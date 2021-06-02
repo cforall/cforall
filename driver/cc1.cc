@@ -382,7 +382,7 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 				// strip inappropriate flags with an argument
 
-			} else if ( arg == "-auxbase" || arg == "-auxbase-strip" || arg == "-dumpbase" ) {
+			} else if ( arg == "-auxbase" || arg == "-auxbase-strip" || arg == "-dumpbase" || arg == "-dumpdir" ) {
 				i += 1;
 				#ifdef __DEBUG_H__
 				cerr << "arg:\"" << argv[i] << "\"" << endl;

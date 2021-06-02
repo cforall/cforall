@@ -401,10 +401,10 @@ public:
 	int expr_id = 0;
 
 	// compact representation used for map lookups.
-	struct TypeEnvKey { 
-		const TypeDecl * base;
-		int formal_usage;
-		int expr_id;
+	struct TypeEnvKey {
+		const TypeDecl * base = nullptr;
+		int formal_usage = 0;
+		int expr_id = 0;
 
 		TypeEnvKey() = default;
 		TypeEnvKey(const TypeDecl * base, int formal_usage = 0, int expr_id = 0): base(base), formal_usage(formal_usage), expr_id(expr_id) {}
@@ -439,8 +439,8 @@ public:
 
 	const Type * accept( Visitor & v ) const override { return v.visit( this ); }
 
-	std::string typeString() const { 
-		if (formal_usage > 0) return std::string("_") + std::to_string(formal_usage) + "_" + std::to_string(expr_id) + "_" + name; 
+	std::string typeString() const {
+		if (formal_usage > 0) return std::string("_") + std::to_string(formal_usage) + "_" + std::to_string(expr_id) + "_" + name;
 		else return name;
 	}
 private:
@@ -547,7 +547,7 @@ namespace std {
 			res = p * res + x.formal_usage;
 			res = p * res + x.expr_id;
 			return res;
-		} 
+		}
 	};
 }
 

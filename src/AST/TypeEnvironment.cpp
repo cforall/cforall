@@ -114,7 +114,7 @@ void TypeEnvironment::add( const FunctionType::ForallList & tyDecls ) {
 }
 
 void TypeEnvironment::add( const TypeSubstitution & sub ) {
-	for ( const auto p : sub ) {
+	for ( const auto & p : sub ) {
 		add( EqvClass{ p.first, p.second } );
 	}
 }

@@ -159,16 +159,25 @@ static void backtrace( int start ) {					// skip first N stack frames
 
 #define SIGPARMS int sig __attribute__(( unused )), siginfo_t * sfp __attribute__(( unused )), ucontext_t * cxt __attribute__(( unused ))
 
-static void Signal( int sig, void (* handler)(SIGPARMS), int flags ) {
-	struct sigaction act;
-
-	act.sa_sigaction = (void (*)(int, siginfo_t *, void *))handler;
+static void _Signal(struct sigaction & act, int sig, int flags ) {
 	act.sa_flags = flags;
 
 	if ( sigaction( sig, &act, nullptr ) == -1 ) {
 	    cerr << "*cfa-cpp compilation error* problem installing signal handler, error(" << errno << ") " << strerror( errno ) << endl;
 	    _exit( EXIT_FAILURE );
 	} // if
+}
+
+static void Signal( int sig, void (* handler)(SIGPARMS), int flags ) {
+	struct sigaction act;
+	act.sa_sigaction = (void (*)(int, siginfo_t *, void *))handler;
+	_Signal(act, sig, flags);
+} // Signal
+
+static void Signal( int sig, void (* handler)(int), int flags ) {
+	struct sigaction act;
+	act.sa_handler = handler;
+	_Signal(act, sig, flags);
 } // Signal
 
 static void sigSegvBusHandler( SIGPARMS ) {
@@ -201,7 +210,7 @@ static void sigFpeHandler( SIGPARMS ) {
 
 static void sigAbortHandler( SIGPARMS ) {
 	backtrace( 6 );										// skip first 6 stack frames
-	Signal( SIGABRT, (void (*)(SIGPARMS))SIG_DFL, SA_SIGINFO );	// reset default signal handler
+	Signal( SIGABRT, SIG_DFL, SA_SIGINFO );	// reset default signal handler
 	raise( SIGABRT );									// reraise SIGABRT
 } // sigAbortHandler
 

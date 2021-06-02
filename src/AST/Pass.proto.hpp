@@ -118,7 +118,7 @@ namespace __pass {
 	/// Mostly used to make the static_assert look (and print) prettier
 	template<typename core_t, typename node_t>
 	struct is_valid_previsit {
-		using ret_t = decltype( ((core_t*)nullptr)->previsit( (const node_t *)nullptr ) );
+		using ret_t = decltype( std::declval<core_t*>()->previsit( std::declval<const node_t *>() ) );
 
 		static constexpr bool value = std::is_void< ret_t >::value ||
 			std::is_base_of<const node_t, typename std::remove_pointer<ret_t>::type >::value;

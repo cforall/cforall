@@ -745,9 +745,9 @@ namespace CodeTools {
 			}
 			// print child scopes
 			++indent;
-			for ( const PassVisitor<ProtoDump>& s : subs ) {
+			for ( const ProtoDump & s : subs ) {
 				std::cout << tab << '{' << std::endl;
-				s.pass.print( indent );
+				s.print( indent );
 				std::cout << tab << '}' << std::endl;
 			}
 		}
