@@ -1,0 +1,6 @@
+#include <vector.hfa>
+#include <fstream.hfa>
+
+int main() {
+    printf("done\n");
+}

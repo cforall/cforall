@@ -1,0 +1,17 @@
+//Testing some valid casts of chars
+char f;
+
+void f() {
+	char f;
+	double f;
+	(int)f;
+	short f;
+	(int)f;
+	(void(*)())f;
+//	([long, long double, *[]()])([f, f, f]);
+}
+
+//Dummy main
+int main( int argc, char const * argv[] ) {
+	#pragma message( "Compiled" )			// force non-empty .expect file
+}

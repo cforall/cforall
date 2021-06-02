@@ -1,0 +1,140 @@
+#pragma once
+
+// #define CFA_STATS_ARRAY 10000
+// #define __CFA_NO_STATISTICS__
+
+#include <stdint.h>
+
+enum {
+	CFA_STATS_READY_Q  = 0x01,
+	CFA_STATS_IO = 0x02,
+};
+
+#if defined(__CFA_NO_STATISTICS__)
+	struct __stats_t;
+	static inline void __init_stats( struct __stats_t * ) {}
+	static inline void __tally_stats( struct __stats_t *, struct __stats_t * ) {}
+	static inline void __print_stats( struct __stats_t *, int, const char *, const char *, void * ) {}
+#else
+	struct __stats_readyQ_pop_t {
+		// number of attemps at poping something
+		volatile uint64_t attempt;
+
+		// number of successes at poping
+		volatile uint64_t success;
+	};
+
+	struct __attribute__((aligned(64))) __stats_readyQ_t {
+		// Push statistic
+		struct {
+			struct {
+				// number of attemps at pushing something to preferred queues
+				volatile uint64_t attempt;
+
+				// number of successes at pushing to preferred queues
+				volatile uint64_t success;
+			}
+			// Stats for local queue within cluster
+			local,
+
+			// Stats for non-local queues within cluster
+			share,
+
+			// Stats from outside cluster
+			extrn;
+		} push;
+
+		// Pop statistic
+		struct {
+			// pop from local queue
+			__stats_readyQ_pop_t local;
+
+			// pop before looking at local queue
+			__stats_readyQ_pop_t help;
+
+			// pop from some other queue
+			__stats_readyQ_pop_t steal;
+
+			// pop when searching queues sequentially
+			__stats_readyQ_pop_t search;
+		} pop;
+
+		struct {
+			volatile uint64_t migration;
+			volatile uint64_t extunpark;
+			volatile  int64_t threads;  // number of threads in the system, includes only local change
+			volatile  int64_t cthreads; // number of threads in the system, includes only local change
+		} threads;
+		struct {
+			volatile uint64_t halts;
+			volatile uint64_t cancels;
+			volatile uint64_t wakes;
+			volatile uint64_t exits;
+		} sleep;
+	};
+
+	#if defined(CFA_HAVE_LINUX_IO_URING_H)
+		struct __attribute__((aligned(64))) __stats_io_t{
+			struct {
+				volatile uint64_t fast;
+				volatile uint64_t slow;
+				volatile uint64_t fail;
+				volatile uint64_t revoke;
+				volatile uint64_t block;
+			} alloc;
+			struct {
+				volatile uint64_t fast;
+				volatile uint64_t slow;
+			} submit;
+			struct {
+				volatile uint64_t external;
+			} flush;
+			struct {
+				volatile uint64_t drain;
+				volatile uint64_t completed;
+				volatile uint64_t flush;
+				volatile uint64_t submitted;
+				struct {
+					volatile uint64_t busy;
+				} errors;
+			} calls;
+			struct {
+				volatile uint64_t sleeps;
+			} poller;
+		};
+	#endif
+
+	#if defined(CFA_STATS_ARRAY)
+		struct __stats_elem_t {
+			long long int ts;
+			int64_t value;
+		};
+	#endif
+
+	struct __attribute__((aligned(128))) __stats_t {
+		__stats_readyQ_t ready;
+		#if defined(CFA_HAVE_LINUX_IO_URING_H)
+			__stats_io_t    io;
+		#endif
+
+		#if defined(CFA_STATS_ARRAY)
+			struct {
+				__stats_elem_t * values;
+				volatile size_t cnt;
+			} array;
+		#endif
+
+	};
+
+	void __init_stats ( struct __stats_t * );
+	void __tally_stats( struct __stats_t *, struct __stats_t * );
+	void __print_stats( struct __stats_t *, int, const char *, const char *, void * );
+	#if defined(CFA_STATS_ARRAY)
+		void __push_stat ( struct __stats_t *, int64_t value, bool external, const char * name, void * handle);
+		void __flush_stat( struct __stats_t *, const char *, void * );
+	#else
+		static inline void __push_stat ( struct __stats_t *, int64_t, bool, const char *, void * ) {}
+		static inline void __flush_stat( struct __stats_t *, const char *, void * ) {}
+	#endif
+#endif
+

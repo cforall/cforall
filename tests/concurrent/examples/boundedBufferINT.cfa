@@ -1,0 +1,126 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+// 
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// boundedBuffer.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon Oct 30 12:45:13 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jun 21 08:20:46 2019
+// Update Count     : 90
+//
+
+#include <stdlib.hfa>									// random
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <thread.hfa>
+#include <unistd.h>										// getpid
+
+//Duration default_preemption() { return 0; }
+
+enum { BufferSize = 50 };
+
+forall( T ) {
+	monitor Buffer {
+		condition full, empty;
+		int front, back, count;
+		T elements[BufferSize];
+	}; // Buffer
+
+	void ?{}( Buffer(T) & buffer ) with( buffer ) { [front, back, count] = 0; }
+
+	int query( Buffer(T) & buffer ) { return buffer.count; } // read-only, no mutual exclusion
+
+	void insert( Buffer(T) & mutex buffer, T elem ) with( buffer ) {
+		if ( count == BufferSize ) wait( empty );
+		elements[back] = elem;
+		back = ( back + 1 ) % BufferSize;
+		count += 1;
+		signal( full );
+	} // insert
+
+	T remove( Buffer(T) & mutex buffer ) with( buffer ) {
+		if ( count == 0 ) wait( full );
+		T elem = elements[front];
+		front = ( front + 1 ) % BufferSize;
+		count -= 1;
+		signal( empty );
+		return elem;
+	} // remove
+}
+
+enum { Sentinel = -1 };
+
+thread Producer {
+	Buffer(int) & buffer;
+	unsigned int N;
+};
+void main( Producer & prod ) with( prod ) {
+	for ( i; 1 ~= N ) {
+		yield( random( 5 ) );
+		insert( buffer, 1 );
+	} // for
+}
+void ?{}( Producer & prod, Buffer(int) * buffer, int N ) {
+	&prod.buffer = buffer;
+	prod.N = N;
+}
+
+thread Consumer {
+	Buffer(int) & buffer;
+	int & sum;											// summation of producer values
+};
+void main( Consumer & cons ) with( cons ) {
+	sum = 0;
+	for () {
+		yield( random( 5 ) );
+		int item = remove( buffer );
+	  if ( item == Sentinel ) break;					// sentinel ?
+		sum += item;
+	} // for
+}
+void ?{}( Consumer & cons, Buffer(int) * buffer, int & sum ) {
+	&cons.buffer = buffer;
+	&cons.sum = &sum;
+}
+
+int main() {
+	Buffer(int) buffer;
+	enum { Prods = 4, Cons = 5 };
+	Producer * prods[Prods];
+	Consumer * cons[Cons];
+	int sums[Cons];
+	int i;
+	processor p;
+
+	//srandom( getpid() );
+	srandom( 1003 );
+
+	for ( i; Cons ) {									// create consumers
+		cons[i] = new( &buffer, sums[i] );
+	} // for
+	for ( i; Prods ) {									// create producers
+		prods[i] = new( &buffer, 100000 );
+	} // for
+
+	for ( i; Prods ) {									// wait for producers to finish
+		delete( prods[i] );
+	} // for
+	for ( i; Cons ) {									// generate sentinal values to stop consumers
+		insert( buffer, Sentinel );
+	} // for
+	int sum = 0;
+	for ( i; Cons ) {									// wait for consumers to finish
+		delete( cons[i] );
+		sum += sums[i];
+	} // for
+	sout | "total:" | sum;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa boundedBufferINT.cfa" //
+// End: //

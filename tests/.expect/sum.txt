@@ -1,0 +1,8 @@
+sum from 5 to 15 is 95, check 95
+sum from 5 to 15 is 95, check 95
+sum from 5 to 15 is 95, check 95
+sum from 5 to 15 is 95, check 95
+sum from 0.5 to 1.5 is 9.5, check 9.5
+sum from 0.5 to 1.5 is 9.5, check 9.5
+sum from 5 to 15 is 95 95, check 95 95
+sum from 5 to 15 is 95, check 95

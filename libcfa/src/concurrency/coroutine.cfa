@@ -1,0 +1,282 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// coroutine.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Nov 28 12:27:26 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec 15 12:06:04 2020
+// Update Count     : 23
+//
+
+#define __cforall_thread__
+
+#include "coroutine.hfa"
+
+#include <stddef.h>
+#include <malloc.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/mman.h>									// mprotect
+#include <unwind.h>
+
+#include "kernel_private.hfa"
+#include "exception.hfa"
+#include "math.hfa"
+
+#define CFA_COROUTINE_USE_MMAP 0
+
+#define __CFA_INVOKE_PRIVATE__
+#include "invoke.h"
+
+extern "C" {
+	void _CtxCoroutine_Unwind(struct _Unwind_Exception * storage, struct $coroutine *) __attribute__ ((__noreturn__));
+	static void _CtxCoroutine_UnwindCleanup(_Unwind_Reason_Code, struct _Unwind_Exception *) __attribute__ ((__noreturn__));
+	static void _CtxCoroutine_UnwindCleanup(_Unwind_Reason_Code, struct _Unwind_Exception *) {
+		abort();
+	}
+
+	extern void CtxRet( struct __stack_context_t * to ) asm ("CtxRet") __attribute__ ((__noreturn__));
+}
+
+//-----------------------------------------------------------------------------
+forall(T &)
+void copy(CoroutineCancelled(T) * dst, CoroutineCancelled(T) * src) {
+	dst->virtual_table = src->virtual_table;
+	dst->the_coroutine = src->the_coroutine;
+	dst->the_exception = src->the_exception;
+}
+
+forall(T &)
+const char * msg(CoroutineCancelled(T) *) {
+	return "CoroutineCancelled(...)";
+}
+
+// This code should not be inlined. It is the error path on resume.
+forall(T & | is_coroutine(T))
+void __cfaehm_cancelled_coroutine(
+		T & cor, $coroutine * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)) ) {
+	verify( desc->cancellation );
+	desc->state = Cancelled;
+	exception_t * except = __cfaehm_cancellation_exception( desc->cancellation );
+
+	// TODO: Remove explitate vtable set once trac#186 is fixed.
+	CoroutineCancelled(T) except;
+	except.virtual_table = &_default_vtable;
+	except.the_coroutine = &cor;
+	except.the_exception = except;
+	// Why does this need a cast?
+	throwResume (CoroutineCancelled(T) &)except;
+
+	except->virtual_table->free( except );
+	free( desc->cancellation );
+	desc->cancellation = 0p;
+}
+
+//-----------------------------------------------------------------------------
+// Global state variables
+
+// minimum feasible stack size in bytes
+static const size_t MinStackSize = 1000;
+extern size_t __page_size;				// architecture pagesize HACK, should go in proper runtime singleton
+extern int __map_prot;
+
+void __stack_prepare( __stack_info_t * this, size_t create_size );
+void __stack_clean  ( __stack_info_t * this );
+
+//-----------------------------------------------------------------------------
+// Coroutine ctors and dtors
+void ?{}( __stack_info_t & this, void * storage, size_t storageSize ) {
+	this.storage   = (__stack_t *)storage;
+
+	// Did we get a piece of storage ?
+	if (this.storage || storageSize != 0) {
+		// We either got a piece of storage or the user asked for a specific size
+		// Immediately create the stack
+		// (This is slightly unintuitive that non-default sized coroutines create are eagerly created
+		// but it avoids that all coroutines carry an unnecessary size)
+		verify( storageSize != 0 );
+		__stack_prepare( &this, storageSize );
+	}
+}
+
+void ^?{}(__stack_info_t & this) {
+	bool userStack = ((intptr_t)this.storage & 0x1) != 0;
+	if ( ! userStack && this.storage ) {
+		__stack_clean( &this );
+	}
+}
+
+void ?{}( $coroutine & this, const char name[], void * storage, size_t storageSize ) with( this ) {
+	(this.context){0p, 0p};
+	(this.stack){storage, storageSize};
+	this.name = name;
+	state = Start;
+	starter = 0p;
+	last = 0p;
+	cancellation = 0p;
+}
+
+void ^?{}($coroutine& this) {
+	if(this.state != Halted && this.state != Start && this.state != Primed) {
+		$coroutine * src = active_coroutine();
+		$coroutine * dst = &this;
+
+		struct _Unwind_Exception storage;
+		storage.exception_class = -1;
+		storage.exception_cleanup = _CtxCoroutine_UnwindCleanup;
+		this.cancellation = &storage;
+		this.last = src;
+
+		// not resuming self ?
+		if ( src == dst ) {
+			abort( "Attempt by coroutine %.256s (%p) to terminate itself.\n", src->name, src );
+		}
+
+		$ctx_switch( src, dst );
+	}
+}
+
+// Part of the Public API
+// Not inline since only ever called once per coroutine
+forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
+void prime(T& cor) {
+	$coroutine* this = get_coroutine(cor);
+	assert(this->state == Start);
+
+	this->state = Primed;
+	resume(cor);
+}
+
+[void *, size_t] __stack_alloc( size_t storageSize ) {
+	const size_t stack_data_size = libCeiling( sizeof(__stack_t), 16 ); // minimum alignment
+	assert(__page_size != 0l);
+	size_t size = libCeiling( storageSize, 16 ) + stack_data_size;
+	size = ceiling(size, __page_size);
+
+	// If we are running debug, we also need to allocate a guardpage to catch stack overflows.
+	void * storage;
+	#if CFA_COROUTINE_USE_MMAP
+		storage = mmap(0p, size + __page_size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+		if(storage == ((void*)-1)) {
+			abort( "coroutine stack creation : internal error, mmap failure, error(%d) %s.", errno, strerror( errno ) );
+		}
+		if ( mprotect( storage, __page_size, PROT_NONE ) == -1 ) {
+			abort( "coroutine stack creation : internal error, mprotect failure, error(%d) %s.", errno, strerror( errno ) );
+		} // if
+		storage = (void *)(((intptr_t)storage) + __page_size);
+	#else
+		__cfaabi_dbg_debug_do(
+			storage = memalign( __page_size, size + __page_size );
+		);
+		__cfaabi_dbg_no_debug_do(
+			storage = (void*)malloc(size);
+		);
+
+		__cfaabi_dbg_debug_do(
+			if ( mprotect( storage, __page_size, PROT_NONE ) == -1 ) {
+				abort( "__stack_alloc : internal error, mprotect failure, error(%d) %s.", (int)errno, strerror( (int)errno ) );
+			}
+			storage = (void *)(((intptr_t)storage) + __page_size);
+		);
+	#endif
+	__cfaabi_dbg_print_safe("Kernel : Created stack %p of size %zu\n", storage, size);
+
+	verify( ((intptr_t)storage & (libAlign() - 1)) == 0ul );
+	return [storage, size];
+}
+
+void __stack_clean  ( __stack_info_t * this ) {
+	void * storage = this->storage->limit;
+
+	#if CFA_COROUTINE_USE_MMAP
+		size_t size = ((intptr_t)this->storage->base) - ((intptr_t)this->storage->limit) + sizeof(__stack_t);
+		storage = (void *)(((intptr_t)storage) - __page_size);
+		if(munmap(storage, size + __page_size) == -1) {
+			abort( "coroutine stack destruction : internal error, munmap failure, error(%d) %s.", errno, strerror( errno ) );
+		}
+	#else
+		__cfaabi_dbg_debug_do(
+			storage = (char*)(storage) - __page_size;
+			if ( mprotect( storage, __page_size, __map_prot ) == -1 ) {
+				abort( "(coStack_t *)%p.^?{}() : internal error, mprotect failure, error(%d) %s.", &this, errno, strerror( errno ) );
+			}
+		);
+
+		free( storage );
+	#endif
+	__cfaabi_dbg_print_safe("Kernel : Deleting stack %p\n", storage);
+}
+
+void __stack_prepare( __stack_info_t * this, size_t create_size ) {
+	const size_t stack_data_size = libCeiling( sizeof(__stack_t), 16 ); // minimum alignment
+	bool userStack;
+	void * storage;
+	size_t size;
+	if ( !this->storage ) {
+		userStack = false;
+		[storage, size] = __stack_alloc( create_size );
+	} else {
+		userStack = true;
+		__cfaabi_dbg_print_safe("Kernel : stack obj %p using user stack %p(%zd bytes)\n", this, this->storage, (intptr_t)this->storage->limit - (intptr_t)this->storage->base);
+
+		// The stack must be aligned, advance the pointer to the next align data
+		storage = (void*)libCeiling( (intptr_t)this->storage, libAlign());
+
+		// The size needs to be shrinked to fit all the extra data structure and be aligned
+		ptrdiff_t diff = (intptr_t)storage - (intptr_t)this->storage;
+		size = libFloor(create_size - stack_data_size - diff, libAlign());
+	} // if
+	assertf( size >= MinStackSize, "Stack size %zd provides less than minimum of %zd bytes for a stack.", size, MinStackSize );
+
+	this->storage = (__stack_t *)((intptr_t)storage + size - sizeof(__stack_t));
+	this->storage->limit = storage;
+	this->storage->base  = (void*)((intptr_t)storage + size - sizeof(__stack_t));
+	this->storage->exception_context.top_resume = 0p;
+	this->storage->exception_context.current_exception = 0p;
+	__attribute__((may_alias)) intptr_t * istorage = (intptr_t*)&this->storage;
+	*istorage |= userStack ? 0x1 : 0x0;
+}
+
+// We need to call suspend from invoke.c, so we expose this wrapper that
+// is not inline (We can't inline Cforall in C)
+extern "C" {
+	void __cfactx_cor_leave( struct $coroutine * src ) {
+		$coroutine * starter = src->cancellation != 0 ? src->last : src->starter;
+
+		src->state = Halted;
+
+		assertf( starter != 0,
+			"Attempt to suspend/leave coroutine \"%.256s\" (%p) that has never been resumed.\n"
+			"Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.",
+			src->name, src );
+		assertf( starter->state != Halted,
+			"Attempt by coroutine \"%.256s\" (%p) to suspend/leave back to terminated coroutine \"%.256s\" (%p).\n"
+			"Possible cause is terminated coroutine's main routine has already returned.",
+			src->name, src, starter->name, starter );
+
+		$ctx_switch( src, starter );
+	}
+
+	struct $coroutine * __cfactx_cor_finish(void) {
+		struct $coroutine * cor = active_coroutine();
+
+		if(cor->state == Primed) {
+			__cfactx_suspend();
+		}
+
+		cor->state = Active;
+
+		return cor;
+	}
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

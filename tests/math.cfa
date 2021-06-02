@@ -1,0 +1,177 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// math.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Fri Apr 22 14:59:21 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr 13 21:04:48 2021
+// Update Count     : 123
+//
+
+#include <fstream.hfa>
+#include <math.hfa>
+
+int main( void ) {
+	float f;
+	double d;
+	long double l;
+
+	sout | "fmod:" | 5.0F % -2.0F | fmod( 5.0F, -2.0F ) | 5.0D % -2.0D | nonl;
+	sout | fmod( 5.0D, -2.0D ) | 5.0L % -2.0L | fmod( 5.0L, -2.0L );
+	sout | "remainder:" | remainder( 2.0F, 3.0F ) | remainder( 2.0D, 3.0D ) | remainder( 2.0L, 3.0L );
+	int quot;
+	f = remquo( 3.6F, 0.5F, &quot );
+	sout | "remquo:" | quot | f | nonl;
+	d = remquo( 3.6D, 0.5F, &quot );
+	sout | quot | d | nonl;
+	l = remquo( 3.6L, 0.5L, &quot );
+	sout | quot | l;
+	sout | "div:" | div( 3.6F, 0.5F ) | div( 3.6D, 0.5D ) | div( 3.6L, 0.5L );
+	sout | "fma:" | fma( 3.0F, -1.0F, 1.0F ) | fma( 3.0D, -1.0D, 1.0D ) | fma( 3.0L, -1.0L, 1.0L );
+	sout | "fdim:" | fdim( 1.0F, -1.0F ) | fdim( 1.0D, -1.0D ) | fdim( 1.0L, -1.0L );
+	sout | "nan:" | (float)nan( "" ) | (double)nan( "" ) | (long double)nan( "" );
+
+	//---------------------- Exponential ----------------------
+
+	sout | "exp:" | exp( 1.0F ) | exp( 1.0D ) | exp( 1.0L ) | nonl;
+	sout | exp( 1.0F+1.0FI ) | exp( 1.0D+1.0DI ) | exp( 1.0DL+1.0LI );
+	sout | "exp2:" | exp2( 1.0F ) | exp2( 1.0D ) | exp2( 1.0L );
+	sout | "expm1:" | expm1( 1.0F ) | expm1( 1.0D ) | expm1( 1.0L );
+	sout | "pow:" | pow( 1.0F, 1.0F ) | pow( 1.0D, 1.0D ) | pow( 1.0L, 1.0L ) | nonl;
+	sout | pow( 1.0F+1.0FI, 1.0F+1.0FI ) | pow( 1.0D+1.0DI, 1.0D+1.0DI ) | pow( 1.5DL+1.5LI, 1.5DL+1.5LI );
+
+	int b = 4;
+	unsigned int e = 2;
+	b \= e;
+	sout | b | "\\" | e | "= " | b \ e;
+	sout | 'a' \ 3 | 2 \ 8 | 4 \ 3 | -4 \ 3 | 4 \ -3 | -4 \ -3;
+	sout | 4.0 \ -3 | -4.0 \ -3 | 4.0 \ 2.1 | (1.0f+2.0fi) \ (3.0f+2.0fi);
+	sout | 4 \ -3 | -4 \ -3 | 4.0 \ 2.1 | (1.0f+2.0fi) \ (3.0f+2.0fi);
+
+	struct S { int i; };
+	double ?*?( double d, S s ) { return d * s.i; }
+	double ?/?( double d, S s ) { return d / s.i; }
+	S ?\?( S s, unsigned long y ) { return (S){ s.i \ y }; }
+	ofstream & ?|?( ofstream & os, S s ) { return os | s.i; }
+	void ?|?( ofstream & os, S s ) { (ofstream &)(os | s); ends( os ); }
+	S s = { 4 };
+	S x = s \ 2;
+	sout | x;
+	sout | s.i | s \ 2u;
+
+	//---------------------- Logarithm ----------------------
+
+	sout | "log:" | log( 1.0F ) | log( 1.0D ) | log( 1.0L ) | nonl;
+	sout | log( 1.0F+1.0FI ) | log( 1.0D+1.0DI ) | log( 1.0DL+1.0LI );
+	sout | "log2:" | log2( 1024 ) | log2( 2 \ 17u ) | log2( 2 \ 23u );
+	sout | "log2:" | log2( 1024l ) | log2( 2l \ 17u ) | log2( 2l \ 23u );
+	sout | "log2:" | log2( 1024ll ) | log2( 2ll \ 17u ) | log2( 2ll \ 23u );
+#if defined( __SIZEOF_INT128__ )
+	sout | "log2:" | log2( 1024l128 ) | log2( 2l128 \ 17u ) | log2( 2l128 \ 23u );
+#endif // __SIZEOF_INT128__
+	sout | "log2:" | log2( 8.0F ) | log2( 8.0D ) | log2( 8.0L );
+	sout | "log10:" | log10( 100.0F ) | log10( 100.0D ) | log10( 100.0L );
+	sout | "log1p:" | log1p( 1.0F ) | log1p( 1.0D ) | log1p( 1.0L );
+	sout | "ilogb:" | ilogb( 1.0F ) | ilogb( 1.0D ) | ilogb( 1.0L );
+	sout | "logb:" | logb( 8.0F ) | logb( 8.0D ) | logb( 8.0L );
+
+	sout | "sqrt:" | sqrt( 1.0F ) | sqrt( 1.0D ) | sqrt( 1.0L ) | nonl;
+	sout | sqrt( 1.0F+1.0FI ) | sqrt( 1.0D+1.0DI ) | sqrt( 1.0DL+1.0LI );
+	sout | "cbrt:" | cbrt( 27.0F ) | cbrt( 27.0D ) | cbrt( 27.0L );
+	sout | "hypot:" | hypot( 1.0F, -1.0F ) | hypot( 1.0D, -1.0D ) | hypot( 1.0L, -1.0L );
+
+	//---------------------- Trigonometric ----------------------
+
+	sout | "sin:" | sin( 1.0F ) | sin( 1.0D ) | sin( 1.0L ) | nonl;
+	sout | sin( 1.0F+1.0FI ) | sin( 1.0D+1.0DI ) | sin( 1.0DL+1.0LI );
+	sout | "cos:" | cos( 1.0F ) | cos( 1.0D ) | cos( 1.0L ) | nonl;
+	sout | cos( 1.0F+1.0FI ) | cos( 1.0D+1.0DI ) | cos( 1.0DL+1.0LI );
+	sout | "tan:" | tan( 1.0F ) | tan( 1.0D ) | tan( 1.0L ) | nonl;
+	sout | tan( 1.0F+1.0FI ) | tan( 1.0D+1.0DI ) | tan( 1.0DL+1.0LI );
+	sout | "asin:" | asin( 1.0F ) | asin( 1.0D ) | asin( 1.0L ) | nonl;
+	sout | asin( 1.0F+1.0FI ) | asin( 1.0D+1.0DI ) | asin( 1.0DL+1.0LI );
+	sout | "acos:" | acos( 1.0F ) | acos( 1.0D ) | acos( 1.0L ) | nonl;
+	sout | acos( 1.0F+1.0FI ) | acos( 1.0D+1.0DI ) | acos( 1.0DL+1.0LI );
+	sout | "atan:" | atan( 1.0F ) | atan( 1.0D ) | atan( 1.0L ) | nonl;
+	sout | atan( 1.0F+1.0FI ) | atan( 1.0D+1.0DI ) | atan( 1.0DL+1.0LI );
+	sout | "atan2:" | atan2( 1.0F, 1.0F ) | atan2( 1.0D, 1.0D ) | atan2( 1.0L, 1.0L ) | nonl;
+	sout | "atan:" | atan( 1.0F, 1.0F ) | atan( 1.0D, 1.0D ) | atan( 1.0L, 1.0L );
+
+	//---------------------- Hyperbolic ----------------------
+
+	sout | "sinh:" | sinh( 1.0F ) | sinh( 1.0D ) | sinh( 1.0L ) | nonl;
+	sout | sinh( 1.0F+1.0FI ) | sinh( 1.0D+1.0DI ) | sinh( 1.0DL+1.0LI );
+	sout | "cosh:" | cosh( 1.0F ) | cosh( 1.0D ) | cosh( 1.0L ) | nonl;
+	sout | cosh( 1.0F+1.0FI ) | cosh( 1.0D+1.0DI ) | cosh( 1.0DL+1.0LI );
+	sout | "tanh:" | tanh( 1.0F ) | tanh( 1.0D ) | tanh( 1.0L ) | nonl;
+	sout | tanh( 1.0F+1.0FI ) | tanh( 1.0D+1.0DI ) | tanh( 1.0DL+1.0LI );
+	sout | "acosh:" | acosh( 1.0F ) | acosh( 1.0D ) | acosh( 1.0L ) | nonl;
+	sout | acosh( 1.0F+1.0FI ) | acosh( 1.0D+1.0DI ) | acosh( 1.0DL+1.0LI );
+	sout | "asinh:" | asinh( 1.0F ) | asinh( 1.0D ) | asinh( 1.0L ) | nonl;
+	sout | asinh( 1.0F+1.0FI ) | asinh( 1.0D+1.0DI ) | asinh( 1.0DL+1.0LI );
+	sout | "atanh:" | atanh( 1.0F ) | atanh( 1.0D ) | atanh( 1.0L ) | nonl;
+	sout | atanh( 1.0F+1.0FI ) | atanh( 1.0D+1.0DI ) | atanh( 1.0DL+1.0LI );
+
+	//---------------------- Error / Gamma ----------------------
+
+	sout | "erf:" | erf( 1.0F ) | erf( 1.0D ) | erf( 1.0L );
+	sout | "erfc:" | erfc( 1.0F ) | erfc( 1.0D ) | erfc( 1.0L );
+	sout | "lgamma:" | lgamma( 4.0F ) | lgamma( 4.0D ) | lgamma( 4.0L );
+	int sign;
+	f = lgamma( 4.0F, &sign );
+	sout | "lgamma:" | f | sign | nonl;
+	d = lgamma( 4.0D, &sign );
+	sout | d | sign | nonl;
+	l = lgamma( 4.0L, &sign );
+	sout | l | sign;
+	sout | "tgamma:" | tgamma( 4.0F ) | tgamma( 4.0D ) | tgamma( 4.0L );
+
+	//---------------------- Nearest Integer ----------------------
+
+	sout | "floor:" | floor( 1.2F ) | floor( 1.2D ) | floor( 1.2L );
+	sout | "ceil:" | ceil( 1.6F ) | ceil( 1.6D ) | ceil( 1.6L );
+	sout | "trunc:" | trunc( 3.5F ) | trunc( 3.5D ) | trunc( 3.5L );
+	sout | "rint:" | (float)rint( 1.5F ) | (double)rint( 1.5D ) | (long double)rint( 1.5L );
+	sout | "rint:" | (long int)rint( 1.5F ) | (long int)rint( 1.5D ) | (long int)rint( 1.5L );
+	sout | "rint:" | (long long int)rint( 1.5F ) | (long long int)rint( 1.5D ) | (long long int)rint( 1.5L );
+	sout | "lrint:" | lrint( 1.5F ) | lrint( 1.5D ) | lrint( 1.5L );
+	sout | "llrint:" | llrint( 1.5F ) | llrint( 1.5D ) | llrint( 1.5L );
+	sout | "nearbyint:" | nearbyint( 3.5F ) | nearbyint( 3.5D ) | nearbyint( 3.5L );
+	sout | "round:" | (float)round( 1.5F ) | (double)round( 1.5D ) | (long double)round( 1.5L );
+	sout | "round:" | (long int)round( 1.5F ) | (long int)round( 1.5D ) | (long int)round( 1.5L );
+	sout | "round:" | (long long int)round( 1.5F ) | (long long int)round( 1.5D ) | (long long int)round( 1.5L );
+	sout | "lround:" | lround( 1.5F ) | lround( 1.5D ) | lround( 1.5L );
+	sout | "llround:" | llround( 1.5F ) | llround( 1.5D ) | llround( 1.5L );
+
+	//---------------------- Manipulation ----------------------
+
+	sout | "copysign:" | copysign( 1.0F, -1.0F ) | copysign( 1.0D, -1.0D ) | copysign( 1.0L, -1.0L );
+	int exp;
+	f = frexp( 4.0F, &exp );
+	sout | "frexp:" | f | exp | nonl;
+	d = frexp( 4.0D, &exp );
+	sout | d | exp | nonl;
+	l = frexp( 4.0L, &exp );
+	sout | l | exp;
+	sout | "ldexp:" | ldexp( 2.0F, 2 ) | ldexp( 2.0D, 2 ) | ldexp( 2.0L, 2 );
+	float fi;
+	double di;
+	long double ldi;
+	f = modf( 2.3F, &fi );
+	sout | "modf:" | fi | f | nonl;
+	d = modf( 2.3D, &di );
+	sout | di | d | nonl;
+	l = modf( 2.3L, &ldi );
+	sout | ldi | l;
+	sout | "modf:" | modf( 2.3F ) | modf( 2.3D ) | modf( 2.3L );
+	sout | "nextafter:" | nextafter( 2.0F, 3.0F ) | nextafter( 2.0D, 3.0D ) | nextafter( 2.0L, 3.0L );
+	sout | "nexttoward:" | nexttoward( 2.0F, 3.0F ) | nexttoward( 2.0D, 3.0D ) | nexttoward( 2.0L, 3.0L );
+
+	sout | "scalbn:" | scalbn( 2.0F, 3 ) | scalbn( 2.0D, 3 ) | scalbn( 2.0L, 3 );
+	sout | "scalbln:" | scalbln( 2.0F, 3L ) | scalbln( 2.0D, 3L ) | scalbln( 2.0L, 3L );
+} // main

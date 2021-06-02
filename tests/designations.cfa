@@ -1,0 +1,263 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// designations.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Thu Jun 29 15:26:36 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jul 27 11:46:35 2017
+// Update Count     : 3
+//
+
+// Note: this test case has been crafted so that it compiles with both cfa and with gcc without any modifications.
+// In particular, since the syntax for designations in Cforall differs from that of C, preprocessor substitution
+// is used for the designation syntax
+#ifdef __cforall
+#define DES :
+#else
+int printf(const char *, ...);
+#define DES =
+#endif
+
+const int indentAmt = 2;
+void indent(int level) {
+	for (int i = 0; i < level; ++i) {
+		printf(" ");
+	}
+}
+
+// A contains fields with different types (int vs. int *)
+struct A {
+	int x, y;
+	int * ptr;
+};
+void printA(struct A a, int level) {
+	indent(level);
+	printf("(A){ %d %d %p }\n", a.x, a.y, a.ptr);
+}
+
+// B contains struct members
+struct B {
+	struct A a0, a1;
+};
+void printB(struct B b, int level) {
+	indent(level);
+	printf("(B){\n");
+	printA(b.a0, level+indentAmt);
+	printA(b.a1, level+indentAmt);
+	indent(level);
+	printf("}\n");
+}
+
+// C contains an array - tests that after 3 ints, the members of B are initialized.
+struct C {
+	int arr[3];
+	struct B b;
+};
+void printC(struct C c, int level) {
+	indent(level);
+	printf("(C){\n");
+	indent(level+indentAmt);
+	printf("(int[]{ %d %d %d }\n", c.arr[0], c.arr[1], c.arr[2]);
+	printB(c.b, level+indentAmt);
+	indent(level);
+	printf("}\n");
+}
+
+// D contains an unnamed aggregate - tests that this doesn't interfere with initialization.
+struct D {
+	struct {
+		int x;
+	};
+};
+void printD(struct D d, int level) {
+	indent(level);
+	printf("(D){ %d }\n", d.x);
+}
+
+// E tests unions
+union E {
+	struct A a;
+	struct B b;
+	struct C c;
+	struct D d;
+	int i;
+};
+
+struct Fred {
+    double i[3];
+    int j;
+    struct Mary {
+	struct Jane {
+	    double j;
+	} j;
+	double i;
+    } m;
+};
+struct Fred s1 @= { .m.j : 3 };
+struct Fred s2 @= { .i : { [2] : 2 } };
+
+int main() {
+	// simple designation case - starting from beginning of structure, leaves ptr default-initialized (zero)
+	struct A y0 = {
+		.x DES 2,
+		.y DES 3
+	};
+
+	// simple initializaiton case - initialize all elements explicitly with no designations
+	struct A y1 = {
+		2, 3, 0
+	};
+
+
+	// use designation to move to member y, leaving x default-initialized (zero)
+	struct A y2 = {
+		.y DES 3,
+		0
+	};
+
+#if ERROR
+	struct A yErr0 = {
+		{} // error - empty scalar initializer is illegal
+	};
+#endif
+
+	printf("=====A=====\n");
+	printA(y0, 0);
+	printA(y1, 0);
+	printA(y2, 0);
+	printf("=====A=====\n\n");
+
+	// initialize only first element (z0.a.x), leaving everything else default-initialized (zero), no nested curly-braces
+	struct B z0 = { 5 };
+
+	// some nested curly braces, use designation to 'jump around' within structure, leaving some members default-initialized
+	struct B z1 = {
+		{ 3 }, // z1.a0
+		{ 4 }, // z1.a1
+		.a0 DES { 5 }, // z1.a0
+		{ 6 }, // z1.a1
+		.a0.y DES 2, // z1.a0.y
+		0, // z1.a0.ptr
+	};
+
+	// z2.a0.y and z2.a0.ptr default-initialized, everything else explicit
+	struct B z2 = {
+		{ 1 },
+		{ 2, 3, 0 }
+	};
+
+	// initialize every member, omitting nested curly braces
+	struct B z3 = {
+		1, 2, 0, 4, 5, 0
+	};
+
+	// no initializer - legal C, but garbage values - don't print this one
+	struct B z4;
+
+	// no curly braces - initialize with object of same type
+	struct B z5 = z2;
+
+	// z6.a0.y and z6.a0.ptr default-initialized, everything else explicit.
+	// no curly braces on z6.a1 initializers
+	struct B z6 = {
+		{ 1 },
+		2, 3, 0
+	};
+
+	printf("=====B=====\n");
+	printB(z0, 0);
+	printB(z1, 0);
+	printB(z2, 0);
+	printB(z3, 0);
+	printB(z5, 0);
+	printB(z6, 0);
+	printf("=====B=====\n\n");
+
+	// TODO: what about extra things in a nested init? are empty structs skipped??
+
+	// test that initializing 'past array bound' correctly moves to next member.
+	struct C c1 = {
+		2, 3, 4,  // arr
+		5, 6, 0,  // b.a0
+		7, 8, 0,  // b.a1
+	};
+
+	printf("=====C=====\n");
+	printC(c1, 0);
+	printf("=====C=====\n\n");
+
+#if ERROR
+	// nested initializer can't refer to same type in C
+	struct C cErr0 = { c1 };
+
+	// must use curly braces to initialize members
+	struct C cErr1 = 2;
+
+	// can't initialize with array compound literal
+	struct C cErr2 = {
+		(int[3]) { 1, 2, 3 }  // error: array initialized from non-constant array expression
+	};
+#endif
+
+#if WARNING
+	// can't initialize array with array - converts to int*
+	int cWarn0_arr[3] = { 1, 2, 3 };
+	struct C cWarn0 = {
+		cWarn0_arr  // warning: initialization makes integer from ptr without cast
+	};
+#endif
+	// array designation
+	int i[2] = { [1] : 3 };
+	// allowed to have 'too many' initialized lists - essentially they are ignored.
+	int i1 = { 3 };
+
+	// doesn't work yet.
+	// designate unnamed object's members
+	// struct D d = { .x DES 3 };
+#if ERROR
+	struct D d1 = { .y DES 3 };
+#endif
+
+	// simple union initialization - initialized first member (e0.a)
+	union E e0 = {
+		y0
+	};
+
+	// simple union initialization - initializes first member (e1.a) - with nested initializer list
+	union E e1 = {
+		{ 2, 3, 0 }
+	};
+
+	// simple union initialization - initializes first member (e2.a) - without nested initializer list
+	union E e2 = {
+		2, 3, 0
+	};
+
+	// move cursor to e4.b.a0.x and initialize until e3.b.a1.ptr inclusive
+	union E e3 = {
+		.b.a0.x DES 2, 3, 0, 5, 6, 0
+	};
+
+	printf("=====E=====\n");
+	printA(e0.a, 0);
+	printA(e1.a, 0);
+	printA(e2.a, 0);
+	printB(e3.b, 0);
+	printf("=====E=====\n\n");
+
+	// special case of initialization: char[] can be initialized with a string literal
+	const char * str0 = "hello";
+	char str1[] = "hello";
+	const char c1[] = "abc";
+	const char c2[] = { 'a', 'b', 'c' };
+	const char c3[][2] = { { 'a', 'b' }, { 'c', 'd'}, { 'c', 'd'} };
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

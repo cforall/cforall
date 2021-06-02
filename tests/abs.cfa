@@ -1,0 +1,36 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// abs.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu Jan 28 18:26:16 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 21:33:15 2018
+// Update Count     : 55
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>										// abs
+
+int main( void ) {
+	signed char ch = -65;
+	sout | "char\t\t\t"					| ch     | "\tabs " | abs( ch );
+	sout | "signed int\t\t"				| -65    | "\tabs" | abs( -65 );
+	sout | "signed long int\t\t" 		| -65l   | "\tabs" | abs( -65l );
+	sout | "signed long long int\t"		| -65ll  | "\tabs" | abs( -65ll );
+	sout | "float\t\t\t" 				| -65.0f | "\tabs" | abs( -65.0f );
+	sout | "double\t\t\t"				| -65.0  | "\tabs" | abs( -65.0 );
+	sout | "long double\t\t"			| -65.0l | "\tabs" | abs( -65.0l );
+	sout | "float _Complex\t\t"			| -65.0F-2.0iF | "\tabs" | abs( -65.0F-2.0iF );
+	sout | "double _Complex\t\t"		| -65.0D-2.0iD | "\tabs" | abs( -65.0D-2.0iD );
+	sout | "long double _Complex\t"		| -65.0L-2.0iL | "\tabs" | abs( -65.0L-2.0iL );
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa abs.cfa" //
+// End: //

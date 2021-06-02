@@ -1,0 +1,295 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// kernel_private.hfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Feb 13 12:27:26 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Aug 12 08:21:33 2020
+// Update Count     : 9
+//
+
+#pragma once
+
+#include "kernel.hfa"
+#include "thread.hfa"
+
+#include "alarm.hfa"
+#include "stats.hfa"
+
+//-----------------------------------------------------------------------------
+// Scheduler
+
+
+extern "C" {
+	void disable_interrupts() OPTIONAL_THREAD;
+	void enable_interrupts( bool poll = true );
+}
+
+void schedule_thread$( $thread * ) __attribute__((nonnull (1)));
+
+extern bool __preemption_enabled();
+
+//release/wake-up the following resources
+void __thread_finish( $thread * thrd );
+
+//-----------------------------------------------------------------------------
+// Processor
+void main(processorCtx_t *);
+
+void * __create_pthread( pthread_t *, void * (*)(void *), void * );
+void __destroy_pthread( pthread_t pthread, void * stack, void ** retval );
+
+
+
+extern cluster * mainCluster;
+
+//-----------------------------------------------------------------------------
+// Threads
+extern "C" {
+      void __cfactx_invoke_thread(void (*main)(void *), void * this);
+}
+
+__cfaabi_dbg_debug_do(
+	extern void __cfaabi_dbg_thread_register  ( $thread * thrd );
+	extern void __cfaabi_dbg_thread_unregister( $thread * thrd );
+)
+
+#define TICKET_BLOCKED (-1) // thread is blocked
+#define TICKET_RUNNING ( 0) // thread is running
+#define TICKET_UNBLOCK ( 1) // thread should ignore next block
+
+//-----------------------------------------------------------------------------
+// Utils
+void doregister( struct cluster * cltr, struct $thread & thrd );
+void unregister( struct cluster * cltr, struct $thread & thrd );
+
+//-----------------------------------------------------------------------------
+// I/O
+$io_arbiter * create(void);
+void destroy($io_arbiter *);
+
+//=======================================================================
+// Cluster lock API
+//=======================================================================
+// Lock-Free registering/unregistering of threads
+// Register a processor to a given cluster and get its unique id in return
+unsigned register_proc_id( void );
+
+// Unregister a processor from a given cluster using its id, getting back the original pointer
+void unregister_proc_id( unsigned );
+
+//=======================================================================
+// Reader-writer lock implementation
+// Concurrent with doregister/unregister,
+//    i.e., threads can be added at any point during or between the entry/exit
+
+//-----------------------------------------------------------------------
+// simple spinlock underlying the RWLock
+// Blocking acquire
+static inline void __atomic_acquire(volatile bool * ll) {
+	while( __builtin_expect(__atomic_exchange_n(ll, (bool)true, __ATOMIC_SEQ_CST), false) ) {
+		while(__atomic_load_n(ll, (int)__ATOMIC_RELAXED))
+			Pause();
+	}
+	/* paranoid */ verify(*ll);
+}
+
+// Non-Blocking acquire
+static inline bool __atomic_try_acquire(volatile bool * ll) {
+	return !__atomic_exchange_n(ll, (bool)true, __ATOMIC_SEQ_CST);
+}
+
+// Release
+static inline void __atomic_unlock(volatile bool * ll) {
+	/* paranoid */ verify(*ll);
+	__atomic_store_n(ll, (bool)false, __ATOMIC_RELEASE);
+}
+
+
+
+
+
+//-----------------------------------------------------------------------
+// Reader-Writer lock protecting the ready-queues
+// while this lock is mostly generic some aspects
+// have been hard-coded to for the ready-queue for
+// simplicity and performance
+struct __scheduler_RWLock_t {
+	// total cachelines allocated
+	unsigned int max;
+
+	// cachelines currently in use
+	volatile unsigned int alloc;
+
+	// cachelines ready to itereate over
+	// (!= to alloc when thread is in second half of doregister)
+	volatile unsigned int ready;
+
+	// writer lock
+	volatile bool write_lock;
+
+	// data pointer
+	volatile bool * volatile * data;
+};
+
+void  ?{}(__scheduler_RWLock_t & this);
+void ^?{}(__scheduler_RWLock_t & this);
+
+extern __scheduler_RWLock_t * __scheduler_lock;
+
+//-----------------------------------------------------------------------
+// Reader side : acquire when using the ready queue to schedule but not
+//  creating/destroying queues
+static inline void ready_schedule_lock(void) with(*__scheduler_lock) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify( ! kernelTLS().in_sched_lock );
+	/* paranoid */ verify( data[kernelTLS().sched_id] == &kernelTLS().sched_lock );
+	/* paranoid */ verify( !kernelTLS().this_processor || kernelTLS().this_processor->unique_id == kernelTLS().sched_id );
+
+	// Step 1 : make sure no writer are in the middle of the critical section
+	while(__atomic_load_n(&write_lock, (int)__ATOMIC_RELAXED))
+		Pause();
+
+	// Fence needed because we don't want to start trying to acquire the lock
+	// before we read a false.
+	// Not needed on x86
+	// std::atomic_thread_fence(std::memory_order_seq_cst);
+
+	// Step 2 : acquire our local lock
+	__atomic_acquire( &kernelTLS().sched_lock );
+	/*paranoid*/ verify(kernelTLS().sched_lock);
+
+	#ifdef __CFA_WITH_VERIFY__
+		// Debug, check if this is owned for reading
+		kernelTLS().in_sched_lock = true;
+	#endif
+}
+
+static inline void ready_schedule_unlock(void) with(*__scheduler_lock) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify( data[kernelTLS().sched_id] == &kernelTLS().sched_lock );
+	/* paranoid */ verify( !kernelTLS().this_processor || kernelTLS().this_processor->unique_id == kernelTLS().sched_id );
+	/* paranoid */ verify( kernelTLS().sched_lock );
+	/* paranoid */ verify( kernelTLS().in_sched_lock );
+	#ifdef __CFA_WITH_VERIFY__
+		// Debug, check if this is owned for reading
+		kernelTLS().in_sched_lock = false;
+	#endif
+	__atomic_unlock(&kernelTLS().sched_lock);
+}
+
+#ifdef __CFA_WITH_VERIFY__
+	static inline bool ready_schedule_islocked(void) {
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( (!kernelTLS().in_sched_lock) || kernelTLS().sched_lock );
+		return kernelTLS().sched_lock;
+	}
+
+	static inline bool ready_mutate_islocked() {
+		return __scheduler_lock->write_lock;
+	}
+#endif
+
+//-----------------------------------------------------------------------
+// Writer side : acquire when changing the ready queue, e.g. adding more
+//  queues or removing them.
+uint_fast32_t ready_mutate_lock( void );
+
+void ready_mutate_unlock( uint_fast32_t /* value returned by lock */ );
+
+//-----------------------------------------------------------------------
+// Lock-Free registering/unregistering of threads
+// Register a processor to a given cluster and get its unique id in return
+// For convenience, also acquires the lock
+static inline [unsigned, uint_fast32_t] ready_mutate_register() {
+	unsigned id = register_proc_id();
+	uint_fast32_t last = ready_mutate_lock();
+	return [id, last];
+}
+
+// Unregister a processor from a given cluster using its id, getting back the original pointer
+// assumes the lock is acquired
+static inline void ready_mutate_unregister( unsigned id, uint_fast32_t last_s ) {
+	ready_mutate_unlock( last_s );
+	unregister_proc_id( id );
+}
+
+//-----------------------------------------------------------------------
+// Cluster idle lock/unlock
+static inline void lock(__cluster_proc_list & this) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	// Start by locking the global RWlock so that we know no-one is
+	// adding/removing processors while we mess with the idle lock
+	ready_schedule_lock();
+
+	// Simple counting lock, acquired, acquired by incrementing the counter
+	// to an odd number
+	for() {
+		uint64_t l = this.lock;
+		if(
+			(0 == (l % 2))
+			&& __atomic_compare_exchange_n(&this.lock, &l, l + 1, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+		) return;
+		Pause();
+	}
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+static inline void unlock(__cluster_proc_list & this) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	/* paranoid */ verify( 1 == (this.lock % 2) );
+	// Simple couting lock, release by incrementing to an even number
+	__atomic_fetch_add( &this.lock, 1, __ATOMIC_SEQ_CST );
+
+	// Release the global lock, which we acquired when locking
+	ready_schedule_unlock();
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+//=======================================================================
+// Ready-Queue API
+//-----------------------------------------------------------------------
+// push thread onto a ready queue for a cluster
+// returns true if the list was previously empty, false otherwise
+__attribute__((hot)) void push(struct cluster * cltr, struct $thread * thrd, bool local);
+
+//-----------------------------------------------------------------------
+// pop thread from the local queues of a cluster
+// returns 0p if empty
+// May return 0p spuriously
+__attribute__((hot)) struct $thread * pop_fast(struct cluster * cltr);
+
+//-----------------------------------------------------------------------
+// pop thread from any ready queue of a cluster
+// returns 0p if empty
+// May return 0p spuriously
+__attribute__((hot)) struct $thread * pop_slow(struct cluster * cltr);
+
+//-----------------------------------------------------------------------
+// search all ready queues of a cluster for any thread
+// returns 0p if empty
+// guaranteed to find any threads added before this call
+__attribute__((hot)) struct $thread * pop_search(struct cluster * cltr);
+
+//-----------------------------------------------------------------------
+// Increase the width of the ready queue (number of lanes) by 4
+void ready_queue_grow  (struct cluster * cltr);
+
+//-----------------------------------------------------------------------
+// Decrease the width of the ready queue (number of lanes) by 4
+void ready_queue_shrink(struct cluster * cltr);
+
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

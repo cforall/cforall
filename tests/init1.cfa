@@ -1,0 +1,135 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// init1.cfa -- tests of initializing pointer- and reference-typed variables and returns
+//
+// Author           : Michael Brooks
+// Created On       : Thu Jul 16 22:00:00 2020
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Oct 11 10:26:50 2020
+// Update Count     : 8
+//
+
+void f() {
+
+    //
+    // setup
+    //
+
+    float x = 3.14;
+
+    float & rx = x;
+    float * px = &x;
+
+    const float & crx = x;
+    const float * cpx = &x;
+
+    //
+    // sound initializations
+    //
+
+    char * str1 = "hi";
+    const char * str2 = "hi";
+
+    float & rx2 = rx;
+    float * px2 = px;
+
+    const float & crx2 = crx;
+    const float * cpx2 = cpx;
+
+    // FIX ME: Code gen not producing correct cast.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
+    int (* fp)( int ) = 0p;
+    fp = 0p;
+#pragma GCC diagnostic pop
+
+    //
+    // unsound initializations
+    //
+
+    #ifdef ERR1
+    // mismatched referenced type
+    int & ry = rx;
+    int * py = px;
+
+    // would discard refered constness (same float is referenced)
+    float & ry2 = crx;
+    float * py2 = cpx;
+    #endif // ERR1
+}
+
+//
+// sound returns
+//
+
+char * f_str1() {
+    return "hi";
+}
+
+const char * f_str2() {
+    return "hi";
+}
+
+float & f_rx2 () {
+    float & rx = *0p;
+    return rx;
+}
+
+float * f_px2 () {
+    float * px = 0p;
+    return px;
+}
+
+const float & f_crx2 () {
+    float & rx = *0p;
+    return rx;
+}
+
+const float * f_cpx2 () {
+    float * px = 0p;
+    return px;
+}
+
+//
+// unsound returns
+//
+
+#ifdef ERR1
+int & f_ry() { 
+    float & rx = *0p;
+    return rx;               // mismatched referenced type
+}
+
+int * f_py() {
+    float * px = 0p;
+    return px;               // mismatched referenced type
+}
+
+float & f_ry2() {
+    const float & crx = *0p;
+    return crx;              // would discard refered constness (same float is referenced)
+}
+
+float * f_py2() {
+    const float * cpx = 0p;
+    return cpx;              // would discard refered constness (same float is referenced)
+}
+
+forall (T &, S &)
+T & anycvt( S & s ) {
+    return s;               // mismatched referenced type
+}
+
+forall (T &, S &)
+T * anycvt( S * s ) {
+    return s;               // mismatched referenced type
+}
+#endif // ERR1
+
+int main() {
+    #pragma message( "Compiled" )			// force non-empty .expect file
+}

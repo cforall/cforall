@@ -1,0 +1,94 @@
+#include <fstream.hfa>
+#include <locks.hfa>
+#include <thread.hfa>
+
+enum { num_blockers = 17, num_unblockers = 13 };
+
+void thrash() {
+	unsigned t[100];
+	for(i; 100) {
+		t[i] = 0xDEADBEEF;
+	}
+}
+
+Semaphore0nary sem;
+
+const unsigned int num_blocks = 1625;
+
+thread Blocker {
+	size_t sum;
+};
+void main(Blocker & this);
+
+Blocker * from_thread($thread * t) {
+	Blocker & nullb = *(Blocker*)0p;
+	$thread & nullt = (thread&)nullb;
+	uintptr_t offset  = (uintptr_t)&nullt;
+	uintptr_t address = ((uintptr_t)t) - offset;
+	return (Blocker*)address;
+}
+
+void main(Blocker & this) {
+	$thread * me = active_thread();
+	Blocker * me1 = &this;
+	Blocker * me2 = from_thread(me);
+	if( me1 != me2 ) sout | "Bad casting!" | me1 | "vs" | me2;
+	this.sum = 0;
+	for(num_blocks) {
+		P(sem);
+		if(((thread&)this).seqable.next != 0p) sout | "Link not invalidated";
+	}
+}
+
+const unsigned int num_unblocks = 2125;
+
+thread Unblocker {
+	size_t sum;
+};
+
+void main(Unblocker & this) {
+	this.sum = 0;
+	unsigned me = (unsigned)(uintptr_t)&this;
+	for(num_unblocks) {
+		$thread * t = V(sem, false);
+		Blocker * b = from_thread(t);
+		b->sum += me;
+		this.sum += (unsigned)(uintptr_t)b;
+		unpark(t);
+		yield(random(10));
+	}
+}
+
+int main() {
+	size_t usum = 0;
+	size_t bsum = 0;
+
+	if((num_unblocks * num_unblockers) != (num_blocks * num_blockers)) sout | "Mismatched Operations: " | (num_unblocks * num_unblockers) | "vs" | (num_blocks * num_blockers);
+
+	sout | "Starting";
+	{
+		Blocker   blockers  [num_blockers  ];
+		Unblocker unblockers[num_unblockers];
+
+		for(i;num_blockers) {
+			for(num_blocks)
+				usum += (unsigned)(uintptr_t)&blockers[i];
+		}
+
+		for(i;num_unblockers) {
+			for(num_unblocks)
+				bsum += (unsigned)(uintptr_t)&unblockers[i];
+		}
+
+		for(i;num_blockers) {
+			bsum -= join(blockers[i]).sum;
+		}
+
+		for(i;num_unblockers) {
+			usum -= join(unblockers[i]).sum;
+		}
+	}
+	sout | "Done!";
+	if(bsum == 0 && usum == 0) sout | "Match!";
+	else sout | "No Match!" | usum | "/" | bsum;
+}

@@ -1,0 +1,121 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2019 University of Waterloo
+// 
+// manipulatorsOutput1.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Sat Jun  8 18:04:11 2019
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Apr 10 08:42:15 2021
+// Update Count     : 18
+// 
+
+#include <fstream.hfa>
+
+int main() {
+	sout | "signed char";
+	signed char sc = -12;
+	printf( "%hhd %2hhd %5.2hhd %-5.2hhd %hho %#hho %hhx %#hhx %#8hhx %#8.10hhx %#8.3hhX %+-8.3hhd %08hhd\n", sc, sc, sc, sc, sc, sc, sc, sc, sc, sc, sc, sc, sc );
+	sout | sc | wd(2,sc) | wd(5,2,sc) | left(wd(5,2,sc)) | nobase(oct(sc)) | oct(sc) | nonl;
+	sout | nobase(hex(sc)) | hex(sc) | wd(8,hex(sc)) | wd(8,10,hex(sc)) | upcase(wd(8,3,hex(sc))) | nonl;
+	sout | left(sign(upcase(wd(8,3,sc)))) | pad0(wd(8,sc));
+
+	sout | "unsigned char";
+	unsigned char usc = 12;
+	printf( "%hhu %2hhu %5.2hhu %-5.2hhu %hho %#hho %hhx %#hhx %#8hhx %#8.10hhx %#8.3hhX %-8.3hhu %08hhu\n", usc, usc, usc, usc, usc, usc, usc, usc, usc, usc, usc, usc, usc );
+	sout | usc | wd(2,usc) | wd(5,2,usc) | left(wd(5,2,usc)) | nobase(oct(usc)) | oct(usc) | nonl;
+	sout | nobase(hex(usc)) | hex(usc) | wd(8,hex(usc)) | wd(8,10,hex(usc)) | upcase(wd(8,3,hex(usc))) | nonl;
+	sout | left(upcase(wd(8,3,usc))) | pad0(wd(8,usc));
+
+	sout | "signed short int";
+	signed short int si = -12;
+	printf( "%hd %2hd %5.2hd %-5.2hd %ho %#ho %hx %#hx %#8hx %#8.10hx %#8.3hX %+-8.3hd %08hd\n", si, si, si, si, si, si, si, si, si, si, si, si, si );
+	sout | si | wd(2,si) | wd(5,2,si) | left(wd(5,2,si)) | nobase(oct(si)) | oct(si) | nonl;
+	sout | nobase(hex(si)) | hex(si) | wd(8,hex(si)) | wd(8,10,hex(si)) | upcase(wd(8,3,hex(si))) | nonl;
+	sout | left(sign(upcase(wd(8,3,si)))) | pad0(wd(8,si));
+
+	sout | "unsigned short int";
+	unsigned short int usi = 12;
+	printf( "%hu %2hu %5.2hu %-5.2hu %ho %#ho %hx %#hx %#8hx %#8.10hx %#8.3hX %-8.3hu %08hu\n", usi, usi, usi, usi, usi, usi, usi, usi, usi, usi, usi, usi, usi );
+	sout | usi | wd(2,usi) | wd(5,2,usi) | left(wd(5,2,usi)) | nobase(oct(usi)) | oct(usi) | nonl;
+	sout | nobase(hex(usi)) | hex(usi) | wd(8,hex(usi)) | wd(8,10,hex(usi)) | upcase(wd(8,3,hex(usi))) | nonl;
+	sout | left(upcase(wd(8,3,usi))) | pad0(wd(8,usi));
+
+	sout | "signed int";
+	signed int i = -12;
+	printf( "%d %2d %5.2d %-5.2d %o %#o %x %#x %#8x %#8.10x %#8.3X %+-8.3d %08d\n", i, i, i, i, i, i, i, i, i, i, i, i, i );
+	sout | i | wd(2,i) | wd(5,2,i) | left(wd(5,2,i)) | nobase(oct(i)) | oct(i) | nonl;
+	sout | nobase(hex(i)) | hex(i) | wd(8,hex(i)) | wd(8,10,hex(i)) | upcase(wd(8,3,hex(i))) | nonl;
+	sout | left(sign(upcase(wd(8,3,i)))) | pad0(wd(8,i));
+
+	sout | "unsigned int";
+	unsigned int ui = 12;
+	printf( "%u %2u %5.2u %-5.2u %o %#o %x %#x %#8x %#8.10x %#8.3X %-8.3u %08u\n", ui, ui, ui, ui, ui, ui, ui, ui, ui, ui, ui, ui, ui );
+	sout | ui | wd(2,ui) | wd(5,2,ui) | left(wd(5,2,ui)) | nobase(oct(ui)) | oct(ui) | nonl;
+	sout | nobase(hex(ui)) | hex(ui) | wd(8,hex(ui)) | wd(8,10,hex(ui)) | upcase(wd(8,3,hex(ui))) | nonl;
+	sout | left(upcase(wd(8,3,ui))) | pad0(wd(8,ui));
+
+	sout | "signed long long int";
+	signed long long int lli = -12;
+	printf( "%lld %2lld %5.2lld %-5.2lld %llo %#llo %llx %#llx %#8llx %#8.10llx %#8.3llX %+-8.3lld %08lld\n", lli, lli, lli, lli, lli, lli, lli, lli, lli, lli, lli, lli, lli );
+	sout | lli | wd(2,lli) | wd(5,2,lli) | left(wd(5,2,lli)) | nobase(oct(lli)) | oct(lli) | nonl;
+	sout | nobase(hex(lli)) | hex(lli) | wd(8,hex(lli)) | wd(8,10,hex(lli)) | upcase(wd(8,3,hex(lli))) | nonl;
+	sout | left(sign(upcase(wd(8,3,lli)))) | pad0(wd(8,lli));
+
+	sout | "unsigned long long int";
+	unsigned long long int ulli = 12;
+	printf( "%llu %2llu %5.2llu %-5.2llu %llo %#llo %llx %#llx %#8llx %#8.10llx %#8.3llX %-8.3llu %08llu\n", ulli, ulli, ulli, ulli, ulli, ulli, ulli, ulli, ulli, ulli, ulli, ulli, ulli );
+	sout | ulli | wd(2,ulli) | wd(5,2,ulli) | left(wd(5,2,ulli)) | nobase(oct(ulli)) | oct(ulli) | nonl;
+	sout | nobase(hex(ulli)) | hex(ulli) | wd(8,hex(ulli)) | wd(8,10,hex(ulli)) | upcase(wd(8,3,hex(ulli))) | nonl;
+	sout | left(upcase(wd(8,3,ulli))) | pad0(wd(8,ulli));
+
+	sout | nl | "binary integral";
+	sout | bin(0) | bin(13) | upcase(bin(13)) | nobase(bin(13)) | left(wd(8,bin(13))) | wd(8,bin(13)) | nonl;
+	sout | pad0(left(wd(8,bin(13)))) | pad0(wd(8,bin(13))) | pad0(wd(8,10,bin(13))) | pad0(wd(8,6,bin(13)));
+
+
+	sout | nl | "float";
+	float f = 3.537;
+	printf( "%g  %8g %#8g %g %8g %8.0g %#8.0g %8.2g %#8.2g %-8.2g %-8.2g %-#8.2g %-+8.2g %-+#8.2g %08.2g %8.2E %8.2a %#8.2A %#8.2e\n",
+		    0.0,3.0F,3.0F, f,  f,    f,     f,    f,     f,  3.0F,      f,      f,      f,       f,     f,    f,    f,     f,     f );
+	sout | 0.0 | wd(8, 3.0F) | nodp(wd(8, 3.0F)) | f | wd(8, f) | ws(8,0, f) | nodp(ws(8,0, f)) | ws(8,2, f) | nodp(ws(8,2, f)) | nonl;
+	sout | left(ws(8,2, 3.0F)) | left(ws(8,2, f)) | left(nodp(ws(8,2, f))) | left(sign(ws(8,2, f))) | left(sign(nodp(ws(8,2, f)))) | nonl;
+	sout | pad0(ws(8,2, f)) | upcase(wd(8,2, sci(f))) | wd(8,2, hex(f)) | upcase(wd(8,2, hex(f))) | nodp(wd(8,2, sci(f)));
+
+	sout | "double";
+	double d = 3.537;
+	printf( "%g  %8g %#8g %g %8g %8.0g %#8.0g %8.2g %#8.2g %-8.2g %-8.2g %-#8.2g %-+8.2g %-+#8.2g %08.2g %8.2E %8.2a %#8.2A %#8.2e\n",
+		    0.0, 3.0, 3.0, d,  d,    d,     d,    d,     d,   3.0,     d,      d,      d,       d,     d,    d,    d,     d,     d );
+	sout | 0.0 | wd(8, 3.0) | nodp(wd(8, 3.0)) | d | wd(8, d) | ws(8,0, d) | nodp(ws(8,0, d)) | ws(8,2, d) | nodp(ws(8,2, d)) | nonl;
+	sout | left(ws(8,2, 3.0)) | left(ws(8,2, d)) | left(nodp(ws(8,2, d))) | left(sign(ws(8,2, d))) | left(sign(nodp(ws(8,2, d)))) | nonl;
+	sout | pad0(ws(8,2, d)) | upcase(wd(8,2, sci(d))) | wd(8,2, hex(d)) | upcase(wd(8,2, hex(d))) | nodp(wd(8,2, sci(d)));
+
+	sout | "long double";
+	long double ld = 3.537;
+	printf( "%Lg  %8Lg %#8Lg %Lg %8Lg %8.0Lg %#8.0Lg %8.2Lg %#8.2Lg %-8.2Lg %-8.2Lg %-#8.2Lg %-+8.2Lg %-+#8.2Lg %08.2Lg %8.2LE %8.2La %#8.2LA %#8.2Le\n",
+		    0.0L, 3.0L, 3.0L, ld,  ld,    ld,     ld,    ld,     ld,   3.0L,     ld,      ld,      ld,       ld,     ld,    ld,    ld,     ld,     ld );
+	sout | 0.0L | wd(8, 3.0L) | nodp(wd(8, 3.0L)) | ld | wd(8, ld) | ws(8,0, ld) | nodp(ws(8,0, ld)) | ws(8,2, ld) | nodp(ws(8,2, ld)) | nonl;
+	sout | left(ws(8,2, 3.0L)) | left(ws(8,2, ld)) | left(nodp(ws(8,2, ld))) | left(sign(ws(8,2, ld))) | left(sign(nodp(ws(8,2, ld)))) | nonl;
+	sout | pad0(ws(8,2, ld)) | upcase(wd(8,2, sci(ld))) | wd(8,2, hex(ld)) | upcase(wd(8,2, hex(ld))) | nodp(wd(8,2, sci(ld)));
+
+	sout | nl | "char";
+	char c = 'a';
+	printf( "%c %2c %5c %-5c %hho %#hho %hhx %#hhx %#8hhx %#8hhX %-8c %8c\n", c, c, c, c, c, c, c, c, c, c, c, c );
+	sout | c | ' ' | wd(2,c) | wd(5,c) | left(wd(5,c)) | nobase(oct(c)) | oct(c) | nonl;
+	sout | nobase(hex(c)) | hex(c) | wd(8,hex(c)) | upcase(wd(8,hex(c))) | left(wd(8,c)) | wd(8,c);
+
+	sout | nl | "string";
+	const char * s = "abcd";
+	printf( "%s %8s %6.8s %-8s\n", s, s, s, s );
+	sout | s | wd(8,s) | wd(6,8,s) | left(wd(8,s));
+
+	sout | nl | "binary string";
+	sout | bin("0") | bin(s) | oct(s) | hex(s);
+	sout | nobase(bin("0")) | nobase(bin(s)) | nobase(oct(s)) | nobase(hex(s));
+	sout | nobase(wd(8,bin("0"))) | nobase(wd(8,bin(s))) | nobase(wd(4,oct(s))) | nobase(wd(3,hex(s)));
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa -Wall -Wextra manipulatorsOutput1.cfa" //
+// End: //

@@ -1,0 +1,186 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// variableDeclarator.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Aug 17 08:41:42 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 07:46:17 2020
+// Update Count     : 13
+// 
+
+// Variable declarations test
+int f1;
+int (f2);
+
+int * f3;
+int ** f4;
+int * const * f5;
+int * const * const f6;
+
+int * (f7);
+int ** (f8);
+int * const * (f9);
+int * const * const (f10);
+
+int (* f11);
+int (** f12);
+int (* const * f13);
+int (* const * const f14);
+
+int f15[0];
+int f16[10];
+int (f17[0]);
+int (f18[10]);
+
+int * f19[0];
+int * f20[10];
+int ** f21[0];
+int ** f22[10];
+int * const * f23[0];
+int * const * f24[10];
+int * const * const f25[0];
+int * const * const f26[10];
+
+int *(f27[0]);
+int *(f28[10]);
+int **(f29[0]);
+int **(f30[10]);
+int * const *(f31[0]);
+int * const *(f32[10]);
+int * const * const (f33[0]);
+int * const * const (f34[10]);
+
+int (* f35)[];
+int (* f36)[10];
+int (** f37)[];
+int (** f38)[10];
+int (* const * f39)[];
+int (* const * f40)[10];
+int (* const * const f41)[];
+int (* const * const f42)[10];
+
+int f43[0][3];
+int f44[3][3];
+int (f45[0])[3];
+int (f46[3])[3];
+int ((f47[0]))[3];
+int ((f48[3]))[3];
+
+int * f49[0][3];
+int * f50[3][3];
+int ** f51[0][3];
+int ** f52[3][3];
+int * const * f53[0][3];
+int * const * f54[3][3];
+int * const * const f55[0][3];
+int * const * const f56[3][3];
+
+int (* f57[0][3]);
+int (* f58[3][3]);
+int (** f59[0][3]);
+int (** f60[3][3]);
+int (* const * f61[0][3]);
+int (* const * f62[3][3]);
+int (* const * const f63[0][3]);
+int (* const * const f64[3][3]);
+
+int f65(int);
+int (f66)(int);
+
+int * f67(int);
+int ** f68(int);
+int * const * f69(int);
+int * const * const f70(int);
+
+int *(f71)(int);
+int **(f72)(int);
+int * const *(f73)(int);
+
+int * const * const (f74)(int);
+
+int (* f75)(int);
+int (** f76)(int);
+int (* const * f77)(int);
+int (* const * const f78)(int);
+
+int (*(* f79)(int))();
+int (*(* const f80)(int))();
+int (* const(* const f81)(int))();
+
+// errors
+
+//int fe0[]();				// array of functions
+//int (fe1[])();				// array of functions
+//int fe2()[];				// returning an array
+//int fe3()();				// returning a function
+//int (* fe4)()();				// returning a function
+//int ((* fe5())())[];			// returning an array
+
+#ifdef __CFA__
+// Cforall extensions
+
+* int cf3;
+* * int cf4;
+* const * int cf5;
+const * const * int cf6;
+
+[0] int cf15;
+[10] int cf16;
+
+[0] * int cf19;
+[10] * int cf20;
+int ** cf21[0];
+[10] * * int cf22;
+[0] * const * int cf23;
+[10] * const * int cf24;
+[0] const * const * int cf25;
+[10] const * const * int cf26;
+
+* [] int cf35;
+* [10] int cf36;
+* * [] int cf37;
+* * [10] int cf38;
+* const * [] int cf39;
+* const * [10] int cf40;
+const * const * [] int cf41;
+const * const * [10] int cf42;
+
+[0][3] int cf43;
+[3][3] int cf44;
+
+[0][3] * int cf49;
+[3][3] * int cf50;
+[0][3] * * int cf51;
+[3][3] * * int cf52;
+[0][3] const * int cf53;
+[3][3] * const * int cf54;
+[0][3] const * const * int cf55;
+[3][3] const * const * int cf56;
+
+[int] cf65(int);
+[int] cf66(int);
+
+[* int] cf67(int);
+[* * int] cf68(int);
+[const * * int] cf69(int);
+[const * const * int] cf70(int);
+
+// function pointer
+
+*[]*[]* [ *[]*[] int ]( *[]*[] int, *[]*[] int ) v3;
+#endif // __CFA__
+
+//Dummy main
+int main( int argc, char const * argv[] ) {
+	#pragma message( "Compiled" )						// force non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa variableDeclarator.cfa" //
+// End: //

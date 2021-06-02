@@ -1,0 +1,48 @@
+#include <fstream.hfa>
+#include <monitor.hfa>
+
+#include <stdbool.h>
+
+monitor M {};
+
+void notcalled( M & mutex m ) {
+	abort();
+}
+
+void test( M & mutex m ) {
+	int i = 0;
+	sout | "Starting";
+
+	when( false ) waitfor( notcalled : m );
+
+	sout | "Step" | i++;
+
+	waitfor( notcalled : m ); or else {
+		sout | "else called";
+	}
+
+	sout | "Step" | i++;
+
+	when( true ) waitfor( notcalled : m ); or when( true ) else {
+		sout | "else called";
+	}
+
+	sout | "Step" | i++;
+
+	when( false ) waitfor( notcalled : m ); or when( true ) else {
+		sout | "else called";
+	}
+
+	sout | "Step" | i++;
+
+	when( false ) waitfor( notcalled : m ); or when( false ) else {
+		sout | "else called";
+	}
+
+	sout | "Done";
+}
+
+int main() {
+	M m;
+	test(m);
+}

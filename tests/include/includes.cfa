@@ -1,0 +1,160 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// includes.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Mar 25 09:08:26 2021
+// Update Count     : 750
+//
+
+#ifdef __CFA__
+extern "C" {
+#endif // __CFA__
+
+//#define _GNU_SOURCE
+#include <aio.h>
+#include <aliases.h>
+#include <alloca.h>
+#include <ar.h>
+#include <argp.h>
+#include <argz.h>
+#include <assert.h>
+#include <byteswap.h>
+#include <complex.h>
+#include <cpio.h>
+#include <crypt.h>
+#include <ctype.h>
+//#include <curses.h>										// may not be installed
+#include <dirent.h>
+#include <dlfcn.h>
+#include <elf.h>
+#include <endian.h>
+#include <envz.h>
+#include <err.h>
+#include <errno.h>
+#include <error.h>
+//#include <eti.h>                                                                              // may not be installed, comes with ncurses
+#include <execinfo.h>
+#include <expat.h>
+#include <expat_external.h>
+#include <fcntl.h>
+#include <features.h>
+#include <fenv.h>
+#include <fmtmsg.h>
+#include <fnmatch.h>
+//#include <form.h>                                                                             // may not be installed, comes with ncurses
+#include <fstab.h>
+#include <fts.h>
+#include <ftw.h>
+#include <sys/types.h>
+//#include <gawkapi.h>									// CFA bug #240 nested anonymous enum fails
+#include <gconv.h>
+#include <getopt.h>
+#include <glob.h>
+#include <gnumake.h>
+#include <gnu-versions.h>
+#include <grp.h>
+#include <gshadow.h>
+#include <iconv.h>
+#include <ifaddrs.h>
+#include <inttypes.h>
+#include <langinfo.h>
+#include <lastlog.h>
+#include <libgen.h>
+#include <libintl.h>
+#include <limits.h>
+//#include <link.h>										// CFA bug #240 nested anonymous enum fails
+#include <locale.h>
+#include <ltdl.h>
+//#include <malloc.h>									// cannot include in extern "C" because of CFA #include_next
+#include <math.h>
+#include <mcheck.h>
+#include <memory.h>
+//#include <menu.h>                                                                             // may not be installed, comes with ncurses
+#include <mntent.h>
+#include <monetary.h>
+#include <mqueue.h>
+//#include <ncurses_dll.h>                                                                      // may not be installed, comes with ncurses
+#include <netdb.h>
+#include <nl_types.h>
+#include <nss.h>
+#include <obstack.h>
+//#include <panel.h>                                                                            // may not be installed, comes with ncurses
+#include <paths.h>
+#include <poll.h>
+#include <printf.h>
+#include <pthread.h>
+#include <pty.h>
+#include <pwd.h>
+#include <regex.h>
+#include <resolv.h>
+#include <re_comp.h>
+#include <sched.h>
+#include <search.h>
+#include <semaphore.h>
+#include <setjmp.h>
+#include <sgtty.h>
+#include <shadow.h>
+#include <signal.h>
+#include <spawn.h>
+#include <stab.h>
+#include <stdc-predef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdio_ext.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sudo_plugin.h>
+#include <syscall.h>
+#include <sysexits.h>
+#include <syslog.h>
+#include <tar.h>
+//#include <term.h>                                                                             // may not be installed, comes with ncurses
+//#include <termcap.h>                                                                          // may not be installed, comes with ncurses
+#include <termio.h>
+#include <termios.h>
+// #include <term_entry.h>								// conflicts with search.h on some machines
+#include <tgmath.h>
+//#include <threads.h>									// does not exist
+#include <thread_db.h>
+#include <time.h>
+#include <ttyent.h>
+#include <uchar.h>
+#include <ucontext.h>
+#include <ulimit.h>
+//#include <unctrl.h>                                                                           // may not be installed, comes with ncurses
+#include <unistd.h>
+#include <utime.h>
+#include <utmp.h>
+#include <utmpx.h>
+#include <values.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#include <wait.h>
+#pragma GCC diagnostic pop
+#include <wchar.h>
+#include <wctype.h>
+#include <wordexp.h>
+
+#if 0
+#endif // 0
+
+#ifdef __CFA__
+} // extern "C"
+#endif // __CFA__
+
+int main( int argc, char const *argv[] ) {
+	#pragma message( "Compiled" )						// force non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa includes.cfa" //
+// End: //

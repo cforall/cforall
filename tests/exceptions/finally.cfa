@@ -1,0 +1,62 @@
+// Finally Clause Tests
+
+#include <exception.hfa>
+#include "except-io.hfa"
+
+EHM_EXCEPTION(myth)();
+
+EHM_VIRTUAL_TABLE(myth, myth_vt);
+
+int main(int argc, char * argv[]) {
+	myth exc = {&myth_vt};
+
+	try {
+		try {
+			printf("termination throw\n");
+			throw exc;
+		} finally {
+			loud_exit a = "termination inner finally";
+			printf("finally during unwind\n");
+		}
+	} catch (myth * error) {
+		printf("termination catch\n");
+	} finally {
+		loud_exit a = "termination outer finally";
+		printf("finally after catch\n");
+	}
+	printf("\n");
+
+	try {
+		try {
+			printf("resumption throw\n");
+			throwResume exc;
+		} finally {
+			loud_exit a = "resumption inner finally";
+			printf("finally after resume\n");
+		}
+	} catchResume (myth * error) {
+		printf("resumption catch\n");
+	} finally {
+		loud_exit a = "resumption outer finally";
+		printf("finally after catch\n");
+	}
+	printf("\n");
+
+	try {
+		printf("walking out of try\n");
+	} finally {
+		loud_exit a = "walking finally";
+		printf("walking through finally\n");
+	}
+	printf("\n");
+
+	try {
+		printf("jumping out of try\n");
+		goto endoffunction;
+	} finally {
+		loud_exit a = "jumping finally";
+		printf("jumping through finally\n");
+	}
+	endoffunction:
+	;
+}

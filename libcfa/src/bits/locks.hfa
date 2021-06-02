@@ -1,0 +1,94 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// bits/locks.hfa -- Basic spinlocks that are reused in the system.
+// Used for locks that aren't specific to cforall threads and can be used anywhere
+//
+//  *** Must not contain code specific to libcfathread ***
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Oct 31 15:14:38 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Aug 12 14:18:07 2020
+// Update Count     : 13
+//
+
+#pragma once
+
+#include "bits/debug.hfa"
+#include "bits/defs.hfa"
+#include <assert.h>
+
+struct __spinlock_t {
+	// Wrap in struct to prevent false sharing with debug info
+	volatile bool lock;
+	#ifdef __CFA_DEBUG__
+		// previous function to acquire the lock
+		const char * prev_name;
+		// previous thread to acquire the lock
+		void* prev_thrd;
+	#endif
+};
+
+#ifdef __cforall
+	extern "C" {
+		extern void disable_interrupts() OPTIONAL_THREAD;
+		extern void enable_interrupts( bool poll = true ) OPTIONAL_THREAD;
+
+		#ifdef __CFA_DEBUG__
+			void __cfaabi_dbg_record_lock(__spinlock_t & this, const char prev_name[]);
+		#else
+			#define __cfaabi_dbg_record_lock(x, y)
+		#endif
+	}
+
+	static inline void ?{}( __spinlock_t & this ) {
+		this.lock = 0;
+	}
+
+	// Lock the spinlock, return false if already acquired
+	static inline bool try_lock  ( __spinlock_t & this __cfaabi_dbg_ctx_param2 ) {
+		disable_interrupts();
+		bool result = (this.lock == 0) && (__atomic_test_and_set( &this.lock, __ATOMIC_ACQUIRE ) == 0);
+		if( result ) {
+			__cfaabi_dbg_record_lock( this, caller );
+		} else {
+			enable_interrupts( false );
+		}
+		return result;
+	}
+
+	// Lock the spinlock, spin if already acquired
+	static inline void lock( __spinlock_t & this __cfaabi_dbg_ctx_param2 ) {
+		#ifndef NOEXPBACK
+			enum { SPIN_START = 4, SPIN_END = 64 * 1024, };
+			unsigned int spin = SPIN_START;
+		#endif
+
+		disable_interrupts();
+		for ( unsigned int i = 1;; i += 1 ) {
+			if ( (this.lock == 0) && (__atomic_test_and_set( &this.lock, __ATOMIC_ACQUIRE ) == 0) ) break;
+			#ifndef NOEXPBACK
+				// exponential spin
+				for ( volatile unsigned int s = 0; s < spin; s += 1 ) Pause();
+
+				// slowly increase by powers of 2
+				if ( i % 64 == 0 ) spin += spin;
+
+				// prevent overflow
+				if ( spin > SPIN_END ) spin = SPIN_START;
+			#else
+				Pause();
+			#endif
+		}
+		__cfaabi_dbg_record_lock( this, caller );
+	}
+
+	static inline void unlock( __spinlock_t & this ) {
+		__atomic_clear( &this.lock, __ATOMIC_RELEASE );
+		enable_interrupts( false );
+	}
+#endif

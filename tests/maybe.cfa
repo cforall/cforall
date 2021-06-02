@@ -1,0 +1,68 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// maybe.c --
+//
+// Author           : Andrew Beach
+// Created On       : Thr May 25 16:02:00 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Sep 25 15:13:28 2020
+// Update Count     : 2
+//
+
+#include <assert.h>
+#include <containers/maybe.hfa>
+
+void checkPredicates() {
+	maybe(int) filled = 4;
+	assert(filled);
+	assert(has_value(&filled));
+
+	maybe(int) empty = {};
+	assert(empty ? false : true);
+	assert(!has_value(&empty));
+}
+
+void checkGetter() {
+	maybe(int) a = 94;
+	assert(94 == get(&a));
+}
+
+/* Waiting on bug#11 to be fixed.
+void checkNamedConstructors() {
+	maybe(char) letter = maybe_value('a');
+	assert(has_value(&letter));
+	assert('a' == get(&letter));
+
+	maybe(char) rune = maybe_none();
+	assert(!has_value(&rune));
+}
+*/
+
+void checkSetters() {
+	maybe(int) fee = 3;
+	assert(3 == get(&fee));
+	set(&fee, 7);
+	assert(7 == get(&fee));
+	set_none(&fee);
+	assert(!has_value(&fee));
+
+	maybe(int) fy = 4;
+	maybe(int) foe = 8;
+	maybe(int) fum = {};
+	fy = foe;
+	assert(8 == get(&fy));
+	fy = fum;
+	assert(!has_value(&fy));
+}
+
+int main(int argc, char * argv[]) {
+	checkPredicates();
+	checkGetter();
+	//checkNamedConstructors();
+	checkSetters();
+	printf( "done\n" );				// non-empty .expect file
+}

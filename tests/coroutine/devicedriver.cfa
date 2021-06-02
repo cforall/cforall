@@ -1,0 +1,91 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// devicedriver.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Sat Mar 16 15:30:34 2019
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Apr 20 09:07:19 2019
+// Update Count     : 90
+//
+
+#include <fstream.hfa>
+#include <coroutine.hfa>
+
+enum Status { CONT, MSG, ESTX, ELNTH, ECRC };
+coroutine Driver {
+	Status status;
+	char * msg, byte;
+}; // Driver
+
+void ?{}( Driver & d, char * m ) { d.msg = m; }
+Status next( Driver & d, char b ) with( d ) {
+	byte = b; resume( d ); return status;
+} // next
+
+void checkCRC( Driver & d, unsigned int sum ) with( d ) {
+	suspend;
+	unsigned short int crc = byte << 8;					// sign extension over written
+	suspend;
+	// prevent sign extension for signed char
+	status = (crc | (unsigned char)byte) == sum ? MSG : ECRC;
+} // checkCRC
+
+void main( Driver & d ) with( d ) {
+	enum { STX = '\002', ESC = '\033', ETX = '\003', MaxMsg = 64 };
+  msg: for () {											// parse message
+		status = CONT;
+		unsigned int lnth = 0, sum = 0;
+		while ( byte != STX ) suspend;
+	  emsg: for () {
+			suspend;
+			choose ( byte ) {							// process byte
+			  case STX:
+				status = ESTX; suspend; continue msg;
+			  case ETX:
+				break emsg;
+			  case ESC:
+				suspend;
+			} // choose
+			if ( lnth >= MaxMsg ) {						// buffer full ?
+				status = ELNTH; suspend; continue msg;
+			} // if
+			msg[lnth++] = byte;
+			sum += byte;
+		} // for
+		msg[lnth] = '\0';								// terminate string
+		checkCRC( d, sum );								// refactor CRC check
+		suspend;
+	} // for
+} // main
+
+int main() {
+	char msg[65], byte;
+	Driver driver = { msg };
+
+	sin | nlOn;											// read newline (all) characters
+  eof: for () {											// read until end of file
+		sin | byte;										// read one character
+	  if ( eof( sin ) ) break eof;						// eof ?
+		choose( next( driver, byte ) ) {				// analyse character
+		  case MSG:
+			sout | "msg:" | msg;
+		  case ESTX:
+			sout | "STX in message";
+		  case ELNTH:
+			sout | "message too long";
+		  case ECRC:
+			sout | "CRC failure";
+		  default: ;
+		} // choose
+	} // for
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa -g -Wall -Wextra devicedriver.cfa" //
+// End: //

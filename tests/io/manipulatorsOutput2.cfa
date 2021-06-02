@@ -1,0 +1,56 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2019 University of Waterloo
+// 
+// manipulatorsOutput2.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Sat Jun  8 18:04:11 2019
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Apr 10 09:16:09 2021
+// Update Count     : 11
+// 
+
+#include <fstream.hfa>
+
+int main() {
+	sout | nl;
+    sout | bin(0) | bin(27HH) | bin(27H) | bin(27) | bin(27L);
+    sout | bin(-27HH) | bin(-27H) | bin(-27) | bin(-27L);
+    sout | oct(0) | oct(27HH) | oct(27H) | oct(27) | oct(27L);
+    sout | oct(-27HH) | oct(-27H) | oct(-27) | oct(-27L);
+    sout | hex(0) | hex(27HH) | hex(27H) | hex(27) | hex(27L);
+    sout | hex(-27HH) | hex(-27H) | hex(-27) | hex(-27L);
+    sout | hex(0.0) | hex(27.5F) | hex(27.5) | hex(27.5L);
+    sout | hex(-27.5F) | hex(-27.5) | hex(-27.5L);
+	sout | sci(0.0) | sci(27.5) | sci(-27.5);
+	sout | eng(0.0) | eng(27.5) | eng(-27.5);
+	sout | upcase(bin(27)) | upcase(hex(27)) | upcase(27.5e-10) | upcase(hex(27.5));
+	sout | nobase(bin(27)) | nobase(oct(27)) | nobase(hex(27));
+    sout | 0. | nodp(0.) | 27.0 | nodp(27.0) | nodp(27.5);
+    sout | sign(27) | sign(-27) | sign(27.) | sign(-27.) | sign(27.5) | sign(-27.5);
+	sout | wd( 4, 34) | wd( 3, 34 ) | wd( 2, 34 );
+	sout | wd( 10, 4.) | wd( 9, 4. ) | wd( 8, 4. );
+	sout | wd( 4, "ab" ) | wd( 3, "ab" ) | wd( 2, "ab" );
+	sout | wd( 4, 34567 ) | wd( 3, 34567 ) | wd( 2, 34567 );
+	sout | wd( 4, 3456. ) | wd( 3, 3456. ) | wd( 2, 3456. );
+	sout | wd( 4, "abcde" ) | wd( 3, "abcde" ) | wd( 2,"abcde" );
+	sout | wd(4,3, 34) | wd(8,4, 34) | wd(10,10, 34);
+	sout | wd( 4,1, 3456 ) | wd( 8,2, 3456 ) | wd( 10,3, 3456 );
+	sout | wd( 4,0, 0 ) | wd( 3,10, 34 );
+	sout | wd(6,3, 27.5) | wd(8,1, 27.5) | wd(8,0, 27.5) | wd(3,8, 27.5);
+	sout | wd(6,3, 27.0) | wd(6,3, 27.5) | wd(8,1, 27.5) | wd(8,0, 27.5) | wd(3,8, 27.5);
+	sout | left(wd(4,27)) | left(wd(10,27.)) | left(wd(10,27.5)) | left(wd(4,3,27)) | left(wd(10,3,27.5));
+	sout | ws(6,6, 234.567) | ws(6,5, 234.567) | ws(6,4, 234.567) | ws(6,3, 234.567);
+	sout | ws(6,6, 234567.) | ws(6,5, 234567.) | ws(6,4, 234567.) | ws(6,3, 234567.);
+	sout | ws(3,6, 234567.) | ws(4,6, 234567.) | ws(5,6, 234567.) | ws(6,6, 234567.);
+	sout | wd(6, "abcd") | wd(8, "abcd") | wd(2, "abcd");
+	sout | wd(6,8, "abcd") | wd(6,8, "abcdefghijk") | wd(6,3, "abcd");
+    sout | pad0(wd(4,27)) | pad0(wd(4,3,27)) | pad0(wd(8,3,27.5));
+
+//	sexit | 3 | 4;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa -Wall -Wextra manipulatorsOutput2.cfa" //
+// End: //

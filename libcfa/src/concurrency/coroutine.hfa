@@ -1,0 +1,198 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// coroutine --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Nov 28 12:27:26 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Feb  4 12:29:26 2020
+// Update Count     : 11
+//
+
+#pragma once
+
+#include <assert.h>
+#include "invoke.h"
+#include "../exception.hfa"
+
+//-----------------------------------------------------------------------------
+// Exception thrown from resume when a coroutine stack is cancelled.
+EHM_FORALL_EXCEPTION(CoroutineCancelled, (coroutine_t &), (coroutine_t)) (
+	coroutine_t * the_coroutine;
+	exception_t * the_exception;
+);
+
+forall(T &)
+void copy(CoroutineCancelled(T) * dst, CoroutineCancelled(T) * src);
+
+forall(T &)
+const char * msg(CoroutineCancelled(T) *);
+
+//-----------------------------------------------------------------------------
+// Coroutine trait
+// Anything that implements this trait can be resumed.
+// Anything that is resumed is a coroutine.
+trait is_coroutine(T & | IS_RESUMPTION_EXCEPTION(CoroutineCancelled, (T))) {
+	void main(T & this);
+	$coroutine * get_coroutine(T & this);
+};
+
+#define DECL_COROUTINE(X) static inline $coroutine* get_coroutine(X& this) { return &this.__cor; } void main(X& this)
+
+//-----------------------------------------------------------------------------
+// Ctors and dtors
+// void ?{}( coStack_t & this );
+// void ^?{}( coStack_t & this );
+
+void  ?{}( $coroutine & this, const char name[], void * storage, size_t storageSize );
+void ^?{}( $coroutine & this );
+
+static inline void ?{}( $coroutine & this)                                       { this{ "Anonymous Coroutine", 0p, 0 }; }
+static inline void ?{}( $coroutine & this, size_t stackSize)                     { this{ "Anonymous Coroutine", 0p, stackSize }; }
+static inline void ?{}( $coroutine & this, void * storage, size_t storageSize )  { this{ "Anonymous Coroutine", storage, storageSize }; }
+static inline void ?{}( $coroutine & this, const char name[])                    { this{ name, 0p, 0 }; }
+static inline void ?{}( $coroutine & this, const char name[], size_t stackSize ) { this{ name, 0p, stackSize }; }
+
+//-----------------------------------------------------------------------------
+// Public coroutine API
+forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
+void prime(T & cor);
+
+static inline struct $coroutine * active_coroutine() { return active_thread()->curr_cor; }
+
+//-----------------------------------------------------------------------------
+// PRIVATE exposed because of inline
+
+// Start coroutine routines
+extern "C" {
+	void __cfactx_invoke_coroutine(void (*main)(void *), void * this);
+
+	forall(T &)
+	void __cfactx_start(void (*main)(T &), struct $coroutine * cor, T & this, void (*invoke)(void (*main)(void *), void *));
+
+	extern void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct $coroutine *) __attribute__ ((__noreturn__));
+
+	extern void __cfactx_switch( struct __stack_context_t * from, struct __stack_context_t * to ) asm ("__cfactx_switch");
+}
+
+// Private wrappers for context switch and stack creation
+// Wrapper for co
+static inline void $ctx_switch( $coroutine * src, $coroutine * dst ) __attribute__((nonnull (1, 2))) {
+	// set state of current coroutine to inactive
+	src->state = src->state == Halted ? Halted : Blocked;
+
+	// set new coroutine that task is executing
+	active_thread()->curr_cor = dst;
+
+	// context switch to specified coroutine
+	verify( dst->context.SP );
+	__cfactx_switch( &src->context, &dst->context );
+	// when __cfactx_switch returns we are back in the src coroutine
+
+	// set state of new coroutine to active
+	src->state = Active;
+
+	if( unlikely(src->cancellation != 0p) ) {
+		__cfactx_coroutine_unwind(src->cancellation, src);
+	}
+}
+
+extern void __stack_prepare( __stack_info_t * this, size_t size /* ignored if storage already allocated */);
+extern void __stack_clean  ( __stack_info_t * this );
+
+
+// Suspend implementation inlined for performance
+extern "C" {
+	static inline void __cfactx_suspend(void) {
+		// optimization : read TLS once and reuse it
+		// Safety note: this is preemption safe since if
+		// preemption occurs after this line, the pointer
+		// will also migrate which means this value will
+		// stay in syn with the TLS
+		$coroutine * src = active_coroutine();
+
+		assertf( src->last != 0,
+			"Attempt to suspend coroutine \"%.256s\" (%p) that has never been resumed.\n"
+			"Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.",
+			src->name, src );
+		assertf( src->last->state != Halted,
+			"Attempt by coroutine \"%.256s\" (%p) to suspend back to terminated coroutine \"%.256s\" (%p).\n"
+			"Possible cause is terminated coroutine's main routine has already returned.",
+			src->name, src, src->last->name, src->last );
+
+		$ctx_switch( src, src->last );
+	}
+}
+
+forall(T & | is_coroutine(T))
+void __cfaehm_cancelled_coroutine(
+	T & cor, $coroutine * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)) );
+
+// Resume implementation inlined for performance
+forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
+static inline T & resume(T & cor) {
+	// optimization : read TLS once and reuse it
+	// Safety note: this is preemption safe since if
+	// preemption occurs after this line, the pointer
+	// will also migrate which means this value will
+	// stay in syn with the TLS
+	$coroutine * src = active_coroutine();
+	$coroutine * dst = get_coroutine(cor);
+
+	if( unlikely(dst->context.SP == 0p) ) {
+		__stack_prepare(&dst->stack, 65000);
+		__cfactx_start(main, dst, cor, __cfactx_invoke_coroutine);
+	}
+
+	// not resuming self ?
+	if ( src != dst ) {
+		assertf( dst->state != Halted ,
+			"Attempt by coroutine %.256s (%p) to resume terminated coroutine %.256s (%p).\n"
+			"Possible cause is terminated coroutine's main routine has already returned.",
+			src->name, src, dst->name, dst );
+
+		// set last resumer
+		dst->last = src;
+		dst->starter = dst->starter ? dst->starter : src;
+	}
+
+	// always done for performance testing
+	$ctx_switch( src, dst );
+	if ( unlikely(dst->cancellation) ) {
+		__cfaehm_cancelled_coroutine( cor, dst, _default_vtable );
+	}
+
+	return cor;
+}
+
+static inline void resume( $coroutine * dst ) __attribute__((nonnull (1))) {
+	// optimization : read TLS once and reuse it
+	// Safety note: this is preemption safe since if
+	// preemption occurs after this line, the pointer
+	// will also migrate which means this value will
+	// stay in syn with the TLS
+	$coroutine * src = active_coroutine();
+
+	// not resuming self ?
+	if ( src != dst ) {
+		assertf( dst->state != Halted ,
+			"Attempt by coroutine %.256s (%p) to resume terminated coroutine %.256s (%p).\n"
+			"Possible cause is terminated coroutine's main routine has already returned.",
+			src->name, src, dst->name, dst );
+
+		// set last resumer
+		dst->last = src;
+	}
+
+	// always done for performance testing
+	$ctx_switch( src, dst );
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

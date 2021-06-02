@@ -1,0 +1,125 @@
+#pragma once
+
+#define __CFA_NO_SCHED_STATS__
+
+#include "containers/queueLockFree.hfa"
+
+// Intrusives lanes which are used by the relaxed ready queue
+struct __attribute__((aligned(128))) __intrusive_lane_t {
+	struct $thread * prev;
+
+	// spin lock protecting the queue
+	volatile bool lock;
+
+	__thread_desc_link anchor;
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		unsigned cnt;
+	#endif
+};
+
+// Get the head pointer (one before the first element) from the anchor
+static inline $thread * mock_head(const __intrusive_lane_t & this) {
+	$thread * rhead = ($thread *)(
+		(uintptr_t)( &this.anchor ) - __builtin_offsetof( $thread, link )
+	);
+	return rhead;
+}
+
+// Ctor
+void ?{}( __intrusive_lane_t & this ) {
+	this.lock = false;
+	this.prev = mock_head(this);
+	this.anchor.next = 0p;
+	this.anchor.ts   = 0;
+	#if !defined(__CFA_NO_STATISTICS__)
+		this.cnt  = 0;
+	#endif
+
+	// We add a boat-load of assertions here because the anchor code is very fragile
+	/* paranoid */ _Static_assert( offsetof( $thread, link ) == offsetof(__intrusive_lane_t, anchor) );
+	/* paranoid */ verify( offsetof( $thread, link ) == offsetof(__intrusive_lane_t, anchor) );
+	/* paranoid */ verify( ((uintptr_t)( mock_head(this) ) + offsetof( $thread, link )) == (uintptr_t)(&this.anchor) );
+	/* paranoid */ verify( &mock_head(this)->link.next == &this.anchor.next );
+	/* paranoid */ verify( &mock_head(this)->link.ts   == &this.anchor.ts   );
+	/* paranoid */ verify( mock_head(this)->link.next == 0p );
+	/* paranoid */ verify( mock_head(this)->link.ts   == 0  );
+	/* paranoid */ verify( mock_head(this) == this.prev );
+	/* paranoid */ verify( __alignof__(__intrusive_lane_t) == 128 );
+	/* paranoid */ verify( __alignof__(this) == 128 );
+	/* paranoid */ verifyf( ((intptr_t)(&this) % 128) == 0, "Expected address to be aligned %p %% 128 == %zd", &this, ((intptr_t)(&this) % 128) );
+}
+
+// Dtor is trivial
+void ^?{}( __intrusive_lane_t & this ) {
+	// Make sure the list is empty
+	/* paranoid */ verify( this.anchor.next == 0p );
+	/* paranoid */ verify( this.anchor.ts   == 0  );
+	/* paranoid */ verify( mock_head(this)  == this.prev );
+}
+
+// Push a thread onto this lane
+// returns true of lane was empty before push, false otherwise
+static inline void push( __intrusive_lane_t & this, $thread * node ) {
+	/* paranoid */ verify( this.lock );
+	/* paranoid */ verify( node->link.next == 0p );
+	/* paranoid */ verify( node->link.ts   == 0  );
+	/* paranoid */ verify( this.prev->link.next == 0p );
+	/* paranoid */ verify( this.prev->link.ts   == 0  );
+	if( this.anchor.next == 0p ) {
+		/* paranoid */ verify( this.anchor.next == 0p );
+		/* paranoid */ verify( this.anchor.ts   == 0  );
+		/* paranoid */ verify( this.prev == mock_head( this ) );
+	} else {
+		/* paranoid */ verify( this.anchor.next != 0p );
+		/* paranoid */ verify( this.anchor.ts   != 0  );
+		/* paranoid */ verify( this.prev != mock_head( this ) );
+	}
+
+	// Get the relevant nodes locally
+	this.prev->link.next = node;
+	this.prev->link.ts   = rdtscl();
+	this.prev = node;
+	#if !defined(__CFA_NO_STATISTICS__)
+		this.cnt++;
+	#endif
+}
+
+// Pop a thread from this lane (must be non-empty)
+// returns popped
+// returns true of lane was empty before push, false otherwise
+static inline [* $thread, unsigned long long] pop( __intrusive_lane_t & this ) {
+	/* paranoid */ verify( this.lock );
+	/* paranoid */ verify( this.anchor.next != 0p );
+	/* paranoid */ verify( this.anchor.ts   != 0  );
+
+	// Get the relevant nodes locally
+	unsigned long long ts = this.anchor.ts;
+	$thread * node = this.anchor.next;
+	this.anchor.next = node->link.next;
+	this.anchor.ts   = node->link.ts;
+	bool is_empty = this.anchor.ts == 0;
+	node->link.next = 0p;
+	node->link.ts   = 0;
+	#if !defined(__CFA_NO_STATISTICS__)
+		this.cnt--;
+	#endif
+
+	// Update head time stamp
+	if(is_empty) this.prev = mock_head( this );
+
+	/* paranoid */ verify( node->link.next == 0p );
+	/* paranoid */ verify( node->link.ts   == 0  );
+	return [node, ts];
+}
+
+// Check whether or not list is empty
+static inline bool is_empty(__intrusive_lane_t & this) {
+	return this.anchor.ts == 0;
+}
+
+// Return the timestamp
+static inline unsigned long long ts(__intrusive_lane_t & this) {
+	// Cannot verify here since it may not be locked
+	return this.anchor.ts;
+}

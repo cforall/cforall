@@ -1,0 +1,142 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// tuplePolymorphism.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Fri Dec 16 10:25:35 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Aug  2 09:24:04 2018
+// Update Count     : 6
+//
+
+#include <stdlib.hfa>
+
+void func(void) {
+	printf("called func(void)\n");
+}
+forall(T, Params... | { void process(T); void func(Params); })
+void func(T arg1, Params p) {
+	process(arg1);
+	func(p);
+}
+void process(int x) {
+	printf("called process(int) %d\n", x);
+}
+void process(double x) {
+	printf("called process(double) %g\n", x);
+}
+
+struct array {
+	int * data;
+	int size;
+};
+
+// xxx - eventually this will be collapsed...x
+void ?{}(array & a) {
+	a.size = 0;
+	a.data = 0;
+	printf("called ?{} with no a\n");
+}
+
+void ?{}(array & a, int a0) {
+	a.size = 1;
+	a.data = (int*)malloc(sizeof(int)*a.size);
+	a.data[0] = a0;
+	printf("called ?{} with a: %d\n", a0);
+}
+
+void ?{}(array & a, int a0, int a1) {
+	a.size = 2;
+	a.data = (int*)malloc(sizeof(int)*a.size);
+	a.data[0] = a0;
+	a.data[1] = a1;
+	printf("called ?{} with a: %d %d\n", a0, a1);
+}
+
+void ?{}(array & a, int a0, int a1, int a2) {
+	a.size = 3;
+	a.data = (int*)malloc(sizeof(int)*a.size);
+	a.data[0] = a0;
+	a.data[1] = a1;
+	a.data[2] = a2;
+	printf("called ?{} with a: %d %d %d\n", a0, a1, a2);
+}
+
+void ^?{}(array & a) {
+	free(a.data);
+}
+
+// test use of a tuple argument
+[void] ?{}(array & a, [int, int, int, int] args) {
+	int a0, a1, a2, a3;
+	[a0, a1, a2, a3] = args;
+	a.size = 4;
+	a.data = (int *)malloc(sizeof(int)*a.size);
+	a.data[0] = a0;
+	a.data[1] = a1;
+	a.data[2] = a2;
+	a.data[3] = a3;
+	printf("called ?{} with a: %d %d %d %d\n", a0, a1, a2, a3);
+}
+
+void print(array * x) {
+	printf("array = { ");
+	for (int i = 0; i < x->size; ++i) {
+		printf("%d, ", x->data[i]);
+	}
+	printf("}\n");
+}
+
+forall(T)
+T * copy(T x) {
+	// test calling new inside a polymorphic function
+	return new(x);
+}
+
+forall(T... | { void foo(T); }) void bar(T x) {}
+void foo(int) {}
+
+int main() {
+	array * x0 = new();
+	print(x0);
+
+	array * x1 = new(999);
+	print(x1);
+
+	array * x2 = new(123, 456);
+	print(x2);
+
+	array * x3 = new(100, 200, 300);
+	print(x3);
+
+	array * x4 = new(10, 2, 3, 4);
+	print(x4);
+
+	int * ptr = copy(111111);
+	printf("copy=%d\n", *ptr);
+
+	printf("calling func\n");
+	func(3, 2.0, 111, 4.145);
+	printf("finished func\n");
+
+	{
+		// T = [const int] -- this ensures that void(*)(int) satisfies void(*)(const int)
+		const int x;
+		bar(x);
+	}
+
+	delete(ptr);
+	delete(x4);
+	delete(x3);
+	delete(x2);
+	delete(x1);
+	delete(x0);
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

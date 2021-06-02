@@ -1,0 +1,79 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// random.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Jul  5 21:29:30 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 21:46:25 2018
+// Update Count     : 22
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>									// random
+#include <unistd.h>										// getpid
+
+int main() {
+	// srandom( getpid() );								// set random seed
+	srandom( 1003 );									// fixed seed for repeatable tests
+
+	// test polymorphic calls to random and stream
+	char c = random();
+	sout | c;
+	c = random( 'A' );
+	sout | c;
+	c = random( 'A', 'Z' );
+	sout | c;
+
+	int i = random();
+    sout | i;
+	i = random( 10 );
+    sout | i;
+	i = random( -10, 20 );
+    sout | i;
+
+	unsigned int ui = random();
+    sout | ui;
+	ui = random( 10u );
+    sout | ui;
+	ui = random( 10u, 20u );
+    sout | ui;
+
+	long int li = random();
+    sout | li;
+	li = random( 10l );
+    sout | li;
+	li = random( -10l, 20l );
+    sout | li;
+
+	unsigned long int uli = random();
+    sout | uli;
+	uli = random( 10ul );
+    sout | uli;
+	uli = random( 10ul, 20ul );
+    sout | uli;
+
+    float f = random();
+    sout | f;
+
+    double d = random();
+    sout | d;
+
+    float _Complex fc = random();
+    sout | fc;
+
+    double _Complex dc = random();
+    sout | dc;
+
+    long double _Complex ldc = random();
+    sout | ldc;
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa random.cfa" //
+// End: //

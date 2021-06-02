@@ -1,0 +1,151 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// limits --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Apr  6 18:06:52 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Mar  1 16:20:54 2018
+// Update Count     : 13
+//
+
+#pragma once
+
+// Integral Constants
+
+extern const signed char MIN;
+extern const unsigned char MIN;
+extern const short int MIN;
+extern const unsigned short int MIN;
+extern const int MIN;
+extern const unsigned int MIN;
+extern const long int MIN;
+extern const unsigned long int MIN;
+extern const long long int MIN;
+extern const unsigned long long int MIN;
+
+extern const signed char MAX;
+extern const unsigned char MAX;
+extern const short int MAX;
+extern const unsigned short int MAX;
+extern const int MAX;
+extern const unsigned int MAX;
+extern const long int MAX;
+extern const unsigned long int MAX;
+extern const long long int MAX;
+extern const unsigned long long int MAX;
+
+// Floating-Point Constants
+
+extern const float MIN;
+extern const double MIN;
+extern const long double MIN;
+extern const float _Complex MIN;
+extern const double _Complex MIN;
+extern const long double _Complex MIN;
+
+extern const float MAX;
+extern const double MAX;
+extern const long double MAX;
+extern const float _Complex MAX;
+extern const double _Complex MAX;
+extern const long double _Complex MAX;
+
+extern const float PI;									// pi
+extern const float PI_2;								// pi / 2
+extern const float PI_4;								// pi / 4
+extern const float _1_PI;								// 1 / pi
+extern const float _2_PI;								// 2 / pi
+extern const float _2_SQRT_PI;							// 2 / sqrt(pi)
+
+extern const double PI;									// pi
+extern const double PI_2;								// pi / 2
+extern const double PI_4;								// pi / 4
+extern const double _1_PI;								// 1 / pi
+extern const double _2_PI;								// 2 / pi
+extern const double _2_SQRT_PI;							// 2 / sqrt(pi)
+
+extern const long double PI;							// pi
+extern const long double PI_2;							// pi / 2
+extern const long double PI_4;							// pi / 4
+extern const long double _1_PI;							// 1 / pi
+extern const long double _2_PI;							// 2 / pi
+extern const long double _2_SQRT_PI;					// 2 / sqrt(pi)
+
+extern const float _Complex PI;							// pi
+extern const float _Complex PI_2;						// pi / 2
+extern const float _Complex PI_4;						// pi / 4
+extern const float _Complex _1_PI;						// 1 / pi
+extern const float _Complex _2_PI;						// 2 / pi
+extern const float _Complex _2_SQRT_PI;					// 2 / sqrt(pi)
+
+extern const double _Complex PI;						// pi
+extern const double _Complex PI_2;						// pi / 2
+extern const double _Complex PI_4;						// pi / 4
+extern const double _Complex _1_PI;						// 1 / pi
+extern const double _Complex _2_PI;						// 2 / pi
+extern const double _Complex _2_SQRT_PI;				// 2 / sqrt(pi)
+
+extern const long double _Complex PI;					// pi
+extern const long double _Complex PI_2;					// pi / 2
+extern const long double _Complex PI_4;					// pi / 4
+extern const long double _Complex _1_PI;				// 1 / pi
+extern const long double _Complex _2_PI;				// 2 / pi
+extern const long double _Complex _2_SQRT_PI;			// 2 / sqrt(pi)
+
+extern const float E;									// e
+extern const float LOG2_E;								// log_2(e)
+extern const float LOG10_E;								// log_10(e)
+extern const float LN_2;								// log_e(2)
+extern const float LN_10;								// log_e(10)
+extern const float SQRT_2;								// sqrt(2)
+extern const float _1_SQRT_2;							// 1 / sqrt(2)
+
+extern const double E;									// e
+extern const double LOG2_E;								// log_2(e)
+extern const double LOG10_E;							// log_10(e)
+extern const double LN_2;								// log_e(2)
+extern const double LN_10;								// log_e(10)
+extern const double SQRT_2;								// sqrt(2)
+extern const double _1_SQRT_2;							// 1 / sqrt(2)
+
+extern const long double E;								// e
+extern const long double LOG2_E;						// log_2(e)
+extern const long double LOG10_E;						// log_10(e)
+extern const long double LN_2;							// log_e(2)
+extern const long double LN_10;							// log_e(10)
+extern const long double SQRT_2;						// sqrt(2)
+extern const long double _1_SQRT_2;						// 1/sqrt(2)
+
+extern const float _Complex E;							// e
+extern const float _Complex LOG2_E;						// log_2(e)
+extern const float _Complex LOG10_E;					// log_10(e)
+extern const float _Complex LN_2;						// log_e(2)
+extern const float _Complex LN_10;						// log_e(10)
+extern const float _Complex SQRT_2;						// sqrt(2)
+extern const float _Complex _1_SQRT_2;					// 1 / sqrt(2)
+
+extern const double _Complex E;							// e
+extern const double _Complex LOG2_E;					// log_2(e)
+extern const double _Complex LOG10_E;					// log_10(e)
+extern const double _Complex LN_2;						// log_e(2)
+extern const double _Complex LN_10;						// log_e(10)
+extern const double _Complex SQRT_2;					// sqrt(2)
+extern const double _Complex _1_SQRT_2;					// 1 / sqrt(2)
+
+extern const long double _Complex E;					// e
+extern const long double _Complex LOG2_E;				// log_2(e)
+extern const long double _Complex LOG10_E;				// log_10(e)
+extern const long double _Complex LN_2;					// log_e(2)
+extern const long double _Complex LN_10;				// log_e(10)
+extern const long double _Complex SQRT_2;				// sqrt(2)
+extern const long double _Complex _1_SQRT_2;			// 1 / sqrt(2)
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

@@ -1,0 +1,324 @@
+extern signed int _X1xi_1 asm ( "xx" );
+signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1){
+    __attribute__ ((unused)) signed int _X12_retval_maini_1;
+    asm ( "nop" :  :  :  );
+    asm ( "nop" :  :  :  );
+    asm ( "nop" :  :  :  );
+    static signed int _X1yi_2 asm ( "yy" );
+    static signed int *_X1zPi_2 asm ( "zz" );
+    signed int _X3srci_2;
+    signed int _X3dsti_2;
+    asm volatile ( "mov %1, %0\n\t" "add $1, %0" :  :  :  );
+    asm volatile ( "mov %1, %0\n\t" "add $1, %0" : "=" "r" ( _X3dsti_2 ) :  :  );
+    asm volatile ( "mov %1, %0\n\t" "add $1, %0" : "=r" ( _X3dsti_2 ) : "r" ( _X3srci_2 ) :  );
+    asm ( "mov %1, %0\n\t" "add $1, %0" : "=r" ( _X3dsti_2 ), "=r" ( _X3srci_2 ) : [ src ] "r" ( _X3dsti_2 ) : "r0" );
+    L2: L1: asm goto ( "frob %%r5, %1; jc %l[L1]; mov (%2), %%r5" :  : "r" ( _X3srci_2 ), "r" ( (&_X3dsti_2) ) : "r5", "memory" : L1, L2 );
+    double _Complex _X2c1Cd_2;
+    double _Complex _X2c2Cd_2;
+    const signed int _X2i1Ki_2;
+    const signed int _X2i2Ki_2;
+    const signed int _X2i3Ki_2;
+    inline signed int _X2f1Fi___2(){
+        __attribute__ ((unused)) signed int _X10_retval_f1i_2;
+    }
+    inline signed int _X2f2Fi___2(){
+        __attribute__ ((unused)) signed int _X10_retval_f2i_2;
+    }
+    signed int _X2s1i_2;
+    signed int _X2s2i_2;
+    volatile signed int _X2v1Vi_2;
+    volatile signed int _X2v2Vi_2;
+    signed int _X2t1i_2;
+    signed int _X2t2i_2;
+    __extension__ const signed int _X2exKi_2;
+    struct S {
+        __extension__ signed int _X1ai_2;
+        __extension__ signed int _X1bi_2;
+        __extension__ signed int _X1ci_2;
+    };
+    inline void _X12_constructorFv_S1S_autogen___2(struct S *_X4_dstS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1SS1S_autogen___2(struct S *_X4_dstS1S_2, struct S _X4_srcS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X4_srcS1S_2._X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X4_srcS1S_2._X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X4_srcS1S_2._X1ci_2) /* ?{} */);
+        }
+
+    }
+    inline void _X11_destructorFv_S1S_autogen___2(struct S *_X4_dstS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2) /* ^?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2) /* ^?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2) /* ^?{} */);
+        }
+
+    }
+    inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___2(struct S *_X4_dstS1S_2, struct S _X4_srcS1S_2){
+        struct S _X4_retS1S_2;
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X4_srcS1S_2._X1ai_2));
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X4_srcS1S_2._X1bi_2));
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X4_srcS1S_2._X1ci_2));
+        }
+
+        {
+            ((void)_X12_constructorFv_S1SS1S_autogen___2((&_X4_retS1S_2), (*_X4_dstS1S_2)));
+        }
+
+        return _X4_retS1S_2;
+    }
+    inline void _X12_constructorFv_S1Si_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1Sii_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1Siii_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2, signed int _X1ci_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X1ci_2) /* ?{} */);
+        }
+
+    }
+    signed int _X1ii_2 = __extension__ 3;
+    __extension__ signed int _X1ai_2;
+    __extension__ signed int _X1bi_2;
+    __extension__ signed int _X1ci_2;
+    {
+        ((void)(((void)(((void)__extension__ _X1ai_2) , __extension__ _X1bi_2)) , __extension__ _X1ci_2));
+    }
+
+    {
+        ((void)(__extension__ _X1ai_2=(__extension__ _X1bi_2+__extension__ _X1ci_2)));
+    }
+
+    {
+        ((void)(__extension__ _X1ai_2=__extension__ (__extension__ _X1bi_2+__extension__ _X1ci_2)));
+    }
+
+    signed int _X2a1i_2;
+    const signed int _X2a2Ki_2;
+    static const signed int _X2a3Ki_2;
+    static const signed int _X2a4Ki_2;
+    static const signed int _X2a5Ki_2;
+    static const signed int _X2a6Ki_2;
+    static const signed int _X2a7Ki_2;
+    signed int *_X2p1Pi_2;
+    signed int *_X2p2Pi_2;
+    struct s1;
+    struct s2 {
+        signed int _X1ii_2;
+    };
+    inline void _X12_constructorFv_S2s2_autogen___2(struct s2 *_X4_dstS2s2_2){
+        {
+            ((void)((*_X4_dstS2s2_2)._X1ii_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S2s2S2s2_autogen___2(struct s2 *_X4_dstS2s2_2, struct s2 _X4_srcS2s2_2){
+        {
+            ((void)((*_X4_dstS2s2_2)._X1ii_2=_X4_srcS2s2_2._X1ii_2) /* ?{} */);
+        }
+
+    }
+    inline void _X11_destructorFv_S2s2_autogen___2(struct s2 *_X4_dstS2s2_2){
+        {
+            ((void)((*_X4_dstS2s2_2)._X1ii_2) /* ^?{} */);
+        }
+
+    }
+    inline struct s2 _X16_operator_assignFS2s2_S2s2S2s2_autogen___2(struct s2 *_X4_dstS2s2_2, struct s2 _X4_srcS2s2_2){
+        struct s2 _X4_retS2s2_2;
+        {
+            ((void)((*_X4_dstS2s2_2)._X1ii_2=_X4_srcS2s2_2._X1ii_2));
+        }
+
+        {
+            ((void)_X12_constructorFv_S2s2S2s2_autogen___2((&_X4_retS2s2_2), (*_X4_dstS2s2_2)));
+        }
+
+        return _X4_retS2s2_2;
+    }
+    inline void _X12_constructorFv_S2s2i_autogen___2(struct s2 *_X4_dstS2s2_2, signed int _X1ii_2){
+        {
+            ((void)((*_X4_dstS2s2_2)._X1ii_2=_X1ii_2) /* ?{} */);
+        }
+
+    }
+    struct s3 {
+        signed int _X1ii_2;
+    };
+    inline void _X12_constructorFv_S2s3_autogen___2(struct s3 *_X4_dstS2s3_2){
+        {
+            ((void)((*_X4_dstS2s3_2)._X1ii_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S2s3S2s3_autogen___2(struct s3 *_X4_dstS2s3_2, struct s3 _X4_srcS2s3_2){
+        {
+            ((void)((*_X4_dstS2s3_2)._X1ii_2=_X4_srcS2s3_2._X1ii_2) /* ?{} */);
+        }
+
+    }
+    inline void _X11_destructorFv_S2s3_autogen___2(struct s3 *_X4_dstS2s3_2){
+        {
+            ((void)((*_X4_dstS2s3_2)._X1ii_2) /* ^?{} */);
+        }
+
+    }
+    inline struct s3 _X16_operator_assignFS2s3_S2s3S2s3_autogen___2(struct s3 *_X4_dstS2s3_2, struct s3 _X4_srcS2s3_2){
+        struct s3 _X4_retS2s3_2;
+        {
+            ((void)((*_X4_dstS2s3_2)._X1ii_2=_X4_srcS2s3_2._X1ii_2));
+        }
+
+        {
+            ((void)_X12_constructorFv_S2s3S2s3_autogen___2((&_X4_retS2s3_2), (*_X4_dstS2s3_2)));
+        }
+
+        return _X4_retS2s3_2;
+    }
+    inline void _X12_constructorFv_S2s3i_autogen___2(struct s3 *_X4_dstS2s3_2, signed int _X1ii_2){
+        {
+            ((void)((*_X4_dstS2s3_2)._X1ii_2=_X1ii_2) /* ?{} */);
+        }
+
+    }
+    struct s3 _X2x1S2s3_2;
+    struct s3 _X2y1S2s3_2;
+    struct s4 {
+        signed int _X1ii_2;
+    };
+    inline void _X12_constructorFv_S2s4_autogen___2(struct s4 *_X4_dstS2s4_2){
+        {
+            ((void)((*_X4_dstS2s4_2)._X1ii_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S2s4S2s4_autogen___2(struct s4 *_X4_dstS2s4_2, struct s4 _X4_srcS2s4_2){
+        {
+            ((void)((*_X4_dstS2s4_2)._X1ii_2=_X4_srcS2s4_2._X1ii_2) /* ?{} */);
+        }
+
+    }
+    inline void _X11_destructorFv_S2s4_autogen___2(struct s4 *_X4_dstS2s4_2){
+        {
+            ((void)((*_X4_dstS2s4_2)._X1ii_2) /* ^?{} */);
+        }
+
+    }
+    inline struct s4 _X16_operator_assignFS2s4_S2s4S2s4_autogen___2(struct s4 *_X4_dstS2s4_2, struct s4 _X4_srcS2s4_2){
+        struct s4 _X4_retS2s4_2;
+        {
+            ((void)((*_X4_dstS2s4_2)._X1ii_2=_X4_srcS2s4_2._X1ii_2));
+        }
+
+        {
+            ((void)_X12_constructorFv_S2s4S2s4_autogen___2((&_X4_retS2s4_2), (*_X4_dstS2s4_2)));
+        }
+
+        return _X4_retS2s4_2;
+    }
+    inline void _X12_constructorFv_S2s4i_autogen___2(struct s4 *_X4_dstS2s4_2, signed int _X1ii_2){
+        {
+            ((void)((*_X4_dstS2s4_2)._X1ii_2=_X1ii_2) /* ?{} */);
+        }
+
+    }
+    struct s4 _X2x2S2s4_2;
+    struct s4 _X2y2S2s4_2;
+    signed int _X2m1A0i_2[((unsigned int )10)];
+    signed int _X2m2A0A0i_2[((unsigned int )10)][((unsigned int )10)];
+    signed int _X2m3A0A0i_2[((unsigned int )10)][((unsigned int )10)];
+    {
+        ((void)(_X12_retval_maini_1=0) /* ?{} */);
+    }
+
+    return _X12_retval_maini_1;
+}
+static inline int invoke_main(int argc, char* argv[], char* envp[]) { (void)argc; (void)argv; (void)envp; return _X4mainFi_iPPKc__1((signed int )argc, (const char **)argv); }
+static inline signed int invoke_main(signed int argc, char **argv, char **envp);
+signed int _X13cfa_args_argci_1;
+char **_X13cfa_args_argvPPc_1;
+char **_X13cfa_args_envpPPc_1;
+signed int main(signed int _X4argci_1, char **_X4argvPPc_1, char **_X4envpPPc_1){
+    __attribute__ ((unused)) signed int _X12_retval_maini_1;
+    {
+        ((void)(_X13cfa_args_argci_1=_X4argci_1));
+    }
+
+    {
+        ((void)(_X13cfa_args_argvPPc_1=_X4argvPPc_1));
+    }
+
+    {
+        ((void)(_X13cfa_args_envpPPc_1=_X4envpPPc_1));
+    }
+
+    {
+        signed int _tmp_cp_ret6;
+        ((void)(_X12_retval_maini_1=(((void)(_tmp_cp_ret6=invoke_main(_X4argci_1, _X4argvPPc_1, _X4envpPPc_1))) , _tmp_cp_ret6)) /* ?{} */);
+    }
+
+    return _X12_retval_maini_1;
+}

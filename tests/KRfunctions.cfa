@@ -1,0 +1,52 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// KRfunctions.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Thu Feb 16 15:23:17 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Nov  6 17:50:34 2018
+// Update Count     : 9
+// 
+
+f0( a, b, c ) const int * b; {}
+f1( a, b, c ) int b __attribute__ (( unused )), * a, c[]; {}
+(f2)( a, b, c ) int a, * b, c[]; {}
+
+struct S { int i; };
+int f3( a, b, c ) struct S a; struct S b; int c[]; { struct S s;}
+int (f4)( a, b, c ) int a, * b, c[]; {}
+int (f5( a, b, c )) int a, * b, c[]; {}
+
+int (* f6( a, b, c ))(int) int a, * b, c[]; {}
+int (* f7( a, b, c ))(int a, int b) int a, * b, c[]; {}
+int * f8( a, b, c ) int a, * b, c[]; {}
+int * const f9( a, b, c ) int b, * a, c[]; {}
+
+int (* (* f10( a, b, c, y ))( int x, int y ) ) int a, * b, c[]; double y; {
+    int *x( int, int );
+    return x;
+}
+
+int (* f11( a, b, c ))[] int a, * b, c[]; {}
+int (* f12( a, b, c ))[][10] int a, * b, c[]; {}
+int ((* f13( a, b, c ))[])[10] int a, * b, c[]; {}
+int (((* f14( a, b, c ))[])[10]) int a, * b, c[]; {}
+f15( a, b, c ) {}
+
+const fred() {
+    int *(*x)( int, int );
+    int a, b;
+    x = f10( 3, &a, &b, 3.5 );
+    const f1( a, b, c ) int a, * b, c[]; {}
+    const f2( int a, int b, int c ) {}
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa KRfunctions.cfa" //
+// End: //

@@ -1,0 +1,767 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// signal.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Jun 5 14:20:42 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Nov  6 07:42:13 2020
+// Update Count     : 54
+//
+
+#define __cforall_thread__
+// #define __CFA_DEBUG_PRINT_PREEMPTION__
+
+#include "preemption.hfa"
+
+#include <assert.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <limits.h>										// PTHREAD_STACK_MIN
+
+#include "bits/debug.hfa"
+#include "bits/signal.hfa"
+#include "kernel_private.hfa"
+
+
+#if !defined(__CFA_DEFAULT_PREEMPTION__)
+#define __CFA_DEFAULT_PREEMPTION__ 10`ms
+#endif
+
+__attribute__((weak)) Duration default_preemption() {
+	const char * preempt_rate_s = getenv("CFA_DEFAULT_PREEMPTION");
+	if(!preempt_rate_s) {
+		__cfadbg_print_safe(preemption, "No CFA_DEFAULT_PREEMPTION in ENV\n");
+		return __CFA_DEFAULT_PREEMPTION__;
+	}
+
+	char * endptr = 0p;
+	long int preempt_rate_l = strtol(preempt_rate_s, &endptr, 10);
+	if(preempt_rate_l < 0 || preempt_rate_l > 65535) {
+		__cfadbg_print_safe(preemption, "CFA_DEFAULT_PREEMPTION out of range : %ld\n", preempt_rate_l);
+		return __CFA_DEFAULT_PREEMPTION__;
+	}
+	if('\0' != *endptr) {
+		__cfadbg_print_safe(preemption, "CFA_DEFAULT_PREEMPTION not a decimal number : %s\n", preempt_rate_s);
+		return __CFA_DEFAULT_PREEMPTION__;
+	}
+
+	return preempt_rate_l`ms;
+}
+
+// FwdDeclarations : timeout handlers
+static void preempt( processor   * this );
+static void timeout( $thread * this );
+
+// FwdDeclarations : Signal handlers
+static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ );
+static void sigHandler_alarm    ( __CFA_SIGPARMS__ );
+static void sigHandler_segv     ( __CFA_SIGPARMS__ );
+static void sigHandler_ill      ( __CFA_SIGPARMS__ );
+static void sigHandler_fpe      ( __CFA_SIGPARMS__ );
+static void sigHandler_abort    ( __CFA_SIGPARMS__ );
+
+// FwdDeclarations : alarm thread main
+static void * alarm_loop( __attribute__((unused)) void * args );
+
+// Machine specific register name
+#if   defined( __i386 )
+#define CFA_REG_IP gregs[REG_EIP]
+#elif defined( __x86_64 )
+#define CFA_REG_IP gregs[REG_RIP]
+#elif defined( __arm__ )
+#define CFA_REG_IP arm_pc
+#elif defined( __aarch64__ )
+#define CFA_REG_IP pc
+#else
+#error unsupported hardware architecture
+#endif
+
+KERNEL_STORAGE(event_kernel_t, event_kernel);         // private storage for event kernel
+event_kernel_t * event_kernel;                        // kernel public handle to even kernel
+static pthread_t alarm_thread;                        // pthread handle to alarm thread
+static void * alarm_stack;							  // pthread stack for alarm thread
+
+static void ?{}(event_kernel_t & this) with( this ) {
+	alarms{};
+	lock{};
+}
+
+enum {
+	PREEMPT_NORMAL    = 0,
+	PREEMPT_TERMINATE = 1,
+};
+
+//=============================================================================================
+// Kernel Preemption logic
+//=============================================================================================
+
+// Get next expired node
+static inline alarm_node_t * get_expired( alarm_list_t * alarms, Time currtime ) {
+	if( ! & (*alarms)`first ) return 0p;						// If no alarms return null
+	if( (*alarms)`first.timeval >= currtime ) return 0p;	// If alarms head not expired return null
+	return pop(alarms);									// Otherwise just pop head
+}
+
+// Tick one frame of the Discrete Event Simulation for alarms
+static void tick_preemption(void) {
+	alarm_node_t * node = 0p;							// Used in the while loop but cannot be declared in the while condition
+	alarm_list_t * alarms = &event_kernel->alarms;		// Local copy for ease of reading
+	Time currtime = __kernel_get_time();				// Check current time once so everything "happens at once"
+
+	//Loop throught every thing expired
+	while( node = get_expired( alarms, currtime ) ) {
+		__cfadbg_print_buffer_decl( preemption, " KERNEL: preemption tick %lu\n", currtime.tn);
+		Duration period = node->period;
+		if( period == 0) {
+			node->set = false;                  // Node is one-shot, just mark it as not pending
+		}
+
+		__cfadbg_print_buffer_local( preemption, " KERNEL: alarm ticking node %p.\n", node );
+
+
+		// Check if this is a kernel
+		if( node->type == Kernel ) {
+			preempt( node->proc );
+		}
+		else if( node->type == User ) {
+			__cfadbg_print_buffer_local( preemption, " KERNEL: alarm unparking %p.\n", node->thrd );
+			timeout( node->thrd );
+		}
+		else {
+			node->callback(*node);
+		}
+
+		// Check if this is a periodic alarm
+		if( period > 0 ) {
+			__cfadbg_print_buffer_local( preemption, " KERNEL: alarm period is %lu.\n", period`ns );
+			node->timeval = currtime + period;  // Alarm is periodic, add currtime to it (used cached current time)
+			insert( alarms, node );             // Reinsert the node for the next time it triggers
+		}
+	}
+
+	// If there are still alarms pending, reset the timer
+	if( & (*alarms)`first ) {
+		Duration delta = (*alarms)`first.timeval - currtime;
+		__kernel_set_timer( delta );
+	}
+}
+
+// Update the preemption of a processor and notify interested parties
+void update_preemption( processor * this, Duration duration ) {
+	alarm_node_t * alarm = this->preemption_alarm;
+
+	// Alarms need to be enabled
+	if ( duration > 0 && ! alarm->set ) {
+		alarm->initial = duration;
+		alarm->period  = duration;
+		register_self( alarm );
+	}
+	// Zero duration but alarm is set
+	else if ( duration == 0 && alarm->set ) {
+		unregister_self( alarm );
+		alarm->initial = 0;
+		alarm->period  = 0;
+	}
+	// If alarm is different from previous, change it
+	else if ( duration > 0 && alarm->period != duration ) {
+		unregister_self( alarm );
+		alarm->initial = duration;
+		alarm->period  = duration;
+		register_self( alarm );
+	}
+}
+
+//=============================================================================================
+// Kernel Signal Tools
+//=============================================================================================
+// In a user-level threading system, there are handful of thread-local variables where this problem occurs on the ARM.
+//
+// For each kernel thread running user-level threads, there is a flag variable to indicate if interrupts are
+// enabled/disabled for that kernel thread. Therefore, this variable is made thread local.
+//
+// For example, this code fragment sets the state of the "interrupt" variable in thread-local memory.
+//
+// _Thread_local volatile int interrupts;
+// int main() {
+//     interrupts = 0; // disable interrupts }
+//
+// which generates the following code on the ARM
+//
+// (gdb) disassemble main
+// Dump of assembler code for function main:
+//    0x0000000000000610 <+0>:	mrs	x1, tpidr_el0
+//    0x0000000000000614 <+4>:	mov	w0, #0x0                   	// #0
+//    0x0000000000000618 <+8>:	add	x1, x1, #0x0, lsl #12
+//    0x000000000000061c <+12>:	add	x1, x1, #0x10
+//    0x0000000000000620 <+16>:	str	wzr, [x1]
+//    0x0000000000000624 <+20>:	ret
+//
+// The mrs moves a pointer from coprocessor register tpidr_el0 into register x1.  Register w0 is set to 0. The two adds
+// increase the TLS pointer with the displacement (offset) 0x10, which is the location in the TSL of variable
+// "interrupts".  Finally, 0 is stored into "interrupts" through the pointer in register x1 that points into the
+// TSL. Now once x1 has the pointer to the location of the TSL for kernel thread N, it can be be preempted at a
+// user-level and the user thread is put on the user-level ready-queue. When the preempted thread gets to the front of
+// the user-level ready-queue it is run on kernel thread M. It now stores 0 into "interrupts" back on kernel thread N,
+// turning off interrupt on the wrong kernel thread.
+//
+// On the x86, the following code is generated for the same code fragment.
+//
+// (gdb) disassemble main
+// Dump of assembler code for function main:
+//    0x0000000000400420 <+0>:	movl   $0x0,%fs:0xfffffffffffffffc
+//    0x000000000040042c <+12>:	xor    %eax,%eax
+//    0x000000000040042e <+14>:	retq
+//
+// and there is base-displacement addressing used to atomically reset variable "interrupts" off of the TSL pointer in
+// register "fs".
+//
+// Hence, the ARM has base-displacement address for the general purpose registers, BUT not to the coprocessor
+// registers. As a result, generating the address for the write into variable "interrupts" is no longer atomic.
+//
+// Note this problem does NOT occur when just using multiple kernel threads because the preemption ALWAYS restarts the
+// thread on the same kernel thread.
+//
+// The obvious question is why does ARM use a coprocessor register to store the TSL pointer given that coprocessor
+// registers are second-class registers with respect to the instruction set. One possible answer is that they did not
+// want to dedicate one of the general registers to hold the TLS pointer and there was a free coprocessor register
+// available.
+
+//-----------------------------------------------------------------------------
+// Some assembly required
+#define __cfaasm_label(label, when) when: asm volatile goto(".global __cfaasm_" #label "_" #when "\n" "__cfaasm_" #label "_" #when ":":::"memory":when)
+
+//----------
+// special case for preemption since used often
+bool __preemption_enabled() {
+	// create a assembler label before
+	// marked as clobber all to avoid movement
+	__cfaasm_label(check, before);
+
+	// access tls as normal
+	bool enabled = __cfaabi_tls.preemption_state.enabled;
+
+	// create a assembler label after
+	// marked as clobber all to avoid movement
+	__cfaasm_label(check, after);
+	return enabled;
+}
+
+struct asm_region {
+	void * before;
+	void * after;
+};
+
+static inline bool __cfaasm_in( void * ip, struct asm_region & region ) {
+	return ip >= region.before && ip <= region.after;
+}
+
+
+//----------
+// Get data from the TLS block
+// struct asm_region __cfaasm_get;
+uintptr_t __cfatls_get( unsigned long int offset ) __attribute__((__noinline__)); //no inline to avoid problems
+uintptr_t __cfatls_get( unsigned long int offset ) {
+	// create a assembler label before
+	// marked as clobber all to avoid movement
+	__cfaasm_label(get, before);
+
+	// access tls as normal (except for pointer arithmetic)
+	uintptr_t val = *(uintptr_t*)((uintptr_t)&__cfaabi_tls + offset);
+
+	// create a assembler label after
+	// marked as clobber all to avoid movement
+	__cfaasm_label(get, after);
+	return val;
+}
+
+extern "C" {
+	// Disable interrupts by incrementing the counter
+	void disable_interrupts() {
+		// create a assembler label before
+		// marked as clobber all to avoid movement
+		__cfaasm_label(dsable, before);
+
+		with( __cfaabi_tls.preemption_state ) {
+			#if GCC_VERSION > 50000
+			static_assert(__atomic_always_lock_free(sizeof(enabled), &enabled), "Must be lock-free");
+			#endif
+
+			// Set enabled flag to false
+			// should be atomic to avoid preemption in the middle of the operation.
+			// use memory order RELAXED since there is no inter-thread on this variable requirements
+			__atomic_store_n(&enabled, false, __ATOMIC_RELAXED);
+
+			// Signal the compiler that a fence is needed but only for signal handlers
+			__atomic_signal_fence(__ATOMIC_ACQUIRE);
+
+			__attribute__((unused)) unsigned short new_val = disable_count + 1;
+			disable_count = new_val;
+			verify( new_val < 65_000u );              // If this triggers someone is disabling interrupts without enabling them
+		}
+
+		// create a assembler label after
+		// marked as clobber all to avoid movement
+		__cfaasm_label(dsable, after);
+
+	}
+
+	// Enable interrupts by decrementing the counter
+	// If counter reaches 0, execute any pending __cfactx_switch
+	void enable_interrupts( bool poll ) {
+		// Cache the processor now since interrupts can start happening after the atomic store
+		processor   * proc = __cfaabi_tls.this_processor;
+		/* paranoid */ verify( !poll || proc );
+
+		with( __cfaabi_tls.preemption_state ){
+			unsigned short prev = disable_count;
+			disable_count -= 1;
+
+			// If this triggers someone is enabled already enabled interruptsverify( prev != 0u );
+			/* paranoid */ verify( prev != 0u );
+
+			// Check if we need to prempt the thread because an interrupt was missed
+			if( prev == 1 ) {
+				#if GCC_VERSION > 50000
+					static_assert(__atomic_always_lock_free(sizeof(enabled), &enabled), "Must be lock-free");
+				#endif
+
+				// Set enabled flag to true
+				// should be atomic to avoid preemption in the middle of the operation.
+				// use memory order RELAXED since there is no inter-thread on this variable requirements
+				__atomic_store_n(&enabled, true, __ATOMIC_RELAXED);
+
+				// Signal the compiler that a fence is needed but only for signal handlers
+				__atomic_signal_fence(__ATOMIC_RELEASE);
+				if( poll && proc->pending_preemption ) {
+					proc->pending_preemption = false;
+					force_yield( __POLL_PREEMPTION );
+				}
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Kernel Signal Debug
+void __cfaabi_check_preemption() {
+	bool ready = __preemption_enabled();
+	if(!ready) { abort("Preemption should be ready"); }
+
+	__cfaasm_label(debug, before);
+
+		sigset_t oldset;
+		int ret;
+		ret = pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
+		if(ret != 0) { abort("ERROR sigprocmask returned %d", ret); }
+
+		ret = sigismember(&oldset, SIGUSR1);
+		if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+		if(ret == 1) { abort("ERROR SIGUSR1 is disabled"); }
+
+		ret = sigismember(&oldset, SIGALRM);
+		if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+		if(ret == 0) { abort("ERROR SIGALRM is enabled"); }
+
+		ret = sigismember(&oldset, SIGTERM);
+		if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+		if(ret == 1) { abort("ERROR SIGTERM is disabled"); }
+
+	__cfaasm_label(debug, after);
+}
+
+#ifdef __CFA_WITH_VERIFY__
+bool __cfaabi_dbg_in_kernel() {
+	return !__preemption_enabled();
+}
+#endif
+
+#undef __cfaasm_label
+
+//-----------------------------------------------------------------------------
+// Signal handling
+
+// sigprocmask wrapper : unblock a single signal
+static inline void signal_unblock( int sig ) {
+	sigset_t mask;
+	sigemptyset( &mask );
+	sigaddset( &mask, sig );
+
+	if ( pthread_sigmask( SIG_UNBLOCK, &mask, 0p ) == -1 ) {
+	    abort( "internal error, pthread_sigmask" );
+	}
+}
+
+// sigprocmask wrapper : block a single signal
+static inline void signal_block( int sig ) {
+	sigset_t mask;
+	sigemptyset( &mask );
+	sigaddset( &mask, sig );
+
+	if ( pthread_sigmask( SIG_BLOCK, &mask, 0p ) == -1 ) {
+		abort( "internal error, pthread_sigmask" );
+	}
+}
+
+// kill wrapper : signal a processor
+static void preempt( processor * this ) {
+	sigval_t value = { PREEMPT_NORMAL };
+	pthread_sigqueue( this->kernel_thread, SIGUSR1, value );
+}
+
+// reserved for future use
+static void timeout( $thread * this ) {
+	unpark( this );
+}
+
+void __disable_interrupts_hard() {
+	sigset_t oldset;
+	int ret;
+	ret = pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
+	if(ret != 0) { abort("ERROR sigprocmask returned %d", ret); }
+
+	ret = sigismember(&oldset, SIGUSR1);
+	if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+	if(ret == 1) { abort("ERROR SIGUSR1 is disabled"); }
+
+	ret = sigismember(&oldset, SIGALRM);
+	if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+	if(ret == 0) { abort("ERROR SIGALRM is enabled"); }
+
+	signal_block( SIGUSR1 );
+}
+
+void __enable_interrupts_hard() {
+	signal_unblock( SIGUSR1 );
+
+	sigset_t oldset;
+	int ret;
+	ret = pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
+	if(ret != 0) { abort("ERROR sigprocmask returned %d", ret); }
+
+	ret = sigismember(&oldset, SIGUSR1);
+	if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+	if(ret == 1) { abort("ERROR SIGUSR1 is disabled"); }
+
+	ret = sigismember(&oldset, SIGALRM);
+	if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+	if(ret == 0) { abort("ERROR SIGALRM is enabled"); }
+}
+
+//-----------------------------------------------------------------------------
+// Some assembly required
+#if defined( __i386 )
+	#ifdef __PIC__
+		#define RELOC_PRELUDE( label ) \
+			"calll   .Lcfaasm_prelude_" #label "$pb\n\t" \
+			".Lcfaasm_prelude_" #label "$pb:\n\t" \
+			"popl    %%eax\n\t" \
+			".Lcfaasm_prelude_" #label "_end:\n\t" \
+			"addl    $_GLOBAL_OFFSET_TABLE_+(.Lcfaasm_prelude_" #label "_end-.Lcfaasm_prelude_" #label "$pb), %%eax\n\t"
+		#define RELOC_PREFIX ""
+		#define RELOC_SUFFIX "@GOT(%%eax)"
+	#else
+		#define RELOC_PREFIX "$"
+		#define RELOC_SUFFIX ""
+	#endif
+	#define __cfaasm_label( label ) struct asm_region label = \
+		({ \
+			struct asm_region region; \
+			asm( \
+				RELOC_PRELUDE( label ) \
+				"movl " RELOC_PREFIX "__cfaasm_" #label "_before" RELOC_SUFFIX ", %[vb]\n\t" \
+				"movl " RELOC_PREFIX "__cfaasm_" #label "_after"  RELOC_SUFFIX ", %[va]\n\t" \
+				 : [vb]"=r"(region.before), [va]"=r"(region.after) \
+			); \
+			region; \
+		});
+#elif defined( __x86_64 )
+	#ifdef __PIC__
+		#define RELOC_PREFIX ""
+		#define RELOC_SUFFIX "@GOTPCREL(%%rip)"
+	#else
+		#define RELOC_PREFIX "$"
+		#define RELOC_SUFFIX ""
+	#endif
+	#define __cfaasm_label( label ) struct asm_region label = \
+		({ \
+			struct asm_region region; \
+			asm( \
+				"movq " RELOC_PREFIX "__cfaasm_" #label "_before" RELOC_SUFFIX ", %[vb]\n\t" \
+				"movq " RELOC_PREFIX "__cfaasm_" #label "_after"  RELOC_SUFFIX ", %[va]\n\t" \
+				 : [vb]"=r"(region.before), [va]"=r"(region.after) \
+			); \
+			region; \
+		});
+#elif defined( __aarch64__ )
+	#ifdef __PIC__
+		// Note that this works only for gcc
+		#define __cfaasm_label( label ) struct asm_region label = \
+		({ \
+			struct asm_region region; \
+			asm( \
+				"adrp %[vb], _GLOBAL_OFFSET_TABLE_"                              "\n\t" \
+        			"ldr  %[vb], [%[vb], #:gotpage_lo15:__cfaasm_" #label "_before]" "\n\t" \
+				"adrp %[va], _GLOBAL_OFFSET_TABLE_"                              "\n\t" \
+        			"ldr  %[va], [%[va], #:gotpage_lo15:__cfaasm_" #label "_after]"  "\n\t" \
+				 : [vb]"=r"(region.before), [va]"=r"(region.after) \
+			); \
+			region; \
+		});
+	#else
+		#error this is not the right thing to do
+		/*
+		#define __cfaasm_label( label ) struct asm_region label = \
+		({ \
+			struct asm_region region; \
+			asm( \
+				"adrp %[vb], __cfaasm_" #label "_before"              "\n\t" \
+        			"add  %[vb], %[vb], :lo12:__cfaasm_" #label "_before" "\n\t" \
+				"adrp %[va], :got:__cfaasm_" #label "_after"          "\n\t" \
+        			"add  %[va], %[va], :lo12:__cfaasm_" #label "_after"  "\n\t" \
+				 : [vb]"=r"(region.before), [va]"=r"(region.after) \
+			); \
+			region; \
+		});
+		*/
+	#endif
+#else
+	#error unknown hardware architecture
+#endif
+
+// KERNEL ONLY
+// Check if a __cfactx_switch signal handler shoud defer
+// If true  : preemption is safe
+// If false : preemption is unsafe and marked as pending
+static inline bool preemption_ready( void * ip ) {
+	// Get all the region for which it is not safe to preempt
+	__cfaasm_label( get    );
+	__cfaasm_label( check  );
+	__cfaasm_label( dsable );
+	__cfaasm_label( debug  );
+
+	// Check if preemption is safe
+	bool ready = true;
+	if( __cfaasm_in( ip, get    ) ) { ready = false; goto EXIT; };
+	if( __cfaasm_in( ip, check  ) ) { ready = false; goto EXIT; };
+	if( __cfaasm_in( ip, dsable ) ) { ready = false; goto EXIT; };
+	if( __cfaasm_in( ip, debug  ) ) { ready = false; goto EXIT; };
+	if( !__cfaabi_tls.preemption_state.enabled) { ready = false; goto EXIT; };
+	if( __cfaabi_tls.preemption_state.in_progress ) { ready = false; goto EXIT; };
+
+EXIT:
+	// Adjust the pending flag accordingly
+	__cfaabi_tls.this_processor->pending_preemption = !ready;
+	return ready;
+}
+
+//=============================================================================================
+// Kernel Signal Startup/Shutdown logic
+//=============================================================================================
+
+// Startup routine to activate preemption
+// Called from kernel_startup
+void __kernel_alarm_startup() {
+	__cfaabi_dbg_print_safe( "Kernel : Starting preemption\n" );
+
+	// Start with preemption disabled until ready
+	__cfaabi_tls.preemption_state.enabled = false;
+	__cfaabi_tls.preemption_state.disable_count = 1;
+
+	// Initialize the event kernel
+	event_kernel = (event_kernel_t *)&storage_event_kernel;
+	(*event_kernel){};
+
+	// Setup proper signal handlers
+	__cfaabi_sigaction( SIGUSR1, sigHandler_ctxSwitch, SA_SIGINFO ); // __cfactx_switch handler
+	__cfaabi_sigaction( SIGALRM, sigHandler_alarm    , SA_SIGINFO ); // debug handler
+
+	signal_block( SIGALRM );
+
+	alarm_stack = __create_pthread( &alarm_thread, alarm_loop, 0p );
+}
+
+// Shutdown routine to deactivate preemption
+// Called from kernel_shutdown
+void __kernel_alarm_shutdown() {
+	__cfaabi_dbg_print_safe( "Kernel : Preemption stopping\n" );
+
+	// Block all signals since we are already shutting down
+	sigset_t mask;
+	sigfillset( &mask );
+	sigprocmask( SIG_BLOCK, &mask, 0p );
+
+	// Notify the alarm thread of the shutdown
+	sigval val;
+	val.sival_int = 0;
+	pthread_sigqueue( alarm_thread, SIGALRM, val );
+
+	// Wait for the preemption thread to finish
+
+	__destroy_pthread( alarm_thread, alarm_stack, 0p );
+
+	// Preemption is now fully stopped
+
+	__cfaabi_dbg_print_safe( "Kernel : Preemption stopped\n" );
+}
+
+// Prevent preemption since we are about to start terminating things
+void __kernel_abort_lock(void) {
+	signal_block( SIGUSR1 );
+}
+
+// Raii ctor/dtor for the preemption_scope
+// Used by thread to control when they want to receive preemption signals
+void ?{}( preemption_scope & this, processor * proc ) {
+	(this.alarm){ proc, 0`s, 0`s };
+	this.proc = proc;
+	this.proc->preemption_alarm = &this.alarm;
+
+	update_preemption( this.proc, this.proc->cltr->preemption_rate );
+}
+
+void ^?{}( preemption_scope & this ) {
+	disable_interrupts();
+
+	update_preemption( this.proc, 0`s );
+}
+
+//=============================================================================================
+// Kernel Signal Handlers
+//=============================================================================================
+__cfaabi_dbg_debug_do( static thread_local void * last_interrupt = 0; )
+
+// Context switch signal handler
+// Receives SIGUSR1 signal and causes the current thread to yield
+static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
+	void * ip = (void *)(cxt->uc_mcontext.CFA_REG_IP);
+	__cfaabi_dbg_debug_do( last_interrupt = ip; )
+
+	// SKULLDUGGERY: if a thread creates a processor and the immediately deletes it,
+	// the interrupt that is supposed to force the kernel thread to preempt might arrive
+	// before the kernel thread has even started running. When that happens, an interrupt
+	// with a null 'this_processor' will be caught, just ignore it.
+	if(! __cfaabi_tls.this_processor ) return;
+
+	choose(sfp->si_value.sival_int) {
+		case PREEMPT_NORMAL   : ;// Normal case, nothing to do here
+		case PREEMPT_TERMINATE: verify( __atomic_load_n( &__cfaabi_tls.this_processor->do_terminate, __ATOMIC_SEQ_CST ) );
+		default:
+			abort( "internal error, signal value is %d", sfp->si_value.sival_int );
+	}
+
+	// Check if it is safe to preempt here
+	if( !preemption_ready( ip ) ) { return; }
+
+	__cfaabi_dbg_print_buffer_decl( " KERNEL: preempting core %p (%p @ %p).\n", __cfaabi_tls.this_processor, __cfaabi_tls.this_thread, (void *)(cxt->uc_mcontext.CFA_REG_IP) );
+
+	// Sync flag : prevent recursive calls to the signal handler
+	__cfaabi_tls.preemption_state.in_progress = true;
+
+	// Clear sighandler mask before context switching.
+	#if GCC_VERSION > 50000
+	static_assert( sizeof( sigset_t ) == sizeof( cxt->uc_sigmask ), "Expected cxt->uc_sigmask to be of sigset_t" );
+	#endif
+	if ( pthread_sigmask( SIG_SETMASK, (sigset_t *)&(cxt->uc_sigmask), 0p ) == -1 ) {
+		abort( "internal error, sigprocmask" );
+	}
+
+	// Clear the in progress flag
+	__cfaabi_tls.preemption_state.in_progress = false;
+
+	// Preemption can occur here
+
+	force_yield( __ALARM_PREEMPTION ); // Do the actual __cfactx_switch
+}
+
+static void sigHandler_alarm( __CFA_SIGPARMS__ ) {
+	abort("SIGALRM should never reach the signal handler");
+}
+
+// Main of the alarm thread
+// Waits on SIGALRM and send SIGUSR1 to whom ever needs it
+static void * alarm_loop( __attribute__((unused)) void * args ) {
+	unsigned id = register_proc_id();
+
+	// Block sigalrms to control when they arrive
+	sigset_t mask;
+	sigfillset(&mask);
+	if ( pthread_sigmask( SIG_BLOCK, &mask, 0p ) == -1 ) {
+	    abort( "internal error, pthread_sigmask" );
+	}
+
+	sigemptyset( &mask );
+	sigaddset( &mask, SIGALRM );
+
+	// Main loop
+	while( true ) {
+		// Wait for a sigalrm
+		siginfo_t info;
+		int sig = sigwaitinfo( &mask, &info );
+
+		__cfadbg_print_buffer_decl ( preemption, " KERNEL: sigwaitinfo returned %d, c: %d, v: %d\n", sig, info.si_code, info.si_value.sival_int );
+		__cfadbg_print_buffer_local( preemption, " KERNEL: SI_QUEUE %d, SI_TIMER %d, SI_KERNEL %d\n", SI_QUEUE, SI_TIMER, SI_KERNEL );
+
+		if( sig < 0 ) {
+			//Error!
+			int err = errno;
+			switch( err ) {
+				case EAGAIN :
+				case EINTR :
+					{__cfadbg_print_buffer_local( preemption, " KERNEL: Spurious wakeup %d.\n", err );}
+					continue;
+				case EINVAL :
+				 	abort( "Timeout was invalid." );
+				default:
+				 	abort( "Unhandled error %d", err);
+			}
+		}
+
+		// If another signal arrived something went wrong
+		assertf(sig == SIGALRM, "Kernel Internal Error, sigwait: Unexpected signal %d (%d : %d)\n", sig, info.si_code, info.si_value.sival_int);
+
+		// Switch on the code (a.k.a. the sender) to
+		switch( info.si_code )
+		{
+		// Signal was not sent by the kernel but by an other thread
+		case SI_QUEUE:
+			// other threads may signal the alarm thread to shut it down
+			// or to manual cause the preemption tick
+			// use info.si_value and handle the case here
+			switch( info.si_value.sival_int ) {
+			case 0:
+				goto EXIT;
+			default:
+				abort( "SI_QUEUE with val %d", info.si_value.sival_int);
+			}
+			// fallthrough
+		// Timers can apparently be marked as sent for the kernel
+		// In either case, tick preemption
+		case SI_TIMER:
+		case SI_KERNEL:
+			// __cfaabi_dbg_print_safe( "Kernel : Preemption thread tick\n" );
+			lock( event_kernel->lock __cfaabi_dbg_ctx2 );
+			tick_preemption();
+			unlock( event_kernel->lock );
+			break;
+		}
+	}
+
+EXIT:
+	__cfaabi_dbg_print_safe( "Kernel : Preemption thread stopping\n" );
+	unregister_proc_id(id);
+
+	return 0p;
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

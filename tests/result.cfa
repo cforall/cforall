@@ -1,0 +1,69 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// result.c --
+//
+// Author           : Andrew Beach
+// Created On       : Thr May 25 16:50:00 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Sep 25 15:22:59 2020
+// Update Count     : 2
+//
+
+#include <assert.h>
+#include <containers/result.hfa>
+
+void checkPredicates() {
+	result(int, char) pass = {1, 4};
+	assert(pass);
+	assert(has_value(&pass));
+
+	result(int, char) fail = {0, '!'};
+	assert((fail ? false : true));
+	assert(!has_value(&fail));
+}
+
+/* Waiting for bug#11 to be fixed.
+void checkNamedConstructors() {
+	result(int, char) = result_value(4);
+	assert(has_value(&pass));
+
+	result(int, char) fail = result_error('!');
+	assert(!has_value(&fail));
+}
+*/
+
+void checkGetters() {
+	result(int, char) pass = {1, 4};
+	assert(4 == get(&pass));
+
+	result(int, char) fail = {0, '!'};
+	assert('!' == get_error(&fail));
+}
+
+void checkSetters() {
+	result(int, char) fee = {1, -7};
+	assert(-7 == get(&fee));
+	set(&fee, 42);
+	assert(42 == get(&fee));
+	set_error(&fee, '@');
+	assert('@' == get_error(&fee));
+
+	result(int, char) fy = {1, -7};
+	fee = fy;
+	assert(-7 == get(&fee));
+	result(int, char) foe = {0, '!'};
+	fee = foe;
+	assert('!' == get_error(&fee));
+}
+
+int main(int argc, char * argv[]) {
+	checkPredicates();
+	//checkNamedConstructors();
+	checkGetters();
+	checkSetters();
+	printf( "done\n" );				// non-empty .expect file
+}

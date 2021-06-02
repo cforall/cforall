@@ -1,0 +1,94 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// exception.cfa -- Exceptions in a concurrent environment.
+//
+// Author           : Andrew Beach
+// Created On       : Mon Aug 17 10:41:00 2020
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Oct 28 14:34:00 2020
+// Update Count     : 1
+//
+
+#define __cforall_thread__
+
+#include "exception.hfa"
+
+#include "coroutine.hfa"
+
+extern struct $thread * mainThread;
+extern "C" {
+extern void __cfactx_thrd_leave();
+}
+
+// Common pattern for all the stop functions, wait until the end then act.
+#define STOP_AT_END_FUNCTION(NAME, ...) \
+static _Unwind_Reason_Code NAME( \
+		int version, \
+		_Unwind_Action actions, \
+		_Unwind_Exception_Class exception_class, \
+		struct _Unwind_Exception * unwind_exception, \
+		struct _Unwind_Context * unwind_context, \
+		void * stop_param) { \
+	verify(actions & _UA_CLEANUP_PHASE); \
+	verify(actions & _UA_FORCE_UNWIND); \
+	verify(!(actions & _UA_SEARCH_PHASE)); \
+	verify(!(actions & _UA_HANDLER_FRAME)); \
+	if ( actions & _UA_END_OF_STACK ) { \
+		__VA_ARGS__ \
+	} else { \
+		return _URC_NO_REASON; \
+	} \
+}
+
+STOP_AT_END_FUNCTION(main_cancelstop,
+	abort();
+)
+
+STOP_AT_END_FUNCTION(thread_cancelstop,
+	__cfactx_thrd_leave();
+	__cabi_abort( "Resumed cancelled thread" );
+)
+
+STOP_AT_END_FUNCTION(coroutine_cancelstop,
+	struct $coroutine * src = ($coroutine *)stop_param;
+	struct $coroutine * dst = src->last;
+
+	$ctx_switch( src, dst );
+	abort();
+)
+
+extern "C" {
+
+struct exception_context_t * this_exception_context(void) {
+	return &__get_stack( active_coroutine() )->exception_context;
+}
+
+_Unwind_Reason_Code __cfaehm_cancellation_unwind( struct _Unwind_Exception * unwind_exception ) {
+	_Unwind_Stop_Fn stop_func;
+	void * stop_param;
+
+	struct $thread * this_thread = active_thread();
+	if ( &this_thread->self_cor != this_thread->curr_cor ) {
+		struct $coroutine * cor = this_thread->curr_cor;
+		cor->cancellation = unwind_exception;
+
+		stop_func = coroutine_cancelstop;
+		stop_param = cor;
+	} else if ( mainThread == this_thread ) {
+		stop_func = main_cancelstop;
+		stop_param = (void *)0x22;
+	} else {
+		this_thread->self_cor.cancellation = unwind_exception;
+
+		stop_func = thread_cancelstop;
+		stop_param = this_thread;
+	}
+
+	return _Unwind_ForcedUnwind( unwind_exception, stop_func, stop_param );
+}
+
+}

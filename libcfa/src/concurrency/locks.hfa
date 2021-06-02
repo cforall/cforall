@@ -1,0 +1,297 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// locks.hfa -- PUBLIC
+// Runtime locks that used with the runtime thread system.
+//
+// Author           : Colby Alexander Parsons
+// Created On       : Thu Jan 21 19:46:50 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include <stdbool.h>
+
+#include "bits/weakso_locks.hfa"
+#include "containers/queueLockFree.hfa"
+
+#include "thread.hfa"
+
+#include "time_t.hfa"
+#include "time.hfa"
+
+//-----------------------------------------------------------------------------
+// Semaphores
+
+// '0-nary' semaphore
+// Similar to a counting semaphore except the value of one is never reached
+// as a consequence, a V() that would bring the value to 1 *spins* until
+// a P consumes it
+struct Semaphore0nary {
+	__spinlock_t lock; // needed to protect
+	mpsc_queue($thread) queue;
+};
+
+static inline bool P(Semaphore0nary & this, $thread * thrd) {
+	/* paranoid */ verify(!(thrd->seqable.next));
+	/* paranoid */ verify(!(thrd`next));
+
+	push(this.queue, thrd);
+	return true;
+}
+
+static inline bool P(Semaphore0nary & this) {
+    $thread * thrd = active_thread();
+    P(this, thrd);
+    park();
+    return true;
+}
+
+static inline $thread * V(Semaphore0nary & this, bool doUnpark = true) {
+	$thread * next;
+	lock(this.lock __cfaabi_dbg_ctx2);
+		for (;;) {
+			next = pop(this.queue);
+			if (next) break;
+			Pause();
+		}
+	unlock(this.lock);
+
+	if (doUnpark) unpark(next);
+	return next;
+}
+
+// Wrapper used on top of any sempahore to avoid potential locking
+struct BinaryBenaphore {
+	volatile ssize_t counter;
+};
+
+static inline {
+	void ?{}(BinaryBenaphore & this) { this.counter = 0; }
+	void ?{}(BinaryBenaphore & this, zero_t) { this.counter = 0; }
+	void ?{}(BinaryBenaphore & this, one_t ) { this.counter = 1; }
+
+	// returns true if no blocking needed
+	bool P(BinaryBenaphore & this) {
+		return __atomic_fetch_sub(&this.counter, 1, __ATOMIC_SEQ_CST) > 0;
+	}
+
+	bool tryP(BinaryBenaphore & this) {
+		ssize_t c = this.counter;
+		return (c >= 1) && __atomic_compare_exchange_n(&this.counter, &c, c-1, false, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);
+	}
+
+	// returns true if notify needed
+	bool V(BinaryBenaphore & this) {
+		ssize_t c = 0;
+		for () {
+			if (__atomic_compare_exchange_n(&this.counter, &c, c+1, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+				if (c == 0) return true;
+				/* paranoid */ verify(c < 0);
+				return false;
+			} else {
+				if (c == 1) return true;
+				/* paranoid */ verify(c < 1);
+				Pause();
+			}
+		}
+	}
+}
+
+// Binary Semaphore based on the BinaryBenaphore on top of the 0-nary Semaphore
+struct ThreadBenaphore {
+	BinaryBenaphore ben;
+	Semaphore0nary  sem;
+};
+
+static inline void ?{}(ThreadBenaphore & this) {}
+static inline void ?{}(ThreadBenaphore & this, zero_t) { (this.ben){ 0 }; }
+static inline void ?{}(ThreadBenaphore & this, one_t ) { (this.ben){ 1 }; }
+
+static inline bool P(ThreadBenaphore & this)              { return P(this.ben) ? false : P(this.sem); }
+static inline bool tryP(ThreadBenaphore & this)           { return tryP(this.ben); }
+static inline bool P(ThreadBenaphore & this, bool wait)   { return wait ? P(this) : tryP(this); }
+
+static inline $thread * V(ThreadBenaphore & this, bool doUnpark = true) {
+	if (V(this.ben)) return 0p;
+	return V(this.sem, doUnpark);
+}
+
+//-----------------------------------------------------------------------------
+// Semaphore
+struct semaphore {
+	__spinlock_t lock;
+	int count;
+	__queue_t($thread) waiting;
+};
+
+void  ?{}(semaphore & this, int count = 1);
+void ^?{}(semaphore & this);
+bool   P (semaphore & this);
+bool   V (semaphore & this);
+bool   V (semaphore & this, unsigned count);
+$thread * V (semaphore & this, bool );
+
+//----------
+struct single_acquisition_lock {
+	inline blocking_lock;
+};
+
+static inline void  ?{}( single_acquisition_lock & this ) {((blocking_lock &)this){ false, false };}
+static inline void ^?{}( single_acquisition_lock & this ) {}
+static inline void   lock     ( single_acquisition_lock & this ) { lock    ( (blocking_lock &)this ); }
+static inline bool   try_lock ( single_acquisition_lock & this ) { return try_lock( (blocking_lock &)this ); }
+static inline void   unlock   ( single_acquisition_lock & this ) { unlock  ( (blocking_lock &)this ); }
+static inline size_t on_wait  ( single_acquisition_lock & this ) { return on_wait ( (blocking_lock &)this ); }
+static inline void   on_wakeup( single_acquisition_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
+static inline void   on_notify( single_acquisition_lock & this, struct $thread * t ) { on_notify( (blocking_lock &)this, t ); }
+
+//----------
+struct owner_lock {
+	inline blocking_lock;
+};
+
+static inline void  ?{}( owner_lock & this ) {((blocking_lock &)this){ true, true };}
+static inline void ^?{}( owner_lock & this ) {}
+static inline void   lock     ( owner_lock & this ) { lock    ( (blocking_lock &)this ); }
+static inline bool   try_lock ( owner_lock & this ) { return try_lock( (blocking_lock &)this ); }
+static inline void   unlock   ( owner_lock & this ) { unlock  ( (blocking_lock &)this ); }
+static inline size_t on_wait  ( owner_lock & this ) { return on_wait ( (blocking_lock &)this ); }
+static inline void   on_wakeup( owner_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
+static inline void   on_notify( owner_lock & this, struct $thread * t ) { on_notify( (blocking_lock &)this, t ); }
+
+struct fast_lock {
+	$thread * volatile owner;
+	ThreadBenaphore sem;
+};
+
+static inline bool $try_lock(fast_lock & this, $thread * thrd) {
+    $thread * exp = 0p;
+    return __atomic_compare_exchange_n(&this.owner, &exp, thrd, false, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);
+}
+
+static inline void lock( fast_lock & this ) __attribute__((artificial));
+static inline void lock( fast_lock & this ) {
+	$thread * thrd = active_thread();
+	/* paranoid */verify(thrd != this.owner);
+
+	for (;;) {
+		if ($try_lock(this, thrd)) return;
+		P(this.sem);
+	}
+}
+
+static inline bool try_lock( fast_lock & this ) __attribute__((artificial));
+static inline bool try_lock ( fast_lock & this ) {
+	$thread * thrd = active_thread();
+	/* paranoid */ verify(thrd != this.owner);
+	return $try_lock(this, thrd);
+}
+
+static inline $thread * unlock( fast_lock & this ) __attribute__((artificial));
+static inline $thread * unlock( fast_lock & this ) {
+	/* paranoid */ verify(active_thread() == this.owner);
+
+	// open 'owner' before unlocking anyone
+	// so new and unlocked threads don't park incorrectly.
+	// This may require additional fencing on ARM.
+	this.owner = 0p;
+
+	return V(this.sem);
+}
+
+static inline size_t on_wait( fast_lock & this ) { unlock(this); return 0; }
+static inline void on_wakeup( fast_lock & this, size_t ) { lock(this); }
+static inline void on_notify( fast_lock &, struct $thread * t ) { unpark(t); }
+
+struct mcs_node {
+	mcs_node * volatile next;
+	single_sem sem;
+};
+
+static inline void ?{}(mcs_node & this) { this.next = 0p; }
+
+static inline mcs_node * volatile & ?`next ( mcs_node * node ) {
+	return node->next;
+}
+
+struct mcs_lock {
+	mcs_queue(mcs_node) queue;
+};
+
+static inline void lock(mcs_lock & l, mcs_node & n) {
+	if(push(l.queue, &n))
+		wait(n.sem);
+}
+
+static inline void unlock(mcs_lock & l, mcs_node & n) {
+	mcs_node * next = advance(l.queue, &n);
+	if(next) post(next->sem);
+}
+
+//-----------------------------------------------------------------------------
+// is_blocking_lock
+trait is_blocking_lock(L & | sized(L)) {
+	// For synchronization locks to use when acquiring
+	void on_notify( L &, struct $thread * );
+
+	// For synchronization locks to use when releasing
+	size_t on_wait( L & );
+
+	// to set recursion count after getting signalled;
+	void on_wakeup( L &, size_t recursion );
+};
+
+//-----------------------------------------------------------------------------
+// info_thread
+// the info thread is a wrapper around a thread used
+// to store extra data for use in the condition variable
+forall(L & | is_blocking_lock(L)) {
+	struct info_thread;
+
+	// for use by sequence
+	info_thread(L) *& Back( info_thread(L) * this );
+	info_thread(L) *& Next( info_thread(L) * this );
+}
+
+//-----------------------------------------------------------------------------
+// Synchronization Locks
+forall(L & | is_blocking_lock(L)) {
+	struct condition_variable {
+		// Spin lock used for mutual exclusion
+		__spinlock_t lock;
+
+		// List of blocked threads
+		Sequence( info_thread(L) ) blocked_threads;
+
+		// Count of current blocked threads
+		int count;
+	};
+
+	void  ?{}( condition_variable(L) & this );
+	void ^?{}( condition_variable(L) & this );
+
+	bool notify_one( condition_variable(L) & this );
+	bool notify_all( condition_variable(L) & this );
+
+	uintptr_t front( condition_variable(L) & this );
+
+	bool empty  ( condition_variable(L) & this );
+	int  counter( condition_variable(L) & this );
+
+	void wait( condition_variable(L) & this );
+	void wait( condition_variable(L) & this, uintptr_t info );
+	bool wait( condition_variable(L) & this, Duration duration );
+	bool wait( condition_variable(L) & this, uintptr_t info, Duration duration );
+
+	void wait( condition_variable(L) & this, L & l );
+	void wait( condition_variable(L) & this, L & l, uintptr_t info );
+	bool wait( condition_variable(L) & this, L & l, Duration duration );
+	bool wait( condition_variable(L) & this, L & l, uintptr_t info, Duration duration );
+}

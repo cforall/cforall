@@ -1,0 +1,14 @@
+char			a b			swap 	b a
+signed int		-1 -2			swap 	-2 -1
+unsigned int		1 2			swap 	2 1
+signed long int		-1 -2			swap 	-2 -1
+unsigned long int	1 2			swap 	2 1
+signed long long int	-1 -2			swap 	-2 -1
+unsigned long long int	1 2			swap 	2 1
+float			1.5 2.5			swap 	2.5 1.5
+double			1.5 2.5			swap 	2.5 1.5
+long double		1.5 2.5			swap 	2.5 1.5
+float _Complex		1.5+1.5i 2.5+2.5i	swap 	2.5+2.5i 1.5+1.5i
+double _Complex		1.5+1.5i 2.5+2.5i	swap 	2.5+2.5i 1.5+1.5i
+long double _Complex	1.5+1.5i 2.5+2.5i	swap 	2.5+2.5i 1.5+1.5i
+struct S		1 2, 2 1		swap 	2 1, 1 2

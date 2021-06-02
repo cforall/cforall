@@ -1,0 +1,36 @@
+// Test exceptions that add data but no functionality.
+
+#include <exception.hfa>
+
+EHM_EXCEPTION(paired)(
+	int first;
+	int second;
+);
+
+EHM_VIRTUAL_TABLE(paired, paired_vt);
+
+const char * virtual_msg(paired * this) {
+	return this->virtual_table->msg(this);
+}
+
+int main(int argc, char * argv[]) {
+	paired except = {&paired_vt, 3, 13};
+
+	try {
+		throw except;
+	} catch (paired * exc) {
+		printf("%s(%d, %d)\n", virtual_msg(exc), exc->first, exc->second);
+		++exc->first;
+	}
+
+	printf("%s(%d, %d)\n", virtual_msg(&except), except.first, except.second);
+
+	try {
+		throwResume except;
+	} catchResume (paired * exc) {
+		printf("%s(%d, %d)\n", virtual_msg(exc), exc->first, exc->second);
+		++exc->first;
+	}
+
+	printf("%s(%d, %d)\n", virtual_msg(&except), except.first, except.second);
+}

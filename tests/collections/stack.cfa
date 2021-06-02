@@ -1,0 +1,117 @@
+#include <fstream.hfa>
+#include <stdlib.hfa>									// new, delete
+#include <bits/stack.hfa>
+
+int main() {
+	// Fred test
+
+	struct Fred {
+		inline Colable;									// Plan 9 inheritance
+		int i;
+	};
+	void ?{}( Fred & fred ) { abort(); }
+	void ?{}( Fred & fred, int p ) with( fred ) {
+		i = p;
+	}
+	Fred *& Next( Fred * n ) {
+		return (Fred *)Next( (Colable *)n );
+	}
+
+	Stack(Fred) fred;
+	StackIter(Fred) inter = { fred };
+	Fred & f;
+
+	sout | nlOff;										// turn off auto newline
+
+	for ( ; inter | f; ) {							// empty list
+		sout | f.i | ' ';
+	}
+	sout | "empty" | nl;
+	
+	for ( i; 10 ) {
+		push( fred, *new( 2 * i ) );
+	}
+
+	for ( StackIter(Fred) iter = { fred }; iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	sout | head( fred ).i | nl;
+	
+	for ( i; 9 ) {
+		delete( &pop( fred ) );
+	}
+
+	for ( over( inter, fred ); inter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+	
+	for ( i; 10 ) {
+		push( fred, *new( 2 * i + 1 ) );
+	}
+	for ( over( inter, fred ); inter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	for ( over( inter, fred ); inter | f; ) {
+		delete( &f );
+	}
+
+	// Mary test
+
+	struct Mary {
+		inline Fred;									// Plan 9 inheritance
+		int j;
+	};
+	void ?{}( Mary & mary ) { abort(); }
+	void ?{}( Mary & mary, int p ) with( mary ) {
+		((Fred &)mary){ p };
+		j = p;
+	}
+
+	Mary *& Next( Mary * n ) {
+		return (Mary *)Next( (Fred *)n );
+	}
+
+	Stack(Mary) mary;
+	StackIter(Mary) maryIter = { mary };
+	Mary & m;
+
+	for ( ; maryIter | m; ) {							// empty list
+		sout | m.i | m.j | ' ';
+	}
+	sout | "empty" | nl;
+	
+	for ( i; 10 ) {
+		push( mary, *new( 2 * i ) );
+	}
+
+	for ( StackIter(Mary) iter = { mary }; iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+	
+	for ( i; 9 ) {
+		delete( &pop( mary ) );
+	}
+
+	for ( over( maryIter, mary ); maryIter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+	
+	for ( i; 10 ) {
+		push( mary, *new( 2 * i + 1 ) );
+	}
+	for ( over( maryIter, mary ); maryIter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+
+	for ( over( maryIter, mary ); maryIter | m; ) {
+		delete( &m );
+	}
+}

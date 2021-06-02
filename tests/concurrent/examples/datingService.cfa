@@ -1,0 +1,117 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// datingService.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon Oct 30 12:56:20 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 15:42:25 2020
+// Update Count     : 40
+//
+
+#include <stdlib.hfa>									// random
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <thread.hfa>
+#include <unistd.h>										// getpid
+
+enum { CompCodes = 20 };								// number of compatibility codes
+
+monitor DatingService {
+	condition Girls[CompCodes], Boys[CompCodes];
+	unsigned int GirlPhoneNo, BoyPhoneNo;
+}; // DatingService
+
+unsigned int girl( DatingService & mutex ds, unsigned int PhoneNo, unsigned int ccode ) with( ds ) {
+	if ( is_empty( Boys[ccode] ) ) {					// no compatible boy ?
+		wait( Girls[ccode] );							// wait for boy
+		GirlPhoneNo = PhoneNo;							// make phone number available
+	} else {
+		GirlPhoneNo = PhoneNo;							// make phone number available
+		signal_block( Boys[ccode] );					// restart boy to set phone number
+	} // if
+	// sout | "Girl:" | PhoneNo | "is dating Boy at" | BoyPhoneNo | "with ccode" | ccode;
+	return BoyPhoneNo;
+} // DatingService girl
+
+unsigned int boy( DatingService & mutex ds, unsigned int PhoneNo, unsigned int ccode ) with( ds ) {
+	if ( is_empty( Girls[ccode] ) ) {					// no compatible girl ?
+		wait( Boys[ccode] );							// wait for girl
+		BoyPhoneNo = PhoneNo;							// make phone number available
+	} else {
+		BoyPhoneNo = PhoneNo;							// make phone number available
+		signal_block( Girls[ccode] );					// restart girl to set phone number
+	} // if
+	// sout | " Boy:" | PhoneNo | "is dating Girl" | GirlPhoneNo | "with ccode" | ccode;
+	return GirlPhoneNo;
+} // DatingService boy
+
+unsigned int girlck[CompCodes];
+unsigned int boyck[CompCodes];
+
+thread Girl {
+	DatingService & TheExchange;
+	unsigned int id, ccode;
+}; // Girl
+
+void main( Girl & g ) with( g ) {
+	yield( random( 100 ) );								// don't all start at the same time
+	unsigned int partner = girl( TheExchange, id, ccode );
+	girlck[id] = partner;
+} // Girl main
+
+void ?{}( Girl & g, DatingService * TheExchange, unsigned int id, unsigned int ccode ) {
+	&g.TheExchange = TheExchange;
+	g.id = id;
+	g.ccode = ccode;
+} // Girl ?{}
+
+thread Boy {
+	DatingService & TheExchange;
+	unsigned int id, ccode;
+}; // Boy
+
+void main( Boy & b ) with( b ) {
+	yield( random( 100 ) );								// don't all start at the same time
+	unsigned int partner = boy( TheExchange, id, ccode );
+	boyck[id] = partner;
+} // Boy main
+
+void ?{}( Boy & b, DatingService * TheExchange, unsigned int id, unsigned int ccode ) {
+	&b.TheExchange = TheExchange;
+	b.id = id;
+	b.ccode = ccode;
+} // Boy ?{}
+
+int main() {
+	DatingService TheExchange;
+	Girl * girls[CompCodes];
+	Boy  * boys[CompCodes];
+
+	srandom( /*getpid()*/ 103 );
+
+	for ( i; (unsigned int)CompCodes ) {
+		girls[i] = new( &TheExchange, i, i );			// TheExchange constructor needs unsigned int
+		boys[i]  = new( &TheExchange, i, CompCodes - ( i + 1 ) );
+	} // for
+
+	for ( i; CompCodes ) {
+		delete( boys[i] );
+		delete( girls[i] );
+	} // for
+
+	for ( i; CompCodes ) {
+		if ( girlck[ boyck[i] ] != boyck[ girlck[i] ] ) abort();
+	} // for
+
+	printf( "done\n" );									// non-empty .expect file
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa datingService.cfa" //
+// End: //

@@ -1,0 +1,60 @@
+#include <thread.hfa>
+#include <fstream.hfa>
+
+volatile int global = 0;
+
+thread Poller {};
+void main(Poller & this) {
+	while(true) {
+		waitfor( ^?{} : this ) {
+			break;
+		} or else {
+			global = (global + 1) % 10;
+			yield();
+		}
+	}
+}
+
+thread Waiter {};
+
+volatile int count = 0;
+
+void main(Waiter & this) {
+	// Get a unique id
+	int id = __atomic_fetch_add(&count, 1, __ATOMIC_SEQ_CST);
+	int id_hash = id | (id << 8) | (id << 16) | (id << 24);
+	int mask = 0xCAFEBABA;
+
+	for(int i = 0; i < 5; i++) {
+		assert(mask == 0xCAFEBABA);
+
+		// Unpark this thread, don't force a yield
+		unpark( this );
+		assert(mask == 0xCAFEBABA);
+
+		// Hash the mask to make sure no one else messes with them
+		mask ^= id_hash;
+		assert(mask == (id_hash ^ 0xCAFEBABA));
+
+		// Force a preemption before the call to park
+		int prev = global;
+		while(prev == global) {}
+
+		// Park this thread,
+		assert(mask == (id_hash ^ 0xCAFEBABA));
+		park();
+		assert(mask == (id_hash ^ 0xCAFEBABA));
+
+		// Reset the hash and recheck it
+		mask ^= id_hash;
+		assert(mask == 0xCAFEBABA);
+	}
+}
+
+int main() {
+	Poller p;
+	{
+		Waiter waiters[5];
+	}
+	printf( "done\n" );				// non-empty .expect file
+}

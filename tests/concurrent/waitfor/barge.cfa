@@ -1,0 +1,92 @@
+//---------------------------------------------------------
+// Barging test
+// Ensures that no barging can occur between :
+//   - the frontend of the waitfor and the waited call
+//   - the waited call and the backend of the waitfor
+//---------------------------------------------------------
+
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+
+#include <stdbool.h>
+
+static const unsigned long N = 5_000ul;
+
+enum state_t { WAITFOR, CALL, BARGE };
+
+monitor global_t {
+	bool done;
+	bool started;
+	state_t state;
+};
+
+void ?{} ( global_t & this ) {
+	this.done = false;
+	this.started = false;
+	this.state = BARGE;
+}
+
+void ^?{} ( global_t & mutex this ) {}
+
+global_t global;
+
+bool barge( global_t & mutex this ) {
+	this.state = BARGE;
+	return !this.done;
+}
+
+thread barger_t {};
+void main( barger_t & this ) {
+	yield();
+	while( barge( global ) ) { yield(random( 10 )); }
+}
+
+bool do_call( global_t & mutex this ) {
+	yield(random( 10 ));
+	if( this.state != WAITFOR && !this.done && this.started ) {
+		serr | "Barging before caller detected";
+	}
+
+	this.state = CALL;
+	return !this.done;
+}
+
+thread caller_t {};
+void main( caller_t & this ) {
+	while( do_call(global) ) { yield(random( 10 )); }
+}
+
+void do_wait( global_t & mutex this ) {
+	this.started = true;
+	for( int i = 0; i < N; i++) {
+		yield(random( 10 ));
+		this.state = WAITFOR;
+		waitfor(do_call : this) {
+			sout | i;
+		}
+
+		if( this.state != CALL ) {
+			serr | "Barging after caller detected";
+		}
+	}
+
+	this.done = true;
+}
+
+thread waiter_t{};
+void main( waiter_t & this ) {
+	do_wait(global);
+}
+
+int main() {
+	sout | "Starting";
+	{
+		barger_t bargers[17];
+		caller_t callers[7];
+		waiter_t waiters;
+	}
+	sout | "Stopping";
+}

@@ -1,0 +1,232 @@
+#include <stdint.h>
+#include <stdlib.hfa>
+
+#include <unistd.h>								// STDERR_FILENO
+#include <inttypes.h>
+#include "bits/debug.hfa"
+#include "bits/locks.hfa"
+#include "stats.hfa"
+#include "strstream.hfa"
+
+#if !defined(__CFA_NO_STATISTICS__)
+	void __init_stats( struct __stats_t * stats ) {
+		stats->ready.push.local.attempt = 0;
+		stats->ready.push.local.success = 0;
+		stats->ready.push.share.attempt = 0;
+		stats->ready.push.share.success = 0;
+		stats->ready.push.extrn.attempt = 0;
+		stats->ready.push.extrn.success = 0;
+		stats->ready.pop.local .attempt = 0;
+		stats->ready.pop.local .success = 0;
+		stats->ready.pop.help  .attempt = 0;
+		stats->ready.pop.help  .success = 0;
+		stats->ready.pop.steal .attempt = 0;
+		stats->ready.pop.steal .success = 0;
+		stats->ready.pop.search.attempt = 0;
+		stats->ready.pop.search.success = 0;
+		stats->ready.threads.migration = 0;
+		stats->ready.threads.extunpark = 0;
+		stats->ready.threads.threads   = 0;
+		stats->ready.threads.cthreads  = 0;
+		stats->ready.sleep.halts   = 0;
+		stats->ready.sleep.cancels = 0;
+		stats->ready.sleep.wakes   = 0;
+		stats->ready.sleep.exits   = 0;
+
+		#if defined(CFA_HAVE_LINUX_IO_URING_H)
+			stats->io.alloc.fast        = 0;
+			stats->io.alloc.slow        = 0;
+			stats->io.alloc.fail        = 0;
+			stats->io.alloc.revoke      = 0;
+			stats->io.alloc.block       = 0;
+			stats->io.submit.fast       = 0;
+			stats->io.submit.slow       = 0;
+			stats->io.flush.external    = 0;
+			stats->io.calls.flush       = 0;
+			stats->io.calls.submitted   = 0;
+			stats->io.calls.drain       = 0;
+			stats->io.calls.completed   = 0;
+			stats->io.calls.errors.busy = 0;
+		#endif
+
+		#if defined(CFA_STATS_ARRAY)
+			stats->array.values = alloc(CFA_STATS_ARRAY);
+			stats->array.cnt = 0;
+		#endif
+	}
+
+	static inline void tally_one( volatile uint64_t * agg, volatile uint64_t * val) {
+		uint64_t add = __atomic_exchange_n(val, 0_l64u, __ATOMIC_RELAXED);
+		__atomic_fetch_add(agg, add, __ATOMIC_RELAXED);
+	}
+
+	static inline void tally_one( volatile int64_t * agg, volatile int64_t * val) {
+		int64_t add = __atomic_exchange_n(val, 0_l64, __ATOMIC_RELAXED);
+		__atomic_fetch_add(agg, add, __ATOMIC_RELAXED);
+	}
+
+	void __tally_stats( struct __stats_t * cltr, struct __stats_t * proc ) {
+		tally_one( &cltr->ready.push.local.attempt, &proc->ready.push.local.attempt );
+		tally_one( &cltr->ready.push.local.success, &proc->ready.push.local.success );
+		tally_one( &cltr->ready.push.share.attempt, &proc->ready.push.share.attempt );
+		tally_one( &cltr->ready.push.share.success, &proc->ready.push.share.success );
+		tally_one( &cltr->ready.push.extrn.attempt, &proc->ready.push.extrn.attempt );
+		tally_one( &cltr->ready.push.extrn.success, &proc->ready.push.extrn.success );
+		tally_one( &cltr->ready.pop.local .attempt, &proc->ready.pop.local .attempt );
+		tally_one( &cltr->ready.pop.local .success, &proc->ready.pop.local .success );
+		tally_one( &cltr->ready.pop.help  .attempt, &proc->ready.pop.help  .attempt );
+		tally_one( &cltr->ready.pop.help  .success, &proc->ready.pop.help  .success );
+		tally_one( &cltr->ready.pop.steal .attempt, &proc->ready.pop.steal .attempt );
+		tally_one( &cltr->ready.pop.steal .success, &proc->ready.pop.steal .success );
+		tally_one( &cltr->ready.pop.search.attempt, &proc->ready.pop.search.attempt );
+		tally_one( &cltr->ready.pop.search.success, &proc->ready.pop.search.success );
+		tally_one( &cltr->ready.threads.migration , &proc->ready.threads.migration  );
+		tally_one( &cltr->ready.threads.extunpark , &proc->ready.threads.extunpark  );
+		tally_one( &cltr->ready.threads.threads   , &proc->ready.threads.threads    );
+		tally_one( &cltr->ready.threads.cthreads  , &proc->ready.threads.cthreads   );
+		tally_one( &cltr->ready.sleep.halts       , &proc->ready.sleep.halts        );
+		tally_one( &cltr->ready.sleep.cancels     , &proc->ready.sleep.cancels      );
+		tally_one( &cltr->ready.sleep.wakes       , &proc->ready.sleep.wakes        );
+		tally_one( &cltr->ready.sleep.exits       , &proc->ready.sleep.exits        );
+
+		#if defined(CFA_HAVE_LINUX_IO_URING_H)
+			tally_one( &cltr->io.alloc.fast       , &proc->io.alloc.fast        );
+			tally_one( &cltr->io.alloc.slow       , &proc->io.alloc.slow        );
+			tally_one( &cltr->io.alloc.fail       , &proc->io.alloc.fail        );
+			tally_one( &cltr->io.alloc.revoke     , &proc->io.alloc.revoke      );
+			tally_one( &cltr->io.alloc.block      , &proc->io.alloc.block       );
+			tally_one( &cltr->io.submit.fast      , &proc->io.submit.fast       );
+			tally_one( &cltr->io.submit.slow      , &proc->io.submit.slow       );
+			tally_one( &cltr->io.flush.external   , &proc->io.flush.external    );
+			tally_one( &cltr->io.calls.flush      , &proc->io.calls.flush       );
+			tally_one( &cltr->io.calls.submitted  , &proc->io.calls.submitted   );
+			tally_one( &cltr->io.calls.drain      , &proc->io.calls.drain       );
+			tally_one( &cltr->io.calls.completed  , &proc->io.calls.completed   );
+			tally_one( &cltr->io.calls.errors.busy, &proc->io.calls.errors.busy );
+		#endif
+	}
+
+	#define eng3(X) (ws(3, 3, unit(eng( X ))))
+
+	void __print_stats( struct __stats_t * stats, int flags, const char * type, const char * name, void * id ) with( *stats ) {
+
+		char buf[1024];
+		ostrstream sstr = { buf, 1024 };
+
+		if( flags & CFA_STATS_READY_Q ) {
+
+			sstr | "----- " | type | " \"" | name | "\" (" | "" | id | "" | ") - Ready Q Stats -----";
+
+			uint64_t totalR = ready.pop.local.success + ready.pop.help.success + ready.pop.steal.success + ready.pop.search.success;
+			uint64_t totalS = ready.push.local.success + ready.push.share.success + ready.push.extrn.success;
+			sstr | "- totals   : " | eng3(totalR) | "run," | eng3(totalS) | "schd (" | eng3(ready.push.extrn.success) | "ext,"
+			     | eng3(ready.threads.migration) | "mig," | eng3(ready.threads.extunpark) | " eupk," | ready.threads.threads | " t," | ready.threads.cthreads | " cthr)";
+
+			double push_len = ((double)ready.push.local.attempt + ready.push.share.attempt + ready.push.extrn.attempt) / totalS;
+			double sLcl_len = ready.push.local.success ? ((double)ready.push.local.attempt) / ready.push.local.success : 0;
+			double sOth_len = ready.push.share.success ? ((double)ready.push.share.attempt) / ready.push.share.success : 0;
+			double sExt_len = ready.push.extrn.success ? ((double)ready.push.extrn.attempt) / ready.push.extrn.success : 0;
+			sstr | "- push avg : " | ws(3, 3, push_len)
+			     | "- l: " | eng3(ready.push.local.attempt) | " (" | ws(3, 3, sLcl_len) | ")"
+			     | ", s: " | eng3(ready.push.share.attempt) | " (" | ws(3, 3, sOth_len) | ")"
+			     | ", e: " | eng3(ready.push.extrn.attempt) | " (" | ws(3, 3, sExt_len) | ")";
+
+			double rLcl_pc = (100.0 * (double)ready.pop.local .success) / totalR;
+			sstr | "- local    : " | eng3(ready.pop.local .success) | "-"| ws(3, 3, rLcl_pc) | '%'
+			     | " (" | eng3(ready.pop.local .attempt) | " try)";
+			double rHlp_pc = (100.0 * (double)ready.pop.help  .success) / totalR;
+			sstr | "- help     : " | eng3(ready.pop.help  .success) | "-"| ws(3, 3, rHlp_pc) | '%'
+			     | " (" | eng3(ready.pop.help  .attempt) | " try)";
+			double rStl_pc = (100.0 * (double)ready.pop.steal .success) / totalR;
+			sstr | "- steal    : " | eng3(ready.pop.steal .success) | "-"| ws(3, 3, rStl_pc) | '%'
+			     | " (" | eng3(ready.pop.steal .attempt) | " try)";
+			double rSch_pc = (100.0 * (double)ready.pop.search.success) / totalR;
+			sstr | "- search   : " | eng3(ready.pop.search.success) | "-"| ws(3, 3, rSch_pc) | '%'
+			     | " (" | eng3(ready.pop.search.attempt) | " try)";
+
+			sstr | "- Idle Slp : " | eng3(ready.sleep.halts) | "halt," | eng3(ready.sleep.cancels) | "cancel," | eng3(ready.sleep.wakes) | "wake," | eng3(ready.sleep.exits) | "exit";
+			sstr | nl;
+		}
+
+		#if defined(CFA_HAVE_LINUX_IO_URING_H)
+			if( flags & CFA_STATS_IO ) {
+				sstr | "----- " | type | " \"" | name | "\" (" | "" | id | "" | ") - I/O Stats -----";
+
+				uint64_t total_allocs = io.alloc.fast + io.alloc.slow;
+
+				uint64_t total_submits = io.submit.fast + io.submit.slow;
+				sstr | "- totals : allc" | eng3(io.alloc .fast) | nonl;
+				if(io.alloc.slow) {
+					double avgfasta = (100.0 * (double)io.alloc.fast) / total_allocs;
+					sstr | "fast," | eng3(io.alloc .slow) | "slow (" | ws(3, 3, avgfasta) | "%)" | nonl;
+				}
+				sstr | " - subm" | eng3(io.submit.fast) | nonl;
+				if(io.alloc.slow) {
+					double avgfasts = (100.0 * (double)io.submit.fast) / total_submits;
+					sstr | "fast," | eng3(io.submit.slow) | "slow (" | ws(3, 3, avgfasts) | "%)" | nonl;
+				}
+				sstr | nl;
+
+				if(io.alloc.fail || io.alloc.revoke || io.alloc.block)
+					sstr | "-     failures      : " | eng3(io.alloc.fail) | "oom, " | eng3(io.alloc.revoke) | "rvk, " | eng3(io.alloc.block) | "blk";
+				if(io.flush.external)
+					sstr | "- flush external    : " | eng3(io.flush.external);
+
+				double avgsubs = ((double)io.calls.submitted) / io.calls.flush;
+				double avgcomp = ((double)io.calls.completed) / io.calls.drain;
+				sstr | "- syscll : "
+				     |   " sub " | eng3(io.calls.flush) | "/" | eng3(io.calls.submitted) | "(" | ws(3, 3, avgsubs) | "/flush)"
+				     | " - cmp " | eng3(io.calls.drain) | "/" | eng3(io.calls.completed) | "(" | ws(3, 3, avgcomp) | "/drain)"
+				     | " - " | eng3(io.calls.errors.busy) | " EBUSY";
+				sstr | nl;
+			}
+		#endif
+
+		if(flags) write( sstr, stdout );
+	}
+
+	#if defined(CFA_STATS_ARRAY)
+		extern "C" {
+			#include <stdio.h>
+			#include <errno.h>
+			#include <sys/stat.h>
+			#include <fcntl.h>
+		}
+
+		void __flush_stat( struct __stats_t * this, const char * name, void * handle) {
+			int ret = mkdir(".cfadata", 0755);
+			if(ret < 0 && errno != EEXIST) abort("Failed to create directory .cfadata: %d\n", errno);
+
+			char filename[100];
+			snprintf(filename, 100, ".cfadata/%s%p.data", name, handle);
+
+			int fd = open(filename, O_WRONLY | O_APPEND | O_CREAT, 0644);
+			if(fd < 0) abort("Failed to create file %s: %d\n", filename, errno);
+
+			for(i; this->array.cnt) {
+				char line[100];
+				size_t n = snprintf(line, 100, "%llu, %lld\n", this->array.values[i].ts, this->array.values[i].value);
+				write(fd, line, n);
+			}
+
+			this->array.cnt = 0;
+			close(fd);
+		}
+
+		static __spinlock_t stats_lock;
+
+		void __push_stat( struct __stats_t * this, int64_t value, bool external, const char * name, void * handle ) {
+			if(external) lock(stats_lock __cfaabi_dbg_ctx2);
+
+			if( this->array.cnt >= CFA_STATS_ARRAY ) __flush_stat( this, name, handle );
+
+			size_t idx = this->array.cnt;
+			this->array.cnt++;
+
+			if(external) unlock(stats_lock);
+
+			this->array.values[idx].ts = rdtscl();
+			this->array.values[idx].value = value;
+		}
+	#endif
+#endif

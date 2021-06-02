@@ -1,0 +1,166 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// identParamDeclarator.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Aug 17 08:37:56 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Sep 25 14:31:08 2020
+// Update Count     : 4
+// 
+
+int fred (
+	int f1,
+	int (f2),
+
+	int *f3,
+	int **f4,
+	int * const *f5,
+	int * const * const f6,
+
+	int *(f7),
+	int **(f8),
+	int * const *(f9),
+	int * const * const (f10),
+
+	int (*f11),
+	int (**f12),
+	int (* const *f13),
+	int (* const * const f14),
+
+	int f15[],
+	int f16[10],
+	int (f17[]),
+	int (f18[10]),
+
+	int *f19[],
+	int *f20[10],
+	int **f21[],
+	int **f22[10],
+	int * const *f23[],
+	int * const *f24[10],
+	int * const * const f25[],
+	int * const * const f26[10],
+
+	int *(f27[]),
+	int *(f28[10]),
+	int **(f29[]),
+	int **(f30[10]),
+	int * const *(f31[]),
+	int * const *(f32[10]),
+	int * const * const (f33[]),
+	int * const * const (f34[10]),
+
+	int (*f35[]),
+	int (*f36[10]),
+	int (**f37[]),
+	int (**f38[10]),
+	int (* const *f39[]),
+	int (* const *f40[10]),
+	int (* const * const f41[]),
+	int (* const * const f42[10]),
+
+	int f43[][3],
+	int f44[3][3],
+	int (f45[])[3],
+	int (f46[3])[3],
+	int ((f47[]))[3],
+	int ((f48[3]))[3],
+
+	int *f49[][3],
+	int *f50[3][3],
+	int **f51[][3],
+	int **f52[3][3],
+	int * const *f53[][3],
+	int * const *f54[3][3],
+	int * const * const f55[][3],
+	int * const * const f56[3][3],
+
+	int (*f57[][3]),
+	int (*f58[3][3]),
+	int (**f59[][3]),
+	int (**f60[3][3]),
+	int (* const *f61[][3]),
+	int (* const *f62[3][3]),
+	int (* const * const f63[][3]),
+	int (* const * const f64[3][3]),
+
+	int f65(int),
+	int (f66)(int),
+
+	int *f67(int),
+	int **f68(int),
+	int * const *f69(int),
+	int * const * const f70(int),
+
+	int *(f71)(int),
+	int **(f72)(int),
+	int * const *(f73)(int),
+	int * const * const (f74)(int),
+
+	int (*f75)(int),
+	int (**f76)(int),
+	int (* const *f77)(int),
+	int (* const * const f78)(int),
+
+	int (*(*f79)(int))(),
+	int (*(* const f80)(int))(),
+	int (* const(* const f81)(int))(),
+
+	int f82[const *],
+	int f83[const 3],
+	int f84[static 3],
+	int f85[static const 3],
+
+	int (f86[const *]),
+	int (f87[const 3]),
+	int (f88[static 3]),
+	int (f89[static const 3]),
+
+	int *f90[const *],
+	int *f91[const 3],
+	int **f92[static 3],
+	int * const *f93[static const 3],
+	int * const * const f94[static const 3],
+
+	int *(f95[const *]),
+	int *(f96[const 3]),
+	int **(f97[static 3]),
+	int * const *(f98[static const 3]),
+	int * const * const (f99[static const 3]),
+
+	int f100[const *][3],
+	int f101[const 3][3],
+	int f102[static 3][3],
+	int f103[static const 3][3],
+
+	int (f104[const *][3]),
+	int (f105[const 3][3]),
+	int (f106[static 3][3]),
+	int (f107[static const 3][3]),
+
+	int *f108[const *][3],
+	int *f109[const 3][3],
+	int **f110[static 3][3],
+	int * const *f111[static const 3][3],
+	int * const * const f112[static const 3][3],
+
+	int *(f113[const *][3]),
+	int *(f114[const 3][3]),
+	int **(f115[static 3][3]),
+	int * const *(f116[static const 3][3]),
+	int * const * const (f117[static const 3][3])
+    );
+
+int main( int argc, char const *argv[] ) {				// dummy main
+	printf( "done\n" );									// non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa identParamDeclarator.cfa" //
+// End: //

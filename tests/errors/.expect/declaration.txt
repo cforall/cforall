@@ -1,0 +1,70 @@
+errors/declaration.cfa:16:1 error: duplicate static in declaration of x1: static const volatile short int 
+
+errors/declaration.cfa:17:1 error: conflicting extern & static in declaration of x2: extern const volatile short int 
+
+errors/declaration.cfa:18:1 error: conflicting extern & auto, conflicting extern & static, conflicting extern & static, duplicate extern in declaration of x3: extern const volatile short int 
+
+errors/declaration.cfa:19:1 error: duplicate static in declaration of x4: static const volatile instance of const volatile struct __anonymous0
+  with members
+    i: int 
+   with body
+
+
+errors/declaration.cfa:20:1 error: duplicate const, duplicate static, duplicate volatile in declaration of x5: static const volatile instance of const volatile struct __anonymous1
+  with members
+    i: int 
+   with body
+
+
+errors/declaration.cfa:22:1 error: duplicate static in declaration of x6: static const volatile Int
+
+errors/declaration.cfa:24:1 error: duplicate const in declaration of f01: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:25:1 error: duplicate volatile in declaration of f02: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:26:1 error: duplicate const in declaration of f03: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:27:1 error: duplicate volatile in declaration of f04: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:28:1 error: duplicate const in declaration of f05: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:29:1 error: duplicate volatile in declaration of f06: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:30:1 error: duplicate const in declaration of f07: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:31:1 error: duplicate const, duplicate volatile in declaration of f08: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:33:1 error: duplicate const, duplicate volatile in declaration of f09: static inline function
+  with no parameters
+  returning const volatile int 
+
+
+errors/declaration.cfa:34:1 error: duplicate const, duplicate _Atomic, duplicate _Atomic, duplicate const, duplicate restrict, duplicate volatile in declaration of f09: static inline function
+  with no parameters
+  returning const restrict volatile _Atomic int 
+
+

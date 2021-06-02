@@ -1,0 +1,104 @@
+#include <thread.hfa>
+#include <future.hfa>
+
+enum {NFUTURES = 10};
+
+thread Server {
+	int pending, done, iteration;
+	multi_future(int) * request;
+};
+
+void ?{}( Server & this ) {
+	((thread&)this){"Server Thread"};
+	this.pending = 0;
+	this.done = 0;
+	this.iteration = 0;
+	this.request = 0p;
+}
+
+void ^?{}( Server & mutex this ) {
+	assert(this.pending == 0);
+	this.request = 0p;
+}
+
+void init( Server & this , multi_future(int) * f ) {
+	this.request = f;
+}
+
+void call( Server & mutex this ) {
+	this.pending++;
+}
+
+void finish( Server & mutex this ) {
+	this.done++;
+}
+
+void main( Server & this ) {
+	MAIN_LOOP:
+	for() {
+		waitfor( ^?{} : this ) {
+			break;
+		}
+		or waitfor( call: this ) {
+			if (this.pending != NFUTURES) { continue MAIN_LOOP; }
+
+			this.pending = 0;
+			fulfil( *this.request, this.iteration );
+			this.iteration++;
+
+			for(NFUTURES) {
+				waitfor( finish: this );
+			}
+
+			reset( *this.request );
+			this.done = 0;
+		}
+	}
+
+}
+
+Server * the_server;
+thread Worker {};
+void ?{}(Worker & this) {
+	((thread&)this){"Worker Thread"};
+}
+
+multi_future(int) * shared_future;
+
+void thrash(void) {
+	volatile int locals[250];
+	for(i; 250) {
+		locals[i] = 0xdeadbeef;
+	}
+}
+
+void work(int num) {
+	call( *the_server );
+	int res = wait( *shared_future );
+	if( res != num ) abort();
+	finish( *the_server );
+}
+
+void main( Worker & ) {
+	for (i; 10) {
+		thrash();
+		work(i);
+		thrash();
+	}
+}
+
+int main() {
+	printf( "start\n" );				// non-empty .expect file
+	processor procs[2];
+	shared_future = new();
+	{
+		Server server;
+		the_server = &server;
+		init(server, shared_future);
+		{
+			Worker workers[NFUTURES];
+		}
+	}
+	delete( shared_future );
+	printf( "done\n" );				// non-empty .expect file
+}

@@ -1,0 +1,64 @@
+#include <fstream.hfa>
+
+forall(T & ) {
+	struct nosize {
+		T * field;
+		void * canary;
+		void * me;
+	};
+
+	void ?{}(nosize(T) & this) {
+		this.field = 0p;
+		this.canary = 0x0D15EA5E0D15EA5Ep;
+		this.me = &this;
+	}
+
+	void ^?{}(nosize(T) & this) {
+		if(0x0D15EA5E0D15EA5Ep != this.canary)
+			sout | "Dead canary in 'no size' dtor";
+
+		if(this.me != (void*)&this)
+			sout | "Inconsistent address in dtor for 'no size'";
+	}
+
+	void call_nosize(T * ) {
+		nosize(T) obj;
+		if(obj.me != (void*)&obj)
+			sout | "Inconsistent address in ctor for 'no size'";
+	}
+}
+
+forall(T & | sized(T) ) {
+	struct withsize {
+		T * field;
+		void * canary;
+		void * me;
+	};
+
+	void ?{}(withsize(T) & this) {
+		this.field = 0p;
+		this.canary = 0x0D15EA5E0D15EA5Ep;
+		this.me = &this;
+	}
+
+	void ^?{}(withsize(T) & this) {
+		if(0x0D15EA5E0D15EA5Ep != this.canary)
+			sout | "Dead canary in 'with size' dtor" ;
+
+		if(this.me != (void*)&this)
+			sout | "Inconsistent address in dtor for 'with size' ";
+	}
+
+	void call_withsize(T * ) {
+		withsize(T) obj;
+		if(obj.me != (void*)&obj)
+			sout | "Inconsistent address in ctor for 'with size' ";
+	}
+}
+
+int main() {
+	int i;
+	call_nosize(&i);
+	call_withsize(&i);
+	sout | "All finished";
+}

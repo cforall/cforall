@@ -1,0 +1,59 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// extension.cfa -- 
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon Jul  4 20:42:43 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Nov  6 17:53:21 2018
+// Update Count     : 47
+//
+
+__extension__ __extension__ int a, b, c;
+__extension__ struct S {
+	__extension__ int a, b, c;
+};
+__extension__ union U {
+	__extension__ int a, b, c;
+};
+__extension__ enum E {
+	R, G, B,
+};
+__extension__ typedef int www; // typedefs are removed => no output
+__extension__ __extension__ int f();
+//__extension__ __extension__ asm( "nop" );
+#ifdef __cforall
+__extension__ __extension__ extern "C" {
+ 	int i, j;
+ }
+#endif // __cforall
+
+__extension__ int fred( int p ) {
+	__extension__ struct S {
+		__extension__ int a, b, c;
+#ifdef __cforall
+		__extension__ * int x, y, z;
+#endif // __cforall
+	};
+	int i = __extension__ a + __extension__ 3;
+	__extension__ 3;
+	__extension__ a;
+	__extension__ int a, b, c;
+
+	__extension__ a = __extension__ b + __extension__ c;
+	__extension__ fred( 3 );
+	__extension__ int mary( int p ) {}
+	__extension__ sizeof( 3 );
+	__extension__ (3 || 4);
+	__extension__ __alignof__( __extension__ a );
+	__extension__ a || __extension__ b && __extension__ c;
+	__extension__ a > __extension__ b ? __extension__ c : __extension__ c;
+	__extension__ a = __extension__ ( __extension__ b + __extension__ c );
+	__extension__ a, __extension__ b, __extension__ c;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa extension.cfa" //
+// End: //

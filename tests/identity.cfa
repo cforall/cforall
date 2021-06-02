@@ -1,0 +1,42 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// identity.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 21:38:59 2018
+// Update Count     : 20
+//
+
+#include <fstream.hfa>
+
+forall( T )
+T identity( T t ) {
+	return t;
+}
+
+int main() {
+	sout | "char\t\t\t"					| identity( 'z' );
+	sout | "signed int\t\t"				| identity( 4 );
+	sout | "unsigned int\t\t"			| identity( 4u );
+	sout | "signed long int\t\t" 		| identity( 4l );
+	sout | "unsigned long int\t" 		| identity( 4ul );
+	sout | "signed long long int\t"		| identity( 4ll );
+	sout | "unsigned long long int\t"	| identity( 4ull );
+	sout | "float\t\t\t" 				| identity( 4.1f );
+	sout | "double\t\t\t"				| identity( 4.1 );
+	sout | "long double\t\t"			| identity( 4.1l );
+	sout | "float _Complex\t\t"			| identity( -4.1F-2.0iF );
+	sout | "double _Complex\t\t"		| identity( -4.1D-2.0iD );
+	sout | "long double _Complex\t"		| identity( -4.1L-2.0iL );
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa identity.cfa" //
+// End: //

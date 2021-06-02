@@ -1,0 +1,12 @@
+int main() {
+	int *v1;
+	typeof(v1) v2;
+	typeof(*v1) v3[4];
+	char *v4[4];
+	typeof(typeof(char *)[4]) v5;
+	typeof (int *) v6;
+	typeof( int ( int, int p ) ) *v7;
+	typeof( [int] ( int, int p ) ) *v8;
+	(typeof(v1)) v2; // cast with typeof
+	printf( "done\n" );				// non-empty .expect file
+}

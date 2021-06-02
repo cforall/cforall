@@ -1,0 +1,48 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// iterator --
+//
+// Author           : Richard C. Bilson
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jul  7 08:37:25 2017
+// Update Count     : 10
+//
+
+#pragma once
+
+// An iterator can be used to traverse a data structure.
+trait iterator( iterator_type, elt_type ) {
+	// point to the next element
+//	iterator_type ?++( iterator_type & );
+	iterator_type ++?( iterator_type & );
+	iterator_type --?( iterator_type & );
+
+	// can be tested for equality with other iterators
+	int ?==?( iterator_type, iterator_type );
+	int ?!=?( iterator_type, iterator_type );
+
+	// dereference to get the pointed-at element
+	elt_type & *?( iterator_type );
+};
+
+trait iterator_for( iterator_type, collection_type, elt_type | iterator( iterator_type, elt_type ) ) {
+//	[ iterator_type begin, iterator_type end ] get_iterators( collection_type );
+	iterator_type begin( collection_type );
+	iterator_type end( collection_type );
+};
+
+forall( iterator_type, elt_type | iterator( iterator_type, elt_type ) )
+void for_each( iterator_type begin, iterator_type end, void (* func)( elt_type ) );
+
+forall( iterator_type, elt_type | iterator( iterator_type, elt_type ) )
+void for_each_reverse( iterator_type begin, iterator_type end, void (* func)( elt_type ) );
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

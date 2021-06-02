@@ -1,0 +1,137 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// gccExtensions.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Sun Aug 14 17:28:17 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Aug  5 18:04:37 2019
+// Update Count     : 28
+// 
+
+extern int x asm( "xx" );
+
+int main(int argc, char const *argv[]) {
+	// asm extensions
+
+	asm( "nop" );
+	__asm( "nop" );
+	__asm__( "nop" );
+
+	static int y asm( "yy" );
+#ifdef __CFA__
+	static * int z asm( "zz" );							// CFA declaration
+#endif // __CFA__
+
+	int src;
+	int dst;
+
+	asm volatile ( "mov %1, %0\n\t"
+				   "add $1, %0" : : : );
+
+	asm volatile ( "mov %1, %0\n\t"
+				   "add $1, %0"
+				   : "=" "r" (dst));
+
+	asm volatile ( "mov %1, %0\n\t"
+				   "add $1, %0"
+				   : "=r" (dst)
+				   : "r" (src));
+
+	asm ( "mov %1, %0\n\t"
+		  "add $1, %0"
+		  : "=r" (dst), "=r" (src)
+		  : [src] "r" (dst)
+		  : "r0");
+
+  L1: L2:
+  	asm goto ( "frob %%r5, %1; jc %l[L1]; mov (%2), %%r5"
+  			   : /* No outputs. */
+  			   : "r"(src), "r"(&dst)
+  			   : "r5", "memory"
+  			   : L1, L2 );
+
+	// alternative type/qualifer names
+
+	__complex__ c1;
+	_Complex c2;
+
+	const int i1;
+	__const int i2;
+	__const__ int i3;
+
+	__inline int f1() {}
+	__inline__ int f2() {}
+
+	__signed s1;
+	__signed s2;
+
+	__volatile int v1;
+	__volatile__ int v2;
+
+	// symbol table attributes
+
+	__typeof(s1) t1;
+	__typeof__(s1) t2;
+
+	// strange extension qualifier
+
+	__extension__ const int ex;
+	struct S {
+		__extension__ int a, b, c;
+	};
+	int i = __extension__ 3;
+	__extension__ int a, b, c;
+	__extension__ a, __extension__ b, __extension__ c;
+	__extension__ a = __extension__ b + __extension__ c;
+	__extension__ a = __extension__ ( __extension__ b + __extension__ c );
+
+	// attributes
+
+	__attribute__(()) int a1;
+	const __attribute(()) int a2;
+	const static __attribute(()) int a3;
+	const static int __attribute(()) a4;
+	const static int a5 __attribute(());
+	const static int a6, __attribute(()) a7;
+
+	int * __attribute(()) p1;
+	int (* __attribute(()) p2);
+//	int (__attribute(()) (p3));
+//	int ( __attribute(()) (* __attribute(()) p4));
+
+	struct __attribute(()) s1;
+	struct __attribute(()) s2 { int i; };
+	struct __attribute(()) s3 { int i; } x1, __attribute(()) y1;
+	struct __attribute(()) s4 { int i; } x2, y2 __attribute(());
+
+	int m1[10] __attribute(());
+	int m2[10][10] __attribute(());
+	int __attribute(()) m3 [10][10];
+//	int ( __attribute(()) m4 [10] )[10];
+
+	// int128
+
+#if defined( __SIZEOF_INT128__ )
+	void f128( __int128 i );
+	void f128( __uint128_t );
+
+	__int128 i128_0;
+	f128( i128_0 );
+	unsigned __int128 i128_1;
+	f128( i128_1 );
+	__int128_t i128_2;
+	f128( i128_2 );
+	__uint128_t i128_3;
+	f128( i128_3 );
+#endif
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa gccExtensions.cfa" //
+// End: //

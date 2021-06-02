@@ -1,0 +1,113 @@
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <bits/stack.hfa>
+#include <bits/queue.hfa>
+#include <bits/sequence.hfa>
+
+struct Task;											// node type
+
+struct TaskDL {
+	inline Seqable;
+	Task & node;
+};
+void ?{}( TaskDL & this, Task & task ) with( this ) {
+	((Seqable &)this){};
+	&node = &task;										// pointer to containing node
+}
+Task & task( TaskDL & this ) with( this ) {				// getter routine for containing node
+	return node;
+}
+
+TaskDL *& Back( TaskDL * n ) {
+	return (TaskDL *)Back( (Seqable *)n );
+}
+
+TaskDL *& Next( TaskDL * n ) {
+	return (TaskDL *)Next( (Colable *)n );
+}
+
+struct TaskSL {
+	inline Colable;
+	Task & node;
+};
+void ?{}( TaskSL & this, Task & task ) with( this ) {
+	((Colable &)this){};
+	&node = &task;										// pointer to containing node
+}
+Task & task( TaskSL & this ) with( this ) {				// getter routine for containing node
+	return node;
+}
+
+TaskSL *& Next( TaskSL * n ) {
+	return (TaskSL *)Next( (Colable *)n );
+}
+
+struct Task {
+	TaskDL clusterRef;									// list of tasks on cluster
+	TaskDL readyRef;									// list of tasks on ready queue
+	TaskSL mutexRef;									// list of tasks on mutex queue
+	int id;
+};
+void ?{}( Task & this, int id ) with( this ) {
+	((TaskDL &)clusterRef){ this };
+	((TaskDL &)readyRef){ this };
+	((TaskSL &)mutexRef){ this };
+	this.id = id;
+}
+
+int main() {
+	Sequence(TaskDL) clustList, readyList;				// task lists
+	Queue(TaskSL) mutexList;
+	enum { Lnth = 10 };
+
+	for ( id; Lnth ) {
+		Task & task = *new( id );						// create task node
+		addHead( clustList, task.clusterRef );			// insert on lists in opposite directions
+		addTail( readyList, task.readyRef );
+		addHead( mutexList, task.mutexRef );
+	}
+
+	SeqIter(TaskDL) sqiter;
+	TaskDL & dl;										// iterator index
+	TaskSL & sl;
+
+	sout | nlOff;
+	for ( over( sqiter, clustList ); sqiter | dl; ) {	// print lists
+		Task & tmp = task( dl ); sout | tmp.id;
+		// sout | task( dl ).id;
+	}
+	sout | nl;
+	for ( over( sqiter, readyList ); sqiter | dl; ) {
+		Task & tmp = task( dl ); sout | tmp.id;
+		// sout | task( dl ).id;
+	}
+	sout | nl;
+	for ( QueueIter(TaskSL) qiter = { mutexList }; qiter | sl; ) {	// print lists
+		Task & tmp = task( sl ); sout | tmp.id;
+		// sout | task( sl ).id;
+	}
+	sout | nl;
+	for ( Lnth ) {										// remove nodes from clustList. mutexList
+		dropHead( clustList );
+		drop( mutexList );
+	}
+	// Simultaneous deletion only safe if all nodes are traversed in same direction.
+	for ( Lnth ) {										// remove nodes from readyList and safe to delete nodes
+		delete( &task( dropHead( readyList ) ) );
+	}
+
+	// Re-purpose Seqable as Colable
+	Stack(TaskDL) mutexStack;
+	for ( id; Lnth ) {
+		Task & task = *new( id );						// create task node
+		push( mutexStack, task.clusterRef );			// insert on lists in opposite directions
+	}
+	for ( StackIter(TaskDL) stiter = { mutexStack }; stiter | dl; ) {
+		Task & tmp = task( dl ); sout | tmp.id;
+		// sout | task( dl ).id;
+	}
+	sout | nl;
+	for ( Lnth ) {										// remove nodes from readyList and safe to delete nodes
+		delete( &task( pop( mutexStack ) ) );
+	}
+}

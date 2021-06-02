@@ -1,0 +1,34 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// nostdlib.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Jul 16 12:14:39 2019
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+extern _Bool threading_enabled(void) __attribute__((weak));
+
+int main() {
+	if(threading_enabled) {
+		if(threading_enabled()) {
+			printf("YES\n");
+		} else {
+			printf("NO\n");
+		}
+	} else {
+		printf("NO LIB\n");
+	}
+	return 0;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa nostdlib.cfa" //
+// End: //

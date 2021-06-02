@@ -1,0 +1,517 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// io.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Apr 23 17:31:00 2020
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#define __cforall_thread__
+
+#if defined(__CFA_DEBUG__)
+	// #define __CFA_DEBUG_PRINT_IO__
+	// #define __CFA_DEBUG_PRINT_IO_CORE__
+#endif
+
+
+#if defined(CFA_HAVE_LINUX_IO_URING_H)
+	#define _GNU_SOURCE         /* See feature_test_macros(7) */
+	#include <errno.h>
+	#include <signal.h>
+	#include <stdint.h>
+	#include <string.h>
+	#include <unistd.h>
+
+	extern "C" {
+		#include <sys/syscall.h>
+		#include <sys/eventfd.h>
+
+		#include <linux/io_uring.h>
+	}
+
+	#include "stats.hfa"
+	#include "kernel.hfa"
+	#include "kernel/fwd.hfa"
+	#include "kernel_private.hfa"
+	#include "io/types.hfa"
+
+	__attribute__((unused)) static const char * opcodes[] = {
+		"OP_NOP",
+		"OP_READV",
+		"OP_WRITEV",
+		"OP_FSYNC",
+		"OP_READ_FIXED",
+		"OP_WRITE_FIXED",
+		"OP_POLL_ADD",
+		"OP_POLL_REMOVE",
+		"OP_SYNC_FILE_RANGE",
+		"OP_SENDMSG",
+		"OP_RECVMSG",
+		"OP_TIMEOUT",
+		"OP_TIMEOUT_REMOVE",
+		"OP_ACCEPT",
+		"OP_ASYNC_CANCEL",
+		"OP_LINK_TIMEOUT",
+		"OP_CONNECT",
+		"OP_FALLOCATE",
+		"OP_OPENAT",
+		"OP_CLOSE",
+		"OP_FILES_UPDATE",
+		"OP_STATX",
+		"OP_READ",
+		"OP_WRITE",
+		"OP_FADVISE",
+		"OP_MADVISE",
+		"OP_SEND",
+		"OP_RECV",
+		"OP_OPENAT2",
+		"OP_EPOLL_CTL",
+		"OP_SPLICE",
+		"OP_PROVIDE_BUFFERS",
+		"OP_REMOVE_BUFFERS",
+		"OP_TEE",
+		"INVALID_OP"
+	};
+
+	static $io_context * __ioarbiter_allocate( $io_arbiter & this, __u32 idxs[], __u32 want );
+	static void __ioarbiter_submit( $io_context * , __u32 idxs[], __u32 have, bool lazy );
+	static void __ioarbiter_flush ( $io_context & );
+	static inline void __ioarbiter_notify( $io_context & ctx );
+//=============================================================================================
+// I/O Polling
+//=============================================================================================
+	static inline unsigned __flush( struct $io_context & );
+	static inline __u32 __release_sqes( struct $io_context & );
+	extern void __kernel_unpark( $thread * thrd );
+
+	bool __cfa_io_drain( processor * proc ) {
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( ready_schedule_islocked() );
+		/* paranoid */ verify( proc );
+		/* paranoid */ verify( proc->io.ctx );
+
+		// Drain the queue
+		$io_context * ctx = proc->io.ctx;
+		unsigned head = *ctx->cq.head;
+		unsigned tail = *ctx->cq.tail;
+		const __u32 mask = *ctx->cq.mask;
+
+		__u32 count = tail - head;
+		__STATS__( false, io.calls.drain++; io.calls.completed += count; )
+
+		if(count == 0) return false;
+
+		for(i; count) {
+			unsigned idx = (head + i) & mask;
+			volatile struct io_uring_cqe & cqe = ctx->cq.cqes[idx];
+
+			/* paranoid */ verify(&cqe);
+
+			struct io_future_t * future = (struct io_future_t *)(uintptr_t)cqe.user_data;
+			__cfadbg_print_safe( io, "Kernel I/O : Syscall completed : cqe %p, result %d for %p\n", &cqe, cqe.res, future );
+
+			__kernel_unpark( fulfil( *future, cqe.res, false ) );
+		}
+
+		__cfadbg_print_safe(io, "Kernel I/O : %u completed\n", count);
+
+		// Mark to the kernel that the cqe has been seen
+		// Ensure that the kernel only sees the new value of the head index after the CQEs have been read.
+		__atomic_store_n( ctx->cq.head, head + count, __ATOMIC_SEQ_CST );
+
+		/* paranoid */ verify( ready_schedule_islocked() );
+		/* paranoid */ verify( ! __preemption_enabled() );
+
+		return true;
+	}
+
+	void __cfa_io_flush( processor * proc ) {
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( proc );
+		/* paranoid */ verify( proc->io.ctx );
+
+		__attribute__((unused)) cluster * cltr = proc->cltr;
+		$io_context & ctx = *proc->io.ctx;
+
+		// for(i; 2) {
+		// 	unsigned idx = proc->rdq.id + i;
+		// 	cltr->ready_queue.lanes.tscs[idx].tv = -1ull;
+		// }
+
+		__ioarbiter_flush( ctx );
+
+		__STATS__( true, io.calls.flush++; )
+		int ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, 0, 0, (sigset_t *)0p, _NSIG / 8);
+		if( ret < 0 ) {
+			switch((int)errno) {
+			case EAGAIN:
+			case EINTR:
+			case EBUSY:
+				// Update statistics
+				__STATS__( false, io.calls.errors.busy ++; )
+				// for(i; 2) {
+				// 	unsigned idx = proc->rdq.id + i;
+				// 	cltr->ready_queue.lanes.tscs[idx].tv = rdtscl();
+				// }
+				return;
+			default:
+				abort( "KERNEL ERROR: IO_URING SYSCALL - (%d) %s\n", (int)errno, strerror(errno) );
+			}
+		}
+
+		__cfadbg_print_safe(io, "Kernel I/O : %u submitted to io_uring %d\n", ret, ctx.fd);
+		__STATS__( true, io.calls.submitted += ret; )
+		/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
+		/* paranoid */ verify( ctx.sq.to_submit >= ret );
+
+		ctx.sq.to_submit -= ret;
+
+		/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
+
+		// Release the consumed SQEs
+		__release_sqes( ctx );
+
+		/* paranoid */ verify( ! __preemption_enabled() );
+
+		ctx.proc->io.pending = false;
+
+		ready_schedule_lock();
+		__cfa_io_drain( proc );
+		ready_schedule_unlock();
+		// for(i; 2) {
+		// 	unsigned idx = proc->rdq.id + i;
+		// 	cltr->ready_queue.lanes.tscs[idx].tv = rdtscl();
+		// }
+	}
+
+//=============================================================================================
+// I/O Submissions
+//=============================================================================================
+
+// Submition steps :
+// 1 - Allocate a queue entry. The ring already has memory for all entries but only the ones
+//     listed in sq.array are visible by the kernel. For those not listed, the kernel does not
+//     offer any assurance that an entry is not being filled by multiple flags. Therefore, we
+//     need to write an allocator that allows allocating concurrently.
+//
+// 2 - Actually fill the submit entry, this is the only simple and straightforward step.
+//
+// 3 - Append the entry index to the array and adjust the tail accordingly. This operation
+//     needs to arrive to two concensus at the same time:
+//     A - The order in which entries are listed in the array: no two threads must pick the
+//         same index for their entries
+//     B - When can the tail be update for the kernel. EVERY entries in the array between
+//         head and tail must be fully filled and shouldn't ever be touched again.
+//
+	//=============================================================================================
+	// Allocation
+	// for user's convenience fill the sqes from the indexes
+	static inline void __fill(struct io_uring_sqe * out_sqes[], __u32 want, __u32 idxs[], struct $io_context * ctx)  {
+		struct io_uring_sqe * sqes = ctx->sq.sqes;
+		for(i; want) {
+			__cfadbg_print_safe(io, "Kernel I/O : filling loop\n");
+			out_sqes[i] = &sqes[idxs[i]];
+		}
+	}
+
+	// Try to directly allocate from the a given context
+	// Not thread-safe
+	static inline bool __alloc(struct $io_context * ctx, __u32 idxs[], __u32 want) {
+		__sub_ring_t & sq = ctx->sq;
+		const __u32 mask  = *sq.mask;
+		__u32 fhead = sq.free_ring.head;    // get the current head of the queue
+		__u32 ftail = sq.free_ring.tail;    // get the current tail of the queue
+
+		// If we don't have enough sqes, fail
+		if((ftail - fhead) < want) { return false; }
+
+		// copy all the indexes we want from the available list
+		for(i; want) {
+			__cfadbg_print_safe(io, "Kernel I/O : allocating loop\n");
+			idxs[i] = sq.free_ring.array[(fhead + i) & mask];
+		}
+
+		// Advance the head to mark the indexes as consumed
+		__atomic_store_n(&sq.free_ring.head, fhead + want, __ATOMIC_RELEASE);
+
+		// return success
+		return true;
+	}
+
+	// Allocate an submit queue entry.
+	// The kernel cannot see these entries until they are submitted, but other threads must be
+	// able to see which entries can be used and which are already un used by an other thread
+	// for convenience, return both the index and the pointer to the sqe
+	// sqe == &sqes[idx]
+	struct $io_context * cfa_io_allocate(struct io_uring_sqe * sqes[], __u32 idxs[], __u32 want) {
+		__cfadbg_print_safe(io, "Kernel I/O : attempting to allocate %u\n", want);
+
+		disable_interrupts();
+		processor * proc = __cfaabi_tls.this_processor;
+		$io_context * ctx = proc->io.ctx;
+		/* paranoid */ verify( __cfaabi_tls.this_processor );
+		/* paranoid */ verify( ctx );
+
+		__cfadbg_print_safe(io, "Kernel I/O : attempting to fast allocation\n");
+
+		// We can proceed to the fast path
+		if( __alloc(ctx, idxs, want) ) {
+			// Allocation was successful
+			__STATS__( true, io.alloc.fast += 1; )
+			enable_interrupts();
+
+			__cfadbg_print_safe(io, "Kernel I/O : fast allocation successful from ring %d\n", ctx->fd);
+
+			__fill( sqes, want, idxs, ctx );
+			return ctx;
+		}
+		// The fast path failed, fallback
+		__STATS__( true, io.alloc.fail += 1; )
+
+		// Fast path failed, fallback on arbitration
+		__STATS__( true, io.alloc.slow += 1; )
+		enable_interrupts();
+
+		$io_arbiter * ioarb = proc->cltr->io.arbiter;
+		/* paranoid */ verify( ioarb );
+
+		__cfadbg_print_safe(io, "Kernel I/O : falling back on arbiter for allocation\n");
+
+		struct $io_context * ret = __ioarbiter_allocate(*ioarb, idxs, want);
+
+		__cfadbg_print_safe(io, "Kernel I/O : slow allocation completed from ring %d\n", ret->fd);
+
+		__fill( sqes, want, idxs,ret );
+		return ret;
+	}
+
+
+	//=============================================================================================
+	// submission
+	static inline void __submit( struct $io_context * ctx, __u32 idxs[], __u32 have, bool lazy) {
+		// We can proceed to the fast path
+		// Get the right objects
+		__sub_ring_t & sq = ctx->sq;
+		const __u32 mask  = *sq.mask;
+		__u32 tail = *sq.kring.tail;
+
+		// Add the sqes to the array
+		for( i; have ) {
+			__cfadbg_print_safe(io, "Kernel I/O : __submit loop\n");
+			sq.kring.array[ (tail + i) & mask ] = idxs[i];
+		}
+
+		// Make the sqes visible to the submitter
+		__atomic_store_n(sq.kring.tail, tail + have, __ATOMIC_RELEASE);
+		sq.to_submit++;
+
+		ctx->proc->io.pending = true;
+		ctx->proc->io.dirty   = true;
+		if(sq.to_submit > 30 || !lazy) {
+			__cfa_io_flush( ctx->proc );
+		}
+	}
+
+	void cfa_io_submit( struct $io_context * inctx, __u32 idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1))) {
+		__cfadbg_print_safe(io, "Kernel I/O : attempting to submit %u (%s)\n", have, lazy ? "lazy" : "eager");
+
+		disable_interrupts();
+		processor * proc = __cfaabi_tls.this_processor;
+		$io_context * ctx = proc->io.ctx;
+		/* paranoid */ verify( __cfaabi_tls.this_processor );
+		/* paranoid */ verify( ctx );
+
+		// Can we proceed to the fast path
+		if( ctx == inctx )		// We have the right instance?
+		{
+			__submit(ctx, idxs, have, lazy);
+
+			// Mark the instance as no longer in-use, re-enable interrupts and return
+			__STATS__( true, io.submit.fast += 1; )
+			enable_interrupts();
+
+			__cfadbg_print_safe(io, "Kernel I/O : submitted on fast path\n");
+			return;
+		}
+
+		// Fast path failed, fallback on arbitration
+		__STATS__( true, io.submit.slow += 1; )
+		enable_interrupts();
+
+		__cfadbg_print_safe(io, "Kernel I/O : falling back on arbiter for submission\n");
+
+		__ioarbiter_submit(inctx, idxs, have, lazy);
+	}
+
+	//=============================================================================================
+	// Flushing
+	// Go through the ring's submit queue and release everything that has already been consumed
+	// by io_uring
+	// This cannot be done by multiple threads
+	static __u32 __release_sqes( struct $io_context & ctx ) {
+		const __u32 mask = *ctx.sq.mask;
+
+		__attribute__((unused))
+		__u32 ctail = *ctx.sq.kring.tail;    // get the current tail of the queue
+		__u32 chead = *ctx.sq.kring.head;	 // get the current head of the queue
+		__u32 phead = ctx.sq.kring.released; // get the head the last time we were here
+
+		__u32 ftail = ctx.sq.free_ring.tail;  // get the current tail of the queue
+
+		// the 3 fields are organized like this diagram
+		// except it's are ring
+		// ---+--------+--------+----
+		// ---+--------+--------+----
+		//    ^        ^        ^
+		// phead    chead    ctail
+
+		// make sure ctail doesn't wrap around and reach phead
+		/* paranoid */ verify(
+			   (ctail >= chead && chead >= phead)
+			|| (chead >= phead && phead >= ctail)
+			|| (phead >= ctail && ctail >= chead)
+		);
+
+		// find the range we need to clear
+		__u32 count = chead - phead;
+
+		if(count == 0) {
+			return 0;
+		}
+
+		// We acquired an previous-head/current-head range
+		// go through the range and release the sqes
+		for( i; count ) {
+			__cfadbg_print_safe(io, "Kernel I/O : release loop\n");
+			__u32 idx = ctx.sq.kring.array[ (phead + i) & mask ];
+			ctx.sq.free_ring.array[ (ftail + i) & mask ] = idx;
+		}
+
+		ctx.sq.kring.released = chead;		// note up to were we processed
+		__atomic_store_n(&ctx.sq.free_ring.tail, ftail + count, __ATOMIC_SEQ_CST);
+
+		__ioarbiter_notify(ctx);
+
+		return count;
+	}
+
+//=============================================================================================
+// I/O Arbiter
+//=============================================================================================
+	static inline void block(__outstanding_io_queue & queue, __outstanding_io & item) {
+		// Lock the list, it's not thread safe
+		lock( queue.lock __cfaabi_dbg_ctx2 );
+		{
+			// Add our request to the list
+			add( queue.queue, item );
+
+			// Mark as pending
+			__atomic_store_n( &queue.empty, false, __ATOMIC_SEQ_CST );
+		}
+		unlock( queue.lock );
+
+		wait( item.sem );
+	}
+
+	static inline bool empty(__outstanding_io_queue & queue ) {
+		return __atomic_load_n( &queue.empty, __ATOMIC_SEQ_CST);
+	}
+
+	static $io_context * __ioarbiter_allocate( $io_arbiter & this, __u32 idxs[], __u32 want ) {
+		__cfadbg_print_safe(io, "Kernel I/O : arbiter allocating\n");
+
+		__STATS__( false, io.alloc.block += 1; )
+
+		// No one has any resources left, wait for something to finish
+		// We need to add ourself to a list of pending allocs and wait for an answer
+		__pending_alloc pa;
+		pa.idxs = idxs;
+		pa.want = want;
+
+		block(this.pending, (__outstanding_io&)pa);
+
+		return pa.ctx;
+
+	}
+
+	static void __ioarbiter_notify( $io_arbiter & this, $io_context * ctx ) {
+		/* paranoid */ verify( !empty(this.pending.queue) );
+
+		lock( this.pending.lock __cfaabi_dbg_ctx2 );
+		{
+			while( !empty(this.pending.queue) ) {
+				__cfadbg_print_safe(io, "Kernel I/O : notifying\n");
+				__u32 have = ctx->sq.free_ring.tail - ctx->sq.free_ring.head;
+				__pending_alloc & pa = (__pending_alloc&)head( this.pending.queue );
+
+				if( have > pa.want ) goto DONE;
+				drop( this.pending.queue );
+
+				/* paranoid */__attribute__((unused)) bool ret =
+
+				__alloc(ctx, pa.idxs, pa.want);
+
+				/* paranoid */ verify( ret );
+
+				pa.ctx = ctx;
+
+				post( pa.sem );
+			}
+
+			this.pending.empty = true;
+			DONE:;
+		}
+		unlock( this.pending.lock );
+	}
+
+	static void __ioarbiter_notify( $io_context & ctx ) {
+		if(!empty( ctx.arbiter->pending )) {
+			__ioarbiter_notify( *ctx.arbiter, &ctx );
+		}
+	}
+
+	// Simply append to the pending
+	static void __ioarbiter_submit( $io_context * ctx, __u32 idxs[], __u32 have, bool lazy ) {
+		__cfadbg_print_safe(io, "Kernel I/O : submitting %u from the arbiter to context %u\n", have, ctx->fd);
+
+		__cfadbg_print_safe(io, "Kernel I/O : waiting to submit %u\n", have);
+
+		__external_io ei;
+		ei.idxs = idxs;
+		ei.have = have;
+		ei.lazy = lazy;
+
+		block(ctx->ext_sq, (__outstanding_io&)ei);
+
+		__cfadbg_print_safe(io, "Kernel I/O : %u submitted from arbiter\n", have);
+	}
+
+	static void __ioarbiter_flush( $io_context & ctx ) {
+		if(!empty( ctx.ext_sq )) {
+			__STATS__( false, io.flush.external += 1; )
+
+			__cfadbg_print_safe(io, "Kernel I/O : arbiter flushing\n");
+
+			lock( ctx.ext_sq.lock __cfaabi_dbg_ctx2 );
+			{
+				while( !empty(ctx.ext_sq.queue) ) {
+					__external_io & ei = (__external_io&)drop( ctx.ext_sq.queue );
+
+					__submit(&ctx, ei.idxs, ei.have, ei.lazy);
+
+					post( ei.sem );
+				}
+
+				ctx.ext_sq.empty = true;
+			}
+			unlock(ctx.ext_sq.lock );
+		}
+	}
+#endif

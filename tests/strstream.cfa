@@ -1,0 +1,37 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+// 
+// strstream.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Apr 28 21:47:35 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Apr 28 21:50:02 2021
+// Update Count     : 3
+// 
+
+#include <fstream.hfa>
+#include <strstream.hfa>
+
+int main() {
+	enum { size = 256 };
+	char buf[size];										// output buffer
+	ostrstream osstr = { buf, size };					// bind output buffer/size
+	int i = 3, j = 5, k = 7;
+	double x = 12345678.9, y = 98765.4321e-11;
+
+	osstr | i | hex(j) | wd(10, k) | sci(x) | unit(eng(y)); // same lines of output
+	write( osstr );
+	printf( "%s", buf );
+	sout | i | hex(j) | wd(10, k) | sci(x) | unit(eng(y));
+
+	// char buf2[] = "12 14 15 3.5 7e4";					// input buffer
+	// istrstream isstr = { buf2 };
+	// isstr | i | j | k | x | y;
+	// sout | i | j | k | x | y;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa strstream.cfa" //
+// End: //

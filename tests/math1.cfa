@@ -1,0 +1,71 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// math1.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Fri Apr 22 14:59:21 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Jul 14 10:16:45 2019
+// Update Count     : 112
+//
+
+#include <fstream.hfa>
+#include <math.hfa>
+
+int main( void ) {
+	float f;
+	double d;
+	long double l;
+
+	sout | "fmod:" | 5.0F % -2.0F | fmod( 5.0F, -2.0F ) | 5.0D % -2.0D | nonl;
+	sout | fmod( 5.0D, -2.0D ) | 5.0L % -2.0L | fmod( 5.0L, -2.0L );
+	sout | "remainder:" | remainder( 2.0F, 3.0F ) | remainder( 2.0D, 3.0D ) | remainder( 2.0L, 3.0L );
+	int quot;
+	f = remquo( 3.6F, 0.5F, &quot );
+	sout | "remquo:" | quot | f | nonl;
+	d = remquo( 3.6D, 0.5F, &quot );
+	sout | quot | d | nonl;
+	l = remquo( 3.6L, 0.5L, &quot );
+	sout | quot | l;
+	sout | "div:" | div( 3.6F, 0.5F ) | div( 3.6D, 0.5D ) | div( 3.6L, 0.5L );
+	sout | "fma:" | fma( 3.0F, -1.0F, 1.0F ) | fma( 3.0D, -1.0D, 1.0D ) | fma( 3.0L, -1.0L, 1.0L );
+	sout | "fdim:" | fdim( 1.0F, -1.0F ) | fdim( 1.0D, -1.0D ) | fdim( 1.0L, -1.0L );
+	sout | "nan:" | (float)nan( "" ) | (double)nan( "" ) | (long double)nan( "" );
+
+	//---------------------- Exponential ----------------------
+
+	sout | "exp:" | exp( 1.0F ) | exp( 1.0D ) | exp( 1.0L ) | nonl;
+	sout | exp( 1.0F+1.0FI ) | exp( 1.0D+1.0DI ) | exp( 1.0DL+1.0LI );
+	sout | "exp2:" | exp2( 1.0F ) | exp2( 1.0D ) | exp2( 1.0L );
+	sout | "expm1:" | expm1( 1.0F ) | expm1( 1.0D ) | expm1( 1.0L );
+	sout | "pow:" | pow( 1.0F, 1.0F ) | pow( 1.0D, 1.0D ) | pow( 1.0L, 1.0L ) | nonl;
+	sout | pow( 1.0F+1.0FI, 1.0F+1.0FI ) | pow( 1.0D+1.0DI, 1.0D+1.0DI ) | pow( 1.5DL+1.5LI, 1.5DL+1.5LI );
+
+	int b = 4;
+	unsigned int e = 2;
+    b \= e;
+    sout | b | "\\" | e | "= " | b \ e;
+    sout | 'a' \ 3 | 2 \ 8 | 4 \ 3 | -4 \ 3 | 4 \ -3 | -4 \ -3;
+	sout | 4.0 \ -3 | -4.0 \ -3 | 4.0 \ 2.1 | (1.0f+2.0fi) \ (3.0f+2.0fi);
+	sout | 4 \ -3 | -4 \ -3 | 4.0 \ 2.1 | (1.0f+2.0fi) \ (3.0f+2.0fi);
+
+	struct S { int i; };
+	double ?*?( double d, S s ) { return d * s.i; }
+	double ?/?( double d, S s ) { return d / s.i; }
+	S ?\?( S s, unsigned long y ) { return (S){ s.i \ y }; }
+	ofstream & ?|?( ofstream & os, S s ) { return os | s.i; }
+	void ?|?( ofstream & os, S s ) { (ofstream &)(os | s); ends( os ); }
+	S s = { 4 };
+	S x = s \ 2;
+	sout | x;
+	sout | s.i | s \ 2u;
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa math1.cfa" //
+// End: //

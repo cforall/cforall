@@ -1,0 +1,8 @@
+msg:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+msg:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+msg:
+msg:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+msg:escapeSTXescapeESCescapeETX
+CRC failure
+STX in message
+message too long

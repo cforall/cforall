@@ -1,0 +1,77 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// defs.hfa -- Commen macros, functions and typedefs
+// Most files depend on them and they are always useful to have.
+//
+//  *** Must not contain code specific to libcfathread ***
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Nov  9 13:24:10 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Oct 24 10:53:15 2020
+// Update Count     : 21
+//
+
+#pragma once
+
+#include <stdint.h>
+#include <assert.h>
+
+#define likely(x)   __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#define thread_local _Thread_local
+
+typedef void (*fptr_t)();
+typedef int_fast16_t __lock_size_t;
+
+#ifdef __cforall
+#define __cfa_anonymous_object(x) inline struct x
+#else
+#define __cfa_anonymous_object(x) struct x __cfa_anonymous_object
+#endif
+
+#ifdef __cforall
+void abort( const char fmt[], ... ) __attribute__ (( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ ));
+void abort( bool signalAbort, const char fmt[], ... ) __attribute__ (( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));
+extern "C" {
+#endif
+void __cabi_abort( const char fmt[], ... ) __attribute__ (( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ ));
+#ifdef __cforall
+}
+#endif
+
+#if defined(__cforall_thread__)
+#define OPTIONAL_THREAD
+#else
+#define OPTIONAL_THREAD __attribute__((weak))
+#endif
+
+static inline long long int rdtscl(void) {
+	#if defined( __i386 ) || defined( __x86_64 )
+	unsigned int lo, hi;
+	__asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+	return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
+	#elif defined( __aarch64__ ) || defined( __arm__ )
+	// https://github.com/google/benchmark/blob/v1.1.0/src/cycleclock.h#L116
+	long long int virtual_timer_value;
+	asm volatile("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
+	return virtual_timer_value;
+	#else
+		#error unsupported hardware architecture
+	#endif
+}
+
+// pause to prevent excess processor bus usage
+#if defined( __i386 ) || defined( __x86_64 )
+	#define Pause() __asm__ __volatile__ ( "pause" : : : )
+#elif defined( __ARM_ARCH )
+	#define Pause() __asm__ __volatile__ ( "YIELD" : : : )
+#else
+	#error unsupported architecture
+#endif
+
+#define CFA_IO_LAZY (1_l64u << 32_l64u)

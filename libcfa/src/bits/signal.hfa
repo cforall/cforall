@@ -1,0 +1,56 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// bits/signal.hfa -- Helper functions and defines to use signals
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Jan 25 16:06:29 2018
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include "bits/debug.hfa"
+#include "bits/defs.hfa"
+
+#include <errno.h>
+#define __USE_GNU
+#include <signal.h>
+#undef __USE_GNU
+#include <stdlib.h>
+#include <string.h>
+
+// Short hands for signal context information
+#define __CFA_SIGCXT__ ucontext_t *
+#define __CFA_SIGPARMS__ __attribute__((unused)) int sig, __attribute__((unused)) siginfo_t *sfp, __attribute__((unused)) __CFA_SIGCXT__ cxt
+
+// Sigaction wrapper : register an signal handler
+static void __cfaabi_sigaction( int sig, void (*handler)(__CFA_SIGPARMS__), int flags ) {
+	struct sigaction act;
+
+	act.sa_sigaction = (void (*)(int, siginfo_t *, void *))handler;
+	sigemptyset( &act.sa_mask );
+	sigaddset( &act.sa_mask, SIGALRM );		// disabled during signal handler
+	sigaddset( &act.sa_mask, SIGUSR1 );
+	sigaddset( &act.sa_mask, SIGSEGV );
+	sigaddset( &act.sa_mask, SIGBUS );
+	sigaddset( &act.sa_mask, SIGILL );
+	sigaddset( &act.sa_mask, SIGFPE );
+	sigaddset( &act.sa_mask, SIGHUP );		// revert to default on second delivery
+	sigaddset( &act.sa_mask, SIGTERM );
+	sigaddset( &act.sa_mask, SIGINT );
+	act.sa_flags = flags;
+
+	if ( sigaction( sig, &act, 0p ) == -1 ) {
+		__cfaabi_dbg_print_buffer_decl(
+			" __cfaabi_sigaction( sig:%d, handler:%p, flags:%d ), problem installing signal handler, error(%d) %s.\n",
+			sig, handler, flags, errno, strerror( errno )
+		);
+		_Exit( EXIT_FAILURE );
+	} // if
+}

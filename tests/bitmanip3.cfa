@@ -1,0 +1,284 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// bitmanip3.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Tue Apr  7 21:22:59 2020
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Aug 24 09:53:26 2020
+// Update Count     : 66
+// 
+
+#include <fstream.hfa>
+#include <bitmanip.hfa>
+
+int main() {
+	bool b1, b2;
+	signed char sc, scr1, scr2, scr3;
+	unsigned char uc, ucr1, ucr2, ucr3;
+	short int si, sir1, sir2, sir3;
+	unsigned short int usi, usir1, usir2, usir3;
+	int i, ir1, ir2, ir3;
+	unsigned int ui, uir1, uir2, uir3;
+	long int li, lir1, lir2, lir3;
+	unsigned long int uli, ulir1, ulir2, ulir3;
+	long long int lli, llir1, llir2, llir3;
+	unsigned long long int ulli, ullir1, ullir2, ullir3;
+
+	//============================================================
+#if 1
+	sout | nl | "is_pow2" | nl | nl;
+
+	sout | "signed char";
+	sc = 0;
+	b1 = is_pow2( sc ), b2 = is_pow2( sc + 13hh );
+	sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | b1 | wd(__bitsizeof(sc)+2, pad0(bin(sc + 13hh))) | b2;
+	for ( sc = 1; sc != 0; sc <<= 1 ) {
+		b1 = is_pow2( sc ), b2 = is_pow2( sc + 13hh );
+		sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | b1 | wd(__bitsizeof(sc)+2, pad0(bin(sc + 13hh))) | b2;
+	} // for
+	sout | nl;
+	sout | "unsigned char";
+	uc = 0;
+	b1 = is_pow2( uc ), b2 = is_pow2( uc + 13hh );
+	sout | wd(__bitsizeof(uc)+2, pad0(bin(uc))) | b1 | wd(__bitsizeof(uc)+2, pad0(bin(uc + 13hh))) | b2;
+	for ( uc = 1; uc != 0; uc <<= 1 ) {
+		b1 = is_pow2( uc ), b2 = is_pow2( uc + 13hh );
+		sout | wd(__bitsizeof(uc)+2, pad0(bin(uc))) | b1 | wd(__bitsizeof(uc)+2, pad0(bin(uc + 13hh))) | b2;
+	} // for
+	sout | nl;
+
+	sout | "short int";
+	si = 0;
+	b1 = is_pow2( si ), b2 = is_pow2( si + 13hh );
+	sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | b1 | wd(__bitsizeof(si)+2, pad0(bin(si + 13h))) | b2;
+	for ( si = 1; si != 0; si <<= 1 ) {
+		b1 = is_pow2( si ), b2 = is_pow2( si + 13hh );
+		sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | b1 | wd(__bitsizeof(si)+2, pad0(bin(si + 13h))) | b2;
+	} // for
+	sout | nl;
+	sout | "unsigned short int";
+	usi = 0;
+	b1 = is_pow2( usi ), b2 = is_pow2( usi + 13hh );
+	sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | b1 | wd(__bitsizeof(usi)+2, pad0(bin(usi + 13hh))) | b2;
+	for ( usi = 1; usi != 0; usi <<= 1 ) {
+		b1 = is_pow2( usi ), b2 = is_pow2( usi + 13hh );
+		sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | b1 | wd(__bitsizeof(usi)+2, pad0(bin(usi + 13hh))) | b2;
+	} // for
+	sout | nl;
+
+	sout | "int";
+	i = 0;
+	b1 = is_pow2( i ), b2 = is_pow2( i + 13hh );
+	sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | b1 | wd(__bitsizeof(i)+2, pad0(bin(i + 13h))) | b2;
+	for ( i = 1; i != 0; i <<= 1 ) {
+		b1 = is_pow2( i ), b2 = is_pow2( i + 13hh );
+		sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | b1 | wd(__bitsizeof(i)+2, pad0(bin(i + 13h))) | b2;
+	} // for
+	sout | nl;
+	sout | "unsigned int";
+	ui = 0;
+	b1 = is_pow2( ui ), b2 = is_pow2( ui + 13hh );
+	sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | b1 | wd(__bitsizeof(ui)+2, pad0(bin(ui + 13hh))) | b2;
+	for ( ui = 1; ui != 0; ui <<= 1 ) {
+		b1 = is_pow2( ui ), b2 = is_pow2( ui + 13hh );
+		sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | b1 | wd(__bitsizeof(ui)+2, pad0(bin(ui + 13hh))) | b2;
+	} // for
+	sout | nl;
+
+	sout | "long int";
+	li = 0;
+	b1 = is_pow2( li ), b2 = is_pow2( li + 13hh );
+	sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | b1 | wd(__bitsizeof(li)+2, pad0(bin(li + 13h))) | b2;
+	for ( li = 1; li != 0; li <<= 1 ) {
+		b1 = is_pow2( li ), b2 = is_pow2( li + 13hh );
+		sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | b1 | wd(__bitsizeof(li)+2, pad0(bin(li + 13h))) | b2;
+	} // for
+	sout | nl;
+	sout | "unsigned long int";
+	uli = 0;
+	b1 = is_pow2( uli ), b2 = is_pow2( uli + 13hh );
+	sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | b1 | wd(__bitsizeof(uli)+2, pad0(bin(uli + 13h))) | b2;
+	for ( uli = 1; uli != 0; uli <<= 1 ) {
+		b1 = is_pow2( uli ), b2 = is_pow2( uli + 13hh );
+		sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | b1 | wd(__bitsizeof(uli)+2, pad0(bin(uli + 13h))) | b2;
+	} // for
+	sout | nl;
+
+	sout | "long long int";
+	lli = 0;
+	b1 = is_pow2( lli ), b2 = is_pow2( lli + 13hh );
+	sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | b1 | wd(__bitsizeof(lli)+2, pad0(bin(lli + 13h))) | b2;
+	for ( lli = 1; lli != 0; lli <<= 1 ) {
+		b1 = is_pow2( lli ), b2 = is_pow2( lli + 13hh );
+		sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | b1 | wd(__bitsizeof(lli)+2, pad0(bin(lli + 13h))) | b2;
+	} // for
+	sout | nl;
+	sout | "unsigned long long int";
+	ulli = 0;
+	b1 = is_pow2( ulli ), b2 = is_pow2( ulli + 13hh );
+	sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | b1 | wd(__bitsizeof(ulli)+2, pad0(bin(ulli + 13h))) | b2;
+	for ( ulli = 1; ulli != 0; ulli <<= 1 ) {
+		b1 = is_pow2( ulli ), b2 = is_pow2( ulli + 13hh );
+		sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | b1 | wd(__bitsizeof(ulli)+2, pad0(bin(ulli + 13h))) | b2;
+	} // for
+	sout | nl;
+#endif // 0
+	//============================================================
+#if 1
+	sout | nl | "floor2" | nl | nl;
+
+	printf( "signed char\n" );
+	for ( sc = 1; sc != 0; sc <<= 1 ) {
+		scr1 = floor2( sc, sc ); scr2 = floor2( sc + 2hh, sc ); scr3 = floor2( -sc - 2hh, sc );
+		printf( "floor2(%hhd, %hhd) = %hhd, floor2(%hhd, %hhd) = %hhd, floor2(%hhd, %hhd) = %hhd\n", sc, sc, scr1, sc + 2hh, sc, scr2, -sc - 2hh, sc, scr3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned char\n" );
+	for ( uc = 1; uc != 0; uc <<= 1 ) {
+		ucr1 = floor2( uc, uc ); ucr2 = floor2( uc + 2hh, uc ); ucr3 = floor2( -uc - 2hh, uc );
+		printf( "floor2(%hhu, %hhu) = %hhu, floor2(%hhu, %hhu) = %hhu, floor2(%hhu, %hhu) = %hhu\n", uc, uc, ucr1, uc + 2uhh, uc, ucr2, -uc - 2uhh, uc, ucr3 );
+	} // for
+	printf( "\n" );
+
+	printf( "short int\n" );
+	for ( si = 1; si != 0; si <<= 1 ) {
+		sir1 = floor2( si, si ); sir2 = floor2( si + 2hh, si ); sir3 = floor2( -si - 2hh, si );
+		printf( "floor2(%hd, %hd) = %hd, floor2(%hd, %hd) = %hd, floor2(%hd, %hd) = %hd\n", si, si, sir1, si + 2h, si, sir2, -si - 2h, si, sir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned short int\n" );
+	for ( usi = 1; usi != 0; usi <<= 1 ) {
+		usir1 = floor2( usi, usi ); usir2 = floor2( usi + 2hh, usi ); usir3 = floor2( -usi - 2hh, usi );
+		printf( "floor2(%hu, %hu) = %hu, floor2(%hu, %hu) = %hu, floor2(%hu, %hu) = %hu\n", usi, usi, usir1, usi + 2uh, usi, usir2, -usi - 2uh, usi, usir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "int\n" );
+	for ( i = 1; i != 0; i <<= 1 ) {
+		ir1 = floor2( i, i ); ir2 = floor2( i + 2hh, i ); ir3 = floor2( -i - 2hh, i );
+		printf( "floor2(%d, %d) = %d, floor2(%d, %d) = %d, floor2(%d, %d) = %d\n", i, i, ir1, i + 2h, i, ir2, -i - 2h, i, ir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned int\n" );
+	for ( ui = 1; ui != 0; ui <<= 1 ) {
+		uir1 = floor2( ui, ui ); uir2 = floor2( ui + 2hh, ui ); uir3 = floor2( -ui - 2hh, ui );
+		printf( "floor2(%u, %u) = %u, floor2(%u, %u) = %u, floor2(%u, %u) = %u\n", ui, ui, uir1, ui + 2h, ui, uir2, -ui - 2h, ui, uir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "long int\n" );
+	for ( li = 1; li != 0; li <<= 1 ) {
+		lir1 = floor2( li, li ); lir2 = floor2( li + 2hh, li ); lir3 = floor2( -li - 2hh, li );
+		printf( "floor2(%ld, %ld) = %ld, floor2(%ld, %ld) = %ld, floor2(%ld, %ld) = %ld\n", li, li, lir1, li + 2h, li, lir2, -li - 2h, li, lir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned long int\n" );
+	for ( uli = 1; uli != 0; uli <<= 1 ) {
+		ulir1 = floor2( uli, uli ); ulir2 = floor2( uli + 2hh, uli ); ulir3 = floor2( -uli - 2hh, uli );
+		printf( "floor2(%lu, %lu) = %lu, floor2(%lu, %lu) = %lu, floor2(%lu, %lu) = %lu\n", uli, uli, ulir1, uli + 2h, uli, ulir2, -uli - 2h, uli, ulir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "long long int\n" );
+	for ( lli = 1; lli != 0; lli <<= 1 ) {
+		llir1 = floor2( lli, lli ); llir2 = floor2( lli + 2hh, lli ); llir3 = floor2( -lli - 2hh, lli );
+		printf( "floor2(%lld, %lld) = %lld, floor2(%lld, %lld) = %lld, floor2(%lld, %lld) = %lld\n", lli, lli, llir1, lli + 2h, lli, llir2, -lli - 2h, lli, llir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned long long int\n" );
+	for ( ulli = 1; ulli != 0; ulli <<= 1 ) {
+		ullir1 = floor2( ulli, ulli ); ullir2 = floor2( ulli + 2hh, ulli ); ullir3 = floor2( -ulli - 2hh, ulli );
+		printf( "floor2(%llu, %llu) = %llu, floor2(%llu, %llu) = %llu, floor2(%llu, %llu) = %llu\n", ulli, ulli, ullir1, ulli + 2h, ulli, ullir2, -ulli - 2h, ulli, ullir3 );
+	} // for
+	printf( "\n" );
+#endif // 0
+	//============================================================
+#if 1
+	sout | nl | "ceiling2" | nl | nl;
+
+	printf( "signed char\n" );
+	for ( sc = 1; sc != 0; sc <<= 1 ) {
+		scr1 = ceiling2( sc, sc ); scr2 = ceiling2( sc + 2hh, sc ); scr3 = ceiling2( -sc - 2hh, sc );
+		printf( "ceiling2(%hhd, %hhd) = %hhd, ceiling2(%hhd, %hhd) = %hhd, ceiling2(%hhd, %hhd) = %hhd\n", sc, sc, scr1, sc + 2hh, sc, scr2, -sc - 2hh, sc, scr3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned char\n" );
+	for ( uc = 1; uc != 0; uc <<= 1 ) {
+		ucr1 = ceiling2( uc, uc ); ucr2 = ceiling2( uc + 2hh, uc ); ucr3 = ceiling2( -uc - 2hh, uc );
+		printf( "ceiling2(%hhu, %hhu) = %hhu, ceiling2(%hhu, %hhu) = %hhu, ceiling2(%hhu, %hhu) = %hhu\n", uc, uc, ucr1, uc + 2uhh, uc, ucr2, -uc - 2uhh, uc, ucr3 );
+	} // for
+	printf( "\n" );
+
+	printf( "short int\n" );
+	for ( si = 1; si != 0; si <<= 1 ) {
+		sir1 = ceiling2( si, si ); sir2 = ceiling2( si + 2hh, si ); sir3 = ceiling2( -si - 2hh, si );
+		printf( "ceiling2(%hd, %hd) = %hd, ceiling2(%hd, %hd) = %hd, ceiling2(%hd, %hd) = %hd\n", si, si, sir1, si + 2h, si, sir2, -si - 2h, si, sir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned short int\n" );
+	for ( usi = 1; usi != 0; usi <<= 1 ) {
+		usir1 = ceiling2( usi, usi ); usir2 = ceiling2( usi + 2hh, usi ); usir3 = ceiling2( -usi - 2hh, usi );
+		printf( "ceiling2(%hu, %hu) = %hu, ceiling2(%hu, %hu) = %hu, ceiling2(%hu, %hu) = %hu\n", usi, usi, usir1, usi + 2uh, usi, usir2, -usi - 2uh, usi, usir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "int\n" );
+	for ( i = 1; i != 0; i <<= 1 ) {
+		ir1 = ceiling2( i, i ); ir2 = ceiling2( i + 2hh, i ); ir3 = ceiling2( -i - 2hh, i );
+		printf( "ceiling2(%d, %d) = %d, ceiling2(%d, %d) = %d, ceiling2(%d, %d) = %d\n", i, i, ir1, i + 2h, i, ir2, -i - 2h, i, ir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned int\n" );
+	for ( ui = 1; ui != 0; ui <<= 1 ) {
+		uir1 = ceiling2( ui, ui ); uir2 = ceiling2( ui + 2hh, ui ); uir3 = ceiling2( -ui - 2hh, ui );
+		printf( "ceiling2(%u, %u) = %u, ceiling2(%u, %u) = %u, ceiling2(%u, %u) = %u\n", ui, ui, uir1, ui + 2h, ui, uir2, -ui - 2h, ui, uir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "long int\n" );
+	for ( li = 1; li != 0; li <<= 1 ) {
+		lir1 = ceiling2( li, li ); lir2 = ceiling2( li + 2hh, li ); lir3 = ceiling2( -li - 2hh, li );
+		printf( "ceiling2(%ld, %ld) = %ld, ceiling2(%ld, %ld) = %ld, ceiling2(%ld, %ld) = %ld\n", li, li, lir1, li + 2h, li, lir2, -li - 2h, li, lir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned long int\n" );
+	for ( uli = 1; uli != 0; uli <<= 1 ) {
+		ulir1 = ceiling2( uli, uli ); ulir2 = ceiling2( uli + 2hh, uli ); ulir3 = ceiling2( -uli - 2hh, uli );
+		printf( "ceiling2(%lu, %lu) = %lu, ceiling2(%lu, %lu) = %lu, ceiling2(%lu, %lu) = %lu\n", uli, uli, ulir1, uli + 2h, uli, ulir2, -uli - 2h, uli, ulir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "long long int\n" );
+	for ( lli = 1; lli != 0; lli <<= 1 ) {
+		llir1 = ceiling2( lli, lli ); llir2 = ceiling2( lli + 2hh, lli ); llir3 = ceiling2( -lli - 2hh, lli );
+		printf( "ceiling2(%lld, %lld) = %lld, ceiling2(%lld, %lld) = %lld, ceiling2(%lld, %lld) = %lld\n", lli, lli, llir1, lli + 2h, lli, llir2, -lli - 2h, lli, llir3 );
+	} // for
+	printf( "\n" );
+
+	printf( "unsigned long long int\n" );
+	for ( ulli = 1; ulli != 0; ulli <<= 1 ) {
+		ullir1 = ceiling2( ulli, ulli ); ullir2 = ceiling2( ulli + 2hh, ulli ); ullir3 = ceiling2( -ulli - 2hh, ulli );
+		printf( "ceiling2(%llu, %llu) = %llu, ceiling2(%llu, %llu) = %llu, ceiling2(%llu, %llu) = %llu\n", ulli, ulli, ullir1, ulli + 2h, ulli, ullir2, -ulli - 2h, ulli, ullir3 );
+	} // for
+	printf( "\n" );
+#endif // 0
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa bitmanip3.cfa" //
+// End: //

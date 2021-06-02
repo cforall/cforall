@@ -1,0 +1,21 @@
+char			z a	min a
+signed int		4 -3	min -3
+unsigned int		4 3	min 3
+signed long int		4 -3	min -3
+unsigned long int	4 3	min 3
+signed long long int	4 -3	min -3
+unsigned long long int	4 3	min 3
+float			4. 3.1	min 3.1
+double			4. 3.1	min 3.1
+long double		4. 3.1	min 3.1
+
+char			z a	max z
+signed int		4 -3	max 4
+unsigned int		4 3	max 4
+signed long int		4 -3	max 4
+unsigned long int	4 3	max 4
+signed long long int	4 -3	max 4
+unsigned long long int	4 3	max 4
+float			4. 3.1	max 4.
+double			4. 3.1	max 4.
+long double		4. 3.1	max 4.

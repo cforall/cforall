@@ -1,0 +1,346 @@
+#include <stdio.h>
+#include "locks.hfa"
+#include <stdlib.hfa>
+#include <thread.hfa>
+
+const unsigned int num_times = 50000;
+
+multiple_acquisition_lock m;
+condition_variable( multiple_acquisition_lock ) c_m;
+
+single_acquisition_lock s;
+condition_variable( single_acquisition_lock ) c_s;
+
+owner_lock o;
+condition_variable( owner_lock ) c_o;
+
+fast_lock f;
+condition_variable( fast_lock ) c_f;
+
+thread T_C_M_WS1 {};
+
+void main( T_C_M_WS1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(m);
+		if(empty(c_m) && i != num_times - 1) {
+			wait(c_m,m);
+		}else{
+			notify_one(c_m);
+		}
+		unlock(m);
+	}
+}
+
+thread T_C_M_WB1 {};
+
+void main( T_C_M_WB1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(m);
+		if(counter(c_m) == 3 || i == num_times - 1) {
+			notify_all(c_m);
+		}else{
+			wait(c_m,m);
+		}
+		unlock(m);
+	}
+}
+
+thread T_C_S_WS1 {};
+
+void main( T_C_S_WS1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(s);
+		if(empty(c_s) && i != num_times - 1) {
+			wait(c_s,s);
+		}else{
+			notify_one(c_s);
+		}
+		unlock(s);
+	}
+}
+
+thread T_C_S_WB1 {};
+
+void main( T_C_S_WB1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(s);
+		if(counter(c_s) == 3 || i == num_times - 1) {
+			notify_all(c_s);
+		}else{
+			wait(c_s,s);
+		}
+		unlock(s);
+	}
+}
+
+thread T_C_F_WS1 {};
+
+void main( T_C_F_WS1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(f);
+		if(empty(c_f) && i != num_times - 1) {
+			wait(c_f,f);
+		}else{
+			notify_one(c_f);
+		}
+		unlock(f);
+	}
+}
+
+thread T_C_F_WB1 {};
+
+void main( T_C_F_WB1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(f);
+		if(counter(c_f) == 3 || i == num_times - 1) {
+			notify_all(c_f);
+		}else{
+			wait(c_f,f);
+		}
+		unlock(f);
+	}
+}
+
+thread T_C_O_WS1 {};
+
+void main( T_C_O_WS1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(o);
+		if(empty(c_o) && i != num_times - 1) {
+			wait(c_o,o);
+		}else{
+			notify_one(c_o);
+		}
+		unlock(o);
+	}
+}
+
+thread T_C_O_WB1 {};
+
+void main( T_C_O_WB1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(o);
+		if(counter(c_o) == 3 || i == num_times - 1) {
+			notify_all(c_o);
+		}else{
+			wait(c_o,o);
+		}
+		unlock(o);
+	}
+}
+
+thread T_C_M_WS2 {};
+
+void main( T_C_M_WS2 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(m);
+		lock(m);
+		lock(m);
+		if(empty(c_m) && i != num_times - 1) {
+			wait(c_m,m);
+		}else{
+			notify_one(c_m);
+		}
+		unlock(m);
+		unlock(m);
+		unlock(m);
+	}
+}
+
+thread T_C_O_WS2 {};
+
+void main( T_C_O_WS2 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(o);
+		lock(o);
+		lock(o);
+		if(empty(c_o) && i != num_times - 1) {
+			wait(c_o,o);
+		}else{
+			notify_one(c_o);
+		}
+		unlock(o);
+		unlock(o);
+		unlock(o);
+	}
+}
+
+thread T_C_NLW {};
+
+void main( T_C_NLW & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		wait(c_o);
+	}
+}
+
+thread T_C_NLS {};
+
+void main( T_C_NLS & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		while (empty(c_o)) { }
+		notify_one(c_o);
+	}
+}
+
+thread T_C_S_WNF {};
+
+void main( T_C_S_WNF & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(s);
+		if(empty(c_s) && i != num_times - 1) {
+			wait(c_s, s, 10);
+		}else{
+			if(!empty(c_s)) assert(front(c_s) == 10);
+			notify_one(c_s);
+		}
+		unlock(s);
+	}
+}
+
+bool done = false;
+
+thread T_C_NLWD {};
+
+void main( T_C_NLWD & this ) {
+	done = false;
+	for (unsigned int i = 0; i < num_times/5; i++) {
+		if (i % 1000 == 0) printf("Iteration: %d\n", i);
+		wait(c_s, 1`ns);
+	}
+	done = true;
+}
+
+thread T_C_WDS {};
+
+void main( T_C_WDS & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		while (empty(c_s) && !done) { }
+		notify_one(c_s);
+		sleep(1`ns);
+		if(done) break;
+	}
+}
+
+thread T_C_LWD {};
+
+void main( T_C_LWD & this ) {
+	done = false;
+	for (unsigned int i = 0; i < num_times/5; i++) {
+		if (i % 1000 == 0) printf("Iteration: %d\n", i);
+		lock(s);
+		wait(c_s, s, 1`ns);
+		unlock(s);
+	}
+	done = true;
+}
+
+thread T_C_LWDS {};
+
+void main( T_C_LWDS & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		while (empty(c_s) && !done) { }
+		lock(s);
+		notify_one(c_s);
+		unlock(s);
+		sleep(1`ns);
+		if(done) break;
+	}
+}
+
+int main() {
+	processor p[2];
+	printf("Start Test 1: multi acquisition lock and condition variable single wait/notify\n");
+	{
+		T_C_M_WS1 t1[2];
+	}
+	printf("Done Test 1\n");
+
+	printf("Start Test 2: multi acquisition lock and condition variable 3 wait/notify all\n");
+	{
+		T_C_M_WB1 t1[4];
+	}
+	printf("Done Test 2\n");
+
+	printf("Start Test 3: single acquisition lock and condition variable single wait/notify\n");
+	{
+		T_C_S_WS1 t1[2];
+	}
+	printf("Done Test 3\n");
+
+	printf("Start Test 4: single acquisition lock and condition variable 3 wait/notify all\n");
+	{
+		T_C_S_WB1 t1[4];
+	}
+	printf("Done Test 4\n");
+
+	printf("Start Test 5: owner lock and condition variable single wait/notify\n");
+	{
+		T_C_O_WS1 t1[2];
+	}
+	printf("Done Test 5\n");
+
+	printf("Start Test 6: owner lock and condition variable 3 wait/notify all\n");
+	{
+		T_C_O_WB1 t1[4];
+	}
+	printf("Done Test 6\n");
+
+	printf("Start Test 7: fast lock and condition variable single wait/notify\n");
+	{
+		T_C_F_WS1 t1[2];
+	}
+	printf("Done Test 7\n");
+
+	printf("Start Test 8: fast lock and condition variable 3 wait/notify all\n");
+	{
+		T_C_F_WB1 t1[4];
+	}
+	printf("Done Test 8\n");
+
+	printf("Start Test 9: multi acquisiton lock and condition variable multiple acquire and wait/notify\n");
+	{
+		T_C_M_WS2 t1[2];
+	}
+	printf("Done Test 9\n");
+
+	printf("Start Test 10: owner lock and condition variable multiple acquire and wait/notify\n");
+	{
+		T_C_O_WS2 t1[2];
+	}
+	printf("Done Test 10\n");
+
+	printf("Start Test 11: no lock condition variable wait/notify\n");
+	{
+		T_C_NLW t1;
+		T_C_NLS t2;
+	}
+	printf("Done Test 11\n");
+
+	printf("Start Test 12: locked condition variable wait/notify with front()\n");
+	{
+		T_C_S_WNF t1[2];
+	}
+	printf("Done Test 12\n");
+
+	// removed to limit test duration. Full test is in long run tests
+	// printf("Start Test 11: unlocked condition variable delay wait\n");
+	// {
+	// 	T_C_NLWD t1;
+	// 	T_C_WDS t2;
+	// }
+	// printf("Done Test 11\n");
+
+	// printf("Start Test 12: locked condition variable delay wait with unlocked signal\n");
+	// {
+	// 	T_C_LWD t1;
+	// 	T_C_WDS t2;
+	// }
+	// printf("Done Test 12\n");
+
+	// printf("Start Test 13: locked condition variable delay wait with locked signal\n");
+	// {
+	// 	T_C_LWD t1;
+	// 	T_C_LWDS t2;
+	// }
+	// printf("Done Test 13\n");
+}

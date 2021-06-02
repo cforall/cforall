@@ -1,0 +1,15 @@
+// No parameters
+void  ?{}();
+void ^?{}();
+void  ?=?();
+void  ?{}(void);
+void ^?{}(void);
+void  ?=?(void);
+
+// Wrong parameters
+void  ?{}(int);
+void ^?{}(int);
+void  ?=?(int);
+void  ?{}(int *);
+void ^?{}(int *);
+void  ?=?(int *);

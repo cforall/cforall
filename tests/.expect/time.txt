@@ -1,0 +1,23 @@
+10800 2 3.375 12 1.00001
+0.125 0.0333333333333333 3.375 12000. 1000010.
+0 2 3.375
+7 7 7
+14
+false false false
+3.5
+
+Fri Jan  2 00:00:00.01 1970
+Fri Jan  2 00:00:14.01 1970 104414010000000
+Fri Jan  2 00:00:14.01 1970 104414010000000
+0 Fri Jan  2 00:00:15.01001 1970 104414010000000
+yy/mm/dd 70/01/02 mm/dd/yy 01/02/70 mm/dd/yy 01/02/70 dd/yy/mm 02/01/70
+Wed Jul  4 00:00:01 2001 994219201000000000
+Wed Jul  4 00:00:01 2001 994219201000000000
+
+1 hour + 2*10 min + 70/10 sec = 4807 seconds
+Dividing that by 2 minutes gives 40
+Dividing that by 2 gives 2403.5 seconds
+4807 seconds is 1 hours, 20 minutes, 7 seconds
+2020 Jan  5 14:01:40 (GMT)
+1970 Jan  5 14:00:00 (GMT)
+1973 Jan  2 06:59:00 (GMT)

@@ -1,0 +1,483 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// iostream.hfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Apr 28 20:37:56 2021
+// Update Count     : 401
+//
+
+#pragma once
+
+#include "iterator.hfa"
+
+
+// *********************************** ostream ***********************************
+
+
+trait basic_ostream( ostype & ) {
+	// private
+	bool sepPrt$( ostype & );							// get separator state (on/off)
+	void sepReset$( ostype & );							// set separator state to default state
+	void sepReset$( ostype &, bool );					// set separator and default state
+	const char * sepGetCur$( ostype & );				// get current separator string
+	void sepSetCur$( ostype &, const char [] );			// set current separator string
+	bool getNL$( ostype & );							// check newline
+	void setNL$( ostype &, bool );						// saw newline
+	bool getANL$( ostype & );							// get auto newline (on/off)
+	bool getPrt$( ostype & );							// get fmt called in output cascade
+	void setPrt$( ostype &, bool );						// set fmt called in output cascade
+	// public
+	void sepOn( ostype & );								// turn separator state on
+	void sepOff( ostype & );							// turn separator state off
+	bool sepDisable( ostype & );						// set default state to off, and return previous state
+	bool sepEnable( ostype & );							// set default state to on, and return previous state
+	void nlOn( ostype & );								// turn auto-newline state on
+	void nlOff( ostype & );								// turn auto-newline state off
+
+	const char * sepGet( ostype & );					// get separator string
+	void sepSet( ostype &, const char [] );				// set separator to string (15 character maximum)
+	const char * sepGetTuple( ostype & );				// get tuple separator string
+	void sepSetTuple( ostype &, const char [] );		// set tuple separator to string (15 character maximum)
+
+	void ends( ostype & );								// end of output statement
+	int fmt( ostype &, const char format[], ... ) __attribute__(( format(printf, 2, 3) ));
+}; // basic_ostream
+	
+trait ostream( ostype & | basic_ostream( ostype ) ) {
+	bool fail( ostype & );								// operation failed?
+	void clear( ostype & );
+	int flush( ostype & );
+	void open( ostype &, const char name[], const char mode[] );
+	void close( ostype & );
+	ostype & write( ostype &, const char [], size_t );
+	void acquire( ostype & );							// concurrent access
+}; // ostream
+
+// trait writeable( T ) {
+// 	forall( ostype & | ostream( ostype ) ) ostype & ?|?( ostype &, T );
+// }; // writeable
+
+trait writeable( T, ostype & | ostream( ostype ) ) {
+	ostype & ?|?( ostype &, T );
+}; // writeable
+
+// implement writable for intrinsic types
+
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?( ostype &, bool );
+	void ?|?( ostype &, bool );
+
+	ostype & ?|?( ostype &, char );
+	void ?|?( ostype &, char );
+	ostype & ?|?( ostype &, signed char );
+	void ?|?( ostype &, signed char );
+	ostype & ?|?( ostype &, unsigned char );
+	void ?|?( ostype &, unsigned char );
+
+	ostype & ?|?( ostype &, short int );
+	void ?|?( ostype &, short int );
+	ostype & ?|?( ostype &, unsigned short int );
+	void ?|?( ostype &, unsigned short int );
+	ostype & ?|?( ostype &, int );
+	void ?|?( ostype &, int );
+	ostype & ?|?( ostype &, unsigned int );
+	void ?|?( ostype &, unsigned int );
+	ostype & ?|?( ostype &, long int );
+	void ?|?( ostype &, long int );
+	ostype & ?|?( ostype &, long long int );
+	void ?|?( ostype &, long long int );
+	ostype & ?|?( ostype &, unsigned long int );
+	void ?|?( ostype &, unsigned long int );
+	ostype & ?|?( ostype &, unsigned long long int );
+	void ?|?( ostype &, unsigned long long int );
+	#if defined( __SIZEOF_INT128__ )
+	ostype & ?|?( ostype &, int128 );
+	void ?|?( ostype &, int128 );
+	ostype & ?|?( ostype &, unsigned int128 );
+	void ?|?( ostype &, unsigned int128 );
+	#endif // __SIZEOF_INT128__
+
+	ostype & ?|?( ostype &, float );
+	void ?|?( ostype &, float );
+	ostype & ?|?( ostype &, double );
+	void ?|?( ostype &, double );
+	ostype & ?|?( ostype &, long double );
+	void ?|?( ostype &, long double );
+
+	ostype & ?|?( ostype &, float _Complex );
+	void ?|?( ostype &, float _Complex );
+	ostype & ?|?( ostype &, double _Complex );
+	void ?|?( ostype &, double _Complex );
+	ostype & ?|?( ostype &, long double _Complex );
+	void ?|?( ostype &, long double _Complex );
+
+	ostype & ?|?( ostype &, const char [] );
+	void ?|?( ostype &, const char [] );
+	// ostype & ?|?( ostype &, const char16_t * );
+	#if ! ( __ARM_ARCH_ISA_ARM == 1 && __ARM_32BIT_STATE == 1 ) // char32_t == wchar_t => ambiguous
+	// ostype & ?|?( ostype &, const char32_t * );
+	#endif // ! ( __ARM_ARCH_ISA_ARM == 1 && __ARM_32BIT_STATE == 1 )
+	// ostype & ?|?( ostype &, const wchar_t * );
+	ostype & ?|?( ostype &, const void * );
+	void ?|?( ostype &, const void * );
+
+	// manipulators
+	ostype & ?|?( ostype &, ostype & (*)( ostype & ) );
+	void ?|?( ostype &, ostype & (*)( ostype & ) );
+	ostype & nl( ostype & );
+	ostype & nonl( ostype & );
+	ostype & sep( ostype & );
+	ostype & sepTuple( ostype & );
+	ostype & sepOn( ostype & );
+	ostype & sepOff( ostype & );
+	ostype & sepDisable( ostype & );
+	ostype & sepEnable( ostype & );
+	ostype & nlOn( ostype & );
+	ostype & nlOff( ostype & );
+} // distribution
+
+forall( ostype & | ostream( ostype ) ) {
+	ostype & acquire( ostype & );
+} // distribution
+
+// tuples
+forall( ostype &, T, Params... | writeable( T, ostype ) | { ostype & ?|?( ostype &, Params ); } ) {
+	ostype & ?|?( ostype & os, T arg, Params rest );
+	void ?|?( ostype & os, T arg, Params rest );
+} // distribution
+
+// writes the range [begin, end) to the given stream
+forall( ostype &, elt_type | writeable( elt_type, ostype ), iterator_type | iterator( iterator_type, elt_type ) ) {
+	void write( iterator_type begin, iterator_type end, ostype & os );
+	void write_reverse( iterator_type begin, iterator_type end, ostype & os );
+} // distribution
+
+// *********************************** manipulators ***********************************
+
+forall( T )
+struct _Ostream_Manip {
+	T val;												// polymorphic base-type
+	int wd, pc;											// width, precision: signed for computations
+	char base;											// numeric base / floating-point style
+	union {
+		unsigned char all;
+		struct {
+			unsigned char eng:1;						// engineering notation
+			unsigned char neg:1;						// val is negative
+			unsigned char pc:1;							// precision specified
+			unsigned char left:1;						// left justify
+			unsigned char nobsdp:1;						// base prefix / decimal point
+			unsigned char sign:1;						// plus / minus sign
+			unsigned char pad0:1;						// zero pad
+		} flags;
+	};
+}; // _Ostream_Manip
+
+// *********************************** integral ***********************************
+
+// See 6.7.9. 19) The initialization shall occur in initializer list order, each initializer provided for a particular
+// subobject overriding any previously listed initializer for the same subobject; ***all subobjects that are not
+// initialized explicitly shall be initialized implicitly the same as objects that have static storage duration.***
+
+#define IntegralFMTDecl( T, CODE ) \
+static inline { \
+	_Ostream_Manip(T) bin( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'b', { .all : 0 } }; } \
+	_Ostream_Manip(T) oct( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'o', { .all : 0 } }; } \
+	_Ostream_Manip(T) hex( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'x', { .all : 0 } }; } \
+	_Ostream_Manip(T) wd( unsigned int w, T val ) { return (_Ostream_Manip(T))@{ val, w, 0, CODE, { .all : 0 } }; } \
+	_Ostream_Manip(T) wd( unsigned int w, unsigned int pc, T val ) { return (_Ostream_Manip(T))@{ val, w, pc, CODE, { .flags.pc : true } }; } \
+	_Ostream_Manip(T) & wd( unsigned int w, _Ostream_Manip(T) & fmt ) { fmt.wd = w; return fmt; } \
+	_Ostream_Manip(T) & wd( unsigned int w, unsigned int pc, _Ostream_Manip(T) & fmt ) { fmt.wd = w; fmt.pc = pc; fmt.flags.pc = true; return fmt; } \
+	_Ostream_Manip(T) & left( _Ostream_Manip(T) & fmt ) { fmt.flags.left = true; return fmt; } \
+	_Ostream_Manip(T) & upcase( _Ostream_Manip(T) & fmt ) { if ( fmt.base == 'x' || fmt.base == 'b' ) fmt.base -= 32; /* upper case */ return fmt; } \
+	_Ostream_Manip(T) & nobase( _Ostream_Manip(T) & fmt ) { fmt.flags.nobsdp = true; return fmt; } \
+	_Ostream_Manip(T) & pad0( _Ostream_Manip(T) & fmt ) { fmt.flags.pad0 = true; return fmt; } \
+	_Ostream_Manip(T) sign( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, CODE, { .flags.sign : true } }; } \
+	_Ostream_Manip(T) & sign( _Ostream_Manip(T) & fmt ) { fmt.flags.sign = true; return fmt; } \
+} /* distribution */ \
+forall( ostype & | basic_ostream( ostype ) ) { \
+	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ); \
+	void ?|?( ostype & os, _Ostream_Manip(T) f ); \
+} // ?|?
+
+IntegralFMTDecl( signed char, 'd' )
+IntegralFMTDecl( unsigned char, 'u' )
+IntegralFMTDecl( signed short int, 'd' )
+IntegralFMTDecl( unsigned short int, 'u' )
+IntegralFMTDecl( signed int, 'd' )
+IntegralFMTDecl( unsigned int, 'u' )
+IntegralFMTDecl( signed long int, 'd' )
+IntegralFMTDecl( unsigned long int, 'u' )
+IntegralFMTDecl( signed long long int, 'd' )
+IntegralFMTDecl( unsigned long long int, 'u' )
+#if defined( __SIZEOF_INT128__ )
+IntegralFMTDecl( int128, 'd' )
+IntegralFMTDecl( unsigned int128, 'u' )
+#endif // __SIZEOF_INT128__
+
+// *********************************** floating point ***********************************
+
+// Default suffix for values with no fraction is "."
+#define FloatingPointFMTDecl( T ) \
+static inline { \
+	_Ostream_Manip(T) hex( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'a', { .all : 0 } }; } \
+	_Ostream_Manip(T) sci( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'e', { .all : 0 } }; } \
+	_Ostream_Manip(T) eng( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'g', { .flags.eng : true } }; } \
+	_Ostream_Manip(T) wd( unsigned int w, T val ) { return (_Ostream_Manip(T))@{ val, w, 0, 'g', { .all : 0 } }; } \
+	_Ostream_Manip(T) wd( unsigned int w, unsigned int pc, T val ) { return (_Ostream_Manip(T))@{ val, w, pc, 'f', { .flags.pc : true } }; } \
+	_Ostream_Manip(T) ws( unsigned int w, unsigned int pc, T val ) { return (_Ostream_Manip(T))@{ val, w, pc, 'g', { .flags.pc : true } }; } \
+	_Ostream_Manip(T) & wd( unsigned int w, _Ostream_Manip(T) & fmt ) { if ( fmt.flags.eng ) fmt.base = 'f'; fmt.wd = w; return fmt; } \
+	_Ostream_Manip(T) & wd( unsigned int w, unsigned int pc, _Ostream_Manip(T) & fmt ) { if ( fmt.flags.eng ) fmt.base = 'f'; fmt.wd = w; fmt.pc = pc; fmt.flags.pc = true; return fmt; } \
+	_Ostream_Manip(T) & ws( unsigned int w, unsigned int pc, _Ostream_Manip(T) & fmt ) { fmt.wd = w; fmt.pc = pc; fmt.flags.pc = true; return fmt; } \
+	_Ostream_Manip(T) & left( _Ostream_Manip(T) & fmt ) { fmt.flags.left = true; return fmt; } \
+	_Ostream_Manip(T) upcase( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'G', { .all : 0 } }; } \
+	_Ostream_Manip(T) & upcase( _Ostream_Manip(T) & fmt ) { fmt.base -= 32; /* upper case */ return fmt; } \
+	_Ostream_Manip(T) & pad0( _Ostream_Manip(T) & fmt ) { fmt.flags.pad0 = true; return fmt; } \
+	_Ostream_Manip(T) sign( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'g', { .flags.sign : true } }; } \
+	_Ostream_Manip(T) & sign( _Ostream_Manip(T) & fmt ) { fmt.flags.sign = true; return fmt; } \
+	_Ostream_Manip(T) nodp( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'g', { .flags.nobsdp : true } }; } \
+	_Ostream_Manip(T) & nodp( _Ostream_Manip(T) & fmt ) { fmt.flags.nobsdp = true; return fmt; } \
+	_Ostream_Manip(T) unit( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'g', { .flags.nobsdp : true } }; } \
+	_Ostream_Manip(T) & unit( _Ostream_Manip(T) & fmt ) { fmt.flags.nobsdp = true; return fmt; } \
+} /* distribution */ \
+forall( ostype & | basic_ostream( ostype ) ) { \
+	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ); \
+	void ?|?( ostype & os, _Ostream_Manip(T) f ); \
+} // ?|?
+
+FloatingPointFMTDecl( double )
+FloatingPointFMTDecl( long double )
+
+// *********************************** character ***********************************
+
+static inline {
+	_Ostream_Manip(char) bin( char c ) { return (_Ostream_Manip(char))@{ c, 1, 0, 'b', { .all : 0 } }; }
+	_Ostream_Manip(char) oct( char c ) { return (_Ostream_Manip(char))@{ c, 1, 0, 'o', { .all : 0 } }; }
+	_Ostream_Manip(char) hex( char c ) { return (_Ostream_Manip(char))@{ c, 1, 0, 'x', { .all : 0 } }; }
+	_Ostream_Manip(char) wd( unsigned int w, char c ) { return (_Ostream_Manip(char))@{ c, w, 0, 'c', { .all : 0 } }; }
+	_Ostream_Manip(char) & wd( unsigned int w, _Ostream_Manip(char) & fmt ) { fmt.wd = w; return fmt; }
+	_Ostream_Manip(char) & left( _Ostream_Manip(char) & fmt ) { fmt.flags.left = true; return fmt; }
+	_Ostream_Manip(char) & upcase( _Ostream_Manip(char) & fmt ) { if ( fmt.base == 'x' || fmt.base == 'b' ) fmt.base -= 32; /* upper case */ return fmt; }
+	_Ostream_Manip(char) & nobase( _Ostream_Manip(char) & fmt ) { fmt.flags.nobsdp = true; return fmt; }
+} // distribution
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, _Ostream_Manip(char) f );
+	void ?|?( ostype & os, _Ostream_Manip(char) f );
+} // ?|?
+
+// *********************************** C string ***********************************
+
+static inline {
+	_Ostream_Manip(const char *) bin( const char s[] ) { return (_Ostream_Manip(const char *))@{ s, 1, 0, 'b', { .all : 0 } }; }
+	_Ostream_Manip(const char *) oct( const char s[] ) { return (_Ostream_Manip(const char *))@{ s, 1, 0, 'o', { .all : 0 } }; }
+	_Ostream_Manip(const char *) hex( const char s[] ) { return (_Ostream_Manip(const char *))@{ s, 1, 0, 'x', { .all : 0 } }; }
+	_Ostream_Manip(const char *) wd( unsigned int w, const char s[] ) { return (_Ostream_Manip(const char *))@{ s, w, 0, 's', { .all : 0 } }; }
+	_Ostream_Manip(const char *) wd( unsigned int w, unsigned int pc, const char s[] ) { return (_Ostream_Manip(const char *))@{ s, w, pc, 's', { .flags.pc : true } }; }
+	_Ostream_Manip(const char *) & wd( unsigned int w, _Ostream_Manip(const char *) & fmt ) { fmt.wd = w; return fmt; }
+	_Ostream_Manip(const char *) & wd( unsigned int w, unsigned int pc, _Ostream_Manip(const char *) & fmt ) { fmt.wd = w; fmt.pc = pc; fmt.flags.pc = true; return fmt; }
+	_Ostream_Manip(const char *) & left( _Ostream_Manip(const char *) & fmt ) { fmt.flags.left = true; return fmt; }
+	_Ostream_Manip(const char *) & nobase( _Ostream_Manip(const char *) & fmt ) { fmt.flags.nobsdp = true; return fmt; }
+} // distribution
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, _Ostream_Manip(const char *) f );
+	void ?|?( ostype & os, _Ostream_Manip(const char *) f );
+} // ?|?
+
+
+// *********************************** istream ***********************************
+
+
+trait basic_istream( istype & ) {
+	bool getANL( istype & );							// get scan newline (on/off)
+	void nlOn( istype & );								// read newline
+	void nlOff( istype & );								// scan newline
+
+	void ends( istype & os );							// end of output statement
+	int fmt( istype &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
+	istype & ungetc( istype &, char );
+	bool eof( istype & );
+}; // basic_istream
+
+trait istream( istype & | basic_istream( istype ) ) {
+	bool fail( istype & );
+	void clear( istype & );
+	void open( istype & is, const char name[] );
+	void close( istype & is );
+	istype & read( istype &, char [], size_t );
+	void acquire( istype & );							// concurrent access
+}; // istream
+
+trait readable( T ) {
+	forall( istype & | istream( istype ) ) istype & ?|?( istype &, T );
+}; // readable
+
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype &, bool & );
+	void ?|?( istype &, bool & );
+
+	istype & ?|?( istype &, char & );
+	void ?|?( istype &, char & );
+	istype & ?|?( istype &, signed char & );
+	void ?|?( istype &, signed char & );
+	istype & ?|?( istype &, unsigned char & );
+	void ?|?( istype &, unsigned char & );
+
+	istype & ?|?( istype &, short int & );
+	void ?|?( istype &, short int & );
+	istype & ?|?( istype &, unsigned short int & );
+	void ?|?( istype &, unsigned short int & );
+	istype & ?|?( istype &, int & );
+	void ?|?( istype &, int & );
+	istype & ?|?( istype &, unsigned int & );
+	void ?|?( istype &, unsigned int & );
+	istype & ?|?( istype &, long int & );
+	void ?|?( istype &, long int & );
+	istype & ?|?( istype &, unsigned long int & );
+	void ?|?( istype &, unsigned long int & );
+	istype & ?|?( istype &, long long int & );
+	void ?|?( istype &, long long int & );
+	istype & ?|?( istype &, unsigned long long int & );
+	void ?|?( istype &, unsigned long long int & );
+	#if defined( __SIZEOF_INT128__ )
+	istype & ?|?( istype &, int128 & );
+	void ?|?( istype &, int128 & );
+	istype & ?|?( istype &, unsigned int128 & );
+	void ?|?( istype &, unsigned int128 & );
+	#endif // __SIZEOF_INT128__
+
+	istype & ?|?( istype &, float & );
+	void ?|?( istype &, float & );
+	istype & ?|?( istype &, double & );
+	void ?|?( istype &, double & );
+	istype & ?|?( istype &, long double & );
+	void ?|?( istype &, long double & );
+
+	istype & ?|?( istype &, float _Complex & );
+	void ?|?( istype &, float _Complex & );
+	istype & ?|?( istype &, double _Complex & );
+	void ?|?( istype &, double _Complex & );
+	istype & ?|?( istype &, long double _Complex & );
+	void ?|?( istype &, long double _Complex & );
+
+//	istype & ?|?( istype &, const char [] );
+	istype & ?|?( istype &, char [] );
+	void ?|?( istype &, char [] );
+
+	// manipulators
+	istype & ?|?( istype &, istype & (*)( istype & ) );
+	void ?|?( istype &, istype & (*)( istype & ) );
+	istype & nl( istype & is );
+	istype & nlOn( istype & );
+	istype & nlOff( istype & );
+} // distribution
+
+forall( istype & | istream( istype ) ) {
+	istype & acquire( istype & );
+} // distribution
+
+// *********************************** manipulators ***********************************
+
+struct _Istream_Cstr {
+	char * s;
+	const char * scanset;
+	int wd;												// width
+	union {
+		unsigned char all;
+		struct {
+			unsigned char ignore:1;						// do not change input argument
+			unsigned char inex:1;						// include/exclude characters in scanset
+		} flags;
+	};
+}; // _Istream_Cstr
+
+static inline {
+	_Istream_Cstr skip( const char scanset[] ) { return (_Istream_Cstr){ 0p, scanset, -1, { .all : 0 } }; }
+	_Istream_Cstr skip( unsigned int n ) { return (_Istream_Cstr){ 0p, 0p, n, { .all : 0 } }; }
+	_Istream_Cstr incl( const char scanset[], char * s ) { return (_Istream_Cstr){ s, scanset, -1, { .flags.inex : false } }; }
+	_Istream_Cstr & incl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
+	_Istream_Cstr excl( const char scanset[], char * s ) { return (_Istream_Cstr){ s, scanset, -1, { .flags.inex : true } }; }
+	_Istream_Cstr & excl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = true; return fmt; }
+	_Istream_Cstr ignore( char s[] ) { return (_Istream_Cstr)@{ s, 0p, -1, { .flags.ignore : true } }; }
+	_Istream_Cstr & ignore( _Istream_Cstr & fmt ) { fmt.flags.ignore = true; return fmt; }
+	_Istream_Cstr wdi( unsigned int w, char s[] ) { return (_Istream_Cstr)@{ s, 0p, w, { .all : 0 } }; }
+	_Istream_Cstr & wdi( unsigned int w, _Istream_Cstr & fmt ) { fmt.wd = w; return fmt; }
+} // distribution
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype & is, _Istream_Cstr f );
+	void ?|?( istype & is, _Istream_Cstr f );
+}
+
+struct _Istream_Char {
+	bool ignore;										// do not change input argument
+}; // _Istream_Char
+
+static inline {
+	_Istream_Char ignore( const char ) { return (_Istream_Char)@{ true }; }
+	_Istream_Char & ignore( _Istream_Char & fmt ) { fmt.ignore = true; return fmt; }
+} // distribution
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype & is, _Istream_Char f );
+	void ?|?( istype & is, _Istream_Char f );
+}
+
+forall( T & | sized( T ) )
+struct _Istream_Manip {
+	T & val;											// polymorphic base-type
+	int wd;												// width
+	bool ignore;										// do not change input argument
+}; // _Istream_Manip
+
+#define InputFMTDecl( T ) \
+static inline { \
+	_Istream_Manip(T) ignore( const T & val ) { return (_Istream_Manip(T))@{ (T &)val, -1, true }; } \
+	_Istream_Manip(T) & ignore( _Istream_Manip(T) & fmt ) { fmt.ignore = true; return fmt; } \
+	_Istream_Manip(T) wdi( unsigned int w, T & val ) { return (_Istream_Manip(T))@{ val, w, false }; } \
+	_Istream_Manip(T) & wdi( unsigned int w, _Istream_Manip(T) & fmt ) { fmt.wd = w; return fmt; } \
+} /* distribution */ \
+forall( istype & | basic_istream( istype ) ) { \
+	istype & ?|?( istype & is, _Istream_Manip(T) f ); \
+	void ?|?( istype & is, _Istream_Manip(T) f ); \
+} // ?|?
+
+InputFMTDecl( signed char )
+InputFMTDecl( unsigned char )
+InputFMTDecl( signed short int )
+InputFMTDecl( unsigned short int )
+InputFMTDecl( signed int )
+InputFMTDecl( unsigned int )
+InputFMTDecl( signed long int )
+InputFMTDecl( unsigned long int )
+InputFMTDecl( signed long long int )
+InputFMTDecl( unsigned long long int )
+
+InputFMTDecl( float )
+InputFMTDecl( double )
+InputFMTDecl( long double )
+
+InputFMTDecl( float _Complex )
+InputFMTDecl( double _Complex )
+InputFMTDecl( long double _Complex )
+
+
+// *********************************** time ***********************************
+
+
+#include <time_t.hfa>									// Duration (constructors) / Time (constructors)
+
+forall( ostype & | ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, Duration dur );
+	void ?|?( ostype & os, Duration dur );
+	ostype & ?|?( ostype & os, Time time );
+	void ?|?( ostype & os, Time time );
+} // distribution
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

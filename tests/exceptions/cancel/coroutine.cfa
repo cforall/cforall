@@ -1,0 +1,34 @@
+// Try cancelling a coroutine.
+
+#include <coroutine.hfa>
+#include <exception.hfa>
+
+EHM_EXCEPTION(internal_error)();
+EHM_VIRTUAL_TABLE(internal_error, internal_vt);
+
+coroutine WillCancel {};
+
+const char * msg(CoroutineCancelled(WillCancel) * this) {
+	return "CoroutineCancelled(WillCancel)";
+}
+
+void main(WillCancel & wc) {
+	printf("1");
+	cancel_stack((internal_error){&internal_vt});
+	printf("!");
+}
+
+int main(int argc, char * argv[]) {
+	WillCancel cancel;
+	try {
+		printf("0");
+		resume(cancel);
+		printf("4");
+	} catchResume (CoroutineCancelled(WillCancel) * error) {
+		printf("2");
+		if ((virtual internal_error *)error->the_exception) {
+			printf("3");
+		}
+	}
+	printf("5\n");
+}

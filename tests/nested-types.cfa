@@ -1,0 +1,106 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2018 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// nested-types.cfa --
+//
+// Author           : Rob Schluntz
+// Created On       : Mon Jul 9 10:20:03 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 08:48:59 2020
+// Update Count     : 6
+//
+
+typedef int N;
+struct A {
+	forall(T)
+	struct N {
+		T x;
+	};
+};
+
+struct S {
+	struct T {
+		int i;
+		typedef int Bar;
+	};
+	T x;
+
+	// struct U;
+	typedef T Bar;
+	typedef int Baz;
+};
+
+// // // // need a way to stuff a qualified name into a struct decl
+// // struct S.U {
+// //   double z;
+// // };
+
+// // what will this do?
+// struct U {
+//   union S {
+//     int i;
+//     double d;
+//   };
+// };
+
+// struct T {
+//   double d;
+// };
+
+// struct S {
+//     enum C { R, G, B };
+//     int i;
+//     struct T {
+// 	int i;
+//     };
+//     T t;
+// };
+
+// S s;
+// S.C c;
+// S.T t;
+
+int main() {
+	// access nested struct
+	S.T x;
+
+	{
+		struct S {
+		  int i;
+		  struct Z {
+		    double d;
+		  };
+		};
+
+		S.Z z;											// gets local S
+		.S.T y;											// lookup at global scope only
+
+		const volatile .S.T q;
+#if ERR1
+		T err1;											// error: no T in scope
+#endif
+#if ERR2
+		.Z err2;										// error: no Z in global scope
+		.S.Baz.Bar err3;								// error: .S.Baz => int, int is not aggregate and should not appear left of the dot
+		.S.Z err4;										// error: no Z in global S
+#endif
+	}
+
+	// U.S un;
+
+	S.Bar y;
+	S.Baz x;
+	S.T.Bar z;
+
+	// A.N(int) x;  // xxx - should not be an error, but currently is.
+
+	#pragma message( "Compiled" )			// force non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa nested-types.cfa" //
+// End: //

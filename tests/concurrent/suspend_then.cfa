@@ -1,0 +1,88 @@
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+
+#define __kick_rate 150000ul
+#include "long_tests.hfa"
+
+Duration default_preemption() {
+	return 0;
+}
+
+#ifdef TEST_LONG
+static const unsigned long N = 600_000ul;
+#else
+static const unsigned long N = 1_000ul;
+#endif
+
+#if !defined(TEST_FOREVER)
+	static inline void print(const char * const text ) {
+		write( STDOUT_FILENO, text, strlen(text) );
+	}
+#else
+	static inline void print(Printer & this, const char * const text ) {}
+#endif
+
+generator Coroutine { int i; };
+
+volatile bool done = false;
+Coroutine * volatile the_cor = 0p;
+
+void store(Coroutine & cor) {
+	__atomic_store_n(&the_cor, &cor, __ATOMIC_SEQ_CST);
+}
+
+Coroutine * take(void) {
+	Coroutine * val = 0p;
+	Coroutine * ret = __atomic_exchange_n(&the_cor, val, __ATOMIC_SEQ_CST);
+	assert(!ret || !the_cor);
+	return ret;
+}
+
+void main(Coroutine& this) {
+	this.i = 0;
+	suspend;
+	for(;TEST(this.i < N); this.i++) {
+
+		print("C - Suspending\n");
+		suspend{
+			print("C - Publishing\n");
+			assert(!the_cor);
+			store( this );
+		}
+		assert(!the_cor);
+		print("C - Back\n");
+		KICK_WATCHDOG;
+		yield();
+	}
+	done = true;
+	suspend;
+}
+
+thread Thread {};
+void main(Thread & this) {
+	Coroutine * mine = 0p;
+	while(!done) {
+		yield();
+
+		mine = take();
+		if(!mine) continue;
+
+		print("T - took\n");
+		resume(*mine);
+	}
+}
+
+
+int main(int argc, char* argv[]) {
+	processor p[2];
+	Coroutine c;
+	resume(c); // Prime the coroutine to avoid one of the threads being its starter
+	the_cor = &c;
+	{
+		Thread t[2];
+	}
+}

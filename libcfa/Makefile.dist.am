@@ -1,0 +1,27 @@
+######################## -*- Mode: Makefile-Automake -*- ######################
+##
+## Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+##
+## The contents of this file are covered under the licence agreement in the
+## file "LICENCE" distributed with Cforall.
+##
+## Makefile.dist.am --
+##
+## Author           : Thierry Delisle
+## Created On       : Fri Aug dd 12:53:35 2020
+## Last Modified By :
+## Last Modified On :
+## Update Count     :
+###############################################################################
+
+AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
+ACLOCAL_AMFLAGS  = -I automake
+
+distdir:
+	@echo "Distributing libcfa from '@LIBCFA_1TARGET_DIR@'"
+	+make -C $(abs_top_builddir)/@LIBCFA_1TARGET_DIR@ distdir \
+	top_distdir=$(top_distdir) \
+	distdir=../$(distdir) \
+	am__remove_distdir=$$(am__remove_distdir) \
+	am__skip_length_check=$(am__skip_length_check) \
+	am__skip_mode_fix=$(am__skip_mode_fix)

@@ -1,0 +1,1683 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// call.cfa -- Api for cforall
+//
+// Author           : Generated from call.cfa.in
+// Created On       : A Date
+//
+
+
+#define __cforall_thread__
+
+#include "bits/defs.hfa"
+#include "kernel.hfa"
+#include "io/types.hfa"
+
+//=============================================================================================
+// I/O uring backend
+//=============================================================================================
+
+#if defined(CFA_HAVE_LINUX_IO_URING_H)
+	#include <assert.h>
+	#include <stdint.h>
+	#include <errno.h>
+	#include <linux/io_uring.h>
+
+	#include "kernel/fwd.hfa"
+
+	static const __u8 REGULAR_FLAGS = 0
+		#if defined(CFA_HAVE_IOSQE_FIXED_FILE)
+			| IOSQE_FIXED_FILE
+		#endif
+		#if defined(CFA_HAVE_IOSQE_IO_DRAIN)
+			| IOSQE_IO_DRAIN
+		#endif
+		#if defined(CFA_HAVE_IOSQE_IO_LINK)
+			| IOSQE_IO_LINK
+		#endif
+		#if defined(CFA_HAVE_IOSQE_IO_HARDLINK)
+			| IOSQE_IO_HARDLINK
+		#endif
+		#if defined(CFA_HAVE_IOSQE_ASYNC)
+			| IOSQE_ASYNC
+		#endif
+		#if defined(CFA_HAVE_IOSQE_BUFFER_SELECTED)
+			| IOSQE_BUFFER_SELECTED
+		#endif
+	;
+
+	static const __u32 SPLICE_FLAGS = 0
+		#if defined(CFA_HAVE_SPLICE_F_FD_IN_FIXED)
+			| SPLICE_F_FD_IN_FIXED
+		#endif
+	;
+
+	extern struct $io_context * cfa_io_allocate(struct io_uring_sqe * out_sqes[], __u32 out_idxs[], __u32 want)  __attribute__((nonnull (1,2)));
+	extern void cfa_io_submit( struct $io_context * in_ctx, __u32 in_idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1,2)));
+#endif
+
+//=============================================================================================
+// I/O Forwards
+//=============================================================================================
+#include <time.hfa>
+
+// Some forward declarations
+#include <errno.h>
+#include <unistd.h>
+
+extern "C" {
+	#include <asm/types.h>
+	#include <sys/socket.h>
+	#include <sys/syscall.h>
+
+#if defined(CFA_HAVE_PREADV2)
+	struct iovec;
+	extern ssize_t preadv2 (int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
+#endif
+#if defined(CFA_HAVE_PWRITEV2)
+	struct iovec;
+	extern ssize_t pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
+#endif
+
+	extern int fsync(int fd);
+
+	#if __OFF_T_MATCHES_OFF64_T
+		typedef __off64_t off_t;
+	#else
+		typedef __off_t off_t;
+	#endif
+	typedef __off64_t off64_t;
+	extern int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags);
+
+	struct msghdr;
+	struct sockaddr;
+	extern ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
+	extern ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+	extern ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+	extern ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+	extern int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
+	extern int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+	extern int fallocate(int fd, int mode, off_t offset, off_t len);
+	extern int posix_fadvise(int fd, off_t offset, off_t len, int advice);
+	extern int madvise(void *addr, size_t length, int advice);
+
+	extern int openat(int dirfd, const char *pathname, int flags, mode_t mode);
+	extern int close(int fd);
+
+	extern ssize_t read (int fd, void *buf, size_t count);
+
+	struct epoll_event;
+	extern int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+
+	extern ssize_t splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags);
+	extern ssize_t tee(int fd_in, int fd_out, size_t len, unsigned int flags);
+}
+
+//=============================================================================================
+// I/O Interface
+//=============================================================================================
+
+//----------
+// synchronous calls
+#if defined(CFA_HAVE_PREADV2)
+	ssize_t cfa_preadv2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+#endif
+#if defined(CFA_HAVE_PWRITEV2)
+	ssize_t cfa_pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+#endif
+int cfa_fsync(int fd, __u64 submit_flags);
+int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags);
+int cfa_sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags, __u64 submit_flags);
+ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags);
+ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
+ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
+ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
+int cfa_accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags);
+int cfa_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags);
+int cfa_fallocate(int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
+int cfa_posix_fadvise(int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
+int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags);
+int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags);
+#if defined(CFA_HAVE_OPENAT2)
+	int cfa_openat2(int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags);
+#endif
+int cfa_close(int fd, __u64 submit_flags);
+#if defined(CFA_HAVE_STATX)
+	int cfa_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags);
+#endif
+ssize_t cfa_read(int fd, void * buf, size_t count, __u64 submit_flags);
+ssize_t cfa_write(int fd, void * buf, size_t count, __u64 submit_flags);
+ssize_t cfa_splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags);
+ssize_t cfa_tee(int fd_in, int fd_out, size_t len, unsigned int flags, __u64 submit_flags);
+
+//----------
+// asynchronous calls
+#if defined(CFA_HAVE_PREADV2)
+	void async_preadv2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+#endif
+#if defined(CFA_HAVE_PWRITEV2)
+	void async_pwritev2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+#endif
+void async_fsync(io_future_t & future, int fd, __u64 submit_flags);
+void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags);
+void async_sync_file_range(io_future_t & future, int fd, off64_t offset, off64_t nbytes, unsigned int flags, __u64 submit_flags);
+void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags);
+void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
+void async_send(io_future_t & future, int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
+void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
+void async_accept4(io_future_t & future, int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags);
+void async_connect(io_future_t & future, int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags);
+void async_fallocate(io_future_t & future, int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
+void async_posix_fadvise(io_future_t & future, int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
+void async_madvise(io_future_t & future, void *addr, size_t length, int advice, __u64 submit_flags);
+void async_openat(io_future_t & future, int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags);
+#if defined(CFA_HAVE_OPENAT2)
+	void async_openat2(io_future_t & future, int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags);
+#endif
+void async_close(io_future_t & future, int fd, __u64 submit_flags);
+#if defined(CFA_HAVE_STATX)
+	void async_statx(io_future_t & future, int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags);
+#endif
+void async_read(io_future_t & future, int fd, void * buf, size_t count, __u64 submit_flags);
+void async_write(io_future_t & future, int fd, void * buf, size_t count, __u64 submit_flags);
+void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags);
+void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned int flags, __u64 submit_flags);
+
+
+//-----------------------------------------------------------------------------
+// preadv2
+#if defined(CFA_HAVE_PREADV2)
+	//----------
+	// asynchronous call
+	inline void async_preadv2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
+		#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_READV)
+			ssize_t res = preadv2(fd, iov, iovcnt, offset, flags);
+			if (res >= 0) {
+				fulfil(future, res);
+			}
+			else {
+				fulfil(future, -errno);
+			}
+		#else
+			__u8 sflags = REGULAR_FLAGS & submit_flags;
+			__u32 idx;
+			struct io_uring_sqe * sqe;
+			struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+	
+			sqe->opcode = IORING_OP_READV;
+			sqe->user_data = (uintptr_t)&future;
+			sqe->flags = sflags;
+			sqe->ioprio = 0;
+			sqe->fd = 0;
+			sqe->off = 0;
+			sqe->addr = 0;
+			sqe->len = 0;
+			sqe->fsync_flags = 0;
+			sqe->__pad2[0] = 0;
+			sqe->__pad2[1] = 0;
+			sqe->__pad2[2] = 0;
+			sqe->fd = fd;
+			sqe->off = offset;
+			sqe->addr = (uintptr_t)iov;
+			sqe->len = iovcnt;
+	
+			asm volatile("": : :"memory");
+	
+			verify( sqe->user_data == (uintptr_t)&future );
+			cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+		#endif
+	}
+
+	//----------
+	// synchronous call
+	ssize_t cfa_preadv2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
+		io_future_t future;
+	
+		async_preadv2( future, fd, iov, iovcnt, offset, flags, submit_flags );
+	
+		wait( future );
+		if( future.result < 0 ) {
+			errno = -future.result;
+			return -1;
+		}
+		return future.result;
+	}
+#endif
+
+//-----------------------------------------------------------------------------
+// pwritev2
+#if defined(CFA_HAVE_PWRITEV2)
+	//----------
+	// asynchronous call
+	inline void async_pwritev2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
+		#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_WRITEV)
+			ssize_t res = pwritev2(fd, iov, iovcnt, offset, flags);
+			if (res >= 0) {
+				fulfil(future, res);
+			}
+			else {
+				fulfil(future, -errno);
+			}
+		#else
+			__u8 sflags = REGULAR_FLAGS & submit_flags;
+			__u32 idx;
+			struct io_uring_sqe * sqe;
+			struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+	
+			sqe->opcode = IORING_OP_WRITEV;
+			sqe->user_data = (uintptr_t)&future;
+			sqe->flags = sflags;
+			sqe->ioprio = 0;
+			sqe->fd = 0;
+			sqe->off = 0;
+			sqe->addr = 0;
+			sqe->len = 0;
+			sqe->fsync_flags = 0;
+			sqe->__pad2[0] = 0;
+			sqe->__pad2[1] = 0;
+			sqe->__pad2[2] = 0;
+			sqe->fd = fd;
+			sqe->off = offset;
+			sqe->addr = (uintptr_t)iov;
+			sqe->len = iovcnt;
+	
+			asm volatile("": : :"memory");
+	
+			verify( sqe->user_data == (uintptr_t)&future );
+			cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+		#endif
+	}
+
+	//----------
+	// synchronous call
+	ssize_t cfa_pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
+		io_future_t future;
+	
+		async_pwritev2( future, fd, iov, iovcnt, offset, flags, submit_flags );
+	
+		wait( future );
+		if( future.result < 0 ) {
+			errno = -future.result;
+			return -1;
+		}
+		return future.result;
+	}
+#endif
+
+//-----------------------------------------------------------------------------
+// fsync
+//----------
+// asynchronous call
+inline void async_fsync(io_future_t & future, int fd, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_FSYNC)
+		ssize_t res = fsync(fd);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_FSYNC;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = fd;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_fsync(int fd, __u64 submit_flags) {
+	io_future_t future;
+
+	async_fsync( future, fd, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// epoll_ctl
+//----------
+// asynchronous call
+inline void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_EPOLL_CTL)
+		ssize_t res = epoll_ctl(epfd, op, fd, event);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_EPOLL_CTL;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = epfd;
+		sqe->addr = fd;
+		sqe->len = op;
+		sqe->off = (uintptr_t)event;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags) {
+	io_future_t future;
+
+	async_epoll_ctl( future, epfd, op, fd, event, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// sync_file_range
+//----------
+// asynchronous call
+inline void async_sync_file_range(io_future_t & future, int fd, off64_t offset, off64_t nbytes, unsigned int flags, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_SYNC_FILE_RANGE)
+		ssize_t res = sync_file_range(fd, offset, nbytes, flags);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_SYNC_FILE_RANGE;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = fd;
+		sqe->off = offset;
+		sqe->len = nbytes;
+		sqe->sync_range_flags = flags;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags, __u64 submit_flags) {
+	io_future_t future;
+
+	async_sync_file_range( future, fd, offset, nbytes, flags, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// sendmsg
+//----------
+// asynchronous call
+inline void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_SENDMSG)
+		ssize_t res = sendmsg(sockfd, msg, flags);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_SENDMSG;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = sockfd;
+		sqe->addr = (uintptr_t)(struct msghdr *)msg;
+		sqe->len = 1;
+		sqe->msg_flags = flags;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags) {
+	io_future_t future;
+
+	async_sendmsg( future, sockfd, msg, flags, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// recvmsg
+//----------
+// asynchronous call
+inline void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, int flags, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_RECVMSG)
+		ssize_t res = recvmsg(sockfd, msg, flags);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_RECVMSG;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = sockfd;
+		sqe->addr = (uintptr_t)(struct msghdr *)msg;
+		sqe->len = 1;
+		sqe->msg_flags = flags;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flags) {
+	io_future_t future;
+
+	async_recvmsg( future, sockfd, msg, flags, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// send
+//----------
+// asynchronous call
+inline void async_send(io_future_t & future, int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_SEND)
+		ssize_t res = send(sockfd, buf, len, flags);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_SEND;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = sockfd;
+		sqe->addr = (uintptr_t)buf;
+		sqe->len = len;
+		sqe->msg_flags = flags;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags) {
+	io_future_t future;
+
+	async_send( future, sockfd, buf, len, flags, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// recv
+//----------
+// asynchronous call
+inline void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, int flags, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_RECV)
+		ssize_t res = recv(sockfd, buf, len, flags);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_RECV;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = sockfd;
+		sqe->addr = (uintptr_t)buf;
+		sqe->len = len;
+		sqe->msg_flags = flags;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flags) {
+	io_future_t future;
+
+	async_recv( future, sockfd, buf, len, flags, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// accept4
+//----------
+// asynchronous call
+inline void async_accept4(io_future_t & future, int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_ACCEPT)
+		ssize_t res = accept4(sockfd, addr, addrlen, flags);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_ACCEPT;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = sockfd;
+		sqe->addr = (uintptr_t)addr;
+		sqe->addr2 = (uintptr_t)addrlen;
+		sqe->accept_flags = flags;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags) {
+	io_future_t future;
+
+	async_accept4( future, sockfd, addr, addrlen, flags, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// connect
+//----------
+// asynchronous call
+inline void async_connect(io_future_t & future, int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_CONNECT)
+		ssize_t res = connect(sockfd, addr, addrlen);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_CONNECT;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = sockfd;
+		sqe->addr = (uintptr_t)addr;
+		sqe->off = addrlen;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags) {
+	io_future_t future;
+
+	async_connect( future, sockfd, addr, addrlen, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// fallocate
+//----------
+// asynchronous call
+inline void async_fallocate(io_future_t & future, int fd, int mode, off_t offset, off_t len, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_FALLOCATE)
+		ssize_t res = fallocate(fd, mode, offset, len);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_FALLOCATE;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = fd;
+		sqe->addr = (uintptr_t)len;
+		sqe->len = mode;
+		sqe->off = offset;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_fallocate(int fd, int mode, off_t offset, off_t len, __u64 submit_flags) {
+	io_future_t future;
+
+	async_fallocate( future, fd, mode, offset, len, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// posix_fadvise
+//----------
+// asynchronous call
+inline void async_posix_fadvise(io_future_t & future, int fd, off_t offset, off_t len, int advice, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_FADVISE)
+		ssize_t res = posix_fadvise(fd, offset, len, advice);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_FADVISE;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = fd;
+		sqe->off = offset;
+		sqe->len = len;
+		sqe->fadvise_advice = advice;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_posix_fadvise(int fd, off_t offset, off_t len, int advice, __u64 submit_flags) {
+	io_future_t future;
+
+	async_posix_fadvise( future, fd, offset, len, advice, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// madvise
+//----------
+// asynchronous call
+inline void async_madvise(io_future_t & future, void *addr, size_t length, int advice, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_MADVISE)
+		ssize_t res = madvise(addr, length, advice);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_MADVISE;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->addr = (uintptr_t)addr;
+		sqe->len = length;
+		sqe->fadvise_advice = advice;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags) {
+	io_future_t future;
+
+	async_madvise( future, addr, length, advice, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// openat
+//----------
+// asynchronous call
+inline void async_openat(io_future_t & future, int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_OPENAT)
+		ssize_t res = openat(dirfd, pathname, flags, mode);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_OPENAT;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = dirfd;
+		sqe->addr = (uintptr_t)pathname;
+		sqe->len = mode;
+		sqe->open_flags = flags;;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags) {
+	io_future_t future;
+
+	async_openat( future, dirfd, pathname, flags, mode, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// openat2
+#if defined(CFA_HAVE_OPENAT2)
+	//----------
+	// asynchronous call
+	inline void async_openat2(io_future_t & future, int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags) {
+		#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_OPENAT2)
+			ssize_t res = openat2(dirfd, pathname, how, size);
+			if (res >= 0) {
+				fulfil(future, res);
+			}
+			else {
+				fulfil(future, -errno);
+			}
+		#else
+			__u8 sflags = REGULAR_FLAGS & submit_flags;
+			__u32 idx;
+			struct io_uring_sqe * sqe;
+			struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+	
+			sqe->opcode = IORING_OP_OPENAT2;
+			sqe->user_data = (uintptr_t)&future;
+			sqe->flags = sflags;
+			sqe->ioprio = 0;
+			sqe->fd = 0;
+			sqe->off = 0;
+			sqe->addr = 0;
+			sqe->len = 0;
+			sqe->fsync_flags = 0;
+			sqe->__pad2[0] = 0;
+			sqe->__pad2[1] = 0;
+			sqe->__pad2[2] = 0;
+			sqe->fd = dirfd;
+			sqe->addr = pathname;
+			sqe->len = sizeof(*how);
+			sqe->off = (uintptr_t)how;
+	
+			asm volatile("": : :"memory");
+	
+			verify( sqe->user_data == (uintptr_t)&future );
+			cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+		#endif
+	}
+
+	//----------
+	// synchronous call
+	int cfa_openat2(int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags) {
+		io_future_t future;
+	
+		async_openat2( future, dirfd, pathname, how, size, submit_flags );
+	
+		wait( future );
+		if( future.result < 0 ) {
+			errno = -future.result;
+			return -1;
+		}
+		return future.result;
+	}
+#endif
+
+//-----------------------------------------------------------------------------
+// close
+//----------
+// asynchronous call
+inline void async_close(io_future_t & future, int fd, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_CLOSE)
+		ssize_t res = close(fd);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_CLOSE;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = fd;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+int cfa_close(int fd, __u64 submit_flags) {
+	io_future_t future;
+
+	async_close( future, fd, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// statx
+#if defined(CFA_HAVE_STATX)
+	//----------
+	// asynchronous call
+	inline void async_statx(io_future_t & future, int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags) {
+		#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_STATX)
+			ssize_t res = statx(dirfd, pathname, flags, mask, statxbuf);
+			if (res >= 0) {
+				fulfil(future, res);
+			}
+			else {
+				fulfil(future, -errno);
+			}
+		#else
+			__u8 sflags = REGULAR_FLAGS & submit_flags;
+			__u32 idx;
+			struct io_uring_sqe * sqe;
+			struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+	
+			sqe->opcode = IORING_OP_STATX;
+			sqe->user_data = (uintptr_t)&future;
+			sqe->flags = sflags;
+			sqe->ioprio = 0;
+			sqe->fd = 0;
+			sqe->off = 0;
+			sqe->addr = 0;
+			sqe->len = 0;
+			sqe->fsync_flags = 0;
+			sqe->__pad2[0] = 0;
+			sqe->__pad2[1] = 0;
+			sqe->__pad2[2] = 0;
+			sqe->fd = dirfd;
+			sqe->off = (uintptr_t)statxbuf;
+			sqe->addr = pathname;
+			sqe->len = mask;
+			sqe->statx_flags = flags;
+	
+			asm volatile("": : :"memory");
+	
+			verify( sqe->user_data == (uintptr_t)&future );
+			cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+		#endif
+	}
+
+	//----------
+	// synchronous call
+	int cfa_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags) {
+		io_future_t future;
+	
+		async_statx( future, dirfd, pathname, flags, mask, statxbuf, submit_flags );
+	
+		wait( future );
+		if( future.result < 0 ) {
+			errno = -future.result;
+			return -1;
+		}
+		return future.result;
+	}
+#endif
+
+//-----------------------------------------------------------------------------
+// read
+//----------
+// asynchronous call
+inline void async_read(io_future_t & future, int fd, void * buf, size_t count, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_READ)
+		ssize_t res = read(fd, buf, count);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_READ;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = fd;
+		sqe->addr = (uintptr_t)buf;
+		sqe->len = count;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+ssize_t cfa_read(int fd, void * buf, size_t count, __u64 submit_flags) {
+	io_future_t future;
+
+	async_read( future, fd, buf, count, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// write
+//----------
+// asynchronous call
+inline void async_write(io_future_t & future, int fd, void * buf, size_t count, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_WRITE)
+		ssize_t res = write(fd, buf, count);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_WRITE;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->fd = fd;
+		sqe->addr = (uintptr_t)buf;
+		sqe->len = count;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+ssize_t cfa_write(int fd, void * buf, size_t count, __u64 submit_flags) {
+	io_future_t future;
+
+	async_write( future, fd, buf, count, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// splice
+//----------
+// asynchronous call
+inline void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_SPLICE)
+		ssize_t res = splice(fd_in, off_in, fd_out, off_out, len, flags);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_SPLICE;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->splice_fd_in = fd_in;
+		sqe->splice_off_in = off_in ? (__u64)*off_in : (__u64)-1;
+		sqe->fd = fd_out;
+		sqe->off = off_out ? (__u64)*off_out : (__u64)-1;
+		sqe->len = len;
+		sqe->splice_flags = flags;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+ssize_t cfa_splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags) {
+	io_future_t future;
+
+	async_splice( future, fd_in, off_in, fd_out, off_out, len, flags, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+//-----------------------------------------------------------------------------
+// tee
+//----------
+// asynchronous call
+inline void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned int flags, __u64 submit_flags) {
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_TEE)
+		ssize_t res = tee(fd_in, fd_out, len, flags);
+		if (res >= 0) {
+			fulfil(future, res);
+		}
+		else {
+			fulfil(future, -errno);
+		}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_TEE;
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;
+		sqe->splice_fd_in = fd_in;
+		sqe->fd = fd_out;
+		sqe->len = len;
+		sqe->splice_flags = flags;
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}
+
+//----------
+// synchronous call
+ssize_t cfa_tee(int fd_in, int fd_out, size_t len, unsigned int flags, __u64 submit_flags) {
+	io_future_t future;
+
+	async_tee( future, fd_in, fd_out, len, flags, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {
+		errno = -future.result;
+		return -1;
+	}
+	return future.result;
+}
+
+
+//-----------------------------------------------------------------------------
+// Check if a function is has asynchronous
+bool has_user_level_blocking( fptr_t func ) {
+ 	#if defined(CFA_HAVE_LINUX_IO_URING_H)
+		#if defined(CFA_HAVE_PREADV2)
+ 			if( /*func == (fptr_t)preadv2 || */
+ 				func == (fptr_t)cfa_preadv2 ||
+				func == (fptr_t)async_preadv2 ) {
+ 				#if defined(CFA_HAVE_IORING_OP_READV)
+					return true;
+				#else
+					return false;
+				#endif
+ 			}
+ 		#endif
+		#if defined(CFA_HAVE_PWRITEV2)
+ 			if( /*func == (fptr_t)preadv2 || */
+ 				func == (fptr_t)cfa_pwritev2 ||
+				func == (fptr_t)async_pwritev2 ) {
+ 				#if defined(CFA_HAVE_IORING_OP_WRITEV)
+					return true;
+				#else
+					return false;
+				#endif
+ 			}
+ 		#endif
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_fsync ||
+			func == (fptr_t)async_fsync ) {
+			#if defined(CFA_HAVE_IORING_OP_FSYNC)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_epoll_ctl ||
+			func == (fptr_t)async_epoll_ctl ) {
+			#if defined(CFA_HAVE_IORING_OP_EPOLL_CTL)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_sync_file_range ||
+			func == (fptr_t)async_sync_file_range ) {
+			#if defined(CFA_HAVE_IORING_OP_SYNC_FILE_RANGE)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_sendmsg ||
+			func == (fptr_t)async_sendmsg ) {
+			#if defined(CFA_HAVE_IORING_OP_SENDMSG)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_recvmsg ||
+			func == (fptr_t)async_recvmsg ) {
+			#if defined(CFA_HAVE_IORING_OP_RECVMSG)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_send ||
+			func == (fptr_t)async_send ) {
+			#if defined(CFA_HAVE_IORING_OP_SEND)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_recv ||
+			func == (fptr_t)async_recv ) {
+			#if defined(CFA_HAVE_IORING_OP_RECV)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_accept4 ||
+			func == (fptr_t)async_accept4 ) {
+			#if defined(CFA_HAVE_IORING_OP_ACCEPT)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_connect ||
+			func == (fptr_t)async_connect ) {
+			#if defined(CFA_HAVE_IORING_OP_CONNECT)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_fallocate ||
+			func == (fptr_t)async_fallocate ) {
+			#if defined(CFA_HAVE_IORING_OP_FALLOCATE)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_posix_fadvise ||
+			func == (fptr_t)async_posix_fadvise ) {
+			#if defined(CFA_HAVE_IORING_OP_FADVISE)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_madvise ||
+			func == (fptr_t)async_madvise ) {
+			#if defined(CFA_HAVE_IORING_OP_MADVISE)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_openat ||
+			func == (fptr_t)async_openat ) {
+			#if defined(CFA_HAVE_IORING_OP_OPENAT)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		#if defined(CFA_HAVE_OPENAT2)
+ 			if( /*func == (fptr_t)preadv2 || */
+ 				func == (fptr_t)cfa_openat2 ||
+				func == (fptr_t)async_openat2 ) {
+ 				#if defined(CFA_HAVE_IORING_OP_OPENAT2)
+					return true;
+				#else
+					return false;
+				#endif
+ 			}
+ 		#endif
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_close ||
+			func == (fptr_t)async_close ) {
+			#if defined(CFA_HAVE_IORING_OP_CLOSE)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		#if defined(CFA_HAVE_STATX)
+ 			if( /*func == (fptr_t)preadv2 || */
+ 				func == (fptr_t)cfa_statx ||
+				func == (fptr_t)async_statx ) {
+ 				#if defined(CFA_HAVE_IORING_OP_STATX)
+					return true;
+				#else
+					return false;
+				#endif
+ 			}
+ 		#endif
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_read ||
+			func == (fptr_t)async_read ) {
+			#if defined(CFA_HAVE_IORING_OP_READ)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_write ||
+			func == (fptr_t)async_write ) {
+			#if defined(CFA_HAVE_IORING_OP_WRITE)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_splice ||
+			func == (fptr_t)async_splice ) {
+			#if defined(CFA_HAVE_IORING_OP_SPLICE)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_tee ||
+			func == (fptr_t)async_tee ) {
+			#if defined(CFA_HAVE_IORING_OP_TEE)
+				return true;
+			#else
+				return false;
+			#endif
+		}
+ 	#endif
+
+ 	return false;
+}

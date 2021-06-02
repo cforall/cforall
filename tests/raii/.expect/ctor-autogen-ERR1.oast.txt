@@ -1,0 +1,98 @@
+raii/ctor-autogen.cfa:102:1 error: Unique best alternative includes deleted identifier in Generated Cast of:
+  Application of
+    Deleted Expression
+      Variable Expression: ?{}: static inline function
+      ... with parameters
+        _dst: reference to instance of struct Managed with body 1
+        x: signed int
+      ... returning nothing
+
+      with resolved type:
+        function
+        ... with parameters
+          _dst: reference to instance of struct Managed with body 1
+          x: signed int
+        ... returning nothing
+
+      ... deleted by: ?{}: function
+      ... with parameters
+        m: reference to instance of struct Managed with body 1
+      ... returning nothing
+      ... with body
+        CompoundStmt
+          Expression Statement:
+            Application of
+              Variable Expression: ?=?: function
+              ... with parameters
+                intrinsic reference to signed int
+                intrinsic signed int
+              ... returning
+                _retval__operator_assign: signed int
+                ... with attributes:
+                  Attribute with name: unused
+
+
+              with resolved type:
+                pointer to function
+                ... with parameters
+                  intrinsic reference to signed int
+                  intrinsic signed int
+                ... returning
+                  _retval__operator_assign: signed int
+                  ... with attributes:
+                    Attribute with name: unused
+
+
+            ... to arguments
+              Generated Cast of:
+                Member Expression, with field:
+                  x: signed int
+                ... from aggregate:
+                  Generated Cast of:
+                    Variable Expression: m: reference to instance of struct Managed with body 1
+                    with resolved type:
+                      reference to instance of struct Managed with body 1
+                  ... to:
+                    instance of struct Managed with body 1
+                  with resolved type:
+                    instance of struct Managed with body 1
+                with resolved type:
+                  signed int
+              ... to:
+                reference to signed int
+              with resolved type:
+                reference to signed int
+              Generated Cast of:
+                constant expression (0 0: zero_t)
+                with resolved type:
+                  zero_t
+              ... to:
+                signed int
+              with resolved type:
+                signed int
+
+            with resolved type:
+              signed int
+            ... with environment:
+              Types:
+              Non-types:
+
+
+  ... to arguments
+    Generated Cast of:
+      Variable Expression: x: instance of struct Managed with body 1
+      with resolved type:
+        instance of struct Managed with body 1
+    ... to:
+      reference to instance of struct Managed with body 1
+    with resolved type:
+      reference to instance of struct Managed with body 1
+    constant expression (123 123: signed int)
+    with resolved type:
+      signed int
+
+  with resolved type:
+    void 
+... to: nothing
+with resolved type:
+  void 

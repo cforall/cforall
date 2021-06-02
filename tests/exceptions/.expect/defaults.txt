@@ -1,0 +1,10 @@
+Should be printed.
+jump catch handler.
+jump default handler.
+Catch unhandled_exception.
+cross terminate throw
+cross terminate default
+cross terminate catch
+cross resume throw
+cross resume default
+cross resume catch

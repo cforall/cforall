@@ -1,0 +1,6 @@
+char a
+signed char 20
+unsigned char 21
+signed short int 22
+unsigned short int 23
+size_t 24

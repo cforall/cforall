@@ -1,0 +1,70 @@
+typedef volatile struct Foo FooInterm;
+typedef const FooInterm Foo;
+#ifdef ERR1
+typedef struct Foo Foo;
+#endif
+
+typedef int ** pt;
+typedef int ** pt;
+
+#ifdef __CFA__
+extern "C" {
+#endif
+typedef int __io_read_fn ( char buf);
+typedef int __io_write_fn ( const char buf);
+
+
+__io_read_fn read;
+__io_write_fn write;
+#ifdef __CFA__
+}
+#endif
+
+int sz;
+typedef int FUNC(int, ...);
+typedef int FUNC(int, ...);
+
+typedef int ARR[];
+typedef int ARR[];
+#ifdef ERR1
+// if a typedef has an array dimension, it can only be redefined to the same dimension
+typedef int ARR[2];
+#endif
+
+typedef int X;
+typedef int Y;
+typedef Y Y2;
+typedef X X2;
+
+typedef Y2 Z;
+typedef X2 Z;
+
+typedef Z X2;
+typedef int X2;
+typedef Z X2;
+typedef int X2;
+
+// xxx - this doesn't work yet due to parsing problems with generic types
+// #ifdef __CFA__
+// typedef forall(type T) void foo(T);
+// typedef forall(type T) void foo(T);
+// typedef forall(type S) void foo(S); // should be allowed to do this...
+// #endif
+
+int main() {
+	typedef int ARR[sz];
+
+	// can't redefine typedef which is VLA
+#if ERR1
+	typedef int ARR[sz];
+#endif
+
+	Foo * x;
+
+	typedef struct Bar Foo;
+	Foo * y;
+
+	typedef int *** pt;
+
+	#pragma message( "Compiled" )			// force non-empty .expect file
+}

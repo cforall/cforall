@@ -1,0 +1,36 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// hello.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 21:38:39 2018
+// Update Count     : 17
+//
+
+#include <fstream.hfa>
+
+int main() {
+	sout | "Hello world!";
+	sout | "Bonjour le monde!";
+	sout | "Hola Mundo!";
+	sout | "Hallo Welt!";
+	sout | "Kaixo Mundua!";
+	sout | "Chào thế giới!";
+	sout | "Привет мир!";
+	sout | "שלום עולם!";
+	sout | "你好，世界!";
+	sout | "こんにちは世界!";
+	sout | "안녕하세요 세계!";
+	sout | "नमस्ते दुनिया!";
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa hello.cfa" //
+// End: //

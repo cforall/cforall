@@ -1,0 +1,32 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// archVast.cfa -- Check if all combinations are of ast/arch are properly distinguished
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Nov 03 15:04:53 2020
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#if defined( __i386 )
+#define NAME FX86
+#elif defined( __x86_64 )
+#define NAME FX64
+#elif defined( __aarch64__ )
+#define NAME FA64
+#endif
+
+int NAME;
+void NAME() {
+	int NAME;
+	double NAME;
+	(char)NAME;
+	(int(*)())NAME;
+}
+
+int main() {}

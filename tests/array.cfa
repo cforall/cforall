@@ -1,0 +1,60 @@
+//                               -*- Mode: C -*-
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// array.cfa -- test array declarations
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Feb 19 21:18:06 2019
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 09:05:40 2020
+// Update Count     : 4
+//
+
+int a1[0];
+//int a2[*];
+//double a4[3.0];
+
+int m1[0][3];
+//int m2[*][*];
+int m4[3][3];
+
+typedef int T;
+
+int fred() {
+//	int a1[];
+//	int a2[*];
+	int a4[3];
+	int T[3];
+}
+
+int mary( int T[3],
+		  int p1[const 3],
+		  int p2[static 3],
+		  int p3[static const 3]
+	) {
+}
+
+int (*tom())[3] {
+}
+
+int (*(jane)())( int T[3],
+				 int p1[const 3],
+				 int p2[static 3],
+				 int p3[static const 3]
+	) {
+}
+
+int main() {
+	#if !defined(NO_COMPILED_PRAGMA)
+		#pragma message( "Compiled" )	// force non-empty .expect file
+	#endif
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa array.cfa" //
+// End: //

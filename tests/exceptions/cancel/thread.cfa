@@ -1,0 +1,57 @@
+// Try cancelling a thread.
+
+#include <thread.hfa>
+#include <exception.hfa>
+
+EHM_EXCEPTION(internal_error)();
+EHM_VIRTUAL_TABLE(internal_error, internal_vt);
+
+thread WillCancel {};
+
+const char * msg(ThreadCancelled(WillCancel) * this) {
+	return "ThreadCancelled(WillCancel)";
+}
+
+void main(WillCancel &) {
+	printf("1");
+	cancel_stack((internal_error){&internal_vt});
+	printf("!");
+}
+
+void explicit() {
+	try {
+		printf("0");
+		WillCancel cancel;
+		printf("1");
+		join(cancel);
+		printf("4");
+	} catchResume (ThreadCancelled(WillCancel) * error) {
+		printf("2");
+		if ((virtual internal_error *)error->the_exception) {
+			printf("3");
+		}
+	}
+	printf("5\n");
+}
+
+void implicit() {
+	try {
+		{
+			printf("0");
+			WillCancel cancel;
+			printf("1");
+		}
+		printf("4");
+	} catchResume (ThreadCancelled(WillCancel) * error) {
+		printf("2");
+		if ((virtual internal_error *)error->the_exception) {
+			printf("3");
+		}
+	}
+	printf("5\n");
+}
+
+int main(int argc, char * argv[]) {
+	explicit();
+	implicit();
+}

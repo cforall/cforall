@@ -1,0 +1,48 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// pair --
+//
+// Author           : Aaron Moss
+// Created On       : Wed Apr 12 15:32:00 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Jul 22 09:59:53 2017
+// Update Count     : 2
+//
+
+#pragma once
+
+forall(R, S) struct pair {
+	R first;
+	S second;
+};
+
+forall(R, S 
+	| { int ?==?(R, R); int ?<?(R, R); int ?<?(S, S); })
+int ?<?(pair(R, S) p, pair(R, S) q);
+
+forall(R, S 
+	| { int ?==?(R, R); int ?<?(R, R); int ?<=?(S, S); })
+int ?<=?(pair(R, S) p, pair(R, S) q);
+
+forall(R, S | { int ?==?(R, R); int ?==?(S, S); })
+int ?==?(pair(R, S) p, pair(R, S) q);
+
+forall(R, S | { int ?!=?(R, R); int ?!=?(S, S); })
+int ?!=?(pair(R, S) p, pair(R, S) q);
+
+forall(R, S 
+	| { int ?==?(R, R); int ?>?(R, R); int ?>?(S, S); })
+int ?>?(pair(R, S) p, pair(R, S) q);
+
+forall(R, S 
+	| { int ?==?(R, R); int ?>?(R, R); int ?>=?(S, S); })
+int ?>=?(pair(R, S) p, pair(R, S) q);
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

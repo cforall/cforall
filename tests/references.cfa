@@ -1,0 +1,142 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// references.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Wed Aug 23 16:11:50 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec 25 14:31:48 2018
+// Update Count     : 11
+//
+
+#include <fstream.hfa>
+
+struct Y { int i; };
+void ?{}( Y & y ) { sout | "Default constructing a Y"; }
+void ?{}( Y & y, Y other ) { sout | "Copy constructing a Y"; }
+void ^?{}( Y & y ) { sout | "Destructing a Y"; }
+Y ?=?( Y & y, Y other ) { sout | "Assigning a Y"; return y; }
+void ?{}( Y & y, int i ) { sout | "Value constructing a Y" | i; y.i = i; }
+
+struct X { Y & r; Y y; };
+void ?{}( X & x ) {
+	// ensure that r is not implicitly constructed
+}
+void ?{}( X & x, X other ) {
+	// ensure that r is not implicitly constructed
+}
+void ^?{}( X & x ) {
+	// ensure that r is not implicitly destructed
+}
+X ?=?( X & x, X other ) { return x; }
+
+// ensure that generated functions do not implicitly operate on references
+struct Z { Y & r; Y y; };
+
+// test user-defined reference-returning function
+int & toref( int * p ) { return *p; }
+// test user-defined reference-parameter function
+int * toptr( int & r ) { return &r; }
+
+void changeRef( int & r ) {
+	r++;
+}
+
+int main() {
+	int x = 123456, x2 = 789, *p1 = &x, **p2 = &p1, ***p3 = &p2,
+		&r1 = x,    &&r2 = r1,   &&&r3 = r2;
+	***p3 = 3;											// change x
+	**p3 = &x;											// change p1
+	*p3 = &p1;											// change p2
+	int y = 0, z = 11, & ar[3] = { x, y, z };			// initialize array of references
+														// &ar[1] = &z;                        // change reference array element
+														// typeof( ar[1] ) p = 3;              // is int, i.e., the type of referenced object
+														// typeof( &ar[1] ) q = &x;            // is int *, i.e., the type of pointer
+	// _Static_assert( sizeof( ar[1] ) == sizeof( int ), "Array type should be int." );   // is true, i.e., the size of referenced object
+	// _Static_assert( sizeof( &ar[1] ) == sizeof( int *), "Address of array should be int *." ); // is true, i.e., the size of a reference
+
+	((int*&)&r3) = &x;									// change r1, (&*)**r3
+	x = 3;
+	// test that basic reference properties are true - r1 should be an alias for x
+	sout | x | r1 | &x == &r1;
+	r1 = 12;
+	sout | x | r1 | &x == &r1;
+
+	// test that functions using basic references work
+	sout | toref( &x ) | toref( p1 ) | toptr( r1 ) == toptr( x ) | toptr( r1 ) == &x;
+
+	changeRef( x );
+	changeRef( y );
+	changeRef( z );
+	sout | x | y | z;
+	changeRef( r1 );
+	sout | r1 | x;
+
+	r3 = 6;												// change x, ***r3
+	sout | "x = " | x | " ; x2 = " | x2;				// check that x was changed
+	&r3 = &x2;											// change r1 to refer to x2, (&*)**r3
+	r3 = 999;											// modify x2
+	sout | "x = " | x | " ; x2 = " | x2;				// check that x2 was changed
+	((int**&)&&r3) = p2;								// change r2, (&(&*)*)*r3, ensure explicit cast to reference works
+	r3 = 12345;											// modify x
+	sout | "x = " | x | " ; x2 = " | x2;				// check that x was changed
+	&&&r3 = p3;											// change r3 to p3, (&(&(&*)*)*)r3
+	((int&)r3) = 22222;									// modify x, ensure explicit cast to reference works
+	sout | "x = " | x | " ; x2 = " | x2;					// check that x was changed
+
+	// test that reference members are not implicitly constructed/destructed/assigned
+	X x1, x2 = x1;
+	x1 = x2;
+
+	Z z1, z2 = z1;
+	Y z1r = 56, z2r = 78;
+	&z1.r = &z1r;
+	&z2.r = &z2r;
+
+	z1 = z2;
+
+	// test rvalue-to-reference conversion
+	{
+		struct S { double x, y; };
+		void f( int & i, int & j, S & s, int v[] ) {
+			sout | i | j | "{ " | s.[x, y] | " }," | "[" | v[0] | "," | v[1] | "," | v[2] | "]";
+		}
+		void g(int & i) { sout | i; }
+		void h(int &&& i) { sout | i; }
+
+		int &&& r = 3;									// rvalue to reference
+		int i = r;
+		sout | i | r;									// both 3
+
+		g( 3 );											// rvalue to reference
+		h( (int &&&)3 );								// rvalue to reference
+
+		int a = 5, b = 4;
+		f( 3, a + b, (S){ 1.0, 7.0 }, (int [3]){ 1, 2, 3 } ); // two rvalue to reference
+	}
+
+	{
+		int a = 3;
+		int *p = &a;
+		asm (
+			#if defined( __i386 ) || defined( __x86_64 )
+				"incl %[p]\n\t"
+				: [p] "+m" (*p)
+			#elif defined( __aarch64__ )
+				"ldr     w1, %[p]\n\t"
+				"add     w1, w1, 1\n\t"
+				"str     w1, %[p]\n\t"
+				: [p] "+m" (*p) ::"w1"
+			#endif
+		);
+		printf("%d\n", a);
+	}
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

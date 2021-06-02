@@ -1,0 +1,297 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// io/types.hfa --
+//
+// Author           : Dimitry Kobets
+// Created On       :
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include <iostream.hfa>
+#include "vec.hfa"
+
+forall (T) {
+    struct vec3 {
+        T x, y, z;
+    };
+}
+
+forall (T) {
+    static inline {
+
+    void ?{}(vec3(T)& v, T x, T y, T z) {
+        v.[x, y, z] = [x, y, z];
+    }
+
+    forall(| zero_assign(T))
+    void ?{}(vec3(T)& vec, zero_t) with (vec) {
+        x = y = z = 0;
+    }
+
+    void ?{}(vec3(T)& vec, T val) with (vec) {
+        x = y = z = val;
+    }
+
+    void ?{}(vec3(T)& vec, vec3(T) other) with (vec) {
+        [x,y,z] = other.[x,y,z];
+    }
+
+    void ?=?(vec3(T)& vec, vec3(T) other) with (vec) {
+        [x,y,z] = other.[x,y,z];
+    }
+    forall(| zero_assign(T))
+    void ?=?(vec3(T)& vec, zero_t) with (vec) {
+        x = y = z = 0;
+    }
+
+    // Primitive mathematical operations
+
+    // -
+    forall(| subtract(T)) {
+    vec3(T) ?-?(vec3(T) u, vec3(T) v) {
+        return [u.x - v.x, u.y - v.y, u.z - v.z];
+    }
+    vec3(T)& ?-=?(vec3(T)& u, vec3(T) v) {
+        u = u - v;
+        return u;
+    }
+    }
+    forall(| negate(T)) {
+    vec3(T) -?(vec3(T) v) with (v) {
+        return [-x, -y, -z];
+    }
+    }
+    forall(| { T --?(T&); }) {
+    vec3(T)& --?(vec3(T)& v) {
+        --v.x;
+        --v.y;
+        --v.z;
+        return v;
+    }
+    vec3(T) ?--(vec3(T)& v) {
+        vec3(T) copy = v;
+        --v;
+        return copy;
+    }
+    }
+
+    // +
+    forall(| add(T)) {
+    vec3(T) ?+?(vec3(T) u, vec3(T) v) {
+        return [u.x + v.x, u.y + v.y, u.z + v.z];
+    }
+    vec3(T)& ?+=?(vec3(T)& u, vec3(T) v) {
+        u = u + v;
+        return u;
+    }
+    }
+
+    forall(| { T ++?(T&); }) {
+    vec3(T)& ++?(vec3(T)& v) {
+        ++v.x;
+        ++v.y;
+        ++v.z;
+        return v;
+    }
+    vec3(T) ?++(vec3(T)& v) {
+        vec3(T) copy = v;
+        ++v;
+        return copy;
+    }
+    }
+
+    // *
+    forall(| multiply(T)) {
+    vec3(T) ?*?(vec3(T) v, T scalar) with (v) {
+        return [x * scalar, y * scalar, z * scalar];
+    }
+    vec3(T) ?*?(T scalar, vec3(T) v) {
+        return v * scalar;
+    }
+    vec3(T) ?*?(vec3(T) u, vec3(T) v) {
+        return [u.x * v.x, u.y * v.y, u.z * v.z];
+    }
+    vec3(T)& ?*=?(vec3(T)& v, T scalar) {
+        v = v * scalar;
+        return v;
+    }
+    vec3(T)& ?*=?(vec3(T)& u, vec3(T) v) {
+        u = u * v;
+        return u;
+    }
+    }
+
+    // /
+    forall(| divide(T)) {
+    vec3(T) ?/?(vec3(T) v, T scalar) with (v) {
+        return [x / scalar, y / scalar, z / scalar];
+    }
+    vec3(T) ?/?(vec3(T) u, vec3(T) v) {
+        return [u.x / v.x, u.y / v.y, u.z / v.z];
+    }
+    vec3(T)& ?/=?(vec3(T)& v, T scalar) {
+        v = v / scalar;
+        return v;
+    }
+    vec3(T)& ?/=?(vec3(T)& u, vec3(T) v) {
+        u = u / v;
+        return u;
+    }
+    }
+
+    // %
+    forall(| { T ?%?(T,T); }) {
+    vec3(T) ?%?(vec3(T) v, T scalar) with (v) {
+        return [x % scalar, y % scalar, z % scalar];
+    }
+    vec3(T)& ?%=?(vec3(T)& u, T scalar) {
+        u = u % scalar;
+        return u;
+    }
+    vec3(T) ?%?(vec3(T) u, vec3(T) v) {
+        return [u.x % v.x, u.y % v.y, u.z % v.z];
+    }
+    vec3(T)& ?%=?(vec3(T)& u, vec3(T) v) {
+        u = u % v;
+        return u;
+    }
+    }
+
+    // &
+    forall(| { T ?&?(T,T); }) {
+    vec3(T) ?&?(vec3(T) v, T scalar) with (v) {
+        return [x & scalar, y & scalar, z & scalar];
+    }
+    vec3(T)& ?&=?(vec3(T)& u, T scalar) {
+        u = u & scalar;
+        return u;
+    }
+    vec3(T) ?&?(vec3(T) u, vec3(T) v) {
+        return [u.x & v.x, u.y & v.y, u.z & v.z];
+    }
+    vec3(T)& ?&=?(vec3(T)& u, vec3(T) v) {
+        u = u & v;
+        return u;
+    }
+    }
+
+    // |
+    forall(| { T ?|?(T,T); }) {
+    vec3(T) ?|?(vec3(T) v, T scalar) with (v) {
+        return [x | scalar, y | scalar, z | scalar];
+    }
+    vec3(T)& ?|=?(vec3(T)& u, T scalar) {
+        u = u | scalar;
+        return u;
+    }
+    vec3(T) ?|?(vec3(T) u, vec3(T) v) {
+        return [u.x | v.x, u.y | v.y, u.z | v.z];
+    }
+    vec3(T)& ?|=?(vec3(T)& u, vec3(T) v) {
+        u = u | v;
+        return u;
+    }
+    }
+
+    // ^
+    forall(| { T ?^?(T,T); }) {
+    vec3(T) ?^?(vec3(T) v, T scalar) with (v) {
+        return [x ^ scalar, y ^ scalar, z ^ scalar];
+    }
+    vec3(T)& ?^=?(vec3(T)& u, T scalar) {
+        u = u ^ scalar;
+        return u;
+    }
+    vec3(T) ?^?(vec3(T) u, vec3(T) v) {
+        return [u.x ^ v.x, u.y ^ v.y, u.z ^ v.z];
+    }
+    vec3(T)& ?^=?(vec3(T)& u, vec3(T) v) {
+        u = u ^ v;
+        return u;
+    }
+    }
+
+    // <<
+    forall(| { T ?<<?(T,T); }) {
+    vec3(T) ?<<?(vec3(T) v, T scalar) with (v) {
+        return [x << scalar, y << scalar, z << scalar];
+    }
+    vec3(T)& ?<<=?(vec3(T)& u, T scalar) {
+        u = u << scalar;
+        return u;
+    }
+    vec3(T) ?<<?(vec3(T) u, vec3(T) v) {
+        return [u.x << v.x, u.y << v.y, u.z << v.z];
+    }
+    vec3(T)& ?<<=?(vec3(T)& u, vec3(T) v) {
+        u = u << v;
+        return u;
+    }
+    }
+
+    // >>
+    forall(| { T ?>>?(T,T); }) {
+    vec3(T) ?>>?(vec3(T) v, T scalar) with (v) {
+        return [x >> scalar, y >> scalar, z >> scalar];
+    }
+    vec3(T)& ?>>=?(vec3(T)& u, T scalar) {
+        u = u >> scalar;
+        return u;
+    }
+    vec3(T) ?>>?(vec3(T) u, vec3(T) v) {
+        return [u.x >> v.x, u.y >> v.y, u.z >> v.z];
+    }
+    vec3(T)& ?>>=?(vec3(T)& u, vec3(T) v) {
+        u = u >> v;
+        return u;
+    }
+    }
+
+    // ~
+    forall(| { T ~?(T); })
+    vec3(T) ~?(vec3(T) v) with (v) {
+        return [~v.x, ~v.y, ~v.z];
+    }
+
+    // relational
+    forall(| equality(T)) {
+    bool ?==?(vec3(T) u, vec3(T) v) with (u) {
+        return x == v.x && y == v.y && z == v.z;
+    }
+    bool ?!=?(vec3(T) u, vec3(T) v) {
+        return !(u == v);
+    }
+    }
+
+    // Geometric functions
+    forall(| add(T) | multiply(T))
+    T dot(vec3(T) u, vec3(T) v) {
+        return u.x * v.x + u.y * v.y + u.z * v.z;
+    }
+
+    forall(| subtract(T) | multiply(T))
+    vec3(T) cross(vec3(T) u, vec3(T) v) {
+        return (vec3(T)){ u.y * v.z - v.y * u.z,
+                          u.z * v.x - v.z * u.x,
+                          u.x * v.y - v.x * u.y };
+    }
+
+    } // static inline
+}
+
+forall(ostype &, T | writeable(T, ostype)) {
+    ostype & ?|?(ostype & os, vec3(T) v) with (v) {
+        return os | '<' | x | ',' | y | ',' | z | '>';
+    }
+    void ?|?(ostype & os, vec3(T) v ) with (v) {
+        (ostype &)(os | v); ends(os);
+    }
+}

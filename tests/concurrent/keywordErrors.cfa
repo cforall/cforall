@@ -1,0 +1,6 @@
+thread A {};
+
+// This include isn't enough but used to fool the check
+#include <invoke.h>
+
+thread B {};

@@ -1,0 +1,65 @@
+// Testing polymophic exception types.
+
+#include <exception.hfa>
+
+EHM_FORALL_EXCEPTION(proxy, (T&), (T))();
+
+EHM_FORALL_VIRTUAL_TABLE(proxy, (int), proxy_int);
+EHM_FORALL_VIRTUAL_TABLE(proxy, (char), proxy_char);
+
+void proxy_test(void) {
+	proxy(int) an_int = {&proxy_int};
+	proxy(char) a_char = {&proxy_char};
+
+    try {
+		throw an_int;
+	} catch (proxy(int) *) {
+		printf("terminate catch\n");
+	}
+
+	try {
+		throwResume a_char;
+	} catchResume (proxy(char) *) {
+		printf("resume catch\n");
+	}
+
+	try {
+		throw a_char;
+	} catch (proxy(int) *) {
+		printf("caught proxy(int)\n");
+	} catch (proxy(char) *) {
+		printf("caught proxy(char)\n");
+	}
+}
+
+EHM_FORALL_EXCEPTION(cell, (T), (T))(
+	T data;
+);
+
+EHM_FORALL_VIRTUAL_TABLE(cell, (int), int_cell);
+EHM_FORALL_VIRTUAL_TABLE(cell, (char), char_cell);
+EHM_FORALL_VIRTUAL_TABLE(cell, (bool), bool_cell);
+
+void cell_test(void) {
+	try {
+		cell(int) except = {&int_cell, -7};
+		throw except;
+	} catch (cell(int) * error) {
+		printf("%d\n", error->data);
+	}
+
+	try {
+		cell(bool) ball = {&bool_cell, false};
+		throwResume ball;
+		printf("%i\n", ball.data);
+	} catchResume (cell(bool) * error) {
+		printf("%i\n", error->data);
+		error->data = true;
+	}
+}
+
+int main(int argc, char * argv[]) {
+	proxy_test();
+	printf("\n");
+	cell_test();
+}

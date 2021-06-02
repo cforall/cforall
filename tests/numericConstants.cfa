@@ -1,0 +1,72 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// numericConstants.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed May 24 22:10:36 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 07:55:22 2020
+// Update Count     : 7
+// 
+
+int main() {
+	1;							// decimal
+	2_1;
+	2_147_483_647;
+	37LL;
+	45ull;
+	89llu;
+	99LLu;
+	56_lu;
+	88_LLu;
+
+//	0;							// octal
+	0u;
+	0_3_77;
+	0_377_ul;
+
+	0x1;						// hexadecimal
+	0x1u;
+	0xabL;
+	0x_80000000;
+	0x_fff;
+	0x_ef3d_aa5c;
+	0x_3LL;
+
+	3.;							// integral real
+	3_100.;
+	1_000_000.;
+
+	3.1;						// integral/fractional real
+	3.141_592_654L;
+	123_456.123_456;
+
+	3E1;						// integral/exponent real
+	3_e1f;
+	3_E1_1_F;
+	3_E_11;
+	3_e_+11;
+	3_E_-11;
+
+	3.0E1;						// integral/fractional/exponent real
+	3.0_E1L;
+	3.0_e1_1;
+	3.0_E_11_l;
+	3.0_e_+11l;
+	3.0_E_-11;
+	123_456.123_456E-16;
+
+	0x_ff.ffp0;					// hex real
+	0x_1.ffff_ffff_p_128_l;
+
+	#pragma message( "Compiled" )	// force non-empty .expect file
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa numericConstants.cfa" //
+// End: //

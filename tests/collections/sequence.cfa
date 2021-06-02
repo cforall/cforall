@@ -1,0 +1,275 @@
+#include <fstream.hfa>
+#include <stdlib.hfa>									// new, delete
+#include <bits/sequence.hfa>
+
+int main() {
+	// Fred test
+
+	struct Fred {
+		inline Seqable;									// Plan 9 inheritance
+		int i;
+	};
+	void ?{}( Fred & fred ) { abort(); }
+	void ?{}( Fred & fred, int p ) with( fred ) {
+		i = p;
+	}
+	Fred *& Back( Fred * n ) {
+		return (Fred *)Back( (Seqable *)n );
+	}
+	Fred *& Next( Fred * n ) {
+		return (Fred *)Next( (Colable *)n );
+	}
+
+	Sequence(Fred) fred;
+	SeqIter(Fred) iter = { fred };
+	Fred & f;
+
+	sout | nlOff;										// turn off auto newline
+
+	for ( ; iter | f; ) {							// empty list
+		sout | f.i | ' ';
+	}
+	sout | "empty" | nl;
+	
+	for ( i; 10 ) {
+		add( fred, *new( 2 * i ) );
+	}
+
+	sout | head( fred ).i | tail( fred ).i | nl;
+
+	for ( SeqIter(Fred) iter = { fred }; iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	for ( i; 9 ) {
+		delete( &dropHead( fred ) );
+	}
+
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+	
+	for ( i; 10 ) {
+		addTail( fred, *new( 2 * i + 1 ) );
+	}
+
+	Fred * head = new( -1 ), tail = { -2 };
+	addHead( fred, *head );
+	addTail( fred, tail );
+
+	sout | head( fred ).i | succ( fred, head )->i | tail( fred ).i | nl;
+
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	remove( fred, *head );
+	remove( fred, tail );
+	delete( head );
+	delete( &dropTail( fred ) );
+
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	for ( i; 5 ) {
+		delete( &dropTail( fred ) );
+	}
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	for ( over( iter, fred ); iter | f; ) {
+		delete( &remove( fred, f ) );
+	}
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | "empty" | nl;
+
+	Fred & middle;
+	for ( i; 10 ) {
+		addHead( fred, *new( i ) );						// reverse order
+		if ( i == 5 ) {
+			&middle = &head( fred );
+		}
+	}
+	for ( SeqIterRev(Fred) riter = { fred }; riter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	head = new( -1 );
+	insertBef( fred, *head, head( fred ) );
+	insertAft( fred, *head, tail );
+
+	sout | head( fred ).i | succ( fred, head )->i | tail( fred ).i | nl;
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	remove( fred, *head );
+	remove( fred, tail );
+	delete( head );
+	delete( &dropTail( fred ) );
+
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	Sequence(Fred) fred2;
+
+	split( fred2, fred, middle );
+
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	for ( over( iter, fred2 ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	transfer( fred, fred2 );
+
+	for ( over( iter, fred ); iter | f; ) {
+		sout | f.i | ' ';
+	}
+	sout | nl;
+
+	for ( over( iter, fred ); iter | f; ) {
+		delete( &f );
+	}
+
+	// Mary test
+
+	struct Mary {
+		inline Fred;									// Plan 9 inheritance
+		int j;
+	};
+	void ?{}( Mary & mary ) { abort(); }
+	void ?{}( Mary & mary, int p ) with( mary ) {
+		((Fred &)mary){ p };
+		j = p;
+	}
+	Mary *& Back( Mary * n ) {
+		return (Mary *)Back( (Fred *)n );
+	}
+	Mary *& Next( Mary * n ) {
+		return (Mary *)Next( (Fred *)n );
+	}
+
+	Sequence(Mary) mary;
+	SeqIter(Mary) iter = { mary };
+	Mary & m;
+
+	for ( ; iter | m; ) {							// empty list
+		sout | m.i | m.j | ' ';
+	}
+	sout | "empty" | nl;
+	
+	for ( i; 10 ) {
+		add( mary, *new( 2 * i ) );
+	}
+
+	sout | head( mary ).i | tail( mary ).i | nl;
+
+	for ( SeqIter(Mary) iter = { mary }; iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+	
+	for ( i; 9 ) {
+		delete( &dropHead( mary ) );
+	}
+
+	for ( over( iter, mary ); iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+	
+	for ( i; 10 ) {
+		addTail( mary, *new( 2 * i + 1 ) );
+	}
+
+	Mary * head = new( -1 ), tail = { -2 };
+	addHead( mary, *head );
+	addTail( mary, tail );
+
+	sout | head( mary ).i | succ( mary, head )->i | tail( mary ).i | nl;
+
+	for ( over( iter, mary ); iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+
+	remove( mary, *head );
+	remove( mary, tail );
+	delete( (Mary *)head );
+	delete( &dropTail( mary ) );
+
+	for ( over( iter, mary ); iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+
+	for ( i; 5 ) {
+		delete( &dropTail( mary ) );
+	}
+	for ( over( iter, mary ); iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+
+	for ( over( iter, mary ); iter | m; ) {
+		delete( &remove( mary, m ) );
+	}
+	for ( over( iter, mary ); iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | "empty" | nl;
+
+	Mary & middle;
+	for ( i; 10 ) {
+		add( mary, *new( i ) );
+		if ( i == 4 ) {
+			&middle = &tail( mary );
+		}
+	}
+	for ( SeqIter(Mary) iter = { mary }; iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+
+	Sequence(Mary) mary2;
+
+	split( mary2, mary, middle );
+
+	for ( over( iter, mary ); iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+	for ( over( iter, mary2 ); iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+
+	transfer( mary, mary2 );
+
+	for ( over( iter, mary ); iter | m; ) {
+		sout | m.i | m.j | ' ';
+	}
+	sout | nl;
+
+	for ( over( iter, mary ); iter | m; ) {
+		delete( &m );
+	}
+}

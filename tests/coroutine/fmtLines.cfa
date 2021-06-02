@@ -1,0 +1,66 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// fmtLines.cc -- format characters into blocks of 4 and groups of 5 blocks per line
+//
+// Author           : Peter A. Buhr
+// Created On       : Sun Sep 17 21:56:15 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Mar 22 13:41:16 2019
+// Update Count     : 58
+//
+
+#include <fstream.hfa>
+#include <coroutine.hfa>
+
+coroutine Format {
+	char ch;											// used for communication
+	int g, b;											// global because used in destructor
+};
+
+void main( Format & fmt ) with( fmt ) {
+	for () {											// for as many characters
+		for ( g = 0; g < 5; g += 1 ) {					// groups of 5 blocks
+			for ( b = 0; b < 4; b += 1 ) {				// blocks of 4 characters
+				for () {								// for newline characters
+					suspend;
+				  if ( ch != '\n' ) break;				// ignore newline
+				} // for
+				sout | ch;								// print character
+			} // for
+			sout | "  ";								// print block separator
+		} // for
+		sout | nl;										// print group separator
+	} // for
+} // main
+
+void ?{}( Format & fmt ) {
+	resume( fmt );										// prime (start) coroutine
+}
+
+void ^?{}( Format & fmt ) with( fmt ) {
+	if ( g != 0 || b != 0 ) sout | nl;
+}
+
+void format( Format & fmt ) {
+	resume( fmt );
+} // format
+
+int main() {
+	Format fmt;
+	sout | nlOff;										// turn off auto newline
+
+  eof: for () {											// read until end of file
+		sin | fmt.ch;									// read one character
+	  if ( eof( sin ) ) break eof;						// eof ?
+		format( fmt );									// push character for formatting
+	} // for
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa fmtLines.cfa" //
+// End: //

@@ -1,0 +1,399 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2019 University of Waterloo
+// 
+// manipulatorsOutput3.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Tue Apr 13 17:54:23 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr 13 17:54:48 2021
+// Update Count     : 1
+// 
+
+#include <fstream.hfa>
+
+int main() {
+	// int128 printing
+	int128 x = 0xffff, y = 0x2;
+
+	x <<= 64;
+	x += 0xffff;
+	y <<= 64;
+	y += 0123;
+	y |= 0x8000000000000000;
+	x = -x;
+	sout | x;
+	sout | sign(x);
+	x = -x;
+	sout | sign(x);
+	sout | nl;
+
+	int128 divisor = 0x4b3b4ca85a86c47a;
+	divisor <<= 16;
+	divisor += 0x98a224000000000;
+	
+	// base 2
+	sout | "base 2";
+	sout | bin(x);
+	sout | upcase(bin(x));
+	sout | nobase(bin(x));
+	sout | wd( 95, upcase(bin(x)) );
+	sout | wd( 95,90, upcase(bin(x)) );
+	sout | wd( 25,30, upcase(hex(x)) );
+	sout | nl;
+
+	sout | bin(divisor);
+	sout | upcase(bin(divisor));
+	sout | wd(38, upcase(bin(divisor)));
+	sout | wd(40, upcase(bin(divisor)));
+	sout | wd(40, 38, upcase(bin(divisor)));
+	sout | wd(40, 30, upcase(bin(divisor)));
+	sout | pad0(sign(wd(40, 38, upcase(bin(divisor)))));
+	sout | nl;
+	
+	// oct
+	sout | "base 8";
+	printf( "%#.10o\n", 0123 );
+	sout | wd( 1,10, oct(0123) );
+	sout | oct(x);
+	sout | nobase(oct(x));
+	sout | wd( 45, oct(0123) );
+	sout | wd( 45,40, oct(0123) );
+	sout | wd( 40,45, oct(0123) );
+	sout | wd( 45, oct(x) );
+	sout | wd( 45,40, oct(x) );
+	sout | wd( 40,45, oct(x) );
+
+	sout | left(wd( 45, oct(0123) )) | 'X';
+	sout | left(wd( 45, oct(x) )) | 'X';
+	sout | left(wd( 45, oct(y) )) | 'X';
+	sout | left(wd( 45,40, oct(0123) )) | 'X';
+	sout | left(wd( 45,40, oct(x) )) | 'X';
+	sout | left(wd( 45,40, oct(y) )) | 'X';
+	sout | left(wd( 40,45, oct(0123) )) | 'X';
+	sout | left(wd( 40,45, oct(x) )) | 'X';
+	sout | left(wd( 40,45, oct(y) )) | 'X';
+	printf( "%#-1.10oX\n", 0123 );
+	sout | left(wd( 1,10, oct(0123) )) | 'X';
+	printf( "%#-40.10oX\n", 0123 );
+	sout | left(wd( 40,10, oct(0123) )) | 'X';
+	sout | left(wd( 40,10, oct(x) )) | 'X';
+	sout | left(wd( 40,10, oct(y) )) | 'X';
+	sout | left(wd( 10,40, oct(0123) )) | 'X';
+	sout | left(wd( 10,40, oct(x) )) | 'X';
+	sout | left(wd( 10,40, oct(y) )) | 'X';
+
+	y = 01234567;
+	sout | left(wd( 45, 49, oct(y) )) | 'X';
+	y = -y;
+	sout | wd(0, oct(y)) | 'Y';
+	sout | left(wd(0, oct(y))) | 'Y';
+	sout | nl;
+
+	sout | upcase(oct(divisor));
+	sout | wd(38, upcase(oct(divisor)));
+	sout | wd(40, upcase(oct(divisor)));
+	sout | wd(40, 38, upcase(oct(divisor)));
+	sout | wd(40, 30, upcase(oct(divisor)));
+	sout | pad0(sign(wd(40, 38, upcase(oct(divisor)))));
+	sout | nl;
+
+	// decimal
+	sout | "base 10";
+	sout | divisor;
+	sout | wd(2, divisor);
+	sout | wd(3, divisor);
+	sout | wd(10, divisor);
+	sout | wd(24, divisor);
+	sout | wd(38, divisor);
+	sout | wd(39, divisor);
+	sout | wd(40, divisor);
+	
+	sout | wd(40, 30, divisor);
+	sout | wd(40, 38, divisor);
+	sout | wd(40, 40, divisor);
+	sout | pad0(wd(40, divisor));
+	sout | pad0(sign(wd(40,divisor)));
+	sout | nl;
+	
+	// hex
+	sout | "base 16";
+
+	sout | hex(x);
+	sout | upcase(hex(x));
+	sout | nobase(hex(x));
+	sout | wd( 45, upcase(hex(x)) );
+	sout | wd( 45,40, upcase(hex(x)) );
+	sout | wd( 45,49, upcase(hex(x)) );
+	sout | left(wd( 45, upcase(hex(x)) )) | 'X';
+	sout | left(wd( 45,40, upcase(hex(x)) )) | 'X';
+	sout | left(wd( 45,49, upcase(hex(x)) )) | 'X';
+	sout | nl;
+
+	sout | upcase(hex(divisor));
+	sout | wd(38, upcase(hex(divisor)));
+	sout | wd(40, upcase(hex(divisor)));
+	sout | wd(40, 38, upcase(hex(divisor)));
+	sout | wd(40, 30, upcase(hex(divisor)));
+	sout | pad0(sign(wd(40, 38, upcase(hex(divisor)))));
+	sout | nl;
+
+	// extras
+	sout | "extras";
+	sout | bin(divisor);
+	sout | upcase(bin(divisor));
+	sout | oct(divisor);
+	sout | hex(divisor);
+	sout | upcase(hex(divisor));
+	sout | nobase(bin(divisor)) | nobase(oct(divisor)) | nobase(hex(divisor));
+	sout | sign(divisor);
+	sout | -divisor;
+	sout | sign(-divisor);
+	sout | wd(2, divisor);
+	sout | wd(3,10,divisor);
+	sout | left(wd(40,divisor)) | 'X';
+	sout | left(sign(wd(40, divisor))) | 'X';
+	sout | left(sign(wd(0,40, divisor))) | 'X';
+	printf( "%-+1.40dX\n", 123456789 );
+
+	int128 i128;
+	unsigned int128 ui128;
+	i128 = -1000;
+	for ( 10 ) {
+		sout | left( sign( wd( 2, i128 ) ) ) | left( wd( 2, hex( i128 ) ) ) | left( wd( 2, oct( i128 ) ) );
+		sout | left( wd( 2, bin( i128 ) ) );
+		i128 += 1;
+	}
+	sout | nl;
+	sout | nl;
+
+	sout | left( wd( 160, i128 ) );
+	sout | left( sign( wd( 0, i128 ) ) );
+	sout | left( wd( 0, hex( i128 ) ) );
+	sout | left( wd( 0, oct( i128 ) ) );
+	sout | left( wd( 0, bin( i128 ) ) );
+	sout | left( sign( wd( 1, i128 ) ) );
+	sout | left( wd( 1, hex( i128 ) ) );
+	sout | left( wd( 1, oct( i128 ) ) );
+	sout | left( wd( 1, bin( i128 ) ) );
+	sout | left( sign( wd( 32, i128 ) ) );
+	sout | left( wd( 32, hex( i128 ) ) );
+	sout | left( wd( 32, oct( i128 ) ) );
+	sout | left( wd( 32, bin( i128 ) ) );
+	sout | left( sign( wd( 160, i128 ) ) );
+	sout | left( wd( 160, hex( i128 ) ) );
+	sout | left( wd( 160, oct( i128 ) ) );
+	sout | left( wd( 160, bin( i128 ) ) );
+	sout | left( sign( wd( 160, i128 ) ) );
+	sout | left( wd( 160, upcase( hex( i128 ) ) ) );
+	sout | left( wd( 160, upcase( oct( i128 ) ) ) );
+	sout | left( wd( 160, upcase( bin( i128 ) ) ) );
+
+	x = 1234;
+	x <<= 64;
+	x += 5678;
+	sout | x | 'X';
+	sout | wd(45, 20, oct(x)) | 'X';
+	sout | left(wd(45, 20, oct(x))) | 'X';
+	sout | wd(45, 21, oct(x)) | 'X';
+	sout | left(wd(45, 21, oct(x))) | 'X';
+	sout | wd(45, 22, oct(x)) | 'X';
+	sout | left(wd(45, 22, oct(x))) | 'X';
+	sout | wd(45, 36, oct(x)) | 'X';
+	sout | left(wd(45, 36, oct(x))) | 'X';
+	sout | wd(45, 46, oct(x)) | 'X';
+	sout | left(wd(45, 46, oct(x))) | 'X';
+	sout | left(wd(45, 20, oct(x))) | 'X';
+	sout | left(wd(45, 22, oct(x))) | 'X';
+	sout | left(wd(45, 24, oct(x))) | 'X';
+	sout | left(wd(45, 26, oct(x))) | 'X';
+	sout | left(wd(45, 28, oct(x))) | 'X';
+
+	y = -x;
+	sout | oct(y) | 'Y';
+	sout | left(wd(0, oct(y))) | 'Y';
+	sout | left(wd(20, oct(y))) | 'Y';
+	sout | left(wd(26, oct(y))) | 'Y';
+	sout | left(wd(40, oct(y))) | 'Y';
+	sout | left(wd(41, oct(y))) | 'Y';
+	sout | left(wd(45, oct(y))) | 'Y';
+	sout | left(wd(45, 49, oct(y))) | 'Y';
+	sout | left(wd(45, 4, oct(y))) | 'Y';
+	sout | left(wd( 45, oct(0123) )) | 'X';
+	sout | left(wd( 45, oct(x) )) | 'X';
+	sout | left(wd( 45,40, oct(0123) )) | 'X';
+	sout | left(wd( 45,40, oct(x) )) | 'X';
+	sout | left(wd( 40,45, oct(0123) )) | 'X';
+	sout | left(wd( 40,45, oct(x) )) | 'X'; 
+	sout | left(wd( 40,10, oct(0123) )) | 'X';
+	sout | left(wd( 40,10, oct(x) )) | 'X';
+	sout | left(wd( 40,10, oct(y) )) | 'X';
+	sout | left(wd( 10,40, oct(0123) )) | 'X';
+	sout | left(wd( 10,40, oct(x) )) | 'X';
+	sout | left(wd( 10,40, oct(y) )) | 'X';
+
+	x = 0xffff, y = 0x2;
+	int128 z = 0x_ffff_ffff_ffff_ffff;
+	x <<= 64;
+	x += 0xffff;
+	y <<= 64;
+	y += 0123;
+	y |= 0x8000000000000000;
+
+	for ( int128 i = 0; i < 8; i += 1 ) {
+		sout | nobase(oct(z + 0x8000000000000000 * i));
+	} // for
+
+	sout | bin(x);
+	sout | upcase(bin(x));
+	sout | nobase(bin(x));
+
+	sout | wd( 95, upcase(bin(x)) );
+	sout | wd( 95,90, upcase(bin(x)) );
+	sout | wd( 90,95, upcase(bin(x)) );
+
+	sout | left(bin(x));
+	sout | left(upcase(bin(x)));
+	sout | left(nobase(bin(x)));
+
+	sout | left(wd( 95, upcase(bin(x)) ));
+	sout | left(wd( 95,90, upcase(bin(x)) ));
+	sout | left(wd( 95,81, upcase(bin(x)) ));
+
+	sout | left(wd( 95,80, upcase(bin(x)) ));
+	sout | left(wd( 95,79, upcase(bin(x)) ));
+	sout | left(wd( 95,90, upcase(bin(0xffff)) ));
+
+	sout | left(wd( 68,64, upcase(bin(0xffff)) ));
+	sout | left(wd( 90,95, upcase(bin(x)) ));
+
+	printf( "%#30.25X\n", 0xffff );
+	sout | wd( 30,25, upcase(hex(0xffff)) );
+	printf( "%#25.30X\n", 0xffff );
+	sout | wd( 25,30, upcase(hex(0xffff)) );
+
+	sout | oct(y);
+	sout | wd( 45, oct(y) );
+	sout | left(wd( 45, oct(y) )) | 'X';
+
+	sout | left(wd( 40,10, oct(0123) )) | 'X';
+	sout | left(wd( 40,10, oct(x) )) | 'X';
+	sout | left(wd( 40,10, oct(y) )) | 'X';
+	sout | left(wd( 10,40, oct(0123) )) | 'X';
+	sout | left(wd( 10,40, oct(x) )) | 'X';
+	sout | left(wd( 10,40, oct(y) )) | 'X';
+
+	i128 = -10;
+	for ( 25 ) {
+		sout | left( sign( wd( 20, i128 ) ) ) | left( wd( 20, hex( i128 ) ) ) | left( wd( 20, oct( i128 ) ) );
+		sout | left( wd( 20, bin( i128 ) ) );
+		i128 += 1;
+	} // for
+	sout | nl;
+
+	i128 = 0x7fffffffffffffff;
+	i128 <<= 64;
+	i128 += 0xfffffffffffffffa;
+
+//	for ( 20 ) {
+	volatile int stop = 20;								// gcc compiler bug
+	for ( int i = 0; i < stop; i += 1 ) {
+		sout | i128;
+		sout | left( sign( wd( 45, i128 ) ) ) | left( wd( 45, hex( i128 ) ) ) | left( wd( 45, oct( i128 ) ) );
+		sout | left( wd( 45, bin( i128 ) ) );
+		i128 += 1;
+	} // for
+	sout | nl;
+
+	ui128 = 0x7fffffffffffffff;
+	ui128 <<= 64;
+	ui128 += 0xfffffffffffffffa;
+	
+	for ( 20 ) {
+		sout | ui128;
+		ui128 += 1;
+	}
+	sout | nl;
+
+	ui128 = 0xffffffffffffffff;
+	ui128 <<= 64;
+	ui128 += 0xfffffffffffffffa;
+	
+	for ( 20 ) {
+		sout | ui128;
+		ui128 += 1;
+	}
+
+	// int128 constants (and printing)
+	int128 v = 0xffff_ffffffff_ffffffff_L128 + 0xffffffff_ffffffff_ffffffff_ffffffff_L128;
+	sout | hex(v);
+	v = 0xffff_ffffffff_ffffffff_L128 + 0xffffffff_ffffffff_ffffffff_ffffffff_L128;
+	sout | hex(v);
+	sout | nl;
+
+	sout | "binary";
+	sout | bin(v);
+	sout | bin(0b_11111111111111111111111111111111_L128);
+	sout | bin(0b_11111111111111111111111111111111_11111111111111111111111111111111_L128);
+	sout | bin(0b_11111111111111111111111111111111_11111111111111111111111111111111_11111111111111111111111111111111_L128);
+	sout | bin(0b_11111111111111111111111111111111_11111111111111111111111111111111_11111111111111111111111111111111_11111111111111111111111111111111_L128);
+	sout | hex(0b_10100010001101000101011001111000_L128);
+	sout | hex(0b_10100010001101000101011001111000_10100111011001010100001100100001_L128);
+	sout | hex(0b_10100010001101000101011001111000_10100111011001010100001100100001_11000010001101000101011001111000_L128);
+	sout | hex(0b_10100010001101000101011001111000_10100111011001010100001100100001_11000010001101000101011001111000_11010111010101010100001100100001_L128);
+	sout | nl;
+
+	sout | "octal";
+	sout | oct(v);
+	sout | oct(0_123456_L128u);
+	sout | oct(0_123456_65432_uL128);
+	sout | oct(0_123456_65432_34567_L128);
+	sout | oct(0_123456_65432_34567_76543_L128);
+	sout | oct(0_123456_65432_34567_76543_23456_L128);
+	sout | oct(0_123456_65432_34567_76543_23456_65432_L128);
+	sout | oct(0_123456_65432_34567_76543_23456_65432_34567_L128);
+	sout | oct(0_123456_65432_34567_76543_23456_65432_34567_76543_L128);
+	sout | oct(0_1111111111111111111L);
+	sout | oct(0_11111111111111111111L);
+	sout | oct(0_111111111111111111111L);
+	sout | nl;
+
+	sout | "decimal";
+	sout | v;
+	sout | 42_798_L128 | oct(42_798_L128);
+	sout | 1_402_432_282_L128 | oct(1_402_432_282_L128);
+	sout | 45_954_901_031_287_L128 | oct(45_954_901_031_287_L128);
+	sout | 1_505_850_196_993_244_515_L128 | oct(1_505_850_196_993_244_515_L128);
+	sout | 394_749_758_663_249_135_511_342_L128 | oct(394_749_758_663_249_135_511_342_L128);
+	sout | 12_935_154_696_204_706_112_391_834_394_L128 | oct(12_935_154_696_204_706_112_391_834_394_L128);
+	sout | 423_859_149_128_410_414_395_372_834_994_551_L128 | oct(423_859_149_128_410_414_395_372_834_994_551_L128);
+	sout | 13_889_016_598_639_747_063_234_935_497_057_631_587_L128 | oct(13_889_016_598_639_747_063_234_935_497_057_631_587_L128);
+	sout | 1234567890123456789_uL128;
+	sout | 1234567890123456789_L128u;
+	sout | 0x_7fffffff_ffffffff_ffffffff_ffffffff_L128;
+	sout | 0x_ffffffff_ffffffff_ffffffff_ffffffff_L128;
+	sout | 0x_80000000_00000000_00000000_00000000_L128;
+	unsigned int128 vv;
+	vv = 340282366920938463463374607431768211455_L128u;
+	sout | vv;
+	vv = 170141183460469231731687303715884105727_L128;
+	sout | vv;
+	sout | nl;
+
+	sout | "hexadecimal";
+	sout | hex(v);
+	sout | hex(0x_ffffffff_L128);
+	sout | hex(0x_ffffffff_ffffffff_L128);
+	sout | hex(0x_ffffffff_ffffffff_ffffffff_L128);
+	sout | hex(0xffffffff_ffffffff_ffffffff_ffffffff_L128);
+	sout | hex(0x_a2345678_L128);
+	sout | hex(0x_a2345678_b7654321_L128);
+	sout | hex(0x_a2345678_b7654321_c2345678_L128);
+	sout | hex(0x_a2345678_b7654321_c2345678_d7654321_L128);
+	sout | nl;
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa -Wall -Wextra manipulatorsOutput3.cfa" //
+// End: //

@@ -1,0 +1,83 @@
+#include <fstream.hfa>
+
+struct value_t {
+	int value;
+};
+
+void ?{}( value_t & this ) { this.value = 22; }
+
+//Standard case
+struct g_t {
+	value_t val;
+};
+
+void ?{}( g_t & this ) { (this.val){}; }
+
+g_t g;
+
+//Autogen case
+struct ga_t {
+	value_t val;
+};
+
+ga_t ga;
+
+//Inline case
+struct gi_t;
+void ?{}( gi_t & this );
+
+struct gi_t {
+	value_t val;
+} gi;
+
+void ?{}( gi_t & this ) { (this.val){}; }
+
+//Inline autogen case
+struct gia_t {
+	value_t val;
+} gia;
+
+//Static case
+struct gs_t {
+	value_t val;
+};
+
+void ?{}( gs_t & this ) { (this.val){}; }
+
+static gs_t gs;
+
+//Static autogen case
+struct gsa_t {
+	value_t val;
+};
+
+static gsa_t gsa;
+
+//Static inline case
+struct gsi_t;
+void ?{}( gsi_t & this );
+
+static struct gsi_t {
+	value_t val;
+} gsi;
+
+void ?{}( gsi_t & this ) { (this.val){}; }
+
+//Static inline autogen case
+static struct gsia_t {
+	value_t val;
+} gsia;
+
+int main() {
+	sout | "static\t\tinline\t\tautogen\t\tvalue";
+
+	sout | "no \t\tno \t\tno \t\t" | g.val.value;
+	sout | "no \t\tno \t\tyes\t\t" | ga.val.value;
+	sout | "no \t\tyes\t\tno \t\t" | gi.val.value;
+	sout | "no \t\tyes\t\tyes\t\t" | gia.val.value;
+	sout | "yes\t\tno \t\tno \t\t" | gs.val.value;
+	sout | "yes\t\tno \t\tyes\t\t" | gsa.val.value;
+	sout | "yes\t\tyes\t\tno \t\t" | gsi.val.value;
+	sout | "yes\t\tyes\t\tyes\t\t" | gsia.val.value;
+
+}

@@ -1,0 +1,10 @@
+char			-65	abs 65
+signed int		-65	abs 65
+signed long int		-65	abs 65
+signed long long int	-65	abs 65
+float			-65.	abs 65.
+double			-65.	abs 65.
+long double		-65.	abs 65.
+float _Complex		-65.-2.i	abs 65.0308
+double _Complex		-65.-2.i	abs 65.0307619515564
+long double _Complex	-65.-2.i	abs 65.0307619515564342

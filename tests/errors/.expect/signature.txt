@@ -1,0 +1,12 @@
+errors/signature.cfa:2:1 error: Constructors, destructors, and assignment functions require at least one parameter.
+errors/signature.cfa:3:1 error: Constructors, destructors, and assignment functions require at least one parameter.
+errors/signature.cfa:4:1 error: Constructors, destructors, and assignment functions require at least one parameter.
+errors/signature.cfa:5:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.
+errors/signature.cfa:6:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.
+errors/signature.cfa:7:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.
+errors/signature.cfa:10:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.
+errors/signature.cfa:11:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.
+errors/signature.cfa:12:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.
+errors/signature.cfa:13:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.
+errors/signature.cfa:14:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.
+errors/signature.cfa:15:1 error: First parameter of a constructor, destructor, or assignment function must be a reference.

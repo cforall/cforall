@@ -1,0 +1,81 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// alarm.hfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Fri Jun 2 11:31:25 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Mar 26 16:25:41 2018
+// Update Count     : 11
+//
+
+#pragma once
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#include <assert.h>
+
+#include "time.hfa"
+
+#include "containers/list.hfa"
+
+struct $thread;
+struct processor;
+
+//=============================================================================================
+// Clock logic
+//=============================================================================================
+
+Time __kernel_get_time();
+void __kernel_set_timer( Duration alarm );
+
+//=============================================================================================
+// Alarm logic
+//=============================================================================================
+
+enum alarm_type{ Kernel = 0, User = 1, Callback = 2 };
+
+struct alarm_node_t;
+
+typedef void (*Alarm_Callback)(alarm_node_t & );
+
+struct alarm_node_t {
+	Duration initial;	// time when alarm goes off
+	Duration period;	// if > 0 => period of alarm
+
+	inline dlink(alarm_node_t);
+
+	union {
+		$thread * thrd;			// thrd who created event
+		processor * proc;			// proc who created event
+		Alarm_Callback callback;	// callback to handle event
+	};
+
+	Time timeval;           // actual time at which the alarm goes off
+	enum alarm_type type;	// true if this is not a user defined alarm
+	bool set		:1;	// whether or not the alarm has be registered
+};
+P9_EMBEDDED( alarm_node_t, dlink(alarm_node_t) )
+
+void ?{}( alarm_node_t & this, $thread * thrd, Duration alarm, Duration period );
+void ?{}( alarm_node_t & this, processor * proc, Duration alarm, Duration period );
+void ?{}( alarm_node_t & this, Alarm_Callback callback, Duration alarm, Duration period );
+void ^?{}( alarm_node_t & this );
+
+typedef dlist(alarm_node_t) alarm_list_t;
+
+void insert( alarm_list_t * this, alarm_node_t * n );
+alarm_node_t * pop( alarm_list_t * this );
+
+void register_self  ( alarm_node_t * this );
+void unregister_self( alarm_node_t * this );
+
+// Local Variables: //
+// mode: c //
+// tab-width: 6 //
+// End: //

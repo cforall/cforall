@@ -1,0 +1,88 @@
+#include <fstream.hfa>
+#include <queueLockFree.hfa>
+#include <thread.hfa>
+
+const unsigned int num_times = 50000;
+
+struct some_node {
+	some_node * volatile next;
+	single_sem sem;
+	unsigned value;
+};
+
+void ?{}(some_node & this) { this.next = 0p; }
+
+static inline some_node * volatile & ?`next ( some_node * node ) {
+	return node->next;
+}
+
+mpsc_queue(some_node) global_queue;
+
+void thrash() {
+	unsigned t[100];
+	for(i; 100) {
+		t[i] = 0xDEADBEEF;
+	}
+}
+
+thread Producer {
+	size_t sum;
+};
+void ?{}( Producer & this ) { this.sum = 0; }
+
+void wait(Producer & this) {
+	some_node node;
+	node.value = (unsigned)&this;
+	push(global_queue, &node);
+	wait(node.sem);
+	this.sum += node.value;
+}
+
+void main(Producer & this) {
+	for(num_times) {
+		thrash();
+		wait(this);
+		thrash();
+		yield(random(10));
+	}
+}
+
+thread Consumer {
+	size_t sum;
+};
+void ?{}(Consumer & this) { this.sum = 0; }
+void main(Consumer & this) {
+	LOOP: for() {
+		waitfor( ^?{} : this) {
+			break LOOP;
+		}
+		or else {}
+
+		some_node * node = pop(global_queue);
+		if(node) {
+			this.sum += node->value;
+			post(node->sem);
+		}
+		else yield();
+	}
+}
+
+int main() {
+	unsigned psum = 0;
+	unsigned csum = -32;
+	processor p[2];
+	sout | "Starting";
+	{
+		Consumer cons;
+		{
+			Producer prods[13];
+			for(i; 13) {
+				psum += join(prods[i]).sum;
+			}
+		}
+		csum = join(cons).sum;
+	}
+	sout | "Done!";
+	if(psum == csum) sout | "Match!";
+	else sout | "No Match!";
+}

@@ -1,0 +1,44 @@
+3 3 1
+12 12 1
+12 12 1 1
+13 1 12
+14 14
+x = 6 ; x2 = 789
+x = 6 ; x2 = 999
+x = 12345 ; x2 = 999
+x = 22222 ; x2 = 999
+Default constructing a Y
+Copy constructing a Y
+Copy constructing a Y
+Copy constructing a Y
+Destructing a Y
+Destructing a Y
+Default constructing a Y
+Copy constructing a Y
+Value constructing a Y 56
+Value constructing a Y 78
+Copy constructing a Y
+Copy constructing a Y
+Assigning a Y
+Copy constructing a Y
+Destructing a Y
+Destructing a Y
+Copy constructing a Y
+Assigning a Y
+Copy constructing a Y
+Destructing a Y
+Destructing a Y
+Copy constructing a Y
+Destructing a Y
+Destructing a Y
+3 3
+3
+3
+3 9 { 1., 7. }, [1, 2, 3]
+4
+Destructing a Y
+Destructing a Y
+Destructing a Y
+Destructing a Y
+Destructing a Y
+Destructing a Y

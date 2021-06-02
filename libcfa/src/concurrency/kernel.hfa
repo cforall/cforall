@@ -1,0 +1,275 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// kernel -- Header containing the core of the kernel API
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Jan 17 12:27:26 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Feb  4 12:29:26 2020
+// Update Count     : 22
+//
+
+#pragma once
+
+#include "invoke.h"
+#include "time_t.hfa"
+#include "coroutine.hfa"
+
+#include "containers/list.hfa"
+
+extern "C" {
+	#include <bits/pthreadtypes.h>
+	#include <pthread.h>
+	#include <linux/types.h>
+}
+
+#ifdef __CFA_WITH_VERIFY__
+	extern bool __cfaabi_dbg_in_kernel();
+#endif
+
+//-----------------------------------------------------------------------------
+// I/O
+struct cluster;
+struct $io_context;
+struct $io_arbiter;
+
+struct io_context_params {
+	int num_entries;
+};
+
+void  ?{}(io_context_params & this);
+
+//-----------------------------------------------------------------------------
+// Processor
+extern struct cluster * mainCluster;
+
+// Processor id, required for scheduling threads
+
+
+coroutine processorCtx_t {
+	struct processor * proc;
+};
+
+// Wrapper around kernel threads
+struct __attribute__((aligned(128))) processor {
+	// Cluster from which to get threads
+	struct cluster * cltr;
+
+	// Ready Queue state per processor
+	struct {
+		unsigned short its;
+		unsigned short itr;
+		unsigned id;
+		unsigned target;
+		unsigned long long int cutoff;
+	} rdq;
+
+	// Set to true to notify the processor should terminate
+	volatile bool do_terminate;
+
+	// Coroutine ctx who does keeps the state of the processor
+	struct processorCtx_t runner;
+
+	// Name of the processor
+	const char * name;
+
+	// Handle to pthreads
+	pthread_t kernel_thread;
+
+	// Unique id for the processor (not per cluster)
+	unsigned unique_id;
+
+	struct {
+		$io_context * ctx;
+		bool pending;
+		bool dirty;
+	} io;
+
+	// Preemption data
+	// Node which is added in the discrete event simulaiton
+	struct alarm_node_t * preemption_alarm;
+
+	// If true, a preemption was triggered in an unsafe region, the processor must preempt as soon as possible
+	bool pending_preemption;
+
+	// Idle lock (kernel semaphore)
+	int idle;
+
+	// Termination synchronisation (user semaphore)
+	oneshot terminated;
+
+	// pthread Stack
+	void * stack;
+
+	// Link lists fields
+	inline dlink(processor);
+
+	// special init fields
+	// This is needed for memcached integration
+	// once memcached experiments are done this should probably be removed
+	// it is not a particularly safe scheme as it can make processors less homogeneous
+	struct {
+		$thread * thrd;
+	} init;
+
+	struct KernelThreadData * local_data;
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		int print_stats;
+		bool print_halts;
+	#endif
+
+#ifdef __CFA_DEBUG__
+	// Last function to enable preemption on this processor
+	const char * last_enable;
+#endif
+};
+P9_EMBEDDED( processor, dlink(processor) )
+
+void  ?{}(processor & this, const char name[], struct cluster & cltr);
+void ^?{}(processor & this);
+
+static inline void  ?{}(processor & this)                        { this{ "Anonymous Processor", *mainCluster}; }
+static inline void  ?{}(processor & this, struct cluster & cltr) { this{ "Anonymous Processor", cltr}; }
+static inline void  ?{}(processor & this, const char name[])     { this{name, *mainCluster}; }
+
+//-----------------------------------------------------------------------------
+// Cluster Tools
+
+// Intrusives lanes which are used by the ready queue
+struct __attribute__((aligned(128))) __intrusive_lane_t;
+void  ?{}(__intrusive_lane_t & this);
+void ^?{}(__intrusive_lane_t & this);
+
+// Aligned timestamps which are used by the relaxed ready queue
+struct __attribute__((aligned(128))) __timestamp_t {
+	volatile unsigned long long tv;
+};
+
+static inline void  ?{}(__timestamp_t & this) { this.tv = 0; }
+static inline void ^?{}(__timestamp_t & this) {}
+
+//TODO adjust cache size to ARCHITECTURE
+// Structure holding the relaxed ready queue
+struct __ready_queue_t {
+	// Data tracking the actual lanes
+	// On a seperate cacheline from the used struct since
+	// used can change on each push/pop but this data
+	// only changes on shrink/grow
+	struct {
+		// Arary of lanes
+		__intrusive_lane_t * volatile data;
+
+		// Array of times
+		__timestamp_t * volatile tscs;
+
+		// Number of lanes (empty or not)
+		volatile size_t count;
+	} lanes;
+};
+
+void  ?{}(__ready_queue_t & this);
+void ^?{}(__ready_queue_t & this);
+#if !defined(__CFA_NO_STATISTICS__)
+	unsigned cnt(const __ready_queue_t & this, unsigned idx);
+#endif
+
+// Idle Sleep
+struct __cluster_proc_list {
+	// Spin lock protecting the queue
+	volatile uint64_t lock;
+
+	// Total number of processors
+	unsigned total;
+
+	// Total number of idle processors
+	unsigned idle;
+
+	// List of idle processors
+	dlist(processor) idles;
+
+	// List of active processors
+	dlist(processor) actives;
+};
+
+//-----------------------------------------------------------------------------
+// Cluster
+struct __attribute__((aligned(128))) cluster {
+	// Ready queue for threads
+	__ready_queue_t ready_queue;
+
+	// Name of the cluster
+	const char * name;
+
+	// Preemption rate on this cluster
+	Duration preemption_rate;
+
+	// List of idle processors
+	__cluster_proc_list procs;
+
+	// List of threads
+	__spinlock_t thread_list_lock;
+	__dllist_t(struct $thread) threads;
+	unsigned int nthreads;
+
+	// Link lists fields
+	struct __dbg_node_cltr {
+		cluster * next;
+		cluster * prev;
+	} node;
+
+	struct {
+		$io_arbiter * arbiter;
+		io_context_params params;
+	} io;
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		struct __stats_t * stats;
+		int print_stats;
+	#endif
+};
+extern Duration default_preemption();
+
+void ?{} (cluster & this, const char name[], Duration preemption_rate, unsigned num_io, const io_context_params & io_params);
+void ^?{}(cluster & this);
+
+static inline void ?{} (cluster & this)                                            { io_context_params default_params;    this{"Anonymous Cluster", default_preemption(), 1, default_params}; }
+static inline void ?{} (cluster & this, Duration preemption_rate)                  { io_context_params default_params;    this{"Anonymous Cluster", preemption_rate, 1, default_params}; }
+static inline void ?{} (cluster & this, const char name[])                         { io_context_params default_params;    this{name, default_preemption(), 1, default_params}; }
+static inline void ?{} (cluster & this, unsigned num_io)                           { io_context_params default_params;    this{"Anonymous Cluster", default_preemption(), num_io, default_params}; }
+static inline void ?{} (cluster & this, Duration preemption_rate, unsigned num_io) { io_context_params default_params;    this{"Anonymous Cluster", preemption_rate, num_io, default_params}; }
+static inline void ?{} (cluster & this, const char name[], unsigned num_io)        { io_context_params default_params;    this{name, default_preemption(), num_io, default_params}; }
+static inline void ?{} (cluster & this, const io_context_params & io_params)                                            { this{"Anonymous Cluster", default_preemption(), 1, io_params}; }
+static inline void ?{} (cluster & this, Duration preemption_rate, const io_context_params & io_params)                  { this{"Anonymous Cluster", preemption_rate, 1, io_params}; }
+static inline void ?{} (cluster & this, const char name[], const io_context_params & io_params)                         { this{name, default_preemption(), 1, io_params}; }
+static inline void ?{} (cluster & this, unsigned num_io, const io_context_params & io_params)                           { this{"Anonymous Cluster", default_preemption(), num_io, io_params}; }
+static inline void ?{} (cluster & this, Duration preemption_rate, unsigned num_io, const io_context_params & io_params) { this{"Anonymous Cluster", preemption_rate, num_io, io_params}; }
+static inline void ?{} (cluster & this, const char name[], unsigned num_io, const io_context_params & io_params)        { this{name, default_preemption(), num_io, io_params}; }
+
+static inline [cluster *&, cluster *& ] __get( cluster & this ) __attribute__((const)) { return this.node.[next, prev]; }
+
+static inline struct processor * active_processor() { return publicTLS_get( this_processor ); } // UNSAFE
+static inline struct cluster   * active_cluster  () { return publicTLS_get( this_processor )->cltr; }
+
+#if !defined(__CFA_NO_STATISTICS__)
+	void print_stats_now( cluster & this, int flags );
+
+	static inline void print_stats_at_exit( cluster & this, int flags ) {
+		this.print_stats |= flags;
+	}
+
+	static inline void print_stats_at_exit( processor & this, int flags ) {
+		this.print_stats |= flags;
+	}
+
+	void print_halts( processor & this );
+#endif
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

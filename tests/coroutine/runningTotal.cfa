@@ -1,0 +1,51 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// runningTotal.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Dec  6 08:05:27 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Mar 22 13:40:49 2019
+// Update Count     : 5
+//
+
+#include <fstream.hfa>
+#include <coroutine.hfa>
+
+coroutine RunTotal {									// input numbers and return running total
+	int input, total;									// communication
+};
+
+void ?{}( RunTotal & rntl ) { rntl.total = 0; }
+
+void update( RunTotal & rntl, int input ) with( rntl ) { // helper
+	total += input;										// remember between activations
+	suspend;											// inactivate on stack
+}
+
+void main( RunTotal & rntl ) with( rntl ) {
+	for () {
+		update( rntl, input );
+	} // for
+}
+
+int add( RunTotal & rntl, int input ) {
+	rntl.input = input;									// pass input to coroutine
+	resume( rntl );
+	return rntl.total;									// return total from coroutine
+}
+int main() {
+	RunTotal rntl;
+	for ( i; 10 ) {
+		sout | i | add( rntl, i );
+	} // for
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa runningTotal.cfa" //
+// End: //

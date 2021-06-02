@@ -1,0 +1,61 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// matrixSum.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon Oct  9 08:29:28 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Feb 20 08:37:53 2019
+// Update Count     : 16
+//
+
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <thread.hfa>
+
+thread Adder {
+	int * row, cols, & subtotal;						// communication
+};
+
+void ?{}( Adder & adder, int row[], int cols, int & subtotal ) {
+	adder.[ row, cols ] = [ row, cols ];				// expression disallowed in multi-member access
+	&adder.subtotal = &subtotal;
+}
+
+void main( Adder & adder ) with( adder ) {				// thread starts here
+	subtotal = 0;
+	for ( c; cols ) {
+		subtotal += row[c];
+	} // for
+}
+
+int main() {
+	/* const */ int rows = 10, cols = 1000;
+	int matrix[rows][cols], subtotals[rows], total = 0;
+	processor p;										// add kernel thread
+
+	for ( r; rows ) {
+		for ( c; cols ) {
+			matrix[r][c] = 1;
+		} // for
+	} // for
+	Adder * adders[rows];
+	for ( r; rows ) {									// start threads to sum rows
+		adders[r] = &(*malloc()){ matrix[r], cols, subtotals[r] };
+//		adders[r] = new( matrix[r], cols, &subtotals[r] );
+	} // for
+	for ( r; rows ) {									// wait for threads to finish
+		delete( adders[r] );
+		total += subtotals[r];							// total subtotals
+	} // for
+	sout | total;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa matrixSum.cfa" //
+// End: //

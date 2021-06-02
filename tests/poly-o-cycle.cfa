@@ -1,0 +1,26 @@
+// Check that a cycle of polymorphic otype structures can be instancated.
+
+forall(T)
+struct func_table;
+
+forall(U)
+struct object {
+	func_table(U) * virtual_table;
+};
+
+forall(T)
+struct func_table {
+	void (*object_func)(object(T) *);
+};
+
+void func(object(int) *) {
+	printf("Success!\n");
+}
+
+func_table(int) an_instance = { func };
+
+int main(int argc, char * argv[]) {
+	object(int) x = { 0p };
+	an_instance.object_func( &x );
+	return 0;
+}

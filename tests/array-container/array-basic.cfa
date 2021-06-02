@@ -1,0 +1,143 @@
+#include <containers/array.hfa>
+
+//
+// Type-theory demo (success is "it compiles")
+//
+
+forall( [Nx], [Ny], [Nz] )
+void typesTest( tag(Nx), tag(Ny), tag(Nz) ) {
+
+    array( float, Nx, Ny, Nz )  xyz;
+
+    // numeric subscripts
+    ptrdiff_t ix = 1, iy = 2, iz = 3;
+    array( float, Ny, Nz ) & yz = xyz[ix];
+    array( float, Nz ) & z = xyz[ix][iy];
+    float & val = xyz[ix][iy][iz];
+
+    // deferral subscript
+    typeof( xyz[all] ) yzx = xyz[all];
+
+    // longform check that -[all] gives intended type (user doesn't write this)
+    arpk( Ny
+        , array( float, Nz)
+        , arpk( Nz
+              , float
+              , arpk( Nx
+                    , array( float, Ny, Nz )
+                    , float
+                    , float
+                    )
+              , float
+              )
+        , float
+        )
+        & yzx_long = xyz[all];
+    & yzx_long = & yzx;
+    & yzx  = & yzx_long;
+}
+
+//
+// Runtime demo
+//
+
+#include <assert.h>
+
+float getMagicNumber( ptrdiff_t w, ptrdiff_t x, ptrdiff_t y, ptrdiff_t z ) {
+
+    assert( 0 <= w && w < 3 );
+    assert( 0 <= x && x < 4 );
+    assert( 0 <= y && y < 5 );
+    assert( 0 <= z && z < 6 );
+
+    float ww = (2.0f \ w) / 1.0f;
+    float xx = (2.0f \ x) / 100.0f;
+    float yy = (2.0f \ y) / 10000.0f;
+    float Nz = (2.0f \ z) / 1000000.0f;
+
+    return ww+xx+yy+Nz;
+}
+
+forall( [Nw], [Nx], [Ny], [Nz] )
+void fillHelloData( array( float, Nw, Nx, Ny, Nz ) & wxyz ) {
+    for (w; z(Nw))
+    for (x; z(Nx))
+    for (y; z(Ny))
+    for (z; z(Nz))
+        wxyz[w][x][y][z] = getMagicNumber(w, x, y, z);
+}
+
+forall( [Zn]
+      , S & | sized(S)
+      )
+float total1d_low( arpk(Zn, S, float, float ) & a ) {
+    float total = 0.0f;
+    for (i; z(Zn))
+        total += a[i];
+    return total;
+}
+
+forall( A & | ar(A, float) )
+float total1d_hi( A & a ) {
+    float total = 0.0f;
+    for (i; a`len)
+        total += a[i];
+    return total;
+}
+
+forall( [Nw], [Nx], [Ny], [Nz] )
+void runtimeTest( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
+
+    array( float, Nw, Nx, Ny, Nz ) wxyz;
+    fillHelloData(wxyz);
+
+    float expect, result;
+    ptrdiff_t slice_ix = 1;
+
+    // summing across W, with x=y=z=1
+
+    expect = 0;
+    for (i; z(Nw))
+        expect += getMagicNumber( i, slice_ix, slice_ix, slice_ix );
+    printf("expect Ws             = %f\n", expect);
+
+    result = total1d_low( wxyz[all][slice_ix][slice_ix][slice_ix] );
+    printf("result Ws [][][][] lo = %f\n", result);
+
+    result = total1d_low( wxyz[[all, slice_ix, slice_ix, slice_ix]] );
+    printf("result Ws [,,,]    lo = %f\n", result);
+
+    result = total1d_hi( wxyz[all][slice_ix][slice_ix][slice_ix] );
+    printf("result Ws [][][][] hi = %f\n", result);
+
+    result = total1d_hi( wxyz[[all, slice_ix, slice_ix, slice_ix]] );
+    printf("result Ws [,,,]    hi = %f\n", result);
+
+    // summing across X, with w=y=z=1
+
+    expect = 0;
+    for (i; z(Nx))
+        expect += getMagicNumber( slice_ix, i, slice_ix, slice_ix );
+    printf("expect Xs             = %f\n", expect);
+
+    result = total1d_low( wxyz[slice_ix][all][slice_ix][slice_ix] );    
+    printf("result Xs [][][][] lo = %f\n", result);
+
+    result = total1d_low( wxyz[[slice_ix, all, slice_ix, slice_ix]] );
+    printf("result Xs [,,,]    lo = %f\n", result);
+
+    result = total1d_hi( wxyz[slice_ix][all][slice_ix][slice_ix] );    
+    printf("result Xs [][][][] hi = %f\n", result);
+
+    result = total1d_hi( wxyz[[slice_ix, all, slice_ix, slice_ix]] );
+    printf("result Xs [,,,]    hi = %f\n", result);
+
+}
+
+const size_t  KW = 3,  KX = 4,  KY = 5,  KZ = 6;
+
+int main() {
+
+    typesTest  (           ztag(KX), ztag(KY), ztag(KZ) );
+    runtimeTest( ztag(KW), ztag(KX), ztag(KY), ztag(KZ) );
+}

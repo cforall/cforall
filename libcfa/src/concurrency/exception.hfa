@@ -1,0 +1,36 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// exception.hfa -- Exceptions in a concurrent environment.
+//
+// Author           : Andrew Beach
+// Created On       : Mon Aug 24 10:41:00 2020
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Aug 24 14:27:00 2020
+// Update Count     : 0
+//
+
+#pragma once
+
+// This is an internal bridge between the two modes and must be C compatable.
+
+#include <unwind.h>
+#include "bits/defs.hfa"
+#include "invoke.h"
+#include "exception.h"
+
+#ifdef __cforall
+extern "C" {
+#endif
+
+struct exception_context_t * this_exception_context(void) OPTIONAL_THREAD;
+
+_Unwind_Reason_Code __cfaehm_cancellation_unwind(
+		struct _Unwind_Exception * unwind_exception ) OPTIONAL_THREAD;
+
+#ifdef __cforall
+}
+#endif

@@ -1,0 +1,70 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// vector.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Jul  4 23:36:19 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 22:02:39 2018
+// Update Count     : 29
+//
+
+#include <vector.hfa>
+#include <fstream.hfa>
+
+#undef assert
+#define assert(x)								\
+	do {										\
+		if ( !(x) ) {							\
+			sout | "CHECK failed :" | #x | "at" | __FILE__ | " :" | __LINE__;	\
+			abort();							\
+		}										\
+	} while( 0 == 1 )
+
+int main() {
+	vector( int ) iv;
+
+	assert( ((uintptr_t)&iv.storage.storage ) == (((uintptr_t)&iv)) );
+	assert( ((uintptr_t)&iv.storage.capacity) == (((uintptr_t)&iv) + sizeof(void *)) );
+	assert( ((uintptr_t)&iv.size            ) == (((uintptr_t)&iv) + sizeof(void *) + sizeof(size_t)) );
+
+	assert( empty( &iv ) );
+	assert( size( &iv ) == 0 );
+	sout | size( &iv );
+
+	push_back( &iv, 1 );
+	assert( size( &iv ) == 1 );
+	sout | size( &iv );
+
+	push_back( &iv, 2 );
+	assert( size( &iv ) == 2 );
+	sout | size( &iv );
+
+	push_back( &iv, 3 );
+	assert( size( &iv ) == 3 );
+	sout | size( &iv );
+
+	assert( !empty( &iv ) );
+	assert( size( &iv ) == 3 );
+	assert( at( &iv, 0 ) == 1 );
+	assert( (&iv)[0] == 1 );
+	assert( at( &iv, 1 ) == 2 );
+	assert( (&iv)[1] == 2 );
+	assert( at( &iv, 2 ) == 3 );
+	assert( (&iv)[2] == 3 );
+
+	clear( &iv );
+
+	assert( empty( &iv ) );
+	assert( size( &iv ) == 0 );
+	sout | size( &iv );
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa vector.cfa" //
+// End: //

@@ -1,0 +1,29 @@
+//Testing enum declaration
+enum Colours {
+	Red,
+	Yellow,
+	Pink,
+	Blue,
+	Purple,
+	Orange,
+	Green
+};
+
+enum Colours c1;
+Colours c2;
+
+void f( void ) {
+	enum Fruits {
+		Apple,
+		Banana,
+		Pear,
+		Mango
+	} fruit = Mango;
+	enum Fruits f1;
+	Fruits f2;
+}
+
+//Dummy main
+int main(int argc, char const *argv[]) {
+	printf( "done\n" );				// non-empty .expect file
+}

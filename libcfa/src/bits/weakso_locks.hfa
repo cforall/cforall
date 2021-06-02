@@ -1,0 +1,75 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// bits/weakso_locks.hfa -- PUBLIC
+// Runtime locks that are compiled out when used without linking the runtime
+// thread system.
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Jan 21 19:46:50 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include "bits/locks.hfa"
+#include "bits/sequence.hfa"
+#include "bits/containers.hfa"
+
+struct $thread;
+
+//-----------------------------------------------------------------------------
+// Blocking Locks
+struct blocking_lock {
+	// Spin lock used for mutual exclusion
+	__spinlock_t lock;
+
+	// List of blocked threads
+	Sequence( $thread ) blocked_threads;
+
+	// Count of current blocked threads
+	size_t wait_count;
+
+	// Flag if the lock allows multiple acquisition
+	bool multi_acquisition;
+
+	// Flag if lock can be released by non owner
+	bool strict_owner;
+
+	// Current thread owning the lock
+	struct $thread * owner;
+
+	// Number of recursion level
+	size_t recursion_count;
+};
+
+void  ?{}( blocking_lock & this, bool multi_acquisition, bool strict_owner ) OPTIONAL_THREAD;
+void ^?{}( blocking_lock & this ) OPTIONAL_THREAD;
+
+void lock( blocking_lock & this ) OPTIONAL_THREAD;
+bool try_lock( blocking_lock & this ) OPTIONAL_THREAD;
+void unlock( blocking_lock & this ) OPTIONAL_THREAD;
+void on_notify( blocking_lock & this, struct $thread * t ) OPTIONAL_THREAD;
+size_t on_wait( blocking_lock & this ) OPTIONAL_THREAD;
+void on_wakeup( blocking_lock & this, size_t ) OPTIONAL_THREAD;
+size_t wait_count( blocking_lock & this ) OPTIONAL_THREAD;
+
+//----------
+struct multiple_acquisition_lock {
+	inline blocking_lock;
+};
+
+
+static inline void  ?{}( multiple_acquisition_lock & this ) {((blocking_lock &)this){ true, false };}
+static inline void ^?{}( multiple_acquisition_lock & this ) {}
+static inline void   lock     ( multiple_acquisition_lock & this ) { lock    ( (blocking_lock &)this ); }
+static inline bool   try_lock ( multiple_acquisition_lock & this ) { return try_lock( (blocking_lock &)this ); }
+static inline void   unlock   ( multiple_acquisition_lock & this ) { unlock  ( (blocking_lock &)this ); }
+static inline size_t on_wait  ( multiple_acquisition_lock & this ) { return on_wait ( (blocking_lock &)this ); }
+static inline void   on_wakeup( multiple_acquisition_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
+static inline void   on_notify( multiple_acquisition_lock & this, struct $thread * t ){ on_notify( (blocking_lock &)this, t ); }

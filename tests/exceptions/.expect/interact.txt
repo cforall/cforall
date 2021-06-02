@@ -1,0 +1,21 @@
+caught as termination
+Entering: try block with resume throw
+intermediate rethrow
+Exiting: try block with resume throw
+caught as termination
+
+terminate catch on terminate
+
+resume catch on resume
+
+termination catch, will resume
+outer resume catch
+
+resumption catch, will terminate
+inner termination catch
+
+throwing resume moon
+resumption moon catch, will terminate
+termination catch
+throwing resume star
+resumption star catch

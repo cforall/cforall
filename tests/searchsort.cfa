@@ -1,0 +1,158 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// searchsort.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu Feb  4 18:17:50 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Dec 20 22:49:46 2018
+// Update Count     : 108
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>									// bsearch, qsort
+#include <stdlib.h>										// C version of bsearch
+
+int comp( const void * t1, const void * t2 ) { return *(int *)t1 < *(int *)t2 ? -1 : *(int *)t2 < *(int *)t1 ? 1 : 0; }
+
+int main( void ) {
+	const int size = 10;
+	int iarr[size];
+
+	sout | nlOff;										// turn off auto newline
+
+	for ( i; 0 ~ size ) {
+		iarr[i] = size - i;
+		sout | iarr[i] | ", ";
+	} // for
+	sout | nl | nl;
+
+	// ascending sort/search by changing < to >
+	qsort( iarr, size );
+	for ( i; 0 ~ size ) {
+		sout | iarr[i] | ", ";
+	} // for
+	sout | nl;
+	for ( i; 0 ~ size ) {		// C version, returns void*
+		int key = size - i;
+		int * v = ( int * ) bsearch( &key, iarr, size, sizeof( iarr[0] ), comp );
+		sout | key | ':' | *v | ", ";
+	} // for
+	sout | nl;
+
+	for ( i; 0 ~ size ) {
+		int * v = bsearch( size - i, iarr, size );
+		sout | size - i | ':' | *v | ", ";
+	} // for
+	sout | nl;
+	for ( i; 0 ~ size ) {
+		unsigned int posn = bsearch( size - i, iarr, size );
+		sout | size - i | ':' | iarr[posn] | ", ";
+	} // for
+	sout | nl | nl;
+
+	// descending sort/search by changing < to >
+	for ( i; 0 ~ size ) {
+		iarr[i] = i + 1;
+		sout | iarr[i] | ", ";
+	} // for
+	sout | nl;
+	{
+		// redefinition of ?<? can't overlap the loop controls:
+		{
+			int (*?<?)(int, int) = ?>?;
+			qsort( iarr, size );
+		}
+		for ( i; 0 ~ size ) {
+			sout | iarr[i] | ", ";
+		} // for
+		sout | nl;
+		for ( i; 0 ~ size ) {
+			int (*?<?)(int, int) = ?>?;
+			int * v = bsearch( size - i, iarr, size );
+			sout | size - i | ':' | *v | ", ";
+		} // for
+		sout | nl;
+		for ( i; 0 ~ size ) {
+			int (*?<?)(int, int) = ?>?;
+			unsigned int posn = bsearch( size - i, iarr, size );
+			sout | size - i | ':' | iarr[posn] | ", ";
+		} // for
+	}
+	sout | nl | nl;
+
+	double darr[size];
+	for ( i; 0 ~ size ) {
+		darr[i] = size - i + 0.5;
+		sout | darr[i] | ", ";
+	} // for
+	sout | nl;
+	qsort( darr, size );
+	for ( i; 0 ~ size ) {
+		sout | darr[i] | ", ";
+	} // for
+	sout | nl;
+	for ( i; 0 ~ size ) {
+		double * v = bsearch( size - i + 0.5, darr, size );
+		sout | size - i + 0.5 | ':' | *v | ", ";
+	} // for
+	sout | nl;
+	for ( i; 0 ~ size ) {
+		unsigned int posn = bsearch( size - i + 0.5, darr, size );
+		sout | size - i + 0.5 | ':' | darr[posn] | ", ";
+	} // for
+	sout | nl | nl;
+
+	struct S { int i, j; } sarr[size];
+	int ?<?( S t1, S t2 ) { return t1.i < t2.i && t1.j < t2.j; }
+	ofstream & ?|?( ofstream & os, S v ) { return os | v.i | ' ' | v.j; }
+	for ( i; 0 ~ size ) {
+		sarr[i].i = size - i;
+		sarr[i].j = size - i + 1;
+		sout | sarr[i] | ", ";
+	} // for
+	sout | nl;
+	qsort( sarr, size );
+	for ( i; 0 ~ size ) {
+		sout | sarr[i] | ", ";
+	} // for
+	sout | nl;
+	for ( i; 0 ~ size ) {
+		S temp = { size - i, size - i + 1 };
+		S * v = bsearch( temp, sarr, size );
+		sout | temp | ':' | *v | ", ";
+	} // for
+	sout | nl;
+	for ( i; 0 ~ size ) {
+		S temp = { size - i, size - i + 1 };
+		unsigned int posn = bsearch( temp, sarr, size );
+		sout | temp | ':' | sarr[posn] | ", ";
+	} // for
+	sout | nl | nl;
+	{
+		int getKey( const S & s ) { return s.j; }
+		for ( i; 0 ~ size ) {
+			sout | sarr[i] | ", ";
+		} // for
+		sout | nl;
+		for ( i; 0 ~ size ) {
+			S * v = bsearch( size - i + 1, sarr, size );
+			sout | size - i + 1 | ':' | *v | ", ";
+		} // for
+		sout | nl;
+		for ( i; 0 ~ size ) {
+			unsigned int posn = bsearch( size - i + 1, sarr, size );
+			sout | size - i + 1 | ':' | sarr[posn] | ", ";
+		} // for
+		sout | nl | nl;
+	}
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa searchsort.cfa" //
+// End: //

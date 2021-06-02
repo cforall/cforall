@@ -1,0 +1,12 @@
+#include <vec/vec2.hfa>
+#include <fstream.hfa>
+#include <limits.hfa>
+
+int main(void) {
+    vec2(unsigned) v1 = {(unsigned)MAX,(unsigned)MIN};
+    sout | "ctor(x,y):" | v1;
+
+    vec2(unsigned) v2 = {3, 4};
+    vec2(unsigned) v3 = {100, 13};
+    sout | "dot(v2,v3):" | dot(v2, v3);
+}

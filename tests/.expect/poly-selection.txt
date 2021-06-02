@@ -1,0 +1,5 @@
+friending generically
+friending specifically
+-
+f-generic
+f-specific

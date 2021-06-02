@@ -1,0 +1,146 @@
+//----------------------------------------------------------------
+// Recursion test
+// Ensures that proper ordering occurs between the nested waitfors
+//-----------------------------------------------------------------
+
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+
+#include <stdbool.h>
+#include <time.h>
+
+static const unsigned long N = 5_000ul;
+
+static inline void rand_yield() { yield(random( 10 )); }
+
+enum state_t { FIRST, SECOND, THIRD, LAST, STOP };
+void shuffle(enum state_t * array)
+{
+	int i;
+	for (i = 0; i < 4; i++)
+	{
+		int j = random( 4 );
+		enum state_t t = array[j];
+		array[j] = array[i];
+		array[i] = t;
+	}
+}
+
+
+monitor global_t {
+	int counter;
+	volatile bool ready;
+	state_t actions[4];
+};
+
+void ?{} ( global_t & this ) {
+	this.counter = 0;
+	this.ready = false;
+	this.actions[0] = FIRST;
+	this.actions[1] = SECOND;
+	this.actions[2] = THIRD;
+	this.actions[3] = LAST;
+	shuffle( this.actions );
+}
+
+void ^?{} ( global_t & mutex this ) {}
+
+global_t global;
+
+state_t call4( global_t & mutex this, int idx ) {
+	sout | "Last";
+
+	rand_yield();
+	this.counter++;
+	this.ready = false;
+	shuffle( this.actions );
+
+	return this.counter < N ? (state_t)this.actions[idx] : (state_t)STOP;
+}
+
+state_t call3( global_t & mutex this, int idx ) {
+	sout | "3rd";
+
+	rand_yield();
+	waitfor( call4 : this );
+	rand_yield();
+
+	sout | "3rd";
+
+	return this.counter < N ? (state_t)this.actions[idx] : (state_t)STOP;
+}
+
+state_t call2( global_t & mutex this, int idx ) {
+	sout | "2nd";
+
+	rand_yield();
+	waitfor( call3 : this );
+	rand_yield();
+
+	sout | "2nd";
+
+	return this.counter < N ? (state_t)this.actions[idx] : (state_t)STOP;
+}
+
+state_t call1( global_t & mutex this, int idx ) {
+	this.ready = true;
+
+	sout | this.counter | "1st";
+
+	rand_yield();
+	waitfor( call2 : this );
+	rand_yield();
+
+	sout | "1st" | nl;
+
+	return this.counter < N ? (state_t)this.actions[idx] : (state_t)STOP;
+}
+
+thread waiter_t{
+	int     idx;
+	state_t state;
+};
+
+void ^?{} ( waiter_t & mutex this ) {}
+void ?{} ( waiter_t & this ) {}
+
+void ?{}( waiter_t & this, int idx, state_t state ) {
+	this.idx   = idx;
+	this.state = state;
+}
+
+
+void main( waiter_t & this ) {
+	while( this.state != STOP ) {
+		rand_yield();
+
+		switch( this.state ) {
+			case FIRST  :                                     this.state = call1( global, this.idx ); break;
+			case SECOND : while( !global.ready ) { yield(); } this.state = call2( global, this.idx ); break;
+			case THIRD  : while( !global.ready ) { yield(); } this.state = call3( global, this.idx ); break;
+			case LAST   : while( !global.ready ) { yield(); } this.state = call4( global, this.idx ); break;
+			case STOP   : serr | "This should not happen" | nl;
+		}
+	}
+}
+
+static waiter_t * volatile the_threads;
+
+int main() {
+	srandom( time(NULL) );
+	sout | nlOff;					// turn off auto newline
+	sout | "Starting" | nl;
+	{
+		waiter_t waiters[4] = {
+			{ 0, FIRST  },
+			{ 1, SECOND },
+			{ 2, THIRD  },
+			{ 3, LAST   }
+		};
+		the_threads = waiters;
+	}
+	sout | "Stopping" | nl;
+}

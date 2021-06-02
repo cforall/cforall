@@ -1,0 +1,146 @@
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+
+#include "long_tests.hfa"
+
+#ifndef PREEMPTION_RATE
+#define PREEMPTION_RATE 10`ms
+#endif
+
+Duration default_preemption() {
+	return PREEMPTION_RATE;
+}
+
+#ifdef TEST_LONG
+static const unsigned long N = 300_000ul;
+#else
+static const unsigned long N = 10_000ul;
+#endif
+
+// This tests checks what happens when someone barges in the midle of the release
+// of a bulk of monitors.
+
+enum state_t { WAIT, SIGNAL, BARGE };
+
+monitor global_t {};
+
+monitor global_data_t;
+void ?{}( global_data_t & this );
+void ^?{} ( global_data_t & mutex this );
+
+monitor global_data_t {
+	int counter;
+	state_t state;
+};
+
+// Use a global struct because the order needs to match with Signaller thread
+struct {
+	global_t mut;
+	global_data_t data;
+} globals;
+
+condition cond;
+
+volatile bool all_done;
+
+void ?{}( global_data_t & this ) {
+	this.counter = 0;
+	this.state = BARGE;
+}
+
+void ^?{} ( global_data_t & mutex this ) {}
+
+//------------------------------------------------------------------------------
+// Barging logic
+void barge( global_data_t & mutex d ) {
+	d.state = BARGE;
+}
+
+thread Barger {};
+void ?{}( Barger & this ) {
+	((thread&)this){ "Barger Thread" };
+}
+
+void main( Barger & this ) {
+	while( !all_done ) {
+		barge( globals.data );
+		yield();
+	}
+}
+
+//------------------------------------------------------------------------------
+// Waiting logic
+bool wait( global_t & mutex m, global_data_t & mutex d ) {
+	wait( cond );
+	if( d.state != SIGNAL ) {
+		sout | "ERROR barging!";
+	}
+
+	#if !defined(TEST_FOREVER)
+		d.counter++;
+		if( (d.counter % 1000) == 0 ) sout | d.counter;
+	#endif
+
+	return TEST(d.counter < N);
+}
+
+thread Waiter {};
+void ?{}( Waiter & this ) {
+	((thread&)this){ "Waiter Thread" };
+}
+
+void main( Waiter & this ) {
+	while( wait( globals.mut, globals.data ) ) { KICK_WATCHDOG; yield(); }
+}
+
+
+//------------------------------------------------------------------------------
+// Signalling logic
+void signal( condition & cond, global_t & mutex a, global_data_t & mutex b ) {
+	b.state = SIGNAL;
+	signal( cond );
+}
+
+void logic( global_t & mutex a ) {
+	signal( cond, a, globals.data );
+
+	yield( random( 10 ) );
+
+	//This is technically a mutual exclusion violation but the mutex monitor protects us
+	bool running = TEST(globals.data.counter < N) && globals.data.counter > 0;
+	if( globals.data.state != SIGNAL && running ) {
+		sout | "ERROR Eager signal" | globals.data.state;
+	}
+}
+
+thread Signaller {};
+void ?{}( Signaller & this ) {
+	((thread&)this){ "Signaller Thread" };
+}
+
+void main( Signaller & this ) {
+	while( !all_done ) {
+		logic( globals.mut );
+		yield();
+	}
+}
+
+//------------------------------------------------------------------------------
+// Main loop
+int main(int argc, char* argv[]) {
+	srandom( time( NULL ) );
+	all_done = false;
+	processor p;
+	{
+		Signaller s;
+		Barger b[17];
+		{
+			Waiter w[4];
+		}
+		sout | "All waiter done";
+		all_done = true;
+	}
+}

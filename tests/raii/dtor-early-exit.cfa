@@ -1,0 +1,261 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// dtor-early-exit.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Wed Aug 17 08:26:25 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Dec 21 08:45:19 2018
+// Update Count     : 10
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <assert.h>
+
+struct A {
+	const char * name;
+	int * x;
+};
+
+// don't want these called
+void ?{}(A & a) { assert( false ); }
+void ?{}(A & a, const char * name) { a.name = name; sout | "construct " | name; a.x = (int*)malloc(); }
+void ?{}(A & a, const char * name, int * ptr) { assert( false ); }
+
+A ?=?(A & a, A b) {  sout | "assign " | a.name | " " | b.name; return a; }
+void ?{}(A & a, A b) { sout | "copy construct " | b.name; a.x = (int*)malloc(); }
+void ^?{}(A & a) { sout | "destruct " | a.name; free(a.x); }
+
+// test returns
+void f(int i) {
+	sout | "f i=" | i;
+	A x = { "x" };  // construct x
+	{
+		A y = { "y" }; // construct y
+		{
+			A z = { "z" }; // construct z
+			{
+				if (i == 0) return; // destruct x, y, z
+			}
+			if (i == 1) return; // destruct x, y, z
+			// destruct z
+		}
+		if (i == 2) return; // destruct x, y
+		// destruct y
+	}
+	return; // destruct x
+}
+
+// test loops, switch, etc.
+void g() {
+	for (int i = 0; i < 10; i++) {
+		sout | "g for i=" | i;
+		A x = { "x" };
+		// construct x
+		// destruct x
+	}
+	sout | nl;
+	{
+		int i = 0;
+		while (i < 10) {
+			sout | "g while i=" | i;
+			A x = { "x" };
+			// construct x
+			i++;
+			// destruct x
+		}
+	}
+	sout | nl;
+	for (int i = 0; i < 10; i++) {
+		switch(10) {
+			case 0:
+			case 5:
+			case 10: {
+				A y = { "y" };
+				sout | "g switch i=" | i;
+				// construct y
+				break; // destruct y
+			}
+			default: {
+				sout | "g switch i=" | i;
+				A x = { "x" };
+				// construct x
+				break; // destruct x
+			}
+		}
+	}
+	sout | nl;
+	for (int k = 0; k < 2; k++) {
+		sout | "g for k=" | k;
+		L1: for (int i = 0; i < 10; i++) {
+			sout | "g for i=" | i;
+
+			A x = { "x" };
+			if (i == 2) {
+				sout | "continue L1";
+				continue;  // destruct x
+			} else if (i == 3) {
+				sout | "break L1";
+				break;  // destruct x
+			}
+
+			L2: for (int j = 0; j < 10; j++) {
+				sout | "g for j=" | j;
+				A y = { "y" };
+				if (j == 0) {
+					sout | "continue L2";
+					continue; // destruct y - missing because object that needs to be destructed is not a part of this block, it's a part of the for's block
+				} else if (j == 1) {
+					sout | "break L2";
+					break;  // destruct y
+				} else if (i == 1) {
+					sout | "continue L1";
+					continue L1; // destruct x,y - note: continue takes you to destructors for block, so only generate destructor for y
+				} else if (k == 1) {
+					sout | "break L1";
+					break L1;  // destruct x,y
+				}
+			}
+		}
+	}
+
+	sout | nl;
+	L3: if( 3 ) {
+		A w = { "w" };
+		if( 4 ) {
+			A v = { "v" };
+			sout | "break L3";
+			break L3;
+		}
+	}
+}
+
+// test goto
+void h() {
+	int i = 0;
+	// for each goto G with target label L:
+	// * find all constructed variables alive at G (set S_G)
+	// * find all constructed variables alive at L (set S_L)
+	// * if S_L-S_G is non-empty, error
+	// * emit destructors for all variables in S_G-S_L
+	sout | "h";
+	{
+		L0: ;
+#ifdef ERR1
+			goto L1; // this is an error in g++ because it skips initialization of y
+#endif
+			A y = { "y" };
+			// S_L1 = { y }
+		L1: sout | "L1";
+			A x = { "x" };
+			// S_L2 = { y, x }
+		L2: sout | "L2";
+			if (i == 0) {
+				++i;
+				sout | "goto L1";
+				// S_G = { y, x }
+				goto L1;  // jump back, destruct b/c before x definition
+				// S_L-S_G = {} => no error
+				// S_G-S_L = { x } => destruct x
+			} else if (i == 1) {
+				++i;
+				sout | "goto L2";
+				// S_G = { y, x }
+				goto L2;  // jump back, do not destruct
+				// S_L-S_G = {}
+				// S_G-S_L = {} => destruct nothing
+			} else if (i == 2) {
+				++i;
+				sout | "goto L3";
+				// S_G = { y, x }
+				goto L3;  // jump ahead, do not destruct
+				// S_L-S_G = {}
+				// S_G-S_L = {}
+			} else if (false) {
+				++i;
+				A z = { "z" };
+				sout | "goto L3-2";
+				// S_G = { z, y, x }
+				goto L3;
+				// S_L-S_G = {}
+				// S_G-S_L = {z} => destruct z
+			} else {
+				++i;
+				sout | "goto L4";
+				// S_G = { y, x }
+				goto L4;  // jump ahead, destruct b/c left block x was defined in
+				// S_L-S_G = {}
+				// S_G-S_L = { y, x } => destruct y, x
+			}
+			// S_L3 = { y, x }
+		L3: sout | "L3";
+			sout | "goto L2-2";
+			// S_G = { y, x }
+			goto L2; // jump back, do not destruct
+			// S_L-S_G = {}
+			// S_G-S_L = {}
+	}
+	// S_L4 = {}
+	L4: sout | "L4";
+	if (i == 4) {
+		sout | "goto L0";
+		// S_G = {}
+		goto L0;
+		// S_L-S_G = {}
+		// S_G-S_L = {}
+	}
+#ifdef ERR2
+	// S_G = {}
+	if (i == 5) goto L2; // this is an error in g++ because it skips initialization of y, x
+	// S_L-S_G = { y, x } => non-empty, so error
+#endif
+}
+
+void i() {
+	// potential loop
+	for() {
+		if(true) continue;
+		int t = 0;
+	}
+}
+
+// TODO: implement __label__ and uncomment these lines
+void computedGoto() {
+  // __label__ bar;
+  void *ptr;
+  ptr = &&foo;
+  goto *ptr;
+  assert(false);
+foo: ;
+//   void f() {
+//     ptr = &&bar;
+//     goto *ptr;
+//     assert(false);
+//   }
+//   f();
+//   assert(false);
+// bar: ;
+}
+
+int main() {
+	sepDisable(sout);
+	for (int i = 0; i < 4; i++) {
+		f(i);
+	}
+	sout | nl;
+	g();
+	sout | nl;
+	h();
+
+	computedGoto();
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa dtor-early-exit" //
+// End: //

@@ -1,0 +1,219 @@
+Before declaration of b1
+constructing int id: 0
+constructing int id: 1
+constructing int id: 2
+default construct A 0
+constructing int id: 3
+constructing int id: 4
+constructing int id: 5
+default construct A 1
+begin construct B id: 0
+assign b.a2
+constructing int id: 6
+constructing int id: 7
+begin construct A id: 2
+construct a.x
+constructing int: 1001 id: 8
+assign a.y
+assigning int: 0 0 id: 6
+end construct A
+copy constructing int: 0 id: 9
+copy constructing int: 0 id: 10
+begin copy construct A id: 3
+copy construct this.x
+copy constructing int: 1001 id: 11
+assign this.y
+copy constructing int: 0 id: 12
+destructing int: 0 id: 12
+destructing int: 0 id: 12
+end copy construct A
+begin ?=? A id: 0
+copy constructing int: 1001 id: 13
+destructing int: 1001 id: 13
+destructing int: 1001 id: 13
+copy constructing int: 0 id: 14
+destructing int: 0 id: 14
+destructing int: 0 id: 14
+copy constructing int: 0 id: 15
+destructing int: 0 id: 15
+destructing int: 0 id: 15
+end ?=? A
+copy constructing int: 0 id: 16
+copy constructing int: 0 id: 17
+begin copy construct A id: 4
+copy construct this.x
+copy constructing int: 1001 id: 18
+assign this.y
+copy constructing int: 0 id: 19
+destructing int: 0 id: 19
+destructing int: 0 id: 19
+end copy construct A
+destructing int: 0 id: 17
+destructing int: 0 id: 19
+destructing int: 1001 id: 18
+destructing int: 0 id: 10
+destructing int: 0 id: 12
+destructing int: 1001 id: 11
+construct b.a1
+constructing int id: 20
+constructing int id: 21
+begin construct A id: 5
+construct a.x
+constructing int: 1000 id: 22
+assign a.y
+assigning int: 0 0 id: 20
+end construct A
+end construct B
+destructing int: 0 id: 7
+destructing int: 0 id: 6
+destructing int: 1001 id: 8
+Before declaration of b2
+copy constructing int: 0 id: 23
+copy constructing int: 0 id: 24
+begin copy construct A id: 6
+copy construct this.x
+copy constructing int: 1000 id: 25
+assign this.y
+copy constructing int: 0 id: 26
+destructing int: 0 id: 26
+destructing int: 0 id: 26
+end copy construct A
+copy constructing int: 0 id: 27
+copy constructing int: 0 id: 28
+begin copy construct A id: 7
+copy construct this.x
+copy constructing int: 1001 id: 29
+assign this.y
+copy constructing int: 0 id: 30
+destructing int: 0 id: 30
+destructing int: 0 id: 30
+end copy construct A
+copy constructing int: 0 id: 31
+copy constructing int: 0 id: 32
+begin copy construct A id: 8
+copy construct this.x
+copy constructing int: 0 id: 33
+assign this.y
+copy constructing int: 0 id: 34
+destructing int: 0 id: 34
+destructing int: 0 id: 34
+end copy construct A
+End of main
+begin destruct B id: 1
+constructing int id: 35
+constructing int id: 36
+begin construct A id: 9
+construct a.x
+constructing int: 999 id: 37
+assign a.y
+assigning int: 0 0 id: 35
+end construct A
+copy constructing int: 0 id: 38
+copy constructing int: 0 id: 39
+begin copy construct A id: 10
+copy construct this.x
+copy constructing int: 999 id: 40
+assign this.y
+copy constructing int: 0 id: 41
+destructing int: 0 id: 41
+destructing int: 0 id: 41
+end copy construct A
+begin ?=? A id: 7
+copy constructing int: 999 id: 42
+destructing int: 999 id: 42
+destructing int: 999 id: 42
+copy constructing int: 0 id: 43
+destructing int: 0 id: 43
+destructing int: 0 id: 43
+copy constructing int: 0 id: 44
+destructing int: 0 id: 44
+destructing int: 0 id: 44
+end ?=? A
+copy constructing int: 0 id: 45
+copy constructing int: 0 id: 46
+begin copy construct A id: 11
+copy construct this.x
+copy constructing int: 999 id: 47
+assign this.y
+copy constructing int: 0 id: 48
+destructing int: 0 id: 48
+destructing int: 0 id: 48
+end copy construct A
+destructing int: 0 id: 46
+destructing int: 0 id: 48
+destructing int: 999 id: 47
+destructing int: 0 id: 39
+destructing int: 0 id: 41
+destructing int: 999 id: 40
+destructing int: 0 id: 24
+destructing int: 0 id: 26
+destructing int: 1000 id: 25
+end destruct B
+destructing int: 0 id: 36
+destructing int: 0 id: 35
+destructing int: 999 id: 37
+destructing int: 0 id: 32
+destructing int: 0 id: 34
+destructing int: 0 id: 33
+destructing int: 0 id: 44
+destructing int: 0 id: 43
+destructing int: 999 id: 42
+begin destruct B id: 2
+constructing int id: 49
+constructing int id: 50
+begin construct A id: 12
+construct a.x
+constructing int: 999 id: 51
+assign a.y
+assigning int: 0 0 id: 49
+end construct A
+copy constructing int: 0 id: 52
+copy constructing int: 0 id: 53
+begin copy construct A id: 13
+copy construct this.x
+copy constructing int: 999 id: 54
+assign this.y
+copy constructing int: 0 id: 55
+destructing int: 0 id: 55
+destructing int: 0 id: 55
+end copy construct A
+begin ?=? A id: 0
+copy constructing int: 999 id: 56
+destructing int: 999 id: 56
+destructing int: 999 id: 56
+copy constructing int: 0 id: 57
+destructing int: 0 id: 57
+destructing int: 0 id: 57
+copy constructing int: 0 id: 58
+destructing int: 0 id: 58
+destructing int: 0 id: 58
+end ?=? A
+copy constructing int: 0 id: 59
+copy constructing int: 0 id: 60
+begin copy construct A id: 14
+copy construct this.x
+copy constructing int: 999 id: 61
+assign this.y
+copy constructing int: 0 id: 62
+destructing int: 0 id: 62
+destructing int: 0 id: 62
+end copy construct A
+destructing int: 0 id: 60
+destructing int: 0 id: 62
+destructing int: 999 id: 61
+destructing int: 0 id: 53
+destructing int: 0 id: 55
+destructing int: 999 id: 54
+destructing int: 0 id: 21
+destructing int: 0 id: 20
+destructing int: 1000 id: 22
+end destruct B
+destructing int: 0 id: 50
+destructing int: 0 id: 49
+destructing int: 999 id: 51
+destructing int: 0 id: 5
+destructing int: 0 id: 4
+destructing int: 0 id: 3
+destructing int: 0 id: 58
+destructing int: 0 id: 57
+destructing int: 999 id: 56

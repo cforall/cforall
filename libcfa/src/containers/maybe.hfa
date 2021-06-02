@@ -1,0 +1,69 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// maybe -- May contain a value.
+//
+// Author           : Andrew Beach
+// Created On       : Wed May 24 14:43:00 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Jul 22 10:00:52 2017
+// Update Count     : 4
+//
+
+#pragma once
+
+#include <stdbool.h>
+
+// DO NOT USE DIRECTLY!
+forall(T)
+struct maybe {
+    bool has_value;
+    T value;
+};
+
+
+forall(T)
+void ?{}(maybe(T) & this);
+
+forall(T)
+void ?{}(maybe(T) & this, T value);
+
+forall(T)
+void ?{}(maybe(T) & this, maybe(T) other);
+
+forall(T)
+void ^?{}(maybe(T) & this);
+
+forall(T)
+maybe(T) ?=?(maybe(T) & this, maybe(T) other);
+
+forall(T)
+bool ?!=?(maybe(T) this, zero_t);
+
+/* Waiting for bug#11 to be fixed.
+forall(T)
+maybe(T) maybe_value(T value);
+
+forall(T)
+maybe(T) maybe_none();
+*/
+
+forall(T)
+bool has_value(maybe(T) * this);
+
+forall(T)
+T get(maybe(T) * this);
+
+forall(T)
+void set(maybe(T) * this, T value);
+
+forall(T)
+void set_none(maybe(T) * this);
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

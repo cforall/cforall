@@ -1,0 +1,135 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// io/types.hfa --
+//
+// Author           : Dimitry Kobets
+// Created On       :
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include <math.hfa>
+
+trait fromint(T) {
+    void ?{}(T&, int);
+};
+trait zeroinit(T) {
+    void ?{}(T&, zero_t);
+};
+trait zero_assign(T) {
+    T ?=?(T&, zero_t);
+};
+trait subtract(T) {
+    T ?-?(T, T);
+};
+trait negate(T) {
+    T -?(T);
+};
+trait add(T) {
+    T ?+?(T, T);
+};
+trait multiply(T) {
+    T ?*?(T, T);
+};
+trait divide(T) {
+    T ?/?(T, T);
+};
+trait lessthan(T) {
+    int ?<?(T, T);
+};
+trait equality(T) {
+    int ?==?(T, T);
+};
+trait sqrt(T) {
+    T sqrt(T);
+};
+
+static inline {
+// int
+int ?=?(int& n, zero_t) { return n = 0.f; }
+// unsigned int
+int ?=?(unsigned int& n, zero_t) { return n = 0.f; }
+/* float */
+void ?{}(float& a, int b) { a = b; }
+float ?=?(float& n, zero_t) { return n = 0.f; }
+/* double */
+void ?{}(double& a, int b) { a = b; }
+double ?=?(double& n, zero_t) { return n = 0L; }
+// long double
+void ?{}(long double& a, int b) { a = b; }
+long double ?=?(long double& n, zero_t) { return n = 0L; }
+}
+
+trait dottable(V, T) {
+    T dot(V, V);
+};
+
+static inline {
+
+forall(T | sqrt(T), V | dottable(V, T))
+T length(V v) {
+   return sqrt(dot(v, v));
+}
+
+forall(T, V | dottable(V, T))
+T length_squared(V v) {
+   return dot(v, v);
+}
+
+forall(T, V | { T length(V); } | subtract(V))
+T distance(V v1, V v2) {
+    return length(v1 - v2);
+}
+
+forall(T, V | { T length(V); V ?/?(V, T); })
+V normalize(V v) {
+    return v / length(v);
+}
+
+// Project vector u onto vector v
+forall(T, V | dottable(V, T) | { V normalize(V); V ?*?(V, T); })
+V project(V u, V v) {
+    V v_norm = normalize(v);
+    return v_norm * dot(u, v_norm);
+}
+
+// Reflect incident vector v with respect to surface with normal n
+forall(T | fromint(T), V | { V project(V, V); V ?*?(T, V); V ?-?(V,V); })
+V reflect(V v, V n) {
+    return v - (T){2} * project(v, n);
+}
+
+// Refract incident vector v with respect to surface with normal n
+// eta is the ratio of indices of refraction between starting material and
+// entering material (i.e., from air to water, eta = 1/1.33)
+// v and n must already be normalized
+forall(T | fromint(T) | subtract(T) | multiply(T) | add(T) | lessthan(T) | sqrt(T),
+       V | dottable(V, T) | { V ?*?(T, V); V ?-?(V,V); void ?{}(V&, zero_t); })
+V refract(V v, V n, T eta) {
+    T dotValue = dot(n, v);
+    T k = (T){1} - eta * eta * ((T){1} - dotValue * dotValue);
+    if (k < (T){0}) {
+        return 0;
+    }
+    return eta * v - (eta * dotValue + sqrt(k)) * n;
+}
+
+// Given a perturbed normal and a geometric normal,
+// flip the perturbed normal if the geometric normal is pointing away
+// from the observer.
+// n is the perturbed vector that we want to align
+// i is the incident vector
+// ng is the geometric normal of the surface
+forall(T | lessthan(T) | zeroinit(T), V | dottable(V, T) | negate(V))
+V faceforward(V n, V i, V ng) {
+    return dot(ng, i) < (T){0} ? n : -n;
+}
+
+} // inline

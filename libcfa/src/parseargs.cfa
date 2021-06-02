@@ -1,0 +1,293 @@
+#include "parseargs.hfa"
+
+#include <stdint.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+extern "C" {
+	#include <getopt.h>
+	#include <sys/ioctl.h>
+
+	struct FILE;
+	extern FILE * stderr;
+	extern FILE * stdout;
+
+	extern int fileno(FILE *stream);
+
+	extern int fprintf ( FILE * stream, const char * format, ... );
+
+	extern          long long int strtoll (const char* str, char** endptr, int base);
+	extern unsigned long long int strtoull(const char* str, char** endptr, int base);
+	extern                 double strtod  (const char* str, char** endptr);
+}
+
+#include "common.hfa"
+#include "limits.hfa"
+
+extern int cfa_args_argc __attribute__((weak));
+extern char ** cfa_args_argv __attribute__((weak));
+extern char ** cfa_args_envp __attribute__((weak));
+
+static void usage(char * cmd, cfa_option options[], size_t opt_count, const char * usage, FILE * out)  __attribute__ ((noreturn));
+//-----------------------------------------------------------------------------
+// checking
+static void check_args(cfa_option options[], size_t opt_count) {
+	for(i; opt_count) {
+		for(j; opt_count) {
+			if(i == j) continue;
+
+			if( options[i].short_name != '\0'
+			&& options[i].short_name == options[j].short_name)
+				abort("Parse Args error: two options have short name '%c' (%zu & %zu)", options[i].short_name, i, j);
+
+			if(0 == strcmp(options[i].long_name, options[j].long_name)) abort("Parse Args error: two options have long name '%s' (%zu & %zu)", options[i].long_name, i, j);
+		}
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Parsing args
+void parse_args( cfa_option options[], size_t opt_count, const char * usage, char ** & left ) {
+	if( 0p != &cfa_args_argc ) {
+		parse_args(cfa_args_argc, cfa_args_argv, options, opt_count, usage, left );
+	}
+	else {
+		char * temp = "";
+		parse_args(0, &temp, options, opt_count, usage, left );
+	}
+}
+
+void parse_args(
+	int argc,
+	char * argv[],
+	cfa_option options[],
+	size_t opt_count,
+	const char * usage,
+	char ** & left
+) {
+	check_args(options, opt_count);
+
+	int maxv = 'h';
+	char optstring[opt_count * 3] = { '\0' };
+	{
+		int idx = 0;
+		for(i; opt_count) {
+			if (options[i].short_name) {
+				maxv = max(options[i].short_name, maxv);
+				optstring[idx] = options[i].short_name;
+				idx++;
+				if(    ((intptr_t)options[i].parse) != ((intptr_t)parse_settrue)
+				&& ((intptr_t)options[i].parse) != ((intptr_t)parse_setfalse) ) {
+					optstring[idx] = ':';
+					idx++;
+				}
+			}
+		}
+		optstring[idx+0] = 'h';
+		optstring[idx+1] = '\0';
+	}
+
+	struct option optarr[opt_count + 2];
+	{
+		int idx = 0;
+		for(i; opt_count) {
+			if(options[i].long_name) {
+				options[i].val = (options[i].short_name != '\0') ? ((int)options[i].short_name) : ++maxv;
+				optarr[idx].name = options[i].long_name;
+				optarr[idx].flag = 0p;
+				optarr[idx].val  = options[i].val;
+				if(    ((intptr_t)options[i].parse) == ((intptr_t)parse_settrue)
+				    || ((intptr_t)options[i].parse) == ((intptr_t)parse_setfalse) ) {
+					optarr[idx].has_arg = no_argument;
+				} else {
+					optarr[idx].has_arg = required_argument;
+				}
+				idx++;
+			}
+		}
+		optarr[idx+0].[name, has_arg, flag, val] = ["help", no_argument, 0, 'h'];
+		optarr[idx+1].[name, has_arg, flag, val] = [0, no_argument, 0, 0];
+	}
+
+	FILE * out = stderr;
+	NEXT_ARG:
+	for() {
+		int idx = 0;
+		int opt = getopt_long(argc, argv, optstring, optarr, &idx);
+		switch(opt) {
+			case -1:
+				if(&left != 0p) left = argv + optind;
+				return;
+			case 'h':
+				out = stdout;
+			case '?':
+				usage(argv[0], options, opt_count, usage, out);
+			default:
+				for(i; opt_count) {
+					if(opt == options[i].val) {
+						const char * arg = optarg ? optarg : "";
+						if( arg[0] == '=' ) { arg++; }
+						bool success = options[i].parse( arg, options[i].variable );
+						if(success) continue NEXT_ARG;
+
+						fprintf(out, "Argument '%s' for option %c could not be parsed\n\n", arg, (char)opt);
+						usage(argv[0], options, opt_count, usage, out);
+					}
+				}
+				abort("Internal parse arg error\n");
+		}
+
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Print usage
+static void printopt(FILE * out, int width, int max, char sn, const char * ln, const char * help) {
+	int hwidth = max - (11 + width);
+	if(hwidth <= 0) hwidth = max;
+
+	char sname[4] = { ' ', ' ', ' ', '\0' };
+	if(sn != '\0') {
+		sname[0] = '-';
+		sname[1] = sn;
+		sname[2] = ',';
+	}
+
+	fprintf(out, "  %s --%-*s   %.*s\n", sname, width, ln, hwidth, help);
+	for() {
+		help += min(strlen(help), hwidth);
+		if('\0' == *help) break;
+		fprintf(out, "%*s%.*s\n", width + 11, "", hwidth, help);
+	}
+}
+
+void print_args_usage(cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
+	usage(cfa_args_argv[0], options, opt_count, usage, error ? stderr : stdout);
+}
+
+void print_args_usage(int , char * argv[], cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
+	usage(argv[0], options, opt_count, usage, error ? stderr : stdout);
+}
+
+static void usage(char * cmd, cfa_option options[], size_t opt_count, const char * help, FILE * out) __attribute__((noreturn)) {
+	int width = 0;
+	{
+		for(i; opt_count) {
+			if(options[i].long_name) {
+				int w = strlen(options[i].long_name);
+				if(w > width) width = w;
+			}
+		}
+	}
+
+	int max_width = 1_000_000;
+	int outfd = fileno(out);
+	if(isatty(outfd)) {
+		struct winsize size;
+		int ret = ioctl(outfd, TIOCGWINSZ, &size);
+		if(ret < 0) abort( "ioctl error: (%d) %s\n", (int)errno, strerror(errno) );
+		max_width = size.ws_col;
+	}
+
+	fprintf(out, "Usage:\n  %s %s\n", cmd, help);
+
+	for(i; opt_count) {
+		printopt(out, width, max_width, options[i].short_name, options[i].long_name, options[i].help);
+	}
+	fprintf(out, "  -%c, --%-*s   %s\n", 'h', width, "help", "print this help message");
+	exit(out == stdout ? 0 : 1);
+}
+
+//-----------------------------------------------------------------------------
+// Typed argument parsing
+bool parse_yesno(const char * arg, bool & value ) {
+	if(strcmp(arg, "yes") == 0) {
+		value = true;
+		return true;
+	}
+
+	if(strcmp(arg, "no") == 0) {
+		value = false;
+		return true;
+	}
+
+	return false;
+}
+
+bool parse_truefalse(const char * arg, bool & value) {
+	if(strcmp(arg, "true") == 0) {
+		value = true;
+		return true;
+	}
+
+	if(strcmp(arg, "false") == 0) {
+		value = false;
+		return true;
+	}
+
+	return false;
+}
+
+bool parse_settrue (const char *, bool & value ) {
+	value = true;
+	return true;
+}
+
+bool parse_setfalse(const char *, bool & value )  {
+	value = false;
+	return true;
+}
+
+bool parse(const char * arg, const char * & value ) {
+	value = arg;
+	return true;
+}
+
+bool parse(const char * arg, int & value) {
+	char * end;
+	int r = strtoll(arg, &end, 10);
+	if(*end != '\0') return false;
+
+	value = r;
+	return true;
+}
+
+bool parse(const char * arg, unsigned & value) {
+	char * end;
+	unsigned long long int r = strtoull(arg, &end, 10);
+	if(*end != '\0') return false;
+	if(r > (unsigned)MAX) return false;
+
+	value = r;
+	return true;
+}
+
+bool parse(const char * arg, unsigned long & value) {
+	char * end;
+	unsigned long long int r = strtoull(arg, &end, 10);
+	if(*end != '\0') return false;
+	if(r > (unsigned long)MAX) return false;
+
+	value = r;
+	return true;
+}
+
+bool parse(const char * arg, unsigned long long & value) {
+        char * end;
+        unsigned long long int r = strtoull(arg, &end, 10);
+        if(*end != '\0') return false;
+        if(r > (unsigned long long)MAX) return false;
+
+        value = r;
+        return true;
+}
+
+bool parse(const char * arg, double & value) {
+	char * end;
+	double r = strtod(arg, &end);
+	if(*end != '\0') return false;
+
+	value = r;
+	return true;
+}

@@ -1,0 +1,108 @@
+// Test virtual casts with polymorphic types.
+
+/* IMPORTANT: The virtual system has not been finalized. However the
+ * exception system does depend on the work-in-progress version currently
+ * supported. That is also why the tests under the exception directory.
+ */
+
+#include <assert.h>
+
+
+struct __cfatid_struct_mono_base {
+    __cfavir_type_info const * parent;
+};
+
+__attribute__(( cfa_linkonce ))
+struct __cfatid_struct_mono_base __cfatid_mono_base = {
+    (__cfavir_type_info *)0,
+};
+
+struct mono_base_vtable {
+	__cfatid_struct_mono_base const * const __cfavir_typeid;
+};
+
+struct mono_base {
+	mono_base_vtable const * virtual_table;
+};
+
+forall(T)
+struct __cfatid_struct_mono_child {
+    __cfatid_struct_mono_base const * parent;
+};
+
+forall(T)
+struct mono_child_vtable {
+	__cfatid_struct_mono_child(T) const * const __cfavir_typeid;
+};
+
+forall(T)
+struct mono_child {
+	mono_child_vtable(T) const * virtual_table;
+};
+
+__cfatid_struct_mono_child(int) __cfatid_mono_child @= {
+	&__cfatid_mono_base,
+};
+
+mono_child_vtable(int) _mono_child_vtable_instance @= {
+	&__cfatid_mono_child,
+};
+
+void mono_poly_test(void) {
+	mono_child(int) child = { &_mono_child_vtable_instance };
+	mono_base * base = (virtual mono_base *)&child;
+	assert(base);
+}
+
+
+forall(U)
+struct __cfatid_struct_poly_base {
+    __cfavir_type_info const * parent;
+};
+
+forall(U)
+struct poly_base_vtable {
+	__cfatid_struct_poly_base(U) const * const __cfavir_typeid;
+};
+
+forall(U)
+struct poly_base {
+	poly_base_vtable(U) const * virtual_table;
+};
+
+forall(V)
+struct __cfatid_struct_poly_child {
+    __cfatid_struct_poly_base(V) const * parent;
+};
+
+forall(V)
+struct poly_child_vtable {
+	__cfatid_struct_poly_child(V) const * const __cfavir_typeid;
+};
+
+forall(V)
+struct poly_child {
+	poly_child_vtable(V) const * virtual_table;
+};
+
+__cfatid_struct_poly_base(int) __cfatid_poly_base @= {
+	(__cfavir_type_info *)0,
+};
+__cfatid_struct_poly_child(int) __cfatid_poly_child = {
+    &__cfatid_poly_base,
+};
+poly_child_vtable(int) _poly_child_vtable_instance @= {
+	&__cfatid_poly_child,
+};
+
+void poly_poly_test() {
+	poly_child(int) child = { &_poly_child_vtable_instance };
+	poly_base(int) * base = (virtual poly_base(int) *)&child;
+	assert(base);
+}
+
+int main(void) {
+	mono_poly_test();
+	poly_poly_test();
+	printf( "done\n" );
+}

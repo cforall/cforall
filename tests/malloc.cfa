@@ -1,0 +1,611 @@
+#include <assert.h>
+#include <malloc.h>										// malloc_usable_size
+#include <stdint.h>										// uintptr_t
+#include <stdlib.h>										// posix_memalign
+#include <fstream.hfa>
+#include <stdlib.hfa>									// access C malloc, realloc
+#include <unistd.h>										// getpagesize
+
+int tests_total;
+int tests_failed;
+size_t tAlign = 32;
+struct S1 { int d1; } __attribute__((aligned(32)));
+typedef struct S1 T1;
+
+void test_base( void * ip, size_t size, size_t align) {
+	tests_total += 1;
+	bool passed = (malloc_size(ip) == size) && (malloc_usable_size(ip) >= size) && (malloc_alignment(ip) == align) && ((uintptr_t)ip % align  == 0);
+	if (!passed) {
+		printf("failed test %2d: %4lu %4lu but got %4lu ( %3lu ) %4lu\n", tests_total, size, align, malloc_size(ip), malloc_usable_size(ip), malloc_alignment(ip));
+		tests_failed += 1;
+	}
+}
+
+void test_fill( void * ip_, size_t start, size_t end, char fill) {
+	tests_total += 1;
+	bool passed = true;
+	char * ip = (char *) ip_;
+	for (i; start ~ end) passed = passed && (ip[i] == fill);
+	if (!passed) {
+		printf("failed test %2d: fill\n", tests_total);
+		tests_failed += 1;
+	}
+}
+
+void test_use( void * ip_) {
+	tests_total += 1;
+	bool passed = true;
+	int * ip = (int *) ip_;
+	size_t size = malloc_size(ip);
+	for (i; 0 ~ size ~ sizeof(int)) ip[i/sizeof(int)] = 0xdeadbeef;
+	for (i; 0 ~ size ~ sizeof(int)) passed = passed &&  (ip[i/sizeof(int)] == 0xdeadbeef);
+	size_t usize = malloc_usable_size(ip);
+	for (i; size ~ usize ~ sizeof(int)) ip[i/sizeof(int)] = -1;
+	for (i; size ~ usize ~ sizeof(int)) passed = passed &&  (ip[i/sizeof(int)] == -1);
+	if (!passed) {
+		printf("failed test %2d: use\n", tests_total);
+		tests_failed += 1;
+	}
+}
+
+int main( void ) {
+	size_t elemSize = sizeof(int);
+	size_t dim = 8;
+	size_t size = dim * elemSize;
+	size_t align = 64;
+	const size_t libAlign = libAlign();
+	char fill = '\xde';
+	int * ip;
+	T1 * tp;
+
+	// testing C   malloc
+
+	tests_total = 0;
+	tests_failed = 0;
+
+	ip = (int *) (void *) malloc( size );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) malloc( 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) aalloc( dim, elemSize );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) aalloc( 0, elemSize );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) aalloc( dim, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) aalloc( 0, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, elemSize );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, size, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( 0, elemSize );
+	test_base(ip, 0, libAlign);
+	test_fill(ip, 0, 0, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, 0 );
+	test_base(ip, 0, libAlign);
+	test_fill(ip, 0, 0, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) malloc( size );
+	ip = (int *) (void *) resize( (void *) ip, size / 4 );
+	test_base(ip, size / 4, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) malloc( size );
+	ip = (int *) (void *) resize( (void *) ip, size * 4 );
+	test_base(ip, size * 4, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) malloc( size );
+	ip = (int *) (void *) resize( (void *) ip, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) resize( NULL, size );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) resize( 0p, size );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, elemSize );
+	ip = (int *) (void *) realloc( (void *) ip, size / 4 );
+	test_base(ip, size / 4, libAlign);
+	test_fill(ip, 0, size / 4, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, elemSize );
+	ip = (int *) (void *) realloc( (void *) ip, size * 4 );
+	test_base(ip, size * 4, libAlign);
+	test_fill(ip, 0, size * 4, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, elemSize );
+	ip = (int *) (void *) realloc( (void *) ip, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) realloc( NULL, size  );
+	test_base(ip, size , libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) realloc( 0p, size );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) memalign( align, size );
+	test_base(ip, size, align);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) memalign( align, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) amemalign( align, dim, elemSize );
+	test_base(ip, size, align);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) amemalign( align, 0, elemSize );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) amemalign( align, dim, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) cmemalign( align, dim, elemSize );
+	test_base(ip, size, align);
+	test_fill(ip, 0, size, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) cmemalign( align, 0, elemSize );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) cmemalign( align, dim, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) aligned_alloc( align, size );
+	test_base(ip, size, align);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) aligned_alloc( align, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	(int) posix_memalign( (void **) &ip, align, size );
+	test_base(ip, size, align);
+	test_use(ip);
+	free(ip);
+
+	(int) posix_memalign( (void **) &ip, align, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) valloc( size );
+	test_base(ip, size, getpagesize());
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) valloc( 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) pvalloc( getpagesize() * 3 / 2 );
+	test_base(ip, getpagesize() * 2, getpagesize());
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) pvalloc( 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) malloc( size );
+	ip = (int *) (void *) resize( (void *) ip, libAlign, size / 2 );
+	test_base(ip, size / 2, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) aligned_alloc( align, size );
+	ip = (int *) (void *) resize( (void *) ip, align, size / 2 );
+	test_base(ip, size / 2, align);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) malloc( size );
+	ip = (int *) (void *) resize( (void *) ip, align, size / 4 );
+	test_base(ip, size / 4, align);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) malloc( size );
+	ip = (int *) (void *) resize( (void *) ip, align, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) resize( NULL, align, size );
+	test_base(ip, size, align);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) resize( 0p, align, size );
+	test_base(ip, size, align);
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, elemSize );
+	ip = (int *) (void *) realloc( (void *) ip, libAlign, size / 2 );
+	test_base(ip, size / 2, libAlign);
+	test_fill(ip, 0, size / 2, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) cmemalign( align, dim, elemSize );
+	ip = (int *) (void *) realloc( (void *) ip, align, size / 2 );
+	test_base(ip, size / 2, align);
+	test_fill(ip, 0, size / 2, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, elemSize );
+	ip = (int *) (void *) realloc( (void *) ip, align, size / 4 );
+	test_base(ip, size / 4, align);
+	test_fill(ip, 0, size / 4, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, elemSize );
+	ip = (int *) (void *) realloc( (void *) ip, 0, size * 4 );
+	test_base(ip, size * 4, libAlign);
+	test_fill(ip, 0, size * 4, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = (int *) (void *) calloc( dim, elemSize );
+	ip = (int *) (void *) realloc( (void *) ip, align, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	free( 0p ); // sanity check
+	free( NULL ); // sanity check
+
+	if (tests_failed == 0) printf("PASSED C malloc tests\n\n");
+	else printf("failed C malloc tests : %d/%d\n\n", tests_failed, tests_total);
+
+	// testing CFA malloc
+
+	tests_total = 0;
+	tests_failed = 0;
+
+	ip = malloc();
+	test_base(ip, elemSize, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = aalloc( dim );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = aalloc( 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = calloc( dim );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, size, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = calloc( 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = aalloc( dim );
+	ip = resize( ip, size / 4 );
+	test_base(ip, size / 4, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = aalloc( dim );
+	ip = resize( ip, size * 4 );
+	test_base(ip, size * 4, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = aalloc( dim );
+	ip = resize( ip, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = resize( (int*)0p, size );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = resize( (int*)0p, size );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = calloc( dim );
+	ip = realloc( ip, size / 4 );
+	test_base(ip, size / 4, libAlign);
+	test_fill(ip, 0, size / 4, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = calloc( dim );
+	ip = realloc( ip, size * 4 );
+	test_base(ip, size * 4, libAlign);
+	test_fill(ip, 0, size, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = calloc( dim );
+	ip = realloc( ip, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = realloc( (int*)0p, size );
+	test_base(ip, size , libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = realloc( (int*)0p, size );
+	test_base(ip, size, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = memalign( align );
+	test_base(ip, elemSize, align);
+	test_use(ip);
+	free(ip);
+
+	ip = amemalign( align, dim );
+	test_base(ip, size, align);
+	test_use(ip);
+	free(ip);
+
+	ip = amemalign( align, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = cmemalign( align, dim );
+	test_base(ip, size, align);
+	test_fill(ip, 0, size, '\0');
+	test_use(ip);
+	free(ip);
+
+	ip = cmemalign( align, 0 );
+	test_base(ip, 0, libAlign);
+	test_use(ip);
+	free(ip);
+
+	ip = aligned_alloc( align );
+	test_base(ip, elemSize, align);
+	test_use(ip);
+	free(ip);
+
+	(int) posix_memalign( (int **) &ip, align );
+	test_base(ip, elemSize, align);
+	test_use(ip);
+	free(ip);
+
+	ip = valloc();
+	test_base(ip, elemSize, getpagesize());
+	test_use(ip);
+	free(ip);
+
+	ip = pvalloc();
+	test_base(ip, getpagesize(), getpagesize());
+	test_use(ip);
+	free(ip);
+
+	if (tests_failed == 0) printf("PASSED CFA malloc tests\n\n");
+	else printf("failed CFA malloc tests : %d/%d\n\n", tests_failed, tests_total);
+
+	// testing CFA malloc with aligned struct
+
+	elemSize = sizeof(T1);
+	size = dim * elemSize;
+	tests_total = 0;
+	tests_failed = 0;
+
+	tp = malloc();
+	test_base(tp, elemSize, tAlign );
+	test_use(tp);
+	free(tp);
+
+	tp = aalloc( dim );
+	test_base(tp, size, tAlign );
+	test_use(tp);
+	free(tp);
+
+	tp = aalloc( 0 );
+	test_base(tp, 0, libAlign);
+	test_use(tp);
+	free(tp);
+
+	tp = calloc( dim );
+	test_base(tp, size, tAlign );
+	test_fill(tp, 0, size, '\0');
+	test_use(tp);
+	free(tp);
+
+	tp = calloc( 0 );
+	test_base(tp, 0, libAlign);
+	test_use(tp);
+	free(tp);
+
+	tp = aalloc( dim );
+	tp = resize( tp, size / 4 );
+	test_base(tp, size / 4, tAlign );
+	test_use(tp);
+	free(tp);
+
+	tp = malloc();
+	tp = resize( tp, size * 4 );
+	test_base(tp, size * 4, tAlign );
+	test_use(tp);
+	free(tp);
+
+	tp = aalloc( dim );
+	tp = resize( tp, 0 );
+	test_base(tp, 0, libAlign);
+	test_use(tp);
+	free(tp);
+
+	tp = resize( (T1*)0p, size );
+	test_base(tp, size, tAlign );
+	test_use(tp);
+	free(tp);
+
+	tp = resize( (T1*)0p, size );
+	test_base(tp, size, tAlign );
+	test_use(tp);
+	free(tp);
+
+	tp = calloc( dim );
+	tp = realloc( tp, size / 4 );
+	test_base(tp, size / 4, tAlign );
+	test_fill(tp, 0, size / 4, '\0');
+	test_use(tp);
+	free(tp);
+
+	tp = calloc( dim );
+	tp = realloc( tp, size * 4 );
+	test_base(tp, size * 4, tAlign );
+	test_fill(tp, 0, size, '\0');
+	test_use(tp);
+	free(tp);
+
+	tp = calloc( dim );
+	tp = realloc( tp, 0 );
+	test_base(tp, 0, libAlign);
+	test_use(tp);
+	free(tp);
+
+	tp = realloc( (T1*)0p, size  );
+	test_base(tp, size , tAlign );
+	test_use(tp);
+	free(tp);
+
+	tp = realloc( (T1*)0p, size );
+	test_base(tp, size, tAlign );
+	test_use(tp);
+	free(tp);
+
+	tp = memalign( align );
+	test_base(tp, elemSize, align);
+	test_use(tp);
+	free(tp);
+
+	tp = amemalign( align, dim );
+	test_base(tp, size, align);
+	test_use(tp);
+	free(tp);
+
+	tp = amemalign( align, 0 );
+	test_base(tp, 0, libAlign);
+	test_use(tp);
+	free(tp);
+
+	tp = cmemalign( align, dim );
+	test_base(tp, size, align);
+	test_fill(tp, 0, size, '\0');
+	test_use(tp);
+	free(tp);
+
+	tp = cmemalign( align, 0 );
+	test_base(tp, 0, libAlign);
+	test_use(tp);
+	free(tp);
+
+	tp = aligned_alloc( align );
+	test_base(tp, elemSize, align);
+	test_use(tp);
+	free(tp);
+
+	(int) posix_memalign( (T1 **) &tp, align );
+	test_base(tp, elemSize, align);
+	test_use(tp);
+	free(tp);
+
+	tp = valloc();
+	test_base(tp, elemSize, getpagesize());
+	test_use(tp);
+	free(tp);
+
+	tp = pvalloc();
+	test_base(tp, getpagesize(), getpagesize());
+	test_use(tp);
+	free(tp);
+
+	if (tests_failed == 0) printf("PASSED CFA malloc tests (aligned struct)\n\n");
+	else printf("failed CFA malloc tests (aligned struct) : %d/%d\n\n", tests_failed, tests_total);
+
+	return 0;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa malloc.cfa" //
+// End: //

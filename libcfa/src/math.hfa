@@ -1,0 +1,434 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// math.hfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon Apr 18 23:37:04 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Apr 15 11:47:56 2021
+// Update Count     : 132
+//
+
+#pragma once
+
+#include <math.h>
+#include <complex.h>
+
+//---------------------------------------
+
+#include "common.hfa"
+
+//---------------------- General ----------------------
+
+static inline {
+	float ?%?( float x, float y ) { return fmodf( x, y ); }
+	float fmod( float x, float y ) { return fmodf( x, y ); }
+	double ?%?( double x, double y ) { return fmod( x, y ); }
+	// extern "C" { double fmod( double, double ); }
+	long double ?%?( long double x, long double y ) { return fmodl( x, y ); }
+	long double fmod( long double x, long double y ) { return fmodl( x, y ); }
+
+	float remainder( float x, float y ) { return remainderf( x, y ); }
+	// extern "C" { double remainder( double, double ); }
+	long double remainder( long double x, long double y ) { return remainderl( x, y ); }
+
+	float remquo( float x, float y, int * quo ) { return remquof( x, y, quo ); }
+	// extern "C" { double remquo( double x, double y, int * quo ); }
+	long double remquo( long double x, long double y, int * quo ) { return remquol( x, y, quo ); }
+	[ int, float ] remquo( float x, float y ) { int quo; x = remquof( x, y, &quo ); return [ quo, x ]; }
+	[ int, double ] remquo( double x, double y ) { int quo; x = remquo( x, y, &quo ); return [ quo, x ]; }
+	[ int, long double ] remquo( long double x, long double y ) { int quo; x = remquol( x, y, &quo ); return [ quo, x ]; }
+
+	[ float, float ] div( float x, float y ) { y = modff( x / y, &x ); return [ x, y ]; }
+	[ double, double ] div( double x, double y ) { y = modf( x / y, &x ); return [ x, y ]; }
+	[ long double, long double ] div( long double x, long double y ) { y = modfl( x / y, &x ); return [ x, y ]; }
+
+	float fma( float x, float y, float z ) { return fmaf( x, y, z ); }
+	// extern "C" { double fma( double, double, double ); }
+	long double fma( long double x, long double y, long double z ) { return fmal( x, y, z ); }
+
+	float fdim( float x, float y ) { return fdimf( x, y ); }
+	// extern "C" { double fdim( double, double ); }
+	long double fdim( long double x, long double y ) { return fdiml( x, y ); }
+
+	float nan( const char tag[] ) { return nanf( tag ); }
+	// extern "C" { double nan( const char [] ); }
+	long double nan( const char tag[] ) { return nanl( tag ); }
+} // distribution
+
+//---------------------- Exponential ----------------------
+
+static inline {
+	float exp( float x ) { return expf( x ); }
+	// extern "C" { double exp( double ); }
+	long double exp( long double x ) { return expl( x ); }
+	float _Complex exp( float _Complex x ) { return cexpf( x ); }
+	double _Complex exp( double _Complex x ) { return cexp( x ); }
+	long double _Complex exp( long double _Complex x ) { return cexpl( x ); }
+
+	float exp2( float x ) { return exp2f( x ); }
+	// extern "C" { double exp2( double ); }
+	long double exp2( long double x ) { return exp2l( x ); }
+	//float _Complex exp2( float _Complex x ) { return cexp2f( x ); }
+	//double _Complex exp2( double _Complex x ) { return cexp2( x ); }
+	//long double _Complex exp2( long double _Complex x ) { return cexp2l( x ); }
+
+	float expm1( float x ) { return expm1f( x ); }
+	// extern "C" { double expm1( double ); }
+	long double expm1( long double x ) { return expm1l( x ); }
+
+	float pow( float x, float y ) { return powf( x, y ); }
+	// extern "C" { double pow( double, double ); }
+	long double pow( long double x, long double y ) { return powl( x, y ); }
+	float _Complex pow( float _Complex x, float _Complex y ) { return cpowf( x, y ); }
+	double _Complex pow( double _Complex x, double _Complex y ) { return cpow( x, y ); }
+	long double _Complex pow( long double _Complex x, long double _Complex y ) { return cpowl( x, y ); }
+} // distribution
+
+//---------------------- Logarithm ----------------------
+
+static inline {
+	float log( float x ) { return logf( x ); }
+	// extern "C" { double log( double ); }
+	long double log( long double x ) { return logl( x ); }
+	float _Complex log( float _Complex x ) { return clogf( x ); }
+	double _Complex log( double _Complex x ) { return clog( x ); }
+	long double _Complex log( long double _Complex x ) { return clogl( x ); }
+
+	// O(1) polymorphic integer log2, using clz, which returns the number of leading 0-bits, starting at the most
+	// significant bit (single instruction on x86)
+	int log2( unsigned int n ) { return n == 0 ? -1 : sizeof(n) * __CHAR_BIT__ - 1 - __builtin_clz( n ); }
+	long int log2( unsigned long int n ) { return n == 0 ? -1 : sizeof(n) * __CHAR_BIT__ - 1 - __builtin_clzl( n ); }
+	long long int log2( unsigned long long int n ) { return n == 0 ? -1 : sizeof(n) * __CHAR_BIT__ - 1 - __builtin_clzll( n ); }
+	float log2( float x ) { return log2f( x ); }
+	// extern "C" { double log2( double ); }
+	long double log2( long double x ) { return log2l( x ); }
+	// float _Complex log2( float _Complex x ) { return clog2f( x ); }
+	// double _Complex log2( double _Complex x ) { return clog2( x ); }
+	// long double _Complex log2( long double _Complex x ) { return clog2l( x ); }
+
+	float log10( float x ) { return log10f( x ); }
+	// extern "C" { double log10( double ); }
+	long double log10( long double x ) { return log10l( x ); }
+	// float _Complex log10( float _Complex x ) { return clog10f( x ); }
+	// double _Complex log10( double _Complex x ) { return clog10( x ); }
+	// long double _Complex log10( long double _Complex x ) { return clog10l( x ); }
+
+	float log1p( float x ) { return log1pf( x ); }
+	// extern "C" { double log1p( double ); }
+	long double log1p( long double x ) { return log1pl( x ); }
+
+	int ilogb( float x ) { return ilogbf( x ); }
+	// extern "C" { int ilogb( double ); }
+	int ilogb( long double x ) { return ilogbl( x ); }
+
+	float logb( float x ) { return logbf( x ); }
+	// extern "C" { double logb( double ); }
+	long double logb( long double x ) { return logbl( x ); }
+
+	float sqrt( float x ) { return sqrtf( x ); }
+	// extern "C" { double sqrt( double ); }
+	long double sqrt( long double x ) { return sqrtl( x ); }
+	float _Complex sqrt( float _Complex x ) { return csqrtf( x ); }
+	double _Complex sqrt( double _Complex x ) { return csqrt( x ); }
+	long double _Complex sqrt( long double _Complex x ) { return csqrtl( x ); }
+
+	float cbrt( float x ) { return cbrtf( x ); }
+	// extern "C" { double cbrt( double ); }
+	long double cbrt( long double x ) { return cbrtl( x ); }
+
+	float hypot( float x, float y ) { return hypotf( x, y ); }
+	// extern "C" { double hypot( double, double ); }
+	long double hypot( long double x, long double y ) { return hypotl( x, y ); }
+} // distribution
+
+//---------------------- Trigonometric ----------------------
+
+static inline {
+	float sin( float x ) { return sinf( x ); }
+	// extern "C" { double sin( double ); }
+	long double sin( long double x ) { return sinl( x ); }
+	float _Complex sin( float _Complex x ) { return csinf( x ); }
+	double _Complex sin( double _Complex x ) { return csin( x ); }
+	long double _Complex sin( long double _Complex x ) { return csinl( x ); }
+
+	float cos( float x ) { return cosf( x ); }
+	// extern "C" { double cos( double ); }
+	long double cos( long double x ) { return cosl( x ); }
+	float _Complex cos( float _Complex x ) { return ccosf( x ); }
+	double _Complex cos( double _Complex x ) { return ccos( x ); }
+	long double _Complex cos( long double _Complex x ) { return ccosl( x ); }
+
+	float tan( float x ) { return tanf( x ); }
+	// extern "C" { double tan( double ); }
+	long double tan( long double x ) { return tanl( x ); }
+	float _Complex tan( float _Complex x ) { return ctanf( x ); }
+	double _Complex tan( double _Complex x ) { return ctan( x ); }
+	long double _Complex tan( long double _Complex x ) { return ctanl( x ); }
+
+	float asin( float x ) { return asinf( x ); }
+	// extern "C" { double asin( double ); }
+	long double asin( long double x ) { return asinl( x ); }
+	float _Complex asin( float _Complex x ) { return casinf( x ); }
+	double _Complex asin( double _Complex x ) { return casin( x ); }
+	long double _Complex asin( long double _Complex x ) { return casinl( x ); }
+
+	float acos( float x ) { return acosf( x ); }
+	// extern "C" { double acos( double ); }
+	long double acos( long double x ) { return acosl( x ); }
+	float _Complex acos( float _Complex x ) { return cacosf( x ); }
+	double _Complex acos( double _Complex x ) { return cacos( x ); }
+	long double _Complex acos( long double _Complex x ) { return cacosl( x ); }
+
+	float atan( float x ) { return atanf( x ); }
+	// extern "C" { double atan( double ); }
+	long double atan( long double x ) { return atanl( x ); }
+	float _Complex atan( float _Complex x ) { return catanf( x ); }
+	double _Complex atan( double _Complex x ) { return catan( x ); }
+	long double _Complex atan( long double _Complex x ) { return catanl( x ); }
+
+	float atan2( float x, float y ) { return atan2f( x, y ); }
+	// extern "C" { double atan2( double, double ); }
+	long double atan2( long double x, long double y ) { return atan2l( x, y ); }
+
+	// alternative name for atan2
+	float atan( float x, float y ) { return atan2f( x, y ); }
+	double atan( double x, double y ) { return atan2( x, y ); }
+	long double atan( long double x, long double y ) { return atan2l( x, y ); }
+} // distribution
+
+//---------------------- Hyperbolic ----------------------
+
+static inline {
+	float sinh( float x ) { return sinhf( x ); }
+	// extern "C" { double sinh( double ); }
+	long double sinh( long double x ) { return sinhl( x ); }
+	float _Complex sinh( float _Complex x ) { return csinhf( x ); }
+	double _Complex sinh( double _Complex x ) { return csinh( x ); }
+	long double _Complex sinh( long double _Complex x ) { return csinhl( x ); }
+
+	float cosh( float x ) { return coshf( x ); }
+	// extern "C" { double cosh( double ); }
+	long double cosh( long double x ) { return coshl( x ); }
+	float _Complex cosh( float _Complex x ) { return ccoshf( x ); }
+	double _Complex cosh( double _Complex x ) { return ccosh( x ); }
+	long double _Complex cosh( long double _Complex x ) { return ccoshl( x ); }
+
+	float tanh( float x ) { return tanhf( x ); }
+	// extern "C" { double tanh( double ); }
+	long double tanh( long double x ) { return tanhl( x ); }
+	float _Complex tanh( float _Complex x ) { return ctanhf( x ); }
+	double _Complex tanh( double _Complex x ) { return ctanh( x ); }
+	long double _Complex tanh( long double _Complex x ) { return ctanhl( x ); }
+
+	float asinh( float x ) { return asinhf( x ); }
+	// extern "C" { double asinh( double ); }
+	long double asinh( long double x ) { return asinhl( x ); }
+	float _Complex asinh( float _Complex x ) { return casinhf( x ); }
+	double _Complex asinh( double _Complex x ) { return casinh( x ); }
+	long double _Complex asinh( long double _Complex x ) { return casinhl( x ); }
+
+	float acosh( float x ) { return acoshf( x ); }
+	// extern "C" { double acosh( double ); }
+	long double acosh( long double x ) { return acoshl( x ); }
+	float _Complex acosh( float _Complex x ) { return cacoshf( x ); }
+	double _Complex acosh( double _Complex x ) { return cacosh( x ); }
+	long double _Complex acosh( long double _Complex x ) { return cacoshl( x ); }
+
+	float atanh( float x ) { return atanhf( x ); }
+	// extern "C" { double atanh( double ); }
+	long double atanh( long double x ) { return atanhl( x ); }
+	float _Complex atanh( float _Complex x ) { return catanhf( x ); }
+	double _Complex atanh( double _Complex x ) { return catanh( x ); }
+	long double _Complex atanh( long double _Complex x ) { return catanhl( x ); }
+} // distribution
+
+//---------------------- Error / Gamma ----------------------
+
+static inline {
+	float erf( float x ) { return erff( x ); }
+	// extern "C" { double erf( double ); }
+	long double erf( long double x ) { return erfl( x ); }
+	// float _Complex erf( float _Complex );
+	// double _Complex erf( double _Complex );
+	// long double _Complex erf( long double _Complex );
+
+	float erfc( float x ) { return erfcf( x ); }
+	// extern "C" { double erfc( double ); }
+	long double erfc( long double x ) { return erfcl( x ); }
+	// float _Complex erfc( float _Complex );
+	// double _Complex erfc( double _Complex );
+	// long double _Complex erfc( long double _Complex );
+
+	float lgamma( float x ) { return lgammaf( x ); }
+	// extern "C" { double lgamma( double ); }
+	long double lgamma( long double x ) { return lgammal( x ); }
+	float lgamma( float x, int * sign ) { return lgammaf_r( x, sign ); }
+	double lgamma( double x, int * sign ) { return lgamma_r( x, sign ); }
+	long double lgamma( long double x, int * sign ) { return lgammal_r( x, sign ); }
+
+	float tgamma( float x ) { return tgammaf( x ); }
+	// extern "C" { double tgamma( double ); }
+	long double tgamma( long double x ) { return tgammal( x ); }
+} // distribution
+
+//---------------------- Nearest Integer ----------------------
+
+static inline {
+	signed char floor( signed char n, signed char align ) { return n / align * align; }
+	unsigned char floor( unsigned char n, unsigned char align ) { return n / align * align; }
+	short int floor( short int n, short int align ) { return n / align * align; }
+	unsigned short int floor( unsigned short int n, unsigned short int align ) { return n / align * align; }
+	int floor( int n, int align ) { return n / align * align; }
+	unsigned int floor( unsigned int n, unsigned int align ) { return n / align * align; }
+	long int floor( long int n, long int align ) { return n / align * align; }
+	unsigned long int floor( unsigned long int n, unsigned long int align ) { return n / align * align; }
+	long long int floor( long long int n, long long int align ) { return n / align * align; }
+	unsigned long long int floor( unsigned long long int n, unsigned long long int align ) { return n / align * align; }
+
+	// forall( T | { T ?/?( T, T ); T ?*?( T, T ); } )
+	// T floor( T n, T align ) { return n / align * align; }
+
+	signed char ceiling_div( signed char n, char align ) { return (n + (align - 1)) / align; }
+	unsigned char ceiling_div( unsigned char n, unsigned char align ) { return (n + (align - 1)) / align; }
+	short int ceiling_div( short int n, short int align ) { return (n + (align - 1)) / align; }
+	unsigned short int ceiling_div( unsigned short int n, unsigned short int align ) { return (n + (align - 1)) / align; }
+	int ceiling_div( int n, int align ) { return (n + (align - 1)) / align; }
+	unsigned int ceiling_div( unsigned int n, unsigned int align ) { return (n + (align - 1)) / align; }
+	long int ceiling_div( long int n, long int align ) { return (n + (align - 1)) / align; }
+	unsigned long int ceiling_div( unsigned long int n, unsigned long int align ) { return (n + (align - 1)) / align; }
+	long long int ceiling_div( long long int n, long long int align ) { return (n + (align - 1)) / align; }
+	unsigned long long int ceiling_div( unsigned long long int n, unsigned long long int align ) { return (n + (align - 1)) / align; }
+
+	// forall( T | { T ?+?( T, T ); T ?-?( T, T ); T ?%?( T, T ); } )
+	// T ceiling_div( T n, T align ) { verify( is_pow2( align ) );return (n + (align - 1)) / align; }
+	
+	// gcc notices the div/mod pair and saves both so only one div.
+	signed char ceiling( signed char n, signed char align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+	unsigned char ceiling( unsigned char n, unsigned char align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+	short int ceiling( short int n, short int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+	unsigned short int ceiling( unsigned short int n, unsigned short int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+	int ceiling( int n, int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+	unsigned int ceiling( unsigned int n, unsigned int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+	long int ceiling( long int n, long int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+	unsigned long int ceiling( unsigned long int n, unsigned long int align ) { return floor( n + (n % align != 0 ? align - 1 : 0) , align); }
+	long long int ceiling( long long int n, long long int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+	unsigned long long int ceiling( unsigned long long int n, unsigned long long int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
+
+	// forall( T | { void ?{}( T &, one_t ); T ?+?( T, T ); T ?-?( T, T ); T ?/?( T, T ); } )
+	// T ceiling( T n, T align ) { return return floor( n + (n % align != 0 ? align - 1 : 0), align ); *}
+
+	float floor( float x ) { return floorf( x ); }
+	// extern "C" { double floor( double ); }
+	long double floor( long double x ) { return floorl( x ); }
+
+	float ceil( float x ) { return ceilf( x ); }
+	// extern "C" { double ceil( double ); }
+	long double ceil( long double x ) { return ceill( x ); }
+
+	float trunc( float x ) { return truncf( x ); }
+	// extern "C" { double trunc( double ); }
+	long double trunc( long double x ) { return truncl( x ); }
+
+	float rint( float x ) { return rintf( x ); }
+	// extern "C" { double rint( double x ); }
+	long double rint( long double x ) { return rintl( x ); }
+	long int rint( float x ) { return lrintf( x ); }
+	long int rint( double x ) { return lrint( x ); }
+	long int rint( long double x ) { return lrintl( x ); }
+	long long int rint( float x ) { return llrintf( x ); }
+	long long int rint( double x ) { return llrint( x ); }
+	long long int rint( long double x ) { return llrintl( x ); }
+
+	long int lrint( float x ) { return lrintf( x ); }
+	// extern "C" { long int lrint( double ); }
+	long int lrint( long double x ) { return lrintl( x ); }
+	long long int llrint( float x ) { return llrintf( x ); }
+	// extern "C" { long long int llrint( double ); }
+	long long int llrint( long double x ) { return llrintl( x ); }
+
+	float nearbyint( float x ) { return nearbyintf( x ); }
+	// extern "C" { double nearbyint( double ); }
+	long double nearbyint( long double x ) { return nearbyintl( x ); }
+
+	float round( float x ) { return roundf( x ); }
+	// extern "C" { double round( double x ); }
+	long double round( long double x ) { return roundl( x ); }
+	long int round( float x ) { return lroundf( x ); }
+	long int round( double x ) { return lround( x ); }
+	long int round( long double x ) { return lroundl( x ); }
+	long long int round( float x ) { return llroundf( x ); }
+	long long int round( double x ) { return llround( x ); }
+	long long int round( long double x ) { return llroundl( x ); }
+
+	long int lround( float x ) { return lroundf( x ); }
+	// extern "C" { long int lround( double ); }
+	long int lround( long double x ) { return lroundl( x ); }
+	long long int llround( float x ) { return llroundf( x ); }
+	// extern "C" { long long int llround( double ); }
+	long long int llround( long double x ) { return llroundl( x ); }
+} // distribution
+
+//---------------------- Manipulation ----------------------
+
+static inline {
+	float copysign( float x, float y ) { return copysignf( x, y ); }
+	// extern "C" { double copysign( double, double ); }
+	long double copysign( long double x, long double y ) { return copysignl( x, y ); }
+
+	float frexp( float x, int * ip ) { return frexpf( x, ip ); }
+	// extern "C" { double frexp( double, int * ); }
+	long double frexp( long double x, int * ip ) { return frexpl( x, ip ); }
+
+	float ldexp( float x, int exp2 ) { return ldexpf( x, exp2 ); }
+	// extern "C" { double ldexp( double, int ); }
+	long double ldexp( long double x, int exp2 ) { return ldexpl( x, exp2 ); }
+
+	[ float, float ] modf( float x ) { float i; x = modff( x, &i ); return [ i, x ]; }
+	float modf( float x, float * i ) { return modff( x, i ); }
+	[ double, double ] modf( double x ) { double i; x = modf( x, &i ); return [ i, x ]; }
+	// extern "C" { double modf( double, double * ); }
+	[ long double, long double ] modf( long double x ) { long double i; x = modfl( x, &i ); return [ i, x ]; }
+	long double modf( long double x, long double * i ) { return modfl( x, i ); }
+
+	float nextafter( float x, float y ) { return nextafterf( x, y ); }
+	// extern "C" { double nextafter( double, double ); }
+	long double nextafter( long double x, long double y ) { return nextafterl( x, y ); }
+
+	float nexttoward( float x, long double y ) { return nexttowardf( x, y ); }
+	// extern "C" { double nexttoward( double, long double ); }
+	long double nexttoward( long double x, long double y ) { return nexttowardl( x, y ); }
+
+	float scalbn( float x, int exp ) { return scalbnf( x, exp ); }
+	// extern "C" { double scalbn( double, int ); }
+	long double scalbn( long double x, int exp ) { return scalbnl( x, exp ); }
+	float scalbn( float x, long int exp ) { return scalblnf( x, exp ); }
+	double scalbn( double x, long int exp ) { return scalbln( x, exp ); }
+	long double scalbn( long double x, long int exp ) { return scalblnl( x, exp ); }
+
+	float scalbln( float x, long int exp ) { return scalblnf( x, exp ); }
+	// extern "C" { double scalbln( double, long int ); }
+	long double scalbln( long double x, long int exp ) { return scalblnl( x, exp ); }
+} // distribution
+
+//---------------------------------------
+
+static inline {
+	forall( T | { void ?{}( T &, one_t ); T ?+?( T, T ); T ?-?( T, T );T ?*?( T, T ); } )
+	T lerp( T x, T y, T a ) { return x * ((T){1} - a) + y * a; }
+
+	forall( T | { void ?{}( T &, zero_t ); void ?{}( T &, one_t ); int ?<?( T, T ); } )
+	T step( T edge, T x ) { return x < edge ? (T){0} : (T){1}; }
+
+	forall( T | { void ?{}( T &, int ); T clamp( T, T, T ); T ?-?( T, T ); T ?*?( T, T ); T ?/?( T, T ); } )
+	T smoothstep( T edge0, T edge1, T x ) { T t = clamp( (x - edge0) / (edge1 - edge0), (T){0}, (T){1} ); return t * t * ((T){3} - (T){2} * t); }
+} // distribution
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

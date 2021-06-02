@@ -1,0 +1,394 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// stdlib --
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu Jan 28 17:12:35 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr 20 21:20:03 2021
+// Update Count     : 575
+//
+
+#pragma once
+
+#include "bits/defs.hfa"								// OPTIONAL_THREAD
+#include "bits/align.hfa"								// libAlign
+
+#include <stdlib.h>										// *alloc, strto*, ato*
+#include <heap.hfa>
+
+// Reduce includes by explicitly defining these routines.
+extern "C" {
+	void * memalign( size_t alignment, size_t size );	// malloc.h
+	void * pvalloc( size_t size );						// malloc.h
+	void * memset( void * dest, int fill, size_t size ); // string.h
+	void * memcpy( void * dest, const void * src, size_t size ); // string.h
+} // extern "C"
+
+//---------------------------------------
+
+#ifndef EXIT_FAILURE
+#define	EXIT_FAILURE	1								// failing exit status
+#define	EXIT_SUCCESS	0								// successful exit status
+#endif // ! EXIT_FAILURE
+
+//---------------------------------------
+
+#include "common.hfa"
+
+//---------------------------------------
+
+// Macro because of returns
+#define ARRAY_ALLOC$( allocation, alignment, dim ) \
+	if ( _Alignof(T) <= libAlign() ) return (T *)(void *)allocation( dim, (size_t)sizeof(T) ); /* C allocation */ \
+	else return (T *)alignment( _Alignof(T), dim, sizeof(T) )
+
+static inline forall( T & | sized(T) ) {
+	// CFA safe equivalents, i.e., implicit size specification
+
+	T * malloc( void ) {
+		if ( _Alignof(T) <= libAlign() ) return (T *)(void *)malloc( (size_t)sizeof(T) ); // C allocation
+		else return (T *)memalign( _Alignof(T), sizeof(T) );
+	} // malloc
+
+	T * aalloc( size_t dim ) {
+		ARRAY_ALLOC$( aalloc, amemalign, dim );
+	} // aalloc
+
+	T * calloc( size_t dim ) {
+		ARRAY_ALLOC$( calloc, cmemalign, dim );
+	} // calloc
+
+	T * resize( T * ptr, size_t size ) {				// CFA resize, eliminate return-type cast
+		if ( _Alignof(T) <= libAlign() ) return (T *)(void *)resize( (void *)ptr, size ); // CFA resize
+		else return (T *)(void *)resize( (void *)ptr, _Alignof(T), size ); // CFA resize
+	} // resize
+
+	T * realloc( T * ptr, size_t size ) {				// CFA realloc, eliminate return-type cast
+		if ( _Alignof(T) <= libAlign() ) return (T *)(void *)realloc( (void *)ptr, size ); // C realloc
+		else return (T *)(void *)realloc( (void *)ptr, _Alignof(T), size ); // CFA realloc
+	} // realloc
+
+	T * memalign( size_t align ) {
+		return (T *)memalign( align, sizeof(T) );		// C memalign
+	} // memalign
+
+	T * amemalign( size_t align, size_t dim ) {
+		return (T *)amemalign( align, dim, sizeof(T) );	// CFA amemalign
+	} // amemalign
+
+	T * cmemalign( size_t align, size_t dim  ) {
+		return (T *)cmemalign( align, dim, sizeof(T) );	// CFA cmemalign
+	} // cmemalign
+
+	T * aligned_alloc( size_t align ) {
+		return (T *)aligned_alloc( align, sizeof(T) );	// C aligned_alloc
+	} // aligned_alloc
+
+	int posix_memalign( T ** ptr, size_t align ) {
+		return posix_memalign( (void **)ptr, align, sizeof(T) ); // C posix_memalign
+	} // posix_memalign
+
+	T * valloc( void ) {
+		return (T *)valloc( sizeof(T) );				// C valloc
+	} // valloc
+
+	T * pvalloc( void ) {
+		return (T *)pvalloc( sizeof(T) );				// C pvalloc
+	} // pvalloc
+} // distribution
+
+/*
+	FIX ME : fix alloc interface after Ticker Number 214 is resolved, define and add union to S_fill. Then, modify postfix-fill functions to support T * with nmemb, char, and T object of any size. Finally, change alloc_internal.
+	Or, just follow the instructions below for that.
+
+	1. Replace the current forall-block that contains defintions of S_fill and S_realloc with following:
+		forall( T & | sized(T) ) {
+			union  U_fill 		{ char c; T * a; T t; };
+			struct S_fill 		{ char tag; U_fill(T) fill; };
+			struct S_realloc	{ inline T *; };
+		}
+
+	2. Replace all current postfix-fill functions with following for updated S_fill:
+		S_fill(T) ?`fill( char a )					{ S_fill(T) ret = {'c'}; ret.fill.c = a; return ret; }
+		S_fill(T) ?`fill( T    a ) 					{ S_fill(T) ret = {'t'}; memcpy(&ret.fill.t, &a, sizeof(T)); return ret; }
+		S_fill(T) ?`fill( T    a[], size_t nmemb ) 	{ S_fill(T) ret = {'a', nmemb}; ret.fill.a = a; return ret; }
+
+	3. Replace the alloc_internal$ function which is outside ttype forall-block with following function:
+		T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T) Fill) {
+			T * ptr = NULL;
+			size_t size = sizeof(T);
+			size_t copy_end = 0;
+
+			if(Resize) {
+				ptr = (T*) (void *) resize( (int *)Resize, Align, Dim * size );
+			} else if (Realloc) {
+				if (Fill.tag != '0') copy_end = min(malloc_size( Realloc ), Dim * size);
+				ptr = (T*) (void *) realloc( (int *)Realloc, Align, Dim * size );
+			} else {
+				ptr = (T*) (void *) memalign( Align, Dim * size );
+			}
+
+			if(Fill.tag == 'c') {
+				memset( (char *)ptr + copy_end, (int)Fill.fill.c, Dim * size - copy_end );
+			} else if(Fill.tag == 't') {
+				for ( int i = copy_end; i <= Dim * size - size ; i += size ) {
+					memcpy( (char *)ptr + i, &Fill.fill.t, size );
+				}
+			} else if(Fill.tag == 'a') {
+				memcpy( (char *)ptr + copy_end, Fill.fill.a, min(Dim * size - copy_end, size * Fill.nmemb) );
+			}
+
+			return ptr;
+		} // alloc_internal$
+*/
+
+typedef struct S_align 			{ inline size_t;  } T_align;
+typedef struct S_resize			{ inline void *;  }	T_resize;
+
+forall( T & ) {
+	struct S_fill 		{ char tag; char c; size_t size; T * at; char t[50]; };
+	struct S_realloc	{ inline T *; };
+}
+
+static inline T_align 	?`align   ( size_t a ) 	{ return (T_align){a}; }
+static inline T_resize 	?`resize  ( void * a )	{ return (T_resize){a}; }
+
+static inline forall( T & | sized(T) ) {
+	S_fill(T) ?`fill ( T t ) {
+		S_fill(T) ret = { 't' };
+		size_t size = sizeof(T);
+		if ( size > sizeof(ret.t) ) {
+			abort( "ERROR: const object of size greater than 50 bytes given for dynamic memory fill\n" );
+		} // if
+		memcpy( &ret.t, &t, size );
+		return ret;
+	}
+	S_fill(T) 		?`fill ( char c ) 				{ return (S_fill(T)){ 'c', c };	}
+	S_fill(T) 		?`fill ( T * a ) 				{ return (S_fill(T)){ 'T', '0', 0, a }; }
+	S_fill(T) 		?`fill ( T a[], size_t nmemb ) 	{ return (S_fill(T)){ 'a', '0', nmemb * sizeof(T), a }; }
+
+	S_realloc(T) 	?`realloc ( T * a )				{ return (S_realloc(T)){a}; }
+
+	T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T) Fill ) {
+		T * ptr = NULL;
+		size_t size = sizeof(T);
+		size_t copy_end = 0;
+
+		if ( Resize ) {
+			ptr = (T*) (void *) resize( (void *)Resize, Align, Dim * size );
+		} else if ( Realloc ) {
+			if ( Fill.tag != '0' ) copy_end = min(malloc_size( Realloc ), Dim * size );
+			ptr = (T *) (void *) realloc( (void *)Realloc, Align, Dim * size );
+		} else {
+			ptr = (T *) (void *) memalign( Align, Dim * size );
+		}
+
+		if ( Fill.tag == 'c' ) {
+			memset( (char *)ptr + copy_end, (int)Fill.c, Dim * size - copy_end );
+		} else if ( Fill.tag == 't' ) {
+			for ( int i = copy_end; i < Dim * size; i += size ) {
+				#pragma GCC diagnostic push
+				#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+				assert( size <= sizeof(Fill.t) );
+				memcpy( (char *)ptr + i, &Fill.t, size );
+				#pragma GCC diagnostic pop
+			}
+		} else if ( Fill.tag == 'a' ) {
+			memcpy( (char *)ptr + copy_end, Fill.at, min(Dim * size - copy_end, Fill.size) );
+		} else if ( Fill.tag == 'T' ) {
+			memcpy( (char *)ptr + copy_end, Fill.at, Dim * size );
+		}
+
+		return ptr;
+	} // alloc_internal$
+
+	forall( TT... | { T * alloc_internal$( void *, T *, size_t, size_t, S_fill(T), TT ); } ) {
+
+		T * alloc_internal$( void *       , T * Realloc, size_t Align, size_t Dim, S_fill(T) Fill, T_resize Resize, TT rest) {
+	        return alloc_internal$( Resize, (T*)0p, Align, Dim, Fill, rest);
+		}
+
+		T * alloc_internal$( void * Resize, T *        , size_t Align, size_t Dim, S_fill(T) Fill, S_realloc(T) Realloc, TT rest) {
+	        return alloc_internal$( (void*)0p, Realloc, Align, Dim, Fill, rest);
+		}
+
+		T * alloc_internal$( void * Resize, T * Realloc, size_t      , size_t Dim, S_fill(T) Fill, T_align Align, TT rest) {
+	        return alloc_internal$( Resize, Realloc, Align, Dim, Fill, rest);
+		}
+
+		T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T)     , S_fill(T) Fill, TT rest) {
+	        return alloc_internal$( Resize, Realloc, Align, Dim, Fill, rest);
+		}
+
+	    T * alloc( TT all ) {
+	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), (size_t)1, (S_fill(T)){'0'}, all);
+	    }
+
+	    T * alloc( size_t dim, TT all ) {
+	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), dim, (S_fill(T)){'0'}, all);
+	    }
+
+	} // distribution TT
+} // distribution T
+
+static inline forall( T & | sized(T) ) {
+	// CFA safe initialization/copy, i.e., implicit size specification, non-array types
+	T * memset( T * dest, char fill ) {
+		return (T *)memset( dest, fill, sizeof(T) );
+	} // memset
+
+	T * memcpy( T * dest, const T * src ) {
+		return (T *)memcpy( dest, src, sizeof(T) );
+	} // memcpy
+
+	// CFA safe initialization/copy, i.e., implicit size specification, array types
+	T * amemset( T dest[], char fill, size_t dim ) {
+		return (T *)(void *)memset( dest, fill, dim * sizeof(T) ); // C memset
+	} // amemset
+
+	T * amemcpy( T dest[], const T src[], size_t dim ) {
+		return (T *)(void *)memcpy( dest, src, dim * sizeof(T) ); // C memcpy
+	} // amemcpy
+} // distribution
+
+// CFA deallocation for multiple objects
+static inline forall( T & )							// FIX ME, problems with 0p in list
+void free( T * ptr ) {
+	free( (void *)ptr );								// C free
+} // free
+static inline forall( T &, TT... | { void free( TT ); } )
+void free( T * ptr, TT rest ) {
+	free( ptr );
+	free( rest );
+} // free
+
+// CFA allocation/deallocation and constructor/destructor, non-array types
+static inline forall( T & | sized(T), TT... | { void ?{}( T &, TT ); } )
+T * new( TT p ) {
+	return &(*(T *)malloc()){ p };						// run constructor
+} // new
+
+static inline forall( T & | { void ^?{}( T & ); } )
+void delete( T * ptr ) {
+	// special case for 0-sized object => always call destructor
+	if ( ptr || sizeof(ptr) == 0 ) {					// ignore null but not 0-sized objects
+		^(*ptr){};										// run destructor
+	} // if
+	free( ptr );										// always call free
+} // delete
+static inline forall( T &, TT... | { void ^?{}( T & ); void delete( TT ); } )
+void delete( T * ptr, TT rest ) {
+	delete( ptr );
+	delete( rest );
+} // delete
+
+// CFA allocation/deallocation and constructor/destructor, array types
+forall( T & | sized(T), TT... | { void ?{}( T &, TT ); } ) T * anew( size_t dim, TT p );
+forall( T & | sized(T) | { void ^?{}( T & ); } ) void adelete( T arr[] );
+forall( T & | sized(T) | { void ^?{}( T & ); }, TT... | { void adelete( TT ); } ) void adelete( T arr[], TT rest );
+
+//---------------------------------------
+
+static inline {
+	int strto( const char sptr[], char ** eptr, int base ) { return (int)strtol( sptr, eptr, base ); }
+	unsigned int strto( const char sptr[], char ** eptr, int base ) { return (unsigned int)strtoul( sptr, eptr, base ); }
+	long int strto( const char sptr[], char ** eptr, int base ) { return strtol( sptr, eptr, base ); }
+	unsigned long int strto( const char sptr[], char ** eptr, int base ) { return strtoul( sptr, eptr, base ); }
+	long long int strto( const char sptr[], char ** eptr, int base ) { return strtoll( sptr, eptr, base ); }
+	unsigned long long int strto( const char sptr[], char ** eptr, int base ) { return strtoull( sptr, eptr, base ); }
+
+	float strto( const char sptr[], char ** eptr ) { return strtof( sptr, eptr ); }
+	double strto( const char sptr[], char ** eptr ) { return strtod( sptr, eptr ); }
+	long double strto( const char sptr[], char ** eptr ) { return strtold( sptr, eptr ); }
+} // distribution
+
+float _Complex strto( const char sptr[], char ** eptr );
+double _Complex strto( const char sptr[], char ** eptr );
+long double _Complex strto( const char sptr[], char ** eptr );
+
+static inline {
+	int ato( const char sptr[] ) { return (int)strtol( sptr, 0p, 10 ); }
+	unsigned int ato( const char sptr[] ) { return (unsigned int)strtoul( sptr, 0p, 10 ); }
+	long int ato( const char sptr[] ) { return strtol( sptr, 0p, 10 ); }
+	unsigned long int ato( const char sptr[] ) { return strtoul( sptr, 0p, 10 ); }
+	long long int ato( const char sptr[] ) { return strtoll( sptr, 0p, 10 ); }
+	unsigned long long int ato( const char sptr[] ) { return strtoull( sptr, 0p, 10 ); }
+
+	float ato( const char sptr[] ) { return strtof( sptr, 0p ); }
+	double ato( const char sptr[] ) { return strtod( sptr, 0p ); }
+	long double ato( const char sptr[] ) { return strtold( sptr, 0p ); }
+
+	float _Complex ato( const char sptr[] ) { return strto( sptr, 0p ); }
+	double _Complex ato( const char sptr[] ) { return strto( sptr, 0p ); }
+	long double _Complex ato( const char sptr[] ) { return strto( sptr, 0p ); }
+} // distribution
+
+//---------------------------------------
+
+forall( E | { int ?<?( E, E ); } ) {
+	E * bsearch( E key, const E * vals, size_t dim );
+	size_t bsearch( E key, const E * vals, size_t dim );
+	E * bsearchl( E key, const E * vals, size_t dim );
+	size_t bsearchl( E key, const E * vals, size_t dim );
+	E * bsearchu( E key, const E * vals, size_t dim );
+	size_t bsearchu( E key, const E * vals, size_t dim );
+} // distribution
+
+forall( K, E | { int ?<?( K, K ); K getKey( const E & ); } ) {
+	E * bsearch( K key, const E * vals, size_t dim );
+	size_t bsearch( K key, const E * vals, size_t dim );
+	E * bsearchl( K key, const E * vals, size_t dim );
+	size_t bsearchl( K key, const E * vals, size_t dim );
+	E * bsearchu( K key, const E * vals, size_t dim );
+	size_t bsearchu( K key, const E * vals, size_t dim );
+} // distribution
+
+forall( E | { int ?<?( E, E ); } ) {
+	void qsort( E * vals, size_t dim );
+} // distribution
+
+//---------------------------------------
+
+extern "C" {											// override C version
+	void srandom( unsigned int seed );
+	long int random( void );							// GENERATES POSITIVE AND NEGATIVE VALUES
+	// For positive values, use unsigned int, e.g., unsigned int r = random() % 100U;
+} // extern "C"
+
+static inline {
+	long int random( long int l, long int u ) { if ( u < l ) [u, l] = [l, u]; return lrand48() % (u - l) + l; } // [l,u)
+	long int random( long int u ) { if ( u < 0 ) return random( u, 0 ); else return random( 0, u ); } // [0,u)
+	unsigned long int random( void ) { return lrand48(); }
+	unsigned long int random( unsigned long int u ) { return lrand48() % u; } // [0,u)
+	unsigned long int random( unsigned long int l, unsigned long int u ) { if ( u < l ) [u, l] = [l, u]; return lrand48() % (u - l) + l; } // [l,u)
+
+	char random( void ) { return (unsigned long int)random(); }
+	char random( char u ) { return random( (unsigned long int)u ); } // [0,u)
+	char random( char l, char u ) { return random( (unsigned long int)l, (unsigned long int)u ); } // [l,u)
+	int random( void ) { return (long int)random(); }
+	int random( int u ) { return random( (long int)u ); } // [0,u]
+	int random( int l, int u ) { return random( (long int)l, (long int)u ); } // [l,u)
+	unsigned int random( void ) { return (unsigned long int)random(); }
+	unsigned int random( unsigned int u ) { return random( (unsigned long int)u ); } // [0,u]
+	unsigned int random( unsigned int l, unsigned int u ) { return random( (unsigned long int)l, (unsigned long int)u ); } // [l,u)
+} // distribution
+
+float random( void );									// [0.0, 1.0)
+double random( void );									// [0.0, 1.0)
+float _Complex random( void );							// [0.0, 1.0)+[0.0, 1.0)i
+double _Complex random( void );							// [0.0, 1.0)+[0.0, 1.0)i
+long double _Complex random( void );					// [0.0, 1.0)+[0.0, 1.0)i
+
+//---------------------------------------
+
+extern bool threading_enabled( void ) OPTIONAL_THREAD;
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

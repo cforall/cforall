@@ -1,0 +1,58 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// raii.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon May 27 13:39:58 2019
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <fstream.hfa>
+#include <coroutine.hfa>
+
+struct Raii {
+	const char * name;
+};
+
+void ?{}( Raii & this, const char * name ) {
+	this.name = name;
+	sout | "Raii Ctor" | this.name;
+}
+
+void ^?{}( Raii & this ) {
+	sout | "Raii Dtor" | this.name;
+}
+
+coroutine Cor {};
+
+void ?{}( Cor & this ) {
+	sout | "Coroutine Ctor";
+}
+
+void main( Cor & this ) {
+	Raii raii = { "Coroutine" };
+	sout | "Before Suspend";
+	suspend;
+	sout | "After Suspend";
+}
+
+void ^?{}( Cor & this ) {
+	sout | "Coroutine Dtor";
+}
+
+int main() {
+	Raii raii = { "Main" };
+	Cor cor;
+	resume(cor);
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa -g -Wall -Wextra raii.cfa" //
+// End: //

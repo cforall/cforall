@@ -1,0 +1,157 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// alarm.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Fri Jun 2 11:31:25 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Jun 17 16:11:35 2020
+// Update Count     : 75
+//
+
+#define __cforall_thread__
+// #define __CFA_DEBUG_PRINT_PREEMPTION__
+
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/time.h>
+
+#include "alarm.hfa"
+#include "kernel/fwd.hfa"
+#include "preemption.hfa"
+
+//=============================================================================================
+// Clock logic
+//=============================================================================================
+
+Time __kernel_get_time() {
+	timespec curr;
+	clock_gettime( CLOCK_MONOTONIC_RAW, &curr );		// CLOCK_REALTIME
+	return (Time){ curr };
+}
+
+void __kernel_set_timer( Duration alarm ) {
+	alarm = max(alarm, 1`us);
+	itimerval otv @= { 0 };
+	getitimer( ITIMER_REAL, &otv );
+	Duration od = { otv.it_value };
+	if(od == 0 || od > alarm) {
+		setitimer( ITIMER_REAL, &(itimerval){ alarm }, 0p );
+	}
+}
+
+//=============================================================================================
+// Alarm logic
+//=============================================================================================
+
+void ?{}( alarm_node_t & this, $thread * thrd, Duration alarm, Duration period) with( this ) {
+	this.initial = alarm;
+	this.period  = period;
+	this.thrd = thrd;
+	this.timeval = __kernel_get_time() + alarm;
+	set = false;
+	type = User;
+}
+
+void ?{}( alarm_node_t & this, processor * proc, Duration alarm, Duration period ) with( this ) {
+	this.initial = alarm;
+	this.period  = period;
+	this.proc = proc;
+	this.timeval = __kernel_get_time() + alarm;
+	set = false;
+	type = Kernel;
+}
+void ?{}( alarm_node_t & this, Alarm_Callback callback, Duration alarm, Duration period ) with( this ) {
+	this.callback = callback;
+	this.initial = alarm;
+	this.period  = period;
+	this.timeval = __kernel_get_time() + alarm;
+	set = false;
+	type = Callback;
+}
+
+void ^?{}( alarm_node_t & this ) {
+	if( this.set ) {
+		unregister_self( &this );
+	}
+}
+
+void insert( alarm_list_t * this, alarm_node_t * n ) {
+	alarm_node_t * it = & (*this)`first;
+	while( it && (n->timeval > it->timeval) ) {
+		it = & (*it)`next;
+	}
+	if ( it ) {
+		insert_before( *it, *n );
+	} else {
+		insert_last(*this, *n);
+	}
+
+	verify( validate( *this ) );
+}
+
+alarm_node_t * pop( alarm_list_t * this ) {
+	verify( validate( *this ) );
+	alarm_node_t * head = & (*this)`first;
+	if( head ) {
+		remove(*head);
+	}
+	verify( validate( *this ) );
+	return head;
+}
+
+void register_self( alarm_node_t * this ) {
+	alarm_list_t & alarms = event_kernel->alarms;
+
+	disable_interrupts();
+	lock( event_kernel->lock __cfaabi_dbg_ctx2 );
+	{
+		/* paranoid */ verify( validate( alarms ) );
+
+		Time curr = __kernel_get_time();
+		__cfadbg_print_safe( preemption, " KERNEL: alarm inserting %p (%lu -> %lu).\n", this, curr.tn, this->timeval.tn );
+		insert( &alarms, this );
+		__kernel_set_timer( this->timeval - curr);
+		this->set = true;
+	}
+	unlock( event_kernel->lock );
+	enable_interrupts();
+}
+
+void unregister_self( alarm_node_t * this ) {
+	disable_interrupts();
+	lock( event_kernel->lock __cfaabi_dbg_ctx2 );
+	{
+		verify( validate( event_kernel->alarms ) );
+		if (this->set) remove( *this );
+		this->set = false;
+	}
+	unlock( event_kernel->lock );
+	enable_interrupts();
+}
+
+//=============================================================================================
+// Utilities
+//=============================================================================================
+
+void sleep( Duration duration ) {
+	alarm_node_t node = { active_thread(), duration, 0`s };
+
+	register_self( &node );
+	park();
+
+	/* paranoid */ verify( !node.set );
+	/* paranoid */ verify( & node`next == 0p );
+	/* paranoid */ verify( & node`prev == 0p );
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

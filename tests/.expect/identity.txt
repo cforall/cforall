@@ -1,0 +1,13 @@
+char			z
+signed int		4
+unsigned int		4
+signed long int		4
+unsigned long int	4
+signed long long int	4
+unsigned long long int	4
+float			4.1
+double			4.1
+long double		4.1
+float _Complex		-4.1-2.i
+double _Complex		-4.1-2.i
+long double _Complex	-4.1-2.i

@@ -1,0 +1,101 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// strstream.hfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Thu Apr 22 22:20:59 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr 27 20:58:50 2021
+// Update Count     : 41
+// 
+
+#pragma once
+
+#include "iostream.hfa"
+#include <stdio.h>
+
+
+// *********************************** ostrstream ***********************************
+
+
+enum { ostrstream_sepSize = 16 };
+struct ostrstream {										// satisfied basic_ostream
+	char * buf$;
+	size_t size$;
+	size_t cursor$;
+	bool sepDefault$;
+	bool sepOnOff$;
+	bool nlOnOff$;
+	bool prt$;											// print text
+	bool sawNL$;
+	const char * sepCur$;
+	char separator$[ostrstream_sepSize];
+	char tupleSeparator$[ostrstream_sepSize];
+}; // ostrstream
+
+// Satisfies basic_ostream
+
+// private
+bool sepPrt$( ostrstream & );
+void sepReset$( ostrstream & );
+void sepReset$( ostrstream &, bool );
+const char * sepGetCur$( ostrstream & );
+void sepSetCur$( ostrstream &, const char [] );
+bool getNL$( ostrstream & );
+void setNL$( ostrstream &, bool );
+bool getANL$( ostrstream & );
+bool getPrt$( ostrstream & );
+void setPrt$( ostrstream &, bool );
+
+// public
+void sepOn( ostrstream & );
+void sepOff( ostrstream & );
+bool sepDisable( ostrstream & );
+bool sepEnable( ostrstream & );
+void nlOn( ostrstream & );
+void nlOff( ostrstream & );
+
+const char * sepGet( ostrstream & );
+void sepSet( ostrstream &, const char [] );
+const char * sepGetTuple( ostrstream & );
+void sepSetTuple( ostrstream &, const char [] );
+
+void ends( ostrstream & );
+int fmt( ostrstream &, const char format[], ... ) __attribute__(( format(printf, 2, 3) ));
+
+ostrstream & write( ostrstream & os, FILE * stream ); // FIX ME: use default = stdout
+ostrstream & write( ostrstream & os );
+
+void ?{}( ostrstream &, char buf[], size_t size );
+
+
+// *********************************** istrstream ***********************************
+
+
+struct istrstream {
+	char * buf$;
+	size_t cursor$;
+	bool nlOnOff$;
+}; // istrstream
+
+// Satisfies basic_istream
+
+// public
+bool getANL( istrstream & );
+void nlOn( istrstream & );
+void nlOff( istrstream & );
+void ends( istrstream & );
+int fmt( istrstream &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
+istrstream & ungetc( istrstream & is, char c );
+int eof( istrstream & is );
+
+void ?{}( istrstream & is, char buf[] );
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

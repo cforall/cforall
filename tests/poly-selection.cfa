@@ -1,0 +1,62 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// poly-selection.cfa -- tests that show correct candidates selected, given interesting cases of
+//                       forall/overload polymoprphism
+//
+// Author           : Michael Brooks
+// Created On       : Mon Jan 18 15:00:00 2021
+// Last Modified By : Michael Brooks
+// Last Modified On : Mon Jan 18 15:00:00 2021
+// Update Count     : 1
+//
+
+void testSpecializationFromGenericOverBareTyvar() {
+    forall( T & )
+    void friend( T & ) {
+        printf("friending generically\n");
+    }
+
+    forall(T &)
+    struct thing {
+        int x;
+    };
+
+    forall( T & )
+    void friend( thing(T) & ) {
+        printf("friending specifically\n");
+    }
+
+    float x;           friend( x );
+    thing(float) y;    friend( y );
+}
+
+void testSpecializationFromGenericAccessibleWithExtraTyvars() {
+
+    forall( T &, U & )
+    struct map {};
+
+    forall( T & )
+    void f( T & ) {
+        printf("f-generic\n");
+    }
+
+    forall( T & )
+    void f( map(T, T) & ) {
+        printf("f-specific\n");
+    }
+
+    float one;
+    map(float, float) two;
+    f(one);
+    f(two);
+}
+
+int main() {
+    testSpecializationFromGenericOverBareTyvar();
+    printf("-\n");
+    testSpecializationFromGenericAccessibleWithExtraTyvars();
+}

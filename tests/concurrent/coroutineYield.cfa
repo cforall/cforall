@@ -1,0 +1,53 @@
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+
+#define __kick_rate 150000ul
+#include "long_tests.hfa"
+
+#ifndef PREEMPTION_RATE
+#define PREEMPTION_RATE 10`ms
+#endif
+
+Duration default_preemption() {
+	return PREEMPTION_RATE;
+}
+
+#ifdef TEST_LONG
+static const unsigned long N = 600_000ul;
+#else
+static const unsigned long N = 1_000ul;
+#endif
+
+coroutine Coroutine {};
+
+void main(Coroutine& this) {
+	while(true) {
+		#if !defined(TEST_FOREVER)
+			sout | "Coroutine 1";
+		#endif
+		yield();
+		#if !defined(TEST_FOREVER)
+			sout | "Coroutine 2";
+		#endif
+		suspend;
+	}
+}
+
+
+Coroutine c;
+int main(int argc, char* argv[]) {
+	for(int i = 0; TEST(i < N); i++) {
+		#if !defined(TEST_FOREVER)
+			sout | "Thread 1";
+		#endif
+		resume(c);
+		#if !defined(TEST_FOREVER)
+			sout | "Thread 2";
+		#endif
+		yield();
+		KICK_WATCHDOG;
+	}
+}

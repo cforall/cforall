@@ -1,0 +1,128 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// loopctrl.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Aug  8 18:32:59 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Dec 12 17:55:26 2019
+// Update Count     : 108
+// 
+
+#include <fstream.hfa>
+
+struct S { int i, j; };
+void ?{}( S & s ) { s.[i, j] = 0; }
+void ?{}( S & s, int i ) { s.[i, j] = [i, 0]; }
+void ?{}( S & s, int i, int j ) { s.[i, j] = [i, j]; }
+void ?{}( S & s, zero_t ) { s.[i, j] = 0; }
+void ?{}( S & s, one_t ) { s.[i, j] = 1; }
+int ?<?( S t1, S t2 ) { return t1.i < t2.i && t1.j < t2.j; }
+int ?<=?( S t1, S t2 ) { return t1.i <= t2.i && t1.j <= t2.j; }
+int ?>?( S t1, S t2 ) { return t1.i > t2.i && t1.j > t2.j; }
+int ?>=?( S t1, S t2 ) { return t1.i >= t2.i && t1.j >= t2.j; }
+S ?=?( S & t1, S t2 ) { t1.i = t2.i; t1.j = t2.j; return t1; }
+S ?+=?( S & t1, S t2 ) { t1.i += t2.i; t1.j += t2.j; return t1; }
+S ?+=?( S & t, one_t ) { t.i += 1; t.j += 1; return t; }
+S ?-=?( S & t1, S t2 ) { t1.i -= t2.i; t1.j -= t2.j; return t1; }
+S ?-=?( S & t, one_t ) { t.i -= 1; t.j -= 1; return t; }
+ofstream & ?|?( ofstream & os, S v ) { return os | '(' | v.i | v.j | ')'; }
+void & ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
+
+int main() {
+	sout | nlOff;										// turn off auto newline
+	while () { sout | "empty"; break; }					sout | nl;
+	do { sout | "empty"; break; } while ();				sout | nl;
+	for () { sout | "empty"; break; }					sout | nl | nl;
+
+	for ( 0 ) { sout | "A"; }							sout | "zero" | nl;
+	for ( 1 ) { sout | "A"; }							sout | nl;
+	for ( 10 ) { sout | "A"; }							sout | nl;
+	for ( = 10 ) { sout | "A"; }						sout | nl;
+	for ( 1 ~= 10 ~ 2 ) { sout | "B"; }					sout | nl;
+	for ( 10 -~= 1 ~ 2 ) { sout | "C"; }				sout | nl;
+	for ( 0.5 ~ 5.5 ) { sout | "D"; }					sout | nl;
+	for ( 5.5 -~ 0.5 ) { sout | "E"; }					sout | nl | nl;
+
+	for ( i; 10 ) { sout | i; }							sout | nl;
+	for ( i; = 10 ) { sout | i; }						sout | nl;
+	for ( i; 1 ~= 10 ~ 2 ) { sout | i; }				sout | nl;
+	for ( i; 10 -~= 1 ~ 2 ) { sout | i; }				sout | nl;
+	for ( i; 0.5 ~ 5.5 ) { sout | i; }					sout | nl;
+	for ( i; 5.5 -~ 0.5 ) { sout | i; }					sout | nl;
+	for ( ui; 2u ~= 10u ~ 2u ) { sout | ui; }			sout | nl;
+	for ( ui; 10u -~= 2u ~ 2u ) { sout | ui; }			sout | nl | nl;
+
+	// @ means do nothing
+	for ( i; 1 ~ @ ) {
+	  if ( i > 10 ) break;
+		sout | i;
+	}													sout | nl;
+	for ( i; 10 -~ @ ) {
+	  if ( i < 0 ) break;
+		sout | i;
+	}													sout | nl;
+	for ( i; 2 ~ @ ~ 2 ) {
+	  if ( i > 10 ) break;
+		sout | i;
+	}													sout | nl;
+	for ( i; 2.1 ~ @ ~ @ ) {
+	  if ( i > 10.5 ) break;
+		sout | i;
+		i += 1.7;
+	}													sout | nl;
+	for ( i; 10 -~ @ ~ 2 ) {
+	  if ( i < 0 ) break;
+		sout | i;
+	}													sout | nl;
+	for ( i; 12.1 ~ @ ~ @ ) {
+	  if ( i < 2.5 ) break;
+		sout | i;
+		i -= 1.7;
+	}													sout | nl | nl;
+	
+	enum { N = 10 };
+	for ( N ) { sout | "N"; }							sout | nl;
+	for ( i; N ) { sout | i; }							sout | nl;
+	for ( i; = N ) { sout | i; }						sout | nl;
+	for ( i; N -~ 0 ) { sout | i; }						sout | nl | nl;
+
+	const int start = 3, comp = 10, inc = 2;
+	for ( i; start ~ comp ~ inc + 1 ) { sout | i; }		sout | nl | nl;
+
+	for ( S s = (S){0}; s < (S){10,10}; s += (S){1} ) { sout | s; } sout | nl;
+	for ( s; (S){10,10} ) { sout | s; } sout | nl;
+	sout | nl;
+	for ( s; (S){0} ~ (S){10,10} ) { sout | s; }		 sout | nl;
+	for ( s; (S){0} ~ (S){10,10} ~ (S){1} ) { sout | s; } sout | nl;
+	for ( s; (S){0} ~= (S){10,10} ) { sout | s; }		 sout | nl;
+	for ( s; (S){0} ~= (S){10,10} ~ (S){1} ) { sout | s; } sout | nl;
+	sout | nl;
+	for ( s; (S){10,10} -~ (S){0} ) { sout | s; }		 sout | nl;
+	for ( s; (S){10,10} -~ (S){0} ~ (S){1} ) { sout | s; } sout | nl;
+	for ( s; (S){10,10} -~= (S){0} ) { sout | s; }		 sout | nl;
+	for ( s; (S){10,10} -~= (S){0} ~ (S){1} ) { sout | s; } sout | nl | nl;
+
+	for ( i; 10 : j; -5 ~ @ ) { sout | i | j; } sout | nl;
+	for ( i; 10 : j; -5 -~ @ ) { sout | i | j; } sout | nl;
+	for ( i; 10 : j; -5 ~ @ ~ 2 ) { sout | i | j; } sout | nl;
+	for ( i; 10 : j; -5 -~ @ ~ 2 ) { sout | i | j; } sout | nl | nl;
+
+	for ( j; -5 ~ @ : i; 10 ) { sout | i | j; } sout | nl;
+	for ( j; -5 -~ @ : i; 10 ) { sout | i | j; } sout | nl;
+	for ( j; -5 ~ @ ~ 2 : i; 10 ) { sout | i | j; } sout | nl;
+	for ( j; -5 -~ @ ~ 2 : i; 10 ) { sout | i | j; } sout | nl | nl;
+
+	for ( j; -5 -~ @ ~ 2 : i; 10 : k; 1.5 ~ @ ) { sout | i | j | k; } sout | nl;
+	for ( j; -5 -~ @ ~ 2 : k; 1.5 ~ @ : i; 10 ) { sout | i | j | k; } sout | nl;
+	for ( k; 1.5 ~ @ : j; -5 -~ @ ~ 2 : i; 10 ) { sout | i | j | k; } sout | nl;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa loopctrl.cfa" //
+// End: //

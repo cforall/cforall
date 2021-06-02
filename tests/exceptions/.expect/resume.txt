@@ -1,0 +1,33 @@
+simple throw
+simple catch
+Exiting: simple catch clause
+end of try clause
+Exiting: simple try clause
+
+catch-all
+
+caught yin as yin
+
+rethrow inner try
+caught throw, will rethrow
+Exiting: rethrowing catch clause
+caught rethrow
+Exiting: rethrow catch clause
+Exiting: rethrow inner try
+
+caught yin, will throw yang
+caught yang
+
+throwing first exception
+caught first exception
+throwing second exception
+caught second exception
+recaught first exception
+
+inner catch
+inner catch
+outer catch
+
+throw
+rethrow
+handle

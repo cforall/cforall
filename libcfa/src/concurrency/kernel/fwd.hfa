@@ -1,0 +1,419 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// kernel/fwd.hfa -- PUBLIC
+// Fundamental code needed to implement threading M.E.S. algorithms.
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Jul 30 16:46:41 2020
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include "bits/defs.hfa"
+#include "bits/debug.hfa"
+
+#ifdef __cforall
+#include "bits/random.hfa"
+#endif
+
+struct $thread;
+struct processor;
+struct cluster;
+
+enum __Preemption_Reason { __NO_PREEMPTION, __ALARM_PREEMPTION, __POLL_PREEMPTION, __MANUAL_PREEMPTION };
+
+#define KERNEL_STORAGE(T,X) __attribute((aligned(__alignof__(T)))) static char storage_##X[sizeof(T)]
+
+#ifdef __cforall
+extern "C" {
+	extern "Cforall" {
+		extern __attribute__((aligned(128))) thread_local struct KernelThreadData {
+			struct $thread          * volatile this_thread;
+			struct processor        * volatile this_processor;
+			volatile bool sched_lock;
+
+			struct {
+				volatile unsigned short disable_count;
+				volatile bool enabled;
+				volatile bool in_progress;
+			} preemption_state;
+
+			#if defined(__SIZEOF_INT128__)
+				__uint128_t rand_seed;
+			#else
+				uint64_t rand_seed;
+			#endif
+			struct {
+				uint64_t fwd_seed;
+				uint64_t bck_seed;
+			} ready_rng;
+
+			struct __stats_t        * volatile this_stats;
+
+
+			#ifdef __CFA_WITH_VERIFY__
+				// Debug, check if the rwlock is owned for reading
+				bool in_sched_lock;
+				unsigned sched_id;
+			#endif
+		} __cfaabi_tls __attribute__ ((tls_model ( "initial-exec" )));
+
+		extern bool __preemption_enabled();
+
+		static inline KernelThreadData & kernelTLS( void ) {
+			/* paranoid */ verify( ! __preemption_enabled() );
+			return __cfaabi_tls;
+		}
+
+		extern uintptr_t __cfatls_get( unsigned long int member );
+		#define publicTLS_get( member ) ((typeof(__cfaabi_tls.member))__cfatls_get( __builtin_offsetof(KernelThreadData, member) ))
+
+		static inline uint64_t __tls_rand() {
+			#if defined(__SIZEOF_INT128__)
+				return __lehmer64( kernelTLS().rand_seed );
+			#else
+				return __xorshift64( kernelTLS().rand_seed );
+			#endif
+		}
+
+		#define M  (1_l64u << 48_l64u)
+		#define A  (25214903917_l64u)
+		#define AI (18446708753438544741_l64u)
+		#define C  (11_l64u)
+		#define D  (16_l64u)
+
+		static inline unsigned __tls_rand_fwd() {
+
+			kernelTLS().ready_rng.fwd_seed = (A * kernelTLS().ready_rng.fwd_seed + C) & (M - 1);
+			return kernelTLS().ready_rng.fwd_seed >> D;
+		}
+
+		static inline unsigned __tls_rand_bck() {
+			unsigned int r = kernelTLS().ready_rng.bck_seed >> D;
+			kernelTLS().ready_rng.bck_seed = AI * (kernelTLS().ready_rng.bck_seed - C) & (M - 1);
+			return r;
+		}
+
+		#undef M
+		#undef A
+		#undef AI
+		#undef C
+		#undef D
+
+		static inline void __tls_rand_advance_bck(void) {
+			kernelTLS().ready_rng.bck_seed = kernelTLS().ready_rng.fwd_seed;
+		}
+	}
+
+
+
+	extern void disable_interrupts();
+	extern void enable_interrupts( bool poll = false );
+
+	extern "Cforall" {
+		extern void park( void );
+		extern void unpark( struct $thread * this );
+		static inline struct $thread * active_thread () {
+			struct $thread * t = publicTLS_get( this_thread );
+			/* paranoid */ verify( t );
+			return t;
+		}
+
+		extern bool force_yield( enum __Preemption_Reason );
+
+		static inline void yield() {
+			force_yield(__MANUAL_PREEMPTION);
+		}
+
+		// Yield: yield N times
+		static inline void yield( unsigned times ) {
+			for( times ) {
+				yield();
+			}
+		}
+
+		extern uint64_t thread_rand();
+
+		// Semaphore which only supports a single thread
+		struct single_sem {
+			struct $thread * volatile ptr;
+		};
+
+		static inline {
+			void  ?{}(single_sem & this) {
+				this.ptr = 0p;
+			}
+
+			void ^?{}(single_sem &) {}
+
+			bool wait(single_sem & this) {
+				for() {
+					struct $thread * expected = this.ptr;
+					if(expected == 1p) {
+						if(__atomic_compare_exchange_n(&this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+							return false;
+						}
+					}
+					else {
+						/* paranoid */ verify( expected == 0p );
+						if(__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+							park();
+							return true;
+						}
+					}
+
+				}
+			}
+
+			bool post(single_sem & this) {
+				for() {
+					struct $thread * expected = this.ptr;
+					if(expected == 1p) return false;
+					if(expected == 0p) {
+						if(__atomic_compare_exchange_n(&this.ptr, &expected, 1p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+							return false;
+						}
+					}
+					else {
+						if(__atomic_compare_exchange_n(&this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+							unpark( expected );
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		// Synchronozation primitive which only supports a single thread and one post
+		// Similar to a binary semaphore with a 'one shot' semantic
+		// is expected to be discarded after each party call their side
+		struct oneshot {
+			// Internal state :
+			//     0p     : is initial state (wait will block)
+			//     1p     : fulfilled (wait won't block)
+			// any thread : a thread is currently waiting
+			struct $thread * volatile ptr;
+		};
+
+		static inline {
+			void  ?{}(oneshot & this) {
+				this.ptr = 0p;
+			}
+
+			void ^?{}(oneshot &) {}
+
+			// Wait for the post, return immidiately if it already happened.
+			// return true if the thread was parked
+			bool wait(oneshot & this) {
+				for() {
+					struct $thread * expected = this.ptr;
+					if(expected == 1p) return false;
+					/* paranoid */ verify( expected == 0p );
+					if(__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+						park();
+						/* paranoid */ verify( this.ptr == 1p );
+						return true;
+					}
+				}
+			}
+
+			// Mark as fulfilled, wake thread if needed
+			// return true if a thread was unparked
+			$thread * post(oneshot & this, bool do_unpark = true) {
+				struct $thread * got = __atomic_exchange_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
+				if( got == 0p ) return 0p;
+				if(do_unpark) unpark( got );
+				return got;
+			}
+		}
+
+		// base types for future to build upon
+		// It is based on the 'oneshot' type to allow multiple futures
+		// to block on the same instance, permitting users to block a single
+		// thread on "any of" [a given set of] futures.
+		// does not support multiple threads waiting on the same future
+		struct future_t {
+			// Internal state :
+			//     0p      : is initial state (wait will block)
+			//     1p      : fulfilled (wait won't block)
+			//     2p      : in progress ()
+			//     3p      : abandoned, server should delete
+			// any oneshot : a context has been setup to wait, a thread could wait on it
+			struct oneshot * volatile ptr;
+		};
+
+		static inline {
+			void  ?{}(future_t & this) {
+				this.ptr = 0p;
+			}
+
+			void ^?{}(future_t &) {}
+
+			void reset(future_t & this) {
+				// needs to be in 0p or 1p
+				__atomic_exchange_n( &this.ptr, 0p, __ATOMIC_SEQ_CST);
+			}
+
+			// check if the future is available
+			bool available( future_t & this ) {
+				return this.ptr == 1p;
+			}
+
+			// Prepare the future to be waited on
+			// intented to be use by wait, wait_any, waitfor, etc. rather than used directly
+			bool setup( future_t & this, oneshot & wait_ctx ) {
+				/* paranoid */ verify( wait_ctx.ptr == 0p );
+				// The future needs to set the wait context
+				for() {
+					struct oneshot * expected = this.ptr;
+					// Is the future already fulfilled?
+					if(expected == 1p) return false; // Yes, just return false (didn't block)
+
+					// The future is not fulfilled, try to setup the wait context
+					/* paranoid */ verify( expected == 0p );
+					if(__atomic_compare_exchange_n(&this.ptr, &expected, &wait_ctx, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+						return true;
+					}
+				}
+			}
+
+			// Stop waiting on a future
+			// When multiple futures are waited for together in "any of" pattern
+			// futures that weren't fulfilled before the thread woke up
+			// should retract the wait ctx
+			// intented to be use by wait, wait_any, waitfor, etc. rather than used directly
+			void retract( future_t & this, oneshot & wait_ctx ) {
+				// Remove the wait context
+				struct oneshot * got = __atomic_exchange_n( &this.ptr, 0p, __ATOMIC_SEQ_CST);
+
+				// got == 0p: future was never actually setup, just return
+				if( got == 0p ) return;
+
+				// got == wait_ctx: since fulfil does an atomic_swap,
+				// if we got back the original then no one else saw context
+				// It is safe to delete (which could happen after the return)
+				if( got == &wait_ctx ) return;
+
+				// got == 1p: the future is ready and the context was fully consumed
+				// the server won't use the pointer again
+				// It is safe to delete (which could happen after the return)
+				if( got == 1p ) return;
+
+				// got == 2p: the future is ready but the context hasn't fully been consumed
+				// spin until it is safe to move on
+				if( got == 2p ) {
+					while( this.ptr != 1p ) Pause();
+					return;
+				}
+
+				// got == any thing else, something wen't wrong here, abort
+				abort("Future in unexpected state");
+			}
+
+			// Mark the future as abandoned, meaning it will be deleted by the server
+			bool abandon( future_t & this ) {
+				/* paranoid */ verify( this.ptr != 3p );
+
+				// Mark the future as abandonned
+				struct oneshot * got = __atomic_exchange_n( &this.ptr, 3p, __ATOMIC_SEQ_CST);
+
+				// If the future isn't already fulfilled, let the server delete it
+				if( got == 0p ) return false;
+
+				// got == 2p: the future is ready but the context hasn't fully been consumed
+				// spin until it is safe to move on
+				if( got == 2p ) {
+					while( this.ptr != 1p ) Pause();
+					got = 1p;
+				}
+
+				// The future is completed delete it now
+				/* paranoid */ verify( this.ptr != 1p );
+				free( &this );
+				return true;
+			}
+
+			// from the server side, mark the future as fulfilled
+			// delete it if needed
+			$thread * fulfil( future_t & this, bool do_unpark = true  ) {
+				for() {
+					struct oneshot * expected = this.ptr;
+					// was this abandoned?
+					#if defined(__GNUC__) && __GNUC__ >= 7
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+					#endif
+						if( expected == 3p ) { free( &this ); return 0p; }
+					#if defined(__GNUC__) && __GNUC__ >= 7
+						#pragma GCC diagnostic pop
+					#endif
+
+					/* paranoid */ verify( expected != 1p ); // Future is already fulfilled, should not happen
+					/* paranoid */ verify( expected != 2p ); // Future is bein fulfilled by someone else, this is even less supported then the previous case.
+
+					// If there is a wait context, we need to consume it and mark it as consumed after
+					// If there is no context then we can skip the in progress phase
+					struct oneshot * want = expected == 0p ? 1p : 2p;
+					if(__atomic_compare_exchange_n(&this.ptr, &expected, want, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+						if( expected == 0p ) { /* paranoid */ verify( this.ptr == 1p); return 0p; }
+						$thread * ret = post( *expected, do_unpark );
+						__atomic_store_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
+						return ret;
+					}
+				}
+
+			}
+
+			// Wait for the future to be fulfilled
+			bool wait( future_t & this ) {
+				oneshot temp;
+				if( !setup(this, temp) ) return false;
+
+				// Wait context is setup, just wait on it
+				bool ret = wait( temp );
+
+				// Wait for the future to tru
+				while( this.ptr == 2p ) Pause();
+				// Make sure the state makes sense
+				// Should be fulfilled, could be in progress but it's out of date if so
+				// since if that is the case, the oneshot was fulfilled (unparking this thread)
+				// and the oneshot should not be needed any more
+				__attribute__((unused)) struct oneshot * was = this.ptr;
+				/* paranoid */ verifyf( was == 1p, "Expected this.ptr to be 1p, was %p\n", was );
+
+				// Mark the future as fulfilled, to be consistent
+				// with potential calls to avail
+				// this.ptr = 1p;
+				return ret;
+			}
+		}
+
+		//-----------------------------------------------------------------------
+		// Statics call at the end of each thread to register statistics
+		#if !defined(__CFA_NO_STATISTICS__)
+			static inline struct __stats_t * __tls_stats() {
+				/* paranoid */ verify( ! __preemption_enabled() );
+				/* paranoid */ verify( kernelTLS().this_stats );
+				return kernelTLS().this_stats;
+			}
+
+			#define __STATS__(in_kernel, ...) { \
+				if( !(in_kernel) ) disable_interrupts(); \
+				with( *__tls_stats() ) { \
+					__VA_ARGS__ \
+				} \
+				if( !(in_kernel) ) enable_interrupts(); \
+			}
+		#else
+			#define __STATS__(in_kernel, ...)
+		#endif
+	}
+}
+#endif

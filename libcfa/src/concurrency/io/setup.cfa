@@ -1,0 +1,347 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// io/setup.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Fri Jul 31 16:25:51 2020
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#define __cforall_thread__
+#define _GNU_SOURCE         /* See feature_test_macros(7) */
+
+#if defined(__CFA_DEBUG__)
+	// #define __CFA_DEBUG_PRINT_IO__
+	// #define __CFA_DEBUG_PRINT_IO_CORE__
+#endif
+
+#include "io/types.hfa"
+#include "kernel.hfa"
+
+#if !defined(CFA_HAVE_LINUX_IO_URING_H)
+	void ?{}(io_context_params & this) {}
+
+	void  ?{}($io_context & this, struct cluster & cl) {}
+	void ^?{}($io_context & this) {}
+
+	void __cfa_io_start( processor * proc ) {}
+	void __cfa_io_flush( processor * proc ) {}
+	void __cfa_io_stop ( processor * proc ) {}
+
+	$io_arbiter * create(void) { return 0p; }
+	void destroy($io_arbiter *) {}
+
+#else
+	#include <errno.h>
+	#include <stdint.h>
+	#include <string.h>
+	#include <signal.h>
+	#include <unistd.h>
+
+	extern "C" {
+		#include <pthread.h>
+		#include <sys/epoll.h>
+		#include <sys/eventfd.h>
+		#include <sys/mman.h>
+		#include <sys/syscall.h>
+
+		#include <linux/io_uring.h>
+	}
+
+	#include "bitmanip.hfa"
+	#include "kernel_private.hfa"
+	#include "thread.hfa"
+
+	void ?{}(io_context_params & this) {
+		this.num_entries = 256;
+	}
+
+	static void * __io_poller_slow( void * arg );
+
+	// Weirdly, some systems that do support io_uring don't actually define these
+	#ifdef __alpha__
+		/*
+		* alpha is the only exception, all other architectures
+		* have common numbers for new system calls.
+		*/
+		#ifndef __NR_io_uring_setup
+			#define __NR_io_uring_setup           535
+		#endif
+		#ifndef __NR_io_uring_enter
+			#define __NR_io_uring_enter           536
+		#endif
+		#ifndef __NR_io_uring_register
+			#define __NR_io_uring_register        537
+		#endif
+	#else /* !__alpha__ */
+		#ifndef __NR_io_uring_setup
+			#define __NR_io_uring_setup           425
+		#endif
+		#ifndef __NR_io_uring_enter
+			#define __NR_io_uring_enter           426
+		#endif
+		#ifndef __NR_io_uring_register
+			#define __NR_io_uring_register        427
+		#endif
+	#endif
+
+//=============================================================================================
+// I/O Context Constrution/Destruction
+//=============================================================================================
+
+
+
+	static void __io_uring_setup ( $io_context & this, const io_context_params & params_in, int procfd );
+	static void __io_uring_teardown( $io_context & this );
+	static void __epoll_register($io_context & ctx);
+	static void __epoll_unregister($io_context & ctx);
+	void __ioarbiter_register( $io_arbiter & mutex, $io_context & ctx );
+	void __ioarbiter_unregister( $io_arbiter & mutex, $io_context & ctx );
+
+	void ?{}($io_context & this, processor * proc, struct cluster & cl) {
+		/* paranoid */ verify( cl.io.arbiter );
+		this.proc = proc;
+		this.arbiter = cl.io.arbiter;
+		this.ext_sq.empty = true;
+		(this.ext_sq.queue){};
+		__io_uring_setup( this, cl.io.params, proc->idle );
+		__cfadbg_print_safe(io_core, "Kernel I/O : Created ring for io_context %u (%p)\n", this.fd, &this);
+	}
+
+	void ^?{}($io_context & this) {
+		__cfadbg_print_safe(io_core, "Kernel I/O : tearing down io_context %u\n", this.fd);
+
+		__io_uring_teardown( this );
+		__cfadbg_print_safe(io_core, "Kernel I/O : Destroyed ring for io_context %u\n", this.fd);
+	}
+
+	extern void __disable_interrupts_hard();
+	extern void __enable_interrupts_hard();
+
+	static void __io_uring_setup( $io_context & this, const io_context_params & params_in, int procfd ) {
+		// Step 1 : call to setup
+		struct io_uring_params params;
+		memset(&params, 0, sizeof(params));
+		// if( params_in.poll_submit   ) params.flags |= IORING_SETUP_SQPOLL;
+		// if( params_in.poll_complete ) params.flags |= IORING_SETUP_IOPOLL;
+
+		__u32 nentries = params_in.num_entries != 0 ? params_in.num_entries : 256;
+		if( !is_pow2(nentries) ) {
+			abort("ERROR: I/O setup 'num_entries' must be a power of 2\n");
+		}
+
+		int fd = syscall(__NR_io_uring_setup, nentries, &params );
+		if(fd < 0) {
+			abort("KERNEL ERROR: IO_URING SETUP - %s\n", strerror(errno));
+		}
+
+		// Step 2 : mmap result
+		struct __sub_ring_t & sq = this.sq;
+		struct __cmp_ring_t & cq = this.cq;
+
+		// calculate the right ring size
+		sq.ring_sz = params.sq_off.array + (params.sq_entries * sizeof(unsigned)           );
+		cq.ring_sz = params.cq_off.cqes  + (params.cq_entries * sizeof(struct io_uring_cqe));
+
+		// Requires features
+		#if defined(IORING_FEAT_SINGLE_MMAP)
+			// adjust the size according to the parameters
+			if ((params.features & IORING_FEAT_SINGLE_MMAP) != 0) {
+				cq.ring_sz = sq.ring_sz = max(cq.ring_sz, sq.ring_sz);
+			}
+		#endif
+
+		// mmap the Submit Queue into existence
+		sq.ring_ptr = mmap(0, sq.ring_sz, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd, IORING_OFF_SQ_RING);
+		if (sq.ring_ptr == (void*)MAP_FAILED) {
+			abort("KERNEL ERROR: IO_URING MMAP1 - %s\n", strerror(errno));
+		}
+
+		// Requires features
+		#if defined(IORING_FEAT_SINGLE_MMAP)
+			// mmap the Completion Queue into existence (may or may not be needed)
+			if ((params.features & IORING_FEAT_SINGLE_MMAP) != 0) {
+				cq.ring_ptr = sq.ring_ptr;
+			}
+			else
+		#endif
+		{
+			// We need multiple call to MMAP
+			cq.ring_ptr = mmap(0, cq.ring_sz, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd, IORING_OFF_CQ_RING);
+			if (cq.ring_ptr == (void*)MAP_FAILED) {
+				munmap(sq.ring_ptr, sq.ring_sz);
+				abort("KERNEL ERROR: IO_URING MMAP2 - %s\n", strerror(errno));
+			}
+		}
+
+		// mmap the submit queue entries
+		size_t size = params.sq_entries * sizeof(struct io_uring_sqe);
+		sq.sqes = (struct io_uring_sqe *)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd, IORING_OFF_SQES);
+		if (sq.sqes == (struct io_uring_sqe *)MAP_FAILED) {
+			munmap(sq.ring_ptr, sq.ring_sz);
+			if (cq.ring_ptr != sq.ring_ptr) munmap(cq.ring_ptr, cq.ring_sz);
+			abort("KERNEL ERROR: IO_URING MMAP3 - %s\n", strerror(errno));
+		}
+
+		// Step 3 : Initialize the data structure
+		// Get the pointers from the kernel to fill the structure
+		// submit queue
+		sq.kring.head  = (volatile __u32 *)(((intptr_t)sq.ring_ptr) + params.sq_off.head);
+		sq.kring.tail  = (volatile __u32 *)(((intptr_t)sq.ring_ptr) + params.sq_off.tail);
+		sq.kring.array = (         __u32 *)(((intptr_t)sq.ring_ptr) + params.sq_off.array);
+		sq.mask        = (   const __u32 *)(((intptr_t)sq.ring_ptr) + params.sq_off.ring_mask);
+		sq.num         = (   const __u32 *)(((intptr_t)sq.ring_ptr) + params.sq_off.ring_entries);
+		sq.flags       = (         __u32 *)(((intptr_t)sq.ring_ptr) + params.sq_off.flags);
+		sq.dropped     = (         __u32 *)(((intptr_t)sq.ring_ptr) + params.sq_off.dropped);
+
+		sq.kring.released = 0;
+
+		sq.free_ring.head = 0;
+		sq.free_ring.tail = *sq.num;
+		sq.free_ring.array = alloc( *sq.num, 128`align );
+		for(i; (__u32)*sq.num) {
+			sq.free_ring.array[i] = i;
+		}
+
+		sq.to_submit = 0;
+
+		// completion queue
+		cq.head      = (volatile __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.head);
+		cq.tail      = (volatile __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.tail);
+		cq.mask      = (   const __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.ring_mask);
+		cq.num       = (   const __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.ring_entries);
+		cq.overflow  = (         __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.overflow);
+		cq.cqes = (struct io_uring_cqe *)(((intptr_t)cq.ring_ptr) + params.cq_off.cqes);
+
+		// Step 4 : eventfd
+		// io_uring_register is so f*cking slow on some machine that it
+		// will never succeed if preemption isn't hard blocked
+		__cfadbg_print_safe(io_core, "Kernel I/O : registering %d for completion with ring %d\n", procfd, fd);
+
+		__disable_interrupts_hard();
+
+		int ret = syscall( __NR_io_uring_register, fd, IORING_REGISTER_EVENTFD, &procfd, 1);
+		if (ret < 0) {
+			abort("KERNEL ERROR: IO_URING EVENTFD REGISTER - %s\n", strerror(errno));
+		}
+
+		__enable_interrupts_hard();
+
+		__cfadbg_print_safe(io_core, "Kernel I/O : registered %d for completion with ring %d\n", procfd, fd);
+
+		// some paranoid checks
+		/* paranoid */ verifyf( (*cq.mask) == ((*cq.num) - 1ul32), "IO_URING Expected mask to be %u (%u entries), was %u", (*cq.num) - 1ul32, *cq.num, *cq.mask  );
+		/* paranoid */ verifyf( (*cq.num)  >= nentries, "IO_URING Expected %u entries, got %u", nentries, *cq.num );
+		/* paranoid */ verifyf( (*cq.head) == 0, "IO_URING Expected head to be 0, got %u", *cq.head );
+		/* paranoid */ verifyf( (*cq.tail) == 0, "IO_URING Expected tail to be 0, got %u", *cq.tail );
+
+		/* paranoid */ verifyf( (*sq.mask) == ((*sq.num) - 1ul32), "IO_URING Expected mask to be %u (%u entries), was %u", (*sq.num) - 1ul32, *sq.num, *sq.mask );
+		/* paranoid */ verifyf( (*sq.num) >= nentries, "IO_URING Expected %u entries, got %u", nentries, *sq.num );
+		/* paranoid */ verifyf( (*sq.kring.head) == 0, "IO_URING Expected head to be 0, got %u", *sq.kring.head );
+		/* paranoid */ verifyf( (*sq.kring.tail) == 0, "IO_URING Expected tail to be 0, got %u", *sq.kring.tail );
+
+		// Update the global ring info
+		this.ring_flags = 0;
+		this.fd         = fd;
+	}
+
+	static void __io_uring_teardown( $io_context & this ) {
+		// Shutdown the io rings
+		struct __sub_ring_t & sq = this.sq;
+		struct __cmp_ring_t & cq = this.cq;
+
+		// unmap the submit queue entries
+		munmap(sq.sqes, (*sq.num) * sizeof(struct io_uring_sqe));
+
+		// unmap the Submit Queue ring
+		munmap(sq.ring_ptr, sq.ring_sz);
+
+		// unmap the Completion Queue ring, if it is different
+		if (cq.ring_ptr != sq.ring_ptr) {
+			munmap(cq.ring_ptr, cq.ring_sz);
+		}
+
+		// close the file descriptor
+		close(this.fd);
+
+		free( this.sq.free_ring.array ); // Maybe null, doesn't matter
+	}
+
+	void __cfa_io_start( processor * proc ) {
+		proc->io.ctx = alloc();
+		(*proc->io.ctx){proc, *proc->cltr};
+	}
+	void __cfa_io_stop ( processor * proc ) {
+		^(*proc->io.ctx){};
+		free(proc->io.ctx);
+	}
+
+//=============================================================================================
+// I/O Context Sleep
+//=============================================================================================
+	// static inline void __epoll_ctl($io_context & ctx, int op, const char * error) {
+	// 	struct epoll_event ev;
+	// 	ev.events = EPOLLIN | EPOLLONESHOT;
+	// 	ev.data.u64 = (__u64)&ctx;
+	// 	int ret = epoll_ctl(iopoll.epollfd, op, ctx.efd, &ev);
+	// 	if (ret < 0) {
+	// 		abort( "KERNEL ERROR: EPOLL %s - (%d) %s\n", error, (int)errno, strerror(errno) );
+	// 	}
+	// }
+
+	// static void __epoll_register($io_context & ctx) {
+	// 	__epoll_ctl(ctx, EPOLL_CTL_ADD, "ADD");
+	// }
+
+	// static void __epoll_unregister($io_context & ctx) {
+	// 	// Read the current epoch so we know when to stop
+	// 	size_t curr = __atomic_load_n(&iopoll.epoch, __ATOMIC_SEQ_CST);
+
+	// 	// Remove the fd from the iopoller
+	// 	__epoll_ctl(ctx, EPOLL_CTL_DEL, "REMOVE");
+
+	// 	// Notify the io poller thread of the shutdown
+	// 	iopoll.run = false;
+	// 	sigval val = { 1 };
+	// 	pthread_sigqueue( iopoll.thrd, SIGUSR1, val );
+
+	// 	// Make sure all this is done
+	// 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+
+	// 	// Wait for the next epoch
+	// 	while(curr == iopoll.epoch && !iopoll.stopped) Pause();
+	// }
+
+	// void __ioctx_prepare_block($io_context & ctx) {
+	// 	__cfadbg_print_safe(io_core, "Kernel I/O - epoll : Re-arming io poller %d (%p)\n", ctx.fd, &ctx);
+	// 	__epoll_ctl(ctx, EPOLL_CTL_MOD, "REARM");
+	// }
+
+
+//=============================================================================================
+// I/O Context Misc Setup
+//=============================================================================================
+	void ?{}( $io_arbiter & this ) {
+		this.pending.empty = true;
+	}
+
+	void ^?{}( $io_arbiter & this ) {}
+
+	$io_arbiter * create(void) {
+		return new();
+	}
+	void destroy($io_arbiter * arbiter) {
+		delete(arbiter);
+	}
+
+//=============================================================================================
+// I/O Context Misc Setup
+//=============================================================================================
+
+#endif

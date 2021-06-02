@@ -1,0 +1,139 @@
+//---------------------------------------------------------
+// Barging test
+// Ensures that no barging can occur between :
+//   - the frontend of the signal_block and the signaled thread
+//   - the signaled  threadand the backend of the signal_block
+//---------------------------------------------------------
+
+
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+
+#include "long_tests.hfa"
+
+#ifndef PREEMPTION_RATE
+#define PREEMPTION_RATE 10`ms
+#endif
+
+Duration default_preemption() {
+	return PREEMPTION_RATE;
+}
+
+#ifdef TEST_LONG
+static const unsigned long N = 150_000ul;
+#else
+static const unsigned long N = 5_000ul;
+#endif
+
+enum state_t { WAITED, SIGNAL, BARGE };
+
+monitor global_data_t {
+	$thread * last_thread;
+	$thread * last_signaller;
+};
+
+void ?{} ( global_data_t & this ) {
+	this.last_thread = NULL;
+	this.last_signaller = NULL;
+}
+
+void ^?{} ( global_data_t & mutex this ) {}
+
+global_data_t globalA, globalB;
+
+condition cond;
+
+volatile bool done;
+
+//------------------------------------------------------------------------------
+void wait_op( global_data_t & mutex a, global_data_t & mutex b, unsigned i ) {
+    wait( cond, (uintptr_t)active_thread() );
+
+	yield( random( 10 ) );
+
+	if(a.last_thread != a.last_signaller || b.last_thread != b.last_signaller ) {
+		sout | "ERROR Barging detected, expected" | a.last_signaller | b.last_signaller | "got" | a.last_thread | b.last_thread;
+		abort();
+	}
+
+	a.last_thread = b.last_thread = active_thread();
+
+	yield( random( 10 ) );
+}
+
+thread Waiter {};
+void main( Waiter & this ) {
+	for( int i = 0; TEST(i < N); i++ ) {
+		wait_op( globalA, globalB, i );
+		KICK_WATCHDOG;
+	}
+}
+
+//------------------------------------------------------------------------------
+void signal_op( global_data_t & mutex a, global_data_t & mutex b ) {
+	yield( random( 10 ) );
+
+	[a.last_thread, b.last_thread, a.last_signaller, b.last_signaller] = active_thread();
+
+	if( !is_empty( cond ) ) {
+
+		$thread * next = ( $thread * ) front( cond );
+
+		if( ! signal_block( cond ) ) {
+			sout | "ERROR expected to be able to signal";
+			abort();
+		}
+
+		yield( random( 10 ) );
+
+		if(a.last_thread != next || b.last_thread != next) {
+			sout | "ERROR Barging detected, expected" | next | "got" | a.last_thread | b.last_thread;
+			abort();
+		}
+	}
+
+}
+
+thread Signaller {};
+void main( Signaller & this ) {
+	while( !done ) {
+		signal_op( globalA, globalB );
+	}
+}
+
+//------------------------------------------------------------------------------
+void barge_op( global_data_t & mutex a ) {
+	a.last_thread = active_thread();
+}
+
+thread Barger {};
+void main( Barger & this ) {
+	for( unsigned i = 0; !done; i++ ) {
+		//Choose some monitor to barge into with some irregular pattern
+		bool choose_a = (i % 13) > (i % 17);
+		if ( choose_a ) barge_op( globalA );
+		else barge_op( globalB );
+	}
+}
+
+//------------------------------------------------------------------------------
+
+int main(int argc, char* argv[]) {
+	srandom( time( NULL ) );
+	done = false;
+	processor p;
+	{
+		Signaller s[4];
+		Barger b[13];
+		sout | "Starting waiters";
+		{
+			Waiter w[3];
+		}
+		sout | "Waiters done";
+		done = true;
+	}
+}

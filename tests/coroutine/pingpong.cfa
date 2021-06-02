@@ -1,0 +1,53 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// pingpong.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Sep 20 11:55:23 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Mar 26 17:54:14 2019
+// Update Count     : 35
+//
+
+#include <coroutine.hfa>
+#include <fstream.hfa>
+
+coroutine PingPong {
+	const char * name;
+	/* const */ unsigned int N;
+	PingPong & part;
+};
+
+void ?{}( PingPong & this, const char * name, unsigned int N, PingPong & part ) {
+	this.[name, N] = [name, N];  &this.part = &part;
+}
+void ?{}( PingPong & this, const char * name, unsigned int N ) {
+	this{ name, N, *0p };								// call first constructor
+}
+void cycle( PingPong & pingpong ) {
+	resume( pingpong );
+}
+void partner( PingPong & this, PingPong & part ) {
+	&this.part = &part;
+	resume( this );
+}
+void main( PingPong & pingpong ) with(pingpong) {		// ping's starter ::main, pong's starter ping
+	for ( N ) {											// N ping-pongs
+		sout | name;
+		cycle( part );
+	} // for
+}
+int main() {
+	enum { N = 20 };
+	PingPong ping = { "ping", N }, pong = { "pong", N, ping };
+	partner( ping, pong );
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa pingpong.cfa" //
+// End: //

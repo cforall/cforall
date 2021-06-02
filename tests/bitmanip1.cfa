@@ -1,0 +1,322 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// bitmanip1.cfa<cfa-cc> -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Tue Apr  7 21:20:29 2020
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr  7 21:20:57 2020
+// Update Count     : 1
+// 
+
+#include <fstream.hfa>
+#include <bitmanip.hfa>
+
+int main() {
+	signed char sc;
+	unsigned char usc;
+	short int si;
+	unsigned short int usi;
+	int i;
+	unsigned int ui;
+	long int li;
+	unsigned long int uli;
+	long long int lli;
+	unsigned long long int ulli;
+
+	//============================================================
+#if 1
+	sout | "leading0s" | nl | nl;
+
+	sout | "signed char";
+	sc = 0;
+	sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | leading0s( sc );
+	for ( sc = 1; sc != 0; sc <<= 1 ) {
+		sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | leading0s( sc );
+	} // for
+	sout | nl;
+	sout | "unsigned char";
+	usc = 0;
+	sout | wd(__bitsizeof(usc)+2, pad0(bin(usc))) | leading0s( usc );
+	for ( usc = 1; usc != 0; usc <<= 1 ) {
+		sout | wd(__bitsizeof(usc)+2, pad0(bin(usc))) | leading0s( usc );
+	} // for
+	sout | nl;
+
+	sout | "short int";
+	si = 0;
+	sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | leading0s( si );
+	for ( si = 1; si != 0; si <<= 1 ) {
+		sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | leading0s( si );
+	} // for
+	sout | nl;
+	sout | "unsigned short int";
+	usi = 0;
+	sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | leading0s( usi );
+	for ( usi = 1; usi != 0; usi <<= 1 ) {
+		sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | leading0s( usi );
+	} // for
+	sout | nl;
+
+	sout | "int";
+	i = 0;
+	sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | leading0s( i );
+	for ( i = 1; i != 0; i <<= 1 ) {
+		sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | leading0s( i );
+	} // for
+	sout | nl;
+	sout | "unsigned int";
+	ui = 0;
+	sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | leading0s( ui );
+	for ( ui = 1; ui != 0; ui <<= 1 ) {
+		sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | leading0s( ui );
+	} // for
+	sout | nl;
+
+	sout | "long int";
+	li = 0;
+	sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | leading0s( li );
+	for ( li = 1; li != 0; li <<= 1 ) {
+		sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | leading0s( li );
+	} // for
+	sout | nl;
+	sout | "unsigned long int";
+	uli = 0;
+	sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | leading0s( uli );
+	for ( uli = 1; uli != 0; uli <<= 1 ) {
+		sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | leading0s( uli );
+	} // for
+	sout | nl;
+
+	sout | "long long int";
+	lli = 0;
+	sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | leading0s( lli );
+	for ( lli = 1; lli != 0; lli <<= 1 ) {
+		sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | leading0s( lli );
+	} // for
+	sout | nl;
+	ulli = 0;
+	sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | leading0s( ulli );
+	sout | "unsigned long long int";
+	for ( ulli = 1; ulli != 0; ulli <<= 1 ) {
+		sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | leading0s( ulli );
+	} // for
+	sout | nl;
+#endif // 0
+	//============================================================
+#if 1
+	sout | nl | "trailing0s" | nl | nl;
+
+	sout | "signed char";
+	for ( sc = 1; sc != 0; sc <<= 1 ) {
+		sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | trailing0s( sc );
+	} // for
+	sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | trailing0s( sc );
+	sout | nl;
+	sout | "unsigned char";
+	for ( usc = 1; usc != 0; usc <<= 1 ) {
+		sout | wd(__bitsizeof(usc)+2, pad0(bin(usc))) | trailing0s( usc );
+	} // for
+	sout | wd(__bitsizeof(usc)+2, pad0(bin(usc))) | trailing0s( usc );
+	sout | nl;
+
+	sout | "short int";
+	for ( si = 1; si != 0; si <<= 1 ) {
+		sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | trailing0s( si );
+	} // for
+	sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | trailing0s( si );
+	sout | nl;
+	sout | "unsigned short int";
+	for ( usi = 1; usi != 0; usi <<= 1 ) {
+		sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | trailing0s( usi );
+	} // for
+	sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | trailing0s( usi );
+	sout | nl;
+
+	sout | "int";
+	for ( i = 1; i != 0; i <<= 1 ) {
+		sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | trailing0s( i );
+	} // for
+	sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | trailing0s( i );
+	sout | nl;
+	sout | "unsigned int";
+	for ( ui = 1; ui != 0; ui <<= 1 ) {
+		sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | trailing0s( ui );
+	} // for
+	sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | trailing0s( ui );
+	sout | nl;
+
+	sout | "long int";
+	for ( li = 1; li != 0; li <<= 1 ) {
+		sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | trailing0s( li );
+	} // for
+	sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | trailing0s( li );
+	sout | nl;
+	sout | "unsigned long int";
+	for ( uli = 1; uli != 0; uli <<= 1 ) {
+		sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | trailing0s( uli );
+	} // for
+	sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | trailing0s( uli );
+	sout | nl;
+
+	sout | "long long int";
+	for ( lli = 1; lli != 0; lli <<= 1 ) {
+		sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | trailing0s( lli );
+	} // for
+	sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | trailing0s( lli );
+	sout | nl;
+	sout | "unsigned long long int";
+	for ( ulli = 1; ulli != 0; ulli <<= 1 ) {
+		sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | trailing0s( ulli );
+	} // for
+	sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | trailing0s( ulli );
+	sout | nl;
+#endif // 0
+	//============================================================
+#if 1
+	sout | nl | "all0s" | nl | nl;
+
+	sout | "signed char";
+	for ( sc = 0; sc != -1hh; sc = (sc << 1) + 1 ) {
+		sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | all0s( sc );
+	} // for
+	sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | all0s( sc );
+	sout | nl;
+	sout | "unsigned char";
+	for ( usc = 0; usc != -1hh; usc = (usc << 1) + 1 ) {
+		sout | wd(__bitsizeof(usc)+2, pad0(bin(usc))) | all0s( usc );
+	} // for
+	sout | wd(__bitsizeof(usc)+2, pad0(bin(usc))) | all0s( usc );
+	sout | nl;
+
+	sout | "short int";
+	for ( si = 0; si != -1h; si = (si << 1) + 1 ) {
+		sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | all0s( si );
+	} // for
+	sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | all0s( si );
+	sout | nl;
+	sout | "unsigned short int";
+	for ( usi = 0; usi != -1h; usi = (usi << 1) + 1 ) {
+		sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | all0s( usi );
+	} // for
+	sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | all0s( usi );
+	sout | nl;
+
+	sout | "int";
+	for ( i = 0; i != -1; i = (i << 1) + 1 ) {
+		sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | all0s( i );
+	} // for
+	sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | all0s( i );
+	sout | nl;
+	sout | "unsigned int";
+	for ( ui = 0; ui != -1; ui = (ui << 1) + 1 ) {
+		sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | all0s( ui );
+	} // for
+	sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | all0s( ui );
+	sout | nl;
+
+	sout | "long int";
+	for ( li = 0; li != -1; li = (li << 1) + 1 ) {
+		sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | all0s( li );
+	} // for
+	sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | all0s( li );
+	sout | nl;
+	sout | "unsigned long int";
+	for ( uli = 0; uli != -1; uli = (uli << 1) + 1 ) {
+		sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | all0s( uli );
+	} // for
+	sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | all0s( uli );
+	sout | nl;
+
+	sout | "long long int";
+	for ( lli = 0; lli != -1; lli = (lli << 1) + 1 ) {
+		sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | all0s( lli );
+	} // for
+	sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | all0s( lli );
+	sout | nl;
+	sout | "unsigned long long int";
+	for ( ulli = 0; ulli != -1; ulli = (ulli << 1) + 1 ) {
+		sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | all0s( ulli );
+	} // for
+	sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | all0s( ulli );
+	sout | nl;
+#endif // 0
+	//============================================================
+#if 1
+	sout | nl | "all1s" | nl | nl;
+
+	sout | "signed char";
+	for ( sc = 0; sc != -1hh; sc = (sc << 1) + 1 ) {
+		sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | all1s( sc );
+	} // for
+	sout | wd(__bitsizeof(sc)+2, pad0(bin(sc))) | all1s( sc );
+	sout | nl;
+	sout | "unsigned char";
+	for ( usc = 0; usc != -1hh; usc = (usc << 1) + 1 ) {
+		sout | wd(__bitsizeof(usc)+2, pad0(bin(usc))) | all1s( usc );
+	} // for
+	sout | wd(__bitsizeof(usc)+2, pad0(bin(usc))) | all1s( usc );
+	sout | nl;
+
+	sout | "short int";
+	for ( si = 0; si != -1h; si = (si << 1) + 1 ) {
+		sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | all1s( si );
+	} // for
+	sout | wd(__bitsizeof(si)+2, pad0(bin(si))) | all1s( si );
+	sout | nl;
+	sout | "unsigned short int";
+	for ( usi = 0; usi != -1h; usi = (usi << 1) + 1 ) {
+		sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | all1s( usi );
+	} // for
+	sout | wd(__bitsizeof(usi)+2, pad0(bin(usi))) | all1s( usi );
+	sout | nl;
+
+	sout | "int";
+	for ( i = 0; i != -1; i = (i << 1) + 1 ) {
+		sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | all1s( i );
+	} // for
+	sout | wd(__bitsizeof(i)+2, pad0(bin(i))) | all1s( i );
+	sout | nl;
+	sout | "unsigned int";
+	for ( ui = 0; ui != -1; ui = (ui << 1) + 1 ) {
+		sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | all1s( ui );
+	} // for
+	sout | wd(__bitsizeof(ui)+2, pad0(bin(ui))) | all1s( ui );
+	sout | nl;
+
+	sout | "long int";
+	for ( li = 0; li != -1; li = (li << 1) + 1 ) {
+		sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | all1s( li );
+	} // for
+	sout | wd(__bitsizeof(li)+2, pad0(bin(li))) | all1s( li );
+	sout | nl;
+	sout | "unsigned long int";
+	for ( uli = 0; uli != -1; uli = (uli << 1) + 1 ) {
+		sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | all1s( uli );
+	} // for
+	sout | wd(__bitsizeof(uli)+2, pad0(bin(uli))) | all1s( uli );
+	sout | nl;
+
+	sout | "long long int";
+	for ( lli = 0; lli != -1; lli = (lli << 1) + 1 ) {
+		sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | all1s( lli );
+	} // for
+	sout | wd(__bitsizeof(lli)+2, pad0(bin(lli))) | all1s( lli );
+	sout | nl;
+	sout | "unsigned long long int";
+	for ( ulli = 0; ulli != -1; ulli = (ulli << 1) + 1 ) {
+		sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | all1s( ulli );
+	} // for
+	sout | wd(__bitsizeof(ulli)+2, pad0(bin(ulli))) | all1s( ulli );
+	sout | nl;
+#endif // 0
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa bitmanip1.cfa" //
+// End: //

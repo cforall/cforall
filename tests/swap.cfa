@@ -1,0 +1,96 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// swap.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jul 12 12:05:26 2019
+// Update Count     : 79
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>										// swap
+
+int main( void ) {
+	char c1 = 'a', c2 = 'b';
+	sout | "char\t\t\t" | c1 | ' ' | c2 | "\t\t\tswap " | nonl;
+	swap( c1, c2 );
+	sout | '\t' | c1 | ' ' | c2;
+
+	signed int i1 = -1, i2 = -2;
+	sout | "signed int\t\t" | i1 | i2 | "\t\t\tswap " | nonl;
+	swap( i1, i2 );
+	sout | '\t' | i1 | i2;
+
+	unsigned int ui1 = 1, ui2 = 2;
+	sout | "unsigned int\t\t" | ui1 | ui2 | "\t\t\tswap " | nonl;
+	swap( ui1, ui2 );
+	sout | '\t' | ui1 | ui2;
+
+	signed long int li1 = -1, li2 = -2;
+	sout | "signed long int\t\t" | li1 | li2 | "\t\t\tswap " | nonl;
+	swap( li1, li2 );
+	sout | '\t' | li1 | li2;
+
+	unsigned long int uli1 = 1, uli2 = 2;
+	sout | "unsigned long int\t" | uli1 | uli2 | "\t\t\tswap " | nonl;
+	swap( uli1, uli2 );
+	sout | '\t' | uli1 | uli2;
+
+	signed long long int lli1 = -1, lli2 = -2;
+	sout | "signed long long int\t" | lli1 | lli2 | "\t\t\tswap " | nonl;
+	swap( lli1, lli2 );
+	sout | '\t' | lli1 | lli2;
+
+	unsigned long long int ulli1 = 1, ulli2 = 2;
+	sout | "unsigned long long int\t" | ulli1 | ulli2 | "\t\t\tswap " | nonl;
+	swap( ulli1, ulli2 );
+	sout | '\t' | ulli1 | ulli2;
+
+	float f1 = 1.5, f2 = 2.5;
+	sout | "float\t\t\t" | f1 | f2 | "\t\t\tswap " | nonl;
+	swap( f1, f2 );
+	sout | '\t' | f1 | f2;
+
+	double d1 = 1.5, d2 = 2.5;
+	sout | "double\t\t\t" | d1 | d2 | "\t\t\tswap " | nonl;
+	swap( d1, d2 );
+	sout | '\t' | d1 | d2;
+
+	long double ld1 = 1.5, ld2 = 2.5;
+	sout | "long double\t\t" | ld1 | ld2 | "\t\t\tswap " | nonl;
+	swap( ld1, ld2 );
+	sout | '\t' | ld1 | ld2;
+
+	float _Complex fc1 = 1.5f+1.5if, fc2 = 2.5f+2.5if;
+	sout | "float _Complex\t\t" | fc1 | fc2 | "\tswap " | nonl;
+	swap( fc1, fc2 );
+	sout | '\t' | fc1 | fc2;
+
+	double _Complex dc1 = 1.5d+1.5id, dc2 = 2.5d+2.5id;
+	sout | "double _Complex\t\t" | dc1 | dc2 | "\tswap " | nonl;
+	swap( dc1, dc2 );
+	sout | '\t' | dc1 | dc2;
+
+	long double _Complex ldc1 = 1.5d+1.5il, ldc2 = 2.5d+2.5il;
+	sout | "long double _Complex\t" | ldc1 | ldc2 | "\tswap " | nonl;
+	swap( ldc1, ldc2 );
+	sout | '\t' | ldc1 | ldc2;
+
+	struct S { int i, j; } s1 = { 1, 2 }, s2 = { 2, 1 };
+	ofstream & ?|?( ofstream & os, S s ) { return os | s.i | s.j; }
+	void ?|?( ofstream & os, S s ) { (ofstream &)(os | s.i | s.j); ends( os ); }
+	sout | "struct S\t\t" | s1 | "," | s2 | "\t\tswap " | nonl;
+	swap( s1, s2 );
+	sout | '\t' | s1 | "," | s2;
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa swap.cfa" //
+// End: //

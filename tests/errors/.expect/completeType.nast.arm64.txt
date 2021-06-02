@@ -1,0 +1,259 @@
+errors/completeType.cfa:34:1 error: Cannot choose between 2 alternatives for expression
+Generated Cast of:
+  Applying untyped:
+    Name: *?
+  ...to:
+    Name: x
+
+... to: nothing
+... with resolved type:
+  void Alternatives are:
+Cost ( 0, 1, 2, 0, 1, -1, 0 ): Generated Cast of:
+      Application of
+        Variable Expression: *?: forall
+          instance of type DT (not function type)
+          function
+        ... with parameters
+          pointer to instance of type DT (not function type)
+        ... returning
+          reference to instance of type DT (not function type)
+
+        ... with resolved type:
+          pointer to forall
+            instance of type [unbound] (not function type)
+            function
+          ... with parameters
+            pointer to instance of type [unbound] (not function type)
+          ... returning
+            reference to instance of type [unbound] (not function type)
+
+        ... to arguments
+        Variable Expression: x: pointer to instance of struct A without body
+        ... with resolved type:
+          pointer to instance of struct A without body
+
+      ... with resolved type:
+        reference to instance of struct A without body
+    ... to: nothing
+    ... with resolved type:
+      void
+  (types:
+    void
+  )
+  Environment:([unbound]DT) -> instance of struct A without body (no widening)
+
+
+Cost ( 0, 1, 2, 0, 1, -1, 0 ): Generated Cast of:
+      Application of
+        Variable Expression: *?: forall
+          instance of type DT (not function type)
+          function
+        ... with parameters
+          pointer to instance of type DT (not function type)
+        ... returning
+          reference to instance of type DT (not function type)
+
+        ... with resolved type:
+          pointer to forall
+            instance of type [unbound] (not function type)
+            function
+          ... with parameters
+            pointer to instance of type [unbound] (not function type)
+          ... returning
+            reference to instance of type [unbound] (not function type)
+
+        ... to arguments
+        Variable Expression: x: pointer to instance of struct B with body
+        ... with resolved type:
+          pointer to instance of struct B with body
+
+      ... with resolved type:
+        reference to instance of struct B with body
+    ... to: nothing
+    ... with resolved type:
+      void
+  (types:
+    void
+  )
+  Environment:([unbound]DT) -> instance of struct B with body (no widening)
+
+
+
+errors/completeType.cfa:35:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: foo
+...to:
+  Name: v
+
+errors/completeType.cfa:36:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: baz
+...to:
+  Name: v
+
+errors/completeType.cfa:37:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: quux
+...to:
+  Name: v
+
+errors/completeType.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: baz
+...to:
+  Name: y
+
+errors/completeType.cfa:60:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: quux
+...to:
+  Name: y
+
+errors/completeType.cfa:72:1 error: No alternatives with satisfiable assertions for Applying untyped:
+  Name: baz
+...to:
+  Name: z
+
+      Unsatisfiable alternative:
+Cost ( 0, 1, 0, 0, 1, -5, 0 ): Application of
+            Variable Expression: baz: forall
+              instance of type T (not function type)
+              with assertions
+              Variable Expression: ?=?: pointer to function
+              ... with parameters
+                reference to instance of type T (not function type)
+                instance of type T (not function type)
+              ... returning
+                instance of type T (not function type)
+
+              ... with resolved type:
+                pointer to function
+                ... with parameters
+                  reference to instance of type T (not function type)
+                  instance of type T (not function type)
+                ... returning
+                  instance of type T (not function type)
+
+              Variable Expression: ?{}: pointer to function
+              ... with parameters
+                reference to instance of type T (not function type)
+              ... returning nothing
+
+              ... with resolved type:
+                pointer to function
+                ... with parameters
+                  reference to instance of type T (not function type)
+                ... returning nothing
+
+              Variable Expression: ?{}: pointer to function
+              ... with parameters
+                reference to instance of type T (not function type)
+                instance of type T (not function type)
+              ... returning nothing
+
+              ... with resolved type:
+                pointer to function
+                ... with parameters
+                  reference to instance of type T (not function type)
+                  instance of type T (not function type)
+                ... returning nothing
+
+              Variable Expression: ^?{}: pointer to function
+              ... with parameters
+                reference to instance of type T (not function type)
+              ... returning nothing
+
+              ... with resolved type:
+                pointer to function
+                ... with parameters
+                  reference to instance of type T (not function type)
+                ... returning nothing
+
+              function
+            ... with parameters
+              pointer to instance of type T (not function type)
+            ... returning nothing
+
+            ... with resolved type:
+              pointer to forall
+                instance of type [unbound] (not function type)
+                with assertions
+                Variable Expression: ?=?: pointer to function
+                ... with parameters
+                  reference to instance of type T (not function type)
+                  instance of type T (not function type)
+                ... returning
+                  instance of type T (not function type)
+
+                ... with resolved type:
+                  pointer to function
+                  ... with parameters
+                    reference to instance of type [unbound] (not function type)
+                    instance of type [unbound] (not function type)
+                  ... returning
+                    instance of type [unbound] (not function type)
+
+                Variable Expression: ?{}: pointer to function
+                ... with parameters
+                  reference to instance of type T (not function type)
+                ... returning nothing
+
+                ... with resolved type:
+                  pointer to function
+                  ... with parameters
+                    reference to instance of type [unbound] (not function type)
+                  ... returning nothing
+
+                Variable Expression: ?{}: pointer to function
+                ... with parameters
+                  reference to instance of type T (not function type)
+                  instance of type T (not function type)
+                ... returning nothing
+
+                ... with resolved type:
+                  pointer to function
+                  ... with parameters
+                    reference to instance of type [unbound] (not function type)
+                    instance of type [unbound] (not function type)
+                  ... returning nothing
+
+                Variable Expression: ^?{}: pointer to function
+                ... with parameters
+                  reference to instance of type T (not function type)
+                ... returning nothing
+
+                ... with resolved type:
+                  pointer to function
+                  ... with parameters
+                    reference to instance of type [unbound] (not function type)
+                  ... returning nothing
+
+                function
+              ... with parameters
+                pointer to instance of type [unbound] (not function type)
+              ... returning nothing
+
+            ... to arguments
+            Variable Expression: z: pointer to instance of type T (not function type)
+            ... with resolved type:
+              pointer to instance of type T (not function type)
+          with 1 pending inference slots
+
+          ... with resolved type:
+            void
+        (types:
+          void
+        )
+        Environment:([unbound]T) -> instance of type T (not function type) (no widening)
+
+      Could not satisfy assertion:
+Variable Expression: ?=?: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+          instance of type T (not function type)
+        ... returning
+          instance of type T (not function type)
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type [unbound] (not function type)
+            instance of type [unbound] (not function type)
+          ... returning
+            instance of type [unbound] (not function type)
+

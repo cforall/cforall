@@ -1,0 +1,110 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// gmp.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Apr 19 08:55:51 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Dec 20 22:41:47 2018
+// Update Count     : 559
+//
+
+// NOTE: UBUNTU DOES NOT SUPPORT GMP MULTILIB, SO ONLY 64-BIT GMP IS TESTED.
+
+#include <gmp.hfa>
+
+int main( void ) {
+	sout | "constructors";
+	short int si = 3;
+	Int x = { "50000000000000000000" }, y = { si }, z = x + y;
+	sout | x | y | z;
+	sout | "x:" | x | "y:" | y | "z:" | z;
+
+	sout | "conversions";
+	y = 'a';
+	sout | "y:" | y;
+	y = "12345678901234567890123456789";
+	sout | "y:" | y;
+	y = 100`mp + 100`mp;
+	sout | "y:" | y;
+	y = -200u`mp + -200u`mp;
+	sout | "y:" | y;
+	y = "12345678901234567890123456789"`mp + "12345678901234567890123456789"`mp;
+	sout | "y:" | y;
+	y = si;
+	sout | "y:" | y;
+	y = -3;
+	sout | "y:" | y;
+	y += 7;
+	sout | "y:" | y;
+	y -= 1;
+	sout | "y:" | y;
+	int b;
+	b = y;
+	si = y;
+	sout | "y:" | y | "b:" | b | "si:" | si;
+
+	sout | "comparison";
+	sout | x == x;
+	sout | x != x;
+	sout | x < x;
+	sout | x <= x;
+	sout | x > x;
+	sout | x >= x;
+
+	sout | "arithmetic";
+	z = x + y + z;
+	sout | "z:" | z;
+	z = z = x;
+	sout | "z:" | z;
+	z = x - y - z;
+	sout | "z:" | z;
+	z = x * y * z;
+	sout | "z:" | z;
+	z = x * 3;
+	sout | "z:" | z;
+	z = 3 * x;
+	sout | "z:" | z;
+	z = x / 3;
+	sout | "z:" | z;
+	sout | div( x, 3 ) | x / 3 | "," | x % 3;
+	[ x, y ] = div( x, 3 );
+	sout | "x:" | x | "y:" | y;
+
+	sout | nl;
+
+	sin | x | y | z;
+	sout | x | y | z;
+
+	sout | nl;
+
+	sout | "Fibonacci Numbers";
+	Int fn, fn1, fn2;
+	fn = (Int){0}; fn1 = fn;							// 1st case
+	sout | (int)0 | fn;
+	fn = 1; fn2 = fn1; fn1 = fn;						// 2nd case
+	sout | 1 | fn;
+	for ( i; 2u ~= 200 ) {
+		fn = fn1 + fn2; fn2 = fn1; fn1 = fn;			// general case
+		sout | i | fn;
+	} // for
+
+	sout | nl;
+
+	sout | "Factorial Numbers";
+	Int fact = 1;										// 1st case
+	sout | (int)0 | fact;
+	for ( i; 1u ~= 40u ) {
+		fact *= i;										// general case
+		sout | i | fact;
+	} // for
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa gmp.cfa -lgmp" //
+// End: //

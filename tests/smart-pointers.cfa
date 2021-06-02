@@ -1,0 +1,73 @@
+// Testing the smart pointers (counter_ptr and unique_ptr).
+
+#include <memory.hfa>
+#include <assert.h>
+
+void counter_test(void) {
+	counter_ptr(int) ptr0 = 3;
+
+	{
+		counter_ptr(int) ptr1 = ptr0;
+		*ptr1 = -7;
+	}
+	assert(-7 == *ptr0);
+
+	{
+		counter_ptr(int) ptr2 = 4;
+		ptr0 = ptr2;
+	}
+	assert(4 == *ptr0);
+
+	{
+		counter_ptr(int) ptr3 = ptr0;
+		counter_ptr(int) ptr4 = ptr0;
+	}
+}
+
+void unique_test(void) {
+	unique_ptr(char) ptr_a = 'a';
+	unique_ptr(char) ptr_b = 'b';
+	move(ptr_a, ptr_b);
+	assert(ptr_b == 0);
+	assert(*ptr_a == 'b');
+
+	unique_ptr(char) ptr_c = 'c';
+	ptr_c = 0;
+}
+
+void pointer_equality(void) {
+	{
+		counter_ptr(int) null = 0p;
+		assert(null == 0);
+		counter_ptr(int) hold = -7;
+		assert(hold != 0);
+		counter_ptr(int) twin = hold;
+		assert(hold == twin);
+	}
+	{
+		unique_ptr(int) null = 0p;
+		assert(null == 0);
+		unique_ptr(int) hold = -7;
+		assert(hold != 0);
+	}
+}
+
+void declare_test(void) {
+	counter_ptr(int) ptr_i0 = 3;
+	counter_ptr(char) ptr_c0 = 'a';
+	counter_ptr(float) ptr_f0 = 3.5f;
+	counter_ptr(double) ptr_d0 = 3.5;
+
+	unique_ptr(int) ptr_i1 = 3;
+	unique_ptr(char) ptr_c1 = 'a';
+	unique_ptr(float) ptr_f1 = 3.5f;
+	unique_ptr(double) ptr_d1 = 3.5;
+}
+
+int main(int argc, char * argv[]) {
+	counter_test();
+	unique_test();
+	pointer_equality();
+
+	printf("done\n");
+}

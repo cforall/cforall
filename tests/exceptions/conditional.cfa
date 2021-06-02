@@ -1,0 +1,36 @@
+// Conditional Catch Test
+
+// I may fold this back into terminate.cfa and resume.cfa once setting
+// up the non-trivial exception is reasonable to do.
+
+#include <exception.hfa>
+
+EHM_EXCEPTION(num_error)(
+	int num;
+);
+
+EHM_VIRTUAL_TABLE(num_error, num_error_vt);
+
+void caught_num_error(int expect, num_error * actual) {
+	printf("Caught num_error: expected=%d actual=%d.\n", expect, actual->num);
+}
+
+int main(int argc, char * argv[]) {
+	num_error exc = {&num_error_vt, 2};
+
+	try {
+		throw exc;
+	} catch (num_error * error ; 3 == error->num ) {
+		caught_num_error(3, error);
+	} catch (num_error * error ; 2 == error->num ) {
+		caught_num_error(2, error);
+	}
+
+	try {
+		throwResume exc;
+	} catchResume (num_error * error ; 3 == error->num ) {
+		caught_num_error(3, error);
+	} catchResume (num_error * error ; 2 == error->num ) {
+		caught_num_error(2, error);
+	}
+}

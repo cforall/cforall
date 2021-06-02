@@ -1,0 +1,126 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2018 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// fallthrough.cfa --
+//
+// Author           : Rob Schluntz
+// Created On       : Wed Mar 14 10:06:25 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Dec 24 11:24:35 2018
+// Update Count     : 22
+//
+
+#include <fstream.hfa>
+
+void test(int choice) {
+	choose ( choice ) {
+	  case 1:
+		sout | "case 1";
+		fallthru;
+	  case 2:
+		sout | "case 2";
+		fallthru;
+		sout | "did not fallthru";
+		if ( 7 ) fallthru common2;
+		fallthru common1;
+	  case 3:
+		sout | "case 3";
+		fallthru default;
+		fallthru common1;
+	  common1:
+		sout | "common1";
+		// break
+	  case 4:
+		sout | "case 4";
+		fallthru common2;
+	  case 5:
+		sout | "case 5";
+		fallthru common2;
+		fallthru default;
+	  case 6:
+		sout | "case 6";
+		fallthru common2;
+	  common2:
+		sout | "common2";
+		// break
+	  default:
+		sout | "default";
+		fallthru;
+	} // choose
+
+	sout | nl;
+
+	switch ( choice ) {
+	  case 1:
+		sout | "case 1";
+		switch ( choice ) {
+		  case 1:
+			sout | "case 1";
+			for ( int i = 0; i < 4; i += 1 ) {
+				sout | i;
+				if ( i == 2 ) fallthru common;
+			} // for
+		} // switch
+		break;
+	  case 5:
+		sout | "case 5";
+		if ( choice == 5 ) {
+			if ( choice != 5 ) {
+				sout | "error";
+			} else {
+				sout | "check";
+				fallthru common;
+			} // if
+		} // if
+	  common:
+		sout | "common";
+		fallthru;
+		break;
+	  default:
+		sout | "default";
+		fallthru;
+	} // switch
+
+#if ERR1
+	// ERROR: fallthrough must be enclosed in switch or choose
+	fallthru;
+	// ERROR: fallthrough must be enclosed in switch or choose
+	fallthru common4;
+	// ERROR: fallthrough must be enclosed in switch or choose
+	fallthru default;
+	choose ( 3 ) {
+	  case 2:
+		for () {
+			choose ( 2 ) {
+			  case 1:
+				// ERROR: default is later, but in a different switch
+				fallthru default;
+				// ERROR: common3 is later, but not at the same level as a case clause
+				fallthru common3;
+			}
+		  common3: ;
+		} // for
+	  default:
+	  case 1:
+	  common4:
+		// ERROR: attempt to jump up with fallthrough
+		if ( 7 ) fallthru common4;
+		// ERROR: attempt to jump up with fallthrough
+		fallthru default;
+	} // choose
+#endif
+}
+
+int main() {
+	test( 1 );
+	sout | nl;
+	test( 5 );
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa fallthrough.cfa" //
+// End: //

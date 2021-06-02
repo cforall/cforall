@@ -1,0 +1,102 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// memory.hfa -- Memory Management Tools for CFA
+//
+// Author           : Andrew Beach
+// Created On       : Tue Jun  2 16:48:00 2020
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Jan 29 15:52:00 2021
+// Update Count     : 1
+//
+
+#pragma once
+
+// Internal data object.
+forall(T & | sized(T))
+struct counter_data {
+	unsigned int counter;
+	T object;
+};
+
+forall(T & | sized(T), Args... | { void ?{}(T &, Args); })
+void ?{}(counter_data(T) & this, Args args);
+
+forall(T & | sized(T) | { void ^?{}(T &); })
+void ^?{}(counter_data(T) & this);
+
+// This is one of many pointers keeping this alive.
+forall(T & | sized(T))
+struct counter_ptr {
+	counter_data(T) * data;
+};
+
+forall(T & | sized(T))
+void ?{}(counter_ptr(T) & this);
+forall(T & | sized(T))
+void ?{}(counter_ptr(T) & this, zero_t);
+forall(T & | sized(T))
+void ?{}(counter_ptr(T) & this, counter_ptr(T) that);
+forall(T & | sized(T), Args... | { void ?{}(T&, Args); })
+void ?{}(counter_ptr(T) & this, Args args);
+
+forall(T & | sized(T) | { void ^?{}(T &); })
+void ^?{}(counter_ptr(T) & this);
+
+forall(T & | sized(T))
+T & *?(counter_ptr(T) & this);
+
+forall(T & | sized(T) | { void ^?{}(T &); })
+void ?=?(counter_ptr(T) & this, counter_ptr(T) that);
+forall(T & | sized(T) | { void ^?{}(T &); })
+void ?=?(counter_ptr(T) & this, zero_t);
+
+forall(T & | sized(T))
+int ?==?(counter_ptr(T) const & this, counter_ptr(T) const & that);
+forall(T & | sized(T))
+int ?!=?(counter_ptr(T) const & this, counter_ptr(T) const & that);
+forall(T & | sized(T))
+int ?==?(counter_ptr(T) const & this, zero_t);
+forall(T & | sized(T))
+int ?!=?(counter_ptr(T) const & this, zero_t);
+
+// This is the only pointer that keeps this alive.
+forall(T &)
+struct unique_ptr {
+	T * data;
+};
+
+forall(T &)
+void ?{}(unique_ptr(T) & this);
+forall(T &)
+void ?{}(unique_ptr(T) & this, zero_t);
+forall(T &)
+void ?{}(unique_ptr(T) & this, unique_ptr(T) that) = void;
+forall(T & | sized(T), Args... | { void ?{}(T &, Args); })
+void ?{}(unique_ptr(T) & this, Args args);
+
+forall(T & | { void ^?{}(T &); })
+void ^?{}(unique_ptr(T) & this);
+
+forall(T & )
+T & *?(unique_ptr(T) & this);
+
+forall(T &)
+void ?=?(unique_ptr(T) & this, unique_ptr(T) that) = void;
+forall(T & | { void ^?{}(T &); })
+void ?=?(unique_ptr(T) & this, zero_t);
+
+forall(T & | { void ^?{}(T &); })
+void move(unique_ptr(T) & this, unique_ptr(T) & that);
+
+forall(T &)
+int ?==?(unique_ptr(T) const & this, unique_ptr(T) const & that);
+forall(T &)
+int ?!=?(unique_ptr(T) const & this, unique_ptr(T) const & that);
+forall(T &)
+int ?==?(unique_ptr(T) const & this, zero_t);
+forall(T &)
+int ?!=?(unique_ptr(T) const & this, zero_t);

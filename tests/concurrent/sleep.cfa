@@ -1,0 +1,40 @@
+#include <fstream.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+
+Duration default_preemption() {
+	return 0;
+}
+
+volatile int counter = 0;
+
+thread fast_sleeper {};
+void main(fast_sleeper &) {
+	Duration wait = 47`ms;
+	for(i; 20) {
+		sleep(wait);
+		__atomic_fetch_add( &counter, 1, __ATOMIC_RELAXED );
+	}
+}
+
+thread slow_sleeper {};
+void main(slow_sleeper &) {
+	Duration wait = 277`ms;
+	for(i; 4) {
+		sleep(wait);
+		int val = __atomic_add_fetch( &counter, -5, __ATOMIC_RELAXED );
+		if(val < -9) abort | "Value reached negative value:" | val;
+	}
+}
+
+int main() {
+	sout | acquire | "start";
+	{
+		slow_sleeper slow;
+		yield();
+		fast_sleeper fast;
+		yield();
+	}
+	sout | acquire | "done";
+}
+

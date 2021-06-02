@@ -1,0 +1,35 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// exception-withthreads.cfa --
+//
+// Author           : Andrew Beach
+// Created On       : Thr 13 16:12:00 2020
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri 14 11:20:00 2020
+// Update Count     : 0
+//
+
+#include <stdlib.hfa>
+#include <exception.hfa>
+#include "../exceptions/with-threads.hfa"
+
+EHM_EXCEPTION(ping)();
+EHM_VIRTUAL_TABLE(ping, ping_vt);
+
+int main(void) {
+	try {
+		throwResume (ping){&ping_vt};
+	} catchResume (ping *) {
+		printf("%s threads\n", threading_enabled() ? "with" : "no");
+	}
+	return 0;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa nothreads.cfa" //
+// End: //

@@ -1,0 +1,61 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// tupleFunction.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Tue Nov 15 17:24:32 2016
+// Last Modified By : Rob Schluntz
+// Last Modified On : Tue Nov 15 17:27:28 2016
+// Update Count     : 3
+//
+
+void f() {
+	printf("called f!\n");
+}
+
+double g(double x, char y, int z) {
+	return z-y+x;
+}
+
+struct V2	{
+	int f2, f3;
+};
+struct V {
+	int f1;
+	V2 i; // temporary
+	// struct V2 {
+	//   int f2, f3;
+	// } i;
+	double f4;
+} v;
+
+V & h() {
+	static V local = { 111, { 222, 333 }, 444.5 };
+	return local;
+}
+
+int main() {
+	struct X {
+		int a;
+		double b;
+		char c;
+	} x = { 10, 12.5, '\x9' };
+
+	// should only call f once
+	printf("g(...)=%lg\n", g((f(), x).[b, c, a]));
+
+	v.[f1, i.[f2, f3], f4].[1.0, 2, 0, 1.1] = [11, 3.14159, 12, 13];
+
+	printf("v.[f1, i.[f2, f3], f4]=[%d, %d, %d, %lg]\n", v.[f1, i.[f2, f3], f4]);
+
+	h().[f1, i.[f2, f3], f4].[1.0, 2, 0, 1.1] = [987, 6.28, 4, 2];
+	printf("v.[f1, i.[f2, f3], f4]=[%d, [%d, %d], %lg]\n", h().[f1, i.[f2, f3], f4]);
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

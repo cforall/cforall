@@ -1,0 +1,35 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// div.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Aug  8 16:28:43 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 21:35:01 2018
+// Update Count     : 20
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>									// div
+
+struct T { int i; };
+T ?/?( T t1, T t2 ) { return t1.i / t2.i; }
+T ?%?( T t1, T t2 ) { return t1.i % t2.i; }
+ofstream & ?|?( ofstream & os, T t ) { return os | t.i; }
+
+int main( void ) {
+	sout | "div" | div( 13, 5 ) | div( 13L, 5L ) | div( 13LL, 5LL );
+	short s1 = 13, s2 = 5;
+	sout | "div" | div( s1, s2 );
+	T t1 = { 13 }, t2 = { 5 };
+	sout | "div" | div( t1, t2 );						// polymorphic div
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa div.cfa" //
+// End: //

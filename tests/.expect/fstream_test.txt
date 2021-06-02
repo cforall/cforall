@@ -1,0 +1,5 @@
+Entrez un nombre, s'il vous plaît:
+Vous avez entré -2
+le nombre -2 est négatif
+Entrez trois nombres, s'il vous plaît:
+Vous avez entré i:2 j:3 k:4

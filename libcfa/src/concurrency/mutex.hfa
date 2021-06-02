@@ -1,0 +1,171 @@
+
+//                              -*- Mode: CFA -*-
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// mutex --
+//
+// Author           : Thierry Delisle
+// Created On       : Fri May 25 01:24:09 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Dec  4 09:16:53 2019
+// Update Count     : 1
+//
+
+#pragma once
+
+#include <stdbool.h>
+
+#include "bits/algorithm.hfa"
+#include "bits/locks.hfa"
+
+#include "invoke.h"
+#include "time_t.hfa"
+
+//-----------------------------------------------------------------------------
+// Locks
+
+// Exclusive lock - non-recursive
+// ---
+struct mutex_lock {
+	// Spin lock used for mutual exclusion
+	__spinlock_t lock;
+
+	// List of blocked threads
+	__queue_t(struct $thread) blocked_threads;
+
+	// Locked flag
+	bool is_locked;
+};
+
+void ?{}(mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void ^?{}(mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void lock(mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+bool try_lock(mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void unlock(mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+
+// Exclusive lock - recursive
+// ---
+struct recursive_mutex_lock{
+	// Spin lock used for mutual exclusion
+	__spinlock_t lock;
+
+	// List of blocked threads
+	__queue_t(struct $thread) blocked_threads;
+
+	// Current thread owning the lock
+	struct $thread * owner;
+
+	// Number of recursion level
+	size_t recursion_count;
+};
+
+void ?{}(recursive_mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void ^?{}(recursive_mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void lock(recursive_mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+bool try_lock(recursive_mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void unlock(recursive_mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+
+trait is_lock(L & | sized(L)) {
+	void lock  (L &);
+	void unlock(L &);
+};
+
+//-----------------------------------------------------------------------------
+// Condition variables
+
+struct condition_variable {
+	// Spin lock used for mutual exclusion
+	__spinlock_t lock;
+
+	// List of blocked threads
+	__queue_t(struct $thread) blocked_threads;
+};
+
+void ?{}(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void ^?{}(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+
+void notify_one(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void notify_all(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+
+void wait(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+
+forall(L & | is_lock(L))
+void wait(condition_variable & this, L & l) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+
+//-----------------------------------------------------------------------------
+// Scopes
+forall(L & | is_lock(L)) {
+	#if !defined( __TUPLE_ARRAYS_EXIST__ )
+	void lock  ( L * locks [], size_t count);
+	void unlock( L * locks [], size_t count);
+
+	struct lock_scope {
+		L **   locks;
+		size_t count;
+	};
+
+	static inline void ?{}(lock_scope(L) & this) {
+		this.locks = 0p;
+		this.count = 0;
+	}
+
+	static inline void ^?{}(lock_scope(L) & this) {
+		if(this.count > 0) {
+			unlock(this.locks, this.count);
+		}
+	}
+
+	static inline lock_scope(L) lock( L * locks [], size_t count, lock_scope(L) & scope) {
+		lock(locks, count);
+		scope.locks = locks;
+		scope.count = count;
+	}
+
+	static inline void unlock( lock_scope(L) & this ) {
+		unlock(this.locks, this.count);
+		this.count = 0;
+	}
+
+	static inline void release( lock_scope(L) & this ) {
+		this.count = 0;
+	}
+	#else
+	void lock( [L &...] locks );
+	void unlock( [L &...] locks );
+
+	forall(size_t N)
+	struct lock_scope {
+		bool released;
+		[L &... N] locks;
+	};
+
+	void ?{}(lock_scope(L) & this) = void;
+	void ?{}(lock_scope(L) & this, lock_scope(L) other) = void;
+	void ?move?(lock_scope(L) & this, lock_scope(L) & other) = default;
+
+	static inline void ^?{}(lock_scope(L) & this) {
+		if( !this.released ) {
+			unlock(this.locks);
+		}
+	}
+
+	forall(size_t N)
+	static inline lock_scope(L, N) lock( [L &...] locks ) {
+		lock(locks);
+		return @{false, locks};
+	}
+
+	static inline void unlock( lock_scope(L) & this ) {
+		unlock(this.locks);
+		this.released = true
+	}
+
+	static inline void release( lock_scope(L) & this ) {
+		this.released = true;
+	}
+	#endif
+}

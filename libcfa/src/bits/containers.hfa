@@ -1,0 +1,306 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// bits/containers.hfa -- Intrusive generic containers.hfa
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Oct 31 16:38:50 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Jan 15 07:42:35 2020
+// Update Count     : 28
+
+#pragma once
+
+#include "bits/align.hfa"
+#include "bits/defs.hfa"
+#include <stdio.h>
+//-----------------------------------------------------------------------------
+// Array
+//-----------------------------------------------------------------------------
+
+#ifdef __cforall
+	forall(T &)
+#else
+	#define T void
+#endif
+struct __small_array {
+	T *           data;
+	__lock_size_t size;
+};
+#undef T
+
+#ifdef __cforall
+	#define __small_array_t(T) __small_array(T)
+#else
+	#define __small_array_t(T) __small_array
+#endif
+
+#ifdef __cforall
+	// forall(T | sized(T))
+	// static inline void ?{}(__small_array(T) & this) {}
+
+	forall(T & | sized(T))
+	static inline T & ?[?]( __small_array(T) & this, __lock_size_t idx ) {
+		return ((typeof(this.data))this.data)[idx];
+	}
+
+	forall(T & | sized(T))
+	static inline T & ?[?]( const __small_array(T) & this, __lock_size_t idx ) {
+		return ((typeof(this.data))this.data)[idx];
+	}
+
+	forall(T &)
+	static inline T * begin( const __small_array(T) & this ) {
+		return ((typeof(this.data))this.data);
+	}
+
+	forall(T & | sized(T))
+	static inline T * end( const __small_array(T) & this ) {
+		return ((typeof(this.data))this.data) + this.size;
+	}
+#endif
+
+//-----------------------------------------------------------------------------
+// Node Base
+//-----------------------------------------------------------------------------
+
+#ifdef __cforall
+	trait is_node(T &) {
+		T *& get_next( T & );
+	};
+#endif
+
+//-----------------------------------------------------------------------------
+// Stack
+//-----------------------------------------------------------------------------
+#ifdef __cforall
+	forall(TYPE &)
+	#define T TYPE
+#else
+	#define T void
+#endif
+struct __stack {
+	T * top;
+};
+#undef T
+
+#ifdef __cforall
+#define __stack_t(T) __stack(T)
+#else
+#define __stack_t(T) struct __stack
+#endif
+
+#ifdef __cforall
+	forall(T &)
+	static inline void ?{}( __stack(T) & this ) {
+		(this.top){ 0p };
+	}
+
+	static inline forall( T & | is_node(T) ) {
+		void push( __stack(T) & this, T * val ) {
+			verify( !get_next( *val ) );
+			get_next( *val ) = this.top;
+			this.top = val;
+		}
+
+		T * pop( __stack(T) & this ) {
+			T * top = this.top;
+			if( top ) {
+				this.top = get_next( *top );
+				get_next( *top ) = 0p;
+			}
+			return top;
+		}
+
+		int ?!=?( const __stack(T) & this, __attribute__((unused)) zero_t zero ) {
+			return this.top != 0;
+		}
+	}
+#endif
+
+//-----------------------------------------------------------------------------
+// Queue
+//-----------------------------------------------------------------------------
+#ifdef __cforall
+	forall(TYPE &)
+	#define T TYPE
+#else
+	#define T void
+#endif
+struct __queue {
+	T * head;
+	T ** tail;
+};
+#undef T
+
+#ifdef __cforall
+#define __queue_t(T) __queue(T)
+#else
+#define __queue_t(T) struct __queue
+#endif
+
+#ifdef __cforall
+	static inline forall( T & | is_node(T) ) {
+		void ?{}( __queue(T) & this ) with( this ) {
+			(this.head){ 1p };
+			(this.tail){ &this.head };
+			verify(*this.tail == 1p);
+		}
+
+		void append( __queue(T) & this, T * val ) with(this) {
+			verify(this.tail != 0p);
+			verify(*this.tail == 1p);
+			*this.tail = val;
+			this.tail = &get_next( *val );
+			*this.tail = 1p;
+		}
+
+		T * peek( __queue(T) & this ) {
+			verify(*this.tail == 1p);
+			T * frontnode = this.head;
+			if( frontnode != 1p ) {
+				verify(*this.tail == 1p);
+				return frontnode;
+			}
+			verify(*this.tail == 1p);
+			return 0p;
+		}
+
+		T * pop_head( __queue(T) & this ) {
+			verify(*this.tail == 1p);
+			T * _head = this.head;
+			if( _head != 1p ) {
+				this.head = get_next( *_head );
+				if( get_next( *_head ) == 1p ) {
+					this.tail = &this.head;
+				}
+				get_next( *_head ) = 0p;
+				verify(*this.tail == 1p);
+				verify( get_next(*_head) == 0p );
+				return _head;
+			}
+			verify(*this.tail == 1p);
+			return 0p;
+		}
+
+		T * remove( __queue(T) & this, T ** it ) with( this ) {
+			T * val = *it;
+			verify( val );
+
+			(*it) = get_next( *val );
+
+			if( this.tail == &get_next( *val ) ) {
+				this.tail = it;
+			}
+
+			get_next( *val ) = 0p;
+
+			verify( (this.head == 1p) == (&this.head == this.tail) );
+			verify( *this.tail == 1p );
+			return val;
+		}
+
+		int ?!=?( const __queue(T) & this, __attribute__((unused)) zero_t zero ) {
+			return this.head != 1p;
+		}
+	}
+#endif
+
+
+//-----------------------------------------------------------------------------
+// Doubly Linked List
+//-----------------------------------------------------------------------------
+#ifdef __cforall
+	forall(TYPE &)
+	#define T TYPE
+	#define __getter_t * [T * & next, T * & prev] ( T & )
+#else
+	typedef void (*__generit_c_getter_t)();
+	#define T void
+	#define __getter_t __generit_c_getter_t
+#endif
+struct __dllist {
+	T * head;
+	__getter_t __get;
+};
+#undef T
+#undef __getter_t
+
+#ifdef __cforall
+#define __dllist_t(T) __dllist(T)
+#else
+#define __dllist_t(T) struct __dllist
+#endif
+
+#ifdef __cforall
+	forall(T & )
+	static inline [void] ?{}( __dllist(T) & this, * [T * & next, T * & prev] ( T & ) __get ) {
+		(this.head){ 0p };
+		this.__get = __get;
+	}
+
+	#define next 0
+	#define prev 1
+	static inline forall(T &) {
+		void push_front( __dllist(T) & this, T & node ) with( this ) {
+			verify(__get);
+			if ( this.head ) {
+				__get( node ).next = this.head;
+				__get( node ).prev = __get( *this.head ).prev;
+				// inserted node must be consistent before it is seen
+				// prevent code movement across barrier
+				asm( "" : : : "memory" );
+				__get( *this.head ).prev = &node;
+				T & _prev = *__get( node ).prev;
+				__get( _prev ).next = &node;
+			} else {
+				__get( node ).next = &node;
+				__get( node ).prev = &node;
+			}
+
+			// prevent code movement across barrier
+			asm( "" : : : "memory" );
+			this.head = &node;
+		}
+
+		void remove( __dllist(T) & this, T & node ) with( this ) {
+			verify(__get);
+			if ( &node == this.head ) {
+				if ( __get( *this.head ).next == this.head ) {
+					this.head = 0p;
+				} else {
+					this.head = __get( *this.head ).next;
+				}
+			}
+			__get( *__get( node ).next ).prev = __get( node ).prev;
+			__get( *__get( node ).prev ).next = __get( node ).next;
+			__get( node ).next = 0p;
+			__get( node ).prev = 0p;
+		}
+
+		int ?!=?( const __dllist(T) & this, __attribute__((unused)) zero_t zero ) {
+			return this.head != 0;
+		}
+
+		void move_to_front( __dllist(T) & src, __dllist(T) & dst, T & node ) {
+			remove    (src, node);
+			push_front(dst, node);
+		}
+	}
+	#undef next
+	#undef prev
+#endif
+
+//-----------------------------------------------------------------------------
+// Tools
+//-----------------------------------------------------------------------------
+#ifdef __cforall
+
+#endif
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

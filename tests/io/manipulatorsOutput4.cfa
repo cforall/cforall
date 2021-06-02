@@ -1,0 +1,49 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2019 University of Waterloo
+// 
+// manipulatorsOutput4.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Tue Apr 13 17:55:02 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr 13 18:00:33 2021
+// Update Count     : 4
+// 
+
+#include <fstream.hfa>
+
+int main() {
+	for ( double w = 1e-27; w < 1e30; w *= 10 ) {
+		sout | w | eng(w) | sign(eng(w)) | ws(12,5, eng(w) ) | sign(ws(12,5, eng(w) )) | wd(12,5, eng(w) ) | sign(wd(12,5, eng(w) )) | pad0(ws(12,5, eng(w) )) | pad0(sign(ws(12,5, eng(w) ))) | pad0(wd(12,5, eng(w) )) | pad0(sign(wd(12,5, eng(w) )))
+			 | left(ws(12,5, eng(w) )) | left(sign(ws(12,5, eng(w) ))) | left(wd(12,5, eng(w) )) | left(sign(wd(12,5, eng(w) ))) | left(pad0(ws(12,5, eng(w) ))) | left(pad0(sign(ws(12,5, eng(w) )))) | left(pad0(wd(12,5, eng(w) ))) | left(pad0(sign(wd(12,5, eng(w) ))));
+	} // for
+	sout | nl;
+
+	for ( double w = 1e-27; w < 1e30; w *= 42 ) {
+		sout | w | eng(w) | sign(eng(w)) | ws(12,5, eng(w) ) | sign(ws(12,5, eng(w) )) | wd(12,5, eng(w) ) | sign(wd(12,5, eng(w) )) | pad0(ws(12,5, eng(w) )) | pad0(sign(ws(12,5, eng(w) ))) | pad0(wd(12,5, eng(w) )) | pad0(sign(wd(12,5, eng(w) )))
+			 | left(ws(12,5, eng(w) )) | left(sign(ws(12,5, eng(w) ))) | left(wd(12,5, eng(w) )) | left(sign(wd(12,5, eng(w) ))) | left(pad0(ws(12,5, eng(w) ))) | left(pad0(sign(ws(12,5, eng(w) )))) | left(pad0(wd(12,5, eng(w) ))) | left(pad0(sign(wd(12,5, eng(w) ))));
+	} // for
+	sout | nl;
+
+	for ( double w = 1e-27; w < 1e30; w *= 10 ) {
+		sout | w | unit(eng(w)) | unit(sign(eng(w))) | unit(ws(12,5, eng(w) )) | unit(sign(ws(12,5, eng(w) ))) | unit(wd(12,5, eng(w) )) | unit(sign(wd(12,5, eng(w) ))) | unit(pad0(ws(12,5, eng(w) ))) | unit(pad0(sign(ws(12,5, eng(w) )))) | unit(pad0(wd(12,5, eng(w) ))) | unit(pad0(sign(wd(12,5, eng(w) ))))
+			| unit(left(ws(12,5, eng(w) ))) | unit(left(sign(ws(12,5, eng(w) )))) | unit(left(wd(12,5, eng(w) ))) | unit(left(sign(wd(12,5, eng(w) )))) | unit(left(pad0(ws(12,5, eng(w) )))) | unit(left(pad0(sign(ws(12,5, eng(w) ))))) | unit(left(pad0(wd(12,5, eng(w) )))) | unit(left(pad0(sign(wd(12,5, eng(w) )))));
+	} // for
+	sout | nl;
+
+	for ( double w = 1e-27; w < 1e30; w *= 42 ) {
+		sout | w | unit(eng(w)) | unit(sign(eng(w))) | unit(ws(12,5, eng(w) )) | unit(sign(ws(12,5, eng(w) ))) | unit(wd(12,5, eng(w) )) | unit(sign(wd(12,5, eng(w) ))) | unit(pad0(ws(12,5, eng(w) ))) | unit(pad0(sign(ws(12,5, eng(w) )))) | unit(pad0(wd(12,5, eng(w) ))) | unit(pad0(sign(wd(12,5, eng(w) ))))
+			| unit(left(ws(12,5, eng(w) ))) | unit(left(sign(ws(12,5, eng(w) )))) | unit(left(wd(12,5, eng(w) ))) | unit(left(sign(wd(12,5, eng(w) )))) | unit(left(pad0(ws(12,5, eng(w) )))) | unit(left(pad0(sign(ws(12,5, eng(w) ))))) | unit(left(pad0(wd(12,5, eng(w) )))) | unit(left(pad0(sign(wd(12,5, eng(w) )))));
+	} // for
+	sout | nl;
+
+	for ( double w = -1e-27; w > -1e30; w *= 42 ) {
+		sout | w | eng(w) | sign(eng(w)) | ws(12,5, eng(w) ) | sign(ws(12,5, eng(w) )) | wd(12,5, eng(w) ) | sign(wd(12,5, eng(w) )) | pad0(ws(12,5, eng(w) )) | pad0(sign(ws(12,5, eng(w) ))) | pad0(wd(12,5, eng(w) )) | pad0(sign(wd(12,5, eng(w) )))
+			 | left(ws(12,5, eng(w) )) | left(sign(ws(12,5, eng(w) ))) | left(wd(12,5, eng(w) )) | left(sign(wd(12,5, eng(w) ))) | left(pad0(ws(12,5, eng(w) ))) | left(pad0(sign(ws(12,5, eng(w) )))) | left(pad0(wd(12,5, eng(w) ))) | left(pad0(sign(wd(12,5, eng(w) ))));
+	} // for
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa -Wall -Wextra manipulatorsOutput4.cfa" //
+// End: //

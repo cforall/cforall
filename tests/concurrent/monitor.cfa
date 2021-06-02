@@ -1,0 +1,43 @@
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <thread.hfa>
+
+monitor global_t {
+	int value;
+};
+
+void ?{}(global_t & this) {
+	this.value = 0;
+}
+
+static global_t global;
+
+void increment3( global_t & mutex this ) {
+	this.value += 1;
+}
+
+void increment2( global_t & mutex this ) {
+	increment3( this );
+}
+
+void increment( global_t & mutex this ) {
+	increment2( this );
+}
+
+thread MyThread {};
+
+void main( MyThread & this ) {
+	for(int i = 0; i < 750_000; i++) {
+		increment( global );
+	}
+}
+
+int main(int argc, char* argv[]) {
+	assert( global.__mon.entry_queue.tail != NULL );
+	processor p;
+	{
+		MyThread f[4];
+	}
+	sout | global.value;
+}

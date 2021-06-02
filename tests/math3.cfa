@@ -1,0 +1,57 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// math3.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Fri Apr 22 14:59:21 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Dec 12 16:30:41 2018
+// Update Count     : 86
+//
+
+#include <fstream.hfa>
+#include <math.hfa>
+
+int main( void ) {
+	float f;
+	double d;
+	long double l;
+
+	//---------------------- Hyperbolic ----------------------
+
+	sout | "sinh:" | sinh( 1.0F ) | sinh( 1.0D ) | sinh( 1.0L ) | nonl;
+	sout | sinh( 1.0F+1.0FI ) | sinh( 1.0D+1.0DI ) | sinh( 1.0DL+1.0LI );
+	sout | "cosh:" | cosh( 1.0F ) | cosh( 1.0D ) | cosh( 1.0L ) | nonl;
+	sout | cosh( 1.0F+1.0FI ) | cosh( 1.0D+1.0DI ) | cosh( 1.0DL+1.0LI );
+	sout | "tanh:" | tanh( 1.0F ) | tanh( 1.0D ) | tanh( 1.0L ) | nonl;
+	sout | tanh( 1.0F+1.0FI ) | tanh( 1.0D+1.0DI ) | tanh( 1.0DL+1.0LI );
+	sout | "acosh:" | acosh( 1.0F ) | acosh( 1.0D ) | acosh( 1.0L ) | nonl;
+	sout | acosh( 1.0F+1.0FI ) | acosh( 1.0D+1.0DI ) | acosh( 1.0DL+1.0LI );
+	sout | "asinh:" | asinh( 1.0F ) | asinh( 1.0D ) | asinh( 1.0L ) | nonl;
+	sout | asinh( 1.0F+1.0FI ) | asinh( 1.0D+1.0DI ) | asinh( 1.0DL+1.0LI );
+	sout | "atanh:" | atanh( 1.0F ) | atanh( 1.0D ) | atanh( 1.0L ) | nonl;
+	sout | atanh( 1.0F+1.0FI ) | atanh( 1.0D+1.0DI ) | atanh( 1.0DL+1.0LI );
+
+	//---------------------- Error / Gamma ----------------------
+
+	sout | "erf:" | erf( 1.0F ) | erf( 1.0D ) | erf( 1.0L );
+	sout | "erfc:" | erfc( 1.0F ) | erfc( 1.0D ) | erfc( 1.0L );
+	sout | "lgamma:" | lgamma( 4.0F ) | lgamma( 4.0D ) | lgamma( 4.0L );
+	int sign;
+	f = lgamma( 4.0F, &sign );
+	sout | "lgamma:" | f | sign | nonl;
+	d = lgamma( 4.0D, &sign );
+	sout | d | sign | nonl;
+	l = lgamma( 4.0L, &sign );
+	sout | l | sign;
+	sout | "tgamma:" | tgamma( 4.0F ) | tgamma( 4.0D ) | tgamma( 4.0L );
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa math3.cfa" //
+// End: //

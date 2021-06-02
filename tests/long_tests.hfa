@@ -1,0 +1,21 @@
+#pragma once
+
+#include <unistd.h>
+
+#if   defined(TEST_FOREVER)
+
+static unsigned long long __kick_count = 0;
+#if !defined(__kick_rate)
+#define __kick_rate 5000ul
+#endif
+
+#define TEST(x) 1
+#define KICK_WATCHDOG do { __kick_count++; if(__kick_count > __kick_rate) { write(STDOUT_FILENO, ".", 1); __kick_count = 0; } } while(0)
+
+
+#else
+
+#define TEST(x) x
+#define KICK_WATCHDOG
+
+#endif

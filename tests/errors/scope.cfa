@@ -1,0 +1,25 @@
+int thisIsAnError;
+int thisIsAnError;
+
+int thisIsNotAnError;
+float thisIsNotAnError;
+
+int thisIsAlsoNotAnError() {
+  int thisIsNotAnError;
+}
+
+int thisIsAlsoNotAnError( double x ) {
+}
+
+double thisIsStillNotAnError( double );
+double thisIsStillNotAnError( double );
+
+double butThisIsAnError( double ) {
+}
+
+double butThisIsAnError( double ) {
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

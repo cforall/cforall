@@ -1,0 +1,197 @@
+
+//                              -*- Mode: CFA -*-
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// mutex.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Fri May 25 01:37:11 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Dec  4 09:16:39 2019
+// Update Count     : 1
+//
+
+#define __cforall_thread__
+
+#include "mutex.hfa"
+
+#include "kernel_private.hfa"
+
+//-----------------------------------------------------------------------------
+// Locks
+
+// Exclusive lock - non-recursive
+// ---
+void ?{}(mutex_lock & this) {
+	this.lock{};
+	this.blocked_threads{};
+	this.is_locked = false;
+}
+
+void ^?{}(mutex_lock & this) {
+	// default
+}
+
+void lock(mutex_lock & this) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	if( is_locked ) {
+		append( blocked_threads, active_thread() );
+		unlock( lock );
+		park();
+	}
+	else {
+		is_locked = true;
+		unlock( lock );
+	}
+}
+
+bool try_lock(mutex_lock & this) with(this) {
+	bool ret = false;
+	lock( lock __cfaabi_dbg_ctx2 );
+	if( !is_locked ) {
+		ret = true;
+		is_locked = true;
+	}
+	unlock( lock );
+	return ret;
+}
+
+void unlock(mutex_lock & this) {
+	lock( this.lock __cfaabi_dbg_ctx2 );
+	this.is_locked = (this.blocked_threads != 0);
+	unpark(
+		pop_head( this.blocked_threads )
+	);
+	unlock( this.lock );
+}
+
+// Exclusive lock - non-recursive
+// ---
+void ?{}(recursive_mutex_lock & this) {
+	this.lock{};
+	this.blocked_threads{};
+	this.owner = 0p;
+	this.recursion_count = 0;
+}
+
+void ^?{}(recursive_mutex_lock & this) {
+	// default
+}
+
+void lock(recursive_mutex_lock & this) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	if( owner == 0p ) {
+		owner = active_thread();
+		recursion_count = 1;
+		unlock( lock );
+	}
+	else if( owner == active_thread() ) {
+		recursion_count++;
+		unlock( lock );
+	}
+	else {
+		append( blocked_threads, active_thread() );
+		unlock( lock );
+		park();
+	}
+}
+
+bool try_lock(recursive_mutex_lock & this) with(this) {
+	bool ret = false;
+	lock( lock __cfaabi_dbg_ctx2 );
+	if( owner == 0p ) {
+		owner = active_thread();
+		recursion_count = 1;
+		ret = true;
+	}
+	else if( owner == active_thread() ) {
+		recursion_count++;
+		ret = true;
+	}
+	unlock( lock );
+	return ret;
+}
+
+void unlock(recursive_mutex_lock & this) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	recursion_count--;
+	if( recursion_count == 0 ) {
+		$thread * thrd = pop_head( blocked_threads );
+		owner = thrd;
+		recursion_count = (thrd ? 1 : 0);
+		unpark( thrd );
+	}
+	unlock( lock );
+}
+
+//-----------------------------------------------------------------------------
+// Conditions
+void ?{}(condition_variable & this) {
+	this.blocked_threads{};
+}
+
+void ^?{}(condition_variable & this) {
+	// default
+}
+
+void notify_one(condition_variable & this) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	unpark(
+		pop_head( this.blocked_threads )
+	);
+	unlock( lock );
+}
+
+void notify_all(condition_variable & this) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	while(this.blocked_threads) {
+		unpark(
+			pop_head( this.blocked_threads )
+		);
+	}
+	unlock( lock );
+}
+
+void wait(condition_variable & this) {
+	lock( this.lock __cfaabi_dbg_ctx2 );
+	append( this.blocked_threads, active_thread() );
+	unlock( this.lock );
+	park();
+}
+
+forall(L & | is_lock(L))
+void wait(condition_variable & this, L & l) {
+	lock( this.lock __cfaabi_dbg_ctx2 );
+	append( this.blocked_threads, active_thread() );
+	unlock(l);
+	unlock(this.lock);
+	park();
+	lock(l);
+}
+
+//-----------------------------------------------------------------------------
+// Scopes
+forall(L & | is_lock(L))
+void lock_all  ( L * locks[], size_t count) {
+	// Sort locks based on addresses
+	__libcfa_small_sort(locks, count);
+
+	// Lock all
+	for(size_t i = 0; i < count; i++) {
+		L * l = locks[i];
+		lock( *l );
+	}
+}
+
+forall(L & | is_lock(L))
+void unlock_all( L * locks[], size_t count) {
+	// Lock all
+	for(size_t i = 0; i < count; i++) {
+		L * l = locks[i];
+		unlock( *l );
+	}
+}

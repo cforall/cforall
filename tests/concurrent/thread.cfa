@@ -1,0 +1,41 @@
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <locks.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+
+thread First  { semaphore* lock; };
+thread Second { semaphore* lock; };
+
+void ?{}( First  & this, semaphore & lock ) { ((thread&)this){ "Thread 1" }; this.lock = &lock; }
+void ?{}( Second & this, semaphore & lock ) { ((thread&)this){ "Thread 2" }; this.lock = &lock; }
+
+void main(First& this) {
+	for(int i = 0; i < 10; i++) {
+		sout | "First : Suspend No." | i + 1;
+		yield();
+	}
+	V(*this.lock);
+}
+
+void main(Second& this) {
+	P(*this.lock);
+	for(int i = 0; i < 10; i++) {
+		sout | "Second : Suspend No." | i + 1;
+		yield();
+	}
+}
+
+
+int main(int argc, char* argv[]) {
+	semaphore lock = { 0 };
+	sout | "User main begin";
+	{
+		processor p;
+		{
+			First  f = { lock };
+			Second s = { lock };
+		}
+	}
+	sout | "User main end";
+}

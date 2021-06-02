@@ -1,0 +1,89 @@
+struct S { int i; };
+void ?{}( S & s, int i ) { s.i = i; }
+int ?`mary( int );
+int ?`mary( S );
+[int] ?`mary( [int, int] );
+int & ?`jane( int & );
+int jack( int );
+
+int main() {
+	int a[3] = { 0, 0, 0 };
+	S s = { 3 }, * ps = &s;
+	[int] t = { 3 };
+	* [int] pt = &t;
+	int i = 1, j = 2;
+
+	// operators
+
+	!i;
+	~i;
+	+i;
+	-i;
+	*ps;
+	++ps;
+	--ps;
+	ps++;
+	ps--;
+
+	i + j;
+	i - j;
+	i * j;
+
+	i / j;
+	i % j;
+	i ^ j;
+	i & j;
+	i | j;
+	i < j;
+	i > j;
+	i = j;
+
+	i == j;
+	i != j;
+	i << j;
+	i >> j;
+	i <= j;
+	i >= j;
+	i && j;
+	i || j;
+	ps->i;
+
+	i *= j;
+	i /= j;
+	i %= j;
+	i += j;
+	i -= j;
+	i &= j;
+	i |= j;
+	i ^= j;
+	i <<= j;
+	i >>= j;
+
+	i ? i : j;
+
+	// postfix function call
+
+	(3 + 4)`mary;
+	({3 + 4;})`mary;
+	[3, 4]`mary;
+	3`mary;
+	a[0]`mary;
+	a[0]`mary`mary;
+	s{0}`mary;
+	a[3]`jane++;
+	jack(3)`mary;
+	s.i`mary;
+	t.0`mary;
+	s.[i]`mary;
+	ps->i`mary;
+	pt->0`mary;
+	ps->[i]`mary;
+	i++`mary;
+	i--`mary;
+	(S){2}`mary;
+	(S)@{2}`mary;
+
+	#if !defined(NO_COMPILED_PRAGMA)
+		#pragma message( "Compiled" )	// force non-empty .expect file
+	#endif
+} // main

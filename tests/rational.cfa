@@ -1,0 +1,100 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// rational.cfa -- test rational number package
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon Mar 28 08:43:12 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Feb  8 18:46:23 2020
+// Update Count     : 86
+//
+
+#include <rational.hfa>
+#include <limits.hfa>
+#include <stdlib.hfa>
+#include <fstream.hfa>
+
+typedef Rational(int) RatInt;
+double convert( int i ) { return (double)i; }			// used by narrow/widen
+int convert( double d ) { return (int)d; }
+
+int main() {
+	sout | "constructor";
+	RatInt a = { 3 }, b = { 4 }, c, d = 0, e = 1;
+	sout | a | b | c | d | e;
+
+	a = (RatInt){ 4, 8 };
+	b = (RatInt){ 5, 7 };
+	sout | a | b;
+	a = (RatInt){ -2, -3 };
+	b = (RatInt){ 3, -2 };
+	sout | a | b;
+	a = (RatInt){ -2, 3 };
+	b = (RatInt){ 3, 2 };
+	sout | a | b;
+
+	sout | "logical";
+	a = (RatInt){ -2 };
+	b = (RatInt){ -3, 2 };
+	sout | a | b;
+//	sout | a == 1; // FIX ME
+	sout | a != b;
+	sout | a <  b;
+	sout | a <= b;
+	sout | a >  b;
+	sout | a >= b;
+
+	sout | "arithmetic";
+	sout | a | b;
+	sout | a + b;
+	sout | a - b;
+	sout | a * b;
+	sout | a / b;
+//	sout | a \ 2 | b \ 2; // FIX ME
+//	sout | a \ -2 | b \ -2;
+
+	sout | "conversion";
+	a = (RatInt){ 3, 4 };
+	sout | widen( a );
+	a = (RatInt){ 1, 7 };
+	sout | widen( a );
+	a = (RatInt){ 355, 113 };
+	sout | widen( a );
+	sout | narrow( 0.75, 4 );
+	sout | narrow( 0.14285714285714, 16 );
+	sout | narrow( 3.14159265358979, 256 );
+
+	sout | "decompose";
+	int n, d;
+//	[n, d] = a;
+//	sout | a | n | d;
+
+	sout | "more tests";
+	RatInt x = { 1, 2 }, y = { 2 };
+	sout | x - y;
+	sout | x > y;
+	sout | x | numerator( x, 2 ) | x;
+	sout | y | denominator( y, -2 ) | y;
+
+	RatInt z = { 0, 5 };
+	sout | z;
+
+	sout | x | numerator( x, 0 ) | x;
+
+	x = (RatInt){ 1, MAX } + (RatInt){ 1, MAX };
+	sout | x;
+	x = (RatInt){ 3, MAX } + (RatInt){ 2, MAX };
+	sout | x;
+
+	sin | a | b;
+	sout | a | b;
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa rational.cfa" //
+// End: //

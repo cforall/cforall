@@ -1,0 +1,98 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// tupleFunction.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Tue Nov 15 17:24:32 2016
+// Last Modified By : Rob Schluntz
+// Last Modified On : Tue Nov 15 17:27:28 2016
+// Update Count     : 3
+//
+
+struct S {
+	int f1, f2;
+	char f3;
+	double f4;
+} v;
+
+[int] foo( [int, int, double, S] x ) {
+	printf("foo([%d, %d, %lg, {%d, %d, %c, %lg}])\n", x.0, x.1, x.2, x.3.[f1, f2, f3, f4]);
+	int a, b;
+	double c;
+	S d;
+	[a, b, c, d] = x;
+	[int, int, double, S] X = x;
+	printf("a=%d b=%d c=%lg d={%d, %d, %c, %lg}\n", a, b, c, d.[f1, f2, f3, f4]);
+	printf("X=[%d, %d, %lg, {%d, %d, %c, %lg}]\n", X.0, X.1, X.2, X.3.[f1, f2, f3, f4]);
+	return b;
+}
+
+[void] bar( [int, double, int] z ) {
+	printf("bar([%d, %lg, %d])\n", z);
+}
+
+[void] baz( int a, double b, int c ) {
+	printf("baz(%d, %lg, %d)\n", a, b, c);
+}
+
+[void] qux( [int, double] n, int m ) {
+	printf("qux([%d, %lg], %d)\n", n, m);
+}
+
+[int, double x, int] quux() {
+	return [3, 5.254, 4];
+}
+[[[int, double, int], [int, double]]] quuux() {
+	return [1, 2, 3, 4, 5];
+}
+
+int main() {
+	[int, double, int] x = [777, 2.76, 8675];
+	int x1 = 123, x3 = 456;
+	double x2 = 999.123;
+
+	printf("foo(...)=%d\n", foo(x1, x3, x2, (S){ 321, 654, 'Q', 3.14 }));
+
+	// call function with tuple parameter using tuple variable arg
+	bar(x);
+
+	// call function with tuple parameter using multiple values
+	bar(x1, x2, x3);
+
+	// call function with multiple parameters using tuple variable arg
+	baz(x);
+
+	// call function with multiple parameters using multiple args
+	baz(x1, x2, x3);
+
+	// call function with multiple parameters, one of which is a tuple using tuple variable arg
+	qux(x);
+
+	// call function with multiple parameters, one of which is a tuple using multiple args
+	qux(x1, x2, x3);
+
+	// call function with multiple return values and assign into a tuple variable
+	x = quux();
+	printf("x=[%d, %lg, %d]\n", x);
+
+	// call function with multiple return values and assign into a tuple expression
+	[x1, x2, x3] = quux();
+	printf("x1=%d x2=%lg x3=%d\n", x1, x2, x3);
+
+	// xxx - tuples of type parameters should come out as generic types?
+	// [x1, x2, x3] = ([(int)x1, (int)x2, (int)x3]) + ([(int)1, (int)2, (int)3]);
+	// ([(int)x1, (int)x2, (int)x3]) + ([(int)1, (int)2, (int)3]);
+	// printf("%d %g %d\n", x1, x2, x3);
+
+	// xxx - comes out the back as a cast, but should come out as a tuple expression of the first n fields cast to each of the result types
+	// ([int, double])x;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //
+

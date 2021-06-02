@@ -1,0 +1,77 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// io1.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Mar  2 16:56:02 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Feb 21 10:07:07 2021
+// Update Count     : 119
+//
+
+#include <fstream.hfa>
+
+int main() {
+	sout | nlOff;										// auto nl off
+
+	sout | "opening delimiters" | nl;
+	sout | "x (" | 1;
+	sout | "x [" | 2;
+	sout | "x {" | 3;
+	sout | "x =" | 4;
+	sout | "x $" | 5;
+	sout | "x £" | 6;
+	sout | "x ¥" | 7;
+	sout | "x ¡" | 8;
+	sout | "x ¿" | 9;
+	sout | "x «" | 10;
+	sout | nl | nl;
+
+	sout | "closing delimiters" | nl;
+	sout | 1 | ", x";
+	sout | 2 | ". x";
+	sout | 3 | "; x";
+	sout | 4 | "! x";
+	sout | 5 | "? x";
+	sout | 6 | "% x";
+	sout | 7 | "¢ x";
+	sout | 8 | "» x";
+	sout | 9 | ") x";
+	sout | 10 | "] x";
+	sout | 11 | "} x";
+	sout | nl | nl;
+
+	sout | "opening/closing delimiters" | nl;
+	sout | "x`" | 1 | "`x'" | 2;
+	sout | "'x\"" | 3 | "\"x:" | 4;
+	sout | ":x " | 5 | " x\t" | 6;
+	sout | "\tx\f" | 7 | "\fx\v" | 8;
+	sout | "\vx\n" | 9 | "\nx\r" | 10;
+	sout | "\rx";
+	sout | nl | nl;
+
+	sout | nlOn;										// auto nl on
+
+	sout | "override opening/closing delimiters";
+	sout | "x ( " | 1 | " ) x" | 2 | " , x" | 3 | " :x: " | 4;
+	sout | nl;
+
+	sout | "spacing";
+	sout | 0 | 1 | 2 | 3;
+	sout | '0' | '1' | '2' | '3';
+	sout | 0 | "" | 1 | "" | 2 | "" | 3;
+	sout | nl;
+
+	sout | "expressions";
+	int x = 3, y = 5, z = 7;
+	sout | x * 3 | y + 1 | z << 2 | x == y | (x | y) | (x || y) | (x > z ? 1 : 2);
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa io1.cfa" //
+// End: //

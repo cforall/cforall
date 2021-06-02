@@ -1,0 +1,11 @@
+extern "C" { static inline int invoke_main(int argc, char* argv[], char* envp[]); }
+int cfa_args_argc;
+char ** cfa_args_argv;
+char ** cfa_args_envp;
+
+int main(int argc, char* argv[], char* envp[]) {
+	cfa_args_argc = argc;
+	cfa_args_argv = argv;
+	cfa_args_envp = envp;
+	return invoke_main(argc, argv, envp);
+}

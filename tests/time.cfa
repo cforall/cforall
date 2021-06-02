@@ -1,0 +1,81 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// time.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Mar 27 17:24:56 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Apr 16 14:59:53 2021
+// Update Count     : 38
+//
+
+#include "time.hfa"
+#include <fstream.hfa>
+
+int main() {
+	Duration d1 = 3`h, d2 = 2`s, d3 = 3.375`s, d4 = 12`s, d5 = 1`s + 10_000`ns;
+	sout | d1 | d2 | d3 | d4 | d5;
+	sout | d1`dd | d2`dm | d3`ds | d4`dms | d5`dus;
+	d1 = 0;
+	sout | d1 | d2 | d3;
+	d1 = 7`s;
+	d3 = d2 = d1;
+	sout | d1 | d2 | d3;
+	d1 = d1 + d2;
+	sout | d1;
+	sout | d1 == 7`s | d1 == d2 | d1 == 0;
+	sout | div( 7`s, 2`s );
+	sout | nl;
+
+	Time t = { 1970, 1, 2, 0, 0, 0, 10_000_000 };
+	sout | t;
+	t = t + d1;
+	sout | t | t`ns;
+	Time t1 = (timespec){ 104_414, 10_000_000 };
+	sout | t1 | t1`ns;
+	sout | t - t  | t + d5 | t`ns;
+	char buf[64];
+	sout | "yy/mm/dd" | [t, buf]`ymd | nonl;			// shared buf => separate calls
+	sout | "mm/dd/yy" | mm_dd_yy( t, buf ) | nonl;
+	strftime( buf, 16, "%D", t );						// %D => mm/dd/yy
+	sout | "mm/dd/yy" | buf | nonl;
+	sout | "dd/yy/mm" | [t, buf]`dmy;
+	Time t2 = { 2001, 7, 4, 0, 0, 1, 0 }, t3 = (timeval){ 994_219_201 };
+	sout | t2 | t2`ns | nl | t3 | t3`ns;
+	sout | nl;
+
+	// Clock Newfoundland = { -3.5`h }, PST = { -8`h };	// distance from GMT (UTC)
+	// sout | "Clock Resolution" | getRes()
+	// 	 | "Newfoundland" | getTime( Newfoundland )
+	// 	 | "local" | getTime()
+	// 	 | "local nsec" | timeHiRes()
+	// 	 | "PST" | PST();								// getTime short form
+	// sout | nl;
+
+	// http://en.cppreference.com/w/cpp/chrono/duration/operator_arith4
+	Duration s = 1`h + 2 * 10`m + 70`s / 10;
+	sout | "1 hour + 2*10 min + 70/10 sec = " | s | "seconds";
+	sout | "Dividing that by 2 minutes gives" | s / 2`m;
+	sout | "Dividing that by 2 gives" | s / 2 | "seconds";
+	sout | s | "seconds is" | s`h | "hours," | (s % 1`h)`m | "minutes," | (s % 1`m)`s | "seconds";
+
+    t1 = (Time){ 2020, 1, 5, 9, 0, 0, 100000000000LL };
+    t2 = (Time){ 1969, 13, 5, 9 };
+    t3 = (Time){ 1970, 25, 366, 48, 120, -120, 60000000000LL };
+    strftime( buf, 128, "%Y %b %e %H:%M:%S (GMT)", t1 );
+    sout | buf;
+    strftime( buf, 128, "%Y %b %e %H:%M:%S (GMT)", t2 );
+    sout | buf;
+    strftime( buf, 128, "%Y %b %e %H:%M:%S (GMT)", t3 );
+    sout | buf;
+} // main
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// compile-command: "cfa time.cfa" //
+// End: //

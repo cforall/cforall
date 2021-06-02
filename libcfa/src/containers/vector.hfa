@@ -1,0 +1,168 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// vector --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Jul  5 18:00:07 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Jun 17 11:02:46 2020
+// Update Count     : 4
+//
+
+#pragma once
+
+#include <stdbool.h>
+
+//------------------------------------------------------------------------------
+//Allocator
+forall(T)
+struct heap_allocator
+{
+	T* storage;
+	size_t capacity;
+};
+
+forall(T)
+void ?{}(heap_allocator(T)& this);
+
+forall(T)
+void ?{}(heap_allocator(T)& this, heap_allocator(T) rhs);
+
+forall(T)
+heap_allocator(T) ?=?(heap_allocator(T)& this, heap_allocator(T) rhs);
+
+forall(T)
+void ^?{}(heap_allocator(T)& this);
+
+forall(T)
+void realloc_storage(heap_allocator(T)* this, size_t size);
+
+forall(T)
+static inline T* data(heap_allocator(T)* this)
+{
+	return this->storage;
+}
+
+//------------------------------------------------------------------------------
+//Declaration
+trait allocator_c(T, allocator_t)
+{
+	void realloc_storage(allocator_t*, size_t);
+	T* data(allocator_t*);
+};
+
+forall(T, allocator_t = heap_allocator(T) | allocator_c(T, allocator_t))
+struct vector;
+
+//------------------------------------------------------------------------------
+//Initialization
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void ?{}(vector(T, allocator_t)& this);
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void ?{}(vector(T, allocator_t)& this, vector(T, allocator_t) rhs);
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+vector(T, allocator_t) ?=?(vector(T, allocator_t)& this, vector(T, allocator_t) rhs);
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void ^?{}(vector(T, allocator_t)& this);
+
+forall(T, allocator_t = heap_allocator(T) | allocator_c(T, allocator_t))
+struct vector
+{
+	allocator_t storage;
+	size_t size;
+};
+
+//------------------------------------------------------------------------------
+//Capacity
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline bool empty(vector(T, allocator_t)* this)
+{
+	return this->size == 0;
+}
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline size_t size(vector(T, allocator_t)* this)
+{
+	return this->size;
+}
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline void reserve(vector(T, allocator_t)* this, size_t size)
+{
+	realloc_storage(&this->storage, this->size+1);
+}
+
+//------------------------------------------------------------------------------
+//Element access
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline T at(vector(T, allocator_t)* this, size_t index)
+{
+	return data(&this->storage)[index];
+}
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline T ?[?](vector(T, allocator_t)* this, size_t index)
+{
+	return data(&this->storage)[index];
+}
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline T front(vector(T, allocator_t)* this)
+{
+	return data(&this->storage)[0];
+}
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline T back(vector(T, allocator_t)* this)
+{
+	return data(&this->storage)[this->size - 1];
+}
+
+//------------------------------------------------------------------------------
+//Modifiers
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void push_back(vector(T, allocator_t)* this, T value);
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void pop_back(vector(T, allocator_t)* this);
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void clear(vector(T, allocator_t)* this);
+
+//------------------------------------------------------------------------------
+//Iterators
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline T* begin(vector(T, allocator_t)* this)
+{
+	return data(&this->storage);
+}
+
+// forall(T, allocator_t | allocator_c(T, allocator_t))
+// static inline const T* cbegin(const vector(T, allocator_t)* this)
+// {
+// 	return data(&this->storage);
+// }
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+static inline T* end(vector(T, allocator_t)* this)
+{
+	return data(&this->storage) + this->size;
+}
+
+// forall(T, allocator_t | allocator_c(T, allocator_t))
+// static inline const T* cend(const vector(T, allocator_t)* this)
+// {
+// 	return data(&this->storage) + this->size;
+// }
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

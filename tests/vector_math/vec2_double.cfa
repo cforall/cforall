@@ -1,0 +1,12 @@
+#include <vec/vec2.hfa>
+#include <fstream.hfa>
+#include <limits.hfa>
+
+int main(void) {
+    vec2(double) v1 = {(double)MAX,(double)MIN};
+    sout | "ctor(x,y):" | v1;
+
+    vec2(double) v2 = {3.4144423, -1.2342315};
+    vec2(double) v3 = {100.23125123, 14.23};
+    sout | "dot(v2,v3):" | dot(v2, v3);
+}

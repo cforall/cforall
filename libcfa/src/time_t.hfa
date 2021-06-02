@@ -1,0 +1,41 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2018 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// time_t.hfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Apr 10 14:42:03 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Jan  5 08:22:46 2020
+// Update Count     : 7
+//
+
+#pragma once
+
+
+//######################### Duration #########################
+
+struct Duration {										// private
+	int64_t tn;											// nanoseconds
+}; // Duration
+
+static inline void ?{}( Duration & dur ) with( dur ) { tn = 0; }
+static inline void ?{}( Duration & dur, __attribute__((unused)) zero_t ) with( dur ) { tn = 0; }
+
+
+//######################### Time #########################
+
+struct Time {											// private
+	uint64_t tn;										// nanoseconds since UNIX epoch
+}; // Time
+
+static inline void ?{}( Time & time ) with( time ) { tn = 0; }
+static inline void ?{}( Time & time, __attribute__((unused)) zero_t ) with( time ) { tn = 0; }
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

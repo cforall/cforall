@@ -1,0 +1,156 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// limits.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Apr  6 18:06:52 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Mar  1 16:22:51 2018
+// Update Count     : 74
+//
+
+#include <limits.h>
+#include <float.h>
+#define __USE_GNU										// get M_* constants
+#include <math.h>
+#include <complex.h>
+#include "limits.hfa"
+
+// Integral Constants
+
+const signed char MIN = SCHAR_MIN;
+const unsigned char MIN = 0;
+const short int MIN = SHRT_MIN;
+const unsigned short int MIN = 0;
+const int MIN = INT_MIN;
+const unsigned int MIN = 0;
+const long int MIN = LONG_MIN;
+const unsigned long int MIN = 0;
+const long long int MIN = LLONG_MIN;
+const unsigned long long int MIN = 0;
+
+const signed char MAX = SCHAR_MAX;
+const unsigned char MAX = UCHAR_MAX;
+const short int MAX = SHRT_MAX;
+const unsigned short int MAX = USHRT_MAX;
+const int MAX = INT_MAX;
+const unsigned int MAX = UINT_MAX;
+const long int MAX = LONG_MAX;
+const unsigned long int MAX = ULONG_MAX;
+const long long int MAX = LLONG_MAX;
+const unsigned long long int MAX = ULLONG_MAX;
+
+// Floating-Point Constants
+
+const float MIN = FLT_MIN;
+const double MIN = DBL_MIN;
+const long double MIN = LDBL_MIN;
+const float _Complex MIN = __FLT_MIN__ + __FLT_MIN__ * I;
+const double _Complex MIN = DBL_MIN +  DBL_MIN * I;
+const long double _Complex MIN = LDBL_MIN + LDBL_MIN * I;
+
+const float MAX = FLT_MAX;
+const double MAX = DBL_MAX;
+const long double MAX = LDBL_MAX;
+const float _Complex MAX = FLT_MAX + FLT_MAX * I;
+const double _Complex MAX = DBL_MAX + DBL_MAX * I;
+const long double _Complex MAX = LDBL_MAX + LDBL_MAX * I;
+
+const float PI = (float)M_PI;							// pi
+const float PI_2 = (float)M_PI_2;						// pi / 2
+const float PI_4 = (float)M_PI_4;						// pi / 4
+const float _1_PI = (float)M_1_PI;						// 1 / pi
+const float _2_PI = (float)M_2_PI;						// 2 / pi
+const float _2_SQRT_PI = (float)M_2_SQRTPI;				// 2 / sqrt(pi)
+
+const double PI = M_PI;									// pi
+const double PI_2 = M_PI_2;								// pi / 2
+const double PI_4 = M_PI_4;								// pi / 4
+const double _1_PI = M_1_PI;							// 1 / pi
+const double _2_PI = M_2_PI;							// 2 / pi
+const double _2_SQRT_PI = M_2_SQRTPI;					// 2 / sqrt(pi)
+
+const long double PI = M_PIl;							// pi
+const long double PI_2 = M_PI_2l;						// pi / 2
+const long double PI_4 = M_PI_4l;						// pi / 4
+const long double _1_PI = M_1_PIl;						// 1 / pi
+const long double _2_PI = M_2_PIl;						// 2 / pi
+const long double _2_SQRT_PI = M_2_SQRTPIl;				// 2 / sqrt(pi)
+
+const float _Complex PI = (float)M_PI + 0.0_iF;			// pi
+const float _Complex PI_2 = (float)M_PI_2 + 0.0_iF;		// pi / 2
+const float _Complex PI_4 = (float)M_PI_4 + 0.0_iF;		// pi / 4
+const float _Complex _1_PI = (float)M_1_PI + 0.0_iF;	// 1 / pi
+const float _Complex _2_PI = (float)M_2_PI + 0.0_iF;	// 2 / pi
+const float _Complex _2_SQRT_PI = (float)M_2_SQRTPI + 0.0_iF; // 2 / sqrt(pi)
+
+const double _Complex PI = M_PI + 0.0_iD;				// pi
+const double _Complex PI_2 = M_PI_2 + 0.0_iD;			// pi / 2
+const double _Complex PI_4 = M_PI_4 + 0.0_iD;			// pi / 4
+const double _Complex _1_PI = M_1_PI + 0.0_iD;			// 1 / pi
+const double _Complex _2_PI = M_2_PI + 0.0_iD;			// 2 / pi
+const double _Complex _2_SQRT_PI = M_2_SQRTPI + 0.0_iD;	// 2 / sqrt(pi)
+
+const long double _Complex PI = M_PIl + 0.0_iL;			// pi
+const long double _Complex PI_2 = M_PI_2l + 0.0_iL;		// pi / 2
+const long double _Complex PI_4 = M_PI_4l + 0.0_iL;		// pi / 4
+const long double _Complex _1_PI = M_1_PIl + 0.0_iL;	// 1 / pi
+const long double _Complex _2_PI = M_2_PIl + 0.0_iL;	// 2 / pi
+const long double _Complex _2_SQRT_PI = M_2_SQRTPIl + 0.0_iL; // 2 / sqrt(pi)
+
+const float E = (float)M_E;								// e
+const float LOG2_E = (float)M_LOG2E;					// log_2(e)
+const float LOG10_E = (float)M_LOG10E;					// log_10(e)
+const float LN_2 = (float)M_LN2;						// log_e(2)
+const float LN_10 = (float)M_LN10;						// log_e(10)
+const float SQRT_2 = (float)M_SQRT2;					// sqrt(2)
+const float _1_SQRT_2 = (float)M_SQRT1_2;				// 1 / sqrt(2)
+
+const double E = M_E;									// e
+const double LOG2_E = M_LOG2E;							// log_2(e)
+const double LOG10_E = M_LOG10E;						// log_10(e)
+const double LN_2 = M_LN2;								// log_e(2)
+const double LN_10 = M_LN10;							// log_e(10)
+const double SQRT_2 = M_SQRT2;							// sqrt(2)
+const double _1_SQRT_2 = M_SQRT1_2;						// 1 / sqrt(2)
+
+const long double E = M_El;								// e
+const long double LOG2_E = M_LOG2El;					// log_2(e)
+const long double LOG10_E = M_LOG10El;					// log_10(e)
+const long double LN_2 = M_LN2l;						// log_e(2)
+const long double LN_10 = M_LN10l;						// log_e(10)
+const long double SQRT_2 = M_SQRT2l;					// sqrt(2)
+const long double _1_SQRT_2 = M_SQRT1_2l;				// 1 / sqrt(2)
+
+const float _Complex E = M_E + 0.0_iF;					// e
+const float _Complex LOG2_E = M_LOG2E + 0.0_iF;			// log_2(e)
+const float _Complex LOG10_E = M_LOG10E + 0.0_iF;		// log_10(e)
+const float _Complex LN_2 = M_LN2 + 0.0_iF;				// log_e(2)
+const float _Complex LN_10 = M_LN10 + 0.0_iF;			// log_e(10)
+const float _Complex SQRT_2 = M_SQRT2 + 0.0_iF;			// sqrt(2)
+const float _Complex _1_SQRT_2 = M_SQRT1_2 + 0.0_iF;	// 1 / sqrt(2)
+
+const double _Complex E = M_E + 0.0_iD;					// e
+const double _Complex LOG2_E = M_LOG2E + 0.0_iD;		// log_2(e)
+const double _Complex LOG10_E = M_LOG10E + 0.0_iD;		// log_10(e)
+const double _Complex LN_2 = M_LN2 + 0.0_iD;			// log_e(2)
+const double _Complex LN_10 = M_LN10 + 0.0_iD;			// log_e(10)
+const double _Complex SQRT_2 = M_SQRT2 + 0.0_iD;		// sqrt(2)
+const double _Complex _1_SQRT_2 = M_SQRT1_2 + 0.0_iD;	// 1 / sqrt(2)
+
+const long double _Complex E = M_El + 0.0_iL;			// e
+const long double _Complex LOG2_E = M_LOG2El + 0.0_iL;	// log_2(e)
+const long double _Complex LOG10_E = M_LOG10El + 0.0_iL; // log_10(e)
+const long double _Complex LN_2 = M_LN2l + 0.0_iL;		// log_e(2)
+const long double _Complex LN_10 = M_LN10l + 0.0_iL;	// log_e(10)
+const long double _Complex SQRT_2 = M_SQRT2l + 0.0_iL;	// sqrt(2)
+const long double _Complex _1_SQRT_2 = M_SQRT1_2l + 0.0_iL; // 1 / sqrt(2)
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

@@ -1,0 +1,409 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// locks.hfa -- LIBCFATHREAD
+// Runtime locks that used with the runtime thread system.
+//
+// Author           : Colby Alexander Parsons
+// Created On       : Thu Jan 21 19:46:50 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#define __cforall_thread__
+
+#include "locks.hfa"
+#include "kernel_private.hfa"
+
+#include <kernel.hfa>
+#include <stdlib.hfa>
+
+//-----------------------------------------------------------------------------
+// info_thread
+forall(L & | is_blocking_lock(L)) {
+	struct info_thread {
+		// used to put info_thread on a dl queue (aka sequence)
+		inline Seqable;
+
+		// waiting thread
+		struct $thread * t;
+
+		// shadow field
+		uintptr_t info;
+
+		// lock that is passed to wait() (if one is passed)
+		L * lock;
+
+		// true when signalled and false when timeout wakes thread
+		bool signalled;
+	};
+
+	void ?{}( info_thread(L) & this, $thread * t, uintptr_t info, L * l ) {
+		((Seqable &) this){};
+		this.t = t;
+		this.info = info;
+		this.lock = l;
+	}
+
+	void ^?{}( info_thread(L) & this ) {}
+
+	info_thread(L) *& Back( info_thread(L) * this ) {
+		return (info_thread(L) *)Back( (Seqable *)this );
+	}
+
+	info_thread(L) *& Next( info_thread(L) * this ) {
+		return (info_thread(L) *)Next( (Colable *)this );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Blocking Locks
+void ?{}( blocking_lock & this, bool multi_acquisition, bool strict_owner ) {
+	this.lock{};
+	this.blocked_threads{};
+	this.wait_count = 0;
+	this.multi_acquisition = multi_acquisition;
+	this.strict_owner = strict_owner;
+	this.owner = 0p;
+	this.recursion_count = 0;
+}
+
+void ^?{}( blocking_lock & this ) {}
+
+
+void lock( blocking_lock & this ) with( this ) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	$thread * thrd = active_thread();
+
+	// single acquisition lock is held by current thread
+	/* paranoid */ verifyf( owner != thrd || multi_acquisition, "Single acquisition lock holder (%p) attempted to reacquire the lock %p resulting in a deadlock.", owner, &this );
+
+	// lock is held by some other thread
+	if ( owner != 0p && owner != thrd ) {
+		addTail( blocked_threads, *thrd );
+		wait_count++;
+		unlock( lock );
+		park( );
+	}
+	// multi acquisition lock is held by current thread
+	else if ( owner == thrd && multi_acquisition ) {
+		recursion_count++;
+		unlock( lock );
+	}
+	// lock isn't held
+	else {
+		owner = thrd;
+		recursion_count = 1;
+		unlock( lock );
+	}
+}
+
+bool try_lock( blocking_lock & this ) with( this ) {
+	bool ret = false;
+	lock( lock __cfaabi_dbg_ctx2 );
+
+	// lock isn't held
+	if ( owner == 0p ) {
+		owner = active_thread();
+		recursion_count = 1;
+		ret = true;
+	}
+	// multi acquisition lock is held by current thread
+	else if ( owner == active_thread() && multi_acquisition ) {
+		recursion_count++;
+		ret = true;
+	}
+
+	unlock( lock );
+	return ret;
+}
+
+void pop_and_set_new_owner( blocking_lock & this ) with( this ) {
+	$thread * t = &dropHead( blocked_threads );
+	owner = t;
+	recursion_count = ( t ? 1 : 0 );
+	wait_count--;
+	unpark( t );
+}
+
+void unlock( blocking_lock & this ) with( this ) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	/* paranoid */ verifyf( owner != 0p, "Attempt to release lock %p that isn't held", &this );
+	/* paranoid */ verifyf( owner == active_thread() || !strict_owner , "Thread %p other than the owner %p attempted to release owner lock %p", owner, active_thread(), &this );
+	/* paranoid */ verifyf( recursion_count == 1 || multi_acquisition, "Thread %p attempted to release owner lock %p which is not recursive but has a recursive count of %zu", active_thread(), &this, recursion_count );
+
+	// if recursion count is zero release lock and set new owner if one is waiting
+	recursion_count--;
+	if ( recursion_count == 0 ) {
+		pop_and_set_new_owner( this );
+	}
+	unlock( lock );
+}
+
+size_t wait_count( blocking_lock & this ) with( this ) {
+	return wait_count;
+}
+
+void on_notify( blocking_lock & this, $thread * t ) with( this ) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	// lock held
+	if ( owner != 0p ) {
+		addTail( blocked_threads, *t );
+		wait_count++;
+		unlock( lock );
+	}
+	// lock not held
+	else {
+		owner = t;
+		recursion_count = 1;
+		unpark( t );
+		unlock( lock );
+	}
+}
+
+size_t on_wait( blocking_lock & this ) with( this ) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	/* paranoid */ verifyf( owner != 0p, "Attempt to release lock %p that isn't held", &this );
+	/* paranoid */ verifyf( owner == active_thread() || !strict_owner, "Thread %p other than the owner %p attempted to release owner lock %p", owner, active_thread(), &this );
+
+	size_t ret = recursion_count;
+
+	pop_and_set_new_owner( this );
+	unlock( lock );
+	return ret;
+}
+
+void on_wakeup( blocking_lock & this, size_t recursion ) with( this ) {
+	recursion_count = recursion;
+}
+
+//-----------------------------------------------------------------------------
+// alarm node wrapper
+forall(L & | is_blocking_lock(L)) {
+	struct alarm_node_wrap {
+		alarm_node_t alarm_node;
+		condition_variable(L) * cond;
+		info_thread(L) * info_thd;
+	};
+
+	void ?{}( alarm_node_wrap(L) & this, Duration alarm, Duration period, Alarm_Callback callback, condition_variable(L) * c, info_thread(L) * i ) {
+		this.alarm_node{ callback, alarm, period };
+		this.cond = c;
+		this.info_thd = i;
+	}
+
+	void ^?{}( alarm_node_wrap(L) & this ) { }
+
+	void timeout_handler ( alarm_node_wrap(L) & this ) with( this ) {
+		// This condition_variable member is called from the kernel, and therefore, cannot block, but it can spin.
+		lock( cond->lock __cfaabi_dbg_ctx2 );
+
+		// this check is necessary to avoid a race condition since this timeout handler
+		// 	may still be called after a thread has been removed from the queue but
+		// 	before the alarm is unregistered
+		if ( listed(info_thd) ) {	// is thread on queue
+			info_thd->signalled = false;
+			// remove this thread O(1)
+			remove( cond->blocked_threads, *info_thd );
+			cond->count--;
+			if( info_thd->lock ) {
+				// call lock's on_notify if a lock was passed
+				on_notify(*info_thd->lock, info_thd->t);
+			} else {
+				// otherwise wake thread
+				unpark( info_thd->t );
+			}
+		}
+		unlock( cond->lock );
+	}
+
+	// this casts the alarm node to our wrapped type since we used type erasure
+	void alarm_node_wrap_cast( alarm_node_t & a ) { timeout_handler( (alarm_node_wrap(L) &)a ); }
+}
+
+//-----------------------------------------------------------------------------
+// condition variable
+forall(L & | is_blocking_lock(L)) {
+
+	void ?{}( condition_variable(L) & this ){
+		this.lock{};
+		this.blocked_threads{};
+		this.count = 0;
+	}
+
+	void ^?{}( condition_variable(L) & this ){ }
+
+	void process_popped( condition_variable(L) & this, info_thread(L) & popped ) with( this ) {
+		if(&popped != 0p) {
+			popped.signalled = true;
+			count--;
+			if (popped.lock) {
+				// if lock passed call on_notify
+				on_notify(*popped.lock, popped.t);
+			} else {
+				// otherwise wake thread
+				unpark(popped.t);
+			}
+		}
+	}
+
+	bool notify_one( condition_variable(L) & this ) with( this ) {
+		lock( lock __cfaabi_dbg_ctx2 );
+		bool ret = !empty(blocked_threads);
+		process_popped(this, dropHead( blocked_threads ));
+		unlock( lock );
+		return ret;
+	}
+
+	bool notify_all( condition_variable(L) & this ) with(this) {
+		lock( lock __cfaabi_dbg_ctx2 );
+		bool ret = !empty(blocked_threads);
+		while( !empty(blocked_threads) ) {
+			process_popped(this, dropHead( blocked_threads ));
+		}
+		unlock( lock );
+		return ret;
+	}
+
+	uintptr_t front( condition_variable(L) & this ) with(this) {
+		return empty(blocked_threads) ? NULL : head(blocked_threads).info;
+	}
+
+	bool empty( condition_variable(L) & this ) with(this) {
+		lock( lock __cfaabi_dbg_ctx2 );
+		bool ret = empty(blocked_threads);
+		unlock( lock );
+		return ret;
+	}
+
+	int counter( condition_variable(L) & this ) with(this) { return count; }
+
+	size_t queue_and_get_recursion( condition_variable(L) & this, info_thread(L) * i ) with(this) {
+		// add info_thread to waiting queue
+		addTail( blocked_threads, *i );
+		count++;
+		size_t recursion_count = 0;
+		if (i->lock) {
+			// if lock was passed get recursion count to reset to after waking thread
+			recursion_count = on_wait( *i->lock );
+		}
+		return recursion_count;
+	}
+
+	// helper for wait()'s' with no timeout
+	void queue_info_thread( condition_variable(L) & this, info_thread(L) & i ) with(this) {
+		lock( lock __cfaabi_dbg_ctx2 );
+		size_t recursion_count = queue_and_get_recursion(this, &i);
+		unlock( lock );
+
+		// blocks here
+		park( );
+
+		// resets recursion count here after waking
+		if (i.lock) on_wakeup(*i.lock, recursion_count);
+	}
+
+	#define WAIT( u, l ) \
+		info_thread( L ) i = { active_thread(), u, l }; \
+		queue_info_thread( this, i );
+
+	// helper for wait()'s' with a timeout
+	void queue_info_thread_timeout( condition_variable(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
+		lock( lock __cfaabi_dbg_ctx2 );
+		size_t recursion_count = queue_and_get_recursion(this, &info);
+		alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
+		register_self( &node_wrap.alarm_node );
+		unlock( lock );
+
+		// blocks here
+		park();
+
+		// unregisters alarm so it doesn't go off if this happens first
+		unregister_self( &node_wrap.alarm_node );
+
+		// resets recursion count here after waking
+		if (info.lock) on_wakeup(*info.lock, recursion_count);
+	}
+
+	#define WAIT_TIME( u, l, t ) \
+		info_thread( L ) i = { active_thread(), u, l }; \
+		queue_info_thread_timeout(this, i, t, alarm_node_wrap_cast ); \
+		return i.signalled;
+
+	void wait( condition_variable(L) & this                        ) with(this) { WAIT( 0, 0p    ) }
+	void wait( condition_variable(L) & this, uintptr_t info        ) with(this) { WAIT( info, 0p ) }
+	void wait( condition_variable(L) & this, L & l                 ) with(this) { WAIT( 0, &l    ) }
+	void wait( condition_variable(L) & this, L & l, uintptr_t info ) with(this) { WAIT( info, &l ) }
+
+	bool wait( condition_variable(L) & this, Duration duration                        ) with(this) { WAIT_TIME( 0   , 0p , duration ) }
+	bool wait( condition_variable(L) & this, uintptr_t info, Duration duration        ) with(this) { WAIT_TIME( info, 0p , duration ) }
+	bool wait( condition_variable(L) & this, L & l, Duration duration                 ) with(this) { WAIT_TIME( 0   , &l , duration ) }
+	bool wait( condition_variable(L) & this, L & l, uintptr_t info, Duration duration ) with(this) { WAIT_TIME( info, &l , duration ) }
+}
+
+//-----------------------------------------------------------------------------
+// Semaphore
+void  ?{}( semaphore & this, int count = 1 ) {
+	(this.lock){};
+	this.count = count;
+	(this.waiting){};
+}
+void ^?{}(semaphore & this) {}
+
+bool P(semaphore & this) with( this ){
+	lock( lock __cfaabi_dbg_ctx2 );
+	count -= 1;
+	if ( count < 0 ) {
+		// queue current task
+		append( waiting, active_thread() );
+
+		// atomically release spin lock and block
+		unlock( lock );
+		park();
+		return true;
+	}
+	else {
+	    unlock( lock );
+	    return false;
+	}
+}
+
+$thread * V (semaphore & this, const bool doUnpark ) with( this ) {
+	$thread * thrd = 0p;
+	lock( lock __cfaabi_dbg_ctx2 );
+	count += 1;
+	if ( count <= 0 ) {
+		// remove task at head of waiting list
+		thrd = pop_head( waiting );
+	}
+
+	unlock( lock );
+
+	// make new owner
+	if( doUnpark ) unpark( thrd );
+
+	return thrd;
+}
+
+bool V(semaphore & this) with( this ) {
+	$thread * thrd = V(this, true);
+	return thrd != 0p;
+}
+
+bool V(semaphore & this, unsigned diff) with( this ) {
+	$thread * thrd = 0p;
+	lock( lock __cfaabi_dbg_ctx2 );
+	int release = max(-count, (int)diff);
+	count += diff;
+	for(release) {
+		unpark( pop_head( waiting ) );
+	}
+
+	unlock( lock );
+
+	return thrd != 0p;
+}

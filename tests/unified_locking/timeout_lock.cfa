@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <locks.hfa>
+#include <alarm.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+#include <kernel.hfa>
+
+multiple_acquisition_lock m, n;
+condition_variable( multiple_acquisition_lock ) c_m, c_n;
+
+const unsigned int NoOfTimes = 20;
+
+void block() { // used for barrier like behaviour
+	lock(n);
+	if (empty( c_n )) {
+		wait( c_n, n );
+	} else {
+		notify_one( c_n );
+	}
+	unlock(n);
+}
+
+thread T1 {};
+
+void main( T1 & this ) {
+	lock(m);
+	wait( c_m, m, 1`s );
+	// printf("Thread: %p timedout\n", active_thread()); // removed since can't expect non deterministic output
+
+	block();
+
+	// Test calls which occur increasingly close to timeout value.
+
+	for ( unsigned int i = 0; i < NoOfTimes + 3; i += 1 ) {
+	    if ( wait( c_m, m, 1000000`ns ) ) {
+			// printf("Thread: %p signalled\n", active_thread()); // removed since can't expect non deterministic output
+	    } else {
+			// printf("Thread: %p timedout\n", active_thread()); // removed since can't expect non deterministic output
+	    } // if
+
+	    block();
+	} // for
+}
+
+
+thread T2 {};
+
+void main( T2 & this ) {
+	block();
+
+	// Test calls which occur increasingly close to timeout value.
+
+	sleep( 100000`ns );
+	notify_one(c_m);
+	block();
+
+	sleep( 500000`ns );
+	notify_one(c_m);
+	block();
+
+	sleep( 900000`ns );
+	notify_one(c_m);
+	block();
+
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+	    sleep( 999700`ns );
+		notify_one(c_m);
+	    block();
+	} // for
+}
+
+int main() {
+	processor p[2];
+	printf("Start Test 1: surface testing condition variable timeout routines\n");
+	wait( c_m, 1`ns );														// bool wait( condition_variable(L) & this, Duration duration );
+	wait( c_m, 10, 1`ns );													// bool wait( condition_variable(L) & this, uintptr_t info, Duration duration );
+	lock(m); wait( c_m, m, 1`ns ); unlock(m); 								// bool wait( condition_variable(L) & this, L & l, Duration duration );
+	lock(m); wait( c_m, m, 10, 1`ns ); unlock(m);							// bool wait( condition_variable(L) & this, L & l, uintptr_t info, Duration duration );
+	printf("Done Test 1\n");
+
+	printf("Start Test 2: testing timeout vs signalling with varying timeout durations\n");
+	{
+		T1 t1;
+		T2 t2;
+	}
+	printf("Done Test 2\n");
+}

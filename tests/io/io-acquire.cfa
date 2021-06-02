@@ -1,0 +1,70 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// io-acquire.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Mon Mar  1 18:40:09 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr 27 11:49:34 2021
+// Update Count     : 18
+// 
+
+#include <fstream.hfa>
+#include <thread.hfa>
+
+thread T {};
+void main( T & ) {
+	// output from parallel threads should not be scrambled
+
+	for ( 100 ) {										// local protection
+		sout | acquire | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+	}
+	{													// global protection (RAII)
+		osacquire acq = { sout };
+		for ( 100 ) {
+			sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+		}
+	}
+	{													// duplicate protection demonstrating recursive lock
+		osacquire acq = { sout };
+		for ( 100 ) {
+			osacquire acq = { sout };
+			sout | acquire | 1 | 2 | 3 | 4 | 5 | acquire | 6 | 7 | 8 | 9;
+			sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+		}
+	}
+
+	// above output used as input to parallel threads 
+
+	int a, b, c, d, e, f, g, h, i;
+	for ( 100 ) {										// local protection
+		sin | acquire | a | b | c | d | e | f | g | h | i;
+	}
+	{													// global protection (RAII)
+		isacquire acq = { sin };
+		for ( 100 ) {
+			sin  | a | b | c | d | e | f | g | h | i;
+		}
+	}
+	{													// duplicate protection demonstrating recursive lock
+		isacquire acq = { sin };
+		for ( 100 ) {
+			isacquire acq = { sin };
+			sin | acquire | a | b | c | d | e | acquire | f | g | h | i;
+			sin | a | b | c | d | e | f | g | h | i;
+		}
+	}
+}
+int main() {
+	processor p;
+	T t[5];
+} 
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa io-acquire.cfa" //
+// End: //

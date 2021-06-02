@@ -1,0 +1,85 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// debug.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Mar 30 12:30:01 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Jun 17 11:07:13 2020
+// Update Count     : 12
+//
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <unistd.h>
+
+enum { buffer_size = 4096 };
+static char buffer[ buffer_size ];
+
+extern "C" {
+	void __cfaabi_bits_write( int fd, const char in_buffer[], int len ) {
+		// ensure all data is written
+		for ( int count = 0, retcode; count < len; count += retcode ) {
+			in_buffer += count;
+
+			for ( ;; ) {
+				retcode = write( fd, in_buffer, len - count );
+
+				// not a timer interrupt ?
+				if ( retcode != -1 || errno != EINTR ) break;
+			}
+
+			if ( retcode == -1 ) _exit( EXIT_FAILURE );
+		}
+	}
+
+	void __cfaabi_bits_acquire() __attribute__((__weak__)) {}
+	void __cfaabi_bits_release() __attribute__((__weak__)) {}
+
+	void __cfaabi_bits_print_safe  ( int fd, const char fmt[], ... ) __attribute__(( format(printf, 2, 3) )) {
+		va_list args;
+
+		va_start( args, fmt );
+		__cfaabi_bits_acquire();
+
+		int len = vsnprintf( buffer, buffer_size, fmt, args );
+		__cfaabi_bits_write( fd, buffer, len );
+
+		__cfaabi_bits_release();
+		va_end( args );
+	}
+
+	void __cfaabi_bits_print_nolock( int fd, const char fmt[], ... ) __attribute__(( format(printf, 2, 3) )) {
+		va_list args;
+
+		va_start( args, fmt );
+
+		int len = vsnprintf( buffer, buffer_size, fmt, args );
+		__cfaabi_bits_write( fd, buffer, len );
+
+		va_end( args );
+	}
+
+	void __cfaabi_bits_print_vararg( int fd, const char fmt[], va_list args ) {
+		int len = vsnprintf( buffer, buffer_size, fmt, args );
+		__cfaabi_bits_write( fd, buffer, len );
+	}
+
+	void __cfaabi_bits_print_buffer( int fd, char in_buffer[], int in_buffer_size, const char fmt[], ... ) __attribute__(( format(printf, 4, 5) )) {
+		va_list args;
+
+		va_start( args, fmt );
+
+		int len = vsnprintf( in_buffer, in_buffer_size, fmt, args );
+		__cfaabi_bits_write( fd, in_buffer, len );
+
+		va_end( args );
+	}
+}

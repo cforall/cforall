@@ -1,0 +1,140 @@
+// Termination Exception Tests
+
+#include <exception.hfa>
+#include "except-io.hfa"
+
+EHM_EXCEPTION(yin)();
+EHM_EXCEPTION(yang)();
+EHM_EXCEPTION(zen)();
+
+EHM_VIRTUAL_TABLE(yin, yin_vt);
+EHM_VIRTUAL_TABLE(yang, yang_vt);
+EHM_VIRTUAL_TABLE(zen, zen_vt);
+
+void in_void(void);
+
+int main(int argc, char * argv[]) {
+	yin a_yin = {&yin_vt};
+	yang a_yang = {&yang_vt};
+	zen a_zen = {&zen_vt};
+
+	// The simple throw catch test.
+	try {
+		loud_exit a = "simple try clause";
+		printf("simple throw\n");
+		throw a_zen;
+		printf("end of try clause\n");
+	} catch (zen * error) {
+		loud_exit a = "simple catch clause";
+		printf("simple catch\n");
+	}
+	printf("\n");
+
+	// Throw catch-all test.
+	try {
+		throw a_zen;
+	} catch (exception_t * error) {
+		printf("catch-all\n");
+	}
+	printf("\n");
+
+	// Don't catch if handler does not match exception.
+	try {
+		try {
+			throw a_yin;
+		} catch (zen *) {
+			printf("caught yin as zen\n");
+		}
+	} catch (yang *) {
+		printf("caught yin as yang\n");
+	} catch (yin *) {
+		printf("caught yin as yin\n");
+	}
+	printf("\n");
+
+	// Test rethrowing an exception.
+	try {
+		try {
+			loud_exit a = "rethrow inner try";
+			printf("rethrow inner try\n");
+			throw a_zen;
+		} catch (zen *) {
+			loud_exit a = "rethrowing catch clause";
+			printf("caught throw, will rethrow\n");
+			throw;
+		}
+	} catch (zen *) {
+		loud_exit a = "rethrow catch clause";
+		printf("caught rethrow\n");
+	}
+	printf("\n");
+
+	// Throw a different exception in a catch.
+	try {
+		try {
+			throw a_yin;
+		} catch (yin *) {
+			printf("caught yin, will throw yang\n");
+			throw a_yang;
+		} catch (yang *) {
+			printf("caught exception from same try\n");
+		}
+	} catch (yang *) {
+		printf("caught yang\n");
+	}
+	printf("\n");
+
+	// Another throw in the catch does not interfere.
+	try {
+		try {
+			printf("throwing first exception\n");
+			throw a_yin;
+		} catch (yin *) {
+			printf("caught first exception\n");
+			try {
+				printf("throwing second exception\n");
+				throw a_yang;
+			} catch (yang *) {
+				printf("caught second exception\n");
+			}
+			throw;
+		}
+	} catch (yin *) {
+		printf("recaught first exception\n");
+	} catch (yang *) {
+		printf("caught second exception (bad location)\n");
+	}
+	printf("\n");
+
+	// Check successive operations.
+	try {
+		try {
+			throw a_zen;
+			throw a_zen;
+		} catch (zen *) {
+			printf("inner catch\n");
+		}
+		throw a_zen;
+	} catch (zen *) {
+		printf("outer catch\n");
+	}
+	printf("\n");
+
+	in_void();
+}
+
+// Do a throw and rethrow in a void function.
+void in_void(void) {
+	zen a_zen = {&zen_vt};
+	try {
+		try {
+			printf("throw\n");
+			throw a_zen;
+		} catch (zen *) {
+			printf("rethrow\n");
+			throw;
+		}
+	} catch (zen *) {
+		printf("handle\n");
+	}
+}

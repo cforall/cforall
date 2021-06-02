@@ -1,0 +1,48 @@
+#include "avl.h"
+#include "avl-private.h"
+
+// Perform a shallow copy of src, return the
+// new tree in ret
+forall(K | Comparable(K), V)
+int copy(tree(K, V) * src, tree(K, V) ** ret){
+  tree(K, V) * helper(tree(K, V) * t, int * worked){
+    if (empty(t)){
+      // given empty tree, return empty tree
+      return NULL;
+    }
+
+    // otherwise, this is not an empty node,
+    // create a new node
+    tree(K, V) * newTree = create(t->key, t->value);
+    if (empty(newTree)) {
+      *worked = 1;
+      return NULL;
+    }
+
+    // recursively copy the left and right branches
+    newTree->left = helper(t->left, worked);
+    newTree->right = helper(t->right, worked);
+
+    setParent(newTree->left, newTree);
+    setParent(newTree->right, newTree);
+    return newTree;
+  }
+
+  int worked = 0;
+  *ret = helper(src, &worked);
+  return worked;
+}
+
+// Apply func to every value element in t, using an in order traversal
+forall(K | Comparable(K), V)
+void for_each(tree(K, V) * t, int (*func)(V)) {
+  if (t == NULL) {
+    return;
+  }
+  // recursively apply the function to the left,
+  // apply the function to this node,
+  // recursively apply the function to the right
+  for_each(t->left, func);
+  func(t->value);
+  for_each(t->right, func);
+}

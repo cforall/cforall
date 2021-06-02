@@ -1,0 +1,264 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// mathX.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu May 24 20:56:54 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Feb 20 18:26:38 2021
+// Update Count     : 30
+//
+
+#include <fstream.hfa>
+#include <math.hfa>
+
+int main( void ) {
+	signed char sc, scr1, scr2, scr3;
+	unsigned char uc, ucr1, ucr2, ucr3;
+	short int si, sir1, sir2, sir3;
+	unsigned short int usi, usir1, usir2, usir3;
+	int i, ir1, ir2, ir3;
+	unsigned int ui, uir1, uir2, uir3;
+	long int li, lir1, lir2, lir3;
+	unsigned long int uli, ulir1, ulir2, ulir3;
+	long long int lli, llir1, llir2, llir3;
+	unsigned long long int ulli, ullir1, ullir2, ullir3;
+
+	float f;
+	double d;
+	long double l;
+
+	//---------------------- Nearest Integer ----------------------
+
+	//============================================================
+#if 1
+	sout | nl | "floor" | nl | nl;
+
+	sout | "signed char";
+	for ( sc = 1; sc != 0; sc <<= 1 ) {
+		scr1 = floor( sc, sc ); scr2 = floor( sc + 2hh, sc ); scr3 = floor( -sc - 2hh, sc );
+		sout | "floor(" | sc | ", " | sc | ") = " | scr1 | ", floor(" | sc + 2hh | ", " | sc | ") = " | scr2 | ", floor(" | -sc - 2hh | ", " | sc | ") = " | scr3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned char";
+	for ( uc = 1; uc != 0; uc <<= 1 ) {
+		ucr1 = floor( uc, uc ); ucr2 = floor( uc + 2uhh, uc ); ucr3 = floor( -uc - 2uhh, uc );
+		sout | "floor(" | uc | ", " | uc | ") = " | ucr1 | ", floor(" | uc + 2uhh | ", " | uc | ") = " | ucr2 | ", floor(" | -uc - 2uhh | ", " | uc | ") = " | ucr3;
+	} // for
+	sout | nl;
+
+	sout | "short int";
+	for ( si = 1; si != 0; si <<= 1 ) {
+		sir1 = floor( si, si ); sir2 = floor( si + 2h, si ); sir3 = floor( -si - 2h, si );
+		sout | "floor(" | si | ", " | si | ") = " | sir1 | ", floor(" | si + 2h | ", " | si | ") = " | sir2 | ", floor(" | -si - 2h | ", " | si | ") = " | sir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned short int";
+	for ( usi = 1; usi != 0; usi <<= 1 ) {
+		usir1 = floor( usi, usi ); usir2 = floor( usi + 2uh, usi ); usir3 = floor( -usi - 2uh, usi );
+		sout | "floor(" | usi | ", " | usi | ") = " | usir1 | ", floor(" | usi + 2uh | ", " | usi | ") = " | usir2 | ", floor(" | -usi - 2uh | ", " | usi | ") = " | usir3;
+	} // for
+	sout | nl;
+
+	sout | "int";
+	for ( i = 1; i != 0; i <<= 1 ) {
+		ir1 = floor( i, i ); ir2 = floor( i + 2n, i ); ir3 = floor( -i - 2n, i );
+		sout | "floor(" | i | ", " | i | ") = " | ir1 | ", floor(" | i + 2n | ", " | i | ") = " | ir2 | ", floor(" | -i - 2n | ", " | i | ") = " | ir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned int";
+	for ( ui = 1; ui != 0; ui <<= 1 ) {
+		uir1 = floor( ui, ui ); uir2 = floor( ui + 2un, ui ); uir3 = floor( -ui - 2un, ui );
+		sout | "floor(" | ui | ", " | ui | ") = " | uir1 | ", floor(" | ui + 2un | ", " | ui | ") = " | uir2 | ", floor(" | -ui - 2un | ", " | ui | ") = " | uir3;
+	} // for
+	sout | nl;
+
+	sout | "long int";
+	for ( li = 1; li != 0; li <<= 1 ) {
+		lir1 = floor( li, li ); lir2 = floor( li + 2l, li ); lir3 = floor( -li - 2l, li );
+		sout | "floor(" | li | ", " | li | ") = " | lir1 | ", floor(" | li + 2l | ", " | li | ") = " | lir2 | ", floor(" | -li - 2l | ", " | li | ") = " | lir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned long int";
+	for ( uli = 1; uli != 0; uli <<= 1 ) {
+		ulir1 = floor( uli, uli ); ulir2 = floor( uli + 2ul, uli ); ulir3 = floor( -uli - 2ul, uli );
+		sout | "floor(" | uli | ", " | uli | ") = " | ulir1 | ", floor(" | uli + 2ul | ", " | uli | ") = " | ulir2 | ", floor(" | -uli - 2ul | ", " | uli | ") = " | ulir3;
+	} // for
+	sout | nl;
+
+	sout | "long long int";
+	for ( lli = 1; lli != 0; lli <<= 1 ) {
+		llir1 = floor( lli, lli ); llir2 = floor( lli + 2ll, lli ); llir3 = floor( -lli - 2ll, lli );
+		sout | "floor(" | lli | ", " | lli | ") = " | llir1 | ", floor(" | lli + 2ll | ", " | lli | ") = " | llir2 | ", floor(" | -lli - 2ll | ", " | lli | ") = " | llir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned long long int";
+	for ( ulli = 1; ulli != 0; ulli <<= 1 ) {
+		ullir1 = floor( ulli, ulli ); ullir2 = floor( ulli + 2ull, ulli ); ullir3 = floor( -ulli - 2ull, ulli );
+		sout | "floor(" | ulli | ", " | ulli | ") = " | ullir1 | ", floor(" | ulli + 2ull | ", " | ulli | ") = " | ullir2 | ", floor(" | -ulli - 2ull | ", " | ulli | ") = " | ullir3;
+	} // for
+	sout | nl;
+#endif // 0
+	//============================================================
+#if 1
+	sout | nl | "ceiling_div" | nl | nl;
+
+	sout | "signed char";
+	for ( sc = 1; sc != 0; sc <<= 1 ) {
+		scr1 = ceiling_div( sc, sc ); scr2 = ceiling_div( sc + 2hh, sc ); scr3 = ceiling_div( -sc - 2hh, sc );
+		sout | "ceiling_div(" | sc | ", " | sc | ") = " | scr1 | ", ceiling_div(" | sc + 2hh | ", " | sc | ") = " | scr2 | ", ceiling_div(" | -sc - 2hh | ", " | sc | ") = " | scr3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned char";
+	for ( uc = 1; uc != 0; uc <<= 1 ) {
+		ucr1 = ceiling_div( uc, uc ); ucr2 = ceiling_div( uc + 2uhh, uc ); ucr3 = ceiling_div( -uc - 2uhh, uc );
+		sout | "ceiling_div(" | uc | ", " | uc | ") = " | ucr1 | ", ceiling_div(" | uc + 2uhh | ", " | uc | ") = " | ucr2 | ", ceiling_div(" | -uc - 2uhh | ", " | uc | ") = " | ucr3;
+	} // for
+	sout | nl;
+
+	sout | "short int";
+	for ( si = 1; si != 0; si <<= 1 ) {
+		sir1 = ceiling_div( si, si ); sir2 = ceiling_div( si + 2h, si ); sir3 = ceiling_div( -si - 2h, si );
+		sout | "ceiling_div(" | si | ", " | si | ") = " | sir1 | ", ceiling_div(" | si + 2h | ", " | si | ") = " | sir2 | ", ceiling_div(" | -si - 2h | ", " | si | ") = " | sir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned short int";
+	for ( usi = 1; usi != 0; usi <<= 1 ) {
+		usir1 = ceiling_div( usi, usi ); usir2 = ceiling_div( usi + 2h, usi ); usir3 = ceiling_div( -usi - 2h, usi );
+		sout | "ceiling_div(" | usi | ", " | usi | ") = " | usir1 | ", ceiling_div(" | usi + 2uh | ", " | usi | ") = " | usir2 | ", ceiling_div(" | -usi - 2uh | ", " | usi | ") = " | usir3;
+	} // for
+	sout | nl;
+
+	sout | "int";
+	for ( i = 1; i != 0; i <<= 1 ) {
+		ir1 = ceiling_div( i, i ); ir2 = ceiling_div( i + 2n, i ); ir3 = ceiling_div( -i - 2n, i );
+		sout | "ceiling_div(" | i | ", " | i | ") = " | ir1 | ", ceiling_div(" | i + 2n | ", " | i | ") = " | ir2 | ", ceiling_div(" | -i - 2n | ", " | i | ") = " | ir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned int";
+	for ( ui = 1; ui != 0; ui <<= 1 ) {
+		uir1 = ceiling_div( ui, ui ); uir2 = ceiling_div( ui + 2un, ui ); uir3 = ceiling_div( -ui - 2un, ui );
+		sout | "ceiling_div(" | ui | ", " | ui | ") = " | uir1 | ", ceiling_div(" | ui + 2un | ", " | ui | ") = " | uir2 | ", ceiling_div(" | -ui - 2un | ", " | ui | ") = " | uir3;
+	} // for
+	sout | nl;
+
+	sout | "long int";
+	for ( li = 1; li != 0; li <<= 1 ) {
+		lir1 = ceiling_div( li, li ); lir2 = ceiling_div( li + 2l, li ); lir3 = ceiling_div( -li - 2l, li );
+		sout | "ceiling_div(" | li | ", " | li | ") = " | lir1 | ", ceiling_div(" | li + 2l | ", " | li | ") = " | lir2 | ", ceiling_div(" | -li - 2l | ", " | li | ") = " | lir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned long int";
+	for ( uli = 1; uli != 0; uli <<= 1 ) {
+		ulir1 = ceiling_div( uli, uli ); ulir2 = ceiling_div( uli + 2ul, uli ); ulir3 = ceiling_div( -uli - 2ul, uli );
+		sout | "ceiling_div(" | uli | ", " | uli | ") = " | ulir1 | ", ceiling_div(" | uli + 2ul | ", " | uli | ") = " | ulir2 | ", ceiling_div(" | -uli - 2ul | ", " | uli | ") = " | ulir3;
+	} // for
+	sout | nl;
+
+	sout | "long long int";
+	for ( lli = 1; lli != 0; lli <<= 1 ) {
+		llir1 = ceiling_div( lli, lli ); llir2 = ceiling_div( lli + 2ll, lli ); llir3 = ceiling_div( -lli - 2ll, lli );
+		sout | "ceiling_div(" | lli | ", " | lli | ") = " | llir1 | ", ceiling_div(" | lli + 2ll | ", " | lli | ") = " | llir2 | ", ceiling_div(" | -lli - 2ll | ", " | lli | ") = " | llir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned long long int";
+	for ( ulli = 1; ulli != 0; ulli <<= 1 ) {
+		ullir1 = ceiling_div( ulli, ulli ); ullir2 = ceiling_div( ulli + 2ull, ulli ); ullir3 = ceiling_div( -ulli - 2ull, ulli );
+		sout | "ceiling_div(" | ulli | ", " | ulli | ") = " | ullir1 | ", ceiling_div(" | ulli + 2ull | ", " | ulli | ") = " | ullir2 | ", ceiling_div(" | -ulli - 2ull | ", " | ulli | ") = " | ullir3;
+	} // for
+	sout | nl;
+#endif // 0
+	//============================================================
+#if 1
+	sout | nl | "ceiling" | nl | nl;
+
+	sout | "signed char";
+	for ( sc = 1; sc != 0; sc <<= 1 ) {
+		scr1 = ceiling( sc, sc ); scr2 = ceiling( sc + 2hh, sc ); scr3 = ceiling( -sc - 2hh, sc );
+		sout | "ceiling(" | sc | ", " | sc | ") = " | scr1 | ", ceiling(" | sc + 2hh | ", " | sc | ") = " | scr2 | ", ceiling(" | -sc - 2hh | ", " | sc | ") = " | scr3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned char";
+	for ( uc = 1; uc != 0; uc <<= 1 ) {
+		ucr1 = ceiling( uc, uc ); ucr2 = ceiling( uc + 2uhh, uc ); ucr3 = ceiling( -uc - 2uhh, uc );
+		sout | "ceiling(" | uc | ", " | uc | ") = " | ucr1 | ", ceiling(" | uc + 2uhh | ", " | uc | ") = " | ucr2 | ", ceiling(" | -uc - 2uhh | ", " | uc | ") = " | ucr3;
+	} // for
+	sout | nl;
+
+	sout | "short int";
+	for ( si = 1; si != 0; si <<= 1 ) {
+		sir1 = ceiling( si, si ); sir2 = ceiling( si + 2h, si ); sir3 = ceiling( -si - 2h, si );
+		sout | "ceiling(" | si | ", " | si | ") = " | sir1 | ", ceiling(" | si + 2h | ", " | si | ") = " | sir2 | ", ceiling(" | -si - 2h | ", " | si | ") = " | sir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned short int";
+	for ( usi = 1; usi != 0; usi <<= 1 ) {
+		usir1 = ceiling( usi, usi ); usir2 = ceiling( usi + 2uh, usi ); usir3 = ceiling( -usi - 2uh, usi );
+		sout | "ceiling(" | usi | ", " | usi | ") = " | usir1 | ", ceiling(" | usi + 2uh | ", " | usi | ") = " | usir2 | ", ceiling(" | -usi - 2uh | ", " | usi | ") = " | usir3;
+	} // for
+	sout | nl;
+
+	sout | "int";
+	for ( i = 1; i != 0; i <<= 1 ) {
+		ir1 = ceiling( i, i ); ir2 = ceiling( i + 2n, i ); ir3 = ceiling( -i - 2n, i );
+		sout | "ceiling(" | i | ", " | i | ") = " | ir1 | ", ceiling(" | i + 2n | ", " | i | ") = " | ir2 | ", ceiling(" | -i - 2n | ", " | i | ") = " | ir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned int";
+	for ( ui = 1; ui != 0; ui <<= 1 ) {
+		uir1 = ceiling( ui, ui ); uir2 = ceiling( ui + 2un, ui ); uir3 = ceiling( -ui - 2un, ui );
+		sout | "ceiling(" | ui | ", " | ui | ") = " | uir1 | ", ceiling(" | ui + 2un | ", " | ui | ") = " | uir2 | ", ceiling(" | -ui - 2un | ", " | ui | ") = " | uir3;
+	} // for
+	sout | nl;
+
+	sout | "long int";
+	for ( li = 1; li != 0; li <<= 1 ) {
+		lir1 = ceiling( li, li ); lir2 = ceiling( li + 2l, li ); lir3 = ceiling( -li - 2l, li );
+		sout | "ceiling(" | li | ", " | li | ") = " | lir1 | ", ceiling(" | li + 2l | ", " | li | ") = " | lir2 | ", ceiling(" | -li - 2l | ", " | li | ") = " | lir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned long int";
+	for ( uli = 1; uli != 0; uli <<= 1 ) {
+		ulir1 = ceiling( uli, uli ); ulir2 = ceiling( uli + 2ul, uli ); ulir3 = ceiling( -uli - 2ul, uli );
+		sout | "ceiling(" | uli | ", " | uli | ") = " | ulir1 | ", ceiling(" | uli + 2ul | ", " | uli | ") = " | ulir2 | ", ceiling(" | -uli - 2ul | ", " | uli | ") = " | ulir3;
+	} // for
+	sout | nl;
+
+	sout | "long long int";
+	for ( lli = 1; lli != 0; lli <<= 1 ) {
+		llir1 = ceiling( lli, lli ); llir2 = ceiling( lli + 2ll, lli ); llir3 = ceiling( -lli - 2ll, lli );
+		sout | "ceiling(" | lli | ", " | lli | ") = " | llir1 | ", ceiling(" | lli + 2ll | ", " | lli | ") = " | llir2 | ", ceiling(" | -lli - 2ll | ", " | lli | ") = " | llir3;
+	} // for
+	sout | nl;
+
+	sout | "unsigned long long int";
+	for ( ulli = 1; ulli != 0; ulli <<= 1 ) {
+		ullir1 = ceiling( ulli, ulli ); ullir2 = ceiling( ulli + 2ull, ulli ); ullir3 = ceiling( -ulli - 2ull, ulli );
+		sout | "ceiling(" | ulli | ", " | ulli | ") = " | ullir1 | ", ceiling(" | ulli + 2ull | ", " | ulli | ") = " | ullir2 | ", ceiling(" | -ulli - 2ull | ", " | ulli | ") = " | ullir3;
+	} // for
+	printf( "\n" );
+#endif // 0
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa mathX.cfa" //
+// End: //

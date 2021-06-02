@@ -1,0 +1,357 @@
+#include <stdbool.h>
+#include <stdint.h>
+
+void foo() {
+	volatile _Bool * vpB = 0; _Bool vB = 0;
+	volatile char * vpc = 0; char * rpc = 0; char vc = 0;
+	volatile short * vps = 0; short * rps = 0; short vs = 0;
+	volatile int * vpi = 0; int * rpi = 0; int vi = 0;
+	volatile long int * vpl = 0; long int * rpl = 0; long int vl = 0;
+	volatile long long int * vpll = 0; long long int * rpll = 0; long long int vll = 0;
+	#if defined(__SIZEOF_INT128__)
+	volatile __int128 * vplll = 0; __int128 * rplll = 0; __int128 vlll = 0;
+	#endif
+	struct type * volatile * vpp = 0; struct type ** rpp = 0; struct type * vp = 0;
+
+	{ char ret; ret = __sync_fetch_and_add(vpc, vc); }
+	{ short ret; ret = __sync_fetch_and_add(vps, vs); }
+	{ int ret; ret = __sync_fetch_and_add(vpi, vi); }
+	{ long int ret; ret = __sync_fetch_and_add(vpl, vl); }
+	{ long long int ret; ret = __sync_fetch_and_add(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_fetch_and_add(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_fetch_and_sub(vpc, vc); }
+	{ short ret; ret = __sync_fetch_and_sub(vps, vs); }
+	{ int ret; ret = __sync_fetch_and_sub(vpi, vi); }
+	{ long int ret; ret = __sync_fetch_and_sub(vpl, vl); }
+	{ long long int ret; ret = __sync_fetch_and_sub(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_fetch_and_sub(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_fetch_and_or(vpc, vc); }
+	{ short ret; ret = __sync_fetch_and_or(vps, vs); }
+	{ int ret; ret = __sync_fetch_and_or(vpi, vi); }
+	{ long int ret; ret = __sync_fetch_and_or(vpl, vl); }
+	{ long long int ret; ret = __sync_fetch_and_or(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_fetch_and_or(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_fetch_and_and(vpc, vc); }
+	{ short ret; ret = __sync_fetch_and_and(vps, vs); }
+	{ int ret; ret = __sync_fetch_and_and(vpi, vi); }
+	{ long int ret; ret = __sync_fetch_and_and(vpl, vl); }
+	{ long long int ret; ret = __sync_fetch_and_and(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_fetch_and_and(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_fetch_and_xor(vpc, vc); }
+	{ short ret; ret = __sync_fetch_and_xor(vps, vs); }
+	{ int ret; ret = __sync_fetch_and_xor(vpi, vi); }
+	{ long int ret; ret = __sync_fetch_and_xor(vpl, vl); }
+	{ long long int ret; ret = __sync_fetch_and_xor(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_fetch_and_xor(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_fetch_and_nand(vpc, vc); }
+	{ short ret; ret = __sync_fetch_and_nand(vps, vs); }
+	{ int ret; ret = __sync_fetch_and_nand(vpi, vi); }
+	{ long int ret; ret = __sync_fetch_and_nand(vpl, vl); }
+	{ long long int ret; ret = __sync_fetch_and_nand(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_fetch_and_nand(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_add_and_fetch(vpc, vc); }
+	{ short ret; ret = __sync_add_and_fetch(vps, vs); }
+	{ int ret; ret = __sync_add_and_fetch(vpi, vi); }
+	{ long int ret; ret = __sync_add_and_fetch(vpl, vl); }
+	{ long long int ret; ret = __sync_add_and_fetch(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_add_and_fetch(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_sub_and_fetch(vpc, vc); }
+	{ short ret; ret = __sync_sub_and_fetch(vps, vs); }
+	{ int ret; ret = __sync_sub_and_fetch(vpi, vi); }
+	{ long int ret; ret = __sync_sub_and_fetch(vpl, vl); }
+	{ long long int ret; ret = __sync_sub_and_fetch(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_sub_and_fetch(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_or_and_fetch(vpc, vc); }
+	{ short ret; ret = __sync_or_and_fetch(vps, vs); }
+	{ int ret; ret = __sync_or_and_fetch(vpi, vi); }
+	{ long int ret; ret = __sync_or_and_fetch(vpl, vl); }
+	{ long long int ret; ret = __sync_or_and_fetch(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_or_and_fetch(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_and_and_fetch(vpc, vc); }
+	{ short ret; ret = __sync_and_and_fetch(vps, vs); }
+	{ int ret; ret = __sync_and_and_fetch(vpi, vi); }
+	{ long int ret; ret = __sync_and_and_fetch(vpl, vl); }
+	{ long long int ret; ret = __sync_and_and_fetch(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_and_and_fetch(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_xor_and_fetch(vpc, vc); }
+	{ short ret; ret = __sync_xor_and_fetch(vps, vs); }
+	{ int ret; ret = __sync_xor_and_fetch(vpi, vi); }
+	{ long int ret; ret = __sync_xor_and_fetch(vpl, vl); }
+	{ long long int ret; ret = __sync_xor_and_fetch(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_xor_and_fetch(vplll, vlll); }
+	#endif
+
+	{ char ret; ret = __sync_nand_and_fetch(vpc, vc); }
+	{ short ret; ret = __sync_nand_and_fetch(vps, vs); }
+	{ int ret; ret = __sync_nand_and_fetch(vpi, vi); }
+	{ long int ret; ret = __sync_nand_and_fetch(vpl, vl); }
+	{ long long int ret; ret = __sync_nand_and_fetch(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_nand_and_fetch(vplll, vlll); }
+	#endif
+
+	{ _Bool ret; ret = __sync_bool_compare_and_swap(vpc, vc, vc); }
+	{ _Bool ret; ret = __sync_bool_compare_and_swap(vps, vs, vs); }
+	{ _Bool ret; ret = __sync_bool_compare_and_swap(vpi, vi, vi); }
+	{ _Bool ret; ret = __sync_bool_compare_and_swap(vpl, vl, vl); }
+	{ _Bool ret; ret = __sync_bool_compare_and_swap(vpll, vll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ _Bool ret; ret = __sync_bool_compare_and_swap(vplll, vlll, vlll); }
+	#endif
+	{ _Bool ret; ret = __sync_bool_compare_and_swap(vpp, vp, vp); }
+
+	{ char ret; ret = __sync_val_compare_and_swap(vpc, vc, vc); }
+	{ short ret; ret = __sync_val_compare_and_swap(vps, vs, vs); }
+	{ int ret; ret = __sync_val_compare_and_swap(vpi, vi, vi); }
+	{ long int ret; ret = __sync_val_compare_and_swap(vpl, vl, vl); }
+	{ long long int ret; ret = __sync_val_compare_and_swap(vpll, vll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_val_compare_and_swap(vplll, vlll, vlll); }
+	#endif
+	{ struct type * ret; ret = __sync_val_compare_and_swap(vpp, vp, vp); }
+
+
+	{ char ret; ret = __sync_lock_test_and_set(vpc, vc); }
+	{ short ret; ret = __sync_lock_test_and_set(vps, vs); }
+	{ int ret; ret = __sync_lock_test_and_set(vpi, vi); }
+	{ long int ret; ret = __sync_lock_test_and_set(vpl, vl); }
+	{ long long int ret; ret = __sync_lock_test_and_set(vpll, vll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __sync_lock_test_and_set(vplll, vlll); }
+	#endif
+
+	{ __sync_lock_release(vpc); }
+	{ __sync_lock_release(vps); }
+	{ __sync_lock_release(vpi); }
+	{ __sync_lock_release(vpl); }
+	{ __sync_lock_release(vpll); }
+	#if defined(__SIZEOF_INT128__)
+	{ __sync_lock_release(vplll); }
+	#endif
+
+	{ __sync_synchronize(); }
+
+
+
+
+	{ _Bool ret; ret = __atomic_test_and_set(vpB, vB); }
+	{ _Bool ret; ret = __atomic_test_and_set(vpc, vc); }
+	{ __atomic_clear(vpB, vB); }
+	{ __atomic_clear(vpc, vc); }
+
+	{ char ret; ret = __atomic_exchange_n(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ char ret; __atomic_exchange(vpc, &vc, &ret, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_exchange_n(vps, vs, __ATOMIC_SEQ_CST); }
+	{ short ret; __atomic_exchange(vps, &vs, &ret, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_exchange_n(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ int ret; __atomic_exchange(vpi, &vi, &ret, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_exchange_n(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long int ret; __atomic_exchange(vpl, &vl, &ret, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_exchange_n(vpll, vll, __ATOMIC_SEQ_CST); }
+	{ long long int ret; __atomic_exchange(vpll, &vll, &ret, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_exchange_n(vplll, vlll, __ATOMIC_SEQ_CST); }
+	{ __int128 ret; __atomic_exchange(vplll, &vlll, &ret, __ATOMIC_SEQ_CST); }
+	#endif
+	{ struct type * ret; ret = __atomic_exchange_n(vpp, vp, __ATOMIC_SEQ_CST); }
+	{ struct type * ret; __atomic_exchange(vpp, &vp, &ret, __ATOMIC_SEQ_CST); }
+
+	{ char ret; ret = __atomic_load_n(vpc, __ATOMIC_SEQ_CST); }
+	{ char ret; __atomic_load(vpc, &ret, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_load_n(vps, __ATOMIC_SEQ_CST); }
+	{ short ret; __atomic_load(vps, &ret, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_load_n(vpi, __ATOMIC_SEQ_CST); }
+	{ int ret; __atomic_load(vpi, &ret, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_load_n(vpl, __ATOMIC_SEQ_CST); }
+	{ long int ret; __atomic_load(vpl, &ret, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_load_n(vpll, __ATOMIC_SEQ_CST); }
+	{ long long int ret; __atomic_load(vpll, &ret, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_load_n(vplll, __ATOMIC_SEQ_CST); }
+	{ __int128 ret; __atomic_load(vplll, &ret, __ATOMIC_SEQ_CST); }
+	#endif
+	{ struct type * ret; ret = __atomic_load_n(vpp, __ATOMIC_SEQ_CST); }
+	{ struct type * ret; __atomic_load(vpp, &ret, __ATOMIC_SEQ_CST); }
+
+	{ _Bool ret; ret = __atomic_compare_exchange_n(vpc, rpc, vc, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange(vpc, rpc, &vc, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange_n(vps, rps, vs, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange(vps, rps, &vs, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange_n(vpi, rpi, vi, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange(vpi, rpi, &vi, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange_n(vpl, rpl, vl, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange(vpl, rpl, &vl, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange_n(vpll, rpll, vll, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange(vpll, rpll, &vll, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ _Bool ret; ret = __atomic_compare_exchange_n(vplll, rplll, vlll, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange(vplll, rplll, &vlll, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	#endif
+	{ _Bool ret; ret = __atomic_compare_exchange_n(vpp, rpp, vp, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+	{ _Bool ret; ret = __atomic_compare_exchange(vpp, rpp, &vp, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
+
+	{ __atomic_store_n(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ __atomic_store(vpc, &vc, __ATOMIC_SEQ_CST); }
+	{ __atomic_store_n(vps, vs, __ATOMIC_SEQ_CST); }
+	{ __atomic_store(vps, &vs, __ATOMIC_SEQ_CST); }
+	{ __atomic_store_n(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ __atomic_store(vpi, &vi, __ATOMIC_SEQ_CST); }
+	{ __atomic_store_n(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ __atomic_store(vpl, &vl, __ATOMIC_SEQ_CST); }
+	{ __atomic_store_n(vpll, vll, __ATOMIC_SEQ_CST); }
+	{ __atomic_store(vpll, &vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __atomic_store_n(vplll, vlll, __ATOMIC_SEQ_CST); }
+	{ __atomic_store(vplll, &vlll, __ATOMIC_SEQ_CST); }
+	#endif
+	{ __atomic_store_n(vpp, vp, __ATOMIC_SEQ_CST); }
+	{ __atomic_store(vpp, &vp, __ATOMIC_SEQ_CST); }
+
+	{ char ret; ret = __atomic_add_fetch(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_add_fetch(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_add_fetch(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_add_fetch(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_add_fetch(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_add_fetch(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_sub_fetch(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_sub_fetch(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_sub_fetch(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_sub_fetch(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_sub_fetch(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_sub_fetch(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_and_fetch(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_and_fetch(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_and_fetch(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_and_fetch(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_and_fetch(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_and_fetch(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_nand_fetch(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_nand_fetch(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_nand_fetch(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_nand_fetch(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_nand_fetch(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_nand_fetch(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_xor_fetch(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_xor_fetch(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_xor_fetch(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_xor_fetch(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_xor_fetch(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_xor_fetch(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_or_fetch(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_or_fetch(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_or_fetch(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_or_fetch(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_or_fetch(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_or_fetch(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_fetch_add(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_fetch_add(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_fetch_add(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_fetch_add(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_fetch_add(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_fetch_add(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_fetch_sub(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_fetch_sub(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_fetch_sub(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_fetch_sub(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_fetch_sub(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_fetch_sub(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_fetch_and(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_fetch_and(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_fetch_and(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_fetch_and(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_fetch_and(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_fetch_and(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_fetch_nand(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_fetch_nand(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_fetch_nand(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_fetch_nand(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_fetch_nand(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_fetch_nand(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_fetch_xor(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_fetch_xor(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_fetch_xor(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_fetch_xor(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_fetch_xor(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_fetch_xor(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ char ret; ret = __atomic_fetch_or(vpc, vc, __ATOMIC_SEQ_CST); }
+	{ short ret; ret = __atomic_fetch_or(vps, vs, __ATOMIC_SEQ_CST); }
+	{ int ret; ret = __atomic_fetch_or(vpi, vi, __ATOMIC_SEQ_CST); }
+	{ long int ret; ret = __atomic_fetch_or(vpl, vl, __ATOMIC_SEQ_CST); }
+	{ long long int ret; ret = __atomic_fetch_or(vpll, vll, __ATOMIC_SEQ_CST); }
+	#if defined(__SIZEOF_INT128__)
+	{ __int128 ret; ret = __atomic_fetch_or(vplll, vlll, __ATOMIC_SEQ_CST); }
+	#endif
+
+	{ _Bool ret; ret = __atomic_always_lock_free(sizeof(int), vpi); }
+	{ _Bool ret; ret = __atomic_is_lock_free(sizeof(int), vpi); }
+	{ __atomic_thread_fence(__ATOMIC_SEQ_CST); }
+	{ __atomic_signal_fence(__ATOMIC_SEQ_CST); }
+}
+
+int main() {
+	#pragma message( "Compiled" )			// force non-empty .expect file
+}

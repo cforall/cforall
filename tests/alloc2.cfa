@@ -1,0 +1,879 @@
+#include <malloc.h>										// malloc_usable_size
+#include <stdint.h>										// uintptr_t
+#include <stdlib.hfa>									// access C malloc, realloc
+#include <string.h>										// memcmp
+
+int last_failed;
+int tests_total;
+int tests_failed;
+size_t tAlign = 32;
+struct S1 { int data; } __attribute__((aligned(32)));
+typedef struct S1 T1;
+
+void test_base( void * ip, size_t size, size_t align) {
+	tests_total += 1;
+//	printf("DEBUG: starting test %d\n", tests_total);
+	bool passed = (malloc_size(ip) == size) && (malloc_usable_size(ip) >= size) && (malloc_alignment(ip) == align) && ((uintptr_t)ip % align  == 0);
+	if (!passed) {
+		printf("failed test %3d: %4zu %4zu but got %4zu ( %3zu ) %4zu\n", tests_total, size, align, malloc_size(ip), malloc_usable_size(ip), malloc_alignment(ip));
+		tests_failed += 1;
+	}
+//	printf("DEBUG: done test %d\n", tests_total);
+}
+
+void test_fill( void * ip_, size_t start, size_t end, char fill) {
+	tests_total += 1;
+//	printf("DEBUG: starting test %d\n", tests_total);
+	bool passed = true;
+	char * ip = (char *) ip_;
+	for (i; start ~ end) passed = passed && (ip[i] == fill);
+	if (!passed) {
+		printf("failed test %3d: fill C\n", tests_total);
+		tests_failed += 1;
+	}
+//	printf("DEBUG: done test %d\n", tests_total);
+}
+
+void test_fill( void * ip_, size_t start, size_t end, int fill) {
+	tests_total += 1;
+//	printf("DEBUG: starting test %d\n", tests_total);
+	bool passed = true;
+	int * ip = (int *) ip_;
+	for (i; start ~ end) passed = passed && (ip[i] == fill);
+	if (!passed) {
+		printf("failed test %3d: fill int\n", tests_total);
+		tests_failed += 1;
+	}
+//	printf("DEBUG: done test %d\n", tests_total);
+}
+
+void test_fill( void * ip_, size_t start, size_t end, int * fill) {
+	tests_total += 1;
+//	printf("DEBUG: starting test %d\n", tests_total);
+	bool passed = (memcmp((void*)((uintptr_t)ip_ + start), (void*)fill, end) == 0);
+	if (!passed) {
+		printf("failed test %3d: fill int A\n", tests_total);
+		tests_failed += 1;
+	}
+//	printf("DEBUG: done test %d\n", tests_total);
+}
+
+void test_fill( void * ip_, size_t start, size_t end, T1 fill) {
+	tests_total += 1;
+//	printf("DEBUG: starting test %d\n", tests_total);
+	bool passed = true;
+	T1 * ip = (T1 *) ip_;
+	for (i; start ~ end) passed = passed && (ip[i].data == fill.data);
+	if (!passed) {
+		printf("failed test %3d: fill T1\n", tests_total);
+		tests_failed += 1;
+	}
+//	printf("DEBUG: done test %d\n", tests_total);
+}
+
+void test_fill( void * ip_, size_t start, size_t end, T1 * fill) {
+	tests_total += 1;
+//	printf("DEBUG: starting test %d\n", tests_total);
+	bool passed = (memcmp((void*)((uintptr_t)ip_ + start), (void*)fill, end) == 0);
+	if (!passed) {
+		printf("failed test %3d: fill T1 A\n", tests_total);
+		tests_failed += 1;
+	}
+//	printf("DEBUG: done test %d\n", tests_total);
+}
+
+void test_use( int * ip, size_t dim) {
+	tests_total += 1;
+//	printf("DEBUG: starting test %d\n", tests_total);
+	bool passed = true;
+	for (i; 0 ~ dim) ip[i] = 0xdeadbeef;
+	for (i; 0 ~ dim) passed = passed &&  (ip[i] == 0xdeadbeef);
+	if (!passed) {
+		printf("failed test %3d: use int\n", tests_total);
+		tests_failed += 1;
+	}
+//	printf("DEBUG: done test %d\n", tests_total);
+}
+
+void test_use( T1 * ip, size_t dim) {
+	tests_total += 1;
+//	printf("DEBUG: starting test %d\n", tests_total);
+	bool passed = true;
+	for (i; 0 ~ dim) ip[i].data = 0xdeadbeef;
+	for (i; 0 ~ dim) passed = passed &&  (ip[i].data == 0xdeadbeef);
+	if (!passed) {
+		printf("failed test %3d: use T1\n", tests_total);
+		tests_failed += 1;
+	}
+//	printf("DEBUG: done test %d\n", tests_total);
+}
+
+int main( void ) {
+	size_t elemSize = sizeof(int);
+	size_t dim = 8;
+	size_t size = dim * elemSize;
+	size_t align = 64;
+	const size_t libAlign = libAlign();
+
+	int 	FillT = 9;
+	char 	FillC = 'a';
+	int   * FillA = calloc(dim / 4);
+	T1 	    FillT1 = { FillT };
+	T1 	  * FillT1A = (T1 *)(void *) malloc( (dim / 4) * sizeof(T1) );
+	for (i; 0 ~ (dim / 4) ) FillT1A[i] = FillT1;
+
+	int		* ip;
+	int 	* op;
+	double 	* dp;
+	T1      * t1p;
+	T1 	    * t1op;
+
+	// testing alloc
+
+	last_failed = -1;
+	tests_total = 0;
+	tests_failed = 0;
+
+	ip = alloc();
+	test_base(ip, elemSize, libAlign);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( dim );
+	test_base(ip, size, libAlign);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0 );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	dp = alloc( dim );
+	ip = alloc( dp`resize );
+	test_base(ip, elemSize, libAlign);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( ((double*)0p)`resize );
+	test_base(ip, elemSize, libAlign);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	dp = alloc( dim );
+	ip = alloc( dim, dp`resize );
+	test_base(ip, size, libAlign);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	dp = alloc( dim );
+	ip = alloc( 0, dp`resize );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, ((double*)0p)`resize );
+	test_base(ip, size, libAlign);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, ((double*)0p)`resize );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim, op`realloc );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( 0, op`realloc );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, ((int*)0p)`realloc );
+	test_base(ip, size, libAlign);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, ((int*)0p)`realloc );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim, op`resize );
+	test_base(ip, size, libAlign);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( FillC`fill );
+	test_base(ip, elemSize, libAlign);
+	test_fill(ip, 0, elemSize, FillC);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( FillT`fill );
+	test_base(ip, elemSize, libAlign);
+	test_fill(ip, 0, 1, FillT);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( dim, FillC`fill );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, size, FillC);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, FillC`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, FillT`fill );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, dim, FillT);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, FillT`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, [FillA, dim/4]`fill );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, size/4, FillA);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, [FillA, dim/4]`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim, op`realloc, FillC`fill );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim / 4, op`realloc, FillC`fill );
+	test_base(ip, size / 4, libAlign);
+	test_fill(ip, 0, dim / 4, (int)0xdeadbeef);
+	test_use(ip, size / 4 / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim * 4, op`realloc, FillC`fill );
+	test_base(ip, size * 4, libAlign);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_fill(ip, size, size * 4, FillC);
+	test_use(ip, size * 4 / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( 0, op`realloc, FillC`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, ((int*)0p)`realloc, FillC`fill );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, size, FillC);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, ((int*)0p)`realloc, FillC`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim, op`realloc, FillT`fill );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim / 4, op`realloc, FillT`fill );
+	test_base(ip, size / 4, libAlign);
+	test_fill(ip, 0, dim / 4, (int)0xdeadbeef);
+	test_use(ip, size / 4 / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim * 4, op`realloc, FillT`fill );
+	test_base(ip, size * 4, libAlign);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_fill(ip, dim, dim * 4, FillT);
+	test_use(ip, size * 4 / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( 0, op`realloc, FillT`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, ((int*)0p)`realloc, FillT`fill );
+	test_base(ip, size, libAlign);
+	test_fill(ip, 0, dim, FillT);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, ((int*)0p)`realloc, FillT`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( align`align );
+	test_base(ip, elemSize, align);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( dim, align`align );
+	test_base(ip, size, align);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, align`align );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( op`realloc, align`align );
+	test_base(ip, elemSize, align);
+	test_fill(ip, 0, 1, (int)0xdeadbeef);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( ((int*)0p)`realloc, align`align );
+	test_base(ip, elemSize, align);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	dp = alloc( dim );
+	ip = alloc( dp`resize, align`align );
+	test_base(ip, elemSize, align);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( ((double*)0p)`resize, align`align );
+	test_base(ip, elemSize, align);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill);
+	ip = alloc( dim, op`realloc, align`align );
+	test_base(ip, size, align);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( 0, op`realloc, align`align );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, ((int*)0p)`realloc, align`align );
+	test_base(ip, size, align);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, ((int*)0p)`realloc, align`align );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( align`align, FillC`fill );
+	test_base(ip, elemSize, align);
+	test_fill(ip, 0, elemSize, FillC);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( align`align, FillT`fill );
+	test_base(ip, elemSize, align);
+	test_fill(ip, 0, 1, FillT);
+	test_use(ip, elemSize / elemSize);
+	free(ip);
+
+	ip = alloc( dim, align`align, FillC`fill );
+	test_base(ip, size, align);
+	test_fill(ip, 0, size, FillC);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, align`align, FillC`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, align`align, FillT`fill );
+	test_base(ip, size, align);
+	test_fill(ip, 0, dim, FillT);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, align`align, FillT`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, align`align, [FillA, dim/4]`fill );
+	test_base(ip, size, align);
+	test_fill(ip, 0, size/4, FillA);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, align`align, [FillA, dim/4]`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim, op`realloc, align`align, FillC`fill );
+	test_base(ip, size, align);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim / 4, op`realloc, align`align, FillC`fill );
+	test_base(ip, size / 4, align);
+	test_fill(ip, 0, dim / 4, (int)0xdeadbeef);
+	test_use(ip, size / 4 / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim * 4, op`realloc, align`align, FillC`fill );
+	test_base(ip, size * 4, align);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_fill(ip, size, size * 4, FillC);
+	test_use(ip, size * 4 / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( 0, op`realloc, align`align, FillC`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, ((int*)0p)`realloc, align`align, FillC`fill );
+	test_base(ip, size, align);
+	test_fill(ip, 0, size, FillC);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, ((int*)0p)`realloc, align`align, FillC`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim, op`realloc, align`align, FillT`fill );
+	test_base(ip, size, align);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim / 4, op`realloc, align`align, FillT`fill );
+	test_base(ip, size / 4, align);
+	test_fill(ip, 0, dim / 4, (int)0xdeadbeef);
+	test_use(ip, size / 4 / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( dim * 4, op`realloc, align`align, FillT`fill );
+	test_base(ip, size * 4, align);
+	test_fill(ip, 0, dim, (int)0xdeadbeef);
+	test_fill(ip, dim, dim * 4, FillT);
+	test_use(ip, size * 4 / elemSize);
+	free(ip);
+
+	op = alloc( dim, ((int)0xdeadbeef)`fill );
+	ip = alloc( 0, op`realloc, align`align, FillT`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	ip = alloc( dim, ((int*)0p)`realloc, align`align, FillT`fill );
+	test_base(ip, size, align);
+	test_fill(ip, 0, dim, FillT);
+	test_use(ip, size / elemSize);
+	free(ip);
+
+	ip = alloc( 0, ((int*)0p)`realloc, align`align, FillT`fill );
+	test_base(ip, 0, libAlign);
+	free(ip);
+
+	if (tests_failed == 0) printf("PASSED alloc tests\n\n");
+	else printf("failed alloc tests : %d/%d\n\n", tests_failed, tests_total);
+
+	// testing alloc (aligned struct)
+
+	elemSize = sizeof(T1);
+	size = dim * elemSize;
+	last_failed = -1;
+	tests_total = 0;
+	tests_failed = 0;
+
+	t1p = alloc();
+	test_base(t1p, elemSize, tAlign);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( dim );
+	test_base(t1p, size, tAlign);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0 );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	dp = alloc( dim );
+	t1p = alloc( dp`resize );
+	test_base(t1p, elemSize, tAlign);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( ((double*)0p)`resize );
+	test_base(t1p, elemSize, tAlign);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	dp = alloc( dim );
+	t1p = alloc( dim, dp`resize );
+	test_base(t1p, size, tAlign);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	dp = alloc( dim );
+	t1p = alloc( 0, dp`resize );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, ((double*)0p)`resize );
+	test_base(t1p, size, tAlign);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, ((double*)0p)`resize );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim, t1op`realloc );
+	test_base(t1p, size, tAlign);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( 0, t1op`realloc );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, ((T1*)0p)`realloc );
+	test_base(t1p, size, tAlign);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, ((T1*)0p)`realloc );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim, t1op`resize );
+	test_base(t1p, size, tAlign);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( FillC`fill );
+	test_base(t1p, elemSize, tAlign);
+	test_fill(t1p, 0, elemSize, FillC);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( FillT1`fill );
+	test_base(t1p, elemSize, tAlign);
+	test_fill(t1p, 0, 1, FillT1);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( dim, FillC`fill );
+	test_base(t1p, size, tAlign);
+	test_fill(t1p, 0, size, FillC);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, FillC`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, FillT1`fill );
+	test_base(t1p, size, tAlign);
+	test_fill(t1p, 0, dim, FillT1);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, FillT1`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, [FillT1A, dim / 4]`fill );
+	test_base(t1p, size, tAlign);
+	test_fill(t1p, 0, size/4, FillT1A);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, [FillT1A, dim / 4]`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim, t1op`realloc, FillC`fill );
+	test_base(t1p, size, tAlign);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim / 4, t1op`realloc, FillC`fill );
+	test_base(t1p, size / 4, tAlign);
+	test_fill(t1p, 0, dim / 4, (T1){0xdeadbeef});
+	test_use(t1p, size / 4 / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim * 4, t1op`realloc, FillC`fill );
+	test_base(t1p, size * 4, tAlign);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_fill(t1p, size, size * 4, FillC);
+	test_use(t1p, size * 4 / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( 0, t1op`realloc, FillC`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, ((T1*)0p)`realloc, FillC`fill );
+	test_base(t1p, size, tAlign);
+	test_fill(t1p, 0, size, FillC);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, ((T1*)0p)`realloc, FillC`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim, t1op`realloc, FillT1`fill );
+	test_base(t1p, size, tAlign);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim / 4, t1op`realloc, FillT1`fill );
+	test_base(t1p, size / 4, tAlign);
+	test_fill(t1p, 0, dim / 4, (T1){0xdeadbeef});
+	test_use(t1p, size / 4 / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim * 4, t1op`realloc, FillT1`fill );
+	test_base(t1p, size * 4, tAlign);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_fill(t1p, dim, dim * 4, FillT1);
+	test_use(t1p, size * 4 / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( 0, t1op`realloc, FillT1`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, ((T1*)0p)`realloc, FillT1`fill );
+	test_base(t1p, size, tAlign);
+	test_fill(t1p, 0, dim, FillT1);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, ((T1*)0p)`realloc, FillT1`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( align`align );
+	test_base(t1p, elemSize, align);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( dim, align`align );
+	test_base(t1p, size, align);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, align`align );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( t1op`realloc, align`align );
+	test_base(t1p, elemSize, align);
+	test_fill(t1p, 0, 1, (T1){0xdeadbeef});
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( ((T1*)0p)`realloc, align`align );
+	test_base(t1p, elemSize, align);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	dp = alloc( dim );
+	t1p = alloc( dp`resize, align`align );
+	test_base(t1p, elemSize, align);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( ((double*)0p)`resize, align`align );
+	test_base(t1p, elemSize, align);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim, t1op`realloc, align`align );
+	test_base(t1p, size, align);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( 0, t1op`realloc, align`align );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, ((T1*)0p)`realloc, align`align );
+	test_base(t1p, size, align);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, ((T1*)0p)`realloc, align`align );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( align`align, FillC`fill );
+	test_base(t1p, elemSize, align);
+	test_fill(t1p, 0, elemSize, FillC);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( align`align, FillT1`fill );
+	test_base(t1p, elemSize, align);
+	test_fill(t1p, 0, 1, FillT1);
+	test_use(t1p, elemSize / elemSize);
+	free(t1p);
+
+	t1p = alloc( dim, align`align, FillC`fill );
+	test_base(t1p, size, align);
+	test_fill(t1p, 0, size, FillC);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, align`align, FillC`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, align`align, FillT1`fill );
+	test_base(t1p, size, align);
+	test_fill(t1p, 0, dim, FillT1);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, align`align, FillT1`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, align`align, [FillT1A, dim / 4]`fill );
+	test_base(t1p, size, align);
+	test_fill(t1p, 0, size/4, FillT1A);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, align`align, [FillT1A, dim / 4]`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim, t1op`realloc, align`align, FillC`fill );
+	test_base(t1p, size, align);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim / 4, t1op`realloc, align`align, FillC`fill );
+	test_base(t1p, size / 4, align);
+	test_fill(t1p, 0, dim / 4, (T1){0xdeadbeef});
+	test_use(t1p, size / 4 / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim * 4, t1op`realloc, align`align, FillC`fill );
+	test_base(t1p, size * 4, align);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_fill(t1p, size, size * 4, FillC);
+	test_use(t1p, size * 4 / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( 0, t1op`realloc, align`align, FillC`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, ((T1*)0p)`realloc, align`align, FillC`fill );
+	test_base(t1p, size, align);
+	test_fill(t1p, 0, size, FillC);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, ((T1*)0p)`realloc, align`align, FillC`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill);
+	t1p = alloc( dim, t1op`realloc, align`align, FillT1`fill );
+	test_base(t1p, size, align);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim / 4, t1op`realloc, align`align, FillT1`fill );
+	test_base(t1p, size / 4, align);
+	test_fill(t1p, 0, dim / 4, (T1){0xdeadbeef});
+	test_use(t1p, size / 4 / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( dim * 4, t1op`realloc, align`align, FillT1`fill );
+	test_base(t1p, size * 4, align);
+	test_fill(t1p, 0, dim, (T1){0xdeadbeef});
+	test_fill(t1p, dim, dim * 4, FillT1);
+	test_use(t1p, size * 4 / elemSize);
+	free(t1p);
+
+	t1op = alloc( dim, ((T1){0xdeadbeef})`fill );
+	t1p = alloc( 0, t1op`realloc, align`align, FillT1`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	t1p = alloc( dim, ((T1*)0p)`realloc, align`align, FillT1`fill );
+	test_base(t1p, size, align);
+	test_fill(t1p, 0, dim, FillT1);
+	test_use(t1p, size / elemSize);
+	free(t1p);
+
+	t1p = alloc( 0, ((T1*)0p)`realloc, align`align, FillT1`fill );
+	test_base(t1p, 0, libAlign);
+	free(t1p);
+
+	if (tests_failed == 0) printf("PASSED alloc tests (aligned struct)\n\n");
+	else printf("failed alloc tests (aligned struct) : %d/%d\n\n", tests_failed, tests_total);
+
+	printf("(if applicable) alignment error below indicates memory trashing caused by test_use.\n\n");
+	free(FillA);
+	free(FillT1A);
+	return 0;
+} // main

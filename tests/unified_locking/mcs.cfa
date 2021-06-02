@@ -1,0 +1,66 @@
+#include <fstream.hfa>
+#include <locks.hfa>
+#include <thread.hfa>
+
+const unsigned int num_times = 50000;
+
+struct MutexObj {
+	mcs_lock l;
+	$thread * id;
+	size_t sum;
+};
+
+MutexObj mo;
+
+void trash() {
+	unsigned t[100];
+	for(i; 100) {
+		t[i] = 0xDEADBEEF;
+	}
+}
+
+unsigned cs() {
+	$thread * me = active_thread();
+	unsigned value = (unsigned)me;
+	mcs_node n;
+	lock(mo.l, n);
+	{
+		size_t tsum = mo.sum;
+		mo.id = me;
+		yield(random(5));
+		if(mo.id != me) sout | "Intruder!";
+		mo.sum = tsum + value;
+	}
+	unlock(mo.l, n);
+	return value;
+}
+
+thread LockCheck {
+	size_t sum;
+};
+
+void main(LockCheck & this) {
+	this.sum = 0;
+	for(num_times) {
+		trash();
+		this.sum += cs();
+		trash();
+		yield(random(10));
+	}
+}
+
+int main() {
+	size_t sum = -32;
+	mo.sum = -32;
+	processor p[2];
+	sout | "Starting";
+	{
+		LockCheck checkers[13];
+		for(i;13) {
+			sum += join(checkers[i]).sum;
+		}
+	}
+	sout | "Done!";
+	if(sum == mo.sum) sout | "Match!";
+	else sout | "No Match!" | sum | "vs" | mo.sum;
+}

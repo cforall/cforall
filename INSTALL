@@ -1,0 +1,32 @@
+cfa-cc: The Cforall->C Compiler System
+======================================
+
+Cforall is built using GNU Make and the GNU Autoconf system.  It also requires
+g++ version >= 4.6, bison and flex.  On systems where GNU Make is the default
+make, the system is built by entering the commands:
+
+For devs using the root git:
+
+  ./autogen.sh
+	./configure
+	make
+	make install
+
+For users using the distributed tarball:
+
+	./configure
+	make
+	make install
+
+Options for 'configure'
+-----------------------
+The script 'configure' accepts many command line arguments.  Run './configure
+--help' to see a list of all of them.  This document attempts to summarize the
+most useful arguments.
+
+--prefix=/some/directory controls the path prefix common to all installed
+  cfa-cc components.  Some components are installed in /some/directory/bin,
+  others in /some/directory/lib.  If unspecified, this defaults to /usr/local.
+  To use (a subdirectory of) your home directory, ${HOME}/some/dir works, but
+  it is important not to put quotes around the directory path; Cforall may
+  appear to build, but the installed version may not work properly.

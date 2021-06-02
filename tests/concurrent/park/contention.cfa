@@ -1,0 +1,62 @@
+#include <kernel.hfa>
+#include <thread.hfa>
+
+thread_local drand48_data buffer = { 0 };
+int myrand() {
+	long int result;
+	lrand48_r(&buffer, &result);
+	return result;
+}
+
+
+thread Thread {};
+void ^?{}(Thread & mutex this) {}
+
+enum Constants { blocked_size = 20 };
+Thread * volatile blocked[blocked_size];
+
+void main( Thread & this ) {
+	for(int i = 0; i < 1000; i++) {
+		int idx = myrand() % blocked_size;
+		if(blocked[idx]) {
+			Thread * thrd = __atomic_exchange_n(&blocked[idx], 0p, __ATOMIC_SEQ_CST);
+			unpark( *thrd );
+		} else {
+			Thread * thrd = __atomic_exchange_n(&blocked[idx], &this, __ATOMIC_SEQ_CST);
+			unpark( *thrd );
+			park();
+		}
+	}
+	printf("Done\n");
+}
+
+// Extra thread to avoid deadlocking
+thread Unparker {};
+
+void main( Unparker & this ) {
+	while(true) {
+		waitfor( ^?{} : this ) {
+			break;
+		} or else {
+			int idx = myrand() % blocked_size;
+			Thread * thrd = __atomic_exchange_n(&blocked[idx], 0p, __ATOMIC_SEQ_CST);
+			unpark( *thrd );
+			yield( myrand() % 20 );
+		}
+	}
+	printf("Done Unparker\n");
+}
+
+
+int main() {
+	for(i ; blocked_size) {
+		blocked[i] = 0p;
+	}
+
+	processor p[3];
+
+	Unparker u;
+	{
+		Thread t[20];
+	}
+}

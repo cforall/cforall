@@ -1,0 +1,481 @@
+#!python3
+#
+# Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+#
+# The contents of this file are covered under the licence agreement in the
+# file "LICENCE" distributed with Cforall.
+#
+# call.cfa.in -- Python script to generate io/call.cfa
+#
+# Author           : Thierry Delisle
+# Created On       : Fri Sep 11 12:41:16 2020
+# Last Modified By :
+# Last Modified On :
+# Update Count     :
+#
+
+Header = """//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// call.cfa -- Api for cforall
+//
+// Author           : Generated from call.cfa.in
+// Created On       : {}
+//
+
+"""
+
+Prelude = """#define __cforall_thread__
+
+#include "bits/defs.hfa"
+#include "kernel.hfa"
+#include "io/types.hfa"
+
+//=============================================================================================
+// I/O uring backend
+//=============================================================================================
+
+#if defined(CFA_HAVE_LINUX_IO_URING_H)
+	#include <assert.h>
+	#include <stdint.h>
+	#include <errno.h>
+	#include <linux/io_uring.h>
+
+	#include "kernel/fwd.hfa"
+
+	static const __u8 REGULAR_FLAGS = 0
+		#if defined(CFA_HAVE_IOSQE_FIXED_FILE)
+			| IOSQE_FIXED_FILE
+		#endif
+		#if defined(CFA_HAVE_IOSQE_IO_DRAIN)
+			| IOSQE_IO_DRAIN
+		#endif
+		#if defined(CFA_HAVE_IOSQE_IO_LINK)
+			| IOSQE_IO_LINK
+		#endif
+		#if defined(CFA_HAVE_IOSQE_IO_HARDLINK)
+			| IOSQE_IO_HARDLINK
+		#endif
+		#if defined(CFA_HAVE_IOSQE_ASYNC)
+			| IOSQE_ASYNC
+		#endif
+		#if defined(CFA_HAVE_IOSQE_BUFFER_SELECTED)
+			| IOSQE_BUFFER_SELECTED
+		#endif
+	;
+
+	static const __u32 SPLICE_FLAGS = 0
+		#if defined(CFA_HAVE_SPLICE_F_FD_IN_FIXED)
+			| SPLICE_F_FD_IN_FIXED
+		#endif
+	;
+
+	extern struct $io_context * cfa_io_allocate(struct io_uring_sqe * out_sqes[], __u32 out_idxs[], __u32 want)  __attribute__((nonnull (1,2)));
+	extern void cfa_io_submit( struct $io_context * in_ctx, __u32 in_idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1,2)));
+#endif
+
+//=============================================================================================
+// I/O Forwards
+//=============================================================================================
+#include <time.hfa>
+
+// Some forward declarations
+#include <errno.h>
+#include <unistd.h>
+
+extern "C" {
+	#include <asm/types.h>
+	#include <sys/socket.h>
+	#include <sys/syscall.h>
+
+#if defined(CFA_HAVE_PREADV2)
+	struct iovec;
+	extern ssize_t preadv2 (int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
+#endif
+#if defined(CFA_HAVE_PWRITEV2)
+	struct iovec;
+	extern ssize_t pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
+#endif
+
+	extern int fsync(int fd);
+
+	#if __OFF_T_MATCHES_OFF64_T
+		typedef __off64_t off_t;
+	#else
+		typedef __off_t off_t;
+	#endif
+	typedef __off64_t off64_t;
+	extern int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags);
+
+	struct msghdr;
+	struct sockaddr;
+	extern ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
+	extern ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+	extern ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+	extern ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+	extern int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
+	extern int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+	extern int fallocate(int fd, int mode, off_t offset, off_t len);
+	extern int posix_fadvise(int fd, off_t offset, off_t len, int advice);
+	extern int madvise(void *addr, size_t length, int advice);
+
+	extern int openat(int dirfd, const char *pathname, int flags, mode_t mode);
+	extern int close(int fd);
+
+	extern ssize_t read (int fd, void *buf, size_t count);
+
+	struct epoll_event;
+	extern int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+
+	extern ssize_t splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags);
+	extern ssize_t tee(int fd_in, int fd_out, size_t len, unsigned int flags);
+}
+
+//=============================================================================================
+// I/O Interface
+//=============================================================================================
+"""
+
+print(Header.format("A Date"))
+print(Prelude)
+
+import re
+import sys
+class Call:
+	def __init__(self, op, signature, body, define=None):
+		sig = re.search("(.*) (.*)\((.*)\)", signature)
+		if not sig:
+			print("OP '{}' has invalid signature {}".format(op, signature), file=sys.stderr)
+			sys.exit(1)
+
+		self.op     = op
+		self.ret    = sig.group(1)
+		self.name   = sig.group(2)
+		self.params = sig.group(3)
+		self.define = define
+		self.body = ""
+
+		accepted_keys = [ 'ioprio', 'fd', 'off', 'addr2','addr', 'splice_off_in','len',
+			'rw_flags', 'fsync_flags', 'poll_events', 'poll32_events',
+			'sync_range_flags', 'msg_flags', 'timeout_flags', 'accept_flags',
+			'cancel_flags', 'open_flags', 'statx_flags', 'fadvise_advice',
+			'splice_flags', 'buf_index' ,'buf_group' 'personality',
+			'splice_fd_in' ]
+
+		for k, v in body.items():
+			if not k in accepted_keys:
+				print("OP '{}' has invalid body kew {}".format(op, k), file=sys.stderr)
+				sys.exit(1)
+
+			self.body += "\n		sqe->{key} = {value};".format(key=k, value=v)
+
+
+	def args(self):
+		param_a = self.params.split(',')
+		args_a = [p.replace('*', ' ').split()[-1] for p in param_a]
+		for a in args_a:
+			if '*' in a:
+				print("OP '{}' has invalid * in argument {}".format(self.op, a), file=sys.stderr)
+				sys.exit(1)
+
+		return ', '.join(args_a)
+
+AsyncTemplate = """inline void async_{name}(io_future_t & future, {params}, __u64 submit_flags) {{
+	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_{op})
+		ssize_t res = {name}({args});
+		if (res >= 0) {{
+			fulfil(future, res);
+		}}
+		else {{
+			fulfil(future, -errno);
+		}}
+	#else
+		__u8 sflags = REGULAR_FLAGS & submit_flags;
+		__u32 idx;
+		struct io_uring_sqe * sqe;
+		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+
+		sqe->opcode = IORING_OP_{op};
+		sqe->user_data = (uintptr_t)&future;
+		sqe->flags = sflags;
+		sqe->ioprio = 0;
+		sqe->fd = 0;
+		sqe->off = 0;
+		sqe->addr = 0;
+		sqe->len = 0;
+		sqe->fsync_flags = 0;
+		sqe->__pad2[0] = 0;
+		sqe->__pad2[1] = 0;
+		sqe->__pad2[2] = 0;{body}
+
+		asm volatile("": : :"memory");
+
+		verify( sqe->user_data == (uintptr_t)&future );
+		cfa_io_submit( ctx, &idx, 1, 0 != (submit_flags & CFA_IO_LAZY) );
+	#endif
+}}"""
+
+SyncTemplate = """{ret} cfa_{name}({params}, __u64 submit_flags) {{
+	io_future_t future;
+
+	async_{name}( future, {args}, submit_flags );
+
+	wait( future );
+	if( future.result < 0 ) {{
+		errno = -future.result;
+		return -1;
+	}}
+	return future.result;
+}}"""
+
+calls = [
+	# CFA_HAVE_IORING_OP_READV
+	Call('READV', 'ssize_t preadv2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags)', {
+		'fd'  : 'fd',
+		'off' : 'offset',
+		'addr': '(uintptr_t)iov',
+		'len' : 'iovcnt',
+	}, define = 'CFA_HAVE_PREADV2'),
+	# CFA_HAVE_IORING_OP_WRITEV
+	Call('WRITEV', 'ssize_t pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags)', {
+		'fd'  : 'fd',
+		'off' : 'offset',
+		'addr': '(uintptr_t)iov',
+		'len' : 'iovcnt'
+	}, define = 'CFA_HAVE_PWRITEV2'),
+	# CFA_HAVE_IORING_OP_FSYNC
+	Call('FSYNC', 'int fsync(int fd)', {
+		'fd': 'fd'
+	}),
+	# CFA_HAVE_IORING_OP_EPOLL_CTL
+	Call('EPOLL_CTL', 'int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)', {
+		'fd': 'epfd',
+		'addr': 'fd',
+		'len': 'op',
+		'off': '(uintptr_t)event'
+	}),
+	# CFA_HAVE_IORING_OP_SYNC_FILE_RANGE
+	Call('SYNC_FILE_RANGE', 'int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags)', {
+		'fd': 'fd',
+		'off': 'offset',
+		'len': 'nbytes',
+		'sync_range_flags': 'flags'
+	}),
+	# CFA_HAVE_IORING_OP_SENDMSG
+	Call('SENDMSG', 'ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)', {
+		'fd': 'sockfd',
+		'addr': '(uintptr_t)(struct msghdr *)msg',
+		'len': '1',
+		'msg_flags': 'flags'
+	}),
+	# CFA_HAVE_IORING_OP_RECVMSG
+	Call('RECVMSG', 'ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)', {
+		'fd': 'sockfd',
+		'addr': '(uintptr_t)(struct msghdr *)msg',
+		'len': '1',
+		'msg_flags': 'flags'
+	}),
+	# CFA_HAVE_IORING_OP_SEND
+	Call('SEND', 'ssize_t send(int sockfd, const void *buf, size_t len, int flags)', {
+		'fd': 'sockfd',
+		'addr': '(uintptr_t)buf',
+		'len': 'len',
+		'msg_flags': 'flags'
+	}),
+	# CFA_HAVE_IORING_OP_RECV
+	Call('RECV', 'ssize_t recv(int sockfd, void *buf, size_t len, int flags)', {
+		'fd': 'sockfd',
+		'addr': '(uintptr_t)buf',
+		'len': 'len',
+		'msg_flags': 'flags'
+	}),
+	# CFA_HAVE_IORING_OP_ACCEPT
+	Call('ACCEPT', 'int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags)', {
+		'fd': 'sockfd',
+		'addr': '(uintptr_t)addr',
+		'addr2': '(uintptr_t)addrlen',
+		'accept_flags': 'flags'
+	}),
+	# CFA_HAVE_IORING_OP_CONNECT
+	Call('CONNECT', 'int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)', {
+		'fd': 'sockfd',
+		'addr': '(uintptr_t)addr',
+		'off': 'addrlen'
+	}),
+	# CFA_HAVE_IORING_OP_FALLOCATE
+	Call('FALLOCATE', 'int fallocate(int fd, int mode, off_t offset, off_t len)', {
+		'fd': 'fd',
+		'addr': '(uintptr_t)len',
+		'len': 'mode',
+		'off': 'offset'
+	}),
+	# CFA_HAVE_IORING_OP_FADVISE
+	Call('FADVISE', 'int posix_fadvise(int fd, off_t offset, off_t len, int advice)', {
+		'fd': 'fd',
+		'off': 'offset',
+		'len': 'len',
+		'fadvise_advice': 'advice'
+	}),
+	# CFA_HAVE_IORING_OP_MADVISE
+	Call('MADVISE', 'int madvise(void *addr, size_t length, int advice)', {
+		'addr': '(uintptr_t)addr',
+		'len': 'length',
+		'fadvise_advice': 'advice'
+	}),
+	# CFA_HAVE_IORING_OP_OPENAT
+	Call('OPENAT', 'int openat(int dirfd, const char *pathname, int flags, mode_t mode)', {
+		'fd': 'dirfd',
+		'addr': '(uintptr_t)pathname',
+		'len': 'mode',
+		'open_flags': 'flags;'
+	}),
+	# CFA_HAVE_IORING_OP_OPENAT2
+	Call('OPENAT2', 'int openat2(int dirfd, const char *pathname, struct open_how * how, size_t size)', {
+		'fd': 'dirfd',
+		'addr': 'pathname',
+		'len': 'sizeof(*how)',
+		'off': '(uintptr_t)how',
+	}, define = 'CFA_HAVE_OPENAT2'),
+	# CFA_HAVE_IORING_OP_CLOSE
+	Call('CLOSE', 'int close(int fd)', {
+		'fd': 'fd'
+	}),
+	# CFA_HAVE_IORING_OP_STATX
+	Call('STATX', 'int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf)', {
+		'fd': 'dirfd',
+		'off': '(uintptr_t)statxbuf',
+		'addr': 'pathname',
+		'len': 'mask',
+		'statx_flags': 'flags'
+	}, define = 'CFA_HAVE_STATX'),
+	# CFA_HAVE_IORING_OP_READ
+	Call('READ', 'ssize_t read(int fd, void * buf, size_t count)', {
+		'fd': 'fd',
+		'addr': '(uintptr_t)buf',
+		'len': 'count'
+	}),
+	# CFA_HAVE_IORING_OP_WRITE
+	Call('WRITE', 'ssize_t write(int fd, void * buf, size_t count)', {
+		'fd': 'fd',
+		'addr': '(uintptr_t)buf',
+		'len': 'count'
+	}),
+	# CFA_HAVE_IORING_OP_SPLICE
+	Call('SPLICE', 'ssize_t splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags)', {
+		'splice_fd_in': 'fd_in',
+		'splice_off_in': 'off_in ? (__u64)*off_in : (__u64)-1',
+		'fd': 'fd_out',
+		'off': 'off_out ? (__u64)*off_out : (__u64)-1',
+		'len': 'len',
+		'splice_flags': 'flags'
+	}),
+	# CFA_HAVE_IORING_OP_TEE
+	Call('TEE', 'ssize_t tee(int fd_in, int fd_out, size_t len, unsigned int flags)', {
+		'splice_fd_in': 'fd_in',
+		'fd': 'fd_out',
+		'len': 'len',
+		'splice_flags': 'flags'
+	})
+]
+
+print("//----------")
+print("// synchronous calls")
+for c in calls:
+	if c.define:
+		print("""#if defined({define})
+	{ret} cfa_{name}({params}, __u64 submit_flags);
+#endif""".format(define=c.define,ret=c.ret, name=c.name, params=c.params))
+	else:
+		print("{ret} cfa_{name}({params}, __u64 submit_flags);"
+		.format(ret=c.ret, name=c.name, params=c.params))
+
+print("\n//----------")
+print("// asynchronous calls")
+for c in calls:
+	if c.define:
+		print("""#if defined({define})
+	void async_{name}(io_future_t & future, {params}, __u64 submit_flags);
+#endif""".format(define=c.define,name=c.name, params=c.params))
+	else:
+		print("void async_{name}(io_future_t & future, {params}, __u64 submit_flags);"
+		.format(name=c.name, params=c.params))
+print("\n")
+
+for c in calls:
+	print("//-----------------------------------------------------------------------------")
+	print("// {}".format(c.name))
+	Async = AsyncTemplate.format(
+		name   = c.name,
+		ret    = c.ret,
+		params = c.params,
+		args   = c.args(),
+		op     = c.op,
+		body   = c.body
+
+	)
+	Sync = SyncTemplate.format(
+		name   = c.name,
+		ret    = c.ret,
+		params = c.params,
+		args   = c.args()
+	)
+
+	if c.define:
+		print("""#if defined({})
+	//----------
+	// asynchronous call
+	{}
+
+	//----------
+	// synchronous call
+	{}
+#endif
+""".format(c.define, "\n\t".join( Async.splitlines() ), "\n\t".join( Sync.splitlines() )))
+	else :
+		print("""//----------
+// asynchronous call
+{}
+
+//----------
+// synchronous call
+{}
+""".format(Async, Sync))
+
+print("""
+//-----------------------------------------------------------------------------
+// Check if a function is has asynchronous
+bool has_user_level_blocking( fptr_t func ) {
+ 	#if defined(CFA_HAVE_LINUX_IO_URING_H)""")
+
+for c in calls:
+	if c.define:
+		print("""		#if defined({define})
+ 			if( /*func == (fptr_t)preadv2 || */
+ 				func == (fptr_t)cfa_{name} ||
+				func == (fptr_t)async_{name} ) {{
+ 				#if defined(CFA_HAVE_IORING_OP_{op})
+					return true;
+				#else
+					return false;
+				#endif
+ 			}}
+ 		#endif""".format(define=c.define, name=c.name, op=c.op))
+	else:
+		print("""		if( /*func == (fptr_t)preadv2 || */
+			func == (fptr_t)cfa_{name} ||
+			func == (fptr_t)async_{name} ) {{
+			#if defined(CFA_HAVE_IORING_OP_{op})
+				return true;
+			#else
+				return false;
+			#endif
+		}}""".format(name=c.name, op=c.op))
+
+print(""" 	#endif
+
+ 	return false;
+}""")

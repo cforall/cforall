@@ -1,0 +1,494 @@
+__extension__ signed int _X1ai_1;
+__extension__ signed int _X1bi_1;
+__extension__ signed int _X1ci_1;
+__extension__ struct S {
+    __extension__ signed int _X1ai_1;
+    __extension__ signed int _X1bi_1;
+    __extension__ signed int _X1ci_1;
+};
+static inline void _X12_constructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1);
+static inline void _X12_constructorFv_S1SS1S_autogen___1(struct S *_X4_dstS1S_1, struct S _X4_srcS1S_1);
+static inline void _X11_destructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1);
+static inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___1(struct S *_X4_dstS1S_1, struct S _X4_srcS1S_1);
+static inline void _X12_constructorFv_S1Si_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1);
+static inline void _X12_constructorFv_S1Sii_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1, signed int _X1bi_1);
+static inline void _X12_constructorFv_S1Siii_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1, signed int _X1bi_1, signed int _X1ci_1);
+static inline void _X12_constructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1){
+    {
+        ((void)((*_X4_dstS1S_1)._X1ai_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1bi_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1ci_1) /* ?{} */);
+    }
+
+}
+static inline void _X12_constructorFv_S1SS1S_autogen___1(struct S *_X4_dstS1S_1, struct S _X4_srcS1S_1){
+    {
+        ((void)((*_X4_dstS1S_1)._X1ai_1=_X4_srcS1S_1._X1ai_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1bi_1=_X4_srcS1S_1._X1bi_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1ci_1=_X4_srcS1S_1._X1ci_1) /* ?{} */);
+    }
+
+}
+static inline void _X11_destructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1){
+    {
+        ((void)((*_X4_dstS1S_1)._X1ci_1) /* ^?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1bi_1) /* ^?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1ai_1) /* ^?{} */);
+    }
+
+}
+static inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___1(struct S *_X4_dstS1S_1, struct S _X4_srcS1S_1){
+    struct S _X4_retS1S_1;
+    {
+        ((void)((*_X4_dstS1S_1)._X1ai_1=_X4_srcS1S_1._X1ai_1));
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1bi_1=_X4_srcS1S_1._X1bi_1));
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1ci_1=_X4_srcS1S_1._X1ci_1));
+    }
+
+    {
+        ((void)_X12_constructorFv_S1SS1S_autogen___1((&_X4_retS1S_1), (*_X4_dstS1S_1)));
+    }
+
+    return _X4_retS1S_1;
+}
+static inline void _X12_constructorFv_S1Si_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1){
+    {
+        ((void)((*_X4_dstS1S_1)._X1ai_1=_X1ai_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1bi_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1ci_1) /* ?{} */);
+    }
+
+}
+static inline void _X12_constructorFv_S1Sii_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1, signed int _X1bi_1){
+    {
+        ((void)((*_X4_dstS1S_1)._X1ai_1=_X1ai_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1bi_1=_X1bi_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1ci_1) /* ?{} */);
+    }
+
+}
+static inline void _X12_constructorFv_S1Siii_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1, signed int _X1bi_1, signed int _X1ci_1){
+    {
+        ((void)((*_X4_dstS1S_1)._X1ai_1=_X1ai_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1bi_1=_X1bi_1) /* ?{} */);
+    }
+
+    {
+        ((void)((*_X4_dstS1S_1)._X1ci_1=_X1ci_1) /* ?{} */);
+    }
+
+}
+__extension__ union U {
+    __extension__ signed int _X1ai_1;
+    __extension__ signed int _X1bi_1;
+    __extension__ signed int _X1ci_1;
+};
+static inline void _X12_constructorFv_U1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1);
+static inline void _X12_constructorFv_U1UU1U_autogen___1(union U *_X4_dstU1U_1, union U _X4_srcU1U_1);
+static inline void _X11_destructorFv_U1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1);
+static inline union U _X16_operator_assignFU1U_U1UU1U_autogen___1(union U *_X4_dstU1U_1, union U _X4_srcU1U_1);
+static inline void _X12_constructorFv_U1Ui_autogen___1(union U *_X4_dstU1U_1, signed int _X1ai_1);
+static inline void _X12_constructorFv_U1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1){
+}
+static inline void _X12_constructorFv_U1UU1U_autogen___1(union U *_X4_dstU1U_1, union U _X4_srcU1U_1){
+    {
+        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X4_srcU1U_1)), sizeof(union U )));
+    }
+
+}
+static inline void _X11_destructorFv_U1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1){
+}
+static inline union U _X16_operator_assignFU1U_U1UU1U_autogen___1(union U *_X4_dstU1U_1, union U _X4_srcU1U_1){
+    union U _X4_retU1U_1;
+    {
+        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X4_srcU1U_1)), sizeof(union U )));
+    }
+
+    {
+        ((void)_X12_constructorFv_U1UU1U_autogen___1((&_X4_retU1U_1), (*_X4_dstU1U_1)));
+    }
+
+    return _X4_retU1U_1;
+}
+static inline void _X12_constructorFv_U1Ui_autogen___1(union U *_X4_dstU1U_1, signed int _X1ai_1){
+    {
+        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X1ai_1)), sizeof(signed int )));
+    }
+
+}
+__extension__ enum E {
+    _X1RKM1E_1,
+    _X1GKM1E_1,
+    _X1BKM1E_1,
+};
+__extension__ signed int _X1fFi___1();
+__extension__ signed int i;
+__extension__ signed int j;
+__extension__ signed int _X4fredFi_i__1(signed int _X1pi_1){
+    __attribute__ ((unused)) signed int _X12_retval_fredi_1;
+    __extension__ struct S {
+        __extension__ signed int _X1ai_2;
+        __extension__ signed int _X1bi_2;
+        __extension__ signed int _X1ci_2;
+        __extension__ signed int *_X1xPi_2;
+        __extension__ signed int *_X1yPi_2;
+        __extension__ signed int *_X1zPi_2;
+    };
+    inline void _X12_constructorFv_S1S_autogen___2(struct S *_X4_dstS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1SS1S_autogen___2(struct S *_X4_dstS1S_2, struct S _X4_srcS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X4_srcS1S_2._X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X4_srcS1S_2._X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X4_srcS1S_2._X1ci_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2=_X4_srcS1S_2._X1xPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2=_X4_srcS1S_2._X1yPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2=_X4_srcS1S_2._X1zPi_2) /* ?{} */);
+        }
+
+    }
+    inline void _X11_destructorFv_S1S_autogen___2(struct S *_X4_dstS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2) /* ^?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2) /* ^?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2) /* ^?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2) /* ^?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2) /* ^?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2) /* ^?{} */);
+        }
+
+    }
+    inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___2(struct S *_X4_dstS1S_2, struct S _X4_srcS1S_2){
+        struct S _X4_retS1S_2;
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X4_srcS1S_2._X1ai_2));
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X4_srcS1S_2._X1bi_2));
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X4_srcS1S_2._X1ci_2));
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2=_X4_srcS1S_2._X1xPi_2));
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2=_X4_srcS1S_2._X1yPi_2));
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2=_X4_srcS1S_2._X1zPi_2));
+        }
+
+        {
+            ((void)_X12_constructorFv_S1SS1S_autogen___2((&_X4_retS1S_2), (*_X4_dstS1S_2)));
+        }
+
+        return _X4_retS1S_2;
+    }
+    inline void _X12_constructorFv_S1Si_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1Sii_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1Siii_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2, signed int _X1ci_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X1ci_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1SiiiPi_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2, signed int _X1ci_2, signed int *_X1xPi_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X1ci_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2=_X1xPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1SiiiPiPi_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2, signed int _X1ci_2, signed int *_X1xPi_2, signed int *_X1yPi_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X1ci_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2=_X1xPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2=_X1yPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1SiiiPiPiPi_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2, signed int _X1ci_2, signed int *_X1xPi_2, signed int *_X1yPi_2, signed int *_X1zPi_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1bi_2=_X1bi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1ci_2=_X1ci_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1xPi_2=_X1xPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1yPi_2=_X1yPi_2) /* ?{} */);
+        }
+
+        {
+            ((void)((*_X4_dstS1S_2)._X1zPi_2=_X1zPi_2) /* ?{} */);
+        }
+
+    }
+    signed int _X1ii_2 = (__extension__ _X1ai_1+__extension__ 3);
+    {
+        ((void)__extension__ 3);
+    }
+
+    {
+        ((void)__extension__ _X1ai_1);
+    }
+
+    __extension__ signed int _X1ai_2;
+    __extension__ signed int _X1bi_2;
+    __extension__ signed int _X1ci_2;
+    {
+        ((void)(__extension__ _X1ai_2=(__extension__ _X1bi_2+__extension__ _X1ci_2)));
+    }
+
+    {
+        signed int _tmp_cp_ret6;
+        ((void)(((void)(_tmp_cp_ret6=__extension__ _X4fredFi_i__1(3))) , _tmp_cp_ret6));
+    }
+
+    __extension__ signed int _X4maryFi_i__2(signed int _X1pi_2){
+        __attribute__ ((unused)) signed int _X12_retval_maryi_2;
+    }
+    {
+        ((void)__extension__ sizeof(3));
+    }
+
+    {
+        ((void)__extension__ ((3!=((signed int )0)) || (4!=((signed int )0))));
+    }
+
+    {
+        ((void)__extension__ __alignof__(__extension__ _X1ai_2));
+    }
+
+    {
+        ((void)((__extension__ _X1ai_2!=((signed int )0)) || (((__extension__ _X1bi_2!=((signed int )0)) && (__extension__ _X1ci_2!=((signed int )0)))!=((signed int )0))));
+    }
+
+    {
+        ((void)(((__extension__ _X1ai_2>__extension__ _X1bi_2)!=((signed int )0)) ? __extension__ _X1ci_2 : __extension__ _X1ci_2));
+    }
+
+    {
+        ((void)(__extension__ _X1ai_2=__extension__ (__extension__ _X1bi_2+__extension__ _X1ci_2)));
+    }
+
+    {
+        ((void)(((void)(((void)__extension__ _X1ai_2) , __extension__ _X1bi_2)) , __extension__ _X1ci_2));
+    }
+
+}

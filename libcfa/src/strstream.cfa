@@ -1,0 +1,172 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+// 
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// strstream.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Thu Apr 22 22:24:35 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr 27 20:59:53 2021
+// Update Count     : 78
+// 
+
+#include "strstream.hfa"
+
+#include <stdio.h>										// vsnprintf
+#include <stdarg.h>										// varargs
+#include <string.h>										// strncpy, strerror
+#include <assert.h>
+#include <errno.h>										// errno
+#include <unistd.h>										// sbrk, sysconf
+
+
+// *********************************** strstream ***********************************
+
+
+#define IO_MSG "I/O error: "
+
+// private
+bool sepPrt$( ostrstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
+void sepReset$( ostrstream & os ) { os.sepOnOff$ = os.sepDefault$; }
+void sepReset$( ostrstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
+const char * sepGetCur$( ostrstream & os ) { return os.sepCur$; }
+void sepSetCur$( ostrstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
+bool getNL$( ostrstream & os ) { return os.sawNL$; }
+void setNL$( ostrstream & os, bool state ) { os.sawNL$ = state; }
+bool getANL$( ostrstream & os ) { return os.nlOnOff$; }
+bool getPrt$( ostrstream & os ) { return os.prt$; }
+void setPrt$( ostrstream & os, bool state ) { os.prt$ = state; }
+
+// public
+void ?{}( ostrstream & os, char buf[], size_t size ) {
+	os.buf$ = buf;
+	os.size$ = size;
+	os.cursor$ = 0;
+	os.sepDefault$ = true;
+	os.sepOnOff$ = false;
+	os.nlOnOff$ = true;
+	os.prt$ = false;
+	os.sawNL$ = false;
+	sepSetCur$( os, sepGet( os ) );
+	sepSet( os, " " );
+	sepSetTuple( os, ", " );
+} // ?{}
+
+void sepOn( ostrstream & os ) { os.sepOnOff$ = ! getNL$( os ); }
+void sepOff( ostrstream & os ) { os.sepOnOff$ = false; }
+
+bool sepDisable( ostrstream & os ) {
+	bool temp = os.sepDefault$;
+	os.sepDefault$ = false;
+	sepReset$( os );
+	return temp;
+} // sepDisable
+
+bool sepEnable( ostrstream & os ) {
+	bool temp = os.sepDefault$;
+	os.sepDefault$ = true;
+	if ( os.sepOnOff$ ) sepReset$( os );				// start of line ?
+	return temp;
+} // sepEnable
+
+void nlOn( ostrstream & os ) { os.nlOnOff$ = true; }
+void nlOff( ostrstream & os ) { os.nlOnOff$ = false; }
+
+const char * sepGet( ostrstream & os ) { return os.separator$; }
+void sepSet( ostrstream & os, const char s[] ) {
+	assert( s );
+	strncpy( os.separator$, s, ostrstream_sepSize - 1 );
+	os.separator$[ostrstream_sepSize - 1] = '\0';
+} // sepSet
+
+const char * sepGetTuple( ostrstream & os ) { return os.tupleSeparator$; }
+void sepSetTuple( ostrstream & os, const char s[] ) {
+	assert( s );
+	strncpy( os.tupleSeparator$, s, ostrstream_sepSize - 1 );
+	os.tupleSeparator$[ostrstream_sepSize - 1] = '\0';
+} // sepSet
+
+void ends( ostrstream & os ) {
+	if ( getANL$( os ) ) nl( os );
+	else setPrt$( os, false );							// turn off
+} // ends
+
+int fmt( ostrstream & os, const char format[], ... ) {
+	va_list args;
+	va_start( args, format );
+	int len = vsnprintf( os.buf$ + os.cursor$, os.size$ - os.cursor$, format, args );
+	va_end( args );
+	os.cursor$ += len;
+	if ( os.cursor$ >= os.size$ ) {						// cursor exceeded buffer size?
+		#define fmtmsg IO_MSG "ostrstream truncated write, buffer too small.\n"
+		write( STDERR_FILENO, fmtmsg, sizeof(fmtmsg) - 1 );
+		abort();
+	} // if
+
+	setPrt$( os, true );								// called in output cascade
+	sepReset$( os );									// reset separator
+	return len;
+} // fmt
+
+ostrstream & write( ostrstream & os, FILE * stream ) {
+	if ( fwrite( os.buf$, 1, os.cursor$, stream ) != os.cursor$ ) {
+		#define ostrwritemsg IO_MSG "ostrstream write error.\n"
+		write( STDERR_FILENO, ostrwritemsg, sizeof(ostrwritemsg) - 1 );
+		abort();
+	} // if
+	return os;
+} // write
+
+ostrstream & write( ostrstream & os ) {
+	return write( os, stdout );
+} // write
+
+
+// *********************************** istrstream ***********************************
+
+
+// public
+void ?{}( istrstream & is, char buf[] ) {
+	is.buf$ = buf;
+	is.cursor$ = 0;
+	is.nlOnOff$ = false;
+} // ?{}
+
+bool getANL( istrstream & is ) { return is.nlOnOff$; }
+void nlOn( istrstream & is ) { is.nlOnOff$ = true; }
+void nlOff( istrstream & is ) { is.nlOnOff$ = false; }
+
+void ends( istrstream & is ) {
+} // ends
+
+int eof( istrstream & is ) {
+	return 0;
+} // eof
+
+istrstream &ungetc( istrstream & is, char c ) {
+	// if ( ungetc( c, (FILE *)(is.file$) ) == EOF ) {
+	// 	abort | IO_MSG "ungetc" | nl | strerror( errno );
+	// } // if
+	return is;
+} // ungetc
+
+int fmt( istrstream & is, const char format[], ... ) {
+	va_list args;
+	va_start( args, format );
+	// This does not work because vsscanf does not return buffer position.
+	int len = vsscanf( is.buf$ + is.cursor$, format, args );
+	va_end( args );
+	if ( len == EOF ) {
+		int j;
+		printf( "X %d%n\n", len, &j );
+	} // if
+	is.cursor$ += len;
+	return len;
+} // fmt
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

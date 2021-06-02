@@ -1,0 +1,125 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// many_read.cfa -- Make sure that multiple concurrent reads to mess up.
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Feb 18 15:26:05 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+extern "C" {
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <fcntl.h>
+	#include <unistd.h>
+}
+
+#include <string.h>
+
+#include <fstream.hfa>
+#include <iofwd.hfa>
+
+#include <thread.hfa>
+#include <kernel.hfa>
+
+#define xstr(s) str(s)
+#define str(s) #s
+
+const char * file = xstr(IN_DIR) "many_read.data";
+int fd;
+off_t size;
+
+const char * content;
+
+thread reader {};
+void ?{}(reader & this) {}
+void ^?{}(reader & mutex this) {}
+void main(reader & this);
+
+int main() {
+	fd = open(file, 0);
+	if(fd < 0) {
+		serr | "Failed to open file: " | file;
+		exit(1);
+	}
+
+	struct stat sb;
+	int ret = fstat(fd, &sb);
+	if(ret < 0) {
+		serr | "Failed to stat file: " | file;
+		exit(1);
+	}
+
+	size = sb.st_size;
+	sout | "File has size: " | size | "bytes";
+
+	char data[size+1];
+	{
+		size_t left = size;
+		char * it = data;
+
+		while(left) {
+			ret = read(fd, it, left);
+			if(ret < 0) {
+				serr | "Failed to read file: " | file | " (the first time)";
+				exit(1);
+			}
+			it += ret;
+			left -= ret;
+		}
+	}
+	data[size] = 0;
+	content = data;
+	sout | content;
+
+	{
+		processor proc[2];
+		{
+			reader readers[17];
+		}
+	}
+
+	sout | "Yup, it all matches.";
+}
+
+#ifdef CFA_HAVE_PREADV2
+	extern "C" {
+		#include <sys/uio.h>
+	}
+#endif
+
+void main(reader & this) {
+	for(50) {
+		char data[size];
+		char * it = data;
+		size_t left = size;
+		off_t offset = 0;
+
+		#ifdef CFA_HAVE_PREADV2
+			while(left) {
+				struct iovec vec;
+				vec.iov_base = (void*)it;
+				vec.iov_len = left;
+				int ret = cfa_preadv2(fd, &vec, 1, offset, 0, 0);
+				if(ret < 0) {
+					serr | "Failed to read file: " | file | " (NOT the first time)";
+					exit(1);
+				}
+				it += ret;
+				left -= ret;
+				offset += ret;
+			}
+
+			if(strncmp(content, data, size) != 0) {
+				serr | "Subsequent read of file '" | file | "' return different content";
+				exit(1);
+			}
+		#endif
+	}
+}

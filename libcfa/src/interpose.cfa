@@ -1,0 +1,322 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// interpose.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Mar 29 16:10:31 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Mar 13 17:35:37 2020
+// Update Count     : 178
+//
+
+#include <stdarg.h>										// va_start, va_end
+#include <stdio.h>
+#include <string.h>										// strlen
+#include <unistd.h>										// _exit, getpid
+#define __USE_GNU
+#include <signal.h>
+#undef __USE_GNU
+extern "C" {
+#include <dlfcn.h>										// dlopen, dlsym
+#include <execinfo.h>									// backtrace, messages
+}
+
+#include "bits/debug.hfa"
+#include "bits/defs.hfa"
+#include "bits/signal.hfa"								// sigHandler_?
+#include "startup.hfa"									// STARTUP_PRIORITY_CORE
+#include <assert.h>
+
+//=============================================================================================
+// Interposing helpers
+//=============================================================================================
+
+void preload_libgcc(void) {
+	dlopen( "libgcc_s.so.1", RTLD_NOW );
+	if ( const char * error = dlerror() ) abort( "interpose_symbol : internal error pre-loading libgcc, %s\n", error );
+}
+
+typedef void (* generic_fptr_t)(void);
+generic_fptr_t interpose_symbol( const char symbol[], const char version[] ) {
+	const char * error;
+
+	static void * library;
+	if ( ! library ) {
+		#if defined( RTLD_NEXT )
+			library = RTLD_NEXT;
+		#else
+			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
+			library = dlopen( "libc.so.6", RTLD_LAZY );
+			error = dlerror();
+			if ( error ) {
+				abort( "interpose_symbol : failed to open libc, %s\n", error );
+			}
+		#endif
+	} // if
+
+	union { generic_fptr_t fptr; void * ptr; } originalFunc;
+
+	#if defined( _GNU_SOURCE )
+		if ( version ) {
+			originalFunc.ptr = dlvsym( library, symbol, version );
+		} else {
+			originalFunc.ptr = dlsym( library, symbol );
+		}
+	#else
+		originalFunc.ptr = dlsym( library, symbol );
+	#endif // _GNU_SOURCE
+
+	error = dlerror();
+	if ( error ) abort( "interpose_symbol : internal error, %s\n", error );
+
+	return originalFunc.fptr;
+}
+
+#define INTERPOSE_LIBC( x, ver ) __cabi_libc.x = (typeof(__cabi_libc.x))interpose_symbol( #x, ver )
+
+//=============================================================================================
+// Interposition Startup logic
+//=============================================================================================
+
+void sigHandler_segv( __CFA_SIGPARMS__ );
+void sigHandler_ill ( __CFA_SIGPARMS__ );
+void sigHandler_fpe ( __CFA_SIGPARMS__ );
+void sigHandler_abrt( __CFA_SIGPARMS__ );
+void sigHandler_term( __CFA_SIGPARMS__ );
+
+struct {
+	void (* exit)( int ) __attribute__(( __noreturn__ ));
+	void (* abort)( void ) __attribute__(( __noreturn__ ));
+} __cabi_libc;
+
+extern "C" {
+	void __cfaabi_interpose_startup(void)  __attribute__(( constructor( STARTUP_PRIORITY_CORE ) ));
+	void __cfaabi_interpose_startup( void ) {
+		const char *version = 0p;
+
+		preload_libgcc();
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
+		INTERPOSE_LIBC( abort, version );
+		INTERPOSE_LIBC( exit , version );
+#pragma GCC diagnostic pop
+
+		// As a precaution (and necessity), errors that result in termination are delivered on a separate stack because
+		// task stacks might be very small (4K) and the signal delivery corrupts memory to the point that a clean
+		// shutdown is impossible. Also, when a stack overflow encounters the non-accessible sentinel page (debug only)
+		// and generates a segment fault, the signal cannot be delivered on the sentinel page. Finally, calls to abort
+		// print a stack trace that uses substantial stack space.
+
+		#define MINSTKSZ SIGSTKSZ * 8
+		static char stack[MINSTKSZ] __attribute__(( aligned (16) ));
+		static stack_t ss;
+
+		ss.ss_sp = stack;
+		ss.ss_size = MINSTKSZ;
+		ss.ss_flags = 0;
+		if ( sigaltstack( &ss, 0p ) == -1 ) {
+			abort( "__cfaabi_interpose_startup : internal error, sigaltstack error(%d) %s.", errno, strerror( errno ) );
+		} // if
+
+		// Failure handler
+		 // internal errors
+		__cfaabi_sigaction( SIGSEGV, sigHandler_segv, SA_SIGINFO | SA_ONSTACK ); // Invalid memory reference (default: Core)
+		__cfaabi_sigaction( SIGBUS , sigHandler_segv, SA_SIGINFO | SA_ONSTACK ); // Bus error, bad memory access (default: Core)
+		__cfaabi_sigaction( SIGILL , sigHandler_ill , SA_SIGINFO | SA_ONSTACK ); // Illegal Instruction (default: Core)
+		__cfaabi_sigaction( SIGFPE , sigHandler_fpe , SA_SIGINFO | SA_ONSTACK ); // Floating-point exception (default: Core)
+
+ 		// handlers to outside errors
+		// reset in-case they insist and send it over and over
+		__cfaabi_sigaction( SIGTERM, sigHandler_term, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Termination signal (default: Term)
+		__cfaabi_sigaction( SIGINT , sigHandler_term, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Interrupt from keyboard (default: Term)
+		__cfaabi_sigaction( SIGHUP , sigHandler_term, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Hangup detected on controlling terminal or death of controlling process (default: Term)
+		__cfaabi_sigaction( SIGQUIT, sigHandler_term, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Quit from keyboard (default: Core)
+		__cfaabi_sigaction( SIGABRT, sigHandler_term, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Abort signal from abort(3) (default: Core)
+	}
+}
+
+//=============================================================================================
+// Terminating Signals logic
+//=============================================================================================
+
+// Forward declare abort after the __typeof__ call to avoid ambiguities
+void exit( int status, const char fmt[], ... ) __attribute__(( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));
+void abort( const char fmt[], ... ) __attribute__(( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ ));
+void abort( bool signalAbort, const char fmt[], ... ) __attribute__(( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));
+void __abort( bool signalAbort, const char fmt[], va_list args ) __attribute__(( __nothrow__, __leaf__, __noreturn__ ));
+
+extern "C" {
+	void abort( void ) __attribute__(( __nothrow__, __leaf__, __noreturn__ )) {
+		abort( false, "%s", "" );
+	}
+
+	void __cabi_abort( const char fmt[], ... ) __attribute__(( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ )) {
+		va_list argp;
+		va_start( argp, fmt );
+		__abort( false, fmt, argp );
+		va_end( argp );
+	}
+
+	void exit( int status ) __attribute__(( __nothrow__, __leaf__, __noreturn__ )) {
+		__cabi_libc.exit( status );
+	}
+}
+
+// See concurrency/kernel.cfa and concurrency/preemption.cfa for strong definition used in multi-processor mode.
+void __kernel_abort_lock( void ) __attribute__(( __nothrow__, __leaf__, __weak__ )) {}
+void __kernel_abort_msg( char buffer[], int size ) __attribute__(( __nothrow__, __leaf__, __weak__ )) {}
+int __kernel_abort_lastframe( void ) __attribute__(( __nothrow__, __leaf__, __weak__ )) { return 4; }
+
+enum { abort_text_size = 1024 };
+static char abort_text[ abort_text_size ];
+
+static void __cfaabi_backtrace( int start ) {
+	enum { Frames = 50, };								// maximum number of stack frames
+	int last = __kernel_abort_lastframe();				// skip last N stack frames
+
+	void * array[Frames];
+	size_t size = backtrace( array, Frames );
+	char ** messages = backtrace_symbols( array, size ); // does not demangle names
+
+	*index( messages[0], '(' ) = '\0';					// find executable name
+	__cfaabi_bits_print_nolock( STDERR_FILENO, "Stack back trace for: %s\n", messages[0]);
+
+	for ( unsigned int i = start; i < size - last && messages != 0p; i += 1 ) {
+		char * name = 0p, * offset_begin = 0p, * offset_end = 0p;
+
+		for ( char * p = messages[i]; *p; p += 1 ) {	// find parantheses and +offset
+			//__cfaabi_bits_print_nolock( "X %s\n", p);
+			if ( *p == '(' ) {
+				name = p;
+			} else if ( *p == '+' ) {
+				offset_begin = p;
+			} else if ( *p == ')' ) {
+				offset_end = p;
+				break;
+			}
+		}
+
+		// if line contains symbol, print it
+		int frameNo = i - start;
+		if ( name && offset_begin && offset_end && name < offset_begin ) {
+			*name++ = '\0';								// delimit strings
+			*offset_begin++ = '\0';
+			*offset_end++ = '\0';
+
+			__cfaabi_bits_print_nolock( STDERR_FILENO, "(%i) %s : %s + %s %s\n", frameNo, messages[i], name, offset_begin, offset_end);
+		} else {										// otherwise, print the whole line
+			__cfaabi_bits_print_nolock( STDERR_FILENO, "(%i) %s\n", frameNo, messages[i] );
+		}
+	}
+	free( messages );
+}
+
+void exit( int status, const char fmt[], ... ) {
+	va_list args;
+	va_start( args, fmt );
+	vfprintf( stderr, fmt, args );
+	va_end( args );
+	__cabi_libc.exit( status );
+}
+
+static volatile bool __abort_first = 0;
+
+// Cannot forward va_list.
+void __abort( bool signalAbort, const char fmt[], va_list args ) {
+	// Multiple threads can come here from multiple paths
+	// To make sure this is safe any concurrent/subsequent call to abort is redirected to libc-abort
+	bool first = ! __atomic_test_and_set( &__abort_first, __ATOMIC_SEQ_CST);
+
+	// Prevent preemption from kicking-in and messing with the abort
+	__kernel_abort_lock();
+
+	// first to abort ?
+	if ( !first ) {
+		// We aren't the first to abort just let C handle it
+		signal( SIGABRT, SIG_DFL );	// restore default in case we came here through the function.
+		__cabi_libc.abort();
+	}
+
+	int len = snprintf( abort_text, abort_text_size, "Cforall Runtime error (UNIX pid:%ld) ", (long int)getpid() ); // use UNIX pid (versus getPid)
+	__cfaabi_bits_write( STDERR_FILENO, abort_text, len );
+
+	// print the cause of the error
+	assert( fmt );
+	len = vsnprintf( abort_text, abort_text_size, fmt, args );
+	__cfaabi_bits_write( STDERR_FILENO, abort_text, len );
+
+	// add optional newline if missing at the end of the format text
+	if ( fmt[strlen( fmt ) - 1] != '\n' ) {
+		__cfaabi_bits_write( STDERR_FILENO, "\n", 1 );
+	} // if
+
+	// Give the kernel the chance to add some data in here
+	__kernel_abort_msg( abort_text, abort_text_size );
+
+	// print stack trace in handler
+	__cfaabi_backtrace( signalAbort ? 4 : 2 );
+
+	// Finally call abort
+	__cabi_libc.abort();
+
+}
+
+void abort( const char fmt[], ... ) {
+	va_list args;
+	va_start( args, fmt );
+	__abort( false, fmt, args );
+    // CONTROL NEVER REACHES HERE!
+	va_end( args );
+}
+
+void abort( bool signalAbort, const char fmt[], ... ) {
+    va_list args;
+    va_start( args, fmt );
+    __abort( signalAbort, fmt, args );
+    // CONTROL NEVER REACHES HERE!
+    va_end( args );
+}
+
+void sigHandler_segv( __CFA_SIGPARMS__ ) {
+		if ( sfp->si_addr == 0p ) {
+			abort( true, "Null pointer (0p) dereference.\n" );
+		} else {
+			abort( true, "%s at memory location %p.\n"
+				   "Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.\n",
+				   (sig == SIGSEGV ? "Segment fault" : "Bus error"), sfp->si_addr );
+		}
+}
+
+void sigHandler_ill( __CFA_SIGPARMS__ ) {
+	abort( true, "Executing illegal instruction at location %p.\n"
+			"Possible cause is stack corruption.\n",
+			sfp->si_addr );
+}
+
+void sigHandler_fpe( __CFA_SIGPARMS__ ) {
+	const char * msg;
+
+	choose( sfp->si_code ) {
+	  case FPE_INTDIV, FPE_FLTDIV: msg = "divide by zero";
+	  case FPE_FLTOVF: msg = "overflow";
+	  case FPE_FLTUND: msg = "underflow";
+	  case FPE_FLTRES: msg = "inexact result";
+	  case FPE_FLTINV: msg = "invalid operation";
+	  default: msg = "unknown";
+	} // choose
+	abort( true, "Computation error %s at location %p.\n", msg, sfp->si_addr );
+}
+
+void sigHandler_term( __CFA_SIGPARMS__ ) {
+	abort( true, "Application interrupted by signal: %s.\n", strsignal( sig ) );
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

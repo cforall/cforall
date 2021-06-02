@@ -1,0 +1,280 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// gmp --
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Apr 19 08:43:43 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Apr 20 20:59:21 2021
+// Update Count     : 32
+//
+
+// https://gmplib.org/gmp-man-6.1.1.pdf
+
+#pragma once
+
+#include <gmp.h>										// GNU multi-precise integers
+#include <fstream.hfa>									// sout
+
+struct Int { mpz_t mpz; };								// wrap GMP implementation
+
+static inline {
+	// constructor, zero_t/one_t are unnecessary because of relationship with signed/unsigned int
+	void ?{}( Int & this ) { mpz_init( this.mpz ); }
+	void ?{}( Int & this, Int init ) { mpz_init_set( this.mpz, init.mpz ); }
+	void ?{}( Int & this, signed long int init ) { mpz_init_set_si( this.mpz, init ); }
+	void ?{}( Int & this, unsigned long int init ) { mpz_init_set_ui( this.mpz, init ); }
+	void ?{}( Int & this, const char val[] ) { if ( mpz_init_set_str( this.mpz, val, 0 ) ) abort(); }
+	void ^?{}( Int & this ) { mpz_clear( this.mpz ); }
+
+	// literal
+	Int ?`mp( signed long int init ) { return (Int){ init }; }
+	Int ?`mp( unsigned long int init ) { return (Int){ init }; }
+	Int ?`mp( const char init[] ) { return (Int){ init }; }
+
+	// assignment
+	Int ?=?( Int & lhs, Int rhs ) { mpz_set( lhs.mpz, rhs.mpz ); return lhs; }
+	Int ?=?( Int & lhs, long int rhs ) { mpz_set_si( lhs.mpz, rhs ); return lhs; }
+	Int ?=?( Int & lhs, unsigned long int rhs ) { mpz_set_ui( lhs.mpz, rhs ); return lhs; }
+	Int ?=?( Int & lhs, const char rhs[] ) { if ( mpz_set_str( lhs.mpz, rhs, 0 ) ) { abort | "invalid string conversion"; } return lhs; }
+
+	char ?=?( char & lhs, Int rhs ) { char val = mpz_get_si( rhs.mpz ); lhs = val; return lhs; }
+	short int ?=?( short int & lhs, Int rhs ) { short int val = mpz_get_si( rhs.mpz ); lhs = val; return lhs; }
+	int ?=?( int & lhs, Int rhs ) { int val = mpz_get_si( rhs.mpz ); lhs = val; return lhs; }
+	long int ?=?( long int & lhs, Int rhs ) { long int val = mpz_get_si( rhs.mpz ); lhs = val; return lhs; }
+	unsigned char ?=?( unsigned char & lhs, Int rhs ) { unsigned char val = mpz_get_ui( rhs.mpz ); lhs = val; return lhs; }
+	unsigned short int ?=?( unsigned short int & lhs, Int rhs ) { unsigned short int val = mpz_get_ui( rhs.mpz ); lhs = val; return lhs; }
+	unsigned int ?=?( unsigned int & lhs, Int rhs ) { unsigned int val = mpz_get_ui( rhs.mpz ); lhs = val; return lhs; }
+	unsigned long int ?=?( unsigned long int & lhs, Int rhs ) { unsigned long int val = mpz_get_ui( rhs.mpz ); lhs = val; return lhs; }
+
+	// conversions
+	long int narrow( Int val ) { return mpz_get_si( val.mpz ); }
+	unsigned long int narrow( Int val ) { return mpz_get_ui( val.mpz ); }
+
+	// comparison
+	int ?==?( Int oper1, Int oper2 ) { return mpz_cmp( oper1.mpz, oper2.mpz ) == 0; }
+	int ?==?( Int oper1, long int oper2 ) { return mpz_cmp_si( oper1.mpz, oper2 ) == 0; }
+	int ?==?( long int oper2, Int oper1 ) { return mpz_cmp_si( oper1.mpz, oper2 ) == 0; }
+	int ?==?( Int oper1, unsigned long int oper2 ) { return mpz_cmp_ui( oper1.mpz, oper2 ) == 0; }
+	int ?==?( unsigned long int oper2, Int oper1 ) { return mpz_cmp_ui( oper1.mpz, oper2 ) == 0; }
+
+	int ?!=?( Int oper1, Int oper2 ) { return ! ( oper1 == oper2 ); }
+	int ?!=?( Int oper1, long int oper2 ) { return ! ( oper1 == oper2 ); }
+	int ?!=?( long int oper1, Int oper2 ) { return ! ( oper1 == oper2 ); }
+	int ?!=?( Int oper1, unsigned long int oper2 ) { return ! ( oper1 == oper2 ); }
+	int ?!=?( unsigned long int oper1, Int oper2 ) { return ! ( oper1 == oper2 ); }
+
+	int ?<?( Int oper1, Int oper2 ) { return mpz_cmp( oper1.mpz, oper2.mpz ) < 0; }
+	int ?<?( Int oper1, long int oper2 ) { return mpz_cmp_si( oper1.mpz, oper2 ) < 0; }
+	int ?<?( long int oper2, Int oper1 ) { return mpz_cmp_si( oper1.mpz, oper2 ) < 0; }
+	int ?<?( Int oper1, unsigned long int oper2 ) { return mpz_cmp_ui( oper1.mpz, oper2 ) < 0; }
+	int ?<?( unsigned long int oper2, Int oper1 ) { return mpz_cmp_ui( oper1.mpz, oper2 ) < 0; }
+
+	int ?<=?( Int oper1, Int oper2 ) { return mpz_cmp( oper1.mpz, oper2.mpz ) <= 0; }
+	int ?<=?( Int oper1, long int oper2 ) { return mpz_cmp_si( oper1.mpz, oper2 ) <= 0; }
+	int ?<=?( long int oper2, Int oper1 ) { return mpz_cmp_si( oper1.mpz, oper2 ) <= 0; }
+	int ?<=?( Int oper1, unsigned long int oper2 ) { return mpz_cmp_ui( oper1.mpz, oper2 ) <= 0; }
+	int ?<=?( unsigned long int oper2, Int oper1 ) { return mpz_cmp_ui( oper1.mpz, oper2 ) <= 0; }
+
+	int ?>?( Int oper1, Int oper2 ) { return ! ( oper1 <= oper2 ); }
+	int ?>?( Int oper1, long int oper2 ) { return ! ( oper1 <= oper2 ); }
+	int ?>?( long int oper1, Int oper2 ) { return ! ( oper1 <= oper2 ); }
+	int ?>?( Int oper1, unsigned long int oper2 ) { return ! ( oper1 <= oper2 ); }
+	int ?>?( unsigned long int oper1, Int oper2 ) { return ! ( oper1 <= oper2 ); }
+
+	int ?>=?( Int oper1, Int oper2 ) { return ! ( oper1 < oper2 ); }
+	int ?>=?( Int oper1, long int oper2 ) { return ! ( oper1 < oper2 ); }
+	int ?>=?( long int oper1, Int oper2 ) { return ! ( oper1 < oper2 ); }
+	int ?>=?( Int oper1, unsigned long int oper2 ) { return ! ( oper1 < oper2 ); }
+	int ?>=?( unsigned long int oper1, Int oper2 ) { return ! ( oper1 < oper2 ); }
+
+	// arithmetic
+	Int +?( Int oper ) { Int pos; mpz_set( pos.mpz, oper.mpz ); return pos; }
+	Int -?( Int oper ) { Int neg; mpz_neg( neg.mpz, oper.mpz ); return neg; }
+	Int ~?( Int oper ) { Int comp; mpz_com( comp.mpz, oper.mpz ); return comp; }
+
+	Int ?&?( Int oper1, Int oper2 ) { Int conjunction; mpz_and( conjunction.mpz, oper1.mpz, oper2.mpz ); return conjunction; }
+	Int ?&?( Int oper1, long int oper2 ) { Int conjunction, temp; mpz_set_si( temp.mpz, oper2 ); mpz_and( conjunction.mpz, oper1.mpz, temp.mpz ); return conjunction; }
+	Int ?&?( long int oper1, Int oper2 ) { Int conjunction, temp; mpz_set_si( temp.mpz, oper1 ); mpz_and( conjunction.mpz, temp.mpz, oper2.mpz ); return conjunction; }
+	Int ?&?( Int oper1, unsigned long int oper2 ) { Int conjunction, temp; mpz_set_ui( temp.mpz, oper2 ); mpz_and( conjunction.mpz, oper1.mpz, temp.mpz ); return conjunction; }
+	Int ?&?( unsigned long int oper1, Int oper2 ) { Int conjunction, temp; mpz_set_ui( temp.mpz, oper1 ); mpz_and( conjunction.mpz, temp.mpz, oper2.mpz ); return conjunction; }
+	Int ?&=?( Int & lhs, Int rhs ) { return lhs = lhs & rhs; }
+
+	Int ?|?( Int oper1, Int oper2 ) { Int disjunction; mpz_ior( disjunction.mpz, oper1.mpz, oper2.mpz ); return disjunction; }
+	Int ?|?( Int oper1, long int oper2 ) { Int disjunction, temp; mpz_set_si( temp.mpz, oper2 ); mpz_ior( disjunction.mpz, oper1.mpz, temp.mpz ); return disjunction; }
+	Int ?|?( long int oper1, Int oper2 ) { Int disjunction, temp; mpz_set_si( temp.mpz, oper1 ); mpz_ior( disjunction.mpz, temp.mpz, oper2.mpz ); return disjunction; }
+	Int ?|?( Int oper1, unsigned long int oper2 ) { Int disjunction, temp; mpz_set_ui( temp.mpz, oper2 ); mpz_ior( disjunction.mpz, oper1.mpz, temp.mpz ); return disjunction; }
+	Int ?|?( unsigned long int oper1, Int oper2 ) { Int disjunction, temp; mpz_set_ui( temp.mpz, oper1 ); mpz_ior( disjunction.mpz, temp.mpz, oper2.mpz ); return disjunction; }
+	Int ?|=?( Int & lhs, Int rhs ) { return lhs = lhs | rhs; }
+
+	Int ?^?( Int oper1, Int oper2 ) { Int disjunction; mpz_xor( disjunction.mpz, oper1.mpz, oper2.mpz ); return disjunction; }
+	Int ?^?( Int oper1, long int oper2 ) { Int disjunction, temp; mpz_set_si( temp.mpz, oper2 ); mpz_ior( disjunction.mpz, oper1.mpz, temp.mpz ); return disjunction; }
+	Int ?^?( long int oper1, Int oper2 ) { Int disjunction, temp; mpz_set_si( temp.mpz, oper1 ); mpz_ior( disjunction.mpz, temp.mpz, oper2.mpz ); return disjunction; }
+	Int ?^?( Int oper1, unsigned long int oper2 ) { Int disjunction, temp; mpz_set_ui( temp.mpz, oper2 ); mpz_ior( disjunction.mpz, oper1.mpz, temp.mpz ); return disjunction; }
+	Int ?^?( unsigned long int oper1, Int oper2 ) { Int disjunction, temp; mpz_set_ui( temp.mpz, oper1 ); mpz_ior( disjunction.mpz, temp.mpz, oper2.mpz ); return disjunction; }
+	Int ?^=?( Int & lhs, Int rhs ) { return lhs = lhs ^ rhs; }
+
+	Int ?+?( Int addend1, Int addend2 ) { Int sum; mpz_add( sum.mpz, addend1.mpz, addend2.mpz ); return sum; }
+	Int ?+?( Int addend1, long int addend2 ) { Int sum; if ( addend2 >= 0 ) mpz_add_ui( sum.mpz, addend1.mpz, addend2 ); else mpz_sub_ui( sum.mpz, addend1.mpz, -addend2 ); return sum; }
+	Int ?+?( long int addend2, Int addend1 ) { Int sum; if ( addend2 >= 0 ) mpz_add_ui( sum.mpz, addend1.mpz, addend2 ); else mpz_sub_ui( sum.mpz, addend1.mpz, -addend2 ); return sum; }
+	Int ?+?( Int addend1, unsigned long int addend2 ) { Int sum; mpz_add_ui( sum.mpz, addend1.mpz, addend2 ); return sum; }
+	Int ?+?( unsigned long int addend2, Int addend1 ) { Int sum; mpz_add_ui( sum.mpz, addend1.mpz, addend2 ); return sum; }
+	Int ?+=?( Int & lhs, Int rhs ) { return lhs = lhs + rhs; }
+	Int ?+=?( Int & lhs, long int rhs ) { return lhs = lhs + rhs; }
+	Int ?+=?( Int & lhs, unsigned long int rhs ) { return lhs = lhs + rhs; }
+	Int ++?( Int & lhs ) { return lhs += 1; }
+	Int ?++( Int & lhs ) { Int ret = lhs; lhs += 1; return ret; }
+
+	Int ?-?( Int minuend, Int subtrahend ) { Int diff; mpz_sub( diff.mpz, minuend.mpz, subtrahend.mpz ); return diff; }
+	Int ?-?( Int minuend, long int subtrahend ) { Int diff; if ( subtrahend >= 0 ) mpz_sub_ui( diff.mpz, minuend.mpz, subtrahend ); else mpz_add_ui( diff.mpz, minuend.mpz, -subtrahend ); return diff; }
+	Int ?-?( long int minuend, Int subtrahend ) { Int diff; if ( subtrahend >= 0 ) mpz_ui_sub( diff.mpz, minuend, subtrahend.mpz ); else { mpz_add_ui( diff.mpz, subtrahend.mpz, -minuend ); mpz_neg( diff.mpz, diff.mpz ); } return diff; }
+	Int ?-?( Int minuend, unsigned long int subtrahend ) { Int diff; mpz_sub_ui( diff.mpz, minuend.mpz, subtrahend ); return diff; }
+	Int ?-?( unsigned long int minuend, Int subtrahend ) { Int diff; mpz_ui_sub( diff.mpz, minuend, subtrahend.mpz ); return diff; }
+	Int ?-=?( Int & lhs, Int rhs ) { return lhs = lhs - rhs; }
+	Int ?-=?( Int & lhs, long int rhs ) { return lhs = lhs - rhs; }
+	Int ?-=?( Int & lhs, unsigned long int rhs ) { return lhs = lhs - rhs; }
+	Int --?( Int & lhs ) { return lhs -= 1; }
+	Int ?--( Int & lhs ) { Int ret = lhs; lhs -= 1; return ret; }
+
+	Int ?*?( Int multiplicator, Int multiplicand ) { Int product; mpz_mul( product.mpz, multiplicator.mpz, multiplicand.mpz ); return product; }
+	Int ?*?( Int multiplicator, long int multiplicand ) { Int product; mpz_mul_si( product.mpz, multiplicator.mpz, multiplicand ); return product; }
+	Int ?*?( long int multiplicand, Int multiplicator ) { Int product; mpz_mul_si( product.mpz, multiplicator.mpz, multiplicand ); return product; }
+	Int ?*?( Int multiplicator, unsigned long int multiplicand ) { Int product; mpz_mul_ui( product.mpz, multiplicator.mpz, multiplicand ); return product; }
+	Int ?*?( unsigned long int multiplicand, Int multiplicator ) { Int product; mpz_mul_ui( product.mpz, multiplicator.mpz, multiplicand ); return product; }
+	Int ?*=?( Int & lhs, Int rhs ) { return lhs = lhs * rhs; }
+	Int ?*=?( Int & lhs, long int rhs ) { return lhs = lhs * rhs; }
+	Int ?*=?( Int & lhs, unsigned long int rhs ) { return lhs = lhs * rhs; }
+
+	// some code for operators "/" and "%" taken from g++ gmpxx.h
+	Int ?/?( Int dividend, Int divisor ) { Int quotient; mpz_tdiv_q( quotient.mpz, dividend.mpz, divisor.mpz ); return quotient; }
+	Int ?/?( Int dividend, unsigned long int divisor ) { Int quotient; mpz_tdiv_q_ui( quotient.mpz, dividend.mpz, divisor ); return quotient; }
+	Int ?/?( unsigned long int dividend, Int divisor ) {
+		Int quotient;
+		if ( mpz_sgn( divisor.mpz ) >= 0 ) {
+			if ( mpz_fits_ulong_p( divisor.mpz ) )
+				mpz_set_ui( quotient.mpz, dividend / mpz_get_ui( divisor.mpz ) );
+			else
+				mpz_set_ui( quotient.mpz, 0 );
+		} else {
+			mpz_neg( quotient.mpz, divisor.mpz );
+			if ( mpz_fits_ulong_p( quotient.mpz ) ) {
+				mpz_set_ui( quotient.mpz, dividend / mpz_get_ui( quotient.mpz ) );
+				mpz_neg( quotient.mpz, quotient.mpz );
+			} else
+				mpz_set_ui( quotient.mpz, 0 );
+		} // if
+		return quotient;
+	} // ?/?
+	Int ?/?( Int dividend, long int divisor ) {
+		Int quotient;
+		if ( divisor >= 0 )
+			mpz_tdiv_q_ui( quotient.mpz, dividend.mpz, divisor );
+		else {
+			mpz_tdiv_q_ui( quotient.mpz, dividend.mpz, -divisor );
+			mpz_neg( quotient.mpz, quotient.mpz );
+		} // if
+		return quotient;
+	} // ?/?
+	Int ?/?( long int dividend, Int divisor ) {
+		Int quotient;
+		if ( mpz_fits_slong_p( divisor.mpz ) )
+			mpz_set_si( quotient.mpz, dividend / mpz_get_si( divisor.mpz ) );
+		else {
+			// if divisor is bigger than a long then the quotient must be zero, unless dividend==LONG_MIN and
+			// dividend==-LONG_MIN in which case the quotient is -1
+			mpz_set_si( quotient.mpz, mpz_cmpabs_ui( divisor.mpz, (dividend >= 0 ? dividend : -dividend)) == 0 ? -1 : 0 );
+		} // if
+		return quotient;
+	} // ?/?
+	Int ?/=?( Int & lhs, Int rhs ) { return lhs = lhs / rhs; }
+	Int ?/=?( Int & lhs, long int rhs ) { return lhs = lhs / rhs; }
+	Int ?/=?( Int & lhs, unsigned long int rhs ) { return lhs = lhs / rhs; }
+
+	[ Int, Int ] div( Int dividend, Int divisor ) { Int quotient, remainder; mpz_fdiv_qr( quotient.mpz, remainder.mpz, dividend.mpz, divisor.mpz ); return [ quotient, remainder ]; }
+	[ Int, Int ] div( Int dividend, unsigned long int divisor ) { Int quotient, remainder; mpz_fdiv_qr_ui( quotient.mpz, remainder.mpz, dividend.mpz, divisor ); return [ quotient, remainder ]; }
+
+	Int ?%?( Int dividend, Int divisor ) { Int remainder; mpz_tdiv_r( remainder.mpz, dividend.mpz, divisor.mpz ); return remainder; }
+	Int ?%?( Int dividend, unsigned long int divisor ) { Int remainder; mpz_tdiv_r_ui( remainder.mpz, dividend.mpz, divisor ); return remainder; }
+	Int ?%?( unsigned long int dividend, Int divisor ) {
+		Int remainder;
+		if ( mpz_sgn( divisor.mpz ) >= 0 ) {
+			if ( mpz_fits_ulong_p( divisor.mpz ) )
+				mpz_set_ui( remainder.mpz, dividend % mpz_get_ui( divisor.mpz ) );
+			else
+				mpz_set_ui( remainder.mpz, dividend );
+		} else {
+			mpz_neg( remainder.mpz, divisor.mpz );
+			if ( mpz_fits_ulong_p( remainder.mpz ) )
+				mpz_set_ui( remainder.mpz, dividend % mpz_get_ui( remainder.mpz ) );
+			else
+				mpz_set_ui( remainder.mpz, dividend );
+		} // if
+		return remainder;
+	} // ?%?
+	Int ?%?( Int dividend, long int divisor ) {
+		Int remainder;
+		mpz_tdiv_r_ui( remainder.mpz, dividend.mpz, (divisor >= 0 ? divisor : -divisor));
+		return remainder;
+	} // ?%?
+	Int ?%?( long int dividend, Int divisor ) {
+		Int remainder;
+		if ( mpz_fits_slong_p( divisor.mpz ) )
+			mpz_set_si( remainder.mpz, dividend % mpz_get_si( divisor.mpz ) );
+		else {
+			// if divisor is bigger than a long then the remainder is dividend unchanged, unless dividend==LONG_MIN and
+			// dividend==-LONG_MIN in which case the remainder is 0
+			mpz_set_si( remainder.mpz, mpz_cmpabs_ui( divisor.mpz, (dividend >= 0 ? dividend : -dividend)) == 0 ? 0 : dividend);
+		} // if
+		return remainder;
+	} // ?%?
+	Int ?%=?( Int & lhs, Int rhs ) { return lhs = lhs % rhs; }
+	Int ?%=?( Int & lhs, long int rhs ) { return lhs = lhs % rhs; }
+	Int ?%=?( Int & lhs, unsigned long int rhs ) { return lhs = lhs % rhs; }
+
+	Int ?<<?( Int shiften, mp_bitcnt_t shift ) { Int shifted; mpz_mul_2exp( shifted.mpz, shiften.mpz, shift ); return shifted; }
+	Int ?<<=?( Int & lhs, mp_bitcnt_t shift ) { return lhs = lhs << shift; }
+	Int ?>>?( Int shiften, mp_bitcnt_t shift ) { Int shifted; mpz_fdiv_q_2exp( shifted.mpz, shiften.mpz, shift ); return shifted; }
+	Int ?>>=?( Int & lhs, mp_bitcnt_t shift ) { return lhs = lhs >> shift; }
+
+	// number functions
+	Int abs( Int oper ) { Int positive; mpz_abs( positive.mpz, oper.mpz ); return positive; }
+	Int fact( unsigned long int N ) { Int factorial; mpz_fac_ui( factorial.mpz, N ); return factorial; }
+	Int gcd( Int oper1, Int oper2 ) { Int gcdret; mpz_gcd( gcdret.mpz, oper1.mpz, oper2.mpz ); return gcdret; }
+	Int pow( Int base, unsigned long int exponent ) { Int power; mpz_pow_ui( power.mpz, base.mpz, exponent ); return power; }
+	Int pow( unsigned long int base, unsigned long int exponent ) { Int power; mpz_ui_pow_ui( power.mpz, base, exponent ); return power; }
+	void srandom( gmp_randstate_t state ) { gmp_randinit_default( state ); }
+	Int random( gmp_randstate_t state, mp_bitcnt_t n ) { Int rand; mpz_urandomb( rand.mpz, state, n ); return rand; }
+	Int random( gmp_randstate_t state, Int n ) { Int rand; mpz_urandomm( rand.mpz, state, n.mpz ); return rand; }
+	Int random( gmp_randstate_t state, mp_size_t max_size ) { Int rand; mpz_random( rand.mpz, max_size ); return rand; }
+	int sgn( Int oper ) { return mpz_sgn( oper.mpz ); }
+	Int sqrt( Int oper ) { Int root; mpz_sqrt( root.mpz, oper.mpz ); return root; }
+
+	// I/O
+	forall( istype & | istream( istype ) )
+		istype & ?|?( istype & is, Int & mp ) {
+		gmp_scanf( "%Zd", &mp );
+		return is;
+	} // ?|?
+
+	forall( ostype & | ostream( ostype ) ) {
+		ostype & ?|?( ostype & os, Int mp ) {
+			if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+			gmp_printf( "%Zd", mp.mpz );
+			sepOn( os );
+			return os;
+		} // ?|?
+
+		void ?|?( ostype & os, Int mp ) {
+			(ostype)(os | mp); ends( os );
+		} // ?|?
+	} // distribution
+} // distribution
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

@@ -1,0 +1,1173 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// iostream.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat May 15 09:39:21 2021
+// Update Count     : 1342
+//
+
+#include "iostream.hfa"
+
+#include <stdio.h>
+#include <stdbool.h>									// true/false
+#include <stdint.h>										// UINT64_MAX
+#include <float.h>										// DBL_DIG, LDBL_DIG
+#include <complex.h>									// creal, cimag
+//#include <string.h>									// strlen, strcmp, memcpy
+extern "C" {
+extern size_t strlen (const char *__s) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+extern int strcmp (const char *__s1, const char *__s2) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+extern char *strcpy (char *__restrict __dest, const char *__restrict __src) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern void *memcpy (void *__restrict __dest, const void *__restrict __src, size_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+} // extern "C"
+
+#include "math.hfa"										// isfinite, floor, ceiling_div
+#include "bitmanip.hfa"									// high1
+
+
+// *********************************** ostream ***********************************
+
+
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, bool b ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%s", b ? "true" : "false" );
+		return os;
+	} // ?|?
+	void ?|?( ostype & os, bool b ) {
+		(ostype &)(os | b); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, char c ) {
+		fmt( os, "%c", c );
+		if ( c == '\n' ) setNL$( os, true );
+		return sepOff( os );
+	} // ?|?
+	void ?|?( ostype & os, char c ) {
+		(ostype &)(os | c); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, signed char sc ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%hhd", sc );
+		return os;
+	} // ?|?
+	void ?|?( ostype & os, signed char sc ) {
+		(ostype &)(os | sc); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, unsigned char usc ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%hhu", usc );
+		return os;
+	} // ?|?
+	void ?|?( ostype & os, unsigned char usc ) {
+		(ostype &)(os | usc); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, short int si ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%hd", si );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, short int si ) {
+		(ostype &)(os | si); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, unsigned short int usi ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%hu", usi );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, unsigned short int usi ) {
+		(ostype &)(os | usi); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, int i ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%d", i );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, int i ) {
+		(ostype &)(os | i); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, unsigned int ui ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%u", ui );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, unsigned int ui ) {
+		(ostype &)(os | ui); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, long int li ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%ld", li );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, long int li ) {
+		(ostype &)(os | li); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, unsigned long int uli ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%lu", uli );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, unsigned long int uli ) {
+		(ostype &)(os | uli); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, long long int lli ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%lld", lli );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, long long int lli ) {
+		(ostype &)(os | lli); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, unsigned long long int ulli ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%llu", ulli );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, unsigned long long int ulli ) {
+		(ostype &)(os | ulli); ends( os );
+	} // ?|?
+
+	#if defined( __SIZEOF_INT128__ )
+	//      UINT64_MAX 18_446_744_073_709_551_615_ULL
+	#define P10_UINT64 10_000_000_000_000_000_000_ULL	// 19 zeroes
+
+	static inline void base10_128( ostype & os, unsigned int128 val ) {
+		#if defined(__GNUC__) && __GNUC_PREREQ(7,0)		// gcc version >= 7
+		if ( val > P10_UINT64 ) {
+		#else
+		if ( (uint64_t)(val >> 64) != 0 || (uint64_t)val > P10_UINT64 ) { // patch gcc 5 & 6 -O3 bug
+		#endif // __GNUC_PREREQ(7,0)
+			base10_128( os, val / P10_UINT64 );			// recursive
+			fmt( os, "%.19lu", (uint64_t)(val % P10_UINT64) );
+		} else {
+			fmt( os, "%lu", (uint64_t)val );
+		} // if
+	} // base10_128
+
+	static inline void base10_128( ostype & os, int128 val ) {
+		if ( val < 0 ) {
+			fmt( os, "-" );								// leading negative sign
+			val = -val;
+		} // if
+		base10_128( os, (unsigned int128)val );			// print zero/positive value
+	} // base10_128
+
+	ostype & ?|?( ostype & os, int128 llli ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		base10_128( os, llli );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, int128 llli ) {
+		(ostype &)(os | llli); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, unsigned int128 ullli ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		base10_128( os, ullli );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, unsigned int128 ullli ) {
+		(ostype &)(os | ullli); ends( os );
+	} // ?|?
+	#endif // __SIZEOF_INT128__
+
+	#define PrintWithDP( os, format, val, ... ) \
+		{ \
+			enum { size = 48 }; \
+			char buf[size]; \
+			int len = snprintf( buf, size, format, ##__VA_ARGS__, val ); \
+			fmt( os, "%s", buf ); \
+			if ( isfinite( val ) ) { /* if number, print decimal point when no fraction or exponent */ \
+				for ( int i = 0;; i += 1 ) { \
+					if ( i == len ) { fmt( os, "." ); break; } \
+					if ( buf[i] == '.' || buf[i] == 'e' || buf[i] == 'E' ) break; /* decimal point or scientific ? */ \
+				} /* for */ \
+			} /* if */ \
+		}
+
+	ostype & ?|?( ostype & os, float f ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		PrintWithDP( os, "%g", f );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, float f ) {
+		(ostype &)(os | f); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, double d ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		PrintWithDP( os, "%.*lg", d, DBL_DIG );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, double d ) {
+		(ostype &)(os | d); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, long double ld ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		PrintWithDP( os, "%.*Lg", ld, LDBL_DIG );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, long double ld ) {
+		(ostype &)(os | ld); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, float _Complex fc ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+//		os | crealf( fc ) | nonl;
+		PrintWithDP( os, "%g", crealf( fc ) );
+		PrintWithDP( os, "%+g", cimagf( fc ) );
+		fmt( os, "i" );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, float _Complex fc ) {
+		(ostype &)(os | fc); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, double _Complex dc ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+//		os | creal( dc ) | nonl;
+		PrintWithDP( os, "%.*lg", creal( dc ), DBL_DIG );
+		PrintWithDP( os, "%+.*lg", cimag( dc ), DBL_DIG );
+		fmt( os, "i" );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, double _Complex dc ) {
+		(ostype &)(os | dc); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, long double _Complex ldc ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+//		os | creall( ldc ) || nonl;
+		PrintWithDP( os, "%.*Lg", creall( ldc ), LDBL_DIG );
+		PrintWithDP( os, "%+.*Lg", cimagl( ldc ), LDBL_DIG );
+		fmt( os, "i" );
+		return os;
+	} // ?|?
+	void & ?|?( ostype & os, long double _Complex ldc ) {
+		(ostype &)(os | ldc); ends( os );
+	} // ?|?
+
+	ostype & ?|?( ostype & os, const char s[] ) {
+		enum { Open = 1, Close, OpenClose };
+		static const unsigned char mask[256] @= {
+			// opening delimiters, no space after
+			['('] : Open, ['['] : Open, ['{'] : Open,
+			['='] : Open, ['$'] : Open, [(unsigned char)'£'] : Open, [(unsigned char)'¥'] : Open,
+			[(unsigned char)'¡'] : Open, [(unsigned char)'¿'] : Open, [(unsigned char)'«'] : Open,
+			// closing delimiters, no space before
+			[','] : Close, ['.'] : Close, [';'] : Close, ['!'] : Close, ['?'] : Close,
+			['%'] : Close, [(unsigned char)'¢'] : Close, [(unsigned char)'»'] : Close,
+			[')'] : Close, [']'] : Close, ['}'] : Close,
+			// opening-closing delimiters, no space before or after
+			['\''] : OpenClose, ['`'] : OpenClose, ['"'] : OpenClose, [':'] : OpenClose,
+			[' '] : OpenClose, ['\f'] : OpenClose, ['\n'] : OpenClose, ['\r'] : OpenClose, ['\t'] : OpenClose, ['\v'] : OpenClose, // isspace
+		}; // mask
+
+	  if ( s[0] == '\0' ) { sepOff( os ); return os; } // null string => no separator
+
+		// first character IS NOT spacing or closing punctuation => add left separator
+		unsigned char ch = s[0];						// must make unsigned
+		if ( sepPrt$( os ) && mask[ ch ] != Close && mask[ ch ] != OpenClose ) {
+			fmt( os, "%s", sepGetCur$( os ) );
+		} // if
+
+		// if string starts line, must reset to determine open state because separator is off
+		sepReset$( os );								// reset separator
+
+		// last character IS spacing or opening punctuation => turn off separator for next item
+		int len = strlen( s );
+		ch = s[len - 1];								// must make unsigned
+		fmt( os, "%s", s );								// fmt resets seperator, but reset it again
+		if ( sepPrt$( os ) && mask[ ch ] != Open && mask[ ch ] != OpenClose ) {
+			sepOn( os );
+		} else {
+			sepOff( os );
+		} // if
+		if ( ch == '\n' ) setNL$( os, true );			// check *AFTER* sepPrt$ call above as it resets NL flag
+		return os;
+//		return write( os, s, len );
+	} // ?|?
+	void ?|?( ostype & os, const char s[] ) {
+		(ostype &)(os | s); ends( os );
+	} // ?|?
+
+// 	ostype & ?|?( ostype & os, const char16_t * s ) {
+// 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+// 		fmt( os, "%ls", s );
+// 		return os;
+// 	} // ?|?
+
+// #if ! ( __ARM_ARCH_ISA_ARM == 1 && __ARM_32BIT_STATE == 1 ) // char32_t == wchar_t => ambiguous
+// 	ostype & ?|?( ostype & os, const char32_t * s ) {
+// 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+// 		fmt( os, "%ls", s );
+// 		return os;
+// 	} // ?|?
+// #endif // ! ( __ARM_ARCH_ISA_ARM == 1 && __ARM_32BIT_STATE == 1 )
+
+// 	ostype & ?|?( ostype & os, const wchar_t * s ) {
+// 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+// 		fmt( os, "%ls", s );
+// 		return os;
+// 	} // ?|?
+
+	ostype & ?|?( ostype & os, const void * p ) {
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		fmt( os, "%p", p );
+		return os;
+	} // ?|?
+	void ?|?( ostype & os, const void * p ) {
+		(ostype &)(os | p); ends( os );
+	} // ?|?
+
+	// manipulators
+	ostype & ?|?( ostype & os, ostype & (* manip)( ostype & ) ) {
+		return manip( os );
+	} // ?|?
+	void ?|?( ostype & os, ostype & (* manip)( ostype & ) ) {
+		manip( os );
+		if ( getPrt$( os ) ) ends( os );				// something printed ?
+		setPrt$( os, false );							// turn off
+	} // ?|?
+
+	ostype & sep( ostype & os ) {
+		return (ostype &)(os | sepGet( os ));
+	} // sep
+
+	ostype & sepTuple( ostype & os ) {
+		return os | sepGetTuple( os );
+	} // sepTuple
+
+	ostype & nl( ostype & os ) {
+		(ostype &)(os | '\n');
+		setPrt$( os, false );							// turn off
+		setNL$( os, true );
+		return sepOff( os );							// prepare for next line
+	} // nl
+
+	ostype & nonl( ostype & os ) {
+		setPrt$( os, false );							// turn off
+		return os;
+	} // nonl
+
+	ostype & sepOn( ostype & os ) {
+		sepOn( os );									// call void returning
+		return os;
+	} // sepOn
+
+	ostype & sepOff( ostype & os ) {
+		sepOff( os );									// call void returning
+		return os;
+	} // sepOff
+
+	ostype & sepEnable( ostype & os ) {
+		sepEnable( os );								// call void returning
+		return os;
+	} // sepEnable
+
+	ostype & sepDisable( ostype & os ) {
+		sepDisable( os );								// call void returning
+		return os;
+	} // sepDisable
+
+	ostype & nlOn( ostype & os ) {
+		nlOn( os );										// call void returning
+		return os;
+	} // nlOn
+
+	ostype & nlOff( ostype & os ) {
+		nlOff( os );									// call void returning
+		return os;
+	} // nlOff
+} // distribution
+
+forall( ostype & | ostream( ostype ) ) {
+	ostype & acquire( ostype & os ) {
+		acquire( os );									// call void returning
+		return os;
+	} // acquire
+} // distribution
+
+// tuples
+forall( ostype &, T, Params... | writeable( T, ostype ) | { ostype & ?|?( ostype &, Params ); } ) {
+	ostype & ?|?( ostype & os, T arg, Params rest ) {
+		(ostype &)(os | arg);							// print first argument
+		sepSetCur$( os, sepGetTuple( os ) );			// switch to tuple separator
+		(ostype &)(os | rest);							// print remaining arguments
+		sepSetCur$( os, sepGet( os ) );					// switch to regular separator
+		return os;
+	} // ?|?
+	void ?|?( ostype & os, T arg, Params rest ) {
+		// (ostype &)(?|?( os, arg, rest )); ends( os );
+		(ostype &)(os | arg);							// print first argument
+		sepSetCur$( os, sepGetTuple( os ) );			// switch to tuple separator
+		(ostype &)(os | rest);							// print remaining arguments
+		sepSetCur$( os, sepGet( os ) );					// switch to regular separator
+		ends( os );
+	} // ?|?
+} // distribution
+
+// writes the range [begin, end) to the given stream
+forall( ostype &, elt_type | writeable( elt_type, ostype ), iterator_type | iterator( iterator_type, elt_type ) ) {
+	void write( iterator_type begin, iterator_type end, ostype & os ) {
+		void print( elt_type i ) { os | i; }
+		for_each( begin, end, print );
+	} // ?|?
+
+	void write_reverse( iterator_type begin, iterator_type end, ostype & os ) {
+		void print( elt_type i ) { os | i; }
+		for_each_reverse( begin, end, print );
+	} // ?|?
+} // distribution
+
+// *********************************** manipulators ***********************************
+
+// *********************************** integral ***********************************
+
+static const char * shortbin[] = { "0", "1", "10", "11", "100", "101", "110", "111", "1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111" };
+static const char * longbin[]  = { "0000", "0001", "0010", "0011", "0100", "0101", "0110", "0111", "1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111" };
+
+// Default prefix for non-decimal prints is 0b, 0, 0x.
+#define IntegralFMTImpl( T, IFMTNP, IFMTP ) \
+forall( ostype & | basic_ostream( ostype ) ) { \
+	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ) { \
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) ); \
+\
+		if ( f.base == 'b' || f.base == 'B' ) {			/* bespoke binary format */ \
+			int bits = high1( f.val );					/* position of most significant bit */ \
+			if ( bits == 0 ) bits = 1;					/* 0 value => force one bit to print */ \
+			int spaces; \
+			if ( ! f.flags.left ) {						/* right justified ? */ \
+				/* Note, base prefix then zero padding or spacing then prefix. */ \
+				if ( f.flags.pc ) { \
+					spaces = f.wd - f.pc; \
+					if ( ! f.flags.nobsdp ) { spaces -= 2; } /* base prefix takes space */ \
+					if ( spaces > 0 ) fmt( os, "%*s", spaces, " " ); /* space pad */ \
+					if ( ! f.flags.nobsdp ) { fmt( os, "0%c", f.base ); } \
+					spaces = f.pc - bits; \
+					if ( spaces > 0 ) fmt( os, "%0*d", spaces, 0 ); /* zero pad */ \
+				} else { \
+					spaces = f.wd - bits; \
+					if ( ! f.flags.nobsdp ) { spaces -= 2; } /* base prefix takes space */ \
+					if ( f.flags.pad0 ) { \
+						if ( ! f.flags.nobsdp ) { fmt( os, "0%c", f.base ); } \
+						if ( spaces > 0 ) fmt( os, "%0*d", spaces, 0 ); /* zero pad */ \
+					} else { \
+						if ( spaces > 0 ) fmt( os, "%*s", spaces, " " ); /* space pad */ \
+						if ( ! f.flags.nobsdp ) { fmt( os, "0%c", f.base ); } \
+					} /* if */ \
+				} /* if */ \
+			} else { \
+				if ( ! f.flags.nobsdp ) fmt( os, "0%c", f.base ); \
+				if ( f.flags.pc ) { \
+					spaces = f.pc - bits; \
+					if ( spaces > 0 ) fmt( os, "%0*d", spaces, 0 ); /* zero pad */ \
+					spaces = f.wd - f.pc; \
+				} else { /* pad0 flag ignored with left flag */ \
+					spaces = f.wd - bits; \
+				} /* if */ \
+				if ( ! f.flags.nobsdp ) { spaces -= 2; } /* base prefix takes space */ \
+			} /* if */ \
+			int shift = floor( bits - 1, 4 ); \
+			typeof( f.val ) temp = f.val; \
+			fmt( os, "%s", shortbin[(temp >> shift) & 0xf] ); \
+			for () { \
+				shift -= 4; \
+			  if ( shift < 0 ) break; \
+				temp = f.val; \
+				fmt( os, "%s", longbin[(temp >> shift) & 0xf] ); \
+			} /* for */ \
+			if ( f.flags.left && spaces > 0 ) fmt( os, "%*s", spaces, " " ); \
+			return os; \
+		} /* if */ \
+\
+		char fmtstr[sizeof(IFMTP)];						/* sizeof includes '\0' */ \
+		if ( ! f.flags.pc ) memcpy( &fmtstr, IFMTNP, sizeof(IFMTNP) ); \
+		else memcpy( &fmtstr, IFMTP, sizeof(IFMTP) ); \
+		int star = 4;									/* position before first '*' */ \
+\
+		/* Insert flags into spaces before '*', from right to left. */ \
+		if ( ! f.flags.nobsdp ) { fmtstr[star] = '#'; star -= 1; } \
+		if ( f.flags.left ) { fmtstr[star] = '-'; star -= 1; } \
+		if ( f.flags.sign ) { fmtstr[star] = '+'; star -= 1; } \
+		if ( f.flags.pad0 && ! f.flags.pc ) { fmtstr[star] = '0'; star -= 1; } \
+		fmtstr[star] = '%'; \
+\
+		if ( ! f.flags.pc ) {							/* no precision */ \
+			fmtstr[sizeof(IFMTNP)-2] = f.base;			/* sizeof includes '\0' */ \
+			/* printf( "%s %c\n", &fmtstr[star], f.base ); */ \
+			fmt( os, &fmtstr[star], f.wd, f.val ); \
+		} else {										/* precision */ \
+			fmtstr[sizeof(IFMTP)-2] = f.base;			/* sizeof includes '\0' */ \
+			/* printf( "%s %c\n", &fmtstr[star], f.base ); */ \
+			fmt( os, &fmtstr[star], f.wd, f.pc, f.val ); \
+		} /* if */ \
+		return os; \
+	} /* ?|? */ \
+	void ?|?( ostype & os, _Ostream_Manip(T) f ) { \
+		(ostype &)(os | f); ends( os ); \
+	} /* ?|? */ \
+} // distribution
+
+IntegralFMTImpl( signed char, "     *hh ", "     *.*hh " )
+IntegralFMTImpl( unsigned char, "     *hh ", "     *.*hh " )
+IntegralFMTImpl( signed short int, "     *h ", "     *.*h " )
+IntegralFMTImpl( unsigned short int, "     *h ", "     *.*h " )
+IntegralFMTImpl( signed int, "     * ", "     *.* " )
+IntegralFMTImpl( unsigned int, "     * ", "     *.* " )
+IntegralFMTImpl( signed long int, "     *l ", "     *.*l " )
+IntegralFMTImpl( unsigned long int, "     *l ", "     *.*l " )
+IntegralFMTImpl( signed long long int, "     *ll ", "     *.*ll " )
+IntegralFMTImpl( unsigned long long int, "     *ll ", "     *.*ll " )
+
+
+#if defined( __SIZEOF_INT128__ )
+// Default prefix for non-decimal prints is 0b, 0, 0x.
+forall( ostype & | basic_ostream( ostype ) )
+static inline void base_128( ostype & os, unsigned int128 val, unsigned int128 power, _Ostream_Manip(uint64_t) & f, unsigned int maxdig, unsigned int bits, unsigned int cnt = 0 ) {
+	int wd = 1;											// f.wd is never 0 because 0 implies left-pad
+	if ( val > power ) {								// subdivide value into printable 64-bit values
+		base_128( os, val / power, power, f, maxdig, bits, cnt + 1 ); // recursive
+		f.val = val % power;
+		if ( cnt == 1 && f.flags.left ) { wd = f.wd; f.wd = maxdig; } // copy f.wd and reset for printing middle chunk
+		// printf( "R val:%#lx(%lu) wd:%u pc:%u base:%c neg:%d pc:%d left:%d nobsdp:%d sign:%d pad0:%d\n",
+		// 		f.val, f.val, f.wd, f.pc, f.base, f.flags.neg, f.flags.pc, f.flags.left, f.flags.nobsdp, f.flags.sign, f.flags.pad0 ); 
+		(ostype &)(os | f);
+		if ( cnt == 1 ) {
+			if ( f.flags.left ) { wd -= maxdig; f.wd = wd < 0 ? 1 : wd; } // update and restore f.wd for printing end chunk
+			sepOff( os );								// no seperator between chunks
+		} // if
+	} else {											// print start chunk
+		f.val = val;
+		// f.pc is unsigned => use wd
+		if ( f.flags.pc && f.pc > maxdig * cnt ) { wd = f.pc - maxdig * cnt; f.pc = wd < 0 ? 0 : wd; }
+		else { f.flags.pc = false; f.pc = 0; }
+
+		if ( ! f.flags.left ) {							// right justify
+			wd = f.wd - maxdig * cnt;
+			f.wd = wd < 0 ? 1 : wd;
+			wd = maxdig;
+		} else {										// left justify
+			if ( cnt != 0 ) {							// value >= 2^64 ?
+				unsigned int dig, bs = 0;
+				// compute size of prefix digits and base
+				if ( f.base == 'd' || f.base == 'u' ) {	// no base prefix
+					dig = ceil( log10( f.val ) );		// use floating-point
+					if ( f.base == 'd' && (f.flags.neg || f.flags.sign) ) bs = 1; // sign ?
+				} else {
+					dig = ceiling_div( high1( f.val ), bits );
+					if ( ! f.flags.nobsdp ) {			// base prefix ?
+						if ( f.base == 'o' ) {
+							// 0 prefix for octal is not added for precision with leading zero
+							if ( f.pc <= dig ) bs = 1;	// 1 character prefix
+						} else bs = 2;					// 2 character prefix
+					} // if
+				} // if
+				wd = f.wd - (f.pc > dig ? f.pc : dig) - bs; // precision > leading digits ?
+				if ( wd < 0 ) wd = 1;
+				f.wd = 1;
+			} // if
+			// all manipulators handled implicitly for value < 2^64
+		} // if
+		// prior checks ensure wd not negative
+
+		if ( f.flags.neg ) f.val = -f.val;
+		// printf( "L val:%#lx(%lu) wd:%u pc:%u base:%c neg:%d pc:%d left:%d nobsdp:%d sign:%d pad0:%d\n",
+		// 		f.val, f.val, f.wd, f.pc, f.base, f.flags.neg, f.flags.pc, f.flags.left, f.flags.nobsdp, f.flags.sign, f.flags.pad0 ); 
+		(ostype &)(os | f);
+
+		// remaining middle and end chunks are padded with 0s on the left
+		if ( ! f.flags.left ) { f.flags.pad0 = true; f.flags.pc = false; } // left pad with 0s
+		else { f.pc = maxdig; f.flags.pc = true; }		// left pad with precision
+
+		if ( cnt != 0 ) sepOff( os );					// no seperator between chunks
+		f.wd = wd;										// reset f.wd for next chunk
+		f.flags.sign = false;							// no leading +/- sign
+		f.flags.nobsdp = true;							// no leading base prefix
+	} // if
+} // base_128
+
+#define IntegralFMTImpl128( T ) \
+forall( ostype & | basic_ostream( ostype ) ) { \
+	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ) { \
+		_Ostream_Manip(uint64_t) fmt; \
+		fmt.[wd, pc, base, all] = f.[wd, pc, base, all]; \
+		if ( f.base == 'b' | f.base == 'B' ) { \
+			base_128( os, f.val, (unsigned int128)1 << 64, fmt, 64, 1 ); \
+		} else if ( f.base == 'o' ) { \
+			base_128( os, f.val, (unsigned int128)1 << 63, fmt, 21, 3 ); \
+		} else if ( f.base == 'd' || f.base == 'u' ) { \
+			if ( f.base == 'd' && f.val < 0 ) { f.val = -f.val; fmt.flags.neg = true; } \
+			base_128( os, f.val, (unsigned int128)10_000_000_000_000_000_000UL, fmt, 19, 0 ); \
+		} else { \
+			base_128( os, f.val, (unsigned int128)1 << 64, fmt, 16, 4 ); \
+		} /* if */ \
+		return os; \
+	} /* ?|? */ \
+	void ?|?( ostype & os, _Ostream_Manip(T) f ) { (ostype &)(os | f); ends( os ); } \
+} // distribution
+
+IntegralFMTImpl128( int128 )
+IntegralFMTImpl128( unsigned int128 )
+#endif // __SIZEOF_INT128__
+
+// *********************************** floating point ***********************************
+
+static const char *suffixes[] = {
+	"y", "z", "a", "f", "p", "n", "u", "m", "",
+	"K", "M", "G", "T", "P", "E", "Z", "Y"
+}; 
+#define SUFFIXES_START (-24) /* Smallest power for which there is a suffix defined. */
+#define SUFFIXES_END (SUFFIXES_START + (int)((sizeof(suffixes) / sizeof(char *) - 1) * 3))
+
+#define PrintWithDP2( os, format, ... ) \
+	{ \
+		if ( ! f.flags.eng ) { \
+			len = snprintf( buf, size, format, ##__VA_ARGS__ ); \
+			if ( isfinite( f.val ) && ( f.pc != 0 || ! f.flags.nobsdp ) ) { /* if number, print decimal point when no fraction or exponent */ \
+				for ( i = 0; i < len && buf[i] != '.' && buf[i] != 'e' && buf[i] != 'E'; i += 1 ); /* decimal point or scientific ? */ \
+				if ( i == len ) { \
+					if ( ! f.flags.left ) { \
+						buf[i] = '.'; buf[i + 1] = '\0'; \
+						if ( buf[0] == ' ' ) bufbeg = 1; /* decimal point within width */ \
+					} else { \
+						for ( i = 0; i < len && buf[i] != ' '; i += 1 ); /* trailing blank ? */ \
+						buf[i] = '.'; \
+						if ( i == len ) buf[i + 1] = '\0'; \
+					} /* if */ \
+				} /* if */ \
+			} /* if */ \
+		} else { \
+			int exp10, len2; \
+			eng( f.val, f.pc, exp10 );					/* changes arguments */ \
+			/* printf( "%g %d %d %d %s\n", f.val, f.wd, f.pc, exp10, format ); */ \
+			if ( ! f.flags.left && f.wd > 1 ) { \
+				/* Exponent size: 'e', optional minus sign, number of digits: log10(0) => undefined */ \
+				f.wd -= 1 + (exp10 < 0 ? 1 : 0) + lrint( floor( exp10 == 0 ? 0 : log10( abs( exp10 ) ) ) ) + 1; \
+				if ( f.wd < 1 ) f.wd = 1; \
+			} /* if */ \
+			len = snprintf( buf, size, format, ##__VA_ARGS__ ); \
+			if ( f.flags.left ) { \
+				for ( len -= 1; len > 0 && buf[len] == ' '; len -= 1 ); \
+				len += 1; \
+			} /* if */ \
+			if ( ! f.flags.nobsdp || (exp10 < SUFFIXES_START) || (exp10 > SUFFIXES_END) ) { \
+				len2 = snprintf( &buf[len], size - len, "e%d", exp10 ); \
+			} else { \
+				len2 = snprintf( &buf[len], size - len, "%s", suffixes[(exp10 - SUFFIXES_START) / 3] ); \
+			} /* if */ \
+			if ( f.flags.left && len + len2 < f.wd ) buf[len + len2] = ' '; \
+		} /* if */ \
+		fmt( os, "%s", &buf[bufbeg] ); \
+	}
+
+#define FloatingPointFMTImpl( T, DFMTNP, DFMTP ) \
+forall( ostype & | basic_ostream( ostype ) ) { \
+	static void eng( T &value, int & pc, int & exp10 ) { \
+		exp10 = lrint( floor( log10( abs( value ) ) ) ); /* round to desired precision */ \
+		if ( exp10 < 0 ) exp10 -= 2; \
+		exp10 = floor( exp10, 3 ); \
+		value *= pow( 10.0, -exp10 ); \
+		if ( pc <= 3 ) pc = 3; \
+	} /* eng */ \
+\
+	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ) { \
+		enum { size = 48 }; \
+		char buf[size]; \
+		int bufbeg = 0, i, len; \
+\
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) ); \
+		char fmtstr[sizeof(DFMTP) + 8];					/* sizeof includes '\0' */ \
+		if ( ! f.flags.pc ) memcpy( &fmtstr, DFMTNP, sizeof(DFMTNP) ); \
+		else memcpy( &fmtstr, DFMTP, sizeof(DFMTP) ); \
+		int star = 4;									/* position before first '*' */ \
+\
+		/* Insert flags into spaces before '*', from right to left. */ \
+		if ( f.flags.left ) { fmtstr[star] = '-'; star -= 1; } \
+		if ( f.flags.sign ) { fmtstr[star] = '+'; star -= 1; } \
+		if ( f.flags.pad0 ) { fmtstr[star] = '0'; star -= 1; } \
+		fmtstr[star] = '%'; \
+\
+		if ( ! f.flags.pc ) {							/* no precision */ \
+			fmtstr[sizeof(DFMTNP)-2] = f.base;			/* sizeof includes '\0' */ \
+			/* printf( "%g %d %s\n", f.val, f.wd, &fmtstr[star] ); */ \
+			PrintWithDP2( os, &fmtstr[star], f.wd, f.val ) \
+		} else {										/* precision */ \
+			fmtstr[sizeof(DFMTP)-2] = f.base;			/* sizeof includes '\0' */ \
+			/* printf( "%g %d %d %s\n", f.val, f.wd, f.pc, &fmtstr[star] ); */ \
+			PrintWithDP2( os, &fmtstr[star], f.wd, f.pc, f.val ) \
+		} /* if */ \
+		return os; \
+	} /* ?|? */ \
+\
+	void ?|?( ostype & os, _Ostream_Manip(T) f ) { (ostype &)(os | f); ends( os ); } \
+} // distribution
+
+FloatingPointFMTImpl( double, "     * ", "     *.* " )
+FloatingPointFMTImpl( long double, "     *L ", "     *.*L " )
+
+// *********************************** character ***********************************
+
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, _Ostream_Manip(char) f ) {
+		if ( f.base != 'c' ) {							// bespoke binary/octal/hex format
+			_Ostream_Manip(unsigned char) fmtuc @= { f.val, f.wd, f.pc, f.base, {'\0'} };
+			fmtuc.flags.pc = f.flags.pc;
+			fmtuc.flags.nobsdp = f.flags.nobsdp;
+//			os | fmtuc | nonl;
+			(ostype &)(os | fmtuc);
+			return os;
+		} // if
+
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+
+		#define CFMTNP "% * "
+		char fmtstr[sizeof(CFMTNP)];					// sizeof includes '\0'
+		memcpy( &fmtstr, CFMTNP, sizeof(CFMTNP) );
+		int star = 1;									// position before first '*'
+
+		// Insert flags into spaces before '*', from right to left.
+		if ( f.flags.left ) { fmtstr[star] = '-'; star -= 1; }
+		fmtstr[star] = '%';
+
+		fmtstr[sizeof(CFMTNP)-2] = f.base;				// sizeof includes '\0'
+		// printf( "%d %s\n", f.wd, &fmtstr[star] );
+		fmt( os, &fmtstr[star], f.wd, f.val );
+		return os;
+	} // ?|?
+
+	void ?|?( ostype & os, _Ostream_Manip(char) f ) { (ostype &)(os | f); ends( os ); }
+} // distribution
+
+// *********************************** C string ***********************************
+
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, _Ostream_Manip(const char *) f ) {
+		if ( ! f.val ) return os;						// null pointer ?
+
+		if ( f.base != 's' ) {							// bespoke binary/octal/hex format
+			_Ostream_Manip(unsigned char) fmtuc @= { 0, f.wd, f.pc, f.base, {'\0'} };
+			fmtuc.flags.pc = f.flags.pc;
+			fmtuc.flags.nobsdp = f.flags.nobsdp;
+			for ( unsigned int i = 0; f.val[i] != '\0'; i += 1 ) {
+				fmtuc.val = f.val[i];
+//				os | fmtuc | nonl;
+				(ostype &)(os | fmtuc);
+			} // for
+			return os;
+		} // if
+
+		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+
+		#define SFMTNP "% * "
+		#define SFMTP "% *.* "
+		char fmtstr[sizeof(SFMTP)];						// sizeof includes '\0'
+		if ( ! f.flags.pc ) memcpy( &fmtstr, SFMTNP, sizeof(SFMTNP) );
+		else memcpy( &fmtstr, SFMTP, sizeof(SFMTP) );
+		int star = 1;									// position before first '*'
+
+		// Insert flags into spaces before '*', from right to left.
+		if ( f.flags.left ) { fmtstr[star] = '-'; star -= 1; }
+		fmtstr[star] = '%';
+
+		if ( ! f.flags.pc ) {							// no precision
+			// printf( "%d %s\n", f.wd, &fmtstr[star] );
+			fmtstr[sizeof(SFMTNP)-2] = f.base;			// sizeof includes '\0'
+			fmt( os, &fmtstr[star], f.wd, f.val );
+		} else {										// precision
+			fmtstr[sizeof(SFMTP)-2] = f.base;			// sizeof includes '\0'
+			// printf( "%d %d %s\n", f.wd, f.pc, &fmtstr[star] );
+			fmt( os, &fmtstr[star], f.wd, f.pc, f.val );
+		} // if
+		return os;
+	} // ?|?
+
+	void ?|?( ostype & os, _Ostream_Manip(const char *) f ) { (ostype &)(os | f); ends( os ); }
+} // distribution
+
+
+// *********************************** istream ***********************************
+
+
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype & is, bool & b ) {
+		char val[6];
+		fmt( is, "%5s", val );
+		if ( strcmp( val, "true" ) == 0 ) b = true;
+		else if ( strcmp( val, "false" ) == 0 ) b = false;
+		else {
+			fprintf( stderr, "invalid Boolean constant\n" );
+			abort();									// cannot use abort stream
+		} // if
+		return is;
+	} // ?|?
+	void ?|?( istype & is, bool & b ) {
+		(istype &)(is | b); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, char & c ) {
+		char temp;
+		for () {
+			fmt( is, "%c", &temp );						// must pass pointer through varg to fmt
+			// do not overwrite parameter with newline unless appropriate
+			if ( temp != '\n' || getANL( is ) ) { c = temp; break; }
+			if ( eof( is ) ) break;
+		} // for
+		return is;
+	} // ?|?
+	void ?|?( istype & is, char & c ) {
+		(istype &)(is | c); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, signed char & sc ) {
+		fmt( is, "%hhi", &sc );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, signed char & sc ) {
+		(istype &)(is | sc); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, unsigned char & usc ) {
+		fmt( is, "%hhi", &usc );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, unsigned char & usc ) {
+		(istype &)(is | usc); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, short int & si ) {
+		fmt( is, "%hi", &si );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, short int & si ) {
+		(istype &)(is | si); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, unsigned short int & usi ) {
+		fmt( is, "%hi", &usi );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, unsigned short int & usi ) {
+		(istype &)(is | usi); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, int & i ) {
+		fmt( is, "%i", &i );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, int & i ) {
+		(istype &)(is | i); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, unsigned int & ui ) {
+		fmt( is, "%i", &ui );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, unsigned int & ui ) {
+		(istype &)(is | ui); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, long int & li ) {
+		fmt( is, "%li", &li );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, long int & li ) {
+		(istype &)(is | li); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, unsigned long int & ulli ) {
+		fmt( is, "%li", &ulli );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, unsigned long int & ulli ) {
+		(istype &)(is | ulli); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, long long int & lli ) {
+		fmt( is, "%lli", &lli );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, long long int & lli ) {
+		(istype &)(is | lli); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, unsigned long long int & ulli ) {
+		fmt( is, "%lli", &ulli );
+		return is;
+	} // ?|?
+	void & ?|?( istype & is, unsigned long long int & ulli ) {
+		(istype &)(is | ulli); ends( is );
+	} // ?|?
+
+	#if defined( __SIZEOF_INT128__ )
+	istype & ?|?( istype & is, int128 & llli ) {
+		return (istype &)(is | (unsigned int128 &)llli);
+	} // ?|?
+	void ?|?( istype & is, int128 & llli ) {
+		(istype &)(is | llli); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, unsigned int128 & ullli ) {
+		char s[40];
+		bool sign = false;
+
+		if ( fmt( is, " %[-]", s ) == 1 ) sign = true;	// skip whitespace, negative sign ?
+		// If the input is too large, the value returned is undefined. If there is no input, no value is returned
+		if ( fmt( is, "%39[0-9]%*[0-9]", s ) == 1 ) {	// take first 39 characters, ignore remaining
+			ullli = 0;
+			for ( unsigned int i = 0; s[i] != '\0'; i += 1 ) {
+				ullli = ullli * 10 + s[i] - '0';
+			} // for
+			if ( sign ) ullli = -ullli;
+		} else if ( sign ) ungetc( is, '-' );			// return minus when no digits
+		return is;
+	} // ?|?
+	void ?|?( istype & is, unsigned int128 & ullli ) {
+		(istype &)(is | ullli); ends( is );
+	} // ?|?
+	#endif // __SIZEOF_INT128__
+
+	istype & ?|?( istype & is, float & f ) {
+		fmt( is, "%f", &f );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, float & f ) {
+		(istype &)(is | f); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, double & d ) {
+		fmt( is, "%lf", &d );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, double & d ) {
+		(istype &)(is | d); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, long double & ld ) {
+		fmt( is, "%Lf", &ld );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, long double & ld ) {
+		(istype &)(is | ld); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, float _Complex & fc ) {
+		float re, im;
+		fmt( is, "%f%fi", &re, &im );
+		fc = re + im * _Complex_I;
+		return is;
+	} // ?|?
+	void ?|?( istype & is, float _Complex & fc ) {
+		(istype &)(is | fc); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, double _Complex & dc ) {
+		double re, im;
+		fmt( is, "%lf%lfi", &re, &im );
+		dc = re + im * _Complex_I;
+		return is;
+	} // ?|?
+	void ?|?( istype & is, double _Complex & dc ) {
+		(istype &)(is | dc); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, long double _Complex & ldc ) {
+		long double re, im;
+		fmt( is, "%Lf%Lfi", &re, &im );
+		ldc = re + im * _Complex_I;
+		return is;
+	} // ?|?
+	void ?|?( istype & is, long double _Complex & ldc ) {
+		(istype &)(is | ldc); ends( is );
+	} // ?|?
+
+	// istype & ?|?( istype & is, const char fmt[] ) {
+	// 	fmt( is, fmt, "" );
+	// 	return is;
+	// } // ?|?
+
+	istype & ?|?( istype & is, char s[] ) {
+		fmt( is, "%s", s );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, char s[] ) {
+		(istype &)(is | s); ends( is );
+	} // ?|?
+
+	// manipulators
+	istype & ?|?( istype & is, istype & (* manip)( istype & ) ) {
+		return manip( is );
+	} // ?|?
+	void ?|?( istype & is, istype & (* manip)( istype & ) ) {
+		manip( is ); ends( is );
+	} // ?|?
+
+	istype & nl( istype & is ) {
+		fmt( is, "%*[^\n]" );							// ignore characters to newline
+		return is;
+	} // nl
+
+	istype & nlOn( istype & is ) {
+		nlOn( is );										// call void returning
+		return is;
+	} // nlOn
+
+	istype & nlOff( istype & is ) {
+		nlOff( is );									// call void returning
+		return is;
+	} // nlOff
+} // distribution
+
+forall( istype & | istream( istype ) ) {
+	istype & acquire( istype & is ) {
+		acquire( is );									// call void returning
+		return is;
+	} // acquire
+} // distribution
+
+// *********************************** manipulators ***********************************
+
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype & is, _Istream_Cstr f ) {
+		// skip xxx
+		if ( ! f.s ) {
+			// printf( "skip %s %d\n", f.scanset, f.wd );
+			if ( f.wd == -1 ) fmt( is, f.scanset, "" );		// no input arguments
+			else for ( f.wd ) fmt( is, "%*c" );
+			return is;
+		} // if
+		size_t len = 0;
+		if ( f.scanset ) len = strlen( f.scanset );
+		char fmtstr[len + 16];
+		int start = 1;
+		fmtstr[0] = '%';
+		if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
+		if ( f.wd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.wd ); }
+		// cstr %s, %*s, %ws, %*ws
+		if ( ! f.scanset ) {
+			fmtstr[start] = 's'; fmtstr[start + 1] = '\0';
+			// printf( "cstr %s\n", fmtstr );
+			fmt( is, fmtstr, f.s );
+			return is;
+		} // if
+		// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
+		// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
+		fmtstr[start] = '['; start += 1;
+		if ( f.flags.inex ) { fmtstr[start] = '^'; start += 1; }
+		strcpy( &fmtstr[start], f.scanset );				// copy includes '\0'
+		len += start;
+		fmtstr[len] = ']'; fmtstr[len + 1] = '\0';
+		// printf( "incl/excl %s\n", fmtstr );
+		fmt( is, fmtstr, f.s );
+		return is;
+	} // ?|?
+	void ?|?( istype & is, _Istream_Cstr f ) {
+		(istype &)(is | f); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, _Istream_Char f ) {
+		fmt( is, "%*c" );									// argument variable unused
+		return is;
+	} // ?|?
+	void ?|?( istype & is, _Istream_Char f ) {
+		(istype &)(is | f); ends( is );
+	} // ?|?
+} // distribution
+
+#define InputFMTImpl( T, CODE ) \
+forall( istype & | basic_istream( istype ) ) { \
+	istype & ?|?( istype & is, _Istream_Manip(T) f ) { \
+		enum { size = 16 }; \
+		char fmtstr[size]; \
+		if ( f.wd == -1 ) { \
+			snprintf( fmtstr, size, "%%%s%s", f.ignore ? "*" : "", CODE ); \
+		} else { \
+			snprintf( fmtstr, size, "%%%s%d%s", f.ignore ? "*" : "", f.wd, CODE ); \
+		} /* if */ \
+		/* printf( "%d %s %p\n", f.wd, fmtstr, &f.val ); */ \
+		fmt( is, fmtstr, &f.val ); \
+		return is; \
+	} /* ?|? */ \
+	void ?|?( istype & is, _Istream_Manip(T) f ) { \
+		(istype &)(is | f); ends( is ); \
+	} /* ?|? */ \
+} // distribution
+
+InputFMTImpl( signed char, "hhi" )
+InputFMTImpl( unsigned char, "hhi" )
+InputFMTImpl( signed short int, "hi" )
+InputFMTImpl( unsigned short int, "hi" )
+InputFMTImpl( signed int, "i" )
+InputFMTImpl( unsigned int, "i" )
+InputFMTImpl( signed long int, "li" )
+InputFMTImpl( unsigned long int, "li" )
+InputFMTImpl( signed long long int, "lli" )
+InputFMTImpl( unsigned long long int, "lli" )
+
+InputFMTImpl( float, "f" )
+InputFMTImpl( double, "lf" )
+InputFMTImpl( long double, "Lf" )
+
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype & is, _Istream_Manip(float _Complex) fc ) {
+		float re, im;
+		_Istream_Manip(float) fmtuc @= { re, fc.wd, fc.ignore };
+		is | fmtuc;
+		&fmtuc.val = &im;
+		is | fmtuc;
+		if ( ! fc.ignore ) fc.val = re + im * _Complex_I; // re/im are uninitialized for ignore
+		return is;
+	} // ?|?
+	void ?|?( istype & is, _Istream_Manip(float _Complex) fc ) {
+		(istype &)(is | fc); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, _Istream_Manip(double _Complex) dc ) {
+		double re, im;
+		_Istream_Manip(double) fmtuc @= { re, dc.wd, dc.ignore };
+		is | fmtuc;
+		&fmtuc.val = &im;
+		is | fmtuc;
+		if ( ! dc.ignore ) dc.val = re + im * _Complex_I; // re/im are uninitialized for ignore
+		return is;
+	} // ?|?
+	void ?|?( istype & is, _Istream_Manip(double _Complex) dc ) {
+		(istype &)(is | dc); ends( is );
+	} // ?|?
+
+	istype & ?|?( istype & is, _Istream_Manip(long double _Complex) ldc ) {
+		long double re, im;
+		_Istream_Manip(long double) fmtuc @= { re, ldc.wd, ldc.ignore };
+		is | fmtuc;
+		&fmtuc.val = &im;
+		is | fmtuc;
+		if ( ! ldc.ignore ) ldc.val = re + im * _Complex_I;	// re/im are uninitialized for ignore
+		return is;
+	} // ?|?
+	void ?|?( istype & is, _Istream_Manip(long double _Complex) ldc ) {
+		(istype &)(is | ldc); ends( is );
+	} // ?|?
+} // distribution
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa iostream.cfa" //
+// End: //

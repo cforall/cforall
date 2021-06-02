@@ -1,0 +1,229 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2018 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// time --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Mar 14 23:18:57 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Apr 21 06:32:31 2021
+// Update Count     : 667
+//
+
+#pragma once
+
+// http://en.cppreference.com/w/cpp/header/chrono
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0355r5.html#refcc
+
+#include <time.h>										// timespec
+#include <sys/time.h>									// timeval
+#include <time_t.hfa>									// Duration/Time types
+
+enum { TIMEGRAN = 1_000_000_000LL };					// nanosecond granularity, except for timeval
+
+//######################### Duration #########################
+
+static inline {
+	void ?{}( Duration & dur, timeval t ) with( dur ) { tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_usec * 1000; }
+	void ?{}( Duration & dur, timespec t ) with( dur ) { tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_nsec; }
+
+	Duration ?=?( Duration & dur, __attribute__((unused)) zero_t ) { return dur{ 0 }; }
+	Duration ?=?( Duration & dur, timeval t ) with( dur ) {
+		tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_usec * (TIMEGRAN / 1_000_000LL);
+		return dur;
+	} // ?=?
+	Duration ?=?( Duration & dur, timespec t ) with( dur ) {
+		tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_nsec;
+		return dur;
+	} // ?=?
+
+	Duration +?( Duration rhs ) with( rhs ) { return (Duration)@{ +tn }; }
+	Duration ?+?( Duration & lhs, Duration rhs ) { return (Duration)@{ lhs.tn + rhs.tn }; }
+	Duration ?+=?( Duration & lhs, Duration rhs ) { lhs = lhs + rhs; return lhs; }
+
+	Duration -?( Duration rhs ) with( rhs ) { return (Duration)@{ -tn }; }
+	Duration ?-?( Duration & lhs, Duration rhs ) { return (Duration)@{ lhs.tn - rhs.tn }; }
+	Duration ?-=?( Duration & lhs, Duration rhs ) { lhs = lhs - rhs; return lhs; }
+
+	Duration ?*?( Duration lhs, int64_t rhs ) { return (Duration)@{ lhs.tn * rhs }; }
+	Duration ?*?( int64_t lhs, Duration rhs ) { return (Duration)@{ lhs * rhs.tn }; }
+	Duration ?*=?( Duration & lhs, int64_t rhs ) { lhs = lhs * rhs; return lhs; }
+
+	int64_t ?/?( Duration lhs, Duration rhs ) { return lhs.tn / rhs.tn; }
+	Duration ?/?( Duration lhs, int64_t rhs ) { return (Duration)@{ lhs.tn / rhs }; }
+	Duration ?/=?( Duration & lhs, int64_t rhs ) { lhs = lhs / rhs; return lhs; }
+	double div( Duration lhs, Duration rhs ) { return (double)lhs.tn / (double)rhs.tn; }
+
+	Duration ?%?( Duration lhs, Duration rhs ) { return (Duration)@{ lhs.tn % rhs.tn }; }
+	Duration ?%=?( Duration & lhs, Duration rhs ) { lhs = lhs % rhs; return lhs; }
+
+	bool ?==?( Duration lhs, __attribute__((unused)) zero_t ) { return lhs.tn == 0; }
+	bool ?!=?( Duration lhs, __attribute__((unused)) zero_t ) { return lhs.tn != 0; }
+	bool ?<? ( Duration lhs, __attribute__((unused)) zero_t ) { return lhs.tn <  0; }
+	bool ?<=?( Duration lhs, __attribute__((unused)) zero_t ) { return lhs.tn <= 0; }
+	bool ?>? ( Duration lhs, __attribute__((unused)) zero_t ) { return lhs.tn >  0; }
+	bool ?>=?( Duration lhs, __attribute__((unused)) zero_t ) { return lhs.tn >= 0; }
+
+	bool ?==?( Duration lhs, Duration rhs ) { return lhs.tn == rhs.tn; }
+	bool ?!=?( Duration lhs, Duration rhs ) { return lhs.tn != rhs.tn; }
+	bool ?<? ( Duration lhs, Duration rhs ) { return lhs.tn <  rhs.tn; }
+	bool ?<=?( Duration lhs, Duration rhs ) { return lhs.tn <= rhs.tn; }
+	bool ?>? ( Duration lhs, Duration rhs ) { return lhs.tn >  rhs.tn; }
+	bool ?>=?( Duration lhs, Duration rhs ) { return lhs.tn >= rhs.tn; }
+
+	Duration abs( Duration rhs ) { return rhs.tn >= 0 ? rhs : -rhs; }
+
+	Duration ?`ns( int64_t nsec ) { return (Duration)@{ nsec }; }
+	Duration ?`us( int64_t usec ) { return (Duration)@{ usec * (TIMEGRAN / 1_000_000LL) }; }
+	Duration ?`ms( int64_t msec ) { return (Duration)@{ msec * (TIMEGRAN / 1_000LL) }; }
+	Duration ?`s( int64_t sec ) { return (Duration)@{ sec * TIMEGRAN }; }
+	Duration ?`s( double sec ) { return (Duration)@{ sec * TIMEGRAN }; }
+	Duration ?`m( int64_t min ) { return (Duration)@{ min * (60LL * TIMEGRAN) }; }
+	Duration ?`m( double min ) { return (Duration)@{ min * (60LL * TIMEGRAN) }; }
+	Duration ?`h( int64_t hours ) { return (Duration)@{ hours * (60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`h( double hours ) { return (Duration)@{ hours * (60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`d( int64_t days ) { return (Duration)@{ days * (24LL * 60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`d( double days ) { return (Duration)@{ days * (24LL * 60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`w( int64_t weeks ) { return (Duration)@{ weeks * (7LL * 24LL * 60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`w( double weeks ) { return (Duration)@{ weeks * (7LL * 24LL * 60LL * 60LL * TIMEGRAN) }; }
+
+	int64_t ?`ns( Duration dur ) { return dur.tn; }
+	int64_t ?`us( Duration dur ) { return dur.tn / (TIMEGRAN / 1_000_000LL); }
+	int64_t ?`ms( Duration dur ) { return dur.tn / (TIMEGRAN / 1_000LL); }
+	int64_t ?`s( Duration dur ) { return dur.tn / TIMEGRAN; }
+	int64_t ?`m( Duration dur ) { return dur.tn / (60LL * TIMEGRAN); }
+	int64_t ?`h( Duration dur ) { return dur.tn / (60LL * 60LL * TIMEGRAN); }
+	int64_t ?`d( Duration dur ) { return dur.tn / (24LL * 60LL * 60LL * TIMEGRAN); }
+	int64_t ?`w( Duration dur ) { return dur.tn / (7LL * 24LL * 60LL * 60LL * TIMEGRAN); }
+
+	double ?`dns( Duration dur ) { return dur.tn; }
+	double ?`dus( Duration dur ) { return dur.tn / ((double)TIMEGRAN / 1_000_000.); }
+	double ?`dms( Duration dur ) { return dur.tn / ((double)TIMEGRAN / 1_000.); }
+	double ?`ds( Duration dur ) { return dur.tn / (double)TIMEGRAN; }
+	double ?`dm( Duration dur ) { return dur.tn / (60. * TIMEGRAN); }
+	double ?`dh( Duration dur ) { return dur.tn / (60. * 60. * (double)TIMEGRAN); }
+	double ?`dd( Duration dur ) { return dur.tn / (24. * 60. * 60. * (double)TIMEGRAN); }
+	double ?`dw( Duration dur ) { return dur.tn / (7. * 24. * 60. * 60. * (double)TIMEGRAN); }
+
+	Duration max( Duration lhs, Duration rhs ) { return  (lhs.tn < rhs.tn) ? rhs : lhs;}
+	Duration min( Duration lhs, Duration rhs ) { return !(rhs.tn < lhs.tn) ? lhs : rhs;}
+} // distribution
+
+//######################### C timeval #########################
+
+static inline {
+	void ?{}( timeval & t ) {}
+	void ?{}( timeval & t, time_t sec, suseconds_t usec ) { t.tv_sec = sec; t.tv_usec = usec; }
+	void ?{}( timeval & t, time_t sec ) { t{ sec, 0 }; }
+	void ?{}( timeval & t, __attribute__((unused)) zero_t ) { t{ 0, 0 }; }
+
+	timeval ?=?( timeval & t, __attribute__((unused)) zero_t ) { return t{ 0 }; }
+	timeval ?+?( timeval lhs, timeval rhs ) { return (timeval)@{ lhs.tv_sec + rhs.tv_sec, lhs.tv_usec + rhs.tv_usec }; }
+	timeval ?-?( timeval lhs, timeval rhs ) { return (timeval)@{ lhs.tv_sec - rhs.tv_sec, lhs.tv_usec - rhs.tv_usec }; }
+	bool ?==?( timeval lhs, timeval rhs ) { return lhs.tv_sec == rhs.tv_sec && lhs.tv_usec == rhs.tv_usec; }
+	bool ?!=?( timeval lhs, timeval rhs ) { return lhs.tv_sec != rhs.tv_sec || lhs.tv_usec != rhs.tv_usec; }
+} // distribution
+
+//######################### C timespec #########################
+
+static inline {
+	void ?{}( timespec & t ) {}
+	void ?{}( timespec & t, time_t sec, __syscall_slong_t nsec ) { t.tv_sec = sec; t.tv_nsec = nsec; }
+	void ?{}( timespec & t, time_t sec ) { t{ sec, 0}; }
+	void ?{}( timespec & t, __attribute__((unused)) zero_t ) { t{ 0, 0 }; }
+
+	timespec ?=?( timespec & t, __attribute__((unused)) zero_t ) { return t{ 0 }; }
+	timespec ?+?( timespec lhs, timespec rhs ) { return (timespec)@{ lhs.tv_sec + rhs.tv_sec, lhs.tv_nsec + rhs.tv_nsec }; }
+	timespec ?-?( timespec lhs, timespec rhs ) { return (timespec)@{ lhs.tv_sec - rhs.tv_sec, lhs.tv_nsec - rhs.tv_nsec }; }
+	bool ?==?( timespec lhs, timespec rhs ) { return lhs.tv_sec == rhs.tv_sec && lhs.tv_nsec == rhs.tv_nsec; }
+	bool ?!=?( timespec lhs, timespec rhs ) { return lhs.tv_sec != rhs.tv_sec || lhs.tv_nsec != rhs.tv_nsec; }
+} // distribution
+
+//######################### C itimerval #########################
+
+static inline {
+	void ?{}( itimerval & itv, Duration alarm ) with( itv ) {
+		// itimerval contains durations but but uses time data-structure timeval.
+		it_value{ alarm`s, (alarm % 1`s)`us };			// seconds, microseconds
+		it_interval{ 0 };								// 0 seconds, 0 microseconds
+	} // itimerval
+
+	void ?{}( itimerval & itv, Duration alarm, Duration interval ) with( itv ) {
+		// itimerval contains durations but but uses time data-structure timeval.
+		it_value{ alarm`s, (alarm % 1`s)`us };			// seconds, microseconds
+		it_interval{ interval`s, interval`us };			// seconds, microseconds
+	} // itimerval
+} // distribution
+
+//######################### Time #########################
+
+void ?{}( Time & time, int year, int month = 1, int day = 1, int hour = 0, int min = 0, int sec = 0, int64_t nsec = 0 );
+static inline {
+	void ?{}( Time & time, timeval t ) with( time ) { tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_usec * 1000; }
+	void ?{}( Time & time, timespec t ) with( time ) { tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_nsec; }
+
+	Time ?=?( Time & time, __attribute__((unused)) zero_t ) { return time{ 0 }; }
+	Time ?=?( Time & time, timeval t ) with( time ) {
+		tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_usec * (TIMEGRAN / 1_000_000LL);
+		return time;
+	} // ?=?
+	Time ?=?( Time & time, timespec t ) with( time ) {
+		tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_nsec;
+		return time;
+	} // ?=?
+
+	Time ?+?( Time & lhs, Duration rhs ) { return (Time)@{ lhs.tn + rhs.tn }; }
+	Time ?+?( Duration lhs, Time rhs ) { return rhs + lhs; }
+	Time ?+=?( Time & lhs, Duration rhs ) { lhs = lhs + rhs; return lhs; }
+
+	Duration ?-?( Time lhs, Time rhs ) { return (Duration)@{ lhs.tn - rhs.tn }; }
+	Time ?-?( Time lhs, Duration rhs ) { return (Time)@{ lhs.tn - rhs.tn }; }
+	Time ?-=?( Time & lhs, Duration rhs ) { lhs = lhs - rhs; return lhs; }
+	bool ?==?( Time lhs, Time rhs ) { return lhs.tn == rhs.tn; }
+	bool ?!=?( Time lhs, Time rhs ) { return lhs.tn != rhs.tn; }
+	bool ?<?( Time lhs, Time rhs ) { return lhs.tn < rhs.tn; }
+	bool ?<=?( Time lhs, Time rhs ) { return lhs.tn <= rhs.tn; }
+	bool ?>?( Time lhs, Time rhs ) { return lhs.tn > rhs.tn; }
+	bool ?>=?( Time lhs, Time rhs ) { return lhs.tn >= rhs.tn; }
+
+	int64_t ?`ns( Time t ) { return t.tn; }
+} // distribution
+
+char * yy_mm_dd( Time time, char * buf );
+static inline char * ?`ymd( Time time, char * buf ) {	// short form
+	return yy_mm_dd( time, buf );
+} // ymd
+
+char * mm_dd_yy( Time time, char * buf );
+static inline char * ?`mdy( Time time, char * buf ) {	// short form
+	return mm_dd_yy( time, buf );
+} // mdy
+
+char * dd_mm_yy( Time time, char * buf );
+static inline char * ?`dmy( Time time, char * buf ) {	// short form
+	return dd_mm_yy( time, buf );;
+} // dmy
+
+size_t strftime( char buf[], size_t size, const char fmt[], Time time );
+
+//------------------------- timeval (cont) -------------------------
+
+static inline void ?{}( timeval & t, Time time ) with( t, time ) {
+	tv_sec = tn / TIMEGRAN;								// seconds
+	tv_usec = tn % TIMEGRAN / (TIMEGRAN / 1_000_000LL);	// microseconds
+} // ?{}
+
+//------------------------- timespec (cont) -------------------------
+
+static inline void ?{}( timespec & t, Time time ) with( t, time ) {
+	tv_sec = tn / TIMEGRAN;								// seconds
+	tv_nsec = tn % TIMEGRAN;							// nanoseconds
+} // ?{}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

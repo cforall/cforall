@@ -1,0 +1,48 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// fibonacci.c -- 3-state finite-state machine
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Jun  8 07:29:37 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Mar 22 13:40:35 2019
+// Update Count     : 26
+//
+
+#include <fstream.hfa>
+#include <coroutine.hfa>
+
+coroutine Fibonacci { int fn; };						// used for communication
+
+void main( Fibonacci & fib ) with( fib ) {				// called on first resume
+	int fn1, fn2;										// retained between resumes
+	fn = 0;  fn1 = fn;									// 1st case
+	suspend;											// restart last resume
+	fn = 1;  fn2 = fn1;  fn1 = fn;						// 2nd case
+	suspend;											// restart last resume
+	for () {
+		fn = fn1 + fn2;  fn2 = fn1;  fn1 = fn;			// general case
+		suspend;										// restart last resume
+	} // for
+}
+
+int next( Fibonacci & fib ) with( fib ) {
+	resume( fib );										// restart last suspend
+	return fn;
+}
+
+int main() {
+	Fibonacci f1, f2;
+	for ( 10 ) {										// print N Fibonacci values
+		sout | next( f1 ) | next( f2 );
+	} // for
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa fibonacci.cfa" //
+// End: //

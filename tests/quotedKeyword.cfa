@@ -1,0 +1,49 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// quotedKeyword.cfa -- test quoted keyword usage
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Feb  7 19:07:07 2020
+// Update Count     : 25
+//
+
+#include <fstream.hfa>
+
+struct {
+	int ``otype;
+	int ``struct;
+} st = { 10, 10 };
+
+typedef int ``forall;
+``forall xxx = 10;
+
+int ``_Alignas, ``_Alignof, ``__alignof, ``__alignof__, ``asm, ``__asm, ``__asm__, ``_At, ``_Atomic, ``__attribute,
+	``__attribute__, ``auto, ``_Bool, ``break, ``case, ``catch, ``catchResume, ``char, ``choose, ``_Complex, ``__complex,
+	``__complex__, ``const, ``__const, ``__const__, ``continue, ``default, ``disable, ``do, ``double, ``dtype, ``else,
+	``enable, ``enum, ``__extension__, ``extern, ``fallthru, ``finally, ``float, ``__float128, ``for, ``forall, ``fortran,
+	``ftype, ``_Generic, ``goto, ``if, ``_Imaginary, ``__imag, ``__imag__, ``inline, ``__inline, ``__inline__, ``int,
+	``__int128, ``__label__, ``long, ``lvalue, ``_Noreturn, ``__builtin_offsetof, ``otype, ``register, ``restrict,
+	``__restrict, ``__restrict__, ``return, ``short, ``signed, ``__signed, ``__signed__, ``sizeof, ``static,
+	``_Static_assert, ``struct, ``switch, ``_Thread_local, ``throw, ``throwResume, ``trait, ``try, ``typedef,
+	``typeof, ``__typeof, ``__typeof__, ``union, ``unsigned, ``__builtin_va_list, ``void, ``volatile, ``__volatile,
+	``__volatile__, ``while;
+
+int main() {
+	int ``if = 0;
+	``catch = 1;
+	st.``otype = 2;
+	st.``struct = 3;
+	``throw = 4;
+	sout | ``catch + st.``otype + st.``struct + ``throw;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa quotedKeyword.cfa" //
+// End: //

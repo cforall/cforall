@@ -1,0 +1,179 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// thread.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Jan 17 12:27:26 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Dec  4 09:17:49 2019
+// Update Count     : 9
+//
+
+#define __cforall_thread__
+
+#include "thread.hfa"
+
+#include "kernel_private.hfa"
+#include "exception.hfa"
+
+#define __CFA_INVOKE_PRIVATE__
+#include "invoke.h"
+
+//-----------------------------------------------------------------------------
+// Thread ctors and dtors
+void ?{}($thread & this, const char * const name, cluster & cl, void * storage, size_t storageSize ) with( this ) {
+	context{ 0p, 0p };
+	self_cor{ name, storage, storageSize };
+	ticket = TICKET_RUNNING;
+	state = Start;
+	preempted = __NO_PREEMPTION;
+	curr_cor = &self_cor;
+	self_mon.owner = &this;
+	self_mon.recursion = 1;
+	self_mon_p = &self_mon;
+	curr_cluster = &cl;
+	link.next = 0p;
+	link.ts   = 0;
+	preferred = -1u;
+	last_proc = 0p;
+	#if defined( __CFA_WITH_VERIFY__ )
+		canary = 0x0D15EA5E0D15EA5Ep;
+	#endif
+
+	seqable.next = 0p;
+	seqable.back = 0p;
+
+	node.next = 0p;
+	node.prev = 0p;
+	doregister(curr_cluster, this);
+
+	monitors{ &self_mon_p, 1, (fptr_t)0 };
+}
+
+void ^?{}($thread& this) with( this ) {
+	#if defined( __CFA_WITH_VERIFY__ )
+		canary = 0xDEADDEADDEADDEADp;
+	#endif
+	unregister(curr_cluster, this);
+	^self_cor{};
+}
+
+forall(T &)
+void copy(ThreadCancelled(T) * dst, ThreadCancelled(T) * src) {
+	dst->virtual_table = src->virtual_table;
+	dst->the_thread = src->the_thread;
+	dst->the_exception = src->the_exception;
+}
+
+forall(T &)
+const char * msg(ThreadCancelled(T) *) {
+	return "ThreadCancelled(...)";
+}
+
+forall(T &)
+static void default_thread_cancel_handler(ThreadCancelled(T) & ) {
+	// Improve this error message, can I do formatting?
+	abort( "Unhandled thread cancellation.\n" );
+}
+
+forall(T & | is_thread(T) | IS_EXCEPTION(ThreadCancelled, (T))
+    | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
+void ?{}( thread_dtor_guard_t & this,
+		T & thrd, void(*cancelHandler)(ThreadCancelled(T) &)) {
+	$monitor * m = get_monitor(thrd);
+	$thread * desc = get_thread(thrd);
+
+	// Setup the monitor guard
+	void (*dtor)(T& mutex this) = ^?{};
+	bool join = cancelHandler != (void(*)(ThreadCancelled(T)&))0;
+	(this.mg){&m, (void(*)())dtor, join};
+
+
+	/* paranoid */ verifyf( Halted == desc->state || Cancelled == desc->state, "Expected thread to be Halted or Cancelled, was %d\n", (int)desc->state );
+
+	// After the guard set-up and any wait, check for cancellation.
+	struct _Unwind_Exception * cancellation = desc->self_cor.cancellation;
+	if ( likely( 0p == cancellation ) ) {
+		return;
+	} else if ( Cancelled == desc->state ) {
+		return;
+	}
+	desc->state = Cancelled;
+	void(*defaultResumptionHandler)(ThreadCancelled(T) &) =
+		join ? cancelHandler : default_thread_cancel_handler;
+
+	// TODO: Remove explitate vtable set once trac#186 is fixed.
+	ThreadCancelled(T) except;
+	except.virtual_table = &_default_vtable;
+	except.the_thread = &thrd;
+	except.the_exception = __cfaehm_cancellation_exception( cancellation );
+	// Why is this cast required?
+	throwResume (ThreadCancelled(T) &)except;
+
+	except.the_exception->virtual_table->free( except.the_exception );
+	free( cancellation );
+	desc->self_cor.cancellation = 0p;
+}
+
+void ^?{}( thread_dtor_guard_t & this ) {
+	^(this.mg){};
+}
+
+//-----------------------------------------------------------------------------
+// Starting and stopping threads
+forall( T & | is_thread(T) )
+void __thrd_start( T & this, void (*main_p)(T &) ) {
+	$thread * this_thrd = get_thread(this);
+
+	disable_interrupts();
+	__cfactx_start(main_p, get_coroutine(this), this, __cfactx_invoke_thread);
+
+	this_thrd->context.[SP, FP] = this_thrd->self_cor.context.[SP, FP];
+	/* paranoid */ verify( this_thrd->context.SP );
+
+	schedule_thread$( this_thrd );
+	enable_interrupts();
+}
+
+//-----------------------------------------------------------------------------
+// Support for threads that don't ues the thread keyword
+forall( T & | sized(T) | is_thread(T) | { void ?{}(T&); } )
+void ?{}( scoped(T)& this ) with( this ) {
+	handle{};
+	__thrd_start(handle, main);
+}
+
+forall( T &, P... | sized(T) | is_thread(T) | { void ?{}(T&, P); } )
+void ?{}( scoped(T)& this, P params ) with( this ) {
+	handle{ params };
+	__thrd_start(handle, main);
+}
+
+forall( T & | sized(T) | is_thread(T) )
+void ^?{}( scoped(T)& this ) with( this ) {
+	^handle{};
+}
+
+//-----------------------------------------------------------------------------
+forall(T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled, (T))
+    | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
+T & join( T & this ) {
+	thread_dtor_guard_t guard = { this, defaultResumptionHandler };
+	return this;
+}
+
+uint64_t thread_rand() {
+	disable_interrupts();
+	uint64_t ret = __tls_rand();
+	enable_interrupts();
+	return ret;
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

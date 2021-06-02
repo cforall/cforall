@@ -1,0 +1,52 @@
+#include <fstream.hfa>
+#include <thread.hfa>
+
+thread Worker { volatile int result; };
+
+void main(Worker & this) {
+	this.result = -10;
+	for(50) {
+		yield();
+	}
+	this.result = 42;
+}
+
+thread OtherWorker { volatile int result; };
+
+void main(OtherWorker & this) {
+	this.result = -10;
+	LOOP: for() {
+		waitfor( ^?{} : this) {
+			break LOOP;
+		}
+		or else {
+			yield();
+		}
+	}
+	this.result = 27;
+}
+
+
+int main(int argc, char* argv[]) {
+	{
+		Worker workers[17];
+		for(i; 17) {
+			int res = join( workers[i] ).result;
+			if( res != 42 ) {
+				sout | "Worker" | i | "got incorrect result:" | res;
+			}
+		}
+	}
+	sout | "All workers got 42";
+
+	{
+		OtherWorker workers[17];
+		for(i; 17) {
+			int res = join( workers[i] ).result;
+			if( res != 27 ) {
+				sout | "Other Worker" | i | "got incorrect result:" | res;
+			}
+		}
+	}
+	sout | "All other workers got 27";
+}

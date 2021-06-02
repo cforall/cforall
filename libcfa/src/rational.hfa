@@ -1,0 +1,112 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// rational -- Rational numbers are numbers written as a ratio, i.e., as a fraction, where the numerator (top number)
+//     and the denominator (bottom number) are whole numbers. When creating and computing with rational numbers, results
+//     are constantly reduced to keep the numerator and denominator as small as possible.
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Apr  6 17:56:25 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Mar 26 23:16:10 2019
+// Update Count     : 109
+//
+
+#pragma once
+
+#include "iostream.hfa"
+
+trait scalar( T ) {
+};
+
+trait arithmetic( T | scalar( T ) ) {
+	int !?( T );
+	int ?==?( T, T );
+	int ?!=?( T, T );
+	int ?<?( T, T );
+	int ?<=?( T, T );
+	int ?>?( T, T );
+	int ?>=?( T, T );
+	void ?{}( T &, zero_t );
+	void ?{}( T &, one_t );
+	T +?( T );
+	T -?( T );
+	T ?+?( T, T );
+	T ?-?( T, T );
+	T ?*?( T, T );
+	T ?/?( T, T );
+	T ?%?( T, T );
+	T ?/=?( T &, T );
+	T abs( T );
+};
+
+// implementation
+
+forall( RationalImpl | arithmetic( RationalImpl ) ) {
+	struct Rational {
+		RationalImpl numerator, denominator;			// invariant: denominator > 0
+	}; // Rational
+
+	// constructors
+
+	void ?{}( Rational(RationalImpl) & r );
+	void ?{}( Rational(RationalImpl) & r, RationalImpl n );
+	void ?{}( Rational(RationalImpl) & r, RationalImpl n, RationalImpl d );
+	void ?{}( Rational(RationalImpl) & r, zero_t );
+	void ?{}( Rational(RationalImpl) & r, one_t );
+
+	// numerator/denominator getter
+
+	RationalImpl numerator( Rational(RationalImpl) r );
+	RationalImpl denominator( Rational(RationalImpl) r );
+	[ RationalImpl, RationalImpl ] ?=?( & [ RationalImpl, RationalImpl ] dest, Rational(RationalImpl) src );
+
+	// numerator/denominator setter
+
+	RationalImpl numerator( Rational(RationalImpl) r, RationalImpl n );
+	RationalImpl denominator( Rational(RationalImpl) r, RationalImpl d );
+
+	// comparison
+
+	int ?==?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+	int ?!=?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+	int ?<?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+	int ?<=?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+	int ?>?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+	int ?>=?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+
+	// arithmetic
+
+	Rational(RationalImpl) +?( Rational(RationalImpl) r );
+	Rational(RationalImpl) -?( Rational(RationalImpl) r );
+	Rational(RationalImpl) ?+?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+	Rational(RationalImpl) ?-?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+	Rational(RationalImpl) ?*?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+	Rational(RationalImpl) ?/?( Rational(RationalImpl) l, Rational(RationalImpl) r );
+
+	// I/O
+	forall( istype & | istream( istype ) | { istype & ?|?( istype &, RationalImpl & ); } )
+	istype & ?|?( istype &, Rational(RationalImpl) & );
+
+	forall( ostype & | ostream( ostype ) | { ostype & ?|?( ostype &, RationalImpl ); } ) {
+		ostype & ?|?( ostype &, Rational(RationalImpl) );
+		void ?|?( ostype &, Rational(RationalImpl) );
+	} // distribution
+} // distribution
+
+forall( RationalImpl | arithmetic( RationalImpl ) |{RationalImpl ?\?( RationalImpl, unsigned long );} )
+Rational(RationalImpl) ?\?( Rational(RationalImpl) x, long int y );
+
+// conversion
+forall( RationalImpl | arithmetic( RationalImpl ) | { double convert( RationalImpl ); } )
+double widen( Rational(RationalImpl) r );
+forall( RationalImpl | arithmetic( RationalImpl ) | { double convert( RationalImpl );  RationalImpl convert( double );} )
+Rational(RationalImpl) narrow( double f, RationalImpl md );
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

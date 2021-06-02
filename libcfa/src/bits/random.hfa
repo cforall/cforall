@@ -1,0 +1,59 @@
+#pragma once
+
+#include <stdint.h>
+
+//--------------------------------------------------
+#if defined(__SIZEOF_INT128__)
+	typedef __uint128_t __lehmer64_state_t;
+	static inline uint64_t __lehmer64( __lehmer64_state_t & state ) {
+		state *= 0xda942042e4dd58b5;
+		return state >> 64;
+	}
+
+//--------------------------------------------------
+	typedef uint64_t __wyhash64_state_t;
+	static inline uint64_t __wyhash64( __wyhash64_state_t & state ) {
+		state += 0x60bee2bee120fc15;
+		__uint128_t tmp;
+		tmp = (__uint128_t) state * 0xa3b195354a39b70d;
+		uint64_t m1 = (tmp >> 64) ^ tmp;
+		tmp = (__uint128_t)m1 * 0x1b03738712fad5c9;
+		uint64_t m2 = (tmp >> 64) ^ tmp;
+		return m2;
+	}
+#endif
+
+//--------------------------------------------------
+typedef uint64_t __xorshift64_state_t;
+static inline uint64_t __xorshift64( __xorshift64_state_t & state ) {
+	uint64_t x = state;
+	x ^= x << 13;
+	x ^= x >> 7;
+	x ^= x << 17;
+	return state = x;
+}
+
+//--------------------------------------------------
+typedef struct {
+  uint32_t a, b, c, d;
+  uint32_t counter;
+} __xorwow__state_t;
+
+/* The state array must be initialized to not be all zero in the first four words */
+static inline uint32_t __xorwow( __xorwow__state_t & state ) {
+	/* Algorithm "xorwow" from p. 5 of Marsaglia, "Xorshift RNGs" */
+	uint32_t t = state.d;
+
+	uint32_t const s = state.a;
+	state.d = state.c;
+	state.c = state.b;
+	state.b = s;
+
+	t ^= t >> 2;
+	t ^= t << 1;
+	t ^= s ^ (s << 4);
+	state.a = t;
+
+	state.counter += 362437;
+	return t + state.counter;
+}

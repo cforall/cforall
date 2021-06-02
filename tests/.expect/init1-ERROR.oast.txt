@@ -1,0 +1,65 @@
+error: No reasonable alternatives for expression Untyped Init Expression
+  Name: cpx  InitAlternative: pointer to float
+error: No reasonable alternatives for expression Untyped Init Expression
+  Name: crx  InitAlternative: reference to float
+error: No reasonable alternatives for expression Untyped Init Expression
+  Name: px  InitAlternative: pointer to signed int
+error: No reasonable alternatives for expression Untyped Init Expression
+  Name: rx  InitAlternative: reference to signed int
+init1.cfa:104:1 error: No reasonable alternatives for expression Generated Cast of:
+  Name: rx
+... to:
+  reference to signed int
+with resolved type:
+  reference to signed int
+init1.cfa:107:1 error: No reasonable alternatives for expression Applying untyped:
+  Name: ?{}
+...to:
+  Generated Cast of:
+    Variable Expression: _retval_f_py: pointer to signed int
+    with resolved type:
+      pointer to signed int
+  ... to:
+    reference to pointer to signed int
+  with resolved type:
+    reference to pointer to signed int
+  Name: px
+
+init1.cfa:114:1 error: No reasonable alternatives for expression Generated Cast of:
+  Name: crx
+... to:
+  reference to float
+with resolved type:
+  reference to float
+init1.cfa:117:1 error: No reasonable alternatives for expression Applying untyped:
+  Name: ?{}
+...to:
+  Generated Cast of:
+    Variable Expression: _retval_f_py2: pointer to float
+    with resolved type:
+      pointer to float
+  ... to:
+    reference to pointer to float
+  with resolved type:
+    reference to pointer to float
+  Name: cpx
+
+init1.cfa:124:1 error: No reasonable alternatives for expression Generated Cast of:
+  Name: s
+... to:
+  reference to instance of type T (not function type)
+with resolved type:
+  reference to instance of type T (not function type)
+init1.cfa:128:1 error: No reasonable alternatives for expression Applying untyped:
+  Name: ?{}
+...to:
+  Generated Cast of:
+    Variable Expression: _retval_anycvt: pointer to instance of type T (not function type)
+    with resolved type:
+      pointer to instance of type T (not function type)
+  ... to:
+    reference to pointer to instance of type T (not function type)
+  with resolved type:
+    reference to pointer to instance of type T (not function type)
+  Name: s
+

@@ -1,0 +1,126 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// result.c -- Contains the expected value or an error value.
+//
+// Author           : Andrew Beach
+// Created On       : Wed May 24 15:40:00 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Feb 17 11:24:04 2019
+// Update Count     : 3
+//
+
+#include <containers/result.hfa>
+#include <assert.h>
+
+
+forall(T, E)
+void ?{}(result(T, E) & this) {
+	this.has_value = false;
+	(this.error){};
+}
+
+forall(T, E)
+void ?{}(result(T, E) & this, one_t, T value) {
+	this.has_value = true;
+	(this.value){value};
+}
+
+forall(T, E)
+void ?{}(result(T, E) & this, zero_t, E error) {
+	this.has_value = false;
+	(this.error){error};
+}
+
+forall(T, E)
+void ?{}(result(T, E) & this, result(T, E) other) {
+	this.has_value = other.has_value;
+	if (other.has_value) {
+		(this.value){other.value};
+	} else {
+		(this.error){other.error};
+	}
+}
+
+forall(T, E)
+result(T, E) ?=?(result(T, E) & this, result(T, E) that) {
+	if (this.has_value && that.has_value) {
+		this.value = that.value;
+	} else if (this.has_value) {
+		^(this.value){};
+		this.has_value = false;
+		(this.error){that.error};
+	} else if (that.has_value) {
+		^(this.error){};
+		this.has_value = true;
+		(this.value){that.value};
+	} else {
+		this.error = that.error;
+	}
+}
+
+forall(T, E)
+void ^?{}(result(T, E) & this) {
+	if (this.has_value) {
+		^(this.value){};
+	} else {
+		^(this.error){};
+	}
+}
+
+forall(T, E)
+bool ?!=?(result(T, E) this, zero_t) {
+	return this.has_value;
+}
+
+forall(T, E)
+result(T, E) result_value(T value) {
+	return (result(T, E)){1, value};
+}
+
+forall(T, E)
+result(T, E) result_error(E error) {
+	return (result(T, E)){0, error};
+}
+
+forall(T, E)
+bool has_value(result(T, E) * this) {
+	return this->has_value;
+}
+
+forall(T, E)
+T get(result(T, E) * this) {
+	assertf(this->has_value, "attempt to get from result without value");
+	return this->value;
+}
+
+forall(T, E)
+E get_error(result(T, E) * this) {
+	assertf(!this->has_value, "attempt to get from result without error");
+	return this->error;
+}
+
+forall(T, E)
+void set(result(T, E) * this, T value) {
+	if (this->has_value) {
+		this->value = value;
+	} else {
+		^(this->error){};
+		this->has_value = true;
+		(this->value){value};
+	}
+}
+
+forall(T, E)
+void set_error(result(T, E) * this, E error) {
+	if (this->has_value) {
+		^(this->value){};
+		this->has_value = false;
+		(this->error){error};
+	} else {
+		this->error = error;
+	}
+}

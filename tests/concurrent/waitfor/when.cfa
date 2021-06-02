@@ -1,0 +1,91 @@
+//----------------------------------------------------------------
+// When test
+// Ensures that when clauses on waitfor are respected
+//-----------------------------------------------------------------
+
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+
+#include <stdbool.h>
+#include <time.h>
+
+static const unsigned long N = 4_998ul;
+
+static inline void rand_yield() { yield(random( 10 )); }
+
+monitor global_t {
+	int last_call;
+	bool done;
+};
+
+void ?{} ( global_t & this ) {
+	this.last_call = 6;
+	this.done = false;
+}
+
+void ^?{} ( global_t & mutex this ) {}
+
+global_t global;
+
+bool call1( global_t & mutex this ) { this.last_call = 1; return this.done; }
+bool call2( global_t & mutex this ) { this.last_call = 2; return this.done; }
+bool call3( global_t & mutex this ) { this.last_call = 3; return this.done; }
+bool call4( global_t & mutex this ) { this.last_call = 4; return this.done; }
+bool call5( global_t & mutex this ) { this.last_call = 5; return this.done; }
+bool call6( global_t & mutex this ) { this.last_call = 6; return this.done; }
+
+thread caller_t{};
+void main( caller_t & this ) {
+	while( true ) {
+		rand_yield();
+		if( call1( global ) ) return;
+		rand_yield();
+		if( call2( global ) ) return;
+		rand_yield();
+		if( call3( global ) ) return;
+		rand_yield();
+		if( call4( global ) ) return;
+		rand_yield();
+		if( call5( global ) ) return;
+		rand_yield();
+		if( call6( global ) ) return;
+	}
+}
+
+void arbiter( global_t & mutex this ) {
+	// There is a race at start where callers can get in before the arbiter.
+	// It doesn't really matter here so just restart the loop correctly and move on
+	this.last_call = 6;
+
+	for( int i = 0; i < N; i++ ) {
+		   when( this.last_call == 6 ) waitfor( call1 : this ) { if( this.last_call != 1) { serr | "Expected last_call to be 1 got" | this.last_call; } }
+		or when( this.last_call == 1 ) waitfor( call2 : this ) { if( this.last_call != 2) { serr | "Expected last_call to be 2 got" | this.last_call; } }
+		or when( this.last_call == 2 ) waitfor( call3 : this ) { if( this.last_call != 3) { serr | "Expected last_call to be 3 got" | this.last_call; } }
+		or when( this.last_call == 3 ) waitfor( call4 : this ) { if( this.last_call != 4) { serr | "Expected last_call to be 4 got" | this.last_call; } }
+		or when( this.last_call == 4 ) waitfor( call5 : this ) { if( this.last_call != 5) { serr | "Expected last_call to be 5 got" | this.last_call; } }
+		or when( this.last_call == 5 ) waitfor( call6 : this ) { if( this.last_call != 6) { serr | "Expected last_call to be 6 got" | this.last_call; } }
+
+		sout | this.last_call;
+	}
+
+	this.done = true;
+}
+
+thread arbiter_t{};
+void main( arbiter_t & this ) {
+	arbiter( global );
+}
+
+int main() {
+	srandom( time(NULL) );
+	sout | "Starting";
+	{
+		arbiter_t arbiter;
+		caller_t callers[7];
+
+	}
+	sout | "Stopping";
+}

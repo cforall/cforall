@@ -1,0 +1,43 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2019 University of Waterloo
+// 
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// gortn.cfa -- compare waitfor and go channels
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Feb 20 08:02:37 2019
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jan 16 22:43:40 2020
+// Update Count     : 5
+// 
+
+#include <fstream.hfa>
+#include <thread.hfa>
+
+struct Msg { int i, j; };
+thread GoRtn { int i;  float f;  Msg m; };
+void ^?{}( GoRtn & mutex ) {}
+void mem1( GoRtn & mutex gortn, int i ) { gortn.i = i; }
+void mem2( GoRtn & mutex gortn, float f ) { gortn.f = f; }
+void mem3( GoRtn & mutex gortn, Msg m ) { gortn.m = m; }
+
+void main( GoRtn & gortn ) with( gortn ) {
+	for () {
+		waitfor( mem1 : gortn ) sout | i;
+		or waitfor( mem2 : gortn ) sout | f;
+		or waitfor( mem3 : gortn ) sout | m.i | m.j;
+		or waitfor( ^?{} : gortn ) break;
+	}
+}
+int main() {
+	GoRtn gortn;										// start thread
+	mem1( gortn, 0 );
+	mem2( gortn, 2.5 );
+	mem3( gortn, (Msg){ 1, 2} );
+} // wait for completion
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

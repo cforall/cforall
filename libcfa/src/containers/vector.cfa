@@ -1,0 +1,137 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// vector.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Jul  5 18:07:52 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Jul  5 18:08:31 2016
+// Update Count     : 2
+//
+
+#include <containers/vector.hfa>
+
+#include <stdlib.hfa>
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void copy_internal(vector(T, allocator_t)* this, vector(T, allocator_t)* other);
+
+//------------------------------------------------------------------------------
+//Initialization
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void ?{}(vector(T, allocator_t)& this)
+{
+	(this.storage){};
+	this.size = 0;
+}
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void ?{}(vector(T, allocator_t)& this, vector(T, allocator_t) rhs)
+{
+	(this.storage){ rhs.storage };
+	copy_internal(&this, &rhs);
+}
+
+// forall(T, allocator_t | allocator_c(T, allocator_t))
+// vector(T, allocator_t) ?=?(vector(T, allocator_t)* this, vector(T, allocator_t) rhs)
+// {
+// 	(&this->storage){};
+// 	copy_internal(this, &rhs);
+// 	return *this;
+// }
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void ^?{}(vector(T, allocator_t)& this)
+{
+	clear(&this);
+	^(this.storage){};
+}
+
+//------------------------------------------------------------------------------
+//Modifiers
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void push_back(vector(T, allocator_t)* this, T value)
+{
+	realloc_storage(&this->storage, this->size+1);
+	data(&this->storage)[this->size] = value;
+	this->size++;
+}
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void pop_back(vector(T, allocator_t)* this)
+{
+	this->size--;
+	^(data(&this->storage)[this->size]){};
+}
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void clear(vector(T, allocator_t)* this)
+{
+	for(size_t i = 0; i < this->size; i++)
+	{
+		^(data(&this->storage)[this->size]){};
+	}
+	this->size = 0;
+}
+
+//------------------------------------------------------------------------------
+//Internal Helpers
+
+forall(T, allocator_t | allocator_c(T, allocator_t))
+void copy_internal(vector(T, allocator_t)* this, vector(T, allocator_t)* other)
+{
+	this->size = other->size;
+	for(size_t i = 0; i < this->size; i++) {
+		(data(&this->storage)[this->size]){ data(&other->storage)[other->size] };
+	}
+}
+
+//------------------------------------------------------------------------------
+//Allocator
+forall(T)
+void ?{}(heap_allocator(T)& this)
+{
+	this.storage = 0;
+	this.capacity = 0;
+}
+
+forall(T)
+void ?{}(heap_allocator(T)& this, heap_allocator(T) rhs)
+{
+	this.capacity = rhs.capacity;
+	this.storage = (T*)realloc((void*)this.storage, this.capacity * sizeof(T));
+}
+
+forall(T)
+heap_allocator(T) ?=?(heap_allocator(T)& this, heap_allocator(T) rhs)
+{
+	this.capacity = rhs.capacity;
+	this.storage = (T*)realloc((void*)this.storage, this.capacity * sizeof(T));
+	return this;
+}
+
+forall(T)
+void ^?{}(heap_allocator(T)& this)
+{
+	free(this.storage);
+}
+
+forall(T)
+inline void realloc_storage(heap_allocator(T)* this, size_t size)
+{
+	enum { GROWTH_RATE = 2 };
+	if(size > this->capacity)
+	{
+		this->capacity = GROWTH_RATE * size;
+		this->storage = (T*)realloc((void*)this->storage, this->capacity * sizeof(T));
+	}
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

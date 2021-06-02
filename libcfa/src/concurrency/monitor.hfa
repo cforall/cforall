@@ -1,0 +1,153 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// monitor --
+//
+// Author           : Thierry Delisle
+// Created On       : Thd Feb 23 12:27:26 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Dec  4 07:55:32 2019
+// Update Count     : 11
+//
+
+#pragma once
+
+#include <stddef.h>
+
+#include <assert.h>
+#include "invoke.h"
+#include "stdlib.hfa"
+
+trait is_monitor(T &) {
+	$monitor * get_monitor( T & );
+	void ^?{}( T & mutex );
+};
+
+static inline void ?{}($monitor & this) with( this ) {
+	lock{};
+	entry_queue{};
+	signal_stack{};
+	owner         = 0p;
+	recursion     = 0;
+	mask.accepted = 0p;
+	mask.data     = 0p;
+	mask.size     = 0;
+	dtor_node     = 0p;
+}
+
+static inline void ^?{}($monitor & ) {}
+
+struct monitor_guard_t {
+	$monitor ** 	m;
+	__lock_size_t   	count;
+	__monitor_group_t prev;
+};
+
+void ?{}( monitor_guard_t & this, $monitor ** m, __lock_size_t count, void (*func)() );
+void ^?{}( monitor_guard_t & this );
+
+struct monitor_dtor_guard_t {
+	$monitor *    m;
+	__monitor_group_t prev;
+	bool join;
+};
+
+void ?{}( monitor_dtor_guard_t & this, $monitor ** m, void (*func)(), bool join );
+void ^?{}( monitor_dtor_guard_t & this );
+
+static inline forall( T & | sized(T) | { void ^?{}( T & mutex ); } )
+void delete( T * th ) {
+	if(th) ^(*th){};
+	free( th );
+}
+
+//-----------------------------------------------------------------------------
+// Internal scheduling
+
+struct __condition_criterion_t {
+	// Whether or not the criterion is met (True if met)
+	bool ready;
+
+	// The monitor this criterion concerns
+	$monitor * target;
+
+	// The parent node to which this criterion belongs
+	struct __condition_node_t * owner;
+
+	// Intrusive linked list Next field
+	__condition_criterion_t * next;
+};
+
+static inline __condition_criterion_t * & get_next( __condition_criterion_t & this ) {
+	return this.next;
+}
+
+struct __condition_node_t {
+	// Thread that needs to be woken when all criteria are met
+	$thread * waiting_thread;
+
+	// Array of criteria (Criterions are contiguous in memory)
+	__condition_criterion_t * criteria;
+
+	// Number of criterions in the criteria
+	__lock_size_t count;
+
+	// Intrusive linked list Next field
+	__condition_node_t * next;
+
+	// Custom user info accessible before signalling
+	uintptr_t user_info;
+};
+
+static inline __condition_node_t * & get_next( __condition_node_t & this ) {
+	return this.next;
+}
+
+void ?{}(__condition_node_t & this, $thread * waiting_thread, __lock_size_t count, uintptr_t user_info );
+void ?{}(__condition_criterion_t & this );
+void ?{}(__condition_criterion_t & this, $monitor * target, __condition_node_t * owner );
+
+struct condition {
+	// Link list which contains the blocked threads as-well as the information needed to unblock them
+	__queue_t(__condition_node_t) blocked;
+
+	// Array of monitor pointers (Monitors are NOT contiguous in memory)
+	$monitor ** monitors;
+
+	// Number of monitors in the array
+	__lock_size_t monitor_count;
+};
+
+static inline void ?{}( condition & this ) {
+	this.monitors = 0p;
+	this.monitor_count = 0;
+}
+
+static inline void ^?{}( condition & this ) {
+	free( this.monitors );
+}
+
+              void wait        ( condition & this, uintptr_t user_info = 0 );
+static inline bool is_empty    ( condition & this ) { return this.blocked.head == 1p; }
+              bool signal      ( condition & this );
+              bool signal_block( condition & this );
+static inline bool signal_all  ( condition & this ) { bool ret = false; while(!is_empty(this)) { ret = signal(this) || ret; } return ret; }
+         uintptr_t front       ( condition & this );
+
+//-----------------------------------------------------------------------------
+// External scheduling
+
+struct __acceptable_t {
+	inline struct __monitor_group_t;
+	bool is_dtor;
+};
+
+void __waitfor_internal( const __waitfor_mask_t & mask, int duration );
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

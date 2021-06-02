@@ -1,0 +1,29 @@
+// Make sure throw-catch during unwind does not trash internal data.
+
+#include <exception.hfa>
+
+EHM_EXCEPTION(yin)();
+EHM_EXCEPTION(yang)();
+
+EHM_VIRTUAL_TABLE(yin, yin_vt);
+EHM_VIRTUAL_TABLE(yang, yang_vt);
+
+int main(int argc, char * argv[]) {
+	try {
+		try {
+			throw (yin){&yin_vt};
+		} finally {
+			try {
+				throw (yang){&yang_vt};
+			} catch (yin *) {
+				printf("inner yin\n");
+			} catch (yang *) {
+				printf("inner yang\n");
+			}
+		}
+	} catch (yin *) {
+		printf("outer yin\n");
+	} catch (yang *) {
+		printf("outer yang\n");
+	}
+}

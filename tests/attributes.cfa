@@ -1,0 +1,167 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// attributes.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Mon Feb  6 16:07:02 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Mar 15 13:53:31 2021
+// Update Count     : 38
+// 
+
+
+// label attribute
+int la() {
+  L: __attribute__(( unused )) 1;
+}
+
+
+// aggregate_name
+struct __attribute__(( unused )) {} Dummy;
+struct __attribute__(( unused )) Agn1;
+struct __attribute__(( unused )) Agn2 {};
+enum __attribute__(( unused )) { E1 };
+enum __attribute__(( unused )) Agn3;
+enum __attribute__(( packed )) Agn3 { E2 };
+#ifdef __CFA__
+struct __attribute__(( unused )) {} ( int );
+struct __attribute__(( unused )) Agn4 {} ( int );
+#endif // __CFA__
+
+
+// field_declaring_list
+struct Fdl {
+    int f1 __attribute__(( unused ));
+    int __attribute__(( unused )) f2;
+    int __attribute__(( unused )) f3 __attribute__(( unused ));
+    __attribute__(( unused )) int f4;
+    __attribute__(( unused )) int f5 __attribute__(( unused ));
+    __attribute__(( used )) int f6 __attribute__(( packed )), f7 __attribute__(( unused )) __attribute__(( unused )), __attribute__(( used )) f8 __attribute__(( unused ));
+    int * f9 __attribute__(( unused ));
+    __attribute__(( used )) int __attribute__(( unused )) * f10;
+    int ( ( * f11 __attribute__(( unused )) ) __attribute__(( unused )) );
+    int ( ( __attribute__(( unused )) * f12  __attribute__(( unused )) ) __attribute__(( unused )) );
+    int ( ( __attribute__(( unused )) * (f13)  __attribute__(( unused )) ) __attribute__(( unused )) );
+    int ( ( ( __attribute__(( unused )) * (f14) )  __attribute__(( unused )) ) __attribute__(( unused )) );
+};
+
+
+// asm_name_opt
+int f() asm( "xyz" ) __attribute__(( unused ));
+
+
+// variable_declarator
+const __attribute__(( used )) int vd1 __attribute__(( used )), __attribute__(( unused )) vd2;
+const __attribute__(( used )) int __attribute__(( used )) * __attribute__(( used )) vd3 __attribute__(( used )), __attribute__(( unused )) (* __attribute__(( unused )) (vd4)) __attribute__(( used ));
+const __attribute__(( used )) int __attribute__(( used )) vd5[5] __attribute__(( used )), __attribute__(( unused )) ((vd6)[5]) __attribute__(( used ));
+const __attribute__(( used )) int __attribute__(( used )) (* __attribute__(( used )) vd7)() __attribute__(( used )), __attribute__(( unused )) ((* __attribute__(( used )) vd8)()) __attribute__(( used ));
+const __attribute__(( used )) int __attribute__(( used )) ( __attribute__(( used )) * vd9)() __attribute__(( used )), __attribute__(( unused )) (( __attribute__(( used )) * vd10)()) __attribute__(( used ));
+
+// function_declarator
+__attribute__(( unused )) int f1() __attribute__(( used ));
+__attribute__(( unused )) int f1() {}
+__attribute__(( unused )) int * __attribute__(( unused )) * const __attribute__(( unused )) f2() __attribute__(( used ));
+__attribute__(( unused )) int * __attribute__(( unused )) * const __attribute__(( unused )) f2() {}
+__attribute__(( unused )) int (* __attribute__(( unused )) f3(int))[] __attribute__(( used ));
+__attribute__(( unused )) int ( __attribute__(( unused )) * __attribute__(( unused )) f4(int))[] __attribute__(( used ));
+__attribute__(( unused )) int (* __attribute__(( unused )) f5(int p))[] {}
+__attribute__(( unused )) int ( __attribute__(( unused )) * (f6)(int p))[] {}
+__attribute__(( unused )) int (* __attribute__(( unused )) f7())(int) __attribute__(( used ));
+__attribute__(( unused )) int (* __attribute__(( unused )) f8())(int) {}
+__attribute__(( unused )) int ( __attribute__(( unused )) * f9())(int) {}
+__attribute__(( unused )) int ( __attribute__(( unused )) * (f10)())(int) {}
+
+
+// variable_type_redeclarator
+typedef int t1, t2, t3, t4, t5, t6, t7, t8;
+int vtr() {
+    // redefine typedef name in new scope
+    __attribute__(( unused )) int __attribute__(( unused )) t1 __attribute__(( used ));
+    __attribute__(( unused )) int __attribute__(( unused )) (* (* t2 __attribute__(( unused )) ) __attribute__(( unused )) ) __attribute__(( unused ));
+    __attribute__(( unused )) int __attribute__(( unused )) t3[5] __attribute__(( unused ));
+    __attribute__(( unused )) int __attribute__(( unused )) (* (* __attribute__(( unused )) t4[5]) __attribute__(( unused )) ) __attribute__(( unused ));
+    __attribute__(( unused )) int __attribute__(( unused )) ( __attribute__(( unused )) * ( __attribute__(( unused )) * t5[5]) __attribute__(( unused )) ) __attribute__(( unused ));
+    __attribute__(( unused )) int __attribute__(( unused )) t6() __attribute__(( unused ));
+    __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) ((t6))() __attribute__(( unused ));
+}
+
+
+// identifier_parameter_declarator
+int ipd1( __attribute__(( unused )) int __attribute__(( unused )) p __attribute__(( unused )),
+	  __attribute__(( unused )) int __attribute__(( unused )) q __attribute__(( unused )) );
+int ipd1( __attribute__(( unused )) int __attribute__(( unused )) p __attribute__(( unused )),
+	  __attribute__(( unused )) int __attribute__(( unused )) q __attribute__(( unused )) ) {}
+int ipd2( __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) p __attribute__(( unused )),
+	  __attribute__(( unused )) int __attribute__(( unused )) (* (q)) __attribute__(( unused )) );
+int ipd2( __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) p __attribute__(( unused )),
+	  __attribute__(( unused )) int __attribute__(( unused )) (* (q)) __attribute__(( unused )) ) {}
+int ipd3( __attribute__(( unused )) int __attribute__(( unused )) p[] __attribute__(( unused )),
+	  __attribute__(( unused )) int __attribute__(( unused )) ((q)[]) __attribute__(( unused )) );
+int ipd3( __attribute__(( unused )) int __attribute__(( unused )) p[] __attribute__(( unused )),
+	  __attribute__(( unused )) int __attribute__(( unused )) ((q)[]) __attribute__(( unused )) ) {}
+int ipd4( __attribute__(( unused )) int __attribute__(( unused )) p() __attribute__(( unused )),
+	  __attribute__(( unused )) int __attribute__(( unused )) ((q)()) __attribute__(( unused )) );
+int ipd4( __attribute__(( unused )) int __attribute__(( unused )) p() __attribute__(( unused )),
+	  __attribute__(( unused )) int __attribute__(( unused )) ((q)()) __attribute__(( unused )) ) {}
+
+
+// type_parameter_redeclarator
+typedef int Foo;
+int tpr1( __attribute__(( unused )) int __attribute__(( unused )) Foo __attribute__(( unused )) );
+int tpr2( __attribute__(( unused )) int __attribute__(( unused )) (* __attribute__(( unused )) (* __attribute__(( unused )) Foo) __attribute__(( unused )) ) __attribute__(( unused )) );
+int tpr3( __attribute__(( unused )) int __attribute__(( unused )) Foo[]  __attribute__(( unused )));
+int tpr4( __attribute__(( unused )) int __attribute__(( unused )) ( __attribute__(( unused )) Foo[5] __attribute__(( unused )) ) );
+int tpr5( __attribute__(( unused )) int __attribute__(( unused )) (*Foo)() __attribute__(( unused )) );
+int tpr6( __attribute__(( unused )) int __attribute__(( unused )) Foo() __attribute__(( unused )) );
+int tpr7( __attribute__(( unused )) int __attribute__(( unused )) ( __attribute__(( unused )) Foo( __attribute__(( unused )) int __attribute__(( unused )) ) ) );
+
+
+// abstract_declarator
+int ad() {
+    typeof( int __attribute__(( used )) ) ad1 __attribute__(( unused ));
+    typeof( int __attribute__(( unused )) * __attribute__(( unused )) ) ad2 __attribute__(( unused ));
+    typeof( int __attribute__(( unused )) [5] ) __attribute__(( unused )) ad3 __attribute__(( unused ));
+    typeof( __attribute__(( unused )) int __attribute__(( unused )) (*)[10] __attribute__(( unused )) ) __attribute__(( unused )) ad4 __attribute__(( unused )), ad5 __attribute__(( used ));
+    typeof( __attribute__(( unused )) int __attribute__(( unused )) () __attribute__(( unused )) ) __attribute__(( unused )) ad6 __attribute__(( unused ));
+    sizeof( __attribute__(( unused )) int __attribute__(( unused )) );
+    sizeof( __attribute__(( unused )) int __attribute__(( unused )) (* __attribute__(( unused )) (* __attribute__(( unused )) ) ) );
+    sizeof( __attribute__(( unused )) int __attribute__(( unused )) [5] __attribute__(( unused )) );
+    sizeof( __attribute__(( unused )) int __attribute__(( unused )) (*)[10] __attribute__(( unused )) );
+    sizeof( __attribute__(( unused )) int __attribute__(( unused )) () __attribute__(( unused )) );
+    sizeof( struct { int i; } __attribute__(( unused )) );
+    sizeof( enum { R } __attribute__(( unused )) );
+}
+
+
+// abstract_parameter_declarator
+int apd1( __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )),
+	__attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) );
+int apd2( __attribute__(( unused )) int __attribute__(( unused )) (* (* __attribute__(( unused )) ) __attribute__(( unused )) ),
+	__attribute__(( unused )) int __attribute__(( unused )) (* (* __attribute__(( unused )) ) __attribute__(( unused )) ) );
+int apd3( __attribute__(( unused )) int __attribute__(( unused )) ([]) __attribute__(( unused )),
+	__attribute__(( unused )) int __attribute__(( unused )) ([]) __attribute__(( unused )) );
+int apd4( __attribute__(( unused )) int __attribute__(( unused )) ()  __attribute__(( unused )),
+	__attribute__(( unused )) int __attribute__(( unused )) ()  __attribute__(( unused )) );
+int apd5( __attribute__(( unused )) int __attribute__(( unused )) (( __attribute__(( unused )) int )) __attribute__(( unused )),
+	__attribute__(( unused )) int __attribute__(( unused )) ( __attribute__(( unused )) int ) __attribute__(( unused )) );
+int apd6( __attribute__(( unused )) int __attribute__(( unused )) (*)()  __attribute__(( unused )),
+	__attribute__(( unused )) int __attribute__(( unused )) (*)()  __attribute__(( unused )) );
+int apd7( __attribute__(( unused )) int __attribute__(( unused )) ((*)( __attribute__(( unused )) int ) ) __attribute__(( unused )),
+	__attribute__(( unused )) int __attribute__(( unused )) ((*)( __attribute__(( unused )) int ) ) __attribute__(( unused )) );
+
+
+// variable_abstract_declarator
+struct Vad {
+    int __attribute__(( unused ));
+    int __attribute__(( unused )) :4;
+    int __attribute__(( unused )) :4, __attribute__(( unused )) :6;
+};
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa attributes.cfa" //
+// End: //

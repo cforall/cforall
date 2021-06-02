@@ -1,0 +1,18 @@
+called ?{} with no a
+array = { }
+called ?{} with a: 999
+array = { 999, }
+called ?{} with a: 123 456
+array = { 123, 456, }
+called ?{} with a: 100 200 300
+array = { 100, 200, 300, }
+called ?{} with a: 10 2 3 4
+array = { 10, 2, 3, 4, }
+copy=111111
+calling func
+called process(int) 3
+called process(double) 2
+called process(int) 111
+called process(double) 4.145
+called func(void)
+finished func

@@ -1,0 +1,163 @@
+#pragma once
+
+#include <assert.h>
+#include <stdint.h>
+
+union __snzi_val_t {
+	uint64_t _all;
+	struct __attribute__((packed)) {
+		char cnt;
+		uint64_t ver:56;
+	};
+};
+
+bool cas(volatile __snzi_val_t & self, __snzi_val_t & exp, char _cnt, uint64_t _ver) {
+	__snzi_val_t t;
+	t.ver = _ver;
+	t.cnt = _cnt;
+	/* paranoid */ verify(t._all == ((_ver << 8) | ((unsigned char)_cnt)));
+	return __atomic_compare_exchange_n(&self._all, &exp._all, t._all, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+}
+
+bool cas(volatile __snzi_val_t & self, __snzi_val_t & exp, const __snzi_val_t & tar) {
+	return __atomic_compare_exchange_n(&self._all, &exp._all, tar._all, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+}
+
+void ?{}( __snzi_val_t & this ) { this._all = 0; }
+void ?{}( __snzi_val_t & this, const volatile __snzi_val_t & o) { this._all = o._all; }
+
+struct __attribute__((aligned(128))) __snzi_node_t {
+	volatile __snzi_val_t value;
+	struct __snzi_node_t * parent;
+	bool is_root;
+};
+
+static inline void arrive( __snzi_node_t & );
+static inline void depart( __snzi_node_t & );
+
+static const int __snzi_half = -1;
+
+//--------------------------------------------------
+// Root node
+static void arrive_r( __snzi_node_t & this ) {
+	/* paranoid */ verify( this.is_root );
+	__atomic_fetch_add(&this.value._all, 1, __ATOMIC_SEQ_CST);
+}
+
+static void depart_r( __snzi_node_t & this ) {
+	/* paranoid */ verify( this.is_root );
+	__atomic_fetch_sub(&this.value._all, 1, __ATOMIC_SEQ_CST);
+}
+
+//--------------------------------------------------
+// Hierarchical node
+static void arrive_h( __snzi_node_t & this ) {
+	int undoArr = 0;
+	bool success = false;
+	while(!success) {
+		__snzi_val_t x = { this.value };
+		/* paranoid */ verify(x.cnt <= 120);
+		if( x.cnt >= 1 ) {
+			if( cas( this.value, x, x.cnt + 1, x.ver ) ) {
+				success = true;
+			}
+		}
+		/* paranoid */ verify(x.cnt <= 120);
+		if( x.cnt == 0 ) {
+			if( cas( this.value, x, __snzi_half, x.ver + 1) ) {
+				success = true;
+				x.cnt = __snzi_half;
+				x.ver = x.ver + 1;
+			}
+		}
+		/* paranoid */ verify(x.cnt <= 120);
+		if( x.cnt == __snzi_half ) {
+			/* paranoid */ verify( this.parent);
+			arrive( *this.parent );
+			if( !cas( this.value, x, 1, x.ver) ) {
+				undoArr = undoArr + 1;
+			}
+		}
+	}
+
+	for(int i = 0; i < undoArr; i++) {
+		/* paranoid */ verify( this.parent );
+		depart( *this.parent );
+	}
+}
+
+static void depart_h( __snzi_node_t & this ) {
+	while(true) {
+		const __snzi_val_t x = { this.value };
+		/* paranoid */ verifyf(x.cnt >= 1, "%d", x.cnt);
+		if( cas( this.value, x, x.cnt - 1, x.ver ) ) {
+			if( x.cnt == 1 ) {
+				/* paranoid */ verify( this.parent );
+				depart( *this.parent );
+			}
+			return;
+		}
+	}
+}
+
+//--------------------------------------------------
+// All nodes
+static inline void arrive( __snzi_node_t & this ) {
+	if(this.is_root) arrive_r( this );
+	else arrive_h( this );
+}
+
+static inline void depart( __snzi_node_t & this ) {
+	if(this.is_root) depart_r( this );
+	else depart_h( this );
+}
+
+static inline bool query( __snzi_node_t & this ) {
+	/* paranoid */ verify( this.is_root );
+	return this.value._all > 0;
+}
+
+//--------------------------------------------------
+// SNZI object
+void  ?{}( __snzi_t & this ) {
+	this.mask = 0;
+	this.root = 0;
+	this.nodes = 0p;
+}
+
+void  ?{}( __snzi_t & this, unsigned depth ) with( this ) {
+	mask = (1 << depth) - 1;
+	root = (1 << (depth + 1)) - 2;
+	nodes = alloc( root + 1 );
+
+	int width = 1 << depth;
+	for(int i = 0; i < root; i++) {
+		nodes[i].value._all = 0;
+		nodes[i].parent = &nodes[(i / 2) + width ];
+		nodes[i].is_root = false;
+	}
+
+	nodes[ root ].value._all = 0;
+	nodes[ root ].parent = 0p;
+	nodes[ root ].is_root = true;
+}
+
+void ^?{}( __snzi_t & this ) {
+	free( this.nodes );
+}
+
+static inline void arrive( __snzi_t & this, int idx) {
+	idx >>= 2;
+	idx &= this.mask;
+	arrive( this.nodes[idx] );
+}
+
+static inline void depart( __snzi_t & this, int idx) {
+	idx >>= 2;
+	idx &= this.mask;
+	depart( this.nodes[idx] );
+}
+
+static inline bool query( const __snzi_t & this ) {
+	return query( this.nodes[ this.root ] );
+}

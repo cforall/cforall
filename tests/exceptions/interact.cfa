@@ -1,0 +1,115 @@
+// Testing Interactions Between Termination and Resumption
+
+#include <exception.hfa>
+#include "except-io.hfa"
+
+EHM_EXCEPTION(star)();
+EHM_EXCEPTION(moon)();
+
+EHM_VIRTUAL_TABLE(star, star_vt);
+EHM_VIRTUAL_TABLE(moon, moon_vt);
+
+int main(int argc, char * argv[]) {
+	// Resume falls back to terminate.
+	try {
+		throwResume (star){&star_vt};
+	} catch (star *) {
+		printf("caught as termination\n");
+	}
+	// Variant of the above to check timing.
+	try {
+		loud_region a = "try block with resume throw";
+		throwResume (star){&star_vt};
+	} catch (star *) {
+		printf("caught as termination\n");
+	} catchResume (star *) {
+		printf("intermediate rethrow\n");
+		throwResume;
+	}
+	printf("\n");
+
+	// Resume does not catch terminate.
+	try {
+		try {
+			throw (star){&star_vt};
+		} catchResume (star *) {
+			printf("resume catch on terminate\n");
+		}
+	} catchResume (star *) {
+		printf("resume catch on terminate\n");
+	} catch (star *) {
+		printf("terminate catch on terminate\n");
+	}
+	printf("\n");
+
+	// Terminate does not catch resume.
+	try {
+		try {
+			throwResume (star){&star_vt};
+		} catch (star *) {
+			printf("terminate catch on resume\n");
+		}
+	} catch (star *) {
+		printf("terminate catch on resume\n");
+	} catchResume (star *) {
+		printf("resume catch on resume\n");
+	}
+	printf("\n");
+
+	// Resume a termination exception.
+	try {
+		try {
+			try {
+				throw (star){&star_vt};
+			} catchResume (star *) {
+				printf("inner resume catch (error)\n");
+			}
+		} catch (star * error) {
+			printf("termination catch, will resume\n");
+			throwResume *error;
+		}
+	} catchResume (star *) {
+		printf("outer resume catch\n");
+	}
+	printf("\n");
+
+	// Terminate a resumption exception.
+	try {
+		try {
+			try {
+				throwResume (star){&star_vt};
+			} catch (star *) {
+				printf("inner termination catch\n");
+			}
+		} catchResume (star * error) {
+			printf("resumption catch, will terminate\n");
+			throw *error;
+		}
+	} catch (star *) {
+		printf("outer terminate catch (error)\n");
+	}
+	printf("\n");
+
+	// Unwinding a resumption catch does not break the system.
+	try {
+		try {
+			try {
+				try {
+					printf("throwing resume moon\n");
+					throwResume (moon){&moon_vt};
+				} catch (star *) {
+					printf("termination catch\n");
+				}
+				printf("throwing resume star\n");
+				throwResume (star){&star_vt};
+			} catchResume (star *) {
+				printf("resumption star catch\n");
+			}
+		} catchResume (moon *) {
+			printf("resumption moon catch, will terminate\n");
+			throw (star){&star_vt};
+		}
+	} catchResume (star *) {
+		printf("outermost catch (error)\n");
+	}
+}

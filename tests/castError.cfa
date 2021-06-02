@@ -1,0 +1,38 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// castError.cfa -- test invalid casts
+// 
+// Author           : Peter A. Buhr
+// Created On       : Tue Feb 19 21:15:39 2019
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Feb 19 21:16:44 2019
+// Update Count     : 1
+// 
+
+forall(T) struct S { T p; };
+int f;
+S(int) sint;
+
+void f() {
+	int f;
+	double f;
+	(char)f;
+	(int(*)())f;
+
+	unsigned char v;
+	short int v;
+	3, v;		// implicit void cast
+
+	(S(char)) sint;
+}
+
+int main() {}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa castError.cfa" //
+// End: //

@@ -1,0 +1,112 @@
+castError.cfa:23:1 error: Cannot choose between 3 alternatives for expression
+Explicit Cast of:
+  Name: f
+... to:
+  char
+... with resolved type:
+  char Alternatives are:
+Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+      Variable Expression: f: double
+      ... with resolved type:
+        double
+    ... to:
+      char
+    ... with resolved type:
+      char
+  (types:
+    char
+  )
+  Environment:
+
+Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+      Variable Expression: f: function
+        accepting unspecified arguments
+      ... returning nothing
+
+      ... with resolved type:
+        pointer to function
+          accepting unspecified arguments
+        ... returning nothing
+
+    ... to:
+      char
+    ... with resolved type:
+      char
+  (types:
+    char
+  )
+  Environment:
+
+Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+      Variable Expression: f: signed int
+      ... with resolved type:
+        signed int
+    ... to:
+      char
+    ... with resolved type:
+      char
+  (types:
+    char
+  )
+  Environment:
+
+
+castError.cfa:28:1 error: Cannot choose between 2 alternatives for expression
+Generated Cast of:
+  Comma Expression:
+    Constant Expression (3: signed int)
+    ... with resolved type:
+      signed int
+    Name: v
+... to: nothing
+... with resolved type:
+  void Alternatives are:
+Cost ( 0, 0, 2, 0, 0, 0, 0 ): Generated Cast of:
+      Comma Expression:
+        Constant Expression (3: signed int)
+        ... with resolved type:
+          signed int
+        Variable Expression: v: signed short int
+        ... with resolved type:
+          signed short int
+      ... with resolved type:
+        signed short int
+    ... to: nothing
+    ... with resolved type:
+      void
+  (types:
+    void
+  )
+  Environment:
+
+Cost ( 0, 0, 2, 0, 0, 0, 0 ): Generated Cast of:
+      Comma Expression:
+        Constant Expression (3: signed int)
+        ... with resolved type:
+          signed int
+        Variable Expression: v: unsigned char
+        ... with resolved type:
+          unsigned char
+      ... with resolved type:
+        unsigned char
+    ... to: nothing
+    ... with resolved type:
+      void
+  (types:
+    void
+  )
+  Environment:
+
+
+castError.cfa:30:1 error: Invalid application of existing declaration(s) in expression Explicit Cast of:
+  Name: sint
+... to:
+  instance of struct S with body
+  ... with parameters
+    char
+
+... with resolved type:
+  instance of struct S with body
+  ... with parameters
+    char
+

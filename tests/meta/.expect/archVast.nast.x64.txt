@@ -1,0 +1,53 @@
+meta/archVast.cfa:28:1 error: Cannot choose between 3 alternatives for expression
+Explicit Cast of:
+  Name: FX64
+... to:
+  char
+... with resolved type:
+  char Alternatives are:
+Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+      Variable Expression: FX64: double
+      ... with resolved type:
+        double
+    ... to:
+      char
+    ... with resolved type:
+      char
+  (types:
+    char
+  )
+  Environment:
+
+Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+      Variable Expression: FX64: function
+        accepting unspecified arguments
+      ... returning nothing
+
+      ... with resolved type:
+        pointer to function
+          accepting unspecified arguments
+        ... returning nothing
+
+    ... to:
+      char
+    ... with resolved type:
+      char
+  (types:
+    char
+  )
+  Environment:
+
+Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+      Variable Expression: FX64: signed int
+      ... with resolved type:
+        signed int
+    ... to:
+      char
+    ... with resolved type:
+      char
+  (types:
+    char
+  )
+  Environment:
+
+

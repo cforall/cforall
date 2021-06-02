@@ -1,0 +1,6 @@
+PASSED C malloc tests
+
+PASSED CFA malloc tests
+
+PASSED CFA malloc tests (aligned struct)
+

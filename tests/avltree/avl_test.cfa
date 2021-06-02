@@ -1,0 +1,52 @@
+#include "avl.h"
+#include "avl-private.h"
+#include <stdlib.hfa>
+
+extern "C" {
+  int strcmp(const char *, const char *);
+}
+
+int main(){
+  // operations:
+  // find(tree(K, V) *, K)
+  // int empty(tree(K, V) *);
+  // tree(K, V) * insert(tree(K, V) *, K, V);
+  // int remove(tree(K, V) **, K);
+
+  // int -> int
+  tree(int, int) * imap = create(-1, (int)0);
+  insert(&imap, 12, 13);
+  insert(&imap, 2, 3);
+  assert( height(imap) == 2 );
+
+  printf("%d %d %d\n", *find(imap, 2), *find(imap, 12), *find(imap, -1));
+
+  remove(&imap, -1);
+  delete(imap);
+
+  // int -> char *
+  tree(int, const char *) * smap = create(-1, "baz");
+  insert(&smap, 12, "bar");
+  insert(&smap, 2, "foo");
+  assert( height(smap) == 2 );
+
+  printf("%s %s %s\n", *find(smap, 2), *find(smap, 12), *find(smap, -1));
+
+  remove(&smap, -2);
+  delete(smap);
+
+  // const char* -> const char*
+  int ?<?(const char * a, const char * b) {
+    return strcmp(a, b) < 0;
+  }
+
+  tree(const char *, const char *) * ssmap = create("queso", "cheese");
+  insert(&ssmap, "foo", "bar");
+  insert(&ssmap, "hello", "world");
+  assert( height(ssmap) == 2 );
+
+  printf("%s %s %s\n", *find(ssmap, "hello"), *find(ssmap, "foo"), *find(ssmap, "queso"));
+
+  remove(&ssmap, "foo");
+  delete(ssmap);
+}

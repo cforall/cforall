@@ -1,0 +1,154 @@
+// TODO: add error cases (e.g., use of field constructors for managed types, etc.)
+
+enum Color { R, G, B };
+
+// empty struct/union should have generated ctor/dtors
+union U {};
+struct S {};
+
+struct SimpleUnion {
+	int x;
+	double y;
+	char z;
+};
+
+struct SimpleStruct {
+	int x;
+	double y;
+	char z;
+};
+
+// struct/union with members with generated ctor/dtors should themselves have generated ctor/dtors
+union PopulatedUnion {
+	Color c;
+	U u;
+	S s;
+};
+
+struct PopulatedStruct {
+	Color c;
+	U u;
+	S s;
+};
+
+// dtype-static generic type is otype
+forall(T &)
+struct DtypeStaticStruct {
+  T * data;
+  short size;
+};
+
+forall(T &)
+union DtypeStaticUnion {
+  T * data;
+  short size;
+};
+
+// dynamic generic type is otype
+forall(T)
+struct DynamicStruct {
+	T x;
+};
+
+forall(T)
+union DynamicUnion {
+	T x;
+};
+
+// struct/union that contains a generic type is
+struct GenericContainingStruct {
+	DynamicStruct(int) dsi;
+	DynamicStruct(double) dsd;
+	DynamicUnion(int) dui;
+	DynamicUnion(double) dud;
+	DtypeStaticStruct(int) dssi;
+	DtypeStaticStruct(float) dssf;
+	DtypeStaticUnion(int) dsui;
+	DtypeStaticUnion(float) dsuf;
+};
+
+union GenericContainingUnion {
+	DynamicStruct(int) dsi;
+	DynamicStruct(double) dsd;
+	DynamicUnion(int) dui;
+	DynamicUnion(double) dud;
+	DtypeStaticStruct(int) dssi;
+	DtypeStaticStruct(float) dssf;
+	DtypeStaticUnion(int) dsui;
+	DtypeStaticUnion(float) dsuf;
+};
+
+
+forall(T)
+T identity(T x) { return x; }
+
+// can identity e if only sized or only the assertion, but the combination breaks...
+// forall(dtype T | sized(T) | { void ?{}(T &); })
+// void identity(T x) {  }
+
+#if ERR1
+// managed type - defines a constructor - can't use field constructors
+struct Managed {
+	int x;
+};
+
+void ?{}(Managed & m) { m.x = 0; }
+
+// managed type since it contains a managed type - can't use field constructors
+struct InheritManaged {
+	Managed m;
+};
+
+Managed x = { 123 }; // error
+Managed y;           // okay
+
+InheritManaged z = { y };  // error?
+#endif
+
+int main() {
+	S s;
+	U u;
+	Color e;
+
+	// identity(R);  Color constant should be Color which is otype
+	identity(e);  // Color should be an otype
+	identity(u);  // U should be an otype
+	identity(s);  // S should be an otype
+
+	SimpleStruct ss;
+	SimpleUnion su;
+
+	identity(ss);
+	identity(su);
+
+	PopulatedStruct ps;
+	PopulatedUnion pu;
+
+	identity(ps); // should recursively be an otype
+	identity(pu); // should recursively be an otype
+
+	DynamicStruct(int) dsi;
+	DynamicStruct(double) dsd;
+	DynamicUnion(int) dui;
+	DynamicUnion(double) dud;
+	DtypeStaticStruct(int) dssi;
+	DtypeStaticStruct(float) dssf;
+	DtypeStaticUnion(int) dsui;
+	DtypeStaticUnion(float) dsuf;
+
+	identity(dsi);
+	identity(dsd);
+	// identity(dui); // xxx - codegen errors in generated thunk _temp3 (Box-pass-generated assignment return-temporary)
+	// identity(dud);
+	identity(dssi);
+	identity(dssf);
+	identity(dsui);
+	identity(dsuf);
+
+	GenericContainingStruct gcs;
+	GenericContainingUnion gcu;
+
+	identity(gcs);
+	identity(gcu);
+	printf( "done\n" );				// non-empty .expect file
+}

@@ -1,0 +1,222 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// forall.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed May  9 08:48:15 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 08:43:20 2020
+// Update Count     : 35
+// 
+
+void g1() {
+	forall( T ) T f( T ) {};
+	void f( int ) {};
+	void h( void (*p)(void) ) {};
+
+	int x;
+	void (*y)(void);
+	char z;
+	float w;
+
+	f( x );
+	f( y );
+	f( z );
+	f( w );
+	h( f( y ) );
+}
+
+void g2() {
+	forall( T ) void f( T, T ) {}
+	forall( T, U ) void f( T, U ) {}
+
+	int x;
+	float y;
+	int *z;
+	float *w;
+
+	f( x, y );
+	f( z, w );
+	f( x, z );
+}
+
+typedef forall ( T ) int (* f)( int );
+
+forall( T )
+void swap( T left, T right ) {
+	T temp = left;
+	left = right;
+	right = temp;
+}
+
+trait sumable( T ) {
+	void ?{}( T &, zero_t );							// 0 literal constructor
+	T ?+?( T, T );										// assortment of additions
+	T ?+=?( T &, T );
+	T ++?( T & );
+	T ?++( T & );
+}; // sumable
+
+forall( T | sumable( T ) )						// use trait
+T sum( size_t size, T a[] ) {
+	T total = 0;										// initialize by 0 constructor
+	for ( size_t i = 0; i < size; i += 1 )
+		total = total + a[i];							// select appropriate +
+	return total;
+} // sum
+
+forall( T | { T ?+?( T, T ); T ?++( T & ); [T] ?+=?( T &,T ); } )
+T twice( T t ) {
+	return t + t;
+}
+
+forall( T | { int ?<?(T, T); } )
+T min( T t1, T t2 ) {
+	return t1 < t2 ? t1 : t2;
+}
+
+int fred() {
+	int x = 1, y = 2, a[10];
+	float f;
+
+	swap( x, y );
+	twice( x );
+	f = min( 4.0, 3.0 );
+	sum( 10, a );
+}
+
+// Multiple forall
+forall( T ) forall( S ) struct { int i; };
+forall( T ) struct { int i; } forall( S );
+struct { int i; } forall( T ) forall( S );
+forall( W ) struct { int i; } forall( T ) forall( S );
+
+// Distribution
+struct P { int i; };
+forall( T ) struct Q { T i; };
+forall( T ) struct { int i; };
+struct KK { int i; };
+inline static {
+ 	void RT1() {}
+}
+forall( T ) {
+	T RT2( T ) {
+		typedef int TD1;
+		struct S1 { T t; };
+	}
+	forall( X ) {
+		typedef int TD2;
+		struct S2 {};
+		X RT2( T, X ) {
+			int TD2;
+		}
+	}
+	extern "C" {
+		forall( W ) {
+			W RT3( W ) {}
+			struct S3 {};
+		}
+	}
+	void RT4() {
+		forall( W ) struct S4 {};
+		typedef int TD3;
+	}
+	static {
+		struct S5 {};
+		void RT5( T ) {
+			struct S6 {};
+			int TD2;
+		}
+	}
+	struct S7 {};
+	typedef int TD4;
+}
+TD2 t2;
+TD4 t4;
+struct Q( int ) t;
+struct S2( int, int ) t;
+struct S5( int ) t;
+struct S7( int ) t;
+
+int i = RT2( 3 );
+double j = RT2( 3, 4.5 );
+
+static inline {
+	forall( T ) {
+		int RT6( T p );
+	}
+	forall( T, U ) {
+		int RT7( T, U );
+	}
+}
+static forall( T ) {
+	int RT8( T );
+}
+forall( T ) inline static {
+	int RT9( T ) { T t; return 3; }
+}
+
+forall( T | { T ?+?( T, T ); } ) {
+	forall( S | { T ?+?( T, S ); } ) {
+		forall( W ) T bar( T t, S s ) { return t + s; }
+		forall( W | { W ?+?( T, W ); } ) W baz( T t, S s, W w ) { return t + s + w; }
+		struct W { T t; } (int,int) ww;
+		struct P pp;
+	}
+}
+
+forall( T | { T ?+?( T, T ); } ) forall( S | { T ?+?( T, S ); } ) 
+struct XW { T t; };
+XW(int,int) xww;
+
+forall( T ) struct S { T t; } (int) x, y, z;
+forall( T ) struct { T t; } (int) a, b, c;
+
+forall( T ) static forall( S ) {
+    forall( X ) struct U {
+		T x;
+    };
+}
+
+forall( T ) {
+	extern "C" {
+		struct SS { T t; };
+		T foo( T ) {}
+	}
+}
+
+SS(int) s;
+W(int,int) w;
+
+int jane() {
+//	int j = bar( 3, 4 );
+	int k = baz( 3, 4, 5 );
+	int i = foo( 3 );
+}
+
+//otype T1 | { void xxx( T1 ); };
+
+// otype T1 | { void ?{}( T1 &, zero_t ); T1 ?+?(T1, T1); T1 ?++(T1); [T1] ?+=?(T1,T1); },
+// 	T2(otype P1, otype P2 ),
+// 	T3 | sumable(T3);
+
+//otype T2(otype P1, otype P2) | sumable( T2( P1,P2 ) ) = struct { P1 i; P2 j; };
+
+// T2(int, int) w1;
+// typedef T2(int, int) w2;
+// w2 g2;
+// otype w3 = T2(int, int);
+// w3 g3;
+
+int main( void ) {
+	#pragma message( "Compiled" )			// force non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa forall.cfa" //
+// End: //

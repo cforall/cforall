@@ -1,0 +1,34 @@
+// Create monomorphic instances of polymorphic types at global scope.
+
+forall(T &)
+void poly0(T &) {}
+
+forall(T & | sized(T))
+void poly1(T &) {}
+
+forall(T)
+void poly2(T &) {}
+
+struct wrapper {
+    void (*mono)(int &);
+};
+
+/* These are failing (#193):
+void (*mono0)(int &) = poly0;
+void (*mono1)(int &) = poly1;
+void (*mono2)(int &) = poly2;
+struct wrapper mono0w = { poly0 };
+struct wrapper mono1w = { poly1 };
+struct wrapper mono2w = { poly2 };
+*/
+void (*mono0c)(int &) @= poly0;
+void (*mono1c)(int &) @= poly1;
+void (*mono2c)(int &) @= poly2;
+struct wrapper mono0wc @= { poly0 };
+struct wrapper mono1wc @= { poly1 };
+struct wrapper mono2wc @= { poly2 };
+
+int main(void) {
+	printf("Compilation Successful.\n");
+	return 0;
+}

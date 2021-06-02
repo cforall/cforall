@@ -1,0 +1,262 @@
+/* prelude/defines.hfa.in.  Generated from configure.ac by autoheader.  */
+
+/* Location of cfa command. */
+#undef CFA_BINDIR
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_ACCEPT. */
+#undef CFA_HAVE_IORING_OP_ACCEPT
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_ASYNC_CANCEL. */
+#undef CFA_HAVE_IORING_OP_ASYNC_CANCEL
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_CLOSE. */
+#undef CFA_HAVE_IORING_OP_CLOSE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_CONNECT. */
+#undef CFA_HAVE_IORING_OP_CONNECT
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_EPOLL_CTL. */
+#undef CFA_HAVE_IORING_OP_EPOLL_CTL
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_FADVISE. */
+#undef CFA_HAVE_IORING_OP_FADVISE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_FALLOCATE. */
+#undef CFA_HAVE_IORING_OP_FALLOCATE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_FILES_UPDATE. */
+#undef CFA_HAVE_IORING_OP_FILES_UPDATE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_FSYNC. */
+#undef CFA_HAVE_IORING_OP_FSYNC
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_LINK_TIMEOUT. */
+#undef CFA_HAVE_IORING_OP_LINK_TIMEOUT
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_MADVISE. */
+#undef CFA_HAVE_IORING_OP_MADVISE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_NOP. */
+#undef CFA_HAVE_IORING_OP_NOP
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_OPENAT. */
+#undef CFA_HAVE_IORING_OP_OPENAT
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_OPENAT2. */
+#undef CFA_HAVE_IORING_OP_OPENAT2
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_POLL_ADD. */
+#undef CFA_HAVE_IORING_OP_POLL_ADD
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_POLL_REMOVE. */
+#undef CFA_HAVE_IORING_OP_POLL_REMOVE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_PROVIDE_BUFFERS. */
+#undef CFA_HAVE_IORING_OP_PROVIDE_BUFFERS
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_READ. */
+#undef CFA_HAVE_IORING_OP_READ
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_READV. */
+#undef CFA_HAVE_IORING_OP_READV
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_READ_FIXED. */
+#undef CFA_HAVE_IORING_OP_READ_FIXED
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_RECV. */
+#undef CFA_HAVE_IORING_OP_RECV
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_RECVMSG. */
+#undef CFA_HAVE_IORING_OP_RECVMSG
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_REMOVE_BUFFER. */
+#undef CFA_HAVE_IORING_OP_REMOVE_BUFFER
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_SEND. */
+#undef CFA_HAVE_IORING_OP_SEND
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_SENDMSG. */
+#undef CFA_HAVE_IORING_OP_SENDMSG
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_SPLICE. */
+#undef CFA_HAVE_IORING_OP_SPLICE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_STATX. */
+#undef CFA_HAVE_IORING_OP_STATX
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_SYNC_FILE_RANGE. */
+#undef CFA_HAVE_IORING_OP_SYNC_FILE_RANGE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_TEE. */
+#undef CFA_HAVE_IORING_OP_TEE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_TIMEOUT. */
+#undef CFA_HAVE_IORING_OP_TIMEOUT
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_TIMEOUT_REMOVE. */
+#undef CFA_HAVE_IORING_OP_TIMEOUT_REMOVE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_WRITE. */
+#undef CFA_HAVE_IORING_OP_WRITE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_WRITEV. */
+#undef CFA_HAVE_IORING_OP_WRITEV
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the operation IORING_OP_WRITE_FIXED. */
+#undef CFA_HAVE_IORING_OP_WRITE_FIXED
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag IORING_SETUP_ATTACH_WQ. */
+#undef CFA_HAVE_IORING_SETUP_ATTACH_WQ
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag ASYNC. */
+#undef CFA_HAVE_IOSQE_ASYNC
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag BUFFER_SELEC. */
+#undef CFA_HAVE_IOSQE_BUFFER_SELECT
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag FIXED_FILE. */
+#undef CFA_HAVE_IOSQE_FIXED_FILE
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag IO_DRAIN. */
+#undef CFA_HAVE_IOSQE_IO_DRAIN
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag IO_HARDLINK. */
+#undef CFA_HAVE_IOSQE_IO_HARDLINK
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag IO_LINK. */
+#undef CFA_HAVE_IOSQE_IO_LINK
+
+/* Defined if io_uring support is present when compiling libcfathread. */
+#undef CFA_HAVE_LINUX_IO_URING_H
+
+/* Defined if openat2 support is present when compiling libcfathread. */
+#undef CFA_HAVE_OPENAT2
+
+/* Defined if preadv2 support is present when compiling libcfathread. */
+#undef CFA_HAVE_PREADV2
+
+/* Defined if pwritev2 support is present when compiling libcfathread. */
+#undef CFA_HAVE_PWRITEV2
+
+/* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag SPLICE_F_FD_IN_FIXED. */
+#undef CFA_HAVE_SPLICE_F_FD_IN_FIXED
+
+/* Defined if statx support is present when compiling libcfathread. */
+#undef CFA_HAVE_STATX
+
+/* Location of include files. */
+#undef CFA_INCDIR
+
+/* Location of cc1 and cfa-cpp commands. */
+#undef CFA_LIBDIR
+
+/* Location of cfa install. */
+#undef CFA_PREFIX
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <linux/io_uring.h> header file. */
+#undef HAVE_LINUX_IO_URING_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#undef LT_OBJDIR
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Version number of package */
+#undef VERSION
+
+/* Defined if libcfathread was compiled without support for statistics. */
+#undef __CFA_NO_STATISTICS__

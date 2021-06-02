@@ -1,0 +1,35 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// fstream_test.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Dec 22 09:47:44 2018
+// Update Count     : 68
+//
+
+#include <fstream.hfa>
+
+int main( void ) {
+	int nombre;
+	sout | "Entrez un nombre, s'il vous plaît:";
+	sin  | nombre;
+	sout | "Vous avez entré" | nombre;
+	sout | "le nombre" | nombre | "est"
+		 | (nombre > 0 ? "positif" : nombre == 0 ? "zéro" : "négatif");
+
+	sout | "Entrez trois nombres, s'il vous plaît:";
+	int i, j, k;
+	sin  | i | j | k;
+	sout | "Vous avez entré" | "i:" | "" | i | "j:" | "" | j | "k:" | "" | k;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa fstream_test.cfa" //
+// End: //

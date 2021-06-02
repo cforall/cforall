@@ -1,0 +1,20 @@
+case 1
+case 2
+case 3
+default
+
+case 1
+case 1
+0
+1
+2
+common
+default
+
+case 5
+common2
+
+case 5
+check
+common
+default

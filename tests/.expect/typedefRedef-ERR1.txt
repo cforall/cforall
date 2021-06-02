@@ -1,0 +1,2 @@
+typedefRedef.cfa:4:1 error: Cannot redefine typedef: Foo
+typedefRedef.cfa:59:1 error: Cannot redefine typedef: ARR

@@ -1,0 +1,625 @@
+char __sync_fetch_and_add(volatile char *, char,...);
+signed char __sync_fetch_and_add(volatile signed char *, signed char,...);
+unsigned char __sync_fetch_and_add(volatile unsigned char *, unsigned char,...);
+signed short __sync_fetch_and_add(volatile signed short *, signed short,...);
+unsigned short __sync_fetch_and_add(volatile unsigned short *, unsigned short,...);
+signed int __sync_fetch_and_add(volatile signed int *, signed int,...);
+unsigned int __sync_fetch_and_add(volatile unsigned int *, unsigned int,...);
+signed long int __sync_fetch_and_add(volatile signed long int *, signed long int,...);
+unsigned long int __sync_fetch_and_add(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_fetch_and_add(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_fetch_and_add(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_fetch_and_add(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_fetch_and_add(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_fetch_and_sub(volatile char *, char,...);
+signed char __sync_fetch_and_sub(volatile signed char *, signed char,...);
+unsigned char __sync_fetch_and_sub(volatile unsigned char *, unsigned char,...);
+signed short __sync_fetch_and_sub(volatile signed short *, signed short,...);
+unsigned short __sync_fetch_and_sub(volatile unsigned short *, unsigned short,...);
+signed int __sync_fetch_and_sub(volatile signed int *, signed int,...);
+unsigned int __sync_fetch_and_sub(volatile unsigned int *, unsigned int,...);
+signed long int __sync_fetch_and_sub(volatile signed long int *, signed long int,...);
+unsigned long int __sync_fetch_and_sub(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_fetch_and_sub(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_fetch_and_sub(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_fetch_and_sub(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_fetch_and_sub(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_fetch_and_or(volatile char *, char,...);
+signed char __sync_fetch_and_or(volatile signed char *, signed char,...);
+unsigned char __sync_fetch_and_or(volatile unsigned char *, unsigned char,...);
+signed short __sync_fetch_and_or(volatile signed short *, signed short,...);
+unsigned short __sync_fetch_and_or(volatile unsigned short *, unsigned short,...);
+signed int __sync_fetch_and_or(volatile signed int *, signed int,...);
+unsigned int __sync_fetch_and_or(volatile unsigned int *, unsigned int,...);
+signed long int __sync_fetch_and_or(volatile signed long int *, signed long int,...);
+unsigned long int __sync_fetch_and_or(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_fetch_and_or(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_fetch_and_or(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_fetch_and_or(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_fetch_and_or(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_fetch_and_and(volatile char *, char,...);
+signed char __sync_fetch_and_and(volatile signed char *, signed char,...);
+unsigned char __sync_fetch_and_and(volatile unsigned char *, unsigned char,...);
+signed short __sync_fetch_and_and(volatile signed short *, signed short,...);
+unsigned short __sync_fetch_and_and(volatile unsigned short *, unsigned short,...);
+signed int __sync_fetch_and_and(volatile signed int *, signed int,...);
+unsigned int __sync_fetch_and_and(volatile unsigned int *, unsigned int,...);
+signed long int __sync_fetch_and_and(volatile signed long int *, signed long int,...);
+unsigned long int __sync_fetch_and_and(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_fetch_and_and(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_fetch_and_and(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_fetch_and_and(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_fetch_and_and(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_fetch_and_xor(volatile char *, char,...);
+signed char __sync_fetch_and_xor(volatile signed char *, signed char,...);
+unsigned char __sync_fetch_and_xor(volatile unsigned char *, unsigned char,...);
+signed short __sync_fetch_and_xor(volatile signed short *, signed short,...);
+unsigned short __sync_fetch_and_xor(volatile unsigned short *, unsigned short,...);
+signed int __sync_fetch_and_xor(volatile signed int *, signed int,...);
+unsigned int __sync_fetch_and_xor(volatile unsigned int *, unsigned int,...);
+signed long int __sync_fetch_and_xor(volatile signed long int *, signed long int,...);
+unsigned long int __sync_fetch_and_xor(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_fetch_and_xor(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_fetch_and_xor(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_fetch_and_xor(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_fetch_and_xor(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_fetch_and_nand(volatile char *, char,...);
+signed char __sync_fetch_and_nand(volatile signed char *, signed char,...);
+unsigned char __sync_fetch_and_nand(volatile unsigned char *, unsigned char,...);
+signed short __sync_fetch_and_nand(volatile signed short *, signed short,...);
+unsigned short __sync_fetch_and_nand(volatile unsigned short *, unsigned short,...);
+signed int __sync_fetch_and_nand(volatile signed int *, signed int,...);
+unsigned int __sync_fetch_and_nand(volatile unsigned int *, unsigned int,...);
+signed long int __sync_fetch_and_nand(volatile signed long int *, signed long int,...);
+unsigned long int __sync_fetch_and_nand(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_fetch_and_nand(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_fetch_and_nand(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_fetch_and_nand(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_fetch_and_nand(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_add_and_fetch(volatile char *, char,...);
+signed char __sync_add_and_fetch(volatile signed char *, signed char,...);
+unsigned char __sync_add_and_fetch(volatile unsigned char *, unsigned char,...);
+signed short __sync_add_and_fetch(volatile signed short *, signed short,...);
+unsigned short __sync_add_and_fetch(volatile unsigned short *, unsigned short,...);
+signed int __sync_add_and_fetch(volatile signed int *, signed int,...);
+signed int __sync_add_and_fetch(volatile signed int *, signed int,...);
+signed long int __sync_add_and_fetch(volatile signed long int *, signed long int,...);
+unsigned long int __sync_add_and_fetch(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_add_and_fetch(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_add_and_fetch(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_add_and_fetch(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_add_and_fetch(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_sub_and_fetch(volatile char *, char,...);
+signed char __sync_sub_and_fetch(volatile signed char *, signed char,...);
+unsigned char __sync_sub_and_fetch(volatile unsigned char *, unsigned char,...);
+signed short __sync_sub_and_fetch(volatile signed short *, signed short,...);
+unsigned short __sync_sub_and_fetch(volatile unsigned short *, unsigned short,...);
+signed int __sync_sub_and_fetch(volatile signed int *, signed int,...);
+unsigned int __sync_sub_and_fetch(volatile unsigned int *, unsigned int,...);
+signed long int __sync_sub_and_fetch(volatile signed long int *, signed long int,...);
+unsigned long int __sync_sub_and_fetch(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_sub_and_fetch(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_sub_and_fetch(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_sub_and_fetch(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_sub_and_fetch(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_or_and_fetch(volatile char *, char,...);
+signed char __sync_or_and_fetch(volatile signed char *, signed char,...);
+unsigned char __sync_or_and_fetch(volatile unsigned char *, unsigned char,...);
+signed short __sync_or_and_fetch(volatile signed short *, signed short,...);
+unsigned short __sync_or_and_fetch(volatile unsigned short *, unsigned short,...);
+signed int __sync_or_and_fetch(volatile signed int *, signed int,...);
+unsigned int __sync_or_and_fetch(volatile unsigned int *, unsigned int,...);
+signed long int __sync_or_and_fetch(volatile signed long int *, signed long int,...);
+unsigned long int __sync_or_and_fetch(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_or_and_fetch(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_or_and_fetch(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_or_and_fetch(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_or_and_fetch(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_and_and_fetch(volatile char *, char,...);
+signed char __sync_and_and_fetch(volatile signed char *, signed char,...);
+unsigned char __sync_and_and_fetch(volatile unsigned char *, unsigned char,...);
+signed short __sync_and_and_fetch(volatile signed short *, signed short,...);
+unsigned short __sync_and_and_fetch(volatile unsigned short *, unsigned short,...);
+signed int __sync_and_and_fetch(volatile signed int *, signed int,...);
+unsigned int __sync_and_and_fetch(volatile unsigned int *, unsigned int,...);
+signed long int __sync_and_and_fetch(volatile signed long int *, signed long int,...);
+unsigned long int __sync_and_and_fetch(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_and_and_fetch(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_and_and_fetch(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_and_and_fetch(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_and_and_fetch(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_xor_and_fetch(volatile char *, char,...);
+signed char __sync_xor_and_fetch(volatile signed char *, signed char,...);
+unsigned char __sync_xor_and_fetch(volatile unsigned char *, unsigned char,...);
+signed short __sync_xor_and_fetch(volatile signed short *, signed short,...);
+unsigned short __sync_xor_and_fetch(volatile unsigned short *, unsigned short,...);
+signed int __sync_xor_and_fetch(volatile signed int *, signed int,...);
+unsigned int __sync_xor_and_fetch(volatile unsigned int *, unsigned int,...);
+signed long int __sync_xor_and_fetch(volatile signed long int *, signed long int,...);
+unsigned long int __sync_xor_and_fetch(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_xor_and_fetch(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_xor_and_fetch(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_xor_and_fetch(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_xor_and_fetch(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+char __sync_nand_and_fetch(volatile char *, char,...);
+signed char __sync_nand_and_fetch(volatile signed char *, signed char,...);
+unsigned char __sync_nand_and_fetch(volatile unsigned char *, unsigned char,...);
+signed short __sync_nand_and_fetch(volatile signed short *, signed short,...);
+unsigned short __sync_nand_and_fetch(volatile unsigned short *, unsigned short,...);
+signed int __sync_nand_and_fetch(volatile signed int *, signed int,...);
+unsigned int __sync_nand_and_fetch(volatile unsigned int *, unsigned int,...);
+signed long int __sync_nand_and_fetch(volatile signed long int *, signed long int,...);
+unsigned long int __sync_nand_and_fetch(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_nand_and_fetch(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_nand_and_fetch(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_nand_and_fetch(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_nand_and_fetch(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+_Bool __sync_bool_compare_and_swap(volatile char *, char, char,...);
+_Bool __sync_bool_compare_and_swap(volatile signed char *, signed char, signed char,...);
+_Bool __sync_bool_compare_and_swap(volatile unsigned char *, unsigned char, unsigned char,...);
+_Bool __sync_bool_compare_and_swap(volatile short *, signed short, signed short,...);
+_Bool __sync_bool_compare_and_swap(volatile short *, unsigned short, unsigned short,...);
+_Bool __sync_bool_compare_and_swap(volatile signed int *, signed int, signed int,...);
+_Bool __sync_bool_compare_and_swap(volatile unsigned int *, unsigned int, unsigned int,...);
+_Bool __sync_bool_compare_and_swap(volatile signed long int *, signed long int, signed long int,...);
+_Bool __sync_bool_compare_and_swap(volatile unsigned long int *, unsigned long int, unsigned long int,...);
+_Bool __sync_bool_compare_and_swap(volatile signed long long int *, signed long long int, signed long long int,...);
+_Bool __sync_bool_compare_and_swap(volatile unsigned long long int *, unsigned long long int, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+_Bool __sync_bool_compare_and_swap(volatile signed __int128 *, signed __int128, signed __int128,...);
+_Bool __sync_bool_compare_and_swap(volatile unsigned __int128 *, unsigned __int128, unsigned __int128,...);
+#endif
+forall(T &) _Bool __sync_bool_compare_and_swap(T * volatile *, T *, T*, ...);
+
+char __sync_val_compare_and_swap(volatile char *, char, char,...);
+signed char __sync_val_compare_and_swap(volatile signed char *, signed char, signed char,...);
+unsigned char __sync_val_compare_and_swap(volatile unsigned char *, unsigned char, unsigned char,...);
+signed short __sync_val_compare_and_swap(volatile signed short *, signed short, signed short,...);
+unsigned short __sync_val_compare_and_swap(volatile unsigned short *, unsigned short, unsigned short,...);
+signed int __sync_val_compare_and_swap(volatile signed int *, signed int, signed int,...);
+unsigned int __sync_val_compare_and_swap(volatile unsigned int *, unsigned int, unsigned int,...);
+signed long int __sync_val_compare_and_swap(volatile signed long int *, signed long int, signed long int,...);
+unsigned long int __sync_val_compare_and_swap(volatile unsigned long int *, unsigned long int, unsigned long int,...);
+signed long long int __sync_val_compare_and_swap(volatile signed long long int *, signed long long int, signed long long int,...);
+unsigned long long int __sync_val_compare_and_swap(volatile unsigned long long int *, unsigned long long int, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_val_compare_and_swap(volatile signed __int128 *, signed __int128, signed __int128,...);
+unsigned __int128 __sync_val_compare_and_swap(volatile unsigned __int128 *, unsigned __int128, unsigned __int128,...);
+#endif
+forall(T &) T * __sync_val_compare_and_swap(T * volatile *, T *, T*,...);
+
+char __sync_lock_test_and_set(volatile char *, char,...);
+signed char __sync_lock_test_and_set(volatile signed char *, signed char,...);
+unsigned char __sync_lock_test_and_set(volatile unsigned char *, unsigned char,...);
+signed short __sync_lock_test_and_set(volatile signed short *, signed short,...);
+unsigned short __sync_lock_test_and_set(volatile unsigned short *, unsigned short,...);
+signed int __sync_lock_test_and_set(volatile signed int *, signed int,...);
+unsigned int __sync_lock_test_and_set(volatile unsigned int *, unsigned int,...);
+signed long int __sync_lock_test_and_set(volatile signed long int *, signed long int,...);
+unsigned long int __sync_lock_test_and_set(volatile unsigned long int *, unsigned long int,...);
+signed long long int __sync_lock_test_and_set(volatile signed long long int *, signed long long int,...);
+unsigned long long int __sync_lock_test_and_set(volatile unsigned long long int *, unsigned long long int,...);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __sync_lock_test_and_set(volatile signed __int128 *, signed __int128,...);
+unsigned __int128 __sync_lock_test_and_set(volatile unsigned __int128 *, unsigned __int128,...);
+#endif
+
+void __sync_lock_release(volatile char *,...);
+void __sync_lock_release(volatile signed char *,...);
+void __sync_lock_release(volatile unsigned char *,...);
+void __sync_lock_release(volatile signed short *,...);
+void __sync_lock_release(volatile unsigned short *,...);
+void __sync_lock_release(volatile signed int *,...);
+void __sync_lock_release(volatile unsigned int *,...);
+void __sync_lock_release(volatile signed long int *,...);
+void __sync_lock_release(volatile unsigned long int *,...);
+void __sync_lock_release(volatile signed long long int *,...);
+void __sync_lock_release(volatile unsigned long long int *,...);
+#if defined(__SIZEOF_INT128__)
+void __sync_lock_release(volatile signed __int128 *,...);
+void __sync_lock_release(volatile unsigned __int128 *,...);
+#endif
+
+void __sync_synchronize();
+
+
+
+
+_Bool __atomic_test_and_set(volatile _Bool *, int);
+_Bool __atomic_test_and_set(volatile char *, int);
+_Bool __atomic_test_and_set(volatile signed char *, int);
+_Bool __atomic_test_and_set(volatile unsigned char *, int);
+_Bool __atomic_test_and_set(volatile signed short *, int);
+_Bool __atomic_test_and_set(volatile unsigned short *, int);
+_Bool __atomic_test_and_set(volatile signed int *, int);
+_Bool __atomic_test_and_set(volatile unsigned int *, int);
+_Bool __atomic_test_and_set(volatile signed long int *, int);
+_Bool __atomic_test_and_set(volatile unsigned long int *, int);
+_Bool __atomic_test_and_set(volatile signed long long int *, int);
+_Bool __atomic_test_and_set(volatile unsigned long long int *, int);
+#if defined(__SIZEOF_INT128__)
+_Bool __atomic_test_and_set(volatile signed __int128 *, int);
+_Bool __atomic_test_and_set(volatile unsigned __int128 *, int);
+#endif
+
+void __atomic_clear(volatile _Bool *, int);
+void __atomic_clear(volatile char *, int);
+void __atomic_clear(volatile signed char *, int);
+void __atomic_clear(volatile unsigned char *, int);
+void __atomic_clear(volatile signed short *, int);
+void __atomic_clear(volatile unsigned short *, int);
+void __atomic_clear(volatile signed int *, int);
+void __atomic_clear(volatile unsigned int *, int);
+void __atomic_clear(volatile signed long int *, int);
+void __atomic_clear(volatile unsigned long int *, int);
+void __atomic_clear(volatile signed long long int *, int);
+void __atomic_clear(volatile unsigned long long int *, int);
+#if defined(__SIZEOF_INT128__)
+void __atomic_clear(volatile signed __int128 *, int);
+void __atomic_clear(volatile unsigned __int128 *, int);
+#endif
+
+_Bool __atomic_exchange_n(volatile _Bool *, _Bool, int);
+void __atomic_exchange(volatile _Bool *, volatile _Bool *, volatile _Bool *, int);
+char __atomic_exchange_n(volatile char *, char, int);
+void __atomic_exchange(volatile char *, volatile char *, volatile char *, int);
+signed char __atomic_exchange_n(volatile signed char *, signed char, int);
+void __atomic_exchange(volatile signed char *, volatile signed char *, volatile signed char *, int);
+unsigned char __atomic_exchange_n(volatile unsigned char *, unsigned char, int);
+void __atomic_exchange(volatile unsigned char *, volatile unsigned char *, volatile unsigned char *, int);
+signed short __atomic_exchange_n(volatile signed short *, signed short, int);
+void __atomic_exchange(volatile signed short *, volatile signed short *, volatile signed short *, int);
+unsigned short __atomic_exchange_n(volatile unsigned short *, unsigned short, int);
+void __atomic_exchange(volatile unsigned short *, volatile unsigned short *, volatile unsigned short *, int);
+signed int __atomic_exchange_n(volatile signed int *, signed int, int);
+void __atomic_exchange(volatile signed int *, volatile signed int *, volatile signed int *, int);
+unsigned int __atomic_exchange_n(volatile unsigned int *, unsigned int, int);
+void __atomic_exchange(volatile unsigned int *, volatile unsigned int *, volatile unsigned int *, int);
+signed long int __atomic_exchange_n(volatile signed long int *, signed long int, int);
+void __atomic_exchange(volatile signed long int *, volatile signed long int *, volatile signed long int *, int);
+unsigned long int __atomic_exchange_n(volatile unsigned long int *, unsigned long int, int);
+void __atomic_exchange(volatile unsigned long int *, volatile unsigned long int *, volatile unsigned long int *, int);
+signed long long int __atomic_exchange_n(volatile signed long long int *, signed long long int, int);
+void __atomic_exchange(volatile signed long long int *, volatile signed long long int *, volatile signed long long int *, int);
+unsigned long long int __atomic_exchange_n(volatile unsigned long long int *, unsigned long long int, int);
+void __atomic_exchange(volatile unsigned long long int *, volatile unsigned long long int *, volatile unsigned long long int *, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_exchange_n(volatile signed __int128 *, signed __int128, int);
+void __atomic_exchange(volatile signed __int128 *, volatile signed __int128 *, volatile signed __int128 *, int);
+unsigned __int128 __atomic_exchange_n(volatile unsigned __int128 *, unsigned __int128, int);
+void __atomic_exchange(volatile unsigned __int128 *, volatile unsigned __int128 *, volatile unsigned __int128 *, int);
+#endif
+forall(T &) T * __atomic_exchange_n(T * volatile *, T *, int);
+forall(T &) void __atomic_exchange(T * volatile *, T * volatile *, T * volatile *, int);
+
+_Bool __atomic_load_n(const volatile _Bool *, int);
+void __atomic_load(const volatile _Bool *, volatile _Bool *, int);
+char __atomic_load_n(const volatile char *, int);
+void __atomic_load(const volatile char *, volatile char *, int);
+signed char __atomic_load_n(const volatile signed char *, int);
+void __atomic_load(const volatile signed char *, volatile signed char *, int);
+unsigned char __atomic_load_n(const volatile unsigned char *, int);
+void __atomic_load(const volatile unsigned char *, volatile unsigned char *, int);
+signed short __atomic_load_n(const volatile signed short *, int);
+void __atomic_load(const volatile signed short *, volatile signed short *, int);
+unsigned short __atomic_load_n(const volatile unsigned short *, int);
+void __atomic_load(const volatile unsigned short *, volatile unsigned short *, int);
+signed int __atomic_load_n(const volatile signed int *, int);
+void __atomic_load(const volatile signed int *, volatile signed int *, int);
+unsigned int __atomic_load_n(const volatile unsigned int *, int);
+void __atomic_load(const volatile unsigned int *, volatile unsigned int *, int);
+signed long int __atomic_load_n(const volatile signed long int *, int);
+void __atomic_load(const volatile signed long int *, volatile signed long int *, int);
+unsigned long int __atomic_load_n(const volatile unsigned long int *, int);
+void __atomic_load(const volatile unsigned long int *, volatile unsigned long int *, int);
+signed long long int __atomic_load_n(const volatile signed long long int *, int);
+void __atomic_load(const volatile signed long long int *, volatile signed long long int *, int);
+unsigned long long int __atomic_load_n(const volatile unsigned long long int *, int);
+void __atomic_load(const volatile unsigned long long int *, volatile unsigned long long int *, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_load_n(const volatile signed __int128 *, int);
+void __atomic_load(const volatile signed __int128 *, volatile signed __int128 *, int);
+unsigned __int128 __atomic_load_n(const volatile unsigned __int128 *, int);
+void __atomic_load(const volatile unsigned __int128 *, volatile unsigned __int128 *, int);
+#endif
+forall(T &) T * __atomic_load_n(T * const volatile *, int);
+forall(T &) void __atomic_load(T * const volatile *, T **, int);
+
+_Bool __atomic_compare_exchange_n(volatile char *, char *, char, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile char *, char *, char *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile signed char *, signed char *, signed char, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile signed char *, signed char *, signed char *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile unsigned char *, unsigned char *, unsigned char, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile unsigned char *, unsigned char *, unsigned char *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile signed short *, signed short *, signed short, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile signed short *, signed short *, signed short *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile unsigned short *, unsigned short *, unsigned short, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile unsigned short *, unsigned short *, unsigned short *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile signed int *, signed int *, signed int, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile signed int *, signed int *, signed int *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile unsigned int *, unsigned int *, unsigned int, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile unsigned int *, unsigned int *, unsigned int *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile signed long int *, signed long int *, signed long int, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile signed long int *, signed long int *, signed long int *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile unsigned long int *, unsigned long int *, unsigned long int, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile unsigned long int *, unsigned long int *, unsigned long int *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile signed long long int *, signed long long int *, signed long long int, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile signed long long int *, signed long long int *, signed long long int *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n(volatile unsigned long long int *, unsigned long long int *, unsigned long long int, _Bool, int, int);
+_Bool __atomic_compare_exchange  (volatile unsigned long long int *, unsigned long long int *, unsigned long long int *, _Bool, int, int);
+#if defined(__SIZEOF_INT128__)
+_Bool __atomic_compare_exchange_n (volatile signed __int128 *, signed __int128 *, signed __int128, _Bool, int, int);
+_Bool __atomic_compare_exchange   (volatile signed __int128 *, signed __int128 *, signed __int128 *, _Bool, int, int);
+_Bool __atomic_compare_exchange_n (volatile unsigned __int128 *, unsigned __int128 *, unsigned __int128, _Bool, int, int);
+_Bool __atomic_compare_exchange   (volatile unsigned __int128 *, unsigned __int128 *, unsigned __int128 *, _Bool, int, int);
+#endif
+forall(T &) _Bool __atomic_compare_exchange_n (T * volatile *, T **, T*, _Bool, int, int);
+forall(T &) _Bool __atomic_compare_exchange   (T * volatile *, T **, T**, _Bool, int, int);
+
+void __atomic_store_n(volatile _Bool *, _Bool, int);
+void __atomic_store(volatile _Bool *, _Bool *, int);
+void __atomic_store_n(volatile char *, char, int);
+void __atomic_store(volatile char *, char *, int);
+void __atomic_store_n(volatile signed char *, signed char, int);
+void __atomic_store(volatile signed char *, signed char *, int);
+void __atomic_store_n(volatile unsigned char *, unsigned char, int);
+void __atomic_store(volatile unsigned char *, unsigned char *, int);
+void __atomic_store_n(volatile signed short *, signed short, int);
+void __atomic_store(volatile signed short *, signed short *, int);
+void __atomic_store_n(volatile unsigned short *, unsigned short, int);
+void __atomic_store(volatile unsigned short *, unsigned short *, int);
+void __atomic_store_n(volatile signed int *, signed int, int);
+void __atomic_store(volatile signed int *, signed int *, int);
+void __atomic_store_n(volatile unsigned int *, unsigned int, int);
+void __atomic_store(volatile unsigned int *, unsigned int *, int);
+void __atomic_store_n(volatile signed long int *, signed long int, int);
+void __atomic_store(volatile signed long int *, signed long int *, int);
+void __atomic_store_n(volatile unsigned long int *, unsigned long int, int);
+void __atomic_store(volatile unsigned long int *, unsigned long int *, int);
+void __atomic_store_n(volatile signed long long int *, signed long long int, int);
+void __atomic_store(volatile signed long long int *, signed long long int *, int);
+void __atomic_store_n(volatile unsigned long long int *, unsigned long long int, int);
+void __atomic_store(volatile unsigned long long int *, unsigned long long int *, int);
+#if defined(__SIZEOF_INT128__)
+void __atomic_store_n(volatile signed __int128 *, signed __int128, int);
+void __atomic_store(volatile signed __int128 *, signed __int128 *, int);
+void __atomic_store_n(volatile unsigned __int128 *, unsigned __int128, int);
+void __atomic_store(volatile unsigned __int128 *, unsigned __int128 *, int);
+#endif
+forall(T &) void __atomic_store_n(T * volatile *, T *, int);
+forall(T &) void __atomic_store(T * volatile *, T **, int);
+
+char __atomic_add_fetch  (volatile char *, char, int);
+signed char __atomic_add_fetch  (volatile signed char *, signed char, int);
+unsigned char __atomic_add_fetch  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_add_fetch  (volatile signed short *, signed short, int);
+unsigned short __atomic_add_fetch  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_add_fetch  (volatile signed int *, signed int, int);
+unsigned int __atomic_add_fetch  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_add_fetch  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_add_fetch  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_add_fetch  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_add_fetch  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_add_fetch   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_add_fetch   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_sub_fetch  (volatile char *, char, int);
+signed char __atomic_sub_fetch  (volatile signed char *, signed char, int);
+unsigned char __atomic_sub_fetch  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_sub_fetch  (volatile signed short *, signed short, int);
+unsigned short __atomic_sub_fetch  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_sub_fetch  (volatile signed int *, signed int, int);
+unsigned int __atomic_sub_fetch  (volatile unsigned int *, unsigned int, int);
+signed long long int __atomic_sub_fetch  (volatile signed long int *, signed long int, int);
+unsigned long long int __atomic_sub_fetch  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_sub_fetch  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_sub_fetch  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_sub_fetch   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_sub_fetch   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_and_fetch  (volatile char *, char, int);
+signed char __atomic_and_fetch  (volatile signed char *, signed char, int);
+unsigned char __atomic_and_fetch  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_and_fetch  (volatile signed short *, signed short, int);
+unsigned short __atomic_and_fetch  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_and_fetch  (volatile signed int *, signed int, int);
+unsigned int __atomic_and_fetch  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_and_fetch  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_and_fetch  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_and_fetch  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_and_fetch  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_and_fetch   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_and_fetch   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_nand_fetch  (volatile char *, char, int);
+signed char __atomic_nand_fetch  (volatile signed char *, signed char, int);
+unsigned char __atomic_nand_fetch  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_nand_fetch  (volatile signed short *, signed short, int);
+unsigned short __atomic_nand_fetch  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_nand_fetch  (volatile signed int *, signed int, int);
+unsigned int __atomic_nand_fetch  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_nand_fetch  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_nand_fetch  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_nand_fetch  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_nand_fetch  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_nand_fetch   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_nand_fetch   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_xor_fetch  (volatile char *, char, int);
+signed char __atomic_xor_fetch  (volatile signed char *, signed char, int);
+unsigned char __atomic_xor_fetch  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_xor_fetch  (volatile signed short *, signed short, int);
+unsigned short __atomic_xor_fetch  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_xor_fetch  (volatile signed int *, signed int, int);
+unsigned int __atomic_xor_fetch  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_xor_fetch  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_xor_fetch  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_xor_fetch  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_xor_fetch  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_xor_fetch   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_xor_fetch   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_or_fetch  (volatile char *, char, int);
+signed char __atomic_or_fetch  (volatile signed char *, signed char, int);
+unsigned char __atomic_or_fetch  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_or_fetch  (volatile signed short *, signed short, int);
+unsigned short __atomic_or_fetch  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_or_fetch  (volatile signed int *, signed int, int);
+unsigned int __atomic_or_fetch  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_or_fetch  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_or_fetch  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_or_fetch  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_or_fetch  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_or_fetch   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_or_fetch   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_fetch_add  (volatile char *, char, int);
+signed char __atomic_fetch_add  (volatile signed char *, signed char, int);
+unsigned char __atomic_fetch_add  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_fetch_add  (volatile signed short *, signed short, int);
+unsigned short __atomic_fetch_add  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_fetch_add  (volatile signed int *, signed int, int);
+unsigned int __atomic_fetch_add  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_fetch_add  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_fetch_add  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_fetch_add  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_fetch_add  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_fetch_add   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_fetch_add   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_fetch_sub  (volatile char *, char, int);
+signed char __atomic_fetch_sub  (volatile signed char *, signed char, int);
+unsigned char __atomic_fetch_sub  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_fetch_sub  (volatile signed short *, signed short, int);
+unsigned short __atomic_fetch_sub  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_fetch_sub  (volatile signed int *, signed int, int);
+unsigned int __atomic_fetch_sub  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_fetch_sub  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_fetch_sub  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_fetch_sub  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_fetch_sub  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_fetch_sub   (volatile signed  __int128 *, signed __int128, int);
+unsigned __int128 __atomic_fetch_sub   (volatile unsigned  __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_fetch_and  (volatile char *, char, int);
+signed char __atomic_fetch_and  (volatile signed char *, signed char, int);
+unsigned char __atomic_fetch_and  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_fetch_and  (volatile signed short *, signed short, int);
+unsigned short __atomic_fetch_and  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_fetch_and  (volatile signed int *, signed int, int);
+unsigned int __atomic_fetch_and  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_fetch_and  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_fetch_and  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_fetch_and  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_fetch_and  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_fetch_and   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_fetch_and   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_fetch_nand  (volatile char *, char, int);
+signed char __atomic_fetch_nand  (volatile signed char *, signed char, int);
+unsigned char __atomic_fetch_nand  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_fetch_nand  (volatile signed short *, signed short, int);
+unsigned short __atomic_fetch_nand  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_fetch_nand  (volatile signed int *, signed int, int);
+unsigned int __atomic_fetch_nand  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_fetch_nand  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_fetch_nand  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_fetch_nand  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_fetch_nand  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_fetch_nand   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_fetch_nand   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_fetch_xor  (volatile char *, char, int);
+signed char __atomic_fetch_xor  (volatile signed char *, signed char, int);
+unsigned char __atomic_fetch_xor  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_fetch_xor  (volatile signed short *, signed short, int);
+unsigned short __atomic_fetch_xor  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_fetch_xor  (volatile signed int *, signed int, int);
+unsigned int __atomic_fetch_xor  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_fetch_xor  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_fetch_xor  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_fetch_xor  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_fetch_xor  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_fetch_xor   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_fetch_xor   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+char __atomic_fetch_or  (volatile char *, char, int);
+signed char __atomic_fetch_or  (volatile signed char *, signed char, int);
+unsigned char __atomic_fetch_or  (volatile unsigned char *, unsigned char, int);
+signed short __atomic_fetch_or  (volatile signed short *, signed short, int);
+unsigned short __atomic_fetch_or  (volatile unsigned short *, unsigned short, int);
+signed int __atomic_fetch_or  (volatile signed int *, signed int, int);
+unsigned int __atomic_fetch_or  (volatile unsigned int *, unsigned int, int);
+signed long int __atomic_fetch_or  (volatile signed long int *, signed long int, int);
+unsigned long int __atomic_fetch_or  (volatile unsigned long int *, unsigned long int, int);
+signed long long int __atomic_fetch_or  (volatile signed long long int *, signed long long int, int);
+unsigned long long int __atomic_fetch_or  (volatile unsigned long long int *, unsigned long long int, int);
+#if defined(__SIZEOF_INT128__)
+signed __int128 __atomic_fetch_or   (volatile signed __int128 *, signed __int128, int);
+unsigned __int128 __atomic_fetch_or   (volatile unsigned __int128 *, unsigned __int128, int);
+#endif
+
+_Bool __atomic_always_lock_free(unsigned long, const volatile void *);
+_Bool __atomic_is_lock_free(unsigned long, const volatile void *);
+
+void __atomic_thread_fence (int);
+void __atomic_signal_fence (int);
+void __atomic_feraiseexcept(int);

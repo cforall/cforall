@@ -1,0 +1,41 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// fibonacci.cfa
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Mar  1 16:54:23 2020
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+generator Fib {
+	int fn1, fn;
+};
+
+void main(Fib & b) with (b) {
+	[fn1, fn] = [1, 0];
+	for () {
+		suspend;
+		[fn1, fn] = [fn, fn + fn1];
+	}
+}
+
+int main() {
+	Fib f1, f2;
+	for ( 10 ) {
+		resume( f1 );
+		resume( f2 );
+		printf("%d %d\n", f1.fn, f2.fn);
+	}
+
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa fibonacci.cfa" //
+// End: //

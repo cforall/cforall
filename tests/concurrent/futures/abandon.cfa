@@ -1,0 +1,102 @@
+#include <thread.hfa>
+
+enum {NFUTURES = 10};
+
+thread Server {
+	int cnt;
+	future_t * requests[NFUTURES];
+};
+
+void ?{}( Server & this ) {
+	this.cnt = 0;
+	for(i; NFUTURES) {
+		this.requests[i] = 0p;
+	}
+}
+
+void ^?{}( Server & mutex this ) {
+	assert(this.cnt == 0);
+	for(i; NFUTURES) {
+		this.requests[i] = 0p;
+	}
+}
+
+void process( Server & this, int i ) {
+	if( this.requests[i] == 0p ) return;
+	future_t * f = this.requests[i];
+	this.requests[i] = 0p;
+	this.cnt--;
+	fulfil( *f );
+}
+
+void call( Server & mutex this, future_t & f ) {
+	for(i; NFUTURES) {
+		if( this.requests[i] == 0p ) {
+			this.requests[i] = &f;
+			this.cnt++;
+			return;
+		}
+	}
+	abort("Monitor Error");
+}
+
+void main( Server & this ) {
+	unsigned i = 0;
+	for() {
+		waitfor( ^?{} : this ) {
+			break;
+		}
+		or when( this.cnt < NFUTURES ) waitfor( call: this ) {}
+		or else {
+			process( this, i % NFUTURES );
+			i++;
+		}
+	}
+
+	for(i; NFUTURES) {
+		process( this, i );
+	}
+}
+
+Server * the_server;
+thread Worker {};
+
+void thrash(void) {
+	volatile int locals[250];
+	for(i; 250) {
+		locals[i] = 0xdeadbeef;
+	}
+}
+
+void work(int i) {
+	future_t *mine = new();
+	call( *the_server, *mine );
+	if (i % 2 == 0) {
+		abandon( *mine );
+	} else {
+		wait( *mine );
+		delete( mine );
+	}
+}
+
+void main( Worker & ) {
+	for(i;150) {
+		thrash();
+		work(i);
+		thrash();
+	}
+}
+
+int main() {
+	printf( "start\n" );				// non-empty .expect file
+	processor procs[2];
+	{
+		Server server;
+		the_server = &server;
+		{
+			Worker workers[17];
+		}
+	}
+	printf( "done\n" );				// non-empty .expect file
+
+}

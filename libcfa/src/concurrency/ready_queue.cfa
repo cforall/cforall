@@ -1,0 +1,711 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2019 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// ready_queue.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Nov dd 16:29:18 2019
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#define __cforall_thread__
+// #define __CFA_DEBUG_PRINT_READY_QUEUE__
+
+
+#define USE_RELAXED_FIFO
+// #define USE_WORK_STEALING
+
+#include "bits/defs.hfa"
+#include "kernel_private.hfa"
+
+#define _GNU_SOURCE
+#include "stdlib.hfa"
+#include "math.hfa"
+
+#include <unistd.h>
+
+#include "ready_subqueue.hfa"
+
+static const size_t cache_line_size = 64;
+
+#if !defined(__CFA_NO_STATISTICS__)
+	#define __STATS(...) __VA_ARGS__
+#else
+	#define __STATS(...)
+#endif
+
+// No overriden function, no environment variable, no define
+// fall back to a magic number
+#ifndef __CFA_MAX_PROCESSORS__
+	#define __CFA_MAX_PROCESSORS__ 1024
+#endif
+
+#if   defined(USE_RELAXED_FIFO)
+	#define BIAS 4
+	#define READYQ_SHARD_FACTOR 4
+	#define SEQUENTIAL_SHARD 1
+#elif defined(USE_WORK_STEALING)
+	#define READYQ_SHARD_FACTOR 2
+	#define SEQUENTIAL_SHARD 2
+#else
+	#error no scheduling strategy selected
+#endif
+
+static inline struct $thread * try_pop(struct cluster * cltr, unsigned w __STATS(, __stats_readyQ_pop_t & stats));
+static inline struct $thread * try_pop(struct cluster * cltr, unsigned i, unsigned j __STATS(, __stats_readyQ_pop_t & stats));
+static inline struct $thread * search(struct cluster * cltr);
+static inline [unsigned, bool] idx_from_r(unsigned r, unsigned preferred);
+
+
+// returns the maximum number of processors the RWLock support
+__attribute__((weak)) unsigned __max_processors() {
+	const char * max_cores_s = getenv("CFA_MAX_PROCESSORS");
+	if(!max_cores_s) {
+		__cfadbg_print_nolock(ready_queue, "No CFA_MAX_PROCESSORS in ENV\n");
+		return __CFA_MAX_PROCESSORS__;
+	}
+
+	char * endptr = 0p;
+	long int max_cores_l = strtol(max_cores_s, &endptr, 10);
+	if(max_cores_l < 1 || max_cores_l > 65535) {
+		__cfadbg_print_nolock(ready_queue, "CFA_MAX_PROCESSORS out of range : %ld\n", max_cores_l);
+		return __CFA_MAX_PROCESSORS__;
+	}
+	if('\0' != *endptr) {
+		__cfadbg_print_nolock(ready_queue, "CFA_MAX_PROCESSORS not a decimal number : %s\n", max_cores_s);
+		return __CFA_MAX_PROCESSORS__;
+	}
+
+	return max_cores_l;
+}
+
+//=======================================================================
+// Cluster wide reader-writer lock
+//=======================================================================
+void  ?{}(__scheduler_RWLock_t & this) {
+	this.max   = __max_processors();
+	this.alloc = 0;
+	this.ready = 0;
+	this.data  = alloc(this.max);
+	this.write_lock  = false;
+
+	/*paranoid*/ verify(__atomic_is_lock_free(sizeof(this.alloc), &this.alloc));
+	/*paranoid*/ verify(__atomic_is_lock_free(sizeof(this.ready), &this.ready));
+
+}
+void ^?{}(__scheduler_RWLock_t & this) {
+	free(this.data);
+}
+
+
+//=======================================================================
+// Lock-Free registering/unregistering of threads
+unsigned register_proc_id( void ) with(*__scheduler_lock) {
+	__cfadbg_print_safe(ready_queue, "Kernel : Registering proc %p for RW-Lock\n", proc);
+	bool * handle = (bool *)&kernelTLS().sched_lock;
+
+	// Step - 1 : check if there is already space in the data
+	uint_fast32_t s = ready;
+
+	// Check among all the ready
+	for(uint_fast32_t i = 0; i < s; i++) {
+		bool * volatile * cell = (bool * volatile *)&data[i]; // Cforall is bugged and the double volatiles causes problems
+		/* paranoid */ verify( handle != *cell );
+
+		bool * null = 0p; // Re-write every loop since compare thrashes it
+		if( __atomic_load_n(cell, (int)__ATOMIC_RELAXED) == null
+			&& __atomic_compare_exchange_n( cell, &null, handle, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+			/* paranoid */ verify(i < ready);
+			/* paranoid */ verify( (kernelTLS().sched_id = i, true) );
+			return i;
+		}
+	}
+
+	if(max <= alloc) abort("Trying to create more than %ud processors", __scheduler_lock->max);
+
+	// Step - 2 : F&A to get a new spot in the array.
+	uint_fast32_t n = __atomic_fetch_add(&alloc, 1, __ATOMIC_SEQ_CST);
+	if(max <= n) abort("Trying to create more than %ud processors", __scheduler_lock->max);
+
+	// Step - 3 : Mark space as used and then publish it.
+	data[n] = handle;
+	while() {
+		unsigned copy = n;
+		if( __atomic_load_n(&ready, __ATOMIC_RELAXED) == n
+			&& __atomic_compare_exchange_n(&ready, &copy, n + 1, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST))
+			break;
+		Pause();
+	}
+
+	__cfadbg_print_safe(ready_queue, "Kernel : Registering proc %p done, id %lu\n", proc, n);
+
+	// Return new spot.
+	/* paranoid */ verify(n < ready);
+	/* paranoid */ verify( (kernelTLS().sched_id = n, true) );
+	return n;
+}
+
+void unregister_proc_id( unsigned id ) with(*__scheduler_lock) {
+	/* paranoid */ verify(id < ready);
+	/* paranoid */ verify(id == kernelTLS().sched_id);
+	/* paranoid */ verify(data[id] == &kernelTLS().sched_lock);
+
+	bool * volatile * cell = (bool * volatile *)&data[id]; // Cforall is bugged and the double volatiles causes problems
+
+	__atomic_store_n(cell, 0p, __ATOMIC_RELEASE);
+
+	__cfadbg_print_safe(ready_queue, "Kernel : Unregister proc %p\n", proc);
+}
+
+//-----------------------------------------------------------------------
+// Writer side : acquire when changing the ready queue, e.g. adding more
+//  queues or removing them.
+uint_fast32_t ready_mutate_lock( void ) with(*__scheduler_lock) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify( ! kernelTLS().sched_lock );
+
+	// Step 1 : lock global lock
+	// It is needed to avoid processors that register mid Critical-Section
+	//   to simply lock their own lock and enter.
+	__atomic_acquire( &write_lock );
+
+	// Step 2 : lock per-proc lock
+	// Processors that are currently being registered aren't counted
+	//   but can't be in read_lock or in the critical section.
+	// All other processors are counted
+	uint_fast32_t s = ready;
+	for(uint_fast32_t i = 0; i < s; i++) {
+		volatile bool * llock = data[i];
+		if(llock) __atomic_acquire( llock );
+	}
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+	return s;
+}
+
+void ready_mutate_unlock( uint_fast32_t last_s ) with(*__scheduler_lock) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	// Step 1 : release local locks
+	// This must be done while the global lock is held to avoid
+	//   threads that where created mid critical section
+	//   to race to lock their local locks and have the writer
+	//   immidiately unlock them
+	// Alternative solution : return s in write_lock and pass it to write_unlock
+	for(uint_fast32_t i = 0; i < last_s; i++) {
+		volatile bool * llock = data[i];
+		if(llock) __atomic_store_n(llock, (bool)false, __ATOMIC_RELEASE);
+	}
+
+	// Step 2 : release global lock
+	/*paranoid*/ assert(true == write_lock);
+	__atomic_store_n(&write_lock, (bool)false, __ATOMIC_RELEASE);
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+//=======================================================================
+// Cforall Ready Queue used for scheduling
+//=======================================================================
+void ?{}(__ready_queue_t & this) with (this) {
+	lanes.data  = 0p;
+	lanes.tscs  = 0p;
+	lanes.count = 0;
+}
+
+void ^?{}(__ready_queue_t & this) with (this) {
+	verify( SEQUENTIAL_SHARD == lanes.count );
+	free(lanes.data);
+	free(lanes.tscs);
+}
+
+//-----------------------------------------------------------------------
+#if defined(USE_RELAXED_FIFO)
+	//-----------------------------------------------------------------------
+	// get index from random number with or without bias towards queues
+	static inline [unsigned, bool] idx_from_r(unsigned r, unsigned preferred) {
+		unsigned i;
+		bool local;
+		unsigned rlow  = r % BIAS;
+		unsigned rhigh = r / BIAS;
+		if((0 != rlow) && preferred >= 0) {
+			// (BIAS - 1) out of BIAS chances
+			// Use perferred queues
+			i = preferred + (rhigh % READYQ_SHARD_FACTOR);
+			local = true;
+		}
+		else {
+			// 1 out of BIAS chances
+			// Use all queues
+			i = rhigh;
+			local = false;
+		}
+		return [i, local];
+	}
+
+	__attribute__((hot)) void push(struct cluster * cltr, struct $thread * thrd, bool push_local) with (cltr->ready_queue) {
+		__cfadbg_print_safe(ready_queue, "Kernel : Pushing %p on cluster %p\n", thrd, cltr);
+
+		const bool external = !push_local || (!kernelTLS().this_processor) || (cltr != kernelTLS().this_processor->cltr);
+		/* paranoid */ verify(external || kernelTLS().this_processor->rdq.id < lanes.count );
+
+		bool local;
+		int preferred = external ? -1 : kernelTLS().this_processor->rdq.id;
+
+		// Try to pick a lane and lock it
+		unsigned i;
+		do {
+			// Pick the index of a lane
+			unsigned r = __tls_rand_fwd();
+			[i, local] = idx_from_r(r, preferred);
+
+			i %= __atomic_load_n( &lanes.count, __ATOMIC_RELAXED );
+
+			#if !defined(__CFA_NO_STATISTICS__)
+				if(unlikely(external)) __atomic_fetch_add(&cltr->stats->ready.push.extrn.attempt, 1, __ATOMIC_RELAXED);
+				else if(local) __tls_stats()->ready.push.local.attempt++;
+				else __tls_stats()->ready.push.share.attempt++;
+			#endif
+
+			// If we can't lock it retry
+		} while( !__atomic_try_acquire( &lanes.data[i].lock ) );
+
+		// Actually push it
+		push(lanes.data[i], thrd);
+
+		// Unlock and return
+		__atomic_unlock( &lanes.data[i].lock );
+
+		// Mark the current index in the tls rng instance as having an item
+		__tls_rand_advance_bck();
+
+		__cfadbg_print_safe(ready_queue, "Kernel : Pushed %p on cluster %p (idx: %u, mask %llu, first %d)\n", thrd, cltr, i, used.mask[0], lane_first);
+
+		// Update statistics
+		#if !defined(__CFA_NO_STATISTICS__)
+			if(unlikely(external)) __atomic_fetch_add(&cltr->stats->ready.push.extrn.success, 1, __ATOMIC_RELAXED);
+			else if(local) __tls_stats()->ready.push.local.success++;
+			else __tls_stats()->ready.push.share.success++;
+		#endif
+	}
+
+	// Pop from the ready queue from a given cluster
+	__attribute__((hot)) $thread * pop_fast(struct cluster * cltr) with (cltr->ready_queue) {
+		/* paranoid */ verify( lanes.count > 0 );
+		/* paranoid */ verify( kernelTLS().this_processor );
+		/* paranoid */ verify( kernelTLS().this_processor->rdq.id < lanes.count );
+
+		unsigned count = __atomic_load_n( &lanes.count, __ATOMIC_RELAXED );
+		int preferred = kernelTLS().this_processor->rdq.id;
+
+
+		// As long as the list is not empty, try finding a lane that isn't empty and pop from it
+		for(25) {
+			// Pick two lists at random
+			unsigned ri = __tls_rand_bck();
+			unsigned rj = __tls_rand_bck();
+
+			unsigned i, j;
+			__attribute__((unused)) bool locali, localj;
+			[i, locali] = idx_from_r(ri, preferred);
+			[j, localj] = idx_from_r(rj, preferred);
+
+			i %= count;
+			j %= count;
+
+			// try popping from the 2 picked lists
+			struct $thread * thrd = try_pop(cltr, i, j __STATS(, *(locali || localj ? &__tls_stats()->ready.pop.local : &__tls_stats()->ready.pop.help)));
+			if(thrd) {
+				return thrd;
+			}
+		}
+
+		// All lanes where empty return 0p
+		return 0p;
+	}
+
+	__attribute__((hot)) struct $thread * pop_slow(struct cluster * cltr) { return pop_fast(cltr); }
+	__attribute__((hot)) struct $thread * pop_search(struct cluster * cltr) {
+		return search(cltr);
+	}
+#endif
+#if defined(USE_WORK_STEALING)
+	__attribute__((hot)) void push(struct cluster * cltr, struct $thread * thrd, bool push_local) with (cltr->ready_queue) {
+		__cfadbg_print_safe(ready_queue, "Kernel : Pushing %p on cluster %p\n", thrd, cltr);
+
+		// #define USE_PREFERRED
+		#if !defined(USE_PREFERRED)
+		const bool external = !push_local || (!kernelTLS().this_processor) || (cltr != kernelTLS().this_processor->cltr);
+		/* paranoid */ verify(external || kernelTLS().this_processor->rdq.id < lanes.count );
+		#else
+			unsigned preferred = thrd->preferred;
+			const bool external = push_local || (!kernelTLS().this_processor) || preferred == -1u || thrd->curr_cluster != cltr;
+			/* paranoid */ verifyf(external || preferred < lanes.count, "Invalid preferred queue %u for %u lanes", preferred, lanes.count );
+
+			unsigned r = preferred % READYQ_SHARD_FACTOR;
+			const unsigned start = preferred - r;
+		#endif
+
+		// Try to pick a lane and lock it
+		unsigned i;
+		do {
+			#if !defined(__CFA_NO_STATISTICS__)
+				if(unlikely(external)) __atomic_fetch_add(&cltr->stats->ready.push.extrn.attempt, 1, __ATOMIC_RELAXED);
+				else __tls_stats()->ready.push.local.attempt++;
+			#endif
+
+			if(unlikely(external)) {
+				i = __tls_rand() % lanes.count;
+			}
+			else {
+				#if !defined(USE_PREFERRED)
+					processor * proc = kernelTLS().this_processor;
+					unsigned r = proc->rdq.its++;
+					i =  proc->rdq.id + (r % READYQ_SHARD_FACTOR);
+				#else
+					i = start + (r++ % READYQ_SHARD_FACTOR);
+				#endif
+			}
+			// If we can't lock it retry
+		} while( !__atomic_try_acquire( &lanes.data[i].lock ) );
+
+		// Actually push it
+		push(lanes.data[i], thrd);
+
+		// Unlock and return
+		__atomic_unlock( &lanes.data[i].lock );
+
+		#if !defined(__CFA_NO_STATISTICS__)
+			if(unlikely(external)) __atomic_fetch_add(&cltr->stats->ready.push.extrn.success, 1, __ATOMIC_RELAXED);
+			else __tls_stats()->ready.push.local.success++;
+		#endif
+
+		__cfadbg_print_safe(ready_queue, "Kernel : Pushed %p on cluster %p (idx: %u, mask %llu, first %d)\n", thrd, cltr, i, used.mask[0], lane_first);
+	}
+
+	// Pop from the ready queue from a given cluster
+	__attribute__((hot)) $thread * pop_fast(struct cluster * cltr) with (cltr->ready_queue) {
+		/* paranoid */ verify( lanes.count > 0 );
+		/* paranoid */ verify( kernelTLS().this_processor );
+		/* paranoid */ verify( kernelTLS().this_processor->rdq.id < lanes.count );
+
+		processor * proc = kernelTLS().this_processor;
+
+		if(proc->rdq.target == -1u) {
+			unsigned long long min = ts(lanes.data[proc->rdq.id]);
+			for(int i = 0; i < READYQ_SHARD_FACTOR; i++) {
+				unsigned long long tsc = ts(lanes.data[proc->rdq.id + i]);
+				if(tsc < min) min = tsc;
+			}
+			proc->rdq.cutoff = min;
+			proc->rdq.target = __tls_rand() % lanes.count;
+		}
+		else {
+			unsigned target = proc->rdq.target;
+			proc->rdq.target = -1u;
+			const unsigned long long bias = 0; //2_500_000_000;
+			const unsigned long long cutoff = proc->rdq.cutoff > bias ? proc->rdq.cutoff - bias : proc->rdq.cutoff;
+			if(lanes.tscs[target].tv < cutoff && ts(lanes.data[target]) < cutoff) {
+				$thread * t = try_pop(cltr, target __STATS(, __tls_stats()->ready.pop.help));
+				if(t) return t;
+			}
+		}
+
+		for(READYQ_SHARD_FACTOR) {
+			unsigned i = proc->rdq.id + (proc->rdq.itr++ % READYQ_SHARD_FACTOR);
+			if($thread * t = try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.local))) return t;
+		}
+		return 0p;
+	}
+
+	__attribute__((hot)) struct $thread * pop_slow(struct cluster * cltr) with (cltr->ready_queue) {
+		unsigned i = __tls_rand() % lanes.count;
+		return try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.steal));
+	}
+
+	__attribute__((hot)) struct $thread * pop_search(struct cluster * cltr) with (cltr->ready_queue) {
+		return search(cltr);
+	}
+#endif
+
+//=======================================================================
+// Various Ready Queue utilities
+//=======================================================================
+// these function work the same or almost the same
+// whether they are using work-stealing or relaxed fifo scheduling
+
+//-----------------------------------------------------------------------
+// try to pop from a lane given by index w
+static inline struct $thread * try_pop(struct cluster * cltr, unsigned w __STATS(, __stats_readyQ_pop_t & stats)) with (cltr->ready_queue) {
+	__STATS( stats.attempt++; )
+
+	// Get relevant elements locally
+	__intrusive_lane_t & lane = lanes.data[w];
+
+	// If list looks empty retry
+	if( is_empty(lane) ) {
+		return 0p;
+	}
+
+	// If we can't get the lock retry
+	if( !__atomic_try_acquire(&lane.lock) ) {
+		return 0p;
+	}
+
+	// If list is empty, unlock and retry
+	if( is_empty(lane) ) {
+		__atomic_unlock(&lane.lock);
+		return 0p;
+	}
+
+	// Actually pop the list
+	struct $thread * thrd;
+	unsigned long long tsv;
+	[thrd, tsv] = pop(lane);
+
+	/* paranoid */ verify(thrd);
+	/* paranoid */ verify(tsv);
+	/* paranoid */ verify(lane.lock);
+
+	// Unlock and return
+	__atomic_unlock(&lane.lock);
+
+	// Update statistics
+	__STATS( stats.success++; )
+
+	#if defined(USE_WORK_STEALING)
+		lanes.tscs[w].tv = tsv;
+	#endif
+
+	thrd->preferred = w;
+
+	// return the popped thread
+	return thrd;
+}
+
+//-----------------------------------------------------------------------
+// try to pop from any lanes making sure you don't miss any threads push
+// before the start of the function
+static inline struct $thread * search(struct cluster * cltr) with (cltr->ready_queue) {
+	/* paranoid */ verify( lanes.count > 0 );
+	unsigned count = __atomic_load_n( &lanes.count, __ATOMIC_RELAXED );
+	unsigned offset = __tls_rand();
+	for(i; count) {
+		unsigned idx = (offset + i) % count;
+		struct $thread * thrd = try_pop(cltr, idx __STATS(, __tls_stats()->ready.pop.search));
+		if(thrd) {
+			return thrd;
+		}
+	}
+
+	// All lanes where empty return 0p
+	return 0p;
+}
+
+//-----------------------------------------------------------------------
+// Check that all the intrusive queues in the data structure are still consistent
+static void check( __ready_queue_t & q ) with (q) {
+	#if defined(__CFA_WITH_VERIFY__)
+		{
+			for( idx ; lanes.count ) {
+				__intrusive_lane_t & sl = lanes.data[idx];
+				assert(!lanes.data[idx].lock);
+
+					if(is_empty(sl)) {
+						assert( sl.anchor.next == 0p );
+						assert( sl.anchor.ts   == 0  );
+						assert( mock_head(sl)  == sl.prev );
+					} else {
+						assert( sl.anchor.next != 0p );
+						assert( sl.anchor.ts   != 0  );
+						assert( mock_head(sl)  != sl.prev );
+					}
+			}
+		}
+	#endif
+}
+
+//-----------------------------------------------------------------------
+// Given 2 indexes, pick the list with the oldest push an try to pop from it
+static inline struct $thread * try_pop(struct cluster * cltr, unsigned i, unsigned j __STATS(, __stats_readyQ_pop_t & stats)) with (cltr->ready_queue) {
+	// Pick the bet list
+	int w = i;
+	if( __builtin_expect(!is_empty(lanes.data[j]), true) ) {
+		w = (ts(lanes.data[i]) < ts(lanes.data[j])) ? i : j;
+	}
+
+	return try_pop(cltr, w __STATS(, stats));
+}
+
+// Call this function of the intrusive list was moved using memcpy
+// fixes the list so that the pointers back to anchors aren't left dangling
+static inline void fix(__intrusive_lane_t & ll) {
+			if(is_empty(ll)) {
+				verify(ll.anchor.next == 0p);
+				ll.prev = mock_head(ll);
+			}
+}
+
+static void assign_list(unsigned & value, dlist(processor) & list, unsigned count) {
+	processor * it = &list`first;
+	for(unsigned i = 0; i < count; i++) {
+		/* paranoid */ verifyf( it, "Unexpected null iterator, at index %u of %u\n", i, count);
+		it->rdq.id = value;
+		it->rdq.target = -1u;
+		value += READYQ_SHARD_FACTOR;
+		it = &(*it)`next;
+	}
+}
+
+static void reassign_cltr_id(struct cluster * cltr) {
+	unsigned preferred = 0;
+	assign_list(preferred, cltr->procs.actives, cltr->procs.total - cltr->procs.idle);
+	assign_list(preferred, cltr->procs.idles  , cltr->procs.idle );
+}
+
+static void fix_times( struct cluster * cltr ) with( cltr->ready_queue ) {
+	#if defined(USE_WORK_STEALING)
+		lanes.tscs = alloc(lanes.count, lanes.tscs`realloc);
+		for(i; lanes.count) {
+			unsigned long long tsc = ts(lanes.data[i]);
+			lanes.tscs[i].tv = tsc != 0 ? tsc : rdtscl();
+		}
+	#endif
+}
+
+// Grow the ready queue
+void ready_queue_grow(struct cluster * cltr) {
+	size_t ncount;
+	int target = cltr->procs.total;
+
+	/* paranoid */ verify( ready_mutate_islocked() );
+	__cfadbg_print_safe(ready_queue, "Kernel : Growing ready queue\n");
+
+	// Make sure that everything is consistent
+	/* paranoid */ check( cltr->ready_queue );
+
+	// grow the ready queue
+	with( cltr->ready_queue ) {
+		// Find new count
+		// Make sure we always have atleast 1 list
+		if(target >= 2) {
+			ncount = target * READYQ_SHARD_FACTOR;
+		} else {
+			ncount = SEQUENTIAL_SHARD;
+		}
+
+		// Allocate new array (uses realloc and memcpies the data)
+		lanes.data = alloc( ncount, lanes.data`realloc );
+
+		// Fix the moved data
+		for( idx; (size_t)lanes.count ) {
+			fix(lanes.data[idx]);
+		}
+
+		// Construct new data
+		for( idx; (size_t)lanes.count ~ ncount) {
+			(lanes.data[idx]){};
+		}
+
+		// Update original
+		lanes.count = ncount;
+	}
+
+	fix_times(cltr);
+
+	reassign_cltr_id(cltr);
+
+	// Make sure that everything is consistent
+	/* paranoid */ check( cltr->ready_queue );
+
+	__cfadbg_print_safe(ready_queue, "Kernel : Growing ready queue done\n");
+
+	/* paranoid */ verify( ready_mutate_islocked() );
+}
+
+// Shrink the ready queue
+void ready_queue_shrink(struct cluster * cltr) {
+	/* paranoid */ verify( ready_mutate_islocked() );
+	__cfadbg_print_safe(ready_queue, "Kernel : Shrinking ready queue\n");
+
+	// Make sure that everything is consistent
+	/* paranoid */ check( cltr->ready_queue );
+
+	int target = cltr->procs.total;
+
+	with( cltr->ready_queue ) {
+		// Remember old count
+		size_t ocount = lanes.count;
+
+		// Find new count
+		// Make sure we always have atleast 1 list
+		lanes.count = target >= 2 ? target * READYQ_SHARD_FACTOR: SEQUENTIAL_SHARD;
+		/* paranoid */ verify( ocount >= lanes.count );
+		/* paranoid */ verify( lanes.count == target * READYQ_SHARD_FACTOR || target < 2 );
+
+		// for printing count the number of displaced threads
+		#if defined(__CFA_DEBUG_PRINT__) || defined(__CFA_DEBUG_PRINT_READY_QUEUE__)
+			__attribute__((unused)) size_t displaced = 0;
+		#endif
+
+		// redistribute old data
+		for( idx; (size_t)lanes.count ~ ocount) {
+			// Lock is not strictly needed but makes checking invariants much easier
+			__attribute__((unused)) bool locked = __atomic_try_acquire(&lanes.data[idx].lock);
+			verify(locked);
+
+			// As long as we can pop from this lane to push the threads somewhere else in the queue
+			while(!is_empty(lanes.data[idx])) {
+				struct $thread * thrd;
+				unsigned long long _;
+				[thrd, _] = pop(lanes.data[idx]);
+
+				push(cltr, thrd, true);
+
+				// for printing count the number of displaced threads
+				#if defined(__CFA_DEBUG_PRINT__) || defined(__CFA_DEBUG_PRINT_READY_QUEUE__)
+					displaced++;
+				#endif
+			}
+
+			// Unlock the lane
+			__atomic_unlock(&lanes.data[idx].lock);
+
+			// TODO print the queue statistics here
+
+			^(lanes.data[idx]){};
+		}
+
+		__cfadbg_print_safe(ready_queue, "Kernel : Shrinking ready queue displaced %zu threads\n", displaced);
+
+		// Allocate new array (uses realloc and memcpies the data)
+		lanes.data = alloc( lanes.count, lanes.data`realloc );
+
+		// Fix the moved data
+		for( idx; (size_t)lanes.count ) {
+			fix(lanes.data[idx]);
+		}
+	}
+
+	fix_times(cltr);
+
+	reassign_cltr_id(cltr);
+
+	// Make sure that everything is consistent
+	/* paranoid */ check( cltr->ready_queue );
+
+	__cfadbg_print_safe(ready_queue, "Kernel : Shrinking ready queue done\n");
+	/* paranoid */ verify( ready_mutate_islocked() );
+}
+
+#if !defined(__CFA_NO_STATISTICS__)
+	unsigned cnt(const __ready_queue_t & this, unsigned idx) {
+		/* paranoid */ verify(this.lanes.count > idx);
+		return this.lanes.data[idx].cnt;
+	}
+#endif

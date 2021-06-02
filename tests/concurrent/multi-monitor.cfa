@@ -1,0 +1,59 @@
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <thread.hfa>
+
+static int global12, global23, global13;
+
+monitor monitor_t {};
+
+static monitor_t m1, m2, m3;
+
+void increment( monitor_t & mutex p1, monitor_t & mutex p2, int & value ) {
+	assert(active_thread() == get_monitor(p1)->owner);
+	assert(active_thread() == get_monitor(p2)->owner);
+	value += 1;
+	assert(active_thread() == get_monitor(p1)->owner);
+	assert(active_thread() == get_monitor(p2)->owner);
+}
+
+thread MyThread {
+	int target;
+};
+
+void ?{}( MyThread & this, int target ) {
+	this.target = target;
+}
+
+void ^?{}( MyThread & mutex this ) {}
+
+void main( MyThread & this ) {
+	for(int i = 0; i < 1000000; i++) {
+		choose(this.target) {
+			case 0: increment( m1, m2, global12 );
+			case 1: increment( m2, m3, global23 );
+			case 2: increment( m1, m3, global13 );
+		}
+	}
+}
+
+forall(T & | sized(T) | { void ^?{}(T & mutex); })
+void delete_mutex(T * x) {
+	^(*x){};
+	free(x);
+}
+
+int main(int argc, char* argv[]) {
+	processor p;
+	{
+		MyThread * f[6];
+		for(int i = 0; i < 6; i++) {
+			f[i] = new(i % 3);
+		}
+
+		for(int i = 0; i < 6; i++) {
+			delete_mutex( f[i] );
+		}
+	}
+	sout | global12 | global23 | global13;
+}

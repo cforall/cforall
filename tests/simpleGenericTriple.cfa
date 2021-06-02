@@ -1,0 +1,43 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// simpleGenericTriple.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Tue Nov 15 17:24:32 2016
+// Last Modified By : Rob Schluntz
+// Last Modified On : Tue Nov 15 17:27:28 2016
+// Update Count     : 3
+//
+
+forall(T)
+struct T3 {
+	T f0, f1, f2;
+};
+
+forall(T | { T ?+?(T, T); })
+T3(T) ?+?(T3(T) x, T3(T) y) {
+	T3(T) z = { x.f0+y.f0, x.f1+y.f1, x.f2+y.f2 };
+	return z;
+}
+
+int main() {
+  int x1 = 123, x3 = 456;
+  double x2 = 999.123;
+  struct T3(int) Li = { x1, (int)x2, x3 };
+  struct T3(int) Ri = { 9, 2, 3 };
+  struct T3(int) reti = Li+Ri;
+  printf("%d %d %d\n", reti.f0, reti.f1, reti.f2);
+
+  struct T3(double) Ld = { x1, x2, x3 };
+  struct T3(double) Rd = { 9, 2, 3 };
+  struct T3(double) retd = Ld+Rd;
+  printf("%g %g %g\n", retd.f0, retd.f1, retd.f2);
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

@@ -1,0 +1,6 @@
+extern void \*malloc[^;]*;
+extern void free[^;]*;
+extern void exit[^;]*;
+extern int atexit[^;]*;
+extern void abort[^;]*;
+extern int printf[^;]*;

@@ -1,0 +1,123 @@
+//                               -*- Mode: C -*- 
+// 
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+// 
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// bitmanip.hfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Sat Mar 14 18:12:27 2020
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Aug 23 21:39:28 2020
+// Update Count     : 140
+// 
+
+#pragma once
+
+// Reference: Bit Twiddling Hacks: http://graphics.stanford.edu/%7Eseander/bithacks.html#CountBitsSetNaive
+
+// Bits are numbered 1-N.
+
+#include <assert.h>
+
+#define __bitsizeof( n ) (sizeof(n) * __CHAR_BIT__)
+
+static inline {
+	// Count leading 0 bits.
+	unsigned int leading0s( unsigned char n ) { return n != 0 ? __builtin_clz( n ) - (__bitsizeof(unsigned int) - __bitsizeof(n)) : __bitsizeof(n); }
+	unsigned int leading0s( unsigned short int n ) { return n != 0 ? __builtin_clz( n ) - (__bitsizeof(unsigned int) - __bitsizeof(n)) : __bitsizeof(n); }
+	unsigned int leading0s( unsigned int n ) { return n != 0 ? __builtin_clz( n ) : __bitsizeof(n); }
+	unsigned int leading0s( unsigned long int n ) { return n != 0 ? __builtin_clzl( n ) : __bitsizeof(n); }
+	unsigned int leading0s( unsigned long long int n ) { return n != 0 ? __builtin_clzll( n ) : __bitsizeof(n); }
+
+	// Count trailing 0 bits.
+	unsigned int trailing0s( unsigned char n ) { return n != 0 ? __builtin_ctz( n ) : __bitsizeof(n); }
+	unsigned int trailing0s( unsigned short int n ) { return n != 0 ? __builtin_ctz( n ) : __bitsizeof(n); }
+	unsigned int trailing0s( unsigned int n ) { return n != 0 ? __builtin_ctz( n ) : __bitsizeof(n); }
+	unsigned int trailing0s( unsigned long int n ) { return n != 0 ? __builtin_ctzl( n ) : __bitsizeof(n); }
+	unsigned int trailing0s( unsigned long long int n ) { return n != 0 ? __builtin_ctzll( n ) : __bitsizeof(n); }
+
+	// Count all 1 bits.
+	unsigned int all1s( unsigned char n ) { return __builtin_popcount( n ); }
+	unsigned int all1s( unsigned short int n ) { return __builtin_popcount( n ); }
+	unsigned int all1s( unsigned int n ) { return __builtin_popcount( n ); }
+	unsigned int all1s( unsigned long int n ) { return __builtin_popcountl( n ); }
+	unsigned int all1s( unsigned long long int n ) { return __builtin_popcountll( n ); }
+
+	// Count all 0 bits.
+	unsigned int all0s( unsigned char n ) { return __builtin_popcount( (typeof(n))~n ); }
+	unsigned int all0s( unsigned short int n ) { return __builtin_popcount( (typeof(n))~n ); }
+	unsigned int all0s( unsigned int n ) { return __builtin_popcount( ~n ); }
+	unsigned int all0s( unsigned long int n ) { return __builtin_popcountl( ~n ); }
+	unsigned int all0s( unsigned long long int n ) { return __builtin_popcountll( ~n ); }
+
+	// Find least significiant zero bit. (ffs)
+	unsigned int low0( unsigned char n ) { return __builtin_ffs( (typeof(n))~n ); }
+	unsigned int low0( unsigned short int n ) { return __builtin_ffs( (typeof(n))~n ); }
+	unsigned int low0( unsigned int n ) { return __builtin_ffs( ~n ); }
+	unsigned int low0( unsigned long int n ) { return __builtin_ffsl( ~n ); }
+	unsigned int low0( unsigned long long int n ) { return __builtin_ffsll( ~n ); }
+
+	// Find least significiant one bit.
+	unsigned int low1( unsigned int n ) { return __builtin_ffs( n ); }
+	unsigned int low1( unsigned long int n ) { return __builtin_ffsl( n ); }
+	unsigned int low1( unsigned long long int n ) { return __builtin_ffsll( n ); }
+
+	// Find most significiant zero bit.
+	unsigned int high0( unsigned char n ) { return n == (typeof(n))-1 ? 0 : __bitsizeof(unsigned int) - __builtin_clz( (typeof(n))~n ); }
+	unsigned int high0( unsigned short int n ) { return n == (typeof(n))-1 ? 0 : __bitsizeof(unsigned int) - __builtin_clz( (typeof(n))~n ); }
+	unsigned int high0( unsigned int n ) { return n == -1 ? 0 : __bitsizeof(n) - __builtin_clz( ~n ); }
+	unsigned int high0( unsigned long int n ) { return n == -1 ? 0 : __bitsizeof(n) - __builtin_clzl( ~n ); }
+	unsigned int high0( unsigned long long int n ) { return n == -1 ? 0 : __bitsizeof(n) - __builtin_clzll( ~n ); }
+
+	// Find most significiant one bit.
+	unsigned int high1( unsigned char n ) { return n == 0 ? 0 : __bitsizeof(unsigned int) - __builtin_clz( n ); }
+	unsigned int high1( unsigned short int n ) { return n == 0 ? 0 : __bitsizeof(unsigned int) - __builtin_clz( n ); }
+	unsigned int high1( unsigned int n ) { return n == 0 ? 0 : __bitsizeof(n) - __builtin_clz( n ); }
+	unsigned int high1( unsigned long int n ) { return n == 0 ? 0 : __bitsizeof(n) - __builtin_clzl( n ); }
+	unsigned int high1( unsigned long long int n ) { return n == 0 ? 0 : __bitsizeof(n) - __builtin_clzll( n ); }
+
+	// Check for power of 2, clears bits below n, rounding down to the next lower multiple of n.  0 is not a power of 2
+	// but this computation returns true because of the two's complement, so it is a special case.
+	bool is_pow2( unsigned char n ) { return n == 0 ? false : (n & (n - 1)) == 0; }
+	bool is_pow2( unsigned short int n ) { return n == 0 ? false : (n & (n - 1)) == 0; }
+	bool is_pow2( unsigned int n ) { return n == 0 ? false : (n & (n - 1)) == 0; }
+	bool is_pow2( unsigned long int n ) { return n == 0 ? false : (n & (n - 1)) == 0; }
+	bool is_pow2( unsigned long long int n ) { return n == 0 ? false : (n & (n - 1)) == 0; }
+
+	// Returns n aligned at the floor of align, clear bits above or equal to align, giving n % align.
+	signed char floor2( signed char n, signed char align ) { verify( is_pow2( align ) ); return n & -align; }
+	unsigned char floor2( unsigned char n, unsigned char align ) { verify( is_pow2( align ) ); return n & -align; }
+	short int floor2( short int n, short int align ) { verify( is_pow2( align ) ); return n & -align; }
+	unsigned short int floor2( unsigned short int n, unsigned short int align ) { verify( is_pow2( align ) ); return n & -align; }
+	int floor2( int n, int align ) { verify( is_pow2( align ) ); return n & -align; }
+	unsigned int floor2( unsigned int n, unsigned int align ) { verify( is_pow2( align ) ); return n & -align; }
+	long int floor2( long int n, long int align ) { verify( is_pow2( align ) ); return n & -align; }
+	unsigned long int floor2( unsigned long int n, unsigned long int align ) { verify( is_pow2( align ) ); return n & -align; }
+	long long int floor2( long long int n, long long int align ) { verify( is_pow2( align ) ); return n & -align; }
+	unsigned long long int floor2( unsigned long long int n, unsigned long long int align ) { verify( is_pow2( align ) ); return n & -align; }
+
+	// forall( T | { T ?&?( T, T ); T -?( T ); } )
+	// T floor2( T n, T align ) { verify( is_pow2( align ) ); return n & -align; }
+
+	// Returns n aligned at the ceiling of align, negate, round down, negate is the same as round up.
+	signed char ceiling2( signed char n, signed char align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	unsigned char ceiling2( unsigned char n, unsigned char align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	short int ceiling2( short int n, short int align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	unsigned short int ceiling2( unsigned short int n, unsigned short int align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	int ceiling2( int n, int align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	unsigned int ceiling2( unsigned int n, unsigned int align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	long int ceiling2( long int n, long int align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	unsigned long int ceiling2( unsigned long int n, unsigned long int align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	long long int ceiling2( long long int n, long long int align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+	unsigned long long int ceiling2( unsigned long long int n, unsigned long long int align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+
+	// forall( T | { T floor2( T, T ); T -?( T ); } )
+	// T ceiling2( T n, T align ) { verify( is_pow2( align ) ); return -floor2( -n, align ); }
+} // distribution
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

@@ -1,0 +1,51 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2019 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// suspend_then.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon Apr 29 12:01:35 2019
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <fstream.hfa>
+
+generator Fibonacci {
+	int fn1, fn2;								// retained between resumes
+	int fn;									// used for communication
+};
+
+void main( Fibonacci & fib ) with( fib ) {				// called on first resume
+	fn = 0;  fn1 = fn;							// 1st case
+	suspend { sout | "Then!"; }						// restart last resume
+	fn = 1;  fn2 = fn1;  fn1 = fn;					// 2nd case
+	suspend { sout | "Then!"; }						// restart last resume
+	for () {
+		fn = fn1 + fn2;  fn2 = fn1;  fn1 = fn;			// general case
+		suspend { sout | "Then!"; }					// restart last resume
+	} // for
+}
+
+int next( Fibonacci & fib ) with( fib ) {
+	resume( fib );								// restart last suspend
+	return fn;
+}
+
+int main() {
+	Fibonacci f1, f2;
+	for ( 10 ) {								// print N Fibonacci values
+		int v1 = next( f1 );
+		int v2 = next( f2 );
+		sout | v1 | v2;
+	} // for
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa runningTotal.cfa" //
+// End: //

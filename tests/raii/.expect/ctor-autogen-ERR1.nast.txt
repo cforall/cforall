@@ -1,0 +1,91 @@
+raii/ctor-autogen.cfa:102:1 error: Unique best alternative includes deleted identifier in Generated Cast of:
+  Application of
+    Deleted Expression
+      Variable Expression: ?{}: static inline function
+      ... with parameters
+        reference to instance of struct Managed with body
+        signed int
+      ... returning nothing
+
+      ... with resolved type:
+        function
+        ... with parameters
+          reference to instance of struct Managed with body
+          signed int
+        ... returning nothing
+
+      ... deleted by: ?{}: function
+      ... with parameters
+        reference to instance of struct Managed with body
+      ... returning nothing
+ with body
+        Compound Statement:
+          Expression Statement:
+            Application of
+              Variable Expression: ?=?: function
+              ... with parameters
+                reference to signed int
+                signed int
+              ... returning
+                signed int
+
+              ... with resolved type:
+                pointer to function
+                ... with parameters
+                  reference to signed int
+                  signed int
+                ... returning
+                  signed int
+
+              ... to arguments
+              Generated Cast of:
+                Member Expression, with field:
+                  x: signed int
+                ... from aggregate:
+                  Generated Cast of:
+                    Variable Expression: m: reference to instance of struct Managed with body
+                    ... with resolved type:
+                      reference to instance of struct Managed with body
+                  ... to:
+                    instance of struct Managed with body
+                  ... with resolved type:
+                    instance of struct Managed with body
+                ... with resolved type:
+                  signed int
+              ... to:
+                reference to signed int
+              ... with resolved type:
+                reference to signed int
+              Generated Cast of:
+                Constant Expression (0: zero_t)
+                ... with resolved type:
+                  zero_t
+              ... to:
+                signed int
+              ... with resolved type:
+                signed int
+
+            ... with resolved type:
+              signed int
+            ... with environment:
+              Types:
+
+
+    ... to arguments
+    Generated Cast of:
+      Variable Expression: x: instance of struct Managed with body
+      ... with resolved type:
+        instance of struct Managed with body
+    ... to:
+      reference to instance of struct Managed with body
+    ... with resolved type:
+      reference to instance of struct Managed with body
+    Constant Expression (123: signed int)
+    ... with resolved type:
+      signed int
+
+  ... with resolved type:
+    void
+... to: nothing
+... with resolved type:
+  void

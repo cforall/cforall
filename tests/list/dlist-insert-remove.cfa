@@ -1,0 +1,1928 @@
+#include <containers/list.hfa>
+#include <fstream.hfa>
+#include <assert.h>
+
+// Section 1:  replaced by above include list.hfa
+
+
+////////////////////////////////////////////////////////////
+//
+// Section 2
+//
+// Structure definitions
+//
+// Example of declaration-side user code
+//
+////////////////////////////////////////////////////////////
+
+// a fred belongs to two doubly-linked lists: mine and yours
+struct fred {
+	float adatum;
+	inline struct mine { inline dlink(fred); };
+	inline struct yours { inline dlink(fred); };
+};
+P9_EMBEDDED(fred, fred.mine)
+P9_EMBEDDED(fred, fred.yours)
+P9_EMBEDDED(fred.mine, dlink(fred))
+P9_EMBEDDED(fred.yours, dlink(fred))
+
+
+void ?{}(fred &this, float adatum) {
+	(this.adatum){adatum};
+}
+
+// a mary belongs to just one doubly-linked list: hers
+struct mary {
+	float anotherdatum;
+	inline dlink(mary);
+};
+
+P9_EMBEDDED(mary, dlink(mary))
+
+void ?{}(mary &this, float anotherdatum) {
+	(this.anotherdatum){anotherdatum};
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 3
+//
+// Test helpers to traverse and print lists.
+//
+// These consume framework-provided accessor functions and
+// do not modify their parameter lists.
+//
+////////////////////////////////////////////////////////////
+
+void printMyFredsFwd(fred & f) {
+    with( DLINK_VIA( fred, fred.mine ) )
+	do {
+		sout | f.adatum;
+	} while (f`moveNext);
+}
+
+void printMyFredsRev(fred & f) {
+    with( DLINK_VIA( fred, fred.mine ) )
+	do {
+		sout | f.adatum;
+	} while (f`movePrev);
+}
+
+
+void printMyFreddies(fred &f1, fred &f2, int isBefore) {
+	if (isBefore) {
+		sout | "==== fred by MINE before ";
+	} else {
+		sout | "==== fred by MINE after ";
+	}
+	if (&f1) {
+		printMyFredsFwd(f1);	sout | '-';
+		printMyFredsRev(f1);	sout | '-';
+	} else {
+		sout | '-'; sout | '-';
+	}
+	if (&f2) {
+		printMyFredsFwd(f2);	sout | '-';
+		printMyFredsRev(f2);	sout | '-';
+	} else {
+		sout | '-'; sout | '-';
+	}
+}
+
+void printYourFredsFwd(fred & f) {
+    with( DLINK_VIA( fred, fred.yours ) )
+	do {
+		sout | f.adatum;
+	} while (f`moveNext);
+}
+
+void printYourFredsRev(fred & f) {
+    with( DLINK_VIA( fred, fred.yours ) )
+	do {
+		sout | f.adatum;
+	} while (f`movePrev);
+}
+
+void printYourFreddies(fred &f1, fred &f2, int isBefore) {
+	if (isBefore) {
+		sout | "==== fred by YOURS before ";
+	} else {
+		sout | "==== fred by YOURS after ";
+	}
+	if (&f1) {
+		printYourFredsFwd(f1);	sout | '-';
+		printYourFredsRev(f1);	sout | '-';
+	} else {
+		sout | '-'; sout | '-';
+	}
+	if (&f2) {
+		printYourFredsFwd(f2);	sout | '-';
+		printYourFredsRev(f2);	sout | '-';
+	} else {
+		sout | '-'; sout | '-';
+	}
+}
+
+void printMariesFwd(mary &m) {
+	do {
+		sout | m.anotherdatum;
+	} while (m`moveNext);
+}
+
+void printMariesRev(mary &m) {
+	do {
+		sout | m.anotherdatum;
+	} while (m`movePrev);
+}
+
+void printMariatheotokos(mary &m1, mary &m2, int isBefore) {
+	if (isBefore) {
+		sout | "==== mary before ";
+	} else {
+		sout | "==== mary after ";
+	}
+	if (&m1) {
+		printMariesFwd(m1);	sout | '-';
+		printMariesRev(m1);	sout | '-';
+	} else {
+		sout | '-'; sout | '-';
+	}
+	if (&m2) {
+		printMariesFwd(m2);	sout | '-';
+		printMariesRev(m2);	sout | '-';
+	} else {
+		sout | '-'; sout | '-';
+	}
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4a.i
+//
+// Test cases of insert_after on headless list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+// All three tests exercise the case of merging two singleton lists into (their respective
+// positions in) one common list of two elements.
+
+// Note that the factoring of sect 4 (vs 3 and 5) keeps section 4 free of strings and IO,
+// and so keeps its assembly easy to inspect.
+
+// Throughout all the 4s, all the print functions called from these tests print:
+//  - from list position #1 moving forward  (a)
+//  - from list position #1 moving backward (b)
+//  - from list position #2 moving forward  (c)
+//  - from list position #2 moving backward (d)
+// The expected-output comments are in form a;b;c;d where a::=num,num,num
+#if 0
+void test__insertafter_singleton_on_singleton__fred_mine () {
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	printMyFreddies(f1, f2, 1);     // 3.14; 3.14; 0.5; 0.5
+	printYourFreddies(f1, f2, 1);   // 3.14; 3.14; 0.5; 0.5
+
+	diref(fred, fred.mine) f1_mine = f1`from;
+	insert_after(f1_mine, f2);
+
+	printMyFreddies(f1, f2, 0);     // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+	printYourFreddies(f1, f2, 0);   // 3.14; 3.14; 0.5; 0.5 (unmodified)
+}
+
+void test__insertafter_singleton_on_singleton__fred_yours () {
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	printMyFreddies(f1, f2, 1);     // 3.14; 3.14; 0.5; 0.5
+	printYourFreddies(f1, f2, 1);   // 3.14; 3.14; 0.5; 0.5
+
+	diref(fred, fred.yours) f1_yours = f1`from;
+	insert_after(f1_yours, f2);
+
+	printMyFreddies(f1, f2, 0);     // 3.14; 3.14; 0.5; 0.5 (unmodified)
+	printYourFreddies(f1, f2, 0);   // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+}
+
+void test__insertafter_singleton_on_singleton__mary () {
+	mary m1 = {3.14};
+	mary m2 = {0.5};
+
+	printMariatheotokos(m1, m2, 1); // 3.14; 3.14; 0.5; 0.5
+
+	insert_after(m1, m2);
+
+	printMariatheotokos(m1, m2, 0); // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4a.ii
+//
+// Test cases of insert_before on headless list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+void test__insertbefore_singleton_on_singleton__fred_mine () {
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	printMyFreddies(f1, f2, 1);     // 3.14; 3.14; 0.5; 0.5
+	printYourFreddies(f1, f2, 1);   // 3.14; 3.14; 0.5; 0.5
+
+	diref(fred, fred.mine) f2_mine = f2`from;
+	insert_before(f2_mine, f1);
+
+	printMyFreddies(f1, f2, 0);     // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+	printYourFreddies(f1, f2, 0);   // 3.14; 3.14; 0.5; 0.5 (unmodified)
+}
+
+void test__insertbefore_singleton_on_singleton__fred_yours () {
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	printMyFreddies(f1, f2, 1);     // 3.14; 3.14; 0.5; 0.5
+	printYourFreddies(f1, f2, 1);   // 3.14; 3.14; 0.5; 0.5
+
+	diref(fred, fred.yours) f2_yours = f2`from;
+	insert_before(f2_yours, f1);
+
+	printMyFreddies(f1, f2, 0);     // 3.14; 3.14; 0.5; 0.5 (unmodified)
+	printYourFreddies(f1, f2, 0);   // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+}
+
+void test__insertbefore_singleton_on_singleton__mary () {
+	mary m1 = {3.14};
+	mary m2 = {0.5};
+
+	printMariatheotokos(m1, m2, 1); // 3.14; 3.14; 0.5; 0.5
+
+	insert_before(m2, m1);
+
+	printMariatheotokos(m1, m2, 0); // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+}
+#endif
+////////////////////////////////////////////////////////////
+//
+// Section 4b.i
+//
+// Test cases of insert_first (necessarily headed list)
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+// All three tests exercise the case of creating an empty container and
+// adding two items to it.
+void test__insertfirst_two_on_empty__fred_mine() {
+
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	dlist(fred, fred.mine) lf;
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 1);     // 3.14; 3.14; 0.5; 0.5
+	printYourFreddies(f1, f2, 1);   // 3.14; 3.14; 0.5; 0.5
+
+	insert_first(lf, f2);
+	insert_first(lf, f1);
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 0);     // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+	printYourFreddies(f1, f2, 0);   // 3.14; 3.14; 0.5; 0.5 (unmodified)
+}
+
+void test__insertfirst_two_on_empty__fred_yours() {
+
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	dlist(fred, fred.yours) lf;
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 1);     // 3.14; 3.14; 0.5; 0.5
+	printYourFreddies(f1, f2, 1);   // 3.14; 3.14; 0.5; 0.5
+
+	insert_first(lf, f2);
+	insert_first(lf, f1);
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 0);     // 3.14; 3.14; 0.5; 0.5 (unmodified)
+	printYourFreddies(f1, f2, 0);   // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+}
+void test__insertfirst_two_on_empty__mary() {
+
+	mary m1 = {3.14};
+	mary m2 = {0.5};
+
+	dlist(mary) lm;
+
+	verify(validate(lm));
+	printMariatheotokos(m1, m2, 1); // 3.14; 3.14; 0.5; 0.5
+
+	insert_first(lm, m2);
+	insert_first(lm, m1);
+
+	printMariatheotokos(m1, m2, 0); // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+	verify(validate(lm));
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4b.ii
+//
+// Test cases of insert_last (necessarily headed list)
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+void test__insertlast_two_on_empty__fred_mine() {
+
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	dlist(fred, fred.mine) lf;
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 1);     // 3.14; 3.14; 0.5; 0.5
+	printYourFreddies(f1, f2, 1);   // 3.14; 3.14; 0.5; 0.5
+
+	insert_last(lf, f1);
+	insert_last(lf, f2);
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 0);     // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+	printYourFreddies(f1, f2, 0);   // 3.14; 3.14; 0.5; 0.5 (unmodified)
+}
+
+void test__insertlast_two_on_empty__fred_yours() {
+
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	dlist(fred, fred.yours) lf;
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 1);     // 3.14; 3.14; 0.5; 0.5
+	printYourFreddies(f1, f2, 1);   // 3.14; 3.14; 0.5; 0.5
+
+	insert_last(lf, f1);
+	insert_last(lf, f2);
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 0);     // 3.14; 3.14; 0.5; 0.5 (unmodified)
+	printYourFreddies(f1, f2, 0);   // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+}
+
+void test__insertlast_two_on_empty__mary() {
+
+	mary m1 = {3.14};
+	mary m2 = {0.5};
+
+	dlist(mary) lm;
+
+	verify(validate(lm));
+	printMariatheotokos(m1, m2, 1); // 3.14; 3.14; 0.5; 0.5
+
+	insert_last(lm, m1);
+	insert_last(lm, m2);
+
+	verify(validate(lm));
+	printMariatheotokos(m1, m2, 0); // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4c.i
+//
+// Test cases of insert_after on headed list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+void test__insertafter_after_last__fred_mine() {
+
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	dlist(fred, fred.mine) lf;
+
+	assert( & lf`first == 0p );
+	assert( & lf`last == 0p );
+
+	insert_first(lf, f1);
+
+	assert( & lf`first == & f1 );
+	assert( & lf`last  == & f1 );
+
+	verify(validate(lf));
+
+	with ( DLINK_VIA(fred, fred.mine) ) insert_after(f1, f2);
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 0);     // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+	printYourFreddies(f1, f2, 0);   // 3.14; 3.14; 0.5; 0.5 (unmodified)
+
+	assert( & lf`first == & f1 );
+	assert( & lf`last  == & f2 );
+}
+
+void test__insertafter_after_last__fred_yours() {
+
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	dlist(fred, fred.yours) lf;
+
+	assert( & lf`first == 0p );
+	assert( & lf`last == 0p );
+
+	insert_first(lf, f1);
+
+	assert( & lf`first == & f1 );
+	assert( & lf`last  == & f1 );
+
+	verify(validate(lf));
+
+    with ( DLINK_VIA(fred, fred.yours) ) insert_after(f1, f2);
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 0);     // 3.14; 3.14; 0.5; 0.5 (unmodified)
+	printYourFreddies(f1, f2, 0);   // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+
+	assert( & lf`first == & f1 );
+	assert( & lf`last  == & f2 );
+}
+
+void test__insertafter_after_last__mary() {
+
+	mary m1 = {3.14};
+	mary m2 = {0.5};
+
+	dlist(mary) lm;
+
+	assert( & lm`first == 0p );
+	assert( & lm`last == 0p );
+
+	insert_first(lm, m1);
+
+	assert( & lm`first == & m1 );
+	assert( & lm`last  == & m1 );
+
+	verify(validate(lm));
+
+	insert_after(m1, m2);
+
+	verify(validate(lm));
+
+	printMariatheotokos(m1, m2, 0); // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+
+	assert( & lm`first == & m1 );
+	assert( & lm`last  == & m2 );
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4c.ii
+//
+// Test cases of insert_before on headed list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+void test__insertbefore_before_first__fred_mine() {
+
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	dlist(fred, fred.mine) lf;
+
+	assert( & lf`first == 0p );
+	assert( & lf`last == 0p );
+
+	insert_last(lf, f2);
+
+	assert( & lf`first == & f2 );
+	assert( & lf`last  == & f2 );
+
+	verify(validate(lf));
+
+	with ( DLINK_VIA(fred, fred.mine) ) insert_before(f2, f1);
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 0);     // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+	printYourFreddies(f1, f2, 0);   // 3.14; 3.14; 0.5; 0.5 (unmodified)
+
+	assert( & lf`first == & f1 );
+	assert( & lf`last  == & f2 );
+}
+
+void test__insertbefore_before_first__fred_yours() {
+
+	fred f1 = {3.14};
+	fred f2 = {0.5};
+
+	dlist(fred, fred.yours) lf;
+
+	assert( & lf`first == 0p );
+	assert( & lf`last == 0p );
+
+	insert_last(lf, f2);
+
+	assert( & lf`first == & f2 );
+	assert( & lf`last  == & f2 );
+
+	verify(validate(lf));
+
+	with ( DLINK_VIA(fred, fred.yours) )insert_before(f2, f1);
+
+	verify(validate(lf));
+
+	printMyFreddies(f1, f2, 0);     // 3.14; 3.14; 0.5; 0.5 (unmodified)
+	printYourFreddies(f1, f2, 0);   // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+
+	assert( & lf`first == & f1 );
+	assert( & lf`last  == & f2 );
+}
+
+void test__insertbefore_before_first__mary() {
+
+	mary m1 = {3.14};
+	mary m2 = {0.5};
+
+	dlist(mary) lm;
+
+	assert( & lm`first == 0p );
+	assert( & lm`last == 0p );
+
+	insert_last(lm, m2);
+
+	assert( & lm`first == & m2 );
+	assert( & lm`last  == & m2 );
+
+	verify(validate(lm));
+
+	insert_before(m2, m1);
+
+	verify(validate(lm));
+
+	printMariatheotokos(m1, m2, 0); // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
+
+	assert( & lm`first == & m1 );
+	assert( & lm`last  == & m2 );
+}
+#if 0
+
+////////////////////////////////////////////////////////////
+//
+// Section 4d.i
+//
+// Test cases of remove, from middle of headless list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+// These tests, in the fred cases, set up the my/your lists initially identical,
+// act on one list, and expect the other unaffected.
+
+void test__remove_mid__fred_mine() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	insert_after(f1`in_mine, f2);
+	insert_after(f2`in_mine, f3);
+
+	insert_after(f1`in_yours, f2);
+	insert_after(f2`in_yours, f3);
+
+	printMyFreddies(f1, f3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(f1, f3, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(f2`in_mine);
+
+	printMyFreddies(f1, f3, 0);     // 1.7, 3.7;       1.7;  3.7;  3.7, 1.7      (modified)
+	printYourFreddies(f1, f3, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+
+	// observe f2 is now solo in mine; in yours, it was just traversed
+	printMyFreddies(f2, *0p, 0);    // 2.7; 2.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(f2.$links_mine.next.is_terminator == false);
+	assert(f2.$links_mine.prev.is_terminator == false);
+}
+
+void test__remove_mid__fred_yours() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	insert_after(f1`in_mine, f2);
+	insert_after(f2`in_mine, f3);
+
+	insert_after(f1`in_yours, f2);
+	insert_after(f2`in_yours, f3);
+
+	printMyFreddies(f1, f3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(f1, f3, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(f2`in_yours);
+
+	printMyFreddies(f1, f3, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(f1, f3, 0);   // 1.7, 3.7;       1.7;  3.7;  3.7, 1.7      (modified)
+
+	// observe f2 is now solo in yours; in mine, it was just traversed
+	printYourFreddies(f2, *0p, 0);    // 2.7; 2.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(f2.$links_yours.next.is_terminator == false);
+	assert(f2.$links_yours.prev.is_terminator == false);
+}
+
+void test__remove_mid__mary() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	insert_after(m1, m2);
+	insert_after(m2, m3);
+
+	printMariatheotokos(m1, m3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(m2);
+
+	printMariatheotokos(m1, m3, 0);     // 1.7, 3.7;  1.7;  3.7;  3.7, 1.7 (modified)
+
+	// observe m2 is now solo
+	printMariatheotokos(m2, *0p, 0);    // 2.7; 2.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(m2.$links.next.is_terminator == false);
+	assert(m2.$links.prev.is_terminator == false);
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4d.ii
+//
+// Test cases of remove, from first position of headless list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+// TODO: validate headless semantic: remove of a neighbourless element is valid and no-op
+
+void test__remove_at_first__fred_mine() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	insert_after(f1`in_mine, f2);
+	insert_after(f2`in_mine, f3);
+
+	insert_after(f1`in_yours, f2);
+	insert_after(f2`in_yours, f3);
+
+	printMyFreddies(f1, f3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(f1, f3, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(f1`in_mine);
+
+	printMyFreddies(f2, f3, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printYourFreddies(f1, f3, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+
+	// observe f1 is now solo in mine; in yours, it was just traversed
+	printMyFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(f1.$links_mine.next.is_terminator == false);
+	assert(f1.$links_mine.prev.is_terminator == false);
+}
+
+void test__remove_at_first__fred_yours() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	insert_after(f1`in_mine, f2);
+	insert_after(f2`in_mine, f3);
+
+	insert_after(f1`in_yours, f2);
+	insert_after(f2`in_yours, f3);
+
+	printMyFreddies(f1, f3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(f1, f3, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(f1`in_yours);
+
+	printMyFreddies(f1, f3, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(f2, f3, 0);   // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+
+	// observe f1 is now solo in yours; in mine, it was just traversed
+	printYourFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(f1.$links_yours.next.is_terminator == false);
+	assert(f1.$links_yours.prev.is_terminator == false);
+}
+
+void test__remove_at_first__mary() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	insert_after(m1, m2);
+	insert_after(m2, m3);
+
+	printMariatheotokos(m1, m3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(m1);
+
+	printMariatheotokos(m2, m3, 0);     // 2.7, 3.7;  2.7;  3.7;  3.7, 2.7 (modified)
+
+	// observe m2 is now solo
+	printMariatheotokos(m1, *0p, 0);    // 1.7; 1.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(m1.$links.next.is_terminator == false);
+	assert(m1.$links.prev.is_terminator == false);
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4d.iii
+//
+// Test cases of remove, from last position of headless list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+void test__remove_at_last__fred_mine() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	insert_after(f1`in_mine, f2);
+	insert_after(f2`in_mine, f3);
+
+	insert_after(f1`in_yours, f2);
+	insert_after(f2`in_yours, f3);
+
+	printMyFreddies(f1, f3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(f1, f3, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(f3`in_mine);
+
+	printMyFreddies(f1, f2, 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printYourFreddies(f1, f3, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+
+	// observe f3 is now solo in mine; in yours, it was just traversed
+	printMyFreddies(f3, *0p, 0);    // 3.7; 3.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(f3.$links_mine.next.is_terminator == false);
+	assert(f3.$links_mine.prev.is_terminator == false);
+}
+
+void test__remove_at_last__fred_yours() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	insert_after(f1`in_mine, f2);
+	insert_after(f2`in_mine, f3);
+
+	insert_after(f1`in_yours, f2);
+	insert_after(f2`in_yours, f3);
+
+	printMyFreddies(f1, f3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(f1, f3, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(f3`in_yours);
+
+	printMyFreddies(f1, f3, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(f1, f2, 0);   // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+
+	// observe f3 is now solo in yours; in mine, it was just traversed
+	printYourFreddies(f3, *0p, 0);    // 3.7; 3.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(f3.$links_yours.next.is_terminator == false);
+	assert(f3.$links_yours.prev.is_terminator == false);
+}
+
+void test__remove_at_last__mary() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	insert_after(m1, m2);
+	insert_after(m2, m3);
+
+	printMariatheotokos(m1, m3, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	remove(m3);
+
+	printMariatheotokos(m1, m2, 0);     // 1.7, 2.7;  1.7;  2.7;  2.7, 1.7 (modified)
+
+	// observe m3 is now solo
+	printMariatheotokos(m3, *0p, 0);    // 3.7; 3.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	assert(m1.$links.next.is_terminator == false);
+	assert(m1.$links.prev.is_terminator == false);
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4e.i
+//
+// Test cases of remove, from first position of headed list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+#endif
+void test__remove_at_head__fred_mine() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f1);
+	insert_last(flm, f2);
+	insert_last(flm, f3);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f1);
+	insert_last(fly, f2);
+	insert_last(fly, f3);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	with( DLINK_VIA(fred, fred.mine) ) remove(f1);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	printMyFreddies(flm`first, flm`last, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+
+	// observe f1 is now solo in mine; in yours, it was just traversed
+	printMyFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(f1.$links_mine.next.is_terminator == false);
+	// assert(f1.$links_mine.prev.is_terminator == false);
+}
+
+
+void test__remove_at_head__fred_yours() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f1);
+	insert_last(flm, f2);
+	insert_last(flm, f3);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f1);
+	insert_last(fly, f2);
+	insert_last(fly, f3);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	with( DLINK_VIA(fred, fred.yours) ) remove(f1);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(fly`first, fly`last, 0);   // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+
+	// observe f1 is now solo in yours; in mine, it was just traversed
+	printYourFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(f1.$links_yours.next.is_terminator == false);
+	// assert(f1.$links_yours.prev.is_terminator == false);
+}
+
+void test__remove_at_head__mary() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	dlist(mary) ml;
+	insert_last(ml, m1);
+	insert_last(ml, m2);
+	insert_last(ml, m3);
+
+	printMariatheotokos(ml`first, ml`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(ml));
+
+	remove(m1);
+
+	verify(validate(ml));
+
+	printMariatheotokos(ml`first, ml`last, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+
+	// observe m1 is now solo
+	printMariatheotokos(m1, *0p, 0);               // 1.7; 1.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(m1.$links.next.is_terminator == false);
+	// assert(m1.$links.prev.is_terminator == false);
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4e.ii
+//
+// Test cases of remove, from last position of headed list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+void test__remove_at_tail__fred_mine() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f1);
+	insert_last(flm, f2);
+	insert_last(flm, f3);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f1);
+	insert_last(fly, f2);
+	insert_last(fly, f3);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	with( DLINK_VIA(fred, fred.mine) ) remove(f3);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+
+	// observe f3 is now solo in mine; in yours, it was just traversed
+	printMyFreddies(f3, *0p, 0);    // 3.7; 3.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(f3.$links_mine.next.is_terminator == false);
+	// assert(f3.$links_mine.prev.is_terminator == false);
+}
+
+void test__remove_at_tail__fred_yours() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f1);
+	insert_last(flm, f2);
+	insert_last(flm, f3);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f1);
+	insert_last(fly, f2);
+	insert_last(fly, f3);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	with( DLINK_VIA(fred, fred.yours) ) remove(f3);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+
+	// observe f3 is now solo in yours; in mine, it was just traversed
+	printYourFreddies(f3, *0p, 0);               // 3.7; 3.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(f3.$links_yours.next.is_terminator == false);
+	// assert(f3.$links_yours.prev.is_terminator == false);
+}
+
+void test__remove_at_tail__mary() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	dlist(mary) ml;
+	insert_last(ml, m1);
+	insert_last(ml, m2);
+	insert_last(ml, m3);
+
+	printMariatheotokos(ml`first, ml`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(ml));
+
+	remove(m3);
+
+	verify(validate(ml));
+
+	printMariatheotokos(ml`first, ml`last, 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+
+	// observe m3 is now solo
+	printMariatheotokos(m3, *0p, 0);               //3.7; 3.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(m3.$links.next.is_terminator == false);
+	// assert(m3.$links.prev.is_terminator == false);
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4e.iii
+//
+// Test cases of remove, of sole element of headed list
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+void test__remove_of_sole__fred_mine() {
+
+	fred f = {0.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 0.7; 0.7; 0.7; 0.7
+	printYourFreddies(fly`first, fly`last, 1);   // 0.7; 0.7; 0.7; 0.7
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	with( DLINK_VIA(fred, fred.mine) ) remove(f);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	assert( & flm`first == 0p );
+	assert( & flm`last == 0p );
+
+	printYourFreddies(fly`first, fly`last, 0);   // 0.7; 0.7; 0.7; 0.7 (unmodified)
+
+	// observe f is solo in mine (now unlisted); in yours, it was just traversed
+	printMyFreddies(f, *0p, 0);    // 0.7; 0.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(f.$links_mine.next.is_terminator == false);
+	// assert(f.$links_mine.prev.is_terminator == false);
+
+	insert_last(flm, f);
+	verify(validate(fly));
+	verify(validate(flm));
+	printMyFreddies(flm`first, flm`last, 0);     // 0.7; 0.7; 0.7; 0.7
+}
+
+void test__remove_of_sole__fred_yours() {
+
+	fred f = {0.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 0.7; 0.7; 0.7; 0.7
+	printYourFreddies(fly`first, fly`last, 1);   // 0.7; 0.7; 0.7; 0.7
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	with( DLINK_VIA(fred, fred.yours) ) remove(f);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	assert( & fly`first == 0p );
+	assert( & fly`last == 0p );
+
+	printYourFreddies(flm`first, flm`last, 0);   // 0.7; 0.7; 0.7; 0.7 (unmodified)
+
+	// observe f is solo in yours (now unlisted); in mine, it was just traversed
+	printYourFreddies(f, *0p, 0);    // 0.7; 0.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(f.$links_yours.next.is_terminator == false);
+	// assert(f.$links_yours.prev.is_terminator == false);
+
+	insert_last(fly, f);
+	verify(validate(fly));
+	verify(validate(flm));
+	printYourFreddies(fly`first, fly`last, 0);     // 0.7; 0.7; 0.7; 0.7
+}
+
+void test__remove_of_sole__mary() {
+
+	mary m = {0.7};
+
+	dlist(mary) ml;
+	insert_last(ml, m);
+
+	printMariatheotokos(ml`first, ml`last, 1);     // 0.7; 0.7; 0.7; 0.7
+
+	verify(validate(ml));
+
+	remove(m);
+
+	verify(validate(ml));
+
+	assert( & ml`first == 0p );
+	assert( & ml`last == 0p );
+
+	// observe f is solo in mine (now unlisted); in yours, it was just traversed
+	printMariatheotokos(m, *0p, 0);    // 0.7; 0.7; ;
+
+	// TODO: decide on appropriate ovservable outcome (is_listed?) and its itended semantics
+	// assert(m.$links.next.is_terminator == false);
+	// assert(m.$links.prev.is_terminator == false);
+
+	insert_last(ml, m);
+	verify(validate(ml));
+	printMariatheotokos(ml`first, ml`last, 0);     // 0.7; 0.7; 0.7; 0.7
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4f
+//
+// Test cases of pop_first, pop_last
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+// These cases assume element removal at first-last is correct
+
+void test__pop_first__fred_mine() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f1);
+	insert_last(flm, f2);
+	insert_last(flm, f3);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f1);
+	insert_last(fly, f2);
+	insert_last(fly, f3);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	fred & popped = try_pop_front(flm);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	printMyFreddies(flm`first, flm`last, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+
+	// observe f1 is now solo in mine; in yours, it was just traversed
+	printMyFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
+
+	assert( &popped == & f1 );
+}
+
+void test__pop_first__fred_yours() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f1);
+	insert_last(flm, f2);
+	insert_last(flm, f3);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f1);
+	insert_last(fly, f2);
+	insert_last(fly, f3);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	fred & popped = try_pop_front(fly);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(fly`first, fly`last, 0);   // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+
+	// observe f1 is now solo in yours; in mine, it was just traversed
+	printYourFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
+
+	assert( &popped == &f1 );
+}
+
+void test__pop_first__maries() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	dlist(mary) ml;
+	insert_last(ml, m1);
+	insert_last(ml, m2);
+	insert_last(ml, m3);
+
+	printMariatheotokos(ml`first, ml`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(ml));
+
+	mary & popped = try_pop_front(ml);
+
+	verify(validate(ml));
+
+	printMariatheotokos(ml`first, ml`last, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+
+	// observe m1 is now solo
+	printMariatheotokos(m1, *0p, 0);               // 1.7; 1.7; ;
+
+	assert( &popped == &m1 );
+}
+
+void test__pop_last__fred_mine() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f1);
+	insert_last(flm, f2);
+	insert_last(flm, f3);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f1);
+	insert_last(fly, f2);
+	insert_last(fly, f3);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	fred & popped = try_pop_back(flm);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+
+	// observe f3 is now solo in mine; in yours, it was just traversed
+	printMyFreddies(f3, *0p, 0);    // 3.7; 3.7; ;
+
+	assert( &popped == & f3 );
+}
+
+void test__pop_last__fred_yours() {
+
+	fred f1 = {1.7};
+	fred f2 = {2.7};
+	fred f3 = {3.7};
+
+	dlist(fred, fred.mine) flm;
+	insert_last(flm, f1);
+	insert_last(flm, f2);
+	insert_last(flm, f3);
+
+	dlist(fred, fred.yours) fly;
+	insert_last(fly, f1);
+	insert_last(fly, f2);
+	insert_last(fly, f3);
+
+	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	fred & popped = try_pop_back(fly);
+
+	verify(validate(fly));
+	verify(validate(flm));
+
+	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+
+	// observe f3 is now solo in yours; in mine, it was just traversed
+	printYourFreddies(f3, *0p, 0);    // 3.7; 3.7; ;
+
+	assert( &popped == & f3 );
+}
+
+void test__pop_last__maries() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	dlist(mary) ml;
+	insert_last(ml, m1);
+	insert_last(ml, m2);
+	insert_last(ml, m3);
+
+	printMariatheotokos(ml`first, ml`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+
+	verify(validate(ml));
+
+	mary & popped = try_pop_back(ml);
+
+	verify(validate(ml));
+
+	printMariatheotokos(ml`first, ml`last, 0);     // 1.7, 1.7;       1.7;  2.7;  2.7, 1.7      (modified)
+
+	// observe m1 is now solo
+	printMariatheotokos(m3, *0p, 0);               // 3.7; 3.7; ;
+
+	assert( &popped == &m3 );
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 4g
+//
+// Test cases of `isEmpty, `hasPrev, `hasNext,
+// try_pop_front, try_pop_back, modifications via `elems
+//
+// Example of call-side user code
+//
+////////////////////////////////////////////////////////////
+
+void test__accessor_cases__mary() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	dlist(mary) ml;			assert( ml`isEmpty);
+
+	insert_last(ml, m1);	assert(!ml`isEmpty);
+	insert_last(ml, m2);	assert(!ml`isEmpty);
+	insert_last(ml, m3);	assert(!ml`isEmpty);
+
+	mary & m1prev = m1`prev;
+	mary & m1next = m1`next;
+	mary & m2prev = m2`prev;
+	mary & m2next = m2`next;
+	mary & m3prev = m3`prev;
+	mary & m3next = m3`next;
+
+	assert (&m1prev == 0p);
+	assert (&m1next == &m2);
+	assert (&m2prev == &m1);
+	assert (&m2next == &m3);
+	assert (&m3prev == &m2);
+	assert (&m3next == 0p);
+
+	assert(!m1`hasPrev);
+	assert( m1`hasNext);
+	assert( m2`hasPrev);
+	assert( m2`hasNext);
+	assert( m3`hasPrev);
+	assert(!m3`hasNext);
+
+	printf("accessor_cases done\n");
+}
+
+void test__try_pop__mary() {
+
+	mary m1 = {1.7};
+	mary m2 = {2.7};
+	mary m3 = {3.7};
+
+	dlist(mary) ml;
+
+	mary &m1r = *0p;
+	mary &m2r = *0p;
+	mary &m3r = *0p;
+	mary &mxr = *0p;
+
+	// queue, back to front
+
+	assert( ml`isEmpty);
+
+	insert_last(ml, m1);
+	insert_last(ml, m2);
+	insert_last(ml, m3);
+
+	&m1r = & try_pop_front(ml);	assert(!ml`isEmpty);
+	&m2r = & try_pop_front(ml);	assert(!ml`isEmpty);
+	&m3r = & try_pop_front(ml);	assert( ml`isEmpty);
+	&mxr = & try_pop_front(ml);	assert( ml`isEmpty);
+
+	assert( &m1r == &m1 );
+	assert( &m2r == &m2 );
+	assert( &m3r == &m3 );
+	assert( &mxr == 0p  );
+
+	&m1r = 0p;
+	&m2r = 0p;
+	&m3r = 0p;
+
+	// queue, front to back
+
+	assert( ml`isEmpty);
+
+	insert_first(ml, m1);
+	insert_first(ml, m2);
+	insert_first(ml, m3);
+
+	&m1r = & try_pop_back(ml);	assert(!ml`isEmpty);
+	&m2r = & try_pop_back(ml);	assert(!ml`isEmpty);
+	&m3r = & try_pop_back(ml);	assert( ml`isEmpty);
+	&mxr = & try_pop_back(ml);	assert( ml`isEmpty);
+
+	assert( &m1r == &m1 );
+	assert( &m2r == &m2 );
+	assert( &m3r == &m3 );
+	assert( &mxr == 0p  );
+
+	&m1r = 0p;
+	&m2r = 0p;
+	&m3r = 0p;
+
+	// stack at front
+
+	assert( ml`isEmpty);
+
+	insert_first(ml, m1);
+	insert_first(ml, m2);
+	insert_first(ml, m3);
+
+	&m3r = & try_pop_front(ml);	assert(!ml`isEmpty);
+	&m2r = & try_pop_front(ml);	assert(!ml`isEmpty);
+	&m1r = & try_pop_front(ml);	assert( ml`isEmpty);
+	&mxr = & try_pop_front(ml);	assert( ml`isEmpty);
+
+	assert( &m1r == &m1 );
+	assert( &m2r == &m2 );
+	assert( &m3r == &m3 );
+	assert( &mxr == 0p  );
+
+	&m1r = 0p;
+	&m2r = 0p;
+	&m3r = 0p;
+
+	// stack at back
+
+	assert( ml`isEmpty);
+
+	insert_last(ml, m1);
+	insert_last(ml, m2);
+	insert_last(ml, m3);
+
+	&m3r = & try_pop_back(ml);	assert(!ml`isEmpty);
+	&m2r = & try_pop_back(ml);	assert(!ml`isEmpty);
+	&m1r = & try_pop_back(ml);	assert( ml`isEmpty);
+	&mxr = & try_pop_back(ml);	assert( ml`isEmpty);
+
+	assert( &m1r == &m1 );
+	assert( &m2r == &m2 );
+	assert( &m3r == &m3 );
+	assert( &mxr == 0p  );
+
+	&m1r = 0p;
+	&m2r = 0p;
+	&m3r = 0p;
+
+	printf("try_pop cases done\n");
+}
+
+void test__origin_mutation__mary() {
+
+	mary m1 = {1.7};
+
+	dlist(mary) ml;
+	mary & mlorigin = ml`elems;
+
+	// insert before the origin
+
+	insert_before( ml`elems, m1 );
+	assert( ! ml`isEmpty );
+
+	mary & mlfirst = ml`first;
+	mary & mllast = ml`last;
+
+	assert( &m1 == & mlfirst );
+	assert( &m1 == & mllast );
+
+	// moveNext after last goes back to origin, &vv
+
+	bool canMoveNext = mllast`moveNext;
+	bool canMovePrev = mlfirst`movePrev;
+
+	assert( ! canMoveNext );
+	assert( ! canMovePrev );
+
+	assert( &mlorigin == & mlfirst );
+	assert( &mlorigin == & mllast );
+
+	printf("origin_mutation cases done\n");
+}
+
+void test__isListed_cases__mary() {
+
+	mary m1 = {1.7};        assert(! m1`isListed);
+	mary m2 = {2.7};        assert(! m2`isListed);
+	mary m3 = {3.7};        assert(! m3`isListed);
+
+	dlist(mary) ml;
+
+	insert_last(ml, m1);	assert(  m1`isListed);  assert(! m2`isListed);
+	insert_last(ml, m2);	assert(  m2`isListed);  assert(! m3`isListed);
+	insert_last(ml, m3);	assert(  m3`isListed);
+
+	remove( m1 );           assert(! m1`isListed);  assert(  m2`isListed);
+	remove( m2 );           assert(! m2`isListed);  assert(  m3`isListed);
+	remove( m3 );           assert(! m3`isListed);
+
+	printf("isListed cases done\n");
+}
+
+////////////////////////////////////////////////////////////
+//
+// Section 5
+//
+// Simple driver with the inter-scario printing
+//
+////////////////////////////////////////////////////////////
+
+int main() {
+#if 0
+	sout | "~~~~~~~~~~~~~~~~~ Headless List Tests - insert_after ~~~~~~~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 1-i:  Modifying Freds on MINE ";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertafter_singleton_on_singleton__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 2-i.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertafter_singleton_on_singleton__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 3-i.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertafter_singleton_on_singleton__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~~~~~~~ Headless List Tests - insert_before ~~~~~~~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 1-ii:  Modifying Freds on MINE ";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertbefore_singleton_on_singleton__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 2-ii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertbefore_singleton_on_singleton__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 3-ii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertbefore_singleton_on_singleton__mary();
+#endif
+	sout | "";
+	sout | "~~~~~~~~~~~~~~~~~ Headed List Tests - insert_first ~~~~~~~~~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 4-i:  Modifying Freds on MINE ";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertfirst_two_on_empty__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 5-i:  Modifying Freds on YOURS ";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertfirst_two_on_empty__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 6-i.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertfirst_two_on_empty__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~~~~~~~~ Headed List Tests - insert_last ~~~~~~~~~~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 4-ii:  Modifying Freds on MINE ";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertlast_two_on_empty__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 5-ii:  Modifying Freds on YOURS ";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertlast_two_on_empty__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 6-ii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertlast_two_on_empty__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~~ Element ops on Headed List Tests: after, last ~~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 7-i.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertafter_after_last__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 8-i.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertafter_after_last__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 9-i.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertafter_after_last__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~ Element ops on Headed List Tests: before, first ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 7-ii.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertbefore_before_first__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 8-ii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertbefore_before_first__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 9-ii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__insertbefore_before_first__mary();
+#if 0
+
+	sout | "";
+	sout | "~~~~~~~~~~ Element removal tests on Headless List: mid ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 10-i.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_mid__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 11-i.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_mid__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 12-i.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_mid__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~ Element removal tests on Headless List: at first ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 10-ii.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_first__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 11-ii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_first__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 12-ii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_first__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~ Element removal tests on Headless List: at last ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 10-iii.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_last__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 11-iii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_last__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 12-iii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_last__mary();
+#endif
+	sout | "";
+	sout | "~~~~~~~~~~ Element removal tests on Headed List: at first ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 13-i.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_head__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 14-i.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_head__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 15-i.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_head__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~ Element removal tests on Headed List: at last ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 13-ii.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_tail__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 14-ii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_tail__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 15-ii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_at_tail__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~ Element removal tests on Headed List: of sole ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 13-iii.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_of_sole__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 14-iii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_of_sole__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 15-iii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__remove_of_sole__mary();
+
+	sout | "";
+	sout | "~~~~~~~~~~ End removal tests on Headed List: First ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 16-i.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__pop_first__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 16-ii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__pop_first__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 16-iii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__pop_first__maries();
+
+	sout | "";
+	sout | "~~~~~~~~~~ End removal tests on Headed List: Last ~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 17-i.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__pop_last__fred_mine();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 17-ii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__pop_last__fred_yours();
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 17-iii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	test__pop_last__maries();
+
+	sout | "";
+	sout | "~~~~~~~~~~~~~~~~~~~ Ease-of-access cases ~~~~~~~~~~~~~~~~~~";
+	sout | "";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 18-i.  Modifying Freds on MINE";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Not implmented";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 18-ii.  Modifying Freds on YOURS";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Not implmented";
+
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	sout | "Test 18-iii.  Modifying Maries";
+	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+
+	test__accessor_cases__mary();
+	test__try_pop__mary();
+	test__origin_mutation__mary();
+	test__isListed_cases__mary();
+
+	return 0;
+}

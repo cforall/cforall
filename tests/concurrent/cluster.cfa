@@ -1,0 +1,35 @@
+#include <kernel.hfa>
+#include <thread.hfa>
+
+static cluster * the_cluster;
+
+thread MyThread {};
+void ?{}( MyThread & this ) {
+	((thread&)this){ *the_cluster };
+}
+
+void main( MyThread & this ) {
+	for(50) {
+		yield();
+	}
+}
+
+struct MyProc {
+	processor self;
+};
+
+void ?{}( MyProc & this ) {
+	(this.self){ *the_cluster };
+}
+
+int main() {
+	cluster cl;
+	the_cluster = &cl;
+	{
+		MyProc procs[4];
+		{
+			MyThread threads[17];
+		}
+	}
+	printf( "done\n" );				// non-empty .expect file
+}

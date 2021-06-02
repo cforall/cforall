@@ -1,0 +1,26 @@
+11.1
+15.0
+11.1
+24.8
+11.2
+11.1
+28.1
+secs 0
+secs 1
+secs 23
+mins 23
+hours 23
+_A_ 23
+_thingy_ 1234
+secs 65535
+mins 65535
+hours 65535
+_A_ 65535
+_thingy_ 65535
+secs 10
+hours 10
+mins 10
+_A_ 10
+_thingy_ 10
+s abc
+_thingy_ abc

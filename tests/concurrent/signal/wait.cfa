@@ -1,0 +1,153 @@
+//---------------------------------------------------------
+// Multi wait test
+// Ensures that no deadlock from waiting/signalling conditions
+//---------------------------------------------------------
+
+
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+
+#define __kick_rate 12000ul
+#include "long_tests.hfa"
+
+#ifndef PREEMPTION_RATE
+#define PREEMPTION_RATE 10`ms
+#endif
+
+Duration default_preemption() {
+	return PREEMPTION_RATE;
+}
+
+#ifdef TEST_LONG
+static const unsigned long N = 375_000ul;
+#else
+static const unsigned long N = 2_500ul;
+#endif
+
+monitor global_t {};
+
+global_t globalA;
+global_t globalB;
+global_t globalC;
+
+condition condAB, condAC, condBC, condABC;
+
+thread Signaler {};
+thread WaiterAB {};
+thread WaiterAC {};
+thread WaiterBC {};
+thread WaiterABC{};
+
+volatile int waiter_left;
+
+//----------------------------------------------------------------------------------------------------
+// Tools
+void signal( condition & cond, global_t & mutex a, global_t & mutex b ) {
+	signal( cond );
+}
+
+void signal( condition & cond, global_t & mutex a, global_t & mutex b, global_t & mutex c ) {
+	signal( cond );
+}
+
+void wait( condition & cond, global_t & mutex a, global_t & mutex b ) {
+	wait( cond );
+}
+
+void wait( condition & cond, global_t & mutex a, global_t & mutex b, global_t & mutex c ) {
+	wait( cond );
+}
+
+//----------------------------------------------------------------------------------------------------
+// Signaler
+void main( Signaler & this ) {
+
+	while( waiter_left != 0 ) {
+		unsigned action = random( 4 );
+		switch( action ) {
+			case 0:
+				signal( condABC, globalA, globalB, globalC );
+				break;
+			case 1:
+				signal( condAB , globalA, globalB );
+				break;
+			case 2:
+				signal( condBC , globalB, globalC );
+				break;
+			case 3:
+				signal( condAC , globalA, globalC );
+				break;
+			default:
+				sout | "Something went wrong";
+				abort();
+		}
+		yield();
+	}
+}
+
+//----------------------------------------------------------------------------------------------------
+// Waiter ABC
+void main( WaiterABC & this ) {
+	for( int i = 0; TEST(i < N); i++ ) {
+		wait( condABC, globalA, globalB, globalC );
+		KICK_WATCHDOG;
+	}
+
+	__atomic_fetch_sub( &waiter_left, 1,  __ATOMIC_SEQ_CST );
+}
+
+//----------------------------------------------------------------------------------------------------
+// Waiter AB
+void main( WaiterAB & this ) {
+	for( int i = 0; TEST(i < N); i++ ) {
+		wait( condAB , globalA, globalB );
+		KICK_WATCHDOG;
+	}
+
+	__atomic_fetch_sub( &waiter_left, 1,  __ATOMIC_SEQ_CST );
+}
+
+//----------------------------------------------------------------------------------------------------
+// Waiter AC
+void main( WaiterAC & this ) {
+	for( int i = 0; TEST(i < N); i++ ) {
+		wait( condAC , globalA, globalC );
+		KICK_WATCHDOG;
+	}
+
+	__atomic_fetch_sub( &waiter_left, 1,  __ATOMIC_SEQ_CST );
+}
+
+//----------------------------------------------------------------------------------------------------
+// Waiter BC
+void main( WaiterBC & this ) {
+	for( int i = 0; TEST(i < N); i++ ) {
+		wait( condBC , globalB, globalC );
+		KICK_WATCHDOG;
+	}
+
+	__atomic_fetch_sub( &waiter_left, 1,  __ATOMIC_SEQ_CST );
+}
+
+//----------------------------------------------------------------------------------------------------
+// Main
+int main(int argc, char* argv[]) {
+	srandom( time( NULL ) );
+	waiter_left = 4;
+	processor p[2];
+	sout | "Starting";
+	{
+		Signaler  e;
+		{
+			WaiterABC a;
+			WaiterAB  b;
+			WaiterBC  c;
+			WaiterAC  d;
+		}
+	}
+	sout | "Done";
+}

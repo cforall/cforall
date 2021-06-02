@@ -1,0 +1,939 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// kernel.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Jan 17 12:27:26 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Aug 31 07:08:20 2020
+// Update Count     : 71
+//
+
+#define __cforall_thread__
+// #define __CFA_DEBUG_PRINT_RUNTIME_CORE__
+
+//C Includes
+#include <errno.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+extern "C" {
+	#include <sys/eventfd.h>
+}
+
+//CFA Includes
+#include "kernel_private.hfa"
+#include "preemption.hfa"
+
+//Private includes
+#define __CFA_INVOKE_PRIVATE__
+#include "invoke.h"
+
+#if !defined(__CFA_NO_STATISTICS__)
+	#define __STATS( ...) __VA_ARGS__
+#else
+	#define __STATS( ...)
+#endif
+
+//-----------------------------------------------------------------------------
+// Some assembly required
+#if defined( __i386 )
+	// mxcr : SSE Status and Control bits (control bits are preserved across function calls)
+	// fcw  : X87 FPU control word (preserved across function calls)
+	#define __x87_store         \
+		uint32_t __mxcr;      \
+		uint16_t __fcw;       \
+		__asm__ volatile (    \
+			"stmxcsr %0\n"  \
+			"fnstcw  %1\n"  \
+			: "=m" (__mxcr),\
+				"=m" (__fcw)  \
+		)
+
+	#define __x87_load         \
+		__asm__ volatile (   \
+			"fldcw  %1\n"  \
+			"ldmxcsr %0\n" \
+			::"m" (__mxcr),\
+				"m" (__fcw)  \
+		)
+
+#elif defined( __x86_64 )
+	#define __x87_store         \
+		uint32_t __mxcr;      \
+		uint16_t __fcw;       \
+		__asm__ volatile (    \
+			"stmxcsr %0\n"  \
+			"fnstcw  %1\n"  \
+			: "=m" (__mxcr),\
+				"=m" (__fcw)  \
+		)
+
+	#define __x87_load          \
+		__asm__ volatile (    \
+			"fldcw  %1\n"   \
+			"ldmxcsr %0\n"  \
+			:: "m" (__mxcr),\
+				"m" (__fcw)  \
+		)
+
+#elif defined( __arm__ )
+	#define __x87_store
+	#define __x87_load
+
+#elif defined( __aarch64__ )
+	#define __x87_store		 \
+		uint32_t __fpcntl[2];    \
+		__asm__ volatile (    \
+			"mrs x9, FPCR\n" \
+			"mrs x10, FPSR\n"  \
+			"stp x9, x10, %0\n"  \
+			: "=m" (__fpcntl) : : "x9", "x10" \
+		)
+
+	#define __x87_load         \
+		__asm__ volatile (    \
+			"ldp x9, x10, %0\n"  \
+			"msr FPSR, x10\n"  \
+			"msr FPCR, x9\n" \
+		: "=m" (__fpcntl) : : "x9", "x10" \
+		)
+
+#else
+	#error unsupported hardware architecture
+#endif
+
+extern $thread * mainThread;
+extern processor * mainProcessor;
+
+//-----------------------------------------------------------------------------
+// Kernel Scheduling logic
+static $thread * __next_thread(cluster * this);
+static $thread * __next_thread_slow(cluster * this);
+static inline bool __must_unpark( $thread * thrd ) __attribute((nonnull(1)));
+static void __run_thread(processor * this, $thread * dst);
+static void __wake_one(cluster * cltr);
+
+static void mark_idle (__cluster_proc_list & idles, processor & proc);
+static void mark_awake(__cluster_proc_list & idles, processor & proc);
+static [unsigned idle, unsigned total, * processor] query_idles( & __cluster_proc_list idles );
+
+extern void __cfa_io_start( processor * );
+extern bool __cfa_io_drain( processor * );
+extern void __cfa_io_flush( processor * );
+extern void __cfa_io_stop ( processor * );
+static inline bool __maybe_io_drain( processor * );
+
+extern void __disable_interrupts_hard();
+extern void __enable_interrupts_hard();
+
+static inline void __disable_interrupts_checked() {
+	/* paranoid */ verify( __preemption_enabled() );
+	disable_interrupts();
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+static inline void __enable_interrupts_checked( bool poll = true ) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	enable_interrupts( poll );
+	/* paranoid */ verify( __preemption_enabled() );
+}
+
+//=============================================================================================
+// Kernel Scheduling logic
+//=============================================================================================
+//Main of the processor contexts
+void main(processorCtx_t & runner) {
+	// Because of a bug, we couldn't initialized the seed on construction
+	// Do it here
+	__cfaabi_tls.rand_seed ^= rdtscl();
+	__cfaabi_tls.ready_rng.fwd_seed = 25214903917_l64u * (rdtscl() ^ (uintptr_t)&runner);
+	__tls_rand_advance_bck();
+
+	processor * this = runner.proc;
+	verify(this);
+
+	__cfa_io_start( this );
+
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p starting\n", this);
+	#if !defined(__CFA_NO_STATISTICS__)
+		if( this->print_halts ) {
+			__cfaabi_bits_print_safe( STDOUT_FILENO, "Processor : %d - %s (%p)\n", this->unique_id, this->name, (void*)this);
+		}
+	#endif
+
+	{
+		// Setup preemption data
+		preemption_scope scope = { this };
+
+		// if we need to run some special setup, now is the time to do it.
+		if(this->init.thrd) {
+			this->init.thrd->curr_cluster = this->cltr;
+			__run_thread(this, this->init.thrd);
+		}
+
+		__cfadbg_print_safe(runtime_core, "Kernel : core %p started\n", this);
+
+		$thread * readyThread = 0p;
+		MAIN_LOOP:
+		for() {
+			#define OLD_MAIN 1
+			#if OLD_MAIN
+			// Check if there is pending io
+			__maybe_io_drain( this );
+
+			// Try to get the next thread
+			readyThread = __next_thread( this->cltr );
+
+			if( !readyThread ) {
+				__cfa_io_flush( this );
+				readyThread = __next_thread_slow( this->cltr );
+			}
+
+			HALT:
+			if( !readyThread ) {
+				// Don't block if we are done
+				if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
+
+				#if !defined(__CFA_NO_STATISTICS__)
+					__tls_stats()->ready.sleep.halts++;
+				#endif
+
+				// Push self to idle stack
+				mark_idle(this->cltr->procs, * this);
+
+				// Confirm the ready-queue is empty
+				readyThread = __next_thread_slow( this->cltr );
+				if( readyThread ) {
+					// A thread was found, cancel the halt
+					mark_awake(this->cltr->procs, * this);
+
+					#if !defined(__CFA_NO_STATISTICS__)
+						__tls_stats()->ready.sleep.cancels++;
+					#endif
+
+					// continue the mai loop
+					break HALT;
+				}
+
+				#if !defined(__CFA_NO_STATISTICS__)
+					if(this->print_halts) {
+						__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl());
+					}
+				#endif
+
+				__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle);
+
+				__disable_interrupts_hard();
+				eventfd_t val;
+				eventfd_read( this->idle, &val );
+				__enable_interrupts_hard();
+
+				#if !defined(__CFA_NO_STATISTICS__)
+					if(this->print_halts) {
+						__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl());
+					}
+				#endif
+
+				// We were woken up, remove self from idle
+				mark_awake(this->cltr->procs, * this);
+
+				// DON'T just proceed, start looking again
+				continue MAIN_LOOP;
+			}
+
+			/* paranoid */ verify( readyThread );
+
+			// Reset io dirty bit
+			this->io.dirty = false;
+
+			// We found a thread run it
+			__run_thread(this, readyThread);
+
+			// Are we done?
+			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
+
+			if(this->io.pending && !this->io.dirty) {
+				__cfa_io_flush( this );
+			}
+
+			#else
+				#warning new kernel loop
+			SEARCH: {
+				/* paranoid */ verify( ! __preemption_enabled() );
+
+				// First, lock the scheduler since we are searching for a thread
+				ready_schedule_lock();
+
+				// Try to get the next thread
+				readyThread = pop_fast( this->cltr );
+				if(readyThread) { ready_schedule_unlock(); break SEARCH; }
+
+				// If we can't find a thread, might as well flush any outstanding I/O
+				if(this->io.pending) { __cfa_io_flush( this ); }
+
+				// Spin a little on I/O, just in case
+					for(5) {
+					__maybe_io_drain( this );
+					readyThread = pop_fast( this->cltr );
+					if(readyThread) { ready_schedule_unlock(); break SEARCH; }
+				}
+
+				// no luck, try stealing a few times
+					for(5) {
+					if( __maybe_io_drain( this ) ) {
+						readyThread = pop_fast( this->cltr );
+					} else {
+						readyThread = pop_slow( this->cltr );
+					}
+					if(readyThread) { ready_schedule_unlock(); break SEARCH; }
+				}
+
+				// still no luck, search for a thread
+				readyThread = pop_search( this->cltr );
+				if(readyThread) { ready_schedule_unlock(); break SEARCH; }
+
+				// Don't block if we are done
+				if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
+
+				__STATS( __tls_stats()->ready.sleep.halts++; )
+
+				// Push self to idle stack
+				ready_schedule_unlock();
+				mark_idle(this->cltr->procs, * this);
+				ready_schedule_lock();
+
+				// Confirm the ready-queue is empty
+				__maybe_io_drain( this );
+				readyThread = pop_search( this->cltr );
+				ready_schedule_unlock();
+
+				if( readyThread ) {
+					// A thread was found, cancel the halt
+					mark_awake(this->cltr->procs, * this);
+
+					__STATS( __tls_stats()->ready.sleep.cancels++; )
+
+					// continue the main loop
+					break SEARCH;
+				}
+
+					__STATS( if(this->print_halts) __cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl()); )
+				__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle);
+
+				// __disable_interrupts_hard();
+				eventfd_t val;
+				eventfd_read( this->idle, &val );
+				// __enable_interrupts_hard();
+
+					__STATS( if(this->print_halts) __cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl()); )
+
+				// We were woken up, remove self from idle
+				mark_awake(this->cltr->procs, * this);
+
+				// DON'T just proceed, start looking again
+				continue MAIN_LOOP;
+			}
+
+		RUN_THREAD:
+			/* paranoid */ verify( ! __preemption_enabled() );
+			/* paranoid */ verify( readyThread );
+
+			// Reset io dirty bit
+			this->io.dirty = false;
+
+			// We found a thread run it
+			__run_thread(this, readyThread);
+
+			// Are we done?
+			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
+
+			if(this->io.pending && !this->io.dirty) {
+				__cfa_io_flush( this );
+			}
+
+			ready_schedule_lock();
+			__maybe_io_drain( this );
+			ready_schedule_unlock();
+			#endif
+		}
+
+		__cfadbg_print_safe(runtime_core, "Kernel : core %p stopping\n", this);
+	}
+
+	__cfa_io_stop( this );
+
+	post( this->terminated );
+
+	if(this == mainProcessor) {
+		// HACK : the coroutine context switch expects this_thread to be set
+		// and it make sense for it to be set in all other cases except here
+		// fake it
+		__cfaabi_tls.this_thread = mainThread;
+	}
+
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p terminated\n", this);
+}
+
+static int * __volatile_errno() __attribute__((noinline));
+static int * __volatile_errno() { asm(""); return &errno; }
+
+// KERNEL ONLY
+// runThread runs a thread by context switching
+// from the processor coroutine to the target thread
+static void __run_thread(processor * this, $thread * thrd_dst) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verifyf( thrd_dst->state == Ready || thrd_dst->preempted != __NO_PREEMPTION, "state : %d, preempted %d\n", thrd_dst->state, thrd_dst->preempted);
+	/* paranoid */ verifyf( thrd_dst->link.next == 0p, "Expected null got %p", thrd_dst->link.next );
+	__builtin_prefetch( thrd_dst->context.SP );
+
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p running thread %p (%s)\n", this, thrd_dst, thrd_dst->self_cor.name);
+
+	$coroutine * proc_cor = get_coroutine(this->runner);
+
+	// set state of processor coroutine to inactive
+	verify(proc_cor->state == Active);
+	proc_cor->state = Blocked;
+
+	// Actually run the thread
+	RUNNING:  while(true) {
+		thrd_dst->preempted = __NO_PREEMPTION;
+		thrd_dst->state = Active;
+
+		// Update global state
+		kernelTLS().this_thread = thrd_dst;
+
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( kernelTLS().this_thread == thrd_dst );
+		/* paranoid */ verify( thrd_dst->curr_cluster == this->cltr );
+		/* paranoid */ verify( thrd_dst->context.SP );
+		/* paranoid */ verify( thrd_dst->state != Halted );
+		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ) || thrd_dst->curr_cor == proc_cor, "ERROR : Destination $thread %p has been corrupted.\n StackPointer too small.\n", thrd_dst ); // add escape condition if we are setting up the processor
+		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit) || thrd_dst->curr_cor == proc_cor, "ERROR : Destination $thread %p has been corrupted.\n StackPointer too large.\n", thrd_dst ); // add escape condition if we are setting up the processor
+		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_dst->canary );
+
+
+
+		// set context switch to the thread that the processor is executing
+		__cfactx_switch( &proc_cor->context, &thrd_dst->context );
+		// when __cfactx_switch returns we are back in the processor coroutine
+
+		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_dst->canary );
+		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit), "ERROR : Destination $thread %p has been corrupted.\n StackPointer too large.\n", thrd_dst );
+		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ), "ERROR : Destination $thread %p has been corrupted.\n StackPointer too small.\n", thrd_dst );
+		/* paranoid */ verify( thrd_dst->context.SP );
+		/* paranoid */ verify( thrd_dst->curr_cluster == this->cltr );
+		/* paranoid */ verify( kernelTLS().this_thread == thrd_dst );
+		/* paranoid */ verify( ! __preemption_enabled() );
+
+		// Reset global state
+		kernelTLS().this_thread = 0p;
+
+		// We just finished running a thread, there are a few things that could have happened.
+		// 1 - Regular case : the thread has blocked and now one has scheduled it yet.
+		// 2 - Racy case    : the thread has blocked but someone has already tried to schedule it.
+		// 4 - Preempted
+		// In case 1, we may have won a race so we can't write to the state again.
+		// In case 2, we lost the race so we now own the thread.
+
+		if(unlikely(thrd_dst->preempted != __NO_PREEMPTION)) {
+			// The thread was preempted, reschedule it and reset the flag
+			schedule_thread$( thrd_dst );
+			break RUNNING;
+		}
+
+		if(unlikely(thrd_dst->state == Halting)) {
+			// The thread has halted, it should never be scheduled/run again
+			// finish the thread
+			__thread_finish( thrd_dst );
+			break RUNNING;
+		}
+
+		/* paranoid */ verify( thrd_dst->state == Active );
+		thrd_dst->state = Blocked;
+
+		// set state of processor coroutine to active and the thread to inactive
+		int old_ticket = __atomic_fetch_sub(&thrd_dst->ticket, 1, __ATOMIC_SEQ_CST);
+		switch(old_ticket) {
+			case TICKET_RUNNING:
+				// This is case 1, the regular case, nothing more is needed
+				break RUNNING;
+			case TICKET_UNBLOCK:
+				#if !defined(__CFA_NO_STATISTICS__)
+					__tls_stats()->ready.threads.threads++;
+					__push_stat( __tls_stats(), __tls_stats()->ready.threads.threads, false, "Processor", this );
+				#endif
+				// This is case 2, the racy case, someone tried to run this thread before it finished blocking
+				// In this case, just run it again.
+				continue RUNNING;
+			default:
+				// This makes no sense, something is wrong abort
+				abort();
+		}
+	}
+
+	// Just before returning to the processor, set the processor coroutine to active
+	proc_cor->state = Active;
+
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p finished running thread %p\n", this, thrd_dst);
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		__tls_stats()->ready.threads.threads--;
+		__push_stat( __tls_stats(), __tls_stats()->ready.threads.threads, false, "Processor", this );
+	#endif
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+// KERNEL_ONLY
+void returnToKernel() {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	$coroutine * proc_cor = get_coroutine(kernelTLS().this_processor->runner);
+	$thread * thrd_src = kernelTLS().this_thread;
+
+	__STATS( thrd_src->last_proc = kernelTLS().this_processor; )
+
+	// Run the thread on this processor
+	{
+		int local_errno = *__volatile_errno();
+		#if defined( __i386 ) || defined( __x86_64 )
+			__x87_store;
+		#endif
+		/* paranoid */ verify( proc_cor->context.SP );
+		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_src->canary );
+		__cfactx_switch( &thrd_src->context, &proc_cor->context );
+		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_src->canary );
+		#if defined( __i386 ) || defined( __x86_64 )
+			__x87_load;
+		#endif
+		*__volatile_errno() = local_errno;
+	}
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		/* paranoid */ verify( thrd_src->last_proc != 0p );
+		if(thrd_src->last_proc != kernelTLS().this_processor) {
+			__tls_stats()->ready.threads.migration++;
+		}
+	#endif
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) < ((uintptr_t)__get_stack(thrd_src->curr_cor)->base ), "ERROR : Returning $thread %p has been corrupted.\n StackPointer too small.\n", thrd_src );
+	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) > ((uintptr_t)__get_stack(thrd_src->curr_cor)->limit), "ERROR : Returning $thread %p has been corrupted.\n StackPointer too large.\n", thrd_src );
+}
+
+//-----------------------------------------------------------------------------
+// Scheduler routines
+// KERNEL ONLY
+static void __schedule_thread( $thread * thrd ) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify( ready_schedule_islocked());
+	/* paranoid */ verify( thrd );
+	/* paranoid */ verify( thrd->state != Halted );
+	/* paranoid */ verify( thrd->curr_cluster );
+	/* paranoid */ #if defined( __CFA_WITH_VERIFY__ )
+	/* paranoid */ 	if( thrd->state == Blocked || thrd->state == Start ) assertf( thrd->preempted == __NO_PREEMPTION,
+					"Error inactive thread marked as preempted, state %d, preemption %d\n", thrd->state, thrd->preempted );
+	/* paranoid */ 	if( thrd->preempted != __NO_PREEMPTION ) assertf(thrd->state == Active,
+					"Error preempted thread marked as not currently running, state %d, preemption %d\n", thrd->state, thrd->preempted );
+	/* paranoid */ #endif
+	/* paranoid */ verifyf( thrd->link.next == 0p, "Expected null got %p", thrd->link.next );
+	/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd->canary );
+
+	const bool local = thrd->state != Start;
+	if (thrd->preempted == __NO_PREEMPTION) thrd->state = Ready;
+
+	// Dereference the thread now because once we push it, there is not guaranteed it's still valid.
+	struct cluster * cl = thrd->curr_cluster;
+	__STATS(bool outside = thrd->last_proc && thrd->last_proc != kernelTLS().this_processor; )
+
+	// push the thread to the cluster ready-queue
+	push( cl, thrd, local );
+
+	// variable thrd is no longer safe to use
+	thrd = 0xdeaddeaddeaddeadp;
+
+	// wake the cluster using the save variable.
+	__wake_one( cl );
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		if( kernelTLS().this_stats ) {
+			__tls_stats()->ready.threads.threads++;
+			if(outside) {
+				__tls_stats()->ready.threads.extunpark++;
+			}
+			__push_stat( __tls_stats(), __tls_stats()->ready.threads.threads, false, "Processor", kernelTLS().this_processor );
+		}
+		else {
+			__atomic_fetch_add(&cl->stats->ready.threads.threads, 1, __ATOMIC_RELAXED);
+			__atomic_fetch_add(&cl->stats->ready.threads.extunpark, 1, __ATOMIC_RELAXED);
+			__push_stat( cl->stats, cl->stats->ready.threads.threads, true, "Cluster", cl );
+		}
+	#endif
+
+	/* paranoid */ verify( ready_schedule_islocked());
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+void schedule_thread$( $thread * thrd ) {
+	ready_schedule_lock();
+		__schedule_thread( thrd );
+	ready_schedule_unlock();
+}
+
+// KERNEL ONLY
+static inline $thread * __next_thread(cluster * this) with( *this ) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	ready_schedule_lock();
+		$thread * thrd = pop_fast( this );
+	ready_schedule_unlock();
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+	return thrd;
+}
+
+// KERNEL ONLY
+static inline $thread * __next_thread_slow(cluster * this) with( *this ) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	ready_schedule_lock();
+		$thread * thrd;
+		for(25) {
+			thrd = pop_slow( this );
+			if(thrd) goto RET;
+		}
+		thrd = pop_search( this );
+
+		RET:
+	ready_schedule_unlock();
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+	return thrd;
+}
+
+static inline bool __must_unpark( $thread * thrd ) {
+	int old_ticket = __atomic_fetch_add(&thrd->ticket, 1, __ATOMIC_SEQ_CST);
+	switch(old_ticket) {
+		case TICKET_RUNNING:
+			// Wake won the race, the thread will reschedule/rerun itself
+			return false;
+		case TICKET_BLOCKED:
+			/* paranoid */ verify( ! thrd->preempted != __NO_PREEMPTION );
+			/* paranoid */ verify( thrd->state == Blocked );
+			return true;
+		default:
+			// This makes no sense, something is wrong abort
+			abort("Thread %p (%s) has mismatch park/unpark\n", thrd, thrd->self_cor.name);
+	}
+}
+
+void __kernel_unpark( $thread * thrd ) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify( ready_schedule_islocked());
+
+	if( !thrd ) return;
+
+	if(__must_unpark(thrd)) {
+		// Wake lost the race,
+		__schedule_thread( thrd );
+	}
+
+	/* paranoid */ verify( ready_schedule_islocked());
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+void unpark( $thread * thrd ) {
+	if( !thrd ) return;
+
+	if(__must_unpark(thrd)) {
+		disable_interrupts();
+			// Wake lost the race,
+			schedule_thread$( thrd );
+		enable_interrupts(false);
+	}
+}
+
+void park( void ) {
+	__disable_interrupts_checked();
+		/* paranoid */ verify( kernelTLS().this_thread->preempted == __NO_PREEMPTION );
+		returnToKernel();
+	__enable_interrupts_checked();
+
+}
+
+extern "C" {
+	// Leave the thread monitor
+	// last routine called by a thread.
+	// Should never return
+	void __cfactx_thrd_leave() {
+		$thread * thrd = active_thread();
+		$monitor * this = &thrd->self_mon;
+
+		// Lock the monitor now
+		lock( this->lock __cfaabi_dbg_ctx2 );
+
+		disable_interrupts();
+
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( thrd->state == Active );
+		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd->canary );
+		/* paranoid */ verify( kernelTLS().this_thread == thrd );
+		/* paranoid */ verify( thrd->context.SP );
+		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) > ((uintptr_t)__get_stack(thrd->curr_cor)->limit), "ERROR : $thread %p has been corrupted.\n StackPointer too large.\n", thrd );
+		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) < ((uintptr_t)__get_stack(thrd->curr_cor)->base ), "ERROR : $thread %p has been corrupted.\n StackPointer too small.\n", thrd );
+
+		thrd->state = Halting;
+		if( TICKET_RUNNING != thrd->ticket ) { abort( "Thread terminated with pending unpark" ); }
+		if( thrd != this->owner ) { abort( "Thread internal monitor has incorrect owner" ); }
+		if( this->recursion != 1) { abort( "Thread internal monitor has unbalanced recursion" ); }
+
+		// Leave the thread
+		returnToKernel();
+
+		// Control flow should never reach here!
+		abort();
+	}
+}
+
+// KERNEL ONLY
+bool force_yield( __Preemption_Reason reason ) {
+	__disable_interrupts_checked();
+		$thread * thrd = kernelTLS().this_thread;
+		/* paranoid */ verify(thrd->state == Active);
+
+		// SKULLDUGGERY: It is possible that we are preempting this thread just before
+		// it was going to park itself. If that is the case and it is already using the
+		// intrusive fields then we can't use them to preempt the thread
+		// If that is the case, abandon the preemption.
+		bool preempted = false;
+		if(thrd->link.next == 0p) {
+			preempted = true;
+			thrd->preempted = reason;
+			returnToKernel();
+		}
+	__enable_interrupts_checked( false );
+	return preempted;
+}
+
+//=============================================================================================
+// Kernel Idle Sleep
+//=============================================================================================
+// Wake a thread from the front if there are any
+static void __wake_one(cluster * this) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify( ready_schedule_islocked() );
+
+	// Check if there is a sleeping processor
+	processor * p;
+	unsigned idle;
+	unsigned total;
+	[idle, total, p] = query_idles(this->procs);
+
+	// If no one is sleeping, we are done
+	if( idle == 0 ) return;
+
+	// We found a processor, wake it up
+	eventfd_t val;
+	val = 1;
+	eventfd_write( p->idle, val );
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		if( kernelTLS().this_stats ) {
+			__tls_stats()->ready.sleep.wakes++;
+		}
+		else {
+			__atomic_fetch_add(&this->stats->ready.sleep.wakes, 1, __ATOMIC_RELAXED);
+		}
+	#endif
+
+	/* paranoid */ verify( ready_schedule_islocked() );
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	return;
+}
+
+// Unconditionnaly wake a thread
+void __wake_proc(processor * this) {
+	__cfadbg_print_safe(runtime_core, "Kernel : waking Processor %p\n", this);
+
+	__disable_interrupts_checked();
+		/* paranoid */ verify( ! __preemption_enabled() );
+		eventfd_t val;
+		val = 1;
+		eventfd_write( this->idle, val );
+	__enable_interrupts_checked();
+}
+
+static void mark_idle(__cluster_proc_list & this, processor & proc) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	lock( this );
+		this.idle++;
+		/* paranoid */ verify( this.idle <= this.total );
+		remove(proc);
+		insert_first(this.idles, proc);
+	unlock( this );
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+static void mark_awake(__cluster_proc_list & this, processor & proc) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	lock( this );
+		this.idle--;
+		/* paranoid */ verify( this.idle >= 0 );
+		remove(proc);
+		insert_last(this.actives, proc);
+	unlock( this );
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+static [unsigned idle, unsigned total, * processor] query_idles( & __cluster_proc_list this ) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify( ready_schedule_islocked() );
+
+	for() {
+		uint64_t l = __atomic_load_n(&this.lock, __ATOMIC_SEQ_CST);
+		if( 1 == (l % 2) ) { Pause(); continue; }
+		unsigned idle    = this.idle;
+		unsigned total   = this.total;
+		processor * proc = &this.idles`first;
+		// Compiler fence is unnecessary, but gcc-8 and older incorrectly reorder code without it
+		asm volatile("": : :"memory");
+		if(l != __atomic_load_n(&this.lock, __ATOMIC_SEQ_CST)) { Pause(); continue; }
+		return [idle, total, proc];
+	}
+
+	/* paranoid */ verify( ready_schedule_islocked() );
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+//=============================================================================================
+// Unexpected Terminating logic
+//=============================================================================================
+void __kernel_abort_msg( char * abort_text, int abort_text_size ) {
+	$thread * thrd = __cfaabi_tls.this_thread;
+
+	if(thrd) {
+		int len = snprintf( abort_text, abort_text_size, "Error occurred while executing thread %.256s (%p)", thrd->self_cor.name, thrd );
+		__cfaabi_bits_write( STDERR_FILENO, abort_text, len );
+
+		if ( &thrd->self_cor != thrd->curr_cor ) {
+			len = snprintf( abort_text, abort_text_size, " in coroutine %.256s (%p).\n", thrd->curr_cor->name, thrd->curr_cor );
+			__cfaabi_bits_write( STDERR_FILENO, abort_text, len );
+		}
+		else {
+			__cfaabi_bits_write( STDERR_FILENO, ".\n", 2 );
+		}
+	}
+	else {
+		int len = snprintf( abort_text, abort_text_size, "Error occurred outside of any thread.\n" );
+		__cfaabi_bits_write( STDERR_FILENO, abort_text, len );
+	}
+}
+
+int __kernel_abort_lastframe( void ) __attribute__ ((__nothrow__)) {
+	return get_coroutine(__cfaabi_tls.this_thread) == get_coroutine(mainThread) ? 4 : 2;
+}
+
+static __spinlock_t kernel_debug_lock;
+
+extern "C" {
+	void __cfaabi_bits_acquire() {
+		lock( kernel_debug_lock __cfaabi_dbg_ctx2 );
+	}
+
+	void __cfaabi_bits_release() {
+		unlock( kernel_debug_lock );
+	}
+}
+
+//=============================================================================================
+// Kernel Utilities
+//=============================================================================================
+#if defined(CFA_HAVE_LINUX_IO_URING_H)
+#include "io/types.hfa"
+#endif
+
+static inline bool __maybe_io_drain( processor * proc ) {
+	bool ret = false;
+	#if defined(CFA_HAVE_LINUX_IO_URING_H)
+		__cfadbg_print_safe(runtime_core, "Kernel : core %p checking io for ring %d\n", proc, proc->io.ctx->fd);
+
+		// Check if we should drain the queue
+		$io_context * ctx = proc->io.ctx;
+		unsigned head = *ctx->cq.head;
+		unsigned tail = *ctx->cq.tail;
+		if(head == tail) return false;
+		#if OLD_MAIN
+		ready_schedule_lock();
+		ret = __cfa_io_drain( proc );
+		ready_schedule_unlock();
+		#else
+			ret = __cfa_io_drain( proc );
+	#endif
+	#endif
+	return ret;
+}
+
+//-----------------------------------------------------------------------------
+// Debug
+__cfaabi_dbg_debug_do(
+	extern "C" {
+		void __cfaabi_dbg_record_lock(__spinlock_t & this, const char prev_name[]) {
+			this.prev_name = prev_name;
+			this.prev_thrd = kernelTLS().this_thread;
+		}
+	}
+)
+
+//-----------------------------------------------------------------------------
+// Debug
+bool threading_enabled(void) __attribute__((const)) {
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Statistics
+#if !defined(__CFA_NO_STATISTICS__)
+	void print_halts( processor & this ) {
+		this.print_halts = true;
+	}
+
+	static void crawl_list( cluster * cltr, dlist(processor) & list, unsigned count ) {
+		/* paranoid */ verify( cltr->stats );
+
+		processor * it = &list`first;
+		for(unsigned i = 0; i < count; i++) {
+			/* paranoid */ verifyf( it, "Unexpected null iterator, at index %u of %u\n", i, count);
+			/* paranoid */ verify( it->local_data->this_stats );
+			__tally_stats( cltr->stats, it->local_data->this_stats );
+			it = &(*it)`next;
+		}
+	}
+
+	void crawl_cluster_stats( cluster & this ) {
+		// Stop the world, otherwise stats could get really messed-up
+		// this doesn't solve all problems but does solve many
+		// so it's probably good enough
+		uint_fast32_t last_size = ready_mutate_lock();
+
+			crawl_list(&this, this.procs.actives, this.procs.total - this.procs.idle);
+			crawl_list(&this, this.procs.idles  , this.procs.idle );
+
+		// Unlock the RWlock
+		ready_mutate_unlock( last_size );
+	}
+
+
+	void print_stats_now( cluster & this, int flags ) {
+		crawl_cluster_stats( this );
+		__print_stats( this.stats, this.print_stats, "Cluster", this.name, (void*)&this );
+	}
+#endif
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

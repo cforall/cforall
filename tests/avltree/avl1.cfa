@@ -1,0 +1,48 @@
+#include "avl.h"
+// #include "cwrap.h"
+#include <stdlib.hfa>
+
+forall(K | Comparable(K), V)
+void ?{}(tree(K, V) &t, K key, V value){
+  (t.key) { key };
+  (t.value) { value };
+  t.parent = NULL;
+  t.left = NULL;
+  t.right = NULL;
+  t.balance = 0;
+}
+
+forall(K| Comparable(K), V)
+void ^?{}(tree(K, V) & t){
+  delete(t.left);
+  delete(t.right);
+  ^(t.key){};
+  ^(t.value){};
+}
+
+forall(K | Comparable(K), V)
+tree(K, V) * create(K key, V value) {
+  // infinite loop trying to resolve ... t = malloc();
+  tree(K, V) * t = ( tree(K, V) * ) malloc(sizeof(tree(K,V)));
+  (*t){ key, value };
+  return t;
+}
+
+// // Helper function to print trees
+// forall(otype K | Comparable(K), otype V)
+// void printTree(tree * t, int level){
+//   if (empty(t)){
+//     return;
+//   }
+
+//   printTree(t->left, level+1);
+//   printf("key: %d, value: %s, level: %d\n", t->key, t->value, level);
+//   printTree(t->right, level+1);
+// }
+
+// // inorder traversal of t
+// // prints each key, followed by the value
+// forall(otype K | Comparable(K), otype V)
+// void printTree(tree(K, V) * t){
+//     printTree(t, 0);
+// }

@@ -1,0 +1,74 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// tuplePolymorphism.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Tue Nov 16 10:38:00 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu May 18 18:05:12 2017
+// Update Count     : 4
+//
+
+// packed is needed so that structs are not passed with the same alignment as function arguments
+__attribute__((packed)) struct A {
+	double x;
+	char y;
+	double z;
+};
+
+__attribute__((packed)) struct B {
+	long long x;
+	char y;
+	long long z;
+};
+
+// ensure that f is a viable candidate for g, even though its parameter structure does not exactly match
+[A] f([A, B] x, B y) { printf("%g %c %g %lld %c %lld %lld %c %lld\n", x.0.[x,y,z], x.1.[x,y,z], y.[x,y,z]); return x.0; }
+forall(T, U | { T f(T, U, U); })
+void g(T x, U y) { f(x, y, y); }
+
+// add two triples
+forall(T | { T ?+?(T, T); })
+[T, T, T] ?+?([T, T, T] x, [T, T, T] y) {
+	return [x.0+y.0, x.1+y.1, x.2+y.2];
+}
+
+int main() {
+	int x1 = 123, x3 = 456;
+	double x2 = 999.123;
+
+	int i1 = 111, i3 = 222;
+	double i2 = 333;
+
+	int d1 = 555, d3 = 444;
+	double d2 = 666;
+
+
+	[i1, i2, i3] = ([x1, (int)x2, x3]) + ([9, 2, 3]);
+	[d1, d2, d3] = ([x1, x2, x3]) + ([9, 2, 3]);
+	printf("%d %g %d\n", i1, i2, i3);
+	printf("%d %g %d\n", d1, d2, d3);
+
+	[double, double, double] zzz;
+	zzz = [x1, x2, x3];
+	printf("%g %g %g\n", zzz);
+	[x1, x2, x3] = zzz+zzz;
+	printf("%d %g %d\n", x1, x2, x3);
+
+	// ensure non-matching assertions are specialized correctly
+	g((A){ 1.21, 'x', 10.21}, (B){ 1111LL, 'v', 54385938LL });
+}
+
+forall(T)
+[T, T] foo([T, T] y) {
+	[T, T] x;
+	return x;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

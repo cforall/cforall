@@ -1,0 +1,39 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// startup.hfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Mar 29 15:56:41 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Jul 24 16:16:37 2018
+// Update Count     : 4
+//
+
+#pragma once
+
+#if GCC_VERSION > 50000
+extern "C" {
+	enum {
+		STARTUP_PRIORITY_MEMORY     = 101,
+		STARTUP_PRIORITY_CORE       = 102,
+		STARTUP_PRIORITY_KERNEL     = 103,
+		STARTUP_PRIORITY_IOSTREAM   = 104,
+		STARTUP_PRIORITY_APPREADY   = 105,
+	};
+}
+#else
+#define STARTUP_PRIORITY_MEMORY     101
+#define STARTUP_PRIORITY_CORE       102
+#define STARTUP_PRIORITY_KERNEL     103
+#define STARTUP_PRIORITY_IOSTREAM   104
+#define STARTUP_PRIORITY_APPREADY   105
+#endif
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

@@ -1,0 +1,164 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2018 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// time.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Mar 27 13:33:14 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Feb  4 08:24:18 2020
+// Update Count     : 70
+//
+
+#include "time.hfa"
+#include "fstream.hfa"
+#include <stdio.h>										// snprintf
+#include <assert.h>
+
+static char * nanomsd( long int ns, char * buf ) {		// most significant digits
+	snprintf( buf, 16, ".%09ld", ns );
+	int i;
+	for ( i = 9; buf[i] == '0' ; i -= 1 );				// find least significant digit
+	buf[i + 1] = '\0';
+	return buf;
+} // nanomsd
+
+
+//######################### Duration #########################
+
+
+forall( ostype & | ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, Duration dur ) with( dur ) {
+		(ostype &)(os | tn / TIMEGRAN);					// print seconds
+		long int ns = (tn < 0 ? -tn : tn) % TIMEGRAN;	// compute nanoseconds
+		if ( ns != 0 ) {								// some ?
+			char buf[16];
+			(ostype &)(os | nanomsd( ns, buf ));		// print nanoseconds
+		} // if
+		return os;
+	} // ?|?
+
+	void ?|?( ostype & os, Duration dur ) with( dur ) {
+		(ostype &)(os | dur); ends( os );
+	} // ?|?
+} // distribution
+
+
+//######################### Time #########################
+
+
+#ifdef __CFA_DEBUG__
+static void tabort( int year, int month, int day, int hour, int min, int sec, int64_t nsec ) {
+	abort | "Attempt to create Time( year=" | year | "(>=1970), month=" | month | "(1-12), day=" | day | "(1-31), hour=" | hour | "(0-23), min=" | min | "(0-59), sec=" | sec
+		  | "(0-60), nsec=" | nsec | "(0-999_999_999), which is not in the range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038, where month and day have 1 origin.";
+} // tabort
+#endif // __CFA_DEBUG__
+
+void ?{}( Time & time, int year, int month, int day, int hour, int min, int sec, int64_t nsec ) with( time ) {
+	tm tm;
+
+	// Values can be in any range (+/-) but result must be in the epoch.
+	tm.tm_year = year - 1900;							// mktime uses 1900 as its starting point
+	// Make month in range 1-12 to match with day.
+	tm.tm_mon = month - 1;								// mktime uses range 0-11
+	tm.tm_mday = day;									// mktime uses range 1-31
+	tm.tm_hour = hour;
+	tm.tm_min = min;
+	tm.tm_sec = sec;
+	tm.tm_isdst = -1;									// let mktime determine if alternate timezone is in effect
+	time_t epochsec = mktime( &tm );
+#ifdef __CFA_DEBUG__
+	if ( epochsec <= (time_t)-1 ) {						// MUST BE LESS THAN OR EQUAL!
+		tabort( year, month, day, hour, min, sec, nsec );
+	} // if
+#endif // __CFA_DEBUG__
+	tn = (int64_t)(epochsec) * TIMEGRAN + nsec;			// convert to nanoseconds
+#ifdef __CFA_DEBUG__
+	if ( tn > 2147483647LL * TIMEGRAN ) {				// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
+		tabort( year, month, day, hour, min, sec, nsec );
+	} // if
+#endif // __CFA_DEBUG__
+} // ?{}
+
+char * yy_mm_dd( Time time, char * buf ) with( time ) {
+	time_t s = tn / TIMEGRAN;
+	tm tm;
+	gmtime_r( &s, &tm );								// tm_mon <= 11, tm_mday <= 31
+#if defined(__GNUC__) && __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+	snprintf( buf, 9, "%02d/%02d/%02d", tm.tm_year % 99, tm.tm_mon + 1, tm.tm_mday );
+#if defined(__GNUC__) && __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
+	return buf;
+} // yy_mm_dd
+
+char * mm_dd_yy( Time time, char * buf ) with( time ) {
+	time_t s = tn / TIMEGRAN;
+	tm tm;
+	gmtime_r( &s, &tm );								// tm_mon <= 11, tm_mday <= 31
+#if defined(__GNUC__) && __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+	snprintf( buf, 9, "%02d/%02d/%02d", tm.tm_mon + 1, tm.tm_mday, tm.tm_year % 99 );
+#if defined(__GNUC__) && __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
+	return buf;
+} // mm_dd_yy
+
+char * dd_mm_yy( Time time, char * buf ) with( time ) {
+	time_t s = tn / TIMEGRAN;
+	tm tm;
+	gmtime_r( &s, &tm );								// tm_mon <= 11, tm_mday <= 31
+#if defined(__GNUC__) && __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+	snprintf( buf, 9, "%02d/%02d/%02d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year % 99 );
+#if defined(__GNUC__) && __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
+	return buf;
+} // dd_mm_yy
+
+size_t strftime( char buf[], size_t size, const char fmt[], Time time ) with( time ) {
+	time_t s = tn / TIMEGRAN;
+	tm tm;
+	gmtime_r( &s, &tm );
+	return strftime( buf, size, fmt, &tm );
+} // strftime
+
+forall( ostype & | ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, Time time ) with( time ) {
+		char buf[32];									// at least 26
+		time_t s = tn / TIMEGRAN;
+		ctime_r( &s, (char *)&buf );					// 26 characters: "Wed Jun 30 21:49:08 1993\n"
+		buf[24] = '\0';									// remove trailing '\n'
+		long int ns = (tn < 0 ? -tn : tn) % TIMEGRAN;	// compute nanoseconds
+		if ( ns == 0 ) {								// none ?
+			(ostype &)(os | buf);						// print date/time/year
+		} else {
+			buf[19] = '\0';								// truncate to "Wed Jun 30 21:49:08"
+			char buf2[16];
+			nanomsd( ns, buf2 );						// compute nanoseconds
+			(ostype &)(os | buf | buf2 | ' ' | &buf[20]); // print date/time, nanoseconds and year
+		} // if
+		return os;
+	} // ?|?
+
+	void ?|?( ostype & os, Time time ) with( time ) {
+		(ostype &)(os | time); ends( os );
+	} // ?|?
+} // distribution
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

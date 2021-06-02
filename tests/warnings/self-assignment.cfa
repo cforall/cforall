@@ -1,0 +1,40 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2018 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// self-assignment.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Thu Mar 1 13:53:57 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 09:24:34 2020
+// Update Count     : 6
+//
+
+struct S {
+	int i;
+};
+
+struct T {
+	S s;
+};
+
+int main() {
+	int j = 0;
+	S s = { 0 };
+	T t = { { 0 } };
+
+	j = j;
+	s = s;
+	s.i = s.i;
+	t.s.i = t.s.i;
+
+	#pragma message( "Compiled" )			// force non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa self-assignment.cfa" //
+// End: //

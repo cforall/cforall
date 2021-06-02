@@ -1,0 +1,21 @@
+termination throw
+finally during unwind
+Exiting: termination inner finally
+termination catch
+finally after catch
+Exiting: termination outer finally
+
+resumption throw
+resumption catch
+finally after resume
+Exiting: resumption inner finally
+finally after catch
+Exiting: resumption outer finally
+
+walking out of try
+walking through finally
+Exiting: walking finally
+
+jumping out of try
+jumping through finally
+Exiting: jumping finally

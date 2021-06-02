@@ -1,0 +1,38 @@
+int ?*?( int a, int b ) {
+	return 0;
+}
+
+int ?()( int number1, int number2 ) {
+	return number1 * number2;
+}
+
+int ?+?( int a, int b ) {
+	return 0;
+}
+
+int ?=?( int &a, int b ) {
+	return 0;
+}
+struct accumulator {
+	int total;
+};
+
+char ?()( struct accumulator a, char number1, char number2 ) {
+	return 'a';
+}
+
+void f( void ) {
+	char a, b;
+	?()( a, b );
+	a(b);
+	a + b;
+}
+
+int main(int argc, char const *argv[]) {
+	/* code */
+	printf( "done\n" );				// non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

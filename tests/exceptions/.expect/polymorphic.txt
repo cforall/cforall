@@ -1,0 +1,7 @@
+terminate catch
+resume catch
+caught proxy(char)
+
+-7
+0
+1

@@ -1,0 +1,28 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// optional.h --
+//
+// Author           : Michael L. Brooks
+// Created On       : Mon Jun 17 10:05:00 2019
+// Last Modified By : Michael L. Brooks
+// Last Modified On : Mon Jun 17 10:05:00 2019
+// Update Count     : 1
+//
+
+#pragma once
+// Pragmas for header cleanup tool
+// IWYU pragma: private, include <optional>
+
+#if __cplusplus < 201703L
+#include_next <experimental/optional>
+namespace std {
+	using std::experimental::optional;
+	using std::experimental::nullopt;
+}
+#else
+#include_next <optional>
+#endif

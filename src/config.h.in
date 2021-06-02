@@ -1,0 +1,141 @@
+/* src/config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* CPU to use if the -m32 flags is given. */
+#undef CFA_32_CPU
+
+/* CPU to use if the -m64 flags is given. */
+#undef CFA_64_CPU
+
+/* Backend compiler to use. */
+#undef CFA_BACKEND_CC
+
+/* Location of cfa command. */
+#undef CFA_BINDIR
+
+/* Default cpu to use if neither -m32 or -m64 are defined. */
+#undef CFA_DEFAULT_CPU
+
+/* compilation flags for cfa libraries and test programs. */
+#undef CFA_FLAGS
+
+/* Location of include files. */
+#undef CFA_INCDIR
+
+/* Location of cc1 and cfa-cpp commands. */
+#undef CFA_LIBDIR
+
+/* Location of cfa install. */
+#undef CFA_PREFIX
+
+/* Sets whether or not to use the new-ast, this is adefault value and can be
+   overrided by --old-ast and --new-ast */
+#undef CFA_USE_NEW_AST
+
+/* Major.Minor */
+#undef CFA_VERSION
+
+/* Build version number. */
+#undef CFA_VERSION_BUILD
+
+/* Major.Minor.Patch.Build */
+#undef CFA_VERSION_FULL
+
+/* Major.Minor.Patch */
+#undef CFA_VERSION_LONG
+
+/* Major version number. */
+#undef CFA_VERSION_MAJOR
+
+/* Minor version number. */
+#undef CFA_VERSION_MINOR
+
+/* Patch version number. */
+#undef CFA_VERSION_PATCH
+
+/* Major */
+#undef CFA_VERSION_SHORT
+
+/* Have compiler warning cast-function-type. */
+#undef HAVE_CAST_FUNCTION_TYPE
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Have keywords _FloatXX. */
+#undef HAVE_KEYWORDS_FLOATXX
+
+/* Define to 1 if you have the <libintl.h> header file. */
+#undef HAVE_LIBINTL_H
+
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if the system has the type `_Float32'. */
+#undef HAVE__FLOAT32
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#undef LT_OBJDIR
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Top build directory */
+#undef TOP_BUILDDIR
+
+/* Top src directory */
+#undef TOP_SRCDIR
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER

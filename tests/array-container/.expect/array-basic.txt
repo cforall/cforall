@@ -1,0 +1,10 @@
+expect Ws             = 7.060606
+result Ws [][][][] lo = 7.060606
+result Ws [,,,]    lo = 7.060606
+result Ws [][][][] hi = 7.060606
+result Ws [,,,]    hi = 7.060606
+expect Xs             = 8.150808
+result Xs [][][][] lo = 8.150808
+result Xs [,,,]    lo = 8.150808
+result Xs [][][][] hi = 8.150808
+result Xs [,,,]    hi = 8.150808

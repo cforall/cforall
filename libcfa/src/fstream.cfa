@@ -1,0 +1,360 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// fstream.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Apr 28 20:37:53 2021
+// Update Count     : 445
+//
+
+#include "fstream.hfa"									// also includes iostream.hfa
+
+#include <stdio.h>										// vfprintf, vfscanf
+#include <stdlib.h>										// exit
+#include <stdarg.h>										// varargs
+#include <string.h>										// strncpy, strerror
+#include <assert.h>
+#include <errno.h>										// errno
+
+// *********************************** ofstream ***********************************
+
+
+#define IO_MSG "I/O error: "
+
+void ?{}( ofstream & os, void * file ) {
+	os.file$ = file;
+	os.sepDefault$ = true;
+	os.sepOnOff$ = false;
+	os.nlOnOff$ = true;
+	os.prt$ = false;
+	os.sawNL$ = false;
+	os.acquired$ = false;
+	sepSetCur$( os, sepGet( os ) );
+	sepSet( os, " " );
+	sepSetTuple( os, ", " );
+} // ?{}
+
+// private
+bool sepPrt$( ofstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
+void sepReset$( ofstream & os ) { os.sepOnOff$ = os.sepDefault$; }
+void sepReset$( ofstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
+const char * sepGetCur$( ofstream & os ) { return os.sepCur$; }
+void sepSetCur$( ofstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
+bool getNL$( ofstream & os ) { return os.sawNL$; }
+void setNL$( ofstream & os, bool state ) { os.sawNL$ = state; }
+bool getANL$( ofstream & os ) { return os.nlOnOff$; }
+bool getPrt$( ofstream & os ) { return os.prt$; }
+void setPrt$( ofstream & os, bool state ) { os.prt$ = state; }
+
+// public
+void ?{}( ofstream & os ) { os.file$ = 0p; }
+
+void ?{}( ofstream & os, const char name[], const char mode[] ) {
+	open( os, name, mode );
+} // ?{}
+
+void ?{}( ofstream & os, const char name[] ) {
+	open( os, name, "w" );
+} // ?{}
+
+void ^?{}( ofstream & os ) {
+	close( os );
+} // ^?{}
+
+void sepOn( ofstream & os ) { os.sepOnOff$ = ! getNL$( os ); }
+void sepOff( ofstream & os ) { os.sepOnOff$ = false; }
+
+bool sepDisable( ofstream & os ) {
+	bool temp = os.sepDefault$;
+	os.sepDefault$ = false;
+	sepReset$( os );
+	return temp;
+} // sepDisable
+
+bool sepEnable( ofstream & os ) {
+	bool temp = os.sepDefault$;
+	os.sepDefault$ = true;
+	if ( os.sepOnOff$ ) sepReset$( os );				// start of line ?
+	return temp;
+} // sepEnable
+
+void nlOn( ofstream & os ) { os.nlOnOff$ = true; }
+void nlOff( ofstream & os ) { os.nlOnOff$ = false; }
+
+const char * sepGet( ofstream & os ) { return os.separator$; }
+void sepSet( ofstream & os, const char s[] ) {
+	assert( s );
+	strncpy( os.separator$, s, ofstream_sepSize - 1 );
+	os.separator$[ofstream_sepSize - 1] = '\0';
+} // sepSet
+
+const char * sepGetTuple( ofstream & os ) { return os.tupleSeparator$; }
+void sepSetTuple( ofstream & os, const char s[] ) {
+	assert( s );
+	strncpy( os.tupleSeparator$, s, ofstream_sepSize - 1 );
+	os.tupleSeparator$[ofstream_sepSize - 1] = '\0';
+} // sepSet
+
+void ends( ofstream & os ) {
+	if ( getANL$( os ) ) nl( os );
+	else setPrt$( os, false );							// turn off
+	if ( &os == &exit ) exit( EXIT_FAILURE );
+	if ( &os == &abort ) abort();
+	if ( os.acquired$ ) { os.acquired$ = false; release( os ); }
+} // ends
+
+bool fail( ofstream & os ) {
+	return os.file$ == 0 || ferror( (FILE *)(os.file$) );
+} // fail
+
+void clear( ofstream & os ) {
+	clearerr( (FILE *)(os.file$) );
+} // clear
+
+int flush( ofstream & os ) {
+	return fflush( (FILE *)(os.file$) );
+} // flush
+
+void open( ofstream & os, const char name[], const char mode[] ) {
+	FILE * file = fopen( name, mode );
+	#ifdef __CFA_DEBUG__
+	if ( file == 0p ) {
+		throw (Open_Failure){ os };
+		// abort | IO_MSG "open output file \"" | name | "\"" | nl | strerror( errno );
+	} // if
+	#endif // __CFA_DEBUG__
+	(os){ file };
+} // open
+
+void open( ofstream & os, const char name[] ) {
+	open( os, name, "w" );
+} // open
+
+void close( ofstream & os ) {
+  if ( (FILE *)(os.file$) == 0p ) return;
+  if ( (FILE *)(os.file$) == (FILE *)stdout || (FILE *)(os.file$) == (FILE *)stderr ) return;
+
+	if ( fclose( (FILE *)(os.file$) ) == EOF ) {
+		abort | IO_MSG "close output" | nl | strerror( errno );
+	} // if
+	os.file$ = 0p;
+} // close
+
+ofstream & write( ofstream & os, const char data[], size_t size ) {
+	if ( fail( os ) ) {
+		abort | IO_MSG "attempt write I/O on failed stream";
+	} // if
+
+	if ( fwrite( data, 1, size, (FILE *)(os.file$) ) != size ) {
+		abort | IO_MSG "write" | nl | strerror( errno );
+	} // if
+	return os;
+} // write
+
+int fmt( ofstream & os, const char format[], ... ) {
+	va_list args;
+	va_start( args, format );
+	int len = vfprintf( (FILE *)(os.file$), format, args );
+	if ( len == EOF ) {
+		if ( ferror( (FILE *)(os.file$) ) ) {
+			abort | IO_MSG "invalid write";
+		} // if
+	} // if
+	va_end( args );
+
+	setPrt$( os, true );								// called in output cascade
+	sepReset$( os );									// reset separator
+	return len;
+} // fmt
+
+inline void acquire( ofstream & os ) {
+	lock( os.lock$ );
+	if ( ! os.acquired$ ) os.acquired$ = true;
+	else unlock( os.lock$ );
+} // acquire
+
+inline void release( ofstream & os ) {
+	unlock( os.lock$ );
+} // release
+
+void ?{}( osacquire & acq, ofstream & os ) { &acq.os = &os; lock( os.lock$ ); }
+void ^?{}( osacquire & acq ) { release( acq.os ); }
+
+static ofstream soutFile = { (FILE *)stdout };
+ofstream & sout = soutFile, & stdout = soutFile;
+static ofstream serrFile = { (FILE *)stderr };
+ofstream & serr = serrFile, & stderr = serrFile;
+
+static ofstream lsoutFile = { (FILE *)stdout };
+ofstream & lsout = lsoutFile;
+
+static ofstream exitFile = { (FILE *)stdout };
+ofstream & exit = exitFile;
+static ofstream abortFile = { (FILE *)stderr };
+ofstream & abort = abortFile;
+
+ofstream & nl( ofstream & os ) {
+	nl$( os );											// call basic_ostream nl
+	flush( os );
+	return os;
+	// (ofstream &)(os | '\n');
+	// setPrt$( os, false );							// turn off
+	// setNL$( os, true );
+	// flush( os );
+	// return sepOff( os );							// prepare for next line
+} // nl
+
+
+// *********************************** ifstream ***********************************
+
+
+// private
+void ?{}( ifstream & is, void * file ) {
+	is.file$ = file;
+	is.nlOnOff$ = false;
+	is.acquired$ = false;
+} // ?{}
+
+// public
+void ?{}( ifstream & is ) { is.file$ = 0p; }
+
+void ?{}( ifstream & is, const char name[], const char mode[] ) {
+	open( is, name, mode );
+} // ?{}
+
+void ?{}( ifstream & is, const char name[] ) {
+	open( is, name, "r" );
+} // ?{}
+
+void ^?{}( ifstream & is ) {
+	close( is );
+} // ^?{}
+
+void nlOn( ifstream & os ) { os.nlOnOff$ = true; }
+void nlOff( ifstream & os ) { os.nlOnOff$ = false; }
+bool getANL( ifstream & os ) { return os.nlOnOff$; }
+
+bool fail( ifstream & is ) {
+	return is.file$ == 0p || ferror( (FILE *)(is.file$) );
+} // fail
+
+void clear( ifstream & is ) {
+	clearerr( (FILE *)(is.file$) );
+} // clear
+
+void ends( ifstream & is ) {
+	if ( is.acquired$ ) { is.acquired$ = false; release( is ); }
+} // ends
+
+bool eof( ifstream & is ) {
+	return feof( (FILE *)(is.file$) );
+} // eof
+
+void open( ifstream & is, const char name[], const char mode[] ) {
+	FILE * file = fopen( name, mode );
+	#ifdef __CFA_DEBUG__
+	if ( file == 0p ) {
+		throw (Open_Failure){ is };
+		// abort | IO_MSG "open input file \"" | name | "\"" | nl | strerror( errno );
+	} // if
+	#endif // __CFA_DEBUG__
+	is.file$ = file;
+} // open
+
+void open( ifstream & is, const char name[] ) {
+	open( is, name, "r" );
+} // open
+
+void close( ifstream & is ) {
+  if ( (FILE *)(is.file$) == 0p ) return;
+  if ( (FILE *)(is.file$) == (FILE *)stdin ) return;
+
+	if ( fclose( (FILE *)(is.file$) ) == EOF ) {
+		abort | IO_MSG "close input" | nl | strerror( errno );
+	} // if
+	is.file$ = 0p;
+} // close
+
+ifstream & read( ifstream & is, char data[], size_t size ) {
+	if ( fail( is ) ) {
+		abort | IO_MSG "attempt read I/O on failed stream";
+	} // if
+
+	if ( fread( data, size, 1, (FILE *)(is.file$) ) == 0 ) {
+		abort | IO_MSG "read" | nl | strerror( errno );
+	} // if
+	return is;
+} // read
+
+ifstream &ungetc( ifstream & is, char c ) {
+	if ( fail( is ) ) {
+		abort | IO_MSG "attempt ungetc I/O on failed stream";
+	} // if
+
+	if ( ungetc( c, (FILE *)(is.file$) ) == EOF ) {
+		abort | IO_MSG "ungetc" | nl | strerror( errno );
+	} // if
+	return is;
+} // ungetc
+
+int fmt( ifstream & is, const char format[], ... ) {
+	va_list args;
+
+	va_start( args, format );
+	int len = vfscanf( (FILE *)(is.file$), format, args );
+	if ( len == EOF ) {
+		if ( ferror( (FILE *)(is.file$) ) ) {
+			abort | IO_MSG "invalid read";
+		} // if
+	} // if
+	va_end( args );
+	return len;
+} // fmt
+
+inline void acquire( ifstream & is ) {
+	lock( is.lock$ );
+	if ( ! is.acquired$ ) is.acquired$ = true;
+	else unlock( is.lock$ );
+} // acquire
+
+inline void release( ifstream & is ) {
+	unlock( is.lock$ );
+} // release
+
+void ?{}( isacquire & acq, ifstream & is ) { &acq.is = &is; lock( is.lock$ ); }
+void ^?{}( isacquire & acq ) { release( acq.is ); }
+
+static ifstream sinFile = { (FILE *)stdin };
+ifstream & sin = sinFile, & stdin = sinFile;
+
+
+// *********************************** exceptions ***********************************
+
+
+EHM_VIRTUAL_TABLE(Open_Failure, Open_Failure_main_table);
+void ?{}( Open_Failure & this, ofstream & ostream ) {
+	this.virtual_table = &Open_Failure_main_table;
+	this.ostream = &ostream;
+	this.tag = 1;
+}
+void ?{}( Open_Failure & this, ifstream & istream ) {
+	this.virtual_table = &Open_Failure_main_table;
+	this.istream = &istream;
+	this.tag = 0;
+}
+void throwOpen_Failure( ofstream & ostream ) {
+	Open_Failure exc = { ostream };
+}
+void throwOpen_Failure( ifstream & istream ) {
+	Open_Failure exc = { istream };
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

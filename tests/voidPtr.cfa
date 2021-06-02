@@ -1,0 +1,18 @@
+int main() {
+	int i, j;
+	void *a = &i, *b = &j;
+
+	if ( a == 0 ) {
+		abort();
+	}
+
+	if ( a == b ) {
+		abort();
+	}
+
+	if ( ! a ) {
+		abort();
+	}
+	printf( "done\n" );				// non-empty .expect file
+}
+

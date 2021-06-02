@@ -1,0 +1,45 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// declarationErrors.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Aug 17 08:23:43 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Nov  6 17:52:47 2018
+// Update Count     : 32
+// 
+
+static short int volatile static const x1;				// duplicate static
+extern short int static volatile const x2;				// multiple extern & static
+extern short int auto static volatile static extern const x3; // duplicate and multiple storage classes
+struct { int i; } const static volatile static x4;		// duplicate static
+struct { int i; } const static volatile const static volatile x5; // duplicate static & const & volatile
+typedef int Int;
+static Int volatile static const x6;					// duplicate static
+
+const static inline const volatile int f01();			// duplicate const
+volatile inline const volatile static int f02();		// duplicate volatile
+const inline const volatile int static f03();			// duplicate const
+volatile inline static const volatile int f04();		// duplicate volatile
+const static int const inline volatile f05();			// duplicate const
+volatile int static const volatile inline f06();		// duplicate volatile
+const static const int volatile inline f07();			// duplicate const
+volatile static const int inline const volatile f08();	// duplicate volatile
+
+volatile static const int inline const volatile f09();	// duplicate volatile
+_Atomic _Atomic _Atomic volatile restrict static const const int inline restrict const volatile f09();	// duplicate volatile
+
+//Dummy main
+int main(int argc, char const *argv[])
+{
+	return 0;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa declarationErrors.cfa" //
+// End: //

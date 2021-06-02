@@ -1,0 +1,95 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// userLiterals.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Sep  6 21:40:50 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Feb 19 07:48:45 2020
+// Update Count     : 74
+//
+
+#include <fstream.hfa>
+#include <wchar.h>
+#include <uchar.h>
+
+int ?`s( int s ) { sout | "secs" | s; return s; }
+int ?`m( int m ) { sout | "mins" | m; return m * 60; }
+int ?`h( int h ) { sout | "hours" | h; return h * 3600; }
+int ?`_A_( int x ) { sout | "_A_" | x; return x; }
+int ?`__thingy_( int x ) { sout | "_thingy_" | x; return x; }
+
+int ?`s( const char * s ) { sout | "s" | s; return 0; }
+int ?`m( const char16_t * m ) { sout | "m" | m; return 0;}
+int ?`h( const char32_t * h ) { sout | "h" | h; return 0; }
+int ?`_A_( const wchar_t * str ) { sout | "_A_" | str; return 0; }
+int ?`__thingy_( const char * str ) { sout | "_thingy_" | str; return 0; }
+
+
+struct Weight { double stones; };
+void ?{}( Weight & w ) { w.stones = 0; }
+void ?{}( Weight & w, double w ) { w.stones = w; }
+Weight ?+?( Weight l, Weight r ) {
+	return (Weight){ l.stones + r.stones };
+}
+ofstream & ?|?( ofstream & os, Weight w ) { return os | wd(1,1, w.stones); }
+void ?|?( ofstream & os, Weight w ) { (ofstream)(os | w); ends( os ); }
+
+Weight ?`st( double w ) { return (Weight){ w }; }		// backquote for user literals
+Weight ?`lb( double w ) { return (Weight){ w / 14.0 }; }
+Weight ?`kg( double w ) { return (Weight) { w * 0.16 }; }
+
+int main() {
+	Weight w, heavy = { 20 };							// 20 stone
+	w = 155`lb;
+	sout | w;
+	w = 0b_1111`st;
+	sout | w;
+	w = 0_233`lb;										// octal weight (155)
+	sout | w;
+	w = 0x_9b_u`kg;
+	sout | w;
+	w = 70.3`kg;
+	sout | w;
+	w = 11`st + 1`lb;
+	sout | w;
+	w = 5`st + 8`kg + 25`lb + heavy;
+	sout | w;
+
+	0`s;
+	1`s;
+	23`s;
+	23u`m;
+	23l`h;
+	23_ul`_A_;
+	1_234_LL`__thingy_;
+
+	0xff_ffl;
+	0xff_ff`s;
+	0xff_ffu`m;
+	0xff_ffl`h;
+	0xff_fful`_A_;
+	0xff_ffLL`__thingy_;
+
+	'\n'`s;
+	L'\n'`h;
+	u'\n'`m;
+	L_'\n'`_A_;
+	U_'\n'`__thingy_;
+
+	"abc"`s;
+	// FIX ME: requires char16_t, char32_t, and wchar_t be unique types
+	// u"abc"`m;
+	// U_"abc"`h;
+	// L"abc"`_A_;
+	u8_"abc"`__thingy_;
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa userLiterals.cfa" //
+// End: //

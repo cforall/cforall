@@ -1,0 +1,94 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// prodcons.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon Sep 18 12:23:39 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Mar 22 13:41:10 2019
+// Update Count     : 54
+//
+
+#include <fstream.hfa>
+#include <coroutine.hfa>
+#include <stdlib.hfa>									// random
+#include <unistd.h>										// getpid
+
+coroutine Cons;											// forward
+int delivery( Cons & cons, int p1, int p2 );
+void stop( Cons & cons );
+
+coroutine Prod {
+	Cons & c;
+	int N, money, receipt;
+};
+void main( Prod & prod ) with( prod ) {					// starter ::main
+	// 1st resume starts here
+	for ( i; N ) {										// N pairs of values
+		int p1 = random( 100 ), p2 = random( 100 );
+		sout | p1 | " " | p2;
+		int status = delivery( c, p1, p2 );
+		sout | " $" | money | nl | status;
+		receipt += 1;
+	}
+	stop( c );
+	sout | "prod stops";
+}
+int payment( Prod & prod, int money ) {
+	prod.money = money;
+	resume( prod );										// main 1st time, then
+	return prod.receipt;								// prod in delivery
+}
+void start( Prod & prod, int N, Cons &c ) {
+	&prod.c = &c;
+	prod.[N, receipt] = [N, 0];
+	resume( prod );										// activate main
+}
+
+coroutine Cons {
+	Prod & p;
+	int p1, p2, status;
+	bool done;
+};
+void ?{}( Cons & cons, Prod & p ) {
+	&cons.p = &p;
+	cons.[status, done ] = [0, false];
+}
+void ^?{}( Cons & cons ) {}
+void main( Cons & cons ) with( cons ) {					// starter prod
+	// 1st resume starts here
+	int money = 1, receipt;
+	for ( ; ! done; ) {
+		sout | p1 | " " | p2 | nl | " $" | money;
+		status += 1;
+		receipt = payment( p, money );
+		sout | " #" | receipt;
+		money += 1;
+	}
+	sout | "cons stops";
+}
+int delivery( Cons & cons, int p1, int p2 ) {
+	cons.[p1, p2] = [p1, p2];
+	resume( cons );										// main 1st time, then
+	return cons.status;									// cons in payment
+}
+void stop( Cons & cons ) {
+	cons.done = true;
+	resume( cons );										// activate payment
+}
+int main() {
+	Prod prod;
+	Cons cons = { prod };
+	srandom( /* getpid() */ 103 );						// fixed seed for testing
+	start( prod, 5, cons );
+	sout | "main stops";
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa prodcons.cfa" //
+// End: //

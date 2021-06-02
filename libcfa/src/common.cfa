@@ -1,0 +1,31 @@
+//                               -*- Mode: C -*-
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// common.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu Jul 12 08:02:29 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jul 12 08:38:47 2018
+// Update Count     : 3
+//
+
+#include "common.hfa"
+#include <stdlib.h>					// div_t, *div
+
+//---------------------------------------
+
+[ int, int ] div( int num, int denom ) { div_t qr = div( num, denom ); return [ qr.quot, qr.rem ]; }
+[ long int, long int ] div( long int num, long int denom ) { ldiv_t qr = ldiv( num, denom ); return [ qr.quot, qr.rem ]; }
+[ long long int, long long int ] div( long long int num, long long int denom ) { lldiv_t qr = lldiv( num, denom ); return [ qr.quot, qr.rem ]; }
+forall( T | { T ?/?( T, T ); T ?%?( T, T ); } )
+[ T, T ] div( T num, T denom ) { return [ num / denom, num % denom ]; }
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

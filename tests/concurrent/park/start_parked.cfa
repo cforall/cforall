@@ -1,0 +1,14 @@
+#include <thread.hfa>
+
+thread Parker {};
+void main( Parker & ) {
+	park();
+}
+
+int main() {
+	for(1000) {
+		Parker parker;
+		unpark( parker );
+	}
+	printf( "done\n" );									// non-empty .expect file
+}

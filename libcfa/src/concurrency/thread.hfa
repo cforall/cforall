@@ -1,0 +1,135 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// thread --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Jan 17 12:27:26 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Dec  4 09:18:14 2019
+// Update Count     : 6
+//
+
+#pragma once
+
+#include <assert.h>
+#include "invoke.h"
+
+#include "coroutine.hfa"
+#include "kernel.hfa"
+#include "monitor.hfa"
+#include "exception.hfa"
+
+//-----------------------------------------------------------------------------
+// thread trait
+trait is_thread(T &) {
+	void ^?{}(T& mutex this);
+	void main(T& this);
+	$thread* get_thread(T& this);
+};
+
+EHM_FORALL_EXCEPTION(ThreadCancelled, (thread_t &), (thread_t)) (
+	thread_t * the_thread;
+	exception_t * the_exception;
+);
+
+forall(T &)
+void copy(ThreadCancelled(T) * dst, ThreadCancelled(T) * src);
+
+forall(T &)
+const char * msg(ThreadCancelled(T) *);
+
+// Inline getters for threads/coroutines/monitors
+forall( T & | is_thread(T) )
+static inline $coroutine* get_coroutine(T & this) __attribute__((const)) { return &get_thread(this)->self_cor; }
+
+forall( T & | is_thread(T) )
+static inline $monitor  * get_monitor  (T & this) __attribute__((const)) { return &get_thread(this)->self_mon; }
+
+static inline $coroutine* get_coroutine($thread * this) __attribute__((const)) { return &this->self_cor; }
+static inline $monitor  * get_monitor  ($thread * this) __attribute__((const)) { return &this->self_mon; }
+
+//-----------------------------------------------------------------------------
+// forward declarations needed for threads
+extern struct cluster * mainCluster;
+
+forall( T & | is_thread(T) )
+void __thrd_start( T & this, void (*)(T &) );
+
+//-----------------------------------------------------------------------------
+// Ctors and dtors
+void ?{}($thread & this, const char * const name, struct cluster & cl, void * storage, size_t storageSize );
+void ^?{}($thread & this);
+
+static inline void ?{}($thread & this)                                                                  { this{ "Anonymous Thread", *mainCluster, 0p, 65000 }; }
+static inline void ?{}($thread & this, size_t stackSize )                                               { this{ "Anonymous Thread", *mainCluster, 0p, stackSize }; }
+static inline void ?{}($thread & this, void * storage, size_t storageSize )                             { this{ "Anonymous Thread", *mainCluster, storage, storageSize }; }
+static inline void ?{}($thread & this, struct cluster & cl )                                            { this{ "Anonymous Thread", cl, 0p, 65000 }; }
+static inline void ?{}($thread & this, struct cluster & cl, size_t stackSize )                          { this{ "Anonymous Thread", cl, 0p, stackSize }; }
+static inline void ?{}($thread & this, struct cluster & cl, void * storage, size_t storageSize )        { this{ "Anonymous Thread", cl, storage, storageSize }; }
+static inline void ?{}($thread & this, const char * const name)                                         { this{ name, *mainCluster, 0p, 65000 }; }
+static inline void ?{}($thread & this, const char * const name, struct cluster & cl )                   { this{ name, cl, 0p, 65000 }; }
+static inline void ?{}($thread & this, const char * const name, struct cluster & cl, size_t stackSize ) { this{ name, cl, 0p, stackSize }; }
+
+struct thread_dtor_guard_t {
+	monitor_dtor_guard_t mg;
+};
+
+forall( T & | is_thread(T) | IS_EXCEPTION(ThreadCancelled, (T))
+    | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
+void ?{}( thread_dtor_guard_t & this, T & thrd, void(*)(ThreadCancelled(T) &) );
+void ^?{}( thread_dtor_guard_t & this );
+
+//-----------------------------------------------------------------------------
+// thread runner
+// Structure that actually start and stop threads
+forall( T & | sized(T) | is_thread(T) )
+struct scoped {
+	T handle;
+};
+
+forall( T & | sized(T) | is_thread(T) | { void ?{}(T&); } )
+void ?{}( scoped(T)& this );
+
+forall( T &, P... | sized(T) | is_thread(T) | { void ?{}(T&, P); } )
+void ?{}( scoped(T)& this, P params );
+
+forall( T & | sized(T) | is_thread(T) )
+void ^?{}( scoped(T)& this );
+
+//-----------------------------------------------------------------------------
+// Scheduler API
+
+//----------
+// Park thread: block until corresponding call to unpark, won't block if unpark is already called
+void park( void );
+
+//----------
+// Unpark a thread, if the thread is already blocked, schedule it
+//                  if the thread is not yet block, signal that it should rerun immediately
+void unpark( $thread * this );
+
+forall( T & | is_thread(T) )
+static inline void unpark( T & this ) { if(!&this) return; unpark( get_thread( this ) );}
+
+//----------
+// Yield: force thread to block and be rescheduled
+bool force_yield( enum __Preemption_Reason );
+
+//----------
+// sleep: force thread to block and be rescheduled after Duration duration
+void sleep( Duration duration );
+
+//----------
+// join
+forall( T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled, (T))
+    | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
+T & join( T & this );
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

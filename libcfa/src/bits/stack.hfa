@@ -1,0 +1,102 @@
+#pragma once
+
+#include "bits/collection.hfa"
+
+// A Stack(T) is a Collection(T) defining the ordering that nodes are returned by drop() in the reverse order from those
+// added by add(). T must be a public descendant of uColable.
+
+// The implementation is a typical singly-linked list, except the next field of the last element points to itself
+// instead of being null.
+
+forall( T & | { T *& Next ( T * ); } ) {
+	struct Stack {
+		inline Collection;								// Plan 9 inheritance
+	};
+
+	inline {
+		// wrappers to make Collection have T
+		T & head( Stack(T) & s ) with( s ) {
+			return *(T *)head( (Collection &)s );
+		} // post: empty() & head() == 0 | !empty() & head() in *this
+
+		void ?{}( Stack(T) &, const Stack(T) & ) = void; // no copy
+		Stack(T) & ?=?( const Stack(T) & ) = void;		// no assignment
+
+		void ?{}( Stack(T) & s ) with( s ) {
+			((Collection &)s){};
+		} // post: empty()
+
+		T & top( Stack(T) & s ) with( s ) {
+			return head( s );
+		}
+
+		T & addHead( Stack(T) & s, T & n ) with( s ) {
+			#ifdef __CFA_DEBUG__
+			if ( listed( (Colable &)(n) ) ) abort( "(Stack &)%p.addHead( %p ) : Node is already on another list.", &s, n );
+			#endif // __CFA_DEBUG__
+			Next( &n ) = &head( s ) ? &head( s ) : &n;
+			root = &n;
+			return n;
+		}
+
+		T & add( Stack(T) & s, T & n ) with( s ) {
+			return addHead( s, n );
+		}
+
+		T & push( Stack(T) & s, T & n ) with( s ) {
+			return addHead( s, n );
+		}
+
+		T & drop( Stack(T) & s ) with( s ) {
+			T & t = head( s );
+			if ( root ) {
+				root = ( T *)Next( (T *)root );
+				if ( &head( s ) == &t ) root = 0p;		// only one element ?
+				Next( &t ) = 0p;
+			} // if
+			return t;
+		}
+
+		T & pop( Stack(T) & s ) with( s ) {
+			return drop( s );
+		}
+	} // distribution
+} // distribution
+
+// A StackIter(T) is a subclass of ColIter(T) that generates the elements of a Stack(T).  It returns the elements in the
+// order returned by drop().
+
+forall( T & | { T *& Next ( T * ); } ) {
+	struct StackIter {
+		inline ColIter;									// Plan 9 inheritance
+	};	
+
+	inline {
+		void ?{}( StackIter(T) & si ) with( si ) {
+			((ColIter &)si){};
+		} // post: curr == 0p
+
+		// create an iterator active in stack s
+		void ?{}( StackIter(T) & si, Stack(T) & s ) with( si ) {
+			curr = &head( s );
+		} // post: curr = {e in s}
+
+		void ?{}( StackIter(T) & si, T & start ) with( si ) {
+			curr = &start;
+		} // post: curr = {e in s}
+
+		// make existing iterator active in stack s
+		void over( StackIter(T) & si, Stack(T) & s ) with( si ) {
+			curr = &head( s );
+		} // post: curr = {e in s}
+
+		bool ?|?( StackIter(T) & si, T && tp ) with( si ) {
+			if ( curr ) {
+				&tp = Curr( si );
+				T * n = Next( Curr( si ) );
+				curr = n == Curr( si ) ? 0p : n;
+			} else &tp = 0p;
+			return &tp != 0p;
+		}
+	} // distribution
+} // distribution

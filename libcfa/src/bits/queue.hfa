@@ -1,0 +1,187 @@
+#pragma once
+
+#include "bits/collection.hfa"
+
+// A Queue(T) is a Collection(T) defining the ordering that nodes are returned by drop() in the same order from those
+// added by add(). T must be a public descendant of uColable.
+
+// The implementation is a typical singly-linked list, except the next field of the last element points to itself
+// instead of being null.
+
+forall( T & | { T *& Next ( T * ); } ) {
+	struct Queue {
+		inline Collection;								// Plan 9 inheritance
+		T * last;										// last element, or 0 if queue is empty.
+	};
+
+	static inline {
+		// wrappers to make Collection have T
+		T & head( Queue(T) & q ) with( q ) {
+			return *(T *)head( (Collection &)q );
+		} // post: empty() & head() == 0 | !empty() & head() in *q
+
+		void ?{}( Queue(T) &, const Queue(T) & ) = void; // no copy
+		Queue(T) & ?=?( const Queue(T) & ) = void;		// no assignment
+
+		void ?{}( Queue(T) & q ) with( q ) {
+			((Collection &)q){};
+			last = 0p;
+		} // post: empty()
+
+		T & tail( Queue(T) & q ) with( q ) {
+			return *last;
+		}
+
+		T * succ( Queue(T) & q, T * n ) with( q ) {		// pre: *n in *q
+			#ifdef __CFA_DEBUG__
+			if ( ! listed( n ) ) abort( "(Queue &)%p.succ( %p ) : Node is not on a list.", &q, n );
+			#endif // __CFA_DEBUG__
+			return (Next( n ) == n) ? 0p : Next( n );
+		} // post: n == tail() & succ(n) == 0 | n != tail() & *succ(n) in *q
+
+		T & addHead( Queue(T) & q, T & n ) with( q ) {
+			#ifdef __CFA_DEBUG__
+			if ( listed( &n ) ) abort( "(Queue &)%p.addHead( %p ) : Node is already on another list.", &q, &n );
+			#endif // __CFA_DEBUG__
+			if ( last ) {
+				Next( &n ) = &head( q );
+				q.root = &n;
+			} else {
+				root = last = &n;
+				Next( &n ) = &n;						// last node points to itself
+			}
+			return n;
+		}
+
+		T & addTail( Queue(T) & q, T & n ) with( q ) {
+			#ifdef __CFA_DEBUG__
+			if ( listed( &n ) ) abort( "(Queue &)%p.addTail( %p ) : Node is already on another list.", &q, &n );
+			#endif // __CFA_DEBUG__
+			if ( last ) Next( last ) = &n;
+			else root = &n;
+			last = &n;
+			Next( &n ) = &n;							// last node points to itself
+			return n;
+		}
+
+		T & add( Queue(T) & q, T & n ) with( q ) {
+			return addTail( q, n );
+		}
+
+		T & dropHead( Queue(T) & q ) with( q ) {
+			T & t = head( q );
+			if ( root ) {
+				root = Next( (T *)root );
+				if ( &head( q ) == &t ) {
+					root = last = 0p;					// only one element
+				}
+				Next( &t ) = 0p;
+			}
+			return t;
+		}
+
+		T & drop( Queue(T) & q ) with( q ) {
+			return dropHead( q );
+		}
+
+		T & remove( Queue(T) & q, T & n ) with( q ) {	// O(n)
+			#ifdef __CFA_DEBUG__
+			if ( ! listed( (Colable &)n ) ) abort( "(Queue &)%p.remove( %p ) : Node is not on a list.", &q, &n );
+			#endif // __CFA_DEBUG__
+			T * prev = 0p;
+			T * curr = (T *)root;
+			for ( ;; ) {
+				if ( &n == curr ) {						// found => remove
+					if ( (T *)root == &n ) {
+						dropHead( q );
+					} else if ( last == &n ) {
+						last = prev;
+						Next( last ) = last;
+					} else {
+						Next( prev ) = Next( curr );
+					}
+					Next( &n ) = 0p;
+					break;
+				}
+				// not found => error
+				#ifdef __CFA_DEBUG__
+				if ( curr == last ) abort( "(Queue &)%p.remove( %p ) : Node is not in list.", &q, &n );
+				#endif // __CFA_DEBUG__
+				prev = curr;
+				curr = Next( curr );
+			}
+			return n;
+		} // post: ! listed( n )
+
+		T & dropTail( Queue(T) & q ) with( q ) {		// O(n)
+			T & n = tail( q );
+			return &n ? remove( q, n ), n : *0p;
+		}
+
+		// Transfer the "from" list to the end of queue sequence; the "from" list is empty after the transfer.
+		void transfer( Queue(T) & q, Queue(T) & from ) with( q ) {
+			if ( empty( from ) ) return;				// "from" list empty ?
+			if ( empty( q ) ) {							// "to" list empty ?
+				root = from.root;
+			} else {									// "to" list not empty
+				Next( last ) = &head( from );
+			}
+			last = from.last;
+			from.root = from.last = 0p;					// mark "from" list empty
+		}
+
+		// Transfer the "from" list up to node "n" to the end of queue list; the "from" list becomes the list after node "n".
+		// Node "n" must be in the "from" list.
+		void split( Queue(T) & q, Queue(T) & from, T & n ) with( q ) {
+			#ifdef __CFA_DEBUG__
+			if ( ! listed( (Colable &)n ) ) abort( "(Queue &)%p.split( %p ) : Node is not on a list.", &q, &n );
+			#endif // __CFA_DEBUG__
+			Queue(T) to;
+			to.root = from.root;						// start of "to" list
+			to.last = &n;								// end of "to" list
+			from.root = Next( &n );						// start of "from" list
+			if ( &n == &head( from ) ) {				// last node in list ?
+				from.root = from.last = 0p;				// mark "from" list empty
+			} else {
+				Next( &n ) = &n;						// fix end of "to" list
+			}
+			transfer( q, to );
+		}
+	} // distribution
+} // distribution
+
+forall( T & | { T *& Next ( T * ); } ) {
+	struct QueueIter {
+		inline ColIter;									// Plan 9 inheritance
+	};
+
+	static inline {
+		void ?{}( QueueIter(T) & qi ) with( qi ) {
+			((ColIter &)qi){};
+		} // post: curr == 0p
+
+		// create an iterator active in queue q
+		void ?{}( QueueIter(T) & qi, Queue(T) & q ) with( qi ) {
+			curr = &head( q );
+		} // post: curr = {e in q}
+
+		void ?{}( QueueIter(T) & qi, T & start ) with( qi ) {
+			curr = &start;
+		} // post: curr = {e in q}
+
+		// make existing iterator active in queue q
+		void over( QueueIter(T) & qi, Queue(T) & q ) with( qi ) {
+			curr = &head( q );
+		} // post: curr = {e in q}
+
+		bool ?|?( QueueIter(T) & qi, T && tp ) with( qi ) {
+			if ( curr ) {
+				&tp = Curr( qi );
+				T * n = Next( Curr( qi ) );
+				curr = (n == Curr( qi ) ) ? 0p : n;
+			} else &tp = 0p;
+			return &tp != 0p;
+		}
+		// post: elts == null & !operator|(tp) | elts != null & *tp' in elts & elts' == elts - *tp & operator|(tp)
+	} // distribution
+} // distribution

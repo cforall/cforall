@@ -1,0 +1,196 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// init_once.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Tue Jun 14 15:43:35 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Sep 25 15:36:39 2020
+// Update Count     : 5
+//
+
+// want to ensure ctor/dtor called at most once per object.
+// whole point of ctor/dtor is that you don't know what's in
+// memory when it's first called, so can't rely on member to
+// determine if this is true. instead, keep an array
+// of addresses that have been constructed and remove the element
+// when it's destructed (and vice-versa)
+
+//*** setup
+extern "C" {
+#define NULL 0
+void * malloc(size_t);
+void free(void *);
+#define assert(cond) if (! (cond)) { printf("Assertion failed: (%s) at %s:%d\n", #cond, __FILE__, __LINE__); abort(); }
+void *memset(void *s, int c, size_t n);
+}
+
+// dummy type
+struct init_once { int * x; };
+
+// array and operations
+// const int size = 1024;
+#define size 1024
+struct array {
+	init_once * elems[size];
+	int length;
+};
+void remove(array * arr, init_once * x) {
+	for (int i = 0; i < arr->length; i++) {
+		if ( arr->elems[i] == x ) {
+			arr->elems[i] = arr->elems[--arr->length];
+			return;
+		}
+	}
+}
+void insert(array * arr, init_once * x) {
+	assert( arr->length < size );
+	arr->elems[arr->length++] = x;
+}
+int find(array * arr, init_once * x) {
+	for (int i = 0; i < arr->length; i++) {
+		if ( arr->elems[i] == x ) {
+			return i;
+		}
+	}
+	return -1;
+}
+void ?{}(array & arr) {
+	memset(arr.elems, 0, sizeof(arr.elems));
+	arr.length = 0;
+}
+array constructed;
+array destructed;
+
+void ?{}(init_once & x) {
+	assert( find( &constructed, &x ) == -1 );
+	remove( &destructed, &x );
+	insert( &constructed, &x );
+
+	x.x = (int *)malloc(sizeof(int));
+}
+
+void ?{}(init_once & x, init_once other) {
+	x{};  // reuse default ctor
+}
+
+void ^?{}(init_once & x) {
+	assert( find( &destructed, &x ) == -1 );
+	remove( &constructed, &x );
+	insert( &destructed, &x );
+
+	free(x.x);
+}
+//*** end setup
+
+// test globals
+init_once x;
+init_once y = x;
+
+void static_variable() {
+	static init_once x;
+}
+
+int main() {
+	// local variables
+	init_once x;
+	init_once y = x;
+
+	// block scoped variables
+	{
+		init_once x;
+		init_once y = x;
+	}
+
+	// loop variables
+	for (int i = 0 ; i < 10; i++) {
+		init_once x;
+		init_once y = x;
+	}
+	int i = 0;
+	while (i < 10) {
+		init_once x;
+		init_once y = x;
+		i++;
+	}
+
+	// declared in a switch block with a break
+	for (int i = 0; i < 10; i++) {
+		switch (10) {
+			case 1: {
+				init_once x;
+				init_once y = x;
+				x{}; // ensure this doesn't execute
+				break;
+			}
+			case 10: {
+				init_once x;
+				init_once y = x;
+			} // fall through
+			default: {
+				init_once x;
+				init_once y = x;
+				break;
+			}
+		}
+	}
+
+	// labeled break/continue
+	L3: for (int k = 0; k < 10; k++) {
+		init_once x;
+		init_once y = x;
+		L1: for (int i = 0; i < 10; i++){
+			init_once x;
+			init_once y = x;
+			L2: for (int j = 0; j < 10; j++) {
+				init_once x;
+				init_once y = x;
+
+				if (i == 0) continue L1;
+				if (i == 1) continue L2;
+				if (i == 2) break L2;
+				if (i == 3) break L1;
+				if (i == 4) continue L3;
+				if (i == 9) break L3;
+				// if (i == 5) goto ;
+			}
+		}
+	}
+
+	// labeled break/continue with if
+	LL1: for (int k = 0; k < 10; k++) {
+		init_once x;
+		init_once y = x;
+		LL2: for (int i = 0; i < 10; i++){
+			init_once x;
+			init_once y = x;
+			LL3: if( i < 5) {
+				init_once x;
+				init_once y = x;
+
+				if (i == 0) continue LL2;
+				if (i == 2) break LL3;
+				if (i == 3) break LL2;
+				if (i == 4) continue LL1;
+			} else {
+				if (i == 9) break LL1;
+				// if (i == 5) goto ;
+			}
+		}
+	}
+
+	// function-scoped static variable
+	for (int i = 0; i < 10; i++) {
+		static_variable();
+	}
+	printf( "done\n" );									// non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa init_once.cfa" //
+// End: //

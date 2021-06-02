@@ -1,0 +1,52 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// startup.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Jul 24 16:21:57 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Jan  9 23:18:23 2021
+// Update Count     : 34
+//
+
+#include <time.h>										// tzset
+#include <locale.h>										// setlocale
+#include <stdlib.h>										// getenv
+#include "startup.hfa"
+
+extern "C" {
+    void __cfaabi_appready_startup( void ) __attribute__(( constructor( STARTUP_PRIORITY_APPREADY ) ));
+    void __cfaabi_appready_startup( void ) {
+		tzset();										// initialize time global variables
+		setlocale( LC_NUMERIC, getenv("LANG") );
+		#ifdef __CFA_DEBUG__
+		extern void heapAppStart();
+		heapAppStart();
+		#endif // __CFA_DEBUG__
+    } // __cfaabi_appready_startup
+
+    void __cfaabi_appready_shutdown( void ) __attribute__(( destructor( STARTUP_PRIORITY_APPREADY ) ));
+    void __cfaabi_appready_shutdown( void ) {
+		#ifdef __CFA_DEBUG__
+		extern void heapAppStop();
+		heapAppStop();
+		#endif // __CFA_DEBUG__
+    } // __cfaabi_appready_shutdown
+
+    void disable_interrupts() __attribute__(( weak )) {}
+    void enable_interrupts() __attribute__(( weak )) {}
+} // extern "C"
+
+struct __spinlock_t;
+extern "C" {
+	void __cfaabi_dbg_record_lock(struct __spinlock_t & this, const char prev_name[]) __attribute__(( weak )) {}
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

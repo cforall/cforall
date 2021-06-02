@@ -1,0 +1,174 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// memory.cfa -- Memory Management Tools for CFA
+//
+// Author           : Andrew Beach
+// Created On       : Tue Jun  2 16:48:00 2020
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Feb  1 16:10:00 2021
+// Update Count     : 1
+//
+
+#include "memory.hfa"
+#include "stdlib.hfa"
+
+// Internal data object.
+forall(T & | sized(T), Args... | { void ?{}(T &, Args); })
+void ?{}(counter_data(T) & this, Args args) {
+	(this.counter){1};
+	(this.object){args};
+}
+
+forall(T & | sized(T) | { void ^?{}(T &); })
+void ^?{}(counter_data(T) & this) {
+	assert(0 == this.counter);
+	^(this.object){};
+}
+
+// This is one of many pointers keeping this alive.
+forall(T & | sized(T))
+void ?{}(counter_ptr(T) & this) {
+	this.data = 0p;
+}
+
+forall(T & | sized(T))
+void ?{}(counter_ptr(T) & this, zero_t) {
+	this.data = 0p;
+}
+
+forall(T & | sized(T) | { void ^?{}(T &); })
+static void internal_decrement(counter_ptr(T) & this) {
+	if (this.data && 0 == --this.data->counter) {
+		delete(this.data);
+	}
+}
+
+forall(T & | sized(T))
+static void internal_copy(counter_ptr(T) & this, counter_ptr(T) & that) {
+	this.data = that.data;
+	if (this.data) {
+		++this.data->counter;
+	}
+}
+
+forall(T & | sized(T))
+void ?{}(counter_ptr(T) & this, counter_ptr(T) that) {
+	// `that` is a copy but it should have neither a constructor
+	// nor destructor run on it so it shouldn't need adjustment.
+	internal_copy(this, that);
+}
+
+forall(T & | sized(T), Args... | { void ?{}(T&, Args); })
+void ?{}(counter_ptr(T) & this, Args args) {
+	this.data = malloc();
+	this.data->counter = 1;
+	(this.data->object){args};
+}
+
+forall(T & | sized(T) | { void ^?{}(T &); })
+void ^?{}(counter_ptr(T) & this) {
+	internal_decrement(this);
+}
+
+forall(T & | sized(T))
+T & *?(counter_ptr(T) & this) {
+	return *((this.data) ? &this.data->object : 0p);
+}
+
+forall(T & | sized(T) | { void ^?{}(T &); })
+void ?=?(counter_ptr(T) & this, counter_ptr(T) that) {
+	if (this.data != that.data) {
+		internal_decrement(this);
+		internal_copy(this, that);
+	}
+}
+
+forall(T & | sized(T) | { void ^?{}(T &); })
+void ?=?(counter_ptr(T) & this, zero_t) {
+	internal_decrement(this);
+	this.data = 0p;
+}
+
+forall(T & | sized(T))
+int ?==?(counter_ptr(T) const & this, counter_ptr(T) const & that) {
+	return this.data == that.data;
+}
+
+forall(T & | sized(T))
+int ?!=?(counter_ptr(T) const & this, counter_ptr(T) const & that) {
+	return !?==?(this, that);
+}
+
+forall(T & | sized(T))
+int ?==?(counter_ptr(T) const & this, zero_t) {
+	return this.data == 0;
+}
+
+forall(T & | sized(T))
+int ?!=?(counter_ptr(T) const & this, zero_t) {
+	return !?==?(this, (zero_t)0);
+}
+
+// This is the only pointer that keeps this alive.
+forall(T &)
+void ?{}(unique_ptr(T) & this) {
+	this.data = 0p;
+}
+
+forall(T &)
+void ?{}(unique_ptr(T) & this, zero_t) {
+	this.data = 0p;
+}
+
+forall(T & | sized(T), Args... | { void ?{}(T &, Args); })
+void ?{}(unique_ptr(T) & this, Args args) {
+	this.data = malloc();
+	(*this.data){args};
+}
+
+forall(T & | { void ^?{}(T &); })
+void ^?{}(unique_ptr(T) & this) {
+	delete(this.data);
+}
+
+forall(T &)
+T & *?(unique_ptr(T) & this) {
+	return *this.data;
+}
+
+forall(T & | { void ^?{}(T &); })
+void ?=?(unique_ptr(T) & this, zero_t) {
+	delete(this.data);
+	this.data = 0p;
+}
+
+forall(T & | { void ^?{}(T &); })
+void move(unique_ptr(T) & this, unique_ptr(T) & that) {
+	delete(this.data);
+	this.data = that.data;
+	that.data = 0p;
+}
+
+forall(T &)
+int ?==?(unique_ptr(T) const & this, unique_ptr(T) const & that) {
+	return this.data == that.data;
+}
+
+forall(T &)
+int ?!=?(unique_ptr(T) const & this, unique_ptr(T) const & that) {
+	return !?==?(this, that);
+}
+
+forall(T &)
+int ?==?(unique_ptr(T) const & this, zero_t) {
+	return this.data == 0;
+}
+
+forall(T &)
+int ?!=?(unique_ptr(T) const & this, zero_t) {
+	return !?==?(this, (zero_t)0);
+}

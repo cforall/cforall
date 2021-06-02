@@ -1,0 +1,8 @@
+// Header used to force linking with libcfathread.
+
+// I know its "with threads" but a coroutine is enough to bring it all in.
+#include <coroutine.hfa>
+
+coroutine DummyCoroutine {};
+
+DummyCoroutine ignored_dummy_coroutine;

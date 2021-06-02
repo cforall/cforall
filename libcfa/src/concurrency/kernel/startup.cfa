@@ -1,0 +1,788 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// kernel/startup.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Jul 30 15:12:54 2020
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#define __cforall_thread__
+
+// C Includes
+#include <errno.h>              // errno
+#include <string.h>             // strerror
+#include <unistd.h>             // sysconf
+extern "C" {
+      #include <limits.h>       // PTHREAD_STACK_MIN
+	#include <sys/eventfd.h>  // eventfd
+      #include <sys/mman.h>     // mprotect
+      #include <sys/resource.h> // getrlimit
+}
+
+// CFA Includes
+#include "kernel_private.hfa"
+#include "startup.hfa"          // STARTUP_PRIORITY_XXX
+#include "math.hfa"
+
+#define CFA_PROCESSOR_USE_MMAP 0
+
+//-----------------------------------------------------------------------------
+// Some assembly required
+#if defined( __i386 )
+	#define CtxGet( ctx ) __asm__ volatile ( \
+		"movl %%esp,%0\n" \
+		"movl %%ebp,%1\n" \
+		: "=rm" (ctx.SP), \
+		  "=rm" (ctx.FP) \
+	)
+#elif defined( __x86_64 )
+	#define CtxGet( ctx ) __asm__ volatile ( \
+		"movq %%rsp,%0\n" \
+		"movq %%rbp,%1\n" \
+		: "=rm" (ctx.SP), \
+		  "=rm" (ctx.FP) \
+	)
+#elif defined( __aarch64__ )
+	#define CtxGet( ctx ) __asm__ volatile ( \
+		"mov %0, sp\n" \
+		"mov %1, fp\n" \
+		: "=rm" (ctx.SP), \
+		  "=rm" (ctx.FP) \
+	)
+#else
+	#error unknown hardware architecture
+#endif
+
+//-----------------------------------------------------------------------------
+// Start and stop routine for the kernel, declared first to make sure they run first
+static void __kernel_startup (void) __attribute__(( constructor( STARTUP_PRIORITY_KERNEL ) ));
+static void __kernel_shutdown(void) __attribute__(( destructor ( STARTUP_PRIORITY_KERNEL ) ));
+
+//-----------------------------------------------------------------------------
+// Static Forward Declarations
+struct current_stack_info_t;
+
+static void * __invoke_processor(void * arg);
+static void __kernel_first_resume( processor * this );
+static void __kernel_last_resume ( processor * this );
+static void init(processor & this, const char name[], cluster & _cltr, $thread * initT);
+static void deinit(processor & this);
+static void doregister( struct cluster & cltr );
+static void unregister( struct cluster & cltr );
+static void register_tls( processor * this );
+static void unregister_tls( processor * this );
+static void ?{}( $coroutine & this, current_stack_info_t * info);
+static void ?{}( $thread & this, current_stack_info_t * info);
+static void ?{}(processorCtx_t & this) {}
+static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * info);
+
+#if defined(__CFA_WITH_VERIFY__)
+	static bool verify_fwd_bck_rng(void);
+#endif
+
+//-----------------------------------------------------------------------------
+// Forward Declarations for other modules
+extern void __kernel_alarm_startup(void);
+extern void __kernel_alarm_shutdown(void);
+
+//-----------------------------------------------------------------------------
+// Other Forward Declarations
+extern void __wake_proc(processor *);
+
+//-----------------------------------------------------------------------------
+// Kernel storage
+KERNEL_STORAGE(cluster,	             mainCluster);
+KERNEL_STORAGE(processor,            mainProcessor);
+KERNEL_STORAGE($thread,	             mainThread);
+KERNEL_STORAGE(__stack_t,            mainThreadCtx);
+KERNEL_STORAGE(__scheduler_RWLock_t, __scheduler_lock);
+#if !defined(__CFA_NO_STATISTICS__)
+KERNEL_STORAGE(__stats_t, mainProcStats);
+#endif
+
+cluster              * mainCluster;
+processor            * mainProcessor;
+$thread              * mainThread;
+__scheduler_RWLock_t * __scheduler_lock;
+
+extern "C" {
+	struct { __dllist_t(cluster) list; __spinlock_t lock; } __cfa_dbg_global_clusters;
+}
+
+extern size_t __page_size;
+extern int __map_prot;
+
+//-----------------------------------------------------------------------------
+// Global state
+thread_local struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "initial-exec" ))) @= {
+	NULL,												// cannot use 0p
+	NULL,
+	false,
+	{ 1, false, false },
+	0,
+	{ 0, 0 },
+	NULL,
+	#ifdef __CFA_WITH_VERIFY__
+		false,
+		0,
+	#endif
+};
+
+//-----------------------------------------------------------------------------
+// Struct to steal stack
+struct current_stack_info_t {
+	__stack_t * storage;  // pointer to stack object
+	void * base;          // base of stack
+	void * limit;         // stack grows towards stack limit
+	void * context;       // address of cfa_context_t
+};
+
+void ?{}( current_stack_info_t & this ) {
+	__stack_context_t ctx;
+	CtxGet( ctx );
+	this.base = ctx.FP;
+
+	rlimit r;
+	getrlimit( RLIMIT_STACK, &r);
+	size_t size = r.rlim_cur;
+
+	this.limit = (void *)(((intptr_t)this.base) - size);
+	this.context = &storage_mainThreadCtx;
+}
+
+
+
+//=============================================================================================
+// Kernel Setup logic
+//=============================================================================================
+//-----------------------------------------------------------------------------
+// Kernel boot procedures
+static void __kernel_startup(void) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	__cfadbg_print_safe(runtime_core, "Kernel : Starting\n");
+
+	__cfa_dbg_global_clusters.list{ __get };
+	__cfa_dbg_global_clusters.lock{};
+
+	/* paranoid */ verify( verify_fwd_bck_rng() );
+
+	// Initialize the global scheduler lock
+	__scheduler_lock = (__scheduler_RWLock_t*)&storage___scheduler_lock;
+	(*__scheduler_lock){};
+
+	// Initialize the main cluster
+	mainCluster = (cluster *)&storage_mainCluster;
+	(*mainCluster){"Main Cluster", 0};
+
+	__cfadbg_print_safe(runtime_core, "Kernel : Main cluster ready\n");
+
+	// Start by initializing the main thread
+	// SKULLDUGGERY: the mainThread steals the process main thread
+	// which will then be scheduled by the mainProcessor normally
+	mainThread = ($thread *)&storage_mainThread;
+	current_stack_info_t info;
+	info.storage = (__stack_t*)&storage_mainThreadCtx;
+	(*mainThread){ &info };
+
+	__cfadbg_print_safe(runtime_core, "Kernel : Main thread ready\n");
+
+
+
+	// Construct the processor context of the main processor
+	void ?{}(processorCtx_t & this, processor * proc) {
+		(this.__cor){ "Processor" };
+		this.__cor.starter = 0p;
+		this.proc = proc;
+	}
+
+	void ?{}(processor & this) with( this ) {
+		( this.terminated ){};
+		( this.runner ){};
+		init( this, "Main Processor", *mainCluster, 0p );
+		kernel_thread = pthread_self();
+
+		runner{ &this };
+		__cfadbg_print_safe(runtime_core, "Kernel : constructed main processor context %p\n", &runner);
+	}
+
+	// Initialize the main processor and the main processor ctx
+	// (the coroutine that contains the processing control flow)
+	mainProcessor = (processor *)&storage_mainProcessor;
+	(*mainProcessor){};
+
+	register_tls( mainProcessor );
+
+	//initialize the global state variables
+	__cfaabi_tls.this_processor = mainProcessor;
+	__cfaabi_tls.this_thread    = mainThread;
+
+	#if !defined( __CFA_NO_STATISTICS__ )
+		__cfaabi_tls.this_stats = (__stats_t *)& storage_mainProcStats;
+		__init_stats( __cfaabi_tls.this_stats );
+	#endif
+	mainProcessor->local_data = &__cfaabi_tls;
+
+	// Enable preemption
+	__kernel_alarm_startup();
+
+	// Add the main thread to the ready queue
+	// once resume is called on mainProcessor->runner the mainThread needs to be scheduled like any normal thread
+	schedule_thread$(mainThread);
+
+	// SKULLDUGGERY: Force a context switch to the main processor to set the main thread's context to the current UNIX
+	// context. Hence, the main thread does not begin through __cfactx_invoke_thread, like all other threads. The trick here is that
+	// mainThread is on the ready queue when this call is made.
+	__kernel_first_resume( __cfaabi_tls.this_processor );
+
+
+	// THE SYSTEM IS NOW COMPLETELY RUNNING
+
+	__cfadbg_print_safe(runtime_core, "Kernel : Started\n--------------------------------------------------\n\n");
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+	enable_interrupts();
+	/* paranoid */ verify( __preemption_enabled() );
+
+}
+
+static void __kernel_shutdown(void) {
+	/* paranoid */ verify( __preemption_enabled() );
+	disable_interrupts();
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	__cfadbg_print_safe(runtime_core, "\n--------------------------------------------------\nKernel : Shutting down\n");
+
+	// SKULLDUGGERY: Notify the mainProcessor it needs to terminates.
+	// When its coroutine terminates, it return control to the mainThread
+	// which is currently here
+	__atomic_store_n(&mainProcessor->do_terminate, true, __ATOMIC_RELEASE);
+	__kernel_last_resume( __cfaabi_tls.this_processor );
+	mainThread->self_cor.state = Halted;
+
+	// THE SYSTEM IS NOW COMPLETELY STOPPED
+
+	// Disable preemption
+	__kernel_alarm_shutdown();
+
+	#if !defined( __CFA_NO_STATISTICS__ )
+		__stats_t * st = (__stats_t *)& storage_mainProcStats;
+		__tally_stats(mainCluster->stats, st);
+		if( 0 != mainProcessor->print_stats ) {
+			__print_stats( st, mainProcessor->print_stats, "Processor ", mainProcessor->name, (void*)mainProcessor );
+		}
+		#if defined(CFA_STATS_ARRAY)
+			__flush_stat( st, "Processor", mainProcessor );
+		#endif
+	#endif
+
+	mainProcessor->local_data = 0p;
+
+	unregister_tls( mainProcessor );
+
+	// Destroy the main processor and its context in reverse order of construction
+	// These were manually constructed so we need manually destroy them
+	void ^?{}(processor & this) with( this ){
+		deinit( this );
+
+		/* paranoid */ verify( this.do_terminate == true );
+		__cfaabi_dbg_print_safe("Kernel : destroyed main processor context %p\n", &runner);
+	}
+
+	^(*mainProcessor){};
+
+	// Final step, destroy the main thread since it is no longer needed
+
+	// Since we provided a stack to this taxk it will not destroy anything
+	/* paranoid */ verify(mainThread->self_cor.stack.storage == (__stack_t*)(((uintptr_t)&storage_mainThreadCtx)| 0x1));
+	^(*mainThread){};
+
+	^(*mainCluster){};
+
+	^(*__scheduler_lock){};
+
+	^(__cfa_dbg_global_clusters.list){};
+	^(__cfa_dbg_global_clusters.lock){};
+
+	__cfadbg_print_safe(runtime_core, "Kernel : Shutdown complete\n");
+}
+
+//=============================================================================================
+// Kernel Initial Scheduling logic
+//=============================================================================================
+
+// Context invoker for processors
+// This is the entry point for processors (kernel threads) *except* for the main processor
+// It effectively constructs a coroutine by stealing the pthread stack
+static void * __invoke_processor(void * arg) {
+	#if !defined( __CFA_NO_STATISTICS__ )
+		__stats_t local_stats;
+		__init_stats( &local_stats );
+		__cfaabi_tls.this_stats = &local_stats;
+	#endif
+
+	processor * proc = (processor *) arg;
+	__cfaabi_tls.this_processor = proc;
+	__cfaabi_tls.this_thread    = 0p;
+	__cfaabi_tls.preemption_state.[enabled, disable_count] = [false, 1];
+	proc->local_data = &__cfaabi_tls;
+
+	register_tls( proc );
+
+	// SKULLDUGGERY: We want to create a context for the processor coroutine
+	// which is needed for the 2-step context switch. However, there is no reason
+	// to waste the perfectly valid stack create by pthread.
+	current_stack_info_t info;
+	__stack_t ctx;
+	info.storage = &ctx;
+	(proc->runner){ proc, &info };
+
+	__cfaabi_dbg_print_safe("Coroutine : created stack %p\n", get_coroutine(proc->runner)->stack.storage);
+
+	//Set global state
+	__cfaabi_tls.this_thread = 0p;
+
+	//We now have a proper context from which to schedule threads
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p created (%p, %p)\n", proc, &proc->runner, &ctx);
+
+	// SKULLDUGGERY: Since the coroutine doesn't have its own stack, we can't
+	// resume it to start it like it normally would, it will just context switch
+	// back to here. Instead directly call the main since we already are on the
+	// appropriate stack.
+	get_coroutine(proc->runner)->state = Active;
+	main( proc->runner );
+	get_coroutine(proc->runner)->state = Halted;
+
+	// Main routine of the core returned, the core is now fully terminated
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p main ended (%p)\n", proc, &proc->runner);
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		__tally_stats(proc->cltr->stats, &local_stats);
+		if( 0 != proc->print_stats ) {
+			__print_stats( &local_stats, proc->print_stats, "Processor ", proc->name, (void*)proc );
+		}
+		#if defined(CFA_STATS_ARRAY)
+			__flush_stat( &local_stats, "Processor", proc );
+		#endif
+	#endif
+
+	proc->local_data = 0p;
+
+	unregister_tls( proc );
+
+	return 0p;
+}
+
+static void __kernel_first_resume( processor * this ) {
+	$thread * src = mainThread;
+	$coroutine * dst = get_coroutine(this->runner);
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	__cfaabi_tls.this_thread->curr_cor = dst;
+	__stack_prepare( &dst->stack, 65000 );
+	__cfactx_start(main, dst, this->runner, __cfactx_invoke_coroutine);
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	dst->last = &src->self_cor;
+	dst->starter = dst->starter ? dst->starter : &src->self_cor;
+
+	// make sure the current state is still correct
+	/* paranoid */ verify(src->state == Ready);
+
+	// context switch to specified coroutine
+	verify( dst->context.SP );
+	__cfactx_switch( &src->context, &dst->context );
+	// when __cfactx_switch returns we are back in the src coroutine
+
+	mainThread->curr_cor = &mainThread->self_cor;
+
+	// make sure the current state has been update
+	/* paranoid */ verify(src->state == Active);
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+// KERNEL_ONLY
+static void __kernel_last_resume( processor * this ) {
+	$coroutine * src = &mainThread->self_cor;
+	$coroutine * dst = get_coroutine(this->runner);
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify( dst->starter == src );
+	/* paranoid */ verify( dst->context.SP );
+
+	// SKULLDUGGERY in debug the processors check that the
+	// stack is still within the limit of the stack limits after running a thread.
+	// that check doesn't make sense if we context switch to the processor using the
+	// coroutine semantics. Since this is a special case, use the current context
+	// info to populate these fields.
+	__cfaabi_dbg_debug_do(
+		__stack_context_t ctx;
+		CtxGet( ctx );
+		mainThread->context.SP = ctx.SP;
+		mainThread->context.FP = ctx.FP;
+	)
+
+	// context switch to the processor
+	__cfactx_switch( &src->context, &dst->context );
+}
+
+
+//=============================================================================================
+// Kernel Object Constructors logic
+//=============================================================================================
+//-----------------------------------------------------------------------------
+// Main thread construction
+static void ?{}( $coroutine & this, current_stack_info_t * info) with( this ) {
+	stack.storage = info->storage;
+	with(*stack.storage) {
+		limit     = info->limit;
+		base      = info->base;
+	}
+	__attribute__((may_alias)) intptr_t * istorage = (intptr_t*) &stack.storage;
+	*istorage |= 0x1;
+	name = "Main Thread";
+	state = Start;
+	starter = 0p;
+	last = 0p;
+	cancellation = 0p;
+}
+
+static void ?{}( $thread & this, current_stack_info_t * info) with( this ) {
+	ticket = TICKET_RUNNING;
+	state = Start;
+	self_cor{ info };
+	curr_cor = &self_cor;
+	curr_cluster = mainCluster;
+	self_mon.owner = &this;
+	self_mon.recursion = 1;
+	self_mon_p = &self_mon;
+	link.next = 0p;
+	link.ts   = 0;
+	preferred = -1u;
+	last_proc = 0p;
+	#if defined( __CFA_WITH_VERIFY__ )
+		canary = 0x0D15EA5E0D15EA5Ep;
+	#endif
+
+	node.next = 0p;
+	node.prev = 0p;
+	doregister(curr_cluster, this);
+
+	monitors{ &self_mon_p, 1, (fptr_t)0 };
+}
+
+//-----------------------------------------------------------------------------
+// Processor
+// Construct the processor context of non-main processors
+static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * info) {
+	(this.__cor){ info };
+	this.proc = proc;
+}
+
+static void init(processor & this, const char name[], cluster & _cltr, $thread * initT) with( this ) {
+	this.name = name;
+	this.cltr = &_cltr;
+	this.rdq.its = 0;
+	this.rdq.itr = 0;
+	this.rdq.id  = -1u;
+	this.rdq.target = -1u;
+	this.rdq.cutoff = 0ull;
+	do_terminate = false;
+	preemption_alarm = 0p;
+	pending_preemption = false;
+
+	this.io.ctx = 0p;
+	this.io.pending = false;
+	this.io.dirty   = false;
+
+	this.init.thrd = initT;
+
+	this.local_data = 0p;
+
+	this.idle = eventfd(0, 0);
+	if (idle < 0) {
+		abort("KERNEL ERROR: PROCESSOR EVENTFD - %s\n", strerror(errno));
+	}
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		print_stats = 0;
+		print_halts = false;
+	#endif
+
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p created\n", &this);
+}
+
+// Not a ctor, it just preps the destruction but should not destroy members
+static void deinit(processor & this) {
+	close(this.idle);
+}
+
+void ?{}(processor & this, const char name[], cluster & _cltr, $thread * initT) {
+	( this.terminated ){};
+	( this.runner ){};
+
+	disable_interrupts();
+		init( this, name, _cltr, initT );
+	enable_interrupts();
+
+	__cfadbg_print_safe(runtime_core, "Kernel : Starting core %p\n", &this);
+
+	this.stack = __create_pthread( &this.kernel_thread, __invoke_processor, (void *)&this );
+}
+
+void ?{}(processor & this, const char name[], cluster & _cltr) {
+	(this){name, _cltr, 0p};
+}
+
+extern size_t __page_size;
+void ^?{}(processor & this) with( this ){
+	if( ! __atomic_load_n(&do_terminate, __ATOMIC_ACQUIRE) ) {
+		__cfadbg_print_safe(runtime_core, "Kernel : core %p signaling termination\n", &this);
+
+		__atomic_store_n(&do_terminate, true, __ATOMIC_RELAXED);
+		__wake_proc( &this );
+
+		wait( terminated );
+		/* paranoid */ verify( active_processor() != &this);
+	}
+
+	__destroy_pthread( kernel_thread, this.stack, 0p );
+
+	disable_interrupts();
+		deinit( this );
+	enable_interrupts();
+}
+
+//-----------------------------------------------------------------------------
+// Cluster
+static void ?{}(__cluster_proc_list & this) {
+	this.lock  = 0;
+	this.idle  = 0;
+	this.total = 0;
+}
+
+void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned num_io, const io_context_params & io_params) with( this ) {
+	this.name = name;
+	this.preemption_rate = preemption_rate;
+	ready_queue{};
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		print_stats = 0;
+		stats = alloc();
+		__init_stats( stats );
+	#endif
+
+	threads{ __get };
+
+	io.arbiter = create();
+	io.params = io_params;
+
+	doregister(this);
+
+	// Lock the RWlock so no-one pushes/pops while we are changing the queue
+	disable_interrupts();
+	uint_fast32_t last_size = ready_mutate_lock();
+
+		// Adjust the ready queue size
+		ready_queue_grow( &this );
+
+	// Unlock the RWlock
+	ready_mutate_unlock( last_size );
+	enable_interrupts( false ); // Don't poll, could be in main cluster
+}
+
+void ^?{}(cluster & this) {
+	destroy(this.io.arbiter);
+
+	// Lock the RWlock so no-one pushes/pops while we are changing the queue
+	disable_interrupts();
+	uint_fast32_t last_size = ready_mutate_lock();
+
+		// Adjust the ready queue size
+		ready_queue_shrink( &this );
+
+	// Unlock the RWlock
+	ready_mutate_unlock( last_size );
+	enable_interrupts( false ); // Don't poll, could be in main cluster
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		if( 0 != this.print_stats ) {
+			__print_stats( this.stats, this.print_stats, "Cluster", this.name, (void*)&this );
+		}
+		#if defined(CFA_STATS_ARRAY)
+			__flush_stat( this.stats, "Cluster", &this );
+		#endif
+		free( this.stats );
+	#endif
+
+	unregister(this);
+}
+
+//=============================================================================================
+// Miscellaneous Initialization
+//=============================================================================================
+//-----------------------------------------------------------------------------
+// Global Queues
+static void doregister( cluster     & cltr ) {
+	lock      ( __cfa_dbg_global_clusters.lock __cfaabi_dbg_ctx2);
+	push_front( __cfa_dbg_global_clusters.list, cltr );
+	unlock    ( __cfa_dbg_global_clusters.lock );
+}
+
+static void unregister( cluster     & cltr ) {
+	lock  ( __cfa_dbg_global_clusters.lock __cfaabi_dbg_ctx2);
+	remove( __cfa_dbg_global_clusters.list, cltr );
+	unlock( __cfa_dbg_global_clusters.lock );
+}
+
+void doregister( cluster * cltr, $thread & thrd ) {
+	lock      (cltr->thread_list_lock __cfaabi_dbg_ctx2);
+	cltr->nthreads += 1;
+	push_front(cltr->threads, thrd);
+	unlock    (cltr->thread_list_lock);
+}
+
+void unregister( cluster * cltr, $thread & thrd ) {
+	lock  (cltr->thread_list_lock __cfaabi_dbg_ctx2);
+	remove(cltr->threads, thrd );
+	cltr->nthreads -= 1;
+	unlock(cltr->thread_list_lock);
+}
+
+static void register_tls( processor * this ) {
+	// Register and Lock the RWlock so no-one pushes/pops while we are changing the queue
+	uint_fast32_t last_size;
+	[this->unique_id, last_size] = ready_mutate_register();
+
+		this->cltr->procs.total += 1u;
+		insert_last(this->cltr->procs.actives, *this);
+
+		// Adjust the ready queue size
+		ready_queue_grow( this->cltr );
+
+	// Unlock the RWlock
+	ready_mutate_unlock( last_size );
+}
+
+
+static void unregister_tls( processor * this ) {
+	// Lock the RWlock so no-one pushes/pops while we are changing the queue
+	uint_fast32_t last_size = ready_mutate_lock();
+		this->cltr->procs.total -= 1u;
+		remove(*this);
+
+		// clear the cluster so nothing gets pushed to local queues
+		cluster * cltr = this->cltr;
+		this->cltr = 0p;
+
+		// Adjust the ready queue size
+		ready_queue_shrink( cltr );
+
+	// Unlock the RWlock and unregister: we don't need the read_lock any more
+	ready_mutate_unregister( this->unique_id, last_size );
+}
+
+static void check( int ret, const char func[] ) {
+	if ( ret ) {										// pthread routines return errno values
+		abort( "%s : internal error, error(%d) %s.", func, ret, strerror( ret ) );
+	} // if
+} // Abort
+
+void * __create_pthread( pthread_t * pthread, void * (*start)(void *), void * arg ) {
+	pthread_attr_t attr;
+
+	check( pthread_attr_init( &attr ), "pthread_attr_init" ); // initialize attribute
+
+	size_t stacksize;
+	// default stack size, normally defined by shell limit
+	check( pthread_attr_getstacksize( &attr, &stacksize ), "pthread_attr_getstacksize" );
+	assert( stacksize >= PTHREAD_STACK_MIN );
+
+	void * stack;
+	#if CFA_PROCESSOR_USE_MMAP
+		stacksize = ceiling( stacksize, __page_size ) + __page_size;
+		stack = mmap(0p, stacksize, __map_prot, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+		if(stack == ((void*)-1)) {
+			abort( "pthread stack creation : internal error, mmap failure, error(%d) %s.", errno, strerror( errno ) );
+		}
+		if ( mprotect( stack, __page_size, PROT_NONE ) == -1 ) {
+			abort( "pthread stack creation : internal error, mprotect failure, error(%d) %s.", errno, strerror( errno ) );
+		} // if
+	#else
+		__cfaabi_dbg_debug_do(
+			stack = memalign( __page_size, stacksize + __page_size );
+			// pthread has no mechanism to create the guard page in user supplied stack.
+			if ( mprotect( stack, __page_size, PROT_NONE ) == -1 ) {
+				abort( "mprotect : internal error, mprotect failure, error(%d) %s.", errno, strerror( errno ) );
+			} // if
+		);
+		__cfaabi_dbg_no_debug_do(
+			stack = malloc( stacksize );
+		);
+	#endif
+
+
+	check( pthread_attr_setstack( &attr, stack, stacksize ), "pthread_attr_setstack" );
+
+	check( pthread_create( pthread, &attr, start, arg ), "pthread_create" );
+	return stack;
+}
+
+void __destroy_pthread( pthread_t pthread, void * stack, void ** retval ) {
+	int err = pthread_join( pthread, retval );
+	if( err != 0 ) abort("KERNEL ERROR: joining pthread %p caused error %s\n", (void*)pthread, strerror(err));
+
+	#if CFA_PROCESSOR_USE_MMAP
+		pthread_attr_t attr;
+
+		check( pthread_attr_init( &attr ), "pthread_attr_init" ); // initialize attribute
+
+		size_t stacksize;
+		// default stack size, normally defined by shell limit
+		check( pthread_attr_getstacksize( &attr, &stacksize ), "pthread_attr_getstacksize" );
+		assert( stacksize >= PTHREAD_STACK_MIN );
+		stacksize += __page_size;
+
+		if(munmap(stack, stacksize) == -1) {
+			abort( "pthread stack destruction : internal error, munmap failure, error(%d) %s.", errno, strerror( errno ) );
+		}
+	#else
+		__cfaabi_dbg_debug_do(
+			// pthread has no mechanism to create the guard page in user supplied stack.
+			if ( mprotect( stack, __page_size, __map_prot ) == -1 ) {
+				abort( "mprotect : internal error, mprotect failure, error(%d) %s.", errno, strerror( errno ) );
+			} // if
+		);
+		free( stack );
+	#endif
+}
+
+#if defined(__CFA_WITH_VERIFY__)
+static bool verify_fwd_bck_rng(void) {
+	__cfaabi_tls.ready_rng.fwd_seed = 25214903917_l64u * (rdtscl() ^ (uintptr_t)&verify_fwd_bck_rng);
+
+	unsigned values[10];
+	for(i; 10) {
+		values[i] = __tls_rand_fwd();
+	}
+
+	__tls_rand_advance_bck();
+
+	for ( i; 9 -~= 0 ) {
+		if(values[i] != __tls_rand_bck()) {
+			return false;
+		}
+	}
+
+	return true;
+}
+#endif

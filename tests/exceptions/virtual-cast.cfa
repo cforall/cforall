@@ -1,0 +1,109 @@
+// Testing the virtual cast, as part of strict inheritance.
+
+/* IMPORTANT: This test does not repersent the final feature set.
+ * We are missing a number of important aspects such as:
+ * + vtable type generation.
+ * + vtable instance generation, that might use different resolution rules.
+ * + Virtual syntax to force said generation on structures and traits.
+ * + Trait references/pointers that do the virtual_table lookup.
+ */
+
+#include <stdlib.hfa>
+#include <assert.h>
+
+
+
+// Hand defined alpha virtual type:
+struct __cfatid_struct_alpha {
+	__cfavir_type_info parent;
+};
+
+__attribute__(( cfa_linkonce ))
+struct __cfatid_struct_alpha __cfatid_alpha = {
+	(__cfavir_type_info *)0,
+};
+
+struct alpha_vtable {
+	struct __cfatid_struct_alpha const * const __cfavir_typeid;
+	char (*code)(void);
+};
+
+struct alpha {
+	alpha_vtable const * virtual_table;
+};
+
+char ret_a(void) {
+	return 'a';
+}
+
+
+
+// Hand defined beta virtual type:
+struct __cfatid_struct_beta {
+	__cfatid_struct_alpha const * parent;
+};
+
+__attribute__(( section(".gnu.linkonce.__cfatid_beta") ))
+struct __cfatid_struct_beta __cfatid_beta = {
+	&__cfatid_alpha,
+};
+
+struct beta_vtable {
+	struct __cfatid_struct_beta const * const __cfavir_typeid;
+	char (*code)(void);
+};
+
+struct beta {
+	beta_vtable const * virtual_table;
+};
+
+char ret_b(void) {
+	return 'b';
+}
+
+
+
+// Hand defined gamma virtual type:
+struct __cfatid_struct_gamma {
+	__cfatid_struct_beta const * parent;
+};
+
+__attribute__(( section(".gnu.linkonce.__cfatid_gamma") ))
+struct __cfatid_struct_gamma __cfatid_gamma = {
+	&__cfatid_beta,
+};
+
+struct gamma_vtable {
+	struct __cfatid_struct_gamma const * const __cfavir_typeid;
+	char (*code)(void);
+};
+
+struct gamma {
+	gamma_vtable const * virtual_table;
+};
+
+char ret_g(void) {
+	return 'g';
+}
+
+
+extern "C" {
+	alpha_vtable _alpha_vtable_instance = { &__cfatid_alpha, ret_a };
+	beta_vtable _beta_vtable_instance = { &__cfatid_beta, ret_b };
+	gamma_vtable _gamma_vtable_instance = { &__cfatid_gamma, ret_g };
+}
+
+int main (int argc, char * argv[]) {
+
+	gamma * tri = malloc(); tri->virtual_table = &_gamma_vtable_instance;
+	beta * mid = (virtual beta *)tri;
+	assert( 'g' == mid->virtual_table->code() );
+
+	alpha * top = malloc(); top->virtual_table = &_alpha_vtable_instance;
+	mid = (virtual beta *)top;
+	assert( ! mid );
+
+	free(tri);
+	free(top);
+	printf( "done\n" );				// non-empty .expect file
+}

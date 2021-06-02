@@ -1,0 +1,191 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// functions.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Aug 17 08:39:58 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Nov  6 17:54:09 2018
+// Update Count     : 13
+//
+
+// ANSI function definitions
+
+void h(void) {}
+
+int f (
+	int (void),
+	int (int),
+	int ((void)),
+	int ((int)),
+	void g(void)
+	) {
+	(* g)();
+	g();
+	g = h;
+}
+
+int f1() {}
+int (f2()) {}
+int (* f3())() {}
+int * ((f4())) {}
+int ((* f5()))() {}
+int * f6() {}
+int * (f7)() {}
+int ** f8() {}
+int * const * (f9)() {}
+int (* f10())[] {}
+int (* f11())[][3] {}
+int ((* f12())[])[3] {}
+
+// "implicit int" otype specifier (not ANSI)
+
+fII1( int i ) {}
+const fII2( int i ) {}
+extern fII3( int i ) {}
+extern const fII4( int i ) {}
+
+* fII5() {}
+const * fII6() {}
+const long * fII7() {}
+static const long * fII8() {}
+const static long * fII9() {}
+
+// K&R function definitions
+
+fO1( i ) int i; {}
+int fO2( i ) int i; {}
+const fO3( i ) int i; {}
+extern fO4( i ) int i; {}
+extern const fO5( i ) int i; {}
+
+// Cforall extensions
+
+// [] f( );
+[int] f( );
+// [] f(int);
+[int] f(int);
+// [] f( ) {}
+[int] f( ) {}
+// [] f(int) {}
+[int] f(int) {}
+
+[int x] f( );
+// [] f(int x);
+//[int x] f(int x);
+//[int x] f( ) {}
+// [] f(int x) {}
+//[int x] f(int x) {}
+
+[int, int x] f( );
+// [] f(int, int x);
+[int, int x] f(int, int x);
+[int, int x] f( ) {}
+// [] f(int, int x) {}
+[int, int x] f(int, int x) {}
+
+[int, int x, int] f( );
+// [] f(int, int x, int);
+[int, int x, int] f(int, int x, int);
+[int, int x, int] f( ) {}
+// [] f(int, int x, int) {}
+[int, int x, int] f(int, int x, int) {}
+
+[int, int x, * int y] f( );
+// [] f(int, int x, * int y);
+[int, int x, * int y] f(int, int x, * int y);
+[int, int x, * int y] f( ) {}
+// [] f(int, int x, * int y) {}
+[int, int x, * int y] f(int, int x, * int y) {}
+
+// function prototypes
+
+[ int ] f11( int ), f12();  // => int f11( int ), f12( void );
+
+const double bar1(), bar2( int ), bar3( double );		// C version
+[const double] foo(), foo( int ), foo( double ) { return 3.0; } // CFA version
+struct S { int i; };
+[S] rtn( int ) {}
+
+
+[int] f(
+	int ( int, int p ),
+	[int](int)
+	) {
+	int (* (* pc)[][10])[][3];
+	* [][10] * [][3] int p;
+	* [] * [int](int) p;
+}
+
+static const int * f1() {}
+static [ * const int ] f2() {}
+static inline [ const * int ] f3() {}
+static inline [ const [ * int, int ] ] f4() {}
+static [ const [ * int, const int ] ] f5() {}
+
+// unnamed parameter
+
+int f(
+	int (),
+
+	int * (),
+	int ** (),
+	int * const * (),
+	int * const * const (),
+
+	int ([]),
+	int ([10]),
+
+	int * ([]),
+	int * ([10]),
+	int ** ([]),
+	int ** ([10]),
+	int * const * ([]),
+	int * const * ([10]),
+	int * const * const ([]),
+	int * const * const ([10])
+	);
+
+int f(
+	int (),
+
+	int * (),
+	int ** (),
+	int * const * (),
+	int * const * const (),
+
+	int ([]),
+	int ([10]),
+
+	int * ([]),
+	int * ([10]),
+	int ** ([]),
+	int ** ([10]),
+	int * const * ([]),
+	int * const * ([10]),
+	int * const * const ([]),
+	int * const * const ([10])
+	) {
+}
+
+typedef int T;
+
+int f( T (* f), T t ) {
+	T (T);
+}
+
+// errors
+
+//int f()[] {}
+//int (f[])() {}
+//int f[]() {}
+//int ((* f15())())[] {}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa functions.cfa" //
+// End: //

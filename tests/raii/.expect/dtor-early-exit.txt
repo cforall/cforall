@@ -1,0 +1,220 @@
+f i=0
+construct x
+construct y
+construct z
+destruct z
+destruct y
+destruct x
+f i=1
+construct x
+construct y
+construct z
+destruct z
+destruct y
+destruct x
+f i=2
+construct x
+construct y
+construct z
+destruct z
+destruct y
+destruct x
+f i=3
+construct x
+construct y
+construct z
+destruct z
+destruct y
+destruct x
+
+g for i=0
+construct x
+destruct x
+g for i=1
+construct x
+destruct x
+g for i=2
+construct x
+destruct x
+g for i=3
+construct x
+destruct x
+g for i=4
+construct x
+destruct x
+g for i=5
+construct x
+destruct x
+g for i=6
+construct x
+destruct x
+g for i=7
+construct x
+destruct x
+g for i=8
+construct x
+destruct x
+g for i=9
+construct x
+destruct x
+
+g while i=0
+construct x
+destruct x
+g while i=1
+construct x
+destruct x
+g while i=2
+construct x
+destruct x
+g while i=3
+construct x
+destruct x
+g while i=4
+construct x
+destruct x
+g while i=5
+construct x
+destruct x
+g while i=6
+construct x
+destruct x
+g while i=7
+construct x
+destruct x
+g while i=8
+construct x
+destruct x
+g while i=9
+construct x
+destruct x
+
+construct y
+g switch i=0
+destruct y
+construct y
+g switch i=1
+destruct y
+construct y
+g switch i=2
+destruct y
+construct y
+g switch i=3
+destruct y
+construct y
+g switch i=4
+destruct y
+construct y
+g switch i=5
+destruct y
+construct y
+g switch i=6
+destruct y
+construct y
+g switch i=7
+destruct y
+construct y
+g switch i=8
+destruct y
+construct y
+g switch i=9
+destruct y
+
+g for k=0
+g for i=0
+construct x
+g for j=0
+construct y
+continue L2
+destruct y
+g for j=1
+construct y
+break L2
+destruct y
+destruct x
+g for i=1
+construct x
+g for j=0
+construct y
+continue L2
+destruct y
+g for j=1
+construct y
+break L2
+destruct y
+destruct x
+g for i=2
+construct x
+continue L1
+destruct x
+g for i=3
+construct x
+break L1
+destruct x
+g for k=1
+g for i=0
+construct x
+g for j=0
+construct y
+continue L2
+destruct y
+g for j=1
+construct y
+break L2
+destruct y
+destruct x
+g for i=1
+construct x
+g for j=0
+construct y
+continue L2
+destruct y
+g for j=1
+construct y
+break L2
+destruct y
+destruct x
+g for i=2
+construct x
+continue L1
+destruct x
+g for i=3
+construct x
+break L1
+destruct x
+
+construct w
+construct v
+break L3
+destruct v
+destruct w
+
+h
+construct y
+L1
+construct x
+L2
+goto L1
+destruct x
+L1
+construct x
+L2
+goto L2
+L2
+goto L3
+L3
+goto L2-2
+L2
+goto L4
+destruct x
+destruct y
+L4
+goto L0
+construct y
+L1
+construct x
+L2
+goto L4
+destruct x
+destruct y
+L4

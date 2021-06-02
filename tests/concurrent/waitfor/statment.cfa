@@ -1,0 +1,136 @@
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <thread.hfa>
+
+#include <stdbool.h>
+
+monitor M {
+	int index;
+	int last_val;
+	int calls[7];
+};
+
+volatile bool start = false;
+
+void ?{}( M & this ) {
+	this.index = 0;
+	this.last_val = 0;
+	for( int i = 0; i < 7; i++ ) {
+		this.calls[i] = 100; //10_000;
+	}
+}
+
+void ^?{} ( M &  mutex this ) {}
+
+int get_index( M & mutex this ) {
+	this.index += 1;
+	return this.index;
+}
+
+bool call1( M & mutex this ) {
+	this.last_val = 1;
+	this.calls[0] -= 1;
+	return this.calls[0] > 0;
+}
+
+bool call2( M & mutex this ) {
+	this.last_val = 2;
+	this.calls[1] -= 1;
+	return this.calls[1] > 0;
+}
+
+bool call3( M & mutex this ) {
+	this.last_val = 3;
+	this.calls[2] -= 1;
+	return this.calls[2] > 0;
+}
+
+bool call4( M & mutex this ) {
+	this.last_val = 4;
+	this.calls[3] -= 1;
+	return this.calls[3] > 0;
+}
+
+bool call5( M & mutex this ) {
+	this.last_val = 5;
+	this.calls[4] -= 1;
+	return this.calls[4] > 0;
+}
+
+bool call6( M & mutex this ) {
+	this.last_val = 6;
+	this.calls[5] -= 1;
+	return this.calls[5] > 0;
+}
+
+bool call7( M & mutex this ) {
+	this.last_val = 7;
+	this.calls[6] -= 1;
+	return this.calls[6] > 0;
+}
+
+M m;
+thread caller{};
+
+bool call( int index ) {
+	switch( index ) {
+		case 1: return call1( m );
+		case 2: return call2( m );
+		case 3: return call3( m );
+		case 4: return call4( m );
+		case 5: return call5( m );
+		case 6: return call6( m );
+		case 7: return call7( m );
+		default :
+			serr | "Incorrect index" | index;
+			abort();
+	}
+}
+
+void main( caller & this ) {
+	int index = get_index( m );
+	while( !start ) yield();
+	while( call( index ) );
+}
+
+void do_wait( M & mutex this ) {
+	bool done = false;
+
+	start = true;
+
+	while( !done ) {
+		   waitfor( get_index : this );
+		or waitfor( call1 : this ) { sout | "Statement"; if( this.last_val != 1 ) { serr | "Incorrect index: expected" | 1 | "got" | this.last_val; } }
+		or waitfor( call2 : this ) { sout | "Statement"; if( this.last_val != 2 ) { serr | "Incorrect index: expected" | 2 | "got" | this.last_val; } }
+		or waitfor( call3 : this ) { sout | "Statement"; if( this.last_val != 3 ) { serr | "Incorrect index: expected" | 3 | "got" | this.last_val; } }
+		or waitfor( call4 : this ) { sout | "Statement"; if( this.last_val != 4 ) { serr | "Incorrect index: expected" | 4 | "got" | this.last_val; } }
+		or waitfor( call5 : this ) { sout | "Statement"; if( this.last_val != 5 ) { serr | "Incorrect index: expected" | 5 | "got" | this.last_val; } }
+		or waitfor( call6 : this ) { sout | "Statement"; if( this.last_val != 6 ) { serr | "Incorrect index: expected" | 6 | "got" | this.last_val; } }
+		or waitfor( call7 : this ) { sout | "Statement"; if( this.last_val != 7 ) { serr | "Incorrect index: expected" | 7 | "got" | this.last_val; } }
+
+		done = true;
+		for( int i = 0; i < 7; i++ ) {
+			if( this.calls[i] > 0 ) {
+				done = false;
+				break;
+			}
+		}
+	}
+}
+
+thread waiter{};
+
+void main( waiter & this ) {
+	do_wait( m );
+}
+
+int main() {
+	processor p[2];
+	sout | "Starting";
+	{
+		caller c[7];
+		waiter w;
+	}
+	sout | "Stopping";
+}

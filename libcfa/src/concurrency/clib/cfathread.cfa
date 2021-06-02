@@ -1,0 +1,349 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// clib/cfathread.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Sep 22 15:31:20 2020
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include "fstream.hfa"
+#include "locks.hfa"
+#include "kernel.hfa"
+#include "stats.hfa"
+#include "thread.hfa"
+#include "time.hfa"
+
+#include "cfathread.h"
+
+extern void ?{}(processor &, const char[], cluster &, $thread *);
+extern "C" {
+      extern void __cfactx_invoke_thread(void (*main)(void *), void * this);
+}
+
+extern Time __kernel_get_time();
+
+//================================================================================
+// Thread run y the C Interface
+
+struct cfathread_object {
+	$thread self;
+	void * (*themain)( void * );
+	void * arg;
+	void * ret;
+};
+void main(cfathread_object & this);
+void ^?{}(cfathread_object & mutex this);
+
+static inline $thread * get_thread( cfathread_object & this ) { return &this.self; }
+
+typedef ThreadCancelled(cfathread_object) cfathread_exception;
+typedef ThreadCancelled_vtable(cfathread_object) cfathread_vtable;
+
+void defaultResumptionHandler(ThreadCancelled(cfathread_object) & except) {
+	abort | "A thread was cancelled";
+}
+
+cfathread_vtable _cfathread_vtable_instance;
+
+cfathread_vtable & const _default_vtable = _cfathread_vtable_instance;
+
+cfathread_vtable const & get_exception_vtable(cfathread_exception *) {
+	return _cfathread_vtable_instance;
+}
+
+static void ?{}( cfathread_object & this, cluster & cl, void *(*themain)( void * ), void * arg ) {
+	this.themain = themain;
+	this.arg = arg;
+	(this.self){"C-thread", cl};
+	__thrd_start(this, main);
+}
+
+void ^?{}(cfathread_object & mutex this) {
+	^(this.self){};
+}
+
+void main( cfathread_object & this ) {
+	__attribute__((unused)) void * const thrd_obj = (void*)&this;
+	__attribute__((unused)) void * const thrd_hdl = (void*)active_thread();
+	/* paranoid */ verify( thrd_obj == thrd_hdl );
+
+	this.ret = this.themain( this.arg );
+}
+
+//================================================================================
+// Special Init Thread responsible for the initialization or processors
+struct __cfainit {
+	$thread self;
+	void (*init)( void * );
+	void * arg;
+};
+void main(__cfainit & this);
+void ^?{}(__cfainit & mutex this);
+
+static inline $thread * get_thread( __cfainit & this ) { return &this.self; }
+
+typedef ThreadCancelled(__cfainit) __cfainit_exception;
+typedef ThreadCancelled_vtable(__cfainit) __cfainit_vtable;
+
+void defaultResumptionHandler(ThreadCancelled(__cfainit) & except) {
+	abort | "The init thread was cancelled";
+}
+
+__cfainit_vtable ___cfainit_vtable_instance;
+
+__cfainit_vtable const & get_exception_vtable(__cfainit_exception *) {
+	return ___cfainit_vtable_instance;
+}
+
+static void ?{}( __cfainit & this, void (*init)( void * ), void * arg ) {
+	this.init = init;
+	this.arg = arg;
+	(this.self){"Processir Init"};
+
+	// Don't use __thrd_start! just prep the context manually
+	$thread * this_thrd = get_thread(this);
+	void (*main_p)(__cfainit &) = main;
+
+	disable_interrupts();
+	__cfactx_start(main_p, get_coroutine(this), this, __cfactx_invoke_thread);
+
+	this_thrd->context.[SP, FP] = this_thrd->self_cor.context.[SP, FP];
+	/* paranoid */ verify( this_thrd->context.SP );
+
+	this_thrd->state = Ready;
+	enable_interrupts();
+}
+
+void ^?{}(__cfainit & mutex this) {
+	^(this.self){};
+}
+
+void main( __cfainit & this ) {
+	__attribute__((unused)) void * const thrd_obj = (void*)&this;
+	__attribute__((unused)) void * const thrd_hdl = (void*)active_thread();
+	/* paranoid */ verify( thrd_obj == thrd_hdl );
+
+	this.init( this.arg );
+}
+
+//================================================================================
+// Main Api
+extern "C" {
+	int cfathread_cluster_create(cfathread_cluster_t * cl) __attribute__((nonnull(1))) {
+		*cl = new();
+		return 0;
+	}
+
+	cfathread_cluster_t cfathread_cluster_self(void) {
+		return active_cluster();
+	}
+
+	int cfathread_cluster_print_stats( cfathread_cluster_t cl ) {
+		#if !defined(__CFA_NO_STATISTICS__)
+			print_stats_at_exit( *cl, CFA_STATS_READY_Q | CFA_STATS_IO );
+			print_stats_now( *cl, CFA_STATS_READY_Q | CFA_STATS_IO );
+		#endif
+		return 0;
+	}
+
+	int cfathread_cluster_add_worker(cfathread_cluster_t cl, pthread_t* tid, void (*init_routine) (void *), void * arg) {
+		__cfainit * it = 0p;
+		if(init_routine) {
+			it = alloc();
+			(*it){init_routine, arg};
+		}
+		processor * proc = alloc();
+		(*proc){ "C-processor", *cl, get_thread(*it) };
+
+		// Wait for the init thread to return before continuing
+		if(it) {
+			^(*it){};
+			free(it);
+		}
+
+		if(tid) *tid = proc->kernel_thread;
+		return 0;
+	}
+
+	int cfathread_cluster_pause (cfathread_cluster_t) {
+		abort | "Pausing clusters is not supported";
+		exit(1);
+	}
+
+	int cfathread_cluster_resume(cfathread_cluster_t) {
+		abort | "Resuming clusters is not supported";
+		exit(1);
+	}
+
+	//--------------------
+	// Thread attributes
+	int cfathread_attr_init(cfathread_attr_t *attr) __attribute__((nonnull (1))) {
+		attr->cl = active_cluster();
+		return 0;
+	}
+
+	//--------------------
+	// Thread
+	int cfathread_create( cfathread_t * handle, const cfathread_attr_t * attr, void *(*main)( void * ), void * arg ) __attribute__((nonnull (1))) {
+		cluster * cl = attr ? attr->cl : active_cluster();
+		cfathread_t thrd = alloc();
+		(*thrd){ *cl, main, arg };
+		*handle = thrd;
+		return 0;
+	}
+
+	int cfathread_join( cfathread_t thrd, void ** retval ) {
+		void * ret = join( *thrd ).ret;
+		^( *thrd ){};
+		free(thrd);
+		if(retval) {
+			*retval = ret;
+		}
+		return 0;
+	}
+
+	int cfathread_get_errno(void) {
+		return errno;
+	}
+
+	cfathread_t cfathread_self(void) {
+		return (cfathread_t)active_thread();
+	}
+
+	int cfathread_usleep(useconds_t usecs) {
+		sleep(usecs`us);
+		return 0;
+	}
+
+	int cfathread_sleep(unsigned int secs) {
+		sleep(secs`s);
+		return 0;
+	}
+
+	void cfathread_park( void ) {
+		park();
+	}
+
+	void cfathread_unpark( cfathread_t thrd ) {
+		unpark( *thrd );
+	}
+
+	void cfathread_yield( void ) {
+		yield();
+	}
+
+	typedef struct cfathread_mutex * cfathread_mutex_t;
+
+	//--------------------
+	// Mutex
+	struct cfathread_mutex {
+		fast_lock impl;
+	};
+	int cfathread_mutex_init(cfathread_mutex_t *restrict mut, const cfathread_mutexattr_t *restrict) __attribute__((nonnull (1))) { *mut = new(); return 0; }
+	int cfathread_mutex_destroy(cfathread_mutex_t *mut) __attribute__((nonnull (1))) { delete( *mut ); return 0; }
+	int cfathread_mutex_lock   (cfathread_mutex_t *mut) __attribute__((nonnull (1))) { lock( (*mut)->impl ); return 0; }
+	int cfathread_mutex_unlock (cfathread_mutex_t *mut) __attribute__((nonnull (1))) { unlock( (*mut)->impl ); return 0; }
+	int cfathread_mutex_trylock(cfathread_mutex_t *mut) __attribute__((nonnull (1))) {
+		bool ret = try_lock( (*mut)->impl );
+		if( ret ) return 0;
+		else return EBUSY;
+	}
+
+	//--------------------
+	// Condition
+	struct cfathread_condition {
+		condition_variable(fast_lock) impl;
+	};
+	int cfathread_cond_init(cfathread_cond_t *restrict cond, const cfathread_condattr_t *restrict) __attribute__((nonnull (1))) { *cond = new(); return 0; }
+	int cfathread_cond_signal(cfathread_cond_t *cond) __attribute__((nonnull (1)))  { notify_one( (*cond)->impl ); return 0; }
+	int cfathread_cond_wait(cfathread_cond_t *restrict cond, cfathread_mutex_t *restrict mut) __attribute__((nonnull (1,2))) { wait( (*cond)->impl, (*mut)->impl ); return 0; }
+	int cfathread_cond_timedwait(cfathread_cond_t *restrict cond, cfathread_mutex_t *restrict mut, const struct timespec *restrict abstime) __attribute__((nonnull (1,2,3))) {
+		Time t = { *abstime };
+		timespec curr;
+		clock_gettime( CLOCK_REALTIME, &curr );
+		Time c = { curr };
+		if( wait( (*cond)->impl, (*mut)->impl, t - c ) ) {
+			return 0;
+		}
+		errno = ETIMEDOUT;
+		return ETIMEDOUT;
+	}
+}
+
+#include <iofwd.hfa>
+
+extern "C" {
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <sys/socket.h>
+
+	//--------------------
+	// IO operations
+	int cfathread_socket(int domain, int type, int protocol) {
+		return socket(domain, type, protocol);
+	}
+	int cfathread_bind(int socket, const struct sockaddr *address, socklen_t address_len) {
+		return bind(socket, address, address_len);
+	}
+
+	int cfathread_listen(int socket, int backlog) {
+		return listen(socket, backlog);
+	}
+
+	int cfathread_accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len) {
+		return cfa_accept4(socket, address, address_len, 0, CFA_IO_LAZY);
+	}
+
+	int cfathread_connect(int socket, const struct sockaddr *address, socklen_t address_len) {
+		return cfa_connect(socket, address, address_len, CFA_IO_LAZY);
+	}
+
+	int cfathread_dup(int fildes) {
+		return dup(fildes);
+	}
+
+	int cfathread_close(int fildes) {
+		return cfa_close(fildes, CFA_IO_LAZY);
+	}
+
+	ssize_t cfathread_sendmsg(int socket, const struct msghdr *message, int flags) {
+		return cfa_sendmsg(socket, message, flags, CFA_IO_LAZY);
+	}
+
+	ssize_t cfathread_write(int fildes, const void *buf, size_t nbyte) {
+		// Use send rather then write for socket since it's faster
+		return cfa_send(fildes, buf, nbyte, 0, CFA_IO_LAZY);
+	}
+
+	ssize_t cfathread_recvfrom(int socket, void *restrict buffer, size_t length, int flags, struct sockaddr *restrict address, socklen_t *restrict address_len)  {
+		struct iovec iov;
+		iov.iov_base = buffer;
+		iov.iov_len = length;
+
+		struct msghdr msg;
+		msg.msg_name = address;
+		msg.msg_namelen = address_len ? (socklen_t)*address_len : (socklen_t)0;
+		msg.msg_iov = &iov;
+		msg.msg_iovlen = 1;
+		msg.msg_control = 0p;
+		msg.msg_controllen = 0;
+
+		ssize_t ret = cfa_recvmsg(socket, &msg, flags, CFA_IO_LAZY);
+
+		if(address_len) *address_len = msg.msg_namelen;
+		return ret;
+	}
+
+	ssize_t cfathread_read(int fildes, void *buf, size_t nbyte) {
+		// Use recv rather then read for socket since it's faster
+		return cfa_recv(fildes, buf, nbyte, 0, CFA_IO_LAZY);
+	}
+
+}

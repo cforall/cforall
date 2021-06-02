@@ -1,0 +1,59 @@
+#include <kernel.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+
+#include "long_tests.hfa"
+
+#ifndef PREEMPTION_RATE
+#define PREEMPTION_RATE 10`ms
+#endif
+
+Duration default_preemption() {
+	return PREEMPTION_RATE;
+}
+
+#ifdef TEST_LONG
+static const unsigned long N = 30_000ul;
+#else
+static const unsigned long N = 500ul;
+#endif
+
+extern void __cfaabi_check_preemption();
+
+static volatile int counter = 0;
+
+thread worker_t {
+	int value;
+};
+
+void ?{}( worker_t & this, int value ) {
+	this.value = value;
+}
+
+void main(worker_t & this) {
+	while(TEST(counter < N)) {
+		__cfaabi_check_preemption();
+		if( (counter % 7) == this.value ) {
+			__cfaabi_check_preemption();
+			int next = __atomic_add_fetch( &counter, 1, __ATOMIC_SEQ_CST );
+			__cfaabi_check_preemption();
+			if( (next % 100) == 0 ) printf("%d\n", (int)next);
+			__cfaabi_check_preemption();
+		}
+		__cfaabi_check_preemption();
+		KICK_WATCHDOG;
+	}
+}
+
+int main(int argc, char* argv[]) {
+	processor p;
+	{
+		worker_t w0 = 0;
+		worker_t w1 = 1;
+		worker_t w2 = 2;
+		worker_t w3 = 3;
+		worker_t w4 = 4;
+		worker_t w5 = 5;
+		worker_t w6 = 6;
+	}
+}

@@ -1,0 +1,177 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// function-operator.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Fri Aug 25 15:21:11 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Apr 11 18:27:45 2019
+// Update Count     : 10
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>
+
+#define length(array) (sizeof((array))/sizeof((array)[0]))
+#define begin(array) (&array[0]) // there's currently a bug in passing an array to a polymorphic function, so ensure a pointer is passed instead
+#define end(array) (&array[length(array)])
+
+// STL-like Algorithms
+trait Assignable(T &, U &) { T ?=?(T &, U); };
+trait Copyable(T &) { void ?{}(T &, T); };
+trait Destructable(T &) { void ^?{}(T &); };
+
+trait Iterator(iter & | sized(iter) | Copyable(iter) | Destructable(iter), T) {
+	T & *?(iter);
+	iter ++?(iter &);
+	int ?!=?(iter, iter);
+};
+
+forall(Tin, Input & | Iterator(Input, Tin), Tout, Output & | Iterator(Output, Tout) | Assignable(Tout, Tin))
+Output copy(Input first, Input last, Output result) {
+	while (first != last) {
+		*result = *first;
+		++result; ++first;
+	}
+	return result;
+}
+
+// test ?()(T *, ...) -- ?() with function call-by-pointer
+forall(Tin, Input & | Iterator(Input, Tin), Tout, Output & | Iterator(Output, Tout), FuncRet, Func & | { FuncRet ?()(Func *, Tin); } | Assignable(Tout, FuncRet))
+Output transform (Input first, Input last, Output result, Func * op) {
+	while (first != last) {
+		*result = op(*first);
+		++result; ++first;
+	}
+	return result;
+}
+
+// test ?()(T, ...) -- ?() with function call-by-value
+forall(Iter &, T | Iterator(Iter, T), Pred | { int ?()(Pred, T); })
+Iter find_if (Iter first, Iter last, Pred pred) {
+	while (first != last) {
+		if (pred(*first)) return first;
+		++first;
+	}
+	return last;
+}
+
+// test ?()(T, ...) -- ?() with function call-by-reference
+forall(Generator, GenRet | { GenRet ?()(Generator &); }, Iter &, T | Iterator(Iter, T) | Assignable(T, GenRet))
+void generate(Iter first, Iter last, Generator & gen) {
+	int i = 0;
+	while (first != last) {
+		*first = gen();
+		++first;
+	}
+}
+
+// encapsulate a counter that increments by one every time it is called
+struct Counter { int c; };
+void ?{}(Counter & cnt) { cnt.c = 0; }
+int ?()(Counter & cnt) { return cnt.c++; }
+
+// TODO: abstract over os type with ostream trait; resolver is currently too slow for this to be reasonable, but it does work.
+struct os_wrapper {
+	ofstream * out;
+};
+
+// TODO: abstract over (os, T)
+os_wrapper ?=?(os_wrapper & wrapper, int x) {
+	*wrapper.out | x;
+	return wrapper;
+}
+
+	struct ostream_iterator {
+		os_wrapper * out;
+	};
+void ?{}(ostream_iterator & iter, ofstream * out) {
+	iter.out = new(out);
+}
+// no destructor, memory leak. This is necessary for this to work at the moment, since
+// *? requires its parameter by value and returns a reference.
+
+// implement Iterator
+os_wrapper & *?(ostream_iterator iter) {
+	return *iter.out;
+}
+ostream_iterator ++?(ostream_iterator & iter) {
+	// nothing to do
+	return iter;
+}
+int ?!=?(ostream_iterator i1, ostream_iterator i2) {
+	return i1.out->out != i2.out->out;
+}
+
+forall(T | { int ?==?(T, T); })
+struct Equals {
+	T val;
+};
+
+forall(T | { int ?==?(T, T); })
+int ?()(Equals(T) eq, T x) {
+	return eq.val == x;
+}
+
+forall(T | { T ?*?(T, T); })
+struct Multiply {
+	T val;
+};
+
+forall(T | { T ?*?(T, T); })
+T ?()(Multiply(T) * mult, T x) {
+	return mult->val * x;
+}
+
+// TODO: generalize to ttype return; doesn't work yet
+// like std::function
+forall(Return, Args...)
+struct function {
+	Return (*f)(Args);
+};
+// TODO: missing adapter in these functions
+// // value, reference, pointer operators
+// forall(otype Return, ttype Args) Return ?()(function(Return, Args) func, Args args) { return func.f(args); }
+// forall(otype Return, ttype Args) Return ?()(function(Return, Args) & func, Args args) { return func.f(args); }
+// forall(otype Return, ttype Args) Return ?()(function(Return, Args) * func, Args args) { return func->f(args); }
+
+int main() {
+	// generate for array fill
+	Counter c;
+	int x[10], y[10];
+	generate(begin(x), end(x), c);
+	generate(begin(y), end(y), c);
+
+	// copy for output
+	ostream_iterator out_iter = { &sout };
+	copy(begin(x), end(x), out_iter);
+	copy(begin(y), end(y), out_iter);
+
+	// find_if for searching
+	Equals(int) is5 = { 5 };
+	if (find_if(begin(x), end(x), is5) != end(y)) {
+		printf("Found 5 in x.\n");
+	} else {
+		printf("Did not find 5 in x.\n");
+	}
+	if (find_if(begin(y), end(y), is5) != end(y)) {
+		printf("Found 5 in y.\n");
+	} else {
+		printf("Did not find 5 in y.\n");
+	}
+
+	Multiply(int) times2 = { 2 };
+	transform(begin(x), end(x), begin(x), &times2);
+	copy(begin(x), end(x), out_iter);
+
+	// REMOVE WHEN ?* PROBLEM FIXED.
+	delete(out_iter.out);
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

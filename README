@@ -1,0 +1,117 @@
+cfa-cc: The Cforall->C Compiler System
+======================================
+
+This is a PRE-RELEASE version of cfa-cc.  It exists solely for the purpose of
+private experimentation and scholarly research.  The authors disclaim all
+responsibility for the consequences of any malfunction of the software,
+including the malfunction of any programs compiled using the software.
+
+What is Cforall?
+----------------
+Cforall is a language design extending ISO C. The purpose of the project is to
+engineer modern language features into C in an evolutionary rather than
+revolutionary way. Java is an example of the revolutionary approach of
+modernizing C/C++, resulting in a new language rather than an extension of its
+descendents. C++, Fortran 95 and Cobol 9X are examples of the evolutionary
+approach where modern language features are added and problems fixed within the
+framework of an existing language.
+
+The goal of this project is to produce a largely backwards compatible version
+of C containing many modern language features and fixing some of the well known
+C problems. Without continued development of the language, C will be unable to
+cope with the needs of modern programming problems and programmers; as a
+result, it will fade into disuse.  Considering the large body of existing C
+code and programmers, there is a significant impetus to ensure C is transformed
+into a modern programming language.
+
+What is cfa-cc?
+---------------
+cfa-cc is a collection of programs centred around a translator that takes
+Cforall code as input and outputs corresponding C code.  This is complemented
+by a compiler driver in the style of "gcc", which handles preprocessing,
+compiling, assembling, and linking and invokes the translator at appropriate
+moments.
+
+What is required in order to use cfa-cc?
+----------------------------------------
+Building cfa-cc requires GNU Make and gcc/g++ 4.  cfa-cc is written in C++.
+
+The compiler driver uses an installed version of gcc to handle all aspects of
+the compilation process except for the Cforall->C translation.  Currently, only
+gcc 4.x is supported.
+
+How is cfa-cc used?
+-------------------
+The compiler driver "cfa" accepts all of the arguments of gcc, and is used in
+the same way.  For example:
+
+	cfa -c test.c
+	cfa test.o
+
+Cforall source files must end with '.c' in order to be compiled by the compiler
+driver.  In addition, the flag "-CFA" causes cfa to invoke the preprocessor and
+translator and send the translator output to standard output.
+
+It is possible to invoke the translator directly.  The translator is installed
+by default as /usr/local/lib/cfa-cpp.  A typical invocation is:
+
+	/usr/local/lib/cfa-cpp -cp infile outfile
+
+If outfile is omitted, output goes to standard output; if infile is also
+omitted, input comes from standard input.  Options to the translator other than
+"-cp" will not produce valid C code and are only useful for debugging the
+translator.
+
+How can C code be used with cfa-cc?
+-----------------------------------
+cfa-cc should be able to compile most ANSI C programs.  It is also possible to
+link against C libraries in most cases.  Since Cforall supports overloading,
+however, names used in Cforall code are mangled in the output C code.  This
+caused linker failures when the names refer to functions and objects in code
+compiled with a standard C compiler.  For this reason, it is necessary to
+enclose the declarations of these functions and objects in extern "C" {}
+blocks.  For example:
+
+	extern "C" {
+	#include <stdio.h>
+	#include <stdlib.h>
+	}
+
+The extern "C" turns off name mangling for functions and objects declared
+within the block.  As a result, it is not possible to overload their names.
+
+What's wrong with cfa-cc?
+-------------------------
+
+The authors consider this software to be in an unstable state.  It is quite
+likely that there are many reasonable programs that will fail to compile.  We
+encourage users to report their experiences to cforall@plg.uwaterloo.ca, but we
+make no promises regarding support.
+
+We have fixed most of the problems that we are aware of.  There are some
+exceptions:
+
+- initializers are poorly implemented; in particular, file-scope initializers
+  may result in the generation of invalid C code
+
+- the ISO C99 designated initialization syntax '[n] = m' or '.n = m' is not
+  supported; use a colon in place of the equal sign
+
+- some legitimate programs will produce warnings from the C compiler; these are
+  harmless (in particular, the creation of libcfa.a in the build process should
+  cause four warnings from gcc)
+
+- abstract types introduced using the keyword 'type' are not implemented
+  (although 'type' can be used to introduce type parameters)
+
+- the implicit coercion of structure types to the type of their first member is
+  not implemented
+
+Who is responsible for cfa-cc?
+------------------------------
+cfa-cc was written by Peter Buhr, Richard Bilson, and Rodolfo Esteves.
+Questions and comments can be sent to cforall@plg.uwaterloo.ca.
+
+The Cforall project maintains a web page:
+
+	https://cforall.uwaterloo.ca

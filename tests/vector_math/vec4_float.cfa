@@ -1,0 +1,90 @@
+#include <vec/vec4.hfa>
+#include <fstream.hfa>
+
+int main(void) {
+    vec4(float) v1 = {1.f,2.f,3.f,4.f};
+    sout | "ctor(x,y):" | v1;
+
+    vec4(float) v2 = v1;
+    sout | "copy ctor:" | v2;
+
+    v2 = (vec4(float)){3.f,4.2f,-2.f,-100.f};
+    sout | "assignment:" | v2;
+
+    v2 = v1;
+    sout | "move assignment:" | v2;
+
+    vec4(float) v3 = 0;
+    sout | "zero-init:" | v3;
+
+    v1 = 0;
+    sout | "zero-assign:" | v1;
+
+    vec4(float) v4 = {1.23f};
+    sout | "fill-ctor:" | v4;
+
+    v1 = (vec4(float)){1.23f, 3.43f, 0.000002f, -0.000002f};
+    sout | "?-?:" | (v1 - (vec4(float)){1.21f,3,1,-0.000001f});
+
+    v1 -= (vec4(float)){1.21f,3,1,-0.000001f};
+    sout | "?-=?:" | v1;
+
+    v1 = -v1;
+    sout | "-?:" | v1;
+
+    v1 = (vec4(float)){1.5f, 2.75f, -14.2f, -13.5f};
+    sout | "?+?:" | (v1 + (vec4(float)){0.8f, -0.3f, 5, 1});
+
+    v1 += (vec4(float)){0.8f, -0.3f, 5, 1};
+    sout | "?+=?:" | v1;
+
+    v1 = (vec4(float)){1.5f, 2.75f, 100.3f, -2.f};
+    sout | "v*s:" | v1 * 3.f;
+
+    sout | "s*v:" | 3.f * v1;
+
+    v1 *= 3;
+    sout | "?*=?:" | v1;
+
+    v1 = (vec4(float)){2, -0.1f, 45, -15};
+    sout | "?/?:" | (v1 / 3.f);
+
+    v1 /= 3.f;
+    sout | "?/=?:" | v1;
+
+    v1 = (vec4(float)){4,3,2,1};
+    v2 = (vec4(float)){0,4,-3,-6};
+    sout | "dot_1:" | dot(v1, v2);
+
+    v2 = (vec4(float)){1.3f, -2, 12.2f, 24.1345f};
+    sout | "dot_2:" | dot(v1, v2);
+
+    v1 = (vec4(float)){1,2,3,4};
+    sout | "length:" | length(v1);
+
+    sout | "length_squared:" | length_squared(v1);
+
+    v2 = (vec4(float)){6, -3.2f, 1, 12};
+    sout | "distance:" | distance(v1, v2);
+
+    sout | "normalize:" | normalize(v2);
+
+    sout | "project:" | project((vec4(float)){5,6,0,-1}, (vec4(float)){0, 0, 0, 1});
+    sout | "project_2:" | project((vec4(float)){5,6,3.2f,-16.75f}, (vec4(float)){10, 1, 4, 2});
+
+    v1 = (vec4(float)){5,6,2.333f,1};
+    v2 = (vec4(float)){1,0,-13.5f,2};
+    sout | "reflect:" | reflect(v1,v2);
+
+    v2 = (vec4(float)){0,-1,2,0.5f};
+    sout | "refract:" | refract(normalize(v1),normalize(v2),1.f);
+    sout | "refract:" | refract(normalize(v1),normalize(v2),1.f/1.33f);
+
+    vec4(float) geometric_normal = {5,6,1,2};
+    vec4(float) perturbed_normal = {4,5.5f,2,2};
+    vec4(float) eyeline = {-1,0.002f,-1.0345f,-2};
+    sout | "faceforward_nochange:" | faceforward(perturbed_normal, eyeline, geometric_normal);
+
+    eyeline = (vec4(float)){1,0.002f,-1.0345f,-2};
+    sout | "faceforward_flip:" | faceforward(perturbed_normal, eyeline, geometric_normal);
+}

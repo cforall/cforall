@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+"""
+config.py
+"""
+
+SRCDIR   = "@abs_srcdir@"
+BUILDDIR = "@abs_builddir@"
+HOSTARCH = "@host_cpu@"
+DISTRIBUTE = @HAS_DISTCC@
+NEWAST = @DEFAULT_NEW_AST@

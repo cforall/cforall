@@ -1,0 +1,73 @@
+void foo(int *) {}
+void bar(void *) {}
+forall(T) void baz(T *);
+forall(T &) void qux(T *);
+forall(T & | sized(T)) void quux(T *);
+
+struct A;	// incomplete
+struct B {};	// complete
+
+int main() {
+	int * i;
+	void * v;
+
+	A * x;
+	A * y;
+	B * x;
+	B * z;
+
+	// okay
+	*i;
+	*y;
+	*z;
+	foo(i);
+	bar(i);
+	baz(i);
+	qux(i);
+	quux(i);
+
+	bar(v);
+	qux(v);
+
+	// bad
+	*v;
+	*x;	// ambiguous
+	foo(v);
+	baz(v);
+	quux(v);
+}
+
+
+forall(T)
+void baz(T * x) {
+	// okay
+	bar(x);
+	baz(x);
+	qux(x);
+	quux(x);
+	*x;
+}
+
+forall(T &)
+void qux(T * y) {
+	// okay
+	*y;
+	bar(y);
+	qux(y);
+
+	// bad
+	baz(y);
+	quux(y);
+}
+
+forall(T & | sized(T))
+void quux(T * z) {
+	// okay
+	bar(z);
+	qux(z);
+	quux(z);
+	*z;
+
+	// bad
+	baz(z);
+}

@@ -1,0 +1,12 @@
+// Check that the exception type check works.
+
+#include <exception.hfa>
+
+EHM_EXCEPTION(truth)();
+
+int main(int argc, char * argv[]) {
+	try {} catch (int e) {}
+	try {} catch (truth & e) {}
+	try {} catchResume (int e) {}
+	try {} catchResume (truth & e) {}
+}

@@ -1,0 +1,53 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// copyfile.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Fri Jun 19 13:44:05 2020
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jun 19 17:58:03 2020
+// Update Count     : 4
+// 
+
+#include <fstream.hfa>
+#include <exception.hfa>
+
+int main( int argc, char * argv[] ) {
+	ifstream in  = stdin;								// copy default files
+	ofstream out = stdout;
+
+	try {
+		choose ( argc ) {
+		  case 2, 3:
+			open( in, argv[1] );						// open input file first as output creates file
+			if ( argc == 3 ) open( out, argv[2] );		// do not create output unless input opens
+		  case 1: ;										// use default files
+		  default:
+			exit | "Usage" | argv[0] | "[ input-file (default stdin) [ output-file (default stdout) ] ]";
+		} // choose
+	} catch( Open_Failure * ex ; ex->istream == &in ) {
+		exit | "Unable to open input file" | argv[1];
+	} catch( Open_Failure * ex ; ex->ostream == &out ) {
+		close( in );									// optional
+		exit | "Unable to open output file" | argv[2];
+	} // try
+
+	out | nlOff;										// turn off auto newline
+	in  | nlOn;											// turn on reading newline
+
+	char ch;
+	for () {											// read all characters
+		in | ch;
+	  if ( eof( in ) ) break;							// eof ?
+		out | ch;
+	} //for
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa copyfile.cfa" //
+// End: //

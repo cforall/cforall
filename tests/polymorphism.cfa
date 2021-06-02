@@ -1,0 +1,120 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// polymorphism.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Tue Oct 17 12:19:48 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec 25 14:40:24 2018
+// Update Count     : 3
+//
+
+#include <assert.h>
+#include <inttypes.h>
+#include <fstream.hfa>
+
+forall(T)
+T f(T x, T y) {
+	x = y;
+	return x;
+}
+
+forall(T) T ident(T x) {
+	return x;
+}
+
+forall( T, U )
+size_t struct_size( T i, U j ) {
+	struct S { T i; U j; };
+	return sizeof(S);
+}
+
+forall( T, U )
+size_t union_size( T i, U j ) {
+	union B { T i; U j; };
+	return sizeof(B);
+}
+
+// perform some simple operations on aggregates of T and U
+forall( T | { void print(T); int ?==?(T, T); }, U | { void print(U); U ?=?(U&, zero_t); } )
+U foo(T i, U j) {
+	struct S { T i; U j; };
+	union B { T i; U j; };
+
+	S s;
+	s.i = i;
+	assertf(s.i == i, "struct operation fails in polymorphic context.");
+
+	B b;
+	b.j = 0;
+	b.i = s.i;
+	return b.j;
+}
+
+int main() {
+	{
+		// ensure that x is not changed by the invocation of a polymorphic function
+		int x = 123;
+		int y = 456;
+		int z = f(x, y);
+		sout | x | y | z;
+	}
+	{
+		// explicitly specialize function
+		int (*f)(int) = ident;
+		((int(*)(int))ident);
+		sout | f(5) | ((int(*)(int))ident)(5);
+	}
+	{
+		// test aggregates with polymorphic members
+		typedef __attribute__((aligned(8))) uint32_t x_type;
+		typedef __attribute__((aligned(8))) uint64_t y_type;
+
+		x_type x = 3;
+		y_type y = 3;
+
+		struct S {
+			x_type f1;
+			y_type f2;
+		};
+		union U {
+			x_type f1;
+			y_type f2;
+		};
+		// ensure that the size of aggregates with polymorphic members
+		// matches the size of the aggregates in a monomorphic context
+		size_t ssz = struct_size(x, y);
+		size_t usz = union_size(x, y);
+		assertf( ssz == sizeof(S), "struct size differs in polymorphic context: %zd / %zd", ssz, sizeof(S));
+		assertf( usz == sizeof(U), "union size differs in polymorphic context: %zd / %zd", usz, sizeof(U));
+
+		y_type ?=?(y_type & this, zero_t) {
+			this = (int)0;
+			return this;
+		}
+
+		void print(x_type x) {
+			sout | x;
+		}
+
+		void print(y_type y) {
+			sout | y;
+		}
+
+		y_type ret = foo(x, y);
+
+		// duplicate logic from inside of foo to ensure the same results
+		U u;
+		u.f2 = 0;
+		u.f1 = x;
+		assertf(ret == u.f2, "union operation fails in polymorphic context.");
+	}
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

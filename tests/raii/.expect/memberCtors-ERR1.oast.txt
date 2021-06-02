@@ -1,0 +1,1 @@
+raii/memberCtors.cfa:92:1 error: in void ?{}(B &b), field a2 used before being constructed

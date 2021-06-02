@@ -1,0 +1,229 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// stdlib.c --
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu Jan 28 17:10:29 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Nov 12 07:46:09 2020
+// Update Count     : 503
+//
+
+#include "stdlib.hfa"
+
+//---------------------------------------
+
+#define _XOPEN_SOURCE 600								// posix_memalign, *rand48
+#include <string.h>										// memcpy, memset
+//#include <math.h>										// fabsf, fabs, fabsl
+#include <complex.h>									// _Complex_I
+#include <assert.h>
+
+//---------------------------------------
+
+// Cforall allocation/deallocation and constructor/destructor, array types
+
+forall( T & | sized(T), TT... | { void ?{}( T &, TT ); } )
+T * anew( size_t dim, TT p ) {
+	T * arr = alloc( dim );
+	for ( unsigned int i = 0; i < dim; i += 1 ) {
+		(arr[i]){ p };									// run constructor
+	} // for
+	return arr;
+} // anew
+
+forall( T & | sized(T) | { void ^?{}( T & ); } )
+void adelete( T arr[] ) {
+	if ( arr ) {										// ignore null
+		size_t dim = malloc_size( arr ) / sizeof( T );
+		for ( int i = dim - 1; i >= 0; i -= 1 ) {		// reverse allocation order, must be unsigned
+			^(arr[i]){};								// run destructor
+		} // for
+		free( arr );
+	} // if
+} // adelete
+
+forall( T & | sized(T) | { void ^?{}( T & ); }, TT... | { void adelete( TT ); } )
+void adelete( T arr[], TT rest ) {
+	if ( arr ) {										// ignore null
+		size_t dim = malloc_size( arr ) / sizeof( T );
+		for ( int i = dim - 1; i >= 0; i -= 1 ) {		// reverse allocation order, must be unsigned
+			^(arr[i]){};								// run destructor
+		} // for
+		free( arr );
+	} // if
+	adelete( rest );
+} // adelete
+
+//---------------------------------------
+
+float _Complex strto( const char sptr[], char ** eptr ) {
+	float re, im;
+	char * eeptr;
+	re = strtof( sptr, &eeptr );
+	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0f + 0.0f * _Complex_I; }
+	im = strtof( eeptr, &eeptr );
+	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0f + 0.0f * _Complex_I; }
+	if ( *eeptr != 'i' ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0f + 0.0f * _Complex_I; }
+	return re + im * _Complex_I;
+} // strto
+
+double _Complex strto( const char sptr[], char ** eptr ) {
+	double re, im;
+	char * eeptr;
+	re = strtod( sptr, &eeptr );
+	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0 + 0.0 * _Complex_I; }
+	im = strtod( eeptr, &eeptr );
+	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0 + 0.0 * _Complex_I; }
+	if ( *eeptr != 'i' ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0 + 0.0 * _Complex_I; }
+	return re + im * _Complex_I;
+} // strto
+
+long double _Complex strto( const char sptr[], char ** eptr ) {
+	long double re, im;
+	char * eeptr;
+	re = strtold( sptr, &eeptr );
+	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0L + 0.0L * _Complex_I; }
+	im = strtold( eeptr, &eeptr );
+	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0L + 0.0L * _Complex_I; }
+	if ( *eeptr != 'i' ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0L + 0.0L * _Complex_I; }
+	return re + im * _Complex_I;
+} // strto
+
+//---------------------------------------
+
+forall( E | { int ?<?( E, E ); } ) {
+	E * bsearch( E key, const E * vals, size_t dim ) {
+		int cmp( const void * t1, const void * t2 ) {
+			return *(E *)t1 < *(E *)t2 ? -1 : *(E *)t2 < *(E *)t1 ? 1 : 0;
+		} // cmp
+		return (E *)bsearch( &key, vals, dim, sizeof(E), cmp );
+	} // bsearch
+
+	size_t bsearch( E key, const E * vals, size_t dim ) {
+		E * result = bsearch( key, vals, dim );
+		return result ? result - vals : dim;			// pointer subtraction includes sizeof(E)
+	} // bsearch
+
+	size_t bsearchl( E key, const E * vals, size_t dim ) {
+		size_t l = 0, m, h = dim;
+		while ( l < h ) {
+			m = (l + h) / 2;
+			if ( (E &)(vals[m]) < key ) {				// cast away const
+				l = m + 1;
+			} else {
+				h = m;
+			} // if
+		} // while
+		return l;
+	} // bsearchl
+
+	E * bsearchl( E key, const E * vals, size_t dim ) {
+		size_t posn = bsearchl( key, vals, dim );
+		return (E *)(&vals[posn]);						// cast away const
+	} // bsearchl
+
+	size_t bsearchu( E key, const E * vals, size_t dim ) {
+		size_t l = 0, m, h = dim;
+		while ( l < h ) {
+			m = (l + h) / 2;
+			if ( ! ( key < (E &)(vals[m]) ) ) {			// cast away const
+				l = m + 1;
+			} else {
+				h = m;
+			} // if
+		} // while
+		return l;
+	} // bsearchu
+
+	E * bsearchu( E key, const E * vals, size_t dim ) {
+		size_t posn = bsearchu( key, vals, dim );
+		return (E *)(&vals[posn]);
+	} // bsearchu
+
+
+	void qsort( E * vals, size_t dim ) {
+		int cmp( const void * t1, const void * t2 ) {
+			return *(E *)t1 < *(E *)t2 ? -1 : *(E *)t2 < *(E *)t1 ? 1 : 0;
+		} // cmp
+		qsort( vals, dim, sizeof(E), cmp );
+	} // qsort
+} // distribution
+
+
+forall( K, E | { int ?<?( K, K ); K getKey( const E & ); } ) {
+	E * bsearch( K key, const E * vals, size_t dim ) {
+		int cmp( const void * t1, const void * t2 ) {
+			return *(K *)t1 < getKey( *(E *)t2 ) ? -1 : getKey( *(E *)t2 ) < *(K *)t1 ? 1 : 0;
+		} // cmp
+		return (E *)bsearch( &key, vals, dim, sizeof(E), cmp );
+	} // bsearch
+
+	size_t bsearch( K key, const E * vals, size_t dim ) {
+		E * result = bsearch( key, vals, dim );
+		return result ? result - vals : dim;			// pointer subtraction includes sizeof(E)
+	} // bsearch
+
+	size_t bsearchl( K key, const E * vals, size_t dim ) {
+		size_t l = 0, m, h = dim;
+		while ( l < h ) {
+			m = (l + h) / 2;
+			if ( getKey( vals[m] ) < key ) {
+				l = m + 1;
+			} else {
+				h = m;
+			} // if
+		} // while
+		return l;
+	} // bsearchl
+
+	E * bsearchl( K key, const E * vals, size_t dim ) {
+		size_t posn = bsearchl( key, vals, dim );
+		return (E *)(&vals[posn]);						// cast away const
+	} // bsearchl
+
+	size_t bsearchu( K key, const E * vals, size_t dim ) {
+		size_t l = 0, m, h = dim;
+		while ( l < h ) {
+			m = (l + h) / 2;
+			if ( ! ( key < getKey( vals[m] ) ) ) {
+				l = m + 1;
+			} else {
+				h = m;
+			} // if
+		} // while
+		return l;
+	} // bsearchu
+
+	E * bsearchu( K key, const E * vals, size_t dim ) {
+		size_t posn = bsearchu( key, vals, dim );
+		return (E *)(&vals[posn]);
+	} // bsearchu
+} // distribution
+
+//---------------------------------------
+
+extern "C" {											// override C version
+	void srandom( unsigned int seed ) { srand48( (long int)seed ); }
+	long int random( void ) { return mrand48(); }		// GENERATES POSITIVE AND NEGATIVE VALUES
+} // extern "C"
+
+float random( void ) { return (float)drand48(); }		// cast otherwise float uses lrand48
+double random( void ) { return drand48(); }
+float _Complex random( void ) { return (float)drand48() + (float _Complex)(drand48() * _Complex_I); }
+double _Complex random( void ) { return drand48() + (double _Complex)(drand48() * _Complex_I); }
+long double _Complex random( void ) { return (long double)drand48() + (long double _Complex)(drand48() * _Complex_I); }
+
+//---------------------------------------
+
+bool threading_enabled(void) __attribute__((weak)) {
+	return false;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

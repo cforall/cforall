@@ -1,0 +1,102 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// maybe.c -- May contain a value.
+//
+// Author           : Andrew Beach
+// Created On       : Wed May 24 15:40:00 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Feb 17 11:22:03 2019
+// Update Count     : 3
+//
+
+#include <containers/maybe.hfa>
+#include <assert.h>
+
+
+forall(T)
+void ?{}(maybe(T) & this) {
+	this.has_value = false;
+}
+
+forall(T)
+void ?{}(maybe(T) & this, T value) {
+	this.has_value = true;
+	(this.value){value};
+}
+
+forall(T)
+void ?{}(maybe(T) & this, maybe(T) other) {
+	this.has_value = other.has_value;
+	if (other.has_value) {
+		(this.value){other.value};
+	}
+}
+
+forall(T)
+maybe(T) ?=?(maybe(T) & this, maybe(T) that) {
+	if (this.has_value && that.has_value) {
+		this.value = that.value;
+	} else if (this.has_value) {
+		^(this.value){};
+		this.has_value = false;
+	} else if (that.has_value) {
+		this.has_value = true;
+		(this.value){that.value};
+	}
+	return this;
+}
+
+forall(T)
+void ^?{}(maybe(T) & this) {
+	if (this.has_value) {
+		^(this.value){};
+	}
+}
+
+forall(T)
+bool ?!=?(maybe(T) this, zero_t) {
+	return this.has_value;
+}
+
+forall(T)
+maybe(T) maybe_value(T value) {
+	return (maybe(T)){value};
+}
+
+forall(T)
+maybe(T) maybe_none() {
+	return (maybe(T)){};
+}
+
+forall(T)
+bool has_value(maybe(T) * this) {
+	return this->has_value;
+}
+
+forall(T)
+T get(maybe(T) * this) {
+	assertf(this->has_value, "attempt to get from maybe without value");
+	return this->value;
+}
+
+forall(T)
+void set(maybe(T) * this, T value) {
+	if (this->has_value) {
+		this->value = value;
+	} else {
+		this->has_value = true;
+		(this->value){value};
+	}
+}
+
+forall(T)
+void set_none(maybe(T) * this) {
+	if (this->has_value) {
+		this->has_value = false;
+		^(this->value){};
+	}
+}

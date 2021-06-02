@@ -1,0 +1,60 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// const-init.cfa -- tests of initializing constants
+//
+// Author           : Michael Brooks
+// Created On       : Tue Oct 06 22:00:00 2020
+// Last Modified By : Michael Brooks
+// Last Modified On : Tue Oct 06 22:00:00 2020
+// Update Count     : 1
+//
+
+/*
+
+These tests show non-crashing of generated code for constants with interesting initializers.
+The potential for these to crash is compiler dependent.
+
+There are two cases:
+1. static constants in one compilation unit (tested here, in a few sub-cases)
+2. extern constants across compilation units (tested by libcfa being loadable, specifically
+   the constant definitions in libcfa/src/limits.cfa, which almost every test exercises,
+   including "hello;" but notably, the "limits" test does not exercise it because that test
+   is compile-only)
+
+Crashes that we have obsrved (#182 and build failures September 2020) are because the libcfa
+initialization is writing to a global variable (which the declaring program wants typed as 
+constant), while the compiler has placed this global in a read-only section.
+
+Compiler dependence includes:
+
+                          Case 1           Case 2
+GCC-6  on Ubuntu 16.04    Never crashed    Never crashed
+GCC-8  on both            Has crashed      Never crashed
+GCC-10 on Ubuntu 20.04    Has crashed      Has crashed
+
+For this test to fail, with most other tests passing, would be a situation only ever
+observed with GCC-8.
+
+*/
+
+// initailized by generated function, called before main
+static const char foo = -1;
+
+struct thing{};
+void ^?{}( thing & ) { printf("dtor\n"); }
+
+int main() {
+    // foo is already initialized
+
+    // no dtor => stays a (static) local, initialized here
+    static const char bar = -1;
+
+    // has dtor => becomes a global, ctor called here, dtor called at exit
+    static const thing it;
+
+    printf("almost done\n");
+}

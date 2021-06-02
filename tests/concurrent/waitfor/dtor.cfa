@@ -1,0 +1,63 @@
+//---------------------------------------------------------
+// Barging test
+// Ensures the statement order is reverse when using waitfor ^?{}
+//---------------------------------------------------------
+
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <monitor.hfa>
+#include <stdlib.hfa>
+#include <thread.hfa>
+
+#include <stdbool.h>
+
+static const unsigned long N = 5_000ul;
+
+enum state_t {
+	CTOR,
+	MAIN,
+	AFTER,
+	END,
+	DTOR
+};
+
+thread dummy_t {
+	state_t state;
+};
+
+static inline void set_state( dummy_t & this, state_t state) {
+	switch(state) {
+		case CTOR  : break;
+		case MAIN  : if( this.state != CTOR  ) { serr | "ERROR Expected state to be CTOR" ; abort(); } this.state = state; break;
+		case AFTER : if( this.state != MAIN  ) { serr | "ERROR Expected state to be MAIN" ; abort(); } this.state = state; break;
+		case END   : if( this.state != AFTER ) { serr | "ERROR Expected state to be AFTER"; abort(); } this.state = state; break;
+		case DTOR  : if( this.state != END   ) { serr | "ERROR Expected state to be END"  ; abort(); } this.state = state; break;
+	}
+}
+
+void ^?{}( dummy_t & mutex this ) {
+	set_state( this, DTOR );
+}
+
+void ?{}( dummy_t & this ) {
+	this.state = CTOR;
+}
+
+void main( dummy_t & this ) {
+	yield(random( 10 ));
+	set_state( this, MAIN );
+	waitfor( ^?{} : this ) {
+		set_state( this, AFTER );
+	}
+	set_state( this, END );
+}
+
+int main() {
+	sout | "Starting";
+	processor p;
+	for( int i = 0; i < N; i++ ){
+		dummy_t dummy[4];
+		yield( random( 100 ) );
+	}
+	sout | "Stopping";
+}

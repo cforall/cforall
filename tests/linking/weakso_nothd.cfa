@@ -1,0 +1,38 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// weakso_nothd.cfa --
+// test whether or not using a weakso locks pulls in threads
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Jul 16 12:14:39 2019
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>
+
+#include <bits/weakso_locks.hfa>
+
+int main() {
+	multiple_acquisition_lock lock;
+	lock(lock);
+	unlock(lock);
+
+	if(threading_enabled()) {
+		stdout | "YES";
+	} else {
+		stdout | "NO";
+	}
+	return 0;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa nothreads.cfa" //
+// End: //

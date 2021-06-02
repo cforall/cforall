@@ -1,0 +1,75 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// ifwhileCtl.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Sat Aug 26 10:13:11 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 21:39:18 2018
+// Update Count     : 23
+//
+
+#include <fstream.hfa>
+
+int f( int r ) { return r; }
+
+int main( void ) {
+	int x = 4, y = 3;
+
+	if ( int x = 1 ) {
+		sout | "x != 0 correct";
+	} else {
+		sout | "x == 0 incorrect";
+	} // if
+
+	if ( int x = 4, y = 0 ) {
+		sout | "x != 0 && y != 0 incorrect";
+	} else if ( int x = 4, y = 1 ) {
+		sout | "x != 0 && y != 0 correct";
+	} else {
+		sout | "x == 0 || y == 0 incorrect";
+	} // if
+
+	if ( int x = 5, y = f( x ); x == y ) {
+		sout | "x == y correct";
+	} else {
+		sout | "x != y incorrect";
+	} // if
+
+	if ( struct S { int i; } s = { 3 }; s.i < 4 ) {
+		S s1;
+		sout | "s.i < 4 correct";
+	} else {
+		S s1;
+		sout | "s.i >= 4 incorrect";
+	} // if
+
+	while ( int x = 1 ) {
+		sout | "x != 0 correct";
+		break;
+	} // while
+
+	while ( int x = 4, y = 0 ) {
+		sout | "x != 0 && y != 0 incorrect";
+	} // while
+
+	while ( int x = 5, y = f( x ); x == y ) {
+		sout | "x == y correct";
+		break;
+	} // while
+
+	while ( struct S { int i; } s = { 3 }; s.i < 4 ) {
+		S s1;
+		sout | "s.i < 4 correct";
+		break;
+	} // while
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa ifwhileCtl.cfa" //
+// End: //

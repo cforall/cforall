@@ -1,0 +1,30 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// tupleCast.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Mon Dec 12 15:56:07 2016
+// Last Modified By : Rob Schluntz
+// Last Modified On : Mon Dec 12 15:56:20 2016
+// Update Count     : 2
+//
+
+[char, int, double] f() { printf("ran f\n"); return ['c', 70, 6.28]; }
+
+int main() {
+  [int, char, float] x = [10, 'A', 3.14f];
+  printf("%d %c %g\n", ([int, char, float])x);
+  printf("%d %c\n", ([int, char])x);
+  printf("%d\n", ([int])x);
+  // printf("%d\n", (int)x);
+  printf("%g %g\n", ([double, float])x);
+  printf("%d %c\n", ([int, char])f());
+}
+
+// Local Variables: //
+// tab-width: 2 //
+// End: //

@@ -1,0 +1,293 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// io/types.hfa --
+//
+// Author           : Dimitry Kobets
+// Created On       :
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include <iostream.hfa>
+#include "vec.hfa"
+
+forall (T) {
+    struct vec4 {
+        T x, y, z, w;
+    };
+}
+
+forall (T) {
+    static inline {
+
+    void ?{}(vec4(T)& v, T x, T y, T z, T w) {
+        v.[x, y, z, w] = [x, y, z, w];
+    }
+
+    forall(| zero_assign(T))
+    void ?{}(vec4(T)& vec, zero_t) with (vec) {
+        x = y = z = w = 0;
+    }
+
+    void ?{}(vec4(T)& vec, T val) with (vec) {
+        x = y = z = w = val;
+    }
+
+    void ?{}(vec4(T)& vec, vec4(T) other) with (vec) {
+        [x,y,z,w] = other.[x,y,z,w];
+    }
+
+    void ?=?(vec4(T)& vec, vec4(T) other) with (vec) {
+        [x,y,z,w] = other.[x,y,z,w];
+    }
+    forall(| zero_assign(T))
+    void ?=?(vec4(T)& vec, zero_t) with (vec) {
+        x = y = z = w = 0;
+    }
+
+    // Primitive mathematical operations
+
+    // -
+    forall(| subtract(T)) {
+    vec4(T) ?-?(vec4(T) u, vec4(T) v) {
+        return [u.x - v.x, u.y - v.y, u.z - v.z, u.w - v.w];
+    }
+    vec4(T)& ?-=?(vec4(T)& u, vec4(T) v) {
+        u = u - v;
+        return u;
+    }
+    }
+    forall(| negate(T)) {
+    vec4(T) -?(vec4(T) v) with (v) {
+        return [-x, -y, -z, -w];
+    }
+    }
+    forall(| { T --?(T&); }) {
+    vec4(T)& --?(vec4(T)& v) {
+        --v.x;
+        --v.y;
+        --v.z;
+        --v.w;
+        return v;
+    }
+    vec4(T) ?--(vec4(T)& v) {
+        vec4(T) copy = v;
+        --v;
+        return copy;
+    }
+    }
+
+    // +
+    forall(| add(T)) {
+    vec4(T) ?+?(vec4(T) u, vec4(T) v) {
+        return [u.x + v.x, u.y + v.y, u.z + v.z, u.w + v.w];
+    }
+    vec4(T)& ?+=?(vec4(T)& u, vec4(T) v) {
+        u = u + v;
+        return u;
+    }
+    }
+
+    forall(| { T ++?(T&); }) {
+    vec4(T)& ++?(vec4(T)& v) {
+        ++v.x;
+        ++v.y;
+        ++v.z;
+        ++v.w;
+        return v;
+    }
+    vec4(T) ?++(vec4(T)& v) {
+        vec4(T) copy = v;
+        ++v;
+        return copy;
+    }
+    }
+
+    // *
+    forall(| multiply(T)) {
+    vec4(T) ?*?(vec4(T) v, T scalar) with (v) {
+        return [x * scalar, y * scalar, z * scalar, w * scalar];
+    }
+    vec4(T) ?*?(T scalar, vec4(T) v) {
+        return v * scalar;
+    }
+    vec4(T) ?*?(vec4(T) u, vec4(T) v) {
+        return [u.x * v.x, u.y * v.y, u.z * v.z, u.w * v.w];
+    }
+    vec4(T)& ?*=?(vec4(T)& v, T scalar) {
+        v = v * scalar;
+        return v;
+    }
+    vec4(T)& ?*=?(vec4(T)& u, vec4(T) v) {
+        u = u * v;
+        return u;
+    }
+    }
+
+    // /
+    forall(| divide(T)) {
+    vec4(T) ?/?(vec4(T) v, T scalar) with (v) {
+        return [x / scalar, y / scalar, z / scalar, w / scalar];
+    }
+    vec4(T) ?/?(vec4(T) u, vec4(T) v) {
+        return [u.x / v.x, u.y / v.y, u.z / v.z, u.w / v.w];
+    }
+    vec4(T)& ?/=?(vec4(T)& v, T scalar) {
+        v = v / scalar;
+        return v;
+    }
+    vec4(T)& ?/=?(vec4(T)& u, vec4(T) v) {
+        u = u / v;
+        return u;
+    }
+    }
+
+    // %
+    forall(| { T ?%?(T,T); }) {
+    vec4(T) ?%?(vec4(T) v, T scalar) with (v) {
+        return [x % scalar, y % scalar, z % scalar, w % scalar];
+    }
+    vec4(T)& ?%=?(vec4(T)& u, T scalar) {
+        u = u % scalar;
+        return u;
+    }
+    vec4(T) ?%?(vec4(T) u, vec4(T) v) {
+        return [u.x % v.x, u.y % v.y, u.z % v.z, u.w % v.w];
+    }
+    vec4(T)& ?%=?(vec4(T)& u, vec4(T) v) {
+        u = u % v;
+        return u;
+    }
+    }
+
+    // &
+    forall(| { T ?&?(T,T); }) {
+    vec4(T) ?&?(vec4(T) v, T scalar) with (v) {
+        return [x & scalar, y & scalar, z & scalar, w & scalar];
+    }
+    vec4(T)& ?&=?(vec4(T)& u, T scalar) {
+        u = u & scalar;
+        return u;
+    }
+    vec4(T) ?&?(vec4(T) u, vec4(T) v) {
+        return [u.x & v.x, u.y & v.y, u.z & v.z, u.w & v.w];
+    }
+    vec4(T)& ?&=?(vec4(T)& u, vec4(T) v) {
+        u = u & v;
+        return u;
+    }
+    }
+
+    // |
+    forall(| { T ?|?(T,T); }) {
+    vec4(T) ?|?(vec4(T) v, T scalar) with (v) {
+        return [x | scalar, y | scalar, z | scalar, w | scalar];
+    }
+    vec4(T)& ?|=?(vec4(T)& u, T scalar) {
+        u = u | scalar;
+        return u;
+    }
+    vec4(T) ?|?(vec4(T) u, vec4(T) v) {
+        return [u.x | v.x, u.y | v.y, u.z | v.z, u.w | v.w];
+    }
+    vec4(T)& ?|=?(vec4(T)& u, vec4(T) v) {
+        u = u | v;
+        return u;
+    }
+    }
+
+    // ^
+    forall(| { T ?^?(T,T); }) {
+    vec4(T) ?^?(vec4(T) v, T scalar) with (v) {
+        return [x ^ scalar, y ^ scalar, z ^ scalar, w ^ scalar];
+    }
+    vec4(T)& ?^=?(vec4(T)& u, T scalar) {
+        u = u ^ scalar;
+        return u;
+    }
+    vec4(T) ?^?(vec4(T) u, vec4(T) v) {
+        return [u.x ^ v.x, u.y ^ v.y, u.z ^ v.z, u.w ^ v.w];
+    }
+    vec4(T)& ?^=?(vec4(T)& u, vec4(T) v) {
+        u = u ^ v;
+        return u;
+    }
+    }
+
+    // <<
+    forall(| { T ?<<?(T,T); }) {
+    vec4(T) ?<<?(vec4(T) v, T scalar) with (v) {
+        return [x << scalar, y << scalar, z << scalar, w << scalar];
+    }
+    vec4(T)& ?<<=?(vec4(T)& u, T scalar) {
+        u = u << scalar;
+        return u;
+    }
+    vec4(T) ?<<?(vec4(T) u, vec4(T) v) {
+        return [u.x << v.x, u.y << v.y, u.z << v.z, u.w << v.w];
+    }
+    vec4(T)& ?<<=?(vec4(T)& u, vec4(T) v) {
+        u = u << v;
+        return u;
+    }
+    }
+
+    // >>
+    forall(| { T ?>>?(T,T); }) {
+    vec4(T) ?>>?(vec4(T) v, T scalar) with (v) {
+        return [x >> scalar, y >> scalar, z >> scalar, w >> scalar];
+    }
+    vec4(T)& ?>>=?(vec4(T)& u, T scalar) {
+        u = u >> scalar;
+        return u;
+    }
+    vec4(T) ?>>?(vec4(T) u, vec4(T) v) {
+        return [u.x >> v.x, u.y >> v.y, u.z >> v.z, u.w >> v.w];
+    }
+    vec4(T)& ?>>=?(vec4(T)& u, vec4(T) v) {
+        u = u >> v;
+        return u;
+    }
+    }
+
+    // ~
+    forall(| { T ~?(T); })
+    vec4(T) ~?(vec4(T) v) with (v) {
+        return [~x, ~y, ~z, ~w];
+    }
+
+    // relational
+    forall(| equality(T)) {
+    bool ?==?(vec4(T) u, vec4(T) v) with (u) {
+        return x == v.x && y == v.y && z == v.z && w == v.w;
+    }
+    bool ?!=?(vec4(T) u, vec4(T) v) {
+        return !(u == v);
+    }
+    }
+
+    // Geometric functions
+    forall(| add(T) | multiply(T))
+    T dot(vec4(T) u, vec4(T) v) {
+        return u.x * v.x + u.y * v.y + u.z * v.z + u.w * v.w;
+    }
+
+    } // static inline
+}
+
+forall(ostype &, T | writeable(T, ostype)) {
+    ostype & ?|?(ostype & os, vec4(T) v) with (v) {
+        return os | '<' | x | ',' | y | ',' | z | ',' | w | '>';
+    }
+    void ?|?(ostype & os, vec4(T) v ) with (v) {
+        (ostype &)(os | v); ends(os);
+    }
+}
+

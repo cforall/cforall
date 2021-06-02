@@ -1,0 +1,66 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// tupleAssign.c --
+//
+// Author           : Rob Schluntz
+// Created On       : Tue Nov 15 17:24:32 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 22:03:48 2018
+// Update Count     : 35
+//
+
+#include <fstream.hfa>
+
+int main() {
+	{
+		// test multiple assignment and cascading assignment
+		int u = 5, v = 6, x = 10, y = 11;
+		[int, int] z = [100, 200];
+
+		// swap x, y and store the new [x, y] in [u, v] and in z;
+		printf( "u=%d v=%d x=%d y=%d z=[%d, %d]\n", u, v, x, y, z );
+		sout | "u=" | u | "v=" | v | "x=" | x | "y=" | y | "z=[" | z | "]";
+		z = [u, v] = [x, y] = [y, x];
+		printf( "u=%d v=%d x=%d y=%d z=[%d, %d]\n", u, v, x, y, z );
+		sout | "u=" | u | "v=" | v | "x=" | x | "y=" | y | "z=[" | z | "]";
+
+		// shuffle elements -- v = z.0, z.0 = z.1, z.1 = u, u = v
+		[v, z, u] = [z, u, v];
+		printf( "u=%d v=%d z=[%d, %d]\n", u, v, z );
+		sout | "u=" | u | "v=" | v | "z=[" | z | "]";
+
+		// multiple assignment with tuple expression on right
+		z = [111, 222];
+		[u, v] = [123, 456];
+		printf( "u=%d v=%d z=[%d, %d]\n", u, v, z );
+		sout | "u=" | u | "v=" | v | "z=[" | z | "]";
+	}
+	{
+		// test mass assignment
+		double d = 0.0;
+		int i = 0;
+		signed char c = '\0';
+		struct X {
+			int z;
+		} x;
+		X ?=?(X & x, double d) { return x; }
+		[int, double, int] t;
+
+		// no conversion from X to integral types, so this serves as a santiy
+		// check that as long as this compiles, ?=?(_, x) is not generated.
+		[t, x, d, i, c, x] = (double)94.12;
+		printf( "d=%lg i=%d c=%c t=[%d, %lg, %d]\n", d, i, (int)c, t );
+		sout | "d=" | d | "i=" | i | "c=" | (char)c | ' ' | "t=[" | t | "]";
+		[x, c, i, d, x, t] = (double)-94.12;
+		printf( "d=%lg i=%d c=%c t=[%d, %lg, %d]\n", d, i, c, t );
+		sout | "d=" | d | "i=" | i | "c=" | (char)c | ' ' | "t=[" | t | "]";
+	}
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// End: //

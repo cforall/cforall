@@ -1,0 +1,52 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// minmax.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 27 17:56:53 2015
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Aug 15 08:28:01 2020
+// Update Count     : 54
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>										// min, max
+
+int main( void ) {
+	// char does not have less or greater than.
+	int ?<?( char op1, char op2 ) { return (int)op1 < (int)op2; }
+	int ?>?( char op1, char op2 ) { return (int)op1 > (int)op2; }
+
+	sout | "char\t\t\t"					| 'z' | ' ' | 'a' | "\tmin " | min( 'z', 'a' );
+	sout | "signed int\t\t"				| 4 | -3 | "\tmin" | min( 4, -3 );
+	sout | "unsigned int\t\t"			| 4u | 3u | "\tmin" | min( 4u, 3u );
+	sout | "signed long int\t\t" 		| 4l | -3l | "\tmin" | min( 4l, -3l );
+	sout | "unsigned long int\t" 		| 4ul | 3ul | "\tmin" | min( 4ul, 3ul );
+	sout | "signed long long int\t"		| 4ll | -3ll | "\tmin" | min( 4ll, -3ll );
+	sout | "unsigned long long int\t"	| 4ull | 3ull | "\tmin" | min( 4ull, 3ull );
+	sout | "float\t\t\t" 				| 4.0f | 3.1f | "\tmin" | min( 4.0f, 3.1f );
+	sout | "double\t\t\t"				| 4.0 | 3.1 | "\tmin" | min( 4.0, 3.1 );
+	sout | "long double\t\t"			| 4.0l | 3.1l | "\tmin" | min( 4.0l, 3.1l );
+
+	sout | nl;
+
+	sout | "char\t\t\t"					| 'z' | ' ' | 'a' | "\tmax " | max( 'z', 'a' );
+	sout | "signed int\t\t"				| 4 | -3 | "\tmax" | max( 4, -3 );
+	sout | "unsigned int\t\t"			| 4u | 3u | "\tmax" | max( 4u, 3u );
+	sout | "signed long int\t\t" 		| 4l | -3l | "\tmax" | max( 4l, -3l );
+	sout | "unsigned long int\t" 		| 4ul | 3ul | "\tmax" | max( 4ul, 3ul );
+	sout | "signed long long int\t"		| 4ll | -3ll | "\tmax" | max( 4ll, -3ll );
+	sout | "unsigned long long int\t"	| 4ull | 3ull | "\tmax" | max( 4ull, 3ull );
+	sout | "float\t\t\t" 				| 4.0f | 3.1f | "\tmax" | max( 4.0f, 3.1f );
+	sout | "double\t\t\t"				| 4.0 | 3.1 | "\tmax" | max( 4.0, 3.1 );
+	sout | "long double\t\t"			| 4.0l | 3.1l | "\tmax" | max( 4.0l, 3.1l );
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa minmax.cfa" //
+// End: //

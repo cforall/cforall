@@ -1,0 +1,59 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// heap.hfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Tue May 26 11:23:55 2020
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Aug  8 17:36:48 2020
+// Update Count     : 16
+// 
+
+#pragma once
+
+size_t default_mmap_start();							// CFA extras
+size_t default_heap_expansion();
+
+bool traceHeap();
+bool traceHeapOn();
+bool traceHeapOff();
+
+bool traceHeapTerm();
+bool traceHeapTermOn();
+bool traceHeapTermOff();
+
+bool checkFree();
+bool checkFreeOn();
+bool checkFreeOff();
+
+// supported mallopt options
+#ifndef M_MMAP_THRESHOLD
+#define M_MMAP_THRESHOLD (-1)
+#endif // M_TOP_PAD
+#ifndef M_TOP_PAD
+#define M_TOP_PAD (-2)
+#endif // M_TOP_PAD
+
+extern "C" {
+	void * aalloc( size_t dim, size_t elemSize );
+	void * resize( void * oaddr, size_t size );
+	void * amemalign( size_t align, size_t dim, size_t elemSize );
+	void * cmemalign( size_t align, size_t dim, size_t elemSize );
+	size_t malloc_alignment( void * addr );
+	bool malloc_zero_fill( void * addr );
+	size_t malloc_size( void * addr );
+	size_t malloc_usable_size( void * addr );
+	int malloc_stats_fd( int fd );
+} // extern "C"
+
+void * resize( void * oaddr, size_t nalign, size_t size );
+void * realloc( void * oaddr, size_t nalign, size_t size );
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

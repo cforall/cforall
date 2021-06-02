@@ -1,0 +1,81 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// result -- Contains the expected value or an error value.
+//
+// Author           : Andrew Beach
+// Created On       : Wed May 24 14:45:00 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Jul 22 10:00:44 2017
+// Update Count     : 3
+//
+
+#pragma once
+
+#include <stdbool.h>
+
+// DO NOT USE DIRECTLY!
+forall(T, E)
+union inner_result{
+	T value;
+	E error;
+};
+
+forall(T, E)
+struct result {
+	bool has_value;
+	inline union inner_result(T, E);
+};
+
+
+forall(T, E)
+void ?{}(result(T, E) & this);
+
+forall(T, E)
+void ?{}(result(T, E) & this, one_t, T value);
+
+forall(T, E)
+void ?{}(result(T, E) & this, zero_t, E error);
+
+forall(T, E)
+void ?{}(result(T, E) & this, result(T, E) other);
+
+forall(T, E)
+void ^?{}(result(T, E) & this);
+
+forall(T, E)
+result(T, E) ?=?(result(T, E) & this, result(T, E) other);
+
+forall(T, E)
+bool ?!=?(result(T, E) this, zero_t);
+
+/* Wating for bug#11 to be fixed.
+forall(T, E)
+result(T, E) result_value(T value);
+
+forall(T, E)
+result(T, E) result_error(E error);
+*/
+
+forall(T, E)
+bool has_value(result(T, E) * this);
+
+forall(T, E)
+T get(result(T, E) * this);
+
+forall(T, E)
+E get_error(result(T, E) * this);
+
+forall(T, E)
+void set(result(T, E) * this, T value);
+
+forall(T, E)
+void set_error(result(T, E) * this, E error);
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

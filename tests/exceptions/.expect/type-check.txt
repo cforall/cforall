@@ -1,0 +1,4 @@
+exceptions/type-check.cfa:8:1 error: catch must have pointer to an exception type
+exceptions/type-check.cfa:9:1 error: catch must have pointer to an exception type
+exceptions/type-check.cfa:10:1 error: catchResume must have pointer to an exception type
+exceptions/type-check.cfa:11:1 error: catchResume must have pointer to an exception type

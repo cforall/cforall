@@ -1,0 +1,120 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2018 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// clock --
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu Apr 12 14:36:06 2018
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Apr 18 08:12:16 2021
+// Update Count     : 28
+//
+
+#include <time.hfa>
+
+//######################### C time #########################
+
+static inline char * ctime( time_t tp ) { char * buf = ctime( &tp ); buf[24] = '\0'; return buf; }
+static inline char * ctime_r( time_t tp, char * buf ) { ctime_r( &tp, buf ); buf[24] = '\0'; return buf; }
+static inline tm * gmtime( time_t tp ) { return gmtime( &tp ); }
+static inline tm * gmtime_r( time_t tp, tm * result ) { return gmtime_r( &tp, result ); }
+static inline tm * localtime( time_t tp ) { return localtime( &tp ); }
+static inline tm * localtime_r( time_t tp, tm * result ) { return localtime_r( &tp, result ); }
+
+//######################### Clock #########################
+
+struct Clock {											// virtual clock
+	// private
+	Duration offset;									// offset from computer real-time
+};
+
+static inline {
+	void reset( Clock & clk, Duration adj ) with( clk ) { // change offset
+		offset = adj + __timezone`s;					// timezone (global) is (UTC - local time) in seconds
+	} // reset
+
+	void ?{}( Clock & clk ) { reset( clk, (Duration){ 0 } ); } // create no offset
+	void ?{}( Clock & clk, Duration adj ) { reset( clk, adj ); } // create with offset
+
+	// System-wide clock that measures real, i.e., wall-clock) time. This clock is affected by discontinuous jumps in
+	// the system time. For example, manual changes of the clock, and incremental adjustments performed by adjtime(3)
+	// and NTP (daylight saving (Fall back).
+	Duration resolutionHi() {							// clock resolution in nanoseconds (fine)
+		struct timespec res;
+		clock_getres( CLOCK_REALTIME, &res );
+		return ((int64_t)res.tv_sec * TIMEGRAN + res.tv_nsec)`ns;
+	} // resolutionHi
+
+	Duration resolution() {								// clock resolution without nanoseconds (coarse)
+		struct timespec res;
+		clock_getres( CLOCK_REALTIME_COARSE, &res );
+		return ((int64_t)res.tv_sec * TIMEGRAN + res.tv_nsec)`ns;
+	} // resolution
+
+	Time timeHiRes() {									// real time with nanoseconds
+		timespec curr;
+		clock_gettime( CLOCK_REALTIME, &curr );
+		return (Time){ curr };
+	} // timeHiRes
+
+	Time time() {										// real time without nanoseconds
+		timespec curr;
+		clock_gettime( CLOCK_REALTIME_COARSE, &curr );
+		curr.tv_nsec = 0;
+		return (Time){ curr };
+	} // time
+
+	Time time( Clock & clk ) with( clk ) {				// real time for given clock
+		return time() + offset;
+	} // time
+
+	Time ?()( Clock & clk ) with( clk ) {				// alternative syntax
+		return time() + offset;
+	} // ?()
+
+	timeval time( Clock & clk ) {						// convert to C time format
+		return (timeval){ clk() };
+	} // time
+
+	tm time( Clock & clk ) with( clk ) {
+		tm ret;
+		localtime_r( time( clk ).tv_sec, &ret );
+		return ret;
+	} // time
+
+	// CFA processor CPU-time watch that ticks when the processor (kernel thread) is running. This watch is affected by
+	// discontinuous jumps when the OS is not running the kernal thread. A duration is returned because the value is
+	// relative and cannot be converted to real-time (wall-clock) time.
+	Duration processor() {								// non-monotonic duration of kernel thread
+		timespec ts;
+		clock_gettime( CLOCK_THREAD_CPUTIME_ID, &ts );
+		return (Duration){ ts };
+	} // processor
+
+	// Program CPU-time watch measures CPU time consumed by all processors (kernel threads) in the UNIX process.  This
+	// watch is affected by discontinuous jumps when the OS is not running the kernel threads. A duration is returned
+	// because the value is relative and cannot be converted to real-time (wall-clock) time.
+	Duration program() {								// non-monotonic duration of program CPU
+		timespec ts;
+		clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts );
+		return (Duration){ ts };
+	} // program
+
+	// Monotonic duration from machine boot and including system suspension. This watch is unaffected by discontinuous
+	// jumps resulting from manual changes of the clock, and incremental adjustments performed by adjtime(3) and NTP
+	// (Fall back). A duration is returned because the value is relative and cannot be converted to real-time
+	// (wall-clock) time.
+	Duration boot() {									// monotonic duration since computer boot
+		timespec ts;
+		clock_gettime( CLOCK_BOOTTIME, &ts );
+		return (Duration){ ts };
+	} // boot
+} // distribution
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

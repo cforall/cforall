@@ -1,0 +1,40 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// complex.cfa --
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed May 24 22:07:31 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 21:34:21 2018
+// Update Count     : 4
+//
+
+#include <complex.h>
+#ifdef __CFA__
+#include <fstream.hfa>
+#endif // __CFA
+
+int main( void ) {
+    double _Complex x = 3 + 2i, y = 4 + 5i, z;
+    z = x + y;
+    printf( "x:%g+%gi y:%g+%gi z:%g+%gi\n", creal(x), cimag(x), creal(y), cimag(y), creal(z), cimag(z) );
+#ifdef __CFA__
+    sout | "x:" | x | "y:" | y | "z:" | z;
+#endif // __CFA
+    x = 2.1 + 1.3i;
+    y = 3.2 + 4.5i;
+    z = x + y;
+    printf( "x:%g+%gi y:%g+%gi z:%g+%gi\n", creal(x), cimag(x), creal(y), cimag(y), creal(z), cimag(z) );
+#ifdef __CFA__
+    sout | "x:" | x | "y:" | y | "z:" | z;
+#endif // __CFA
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa complex.cfa" //
+// End: //

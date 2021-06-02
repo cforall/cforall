@@ -1,0 +1,99 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// bits/collection.hfa -- PUBLIC
+// Intrusive singly-linked list
+//
+// Author           : Colby Alexander Parsons & Peter A. Buhr
+// Created On       : Thu Jan 21 19:46:50 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+struct Colable {
+	// next node in the list
+	// invariant: (next != 0) <=> listed()
+	struct Colable * next;
+};
+#ifdef __cforall
+static inline {
+	// PUBLIC
+
+	void ?{}( Colable & co ) with( co ) {
+		next = 0p;
+	} // post: ! listed()
+
+	// return true iff *this is an element of a collection
+	bool listed( Colable & co ) with( co ) {			// pre: this != 0
+		return next != 0p;
+	}
+
+	Colable & getNext( Colable & co ) with( co ) {
+		return *next;
+	}
+
+	// PRIVATE
+
+	Colable *& Next( Colable * cp ) {
+		return cp->next;
+	}
+
+	// // wrappers to make Collection have T
+	// forall( T & ) {
+	// 	T *& Next( T * n ) {
+	// 		return (T *)Next( (Colable *)n );
+	// 	}
+	// } // distribution
+} // distribution
+
+static inline forall( T & | { T *& Next ( T * ); } ) {
+	bool listed( T * n ) {
+		return Next( n ) != 0p;
+	}
+}
+
+struct Collection {
+	void * root;										// pointer to root element of list
+};
+
+static inline {
+	// class invariant: root == 0 & empty() | *root in *this
+	void ?{}( Collection &, const Collection & ) = void; // no copy
+	Collection & ?=?( const Collection & ) = void;		// no assignment
+
+	void ?{}( Collection & collection ) with( collection ) {
+		root = 0p;
+	} // post: empty()
+
+	bool empty( Collection & collection ) with( collection ) { // 0 <=> *this contains no elements
+		return root == 0p;
+	}
+
+	void * head( Collection & collection ) with( collection ) {
+		return root;
+	} // post: empty() & head() == 0 | !empty() & head() in *this
+} // distribution
+
+
+struct ColIter {
+	void * curr;										// element returned by |
+};
+
+static inline {
+	void ?{}( ColIter & colIter ) with( colIter ) {
+		curr = 0p;
+	} // post: elts = null
+
+	forall( T & ) {
+		T * Curr( ColIter & ci ) with( ci ) {
+			return (T *)curr;
+		}
+	} // distribution
+} // distribution
+#endif

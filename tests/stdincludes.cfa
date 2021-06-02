@@ -1,0 +1,56 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// stdincludes.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Tue Aug 29 08:26:14 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 08:51:38 2020
+// Update Count     : 8
+// 
+
+// C11 standard headers
+
+#include <assert.h>
+#include <complex.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fenv.h>
+#include <float.h>
+#include <inttypes.h>
+//#include <iso646.h>										// does not exist on linux
+#include <limits.h>
+#include <locale.h>
+#include <malloc.h>										// extra
+#include <math.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdalign.h>
+#include <stdarg.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdnoreturn.h>
+#include <string.h>
+#include <tgmath.h>
+#include <time.h>
+#include <uchar.h>
+#include <unistd.h>										// extra
+#include <wchar.h>
+#include <wctype.h>
+
+int main() {
+	#pragma message( "Compiled" )			// force non-empty .expect file
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa stdincludes.cfa" //
+// End: //

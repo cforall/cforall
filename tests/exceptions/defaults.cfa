@@ -1,0 +1,102 @@
+// Tests for providing new default operations.
+
+#include <string.h>
+#include <exception.hfa>
+
+EHM_EXCEPTION(log_message)(
+	char * msg;
+);
+
+_EHM_DEFINE_COPY(log_message, )
+const char * msg(log_message * this) {
+	return this->msg;
+}
+_EHM_VIRTUAL_TABLE(log_message, , log_vt);
+
+// Logging messages don't have to be handled.
+void defaultResumptionHandler(log_message &) {}
+
+// And should never be used to terminate computation.
+void defaultTerminationHandler(log_message &) = void;
+
+void log_test(void) {
+	// We can catch log:
+	try {
+		throwResume (log_message){&log_vt, "Should be printed.\n"};
+	} catchResume (log_message * this) {
+		printf("%s", this->virtual_table->msg(this));
+	}
+	// But we don't have to:
+	throwResume (log_message){&log_vt, "Should not be printed.\n"};
+}
+
+// I don't have a good use case for doing the same with termination.
+EHM_EXCEPTION(jump)();
+void defaultTerminationHandler(jump &) {
+	printf("jump default handler.\n");
+}
+
+EHM_VIRTUAL_TABLE(jump, jump_vt);
+
+void jump_test(void) {
+	try {
+		throw (jump){&jump_vt};
+	} catch (jump * this) {
+		printf("jump catch handler.\n");
+	}
+	throw (jump){&jump_vt};
+}
+
+EHM_EXCEPTION(first)();
+EHM_VIRTUAL_TABLE(first, first_vt);
+
+EHM_EXCEPTION(unhandled_exception)();
+EHM_VIRTUAL_TABLE(unhandled_exception, unhandled_vt);
+
+void unhandled_test(void) {
+	forall(T &, V & | is_exception(T, V))
+	void defaultTerminationHandler(T &) {
+		throw (unhandled_exception){&unhandled_vt};
+	}
+	void defaultTerminationHandler(unhandled_exception &) {
+		abort();
+	}
+	try {
+		throw (first){&first_vt};
+	} catch (unhandled_exception * t) {
+		printf("Catch unhandled_exception.\n");
+	}
+}
+
+EHM_EXCEPTION(second)();
+EHM_VIRTUAL_TABLE(second, second_vt);
+
+void cross_test(void) {
+	void defaultTerminationHandler(first &) {
+		printf("cross terminate default\n");
+		throw (second){&second_vt};
+	}
+	void defaultResumptionHandler(first &) {
+		printf("cross resume default\n");
+		throwResume (second){&second_vt};
+	}
+	try {
+		printf("cross terminate throw\n");
+		throw (first){&first_vt};
+	} catch (second *) {
+		printf("cross terminate catch\n");
+	}
+	try {
+		printf("cross resume throw\n");
+		throwResume (first){&first_vt};
+	} catchResume (second *) {
+		printf("cross resume catch\n");
+	}
+}
+
+int main(int argc, char * argv[]) {
+	log_test();
+	jump_test();
+	unhandled_test();
+	cross_test();
+}

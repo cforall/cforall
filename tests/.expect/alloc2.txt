@@ -1,0 +1,6 @@
+PASSED alloc tests
+
+PASSED alloc tests (aligned struct)
+
+(if applicable) alignment error below indicates memory trashing caused by test_use.
+

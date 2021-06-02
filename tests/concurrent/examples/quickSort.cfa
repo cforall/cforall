@@ -1,0 +1,189 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// quickSort.c -- In-place concurrent quick-sort: threads are created to partition to a specific depth, then sequential
+//		recursive-calls are use to sort each partition.
+//
+// Author           : Peter A. Buhr
+// Created On       : Wed Dec  6 12:15:52 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Feb 12 18:24:47 2020
+// Update Count     : 177
+//
+
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <kernel.hfa>
+#include <thread.hfa>
+#include <string.h>										// strcmp
+
+thread Quicksort {
+	int * values;										// communication variables
+	int low, high, depth;
+};
+
+void ?{}( Quicksort & qs, int values[], int size, int depth ) {
+	qs.[values, low, high, depth] = [values, 0, size, depth];
+} // Quicksort
+
+void main( Quicksort & qs ) {							// thread starts here
+	// nested routines: information hiding
+
+	void ?{}( Quicksort & qs, int values[], int low, int high, int depth ) {
+		qs.values = values;  qs.low = low;  qs.high = high;  qs.depth = depth;
+	} // Quicksort
+
+	void sort( int values[], int low, int high, int depth ) {
+		int left, right;								// index to left/right-hand side of the values
+		int pivot;										// pivot value of values
+		int swap;										// temporary
+
+		//verify();										// check for stack overflow due to recursion
+
+		// partition while 2 or more elements in the array
+		if ( low < high ) {
+			pivot = values[low + ( high - low ) / 2];
+			left  = low;
+			right = high;
+
+			// partition: move values less < pivot before the pivot and values > pivot after the pivot
+			do {
+				while ( values[left] < pivot ) left += 1; // changed values[left] < pivot
+				while ( pivot < values[right] ) right -= 1;
+				if ( left <= right ) {
+					swap = values[left];				// interchange values
+					values[left]  = values[right];
+					values[right] = swap;
+					left += 1;
+					right -= 1;
+				} // if
+			} while ( left <= right );
+
+			// restrict number of tasks to slightly greater than number of processors
+			if ( depth > 0 ) {
+				depth -= 1;
+				Quicksort lqs = { values, low, right, depth }; // concurrently sort lower half
+				Quicksort rqs = { values, left, high, depth }; // concurrently sort upper half
+				// Quicksort lqs = { values, low, right, depth }; // concurrently sort lower half
+				// sort( values, left, high, depth );		// concurrently sort upper half
+			} else {
+				sort( values, low, right, 0 );			// sequentially sort lower half
+				sort( values, left, high, 0 );			// sequentially sort upper half
+			} // if
+		} // if
+	} // sort
+
+	with( qs ) {
+		sort( values, low, high, depth );
+	} // with
+} // main
+
+
+bool convert( int & val, const char * nptr ) {			// convert C string to integer
+	char * eptr;
+	int temp = strto( nptr, &eptr, 10 );				// do not change val on false
+	// true => entire string valid with no extra characters
+	return *nptr != '\0' && *eptr == '\0' ? val = temp, true : false;
+} // convert
+
+void usage( char * argv[] ) {
+	sout | "Usage:" | argv[0] | "( -s unsorted-file [ sorted-file ] | -t size (>= 0) [ depth (>= 0) ] )";
+	exit( EXIT_FAILURE );								// TERMINATE!
+} // usage
+
+
+int main( int argc, char * argv[] ) {
+	ifstream & unsortedfile = sin;
+	ofstream & sortedfile = sout;						// default value
+	int depth = 0, size;
+
+	if ( argc != 1 ) {									// do not use defaults
+		if ( argc < 2 || argc > 4 ) usage( argv );		// wrong number of options
+		if ( strcmp( argv[1], "-t" ) == 0 ) {			// timing ?
+			&unsortedfile = (ifstream *)0;				// no input
+			choose ( argc ) {
+			  case 4:
+				if ( ! convert( depth, argv[3] ) || depth < 0 ) usage( argv );
+				fallthrough;
+			  case 3:
+				if ( ! convert( size, argv[2] ) || size < 0 ) usage( argv );
+			} // choose
+		} else {										// sort file
+			choose ( argc ) {
+			  case 3:
+				&sortedfile = new( (const char *)argv[2] ); // open the output file
+				if ( fail( sortedfile ) ) {
+					serr | "Error! Could not open sorted output file \"" | argv[2] | "\"";
+					usage( argv );
+				} // if
+				fallthrough;
+			  case 2:
+				&unsortedfile = new( (const char *)argv[1] ); // open the input file
+				if ( fail( unsortedfile ) ) {
+					serr | "Error! Could not open unsorted input file \"" | argv[1] | "\"";
+					usage( argv );
+				} // if
+			} // choose
+		} // if
+	} // if
+	sortedfile | nlOff;									// turn off auto newline
+
+	enum { ValuesPerLine = 22 };						// number of values printed per line
+
+	if ( &unsortedfile ) {								// generate output ?
+		for () {
+			unsortedfile | size;						// read number of elements in the list
+		  if ( eof( unsortedfile ) ) break;
+			int * values = alloc( size );				// values to be sorted, too large to put on stack
+			for ( counter; size ) {						// read unsorted numbers
+				unsortedfile | values[counter];
+				if ( counter != 0 && counter % ValuesPerLine == 0 ) sortedfile | nl | "  ";
+				sortedfile | values[counter];
+				if ( counter < size - 1 && (counter + 1) % ValuesPerLine != 0 ) sortedfile | ' ';
+			} // for
+			sortedfile | nl;
+			if ( size > 0 ) {							// values to sort ?
+				Quicksort QS = { values, size - 1, 0 }; // sort values
+			} // wait until sort tasks terminate
+			for ( counter; size ) {						// print sorted list
+				if ( counter != 0 && counter % ValuesPerLine == 0 ) sortedfile | nl | "  ";
+				sortedfile | values[counter];
+				if ( counter < size - 1 && (counter + 1) % ValuesPerLine != 0 ) sortedfile | ' ';
+			} // for
+			sortedfile | nl | nl;
+
+			delete( values );
+		} // for
+		if ( &unsortedfile != &sin ) delete( &unsortedfile ); // close input/output files
+		if ( &sortedfile != &sout ) delete( &sortedfile );
+	} else {
+		processor processors[ (1 << depth) - 1 ] __attribute__(( unused )); // create 2^depth-1 kernel threads
+
+		int * values = alloc( size );					// values to be sorted, too large to put on stack
+		for ( counter; size ) {							// generate unsorted numbers
+			values[counter] = size - counter;			// descending values
+		} // for
+		for ( i; 200 ) {								// random shuffle a few values
+			swap( values[rand() % size], values[rand() % size] );
+		} // for
+		{
+			Quicksort QS = { values, size - 1, depth }; // sort values
+		} // wait until sort tasks terminate
+
+		// for ( counter; size - 1 ) {				// check sorting
+		// 	if ( values[counter] > values[counter + 1] ) abort();
+		// } // for
+
+		delete( values );
+	} // if
+} // main
+
+// for depth in 0 1 2 3 4 5 ; do echo "sort 500000000 values with ${depth} depth" ; time -f "%Uu %Ss %E %Mkb" a.out -t 500000000 ${depth} ; done
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa quickSort.cfa" //
+// End: //

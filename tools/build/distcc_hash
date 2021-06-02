@@ -1,0 +1,7 @@
+#!/bin/bash
+
+tools=$( dirname "${BASH_SOURCE[0]}" )
+path=$(readlink -f ${tools}/../../$1)
+
+hash=$(openssl dgst -sha256 <<< $path)
+echo "${hash: -10}"

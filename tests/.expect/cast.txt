@@ -1,0 +1,2 @@
+cast.cfa: In function '_X4mainFi_iPPKc__1':
+cast.cfa:18:9: note: #pragma message: Compiled

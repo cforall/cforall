@@ -1,0 +1,52 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// assert.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Nov 28 12:27:26 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Feb  4 13:00:18 2020
+// Update Count     : 6
+//
+
+#include <assert.h>
+#include <stdarg.h>								// varargs
+#include <stdio.h>								// fprintf
+#include <unistd.h>								// STDERR_FILENO
+#include "bits/debug.hfa"
+
+extern "C" {
+	extern const char * __progname;						// global name of running executable (argv[0])
+
+	#define CFA_ASSERT_FMT "Cforall Assertion error \"%s\" from program \"%s\" in \"%s\" at line %d in file \"%s\""
+
+	// called by macro assert in assert.h
+	void __assert_fail( const char assertion[], const char file[], unsigned int line, const char function[] ) {
+		__cfaabi_bits_print_safe( STDERR_FILENO, CFA_ASSERT_FMT ".\n", assertion, __progname, function, line, file );
+		abort();
+	}
+
+	// called by macro assertf
+	void __assert_fail_f( const char assertion[], const char file[], unsigned int line, const char function[], const char fmt[], ... ) {
+		__cfaabi_bits_acquire();
+		__cfaabi_bits_print_nolock( STDERR_FILENO, CFA_ASSERT_FMT ": ", assertion, __progname, function, line, file );
+
+		va_list args;
+		va_start( args, fmt );
+		__cfaabi_bits_print_vararg( STDERR_FILENO, fmt, args );
+		va_end( args );
+
+		__cfaabi_bits_print_nolock( STDERR_FILENO, "\n" );
+		__cfaabi_bits_release();
+		abort();
+	}
+}
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

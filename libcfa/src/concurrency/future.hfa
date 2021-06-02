@@ -1,0 +1,119 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// io/types.hfa --
+//
+// Author           : Thierry Delisle & Peiran Hong
+// Created On       : Wed Jan 06 17:33:18 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include "bits/locks.hfa"
+#include "monitor.hfa"
+
+forall( T ) {
+	struct future {
+		inline future_t;
+		T result;
+	};
+
+	static inline {
+		// Reset future back to original state
+		void reset(future(T) & this) { reset( (future_t&)this ); }
+
+		// check if the future is available
+		bool available( future(T) & this ) { return available( (future_t&)this ); }
+
+		// Mark the future as abandoned, meaning it will be deleted by the server
+		// This doesn't work beause of the potential need for a destructor
+		void abandon( future(T) & this );
+
+		// Fulfil the future, returns whether or not someone was unblocked
+		$thread * fulfil( future(T) & this, T result ) {
+			this.result = result;
+			return fulfil( (future_t&)this );
+		}
+
+		// Wait for the future to be fulfilled
+		// Also return whether the thread had to block or not
+		[T, bool] wait( future(T) & this ) {
+			bool r = wait( (future_t&)this );
+			return [this.result, r];
+		}
+
+		// Wait for the future to be fulfilled
+		T wait( future(T) & this ) {
+			[T, bool] tt;
+			tt = wait(this);
+			return tt.0;
+		}
+	}
+}
+
+forall( T ) {
+	monitor multi_future {
+		inline future_t;
+		condition blocked;
+		bool has_first;
+		T result;
+	};
+
+	static inline {
+		void ?{}(multi_future(T) & this) {
+			this.has_first = false;
+		}
+
+		bool $first( multi_future(T) & mutex this ) {
+			if (this.has_first) {
+				wait( this.blocked );
+				return false;
+			}
+
+			this.has_first = true;
+			return true;
+		}
+
+		void $first_done( multi_future(T) & mutex this ) {
+			this.has_first = false;
+			signal_all( this.blocked );
+		}
+
+		// Reset future back to original state
+		void reset(multi_future(T) & mutex this) {
+			if( this.has_first != false) abort("Attempting to reset a multi_future with at least one blocked threads");
+			if( !is_empty(this.blocked) ) abort("Attempting to reset a multi_future with multiple blocked threads");
+			reset( (future_t&)this );
+		}
+
+		// Fulfil the future, returns whether or not someone was unblocked
+		bool fulfil( multi_future(T) & this, T result ) {
+			this.result = result;
+			return fulfil( (future_t&)this ) != 0p;
+		}
+
+		// Wait for the future to be fulfilled
+		// Also return whether the thread had to block or not
+		[T, bool] wait( multi_future(T) & this ) {
+			bool sw = $first( this );
+			bool w = !sw;
+			if ( sw ) {
+				w = wait( (future_t&)this );
+				$first_done( this );
+			}
+
+			return [this.result, w];
+		}
+
+		// Wait for the future to be fulfilled
+		T wait( multi_future(T) & this ) {
+			return wait(this).0;
+		}
+	}
+}

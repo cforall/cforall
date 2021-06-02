@@ -1,0 +1,156 @@
+// All of these should be caught as long as the check remains in the same
+// pass. (Although not even all of the checks are in place yet.)
+
+void break_in_finally() {
+	while (true) {
+		try {} finally {
+			break;
+		}
+	}
+}
+
+void for_break_in_finally() {
+	for (10) {
+		try {} finally {
+			break;
+		}
+	}
+}
+
+void do_while_break_in_finally() {
+	do {
+		try {} finally {
+			break;
+		}
+	} while (false);
+}
+
+void continue_in_finally() {
+	while (true) {
+		try {} finally {
+			continue;
+		}
+	}
+}
+
+void goto_in_finally() {
+	while (true) {
+		try {} finally {
+			goto end_of_function;
+		}
+	}
+	end_of_function: {}
+}
+
+void labelled_break_in_finally() {
+	mainLoop: while (true) {
+		try {} finally {
+			break mainLoop;
+		}
+	}
+}
+
+void labelled_continue_in_finally() {
+	mainLoop: while (true) {
+		try {} finally {
+			continue mainLoop;
+		}
+	}
+}
+
+void switch_break_in_finally() {
+	switch (1) {
+	case 1:
+		try {} finally {
+			break;
+		}
+	default:
+		break;
+	}
+}
+
+void choose_break_in_finally() {
+	choose (1) {
+	case 1:
+		try {} finally {
+			break;
+		}
+	default:
+		break;
+	}
+}
+
+void choose_fallthru_in_finally() {
+	choose (1) {
+	case 1:
+		try {} finally {
+			fallthru;
+		}
+	default:
+		break;
+	}
+}
+
+void labelled_choose_break_in_finally() {
+	mainBlock: choose (1) {
+	case 1:
+		try {} finally {
+			break mainBlock;
+		}
+	case 2:
+		break;
+	default:
+		break;
+	}
+}
+
+void labelled_choose_fallthru_in_finally() {
+	mainBlock: choose (1) {
+	case 1:
+		try {} finally {
+			fallthru mainBlock;
+		}
+	case 2:
+		break;
+	default:
+		break;
+	}
+}
+
+void choose_fallthru_default_in_finally() {
+	choose (1) {
+	case 1:
+		try {} finally {
+			fallthru default;
+		}
+	default:
+		break;
+	}
+}
+
+void void_return_in_finally() {
+	try {} finally {
+		return;
+	}
+}
+
+int value_return_in_finally() {
+	try {} finally {
+		return -7;
+	}
+
+}
+
+// Checked in the same place, make sure it does't break.
+void break_in_function() {
+	while (true) {
+		void inner() {
+			break;
+		}
+	}
+}
+
+void main() {
+	// Should not compile.
+	return 1;
+}

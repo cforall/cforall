@@ -1,0 +1,109 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// switch.cfa -- 
+//
+// Author           : Peter A. Buhr
+// Created On       : Tue Jul 12 06:50:22 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Sep 27 08:35:02 2020
+// Update Count     : 43
+// 
+
+int f( int i ) { return i; }
+
+int main( void ) {
+	int i = 0;
+	switch ( i ) case 3 : i = 1;
+	switch ( i ) default : f( 3 );
+
+	switch ( 3 )
+	  default:
+	  case 2:
+	  case 3:
+		f( 3 );
+
+	switch ( i ) {}
+	switch ( i ) {
+	  case 3:
+		f( 3 );
+	} // switch
+
+	switch ( 3 ) {
+		int j;
+	  case 3:
+		break;
+	  case 4:
+		j = 0;
+	}
+
+	switch ( i ) {
+	  case 1, 2, 3:
+		switch ( i ) {
+		  case 2, 3, 4:
+			7;
+		}
+	}
+
+	switch ( i ) {
+		int j = 0;
+		int k = 0;
+		struct S { int i; };
+		S s;
+	  case 8~10:
+	  default:
+		i = 3;
+	  case 19:
+	  case 'A' ... 'Z':
+	  case 1 ... 6:
+	  case 20, 30:
+		j = 3;
+		f( 3 );
+		break;
+	} // switch
+
+	choose ( i ) case 3 : f( 3 );
+	choose ( i ) default : i = 1;
+
+	choose ( 3 )
+	  case 2:
+	  default:
+	  case 3:
+		f( 3 );
+
+	choose ( i ) {}
+	choose ( i ) {
+	  case 3:
+		f( 3 );
+	} // choose
+
+	choose ( i ) {
+		int j = 0;
+		int k = 0;
+		struct S { int i; };
+		S s;
+	  case 19:
+	  case 'A'...'Z':
+	  case 0 ...6:										// space required, or lexed as decimal point
+	  case 20, 30, 40:
+		i = 3;
+		f( 3 );
+	  default:
+		j = 3;
+	  case 8~10:
+		f( 3 );
+		fallthru;
+	  case 'd':
+		j = 5;
+	} // choose
+
+	#pragma message( "Compiled" )						// force non-empty .expect file
+} // main
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa switch.cfa" //
+// End: //

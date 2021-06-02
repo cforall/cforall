@@ -1,0 +1,41 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// preemption.hfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Jun 5 14:20:42 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Mar 23 17:18:53 2018
+// Update Count     : 2
+//
+
+#pragma once
+
+#include "bits/locks.hfa"
+#include "alarm.hfa"
+
+struct event_kernel_t {
+	alarm_list_t alarms;
+	__spinlock_t lock;
+};
+
+extern event_kernel_t * event_kernel;
+
+void update_preemption( processor * this, Duration duration );
+
+struct preemption_scope {
+	alarm_node_t alarm;
+	processor * proc;
+};
+
+void ?{}( preemption_scope & this, processor * proc );
+void ^?{}( preemption_scope & this );
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

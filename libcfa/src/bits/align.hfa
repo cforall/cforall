@@ -1,0 +1,64 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// align.hfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Nov 28 12:27:26 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Nov 16 18:58:22 2019
+// Update Count     : 3
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+//
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
+//
+
+#pragma once
+
+#include <assert.h>
+#include <stdbool.h>
+
+// Minimum size used to align memory boundaries for memory allocations.
+//#define libAlign() (sizeof(double))
+// gcc-7 uses xmms instructions, which require 16 byte alignment.
+#define libAlign() (16)
+
+// Check for power of 2
+static inline bool libPow2( unsigned long int value ) {
+    // clears all bits below value, rounding value down to the next lower multiple of value
+    return (value & (value - 1ul)) == 0ul;
+} // libPow2
+
+
+// Returns value aligned at the floor of align.
+static inline unsigned long int libFloor( unsigned long int value, unsigned long int align ) {
+    assert( libPow2( align ) );
+    // clears all bits above or equal to align, getting (value % align), the phase of value with regards to align
+    return value & -align;
+} // libFloor
+
+
+// Returns value aligned at the ceiling of align.
+
+static inline unsigned long int libCeiling( unsigned long int value, unsigned long int align ) {
+    assert( libPow2( align ) );
+    // "negate, round down, negate" is the same as round up
+    return -libFloor( -value, align );
+} // uCeiling
+
+// Local Variables: //
+// compile-command: "make install" //
+// End: //

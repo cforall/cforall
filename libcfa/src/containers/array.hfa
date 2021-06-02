@@ -1,0 +1,165 @@
+
+
+// a type whose size is n
+#define Z(n) char[n]
+
+// the inverse of Z(-)
+#define z(N) sizeof(N)
+
+forall( T & ) struct tag {};
+#define ttag(T) ((tag(T)){})
+#define ztag(n) ttag(Z(n))
+
+
+//
+// Single-dim array sruct (with explicit packing and atom)
+//
+
+forall( [N], S & | sized(S), Timmed &, Tbase & ) {
+    struct arpk {
+        S strides[z(N)];
+    };
+
+    // About the choice of integral types offered as subscript overloads:
+    // Intent is to cover these use cases:
+    //    float foo( ptrdiff_t i ) { return a[i]; }           // i : ptrdiff_t
+    //    forall( [N] ) ... for( i; N ) { total += a[i]; }    // i : typeof( sizeof(42) )
+    //    for( i; 5 ) { total += a[i]; }                      // i : int
+    // It gets complicated by:
+    // -  CFA does overloading on concrete types, like int and unsigned int, not on typedefed
+    //    types like size_t.  So trying to overload on ptrdiff_t vs int works in 64-bit mode
+    //    but not in 32-bit mode.
+    // -  Given bug of Trac #247, CFA gives sizeof expressions type unsigned long int, when it
+    //    should give them type size_t.
+    //    
+    //                          gcc -m32         cfa -m32 given bug         gcc -m64
+    // ptrdiff_t                int              int                        long int
+    // size_t                   unsigned int     unsigned int               unsigned long int
+    // typeof( sizeof(42) )     unsigned int     unsigned long int          unsigned long int
+    // int                      int              int                        int
+
+    static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, int i ) {
+        return (Timmed &) a.strides[i];
+    }
+
+    static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, unsigned int i ) {
+        return (Timmed &) a.strides[i];
+    }
+
+    static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, long int i ) {
+        return (Timmed &) a.strides[i];
+    }
+
+    static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, unsigned long int i ) {
+        return (Timmed &) a.strides[i];
+    }
+
+    static inline size_t ?`len( arpk(N, S, Timmed, Tbase) & a ) {
+        return z(N);
+    }
+
+    // workaround #226 (and array relevance thereof demonstrated in mike102/otype-slow-ndims.cfa)
+    static inline void ?{}( arpk(N, S, Timmed, Tbase) & this ) {
+        void ?{}( S (&inner)[z(N)] ) {}
+        ?{}(this.strides);
+    }
+    static inline void ^?{}( arpk(N, S, Timmed, Tbase) & this ) {
+        void ^?{}( S (&inner)[z(N)] ) {}
+        ^?{}(this.strides);
+    }
+}
+
+//
+// Sugar for declaring array structure instances
+//
+
+forall( Te )
+static inline Te mkar_( tag(Te) ) {}
+
+forall( [N], ZTags ... , Trslt &, Tatom & | { Trslt mkar_( tag(Tatom), ZTags ); } )
+static inline arpk(N, Trslt, Trslt, Tatom) mkar_( tag(Tatom), tag(N), ZTags ) {}
+
+// based on https://stackoverflow.com/questions/1872220/is-it-possible-to-iterate-over-arguments-in-variadic-macros
+
+    // Make a FOREACH macro
+    #define FE_0(WHAT)
+    #define FE_1(WHAT, X) WHAT(X) 
+    #define FE_2(WHAT, X, ...) WHAT(X)FE_1(WHAT, __VA_ARGS__)
+    #define FE_3(WHAT, X, ...) WHAT(X)FE_2(WHAT, __VA_ARGS__)
+    #define FE_4(WHAT, X, ...) WHAT(X)FE_3(WHAT, __VA_ARGS__)
+    #define FE_5(WHAT, X, ...) WHAT(X)FE_4(WHAT, __VA_ARGS__)
+    //... repeat as needed
+
+    #define GET_MACRO(_0,_1,_2,_3,_4,_5,NAME,...) NAME 
+    #define FOR_EACH(action,...) \
+    GET_MACRO(_0,__VA_ARGS__,FE_5,FE_4,FE_3,FE_2,FE_1,FE_0)(action,__VA_ARGS__)
+
+#define COMMA_ttag(X) , ttag(X)
+#define array( TE, ...) typeof( mkar_( ttag(TE)  FOR_EACH( COMMA_ttag, __VA_ARGS__ ) ) )
+
+#define COMMA_ztag(X) , ztag(X)
+#define zarray( TE, ...) typeof( mkar_( ttag(TE)  FOR_EACH( COMMA_ztag, __VA_ARGS__ ) ) )
+
+//
+// Sugar for multidimensional indexing
+//
+
+// Core -[[-,-,-]] operator
+
+#ifdef TRY_BROKEN_DESIRED_MD_SUBSCRIPT
+
+// Desired form.  One definition with recursion on IxBC (worked until Jan 2021, see trac #__TODO__)
+
+forall( TA &, TB &, TC &, IxAB, IxBC ... | { TB & ?[?]( TA &, IxAB ); TC & ?[?]( TB &, IxBC ); } )
+static inline TC & ?[?]( TA & this, IxAB ab, IxBC bc ) {
+    return this[ab][bc];
+}
+
+#else 
+
+// Workaround form.  Listing all possibilities up to 4 dims.
+
+forall( TA &, TB &, TC &, IxAB_0, IxBC | { TB & ?[?]( TA &, IxAB_0 ); TC & ?[?]( TB &, IxBC ); } )
+static inline TC & ?[?]( TA & this, IxAB_0 ab, IxBC bc ) {
+    return this[ab][bc];
+}
+
+forall( TA &, TB &, TC &, IxAB_0, IxAB_1, IxBC | { TB & ?[?]( TA &, IxAB_0, IxAB_1 ); TC & ?[?]( TB &, IxBC ); } )
+static inline TC & ?[?]( TA & this, IxAB_0 ab0, IxAB_1 ab1, IxBC bc ) {
+    return this[[ab0,ab1]][bc];
+}
+
+forall( TA &, TB &, TC &, IxAB_0, IxAB_1, IxAB_2, IxBC | { TB & ?[?]( TA &, IxAB_0, IxAB_1, IxAB_2 ); TC & ?[?]( TB &, IxBC ); } )
+static inline TC & ?[?]( TA & this, IxAB_0 ab0, IxAB_1 ab1, IxAB_2 ab2, IxBC bc ) {
+    return this[[ab0,ab1,ab2]][bc];
+}
+
+#endif
+
+//
+// Rotation
+//
+
+// Base
+forall( [Nq], Sq & | sized(Sq), Tbase & )
+static inline tag(arpk(Nq, Sq, Tbase, Tbase)) enq_( tag(Tbase), tag(Nq), tag(Sq), tag(Tbase) ) {}
+
+// Rec
+forall( [Nq], Sq & | sized(Sq), [N], S & | sized(S), recq &, recr &, Tbase & | { tag(recr) enq_( tag(Tbase), tag(Nq), tag(Sq), tag(recq) ); } )
+static inline tag(arpk(N, S, recr, Tbase)) enq_( tag(Tbase), tag(Nq), tag(Sq), tag(arpk(N, S, recq, Tbase)) ) {}
+
+// Wrapper
+struct all_t {} all;
+forall( [N], S & | sized(S), Te &, result &, Tbase & | { tag(result) enq_( tag(Tbase), tag(N), tag(S), tag(Te) ); } )
+static inline result & ?[?]( arpk(N, S, Te, Tbase) & this, all_t ) {
+    return (result&) this;
+}
+
+//
+// Trait of array or slice
+//
+
+trait ar(A &, Tv &) {
+    Tv& ?[?]( A&, ptrdiff_t );
+    size_t ?`len( A& );
+};

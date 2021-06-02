@@ -1,0 +1,74 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+// 
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// shortCircuit.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Thu Jan 28 18:26:16 2016
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec  4 18:26:05 2018
+// Update Count     : 4
+// 
+
+void g( float f ) {}
+void g( int i ) {}
+
+void f( int a ) {
+	int b;
+	float c;
+	g( a ? b : c );
+	g( a && c );
+	g( a || b );
+}
+
+void g() {
+	int a;
+	struct { int b; } a;
+	if ( a ) {
+		while ( a ) {
+			int *b;
+			for ( b; a; b ) {
+			}
+		}
+	}
+}
+
+#include <fstream.hfa>
+
+struct test_t {
+	int x;
+};
+
+int ?!=?( test_t lhs, int rhs ) {
+	sout | lhs.x | " ";
+	return lhs.x != 0;
+}
+
+int main( int argc, char const *argv[] ) {
+	sout | nlOff;
+	test_t true_val, false_val;
+	true_val.x = 1;
+	false_val.x = 0;
+
+	true_val && false_val;
+	sout | nl;
+
+	true_val || false_val;
+	sout | nl;
+
+	false_val && true_val;
+	sout | nl;
+
+	false_val || true_val;
+	sout | nl;
+
+	return 0;
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa abs.cfa" //
+// End: //

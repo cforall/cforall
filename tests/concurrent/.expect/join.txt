@@ -1,0 +1,2 @@
+All workers got 42
+All other workers got 27
