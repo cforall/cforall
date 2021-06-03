@@ -266,6 +266,12 @@ extern "C" {
 	struct $coroutine * __cfactx_cor_finish(void) {
 		struct $coroutine * cor = active_coroutine();
 
+		// get the active thread once
+		$thread * athrd = active_thread();
+
+		/* paranoid */ verify( athrd->corctx_flag );
+		athrd->corctx_flag = false;
+
 		if(cor->state == Primed) {
 			__cfactx_suspend();
 		}

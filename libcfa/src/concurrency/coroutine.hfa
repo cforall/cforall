@@ -85,13 +85,23 @@ static inline void $ctx_switch( $coroutine * src, $coroutine * dst ) __attribute
 	// set state of current coroutine to inactive
 	src->state = src->state == Halted ? Halted : Blocked;
 
+	// get the active thread once
+	$thread * athrd = active_thread();
+
+	// Mark the coroutine
+	/* paranoid */ verify( !athrd->corctx_flag );
+	athrd->corctx_flag = true;
+
 	// set new coroutine that task is executing
-	active_thread()->curr_cor = dst;
+	athrd->curr_cor = dst;
 
 	// context switch to specified coroutine
-	verify( dst->context.SP );
+	/* paranoid */ verify( dst->context.SP );
 	__cfactx_switch( &src->context, &dst->context );
 	// when __cfactx_switch returns we are back in the src coroutine
+
+	/* paranoid */ verify( athrd->corctx_flag );
+	athrd->corctx_flag = false;
 
 	// set state of new coroutine to active
 	src->state = Active;

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 26 14:23:51 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 17 14:27:08 2020
-// Update Count     : 414
+// Last Modified On : Tue Jun  1 23:07:21 2021
+// Update Count     : 415
 //
 
 #include <iostream>
@@ -198,7 +198,9 @@ static void Stage1( const int argc, const char * const argv[] ) {
 				// CPP flags with an argument
 				if ( arg == "-D" || arg == "-U" || arg == "-I" || arg == "-MF" || arg == "-MT" || arg == "-MQ" ||
 					 arg == "-include" || arg == "-imacros" || arg == "-idirafter" || arg == "-iprefix" ||
-					 arg == "-iwithprefix" || arg == "-iwithprefixbefore" || arg == "-isystem" || arg == "-isysroot" ) {
+					 arg == "-iwithprefix" || arg == "-iwithprefixbefore" || arg == "-isystem" || arg == "-isysroot" ||
+					 arg == "-dumpbase-ext" || arg == "-dumpbase"
+					) {
 					i += 1;
 					args[nargs++] = argv[i];			// pass argument along
 					#ifdef __DEBUG_H__

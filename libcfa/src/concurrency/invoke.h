@@ -166,6 +166,8 @@ extern "C" {
 		enum __Coroutine_State state:8;
 		enum __Preemption_Reason preempted:8;
 
+		bool corctx_flag;
+
 		//SKULLDUGGERY errno is not save in the thread data structure because returnToKernel appears to be the only function to require saving and restoring it
 
 		// pointer to the cluster on which the thread is running

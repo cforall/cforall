@@ -13,5 +13,5 @@ void f() {
 
 //Dummy main
 int main( int argc, char const * argv[] ) {
-	#pragma message( "Compiled" )			// force non-empty .expect file
+	#pragma message( "Compiled" )						// force non-empty .expect file
 }

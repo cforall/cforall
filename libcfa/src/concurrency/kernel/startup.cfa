@@ -396,6 +396,7 @@ static void __kernel_first_resume( processor * this ) {
 
 	// make sure the current state is still correct
 	/* paranoid */ verify(src->state == Ready);
+	src->corctx_flag = true;
 
 	// context switch to specified coroutine
 	verify( dst->context.SP );

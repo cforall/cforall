@@ -31,6 +31,7 @@ void ?{}($thread & this, const char * const name, cluster & cl, void * storage, 
 	ticket = TICKET_RUNNING;
 	state = Start;
 	preempted = __NO_PREEMPTION;
+	corctx_flag = false;
 	curr_cor = &self_cor;
 	self_mon.owner = &this;
 	self_mon.recursion = 1;
