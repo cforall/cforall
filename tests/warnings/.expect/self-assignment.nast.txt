@@ -1,3 +1,4 @@
+warnings/self-assignment.cfa:34:25: warning: Compiled
 warnings/self-assignment.cfa:29:1 warning: self assignment of expression: Generated Cast of:
   Variable Expression: j: signed int
   ... with resolved type:
@@ -45,5 +46,3 @@ warnings/self-assignment.cfa:32:1 warning: self assignment of expression: Genera
   reference to signed int
 ... with resolved type:
   reference to signed int
-warnings/self-assignment.cfa: In function '_X4mainFi___1':
-warnings/self-assignment.cfa:36:9: note: #pragma message: Compiled

@@ -83,7 +83,5 @@ int main() {
 	(S){2}`mary;
 	(S)@{2}`mary;
 
-	#if !defined(NO_COMPILED_PRAGMA)
-		#pragma message( "Compiled" )	// force non-empty .expect file
-	#endif
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 } // main

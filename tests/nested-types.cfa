@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Mon Jul 9 10:20:03 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 08:48:59 2020
-// Update Count     : 6
+// Last Modified On : Sat Jun  5 10:07:42 2021
+// Update Count     : 7
 //
 
 typedef int N;
@@ -97,7 +97,7 @@ int main() {
 
 	// A.N(int) x;  // xxx - should not be an error, but currently is.
 
-	#pragma message( "Compiled" )			// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

@@ -1,2 +1,0 @@
-stdincludes.cfa: In function '_X4mainFi___1':
-stdincludes.cfa:52:9: note: #pragma message: Compiled

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug 10 07:29:39 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 09:01:34 2020
-// Update Count     : 12
+// Last Modified On : Sat Jun  5 10:07:34 2021
+// Update Count     : 13
 // 
 
 int foo() {
@@ -178,7 +178,7 @@ int foo() {
 }
 
 int main( int argc, char const *argv[] ) {
-	#pragma message( "Compiled" )						// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

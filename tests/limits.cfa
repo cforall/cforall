@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May 10 20:44:20 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 08:45:43 2020
-// Update Count     : 10
+// Last Modified On : Sat Jun  5 10:07:32 2021
+// Update Count     : 11
 //
 
 // Note: For testing the ability to load the constants defined in libcfa/src/limits.cfa,
@@ -149,7 +149,7 @@ long double _Complex sqrt_2 = SQRT_2;
 long double _Complex _1_sqrt_2 = _1_SQRT_2;
 
 int main(int argc, char const *argv[]) {
-	#pragma message( "Compiled" )						// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

@@ -1,2 +1,1 @@
-switch.cfa: In function '_X4mainFi___1':
-switch.cfa:105:9: note: #pragma message: Compiled
+switch.cfa:103:25: warning: Compiled

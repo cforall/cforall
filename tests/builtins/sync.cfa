@@ -353,5 +353,5 @@ void foo() {
 }
 
 int main() {
-	#pragma message( "Compiled" )			// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }

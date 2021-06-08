@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 24 22:10:36 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 07:55:22 2020
-// Update Count     : 7
+// Last Modified On : Sat Jun  5 10:07:52 2021
+// Update Count     : 8
 // 
 
 int main() {
@@ -63,7 +63,7 @@ int main() {
 	0x_ff.ffp0;					// hex real
 	0x_1.ffff_ffff_p_128_l;
 
-	#pragma message( "Compiled" )	// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 } // main
 
 // Local Variables: //

@@ -1,2 +1,1 @@
-array.cfa: In function '_X4mainFi___1':
-array.cfa:55:9: note: #pragma message: Compiled
+array.cfa:52:25: warning: Compiled

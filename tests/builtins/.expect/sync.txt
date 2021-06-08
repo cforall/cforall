@@ -1,2 +1,1 @@
-builtins/sync.cfa: In function '_X4mainFi___1':
-builtins/sync.cfa:358:9: note: #pragma message: Compiled
+builtins/sync.cfa:356:25: warning: Compiled

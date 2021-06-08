@@ -1,2 +1,1 @@
-typedefRedef.cfa: In function '_X4mainFi___1':
-typedefRedef.cfa:71:9: note: #pragma message: Compiled
+typedefRedef.cfa:69:25: warning: Compiled

@@ -1,2 +1,1 @@
-nested-types.cfa: In function '_X4mainFi___1':
-nested-types.cfa:102:9: note: #pragma message: Compiled
+nested-types.cfa:100:25: warning: Compiled

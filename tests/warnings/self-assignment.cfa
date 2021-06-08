@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Thu Mar 1 13:53:57 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 09:24:34 2020
-// Update Count     : 6
+// Last Modified On : Sat Jun  5 10:08:56 2021
+// Update Count     : 7
 //
 
 struct S {
@@ -31,7 +31,7 @@ int main() {
 	s.i = s.i;
 	t.s.i = t.s.i;
 
-	#pragma message( "Compiled" )			// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

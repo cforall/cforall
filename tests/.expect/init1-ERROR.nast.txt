@@ -1,3 +1,4 @@
+init1.cfa:134:25: warning: Compiled
 init1.cfa:56:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
   Name: rx  InitAlternative: reference to signed int
 init1.cfa:57:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression

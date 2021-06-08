@@ -1,2 +1,1 @@
-identFuncDeclarator.cfa: In function '_X4mainFi___1':
-identFuncDeclarator.cfa:116:9: note: #pragma message: Compiled
+identFuncDeclarator.cfa:114:25: warning: Compiled

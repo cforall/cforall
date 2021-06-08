@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug 17 08:41:42 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 07:46:17 2020
-// Update Count     : 13
+// Last Modified On : Sat Jun  5 10:08:47 2021
+// Update Count     : 14
 // 
 
 // Variable declarations test
@@ -177,7 +177,7 @@ const * const * [10] int cf42;
 
 //Dummy main
 int main( int argc, char const * argv[] ) {
-	#pragma message( "Compiled" )						// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

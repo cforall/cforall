@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar 25 09:08:26 2021
-// Update Count     : 750
+// Last Modified On : Sat Jun  5 10:06:46 2021
+// Update Count     : 751
 //
 
 #ifdef __CFA__
@@ -151,7 +151,7 @@ extern "C" {
 #endif // __CFA__
 
 int main( int argc, char const *argv[] ) {
-	#pragma message( "Compiled" )						// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

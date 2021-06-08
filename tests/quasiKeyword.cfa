@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb 17 10:33:49 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 21 15:52:04 2021
-// Update Count     : 7
+// Last Modified On : Sat Jun  5 10:07:59 2021
+// Update Count     : 8
 // 
 
 #include <exception.hfa>
@@ -51,5 +51,5 @@ int main(int argc, char const *argv[]) {
 		} 
 	else catch = 3;
 
-	#pragma message( "Compiled" )						// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }

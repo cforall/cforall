@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 29 08:26:14 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 08:51:38 2020
-// Update Count     : 8
+// Last Modified On : Sat Jun  5 10:08:11 2021
+// Update Count     : 9
 // 
 
 // C11 standard headers
@@ -47,7 +47,7 @@
 #include <wctype.h>
 
 int main() {
-	#pragma message( "Compiled" )			// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

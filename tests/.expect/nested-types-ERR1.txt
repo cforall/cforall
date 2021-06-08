@@ -1,1 +1,2 @@
+nested-types.cfa:100:25: warning: Compiled
 nested-types.cfa:83:1 error: Use of undefined type T

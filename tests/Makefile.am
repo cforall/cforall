@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Tue Mar  2 21:39:01 2021
-## Update Count     : 90
+## Last Modified On : Sat Jun  5 14:49:25 2021
+## Update Count     : 92
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -172,7 +172,7 @@ $(GENERATED_CODE): % : %.cfa $(CFACCBIN)
 CFACOMPILE_SYNTAX = $(CFACOMPILETEST) -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o $(abspath ${@})
 
 SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator forall \
-	init1 limits nested-types stdincludes cast labelledExit array quasiKeyword include/includes builtins/sync warnings/self-assignment
+	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment
 $(SYNTAX_ONLY_CODE): % : %.cfa $(CFACCBIN)
 	$(CFACOMPILE_SYNTAX)
 	$(if $(test), cp $(test) $(abspath ${@}), )

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug 17 08:36:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 08:20:46 2020
-// Update Count     : 5
+// Last Modified On : Sat Jun  5 10:06:25 2021
+// Update Count     : 6
 // 
 
 int main() {
@@ -111,7 +111,7 @@ int main() {
 	int (* (* const f80)(int))();
 	int (* const(* const f81)(int))();
 
-	#pragma message( "Compiled" )			// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

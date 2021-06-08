@@ -1,2 +1,1 @@
-variableDeclarator.cfa: In function '_X4mainFi_iPPKc__1':
-variableDeclarator.cfa:182:9: note: #pragma message: Compiled
+variableDeclarator.cfa:180:25: warning: Compiled

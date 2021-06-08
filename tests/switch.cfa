@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 12 06:50:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 08:35:02 2020
-// Update Count     : 43
+// Last Modified On : Sat Jun  5 10:08:20 2021
+// Update Count     : 44
 // 
 
 int f( int i ) { return i; }
@@ -100,7 +100,7 @@ int main( void ) {
 		j = 5;
 	} // choose
 
-	#pragma message( "Compiled" )						// force non-empty .expect file
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
 } // main
 
 // Local Variables: //
