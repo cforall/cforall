@@ -131,6 +131,12 @@ AC_PROG_MAKE_SET
 #io_uring 5.5 uses enum values
 #io_uring 5.6 and later uses probes
 
+AH_TEMPLATE([CFA_HAVE_LINUX_RSEQ_H],[Defined if rseq support is present when compiling libcfathread.])
+AC_CHECK_HEADERS([linux/rseq.h], [AC_DEFINE(CFA_HAVE_LINUX_RSEQ_H)])
+
+AH_TEMPLATE([CFA_HAVE_LINUX_LIBRSEQ],[Defined if librseq support is present when compiling libcfathread.])
+AC_CHECK_LIB([rseq], [rseq_available], [AC_DEFINE(CFA_HAVE_LINUX_RSEQ_H)], [])
+
 AH_TEMPLATE([CFA_HAVE_LINUX_IO_URING_H],[Defined if io_uring support is present when compiling libcfathread.])
 AH_TEMPLATE([CFA_HAVE_IORING_OP_NOP],[Defined if io_uring support is present when compiling libcfathread and supports the operation IORING_OP_NOP.])
 AH_TEMPLATE([CFA_HAVE_IORING_OP_READV],[Defined if io_uring support is present when compiling libcfathread and supports the operation IORING_OP_READV.])
