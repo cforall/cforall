@@ -7,17 +7,19 @@
 // fibonacci.cfa
 //
 // Author           : Thierry Delisle
-// Created On       : Mon Mar  1 16:54:23 2020
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Created On       : Mon Mar 1 16:54:23 2020
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jun 10 21:54:14 2021
+// Update Count     : 3
 //
+
+#include <fstream.hfa>
 
 generator Fib {
 	int fn1, fn;
 };
 
-void main(Fib & b) with (b) {
+void main(Fib & fib) with (fib) {
 	[fn1, fn] = [1, 0];
 	for () {
 		suspend;
@@ -28,11 +30,10 @@ void main(Fib & b) with (b) {
 int main() {
 	Fib f1, f2;
 	for ( 10 ) {
-		resume( f1 );
-		resume( f2 );
-		printf("%d %d\n", f1.fn, f2.fn);
+		resume( f1 ); resume( f2 );
+		sout | f1.fn | f2.fn;
+		// sout | resume( f1 ).fn | resume( f2 ).fn; // compiler bug
 	}
-
 }
 
 // Local Variables: //

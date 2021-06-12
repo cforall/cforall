@@ -26,17 +26,6 @@
 #include "concurrency/invoke.h"
 #include "stdhdr/assert.h"
 #include "virtual.h"
-
-#if defined( __ARM_ARCH )
-#warning FIX ME: temporary hack to keep ARM build working
-#ifndef _URC_FATAL_PHASE1_ERROR
-#define _URC_FATAL_PHASE1_ERROR 3
-#endif // ! _URC_FATAL_PHASE1_ERROR
-#ifndef _URC_FATAL_PHASE2_ERROR
-#define _URC_FATAL_PHASE2_ERROR 2
-#endif // ! _URC_FATAL_PHASE2_ERROR
-#endif // __ARM_ARCH
-
 #include "lsda.h"
 
 /* The exception class for our exceptions. Because of the vendor component
@@ -300,7 +289,7 @@ void __cfaehm_rethrow_terminate(void) {
 	abort();
 }
 
-#if defined( __x86_64 ) || defined( __i386 )
+#if defined( __x86_64 ) || defined( __i386 ) || defined( __ARM_ARCH )
 // This is our personality routine. For every stack frame annotated with
 // ".cfi_personality 0x3,__gcfa_personality_v0" this function will be called twice when unwinding.
 //  Once in the search phase and once in the cleanup phase.
@@ -418,8 +407,7 @@ _Unwind_Reason_Code __gcfa_personality_v0(
 #				elif defined( __i386 )
 				    _Unwind_GetCFA(unwind_context) + 24;
 #				elif defined( __ARM_ARCH )
-#				    warning FIX ME: check if anything needed for ARM
-				    42;
+				    _Unwind_GetCFA(unwind_context) + 40;
 #				endif
 				int (*matcher)(exception_t *) = *(int(**)(exception_t *))match_pos;
 
@@ -536,7 +524,11 @@ void __cfaehm_try_terminate(void (*try_block)(),
 asm (
 	// HEADER
 	".LFECFA1:\n"
+#if defined( __x86_64 ) || defined( __i386 )
 	"	.globl	__gcfa_personality_v0\n"
+#else // defined( __ARM_ARCH )
+	"	.global	__gcfa_personality_v0\n"
+#endif
 	"	.section	.gcc_except_table,\"a\",@progbits\n"
 	// TABLE HEADER (important field is the BODY length at the end)
 	".LLSDACFA2:\n"
@@ -568,21 +560,31 @@ asm (
 	"	.weak	CFA.ref.__gcfa_personality_v0\n"
 	// No clue what this does specifically
 	"	.section	.data.rel.local.CFA.ref.__gcfa_personality_v0,\"awG\",@progbits,CFA.ref.__gcfa_personality_v0,comdat\n"
+#if defined( __x86_64 ) || defined( __i386 )
 	"	.align 8\n"
+#else // defined( __ARM_ARCH )
+	"	.align 3\n"
+#endif
 	"	.type CFA.ref.__gcfa_personality_v0, @object\n"
 	"	.size CFA.ref.__gcfa_personality_v0, 8\n"
 	"CFA.ref.__gcfa_personality_v0:\n"
 #if defined( __x86_64 )
 	"	.quad __gcfa_personality_v0\n"
-#else // then __i386
+#elif defined( __i386 )
 	"	.long __gcfa_personality_v0\n"
+#else // defined( __ARM_ARCH )
+	"	.xword __gcfa_personality_v0\n"
 #endif
 );
 #else // __PIC__
 asm (
 	// HEADER
 	".LFECFA1:\n"
+#if defined( __x86_64 ) || defined( __i386 )
 	"	.globl	__gcfa_personality_v0\n"
+#else // defined( __ARM_ARCH )
+	"	.global	__gcfa_personality_v0\n"
+#endif
 	"	.section	.gcc_except_table,\"a\",@progbits\n"
 	// TABLE HEADER (important field is the BODY length at the end)
 	".LLSDACFA2:\n"
@@ -611,21 +613,6 @@ asm (
 
 #pragma GCC pop_options
 
-#elif defined( __ARM_ARCH )
-_Unwind_Reason_Code __gcfa_personality_v0(
-		int version,
-		_Unwind_Action actions,
-		unsigned long long exception_class,
-		struct _Unwind_Exception * unwind_exception,
-		struct _Unwind_Context * unwind_context) {
-	return _URC_CONTINUE_UNWIND;
-}
-
-__attribute__((noinline))
-void __cfaehm_try_terminate(void (*try_block)(),
-		void (*catch_block)(int index, exception_t * except),
-		__attribute__((unused)) int (*match_block)(exception_t * except)) {
-}
 #else
 	#error unsupported hardware architecture
-#endif // __x86_64 || __i386
+#endif // __x86_64 || __i386 || __ARM_ARCH
