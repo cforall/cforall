@@ -170,6 +170,12 @@
 /* Defined if io_uring support is present when compiling libcfathread. */
 #undef CFA_HAVE_LINUX_IO_URING_H
 
+/* Defined if librseq support is present when compiling libcfathread. */
+#undef CFA_HAVE_LINUX_LIBRSEQ
+
+/* Defined if rseq support is present when compiling libcfathread. */
+#undef CFA_HAVE_LINUX_RSEQ_H
+
 /* Defined if openat2 support is present when compiling libcfathread. */
 #undef CFA_HAVE_OPENAT2
 
@@ -203,6 +209,9 @@
 
 /* Define to 1 if you have the <linux/io_uring.h> header file. */
 #undef HAVE_LINUX_IO_URING_H
+
+/* Define to 1 if you have the <linux/rseq.h> header file. */
+#undef HAVE_LINUX_RSEQ_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H

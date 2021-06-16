@@ -137,26 +137,27 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(cfa_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libcfa_la_LIBADD =
-am__libcfa_la_SOURCES_DIST = common.hfa fstream.hfa strstream.hfa \
-	heap.hfa iostream.hfa iterator.hfa limits.hfa memory.hfa \
-	parseargs.hfa rational.hfa stdlib.hfa time.hfa \
+am__libcfa_la_SOURCES_DIST = common.hfa fstream.hfa heap.hfa \
+	iostream.hfa iterator.hfa limits.hfa memory.hfa parseargs.hfa \
+	rational.hfa stdlib.hfa strstream.hfa time.hfa \
 	bits/weakso_locks.hfa containers/maybe.hfa containers/pair.hfa \
-	containers/result.hfa containers/vector.hfa common.cfa \
-	fstream.cfa strstream.cfa heap.cfa iostream.cfa iterator.cfa \
+	containers/result.hfa containers/vector.hfa device/cpu.hfa \
+	common.cfa fstream.cfa heap.cfa iostream.cfa iterator.cfa \
 	limits.cfa memory.cfa parseargs.cfa rational.cfa stdlib.cfa \
-	time.cfa bits/weakso_locks.cfa containers/maybe.cfa \
-	containers/pair.cfa containers/result.cfa \
-	containers/vector.cfa assert.cfa bits/algorithm.hfa \
-	bits/debug.cfa exception.c interpose.cfa lsda.h startup.cfa \
-	startup.hfa virtual.c virtual.h
+	strstream.cfa time.cfa bits/weakso_locks.cfa \
+	containers/maybe.cfa containers/pair.cfa containers/result.cfa \
+	containers/vector.cfa device/cpu.cfa assert.cfa \
+	bits/algorithm.hfa bits/debug.cfa exception.c interpose.cfa \
+	lsda.h startup.cfa startup.hfa virtual.c virtual.h
 am__objects_1 =
 am__dirstamp = $(am__leading_dot)dirstamp
-@BUILDLIB_TRUE@am__objects_2 = common.lo fstream.lo strstream.lo \
-@BUILDLIB_TRUE@	heap.lo iostream.lo iterator.lo limits.lo \
-@BUILDLIB_TRUE@	memory.lo parseargs.lo rational.lo stdlib.lo \
+@BUILDLIB_TRUE@am__objects_2 = common.lo fstream.lo heap.lo \
+@BUILDLIB_TRUE@	iostream.lo iterator.lo limits.lo memory.lo \
+@BUILDLIB_TRUE@	parseargs.lo rational.lo stdlib.lo strstream.lo \
 @BUILDLIB_TRUE@	time.lo bits/weakso_locks.lo \
 @BUILDLIB_TRUE@	containers/maybe.lo containers/pair.lo \
-@BUILDLIB_TRUE@	containers/result.lo containers/vector.lo
+@BUILDLIB_TRUE@	containers/result.lo containers/vector.lo \
+@BUILDLIB_TRUE@	device/cpu.lo
 @BUILDLIB_TRUE@am__objects_3 = $(am__objects_1) $(am__objects_2) \
 @BUILDLIB_TRUE@	assert.lo bits/debug.lo exception.lo \
 @BUILDLIB_TRUE@	interpose.lo startup.lo virtual.lo
@@ -267,22 +268,23 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
-	-type f -printf "%p ") common.hfa fstream.hfa strstream.hfa \
-	heap.hfa iostream.hfa iterator.hfa limits.hfa memory.hfa \
-	parseargs.hfa rational.hfa stdlib.hfa time.hfa \
+	-type f -printf "%p ") common.hfa fstream.hfa heap.hfa \
+	iostream.hfa iterator.hfa limits.hfa memory.hfa parseargs.hfa \
+	rational.hfa stdlib.hfa strstream.hfa time.hfa \
 	bits/weakso_locks.hfa containers/maybe.hfa containers/pair.hfa \
-	containers/result.hfa containers/vector.hfa bitmanip.hfa \
-	clock.hfa exception.hfa exception.h gmp.hfa math.hfa \
-	time_t.hfa bits/align.hfa bits/containers.hfa bits/debug.hfa \
-	bits/defs.hfa bits/locks.hfa bits/collection.hfa \
-	bits/stack.hfa bits/queue.hfa bits/sequence.hfa \
-	containers/array.hfa concurrency/iofwd.hfa containers/list.hfa \
-	containers/queueLockFree.hfa containers/stackLockFree.hfa \
-	vec/vec.hfa vec/vec2.hfa vec/vec3.hfa vec/vec4.hfa \
-	concurrency/alarm.hfa concurrency/coroutine.hfa \
-	concurrency/exception.hfa concurrency/kernel.hfa \
-	concurrency/locks.hfa concurrency/monitor.hfa \
-	concurrency/mutex.hfa concurrency/thread.hfa bits/random.hfa \
+	containers/result.hfa containers/vector.hfa device/cpu.hfa \
+	bitmanip.hfa clock.hfa exception.hfa exception.h gmp.hfa \
+	math.hfa time_t.hfa bits/align.hfa bits/containers.hfa \
+	bits/debug.hfa bits/defs.hfa bits/locks.hfa \
+	bits/collection.hfa bits/stack.hfa bits/queue.hfa \
+	bits/sequence.hfa containers/array.hfa concurrency/iofwd.hfa \
+	containers/list.hfa containers/queueLockFree.hfa \
+	containers/stackLockFree.hfa vec/vec.hfa vec/vec2.hfa \
+	vec/vec3.hfa vec/vec4.hfa concurrency/alarm.hfa \
+	concurrency/coroutine.hfa concurrency/exception.hfa \
+	concurrency/kernel.hfa concurrency/locks.hfa \
+	concurrency/monitor.hfa concurrency/mutex.hfa \
+	concurrency/thread.hfa bits/random.hfa \
 	concurrency/clib/cfathread.h concurrency/invoke.h \
 	concurrency/future.hfa concurrency/kernel/fwd.hfa
 HEADERS = $(nobase_cfa_include_HEADERS)
@@ -541,7 +543,6 @@ AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_TRUE@inst_headers_src = \
 @BUILDLIB_TRUE@	common.hfa \
 @BUILDLIB_TRUE@	fstream.hfa \
-@BUILDLIB_TRUE@	strstream.hfa \
 @BUILDLIB_TRUE@	heap.hfa \
 @BUILDLIB_TRUE@	iostream.hfa \
 @BUILDLIB_TRUE@	iterator.hfa \
@@ -550,12 +551,14 @@ AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_TRUE@	parseargs.hfa \
 @BUILDLIB_TRUE@	rational.hfa \
 @BUILDLIB_TRUE@	stdlib.hfa \
+@BUILDLIB_TRUE@	strstream.hfa \
 @BUILDLIB_TRUE@	time.hfa \
 @BUILDLIB_TRUE@	bits/weakso_locks.hfa \
 @BUILDLIB_TRUE@	containers/maybe.hfa \
 @BUILDLIB_TRUE@	containers/pair.hfa \
 @BUILDLIB_TRUE@	containers/result.hfa \
-@BUILDLIB_TRUE@	containers/vector.hfa
+@BUILDLIB_TRUE@	containers/vector.hfa \
+@BUILDLIB_TRUE@	device/cpu.hfa
 
 @BUILDLIB_FALSE@libsrc = 
 @BUILDLIB_TRUE@libsrc = ${inst_headers_src} ${inst_headers_src:.hfa=.cfa} \
@@ -734,6 +737,13 @@ containers/result.lo: containers/$(am__dirstamp) \
 	containers/$(DEPDIR)/$(am__dirstamp)
 containers/vector.lo: containers/$(am__dirstamp) \
 	containers/$(DEPDIR)/$(am__dirstamp)
+device/$(am__dirstamp):
+	@$(MKDIR_P) device
+	@: > device/$(am__dirstamp)
+device/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) device/$(DEPDIR)
+	@: > device/$(DEPDIR)/$(am__dirstamp)
+device/cpu.lo: device/$(am__dirstamp) device/$(DEPDIR)/$(am__dirstamp)
 bits/debug.lo: bits/$(am__dirstamp) bits/$(DEPDIR)/$(am__dirstamp)
 
 libcfa.la: $(libcfa_la_OBJECTS) $(libcfa_la_DEPENDENCIES) $(EXTRA_libcfa_la_DEPENDENCIES) 
@@ -816,6 +826,8 @@ mostlyclean-compile:
 	-rm -f concurrency/kernel/*.lo
 	-rm -f containers/*.$(OBJEXT)
 	-rm -f containers/*.lo
+	-rm -f device/*.$(OBJEXT)
+	-rm -f device/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -890,6 +902,7 @@ clean-libtool:
 	-rm -rf concurrency/io/.libs concurrency/io/_libs
 	-rm -rf concurrency/kernel/.libs concurrency/kernel/_libs
 	-rm -rf containers/.libs containers/_libs
+	-rm -rf device/.libs device/_libs
 install-nobase_cfa_includeHEADERS: $(nobase_cfa_include_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(nobase_cfa_include_HEADERS)'; test -n "$(cfa_includedir)" || list=; \
@@ -1045,6 +1058,8 @@ distclean-generic:
 	-rm -f concurrency/kernel/$(am__dirstamp)
 	-rm -f containers/$(DEPDIR)/$(am__dirstamp)
 	-rm -f containers/$(am__dirstamp)
+	-rm -f device/$(DEPDIR)/$(am__dirstamp)
+	-rm -f device/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

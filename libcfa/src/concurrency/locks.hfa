@@ -20,7 +20,7 @@
 
 #include "bits/weakso_locks.hfa"
 #include "containers/queueLockFree.hfa"
-
+#include "limits.hfa"
 #include "thread.hfa"
 
 #include "time_t.hfa"
@@ -84,6 +84,7 @@ static inline {
 
 	bool tryP(BinaryBenaphore & this) {
 		ssize_t c = this.counter;
+		/* paranoid */ verify( c > MIN );
 		return (c >= 1) && __atomic_compare_exchange_n(&this.counter, &c, c-1, false, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);
 	}
 
@@ -91,6 +92,7 @@ static inline {
 	bool V(BinaryBenaphore & this) {
 		ssize_t c = 0;
 		for () {
+			/* paranoid */ verify( this.counter < MAX );
 			if (__atomic_compare_exchange_n(&this.counter, &c, c+1, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 				if (c == 0) return true;
 				/* paranoid */ verify(c < 0);

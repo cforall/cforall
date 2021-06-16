@@ -15,16 +15,31 @@
 
 #pragma once
 
+#if !defined(__cforall_thread__)
+	#error kernel_private.hfa should only be included in libcfathread source
+#endif
+
 #include "kernel.hfa"
 #include "thread.hfa"
 
 #include "alarm.hfa"
 #include "stats.hfa"
 
+extern "C" {
+#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
+	#include <rseq/rseq.h>
+#elif defined(CFA_HAVE_LINUX_RSEQ_H)
+	// #include <linux/rseq.h>
+#else
+	#ifndef _GNU_SOURCE
+	#error kernel_private requires gnu_source
+	#endif
+	#include <sched.h>
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // Scheduler
-
-
 extern "C" {
 	void disable_interrupts() OPTIONAL_THREAD;
 	void enable_interrupts( bool poll = true );
@@ -38,13 +53,35 @@ extern bool __preemption_enabled();
 void __thread_finish( $thread * thrd );
 
 //-----------------------------------------------------------------------------
+// Hardware
+
+#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
+	// No data needed
+#elif defined(CFA_HAVE_LINUX_RSEQ_H)
+	extern "Cforall" {
+		// extern __attribute__((aligned(128))) thread_local volatile struct rseq __cfaabi_rseq;
+	}
+#else
+	// No data needed
+#endif
+
+static inline int __kernel_getcpu() {
+	/* paranoid */ verify( ! __preemption_enabled() );
+#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
+	return rseq_current_cpu_raw();
+#elif defined(CFA_HAVE_LINUX_RSEQ_H)
+	// return __cfaabi_rseq.cpu_id;
+#else
+	return sched_getcpu();
+#endif
+}
+
+//-----------------------------------------------------------------------------
 // Processor
 void main(processorCtx_t *);
 
 void * __create_pthread( pthread_t *, void * (*)(void *), void * );
 void __destroy_pthread( pthread_t pthread, void * stack, void ** retval );
-
-
 
 extern cluster * mainCluster;
 

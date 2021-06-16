@@ -1,0 +1,33 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// cpu.cfa -- checks that libcfa correctly counts the number of cpus.
+//
+// Author           : Thierry Delisle
+// Created On       : Mon Jun 14 13:59:01 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+
+#include <fstream.hfa>
+#include <device/cpu.hfa>
+extern "C" {
+	#include <sys/sysinfo.h>
+}
+
+int main() {
+	int ret1 = get_nprocs();
+	int ret2 = cpu_info.hthrd_count;
+	if(ret1 != ret2) {
+		sout | "No match! libcfa says" | ret2 | "hardware threads but linux counts" | ret1 | "processors";
+	}
+	else {
+		sout | "Match!";
+	}
+
+}

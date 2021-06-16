@@ -14,6 +14,7 @@
 //
 
 #define __cforall_thread__
+#define _GNU_SOURCE
 
 #if defined(__CFA_DEBUG__)
 	// #define __CFA_DEBUG_PRINT_IO__
@@ -22,7 +23,6 @@
 
 
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
-	#define _GNU_SOURCE         /* See feature_test_macros(7) */
 	#include <errno.h>
 	#include <signal.h>
 	#include <stdint.h>

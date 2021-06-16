@@ -30,15 +30,10 @@ void main( Fibonacci & fib ) with( fib ) {				// called on first resume
 	} // for
 }
 
-int next( Fibonacci & fib ) with( fib ) {
-	resume( fib );										// restart last suspend
-	return fn;
-}
-
 int main() {
 	Fibonacci f1, f2;
 	for ( 10 ) {										// print N Fibonacci values
-		sout | next( f1 ) | next( f2 );
+		sout | resume( f1 ).fn | resume( f2 ).fn;
 	} // for
 }
 

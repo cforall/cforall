@@ -94,7 +94,6 @@ struct {
 } __cabi_libc;
 
 extern "C" {
-	void __cfaabi_interpose_startup(void)  __attribute__(( constructor( STARTUP_PRIORITY_CORE ) ));
 	void __cfaabi_interpose_startup( void ) {
 		const char *version = 0p;
 

@@ -16,6 +16,7 @@
 //
 
 #define __cforall_thread__
+#define _GNU_SOURCE
 
 #include "mutex.hfa"
 

@@ -1,0 +1,389 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// topology.cfa -- read the data structure
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Jun 10 16:13:07 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include "device/cpu.hfa"
+
+#include <math.hfa>
+#include <stdlib.hfa>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+extern "C" {
+	#include <dirent.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <fcntl.h>
+}
+
+// search a string for character 'character' but looking atmost at len
+// chars
+static const char * strnchr(const char * str, int character, size_t len) {
+	return (const char *)memchr(str, character, strnlen(str, len));
+}
+
+// Check if have string matches the want string
+// ignoring any characters that are longer than the want string
+static bool strmatch(const char * want, char * have) {
+	size_t w = strlen(want);
+	return strncmp(want, have, w) == 0;
+}
+
+typedef const char * idx_range_t;
+
+// read the value of a string and evaluate it
+// get the end pointer and make sure it is all evaluated
+static unsigned read_value(idx_range_t map, size_t len, const char ** end) {
+	unsigned long val = strtoul(map, (char**)end, 10);
+	/* paranoid */ __attribute__((unused)) size_t read = (*end - map);
+	/* paranoid */ verifyf(read <= len, "String '%s' passed with inconsistent length %zu", map, len);
+	/* paranoid */ verifyf(read == len, "String %.*s not entirely a number, %zu chars left", (int)len, map, len - read);
+	return val;
+}
+
+// Evaluate the width of a comma seperated list of idx
+// for example 'A-B,C-D,E,F' has a width of '(B-A) + (D-C) + 1 + 1'
+// Also has an (non-optional) end ptr like strtoul and friends
+//
+// FIXME : the current implementation only supports 1 comma
+static unsigned read_width(idx_range_t map, size_t len, const char ** end) {
+	// Do we have a comma
+	const char * comma = strnchr(map, ',', len);
+	if(comma != 0p) {
+		// We do! recurse and sum the widths
+		const char * _;
+		size_t split = comma - map;
+		unsigned lhs = read_width(map, split, &_);
+		unsigned rhs = read_width(comma + 1, len - split - 1, end);
+		return lhs + rhs;
+	}
+
+	// No commas, check for a range
+	const char * dash = strnchr(map, '-', len);
+	if(dash != 0p) {
+		const char * _;
+		size_t split = dash - map;
+		unsigned lhs = read_value(map, split, &_);
+		unsigned rhs = read_value(dash + 1, len - split - 1, end);
+		return rhs - lhs + 1;
+	}
+
+	// No range, no comma, just a single value
+	// It's width is 1 and we can consume everything
+	/* paranoid */ verifyf( ({strtoul(map, (char**)end, 10); *end == (map + len); }), "Value in range '%.*s' not a number", (int)len, map);
+	*end = map + len;
+	return 1;
+}
+
+// go through a directory calling fn on each file
+static int iterate_dir( const char * path, void (*fn)(struct dirent * ent) ) {
+	// open the directory
+	DIR *dir = opendir(path);
+	if(dir == 0p) { return ENOTDIR; }
+
+	// call fn for each
+	struct dirent * ent;
+	while ((ent = readdir(dir)) != 0p) {
+		fn( ent );
+	}
+
+	// no longer need this
+	closedir(dir);
+	return 0;
+}
+
+// count the number of directories with the specified prefix
+// the directories counted have the form '[prefix]N' where prefix is the parameter
+// and N is an base 10 integer.
+static int count_prefix_dirs(const char * path, const char * prefix) {
+	// read the directory and find the cpu count
+	// and make sure everything is as expected
+	int max = -1;
+	int count = 0;
+	void lambda(struct dirent * ent) {
+		// were are looking for prefixX, where X is a number
+		// check that it starts with 'cpu
+		char * s = strstr(ent->d_name, prefix);
+		if(s == 0p) { return; }
+		if(s != ent->d_name) { return; }
+
+		// check that the next part is a number
+		s += strlen(prefix);
+		char * end;
+		long int val = strtol(s, &end, 10);
+		if(*end != '\0' || val < 0) { return; }
+
+		// check that it's a directory
+		if(ent->d_type != DT_DIR) { return; }
+
+		// it's a match!
+		max = max(val, max);
+		count++;
+	}
+	iterate_dir(path, lambda);
+
+	/* paranoid */ verifyf(count == max + 1, "Inconsistent %s count, counted %d, but max %s was %d", prefix, count, prefix, (int)max);
+
+	return count;
+}
+
+// Count number of cpus in the system
+static int count_cpus(void) {
+	const char * fpath = "/sys/devices/system/cpu/present";
+	int fd = open(fpath, 0, O_RDONLY);
+	/* paranoid */ verifyf(fd >= 0, "Could not open file %s", fpath);
+
+	char buff[128];
+	ssize_t r = read(fd, buff, 128);
+	/* paranoid */ verifyf(r > 0, "Could not read file %s", fpath);
+	/* paranoid */ verify( buff[r-1] == '\n' );
+	buff[r-1] = '\0';
+
+	/* paranoid */ __attribute__((unused)) int ret =
+	close(fd);
+	/* paranoid */ verifyf(ret == 0, "Could not close file %s", fpath);
+
+	const char * _;
+	int cnt = read_width(buff, r - 1, &_);
+	/* paranoid */ verify(cnt == count_prefix_dirs("/sys/devices/system/cpu", "cpu"));
+	return cnt;
+}
+
+// Count number of cache *indexes* in the system
+// cache indexes are distinct from cache level as Data or Instruction cache
+// can share a level but not an index
+// PITFALL: assumes all cpus have the same indexes as cpu0
+static int count_cache_indexes(void) {
+	return count_prefix_dirs("/sys/devices/system/cpu/cpu0/cache", "index");
+}
+
+
+// read information about a spcficic cache index/cpu file into the output buffer
+static size_t read_cpuidxinfo_into(unsigned cpu, unsigned idx, const char * file, char * out, size_t out_len) {
+	// Pick the file we want and read it
+	char buf[128];
+	/* paranoid */ __attribute__((unused)) int len =
+	snprintf(buf, 128, "/sys/devices/system/cpu/cpu%u/cache/index%u/%s", cpu, idx, file);
+	/* paranoid */ verifyf(len > 0, "Could not generate '%s' filename for cpu %u, index %u", file, cpu, idx);
+
+	int fd = open(buf, 0, O_RDONLY);
+	/* paranoid */ verifyf(fd > 0, "Could not open file '%s'", buf);
+
+	ssize_t r = read(fd, out, out_len);
+	/* paranoid */ verifyf(r > 0, "Could not read file '%s'", buf);
+
+	/* paranoid */ __attribute__((unused)) int ret =
+	close(fd);
+	/* paranoid */ verifyf(ret == 0, "Could not close file '%s'", buf);
+	return r;
+}
+
+// Iterate over the cache indexes of a given cpu
+typedef void (*handle_func_t)(unsigned idx, unsigned char level, idx_range_t range, size_t len);
+static void foreach_cacheidx(unsigned cpu, unsigned idxs, handle_func_t handle) {
+	for(i; idxs) {
+		unsigned idx = idxs - 1 - i;
+		char buf[32];
+
+		// Type says what kind of cache this is,
+		// Options are: Unified, Data, Instruction
+		read_cpuidxinfo_into(cpu, idx, "type", buf, 32);
+		if((!strmatch("Unified", buf)) && (!strmatch("Data", buf))) {
+			// We don't care about instruction caches
+			continue;
+		}
+
+		// Level is the cache level: higher means bigger and slower
+		read_cpuidxinfo_into(cpu, idx, "level", buf, 32);
+		char * end;
+		unsigned long level = strtoul(buf, &end, 10);
+		/* paranoid */ verifyf(level <= 250, "Cpu %u has more than 250 levels of cache, this is not supported", cpu);
+
+		// shared_cpu_list is a range of cpus that share this particular cache
+		size_t n = read_cpuidxinfo_into(cpu, idx, "shared_cpu_list", buf, 32);
+		/* paranoid */ verify( buf[n-1] == '\n' );
+		buf[n-1] = '\0';
+
+		// Simply call the functor
+		handle(idx, level, buf, n - 1);
+	}
+}
+
+
+struct raw_cache_instance {
+	idx_range_t range;
+	unsigned width;
+	unsigned char level;
+	// FIXME add at least size and type
+};
+
+static void  ?{}(raw_cache_instance & this) { this.range = 0p;}
+static void ^?{}(raw_cache_instance & this) { free(this.range);}
+
+raw_cache_instance ** build_raw_cache_table(unsigned cpus, unsigned idxs, unsigned cache_levels)
+{
+	raw_cache_instance ** raw = alloc(cpus);
+	for(i; cpus) {
+		raw[i] = alloc(cache_levels);
+		void addcache(unsigned fidx, unsigned char level, idx_range_t range, size_t len) {
+			/* paranoid */ verifyf(level <= cache_levels, "Unexpected cache level %d on cpu %u index %u", (int)level, i, fidx);
+
+			unsigned idx = cache_levels - level;
+			raw_cache_instance & r = raw[i][idx];
+			r.range = strndup(range, len);
+			r.level = level;
+			const char * end;
+			r.width = read_width(range, len, &end);
+		}
+		foreach_cacheidx(i, idxs, addcache);
+	}
+
+	return raw;
+}
+
+// returns an allocate list of all the different distinct last level caches
+static [*idx_range_t, size_t cnt] distinct_llcs(unsigned cpus, unsigned llc_idx, raw_cache_instance ** raw) {
+	// Allocate at least one element
+	idx_range_t * ranges = alloc();
+	size_t range_cnt = 1;
+
+	// Initialize with element 0
+	*ranges = raw[0][llc_idx].range;
+
+	// Go over all other cpus
+	CPU_LOOP: for(i; 1~cpus) {
+		// Check if the range is already there
+		idx_range_t candidate = raw[i][llc_idx].range;
+		for(j; range_cnt) {
+			idx_range_t exist = ranges[j];
+			// If the range is already there just jump to the next cpu
+			if(0 == strcmp(candidate, exist)) continue CPU_LOOP;
+		}
+
+		// The range wasn't there, added to the list
+		ranges = alloc(range_cnt + 1, ranges`realloc);
+		ranges[range_cnt] = candidate;
+		range_cnt++;
+	}
+
+	// return what we have
+	return [ranges, range_cnt];
+}
+
+struct cpu_pairing_t {
+	unsigned cpu;
+	unsigned llc_id;
+};
+
+int ?<?( cpu_pairing_t lhs, cpu_pairing_t rhs ) {
+	return lhs.llc_id < rhs.llc_id;
+}
+
+static [[]cpu_pairing_t] get_cpu_pairings(unsigned cpus, raw_cache_instance ** raw, idx_range_t * maps, size_t map_cnt) {
+	cpu_pairing_t * pairings = alloc(cpus);
+
+	CPU_LOOP: for(i; cpus) {
+		pairings[i].cpu = i;
+		idx_range_t want = raw[i][0].range;
+		MAP_LOOP: for(j; map_cnt) {
+			if(0 != strcmp(want, maps[j])) continue MAP_LOOP;
+
+			pairings[i].llc_id = j;
+			continue CPU_LOOP;
+		}
+
+		/* paranoid */ verifyf( false, "Cpu %u map doesn't match", i );
+	}
+
+	return pairings;
+}
+
+extern "C" {
+	void __cfaabi_device_startup( void ) {
+		int cpus = count_cpus();
+		int idxs = count_cache_indexes();
+
+		// Count actual cache levels
+		unsigned cache_levels = 0;
+		unsigned llc = 0;
+		{
+			unsigned char prev = -1u;
+			void first(unsigned idx, unsigned char level, const char * map, size_t len) {
+				/* paranoid */ verifyf(level < prev, "Index %u of cpu 0 has cache levels out of order: %u then %u", idx, (unsigned)prev, (unsigned)level);
+				llc = max(llc, level);
+				prev = level;
+				cache_levels++;
+			}
+			foreach_cacheidx(0, idxs, first);
+		}
+
+		// Read in raw data
+		raw_cache_instance ** raw = build_raw_cache_table(cpus, idxs, cache_levels);
+
+		// Find number of distinct cache instances
+		idx_range_t * maps;
+		size_t map_cnt;
+		[maps, map_cnt] =  distinct_llcs(cpus, cache_levels - llc, raw);
+
+		#if defined(__CFA_WITH_VERIFY__)
+		{
+			unsigned width = 0;
+			for(i; map_cnt) {
+				const char * _;
+				width += read_width(maps[i], strlen(maps[i]), &_);
+			}
+			verify(width == cpus);
+		}
+		#endif
+
+		// Get mappings from cpu to cache instance
+		cpu_pairing_t * pairings = get_cpu_pairings(cpus, raw, maps, map_cnt);
+
+		// Sort by cache instance
+		qsort(pairings, cpus);
+
+		unsigned llc_width = raw[0][cache_levels - llc].width;
+
+		// From the mappins build the actual cpu map we want
+		struct cpu_map_entry_t * entries = alloc(cpus);
+		for(i; cpus) { entries[i].count = 0; }
+		for(i; cpus) {
+			unsigned c = pairings[i].cpu;
+			entries[c].start = pairings[i].llc_id * llc_width;
+			entries[c].count = llc_width;
+		}
+
+		// get rid of the temporary data
+		free(maps);
+		free(pairings);
+
+		for(i; cpus) {
+			for(j; cache_levels) {
+				^(raw[i][j]){};
+			}
+			free(raw[i]);
+		}
+		free(raw);
+
+		cpu_info.llc_map = entries;
+		cpu_info.hthrd_count = cpus;
+	}
+
+	void __cfaabi_device_shutdown( void ) {
+		free(cpu_info.llc_map);
+	}
+}

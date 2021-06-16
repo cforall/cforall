@@ -14,6 +14,7 @@
 //
 
 #define __cforall_thread__
+#define _GNU_SOURCE
 
 // C Includes
 #include <errno.h>              // errno
@@ -134,6 +135,16 @@ thread_local struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "i
 		0,
 	#endif
 };
+
+#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
+	// No data needed
+#elif defined(CFA_HAVE_LINUX_RSEQ_H)
+	extern "Cforall" {
+		// thread_local volatile struct rseq __cfaabi_rseq;
+	}
+#else
+	// No data needed
+#endif
 
 //-----------------------------------------------------------------------------
 // Struct to steal stack
@@ -334,6 +345,10 @@ static void * __invoke_processor(void * arg) {
 	proc->local_data = &__cfaabi_tls;
 
 	register_tls( proc );
+
+	#if defined(CFA_HAVE_LINUX_LIBRSEQ)
+		rseq_register_current_thread();
+	#endif
 
 	// SKULLDUGGERY: We want to create a context for the processor coroutine
 	// which is needed for the 2-step context switch. However, there is no reason

@@ -19,9 +19,7 @@
 #include "bits/defs.hfa"
 
 #include <errno.h>
-#define __USE_GNU
 #include <signal.h>
-#undef __USE_GNU
 #include <stdlib.h>
 #include <string.h>
 

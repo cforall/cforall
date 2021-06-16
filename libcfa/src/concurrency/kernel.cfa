@@ -14,6 +14,8 @@
 //
 
 #define __cforall_thread__
+#define _GNU_SOURCE
+
 // #define __CFA_DEBUG_PRINT_RUNTIME_CORE__
 
 //C Includes
@@ -422,6 +424,8 @@ static void __run_thread(processor * this, $thread * thrd_dst) {
 		__cfactx_switch( &proc_cor->context, &thrd_dst->context );
 		// when __cfactx_switch returns we are back in the processor coroutine
 
+
+
 		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_dst->canary );
 		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit) || thrd_dst->corctx_flag, "ERROR : Destination $thread %p has been corrupted.\n StackPointer too large.\n", thrd_dst );
 		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ) || thrd_dst->corctx_flag, "ERROR : Destination $thread %p has been corrupted.\n StackPointer too small.\n", thrd_dst );
@@ -521,8 +525,8 @@ void returnToKernel() {
 	#endif
 
 	/* paranoid */ verify( ! __preemption_enabled() );
-	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) < ((uintptr_t)__get_stack(thrd_src->curr_cor)->base ), "ERROR : Returning $thread %p has been corrupted.\n StackPointer too small.\n", thrd_src );
-	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) > ((uintptr_t)__get_stack(thrd_src->curr_cor)->limit), "ERROR : Returning $thread %p has been corrupted.\n StackPointer too large.\n", thrd_src );
+	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) < ((uintptr_t)__get_stack(thrd_src->curr_cor)->base ) || thrd_src->corctx_flag, "ERROR : Returning $thread %p has been corrupted.\n StackPointer too small.\n", thrd_src );
+	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) > ((uintptr_t)__get_stack(thrd_src->curr_cor)->limit) || thrd_src->corctx_flag, "ERROR : Returning $thread %p has been corrupted.\n StackPointer too large.\n", thrd_src );
 }
 
 //-----------------------------------------------------------------------------

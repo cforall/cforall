@@ -68,7 +68,6 @@ inst_headers_nosrc = \
 inst_headers_src = \
 	common.hfa \
 	fstream.hfa \
-	strstream.hfa \
 	heap.hfa \
 	iostream.hfa \
 	iterator.hfa \
@@ -77,12 +76,14 @@ inst_headers_src = \
 	parseargs.hfa \
 	rational.hfa \
 	stdlib.hfa \
+	strstream.hfa \
 	time.hfa \
 	bits/weakso_locks.hfa \
 	containers/maybe.hfa \
 	containers/pair.hfa \
 	containers/result.hfa \
-	containers/vector.hfa
+	containers/vector.hfa \
+	device/cpu.hfa
 
 libsrc = ${inst_headers_src} ${inst_headers_src:.hfa=.cfa} \
 	assert.cfa \

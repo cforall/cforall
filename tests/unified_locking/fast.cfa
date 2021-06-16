@@ -21,12 +21,13 @@ void trash() {
 
 uint32_t cs() {
 	$thread * me = active_thread();
-	uint32_t value = (uint32_t)me;
+	uint32_t value;
 	lock(mo.l);
 	{
 		uint32_t tsum = mo.sum;
 		mo.id = me;
 		yield(random(5));
+		value = ((uint32_t)random()) ^ ((uint32_t)me);
 		if(mo.id != me) sout | "Intruder!";
 		mo.sum = tsum + value;
 	}

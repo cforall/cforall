@@ -1,0 +1,28 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// cpu.hfa -- read the data structure
+//
+// Author           : Thierry Delisle
+// Created On       : Fri Jun 11 15:22:23 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <stddef.h>
+
+struct cpu_map_entry_t {
+	unsigned start;
+	unsigned count;
+};
+
+struct cpu_info_t {
+	const cpu_map_entry_t * llc_map;
+	size_t hthrd_count;
+};
+
+cpu_info_t cpu_info;
