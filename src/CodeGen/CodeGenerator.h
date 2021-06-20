@@ -91,6 +91,7 @@ namespace CodeGen {
 		void postvisit( TupleExpr *tupleExpr );
 		void postvisit( TupleIndexExpr * tupleExpr );
 		void postvisit( TypeExpr *typeExpr );
+		void postvisit( DimensionExpr *dimensionExpr );
 		void postvisit( AsmExpr * );
 		void postvisit( StmtExpr * );
 		void postvisit( ConstructorExpr * );

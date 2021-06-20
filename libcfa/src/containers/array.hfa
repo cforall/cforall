@@ -1,14 +1,8 @@
 
 
-// a type whose size is n
-#define Z(n) char[n]
-
-// the inverse of Z(-)
-#define z(N) sizeof(N)
-
-forall( T & ) struct tag {};
+forall( __CFA_tysys_id_only_X & ) struct tag {};
 #define ttag(T) ((tag(T)){})
-#define ztag(n) ttag(Z(n))
+#define ztag(n) ttag(n)
 
 
 //
@@ -17,7 +11,7 @@ forall( T & ) struct tag {};
 
 forall( [N], S & | sized(S), Timmed &, Tbase & ) {
     struct arpk {
-        S strides[z(N)];
+        S strides[N];
     };
 
     // About the choice of integral types offered as subscript overloads:
@@ -55,16 +49,16 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
     }
 
     static inline size_t ?`len( arpk(N, S, Timmed, Tbase) & a ) {
-        return z(N);
+        return N;
     }
 
     // workaround #226 (and array relevance thereof demonstrated in mike102/otype-slow-ndims.cfa)
     static inline void ?{}( arpk(N, S, Timmed, Tbase) & this ) {
-        void ?{}( S (&inner)[z(N)] ) {}
+        void ?{}( S (&inner)[N] ) {}
         ?{}(this.strides);
     }
     static inline void ^?{}( arpk(N, S, Timmed, Tbase) & this ) {
-        void ^?{}( S (&inner)[z(N)] ) {}
+        void ^?{}( S (&inner)[N] ) {}
         ^?{}(this.strides);
     }
 }

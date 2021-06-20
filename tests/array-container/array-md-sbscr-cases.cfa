@@ -19,10 +19,10 @@ float getMagicNumber( ptrdiff_t w, ptrdiff_t x, ptrdiff_t y, ptrdiff_t z ) {
 
 forall( [Nw], [Nx], [Ny], [Nz] )
 void fillHelloData( array( float, Nw, Nx, Ny, Nz ) & wxyz ) {
-    for (w; z(Nw))
-    for (x; z(Nx))
-    for (y; z(Ny))
-    for (z; z(Nz))
+    for (w; Nw)
+    for (x; Nx)
+    for (y; Ny)
+    for (z; Nz)
         wxyz[w][x][y][z] = getMagicNumber(w, x, y, z);
 }
 
@@ -245,27 +245,27 @@ void test_numSubscrTypeCompatibility( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
     assert(( wxyz [2][[3,  4,  5]] == valExpected ));
     assert(( wxyz[[2,  3,  4,  5]] == valExpected ));
 
-    for ( i; z(Nw) ) {
+    for ( i; Nw ) {
         assert(( wxyz[[ i, 3, 4, 5 ]] == getMagicNumber(i, 3, 4, 5) ));
     }
 
-    for ( i; z(Nx) ) {
+    for ( i; Nx ) {
         assert(( wxyz[[ 2, i, 4, 5 ]] == getMagicNumber(2, i, 4, 5) ));
     }
 
-    for ( i; z(Ny) ) {
+    for ( i; Ny ) {
         assert(( wxyz[[ 2, 3, i, 5 ]] == getMagicNumber(2, 3, i, 5) ));
     }
 
-    for ( i; z(Nz) ) {
+    for ( i; Nz ) {
         assert(( wxyz[[ 2, 3, 4, i ]] == getMagicNumber(2, 3, 4, i) ));
     }
 
-    for ( i; z(Nw) ) {
+    for ( i; Nw ) {
         assert(( wxyz[[ i, all, 4, 5 ]][3] == getMagicNumber(i, 3, 4, 5) ));
     }
 
-    for ( i; z(Nw) ) {
+    for ( i; Nw ) {
         assert(( wxyz[[ all, 3, 4, 5 ]][i] == getMagicNumber(i, 3, 4, 5) ));
     }
 }

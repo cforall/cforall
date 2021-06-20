@@ -1075,10 +1075,10 @@ Declaration * DeclarationNode::build() const {
 
 	if ( variable.tyClass != TypeDecl::NUMBER_OF_KINDS ) {
 		// otype is internally converted to dtype + otype parameters
-		static const TypeDecl::Kind kindMap[] = { TypeDecl::Dtype, TypeDecl::DStype, TypeDecl::Dtype, TypeDecl::Ftype, TypeDecl::Ttype, TypeDecl::Dtype };
+		static const TypeDecl::Kind kindMap[] = { TypeDecl::Dtype, TypeDecl::DStype, TypeDecl::Dtype, TypeDecl::Ftype, TypeDecl::Ttype, TypeDecl::Dimension };
 		static_assert( sizeof(kindMap) / sizeof(kindMap[0]) == TypeDecl::NUMBER_OF_KINDS, "DeclarationNode::build: kindMap is out of sync." );
 		assertf( variable.tyClass < sizeof(kindMap)/sizeof(kindMap[0]), "Variable's tyClass is out of bounds." );
-		TypeDecl * ret = new TypeDecl( *name, Type::StorageClasses(), nullptr, kindMap[ variable.tyClass ], variable.tyClass == TypeDecl::Otype || variable.tyClass == TypeDecl::ALtype, variable.initializer ? variable.initializer->buildType() : nullptr );
+		TypeDecl * ret = new TypeDecl( *name, Type::StorageClasses(), nullptr, kindMap[ variable.tyClass ], variable.tyClass == TypeDecl::Otype, variable.initializer ? variable.initializer->buildType() : nullptr );
 		buildList( variable.assertions, ret->get_assertions() );
 		return ret;
 	} // if

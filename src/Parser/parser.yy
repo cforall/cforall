@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 26 18:41:54 2021
-// Update Count     : 4990
+// Last Modified On : Wed May 19 14:20:36 2021
+// Update Count     : 5022
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -286,7 +286,7 @@ if ( N ) {																		\
 %token ALIGNAS ALIGNOF GENERIC STATICASSERT				// C11
 
 // names and constants: lexer differentiates between identifier and typedef names
-%token<tok> IDENTIFIER		QUOTED_IDENTIFIER	TYPEDEFname		TYPEGENname
+%token<tok> IDENTIFIER		QUOTED_IDENTIFIER	TYPEDIMname		TYPEDEFname		TYPEGENname
 %token<tok> TIMEOUT			WOR					CATCH			RECOVER			CATCHRESUME		FIXUP		FINALLY		// CFA
 %token<tok> INTEGERconstant	CHARACTERconstant	STRINGliteral
 %token<tok> DIRECTIVE
@@ -585,6 +585,10 @@ primary_expression:
 		{ $$ = new ExpressionNode( build_varref( $1 ) ); }
 	| quasi_keyword
 		{ $$ = new ExpressionNode( build_varref( $1 ) ); }
+	| TYPEDIMname										// CFA, generic length argument
+		// { $$ = new ExpressionNode( new TypeExpr( maybeMoveBuildType( DeclarationNode::newFromTypedef( $1 ) ) ) ); }
+		// { $$ = new ExpressionNode( build_varref( $1 ) ); }
+		{ $$ = new ExpressionNode( build_dimensionref( $1 ) ); }
 	| tuple
 	| '(' comma_expression ')'
 		{ $$ = $2; }
@@ -2534,8 +2538,8 @@ type_parameter:											// CFA
 		{ $$ = DeclarationNode::newTypeParam( $2, $1 )->addTypeInitializer( $4 )->addAssertions( $5 ); }
 	| '[' identifier_or_type_name ']'
 		{
-			typedefTable.addToScope( *$2, TYPEDEFname, "9" );
-			$$ = DeclarationNode::newTypeParam( TypeDecl::ALtype, $2 );
+			typedefTable.addToScope( *$2, TYPEDIMname, "9" );
+			$$ = DeclarationNode::newTypeParam( TypeDecl::Dimension, $2 );
 		}
 	// | type_specifier identifier_parameter_declarator
 	| assertion_list
@@ -2589,12 +2593,10 @@ type_list:												// CFA
 	type
 		{ $$ = new ExpressionNode( new TypeExpr( maybeMoveBuildType( $1 ) ) ); }
 	| assignment_expression
-		{ SemanticError( yylloc, toString("Expression generic parameters are currently unimplemented: ", $1->build()) ); $$ = nullptr; }
 	| type_list ',' type
 		{ $$ = (ExpressionNode *)($1->set_last( new ExpressionNode( new TypeExpr( maybeMoveBuildType( $3 ) ) ) )); }
 	| type_list ',' assignment_expression
-		{ SemanticError( yylloc, toString("Expression generic parameters are currently unimplemented: ", $3->build()) ); $$ = nullptr; }
-		// { $$ = (ExpressionNode *)( $1->set_last( $3 )); }
+		{ $$ = (ExpressionNode *)( $1->set_last( $3 )); }
 	;
 
 type_declaring_list:									// CFA

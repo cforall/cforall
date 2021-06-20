@@ -60,19 +60,19 @@ float getMagicNumber( ptrdiff_t w, ptrdiff_t x, ptrdiff_t y, ptrdiff_t z ) {
 
 forall( [Nw], [Nx], [Ny], [Nz] )
 void fillHelloData( array( float, Nw, Nx, Ny, Nz ) & wxyz ) {
-    for (w; z(Nw))
-    for (x; z(Nx))
-    for (y; z(Ny))
-    for (z; z(Nz))
+    for (w; Nw)
+    for (x; Nx)
+    for (y; Ny)
+    for (z; Nz)
         wxyz[w][x][y][z] = getMagicNumber(w, x, y, z);
 }
 
-forall( [Zn]
+forall( [N]
       , S & | sized(S)
       )
-float total1d_low( arpk(Zn, S, float, float ) & a ) {
+float total1d_low( arpk(N, S, float, float ) & a ) {
     float total = 0.0f;
-    for (i; z(Zn))
+    for (i; N)
         total += a[i];
     return total;
 }
@@ -97,7 +97,7 @@ void runtimeTest( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
     // summing across W, with x=y=z=1
 
     expect = 0;
-    for (i; z(Nw))
+    for (i; Nw)
         expect += getMagicNumber( i, slice_ix, slice_ix, slice_ix );
     printf("expect Ws             = %f\n", expect);
 
@@ -116,7 +116,7 @@ void runtimeTest( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
     // summing across X, with w=y=z=1
 
     expect = 0;
-    for (i; z(Nx))
+    for (i; Nx)
         expect += getMagicNumber( slice_ix, i, slice_ix, slice_ix );
     printf("expect Xs             = %f\n", expect);
 

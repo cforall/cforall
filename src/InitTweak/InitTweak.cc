@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Fri May 13 11:26:36 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 23:15:52 2019
-// Update Count     : 8
+// Last Modified On : Wed Jun 16 20:57:22 2021
+// Update Count     : 18
 //
 
 #include <algorithm>               // for find, all_of
@@ -1216,14 +1216,24 @@ bool InitExpander_new::addReference() {
 
 	void addDataSectonAttribute( ObjectDecl * objDecl ) {
 		objDecl->attributes.push_back(new Attribute("section", {
-			new ConstantExpr( Constant::from_string(".data#") ),
-		}));
+			new ConstantExpr( Constant::from_string(".data"
+#if defined( __x86_64 ) || defined( __i386 ) // assembler comment to prevent assembler warning message
+					"#"
+#else // defined( __ARM_ARCH )
+					"//"
+#endif
+				))}));
 	}
 
 	void addDataSectionAttribute( ast::ObjectDecl * objDecl ) {
 		objDecl->attributes.push_back(new ast::Attribute("section", {
-			ast::ConstantExpr::from_string(objDecl->location, ".data#"),
-		}));
+			ast::ConstantExpr::from_string(objDecl->location, ".data"
+#if defined( __x86_64 ) || defined( __i386 ) // assembler comment to prevent assembler warning message
+					"#"
+#else // defined( __ARM_ARCH )
+					"//"
+#endif
+				)}));
 	}
 
 }

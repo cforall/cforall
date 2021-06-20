@@ -104,6 +104,7 @@ namespace SymTab {
 	};
 
 	struct FixQualifiedTypes final : public WithIndexer {
+		FixQualifiedTypes() : WithIndexer(false) {}
 		Type * postmutate( QualifiedType * );
 	};
 
@@ -171,6 +172,16 @@ namespace SymTab {
 		ForwardUnionsType forwardUnions;
 		/// true if currently in a generic type body, so that type parameter instances can be renamed appropriately
 		bool inGeneric = false;
+	};
+
+	/// Does early resolution on the expressions that give enumeration constants their values
+	struct ResolveEnumInitializers final : public WithIndexer, public WithGuards, public WithVisitorRef<ResolveEnumInitializers>, public WithShortCircuiting {
+		ResolveEnumInitializers( const Indexer * indexer );
+		void postvisit( EnumDecl * enumDecl );
+
+	  private:
+		const Indexer * local_indexer;
+
 	};
 
 	/// Replaces array and function types in forall lists by appropriate pointer type and assigns each Object and Function declaration a unique ID.
@@ -261,6 +272,25 @@ namespace SymTab {
 		void previsit( UnionInstType * inst );
 	};
 
+	/// desugar declarations and uses of dimension paramaters like [N],
+	/// from type-system managed values, to tunnneling via ordinary types,
+	/// as char[-] in and sizeof(-) out
+	struct TranslateDimensionGenericParameters : public WithIndexer, public WithGuards {
+		static void translateDimensions( std::list< Declaration * > &translationUnit );
+		TranslateDimensionGenericParameters();
+
+		bool nextVisitedNodeIsChildOfSUIT = false; // SUIT = Struct or Union -Inst Type
+		bool visitingChildOfSUIT = false;
+		void changeState_ChildOfSUIT( bool newVal );
+		void premutate( StructInstType * sit );
+		void premutate( UnionInstType * uit );
+		void premutate( BaseSyntaxNode * node );
+
+		TypeDecl * postmutate( TypeDecl * td );
+		Expression * postmutate( DimensionExpr * de );
+		Expression * postmutate( Expression * e );
+	};
+
 	struct FixObjectType : public WithIndexer {
 		/// resolves typeof type in object, function, and type declarations
 		static void fix( std::list< Declaration * > & translationUnit );
@@ -306,6 +336,7 @@ namespace SymTab {
 	void validate( std::list< Declaration * > &translationUnit, __attribute__((unused)) bool doDebug ) {
 		PassVisitor<EnumAndPointerDecay_old> epc;
 		PassVisitor<LinkReferenceToTypes_old> lrt( nullptr );
+		PassVisitor<ResolveEnumInitializers> rei( nullptr );
 		PassVisitor<ForallPointerDecay_old> fpd;
 		PassVisitor<CompoundLiteral> compoundliteral;
 		PassVisitor<ValidateGenericParameters> genericParams;
@@ -325,25 +356,29 @@ namespace SymTab {
 		{
 			Stats::Heap::newPass("validate-B");
 			Stats::Time::BlockGuard guard("validate-B");
-			Stats::Time::TimeBlock("Link Reference To Types", [&]() {
-				acceptAll( translationUnit, lrt ); // must happen before autogen, because sized flag needs to propagate to generated functions
-			});
-			Stats::Time::TimeBlock("Fix Qualified Types", [&]() {
-				mutateAll( translationUnit, fixQual ); // must happen after LinkReferenceToTypes_old, because aggregate members are accessed
-			});
-			Stats::Time::TimeBlock("Hoist Structs", [&]() {
-				HoistStruct::hoistStruct( translationUnit ); // must happen after EliminateTypedef, so that aggregate typedefs occur in the correct order
-			});
-			Stats::Time::TimeBlock("Eliminate Typedefs", [&]() {
-				EliminateTypedef::eliminateTypedef( translationUnit ); //
-			});
+			acceptAll( translationUnit, lrt ); // must happen before autogen, because sized flag needs to propagate to generated functions
+			mutateAll( translationUnit, fixQual ); // must happen after LinkReferenceToTypes_old, because aggregate members are accessed
+			HoistStruct::hoistStruct( translationUnit );
+			EliminateTypedef::eliminateTypedef( translationUnit );
 		}
 		{
 			Stats::Heap::newPass("validate-C");
 			Stats::Time::BlockGuard guard("validate-C");
-			acceptAll( translationUnit, genericParams );  // check as early as possible - can't happen before LinkReferenceToTypes_old
-			ReturnChecker::checkFunctionReturns( translationUnit );
-			InitTweak::fixReturnStatements( translationUnit ); // must happen before autogen
+			Stats::Time::TimeBlock("Validate Generic Parameters", [&]() {
+				acceptAll( translationUnit, genericParams );  // check as early as possible - can't happen before LinkReferenceToTypes_old; observed failing when attempted before eliminateTypedef
+			});
+			Stats::Time::TimeBlock("Translate Dimensions", [&]() {
+				TranslateDimensionGenericParameters::translateDimensions( translationUnit );
+			});
+			Stats::Time::TimeBlock("Resolve Enum Initializers", [&]() {
+				acceptAll( translationUnit, rei ); // must happen after translateDimensions because rei needs identifier lookup, which needs name mangling
+			});
+			Stats::Time::TimeBlock("Check Function Returns", [&]() {
+				ReturnChecker::checkFunctionReturns( translationUnit );
+			});
+			Stats::Time::TimeBlock("Fix Return Statements", [&]() {
+				InitTweak::fixReturnStatements( translationUnit ); // must happen before autogen
+			});
 		}
 		{
 			Stats::Heap::newPass("validate-D");
@@ -643,7 +678,7 @@ namespace SymTab {
 		fixFunctionList( func->returnVals, false, func );
 	}
 
-	LinkReferenceToTypes_old::LinkReferenceToTypes_old( const Indexer * other_indexer ) {
+	LinkReferenceToTypes_old::LinkReferenceToTypes_old( const Indexer * other_indexer ) : WithIndexer( false ) {
 		if ( other_indexer ) {
 			local_indexer = other_indexer;
 		} else {
@@ -663,14 +698,6 @@ namespace SymTab {
 		} // if
 	}
 
-	void checkGenericParameters( ReferenceToType * inst ) {
-		for ( Expression * param : inst->parameters ) {
-			if ( ! dynamic_cast< TypeExpr * >( param ) ) {
-				SemanticError( inst, "Expression parameters for generic types are currently unsupported: " );
-			}
-		}
-	}
-
 	void LinkReferenceToTypes_old::postvisit( StructInstType * structInst ) {
 		const StructDecl * st = local_indexer->lookupStruct( structInst->name );
 		// it's not a semantic error if the struct is not found, just an implicit forward declaration
@@ -681,7 +708,6 @@ namespace SymTab {
 			// use of forward declaration
 			forwardStructs[ structInst->name ].push_back( structInst );
 		} // if
-		checkGenericParameters( structInst );
 	}
 
 	void LinkReferenceToTypes_old::postvisit( UnionInstType * unionInst ) {
@@ -694,7 +720,6 @@ namespace SymTab {
 			// use of forward declaration
 			forwardUnions[ unionInst->name ].push_back( unionInst );
 		} // if
-		checkGenericParameters( unionInst );
 	}
 
 	void LinkReferenceToTypes_old::previsit( QualifiedType * ) {
@@ -806,15 +831,6 @@ namespace SymTab {
 				} // for
 				forwardEnums.erase( fwds );
 			} // if
-
-			for ( Declaration * member : enumDecl->members ) {
-				ObjectDecl * field = strict_dynamic_cast<ObjectDecl *>( member );
-				if ( field->init ) {
-					// need to resolve enumerator initializers early so that other passes that determine if an expression is constexpr have the appropriate information.
-					SingleInit * init = strict_dynamic_cast<SingleInit *>( field->init );
-					ResolvExpr::findSingleExpression( init->value, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), indexer );
-				}
-			}
 		} // if
 	}
 
@@ -877,6 +893,27 @@ namespace SymTab {
 			if ( const TypeDecl * typeDecl = dynamic_cast< const TypeDecl * >( namedTypeDecl ) ) {
 				typeInst->set_isFtype( typeDecl->kind == TypeDecl::Ftype );
 			} // if
+		} // if
+	}
+
+	ResolveEnumInitializers::ResolveEnumInitializers( const Indexer * other_indexer ) : WithIndexer( true ) {
+		if ( other_indexer ) {
+			local_indexer = other_indexer;
+		} else {
+			local_indexer = &indexer;
+		} // if
+	}
+
+	void ResolveEnumInitializers::postvisit( EnumDecl * enumDecl ) {
+		if ( enumDecl->body ) {
+			for ( Declaration * member : enumDecl->members ) {
+				ObjectDecl * field = strict_dynamic_cast<ObjectDecl *>( member );
+				if ( field->init ) {
+					// need to resolve enumerator initializers early so that other passes that determine if an expression is constexpr have the appropriate information.
+					SingleInit * init = strict_dynamic_cast<SingleInit *>( field->init );
+					ResolvExpr::findSingleExpression( init->value, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), indexer );
+				}
+			}
 		} // if
 	}
 
@@ -1151,6 +1188,7 @@ namespace SymTab {
 		GuardScope( typedefNames );
 		GuardScope( typedeclNames );
 		mutateAll( aggr->parameters, * visitor );
+		mutateAll( aggr->attributes, * visitor );
 
 		// unroll mutateAll for aggr->members so that implicit typedefs for nested types are added to the aggregate body.
 		for ( std::list< Declaration * >::iterator i = aggr->members.begin(); i != aggr->members.end(); ++i ) {
@@ -1221,6 +1259,24 @@ namespace SymTab {
 		}
 	}
 
+	// Test for special name on a generic parameter.  Special treatment for the
+	// special name is a bootstrapping hack.  In most cases, the worlds of T's
+	// and of N's don't overlap (normal treamtemt).  The foundations in
+	// array.hfa use tagging for both types and dimensions.  Tagging treats
+	// its subject parameter even more opaquely than T&, which assumes it is
+	// possible to have a pointer/reference to such an object.  Tagging only
+	// seeks to identify the type-system resident at compile time.  Both N's
+	// and T's can make tags.  The tag definition uses the special name, which
+	// is treated as "an N or a T."  This feature is not inteded to be used
+	// outside of the definition and immediate uses of a tag.
+	static inline bool isReservedTysysIdOnlyName( const std::string & name ) {
+		// name's prefix was __CFA_tysys_id_only, before it got wrapped in __..._generic
+		int foundAt = name.find("__CFA_tysys_id_only");
+		if (foundAt == 0) return true;
+		if (foundAt == 2 && name[0] == '_' && name[1] == '_') return true;
+		return false;
+	}
+
 	template< typename Aggr >
 	void validateGeneric( Aggr * inst ) {
 		std::list< TypeDecl * > * params = inst->get_baseParameters();
@@ -1237,21 +1293,37 @@ namespace SymTab {
 			//   vector(int, heap_allocator(int))
 			TypeSubstitution sub;
 			auto paramIter = params->begin();
-			for ( size_t i = 0; paramIter != params->end(); ++paramIter, ++i ) {
-				if ( i < args.size() ) {
-					TypeExpr * expr = strict_dynamic_cast< TypeExpr * >( * std::next( args.begin(), i ) );
-					sub.add( (* paramIter)->get_name(), expr->get_type()->clone() );
-				} else if ( i == args.size() ) {
+			auto argIter = args.begin();
+			for ( ; paramIter != params->end(); ++paramIter, ++argIter ) {
+				if ( argIter != args.end() ) {
+					TypeExpr * expr = dynamic_cast< TypeExpr * >( * argIter );
+					if ( expr ) {
+						sub.add( (* paramIter)->get_name(), expr->get_type()->clone() );
+					}
+				} else {
 					Type * defaultType = (* paramIter)->get_init();
 					if ( defaultType ) {
 						args.push_back( new TypeExpr( defaultType->clone() ) );
 						sub.add( (* paramIter)->get_name(), defaultType->clone() );
+						argIter = std::prev(args.end());
+					} else {
+						SemanticError( inst, "Too few type arguments in generic type " );
 					}
 				}
+				assert( argIter != args.end() );
+				bool typeParamDeclared = (*paramIter)->kind != TypeDecl::Kind::Dimension;
+				bool typeArgGiven;
+				if ( isReservedTysysIdOnlyName( (*paramIter)->name ) ) {
+					// coerce a match when declaration is reserved name, which means "either"
+					typeArgGiven = typeParamDeclared;
+				} else {
+					typeArgGiven = dynamic_cast< TypeExpr * >( * argIter );
+				}
+				if ( ! typeParamDeclared &&   typeArgGiven ) SemanticError( inst, "Type argument given for value parameter: " );
+				if (   typeParamDeclared && ! typeArgGiven ) SemanticError( inst, "Expression argument given for type parameter: " );
 			}
 
 			sub.apply( inst );
-			if ( args.size() < params->size() ) SemanticError( inst, "Too few type arguments in generic type " );
 			if ( args.size() > params->size() ) SemanticError( inst, "Too many type arguments in generic type " );
 		}
 	}
@@ -1262,6 +1334,106 @@ namespace SymTab {
 
 	void ValidateGenericParameters::previsit( UnionInstType * inst ) {
 		validateGeneric( inst );
+	}
+
+	void TranslateDimensionGenericParameters::translateDimensions( std::list< Declaration * > &translationUnit ) {
+		PassVisitor<TranslateDimensionGenericParameters> translator;
+		mutateAll( translationUnit, translator );
+	}
+
+	TranslateDimensionGenericParameters::TranslateDimensionGenericParameters() : WithIndexer( false ) {}
+
+	// Declaration of type variable:           forall( [N] )          ->  forall( N & | sized( N ) )
+	TypeDecl * TranslateDimensionGenericParameters::postmutate( TypeDecl * td ) {
+		if ( td->kind == TypeDecl::Dimension ) {
+			td->kind = TypeDecl::Dtype;
+			if ( ! isReservedTysysIdOnlyName( td->name ) ) {
+				td->sized = true;
+			}
+		}
+		return td;
+	}
+
+	// Situational awareness:
+	// array( float, [[currentExpr]]     )  has  visitingChildOfSUIT == true
+	// array( float, [[currentExpr]] - 1 )  has  visitingChildOfSUIT == false
+	// size_t x =    [[currentExpr]]        has  visitingChildOfSUIT == false
+	void TranslateDimensionGenericParameters::changeState_ChildOfSUIT( bool newVal ) {
+		GuardValue( nextVisitedNodeIsChildOfSUIT );
+		GuardValue( visitingChildOfSUIT );
+		visitingChildOfSUIT = nextVisitedNodeIsChildOfSUIT;
+		nextVisitedNodeIsChildOfSUIT = newVal;
+	}
+	void TranslateDimensionGenericParameters::premutate( StructInstType * sit ) {
+		(void) sit;
+		changeState_ChildOfSUIT(true);
+	}
+	void TranslateDimensionGenericParameters::premutate( UnionInstType * uit ) {
+		(void) uit;
+		changeState_ChildOfSUIT(true);
+	}
+	void TranslateDimensionGenericParameters::premutate( BaseSyntaxNode * node ) {
+		(void) node;
+		changeState_ChildOfSUIT(false);
+	}
+
+	// Passing values as dimension arguments:  array( float,     7 )  -> array( float, char[             7 ] )
+	// Consuming dimension parameters:         size_t x =    N - 1 ;  -> size_t x =          sizeof(N) - 1   ;
+	// Intertwined reality:                    array( float, N     )  -> array( float,              N        )
+	//                                         array( float, N - 1 )  -> array( float, char[ sizeof(N) - 1 ] )
+	// Intertwined case 1 is not just an optimization.
+	// Avoiding char[sizeof(-)] is necessary to enable the call of f to bind the value of N, in:
+	//   forall([N]) void f( array(float, N) & );
+	//   array(float, 7) a;
+	//   f(a);
+
+	Expression * TranslateDimensionGenericParameters::postmutate( DimensionExpr * de ) {
+		// Expression de is an occurrence of N in LHS of above examples.
+		// Look up the name that de references.
+		// If we are in a struct body, then this reference can be to an entry of the stuct's forall list.
+		// Whether or not we are in a struct body, this reference can be to an entry of a containing function's forall list.
+		// If we are in a struct body, then the stuct's forall declarations are innermost (functions don't occur in structs).
+		// Thus, a potential struct's declaration is highest priority.
+		// A struct's forall declarations are already renamed with _generic_ suffix.  Try that name variant first.
+
+		std::string useName = "__" + de->name + "_generic_";
+		TypeDecl * namedParamDecl = const_cast<TypeDecl *>( strict_dynamic_cast<const TypeDecl *, nullptr >( indexer.lookupType( useName ) ) );
+
+		if ( ! namedParamDecl ) {
+			useName = de->name;
+			namedParamDecl = const_cast<TypeDecl *>( strict_dynamic_cast<const TypeDecl *, nullptr >( indexer.lookupType( useName ) ) );
+		}
+
+		// Expect to find it always.  A misspelled name would have been parsed as an identifier.
+		assert( namedParamDecl && "Type-system-managed value name not found in symbol table" );
+
+		delete de;
+
+		TypeInstType * refToDecl = new TypeInstType( 0, useName, namedParamDecl );
+
+		if ( visitingChildOfSUIT ) {
+			// As in postmutate( Expression * ), topmost expression needs a TypeExpr wrapper
+			// But avoid ArrayType-Sizeof
+			return new TypeExpr( refToDecl );
+		} else {
+			// the N occurrence is being used directly as a runtime value,
+			// if we are in a type instantiation, then the N is within a bigger value computation
+			return new SizeofExpr( refToDecl );
+		}
+	}
+
+	Expression * TranslateDimensionGenericParameters::postmutate( Expression * e ) {
+		if ( visitingChildOfSUIT ) {
+			// e is an expression used as an argument to instantiate a type
+			if (! dynamic_cast< TypeExpr * >( e ) ) {
+				// e is a value expression
+				// but not a DimensionExpr, which has a distinct postmutate
+				Type * typeExprContent = new ArrayType( 0, new BasicType( 0, BasicType::Char ), e, true, false );
+				TypeExpr * result = new TypeExpr( typeExprContent );
+				return result;
+			}
+		}
+		return e;
 	}
 
 	void CompoundLiteral::premutate( ObjectDecl * objectDecl ) {

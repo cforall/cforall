@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:20:13 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 15 20:56:47 2021
-// Update Count     : 260
+// Last Modified On : Wed May 19 08:30:14 2021
+// Update Count     : 262
 //
 
 
@@ -30,6 +30,7 @@ debugPrint(
 static const char *kindName( int kind ) {
 	switch ( kind ) {
 	  case IDENTIFIER: return "identifier";
+	  case TYPEDIMname: return "typedim";
 	  case TYPEDEFname: return "typedef";
 	  case TYPEGENname: return "typegen";
 	  default:

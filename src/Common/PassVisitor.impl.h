@@ -635,6 +635,7 @@ void PassVisitor< pass_type >::visit( StructDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeAccept_impl( node->parameters, *this );
 		maybeAccept_impl( node->members   , *this );
+		maybeAccept_impl( node->attributes, *this );
 	}
 
 	// this addition replaces the forward declaration
@@ -655,6 +656,7 @@ void PassVisitor< pass_type >::visit( const StructDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeAccept_impl( node->parameters, *this );
 		maybeAccept_impl( node->members   , *this );
+		maybeAccept_impl( node->attributes, *this );
 	}
 
 	// this addition replaces the forward declaration
@@ -675,6 +677,7 @@ Declaration * PassVisitor< pass_type >::mutate( StructDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeMutate_impl( node->parameters, *this );
 		maybeMutate_impl( node->members   , *this );
+		maybeMutate_impl( node->attributes, *this );
 	}
 
 	// this addition replaces the forward declaration
@@ -696,6 +699,7 @@ void PassVisitor< pass_type >::visit( UnionDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeAccept_impl( node->parameters, *this );
 		maybeAccept_impl( node->members   , *this );
+		maybeAccept_impl( node->attributes, *this );
 	}
 
 	indexerAddUnion( node );
@@ -713,6 +717,7 @@ void PassVisitor< pass_type >::visit( const UnionDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeAccept_impl( node->parameters, *this );
 		maybeAccept_impl( node->members   , *this );
+		maybeAccept_impl( node->attributes, *this );
 	}
 
 	indexerAddUnion( node );
@@ -731,6 +736,7 @@ Declaration * PassVisitor< pass_type >::mutate( UnionDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeMutate_impl( node->parameters, *this );
 		maybeMutate_impl( node->members   , *this );
+		maybeMutate_impl( node->attributes, *this );
 	}
 
 	indexerAddUnion( node );
@@ -749,6 +755,7 @@ void PassVisitor< pass_type >::visit( EnumDecl * node ) {
 	// unlike structs, traits, and unions, enums inject their members into the global scope
 	maybeAccept_impl( node->parameters, *this );
 	maybeAccept_impl( node->members   , *this );
+	maybeAccept_impl( node->attributes, *this );
 
 	VISIT_END( node );
 }
@@ -762,6 +769,7 @@ void PassVisitor< pass_type >::visit( const EnumDecl * node ) {
 	// unlike structs, traits, and unions, enums inject their members into the global scope
 	maybeAccept_impl( node->parameters, *this );
 	maybeAccept_impl( node->members   , *this );
+	maybeAccept_impl( node->attributes, *this );
 
 	VISIT_END( node );
 }
@@ -775,6 +783,7 @@ Declaration * PassVisitor< pass_type >::mutate( EnumDecl * node ) {
 	// unlike structs, traits, and unions, enums inject their members into the global scope
 	maybeMutate_impl( node->parameters, *this );
 	maybeMutate_impl( node->members   , *this );
+	maybeMutate_impl( node->attributes, *this );
 
 	MUTATE_END( Declaration, node );
 }
@@ -789,6 +798,7 @@ void PassVisitor< pass_type >::visit( TraitDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeAccept_impl( node->parameters, *this );
 		maybeAccept_impl( node->members   , *this );
+		maybeAccept_impl( node->attributes, *this );
 	}
 
 	indexerAddTrait( node );
@@ -804,6 +814,7 @@ void PassVisitor< pass_type >::visit( const TraitDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeAccept_impl( node->parameters, *this );
 		maybeAccept_impl( node->members   , *this );
+		maybeAccept_impl( node->attributes, *this );
 	}
 
 	indexerAddTrait( node );
@@ -819,6 +830,7 @@ Declaration * PassVisitor< pass_type >::mutate( TraitDecl * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeMutate_impl( node->parameters, *this );
 		maybeMutate_impl( node->members   , *this );
+		maybeMutate_impl( node->attributes, *this );
 	}
 
 	indexerAddTrait( node );
@@ -2506,6 +2518,36 @@ Expression * PassVisitor< pass_type >::mutate( TypeExpr * node ) {
 }
 
 //--------------------------------------------------------------------------
+// DimensionExpr
+template< typename pass_type >
+void PassVisitor< pass_type >::visit( DimensionExpr * node ) {
+	VISIT_START( node );
+
+	indexerScopedAccept( node->result, *this );
+
+	VISIT_END( node );
+}
+
+template< typename pass_type >
+void PassVisitor< pass_type >::visit( const DimensionExpr * node ) {
+	VISIT_START( node );
+
+	indexerScopedAccept( node->result, *this );
+
+	VISIT_END( node );
+}
+
+template< typename pass_type >
+Expression * PassVisitor< pass_type >::mutate( DimensionExpr * node ) {
+	MUTATE_START( node );
+
+	indexerScopedMutate( node->env   , *this );
+	indexerScopedMutate( node->result, *this );
+
+	MUTATE_END( Expression, node );
+}
+
+//--------------------------------------------------------------------------
 // AsmExpr
 template< typename pass_type >
 void PassVisitor< pass_type >::visit( AsmExpr * node ) {
@@ -3144,7 +3186,7 @@ void PassVisitor< pass_type >::visit( PointerType * node ) {
 	VISIT_START( node );
 
 	maybeAccept_impl( node->forall, *this );
-	// xxx - should PointerType visit/mutate dimension?
+	maybeAccept_impl( node->dimension, *this );
 	maybeAccept_impl( node->base, *this );
 
 	VISIT_END( node );
@@ -3155,7 +3197,7 @@ void PassVisitor< pass_type >::visit( const PointerType * node ) {
 	VISIT_START( node );
 
 	maybeAccept_impl( node->forall, *this );
-	// xxx - should PointerType visit/mutate dimension?
+	maybeAccept_impl( node->dimension, *this );
 	maybeAccept_impl( node->base, *this );
 
 	VISIT_END( node );
@@ -3166,7 +3208,7 @@ Type * PassVisitor< pass_type >::mutate( PointerType * node ) {
 	MUTATE_START( node );
 
 	maybeMutate_impl( node->forall, *this );
-	// xxx - should PointerType visit/mutate dimension?
+	maybeMutate_impl( node->dimension, *this );
 	maybeMutate_impl( node->base, *this );
 
 	MUTATE_END( Type, node );
@@ -3855,7 +3897,7 @@ Initializer * PassVisitor< pass_type >::mutate( ConstructorInit * node ) {
 }
 
 //--------------------------------------------------------------------------
-// Attribute
+// Constant
 template< typename pass_type >
 void PassVisitor< pass_type >::visit( Constant * node ) {
 	VISIT_START( node );

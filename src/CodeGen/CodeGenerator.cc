@@ -590,6 +590,11 @@ namespace CodeGen {
 		} // if
 	}
 
+	void CodeGenerator::postvisit( DimensionExpr * dimensionExpr ) {
+		extension( dimensionExpr );
+		output << "/*non-type*/" << dimensionExpr->get_name();
+	}
+
 	void CodeGenerator::postvisit( AddressExpr * addressExpr ) {
 		extension( addressExpr );
 		output << "(&";

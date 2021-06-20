@@ -65,6 +65,7 @@ struct __attribute__((aligned(128))) processor {
 		unsigned short itr;
 		unsigned id;
 		unsigned target;
+		unsigned last;
 		unsigned long long int cutoff;
 	} rdq;
 

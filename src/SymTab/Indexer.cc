@@ -73,9 +73,9 @@ namespace SymTab {
 		}
 	}
 
-	Indexer::Indexer()
+	Indexer::Indexer( bool trackIdentifiers )
 	: idTable(), typeTable(), structTable(), enumTable(), unionTable(), traitTable(),
-	  prevScope(), scope( 0 ), repScope( 0 ) { ++* stats().count; }
+	  prevScope(), scope( 0 ), repScope( 0 ), trackIdentifiers( trackIdentifiers ) { ++* stats().count; }
 
 	Indexer::~Indexer() {
 		stats().size->push( idTable ? idTable->size() : 0 );
@@ -109,6 +109,8 @@ namespace SymTab {
 	}
 
 	void Indexer::lookupId( const std::string & id, std::list< IdData > &out ) const {
+		assert( trackIdentifiers );
+
 		++* stats().lookup_calls;
 		if ( ! idTable ) return;
 
@@ -433,6 +435,7 @@ namespace SymTab {
 	void Indexer::addId(const DeclarationWithType * decl, OnConflict handleConflicts, const Expression * baseExpr,
 			const Declaration * deleteStmt ) {
 		++* stats().add_calls;
+		if ( ! trackIdentifiers ) return;
 		const std::string &name = decl->name;
 		if ( name == "" ) return;
 

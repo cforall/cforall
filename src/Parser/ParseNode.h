@@ -182,6 +182,7 @@ Expression * build_field_name_FLOATINGconstant( const std::string & str );
 Expression * build_field_name_fraction_constants( Expression * fieldName, ExpressionNode * fracts );
 
 NameExpr * build_varref( const std::string * name );
+DimensionExpr * build_dimensionref( const std::string * name );
 
 Expression * build_cast( DeclarationNode * decl_node, ExpressionNode * expr_node );
 Expression * build_keyword_cast( AggregateDecl::Aggregate target, ExpressionNode * expr_node );

@@ -84,6 +84,7 @@ class LogicalExpr;
 class ConditionalExpr;
 class CommaExpr;
 class TypeExpr;
+class DimensionExpr;
 class AsmExpr;
 class ImplicitCopyCtorExpr;
 class ConstructorExpr;

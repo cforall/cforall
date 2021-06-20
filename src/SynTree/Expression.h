@@ -586,6 +586,25 @@ class TypeExpr : public Expression {
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
+/// DimensionExpr represents a type-system provided value used in an expression ( forrall([N]) ... N + 1 )
+class DimensionExpr : public Expression {
+  public:
+	std::string name;
+
+	DimensionExpr( std::string name );
+	DimensionExpr( const DimensionExpr & other );
+	virtual ~DimensionExpr();
+
+	const std::string & get_name() const { return name; }
+	void set_name( std::string newValue ) { name = newValue; }
+
+	virtual DimensionExpr * clone() const override { return new DimensionExpr( * this ); }
+	virtual void accept( Visitor & v ) override { v.visit( this ); }
+	virtual void accept( Visitor & v ) const override { v.visit( this ); }
+	virtual Expression * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
+};
+
 /// AsmExpr represents a GCC 'asm constraint operand' used in an asm statement: [output] "=f" (result)
 class AsmExpr : public Expression {
   public:

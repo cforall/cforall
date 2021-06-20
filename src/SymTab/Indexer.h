@@ -30,7 +30,7 @@ namespace ResolvExpr {
 namespace SymTab {
 	class Indexer : public std::enable_shared_from_this<SymTab::Indexer> {
 	public:
-		explicit Indexer();
+		explicit Indexer( bool trackIdentifiers = true );
 		virtual ~Indexer();
 
 		// when using an indexer manually (e.g., within a mutator traversal), it is necessary to
@@ -179,6 +179,8 @@ namespace SymTab {
 		bool hasCompatibleCDecl( const std::string & id, const std::string & mangleName ) const;
 		/// returns true if there exists a declaration with C linkage and the given name with a different mangled name
 		bool hasIncompatibleCDecl( const std::string & id, const std::string & mangleName ) const;
+
+	    bool trackIdentifiers;
 	};
 } // namespace SymTab
 

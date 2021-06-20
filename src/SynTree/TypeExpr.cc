@@ -34,6 +34,20 @@ void TypeExpr::print( std::ostream &os, Indenter indent ) const {
 	Expression::print( os, indent );
 }
 
+DimensionExpr::DimensionExpr( std::string name ) : Expression(), name(name) {
+	assertf(name != "0", "Zero is not a valid name");
+	assertf(name != "1", "One is not a valid name");
+}
+
+DimensionExpr::DimensionExpr( const DimensionExpr & other ) : Expression( other ), name( other.name ) {
+}
+
+DimensionExpr::~DimensionExpr() {}
+
+void DimensionExpr::print( std::ostream & os, Indenter indent ) const {
+	os << "Type-Sys Value: " << get_name();
+	Expression::print( os, indent );
+}
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

@@ -29,7 +29,7 @@ extern "C" {
 #if   defined(CFA_HAVE_LINUX_LIBRSEQ)
 	#include <rseq/rseq.h>
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
-	// #include <linux/rseq.h>
+	#include <linux/rseq.h>
 #else
 	#ifndef _GNU_SOURCE
 	#error kernel_private requires gnu_source
@@ -59,7 +59,7 @@ void __thread_finish( $thread * thrd );
 	// No data needed
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
 	extern "Cforall" {
-		// extern __attribute__((aligned(128))) thread_local volatile struct rseq __cfaabi_rseq;
+		extern __attribute__((aligned(128))) thread_local volatile struct rseq __cfaabi_rseq;
 	}
 #else
 	// No data needed
@@ -68,9 +68,11 @@ void __thread_finish( $thread * thrd );
 static inline int __kernel_getcpu() {
 	/* paranoid */ verify( ! __preemption_enabled() );
 #if   defined(CFA_HAVE_LINUX_LIBRSEQ)
-	return rseq_current_cpu_raw();
+	return rseq_current_cpu();
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
-	// return __cfaabi_rseq.cpu_id;
+	int r = __cfaabi_rseq.cpu_id;
+	/* paranoid */ verify( r >= 0 );
+	return r;
 #else
 	return sched_getcpu();
 #endif

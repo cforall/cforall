@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Apr 22 14:59:21 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 13 21:04:48 2021
-// Update Count     : 123
+// Last Modified On : Fri Jun 18 17:02:44 2021
+// Update Count     : 124
 //
 
 #include <fstream.hfa>
@@ -39,11 +39,11 @@ int main( void ) {
 	//---------------------- Exponential ----------------------
 
 	sout | "exp:" | exp( 1.0F ) | exp( 1.0D ) | exp( 1.0L ) | nonl;
-	sout | exp( 1.0F+1.0FI ) | exp( 1.0D+1.0DI ) | exp( 1.0DL+1.0LI );
+	sout | exp( 1.0F+1.0FI ) | exp( 1.0D+1.0DI ) | exp( 1.0L+1.0LI );
 	sout | "exp2:" | exp2( 1.0F ) | exp2( 1.0D ) | exp2( 1.0L );
 	sout | "expm1:" | expm1( 1.0F ) | expm1( 1.0D ) | expm1( 1.0L );
 	sout | "pow:" | pow( 1.0F, 1.0F ) | pow( 1.0D, 1.0D ) | pow( 1.0L, 1.0L ) | nonl;
-	sout | pow( 1.0F+1.0FI, 1.0F+1.0FI ) | pow( 1.0D+1.0DI, 1.0D+1.0DI ) | pow( 1.5DL+1.5LI, 1.5DL+1.5LI );
+	sout | pow( 1.0F+1.0FI, 1.0F+1.0FI ) | pow( 1.0D+1.0DI, 1.0D+1.0DI ) | pow( 1.5L+1.5LI, 1.5L+1.5LI );
 
 	int b = 4;
 	unsigned int e = 2;
@@ -67,7 +67,7 @@ int main( void ) {
 	//---------------------- Logarithm ----------------------
 
 	sout | "log:" | log( 1.0F ) | log( 1.0D ) | log( 1.0L ) | nonl;
-	sout | log( 1.0F+1.0FI ) | log( 1.0D+1.0DI ) | log( 1.0DL+1.0LI );
+	sout | log( 1.0F+1.0FI ) | log( 1.0D+1.0DI ) | log( 1.0L+1.0LI );
 	sout | "log2:" | log2( 1024 ) | log2( 2 \ 17u ) | log2( 2 \ 23u );
 	sout | "log2:" | log2( 1024l ) | log2( 2l \ 17u ) | log2( 2l \ 23u );
 	sout | "log2:" | log2( 1024ll ) | log2( 2ll \ 17u ) | log2( 2ll \ 23u );
@@ -81,41 +81,41 @@ int main( void ) {
 	sout | "logb:" | logb( 8.0F ) | logb( 8.0D ) | logb( 8.0L );
 
 	sout | "sqrt:" | sqrt( 1.0F ) | sqrt( 1.0D ) | sqrt( 1.0L ) | nonl;
-	sout | sqrt( 1.0F+1.0FI ) | sqrt( 1.0D+1.0DI ) | sqrt( 1.0DL+1.0LI );
+	sout | sqrt( 1.0F+1.0FI ) | sqrt( 1.0D+1.0DI ) | sqrt( 1.0L+1.0LI );
 	sout | "cbrt:" | cbrt( 27.0F ) | cbrt( 27.0D ) | cbrt( 27.0L );
 	sout | "hypot:" | hypot( 1.0F, -1.0F ) | hypot( 1.0D, -1.0D ) | hypot( 1.0L, -1.0L );
 
 	//---------------------- Trigonometric ----------------------
 
 	sout | "sin:" | sin( 1.0F ) | sin( 1.0D ) | sin( 1.0L ) | nonl;
-	sout | sin( 1.0F+1.0FI ) | sin( 1.0D+1.0DI ) | sin( 1.0DL+1.0LI );
+	sout | sin( 1.0F+1.0FI ) | sin( 1.0D+1.0DI ) | sin( 1.0L+1.0LI );
 	sout | "cos:" | cos( 1.0F ) | cos( 1.0D ) | cos( 1.0L ) | nonl;
-	sout | cos( 1.0F+1.0FI ) | cos( 1.0D+1.0DI ) | cos( 1.0DL+1.0LI );
+	sout | cos( 1.0F+1.0FI ) | cos( 1.0D+1.0DI ) | cos( 1.0L+1.0LI );
 	sout | "tan:" | tan( 1.0F ) | tan( 1.0D ) | tan( 1.0L ) | nonl;
-	sout | tan( 1.0F+1.0FI ) | tan( 1.0D+1.0DI ) | tan( 1.0DL+1.0LI );
+	sout | tan( 1.0F+1.0FI ) | tan( 1.0D+1.0DI ) | tan( 1.0L+1.0LI );
 	sout | "asin:" | asin( 1.0F ) | asin( 1.0D ) | asin( 1.0L ) | nonl;
-	sout | asin( 1.0F+1.0FI ) | asin( 1.0D+1.0DI ) | asin( 1.0DL+1.0LI );
+	sout | asin( 1.0F+1.0FI ) | asin( 1.0D+1.0DI ) | asin( 1.0L+1.0LI );
 	sout | "acos:" | acos( 1.0F ) | acos( 1.0D ) | acos( 1.0L ) | nonl;
-	sout | acos( 1.0F+1.0FI ) | acos( 1.0D+1.0DI ) | acos( 1.0DL+1.0LI );
+	sout | acos( 1.0F+1.0FI ) | acos( 1.0D+1.0DI ) | acos( 1.0L+1.0LI );
 	sout | "atan:" | atan( 1.0F ) | atan( 1.0D ) | atan( 1.0L ) | nonl;
-	sout | atan( 1.0F+1.0FI ) | atan( 1.0D+1.0DI ) | atan( 1.0DL+1.0LI );
+	sout | atan( 1.0F+1.0FI ) | atan( 1.0D+1.0DI ) | atan( 1.0L+1.0LI );
 	sout | "atan2:" | atan2( 1.0F, 1.0F ) | atan2( 1.0D, 1.0D ) | atan2( 1.0L, 1.0L ) | nonl;
 	sout | "atan:" | atan( 1.0F, 1.0F ) | atan( 1.0D, 1.0D ) | atan( 1.0L, 1.0L );
 
 	//---------------------- Hyperbolic ----------------------
 
 	sout | "sinh:" | sinh( 1.0F ) | sinh( 1.0D ) | sinh( 1.0L ) | nonl;
-	sout | sinh( 1.0F+1.0FI ) | sinh( 1.0D+1.0DI ) | sinh( 1.0DL+1.0LI );
+	sout | sinh( 1.0F+1.0FI ) | sinh( 1.0D+1.0DI ) | sinh( 1.0L+1.0LI );
 	sout | "cosh:" | cosh( 1.0F ) | cosh( 1.0D ) | cosh( 1.0L ) | nonl;
-	sout | cosh( 1.0F+1.0FI ) | cosh( 1.0D+1.0DI ) | cosh( 1.0DL+1.0LI );
+	sout | cosh( 1.0F+1.0FI ) | cosh( 1.0D+1.0DI ) | cosh( 1.0L+1.0LI );
 	sout | "tanh:" | tanh( 1.0F ) | tanh( 1.0D ) | tanh( 1.0L ) | nonl;
-	sout | tanh( 1.0F+1.0FI ) | tanh( 1.0D+1.0DI ) | tanh( 1.0DL+1.0LI );
+	sout | tanh( 1.0F+1.0FI ) | tanh( 1.0D+1.0DI ) | tanh( 1.0L+1.0LI );
 	sout | "acosh:" | acosh( 1.0F ) | acosh( 1.0D ) | acosh( 1.0L ) | nonl;
-	sout | acosh( 1.0F+1.0FI ) | acosh( 1.0D+1.0DI ) | acosh( 1.0DL+1.0LI );
+	sout | acosh( 1.0F+1.0FI ) | acosh( 1.0D+1.0DI ) | acosh( 1.0L+1.0LI );
 	sout | "asinh:" | asinh( 1.0F ) | asinh( 1.0D ) | asinh( 1.0L ) | nonl;
-	sout | asinh( 1.0F+1.0FI ) | asinh( 1.0D+1.0DI ) | asinh( 1.0DL+1.0LI );
+	sout | asinh( 1.0F+1.0FI ) | asinh( 1.0D+1.0DI ) | asinh( 1.0L+1.0LI );
 	sout | "atanh:" | atanh( 1.0F ) | atanh( 1.0D ) | atanh( 1.0L ) | nonl;
-	sout | atanh( 1.0F+1.0FI ) | atanh( 1.0D+1.0DI ) | atanh( 1.0DL+1.0LI );
+	sout | atanh( 1.0F+1.0FI ) | atanh( 1.0D+1.0DI ) | atanh( 1.0L+1.0LI );
 
 	//---------------------- Error / Gamma ----------------------
 

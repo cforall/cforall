@@ -146,50 +146,51 @@ extern int yydebug;
     STATICASSERT = 352,
     IDENTIFIER = 353,
     QUOTED_IDENTIFIER = 354,
-    TYPEDEFname = 355,
-    TYPEGENname = 356,
-    TIMEOUT = 357,
-    WOR = 358,
-    CATCH = 359,
-    RECOVER = 360,
-    CATCHRESUME = 361,
-    FIXUP = 362,
-    FINALLY = 363,
-    INTEGERconstant = 364,
-    CHARACTERconstant = 365,
-    STRINGliteral = 366,
-    DIRECTIVE = 367,
-    FLOATING_DECIMALconstant = 368,
-    FLOATING_FRACTIONconstant = 369,
-    FLOATINGconstant = 370,
-    ARROW = 371,
-    ICR = 372,
-    DECR = 373,
-    LS = 374,
-    RS = 375,
-    LE = 376,
-    GE = 377,
-    EQ = 378,
-    NE = 379,
-    ANDAND = 380,
-    OROR = 381,
-    ELLIPSIS = 382,
-    EXPassign = 383,
-    MULTassign = 384,
-    DIVassign = 385,
-    MODassign = 386,
-    PLUSassign = 387,
-    MINUSassign = 388,
-    LSassign = 389,
-    RSassign = 390,
-    ANDassign = 391,
-    ERassign = 392,
-    ORassign = 393,
-    ErangeUpEq = 394,
-    ErangeDown = 395,
-    ErangeDownEq = 396,
-    ATassign = 397,
-    THEN = 398
+    TYPEDIMname = 355,
+    TYPEDEFname = 356,
+    TYPEGENname = 357,
+    TIMEOUT = 358,
+    WOR = 359,
+    CATCH = 360,
+    RECOVER = 361,
+    CATCHRESUME = 362,
+    FIXUP = 363,
+    FINALLY = 364,
+    INTEGERconstant = 365,
+    CHARACTERconstant = 366,
+    STRINGliteral = 367,
+    DIRECTIVE = 368,
+    FLOATING_DECIMALconstant = 369,
+    FLOATING_FRACTIONconstant = 370,
+    FLOATINGconstant = 371,
+    ARROW = 372,
+    ICR = 373,
+    DECR = 374,
+    LS = 375,
+    RS = 376,
+    LE = 377,
+    GE = 378,
+    EQ = 379,
+    NE = 380,
+    ANDAND = 381,
+    OROR = 382,
+    ELLIPSIS = 383,
+    EXPassign = 384,
+    MULTassign = 385,
+    DIVassign = 386,
+    MODassign = 387,
+    PLUSassign = 388,
+    MINUSassign = 389,
+    LSassign = 390,
+    RSassign = 391,
+    ANDassign = 392,
+    ERassign = 393,
+    ORassign = 394,
+    ErangeUpEq = 395,
+    ErangeDown = 396,
+    ErangeDownEq = 397,
+    ATassign = 398,
+    THEN = 399
   };
 #endif
 /* Tokens.  */
@@ -290,50 +291,51 @@ extern int yydebug;
 #define STATICASSERT 352
 #define IDENTIFIER 353
 #define QUOTED_IDENTIFIER 354
-#define TYPEDEFname 355
-#define TYPEGENname 356
-#define TIMEOUT 357
-#define WOR 358
-#define CATCH 359
-#define RECOVER 360
-#define CATCHRESUME 361
-#define FIXUP 362
-#define FINALLY 363
-#define INTEGERconstant 364
-#define CHARACTERconstant 365
-#define STRINGliteral 366
-#define DIRECTIVE 367
-#define FLOATING_DECIMALconstant 368
-#define FLOATING_FRACTIONconstant 369
-#define FLOATINGconstant 370
-#define ARROW 371
-#define ICR 372
-#define DECR 373
-#define LS 374
-#define RS 375
-#define LE 376
-#define GE 377
-#define EQ 378
-#define NE 379
-#define ANDAND 380
-#define OROR 381
-#define ELLIPSIS 382
-#define EXPassign 383
-#define MULTassign 384
-#define DIVassign 385
-#define MODassign 386
-#define PLUSassign 387
-#define MINUSassign 388
-#define LSassign 389
-#define RSassign 390
-#define ANDassign 391
-#define ERassign 392
-#define ORassign 393
-#define ErangeUpEq 394
-#define ErangeDown 395
-#define ErangeDownEq 396
-#define ATassign 397
-#define THEN 398
+#define TYPEDIMname 355
+#define TYPEDEFname 356
+#define TYPEGENname 357
+#define TIMEOUT 358
+#define WOR 359
+#define CATCH 360
+#define RECOVER 361
+#define CATCHRESUME 362
+#define FIXUP 363
+#define FINALLY 364
+#define INTEGERconstant 365
+#define CHARACTERconstant 366
+#define STRINGliteral 367
+#define DIRECTIVE 368
+#define FLOATING_DECIMALconstant 369
+#define FLOATING_FRACTIONconstant 370
+#define FLOATINGconstant 371
+#define ARROW 372
+#define ICR 373
+#define DECR 374
+#define LS 375
+#define RS 376
+#define LE 377
+#define GE 378
+#define EQ 379
+#define NE 380
+#define ANDAND 381
+#define OROR 382
+#define ELLIPSIS 383
+#define EXPassign 384
+#define MULTassign 385
+#define DIVassign 386
+#define MODassign 387
+#define PLUSassign 388
+#define MINUSassign 389
+#define LSassign 390
+#define RSassign 391
+#define ANDassign 392
+#define ERassign 393
+#define ORassign 394
+#define ErangeUpEq 395
+#define ErangeDown 396
+#define ErangeDownEq 397
+#define ATassign 398
+#define THEN 399
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -361,7 +363,7 @@ union YYSTYPE
 	CatchStmt::Kind catch_kind;
 	GenericExpr * genexpr;
 
-#line 365 "Parser/parser.hh"
+#line 367 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

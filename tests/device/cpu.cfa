@@ -16,11 +16,131 @@
 
 #include <fstream.hfa>
 #include <device/cpu.hfa>
+#include <stdlib.hfa>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
 extern "C" {
+	#include <dirent.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
 	#include <sys/sysinfo.h>
+	#include <fcntl.h>
+}
+
+// go through a directory calling fn on each file
+static int iterate_dir( const char * path, void (*fn)(struct dirent * ent) ) {
+	// open the directory
+	DIR *dir = opendir(path);
+	if(dir == 0p) { return ENOTDIR; }
+
+	// call fn for each
+	struct dirent * ent;
+	while ((ent = readdir(dir)) != 0p) {
+		fn( ent );
+	}
+
+	// no longer need this
+	closedir(dir);
+	return 0;
+}
+
+// count the number of directories with the specified prefix
+// the directories counted have the form '[prefix]N' where prefix is the parameter
+// and N is an base 10 integer.
+static int count_prefix_dirs(const char * path, const char * prefix) {
+	// read the directory and find the cpu count
+	// and make sure everything is as expected
+	int max = -1;
+	int count = 0;
+	void lambda(struct dirent * ent) {
+		// were are looking for prefixX, where X is a number
+		// check that it starts with 'cpu
+		char * s = strstr(ent->d_name, prefix);
+		if(s == 0p) { return; }
+		if(s != ent->d_name) { return; }
+
+		// check that the next part is a number
+		s += strlen(prefix);
+		char * end;
+		long int val = strtol(s, &end, 10);
+		if(*end != '\0' || val < 0) { return; }
+
+		// check that it's a directory
+		if(ent->d_type != DT_DIR) { return; }
+
+		// it's a match!
+		max = max(val, max);
+		count++;
+	}
+	iterate_dir(path, lambda);
+
+	/* paranoid */ verifyf(count == max + 1, "Inconsistent %s count, counted %d, but max %s was %d", prefix, count, prefix, (int)max);
+
+	return count;
+}
+
+// Count number of cache *indexes* in the system
+// cache indexes are distinct from cache level as Data or Instruction cache
+// can share a level but not an index
+// PITFALL: assumes all cpus have the same indexes as cpu0
+static int count_cache_indexes(void) {
+	return count_prefix_dirs("/sys/devices/system/cpu/cpu0/cache", "index");
+}
+
+// read information about a spcficic cache index/cpu file into the output buffer
+static size_t read_cpuidxinfo_into(unsigned cpu, unsigned idx, const char * file, char * out, size_t out_len) {
+	// Pick the file we want and read it
+	char buf[128];
+	/* paranoid */ __attribute__((unused)) int len =
+	snprintf(buf, 128, "/sys/devices/system/cpu/cpu%u/cache/index%u/%s", cpu, idx, file);
+	/* paranoid */ verifyf(len > 0, "Could not generate '%s' filename for cpu %u, index %u", file, cpu, idx);
+
+	int fd = open(buf, 0, O_RDONLY);
+	/* paranoid */ verifyf(fd > 0, "Could not open file '%s'", buf);
+
+	ssize_t r = read(fd, out, out_len);
+	/* paranoid */ verifyf(r > 0, "Could not read file '%s'", buf);
+
+	/* paranoid */ __attribute__((unused)) int ret =
+	close(fd);
+	/* paranoid */ verifyf(ret == 0, "Could not close file '%s'", buf);
+
+	out[r-1] = '\0';
+	return r-1;
+}
+
+unsigned find_idx() {
+	int idxs = count_cache_indexes();
+
+	unsigned found_level = 0;
+	unsigned found = -1u;
+	for(i; idxs) {
+		unsigned idx = idxs - 1 - i;
+		char buf[32];
+
+		// Level is the cache level: higher means bigger and slower
+		read_cpuidxinfo_into(0, idx, "level", buf, 32);
+		char * end;
+		unsigned long level = strtoul(buf, &end, 10);
+		/* paranoid */ verifyf(level <= 250, "Cpu %u has more than 250 levels of cache, that doesn't sound right", 0);
+		/* paranoid */ verify(*end == '\0');
+
+		if(found_level < level) {
+			found_level = level;
+			found = idx;
+		}
+	}
+
+	/* paranoid */ verify(found != -1u);
+	return found;
 }
 
 int main() {
+	//-----------------------------------------------------------------------
 	int ret1 = get_nprocs();
 	int ret2 = cpu_info.hthrd_count;
 	if(ret1 != ret2) {
@@ -30,4 +150,49 @@ int main() {
 		sout | "Match!";
 	}
 
+	//-----------------------------------------------------------------------
+	// Make sure no one has the same self
+	for(ime; cpu_info.hthrd_count) {
+		unsigned me = cpu_info.llc_map[ime].self;
+		{
+			unsigned s = cpu_info.llc_map[ime].start;
+			unsigned e = s + cpu_info.llc_map[ime].count;
+			if(me < s || me >= e) {
+				sout | "CPU" | ime | "outside of it's own map: " | s | "<=" | me | "<" | e;
+			}
+		}
+
+
+		for(ithem; cpu_info.hthrd_count) {
+			if(ime == ithem) continue;
+
+			unsigned them = cpu_info.llc_map[ithem].self;
+			if(me == them) {
+				sout | "CPU" | ime | "has conflicting self id with" | ithem | "(" | me | ")";
+			}
+		}
+	}
+
+
+	//-----------------------------------------------------------------------
+	unsigned idx = find_idx();
+	// For all procs check mapping is consistent
+	for(cpu_me; cpu_info.hthrd_count) {
+		char buf_me[32];
+		size_t len_me = read_cpuidxinfo_into(cpu_me, idx, "shared_cpu_list", buf_me, 32);
+		for(cpu_them; cpu_info.hthrd_count) {
+			if(cpu_me == cpu_them) continue;
+			char buf_them[32];
+			size_t len_them = read_cpuidxinfo_into(cpu_them, idx, "shared_cpu_list", buf_them, 32);
+
+			bool match_file = len_them == len_me && 0 == strncmp(buf_them, buf_me, len_me);
+			bool match_info = cpu_info.llc_map[cpu_me].start == cpu_info.llc_map[cpu_them].start && cpu_info.llc_map[cpu_me].count == cpu_info.llc_map[cpu_them].count;
+
+			if(match_file != match_info) {
+				sout | "CPU" | cpu_me | "and" | cpu_them | "have inconsitent file and cpu_info";
+				sout | cpu_me | ": <" | cpu_info.llc_map[cpu_me  ].start | "," | cpu_info.llc_map[cpu_me  ].count | "> '" | buf_me   | "'";
+				sout | cpu_me | ": <" | cpu_info.llc_map[cpu_them].start | "," | cpu_info.llc_map[cpu_them].count | "> '" | buf_them | "'";
+			}
+		}
+	}
 }

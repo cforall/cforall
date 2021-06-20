@@ -200,7 +200,7 @@ class NamedTypeDecl : public Declaration {
 class TypeDecl : public NamedTypeDecl {
 	typedef NamedTypeDecl Parent;
   public:
-	enum Kind { Dtype, DStype, Otype, Ftype, Ttype, ALtype, NUMBER_OF_KINDS };
+	enum Kind { Dtype, DStype, Otype, Ftype, Ttype, Dimension, NUMBER_OF_KINDS };
 
 	Kind kind;
 	bool sized;

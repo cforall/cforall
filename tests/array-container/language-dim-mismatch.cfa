@@ -1,0 +1,15 @@
+forall( [N] )
+struct SN {};
+
+forall( T )
+struct ST {};
+
+int main() {
+
+    SN(42) good1;
+    ST(float) good2;
+
+    SN(float) bad1;  // first  expected error: Type argument given for value parameter
+    ST(42) bad2;     // second expected error: Expression argument given for type parameter
+
+}

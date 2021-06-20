@@ -255,8 +255,14 @@ static void __cfaehm_begin_unwind(void(*defaultHandler)(exception_t *)) {
 	// was found that would work but may be expensive for no reason since we will always search
 	// the whole stack.
 
+#if defined( __x86_64 ) || defined( __i386 )
 	// We did not simply reach the end of the stack without finding a handler. This is an error.
 	if ( ret != _URC_END_OF_STACK ) {
+#else // defined( __ARM_ARCH )
+	// The return code from _Unwind_RaiseException seems to be corrupt on ARM at end of stack.
+	// This workaround tries to keep default exception handling working. 
+	if ( ret == _URC_FATAL_PHASE1_ERROR || ret == _URC_FATAL_PHASE2_ERROR ) {
+#endif
 		printf("UNWIND ERROR %d after raise exception\n", ret);
 		abort();
 	}

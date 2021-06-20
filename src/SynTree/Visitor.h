@@ -134,6 +134,8 @@ class Visitor {
 	virtual void visit( const CommaExpr * commaExpr ) = 0;
 	virtual void visit( TypeExpr * node ) { visit( const_cast<const TypeExpr *>(node) ); }
 	virtual void visit( const TypeExpr * typeExpr ) = 0;
+	virtual void visit( DimensionExpr * node ) { visit( const_cast<const DimensionExpr *>(node) ); }
+	virtual void visit( const DimensionExpr * typeExpr ) = 0;
 	virtual void visit( AsmExpr * node ) { visit( const_cast<const AsmExpr *>(node) ); }
 	virtual void visit( const AsmExpr * asmExpr ) = 0;
 	virtual void visit( ImplicitCopyCtorExpr * node ) { visit( const_cast<const ImplicitCopyCtorExpr *>(node) ); }

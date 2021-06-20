@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Thu Apr  1 13:22:31 2021
- * Update Count     : 754
+ * Last Modified On : Sat Jun 19 15:23:05 2021
+ * Update Count     : 758
  */
 
 %option yylineno
@@ -116,12 +116,13 @@ hex_digits ({hex})|({hex}({hex}|"_")*{hex})
 hex_prefix "0"[xX]"_"?
 hex_constant {hex_prefix}{hex_digits}{integer_suffix_opt}
 
-				// GCC: D (double) and iI (imaginary) suffixes, and DL (long double)
+				// GCC: floating D (double), imaginary iI, and decimal floating DF, DD, DL
 exponent "_"?[eE]"_"?[+-]?{decimal_digits}
 floating_size 16|32|32x|64|64x|80|128|128x
 floating_length ([fFdDlLwWqQ]|[fF]{floating_size})
 floating_suffix ({floating_length}?[iI]?)|([iI]{floating_length})
-floating_suffix_opt ("_"?({floating_suffix}|"DL"))?
+decimal_floating_suffix [dD][fFdDlL]
+floating_suffix_opt ("_"?({floating_suffix}|{decimal_floating_suffix}))?
 decimal_digits ({decimal})|({decimal}({decimal}|"_")*{decimal})
 floating_decimal {decimal_digits}"."{exponent}?{floating_suffix_opt}
 floating_fraction "."{decimal_digits}{exponent}?{floating_suffix_opt}
@@ -233,6 +234,9 @@ __const			{ KEYWORD_RETURN(CONST); }				// GCC
 __const__		{ KEYWORD_RETURN(CONST); }				// GCC
 continue		{ KEYWORD_RETURN(CONTINUE); }
 coroutine		{ KEYWORD_RETURN(COROUTINE); }			// CFA
+_Decimal32		{ KEYWORD_RETURN(FLOAT); }				// GCC
+_Decimal64		{ KEYWORD_RETURN(DOUBLE); }				// GCC
+_Decimal128		{ KEYWORD_RETURN(uuFLOAT128); }			// GCC
 default			{ KEYWORD_RETURN(DEFAULT); }
 disable			{ KEYWORD_RETURN(DISABLE); }			// CFA
 do				{ KEYWORD_RETURN(DO); }

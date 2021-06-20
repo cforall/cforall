@@ -174,7 +174,7 @@ private:
 /// Cforall type variable: `dtype T`
 class TypeDecl final : public NamedTypeDecl {
   public:
-	enum Kind { Dtype, DStype, Otype, Ftype, Ttype, ALtype, NUMBER_OF_KINDS };
+	enum Kind { Dtype, DStype, Otype, Ftype, Ttype, Dimension, NUMBER_OF_KINDS };
 
 	Kind kind;
 	bool sized;

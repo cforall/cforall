@@ -478,7 +478,7 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 		{
 			guard_symtab guard { *this };
 			// implicit add __func__ identifier as specified in the C manual 6.4.2.2
-			static ast::ptr< ast::ObjectDecl > func{ new ast::ObjectDecl{ 
+			static ast::ptr< ast::ObjectDecl > func{ new ast::ObjectDecl{
 				CodeLocation{}, "__func__",
 				new ast::ArrayType{
 					new ast::BasicType{ ast::BasicType::Char, ast::CV::Const },
@@ -521,8 +521,9 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::StructDecl * node ) {
 
 	VISIT({
 		guard_symtab guard { * this };
-		maybe_accept( node, &StructDecl::params  );
-		maybe_accept( node, &StructDecl::members );
+		maybe_accept( node, &StructDecl::params     );
+		maybe_accept( node, &StructDecl::members    );
+		maybe_accept( node, &StructDecl::attributes );
 	})
 
 	// this addition replaces the forward declaration
@@ -542,8 +543,9 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::UnionDecl * node ) {
 
 	VISIT({
 		guard_symtab guard { * this };
-		maybe_accept( node, &UnionDecl::params  );
-		maybe_accept( node, &UnionDecl::members );
+		maybe_accept( node, &UnionDecl::params     );
+		maybe_accept( node, &UnionDecl::members    );
+		maybe_accept( node, &UnionDecl::attributes );
 	})
 
 	__pass::symtab::addUnion( core, 0, node );
@@ -561,8 +563,9 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::EnumDecl * node ) {
 
 	VISIT(
 		// unlike structs, traits, and unions, enums inject their members into the global scope
-		maybe_accept( node, &EnumDecl::params  );
-		maybe_accept( node, &EnumDecl::members );
+		maybe_accept( node, &EnumDecl::params     );
+		maybe_accept( node, &EnumDecl::members    );
+		maybe_accept( node, &EnumDecl::attributes );
 	)
 
 	VISIT_END( Decl, node );
@@ -576,8 +579,9 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::TraitDecl * node ) {
 
 	VISIT({
 		guard_symtab guard { *this };
-		maybe_accept( node, &TraitDecl::params  );
-		maybe_accept( node, &TraitDecl::members );
+		maybe_accept( node, &TraitDecl::params     );
+		maybe_accept( node, &TraitDecl::members    );
+		maybe_accept( node, &TraitDecl::attributes );
 	})
 
 	__pass::symtab::addTrait( core, 0, node );

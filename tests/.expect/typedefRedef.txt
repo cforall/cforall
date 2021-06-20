@@ -1,1 +1,1 @@
-typedefRedef.cfa:69:25: warning: Compiled
+typedefRedef.cfa:75:25: warning: Compiled

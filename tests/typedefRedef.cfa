@@ -44,6 +44,12 @@ typedef int X2;
 typedef Z X2;
 typedef int X2;
 
+X2 value  __attribute__((aligned(4 * sizeof(X2))));
+
+__attribute__((aligned(4 * sizeof(X2)))) struct rseq_cs {
+	int foo;
+};
+
 // xxx - this doesn't work yet due to parsing problems with generic types
 // #ifdef __CFA__
 // typedef forall(type T) void foo(T);

@@ -166,6 +166,8 @@ public:
 	virtual void visit( const CommaExpr * commaExpr ) override final;
 	virtual void visit( TypeExpr * typeExpr ) override final;
 	virtual void visit( const TypeExpr * typeExpr ) override final;
+	virtual void visit( DimensionExpr * dimensionExpr ) override final;
+	virtual void visit( const DimensionExpr * dimensionExpr ) override final;
 	virtual void visit( AsmExpr * asmExpr ) override final;
 	virtual void visit( const AsmExpr * asmExpr ) override final;
 	virtual void visit( ImplicitCopyCtorExpr * impCpCtorExpr ) override final;
@@ -308,6 +310,7 @@ public:
 	virtual Expression * mutate( ConditionalExpr * conditionalExpr ) override final;
 	virtual Expression * mutate( CommaExpr * commaExpr ) override final;
 	virtual Expression * mutate( TypeExpr * typeExpr ) override final;
+	virtual Expression * mutate( DimensionExpr * dimensionExpr ) override final;
 	virtual Expression * mutate( AsmExpr * asmExpr ) override final;
 	virtual Expression * mutate( ImplicitCopyCtorExpr * impCpCtorExpr ) override final;
 	virtual Expression * mutate( ConstructorExpr * ctorExpr ) override final;
@@ -541,7 +544,7 @@ public:
 
 class WithIndexer {
 protected:
-	WithIndexer() {}
+	WithIndexer( bool trackIdentifiers = true ) : indexer(trackIdentifiers) {}
 	~WithIndexer() {}
 
 public:

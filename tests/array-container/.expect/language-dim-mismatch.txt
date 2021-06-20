@@ -1,0 +1,10 @@
+array-container/language-dim-mismatch.cfa:12:1 error: Type argument given for value parameter: instance of struct SN with body 1
+... with parameters
+  float
+
+array-container/language-dim-mismatch.cfa:13:1 error: Expression argument given for type parameter: instance of struct ST with body 1
+... with parameters
+  constant expression (42 42: signed int)
+  with resolved type:
+    signed int
+

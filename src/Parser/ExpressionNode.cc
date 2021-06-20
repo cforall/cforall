@@ -508,6 +508,11 @@ NameExpr * build_varref( const string * name ) {
 	return expr;
 } // build_varref
 
+DimensionExpr * build_dimensionref( const string * name ) {
+	DimensionExpr * expr = new DimensionExpr( *name );
+	delete name;
+	return expr;
+} // build_varref
 // TODO: get rid of this and OperKinds and reuse code from OperatorTable
 static const char * OperName[] = {						// must harmonize with OperKinds
 	// diadic

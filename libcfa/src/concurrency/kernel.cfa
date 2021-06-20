@@ -279,14 +279,14 @@ void main(processorCtx_t & runner) {
 				if(this->io.pending) { __cfa_io_flush( this ); }
 
 				// Spin a little on I/O, just in case
-					for(5) {
+				for(5) {
 					__maybe_io_drain( this );
 					readyThread = pop_fast( this->cltr );
 					if(readyThread) { ready_schedule_unlock(); break SEARCH; }
 				}
 
 				// no luck, try stealing a few times
-					for(5) {
+				for(5) {
 					if( __maybe_io_drain( this ) ) {
 						readyThread = pop_fast( this->cltr );
 					} else {

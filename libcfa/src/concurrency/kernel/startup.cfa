@@ -18,13 +18,17 @@
 
 // C Includes
 #include <errno.h>              // errno
+#include <signal.h>
 #include <string.h>             // strerror
 #include <unistd.h>             // sysconf
+
 extern "C" {
       #include <limits.h>       // PTHREAD_STACK_MIN
+	#include <unistd.h>       // syscall
 	#include <sys/eventfd.h>  // eventfd
       #include <sys/mman.h>     // mprotect
       #include <sys/resource.h> // getrlimit
+	#include <sys/syscall.h>  // __NR_xxx
 }
 
 // CFA Includes
@@ -97,6 +101,25 @@ extern void __kernel_alarm_shutdown(void);
 // Other Forward Declarations
 extern void __wake_proc(processor *);
 
+#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
+	// No forward declaration needed
+	#define __kernel_rseq_register rseq_register_current_thread
+	#define __kernel_rseq_unregister rseq_unregister_current_thread
+#elif defined(CFA_HAVE_LINUX_RSEQ_H)
+	void __kernel_raw_rseq_register  (void);
+	void __kernel_raw_rseq_unregister(void);
+
+	#define __kernel_rseq_register __kernel_raw_rseq_register
+	#define __kernel_rseq_unregister __kernel_raw_rseq_unregister
+#else
+	// No forward declaration needed
+	// No initialization needed
+	static inline void noop(void) {}
+
+	#define __kernel_rseq_register noop
+	#define __kernel_rseq_unregister noop
+#endif
+
 //-----------------------------------------------------------------------------
 // Kernel storage
 KERNEL_STORAGE(cluster,	             mainCluster);
@@ -140,7 +163,9 @@ thread_local struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "i
 	// No data needed
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
 	extern "Cforall" {
-		// thread_local volatile struct rseq __cfaabi_rseq;
+		__attribute__((aligned(128))) thread_local volatile struct rseq __cfaabi_rseq @= {
+			.cpu_id : RSEQ_CPU_ID_UNINITIALIZED,
+		};
 	}
 #else
 	// No data needed
@@ -230,6 +255,8 @@ static void __kernel_startup(void) {
 
 	register_tls( mainProcessor );
 
+	__kernel_rseq_register();
+
 	//initialize the global state variables
 	__cfaabi_tls.this_processor = mainProcessor;
 	__cfaabi_tls.this_thread    = mainThread;
@@ -295,6 +322,8 @@ static void __kernel_shutdown(void) {
 
 	mainProcessor->local_data = 0p;
 
+	__kernel_rseq_unregister();
+
 	unregister_tls( mainProcessor );
 
 	// Destroy the main processor and its context in reverse order of construction
@@ -346,9 +375,7 @@ static void * __invoke_processor(void * arg) {
 
 	register_tls( proc );
 
-	#if defined(CFA_HAVE_LINUX_LIBRSEQ)
-		rseq_register_current_thread();
-	#endif
+	__kernel_rseq_register();
 
 	// SKULLDUGGERY: We want to create a context for the processor coroutine
 	// which is needed for the 2-step context switch. However, there is no reason
@@ -388,6 +415,8 @@ static void * __invoke_processor(void * arg) {
 	#endif
 
 	proc->local_data = 0p;
+
+	__kernel_rseq_unregister();
 
 	unregister_tls( proc );
 
@@ -511,6 +540,7 @@ static void init(processor & this, const char name[], cluster & _cltr, $thread *
 	this.rdq.itr = 0;
 	this.rdq.id  = -1u;
 	this.rdq.target = -1u;
+	this.rdq.last = -1u;
 	this.rdq.cutoff = 0ull;
 	do_terminate = false;
 	preemption_alarm = 0p;
@@ -801,4 +831,60 @@ static bool verify_fwd_bck_rng(void) {
 
 	return true;
 }
+#endif
+
+#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
+	// No definition needed
+#elif defined(CFA_HAVE_LINUX_RSEQ_H)
+
+	#if defined( __x86_64 ) || defined( __i386 )
+		#define RSEQ_SIG	0x53053053
+	#elif defined( __ARM_ARCH )
+		#ifdef __ARMEB__
+		#define RSEQ_SIG    0xf3def5e7      /* udf    #24035    ; 0x5de3 (ARMv6+) */
+		#else
+		#define RSEQ_SIG    0xe7f5def3      /* udf    #24035    ; 0x5de3 */
+		#endif
+	#endif
+
+	extern void __disable_interrupts_hard();
+	extern void __enable_interrupts_hard();
+
+	void __kernel_raw_rseq_register  (void) {
+		/* paranoid */ verify( __cfaabi_rseq.cpu_id == RSEQ_CPU_ID_UNINITIALIZED );
+
+		// int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), 0, (sigset_t *)0p, _NSIG / 8);
+		int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), 0, RSEQ_SIG);
+		if(ret != 0) {
+			int e = errno;
+			switch(e) {
+			case EINVAL: abort("KERNEL ERROR: rseq register invalid argument");
+			case ENOSYS: abort("KERNEL ERROR: rseq register no supported");
+			case EFAULT: abort("KERNEL ERROR: rseq register with invalid argument");
+			case EBUSY : abort("KERNEL ERROR: rseq register already registered");
+			case EPERM : abort("KERNEL ERROR: rseq register sig  argument  on unregistration does not match the signature received on registration");
+			default: abort("KERNEL ERROR: rseq register unexpected return %d", e);
+			}
+		}
+	}
+
+	void __kernel_raw_rseq_unregister(void) {
+		/* paranoid */ verify( __cfaabi_rseq.cpu_id >= 0 );
+
+		// int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), RSEQ_FLAG_UNREGISTER, (sigset_t *)0p, _NSIG / 8);
+		int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), RSEQ_FLAG_UNREGISTER, RSEQ_SIG);
+		if(ret != 0) {
+			int e = errno;
+			switch(e) {
+			case EINVAL: abort("KERNEL ERROR: rseq unregister invalid argument");
+			case ENOSYS: abort("KERNEL ERROR: rseq unregister no supported");
+			case EFAULT: abort("KERNEL ERROR: rseq unregister with invalid argument");
+			case EBUSY : abort("KERNEL ERROR: rseq unregister already registered");
+			case EPERM : abort("KERNEL ERROR: rseq unregister sig  argument  on unregistration does not match the signature received on registration");
+			default: abort("KERNEL ERROR: rseq unregisteunexpected return %d", e);
+			}
+		}
+	}
+#else
+	// No definition needed
 #endif

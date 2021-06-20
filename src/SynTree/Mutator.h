@@ -79,6 +79,7 @@ class Mutator {
 	virtual Expression * mutate( ConditionalExpr * conditionalExpr ) = 0;
 	virtual Expression * mutate( CommaExpr * commaExpr ) = 0;
 	virtual Expression * mutate( TypeExpr * typeExpr ) = 0;
+	virtual Expression * mutate( DimensionExpr * dimensionExpr ) = 0;
 	virtual Expression * mutate( AsmExpr * asmExpr ) = 0;
 	virtual Expression * mutate( ImplicitCopyCtorExpr * impCpCtorExpr ) = 0;
 	virtual Expression * mutate( ConstructorExpr * ctorExpr ) = 0;

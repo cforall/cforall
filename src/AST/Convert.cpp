@@ -2414,6 +2414,17 @@ private:
 		);
 	}
 
+	virtual void visit( const DimensionExpr * old ) override final {
+		// DimensionExpr gets desugared away in Validate.
+		// As long as new-AST passes don't use it, this cheap-cheerful error
+		// detection helps ensure that these occurrences have been compiled
+		// away, as expected.  To move the DimensionExpr boundary downstream
+		// or move the new-AST translation boundary upstream, implement
+		// DimensionExpr in the new AST and implement a conversion.
+		(void) old;
+		assert(false && "DimensionExpr should not be present at new-AST boundary");
+	}
+
 	virtual void visit( const AsmExpr * old ) override final {
 		this->node = visitBaseExpr( old,
 			new ast::AsmExpr(
