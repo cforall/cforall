@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 19 14:20:36 2021
-// Update Count     : 5022
+// Last Modified On : Sun Jun 20 18:46:51 2021
+// Update Count     : 5023
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -268,6 +268,7 @@ if ( N ) {																		\
 %token BOOL COMPLEX IMAGINARY							// C99
 %token INT128 UINT128 uuFLOAT80 uuFLOAT128				// GCC
 %token uFLOAT16 uFLOAT32 uFLOAT32X uFLOAT64 uFLOAT64X uFLOAT128 // GCC
+%token DECIMAL32 DECIMAL64 DECIMAL128					// GCC
 %token ZERO_T ONE_T										// CFA
 %token SIZEOF TYPEOF VALIST AUTO_TYPE					// GCC
 %token OFFSETOF BASETYPEOF TYPEID						// CFA
@@ -633,9 +634,12 @@ generic_association:									// C11
 
 postfix_expression:
 	primary_expression
-	| postfix_expression '[' assignment_expression ',' comma_expression ']'
-		// { $$ = new ExpressionNode( build_binary_val( OperKinds::Index, $1, new ExpressionNode( build_binary_val( OperKinds::Index, $3, $5 ) ) ) ); }
-		{ SemanticError( yylloc, "New array subscript is currently unimplemented." ); $$ = nullptr; }
+	| postfix_expression '[' assignment_expression ',' tuple_expression_list ']'
+			// Historic, transitional: Disallow commas in subscripts.
+			// Switching to this behaviour may help check if a C compatibilty case uses comma-exprs in subscripts.
+		// { SemanticError( yylloc, "New array subscript is currently unimplemented." ); $$ = nullptr; }
+			// Current: Commas in subscripts make tuples.
+		{ $$ = new ExpressionNode( build_binary_val( OperKinds::Index, $1, new ExpressionNode( build_tuple( (ExpressionNode *)($3->set_last( $5 ) ) )) ) ); }
 	| postfix_expression '[' assignment_expression ']'
 		// CFA, comma_expression disallowed in this context because it results in a common user error: subscripting a
 		// matrix with x[i,j] instead of x[i][j]. While this change is not backwards compatible, there seems to be
@@ -1890,6 +1894,12 @@ basic_type_name:
 		{ $$ = DeclarationNode::newBasicType( DeclarationNode::uFloat64x ); }
 	| uFLOAT128
 		{ $$ = DeclarationNode::newBasicType( DeclarationNode::uFloat128 ); }
+	| DECIMAL32
+		{ SemanticError( yylloc, "_Decimal32 is currently unimplemented." ); $$ = nullptr; }
+	| DECIMAL64
+		{ SemanticError( yylloc, "_Decimal64 is currently unimplemented." ); $$ = nullptr; }
+	| DECIMAL128
+		{ SemanticError( yylloc, "_Decimal128 is currently unimplemented." ); $$ = nullptr; }
 	| COMPLEX											// C99
 		{ $$ = DeclarationNode::newComplexType( DeclarationNode::Complex ); }
 	| IMAGINARY											// C99

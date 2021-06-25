@@ -1,0 +1,355 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// vector -- A growable array, with full-service iterators
+//
+// Author           : Michael Brooks
+// Created On       : Thu Jun 23 22:00:00 2021
+// Last Modified By : Michael Brooks
+// Last Modified On : Thu Jun 23 22:00:00 2021
+// Update Count     : 1
+//
+
+#include <stdlib.hfa>
+#include "list.hfa"
+
+forall( T ) {
+    struct vector;
+    
+    struct vector_transit {
+        vector(T) * col_$;
+        ptrdiff_t idx_$;
+    };
+
+    struct vector_exit {
+        vector(T) * invec_$;
+        T * item_$;
+    };
+
+    struct vector_permit {
+        vector(T) * invec_$;
+        T * item_$;
+        inline dlink(vector_permit(T));
+    };
+    P9_EMBEDDED(vector_permit(T), dlink(vector_permit(T)))
+
+    struct vector {
+        T * buffer_first_$;
+        T * buffer_end_$;
+        T * elems_first_$;
+        T * elems_end_$; // wrapped before storing, never == buffer_end_$
+        size_t exit_refcount_$;
+        dlist(vector_permit(T)) live_iters_$;
+    };
+}
+
+static inline
+forall( T ) {
+    
+    // vector
+
+    void ?{}( vector( T ) &, size_t capacity );
+    void ^?{}( vector( T ) & );
+
+    void ?{}( vector( T ) & ) = void;
+    void ?{}( vector( T ) &, vector( T ) & ) = void;
+    vector( T ) & ?=?( vector( T ) &, vector( T ) & ) = void;
+
+    // transit
+
+    void ?{}( vector_transit(T) & ) = void;
+    void ?{}( vector_transit(T) &, vector_transit(T) & );
+    void ^?{}( vector_transit(T) & );
+
+    T ?`val( vector_transit(T) & src );
+    void ?=?( vector_transit(T) & dst, T val );
+
+    // exit
+
+    void ?{}( vector_exit(T) & ) = void;
+    void ?{}( vector_exit(T) &, vector(T) * ) = void;
+
+    void ^?{}( vector_exit(T) & );
+    void ?{}( vector_exit(T) &, vector_transit(T) & );
+    void ?{}( vector_exit(T) &, vector_exit(T) & );
+
+    T ?`val( vector_exit(T) & src );
+    void ?=?( vector_exit(T) & dst, T val );
+    T & ?=?( T & dst, vector_exit(T) & src );
+    void ?*=?( T & dst, vector_exit(T) & src );
+
+    bool ?`moveNext( vector_exit(T) & it );
+
+    // permit
+
+    void ?{}( vector_permit(T) & ) = void;
+
+    void ^?{}( vector_permit(T) & );
+    void ?{}( vector_permit(T) &, vector_transit(T) & );
+    void ?{}( vector_permit(T) &, vector_exit(T) & );
+    void ?{}( vector_permit(T) &, vector_permit(T) & ) = void;
+
+    T ?`val( vector_permit(T) & src );
+
+    // api
+
+    vector_transit(T) push_last( vector( T ) & col, T val );
+    vector_transit(T) ?[?]( vector( T ) &, ptrdiff_t );
+    vector_exit(T) ?`origin( vector( T ) & );
+    size_t ?`capacity( vector(T) & );
+    size_t ?`length( vector(T) & );
+
+    void insert_before( vector( T ) & col, ptrdiff_t idx, T val );
+
+}
+
+static inline
+forall( T ) {
+
+    // vector
+
+    void ?{}( vector( T ) & this, size_t capacity ) {
+        (this.buffer_first_$){ aalloc( capacity ) };
+        (this.buffer_end_$){ this.buffer_first_$ + capacity};
+        (this.elems_first_$){ 0p };
+        (this.elems_end_$){ this.buffer_first_$ };
+        (this.exit_refcount_$){ 0 };
+        (this.live_iters_$){};
+    }
+
+    void ^?{}( vector( T ) & this ) {
+        assert( this.exit_refcount_$ == 0 );
+        free( this.buffer_first_$ );
+        this.buffer_first_$ = 0p;
+        this.buffer_end_$ = 0p;
+        this.elems_first_$ = 0p;
+        this.elems_end_$ = 0p;
+    }
+
+    // transit 
+
+    void ?{}( vector_transit(T) & this, vector_transit(T) & other ) {
+        // call autogen constructor deleted at end of hfa
+        (this){ other.col_$, other.idx_$ };
+    }
+
+    void ^?{}( vector_transit(T) & ) {}
+
+
+    vector_transit(T) ?[?]( vector( T ) & vec, ptrdiff_t idx ) {
+        // call autogen constructor deleted at end of hfa
+        vector_transit(T) ret = { & vec, idx };
+        return ret;
+    }
+
+    T & findElemMem_$( vector(T) & v, ptrdiff_t idx ) {
+        size_t len = v`length;
+        while (idx > len) idx -= len;
+        while (idx < 0  ) idx += len;
+        T * ret = v.elems_first_$ + idx;
+        if (ret < v.buffer_end_$) return *ret;
+        ret -= (v.buffer_end_$ - v.buffer_first_$);
+        assert( v.buffer_first_$ <= ret && ret < v.elems_end_$ );
+        return *ret;
+    }
+
+    T ?`val( vector_transit(T) & src ) {
+        T ret = findElemMem_$( *src.col_$, src.idx_$ );
+        return ret;
+    }
+
+    void ?=?( vector_transit(T) & src, T val ) {
+        findElemMem_$( *src.col_$, src.idx_$ ) = val;
+    }
+
+    // exit
+
+    void ?{}( vector_exit(T) & this, vector_transit(T) & src ) {
+        ( this.invec_$ ){ src.col_$ };
+        ( this.item_$ ){ & findElemMem_$( *src.col_$, src.idx_$ ) };
+
+        this.invec_$->exit_refcount_$ ++;
+    }
+    void ?{}( vector_exit(T) & this, vector_exit(T) & src ){
+        ( this.invec_$ ){ src.invec_$ };
+        ( this.item_$ ){ src.item_$ };
+
+        this.invec_$->exit_refcount_$ ++;
+    }
+
+    void ^?{}( vector_exit(T) & it ) {
+        it.invec_$->exit_refcount_$ --;
+    }
+
+    T ?`val( vector_exit(T) & src ) {
+        return *src.item_$;
+    }
+
+    void ?*=?( T & dst, vector_exit(T) & src ) {
+        dst = *src.item_$;
+    }
+
+    bool ?`moveNext( vector_exit(T) & it ) {
+        if (it.invec_$->elems_first_$ == 0p) {
+            // vector is empty
+            assert ( it.item_$ == 0p ); // it was at origin
+            return false;
+        }
+        assert( it.invec_$->elems_first_$ < it.invec_$->elems_end_$ && "can't handle wraparound yet" ); // temporary: must implement
+        if( it.item_$ == 0p ) {
+            // moving from origin
+            it.item_$ = it.invec_$->elems_first_$;
+        } else {
+            it.item_$ += 1;
+            if( it.item_$ > it.invec_$->buffer_end_$ )
+                it.item_$ = it.invec_$->buffer_first_$;
+        }
+        if ( it.item_$ >= it.invec_$->elems_end_$ ) {
+            // moving to origin
+            it.item_$ = 0p;
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // permit
+
+    void ^?{}( vector_permit(T) & this ) {
+        remove(this);
+    }
+
+    void ?{}( vector_permit(T) & this, vector_transit(T) & src ) {
+        ( this.invec_$ ){ src.col_$ };
+        ( this.item_$ ){ & findElemMem_$( *src.col_$, src.idx_$ ) };
+        insert_first( src.col_$->live_iters_$, this );
+    }
+
+    void ?{}( vector_permit(T) & this, vector_exit(T) & src ) {
+        ( this.invec_$ ){ src.invec_$ };
+        ( this.item_$ ){ src.item_$ };
+        insert_first( src.invec_$->live_iters_$, this );
+    }
+
+    T ?`val( vector_permit(T) & src ){
+        return *src.item_$;
+    }
+
+    // vec internals
+
+    void grow( vector( T ) & this ) {
+        size_t newCapacity = 2 * (this.buffer_end_$ - this.buffer_first_$);
+        T * newItems = aalloc( newCapacity );
+        size_t elemCount = this`length;
+        for ( ptrdiff_t pos = 0; pos < elemCount; pos += 1 ) {
+            newItems[pos] = findElemMem_$(this, pos);
+        }
+
+        while ( vector_permit(T) & liveIter = this.live_iters_$`elems; liveIter`moveNext ) {
+            liveIter.item_$ += (newItems - this.buffer_first_$);
+        }
+
+        free( this.buffer_first_$ );
+        this.buffer_first_$ = newItems;
+        this.buffer_end_$ = newItems + newCapacity;
+        this.elems_first_$ = this.buffer_first_$;
+        this.elems_end_$ = this.buffer_first_$ + elemCount;
+        assert (this.elems_end_$ < this.buffer_end_$);
+    }
+
+    // vec api
+
+    vector_transit(T) push_last( vector( T ) & col, T val ) {
+        assert (col.exit_refcount_$ == 0);
+        if (col`length >= col`capacity) {
+            assert (col`length == col`capacity);
+            grow(col);
+        }
+        // call autogen constructor deleted at end of hfa
+        vector_transit(T) ret = { & col, col`length };
+        *col.elems_end_$ = val;
+        if (col.elems_first_$ == 0p) col.elems_first_$ = col.elems_end_$;
+        col.elems_end_$ += 1;
+        if (col.elems_end_$ >= col.buffer_end_$) col.elems_end_$ = col.buffer_first_$;
+        return ret;
+    }
+
+    vector_exit(T) ?`origin( vector( T ) & vec ) {
+
+        // private memberwise constructor, deleted from global namespace at end
+        // autogen constructor would not do the raii
+        void ?{}( vector_exit(T) & this, vector(T) * invec_$, T * item_$ ) {
+            ( this.invec_$ ){ invec_$ };
+            ( this.item_$ ){ item_$ };
+            this.invec_$->exit_refcount_$ ++;
+        }
+
+        vector_exit(T) ret = { &vec, 0p };
+        return ret;
+    }
+
+    bool inRange_$( T * query, T * from, T * to) {
+        if (from == to) return false;
+        if (from < to) return from <= query && query < to;
+        return query < to || from <= query;
+    }
+
+    void insert_before( vector( T ) & col, ptrdiff_t idx, T val ) {
+        assert (col.exit_refcount_$ == 0);
+        if (col`length >= col`capacity) {
+            assert (col`length == col`capacity);
+            grow(col);
+        }
+        
+        T & insertTargetR = findElemMem_$( col, idx );
+        T * insertTarget = & insertTargetR; // doesn't work in one line; must be a bug
+
+        // bubble toward back
+        if ( col.elems_end_$ < insertTarget ) {
+            // two phases of bubbling, to wrap around
+            for (T * tgt = col.elems_end_$; tgt > col.buffer_first_$; tgt--) {
+                *tgt = *(tgt-1);
+            }
+            *col.buffer_first_$ = *(col.buffer_end_$ - 1);
+            for (T * tgt = col.buffer_end_$ - 1; tgt > insertTarget; tgt--) {
+                *tgt = *(tgt-1);
+            }
+        } else {
+            for (T * tgt = col.elems_end_$; tgt > insertTarget; tgt--) {
+                *tgt = *(tgt-1);
+            }
+        }
+
+        col.elems_end_$ += 1;
+        if (col.elems_end_$ == col.buffer_end_$) col.elems_end_$ = col.buffer_first_$;
+
+        *insertTarget = val;
+
+        while ( vector_permit(T) & liveIter = col.live_iters_$`elems; liveIter`moveNext ) {
+            if ( inRange_$(liveIter.item_$, insertTarget, col.elems_end_$) ) {
+                liveIter.item_$ += 1;
+                if (liveIter.item_$ >= col.buffer_end_$) liveIter.item_$ = col.buffer_first_$;
+            }
+        }
+    }
+
+    size_t ?`capacity( vector(T) & v ) {
+        return v.buffer_end_$ - v.buffer_first_$;
+    }
+
+    size_t ?`length( vector(T) & v ) {
+        if (v.elems_first_$ == 0p) return 0;
+        if (v.elems_first_$ < v.elems_end_$ ) return v.elems_end_$ - v.elems_first_$;
+        return v.buffer_end_$ - v.elems_first_$ + v.elems_end_$ - v.buffer_first_$;
+    }
+
+
+} // forall T
+
+forall( T ) {
+    void ?{}( vector_exit(T) &, vector(T) *, T * ) = void;
+    void ?{}( vector_transit(T) & this, vector( T ) * col, ptrdiff_t idx ) = void;
+}

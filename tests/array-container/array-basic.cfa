@@ -104,13 +104,13 @@ void runtimeTest( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
     result = total1d_low( wxyz[all][slice_ix][slice_ix][slice_ix] );
     printf("result Ws [][][][] lo = %f\n", result);
 
-    result = total1d_low( wxyz[[all, slice_ix, slice_ix, slice_ix]] );
+    result = total1d_low( wxyz[all, slice_ix, slice_ix, slice_ix] );
     printf("result Ws [,,,]    lo = %f\n", result);
 
     result = total1d_hi( wxyz[all][slice_ix][slice_ix][slice_ix] );
     printf("result Ws [][][][] hi = %f\n", result);
 
-    result = total1d_hi( wxyz[[all, slice_ix, slice_ix, slice_ix]] );
+    result = total1d_hi( wxyz[all, slice_ix, slice_ix, slice_ix] );
     printf("result Ws [,,,]    hi = %f\n", result);
 
     // summing across X, with w=y=z=1
@@ -123,13 +123,13 @@ void runtimeTest( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
     result = total1d_low( wxyz[slice_ix][all][slice_ix][slice_ix] );    
     printf("result Xs [][][][] lo = %f\n", result);
 
-    result = total1d_low( wxyz[[slice_ix, all, slice_ix, slice_ix]] );
+    result = total1d_low( wxyz[slice_ix, all, slice_ix, slice_ix] );
     printf("result Xs [,,,]    lo = %f\n", result);
 
     result = total1d_hi( wxyz[slice_ix][all][slice_ix][slice_ix] );    
     printf("result Xs [][][][] hi = %f\n", result);
 
-    result = total1d_hi( wxyz[[slice_ix, all, slice_ix, slice_ix]] );
+    result = total1d_hi( wxyz[slice_ix, all, slice_ix, slice_ix] );
     printf("result Xs [,,,]    hi = %f\n", result);
 
 }

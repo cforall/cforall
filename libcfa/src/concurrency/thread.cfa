@@ -39,7 +39,7 @@ void ?{}($thread & this, const char * const name, cluster & cl, void * storage, 
 	self_mon_p = &self_mon;
 	curr_cluster = &cl;
 	link.next = 0p;
-	link.ts   = 0;
+	link.ts   = -1llu;
 	preferred = -1u;
 	last_proc = 0p;
 	#if defined( __CFA_WITH_VERIFY__ )

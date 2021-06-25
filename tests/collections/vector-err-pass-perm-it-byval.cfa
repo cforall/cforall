@@ -1,0 +1,2 @@
+#define TRY_PASS_PERMIT_BYVAL_1
+#include "vector-demo.cfa"

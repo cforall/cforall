@@ -279,12 +279,12 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	bits/collection.hfa bits/stack.hfa bits/queue.hfa \
 	bits/sequence.hfa containers/array.hfa concurrency/iofwd.hfa \
 	containers/list.hfa containers/queueLockFree.hfa \
-	containers/stackLockFree.hfa vec/vec.hfa vec/vec2.hfa \
-	vec/vec3.hfa vec/vec4.hfa concurrency/alarm.hfa \
-	concurrency/coroutine.hfa concurrency/exception.hfa \
-	concurrency/kernel.hfa concurrency/locks.hfa \
-	concurrency/monitor.hfa concurrency/mutex.hfa \
-	concurrency/thread.hfa bits/random.hfa \
+	containers/stackLockFree.hfa containers/vector2.hfa \
+	vec/vec.hfa vec/vec2.hfa vec/vec3.hfa vec/vec4.hfa \
+	concurrency/alarm.hfa concurrency/coroutine.hfa \
+	concurrency/exception.hfa concurrency/kernel.hfa \
+	concurrency/locks.hfa concurrency/monitor.hfa \
+	concurrency/mutex.hfa concurrency/thread.hfa bits/random.hfa \
 	concurrency/clib/cfathread.h concurrency/invoke.h \
 	concurrency/future.hfa concurrency/kernel/fwd.hfa
 HEADERS = $(nobase_cfa_include_HEADERS)
@@ -534,6 +534,7 @@ AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_TRUE@	containers/list.hfa \
 @BUILDLIB_TRUE@	containers/queueLockFree.hfa \
 @BUILDLIB_TRUE@	containers/stackLockFree.hfa \
+@BUILDLIB_TRUE@	containers/vector2.hfa \
 @BUILDLIB_TRUE@	vec/vec.hfa \
 @BUILDLIB_TRUE@	vec/vec2.hfa \
 @BUILDLIB_TRUE@	vec/vec3.hfa \

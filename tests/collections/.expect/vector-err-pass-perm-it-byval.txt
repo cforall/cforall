@@ -1,0 +1,270 @@
+error: Unique best alternative includes deleted identifier in Generated Cast of:
+  Application of
+    Deleted Expression
+      Variable Expression: ?{}: static inline forall
+        instance of type T (not function type)
+        with assertions
+        Variable Expression: ?=?: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+          instance of type T (not function type)
+        ... returning
+          instance of type T (not function type)
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+            instance of type T (not function type)
+          ... returning
+            instance of type T (not function type)
+
+        Variable Expression: ?{}: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+        ... returning nothing
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+          ... returning nothing
+
+        Variable Expression: ?{}: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+          instance of type T (not function type)
+        ... returning nothing
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+            instance of type T (not function type)
+          ... returning nothing
+
+        Variable Expression: ^?{}: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+        ... returning nothing
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+          ... returning nothing
+
+        function
+      ... with parameters
+        reference to instance of struct vector_permit with body
+        ... with parameters
+          instance of type T (not function type)
+
+        reference to instance of struct vector_permit with body
+        ... with parameters
+          instance of type T (not function type)
+
+      ... returning nothing
+
+      ... with resolved type:
+        forall
+          instance of type T (not function type)
+          with assertions
+          Variable Expression: ?=?: pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+            instance of type T (not function type)
+          ... returning
+            instance of type T (not function type)
+
+          ... with resolved type:
+            pointer to function
+            ... with parameters
+              reference to instance of type T (not function type)
+              instance of type T (not function type)
+            ... returning
+              instance of type T (not function type)
+
+          Variable Expression: ?{}: pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+          ... returning nothing
+
+          ... with resolved type:
+            pointer to function
+            ... with parameters
+              reference to instance of type T (not function type)
+            ... returning nothing
+
+          Variable Expression: ?{}: pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+            instance of type T (not function type)
+          ... returning nothing
+
+          ... with resolved type:
+            pointer to function
+            ... with parameters
+              reference to instance of type T (not function type)
+              instance of type T (not function type)
+            ... returning nothing
+
+          Variable Expression: ^?{}: pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+          ... returning nothing
+
+          ... with resolved type:
+            pointer to function
+            ... with parameters
+              reference to instance of type T (not function type)
+            ... returning nothing
+
+          function
+        ... with parameters
+          reference to instance of struct vector_permit with body
+          ... with parameters
+            instance of type T (not function type)
+
+          reference to instance of struct vector_permit with body
+          ... with parameters
+            instance of type T (not function type)
+
+        ... returning nothing
+
+      ... deleted by: ?{}: static inline forall
+        instance of type T (not function type)
+        with assertions
+        Variable Expression: ?=?: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+          instance of type T (not function type)
+        ... returning
+          instance of type T (not function type)
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+            instance of type T (not function type)
+          ... returning
+            instance of type T (not function type)
+
+        Variable Expression: ?{}: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+        ... returning nothing
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+          ... returning nothing
+
+        Variable Expression: ?{}: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+          instance of type T (not function type)
+        ... returning nothing
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+            instance of type T (not function type)
+          ... returning nothing
+
+        Variable Expression: ^?{}: pointer to function
+        ... with parameters
+          reference to instance of type T (not function type)
+        ... returning nothing
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            reference to instance of type T (not function type)
+          ... returning nothing
+
+        function
+      ... with parameters
+        reference to instance of struct vector_permit with body
+        ... with parameters
+          instance of type T (not function type)
+
+        reference to instance of struct vector_permit with body
+        ... with parameters
+          instance of type T (not function type)
+
+      ... returning nothing
+
+    ... to arguments
+    Generated Cast of:
+      Variable Expression: __tmp: instance of struct vector_permit with body
+      ... with parameters
+        float
+
+      ... with resolved type:
+        instance of struct vector_permit with body
+        ... with parameters
+          float
+
+    ... to:
+      reference to instance of struct vector_permit with body
+      ... with parameters
+        float
+
+    ... with resolved type:
+      reference to instance of struct vector_permit with body
+      ... with parameters
+        float
+
+    Generated Cast of:
+      Variable Expression: it: instance of struct vector_permit with body
+      ... with parameters
+        float
+
+      ... with resolved type:
+        instance of struct vector_permit with body
+        ... with parameters
+          float
+
+    ... to:
+      reference to instance of struct vector_permit with body
+      ... with parameters
+        float
+
+    ... with resolved type:
+      reference to instance of struct vector_permit with body
+      ... with parameters
+        float
+
+  with inferred parameters 0:
+    ?=?: function
+    ... with parameters
+      reference to float
+      float
+    ... returning
+      float
+
+    ?{}: function
+    ... with parameters
+      reference to float
+    ... returning nothing
+
+    ?{}: function
+    ... with parameters
+      reference to float
+      float
+    ... returning nothing
+
+    ^?{}: function
+    ... with parameters
+      reference to float
+    ... returning nothing
+
+
+  ... with resolved type:
+    void
+... to: nothing
+... with resolved type:
+  void

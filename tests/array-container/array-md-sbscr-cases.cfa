@@ -52,40 +52,40 @@ void test_inOrderSplits( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
 
     // order wxyz, natural split (4-0 or 0-4, no intermediate to declare)
 
-    assert(( wxyz[[iw, ix, iy, iz]] == valExpected ));
+    assert(( wxyz[iw, ix, iy, iz] == valExpected ));
 
     // order wxyz, unnatural split 1-3  (three ways declared)
 
     typeof( wxyz[iw] ) xyz1 = wxyz[iw];
-    assert(( xyz1[[ix, iy, iz]]  == valExpected ));
+    assert(( xyz1[ix, iy, iz]  == valExpected ));
 
     typeof( wxyz[iw] ) xyz2;
     &xyz2 = &wxyz[iw];
-    assert(( xyz2[[ix, iy, iz]] == valExpected ));
+    assert(( xyz2[ix, iy, iz] == valExpected ));
 
-    assert(( wxyz[iw][[ix, iy, iz]] == valExpected ));
+    assert(( wxyz[iw][ix, iy, iz] == valExpected ));
 
     // order wxyz, unnatural split 2-2  (three ways declared)
 
-    typeof( wxyz[[iw, ix]] ) yz1 = wxyz[[iw,ix]];
-    assert(( yz1[[iy, iz]]  == valExpected ));
+    typeof( wxyz[iw, ix] ) yz1 = wxyz[iw,ix];
+    assert(( yz1[iy, iz]  == valExpected ));
 
-    typeof( wxyz[[iw, ix]] ) yz2;
-    &yz2 = &wxyz[[iw, ix]];
-    assert(( yz2[[iy, iz]]  == valExpected ));
+    typeof( wxyz[iw, ix] ) yz2;
+    &yz2 = &wxyz[iw, ix];
+    assert(( yz2[iy, iz]  == valExpected ));
 
-    assert(( wxyz[[iw, ix]][[iy, iz]] == valExpected ));
+    assert(( wxyz[iw, ix][iy, iz] == valExpected ));
 
     // order wxyz, unnatural split 3-1  (three ways declared)
 
-    typeof( wxyz[[iw, ix, iy]] ) z1 = wxyz[[iw, ix, iy]];
+    typeof( wxyz[iw, ix, iy] ) z1 = wxyz[iw, ix, iy];
     assert(( z1[iz]  == valExpected ));
 
-    typeof( wxyz[[iw, ix, iy]] ) z2;
-    &z2 = &wxyz[[iw, ix, iy]];
+    typeof( wxyz[iw, ix, iy] ) z2;
+    &z2 = &wxyz[iw, ix, iy];
     assert(( z2[iz] == valExpected ));
 
-    assert(( wxyz[[iw, ix, iy]][iz] == valExpected ));
+    assert(( wxyz[iw, ix, iy][iz] == valExpected ));
 }
 
 // All orders that skip a single dimension, each in its most natural split.
@@ -103,34 +103,34 @@ void test_skipSingle( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
 
     // order wxyz (no intermediates to declare)
 
-    assert(( wxyz[[iw  , ix  , iy  , iz  ]]       == valExpected ));
-    assert(( wxyz[[iw-1, ix  , iy  , iz  ]]       != valExpected ));
+    assert(( wxyz[iw  , ix  , iy  , iz  ]       == valExpected ));
+    assert(( wxyz[iw-1, ix  , iy  , iz  ]       != valExpected ));
 
     // order xyzw: *xyz, w
 
-    assert(( wxyz[[all , ix  , iy  , iz  ]][iw  ] == valExpected ));
-    assert(( wxyz[[all , ix-1, iy  , iz  ]][iw  ] != valExpected ));
-    assert(( wxyz[[all , ix  , iy  , iz  ]][iw-1] != valExpected ));
+    assert(( wxyz[all , ix  , iy  , iz  ][iw  ] == valExpected ));
+    assert(( wxyz[all , ix-1, iy  , iz  ][iw  ] != valExpected ));
+    assert(( wxyz[all , ix  , iy  , iz  ][iw-1] != valExpected ));
 
     // order wyzx: w*yz, x
 
-    assert(( wxyz[[iw  , all , iy  , iz  ]][ix  ] == valExpected ));
-    assert(( wxyz[[iw  , all , iy-1, iz  ]][ix  ] != valExpected ));
-    assert(( wxyz[[iw  , all , iy  , iz  ]][ix-1] != valExpected ));
+    assert(( wxyz[iw  , all , iy  , iz  ][ix  ] == valExpected ));
+    assert(( wxyz[iw  , all , iy-1, iz  ][ix  ] != valExpected ));
+    assert(( wxyz[iw  , all , iy  , iz  ][ix-1] != valExpected ));
 
     // order wxzy: wx*z, y
   #if 0
     // not working on 32-bit
-    assert(( wxyz[[iw  , ix  , all , iz  ]][iy  ] == valExpected ));
-    assert(( wxyz[[iw  , ix  , all , iz-1]][iy  ] != valExpected ));
-    assert(( wxyz[[iw  , ix  , all , iz  ]][iy-1] != valExpected ));
+    assert(( wxyz[iw  , ix  , all , iz  ][iy  ] == valExpected ));
+    assert(( wxyz[iw  , ix  , all , iz-1][iy  ] != valExpected ));
+    assert(( wxyz[iw  , ix  , all , iz  ][iy-1] != valExpected ));
   #endif
 }
 
 
 // The comments specify a covering set of orders, each in its most natural split.
 // Covering means that each edge on the lattice of dimesnions-provided is used.
-// Natural split means the arity of every -[[-,...]] tuple equals the dimensionality of its "this" operand, then that the fewest "all" subscripts are given.
+// Natural split means the arity of every -[-,...] tuple equals the dimensionality of its "this" operand, then that the fewest "all" subscripts are given.
 // The commented-out test code shows cases that don't work.  We wish all the comment-coverd cases worked.
 forall( [Nw], [Nx], [Ny], [Nz] )
 void test_latticeCoverage( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
@@ -146,72 +146,72 @@ void test_latticeCoverage( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
 
     // order wxyz (no intermediates to declare)
 
-    assert(( wxyz[[iw, ix, iy, iz]] == valExpected ));
+    assert(( wxyz[iw, ix, iy, iz] == valExpected ));
 
     {
         // order wyxz: w*y*, xz
         assert( wxyz[iw][all][iy][all] [ix][iz] == valExpected );
 
-        typeof( wxyz[[iw, all, iy, all]] ) xz1 = wxyz[[iw, all, iy, all]];
-        assert(( xz1[[ix, iz]]  == valExpected ));
+        typeof( wxyz[iw, all, iy, all] ) xz1 = wxyz[iw, all, iy, all];
+        assert(( xz1[ix, iz]  == valExpected ));
 
-        typeof( wxyz[[iw, all, iy, all]] ) xz2;
-        &xz2 = &wxyz[[iw, all, iy, all]];
-        assert(( xz2[[ix, iz]]  == valExpected ));
+        typeof( wxyz[iw, all, iy, all] ) xz2;
+        &xz2 = &wxyz[iw, all, iy, all];
+        assert(( xz2[ix, iz]  == valExpected ));
 
-        assert(( wxyz[[iw  , all, iy  , all]][[ix  , iz  ]] == valExpected ));
-        assert(( wxyz[[iw-1, all, iy  , all]][[ix  , iz  ]] != valExpected ));
-        assert(( wxyz[[iw  , all, iy-1, all]][[ix  , iz  ]] != valExpected ));
-        assert(( wxyz[[iw  , all, iy  , all]][[ix-1, iz  ]] != valExpected ));
-        assert(( wxyz[[iw  , all, iy  , all]][[ix  , iz-1]] != valExpected ));
+        assert(( wxyz[iw  , all, iy  , all][ix  , iz  ] == valExpected ));
+        assert(( wxyz[iw-1, all, iy  , all][ix  , iz  ] != valExpected ));
+        assert(( wxyz[iw  , all, iy-1, all][ix  , iz  ] != valExpected ));
+        assert(( wxyz[iw  , all, iy  , all][ix-1, iz  ] != valExpected ));
+        assert(( wxyz[iw  , all, iy  , all][ix  , iz-1] != valExpected ));
     }
     {
         // order wzxy: w**z, xy
         assert( wxyz[iw][all][all][iz] [ix][iy] == valExpected );
 
-        // typeof( wxyz[[iw, all, all, iz]] ) xy1 = wxyz[[iw, all, all, iz]];
-        // assert(( xy1[[ix, iy]]  == valExpected ));
+        // typeof( wxyz[iw, all, all, iz] ) xy1 = wxyz[iw, all, all, iz];
+        // assert(( xy1[ix, iy]  == valExpected ));
 
-        // typeof(  wxyz[[iw, all, all, iz]] ) xy2;
-        // &xy2 = &wxyz[[iw, all, all, iz]];
-        // assert(( xy2[[ix, iy]]  == valExpected ));
+        // typeof(  wxyz[iw, all, all, iz] ) xy2;
+        // &xy2 = &wxyz[iw, all, all, iz];
+        // assert(( xy2[ix, iy]  == valExpected ));
 
-        // assert(( wxyz[[iw  , all, all, iz  ]][[ix  , iy  ]] == valExpected ));
-        // assert(( wxyz[[iw-1, all, all, iz  ]][[ix  , iy  ]] != valExpected ));
-        // assert(( wxyz[[iw  , all, all, iz-1]][[ix  , iy  ]] != valExpected ));
-        // assert(( wxyz[[iw  , all, all, iz  ]][[ix-1, iy  ]] != valExpected ));
-        // assert(( wxyz[[iw  , all, all, iz  ]][[ix  , iy-1]] != valExpected ));
+        // assert(( wxyz[iw  , all, all, iz  ][ix  , iy  ] == valExpected ));
+        // assert(( wxyz[iw-1, all, all, iz  ][ix  , iy  ] != valExpected ));
+        // assert(( wxyz[iw  , all, all, iz-1][ix  , iy  ] != valExpected ));
+        // assert(( wxyz[iw  , all, all, iz  ][ix-1, iy  ] != valExpected ));
+        // assert(( wxyz[iw  , all, all, iz  ][ix  , iy-1] != valExpected ));
     }
     {
         // order xywz: *xy*, wz
         assert( wxyz[all][ix][iy][all] [iw][iz] == valExpected );
 
-        typeof( wxyz[[all, ix, iy, all]] ) wz1 = wxyz[[all, ix, iy, all]];
-        assert(( wz1[[iw, iz]]  == valExpected ));
+        typeof( wxyz[all, ix, iy, all] ) wz1 = wxyz[all, ix, iy, all];
+        assert(( wz1[iw, iz]  == valExpected ));
 
-        assert(( wxyz[[all  , ix, iy  , all]][[iw  , iz  ]] == valExpected ));
+        assert(( wxyz[all  , ix, iy  , all][iw  , iz  ] == valExpected ));
     }
     {
         // order xzwy: *x*z, wy
         assert( wxyz[all][ix][all][iz] [iw][iy] == valExpected );
 
-        // assert(( wxyz[[all , ix  , all , iz  ]][[iw  , iy  ]] == valExpected ));
+        // assert(( wxyz[all , ix  , all , iz  ][iw  , iy  ] == valExpected ));
     }
     {
         // order yzwx: **yz, wx
         assert( wxyz[all][all][iy][iz] [iw][ix] == valExpected );
 
-        // assert(( wxyz[[all , all , iy  , iz  ]][[iw  , ix  ]] == valExpected ));
+        // assert(( wxyz[all , all , iy  , iz  ][iw  , ix  ] == valExpected ));
     }
     {
         // order xwzy: *x**, w*z, y
         assert( wxyz[all][ix][all][all] [iw][all][iz] [iy] == valExpected );
 
-        typeof( wxyz[all][ix][all][all] ) wyz_workaround = wxyz[[all , ix , all  , all  ]];
-        typeof( wyz_workaround[iw][all][iz] ) y_workaround = wyz_workaround[[iw , all , iz  ]];
+        typeof( wxyz[all][ix][all][all] ) wyz_workaround = wxyz[all , ix , all  , all  ];
+        typeof( wyz_workaround[iw][all][iz] ) y_workaround = wyz_workaround[iw , all , iz  ];
         assert( y_workaround[iy] == valExpected );
 
-        // assert(( wxyz[[all , ix , all  , all  ]][[iw  , all , iz  ]][iy  ] == valExpected ));
+        // assert(( wxyz[all , ix , all  , all  ][iw  , all , iz  ][iy  ] == valExpected ));
     }
     {
         // order ywzx: **y*, w*z, x
@@ -238,35 +238,35 @@ void test_numSubscrTypeCompatibility( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
 
     valExpected = getMagicNumber(2, 3, 4, 5);
     assert(( wxyz [2] [3] [4] [5]  == valExpected ));
-    assert(( wxyz[[2,  3]][4] [5]  == valExpected ));
-    assert(( wxyz [2][[3,  4]][5]  == valExpected ));
-    assert(( wxyz [2] [3][[4,  5]] == valExpected ));
-    assert(( wxyz[[2,  3,  4]][5]  == valExpected ));
-    assert(( wxyz [2][[3,  4,  5]] == valExpected ));
-    assert(( wxyz[[2,  3,  4,  5]] == valExpected ));
+    assert(( wxyz[2,  3][4] [5]  == valExpected ));
+    assert(( wxyz [2][3,  4][5]  == valExpected ));
+    assert(( wxyz [2] [3][4,  5] == valExpected ));
+    assert(( wxyz[2,  3,  4][5]  == valExpected ));
+    assert(( wxyz [2][3,  4,  5] == valExpected ));
+    assert(( wxyz[2,  3,  4,  5] == valExpected ));
 
     for ( i; Nw ) {
-        assert(( wxyz[[ i, 3, 4, 5 ]] == getMagicNumber(i, 3, 4, 5) ));
+        assert(( wxyz[ i, 3, 4, 5 ] == getMagicNumber(i, 3, 4, 5) ));
     }
 
     for ( i; Nx ) {
-        assert(( wxyz[[ 2, i, 4, 5 ]] == getMagicNumber(2, i, 4, 5) ));
+        assert(( wxyz[ 2, i, 4, 5 ] == getMagicNumber(2, i, 4, 5) ));
     }
 
     for ( i; Ny ) {
-        assert(( wxyz[[ 2, 3, i, 5 ]] == getMagicNumber(2, 3, i, 5) ));
+        assert(( wxyz[ 2, 3, i, 5 ] == getMagicNumber(2, 3, i, 5) ));
     }
 
     for ( i; Nz ) {
-        assert(( wxyz[[ 2, 3, 4, i ]] == getMagicNumber(2, 3, 4, i) ));
+        assert(( wxyz[ 2, 3, 4, i ] == getMagicNumber(2, 3, 4, i) ));
     }
 
     for ( i; Nw ) {
-        assert(( wxyz[[ i, all, 4, 5 ]][3] == getMagicNumber(i, 3, 4, 5) ));
+        assert(( wxyz[ i, all, 4, 5 ][3] == getMagicNumber(i, 3, 4, 5) ));
     }
 
     for ( i; Nw ) {
-        assert(( wxyz[[ all, 3, 4, 5 ]][i] == getMagicNumber(i, 3, 4, 5) ));
+        assert(( wxyz[ all, 3, 4, 5 ][i] == getMagicNumber(i, 3, 4, 5) ));
     }
 }
 

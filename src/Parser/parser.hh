@@ -89,108 +89,111 @@ extern int yydebug;
     uFLOAT64 = 295,
     uFLOAT64X = 296,
     uFLOAT128 = 297,
-    ZERO_T = 298,
-    ONE_T = 299,
-    SIZEOF = 300,
-    TYPEOF = 301,
-    VALIST = 302,
-    AUTO_TYPE = 303,
-    OFFSETOF = 304,
-    BASETYPEOF = 305,
-    TYPEID = 306,
-    ENUM = 307,
-    STRUCT = 308,
-    UNION = 309,
-    EXCEPTION = 310,
-    GENERATOR = 311,
-    COROUTINE = 312,
-    MONITOR = 313,
-    THREAD = 314,
-    OTYPE = 315,
-    FTYPE = 316,
-    DTYPE = 317,
-    TTYPE = 318,
-    TRAIT = 319,
-    LABEL = 320,
-    SUSPEND = 321,
-    ATTRIBUTE = 322,
-    EXTENSION = 323,
-    IF = 324,
-    ELSE = 325,
-    SWITCH = 326,
-    CASE = 327,
-    DEFAULT = 328,
-    DO = 329,
-    WHILE = 330,
-    FOR = 331,
-    BREAK = 332,
-    CONTINUE = 333,
-    GOTO = 334,
-    RETURN = 335,
-    CHOOSE = 336,
-    FALLTHRU = 337,
-    FALLTHROUGH = 338,
-    WITH = 339,
-    WHEN = 340,
-    WAITFOR = 341,
-    DISABLE = 342,
-    ENABLE = 343,
-    TRY = 344,
-    THROW = 345,
-    THROWRESUME = 346,
-    AT = 347,
-    ASM = 348,
-    ALIGNAS = 349,
-    ALIGNOF = 350,
-    GENERIC = 351,
-    STATICASSERT = 352,
-    IDENTIFIER = 353,
-    QUOTED_IDENTIFIER = 354,
-    TYPEDIMname = 355,
-    TYPEDEFname = 356,
-    TYPEGENname = 357,
-    TIMEOUT = 358,
-    WOR = 359,
-    CATCH = 360,
-    RECOVER = 361,
-    CATCHRESUME = 362,
-    FIXUP = 363,
-    FINALLY = 364,
-    INTEGERconstant = 365,
-    CHARACTERconstant = 366,
-    STRINGliteral = 367,
-    DIRECTIVE = 368,
-    FLOATING_DECIMALconstant = 369,
-    FLOATING_FRACTIONconstant = 370,
-    FLOATINGconstant = 371,
-    ARROW = 372,
-    ICR = 373,
-    DECR = 374,
-    LS = 375,
-    RS = 376,
-    LE = 377,
-    GE = 378,
-    EQ = 379,
-    NE = 380,
-    ANDAND = 381,
-    OROR = 382,
-    ELLIPSIS = 383,
-    EXPassign = 384,
-    MULTassign = 385,
-    DIVassign = 386,
-    MODassign = 387,
-    PLUSassign = 388,
-    MINUSassign = 389,
-    LSassign = 390,
-    RSassign = 391,
-    ANDassign = 392,
-    ERassign = 393,
-    ORassign = 394,
-    ErangeUpEq = 395,
-    ErangeDown = 396,
-    ErangeDownEq = 397,
-    ATassign = 398,
-    THEN = 399
+    DECIMAL32 = 298,
+    DECIMAL64 = 299,
+    DECIMAL128 = 300,
+    ZERO_T = 301,
+    ONE_T = 302,
+    SIZEOF = 303,
+    TYPEOF = 304,
+    VALIST = 305,
+    AUTO_TYPE = 306,
+    OFFSETOF = 307,
+    BASETYPEOF = 308,
+    TYPEID = 309,
+    ENUM = 310,
+    STRUCT = 311,
+    UNION = 312,
+    EXCEPTION = 313,
+    GENERATOR = 314,
+    COROUTINE = 315,
+    MONITOR = 316,
+    THREAD = 317,
+    OTYPE = 318,
+    FTYPE = 319,
+    DTYPE = 320,
+    TTYPE = 321,
+    TRAIT = 322,
+    LABEL = 323,
+    SUSPEND = 324,
+    ATTRIBUTE = 325,
+    EXTENSION = 326,
+    IF = 327,
+    ELSE = 328,
+    SWITCH = 329,
+    CASE = 330,
+    DEFAULT = 331,
+    DO = 332,
+    WHILE = 333,
+    FOR = 334,
+    BREAK = 335,
+    CONTINUE = 336,
+    GOTO = 337,
+    RETURN = 338,
+    CHOOSE = 339,
+    FALLTHRU = 340,
+    FALLTHROUGH = 341,
+    WITH = 342,
+    WHEN = 343,
+    WAITFOR = 344,
+    DISABLE = 345,
+    ENABLE = 346,
+    TRY = 347,
+    THROW = 348,
+    THROWRESUME = 349,
+    AT = 350,
+    ASM = 351,
+    ALIGNAS = 352,
+    ALIGNOF = 353,
+    GENERIC = 354,
+    STATICASSERT = 355,
+    IDENTIFIER = 356,
+    QUOTED_IDENTIFIER = 357,
+    TYPEDIMname = 358,
+    TYPEDEFname = 359,
+    TYPEGENname = 360,
+    TIMEOUT = 361,
+    WOR = 362,
+    CATCH = 363,
+    RECOVER = 364,
+    CATCHRESUME = 365,
+    FIXUP = 366,
+    FINALLY = 367,
+    INTEGERconstant = 368,
+    CHARACTERconstant = 369,
+    STRINGliteral = 370,
+    DIRECTIVE = 371,
+    FLOATING_DECIMALconstant = 372,
+    FLOATING_FRACTIONconstant = 373,
+    FLOATINGconstant = 374,
+    ARROW = 375,
+    ICR = 376,
+    DECR = 377,
+    LS = 378,
+    RS = 379,
+    LE = 380,
+    GE = 381,
+    EQ = 382,
+    NE = 383,
+    ANDAND = 384,
+    OROR = 385,
+    ELLIPSIS = 386,
+    EXPassign = 387,
+    MULTassign = 388,
+    DIVassign = 389,
+    MODassign = 390,
+    PLUSassign = 391,
+    MINUSassign = 392,
+    LSassign = 393,
+    RSassign = 394,
+    ANDassign = 395,
+    ERassign = 396,
+    ORassign = 397,
+    ErangeUpEq = 398,
+    ErangeDown = 399,
+    ErangeDownEq = 400,
+    ATassign = 401,
+    THEN = 402
   };
 #endif
 /* Tokens.  */
@@ -234,108 +237,111 @@ extern int yydebug;
 #define uFLOAT64 295
 #define uFLOAT64X 296
 #define uFLOAT128 297
-#define ZERO_T 298
-#define ONE_T 299
-#define SIZEOF 300
-#define TYPEOF 301
-#define VALIST 302
-#define AUTO_TYPE 303
-#define OFFSETOF 304
-#define BASETYPEOF 305
-#define TYPEID 306
-#define ENUM 307
-#define STRUCT 308
-#define UNION 309
-#define EXCEPTION 310
-#define GENERATOR 311
-#define COROUTINE 312
-#define MONITOR 313
-#define THREAD 314
-#define OTYPE 315
-#define FTYPE 316
-#define DTYPE 317
-#define TTYPE 318
-#define TRAIT 319
-#define LABEL 320
-#define SUSPEND 321
-#define ATTRIBUTE 322
-#define EXTENSION 323
-#define IF 324
-#define ELSE 325
-#define SWITCH 326
-#define CASE 327
-#define DEFAULT 328
-#define DO 329
-#define WHILE 330
-#define FOR 331
-#define BREAK 332
-#define CONTINUE 333
-#define GOTO 334
-#define RETURN 335
-#define CHOOSE 336
-#define FALLTHRU 337
-#define FALLTHROUGH 338
-#define WITH 339
-#define WHEN 340
-#define WAITFOR 341
-#define DISABLE 342
-#define ENABLE 343
-#define TRY 344
-#define THROW 345
-#define THROWRESUME 346
-#define AT 347
-#define ASM 348
-#define ALIGNAS 349
-#define ALIGNOF 350
-#define GENERIC 351
-#define STATICASSERT 352
-#define IDENTIFIER 353
-#define QUOTED_IDENTIFIER 354
-#define TYPEDIMname 355
-#define TYPEDEFname 356
-#define TYPEGENname 357
-#define TIMEOUT 358
-#define WOR 359
-#define CATCH 360
-#define RECOVER 361
-#define CATCHRESUME 362
-#define FIXUP 363
-#define FINALLY 364
-#define INTEGERconstant 365
-#define CHARACTERconstant 366
-#define STRINGliteral 367
-#define DIRECTIVE 368
-#define FLOATING_DECIMALconstant 369
-#define FLOATING_FRACTIONconstant 370
-#define FLOATINGconstant 371
-#define ARROW 372
-#define ICR 373
-#define DECR 374
-#define LS 375
-#define RS 376
-#define LE 377
-#define GE 378
-#define EQ 379
-#define NE 380
-#define ANDAND 381
-#define OROR 382
-#define ELLIPSIS 383
-#define EXPassign 384
-#define MULTassign 385
-#define DIVassign 386
-#define MODassign 387
-#define PLUSassign 388
-#define MINUSassign 389
-#define LSassign 390
-#define RSassign 391
-#define ANDassign 392
-#define ERassign 393
-#define ORassign 394
-#define ErangeUpEq 395
-#define ErangeDown 396
-#define ErangeDownEq 397
-#define ATassign 398
-#define THEN 399
+#define DECIMAL32 298
+#define DECIMAL64 299
+#define DECIMAL128 300
+#define ZERO_T 301
+#define ONE_T 302
+#define SIZEOF 303
+#define TYPEOF 304
+#define VALIST 305
+#define AUTO_TYPE 306
+#define OFFSETOF 307
+#define BASETYPEOF 308
+#define TYPEID 309
+#define ENUM 310
+#define STRUCT 311
+#define UNION 312
+#define EXCEPTION 313
+#define GENERATOR 314
+#define COROUTINE 315
+#define MONITOR 316
+#define THREAD 317
+#define OTYPE 318
+#define FTYPE 319
+#define DTYPE 320
+#define TTYPE 321
+#define TRAIT 322
+#define LABEL 323
+#define SUSPEND 324
+#define ATTRIBUTE 325
+#define EXTENSION 326
+#define IF 327
+#define ELSE 328
+#define SWITCH 329
+#define CASE 330
+#define DEFAULT 331
+#define DO 332
+#define WHILE 333
+#define FOR 334
+#define BREAK 335
+#define CONTINUE 336
+#define GOTO 337
+#define RETURN 338
+#define CHOOSE 339
+#define FALLTHRU 340
+#define FALLTHROUGH 341
+#define WITH 342
+#define WHEN 343
+#define WAITFOR 344
+#define DISABLE 345
+#define ENABLE 346
+#define TRY 347
+#define THROW 348
+#define THROWRESUME 349
+#define AT 350
+#define ASM 351
+#define ALIGNAS 352
+#define ALIGNOF 353
+#define GENERIC 354
+#define STATICASSERT 355
+#define IDENTIFIER 356
+#define QUOTED_IDENTIFIER 357
+#define TYPEDIMname 358
+#define TYPEDEFname 359
+#define TYPEGENname 360
+#define TIMEOUT 361
+#define WOR 362
+#define CATCH 363
+#define RECOVER 364
+#define CATCHRESUME 365
+#define FIXUP 366
+#define FINALLY 367
+#define INTEGERconstant 368
+#define CHARACTERconstant 369
+#define STRINGliteral 370
+#define DIRECTIVE 371
+#define FLOATING_DECIMALconstant 372
+#define FLOATING_FRACTIONconstant 373
+#define FLOATINGconstant 374
+#define ARROW 375
+#define ICR 376
+#define DECR 377
+#define LS 378
+#define RS 379
+#define LE 380
+#define GE 381
+#define EQ 382
+#define NE 383
+#define ANDAND 384
+#define OROR 385
+#define ELLIPSIS 386
+#define EXPassign 387
+#define MULTassign 388
+#define DIVassign 389
+#define MODassign 390
+#define PLUSassign 391
+#define MINUSassign 392
+#define LSassign 393
+#define RSassign 394
+#define ANDassign 395
+#define ERassign 396
+#define ORassign 397
+#define ErangeUpEq 398
+#define ErangeDown 399
+#define ErangeDownEq 400
+#define ATassign 401
+#define THEN 402
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -363,7 +369,7 @@ union YYSTYPE
 	CatchStmt::Kind catch_kind;
 	GenericExpr * genexpr;
 
-#line 367 "Parser/parser.hh"
+#line 373 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

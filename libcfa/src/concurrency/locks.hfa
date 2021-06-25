@@ -173,6 +173,8 @@ struct fast_lock {
 	ThreadBenaphore sem;
 };
 
+static inline void ?{}(fast_lock & this) { this.owner = 0p; }
+
 static inline bool $try_lock(fast_lock & this, $thread * thrd) {
     $thread * exp = 0p;
     return __atomic_compare_exchange_n(&this.owner, &exp, thrd, false, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);

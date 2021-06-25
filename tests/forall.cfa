@@ -198,6 +198,32 @@ int jane() {
 	int i = foo( 3 );
 }
 
+forall( T ) void check_otype() {
+	T & tr = *0p;
+	T * tp = 0p;
+
+	&tr += 1;
+	tp += 1;
+	T & tx = tp[1];
+
+	T t;
+	T t2 = t;
+}
+
+forall( T * ) void check_dstype() {
+	T & tr = *0p;
+	T * tp = 0p;
+
+	&tr += 1;
+	tp += 1;
+	T & tx = tp[1];
+}
+
+forall( T & ) void check_dtype() {
+	T & tr = *0p;
+	T * tp = 0p;
+}
+
 //otype T1 | { void xxx( T1 ); };
 
 // otype T1 | { void ?{}( T1 &, zero_t ); T1 ?+?(T1, T1); T1 ?++(T1); [T1] ?+=?(T1,T1); },

@@ -22,7 +22,10 @@ struct cpu_map_entry_t {
 };
 
 struct cpu_info_t {
+	 // array of size [hthrd_count]
 	const cpu_map_entry_t * llc_map;
+
+	 // Number of _hardware_ threads present in the system
 	size_t hthrd_count;
 };
 

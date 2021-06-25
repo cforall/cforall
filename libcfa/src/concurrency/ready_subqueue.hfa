@@ -31,7 +31,7 @@ void ?{}( __intrusive_lane_t & this ) {
 	this.lock = false;
 	this.prev = mock_head(this);
 	this.anchor.next = 0p;
-	this.anchor.ts   = 0;
+	this.anchor.ts   = -1llu;
 	#if !defined(__CFA_NO_STATISTICS__)
 		this.cnt  = 0;
 	#endif
@@ -43,7 +43,7 @@ void ?{}( __intrusive_lane_t & this ) {
 	/* paranoid */ verify( &mock_head(this)->link.next == &this.anchor.next );
 	/* paranoid */ verify( &mock_head(this)->link.ts   == &this.anchor.ts   );
 	/* paranoid */ verify( mock_head(this)->link.next == 0p );
-	/* paranoid */ verify( mock_head(this)->link.ts   == 0  );
+	/* paranoid */ verify( mock_head(this)->link.ts   == -1llu  );
 	/* paranoid */ verify( mock_head(this) == this.prev );
 	/* paranoid */ verify( __alignof__(__intrusive_lane_t) == 128 );
 	/* paranoid */ verify( __alignof__(this) == 128 );
@@ -54,7 +54,7 @@ void ?{}( __intrusive_lane_t & this ) {
 void ^?{}( __intrusive_lane_t & this ) {
 	// Make sure the list is empty
 	/* paranoid */ verify( this.anchor.next == 0p );
-	/* paranoid */ verify( this.anchor.ts   == 0  );
+	/* paranoid */ verify( this.anchor.ts   == -1llu );
 	/* paranoid */ verify( mock_head(this)  == this.prev );
 }
 
@@ -63,15 +63,17 @@ void ^?{}( __intrusive_lane_t & this ) {
 static inline void push( __intrusive_lane_t & this, $thread * node ) {
 	/* paranoid */ verify( this.lock );
 	/* paranoid */ verify( node->link.next == 0p );
-	/* paranoid */ verify( node->link.ts   == 0  );
+	/* paranoid */ verify( node->link.ts   == -1llu  );
 	/* paranoid */ verify( this.prev->link.next == 0p );
-	/* paranoid */ verify( this.prev->link.ts   == 0  );
+	/* paranoid */ verify( this.prev->link.ts   == -1llu  );
 	if( this.anchor.next == 0p ) {
 		/* paranoid */ verify( this.anchor.next == 0p );
-		/* paranoid */ verify( this.anchor.ts   == 0  );
+		/* paranoid */ verify( this.anchor.ts   == -1llu );
+		/* paranoid */ verify( this.anchor.ts   != 0  );
 		/* paranoid */ verify( this.prev == mock_head( this ) );
 	} else {
 		/* paranoid */ verify( this.anchor.next != 0p );
+		/* paranoid */ verify( this.anchor.ts   != -1llu );
 		/* paranoid */ verify( this.anchor.ts   != 0  );
 		/* paranoid */ verify( this.prev != mock_head( this ) );
 	}
@@ -91,6 +93,7 @@ static inline void push( __intrusive_lane_t & this, $thread * node ) {
 static inline [* $thread, unsigned long long] pop( __intrusive_lane_t & this ) {
 	/* paranoid */ verify( this.lock );
 	/* paranoid */ verify( this.anchor.next != 0p );
+	/* paranoid */ verify( this.anchor.ts   != -1llu );
 	/* paranoid */ verify( this.anchor.ts   != 0  );
 
 	// Get the relevant nodes locally
@@ -98,9 +101,9 @@ static inline [* $thread, unsigned long long] pop( __intrusive_lane_t & this ) {
 	$thread * node = this.anchor.next;
 	this.anchor.next = node->link.next;
 	this.anchor.ts   = node->link.ts;
-	bool is_empty = this.anchor.ts == 0;
+	bool is_empty = this.anchor.next == 0p;
 	node->link.next = 0p;
-	node->link.ts   = 0;
+	node->link.ts   = -1llu;
 	#if !defined(__CFA_NO_STATISTICS__)
 		this.cnt--;
 	#endif
@@ -109,17 +112,20 @@ static inline [* $thread, unsigned long long] pop( __intrusive_lane_t & this ) {
 	if(is_empty) this.prev = mock_head( this );
 
 	/* paranoid */ verify( node->link.next == 0p );
-	/* paranoid */ verify( node->link.ts   == 0  );
+	/* paranoid */ verify( node->link.ts   == -1llu  );
+	/* paranoid */ verify( node->link.ts   != 0  );
+	/* paranoid */ verify( this.anchor.ts  != 0  );
 	return [node, ts];
 }
 
 // Check whether or not list is empty
 static inline bool is_empty(__intrusive_lane_t & this) {
-	return this.anchor.ts == 0;
+	return this.anchor.next == 0p;
 }
 
 // Return the timestamp
 static inline unsigned long long ts(__intrusive_lane_t & this) {
 	// Cannot verify here since it may not be locked
+	/* paranoid */ verify(this.anchor.ts != 0);
 	return this.anchor.ts;
 }

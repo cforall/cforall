@@ -136,11 +136,17 @@ static inline TC & ?[?]( TA & this, IxAB_0 ab0, IxAB_1 ab1, IxAB_2 ab2, IxBC bc 
 
 // Base
 forall( [Nq], Sq & | sized(Sq), Tbase & )
-static inline tag(arpk(Nq, Sq, Tbase, Tbase)) enq_( tag(Tbase), tag(Nq), tag(Sq), tag(Tbase) ) {}
+static inline tag(arpk(Nq, Sq, Tbase, Tbase)) enq_( tag(Tbase), tag(Nq), tag(Sq), tag(Tbase) ) {
+    tag(arpk(Nq, Sq, Tbase, Tbase)) ret;
+    return ret;
+}
 
 // Rec
 forall( [Nq], Sq & | sized(Sq), [N], S & | sized(S), recq &, recr &, Tbase & | { tag(recr) enq_( tag(Tbase), tag(Nq), tag(Sq), tag(recq) ); } )
-static inline tag(arpk(N, S, recr, Tbase)) enq_( tag(Tbase), tag(Nq), tag(Sq), tag(arpk(N, S, recq, Tbase)) ) {}
+static inline tag(arpk(N, S, recr, Tbase)) enq_( tag(Tbase), tag(Nq), tag(Sq), tag(arpk(N, S, recq, Tbase)) ) {
+    tag(arpk(N, S, recr, Tbase)) ret;
+    return ret;
+}
 
 // Wrapper
 struct all_t {} all;

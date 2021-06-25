@@ -21,6 +21,7 @@
 
 #define USE_RELAXED_FIFO
 // #define USE_WORK_STEALING
+// #define USE_CPU_WORK_STEALING
 
 #include "bits/defs.hfa"
 #include "device/cpu.hfa"
@@ -29,7 +30,12 @@
 #include "stdlib.hfa"
 #include "math.hfa"
 
+#include <errno.h>
 #include <unistd.h>
+
+extern "C" {
+	#include <sys/syscall.h>  // __NR_xxx
+}
 
 #include "ready_subqueue.hfa"
 
@@ -88,6 +94,25 @@ __attribute__((weak)) unsigned __max_processors() {
 	return max_cores_l;
 }
 
+#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
+	// No forward declaration needed
+	#define __kernel_rseq_register rseq_register_current_thread
+	#define __kernel_rseq_unregister rseq_unregister_current_thread
+#elif defined(CFA_HAVE_LINUX_RSEQ_H)
+	void __kernel_raw_rseq_register  (void);
+	void __kernel_raw_rseq_unregister(void);
+
+	#define __kernel_rseq_register __kernel_raw_rseq_register
+	#define __kernel_rseq_unregister __kernel_raw_rseq_unregister
+#else
+	// No forward declaration needed
+	// No initialization needed
+	static inline void noop(void) {}
+
+	#define __kernel_rseq_register noop
+	#define __kernel_rseq_unregister noop
+#endif
+
 //=======================================================================
 // Cluster wide reader-writer lock
 //=======================================================================
@@ -110,6 +135,8 @@ void ^?{}(__scheduler_RWLock_t & this) {
 //=======================================================================
 // Lock-Free registering/unregistering of threads
 unsigned register_proc_id( void ) with(*__scheduler_lock) {
+	__kernel_rseq_register();
+
 	__cfadbg_print_safe(ready_queue, "Kernel : Registering proc %p for RW-Lock\n", proc);
 	bool * handle = (bool *)&kernelTLS().sched_lock;
 
@@ -164,6 +191,8 @@ void unregister_proc_id( unsigned id ) with(*__scheduler_lock) {
 	__atomic_store_n(cell, 0p, __ATOMIC_RELEASE);
 
 	__cfadbg_print_safe(ready_queue, "Kernel : Unregister proc %p\n", proc);
+
+	__kernel_rseq_unregister();
 }
 
 //-----------------------------------------------------------------------
@@ -258,7 +287,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 		const cpu_map_entry_t & map = cpu_info.llc_map[cpu];
 		/* paranoid */ verify(map.start * READYQ_SHARD_FACTOR < lanes.count);
 		/* paranoid */ verify(map.self * READYQ_SHARD_FACTOR < lanes.count);
-		/* paranoid */ verifyf((map.start + map.count) * READYQ_SHARD_FACTOR <= lanes.count, "have %u lanes but map can go up to %u", lanes.count, (map.start + map.count) * READYQ_SHARD_FACTOR);
+		/* paranoid */ verifyf((map.start + map.count) * READYQ_SHARD_FACTOR <= lanes.count, "have %zu lanes but map can go up to %u", lanes.count, (map.start + map.count) * READYQ_SHARD_FACTOR);
 
 		const int start = map.self * READYQ_SHARD_FACTOR;
 		unsigned i;
@@ -298,7 +327,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 		const cpu_map_entry_t & map = cpu_info.llc_map[cpu];
 		/* paranoid */ verify(map.start * READYQ_SHARD_FACTOR < lanes.count);
 		/* paranoid */ verify(map.self * READYQ_SHARD_FACTOR < lanes.count);
-		/* paranoid */ verifyf((map.start + map.count) * READYQ_SHARD_FACTOR <= lanes.count, "have %u lanes but map can go up to %u", lanes.count, (map.start + map.count) * READYQ_SHARD_FACTOR);
+		/* paranoid */ verifyf((map.start + map.count) * READYQ_SHARD_FACTOR <= lanes.count, "have %zu lanes but map can go up to %u", lanes.count, (map.start + map.count) * READYQ_SHARD_FACTOR);
 
 		processor * const proc = kernelTLS().this_processor;
 		const int start = map.self * READYQ_SHARD_FACTOR;
@@ -312,7 +341,27 @@ void ^?{}(__ready_queue_t & this) with (this) {
 				if(tsc < min) min = tsc;
 			}
 			proc->rdq.cutoff = min;
-			proc->rdq.target = (map.start * READYQ_SHARD_FACTOR) + (__tls_rand() % (map.count* READYQ_SHARD_FACTOR));
+
+			/* paranoid */ verify(lanes.count < 65536); // The following code assumes max 65536 cores.
+			/* paranoid */ verify(map.count < 65536); // The following code assumes max 65536 cores.
+			uint64_t chaos = __tls_rand();
+			uint64_t high_chaos = (chaos >> 32);
+			uint64_t  mid_chaos = (chaos >> 16) & 0xffff;
+			uint64_t  low_chaos = chaos & 0xffff;
+
+			unsigned me = map.self;
+			unsigned cpu_chaos = map.start + (mid_chaos % map.count);
+			bool global = cpu_chaos == me;
+
+			if(global) {
+				proc->rdq.target = high_chaos % lanes.count;
+			} else {
+				proc->rdq.target = (cpu_chaos * READYQ_SHARD_FACTOR) + (low_chaos % READYQ_SHARD_FACTOR);
+				/* paranoid */ verify(proc->rdq.target >= (map.start * READYQ_SHARD_FACTOR));
+				/* paranoid */ verify(proc->rdq.target <  ((map.start + map.count) * READYQ_SHARD_FACTOR));
+			}
+
+			/* paranoid */ verify(proc->rdq.target != -1u);
 		}
 		else {
 			const unsigned long long bias = 0; //2_500_000_000;
@@ -349,6 +398,11 @@ void ^?{}(__ready_queue_t & this) with (this) {
 	__attribute__((hot)) struct $thread * pop_slow(struct cluster * cltr) with (cltr->ready_queue) {
 		processor * const proc = kernelTLS().this_processor;
 		unsigned last = proc->rdq.last;
+		if(last != -1u) {
+			struct $thread * t = try_pop(cltr, last __STATS(, __tls_stats()->ready.pop.steal));
+			if(t) return t;
+			proc->rdq.last = -1u;
+		}
 
 		unsigned i = __tls_rand() % lanes.count;
 		return try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.steal));
@@ -650,11 +704,11 @@ static void check( __ready_queue_t & q ) with (q) {
 
 					if(is_empty(sl)) {
 						assert( sl.anchor.next == 0p );
-						assert( sl.anchor.ts   == 0  );
+						assert( sl.anchor.ts   == -1llu );
 						assert( mock_head(sl)  == sl.prev );
 					} else {
 						assert( sl.anchor.next != 0p );
-						assert( sl.anchor.ts   != 0  );
+						assert( sl.anchor.ts   != -1llu );
 						assert( mock_head(sl)  != sl.prev );
 					}
 			}
@@ -704,8 +758,9 @@ static void fix_times( struct cluster * cltr ) with( cltr->ready_queue ) {
 	#if defined(USE_WORK_STEALING)
 		lanes.tscs = alloc(lanes.count, lanes.tscs`realloc);
 		for(i; lanes.count) {
-			unsigned long long tsc = ts(lanes.data[i]);
-			lanes.tscs[i].tv = tsc != 0 ? tsc : rdtscl();
+			unsigned long long tsc1 = ts(lanes.data[i]);
+			unsigned long long tsc2 = rdtscl();
+			lanes.tscs[i].tv = min(tsc1, tsc2);
 		}
 	#endif
 }
@@ -846,4 +901,61 @@ static void fix_times( struct cluster * cltr ) with( cltr->ready_queue ) {
 		/* paranoid */ verify(this.lanes.count > idx);
 		return this.lanes.data[idx].cnt;
 	}
+#endif
+
+
+#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
+	// No definition needed
+#elif defined(CFA_HAVE_LINUX_RSEQ_H)
+
+	#if defined( __x86_64 ) || defined( __i386 )
+		#define RSEQ_SIG	0x53053053
+	#elif defined( __ARM_ARCH )
+		#ifdef __ARMEB__
+		#define RSEQ_SIG    0xf3def5e7      /* udf    #24035    ; 0x5de3 (ARMv6+) */
+		#else
+		#define RSEQ_SIG    0xe7f5def3      /* udf    #24035    ; 0x5de3 */
+		#endif
+	#endif
+
+	extern void __disable_interrupts_hard();
+	extern void __enable_interrupts_hard();
+
+	void __kernel_raw_rseq_register  (void) {
+		/* paranoid */ verify( __cfaabi_rseq.cpu_id == RSEQ_CPU_ID_UNINITIALIZED );
+
+		// int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), 0, (sigset_t *)0p, _NSIG / 8);
+		int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), 0, RSEQ_SIG);
+		if(ret != 0) {
+			int e = errno;
+			switch(e) {
+			case EINVAL: abort("KERNEL ERROR: rseq register invalid argument");
+			case ENOSYS: abort("KERNEL ERROR: rseq register no supported");
+			case EFAULT: abort("KERNEL ERROR: rseq register with invalid argument");
+			case EBUSY : abort("KERNEL ERROR: rseq register already registered");
+			case EPERM : abort("KERNEL ERROR: rseq register sig  argument  on unregistration does not match the signature received on registration");
+			default: abort("KERNEL ERROR: rseq register unexpected return %d", e);
+			}
+		}
+	}
+
+	void __kernel_raw_rseq_unregister(void) {
+		/* paranoid */ verify( __cfaabi_rseq.cpu_id >= 0 );
+
+		// int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), RSEQ_FLAG_UNREGISTER, (sigset_t *)0p, _NSIG / 8);
+		int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), RSEQ_FLAG_UNREGISTER, RSEQ_SIG);
+		if(ret != 0) {
+			int e = errno;
+			switch(e) {
+			case EINVAL: abort("KERNEL ERROR: rseq unregister invalid argument");
+			case ENOSYS: abort("KERNEL ERROR: rseq unregister no supported");
+			case EFAULT: abort("KERNEL ERROR: rseq unregister with invalid argument");
+			case EBUSY : abort("KERNEL ERROR: rseq unregister already registered");
+			case EPERM : abort("KERNEL ERROR: rseq unregister sig  argument  on unregistration does not match the signature received on registration");
+			default: abort("KERNEL ERROR: rseq unregisteunexpected return %d", e);
+			}
+		}
+	}
+#else
+	// No definition needed
 #endif

@@ -1,0 +1,21 @@
+raiiTests=================
+Having pushed, length is 1
+by transit, got pos0 = 1.000000
+by exit, got pos0 = 1.000000
+Having pushed, length is 2
+helperE sees 2.000000
+producerE gave 1.000000
+producerE again gave 1.000000
+helperT sees 2.000000
+producerT gave 1.000000
+by permit, got pos0 = 1.000000
+Having pushed, length is 3
+into permit from call, got ofH = 1.000000
+stayValidTests============
+before 0.100000
+after, logical: 0.100000
+after, physical: -0.100000
+loopTests=================
+loop sees 0.000000
+loop sees 0.100000
+loop sees 0.200000

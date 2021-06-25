@@ -1,0 +1,169 @@
+#include <containers/vector2.hfa>
+
+void raiiTests() {
+    printf("raiiTests=================\n");
+
+    vector( float ) v = { 25 };
+
+    push_last( v, 1 );
+    printf( "Having pushed, length is %ld\n", v`length );
+
+    float y = v[0]`val;
+    printf( "by transit, got pos0 = %f\n", y );
+
+    {
+        vector_exit(float) it = v[0];
+
+        float z = it`val;
+        printf( "by exit, got pos0 = %f\n", z );
+
+        // forbid modification while locked
+      #ifdef TRY_MOD_WHILE_LOCKED_1
+        push_last( v, 1 );   // runtime assertion failure
+        printf( "Having pushed, length is %ld\n", v`length );
+      #endif
+    }
+
+    push_last( v, 2 );
+    printf( "Having pushed, length is %ld\n", v`length );
+
+    // deletion scope for some exits
+    // point is the function decls and calls, though
+    {
+        void helperE(vector_exit(float) it) {
+            float q = it`val;
+            printf( "helperE sees %f\n", q );
+        }
+
+        vector_exit(float) it2 = v[1];
+        helperE(it2);
+
+        // can't call with implied exit (wish I could, low priority)
+      #ifdef TRY_IMPLIED_EXIT_1
+        helperE( v[1] ); // Invalid application of existing declaration(s)
+      #endif
+
+        //------
+
+        vector_exit(float) producerE( vector( float ) & theVec ) {
+          return theVec[0];
+        }
+
+        vector_exit(float) it3 = producerE( v );
+        float z = it3`val;
+        printf( "producerE gave %f\n", z );
+
+        float zzzz = producerE( v )`val;
+        printf( "producerE again gave %f\n", zzzz );
+
+        //------
+
+        void helperT(vector_transit(float) it) {
+            float q = it`val;
+            printf( "helperT sees %f\n", q );
+        }
+
+        helperT( v[1] );
+
+        //------
+
+        vector_transit(float) producerT( vector( float ) & theVec ) {
+            return theVec[0];
+        }
+
+        float zz = producerT( v )`val;
+        printf( "producerT gave %f\n", zz );
+    }
+
+    //=======
+
+    {
+        vector_permit(float) it = v[0];
+
+        float z = it`val;
+        printf( "by permit, got pos0 = %f\n", z );
+
+        // allow modification while permits exist
+        push_last( v, 1 );
+        printf( "Having pushed, length is %ld\n", v`length );
+
+        // forbid passing permit by value
+      #ifdef TRY_PASS_PERMIT_BYVAL_1
+        void f( vector_permit(float) xx ) {
+            printf("can't get here\n");
+        }
+        f( it ); // Unique best alternative includes deleted identifier
+      #endif
+
+        // can declare function that returns permit (wish to forbid)
+        vector_permit(float) g( vector( float ) & theVec ) {
+            return theVec[0]; // want to forbid
+        }
+
+        // forbid calling a function that returns permit by value
+      #ifdef TRY_RETURN_PERMIT_BYVAL_1
+        vector_permit(float) ofG = g( v ); // Unique best alternative includes deleted identifier
+      #endif
+        
+        // allow declaration of permit, populating from exit
+        vector_exit(float) h( vector( float ) & theVec ) {
+            return theVec[0];
+        }
+
+        vector_permit(float) ofH = h( v );
+        float zh = ofH`val;
+        printf( "into permit from call, got ofH = %f\n", zh );
+    }
+}
+
+void stayValidTests() {
+    printf("stayValidTests============\n");
+    vector( float ) v = { 4 };
+    push_last(v, 0.0f);
+    push_last(v, 0.1f);
+    push_last(v, 0.2f);
+    // v is [0.0, 0.1, 0.2]
+
+    vector_permit(float) iter = v[1];  // iter at 0.1
+
+    float val1 = iter`val;
+    printf("before %f\n", val1);
+
+    insert_before( v, 1, 98.6f );  // v is [0.0, 98.6, 0.1, 0.2]; iter at 0.1
+
+    float val2 = iter`val;
+    printf("after, logical: %f\n", val2);
+
+    // we had filled it to the brim
+    assert( v`capacity == 4 && v`length == 4 );
+
+    push_last(v, -100); // v is [0.0, 98.6, 0.1, 0.2, 0.3]; iter at 0.1, but RTP it's not looking at the old memory's 0.1
+
+    // that made it bigger
+    assert( v`capacity >  5 && v`length == 5 );
+
+    v[2] = -0.1;  // v is [0.0, 98.6, -0.1, 0.2, 0.3]; iter at -0.1, where only the new memory had that change
+
+    float val3 = iter`val;
+    printf("after, physical: %f\n", val3);
+}
+
+void loopTests() {
+    printf("loopTests=================\n");
+    vector(float) v = { 4 };
+    push_last(v, 0.0f);
+    push_last(v, 0.1f);
+    push_last(v, 0.2f);
+    float toPrint;
+
+    while( vector_exit(float) it = v`origin; it`moveNext ) {
+        toPrint *= it;
+        printf("loop sees %f\n", toPrint);
+    }
+}
+
+int main() {
+    raiiTests();
+    stayValidTests();
+    loopTests();
+}

@@ -12,7 +12,6 @@ import tempfile
 import time
 
 import os
-import psutil
 import signal
 
 ################################################################################

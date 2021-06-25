@@ -1872,8 +1872,8 @@ char *yytext;
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Sat Jun 19 15:23:05 2021
- * Update Count     : 758
+ * Last Modified On : Sun Jun 20 18:41:09 2021
+ * Update Count     : 759
  */
 #line 21 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 // The lexer assumes the program has been preprocessed by cpp. Hence, all user level preprocessor directive have been
@@ -2471,17 +2471,17 @@ YY_RULE_SETUP
 case 39:
 YY_RULE_SETUP
 #line 238 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
-{ KEYWORD_RETURN(FLOAT); }				// GCC
+{ KEYWORD_RETURN(DECIMAL32); }			// GCC
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
 #line 239 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
-{ KEYWORD_RETURN(DOUBLE); }				// GCC
+{ KEYWORD_RETURN(DECIMAL64); }			// GCC
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
 #line 240 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
-{ KEYWORD_RETURN(uuFLOAT128); }			// GCC
+{ KEYWORD_RETURN(DECIMAL128); }			// GCC
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
