@@ -5,17 +5,18 @@ Cforall is built using GNU Make and the GNU Autoconf system.  It also requires
 g++ version >= 4.6, bison and flex.  On systems where GNU Make is the default
 make, the system is built by entering the commands:
 
-For devs using the root git:
+For devs using the maintainer's git:
 
-  ./autogen.sh
+	./autogen.sh
 	./configure
 	make
 	make install
 
-For users using the distributed tarball:
+For users using the distributed tarball / github:
 
 	./configure
 	make
+	make check
 	make install
 
 Options for 'configure'

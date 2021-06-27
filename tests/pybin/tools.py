@@ -375,7 +375,10 @@ def core_info(path):
 	if not os.path.isfile(core):
 		return 1, "ERR No core dump"
 
-	return sh('gdb', '-n', path, core, '-batch', '-x', cmd, output_file=subprocess.PIPE)
+	try:
+		return sh('gdb', '-n', path, core, '-batch', '-x', cmd, output_file=subprocess.PIPE)
+	except:
+		return 1, "ERR Could not read core with gdb"
 
 def core_archive(dst, name, exe):
 	# Get the core dump
