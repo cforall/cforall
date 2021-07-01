@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jun 20 18:46:51 2021
-// Update Count     : 5023
+// Last Modified On : Tue Jun 29 09:12:47 2021
+// Update Count     : 5027
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -25,19 +25,15 @@
 
 // The root language for this grammar is ANSI99/11 C. All of ANSI99/11 is parsed, except for:
 //
-// 1. designation with '=' (use ':' instead)
+//   designation with '=' (use ':' instead)
 //
-// Most of the syntactic extensions from ANSI90 to ANSI11 C are marked with the comment "C99/C11". This grammar also has
-// two levels of extensions. The first extensions cover most of the GCC C extensions, except for:
-//
-// 1. designation with and without '=' (use ':' instead)
+// This incompatibility is discussed in detail before the "designation" grammar rule.  Most of the syntactic extensions
+// from ANSI90 to ANSI11 C are marked with the comment "C99/C11".
 
-//
-// All of the syntactic extensions for GCC C are marked with the comment "GCC". The second extensions are for Cforall
-// (CFA), which fixes several of C's outstanding problems and extends C with many modern language concepts. All of the
-// syntactic extensions for CFA C are marked with the comment "CFA". As noted above, there is one unreconcileable
-// parsing problem between C99 and CFA with respect to designators; this is discussed in detail before the "designation"
-// grammar rule.
+// This grammar also has two levels of extensions. The first extensions cover most of the GCC C extensions All of the
+// syntactic extensions for GCC C are marked with the comment "GCC". The second extensions are for Cforall (CFA), which
+// fixes several of C's outstanding problems and extends C with many modern language concepts. All of the syntactic
+// extensions for CFA C are marked with the comment "CFA".
 
 %{
 #define YYDEBUG_LEXER_TEXT( yylval )					// lexer loads this up each time
@@ -1922,7 +1918,7 @@ basic_type_name:
 vtable_opt:
 	// empty
 		{ $$ = nullptr; }
-	| vtable;
+	| vtable
 	;
 
 vtable:
@@ -2563,6 +2559,8 @@ new_type_class:											// CFA
 		{ $$ = TypeDecl::Dtype; }
 	| '*'
 		{ $$ = TypeDecl::DStype; }						// dtype + sized
+	// | '(' '*' ')'
+	// 	{ $$ = TypeDecl::Ftype; }
 	| ELLIPSIS
 		{ $$ = TypeDecl::Ttype; }
 	;

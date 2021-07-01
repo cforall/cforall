@@ -14,11 +14,15 @@ Start Test 7: fast lock and condition variable single wait/notify
 Done Test 7
 Start Test 8: fast lock and condition variable 3 wait/notify all
 Done Test 8
-Start Test 9: multi acquisiton lock and condition variable multiple acquire and wait/notify
+Start Test 9: linear backoff lock and condition variable single wait/notify
 Done Test 9
-Start Test 10: owner lock and condition variable multiple acquire and wait/notify
+Start Test 10: linear backoff lock and condition variable 3 wait/notify all
 Done Test 10
-Start Test 11: no lock condition variable wait/notify
+Start Test 11: multi acquisiton lock and condition variable multiple acquire and wait/notify
 Done Test 11
-Start Test 12: locked condition variable wait/notify with front()
+Start Test 12: owner lock and condition variable multiple acquire and wait/notify
 Done Test 12
+Start Test 13: no lock condition variable wait/notify
+Done Test 13
+Start Test 14: locked condition variable wait/notify with front()
+Done Test 14

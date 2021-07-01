@@ -30,8 +30,10 @@ typedef int_fast16_t __lock_size_t;
 
 #ifdef __cforall
 #define __cfa_anonymous_object(x) inline struct x
+#define __cfa_dlink(x) inline dlink(x)
 #else
 #define __cfa_anonymous_object(x) struct x __cfa_anonymous_object
+#define __cfa_dlink(x) struct { struct x * next; struct x * back; } __dlink_substitute
 #endif
 
 #ifdef __cforall

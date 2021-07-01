@@ -17,9 +17,12 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "bits/weakso_locks.hfa"
 #include "containers/queueLockFree.hfa"
+#include "containers/list.hfa"
+
 #include "limits.hfa"
 #include "thread.hfa"
 
@@ -39,8 +42,8 @@ struct Semaphore0nary {
 };
 
 static inline bool P(Semaphore0nary & this, $thread * thrd) {
-	/* paranoid */ verify(!(thrd->seqable.next));
-	/* paranoid */ verify(!(thrd`next));
+	/* paranoid */ verify(!thrd`next);
+	/* paranoid */ verify(!(&(*thrd)`next));
 
 	push(this.queue, thrd);
 	return true;
@@ -239,6 +242,123 @@ static inline void unlock(mcs_lock & l, mcs_node & n) {
 	if(next) post(next->sem);
 }
 
+struct linear_backoff_then_block_lock {
+	// Spin lock used for mutual exclusion
+	__spinlock_t spinlock;
+
+	// Current thread owning the lock
+	struct $thread * owner;
+
+	// List of blocked threads
+	dlist( $thread ) blocked_threads;
+
+	// Used for comparing and exchanging
+	volatile size_t lock_value;
+
+	// used for linear backoff spinning
+	int spin_start;
+	int spin_end;
+	int spin_count;
+
+	// after unsuccessful linear backoff yield this many times
+	int yield_count;
+};
+
+static inline void  ?{}( linear_backoff_then_block_lock & this, int spin_start, int spin_end, int spin_count, int yield_count ) {
+	this.spinlock{};
+	this.blocked_threads{};
+	this.lock_value = 0;
+	this.spin_start = spin_start;
+	this.spin_end = spin_end;
+	this.spin_count = spin_count;
+	this.yield_count = yield_count;
+}
+static inline void  ?{}( linear_backoff_then_block_lock & this ) { this{4, 1024, 16, 0}; }
+static inline void ^?{}( linear_backoff_then_block_lock & this ) {}
+
+static inline bool internal_try_lock(linear_backoff_then_block_lock & this, size_t & compare_val) with(this) {
+	if (__atomic_compare_exchange_n(&lock_value, &compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)) {
+		owner = active_thread();
+		return true;
+	}
+	return false;
+}
+
+static inline bool try_lock(linear_backoff_then_block_lock & this) { size_t compare_val = 0; return internal_try_lock(this, compare_val); }
+
+static inline bool try_lock_contention(linear_backoff_then_block_lock & this) with(this) {
+	if (__atomic_exchange_n(&lock_value, 2, __ATOMIC_ACQUIRE) == 0) {
+		owner = active_thread();
+		return true;
+	}
+	return false;
+}
+
+static inline bool block(linear_backoff_then_block_lock & this) with(this) {
+	lock( spinlock __cfaabi_dbg_ctx2 );
+	if (lock_value != 2) {
+		unlock( spinlock );
+		return true;
+	}
+	insert_last( blocked_threads, *active_thread() );
+	unlock( spinlock );
+	park( );
+	return true;
+}
+
+static inline bool lock(linear_backoff_then_block_lock & this) with(this) {
+	// if owner just return
+	if (active_thread() == owner) return true;
+	size_t compare_val = 0;
+	int spin = spin_start;
+	// linear backoff
+	for( ;; ) {
+		compare_val = 0;
+		if (internal_try_lock(this, compare_val)) return true;
+		if (2 == compare_val) break;
+		for (int i = 0; i < spin; i++) Pause();
+		if (spin >= spin_end) break;
+		spin += spin;
+	}
+
+	// linear backoff bounded by spin_count
+	spin = spin_start;
+	int spin_counter = 0;
+	int yield_counter = 0;
+	for ( ;; ) {
+		if(try_lock_contention(this)) return true;
+		if(spin_counter < spin_count) {
+			for (int i = 0; i < spin; i++) Pause();
+			if (spin < spin_end) spin += spin;
+			else spin_counter++;
+		} else if (yield_counter < yield_count) {
+			// after linear backoff yield yield_count times
+			yield_counter++;
+			yield();
+		} else { break; }
+	}
+
+	// block until signalled
+	while (block(this)) if(try_lock_contention(this)) return true;
+	
+	// this should never be reached as block(this) always returns true
+	return false;
+}
+
+static inline void unlock(linear_backoff_then_block_lock & this) with(this) {
+	verify(lock_value > 0);
+    owner = 0p;
+    if (__atomic_exchange_n(&lock_value, 0, __ATOMIC_RELEASE) == 1) return;
+	lock( spinlock __cfaabi_dbg_ctx2 );
+	$thread * t = &try_pop_front( blocked_threads );
+	unlock( spinlock );
+	unpark( t );
+}
+
+static inline void on_notify(linear_backoff_then_block_lock & this, struct $thread * t ) { unpark(t); }
+static inline size_t on_wait(linear_backoff_then_block_lock & this) { unlock(this); return 0; }
+static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { lock(this); }
+
 //-----------------------------------------------------------------------------
 // is_blocking_lock
 trait is_blocking_lock(L & | sized(L)) {
@@ -253,15 +373,15 @@ trait is_blocking_lock(L & | sized(L)) {
 };
 
 //-----------------------------------------------------------------------------
-// info_thread
-// the info thread is a wrapper around a thread used
-// to store extra data for use in the condition variable
+// // info_thread
+// // the info thread is a wrapper around a thread used
+// // to store extra data for use in the condition variable
 forall(L & | is_blocking_lock(L)) {
 	struct info_thread;
 
-	// for use by sequence
-	info_thread(L) *& Back( info_thread(L) * this );
-	info_thread(L) *& Next( info_thread(L) * this );
+	// // for use by sequence
+	// info_thread(L) *& Back( info_thread(L) * this );
+	// info_thread(L) *& Next( info_thread(L) * this );
 }
 
 //-----------------------------------------------------------------------------
@@ -272,11 +392,12 @@ forall(L & | is_blocking_lock(L)) {
 		__spinlock_t lock;
 
 		// List of blocked threads
-		Sequence( info_thread(L) ) blocked_threads;
+		dlist( info_thread(L) ) blocked_threads;
 
 		// Count of current blocked threads
 		int count;
 	};
+	
 
 	void  ?{}( condition_variable(L) & this );
 	void ^?{}( condition_variable(L) & this );

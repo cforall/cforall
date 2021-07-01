@@ -76,7 +76,7 @@ void main( Barger & this ) {
 bool wait( global_t & mutex m, global_data_t & mutex d ) {
 	wait( cond );
 	if( d.state != SIGNAL ) {
-		sout | "ERROR barging!";
+		abort | "ERROR barging!";
 	}
 
 	#if !defined(TEST_FOREVER)
@@ -112,7 +112,7 @@ void logic( global_t & mutex a ) {
 	//This is technically a mutual exclusion violation but the mutex monitor protects us
 	bool running = TEST(globals.data.counter < N) && globals.data.counter > 0;
 	if( globals.data.state != SIGNAL && running ) {
-		sout | "ERROR Eager signal" | globals.data.state;
+		abort | "ERROR Eager signal" | globals.data.state;
 	}
 }
 

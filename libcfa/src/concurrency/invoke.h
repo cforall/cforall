@@ -19,6 +19,7 @@
 #include "kernel/fwd.hfa"
 
 #ifdef __cforall
+#include "containers/list.hfa"
 extern "C" {
 #endif
 
@@ -197,6 +198,9 @@ extern "C" {
 			struct $thread * back;
 		} seqable;
 
+		// used to put threads on dlist data structure
+		__cfa_dlink($thread);
+
 		struct {
 			struct $thread * next;
 			struct $thread * prev;
@@ -208,6 +212,9 @@ extern "C" {
 			void * canary;
 		#endif
 	};
+	#ifdef __cforall
+		P9_EMBEDDED( $thread, dlink($thread) )
+	#endif
 	// Wrapper for gdb
 	struct cfathread_thread_t { struct $thread debug; };
 
@@ -237,7 +244,7 @@ extern "C" {
 		}
 
 		static inline $thread *& Next( $thread * this ) __attribute__((const)) {
-			return this->seqable.next;
+				return this->seqable.next;
 		}
 
 		static inline bool listed( $thread * this ) {
