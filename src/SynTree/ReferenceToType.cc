@@ -206,7 +206,6 @@ void TypeInstType::print( std::ostream &os, Indenter indent ) const {
 
 	Type::print( os, indent );
 	os << "instance of " << typeString() << " ";
-	const auto & name_ = get_name();
 	if( deterministic_output && isUnboundType(name) ) os << "[unbound]";
 	else os << name;
 	os << " (" << ( isFtype ? "" : "not" ) << " function type)";

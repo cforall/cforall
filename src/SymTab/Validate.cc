@@ -1627,7 +1627,6 @@ namespace {
 			return fixFunctionList( func, &ast::FunctionType::returns );
 		}
 	};
-	*/
 
 	/// expand assertions from a trait instance, performing appropriate type variable substitutions
 	void expandAssertions(
@@ -1645,8 +1644,6 @@ namespace {
 			out.emplace_back( member );
 		}
 	}
-
-	/*
 
 	/// Associates forward declarations of aggregates with their definitions
 	class LinkReferenceToTypes_new final

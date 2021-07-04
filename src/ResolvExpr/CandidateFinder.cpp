@@ -596,7 +596,7 @@ namespace {
 	class Finder final : public ast::WithShortCircuiting {
 		const ast::SymbolTable & symtab;
 	public:
-		static size_t traceId;
+		// static size_t traceId;
 		CandidateFinder & selfFinder;
 		CandidateList & candidates;
 		const ast::TypeEnvironment & tenv;
@@ -889,7 +889,7 @@ namespace {
 								argType = tuple->types[0];
 							}
 						}
-						
+
 						// if argType is an unbound type parameter, all special functions need to be searched.
 						if (isUnboundType(argType)) {
 							funcFinder.otypeKeys.clear();
@@ -1103,7 +1103,7 @@ namespace {
 
 				// unification run for side-effects
 				unify( toType, cand->expr->result, cand->env, need, have, open, symtab );
-				Cost thisCost = 
+				Cost thisCost =
 					(castExpr->isGenerated == ast::GeneratedFlag::GeneratedCast)
  	                    ? conversionCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env )
  	                    : castCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env );
@@ -1728,12 +1728,12 @@ bool CandidateFinder::pruneCandidates( CandidateList & candidates, CandidateList
 						PRINT( std::cerr << "marking ambiguous" << std::endl; )
 						found->second.ambiguous = true;
 					}
-				} else { 
+				} else {
 					// xxx - can satisfyAssertions increase the cost?
 					PRINT(
 						std::cerr << "cost " << newCand->cost << " loses to "
 							<< found->second.candidate->cost << std::endl;
-					)	
+					)
 				}
 			} else {
 				selected.emplace_hint( found, mangleName, newCand );
@@ -1818,7 +1818,7 @@ void CandidateFinder::find( const ast::Expr * expr, ResolvMode mode ) {
 
 		if ( mode.failFast && pruned.empty() ) {
 			std::ostringstream stream;
-			if (found) {		
+			if (found) {
 				CandidateList winners = findMinCost( candidates );
 				stream << "Cannot choose between " << winners.size() << " alternatives for "
 					"expression\n";

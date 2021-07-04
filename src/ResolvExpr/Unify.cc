@@ -1043,7 +1043,7 @@ namespace ResolvExpr {
 				flatten( ty, out );
 			}
 
-			return { new ast::TupleType{ std::move(out) } };
+			return new ast::TupleType{ std::move(out) };
 		}
 
 		static bool unifyList(

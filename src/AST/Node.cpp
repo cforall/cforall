@@ -46,11 +46,11 @@ void _trap( const void * node ) {
 	assertf(node, "strict_as had nullptr input.");
 	const ast::ParseNode * parse = dynamic_cast<const ast::ParseNode *>( node );
 	if ( nullptr == parse ) {
-		assertf(nullptr, "%s (no location)", toString(node).c_str());
+		assertf(false, "%s (no location)", toString(node).c_str());
 	} else if ( parse->location.isUnset() ) {
-		assertf(nullptr, "%s (unset location)", toString(node).c_str());
+		assertf(false, "%s (unset location)", toString(node).c_str());
 	} else {
-		assertf(nullptr, "%s (at %s:%d)", toString(node).c_str(),
+		assertf(false, "%s (at %s:%d)", toString(node).c_str(),
 			parse->location.filename.c_str(), parse->location.first_line);
 	}
 }

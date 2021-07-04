@@ -91,7 +91,7 @@ const char * StructDecl::typeString() const { return aggrString( kind ); }
 StructInstType * StructDecl::makeInst( std::list< Expression * > const & new_parameters ) {
 	std::list< Expression * > copy_parameters;
 	cloneAll( new_parameters, copy_parameters );
-	return makeInst( move( copy( copy_parameters ) ) );
+	return makeInst( copy( copy_parameters ) );
 }
 
 StructInstType * StructDecl::makeInst( std::list< Expression * > && new_parameters ) {

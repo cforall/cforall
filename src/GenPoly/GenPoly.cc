@@ -63,6 +63,7 @@ namespace GenPoly {
 			return false;
 		}
 
+		__attribute__((ununsed))
 		bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const TyVarMap & tyVars, const ast::TypeSubstitution * env) {
 			for (auto &param : params) {
 				auto paramType = param.strict_as<ast::TypeExpr>();
