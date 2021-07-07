@@ -22,11 +22,11 @@
 #include "stdlib.hfa"
 
 trait is_monitor(T &) {
-	$monitor * get_monitor( T & );
+	monitor$ * get_monitor( T & );
 	void ^?{}( T & mutex );
 };
 
-static inline void ?{}($monitor & this) with( this ) {
+static inline void ?{}(monitor$ & this) with( this ) {
 	lock{};
 	entry_queue{};
 	signal_stack{};
@@ -38,24 +38,24 @@ static inline void ?{}($monitor & this) with( this ) {
 	dtor_node     = 0p;
 }
 
-static inline void ^?{}($monitor & ) {}
+static inline void ^?{}(monitor$ & ) {}
 
 struct monitor_guard_t {
-	$monitor ** 	m;
+	monitor$ ** 	m;
 	__lock_size_t   	count;
 	__monitor_group_t prev;
 };
 
-void ?{}( monitor_guard_t & this, $monitor ** m, __lock_size_t count, void (*func)() );
+void ?{}( monitor_guard_t & this, monitor$ ** m, __lock_size_t count, void (*func)() );
 void ^?{}( monitor_guard_t & this );
 
 struct monitor_dtor_guard_t {
-	$monitor *    m;
+	monitor$ *    m;
 	__monitor_group_t prev;
 	bool join;
 };
 
-void ?{}( monitor_dtor_guard_t & this, $monitor ** m, void (*func)(), bool join );
+void ?{}( monitor_dtor_guard_t & this, monitor$ ** m, void (*func)(), bool join );
 void ^?{}( monitor_dtor_guard_t & this );
 
 static inline forall( T & | sized(T) | { void ^?{}( T & mutex ); } )
@@ -72,7 +72,7 @@ struct __condition_criterion_t {
 	bool ready;
 
 	// The monitor this criterion concerns
-	$monitor * target;
+	monitor$ * target;
 
 	// The parent node to which this criterion belongs
 	struct __condition_node_t * owner;
@@ -87,7 +87,7 @@ static inline __condition_criterion_t * & get_next( __condition_criterion_t & th
 
 struct __condition_node_t {
 	// Thread that needs to be woken when all criteria are met
-	$thread * waiting_thread;
+	thread$ * waiting_thread;
 
 	// Array of criteria (Criterions are contiguous in memory)
 	__condition_criterion_t * criteria;
@@ -106,16 +106,16 @@ static inline __condition_node_t * & get_next( __condition_node_t & this ) {
 	return this.next;
 }
 
-void ?{}(__condition_node_t & this, $thread * waiting_thread, __lock_size_t count, uintptr_t user_info );
+void ?{}(__condition_node_t & this, thread$ * waiting_thread, __lock_size_t count, uintptr_t user_info );
 void ?{}(__condition_criterion_t & this );
-void ?{}(__condition_criterion_t & this, $monitor * target, __condition_node_t * owner );
+void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t * owner );
 
 struct condition {
 	// Link list which contains the blocked threads as-well as the information needed to unblock them
 	__queue_t(__condition_node_t) blocked;
 
 	// Array of monitor pointers (Monitors are NOT contiguous in memory)
-	$monitor ** monitors;
+	monitor$ ** monitors;
 
 	// Number of monitors in the array
 	__lock_size_t monitor_count;

@@ -28,8 +28,8 @@
 // magically invoke the "main" of the most derived class
 // Called from the kernel when starting a coroutine or task so must switch back to user mode.
 
-extern struct $coroutine * __cfactx_cor_finish(void);
-extern void __cfactx_cor_leave ( struct $coroutine * );
+extern struct coroutine$ * __cfactx_cor_finish(void);
+extern void __cfactx_cor_leave ( struct coroutine$ * );
 extern void __cfactx_thrd_leave();
 
 extern void disable_interrupts() OPTIONAL_THREAD;
@@ -40,7 +40,7 @@ void __cfactx_invoke_coroutine(
 	void *this
 ) {
 	// Finish setting up the coroutine by setting its state
-	struct $coroutine * cor = __cfactx_cor_finish();
+	struct coroutine$ * cor = __cfactx_cor_finish();
 
 	// Call the main of the coroutine
 	main( this );
@@ -69,8 +69,8 @@ static _Unwind_Reason_Code __cfactx_coroutine_unwindstop(
 	return _URC_FATAL_PHASE2_ERROR;
 }
 
-void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct $coroutine * cor) __attribute__ ((__noreturn__));
-void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct $coroutine * cor) {
+void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct coroutine$ * cor) __attribute__ ((__noreturn__));
+void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct coroutine$ * cor) {
 	_Unwind_Reason_Code ret = _Unwind_ForcedUnwind( storage, __cfactx_coroutine_unwindstop, cor );
 	printf("UNWIND ERROR %d after force unwind\n", ret);
 	abort();
@@ -99,7 +99,7 @@ void __cfactx_invoke_thread(
 
 void __cfactx_start(
 	void (*main)(void *),
-	struct $coroutine * cor,
+	struct coroutine$ * cor,
 	void *this,
 	void (*invoke)(void *)
 ) {

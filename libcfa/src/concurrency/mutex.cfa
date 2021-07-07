@@ -121,7 +121,7 @@ void unlock(recursive_mutex_lock & this) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	recursion_count--;
 	if( recursion_count == 0 ) {
-		$thread * thrd = pop_head( blocked_threads );
+		thread$ * thrd = pop_head( blocked_threads );
 		owner = thrd;
 		recursion_count = (thrd ? 1 : 0);
 		unpark( thrd );

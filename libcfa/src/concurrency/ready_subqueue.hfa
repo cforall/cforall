@@ -6,7 +6,7 @@
 
 // Intrusives lanes which are used by the relaxed ready queue
 struct __attribute__((aligned(128))) __intrusive_lane_t {
-	struct $thread * prev;
+	struct thread$ * prev;
 
 	// spin lock protecting the queue
 	volatile bool lock;
@@ -19,9 +19,9 @@ struct __attribute__((aligned(128))) __intrusive_lane_t {
 };
 
 // Get the head pointer (one before the first element) from the anchor
-static inline $thread * mock_head(const __intrusive_lane_t & this) {
-	$thread * rhead = ($thread *)(
-		(uintptr_t)( &this.anchor ) - __builtin_offsetof( $thread, link )
+static inline thread$ * mock_head(const __intrusive_lane_t & this) {
+	thread$ * rhead = (thread$ *)(
+		(uintptr_t)( &this.anchor ) - __builtin_offsetof( thread$, link )
 	);
 	return rhead;
 }
@@ -37,9 +37,9 @@ void ?{}( __intrusive_lane_t & this ) {
 	#endif
 
 	// We add a boat-load of assertions here because the anchor code is very fragile
-	/* paranoid */ _Static_assert( offsetof( $thread, link ) == offsetof(__intrusive_lane_t, anchor) );
-	/* paranoid */ verify( offsetof( $thread, link ) == offsetof(__intrusive_lane_t, anchor) );
-	/* paranoid */ verify( ((uintptr_t)( mock_head(this) ) + offsetof( $thread, link )) == (uintptr_t)(&this.anchor) );
+	/* paranoid */ _Static_assert( offsetof( thread$, link ) == offsetof(__intrusive_lane_t, anchor) );
+	/* paranoid */ verify( offsetof( thread$, link ) == offsetof(__intrusive_lane_t, anchor) );
+	/* paranoid */ verify( ((uintptr_t)( mock_head(this) ) + offsetof( thread$, link )) == (uintptr_t)(&this.anchor) );
 	/* paranoid */ verify( &mock_head(this)->link.next == &this.anchor.next );
 	/* paranoid */ verify( &mock_head(this)->link.ts   == &this.anchor.ts   );
 	/* paranoid */ verify( mock_head(this)->link.next == 0p );
@@ -60,7 +60,7 @@ void ^?{}( __intrusive_lane_t & this ) {
 
 // Push a thread onto this lane
 // returns true of lane was empty before push, false otherwise
-static inline void push( __intrusive_lane_t & this, $thread * node ) {
+static inline void push( __intrusive_lane_t & this, thread$ * node ) {
 	/* paranoid */ verify( this.lock );
 	/* paranoid */ verify( node->link.next == 0p );
 	/* paranoid */ verify( node->link.ts   == -1llu  );
@@ -90,7 +90,7 @@ static inline void push( __intrusive_lane_t & this, $thread * node ) {
 // Pop a thread from this lane (must be non-empty)
 // returns popped
 // returns true of lane was empty before push, false otherwise
-static inline [* $thread, unsigned long long] pop( __intrusive_lane_t & this ) {
+static inline [* thread$, unsigned long long] pop( __intrusive_lane_t & this ) {
 	/* paranoid */ verify( this.lock );
 	/* paranoid */ verify( this.anchor.next != 0p );
 	/* paranoid */ verify( this.anchor.ts   != -1llu );
@@ -98,7 +98,7 @@ static inline [* $thread, unsigned long long] pop( __intrusive_lane_t & this ) {
 
 	// Get the relevant nodes locally
 	unsigned long long ts = this.anchor.ts;
-	$thread * node = this.anchor.next;
+	thread$ * node = this.anchor.next;
 	this.anchor.next = node->link.next;
 	this.anchor.ts   = node->link.ts;
 	bool is_empty = this.anchor.next == 0p;

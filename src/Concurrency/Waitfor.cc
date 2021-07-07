@@ -243,7 +243,7 @@ namespace Concurrency {
 			assert( !decl_mask );
 			decl_mask = decl;
 		}
-		else if( decl->name == "$monitor" ) {
+		else if( decl->name == "monitor$" ) {
 			assert( !decl_monitor );
 			decl_monitor = decl;
 		}

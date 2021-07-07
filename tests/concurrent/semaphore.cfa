@@ -21,7 +21,7 @@ thread Blocker {
 };
 
 void main(Blocker & this) {
-	$thread * me = active_thread();
+	thread$ * me = active_thread();
 	this.sum = 0;
 	for(num_blocks) {
 		this.sum += (unsigned)me;
@@ -44,7 +44,7 @@ void main(Unblocker & this) {
 		}
 		or else {}
 
-		$thread * t = V(ben, false);
+		thread$ * t = V(ben, false);
 		if(t) {
 			this.sum += (unsigned)t;
 			unpark(t);

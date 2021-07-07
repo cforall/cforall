@@ -66,9 +66,9 @@ static const size_t cache_line_size = 64;
 	#error no scheduling strategy selected
 #endif
 
-static inline struct $thread * try_pop(struct cluster * cltr, unsigned w __STATS(, __stats_readyQ_pop_t & stats));
-static inline struct $thread * try_pop(struct cluster * cltr, unsigned i, unsigned j __STATS(, __stats_readyQ_pop_t & stats));
-static inline struct $thread * search(struct cluster * cltr);
+static inline struct thread$ * try_pop(struct cluster * cltr, unsigned w __STATS(, __stats_readyQ_pop_t & stats));
+static inline struct thread$ * try_pop(struct cluster * cltr, unsigned i, unsigned j __STATS(, __stats_readyQ_pop_t & stats));
+static inline struct thread$ * search(struct cluster * cltr);
 static inline [unsigned, bool] idx_from_r(unsigned r, unsigned preferred);
 
 
@@ -273,7 +273,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 
 //-----------------------------------------------------------------------
 #if defined(USE_CPU_WORK_STEALING)
-	__attribute__((hot)) void push(struct cluster * cltr, struct $thread * thrd, bool push_local) with (cltr->ready_queue) {
+	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, bool push_local) with (cltr->ready_queue) {
 		__cfadbg_print_safe(ready_queue, "Kernel : Pushing %p on cluster %p\n", thrd, cltr);
 
 		processor * const proc = kernelTLS().this_processor;
@@ -315,7 +315,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 	}
 
 	// Pop from the ready queue from a given cluster
-	__attribute__((hot)) $thread * pop_fast(struct cluster * cltr) with (cltr->ready_queue) {
+	__attribute__((hot)) thread$ * pop_fast(struct cluster * cltr) with (cltr->ready_queue) {
 		/* paranoid */ verify( lanes.count > 0 );
 		/* paranoid */ verify( kernelTLS().this_processor );
 
@@ -370,7 +370,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 				unsigned target = proc->rdq.target;
 				proc->rdq.target = -1u;
 				if(lanes.tscs[target].tv < cutoff && ts(lanes.data[target]) < cutoff) {
-					$thread * t = try_pop(cltr, target __STATS(, __tls_stats()->ready.pop.help));
+					thread$ * t = try_pop(cltr, target __STATS(, __tls_stats()->ready.pop.help));
 					proc->rdq.last = target;
 					if(t) return t;
 				}
@@ -378,7 +378,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 
 			unsigned last = proc->rdq.last;
 			if(last != -1u && lanes.tscs[last].tv < cutoff && ts(lanes.data[last]) < cutoff) {
-				$thread * t = try_pop(cltr, last __STATS(, __tls_stats()->ready.pop.help));
+				thread$ * t = try_pop(cltr, last __STATS(, __tls_stats()->ready.pop.help));
 				if(t) return t;
 			}
 			else {
@@ -388,18 +388,18 @@ void ^?{}(__ready_queue_t & this) with (this) {
 
 		for(READYQ_SHARD_FACTOR) {
 			unsigned i = start + (proc->rdq.itr++ % READYQ_SHARD_FACTOR);
-			if($thread * t = try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.local))) return t;
+			if(thread$ * t = try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.local))) return t;
 		}
 
 		// All lanes where empty return 0p
 		return 0p;
 	}
 
-	__attribute__((hot)) struct $thread * pop_slow(struct cluster * cltr) with (cltr->ready_queue) {
+	__attribute__((hot)) struct thread$ * pop_slow(struct cluster * cltr) with (cltr->ready_queue) {
 		processor * const proc = kernelTLS().this_processor;
 		unsigned last = proc->rdq.last;
 		if(last != -1u) {
-			struct $thread * t = try_pop(cltr, last __STATS(, __tls_stats()->ready.pop.steal));
+			struct thread$ * t = try_pop(cltr, last __STATS(, __tls_stats()->ready.pop.steal));
 			if(t) return t;
 			proc->rdq.last = -1u;
 		}
@@ -407,7 +407,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 		unsigned i = __tls_rand() % lanes.count;
 		return try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.steal));
 	}
-	__attribute__((hot)) struct $thread * pop_search(struct cluster * cltr) {
+	__attribute__((hot)) struct thread$ * pop_search(struct cluster * cltr) {
 		return search(cltr);
 	}
 #endif
@@ -434,7 +434,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 		return [i, local];
 	}
 
-	__attribute__((hot)) void push(struct cluster * cltr, struct $thread * thrd, bool push_local) with (cltr->ready_queue) {
+	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, bool push_local) with (cltr->ready_queue) {
 		__cfadbg_print_safe(ready_queue, "Kernel : Pushing %p on cluster %p\n", thrd, cltr);
 
 		const bool external = !push_local || (!kernelTLS().this_processor) || (cltr != kernelTLS().this_processor->cltr);
@@ -481,7 +481,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 	}
 
 	// Pop from the ready queue from a given cluster
-	__attribute__((hot)) $thread * pop_fast(struct cluster * cltr) with (cltr->ready_queue) {
+	__attribute__((hot)) thread$ * pop_fast(struct cluster * cltr) with (cltr->ready_queue) {
 		/* paranoid */ verify( lanes.count > 0 );
 		/* paranoid */ verify( kernelTLS().this_processor );
 		/* paranoid */ verify( kernelTLS().this_processor->rdq.id < lanes.count );
@@ -505,7 +505,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 			j %= count;
 
 			// try popping from the 2 picked lists
-			struct $thread * thrd = try_pop(cltr, i, j __STATS(, *(locali || localj ? &__tls_stats()->ready.pop.local : &__tls_stats()->ready.pop.help)));
+			struct thread$ * thrd = try_pop(cltr, i, j __STATS(, *(locali || localj ? &__tls_stats()->ready.pop.local : &__tls_stats()->ready.pop.help)));
 			if(thrd) {
 				return thrd;
 			}
@@ -515,13 +515,13 @@ void ^?{}(__ready_queue_t & this) with (this) {
 		return 0p;
 	}
 
-	__attribute__((hot)) struct $thread * pop_slow(struct cluster * cltr) { return pop_fast(cltr); }
-	__attribute__((hot)) struct $thread * pop_search(struct cluster * cltr) {
+	__attribute__((hot)) struct thread$ * pop_slow(struct cluster * cltr) { return pop_fast(cltr); }
+	__attribute__((hot)) struct thread$ * pop_search(struct cluster * cltr) {
 		return search(cltr);
 	}
 #endif
 #if defined(USE_WORK_STEALING)
-	__attribute__((hot)) void push(struct cluster * cltr, struct $thread * thrd, bool push_local) with (cltr->ready_queue) {
+	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, bool push_local) with (cltr->ready_queue) {
 		__cfadbg_print_safe(ready_queue, "Kernel : Pushing %p on cluster %p\n", thrd, cltr);
 
 		// #define USE_PREFERRED
@@ -575,7 +575,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 	}
 
 	// Pop from the ready queue from a given cluster
-	__attribute__((hot)) $thread * pop_fast(struct cluster * cltr) with (cltr->ready_queue) {
+	__attribute__((hot)) thread$ * pop_fast(struct cluster * cltr) with (cltr->ready_queue) {
 		/* paranoid */ verify( lanes.count > 0 );
 		/* paranoid */ verify( kernelTLS().this_processor );
 		/* paranoid */ verify( kernelTLS().this_processor->rdq.id < lanes.count );
@@ -597,24 +597,24 @@ void ^?{}(__ready_queue_t & this) with (this) {
 			const unsigned long long bias = 0; //2_500_000_000;
 			const unsigned long long cutoff = proc->rdq.cutoff > bias ? proc->rdq.cutoff - bias : proc->rdq.cutoff;
 			if(lanes.tscs[target].tv < cutoff && ts(lanes.data[target]) < cutoff) {
-				$thread * t = try_pop(cltr, target __STATS(, __tls_stats()->ready.pop.help));
+				thread$ * t = try_pop(cltr, target __STATS(, __tls_stats()->ready.pop.help));
 				if(t) return t;
 			}
 		}
 
 		for(READYQ_SHARD_FACTOR) {
 			unsigned i = proc->rdq.id + (proc->rdq.itr++ % READYQ_SHARD_FACTOR);
-			if($thread * t = try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.local))) return t;
+			if(thread$ * t = try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.local))) return t;
 		}
 		return 0p;
 	}
 
-	__attribute__((hot)) struct $thread * pop_slow(struct cluster * cltr) with (cltr->ready_queue) {
+	__attribute__((hot)) struct thread$ * pop_slow(struct cluster * cltr) with (cltr->ready_queue) {
 		unsigned i = __tls_rand() % lanes.count;
 		return try_pop(cltr, i __STATS(, __tls_stats()->ready.pop.steal));
 	}
 
-	__attribute__((hot)) struct $thread * pop_search(struct cluster * cltr) with (cltr->ready_queue) {
+	__attribute__((hot)) struct thread$ * pop_search(struct cluster * cltr) with (cltr->ready_queue) {
 		return search(cltr);
 	}
 #endif
@@ -627,7 +627,7 @@ void ^?{}(__ready_queue_t & this) with (this) {
 
 //-----------------------------------------------------------------------
 // try to pop from a lane given by index w
-static inline struct $thread * try_pop(struct cluster * cltr, unsigned w __STATS(, __stats_readyQ_pop_t & stats)) with (cltr->ready_queue) {
+static inline struct thread$ * try_pop(struct cluster * cltr, unsigned w __STATS(, __stats_readyQ_pop_t & stats)) with (cltr->ready_queue) {
 	__STATS( stats.attempt++; )
 
 	// Get relevant elements locally
@@ -650,7 +650,7 @@ static inline struct $thread * try_pop(struct cluster * cltr, unsigned w __STATS
 	}
 
 	// Actually pop the list
-	struct $thread * thrd;
+	struct thread$ * thrd;
 	unsigned long long tsv;
 	[thrd, tsv] = pop(lane);
 
@@ -677,13 +677,13 @@ static inline struct $thread * try_pop(struct cluster * cltr, unsigned w __STATS
 //-----------------------------------------------------------------------
 // try to pop from any lanes making sure you don't miss any threads push
 // before the start of the function
-static inline struct $thread * search(struct cluster * cltr) with (cltr->ready_queue) {
+static inline struct thread$ * search(struct cluster * cltr) with (cltr->ready_queue) {
 	/* paranoid */ verify( lanes.count > 0 );
 	unsigned count = __atomic_load_n( &lanes.count, __ATOMIC_RELAXED );
 	unsigned offset = __tls_rand();
 	for(i; count) {
 		unsigned idx = (offset + i) % count;
-		struct $thread * thrd = try_pop(cltr, idx __STATS(, __tls_stats()->ready.pop.search));
+		struct thread$ * thrd = try_pop(cltr, idx __STATS(, __tls_stats()->ready.pop.search));
 		if(thrd) {
 			return thrd;
 		}
@@ -718,7 +718,7 @@ static void check( __ready_queue_t & q ) with (q) {
 
 //-----------------------------------------------------------------------
 // Given 2 indexes, pick the list with the oldest push an try to pop from it
-static inline struct $thread * try_pop(struct cluster * cltr, unsigned i, unsigned j __STATS(, __stats_readyQ_pop_t & stats)) with (cltr->ready_queue) {
+static inline struct thread$ * try_pop(struct cluster * cltr, unsigned i, unsigned j __STATS(, __stats_readyQ_pop_t & stats)) with (cltr->ready_queue) {
 	// Pick the bet list
 	int w = i;
 	if( __builtin_expect(!is_empty(lanes.data[j]), true) ) {
@@ -853,7 +853,7 @@ static void fix_times( struct cluster * cltr ) with( cltr->ready_queue ) {
 
 				// As long as we can pop from this lane to push the threads somewhere else in the queue
 				while(!is_empty(lanes.data[idx])) {
-					struct $thread * thrd;
+					struct thread$ * thrd;
 					unsigned long long _;
 					[thrd, _] = pop(lanes.data[idx]);
 

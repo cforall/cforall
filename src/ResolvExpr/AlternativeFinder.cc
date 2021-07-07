@@ -1301,7 +1301,7 @@ namespace ResolvExpr {
 		};
 
 		try {
-			// Attempt 1 : turn (thread&)X into ($thread&)X.__thrd
+			// Attempt 1 : turn (thread&)X into (thread$&)X.__thrd
 			// Clone is purely for memory management
 			std::unique_ptr<Expression> tech1 { new UntypedMemberExpr(new NameExpr(castExpr->concrete_target.field), castExpr->arg->clone()) };
 
@@ -1312,7 +1312,7 @@ namespace ResolvExpr {
 			return;
 		} catch(SemanticErrorException & ) {}
 
-		// Fallback : turn (thread&)X into ($thread&)get_thread(X)
+		// Fallback : turn (thread&)X into (thread$&)get_thread(X)
 		std::unique_ptr<Expression> fallback { UntypedExpr::createDeref( new UntypedExpr(new NameExpr(castExpr->concrete_target.getter), { castExpr->arg->clone() })) };
 		// don't prune here, since it's guaranteed all alternatives will have the same type
 		finder.findWithoutPrune( fallback.get() );

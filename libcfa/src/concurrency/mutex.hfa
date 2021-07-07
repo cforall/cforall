@@ -35,7 +35,7 @@ struct mutex_lock {
 	__spinlock_t lock;
 
 	// List of blocked threads
-	__queue_t(struct $thread) blocked_threads;
+	__queue_t(struct thread$) blocked_threads;
 
 	// Locked flag
 	bool is_locked;
@@ -54,10 +54,10 @@ struct recursive_mutex_lock{
 	__spinlock_t lock;
 
 	// List of blocked threads
-	__queue_t(struct $thread) blocked_threads;
+	__queue_t(struct thread$) blocked_threads;
 
 	// Current thread owning the lock
-	struct $thread * owner;
+	struct thread$ * owner;
 
 	// Number of recursion level
 	size_t recursion_count;
@@ -82,7 +82,7 @@ struct condition_variable {
 	__spinlock_t lock;
 
 	// List of blocked threads
-	__queue_t(struct $thread) blocked_threads;
+	__queue_t(struct thread$) blocked_threads;
 };
 
 void ?{}(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));

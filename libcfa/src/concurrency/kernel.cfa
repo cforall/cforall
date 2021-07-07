@@ -109,15 +109,15 @@ extern "C" {
 	#error unsupported hardware architecture
 #endif
 
-extern $thread * mainThread;
+extern thread$ * mainThread;
 extern processor * mainProcessor;
 
 //-----------------------------------------------------------------------------
 // Kernel Scheduling logic
-static $thread * __next_thread(cluster * this);
-static $thread * __next_thread_slow(cluster * this);
-static inline bool __must_unpark( $thread * thrd ) __attribute((nonnull(1)));
-static void __run_thread(processor * this, $thread * dst);
+static thread$ * __next_thread(cluster * this);
+static thread$ * __next_thread_slow(cluster * this);
+static inline bool __must_unpark( thread$ * thrd ) __attribute((nonnull(1)));
+static void __run_thread(processor * this, thread$ * dst);
 static void __wake_one(cluster * cltr);
 
 static void mark_idle (__cluster_proc_list & idles, processor & proc);
@@ -180,7 +180,7 @@ void main(processorCtx_t & runner) {
 
 		__cfadbg_print_safe(runtime_core, "Kernel : core %p started\n", this);
 
-		$thread * readyThread = 0p;
+		thread$ * readyThread = 0p;
 		MAIN_LOOP:
 		for() {
 			#define OLD_MAIN 1
@@ -387,7 +387,7 @@ static int * __volatile_errno() { asm(""); return &errno; }
 // KERNEL ONLY
 // runThread runs a thread by context switching
 // from the processor coroutine to the target thread
-static void __run_thread(processor * this, $thread * thrd_dst) {
+static void __run_thread(processor * this, thread$ * thrd_dst) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verifyf( thrd_dst->state == Ready || thrd_dst->preempted != __NO_PREEMPTION, "state : %d, preempted %d\n", thrd_dst->state, thrd_dst->preempted);
 	/* paranoid */ verifyf( thrd_dst->link.next == 0p, "Expected null got %p", thrd_dst->link.next );
@@ -395,7 +395,7 @@ static void __run_thread(processor * this, $thread * thrd_dst) {
 
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p running thread %p (%s)\n", this, thrd_dst, thrd_dst->self_cor.name);
 
-	$coroutine * proc_cor = get_coroutine(this->runner);
+	coroutine$ * proc_cor = get_coroutine(this->runner);
 
 	// set state of processor coroutine to inactive
 	verify(proc_cor->state == Active);
@@ -414,8 +414,8 @@ static void __run_thread(processor * this, $thread * thrd_dst) {
 		/* paranoid */ verify( thrd_dst->curr_cluster == this->cltr );
 		/* paranoid */ verify( thrd_dst->context.SP );
 		/* paranoid */ verify( thrd_dst->state != Halted );
-		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ) || thrd_dst->curr_cor == proc_cor || thrd_dst->corctx_flag, "ERROR : Destination $thread %p has been corrupted.\n StackPointer too small.\n", thrd_dst ); // add escape condition if we are setting up the processor
-		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit) || thrd_dst->curr_cor == proc_cor || thrd_dst->corctx_flag, "ERROR : Destination $thread %p has been corrupted.\n StackPointer too large.\n", thrd_dst ); // add escape condition if we are setting up the processor
+		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ) || thrd_dst->curr_cor == proc_cor || thrd_dst->corctx_flag, "ERROR : Destination thread$ %p has been corrupted.\n StackPointer too small.\n", thrd_dst ); // add escape condition if we are setting up the processor
+		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit) || thrd_dst->curr_cor == proc_cor || thrd_dst->corctx_flag, "ERROR : Destination thread$ %p has been corrupted.\n StackPointer too large.\n", thrd_dst ); // add escape condition if we are setting up the processor
 		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_dst->canary );
 
 
@@ -427,8 +427,8 @@ static void __run_thread(processor * this, $thread * thrd_dst) {
 
 
 		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_dst->canary );
-		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit) || thrd_dst->corctx_flag, "ERROR : Destination $thread %p has been corrupted.\n StackPointer too large.\n", thrd_dst );
-		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ) || thrd_dst->corctx_flag, "ERROR : Destination $thread %p has been corrupted.\n StackPointer too small.\n", thrd_dst );
+		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit) || thrd_dst->corctx_flag, "ERROR : Destination thread$ %p has been corrupted.\n StackPointer too large.\n", thrd_dst );
+		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ) || thrd_dst->corctx_flag, "ERROR : Destination thread$ %p has been corrupted.\n StackPointer too small.\n", thrd_dst );
 		/* paranoid */ verify( thrd_dst->context.SP );
 		/* paranoid */ verify( thrd_dst->curr_cluster == this->cltr );
 		/* paranoid */ verify( kernelTLS().this_thread == thrd_dst );
@@ -496,8 +496,8 @@ static void __run_thread(processor * this, $thread * thrd_dst) {
 // KERNEL_ONLY
 void returnToKernel() {
 	/* paranoid */ verify( ! __preemption_enabled() );
-	$coroutine * proc_cor = get_coroutine(kernelTLS().this_processor->runner);
-	$thread * thrd_src = kernelTLS().this_thread;
+	coroutine$ * proc_cor = get_coroutine(kernelTLS().this_processor->runner);
+	thread$ * thrd_src = kernelTLS().this_thread;
 
 	__STATS( thrd_src->last_proc = kernelTLS().this_processor; )
 
@@ -525,14 +525,14 @@ void returnToKernel() {
 	#endif
 
 	/* paranoid */ verify( ! __preemption_enabled() );
-	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) < ((uintptr_t)__get_stack(thrd_src->curr_cor)->base ) || thrd_src->corctx_flag, "ERROR : Returning $thread %p has been corrupted.\n StackPointer too small.\n", thrd_src );
-	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) > ((uintptr_t)__get_stack(thrd_src->curr_cor)->limit) || thrd_src->corctx_flag, "ERROR : Returning $thread %p has been corrupted.\n StackPointer too large.\n", thrd_src );
+	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) < ((uintptr_t)__get_stack(thrd_src->curr_cor)->base ) || thrd_src->corctx_flag, "ERROR : Returning thread$ %p has been corrupted.\n StackPointer too small.\n", thrd_src );
+	/* paranoid */ verifyf( ((uintptr_t)thrd_src->context.SP) > ((uintptr_t)__get_stack(thrd_src->curr_cor)->limit) || thrd_src->corctx_flag, "ERROR : Returning thread$ %p has been corrupted.\n StackPointer too large.\n", thrd_src );
 }
 
 //-----------------------------------------------------------------------------
 // Scheduler routines
 // KERNEL ONLY
-static void __schedule_thread( $thread * thrd ) {
+static void __schedule_thread( thread$ * thrd ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( ready_schedule_islocked());
 	/* paranoid */ verify( thrd );
@@ -582,18 +582,18 @@ static void __schedule_thread( $thread * thrd ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 }
 
-void schedule_thread$( $thread * thrd ) {
+void schedule_thread$( thread$ * thrd ) {
 	ready_schedule_lock();
 		__schedule_thread( thrd );
 	ready_schedule_unlock();
 }
 
 // KERNEL ONLY
-static inline $thread * __next_thread(cluster * this) with( *this ) {
+static inline thread$ * __next_thread(cluster * this) with( *this ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 
 	ready_schedule_lock();
-		$thread * thrd = pop_fast( this );
+		thread$ * thrd = pop_fast( this );
 	ready_schedule_unlock();
 
 	/* paranoid */ verify( ! __preemption_enabled() );
@@ -601,11 +601,11 @@ static inline $thread * __next_thread(cluster * this) with( *this ) {
 }
 
 // KERNEL ONLY
-static inline $thread * __next_thread_slow(cluster * this) with( *this ) {
+static inline thread$ * __next_thread_slow(cluster * this) with( *this ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 
 	ready_schedule_lock();
-		$thread * thrd;
+		thread$ * thrd;
 		for(25) {
 			thrd = pop_slow( this );
 			if(thrd) goto RET;
@@ -619,7 +619,7 @@ static inline $thread * __next_thread_slow(cluster * this) with( *this ) {
 	return thrd;
 }
 
-static inline bool __must_unpark( $thread * thrd ) {
+static inline bool __must_unpark( thread$ * thrd ) {
 	int old_ticket = __atomic_fetch_add(&thrd->ticket, 1, __ATOMIC_SEQ_CST);
 	switch(old_ticket) {
 		case TICKET_RUNNING:
@@ -635,7 +635,7 @@ static inline bool __must_unpark( $thread * thrd ) {
 	}
 }
 
-void __kernel_unpark( $thread * thrd ) {
+void __kernel_unpark( thread$ * thrd ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( ready_schedule_islocked());
 
@@ -650,7 +650,7 @@ void __kernel_unpark( $thread * thrd ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 }
 
-void unpark( $thread * thrd ) {
+void unpark( thread$ * thrd ) {
 	if( !thrd ) return;
 
 	if(__must_unpark(thrd)) {
@@ -674,8 +674,8 @@ extern "C" {
 	// last routine called by a thread.
 	// Should never return
 	void __cfactx_thrd_leave() {
-		$thread * thrd = active_thread();
-		$monitor * this = &thrd->self_mon;
+		thread$ * thrd = active_thread();
+		monitor$ * this = &thrd->self_mon;
 
 		// Lock the monitor now
 		lock( this->lock __cfaabi_dbg_ctx2 );
@@ -687,8 +687,8 @@ extern "C" {
 		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd->canary );
 		/* paranoid */ verify( kernelTLS().this_thread == thrd );
 		/* paranoid */ verify( thrd->context.SP );
-		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) > ((uintptr_t)__get_stack(thrd->curr_cor)->limit), "ERROR : $thread %p has been corrupted.\n StackPointer too large.\n", thrd );
-		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) < ((uintptr_t)__get_stack(thrd->curr_cor)->base ), "ERROR : $thread %p has been corrupted.\n StackPointer too small.\n", thrd );
+		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) > ((uintptr_t)__get_stack(thrd->curr_cor)->limit), "ERROR : thread$ %p has been corrupted.\n StackPointer too large.\n", thrd );
+		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) < ((uintptr_t)__get_stack(thrd->curr_cor)->base ), "ERROR : thread$ %p has been corrupted.\n StackPointer too small.\n", thrd );
 
 		thrd->state = Halting;
 		if( TICKET_RUNNING != thrd->ticket ) { abort( "Thread terminated with pending unpark" ); }
@@ -706,7 +706,7 @@ extern "C" {
 // KERNEL ONLY
 bool force_yield( __Preemption_Reason reason ) {
 	__disable_interrupts_checked();
-		$thread * thrd = kernelTLS().this_thread;
+		thread$ * thrd = kernelTLS().this_thread;
 		/* paranoid */ verify(thrd->state == Active);
 
 		// SKULLDUGGERY: It is possible that we are preempting this thread just before
@@ -818,7 +818,7 @@ static [unsigned idle, unsigned total, * processor] query_idles( & __cluster_pro
 // Unexpected Terminating logic
 //=============================================================================================
 void __kernel_abort_msg( char * abort_text, int abort_text_size ) {
-	$thread * thrd = __cfaabi_tls.this_thread;
+	thread$ * thrd = __cfaabi_tls.this_thread;
 
 	if(thrd) {
 		int len = snprintf( abort_text, abort_text_size, "Error occurred while executing thread %.256s (%p)", thrd->self_cor.name, thrd );

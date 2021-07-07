@@ -89,7 +89,7 @@
 //=============================================================================================
 	static inline unsigned __flush( struct $io_context & );
 	static inline __u32 __release_sqes( struct $io_context & );
-	extern void __kernel_unpark( $thread * thrd );
+	extern void __kernel_unpark( thread$ * thrd );
 
 	bool __cfa_io_drain( processor * proc ) {
 		/* paranoid */ verify( ! __preemption_enabled() );

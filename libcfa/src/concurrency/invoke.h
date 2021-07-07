@@ -70,7 +70,7 @@ extern "C" {
 
 	enum __Coroutine_State { Halted, Start, Primed, Blocked, Ready, Active, Cancelled, Halting };
 
-	struct $coroutine {
+	struct coroutine$ {
 		// context that is switch during a __cfactx_switch
 		struct __stack_context_t context;
 
@@ -84,19 +84,19 @@ extern "C" {
 		enum __Coroutine_State state;
 
 		// first coroutine to resume this one
-		struct $coroutine * starter;
+		struct coroutine$ * starter;
 
 		// last coroutine to resume this one
-		struct $coroutine * last;
+		struct coroutine$ * last;
 
 		// If non-null stack must be unwound with this exception
 		struct _Unwind_Exception * cancellation;
 
 	};
 	// Wrapper for gdb
-	struct cfathread_coroutine_t { struct $coroutine debug; };
+	struct cfathread_coroutine_t { struct coroutine$ debug; };
 
-	static inline struct __stack_t * __get_stack( struct $coroutine * cor ) {
+	static inline struct __stack_t * __get_stack( struct coroutine$ * cor ) {
 		return (struct __stack_t*)(((uintptr_t)cor->stack.storage) & ((uintptr_t)-2));
 	}
 
@@ -109,15 +109,15 @@ extern "C" {
 		__cfa_anonymous_object( __small_array_t(struct __acceptable_t) );
 	};
 
-	struct $monitor {
+	struct monitor$ {
 		// spinlock to protect internal data
 		struct __spinlock_t lock;
 
 		// current owner of the monitor
-		struct $thread * owner;
+		struct thread$ * owner;
 
 		// queue of threads that are blocked waiting for the monitor
-		__queue_t(struct $thread) entry_queue;
+		__queue_t(struct thread$) entry_queue;
 
 		// stack of conditions to run next once we exit the monitor
 		__stack_t(struct __condition_criterion_t) signal_stack;
@@ -132,11 +132,11 @@ extern "C" {
 		struct __condition_node_t * dtor_node;
 	};
 	// Wrapper for gdb
-	struct cfathread_monitor_t { struct $monitor debug; };
+	struct cfathread_monitor_t { struct monitor$ debug; };
 
 	struct __monitor_group_t {
 		// currently held monitors
-		__cfa_anonymous_object( __small_array_t($monitor*) );
+		__cfa_anonymous_object( __small_array_t(monitor$*) );
 
 		// last function that acquired monitors
 		fptr_t func;
@@ -145,11 +145,11 @@ extern "C" {
 	// Link lists fields
 	// instrusive link field for threads
 	struct __thread_desc_link {
-		struct $thread * next;
+		struct thread$ * next;
 		volatile unsigned long long ts;
 	};
 
-	struct $thread {
+	struct thread$ {
 		// Core threading fields
 		// context that is switch during a __cfactx_switch
 		struct __stack_context_t context;
@@ -178,32 +178,32 @@ extern "C" {
 		unsigned preferred;
 
 		// coroutine body used to store context
-		struct $coroutine  self_cor;
+		struct coroutine$  self_cor;
 
 		// current active context
-		struct $coroutine * curr_cor;
+		struct coroutine$ * curr_cor;
 
 		// monitor body used for mutual exclusion
-		struct $monitor    self_mon;
+		struct monitor$    self_mon;
 
 		// pointer to monitor with sufficient lifetime for current monitors
-		struct $monitor *  self_mon_p;
+		struct monitor$ *  self_mon_p;
 
 		// monitors currently held by this thread
 		struct __monitor_group_t monitors;
 
 		// used to put threads on user data structures
 		struct {
-			struct $thread * next;
-			struct $thread * back;
+			struct thread$ * next;
+			struct thread$ * back;
 		} seqable;
 
 		// used to put threads on dlist data structure
-		__cfa_dlink($thread);
+		__cfa_dlink(thread$);
 
 		struct {
-			struct $thread * next;
-			struct $thread * prev;
+			struct thread$ * next;
+			struct thread$ * prev;
 		} node;
 
 		struct processor * last_proc;
@@ -213,13 +213,13 @@ extern "C" {
 		#endif
 	};
 	#ifdef __cforall
-		P9_EMBEDDED( $thread, dlink($thread) )
+		P9_EMBEDDED( thread$, dlink(thread$) )
 	#endif
 	// Wrapper for gdb
-	struct cfathread_thread_t { struct $thread debug; };
+	struct cfathread_thread_t { struct thread$ debug; };
 
 	#ifdef __CFA_DEBUG__
-		void __cfaabi_dbg_record_thrd($thread & this, bool park, const char prev_name[]);
+		void __cfaabi_dbg_record_thrd(thread$ & this, bool park, const char prev_name[]);
 	#else
 		#define __cfaabi_dbg_record_thrd(x, y, z)
 	#endif
@@ -227,27 +227,27 @@ extern "C" {
 	#ifdef __cforall
 	extern "Cforall" {
 
-		static inline $thread *& get_next( $thread & this ) __attribute__((const)) {
+		static inline thread$ *& get_next( thread$ & this ) __attribute__((const)) {
 			return this.link.next;
 		}
 
-		static inline [$thread *&, $thread *& ] __get( $thread & this ) __attribute__((const)) {
+		static inline [thread$ *&, thread$ *& ] __get( thread$ & this ) __attribute__((const)) {
 			return this.node.[next, prev];
 		}
 
-		static inline $thread * volatile & ?`next ( $thread * this )  __attribute__((const)) {
+		static inline thread$ * volatile & ?`next ( thread$ * this )  __attribute__((const)) {
 			return this->seqable.next;
 		}
 
-		static inline $thread *& Back( $thread * this ) __attribute__((const)) {
+		static inline thread$ *& Back( thread$ * this ) __attribute__((const)) {
 			return this->seqable.back;
 		}
 
-		static inline $thread *& Next( $thread * this ) __attribute__((const)) {
+		static inline thread$ *& Next( thread$ * this ) __attribute__((const)) {
 				return this->seqable.next;
 		}
 
-		static inline bool listed( $thread * this ) {
+		static inline bool listed( thread$ * this ) {
 			return this->seqable.next != 0p;
 		}
 
@@ -257,7 +257,7 @@ extern "C" {
 			(this.func){NULL};
 		}
 
-		static inline void ?{}(__monitor_group_t & this, struct $monitor ** data, __lock_size_t size, fptr_t func) {
+		static inline void ?{}(__monitor_group_t & this, struct monitor$ ** data, __lock_size_t size, fptr_t func) {
 			(this.data){data};
 			(this.size){size};
 			(this.func){func};

@@ -22,7 +22,7 @@
 
 #include "cfathread.h"
 
-extern void ?{}(processor &, const char[], cluster &, $thread *);
+extern void ?{}(processor &, const char[], cluster &, thread$ *);
 extern "C" {
       extern void __cfactx_invoke_thread(void (*main)(void *), void * this);
 }
@@ -33,7 +33,7 @@ extern Time __kernel_get_time();
 // Thread run y the C Interface
 
 struct cfathread_object {
-	$thread self;
+	thread$ self;
 	void * (*themain)( void * );
 	void * arg;
 	void * ret;
@@ -41,7 +41,7 @@ struct cfathread_object {
 void main(cfathread_object & this);
 void ^?{}(cfathread_object & mutex this);
 
-static inline $thread * get_thread( cfathread_object & this ) { return &this.self; }
+static inline thread$ * get_thread( cfathread_object & this ) { return &this.self; }
 
 typedef ThreadCancelled(cfathread_object) cfathread_exception;
 typedef ThreadCancelled_vtable(cfathread_object) cfathread_vtable;
@@ -80,14 +80,14 @@ void main( cfathread_object & this ) {
 //================================================================================
 // Special Init Thread responsible for the initialization or processors
 struct __cfainit {
-	$thread self;
+	thread$ self;
 	void (*init)( void * );
 	void * arg;
 };
 void main(__cfainit & this);
 void ^?{}(__cfainit & mutex this);
 
-static inline $thread * get_thread( __cfainit & this ) { return &this.self; }
+static inline thread$ * get_thread( __cfainit & this ) { return &this.self; }
 
 typedef ThreadCancelled(__cfainit) __cfainit_exception;
 typedef ThreadCancelled_vtable(__cfainit) __cfainit_vtable;
@@ -108,7 +108,7 @@ static void ?{}( __cfainit & this, void (*init)( void * ), void * arg ) {
 	(this.self){"Processir Init"};
 
 	// Don't use __thrd_start! just prep the context manually
-	$thread * this_thrd = get_thread(this);
+	thread$ * this_thrd = get_thread(this);
 	void (*main_p)(__cfainit &) = main;
 
 	disable_interrupts();

@@ -178,7 +178,7 @@ struct io_future_t {
 };
 
 static inline {
-	$thread * fulfil( io_future_t & this, __s32 result, bool do_unpark = true ) {
+	thread$ * fulfil( io_future_t & this, __s32 result, bool do_unpark = true ) {
 		this.result = result;
 		return fulfil(this.self, do_unpark);
 	}

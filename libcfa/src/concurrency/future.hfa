@@ -36,7 +36,7 @@ forall( T ) {
 		void abandon( future(T) & this );
 
 		// Fulfil the future, returns whether or not someone was unblocked
-		$thread * fulfil( future(T) & this, T result ) {
+		thread$ * fulfil( future(T) & this, T result ) {
 			this.result = result;
 			return fulfil( (future_t&)this );
 		}

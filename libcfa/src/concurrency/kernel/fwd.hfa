@@ -23,7 +23,7 @@
 #include "bits/random.hfa"
 #endif
 
-struct $thread;
+struct thread$;
 struct processor;
 struct cluster;
 
@@ -35,7 +35,7 @@ enum __Preemption_Reason { __NO_PREEMPTION, __ALARM_PREEMPTION, __POLL_PREEMPTIO
 extern "C" {
 	extern "Cforall" {
 		extern __attribute__((aligned(128))) thread_local struct KernelThreadData {
-			struct $thread          * volatile this_thread;
+			struct thread$          * volatile this_thread;
 			struct processor        * volatile this_processor;
 			volatile bool sched_lock;
 
@@ -119,9 +119,9 @@ extern "C" {
 
 	extern "Cforall" {
 		extern void park( void );
-		extern void unpark( struct $thread * this );
-		static inline struct $thread * active_thread () {
-			struct $thread * t = publicTLS_get( this_thread );
+		extern void unpark( struct thread$ * this );
+		static inline struct thread$ * active_thread () {
+			struct thread$ * t = publicTLS_get( this_thread );
 			/* paranoid */ verify( t );
 			return t;
 		}
@@ -143,7 +143,7 @@ extern "C" {
 
 		// Semaphore which only supports a single thread
 		struct single_sem {
-			struct $thread * volatile ptr;
+			struct thread$ * volatile ptr;
 		};
 
 		static inline {
@@ -155,7 +155,7 @@ extern "C" {
 
 			bool wait(single_sem & this) {
 				for() {
-					struct $thread * expected = this.ptr;
+					struct thread$ * expected = this.ptr;
 					if(expected == 1p) {
 						if(__atomic_compare_exchange_n(&this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 							return false;
@@ -174,7 +174,7 @@ extern "C" {
 
 			bool post(single_sem & this) {
 				for() {
-					struct $thread * expected = this.ptr;
+					struct thread$ * expected = this.ptr;
 					if(expected == 1p) return false;
 					if(expected == 0p) {
 						if(__atomic_compare_exchange_n(&this.ptr, &expected, 1p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
@@ -199,7 +199,7 @@ extern "C" {
 			//     0p     : is initial state (wait will block)
 			//     1p     : fulfilled (wait won't block)
 			// any thread : a thread is currently waiting
-			struct $thread * volatile ptr;
+			struct thread$ * volatile ptr;
 		};
 
 		static inline {
@@ -213,7 +213,7 @@ extern "C" {
 			// return true if the thread was parked
 			bool wait(oneshot & this) {
 				for() {
-					struct $thread * expected = this.ptr;
+					struct thread$ * expected = this.ptr;
 					if(expected == 1p) return false;
 					/* paranoid */ verify( expected == 0p );
 					if(__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
@@ -226,8 +226,8 @@ extern "C" {
 
 			// Mark as fulfilled, wake thread if needed
 			// return true if a thread was unparked
-			$thread * post(oneshot & this, bool do_unpark = true) {
-				struct $thread * got = __atomic_exchange_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
+			thread$ * post(oneshot & this, bool do_unpark = true) {
+				struct thread$ * got = __atomic_exchange_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
 				if( got == 0p ) return 0p;
 				if(do_unpark) unpark( got );
 				return got;
@@ -342,7 +342,7 @@ extern "C" {
 
 			// from the server side, mark the future as fulfilled
 			// delete it if needed
-			$thread * fulfil( future_t & this, bool do_unpark = true  ) {
+			thread$ * fulfil( future_t & this, bool do_unpark = true  ) {
 				for() {
 					struct oneshot * expected = this.ptr;
 					// was this abandoned?
@@ -363,7 +363,7 @@ extern "C" {
 					struct oneshot * want = expected == 0p ? 1p : 2p;
 					if(__atomic_compare_exchange_n(&this.ptr, &expected, want, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 						if( expected == 0p ) { /* paranoid */ verify( this.ptr == 1p); return 0p; }
-						$thread * ret = post( *expected, do_unpark );
+						thread$ * ret = post( *expected, do_unpark );
 						__atomic_store_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
 						return ret;
 					}

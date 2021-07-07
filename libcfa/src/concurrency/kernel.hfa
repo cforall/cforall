@@ -114,7 +114,7 @@ struct __attribute__((aligned(128))) processor {
 	// once memcached experiments are done this should probably be removed
 	// it is not a particularly safe scheme as it can make processors less homogeneous
 	struct {
-		$thread * thrd;
+		thread$ * thrd;
 	} init;
 
 	struct KernelThreadData * local_data;
@@ -214,7 +214,7 @@ struct __attribute__((aligned(128))) cluster {
 
 	// List of threads
 	__spinlock_t thread_list_lock;
-	__dllist_t(struct $thread) threads;
+	__dllist_t(struct thread$) threads;
 	unsigned int nthreads;
 
 	// Link lists fields

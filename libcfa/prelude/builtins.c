@@ -56,16 +56,16 @@ static inline T & identity(T & i) {
 }
 
 // generator support
-struct $generator {
+struct generator$ {
 	inline int;
 };
 
-static inline void  ?{}($generator & this) { ((int&)this) = 0; }
-static inline void ^?{}($generator &) {}
+static inline void  ?{}(generator$ & this) { ((int&)this) = 0; }
+static inline void ^?{}(generator$ &) {}
 
 trait is_generator(T &) {
       void main(T & this);
-      $generator * get_generator(T & this);
+      generator$ * get_generator(T & this);
 };
 
 forall(T & | is_generator(T))

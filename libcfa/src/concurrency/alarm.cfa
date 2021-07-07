@@ -50,7 +50,7 @@ void __kernel_set_timer( Duration alarm ) {
 // Alarm logic
 //=============================================================================================
 
-void ?{}( alarm_node_t & this, $thread * thrd, Duration alarm, Duration period) with( this ) {
+void ?{}( alarm_node_t & this, thread$ * thrd, Duration alarm, Duration period) with( this ) {
 	this.initial = alarm;
 	this.period  = period;
 	this.thrd = thrd;

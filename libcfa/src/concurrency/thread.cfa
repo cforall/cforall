@@ -26,7 +26,7 @@
 
 //-----------------------------------------------------------------------------
 // Thread ctors and dtors
-void ?{}($thread & this, const char * const name, cluster & cl, void * storage, size_t storageSize ) with( this ) {
+void ?{}(thread$ & this, const char * const name, cluster & cl, void * storage, size_t storageSize ) with( this ) {
 	context{ 0p, 0p };
 	self_cor{ name, storage, storageSize };
 	ticket = TICKET_RUNNING;
@@ -56,7 +56,7 @@ void ?{}($thread & this, const char * const name, cluster & cl, void * storage, 
 	monitors{ &self_mon_p, 1, (fptr_t)0 };
 }
 
-void ^?{}($thread& this) with( this ) {
+void ^?{}(thread$& this) with( this ) {
 	#if defined( __CFA_WITH_VERIFY__ )
 		canary = 0xDEADDEADDEADDEADp;
 	#endif
@@ -86,8 +86,8 @@ forall(T & | is_thread(T) | IS_EXCEPTION(ThreadCancelled, (T))
     | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
 void ?{}( thread_dtor_guard_t & this,
 		T & thrd, void(*cancelHandler)(ThreadCancelled(T) &)) {
-	$monitor * m = get_monitor(thrd);
-	$thread * desc = get_thread(thrd);
+	monitor$ * m = get_monitor(thrd);
+	thread$ * desc = get_thread(thrd);
 
 	// Setup the monitor guard
 	void (*dtor)(T& mutex this) = ^?{};
@@ -129,7 +129,7 @@ void ^?{}( thread_dtor_guard_t & this ) {
 // Starting and stopping threads
 forall( T & | is_thread(T) )
 void __thrd_start( T & this, void (*main_p)(T &) ) {
-	$thread * this_thrd = get_thread(this);
+	thread$ * this_thrd = get_thread(this);
 
 	disable_interrupts();
 	__cfactx_start(main_p, get_coroutine(this), this, __cfactx_invoke_thread);

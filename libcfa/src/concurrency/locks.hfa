@@ -38,10 +38,10 @@
 // a P consumes it
 struct Semaphore0nary {
 	__spinlock_t lock; // needed to protect
-	mpsc_queue($thread) queue;
+	mpsc_queue(thread$) queue;
 };
 
-static inline bool P(Semaphore0nary & this, $thread * thrd) {
+static inline bool P(Semaphore0nary & this, thread$ * thrd) {
 	/* paranoid */ verify(!thrd`next);
 	/* paranoid */ verify(!(&(*thrd)`next));
 
@@ -50,14 +50,14 @@ static inline bool P(Semaphore0nary & this, $thread * thrd) {
 }
 
 static inline bool P(Semaphore0nary & this) {
-    $thread * thrd = active_thread();
+    thread$ * thrd = active_thread();
     P(this, thrd);
     park();
     return true;
 }
 
-static inline $thread * V(Semaphore0nary & this, bool doUnpark = true) {
-	$thread * next;
+static inline thread$ * V(Semaphore0nary & this, bool doUnpark = true) {
+	thread$ * next;
 	lock(this.lock __cfaabi_dbg_ctx2);
 		for (;;) {
 			next = pop(this.queue);
@@ -123,7 +123,7 @@ static inline bool P(ThreadBenaphore & this)              { return P(this.ben) ?
 static inline bool tryP(ThreadBenaphore & this)           { return tryP(this.ben); }
 static inline bool P(ThreadBenaphore & this, bool wait)   { return wait ? P(this) : tryP(this); }
 
-static inline $thread * V(ThreadBenaphore & this, bool doUnpark = true) {
+static inline thread$ * V(ThreadBenaphore & this, bool doUnpark = true) {
 	if (V(this.ben)) return 0p;
 	return V(this.sem, doUnpark);
 }
@@ -133,7 +133,7 @@ static inline $thread * V(ThreadBenaphore & this, bool doUnpark = true) {
 struct semaphore {
 	__spinlock_t lock;
 	int count;
-	__queue_t($thread) waiting;
+	__queue_t(thread$) waiting;
 };
 
 void  ?{}(semaphore & this, int count = 1);
@@ -141,7 +141,7 @@ void ^?{}(semaphore & this);
 bool   P (semaphore & this);
 bool   V (semaphore & this);
 bool   V (semaphore & this, unsigned count);
-$thread * V (semaphore & this, bool );
+thread$ * V (semaphore & this, bool );
 
 //----------
 struct single_acquisition_lock {
@@ -155,7 +155,7 @@ static inline bool   try_lock ( single_acquisition_lock & this ) { return try_lo
 static inline void   unlock   ( single_acquisition_lock & this ) { unlock  ( (blocking_lock &)this ); }
 static inline size_t on_wait  ( single_acquisition_lock & this ) { return on_wait ( (blocking_lock &)this ); }
 static inline void   on_wakeup( single_acquisition_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
-static inline void   on_notify( single_acquisition_lock & this, struct $thread * t ) { on_notify( (blocking_lock &)this, t ); }
+static inline void   on_notify( single_acquisition_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
 
 //----------
 struct owner_lock {
@@ -169,23 +169,23 @@ static inline bool   try_lock ( owner_lock & this ) { return try_lock( (blocking
 static inline void   unlock   ( owner_lock & this ) { unlock  ( (blocking_lock &)this ); }
 static inline size_t on_wait  ( owner_lock & this ) { return on_wait ( (blocking_lock &)this ); }
 static inline void   on_wakeup( owner_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
-static inline void   on_notify( owner_lock & this, struct $thread * t ) { on_notify( (blocking_lock &)this, t ); }
+static inline void   on_notify( owner_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
 
 struct fast_lock {
-	$thread * volatile owner;
+	thread$ * volatile owner;
 	ThreadBenaphore sem;
 };
 
 static inline void ?{}(fast_lock & this) { this.owner = 0p; }
 
-static inline bool $try_lock(fast_lock & this, $thread * thrd) {
-    $thread * exp = 0p;
+static inline bool $try_lock(fast_lock & this, thread$ * thrd) {
+    thread$ * exp = 0p;
     return __atomic_compare_exchange_n(&this.owner, &exp, thrd, false, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);
 }
 
 static inline void lock( fast_lock & this ) __attribute__((artificial));
 static inline void lock( fast_lock & this ) {
-	$thread * thrd = active_thread();
+	thread$ * thrd = active_thread();
 	/* paranoid */verify(thrd != this.owner);
 
 	for (;;) {
@@ -196,13 +196,13 @@ static inline void lock( fast_lock & this ) {
 
 static inline bool try_lock( fast_lock & this ) __attribute__((artificial));
 static inline bool try_lock ( fast_lock & this ) {
-	$thread * thrd = active_thread();
+	thread$ * thrd = active_thread();
 	/* paranoid */ verify(thrd != this.owner);
 	return $try_lock(this, thrd);
 }
 
-static inline $thread * unlock( fast_lock & this ) __attribute__((artificial));
-static inline $thread * unlock( fast_lock & this ) {
+static inline thread$ * unlock( fast_lock & this ) __attribute__((artificial));
+static inline thread$ * unlock( fast_lock & this ) {
 	/* paranoid */ verify(active_thread() == this.owner);
 
 	// open 'owner' before unlocking anyone
@@ -215,7 +215,7 @@ static inline $thread * unlock( fast_lock & this ) {
 
 static inline size_t on_wait( fast_lock & this ) { unlock(this); return 0; }
 static inline void on_wakeup( fast_lock & this, size_t ) { lock(this); }
-static inline void on_notify( fast_lock &, struct $thread * t ) { unpark(t); }
+static inline void on_notify( fast_lock &, struct thread$ * t ) { unpark(t); }
 
 struct mcs_node {
 	mcs_node * volatile next;
@@ -247,10 +247,10 @@ struct linear_backoff_then_block_lock {
 	__spinlock_t spinlock;
 
 	// Current thread owning the lock
-	struct $thread * owner;
+	struct thread$ * owner;
 
 	// List of blocked threads
-	dlist( $thread ) blocked_threads;
+	dlist( thread$ ) blocked_threads;
 
 	// Used for comparing and exchanging
 	volatile size_t lock_value;
@@ -340,7 +340,49 @@ static inline bool lock(linear_backoff_then_block_lock & this) with(this) {
 
 	// block until signalled
 	while (block(this)) if(try_lock_contention(this)) return true;
-	
+
+	// this should never be reached as block(this) always returns true
+	return false;
+}
+
+static inline bool lock_improved(linear_backoff_then_block_lock & this) with(this) {
+	// if owner just return
+	if (active_thread() == owner) return true;
+	size_t compare_val = 0;
+	int spin = spin_start;
+	// linear backoff
+	for( ;; ) {
+		compare_val = 0;
+		if (internal_try_lock(this, compare_val)) return true;
+		if (2 == compare_val) break;
+		for (int i = 0; i < spin; i++) Pause();
+		if (spin >= spin_end) break;
+		spin += spin;
+	}
+
+	// linear backoff bounded by spin_count
+	spin = spin_start;
+	int spin_counter = 0;
+	int yield_counter = 0;
+	for ( ;; ) {
+		compare_val = 0;
+		if(internal_try_lock(this, compare_val)) return true;
+		if (2 == compare_val) break;
+		if(spin_counter < spin_count) {
+			for (int i = 0; i < spin; i++) Pause();
+			if (spin < spin_end) spin += spin;
+			else spin_counter++;
+		} else if (yield_counter < yield_count) {
+			// after linear backoff yield yield_count times
+			yield_counter++;
+			yield();
+		} else { break; }
+	}
+
+	if(2 != compare_val && try_lock_contention(this)) return true;
+	// block until signalled
+	while (block(this)) if(try_lock_contention(this)) return true;
+
 	// this should never be reached as block(this) always returns true
 	return false;
 }
@@ -350,20 +392,20 @@ static inline void unlock(linear_backoff_then_block_lock & this) with(this) {
     owner = 0p;
     if (__atomic_exchange_n(&lock_value, 0, __ATOMIC_RELEASE) == 1) return;
 	lock( spinlock __cfaabi_dbg_ctx2 );
-	$thread * t = &try_pop_front( blocked_threads );
+	thread$ * t = &try_pop_front( blocked_threads );
 	unlock( spinlock );
 	unpark( t );
 }
 
-static inline void on_notify(linear_backoff_then_block_lock & this, struct $thread * t ) { unpark(t); }
+static inline void on_notify(linear_backoff_then_block_lock & this, struct thread$ * t ) { unpark(t); }
 static inline size_t on_wait(linear_backoff_then_block_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { lock(this); }
+static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { lock_improved(this); }
 
 //-----------------------------------------------------------------------------
 // is_blocking_lock
 trait is_blocking_lock(L & | sized(L)) {
 	// For synchronization locks to use when acquiring
-	void on_notify( L &, struct $thread * );
+	void on_notify( L &, struct thread$ * );
 
 	// For synchronization locks to use when releasing
 	size_t on_wait( L & );
@@ -397,7 +439,7 @@ forall(L & | is_blocking_lock(L)) {
 		// Count of current blocked threads
 		int count;
 	};
-	
+
 
 	void  ?{}( condition_variable(L) & this );
 	void ^?{}( condition_variable(L) & this );

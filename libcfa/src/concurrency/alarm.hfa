@@ -24,7 +24,7 @@
 
 #include "containers/list.hfa"
 
-struct $thread;
+struct thread$;
 struct processor;
 
 //=============================================================================================
@@ -51,7 +51,7 @@ struct alarm_node_t {
 	inline dlink(alarm_node_t);
 
 	union {
-		$thread * thrd;			// thrd who created event
+		thread$ * thrd;			// thrd who created event
 		processor * proc;			// proc who created event
 		Alarm_Callback callback;	// callback to handle event
 	};
@@ -62,7 +62,7 @@ struct alarm_node_t {
 };
 P9_EMBEDDED( alarm_node_t, dlink(alarm_node_t) )
 
-void ?{}( alarm_node_t & this, $thread * thrd, Duration alarm, Duration period );
+void ?{}( alarm_node_t & this, thread$ * thrd, Duration alarm, Duration period );
 void ?{}( alarm_node_t & this, processor * proc, Duration alarm, Duration period );
 void ?{}( alarm_node_t & this, Alarm_Callback callback, Duration alarm, Duration period );
 void ^?{}( alarm_node_t & this );

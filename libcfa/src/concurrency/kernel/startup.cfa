@@ -76,14 +76,14 @@ struct current_stack_info_t;
 static void * __invoke_processor(void * arg);
 static void __kernel_first_resume( processor * this );
 static void __kernel_last_resume ( processor * this );
-static void init(processor & this, const char name[], cluster & _cltr, $thread * initT);
+static void init(processor & this, const char name[], cluster & _cltr, thread$ * initT);
 static void deinit(processor & this);
 static void doregister( struct cluster & cltr );
 static void unregister( struct cluster & cltr );
 static void register_tls( processor * this );
 static void unregister_tls( processor * this );
-static void ?{}( $coroutine & this, current_stack_info_t * info);
-static void ?{}( $thread & this, current_stack_info_t * info);
+static void ?{}( coroutine$ & this, current_stack_info_t * info);
+static void ?{}( thread$ & this, current_stack_info_t * info);
 static void ?{}(processorCtx_t & this) {}
 static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * info);
 
@@ -104,7 +104,7 @@ extern void __wake_proc(processor *);
 // Kernel storage
 KERNEL_STORAGE(cluster,	             mainCluster);
 KERNEL_STORAGE(processor,            mainProcessor);
-KERNEL_STORAGE($thread,	             mainThread);
+KERNEL_STORAGE(thread$,	             mainThread);
 KERNEL_STORAGE(__stack_t,            mainThreadCtx);
 KERNEL_STORAGE(__scheduler_RWLock_t, __scheduler_lock);
 #if !defined(__CFA_NO_STATISTICS__)
@@ -113,7 +113,7 @@ KERNEL_STORAGE(__stats_t, mainProcStats);
 
 cluster              * mainCluster;
 processor            * mainProcessor;
-$thread              * mainThread;
+thread$              * mainThread;
 __scheduler_RWLock_t * __scheduler_lock;
 
 extern "C" {
@@ -202,7 +202,7 @@ static void __kernel_startup(void) {
 	// Start by initializing the main thread
 	// SKULLDUGGERY: the mainThread steals the process main thread
 	// which will then be scheduled by the mainProcessor normally
-	mainThread = ($thread *)&storage_mainThread;
+	mainThread = (thread$ *)&storage_mainThread;
 	current_stack_info_t info;
 	info.storage = (__stack_t*)&storage_mainThreadCtx;
 	(*mainThread){ &info };
@@ -396,8 +396,8 @@ static void * __invoke_processor(void * arg) {
 }
 
 static void __kernel_first_resume( processor * this ) {
-	$thread * src = mainThread;
-	$coroutine * dst = get_coroutine(this->runner);
+	thread$ * src = mainThread;
+	coroutine$ * dst = get_coroutine(this->runner);
 
 	/* paranoid */ verify( ! __preemption_enabled() );
 
@@ -429,8 +429,8 @@ static void __kernel_first_resume( processor * this ) {
 
 // KERNEL_ONLY
 static void __kernel_last_resume( processor * this ) {
-	$coroutine * src = &mainThread->self_cor;
-	$coroutine * dst = get_coroutine(this->runner);
+	coroutine$ * src = &mainThread->self_cor;
+	coroutine$ * dst = get_coroutine(this->runner);
 
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( dst->starter == src );
@@ -458,7 +458,7 @@ static void __kernel_last_resume( processor * this ) {
 //=============================================================================================
 //-----------------------------------------------------------------------------
 // Main thread construction
-static void ?{}( $coroutine & this, current_stack_info_t * info) with( this ) {
+static void ?{}( coroutine$ & this, current_stack_info_t * info) with( this ) {
 	stack.storage = info->storage;
 	with(*stack.storage) {
 		limit     = info->limit;
@@ -473,7 +473,7 @@ static void ?{}( $coroutine & this, current_stack_info_t * info) with( this ) {
 	cancellation = 0p;
 }
 
-static void ?{}( $thread & this, current_stack_info_t * info) with( this ) {
+static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 	ticket = TICKET_RUNNING;
 	state = Start;
 	self_cor{ info };
@@ -505,7 +505,7 @@ static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * 
 	this.proc = proc;
 }
 
-static void init(processor & this, const char name[], cluster & _cltr, $thread * initT) with( this ) {
+static void init(processor & this, const char name[], cluster & _cltr, thread$ * initT) with( this ) {
 	this.name = name;
 	this.cltr = &_cltr;
 	this.rdq.its = 0;
@@ -544,7 +544,7 @@ static void deinit(processor & this) {
 	close(this.idle);
 }
 
-void ?{}(processor & this, const char name[], cluster & _cltr, $thread * initT) {
+void ?{}(processor & this, const char name[], cluster & _cltr, thread$ * initT) {
 	( this.terminated ){};
 	( this.runner ){};
 
@@ -662,14 +662,14 @@ static void unregister( cluster     & cltr ) {
 	unlock( __cfa_dbg_global_clusters.lock );
 }
 
-void doregister( cluster * cltr, $thread & thrd ) {
+void doregister( cluster * cltr, thread$ & thrd ) {
 	lock      (cltr->thread_list_lock __cfaabi_dbg_ctx2);
 	cltr->nthreads += 1;
 	push_front(cltr->threads, thrd);
 	unlock    (cltr->thread_list_lock);
 }
 
-void unregister( cluster * cltr, $thread & thrd ) {
+void unregister( cluster * cltr, thread$ & thrd ) {
 	lock  (cltr->thread_list_lock __cfaabi_dbg_ctx2);
 	remove(cltr->threads, thrd );
 	cltr->nthreads -= 1;

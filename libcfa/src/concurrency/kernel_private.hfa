@@ -45,12 +45,12 @@ extern "C" {
 	void enable_interrupts( bool poll = true );
 }
 
-void schedule_thread$( $thread * ) __attribute__((nonnull (1)));
+void schedule_thread$( thread$ * ) __attribute__((nonnull (1)));
 
 extern bool __preemption_enabled();
 
 //release/wake-up the following resources
-void __thread_finish( $thread * thrd );
+void __thread_finish( thread$ * thrd );
 
 //-----------------------------------------------------------------------------
 // Hardware
@@ -94,8 +94,8 @@ extern "C" {
 }
 
 __cfaabi_dbg_debug_do(
-	extern void __cfaabi_dbg_thread_register  ( $thread * thrd );
-	extern void __cfaabi_dbg_thread_unregister( $thread * thrd );
+	extern void __cfaabi_dbg_thread_register  ( thread$ * thrd );
+	extern void __cfaabi_dbg_thread_unregister( thread$ * thrd );
 )
 
 #define TICKET_BLOCKED (-1) // thread is blocked
@@ -104,8 +104,8 @@ __cfaabi_dbg_debug_do(
 
 //-----------------------------------------------------------------------------
 // Utils
-void doregister( struct cluster * cltr, struct $thread & thrd );
-void unregister( struct cluster * cltr, struct $thread & thrd );
+void doregister( struct cluster * cltr, struct thread$ & thrd );
+void unregister( struct cluster * cltr, struct thread$ & thrd );
 
 //-----------------------------------------------------------------------------
 // I/O
@@ -299,25 +299,25 @@ static inline void unlock(__cluster_proc_list & this) {
 //-----------------------------------------------------------------------
 // push thread onto a ready queue for a cluster
 // returns true if the list was previously empty, false otherwise
-__attribute__((hot)) void push(struct cluster * cltr, struct $thread * thrd, bool local);
+__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, bool local);
 
 //-----------------------------------------------------------------------
 // pop thread from the local queues of a cluster
 // returns 0p if empty
 // May return 0p spuriously
-__attribute__((hot)) struct $thread * pop_fast(struct cluster * cltr);
+__attribute__((hot)) struct thread$ * pop_fast(struct cluster * cltr);
 
 //-----------------------------------------------------------------------
 // pop thread from any ready queue of a cluster
 // returns 0p if empty
 // May return 0p spuriously
-__attribute__((hot)) struct $thread * pop_slow(struct cluster * cltr);
+__attribute__((hot)) struct thread$ * pop_slow(struct cluster * cltr);
 
 //-----------------------------------------------------------------------
 // search all ready queues of a cluster for any thread
 // returns 0p if empty
 // guaranteed to find any threads added before this call
-__attribute__((hot)) struct $thread * pop_search(struct cluster * cltr);
+__attribute__((hot)) struct thread$ * pop_search(struct cluster * cltr);
 
 //-----------------------------------------------------------------------
 // Increase the width of the ready queue (number of lanes) by 4

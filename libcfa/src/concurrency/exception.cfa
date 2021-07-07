@@ -19,7 +19,7 @@
 
 #include "coroutine.hfa"
 
-extern struct $thread * mainThread;
+extern struct thread$ * mainThread;
 extern "C" {
 extern void __cfactx_thrd_leave();
 }
@@ -54,8 +54,8 @@ STOP_AT_END_FUNCTION(thread_cancelstop,
 )
 
 STOP_AT_END_FUNCTION(coroutine_cancelstop,
-	struct $coroutine * src = ($coroutine *)stop_param;
-	struct $coroutine * dst = src->last;
+	struct coroutine$ * src = (coroutine$ *)stop_param;
+	struct coroutine$ * dst = src->last;
 
 	$ctx_switch( src, dst );
 	abort();
@@ -71,9 +71,9 @@ _Unwind_Reason_Code __cfaehm_cancellation_unwind( struct _Unwind_Exception * unw
 	_Unwind_Stop_Fn stop_func;
 	void * stop_param;
 
-	struct $thread * this_thread = active_thread();
+	struct thread$ * this_thread = active_thread();
 	if ( &this_thread->self_cor != this_thread->curr_cor ) {
-		struct $coroutine * cor = this_thread->curr_cor;
+		struct coroutine$ * cor = this_thread->curr_cor;
 		cor->cancellation = unwind_exception;
 
 		stop_func = coroutine_cancelstop;

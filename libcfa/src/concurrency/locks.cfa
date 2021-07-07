@@ -31,7 +31,7 @@ forall(L & | is_blocking_lock(L)) {
 		inline dlink(info_thread(L));
 
 		// waiting thread
-		struct $thread * t;
+		struct thread$ * t;
 
 		// shadow field
 		uintptr_t info;
@@ -44,7 +44,7 @@ forall(L & | is_blocking_lock(L)) {
 	};
 	P9_EMBEDDED( info_thread(L), dlink(info_thread(L)) )
 
-	void ?{}( info_thread(L) & this, $thread * t, uintptr_t info, L * l ) {
+	void ?{}( info_thread(L) & this, thread$ * t, uintptr_t info, L * l ) {
 		this.t = t;
 		this.info = info;
 		this.lock = l;
@@ -70,7 +70,7 @@ void ^?{}( blocking_lock & this ) {}
 
 void lock( blocking_lock & this ) with( this ) {
 	lock( lock __cfaabi_dbg_ctx2 );
-	$thread * thrd = active_thread();
+	thread$ * thrd = active_thread();
 
 	// single acquisition lock is held by current thread
 	/* paranoid */ verifyf( owner != thrd || multi_acquisition, "Single acquisition lock holder (%p) attempted to reacquire the lock %p resulting in a deadlock.", owner, &this );
@@ -116,7 +116,7 @@ bool try_lock( blocking_lock & this ) with( this ) {
 }
 
 void pop_and_set_new_owner( blocking_lock & this ) with( this ) {
-	$thread * t = &try_pop_front( blocked_threads );
+	thread$ * t = &try_pop_front( blocked_threads );
 	owner = t;
 	recursion_count = ( t ? 1 : 0 );
 	wait_count--;
@@ -141,7 +141,7 @@ size_t wait_count( blocking_lock & this ) with( this ) {
 	return wait_count;
 }
 
-void on_notify( blocking_lock & this, $thread * t ) with( this ) {
+void on_notify( blocking_lock & this, thread$ * t ) with( this ) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	// lock held
 	if ( owner != 0p ) {
@@ -365,8 +365,8 @@ bool P(semaphore & this) with( this ){
 	}
 }
 
-$thread * V (semaphore & this, const bool doUnpark ) with( this ) {
-	$thread * thrd = 0p;
+thread$ * V (semaphore & this, const bool doUnpark ) with( this ) {
+	thread$ * thrd = 0p;
 	lock( lock __cfaabi_dbg_ctx2 );
 	count += 1;
 	if ( count <= 0 ) {
@@ -383,12 +383,12 @@ $thread * V (semaphore & this, const bool doUnpark ) with( this ) {
 }
 
 bool V(semaphore & this) with( this ) {
-	$thread * thrd = V(this, true);
+	thread$ * thrd = V(this, true);
 	return thrd != 0p;
 }
 
 bool V(semaphore & this, unsigned diff) with( this ) {
-	$thread * thrd = 0p;
+	thread$ * thrd = 0p;
 	lock( lock __cfaabi_dbg_ctx2 );
 	int release = max(-count, (int)diff);
 	count += diff;

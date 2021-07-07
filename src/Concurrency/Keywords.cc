@@ -121,15 +121,15 @@ namespace Concurrency {
 	// thread Mythread {                         struct MyThread {
 	// 	int data;                                  int data;
 	// 	a_struct_t more_data;                      a_struct_t more_data;
-	//                                =>             $thread __thrd_d;
+	//                                =>             thread$ __thrd_d;
 	// };                                        };
-	//                                           static inline $thread * get_thread( MyThread * this ) { return &this->__thrd_d; }
+	//                                           static inline thread$ * get_thread( MyThread * this ) { return &this->__thrd_d; }
 	//
 	class ThreadKeyword final : public ConcurrentSueKeyword {
 	  public:
 
 	  	ThreadKeyword() : ConcurrentSueKeyword(
-			"$thread",
+			"thread$",
 			"__thrd",
 			"get_thread",
 			"thread keyword requires threads to be in scope, add #include <thread.hfa>\n",
@@ -154,15 +154,15 @@ namespace Concurrency {
 	// coroutine MyCoroutine {                   struct MyCoroutine {
 	// 	int data;                                  int data;
 	// 	a_struct_t more_data;                      a_struct_t more_data;
-	//                                =>             $coroutine __cor_d;
+	//                                =>             coroutine$ __cor_d;
 	// };                                        };
-	//                                           static inline $coroutine * get_coroutine( MyCoroutine * this ) { return &this->__cor_d; }
+	//                                           static inline coroutine$ * get_coroutine( MyCoroutine * this ) { return &this->__cor_d; }
 	//
 	class CoroutineKeyword final : public ConcurrentSueKeyword {
 	  public:
 
 	  	CoroutineKeyword() : ConcurrentSueKeyword(
-			"$coroutine",
+			"coroutine$",
 			"__cor",
 			"get_coroutine",
 			"coroutine keyword requires coroutines to be in scope, add #include <coroutine.hfa>\n",
@@ -189,15 +189,15 @@ namespace Concurrency {
 	// monitor MyMonitor {                       struct MyMonitor {
 	// 	int data;                                  int data;
 	// 	a_struct_t more_data;                      a_struct_t more_data;
-	//                                =>             $monitor __mon_d;
+	//                                =>             monitor$ __mon_d;
 	// };                                        };
-	//                                           static inline $monitor * get_coroutine( MyMonitor * this ) { return &this->__cor_d; }
+	//                                           static inline monitor$ * get_coroutine( MyMonitor * this ) { return &this->__cor_d; }
 	//
 	class MonitorKeyword final : public ConcurrentSueKeyword {
 	  public:
 
 	  	MonitorKeyword() : ConcurrentSueKeyword(
-			"$monitor",
+			"monitor$",
 			"__mon",
 			"get_monitor",
 			"monitor keyword requires monitors to be in scope, add #include <monitor.hfa>\n",
@@ -229,10 +229,10 @@ namespace Concurrency {
 	  public:
 
 	  	GeneratorKeyword() : ConcurrentSueKeyword(
-			"$generator",
+			"generator$",
 			"__generator_state",
 			"get_generator",
-			"Unable to find builtin type $generator\n",
+			"Unable to find builtin type generator$\n",
 			"",
 			true,
 			AggregateDecl::Generator
@@ -291,7 +291,7 @@ namespace Concurrency {
 	//-----------------------------------------------------------------------------
 	//Handles mutex routines definitions :
 	// void foo( A * mutex a, B * mutex b,  int i ) {                  void foo( A * a, B * b,  int i ) {
-	// 	                                                                 $monitor * __monitors[] = { get_monitor(a), get_monitor(b) };
+	// 	                                                                 monitor$ * __monitors[] = { get_monitor(a), get_monitor(b) };
 	// 	                                                                 monitor_guard_t __guard = { __monitors, 2 };
 	//    /*Some code*/                                       =>           /*Some code*/
 	// }                                                               }
@@ -332,7 +332,7 @@ namespace Concurrency {
 	//-----------------------------------------------------------------------------
 	//Handles mutex routines definitions :
 	// void foo( A * mutex a, B * mutex b,  int i ) {                  void foo( A * a, B * b,  int i ) {
-	// 	                                                                 $monitor * __monitors[] = { get_monitor(a), get_monitor(b) };
+	// 	                                                                 monitor$ * __monitors[] = { get_monitor(a), get_monitor(b) };
 	// 	                                                                 monitor_guard_t __guard = { __monitors, 2 };
 	//    /*Some code*/                                       =>           /*Some code*/
 	// }                                                               }
@@ -448,7 +448,7 @@ namespace Concurrency {
 
 	Expression * ConcurrentSueKeyword::postmutate( KeywordCastExpr * cast ) {
 		if ( cast_target == cast->target ) {
-			// convert (thread &)t to ($thread &)*get_thread(t), etc.
+			// convert (thread &)t to (thread$ &)*get_thread(t), etc.
 			if( !type_decl ) SemanticError( cast, context_error );
 			if( !dtor_decl ) SemanticError( cast, context_error );
 			assert( cast->result == nullptr );
@@ -918,7 +918,7 @@ namespace Concurrency {
 
 	void MutexKeyword::postvisit(StructDecl* decl) {
 
-		if( decl->name == "$monitor" && decl->body ) {
+		if( decl->name == "monitor$" && decl->body ) {
 			assert( !monitor_decl );
 			monitor_decl = decl;
 		}
@@ -1019,7 +1019,7 @@ namespace Concurrency {
 			))
 		);
 
-		//$monitor * __monitors[] = { get_monitor(a), get_monitor(b) };
+		//monitor$ * __monitors[] = { get_monitor(a), get_monitor(b) };
 		body->push_front( new DeclStmt( monitors ) );
 	}
 
@@ -1116,7 +1116,7 @@ namespace Concurrency {
 			))
 		);
 
-		//$monitor * __monitors[] = { get_monitor(a), get_monitor(b) };
+		//monitor$ * __monitors[] = { get_monitor(a), get_monitor(b) };
 		body->push_front( new DeclStmt( monitors) );
 	}
 
@@ -1124,7 +1124,7 @@ namespace Concurrency {
 	// General entry routine
 	//=============================================================================================
 	void ThreadStarter::previsit( StructDecl * decl ) {
-		if( decl->name == "$thread" && decl->body ) {
+		if( decl->name == "thread$" && decl->body ) {
 			assert( !thread_decl );
 			thread_decl = decl;
 		}

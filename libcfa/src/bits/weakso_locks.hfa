@@ -22,7 +22,7 @@
 #include "bits/containers.hfa"
 #include "containers/list.hfa"
 
-struct $thread;
+struct thread$;
 
 //-----------------------------------------------------------------------------
 // Blocking Locks
@@ -31,7 +31,7 @@ struct blocking_lock {
 	__spinlock_t lock;
 
 	// List of blocked threads
-	dlist( $thread ) blocked_threads;
+	dlist( thread$ ) blocked_threads;
 
 	// Count of current blocked threads
 	size_t wait_count;
@@ -43,7 +43,7 @@ struct blocking_lock {
 	bool strict_owner;
 
 	// Current thread owning the lock
-	struct $thread * owner;
+	struct thread$ * owner;
 
 	// Number of recursion level
 	size_t recursion_count;
@@ -55,7 +55,7 @@ void ^?{}( blocking_lock & this ) OPTIONAL_THREAD;
 void lock( blocking_lock & this ) OPTIONAL_THREAD;
 bool try_lock( blocking_lock & this ) OPTIONAL_THREAD;
 void unlock( blocking_lock & this ) OPTIONAL_THREAD;
-void on_notify( blocking_lock & this, struct $thread * t ) OPTIONAL_THREAD;
+void on_notify( blocking_lock & this, struct thread$ * t ) OPTIONAL_THREAD;
 size_t on_wait( blocking_lock & this ) OPTIONAL_THREAD;
 void on_wakeup( blocking_lock & this, size_t ) OPTIONAL_THREAD;
 size_t wait_count( blocking_lock & this ) OPTIONAL_THREAD;
@@ -73,4 +73,4 @@ static inline bool   try_lock ( multiple_acquisition_lock & this ) { return try_
 static inline void   unlock   ( multiple_acquisition_lock & this ) { unlock  ( (blocking_lock &)this ); }
 static inline size_t on_wait  ( multiple_acquisition_lock & this ) { return on_wait ( (blocking_lock &)this ); }
 static inline void   on_wakeup( multiple_acquisition_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
-static inline void   on_notify( multiple_acquisition_lock & this, struct $thread * t ){ on_notify( (blocking_lock &)this, t ); }
+static inline void   on_notify( multiple_acquisition_lock & this, struct thread$ * t ){ on_notify( (blocking_lock &)this, t ); }

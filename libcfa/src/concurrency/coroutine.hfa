@@ -38,31 +38,31 @@ const char * msg(CoroutineCancelled(T) *);
 // Anything that is resumed is a coroutine.
 trait is_coroutine(T & | IS_RESUMPTION_EXCEPTION(CoroutineCancelled, (T))) {
 	void main(T & this);
-	$coroutine * get_coroutine(T & this);
+	coroutine$ * get_coroutine(T & this);
 };
 
-#define DECL_COROUTINE(X) static inline $coroutine* get_coroutine(X& this) { return &this.__cor; } void main(X& this)
+#define DECL_COROUTINE(X) static inline coroutine$* get_coroutine(X& this) { return &this.__cor; } void main(X& this)
 
 //-----------------------------------------------------------------------------
 // Ctors and dtors
 // void ?{}( coStack_t & this );
 // void ^?{}( coStack_t & this );
 
-void  ?{}( $coroutine & this, const char name[], void * storage, size_t storageSize );
-void ^?{}( $coroutine & this );
+void  ?{}( coroutine$ & this, const char name[], void * storage, size_t storageSize );
+void ^?{}( coroutine$ & this );
 
-static inline void ?{}( $coroutine & this)                                       { this{ "Anonymous Coroutine", 0p, 0 }; }
-static inline void ?{}( $coroutine & this, size_t stackSize)                     { this{ "Anonymous Coroutine", 0p, stackSize }; }
-static inline void ?{}( $coroutine & this, void * storage, size_t storageSize )  { this{ "Anonymous Coroutine", storage, storageSize }; }
-static inline void ?{}( $coroutine & this, const char name[])                    { this{ name, 0p, 0 }; }
-static inline void ?{}( $coroutine & this, const char name[], size_t stackSize ) { this{ name, 0p, stackSize }; }
+static inline void ?{}( coroutine$ & this)                                       { this{ "Anonymous Coroutine", 0p, 0 }; }
+static inline void ?{}( coroutine$ & this, size_t stackSize)                     { this{ "Anonymous Coroutine", 0p, stackSize }; }
+static inline void ?{}( coroutine$ & this, void * storage, size_t storageSize )  { this{ "Anonymous Coroutine", storage, storageSize }; }
+static inline void ?{}( coroutine$ & this, const char name[])                    { this{ name, 0p, 0 }; }
+static inline void ?{}( coroutine$ & this, const char name[], size_t stackSize ) { this{ name, 0p, stackSize }; }
 
 //-----------------------------------------------------------------------------
 // Public coroutine API
 forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
 void prime(T & cor);
 
-static inline struct $coroutine * active_coroutine() { return active_thread()->curr_cor; }
+static inline struct coroutine$ * active_coroutine() { return active_thread()->curr_cor; }
 
 //-----------------------------------------------------------------------------
 // PRIVATE exposed because of inline
@@ -72,21 +72,21 @@ extern "C" {
 	void __cfactx_invoke_coroutine(void (*main)(void *), void * this);
 
 	forall(T &)
-	void __cfactx_start(void (*main)(T &), struct $coroutine * cor, T & this, void (*invoke)(void (*main)(void *), void *));
+	void __cfactx_start(void (*main)(T &), struct coroutine$ * cor, T & this, void (*invoke)(void (*main)(void *), void *));
 
-	extern void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct $coroutine *) __attribute__ ((__noreturn__));
+	extern void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct coroutine$ *) __attribute__ ((__noreturn__));
 
 	extern void __cfactx_switch( struct __stack_context_t * from, struct __stack_context_t * to ) asm ("__cfactx_switch");
 }
 
 // Private wrappers for context switch and stack creation
 // Wrapper for co
-static inline void $ctx_switch( $coroutine * src, $coroutine * dst ) __attribute__((nonnull (1, 2))) {
+static inline void $ctx_switch( coroutine$ * src, coroutine$ * dst ) __attribute__((nonnull (1, 2))) {
 	// set state of current coroutine to inactive
 	src->state = src->state == Halted ? Halted : Blocked;
 
 	// get the active thread once
-	$thread * athrd = active_thread();
+	thread$ * athrd = active_thread();
 
 	// Mark the coroutine
 	/* paranoid */ verify( !athrd->corctx_flag );
@@ -123,7 +123,7 @@ extern "C" {
 		// preemption occurs after this line, the pointer
 		// will also migrate which means this value will
 		// stay in syn with the TLS
-		$coroutine * src = active_coroutine();
+		coroutine$ * src = active_coroutine();
 
 		assertf( src->last != 0,
 			"Attempt to suspend coroutine \"%.256s\" (%p) that has never been resumed.\n"
@@ -140,7 +140,7 @@ extern "C" {
 
 forall(T & | is_coroutine(T))
 void __cfaehm_cancelled_coroutine(
-	T & cor, $coroutine * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)) );
+	T & cor, coroutine$ * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)) );
 
 // Resume implementation inlined for performance
 forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
@@ -150,8 +150,8 @@ static inline T & resume(T & cor) {
 	// preemption occurs after this line, the pointer
 	// will also migrate which means this value will
 	// stay in syn with the TLS
-	$coroutine * src = active_coroutine();
-	$coroutine * dst = get_coroutine(cor);
+	coroutine$ * src = active_coroutine();
+	coroutine$ * dst = get_coroutine(cor);
 
 	if( unlikely(dst->context.SP == 0p) ) {
 		__stack_prepare(&dst->stack, 65000);
@@ -179,13 +179,13 @@ static inline T & resume(T & cor) {
 	return cor;
 }
 
-static inline void resume( $coroutine * dst ) __attribute__((nonnull (1))) {
+static inline void resume( coroutine$ * dst ) __attribute__((nonnull (1))) {
 	// optimization : read TLS once and reuse it
 	// Safety note: this is preemption safe since if
 	// preemption occurs after this line, the pointer
 	// will also migrate which means this value will
 	// stay in syn with the TLS
-	$coroutine * src = active_coroutine();
+	coroutine$ * src = active_coroutine();
 
 	// not resuming self ?
 	if ( src != dst ) {

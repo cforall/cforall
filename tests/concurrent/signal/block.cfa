@@ -32,8 +32,8 @@ static const unsigned long N = 5_000ul;
 enum state_t { WAITED, SIGNAL, BARGE };
 
 monitor global_data_t {
-	$thread * last_thread;
-	$thread * last_signaller;
+	thread$ * last_thread;
+	thread$ * last_signaller;
 };
 
 void ?{} ( global_data_t & this ) {
@@ -81,7 +81,7 @@ void signal_op( global_data_t & mutex a, global_data_t & mutex b ) {
 
 	if( !is_empty( cond ) ) {
 
-		$thread * next = ( $thread * ) front( cond );
+		thread$ * next = ( thread$ * ) front( cond );
 
 		if( ! signal_block( cond ) ) {
 			sout | "ERROR expected to be able to signal";

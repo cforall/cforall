@@ -20,16 +20,16 @@ thread Blocker {
 };
 void main(Blocker & this);
 
-Blocker * from_thread($thread * t) {
+Blocker * from_thread(thread$ * t) {
 	Blocker & nullb = *(Blocker*)0p;
-	$thread & nullt = (thread&)nullb;
+	thread$ & nullt = (thread&)nullb;
 	uintptr_t offset  = (uintptr_t)&nullt;
 	uintptr_t address = ((uintptr_t)t) - offset;
 	return (Blocker*)address;
 }
 
 void main(Blocker & this) {
-	$thread * me = active_thread();
+	thread$ * me = active_thread();
 	Blocker * me1 = &this;
 	Blocker * me2 = from_thread(me);
 	if( me1 != me2 ) sout | "Bad casting!" | me1 | "vs" | me2;
@@ -50,7 +50,7 @@ void main(Unblocker & this) {
 	this.sum = 0;
 	unsigned me = (unsigned)(uintptr_t)&this;
 	for(num_unblocks) {
-		$thread * t = V(sem, false);
+		thread$ * t = V(sem, false);
 		Blocker * b = from_thread(t);
 		b->sum += me;
 		this.sum += (unsigned)(uintptr_t)b;

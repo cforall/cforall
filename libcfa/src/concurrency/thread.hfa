@@ -28,7 +28,7 @@
 trait is_thread(T &) {
 	void ^?{}(T& mutex this);
 	void main(T& this);
-	$thread* get_thread(T& this);
+	thread$ * get_thread(T& this);
 };
 
 EHM_FORALL_EXCEPTION(ThreadCancelled, (thread_t &), (thread_t)) (
@@ -44,13 +44,13 @@ const char * msg(ThreadCancelled(T) *);
 
 // Inline getters for threads/coroutines/monitors
 forall( T & | is_thread(T) )
-static inline $coroutine* get_coroutine(T & this) __attribute__((const)) { return &get_thread(this)->self_cor; }
+static inline coroutine$ * get_coroutine(T & this) __attribute__((const)) { return &get_thread(this)->self_cor; }
 
 forall( T & | is_thread(T) )
-static inline $monitor  * get_monitor  (T & this) __attribute__((const)) { return &get_thread(this)->self_mon; }
+static inline monitor$   * get_monitor  (T & this) __attribute__((const)) { return &get_thread(this)->self_mon; }
 
-static inline $coroutine* get_coroutine($thread * this) __attribute__((const)) { return &this->self_cor; }
-static inline $monitor  * get_monitor  ($thread * this) __attribute__((const)) { return &this->self_mon; }
+static inline coroutine$ * get_coroutine(thread$ * this) __attribute__((const)) { return &this->self_cor; }
+static inline monitor$   * get_monitor  (thread$ * this) __attribute__((const)) { return &this->self_mon; }
 
 //-----------------------------------------------------------------------------
 // forward declarations needed for threads
@@ -61,18 +61,18 @@ void __thrd_start( T & this, void (*)(T &) );
 
 //-----------------------------------------------------------------------------
 // Ctors and dtors
-void ?{}($thread & this, const char * const name, struct cluster & cl, void * storage, size_t storageSize );
-void ^?{}($thread & this);
+void ?{}(thread$ & this, const char * const name, struct cluster & cl, void * storage, size_t storageSize );
+void ^?{}(thread$ & this);
 
-static inline void ?{}($thread & this)                                                                  { this{ "Anonymous Thread", *mainCluster, 0p, 65000 }; }
-static inline void ?{}($thread & this, size_t stackSize )                                               { this{ "Anonymous Thread", *mainCluster, 0p, stackSize }; }
-static inline void ?{}($thread & this, void * storage, size_t storageSize )                             { this{ "Anonymous Thread", *mainCluster, storage, storageSize }; }
-static inline void ?{}($thread & this, struct cluster & cl )                                            { this{ "Anonymous Thread", cl, 0p, 65000 }; }
-static inline void ?{}($thread & this, struct cluster & cl, size_t stackSize )                          { this{ "Anonymous Thread", cl, 0p, stackSize }; }
-static inline void ?{}($thread & this, struct cluster & cl, void * storage, size_t storageSize )        { this{ "Anonymous Thread", cl, storage, storageSize }; }
-static inline void ?{}($thread & this, const char * const name)                                         { this{ name, *mainCluster, 0p, 65000 }; }
-static inline void ?{}($thread & this, const char * const name, struct cluster & cl )                   { this{ name, cl, 0p, 65000 }; }
-static inline void ?{}($thread & this, const char * const name, struct cluster & cl, size_t stackSize ) { this{ name, cl, 0p, stackSize }; }
+static inline void ?{}(thread$ & this)                                                                  { this{ "Anonymous Thread", *mainCluster, 0p, 65000 }; }
+static inline void ?{}(thread$ & this, size_t stackSize )                                               { this{ "Anonymous Thread", *mainCluster, 0p, stackSize }; }
+static inline void ?{}(thread$ & this, void * storage, size_t storageSize )                             { this{ "Anonymous Thread", *mainCluster, storage, storageSize }; }
+static inline void ?{}(thread$ & this, struct cluster & cl )                                            { this{ "Anonymous Thread", cl, 0p, 65000 }; }
+static inline void ?{}(thread$ & this, struct cluster & cl, size_t stackSize )                          { this{ "Anonymous Thread", cl, 0p, stackSize }; }
+static inline void ?{}(thread$ & this, struct cluster & cl, void * storage, size_t storageSize )        { this{ "Anonymous Thread", cl, storage, storageSize }; }
+static inline void ?{}(thread$ & this, const char * const name)                                         { this{ name, *mainCluster, 0p, 65000 }; }
+static inline void ?{}(thread$ & this, const char * const name, struct cluster & cl )                   { this{ name, cl, 0p, 65000 }; }
+static inline void ?{}(thread$ & this, const char * const name, struct cluster & cl, size_t stackSize ) { this{ name, cl, 0p, stackSize }; }
 
 struct thread_dtor_guard_t {
 	monitor_dtor_guard_t mg;
@@ -110,7 +110,7 @@ void park( void );
 //----------
 // Unpark a thread, if the thread is already blocked, schedule it
 //                  if the thread is not yet block, signal that it should rerun immediately
-void unpark( $thread * this );
+void unpark( thread$ * this );
 
 forall( T & | is_thread(T) )
 static inline void unpark( T & this ) { if(!&this) return; unpark( get_thread( this ) );}

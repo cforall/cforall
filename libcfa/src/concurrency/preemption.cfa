@@ -60,7 +60,7 @@ __attribute__((weak)) Duration default_preemption() {
 
 // FwdDeclarations : timeout handlers
 static void preempt( processor   * this );
-static void timeout( $thread * this );
+static void timeout( thread$ * this );
 
 // FwdDeclarations : Signal handlers
 static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ );
@@ -419,7 +419,7 @@ static void preempt( processor * this ) {
 }
 
 // reserved for future use
-static void timeout( $thread * this ) {
+static void timeout( thread$ * this ) {
 	unpark( this );
 }
 

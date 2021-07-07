@@ -36,7 +36,7 @@
 #include "invoke.h"
 
 extern "C" {
-	void _CtxCoroutine_Unwind(struct _Unwind_Exception * storage, struct $coroutine *) __attribute__ ((__noreturn__));
+	void _CtxCoroutine_Unwind(struct _Unwind_Exception * storage, struct coroutine$ *) __attribute__ ((__noreturn__));
 	static void _CtxCoroutine_UnwindCleanup(_Unwind_Reason_Code, struct _Unwind_Exception *) __attribute__ ((__noreturn__));
 	static void _CtxCoroutine_UnwindCleanup(_Unwind_Reason_Code, struct _Unwind_Exception *) {
 		abort();
@@ -61,7 +61,7 @@ const char * msg(CoroutineCancelled(T) *) {
 // This code should not be inlined. It is the error path on resume.
 forall(T & | is_coroutine(T))
 void __cfaehm_cancelled_coroutine(
-		T & cor, $coroutine * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)) ) {
+		T & cor, coroutine$ * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)) ) {
 	verify( desc->cancellation );
 	desc->state = Cancelled;
 	exception_t * except = __cfaehm_cancellation_exception( desc->cancellation );
@@ -113,7 +113,7 @@ void ^?{}(__stack_info_t & this) {
 	}
 }
 
-void ?{}( $coroutine & this, const char name[], void * storage, size_t storageSize ) with( this ) {
+void ?{}( coroutine$ & this, const char name[], void * storage, size_t storageSize ) with( this ) {
 	(this.context){0p, 0p};
 	(this.stack){storage, storageSize};
 	this.name = name;
@@ -123,10 +123,10 @@ void ?{}( $coroutine & this, const char name[], void * storage, size_t storageSi
 	cancellation = 0p;
 }
 
-void ^?{}($coroutine& this) {
+void ^?{}(coroutine$& this) {
 	if(this.state != Halted && this.state != Start && this.state != Primed) {
-		$coroutine * src = active_coroutine();
-		$coroutine * dst = &this;
+		coroutine$ * src = active_coroutine();
+		coroutine$ * dst = &this;
 
 		struct _Unwind_Exception storage;
 		storage.exception_class = -1;
@@ -147,7 +147,7 @@ void ^?{}($coroutine& this) {
 // Not inline since only ever called once per coroutine
 forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
 void prime(T& cor) {
-	$coroutine* this = get_coroutine(cor);
+	coroutine$* this = get_coroutine(cor);
 	assert(this->state == Start);
 
 	this->state = Primed;
@@ -247,8 +247,8 @@ void __stack_prepare( __stack_info_t * this, size_t create_size ) {
 // We need to call suspend from invoke.c, so we expose this wrapper that
 // is not inline (We can't inline Cforall in C)
 extern "C" {
-	void __cfactx_cor_leave( struct $coroutine * src ) {
-		$coroutine * starter = src->cancellation != 0 ? src->last : src->starter;
+	void __cfactx_cor_leave( struct coroutine$ * src ) {
+		coroutine$ * starter = src->cancellation != 0 ? src->last : src->starter;
 
 		src->state = Halted;
 
@@ -264,11 +264,11 @@ extern "C" {
 		$ctx_switch( src, starter );
 	}
 
-	struct $coroutine * __cfactx_cor_finish(void) {
-		struct $coroutine * cor = active_coroutine();
+	struct coroutine$ * __cfactx_cor_finish(void) {
+		struct coroutine$ * cor = active_coroutine();
 
 		// get the active thread once
-		$thread * athrd = active_thread();
+		thread$ * athrd = active_thread();
 
 		/* paranoid */ verify( athrd->corctx_flag );
 		athrd->corctx_flag = false;

@@ -23,7 +23,7 @@ void ^?{}( blocking_lock & ) {}
 void lock( blocking_lock & ) {}
 bool try_lock( blocking_lock & ) { return false; }
 void unlock( blocking_lock & ) {}
-void on_notify( blocking_lock &, struct $thread * ) {}
+void on_notify( blocking_lock &, struct thread$ * ) {}
 size_t on_wait( blocking_lock & ) { return 0; }
 void on_wakeup( blocking_lock &, size_t ) {}
 size_t wait_count( blocking_lock & ) { return 0; }

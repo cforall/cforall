@@ -6,7 +6,7 @@ const unsigned int num_times = 50;
 
 struct MutexObj {
 	fast_lock l;
-	$thread * id;
+	thread$ * id;
 	uint32_t sum;
 };
 
@@ -20,7 +20,7 @@ void trash() {
 }
 
 uint32_t cs() {
-	$thread * me = active_thread();
+	thread$ * me = active_thread();
 	uint32_t value;
 	lock(mo.l);
 	{
