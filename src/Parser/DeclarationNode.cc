@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Mar 23 08:44:08 2021
-// Update Count     : 1149
+// Last Modified On : Wed Jul 14 17:36:57 2021
+// Update Count     : 1154
 //
 
 #include <cassert>                 // for assert, assertf, strict_dynamic_cast
@@ -384,6 +384,13 @@ DeclarationNode * DeclarationNode::newTypeof( ExpressionNode * expr, bool basety
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( basetypeof ? TypeData::Basetypeof : TypeData::Typeof );
 	newnode->type->typeexpr = expr;
+	return newnode;
+}
+
+DeclarationNode * DeclarationNode::newVtableType( DeclarationNode * decl ) {
+	DeclarationNode * newnode = new DeclarationNode;
+	newnode->type = new TypeData( TypeData::Vtable );
+	newnode->setBase( decl->type );
 	return newnode;
 }
 

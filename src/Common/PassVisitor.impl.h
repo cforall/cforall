@@ -3609,6 +3609,41 @@ Type * PassVisitor< pass_type >::mutate( TypeofType * node ) {
 }
 
 //--------------------------------------------------------------------------
+// VTableType
+template< typename pass_type >
+void PassVisitor< pass_type >::visit( VTableType * node ) {
+	VISIT_START( node );
+
+	// Forall qualifiers should be on base type, not here
+	// maybeAccept_impl( node->forall, *this );
+	maybeAccept_impl( node->base, *this );
+
+	VISIT_END( node );
+}
+
+template< typename pass_type >
+void PassVisitor< pass_type >::visit( const VTableType * node ) {
+	VISIT_START( node );
+
+	// Forall qualifiers should be on base type, not here
+	// maybeAccept_impl( node->forall, *this );
+	maybeAccept_impl( node->base, *this );
+
+	VISIT_END( node );
+}
+
+template< typename pass_type >
+Type * PassVisitor< pass_type >::mutate( VTableType * node ) {
+	MUTATE_START( node );
+
+	// Forall qualifiers should be on base type, not here
+	// maybeMutate_impl( node->forall, *this );
+	maybeMutate_impl( node->base, *this );
+
+	MUTATE_END( Type, node );
+}
+
+//--------------------------------------------------------------------------
 // AttrType
 template< typename pass_type >
 void PassVisitor< pass_type >::visit( AttrType * node ) {

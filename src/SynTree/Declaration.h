@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:35:36 2021
-// Update Count     : 159
+// Last Modified By : Henry Xue
+// Last Modified On : Tue Jul 20 04:10:50 2021
+// Update Count     : 160
 //
 
 #pragma once
@@ -299,6 +299,7 @@ class StructDecl : public AggregateDecl {
 	StructDecl( const StructDecl & other ) : Parent( other ), kind( other.kind ) {}
 
 	bool is_coroutine() { return kind == Coroutine; }
+	bool is_exception() { return kind == Exception; }
 	bool is_generator() { return kind == Generator; }
 	bool is_monitor  () { return kind == Monitor  ; }
 	bool is_thread   () { return kind == Thread   ; }

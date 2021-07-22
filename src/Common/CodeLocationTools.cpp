@@ -175,6 +175,7 @@ public:
     macro(TypeInstType, Type) \
     macro(TupleType, Type) \
     macro(TypeofType, Type) \
+    macro(VTableType, Type) \
     macro(VarArgsType, Type) \
     macro(ZeroType, Type) \
     macro(OneType, Type) \

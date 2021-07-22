@@ -55,6 +55,40 @@ U foo(T i, U j) {
 	return b.j;
 }
 
+void checkPlan9offsets() {
+
+	forall( T )
+	struct thing {
+		T q;                // variable-sized padding
+		inline double;
+		inline float;
+	};
+
+	#define SHOW_OFFSETS \
+		double & x_inner_double = x; \
+		float  & x_inner_float  = x; \
+		printf("  offset of inner double: %ld\n", ((char *) & x_inner_double) - ((char *) & x) ); \
+		printf("  offset of inner float:  %ld\n", ((char *) & x_inner_float ) - ((char *) & x) );
+
+	void showStatic( thing(long long int) & x ) {
+		printf("static:\n");
+		SHOW_OFFSETS
+	}
+
+	forall( T )
+	void showDynamic( thing(T) & x ) {
+		printf("dynamic:\n");
+		SHOW_OFFSETS
+	}
+
+	#undef SHOW_OFFSETS
+
+	printf("=== checkPlan9offsets\n");
+	thing(long long int) x;
+	showStatic(x);
+	showDynamic(x);
+}
+
 int main() {
 	{
 		// ensure that x is not changed by the invocation of a polymorphic function
@@ -113,6 +147,8 @@ int main() {
 		u.f1 = x;
 		assertf(ret == u.f2, "union operation fails in polymorphic context.");
 	}
+
+	checkPlan9offsets();
 }
 
 // Local Variables: //

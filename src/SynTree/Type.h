@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Sep  4 09:58:00 2019
-// Update Count     : 170
+// Last Modified On : Wed Jul 14 15:40:00 2021
+// Update Count     : 171
 //
 
 #pragma once
@@ -644,6 +644,25 @@ class TypeofType : public Type {
 	virtual bool isComplete() const override { assert( false ); return false; }
 
 	virtual TypeofType *clone() const override { return new TypeofType( *this ); }
+	virtual void accept( Visitor & v ) override { v.visit( this ); }
+	virtual void accept( Visitor & v ) const override { v.visit( this ); }
+	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
+};
+
+class VTableType : public Type {
+public:
+	Type *base;
+
+	VTableType( const Type::Qualifiers & tq, Type *base,
+		const std::list< Attribute * > & attributes = std::list< Attribute * >() );
+	VTableType( const VTableType & );
+	virtual ~VTableType();
+
+	Type *get_base() { return base; }
+	void set_base( Type *newValue ) { base = newValue; }
+
+	virtual VTableType *clone() const override { return new VTableType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
 	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }

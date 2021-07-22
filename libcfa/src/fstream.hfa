@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 28 20:37:57 2021
-// Update Count     : 230
+// Last Modified On : Tue Jul 20 21:18:03 2021
+// Update Count     : 232
 //
 
 #pragma once
@@ -147,14 +147,14 @@ extern ifstream & sin, & stdin;							// aliases
 // *********************************** exceptions ***********************************
 
 
-EHM_EXCEPTION(Open_Failure)(
+exception Open_Failure {
 	union {
 		ofstream * ostream;
 		ifstream * istream;
 	};
 	// TEMPORARY: need polymorphic exceptions
 	int tag;											// 1 => ostream; 0 => istream
-);
+};
 
 void ?{}( Open_Failure & this, ofstream & );
 void ?{}( Open_Failure & this, ifstream & );

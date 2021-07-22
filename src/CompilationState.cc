@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May  3 13:45:23 2019
-// Update Count     : 4
+// Last Modified By : Henry Xue
+// Last Modified On : Tue Jul 20 04:27:35 2021
+// Update Count     : 5
 //
 
 #include "config.h"
@@ -22,6 +22,7 @@ int
 	bcodegenp = false,
 	ctorinitp = false,
 	declstatsp = false,
+	exdeclp = false,
 	exprp = false,
 	expraltp = false,
 	genericsp = false,

@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu Jul 23 14:15:00 2020
-// Update Count     : 6
+// Last Modified On : Wed Jul 14 15:54:00 2021
+// Update Count     : 7
 //
 
 #pragma once
@@ -487,6 +487,19 @@ public:
 	const Type * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
 	TypeofType * clone() const override { return new TypeofType{ *this }; }
+	MUTATE_FRIEND
+};
+
+/// Virtual Table Type `vtable(T)`
+class VTableType final : public Type {
+public:
+	ptr<Type> base;
+
+	VTableType( const Type * b, CV::Qualifiers q = {} ) : Type(q), base(b) {}
+
+	const Type * accept( Visitor & v ) const override { return v.visit( this ); }
+private:
+	VTableType * clone() const override { return new VTableType{ *this }; }
 	MUTATE_FRIEND
 };
 

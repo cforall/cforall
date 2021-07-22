@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 15 16:52:37 2019
-// Update Count     : 49
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Jul 14 15:47:00 2021
+// Update Count     : 50
 //
 #include "Type.h"
 
@@ -175,6 +175,27 @@ bool isUnboundType(const std::string & tname) {
 		return true;
 	}
 	return false;
+}
+
+VTableType::VTableType( const Type::Qualifiers &tq, Type *base, const std::list< Attribute * > & attributes )
+		: Type( tq, attributes ), base( base ) {
+	assertf( base, "VTableType with a null base created." );
+}
+
+VTableType::VTableType( const VTableType &other )
+		: Type( other ), base( other.base->clone() ) {
+}
+
+VTableType::~VTableType() {
+	delete base;
+}
+
+void VTableType::print( std::ostream &os, Indenter indent ) const {
+	Type::print( os, indent );
+	os << "get virtual-table type of ";
+	if ( base ) {
+		base->print( os, indent );
+	} // if
 }
 
 // Local Variables: //

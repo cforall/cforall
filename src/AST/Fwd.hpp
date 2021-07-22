@@ -116,6 +116,7 @@ class TraitInstType;
 class TypeInstType;
 class TupleType;
 class TypeofType;
+class VTableType;
 class VarArgsType;
 class ZeroType;
 class OneType;

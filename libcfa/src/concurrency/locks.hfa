@@ -275,6 +275,8 @@ static inline void  ?{}( linear_backoff_then_block_lock & this, int spin_start, 
 }
 static inline void  ?{}( linear_backoff_then_block_lock & this ) { this{4, 1024, 16, 0}; }
 static inline void ^?{}( linear_backoff_then_block_lock & this ) {}
+static inline void ?{}( linear_backoff_then_block_lock & this, linear_backoff_then_block_lock this2 ) = void;
+static inline void ?=?( linear_backoff_then_block_lock & this, linear_backoff_then_block_lock this2 ) = void;
 
 static inline bool internal_try_lock(linear_backoff_then_block_lock & this, size_t & compare_val) with(this) {
 	if (__atomic_compare_exchange_n(&lock_value, &compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)) {

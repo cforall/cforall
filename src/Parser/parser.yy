@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 29 09:12:47 2021
-// Update Count     : 5027
+// Last Modified On : Tue Jul 20 22:03:04 2021
+// Update Count     : 5031
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1922,8 +1922,9 @@ vtable_opt:
 	;
 
 vtable:
-	VTABLE '(' type_list ')' default_opt
-		{ SemanticError( yylloc, "vtable is currently unimplemented." ); $$ = nullptr; }
+	VTABLE '(' type_name ')' default_opt
+		{ $$ = DeclarationNode::newVtableType( $3 ); }
+		// { SemanticError( yylloc, "vtable is currently unimplemented." ); $$ = nullptr; }
 	;
 
 default_opt:

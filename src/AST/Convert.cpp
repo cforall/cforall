@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Thu May 09 15::37::05 2019
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:43:51 2021
-// Update Count     : 36
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Jul 14 16:15:00 2021
+// Update Count     : 37
 //
 
 #include "Convert.hpp"
@@ -1352,6 +1352,13 @@ private:
 			cv( node ),
 			get<Expression>().accept1( node->expr ),
 			(bool)node->kind
+		} );
+	}
+
+	const ast::Type * visit( const ast::VTableType * node ) override final {
+		return visitType( node, new VTableType{
+			cv( node ),
+			get<Type>().accept1( node->base )
 		} );
 	}
 
@@ -2794,6 +2801,13 @@ private:
 		visitType( old, new ast::TypeofType{
 			GET_ACCEPT_1( expr, Expr ),
 			(ast::TypeofType::Kind)old->is_basetypeof,
+			cv( old )
+		} );
+	}
+
+	virtual void visit( const VTableType * old ) override final {
+		visitType( old, new ast::VTableType{
+			GET_ACCEPT_1( base, Type ),
 			cv( old )
 		} );
 	}

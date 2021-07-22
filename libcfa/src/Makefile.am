@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Sat Apr 24 09:09:56 2021
-## Update Count     : 254
+## Last Modified On : Fri Jul 16 16:00:40 2021
+## Update Count     : 255
 ###############################################################################
 
 # create object files in directory with source files
@@ -44,6 +44,7 @@ inst_headers_nosrc = \
 	exception.hfa \
 	exception.h \
 	gmp.hfa \
+	math.trait.hfa \
 	math.hfa \
 	time_t.hfa \
 	bits/align.hfa \

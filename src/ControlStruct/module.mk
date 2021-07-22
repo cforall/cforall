@@ -9,12 +9,14 @@
 ##
 ## Author           : Richard C. Bilson
 ## Created On       : Mon Jun  1 17:49:17 2015
-## Last Modified By : Andrew Beach
-## Last Modified On : Wed Jun 28 16:15:00 2017
-## Update Count     : 4
+## Last Modified By : Henry Xue
+## Last Modified On : Tue Jul 20 04:10:50 2021
+## Update Count     : 5
 ###############################################################################
 
 SRC_CONTROLSTRUCT = \
+	ControlStruct/ExceptDecl.cc \
+	ControlStruct/ExceptDecl.h \
 	ControlStruct/ForExprMutator.cc \
 	ControlStruct/ForExprMutator.h \
 	ControlStruct/LabelFixer.cc \

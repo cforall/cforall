@@ -1872,6 +1872,19 @@ const ast::Type * ast::Pass< core_t >::visit( const ast::TypeofType * node ) {
 }
 
 //--------------------------------------------------------------------------
+// VTableType
+template< typename core_t >
+const ast::Type * ast::Pass< core_t >::visit( const ast::VTableType * node ) {
+	VISIT_START( node );
+
+	VISIT(
+		maybe_accept( node, &VTableType::base );
+	)
+
+	VISIT_END( Type, node );
+}
+
+//--------------------------------------------------------------------------
 // VarArgsType
 template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::VarArgsType * node ) {

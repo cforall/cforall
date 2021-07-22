@@ -1545,13 +1545,30 @@ namespace GenPoly {
 		long findMember( DeclarationWithType *memberDecl, std::list< Declaration* > &baseDecls ) {
 			long i = 0;
 			for(std::list< Declaration* >::const_iterator decl = baseDecls.begin(); decl != baseDecls.end(); ++decl, ++i ) {
-				if ( memberDecl->get_name() != (*decl)->get_name() ) continue;
+				if ( memberDecl->get_name() != (*decl)->get_name() )
+					continue;
 
-				if ( DeclarationWithType *declWithType = dynamic_cast< DeclarationWithType* >( *decl ) ) {
-					if ( memberDecl->get_mangleName().empty() || declWithType->get_mangleName().empty()
-					     || memberDecl->get_mangleName() == declWithType->get_mangleName() ) return i;
-					else continue;
-				} else return i;
+				if ( memberDecl->get_name().empty() ) {
+					// plan-9 field: match on unique_id
+					if ( memberDecl->get_uniqueId() == (*decl)->get_uniqueId() )
+						return i;
+					else
+						continue;
+				}
+
+				DeclarationWithType *declWithType = strict_dynamic_cast< DeclarationWithType* >( *decl );
+
+				if ( memberDecl->get_mangleName().empty() || declWithType->get_mangleName().empty() ) {
+					// tuple-element field: expect neither had mangled name; accept match on simple name (like field_2) only
+					assert( memberDecl->get_mangleName().empty() && declWithType->get_mangleName().empty() );
+					return i;
+				}
+
+				// ordinary field: use full name to accommodate overloading
+				if ( memberDecl->get_mangleName() == declWithType->get_mangleName() )
+					return i;
+				else
+					continue;
 			}
 			return -1;
 		}

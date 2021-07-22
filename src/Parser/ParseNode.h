@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 15:19:04 2021
-// Update Count     : 897
+// Last Modified On : Wed Jul 14 17:28:53 2021
+// Update Count     : 900
 //
 
 #pragma once
@@ -248,6 +248,7 @@ struct DeclarationNode : public ParseNode {
 	static DeclarationNode * newBitfield( ExpressionNode * size );
 	static DeclarationNode * newTuple( DeclarationNode * members );
 	static DeclarationNode * newTypeof( ExpressionNode * expr, bool basetypeof = false );
+	static DeclarationNode * newVtableType( DeclarationNode * expr );
 	static DeclarationNode * newAttribute( const std::string *, ExpressionNode * expr = nullptr ); // gcc attributes
 	static DeclarationNode * newDirectiveStmt( StatementNode * stmt ); // gcc external directive statement
 	static DeclarationNode * newAsmStmt( StatementNode * stmt ); // gcc external asm statement

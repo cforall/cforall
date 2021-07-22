@@ -1415,6 +1415,14 @@ public:
 		return node;
 	}
 
+	virtual const ast::Type * visit( const ast::VTableType * node ) override final {
+		preprint( node );
+		os << "vtable for ";
+		safe_print( node->base );
+
+		return node;
+	}
+
 	virtual const ast::Type * visit( const ast::VarArgsType * node ) override final {
 		preprint( node );
 		os << "builtin var args pack";

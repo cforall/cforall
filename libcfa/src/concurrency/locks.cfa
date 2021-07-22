@@ -119,7 +119,7 @@ void pop_and_set_new_owner( blocking_lock & this ) with( this ) {
 	thread$ * t = &try_pop_front( blocked_threads );
 	owner = t;
 	recursion_count = ( t ? 1 : 0 );
-	wait_count--;
+	if ( t ) wait_count--;
 	unpark( t );
 }
 

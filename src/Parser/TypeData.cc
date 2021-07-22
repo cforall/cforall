@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:12:51 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 16 07:56:46 2019
-// Update Count     : 662
+// Last Modified By : Henry Xue
+// Last Modified On : Tue Jul 20 04:10:50 2021
+// Update Count     : 673
 //
 
 #include <cassert>                 // for assert
@@ -99,6 +99,8 @@ TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), f
 		// typeexpr = new Typeof_t;
 		typeexpr = nullptr;
 		break;
+	  case Vtable:
+		break;
 	  case Builtin:
 		// builtin = new Builtin_t;
 		case Qualified:
@@ -169,6 +171,8 @@ TypeData::~TypeData() {
 	  case Basetypeof:
 		// delete typeexpr->expr;
 		delete typeexpr;
+		break;
+	  case Vtable:
 		break;
 	  case Builtin:
 		// delete builtin;
@@ -248,6 +252,8 @@ TypeData * TypeData::clone() const {
 	  case Typeof:
 	  case Basetypeof:
 		newtype->typeexpr = maybeClone( typeexpr );
+		break;
+	  case Vtable:
 		break;
 	  case Builtin:
 		assert( builtintype == DeclarationNode::Zero || builtintype == DeclarationNode::One );
@@ -466,6 +472,7 @@ const std::string * TypeData::leafName() const {
 	  case Typeof:
 	  case Basetypeof:
 	  case Builtin:
+	  case Vtable:
 		assertf(false, "Tried to get leaf name from kind without a name: %d", kind);
 		break;
 	  case Aggregate:
@@ -545,6 +552,8 @@ Type * typebuild( const TypeData * td ) {
 	  case TypeData::Typeof:
 	  case TypeData::Basetypeof:
 		return buildTypeof( td );
+	  case TypeData::Vtable:
+		return buildVtable( td );
 	  case TypeData::Builtin:
 		switch ( td->builtintype ) {
 		  case DeclarationNode::Zero:
@@ -768,6 +777,7 @@ AggregateDecl * buildAggregate( const TypeData * td, std::list< Attribute * > at
 	switch ( td->aggregate.kind ) {
 	  case AggregateDecl::Struct:
 	  case AggregateDecl::Coroutine:
+	  case AggregateDecl::Exception:
 	  case AggregateDecl::Generator:
 	  case AggregateDecl::Monitor:
 	  case AggregateDecl::Thread:
@@ -944,9 +954,14 @@ TypeofType * buildTypeof( const TypeData * td ) {
 	assert( td->kind == TypeData::Typeof || td->kind == TypeData::Basetypeof );
 	assert( td->typeexpr );
 	// assert( td->typeexpr->expr );
-	return new TypeofType{
-		buildQualifiers( td ), td->typeexpr->build(), td->kind == TypeData::Basetypeof };
+	return new TypeofType{ buildQualifiers( td ), td->typeexpr->build(), td->kind == TypeData::Basetypeof };
 } // buildTypeof
+
+
+VTableType * buildVtable( const TypeData * td ) {
+	assert( td->base );
+	return new VTableType{ buildQualifiers( td ), typebuild( td->base ) };
+} // buildVtable
 
 
 Declaration * buildDecl( const TypeData * td, const string &name, Type::StorageClasses scs, Expression * bitfieldWidth, Type::FuncSpecifiers funcSpec, LinkageSpec::Spec linkage, Expression *asmName, Initializer * init, std::list< Attribute * > attributes ) {

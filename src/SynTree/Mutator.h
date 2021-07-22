@@ -111,6 +111,7 @@ class Mutator {
 	virtual Type * mutate( TypeInstType * aggregateUseType ) = 0;
 	virtual Type * mutate( TupleType * tupleType ) = 0;
 	virtual Type * mutate( TypeofType * typeofType ) = 0;
+	virtual Type * mutate( VTableType * vtableType ) = 0;
 	virtual Type * mutate( AttrType * attrType ) = 0;
 	virtual Type * mutate( VarArgsType * varArgsType ) = 0;
 	virtual Type * mutate( ZeroType * zeroType ) = 0;

@@ -197,6 +197,8 @@ class Visitor {
 	virtual void visit( const TupleType * tupleType ) = 0;
 	virtual void visit( TypeofType * node ) { visit( const_cast<const TypeofType *>(node) ); }
 	virtual void visit( const TypeofType * typeofType ) = 0;
+	virtual void visit( VTableType * node ) { visit( const_cast<const VTableType *>(node) ); }
+	virtual void visit( const VTableType * vtableType ) = 0;
 	virtual void visit( AttrType * node ) { visit( const_cast<const AttrType *>(node) ); }
 	virtual void visit( const AttrType * attrType ) = 0;
 	virtual void visit( VarArgsType * node ) { visit( const_cast<const VarArgsType *>(node) ); }

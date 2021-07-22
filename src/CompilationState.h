@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May  3 13:43:21 2019
-// Update Count     : 4
+// Last Modified By : Henry Xue
+// Last Modified On : Tue Jul 20 04:27:35 2021
+// Update Count     : 5
 //
 
 extern int yydebug;                   // set for -g flag (Grammar)
@@ -21,6 +21,7 @@ extern int
 	bcodegenp,
 	ctorinitp,
 	declstatsp,
+	exdeclp,
 	exprp,
 	expraltp,
 	genericsp,

@@ -9,29 +9,30 @@
 // Author           : Aaron B. Moss
 // Created On       : Thu Feb 22 15:27:00 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov  6 17:50:23 2018
-// Update Count     : 2
+// Last Modified On : Tue Jul 20 21:25:30 2021
+// Update Count     : 4
 // 
+
+#include <fstream.hfa>
 
 // Tests unified increment/decrement builtin functions.
 // Could be extended for other arithmetic unifications
 
 struct counter { int x; };
 
-counter& ?+=?( counter& c, one_t ) { ++c.x; return c; }
-
-counter& ?-=?( counter& c, one_t ) { --c.x; return c; }
+counter ?+=?( counter & c, one_t ) { ++c.x; return c; }
+counter ?-=?( counter & c, one_t ) { --c.x; return c; }
 
 int main() {
     counter c = { 42 };
     c += 1;
     ++c;
     c++;
-    printf("%d\n", c.x);
+    sout | "inc" | c.x;
     c -= 1;
     --c;
     c--;
-    printf("%d\n", c.x);
+    sout | "dec" | c.x;
 }
 
 // Local Variables: //

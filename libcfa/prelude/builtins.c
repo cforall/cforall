@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 21 16:21:03 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 13 17:26:32 2021
-// Update Count     : 117
+// Last Modified On : Wed Jul 21 13:31:34 2021
+// Update Count     : 129
 //
 
 #define __cforall_builtins__
@@ -76,21 +76,23 @@ static inline T & resume(T & gen) {
 
 // implicit increment, decrement if += defined, and implicit not if != defined
 
+// C11 reference manual Section 6.5.16 (page101): "An assignment expression has the value of the left operand after the
+// assignment, but is not an lvalue." Hence, return a value not a reference.
 static inline {
-	forall( DT & | { DT & ?+=?( DT &, one_t ); } )
-	DT & ++?( DT & x ) { return x += 1; }
+	forall( T | { T ?+=?( T &, one_t ); } )
+	T ++?( T & x ) { return x += 1; }
 
-	forall( DT & | sized(DT) | { void ?{}( DT &, DT ); void ^?{}( DT & ); DT & ?+=?( DT &, one_t ); } )
-	DT & ?++( DT & x ) { DT tmp = x; x += 1; return tmp; }
+	forall( T | { T ?+=?( T &, one_t ); } )
+	T ?++( T & x ) { T tmp = x; x += 1; return tmp; }
 
-	forall( DT & | { DT & ?-=?( DT &, one_t ); } )
-	DT & --?( DT & x ) { return x -= 1; }
+	forall( T | { T ?-=?( T &, one_t ); } )
+	T --?( T & x ) { return x -= 1; }
 
-	forall( DT & | sized(DT) | { void ?{}( DT &, DT ); void ^?{}( DT & ); DT & ?-=?( DT &, one_t ); } )
-	DT & ?--( DT & x ) { DT tmp = x; x -= 1; return tmp; }
+	forall( T | { T ?-=?( T &, one_t ); } )
+	T ?--( T & x ) { T tmp = x; x -= 1; return tmp; }
 
-	forall( DT & | { int ?!=?( const DT &, zero_t ); } )
-	int !?( const DT & x ) { return !( x != 0 ); }
+	forall( T | { int ?!=?( T, zero_t ); } )
+	int !?( T & x ) { return !( x != 0 ); }
 } // distribution
 
 // universal typed pointer constant

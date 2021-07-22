@@ -1,2 +1,9 @@
 123 456 456
 5 5
+=== checkPlan9offsets
+static:
+  offset of inner double: 8
+  offset of inner float:  16
+dynamic:
+  offset of inner double: 8
+  offset of inner float:  16

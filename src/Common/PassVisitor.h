@@ -229,6 +229,8 @@ public:
 	virtual void visit( const TupleType * tupleType ) override final;
 	virtual void visit( TypeofType * typeofType ) override final;
 	virtual void visit( const TypeofType * typeofType ) override final;
+	virtual void visit( VTableType * vtableType ) override final;
+	virtual void visit( const VTableType * vtableType ) override final;
 	virtual void visit( AttrType * attrType ) override final;
 	virtual void visit( const AttrType * attrType ) override final;
 	virtual void visit( VarArgsType * varArgsType ) override final;
@@ -342,6 +344,7 @@ public:
 	virtual Type * mutate( TypeInstType * aggregateUseType ) override final;
 	virtual Type * mutate( TupleType * tupleType ) override final;
 	virtual Type * mutate( TypeofType * typeofType ) override final;
+	virtual Type * mutate( VTableType * vtableType ) override final;
 	virtual Type * mutate( AttrType * attrType ) override final;
 	virtual Type * mutate( VarArgsType * varArgsType ) override final;
 	virtual Type * mutate( ZeroType * zeroType ) override final;

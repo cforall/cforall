@@ -212,6 +212,7 @@ public:
 	const ast::Type *             visit( const ast::TypeInstType         * ) override final;
 	const ast::Type *             visit( const ast::TupleType            * ) override final;
 	const ast::Type *             visit( const ast::TypeofType           * ) override final;
+	const ast::Type *             visit( const ast::VTableType           * ) override final;
 	const ast::Type *             visit( const ast::VarArgsType          * ) override final;
 	const ast::Type *             visit( const ast::ZeroType             * ) override final;
 	const ast::Type *             visit( const ast::OneType              * ) override final;

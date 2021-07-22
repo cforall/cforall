@@ -81,7 +81,8 @@ EXTRA_DIST = test.py \
 	concurrent/clib.c \
 	concurrent/clib_tls.c \
 	exceptions/with-threads.hfa \
-	exceptions/except-io.hfa
+	exceptions/except-io.hfa \
+	unified_locking/mutex_test.hfa
 
 dist-hook:
 	echo "Gathering test files"

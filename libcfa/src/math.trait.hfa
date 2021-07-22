@@ -1,0 +1,69 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// math.trait.hfa -- 
+//
+// Author           : Peter A. Buhr
+// Created On       : Fri Jul 16 15:40:52 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Jul 20 17:47:19 2021
+// Update Count     : 19
+// 
+
+#pragma once
+
+trait Not( T ) {
+	void ?{}( T &, zero_t );
+	int !?( T );
+}; // Not
+
+trait Equality( T | Not( T ) ) {
+	int ?==?( T, T );
+	int ?!=?( T, T );
+}; // Equality
+
+trait Relational( T | Equality( T ) ) {
+	int ?<?( T, T );
+	int ?<=?( T, T );
+	int ?>?( T, T );
+	int ?>=?( T, T );
+}; // Relational
+
+trait Signed( T ) {
+	T +?( T );
+	T -?( T );
+	T abs( T );
+}; // Signed
+
+trait Additive( T | Signed( T ) ) {
+	T ?+?( T, T );
+	T ?-?( T, T );
+	T ?+=?( T &, T );
+	T ?-=?( T &, T );
+}; // Additive
+
+trait Incdec( T | Additive( T ) ) {
+	void ?{}( T &, one_t );
+	// T ?++( T & );
+	// T ++?( T &);
+	// T ?--( T & );
+	// T --?( T & );
+}; // Incdec
+
+trait Multiplicative( T | Incdec( T ) ) {
+	T ?*?( T, T );
+	T ?/?( T, T );
+	T ?%?( T, T );
+	T ?/=?( T &, T );
+}; // Multiplicative
+
+trait Arithmetic( T | Relational( T ) | Multiplicative( T ) ) {
+}; // Arithmetic
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

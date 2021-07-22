@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:18:36 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar 27 09:05:35 2021
-// Update Count     : 200
+// Last Modified On : Wed Jul 14 17:44:05 2021
+// Update Count     : 202
 //
 
 #pragma once
@@ -26,7 +26,7 @@
 
 struct TypeData {
 	enum Kind { Basic, Pointer, Reference, Array, Function, Aggregate, AggregateInst, Enum, EnumConstant, Symbolic,
-				SymbolicInst, Tuple, Typeof, Basetypeof, Builtin, GlobalScope, Qualified, Unknown };
+				SymbolicInst, Tuple, Typeof, Basetypeof, Vtable, Builtin, GlobalScope, Qualified, Unknown };
 
 	struct Aggregate_t {
 		AggregateDecl::Aggregate kind;
@@ -127,6 +127,7 @@ EnumDecl * buildEnum( const TypeData *, std::list< Attribute * >, LinkageSpec::S
 TypeInstType * buildSymbolicInst( const TypeData * );
 TupleType * buildTuple( const TypeData * );
 TypeofType * buildTypeof( const TypeData * );
+VTableType * buildVtable( const TypeData * );
 Declaration * buildDecl( const TypeData *, const std::string &, Type::StorageClasses, Expression *, Type::FuncSpecifiers funcSpec, LinkageSpec::Spec, Expression * asmName,
 						 Initializer * init = nullptr, std::list< class Attribute * > attributes = std::list< class Attribute * >() );
 FunctionType * buildFunction( const TypeData * );

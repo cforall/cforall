@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 16 07:30:19 2021
-// Update Count     : 442
+// Last Modified On : Wed Jul 14 21:55:12 2021
+// Update Count     : 467
 //
 
 #include <iostream>
@@ -93,23 +93,23 @@ PathMode FromProc() {
 
 	// get executable path from /proc/self/exe
 	ssize_t size = readlink("/proc/self/exe", const_cast<char*>(abspath.c_str()), abspath.size());
-	if(size <= 0) {
+	if ( size <= 0 ) {
 		std::cerr << "Error could not evaluate absolute path from /proc/self/exe" << std::endl;
 		std::cerr << "Failed with " << std::strerror(errno) << std::endl;
 		std::exit(1);
-	}
+	} // if
 
 	// Trim extra characters
 	abspath.resize(size);
 
 	// Are we installed
-	if(abspath.rfind(CFA_BINDIR  , 0) == 0) { return Installed; }
+	if ( abspath.rfind(CFA_BINDIR, 0) == 0 ) { return Installed; }
 
 	// Is this the build tree
-	if(abspath.rfind(TOP_BUILDDIR, 0) == 0) { return BuildTree; }
+	if ( abspath.rfind(TOP_BUILDDIR, 0 ) == 0 ) { return BuildTree; }
 
 	// Does this look like distcc
-	if(abspath.find("/.cfadistcc/") != std::string::npos) { return Distributed; }
+	if ( abspath.find( "/.cfadistcc/" ) != std::string::npos ) { return Distributed; }
 
 	// None of the above? Give up since we don't know where the prelude or include directories are
 	std::cerr << "Cannot find required files from excutable path " << abspath << std::endl;
@@ -187,10 +187,18 @@ int main( int argc, char * argv[] ) {
 				if ( arg.size() == 5 ) {
 					i += 1;
 					if ( i == argc ) continue;			// next argument available ?
-					Putenv( argv, argv[i] );
+					Putenv( argv, argv[i] );			// make available for cc1
 				} else if ( arg[5] == ',' ) {			// CFA specific arguments
-					Putenv( argv, argv[i] + 6 );
+					string xcfargs = arg.substr( 6 ) + ","; // add sentinel
+					for ( ;; ) {
+						size_t posn = xcfargs.find_first_of( "," ); // find separator
+					  if ( posn == string::npos ) break; // any characters left ?
+						string xcfarg = xcfargs.substr( 0, posn ); // remove XCFA argument
+						Putenv( argv, xcfarg );			// make available for cc1
+						xcfargs.erase( 0, posn + 1 );	// remove first argument and comma
+					} // for
 				} else {								// CFA specific arguments
+					assert( false );					// this does not make sense
 					args[nargs++] = argv[i];
 				} // if
 			} else if ( arg == "-CFA" ) {
@@ -363,7 +371,7 @@ int main( int argc, char * argv[] ) {
 	args[nargs++] = "-imacros";
 	args[nargs++] = "stdbool.h";
 
-	if( compiling_libs ) {
+	if ( compiling_libs ) {
 		Putenv( argv, "-t" );
 	} // if
 

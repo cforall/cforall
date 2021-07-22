@@ -451,7 +451,8 @@ EXTRA_DIST = test.py \
 	concurrent/clib.c \
 	concurrent/clib_tls.c \
 	exceptions/with-threads.hfa \
-	exceptions/except-io.hfa
+	exceptions/except-io.hfa \
+	unified_locking/mutex_test.hfa
 
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa

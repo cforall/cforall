@@ -104,6 +104,7 @@ public:
     virtual const ast::Type *             visit( const ast::TypeInstType         * ) = 0;
     virtual const ast::Type *             visit( const ast::TupleType            * ) = 0;
     virtual const ast::Type *             visit( const ast::TypeofType           * ) = 0;
+    virtual const ast::Type *             visit( const ast::VTableType           * ) = 0;
     virtual const ast::Type *             visit( const ast::VarArgsType          * ) = 0;
     virtual const ast::Type *             visit( const ast::ZeroType             * ) = 0;
     virtual const ast::Type *             visit( const ast::OneType              * ) = 0;

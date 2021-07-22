@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 26 14:23:51 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun  1 23:07:21 2021
-// Update Count     : 415
+// Last Modified On : Wed Jul 21 09:46:24 2021
+// Update Count     : 419
 //
 
 #include <iostream>
@@ -371,9 +371,9 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 			if ( prefix( arg, "-fdiagnostics-color=" ) ) {
 				string choice = arg.substr(20);
-				     if(choice == "always") color_arg = Color_Always;
-				else if(choice == "never" ) color_arg = Color_Never;
-				else if(choice == "auto"  ) color_arg = Color_Auto;
+				if ( choice == "always" ) color_arg = Color_Always;
+				else if ( choice == "never" ) color_arg = Color_Never;
+				else if ( choice == "auto" ) color_arg = Color_Auto;
 			} else if ( arg == "-fno-diagnostics-color" ) {
 				color_arg = Color_Auto;
 			} // if
@@ -586,7 +586,7 @@ int main( const int argc, const char * const argv[], __attribute__((unused)) con
 	} else if ( arg == "-fpreprocessed" ) {
 		Stage2( argc, argv );
 	} else {
-		cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
+		cerr << "Usage: " << argv[0] << " [-E input-file [output-file] ] | [-fpreprocessed input-file output-file] [options]" << endl;
 		exit( EXIT_FAILURE );
 	} // if
 } // main

@@ -8,9 +8,9 @@
 //
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar  6 15:49:00 2021
-// Update Count     : 656
+// Last Modified By : Henry Xue
+// Last Modified On : Tue Jul 20 04:27:35 2021
+// Update Count     : 658
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -48,6 +48,7 @@ using namespace std;
 #include "Common/UnimplementedError.h"      // for UnimplementedError
 #include "Common/utility.h"                 // for deleteAll, filter, printAll
 #include "Concurrency/Waitfor.h"            // for generateWaitfor
+#include "ControlStruct/ExceptDecl.h"       // for translateExcept
 #include "ControlStruct/ExceptTranslate.h"  // for translateEHM
 #include "ControlStruct/Mutate.h"           // for mutate
 #include "GenPoly/Box.h"                    // for box
@@ -305,6 +306,12 @@ int main( int argc, char * argv[] ) {
 		CodeTools::fillLocations( translationUnit );
 		Stats::Time::StopBlock();
 
+		PASS( "Translate Exception Declarations", ControlStruct::translateExcept( translationUnit ) );
+		if ( exdeclp ) {
+			dump( translationUnit );
+			return EXIT_SUCCESS;
+		} // if
+
 		// add the assignment statement after the initialization of a type parameter
 		PASS( "Validate", SymTab::validate( translationUnit, symtabp ) );
 		if ( symtabp ) {
@@ -548,6 +555,7 @@ static struct Printopts {
 	{ "tree", parsep, true, "print parse tree" },
 	// code dumps
 	{ "ast", astp, true, "print AST after parsing" },
+	{ "exdecl", exdeclp, true, "print AST after translating exception decls" },
 	{ "symevt", symtabp, true, "print AST after symbol table events" },
 	{ "altexpr", expraltp, true, "print alternatives for expressions" },
 	{ "astdecl", validp, true, "print AST after declaration validation pass" },
