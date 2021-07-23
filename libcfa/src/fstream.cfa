@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 28 20:37:53 2021
-// Update Count     : 445
+// Last Modified On : Thu Jul 22 11:34:41 2021
+// Update Count     : 448
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -337,20 +337,26 @@ ifstream & sin = sinFile, & stdin = sinFile;
 // *********************************** exceptions ***********************************
 
 
-EHM_VIRTUAL_TABLE(Open_Failure, Open_Failure_main_table);
+//EHM_VIRTUAL_TABLE(Open_Failure, Open_Failure_main_table);
+static vtable(Open_Failure) Open_Failure_main_table;
+
+// exception I/O constructors
 void ?{}( Open_Failure & this, ofstream & ostream ) {
 	this.virtual_table = &Open_Failure_main_table;
 	this.ostream = &ostream;
 	this.tag = 1;
-}
+} // ?{}
+
 void ?{}( Open_Failure & this, ifstream & istream ) {
 	this.virtual_table = &Open_Failure_main_table;
 	this.istream = &istream;
 	this.tag = 0;
-}
+} // ?{}
+
 void throwOpen_Failure( ofstream & ostream ) {
 	Open_Failure exc = { ostream };
 }
+
 void throwOpen_Failure( ifstream & istream ) {
 	Open_Failure exc = { istream };
 }

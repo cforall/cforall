@@ -9,8 +9,8 @@
 // Author           : Henry Xue
 // Created On       : Tue Jul 20 04:10:50 2021
 // Last Modified By : Henry Xue
-// Last Modified On : Tue Jul 20 04:10:50 2021
-// Update Count     : 1
+// Last Modified On : Thu Jul 22 10:40:55 2021
+// Update Count     : 2
 //
 
 #include "ExceptDecl.h"
@@ -213,14 +213,130 @@ StructDecl * ehmExceptionStruct( const std::string & exceptionName, const std::l
 	return structDecl;
 }
 
+ObjectDecl * ehmExternVtable( const std::string & exceptionName, const std::string & tableName,
+							  std::list< Expression *> * parameters ) {
+	StructInstType * structInstType = new StructInstType( Type::Const, Virtual::vtableTypeName(exceptionName) );
+	if ( parameters ) {
+		structInstType->parameters = *parameters;
+	}
+	return new ObjectDecl(
+		tableName,
+		Type::Extern,
+		LinkageSpec::Cforall,
+		nullptr,
+		structInstType,
+		nullptr
+	);
+}
+
+FunctionDecl * ehmDefineCopy( const std::string & exceptionName ) {
+	FunctionType * copyFnType = new FunctionType( noQualifiers, false );
+	copyFnType->get_parameters().push_back( new ObjectDecl(
+		"this",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new PointerType( noQualifiers,
+			new TypeInstType( noQualifiers, exceptionName, false ) ),
+		nullptr
+	) );
+	copyFnType->get_parameters().push_back( new ObjectDecl(
+		"that",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new PointerType( noQualifiers,
+			new TypeInstType( noQualifiers, exceptionName, false ) ),
+		nullptr
+	) );
+	copyFnType->get_returnVals().push_back( new ObjectDecl(
+		"",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new VoidType( noQualifiers ),
+		nullptr
+	) );
+	return new FunctionDecl(
+		"copy",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		copyFnType,
+		new CompoundStmt( {
+			new ExprStmt( new UntypedExpr( new NameExpr( "?=?" ), {
+				new UntypedExpr( new NameExpr( "*?" ), { new NameExpr( "this" ) } ),
+				new UntypedExpr( new NameExpr( "*?" ), { new NameExpr( "that" ) } )
+			} ) )
+		} )
+	);
+}
+
+FunctionDecl * ehmDefineMsg( const std::string & exceptionName ) {
+	FunctionType * msgFnType = new FunctionType( noQualifiers, false );
+	msgFnType->get_parameters().push_back( new ObjectDecl(
+		"this",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new PointerType( noQualifiers,
+			new TypeInstType( noQualifiers, exceptionName, false ) ),
+		nullptr
+	) );
+	msgFnType->get_returnVals().push_back( new ObjectDecl(
+		"",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new PointerType( noQualifiers, new BasicType( Type::Const, BasicType::Char ) ),
+		nullptr
+	) );
+	return new FunctionDecl(
+		"msg",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		msgFnType,
+		new CompoundStmt( {
+			new ReturnStmt( new ConstantExpr( Constant::from_string( exceptionName ) ) )
+		} )
+	);
+}
+
+ObjectDecl * ehmVirtualTable( const std::string & exceptionName, const std::string & tableName ) {
+	std::list< Initializer *> inits {
+		new SingleInit( new AddressExpr(
+			new NameExpr( Virtual::typeIdName( exceptionName ) ) ) ),
+		new SingleInit( new SizeofExpr(
+			new StructInstType( noQualifiers, exceptionName ) ) ),
+		new SingleInit( new NameExpr( "copy" ) ),
+		new SingleInit( new NameExpr( "^?{}" ) ),
+		new SingleInit( new NameExpr( "msg" ) )
+	};
+	std::list< Designation *> desig {
+		new Designation( { new NameExpr( "__cfavir_typeid" ) } ),
+		new Designation( { new NameExpr( "size" ) } ),
+		new Designation( { new NameExpr( "copy" ) } ),
+		new Designation( { new NameExpr( "^?{}" ) } ),
+		new Designation( { new NameExpr( "msg" ) } )
+	};
+	return new ObjectDecl(
+		tableName,
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new StructInstType( Type::Const, Virtual::vtableTypeName( exceptionName ) ),
+		new ListInit( inits, desig )
+	);
+}
+
 class ExceptDeclCore : public WithDeclsToAdd {
 public:
-	Declaration * postmutate( StructDecl * structDecl );
+	Declaration * postmutate( StructDecl * structDecl ); // translates exception decls
+	DeclarationWithType * postmutate( ObjectDecl * objectDecl ); // translates vtable decls 
 };
 
 Declaration * ExceptDeclCore::postmutate( StructDecl * structDecl ) {
 	if ( structDecl->is_exception() ) {
-		const std::string & exceptionName = structDecl->name;
+		const std::string & exceptionName = structDecl->get_name();
 		declsToAddBefore.push_back( ehmTypeIdStruct( exceptionName, nullptr ) );
 		declsToAddBefore.push_back( ehmTypeIdValue( exceptionName, nullptr ) );
 		declsToAddBefore.push_back( ehmExceptionStructDecl( exceptionName, nullptr ) );
@@ -228,6 +344,25 @@ Declaration * ExceptDeclCore::postmutate( StructDecl * structDecl ) {
 		return ehmExceptionStruct( exceptionName, structDecl->get_members(), nullptr );
 	}
 	return structDecl;
+}
+
+DeclarationWithType * ExceptDeclCore::postmutate( ObjectDecl * objectDecl ) {
+	// Check if it is VTableType
+	VTableType * vtableType = dynamic_cast< VTableType *>( objectDecl->get_type() );
+	if ( vtableType ) {
+		TypeInstType * base = dynamic_cast< TypeInstType *>( vtableType->get_base() );
+		assert( base ); // should be a TypeInstType
+		const std::string & exceptionName = base->get_name();
+		const std::string & tableName = objectDecl->get_name();
+		if ( objectDecl->get_storageClasses().is_extern ) {
+			return ehmExternVtable( exceptionName, tableName, nullptr );
+		} else {
+			declsToAddBefore.push_back( ehmDefineCopy( exceptionName ) );
+			declsToAddBefore.push_back( ehmDefineMsg( exceptionName ) );
+			return ehmVirtualTable( exceptionName, tableName );
+		}
+	}
+	return objectDecl;
 }
 
 void translateExcept( std::list< Declaration *> & translationUnit ) {
