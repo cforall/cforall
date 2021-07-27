@@ -9,19 +9,140 @@
 // Author           : Henry Xue
 // Created On       : Tue Jul 20 04:10:50 2021
 // Last Modified By : Henry Xue
-// Last Modified On : Thu Jul 22 10:40:55 2021
-// Update Count     : 2
+// Last Modified On : Mon Jul 26 12:55:28 2021
+// Update Count     : 3
 //
 
 #include "ExceptDecl.h"
 
+#include <cassert>               // for assert
+#include <string>                // for string
+#include <sstream>               // for stringstream
+
 #include "Common/PassVisitor.h"  // for PassVisitor
+#include "Common/utility.h"      // for cloneAll
 #include "SynTree/Mutator.h"     // for mutateAll
 #include "Virtual/Tables.h"      // for helpers
 
 namespace ControlStruct {
 
-StructDecl * ehmTypeIdStruct( const std::string & exceptionName, std::list< TypeDecl *> * parameters ) {
+const std::list< Expression *> & makeParameters(
+	const std::list< TypeDecl *> & forallClause
+) {
+	auto parameters = new std::list< Expression *>();
+	for ( auto it = forallClause.begin(); it != forallClause.end(); it++ ) {
+		parameters->emplace_back( new TypeExpr(
+			new TypeInstType( noQualifiers, ( *it )->get_name(), false )
+		) );
+	}
+	return *parameters;
+}
+
+TypeInstType * makeExceptInstType(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters
+) {
+	TypeInstType * exceptInstType = new TypeInstType(
+		noQualifiers,
+		exceptionName,
+		false
+	);
+	cloneAll( parameters, exceptInstType->parameters );
+	return exceptInstType;
+}
+
+// void (*copy)(exception_name parameters * this, exception_name parameters * that);
+FunctionType * makeCopyFnType(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters
+) {
+	FunctionType * copyFnType = new FunctionType( noQualifiers, false );
+	copyFnType->get_parameters().push_back( new ObjectDecl(
+		"this",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new PointerType( noQualifiers,
+			makeExceptInstType( exceptionName, parameters ) ),
+		nullptr
+	) );
+	copyFnType->get_parameters().push_back( new ObjectDecl(
+		"that",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new PointerType( noQualifiers,
+			makeExceptInstType( exceptionName, parameters ) ),
+		nullptr
+	) );
+	copyFnType->get_returnVals().push_back( new ObjectDecl(
+		"",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new VoidType( noQualifiers ),
+		nullptr
+	) );
+	return copyFnType;
+}
+
+// void (*^?{})(exception_name parameters & this);
+FunctionType * makeDtorFnType(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters
+) {
+	FunctionType * dtorFnType = new FunctionType( noQualifiers, false );
+	dtorFnType->get_parameters().push_back( new ObjectDecl(
+		"this",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new ReferenceType( noQualifiers,
+			makeExceptInstType( exceptionName, parameters ) ),
+		nullptr
+	) );
+	dtorFnType->get_returnVals().push_back( new ObjectDecl(
+		"",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new VoidType( noQualifiers ),
+		nullptr
+	) );
+	return dtorFnType;
+}
+
+// const char * (*msg)(exception_name parameters * this);
+FunctionType * makeMsgFnType(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters
+) {
+	FunctionType * msgFnType = new FunctionType( noQualifiers, false );
+	msgFnType->get_parameters().push_back( new ObjectDecl(
+		"this",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new PointerType( noQualifiers,
+			makeExceptInstType( exceptionName, parameters ) ),
+		nullptr
+	) );
+	msgFnType->get_returnVals().push_back( new ObjectDecl(
+		"",
+		noStorageClasses,
+		LinkageSpec::Cforall,
+		nullptr,
+		new PointerType( noQualifiers,
+			new BasicType( Type::Const, BasicType::Char ) ),
+		nullptr
+	) );
+	return msgFnType;
+}
+
+StructDecl * ehmTypeIdStruct(
+	const std::string & exceptionName,
+	const std::list< TypeDecl *> & forallClause
+) {
 	StructDecl * structDecl = new StructDecl( Virtual::typeIdType( exceptionName ) );
 	structDecl->members.push_back( new ObjectDecl(
 		"parent",
@@ -33,23 +154,25 @@ StructDecl * ehmTypeIdStruct( const std::string & exceptionName, std::list< Type
 		nullptr
 	) );
 	structDecl->set_body( true );
-	if ( parameters ) {
-		structDecl->parameters = *parameters;
-	}
+	cloneAll( forallClause, structDecl->parameters );
 	return structDecl;
 }
 
-ObjectDecl * ehmTypeIdValue( const std::string & exceptionName, std::list< Expression *> * parameters ) {
-	StructInstType * structInstType = new StructInstType( Type::Const, Virtual::typeIdType( exceptionName ) );
-	if ( parameters ) {
-		structInstType->parameters = *parameters;
-	}
+ObjectDecl * ehmTypeIdValue(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters
+) {
+	StructInstType * typeIdType = new StructInstType(
+		Type::Const,
+		Virtual::typeIdType( exceptionName )
+	);
+	cloneAll( parameters, typeIdType->parameters );
 	return new ObjectDecl(
 		Virtual::typeIdName( exceptionName ),
 		noStorageClasses,
 		LinkageSpec::Cforall,
 		nullptr,
-		structInstType,
+		typeIdType,
 		new ListInit( { new SingleInit(
 			new AddressExpr( new NameExpr( "__cfatid_exception_t" ) )
 			) }, {}, true ),
@@ -57,27 +180,33 @@ ObjectDecl * ehmTypeIdValue( const std::string & exceptionName, std::list< Expre
 	);
 }
 
-StructDecl * ehmExceptionStructDecl( const std::string & exceptionName, std::list< TypeDecl *> * parameters ) {
+StructDecl * ehmExceptionStructDecl(
+	const std::string & exceptionName,
+	const std::list< TypeDecl *> & forallClause
+) {
 	StructDecl * structDecl = new StructDecl( exceptionName );
-	if ( parameters ) {
-		structDecl->parameters = *parameters;
-	}
+	cloneAll( forallClause, structDecl->parameters );
 	return structDecl;
 }
 
-StructDecl * ehmVirtualTableStruct( const std::string & exceptionName, std::list< TypeDecl *> * parameters ) {
-	// _EHM_TYPE_ID_TYPE(exception_name) parameters const * __cfavir_typeid;
+StructDecl * ehmVirtualTableStruct(
+	const std::string & exceptionName,
+	const std::list< TypeDecl *> & forallClause,
+	const std::list< Expression *> & parameters
+) {
+	StructInstType * typeIdType = new StructInstType(
+		Type::Const,
+		Virtual::typeIdType( exceptionName )
+	);
+	cloneAll( parameters, typeIdType->parameters );
 	ObjectDecl * typeId = new ObjectDecl(
 		"__cfavir_typeid",
 		noStorageClasses,
 		LinkageSpec::Cforall,
 		nullptr,
-		new PointerType( noQualifiers,
-			new StructInstType( Type::Const, Virtual::typeIdType( exceptionName ) ) ),
+		new PointerType( noQualifiers, typeIdType ),
 		nullptr
 	);
-
-	// size_t size;
 	ObjectDecl * size = new ObjectDecl(
 		"size",
 		noStorageClasses,
@@ -86,100 +215,33 @@ StructDecl * ehmVirtualTableStruct( const std::string & exceptionName, std::list
 		new TypeInstType( noQualifiers, "size_t", false ),
 		nullptr
 	);
-	
-	// void (*copy)(exception_name parameters * this, exception_name parameters * other);
-	FunctionType * copyFnType = new FunctionType( noQualifiers, false );
-	copyFnType->get_parameters().push_back( new ObjectDecl(
-		"this",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new PointerType( noQualifiers,
-			new TypeInstType( noQualifiers, exceptionName, false ) ),
-		nullptr
-	) );
-	copyFnType->get_parameters().push_back( new ObjectDecl(
-		"other",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new PointerType( noQualifiers,
-			new TypeInstType( noQualifiers, exceptionName, false ) ),
-		nullptr
-	) );
-	copyFnType->get_returnVals().push_back( new ObjectDecl(
-		"",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new VoidType( noQualifiers ),
-		nullptr
-	) );
 	ObjectDecl * copy = new ObjectDecl(
 		"copy",
 		noStorageClasses,
 		LinkageSpec::Cforall,
 		nullptr,
-		new PointerType( noQualifiers, copyFnType ),
+		new PointerType( noQualifiers,
+			makeCopyFnType( exceptionName, parameters ) ),
 		nullptr
 	);
-
-	// void (*^?{})(exception_name parameters & this);
-	FunctionType * dtorFnType = new FunctionType( noQualifiers, false );
-	dtorFnType->get_parameters().push_back( new ObjectDecl(
-		"this",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new ReferenceType( noQualifiers,
-			new TypeInstType( noQualifiers, exceptionName, false ) ),
-		nullptr
-	) );
-	dtorFnType->get_returnVals().push_back( new ObjectDecl(
-		"",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new VoidType( noQualifiers ),
-		nullptr
-	) );
 	ObjectDecl * dtor = new ObjectDecl(
 		"^?{}",
 		noStorageClasses,
 		LinkageSpec::Cforall,
 		nullptr,
-		new PointerType( noQualifiers, dtorFnType ),
+		new PointerType( noQualifiers,
+			makeDtorFnType( exceptionName, parameters ) ),
 		nullptr
 	);
-
-	// const char * (*msg)(exception_name parameters * this);
-	FunctionType * msgFnType = new FunctionType( noQualifiers, false );
-	msgFnType->get_parameters().push_back( new ObjectDecl(
-		"this",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new PointerType( noQualifiers,
-			new TypeInstType( noQualifiers, exceptionName, false ) ),
-		nullptr
-	) );
-	msgFnType->get_returnVals().push_back( new ObjectDecl(
-		"",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new PointerType( noQualifiers, new BasicType( Type::Const, BasicType::Char ) ),
-		nullptr
-	) );
 	ObjectDecl * msg = new ObjectDecl(
 		"msg",
 		noStorageClasses,
 		LinkageSpec::Cforall,
 		nullptr,
-		new PointerType( noQualifiers, msgFnType ),
+		new PointerType( noQualifiers,
+			makeMsgFnType( exceptionName, parameters ) ),
 		nullptr
 	);
-
 	StructDecl * structDecl = new StructDecl( Virtual::vtableTypeName( exceptionName ) );
 	structDecl->members.push_back( typeId );
 	structDecl->members.push_back( size );
@@ -187,14 +249,21 @@ StructDecl * ehmVirtualTableStruct( const std::string & exceptionName, std::list
 	structDecl->members.push_back( dtor );
 	structDecl->members.push_back( msg );
 	structDecl->set_body( true );
-	if ( parameters ) {
-		structDecl->parameters = *parameters;
-	}
+	cloneAll( forallClause, structDecl->parameters );
 	return structDecl;
 }
 
-StructDecl * ehmExceptionStruct( const std::string & exceptionName, const std::list<Declaration*> & members,
-								 std::list<TypeDecl *> * parameters ) {
+StructDecl * ehmExceptionStruct(
+	const std::string & exceptionName,
+	const std::list< TypeDecl *> & forallClause,
+	const std::list< Expression *> & parameters, 
+	const std::list< Declaration *> & members
+) {
+	StructInstType * vtableType = new StructInstType(
+		Type::Const,
+		Virtual::vtableTypeName( exceptionName )
+	);
+	cloneAll( parameters, vtableType->parameters );
 	StructDecl * structDecl = new StructDecl( exceptionName );
 	structDecl->members = members;
 	structDecl->members.push_front( new ObjectDecl(
@@ -202,66 +271,43 @@ StructDecl * ehmExceptionStruct( const std::string & exceptionName, const std::l
 		noStorageClasses,
 		LinkageSpec::Cforall,
 		nullptr,
-		new PointerType( noQualifiers,
-			new StructInstType( Type::Const, Virtual::vtableTypeName( exceptionName ) ) ),
+		new PointerType( noQualifiers, vtableType ),
 		nullptr
 	) );
 	structDecl->set_body( true );
-	if ( parameters ) {
-		structDecl->parameters = *parameters;
-	}
+	cloneAll( forallClause, structDecl->parameters );
 	return structDecl;
 }
 
-ObjectDecl * ehmExternVtable( const std::string & exceptionName, const std::string & tableName,
-							  std::list< Expression *> * parameters ) {
-	StructInstType * structInstType = new StructInstType( Type::Const, Virtual::vtableTypeName(exceptionName) );
-	if ( parameters ) {
-		structInstType->parameters = *parameters;
-	}
+ObjectDecl * ehmExternVtable(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters, 
+	const std::string & tableName
+) {
+	StructInstType * vtableType = new StructInstType(
+		Type::Const,
+		Virtual::vtableTypeName( exceptionName )
+	);
+	cloneAll( parameters, vtableType->parameters );
 	return new ObjectDecl(
 		tableName,
 		Type::Extern,
 		LinkageSpec::Cforall,
 		nullptr,
-		structInstType,
+		vtableType,
 		nullptr
 	);
 }
 
-FunctionDecl * ehmDefineCopy( const std::string & exceptionName ) {
-	FunctionType * copyFnType = new FunctionType( noQualifiers, false );
-	copyFnType->get_parameters().push_back( new ObjectDecl(
-		"this",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new PointerType( noQualifiers,
-			new TypeInstType( noQualifiers, exceptionName, false ) ),
-		nullptr
-	) );
-	copyFnType->get_parameters().push_back( new ObjectDecl(
-		"that",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new PointerType( noQualifiers,
-			new TypeInstType( noQualifiers, exceptionName, false ) ),
-		nullptr
-	) );
-	copyFnType->get_returnVals().push_back( new ObjectDecl(
-		"",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new VoidType( noQualifiers ),
-		nullptr
-	) );
+FunctionDecl * ehmDefineCopy(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters
+) {
 	return new FunctionDecl(
 		"copy",
 		noStorageClasses,
 		LinkageSpec::Cforall,
-		copyFnType,
+		makeCopyFnType( exceptionName, parameters ),
 		new CompoundStmt( {
 			new ExprStmt( new UntypedExpr( new NameExpr( "?=?" ), {
 				new UntypedExpr( new NameExpr( "*?" ), { new NameExpr( "this" ) } ),
@@ -271,42 +317,45 @@ FunctionDecl * ehmDefineCopy( const std::string & exceptionName ) {
 	);
 }
 
-FunctionDecl * ehmDefineMsg( const std::string & exceptionName ) {
-	FunctionType * msgFnType = new FunctionType( noQualifiers, false );
-	msgFnType->get_parameters().push_back( new ObjectDecl(
-		"this",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new PointerType( noQualifiers,
-			new TypeInstType( noQualifiers, exceptionName, false ) ),
-		nullptr
-	) );
-	msgFnType->get_returnVals().push_back( new ObjectDecl(
-		"",
-		noStorageClasses,
-		LinkageSpec::Cforall,
-		nullptr,
-		new PointerType( noQualifiers, new BasicType( Type::Const, BasicType::Char ) ),
-		nullptr
-	) );
+FunctionDecl * ehmDefineMsg(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters
+) {
+	std::stringstream msg;
+	msg << exceptionName;
+	if ( !parameters.empty() ) { // forall variant, add parameters
+		msg << "(";
+		for ( auto it = parameters.begin(); it != parameters.end(); it++ ) {
+			( *it )->print( msg );
+			if ( it + 1 == parameters.end() ) {
+				msg << ")"; // end of list, close bracket
+			} else {
+				msg << ", "; // otherwise use comma as separator
+			}
+		}
+	}
 	return new FunctionDecl(
 		"msg",
 		noStorageClasses,
 		LinkageSpec::Cforall,
-		msgFnType,
+		makeMsgFnType( exceptionName, parameters ),
 		new CompoundStmt( {
-			new ReturnStmt( new ConstantExpr( Constant::from_string( exceptionName ) ) )
+			new ReturnStmt( new ConstantExpr( Constant::from_string( msg.str() ) ) )
 		} )
 	);
 }
 
-ObjectDecl * ehmVirtualTable( const std::string & exceptionName, const std::string & tableName ) {
+ObjectDecl * ehmVirtualTable(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters,
+	const std::string & tableName
+) {
+	StructInstType * sizeofType = new StructInstType( noQualifiers, exceptionName );
+	cloneAll( parameters, sizeofType->parameters );
 	std::list< Initializer *> inits {
 		new SingleInit( new AddressExpr(
 			new NameExpr( Virtual::typeIdName( exceptionName ) ) ) ),
-		new SingleInit( new SizeofExpr(
-			new StructInstType( noQualifiers, exceptionName ) ) ),
+		new SingleInit( new SizeofExpr( sizeofType ) ),
 		new SingleInit( new NameExpr( "copy" ) ),
 		new SingleInit( new NameExpr( "^?{}" ) ),
 		new SingleInit( new NameExpr( "msg" ) )
@@ -318,30 +367,44 @@ ObjectDecl * ehmVirtualTable( const std::string & exceptionName, const std::stri
 		new Designation( { new NameExpr( "^?{}" ) } ),
 		new Designation( { new NameExpr( "msg" ) } )
 	};
+	StructInstType * vtableType = new StructInstType(
+		Type::Const,
+		Virtual::vtableTypeName( exceptionName )
+	);
+	cloneAll( parameters, vtableType->parameters );
 	return new ObjectDecl(
 		tableName,
 		noStorageClasses,
 		LinkageSpec::Cforall,
 		nullptr,
-		new StructInstType( Type::Const, Virtual::vtableTypeName( exceptionName ) ),
+		vtableType,
 		new ListInit( inits, desig )
 	);
 }
 
 class ExceptDeclCore : public WithDeclsToAdd {
 public:
-	Declaration * postmutate( StructDecl * structDecl ); // translates exception decls
-	DeclarationWithType * postmutate( ObjectDecl * objectDecl ); // translates vtable decls 
+	// translates exception decls
+	Declaration * postmutate( StructDecl * structDecl );
+
+	// translates vtable decls
+	DeclarationWithType * postmutate( ObjectDecl * objectDecl );
 };
 
 Declaration * ExceptDeclCore::postmutate( StructDecl * structDecl ) {
 	if ( structDecl->is_exception() ) {
 		const std::string & exceptionName = structDecl->get_name();
-		declsToAddBefore.push_back( ehmTypeIdStruct( exceptionName, nullptr ) );
-		declsToAddBefore.push_back( ehmTypeIdValue( exceptionName, nullptr ) );
-		declsToAddBefore.push_back( ehmExceptionStructDecl( exceptionName, nullptr ) );
-		declsToAddBefore.push_back( ehmVirtualTableStruct( exceptionName, nullptr ) );
-		return ehmExceptionStruct( exceptionName, structDecl->get_members(), nullptr );
+		const std::list< TypeDecl *> & forallClause = structDecl->get_parameters();
+		const std::list< Expression *> & parameters = makeParameters( forallClause );
+		const std::list< Declaration *> & members = structDecl->get_members();
+
+		declsToAddBefore.push_back( ehmTypeIdStruct( exceptionName, forallClause ) );
+		if ( forallClause.empty() ) { // non-forall variant
+			declsToAddBefore.push_back( ehmTypeIdValue( exceptionName, parameters ) );
+		}
+		declsToAddBefore.push_back( ehmExceptionStructDecl( exceptionName, forallClause ) );
+		declsToAddBefore.push_back( ehmVirtualTableStruct( exceptionName, forallClause, parameters ) );
+		return ehmExceptionStruct( exceptionName, forallClause, parameters, members );
 	}
 	return structDecl;
 }
@@ -354,13 +417,18 @@ DeclarationWithType * ExceptDeclCore::postmutate( ObjectDecl * objectDecl ) {
 		assert( base ); // should be a TypeInstType
 		const std::string & exceptionName = base->get_name();
 		const std::string & tableName = objectDecl->get_name();
-		if ( objectDecl->get_storageClasses().is_extern ) {
-			return ehmExternVtable( exceptionName, tableName, nullptr );
-		} else {
-			declsToAddBefore.push_back( ehmDefineCopy( exceptionName ) );
-			declsToAddBefore.push_back( ehmDefineMsg( exceptionName ) );
-			return ehmVirtualTable( exceptionName, tableName );
+		const std::list< Expression *> parameters = base->get_parameters();
+
+		if ( objectDecl->get_storageClasses().is_extern ) { // if extern
+			return ehmExternVtable( exceptionName, parameters, tableName );
 		}
+		// else, non-extern
+		if ( !parameters.empty() ) { // forall variant
+			declsToAddBefore.push_back( ehmTypeIdValue( exceptionName, parameters ) );
+		}
+		declsToAddBefore.push_back( ehmDefineCopy( exceptionName, parameters ) );
+		declsToAddBefore.push_back( ehmDefineMsg( exceptionName, parameters ) );
+		return ehmVirtualTable( exceptionName, parameters, tableName );
 	}
 	return objectDecl;
 }
