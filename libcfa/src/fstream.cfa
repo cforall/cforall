@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 22 11:34:41 2021
-// Update Count     : 448
+// Last Modified On : Thu Jul 29 22:34:10 2021
+// Update Count     : 454
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -141,18 +141,21 @@ void close( ofstream & os ) {
   if ( (FILE *)(os.file$) == (FILE *)stdout || (FILE *)(os.file$) == (FILE *)stderr ) return;
 
 	if ( fclose( (FILE *)(os.file$) ) == EOF ) {
-		abort | IO_MSG "close output" | nl | strerror( errno );
+		throw (Close_Failure){ os };
+		// abort | IO_MSG "close output" | nl | strerror( errno );
 	} // if
 	os.file$ = 0p;
 } // close
 
 ofstream & write( ofstream & os, const char data[], size_t size ) {
 	if ( fail( os ) ) {
-		abort | IO_MSG "attempt write I/O on failed stream";
+		throw (Write_Failure){ os };
+		// abort | IO_MSG "attempt write I/O on failed stream";
 	} // if
 
 	if ( fwrite( data, 1, size, (FILE *)(os.file$) ) != size ) {
-		abort | IO_MSG "write" | nl | strerror( errno );
+		throw (Write_Failure){ os };
+		// abort | IO_MSG "write" | nl | strerror( errno );
 	} // if
 	return os;
 } // write
@@ -276,18 +279,21 @@ void close( ifstream & is ) {
   if ( (FILE *)(is.file$) == (FILE *)stdin ) return;
 
 	if ( fclose( (FILE *)(is.file$) ) == EOF ) {
-		abort | IO_MSG "close input" | nl | strerror( errno );
+		throw (Close_Failure){ is };
+		// abort | IO_MSG "close input" | nl | strerror( errno );
 	} // if
 	is.file$ = 0p;
 } // close
 
 ifstream & read( ifstream & is, char data[], size_t size ) {
 	if ( fail( is ) ) {
-		abort | IO_MSG "attempt read I/O on failed stream";
+		throw (Read_Failure){ is };
+		// abort | IO_MSG "attempt read I/O on failed stream";
 	} // if
 
 	if ( fread( data, size, 1, (FILE *)(is.file$) ) == 0 ) {
-		abort | IO_MSG "read" | nl | strerror( errno );
+		throw (Read_Failure){ is };
+		// abort | IO_MSG "read" | nl | strerror( errno );
 	} // if
 	return is;
 } // read
@@ -337,29 +343,76 @@ ifstream & sin = sinFile, & stdin = sinFile;
 // *********************************** exceptions ***********************************
 
 
-//EHM_VIRTUAL_TABLE(Open_Failure, Open_Failure_main_table);
-static vtable(Open_Failure) Open_Failure_main_table;
+static vtable(Open_Failure) Open_Failure_vt;
 
 // exception I/O constructors
 void ?{}( Open_Failure & this, ofstream & ostream ) {
-	this.virtual_table = &Open_Failure_main_table;
+	this.virtual_table = &Open_Failure_vt;
 	this.ostream = &ostream;
 	this.tag = 1;
 } // ?{}
 
 void ?{}( Open_Failure & this, ifstream & istream ) {
-	this.virtual_table = &Open_Failure_main_table;
+	this.virtual_table = &Open_Failure_vt;
 	this.istream = &istream;
 	this.tag = 0;
 } // ?{}
 
-void throwOpen_Failure( ofstream & ostream ) {
-	Open_Failure exc = { ostream };
-}
 
-void throwOpen_Failure( ifstream & istream ) {
-	Open_Failure exc = { istream };
-}
+static vtable(Close_Failure) Close_Failure_vt;
+
+// exception I/O constructors
+void ?{}( Close_Failure & this, ofstream & ostream ) {
+	this.virtual_table = &Close_Failure_vt;
+	this.ostream = &ostream;
+	this.tag = 1;
+} // ?{}
+
+void ?{}( Close_Failure & this, ifstream & istream ) {
+	this.virtual_table = &Close_Failure_vt;
+	this.istream = &istream;
+	this.tag = 0;
+} // ?{}
+
+
+static vtable(Write_Failure) Write_Failure_vt;
+
+// exception I/O constructors
+void ?{}( Write_Failure & this, ofstream & ostream ) {
+	this.virtual_table = &Write_Failure_vt;
+	this.ostream = &ostream;
+	this.tag = 1;
+} // ?{}
+
+void ?{}( Write_Failure & this, ifstream & istream ) {
+	this.virtual_table = &Write_Failure_vt;
+	this.istream = &istream;
+	this.tag = 0;
+} // ?{}
+
+
+static vtable(Read_Failure) Read_Failure_vt;
+
+// exception I/O constructors
+void ?{}( Read_Failure & this, ofstream & ostream ) {
+	this.virtual_table = &Read_Failure_vt;
+	this.ostream = &ostream;
+	this.tag = 1;
+} // ?{}
+
+void ?{}( Read_Failure & this, ifstream & istream ) {
+	this.virtual_table = &Read_Failure_vt;
+	this.istream = &istream;
+	this.tag = 0;
+} // ?{}
+
+// void throwOpen_Failure( ofstream & ostream ) {
+// 	Open_Failure exc = { ostream };
+// }
+
+// void throwOpen_Failure( ifstream & istream ) {
+// 	Open_Failure exc = { istream };
+// }
 
 // Local Variables: //
 // tab-width: 4 //

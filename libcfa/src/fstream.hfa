@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 20 21:18:03 2021
-// Update Count     : 232
+// Last Modified On : Wed Jul 28 07:35:50 2021
+// Update Count     : 234
 //
 
 #pragma once
@@ -158,6 +158,42 @@ exception Open_Failure {
 
 void ?{}( Open_Failure & this, ofstream & );
 void ?{}( Open_Failure & this, ifstream & );
+
+exception Close_Failure {
+	union {
+		ofstream * ostream;
+		ifstream * istream;
+	};
+	// TEMPORARY: need polymorphic exceptions
+	int tag;											// 1 => ostream; 0 => istream
+};
+
+void ?{}( Close_Failure & this, ofstream & );
+void ?{}( Close_Failure & this, ifstream & );
+
+exception Write_Failure {
+	union {
+		ofstream * ostream;
+		ifstream * istream;
+	};
+	// TEMPORARY: need polymorphic exceptions
+	int tag;											// 1 => ostream; 0 => istream
+};
+
+void ?{}( Write_Failure & this, ofstream & );
+void ?{}( Write_Failure & this, ifstream & );
+
+exception Read_Failure {
+	union {
+		ofstream * ostream;
+		ifstream * istream;
+	};
+	// TEMPORARY: need polymorphic exceptions
+	int tag;											// 1 => ostream; 0 => istream
+};
+
+void ?{}( Read_Failure & this, ofstream & );
+void ?{}( Read_Failure & this, ifstream & );
 
 // Local Variables: //
 // mode: c //
