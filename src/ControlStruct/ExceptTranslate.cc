@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Wed Jun 14 16:49:00 2017
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Jun 24 11:18:00 2020
-// Update Count     : 17
+// Last Modified By : Henry Xue
+// Last Modified On : Tue Aug 03 10:05:51 2021
+// Update Count     : 18
 //
 
 #include "ExceptTranslate.h"
@@ -319,13 +319,12 @@ namespace ControlStruct {
 			ObjectDecl * handler_decl =
 				static_cast<ObjectDecl *>( handler->get_decl() );
 			ObjectDecl * local_except = handler_decl->clone();
-			local_except->set_init(
-				new ListInit({ new SingleInit(
-					new VirtualCastExpr( nameOf( except_obj ),
-						local_except->get_type()
-						)
-					) })
+			VirtualCastExpr * vcex = new VirtualCastExpr(
+				nameOf( except_obj ),
+				local_except->get_type()
 				);
+			vcex->location = handler->location;
+			local_except->set_init( new ListInit({ new SingleInit( vcex ) }) );
 			block->push_back( new DeclStmt( local_except ) );
 
 			// Add the cleanup attribute.
@@ -391,9 +390,13 @@ namespace ControlStruct {
 		block->push_back( new DeclStmt( local_except ) );
 
 		// Check for type match.
-		Expression * cond = UntypedExpr::createAssign( nameOf( local_except ),
-			new VirtualCastExpr( nameOf( except_obj ),
-				local_except->get_type()->clone() ) );
+		VirtualCastExpr * vcex = new VirtualCastExpr(
+			nameOf( except_obj ),
+			local_except->get_type()->clone()
+			);
+		vcex->location = modded_handler->location;
+		Expression * cond = UntypedExpr::createAssign(
+			nameOf( local_except ), vcex );
 
 		// Add the check on the conditional if it is provided.
 		if ( modded_handler->get_cond() ) {

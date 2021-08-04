@@ -9,8 +9,8 @@
 // Author           : Henry Xue
 // Created On       : Tue Jul 20 04:10:50 2021
 // Last Modified By : Henry Xue
-// Last Modified On : Mon Jul 26 12:55:28 2021
-// Update Count     : 3
+// Last Modified On : Tue Aug 03 10:42:26 2021
+// Update Count     : 4
 //
 
 #include "ExceptDecl.h"
@@ -279,6 +279,26 @@ StructDecl * ehmExceptionStruct(
 	return structDecl;
 }
 
+ObjectDecl * ehmTypeIdExtern(
+	const std::string & exceptionName,
+	const std::list< Expression *> & parameters
+) {
+	StructInstType * typeIdType = new StructInstType(
+		Type::Const,
+		Virtual::typeIdType( exceptionName )
+	);
+	cloneAll( parameters, typeIdType->parameters );
+	return new ObjectDecl(
+		Virtual::typeIdName( exceptionName ),
+		Type::Extern,
+		LinkageSpec::Cforall,
+		nullptr,
+		typeIdType,
+		nullptr,
+		{ new Attribute( "cfa_linkonce" ) }
+	);
+}
+
 ObjectDecl * ehmExternVtable(
 	const std::string & exceptionName,
 	const std::list< Expression *> & parameters, 
@@ -420,6 +440,9 @@ DeclarationWithType * ExceptDeclCore::postmutate( ObjectDecl * objectDecl ) {
 		const std::list< Expression *> parameters = base->get_parameters();
 
 		if ( objectDecl->get_storageClasses().is_extern ) { // if extern
+			if ( !parameters.empty() ) { // forall variant
+				declsToAddBefore.push_back( ehmTypeIdExtern( exceptionName, parameters ) );
+			}
 			return ehmExternVtable( exceptionName, parameters, tableName );
 		}
 		// else, non-extern
