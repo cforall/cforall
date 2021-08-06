@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 16 09:51:37 2019
-// Update Count     : 336
+// Last Modified On : Thu Aug  5 21:27:25 2021
+// Update Count     : 346
 //
 
 #include <fstream.hfa>
@@ -19,13 +19,12 @@
 
 trait sumable( T ) {
 	void ?{}( T &, zero_t );							// 0 literal constructor
+	void ?{}( T &, one_t );								// 1 literal constructor
 	T ?+?( T, T );										// assortment of additions
-	T ?+=?( T &, T );
-	T ++?( T & );
-	T ?++( T & );
+	T ?+=?( T &, T );									// get pre/post ++ with += and one_t
 }; // sumable
 
-forall( T | sumable( T ) )						// use trait
+forall( T | sumable( T ) )								// use trait
 T sum( size_t size, T a[] ) {
 	T total = 0;										// initialize by 0 constructor
 	for ( i; size )
@@ -34,7 +33,6 @@ T sum( size_t size, T a[] ) {
 } // sum
 
 int main( void ) {
-#if 0
 	const int low = 5, High = 15, size = High - low;
 
 	signed char s = 0, a[size], v = (char)low;
@@ -93,12 +91,10 @@ int main( void ) {
 	void ?{}( S & s, one_t ) { s.[i, j] = 1; }
 	S ?+?( S t1, S t2 ) { return (S){ t1.i + t2.i, t1.j + t2.j }; }
 	S ?+=?( S & t1, S t2 ) { t1 = t1 + t2; return t1; }
-	S ++?( S & t ) { t += (S){1}; return t; }
-	S ?++( S & t ) { S temp = t; t += (S){1}; return temp; }
 	ofstream & ?|?( ofstream & os, S v ) { return os | v.i | v.j; }
 	void ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
 
-	S s = (S){0}, a[size], v = { low, low };
+	S s = 0, a[size], v = { low, low };
 	for ( int i = 0; i < size; i += 1, v += (S){1} ) {
 		s += (S)v;
 		a[i] = (S)v;
@@ -121,94 +117,6 @@ int main( void ) {
 	sout | "sum from" | low | "to" | High | "is"
 		 | sum( size, gs.x ) | ", check" | (int)s;		// add field array in generic type
 	delete( gs.x );
-#else
-	const int low = 5, High = 15, size = High - low;
-
-	signed char s = 0, a[size], v = (char)low;
-	for ( int i = 0; i < size; i += 1, v += 1hh ) {
-		s += v;
-		a[i] = v;
-	} // for
-	printf( "sum from %d to %d is %hhd, check %hhd\n", low, High,
-		 sum( size, (signed char *)a ), (signed char)s );
-
-	unsigned char s = 0, a[size], v = low;
-	for ( int i = 0; i < size; i += 1, v += 1hhu ) {
-		s += (unsigned char)v;
-		a[i] = (unsigned char)v;
-	} // for
-	printf( "sum from %d to %d is %hhu, check %hhu\n", low, High,
-		 sum( size, (unsigned char *)a ), (unsigned char)s );
-
-	short int s = 0, a[size], v = low;
-	for ( int i = 0; i < size; i += 1, v += 1h ) {
-	 	s += (short int)v;
-	 	a[i] = (short int)v;
-	} // for
-	printf( "sum from %d to %d is %hd, check %hd\n", low, High,
-		 sum( size, (short int *)a ), (short int)s );
-
-	int s = 0, a[size], v = low;
-	for ( int i = 0; i < size; i += 1, v += 1 ) {
-		s += (int)v;
-		a[i] = (int)v;
-	} // for
-	printf( "sum from %d to %d is %d, check %d\n", low, High,
-		 sum( size, (int *)a ), (int)s );
-
-	float s = 0.0f, a[size], v = low / 10.0f;
-	for ( int i = 0; i < size; i += 1, v += 0.1f ) {
-		s += (float)v;
-		a[i] = (float)v;
-	} // for
-	printf( "sum from %g to %g is %g, check %g\n", low / 10.0f, High / 10.0f,
-		 sum( size, (float *)a ), (float)s );
-
-	double s = 0.0, a[size], v = low / 10.0;
-	for ( int i = 0; i < size; i += 1, v += 0.1 ) {
-		s += (double)v;
-		a[i] = (double)v;
-	} // for
-	printf( "sum from %g to %g is %g, check %g\n", low / 10.0f, High / 10.0f,
-		 sum( size, (double *)a ), (double)s );
-
-	struct S { int i, j; };
-	void ?{}( S & s ) { s.[i, j] = 0; }
-	void ?{}( S & s, int i ) { s.[i, j] = [i, 0]; }
-	void ?{}( S & s, int i, int j ) { s.[i, j] = [i, j]; }
-	void ?{}( S & s, zero_t ) { s.[i, j] = 0; }
-	void ?{}( S & s, one_t ) { s.[i, j] = 1; }
-	S ?+?( S t1, S t2 ) { return (S){ t1.i + t2.i, t1.j + t2.j }; }
-	S ?+=?( S & t1, S t2 ) { t1 = t1 + t2; return t1; }
-	S ++?( S & t ) { t += (S){1}; return t; }
-	S ?++( S & t ) { S temp = t; t += (S){1}; return temp; }
-	ofstream & ?|?( ofstream & os, S v ) { return os | v.i | v.j; }
-	void ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
-
-	S s = 0, a[size], v = { low, low };
-	for ( int i = 0; i < size; i += 1, v += (S){1} ) {
-		s += (S)v;
-		a[i] = (S)v;
-	} // for
-	printf( "sum from %d to %d is %d %d, check %d %d\n", low, High,
-		 sum( size, (S *)a ).[i, j], s.[i, j] );
-
-	forall( Impl | sumable( Impl ) )
-	struct GS {
-		Impl * x, * y;
-	};
-	GS(int) gs;
-	// FIX ME, resolution problem with anew not picking up the LH type
-	gs.x = (typeof(gs.x))anew( size );					// create array storage for field
-	s = 0; v = low;
-	for ( int i = 0; i < size; i += 1, v += 1 ) {
-		s += (int)v;
-		gs.x[i] = (int)v;								// set field array in generic type
-	} // for
-	printf( "sum from %d to %d is %d, check %d\n", low, High,
-		 sum( size, gs.x ), (int)s );		// add field array in generic type
-	delete( gs.x );
-#endif
 } // main
 
 // Local Variables: //
