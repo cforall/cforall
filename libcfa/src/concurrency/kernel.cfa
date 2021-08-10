@@ -393,6 +393,16 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 	/* paranoid */ verifyf( thrd_dst->link.next == 0p, "Expected null got %p", thrd_dst->link.next );
 	__builtin_prefetch( thrd_dst->context.SP );
 
+	int curr = __kernel_getcpu();
+	if(thrd_dst->last_cpu != curr) {
+		int64_t l = thrd_dst->last_cpu;
+		int64_t c = curr;
+		int64_t v = (l << 32) | c;
+		__push_stat( __tls_stats(), v, false, "Processor", this );
+	}
+
+	thrd_dst->last_cpu = curr;
+
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p running thread %p (%s)\n", this, thrd_dst, thrd_dst->self_cor.name);
 
 	coroutine$ * proc_cor = get_coroutine(this->runner);
@@ -469,7 +479,6 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 			case TICKET_UNBLOCK:
 				#if !defined(__CFA_NO_STATISTICS__)
 					__tls_stats()->ready.threads.threads++;
-					__push_stat( __tls_stats(), __tls_stats()->ready.threads.threads, false, "Processor", this );
 				#endif
 				// This is case 2, the racy case, someone tried to run this thread before it finished blocking
 				// In this case, just run it again.
@@ -487,7 +496,6 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 
 	#if !defined(__CFA_NO_STATISTICS__)
 		__tls_stats()->ready.threads.threads--;
-		__push_stat( __tls_stats(), __tls_stats()->ready.threads.threads, false, "Processor", this );
 	#endif
 
 	/* paranoid */ verify( ! __preemption_enabled() );
@@ -569,12 +577,10 @@ static void __schedule_thread( thread$ * thrd ) {
 			if(outside) {
 				__tls_stats()->ready.threads.extunpark++;
 			}
-			__push_stat( __tls_stats(), __tls_stats()->ready.threads.threads, false, "Processor", kernelTLS().this_processor );
 		}
 		else {
 			__atomic_fetch_add(&cl->stats->ready.threads.threads, 1, __ATOMIC_RELAXED);
 			__atomic_fetch_add(&cl->stats->ready.threads.extunpark, 1, __ATOMIC_RELAXED);
-			__push_stat( cl->stats, cl->stats->ready.threads.threads, true, "Cluster", cl );
 		}
 	#endif
 

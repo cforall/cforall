@@ -344,19 +344,12 @@ void ^?{}(__ready_queue_t & this) with (this) {
 
 			/* paranoid */ verify(lanes.count < 65536); // The following code assumes max 65536 cores.
 			/* paranoid */ verify(map.count < 65536); // The following code assumes max 65536 cores.
-			uint64_t chaos = __tls_rand();
-			uint64_t high_chaos = (chaos >> 32);
-			uint64_t  mid_chaos = (chaos >> 16) & 0xffff;
-			uint64_t  low_chaos = chaos & 0xffff;
 
-			unsigned me = map.self;
-			unsigned cpu_chaos = map.start + (mid_chaos % map.count);
-			bool global = cpu_chaos == me;
-
-			if(global) {
-				proc->rdq.target = high_chaos % lanes.count;
+			if(0 == (__tls_rand() % 10_000)) {
+				proc->rdq.target = __tls_rand() % lanes.count;
 			} else {
-				proc->rdq.target = (cpu_chaos * READYQ_SHARD_FACTOR) + (low_chaos % READYQ_SHARD_FACTOR);
+				unsigned cpu_chaos = map.start + (__tls_rand() % map.count);
+				proc->rdq.target = (cpu_chaos * READYQ_SHARD_FACTOR) + (__tls_rand() % READYQ_SHARD_FACTOR);
 				/* paranoid */ verify(proc->rdq.target >= (map.start * READYQ_SHARD_FACTOR));
 				/* paranoid */ verify(proc->rdq.target <  ((map.start + map.count) * READYQ_SHARD_FACTOR));
 			}

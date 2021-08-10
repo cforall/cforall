@@ -234,6 +234,7 @@ static void __kernel_startup(void) {
 	(*mainProcessor){};
 
 	register_tls( mainProcessor );
+	mainThread->last_cpu = __kernel_getcpu();
 
 	//initialize the global state variables
 	__cfaabi_tls.this_processor = mainProcessor;

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 20 14:01:46 2020
-// Update Count     : 1076
+// Last Modified On : Sat Aug  7 09:18:56 2021
+// Update Count     : 1077
 //
 
 #include <cassert>                 // for assert
@@ -513,6 +513,7 @@ DimensionExpr * build_dimensionref( const string * name ) {
 	delete name;
 	return expr;
 } // build_varref
+
 // TODO: get rid of this and OperKinds and reuse code from OperatorTable
 static const char * OperName[] = {						// must harmonize with OperKinds
 	// diadic

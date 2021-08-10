@@ -33,6 +33,9 @@ void ?{}(thread$ & this, const char * const name, cluster & cl, void * storage, 
 	state = Start;
 	preempted = __NO_PREEMPTION;
 	corctx_flag = false;
+	disable_interrupts();
+	last_cpu = __kernel_getcpu();
+	enable_interrupts();
 	curr_cor = &self_cor;
 	self_mon.owner = &this;
 	self_mon.recursion = 1;
