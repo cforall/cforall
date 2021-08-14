@@ -175,6 +175,8 @@ template class ast::ptr_base< ast::NullStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::NullStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::ImplicitCtorDtorStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::ImplicitCtorDtorStmt, ast::Node::ref_type::strong >;
+template class ast::ptr_base< ast::MutexStmt, ast::Node::ref_type::weak >;
+template class ast::ptr_base< ast::MutexStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::Expr, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::Expr, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::ApplicationExpr, ast::Node::ref_type::weak >;

@@ -1345,7 +1345,7 @@ with_statement:
 // If MUTEX becomes a general qualifier, there are shift/reduce conflicts, so change syntax to "with mutex".
 mutex_statement:
 	MUTEX '(' argument_expression_list_opt ')' statement
-		{ SemanticError( yylloc, "Mutex statement is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new StatementNode( build_mutex( $3, $5 ) ); }
 	;
 
 when_clause:

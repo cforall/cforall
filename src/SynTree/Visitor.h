@@ -91,6 +91,8 @@ class Visitor {
 	virtual void visit( const DeclStmt * declStmt ) = 0;
 	virtual void visit( ImplicitCtorDtorStmt * node ) { visit( const_cast<const ImplicitCtorDtorStmt *>(node) ); }
 	virtual void visit( const ImplicitCtorDtorStmt * impCtorDtorStmt ) = 0;
+	virtual void visit( MutexStmt * node ) { visit( const_cast<const MutexStmt *>(node) ); }
+	virtual void visit( const MutexStmt * mutexStmt ) = 0;
 
 	virtual void visit( ApplicationExpr * node ) { visit( const_cast<const ApplicationExpr *>(node) ); }
 	virtual void visit( const ApplicationExpr * applicationExpr ) = 0;

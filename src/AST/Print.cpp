@@ -799,6 +799,21 @@ public:
 		return node;
 	}
 
+	virtual const ast::Stmt * visit( const ast::MutexStmt * node ) override final {
+		os << "Mutex Statement" << endl;
+		os << indent << "... with Mutex Parameters: ";
+		++indent;
+		printAll( node->mutexObjs );
+		--indent;
+		os << indent << "... with Statement: ";
+		++indent;
+		safe_print( node->stmt );
+		--indent;
+		os << endl;
+
+		return node;
+	}
+
 	virtual const ast::Expr * visit( const ast::ApplicationExpr * node ) override final {
 		++indent;
 		os << "Application of" << endl << indent;

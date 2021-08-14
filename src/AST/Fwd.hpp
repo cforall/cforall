@@ -59,6 +59,7 @@ class WithStmt;
 class DeclStmt;
 class NullStmt;
 class ImplicitCtorDtorStmt;
+class MutexStmt;
 
 class Expr;
 class ApplicationExpr;

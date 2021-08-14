@@ -8108,7 +8108,7 @@ yyreduce:
 
   case 279:
 #line 1348 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "Mutex statement is currently unimplemented." ); (yyval.sn) = nullptr; }
+                { (yyval.sn) = new StatementNode( build_mutex( (yyvsp[-2].en), (yyvsp[0].sn) ) ); }
 #line 8113 "Parser/parser.cc"
     break;
 

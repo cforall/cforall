@@ -1780,6 +1780,42 @@ Statement * PassVisitor< pass_type >::mutate( ImplicitCtorDtorStmt * node ) {
 }
 
 //--------------------------------------------------------------------------
+// MutexStmt
+template< typename pass_type >
+void PassVisitor< pass_type >::visit( MutexStmt * node ) {
+	VISIT_START( node );
+	// mutex statements introduce a level of scope (for the initialization)
+	maybeAccept_impl( node->mutexObjs, *this );
+	{
+		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
+		node->stmt = visitStatement( node->stmt );
+	}
+	VISIT_END( node );
+}
+
+template< typename pass_type >
+void PassVisitor< pass_type >::visit( const MutexStmt * node ) {
+	VISIT_START( node );
+	maybeAccept_impl( node->mutexObjs, *this );
+	{
+		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
+		visitStatement( node->stmt );
+	}
+	VISIT_END( node );
+}
+
+template< typename pass_type >
+Statement * PassVisitor< pass_type >::mutate( MutexStmt * node ) {
+	MUTATE_START( node );
+	maybeMutate_impl( node->mutexObjs, *this );
+	{
+		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
+		node->stmt = mutateStatement( node->stmt );
+	}
+	MUTATE_END( Statement, node );
+}
+
+//--------------------------------------------------------------------------
 // ApplicationExpr
 template< typename pass_type >
 void PassVisitor< pass_type >::visit( ApplicationExpr * node ) {

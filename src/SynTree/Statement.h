@@ -534,6 +534,22 @@ class ImplicitCtorDtorStmt : public Statement {
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
+class MutexStmt : public Statement {
+  public:
+	Statement * stmt;
+	std::list<Expression *> mutexObjs; // list of mutex objects to acquire
+
+	MutexStmt( Statement * stmt, std::list<Expression *> mutexObjs );
+	MutexStmt( const MutexStmt & other );
+	virtual ~MutexStmt();
+
+	virtual MutexStmt * clone() const override { return new MutexStmt( *this ); }
+	virtual void accept( Visitor & v ) override { v.visit( this ); }
+	virtual void accept( Visitor & v ) const override { v.visit( this ); }
+	virtual Statement * acceptMutator( Mutator & m )  override { return m.mutate( this ); }
+	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
+};
+
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

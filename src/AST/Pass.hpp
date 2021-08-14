@@ -161,6 +161,7 @@ public:
 	const ast::NullStmt *         visit( const ast::NullStmt             * ) override final;
 	const ast::Stmt *             visit( const ast::DeclStmt             * ) override final;
 	const ast::Stmt *             visit( const ast::ImplicitCtorDtorStmt * ) override final;
+	const ast::Stmt *             visit( const ast::MutexStmt            * ) override final;
 	const ast::Expr *             visit( const ast::ApplicationExpr      * ) override final;
 	const ast::Expr *             visit( const ast::UntypedExpr          * ) override final;
 	const ast::Expr *             visit( const ast::NameExpr             * ) override final;

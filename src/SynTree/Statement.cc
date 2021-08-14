@@ -564,6 +564,30 @@ void ImplicitCtorDtorStmt::print( std::ostream & os, Indenter indent ) const {
 	os << endl;
 }
 
+MutexStmt::MutexStmt( Statement * stmt, std::list<Expression *> mutexObjs ) 
+	: Statement(), stmt( stmt ), mutexObjs( mutexObjs ) { }
+
+MutexStmt::MutexStmt( const MutexStmt & other ) : Statement( other ), stmt( maybeClone( other.stmt ) ) {
+	cloneAll( other.mutexObjs, mutexObjs );
+}
+
+MutexStmt::~MutexStmt() {
+	deleteAll( mutexObjs );
+	delete stmt;
+}
+
+void MutexStmt::print( std::ostream & os, Indenter indent ) const {
+	os << "Mutex Statement" << endl;
+	os << indent << "... with Expressions: " << endl;
+	for (auto * obj : mutexObjs) {
+		os << indent+1;
+		obj->print( os, indent+1);
+		os << endl;
+	}
+	os << indent << "... with Statement: " << endl << indent+1;
+	stmt->print( os, indent+1 );
+}
+
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

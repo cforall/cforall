@@ -425,6 +425,22 @@ private:
 	MUTATE_FRIEND
 };
 
+/// Mutex Statement
+class MutexStmt final : public Stmt {
+public:
+	ptr<Stmt> stmt;
+	std::vector<ptr<Expr>> mutexObjs;
+
+	MutexStmt( const CodeLocation & loc, const Stmt * stmt, 
+		std::vector<ptr<Expr>> && mutexes, std::vector<Label> && labels = {} )
+	: Stmt(loc, std::move(labels)), stmt(stmt), mutexObjs(std::move(mutexes)) {}
+
+	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
+private:
+	MutexStmt * clone() const override { return new MutexStmt{ *this }; }
+	MUTATE_FRIEND
+};
+
 }
 
 #undef MUTATE_FRIEND

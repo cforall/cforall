@@ -120,6 +120,7 @@ namespace CodeGen {
 		void postvisit( NullStmt * );
 		void postvisit( DeclStmt * );
 		void postvisit( ImplicitCtorDtorStmt * );
+		void postvisit( MutexStmt * stmt );
 
 		void genAttributes( std::list< Attribute * > & attributes );
 

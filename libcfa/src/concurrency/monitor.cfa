@@ -368,6 +368,10 @@ void ?{}( monitor_guard_t & this, monitor$ * m [], __lock_size_t count, fptr_t f
 	// __cfaabi_dbg_print_safe( "MGUARD : entered\n" );
 }
 
+void ?{}( monitor_guard_t & this, monitor$ * m [], __lock_size_t count ) {
+	this{ m, count, 0p };
+}
+
 
 // Dtor for monitor guard
 void ^?{}( monitor_guard_t & this ) {

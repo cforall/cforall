@@ -47,6 +47,7 @@ struct monitor_guard_t {
 };
 
 void ?{}( monitor_guard_t & this, monitor$ ** m, __lock_size_t count, void (*func)() );
+void ?{}( monitor_guard_t & this, monitor$ ** m, __lock_size_t count );
 void ^?{}( monitor_guard_t & this );
 
 struct monitor_dtor_guard_t {

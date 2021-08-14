@@ -1186,6 +1186,11 @@ namespace CodeGen {
 		stmt->callStmt->accept( *visitor );
 	}
 
+	void CodeGenerator::postvisit( MutexStmt * stmt ) {
+		assertf( ! options.genC, "ImplicitCtorDtorStmts should not reach code generation." );
+		stmt->stmt->accept( *visitor );
+	}
+
 	void CodeGenerator::handleStorageClass( DeclarationWithType * decl ) {
 		if ( decl->get_storageClasses().any() ) {
 			decl->get_storageClasses().print( output );

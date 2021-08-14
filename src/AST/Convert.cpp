@@ -605,6 +605,15 @@ private:
 		return stmtPostamble( stmt, node );
 	}
 
+	const ast::Stmt * visit( const ast::MutexStmt * node ) override final {
+		if ( inCache( node ) ) return nullptr;
+		 auto stmt = new MutexStmt(
+			get<Statement>().accept1( node->stmt ),
+		 	get<Expression>().acceptL( node->mutexObjs )
+		);
+		return stmtPostamble( stmt, node );
+	}
+
 	TypeSubstitution * convertTypeSubstitution(const ast::TypeSubstitution * src) {
 
 		if (!src) return nullptr;
@@ -2121,6 +2130,16 @@ private:
 		cache.emplace( old, stmt );
 		stmt->callStmt = GET_ACCEPT_1(callStmt, Stmt);
 		this->node = stmt;
+	}
+
+	virtual void visit( const MutexStmt * old ) override final {
+		if ( inCache( old ) ) return;
+		this->node = new ast::MutexStmt(
+			old->location,
+			GET_ACCEPT_1(stmt, Stmt),
+			GET_ACCEPT_V(mutexObjs, Expr)
+		);
+		cache.emplace( old, this->node );
 	}
 
 	// TypeSubstitution shouldn't exist yet in old.

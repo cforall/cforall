@@ -123,6 +123,8 @@ public:
 	virtual void visit( const DeclStmt * declStmt ) override final;
 	virtual void visit( ImplicitCtorDtorStmt * impCtorDtorStmt ) override final;
 	virtual void visit( const ImplicitCtorDtorStmt * impCtorDtorStmt ) override final;
+	virtual void visit( MutexStmt * mutexStmt ) override final;
+	virtual void visit( const MutexStmt * mutexStmt ) override final;
 
 	virtual void visit( ApplicationExpr * applicationExpr ) override final;
 	virtual void visit( const ApplicationExpr * applicationExpr ) override final;
@@ -290,6 +292,7 @@ public:
 	virtual NullStmt * mutate( NullStmt * nullStmt ) override final;
 	virtual Statement * mutate( DeclStmt * declStmt ) override final;
 	virtual Statement * mutate( ImplicitCtorDtorStmt * impCtorDtorStmt ) override final;
+	virtual Statement * mutate( MutexStmt * mutexStmt ) override final;
 
 	virtual Expression * mutate( ApplicationExpr * applicationExpr ) override final;
 	virtual Expression * mutate( UntypedExpr * untypedExpr ) override final;

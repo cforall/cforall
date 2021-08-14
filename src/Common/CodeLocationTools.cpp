@@ -124,6 +124,7 @@ public:
     macro(NullStmt, NullStmt) \
     macro(DeclStmt, Stmt) \
     macro(ImplicitCtorDtorStmt, Stmt) \
+    macro(MutexStmt, Stmt) \
     macro(ApplicationExpr, Expr) \
     macro(UntypedExpr, Expr) \
     macro(NameExpr, Expr) \

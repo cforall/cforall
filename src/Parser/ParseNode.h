@@ -436,6 +436,7 @@ WaitForStmt * build_waitfor( ExpressionNode * target, StatementNode * stmt, Expr
 WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when );
 WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when, StatementNode * else_stmt, ExpressionNode * else_when );
 Statement * build_with( ExpressionNode * exprs, StatementNode * stmt );
+Statement * build_mutex( ExpressionNode * exprs, StatementNode * stmt );
 
 //##############################################################################
 

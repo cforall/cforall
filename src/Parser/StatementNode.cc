@@ -373,6 +373,13 @@ Statement * build_directive( string * directive ) {
 	return new DirectiveStmt( *directive );
 } // build_directive
 
+Statement * build_mutex( ExpressionNode * exprs, StatementNode * stmt ) {
+	std::list< Expression * > expList;
+	buildMoveList( exprs, expList );
+	Statement * body = maybeMoveBuild<Statement>( stmt );
+	return new MutexStmt( body, expList );
+} // build_mutex
+
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

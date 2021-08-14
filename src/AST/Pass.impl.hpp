@@ -1038,6 +1038,22 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ImplicitCtorDtorStmt * 
 }
 
 //--------------------------------------------------------------------------
+// MutexStmt
+template< typename core_t >
+const ast::Stmt * ast::Pass< core_t >::visit( const ast::MutexStmt * node ) {
+	VISIT_START( node );
+
+	VISIT({
+		// mutex statements introduce a level of scope (for the initialization)
+		guard_symtab guard { *this };
+		maybe_accept( node, &MutexStmt::stmt );
+		maybe_accept( node, &MutexStmt::mutexObjs );
+	})
+
+	VISIT_END( Stmt, node );
+}
+
+//--------------------------------------------------------------------------
 // ApplicationExpr
 template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::ApplicationExpr * node ) {

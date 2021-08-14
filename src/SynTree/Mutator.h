@@ -57,6 +57,7 @@ class Mutator {
 	virtual NullStmt * mutate( NullStmt * nullStmt ) = 0;
 	virtual Statement * mutate( DeclStmt * declStmt ) = 0;
 	virtual Statement * mutate( ImplicitCtorDtorStmt * impCtorDtorStmt ) = 0;
+	virtual Statement * mutate( MutexStmt * mutexStmt ) = 0;
 
 	virtual Expression * mutate( ApplicationExpr * applicationExpr ) = 0;
 	virtual Expression * mutate( UntypedExpr * untypedExpr ) = 0;

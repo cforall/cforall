@@ -301,16 +301,19 @@ namespace Concurrency {
 
 		void postvisit( FunctionDecl * decl );
 		void postvisit(   StructDecl * decl );
+		Statement * postmutate( MutexStmt * stmt );
 
 		std::list<DeclarationWithType*> findMutexArgs( FunctionDecl*, bool & first );
 		void validate( DeclarationWithType * );
 		void addDtorStatements( FunctionDecl* func, CompoundStmt *, const std::list<DeclarationWithType * > &);
 		void addStatements( FunctionDecl* func, CompoundStmt *, const std::list<DeclarationWithType * > &);
+		void addStatements( CompoundStmt * body, const std::list<Expression * > & args );
 		void addThreadDtorStatements( FunctionDecl* func, CompoundStmt * body, const std::list<DeclarationWithType * > & args );
 
 		static void implement( std::list< Declaration * > & translationUnit ) {
 			PassVisitor< MutexKeyword > impl;
 			acceptAll( translationUnit, impl );
+			mutateAll( translationUnit, impl );
 		}
 
 	  private:
@@ -936,6 +939,14 @@ namespace Concurrency {
 		}
 	}
 
+	Statement * MutexKeyword::postmutate( MutexStmt * stmt ) {
+		std::list<Statement *> stmtsForCtor;
+		stmtsForCtor.push_back(stmt->stmt);
+		CompoundStmt * body = new CompoundStmt( stmtsForCtor );
+		addStatements( body, stmt->mutexObjs);
+		return body;
+	}
+
 	std::list<DeclarationWithType*> MutexKeyword::findMutexArgs( FunctionDecl* decl, bool & first ) {
 		std::list<DeclarationWithType*> mutexArgs;
 
@@ -1057,6 +1068,62 @@ namespace Concurrency {
 				)
 			))
 		);
+	}
+
+	void MutexKeyword::addStatements( CompoundStmt * body, const std::list<Expression * > & args ) {
+		ObjectDecl * monitors = new ObjectDecl(
+			"__monitors",
+			noStorageClasses,
+			LinkageSpec::Cforall,
+			nullptr,
+			new ArrayType(
+				noQualifiers,
+				new PointerType(
+					noQualifiers,
+					new StructInstType(
+						noQualifiers,
+						monitor_decl
+					)
+				),
+				new ConstantExpr( Constant::from_ulong( args.size() ) ),
+				false,
+				false
+			),
+			new ListInit(
+				map_range < std::list<Initializer*> > ( args, [](Expression * var ){
+					return new SingleInit( new UntypedExpr(
+						new NameExpr( "get_monitor" ),
+						{ var }
+					) );
+				})
+			)
+		);
+
+		// in reverse order :
+		// monitor_guard_t __guard = { __monitors, # };
+		body->push_front(
+			new DeclStmt( new ObjectDecl(
+				"__guard",
+				noStorageClasses,
+				LinkageSpec::Cforall,
+				nullptr,
+				new StructInstType(
+					noQualifiers,
+					guard_decl
+				),
+				new ListInit(
+					{
+						new SingleInit( new VariableExpr( monitors ) ),
+						new SingleInit( new ConstantExpr( Constant::from_ulong( args.size() ) ) )
+					},
+					noDesignators,
+					true
+				)
+			))
+		);
+
+		//monitor$ * __monitors[] = { get_monitor(a), get_monitor(b) };
+		body->push_front( new DeclStmt( monitors) );
 	}
 
 	void MutexKeyword::addStatements( FunctionDecl* func, CompoundStmt * body, const std::list<DeclarationWithType * > & args ) {
