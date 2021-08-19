@@ -1,13 +1,12 @@
 // Testing Interactions Between Termination and Resumption
 
-#include <exception.hfa>
 #include "except-io.hfa"
 
-EHM_EXCEPTION(star)();
-EHM_EXCEPTION(moon)();
+exception star {};
+exception moon {};
 
-EHM_VIRTUAL_TABLE(star, star_vt);
-EHM_VIRTUAL_TABLE(moon, moon_vt);
+vtable(star) star_vt;
+vtable(moon) moon_vt;
 
 int main(int argc, char * argv[]) {
 	// Resume falls back to terminate.

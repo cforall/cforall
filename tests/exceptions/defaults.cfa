@@ -3,9 +3,9 @@
 #include <string.h>
 #include <exception.hfa>
 
-EHM_EXCEPTION(log_message)(
+exception log_message {
 	char * msg;
-);
+};
 
 _EHM_DEFINE_COPY(log_message, )
 const char * msg(log_message * this) {
@@ -31,12 +31,12 @@ void log_test(void) {
 }
 
 // I don't have a good use case for doing the same with termination.
-EHM_EXCEPTION(jump)();
+exception jump {};
 void defaultTerminationHandler(jump &) {
 	printf("jump default handler.\n");
 }
 
-EHM_VIRTUAL_TABLE(jump, jump_vt);
+vtable(jump) jump_vt;
 
 void jump_test(void) {
 	try {
@@ -47,11 +47,11 @@ void jump_test(void) {
 	throw (jump){&jump_vt};
 }
 
-EHM_EXCEPTION(first)();
-EHM_VIRTUAL_TABLE(first, first_vt);
+exception first {};
+vtable(first) first_vt;
 
-EHM_EXCEPTION(unhandled_exception)();
-EHM_VIRTUAL_TABLE(unhandled_exception, unhandled_vt);
+exception unhandled_exception {};
+vtable(unhandled_exception) unhandled_vt;
 
 void unhandled_test(void) {
 	forall(T &, V & | is_exception(T, V))
@@ -68,8 +68,8 @@ void unhandled_test(void) {
 	}
 }
 
-EHM_EXCEPTION(second)();
-EHM_VIRTUAL_TABLE(second, second_vt);
+exception second {};
+vtable(second) second_vt;
 
 void cross_test(void) {
 	void defaultTerminationHandler(first &) {

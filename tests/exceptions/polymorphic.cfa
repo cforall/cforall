@@ -1,11 +1,9 @@
 // Testing polymophic exception types.
 
-#include <exception.hfa>
+forall(T &) exception proxy {};
 
-EHM_FORALL_EXCEPTION(proxy, (T&), (T))();
-
-EHM_FORALL_VIRTUAL_TABLE(proxy, (int), proxy_int);
-EHM_FORALL_VIRTUAL_TABLE(proxy, (char), proxy_char);
+vtable(proxy(int)) proxy_int;
+vtable(proxy(char)) proxy_char;
 
 void proxy_test(void) {
 	proxy(int) an_int = {&proxy_int};
@@ -32,13 +30,13 @@ void proxy_test(void) {
 	}
 }
 
-EHM_FORALL_EXCEPTION(cell, (T), (T))(
+forall(T) exception cell {
 	T data;
-);
+};
 
-EHM_FORALL_VIRTUAL_TABLE(cell, (int), int_cell);
-EHM_FORALL_VIRTUAL_TABLE(cell, (char), char_cell);
-EHM_FORALL_VIRTUAL_TABLE(cell, (bool), bool_cell);
+vtable(cell(int)) int_cell;
+vtable(cell(char)) char_cell;
+vtable(cell(bool)) bool_cell;
 
 void cell_test(void) {
 	try {

@@ -1,11 +1,10 @@
 // Finally Clause Tests
 
-#include <exception.hfa>
 #include "except-io.hfa"
 
-EHM_EXCEPTION(myth)();
+exception myth {};
 
-EHM_VIRTUAL_TABLE(myth, myth_vt);
+vtable(myth) myth_vt;
 
 int main(int argc, char * argv[]) {
 	myth exc = {&myth_vt};

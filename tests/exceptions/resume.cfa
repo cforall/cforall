@@ -1,15 +1,14 @@
 // Resumption Exception Tests
 
-#include <exception.hfa>
 #include "except-io.hfa"
 
-EHM_EXCEPTION(yin)();
-EHM_EXCEPTION(yang)();
-EHM_EXCEPTION(zen)();
+exception yin {};
+exception yang {};
+exception zen {};
 
-EHM_VIRTUAL_TABLE(yin, yin_vt);
-EHM_VIRTUAL_TABLE(yang, yang_vt);
-EHM_VIRTUAL_TABLE(zen, zen_vt);
+vtable(yin) yin_vt;
+vtable(yang) yang_vt;
+vtable(zen) zen_vt;
 
 void in_void(void);
 

@@ -1,13 +1,11 @@
 // Test exceptions that add data but no functionality.
 
-#include <exception.hfa>
-
-EHM_EXCEPTION(paired)(
+exception paired {
 	int first;
 	int second;
-);
+};
 
-EHM_VIRTUAL_TABLE(paired, paired_vt);
+vtable(paired) paired_vt;
 
 const char * virtual_msg(paired * this) {
 	return this->virtual_table->msg(this);

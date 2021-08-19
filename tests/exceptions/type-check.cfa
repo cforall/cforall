@@ -1,8 +1,6 @@
 // Check that the exception type check works.
 
-#include <exception.hfa>
-
-EHM_EXCEPTION(truth)();
+exception truth {};
 
 int main(int argc, char * argv[]) {
 	try {} catch (int e) {}

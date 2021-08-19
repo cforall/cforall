@@ -1,10 +1,9 @@
 // Try cancelling a coroutine.
 
 #include <coroutine.hfa>
-#include <exception.hfa>
 
-EHM_EXCEPTION(internal_error)();
-EHM_VIRTUAL_TABLE(internal_error, internal_vt);
+exception internal_error {};
+vtable(internal_error) internal_vt;
 
 coroutine WillCancel {};
 
