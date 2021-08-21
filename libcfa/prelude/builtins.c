@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 21 16:21:03 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 21 13:31:34 2021
-// Update Count     : 129
+// Last Modified On : Sat Aug 14 08:45:54 2021
+// Update Count     : 133
 //
 
 #define __cforall_builtins__
@@ -105,6 +105,10 @@ static inline void ?{}( unsigned int128 & this, unsigned long int h, unsigned lo
 	this = (unsigned int128)h << 64 | (unsigned int128)l;
 } // ?{}
 #endif // __SIZEOF_INT128__
+
+// for-control index constraints
+// forall( T | { void ?{}( T &, zero_t ); void ?{}( T &, one_t ); T ?+=?( T &, T ); T ?-=?( T &, T ); int ?<?( T, T ); } )
+// static inline T __for_control_index_constraints__( T t ) { return t; }
 
 // exponentiation operator implementation
 
