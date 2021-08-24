@@ -9,9 +9,9 @@
 ##
 ## Author           : Richard C. Bilson
 ## Created On       : Mon Jun  1 17:49:17 2015
-## Last Modified By : Peter A. Buhr
-## Last Modified On : Mon Jun  1 17:54:33 2015
-## Update Count     : 1
+## Last Modified By : Henry Xue
+## Last Modified On : Mon Aug 23 15:36:09 2021
+## Update Count     : 2
 ###############################################################################
 
 SRC_TUPLES = \
@@ -19,6 +19,7 @@ SRC_TUPLES = \
 	Tuples/Explode.h \
 	Tuples/TupleAssignment.cc \
 	Tuples/TupleExpansion.cc \
+	Tuples/TupleExpansionNew.cpp \
 	Tuples/Tuples.cc \
 	Tuples/Tuples.h
 

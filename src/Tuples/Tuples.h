@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Jun 18 09:36:00 2019
-// Update Count     : 18
+// Last Modified By : Henry Xue
+// Last Modified On : Mon Aug 23 15:36:09 2021
+// Update Count     : 19
 //
 
 #pragma once
@@ -38,6 +38,7 @@ namespace Tuples {
 	// TupleExpansion.cc
 	/// expands z.[a, b.[x, y], c] into [z.a, z.b.x, z.b.y, z.c], inserting UniqueExprs as appropriate
 	void expandMemberTuples( std::list< Declaration * > & translationUnit );
+	void expandMemberTuples( ast::TranslationUnit & translationUnit );
 
 	/// replaces tuple-related elements, such as TupleType, TupleExpr, TupleAssignExpr, etc.
 	void expandTuples( std::list< Declaration * > & translationUnit );

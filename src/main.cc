@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Henry Xue
-// Last Modified On : Tue Jul 20 04:27:35 2021
-// Update Count     : 658
+// Last Modified On : Mon Aug 23 15:42:08 2021
+// Update Count     : 650
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -334,7 +334,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Fix Labels", ControlStruct::fixLabels( translationUnit ) );
 		PASS( "Fix Names", CodeGen::fixNames( translationUnit ) );
 		PASS( "Gen Init", InitTweak::genInit( translationUnit ) );
-		PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( translationUnit ) );
+
 		if ( libcfap ) {
 			// generate the bodies of cfa library functions
 			LibCfa::makeLibCfa( translationUnit );
@@ -364,6 +364,9 @@ int main( int argc, char * argv[] ) {
 				ast::pass_visitor_stats.max = Stats::Counters::build<Stats::Counters::MaxCounter<double>>("Max depth - New");
 			}
 			auto transUnit = convert( move( translationUnit ) );
+
+			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( transUnit ) );
+			
 			PASS( "Resolve", ResolvExpr::resolve( transUnit ) );
 			if ( exprp ) {
 				dump( move( transUnit ) );
@@ -375,6 +378,8 @@ int main( int argc, char * argv[] ) {
 			PASS( "Fix Init", InitTweak::fix(transUnit, buildingLibrary()));
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( translationUnit ) );
+
 			PASS( "Resolve", ResolvExpr::resolve( translationUnit ) );
 			if ( exprp ) {
 				dump( translationUnit );

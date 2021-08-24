@@ -239,7 +239,8 @@ am__objects_7 = SynTree/AddressExpr.$(OBJEXT) \
 	SynTree/ZeroOneType.$(OBJEXT)
 am__objects_8 = Tuples/Explode.$(OBJEXT) \
 	Tuples/TupleAssignment.$(OBJEXT) \
-	Tuples/TupleExpansion.$(OBJEXT) Tuples/Tuples.$(OBJEXT)
+	Tuples/TupleExpansion.$(OBJEXT) \
+	Tuples/TupleExpansionNew.$(OBJEXT) Tuples/Tuples.$(OBJEXT)
 am__objects_9 = CompilationState.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2) Concurrency/Keywords.$(OBJEXT) \
 	$(am__objects_3) $(am__objects_4) GenPoly/GenPoly.$(OBJEXT) \
@@ -413,7 +414,9 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	SynTree/$(DEPDIR)/VarArgsType.Po SynTree/$(DEPDIR)/VoidType.Po \
 	SynTree/$(DEPDIR)/ZeroOneType.Po Tuples/$(DEPDIR)/Explode.Po \
 	Tuples/$(DEPDIR)/TupleAssignment.Po \
-	Tuples/$(DEPDIR)/TupleExpansion.Po Tuples/$(DEPDIR)/Tuples.Po \
+	Tuples/$(DEPDIR)/TupleExpansion.Po \
+	Tuples/$(DEPDIR)/TupleExpansionNew.Po \
+	Tuples/$(DEPDIR)/Tuples.Po \
 	Validate/$(DEPDIR)/FindSpecialDecls.Po \
 	Validate/$(DEPDIR)/HandleAttributes.Po \
 	Virtual/$(DEPDIR)/ExpandCasts.Po Virtual/$(DEPDIR)/Tables.Po
@@ -947,6 +950,7 @@ SRC_TUPLES = \
 	Tuples/Explode.h \
 	Tuples/TupleAssignment.cc \
 	Tuples/TupleExpansion.cc \
+	Tuples/TupleExpansionNew.cpp \
 	Tuples/Tuples.cc \
 	Tuples/Tuples.h
 
@@ -1343,6 +1347,8 @@ Tuples/TupleAssignment.$(OBJEXT): Tuples/$(am__dirstamp) \
 	Tuples/$(DEPDIR)/$(am__dirstamp)
 Tuples/TupleExpansion.$(OBJEXT): Tuples/$(am__dirstamp) \
 	Tuples/$(DEPDIR)/$(am__dirstamp)
+Tuples/TupleExpansionNew.$(OBJEXT): Tuples/$(am__dirstamp) \
+	Tuples/$(DEPDIR)/$(am__dirstamp)
 Tuples/Tuples.$(OBJEXT): Tuples/$(am__dirstamp) \
 	Tuples/$(DEPDIR)/$(am__dirstamp)
 Validate/$(am__dirstamp):
@@ -1621,6 +1627,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/Explode.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleAssignment.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleExpansion.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleExpansionNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/Tuples.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HandleAttributes.Po@am__quote@ # am--include-marker
@@ -2008,6 +2015,7 @@ distclean: distclean-am
 	-rm -f Tuples/$(DEPDIR)/Explode.Po
 	-rm -f Tuples/$(DEPDIR)/TupleAssignment.Po
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
+	-rm -f Tuples/$(DEPDIR)/TupleExpansionNew.Po
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
@@ -2203,6 +2211,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Tuples/$(DEPDIR)/Explode.Po
 	-rm -f Tuples/$(DEPDIR)/TupleAssignment.Po
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
+	-rm -f Tuples/$(DEPDIR)/TupleExpansionNew.Po
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
