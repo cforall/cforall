@@ -154,6 +154,13 @@ void move(unique_ptr(T) & this, unique_ptr(T) & that) {
 }
 
 forall(T &)
+T * release(unique_ptr(T) & this) {
+	T * data = this.data;
+	this.data = 0p;
+	return data;
+}
+
+forall(T &)
 int ?==?(unique_ptr(T) const & this, unique_ptr(T) const & that) {
 	return this.data == that.data;
 }

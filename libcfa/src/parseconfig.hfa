@@ -1,0 +1,125 @@
+#pragma once
+
+#include <math.trait.hfa>
+
+
+// *********************************** initial declarations ***********************************
+
+
+struct config_entry {
+	const char * key;
+	void * variable;
+	bool (*parse)( const char *, void * );
+	bool (*validate)( void * );
+};
+
+bool null_validator( void * ) { return true; }
+
+static inline void ?{}( config_entry & this ) {}
+
+forall(T & | { bool parse( const char *, T & ); })
+static inline void ?{}( config_entry & this, const char * key, T & variable ) {
+	this.key      = key;
+	this.variable = (void *)&variable;
+	this.parse    = (bool (*)(const char *, void *))(bool (*)(const char *, T &))parse;
+	this.validate = null_validator;
+}
+
+forall(T & | { bool parse( const char *, T & ); })
+static inline void ?{}( config_entry & this, const char * key, T & variable, bool (*validate)(T &) ) {
+	this.key      = key;
+	this.variable = (void *)&variable;
+	this.parse    = (bool (*)(const char *, void *))(bool (*)(const char *, T &))parse;
+	this.validate = (bool (*)(void *))(bool (*)(T &))validate;
+}
+
+forall(T &)
+static inline void ?{}( config_entry & this, const char * key, T & variable, bool (*parse)(const char *, T &) ) {
+	this.key      = key;
+	this.variable = (void *)&variable;
+	this.parse    = (bool (*)(const char *, void *))(bool (*)(const char *, T &))parse;
+	this.validate = null_validator;
+}
+
+forall(T &)
+static inline void ?{}( config_entry & this, const char * key, T & variable, bool (*parse)(const char *, T &), bool (*validate)(T &) ) {
+	this.key      = key;
+	this.variable = (void *)&variable;
+	this.parse    = (bool (*)(const char *, void *))(bool (*)(const char *, T &))parse;
+	this.validate = (bool (*)(void *))(bool (*)(T &))validate;
+}
+
+// TODO: Replace KVPairs with vector2 when it's fully functional
+struct KVPairs {
+	size_t size, max_size;
+	* [ * char, * char ] data;
+};
+
+[ void ] add_kv_pair( & KVPairs kv_pairs, [] char key, [] char value );
+
+
+// *********************************** exceptions ***********************************
+
+
+exception Missing_Config_Entries {
+	unsigned int num_missing;
+};
+
+[ void ] msg( * Missing_Config_Entries ex );
+
+exception Parse_Failure {
+	* char failed_key;
+	* char failed_value;
+};
+
+[ void ] msg( * Parse_Failure ex );
+
+exception Validation_Failure {
+	* char failed_key;
+	* char failed_value;
+};
+
+[ void ] msg( * Validation_Failure ex );
+
+
+// *********************************** main code ***********************************
+
+
+[ * KVPairs ] parse_tabular_config_format( [] const char config_file, size_t num_entries );
+
+[ void ] parse_config(
+	[] const char config_file,
+	[] config_entry entries,
+	size_t num_entries,
+	KVPairs * (*parser)(const char [], size_t)  // TODO: add sensible default parser when resolver bug is fixed
+);
+
+bool parse( const char *, const char * & );
+bool parse( const char *, int & );
+bool parse( const char *, unsigned & );
+bool parse( const char *, unsigned long & );
+bool parse( const char *, unsigned long long & );
+bool parse( const char *, float & );
+bool parse( const char *, double & );
+
+
+// *********************************** validation ***********************************
+
+
+forall(T | Relational( T ))
+[ bool ] is_nonnegative( & T );
+
+forall(T | Relational( T ))
+[ bool ] is_positive( & T );
+
+forall(T | Relational( T ))
+[ bool ] is_nonpositive( & T );
+
+forall(T | Relational( T ))
+[ bool ] is_negative( & T );
+
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

@@ -989,6 +989,64 @@ static inline __lock_size_t aggregate( monitor$ * storage [], const __waitfor_ma
 	return size;
 }
 
+//-----------------------------------------------------------------------------
+// Enter routine for mutex stmt
+// Can't be accepted since a mutex stmt is effectively an anonymous routine
+// Thus we do not need a monitor group
+void lock( monitor$ * this ) {
+	thread$ * thrd = active_thread();
+
+	// Lock the monitor spinlock
+	lock( this->lock __cfaabi_dbg_ctx2 );
+
+	__cfaabi_dbg_print_safe( "Kernel : %10p Entering mon %p (%p)\n", thrd, this, this->owner);
+
+	if( unlikely(0 != (0x1 & (uintptr_t)this->owner)) ) {
+		abort( "Attempt by thread \"%.256s\" (%p) to access joined monitor %p.", thrd->self_cor.name, thrd, this );
+	}
+	else if( !this->owner ) {
+		// No one has the monitor, just take it
+		__set_owner( this, thrd );
+
+		__cfaabi_dbg_print_safe( "Kernel :  mon is free \n" );
+	}
+	else if( this->owner == thrd) {
+		// We already have the monitor, just note how many times we took it
+		this->recursion += 1;
+
+		__cfaabi_dbg_print_safe( "Kernel :  mon already owned \n" );
+	}
+	else {
+		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
+
+		// Some one else has the monitor, wait in line for it
+		/* paranoid */ verify( thrd->link.next == 0p );
+		append( this->entry_queue, thrd );
+		/* paranoid */ verify( thrd->link.next == 1p );
+
+		unlock( this->lock );
+		park();
+
+		__cfaabi_dbg_print_safe( "Kernel : %10p Entered  mon %p\n", thrd, this);
+
+		/* paranoid */ verifyf( active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
+		return;
+	}
+
+	__cfaabi_dbg_print_safe( "Kernel : %10p Entered  mon %p\n", thrd, this);
+
+	/* paranoid */ verifyf( active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
+	/* paranoid */ verify( this->lock.lock );
+
+	// Release the lock and leave
+	unlock( this->lock );
+	return;
+}
+
+// Leave routine for mutex stmt
+// Is just a wrapper around __leave for the is_lock trait to see
+void unlock( monitor$ * this ) { __leave( this ); }
+
 // Local Variables: //
 // mode: c //
 // tab-width: 4 //

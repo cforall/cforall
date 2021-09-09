@@ -444,6 +444,9 @@ EXTRA_DIST = test.py \
 	pybin/test_run.py \
 	pybin/tools.py \
 	long_tests.hfa \
+	.in/parseconfig-all.txt \
+	.in/parseconfig-errors.txt \
+	.in/parseconfig-missing.txt \
 	io/.in/io.data \
 	io/.in/many_read.data \
 	avltree/avl.h \

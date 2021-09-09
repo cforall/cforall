@@ -123,12 +123,12 @@ int flush( ofstream & os ) {
 
 void open( ofstream & os, const char name[], const char mode[] ) {
 	FILE * file = fopen( name, mode );
-	#ifdef __CFA_DEBUG__
+	// #ifdef __CFA_DEBUG__
 	if ( file == 0p ) {
 		throw (Open_Failure){ os };
 		// abort | IO_MSG "open output file \"" | name | "\"" | nl | strerror( errno );
 	} // if
-	#endif // __CFA_DEBUG__
+	// #endif // __CFA_DEBUG__
 	(os){ file };
 } // open
 
@@ -261,12 +261,12 @@ bool eof( ifstream & is ) {
 
 void open( ifstream & is, const char name[], const char mode[] ) {
 	FILE * file = fopen( name, mode );
-	#ifdef __CFA_DEBUG__
+	// #ifdef __CFA_DEBUG__
 	if ( file == 0p ) {
 		throw (Open_Failure){ is };
 		// abort | IO_MSG "open input file \"" | name | "\"" | nl | strerror( errno );
 	} // if
-	#endif // __CFA_DEBUG__
+	// #endif // __CFA_DEBUG__
 	is.file$ = file;
 } // open
 

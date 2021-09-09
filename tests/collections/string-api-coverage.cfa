@@ -1,0 +1,291 @@
+#include <containers/string.hfa>
+
+void assertWellFormedHandleList( int maxLen ) { // with(HeapArea)
+    // HandleNode *n;
+    // int limit1 = maxLen;
+    // for ( n = Header.flink; (limit1-- > 0) && n != &Header; n = n->flink ) {}
+    // assert (n == &Header);
+    // int limit2 = maxLen;
+    // for ( n = Header.blink; (limit2-- > 0) && n != &Header; n = n->blink ) {}
+    // assert (n == &Header);
+    // assert (limit1 == limit2);
+}
+
+// The given string is reachable.
+void assertOnHandleList( string & q ) { // with(HeapArea)
+    // HandleNode *n;
+    // for ( n = Header.flink; n != &Header; n = n->flink ) {
+    //     if ( n == & q.inner->Handle ) return;
+    // }
+    // assert( false );
+}
+
+
+// Purpose: call each function in string.hfa, top to bottom
+
+int main () {
+    string s = "hello";
+    string s2 = "hello";
+    string s3 = "world";
+    string frag = "ell";
+
+    // IO operator, x2
+    sout | s | s | s;
+
+    // Comparisons
+    // all print "true false"
+    sout | (s == s2) | (s == s3);
+    sout | (s != s3) | (s != s2);
+    sout | (s == "hello") | (s == "world");
+    sout | (s != "world") | (s != "hello");
+    sout | ( frag == s(1,4) ) | ( s3   == s(1,4) );
+    sout | ( s3   != s(1,4) ) | ( frag != s(1,4) );
+    sout | ( s2(1,4) == s(1,4) ) | ( s3(1,4)   == s(1,4) );
+    sout | ( s3(1,4) != s(1,4) ) | ( s2(1,4)   != s(1,4) );
+    sout | ( s(1,4) == frag ) | ( s(1,4) == s3   );
+    sout | ( s(1,4) != s3   ) | ( s(1,4) != frag );
+    sout | ( s(1,4) == "ell"   ) | ( s(1,4) == "world" );
+    sout | ( s(1,4) != "world" ) | ( s(1,4) != "ell"   );
+
+
+                                            assertWellFormedHandleList( 10 );
+    //
+    // breadth Constructors
+    //
+    {
+        string b1 = { "1234567", 3 };
+        sout | b1; // 123
+
+        string b2 = s;
+        sout | b2; // hello
+
+        // todo: a plain string &
+        const string & s_ref = s;
+        string b3 = s_ref;
+        sout | b3;  // hello
+
+        & s_ref = & s3;
+        b3 = s_ref;
+        sout | b3; // world
+
+        const string & s_constref = s;
+        string b4 = s_constref;
+        sout | b4; // hello
+
+        & s_constref = & s3;
+        b4 = s_constref;
+        sout | b4;  // world
+    }
+                                            assertWellFormedHandleList( 10 );
+
+    sout | size(s); // 5
+
+    //
+    // concatenation/append
+    //
+
+    string sx = s + s3;
+                                            assertWellFormedHandleList( 10 );
+    sout | sx; // helloworld
+                                            assertWellFormedHandleList( 10 );
+    sx = "xx";
+                                            assertWellFormedHandleList( 10 );
+    sx = s + s3;
+                                            assertWellFormedHandleList( 10 );
+    sout | sx; // helloworld
+                                            assertWellFormedHandleList( 10 );
+
+    sx += '!';
+    sout | sx; // helloworld!
+    sx = s + '!';
+    sout | sx; // hello!
+
+    sx = s;
+    sx += s;
+    sout | sx; // hellohello
+                                            assertWellFormedHandleList( 10 );
+    sx += ", friend";    
+    sout | sx; // hellohello, friend
+
+    sx = s + ", friend";
+    sout | sx; // hello, friend
+
+    sx = "bye, " + "friend";
+    sout | sx; // bye, friend
+
+    //
+    // repetition
+    //
+    sx = s * 3;
+    sout | sx; // hellohellohello
+
+    sx = 'Q' * (size_t)3;
+    sout | sx; // QQQ
+
+    sx = "asdf" * 3;
+    sout | sx; // asdfasdfasdf
+
+    //
+    // slicing
+    //
+
+    //...
+
+    //
+    // character access
+    //
+
+    char c = s[1];
+    sout | c;   // e
+
+    s[3] = "p!!!";
+    sout | s;   // help!!!o
+
+    s[7] = '!';
+    sout | s;   // help!!!!
+
+    s[7] = "";
+    sout | s;   // help!!!
+
+    sout | s[3]; // p
+
+    //
+    // search
+    //
+
+    s += '?'; // already tested
+    sout | contains( s, 'h' ) | contains( s, '?' ) | contains( s, 'o' ); // true true false
+
+    sout
+        | find( s, 'h' )  // 0
+        | find( s, '!' )  // 4
+        | find( s, '?' )  // 7
+        | find( s, 'o' ); // 8, not found
+
+    string alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+    sout
+        | find( alphabet, "" )    // 0
+        | find( alphabet, "a" )   // 0
+        | find( alphabet, "z" )   // 25
+        | find( alphabet, "abc" ) // 0
+        | find( alphabet, "abq" ) // 26, not found
+        | find( alphabet, "def"); // 3
+    
+    sout
+        | includes( alphabet, "" )    // true
+        | includes( alphabet, "a" )   // true
+        | includes( alphabet, "z" )   // true
+        | includes( alphabet, "abc" ) // true
+        | includes( alphabet, "abq" ) // false
+        | includes( alphabet, "def"); // true
+    
+    {
+        char *empty_c = "";
+        char *a_c = "a";
+        char *z_c = "z";
+        char *dex_c = "dex";
+
+        sout
+            | find( alphabet, empty_c )   // 0
+            | find( alphabet, a_c )       // 0
+            | find( alphabet, dex_c )     // 26, not found
+            | find( alphabet, dex_c, 2 ); // 3
+
+        sout
+            | includes( alphabet, empty_c )   // true
+            | includes( alphabet, a_c )       // true
+            | includes( alphabet, dex_c )     // false
+            | includes( alphabet, dex_c, 2 ); // true
+
+        sout
+            | startsWith( alphabet, a_c)            // true
+            | endsWith  ( alphabet, a_c)            // false
+            | startsWith( alphabet, z_c)            // false
+            | endsWith  ( alphabet, z_c);           // true
+
+        string empty = empty_c;
+        string a = a_c;
+        string z = z_c;
+        string dex = dex_c;
+
+        sout
+            | find( alphabet, empty )     // 0
+            | find( alphabet, a )         // 0
+            | find( alphabet, dex )       // 26, not found
+            | find( alphabet, dex(0,2) ); // 3
+
+        sout
+            | includes( alphabet, empty )     // true
+            | includes( alphabet, a )         // true
+            | includes( alphabet, dex )       // false
+            | includes( alphabet, dex(0,2) ); // true
+
+        sout
+            | startsWith( alphabet, a)            // true
+            | endsWith  ( alphabet, a)            // false
+            | startsWith( alphabet, z)            // false
+            | endsWith  ( alphabet, z);           // true
+    }
+
+    sout
+        | find( alphabet        , "def")  // 3
+        | find( alphabet( 0, 26), "def")  // 3
+        | find( alphabet( 2, 26), "def")  // 1
+        | find( alphabet( 3, 26), "def")  // 0
+        | find( alphabet( 4, 26), "def")  // 22, not found
+        | find( alphabet( 4, 26),  "ef")  // 0
+        | find( alphabet( 0,  6), "def")  // 3
+        | find( alphabet( 0,  5), "def")  // 5, not found
+        | find( alphabet( 0,  5), "de" ); // 3
+
+    sout
+        | includes( alphabet        , "def")  // true
+        | includes( alphabet( 0, 26), "def")  // true
+        | includes( alphabet( 2, 26), "def")  // true
+        | includes( alphabet( 3, 26), "def")  // true
+        | includes( alphabet( 4, 26), "def")  // false
+        | includes( alphabet( 4, 26),  "ef")  // true
+        | includes( alphabet( 0,  6), "def")  // true
+        | includes( alphabet( 0,  5), "def")  // false
+        | includes( alphabet( 0,  5), "de" ); // true
+
+    sout
+        | startsWith( alphabet        , "abc")  // true
+        | startsWith( alphabet( 0, 26), "abc")  // true
+        | startsWith( alphabet( 1, 26), "abc")  // false
+        | startsWith( alphabet( 1, 26),  "bc")  // true
+        | startsWith( alphabet( 0, 26), "abc")  // true
+        | startsWith( alphabet( 0,  4), "abc")  // true
+        | startsWith( alphabet( 0,  3), "abc")  // true
+        | startsWith( alphabet( 0,  3), "ab" )  // true
+        | startsWith( alphabet        , "xyz"); // false
+
+    sout
+        | endsWith( alphabet        , "xyz")  // true
+        | endsWith( alphabet        , "xyzz") // false
+        | endsWith( alphabet( 0, 26), "xyz")  // true
+        | endsWith( alphabet( 0, 25), "xyz")  // false
+        | endsWith( alphabet( 0, 25), "xy" )  // true
+        | endsWith( alphabet( 0, 26), "xyz")  // true
+        | endsWith( alphabet(23, 26), "xyz")  // true
+        | endsWith( alphabet(24, 26), "xyz")  // false
+        | endsWith( alphabet(24, 26),  "yz")  // true
+        | endsWith( alphabet        , "abc"); // false
+
+    charclass cc_cba = {"cba"};
+    charclass cc_onml = {"onml"};
+    charclass cc_alphabet = {alphabet};
+
+    // include (rest of the) numbers:  tell me where the numbers stop
+    // exclude (until)       numbers:  tell me where the numbers start (include rest of the non-numbers)
+
+    sout
+        | include( alphabet, cc_cba )  // 3
+        | exclude( alphabet, cc_cba )  // 0
+        | include( alphabet, cc_onml )  // 0
+        | exclude( alphabet, cc_onml )  // 11
+        | include( alphabet, cc_alphabet )  // 26
+        | exclude( alphabet, cc_alphabet ); // 0
+}
+

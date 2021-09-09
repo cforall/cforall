@@ -139,25 +139,28 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libcfa_la_LIBADD =
 am__libcfa_la_SOURCES_DIST = common.hfa fstream.hfa heap.hfa \
 	iostream.hfa iterator.hfa limits.hfa memory.hfa parseargs.hfa \
-	rational.hfa stdlib.hfa strstream.hfa time.hfa \
+	parseconfig.hfa rational.hfa stdlib.hfa strstream.hfa time.hfa \
 	bits/weakso_locks.hfa containers/maybe.hfa containers/pair.hfa \
-	containers/result.hfa containers/vector.hfa device/cpu.hfa \
+	containers/result.hfa containers/string.hfa \
+	containers/string_res.hfa containers/vector.hfa device/cpu.hfa \
 	common.cfa fstream.cfa heap.cfa iostream.cfa iterator.cfa \
-	limits.cfa memory.cfa parseargs.cfa rational.cfa stdlib.cfa \
-	strstream.cfa time.cfa bits/weakso_locks.cfa \
-	containers/maybe.cfa containers/pair.cfa containers/result.cfa \
-	containers/vector.cfa device/cpu.cfa assert.cfa \
-	bits/algorithm.hfa bits/debug.cfa exception.c interpose.cfa \
-	lsda.h startup.cfa startup.hfa virtual.c virtual.h
+	limits.cfa memory.cfa parseargs.cfa parseconfig.cfa \
+	rational.cfa stdlib.cfa strstream.cfa time.cfa \
+	bits/weakso_locks.cfa containers/maybe.cfa containers/pair.cfa \
+	containers/result.cfa containers/string.cfa \
+	containers/string_res.cfa containers/vector.cfa device/cpu.cfa \
+	assert.cfa bits/debug.cfa exception.c interpose.cfa lsda.h \
+	startup.cfa startup.hfa virtual.c virtual.h
 am__objects_1 =
 am__dirstamp = $(am__leading_dot)dirstamp
 @BUILDLIB_TRUE@am__objects_2 = common.lo fstream.lo heap.lo \
 @BUILDLIB_TRUE@	iostream.lo iterator.lo limits.lo memory.lo \
-@BUILDLIB_TRUE@	parseargs.lo rational.lo stdlib.lo strstream.lo \
-@BUILDLIB_TRUE@	time.lo bits/weakso_locks.lo \
-@BUILDLIB_TRUE@	containers/maybe.lo containers/pair.lo \
-@BUILDLIB_TRUE@	containers/result.lo containers/vector.lo \
-@BUILDLIB_TRUE@	device/cpu.lo
+@BUILDLIB_TRUE@	parseargs.lo parseconfig.lo rational.lo \
+@BUILDLIB_TRUE@	stdlib.lo strstream.lo time.lo \
+@BUILDLIB_TRUE@	bits/weakso_locks.lo containers/maybe.lo \
+@BUILDLIB_TRUE@	containers/pair.lo containers/result.lo \
+@BUILDLIB_TRUE@	containers/string.lo containers/string_res.lo \
+@BUILDLIB_TRUE@	containers/vector.lo device/cpu.lo
 @BUILDLIB_TRUE@am__objects_3 = $(am__objects_1) $(am__objects_2) \
 @BUILDLIB_TRUE@	assert.lo bits/debug.lo exception.lo \
 @BUILDLIB_TRUE@	interpose.lo startup.lo virtual.lo
@@ -270,15 +273,16 @@ am__can_run_installinfo = \
 am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	-type f -printf "%p ") common.hfa fstream.hfa heap.hfa \
 	iostream.hfa iterator.hfa limits.hfa memory.hfa parseargs.hfa \
-	rational.hfa stdlib.hfa strstream.hfa time.hfa \
+	parseconfig.hfa rational.hfa stdlib.hfa strstream.hfa time.hfa \
 	bits/weakso_locks.hfa containers/maybe.hfa containers/pair.hfa \
-	containers/result.hfa containers/vector.hfa device/cpu.hfa \
+	containers/result.hfa containers/string.hfa \
+	containers/string_res.hfa containers/vector.hfa device/cpu.hfa \
 	bitmanip.hfa clock.hfa exception.hfa exception.h gmp.hfa \
-	math.trait.hfa math.hfa time_t.hfa bits/align.hfa \
-	bits/containers.hfa bits/debug.hfa bits/defs.hfa \
-	bits/locks.hfa bits/collection.hfa bits/stack.hfa \
-	bits/queue.hfa bits/sequence.hfa containers/array.hfa \
-	concurrency/iofwd.hfa containers/list.hfa \
+	math.trait.hfa math.hfa time_t.hfa bits/algorithm.hfa \
+	bits/align.hfa bits/containers.hfa bits/debug.hfa \
+	bits/defs.hfa bits/locks.hfa bits/collection.hfa \
+	bits/stack.hfa bits/queue.hfa bits/sequence.hfa \
+	containers/array.hfa concurrency/iofwd.hfa containers/list.hfa \
 	containers/queueLockFree.hfa containers/stackLockFree.hfa \
 	containers/vector2.hfa vec/vec.hfa vec/vec2.hfa vec/vec3.hfa \
 	vec/vec4.hfa concurrency/alarm.hfa concurrency/coroutine.hfa \
@@ -286,7 +290,8 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	concurrency/locks.hfa concurrency/monitor.hfa \
 	concurrency/mutex.hfa concurrency/thread.hfa bits/random.hfa \
 	concurrency/clib/cfathread.h concurrency/invoke.h \
-	concurrency/future.hfa concurrency/kernel/fwd.hfa
+	concurrency/future.hfa concurrency/kernel/fwd.hfa \
+	concurrency/mutex_stmt.hfa
 HEADERS = $(nobase_cfa_include_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -521,6 +526,7 @@ AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_TRUE@	math.trait.hfa \
 @BUILDLIB_TRUE@	math.hfa \
 @BUILDLIB_TRUE@	time_t.hfa \
+@BUILDLIB_TRUE@	bits/algorithm.hfa \
 @BUILDLIB_TRUE@	bits/align.hfa \
 @BUILDLIB_TRUE@	bits/containers.hfa \
 @BUILDLIB_TRUE@	bits/debug.hfa \
@@ -551,6 +557,7 @@ AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_TRUE@	limits.hfa \
 @BUILDLIB_TRUE@	memory.hfa \
 @BUILDLIB_TRUE@	parseargs.hfa \
+@BUILDLIB_TRUE@	parseconfig.hfa \
 @BUILDLIB_TRUE@	rational.hfa \
 @BUILDLIB_TRUE@	stdlib.hfa \
 @BUILDLIB_TRUE@	strstream.hfa \
@@ -559,13 +566,14 @@ AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_TRUE@	containers/maybe.hfa \
 @BUILDLIB_TRUE@	containers/pair.hfa \
 @BUILDLIB_TRUE@	containers/result.hfa \
+@BUILDLIB_TRUE@	containers/string.hfa \
+@BUILDLIB_TRUE@	containers/string_res.hfa \
 @BUILDLIB_TRUE@	containers/vector.hfa \
 @BUILDLIB_TRUE@	device/cpu.hfa
 
 @BUILDLIB_FALSE@libsrc = 
 @BUILDLIB_TRUE@libsrc = ${inst_headers_src} ${inst_headers_src:.hfa=.cfa} \
 @BUILDLIB_TRUE@	assert.cfa \
-@BUILDLIB_TRUE@	bits/algorithm.hfa \
 @BUILDLIB_TRUE@	bits/debug.cfa \
 @BUILDLIB_TRUE@	exception.c \
 @BUILDLIB_TRUE@	interpose.cfa \
@@ -583,7 +591,8 @@ AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_TRUE@	concurrency/clib/cfathread.h \
 @BUILDLIB_TRUE@	concurrency/invoke.h \
 @BUILDLIB_TRUE@	concurrency/future.hfa \
-@BUILDLIB_TRUE@	concurrency/kernel/fwd.hfa
+@BUILDLIB_TRUE@	concurrency/kernel/fwd.hfa \
+@BUILDLIB_TRUE@	concurrency/mutex_stmt.hfa
 
 @BUILDLIB_FALSE@inst_thread_headers_src = 
 @BUILDLIB_TRUE@inst_thread_headers_src = \
@@ -736,6 +745,10 @@ containers/maybe.lo: containers/$(am__dirstamp) \
 containers/pair.lo: containers/$(am__dirstamp) \
 	containers/$(DEPDIR)/$(am__dirstamp)
 containers/result.lo: containers/$(am__dirstamp) \
+	containers/$(DEPDIR)/$(am__dirstamp)
+containers/string.lo: containers/$(am__dirstamp) \
+	containers/$(DEPDIR)/$(am__dirstamp)
+containers/string_res.lo: containers/$(am__dirstamp) \
 	containers/$(DEPDIR)/$(am__dirstamp)
 containers/vector.lo: containers/$(am__dirstamp) \
 	containers/$(DEPDIR)/$(am__dirstamp)

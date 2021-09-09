@@ -323,64 +323,6 @@ static inline bool lock(linear_backoff_then_block_lock & this) with(this) {
 		spin += spin;
 	}
 
-	// linear backoff bounded by spin_count
-	spin = spin_start;
-	int spin_counter = 0;
-	int yield_counter = 0;
-	for ( ;; ) {
-		if(try_lock_contention(this)) return true;
-		if(spin_counter < spin_count) {
-			for (int i = 0; i < spin; i++) Pause();
-			if (spin < spin_end) spin += spin;
-			else spin_counter++;
-		} else if (yield_counter < yield_count) {
-			// after linear backoff yield yield_count times
-			yield_counter++;
-			yield();
-		} else { break; }
-	}
-
-	// block until signalled
-	while (block(this)) if(try_lock_contention(this)) return true;
-
-	// this should never be reached as block(this) always returns true
-	return false;
-}
-
-static inline bool lock_improved(linear_backoff_then_block_lock & this) with(this) {
-	// if owner just return
-	if (active_thread() == owner) return true;
-	size_t compare_val = 0;
-	int spin = spin_start;
-	// linear backoff
-	for( ;; ) {
-		compare_val = 0;
-		if (internal_try_lock(this, compare_val)) return true;
-		if (2 == compare_val) break;
-		for (int i = 0; i < spin; i++) Pause();
-		if (spin >= spin_end) break;
-		spin += spin;
-	}
-
-	// linear backoff bounded by spin_count
-	spin = spin_start;
-	int spin_counter = 0;
-	int yield_counter = 0;
-	for ( ;; ) {
-		compare_val = 0;
-		if(internal_try_lock(this, compare_val)) return true;
-		if (2 == compare_val) break;
-		if(spin_counter < spin_count) {
-			for (int i = 0; i < spin; i++) Pause();
-			if (spin < spin_end) spin += spin;
-			else spin_counter++;
-		} else if (yield_counter < yield_count) {
-			// after linear backoff yield yield_count times
-			yield_counter++;
-			yield();
-		} else { break; }
-	}
-
 	if(2 != compare_val && try_lock_contention(this)) return true;
 	// block until signalled
 	while (block(this)) if(try_lock_contention(this)) return true;
@@ -401,7 +343,7 @@ static inline void unlock(linear_backoff_then_block_lock & this) with(this) {
 
 static inline void on_notify(linear_backoff_then_block_lock & this, struct thread$ * t ) { unpark(t); }
 static inline size_t on_wait(linear_backoff_then_block_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { lock_improved(this); }
+static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { lock(this); }
 
 //-----------------------------------------------------------------------------
 // is_blocking_lock

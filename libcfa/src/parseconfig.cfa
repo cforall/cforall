@@ -1,0 +1,230 @@
+#include <fstream.hfa>
+#include <parseargs.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+#include "parseconfig.hfa"
+
+
+// *********************************** exceptions ***********************************
+
+
+// TODO: Add names of missing config entries to exception (see further below)
+static vtable(Missing_Config_Entries) Missing_Config_Entries_vt;
+
+[ void ] ?{}( & Missing_Config_Entries this, unsigned int num_missing ) {
+	this.virtual_table = &Missing_Config_Entries_vt;
+	this.num_missing = num_missing;
+}
+
+// TODO: use string interface when it's ready (and implement exception msg protocol)
+[ void ] msg( * Missing_Config_Entries ex ) {
+	serr | nlOff;
+	serr | "The config file is missing " | ex->num_missing;
+	serr | nlOn;
+	if ( ex->num_missing == 1 ) {
+		serr | " entry.";
+	} else {
+		serr | " entries.";
+	}
+} // msg
+
+
+static vtable(Parse_Failure) Parse_Failure_vt;
+
+[ void ] ?{}( & Parse_Failure this, [] char failed_key, [] char failed_value ) {
+	this.virtual_table = &Parse_Failure_vt;
+
+	this.failed_key = alloc( strlen( failed_key ) );
+	this.failed_value = alloc( strlen( failed_value ) );
+	strcpy( this.failed_key, failed_key );
+	strcpy( this.failed_value, failed_value );
+}
+
+[ void ] ^?{}( & Parse_Failure this ) with ( this ) {
+	free( failed_key );
+	free( failed_value );
+}
+
+// TODO: use string interface when it's ready (and implement exception msg protocol)
+[ void ] msg( * Parse_Failure ex ) {
+	serr | "Config entry " | ex->failed_key | " could not be parsed. It has value " | ex->failed_value | ".";
+}
+
+
+static vtable(Validation_Failure) Validation_Failure_vt;
+
+[ void ] ?{}( & Validation_Failure this, [] char failed_key, [] char failed_value ) {
+	this.virtual_table = &Validation_Failure_vt;
+
+	this.failed_key = alloc( strlen( failed_key ) );
+	this.failed_value = alloc( strlen( failed_value ) );
+	strcpy( this.failed_key, failed_key );
+	strcpy( this.failed_value, failed_value );
+}
+
+[ void ] ^?{}( & Validation_Failure this ) with ( this ) {
+	free( failed_key );
+	free( failed_value );
+}
+
+// TODO: use string interface when it's ready (and implement exception msg protocol)
+[ void ] msg( * Validation_Failure ex ) {
+	serr | "Config entry " | ex->failed_key | " could not be validated. It has value " | ex->failed_value | ".";
+}
+
+
+// *********************************** main code ***********************************
+
+
+[ void ] ?{}( & KVPairs kvp ) with ( kvp ) {				// default constructor
+	size = 0; max_size = 0; data = 0p;
+}
+
+[ void ] ?{}( & KVPairs kvp, size_t size ) { 				// initialization
+	kvp.[ size, max_size ] = [ 0, size ];
+	kvp.data = alloc( size );
+}
+
+[ void ] ^?{}( & KVPairs kvp ) with ( kvp ) {				// destructor
+	for ( i; size ) free( data[i] );
+	free( data );
+	size = 0; max_size = 0; data = 0p;
+}
+
+[ void ] add_kv_pair( & KVPairs kv_pairs, [] char key, [] char value ) with ( kv_pairs ) {
+	if ( max_size == 0 ) {
+		max_size = 1;
+		data = alloc( max_size );
+	} else if ( size == max_size ) {
+		max_size *= 2;
+		data = alloc( max_size, data`realloc );
+	}
+
+	data[size].0 = alloc( strlen( key ) );
+	data[size].1 = alloc( strlen( value ) );
+	strcpy( data[size].0, key );
+	strcpy( data[size].1, value );
+	++size;
+} // add_kv_pair
+
+
+[ bool ] comments( & ifstream in, [] char name ) {
+	while () {
+		in | name;
+	  if ( eof( in ) ) return true;
+	  if ( name[0] != '#' ) return false;
+		in | nl;									// ignore remainder of line
+	} // while
+} // comments
+
+// Parse configuration from a file formatted in tabular (CS 343) style
+[ * KVPairs ] parse_tabular_config_format( [] const char config_file, size_t num_entries ) {
+	// TODO: Change this to a unique_ptr when we fully support returning them (move semantics)
+	* KVPairs kv_pairs = new( num_entries );
+
+	ifstream in;
+	try {
+		open( in, config_file );					// open the configuration file for input
+
+		[64] char key;
+		[256] char value;
+
+		while () {									// parameter names can appear in any order
+		  	// NOTE: Must add check to see if already read in value for this key,
+			// once we switch to using hash table as intermediate storage
+		  if ( comments( in, key ) ) break;			// eof ?
+			in | value;
+
+			add_kv_pair( *kv_pairs, key, value );
+
+		  if ( eof( in ) ) break;
+			in | nl;								// ignore remainder of line
+		} // for
+	} catch( Open_Failure * ex; ex->istream == &in ) {
+		delete( kv_pairs );
+		throw *ex;
+	} // try
+	close( in );
+
+	return kv_pairs;
+} // parse_tabular_config_format
+
+// Parse configuration values from intermediate format
+[ void ] parse_config(
+		[] const char config_file,
+		[] config_entry entries,
+		size_t num_entries,
+		KVPairs * (*parser)(const char [], size_t)
+) {
+	* KVPairs kv_pairs = parser( config_file, num_entries );
+
+	int entries_so_far = 0;
+	for ( i; kv_pairs->size ) {
+	  if ( entries_so_far == num_entries ) break;
+
+		char * src_key, * src_value;
+		[ src_key, src_value ] = kv_pairs->data[i];
+
+		for ( j; num_entries ) {
+		  if ( strcmp( src_key, entries[j].key ) != 0 ) continue;
+		  	// Parse the data
+		  	if ( !entries[j].parse( src_value, entries[j].variable ) ) {
+				* Parse_Failure ex = new( src_key, src_value );
+				delete( kv_pairs );
+				throw *ex;
+			}
+
+			// Validate the data
+			if ( !entries[j].validate( entries[j].variable ) ) {
+				* Validation_Failure ex = new( src_key, src_value );
+				delete( kv_pairs );
+				throw *ex;
+			}
+
+			++entries_so_far;
+
+			break;
+		}
+	}
+	// TODO: Once we get vector2+hash_table, we can more easily add the missing config keys to this error
+	if ( entries_so_far < num_entries ) {
+		delete( kv_pairs );
+		throw (Missing_Config_Entries){ num_entries - entries_so_far };
+	}
+
+	delete( kv_pairs );
+} // parse_config
+
+
+// *********************************** validation ***********************************
+
+
+forall(T | Relational( T ))
+[ bool ] is_nonnegative( & T value ) {
+	T zero_val = 0;
+	return value >= zero_val;
+}
+
+forall(T | Relational( T ))
+[ bool ] is_positive( & T value ) {
+	T zero_val = 0;
+	return value > zero_val;
+}
+
+forall(T | Relational( T ))
+[ bool ] is_nonpositive( & T value ) {
+	T zero_val = 0;
+	return value <= zero_val;
+}
+
+forall(T | Relational( T ))
+[ bool ] is_negative( & T value ) {
+	T zero_val = 0;
+	return value < zero_val;
+}
+
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa parseconfig.cfa" //
+// End: //

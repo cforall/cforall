@@ -22,6 +22,7 @@ SRC = main.cc \
       CompilationState.cc \
       CompilationState.h \
       MakeLibCfa.cc \
+	  MakeLibCfaNew.cpp \
 	MakeLibCfa.h
 
 SRCDEMANGLE = CompilationState.cc

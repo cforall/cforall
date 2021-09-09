@@ -1,0 +1,42 @@
+#include "bits/algorithm.hfa"
+#include <assert.h>
+#include "invoke.h"
+#include "stdlib.hfa"
+#include <stdio.h>
+
+//-----------------------------------------------------------------------------
+// is_lock
+trait is_lock(L & | sized(L)) {
+	// For acquiring a lock
+	void lock( L & );
+
+	// For releasing a lock
+	void unlock( L & );
+};
+
+forall(L & | is_lock(L)) {
+
+    struct __mutex_stmt_lock_guard {
+        L ** lockarr;
+        __lock_size_t count;
+    };
+    
+    static inline void ?{}( __mutex_stmt_lock_guard(L) & this, L * lockarr [], __lock_size_t count  ) {
+        this.lockarr = lockarr;
+        this.count = count;
+
+        // Sort locks based on address
+        __libcfa_small_sort(this.lockarr, count);
+
+        // acquire locks in order
+        for ( size_t i = 0; i < count; i++ ) {
+            lock(*this.lockarr[i]);
+        }
+    }
+    
+    static inline void ^?{}( __mutex_stmt_lock_guard(L) & this ) with(this) {
+        for ( size_t i = count; i > 0; i-- ) {
+            unlock(*lockarr[i - 1]);
+        }
+    }
+}

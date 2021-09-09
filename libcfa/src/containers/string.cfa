@@ -1,0 +1,317 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// string -- variable-length, mutable run of text, with value semantics
+//
+// Author           : Michael L. Brooks
+// Created On       : Fri Sep 03 11:00:00 2021
+// Last Modified By : Michael L. Brooks
+// Last Modified On : Fri Sep 03 11:00:00 2021
+// Update Count     : 1
+//
+
+#include "string.hfa"
+#include "string_res.hfa"
+#include <stdlib.hfa>
+
+
+/*
+Implementation Principle: typical operation translates to the equivalent
+operation on `inner`.  Exceptions are implementing new RAII pattern for value
+semantics and some const-hell handling.
+*/
+
+////////////////////////////////////////////////////////
+// string RAII
+
+
+void ?{}( string & this ) {
+    (this.inner) { malloc() };
+    ?{}( *this.inner );
+}
+
+// private (not in header)
+static void ?{}( string & this, string_res & src, size_t start, size_t end ) {
+    (this.inner) { malloc() };
+    ?{}( *this.inner, src, SHARE_EDITS, start, end );
+}
+
+void ?{}( string & this, const string & other ) {
+    (this.inner) { malloc() };
+    ?{}( *this.inner, *other.inner, COPY_VALUE );
+}
+
+void ?{}( string & this, string & other ) {
+    ?{}( this, (const string &) other );
+}
+
+void ?{}( string & this, const char * val ) {
+    (this.inner) { malloc() };
+    ?{}( *this.inner, val );
+}
+
+void ?{}( string & this, const char* buffer, size_t bsize) {
+    (this.inner) { malloc() };
+    ?{}( *this.inner, buffer, bsize );
+}
+
+void ^?{}( string & this ) {
+    ^(*this.inner){};
+    free( this.inner );
+    this.inner = 0p;
+}
+
+////////////////////////////////////////////////////////
+// Alternate construction: request shared edits
+
+string_WithSharedEdits ?`shareEdits( string & this ) {
+    string_WithSharedEdits ret = { &this };
+    return ret;
+}
+
+void ?{}( string & this, string_WithSharedEdits src ) {
+    ?{}( this, *src.s->inner, 0, src.s->inner->Handle.lnth);
+}
+
+////////////////////////////////////////////////////////
+// Assignment
+
+void ?=?( string & this, const char * val ) {
+    (*this.inner) = val;
+}
+
+void ?=?(string & this, const string & other) {
+    (*this.inner) = (*other.inner);
+}
+
+void ?=?( string & this, char val ) {
+    (*this.inner) = val;
+}
+
+string ?=?(string & this, string other) {
+    (*this.inner) = (*other.inner);
+    return this;
+}
+
+
+////////////////////////////////////////////////////////
+// Output
+
+ofstream & ?|?( ofstream & fs, const string & this ) {
+    return fs | (*this.inner);
+}
+
+void ?|?( ofstream & fs, const string & this ) {
+    fs | (*this.inner);
+}
+
+////////////////////////////////////////////////////////
+// Slicing
+
+string ?()( string & this, size_t start, size_t end ) {
+    string ret = { *this.inner, start, end };
+    return ret`shareEdits;
+}
+
+////////////////////////////////////////////////////////
+// Comparison
+
+bool ?==?(const string &s, const string &other) {
+    return *s.inner == *other.inner;
+}
+
+bool ?!=?(const string &s, const string &other) {
+    return *s.inner != *other.inner;
+}
+
+bool ?==?(const string &s, const char* other) {
+    return *s.inner == other;
+}
+
+bool ?!=?(const string &s, const char* other) {
+    return *s.inner != other;
+}
+
+////////////////////////////////////////////////////////
+// Getter
+
+size_t size(const string &s) {
+    return size( * s.inner );
+}
+
+////////////////////////////////////////////////////////
+// Concatenation
+
+void ?+=?(string &s, char other) {
+    (*s.inner) += other;
+}
+
+void ?+=?(string &s, const string &s2) {
+    (*s.inner) += (*s2.inner);
+}
+
+void ?+=?(string &s, const char* other) {
+    (*s.inner) += other;
+}
+
+string ?+?(const string &s, char other) {
+    string ret = s;
+    ret += other;
+    return ret;
+}
+
+string ?+?(const string &s, const string &s2) {
+    string ret = s;
+    ret += s2;
+    return ret;
+}
+
+string ?+?(const char* s1, const char* s2) {
+    string ret = s1;
+    ret += s2;
+    return ret;
+}
+
+string ?+?(const string &s, const char* other) {
+    string ret = s;
+    ret += other;
+    return ret;
+}
+
+////////////////////////////////////////////////////////
+// Repetition
+
+string ?*?(const string &s, size_t factor) {
+    string ret = "";
+    for (factor) ret += s;
+    return ret;
+}
+
+string ?*?(char c, size_t size) {
+    string ret = "";
+    for ((size_t)size) ret += c;
+    return ret;
+}
+
+string ?*?(const char *s, size_t factor) {
+    string ss = s;
+    return ss * factor;
+}
+
+////////////////////////////////////////////////////////
+// Character access
+
+char ?[?](const string &s, size_t index) {
+    return (*s.inner)[index];
+}
+
+string ?[?](string &s, size_t index) {
+    string ret = { *s.inner, index, index + 1 };
+    return ret`shareEdits;
+}
+
+////////////////////////////////////////////////////////
+// Search
+
+bool contains(const string &s, char ch) {
+    return contains( *s.inner, ch );
+}
+
+int find(const string &s, char search) {
+    return find( *s.inner, search );
+}
+
+int find(const string &s, const string &search) {
+    return find( *s.inner, *search.inner );
+}
+
+int find(const string &s, const char* search) {
+    return find( *s.inner, search);
+}
+
+int find(const string &s, const char* search, size_t searchsize) {
+    return find( *s.inner, search, searchsize);
+}
+
+bool includes(const string &s, const string &search) {
+    return includes( *s.inner, *search.inner );
+}
+
+bool includes(const string &s, const char* search) {
+    return includes( *s.inner, search );
+}
+
+bool includes(const string &s, const char* search, size_t searchsize) {
+    return includes( *s.inner, search, searchsize );
+}
+
+bool startsWith(const string &s, const string &prefix) {
+    return startsWith( *s.inner, *prefix.inner );
+}
+
+bool startsWith(const string &s, const char* prefix) {
+    return startsWith( *s.inner, prefix );
+}
+
+bool startsWith(const string &s, const char* prefix, size_t prefixsize) {
+    return startsWith( *s.inner, prefix, prefixsize );
+}
+
+bool endsWith(const string &s, const string &suffix) {
+    return endsWith( *s.inner, *suffix.inner );
+}
+
+bool endsWith(const string &s, const char* suffix) {
+    return endsWith( *s.inner, suffix );
+}
+
+bool endsWith(const string &s, const char* suffix, size_t suffixsize) {
+    return endsWith( *s.inner, suffix, suffixsize );
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+// charclass, include, exclude
+
+void ?{}( charclass & this, const string & chars) {
+    (this.inner) { malloc() };
+    ?{}( *this.inner, *(const string_res *)chars.inner );
+}
+
+void ?{}( charclass & this, const char * chars ) {
+    (this.inner) { malloc() };
+    ?{}( *this.inner, chars );
+}
+
+void ?{}( charclass & this, const char * chars, size_t charssize ) {
+    (this.inner) { malloc() };
+    ?{}( *this.inner, chars, charssize );
+}
+
+void ^?{}( charclass & this ) {
+    ^(*this.inner){};
+    free( this.inner );
+    this.inner = 0p;
+}
+
+
+int exclude(const string &s, const charclass &mask) {
+    return exclude( *s.inner, *mask.inner );
+}
+/*
+StrSlice exclude(string &s, const charclass &mask) {
+}
+*/
+
+int include(const string &s, const charclass &mask) {
+    return include( *s.inner, *mask.inner );
+}
+
+/*
+StrSlice include(string &s, const charclass &mask) {
+}
+*/
+

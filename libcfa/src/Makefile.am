@@ -47,6 +47,7 @@ inst_headers_nosrc = \
 	math.trait.hfa \
 	math.hfa \
 	time_t.hfa \
+	bits/algorithm.hfa \
 	bits/align.hfa \
 	bits/containers.hfa \
 	bits/debug.hfa \
@@ -76,6 +77,7 @@ inst_headers_src = \
 	limits.hfa \
 	memory.hfa \
 	parseargs.hfa \
+	parseconfig.hfa \
 	rational.hfa \
 	stdlib.hfa \
 	strstream.hfa \
@@ -84,12 +86,13 @@ inst_headers_src = \
 	containers/maybe.hfa \
 	containers/pair.hfa \
 	containers/result.hfa \
+	containers/string.hfa \
+	containers/string_res.hfa \
 	containers/vector.hfa \
 	device/cpu.hfa
 
 libsrc = ${inst_headers_src} ${inst_headers_src:.hfa=.cfa} \
 	assert.cfa \
-	bits/algorithm.hfa \
 	bits/debug.cfa \
 	exception.c \
 	interpose.cfa \
@@ -105,7 +108,8 @@ inst_thread_headers_nosrc = \
 	concurrency/clib/cfathread.h \
 	concurrency/invoke.h \
 	concurrency/future.hfa \
-	concurrency/kernel/fwd.hfa
+	concurrency/kernel/fwd.hfa \
+	concurrency/mutex_stmt.hfa
 
 inst_thread_headers_src = \
 	concurrency/alarm.hfa \

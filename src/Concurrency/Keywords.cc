@@ -92,6 +92,7 @@ namespace Concurrency {
 		FunctionDecl * forwardDeclare( StructDecl * );
 		ObjectDecl * addField( StructDecl * );
 		void addRoutines( ObjectDecl *, FunctionDecl * );
+		void addLockUnlockRoutines( StructDecl * );
 
 		virtual bool is_target( StructDecl * decl ) = 0;
 
@@ -321,6 +322,7 @@ namespace Concurrency {
 		StructDecl* guard_decl = nullptr;
 		StructDecl* dtor_guard_decl = nullptr;
 		StructDecl* thread_guard_decl = nullptr;
+		StructDecl* lock_guard_decl = nullptr;
 
 		static std::unique_ptr< Type > generic_func;
 	};
@@ -462,7 +464,6 @@ namespace Concurrency {
 		return cast;
 	}
 
-
 	void ConcurrentSueKeyword::handle( StructDecl * decl ) {
 		if( ! decl->body ) return;
 
@@ -478,7 +479,11 @@ namespace Concurrency {
 		}
 		FunctionDecl * func = forwardDeclare( decl );
 		ObjectDecl * field = addField( decl );
+
+		// add get_.* routine
 		addRoutines( field, func );
+		// add lock/unlock routines to monitors for use by mutex stmt
+		addLockUnlockRoutines( decl );
 	}
 
 	void ConcurrentSueKeyword::addTypeId( StructDecl * decl ) {
@@ -611,6 +616,8 @@ namespace Concurrency {
 		return field;
 	}
 
+	// This function adds the get_.* routine body for coroutines, monitors etc
+	// 		after their corresponding struct has been made
 	void ConcurrentSueKeyword::addRoutines( ObjectDecl * field, FunctionDecl * func ) {
 		CompoundStmt * statement = new CompoundStmt();
 		statement->push_back(
@@ -633,6 +640,114 @@ namespace Concurrency {
 		get_decl->set_statements( statement );
 
 		declsToAddAfter.push_back( get_decl );
+	}
+
+	// Generates lock/unlock routines for monitors to be used by mutex stmts
+	void ConcurrentSueKeyword::addLockUnlockRoutines( StructDecl * decl ) {
+		// this routine will be called for all ConcurrentSueKeyword children so only continue if we are a monitor
+		if ( !decl->is_monitor() ) return;
+
+		FunctionType * lock_fn_type = new FunctionType( noQualifiers, false );
+		FunctionType * unlock_fn_type = new FunctionType( noQualifiers, false );
+
+		// create this ptr parameter for both routines
+		ObjectDecl * this_decl = new ObjectDecl(
+			"this",
+			noStorageClasses,
+			LinkageSpec::Cforall,
+			nullptr,
+			new ReferenceType(
+				noQualifiers,
+				new StructInstType(
+					noQualifiers,
+					decl
+				)
+			),
+			nullptr
+		);
+
+		lock_fn_type->get_parameters().push_back( this_decl->clone() );
+		unlock_fn_type->get_parameters().push_back( this_decl->clone() );
+		fixupGenerics(lock_fn_type, decl);
+		fixupGenerics(unlock_fn_type, decl);
+
+		delete this_decl;
+
+
+		//////////////////////////////////////////////////////////////////////
+		// The following generates this lock routine for all monitors
+		/*
+			void lock (monitor_t & this) {
+				lock(get_monitor(this));
+			}	
+		*/
+		FunctionDecl * lock_decl = new FunctionDecl(
+			"lock",
+			Type::Static,
+			LinkageSpec::Cforall,
+			lock_fn_type,
+			nullptr,
+			{ },
+			Type::Inline
+		);
+
+		UntypedExpr * get_monitor_lock =  new UntypedExpr (
+			new NameExpr( "get_monitor" ),
+			{ new VariableExpr( lock_fn_type->get_parameters().front() ) }
+		);
+
+		CompoundStmt * lock_statement = new CompoundStmt();
+		lock_statement->push_back(
+			new ExprStmt( 
+				new UntypedExpr (
+					new NameExpr( "lock" ),
+					{
+						get_monitor_lock
+					}
+				)
+			)
+		);
+		lock_decl->set_statements( lock_statement );
+
+		//////////////////////////////////////////////////////////////////
+		// The following generates this routine for all monitors
+		/*
+			void unlock (monitor_t & this) {
+				unlock(get_monitor(this));
+			}	
+		*/
+		FunctionDecl * unlock_decl = new FunctionDecl(
+			"unlock",
+			Type::Static,
+			LinkageSpec::Cforall,
+			unlock_fn_type,
+			nullptr,
+			{ },
+			Type::Inline
+		);
+
+		CompoundStmt * unlock_statement = new CompoundStmt();
+
+		UntypedExpr * get_monitor_unlock =  new UntypedExpr (
+			new NameExpr( "get_monitor" ),
+			{ new VariableExpr( unlock_fn_type->get_parameters().front() ) }
+		);
+
+		unlock_statement->push_back(
+			new ExprStmt( 
+				new UntypedExpr(
+					new NameExpr( "unlock" ),
+					{
+						get_monitor_unlock
+					}
+				)
+			)
+		);
+		unlock_decl->set_statements( unlock_statement );
+		
+		// pushes routines to declsToAddAfter to add at a later time
+		declsToAddAfter.push_back( lock_decl );
+		declsToAddAfter.push_back( unlock_decl );
 	}
 
 	//=============================================================================================
@@ -936,6 +1051,10 @@ namespace Concurrency {
 		else if( decl->name == "thread_dtor_guard_t" && decl->body ) {
 			assert( !thread_guard_decl );
 			thread_guard_decl = decl;
+		} 
+		else if ( decl->name == "__mutex_stmt_lock_guard" && decl->body ) {
+			assert( !lock_guard_decl );
+			lock_guard_decl = decl;
 		}
 	}
 
@@ -1080,10 +1199,7 @@ namespace Concurrency {
 				noQualifiers,
 				new PointerType(
 					noQualifiers,
-					new StructInstType(
-						noQualifiers,
-						monitor_decl
-					)
+					new TypeofType( noQualifiers, args.front()->clone() )
 				),
 				new ConstantExpr( Constant::from_ulong( args.size() ) ),
 				false,
@@ -1091,13 +1207,15 @@ namespace Concurrency {
 			),
 			new ListInit(
 				map_range < std::list<Initializer*> > ( args, [](Expression * var ){
-					return new SingleInit( new UntypedExpr(
-						new NameExpr( "get_monitor" ),
-						{ var }
-					) );
+					return new SingleInit( new AddressExpr( var ) );
 				})
 			)
 		);
+
+		StructInstType * lock_guard_struct = new StructInstType( noQualifiers, lock_guard_decl );
+		TypeExpr * lock_type_expr = new TypeExpr( new TypeofType( noQualifiers, args.front()->clone() ) );
+
+		lock_guard_struct->parameters.push_back( lock_type_expr ) ;
 
 		// in reverse order :
 		// monitor_guard_t __guard = { __monitors, # };
@@ -1107,10 +1225,7 @@ namespace Concurrency {
 				noStorageClasses,
 				LinkageSpec::Cforall,
 				nullptr,
-				new StructInstType(
-					noQualifiers,
-					guard_decl
-				),
+				lock_guard_struct,
 				new ListInit(
 					{
 						new SingleInit( new VariableExpr( monitors ) ),

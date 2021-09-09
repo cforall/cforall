@@ -1,0 +1,877 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// string_res -- variable-length, mutable run of text, with resource semantics
+//
+// Author           : Michael L. Brooks
+// Created On       : Fri Sep 03 11:00:00 2021
+// Last Modified By : Michael L. Brooks
+// Last Modified On : Fri Sep 03 11:00:00 2021
+// Update Count     : 1
+//
+
+#include "string_res.hfa"
+#include <stdlib.hfa>  // e.g. malloc
+#include <string.h>    // e.g. strlen
+
+//######################### VbyteHeap "header" #########################
+
+
+#ifdef VbyteDebug
+extern HandleNode *HeaderPtr;
+#endif // VbyteDebug
+
+struct VbyteHeap {
+
+    int NoOfCompactions;				// number of compactions of the byte area
+    int NoOfExtensions;					// number of extensions in the size of the byte area
+    int NoOfReductions;					// number of reductions in the size of the byte area
+    
+    int InitSize;					// initial number of bytes in the byte-string area
+    int CurrSize;					// current number of bytes in the byte-string area
+    char *StartVbyte;					// pointer to the `st byte of the start of the byte-string area
+    char *EndVbyte;					// pointer to the next byte after the end of the currently used portion of byte-string area
+    void *ExtVbyte;					// pointer to the next byte after the end of the byte-string area
+
+    HandleNode Header;					// header node for handle list
+}; // VbyteHeap
+
+    
+static inline void compaction( VbyteHeap & );				// compaction of the byte area
+static inline void garbage( VbyteHeap & );				// garbage collect the byte area
+static inline void extend( VbyteHeap &, int );			// extend the size of the byte area
+static inline void reduce( VbyteHeap &, int );			// reduce the size of the byte area
+
+static inline void ?{}( VbyteHeap &, int = 1000 );
+static inline void ^?{}( VbyteHeap & );
+static inline void ByteCopy( VbyteHeap &, char *, int, int, char *, int, int ); // copy a block of bytes from one location in the heap to another
+static inline int ByteCmp( VbyteHeap &, char *, int, int, char *, int, int );	// compare 2 blocks of bytes
+static inline char *VbyteAlloc( VbyteHeap &, int );			// allocate a block bytes in the heap
+
+
+static inline void AddThisAfter( HandleNode &, HandleNode & );
+static inline void DeleteNode( HandleNode & );
+static inline void MoveThisAfter( HandleNode &, const HandleNode & );		// move current handle after parameter handle
+
+
+// Allocate the storage for the variable sized area and intialize the heap variables.
+
+static inline void ?{}( VbyteHeap & this, int Size ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:VbyteHeap::VbyteHeap, this:" | &this | " Size:" | Size;
+#endif // VbyteDebug
+    NoOfCompactions = NoOfExtensions = NoOfReductions = 0;
+    InitSize = CurrSize = Size;
+    StartVbyte = EndVbyte = alloc(CurrSize);
+    ExtVbyte = (void *)( StartVbyte + CurrSize );
+    Header.flink = Header.blink = &Header;
+#ifdef VbyteDebug
+    HeaderPtr = &Header;
+    serr | "exit:VbyteHeap::VbyteHeap, this:" | &this;
+#endif // VbyteDebug
+} // VbyteHeap
+
+
+// Release the dynamically allocated storage for the byte area.
+
+static inline void ^?{}( VbyteHeap & this ) with(this) {
+    free( StartVbyte );
+} // ~VbyteHeap
+
+
+//######################### HandleNode #########################
+
+
+// Create a handle node. The handle is not linked into the handle list.  This is the responsibilitiy of the handle
+// creator.
+
+void ?{}( HandleNode & this ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:HandleNode::HandleNode, this:" | &this;
+#endif // VbyteDebug
+    s = 0;
+    lnth = 0;
+#ifdef VbyteDebug
+    serr | "exit:HandleNode::HandleNode, this:" | &this;
+#endif // VbyteDebug
+} // HandleNode
+
+// Create a handle node. The handle is linked into the handle list at the end. This means that this handle will NOT be
+// in order by string address, but this is not a problem because a string with length zero does nothing during garbage
+// collection.
+
+void ?{}( HandleNode & this, VbyteHeap & vh ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:HandleNode::HandleNode, this:" | &this;
+#endif // VbyteDebug
+    s = 0;
+    lnth = 0;
+    AddThisAfter( this, *vh.Header.blink );
+#ifdef VbyteDebug
+    serr | "exit:HandleNode::HandleNode, this:" | &this;
+#endif // VbyteDebug
+} // HandleNode
+
+
+// Delete a node from the handle list by unchaining it from the list. If the handle node was allocated dynamically, it
+// is the responsibility of the creator to destroy it.
+
+void ^?{}( HandleNode & this ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:HandleNode::~HandleNode, this:" | & this;
+    {
+	serr | nlOff;
+	serr | " lnth:" | lnth | " s:" | (void *)s | ",\"";
+	for ( int i = 0; i < lnth; i += 1 ) {
+	    serr | s[i];
+	} // for
+	serr | "\" flink:" | flink | " blink:" | blink | nl;
+	serr | nlOn;
+    }
+#endif // VbyteDebug
+    DeleteNode( this );
+} // ~HandleNode
+
+//######################### String Resource #########################
+
+
+VbyteHeap HeapArea;
+
+// Returns the size of the string in bytes
+size_t size(const string_res &s) with(s) {
+    return Handle.lnth;
+}
+
+// Output operator
+ofstream & ?|?(ofstream &out, const string_res &s) {
+    // Store auto-newline state so it can be restored
+    bool anl = getANL$(out);
+    nlOff(out);
+    for (size_t i = 0; i < s.Handle.lnth; i++) {
+        out | s[i];
+    }
+    out | sep;
+    // Re-apply newlines after done, for chaining version
+    if (anl) nlOn(out);
+    return out;
+}
+
+void ?|?(ofstream &out, const string_res &s) {
+    // Store auto-newline state so it can be restored
+    bool anl = getANL$(out);
+    nlOff(out);
+    for (size_t i = 0; i < s.Handle.lnth; i++) {
+        // Need to re-apply on the last output operator, for whole-statement version
+        if (anl && i == s.Handle.lnth-1) nlOn(out);
+        out | s[i];
+    }
+    return out;
+}
+
+// Empty constructor
+void ?{}(string_res &s) with(s) {
+    (Handle){ HeapArea };
+    s.shareEditSet_prev = &s;
+    s.shareEditSet_next = &s;
+}
+
+// Constructor from a raw buffer and size
+void ?{}(string_res &s, const char* rhs, size_t rhslnth) with(s) {
+    (Handle){ HeapArea };
+    Handle.s = VbyteAlloc(HeapArea, rhslnth);
+    Handle.lnth = rhslnth;
+    for ( int i = 0; i < rhslnth; i += 1 ) {		// copy characters
+        Handle.s[i] = rhs[i];
+    } // for
+    s.shareEditSet_prev = &s;
+    s.shareEditSet_next = &s;
+}
+
+// String literal constructor
+void ?{}(string_res &s, const char* rhs) {
+    (s){ rhs, strlen(rhs) };
+}
+
+// General copy constructor
+void ?{}(string_res &s, const string_res & s2, StrResInitMode mode, size_t start, size_t end ) {
+
+    (s.Handle){ HeapArea };
+    s.Handle.s = s2.Handle.s + start;
+    s.Handle.lnth = end - start;
+    MoveThisAfter(s.Handle, s2.Handle );			// insert this handle after rhs handle
+    // ^ bug?  skip others at early point in string
+    
+    if (mode == COPY_VALUE) {
+        // make s alone in its shareEditSet
+        s.shareEditSet_prev = &s;
+        s.shareEditSet_next = &s;
+    } else {
+        assert( mode == SHARE_EDITS );
+
+        // s2 is logically const but not implementation const
+        string_res & s2mod = (string_res &) s2;
+
+        // insert s after s2 on shareEditSet
+        s.shareEditSet_next = s2mod.shareEditSet_next;
+        s.shareEditSet_prev = &s2mod;
+        s.shareEditSet_next->shareEditSet_prev = &s;
+        s.shareEditSet_prev->shareEditSet_next = &s;
+    }
+}
+
+void assign(string_res &this, const char* buffer, size_t bsize) {
+
+    char * afterBegin = this.Handle.s + this.Handle.lnth;
+
+    char * shareEditSetStart = this.Handle.s;
+    char * shareEditSetEnd = afterBegin;
+    for (string_res * editPeer = this.shareEditSet_next; editPeer != &this; editPeer = editPeer->shareEditSet_next) {
+        shareEditSetStart = min( shareEditSetStart, editPeer->Handle.s );
+        shareEditSetEnd = max( shareEditSetStart, editPeer->Handle.s + editPeer->Handle.lnth);
+    }
+
+    char * beforeBegin = shareEditSetStart;
+    size_t beforeLen = this.Handle.s - shareEditSetStart;
+    size_t afterLen = shareEditSetEnd - afterBegin;
+
+    string_res pasting = { beforeBegin, beforeLen };
+    append(pasting, buffer, bsize);
+    string_res after = { afterBegin, afterLen }; // juxtaposed with in-progress pasting
+    pasting += after;                        // optimized case
+
+    size_t oldLnth = this.Handle.lnth;
+
+    this.Handle.s = pasting.Handle.s + beforeLen;
+    this.Handle.lnth = bsize;
+    MoveThisAfter( this.Handle, pasting.Handle );
+
+    // adjust all substring string and handle locations, and check if any substring strings are outside the new base string
+    char *limit = pasting.Handle.s + pasting.Handle.lnth;
+    for (string_res * p = this.shareEditSet_next; p != &this; p = p->shareEditSet_next) {
+        assert (p->Handle.s >= beforeBegin);
+        if ( p->Handle.s < beforeBegin + beforeLen ) {
+            // p starts before the edit
+            if ( p->Handle.s + p->Handle.lnth < beforeBegin + beforeLen ) {
+                // p ends before the edit
+                // take end as start-anchored too
+                // p->Handle.lnth unaffected
+            } else if ( p->Handle.s + p->Handle.lnth < afterBegin ) {
+                // p ends during the edit
+                // clip end of p to end at start of edit
+                p->Handle.lnth = beforeLen - ( p->Handle.s - beforeBegin );
+            } else {
+                // p ends after the edit
+                assert ( p->Handle.s + p->Handle.lnth <= afterBegin + afterLen );
+                // take end as end-anchored
+                // stretch-shrink p according to the edit
+                p->Handle.lnth += this.Handle.lnth;
+                p->Handle.lnth -= oldLnth;
+            }
+            // take start as start-anchored
+            size_t startOffsetFromStart = p->Handle.s - beforeBegin;
+            p->Handle.s = pasting.Handle.s + startOffsetFromStart;
+        } else if ( p->Handle.s < afterBegin ) {
+            // p starts during the edit
+            assert( p->Handle.s + p->Handle.lnth >= beforeBegin + beforeLen );
+            if ( p->Handle.s + p->Handle.lnth < afterBegin ) {
+                // p ends during the edit
+                // set p to empty string at start of edit
+                p->Handle.s = this.Handle.s;
+                p->Handle.lnth = 0;
+            } else {
+                // p ends after the edit
+                // clip start of p to start at end of edit
+                p->Handle.s = this.Handle.s + this.Handle.lnth;
+                p->Handle.lnth += this.Handle.lnth;
+                p->Handle.lnth -= oldLnth;
+            }
+        } else {
+            assert ( p->Handle.s <= afterBegin + afterLen );
+            assert ( p->Handle.s + p->Handle.lnth <= afterBegin + afterLen );
+            // p starts after the edit
+            // take start and end as end-anchored
+            size_t startOffsetFromEnd = afterBegin + afterLen - p->Handle.s;
+            p->Handle.s = limit - startOffsetFromEnd;
+            // p->Handle.lnth unaffected
+        }
+        MoveThisAfter( p->Handle, pasting.Handle );	// move substring handle to maintain sorted order by string position
+    }
+}
+
+void ?=?(string_res &s, const char* other) {
+    assign(s, other, strlen(other));
+}
+
+void ?=?(string_res &s, char other) {
+    assign(s, &other, 1);
+}
+
+// Copy assignment operator
+void ?=?(string_res & this, const string_res & rhs) with( this ) {
+    assign(this, rhs.Handle.s, rhs.Handle.lnth);
+}
+
+void ?=?(string_res & this, string_res & rhs) with( this ) {
+    const string_res & rhs2 = rhs;
+    this = rhs2;
+}
+
+
+// Destructor
+void ^?{}(string_res &s) with(s) {
+    // much delegated to implied ^VbyteSM
+
+    // sever s from its share-edit peers, if any (four no-ops when already solo)
+    s.shareEditSet_prev->shareEditSet_next = s.shareEditSet_next;
+    s.shareEditSet_next->shareEditSet_prev = s.shareEditSet_prev;
+    s.shareEditSet_next = &s;
+    s.shareEditSet_prev = &s;
+}
+
+
+// Returns the character at the given index
+// With unicode support, this may be different from just the byte at the given
+// offset from the start of the string.
+char ?[?](const string_res &s, size_t index) with(s) {
+    //TODO: Check if index is valid (no exceptions yet)
+    return Handle.s[index];
+}
+
+
+///////////////////////////////////////////////////////////////////
+// Concatenation
+
+void append(string_res &str1, const char * buffer, size_t bsize) {
+    size_t clnth = size(str1) + bsize;
+    if ( str1.Handle.s + size(str1) == buffer ) { // already juxtapose ?
+        // no-op
+    } else {						// must copy some text
+        if ( str1.Handle.s + size(str1) == VbyteAlloc(HeapArea, 0) ) { // str1 at end of string area ?
+            VbyteAlloc(HeapArea, bsize); // create room for 2nd part at the end of string area
+        } else {					// copy the two parts
+            char * str1oldBuf = str1.Handle.s;
+            str1.Handle.s = VbyteAlloc( HeapArea, clnth );
+            ByteCopy( HeapArea, str1.Handle.s, 0, str1.Handle.lnth, str1oldBuf, 0, str1.Handle.lnth);
+        } // if
+        ByteCopy( HeapArea, str1.Handle.s, str1.Handle.lnth, bsize, (char*)buffer, 0, (int)bsize);
+        //       VbyteHeap & this, char *Dst, int DstStart, int DstLnth, char *Src, int SrcStart, int SrcLnth 
+    } // if
+    str1.Handle.lnth = clnth;
+}
+
+void ?+=?(string_res &str1, const string_res &str2) {
+    append( str1, str2.Handle.s, str2.Handle.lnth );
+}
+
+void ?+=?(string_res &s, char other) {
+    append( s, &other, 1 );
+}
+
+void ?+=?(string_res &s, const char* other) {
+    append( s, other, strlen(other) );
+}
+
+
+
+
+//////////////////////////////////////////////////////////
+// Comparisons
+
+
+bool ?==?(const string_res &s1, const string_res &s2) {
+    return ByteCmp( HeapArea, s1.Handle.s, 0, s1.Handle.lnth, s2.Handle.s, 0, s2.Handle.lnth) == 0;
+}
+
+bool ?!=?(const string_res &s1, const string_res &s2) {
+    return !(s1 == s2);
+}
+bool ?==?(const string_res &s, const char* other) {
+    string_res sother = other;
+    return s == sother;
+}
+bool ?!=?(const string_res &s, const char* other) {
+    return !(s == other);
+}
+
+
+//////////////////////////////////////////////////////////
+// Search
+
+bool contains(const string_res &s, char ch) {
+    for (i; size(s)) {
+        if (s[i] == ch) return true;
+    }
+    return false;
+}
+
+int find(const string_res &s, char search) {
+    for (i; size(s)) {
+        if (s[i] == search) return i;
+    }
+    return size(s);
+}
+
+    /* Remaining implementations essentially ported from Sunjay's work */
+
+int find(const string_res &s, const string_res &search) {
+    return find(s, search.Handle.s, search.Handle.lnth);
+}
+
+int find(const string_res &s, const char* search) {
+    return find(s, search, strlen(search));
+}
+
+int find(const string_res &s, const char* search, size_t searchsize) {
+    // FIXME: This is a naive algorithm. We probably want to switch to someting
+    // like Boyer-Moore in the future.
+    // https://en.wikipedia.org/wiki/String_searching_algorithm
+
+    // Always find the empty string
+    if (searchsize == 0) {
+        return 0;
+    }
+
+    for (size_t i = 0; i < s.Handle.lnth; i++) {
+        size_t remaining = s.Handle.lnth - i;
+        // Never going to find the search string if the remaining string is
+        // smaller than search
+        if (remaining < searchsize) {
+            break;
+        }
+
+        bool matched = true;
+        for (size_t j = 0; j < searchsize; j++) {
+            if (search[j] != s.Handle.s[i + j]) {
+                matched = false;
+                break;
+            }
+        }
+        if (matched) {
+            return i;
+        }
+    }
+
+    return s.Handle.lnth;
+}
+
+bool includes(const string_res &s, const string_res &search) {
+    return includes(s, search.Handle.s, search.Handle.lnth);
+}
+
+bool includes(const string_res &s, const char* search) {
+    return includes(s, search, strlen(search));
+}
+
+bool includes(const string_res &s, const char* search, size_t searchsize) {
+    return find(s, search, searchsize) < s.Handle.lnth;
+}
+
+bool startsWith(const string_res &s, const string_res &prefix) {
+    return startsWith(s, prefix.Handle.s, prefix.Handle.lnth);
+}
+
+bool startsWith(const string_res &s, const char* prefix) {
+    return startsWith(s, prefix, strlen(prefix));
+}
+
+bool startsWith(const string_res &s, const char* prefix, size_t prefixsize) {
+    if (s.Handle.lnth < prefixsize) {
+        return false;
+    }
+    return memcmp(s.Handle.s, prefix, prefixsize) == 0;
+}
+
+bool endsWith(const string_res &s, const string_res &suffix) {
+    return endsWith(s, suffix.Handle.s, suffix.Handle.lnth);
+}
+
+bool endsWith(const string_res &s, const char* suffix) {
+    return endsWith(s, suffix, strlen(suffix));
+}
+
+bool endsWith(const string_res &s, const char* suffix, size_t suffixsize) {
+    if (s.Handle.lnth < suffixsize) {
+        return false;
+    }
+    // Amount to offset the bytes pointer so that we are comparing the end of s
+    // to suffix. s.bytes + offset should be the first byte to compare against suffix
+    size_t offset = s.Handle.lnth - suffixsize;
+    return memcmp(s.Handle.s + offset, suffix, suffixsize) == 0;
+}
+
+    /* Back to Mike's work */
+
+
+///////////////////////////////////////////////////////////////////////////
+// charclass, include, exclude
+
+void ?{}( charclass_res & this, const string_res & chars) {
+    (this){ chars.Handle.s, chars.Handle.lnth };
+}
+
+void ?{}( charclass_res & this, const char * chars ) {
+    (this){ chars, strlen(chars) };
+}
+
+void ?{}( charclass_res & this, const char * chars, size_t charssize ) {
+    (this.chars){ chars, charssize };
+    // now sort it ?
+}
+
+void ^?{}( charclass_res & this ) {
+    ^(this.chars){};
+}
+
+static bool test( const charclass_res & mask, char c ) {
+    // instead, use sorted char list?
+    return contains( mask.chars, c );
+}
+
+int exclude(const string_res &s, const charclass_res &mask) {
+    for (int i = 0; i < size(s); i++) {
+        if ( test(mask, s[i]) ) return i;
+    }
+    return size(s);
+}
+
+int include(const string_res &s, const charclass_res &mask) {
+    for (int i = 0; i < size(s); i++) {
+        if ( ! test(mask, s[i]) ) return i;
+    }
+    return size(s);
+}
+
+//######################### VbyteHeap "implementation" #########################
+
+
+// Add a new HandleNode node n after the current HandleNode node.
+
+static inline void AddThisAfter( HandleNode & this, HandleNode & n ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:AddThisAfter, this:" | &this | " n:" | &n;
+#endif // VbyteDebug
+    flink = n.flink;
+    blink = &n;
+    n.flink->blink = &this;
+    n.flink = &this;
+#ifdef VbyteDebug
+    {
+		serr | "HandleList:";
+		serr | nlOff;
+		for ( HandleNode *ni = HeaderPtr->flink; ni != HeaderPtr; ni = ni->flink ) {
+			serr | "\tnode:" | ni | " lnth:" | ni->lnth | " s:" | (void *)ni->s | ",\"";
+			for ( int i = 0; i < ni->lnth; i += 1 ) {
+				serr | ni->s[i];
+			} // for
+			serr | "\" flink:" | ni->flink | " blink:" | ni->blink | nl;
+		} // for
+		serr | nlOn;
+    }
+    serr | "exit:AddThisAfter";
+#endif // VbyteDebug
+} // AddThisAfter
+
+
+// Delete the current HandleNode node.
+
+static inline void DeleteNode( HandleNode & this ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:DeleteNode, this:" | &this;
+#endif // VbyteDebug
+    flink->blink = blink;
+    blink->flink = flink;
+#ifdef VbyteDebug
+    serr | "exit:DeleteNode";
+#endif // VbyteDebug
+} //  DeleteNode
+
+
+
+// Allocates specified storage for a string from byte-string area. If not enough space remains to perform the
+// allocation, the garbage collection routine is called and a second attempt is made to allocate the space. If the
+// second attempt fails, a further attempt is made to create a new, larger byte-string area.
+
+static inline char * VbyteAlloc( VbyteHeap & this, int size ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:VbyteAlloc, size:" | size;
+#endif // VbyteDebug
+    uintptr_t NoBytes;
+    char *r;
+
+    NoBytes = ( uintptr_t )EndVbyte + size;
+    if ( NoBytes > ( uintptr_t )ExtVbyte ) {		// enough room for new byte-string ?
+		garbage( this );					// firer up the garbage collector
+		NoBytes = ( uintptr_t )EndVbyte + size;		// try again
+		if ( NoBytes > ( uintptr_t )ExtVbyte ) {	// enough room for new byte-string ?
+assert( 0 && "need to implement actual growth" );
+			// extend( size );				// extend the byte-string area
+		} // if
+    } // if
+    r = EndVbyte;
+    EndVbyte += size;
+#ifdef VbyteDebug
+    serr | "exit:VbyteAlloc, r:" | (void *)r | " EndVbyte:" | (void *)EndVbyte | " ExtVbyte:" | ExtVbyte;
+#endif // VbyteDebug
+    return r;
+} // VbyteAlloc
+
+
+// Move an existing HandleNode node h somewhere after the current HandleNode node so that it is in ascending order by
+// the address in the byte string area.
+
+static inline void MoveThisAfter( HandleNode & this, const HandleNode  & h ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:MoveThisAfter, this:" | & this | " h:" | & h;
+#endif // VbyteDebug
+    if ( s < h.s ) {					// check argument values
+		// serr | "VbyteSM: Error - Cannot move byte string starting at:" | s | " after byte string starting at:"
+		//      | ( h->s ) | " and keep handles in ascending order";
+		// exit(-1 );
+		assert( 0 && "VbyteSM: Error - Cannot move byte strings as requested and keep handles in ascending order");
+    } // if
+
+    HandleNode *i;
+    for ( i = h.flink; i->s != 0 && s > ( i->s ); i = i->flink ); // find the position for this node after h
+    if ( & this != i->blink ) {
+		DeleteNode( this );
+		AddThisAfter( this, *i->blink );
+    } // if
+#ifdef VbyteDebug
+    serr | "exit:MoveThisAfter";
+    {
+	serr | "HandleList:";
+	serr | nlOff;
+	for ( HandleNode *n = HeaderPtr->flink; n != HeaderPtr; n = n->flink ) {
+	    serr | "\tnode:" | n | " lnth:" | n->lnth | " s:" | (void *)n->s | ",\"";
+	    for ( int i = 0; i < n->lnth; i += 1 ) {
+		serr | n->s[i];
+	    } // for
+	    serr | "\" flink:" | n->flink | " blink:" | n->blink;
+	} // for
+	serr | nlOn;
+    }
+#endif // VbyteDebug
+} // MoveThisAfter
+
+
+
+
+
+//######################### VbyteHeap #########################
+
+#ifdef VbyteDebug
+HandleNode *HeaderPtr = 0p;
+#endif // VbyteDebug
+
+// Move characters from one location in the byte-string area to another. The routine handles the following situations:
+//
+// if the |Src| > |Dst| => truncate
+// if the |Dst| > |Src| => pad Dst with blanks
+
+void ByteCopy( VbyteHeap & this, char *Dst, int DstStart, int DstLnth, char *Src, int SrcStart, int SrcLnth ) {
+    for ( int i = 0; i < DstLnth; i += 1 ) {
+      if ( i == SrcLnth ) {				// |Dst| > |Src|
+	    for ( ; i < DstLnth; i += 1 ) {		// pad Dst with blanks
+		Dst[DstStart + i] = ' ';
+	    } // for
+	    break;
+	} // exit
+	Dst[DstStart + i] = Src[SrcStart + i];
+    } // for
+} // ByteCopy
+
+// Compare two byte strings in the byte-string area. The routine returns the following values:
+//
+// 1 => Src1-byte-string > Src2-byte-string
+// 0 => Src1-byte-string = Src2-byte-string
+// -1 => Src1-byte-string < Src2-byte-string
+
+int ByteCmp( VbyteHeap & this, char *Src1, int Src1Start, int Src1Lnth, char *Src2, int Src2Start, int Src2Lnth )  with(this) {
+#ifdef VbyteDebug
+    serr | "enter:ByteCmp, Src1Start:" | Src1Start | " Src1Lnth:" | Src1Lnth | " Src2Start:" | Src2Start | " Src2Lnth:" | Src2Lnth;
+#endif // VbyteDebug
+    int cmp;
+
+    CharZip: for ( int i = 0; ; i += 1 ) {
+	if ( i == Src2Lnth - 1 ) {
+	    for ( ; ; i += 1 ) {
+		if ( i == Src1Lnth - 1 ) {
+		    cmp = 0;
+		    break CharZip;
+		} // exit
+		if ( Src1[Src1Start + i] != ' ') {
+			// SUSPECTED BUG:  this could be be why Peter got the bug report about == " "  (why is this case here at all?)
+		    cmp = 1;
+		    break CharZip;
+		} // exit
+	    } // for
+	} // exit
+	if ( i == Src1Lnth - 1 ) {
+	    for ( ; ; i += 1 ) {
+	    	if ( i == Src2Lnth - 1 ) {
+		    cmp = 0;
+		    break CharZip;
+		} // exit
+	    	if ( Src2[Src2Start + i] != ' ') {
+		    cmp = -1;
+		    break CharZip;
+		} // exit
+	    } // for
+	} // exit
+      if ( Src2[Src2Start + i] != Src1[Src1Start+ i]) {
+	    cmp = Src1[Src1Start + i] > Src2[Src2Start + i] ? 1 : -1;
+	    break CharZip;
+	} // exit
+    } // for
+#ifdef VbyteDebug
+    serr | "exit:ByteCmp, cmp:" | cmp;
+#endif // VbyteDebug
+    return cmp;
+} // ByteCmp
+
+
+// The compaction moves all of the byte strings currently in use to the beginning of the byte-string area and modifies
+// the handles to reflect the new positions of the byte strings. Compaction assumes that the handle list is in ascending
+// order by pointers into the byte-string area.  The strings associated with substrings do not have to be moved because
+// the containing string has been moved. Hence, they only require that their string pointers be adjusted.
+
+void compaction(VbyteHeap & this) with(this) {
+    HandleNode *h;
+    char *obase, *nbase, *limit;
+    
+    NoOfCompactions += 1;
+    EndVbyte = StartVbyte;
+    h = Header.flink;					// ignore header node
+    for (;;) {
+		ByteCopy( this, EndVbyte, 0, h->lnth, h->s, 0, h->lnth );
+		obase = h->s;
+		h->s = EndVbyte;
+		nbase = h->s;
+		EndVbyte += h->lnth;
+		limit = obase + h->lnth;
+		h = h->flink;
+		
+		// check if any substrings are allocated within a string
+		
+		for (;;) {
+			if ( h == &Header ) break;			// end of header list ?
+			if ( h->s >= limit ) break;			// outside of current string ?
+			h->s = nbase + (( uintptr_t )h->s - ( uintptr_t )obase );
+			h = h->flink;
+		} // for
+		if ( h == &Header ) break;			// end of header list ?
+    } // for
+} // compaction
+
+
+// Garbage determines the amount of free space left in the heap and then reduces, leave the same, or extends the size of
+// the heap.  The heap is then compacted in the existing heap or into the newly allocated heap.
+
+void garbage(VbyteHeap & this ) with(this) {
+#ifdef VbyteDebug
+    serr | "enter:garbage";
+    {
+		serr | "HandleList:";
+		for ( HandleNode *n = Header.flink; n != &Header; n = n->flink ) {
+			serr | nlOff;
+			serr | "\tnode:" | n | " lnth:" | n->lnth | " s:" | (void *)n->s | ",\"";
+			for ( int i = 0; i < n->lnth; i += 1 ) {
+				serr | n->s[i];
+			} // for
+			serr | nlOn;
+			serr | "\" flink:" | n->flink | " blink:" | n->blink;
+		} // for
+    }
+#endif // VbyteDebug
+    int AmountUsed, AmountFree;
+
+    AmountUsed = 0;
+    for ( HandleNode *i = Header.flink; i != &Header; i = i->flink ) { // calculate amount of byte area used
+		AmountUsed += i->lnth;
+    } // for
+    AmountFree = ( uintptr_t )ExtVbyte - ( uintptr_t )StartVbyte - AmountUsed;
+    
+    if ( AmountFree < ( int )( CurrSize * 0.1 )) {	// free space less than 10% ?
+
+assert( 0 && "need to implement actual growth" );
+//		extend( CurrSize );				// extend the heap
+
+			//  Peter says, "This needs work before it should be used."
+			//  } else if ( AmountFree > CurrSize / 2 ) {		// free space greater than 3 times the initial allocation ? 
+			//		reduce(( AmountFree / CurrSize - 3 ) * CurrSize ); // reduce the memory
+
+    } // if
+    compaction(this);					// compact the byte area, in the same or new heap area
+#ifdef VbyteDebug
+    {
+		serr | "HandleList:";
+		for ( HandleNode *n = Header.flink; n != &Header; n = n->flink ) {
+			serr | nlOff;
+			serr | "\tnode:" | n | " lnth:" | n->lnth | " s:" | (void *)n->s | ",\"";
+			for ( int i = 0; i < n->lnth; i += 1 ) {
+				serr | n->s[i];
+			} // for
+			serr | nlOn;
+			serr | "\" flink:" | n->flink | " blink:" | n->blink;
+		} // for
+    }
+    serr | "exit:garbage";
+#endif // VbyteDebug
+} // garbage
+
+#undef VbyteDebug
+
+//WIP
+#if 0
+
+
+// Extend the size of the byte-string area by creating a new area and copying the old area into it. The old byte-string
+// area is deleted.
+
+void VbyteHeap::extend( int size ) {
+#ifdef VbyteDebug
+    serr | "enter:extend, size:" | size;
+#endif // VbyteDebug
+    char *OldStartVbyte;
+
+    NoOfExtensions += 1;
+    OldStartVbyte = StartVbyte;				// save previous byte area
+    
+    CurrSize += size > InitSize ? size : InitSize;	// minimum extension, initial size
+    StartVbyte = EndVbyte = new char[CurrSize];
+    ExtVbyte = (void *)( StartVbyte + CurrSize );
+    compaction();					// copy from old heap to new & adjust pointers to new heap
+    delete OldStartVbyte;				// release old heap
+#ifdef VbyteDebug
+    serr | "exit:extend, CurrSize:" | CurrSize;
+#endif // VbyteDebug
+} // extend
+
+
+// Extend the size of the byte-string area by creating a new area and copying the old area into it. The old byte-string
+// area is deleted.
+
+void VbyteHeap::reduce( int size ) {
+#ifdef VbyteDebug
+    serr | "enter:reduce, size:" | size;
+#endif // VbyteDebug
+    char *OldStartVbyte;
+
+    NoOfReductions += 1;
+    OldStartVbyte = StartVbyte;				// save previous byte area
+    
+    CurrSize -= size;
+    StartVbyte = EndVbyte = new char[CurrSize];
+    ExtVbyte = (void *)( StartVbyte + CurrSize );
+    compaction();					// copy from old heap to new & adjust pointers to new heap
+    delete  OldStartVbyte;				// release old heap
+#ifdef VbyteDebug
+    serr | "exit:reduce, CurrSize:" | CurrSize;
+#endif // VbyteDebug
+} // reduce
+
+
+#endif

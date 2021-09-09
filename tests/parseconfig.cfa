@@ -1,0 +1,146 @@
+#include <fstream.hfa>
+#include <parseconfig.hfa>
+#include <stdlib.hfa>
+
+extern "C" {
+	extern long long int strtoll( const char* str, char** endptr, int base );
+}
+
+#define xstr(s) str(s)
+#define str(s) #s
+
+bool custom_parse( const char * arg, int & value ) {
+	char * end;
+	int r = strtoll( arg, &end, 10 );
+  if ( *end != '\0' ) return false;
+
+	value = r + 99;
+	return true;
+}
+
+int main() {
+	struct {
+        int stop_cost;
+        int num_students;
+        int num_stops;
+        int max_num_students;
+        int timer_delay;
+        int groupoff_delay;
+    } config_params;
+    int conductor_delay;
+    [2] int parental_delay_and_num_couriers;
+    [ int, int ] max_student_delay_and_trips;
+
+	const size_t NUM_ENTRIES = 11;
+	config_entry entries[NUM_ENTRIES] = {
+		{ "StopCost", config_params.stop_cost },
+        { "NumStudents", config_params.num_students },
+        { "NumStops", config_params.num_stops },
+        { "MaxNumStudents", config_params.max_num_students },
+        { "TimerDelay", config_params.timer_delay },
+        { "GroupoffDelay", config_params.groupoff_delay },
+        { "ConductorDelay", conductor_delay },
+        { "ParentalDelay", parental_delay_and_num_couriers[0] },
+        { "NumCouriers", parental_delay_and_num_couriers[1] },
+        { "MaxStudentDelay", max_student_delay_and_trips.0 },
+        { "MaxStudentTrips", max_student_delay_and_trips.1 }
+    };
+
+
+	sout | "Different types of destination addresses";
+
+	parse_config( xstr(IN_DIR) "parseconfig-all.txt", entries, NUM_ENTRIES, parse_tabular_config_format );
+
+    sout | "Stop cost: " | config_params.stop_cost;
+    sout | "Number of students: " | config_params.num_students;
+    sout | "Number of stops: " | config_params.num_stops;
+    sout | "Maximum number of students: " | config_params.max_num_students;
+    sout | "Timer delay: " | config_params.timer_delay;
+    sout | "Groupoff delay: " | config_params.groupoff_delay;
+    sout | "Conductor delay: " | conductor_delay;
+    sout | "Parental delay: " | parental_delay_and_num_couriers[0];
+    sout | "Number of couriers: " | parental_delay_and_num_couriers[1];
+    sout | "Maximum student delay: " | max_student_delay_and_trips.0;
+    sout | "Maximum student trips: " | max_student_delay_and_trips.1;
+	sout | nl;
+
+
+	sout | "Open_Failure thrown when config file does not exist";
+	try {
+		parse_config( xstr(IN_DIR) "doesnt-exist.txt", entries, NUM_ENTRIES, parse_tabular_config_format );
+	} catch( Open_Failure * ex ) {
+		sout | "Failed to open the config file";
+	}
+	sout | nl;
+
+
+	sout | "Missing_Config_Entries thrown when config file is missing entries we want";
+	try {
+		parse_config( xstr(IN_DIR) "parseconfig-missing.txt", entries, NUM_ENTRIES, parse_tabular_config_format );
+	} catch( Missing_Config_Entries * ex ) {
+		msg( ex );
+	}
+	sout | nl;
+
+
+	sout | "Parse_Failure thrown when an entry cannot be parsed";
+
+	int non_int_val;
+	config_entry entry[1] = {
+		{ "AnothaOne", non_int_val }
+	};
+
+	try {
+		parse_config( xstr(IN_DIR) "parseconfig-errors.txt", entry, 1, parse_tabular_config_format );
+	} catch( Parse_Failure * ex ) {
+		msg( ex );
+	}
+	sout | nl;
+
+
+	sout | "Validation_Failure thrown when an entry fails validation";
+
+	// TODO: Fix compiler bug that makes casting necessary
+	config_entry new_entry1 = { "StopCost", config_params.stop_cost, (bool (*)(int &))is_positive };
+	entries[0] = new_entry1;
+
+	try {
+		parse_config( xstr(IN_DIR) "parseconfig-errors.txt", entries, NUM_ENTRIES, parse_tabular_config_format );
+	} catch( Validation_Failure * ex ) {
+		msg( ex );
+	}
+	sout | nl;
+
+
+	sout | "No error is thrown when validation succeeds";
+	config_params.stop_cost = -1; // Reset value
+	parse_config( xstr(IN_DIR) "parseconfig-all.txt", entries, NUM_ENTRIES, parse_tabular_config_format );
+	sout | "Stop cost: " | config_params.stop_cost;
+	sout | nl;
+
+
+	sout | "A custom parse function can be accepted";
+
+	config_entry new_entry2 = { "StopCost", config_params.stop_cost, custom_parse };
+	entries[0] = new_entry2;
+
+	config_params.stop_cost = -1; // Reset value
+	parse_config( xstr(IN_DIR) "parseconfig-all.txt", entries, NUM_ENTRIES, parse_tabular_config_format );
+
+	sout | "Stop cost: " | config_params.stop_cost;
+	sout | nl;
+
+
+	sout | "Custom parse and validation functions can be provided together";
+
+	// TODO: Fix compiler bug that makes casting necessary
+	config_entry new_entry3 = { "StopCost", config_params.stop_cost, custom_parse, (bool (*)(int &))is_positive };
+	entries[0] = new_entry3;
+
+	config_params.stop_cost = -1; // Reset value
+	parse_config( xstr(IN_DIR) "parseconfig-all.txt", entries, NUM_ENTRIES, parse_tabular_config_format );
+
+	sout | "Stop cost: " | config_params.stop_cost;
+
+	exit( EXIT_SUCCESS );  // This is to avoid memory leak messages from the above exceptions
+}

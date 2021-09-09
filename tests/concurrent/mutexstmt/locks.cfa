@@ -1,24 +1,18 @@
-#include <monitor.hfa>
 #include <mutex_stmt.hfa>
-#include <stdio.h>
-#include <stdlib.hfa>
-#include <thread.hfa>
+#include <locks.hfa>
 
 const unsigned int num_times = 10000;
 
-monitor monitor_t {};
-
-monitor_t m1, m2, m3, m4, m5;
+single_acquisition_lock m1, m2, m3, m4, m5;
 
 thread T_Mutex {};
 bool insideFlag = false;
 int count = 0;
-bool startFlag = false;
 
 void main( T_Mutex & this ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		mutex ( m1 ) count++;
-		mutex ( m1 ) {
+		mutex ( m1 ) { 
 			assert(!insideFlag);
 			insideFlag = true;
 			assert(insideFlag);
@@ -68,14 +62,14 @@ void main( T_Multi & this ) {
 int main() {
 	processor p[10];
 
-	printf("Start Test: single monitor mutual exclusion\n");
+	printf("Start Test: single lock mutual exclusion\n");
 	{
 		T_Mutex t[10];
 	}
-	printf("End Test: single monitor mutual exclusion\n");
-	printf("Start Test: multi monitor deadlock/mutual exclusion\n");
+	printf("End Test: single lock mutual exclusion\n");
+	printf("Start Test: multi lock deadlock/mutual exclusion\n");
 	{
 		T_Multi t[10];
 	}
-	printf("End Test: multi monitor deadlock/mutual exclusion\n");
+	printf("End Test: multi lock deadlock/mutual exclusion\n");
 }

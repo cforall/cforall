@@ -1,0 +1,33 @@
+Different types of destination addresses
+Stop cost: 1
+Number of students: 2
+Number of stops: 2
+Maximum number of students: 5
+Timer delay: 2
+Groupoff delay: 10
+Conductor delay: 5
+Parental delay: 5
+Number of couriers: 1
+Maximum student delay: 10
+Maximum student trips: 3
+
+Open_Failure thrown when config file does not exist
+Failed to open the config file
+
+Missing_Config_Entries thrown when config file is missing entries we want
+The config file is missing 1 entry.
+
+Parse_Failure thrown when an entry cannot be parsed
+Config entry AnothaOne could not be parsed. It has value DjKhaled.
+
+Validation_Failure thrown when an entry fails validation
+Config entry StopCost could not be validated. It has value -1.
+
+No error is thrown when validation succeeds
+Stop cost: 1
+
+A custom parse function can be accepted
+Stop cost: 100
+
+Custom parse and validation functions can be provided together
+Stop cost: 100

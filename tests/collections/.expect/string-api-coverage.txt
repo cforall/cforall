@@ -1,0 +1,51 @@
+hello hello hello
+true false
+true false
+true false
+true false
+true false
+true false
+true false
+true false
+true false
+true false
+true false
+true false
+123
+hello
+hello
+world
+hello
+world
+5
+helloworld
+helloworld
+helloworld!
+hello!
+hellohello
+hellohello, friend
+hello, friend
+bye, friend
+hellohellohello
+QQQ
+asdfasdfasdf
+e
+help!!!o
+help!!!!
+help!!!
+p
+true true false
+0 4 7 8
+0 0 25 0 26 3
+true true true true false true
+0 0 26 3
+true true false true
+true false false true
+0 0 26 3
+true true false true
+true false false true
+3 3 1 0 22 0 3 5 3
+true true true true false true true false true
+true true false true true true true true false
+true false true false true true true false true false
+3 0 0 11 26 0

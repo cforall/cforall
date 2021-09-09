@@ -1,0 +1,12 @@
+StopCost				-1	# amount to charge per train stop
+NumStudents				2	# number of students to create
+NumStops				2	# number of train stops; minimum of 2
+MaxNumStudents 			5  	# maximum students each train can carry
+TimerDelay 				2	# length of time between each tick of the timer
+MaxStudentDelay			10	# maximum random student delay between trips
+MaxStudentTrips 		3	# maximum number of train trips each student takes
+GroupoffDelay			10	# length of time between initializing gift cards
+ConductorDelay			5  	# length of time between checking on passenger POPs
+ParentalDelay			5	# length of time between cash deposits
+NumCouriers				1	# number of WATCard office couriers in the pool
+AnothaOne               DjKhaled    # this one will not be used by the user

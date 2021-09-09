@@ -18,9 +18,13 @@
 #include <list>  // for list
 
 class Declaration;
+namespace ast {
+	struct TranslationUnit;
+}
 
 namespace LibCfa {
 	void makeLibCfa( std::list< Declaration* > &prelude );
+	void makeLibCfa( ast::TranslationUnit & translationUnit );
 } // namespace LibCfa
 
 // Local Variables: //

@@ -1,0 +1,140 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// string_res -- variable-length, mutable run of text, with resource semantics
+//
+// Author           : Michael L. Brooks
+// Created On       : Fri Sep 03 11:00:00 2021
+// Last Modified By : Michael L. Brooks
+// Last Modified On : Fri Sep 03 11:00:00 2021
+// Update Count     : 1
+//
+
+#pragma once
+
+#include <fstream.hfa>
+
+    
+//######################### HandleNode #########################
+//private
+
+struct VbyteHeap;
+
+struct HandleNode {
+    HandleNode *flink;					// forward link
+    HandleNode *blink;					// backward link
+
+    char *s;						// pointer to byte string
+    unsigned int lnth;					// length of byte string
+}; // HandleNode
+
+void ?{}( HandleNode & );			// constructor for header node
+
+void ?{}( HandleNode &, VbyteHeap & );		// constructor for nodes in the handle list
+void ^?{}( HandleNode & );			// destructor for handle nodes
+
+
+//######################### String #########################
+
+// A dynamically-sized string
+struct string_res {
+    HandleNode Handle; // chars, start, end, global neighbours
+    string_res * shareEditSet_prev;
+    string_res * shareEditSet_next;
+};
+
+
+//######################### charclass_res #########################
+
+struct charclass_res {
+    string_res chars;
+};
+
+void ?{}( charclass_res & ) = void;
+void ?{}( charclass_res &, charclass_res) = void;
+charclass_res ?=?( charclass_res &, charclass_res) = void;
+void ?{}( charclass_res &, const string_res & chars);
+void ?{}( charclass_res &, const char * chars );
+void ?{}( charclass_res &, const char * chars, size_t charssize );
+void ^?{}( charclass_res & );
+
+
+//######################### String #########################
+
+// Getters
+size_t size(const string_res &s);
+
+// Constructors, Assignment Operators, Destructor
+void ?{}(string_res &s); // empty string
+void ?{}(string_res &s, const char* initial); // copy from string literal (NULL-terminated)
+void ?{}(string_res &s, const char* buffer, size_t bsize); // copy specific length from buffer
+
+void ?{}(string_res &s, const string_res & s2) = void;
+void ?{}(string_res &s, string_res & s2) = void;
+
+enum StrResInitMode { COPY_VALUE, SHARE_EDITS };
+void ?{}(string_res &s, const string_res & src, StrResInitMode, size_t start, size_t end );
+static inline void ?{}(string_res &s, const string_res & src, StrResInitMode mode ) {
+    ?{}( s, src, mode, 0, size(src));
+}
+
+void assign(string_res &s, const char* buffer, size_t bsize); // copy specific length from buffer
+void ?=?(string_res &s, const char* other); // copy from string literal (NULL-terminated)
+void ?=?(string_res &s, const string_res &other);
+void ?=?(string_res &s, string_res &other);
+void ?=?(string_res &s, char other);
+
+void ^?{}(string_res &s);
+
+// IO Operator
+ofstream & ?|?(ofstream &out, const string_res &s);
+void ?|?(ofstream &out, const string_res &s);
+
+// Concatenation
+void ?+=?(string_res &s, char other); // append a character
+void ?+=?(string_res &s, const string_res &s2); // append-concatenate to first string
+void ?+=?(string_res &s, const char* other);
+void append(string_res &s, const char* buffer, size_t bsize);
+
+// Character access
+char ?[?](const string_res &s, size_t index); // Mike changed to ret by val from Sunjay's ref, to match Peter's
+//char codePointAt(const string_res &s, size_t index); // revisit under Unicode
+
+// Comparisons
+bool ?==?(const string_res &s, const string_res &other);
+bool ?!=?(const string_res &s, const string_res &other);
+bool ?==?(const string_res &s, const char* other);
+bool ?!=?(const string_res &s, const char* other);
+
+// String search
+bool contains(const string_res &s, char ch); // single character
+
+int find(const string_res &s, char search);
+int find(const string_res &s, const string_res &search);
+int find(const string_res &s, const char* search);
+int find(const string_res &s, const char* search, size_t searchsize);
+
+bool includes(const string_res &s, const string_res &search);
+bool includes(const string_res &s, const char* search);
+bool includes(const string_res &s, const char* search, size_t searchsize);
+
+bool startsWith(const string_res &s, const string_res &prefix);
+bool startsWith(const string_res &s, const char* prefix);
+bool startsWith(const string_res &s, const char* prefix, size_t prefixsize);
+
+bool endsWith(const string_res &s, const string_res &suffix);
+bool endsWith(const string_res &s, const char* suffix);
+bool endsWith(const string_res &s, const char* suffix, size_t suffixsize);
+
+int include(const string_res &s, const charclass_res &mask);
+int exclude(const string_res &s, const charclass_res &mask);
+
+// Modifiers
+void padStart(string_res &s, size_t n);
+void padStart(string_res &s, size_t n, char padding);
+void padEnd(string_res &s, size_t n);
+void padEnd(string_res &s, size_t n, char padding);
+

@@ -148,6 +148,10 @@ struct __acceptable_t {
 
 void __waitfor_internal( const __waitfor_mask_t & mask, int duration );
 
+// lock and unlock routines for mutex statements to use
+void lock( monitor$ * this );
+void unlock( monitor$ * this );
+
 // Local Variables: //
 // mode: c //
 // tab-width: 4 //

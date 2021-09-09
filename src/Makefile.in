@@ -252,9 +252,9 @@ am__objects_9 = CompilationState.$(OBJEXT) $(am__objects_1) \
 am_libdemangle_a_OBJECTS = $(am__objects_9)
 libdemangle_a_OBJECTS = $(am_libdemangle_a_OBJECTS)
 am__objects_10 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
-	MakeLibCfa.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
-	CodeGen/Generate.$(OBJEXT) CodeGen/FixNames.$(OBJEXT) \
-	CodeTools/DeclStats.$(OBJEXT) \
+	MakeLibCfa.$(OBJEXT) MakeLibCfaNew.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2) CodeGen/Generate.$(OBJEXT) \
+	CodeGen/FixNames.$(OBJEXT) CodeTools/DeclStats.$(OBJEXT) \
 	CodeTools/ResolvProtoDump.$(OBJEXT) \
 	CodeTools/TrackLoc.$(OBJEXT) Concurrency/Keywords.$(OBJEXT) \
 	Concurrency/Waitfor.$(OBJEXT) $(am__objects_3) \
@@ -305,15 +305,16 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/automake/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
-	./$(DEPDIR)/MakeLibCfa.Po ./$(DEPDIR)/main.Po \
-	AST/$(DEPDIR)/AssertAcyclic.Po AST/$(DEPDIR)/Attribute.Po \
-	AST/$(DEPDIR)/Convert.Po AST/$(DEPDIR)/Decl.Po \
-	AST/$(DEPDIR)/DeclReplacer.Po AST/$(DEPDIR)/Expr.Po \
-	AST/$(DEPDIR)/GenericSubstitution.Po AST/$(DEPDIR)/Init.Po \
-	AST/$(DEPDIR)/LinkageSpec.Po AST/$(DEPDIR)/Node.Po \
-	AST/$(DEPDIR)/Pass.Po AST/$(DEPDIR)/Print.Po \
-	AST/$(DEPDIR)/Stmt.Po AST/$(DEPDIR)/SymbolTable.Po \
-	AST/$(DEPDIR)/Type.Po AST/$(DEPDIR)/TypeEnvironment.Po \
+	./$(DEPDIR)/MakeLibCfa.Po ./$(DEPDIR)/MakeLibCfaNew.Po \
+	./$(DEPDIR)/main.Po AST/$(DEPDIR)/AssertAcyclic.Po \
+	AST/$(DEPDIR)/Attribute.Po AST/$(DEPDIR)/Convert.Po \
+	AST/$(DEPDIR)/Decl.Po AST/$(DEPDIR)/DeclReplacer.Po \
+	AST/$(DEPDIR)/Expr.Po AST/$(DEPDIR)/GenericSubstitution.Po \
+	AST/$(DEPDIR)/Init.Po AST/$(DEPDIR)/LinkageSpec.Po \
+	AST/$(DEPDIR)/Node.Po AST/$(DEPDIR)/Pass.Po \
+	AST/$(DEPDIR)/Print.Po AST/$(DEPDIR)/Stmt.Po \
+	AST/$(DEPDIR)/SymbolTable.Po AST/$(DEPDIR)/Type.Po \
+	AST/$(DEPDIR)/TypeEnvironment.Po \
 	AST/$(DEPDIR)/TypeSubstitution.Po \
 	CodeGen/$(DEPDIR)/CodeGenerator.Po \
 	CodeGen/$(DEPDIR)/FixMain.Po CodeGen/$(DEPDIR)/FixNames.Po \
@@ -670,15 +671,15 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I automake
 SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
-	MakeLibCfa.h $(SRC_AST) $(SRC_CODEGEN) CodeGen/Generate.cc \
-	CodeGen/Generate.h CodeGen/FixNames.cc CodeGen/FixNames.h \
-	CodeTools/DeclStats.cc CodeTools/DeclStats.h \
-	CodeTools/ResolvProtoDump.cc CodeTools/ResolvProtoDump.h \
-	CodeTools/TrackLoc.cc CodeTools/TrackLoc.h \
-	Concurrency/Keywords.cc Concurrency/Keywords.h \
-	Concurrency/Waitfor.cc Concurrency/Waitfor.h $(SRC_COMMON) \
-	Common/DebugMalloc.cc $(SRC_CONTROLSTRUCT) \
-	ControlStruct/ExceptTranslate.cc \
+	MakeLibCfaNew.cpp MakeLibCfa.h $(SRC_AST) $(SRC_CODEGEN) \
+	CodeGen/Generate.cc CodeGen/Generate.h CodeGen/FixNames.cc \
+	CodeGen/FixNames.h CodeTools/DeclStats.cc \
+	CodeTools/DeclStats.h CodeTools/ResolvProtoDump.cc \
+	CodeTools/ResolvProtoDump.h CodeTools/TrackLoc.cc \
+	CodeTools/TrackLoc.h Concurrency/Keywords.cc \
+	Concurrency/Keywords.h Concurrency/Waitfor.cc \
+	Concurrency/Waitfor.h $(SRC_COMMON) Common/DebugMalloc.cc \
+	$(SRC_CONTROLSTRUCT) ControlStruct/ExceptTranslate.cc \
 	ControlStruct/ExceptTranslate.h GenPoly/Box.cc GenPoly/Box.h \
 	GenPoly/ErasableScopedMap.h GenPoly/FindFunction.cc \
 	GenPoly/FindFunction.h GenPoly/GenPoly.cc GenPoly/GenPoly.h \
@@ -1484,6 +1485,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CompilationState.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MakeLibCfa.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MakeLibCfaNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/AssertAcyclic.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Attribute.Po@am__quote@ # am--include-marker
@@ -1872,6 +1874,7 @@ clean-am: clean-cfa_cpplibPROGRAMS clean-generic clean-libtool \
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/CompilationState.Po
 	-rm -f ./$(DEPDIR)/MakeLibCfa.Po
+	-rm -f ./$(DEPDIR)/MakeLibCfaNew.Po
 	-rm -f ./$(DEPDIR)/main.Po
 	-rm -f AST/$(DEPDIR)/AssertAcyclic.Po
 	-rm -f AST/$(DEPDIR)/Attribute.Po
@@ -2068,6 +2071,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/CompilationState.Po
 	-rm -f ./$(DEPDIR)/MakeLibCfa.Po
+	-rm -f ./$(DEPDIR)/MakeLibCfaNew.Po
 	-rm -f ./$(DEPDIR)/main.Po
 	-rm -f AST/$(DEPDIR)/AssertAcyclic.Po
 	-rm -f AST/$(DEPDIR)/Attribute.Po
