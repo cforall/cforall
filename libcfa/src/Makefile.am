@@ -195,6 +195,9 @@ prelude.lo: prelude.cfa extras.cf gcc-builtins.cf builtins.cf @LOCAL_CFACC@ @CFA
 	${AM_V_GEN}$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile \
 	$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -o ${@}
 
+concurrency/io/call.cfa: $(srcdir)/concurrency/io/call.cfa.in
+	${AM_V_GEN}python3 $< > $@
+
 #----------------------------------------------------------------------------------------------------------------
 libcfa_la_SOURCES = ${libsrc}
 nodist_libcfa_la_SOURCES = prelude.cfa
