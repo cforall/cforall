@@ -421,3 +421,5 @@ extern "C" {
 		free(cpu_info.llc_map);
 	}
 }
+
+cpu_info_t cpu_info;

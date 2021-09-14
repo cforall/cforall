@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug  8 09:14:44 2021
-// Update Count     : 5038
+// Last Modified On : Sat Sep 11 08:20:44 2021
+// Update Count     : 5040
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -2445,6 +2445,7 @@ initializer_opt:
 		{ $$ = nullptr; }
 	| simple_assignment_operator initializer	{ $$ = $1 == OperKinds::Assign ? $2 : $2->set_maybeConstructed( false ); }
 	| '=' VOID									{ $$ = new InitializerNode( true ); }
+	| '{' initializer_list_opt comma_opt '}'	{ $$ = new InitializerNode( $2, true ); }
 	;
 
 initializer:
@@ -2458,8 +2459,7 @@ initializer_list_opt:
 	| initializer
 	| designation initializer					{ $$ = $2->set_designators( $1 ); }
 	| initializer_list_opt ',' initializer		{ $$ = (InitializerNode *)( $1->set_last( $3 ) ); }
-	| initializer_list_opt ',' designation initializer
-		{ $$ = (InitializerNode *)($1->set_last( $4->set_designators( $3 ) )); }
+	| initializer_list_opt ',' designation initializer { $$ = (InitializerNode *)($1->set_last( $4->set_designators( $3 ) )); }
 	;
 
 // There is an unreconcileable parsing problem between C99 and CFA with respect to designators. The problem is use of

@@ -29,4 +29,4 @@ struct cpu_info_t {
 	size_t hthrd_count;
 };
 
-cpu_info_t cpu_info;
+extern cpu_info_t cpu_info;

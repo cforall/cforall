@@ -21,6 +21,7 @@
 //C Includes
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <signal.h>
 #include <unistd.h>
 extern "C" {
@@ -30,6 +31,8 @@ extern "C" {
 //CFA Includes
 #include "kernel_private.hfa"
 #include "preemption.hfa"
+#include "strstream.hfa"
+#include "device/cpu.hfa"
 
 //Private includes
 #define __CFA_INVOKE_PRIVATE__
@@ -230,10 +233,23 @@ void main(processorCtx_t & runner) {
 
 				__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle);
 
-				__disable_interrupts_hard();
-				eventfd_t val;
-				eventfd_read( this->idle, &val );
-				__enable_interrupts_hard();
+				{
+					eventfd_t val;
+					ssize_t ret = read( this->idle, &val, sizeof(val) );
+					if(ret < 0) {
+						switch((int)errno) {
+						case EAGAIN:
+						#if EAGAIN != EWOULDBLOCK
+							case EWOULDBLOCK:
+						#endif
+						case EINTR:
+							// No need to do anything special here, just assume it's a legitimate wake-up
+							break;
+						default:
+							abort( "KERNEL : internal error, read failure on idle eventfd, error(%d) %s.", (int)errno, strerror( (int)errno ) );
+						}
+					}
+				}
 
 				#if !defined(__CFA_NO_STATISTICS__)
 					if(this->print_halts) {
