@@ -1199,7 +1199,12 @@ namespace Concurrency {
 				noQualifiers,
 				new PointerType(
 					noQualifiers,
-					new TypeofType( noQualifiers, args.front()->clone() )
+					//new TypeofType( noQualifiers, args.front()->clone() )
+					new TypeofType( noQualifiers, new UntypedExpr(
+							new NameExpr( "__get_type" ),
+							{ args.front()->clone() }
+						) 
+					)
 				),
 				new ConstantExpr( Constant::from_ulong( args.size() ) ),
 				false,
@@ -1207,13 +1212,23 @@ namespace Concurrency {
 			),
 			new ListInit(
 				map_range < std::list<Initializer*> > ( args, [](Expression * var ){
-					return new SingleInit( new AddressExpr( var ) );
+					return new SingleInit( new UntypedExpr(
+							new NameExpr( "__get_ptr" ),
+							{ var }
+					) );
+					//return new SingleInit( new AddressExpr( var ) );
 				})
 			)
 		);
 
 		StructInstType * lock_guard_struct = new StructInstType( noQualifiers, lock_guard_decl );
-		TypeExpr * lock_type_expr = new TypeExpr( new TypeofType( noQualifiers, args.front()->clone() ) );
+		TypeExpr * lock_type_expr = new TypeExpr( 
+			new TypeofType( noQualifiers, new UntypedExpr(
+				new NameExpr( "__get_type" ),
+				{ args.front()->clone() }
+				) 
+			) 
+		);
 
 		lock_guard_struct->parameters.push_back( lock_type_expr ) ;
 

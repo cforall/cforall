@@ -39,4 +39,12 @@ forall(L & | is_lock(L)) {
             unlock(*lockarr[i - 1]);
         }
     }
+
+    static inline L * __get_ptr( L & this ) {
+        return &this;
+    }
+
+    static inline L __get_type( L & this );
+
+    static inline L __get_type( L * this );
 }
