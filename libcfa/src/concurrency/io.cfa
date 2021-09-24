@@ -89,7 +89,7 @@
 //=============================================================================================
 	static inline unsigned __flush( struct $io_context & );
 	static inline __u32 __release_sqes( struct $io_context & );
-	extern void __kernel_unpark( thread$ * thrd );
+	extern void __kernel_unpark( thread$ * thrd, unpark_hint );
 
 	bool __cfa_io_drain( processor * proc ) {
 		/* paranoid */ verify( ! __preemption_enabled() );
@@ -117,7 +117,7 @@
 			struct io_future_t * future = (struct io_future_t *)(uintptr_t)cqe.user_data;
 			__cfadbg_print_safe( io, "Kernel I/O : Syscall completed : cqe %p, result %d for %p\n", &cqe, cqe.res, future );
 
-			__kernel_unpark( fulfil( *future, cqe.res, false ) );
+			__kernel_unpark( fulfil( *future, cqe.res, false ), UNPARK_LOCAL );
 		}
 
 		__cfadbg_print_safe(io, "Kernel I/O : %u completed\n", count);

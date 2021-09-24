@@ -36,6 +36,10 @@ void ?{}( HandleNode & );			// constructor for header node
 void ?{}( HandleNode &, VbyteHeap & );		// constructor for nodes in the handle list
 void ^?{}( HandleNode & );			// destructor for handle nodes
 
+extern VbyteHeap * DEBUG_string_heap;
+size_t DEBUG_string_bytes_avail_until_gc( VbyteHeap * heap );
+const char * DEBUG_string_heap_start( VbyteHeap * heap );
+
 
 //######################### String #########################
 

@@ -118,8 +118,11 @@ extern "C" {
 	extern void enable_interrupts( bool poll = false );
 
 	extern "Cforall" {
+		enum unpark_hint { UNPARK_LOCAL, UNPARK_REMOTE };
+
 		extern void park( void );
-		extern void unpark( struct thread$ * this );
+		extern void unpark( struct thread$ *, unpark_hint );
+		static inline void unpark( struct thread$ * thrd ) { unpark(thrd, UNPARK_LOCAL); }
 		static inline struct thread$ * active_thread () {
 			struct thread$ * t = publicTLS_get( this_thread );
 			/* paranoid */ verify( t );

@@ -24,6 +24,8 @@
 #define __CFA_INVOKE_PRIVATE__
 #include "invoke.h"
 
+uint64_t thread_rand();
+
 //-----------------------------------------------------------------------------
 // Thread ctors and dtors
 void ?{}(thread$ & this, const char * const name, cluster & cl, void * storage, size_t storageSize ) with( this ) {
@@ -33,9 +35,6 @@ void ?{}(thread$ & this, const char * const name, cluster & cl, void * storage, 
 	state = Start;
 	preempted = __NO_PREEMPTION;
 	corctx_flag = false;
-	disable_interrupts();
-	last_cpu = __kernel_getcpu();
-	enable_interrupts();
 	curr_cor = &self_cor;
 	self_mon.owner = &this;
 	self_mon.recursion = 1;
@@ -43,7 +42,7 @@ void ?{}(thread$ & this, const char * const name, cluster & cl, void * storage, 
 	curr_cluster = &cl;
 	link.next = 0p;
 	link.ts   = -1llu;
-	preferred = -1u;
+	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
 	#if defined( __CFA_WITH_VERIFY__ )
 		canary = 0x0D15EA5E0D15EA5Ep;
@@ -140,7 +139,7 @@ void __thrd_start( T & this, void (*main_p)(T &) ) {
 	this_thrd->context.[SP, FP] = this_thrd->self_cor.context.[SP, FP];
 	/* paranoid */ verify( this_thrd->context.SP );
 
-	schedule_thread$( this_thrd );
+	schedule_thread$( this_thrd, UNPARK_LOCAL );
 	enable_interrupts();
 }
 

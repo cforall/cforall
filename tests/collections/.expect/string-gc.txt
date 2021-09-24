@@ -1,0 +1,39 @@
+======================== basicFillCompact
+hello!
+hello!----|
+hello!----|----|
+hello!----|----|----|
+--A
+length of x:21
+padder from 6 to 11
+x from 0 to 21
+--B
+length of x:996
+padder from 6 to 11
+x from 0 to 996
+--C
+xinit from 0 to 6
+padder from 6 to 11
+x from 996 to 997
+--D
+before append, x = q
+after append, x = q----|
+--E
+xinit from 0 to 6
+padder from 6 to 11
+x from 11 to 17
+--F
+983 bytes available before re-fill
+1 bytes available after re-fill
+--G
+after re-fill, x = q----|
+======================== fillCompact_withSharedEdits
+x from 990 to 995
+y from 990 to 995
+-
+before reassign, x = hello
+before reassign, y = hello
+after reassign, x = 0123456789
+after reassign, y = 0123456789
+x from 5 to 15
+y from 5 to 15

@@ -20,8 +20,21 @@
 //######################### VbyteHeap "header" #########################
 
 
+
+
+
+
+
+
+// DON'T COMMIT:
+// #define VbyteDebug
+
+
+
+
+
 #ifdef VbyteDebug
-extern HandleNode *HeaderPtr;
+HandleNode *HeaderPtr;
 #endif // VbyteDebug
 
 struct VbyteHeap {
@@ -140,6 +153,17 @@ void ^?{}( HandleNode & this ) with(this) {
 
 VbyteHeap HeapArea;
 
+VbyteHeap * DEBUG_string_heap = & HeapArea;
+
+size_t DEBUG_string_bytes_avail_until_gc( VbyteHeap * heap ) {
+    return ((char*)heap->ExtVbyte) - heap->EndVbyte;
+}
+
+const char * DEBUG_string_heap_start( VbyteHeap * heap ) {
+    return heap->StartVbyte;
+}
+
+
 // Returns the size of the string in bytes
 size_t size(const string_res &s) with(s) {
     return Handle.lnth;
@@ -224,23 +248,44 @@ void ?{}(string_res &s, const string_res & s2, StrResInitMode mode, size_t start
 
 void assign(string_res &this, const char* buffer, size_t bsize) {
 
-    char * afterBegin = this.Handle.s + this.Handle.lnth;
-
-    char * shareEditSetStart = this.Handle.s;
-    char * shareEditSetEnd = afterBegin;
+    // traverse the incumbent share-edit set (SES) to recover the range of a base string to which `this` belongs
+    string_res * shareEditSetStartPeer = & this;
+    string_res * shareEditSetEndPeer = & this;
     for (string_res * editPeer = this.shareEditSet_next; editPeer != &this; editPeer = editPeer->shareEditSet_next) {
-        shareEditSetStart = min( shareEditSetStart, editPeer->Handle.s );
-        shareEditSetEnd = max( shareEditSetStart, editPeer->Handle.s + editPeer->Handle.lnth);
+        if ( editPeer->Handle.s < shareEditSetStartPeer->Handle.s ) {
+            shareEditSetStartPeer = editPeer;
+        }
+        if ( shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth < editPeer->Handle.s + editPeer->Handle.lnth) {
+            shareEditSetEndPeer = editPeer;
+        }
     }
 
-    char * beforeBegin = shareEditSetStart;
-    size_t beforeLen = this.Handle.s - shareEditSetStart;
-    size_t afterLen = shareEditSetEnd - afterBegin;
+    // full string is from start of shareEditSetStartPeer thru end of shareEditSetEndPeer
+    // `this` occurs in the middle of it, to be replaced
+    // build up the new text in `pasting`
 
-    string_res pasting = { beforeBegin, beforeLen };
-    append(pasting, buffer, bsize);
-    string_res after = { afterBegin, afterLen }; // juxtaposed with in-progress pasting
-    pasting += after;                        // optimized case
+    string_res pasting = {
+        shareEditSetStartPeer->Handle.s,                   // start of SES
+        this.Handle.s - shareEditSetStartPeer->Handle.s }; // length of SES, before this
+    append( pasting,
+        buffer,                                            // start of replacement for this
+        bsize );                                           // length of replacement for this
+    append( pasting,
+        this.Handle.s + this.Handle.lnth,                  // start of SES after this
+        shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth -
+        (this.Handle.s + this.Handle.lnth) );              // length of SES, after this
+
+    // The above string building can trigger compaction.
+    // The reference points (that are arguments of the string building) may move during that building.
+    // From this point on, they are stable.
+    // So now, capture their values for use in the overlap cases, below.
+    // Do not factor these definitions with the arguments used above.
+
+    char * beforeBegin = shareEditSetStartPeer->Handle.s;
+    size_t beforeLen = this.Handle.s - beforeBegin;
+
+    char * afterBegin = this.Handle.s + this.Handle.lnth;
+    size_t afterLen = shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth - afterBegin;
 
     size_t oldLnth = this.Handle.lnth;
 
@@ -252,14 +297,22 @@ void assign(string_res &this, const char* buffer, size_t bsize) {
     char *limit = pasting.Handle.s + pasting.Handle.lnth;
     for (string_res * p = this.shareEditSet_next; p != &this; p = p->shareEditSet_next) {
         assert (p->Handle.s >= beforeBegin);
-        if ( p->Handle.s < beforeBegin + beforeLen ) {
-            // p starts before the edit
-            if ( p->Handle.s + p->Handle.lnth < beforeBegin + beforeLen ) {
+        if ( p->Handle.s >= afterBegin ) {
+            assert ( p->Handle.s <= afterBegin + afterLen );
+            assert ( p->Handle.s + p->Handle.lnth <= afterBegin + afterLen );
+            // p starts after the edit
+            // take start and end as end-anchored
+            size_t startOffsetFromEnd = afterBegin + afterLen - p->Handle.s;
+            p->Handle.s = limit - startOffsetFromEnd;
+            // p->Handle.lnth unaffected
+        } else if ( p->Handle.s <= beforeBegin + beforeLen ) {
+            // p starts before, or at the start of, the edit
+            if ( p->Handle.s + p->Handle.lnth <= beforeBegin + beforeLen ) {
                 // p ends before the edit
                 // take end as start-anchored too
                 // p->Handle.lnth unaffected
             } else if ( p->Handle.s + p->Handle.lnth < afterBegin ) {
-                // p ends during the edit
+                // p ends during the edit; p does not include the last character replaced
                 // clip end of p to end at start of edit
                 p->Handle.lnth = beforeLen - ( p->Handle.s - beforeBegin );
             } else {
@@ -273,29 +326,22 @@ void assign(string_res &this, const char* buffer, size_t bsize) {
             // take start as start-anchored
             size_t startOffsetFromStart = p->Handle.s - beforeBegin;
             p->Handle.s = pasting.Handle.s + startOffsetFromStart;
-        } else if ( p->Handle.s < afterBegin ) {
+        } else {
+            assert ( p->Handle.s < afterBegin );
             // p starts during the edit
             assert( p->Handle.s + p->Handle.lnth >= beforeBegin + beforeLen );
             if ( p->Handle.s + p->Handle.lnth < afterBegin ) {
-                // p ends during the edit
+                // p ends during the edit; p does not include the last character replaced
                 // set p to empty string at start of edit
                 p->Handle.s = this.Handle.s;
                 p->Handle.lnth = 0;
             } else {
-                // p ends after the edit
+                // p includes the end of the edit
                 // clip start of p to start at end of edit
+                int charsToClip = afterBegin - p->Handle.s;
                 p->Handle.s = this.Handle.s + this.Handle.lnth;
-                p->Handle.lnth += this.Handle.lnth;
-                p->Handle.lnth -= oldLnth;
+                p->Handle.lnth -= charsToClip;
             }
-        } else {
-            assert ( p->Handle.s <= afterBegin + afterLen );
-            assert ( p->Handle.s + p->Handle.lnth <= afterBegin + afterLen );
-            // p starts after the edit
-            // take start and end as end-anchored
-            size_t startOffsetFromEnd = afterBegin + afterLen - p->Handle.s;
-            p->Handle.s = limit - startOffsetFromEnd;
-            // p->Handle.lnth unaffected
         }
         MoveThisAfter( p->Handle, pasting.Handle );	// move substring handle to maintain sorted order by string position
     }
@@ -640,7 +686,6 @@ static inline void MoveThisAfter( HandleNode & this, const HandleNode  & h ) wit
 		AddThisAfter( this, *i->blink );
     } // if
 #ifdef VbyteDebug
-    serr | "exit:MoveThisAfter";
     {
 	serr | "HandleList:";
 	serr | nlOff;
@@ -649,10 +694,11 @@ static inline void MoveThisAfter( HandleNode & this, const HandleNode  & h ) wit
 	    for ( int i = 0; i < n->lnth; i += 1 ) {
 		serr | n->s[i];
 	    } // for
-	    serr | "\" flink:" | n->flink | " blink:" | n->blink;
+	    serr | "\" flink:" | n->flink | " blink:" | n->blink | nl;
 	} // for
 	serr | nlOn;
     }
+    serr | "exit:MoveThisAfter";
 #endif // VbyteDebug
 } // MoveThisAfter
 
@@ -661,10 +707,6 @@ static inline void MoveThisAfter( HandleNode & this, const HandleNode  & h ) wit
 
 
 //######################### VbyteHeap #########################
-
-#ifdef VbyteDebug
-HandleNode *HeaderPtr = 0p;
-#endif // VbyteDebug
 
 // Move characters from one location in the byte-string area to another. The routine handles the following situations:
 //

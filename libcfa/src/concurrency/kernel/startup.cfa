@@ -199,18 +199,6 @@ static void __kernel_startup(void) {
 
 	__cfadbg_print_safe(runtime_core, "Kernel : Main cluster ready\n");
 
-	// Start by initializing the main thread
-	// SKULLDUGGERY: the mainThread steals the process main thread
-	// which will then be scheduled by the mainProcessor normally
-	mainThread = (thread$ *)&storage_mainThread;
-	current_stack_info_t info;
-	info.storage = (__stack_t*)&storage_mainThreadCtx;
-	(*mainThread){ &info };
-
-	__cfadbg_print_safe(runtime_core, "Kernel : Main thread ready\n");
-
-
-
 	// Construct the processor context of the main processor
 	void ?{}(processorCtx_t & this, processor * proc) {
 		(this.__cor){ "Processor" };
@@ -234,7 +222,16 @@ static void __kernel_startup(void) {
 	(*mainProcessor){};
 
 	register_tls( mainProcessor );
-	mainThread->last_cpu = __kernel_getcpu();
+
+	// Start by initializing the main thread
+	// SKULLDUGGERY: the mainThread steals the process main thread
+	// which will then be scheduled by the mainProcessor normally
+	mainThread = (thread$ *)&storage_mainThread;
+	current_stack_info_t info;
+	info.storage = (__stack_t*)&storage_mainThreadCtx;
+	(*mainThread){ &info };
+
+	__cfadbg_print_safe(runtime_core, "Kernel : Main thread ready\n");
 
 	//initialize the global state variables
 	__cfaabi_tls.this_processor = mainProcessor;
@@ -251,7 +248,7 @@ static void __kernel_startup(void) {
 
 	// Add the main thread to the ready queue
 	// once resume is called on mainProcessor->runner the mainThread needs to be scheduled like any normal thread
-	schedule_thread$(mainThread);
+	schedule_thread$(mainThread, UNPARK_LOCAL);
 
 	// SKULLDUGGERY: Force a context switch to the main processor to set the main thread's context to the current UNIX
 	// context. Hence, the main thread does not begin through __cfactx_invoke_thread, like all other threads. The trick here is that
@@ -485,7 +482,7 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 	self_mon_p = &self_mon;
 	link.next = 0p;
 	link.ts   = -1llu;
-	preferred = -1u;
+	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
 	#if defined( __CFA_WITH_VERIFY__ )
 		canary = 0x0D15EA5E0D15EA5Ep;

@@ -169,14 +169,12 @@ extern "C" {
 
 		bool corctx_flag;
 
-		int last_cpu;
-
 		//SKULLDUGGERY errno is not save in the thread data structure because returnToKernel appears to be the only function to require saving and restoring it
 
 		// pointer to the cluster on which the thread is running
 		struct cluster * curr_cluster;
 
-		// preferred ready-queue
+		// preferred ready-queue or CPU
 		unsigned preferred;
 
 		// coroutine body used to store context

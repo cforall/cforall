@@ -45,7 +45,7 @@ extern "C" {
 	void enable_interrupts( bool poll = true );
 }
 
-void schedule_thread$( thread$ * ) __attribute__((nonnull (1)));
+void schedule_thread$( thread$ *, unpark_hint hint ) __attribute__((nonnull (1)));
 
 extern bool __preemption_enabled();
 
@@ -299,7 +299,7 @@ static inline void unlock(__cluster_proc_list & this) {
 //-----------------------------------------------------------------------
 // push thread onto a ready queue for a cluster
 // returns true if the list was previously empty, false otherwise
-__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, bool local);
+__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, unpark_hint hint);
 
 //-----------------------------------------------------------------------
 // pop thread from the local queues of a cluster
@@ -318,6 +318,10 @@ __attribute__((hot)) struct thread$ * pop_slow(struct cluster * cltr);
 // returns 0p if empty
 // guaranteed to find any threads added before this call
 __attribute__((hot)) struct thread$ * pop_search(struct cluster * cltr);
+
+//-----------------------------------------------------------------------
+// get preferred ready for new thread
+unsigned ready_queue_new_preferred();
 
 //-----------------------------------------------------------------------
 // Increase the width of the ready queue (number of lanes) by 4

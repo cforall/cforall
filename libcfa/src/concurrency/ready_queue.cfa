@@ -99,8 +99,8 @@ __attribute__((weak)) unsigned __max_processors() {
 	#define __kernel_rseq_register rseq_register_current_thread
 	#define __kernel_rseq_unregister rseq_unregister_current_thread
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
-	void __kernel_raw_rseq_register  (void);
-	void __kernel_raw_rseq_unregister(void);
+	static void __kernel_raw_rseq_register  (void);
+	static void __kernel_raw_rseq_unregister(void);
 
 	#define __kernel_rseq_register __kernel_raw_rseq_register
 	#define __kernel_rseq_unregister __kernel_raw_rseq_unregister
@@ -245,19 +245,34 @@ void ready_mutate_unlock( uint_fast32_t last_s ) with(*__scheduler_lock) {
 //=======================================================================
 // Cforall Ready Queue used for scheduling
 //=======================================================================
+unsigned long long moving_average(unsigned long long nval, unsigned long long oval) {
+	const unsigned long long tw = 16;
+	const unsigned long long nw = 4;
+	const unsigned long long ow = tw - nw;
+	return ((nw * nval) + (ow * oval)) / tw;
+}
+
 void ?{}(__ready_queue_t & this) with (this) {
 	#if defined(USE_CPU_WORK_STEALING)
 		lanes.count = cpu_info.hthrd_count * READYQ_SHARD_FACTOR;
 		lanes.data = alloc( lanes.count );
 		lanes.tscs = alloc( lanes.count );
+		lanes.help = alloc( cpu_info.hthrd_count );
 
 		for( idx; (size_t)lanes.count ) {
 			(lanes.data[idx]){};
 			lanes.tscs[idx].tv = rdtscl();
+			lanes.tscs[idx].ma = rdtscl();
+		}
+		for( idx; (size_t)cpu_info.hthrd_count ) {
+			lanes.help[idx].src = 0;
+			lanes.help[idx].dst = 0;
+			lanes.help[idx].tri = 0;
 		}
 	#else
 		lanes.data  = 0p;
 		lanes.tscs  = 0p;
+		lanes.help  = 0p;
 		lanes.count = 0;
 	#endif
 }
@@ -269,22 +284,34 @@ void ^?{}(__ready_queue_t & this) with (this) {
 
 	free(lanes.data);
 	free(lanes.tscs);
+	free(lanes.help);
 }
 
 //-----------------------------------------------------------------------
 #if defined(USE_CPU_WORK_STEALING)
-	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, bool push_local) with (cltr->ready_queue) {
+	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, unpark_hint hint) with (cltr->ready_queue) {
 		__cfadbg_print_safe(ready_queue, "Kernel : Pushing %p on cluster %p\n", thrd, cltr);
 
 		processor * const proc = kernelTLS().this_processor;
-		const bool external = !push_local || (!proc) || (cltr != proc->cltr);
+		const bool external = (!proc) || (cltr != proc->cltr);
 
+		// Figure out the current cpu and make sure it is valid
 		const int cpu = __kernel_getcpu();
 		/* paranoid */ verify(cpu >= 0);
 		/* paranoid */ verify(cpu < cpu_info.hthrd_count);
 		/* paranoid */ verify(cpu * READYQ_SHARD_FACTOR < lanes.count);
 
-		const cpu_map_entry_t & map = cpu_info.llc_map[cpu];
+		// Figure out where thread was last time and make sure it's
+		/* paranoid */ verify(thrd->preferred >= 0);
+		/* paranoid */ verify(thrd->preferred < cpu_info.hthrd_count);
+		/* paranoid */ verify(thrd->preferred * READYQ_SHARD_FACTOR < lanes.count);
+		const int prf = thrd->preferred * READYQ_SHARD_FACTOR;
+
+		const cpu_map_entry_t & map;
+		choose(hint) {
+			case UNPARK_LOCAL : &map = &cpu_info.llc_map[cpu];
+			case UNPARK_REMOTE: &map = &cpu_info.llc_map[prf];
+		}
 		/* paranoid */ verify(map.start * READYQ_SHARD_FACTOR < lanes.count);
 		/* paranoid */ verify(map.self * READYQ_SHARD_FACTOR < lanes.count);
 		/* paranoid */ verifyf((map.start + map.count) * READYQ_SHARD_FACTOR <= lanes.count, "have %zu lanes but map can go up to %u", lanes.count, (map.start + map.count) * READYQ_SHARD_FACTOR);
@@ -295,7 +322,10 @@ void ^?{}(__ready_queue_t & this) with (this) {
 			unsigned r;
 			if(unlikely(external)) { r = __tls_rand(); }
 			else { r = proc->rdq.its++; }
-			i = start + (r % READYQ_SHARD_FACTOR);
+			choose(hint) {
+				case UNPARK_LOCAL : i = start + (r % READYQ_SHARD_FACTOR);
+				case UNPARK_REMOTE: i = prf   + (r % READYQ_SHARD_FACTOR);
+			}
 			// If we can't lock it retry
 		} while( !__atomic_try_acquire( &lanes.data[i].lock ) );
 
@@ -331,21 +361,20 @@ void ^?{}(__ready_queue_t & this) with (this) {
 
 		processor * const proc = kernelTLS().this_processor;
 		const int start = map.self * READYQ_SHARD_FACTOR;
+		const unsigned long long ctsc = rdtscl();
 
 		// Did we already have a help target
 		if(proc->rdq.target == -1u) {
-			// if We don't have a
-			unsigned long long min = ts(lanes.data[start]);
+			unsigned long long max = 0;
 			for(i; READYQ_SHARD_FACTOR) {
-				unsigned long long tsc = ts(lanes.data[start + i]);
-				if(tsc < min) min = tsc;
+				unsigned long long tsc = moving_average(ctsc - ts(lanes.data[start + i]), lanes.tscs[start + i].ma);
+				if(tsc > max) max = tsc;
 			}
-			proc->rdq.cutoff = min;
-
+			 proc->rdq.cutoff = (max + 2 * max) / 2;
 			/* paranoid */ verify(lanes.count < 65536); // The following code assumes max 65536 cores.
 			/* paranoid */ verify(map.count < 65536); // The following code assumes max 65536 cores.
 
-			if(0 == (__tls_rand() % 10_000)) {
+			if(0 == (__tls_rand() % 100)) {
 				proc->rdq.target = __tls_rand() % lanes.count;
 			} else {
 				unsigned cpu_chaos = map.start + (__tls_rand() % map.count);
@@ -357,16 +386,23 @@ void ^?{}(__ready_queue_t & this) with (this) {
 			/* paranoid */ verify(proc->rdq.target != -1u);
 		}
 		else {
-			const unsigned long long bias = 0; //2_500_000_000;
-			const unsigned long long cutoff = proc->rdq.cutoff > bias ? proc->rdq.cutoff - bias : proc->rdq.cutoff;
+			unsigned long long max = 0;
+			for(i; READYQ_SHARD_FACTOR) {
+				unsigned long long tsc = moving_average(ctsc - ts(lanes.data[start + i]), lanes.tscs[start + i].ma);
+				if(tsc > max) max = tsc;
+			}
+			const unsigned long long cutoff = (max + 2 * max) / 2;
 			{
 				unsigned target = proc->rdq.target;
 				proc->rdq.target = -1u;
-				if(lanes.tscs[target].tv < cutoff && ts(lanes.data[target]) < cutoff) {
+				lanes.help[target / READYQ_SHARD_FACTOR].tri++;
+				if(moving_average(ctsc - lanes.tscs[target].tv, lanes.tscs[target].ma) > cutoff) {
 					thread$ * t = try_pop(cltr, target __STATS(, __tls_stats()->ready.pop.help));
 					proc->rdq.last = target;
 					if(t) return t;
+					else proc->rdq.target = -1u;
 				}
+				else proc->rdq.target = -1u;
 			}
 
 			unsigned last = proc->rdq.last;
@@ -427,10 +463,10 @@ void ^?{}(__ready_queue_t & this) with (this) {
 		return [i, local];
 	}
 
-	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, bool push_local) with (cltr->ready_queue) {
+	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, unpark_hint hint) with (cltr->ready_queue) {
 		__cfadbg_print_safe(ready_queue, "Kernel : Pushing %p on cluster %p\n", thrd, cltr);
 
-		const bool external = !push_local || (!kernelTLS().this_processor) || (cltr != kernelTLS().this_processor->cltr);
+		const bool external = (hint != UNPARK_LOCAL) || (!kernelTLS().this_processor) || (cltr != kernelTLS().this_processor->cltr);
 		/* paranoid */ verify(external || kernelTLS().this_processor->rdq.id < lanes.count );
 
 		bool local;
@@ -514,16 +550,16 @@ void ^?{}(__ready_queue_t & this) with (this) {
 	}
 #endif
 #if defined(USE_WORK_STEALING)
-	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, bool push_local) with (cltr->ready_queue) {
+	__attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, unpark_hint hint) with (cltr->ready_queue) {
 		__cfadbg_print_safe(ready_queue, "Kernel : Pushing %p on cluster %p\n", thrd, cltr);
 
 		// #define USE_PREFERRED
 		#if !defined(USE_PREFERRED)
-		const bool external = !push_local || (!kernelTLS().this_processor) || (cltr != kernelTLS().this_processor->cltr);
+		const bool external = (hint != UNPARK_LOCAL) || (!kernelTLS().this_processor) || (cltr != kernelTLS().this_processor->cltr);
 		/* paranoid */ verify(external || kernelTLS().this_processor->rdq.id < lanes.count );
 		#else
 			unsigned preferred = thrd->preferred;
-			const bool external = push_local || (!kernelTLS().this_processor) || preferred == -1u || thrd->curr_cluster != cltr;
+			const bool external = (hint != UNPARK_LOCAL) || (!kernelTLS().this_processor) || preferred == -1u || thrd->curr_cluster != cltr;
 			/* paranoid */ verifyf(external || preferred < lanes.count, "Invalid preferred queue %u for %u lanes", preferred, lanes.count );
 
 			unsigned r = preferred % READYQ_SHARD_FACTOR;
@@ -644,6 +680,7 @@ static inline struct thread$ * try_pop(struct cluster * cltr, unsigned w __STATS
 
 	// Actually pop the list
 	struct thread$ * thrd;
+	unsigned long long tsc_before = ts(lane);
 	unsigned long long tsv;
 	[thrd, tsv] = pop(lane);
 
@@ -657,11 +694,17 @@ static inline struct thread$ * try_pop(struct cluster * cltr, unsigned w __STATS
 	// Update statistics
 	__STATS( stats.success++; )
 
-	#if defined(USE_WORK_STEALING)
+	#if defined(USE_WORK_STEALING) || defined(USE_CPU_WORK_STEALING)
+		unsigned long long now = rdtscl();
 		lanes.tscs[w].tv = tsv;
+		lanes.tscs[w].ma = moving_average(now > tsc_before ? now - tsc_before : 0, lanes.tscs[w].ma);
 	#endif
 
-	thrd->preferred = w;
+	#if defined(USE_CPU_WORK_STEALING)
+		thrd->preferred = w / READYQ_SHARD_FACTOR;
+	#else
+		thrd->preferred = w;
+	#endif
 
 	// return the popped thread
 	return thrd;
@@ -684,6 +727,27 @@ static inline struct thread$ * search(struct cluster * cltr) with (cltr->ready_q
 
 	// All lanes where empty return 0p
 	return 0p;
+}
+
+//-----------------------------------------------------------------------
+// get preferred ready for new thread
+unsigned ready_queue_new_preferred() {
+	unsigned pref = 0;
+	if(struct thread$ * thrd = publicTLS_get( this_thread )) {
+		pref = thrd->preferred;
+	}
+	else {
+		#if defined(USE_CPU_WORK_STEALING)
+			pref = __kernel_getcpu();
+		#endif
+	}
+
+	#if defined(USE_CPU_WORK_STEALING)
+		/* paranoid */ verify(pref >= 0);
+		/* paranoid */ verify(pref < cpu_info.hthrd_count);
+	#endif
+
+	return pref;
 }
 
 //-----------------------------------------------------------------------
@@ -914,7 +978,7 @@ static void fix_times( struct cluster * cltr ) with( cltr->ready_queue ) {
 	extern void __disable_interrupts_hard();
 	extern void __enable_interrupts_hard();
 
-	void __kernel_raw_rseq_register  (void) {
+	static void __kernel_raw_rseq_register  (void) {
 		/* paranoid */ verify( __cfaabi_rseq.cpu_id == RSEQ_CPU_ID_UNINITIALIZED );
 
 		// int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), 0, (sigset_t *)0p, _NSIG / 8);
@@ -932,7 +996,7 @@ static void fix_times( struct cluster * cltr ) with( cltr->ready_queue ) {
 		}
 	}
 
-	void __kernel_raw_rseq_unregister(void) {
+	static void __kernel_raw_rseq_unregister(void) {
 		/* paranoid */ verify( __cfaabi_rseq.cpu_id >= 0 );
 
 		// int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), RSEQ_FLAG_UNREGISTER, (sigset_t *)0p, _NSIG / 8);

@@ -97,7 +97,6 @@ static inline [* thread$, unsigned long long] pop( __intrusive_lane_t & this ) {
 	/* paranoid */ verify( this.anchor.ts   != 0  );
 
 	// Get the relevant nodes locally
-	unsigned long long ts = this.anchor.ts;
 	thread$ * node = this.anchor.next;
 	this.anchor.next = node->link.next;
 	this.anchor.ts   = node->link.ts;
@@ -115,7 +114,7 @@ static inline [* thread$, unsigned long long] pop( __intrusive_lane_t & this ) {
 	/* paranoid */ verify( node->link.ts   == -1llu  );
 	/* paranoid */ verify( node->link.ts   != 0  );
 	/* paranoid */ verify( this.anchor.ts  != 0  );
-	return [node, ts];
+	return [node, this.anchor.ts];
 }
 
 // Check whether or not list is empty

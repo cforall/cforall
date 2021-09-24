@@ -47,6 +47,10 @@
 			stats->io.calls.drain       = 0;
 			stats->io.calls.completed   = 0;
 			stats->io.calls.errors.busy = 0;
+			stats->io.ops.sockread      = 0;
+			stats->io.ops.epllread      = 0;
+			stats->io.ops.sockwrite     = 0;
+			stats->io.ops.epllwrite     = 0;
 		#endif
 
 		#if defined(CFA_STATS_ARRAY)
@@ -103,6 +107,10 @@
 			tally_one( &cltr->io.calls.drain      , &proc->io.calls.drain       );
 			tally_one( &cltr->io.calls.completed  , &proc->io.calls.completed   );
 			tally_one( &cltr->io.calls.errors.busy, &proc->io.calls.errors.busy );
+			tally_one( &cltr->io.ops.sockread     , &proc->io.ops.sockread      );
+			tally_one( &cltr->io.ops.epllread     , &proc->io.ops.epllread      );
+			tally_one( &cltr->io.ops.sockwrite    , &proc->io.ops.sockwrite     );
+			tally_one( &cltr->io.ops.epllwrite    , &proc->io.ops.epllwrite     );
 		#endif
 	}
 
@@ -178,6 +186,9 @@
 				     |   " sub " | eng3(io.calls.flush) | "/" | eng3(io.calls.submitted) | "(" | ws(3, 3, avgsubs) | "/flush)"
 				     | " - cmp " | eng3(io.calls.drain) | "/" | eng3(io.calls.completed) | "(" | ws(3, 3, avgcomp) | "/drain)"
 				     | " - " | eng3(io.calls.errors.busy) | " EBUSY";
+				sstr | "- ops blk: "
+				     |   " sk rd: " | eng3(io.ops.sockread)  | "epll: " | eng3(io.ops.epllread)
+				     |   " sk wr: " | eng3(io.ops.sockwrite) | "epll: " | eng3(io.ops.epllwrite);
 				sstr | nl;
 			}
 		#endif

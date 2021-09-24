@@ -1,0 +1,125 @@
+#include <string_res.hfa>
+
+size_t bytesRemaining() {
+    return DEBUG_string_bytes_avail_until_gc( DEBUG_string_heap );
+}
+
+size_t heapOffsetStart( string_res & s ) {
+    const char * startByte = DEBUG_string_heap_start( DEBUG_string_heap );
+    assert( s.Handle.s >= startByte );
+    return s.Handle.s - startByte;
+}
+
+void prtStrRep(const char * label, string_res & s) {
+    sout | label | "from" | heapOffsetStart(s) | "to" | (heapOffsetStart(s) + size(s));
+}
+#define PRT_STR_REP(s) prtStrRep( #s, s )
+
+void basicFillCompact() {
+    sout | "======================== basicFillCompact";
+    string_res xinit = "hello!";
+    string_res x = {xinit, COPY_VALUE};
+    string_res padder = "----|";
+    sout | x;
+    for( 3 ) {
+        x += padder;
+        sout | x;
+    }
+
+    // x and padder overlap
+    sout | "--A";
+    sout | "length of x:" | size(x);
+    PRT_STR_REP(padder);
+    PRT_STR_REP(x);
+
+    while ( bytesRemaining() + 1 > 5 ) { // until room for "q" but not another "----|" thereafter
+        x += padder;
+    }
+
+    // x and padder still overlap; now x is huge
+    sout | "--B";
+    sout | "length of x:" | size(x);
+    PRT_STR_REP(padder);
+    PRT_STR_REP(x);
+
+    assert( bytesRemaining() >= 1 );
+    x = "q";
+
+    // x and padder no longer overlap; baseline xinit
+    sout | "--C";
+    PRT_STR_REP(xinit);
+    PRT_STR_REP(padder);
+    PRT_STR_REP(x);
+
+    // want the next edit to straddle the bound
+    assert( bytesRemaining() < size(padder) );
+
+    sout | "--D";
+    sout | "before append, x = " | x;     // q
+    x += padder;                         // trigger compaction
+    sout | "after append, x = " | x;      // q----|
+
+    // x and padder moved to the start
+    sout | "--E";
+    PRT_STR_REP(xinit);
+    PRT_STR_REP(padder);
+    PRT_STR_REP(x);
+
+    // plenty of room now
+    sout | "--F";
+    sout | bytesRemaining() | "bytes available before re-fill";
+
+    // fill it again
+    string_res z = "zzz";
+    while ( bytesRemaining() > 1 ) {
+        z += ".";
+    }
+
+    sout | bytesRemaining() | "bytes available after re-fill";
+
+    // ensure not affected (shows it's not referencing an invalid location that hadn't been overwritten from the original value yet)
+    // black-box criterion that matches earlier "saw it move"
+    sout | "--G";
+    sout | "after re-fill, x = " | x;      // q----|
+
+    // leave the heap basically empty, for the next test
+    z = "";                        // turn used space into gargbage
+    string_res whatever = "asdf";  // trigger compaction
+    assert( bytesRemaining() > 100 );
+}
+
+void fillCompact_withSharedEdits() {
+    // do an assignment that causes a collection to happen, while there are edits shared (substrings)
+
+    sout | "======================== fillCompact_withSharedEdits";
+
+    // mostly fill the pad
+    string_res z = "zzz";
+    while ( bytesRemaining() > 10 ) {
+        z += ".";
+    }
+    z = "";  // leave compaction possible
+
+    // setup
+    string_res x = "hello";
+    string_res y = { x, SHARE_EDITS, 0, 5 };
+    PRT_STR_REP(x);
+    PRT_STR_REP(y);
+    sout | "-";
+
+    sout | "before reassign, x = " | x;     // hello
+    sout | "before reassign, y = " | y;     // hello
+
+    x = "0123456789"; // compact here
+
+    sout | "after reassign, x = " | x;      // 0123456789
+    sout | "after reassign, y = " | y;      // 0123456789
+
+    PRT_STR_REP(x);
+    PRT_STR_REP(y);
+}
+
+int main() {
+    basicFillCompact();
+    fillCompact_withSharedEdits();
+}

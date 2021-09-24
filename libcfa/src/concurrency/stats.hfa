@@ -101,6 +101,12 @@ enum {
 			struct {
 				volatile uint64_t sleeps;
 			} poller;
+			struct {
+				volatile uint64_t sockread;
+				volatile uint64_t epllread;
+				volatile uint64_t sockwrite;
+				volatile uint64_t epllwrite;
+			} ops;
 		};
 	#endif
 

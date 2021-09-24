@@ -340,13 +340,26 @@ void main(processorCtx_t & runner) {
 					break SEARCH;
 				}
 
-					__STATS( if(this->print_halts) __cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl()); )
+				__STATS( if(this->print_halts) __cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl()); )
 				__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle);
 
-				// __disable_interrupts_hard();
-				eventfd_t val;
-				eventfd_read( this->idle, &val );
-				// __enable_interrupts_hard();
+				{
+					eventfd_t val;
+					ssize_t ret = read( this->idle, &val, sizeof(val) );
+					if(ret < 0) {
+						switch((int)errno) {
+						case EAGAIN:
+						#if EAGAIN != EWOULDBLOCK
+							case EWOULDBLOCK:
+						#endif
+						case EINTR:
+							// No need to do anything special here, just assume it's a legitimate wake-up
+							break;
+						default:
+							abort( "KERNEL : internal error, read failure on idle eventfd, error(%d) %s.", (int)errno, strerror( (int)errno ) );
+						}
+					}
+				}
 
 					__STATS( if(this->print_halts) __cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl()); )
 
@@ -409,16 +422,6 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 	/* paranoid */ verifyf( thrd_dst->link.next == 0p, "Expected null got %p", thrd_dst->link.next );
 	__builtin_prefetch( thrd_dst->context.SP );
 
-	int curr = __kernel_getcpu();
-	if(thrd_dst->last_cpu != curr) {
-		int64_t l = thrd_dst->last_cpu;
-		int64_t c = curr;
-		int64_t v = (l << 32) | c;
-		__push_stat( __tls_stats(), v, false, "Processor", this );
-	}
-
-	thrd_dst->last_cpu = curr;
-
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p running thread %p (%s)\n", this, thrd_dst, thrd_dst->self_cor.name);
 
 	coroutine$ * proc_cor = get_coroutine(this->runner);
@@ -472,7 +475,7 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 
 		if(unlikely(thrd_dst->preempted != __NO_PREEMPTION)) {
 			// The thread was preempted, reschedule it and reset the flag
-			schedule_thread$( thrd_dst );
+			schedule_thread$( thrd_dst, UNPARK_LOCAL );
 			break RUNNING;
 		}
 
@@ -556,7 +559,7 @@ void returnToKernel() {
 //-----------------------------------------------------------------------------
 // Scheduler routines
 // KERNEL ONLY
-static void __schedule_thread( thread$ * thrd ) {
+static void __schedule_thread( thread$ * thrd, unpark_hint hint ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( ready_schedule_islocked());
 	/* paranoid */ verify( thrd );
@@ -576,10 +579,10 @@ static void __schedule_thread( thread$ * thrd ) {
 
 	// Dereference the thread now because once we push it, there is not guaranteed it's still valid.
 	struct cluster * cl = thrd->curr_cluster;
-	__STATS(bool outside = thrd->last_proc && thrd->last_proc != kernelTLS().this_processor; )
+	__STATS(bool outside = hint == UNPARK_LOCAL && thrd->last_proc && thrd->last_proc != kernelTLS().this_processor; )
 
 	// push the thread to the cluster ready-queue
-	push( cl, thrd, local );
+	push( cl, thrd, hint );
 
 	// variable thrd is no longer safe to use
 	thrd = 0xdeaddeaddeaddeadp;
@@ -604,9 +607,9 @@ static void __schedule_thread( thread$ * thrd ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 }
 
-void schedule_thread$( thread$ * thrd ) {
+void schedule_thread$( thread$ * thrd, unpark_hint hint ) {
 	ready_schedule_lock();
-		__schedule_thread( thrd );
+		__schedule_thread( thrd, hint );
 	ready_schedule_unlock();
 }
 
@@ -657,7 +660,7 @@ static inline bool __must_unpark( thread$ * thrd ) {
 	}
 }
 
-void __kernel_unpark( thread$ * thrd ) {
+void __kernel_unpark( thread$ * thrd, unpark_hint hint ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( ready_schedule_islocked());
 
@@ -665,20 +668,20 @@ void __kernel_unpark( thread$ * thrd ) {
 
 	if(__must_unpark(thrd)) {
 		// Wake lost the race,
-		__schedule_thread( thrd );
+		__schedule_thread( thrd, hint );
 	}
 
 	/* paranoid */ verify( ready_schedule_islocked());
 	/* paranoid */ verify( ! __preemption_enabled() );
 }
 
-void unpark( thread$ * thrd ) {
+void unpark( thread$ * thrd, unpark_hint hint ) {
 	if( !thrd ) return;
 
 	if(__must_unpark(thrd)) {
 		disable_interrupts();
 			// Wake lost the race,
-			schedule_thread$( thrd );
+			schedule_thread$( thrd, hint );
 		enable_interrupts(false);
 	}
 }

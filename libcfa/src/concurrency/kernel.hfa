@@ -150,9 +150,17 @@ void ^?{}(__intrusive_lane_t & this);
 // Aligned timestamps which are used by the relaxed ready queue
 struct __attribute__((aligned(128))) __timestamp_t {
 	volatile unsigned long long tv;
+	volatile unsigned long long ma;
 };
 
-static inline void  ?{}(__timestamp_t & this) { this.tv = 0; }
+// Aligned timestamps which are used by the relaxed ready queue
+struct __attribute__((aligned(128))) __help_cnts_t {
+	volatile unsigned long long src;
+	volatile unsigned long long dst;
+	volatile unsigned long long tri;
+};
+
+static inline void  ?{}(__timestamp_t & this) { this.tv = 0; this.ma = 0; }
 static inline void ^?{}(__timestamp_t & this) {}
 
 //TODO adjust cache size to ARCHITECTURE
@@ -168,6 +176,9 @@ struct __ready_queue_t {
 
 		// Array of times
 		__timestamp_t * volatile tscs;
+
+		// Array of stats
+		__help_cnts_t * volatile help;
 
 		// Number of lanes (empty or not)
 		volatile size_t count;
