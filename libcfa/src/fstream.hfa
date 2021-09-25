@@ -79,6 +79,9 @@ ofstream & write( ofstream &, const char data[], size_t size );
 void acquire( ofstream & );
 void release( ofstream & );
 
+void lock( ofstream & );
+void unlock( ofstream & );
+
 struct osacquire {
 	ofstream & os;
 };
