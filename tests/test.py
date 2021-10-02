@@ -256,7 +256,7 @@ def run_test_worker(t) :
 		retcode, error, duration = run_single_test(t)
 
 		# update output based on current action
-		result_txt = TestResult.toString( retcode, duration )
+		result_key, result_txt = TestResult.toString( retcode, duration )
 
 		#print result with error if needed
 		text = '\t' + name_txt + result_txt
@@ -264,9 +264,9 @@ def run_test_worker(t) :
 		if error :
 			text = text + '\n' + error
 
-		return retcode == TestResult.SUCCESS, text
+		return retcode == TestResult.SUCCESS, result_key, text
 	except KeyboardInterrupt:
-		return False, ""
+		return False, 'keybrd', ""
 	# except Exception as ex:
 	# 	print("Unexpected error in worker thread running {}: {}".format(t.target(), ex), file=sys.stderr)
 	# 	sys.stderr.flush()
@@ -282,6 +282,8 @@ def run_tests(tests, jobs) :
 	pool = multiprocessing.Pool(jobs)
 
 	failed = False
+	rescnts = {	'pass': 0, 'fail': 0, 'time': 0, 'keybrd': 0 }
+	other = 0
 
 	# for each test to run
 	try :
@@ -293,7 +295,12 @@ def run_tests(tests, jobs) :
 			chunksize = 1
 		)
 
-		for i, (succ, txt) in enumerate(timed(results, timeout = settings.timeout.total), 1) :
+		for i, (succ, code, txt) in enumerate(timed(results, timeout = settings.timeout.total), 1) :
+			if code in rescnts.keys():
+				rescnts[code] += 1
+			else:
+				other += 1
+
 			if not succ :
 				failed = True
 
@@ -318,6 +325,8 @@ def run_tests(tests, jobs) :
 
 	# clean the workspace
 	make('clean', output_file=subprocess.DEVNULL, error=subprocess.DEVNULL)
+
+	print("{} passes, {} failures, {} timeouts, {} cancelled, {} other".format(rescnts['pass'], rescnts['fail'], rescnts['time'], rescnts['keybrd'], other))
 
 	return failed
 
@@ -442,7 +451,6 @@ if __name__ == "__main__":
 			# otherwise run all tests and make sure to return the correct error code
 			failed = run_tests(local_tests, options.jobs)
 			if failed:
-				result = 1
 				if not settings.continue_:
 					break
 

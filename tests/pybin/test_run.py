@@ -64,13 +64,13 @@ class TestResult:
 	@classmethod
 	def toString( cls, retcode, duration ):
 		if settings.generating :
-			if   retcode == TestResult.SUCCESS: 	text = "Done   "
-			elif retcode == TestResult.TIMEOUT: 	text = "TIMEOUT"
-			else :						text = "ERROR code %d" % retcode
+			if   retcode == TestResult.SUCCESS: 	key = 'pass'; text = "Done   "
+			elif retcode == TestResult.TIMEOUT: 	key = 'time'; text = "TIMEOUT"
+			else :	key = 'fail';	text = "ERROR code %d" % retcode
 		else :
-			if   retcode == TestResult.SUCCESS: 	text = "PASSED "
-			elif retcode == TestResult.TIMEOUT: 	text = "TIMEOUT"
-			else :						text = "FAILED with code %d" % retcode
+			if   retcode == TestResult.SUCCESS: 	key = 'pass'; text = "PASSED "
+			elif retcode == TestResult.TIMEOUT: 	key = 'time'; text = "TIMEOUT"
+			else :	key = 'fail';	text = "FAILED with code %d" % retcode
 
 		text += "    C%s - R%s" % (fmtDur(duration[0]), fmtDur(duration[1]))
-		return text
+		return key, text

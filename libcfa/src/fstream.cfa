@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Sep 21 21:51:38 2021
-// Update Count     : 460
+// Last Modified On : Fri Oct  1 08:10:21 2021
+// Update Count     : 473
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -27,7 +27,8 @@
 
 #define IO_MSG "I/O error: "
 
-void ?{}( ofstream & os, void * file ) with(os) {
+// private
+void ?{}( ofstream & os, void * file ) with( os ) {
 	file$ = file;
 	sepDefault$ = true;
 	sepOnOff$ = false;
@@ -40,32 +41,25 @@ void ?{}( ofstream & os, void * file ) with(os) {
 	sepSetTuple( os, ", " );
 } // ?{}
 
-// private
-bool sepPrt$( ofstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
-void sepReset$( ofstream & os ) { os.sepOnOff$ = os.sepDefault$; }
-void sepReset$( ofstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
-const char * sepGetCur$( ofstream & os ) { return os.sepCur$; }
-void sepSetCur$( ofstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
-bool getNL$( ofstream & os ) { return os.sawNL$; }
-void setNL$( ofstream & os, bool state ) { os.sawNL$ = state; }
-bool getANL$( ofstream & os ) { return os.nlOnOff$; }
-bool getPrt$( ofstream & os ) { return os.prt$; }
-void setPrt$( ofstream & os, bool state ) { os.prt$ = state; }
+inline bool sepPrt$( ofstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
+inline void sepReset$( ofstream & os ) { os.sepOnOff$ = os.sepDefault$; }
+inline void sepReset$( ofstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
+inline const char * sepGetCur$( ofstream & os ) { return os.sepCur$; }
+inline void sepSetCur$( ofstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
+inline bool getNL$( ofstream & os ) { return os.sawNL$; }
+inline void setNL$( ofstream & os, bool state ) { os.sawNL$ = state; }
+inline bool getANL$( ofstream & os ) { return os.nlOnOff$; }
+inline bool getPrt$( ofstream & os ) { return os.prt$; }
+inline void setPrt$( ofstream & os, bool state ) { os.prt$ = state; }
+
+inline void lock( ofstream & os ) with( os ) {	lock( os.lock$ ); }
+inline void unlock( ofstream & os ) { unlock( os.lock$ ); }
 
 // public
 void ?{}( ofstream & os ) { os.file$ = 0p; }
-
-void ?{}( ofstream & os, const char name[], const char mode[] ) {
-	open( os, name, mode );
-} // ?{}
-
-void ?{}( ofstream & os, const char name[] ) {
-	open( os, name, "w" );
-} // ?{}
-
-void ^?{}( ofstream & os ) {
-	close( os );
-} // ^?{}
+void ?{}( ofstream & os, const char name[], const char mode[] ) { open( os, name, mode ); }
+void ?{}( ofstream & os, const char name[] ) { open( os, name, "w" ); }
+void ^?{}( ofstream & os ) { close( os ); }
 
 void sepOn( ofstream & os ) { os.sepOnOff$ = ! getNL$( os ); }
 void sepOff( ofstream & os ) { os.sepOnOff$ = false; }
@@ -106,20 +100,12 @@ void ends( ofstream & os ) {
 	else setPrt$( os, false );							// turn off
 	if ( &os == &exit ) exit( EXIT_FAILURE );
 	if ( &os == &abort ) abort();
-	if ( os.acquired$ ) { os.acquired$ = false; release( os ); }
+	if ( os.acquired$ ) { os.acquired$ = false; unlock( os ); }
 } // ends
 
-bool fail( ofstream & os ) {
-	return os.file$ == 0 || ferror( (FILE *)(os.file$) );
-} // fail
-
-void clear( ofstream & os ) {
-	clearerr( (FILE *)(os.file$) );
-} // clear
-
-int flush( ofstream & os ) {
-	return fflush( (FILE *)(os.file$) );
-} // flush
+bool fail( ofstream & os ) { return os.file$ == 0 || ferror( (FILE *)(os.file$) ); }
+void clear( ofstream & os ) { clearerr( (FILE *)(os.file$) ); }
+int flush( ofstream & os ) { return fflush( (FILE *)(os.file$) ); }
 
 void open( ofstream & os, const char name[], const char mode[] ) {
 	FILE * file = fopen( name, mode );
@@ -130,11 +116,9 @@ void open( ofstream & os, const char name[], const char mode[] ) {
 	(os){ file };										// initialize 
 } // open
 
-void open( ofstream & os, const char name[] ) {
-	open( os, name, "w" );
-} // open
+void open( ofstream & os, const char name[] ) { open( os, name, "w" ); }
 
-void close( ofstream & os ) with(os) {
+void close( ofstream & os ) with( os ) {
   if ( (FILE *)(file$) == 0p ) return;
   if ( (FILE *)(file$) == (FILE *)stdout || (FILE *)(file$) == (FILE *)stderr ) return;
 
@@ -142,7 +126,7 @@ void close( ofstream & os ) with(os) {
 		throw (Close_Failure){ os };
 		// abort | IO_MSG "close output" | nl | strerror( errno );
 	} // if
-	file$ = 0p;
+	file$ = 0p;											// safety after close
 } // close
 
 ofstream & write( ofstream & os, const char data[], size_t size ) {
@@ -174,18 +158,14 @@ int fmt( ofstream & os, const char format[], ... ) {
 	return len;
 } // fmt
 
-inline void acquire( ofstream & os ) with(os) {
-	lock( lock$ );										// may increase recursive lock
+void acquire( ofstream & os ) with( os ) {
+	lock( os );											// may increase recursive lock
 	if ( ! acquired$ ) acquired$ = true;				// not locked ?
-	else unlock( lock$ );								// unwind recursive lock at start
+	else unlock( os );									// unwind recursive lock at start
 } // acquire
 
-inline void release( ofstream & os ) {
-	unlock( os.lock$ );
-} // release
-
-void ?{}( osacquire & acq, ofstream & os ) { lock( os.lock$ ); &acq.os = &os; }
-void ^?{}( osacquire & acq ) { release( acq.os ); }
+void ?{}( osacquire & acq, ofstream & os ) { &acq.os = &os; lock( os ); }
+void ^?{}( osacquire & acq ) { unlock( acq.os ); }
 
 static ofstream soutFile = { (FILE *)stdout };
 ofstream & sout = soutFile, & stdout = soutFile;
@@ -204,11 +184,6 @@ ofstream & nl( ofstream & os ) {
 	nl$( os );											// call basic_ostream nl
 	flush( os );
 	return os;
-	// (ofstream &)(os | '\n');
-	// setPrt$( os, false );							// turn off
-	// setNL$( os, true );
-	// flush( os );
-	// return sepOff( os );							// prepare for next line
 } // nl
 
 
@@ -216,46 +191,33 @@ ofstream & nl( ofstream & os ) {
 
 
 // private
-void ?{}( ifstream & is, void * file ) with(is) {
+void ?{}( ifstream & is, void * file ) with( is ) {
 	file$ = file;
 	nlOnOff$ = false;
 	acquired$ = false;
 } // ?{}
 
+inline void lock( ifstream & os ) with( os ) { lock( os.lock$ ); }
+inline void unlock( ifstream & os ) { unlock( os.lock$ ); }
+
 // public
 void ?{}( ifstream & is ) { is.file$ = 0p; }
-
-void ?{}( ifstream & is, const char name[], const char mode[] ) {
-	open( is, name, mode );
-} // ?{}
-
-void ?{}( ifstream & is, const char name[] ) {
-	open( is, name, "r" );
-} // ?{}
-
-void ^?{}( ifstream & is ) {
-	close( is );
-} // ^?{}
+void ?{}( ifstream & is, const char name[], const char mode[] ) { open( is, name, mode ); }
+void ?{}( ifstream & is, const char name[] ) { open( is, name, "r" ); }
+void ^?{}( ifstream & is ) { close( is ); }
 
 void nlOn( ifstream & os ) { os.nlOnOff$ = true; }
 void nlOff( ifstream & os ) { os.nlOnOff$ = false; }
 bool getANL( ifstream & os ) { return os.nlOnOff$; }
 
-bool fail( ifstream & is ) {
-	return is.file$ == 0p || ferror( (FILE *)(is.file$) );
-} // fail
-
-void clear( ifstream & is ) {
-	clearerr( (FILE *)(is.file$) );
-} // clear
+bool fail( ifstream & is ) { return is.file$ == 0p || ferror( (FILE *)(is.file$) ); }
+void clear( ifstream & is ) { clearerr( (FILE *)(is.file$) ); }
 
 void ends( ifstream & is ) {
-	if ( is.acquired$ ) { is.acquired$ = false; release( is ); }
+	if ( is.acquired$ ) { is.acquired$ = false; unlock( is ); }
 } // ends
 
-bool eof( ifstream & is ) {
-	return feof( (FILE *)(is.file$) );
-} // eof
+bool eof( ifstream & is ) { return feof( (FILE *)(is.file$) ); }
 
 void open( ifstream & is, const char name[], const char mode[] ) {
 	FILE * file = fopen( name, mode );
@@ -266,11 +228,9 @@ void open( ifstream & is, const char name[], const char mode[] ) {
 	(is){ file };										// initialize 
 } // open
 
-void open( ifstream & is, const char name[] ) {
-	open( is, name, "r" );
-} // open
+void open( ifstream & is, const char name[] ) { open( is, name, "r" ); }
 
-void close( ifstream & is ) with(is) {
+void close( ifstream & is ) with( is ) {
   if ( (FILE *)(file$) == 0p ) return;
   if ( (FILE *)(file$) == (FILE *)stdin ) return;
 
@@ -319,18 +279,14 @@ int fmt( ifstream & is, const char format[], ... ) {
 	return len;
 } // fmt
 
-inline void acquire( ifstream & is ) with(is) {
-	lock( lock$ );										// may increase recursive lock
+void acquire( ifstream & is ) with( is ) {
+	lock( is );											// may increase recursive lock
 	if ( ! acquired$ ) acquired$ = true;				// not locked ?
-	else unlock( lock$ );								// unwind recursive lock at start
+	else unlock( is );									// unwind recursive lock at start
 } // acquire
 
-inline void release( ifstream & is ) {
-	unlock( is.lock$ );
-} // release
-
-void ?{}( isacquire & acq, ifstream & is ) { lock( is.lock$ ); &acq.is = &is; }
-void ^?{}( isacquire & acq ) { release( acq.is ); }
+void ?{}( isacquire & acq, ifstream & is ) { &acq.is = &is; lock( is ); }
+void ^?{}( isacquire & acq ) { unlock( acq.is ); }
 
 static ifstream sinFile = { (FILE *)stdin };
 ifstream & sin = sinFile, & stdin = sinFile;

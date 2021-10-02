@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 28 07:35:50 2021
-// Update Count     : 234
+// Last Modified On : Fri Oct  1 07:40:37 2021
+// Update Count     : 238
 //
 
 #pragma once
@@ -52,6 +52,9 @@ bool getANL$( ofstream & );
 bool getPrt$( ofstream & );
 void setPrt$( ofstream &, bool );
 
+void lock( ofstream & );
+void unlock( ofstream & );
+
 // public
 void sepOn( ofstream & );
 void sepOff( ofstream & );
@@ -77,10 +80,6 @@ void close( ofstream & );
 ofstream & write( ofstream &, const char data[], size_t size );
 
 void acquire( ofstream & );
-void release( ofstream & );
-
-void lock( ofstream & );
-void unlock( ofstream & );
 
 struct osacquire {
 	ofstream & os;
@@ -114,6 +113,10 @@ struct ifstream {
 
 // Satisfies istream
 
+// private
+void lock( ifstream & );
+void unlock( ifstream & );
+
 // public
 void nlOn( ifstream & );
 void nlOff( ifstream & );
@@ -131,7 +134,6 @@ ifstream & read( ifstream & is, char data[], size_t size );
 ifstream & ungetc( ifstream & is, char c );
 
 void acquire( ifstream & is );
-void release( ifstream & is );
 
 struct isacquire {
 	ifstream & is;
