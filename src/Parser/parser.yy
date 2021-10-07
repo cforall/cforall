@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep 11 08:20:44 2021
-// Update Count     : 5040
+// Last Modified On : Sat Oct  2 08:27:21 2021
+// Update Count     : 5080
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -30,7 +30,7 @@
 // This incompatibility is discussed in detail before the "designation" grammar rule.  Most of the syntactic extensions
 // from ANSI90 to ANSI11 C are marked with the comment "C99/C11".
 
-// This grammar also has two levels of extensions. The first extensions cover most of the GCC C extensions All of the
+// This grammar also has two levels of extensions. The first extensions cover most of the GCC C extensions. All of the
 // syntactic extensions for GCC C are marked with the comment "GCC". The second extensions are for Cforall (CFA), which
 // fixes several of C's outstanding problems and extends C with many modern language concepts. All of the syntactic
 // extensions for CFA C are marked with the comment "CFA".
@@ -309,8 +309,7 @@ if ( N ) {																		\
 %token ErangeUpEq	ErangeDown	ErangeDownEq			// ~=	-~	-~=
 %token ATassign											// @=
 
-%type<tok> identifier
-%type<tok> identifier_or_type_name  attr_name
+%type<tok> identifier					identifier_at				identifier_or_type_name		attr_name
 %type<tok> quasi_keyword
 %type<constant> string_literal
 %type<str> string_literal_list
@@ -326,7 +325,7 @@ if ( N ) {																		\
 %type<en> logical_AND_expression		logical_OR_expression
 %type<en> conditional_expression		constant_expression			assignment_expression		assignment_expression_opt
 %type<en> comma_expression				comma_expression_opt
-%type<en> argument_expression_list_opt	argument_expression			default_initializer_opt
+%type<en> argument_expression_list_opt	argument_expression_list	argument_expression			default_initializer_opt
 %type<ifctl> if_control_expression
 %type<fctl> for_control_expression		for_control_expression_list
 %type<compop> inclexcl
@@ -558,6 +557,10 @@ quasi_keyword:											// CFA
 identifier:
 	IDENTIFIER
 	| quasi_keyword
+	;
+
+identifier_at:
+	identifier
 	| '@'												// CFA
 		{ Token tok = { new string( DeclarationNode::anonymous.newName() ), yylval.tok.loc }; $$ = tok; }
 	;
@@ -692,7 +695,11 @@ postfix_expression:
 argument_expression_list_opt:
 	// empty
 		{ $$ = nullptr; }
-	| argument_expression
+	| argument_expression_list
+	;
+
+argument_expression_list:
+	argument_expression
 	| argument_expression_list_opt ',' argument_expression
 		{ $$ = (ExpressionNode *)($1->set_last( $3 )); }
 	;
@@ -730,7 +737,7 @@ field_name:
 		{ $$ = new ExpressionNode( build_field_name_fraction_constants( build_constantInteger( *$1 ), $2 ) ); }
 	| FLOATINGconstant fraction_constants_opt
 		{ $$ = new ExpressionNode( build_field_name_fraction_constants( build_field_name_FLOATINGconstant( *$1 ), $2 ) ); }
-	| identifier fraction_constants_opt
+	| identifier_at fraction_constants_opt				// CFA, allow anonymous fields
 		{
 			$$ = new ExpressionNode( build_field_name_fraction_constants( build_varref( $1 ), $2 ) );
 		}
@@ -1083,6 +1090,9 @@ statement_list_nodecl:
 expression_statement:
 	comma_expression_opt ';'
 		{ $$ = new StatementNode( build_expr( $1 ) ); }
+	| MUTEX '@' comma_expression ';'
+		// { $$ = new StatementNode( build_mutex( nullptr, new StatementNode( build_expr( $3 ) ) ) ); }
+		{ SemanticError( yylloc, "Mutex expression is currently unimplemented." ); $$ = nullptr; }
 	;
 
 selection_statement:
@@ -1338,14 +1348,12 @@ fall_through_name:										// CFA
 
 with_statement:
 	WITH '(' tuple_expression_list ')' statement
-		{
-			$$ = new StatementNode( build_with( $3, $5 ) );
-		}
+		{ $$ = new StatementNode( build_with( $3, $5 ) ); }
 	;
 
 // If MUTEX becomes a general qualifier, there are shift/reduce conflicts, so change syntax to "with mutex".
 mutex_statement:
-	MUTEX '(' argument_expression_list_opt ')' statement
+	MUTEX '(' argument_expression_list ')' statement
 		{ $$ = new StatementNode( build_mutex( $3, $5 ) ); }
 	;
 
@@ -2474,7 +2482,7 @@ initializer_list_opt:
 
 designation:
 	designator_list ':'									// C99, CFA uses ":" instead of "="
-	| identifier ':'									// GCC, field name
+	| identifier_at ':'									// GCC, field name
 		{ $$ = new ExpressionNode( build_varref( $1 ) ); }
 	;
 
@@ -2486,7 +2494,7 @@ designator_list:										// C99
 	;
 
 designator:
-	'.' identifier										// C99, field name
+	'.' identifier_at									// C99, field name
 		{ $$ = new ExpressionNode( build_varref( $2 ) ); }
 	| '[' push assignment_expression pop ']'			// C99, single array element
 		// assignment_expression used instead of constant_expression because of shift/reduce conflicts with tuple.
@@ -2918,7 +2926,7 @@ attr_name:												// GCC
 // declaring an array of functions versus a pointer to an array of functions.
 
 paren_identifier:
-	identifier
+	identifier_at
 		{ $$ = DeclarationNode::newName( $1 ); }
 	| '(' paren_identifier ')'							// redundant parenthesis
 		{ $$ = $2; }

@@ -16,14 +16,15 @@
 
 #include <fstream.hfa>
 #include <stdlib.hfa>
+#include <mutex_stmt.hfa>
 
 int main() {
 	int i;
 	if(threading_enabled()) {
-		stdout | acquire | "YES";
+		mutex( stdout ) stdout | "YES";
 		stdin | i;
 	} else {
-		stdout | acquire | "NO";
+		mutex( stdout ) stdout | "NO";
 		stdin | i;
 	}
 }

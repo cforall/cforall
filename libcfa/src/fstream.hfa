@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct  1 07:40:37 2021
-// Update Count     : 238
+// Last Modified On : Wed Oct  6 18:45:49 2021
+// Update Count     : 240
 //
 
 #pragma once
@@ -35,7 +35,6 @@ struct ofstream {
 	char separator$[ofstream_sepSize];
 	char tupleSeparator$[ofstream_sepSize];
 	multiple_acquisition_lock lock$;
-	bool acquired$;
 }; // ofstream
 
 // Satisfies ostream
@@ -79,14 +78,6 @@ void open( ofstream &, const char name[] );
 void close( ofstream & );
 ofstream & write( ofstream &, const char data[], size_t size );
 
-void acquire( ofstream & );
-
-struct osacquire {
-	ofstream & os;
-};
-void ?{}( osacquire & acq, ofstream & );
-void ^?{}( osacquire & acq );
-
 void ?{}( ofstream & );
 void ?{}( ofstream &, const char name[], const char mode[] ); // FIX ME: use default = "w"
 void ?{}( ofstream &, const char name[] );
@@ -108,7 +99,6 @@ struct ifstream {
 	void * file$;
 	bool nlOnOff$;
 	multiple_acquisition_lock lock$;
-	bool acquired$;
 }; // ifstream
 
 // Satisfies istream
@@ -132,14 +122,6 @@ void open( ifstream & is, const char name[] );
 void close( ifstream & is );
 ifstream & read( ifstream & is, char data[], size_t size );
 ifstream & ungetc( ifstream & is, char c );
-
-void acquire( ifstream & is );
-
-struct isacquire {
-	ifstream & is;
-};
-void ?{}( isacquire & acq, ifstream & is );
-void ^?{}( isacquire & acq );
 
 void ?{}( ifstream & is );
 void ?{}( ifstream & is, const char name[], const char mode[] ); // FIX ME: use default = "r"

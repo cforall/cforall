@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 28 20:37:56 2021
-// Update Count     : 401
+// Last Modified On : Wed Oct  6 18:54:59 2021
+// Update Count     : 404
 //
 
 #pragma once
@@ -57,7 +57,6 @@ trait ostream( ostype & | basic_ostream( ostype ) ) {
 	void open( ostype &, const char name[], const char mode[] );
 	void close( ostype & );
 	ostype & write( ostype &, const char [], size_t );
-	void acquire( ostype & );							// concurrent access
 }; // ostream
 
 // trait writeable( T ) {
@@ -141,10 +140,6 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & sepEnable( ostype & );
 	ostype & nlOn( ostype & );
 	ostype & nlOff( ostype & );
-} // distribution
-
-forall( ostype & | ostream( ostype ) ) {
-	ostype & acquire( ostype & );
 } // distribution
 
 // tuples
@@ -311,7 +306,6 @@ trait istream( istype & | basic_istream( istype ) ) {
 	void open( istype & is, const char name[] );
 	void close( istype & is );
 	istype & read( istype &, char [], size_t );
-	void acquire( istype & );							// concurrent access
 }; // istream
 
 trait readable( T ) {
@@ -376,10 +370,6 @@ forall( istype & | basic_istream( istype ) ) {
 	istype & nl( istype & is );
 	istype & nlOn( istype & );
 	istype & nlOff( istype & );
-} // distribution
-
-forall( istype & | istream( istype ) ) {
-	istype & acquire( istype & );
 } // distribution
 
 // *********************************** manipulators ***********************************

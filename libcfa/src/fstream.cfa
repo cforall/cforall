@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct  1 08:10:21 2021
-// Update Count     : 473
+// Last Modified On : Wed Oct  6 18:39:13 2021
+// Update Count     : 508
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -35,7 +35,6 @@ void ?{}( ofstream & os, void * file ) with( os ) {
 	nlOnOff$ = true;
 	prt$ = false;
 	sawNL$ = false;
-	acquired$ = false;
 	sepSetCur$( os, sepGet( os ) );
 	sepSet( os, " " );
 	sepSetTuple( os, ", " );
@@ -100,7 +99,6 @@ void ends( ofstream & os ) {
 	else setPrt$( os, false );							// turn off
 	if ( &os == &exit ) exit( EXIT_FAILURE );
 	if ( &os == &abort ) abort();
-	if ( os.acquired$ ) { os.acquired$ = false; unlock( os ); }
 } // ends
 
 bool fail( ofstream & os ) { return os.file$ == 0 || ferror( (FILE *)(os.file$) ); }
@@ -108,7 +106,13 @@ void clear( ofstream & os ) { clearerr( (FILE *)(os.file$) ); }
 int flush( ofstream & os ) { return fflush( (FILE *)(os.file$) ); }
 
 void open( ofstream & os, const char name[], const char mode[] ) {
-	FILE * file = fopen( name, mode );
+	FILE * file;
+    for ( cnt; 10 ) {
+		errno = 0;
+		file = fopen( name, mode );
+	  if ( file != 0p || errno != EINTR ) break;		// timer interrupt ?
+	  if ( cnt == 9 ) abort( "ofstream open EINTR spinning exceeded" );
+    } // for
 	if ( file == 0p ) {
 		throw (Open_Failure){ os };
 		// abort | IO_MSG "open output file \"" | name | "\"" | nl | strerror( errno );
@@ -122,7 +126,14 @@ void close( ofstream & os ) with( os ) {
   if ( (FILE *)(file$) == 0p ) return;
   if ( (FILE *)(file$) == (FILE *)stdout || (FILE *)(file$) == (FILE *)stderr ) return;
 
-	if ( fclose( (FILE *)(file$) ) == EOF ) {
+	int ret;
+    for ( cnt; 10 ) {
+		errno = 0;
+		ret = fclose( (FILE *)(file$) );
+	  if ( ret != EOF || errno != EINTR ) break;		// timer interrupt ?
+	  if ( cnt == 9 ) abort( "ofstream open EINTR spinning exceeded" );
+    } // for
+	if ( ret == EOF ) {
 		throw (Close_Failure){ os };
 		// abort | IO_MSG "close output" | nl | strerror( errno );
 	} // if
@@ -145,7 +156,14 @@ ofstream & write( ofstream & os, const char data[], size_t size ) {
 int fmt( ofstream & os, const char format[], ... ) {
 	va_list args;
 	va_start( args, format );
-	int len = vfprintf( (FILE *)(os.file$), format, args );
+		
+	int len;
+    for ( cnt; 10 ) {
+		errno = 0;
+		len = vfprintf( (FILE *)(os.file$), format, args );
+	  if ( len != EOF || errno != EINTR ) break;		// timer interrupt ?
+	  if ( cnt == 9 ) abort( "ofstream fmt EINTR spinning exceeded" );
+    } // for
 	if ( len == EOF ) {
 		if ( ferror( (FILE *)(os.file$) ) ) {
 			abort | IO_MSG "invalid write";
@@ -157,15 +175,6 @@ int fmt( ofstream & os, const char format[], ... ) {
 	sepReset$( os );									// reset separator
 	return len;
 } // fmt
-
-void acquire( ofstream & os ) with( os ) {
-	lock( os );											// may increase recursive lock
-	if ( ! acquired$ ) acquired$ = true;				// not locked ?
-	else unlock( os );									// unwind recursive lock at start
-} // acquire
-
-void ?{}( osacquire & acq, ofstream & os ) { &acq.os = &os; lock( os ); }
-void ^?{}( osacquire & acq ) { unlock( acq.os ); }
 
 static ofstream soutFile = { (FILE *)stdout };
 ofstream & sout = soutFile, & stdout = soutFile;
@@ -194,7 +203,6 @@ ofstream & nl( ofstream & os ) {
 void ?{}( ifstream & is, void * file ) with( is ) {
 	file$ = file;
 	nlOnOff$ = false;
-	acquired$ = false;
 } // ?{}
 
 inline void lock( ifstream & os ) with( os ) { lock( os.lock$ ); }
@@ -214,13 +222,18 @@ bool fail( ifstream & is ) { return is.file$ == 0p || ferror( (FILE *)(is.file$)
 void clear( ifstream & is ) { clearerr( (FILE *)(is.file$) ); }
 
 void ends( ifstream & is ) {
-	if ( is.acquired$ ) { is.acquired$ = false; unlock( is ); }
 } // ends
 
 bool eof( ifstream & is ) { return feof( (FILE *)(is.file$) ); }
 
 void open( ifstream & is, const char name[], const char mode[] ) {
-	FILE * file = fopen( name, mode );
+	FILE * file;
+    for ( cnt; 10 ) {
+		errno = 0;
+		file = fopen( name, mode );
+	  if ( file != 0p || errno != EINTR ) break;		// timer interrupt ?
+	  if ( cnt == 9 ) abort( "ifstream open EINTR spinning exceeded" );
+    } // for
 	if ( file == 0p ) {
 		throw (Open_Failure){ is };
 		// abort | IO_MSG "open input file \"" | name | "\"" | nl | strerror( errno );
@@ -234,11 +247,18 @@ void close( ifstream & is ) with( is ) {
   if ( (FILE *)(file$) == 0p ) return;
   if ( (FILE *)(file$) == (FILE *)stdin ) return;
 
-	if ( fclose( (FILE *)(file$) ) == EOF ) {
+	int ret;
+    for ( cnt; 10 ) {
+		errno = 0;
+		ret = fclose( (FILE *)(file$) );
+	  if ( ret != EOF || errno != EINTR ) break;		// timer interrupt ?
+	  if ( cnt == 9 ) abort( "ifstream close EINTR spinning exceeded" );
+    } // for
+	if ( ret == EOF ) {
 		throw (Close_Failure){ is };
 		// abort | IO_MSG "close input" | nl | strerror( errno );
 	} // if
-	file$ = 0p;
+	file$ = 0p;											// safety after close
 } // close
 
 ifstream & read( ifstream & is, char data[], size_t size ) {
@@ -267,9 +287,14 @@ ifstream &ungetc( ifstream & is, char c ) {
 
 int fmt( ifstream & is, const char format[], ... ) {
 	va_list args;
-
 	va_start( args, format );
-	int len = vfscanf( (FILE *)(is.file$), format, args );
+
+	int len;
+    for () {											// no check for EINTR limit waiting for keyboard input
+		errno = 0;
+		len = vfscanf( (FILE *)(is.file$), format, args );
+	  if ( len != EOF || errno != EINTR ) break;		// timer interrupt ?
+    } // for
 	if ( len == EOF ) {
 		if ( ferror( (FILE *)(is.file$) ) ) {
 			abort | IO_MSG "invalid read";
@@ -278,15 +303,6 @@ int fmt( ifstream & is, const char format[], ... ) {
 	va_end( args );
 	return len;
 } // fmt
-
-void acquire( ifstream & is ) with( is ) {
-	lock( is );											// may increase recursive lock
-	if ( ! acquired$ ) acquired$ = true;				// not locked ?
-	else unlock( is );									// unwind recursive lock at start
-} // acquire
-
-void ?{}( isacquire & acq, ifstream & is ) { &acq.is = &is; lock( is ); }
-void ^?{}( isacquire & acq ) { unlock( acq.is ); }
 
 static ifstream sinFile = { (FILE *)stdin };
 ifstream & sin = sinFile, & stdin = sinFile;

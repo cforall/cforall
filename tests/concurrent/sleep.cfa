@@ -1,5 +1,6 @@
 #include <fstream.hfa>
 #include <thread.hfa>
+#include <mutex_stmt.hfa>
 #include <time.hfa>
 
 Duration default_preemption() {
@@ -28,13 +29,13 @@ void main(slow_sleeper &) {
 }
 
 int main() {
-	sout | acquire | "start";
+	mutex( sout ) sout | "start";
 	{
 		slow_sleeper slow;
 		yield();
 		fast_sleeper fast;
 		yield();
 	}
-	sout | acquire | "done";
+	mutex( sout ) sout | "done";
 }
 

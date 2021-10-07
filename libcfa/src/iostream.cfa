@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat May 15 09:39:21 2021
-// Update Count     : 1342
+// Last Modified On : Wed Oct  6 18:55:03 2021
+// Update Count     : 1344
 //
 
 #include "iostream.hfa"
@@ -397,13 +397,6 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		nlOff( os );									// call void returning
 		return os;
 	} // nlOff
-} // distribution
-
-forall( ostype & | ostream( ostype ) ) {
-	ostype & acquire( ostype & os ) {
-		acquire( os );									// call void returning
-		return os;
-	} // acquire
 } // distribution
 
 // tuples
@@ -1034,13 +1027,6 @@ forall( istype & | basic_istream( istype ) ) {
 		nlOff( is );									// call void returning
 		return is;
 	} // nlOff
-} // distribution
-
-forall( istype & | istream( istype ) ) {
-	istype & acquire( istype & is ) {
-		acquire( is );									// call void returning
-		return is;
-	} // acquire
 } // distribution
 
 // *********************************** manipulators ***********************************

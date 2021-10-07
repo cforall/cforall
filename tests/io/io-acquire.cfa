@@ -9,53 +9,68 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  1 18:40:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 27 11:49:34 2021
-// Update Count     : 18
+// Last Modified On : Wed Oct  6 18:04:58 2021
+// Update Count     : 72
 // 
 
 #include <fstream.hfa>
 #include <thread.hfa>
+#include <mutex_stmt.hfa>
 
 thread T {};
 void main( T & ) {
 	// output from parallel threads should not be scrambled
 
-	for ( 100 ) {										// local protection
-		sout | acquire | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+	for ( 100 ) {										// expression protection
+		mutex(sout) sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 	}
-	{													// global protection (RAII)
-		osacquire acq = { sout };
+	mutex( sout ) {										// statement protection
 		for ( 100 ) {
 			sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 		}
 	}
 	{													// duplicate protection demonstrating recursive lock
-		osacquire acq = { sout };
-		for ( 100 ) {
-			osacquire acq = { sout };
-			sout | acquire | 1 | 2 | 3 | 4 | 5 | acquire | 6 | 7 | 8 | 9;
-			sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+		ofstream & h1( ofstream & os ) {				// helper
+			mutex( os ) return os | 1 | 2 | 3 | 4;		// unnecessary mutex
+		}
+		ofstream & h2( ofstream & os ) {				// helper
+			mutex( os ) return os | 6 | 7 | 8 | 9;		// unnecessary mutex
+		}
+		mutex( sout ) {									// unnecessary mutex
+			for ( 100 ) {
+				mutex( sout ) {
+					sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+					sout | h1 | 5 | h2;					// refactored code
+				}
+			}
 		}
 	}
 
 	// above output used as input to parallel threads 
 
 	int a, b, c, d, e, f, g, h, i;
-	for ( 100 ) {										// local protection
-		sin | acquire | a | b | c | d | e | f | g | h | i;
+	for ( 100 ) {										// expression protection
+		mutex(sin) sin | a | b | c | d | e | f | g | h | i;
 	}
-	{													// global protection (RAII)
-		isacquire acq = { sin };
+	mutex( sin ) {										// statement protection
 		for ( 100 ) {
 			sin  | a | b | c | d | e | f | g | h | i;
 		}
 	}
 	{													// duplicate protection demonstrating recursive lock
-		isacquire acq = { sin };
-		for ( 100 ) {
-			isacquire acq = { sin };
-			sin | acquire | a | b | c | d | e | acquire | f | g | h | i;
-			sin | a | b | c | d | e | f | g | h | i;
+		ifstream & h1( ifstream & is ) {				// helper
+			mutex( is ) return is | a | b | c | d;		// unnecessary mutex
+		}
+		ifstream & h2( ifstream & is ) {				// helper
+			mutex( is ) return is | f | g | h | i;		// unnecessary mutex
+		}
+		mutex( sin ) {									// unnecessary mutex
+			for ( 5 ) {
+				mutex( sin ) {
+					sin  | a | b | c | d | e | f | g | h | i;
+					sin  | h1 | e | h2;					// refactored code
+				}
+			}
 		}
 	}
 }

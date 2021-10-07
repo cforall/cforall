@@ -1,6 +1,7 @@
 #include <fstream.hfa>
 #include <locks.hfa>
 #include <thread.hfa>
+#include <mutex_stmt.hfa>
 
 enum { num_blockers = 17, num_unblockers = 13 };
 
@@ -27,7 +28,7 @@ void main(Blocker & this) {
 		this.sum += (unsigned)me;
 		thrash();
 		P(ben);
-		if(((thread&)this).seqable.next != 0p) sout | acquire |"Link not invalidated";
+		if(((thread&)this).seqable.next != 0p) mutex(sout) sout | "Link not invalidated";
 		thrash();
 	}
 }
