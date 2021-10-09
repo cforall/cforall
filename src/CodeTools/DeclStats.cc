@@ -155,8 +155,19 @@ namespace CodeTools {
 
 		/// number of counting bins for linkages
 		static const unsigned n_named_specs = 8;
-		/// map from total number of specs to bins
-		static const unsigned ind_for_linkage[16];
+		/// Mapping function from linkage to bin.
+		static unsigned linkage_index( LinkageSpec::Spec spec ) {
+			switch ( spec ) {
+			case LinkageSpec::Intrinsic:  return 0;
+			case LinkageSpec::C:          return 1;
+			case LinkageSpec::Cforall:    return 2;
+			case LinkageSpec::AutoGen:    return 3;
+			case LinkageSpec::Compiler:   return 4;
+			case LinkageSpec::BuiltinCFA: return 5;
+			case LinkageSpec::BuiltinC:   return 6;
+			default:                      return 7;
+			}
+		}
 
 		Stats for_linkage[n_named_specs];            ///< Stores separate stats per linkage
 		std::unordered_set<std::string> seen_names;  ///< Stores manglenames already seen to avoid double-counting
@@ -365,7 +376,7 @@ namespace CodeTools {
 			// skip if already seen declaration for this function
 			const std::string& mangleName = decl->get_mangleName().empty() ? decl->name : decl->get_mangleName();
 			if ( seen_names.insert( mangleName ).second ) {
-				Stats& stats = for_linkage[ ind_for_linkage[ decl->linkage ] ];
+				Stats& stats = for_linkage[ linkage_index( decl->linkage ) ];
 
 				++stats.n_decls;
 				FunctionType* fnTy = decl->type;
@@ -525,9 +536,6 @@ namespace CodeTools {
 			printPairMap("exprs_by_depth+fanout", exprs_by_fanout_at_depth);
 		}
 	};
-
-	const unsigned DeclStats::ind_for_linkage[]
-		= { 7, 7, 2, 1,   7, 7, 7, 3,   4, 7, 6, 5,   7, 7, 7, 0 };
 
 	void printDeclStats( std::list< Declaration * > &translationUnit ) {
 		PassVisitor<DeclStats> stats;

@@ -179,10 +179,11 @@ am__objects_2 = CodeGen/CodeGenerator.$(OBJEXT) \
 	CodeGen/FixMain.$(OBJEXT) CodeGen/GenType.$(OBJEXT) \
 	CodeGen/LinkOnce.$(OBJEXT) CodeGen/OperatorTable.$(OBJEXT)
 am__objects_3 = Common/Assert.$(OBJEXT) \
-	Common/CodeLocationTools.$(OBJEXT) Common/Eval.$(OBJEXT) \
-	Common/Examine.$(OBJEXT) Common/PassVisitor.$(OBJEXT) \
-	Common/SemanticError.$(OBJEXT) Common/Stats/Counter.$(OBJEXT) \
-	Common/Stats/Heap.$(OBJEXT) Common/Stats/ResolveTime.$(OBJEXT) \
+	Common/CodeLocationTools.$(OBJEXT) Common/DeclStats.$(OBJEXT) \
+	Common/Eval.$(OBJEXT) Common/Examine.$(OBJEXT) \
+	Common/PassVisitor.$(OBJEXT) Common/SemanticError.$(OBJEXT) \
+	Common/Stats/Counter.$(OBJEXT) Common/Stats/Heap.$(OBJEXT) \
+	Common/Stats/ResolveTime.$(OBJEXT) \
 	Common/Stats/Stats.$(OBJEXT) Common/Stats/Time.$(OBJEXT) \
 	Common/UniqueName.$(OBJEXT)
 am__objects_4 = ControlStruct/ExceptDecl.$(OBJEXT) \
@@ -325,8 +326,9 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	CodeTools/$(DEPDIR)/ResolvProtoDump.Po \
 	CodeTools/$(DEPDIR)/TrackLoc.Po Common/$(DEPDIR)/Assert.Po \
 	Common/$(DEPDIR)/CodeLocationTools.Po \
-	Common/$(DEPDIR)/DebugMalloc.Po Common/$(DEPDIR)/Eval.Po \
-	Common/$(DEPDIR)/Examine.Po Common/$(DEPDIR)/PassVisitor.Po \
+	Common/$(DEPDIR)/DebugMalloc.Po Common/$(DEPDIR)/DeclStats.Po \
+	Common/$(DEPDIR)/Eval.Po Common/$(DEPDIR)/Examine.Po \
+	Common/$(DEPDIR)/PassVisitor.Po \
 	Common/$(DEPDIR)/SemanticError.Po \
 	Common/$(DEPDIR)/UniqueName.Po \
 	Common/Stats/$(DEPDIR)/Counter.Po \
@@ -788,6 +790,8 @@ SRC_COMMON = \
       Common/CodeLocationTools.cpp \
       Common/CompilerError.h \
       Common/Debug.h \
+      Common/DeclStats.hpp \
+      Common/DeclStats.cpp \
       Common/ErrorObjects.h \
       Common/Eval.cc \
       Common/Examine.cc \
@@ -1121,6 +1125,8 @@ Common/$(DEPDIR)/$(am__dirstamp):
 Common/Assert.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
 Common/CodeLocationTools.$(OBJEXT): Common/$(am__dirstamp) \
+	Common/$(DEPDIR)/$(am__dirstamp)
+Common/DeclStats.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
 Common/Eval.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
@@ -1517,6 +1523,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Assert.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/CodeLocationTools.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/DebugMalloc.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/DeclStats.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Eval.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Examine.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/PassVisitor.Po@am__quote@ # am--include-marker
@@ -1906,6 +1913,7 @@ distclean: distclean-am
 	-rm -f Common/$(DEPDIR)/Assert.Po
 	-rm -f Common/$(DEPDIR)/CodeLocationTools.Po
 	-rm -f Common/$(DEPDIR)/DebugMalloc.Po
+	-rm -f Common/$(DEPDIR)/DeclStats.Po
 	-rm -f Common/$(DEPDIR)/Eval.Po
 	-rm -f Common/$(DEPDIR)/Examine.Po
 	-rm -f Common/$(DEPDIR)/PassVisitor.Po
@@ -2103,6 +2111,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Common/$(DEPDIR)/Assert.Po
 	-rm -f Common/$(DEPDIR)/CodeLocationTools.Po
 	-rm -f Common/$(DEPDIR)/DebugMalloc.Po
+	-rm -f Common/$(DEPDIR)/DeclStats.Po
 	-rm -f Common/$(DEPDIR)/Eval.Po
 	-rm -f Common/$(DEPDIR)/Examine.Po
 	-rm -f Common/$(DEPDIR)/PassVisitor.Po

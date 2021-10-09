@@ -8,9 +8,9 @@
 //
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
-// Last Modified By : Henry Xue
-// Last Modified On : Mon Aug 23 15:42:08 2021
-// Update Count     : 650
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Oct  8 11:22:00 2021
+// Update Count     : 651
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -42,6 +42,7 @@ using namespace std;
 #include "CodeTools/TrackLoc.h"             // for fillLocations
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
 #include "Common/CompilerError.h"           // for CompilerError
+#include "Common/DeclStats.hpp"
 #include "Common/Stats.h"
 #include "Common/PassVisitor.h"
 #include "Common/SemanticError.h"           // for SemanticError
@@ -340,23 +341,7 @@ int main( int argc, char * argv[] ) {
 			LibCfa::makeLibCfa( translationUnit );
 		} // if
 
-		if ( declstatsp ) {
-			CodeTools::printDeclStats( translationUnit );
-			deleteAll( translationUnit );
-			return EXIT_SUCCESS;
-		} // if
-
-		if ( bresolvep ) {
-			dump( translationUnit );
-			return EXIT_SUCCESS;
-		} // if
-
 		CodeTools::fillLocations( translationUnit );
-
-		if ( resolvprotop ) {
-			CodeTools::dumpAsResolvProto( translationUnit );
-			return EXIT_SUCCESS;
-		} // if
 
 		if( useNewAST ) {
 			if (Stats::Counters::enabled) {
@@ -365,8 +350,28 @@ int main( int argc, char * argv[] ) {
 			}
 			auto transUnit = convert( move( translationUnit ) );
 
+			forceFillCodeLocations( transUnit );
+
 			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( transUnit ) );
-			
+
+			// LibCfa::makeLibCfa
+
+			if ( declstatsp ) {
+				printDeclStats( transUnit );
+				return EXIT_SUCCESS;
+			} // if
+
+			if ( bresolvep ) {
+				dump( move( transUnit ) );
+				return EXIT_SUCCESS;
+			} // if
+
+			if ( resolvprotop ) {
+				// TODO: Better error message.
+				assert(false);
+				return EXIT_SUCCESS;
+			} // if
+
 			PASS( "Resolve", ResolvExpr::resolve( transUnit ) );
 			if ( exprp ) {
 				dump( move( transUnit ) );
@@ -379,6 +384,26 @@ int main( int argc, char * argv[] ) {
 			translationUnit = convert( move( transUnit ) );
 		} else {
 			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( translationUnit ) );
+
+			// LibCfa::makeLibCfa
+
+			if ( declstatsp ) {
+				CodeTools::printDeclStats( translationUnit );
+				deleteAll( translationUnit );
+				return EXIT_SUCCESS;
+			} // if
+
+			if ( bresolvep ) {
+				dump( translationUnit );
+				return EXIT_SUCCESS;
+			} // if
+
+			CodeTools::fillLocations( translationUnit );
+
+			if ( resolvprotop ) {
+				CodeTools::dumpAsResolvProto( translationUnit );
+				return EXIT_SUCCESS;
+			} // if
 
 			PASS( "Resolve", ResolvExpr::resolve( translationUnit ) );
 			if ( exprp ) {

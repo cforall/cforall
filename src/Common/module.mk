@@ -21,6 +21,8 @@ SRC_COMMON = \
       Common/CodeLocationTools.cpp \
       Common/CompilerError.h \
       Common/Debug.h \
+      Common/DeclStats.hpp \
+      Common/DeclStats.cpp \
       Common/ErrorObjects.h \
       Common/Eval.cc \
       Common/Examine.cc \
