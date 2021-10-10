@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  2 08:27:21 2021
-// Update Count     : 5080
+// Last Modified On : Fri Oct  8 06:57:16 2021
+// Update Count     : 5086
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1090,9 +1090,9 @@ statement_list_nodecl:
 expression_statement:
 	comma_expression_opt ';'
 		{ $$ = new StatementNode( build_expr( $1 ) ); }
-	| MUTEX '@' comma_expression ';'
-		// { $$ = new StatementNode( build_mutex( nullptr, new StatementNode( build_expr( $3 ) ) ) ); }
-		{ SemanticError( yylloc, "Mutex expression is currently unimplemented." ); $$ = nullptr; }
+	| MUTEX '(' ')' comma_expression ';'
+		{ $$ = new StatementNode( build_mutex( nullptr, new StatementNode( build_expr( $4 ) ) ) ); }
+		// { SemanticError( yylloc, "Mutex expression is currently unimplemented." ); $$ = nullptr; }
 	;
 
 selection_statement:
