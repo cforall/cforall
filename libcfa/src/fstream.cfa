@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct  6 18:39:13 2021
-// Update Count     : 508
+// Last Modified On : Sun Oct 10 11:23:05 2021
+// Update Count     : 512
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -205,6 +205,8 @@ void ?{}( ifstream & is, void * file ) with( is ) {
 	nlOnOff$ = false;
 } // ?{}
 
+bool getANL$( ifstream & os ) { return os.nlOnOff$; }
+
 inline void lock( ifstream & os ) with( os ) { lock( os.lock$ ); }
 inline void unlock( ifstream & os ) { unlock( os.lock$ ); }
 
@@ -214,17 +216,15 @@ void ?{}( ifstream & is, const char name[], const char mode[] ) { open( is, name
 void ?{}( ifstream & is, const char name[] ) { open( is, name, "r" ); }
 void ^?{}( ifstream & is ) { close( is ); }
 
-void nlOn( ifstream & os ) { os.nlOnOff$ = true; }
-void nlOff( ifstream & os ) { os.nlOnOff$ = false; }
-bool getANL( ifstream & os ) { return os.nlOnOff$; }
-
 bool fail( ifstream & is ) { return is.file$ == 0p || ferror( (FILE *)(is.file$) ); }
 void clear( ifstream & is ) { clearerr( (FILE *)(is.file$) ); }
 
-void ends( ifstream & is ) {
-} // ends
+void nlOn( ifstream & os ) { os.nlOnOff$ = true; }
+void nlOff( ifstream & os ) { os.nlOnOff$ = false; }
 
-bool eof( ifstream & is ) { return feof( (FILE *)(is.file$) ); }
+void ends( ifstream & is ) {}
+
+bool eof( ifstream & is ) { return feof( (FILE *)(is.file$) ) != 0; }
 
 void open( ifstream & is, const char name[], const char mode[] ) {
 	FILE * file;

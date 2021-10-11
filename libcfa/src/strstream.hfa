@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:20:59 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 27 20:58:50 2021
-// Update Count     : 41
+// Last Modified On : Sun Oct 10 10:14:22 2021
+// Update Count     : 47
 // 
 
 #pragma once
@@ -84,16 +84,19 @@ struct istrstream {
 
 // Satisfies basic_istream
 
+// private
+bool getANL$( istrstream & );
+
 // public
-bool getANL( istrstream & );
 void nlOn( istrstream & );
 void nlOff( istrstream & );
 void ends( istrstream & );
-int fmt( istrstream &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
-istrstream & ungetc( istrstream & is, char c );
-int eof( istrstream & is );
 
-void ?{}( istrstream & is, char buf[] );
+int fmt( istrstream &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
+istrstream & ungetc( istrstream &, char );
+bool eof( istrstream & );
+
+void ?{}( istrstream &, char buf[] );
 
 // Local Variables: //
 // mode: c //

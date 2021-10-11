@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct  6 18:54:59 2021
-// Update Count     : 404
+// Last Modified On : Sun Oct 10 10:02:07 2021
+// Update Count     : 407
 //
 
 #pragma once
@@ -290,10 +290,11 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 
 trait basic_istream( istype & ) {
-	bool getANL( istype & );							// get scan newline (on/off)
+	// private
+	bool getANL$( istype & );							// get scan newline (on/off)
+	// public
 	void nlOn( istype & );								// read newline
 	void nlOff( istype & );								// scan newline
-
 	void ends( istype & os );							// end of output statement
 	int fmt( istype &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
 	istype & ungetc( istype &, char );

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct  6 18:55:03 2021
-// Update Count     : 1344
+// Last Modified On : Sun Oct 10 09:28:17 2021
+// Update Count     : 1345
 //
 
 #include "iostream.hfa"
@@ -821,7 +821,7 @@ forall( istype & | basic_istream( istype ) ) {
 		for () {
 			fmt( is, "%c", &temp );						// must pass pointer through varg to fmt
 			// do not overwrite parameter with newline unless appropriate
-			if ( temp != '\n' || getANL( is ) ) { c = temp; break; }
+			if ( temp != '\n' || getANL$( is ) ) { c = temp; break; }
 			if ( eof( is ) ) break;
 		} // for
 		return is;

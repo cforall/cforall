@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct  6 18:45:49 2021
-// Update Count     : 240
+// Last Modified On : Sun Oct 10 09:37:32 2021
+// Update Count     : 243
 //
 
 #pragma once
@@ -76,6 +76,7 @@ int flush( ofstream & );
 void open( ofstream &, const char name[], const char mode[] ); // FIX ME: use default = "w"
 void open( ofstream &, const char name[] );
 void close( ofstream & );
+
 ofstream & write( ofstream &, const char data[], size_t size );
 
 void ?{}( ofstream & );
@@ -104,13 +105,14 @@ struct ifstream {
 // Satisfies istream
 
 // private
+bool getANL$( ifstream & );
+
 void lock( ifstream & );
 void unlock( ifstream & );
 
 // public
 void nlOn( ifstream & );
 void nlOff( ifstream & );
-bool getANL( ifstream & );
 void ends( ifstream & );
 int fmt( ifstream &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
 
@@ -120,6 +122,7 @@ bool eof( ifstream & is );
 void open( ifstream & is, const char name[], const char mode[] ); // FIX ME: use default = "r"
 void open( ifstream & is, const char name[] );
 void close( ifstream & is );
+
 ifstream & read( ifstream & is, char data[], size_t size );
 ifstream & ungetc( ifstream & is, char c );
 

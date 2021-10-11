@@ -9,11 +9,12 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:24:35 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 27 20:59:53 2021
-// Update Count     : 78
+// Last Modified On : Sun Oct 10 16:13:20 2021
+// Update Count     : 101
 // 
 
 #include "strstream.hfa"
+#include "fstream.hfa"									// abort
 
 #include <stdio.h>										// vsnprintf
 #include <stdarg.h>										// varargs
@@ -29,16 +30,16 @@
 #define IO_MSG "I/O error: "
 
 // private
-bool sepPrt$( ostrstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
-void sepReset$( ostrstream & os ) { os.sepOnOff$ = os.sepDefault$; }
-void sepReset$( ostrstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
-const char * sepGetCur$( ostrstream & os ) { return os.sepCur$; }
-void sepSetCur$( ostrstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
-bool getNL$( ostrstream & os ) { return os.sawNL$; }
-void setNL$( ostrstream & os, bool state ) { os.sawNL$ = state; }
-bool getANL$( ostrstream & os ) { return os.nlOnOff$; }
-bool getPrt$( ostrstream & os ) { return os.prt$; }
-void setPrt$( ostrstream & os, bool state ) { os.prt$ = state; }
+inline bool sepPrt$( ostrstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
+inline void sepReset$( ostrstream & os ) { os.sepOnOff$ = os.sepDefault$; }
+inline void sepReset$( ostrstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
+inline const char * sepGetCur$( ostrstream & os ) { return os.sepCur$; }
+inline void sepSetCur$( ostrstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
+inline bool getNL$( ostrstream & os ) { return os.sawNL$; }
+inline void setNL$( ostrstream & os, bool state ) { os.sawNL$ = state; }
+inline bool getANL$( ostrstream & os ) { return os.nlOnOff$; }
+inline bool getPrt$( ostrstream & os ) { return os.prt$; }
+inline void setPrt$( ostrstream & os, bool state ) { os.prt$ = state; }
 
 // public
 void ?{}( ostrstream & os, char buf[], size_t size ) {
@@ -127,6 +128,8 @@ ostrstream & write( ostrstream & os ) {
 
 // *********************************** istrstream ***********************************
 
+// private
+bool getANL$( istrstream & is ) { return is.nlOnOff$; }
 
 // public
 void ?{}( istrstream & is, char buf[] ) {
@@ -135,16 +138,29 @@ void ?{}( istrstream & is, char buf[] ) {
 	is.nlOnOff$ = false;
 } // ?{}
 
-bool getANL( istrstream & is ) { return is.nlOnOff$; }
 void nlOn( istrstream & is ) { is.nlOnOff$ = true; }
 void nlOff( istrstream & is ) { is.nlOnOff$ = false; }
 
-void ends( istrstream & is ) {
-} // ends
+void ends( istrstream & is ) {}
+bool eof( istrstream & is ) { return false; }
 
-int eof( istrstream & is ) {
-	return 0;
-} // eof
+int fmt( istrstream & is, const char format[], ... ) with(is) {
+	va_list args;
+	va_start( args, format );
+	// THIS DOES NOT WORK BECAUSE VSSCANF RETURNS NUMBER OF VALUES READ VERSUS BUFFER POSITION SCANNED.
+	int len = vsscanf( buf$ + cursor$, format, args );
+	va_end( args );
+	if ( len == EOF ) {
+		abort | IO_MSG "invalid read";
+	} // if
+	// SKULLDUGGERY: This hack skips over characters read by vsscanf by moving to the next whitespace but it does not
+	// handle C reads with wdi manipulators that leave the cursor at a non-whitespace character.
+	for ( ; buf$[cursor$] != ' ' && buf$[cursor$] != '\t' && buf$[cursor$] != '\0'; cursor$ += 1 ) {
+		//printf( "X \'%c\'\n", buf$[cursor$] );
+	} // for
+	if ( buf$[cursor$] != '\0' ) cursor$ += 1;	// advance to whitespace
+	return len;
+} // fmt
 
 istrstream &ungetc( istrstream & is, char c ) {
 	// if ( ungetc( c, (FILE *)(is.file$) ) == EOF ) {
@@ -152,20 +168,6 @@ istrstream &ungetc( istrstream & is, char c ) {
 	// } // if
 	return is;
 } // ungetc
-
-int fmt( istrstream & is, const char format[], ... ) {
-	va_list args;
-	va_start( args, format );
-	// This does not work because vsscanf does not return buffer position.
-	int len = vsscanf( is.buf$ + is.cursor$, format, args );
-	va_end( args );
-	if ( len == EOF ) {
-		int j;
-		printf( "X %d%n\n", len, &j );
-	} // if
-	is.cursor$ += len;
-	return len;
-} // fmt
 
 // Local Variables: //
 // tab-width: 4 //
