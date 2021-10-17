@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct 11 16:14:04 2021
-// Update Count     : 5131
+// Last Modified On : Fri Oct 15 09:20:17 2021
+// Update Count     : 5163
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -68,7 +68,7 @@ bool appendStr( string & to, string & from ) {
 	//
 	// 2. String encodings are transformed into canonical form (one encoding at start) so the encoding can be found
 	//    without searching the string, e.g.: "abc" L"def" L"ghi" => L"abc" "def" "ghi". Multiple encodings must match,
-	//    i.e., u"a" U"b" L"c" is disallowed.
+	//    e.g., u"a" U"b" L"c" is disallowed.
 
 	if ( from[0] != '"' ) {								// encoding ?
 		if ( to[0] != '"' ) {							// encoding ?
@@ -345,7 +345,7 @@ if ( N ) {																		\
 %type<sn> switch_clause_list_opt		switch_clause_list
 %type<en> case_value
 %type<sn> case_clause					case_value_list				case_label					case_label_list
-%type<sn> iteration_statement			loop_default_opt			jump_statement
+%type<sn> iteration_statement			jump_statement
 %type<sn> expression_statement			asm_statement
 %type<sn> with_statement
 %type<en> with_clause_opt
@@ -1191,26 +1191,24 @@ switch_clause_list:										// CFA
 	;
 
 iteration_statement:
-	WHILE '(' push if_control_expression ')' loop_default_opt statement pop
-		{ $$ = new StatementNode( build_while( $4, maybe_build_compound( $7 ) ) ); }
-	| WHILE '(' ')' statement							// CFA => while ( 1 )
+	WHILE '(' ')' statement								// CFA => while ( 1 )
 		{ $$ = new StatementNode( build_while( new IfCtrl( nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ), maybe_build_compound( $4 ) ) ); }
-	| DO statement WHILE '(' comma_expression ')' loop_default_opt ';'
-		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ) ) ); }
+	| WHILE '(' if_control_expression ')' statement		%prec THEN
+		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ) ) ); }
+	| WHILE '(' if_control_expression ')' statement ELSE statement // CFA
+		{ SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
 	| DO statement WHILE '(' ')' ';'					// CFA => do while( 1 )
 		{ $$ = new StatementNode( build_do_while( new ExpressionNode( build_constantInteger( *new string( "1" ) ) ), maybe_build_compound( $2 ) ) ); }
-	| FOR '(' push for_control_expression_list ')' loop_default_opt statement pop
-	  	{ $$ = new StatementNode( build_for( $4, maybe_build_compound( $7 ) ) ); }
+	| DO statement WHILE '(' comma_expression ')' ';'	%prec THEN
+		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ) ) ); }
+	| DO statement WHILE '(' comma_expression ')' ELSE statement // CFA
+		{ SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
 	| FOR '(' ')' statement								// CFA => for ( ;; )
 		{ $$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) ); }
-	;
-
-loop_default_opt:
-	// empty
-		{ $$ = nullptr; }
-	| DEFAULT statement ELSE
+	| FOR '(' for_control_expression_list ')' statement	%prec THEN
+	  	{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ) ) ); }
+	| FOR '(' for_control_expression_list ')' statement ELSE statement // CFA
 		{ SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
-		// { $$ = $2; }
 	;
 
 for_control_expression_list:
