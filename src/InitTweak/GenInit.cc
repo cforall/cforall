@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 23:15:10 2019
-// Update Count     : 184
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Oct 25 13:53:00 2021
+// Update Count     : 186
 //
 #include "GenInit.h"
 
@@ -23,6 +23,7 @@
 
 #include "AST/Decl.hpp"
 #include "AST/Init.hpp"
+#include "AST/Pass.hpp"
 #include "AST/Node.hpp"
 #include "AST/Stmt.hpp"
 #include "CompilationState.h"
@@ -291,6 +292,135 @@ namespace InitTweak {
 	void HoistArrayDimension_NoResolve::premutate( FunctionDecl * ) {
 		GuardValue( inFunction );
 		inFunction = true;
+	}
+
+namespace {
+
+#	warning Remove the _New suffix after the conversion is complete.
+	struct HoistArrayDimension_NoResolve_New final :
+			public ast::WithDeclsToAdd<>, public ast::WithShortCircuiting,
+			public ast::WithGuards,
+			public ast::WithVisitorRef<HoistArrayDimension_NoResolve_New> {
+		void previsit( const ast::ObjectDecl * decl );
+		const ast::DeclWithType * postvisit( const ast::ObjectDecl * decl );
+		// Do not look for objects inside there declarations (and type).
+		void previsit( const ast::AggregateDecl * ) { visit_children = false; }
+		void previsit( const ast::NamedTypeDecl * ) { visit_children = false; }
+		void previsit( const ast::FunctionType * ) { visit_children = false; }
+
+		const ast::Type * hoist( const ast::Type * type );
+
+		ast::Storage::Classes storageClasses;
+	};
+
+	void HoistArrayDimension_NoResolve_New::previsit(
+			const ast::ObjectDecl * decl ) {
+		GuardValue( storageClasses ) = decl->storage;
+	}
+
+	const ast::DeclWithType * HoistArrayDimension_NoResolve_New::postvisit(
+			const ast::ObjectDecl * objectDecl ) {
+		return mutate_field( objectDecl, &ast::ObjectDecl::type,
+				hoist( objectDecl->type ) );
+	}
+
+	const ast::Type * HoistArrayDimension_NoResolve_New::hoist(
+			const ast::Type * type ) {
+		static UniqueName dimensionName( "_array_dim" );
+
+		if ( !isInFunction() || storageClasses.is_static ) {
+			return type;
+		}
+
+		if ( auto arrayType = dynamic_cast< const ast::ArrayType * >( type ) ) {
+			if ( nullptr == arrayType->dimension ) {
+				return type;
+			}
+
+			if ( !Tuples::maybeImpure( arrayType->dimension ) ) {
+				return type;
+			}
+
+			ast::ptr<ast::Type> dimType = ast::sizeType;
+			assert( dimType );
+			add_qualifiers( dimType, ast::CV::Qualifiers( ast::CV::Const ) );
+
+			ast::ObjectDecl * arrayDimension = new ast::ObjectDecl(
+				arrayType->dimension->location,
+				dimensionName.newName(),
+				dimType,
+				new ast::SingleInit(
+					arrayType->dimension->location,
+					arrayType->dimension
+				)
+			);
+
+			ast::ArrayType * mutType = ast::mutate( arrayType );
+			mutType->dimension = new ast::VariableExpr(
+					arrayDimension->location, arrayDimension );
+			declsToAddBefore.push_back( arrayDimension );
+
+			mutType->base = hoist( mutType->base );
+			return mutType;
+		}
+		return type;
+	}
+
+	struct ReturnFixer_New final :
+			public ast::WithStmtsToAdd<>, ast::WithGuards {
+		void previsit( const ast::FunctionDecl * decl );
+		const ast::ReturnStmt * previsit( const ast::ReturnStmt * stmt );
+	private:
+		const ast::FunctionDecl * funcDecl = nullptr;
+	};
+
+	void ReturnFixer_New::previsit( const ast::FunctionDecl * decl ) {
+		GuardValue( funcDecl ) = decl;
+	}
+
+	const ast::ReturnStmt * ReturnFixer_New::previsit(
+			const ast::ReturnStmt * stmt ) {
+		auto & returns = funcDecl->returns;
+		assert( returns.size() < 2 );
+		// Hands off if the function returns a reference.
+		// Don't allocate a temporary if the address is returned.
+		if ( stmt->expr && 1 == returns.size() ) {
+			ast::ptr<ast::DeclWithType> retDecl = returns.front();
+			if ( isConstructable( retDecl->get_type() ) ) {
+				// Explicitly construct the return value using the return
+				// expression and the retVal object.
+				assertf( "" != retDecl->name,
+					"Function %s has unnamed return value.\n",
+					funcDecl->name.c_str() );
+
+				auto retVal = retDecl.strict_as<ast::ObjectDecl>();
+				if ( auto varExpr = stmt->expr.as<ast::VariableExpr>() ) {
+					// Check if the return statement is already set up.
+					if ( varExpr->var == retVal ) return stmt;
+				}
+				ast::ptr<ast::Stmt> ctorStmt = genCtorDtor(
+					retVal->location, "?{}", retVal, stmt->expr );
+				assertf( ctorStmt,
+					"ReturnFixer: genCtorDtor returned nllptr: %s / %s",
+					toString( retVal ).c_str(),
+					toString( stmt->expr ).c_str() );
+					stmtsToAddBefore.push_back( ctorStmt );
+
+				// Return the retVal object.
+				ast::ReturnStmt * mutStmt = ast::mutate( stmt );
+				mutStmt->expr = new ast::VariableExpr(
+					stmt->location, retDecl );
+				return mutStmt;
+			}
+		}
+		return stmt;
+	}
+
+} // namespace
+
+	void genInit( ast::TranslationUnit & transUnit ) {
+		ast::Pass<HoistArrayDimension_NoResolve_New>::run( transUnit );
+		ast::Pass<ReturnFixer_New>::run( transUnit );
 	}
 
 	void CtorDtor::generateCtorDtor( std::list< Declaration * > & translationUnit ) {

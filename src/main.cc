@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Oct  8 11:22:00 2021
-// Update Count     : 651
+// Last Modified On : Fri Oct 22 16:06:00 2021
+// Update Count     : 653
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -42,7 +42,8 @@ using namespace std;
 #include "CodeTools/TrackLoc.h"             // for fillLocations
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
 #include "Common/CompilerError.h"           // for CompilerError
-#include "Common/DeclStats.hpp"
+#include "Common/DeclStats.hpp"             // for printDeclStats
+#include "Common/ResolvProtoDump.hpp"       // for dumpAsResolverProto
 #include "Common/Stats.h"
 #include "Common/PassVisitor.h"
 #include "Common/SemanticError.h"           // for SemanticError
@@ -334,12 +335,6 @@ int main( int argc, char * argv[] ) {
 		PASS( "Translate Throws", ControlStruct::translateThrows( translationUnit ) );
 		PASS( "Fix Labels", ControlStruct::fixLabels( translationUnit ) );
 		PASS( "Fix Names", CodeGen::fixNames( translationUnit ) );
-		PASS( "Gen Init", InitTweak::genInit( translationUnit ) );
-
-		if ( libcfap ) {
-			// generate the bodies of cfa library functions
-			LibCfa::makeLibCfa( translationUnit );
-		} // if
 
 		CodeTools::fillLocations( translationUnit );
 
@@ -352,9 +347,13 @@ int main( int argc, char * argv[] ) {
 
 			forceFillCodeLocations( transUnit );
 
+			PASS( "Gen Init", InitTweak::genInit( transUnit ) );
 			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( transUnit ) );
 
-			// LibCfa::makeLibCfa
+			if ( libcfap ) {
+				// Generate the bodies of cfa library functions.
+				LibCfa::makeLibCfa( transUnit );
+			} // if
 
 			if ( declstatsp ) {
 				printDeclStats( transUnit );
@@ -367,8 +366,7 @@ int main( int argc, char * argv[] ) {
 			} // if
 
 			if ( resolvprotop ) {
-				// TODO: Better error message.
-				assert(false);
+				dumpAsResolverProto( transUnit );
 				return EXIT_SUCCESS;
 			} // if
 
@@ -381,11 +379,16 @@ int main( int argc, char * argv[] ) {
 			forceFillCodeLocations( transUnit );
 
 			PASS( "Fix Init", InitTweak::fix(transUnit, buildingLibrary()));
+
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Gen Init", InitTweak::genInit( translationUnit ) );
 			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( translationUnit ) );
 
-			// LibCfa::makeLibCfa
+			if ( libcfap ) {
+				// Generate the bodies of cfa library functions.
+				LibCfa::makeLibCfa( translationUnit );
+			} // if
 
 			if ( declstatsp ) {
 				CodeTools::printDeclStats( translationUnit );

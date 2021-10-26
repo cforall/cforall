@@ -181,9 +181,9 @@ am__objects_2 = CodeGen/CodeGenerator.$(OBJEXT) \
 am__objects_3 = Common/Assert.$(OBJEXT) \
 	Common/CodeLocationTools.$(OBJEXT) Common/DeclStats.$(OBJEXT) \
 	Common/Eval.$(OBJEXT) Common/Examine.$(OBJEXT) \
-	Common/PassVisitor.$(OBJEXT) Common/SemanticError.$(OBJEXT) \
-	Common/Stats/Counter.$(OBJEXT) Common/Stats/Heap.$(OBJEXT) \
-	Common/Stats/ResolveTime.$(OBJEXT) \
+	Common/PassVisitor.$(OBJEXT) Common/ResolvProtoDump.$(OBJEXT) \
+	Common/SemanticError.$(OBJEXT) Common/Stats/Counter.$(OBJEXT) \
+	Common/Stats/Heap.$(OBJEXT) Common/Stats/ResolveTime.$(OBJEXT) \
 	Common/Stats/Stats.$(OBJEXT) Common/Stats/Time.$(OBJEXT) \
 	Common/UniqueName.$(OBJEXT)
 am__objects_4 = ControlStruct/ExceptDecl.$(OBJEXT) \
@@ -329,6 +329,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Common/$(DEPDIR)/DebugMalloc.Po Common/$(DEPDIR)/DeclStats.Po \
 	Common/$(DEPDIR)/Eval.Po Common/$(DEPDIR)/Examine.Po \
 	Common/$(DEPDIR)/PassVisitor.Po \
+	Common/$(DEPDIR)/ResolvProtoDump.Po \
 	Common/$(DEPDIR)/SemanticError.Po \
 	Common/$(DEPDIR)/UniqueName.Po \
 	Common/Stats/$(DEPDIR)/Counter.Po \
@@ -803,6 +804,8 @@ SRC_COMMON = \
       Common/PassVisitor.impl.h \
       Common/PassVisitor.proto.h \
       Common/PersistentMap.h \
+      Common/ResolvProtoDump.hpp \
+      Common/ResolvProtoDump.cpp \
       Common/ScopedMap.h \
       Common/SemanticError.cc \
       Common/SemanticError.h \
@@ -1133,6 +1136,8 @@ Common/Eval.$(OBJEXT): Common/$(am__dirstamp) \
 Common/Examine.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
 Common/PassVisitor.$(OBJEXT): Common/$(am__dirstamp) \
+	Common/$(DEPDIR)/$(am__dirstamp)
+Common/ResolvProtoDump.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
 Common/SemanticError.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
@@ -1527,6 +1532,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Eval.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Examine.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/PassVisitor.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/ResolvProtoDump.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/SemanticError.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/UniqueName.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Counter.Po@am__quote@ # am--include-marker
@@ -1917,6 +1923,7 @@ distclean: distclean-am
 	-rm -f Common/$(DEPDIR)/Eval.Po
 	-rm -f Common/$(DEPDIR)/Examine.Po
 	-rm -f Common/$(DEPDIR)/PassVisitor.Po
+	-rm -f Common/$(DEPDIR)/ResolvProtoDump.Po
 	-rm -f Common/$(DEPDIR)/SemanticError.Po
 	-rm -f Common/$(DEPDIR)/UniqueName.Po
 	-rm -f Common/Stats/$(DEPDIR)/Counter.Po
@@ -2115,6 +2122,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Common/$(DEPDIR)/Eval.Po
 	-rm -f Common/$(DEPDIR)/Examine.Po
 	-rm -f Common/$(DEPDIR)/PassVisitor.Po
+	-rm -f Common/$(DEPDIR)/ResolvProtoDump.Po
 	-rm -f Common/$(DEPDIR)/SemanticError.Po
 	-rm -f Common/$(DEPDIR)/UniqueName.Po
 	-rm -f Common/Stats/$(DEPDIR)/Counter.Po

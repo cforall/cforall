@@ -347,11 +347,13 @@ class WithGuards {
 public:
 
 	/// When this node is finished being visited, restore the value of a variable
+	/// You may assign to the return value to set the new value in the same statement.
 	template< typename T >
-	void GuardValue( T& val ) {
+	T& GuardValue( T& val ) {
 		at_cleanup( [ val ]( void * newVal ) {
 			* static_cast< T * >( newVal ) = val;
 		}, static_cast< void * >( & val ) );
+		return val;
 	}
 
 	/// On the object, all beginScope now and endScope when the current node is finished being visited

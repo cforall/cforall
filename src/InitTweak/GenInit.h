@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:31:19 2017
-// Update Count     : 4
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Oct 22 16:08:00 2021
+// Update Count     : 6
 //
 
 #pragma once
@@ -26,6 +26,7 @@
 namespace InitTweak {
 	/// Adds return value temporaries and wraps Initializers in ConstructorInit nodes
 	void genInit( std::list< Declaration * > & translationUnit );
+	void genInit( ast::TranslationUnit & translationUnit );
 
 	/// Converts return statements into copy constructor calls on the hidden return variable
 	void fixReturnStatements( std::list< Declaration * > & translationUnit );

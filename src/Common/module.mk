@@ -34,6 +34,8 @@ SRC_COMMON = \
       Common/PassVisitor.impl.h \
       Common/PassVisitor.proto.h \
       Common/PersistentMap.h \
+      Common/ResolvProtoDump.hpp \
+      Common/ResolvProtoDump.cpp \
       Common/ScopedMap.h \
       Common/SemanticError.cc \
       Common/SemanticError.h \
