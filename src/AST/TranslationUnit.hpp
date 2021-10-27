@@ -25,10 +25,10 @@ namespace ast {
 struct TranslationUnit {
 	std::list< ptr< Decl > > decls;
 
-	struct Globals {
+	struct Global {
 		std::map< UniqueId, Decl * > idMap;
 
-		const Type * sizeType;
+		ptr<Type> sizeType;
 		const FunctionDecl * dereference;
 		const StructDecl * dtorStruct;
 		const FunctionDecl * dtorDestroy;

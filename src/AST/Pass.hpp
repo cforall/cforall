@@ -395,6 +395,16 @@ struct WithSymbolTable {
 	SymbolTable symtab;
 };
 
+/// Used to get a pointer to the wrapping TranslationUnit.
+struct WithConstTranslationUnit {
+	const TranslationUnit * translationUnit = nullptr;
+
+	const TranslationUnit & transUnit() const {
+		assertf( translationUnit, "WithConstTranslationUnit not set-up." );
+		return *translationUnit;
+	}
+};
+
 }
 
 #include "Common/Stats.h"

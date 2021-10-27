@@ -419,7 +419,13 @@ inline void ast::accept_all( std::list< ast::ptr<ast::Decl> > & decls, ast::Pass
 
 template< typename core_t >
 inline void ast::accept_all( ast::TranslationUnit & unit, ast::Pass< core_t > & visitor ) {
-	return ast::accept_all( unit.decls, visitor );
+	if ( auto ptr = __pass::translation_unit::get_cptr( visitor.core, 0 ) ) {
+		ValueGuard<const TranslationUnit *> guard( *ptr );
+		*ptr = &unit;
+		return ast::accept_all( unit.decls, visitor );
+	} else {
+		return ast::accept_all( unit.decls, visitor );
+	}
 }
 
 // A NOTE ON THE ORDER OF TRAVERSAL

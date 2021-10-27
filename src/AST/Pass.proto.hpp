@@ -425,6 +425,20 @@ namespace __pass {
 
 	} // namespace forall
 
+	// For passes that need access to the global context. Sreaches `translationUnit`
+	namespace translation_unit {
+		template<typename core_t>
+		static inline auto get_cptr( core_t & core, int )
+				-> decltype( &core.translationUnit ) {
+			return &core.translationUnit;
+		}
+
+		template<typename core_t>
+		static inline const TranslationUnit ** get_cptr( core_t &, long ) {
+			return nullptr;
+		}
+	}
+
 	template<typename core_t>
 	static inline auto get_result( core_t & core, char ) -> decltype( core.result() ) {
 		return core.result();

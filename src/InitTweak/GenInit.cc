@@ -299,7 +299,7 @@ namespace {
 #	warning Remove the _New suffix after the conversion is complete.
 	struct HoistArrayDimension_NoResolve_New final :
 			public ast::WithDeclsToAdd<>, public ast::WithShortCircuiting,
-			public ast::WithGuards,
+			public ast::WithGuards, public ast::WithConstTranslationUnit,
 			public ast::WithVisitorRef<HoistArrayDimension_NoResolve_New> {
 		void previsit( const ast::ObjectDecl * decl );
 		const ast::DeclWithType * postvisit( const ast::ObjectDecl * decl );
@@ -341,7 +341,7 @@ namespace {
 				return type;
 			}
 
-			ast::ptr<ast::Type> dimType = ast::sizeType;
+			ast::ptr<ast::Type> dimType = transUnit().global.sizeType;
 			assert( dimType );
 			add_qualifiers( dimType, ast::CV::Qualifiers( ast::CV::Const ) );
 
