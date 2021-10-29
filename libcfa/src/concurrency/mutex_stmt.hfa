@@ -1,8 +1,5 @@
 #include "bits/algorithm.hfa"
-#include <assert.h>
-#include "invoke.h"
-#include "stdlib.hfa"
-#include <stdio.h>
+#include "bits/defs.hfa"
 
 //-----------------------------------------------------------------------------
 // is_lock
