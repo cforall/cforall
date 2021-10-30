@@ -21,6 +21,9 @@
 #include <list>                    // for list
 #include <string>                  // for operator<<
 
+#include "AST/Decl.hpp"
+#include "AST/Type.hpp"
+#include "Common/PassVisitor.h"
 #include "Common/SemanticError.h"  // for SemanticError
 #include "CodeGen/GenType.h"       // for GenType
 #include "SynTree/Declaration.h"   // for FunctionDecl, operator<<
@@ -28,26 +31,40 @@
 #include "SymTab/Mangler.h"
 
 namespace CodeGen {
+
+namespace {
+
+struct FindMainCore {
+	FunctionDecl * main_signature = nullptr;
+
+	void previsit( FunctionDecl * decl ) {
+		if ( FixMain::isMain( decl ) ) {
+			if ( main_signature ) {
+				SemanticError( decl, "Multiple definition of main routine\n" );
+			}
+			main_signature = decl;
+		}
+	}
+};
+
+}
+
 	bool FixMain::replace_main = false;
-	std::unique_ptr<FunctionDecl> FixMain::main_signature = nullptr;
 
 	template<typename container>
 	std::string genTypeAt(const container& p, size_t idx) {
 		return genType((*std::next(p.begin(), idx))->get_type(), "");
 	}
 
-	void FixMain::registerMain(FunctionDecl* functionDecl)
-	{
-		if(main_signature) {
-			SemanticError(functionDecl, "Multiple definition of main routine\n");
-		}
-		main_signature.reset( functionDecl->clone() );
-	}
+	void FixMain::fix( std::list< Declaration * > & translationUnit,
+			std::ostream &os, const char* bootloader_filename ) {
+		PassVisitor< FindMainCore > main_finder;
+		acceptAll( translationUnit, main_finder );
+		FunctionDecl * main_signature = main_finder.pass.main_signature;
 
-	void FixMain::fix(std::ostream &os, const char* bootloader_filename) {
 		if( main_signature ) {
 			os << "static inline int invoke_main(int argc, char* argv[], char* envp[]) { (void)argc; (void)argv; (void)envp; return ";
-			main_signature->mangleName = SymTab::Mangler::mangle(main_signature.get());
+			main_signature->mangleName = SymTab::Mangler::mangle(main_signature);
 
 			os << main_signature->get_scopedMangleName() << "(";
 			const auto& params = main_signature->get_functionType()->get_parameters();
@@ -64,4 +81,73 @@ namespace CodeGen {
 			os << bootloader.rdbuf();
 		}
 	}
+
+namespace {
+
+ObjectDecl * signedIntObj() {
+	return new ObjectDecl(
+		"", Type::StorageClasses(), LinkageSpec::Cforall, 0,
+		new BasicType( Type::Qualifiers(), BasicType::SignedInt ), nullptr );
+}
+
+ObjectDecl * charStarObj() {
+	return new ObjectDecl(
+		"", Type::StorageClasses(), LinkageSpec::Cforall, 0,
+		new PointerType( Type::Qualifiers(),
+			new PointerType( Type::Qualifiers(),
+				new BasicType( Type::Qualifiers(), BasicType::Char ) ) ),
+		nullptr );
+}
+
+std::string create_mangled_main_function_name( FunctionType * function_type ) {
+	std::unique_ptr<FunctionDecl> decl( new FunctionDecl(
+		"main", Type::StorageClasses(), LinkageSpec::Cforall,
+		function_type, nullptr ) );
+	return SymTab::Mangler::mangle( decl.get() );
+}
+
+std::string mangled_0_argument_main() {
+	FunctionType* main_type = new FunctionType( Type::Qualifiers(), true );
+	main_type->get_returnVals().push_back( signedIntObj() );
+	return create_mangled_main_function_name( main_type );
+}
+
+std::string mangled_2_argument_main() {
+	FunctionType* main_type = new FunctionType( Type::Qualifiers(), false );
+	main_type->get_returnVals().push_back( signedIntObj() );
+	main_type->get_parameters().push_back( signedIntObj() );
+	main_type->get_parameters().push_back( charStarObj() );
+	return create_mangled_main_function_name( main_type );
+}
+
+bool is_main( const std::string & mangled_name ) {
+	// This breaks if you move it out of the function.
+	static const std::string mangled_mains[] = {
+		mangled_0_argument_main(),
+		mangled_2_argument_main(),
+		//mangled_3_argument_main(),
+	};
+
+	for ( auto main_name : mangled_mains ) {
+		if ( main_name == mangled_name ) return true;
+	}
+	return false;
+}
+
+} // namespace
+
+bool FixMain::isMain( FunctionDecl * decl ) {
+	if ( std::string("main") != decl->name ) {
+		return false;
+	}
+	return is_main( SymTab::Mangler::mangle( decl, true, true ) );
+}
+
+bool FixMain::isMain( const ast::FunctionDecl * decl ) {
+	if ( std::string("main") != decl->name ) {
+		return false;
+	}
+	return is_main( Mangle::mangle( decl, Mangle::Type ) );
+}
+
 };

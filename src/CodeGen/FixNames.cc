@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 23:39:14 2019
-// Update Count     : 21
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Oct 29 15:49:00 2021
+// Update Count     : 23
 //
 
 #include "FixNames.h"
@@ -18,6 +18,9 @@
 #include <memory>                  // for unique_ptr
 #include <string>                  // for string, operator!=, operator==
 
+#include "AST/Chain.hpp"
+#include "AST/Expr.hpp"
+#include "AST/Pass.hpp"
 #include "Common/PassVisitor.h"
 #include "Common/SemanticError.h"  // for SemanticError
 #include "FixMain.h"               // for FixMain
@@ -45,55 +48,6 @@ namespace CodeGen {
 		void fixDWT( DeclarationWithType *dwt );
 	};
 
-	std::string mangle_main() {
-		FunctionType* main_type;
-		std::unique_ptr<FunctionDecl> mainDecl { new FunctionDecl( "main", Type::StorageClasses(), LinkageSpec::Cforall,
-																   main_type = new FunctionType( Type::Qualifiers(), true ), nullptr )
-				};
-		main_type->get_returnVals().push_back(
-			new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, 0, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), nullptr )
-		);
-
-		auto && name = SymTab::Mangler::mangle( mainDecl.get() );
-		// std::cerr << name << std::endl;
-		return std::move(name);
-	}
-	std::string mangle_main_args() {
-		FunctionType* main_type;
-		std::unique_ptr<FunctionDecl> mainDecl { new FunctionDecl( "main", Type::StorageClasses(), LinkageSpec::Cforall,
-																   main_type = new FunctionType( Type::Qualifiers(), false ), nullptr )
-				};
-		main_type->get_returnVals().push_back(
-			new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, 0, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), nullptr )
-		);
-
-		main_type->get_parameters().push_back(
-			new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, 0, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), nullptr )
-		);
-
-		main_type->get_parameters().push_back(
-			new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, 0,
-			new PointerType( Type::Qualifiers(), new PointerType( Type::Qualifiers(), new BasicType( Type::Qualifiers(), BasicType::Char ) ) ),
-			nullptr )
-		);
-
-		auto&& name = SymTab::Mangler::mangle( mainDecl.get() );
-		// std::cerr << name << std::endl;
-		return std::move(name);
-	}
-
-	bool is_main(const std::string& name) {
-		static std::string mains[] = {
-			mangle_main(),
-			mangle_main_args()
-		};
-
-		for(const auto& m : mains) {
-			if( name == m ) return true;
-		}
-		return false;
-	}
-
 	void fixNames( std::list< Declaration* > & translationUnit ) {
 		PassVisitor<FixNames> fixer;
 		acceptAll( translationUnit, fixer );
@@ -117,13 +71,12 @@ namespace CodeGen {
 	void FixNames::postvisit( FunctionDecl * functionDecl ) {
 		fixDWT( functionDecl );
 
-		if(is_main( SymTab::Mangler::mangle(functionDecl, true, true) )) {
+		if ( FixMain::isMain( functionDecl ) ) {
 			int nargs = functionDecl->get_functionType()->get_parameters().size();
 			if( !(nargs == 0 || nargs == 2 || nargs == 3) ) {
 				SemanticError(functionDecl, "Main expected to have 0, 2 or 3 arguments\n");
 			}
 			functionDecl->get_statements()->get_kids().push_back( new ReturnStmt( new ConstantExpr( Constant::from_int( 0 ) ) ) );
-			CodeGen::FixMain::registerMain( functionDecl );
 		}
 	}
 
@@ -131,6 +84,58 @@ namespace CodeGen {
 		scopeLevel++;
 		GuardAction( [this](){ scopeLevel--; } );
 	}
+
+/// Does work with the main function and scopeLevels.
+class FixNames_new : public ast::WithGuards {
+	int scopeLevel = 1;
+
+	bool shouldSetScopeLevel( const ast::DeclWithType * dwt ) {
+		return !dwt->name.empty() && dwt->linkage.is_mangled
+			&& dwt->scopeLevel != scopeLevel;
+	}
+public:
+	const ast::ObjectDecl *postvisit( const ast::ObjectDecl *objectDecl ) {
+		if ( shouldSetScopeLevel( objectDecl ) ) {
+			return ast::mutate_field( objectDecl, &ast::ObjectDecl::scopeLevel, scopeLevel );
+		}
+		return objectDecl;
+	}
+
+	const ast::FunctionDecl *postvisit( const ast::FunctionDecl *functionDecl ) {
+		// This store is used to ensure a maximum of one call to mutate.
+		ast::FunctionDecl * mutDecl = nullptr;
+
+		if ( shouldSetScopeLevel( functionDecl ) ) {
+			mutDecl = ast::mutate( functionDecl );
+			mutDecl->scopeLevel = scopeLevel;
+		}
+
+		if ( FixMain::isMain( functionDecl ) ) {
+			if ( !mutDecl ) { mutDecl = ast::mutate( functionDecl ); }
+
+			int nargs = mutDecl->params.size();
+			if ( 0 != nargs && 2 != nargs && 3 != nargs ) {
+				SemanticError( functionDecl, "Main expected to have 0, 2 or 3 arguments\n" );
+			}
+			ast::chain_mutate( mutDecl->stmts )->kids.push_back(
+				new ast::ReturnStmt(
+					mutDecl->location,
+					ast::ConstantExpr::from_int( mutDecl->location, 0 )
+				)
+			);
+		}
+		return mutDecl ? mutDecl : functionDecl;
+	}
+
+	void previsit( const ast::CompoundStmt * ) {
+		GuardValue( scopeLevel ) += 1;
+	}
+};
+
+void fixNames( ast::TranslationUnit & translationUnit ) {
+	ast::Pass<FixNames_new>::run( translationUnit );
+}
+
 } // namespace CodeGen
 
 // Local Variables: //

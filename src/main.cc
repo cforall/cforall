@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Oct 22 16:06:00 2021
-// Update Count     : 653
+// Last Modified On : Fri Oct 29 16:34:00 2021
+// Update Count     : 655
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -334,7 +334,6 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Translate Throws", ControlStruct::translateThrows( translationUnit ) );
 		PASS( "Fix Labels", ControlStruct::fixLabels( translationUnit ) );
-		PASS( "Fix Names", CodeGen::fixNames( translationUnit ) );
 
 		CodeTools::fillLocations( translationUnit );
 
@@ -347,6 +346,7 @@ int main( int argc, char * argv[] ) {
 
 			forceFillCodeLocations( transUnit );
 
+			PASS( "Fix Names", CodeGen::fixNames( transUnit ) );
 			PASS( "Gen Init", InitTweak::genInit( transUnit ) );
 			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( transUnit ) );
 
@@ -382,6 +382,7 @@ int main( int argc, char * argv[] ) {
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Fix Names", CodeGen::fixNames( translationUnit ) );
 			PASS( "Gen Init", InitTweak::genInit( translationUnit ) );
 			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( translationUnit ) );
 
@@ -470,7 +471,8 @@ int main( int argc, char * argv[] ) {
 		CodeTools::fillLocations( translationUnit );
 		PASS( "Code Gen", CodeGen::generate( translationUnit, *output, ! genproto, prettycodegenp, true, linemarks ) );
 
-		CodeGen::FixMain::fix( *output, (PreludeDirector + "/bootloader.c").c_str() );
+		CodeGen::FixMain::fix( translationUnit, *output,
+				(PreludeDirector + "/bootloader.c").c_str() );
 		if ( output != &cout ) {
 			delete output;
 		} // if
