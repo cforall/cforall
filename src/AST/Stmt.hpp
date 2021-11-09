@@ -174,6 +174,7 @@ private:
 /// Case label `case ...:` `default:`
 class CaseStmt final : public Stmt {
 public:
+	/// Null for the default label.
 	ptr<Expr> cond;
 	std::vector<ptr<Stmt>> stmts;
 

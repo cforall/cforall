@@ -195,7 +195,10 @@ void main(processorCtx_t & runner) {
 			readyThread = __next_thread( this->cltr );
 
 			if( !readyThread ) {
+				ready_schedule_lock();
 				__cfa_io_flush( this );
+				ready_schedule_unlock();
+
 				readyThread = __next_thread_slow( this->cltr );
 			}
 
@@ -276,7 +279,9 @@ void main(processorCtx_t & runner) {
 			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
 
 			if(this->io.pending && !this->io.dirty) {
+				ready_schedule_lock();
 				__cfa_io_flush( this );
+				ready_schedule_unlock();
 			}
 
 			#else
@@ -316,7 +321,10 @@ void main(processorCtx_t & runner) {
 				if(readyThread) { ready_schedule_unlock(); break SEARCH; }
 
 				// Don't block if we are done
-				if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
+				if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) {
+					ready_schedule_unlock();
+					break MAIN_LOOP;
+				}
 
 				__STATS( __tls_stats()->ready.sleep.halts++; )
 
@@ -938,6 +946,7 @@ bool threading_enabled(void) __attribute__((const)) {
 		for(unsigned i = 0; i < count; i++) {
 			/* paranoid */ verifyf( it, "Unexpected null iterator, at index %u of %u\n", i, count);
 			/* paranoid */ verify( it->local_data->this_stats );
+			// __print_stats( it->local_data->this_stats, cltr->print_stats, "Processor", it->name, (void*)it );
 			__tally_stats( cltr->stats, it->local_data->this_stats );
 			it = &(*it)`next;
 		}
@@ -947,6 +956,7 @@ bool threading_enabled(void) __attribute__((const)) {
 		// Stop the world, otherwise stats could get really messed-up
 		// this doesn't solve all problems but does solve many
 		// so it's probably good enough
+		disable_interrupts();
 		uint_fast32_t last_size = ready_mutate_lock();
 
 			crawl_list(&this, this.procs.actives, this.procs.total - this.procs.idle);
@@ -954,6 +964,7 @@ bool threading_enabled(void) __attribute__((const)) {
 
 		// Unlock the RWlock
 		ready_mutate_unlock( last_size );
+		enable_interrupts();
 	}
 
 

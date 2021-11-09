@@ -130,6 +130,7 @@ public:
 	std::vector<ptr<DeclWithType>> assertions;
 	// declared type, derived from parameter declarations
 	ptr<FunctionType> type;
+	/// Null for the forward declaration of a function.
 	ptr<CompoundStmt> stmts;
 	std::vector< ptr<Expr> > withExprs;
 

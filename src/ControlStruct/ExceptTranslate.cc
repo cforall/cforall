@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ExceptVisitor.cc --
+// ExceptTranslate.cc -- Conversion of exception control flow structures.
 //
 // Author           : Andrew Beach
 // Created On       : Wed Jun 14 16:49:00 2017

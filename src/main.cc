@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Oct 29 16:34:00 2021
-// Update Count     : 655
+// Last Modified On : Mon Nov  8 11:42:00 2021
+// Update Count     : 656
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -52,6 +52,7 @@ using namespace std;
 #include "Concurrency/Waitfor.h"            // for generateWaitfor
 #include "ControlStruct/ExceptDecl.h"       // for translateExcept
 #include "ControlStruct/ExceptTranslate.h"  // for translateEHM
+#include "ControlStruct/FixLabels.hpp"      // for fixLabels
 #include "ControlStruct/Mutate.h"           // for mutate
 #include "GenPoly/Box.h"                    // for box
 #include "GenPoly/InstantiateGeneric.h"     // for instantiateGeneric
@@ -332,9 +333,6 @@ int main( int argc, char * argv[] ) {
 			return EXIT_SUCCESS;
 		} // if
 
-		PASS( "Translate Throws", ControlStruct::translateThrows( translationUnit ) );
-		PASS( "Fix Labels", ControlStruct::fixLabels( translationUnit ) );
-
 		CodeTools::fillLocations( translationUnit );
 
 		if( useNewAST ) {
@@ -346,6 +344,8 @@ int main( int argc, char * argv[] ) {
 
 			forceFillCodeLocations( transUnit );
 
+			PASS( "Translate Throws", ControlStruct::translateThrows( transUnit ) );
+			PASS( "Fix Labels", ControlStruct::fixLabels( transUnit ) );
 			PASS( "Fix Names", CodeGen::fixNames( transUnit ) );
 			PASS( "Gen Init", InitTweak::genInit( transUnit ) );
 			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( transUnit ) );
@@ -382,6 +382,8 @@ int main( int argc, char * argv[] ) {
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Translate Throws", ControlStruct::translateThrows( translationUnit ) );
+			PASS( "Fix Labels", ControlStruct::fixLabels( translationUnit ) );
 			PASS( "Fix Names", CodeGen::fixNames( translationUnit ) );
 			PASS( "Gen Init", InitTweak::genInit( translationUnit ) );
 			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( translationUnit ) );

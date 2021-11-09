@@ -101,7 +101,7 @@ static void prtUnfreed() {
 	} // if
 } // prtUnfreed
 
-extern int cfa_main_returned;							// from bootloader.cf
+extern int cfa_main_returned;							// from interpose.cfa
 extern "C" {
 	void heapAppStart() {								// called by __cfaabi_appready_startup
 		allocUnfreed = 0;

@@ -65,6 +65,17 @@ void delete( T * th ) {
 	free( th );
 }
 
+static inline forall( T & | sized(T) | { void ^?{}( T & mutex ); } )
+void adelete( T arr[] ) {
+	if ( arr ) {										// ignore null
+		size_t dim = malloc_size( arr ) / sizeof( T );
+		for ( int i = dim - 1; i >= 0; i -= 1 ) {		// reverse allocation order, must be unsigned
+			^(arr[i]){};								// run destructor
+		} // for
+		free( arr );
+	} // if
+} // adelete
+
 //-----------------------------------------------------------------------------
 // Internal scheduling
 

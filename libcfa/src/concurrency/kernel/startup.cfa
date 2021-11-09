@@ -99,6 +99,7 @@ extern void __kernel_alarm_shutdown(void);
 //-----------------------------------------------------------------------------
 // Other Forward Declarations
 extern void __wake_proc(processor *);
+extern int cfa_main_returned;							// from interpose.cfa
 
 //-----------------------------------------------------------------------------
 // Kernel storage
@@ -267,6 +268,7 @@ static void __kernel_startup(void) {
 }
 
 static void __kernel_shutdown(void) {
+	if(!cfa_main_returned) return;
 	/* paranoid */ verify( __preemption_enabled() );
 	disable_interrupts();
 	/* paranoid */ verify( ! __preemption_enabled() );

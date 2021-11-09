@@ -182,9 +182,7 @@
 
 		ctx.proc->io.pending = false;
 
-		ready_schedule_lock();
 		__cfa_io_drain( proc );
-		ready_schedule_unlock();
 		// for(i; 2) {
 		// 	unsigned idx = proc->rdq.id + i;
 		// 	cltr->ready_queue.lanes.tscs[idx].tv = rdtscl();
@@ -310,12 +308,14 @@
 
 		// Make the sqes visible to the submitter
 		__atomic_store_n(sq.kring.tail, tail + have, __ATOMIC_RELEASE);
-		sq.to_submit++;
+		sq.to_submit += have;
 
 		ctx->proc->io.pending = true;
 		ctx->proc->io.dirty   = true;
 		if(sq.to_submit > 30 || !lazy) {
+			ready_schedule_lock();
 			__cfa_io_flush( ctx->proc );
+			ready_schedule_unlock();
 		}
 	}
 

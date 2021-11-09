@@ -187,4 +187,8 @@ static inline {
 	bool wait( io_future_t & this ) {
 		return wait(this.self);
 	}
+
+	void reset( io_future_t & this ) {
+		return reset(this.self);
+	}
 }

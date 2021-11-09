@@ -17,6 +17,8 @@
 SRC_CONTROLSTRUCT = \
 	ControlStruct/ExceptDecl.cc \
 	ControlStruct/ExceptDecl.h \
+	ControlStruct/FixLabels.cpp \
+	ControlStruct/FixLabels.hpp \
 	ControlStruct/ForExprMutator.cc \
 	ControlStruct/ForExprMutator.h \
 	ControlStruct/LabelFixer.cc \
@@ -25,9 +27,15 @@ SRC_CONTROLSTRUCT = \
 	ControlStruct/LabelGenerator.h \
 	ControlStruct/MLEMutator.cc \
 	ControlStruct/MLEMutator.h \
+	ControlStruct/MultiLevelExit.cpp \
+	ControlStruct/MultiLevelExit.hpp \
 	ControlStruct/Mutate.cc \
 	ControlStruct/Mutate.h
 
-SRC += $(SRC_CONTROLSTRUCT) ControlStruct/ExceptTranslate.cc ControlStruct/ExceptTranslate.h
+SRC += $(SRC_CONTROLSTRUCT) \
+	ControlStruct/ExceptTranslateNew.cpp \
+	ControlStruct/ExceptTranslate.cc \
+	ControlStruct/ExceptTranslate.h
+
 SRCDEMANGLE += $(SRC_CONTROLSTRUCT)
 

@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:20:14 2017
-// Update Count     : 6
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Nov  8 10:16:00 2021
+// Update Count     : 8
 //
 
 #pragma once
@@ -20,20 +20,26 @@
 #include "SynTree/Label.h"  // for Label
 
 class Statement;
+namespace ast {
+	class Stmt;
+	class Label;
+}
 
 namespace ControlStruct {
-	class LabelGenerator {
-	  public:
-		static LabelGenerator *getGenerator();
-		Label newLabel(std::string suffix, Statement * stmt = nullptr);
-		void reset() { current = 0; }
-		void rewind() { current--; }
-	  protected:
-		LabelGenerator(): current(0) {}
-	  private:
-		int current;
-		static LabelGenerator *labelGenerator;
-	};
+
+class LabelGenerator {
+	static int current;
+	static LabelGenerator *labelGenerator;
+protected:
+	LabelGenerator() {}
+public:
+	static LabelGenerator *getGenerator();
+	static Label newLabel(std::string suffix, Statement * stmt = nullptr);
+	static ast::Label newLabel( const std::string&, const ast::Stmt * );
+	static void reset() { current = 0; }
+	static void rewind() { current--; }
+};
+
 } // namespace ControlStruct
 
 // Local Variables: //

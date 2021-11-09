@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ExceptTranslate.h --
+// ExceptTranslate.h -- Conversion of exception control flow structures.
 //
 // Author           : Andrew Beach
 // Created On       : Tus Jun 06 10:13:00 2017
 // Last Modified By : Andrew Beach
-// Last Modified On : Tus May 19 11:47:00 2020
-// Update Count     : 5
+// Last Modified On : Mon Nov  8 11:43:00 2020
+// Update Count     : 6
 //
 
 #pragma once
@@ -18,9 +18,13 @@
 #include <list>  // for list
 
 class Declaration;
+namespace ast {
+	class TranslationUnit;
+}
 
 namespace ControlStruct {
 	void translateThrows( std::list< Declaration *> & translationUnit );
+	void translateThrows( ast::TranslationUnit & transUnit );
 	/* Replaces all throw & throwResume statements with function calls.
 	 * These still need to be resolved, so call this before the reslover.
 	 */

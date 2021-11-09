@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 11 22:23:20 2019
-// Update Count     : 15
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Nov  8 10:18:00 2021
+// Update Count     : 17
 //
 
 #include <iostream>             // for operator<<, basic_ostream
@@ -18,12 +18,18 @@
 #include <list>                 // for list
 
 #include "LabelGenerator.h"
+
+#include "AST/Attribute.hpp"
+#include "AST/Label.hpp"
+#include "AST/Stmt.hpp"
 #include "SynTree/Attribute.h"  // for Attribute
 #include "SynTree/Label.h"      // for Label, operator<<
 #include "SynTree/Statement.h"  // for Statement
 
 namespace ControlStruct {
-	LabelGenerator * LabelGenerator::labelGenerator = 0;
+
+int LabelGenerator::current = 0;
+LabelGenerator * LabelGenerator::labelGenerator = nullptr;
 
 	LabelGenerator * LabelGenerator::getGenerator() {
 		if ( LabelGenerator::labelGenerator == 0 )
@@ -42,6 +48,21 @@ namespace ControlStruct {
 		l.get_attributes().push_back( new Attribute("unused") );
 		return l;
 	}
+
+ast::Label LabelGenerator::newLabel(
+		const std::string & suffix, const ast::Stmt * stmt ) {
+	assert( stmt );
+
+	std::ostringstream os;
+	os << "__L" << current++ << "__" << suffix;
+	if ( stmt && !stmt->labels.empty() ) {
+		os << "_" << stmt->labels.front() << "__";
+	}
+	ast::Label ret_label( stmt->location, os.str() );
+	ret_label.attributes.push_back( new ast::Attribute( "unused" ) );
+	return ret_label;
+}
+
 } // namespace ControlStruct
 
 // Local Variables: //

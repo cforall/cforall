@@ -187,10 +187,12 @@ am__objects_3 = Common/Assert.$(OBJEXT) \
 	Common/Stats/Stats.$(OBJEXT) Common/Stats/Time.$(OBJEXT) \
 	Common/UniqueName.$(OBJEXT)
 am__objects_4 = ControlStruct/ExceptDecl.$(OBJEXT) \
+	ControlStruct/FixLabels.$(OBJEXT) \
 	ControlStruct/ForExprMutator.$(OBJEXT) \
 	ControlStruct/LabelFixer.$(OBJEXT) \
 	ControlStruct/LabelGenerator.$(OBJEXT) \
 	ControlStruct/MLEMutator.$(OBJEXT) \
+	ControlStruct/MultiLevelExit.$(OBJEXT) \
 	ControlStruct/Mutate.$(OBJEXT)
 am__objects_5 = ResolvExpr/AdjustExprType.$(OBJEXT) \
 	ResolvExpr/Alternative.$(OBJEXT) \
@@ -260,6 +262,7 @@ am__objects_10 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	CodeTools/TrackLoc.$(OBJEXT) Concurrency/Keywords.$(OBJEXT) \
 	Concurrency/Waitfor.$(OBJEXT) $(am__objects_3) \
 	Common/DebugMalloc.$(OBJEXT) $(am__objects_4) \
+	ControlStruct/ExceptTranslateNew.$(OBJEXT) \
 	ControlStruct/ExceptTranslate.$(OBJEXT) GenPoly/Box.$(OBJEXT) \
 	GenPoly/FindFunction.$(OBJEXT) GenPoly/GenPoly.$(OBJEXT) \
 	GenPoly/InstantiateGeneric.$(OBJEXT) GenPoly/Lvalue.$(OBJEXT) \
@@ -340,10 +343,13 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Concurrency/$(DEPDIR)/Waitfor.Po \
 	ControlStruct/$(DEPDIR)/ExceptDecl.Po \
 	ControlStruct/$(DEPDIR)/ExceptTranslate.Po \
+	ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po \
+	ControlStruct/$(DEPDIR)/FixLabels.Po \
 	ControlStruct/$(DEPDIR)/ForExprMutator.Po \
 	ControlStruct/$(DEPDIR)/LabelFixer.Po \
 	ControlStruct/$(DEPDIR)/LabelGenerator.Po \
 	ControlStruct/$(DEPDIR)/MLEMutator.Po \
+	ControlStruct/$(DEPDIR)/MultiLevelExit.Po \
 	ControlStruct/$(DEPDIR)/Mutate.Po GenPoly/$(DEPDIR)/Box.Po \
 	GenPoly/$(DEPDIR)/FindFunction.Po GenPoly/$(DEPDIR)/GenPoly.Po \
 	GenPoly/$(DEPDIR)/InstantiateGeneric.Po \
@@ -682,7 +688,8 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	CodeTools/TrackLoc.h Concurrency/Keywords.cc \
 	Concurrency/Keywords.h Concurrency/Waitfor.cc \
 	Concurrency/Waitfor.h $(SRC_COMMON) Common/DebugMalloc.cc \
-	$(SRC_CONTROLSTRUCT) ControlStruct/ExceptTranslate.cc \
+	$(SRC_CONTROLSTRUCT) ControlStruct/ExceptTranslateNew.cpp \
+	ControlStruct/ExceptTranslate.cc \
 	ControlStruct/ExceptTranslate.h GenPoly/Box.cc GenPoly/Box.h \
 	GenPoly/ErasableScopedMap.h GenPoly/FindFunction.cc \
 	GenPoly/FindFunction.h GenPoly/GenPoly.cc GenPoly/GenPoly.h \
@@ -829,6 +836,8 @@ SRC_COMMON = \
 SRC_CONTROLSTRUCT = \
 	ControlStruct/ExceptDecl.cc \
 	ControlStruct/ExceptDecl.h \
+	ControlStruct/FixLabels.cpp \
+	ControlStruct/FixLabels.hpp \
 	ControlStruct/ForExprMutator.cc \
 	ControlStruct/ForExprMutator.h \
 	ControlStruct/LabelFixer.cc \
@@ -837,6 +846,8 @@ SRC_CONTROLSTRUCT = \
 	ControlStruct/LabelGenerator.h \
 	ControlStruct/MLEMutator.cc \
 	ControlStruct/MLEMutator.h \
+	ControlStruct/MultiLevelExit.cpp \
+	ControlStruct/MultiLevelExit.hpp \
 	ControlStruct/Mutate.cc \
 	ControlStruct/Mutate.h
 
@@ -1167,6 +1178,8 @@ ControlStruct/$(DEPDIR)/$(am__dirstamp):
 	@: > ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/ExceptDecl.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
+ControlStruct/FixLabels.$(OBJEXT): ControlStruct/$(am__dirstamp) \
+	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/ForExprMutator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/LabelFixer.$(OBJEXT): ControlStruct/$(am__dirstamp) \
@@ -1174,6 +1187,8 @@ ControlStruct/LabelFixer.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 ControlStruct/LabelGenerator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/MLEMutator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
+	ControlStruct/$(DEPDIR)/$(am__dirstamp)
+ControlStruct/MultiLevelExit.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/Mutate.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
@@ -1406,6 +1421,9 @@ Concurrency/Waitfor.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Common/DebugMalloc.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
+ControlStruct/ExceptTranslateNew.$(OBJEXT):  \
+	ControlStruct/$(am__dirstamp) \
+	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/ExceptTranslate.$(OBJEXT):  \
 	ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
@@ -1544,10 +1562,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Waitfor.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptDecl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptTranslate.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/FixLabels.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ForExprMutator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelFixer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelGenerator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/MLEMutator.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/MultiLevelExit.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/Mutate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Box.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/FindFunction.Po@am__quote@ # am--include-marker
@@ -1935,10 +1956,13 @@ distclean: distclean-am
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptDecl.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslate.Po
+	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po
+	-rm -f ControlStruct/$(DEPDIR)/FixLabels.Po
 	-rm -f ControlStruct/$(DEPDIR)/ForExprMutator.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelFixer.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelGenerator.Po
 	-rm -f ControlStruct/$(DEPDIR)/MLEMutator.Po
+	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
 	-rm -f ControlStruct/$(DEPDIR)/Mutate.Po
 	-rm -f GenPoly/$(DEPDIR)/Box.Po
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
@@ -2134,10 +2158,13 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptDecl.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslate.Po
+	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po
+	-rm -f ControlStruct/$(DEPDIR)/FixLabels.Po
 	-rm -f ControlStruct/$(DEPDIR)/ForExprMutator.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelFixer.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelGenerator.Po
 	-rm -f ControlStruct/$(DEPDIR)/MLEMutator.Po
+	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
 	-rm -f ControlStruct/$(DEPDIR)/Mutate.Po
 	-rm -f GenPoly/$(DEPDIR)/Box.Po
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po

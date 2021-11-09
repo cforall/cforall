@@ -93,9 +93,12 @@ struct {
 	void (* abort)( void ) __attribute__(( __noreturn__ ));
 } __cabi_libc;
 
+int cfa_main_returned;
+
 extern "C" {
 	void __cfaabi_interpose_startup( void ) {
 		const char *version = 0p;
+		cfa_main_returned = 0;
 
 		preload_libgcc();
 
