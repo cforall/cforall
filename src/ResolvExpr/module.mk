@@ -60,6 +60,10 @@ SRC_RESOLVEXPR = \
       ResolvExpr/Unify.h \
       ResolvExpr/WidenMode.h
 
+SRC += $(SRC_RESOLVEXPR) \
+	ResolvExpr/AlternativePrinter.cc \
+	ResolvExpr/AlternativePrinter.h \
+	ResolvExpr/CandidatePrinter.cpp \
+	ResolvExpr/CandidatePrinter.hpp
 
-SRC += $(SRC_RESOLVEXPR) ResolvExpr/AlternativePrinter.cc ResolvExpr/AlternativePrinter.h
 SRCDEMANGLE += $(SRC_RESOLVEXPR)

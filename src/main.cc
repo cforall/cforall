@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Nov  8 11:42:00 2021
-// Update Count     : 656
+// Last Modified On : Tue Nov  9 11:10:00 2021
+// Update Count     : 657
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -64,6 +64,7 @@ using namespace std;
 #include "Parser/ParseNode.h"               // for DeclarationNode, buildList
 #include "Parser/TypedefTable.h"            // for TypedefTable
 #include "ResolvExpr/AlternativePrinter.h"  // for AlternativePrinter
+#include "ResolvExpr/CandidatePrinter.hpp"  // for printCandidates
 #include "ResolvExpr/Resolver.h"            // for resolve
 #include "SymTab/Validate.h"                // for validate
 #include "SynTree/LinkageSpec.h"            // for Spec, Cforall, Intrinsic
@@ -317,21 +318,6 @@ int main( int argc, char * argv[] ) {
 
 		// add the assignment statement after the initialization of a type parameter
 		PASS( "Validate", SymTab::validate( translationUnit, symtabp ) );
-		if ( symtabp ) {
-			deleteAll( translationUnit );
-			return EXIT_SUCCESS;
-		} // if
-
-		if ( expraltp ) {
-			PassVisitor<ResolvExpr::AlternativePrinter> printer( cout );
-			acceptAll( translationUnit, printer );
-			return EXIT_SUCCESS;
-		} // if
-
-		if ( validp ) {
-			dump( translationUnit );
-			return EXIT_SUCCESS;
-		} // if
 
 		CodeTools::fillLocations( translationUnit );
 
@@ -343,6 +329,20 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			if ( symtabp ) {
+				return EXIT_SUCCESS;
+			} // if
+
+			if ( expraltp ) {
+				ResolvExpr::printCandidates( transUnit );
+				return EXIT_SUCCESS;
+			} // if
+
+			if ( validp ) {
+				dump( move( transUnit ) );
+				return EXIT_SUCCESS;
+			} // if
 
 			PASS( "Translate Throws", ControlStruct::translateThrows( transUnit ) );
 			PASS( "Fix Labels", ControlStruct::fixLabels( transUnit ) );
@@ -382,6 +382,22 @@ int main( int argc, char * argv[] ) {
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			if ( symtabp ) {
+				deleteAll( translationUnit );
+				return EXIT_SUCCESS;
+			} // if
+
+			if ( expraltp ) {
+				PassVisitor<ResolvExpr::AlternativePrinter> printer( cout );
+				acceptAll( translationUnit, printer );
+				return EXIT_SUCCESS;
+			} // if
+
+			if ( validp ) {
+				dump( translationUnit );
+				return EXIT_SUCCESS;
+			} // if
+
 			PASS( "Translate Throws", ControlStruct::translateThrows( translationUnit ) );
 			PASS( "Fix Labels", ControlStruct::fixLabels( translationUnit ) );
 			PASS( "Fix Names", CodeGen::fixNames( translationUnit ) );

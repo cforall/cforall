@@ -277,7 +277,8 @@ am__objects_10 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Parser/parserutility.$(OBJEXT) Parser/StatementNode.$(OBJEXT) \
 	Parser/TypeData.$(OBJEXT) Parser/TypedefTable.$(OBJEXT) \
 	$(am__objects_5) ResolvExpr/AlternativePrinter.$(OBJEXT) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
+	ResolvExpr/CandidatePrinter.$(OBJEXT) $(am__objects_6) \
+	$(am__objects_7) $(am__objects_8) \
 	Validate/HandleAttributes.$(OBJEXT) \
 	Validate/FindSpecialDecls.$(OBJEXT) \
 	Virtual/ExpandCasts.$(OBJEXT) Virtual/Tables.$(OBJEXT)
@@ -373,6 +374,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	ResolvExpr/$(DEPDIR)/AlternativePrinter.Po \
 	ResolvExpr/$(DEPDIR)/Candidate.Po \
 	ResolvExpr/$(DEPDIR)/CandidateFinder.Po \
+	ResolvExpr/$(DEPDIR)/CandidatePrinter.Po \
 	ResolvExpr/$(DEPDIR)/CastCost.Po \
 	ResolvExpr/$(DEPDIR)/CommonType.Po \
 	ResolvExpr/$(DEPDIR)/ConversionCost.Po \
@@ -708,7 +710,9 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	Parser/StatementNode.cc Parser/TypeData.cc Parser/TypeData.h \
 	Parser/TypedefTable.cc Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
 	ResolvExpr/AlternativePrinter.cc \
-	ResolvExpr/AlternativePrinter.h $(SRC_SYMTAB) $(SRC_SYNTREE) \
+	ResolvExpr/AlternativePrinter.h \
+	ResolvExpr/CandidatePrinter.cpp \
+	ResolvExpr/CandidatePrinter.hpp $(SRC_SYMTAB) $(SRC_SYNTREE) \
 	$(SRC_TUPLES) Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h Validate/FindSpecialDecls.cc \
 	Validate/FindSpecialDecls.h Virtual/ExpandCasts.cc \
@@ -1474,6 +1478,8 @@ Parser/TypedefTable.$(OBJEXT): Parser/$(am__dirstamp) \
 	Parser/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/AlternativePrinter.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
+ResolvExpr/CandidatePrinter.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
+	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 Virtual/ExpandCasts.$(OBJEXT): Virtual/$(am__dirstamp) \
 	Virtual/$(DEPDIR)/$(am__dirstamp)
 ../driver/$(am__dirstamp):
@@ -1598,6 +1604,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/AlternativePrinter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/Candidate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CandidateFinder.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CandidatePrinter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CastCost.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CommonType.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ConversionCost.Po@am__quote@ # am--include-marker
@@ -1992,6 +1999,7 @@ distclean: distclean-am
 	-rm -f ResolvExpr/$(DEPDIR)/AlternativePrinter.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Candidate.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CandidateFinder.Po
+	-rm -f ResolvExpr/$(DEPDIR)/CandidatePrinter.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CastCost.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CommonType.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ConversionCost.Po
@@ -2194,6 +2202,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ResolvExpr/$(DEPDIR)/AlternativePrinter.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Candidate.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CandidateFinder.Po
+	-rm -f ResolvExpr/$(DEPDIR)/CandidatePrinter.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CastCost.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CommonType.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ConversionCost.Po
