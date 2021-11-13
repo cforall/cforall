@@ -45,6 +45,7 @@ namespace Tuples {
 
 	/// replaces UniqueExprs with a temporary variable and one call
 	void expandUniqueExpr( std::list< Declaration * > & translationUnit );
+	void expandUniqueExpr( ast::TranslationUnit & translationUnit );
 
 	/// returns VoidType if any of the expressions have Voidtype, otherwise TupleType of the Expression result types
 	Type * makeTupleType( const std::list< Expression * > & exprs );

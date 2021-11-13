@@ -23,6 +23,7 @@ SRC_AST = \
 	AST/Chain.hpp \
 	AST/Convert.cpp \
 	AST/Convert.hpp \
+	AST/Copy.cpp \
 	AST/Copy.hpp \
 	AST/CVQualifiers.hpp \
 	AST/Decl.cpp \

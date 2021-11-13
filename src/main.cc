@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Nov  9 11:10:00 2021
-// Update Count     : 657
+// Last Modified On : Fri Nov 12 11:06:00 2021
+// Update Count     : 658
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -317,7 +317,12 @@ int main( int argc, char * argv[] ) {
 		} // if
 
 		// add the assignment statement after the initialization of a type parameter
-		PASS( "Validate", SymTab::validate( translationUnit, symtabp ) );
+		PASS( "Validate-A", SymTab::validate_A( translationUnit ) );
+		PASS( "Validate-B", SymTab::validate_B( translationUnit ) );
+		PASS( "Validate-C", SymTab::validate_C( translationUnit ) );
+		PASS( "Validate-D", SymTab::validate_D( translationUnit ) );
+		PASS( "Validate-E", SymTab::validate_E( translationUnit ) );
+		PASS( "Validate-F", SymTab::validate_F( translationUnit ) );
 
 		CodeTools::fillLocations( translationUnit );
 
@@ -380,6 +385,14 @@ int main( int argc, char * argv[] ) {
 
 			PASS( "Fix Init", InitTweak::fix(transUnit, buildingLibrary()));
 
+			// fix ObjectDecl - replaces ConstructorInit nodes
+			if ( ctorinitp ) {
+				dump( move( transUnit ) );
+				return EXIT_SUCCESS;
+			} // if
+
+			// Currently not working due to unresolved issues with UniqueExpr
+			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( transUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
 			translationUnit = convert( move( transUnit ) );
 		} else {
 			if ( symtabp ) {
@@ -434,15 +447,15 @@ int main( int argc, char * argv[] ) {
 			}
 
 			PASS( "Fix Init", InitTweak::fix( translationUnit, buildingLibrary() ) );
+
+			// fix ObjectDecl - replaces ConstructorInit nodes
+			if ( ctorinitp ) {
+				dump ( translationUnit );
+				return EXIT_SUCCESS;
+			} // if
+
+			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( translationUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
 		}
-
-		// fix ObjectDecl - replaces ConstructorInit nodes
-		if ( ctorinitp ) {
-			dump ( translationUnit );
-			return EXIT_SUCCESS;
-		} // if
-
-		PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( translationUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
 
 		PASS( "Translate Tries" , ControlStruct::translateTries( translationUnit ) );
 

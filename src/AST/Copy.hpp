@@ -9,19 +9,14 @@
 // Author           : Andrew Beach
 // Created On       : Wed Jul 10 16:13:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Jun 19 16:43:00 2020
-// Update Count     : 1
+// Last Modified On : Thr Nov 11  9:22:00 2021
+// Update Count     : 2
 //
 
 #pragma once
 
-#include "Decl.hpp"
-#include "Expr.hpp"
-#include "Pass.hpp"
-#include "Stmt.hpp"
-#include "Type.hpp"
-#include <unordered_set>
-#include <unordered_map>
+#include "Node.hpp"
+#include <cassert>
 
 namespace ast {
 
@@ -42,88 +37,17 @@ node_t * deepCopy( const node_t * localRoot );
  * that point to another node in the sub-tree to the new version of that node.
  */
 
-class DeepCopyCore {
-	std::unordered_map< const Node *, const Node * > nodeCache;
-	std::unordered_set< readonly<Node> * > readonlyCache;
-
-	template<typename node_t>
-	void readonlyInsert( const readonly<node_t> * ptrptr ) {
-		readonlyCache.insert( (readonly<Node> *) ptrptr );
-	}
-
-public:
-	template<typename node_t>
-	const node_t * previsit( const node_t * node ) {
-		const node_t * copy = shallowCopy( node );
-		nodeCache.insert( std::make_pair( node, copy ) );
-		return copy;
-	}
-
-	void postvisit( const AggregateDecl * node ) {
-		readonlyInsert( &node->parent );
-	}
-
-	void postvisit( const StructInstType * node ) {
-		readonlyInsert( &node->base );
-	}
-
-	void postvisit( const UnionInstType * node ) {
-		readonlyInsert( &node->base );
-	}
-
-	void postvisit( const EnumInstType * node ) {
-		readonlyInsert( &node->base );
-	}
-
-	void postvisit( const TraitInstType * node ) {
-		readonlyInsert( &node->base );
-	}
-
-	void postvisit( const TypeInstType * node ) {
-		readonlyInsert( &node->base );
-	}
-
-	void postvisit( const ImplicitCtorDtorStmt * node ) {
-		readonlyInsert( (const readonly<Stmt> *) &node->callStmt );
-	}
-
-	void postvisit( const MemberExpr * node ) {
-		readonlyInsert( &node->member );
-	}
-
-	void postvisit( const VariableExpr * node ) {
-		readonlyInsert( &node->var );
-	}
-
-	void postvisit( const OffsetofExpr * node ) {
-		readonlyInsert( &node->member );
-	}
-
-	void postvisit( const DeletedExpr * node ) {
-		readonlyInsert( &node->deleteStmt );
-	}
-
-	void readonlyUpdates() {
-		for ( readonly<Node> * ptr : readonlyCache ) {
-			auto it = nodeCache.find( ptr->get() );
-			if ( nodeCache.end() != it ) {
-				*ptr = it->second;
-			}
-		}
-	}
-};
-
+// Implementations:
 template<typename node_t>
 node_t * shallowCopy( const node_t * localRoot ) {
 	return localRoot->clone();
 }
 
+Node * deepCopyNode( const Node * node );
+
 template<typename node_t>
 node_t * deepCopy( const node_t * localRoot ) {
-	Pass< DeepCopyCore > dc;
-	node_t const * newRoot = localRoot->accept( dc );
-	dc.core.readonlyUpdates();
-	return const_cast< node_t * >( newRoot );
+	return strict_dynamic_cast<node_t *>( deepCopyNode( localRoot ) );
 }
 
 }

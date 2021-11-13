@@ -34,6 +34,14 @@ namespace SymTab {
 	void validate( std::list< Declaration * > &translationUnit, bool doDebug = false );
 	void validateType( Type *type, const Indexer *indexer );
 
+	// Sub-passes of validate.
+	void validate_A( std::list< Declaration * > &translationUnit );
+	void validate_B( std::list< Declaration * > &translationUnit );
+	void validate_C( std::list< Declaration * > &translationUnit );
+	void validate_D( std::list< Declaration * > &translationUnit );
+	void validate_E( std::list< Declaration * > &translationUnit );
+	void validate_F( std::list< Declaration * > &translationUnit );
+
 	const ast::Type * validateType(
 		const CodeLocation & loc, const ast::Type * type, const ast::SymbolTable & symtab );
 } // namespace SymTab

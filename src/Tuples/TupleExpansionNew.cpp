@@ -21,6 +21,10 @@ namespace {
 		void previsit( const ast::UntypedMemberExpr * ) { visit_children = false; }
         const ast::Expr * postvisit( const ast::UntypedMemberExpr * memberExpr );
 	};
+	struct UniqueExprExpander final : public ast::WithDeclsToAdd<> {
+		const ast::Expr * postvisit( const ast::UniqueExpr * unqExpr );
+		std::map< int, ast::ptr<ast::Expr> > decls; // not vector, because order added may not be increasing order
+	};
 } // namespace
 
 void expandMemberTuples( ast::TranslationUnit & translationUnit ) {
@@ -63,6 +67,47 @@ namespace {
 			// there may be a tuple expr buried in the aggregate
 			return new ast::UntypedMemberExpr( loc, memberExpr->member, memberExpr->aggregate->accept( *visitor ) );
 		}
+	}
+} // namespace
+
+void expandUniqueExpr( ast::TranslationUnit & translationUnit ) {
+	ast::Pass< UniqueExprExpander >::run( translationUnit );
+}
+
+namespace {
+	const ast::Expr * UniqueExprExpander::postvisit( const ast::UniqueExpr * unqExpr ) {
+		const CodeLocation loc = unqExpr->location;
+		const int id = unqExpr->id;
+
+		// on first time visiting a unique expr with a particular ID, generate the expression that replaces all UniqueExprs with that ID,
+		// and lookup on subsequent hits. This ensures that all unique exprs with the same ID reference the same variable.
+		if ( ! decls.count( id ) ) {
+			ast::ptr< ast::Expr > assignUnq;
+			const ast::VariableExpr * var = unqExpr->var;
+			if ( unqExpr->object ) {
+				// an object was generated to represent this unique expression -- it should be added to the list of declarations now
+				declsToAddBefore.push_back( unqExpr->object.as< ast::Decl >() );
+				// deep copy required due to unresolved issues with UniqueExpr
+				assignUnq = ast::UntypedExpr::createAssign( loc, var, unqExpr->expr );
+			} else {
+				const auto commaExpr = unqExpr->expr.strict_as< ast::CommaExpr >();
+				assignUnq = commaExpr->arg1;
+			}
+			auto finished = new ast::ObjectDecl( loc, toString( "_unq", id, "_finished_" ), new ast::BasicType( ast::BasicType::Kind::Bool ),
+				new ast::SingleInit( loc, ast::ConstantExpr::from_int( loc, 0 ) ), {}, ast::Linkage::Cforall );
+			declsToAddBefore.push_back( finished );
+			// (finished ? _unq_expr_N : (_unq_expr_N = <unqExpr->get_expr()>, finished = 1, _unq_expr_N))
+			// This pattern ensures that each unique expression is evaluated once, regardless of evaluation order of the generated C code.
+			auto assignFinished = ast::UntypedExpr::createAssign( loc, new ast::VariableExpr( loc, finished ),
+				ast::ConstantExpr::from_int( loc, 1 ) );
+			auto condExpr = new ast::ConditionalExpr( loc, new ast::VariableExpr( loc, finished ), var,
+				new ast::CommaExpr( loc, new ast::CommaExpr( loc, assignUnq, assignFinished ), var ) );
+			condExpr->result = var->result;
+			condExpr->env = unqExpr->env;
+			decls[id] = condExpr;
+		}
+		//delete unqExpr;
+		return ast::deepCopy(decls[id].get());
 	}
 } // namespace
 } // namespace Tuples

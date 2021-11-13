@@ -1040,20 +1040,18 @@ private:
 	}
 
 	const ast::Expr * visit( const ast::StmtExpr * node ) override final {
-		auto stmts = node->stmts;
-		// disable sharing between multiple StmtExprs explicitly.
-		// this should no longer be true.
-
 		auto rslt = new StmtExpr(
-			get<CompoundStmt>().accept1(stmts)
+			get<CompoundStmt>().accept1(node->stmts)
 		);
 
 		rslt->returnDecls = get<ObjectDecl>().acceptL(node->returnDecls);
 		rslt->dtors       = get<Expression>().acceptL(node->dtors);
-		if (node->resultExpr) {
-			// this MUST be found by children visit
-			rslt->resultExpr  = strict_dynamic_cast<ExprStmt *>(readonlyCache.at(node->resultExpr));
-		}
+
+		// is this even used after convert?
+		//if (tmp->resultExpr) {
+		//	// this MUST be found by children visit
+		//	rslt->resultExpr  = strict_dynamic_cast<ExprStmt *>(readonlyCache.at(tmp->resultExpr));
+		//}
 
 		auto expr = visitBaseExpr( node, rslt );
 		this->node = expr;
