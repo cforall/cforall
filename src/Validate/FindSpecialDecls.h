@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Thu Aug 30 09:49:02 2018
-// Last Modified By : Rob Schluntz
-// Last Modified On : Thu Aug 30 09:51:12 2018
-// Update Count     : 2
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Nov 10 15:16:00 2021
+// Update Count     : 3
 //
 
 #pragma once
@@ -21,6 +21,10 @@ class Declaration;
 class FunctionDecl;
 class StructDecl;
 class Type;
+
+namespace ast {
+	class TranslationUnit;
+}
 
 namespace Validate {
 	/// size_t type - set when size_t typedef is seen. Useful in a few places,
@@ -37,6 +41,11 @@ namespace Validate {
 
 	/// find and remember some of the special declarations that are useful for generating code, so that they do not have to be discovered multiple times.
 	void findSpecialDecls( std::list< Declaration * > & translationUnit );
+
+/// find and remember some of the special declarations that are useful for
+/// generating code, so that they do not have to be discovered multiple times.
+void findGlobalDecls( ast::TranslationUnit & translationUnit );
+
 } // namespace Validate
 
 // Local Variables: //

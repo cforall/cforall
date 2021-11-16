@@ -97,6 +97,7 @@ public:
 	iterator end() { return initializers.end(); }
 	const_iterator begin() const { return initializers.begin(); }
 	const_iterator end() const { return initializers.end(); }
+	size_t size() const { return initializers.size(); }
 
 	const Init * accept( Visitor & v ) const override { return v.visit( this ); }
 private:

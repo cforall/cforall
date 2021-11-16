@@ -14,5 +14,16 @@
 ## Update Count     : 2
 ###############################################################################
 
-SRC += Validate/HandleAttributes.cc Validate/HandleAttributes.h Validate/FindSpecialDecls.cc Validate/FindSpecialDecls.h
-SRCDEMANGLE += Validate/HandleAttributes.cc Validate/HandleAttributes.h Validate/FindSpecialDecls.cc Validate/FindSpecialDecls.h
+SRC_VALIDATE = \
+	Validate/HandleAttributes.cc \
+	Validate/HandleAttributes.h \
+	Validate/InitializerLength.cpp \
+	Validate/InitializerLength.hpp \
+	Validate/LabelAddressFixer.cpp \
+	Validate/LabelAddressFixer.hpp \
+	Validate/FindSpecialDeclsNew.cpp \
+	Validate/FindSpecialDecls.cc \
+	Validate/FindSpecialDecls.h
+
+SRC += $(SRC_VALIDATE)
+SRCDEMANGLE += $(SRC_VALIDATE)

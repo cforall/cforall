@@ -590,7 +590,8 @@ namespace {
 		// check for existing cleanup attribute before adding another(?)
 		// need to add __Destructor for _tmp_cp variables as well
 
-		assertf( ast::dtorStruct && ast::dtorStruct->members.size() == 2, "Destructor generation requires __Destructor definition." );
+		assertf( ast::dtorStruct, "Destructor generation requires __Destructor definition." );
+		assertf( ast::dtorStruct->members.size() == 2, "__Destructor definition does not have expected fields." );
 		assertf( ast::dtorStructDestroy, "Destructor generation requires __destroy_Destructor." );
 
 		const CodeLocation loc = ret->location;
@@ -1215,8 +1216,8 @@ namespace {
 							std::list< ast::ptr<ast::Stmt> > stmtsToAdd;
 
 							static UniqueName memberDtorNamer = { "__memberDtor" };
-							assertf( Validate::dtorStruct, "builtin __Destructor not found." );
-							assertf( Validate::dtorStructDestroy, "builtin __destroy_Destructor not found." );
+							assertf( ast::dtorStruct, "builtin __Destructor not found." );
+							assertf( ast::dtorStructDestroy, "builtin __destroy_Destructor not found." );
 
 							ast::Expr * thisExpr = new ast::CastExpr( new ast::AddressExpr( new ast::VariableExpr(loc, thisParam ) ), new ast::PointerType( new ast::VoidType(), ast::CV::Qualifiers() ) );
 							ast::Expr * dtorExpr = new ast::VariableExpr(loc, getDtorFunc( thisParam, callStmt, stmtsToAdd ) );

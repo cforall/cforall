@@ -108,7 +108,7 @@ public:
 	template< typename node_type, typename... Args >
 	static auto read( node_type const * node, Args&&... args ) {
 		Pass<core_t> visitor( std::forward<Args>( args )... );
-		node_type const * temp = node->accept( visitor );
+		auto const * temp = node->accept( visitor );
 		assert( temp == node );
 		return visitor.get_result();
 	}
@@ -123,7 +123,7 @@ public:
 	template< typename node_type, typename... Args >
 	static auto read( node_type const * node ) {
 		Pass<core_t> visitor;
-		node_type const * temp = node->accept( visitor );
+		auto const * temp = node->accept( visitor );
 		assert( temp == node );
 		return visitor.get_result();
 	}

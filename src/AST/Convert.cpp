@@ -1443,6 +1443,12 @@ private:
 };
 
 std::list< Declaration * > convert( const ast::TranslationUnit && translationUnit ) {
+	// Copy values from the global store to the local static variables.
+	ast::sizeType = translationUnit.global.sizeType;
+	ast::dereferenceOperator = translationUnit.global.dereference;
+	ast::dtorStruct = translationUnit.global.dtorStruct;
+	ast::dtorStructDestroy = translationUnit.global.dtorDestroy;
+
 	ConverterNewToOld c;
 	std::list< Declaration * > decls;
 	for(auto d : translationUnit.decls) {

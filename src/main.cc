@@ -71,6 +71,9 @@ using namespace std;
 #include "SynTree/Declaration.h"            // for Declaration
 #include "SynTree/Visitor.h"                // for acceptAll
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
+#include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
+#include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
+#include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
 #include "Virtual/ExpandCasts.h"            // for expandCasts
 
 
@@ -322,7 +325,6 @@ int main( int argc, char * argv[] ) {
 		PASS( "Validate-C", SymTab::validate_C( translationUnit ) );
 		PASS( "Validate-D", SymTab::validate_D( translationUnit ) );
 		PASS( "Validate-E", SymTab::validate_E( translationUnit ) );
-		PASS( "Validate-F", SymTab::validate_F( translationUnit ) );
 
 		CodeTools::fillLocations( translationUnit );
 
@@ -334,6 +336,10 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			PASS( "Set Length From Initializer", Validate::setLengthFromInitializer( transUnit ) );
+			PASS( "Find Global Decls", Validate::findGlobalDecls( transUnit ) );
+			PASS( "Fix Label Address", Validate::fixLabelAddresses( transUnit ) );
 
 			if ( symtabp ) {
 				return EXIT_SUCCESS;
@@ -395,6 +401,8 @@ int main( int argc, char * argv[] ) {
 			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( transUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Validate-F", SymTab::validate_F( translationUnit ) );
+
 			if ( symtabp ) {
 				deleteAll( translationUnit );
 				return EXIT_SUCCESS;

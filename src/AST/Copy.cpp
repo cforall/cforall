@@ -104,7 +104,8 @@ public:
 
 }
 
-Node * deepCopyNode( const Node * localRoot ) {
+template<>
+Node * deepCopy<Node>( const Node * localRoot ) {
 	Pass< DeepCopyCore > dc;
 	Node const * newRoot = localRoot->accept( dc );
 	dc.core.readonlyUpdates();

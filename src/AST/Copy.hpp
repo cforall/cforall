@@ -43,12 +43,13 @@ node_t * shallowCopy( const node_t * localRoot ) {
 	return localRoot->clone();
 }
 
-Node * deepCopyNode( const Node * node );
-
 template<typename node_t>
 node_t * deepCopy( const node_t * localRoot ) {
-	return strict_dynamic_cast<node_t *>( deepCopyNode( localRoot ) );
+	return strict_dynamic_cast<node_t *>( deepCopy<Node>( localRoot ) );
 }
+
+template<>
+Node * deepCopy<Node>( const Node * localRoot );
 
 }
 
