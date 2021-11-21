@@ -267,26 +267,35 @@ static inline void lock(__cluster_proc_list & this) {
 	// adding/removing processors while we mess with the idle lock
 	ready_schedule_lock();
 
-	// Simple counting lock, acquired, acquired by incrementing the counter
-	// to an odd number
-	for() {
-		uint64_t l = this.lock;
-		if(
-			(0 == (l % 2))
-			&& __atomic_compare_exchange_n(&this.lock, &l, l + 1, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
-		) return;
-		Pause();
-	}
+	lock( this.lock __cfaabi_dbg_ctx2 );
 
 	/* paranoid */ verify( ! __preemption_enabled() );
+}
+
+static inline bool try_lock(__cluster_proc_list & this) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	// Start by locking the global RWlock so that we know no-one is
+	// adding/removing processors while we mess with the idle lock
+	ready_schedule_lock();
+
+	if(try_lock( this.lock __cfaabi_dbg_ctx2 )) {
+		// success
+		/* paranoid */ verify( ! __preemption_enabled() );
+		return true;
+	}
+
+	// failed to lock
+	ready_schedule_unlock();
+
+	/* paranoid */ verify( ! __preemption_enabled() );
+	return false;
 }
 
 static inline void unlock(__cluster_proc_list & this) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 
-	/* paranoid */ verify( 1 == (this.lock % 2) );
-	// Simple couting lock, release by incrementing to an even number
-	__atomic_fetch_add( &this.lock, 1, __ATOMIC_SEQ_CST );
+	unlock(this.lock);
 
 	// Release the global lock, which we acquired when locking
 	ready_schedule_unlock();

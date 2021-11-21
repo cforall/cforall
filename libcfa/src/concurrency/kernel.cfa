@@ -123,9 +123,8 @@ static inline bool __must_unpark( thread$ * thrd ) __attribute((nonnull(1)));
 static void __run_thread(processor * this, thread$ * dst);
 static void __wake_one(cluster * cltr);
 
-static void mark_idle (__cluster_proc_list & idles, processor & proc);
+static bool mark_idle (__cluster_proc_list & idles, processor & proc);
 static void mark_awake(__cluster_proc_list & idles, processor & proc);
-static [unsigned idle, unsigned total, * processor] query_idles( & __cluster_proc_list idles );
 
 extern void __cfa_io_start( processor * );
 extern bool __cfa_io_drain( processor * );
@@ -212,7 +211,7 @@ void main(processorCtx_t & runner) {
 				#endif
 
 				// Push self to idle stack
-				mark_idle(this->cltr->procs, * this);
+				if(!mark_idle(this->cltr->procs, * this)) continue MAIN_LOOP;
 
 				// Confirm the ready-queue is empty
 				readyThread = __next_thread_slow( this->cltr );
@@ -330,7 +329,7 @@ void main(processorCtx_t & runner) {
 
 				// Push self to idle stack
 				ready_schedule_unlock();
-				mark_idle(this->cltr->procs, * this);
+				if(!mark_idle(this->cltr->procs, * this)) goto SEARCH;
 				ready_schedule_lock();
 
 				// Confirm the ready-queue is empty
@@ -765,18 +764,15 @@ static void __wake_one(cluster * this) {
 	/* paranoid */ verify( ready_schedule_islocked() );
 
 	// Check if there is a sleeping processor
-	processor * p;
-	unsigned idle;
-	unsigned total;
-	[idle, total, p] = query_idles(this->procs);
+	int fd = __atomic_load_n(&this->procs.fd, __ATOMIC_SEQ_CST);
 
 	// If no one is sleeping, we are done
-	if( idle == 0 ) return;
+	if( fd == 0 ) return;
 
 	// We found a processor, wake it up
 	eventfd_t val;
 	val = 1;
-	eventfd_write( p->idle, val );
+	eventfd_write( fd, val );
 
 	#if !defined(__CFA_NO_STATISTICS__)
 		if( kernelTLS().this_stats ) {
@@ -805,15 +801,19 @@ void __wake_proc(processor * this) {
 	__enable_interrupts_checked();
 }
 
-static void mark_idle(__cluster_proc_list & this, processor & proc) {
+static bool mark_idle(__cluster_proc_list & this, processor & proc) {
 	/* paranoid */ verify( ! __preemption_enabled() );
-	lock( this );
+	if(!try_lock( this )) return false;
 		this.idle++;
 		/* paranoid */ verify( this.idle <= this.total );
 		remove(proc);
 		insert_first(this.idles, proc);
+
+		__atomic_store_n(&this.fd, proc.idle, __ATOMIC_SEQ_CST);
 	unlock( this );
 	/* paranoid */ verify( ! __preemption_enabled() );
+
+	return true;
 }
 
 static void mark_awake(__cluster_proc_list & this, processor & proc) {
@@ -823,27 +823,14 @@ static void mark_awake(__cluster_proc_list & this, processor & proc) {
 		/* paranoid */ verify( this.idle >= 0 );
 		remove(proc);
 		insert_last(this.actives, proc);
+
+		{
+			int fd = 0;
+			if(!this.idles`isEmpty) fd = this.idles`first.idle;
+			__atomic_store_n(&this.fd, fd, __ATOMIC_SEQ_CST);
+		}
+
 	unlock( this );
-	/* paranoid */ verify( ! __preemption_enabled() );
-}
-
-static [unsigned idle, unsigned total, * processor] query_idles( & __cluster_proc_list this ) {
-	/* paranoid */ verify( ! __preemption_enabled() );
-	/* paranoid */ verify( ready_schedule_islocked() );
-
-	for() {
-		uint64_t l = __atomic_load_n(&this.lock, __ATOMIC_SEQ_CST);
-		if( 1 == (l % 2) ) { Pause(); continue; }
-		unsigned idle    = this.idle;
-		unsigned total   = this.total;
-		processor * proc = &this.idles`first;
-		// Compiler fence is unnecessary, but gcc-8 and older incorrectly reorder code without it
-		asm volatile("": : :"memory");
-		if(l != __atomic_load_n(&this.lock, __ATOMIC_SEQ_CST)) { Pause(); continue; }
-		return [idle, total, proc];
-	}
-
-	/* paranoid */ verify( ready_schedule_islocked() );
 	/* paranoid */ verify( ! __preemption_enabled() );
 }
 
@@ -905,12 +892,12 @@ static inline bool __maybe_io_drain( processor * proc ) {
 		unsigned tail = *ctx->cq.tail;
 		if(head == tail) return false;
 		#if OLD_MAIN
-		ready_schedule_lock();
-		ret = __cfa_io_drain( proc );
-		ready_schedule_unlock();
+			ready_schedule_lock();
+			ret = __cfa_io_drain( proc );
+			ready_schedule_unlock();
 		#else
 			ret = __cfa_io_drain( proc );
-	#endif
+		#endif
 	#endif
 	return ret;
 }

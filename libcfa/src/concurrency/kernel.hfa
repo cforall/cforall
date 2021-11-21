@@ -194,7 +194,10 @@ void ^?{}(__ready_queue_t & this);
 // Idle Sleep
 struct __cluster_proc_list {
 	// Spin lock protecting the queue
-	volatile uint64_t lock;
+	__spinlock_t lock;
+
+	// FD to use to wake a processor
+	volatile int fd;
 
 	// Total number of processors
 	unsigned total;
