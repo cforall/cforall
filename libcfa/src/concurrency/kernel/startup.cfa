@@ -526,8 +526,8 @@ static void init(processor & this, const char name[], cluster & _cltr, thread$ *
 
 	this.local_data = 0p;
 
-	this.idle = eventfd(0, 0);
-	if (idle < 0) {
+	this.idle_fd = eventfd(0, 0);
+	if (idle_fd < 0) {
 		abort("KERNEL ERROR: PROCESSOR EVENTFD - %s\n", strerror(errno));
 	}
 
@@ -541,7 +541,7 @@ static void init(processor & this, const char name[], cluster & _cltr, thread$ *
 
 // Not a ctor, it just preps the destruction but should not destroy members
 static void deinit(processor & this) {
-	close(this.idle);
+	close(this.idle_fd);
 }
 
 void ?{}(processor & this, const char name[], cluster & _cltr, thread$ * initT) {

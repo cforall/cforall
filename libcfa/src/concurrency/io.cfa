@@ -132,7 +132,7 @@
 		return true;
 	}
 
-	void __cfa_io_flush( processor * proc ) {
+	bool __cfa_io_flush( processor * proc, bool wait ) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( proc );
 		/* paranoid */ verify( proc->io.ctx );
@@ -140,15 +140,10 @@
 		__attribute__((unused)) cluster * cltr = proc->cltr;
 		$io_context & ctx = *proc->io.ctx;
 
-		// for(i; 2) {
-		// 	unsigned idx = proc->rdq.id + i;
-		// 	cltr->ready_queue.lanes.tscs[idx].tv = -1ull;
-		// }
-
 		__ioarbiter_flush( ctx );
 
 		__STATS__( true, io.calls.flush++; )
-		int ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, 0, 0, (sigset_t *)0p, _NSIG / 8);
+		int ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, wait ? 1 : 0, 0, (sigset_t *)0p, _NSIG / 8);
 		if( ret < 0 ) {
 			switch((int)errno) {
 			case EAGAIN:
@@ -156,11 +151,7 @@
 			case EBUSY:
 				// Update statistics
 				__STATS__( false, io.calls.errors.busy ++; )
-				// for(i; 2) {
-				// 	unsigned idx = proc->rdq.id + i;
-				// 	cltr->ready_queue.lanes.tscs[idx].tv = rdtscl();
-				// }
-				return;
+				return false;
 			default:
 				abort( "KERNEL ERROR: IO_URING SYSCALL - (%d) %s\n", (int)errno, strerror(errno) );
 			}
@@ -181,12 +172,10 @@
 		/* paranoid */ verify( ! __preemption_enabled() );
 
 		ctx.proc->io.pending = false;
-
-		__cfa_io_drain( proc );
-		// for(i; 2) {
-		// 	unsigned idx = proc->rdq.id + i;
-		// 	cltr->ready_queue.lanes.tscs[idx].tv = rdtscl();
-		// }
+		ready_schedule_lock();
+		bool ret = __cfa_io_drain( proc );
+		ready_schedule_unlock();
+		return ret;
 	}
 
 //=============================================================================================
@@ -290,7 +279,6 @@
 		return ret;
 	}
 
-
 	//=============================================================================================
 	// submission
 	static inline void __submit( struct $io_context * ctx, __u32 idxs[], __u32 have, bool lazy) {
@@ -313,9 +301,7 @@
 		ctx->proc->io.pending = true;
 		ctx->proc->io.dirty   = true;
 		if(sq.to_submit > 30 || !lazy) {
-			ready_schedule_lock();
-			__cfa_io_flush( ctx->proc );
-			ready_schedule_unlock();
+			__cfa_io_flush( ctx->proc, false );
 		}
 	}
 
@@ -514,4 +500,43 @@
 			unlock(ctx.ext_sq.lock );
 		}
 	}
+
+	#if defined(IO_URING_IDLE)
+		bool __kernel_read(processor * proc, io_future_t & future, char buf[], int fd) {
+			$io_context * ctx = proc->io.ctx;
+			/* paranoid */ verify( ! __preemption_enabled() );
+			/* paranoid */ verify( proc == __cfaabi_tls.this_processor );
+			/* paranoid */ verify( ctx );
+
+			__u32 idx;
+			struct io_uring_sqe * sqe;
+
+			// We can proceed to the fast path
+			if( !__alloc(ctx, &idx, 1) ) return false;
+
+			// Allocation was successful
+			__fill( &sqe, 1, &idx, ctx );
+
+			sqe->opcode = IORING_OP_READ;
+			sqe->user_data = (uintptr_t)&future;
+			sqe->flags = 0;
+			sqe->ioprio = 0;
+			sqe->fd = 0;
+			sqe->off = 0;
+			sqe->fsync_flags = 0;
+			sqe->__pad2[0] = 0;
+			sqe->__pad2[1] = 0;
+			sqe->__pad2[2] = 0;
+			sqe->addr = (uintptr_t)buf;
+			sqe->len = sizeof(uint64_t);
+
+			asm volatile("": : :"memory");
+
+			/* paranoid */ verify( sqe->user_data == (uintptr_t)&future );
+			__submit( ctx, &idx, 1, true );
+
+			/* paranoid */ verify( proc == __cfaabi_tls.this_processor );
+			/* paranoid */ verify( ! __preemption_enabled() );
+		}
+	#endif
 #endif

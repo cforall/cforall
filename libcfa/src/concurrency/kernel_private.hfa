@@ -38,6 +38,8 @@ extern "C" {
 #endif
 }
 
+// #define IO_URING_IDLE
+
 //-----------------------------------------------------------------------------
 // Scheduler
 extern "C" {
@@ -148,10 +150,6 @@ static inline void __atomic_unlock(volatile bool * ll) {
 	/* paranoid */ verify(*ll);
 	__atomic_store_n(ll, (bool)false, __ATOMIC_RELEASE);
 }
-
-
-
-
 
 //-----------------------------------------------------------------------
 // Reader-Writer lock protecting the ready-queues

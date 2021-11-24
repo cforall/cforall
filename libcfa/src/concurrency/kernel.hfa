@@ -99,7 +99,7 @@ struct __attribute__((aligned(128))) processor {
 	bool pending_preemption;
 
 	// Idle lock (kernel semaphore)
-	int idle;
+	int idle_fd;
 
 	// Termination synchronisation (user semaphore)
 	oneshot terminated;

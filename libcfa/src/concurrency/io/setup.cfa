@@ -31,7 +31,7 @@
 	void ^?{}($io_context & this) {}
 
 	void __cfa_io_start( processor * proc ) {}
-	void __cfa_io_flush( processor * proc ) {}
+	bool __cfa_io_flush( processor * proc, bool ) {}
 	void __cfa_io_stop ( processor * proc ) {}
 
 	$io_arbiter * create(void) { return 0p; }
@@ -110,7 +110,7 @@
 		this.arbiter = cl.io.arbiter;
 		this.ext_sq.empty = true;
 		(this.ext_sq.queue){};
-		__io_uring_setup( this, cl.io.params, proc->idle );
+		__io_uring_setup( this, cl.io.params, proc->idle_fd );
 		__cfadbg_print_safe(io_core, "Kernel I/O : Created ring for io_context %u (%p)\n", this.fd, &this);
 	}
 
@@ -219,21 +219,23 @@
 		cq.overflow  = (         __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.overflow);
 		cq.cqes = (struct io_uring_cqe *)(((intptr_t)cq.ring_ptr) + params.cq_off.cqes);
 
-		// Step 4 : eventfd
-		// io_uring_register is so f*cking slow on some machine that it
-		// will never succeed if preemption isn't hard blocked
-		__cfadbg_print_safe(io_core, "Kernel I/O : registering %d for completion with ring %d\n", procfd, fd);
+		#if !defined(IO_URING_IDLE)
+			// Step 4 : eventfd
+			// io_uring_register is so f*cking slow on some machine that it
+			// will never succeed if preemption isn't hard blocked
+			__cfadbg_print_safe(io_core, "Kernel I/O : registering %d for completion with ring %d\n", procfd, fd);
 
-		__disable_interrupts_hard();
+			__disable_interrupts_hard();
 
-		int ret = syscall( __NR_io_uring_register, fd, IORING_REGISTER_EVENTFD, &procfd, 1);
-		if (ret < 0) {
-			abort("KERNEL ERROR: IO_URING EVENTFD REGISTER - %s\n", strerror(errno));
-		}
+			int ret = syscall( __NR_io_uring_register, fd, IORING_REGISTER_EVENTFD, &procfd, 1);
+			if (ret < 0) {
+				abort("KERNEL ERROR: IO_URING EVENTFD REGISTER - %s\n", strerror(errno));
+			}
 
-		__enable_interrupts_hard();
+			__enable_interrupts_hard();
 
-		__cfadbg_print_safe(io_core, "Kernel I/O : registered %d for completion with ring %d\n", procfd, fd);
+			__cfadbg_print_safe(io_core, "Kernel I/O : registered %d for completion with ring %d\n", procfd, fd);
+		#endif
 
 		// some paranoid checks
 		/* paranoid */ verifyf( (*cq.mask) == ((*cq.num) - 1ul32), "IO_URING Expected mask to be %u (%u entries), was %u", (*cq.num) - 1ul32, *cq.num, *cq.mask  );

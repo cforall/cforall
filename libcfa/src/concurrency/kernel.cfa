@@ -33,6 +33,7 @@ extern "C" {
 #include "preemption.hfa"
 #include "strstream.hfa"
 #include "device/cpu.hfa"
+#include "io/types.hfa"
 
 //Private includes
 #define __CFA_INVOKE_PRIVATE__
@@ -123,14 +124,19 @@ static inline bool __must_unpark( thread$ * thrd ) __attribute((nonnull(1)));
 static void __run_thread(processor * this, thread$ * dst);
 static void __wake_one(cluster * cltr);
 
+static void idle_sleep(processor * proc, io_future_t & future, char buf[]);
 static bool mark_idle (__cluster_proc_list & idles, processor & proc);
 static void mark_awake(__cluster_proc_list & idles, processor & proc);
 
 extern void __cfa_io_start( processor * );
 extern bool __cfa_io_drain( processor * );
-extern void __cfa_io_flush( processor * );
+extern bool __cfa_io_flush( processor *, bool wait );
 extern void __cfa_io_stop ( processor * );
 static inline bool __maybe_io_drain( processor * );
+
+#if defined(IO_URING_IDLE) && defined(CFA_HAVE_LINUX_IO_URING_H)
+	extern bool __kernel_read(processor * proc, io_future_t & future, char buf[], int fd);
+#endif
 
 extern void __disable_interrupts_hard();
 extern void __enable_interrupts_hard();
@@ -147,6 +153,7 @@ static inline void __enable_interrupts_checked( bool poll = true ) {
 	/* paranoid */ verify( __preemption_enabled() );
 }
 
+
 //=============================================================================================
 // Kernel Scheduling logic
 //=============================================================================================
@@ -160,6 +167,10 @@ void main(processorCtx_t & runner) {
 
 	processor * this = runner.proc;
 	verify(this);
+
+	io_future_t future; // used for idle sleep when io_uring is present
+	future.self.ptr = 1p;  // mark it as already fulfilled so we know if there is a pending request or not
+	char buf[sizeof(uint64_t)];
 
 	__cfa_io_start( this );
 
@@ -194,9 +205,7 @@ void main(processorCtx_t & runner) {
 			readyThread = __next_thread( this->cltr );
 
 			if( !readyThread ) {
-				ready_schedule_lock();
-				__cfa_io_flush( this );
-				ready_schedule_unlock();
+				__cfa_io_flush( this, false );
 
 				readyThread = __next_thread_slow( this->cltr );
 			}
@@ -227,37 +236,7 @@ void main(processorCtx_t & runner) {
 					break HALT;
 				}
 
-				#if !defined(__CFA_NO_STATISTICS__)
-					if(this->print_halts) {
-						__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl());
-					}
-				#endif
-
-				__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle);
-
-				{
-					eventfd_t val;
-					ssize_t ret = read( this->idle, &val, sizeof(val) );
-					if(ret < 0) {
-						switch((int)errno) {
-						case EAGAIN:
-						#if EAGAIN != EWOULDBLOCK
-							case EWOULDBLOCK:
-						#endif
-						case EINTR:
-							// No need to do anything special here, just assume it's a legitimate wake-up
-							break;
-						default:
-							abort( "KERNEL : internal error, read failure on idle eventfd, error(%d) %s.", (int)errno, strerror( (int)errno ) );
-						}
-					}
-				}
-
-				#if !defined(__CFA_NO_STATISTICS__)
-					if(this->print_halts) {
-						__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl());
-					}
-				#endif
+				idle_sleep( this, future, buf );
 
 				// We were woken up, remove self from idle
 				mark_awake(this->cltr->procs, * this);
@@ -278,9 +257,7 @@ void main(processorCtx_t & runner) {
 			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
 
 			if(this->io.pending && !this->io.dirty) {
-				ready_schedule_lock();
-				__cfa_io_flush( this );
-				ready_schedule_unlock();
+				__cfa_io_flush( this, false );
 			}
 
 			#else
@@ -296,7 +273,7 @@ void main(processorCtx_t & runner) {
 				if(readyThread) { ready_schedule_unlock(); break SEARCH; }
 
 				// If we can't find a thread, might as well flush any outstanding I/O
-				if(this->io.pending) { __cfa_io_flush( this ); }
+				if(this->io.pending) { __cfa_io_flush( this, false ); }
 
 				// Spin a little on I/O, just in case
 				for(5) {
@@ -348,11 +325,11 @@ void main(processorCtx_t & runner) {
 				}
 
 				__STATS( if(this->print_halts) __cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl()); )
-				__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle);
+				__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle_fd);
 
 				{
 					eventfd_t val;
-					ssize_t ret = read( this->idle, &val, sizeof(val) );
+					ssize_t ret = read( this->idle_fd, &val, sizeof(val) );
 					if(ret < 0) {
 						switch((int)errno) {
 						case EAGAIN:
@@ -391,7 +368,7 @@ void main(processorCtx_t & runner) {
 			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
 
 			if(this->io.pending && !this->io.dirty) {
-				__cfa_io_flush( this );
+				__cfa_io_flush( this, false );
 			}
 
 			ready_schedule_lock();
@@ -797,8 +774,57 @@ void __wake_proc(processor * this) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		eventfd_t val;
 		val = 1;
-		eventfd_write( this->idle, val );
+		eventfd_write( this->idle_fd, val );
 	__enable_interrupts_checked();
+}
+
+static void idle_sleep(processor * this, io_future_t & future, char buf[]) {
+	#if !defined(IO_URING_IDLE) || !defined(CFA_HAVE_LINUX_IO_URING_H)
+		#if !defined(__CFA_NO_STATISTICS__)
+			if(this->print_halts) {
+				__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl());
+			}
+		#endif
+
+		__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle_fd);
+
+		{
+			eventfd_t val;
+			ssize_t ret = read( this->idle_fd, &val, sizeof(val) );
+			if(ret < 0) {
+				switch((int)errno) {
+				case EAGAIN:
+				#if EAGAIN != EWOULDBLOCK
+					case EWOULDBLOCK:
+				#endif
+				case EINTR:
+					// No need to do anything special here, just assume it's a legitimate wake-up
+					break;
+				default:
+					abort( "KERNEL : internal error, read failure on idle eventfd, error(%d) %s.", (int)errno, strerror( (int)errno ) );
+				}
+			}
+		}
+
+		#if !defined(__CFA_NO_STATISTICS__)
+			if(this->print_halts) {
+				__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl());
+			}
+		#endif
+	#else
+		#if !defined(CFA_HAVE_IORING_OP_READ)
+			#error this is only implemented if the read is present
+		#endif
+		// Do we already have a pending read
+		if(available(future)) {
+			// There is no pending read, we need to add one
+			reset(future);
+
+			__kernel_read(this, future, buf, this->idle_fd );
+		}
+
+		__cfa_io_flush( this, true );
+	#endif
 }
 
 static bool mark_idle(__cluster_proc_list & this, processor & proc) {
@@ -809,7 +835,7 @@ static bool mark_idle(__cluster_proc_list & this, processor & proc) {
 		remove(proc);
 		insert_first(this.idles, proc);
 
-		__atomic_store_n(&this.fd, proc.idle, __ATOMIC_SEQ_CST);
+		__atomic_store_n(&this.fd, proc.idle_fd, __ATOMIC_SEQ_CST);
 	unlock( this );
 	/* paranoid */ verify( ! __preemption_enabled() );
 
@@ -826,7 +852,7 @@ static void mark_awake(__cluster_proc_list & this, processor & proc) {
 
 		{
 			int fd = 0;
-			if(!this.idles`isEmpty) fd = this.idles`first.idle;
+			if(!this.idles`isEmpty) fd = this.idles`first.idle_fd;
 			__atomic_store_n(&this.fd, fd, __ATOMIC_SEQ_CST);
 		}
 
