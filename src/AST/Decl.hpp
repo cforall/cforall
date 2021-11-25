@@ -269,10 +269,10 @@ public:
 		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall )
 	: AggregateDecl( loc, name, std::move(attrs), linkage ), kind( kind ) {}
 
-	bool is_coroutine() { return kind == Coroutine; }
-	bool is_generator() { return kind == Generator; }
-	bool is_monitor  () { return kind == Monitor  ; }
-	bool is_thread   () { return kind == Thread   ; }
+	bool is_coroutine() const { return kind == Coroutine; }
+	bool is_generator() const { return kind == Generator; }
+	bool is_monitor  () const { return kind == Monitor  ; }
+	bool is_thread   () const { return kind == Thread   ; }
 
 	const Decl * accept( Visitor & v ) const override { return v.visit( this ); }
 

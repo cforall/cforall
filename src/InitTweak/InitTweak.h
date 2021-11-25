@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Fri May 13 11:26:36 2016
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Jul 19 14:18:00 2019
-// Update Count     : 6
+// Last Modified On : Fri Nov 19 14:18:00 2021
+// Update Count     : 7
 //
 
 #pragma once
@@ -34,6 +34,7 @@ namespace InitTweak {
 
 	/// returns the base type of the first parameter to a constructor/destructor/assignment function
 	Type * getTypeofThis( FunctionType * ftype );
+	const ast::Type * getTypeofThis( const ast::FunctionType * ftype );
 
 	/// returns the first parameter of a constructor/destructor/assignment function
 	ObjectDecl * getParamThis( FunctionType * ftype );

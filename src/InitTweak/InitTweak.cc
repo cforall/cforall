@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Fri May 13 11:26:36 2016
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 16 20:57:22 2021
-// Update Count     : 18
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Nov 19 19:22:00 2021
+// Update Count     : 19
 //
 
 #include <algorithm>               // for find, all_of
@@ -536,6 +536,16 @@ bool InitExpander_new::addReference() {
 		assertf( ftype, "getTypeofThis: nullptr ftype" );
 		ObjectDecl * thisParam = getParamThis( ftype );
 		ReferenceType * refType = strict_dynamic_cast< ReferenceType * >( thisParam->type );
+		return refType->base;
+	}
+
+	const ast::Type * getTypeofThis( const ast::FunctionType * ftype ) {
+		assertf( ftype, "getTypeofThis: nullptr ftype" );
+		const std::vector<ast::ptr<ast::Type>> & params = ftype->params;
+		assertf( !params.empty(), "getTypeofThis: ftype with 0 parameters: %s",
+				toString( ftype ).c_str() );
+		const ast::ReferenceType * refType =
+			params.front().strict_as<ast::ReferenceType>();
 		return refType->base;
 	}
 

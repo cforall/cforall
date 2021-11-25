@@ -978,6 +978,7 @@ namespace Concurrency {
 		if( mutexArgs.empty() ) {
 			// If this is the destructor for a monitor it must be mutex
 			if(isDtor) {
+				// This reflects MutexKeyword::validate, except does not produce an error.
 				Type* ty = decl->get_functionType()->get_parameters().front()->get_type();
 
 				// If it's a copy, it's not a mutex
