@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Print.hpp --
+// Print.hpp -- Print an AST (or sub-tree) to a stream.
 //
 // Author           : Thierry Delisle
 // Created On       : Tue May 21 16:20:15 2019
@@ -34,13 +34,13 @@ void printShort( std::ostream & os, const ast::Decl * node, Indenter indent = {}
 /// Print a collection of items
 template< typename Coll >
 void printAll( std::ostream & os, const Coll & c, Indenter indent = {} ) {
-    for ( const auto & i : c ) {
-        if ( ! i ) continue;
-        
-        os << indent;
-        print( os, i, indent );
-        os << std::endl;
-    }
+	for ( const auto & i : c ) {
+		if ( ! i ) continue;
+
+		os << indent;
+		print( os, i, indent );
+		os << std::endl;
+	}
 }
 
 }

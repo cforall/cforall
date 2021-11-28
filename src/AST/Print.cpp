@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Print.cpp --
+// Print.cpp -- Print an AST (or sub-tree) to a stream.
 //
 // Author           : Thierry Delisle
 // Created On       : Tue May 21 16:20:15 2019
