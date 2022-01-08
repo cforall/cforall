@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Nov 12 11:06:00 2021
-// Update Count     : 658
+// Last Modified On : Tue Nov 30 10:25:00 2021
+// Update Count     : 659
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -49,6 +49,7 @@ using namespace std;
 #include "Common/SemanticError.h"           // for SemanticError
 #include "Common/UnimplementedError.h"      // for UnimplementedError
 #include "Common/utility.h"                 // for deleteAll, filter, printAll
+#include "Concurrency/Keywords.h"           // for implementMutex, implement...
 #include "Concurrency/Waitfor.h"            // for generateWaitfor
 #include "ControlStruct/ExceptDecl.h"       // for translateExcept
 #include "ControlStruct/ExceptTranslate.h"  // for translateEHM
@@ -72,6 +73,7 @@ using namespace std;
 #include "SynTree/Visitor.h"                // for acceptAll
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
 #include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
+#include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
 #include "Virtual/ExpandCasts.h"            // for expandCasts
@@ -324,7 +326,6 @@ int main( int argc, char * argv[] ) {
 		PASS( "Validate-B", SymTab::validate_B( translationUnit ) );
 		PASS( "Validate-C", SymTab::validate_C( translationUnit ) );
 		PASS( "Validate-D", SymTab::validate_D( translationUnit ) );
-		PASS( "Validate-E", SymTab::validate_E( translationUnit ) );
 
 		CodeTools::fillLocations( translationUnit );
 
@@ -337,6 +338,9 @@ int main( int argc, char * argv[] ) {
 
 			forceFillCodeLocations( transUnit );
 
+			PASS( "Implement Mutex", Concurrency::implementMutex( transUnit ) );
+			PASS( "Implement Thread Start", Concurrency::implementThreadStarter( transUnit ) );
+			PASS( "Compound Literal", Validate::handleCompoundLiterals( transUnit ) );
 			PASS( "Set Length From Initializer", Validate::setLengthFromInitializer( transUnit ) );
 			PASS( "Find Global Decls", Validate::findGlobalDecls( transUnit ) );
 			PASS( "Fix Label Address", Validate::fixLabelAddresses( transUnit ) );
@@ -401,6 +405,7 @@ int main( int argc, char * argv[] ) {
 			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( transUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Validate-E", SymTab::validate_E( translationUnit ) );
 			PASS( "Validate-F", SymTab::validate_F( translationUnit ) );
 
 			if ( symtabp ) {

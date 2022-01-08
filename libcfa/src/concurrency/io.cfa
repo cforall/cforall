@@ -32,6 +32,7 @@
 	extern "C" {
 		#include <sys/syscall.h>
 		#include <sys/eventfd.h>
+		#include <sys/uio.h>
 
 		#include <linux/io_uring.h>
 	}
@@ -132,7 +133,7 @@
 		return true;
 	}
 
-	bool __cfa_io_flush( processor * proc, bool wait ) {
+	bool __cfa_io_flush( processor * proc, int min_comp ) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( proc );
 		/* paranoid */ verify( proc->io.ctx );
@@ -143,7 +144,7 @@
 		__ioarbiter_flush( ctx );
 
 		__STATS__( true, io.calls.flush++; )
-		int ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, wait ? 1 : 0, 0, (sigset_t *)0p, _NSIG / 8);
+		int ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, min_comp, min_comp > 0 ? IORING_ENTER_GETEVENTS : 0, (sigset_t *)0p, _NSIG / 8);
 		if( ret < 0 ) {
 			switch((int)errno) {
 			case EAGAIN:
@@ -301,7 +302,7 @@
 		ctx->proc->io.pending = true;
 		ctx->proc->io.dirty   = true;
 		if(sq.to_submit > 30 || !lazy) {
-			__cfa_io_flush( ctx->proc, false );
+			__cfa_io_flush( ctx->proc, 0 );
 		}
 	}
 
@@ -501,8 +502,8 @@
 		}
 	}
 
-	#if defined(IO_URING_IDLE)
-		bool __kernel_read(processor * proc, io_future_t & future, char buf[], int fd) {
+	#if defined(CFA_WITH_IO_URING_IDLE)
+		bool __kernel_read(processor * proc, io_future_t & future, iovec & iov, int fd) {
 			$io_context * ctx = proc->io.ctx;
 			/* paranoid */ verify( ! __preemption_enabled() );
 			/* paranoid */ verify( proc == __cfaabi_tls.this_processor );
@@ -517,18 +518,27 @@
 			// Allocation was successful
 			__fill( &sqe, 1, &idx, ctx );
 
-			sqe->opcode = IORING_OP_READ;
 			sqe->user_data = (uintptr_t)&future;
 			sqe->flags = 0;
-			sqe->ioprio = 0;
-			sqe->fd = 0;
+			sqe->fd = fd;
 			sqe->off = 0;
+			sqe->ioprio = 0;
 			sqe->fsync_flags = 0;
 			sqe->__pad2[0] = 0;
 			sqe->__pad2[1] = 0;
 			sqe->__pad2[2] = 0;
-			sqe->addr = (uintptr_t)buf;
-			sqe->len = sizeof(uint64_t);
+
+			#if defined(CFA_HAVE_IORING_OP_READ)
+				sqe->opcode = IORING_OP_READ;
+				sqe->addr = (uint64_t)iov.iov_base;
+				sqe->len = iov.iov_len;
+			#elif defined(CFA_HAVE_READV) && defined(CFA_HAVE_IORING_OP_READV)
+				sqe->opcode = IORING_OP_READV;
+				sqe->addr = (uintptr_t)&iov;
+				sqe->len = 1;
+			#else
+				#error CFA_WITH_IO_URING_IDLE but none of CFA_HAVE_READV, CFA_HAVE_IORING_OP_READV or CFA_HAVE_IORING_OP_READ defined
+			#endif
 
 			asm volatile("": : :"memory");
 

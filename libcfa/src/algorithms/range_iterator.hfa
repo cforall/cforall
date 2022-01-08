@@ -1,0 +1,27 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// range_iterator.hfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Nov 30 13:06:22 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+generator RangeIter {
+	const char * text;
+	int com;
+	int _start;
+	int _stop;
+};
+
+static inline void ?{}(RangeIter & this, const char * text) {
+	this.text = text;
+}
+
+static inline bool moveNext(RangeIter & this) { resume(this); return this.com >= 0; }

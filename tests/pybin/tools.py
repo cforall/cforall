@@ -373,7 +373,7 @@ def core_info(path):
 	core  = os.path.join(os.getcwd(), "core" )
 
 	if not os.path.isfile(core):
-		return 1, "ERR No core dump"
+		return 1, "ERR No core dump (limit soft: {} hard: {})".format(*resource.getrlimit(resource.RLIMIT_CORE))
 
 	try:
 		return sh('gdb', '-n', path, core, '-batch', '-x', cmd, output_file=subprocess.PIPE)

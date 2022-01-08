@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov 12 07:46:09 2020
-// Update Count     : 503
+// Last Modified On : Mon Jan  3 09:36:27 2022
+// Update Count     : 519
 //
 
 #include "stdlib.hfa"
@@ -220,9 +220,36 @@ long double _Complex random( void ) { return (long double)drand48() + (long doub
 
 //---------------------------------------
 
-bool threading_enabled(void) __attribute__((weak)) {
-	return false;
-}
+static uint32_t seed = 0;								// current seed
+static thread_local uint32_t state;						// random state
+
+void set_seed( uint32_t seed_ ) { state = seed = seed_; }
+uint32_t get_seed() { return seed; }
+
+#define GENERATOR LCG
+
+inline uint32_t MarsagliaXor( uint32_t & state ) {
+	if ( unlikely( seed == 0 ) ) set_seed( rdtscl() );
+	else if ( unlikely( state == 0 ) ) state = seed;
+	state ^= state << 6;
+	state ^= state >> 21;
+	state ^= state << 7;
+	return state;
+} // MarsagliaXor
+
+inline uint32_t LCG( uint32_t & state ) {				// linear congruential generator
+	if ( unlikely( seed == 0 ) ) set_seed( rdtscl() );
+	else if ( unlikely( state == 0 ) ) state = seed;
+	return state = 36969 * (state & 65535) + (state >> 16); // 36969 is NOT prime!
+} // LCG
+
+uint32_t prng( PRNG & prng ) with( prng ) { callcnt += 1; return GENERATOR( state ); }
+
+uint32_t prng( void ) { return GENERATOR( state ); }
+
+//---------------------------------------
+
+bool threading_enabled( void ) __attribute__(( weak )) { return false; }
 
 // Local Variables: //
 // tab-width: 4 //

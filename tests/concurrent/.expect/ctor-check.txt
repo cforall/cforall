@@ -1,0 +1,8 @@
+concurrent/ctor-check.cfa:11:1 error: constructors cannot have mutex parameters
+?{}: function
+... with parameters
+  lvalue reference to instance of struct Empty with body
+... returning nothing
+ with body
+  Compound Statement:
+

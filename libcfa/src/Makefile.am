@@ -83,6 +83,7 @@ inst_headers_src = \
 	strstream.hfa \
 	time.hfa \
 	bits/weakso_locks.hfa \
+	algorithms/range_iterator.hfa \
 	containers/maybe.hfa \
 	containers/pair.hfa \
 	containers/result.hfa \

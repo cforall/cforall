@@ -1,0 +1,62 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// range_iterator.cfa --
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Nov 30 13:06:22 2021
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include "range_iterator.hfa"
+
+#include <stdio.h>
+
+#include <fstream.hfa>
+
+void main(RangeIter & this) {
+	for() {
+		this._start = -1;
+		this._stop = -1;
+		int start_len = -1, stop_len = -1;
+		int ret = sscanf(this.text, "%u%n-%u%n", &this._start, &start_len, &this._stop, &stop_len);
+		switch(ret) {
+		case 0:
+			// Not a range, maybe a comma?
+			if(this.text[0] == ',') {
+				this.text ++;
+				continue;
+			}
+
+			serr | "Error: unexpected character in next range: '" | this.text |"'";
+			exit(2);
+		case 1:
+			this.text += start_len;
+			// Only one value, push it!
+			this.com = this._start;
+			suspend;
+			break;
+		case 2:
+			if(this._start > this._stop) {
+				serr | "Error: next range out of order '" | this.text |"'";
+				exit(2);
+			}
+			this.text += stop_len;
+			for(this.com = this._start; this.com <= this._stop; this.com++) {
+				suspend;
+			}
+			break;
+		default:
+			serr | "Error reading next block: '" | this.text |"', returned" | ret;
+			exit(2);
+		}
+
+		if(this.text[0] == '\0') break;
+	}
+	this.com = -1;
+}

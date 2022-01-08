@@ -144,12 +144,8 @@ cfa_cpplib_PROGRAMS = ../driver/cfa-cpp$(EXEEXT) $(DEMANGLER)
 EXTRA_PROGRAMS = demangler$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/automake/libtool.m4 \
-	$(top_srcdir)/automake/ltoptions.m4 \
-	$(top_srcdir)/automake/ltsugar.m4 \
-	$(top_srcdir)/automake/ltversion.m4 \
-	$(top_srcdir)/automake/lt~obsolete.m4 \
-	$(top_srcdir)/tools/build/cfa.m4 $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/tools/build/cfa.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -178,7 +174,9 @@ am__objects_1 = AST/AssertAcyclic.$(OBJEXT) AST/Attribute.$(OBJEXT) \
 am__objects_2 = CodeGen/CodeGenerator.$(OBJEXT) \
 	CodeGen/FixMain.$(OBJEXT) CodeGen/GenType.$(OBJEXT) \
 	CodeGen/LinkOnce.$(OBJEXT) CodeGen/OperatorTable.$(OBJEXT)
-am__objects_3 = Common/Assert.$(OBJEXT) \
+am__objects_3 = Concurrency/KeywordsNew.$(OBJEXT) \
+	Concurrency/Keywords.$(OBJEXT)
+am__objects_4 = Common/Assert.$(OBJEXT) \
 	Common/CodeLocationTools.$(OBJEXT) Common/DeclStats.$(OBJEXT) \
 	Common/Eval.$(OBJEXT) Common/Examine.$(OBJEXT) \
 	Common/PassVisitor.$(OBJEXT) Common/ResolvProtoDump.$(OBJEXT) \
@@ -186,7 +184,7 @@ am__objects_3 = Common/Assert.$(OBJEXT) \
 	Common/Stats/Heap.$(OBJEXT) Common/Stats/ResolveTime.$(OBJEXT) \
 	Common/Stats/Stats.$(OBJEXT) Common/Stats/Time.$(OBJEXT) \
 	Common/UniqueName.$(OBJEXT)
-am__objects_4 = ControlStruct/ExceptDecl.$(OBJEXT) \
+am__objects_5 = ControlStruct/ExceptDecl.$(OBJEXT) \
 	ControlStruct/FixLabels.$(OBJEXT) \
 	ControlStruct/ForExprMutator.$(OBJEXT) \
 	ControlStruct/LabelFixer.$(OBJEXT) \
@@ -194,7 +192,7 @@ am__objects_4 = ControlStruct/ExceptDecl.$(OBJEXT) \
 	ControlStruct/MLEMutator.$(OBJEXT) \
 	ControlStruct/MultiLevelExit.$(OBJEXT) \
 	ControlStruct/Mutate.$(OBJEXT)
-am__objects_5 = ResolvExpr/AdjustExprType.$(OBJEXT) \
+am__objects_6 = ResolvExpr/AdjustExprType.$(OBJEXT) \
 	ResolvExpr/Alternative.$(OBJEXT) \
 	ResolvExpr/AlternativeFinder.$(OBJEXT) \
 	ResolvExpr/Candidate.$(OBJEXT) \
@@ -216,10 +214,10 @@ am__objects_5 = ResolvExpr/AdjustExprType.$(OBJEXT) \
 	ResolvExpr/SpecCost.$(OBJEXT) \
 	ResolvExpr/TypeEnvironment.$(OBJEXT) \
 	ResolvExpr/Unify.$(OBJEXT)
-am__objects_6 = SymTab/Autogen.$(OBJEXT) SymTab/FixFunction.$(OBJEXT) \
+am__objects_7 = SymTab/Autogen.$(OBJEXT) SymTab/FixFunction.$(OBJEXT) \
 	SymTab/Indexer.$(OBJEXT) SymTab/Mangler.$(OBJEXT) \
 	SymTab/ManglerCommon.$(OBJEXT) SymTab/Validate.$(OBJEXT)
-am__objects_7 = SynTree/AddressExpr.$(OBJEXT) \
+am__objects_8 = SynTree/AddressExpr.$(OBJEXT) \
 	SynTree/AggregateDecl.$(OBJEXT) \
 	SynTree/ApplicationExpr.$(OBJEXT) SynTree/ArrayType.$(OBJEXT) \
 	SynTree/Attribute.$(OBJEXT) SynTree/AttrType.$(OBJEXT) \
@@ -240,32 +238,33 @@ am__objects_7 = SynTree/AddressExpr.$(OBJEXT) \
 	SynTree/TypeSubstitution.$(OBJEXT) \
 	SynTree/VarArgsType.$(OBJEXT) SynTree/VoidType.$(OBJEXT) \
 	SynTree/ZeroOneType.$(OBJEXT)
-am__objects_8 = Tuples/Explode.$(OBJEXT) \
+am__objects_9 = Tuples/Explode.$(OBJEXT) \
 	Tuples/TupleAssignment.$(OBJEXT) \
 	Tuples/TupleExpansion.$(OBJEXT) \
 	Tuples/TupleExpansionNew.$(OBJEXT) Tuples/Tuples.$(OBJEXT)
-am__objects_9 = Validate/HandleAttributes.$(OBJEXT) \
+am__objects_10 = Validate/CompoundLiteral.$(OBJEXT) \
+	Validate/HandleAttributes.$(OBJEXT) \
 	Validate/InitializerLength.$(OBJEXT) \
 	Validate/LabelAddressFixer.$(OBJEXT) \
 	Validate/FindSpecialDeclsNew.$(OBJEXT) \
 	Validate/FindSpecialDecls.$(OBJEXT)
-am__objects_10 = CompilationState.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2) Concurrency/Keywords.$(OBJEXT) \
-	$(am__objects_3) $(am__objects_4) GenPoly/GenPoly.$(OBJEXT) \
+am__objects_11 = CompilationState.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) GenPoly/GenPoly.$(OBJEXT) \
 	GenPoly/Lvalue.$(OBJEXT) InitTweak/GenInit.$(OBJEXT) \
-	InitTweak/InitTweak.$(OBJEXT) $(am__objects_5) \
-	$(am__objects_6) SymTab/Demangle.$(OBJEXT) $(am__objects_7) \
-	$(am__objects_8) $(am__objects_9) Virtual/Tables.$(OBJEXT)
-am_libdemangle_a_OBJECTS = $(am__objects_10)
+	InitTweak/InitTweak.$(OBJEXT) $(am__objects_6) \
+	$(am__objects_7) SymTab/Demangle.$(OBJEXT) $(am__objects_8) \
+	$(am__objects_9) $(am__objects_10) Virtual/Tables.$(OBJEXT)
+am_libdemangle_a_OBJECTS = $(am__objects_11)
 libdemangle_a_OBJECTS = $(am_libdemangle_a_OBJECTS)
-am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
+am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	MakeLibCfa.$(OBJEXT) MakeLibCfaNew.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2) CodeGen/Generate.$(OBJEXT) \
 	CodeGen/FixNames.$(OBJEXT) CodeTools/DeclStats.$(OBJEXT) \
 	CodeTools/ResolvProtoDump.$(OBJEXT) \
-	CodeTools/TrackLoc.$(OBJEXT) Concurrency/Keywords.$(OBJEXT) \
-	Concurrency/Waitfor.$(OBJEXT) $(am__objects_3) \
-	Common/DebugMalloc.$(OBJEXT) $(am__objects_4) \
+	CodeTools/TrackLoc.$(OBJEXT) $(am__objects_3) \
+	Concurrency/Waitfor.$(OBJEXT) $(am__objects_4) \
+	Common/DebugMalloc.$(OBJEXT) $(am__objects_5) \
 	ControlStruct/ExceptTranslateNew.$(OBJEXT) \
 	ControlStruct/ExceptTranslate.$(OBJEXT) GenPoly/Box.$(OBJEXT) \
 	GenPoly/FindFunction.$(OBJEXT) GenPoly/GenPoly.$(OBJEXT) \
@@ -280,11 +279,11 @@ am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Parser/ParseNode.$(OBJEXT) Parser/parser.$(OBJEXT) \
 	Parser/parserutility.$(OBJEXT) Parser/StatementNode.$(OBJEXT) \
 	Parser/TypeData.$(OBJEXT) Parser/TypedefTable.$(OBJEXT) \
-	$(am__objects_5) ResolvExpr/AlternativePrinter.$(OBJEXT) \
-	ResolvExpr/CandidatePrinter.$(OBJEXT) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
+	$(am__objects_6) ResolvExpr/AlternativePrinter.$(OBJEXT) \
+	ResolvExpr/CandidatePrinter.$(OBJEXT) $(am__objects_7) \
+	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
 	Virtual/ExpandCasts.$(OBJEXT) Virtual/Tables.$(OBJEXT)
-am____driver_cfa_cpp_OBJECTS = $(am__objects_11)
+am____driver_cfa_cpp_OBJECTS = $(am__objects_12)
 ___driver_cfa_cpp_OBJECTS = $(am____driver_cfa_cpp_OBJECTS)
 am__DEPENDENCIES_1 =
 ___driver_cfa_cpp_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -343,6 +342,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Common/Stats/$(DEPDIR)/ResolveTime.Po \
 	Common/Stats/$(DEPDIR)/Stats.Po Common/Stats/$(DEPDIR)/Time.Po \
 	Concurrency/$(DEPDIR)/Keywords.Po \
+	Concurrency/$(DEPDIR)/KeywordsNew.Po \
 	Concurrency/$(DEPDIR)/Waitfor.Po \
 	ControlStruct/$(DEPDIR)/ExceptDecl.Po \
 	ControlStruct/$(DEPDIR)/ExceptTranslate.Po \
@@ -431,6 +431,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Tuples/$(DEPDIR)/TupleExpansion.Po \
 	Tuples/$(DEPDIR)/TupleExpansionNew.Po \
 	Tuples/$(DEPDIR)/Tuples.Po \
+	Validate/$(DEPDIR)/CompoundLiteral.Po \
 	Validate/$(DEPDIR)/FindSpecialDecls.Po \
 	Validate/$(DEPDIR)/FindSpecialDeclsNew.Po \
 	Validate/$(DEPDIR)/HandleAttributes.Po \
@@ -692,10 +693,10 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	CodeGen/FixNames.h CodeTools/DeclStats.cc \
 	CodeTools/DeclStats.h CodeTools/ResolvProtoDump.cc \
 	CodeTools/ResolvProtoDump.h CodeTools/TrackLoc.cc \
-	CodeTools/TrackLoc.h Concurrency/Keywords.cc \
-	Concurrency/Keywords.h Concurrency/Waitfor.cc \
-	Concurrency/Waitfor.h $(SRC_COMMON) Common/DebugMalloc.cc \
-	$(SRC_CONTROLSTRUCT) ControlStruct/ExceptTranslateNew.cpp \
+	CodeTools/TrackLoc.h $(SRC_CONCURRENCY) Concurrency/Keywords.h \
+	Concurrency/Waitfor.cc Concurrency/Waitfor.h $(SRC_COMMON) \
+	Common/DebugMalloc.cc $(SRC_CONTROLSTRUCT) \
+	ControlStruct/ExceptTranslateNew.cpp \
 	ControlStruct/ExceptTranslate.cc \
 	ControlStruct/ExceptTranslate.h GenPoly/Box.cc GenPoly/Box.h \
 	GenPoly/ErasableScopedMap.h GenPoly/FindFunction.cc \
@@ -721,7 +722,7 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	$(SRC_TUPLES) $(SRC_VALIDATE) Virtual/ExpandCasts.cc \
 	Virtual/ExpandCasts.h Virtual/Tables.cc Virtual/Tables.h
 SRCDEMANGLE = CompilationState.cc $(SRC_AST) $(SRC_CODEGEN) \
-	Concurrency/Keywords.cc $(SRC_COMMON) $(SRC_CONTROLSTRUCT) \
+	$(SRC_CONCURRENCY) $(SRC_COMMON) $(SRC_CONTROLSTRUCT) \
 	GenPoly/GenPoly.cc GenPoly/GenPoly.h GenPoly/Lvalue.cc \
 	GenPoly/Lvalue.h InitTweak/GenInit.cc InitTweak/GenInit.h \
 	InitTweak/InitTweak.cc InitTweak/InitTweak.h $(SRC_RESOLVEXPR) \
@@ -796,6 +797,10 @@ SRC_CODEGEN = \
 	CodeGen/OperatorTable.cc \
 	CodeGen/OperatorTable.h \
 	CodeGen/Options.h
+
+SRC_CONCURRENCY = \
+	Concurrency/KeywordsNew.cpp \
+	Concurrency/Keywords.cc
 
 SRC_COMMON = \
       Common/Assert.cc \
@@ -980,6 +985,8 @@ SRC_TUPLES = \
 	Tuples/Tuples.h
 
 SRC_VALIDATE = \
+	Validate/CompoundLiteral.cpp \
+	Validate/CompoundLiteral.hpp \
 	Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h \
 	Validate/InitializerLength.cpp \
@@ -1146,6 +1153,8 @@ Concurrency/$(am__dirstamp):
 Concurrency/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) Concurrency/$(DEPDIR)
 	@: > Concurrency/$(DEPDIR)/$(am__dirstamp)
+Concurrency/KeywordsNew.$(OBJEXT): Concurrency/$(am__dirstamp) \
+	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/Keywords.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Common/$(am__dirstamp):
@@ -1402,6 +1411,8 @@ Validate/$(am__dirstamp):
 Validate/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) Validate/$(DEPDIR)
 	@: > Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/CompoundLiteral.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/HandleAttributes.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/InitializerLength.$(OBJEXT): Validate/$(am__dirstamp) \
@@ -1586,6 +1597,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Stats.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Time.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Keywords.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/KeywordsNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Waitfor.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptDecl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptTranslate.Po@am__quote@ # am--include-marker
@@ -1693,6 +1705,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleExpansion.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleExpansionNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/Tuples.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/CompoundLiteral.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDeclsNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HandleAttributes.Po@am__quote@ # am--include-marker
@@ -1985,6 +1998,7 @@ distclean: distclean-am
 	-rm -f Common/Stats/$(DEPDIR)/Stats.Po
 	-rm -f Common/Stats/$(DEPDIR)/Time.Po
 	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
+	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptDecl.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslate.Po
@@ -2092,6 +2106,7 @@ distclean: distclean-am
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
 	-rm -f Tuples/$(DEPDIR)/TupleExpansionNew.Po
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
+	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
@@ -2192,6 +2207,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Common/Stats/$(DEPDIR)/Stats.Po
 	-rm -f Common/Stats/$(DEPDIR)/Time.Po
 	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
+	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptDecl.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslate.Po
@@ -2299,6 +2315,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
 	-rm -f Tuples/$(DEPDIR)/TupleExpansionNew.Po
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
+	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po

@@ -31,7 +31,7 @@
 	void ^?{}($io_context & this) {}
 
 	void __cfa_io_start( processor * proc ) {}
-	bool __cfa_io_flush( processor * proc, bool ) {}
+	bool __cfa_io_flush( processor * proc, int ) {}
 	void __cfa_io_stop ( processor * proc ) {}
 
 	$io_arbiter * create(void) { return 0p; }
@@ -219,7 +219,7 @@
 		cq.overflow  = (         __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.overflow);
 		cq.cqes = (struct io_uring_cqe *)(((intptr_t)cq.ring_ptr) + params.cq_off.cqes);
 
-		#if !defined(IO_URING_IDLE)
+		#if !defined(CFA_WITH_IO_URING_IDLE)
 			// Step 4 : eventfd
 			// io_uring_register is so f*cking slow on some machine that it
 			// will never succeed if preemption isn't hard blocked

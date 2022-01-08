@@ -93,12 +93,8 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/automake/libtool.m4 \
-	$(top_srcdir)/automake/ltoptions.m4 \
-	$(top_srcdir)/automake/ltsugar.m4 \
-	$(top_srcdir)/automake/ltversion.m4 \
-	$(top_srcdir)/automake/lt~obsolete.m4 \
-	$(top_srcdir)/../tools/build/cfa.m4 $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/../tools/build/cfa.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am \
@@ -140,27 +136,31 @@ libcfa_la_LIBADD =
 am__libcfa_la_SOURCES_DIST = common.hfa fstream.hfa heap.hfa \
 	iostream.hfa iterator.hfa limits.hfa memory.hfa parseargs.hfa \
 	parseconfig.hfa rational.hfa stdlib.hfa strstream.hfa time.hfa \
-	bits/weakso_locks.hfa containers/maybe.hfa containers/pair.hfa \
-	containers/result.hfa containers/string.hfa \
-	containers/string_res.hfa containers/vector.hfa device/cpu.hfa \
-	common.cfa fstream.cfa heap.cfa iostream.cfa iterator.cfa \
-	limits.cfa memory.cfa parseargs.cfa parseconfig.cfa \
-	rational.cfa stdlib.cfa strstream.cfa time.cfa \
-	bits/weakso_locks.cfa containers/maybe.cfa containers/pair.cfa \
-	containers/result.cfa containers/string.cfa \
-	containers/string_res.cfa containers/vector.cfa device/cpu.cfa \
-	assert.cfa bits/debug.cfa exception.c interpose.cfa lsda.h \
-	startup.cfa startup.hfa virtual.c virtual.h
+	bits/weakso_locks.hfa algorithms/range_iterator.hfa \
+	containers/maybe.hfa containers/pair.hfa containers/result.hfa \
+	containers/string.hfa containers/string_res.hfa \
+	containers/vector.hfa device/cpu.hfa common.cfa fstream.cfa \
+	heap.cfa iostream.cfa iterator.cfa limits.cfa memory.cfa \
+	parseargs.cfa parseconfig.cfa rational.cfa stdlib.cfa \
+	strstream.cfa time.cfa bits/weakso_locks.cfa \
+	algorithms/range_iterator.cfa containers/maybe.cfa \
+	containers/pair.cfa containers/result.cfa \
+	containers/string.cfa containers/string_res.cfa \
+	containers/vector.cfa device/cpu.cfa assert.cfa bits/debug.cfa \
+	exception.c interpose.cfa lsda.h startup.cfa startup.hfa \
+	virtual.c virtual.h
 am__objects_1 =
 am__dirstamp = $(am__leading_dot)dirstamp
 @BUILDLIB_TRUE@am__objects_2 = common.lo fstream.lo heap.lo \
 @BUILDLIB_TRUE@	iostream.lo iterator.lo limits.lo memory.lo \
 @BUILDLIB_TRUE@	parseargs.lo parseconfig.lo rational.lo \
 @BUILDLIB_TRUE@	stdlib.lo strstream.lo time.lo \
-@BUILDLIB_TRUE@	bits/weakso_locks.lo containers/maybe.lo \
-@BUILDLIB_TRUE@	containers/pair.lo containers/result.lo \
-@BUILDLIB_TRUE@	containers/string.lo containers/string_res.lo \
-@BUILDLIB_TRUE@	containers/vector.lo device/cpu.lo
+@BUILDLIB_TRUE@	bits/weakso_locks.lo \
+@BUILDLIB_TRUE@	algorithms/range_iterator.lo \
+@BUILDLIB_TRUE@	containers/maybe.lo containers/pair.lo \
+@BUILDLIB_TRUE@	containers/result.lo containers/string.lo \
+@BUILDLIB_TRUE@	containers/string_res.lo containers/vector.lo \
+@BUILDLIB_TRUE@	device/cpu.lo
 @BUILDLIB_TRUE@am__objects_3 = $(am__objects_1) $(am__objects_2) \
 @BUILDLIB_TRUE@	assert.lo bits/debug.lo exception.lo \
 @BUILDLIB_TRUE@	interpose.lo startup.lo virtual.lo
@@ -274,15 +274,16 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	-type f -printf "%p ") common.hfa fstream.hfa heap.hfa \
 	iostream.hfa iterator.hfa limits.hfa memory.hfa parseargs.hfa \
 	parseconfig.hfa rational.hfa stdlib.hfa strstream.hfa time.hfa \
-	bits/weakso_locks.hfa containers/maybe.hfa containers/pair.hfa \
-	containers/result.hfa containers/string.hfa \
-	containers/string_res.hfa containers/vector.hfa device/cpu.hfa \
-	bitmanip.hfa clock.hfa exception.hfa exception.h gmp.hfa \
-	math.trait.hfa math.hfa time_t.hfa bits/algorithm.hfa \
-	bits/align.hfa bits/containers.hfa bits/debug.hfa \
-	bits/defs.hfa bits/locks.hfa bits/collection.hfa \
-	bits/stack.hfa bits/queue.hfa bits/sequence.hfa \
-	containers/array.hfa concurrency/iofwd.hfa containers/list.hfa \
+	bits/weakso_locks.hfa algorithms/range_iterator.hfa \
+	containers/maybe.hfa containers/pair.hfa containers/result.hfa \
+	containers/string.hfa containers/string_res.hfa \
+	containers/vector.hfa device/cpu.hfa bitmanip.hfa clock.hfa \
+	exception.hfa exception.h gmp.hfa math.trait.hfa math.hfa \
+	time_t.hfa bits/algorithm.hfa bits/align.hfa \
+	bits/containers.hfa bits/debug.hfa bits/defs.hfa \
+	bits/locks.hfa bits/collection.hfa bits/stack.hfa \
+	bits/queue.hfa bits/sequence.hfa containers/array.hfa \
+	concurrency/iofwd.hfa containers/list.hfa \
 	containers/queueLockFree.hfa containers/stackLockFree.hfa \
 	containers/vector2.hfa vec/vec.hfa vec/vec2.hfa vec/vec3.hfa \
 	vec/vec4.hfa concurrency/alarm.hfa concurrency/coroutine.hfa \
@@ -563,6 +564,7 @@ AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_TRUE@	strstream.hfa \
 @BUILDLIB_TRUE@	time.hfa \
 @BUILDLIB_TRUE@	bits/weakso_locks.hfa \
+@BUILDLIB_TRUE@	algorithms/range_iterator.hfa \
 @BUILDLIB_TRUE@	containers/maybe.hfa \
 @BUILDLIB_TRUE@	containers/pair.hfa \
 @BUILDLIB_TRUE@	containers/result.hfa \
@@ -734,6 +736,14 @@ bits/$(DEPDIR)/$(am__dirstamp):
 	@: > bits/$(DEPDIR)/$(am__dirstamp)
 bits/weakso_locks.lo: bits/$(am__dirstamp) \
 	bits/$(DEPDIR)/$(am__dirstamp)
+algorithms/$(am__dirstamp):
+	@$(MKDIR_P) algorithms
+	@: > algorithms/$(am__dirstamp)
+algorithms/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) algorithms/$(DEPDIR)
+	@: > algorithms/$(DEPDIR)/$(am__dirstamp)
+algorithms/range_iterator.lo: algorithms/$(am__dirstamp) \
+	algorithms/$(DEPDIR)/$(am__dirstamp)
 containers/$(am__dirstamp):
 	@$(MKDIR_P) containers
 	@: > containers/$(am__dirstamp)
@@ -829,6 +839,8 @@ libcfathread.la: $(libcfathread_la_OBJECTS) $(libcfathread_la_DEPENDENCIES) $(EX
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f algorithms/*.$(OBJEXT)
+	-rm -f algorithms/*.lo
 	-rm -f bits/*.$(OBJEXT)
 	-rm -f bits/*.lo
 	-rm -f concurrency/*.$(OBJEXT)
@@ -911,6 +923,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf algorithms/.libs algorithms/_libs
 	-rm -rf bits/.libs bits/_libs
 	-rm -rf concurrency/.libs concurrency/_libs
 	-rm -rf concurrency/clib/.libs concurrency/clib/_libs
@@ -1061,6 +1074,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f algorithms/$(DEPDIR)/$(am__dirstamp)
+	-rm -f algorithms/$(am__dirstamp)
 	-rm -f bits/$(DEPDIR)/$(am__dirstamp)
 	-rm -f bits/$(am__dirstamp)
 	-rm -f concurrency/$(DEPDIR)/$(am__dirstamp)

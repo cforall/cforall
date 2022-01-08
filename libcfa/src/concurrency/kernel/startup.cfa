@@ -278,7 +278,9 @@ static void __kernel_shutdown(void) {
 	// SKULLDUGGERY: Notify the mainProcessor it needs to terminates.
 	// When its coroutine terminates, it return control to the mainThread
 	// which is currently here
+	/* paranoid */ verify( !__atomic_load_n(&mainProcessor->do_terminate, __ATOMIC_ACQUIRE) );
 	__atomic_store_n(&mainProcessor->do_terminate, true, __ATOMIC_RELEASE);
+	__wake_proc( mainProcessor );
 	__kernel_last_resume( __cfaabi_tls.this_processor );
 	mainThread->self_cor.state = Halted;
 
@@ -402,7 +404,7 @@ static void __kernel_first_resume( processor * this ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 
 	__cfaabi_tls.this_thread->curr_cor = dst;
-	__stack_prepare( &dst->stack, 65000 );
+	__stack_prepare( &dst->stack, DEFAULT_STACK_SIZE );
 	__cfactx_start(main, dst, this->runner, __cfactx_invoke_coroutine);
 
 	/* paranoid */ verify( ! __preemption_enabled() );
@@ -563,15 +565,16 @@ void ?{}(processor & this, const char name[], cluster & _cltr) {
 
 extern size_t __page_size;
 void ^?{}(processor & this) with( this ){
-	if( ! __atomic_load_n(&do_terminate, __ATOMIC_ACQUIRE) ) {
-		__cfadbg_print_safe(runtime_core, "Kernel : core %p signaling termination\n", &this);
+	/* paranoid */ verify( !__atomic_load_n(&do_terminate, __ATOMIC_ACQUIRE) );
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p signaling termination\n", &this);
 
-		__atomic_store_n(&do_terminate, true, __ATOMIC_RELAXED);
+	__atomic_store_n(&do_terminate, true, __ATOMIC_RELAXED);
+	__disable_interrupts_checked();
 		__wake_proc( &this );
+	__enable_interrupts_checked();
 
-		wait( terminated );
-		/* paranoid */ verify( active_processor() != &this);
-	}
+	wait( terminated );
+	/* paranoid */ verify( active_processor() != &this);
 
 	__destroy_pthread( kernel_thread, this.stack, 0p );
 
@@ -720,10 +723,7 @@ void * __create_pthread( pthread_t * pthread, void * (*start)(void *), void * ar
 
 	check( pthread_attr_init( &attr ), "pthread_attr_init" ); // initialize attribute
 
-	size_t stacksize;
-	// default stack size, normally defined by shell limit
-	check( pthread_attr_getstacksize( &attr, &stacksize ), "pthread_attr_getstacksize" );
-	assert( stacksize >= PTHREAD_STACK_MIN );
+	size_t stacksize = DEFAULT_STACK_SIZE;
 
 	void * stack;
 	#if CFA_PROCESSOR_USE_MMAP
@@ -748,9 +748,7 @@ void * __create_pthread( pthread_t * pthread, void * (*start)(void *), void * ar
 		);
 	#endif
 
-
 	check( pthread_attr_setstack( &attr, stack, stacksize ), "pthread_attr_setstack" );
-
 	check( pthread_create( pthread, &attr, start, arg ), "pthread_create" );
 	return stack;
 }

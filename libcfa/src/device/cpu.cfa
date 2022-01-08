@@ -30,6 +30,8 @@ extern "C" {
 	#include <fcntl.h>
 }
 
+#include "algorithms/range_iterator.hfa"
+
 // search a string for character 'character' but looking atmost at len
 // chars
 static const char * strnchr(const char * str, int character, size_t len) {
@@ -134,7 +136,8 @@ static int count_prefix_dirs(const char * path, const char * prefix) {
 		max = max(val, max);
 		count++;
 	}
-	iterate_dir(path, lambda);
+	int ret = iterate_dir(path, lambda);
+	if(ret == ENOTDIR) return 0;
 
 	/* paranoid */ verifyf(count == max + 1, "Inconsistent %s count, counted %d, but max %s was %d", prefix, count, prefix, (int)max);
 
@@ -142,7 +145,7 @@ static int count_prefix_dirs(const char * path, const char * prefix) {
 }
 
 // Count number of cpus in the system
-static int count_cpus(void) {
+static [int, const char *] count_cpus(void) {
 	const char * fpath = "/sys/devices/system/cpu/online";
 	int fd = open(fpath, 0, O_RDONLY);
 	/* paranoid */ verifyf(fd >= 0, "Could not open file %s", fpath);
@@ -158,9 +161,7 @@ static int count_cpus(void) {
 	/* paranoid */ verifyf(ret == 0, "Could not close file %s", fpath);
 
 	const char * _;
-	int cnt = read_width(buff, r - 1, &_);
-	/* paranoid */ verify(cnt == count_prefix_dirs("/sys/devices/system/cpu", "cpu"));
-	return cnt;
+	return [read_width(buff, r - 1, &_), strndup(buff, r - 1)];
 }
 
 // Count number of cache *indexes* in the system
@@ -225,19 +226,24 @@ static void foreach_cacheidx(unsigned cpu, unsigned idxs, handle_func_t handle) 
 
 
 struct raw_cache_instance {
-	idx_range_t range;
-	unsigned width;
-	unsigned char level;
+	idx_range_t range;	// A text description of the cpus covered
+	unsigned width;		// The number of cpus covered
+	unsigned char level;	// the cache level
 	// FIXME add at least size and type
 };
 
 static void  ?{}(raw_cache_instance & this) { this.range = 0p;}
 static void ^?{}(raw_cache_instance & this) { free(this.range);}
 
-raw_cache_instance ** build_raw_cache_table(unsigned cpus, unsigned idxs, unsigned cache_levels)
+// Returns a 2D array of instances of size [cpu count][cache levels]
+// where cache level doesn't include instruction caches
+raw_cache_instance ** build_raw_cache_table(unsigned cpus_c, idx_range_t cpus, unsigned idxs, unsigned cache_levels)
 {
-	raw_cache_instance ** raw = alloc(cpus);
-	for(i; cpus) {
+	raw_cache_instance ** raw = alloc(cpus_c, '\0'`fill);
+
+	RangeIter rc = { cpus };
+	while(moveNext(rc)) {
+		unsigned i = rc.com;
 		raw[i] = alloc(cache_levels);
 		void addcache(unsigned fidx, unsigned char level, idx_range_t range, size_t len) {
 			/* paranoid */ verifyf(level <= cache_levels, "Unexpected cache level %d on cpu %u index %u", (int)level, i, fidx);
@@ -262,18 +268,25 @@ struct llc_map_t {
 };
 
 // returns an allocate list of all the different distinct last level caches
-static [*llc_map_t, size_t cnt] distinct_llcs(unsigned cpus, unsigned llc_idx, raw_cache_instance ** raw) {
+static [*llc_map_t, size_t cnt] distinct_llcs(idx_range_t cpus, unsigned llc_idx, raw_cache_instance ** raw) {
 	// Allocate at least one element
 	llc_map_t* ranges = alloc();
 	size_t range_cnt = 1;
 
+	RangeIter rc = { cpus };
+	__attribute__((unused)) bool ret =
+	moveNext(rc);
+	/* paranoid */ verify( ret );
+	/* paranoid */ verify( rc.com >= 0 );
+
 	// Initialize with element 0
-	ranges->raw = &raw[0][llc_idx];
+	ranges->raw = &raw[rc.com][llc_idx];
 	ranges->count = 0;
 	ranges->start = -1u;
 
 	// Go over all other cpus
-	CPU_LOOP: for(i; 1~cpus) {
+	CPU_LOOP: while(moveNext(rc)) {
+		unsigned i = rc.com;
 		// Check if the range is already there
 		raw_cache_instance * candidate = &raw[i][llc_idx];
 		for(j; range_cnt) {
@@ -303,10 +316,12 @@ int ?<?( cpu_pairing_t lhs, cpu_pairing_t rhs ) {
 	return lhs.id < rhs.id;
 }
 
-static [[]cpu_pairing_t] get_cpu_pairings(unsigned cpus, raw_cache_instance ** raw, llc_map_t * maps, size_t map_cnt) {
-	cpu_pairing_t * pairings = alloc(cpus);
+static [[]cpu_pairing_t] get_cpu_pairings(unsigned cpus_c, idx_range_t cpus, raw_cache_instance ** raw, llc_map_t * maps, size_t map_cnt) {
+	cpu_pairing_t * pairings = alloc(cpus_c);
 
-	CPU_LOOP: for(i; cpus) {
+	RangeIter rc = { cpus };
+	CPU_LOOP: while(moveNext(rc)) {
+		unsigned i = rc.com;
 		pairings[i].cpu = i;
 		idx_range_t want = raw[i][0].range;
 		MAP_LOOP: for(j; map_cnt) {
@@ -326,13 +341,26 @@ static [[]cpu_pairing_t] get_cpu_pairings(unsigned cpus, raw_cache_instance ** r
 
 extern "C" {
 	void __cfaabi_device_startup( void ) {
-		int cpus = count_cpus();
+		int cpus_c;
+		const char * cpus;
+		[cpus_c, cpus] = count_cpus();
+		#if defined(__CFA_WITH_VERIFY__)
+		// Verify that the mapping is self consistant.
+		{
+			RangeIter rc = { cpus };
+			while(moveNext(rc)) {
+				unsigned i = rc.com;
+				verify(cpus_c > i);
+			}
+		}
+		#endif
+
 		int idxs = count_cache_indexes();
 
 		// Count actual cache levels
 		unsigned cache_levels = 0;
 		unsigned llc = 0;
-		{
+		if (idxs != 0) {
 			unsigned char prev = -1u;
 			void first(unsigned idx, unsigned char level, const char * map, size_t len) {
 				/* paranoid */ verifyf(level < prev, "Index %u of cpu 0 has cache levels out of order: %u then %u", idx, (unsigned)prev, (unsigned)level);
@@ -344,7 +372,7 @@ extern "C" {
 		}
 
 		// Read in raw data
-		raw_cache_instance ** raw = build_raw_cache_table(cpus, idxs, cache_levels);
+		raw_cache_instance ** raw = build_raw_cache_table(cpus_c, cpus, idxs, cache_levels);
 
 		// Find number of distinct cache instances
 		llc_map_t * maps;
@@ -361,20 +389,22 @@ extern "C" {
 				width1 += read_width(maps[i].raw->range, strlen(maps[i].raw->range), &_);
 				width2 += maps[i].raw->width;
 			}
-			verify(width1 == cpus);
-			verify(width2 == cpus);
+			verify(width1 == cpus_c);
+			verify(width2 == cpus_c);
 		}
 		#endif
 
 		// Get mappings from cpu to cache instance
-		cpu_pairing_t * pairings = get_cpu_pairings(cpus, raw, maps, map_cnt);
+		cpu_pairing_t * pairings = get_cpu_pairings(cpus_c, cpus, raw, maps, map_cnt);
 
 		// Sort by cache instance
-		qsort(pairings, cpus);
+		qsort(pairings, cpus_c);
 
 		{
 			unsigned it = 0;
-			for(i; cpus) {
+			RangeIter rc = { cpus };
+			while(moveNext(rc)) {
+				unsigned i = rc.com;
 				unsigned llc_id = pairings[i].id;
 				if(maps[llc_id].start == -1u) {
 					maps[llc_id].start = it;
@@ -383,13 +413,16 @@ extern "C" {
 					/* paranoid */ verify(it != -1u);
 				}
 			}
-			/* paranoid */ verify(it == cpus);
+			/* paranoid */ verify(it == cpus_c);
 		}
 
 		// From the mappings build the actual cpu map we want
-		struct cpu_map_entry_t * entries = alloc(cpus);
-		for(i; cpus) { entries[i].count = 0; }
-		for(i; cpus) {
+		struct cpu_map_entry_t * entries = alloc(cpus_c);
+		for(i; cpus_c) { entries[i].count = 0; }
+
+		RangeIter rc = { cpus };
+		while(moveNext(rc)) {
+			unsigned i = rc.com;
 			/* paranoid */ verify(pairings[i].id < map_cnt);
 			unsigned c = pairings[i].cpu;
 			unsigned llc_id = pairings[i].id;
@@ -405,8 +438,8 @@ extern "C" {
 		free(maps);
 		free(pairings);
 
-		for(i; cpus) {
-			for(j; cache_levels) {
+		for(i; cpus_c) {
+			if( raw[i] ) for(j; cache_levels) {
 				^(raw[i][j]){};
 			}
 			free(raw[i]);
@@ -414,7 +447,8 @@ extern "C" {
 		free(raw);
 
 		cpu_info.llc_map = entries;
-		cpu_info.hthrd_count = cpus;
+		cpu_info.hthrd_count = cpus_c;
+		cpu_info.llc_count = map_cnt;
 	}
 
 	void __cfaabi_device_shutdown( void ) {

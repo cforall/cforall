@@ -1,0 +1,15 @@
+#include <monitor.hfa>
+
+monitor Empty {};
+
+struct Test {};
+
+// Should work:
+void ?{}(Test & this, Empty & mutex mon) {}
+
+// Should not work:
+void ?{}(Empty & mutex this) {}
+
+int main(void) {
+	printf("done\n");
+}

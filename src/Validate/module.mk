@@ -15,6 +15,8 @@
 ###############################################################################
 
 SRC_VALIDATE = \
+	Validate/CompoundLiteral.cpp \
+	Validate/CompoundLiteral.hpp \
 	Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h \
 	Validate/InitializerLength.cpp \

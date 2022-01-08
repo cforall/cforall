@@ -1,0 +1,114 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// dumpable.cfa -- Check if everything looks correctly set to dump core
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Jan 05 13:53:22 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <limits.h>
+#include <errno.h>
+
+#include <fstream.hfa>
+
+extern "C" {
+	#include <sys/prctl.h>
+	#include <sys/resource.h>
+	#include <sys/statvfs.h>
+	#include <unistd.h>
+}
+
+void check_ulimit() {
+	struct rlimit rlp;
+	getrlimit(RLIMIT_CORE, &rlp);
+	if(rlp.rlim_cur < 536870912) {
+		serr | "Soft core limit is less than ~500Mb: " | rlp.rlim_cur;
+	}
+
+	if(rlp.rlim_max < 536870912) {
+		serr | "Hard core limit is less than ~500Mb: " | rlp.rlim_max;
+	}
+}
+
+void check_permission() {
+	{
+		char myExe[PATH_MAX];
+		ssize_t n = readlink("/proc/self/exe", myExe, sizeof(myExe));
+		if (n < 0) {
+			perror("readlink(/proc/self/exe) error");
+			return 1;
+		}
+		myExe[n] = '\0';
+
+		if(int r = access(myExe, F_OK); r != 0) serr | "Expected current executable does not exist!" | r | errno;
+		if(int r = access(myExe, R_OK); r != 0) serr | "No read access for current executable" | r | errno;
+	}
+
+	{
+		char myCwd[PATH_MAX];
+		if (getcwd(myCwd, sizeof(myCwd)) == 0p) {
+			perror("getcwd() error");
+			return;
+		}
+
+		if(access(myCwd, F_OK) != 0) serr | "Expected current working directory does not exist!";
+		if(access(myCwd, R_OK) != 0) serr | "No read access for current working directory";
+		if(access(myCwd, W_OK) != 0) serr | "No write access for current working directory";
+	}
+}
+
+void check_free_space() {
+	struct statvfs buf;
+	if(statvfs(".", &buf) != 0) {
+		perror("statvfs() error");
+		return;
+	}
+
+	if((buf.f_bsize * buf.f_bavail) < 536870912) {
+		serr | "Available diskspace is less than ~500Mb: " | (buf.f_bsize * buf.f_bavail);
+	}
+
+	if(buf.f_favail < 10) {
+		serr | "Available inodes is less than 10: " | buf.f_favail;
+	}
+
+	if(buf.f_flag & ST_RDONLY) {
+		serr | "Filesystem is read only";
+	}
+}
+
+void check_noconflict() {
+	char * name = "./core";
+	if(access("./core", F_OK) == 0) serr | "A file of the core name ('" | name | "') already exists";
+}
+
+void check_dumpflag() {
+	int r = prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
+	if(r < 0) {
+		perror("prctl(PR_GET_DUMPABLE) error");
+		return;
+	}
+
+	if(r != 1) serr | "dumpable attribute not set to 1 \"(SUID_DUMP_USER, process is dumpable)\", was" | r;
+}
+
+int main() {
+	check_ulimit();
+
+	check_permission();
+
+	check_free_space();
+
+	check_noconflict();
+
+	check_dumpflag();
+
+	sout | "Done";
+}

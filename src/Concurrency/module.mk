@@ -14,6 +14,14 @@
 ## Update Count     : 0
 ###############################################################################
 
-SRC += Concurrency/Keywords.cc Concurrency/Keywords.h Concurrency/Waitfor.cc Concurrency/Waitfor.h
-SRCDEMANGLE += Concurrency/Keywords.cc
+SRC_CONCURRENCY = \
+	Concurrency/KeywordsNew.cpp \
+	Concurrency/Keywords.cc
+
+SRC += $(SRC_CONCURRENCY) \
+	Concurrency/Keywords.h \
+	Concurrency/Waitfor.cc \
+	Concurrency/Waitfor.h
+
+SRCDEMANGLE += $(SRC_CONCURRENCY)
 

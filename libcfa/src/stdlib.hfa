@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 20 21:20:03 2021
-// Update Count     : 575
+// Last Modified On : Sun Jan  2 22:53:57 2022
+// Update Count     : 594
 //
 
 #pragma once
@@ -42,35 +42,32 @@ extern "C" {
 
 //---------------------------------------
 
-// Macro because of returns
-#define ARRAY_ALLOC$( allocation, alignment, dim ) \
-	if ( _Alignof(T) <= libAlign() ) return (T *)(void *)allocation( dim, (size_t)sizeof(T) ); /* C allocation */ \
-	else return (T *)alignment( _Alignof(T), dim, sizeof(T) )
-
 static inline forall( T & | sized(T) ) {
 	// CFA safe equivalents, i.e., implicit size specification
 
 	T * malloc( void ) {
-		if ( _Alignof(T) <= libAlign() ) return (T *)(void *)malloc( (size_t)sizeof(T) ); // C allocation
+		if ( _Alignof(T) <= libAlign() ) return (T *)malloc( sizeof(T) ); // C allocation
 		else return (T *)memalign( _Alignof(T), sizeof(T) );
 	} // malloc
 
 	T * aalloc( size_t dim ) {
-		ARRAY_ALLOC$( aalloc, amemalign, dim );
+		if ( _Alignof(T) <= libAlign() ) return (T *)aalloc( dim, sizeof(T) ); // C allocation
+		else return (T *)amemalign( _Alignof(T), dim, sizeof(T) );
 	} // aalloc
 
 	T * calloc( size_t dim ) {
-		ARRAY_ALLOC$( calloc, cmemalign, dim );
+		if ( _Alignof(T) <= libAlign() ) return (T *)calloc( dim, sizeof(T) ); // C allocation
+		else return (T *)cmemalign( _Alignof(T), dim, sizeof(T) );
 	} // calloc
 
 	T * resize( T * ptr, size_t size ) {				// CFA resize, eliminate return-type cast
-		if ( _Alignof(T) <= libAlign() ) return (T *)(void *)resize( (void *)ptr, size ); // CFA resize
-		else return (T *)(void *)resize( (void *)ptr, _Alignof(T), size ); // CFA resize
+		if ( _Alignof(T) <= libAlign() ) return (T *)resize( (void *)ptr, size ); // CFA resize
+		else return (T *)resize( (void *)ptr, _Alignof(T), size ); // CFA resize
 	} // resize
 
 	T * realloc( T * ptr, size_t size ) {				// CFA realloc, eliminate return-type cast
-		if ( _Alignof(T) <= libAlign() ) return (T *)(void *)realloc( (void *)ptr, size ); // C realloc
-		else return (T *)(void *)realloc( (void *)ptr, _Alignof(T), size ); // CFA realloc
+		if ( _Alignof(T) <= libAlign() ) return (T *)realloc( (void *)ptr, size ); // C realloc
+		else return (T *)realloc( (void *)ptr, _Alignof(T), size ); // CFA realloc
 	} // realloc
 
 	T * memalign( size_t align ) {
@@ -168,8 +165,9 @@ static inline forall( T & | sized(T) ) {
 		memcpy( &ret.t, &t, size );
 		return ret;
 	}
+	S_fill(T) 		?`fill ( zero_t ) = void; // FIX ME: remove this once ticket 214 is resolved
+	S_fill(T) 		?`fill ( T * a ) 				{ return (S_fill(T)){ 'T', '0', 0, a }; } // FIX ME: remove this once ticket 214 is resolved
 	S_fill(T) 		?`fill ( char c ) 				{ return (S_fill(T)){ 'c', c };	}
-	S_fill(T) 		?`fill ( T * a ) 				{ return (S_fill(T)){ 'T', '0', 0, a }; }
 	S_fill(T) 		?`fill ( T a[], size_t nmemb ) 	{ return (S_fill(T)){ 'a', '0', nmemb * sizeof(T), a }; }
 
 	S_realloc(T) 	?`realloc ( T * a )				{ return (S_realloc(T)){a}; }
@@ -361,11 +359,11 @@ extern "C" {											// override C version
 } // extern "C"
 
 static inline {
-	long int random( long int l, long int u ) { if ( u < l ) [u, l] = [l, u]; return lrand48() % (u - l) + l; } // [l,u)
-	long int random( long int u ) { if ( u < 0 ) return random( u, 0 ); else return random( 0, u ); } // [0,u)
+	long int random( long int l, long int u ) { if ( u < l ) [u, l] = [l, u]; return lrand48() % (u - l + 1) + l; } // [l,u]
+	long int random( long int u ) { return random( 0, u - 1 ); } // [0,u)
 	unsigned long int random( void ) { return lrand48(); }
 	unsigned long int random( unsigned long int u ) { return lrand48() % u; } // [0,u)
-	unsigned long int random( unsigned long int l, unsigned long int u ) { if ( u < l ) [u, l] = [l, u]; return lrand48() % (u - l) + l; } // [l,u)
+	unsigned long int random( unsigned long int l, unsigned long int u ) { if ( u < l ) [u, l] = [l, u]; return lrand48() % (u - l + 1) + l; } // [l,u]
 
 	char random( void ) { return (unsigned long int)random(); }
 	char random( char u ) { return random( (unsigned long int)u ); } // [0,u)
@@ -383,6 +381,35 @@ double random( void );									// [0.0, 1.0)
 float _Complex random( void );							// [0.0, 1.0)+[0.0, 1.0)i
 double _Complex random( void );							// [0.0, 1.0)+[0.0, 1.0)i
 long double _Complex random( void );					// [0.0, 1.0)+[0.0, 1.0)i
+
+//---------------------------------------
+
+struct PRNG {
+	uint32_t callcnt;									// call count
+	uint32_t seed;										// current seed
+	uint32_t state;										// random state
+}; // PRNG
+
+extern uint32_t prng( PRNG & prng ) __attribute__(( warn_unused_result )); // [0,UINT_MAX]
+static inline {
+	void set_seed( PRNG & prng, uint32_t seed_ ) with( prng ) { state = seed = seed_; } // set seed
+	void ?{}( PRNG & prng ) { set_seed( prng, rdtscl() ); }	// random seed
+	void ?{}( PRNG & prng, uint32_t seed ) { set_seed( prng, seed ); } // fixed seed
+	uint32_t get_seed( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
+	uint32_t prng( PRNG & prng, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
+	uint32_t prng( PRNG & prng, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
+	uint32_t calls( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
+} // distribution
+
+extern void set_seed( uint32_t seed );					// set per thread seed
+extern uint32_t get_seed();								// get seed
+extern uint32_t prng( void ) __attribute__(( warn_unused_result )); // [0,UINT_MAX]
+static inline {
+	uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result ));
+	uint32_t prng( uint32_t u ) { return prng() % u; }	// [0,u)
+	uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result ));
+	uint32_t prng( uint32_t l, uint32_t u ) { return prng( u - l + 1 ) + l; } // [l,u]
+} // distribution
 
 //---------------------------------------
 

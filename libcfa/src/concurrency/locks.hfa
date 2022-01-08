@@ -176,6 +176,7 @@ struct fast_lock {
 	ThreadBenaphore sem;
 };
 
+static inline void ?{}(fast_lock & this) __attribute__((deprecated("use linear_backoff_then_block_lock instead")));
 static inline void ?{}(fast_lock & this) { this.owner = 0p; }
 
 static inline bool $try_lock(fast_lock & this, thread$ * thrd) {
@@ -183,7 +184,7 @@ static inline bool $try_lock(fast_lock & this, thread$ * thrd) {
     return __atomic_compare_exchange_n(&this.owner, &exp, thrd, false, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);
 }
 
-static inline void lock( fast_lock & this ) __attribute__((artificial));
+static inline void lock( fast_lock & this ) __attribute__((deprecated("use linear_backoff_then_block_lock instead"), artificial));
 static inline void lock( fast_lock & this ) {
 	thread$ * thrd = active_thread();
 	/* paranoid */verify(thrd != this.owner);
@@ -194,14 +195,14 @@ static inline void lock( fast_lock & this ) {
 	}
 }
 
-static inline bool try_lock( fast_lock & this ) __attribute__((artificial));
+static inline bool try_lock( fast_lock & this ) __attribute__((deprecated("use linear_backoff_then_block_lock instead"), artificial));
 static inline bool try_lock ( fast_lock & this ) {
 	thread$ * thrd = active_thread();
 	/* paranoid */ verify(thrd != this.owner);
 	return $try_lock(this, thrd);
 }
 
-static inline thread$ * unlock( fast_lock & this ) __attribute__((artificial));
+static inline thread$ * unlock( fast_lock & this ) __attribute__((deprecated("use linear_backoff_then_block_lock instead"), artificial));
 static inline thread$ * unlock( fast_lock & this ) {
 	/* paranoid */ verify(active_thread() == this.owner);
 

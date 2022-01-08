@@ -9,6 +9,7 @@ struct MutexObj {
 	LOCK l;
 	thread$ * id;
 	uint32_t sum;
+	uint32_t cnt;
 };
 
 MutexObj mo;
@@ -26,10 +27,12 @@ uint32_t cs() {
 	lock(mo.l);
 	{
 		uint32_t tsum = mo.sum;
+		uint32_t cnt = mo.cnt;
 		mo.id = me;
 		yield(random(5));
 		value = ((uint32_t)random()) ^ ((uint32_t)me);
 		if(mo.id != me) sout | "Intruder!";
+		mo.cnt = cnt + 1;
 		mo.sum = tsum + value;
 	}
 	unlock(mo.l);
@@ -53,6 +56,7 @@ void main(LockCheck & this) {
 int test() {
 	uint32_t sum = -32;
 	mo.sum = -32;
+	mo.cnt = 0;
 	processor p[2];
 	sout | "Starting";
 	{
@@ -62,6 +66,7 @@ int test() {
 		}
 	}
 	sout | "Done!";
+	if(mo.cnt != (13 * num_times)) sout | "Invalid cs count!" | mo.cnt | "vs "| (13 * num_times) | "(13 *" | num_times | ')';
 	if(sum == mo.sum) sout | "Match!";
 	else sout | "No Match!" | sum | "vs" | mo.sum;
 }

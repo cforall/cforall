@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  5 16:26:03 2019
-// Update Count     : 44
+// Last Modified On : Thu Jan  6 16:37:40 2022
+// Update Count     : 47
 //
 
 #include "bits/containers.hfa"
@@ -26,6 +26,8 @@ extern "C" {
 #if ! defined(__CFA_INVOKE_PRIVATE__)
 #ifndef _INVOKE_H_
 #define _INVOKE_H_
+
+	enum { DEFAULT_STACK_SIZE = 65000 };
 
 	struct __cfaehm_try_resume_node;
 	struct __cfaehm_base_exception_t;

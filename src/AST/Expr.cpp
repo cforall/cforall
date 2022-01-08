@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed May 15 17:00:00 2019
-// Last Modified By : Peter A. Buhr
-// Created On       : Thr Jun 13 13:38:00 2019
-// Update Count     : 6
+// Last Modified By : Andrew Beach
+// Created On       : Tue Nov 30 14:23:00 2021
+// Update Count     : 7
 //
 
 #include "Expr.hpp"
@@ -140,34 +140,37 @@ VariableExpr * VariableExpr::functionPointer(
 namespace {
 	/// The type of the address of a type.
 	/// Caller is responsible for managing returned memory
-	Type * addrType( const Type * type ) {
-		if ( const ReferenceType * refType = dynamic_cast< const ReferenceType * >( type ) ) {
-			return new ReferenceType{ addrType( refType->base ), refType->qualifiers };
+	Type * addrType( const ptr<Type> & type ) {
+		if ( auto refType = type.as< ReferenceType >() ) {
+			return new ReferenceType( addrType( refType->base ), refType->qualifiers );
 		} else {
-			return new PointerType{ type };
+			return new PointerType( type );
+		}
+	}
+
+	/// The type of the address of an expression.
+	/// Caller is responsible for managing returned memory
+	Type * addrExprType( const CodeLocation & loc, const Expr * arg ) {
+		assert( arg );
+		// If the expression's type is unknown, the address type is unknown.
+		if ( nullptr == arg->result ) {
+			return nullptr;
+		// An lvalue is transformed directly.
+		} else if ( arg->get_lvalue() ) {
+			return addrType( arg->result );
+		// Strip a layer of reference to "create" an lvalue expression.
+		} else if ( auto refType = arg->result.as< ReferenceType >() ) {
+			return addrType( refType->base );
+		} else {
+			SemanticError( loc, arg->result.get(),
+				"Attempt to take address of non-lvalue expression: " );
 		}
 	}
 }
 
-AddressExpr::AddressExpr( const CodeLocation & loc, const Expr * a ) : Expr( loc ), arg( a ) {
-	if ( arg->result ) {
-		if ( arg->get_lvalue() ) {
-			// lvalue, retains all levels of reference, and gains a pointer inside the references
-			Type * res = addrType( arg->result );
-			result = res;
-		} else {
-			// taking address of non-lvalue, must be a reference, loses one layer of reference
-			if ( const ReferenceType * refType =
-					dynamic_cast< const ReferenceType * >( arg->result.get() ) ) {
-				Type * res = addrType( refType->base );
-				result = res;
-			} else {
-				SemanticError( loc, arg->result.get(),
-					"Attempt to take address of non-lvalue expression: " );
-			}
-		}
-	}
-}
+AddressExpr::AddressExpr( const CodeLocation & loc, const Expr * a ) :
+	Expr( loc, addrExprType( loc, a ) ), arg( a )
+{}
 
 // --- LabelAddressExpr
 
