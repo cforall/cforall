@@ -9,13 +9,15 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  1 18:40:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 10 07:57:12 2022
-// Update Count     : 73
+// Last Modified On : Mon Jan 10 16:10:20 2022
+// Update Count     : 74
 // 
 
 #include <fstream.hfa>
 #include <thread.hfa>
 #include <mutex_stmt.hfa>
+
+Duration default_preemption() {	return 0; }
 
 thread T {};
 void main( T & ) {
@@ -81,5 +83,5 @@ int main() {
 
 // Local Variables: //
 // tab-width: 4 //
-// compile-command: "cfa io-acquire.cfa" //
+// compile-command: "cfa io-acquire2.cfa" //
 // End: //

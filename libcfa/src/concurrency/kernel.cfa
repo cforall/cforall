@@ -553,7 +553,6 @@ static void __schedule_thread( thread$ * thrd, unpark_hint hint ) {
 	/* paranoid */ verifyf( thrd->link.next == 0p, "Expected null got %p", thrd->link.next );
 	/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd->canary );
 
-	const bool local = thrd->state != Start;
 	if (thrd->preempted == __NO_PREEMPTION) thrd->state = Ready;
 
 	// Dereference the thread now because once we push it, there is not guaranteed it's still valid.
@@ -736,7 +735,11 @@ static void __wake_one(cluster * this) {
 	/* paranoid */ verify( ready_schedule_islocked() );
 
 	// Check if there is a sleeping processor
-	int fd = __atomic_load_n(&this->procs.fd, __ATOMIC_SEQ_CST);
+	// int fd = __atomic_load_n(&this->procs.fd, __ATOMIC_SEQ_CST);
+	int fd = 0;
+	if( __atomic_load_n(&this->procs.fd, __ATOMIC_SEQ_CST) != 0 ) {
+		fd = __atomic_exchange_n(&this->procs.fd, 0, __ATOMIC_RELAXED);
+	}
 
 	// If no one is sleeping, we are done
 	if( fd == 0 ) return;

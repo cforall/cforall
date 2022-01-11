@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 10 11:23:05 2021
-// Update Count     : 512
+// Last Modified On : Mon Jan 10 08:45:05 2022
+// Update Count     : 513
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -51,7 +51,7 @@ inline bool getANL$( ofstream & os ) { return os.nlOnOff$; }
 inline bool getPrt$( ofstream & os ) { return os.prt$; }
 inline void setPrt$( ofstream & os, bool state ) { os.prt$ = state; }
 
-inline void lock( ofstream & os ) with( os ) {	lock( os.lock$ ); }
+inline void lock( ofstream & os ) with( os ) { lock( os.lock$ ); }
 inline void unlock( ofstream & os ) { unlock( os.lock$ ); }
 
 // public

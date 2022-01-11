@@ -76,10 +76,11 @@ extern "C" {
 		#define publicTLS_get( member ) ((typeof(__cfaabi_tls.member))__cfatls_get( __builtin_offsetof(KernelThreadData, member) ))
 
 		static inline uint64_t __tls_rand() {
+			return
 			#if defined(__SIZEOF_INT128__)
-				return __lehmer64( kernelTLS().rand_seed );
+				__lehmer64( kernelTLS().rand_seed );
 			#else
-				return __xorshift64( kernelTLS().rand_seed );
+				__xorshift64( kernelTLS().rand_seed );
 			#endif
 		}
 
@@ -90,7 +91,6 @@ extern "C" {
 		#define D  (16_l64u)
 
 		static inline unsigned __tls_rand_fwd() {
-
 			kernelTLS().ready_rng.fwd_seed = (A * kernelTLS().ready_rng.fwd_seed + C) & (M - 1);
 			return kernelTLS().ready_rng.fwd_seed >> D;
 		}
@@ -111,8 +111,6 @@ extern "C" {
 			kernelTLS().ready_rng.bck_seed = kernelTLS().ready_rng.fwd_seed;
 		}
 	}
-
-
 
 	extern void disable_interrupts();
 	extern void enable_interrupts( bool poll = false );

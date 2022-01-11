@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  4 09:17:49 2019
-// Update Count     : 9
+// Last Modified On : Mon Jan 10 17:05:35 2022
+// Update Count     : 28
 //
 
 #define __cforall_thread__
@@ -26,9 +26,11 @@
 
 uint64_t thread_rand();
 
+extern uint32_t __thread_seed;							// global thread seed
+
 //-----------------------------------------------------------------------------
 // Thread ctors and dtors
-void ?{}(thread$ & this, const char * const name, cluster & cl, void * storage, size_t storageSize ) with( this ) {
+void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage, size_t storageSize ) with( this ) {
 	context{ 0p, 0p };
 	self_cor{ name, storage, storageSize };
 	ticket = TICKET_RUNNING;
@@ -38,6 +40,7 @@ void ?{}(thread$ & this, const char * const name, cluster & cl, void * storage, 
 	curr_cor = &self_cor;
 	self_mon.owner = &this;
 	self_mon.recursion = 1;
+	random_state = __thread_seed;
 	self_mon_p = &self_mon;
 	curr_cluster = &cl;
 	link.next = 0p;
@@ -176,6 +179,22 @@ uint64_t thread_rand() {
 	enable_interrupts();
 	return ret;
 }
+
+#define GENERATOR LCG
+
+inline uint32_t MarsagliaXor( uint32_t & state ) {
+	state ^= state << 6;
+	state ^= state >> 21;
+	state ^= state << 7;
+	return state;
+} // MarsagliaXor
+
+inline uint32_t LCG( uint32_t & state ) {				// linear congruential generator
+	return state = 36969 * (state & 65535) + (state >> 16); // 36969 is NOT prime!
+} // LCG
+
+void set_seed( uint32_t seed ) { active_thread()->random_state = seed; __thread_seed = seed; }
+uint32_t prng( void ) { return GENERATOR( active_thread()->random_state ); } // [0,UINT_MAX]
 
 // Local Variables: //
 // mode: c //

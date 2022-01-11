@@ -680,7 +680,9 @@ static inline struct thread$ * try_pop(struct cluster * cltr, unsigned w __STATS
 
 	// Actually pop the list
 	struct thread$ * thrd;
-	unsigned long long tsc_before = ts(lane);
+	#if defined(USE_WORK_STEALING) || defined(USE_CPU_WORK_STEALING)
+		unsigned long long tsc_before = ts(lane);
+	#endif
 	unsigned long long tsv;
 	[thrd, tsv] = pop(lane);
 

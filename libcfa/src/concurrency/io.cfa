@@ -547,6 +547,8 @@
 
 			/* paranoid */ verify( proc == __cfaabi_tls.this_processor );
 			/* paranoid */ verify( ! __preemption_enabled() );
+
+			return true;
 		}
 	#endif
 #endif

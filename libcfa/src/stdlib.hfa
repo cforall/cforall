@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan  2 22:53:57 2022
-// Update Count     : 594
+// Last Modified On : Mon Jan 10 17:03:18 2022
+// Update Count     : 619
 //
 
 #pragma once
@@ -20,6 +20,7 @@
 
 #include <stdlib.h>										// *alloc, strto*, ato*
 #include <heap.hfa>
+
 
 // Reduce includes by explicitly defining these routines.
 extern "C" {
@@ -390,7 +391,7 @@ struct PRNG {
 	uint32_t state;										// random state
 }; // PRNG
 
-extern uint32_t prng( PRNG & prng ) __attribute__(( warn_unused_result )); // [0,UINT_MAX]
+uint32_t prng( PRNG & prng ) __attribute__(( warn_unused_result )); // [0,UINT_MAX]
 static inline {
 	void set_seed( PRNG & prng, uint32_t seed_ ) with( prng ) { state = seed = seed_; } // set seed
 	void ?{}( PRNG & prng ) { set_seed( prng, rdtscl() ); }	// random seed
@@ -401,14 +402,12 @@ static inline {
 	uint32_t calls( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
 } // distribution
 
-extern void set_seed( uint32_t seed );					// set per thread seed
-extern uint32_t get_seed();								// get seed
-extern uint32_t prng( void ) __attribute__(( warn_unused_result )); // [0,UINT_MAX]
+void set_seed( uint32_t seed_ ) OPTIONAL_THREAD;
+uint32_t get_seed() __attribute__(( warn_unused_result ));
+uint32_t prng( void ) __attribute__(( warn_unused_result )) OPTIONAL_THREAD; // [0,UINT_MAX]
 static inline {
-	uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result ));
-	uint32_t prng( uint32_t u ) { return prng() % u; }	// [0,u)
-	uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result ));
-	uint32_t prng( uint32_t l, uint32_t u ) { return prng( u - l + 1 ) + l; } // [l,u]
+	uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
+	uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
 } // distribution
 
 //---------------------------------------

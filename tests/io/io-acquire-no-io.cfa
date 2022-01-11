@@ -1,0 +1,86 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// io-acquire.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Mon Mar  1 18:40:09 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Oct  6 18:04:58 2021
+// Update Count     : 72
+// 
+
+#include <fstream.hfa>
+#include <thread.hfa>
+#include <mutex_stmt.hfa>
+
+multiple_acquisition_lock soutLock, sinLock;
+
+long long i;
+void doWork() {
+	for (int j = 0; j < 10000; j++) {
+		i += rand();
+		i -= rand();
+	}
+}
+
+thread T {};
+void main( T & ) {
+	// output from parallel threads should not be scrambled
+
+	for ( 100 ) {										// expression protection
+		mutex(soutLock) doWork();
+	}
+	mutex( soutLock ) {										// statement protection
+		for ( 100 ) {
+			doWork();
+		}
+	}
+	{													// duplicate protection demonstrating recursive lock
+		mutex( soutLock ) {									// unnecessary mutex
+			for ( 100 ) {
+				mutex( soutLock ) {
+					doWork();
+					mutex( soutLock ) { doWork(); mutex( soutLock )	doWork(); }		// refactored code
+				}
+			}
+		}
+	}
+
+	// above output used as input to parallel threads 
+
+	int a, b, c, d, e, f, g, h, i;
+	for ( 100 ) {										// expression protection
+		mutex(sinLock) doWork();
+	}
+	mutex( sinLock ) {										// statement protection
+		for ( 100 ) {
+			doWork();
+		}
+	}
+	{													// duplicate protection demonstrating recursive lock
+		mutex( sinLock ) {									// unnecessary mutex
+			for ( 5 ) {
+				mutex( sinLock ) {
+					doWork();
+					mutex( sinLock ) { doWork(); mutex( sinLock )	doWork(); }
+				}
+			}
+		}
+	}
+}
+int main() {
+	processor p;
+	{
+		T t[5];
+	}
+	sout | "done";
+} 
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa io-acquire.cfa" //
+// End: //

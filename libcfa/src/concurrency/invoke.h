@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  6 16:37:40 2022
-// Update Count     : 47
+// Last Modified On : Sun Jan  9 19:06:45 2022
+// Update Count     : 48
 //
 
 #include "bits/containers.hfa"
@@ -209,6 +209,8 @@ extern "C" {
 		} node;
 
 		struct processor * last_proc;
+
+		uint32_t random_state;							// fast random numbers
 
 		#if defined( __CFA_WITH_VERIFY__ )
 			void * canary;

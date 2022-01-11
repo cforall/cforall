@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  1 18:40:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 10 07:57:12 2022
-// Update Count     : 73
+// Last Modified On : Wed Oct  6 18:04:58 2021
+// Update Count     : 72
 // 
 
 #include <fstream.hfa>
@@ -22,7 +22,7 @@ void main( T & ) {
 	// output from parallel threads should not be scrambled
 
 	for ( 100 ) {										// expression protection
-		mutex( sout ) sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+		mutex(sout) sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 	}
 	mutex( sout ) {										// statement protection
 		for ( 100 ) {
@@ -45,12 +45,13 @@ void main( T & ) {
 			}
 		}
 	}
-
+}
 	// above output used as input to parallel threads 
-
+thread T2 {};
+void main( T2 & ) {
 	int a, b, c, d, e, f, g, h, i;
 	for ( 100 ) {										// expression protection
-		mutex( sin ) sin | a | b | c | d | e | f | g | h | i;
+		mutex(sin) sin | a | b | c | d | e | f | g | h | i;
 	}
 	mutex( sin ) {										// statement protection
 		for ( 100 ) {
@@ -76,7 +77,12 @@ void main( T & ) {
 }
 int main() {
 	processor p;
-	T t[5];
+	{
+		T t[5];
+	}
+	{
+		T2 t[5];
+	}
 } 
 
 // Local Variables: //
