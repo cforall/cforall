@@ -15,10 +15,21 @@
 
 #include <stddef.h>
 
+// Map from cpu entry to a structure detailling cpus with common topologies
+// Note that the cpu-groups are contiguous so the indexing is different from
+// the cpu indexing
 struct cpu_map_entry_t {
+	// Where this particular cpu is in the group
 	unsigned self;
+
+	// Starting index of the cpus with the same topology
 	unsigned start;
+
+	// Number of cpus with the same topology
 	unsigned count;
+
+	// Index of the cache this entry describes
+	unsigned cache;
 };
 
 struct cpu_info_t {

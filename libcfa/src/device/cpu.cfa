@@ -426,12 +426,11 @@ extern "C" {
 			/* paranoid */ verify(pairings[i].id < map_cnt);
 			unsigned c = pairings[i].cpu;
 			unsigned llc_id = pairings[i].id;
-			unsigned width = maps[llc_id].raw->width;
 			unsigned start = maps[llc_id].start;
-			unsigned self  = start + (maps[llc_id].count++);
-			entries[c].count = width;
+			entries[c].count = maps[llc_id].raw->width;
 			entries[c].start = start;
-			entries[c].self  = self;
+			entries[c].self  = start + (maps[llc_id].count++);
+			entries[c].cache = llc_id;
 		}
 
 		// get rid of the temporary data
