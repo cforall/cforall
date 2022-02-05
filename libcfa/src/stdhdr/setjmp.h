@@ -9,16 +9,35 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jul  4 23:25:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul  5 20:38:33 2016
-// Update Count     : 12
+// Last Modified On : Thu Feb  3 21:53:28 2022
+// Update Count     : 18
 // 
 
+// pthread.h and setjmp.h cannot agree on the type of __sigsetjmp:
+//
+//   extern int __sigsetjmp (struct __jmp_buf_tag *__env, int __savemask) __attribute__ ((__nothrow__));
+//   extern int __sigsetjmp (struct __jmp_buf_tag __env[1], int __savemask) __attribute__ ((__nothrow__));
+//
+// With -Wall, gcc-11 warns about the disagreement unless the CPP directive
+//
+//    # 1 "/usr/include/pthread.h" 1 3 4
+//
+// appears, which appears to be witchcraft. Unfortunately, this directive is removed by the CFA preprocessor, so the
+// batchtest fails because of the spurious warning message. Hence, the warning is elided.
+
 extern "C" {
+#if defined(__GNUC__) && __GNUC__ == 11
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Warray-parameter"
+#endif // defined(__GNUC__) && __GNUC__ == 11
+
 #include_next <setjmp.h>								// has internal check for multiple expansion
+
+#if defined(__GNUC__) && __GNUC__ == 11
+	#pragma GCC diagnostic pop
+#endif // defined(__GNUC__) && __GNUC__ == 11
 } // extern "C"
 
 // Local Variables: //
-// tab-width: 4 //
 // mode: c++ //
-// compile-command: "make install" //
 // End: //

@@ -1,0 +1,50 @@
+#include <fstream.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+
+#include "long_tests.hfa"
+
+#ifndef PREEMPTION_RATE
+#define PREEMPTION_RATE 10`ms
+#endif
+
+Duration default_preemption() {
+	return PREEMPTION_RATE;
+}
+
+#ifdef TEST_LONG
+static const unsigned long N = 30_000ul;
+#else
+static const unsigned long N = 500ul;
+#endif
+
+extern void __cfaabi_check_preemption();
+
+static struct {
+	volatile int x;
+	volatile int y;
+} globals;
+
+thread T1 {};
+void main(T1 &) {
+	for() {
+		if ( globals.x == N ) break;
+		if ( globals.x < globals.y ) globals.x += 1;
+	}
+}
+
+thread T2 {};
+void main(T2 &) {
+	for() {
+		if ( globals.y == N ) break;
+		if ( globals.y == globals.x ) globals.y += 1;
+	}
+}
+
+int main() {
+	{
+		T1 t1;
+		T2 t2;
+	}
+	sout | "Done";
+} // main

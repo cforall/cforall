@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct 15 09:20:17 2021
-// Update Count     : 5163
+// Last Modified On : Tue Feb  1 11:06:13 2022
+// Update Count     : 5167
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -237,7 +237,7 @@ if ( N ) {																		\
 	StatementNode * sn;
 	WaitForStmt * wfs;
 	Expression * constant;
-	IfCtrl * ifctl;
+	CondCtl * ifctl;
 	ForCtrl * fctl;
 	enum OperKinds compop;
 	LabelNode * label;
@@ -326,7 +326,7 @@ if ( N ) {																		\
 %type<en> conditional_expression		constant_expression			assignment_expression		assignment_expression_opt
 %type<en> comma_expression				comma_expression_opt
 %type<en> argument_expression_list_opt	argument_expression_list	argument_expression			default_initializer_opt
-%type<ifctl> if_control_expression
+%type<ifctl> conditional_declaration
 %type<fctl> for_control_expression		for_control_expression_list
 %type<compop> inclexcl
 %type<en> subrange
@@ -1122,22 +1122,22 @@ selection_statement:
 	;
 
 if_statement:
-	IF '(' if_control_expression ')' statement			%prec THEN
+	IF '(' conditional_declaration ')' statement		%prec THEN
 		// explicitly deal with the shift/reduce conflict on if/else
 		{ $$ = new StatementNode( build_if( $3, maybe_build_compound( $5 ), nullptr ) ); }
-	| IF '(' if_control_expression ')' statement ELSE statement
+	| IF '(' conditional_declaration ')' statement ELSE statement
 		{ $$ = new StatementNode( build_if( $3, maybe_build_compound( $5 ), maybe_build_compound( $7 ) ) ); }
 	;
 
-if_control_expression:
+conditional_declaration:
 	comma_expression
-		{ $$ = new IfCtrl( nullptr, $1 ); }
+		{ $$ = new CondCtl( nullptr, $1 ); }
 	| c_declaration										// no semi-colon
-		{ $$ = new IfCtrl( $1, nullptr ); }
+		{ $$ = new CondCtl( $1, nullptr ); }
 	| cfa_declaration									// no semi-colon
-		{ $$ = new IfCtrl( $1, nullptr ); }
+		{ $$ = new CondCtl( $1, nullptr ); }
 	| declaration comma_expression						// semi-colon separated
-		{ $$ = new IfCtrl( $1, $2 ); }
+		{ $$ = new CondCtl( $1, $2 ); }
  	;
 
 // CASE and DEFAULT clauses are only allowed in the SWITCH statement, precluding Duff's device. In addition, a case
@@ -1192,23 +1192,26 @@ switch_clause_list:										// CFA
 
 iteration_statement:
 	WHILE '(' ')' statement								// CFA => while ( 1 )
-		{ $$ = new StatementNode( build_while( new IfCtrl( nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ), maybe_build_compound( $4 ) ) ); }
-	| WHILE '(' if_control_expression ')' statement		%prec THEN
+		{ $$ = new StatementNode( build_while( new CondCtl( nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ), maybe_build_compound( $4 ) ) ); }
+	| WHILE '(' conditional_declaration ')' statement	%prec THEN
 		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ) ) ); }
-	| WHILE '(' if_control_expression ')' statement ELSE statement // CFA
-		{ SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
+	| WHILE '(' conditional_declaration ')' statement ELSE statement // CFA
+		// { SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ), $7 ) ); }
 	| DO statement WHILE '(' ')' ';'					// CFA => do while( 1 )
 		{ $$ = new StatementNode( build_do_while( new ExpressionNode( build_constantInteger( *new string( "1" ) ) ), maybe_build_compound( $2 ) ) ); }
 	| DO statement WHILE '(' comma_expression ')' ';'	%prec THEN
 		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ) ) ); }
 	| DO statement WHILE '(' comma_expression ')' ELSE statement // CFA
-		{ SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
+		// { SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ), $8 ) ); }
 	| FOR '(' ')' statement								// CFA => for ( ;; )
 		{ $$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) ); }
 	| FOR '(' for_control_expression_list ')' statement	%prec THEN
 	  	{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ) ) ); }
 	| FOR '(' for_control_expression_list ')' statement ELSE statement // CFA
-		{ SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
+		// { SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ), $7 ) ); }
 	;
 
 for_control_expression_list:

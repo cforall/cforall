@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 09:39:00 2021
-// Last Modified By : Andrew Beach
-// Last Modified On : Mon Nov  8 10:53:00 2021
-// Update Count     : 3
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Jan 31 22:19:17 2022
+// Update Count     : 9
 //
 
 #include "FixLabels.hpp"
@@ -19,50 +19,48 @@
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
 #include "ControlStruct/MultiLevelExit.hpp"
+using namespace ast;
 
 namespace ControlStruct {
-
-namespace {
-
-class FixLabelsCore final : public ast::WithGuards {
+class FixLabelsCore final : public WithGuards {
 	LabelToStmt labelTable;
-public:
+  public:
 	FixLabelsCore() : labelTable() {}
 
-	void previsit( const ast::FunctionDecl * );
-	const ast::FunctionDecl * postvisit( const ast::FunctionDecl * );
-	void previsit( const ast::Stmt * );
-	void previsit( const ast::BranchStmt * );
-	void previsit( const ast::LabelAddressExpr * );
+	void previsit( const FunctionDecl * );
+	const FunctionDecl * postvisit( const FunctionDecl * );
+	void previsit( const Stmt * );
+	void previsit( const BranchStmt * );
+	void previsit( const LabelAddressExpr * );
 
-	void setLabelsDef( const std::vector<ast::Label> &, const ast::Stmt * );
-	void setLabelsUsage( const ast::Label & );
+	void setLabelsDef( const std::vector<Label> &, const Stmt * );
+	void setLabelsUsage( const Label & );
 };
 
-void FixLabelsCore::previsit( const ast::FunctionDecl * ) {
+void FixLabelsCore::previsit( const FunctionDecl * ) {
 	GuardValue( labelTable ).clear();
 }
 
-const ast::FunctionDecl * FixLabelsCore::postvisit(
-		const ast::FunctionDecl * decl ) {
+const FunctionDecl * FixLabelsCore::postvisit(
+	const FunctionDecl * decl ) {
 	if ( nullptr == decl->stmts ) return decl;
 	for ( auto kvp : labelTable ) {
 		if ( nullptr == kvp.second ) {
 			SemanticError( kvp.first.location,
-				"Use of undefined label: " + kvp.first.name );
+						   "Use of undefined label: " + kvp.first.name );
 		}
 	}
-	return ast::mutate_field( decl, &ast::FunctionDecl::stmts,
-		multiLevelExitUpdate( decl->stmts.get(), labelTable ) );
+	return mutate_field( decl, &FunctionDecl::stmts,
+						 multiLevelExitUpdate( decl->stmts.get(), labelTable ) );
 }
 
-void FixLabelsCore::previsit( const ast::Stmt * stmt ) {
+void FixLabelsCore::previsit( const Stmt * stmt ) {
 	if ( !stmt->labels.empty() ) {
 		setLabelsDef( stmt->labels, stmt );
 	}
 }
 
-void FixLabelsCore::previsit( const ast::BranchStmt * stmt ) {
+void FixLabelsCore::previsit( const BranchStmt * stmt ) {
 	if ( !stmt->labels.empty() ) {
 		setLabelsDef( stmt->labels, stmt );
 	}
@@ -71,13 +69,13 @@ void FixLabelsCore::previsit( const ast::BranchStmt * stmt ) {
 	}
 }
 
-void FixLabelsCore::previsit( const ast::LabelAddressExpr * expr ) {
+void FixLabelsCore::previsit( const LabelAddressExpr * expr ) {
 	assert( !expr->arg.empty() );
 	setLabelsUsage( expr->arg );
 }
 
 void FixLabelsCore::setLabelsDef(
-		const std::vector<ast::Label> & labels, const ast::Stmt * stmt ) {
+	const std::vector<Label> & labels, const Stmt * stmt ) {
 	assert( !labels.empty() );
 	assert( stmt );
 
@@ -88,7 +86,7 @@ void FixLabelsCore::setLabelsDef(
 		} else if ( nullptr != labelTable[ label ] ) {
 			// Duplicate definition, this is an error.
 			SemanticError( label.location,
-				"Duplicate definition of label: " + label.name );
+						   "Duplicate definition of label: " + label.name );
 		} else {
 			// Perviously used, but not defined until now.
 			labelTable[ label ] = stmt;
@@ -97,18 +95,15 @@ void FixLabelsCore::setLabelsDef(
 }
 
 // Label was used, if it is new add it to the table.
-void FixLabelsCore::setLabelsUsage( const ast::Label & label ) {
+void FixLabelsCore::setLabelsUsage( const Label & label ) {
 	if ( labelTable.find( label ) == labelTable.end() ) {
 		labelTable[ label ] = nullptr;
 	}
 }
 
-} // namespace
-
-void fixLabels( ast::TranslationUnit & translationUnit ) {
-	ast::Pass<FixLabelsCore>::run( translationUnit );
+void fixLabels( TranslationUnit & translationUnit ) {
+	Pass<FixLabelsCore>::run( translationUnit );
 }
-
 } // namespace ControlStruct
 
 // Local Variables: //

@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed May  8 13:00:00 2019
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed May 15 15:53:00 2019
-// Update Count     : 2
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Feb  2 19:01:20 2022
+// Update Count     : 3
 //
 
 #include "Stmt.hpp"
@@ -55,8 +55,8 @@ CompoundStmt::CompoundStmt( const CompoundStmt& other ) : Stmt(other), kids(othe
 }
 
 // --- BranchStmt
-BranchStmt::BranchStmt( const CodeLocation& loc, Kind kind, Label target, std::vector<Label>&& labels )
-: Stmt(loc, std::move(labels)), originalTarget(target), target(target), kind(kind) {
+BranchStmt::BranchStmt( const CodeLocation& loc, Kind kind, Label target, const std::vector<Label>&& labels )
+		: Stmt(loc, std::move(labels)), originalTarget(target), target(target), kind(kind) {
 	// Make sure a syntax error hasn't slipped through.
 	assert( Goto != kind || !target.empty() );
 }

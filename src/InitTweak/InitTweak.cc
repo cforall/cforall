@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Fri May 13 11:26:36 2016
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Nov 19 19:22:00 2021
-// Update Count     : 19
+// Last Modified On : Mon Dec  6 13:21:00 2021
+// Update Count     : 20
 //
 
 #include <algorithm>               // for find, all_of
@@ -1190,16 +1190,32 @@ bool InitExpander_new::addReference() {
 		}
 	}
 
-	bool isCopyFunction( const ast::FunctionDecl * decl ) {
-		const ast::FunctionType * ftype = decl->type;
-		if ( ftype->params.size() != 2 ) return false;
+bool isAssignment( const ast::FunctionDecl * decl ) {
+	return isAssignment( decl->name ) && isCopyFunction( decl );
+}
 
-		const ast::Type * t1 = getPointerBase( ftype->params.front() );
-		if ( ! t1 ) return false;
-		const ast::Type * t2 = ftype->params.back();
+bool isDestructor( const ast::FunctionDecl * decl ) {
+	return isDestructor( decl->name );
+}
 
-		return ResolvExpr::typesCompatibleIgnoreQualifiers( t1, t2, ast::SymbolTable{} );
-	}
+bool isDefaultConstructor( const ast::FunctionDecl * decl ) {
+	return isConstructor( decl->name ) && 1 == decl->params.size();
+}
+
+bool isCopyConstructor( const ast::FunctionDecl * decl ) {
+	return isConstructor( decl->name ) && 2 == decl->params.size();
+}
+
+bool isCopyFunction( const ast::FunctionDecl * decl ) {
+	const ast::FunctionType * ftype = decl->type;
+	if ( ftype->params.size() != 2 ) return false;
+
+	const ast::Type * t1 = getPointerBase( ftype->params.front() );
+	if ( ! t1 ) return false;
+	const ast::Type * t2 = ftype->params.back();
+
+	return ResolvExpr::typesCompatibleIgnoreQualifiers( t1, t2, ast::SymbolTable{} );
+}
 
 	const FunctionDecl * isAssignment( const Declaration * decl ) {
 		return isCopyFunction( decl, "?=?" );

@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:35:38 2021
-// Update Count     : 63
+// Last Modified On : Tue Feb  1 09:23:21 2022
+// Update Count     : 64
 //
 
 #pragma once
@@ -115,7 +115,7 @@ namespace CodeGen {
 		void postvisit( CatchStmt * );
 		void postvisit( WaitForStmt * );
 		void postvisit( WithStmt * );
-		void postvisit( WhileStmt * );
+		void postvisit( WhileDoStmt * );
 		void postvisit( ForStmt * );
 		void postvisit( NullStmt * );
 		void postvisit( DeclStmt * );

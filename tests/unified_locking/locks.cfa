@@ -14,9 +14,6 @@ condition_variable( single_acquisition_lock ) c_s;
 owner_lock o;
 condition_variable( owner_lock ) c_o;
 
-fast_lock f;
-condition_variable( fast_lock ) c_f;
-
 linear_backoff_then_block_lock l;
 condition_variable( linear_backoff_then_block_lock ) c_l;
 
@@ -73,34 +70,6 @@ void main( T_C_S_WB1 & this ) {
 			wait(c_s,s);
 		}
 		unlock(s);
-	}
-}
-
-thread T_C_F_WS1 {};
-
-void main( T_C_F_WS1 & this ) {
-	for (unsigned int i = 0; i < num_times; i++) {
-		lock(f);
-		if(empty(c_f) && i != num_times - 1) {
-			wait(c_f,f);
-		}else{
-			notify_one(c_f);
-		}
-		unlock(f);
-	}
-}
-
-thread T_C_F_WB1 {};
-
-void main( T_C_F_WB1 & this ) {
-	for (unsigned int i = 0; i < num_times; i++) {
-		lock(f);
-		if(counter(c_f) == 3 || i == num_times - 1) {
-			notify_all(c_f);
-		}else{
-			wait(c_f,f);
-		}
-		unlock(f);
 	}
 }
 
@@ -316,52 +285,40 @@ int main() {
 	}
 	printf("Done Test 6\n");
 
-	printf("Start Test 7: fast lock and condition variable single wait/notify\n");
-	{
-		T_C_F_WS1 t1[2];
-	}
-	printf("Done Test 7\n");
-
-	printf("Start Test 8: fast lock and condition variable 3 wait/notify all\n");
-	{
-		T_C_F_WB1 t1[4];
-	}
-	printf("Done Test 8\n");
-
-	printf("Start Test 9: linear backoff lock and condition variable single wait/notify\n");
+	printf("Start Test 7: linear backoff lock and condition variable single wait/notify\n");
 	{
 		T_C_L_WS1 t1[2];
 	}
-	printf("Done Test 9\n");
+	printf("Done Test 7\n");
 
-	printf("Start Test 10: linear backoff lock and condition variable 3 wait/notify all\n");
+	printf("Start Test 8: linear backoff lock and condition variable 3 wait/notify all\n");
 	{
 		T_C_L_WB1 t1[4];
 	}
-	printf("Done Test 10\n");
+	printf("Done Test 8\n");
 
-	printf("Start Test 11: multi acquisiton lock and condition variable multiple acquire and wait/notify\n");
+	printf("Start Test 9: multi acquisiton lock and condition variable multiple acquire and wait/notify\n");
 	{
 		T_C_M_WS2 t1[2];
 	}
-	printf("Done Test 11\n");
+	printf("Done Test 9\n");
 
-	printf("Start Test 12: owner lock and condition variable multiple acquire and wait/notify\n");
+	printf("Start Test 10: owner lock and condition variable multiple acquire and wait/notify\n");
 	{
 		T_C_O_WS2 t1[2];
 	}
-	printf("Done Test 12\n");
+	printf("Done Test 10\n");
 
-	printf("Start Test 13: no lock condition variable wait/notify\n");
+	printf("Start Test 11: no lock condition variable wait/notify\n");
 	{
 		T_C_NLW t1;
 		T_C_NLS t2;
 	}
-	printf("Done Test 13\n");
+	printf("Done Test 11\n");
 
-	printf("Start Test 14: locked condition variable wait/notify with front()\n");
+	printf("Start Test 12: locked condition variable wait/notify with front()\n");
 	{
 		T_C_S_WNF t1[2];
 	}
-	printf("Done Test 14\n");
+	printf("Done Test 12\n");
 }

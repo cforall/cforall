@@ -41,9 +41,9 @@ extern "C" {
 #include "invoke.h"
 
 #if !defined(__CFA_NO_STATISTICS__)
-	#define __STATS( ...) __VA_ARGS__
+	#define __STATS_DEF( ...) __VA_ARGS__
 #else
-	#define __STATS( ...)
+	#define __STATS_DEF( ...)
 #endif
 
 //-----------------------------------------------------------------------------
@@ -121,6 +121,7 @@ extern processor * mainProcessor;
 // Kernel Scheduling logic
 static thread$ * __next_thread(cluster * this);
 static thread$ * __next_thread_slow(cluster * this);
+static thread$ * __next_thread_search(cluster * this);
 static inline bool __must_unpark( thread$ * thrd ) __attribute((nonnull(1)));
 static void __run_thread(processor * this, thread$ * dst);
 static void __wake_one(cluster * cltr);
@@ -186,8 +187,6 @@ void main(processorCtx_t & runner) {
 		thread$ * readyThread = 0p;
 		MAIN_LOOP:
 		for() {
-			#define OLD_MAIN 1
-			#if OLD_MAIN
 			// Check if there is pending io
 			__maybe_io_drain( this );
 
@@ -195,9 +194,20 @@ void main(processorCtx_t & runner) {
 			readyThread = __next_thread( this->cltr );
 
 			if( !readyThread ) {
+				__IO_STATS__(true, io.flush.idle++; )
 				__cfa_io_flush( this, 0 );
 
+				readyThread = __next_thread( this->cltr );
+			}
+
+			if( !readyThread ) for(5) {
+				__IO_STATS__(true, io.flush.idle++; )
+
 				readyThread = __next_thread_slow( this->cltr );
+
+				if( readyThread ) break;
+
+				__cfa_io_flush( this, 0 );
 			}
 
 			HALT:
@@ -205,22 +215,16 @@ void main(processorCtx_t & runner) {
 				// Don't block if we are done
 				if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
 
-				#if !defined(__CFA_NO_STATISTICS__)
-					__tls_stats()->ready.sleep.halts++;
-				#endif
-
 				// Push self to idle stack
 				if(!mark_idle(this->cltr->procs, * this)) continue MAIN_LOOP;
 
 				// Confirm the ready-queue is empty
-				readyThread = __next_thread_slow( this->cltr );
+				readyThread = __next_thread_search( this->cltr );
 				if( readyThread ) {
 					// A thread was found, cancel the halt
 					mark_awake(this->cltr->procs, * this);
 
-					#if !defined(__CFA_NO_STATISTICS__)
-						__tls_stats()->ready.sleep.cancels++;
-					#endif
+					__STATS__(true, ready.sleep.cancels++; )
 
 					// continue the mai loop
 					break HALT;
@@ -247,124 +251,9 @@ void main(processorCtx_t & runner) {
 			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
 
 			if(this->io.pending && !this->io.dirty) {
+				__IO_STATS__(true, io.flush.dirty++; )
 				__cfa_io_flush( this, 0 );
 			}
-
-			#else
-				#warning new kernel loop
-			SEARCH: {
-				/* paranoid */ verify( ! __preemption_enabled() );
-
-				// First, lock the scheduler since we are searching for a thread
-				ready_schedule_lock();
-
-				// Try to get the next thread
-				readyThread = pop_fast( this->cltr );
-				if(readyThread) { ready_schedule_unlock(); break SEARCH; }
-
-				// If we can't find a thread, might as well flush any outstanding I/O
-				if(this->io.pending) { __cfa_io_flush( this, 0 ); }
-
-				// Spin a little on I/O, just in case
-				for(5) {
-					__maybe_io_drain( this );
-					readyThread = pop_fast( this->cltr );
-					if(readyThread) { ready_schedule_unlock(); break SEARCH; }
-				}
-
-				// no luck, try stealing a few times
-				for(5) {
-					if( __maybe_io_drain( this ) ) {
-						readyThread = pop_fast( this->cltr );
-					} else {
-						readyThread = pop_slow( this->cltr );
-					}
-					if(readyThread) { ready_schedule_unlock(); break SEARCH; }
-				}
-
-				// still no luck, search for a thread
-				readyThread = pop_search( this->cltr );
-				if(readyThread) { ready_schedule_unlock(); break SEARCH; }
-
-				// Don't block if we are done
-				if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) {
-					ready_schedule_unlock();
-					break MAIN_LOOP;
-				}
-
-				__STATS( __tls_stats()->ready.sleep.halts++; )
-
-				// Push self to idle stack
-				ready_schedule_unlock();
-				if(!mark_idle(this->cltr->procs, * this)) goto SEARCH;
-				ready_schedule_lock();
-
-				// Confirm the ready-queue is empty
-				__maybe_io_drain( this );
-				readyThread = pop_search( this->cltr );
-				ready_schedule_unlock();
-
-				if( readyThread ) {
-					// A thread was found, cancel the halt
-					mark_awake(this->cltr->procs, * this);
-
-					__STATS( __tls_stats()->ready.sleep.cancels++; )
-
-					// continue the main loop
-					break SEARCH;
-				}
-
-				__STATS( if(this->print_halts) __cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl()); )
-				__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle_fd);
-
-				{
-					eventfd_t val;
-					ssize_t ret = read( this->idle_fd, &val, sizeof(val) );
-					if(ret < 0) {
-						switch((int)errno) {
-						case EAGAIN:
-						#if EAGAIN != EWOULDBLOCK
-							case EWOULDBLOCK:
-						#endif
-						case EINTR:
-							// No need to do anything special here, just assume it's a legitimate wake-up
-							break;
-						default:
-							abort( "KERNEL : internal error, read failure on idle eventfd, error(%d) %s.", (int)errno, strerror( (int)errno ) );
-						}
-					}
-				}
-
-					__STATS( if(this->print_halts) __cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl()); )
-
-				// We were woken up, remove self from idle
-				mark_awake(this->cltr->procs, * this);
-
-				// DON'T just proceed, start looking again
-				continue MAIN_LOOP;
-			}
-
-		RUN_THREAD:
-			/* paranoid */ verify( ! __preemption_enabled() );
-			/* paranoid */ verify( readyThread );
-
-			// Reset io dirty bit
-			this->io.dirty = false;
-
-			// We found a thread run it
-			__run_thread(this, readyThread);
-
-			// Are we done?
-			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
-
-			if(this->io.pending && !this->io.dirty) {
-				__cfa_io_flush( this, 0 );
-			}
-
-			ready_schedule_lock();
-			__maybe_io_drain( this );
-			ready_schedule_unlock();
-			#endif
 		}
 
 		__cfadbg_print_safe(runtime_core, "Kernel : core %p stopping\n", this);
@@ -475,9 +364,7 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 				// This is case 1, the regular case, nothing more is needed
 				break RUNNING;
 			case TICKET_UNBLOCK:
-				#if !defined(__CFA_NO_STATISTICS__)
-					__tls_stats()->ready.threads.threads++;
-				#endif
+				__STATS__(true, ready.threads.threads++; )
 				// This is case 2, the racy case, someone tried to run this thread before it finished blocking
 				// In this case, just run it again.
 				continue RUNNING;
@@ -492,9 +379,7 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p finished running thread %p\n", this, thrd_dst);
 
-	#if !defined(__CFA_NO_STATISTICS__)
-		__tls_stats()->ready.threads.threads--;
-	#endif
+	__STATS__(true, ready.threads.threads--; )
 
 	/* paranoid */ verify( ! __preemption_enabled() );
 }
@@ -505,7 +390,7 @@ void returnToKernel() {
 	coroutine$ * proc_cor = get_coroutine(kernelTLS().this_processor->runner);
 	thread$ * thrd_src = kernelTLS().this_thread;
 
-	__STATS( thrd_src->last_proc = kernelTLS().this_processor; )
+	__STATS_DEF( thrd_src->last_proc = kernelTLS().this_processor; )
 
 	// Run the thread on this processor
 	{
@@ -557,7 +442,7 @@ static void __schedule_thread( thread$ * thrd, unpark_hint hint ) {
 
 	// Dereference the thread now because once we push it, there is not guaranteed it's still valid.
 	struct cluster * cl = thrd->curr_cluster;
-	__STATS(bool outside = hint == UNPARK_LOCAL && thrd->last_proc && thrd->last_proc != kernelTLS().this_processor; )
+	__STATS_DEF(bool outside = hint == UNPARK_LOCAL && thrd->last_proc && thrd->last_proc != kernelTLS().this_processor; )
 
 	// push the thread to the cluster ready-queue
 	push( cl, thrd, hint );
@@ -608,14 +493,19 @@ static inline thread$ * __next_thread_slow(cluster * this) with( *this ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 
 	ready_schedule_lock();
-		thread$ * thrd;
-		for(25) {
-			thrd = pop_slow( this );
-			if(thrd) goto RET;
-		}
-		thrd = pop_search( this );
+		thread$ * thrd = pop_slow( this );
+	ready_schedule_unlock();
 
-		RET:
+	/* paranoid */ verify( ! __preemption_enabled() );
+	return thrd;
+}
+
+// KERNEL ONLY
+static inline thread$ * __next_thread_search(cluster * this) with( *this ) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+
+	ready_schedule_lock();
+		thread$ * thrd = pop_search( this );
 	ready_schedule_unlock();
 
 	/* paranoid */ verify( ! __preemption_enabled() );
@@ -731,32 +621,48 @@ bool force_yield( __Preemption_Reason reason ) {
 //=============================================================================================
 // Wake a thread from the front if there are any
 static void __wake_one(cluster * this) {
+	eventfd_t val;
+
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( ready_schedule_islocked() );
 
 	// Check if there is a sleeping processor
-	// int fd = __atomic_load_n(&this->procs.fd, __ATOMIC_SEQ_CST);
-	int fd = 0;
-	if( __atomic_load_n(&this->procs.fd, __ATOMIC_SEQ_CST) != 0 ) {
-		fd = __atomic_exchange_n(&this->procs.fd, 0, __ATOMIC_RELAXED);
+	struct __fd_waitctx * fdp = __atomic_load_n(&this->procs.fdw, __ATOMIC_SEQ_CST);
+
+	// If no one is sleeping: we are done
+	if( fdp == 0p ) return;
+
+	int fd = 1;
+	if( __atomic_load_n(&fdp->fd, __ATOMIC_SEQ_CST) != 1 ) {
+		fd = __atomic_exchange_n(&fdp->fd, 1, __ATOMIC_RELAXED);
 	}
 
-	// If no one is sleeping, we are done
-	if( fd == 0 ) return;
+	switch(fd) {
+	case 0:
+		// If the processor isn't ready to sleep then the exchange will already wake it up
+		#if !defined(__CFA_NO_STATISTICS__)
+			if( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.early++;
+			} else { __atomic_fetch_add(&this->stats->ready.sleep.early, 1, __ATOMIC_RELAXED); }
+		#endif
+		break;
+	case 1:
+		// If someone else already said they will wake them: we are done
+		#if !defined(__CFA_NO_STATISTICS__)
+			if( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.seen++;
+			} else { __atomic_fetch_add(&this->stats->ready.sleep.seen, 1, __ATOMIC_RELAXED); }
+		#endif
+		break;
+	default:
+		// If the processor was ready to sleep, we need to wake it up with an actual write
+		val = 1;
+		eventfd_write( fd, val );
 
-	// We found a processor, wake it up
-	eventfd_t val;
-	val = 1;
-	eventfd_write( fd, val );
-
-	#if !defined(__CFA_NO_STATISTICS__)
-		if( kernelTLS().this_stats ) {
-			__tls_stats()->ready.sleep.wakes++;
-		}
-		else {
-			__atomic_fetch_add(&this->stats->ready.sleep.wakes, 1, __ATOMIC_RELAXED);
-		}
-	#endif
+		#if !defined(__CFA_NO_STATISTICS__)
+			if( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.wakes++;
+			} else { __atomic_fetch_add(&this->stats->ready.sleep.wakes, 1, __ATOMIC_RELAXED); }
+		#endif
+		break;
+	}
 
 	/* paranoid */ verify( ready_schedule_islocked() );
 	/* paranoid */ verify( ! __preemption_enabled() );
@@ -770,6 +676,8 @@ void __wake_proc(processor * this) {
 
 	__cfadbg_print_safe(runtime_core, "Kernel : waking Processor %p\n", this);
 
+	this->idle_wctx.fd = 1;
+
 	eventfd_t val;
 	val = 1;
 	eventfd_write( this->idle_fd, val );
@@ -778,6 +686,21 @@ void __wake_proc(processor * this) {
 }
 
 static void idle_sleep(processor * this, io_future_t & future, iovec & iov) {
+	// Tell everyone we are ready to go do sleep
+	for() {
+		int expected = this->idle_wctx.fd;
+
+		// Someone already told us to wake-up! No time for a nap.
+		if(expected == 1) { return; }
+
+		// Try to mark that we are going to sleep
+		if(__atomic_compare_exchange_n(&this->idle_wctx.fd, &expected, this->idle_fd, false,  __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) ) {
+			// Every one agreed, taking a nap
+			break;
+		}
+	}
+
+
 	#if !defined(CFA_WITH_IO_URING_IDLE)
 		#if !defined(__CFA_NO_STATISTICS__)
 			if(this->print_halts) {
@@ -824,6 +747,10 @@ static void idle_sleep(processor * this, io_future_t & future, iovec & iov) {
 }
 
 static bool mark_idle(__cluster_proc_list & this, processor & proc) {
+	__STATS__(true, ready.sleep.halts++; )
+
+	proc.idle_wctx.fd = 0;
+
 	/* paranoid */ verify( ! __preemption_enabled() );
 	if(!try_lock( this )) return false;
 		this.idle++;
@@ -831,7 +758,7 @@ static bool mark_idle(__cluster_proc_list & this, processor & proc) {
 		remove(proc);
 		insert_first(this.idles, proc);
 
-		__atomic_store_n(&this.fd, proc.idle_fd, __ATOMIC_SEQ_CST);
+		__atomic_store_n(&this.fdw, &proc.idle_wctx, __ATOMIC_SEQ_CST);
 	unlock( this );
 	/* paranoid */ verify( ! __preemption_enabled() );
 
@@ -847,9 +774,9 @@ static void mark_awake(__cluster_proc_list & this, processor & proc) {
 		insert_last(this.actives, proc);
 
 		{
-			int fd = 0;
-			if(!this.idles`isEmpty) fd = this.idles`first.idle_fd;
-			__atomic_store_n(&this.fd, fd, __ATOMIC_SEQ_CST);
+			struct __fd_waitctx * wctx = 0;
+			if(!this.idles`isEmpty) wctx = &this.idles`first.idle_wctx;
+			__atomic_store_n(&this.fdw, wctx, __ATOMIC_SEQ_CST);
 		}
 
 	unlock( this );
@@ -913,13 +840,9 @@ static inline bool __maybe_io_drain( processor * proc ) {
 		unsigned head = *ctx->cq.head;
 		unsigned tail = *ctx->cq.tail;
 		if(head == tail) return false;
-		#if OLD_MAIN
-			ready_schedule_lock();
-			ret = __cfa_io_drain( proc );
-			ready_schedule_unlock();
-		#else
-			ret = __cfa_io_drain( proc );
-		#endif
+		ready_schedule_lock();
+		ret = __cfa_io_drain( proc );
+		ready_schedule_unlock();
 	#endif
 	return ret;
 }

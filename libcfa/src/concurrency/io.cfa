@@ -143,36 +143,40 @@
 
 		__ioarbiter_flush( ctx );
 
-		__STATS__( true, io.calls.flush++; )
-		int ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, min_comp, min_comp > 0 ? IORING_ENTER_GETEVENTS : 0, (sigset_t *)0p, _NSIG / 8);
-		if( ret < 0 ) {
-			switch((int)errno) {
-			case EAGAIN:
-			case EINTR:
-			case EBUSY:
-				// Update statistics
-				__STATS__( false, io.calls.errors.busy ++; )
-				return false;
-			default:
-				abort( "KERNEL ERROR: IO_URING SYSCALL - (%d) %s\n", (int)errno, strerror(errno) );
+		if(ctx.sq.to_submit != 0 || min_comp > 0) {
+
+			__STATS__( true, io.calls.flush++; )
+			int ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, min_comp, min_comp > 0 ? IORING_ENTER_GETEVENTS : 0, (sigset_t *)0p, _NSIG / 8);
+			if( ret < 0 ) {
+				switch((int)errno) {
+				case EAGAIN:
+				case EINTR:
+				case EBUSY:
+					// Update statistics
+					__STATS__( false, io.calls.errors.busy ++; )
+					return false;
+				default:
+					abort( "KERNEL ERROR: IO_URING SYSCALL - (%d) %s\n", (int)errno, strerror(errno) );
+				}
 			}
+
+			__cfadbg_print_safe(io, "Kernel I/O : %u submitted to io_uring %d\n", ret, ctx.fd);
+			__STATS__( true, io.calls.submitted += ret; )
+			/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
+			/* paranoid */ verify( ctx.sq.to_submit >= ret );
+
+			ctx.sq.to_submit -= ret;
+
+			/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
+
+			// Release the consumed SQEs
+			__release_sqes( ctx );
+
+			/* paranoid */ verify( ! __preemption_enabled() );
+
+			ctx.proc->io.pending = false;
 		}
 
-		__cfadbg_print_safe(io, "Kernel I/O : %u submitted to io_uring %d\n", ret, ctx.fd);
-		__STATS__( true, io.calls.submitted += ret; )
-		/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
-		/* paranoid */ verify( ctx.sq.to_submit >= ret );
-
-		ctx.sq.to_submit -= ret;
-
-		/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
-
-		// Release the consumed SQEs
-		__release_sqes( ctx );
-
-		/* paranoid */ verify( ! __preemption_enabled() );
-
-		ctx.proc->io.pending = false;
 		ready_schedule_lock();
 		bool ret = __cfa_io_drain( proc );
 		ready_schedule_unlock();
@@ -301,7 +305,12 @@
 
 		ctx->proc->io.pending = true;
 		ctx->proc->io.dirty   = true;
-		if(sq.to_submit > 30 || !lazy) {
+		if(sq.to_submit > 30) {
+			__tls_stats()->io.flush.full++;
+			__cfa_io_flush( ctx->proc, 0 );
+		}
+		if(!lazy) {
+			__tls_stats()->io.flush.eager++;
 			__cfa_io_flush( ctx->proc, 0 );
 		}
 	}

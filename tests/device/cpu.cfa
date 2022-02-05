@@ -14,8 +14,9 @@
 //
 
 
-#include <fstream.hfa>
 #include <device/cpu.hfa>
+#include <limits.hfa>
+#include <fstream.hfa>
 #include <stdlib.hfa>
 
 #include <errno.h>
@@ -117,7 +118,7 @@ unsigned find_idx() {
 	int idxs = count_cache_indexes();
 
 	unsigned found_level = 0;
-	unsigned found = -1u;
+	unsigned found = MAX;
 	for(i; idxs) {
 		unsigned idx = idxs - 1 - i;
 		char buf[32];
@@ -135,7 +136,7 @@ unsigned find_idx() {
 		}
 	}
 
-	/* paranoid */ verify(found != -1u);
+	/* paranoid */ verify(found != MAX);
 	return found;
 }
 

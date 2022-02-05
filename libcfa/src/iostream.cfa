@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 10 09:28:17 2021
-// Update Count     : 1345
+// Last Modified On : Wed Jan 19 08:15:53 2022
+// Update Count     : 1352
 //
 
 #include "iostream.hfa"
@@ -56,7 +56,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, signed char sc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%hhd", sc );
+		fmt( os, "%'hhd", sc );
 		return os;
 	} // ?|?
 	void ?|?( ostype & os, signed char sc ) {
@@ -65,7 +65,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, unsigned char usc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%hhu", usc );
+		fmt( os, "%'hhu", usc );
 		return os;
 	} // ?|?
 	void ?|?( ostype & os, unsigned char usc ) {
@@ -74,7 +74,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, short int si ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%hd", si );
+		fmt( os, "%'hd", si );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, short int si ) {
@@ -83,7 +83,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, unsigned short int usi ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%hu", usi );
+		fmt( os, "%'hu", usi );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, unsigned short int usi ) {
@@ -92,7 +92,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, int i ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%d", i );
+		fmt( os, "%'d", i );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, int i ) {
@@ -101,7 +101,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, unsigned int ui ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%u", ui );
+		fmt( os, "%'u", ui );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, unsigned int ui ) {
@@ -110,7 +110,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, long int li ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%ld", li );
+		fmt( os, "%'ld", li );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, long int li ) {
@@ -119,7 +119,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, unsigned long int uli ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%lu", uli );
+		fmt( os, "%'lu", uli );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, unsigned long int uli ) {
@@ -128,7 +128,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, long long int lli ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%lld", lli );
+		fmt( os, "%'lld", lli );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, long long int lli ) {
@@ -137,7 +137,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, unsigned long long int ulli ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		fmt( os, "%llu", ulli );
+		fmt( os, "%'llu", ulli );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, unsigned long long int ulli ) {
@@ -204,7 +204,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, float f ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		PrintWithDP( os, "%g", f );
+		PrintWithDP( os, "%'g", f );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, float f ) {
@@ -213,7 +213,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, double d ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		PrintWithDP( os, "%.*lg", d, DBL_DIG );
+		PrintWithDP( os, "%'.*lg", d, DBL_DIG );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, double d ) {
@@ -222,7 +222,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, long double ld ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-		PrintWithDP( os, "%.*Lg", ld, LDBL_DIG );
+		PrintWithDP( os, "%'.*Lg", ld, LDBL_DIG );
 		return os;
 	} // ?|?
 	void & ?|?( ostype & os, long double ld ) {
@@ -232,8 +232,8 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, float _Complex fc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 //		os | crealf( fc ) | nonl;
-		PrintWithDP( os, "%g", crealf( fc ) );
-		PrintWithDP( os, "%+g", cimagf( fc ) );
+		PrintWithDP( os, "%'g", crealf( fc ) );
+		PrintWithDP( os, "%'+g", cimagf( fc ) );
 		fmt( os, "i" );
 		return os;
 	} // ?|?
@@ -244,8 +244,8 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, double _Complex dc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 //		os | creal( dc ) | nonl;
-		PrintWithDP( os, "%.*lg", creal( dc ), DBL_DIG );
-		PrintWithDP( os, "%+.*lg", cimag( dc ), DBL_DIG );
+		PrintWithDP( os, "%'.*lg", creal( dc ), DBL_DIG );
+		PrintWithDP( os, "%'+.*lg", cimag( dc ), DBL_DIG );
 		fmt( os, "i" );
 		return os;
 	} // ?|?
@@ -256,8 +256,8 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, long double _Complex ldc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 //		os | creall( ldc ) || nonl;
-		PrintWithDP( os, "%.*Lg", creall( ldc ), LDBL_DIG );
-		PrintWithDP( os, "%+.*Lg", cimagl( ldc ), LDBL_DIG );
+		PrintWithDP( os, "%'.*Lg", creall( ldc ), LDBL_DIG );
+		PrintWithDP( os, "%'+.*Lg", cimagl( ldc ), LDBL_DIG );
 		fmt( os, "i" );
 		return os;
 	} // ?|?
@@ -281,6 +281,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 			[' '] : OpenClose, ['\f'] : OpenClose, ['\n'] : OpenClose, ['\r'] : OpenClose, ['\t'] : OpenClose, ['\v'] : OpenClose, // isspace
 		}; // mask
 
+	  if ( s == 0p ) { fmt( os, "%s", "0p" ); return os; } // null pointer
 	  if ( s[0] == '\0' ) { sepOff( os ); return os; } // null string => no separator
 
 		// first character IS NOT spacing or closing punctuation => add left separator
@@ -495,13 +496,14 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 		char fmtstr[sizeof(IFMTP)];						/* sizeof includes '\0' */ \
 		if ( ! f.flags.pc ) memcpy( &fmtstr, IFMTNP, sizeof(IFMTNP) ); \
 		else memcpy( &fmtstr, IFMTP, sizeof(IFMTP) ); \
-		int star = 4;									/* position before first '*' */ \
+		int star = 5;									/* position before first '*' */ \
 \
 		/* Insert flags into spaces before '*', from right to left. */ \
 		if ( ! f.flags.nobsdp ) { fmtstr[star] = '#'; star -= 1; } \
 		if ( f.flags.left ) { fmtstr[star] = '-'; star -= 1; } \
 		if ( f.flags.sign ) { fmtstr[star] = '+'; star -= 1; } \
 		if ( f.flags.pad0 && ! f.flags.pc ) { fmtstr[star] = '0'; star -= 1; } \
+		fmtstr[star] = '\''; star -= 1;					/* locale */ \
 		fmtstr[star] = '%'; \
 \
 		if ( ! f.flags.pc ) {							/* no precision */ \
@@ -520,16 +522,16 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 	} /* ?|? */ \
 } // distribution
 
-IntegralFMTImpl( signed char, "     *hh ", "     *.*hh " )
-IntegralFMTImpl( unsigned char, "     *hh ", "     *.*hh " )
-IntegralFMTImpl( signed short int, "     *h ", "     *.*h " )
-IntegralFMTImpl( unsigned short int, "     *h ", "     *.*h " )
-IntegralFMTImpl( signed int, "     * ", "     *.* " )
-IntegralFMTImpl( unsigned int, "     * ", "     *.* " )
-IntegralFMTImpl( signed long int, "     *l ", "     *.*l " )
-IntegralFMTImpl( unsigned long int, "     *l ", "     *.*l " )
-IntegralFMTImpl( signed long long int, "     *ll ", "     *.*ll " )
-IntegralFMTImpl( unsigned long long int, "     *ll ", "     *.*ll " )
+IntegralFMTImpl( signed char,            "      *hh ", "      *.*hh " )
+IntegralFMTImpl( unsigned char,          "      *hh ", "      *.*hh " )
+IntegralFMTImpl( signed short int,       "      *h ",  "      *.*h " )
+IntegralFMTImpl( unsigned short int,     "      *h ",  "      *.*h " )
+IntegralFMTImpl( signed int,             "      * ",   "      *.* " )
+IntegralFMTImpl( unsigned int,           "      * ",   "      *.* " )
+IntegralFMTImpl( signed long int,        "      *l ",  "      *.*l " )
+IntegralFMTImpl( unsigned long int,      "      *l ",  "      *.*l " )
+IntegralFMTImpl( signed long long int,   "      *ll ", "      *.*ll " )
+IntegralFMTImpl( unsigned long long int, "      *ll ", "      *.*ll " )
 
 
 #if defined( __SIZEOF_INT128__ )
@@ -691,12 +693,13 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 		char fmtstr[sizeof(DFMTP) + 8];					/* sizeof includes '\0' */ \
 		if ( ! f.flags.pc ) memcpy( &fmtstr, DFMTNP, sizeof(DFMTNP) ); \
 		else memcpy( &fmtstr, DFMTP, sizeof(DFMTP) ); \
-		int star = 4;									/* position before first '*' */ \
+		int star = 5;									/* position before first '*' */ \
 \
 		/* Insert flags into spaces before '*', from right to left. */ \
 		if ( f.flags.left ) { fmtstr[star] = '-'; star -= 1; } \
 		if ( f.flags.sign ) { fmtstr[star] = '+'; star -= 1; } \
 		if ( f.flags.pad0 ) { fmtstr[star] = '0'; star -= 1; } \
+		fmtstr[star] = '\''; star -= 1;					/* locale */ \
 		fmtstr[star] = '%'; \
 \
 		if ( ! f.flags.pc ) {							/* no precision */ \
@@ -714,8 +717,8 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 	void ?|?( ostype & os, _Ostream_Manip(T) f ) { (ostype &)(os | f); ends( os ); } \
 } // distribution
 
-FloatingPointFMTImpl( double, "     * ", "     *.* " )
-FloatingPointFMTImpl( long double, "     *L ", "     *.*L " )
+FloatingPointFMTImpl( double,      "      * ",  "      *.* " )
+FloatingPointFMTImpl( long double, "      *L ", "      *.*L " )
 
 // *********************************** character ***********************************
 

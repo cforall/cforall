@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Jan 22 11:50:00 2020
-// Update Count     : 48
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Feb  1 09:27:24 2022
+// Update Count     : 50
 //
 
 #pragma once
@@ -41,8 +41,8 @@ namespace ControlStruct {
 
 		void premutate( CompoundStmt *cmpndStmt );
 		Statement * postmutate( BranchStmt *branchStmt ) throw ( SemanticErrorException );
-		void premutate( WhileStmt *whileStmt );
-		Statement * postmutate( WhileStmt *whileStmt );
+		void premutate( WhileDoStmt *whileDoStmt );
+		Statement * postmutate( WhileDoStmt *whileDoStmt );
 		void premutate( ForStmt *forStmt );
 		Statement * postmutate( ForStmt *forStmt );
 		void premutate( CaseStmt *caseStmt );
@@ -66,7 +66,7 @@ namespace ControlStruct {
 			explicit Entry( ForStmt *stmt, Label breakExit, Label contExit ) :
 				stmt( stmt ), breakExit( breakExit ), contExit( contExit ) {}
 
-			explicit Entry( WhileStmt *stmt, Label breakExit, Label contExit ) :
+			explicit Entry( WhileDoStmt *stmt, Label breakExit, Label contExit ) :
 				stmt( stmt ), breakExit( breakExit ), contExit( contExit ) {}
 
 			explicit Entry( CompoundStmt *stmt, Label breakExit ) :

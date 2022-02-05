@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:35:35 2021
-// Update Count     : 15
+// Last Modified On : Tue Feb  1 09:26:57 2022
+// Update Count     : 17
 //
 
 #pragma once
@@ -59,8 +59,8 @@ class Visitor {
 	virtual void visit( const DirectiveStmt * directiveStmt ) = 0;
 	virtual void visit( IfStmt * node ) { visit( const_cast<const IfStmt *>(node) ); }
 	virtual void visit( const IfStmt * ifStmt ) = 0;
-	virtual void visit( WhileStmt * node ) { visit( const_cast<const WhileStmt *>(node) ); }
-	virtual void visit( const WhileStmt * whileStmt ) = 0;
+	virtual void visit( WhileDoStmt * node ) { visit( const_cast<const WhileDoStmt *>(node) ); }
+	virtual void visit( const WhileDoStmt * whileDoStmt ) = 0;
 	virtual void visit( ForStmt * node ) { visit( const_cast<const ForStmt *>(node) ); }
 	virtual void visit( const ForStmt * forStmt ) = 0;
 	virtual void visit( SwitchStmt * node ) { visit( const_cast<const SwitchStmt *>(node) ); }

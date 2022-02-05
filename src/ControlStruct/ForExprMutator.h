@@ -9,23 +9,23 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 17 15:32:48 2017
-// Update Count     : 5
+// Last Modified On : Tue Feb  1 09:18:50 2022
+// Update Count     : 7
 //
 
 #pragma once
 
 class IfStmt;
 class ForStmt;
-class WhileStmt;
+class WhileDoStmt;
 class Statement;
 
 namespace ControlStruct {
 	class ForExprMutator {
 	  public:
-		Statement *postmutate( IfStmt * );
-		Statement *postmutate( ForStmt * );
-		Statement *postmutate( WhileStmt * );
+		Statement * postmutate( IfStmt * );
+		Statement * postmutate( ForStmt * );
+		Statement * postmutate( WhileDoStmt * );
 	};
 } // namespace ControlStruct
 

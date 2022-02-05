@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thu May 16 14:16:00 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:25:06 2021
-// Update Count     : 2
+// Last Modified On : Tue Feb  1 09:09:39 2022
+// Update Count     : 3
 //
 
 #include "Node.hpp"
@@ -145,8 +145,8 @@ template class ast::ptr_base< ast::DirectiveStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::DirectiveStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::IfStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::IfStmt, ast::Node::ref_type::strong >;
-template class ast::ptr_base< ast::WhileStmt, ast::Node::ref_type::weak >;
-template class ast::ptr_base< ast::WhileStmt, ast::Node::ref_type::strong >;
+template class ast::ptr_base< ast::WhileDoStmt, ast::Node::ref_type::weak >;
+template class ast::ptr_base< ast::WhileDoStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::ForStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::ForStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::SwitchStmt, ast::Node::ref_type::weak >;

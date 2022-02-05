@@ -452,6 +452,11 @@ namespace SymTab {
 		}
 	}
 
+	void decayForallPointers( std::list< Declaration * > & translationUnit ) {
+		PassVisitor<ForallPointerDecay_old> fpd;
+		acceptAll( translationUnit, fpd );
+	}
+
 	void validate( std::list< Declaration * > &translationUnit, __attribute__((unused)) bool doDebug ) {
 		validate_A( translationUnit );
 		validate_B( translationUnit );
@@ -469,7 +474,6 @@ namespace SymTab {
 		type->accept( lrt );
 		type->accept( fpd );
 	}
-
 
 	void HoistTypeDecls::handleType( Type * type ) {
 		// some type declarations are buried in expressions and not easy to hoist during parsing; hoist them here

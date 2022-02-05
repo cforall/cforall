@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 11 22:26:52 2019
-// Update Count     : 14
+// Last Modified On : Tue Feb  1 09:26:12 2022
+// Update Count     : 16
 //
 
 #include <list>                 // for list, _List_iterator, list<>::iterator
@@ -44,8 +44,8 @@ namespace ControlStruct {
 		// hoist any initializer declarations to make them C89 (rather than C99)
 		return hoist( forStmt, forStmt->initialization );
 	}
-	Statement * ForExprMutator::postmutate( WhileStmt * whileStmt ) {
-		return hoist( whileStmt, whileStmt->initialization );
+	Statement * ForExprMutator::postmutate( WhileDoStmt * whileDoStmt ) {
+		return hoist( whileDoStmt, whileDoStmt->initialization );
 	}
 } // namespace ControlStruct
 

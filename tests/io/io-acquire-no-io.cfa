@@ -9,13 +9,15 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  1 18:40:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct  6 18:04:58 2021
-// Update Count     : 72
+// Last Modified On : Fri Jan 14 09:13:54 2022
+// Update Count     : 73
 // 
 
 #include <fstream.hfa>
 #include <thread.hfa>
 #include <mutex_stmt.hfa>
+
+Duration default_preemption() { return 0; }
 
 multiple_acquisition_lock soutLock, sinLock;
 

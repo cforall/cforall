@@ -33,6 +33,7 @@ extern "C" {
 // CFA Includes
 #include "kernel_private.hfa"
 #include "startup.hfa"          // STARTUP_PRIORITY_XXX
+#include "limits.hfa"
 #include "math.hfa"
 
 #define CFA_PROCESSOR_USE_MMAP 0
@@ -100,6 +101,7 @@ extern void __kernel_alarm_shutdown(void);
 // Other Forward Declarations
 extern void __wake_proc(processor *);
 extern int cfa_main_returned;							// from interpose.cfa
+extern uint32_t __global_random_seed;
 
 //-----------------------------------------------------------------------------
 // Kernel storage
@@ -173,7 +175,6 @@ void ?{}( current_stack_info_t & this ) {
 	this.limit = (void *)(((intptr_t)this.base) - size);
 	this.context = &storage_mainThreadCtx;
 }
-
 
 
 //=============================================================================================
@@ -488,6 +489,7 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 	link.ts   = -1llu;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
+	random_state = __global_random_seed;
 	#if defined( __CFA_WITH_VERIFY__ )
 		canary = 0x0D15EA5E0D15EA5Ep;
 	#endif
@@ -512,10 +514,11 @@ static void init(processor & this, const char name[], cluster & _cltr, thread$ *
 	this.cltr = &_cltr;
 	this.rdq.its = 0;
 	this.rdq.itr = 0;
-	this.rdq.id  = -1u;
-	this.rdq.target = -1u;
-	this.rdq.last = -1u;
-	this.rdq.cutoff = 0ull;
+	this.rdq.id  = MAX;
+	this.rdq.target = MAX;
+	this.rdq.last = MAX;
+	this.rdq.cpu = 0;
+	// this.rdq.cutoff = 0ull;
 	do_terminate = false;
 	preemption_alarm = 0p;
 	pending_preemption = false;
@@ -532,6 +535,13 @@ static void init(processor & this, const char name[], cluster & _cltr, thread$ *
 	if (idle_fd < 0) {
 		abort("KERNEL ERROR: PROCESSOR EVENTFD - %s\n", strerror(errno));
 	}
+
+	this.idle_wctx.fd = 0;
+
+	// I'm assuming these two are reserved for standard input and output
+	// so I'm using them as sentinels with idle_wctx.
+	/* paranoid */ verify( this.idle_fd != 0 );
+	/* paranoid */ verify( this.idle_fd != 1 );
 
 	#if !defined(__CFA_NO_STATISTICS__)
 		print_stats = 0;
@@ -586,7 +596,7 @@ void ^?{}(processor & this) with( this ){
 //-----------------------------------------------------------------------------
 // Cluster
 static void ?{}(__cluster_proc_list & this) {
-	this.fd    = 0;
+	this.fdw   = 0p;
 	this.idle  = 0;
 	this.total = 0;
 }
@@ -683,6 +693,8 @@ static void register_tls( processor * this ) {
 	// Register and Lock the RWlock so no-one pushes/pops while we are changing the queue
 	uint_fast32_t last_size;
 	[this->unique_id, last_size] = ready_mutate_register();
+
+		this->rdq.cpu = __kernel_getcpu();
 
 		this->cltr->procs.total += 1u;
 		insert_last(this->cltr->procs.actives, *this);

@@ -4,13 +4,14 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// StatementNode.cc --
+// StatementNode.cc -- Transform from parse data-structures to AST data-structures, usually deleting the parse
+//     data-structure after the transformation.
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct 24 04:20:55 2020
-// Update Count     : 383
+// Last Modified On : Wed Feb  2 20:29:30 2022
+// Update Count     : 425
 //
 
 #include <cassert>                 // for assert, strict_dynamic_cast, assertf
@@ -62,7 +63,7 @@ StatementNode * StatementNode::append_last_case( StatementNode * stmt ) {
 	} // for
 	// convert from StatementNode list to Statement list
 	StatementNode * node = dynamic_cast< StatementNode * >(prev);
-	std::list< Statement * > stmts;
+	list< Statement * > stmts;
 	buildMoveList( stmt, stmts );
 	// splice any new Statements to end of current Statements
 	CaseStmt * caseStmt = dynamic_cast< CaseStmt * >(node->stmt.get());
@@ -77,7 +78,7 @@ Statement * build_expr( ExpressionNode * ctl ) {
 	else return new NullStmt();
 } // build_expr
 
-Expression * build_if_control( IfCtrl * ctl, std::list< Statement * > & init ) {
+Expression * build_if_control( CondCtl * ctl, list< Statement * > & init ) {
 	if ( ctl->init != 0 ) {
 		buildMoveList( ctl->init, init );
 	} // if
@@ -99,30 +100,31 @@ Expression * build_if_control( IfCtrl * ctl, std::list< Statement * > & init ) {
 	return cond;
 } // build_if_control
 
-Statement * build_if( IfCtrl * ctl, StatementNode * then_stmt, StatementNode * else_stmt ) {
-	Statement * thenb, * elseb = nullptr;
-	std::list< Statement * > branches;
-	buildMoveList< Statement, StatementNode >( then_stmt, branches );
-	assert( branches.size() == 1 );
-	thenb = branches.front();
+Statement * build_if( CondCtl * ctl, StatementNode * then, StatementNode * else_ ) {
+	list< Statement * > astinit;						// maybe empty
+	Expression * astcond = build_if_control( ctl, astinit ); // ctl deleted, cond/init set
 
-	if ( else_stmt ) {
-		std::list< Statement * > branches;
-		buildMoveList< Statement, StatementNode >( else_stmt, branches );
-		assert( branches.size() == 1 );
-		elseb = branches.front();
+	Statement * astthen, * astelse = nullptr;
+	list< Statement * > aststmt;
+	buildMoveList< Statement, StatementNode >( then, aststmt );
+	assert( aststmt.size() == 1 );
+	astthen = aststmt.front();
+
+	if ( else_ ) {
+		list< Statement * > aststmt;
+		buildMoveList< Statement, StatementNode >( else_, aststmt );
+		assert( aststmt.size() == 1 );
+		astelse = aststmt.front();
 	} // if
 
-	std::list< Statement * > init;
-	Expression * cond = build_if_control( ctl, init );
-	return new IfStmt( cond, thenb, elseb, init );
+	return new IfStmt( astcond, astthen, astelse, astinit );
 } // build_if
 
 Statement * build_switch( bool isSwitch, ExpressionNode * ctl, StatementNode * stmt ) {
-	std::list< Statement * > branches;
-	buildMoveList< Statement, StatementNode >( stmt, branches );
-	if ( ! isSwitch ) {										// choose statement
-		for ( Statement * stmt : branches ) {
+	list< Statement * > aststmt;
+	buildMoveList< Statement, StatementNode >( stmt, aststmt );
+	if ( ! isSwitch ) {									// choose statement
+		for ( Statement * stmt : aststmt ) {
 			CaseStmt * caseStmt = strict_dynamic_cast< CaseStmt * >( stmt );
 			if ( ! caseStmt->stmts.empty() ) {			// code after "case" => end of case list
 				CompoundStmt * block = strict_dynamic_cast< CompoundStmt * >( caseStmt->stmts.front() );
@@ -130,59 +132,63 @@ Statement * build_switch( bool isSwitch, ExpressionNode * ctl, StatementNode * s
 			} // if
 		} // for
 	} // if
-	// branches.size() == 0 for switch (...) {}, i.e., no declaration or statements
-	return new SwitchStmt( maybeMoveBuild< Expression >(ctl), branches );
+	// aststmt.size() == 0 for switch (...) {}, i.e., no declaration or statements
+	return new SwitchStmt( maybeMoveBuild< Expression >(ctl), aststmt );
 } // build_switch
 
 Statement * build_case( ExpressionNode * ctl ) {
-	std::list< Statement * > branches;
-	return new CaseStmt( maybeMoveBuild< Expression >(ctl), branches );
+	return new CaseStmt( maybeMoveBuild< Expression >(ctl), {} ); // stmt starts empty and then added to
 } // build_case
 
 Statement * build_default() {
-	std::list< Statement * > branches;
-	return new CaseStmt( nullptr, branches, true );
+	return new CaseStmt( nullptr, {}, true );			// stmt starts empty and then added to
 } // build_default
 
-Statement * build_while( IfCtrl * ctl, StatementNode * stmt ) {
-	std::list< Statement * > branches;
-	buildMoveList< Statement, StatementNode >( stmt, branches );
-	assert( branches.size() == 1 );
+Statement * build_while( CondCtl * ctl, StatementNode * stmt, StatementNode * else_ ) {
+	list< Statement * > astinit;						// maybe empty
+	Expression * astcond = build_if_control( ctl, astinit ); // ctl deleted, cond/init set
 
-	std::list< Statement * > init;
-	Expression * cond = build_if_control( ctl, init );
-	return new WhileStmt( cond, branches.front(), init, false );
+	list< Statement * > aststmt;						// loop body, compound created if empty
+	buildMoveList< Statement, StatementNode >( stmt, aststmt );
+	assert( aststmt.size() == 1 );
+
+	list< Statement * > astelse;						// else clause, maybe empty
+	buildMoveList< Statement, StatementNode >( else_, astelse );
+
+	return new WhileDoStmt( astcond, aststmt.front(), astelse.front(), astinit, false );
 } // build_while
 
-Statement * build_do_while( ExpressionNode * ctl, StatementNode * stmt ) {
-	std::list< Statement * > branches;
-	buildMoveList< Statement, StatementNode >( stmt, branches );
-	assert( branches.size() == 1 );
+Statement * build_do_while( ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ ) {
+	list< Statement * > aststmt;						// loop body, compound created if empty
+	buildMoveList< Statement, StatementNode >( stmt, aststmt );
+	assert( aststmt.size() == 1 );						// compound created if empty
 
-	std::list< Statement * > init;
-	return new WhileStmt( notZeroExpr( maybeMoveBuild< Expression >(ctl) ), branches.front(), init, true );
+	list< Statement * > astelse;						// else clause, maybe empty
+	buildMoveList< Statement, StatementNode >( else_, astelse );
+
+	// do-while cannot have declarations in the contitional, so init is always empty
+	return new WhileDoStmt( notZeroExpr( maybeMoveBuild< Expression >(ctl) ), aststmt.front(), astelse.front(), {}, true );
 } // build_do_while
 
-Statement * build_for( ForCtrl * forctl, StatementNode * stmt ) {
-	std::list< Statement * > branches;
-	buildMoveList< Statement, StatementNode >( stmt, branches );
-	assert( branches.size() == 1 );
+Statement * build_for( ForCtrl * forctl, StatementNode * stmt, StatementNode * else_ ) {
+	list< Statement * > astinit;						// maybe empty
+	buildMoveList( forctl->init, astinit );
 
-	std::list< Statement * > init;
-	if ( forctl->init != 0 ) {
-		buildMoveList( forctl->init, init );
-	} // if
+	Expression * astcond = nullptr;						// maybe empty
+	astcond = notZeroExpr( maybeMoveBuild< Expression >(forctl->condition) );
 
-	Expression * cond = 0;
-	if ( forctl->condition != 0 )
-		cond = notZeroExpr( maybeMoveBuild< Expression >(forctl->condition) );
-
-	Expression * incr = 0;
-	if ( forctl->change != 0 )
-		incr = maybeMoveBuild< Expression >(forctl->change);
-
+	Expression * astincr = nullptr;						// maybe empty
+	astincr = maybeMoveBuild< Expression >(forctl->change);
 	delete forctl;
-	return new ForStmt( init, cond, incr, branches.front() );
+
+	list< Statement * > aststmt;						// loop body, compound created if empty
+	buildMoveList< Statement, StatementNode >( stmt, aststmt );
+	assert( aststmt.size() == 1 );
+
+	list< Statement * > astelse;						// else clause, maybe empty
+	buildMoveList< Statement, StatementNode >( else_, astelse );
+
+	return new ForStmt( astinit, astcond, astincr, aststmt.front(), astelse.front() );
 } // build_for
 
 Statement * build_branch( BranchStmt::Type kind ) {
@@ -190,7 +196,7 @@ Statement * build_branch( BranchStmt::Type kind ) {
 	return ret;
 } // build_branch
 
-Statement * build_branch( std::string * identifier, BranchStmt::Type kind ) {
+Statement * build_branch( string * identifier, BranchStmt::Type kind ) {
 	Statement * ret = new BranchStmt( * identifier, kind );
 	delete identifier; 									// allocated by lexer
 	return ret;
@@ -201,22 +207,22 @@ Statement * build_computedgoto( ExpressionNode * ctl ) {
 } // build_computedgoto
 
 Statement * build_return( ExpressionNode * ctl ) {
-	std::list< Expression * > exps;
+	list< Expression * > exps;
 	buildMoveList( ctl, exps );
 	return new ReturnStmt( exps.size() > 0 ? exps.back() : nullptr );
 } // build_return
 
 Statement * build_throw( ExpressionNode * ctl ) {
-	std::list< Expression * > exps;
+	list< Expression * > exps;
 	buildMoveList( ctl, exps );
-	assertf( exps.size() < 2, "This means we are leaking memory");
+	assertf( exps.size() < 2, "CFA internal error: leaking memory" );
 	return new ThrowStmt( ThrowStmt::Terminate, !exps.empty() ? exps.back() : nullptr );
 } // build_throw
 
 Statement * build_resume( ExpressionNode * ctl ) {
-	std::list< Expression * > exps;
+	list< Expression * > exps;
 	buildMoveList( ctl, exps );
-	assertf( exps.size() < 2, "This means we are leaking memory");
+	assertf( exps.size() < 2, "CFA internal error: leaking memory" );
 	return new ThrowStmt( ThrowStmt::Resume, !exps.empty() ? exps.back() : nullptr );
 } // build_resume
 
@@ -226,26 +232,26 @@ Statement * build_resume_at( ExpressionNode * ctl, ExpressionNode * target ) {
 	assertf( false, "resume at (non-local throw) is not yet supported," );
 } // build_resume_at
 
-Statement * build_try( StatementNode * try_stmt, StatementNode * catch_stmt, StatementNode * finally_stmt ) {
-	std::list< CatchStmt * > branches;
-	buildMoveList< CatchStmt, StatementNode >( catch_stmt, branches );
-	CompoundStmt * tryBlock = strict_dynamic_cast< CompoundStmt * >(maybeMoveBuild< Statement >(try_stmt));
-	FinallyStmt * finallyBlock = dynamic_cast< FinallyStmt * >(maybeMoveBuild< Statement >(finally_stmt) );
-	return new TryStmt( tryBlock, branches, finallyBlock );
+Statement * build_try( StatementNode * try_, StatementNode * catch_, StatementNode * finally_ ) {
+	list< CatchStmt * > aststmt;
+	buildMoveList< CatchStmt, StatementNode >( catch_, aststmt );
+	CompoundStmt * tryBlock = strict_dynamic_cast< CompoundStmt * >(maybeMoveBuild< Statement >(try_));
+	FinallyStmt * finallyBlock = dynamic_cast< FinallyStmt * >(maybeMoveBuild< Statement >(finally_) );
+	return new TryStmt( tryBlock, aststmt, finallyBlock );
 } // build_try
 
 Statement * build_catch( CatchStmt::Kind kind, DeclarationNode * decl, ExpressionNode * cond, StatementNode * body ) {
-	std::list< Statement * > branches;
-	buildMoveList< Statement, StatementNode >( body, branches );
-	assert( branches.size() == 1 );
-	return new CatchStmt( kind, maybeMoveBuild< Declaration >(decl), maybeMoveBuild< Expression >(cond), branches.front() );
+	list< Statement * > aststmt;
+	buildMoveList< Statement, StatementNode >( body, aststmt );
+	assert( aststmt.size() == 1 );
+	return new CatchStmt( kind, maybeMoveBuild< Declaration >(decl), maybeMoveBuild< Expression >(cond), aststmt.front() );
 } // build_catch
 
 Statement * build_finally( StatementNode * stmt ) {
-	std::list< Statement * > branches;
-	buildMoveList< Statement, StatementNode >( stmt, branches );
-	assert( branches.size() == 1 );
-	return new FinallyStmt( dynamic_cast< CompoundStmt * >( branches.front() ) );
+	list< Statement * > aststmt;
+	buildMoveList< Statement, StatementNode >( stmt, aststmt );
+	assert( aststmt.size() == 1 );
+	return new FinallyStmt( dynamic_cast< CompoundStmt * >( aststmt.front() ) );
 } // build_finally
 
 SuspendStmt * build_suspend( StatementNode * then, SuspendStmt::Type type ) {
@@ -253,7 +259,7 @@ SuspendStmt * build_suspend( StatementNode * then, SuspendStmt::Type type ) {
 
 	node->type = type;
 
-	std::list< Statement * > stmts;
+	list< Statement * > stmts;
 	buildMoveList< Statement, StatementNode >( then, stmts );
 	if(!stmts.empty()) {
 		assert( stmts.size() == 1 );
@@ -318,21 +324,21 @@ WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * s
 	return node;
 } // build_waitfor_timeout
 
-WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when,  StatementNode * else_stmt, ExpressionNode * else_when ) {
+WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when,  StatementNode * else_, ExpressionNode * else_when ) {
 	auto node = new WaitForStmt();
 
 	node->timeout.time      = maybeMoveBuild<Expression>( timeout );
 	node->timeout.statement = maybeMoveBuild<Statement >( stmt    );
 	node->timeout.condition = notZeroExpr( maybeMoveBuild<Expression>( when ) );
 
-	node->orelse.statement  = maybeMoveBuild<Statement >( else_stmt );
+	node->orelse.statement  = maybeMoveBuild<Statement >( else_ );
 	node->orelse.condition  = notZeroExpr( maybeMoveBuild<Expression>( else_when ) );
 
 	return node;
 } // build_waitfor_timeout
 
 Statement * build_with( ExpressionNode * exprs, StatementNode * stmt ) {
-	std::list< Expression * > e;
+	list< Expression * > e;
 	buildMoveList( exprs, e );
 	Statement * s = maybeMoveBuild<Statement>( stmt );
 	return new DeclStmt( new WithStmt( e, s ) );
@@ -360,8 +366,8 @@ StatementNode * maybe_build_compound( StatementNode * first ) {
 } // maybe_build_compound
 
 Statement * build_asm( bool voltile, Expression * instruction, ExpressionNode * output, ExpressionNode * input, ExpressionNode * clobber, LabelNode * gotolabels ) {
-	std::list< Expression * > out, in;
-	std::list< ConstantExpr * > clob;
+	list< Expression * > out, in;
+	list< ConstantExpr * > clob;
 
 	buildMoveList( output, out );
 	buildMoveList( input, in );
@@ -374,7 +380,7 @@ Statement * build_directive( string * directive ) {
 } // build_directive
 
 Statement * build_mutex( ExpressionNode * exprs, StatementNode * stmt ) {
-	std::list< Expression * > expList;
+	list< Expression * > expList;
 	buildMoveList( exprs, expList );
 	Statement * body = maybeMoveBuild<Statement>( stmt );
 	return new MutexStmt( body, expList );

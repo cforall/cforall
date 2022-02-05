@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Fri May 13 11:26:36 2016
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Nov 19 14:18:00 2021
-// Update Count     : 7
+// Last Modified On : Mon Dec  6 13:20:00 2021
+// Update Count     : 8
 //
 
 #pragma once
@@ -30,6 +30,10 @@ namespace InitTweak {
 	const FunctionDecl * isDefaultConstructor( const Declaration * decl );
 	const FunctionDecl * isCopyConstructor( const Declaration * decl );
 	const FunctionDecl * isCopyFunction( const Declaration * decl, const std::string & fname );
+	bool isAssignment( const ast::FunctionDecl * decl );
+	bool isDestructor( const ast::FunctionDecl * decl );
+	bool isDefaultConstructor( const ast::FunctionDecl * decl );
+	bool isCopyConstructor( const ast::FunctionDecl * decl );
 	bool isCopyFunction( const ast::FunctionDecl * decl );
 
 	/// returns the base type of the first parameter to a constructor/destructor/assignment function

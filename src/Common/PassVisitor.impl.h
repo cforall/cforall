@@ -1188,8 +1188,8 @@ void PassVisitor< pass_type >::visit( IfStmt * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeAccept_impl( node->initialization, *this );
 		visitExpression ( node->condition );
-		node->thenPart = visitStatement( node->thenPart );
-		node->elsePart = visitStatement( node->elsePart );
+		node->then = visitStatement( node->then );
+		node->else_ = visitStatement( node->else_ );
 	}
 	VISIT_END( node );
 }
@@ -1202,8 +1202,8 @@ void PassVisitor< pass_type >::visit( const IfStmt * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeAccept_impl( node->initialization, *this );
 		visitExpression ( node->condition );
-		visitStatement  ( node->thenPart );
-		visitStatement  ( node->elsePart );
+		visitStatement  ( node->then );
+		visitStatement  ( node->else_ );
 	}
 	VISIT_END( node );
 }
@@ -1216,16 +1216,16 @@ Statement * PassVisitor< pass_type >::mutate( IfStmt * node ) {
 		auto guard = makeFuncGuard( [this]() { indexerScopeEnter(); }, [this]() { indexerScopeLeave(); } );
 		maybeMutate_impl( node->initialization, *this );
 		node->condition = mutateExpression( node->condition );
-		node->thenPart  = mutateStatement ( node->thenPart  );
-		node->elsePart  = mutateStatement ( node->elsePart  );
+		node->then  = mutateStatement ( node->then  );
+		node->else_  = mutateStatement ( node->else_  );
 	}
 	MUTATE_END( Statement, node );
 }
 
 //--------------------------------------------------------------------------
-// WhileStmt
+// WhileDoStmt
 template< typename pass_type >
-void PassVisitor< pass_type >::visit( WhileStmt * node ) {
+void PassVisitor< pass_type >::visit( WhileDoStmt * node ) {
 	VISIT_START( node );
 
 	{
@@ -1240,7 +1240,7 @@ void PassVisitor< pass_type >::visit( WhileStmt * node ) {
 }
 
 template< typename pass_type >
-void PassVisitor< pass_type >::visit( const WhileStmt * node ) {
+void PassVisitor< pass_type >::visit( const WhileDoStmt * node ) {
 	VISIT_START( node );
 
 	{
@@ -1255,7 +1255,7 @@ void PassVisitor< pass_type >::visit( const WhileStmt * node ) {
 }
 
 template< typename pass_type >
-Statement * PassVisitor< pass_type >::mutate( WhileStmt * node ) {
+Statement * PassVisitor< pass_type >::mutate( WhileDoStmt * node ) {
 	MUTATE_START( node );
 
 	{

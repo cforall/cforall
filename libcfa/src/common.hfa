@@ -1,17 +1,17 @@
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-// 
-// common -- 
-// 
+//
+// common.hfa --
+//
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 11 17:54:36 2018
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Wed May  5 14:02:04 2021
 // Update Count     : 18
-// 
+//
 
 #pragma once
 

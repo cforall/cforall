@@ -91,8 +91,8 @@ public:
 	virtual void visit( const DirectiveStmt * dirStmt ) override final;
 	virtual void visit( IfStmt * ifStmt ) override final;
 	virtual void visit( const IfStmt * ifStmt ) override final;
-	virtual void visit( WhileStmt * whileStmt ) override final;
-	virtual void visit( const WhileStmt * whileStmt ) override final;
+	virtual void visit( WhileDoStmt * whileDoStmt ) override final;
+	virtual void visit( const WhileDoStmt * whileDoStmt ) override final;
 	virtual void visit( ForStmt * forStmt ) override final;
 	virtual void visit( const ForStmt * forStmt ) override final;
 	virtual void visit( SwitchStmt * switchStmt ) override final;
@@ -276,7 +276,7 @@ public:
 	virtual Statement * mutate( AsmStmt * asmStmt ) override final;
 	virtual Statement * mutate( DirectiveStmt * dirStmt ) override final;
 	virtual Statement * mutate( IfStmt * ifStmt ) override final;
-	virtual Statement * mutate( WhileStmt * whileStmt ) override final;
+	virtual Statement * mutate( WhileDoStmt * whileDoStmt ) override final;
 	virtual Statement * mutate( ForStmt * forStmt ) override final;
 	virtual Statement * mutate( SwitchStmt * switchStmt ) override final;
 	virtual Statement * mutate( CaseStmt * caseStmt ) override final;

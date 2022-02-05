@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 13:49:00 2021
-// Last Modified By : Andrew Beach
-// Last Modified On : Mon Nov  8 10:53:00 2021
-// Update Count     : 3
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Jan 31 22:34:06 2022
+// Update Count     : 6
 //
 
 #pragma once
@@ -18,19 +18,16 @@
 #include <map>
 
 namespace ast {
-	class CompoundStmt;
-	class Label;
-	class Stmt;
+class CompoundStmt;
+class Label;
+class Stmt;
 }
 
 namespace ControlStruct {
-
 using LabelToStmt = std::map<ast::Label, const ast::Stmt *>;
 
-/// Mutate a function body to handle multi-level exits.
-const ast::CompoundStmt * multiLevelExitUpdate(
-	const ast::CompoundStmt *, const LabelToStmt & );
-
+// Mutate a function body to handle multi-level exits.
+const ast::CompoundStmt * multiLevelExitUpdate(	const ast::CompoundStmt *, const LabelToStmt & );
 }
 
 // Local Variables: //

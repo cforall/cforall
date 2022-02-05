@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thr May 9 15:28:00 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:25:07 2021
-// Update Count     : 1
+// Last Modified On : Tue Feb  1 09:09:34 2022
+// Update Count     : 2
 //
 
 #pragma once
@@ -37,7 +37,7 @@ public:
     virtual const ast::Stmt *             visit( const ast::AsmStmt              * ) = 0;
     virtual const ast::Stmt *             visit( const ast::DirectiveStmt        * ) = 0;
     virtual const ast::Stmt *             visit( const ast::IfStmt               * ) = 0;
-    virtual const ast::Stmt *             visit( const ast::WhileStmt            * ) = 0;
+    virtual const ast::Stmt *             visit( const ast::WhileDoStmt          * ) = 0;
     virtual const ast::Stmt *             visit( const ast::ForStmt              * ) = 0;
     virtual const ast::Stmt *             visit( const ast::SwitchStmt           * ) = 0;
     virtual const ast::Stmt *             visit( const ast::CaseStmt             * ) = 0;

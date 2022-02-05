@@ -9,14 +9,15 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun  5 10:06:46 2021
-// Update Count     : 751
+// Last Modified On : Thu Feb  3 22:06:07 2022
+// Update Count     : 774
 //
 
 #ifdef __CFA__
 extern "C" {
 #endif // __CFA__
 
+#if 1
 //#define _GNU_SOURCE
 #include <aio.h>
 #include <aliases.h>
@@ -39,7 +40,7 @@ extern "C" {
 #include <err.h>
 #include <errno.h>
 #include <error.h>
-//#include <eti.h>                                                                              // may not be installed, comes with ncurses
+//#include <eti.h>										// may not be installed, comes with ncurses
 #include <execinfo.h>
 #include <expat.h>
 #include <expat_external.h>
@@ -48,7 +49,7 @@ extern "C" {
 #include <fenv.h>
 #include <fmtmsg.h>
 #include <fnmatch.h>
-//#include <form.h>                                                                             // may not be installed, comes with ncurses
+//#include <form.h>										// may not be installed, comes with ncurses
 #include <fstab.h>
 #include <fts.h>
 #include <ftw.h>
@@ -76,16 +77,16 @@ extern "C" {
 #include <math.h>
 #include <mcheck.h>
 #include <memory.h>
-//#include <menu.h>                                                                             // may not be installed, comes with ncurses
+//#include <menu.h>										// may not be installed, comes with ncurses
 #include <mntent.h>
 #include <monetary.h>
 #include <mqueue.h>
-//#include <ncurses_dll.h>                                                                      // may not be installed, comes with ncurses
+//#include <ncurses_dll.h>								// may not be installed, comes with ncurses
 #include <netdb.h>
 #include <nl_types.h>
 #include <nss.h>
 #include <obstack.h>
-//#include <panel.h>                                                                            // may not be installed, comes with ncurses
+//#include <panel.h>										// may not be installed, comes with ncurses
 #include <paths.h>
 #include <poll.h>
 #include <printf.h>
@@ -116,8 +117,8 @@ extern "C" {
 #include <sysexits.h>
 #include <syslog.h>
 #include <tar.h>
-//#include <term.h>                                                                             // may not be installed, comes with ncurses
-//#include <termcap.h>                                                                          // may not be installed, comes with ncurses
+//#include <term.h>										// may not be installed, comes with ncurses
+//#include <termcap.h>									// may not be installed, comes with ncurses
 #include <termio.h>
 #include <termios.h>
 // #include <term_entry.h>								// conflicts with search.h on some machines
@@ -129,7 +130,7 @@ extern "C" {
 #include <uchar.h>
 #include <ucontext.h>
 #include <ulimit.h>
-//#include <unctrl.h>                                                                           // may not be installed, comes with ncurses
+//#include <unctrl.h>										// may not be installed, comes with ncurses
 #include <unistd.h>
 #include <utime.h>
 #include <utmp.h>
@@ -142,16 +143,14 @@ extern "C" {
 #include <wchar.h>
 #include <wctype.h>
 #include <wordexp.h>
-
-#if 0
 #endif // 0
 
 #ifdef __CFA__
 } // extern "C"
 #endif // __CFA__
 
-int main( int argc, char const *argv[] ) {
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+int main( int argc, char const * argv[] ) {
+    #pragma GCC warning "Compiled"							// force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

@@ -28,9 +28,13 @@
 		stats->ready.threads.extunpark = 0;
 		stats->ready.threads.threads   = 0;
 		stats->ready.threads.cthreads  = 0;
+		stats->ready.threads.preempt.yield  = 0;
+		stats->ready.threads.preempt.rllfwd = 0;
 		stats->ready.sleep.halts   = 0;
 		stats->ready.sleep.cancels = 0;
+		stats->ready.sleep.early   = 0;
 		stats->ready.sleep.wakes   = 0;
+		stats->ready.sleep.seen    = 0;
 		stats->ready.sleep.exits   = 0;
 
 		#if defined(CFA_HAVE_LINUX_IO_URING_H)
@@ -42,6 +46,10 @@
 			stats->io.submit.fast       = 0;
 			stats->io.submit.slow       = 0;
 			stats->io.flush.external    = 0;
+			stats->io.flush.dirty       = 0;
+			stats->io.flush.full        = 0;
+			stats->io.flush.idle        = 0;
+			stats->io.flush.eager       = 0;
 			stats->io.calls.flush       = 0;
 			stats->io.calls.submitted   = 0;
 			stats->io.calls.drain       = 0;
@@ -70,28 +78,32 @@
 	}
 
 	void __tally_stats( struct __stats_t * cltr, struct __stats_t * proc ) {
-		tally_one( &cltr->ready.push.local.attempt, &proc->ready.push.local.attempt );
-		tally_one( &cltr->ready.push.local.success, &proc->ready.push.local.success );
-		tally_one( &cltr->ready.push.share.attempt, &proc->ready.push.share.attempt );
-		tally_one( &cltr->ready.push.share.success, &proc->ready.push.share.success );
-		tally_one( &cltr->ready.push.extrn.attempt, &proc->ready.push.extrn.attempt );
-		tally_one( &cltr->ready.push.extrn.success, &proc->ready.push.extrn.success );
-		tally_one( &cltr->ready.pop.local .attempt, &proc->ready.pop.local .attempt );
-		tally_one( &cltr->ready.pop.local .success, &proc->ready.pop.local .success );
-		tally_one( &cltr->ready.pop.help  .attempt, &proc->ready.pop.help  .attempt );
-		tally_one( &cltr->ready.pop.help  .success, &proc->ready.pop.help  .success );
-		tally_one( &cltr->ready.pop.steal .attempt, &proc->ready.pop.steal .attempt );
-		tally_one( &cltr->ready.pop.steal .success, &proc->ready.pop.steal .success );
-		tally_one( &cltr->ready.pop.search.attempt, &proc->ready.pop.search.attempt );
-		tally_one( &cltr->ready.pop.search.success, &proc->ready.pop.search.success );
-		tally_one( &cltr->ready.threads.migration , &proc->ready.threads.migration  );
-		tally_one( &cltr->ready.threads.extunpark , &proc->ready.threads.extunpark  );
-		tally_one( &cltr->ready.threads.threads   , &proc->ready.threads.threads    );
-		tally_one( &cltr->ready.threads.cthreads  , &proc->ready.threads.cthreads   );
-		tally_one( &cltr->ready.sleep.halts       , &proc->ready.sleep.halts        );
-		tally_one( &cltr->ready.sleep.cancels     , &proc->ready.sleep.cancels      );
-		tally_one( &cltr->ready.sleep.wakes       , &proc->ready.sleep.wakes        );
-		tally_one( &cltr->ready.sleep.exits       , &proc->ready.sleep.exits        );
+		tally_one( &cltr->ready.push.local.attempt    , &proc->ready.push.local.attempt     );
+		tally_one( &cltr->ready.push.local.success    , &proc->ready.push.local.success     );
+		tally_one( &cltr->ready.push.share.attempt    , &proc->ready.push.share.attempt     );
+		tally_one( &cltr->ready.push.share.success    , &proc->ready.push.share.success     );
+		tally_one( &cltr->ready.push.extrn.attempt    , &proc->ready.push.extrn.attempt     );
+		tally_one( &cltr->ready.push.extrn.success    , &proc->ready.push.extrn.success     );
+		tally_one( &cltr->ready.pop.local .attempt    , &proc->ready.pop.local .attempt     );
+		tally_one( &cltr->ready.pop.local .success    , &proc->ready.pop.local .success     );
+		tally_one( &cltr->ready.pop.help  .attempt    , &proc->ready.pop.help  .attempt     );
+		tally_one( &cltr->ready.pop.help  .success    , &proc->ready.pop.help  .success     );
+		tally_one( &cltr->ready.pop.steal .attempt    , &proc->ready.pop.steal .attempt     );
+		tally_one( &cltr->ready.pop.steal .success    , &proc->ready.pop.steal .success     );
+		tally_one( &cltr->ready.pop.search.attempt    , &proc->ready.pop.search.attempt     );
+		tally_one( &cltr->ready.pop.search.success    , &proc->ready.pop.search.success     );
+		tally_one( &cltr->ready.threads.migration     , &proc->ready.threads.migration      );
+		tally_one( &cltr->ready.threads.extunpark     , &proc->ready.threads.extunpark      );
+		tally_one( &cltr->ready.threads.threads       , &proc->ready.threads.threads        );
+		tally_one( &cltr->ready.threads.cthreads      , &proc->ready.threads.cthreads       );
+		tally_one( &cltr->ready.threads.preempt.yield , &proc->ready.threads.preempt.yield  );
+		tally_one( &cltr->ready.threads.preempt.rllfwd, &proc->ready.threads.preempt.rllfwd );
+		tally_one( &cltr->ready.sleep.halts           , &proc->ready.sleep.halts            );
+		tally_one( &cltr->ready.sleep.cancels         , &proc->ready.sleep.cancels          );
+		tally_one( &cltr->ready.sleep.early           , &proc->ready.sleep.early            );
+		tally_one( &cltr->ready.sleep.wakes           , &proc->ready.sleep.wakes            );
+		tally_one( &cltr->ready.sleep.seen            , &proc->ready.sleep.wakes            );
+		tally_one( &cltr->ready.sleep.exits           , &proc->ready.sleep.exits            );
 
 		#if defined(CFA_HAVE_LINUX_IO_URING_H)
 			tally_one( &cltr->io.alloc.fast       , &proc->io.alloc.fast        );
@@ -102,6 +114,10 @@
 			tally_one( &cltr->io.submit.fast      , &proc->io.submit.fast       );
 			tally_one( &cltr->io.submit.slow      , &proc->io.submit.slow       );
 			tally_one( &cltr->io.flush.external   , &proc->io.flush.external    );
+			tally_one( &cltr->io.flush.dirty      , &proc->io.flush.dirty       );
+			tally_one( &cltr->io.flush.full       , &proc->io.flush.full        );
+			tally_one( &cltr->io.flush.idle       , &proc->io.flush.idle        );
+			tally_one( &cltr->io.flush.eager      , &proc->io.flush.eager       );
 			tally_one( &cltr->io.calls.flush      , &proc->io.calls.flush       );
 			tally_one( &cltr->io.calls.submitted  , &proc->io.calls.submitted   );
 			tally_one( &cltr->io.calls.drain      , &proc->io.calls.drain       );
@@ -152,7 +168,10 @@
 			sstr | "- search   : " | eng3(ready.pop.search.success) | "-"| ws(3, 3, rSch_pc) | '%'
 			     | " (" | eng3(ready.pop.search.attempt) | " try)";
 
-			sstr | "- Idle Slp : " | eng3(ready.sleep.halts) | "halt," | eng3(ready.sleep.cancels) | "cancel," | eng3(ready.sleep.wakes) | "wake," | eng3(ready.sleep.exits) | "exit";
+			sstr | "- Idle Slp : " | eng3(ready.sleep.halts) | "halt," | eng3(ready.sleep.cancels) | "cancel,"
+			     | eng3(ready.sleep.wakes + ready.sleep.early) | '(' | eng3(ready.sleep.early) | ',' | eng3(ready.sleep.seen) | ')' | " wake(early, seen),"
+			     | eng3(ready.sleep.exits) | "exit";
+			sstr | "- Preemption : " | eng3(ready.threads.preempt.yield) | "yields," | eng3(ready.threads.preempt.rllfwd) | "delayed";
 			sstr | nl;
 		}
 
@@ -177,15 +196,16 @@
 
 				if(io.alloc.fail || io.alloc.revoke || io.alloc.block)
 					sstr | "-     failures      : " | eng3(io.alloc.fail) | "oom, " | eng3(io.alloc.revoke) | "rvk, " | eng3(io.alloc.block) | "blk";
-				if(io.flush.external)
-					sstr | "- flush external    : " | eng3(io.flush.external);
+				// if(io.flush.external)
+				// 	sstr | "- flush external    : " | eng3(io.flush.external);
 
 				double avgsubs = ((double)io.calls.submitted) / io.calls.flush;
 				double avgcomp = ((double)io.calls.completed) / io.calls.drain;
 				sstr | "- syscll : "
-				     |   " sub " | eng3(io.calls.flush) | "/" | eng3(io.calls.submitted) | "(" | ws(3, 3, avgsubs) | "/flush)"
-				     | " - cmp " | eng3(io.calls.drain) | "/" | eng3(io.calls.completed) | "(" | ws(3, 3, avgcomp) | "/drain)"
+				     |   " sub " | eng3(io.calls.submitted) | "/" | eng3(io.calls.flush) | "(" | ws(3, 3, avgsubs) | "/flush)"
+				     | " - cmp " | eng3(io.calls.completed) | "/" | eng3(io.calls.drain) | "(" | ws(3, 3, avgcomp) | "/drain)"
 				     | " - " | eng3(io.calls.errors.busy) | " EBUSY";
+				sstr | " - sub: " | eng3(io.flush.full) | "full, " | eng3(io.flush.dirty) | "drty, " | eng3(io.flush.idle) | "idle, " | eng3(io.flush.eager) | "eagr, " | eng3(io.flush.external) | "ext";
 				sstr | "- ops blk: "
 				     |   " sk rd: " | eng3(io.ops.sockread)  | "epll: " | eng3(io.ops.epllread)
 				     |   " sk wr: " | eng3(io.ops.sockwrite) | "epll: " | eng3(io.ops.epllwrite);

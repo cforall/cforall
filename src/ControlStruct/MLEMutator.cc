@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Jan 22 11:50:00 2020
-// Update Count     : 223
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Feb  2 20:18:57 2022
+// Update Count     : 227
 //
 
 // NOTE: There are two known subtle differences from the code that uC++ generates for the same input
@@ -38,7 +38,7 @@ namespace ControlStruct {
 	}
 	namespace {
 		bool isLoop( const MultiLevelExitMutator::Entry & e ) {
-			return dynamic_cast< WhileStmt * >( e.get_controlStructure() )
+			return dynamic_cast< WhileDoStmt * >( e.get_controlStructure() )
 				|| dynamic_cast< ForStmt * >( e.get_controlStructure() );
 		}
 		bool isSwitch( const MultiLevelExitMutator::Entry & e ) {
@@ -135,7 +135,7 @@ namespace ControlStruct {
 				return;
 			}
 		}
-		assertf( false, "Could not find label '%s' on statement %s",
+		assertf( false, "CFA internal error: could not find label '%s' on statement %s",
 			originalTarget.get_name().c_str(), toString( stmt ).c_str() );
 	}
 
@@ -294,16 +294,16 @@ namespace ControlStruct {
 		return loopStmt;
 	}
 
-	void MultiLevelExitMutator::premutate( WhileStmt * whileStmt ) {
-		return prehandleLoopStmt( whileStmt );
+	void MultiLevelExitMutator::premutate( WhileDoStmt * whileDoStmt ) {
+		return prehandleLoopStmt( whileDoStmt );
 	}
 
 	void MultiLevelExitMutator::premutate( ForStmt * forStmt ) {
 		return prehandleLoopStmt( forStmt );
 	}
 
-	Statement * MultiLevelExitMutator::postmutate( WhileStmt * whileStmt ) {
-		return posthandleLoopStmt( whileStmt );
+	Statement * MultiLevelExitMutator::postmutate( WhileDoStmt * whileDoStmt ) {
+		return posthandleLoopStmt( whileDoStmt );
 	}
 
 	Statement * MultiLevelExitMutator::postmutate( ForStmt * forStmt ) {
@@ -394,7 +394,9 @@ namespace ControlStruct {
 			} // if
 		}
 		assert( ! enclosingControlStructures.empty() );
-		assertf( dynamic_cast<SwitchStmt *>( enclosingControlStructures.back().get_controlStructure() ), "Control structure enclosing a case clause must be a switch, but is: %s", toCString( enclosingControlStructures.back().get_controlStructure() ) );
+		assertf( dynamic_cast<SwitchStmt *>( enclosingControlStructures.back().get_controlStructure() ),
+				 "CFA internal error: control structure enclosing a case clause must be a switch, but is: %s",
+				 toCString( enclosingControlStructures.back().get_controlStructure() ) );
 		if ( caseStmt->isDefault() ) {
 			if ( enclosingControlStructures.back().isFallDefaultUsed() ) {
 				// add fallthrough default label if necessary

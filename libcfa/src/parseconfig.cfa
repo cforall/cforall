@@ -1,3 +1,11 @@
+
+
+#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wunused-parameter"
+//#pragma GCC diagnostic ignored "-Wunused-function"
+//#pragma GCC diagnostic ignored "-Wuninitialized"
+//#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 #include <fstream.hfa>
 #include <parseargs.hfa>
 #include <stdlib.hfa>
@@ -18,14 +26,7 @@ static vtable(Missing_Config_Entries) Missing_Config_Entries_vt;
 
 // TODO: use string interface when it's ready (and implement exception msg protocol)
 [ void ] msg( * Missing_Config_Entries ex ) {
-	serr | nlOff;
-	serr | "The config file is missing " | ex->num_missing;
-	serr | nlOn;
-	if ( ex->num_missing == 1 ) {
-		serr | " entry.";
-	} else {
-		serr | " entries.";
-	}
+	serr | "The config file is missing " | ex->num_missing | "entr" | sepOff | (ex->num_missing == 1 ? "y." : "ies.");
 } // msg
 
 
@@ -222,6 +223,7 @@ forall(T | Relational( T ))
 	T zero_val = 0;
 	return value < zero_val;
 }
+#pragma GCC diagnostic pop
 
 
 // Local Variables: //

@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Thu May 09 15::37::05 2019
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Jul 14 16:15:00 2021
-// Update Count     : 37
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Feb  2 13:19:22 2022
+// Update Count     : 41
 //
 
 #include "Convert.hpp"
@@ -392,8 +392,8 @@ private:
 		if ( inCache( node ) ) return nullptr;
 		auto stmt = new IfStmt(
 			get<Expression>().accept1( node->cond ),
-			get<Statement>().accept1( node->thenPart ),
-			get<Statement>().accept1( node->elsePart ),
+			get<Statement>().accept1( node->then ),
+			get<Statement>().accept1( node->else_ ),
 			get<Statement>().acceptL( node->inits )
 		);
 		return stmtPostamble( stmt, node );
@@ -418,12 +418,13 @@ private:
 		return stmtPostamble( stmt, node );
 	}
 
-	const ast::Stmt * visit( const ast::WhileStmt * node ) override final {
+	const ast::Stmt * visit( const ast::WhileDoStmt * node ) override final {
 		if ( inCache( node ) ) return nullptr;
 		auto inits = get<Statement>().acceptL( node->inits );
-		auto stmt = new WhileStmt(
+		auto stmt = new WhileDoStmt(
 			get<Expression>().accept1( node->cond ),
 			get<Statement>().accept1( node->body ),
+			get<Statement>().accept1( node->else_ ),
 			inits,
 			node->isDoWhile
 		);
@@ -436,7 +437,8 @@ private:
 			get<Statement>().acceptL( node->inits ),
 			get<Expression>().accept1( node->cond ),
 			get<Expression>().accept1( node->inc ),
-			get<Statement>().accept1( node->body )
+			get<Statement>().accept1( node->body ),
+			get<Statement>().accept1( node->else_ )
 		);
 		return stmtPostamble( stmt, node );
 	}
@@ -1871,8 +1873,8 @@ private:
 		this->node = new ast::IfStmt(
 			old->location,
 			GET_ACCEPT_1(condition, Expr),
-			GET_ACCEPT_1(thenPart, Stmt),
-			GET_ACCEPT_1(elsePart, Stmt),
+			GET_ACCEPT_1(then, Stmt),
+			GET_ACCEPT_1(else_, Stmt),
 			GET_ACCEPT_V(initialization, Stmt),
 			GET_LABELS_V(old->labels)
 		);
@@ -1901,12 +1903,13 @@ private:
 		cache.emplace( old, this->node );
 	}
 
-	virtual void visit( const WhileStmt * old ) override final {
+	virtual void visit( const WhileDoStmt * old ) override final {
 		if ( inCache( old ) ) return;
-		this->node = new ast::WhileStmt(
+		this->node = new ast::WhileDoStmt(
 			old->location,
 			GET_ACCEPT_1(condition, Expr),
 			GET_ACCEPT_1(body, Stmt),
+			GET_ACCEPT_1(else_, Stmt),
 			GET_ACCEPT_V(initialization, Stmt),
 			old->isDoWhile,
 			GET_LABELS_V(old->labels)
@@ -1922,6 +1925,7 @@ private:
 			GET_ACCEPT_1(condition, Expr),
 			GET_ACCEPT_1(increment, Expr),
 			GET_ACCEPT_1(body, Stmt),
+			GET_ACCEPT_1(else_, Stmt),
 			GET_LABELS_V(old->labels)
 		);
 		cache.emplace( old, this->node );

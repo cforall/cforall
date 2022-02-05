@@ -9,9 +9,9 @@
 ##
 ## Author           : Richard C. Bilson
 ## Created On       : Mon Jun  1 17:49:17 2015
-## Last Modified By : Henry Xue
-## Last Modified On : Tue Jul 20 04:10:50 2021
-## Update Count     : 5
+## Last Modified By : Peter A. Buhr
+## Last Modified On : Sat Jan 29 12:04:19 2022
+## Update Count     : 7
 ###############################################################################
 
 SRC_CONTROLSTRUCT = \
@@ -21,10 +21,14 @@ SRC_CONTROLSTRUCT = \
 	ControlStruct/FixLabels.hpp \
 	ControlStruct/ForExprMutator.cc \
 	ControlStruct/ForExprMutator.h \
+	ControlStruct/HoistControlDecls.cpp \
+	ControlStruct/HoistControlDecls.hpp \
 	ControlStruct/LabelFixer.cc \
 	ControlStruct/LabelFixer.h \
 	ControlStruct/LabelGenerator.cc \
 	ControlStruct/LabelGenerator.h \
+	ControlStruct/LabelGeneratorNew.cpp \
+	ControlStruct/LabelGeneratorNew.hpp \
 	ControlStruct/MLEMutator.cc \
 	ControlStruct/MLEMutator.h \
 	ControlStruct/MultiLevelExit.cpp \

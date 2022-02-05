@@ -9,43 +9,16 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  1 18:40:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct  6 18:04:58 2021
-// Update Count     : 72
+// Last Modified On : Fri Jan 14 09:13:43 2022
+// Update Count     : 73
 // 
 
 #include <fstream.hfa>
 #include <thread.hfa>
 #include <mutex_stmt.hfa>
 
-thread T {};
-void main( T & ) {
-	// output from parallel threads should not be scrambled
+Duration default_preemption() { return 0; }
 
-	for ( 100 ) {										// expression protection
-		mutex(sout) sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-	}
-	mutex( sout ) {										// statement protection
-		for ( 100 ) {
-			sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-		}
-	}
-	{													// duplicate protection demonstrating recursive lock
-		ofstream & h1( ofstream & os ) {				// helper
-			mutex( os ) return os | 1 | 2 | 3 | 4;		// unnecessary mutex
-		}
-		ofstream & h2( ofstream & os ) {				// helper
-			mutex( os ) return os | 6 | 7 | 8 | 9;		// unnecessary mutex
-		}
-		mutex( sout ) {									// unnecessary mutex
-			for ( 100 ) {
-				mutex( sout ) {
-					sout | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-					sout | h1 | 5 | h2;					// refactored code
-				}
-			}
-		}
-	}
-}
 	// above output used as input to parallel threads 
 thread T2 {};
 void main( T2 & ) {
@@ -78,11 +51,9 @@ void main( T2 & ) {
 int main() {
 	processor p;
 	{
-		T t[5];
-	}
-	{
 		T2 t[5];
 	}
+	sout | "done";
 } 
 
 // Local Variables: //

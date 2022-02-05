@@ -9,33 +9,23 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 31 22:30:10 2022
-// Update Count     : 16
+// Last Modified On : Mon Jan 31 18:03:09 2022
+// Update Count     : 27
 //
 
 #pragma once
 
-#include <string>           // for string
-
-#include "SynTree/Label.h"  // for Label
+#include <string>										// for string
 
 class Statement;
 
 namespace ast {
-class Stmt;
-class Label;
-}
+	class Stmt;
+	class Label;
+} // namespace ast
 
 namespace ControlStruct {
-class LabelGenerator {
-	static int current;
-	static LabelGenerator *labelGenerator;
-  protected:
-	LabelGenerator() {}
-  public:
-	static LabelGenerator *getGenerator();
-	static Label newLabel(std::string suffix, Statement * stmt = nullptr);
-};
+	ast::Label newLabel( const std::string &, const ast::Stmt * );
 } // namespace ControlStruct
 
 // Local Variables: //

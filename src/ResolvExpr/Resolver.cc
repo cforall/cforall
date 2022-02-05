@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Sun May 17 12:17:01 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Fri Mar 27 11:58:00 2020
-// Update Count     : 242
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Feb  1 16:27:14 2022
+// Update Count     : 245
 //
 
 #include <cassert>                       // for strict_dynamic_cast, assert
@@ -79,7 +79,7 @@ namespace ResolvExpr {
 		void previsit( AsmExpr * asmExpr );
 		void previsit( AsmStmt * asmStmt );
 		void previsit( IfStmt * ifStmt );
-		void previsit( WhileStmt * whileStmt );
+		void previsit( WhileDoStmt * whileDoStmt );
 		void previsit( ForStmt * forStmt );
 		void previsit( SwitchStmt * switchStmt );
 		void previsit( CaseStmt * caseStmt );
@@ -501,8 +501,8 @@ namespace ResolvExpr {
 		findIntegralExpression( ifStmt->condition, indexer );
 	}
 
-	void Resolver_old::previsit( WhileStmt * whileStmt ) {
-		findIntegralExpression( whileStmt->condition, indexer );
+	void Resolver_old::previsit( WhileDoStmt * whileDoStmt ) {
+		findIntegralExpression( whileDoStmt->condition, indexer );
 	}
 
 	void Resolver_old::previsit( ForStmt * forStmt ) {
@@ -571,10 +571,10 @@ namespace ResolvExpr {
 	}
 
 	void Resolver_old::previsit( CatchStmt * catchStmt ) {
-		// Until we are very sure this invarent (ifs that move between passes have thenPart)
+		// Until we are very sure this invarent (ifs that move between passes have then)
 		// holds, check it. This allows a check for when to decode the mangling.
 		if ( IfStmt * ifStmt = dynamic_cast<IfStmt *>( catchStmt->body ) ) {
-			assert( ifStmt->thenPart );
+			assert( ifStmt->then );
 		}
 		// Encode the catchStmt so the condition can see the declaration.
 		if ( catchStmt->cond ) {
@@ -587,13 +587,13 @@ namespace ResolvExpr {
 	void Resolver_old::postvisit( CatchStmt * catchStmt ) {
 		// Decode the catchStmt so everything is stored properly.
 		IfStmt * ifStmt = dynamic_cast<IfStmt *>( catchStmt->body );
-		if ( nullptr != ifStmt && nullptr == ifStmt->thenPart ) {
+		if ( nullptr != ifStmt && nullptr == ifStmt->then ) {
 			assert( ifStmt->condition );
-			assert( ifStmt->elsePart );
+			assert( ifStmt->else_ );
 			catchStmt->cond = ifStmt->condition;
-			catchStmt->body = ifStmt->elsePart;
+			catchStmt->body = ifStmt->else_;
 			ifStmt->condition = nullptr;
-			ifStmt->elsePart = nullptr;
+			ifStmt->else_ = nullptr;
 			delete ifStmt;
 		}
 	}
@@ -1271,7 +1271,7 @@ namespace ResolvExpr {
 		const ast::AsmExpr *         previsit( const ast::AsmExpr * );
 		const ast::AsmStmt *         previsit( const ast::AsmStmt * );
 		const ast::IfStmt *          previsit( const ast::IfStmt * );
-		const ast::WhileStmt *       previsit( const ast::WhileStmt * );
+		const ast::WhileDoStmt *       previsit( const ast::WhileDoStmt * );
 		const ast::ForStmt *         previsit( const ast::ForStmt * );
 		const ast::SwitchStmt *      previsit( const ast::SwitchStmt * );
 		const ast::CaseStmt *        previsit( const ast::CaseStmt * );
@@ -1580,9 +1580,9 @@ namespace ResolvExpr {
 			ifStmt, &ast::IfStmt::cond, findIntegralExpression( ifStmt->cond, symtab ) );
 	}
 
-	const ast::WhileStmt * Resolver_new::previsit( const ast::WhileStmt * whileStmt ) {
+	const ast::WhileDoStmt * Resolver_new::previsit( const ast::WhileDoStmt * whileDoStmt ) {
 		return ast::mutate_field(
-			whileStmt, &ast::WhileStmt::cond, findIntegralExpression( whileStmt->cond, symtab ) );
+			whileDoStmt, &ast::WhileDoStmt::cond, findIntegralExpression( whileDoStmt->cond, symtab ) );
 	}
 
 	const ast::ForStmt * Resolver_new::previsit( const ast::ForStmt * forStmt ) {
@@ -1668,10 +1668,10 @@ namespace ResolvExpr {
 	}
 
 	const ast::CatchStmt * Resolver_new::previsit( const ast::CatchStmt * catchStmt ) {
-		// Until we are very sure this invarent (ifs that move between passes have thenPart)
+		// Until we are very sure this invarent (ifs that move between passes have then)
 		// holds, check it. This allows a check for when to decode the mangling.
 		if ( auto ifStmt = catchStmt->body.as<ast::IfStmt>() ) {
-			assert( ifStmt->thenPart );
+			assert( ifStmt->then );
 		}
 		// Encode the catchStmt so the condition can see the declaration.
 		if ( catchStmt->cond ) {
@@ -1686,12 +1686,12 @@ namespace ResolvExpr {
 	const ast::CatchStmt * Resolver_new::postvisit( const ast::CatchStmt * catchStmt ) {
 		// Decode the catchStmt so everything is stored properly.
 		const ast::IfStmt * ifStmt = catchStmt->body.as<ast::IfStmt>();
-		if ( nullptr != ifStmt && nullptr == ifStmt->thenPart ) {
+		if ( nullptr != ifStmt && nullptr == ifStmt->then ) {
 			assert( ifStmt->cond );
-			assert( ifStmt->elsePart );
+			assert( ifStmt->else_ );
 			ast::CatchStmt * stmt = ast::mutate( catchStmt );
 			stmt->cond = ifStmt->cond;
-			stmt->body = ifStmt->elsePart;
+			stmt->body = ifStmt->else_;
 			// ifStmt should be implicately deleted here.
 			return stmt;
 		}

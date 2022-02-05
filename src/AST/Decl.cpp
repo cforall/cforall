@@ -25,6 +25,7 @@
 #include "Init.hpp"
 #include "Node.hpp"            // for readonly
 #include "Type.hpp"            // for readonly
+#include "Expr.hpp"
 
 namespace ast {
 
@@ -64,6 +65,9 @@ FunctionDecl::FunctionDecl( const CodeLocation & loc, const std::string & name,
 	}
 	for (auto & tp : this->type_params) {
 		ftype->forall.emplace_back(new TypeInstType(tp->name, tp));
+		for (auto & ap: tp->assertions) {
+			ftype->assertions.emplace_back(new VariableExpr(loc, ap));
+		}
 	}
 	this->type = ftype;
 }

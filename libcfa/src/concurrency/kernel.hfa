@@ -54,6 +54,11 @@ coroutine processorCtx_t {
 	struct processor * proc;
 };
 
+
+struct __fd_waitctx {
+	volatile int fd;
+};
+
 // Wrapper around kernel threads
 struct __attribute__((aligned(128))) processor {
 	// Cluster from which to get threads
@@ -66,8 +71,7 @@ struct __attribute__((aligned(128))) processor {
 		unsigned id;
 		unsigned target;
 		unsigned last;
-		unsigned cnt;
-		unsigned long long int cutoff;
+		signed   cpu;
 	} rdq;
 
 	// Set to true to notify the processor should terminate
@@ -100,6 +104,9 @@ struct __attribute__((aligned(128))) processor {
 
 	// Idle lock (kernel semaphore)
 	int idle_fd;
+
+	// Idle waitctx
+	struct __fd_waitctx idle_wctx;
 
 	// Termination synchronisation (user semaphore)
 	oneshot terminated;
@@ -153,6 +160,10 @@ struct __attribute__((aligned(128))) __timestamp_t {
 	volatile unsigned long long ma;
 };
 
+struct __attribute__((aligned(16))) __cache_id_t {
+	volatile unsigned id;
+};
+
 // Aligned timestamps which are used by the relaxed ready queue
 struct __attribute__((aligned(128))) __help_cnts_t {
 	volatile unsigned long long src;
@@ -163,8 +174,12 @@ struct __attribute__((aligned(128))) __help_cnts_t {
 static inline void  ?{}(__timestamp_t & this) { this.tv = 0; this.ma = 0; }
 static inline void ^?{}(__timestamp_t & this) {}
 
+struct __attribute__((aligned(128))) __ready_queue_caches_t;
+void  ?{}(__ready_queue_caches_t & this);
+void ^?{}(__ready_queue_caches_t & this);
+
 //TODO adjust cache size to ARCHITECTURE
-// Structure holding the relaxed ready queue
+// Structure holding the ready queue
 struct __ready_queue_t {
 	// Data tracking the actual lanes
 	// On a seperate cacheline from the used struct since
@@ -176,6 +191,8 @@ struct __ready_queue_t {
 
 		// Array of times
 		__timestamp_t * volatile tscs;
+
+		__cache_id_t * volatile caches;
 
 		// Array of stats
 		__help_cnts_t * volatile help;
@@ -197,7 +214,7 @@ struct __cluster_proc_list {
 	__spinlock_t lock;
 
 	// FD to use to wake a processor
-	volatile int fd;
+	struct __fd_waitctx * volatile fdw;
 
 	// Total number of processors
 	unsigned total;

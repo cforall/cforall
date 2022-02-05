@@ -358,7 +358,7 @@ union YYSTYPE
 	StatementNode * sn;
 	WaitForStmt * wfs;
 	Expression * constant;
-	IfCtrl * ifctl;
+	CondCtl * ifctl;
 	ForCtrl * fctl;
 	enum OperKinds compop;
 	LabelNode * label;

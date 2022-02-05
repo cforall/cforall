@@ -33,13 +33,6 @@
 	/* call the implementation of the previsit of this pass */ \
 	__pass::previsit( core, node, 0 );
 
-#define VISIT( code... ) \
-	/* if this node should visit its children */ \
-	if ( __visit_children() ) { \
-		/* visit the children */ \
-		code \
-	}
-
 #define VISIT_END( type, node ) \
 	/* call the implementation of the postvisit of this pass */ \
 	auto __return = __pass::postvisit( core, node, 0 ); \
@@ -451,7 +444,7 @@ template< typename core_t >
 const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::ObjectDecl * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &ObjectDecl::type );
@@ -459,7 +452,7 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::ObjectDecl * no
 		maybe_accept( node, &ObjectDecl::init          );
 		maybe_accept( node, &ObjectDecl::bitfieldWidth );
 		maybe_accept( node, &ObjectDecl::attributes    );
-	)
+	}
 
 	__pass::symtab::addId( core, 0, node );
 
@@ -474,7 +467,9 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 
 	__pass::symtab::addId( core, 0, node );
 
-	VISIT(maybe_accept( node, &FunctionDecl::withExprs );)
+	if ( __visit_children() ) {
+		maybe_accept( node, &FunctionDecl::withExprs );
+	}
 	{
 		// with clause introduces a level of scope (for the with expression members).
 		// with clause exprs are added to the symbol table before parameters so that parameters
@@ -492,7 +487,7 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 				}
 			} };
 			__pass::symtab::addId( core, 0, func );
-			VISIT(
+			if ( __visit_children() ) {
 				// parameter declarations
 				maybe_accept( node, &FunctionDecl::params );
 				maybe_accept( node, &FunctionDecl::returns );
@@ -508,7 +503,7 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 				atFunctionTop = true;
 				maybe_accept( node, &FunctionDecl::stmts );
 				maybe_accept( node, &FunctionDecl::attributes );
-			)
+			}
 		}
 	}
 
@@ -525,12 +520,12 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::StructDecl * node ) {
 	// needs to be on the heap because addStruct saves the pointer
 	__pass::symtab::addStructFwd( core, 0, node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { * this };
 		maybe_accept( node, &StructDecl::params     );
 		maybe_accept( node, &StructDecl::members    );
 		maybe_accept( node, &StructDecl::attributes );
-	})
+	}
 
 	// this addition replaces the forward declaration
 	__pass::symtab::addStruct( core, 0, node );
@@ -547,12 +542,12 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::UnionDecl * node ) {
 	// make up a forward declaration and add it before processing the members
 	__pass::symtab::addUnionFwd( core, 0, node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { * this };
 		maybe_accept( node, &UnionDecl::params     );
 		maybe_accept( node, &UnionDecl::members    );
 		maybe_accept( node, &UnionDecl::attributes );
-	})
+	}
 
 	__pass::symtab::addUnion( core, 0, node );
 
@@ -567,12 +562,12 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::EnumDecl * node ) {
 
 	__pass::symtab::addEnum( core, 0, node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		// unlike structs, traits, and unions, enums inject their members into the global scope
 		maybe_accept( node, &EnumDecl::params     );
 		maybe_accept( node, &EnumDecl::members    );
 		maybe_accept( node, &EnumDecl::attributes );
-	)
+	}
 
 	VISIT_END( Decl, node );
 }
@@ -583,12 +578,12 @@ template< typename core_t >
 const ast::Decl * ast::Pass< core_t >::visit( const ast::TraitDecl * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &TraitDecl::params     );
 		maybe_accept( node, &TraitDecl::members    );
 		maybe_accept( node, &TraitDecl::attributes );
-	})
+	}
 
 	__pass::symtab::addTrait( core, 0, node );
 
@@ -601,24 +596,24 @@ template< typename core_t >
 const ast::Decl * ast::Pass< core_t >::visit( const ast::TypeDecl * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &TypeDecl::base   );
-	})
+	}
 
 	// see A NOTE ON THE ORDER OF TRAVERSAL, above
 	// note that assertions come after the type is added to the symtab, since they are not part of the type proper
 	// and may depend on the type itself
 	__pass::symtab::addType( core, 0, node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &TypeDecl::assertions );
 
 		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &TypeDecl::init );
 		}
-	)
+	}
 
 	VISIT_END( Decl, node );
 }
@@ -629,14 +624,16 @@ template< typename core_t >
 const ast::Decl * ast::Pass< core_t >::visit( const ast::TypedefDecl * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &TypedefDecl::base   );
-	})
+	}
 
 	__pass::symtab::addType( core, 0, node );
 
-	VISIT( maybe_accept( node, &TypedefDecl::assertions ); )
+	if ( __visit_children() ) {
+		maybe_accept( node, &TypedefDecl::assertions );
+	}
 
 	VISIT_END( Decl, node );
 }
@@ -647,9 +644,9 @@ template< typename core_t >
 const ast::AsmDecl * ast::Pass< core_t >::visit( const ast::AsmDecl * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &AsmDecl::stmt );
-	)
+	}
 
 	VISIT_END( AsmDecl, node );
 }
@@ -660,9 +657,9 @@ template< typename core_t >
 const ast::DirectiveDecl * ast::Pass< core_t >::visit( const ast::DirectiveDecl * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &DirectiveDecl::stmt );
-	)
+	}
 
 	VISIT_END( DirectiveDecl, node );
 }
@@ -673,10 +670,10 @@ template< typename core_t >
 const ast::StaticAssertDecl * ast::Pass< core_t >::visit( const ast::StaticAssertDecl * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &StaticAssertDecl::cond );
 		maybe_accept( node, &StaticAssertDecl::msg  );
-	)
+	}
 
 	VISIT_END( StaticAssertDecl, node );
 }
@@ -686,7 +683,8 @@ const ast::StaticAssertDecl * ast::Pass< core_t >::visit( const ast::StaticAsser
 template< typename core_t >
 const ast::CompoundStmt * ast::Pass< core_t >::visit( const ast::CompoundStmt * node ) {
 	VISIT_START( node );
-	VISIT(
+
+	if ( __visit_children() ) {
 		// Do not enter (or leave) a new scope if atFunctionTop. Remember to save the result.
 		auto guard1 = makeFuncGuard( [this, enterScope = !this->atFunctionTop]() {
 			if ( enterScope ) {
@@ -703,7 +701,8 @@ const ast::CompoundStmt * ast::Pass< core_t >::visit( const ast::CompoundStmt * 
 		atFunctionTop = false;
 		guard_scope guard3 { *this };
 		maybe_accept( node, &CompoundStmt::kids );
-	)
+	}
+
 	VISIT_END( CompoundStmt, node );
 }
 
@@ -713,9 +712,9 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::ExprStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &ExprStmt::expr );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -726,12 +725,12 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::AsmStmt * node ) {
 	VISIT_START( node )
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &AsmStmt::instruction );
 		maybe_accept( node, &AsmStmt::output      );
 		maybe_accept( node, &AsmStmt::input       );
 		maybe_accept( node, &AsmStmt::clobber     );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -751,31 +750,31 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::IfStmt * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		// if statements introduce a level of scope (for the initialization)
 		guard_symtab guard { *this };
 		maybe_accept( node, &IfStmt::inits    );
 		maybe_accept( node, &IfStmt::cond     );
-		maybe_accept_as_compound( node, &IfStmt::thenPart );
-		maybe_accept_as_compound( node, &IfStmt::elsePart );
-	})
+		maybe_accept_as_compound( node, &IfStmt::then );
+		maybe_accept_as_compound( node, &IfStmt::else_ );
+	}
 
 	VISIT_END( Stmt, node );
 }
 
 //--------------------------------------------------------------------------
-// WhileStmt
+// WhileDoStmt
 template< typename core_t >
-const ast::Stmt * ast::Pass< core_t >::visit( const ast::WhileStmt * node ) {
+const ast::Stmt * ast::Pass< core_t >::visit( const ast::WhileDoStmt * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		// while statements introduce a level of scope (for the initialization)
 		guard_symtab guard { *this };
-		maybe_accept( node, &WhileStmt::inits );
-		maybe_accept( node, &WhileStmt::cond  );
-		maybe_accept_as_compound( node, &WhileStmt::body  );
-	})
+		maybe_accept( node, &WhileDoStmt::inits );
+		maybe_accept( node, &WhileDoStmt::cond  );
+		maybe_accept_as_compound( node, &WhileDoStmt::body  );
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -786,7 +785,7 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::ForStmt * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		// for statements introduce a level of scope (for the initialization)
 		guard_symtab guard { *this };
 		// xxx - old ast does not create WithStmtsToAdd scope for loop inits. should revisit this later.
@@ -794,7 +793,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ForStmt * node ) {
 		maybe_accept( node, &ForStmt::cond  );
 		maybe_accept( node, &ForStmt::inc   );
 		maybe_accept_as_compound( node, &ForStmt::body  );
-	})
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -805,10 +804,10 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::SwitchStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &SwitchStmt::cond  );
 		maybe_accept( node, &SwitchStmt::stmts );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -819,10 +818,10 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::CaseStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &CaseStmt::cond  );
 		maybe_accept( node, &CaseStmt::stmts );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -841,9 +840,9 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::ReturnStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &ReturnStmt::expr );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -854,10 +853,10 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::ThrowStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &ThrowStmt::expr   );
 		maybe_accept( node, &ThrowStmt::target );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -868,11 +867,11 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::TryStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &TryStmt::body     );
 		maybe_accept( node, &TryStmt::handlers );
 		maybe_accept( node, &TryStmt::finally  );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -883,13 +882,13 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::CatchStmt * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		// catch statements introduce a level of scope (for the caught exception)
 		guard_symtab guard { *this };
 		maybe_accept( node, &CatchStmt::decl );
 		maybe_accept( node, &CatchStmt::cond );
 		maybe_accept_as_compound( node, &CatchStmt::body );
-	})
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -900,9 +899,9 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::FinallyStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &FinallyStmt::body );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -913,9 +912,9 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::SuspendStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &SuspendStmt::then   );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -933,7 +932,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitForStmt * node ) {
 		// 	maybeAccept_impl( clause.condition, *this );
 		// }
 
-	VISIT({
+	if ( __visit_children() ) {
 		std::vector<WaitForStmt::Clause> new_clauses;
 		new_clauses.reserve( node->clauses.size() );
 		bool mutated = false;
@@ -964,7 +963,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitForStmt * node ) {
 			n->clauses = std::move( new_clauses );
 			node = n;
 		}
-	})
+	}
 
 	#define maybe_accept(field) \
 		if(node->field) { \
@@ -976,13 +975,13 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitForStmt * node ) {
 			} \
 		}
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( timeout.time );
 		maybe_accept( timeout.stmt );
 		maybe_accept( timeout.cond );
 		maybe_accept( orElse.stmt  );
 		maybe_accept( orElse.cond  );
-	)
+	}
 
 	#undef maybe_accept
 
@@ -995,7 +994,7 @@ template< typename core_t >
 const ast::Decl * ast::Pass< core_t >::visit( const ast::WithStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &WithStmt::exprs );
 		{
 			// catch statements introduce a level of scope (for the caught exception)
@@ -1003,7 +1002,8 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::WithStmt * node ) {
 			__pass::symtab::addWith( core, 0, node->exprs, node );
 			maybe_accept( node, &WithStmt::stmt );
 		}
-	)
+	}
+
 	VISIT_END( Stmt, node );
 }
 
@@ -1021,9 +1021,9 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::DeclStmt * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &DeclStmt::decl );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -1036,9 +1036,9 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ImplicitCtorDtorStmt * 
 
 	// For now this isn't visited, it is unclear if this causes problem
 	// if all tests are known to pass, remove this code
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &ImplicitCtorDtorStmt::callStmt );
-	)
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -1049,12 +1049,12 @@ template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::MutexStmt * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		// mutex statements introduce a level of scope (for the initialization)
 		guard_symtab guard { *this };
 		maybe_accept( node, &MutexStmt::stmt );
 		maybe_accept( node, &MutexStmt::mutexObjs );
-	})
+	}
 
 	VISIT_END( Stmt, node );
 }
@@ -1065,14 +1065,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::ApplicationExpr * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &ApplicationExpr::result );
 		}
 		maybe_accept( node, &ApplicationExpr::func );
 		maybe_accept( node, &ApplicationExpr::args );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1083,14 +1083,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::UntypedExpr * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &UntypedExpr::result );
 		}
 
 		maybe_accept( node, &UntypedExpr::args );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1101,10 +1101,10 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::NameExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &NameExpr::result );
-	})
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1115,12 +1115,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::CastExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &CastExpr::result );
 		}
 		maybe_accept( node, &CastExpr::arg );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1131,12 +1132,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::KeywordCastExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &KeywordCastExpr::result );
 		}
 		maybe_accept( node, &KeywordCastExpr::arg );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1147,12 +1149,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::VirtualCastExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &VirtualCastExpr::result );
 		}
 		maybe_accept( node, &VirtualCastExpr::arg );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1163,12 +1166,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::AddressExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &AddressExpr::result );
 		}
 		maybe_accept( node, &AddressExpr::arg );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1179,10 +1183,10 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::LabelAddressExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &LabelAddressExpr::result );
-	})
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1193,13 +1197,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::UntypedMemberExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &UntypedMemberExpr::result );
 		}
 		maybe_accept( node, &UntypedMemberExpr::aggregate );
 		maybe_accept( node, &UntypedMemberExpr::member    );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1210,12 +1215,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::MemberExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &MemberExpr::result );
 		}
 		maybe_accept( node, &MemberExpr::aggregate );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1226,10 +1232,10 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::VariableExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &VariableExpr::result );
-	})
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1240,10 +1246,10 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::ConstantExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &ConstantExpr::result );
-	})
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1254,7 +1260,8 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::SizeofExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &SizeofExpr::result );
 		}
@@ -1263,7 +1270,7 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::SizeofExpr * node ) {
 		} else {
 			maybe_accept( node, &SizeofExpr::expr );
 		}
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1274,7 +1281,8 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::AlignofExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &AlignofExpr::result );
 		}
@@ -1283,7 +1291,7 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::AlignofExpr * node ) {
 		} else {
 			maybe_accept( node, &AlignofExpr::expr );
 		}
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1294,12 +1302,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::UntypedOffsetofExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &UntypedOffsetofExpr::result );
 		}
 		maybe_accept( node, &UntypedOffsetofExpr::type   );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1310,12 +1319,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::OffsetofExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &OffsetofExpr::result );
 		}
 		maybe_accept( node, &OffsetofExpr::type   );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1326,12 +1336,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::OffsetPackExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &OffsetPackExpr::result );
 		}
 		maybe_accept( node, &OffsetPackExpr::type   );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1342,13 +1353,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::LogicalExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &LogicalExpr::result );
 		}
 		maybe_accept( node, &LogicalExpr::arg1 );
 		maybe_accept( node, &LogicalExpr::arg2 );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1359,14 +1371,15 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::ConditionalExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &ConditionalExpr::result );
 		}
 		maybe_accept( node, &ConditionalExpr::arg1 );
 		maybe_accept( node, &ConditionalExpr::arg2 );
 		maybe_accept( node, &ConditionalExpr::arg3 );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1377,13 +1390,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::CommaExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &CommaExpr::result );
 		}
 		maybe_accept( node, &CommaExpr::arg1 );
 		maybe_accept( node, &CommaExpr::arg2 );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1394,12 +1408,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::TypeExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &TypeExpr::result );
 		}
 		maybe_accept( node, &TypeExpr::type );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1410,13 +1425,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::AsmExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &AsmExpr::result );
 		}
 		maybe_accept( node, &AsmExpr::constraint );
 		maybe_accept( node, &AsmExpr::operand    );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1427,12 +1443,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::ImplicitCopyCtorExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &ImplicitCopyCtorExpr::result );
 		}
 		maybe_accept( node, &ImplicitCopyCtorExpr::callExpr    );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1443,12 +1460,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::ConstructorExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &ConstructorExpr::result );
 		}
 		maybe_accept( node, &ConstructorExpr::callExpr );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1459,12 +1477,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::CompoundLiteralExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &CompoundLiteralExpr::result );
 		}
 		maybe_accept( node, &CompoundLiteralExpr::init );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1475,13 +1494,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::RangeExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &RangeExpr::result );
 		}
 		maybe_accept( node, &RangeExpr::low    );
 		maybe_accept( node, &RangeExpr::high   );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1492,12 +1512,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::UntypedTupleExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &UntypedTupleExpr::result );
 		}
 		maybe_accept( node, &UntypedTupleExpr::exprs  );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1508,12 +1529,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::TupleExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &TupleExpr::result );
 		}
 		maybe_accept( node, &TupleExpr::exprs  );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1524,12 +1546,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::TupleIndexExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &TupleIndexExpr::result );
 		}
 		maybe_accept( node, &TupleIndexExpr::tuple  );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1540,12 +1563,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::TupleAssignExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &TupleAssignExpr::result );
 		}
 		maybe_accept( node, &TupleAssignExpr::stmtExpr );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1556,7 +1580,8 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::StmtExpr * node ) {
 	VISIT_START( node );
 
-	VISIT(// don't want statements from outer CompoundStmts to be added to this StmtExpr
+	if ( __visit_children() ) {
+		// don't want statements from outer CompoundStmts to be added to this StmtExpr
 		// get the stmts that will need to be spliced in
 		auto stmts_before = __pass::stmtsToAddBefore( core, 0);
 		auto stmts_after  = __pass::stmtsToAddAfter ( core, 0);
@@ -1573,7 +1598,7 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::StmtExpr * node ) {
 		maybe_accept( node, &StmtExpr::stmts       );
 		maybe_accept( node, &StmtExpr::returnDecls );
 		maybe_accept( node, &StmtExpr::dtors       );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1584,12 +1609,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::UniqueExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &UniqueExpr::result );
 		}
 		maybe_accept( node, &UniqueExpr::expr   );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1600,13 +1626,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::UntypedInitExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &UntypedInitExpr::result );
 		}
 		maybe_accept( node, &UntypedInitExpr::expr   );
 		// not currently visiting initAlts, but this doesn't matter since this node is only used in the resolver.
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1617,13 +1644,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::InitExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &InitExpr::result );
 		}
 		maybe_accept( node, &InitExpr::expr   );
 		maybe_accept( node, &InitExpr::designation );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1634,13 +1662,14 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::DeletedExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &DeletedExpr::result );
 		}
 		maybe_accept( node, &DeletedExpr::expr );
 		// don't visit deleteStmt, because it is a pointer to somewhere else in the tree.
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1651,12 +1680,13 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::DefaultArgExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &DefaultArgExpr::result );
 		}
 		maybe_accept( node, &DefaultArgExpr::expr );
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1667,7 +1697,8 @@ template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::GenericExpr * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
+		{
 			guard_symtab guard { *this };
 			maybe_accept( node, &GenericExpr::result );
 		}
@@ -1696,7 +1727,7 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::GenericExpr * node ) {
 			n->associations = std::move( new_kids );
 			node = n;
 		}
-	)
+	}
 
 	VISIT_END( Expr, node );
 }
@@ -1725,10 +1756,10 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::PointerType * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		// xxx - should PointerType visit/mutate dimension?
 		maybe_accept( node, &PointerType::base );
-	)
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1739,10 +1770,10 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::ArrayType * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &ArrayType::dimension );
 		maybe_accept( node, &ArrayType::base );
-	)
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1753,9 +1784,9 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::ReferenceType * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &ReferenceType::base );
-	)
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1766,10 +1797,10 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::QualifiedType * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &QualifiedType::parent );
 		maybe_accept( node, &QualifiedType::child );
-	)
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1780,13 +1811,13 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::FunctionType * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		// guard_forall_subs forall_guard { *this, node };
 		// mutate_forall( node );
 		maybe_accept( node, &FunctionType::assertions );
 		maybe_accept( node, &FunctionType::returns );
 		maybe_accept( node, &FunctionType::params  );
-	})
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1799,10 +1830,10 @@ const ast::Type * ast::Pass< core_t >::visit( const ast::StructInstType * node )
 
 	__pass::symtab::addStruct( core, 0, node->name );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &StructInstType::params );
-	})
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1815,10 +1846,10 @@ const ast::Type * ast::Pass< core_t >::visit( const ast::UnionInstType * node ) 
 
 	__pass::symtab::addUnion( core, 0, node->name );
 
-	VISIT({
+	if ( __visit_children() ) {
 		guard_symtab guard { *this };
 		maybe_accept( node, &UnionInstType::params );
-	})
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1829,9 +1860,9 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::EnumInstType * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		maybe_accept( node, &EnumInstType::params );
-	})
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1842,9 +1873,9 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::TraitInstType * node ) {
 	VISIT_START( node );
 
-	VISIT({
+	if ( __visit_children() ) {
 		maybe_accept( node, &TraitInstType::params );
-	})
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1855,13 +1886,13 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::TypeInstType * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		{
 			maybe_accept( node, &TypeInstType::params );
 		}
 		// ensure that base re-bound if doing substitution
 		__pass::forall::replace( core, 0, node );
-	)
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1872,10 +1903,10 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::TupleType * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &TupleType::types );
 		maybe_accept( node, &TupleType::members );
-	)
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1886,9 +1917,9 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::TypeofType * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &TypeofType::expr );
-	)
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1899,9 +1930,9 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::VTableType * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &VTableType::base );
-	)
+	}
 
 	VISIT_END( Type, node );
 }
@@ -1949,7 +1980,9 @@ template< typename core_t >
 const ast::Designation * ast::Pass< core_t >::visit( const ast::Designation * node ) {
 	VISIT_START( node );
 
-	VISIT( maybe_accept( node, &Designation::designators ); )
+	if ( __visit_children() ) {
+		maybe_accept( node, &Designation::designators );
+	}
 
 	VISIT_END( Designation, node );
 }
@@ -1960,9 +1993,9 @@ template< typename core_t >
 const ast::Init * ast::Pass< core_t >::visit( const ast::SingleInit * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &SingleInit::value );
-	)
+	}
 
 	VISIT_END( Init, node );
 }
@@ -1973,10 +2006,10 @@ template< typename core_t >
 const ast::Init * ast::Pass< core_t >::visit( const ast::ListInit * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &ListInit::designations );
 		maybe_accept( node, &ListInit::initializers );
-	)
+	}
 
 	VISIT_END( Init, node );
 }
@@ -1987,11 +2020,11 @@ template< typename core_t >
 const ast::Init * ast::Pass< core_t >::visit( const ast::ConstructorInit * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &ConstructorInit::ctor );
 		maybe_accept( node, &ConstructorInit::dtor );
 		maybe_accept( node, &ConstructorInit::init );
-	)
+	}
 
 	VISIT_END( Init, node );
 }
@@ -2002,9 +2035,9 @@ template< typename core_t >
 const ast::Attribute * ast::Pass< core_t >::visit( const ast::Attribute * node  )  {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		maybe_accept( node, &Attribute::params );
-	)
+	}
 
 	VISIT_END( Attribute, node );
 }
@@ -2015,7 +2048,7 @@ template< typename core_t >
 const ast::TypeSubstitution * ast::Pass< core_t >::visit( const ast::TypeSubstitution * node ) {
 	VISIT_START( node );
 
-	VISIT(
+	if ( __visit_children() ) {
 		{
 			bool mutated = false;
 			std::unordered_map< ast::TypeInstType::TypeEnvKey, ast::ptr< ast::Type > > new_map;
@@ -2031,11 +2064,10 @@ const ast::TypeSubstitution * ast::Pass< core_t >::visit( const ast::TypeSubstit
 				node = new_node;
 			}
 		}
-	)
+	}
 
 	VISIT_END( TypeSubstitution, node );
 }
 
 #undef VISIT_START
-#undef VISIT
 #undef VISIT_END

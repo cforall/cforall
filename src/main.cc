@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Nov 30 10:25:00 2021
-// Update Count     : 659
+// Last Modified On : Wed Jan 26 14:09:00 2022
+// Update Count     : 670
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -54,6 +54,7 @@ using namespace std;
 #include "ControlStruct/ExceptDecl.h"       // for translateExcept
 #include "ControlStruct/ExceptTranslate.h"  // for translateEHM
 #include "ControlStruct/FixLabels.hpp"      // for fixLabels
+#include "ControlStruct/HoistControlDecls.hpp" //  hoistControlDecls
 #include "ControlStruct/Mutate.h"           // for mutate
 #include "GenPoly/Box.h"                    // for box
 #include "GenPoly/InstantiateGeneric.h"     // for instantiateGeneric
@@ -72,12 +73,12 @@ using namespace std;
 #include "SynTree/Declaration.h"            // for Declaration
 #include "SynTree/Visitor.h"                // for acceptAll
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
+#include "Validate/Autogen.hpp"             // for autogenerateRoutines
 #include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
 #include "Virtual/ExpandCasts.h"            // for expandCasts
-
 
 static void NewPass( const char * const name ) {
 	Stats::Heap::newPass( name );
@@ -325,11 +326,14 @@ int main( int argc, char * argv[] ) {
 		PASS( "Validate-A", SymTab::validate_A( translationUnit ) );
 		PASS( "Validate-B", SymTab::validate_B( translationUnit ) );
 		PASS( "Validate-C", SymTab::validate_C( translationUnit ) );
-		PASS( "Validate-D", SymTab::validate_D( translationUnit ) );
 
 		CodeTools::fillLocations( translationUnit );
 
 		if( useNewAST ) {
+			PASS( "Apply Concurrent Keywords", Concurrency::applyKeywords( translationUnit ) );
+			PASS( "Forall Pointer Decay", SymTab::decayForallPointers( translationUnit ) );
+			CodeTools::fillLocations( translationUnit );
+
 			if (Stats::Counters::enabled) {
 				ast::pass_visitor_stats.avg = Stats::Counters::build<Stats::Counters::AverageCounter<double>>("Average Depth - New");
 				ast::pass_visitor_stats.max = Stats::Counters::build<Stats::Counters::MaxCounter<double>>("Max depth - New");
@@ -337,6 +341,13 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			// Must happen before autogen routines are added.
+			PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls( transUnit ) );
+
+			// Must be after enum and pointer decay.
+			// Must be before compound literals.
+			PASS( "Generate Autogen Routines", Validate::autogenerateRoutines( transUnit ) );
 
 			PASS( "Implement Mutex", Concurrency::implementMutex( transUnit ) );
 			PASS( "Implement Thread Start", Concurrency::implementThreadStarter( transUnit ) );
@@ -403,8 +414,12 @@ int main( int argc, char * argv[] ) {
 
 			// Currently not working due to unresolved issues with UniqueExpr
 			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( transUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
+
+			PASS( "Translate Tries" , ControlStruct::translateTries( transUnit ) );
+
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Validate-D", SymTab::validate_D( translationUnit ) );
 			PASS( "Validate-E", SymTab::validate_E( translationUnit ) );
 			PASS( "Validate-F", SymTab::validate_F( translationUnit ) );
 
@@ -468,9 +483,11 @@ int main( int argc, char * argv[] ) {
 			} // if
 
 			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( translationUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
+
+			PASS( "Translate Tries" , ControlStruct::translateTries( translationUnit ) );
 		}
 
-		PASS( "Translate Tries" , ControlStruct::translateTries( translationUnit ) );
+		
 
 		PASS( "Gen Waitfor" , Concurrency::generateWaitFor( translationUnit ) );
 

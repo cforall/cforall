@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 14 17:28:53 2021
-// Update Count     : 900
+// Last Modified On : Wed Feb  2 09:15:49 2022
+// Update Count     : 905
 //
 
 #pragma once
@@ -389,8 +389,8 @@ struct StatementNode final : public ParseNode {
 
 Statement * build_expr( ExpressionNode * ctl );
 
-struct IfCtrl {
-	IfCtrl( DeclarationNode * decl, ExpressionNode * condition ) :
+struct CondCtl {
+	CondCtl( DeclarationNode * decl, ExpressionNode * condition ) :
 		init( decl ? new StatementNode( decl ) : nullptr ), condition( condition ) {}
 
 	StatementNode * init;
@@ -408,14 +408,14 @@ struct ForCtrl {
 	ExpressionNode * change;
 };
 
-Expression * build_if_control( IfCtrl * ctl, std::list< Statement * > & init );
-Statement * build_if( IfCtrl * ctl, StatementNode * then_stmt, StatementNode * else_stmt );
+Expression * build_if_control( CondCtl * ctl, std::list< Statement * > & init );
+Statement * build_if( CondCtl * ctl, StatementNode * then, StatementNode * else_ );
 Statement * build_switch( bool isSwitch, ExpressionNode * ctl, StatementNode * stmt );
 Statement * build_case( ExpressionNode * ctl );
 Statement * build_default();
-Statement * build_while( IfCtrl * ctl, StatementNode * stmt );
-Statement * build_do_while( ExpressionNode * ctl, StatementNode * stmt );
-Statement * build_for( ForCtrl * forctl, StatementNode * stmt );
+Statement * build_while( CondCtl * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
+Statement * build_do_while( ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
+Statement * build_for( ForCtrl * forctl, StatementNode * stmt, StatementNode * else_ = nullptr );
 Statement * build_branch( BranchStmt::Type kind );
 Statement * build_branch( std::string * identifier, BranchStmt::Type kind );
 Statement * build_computedgoto( ExpressionNode * ctl );
@@ -423,8 +423,8 @@ Statement * build_return( ExpressionNode * ctl );
 Statement * build_throw( ExpressionNode * ctl );
 Statement * build_resume( ExpressionNode * ctl );
 Statement * build_resume_at( ExpressionNode * ctl , ExpressionNode * target );
-Statement * build_try( StatementNode * try_stmt, StatementNode * catch_stmt, StatementNode * finally_stmt );
-Statement * build_catch( CatchStmt::Kind kind, DeclarationNode *decl, ExpressionNode *cond, StatementNode *body );
+Statement * build_try( StatementNode * try_, StatementNode * catch_, StatementNode * finally_ );
+Statement * build_catch( CatchStmt::Kind kind, DeclarationNode * decl, ExpressionNode * cond, StatementNode * body );
 Statement * build_finally( StatementNode * stmt );
 Statement * build_compound( StatementNode * first );
 StatementNode * maybe_build_compound( StatementNode * first );

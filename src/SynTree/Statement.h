@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 10 14:13:24 2020
-// Update Count     : 85
+// Last Modified On : Wed Feb  2 20:15:30 2022
+// Update Count     : 98
 //
 
 #pragma once
@@ -106,7 +106,7 @@ class AsmStmt : public Statement {
 	std::list<ConstantExpr *> clobber;
 	std::list<Label> gotolabels;
 
-	AsmStmt( bool voltile, Expression * instruction, std::list<Expression *> output, std::list<Expression *> input, std::list<ConstantExpr *> clobber, std::list<Label> gotolabels );
+	AsmStmt( bool voltile, Expression * instruction, const std::list<Expression *> output, const std::list<Expression *> input, const std::list<ConstantExpr *> clobber, const std::list<Label> gotolabels );
 	AsmStmt( const AsmStmt & other );
 	virtual ~AsmStmt();
 
@@ -147,22 +147,22 @@ class DirectiveStmt : public Statement {
 class IfStmt : public Statement {
   public:
 	Expression * condition;
-	Statement * thenPart;
-	Statement * elsePart;
+	Statement * then;
+	Statement * else_;
 	std::list<Statement *> initialization;
 
-	IfStmt( Expression * condition, Statement * thenPart, Statement * elsePart,
-			std::list<Statement *> initialization = std::list<Statement *>() );
+	IfStmt( Expression * condition, Statement * then, Statement * else_,
+			const std::list<Statement *> initialization = std::list<Statement *>() );
 	IfStmt( const IfStmt & other );
 	virtual ~IfStmt();
 
 	std::list<Statement *> & get_initialization() { return initialization; }
 	Expression * get_condition() { return condition; }
 	void set_condition( Expression * newValue ) { condition = newValue; }
-	Statement * get_thenPart() { return thenPart; }
-	void set_thenPart( Statement * newValue ) { thenPart = newValue; }
-	Statement * get_elsePart() { return elsePart; }
-	void set_elsePart( Statement * newValue ) { elsePart = newValue; }
+	Statement * get_then() { return then; }
+	void set_then( Statement * newValue ) { then = newValue; }
+	Statement * get_else() { return else_; }
+	void set_else( Statement * newValue ) { else_ = newValue; }
 
 	virtual IfStmt * clone() const override { return new IfStmt( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
@@ -224,16 +224,18 @@ class CaseStmt : public Statement {
 	bool _isDefault;
 };
 
-class WhileStmt : public Statement {
+class WhileDoStmt : public Statement {
   public:
 	Expression * condition;
 	Statement * body;
+	Statement * else_;
 	std::list<Statement *> initialization;
 	bool isDoWhile;
 
-	WhileStmt( Expression * condition, Statement * body, std::list<Statement *> & initialization, bool isDoWhile = false );
-	WhileStmt( const WhileStmt & other );
-	virtual ~WhileStmt();
+	WhileDoStmt( Expression * condition, Statement * body, const std::list<Statement *> & initialization, bool isDoWhile = false );
+	WhileDoStmt( Expression * condition, Statement * body, Statement * else_, const std::list<Statement *> & initialization, bool isDoWhile = false );
+	WhileDoStmt( const WhileDoStmt & other );
+	virtual ~WhileDoStmt();
 
 	Expression * get_condition() { return condition; }
 	void set_condition( Expression * newValue ) { condition = newValue; }
@@ -242,7 +244,7 @@ class WhileStmt : public Statement {
 	bool get_isDoWhile() { return isDoWhile; }
 	void set_isDoWhile( bool newValue ) { isDoWhile = newValue; }
 
-	virtual WhileStmt * clone() const override { return new WhileStmt( *this ); }
+	virtual WhileDoStmt * clone() const override { return new WhileDoStmt( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
 	virtual Statement * acceptMutator( Mutator & m )  override { return m.mutate( this ); }
@@ -255,8 +257,9 @@ class ForStmt : public Statement {
 	Expression * condition;
 	Expression * increment;
 	Statement * body;
+	Statement * else_;
 
-	ForStmt( std::list<Statement *> initialization, Expression * condition = nullptr, Expression * increment = nullptr, Statement * body = nullptr );
+	ForStmt( const std::list<Statement *> initialization, Expression * condition = nullptr, Expression * increment = nullptr, Statement * body = nullptr, Statement * else_ = nullptr );
 	ForStmt( const ForStmt & other );
 	virtual ~ForStmt();
 
@@ -277,7 +280,7 @@ class ForStmt : public Statement {
 
 class BranchStmt : public Statement {
   public:
-	enum Type { Goto = 0, Break, Continue, FallThrough, FallThroughDefault };
+	enum Type { Goto, Break, Continue, FallThrough, FallThroughDefault, BranchStmts };
 
 	// originalTarget kept for error messages.
 	const Label originalTarget;
@@ -356,7 +359,7 @@ class TryStmt : public Statement {
 	std::list<CatchStmt *> handlers;
 	FinallyStmt * finallyBlock;
 
-	TryStmt( CompoundStmt * tryBlock, std::list<CatchStmt *> & handlers, FinallyStmt * finallyBlock = nullptr );
+	TryStmt( CompoundStmt * tryBlock, const std::list<CatchStmt *> & handlers, FinallyStmt * finallyBlock = nullptr );
 	TryStmt( const TryStmt & other );
 	virtual ~TryStmt();
 
@@ -539,7 +542,7 @@ class MutexStmt : public Statement {
 	Statement * stmt;
 	std::list<Expression *> mutexObjs; // list of mutex objects to acquire
 
-	MutexStmt( Statement * stmt, std::list<Expression *> mutexObjs );
+	MutexStmt( Statement * stmt, const std::list<Expression *> mutexObjs );
 	MutexStmt( const MutexStmt & other );
 	virtual ~MutexStmt();
 

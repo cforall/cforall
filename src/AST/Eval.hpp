@@ -23,8 +23,8 @@ namespace ast {
 /// Create a new UntypedExpr with the given arguments
 template< typename... Args >
 UntypedExpr * call( const CodeLocation & loc, const std::string & name, Args &&... args ) {
-	return new UntypedExpr { 
-		loc, new NameExpr { loc, name }, 
+	return new UntypedExpr {
+		loc, new NameExpr { loc, name },
 		std::vector< ptr< Expr > > { std::forward< Args >( args )... } };
 }
 

@@ -9,12 +9,12 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 10 17:07:21 2022
-// Update Count     : 572
+// Last Modified On : Thu Jan 13 21:38:30 2022
+// Update Count     : 593
 //
 
 #include "stdlib.hfa"
-//#include "concurrency/kernel/fwd.hfa"
+#include "bits/random.hfa"
 #include "concurrency/invoke.h"							// random_state
 
 //---------------------------------------
@@ -224,24 +224,15 @@ long double _Complex random( void ) { return (long double)drand48() + (long doub
 
 #define GENERATOR LCG
 
-inline uint32_t MarsagliaXor( uint32_t & state ) {
-	state ^= state << 6;
-	state ^= state >> 21;
-	state ^= state << 7;
-	return state;
-} // MarsagliaXor
+uint32_t __global_random_seed;							// sequential/concurrent
+uint32_t __global_random_state;						// sequential only
 
-inline uint32_t LCG( uint32_t & state ) {				// linear congruential generator
-	return state = 36969 * (state & 65535) + (state >> 16); // 36969 is NOT prime!
-} // LCG
-
-uint32_t __thread_seed = rdtscl();						// global thread seed
-
-void set_seed( uint32_t seed ) { __thread_seed = seed; }
-uint32_t get_seed() { return  __thread_seed; }
+void set_seed( PRNG & prng, uint32_t seed_ ) with( prng ) { state = seed = seed_; GENERATOR( state ); } // set seed
 uint32_t prng( PRNG & prng ) with( prng ) { callcnt += 1; return GENERATOR( state ); }
 
-uint32_t prng( void ) { return GENERATOR( __thread_seed ); } // [0,UINT_MAX]
+void set_seed( uint32_t seed ) { __global_random_seed = seed; GENERATOR( __global_random_state ); }
+uint32_t get_seed() { return __global_random_seed; }
+uint32_t prng( void ) { return GENERATOR( __global_random_state ); } // [0,UINT_MAX]
 
 //---------------------------------------
 

@@ -78,34 +78,19 @@ extern "C" {
 		static inline uint64_t __tls_rand() {
 			return
 			#if defined(__SIZEOF_INT128__)
-				__lehmer64( kernelTLS().rand_seed );
+				lehmer64( kernelTLS().rand_seed );
 			#else
-				__xorshift64( kernelTLS().rand_seed );
+				xorshift_13_7_17( kernelTLS().rand_seed );
 			#endif
 		}
 
-		#define M  (1_l64u << 48_l64u)
-		#define A  (25214903917_l64u)
-		#define AI (18446708753438544741_l64u)
-		#define C  (11_l64u)
-		#define D  (16_l64u)
-
 		static inline unsigned __tls_rand_fwd() {
-			kernelTLS().ready_rng.fwd_seed = (A * kernelTLS().ready_rng.fwd_seed + C) & (M - 1);
-			return kernelTLS().ready_rng.fwd_seed >> D;
+			return LCGBI_fwd( kernelTLS().ready_rng.fwd_seed );
 		}
 
 		static inline unsigned __tls_rand_bck() {
-			unsigned int r = kernelTLS().ready_rng.bck_seed >> D;
-			kernelTLS().ready_rng.bck_seed = AI * (kernelTLS().ready_rng.bck_seed - C) & (M - 1);
-			return r;
+			return LCGBI_bck( kernelTLS().ready_rng.bck_seed );
 		}
-
-		#undef M
-		#undef A
-		#undef AI
-		#undef C
-		#undef D
 
 		static inline void __tls_rand_advance_bck(void) {
 			kernelTLS().ready_rng.bck_seed = kernelTLS().ready_rng.fwd_seed;
@@ -139,8 +124,6 @@ extern "C" {
 				yield();
 			}
 		}
-
-		extern uint64_t thread_rand();
 
 		// Semaphore which only supports a single thread
 		struct single_sem {
@@ -412,8 +395,20 @@ extern "C" {
 				} \
 				if( !(in_kernel) ) enable_interrupts(); \
 			}
+			#if defined(CFA_HAVE_LINUX_IO_URING_H)
+				#define __IO_STATS__(in_kernel, ...) { \
+					if( !(in_kernel) ) disable_interrupts(); \
+					with( *__tls_stats() ) { \
+						__VA_ARGS__ \
+					} \
+					if( !(in_kernel) ) enable_interrupts(); \
+				}
+			#else
+				#define __IO_STATS__(in_kernel, ...)
+			#endif
 		#else
 			#define __STATS__(in_kernel, ...)
+			#define __IO_STATS__(in_kernel, ...)
 		#endif
 	}
 }

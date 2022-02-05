@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 10 17:03:18 2022
-// Update Count     : 619
+// Last Modified On : Thu Jan 13 21:34:46 2022
+// Update Count     : 636
 //
 
 #pragma once
@@ -207,7 +207,6 @@ static inline forall( T & | sized(T) ) {
 	} // alloc_internal$
 
 	forall( TT... | { T * alloc_internal$( void *, T *, size_t, size_t, S_fill(T), TT ); } ) {
-
 		T * alloc_internal$( void *       , T * Realloc, size_t Align, size_t Dim, S_fill(T) Fill, T_resize Resize, TT rest) {
 	        return alloc_internal$( Resize, (T*)0p, Align, Dim, Fill, rest);
 		}
@@ -231,7 +230,6 @@ static inline forall( T & | sized(T) ) {
 	    T * alloc( size_t dim, TT all ) {
 	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), dim, (S_fill(T)){'0'}, all);
 	    }
-
 	} // distribution TT
 } // distribution T
 
@@ -385,15 +383,34 @@ long double _Complex random( void );					// [0.0, 1.0)+[0.0, 1.0)i
 
 //---------------------------------------
 
+// Sequential Pseudo Random-Number Generator : generate repeatable sequence of values that appear random.
+//
+// Declaration :
+//   PRNG sprng = { 1009 } - set starting seed versus random seed
+//   
+// Interface :
+//   set_seed( sprng, 1009 ) - set starting seed for ALL kernel threads versus random seed
+//   get_seed( sprng ) - read seed
+//   prng( sprng ) - generate random value in range [0,UINT_MAX]
+//   prng( sprng, u ) - generate random value in range [0,u)
+//   prng( sprng, l, u ) - generate random value in range [l,u]
+//   calls( sprng ) - number of generated random value so far
+//
+// Examples : generate random number between 5-21
+//   prng( sprng ) % 17 + 5;	values 0-16 + 5 = 5-21
+//   prng( sprng, 16 + 1 ) + 5;
+//   prng( sprng, 5, 21 );
+//   calls( sprng );
+
 struct PRNG {
 	uint32_t callcnt;									// call count
 	uint32_t seed;										// current seed
 	uint32_t state;										// random state
 }; // PRNG
 
+void set_seed( PRNG & prng, uint32_t seed_ );
 uint32_t prng( PRNG & prng ) __attribute__(( warn_unused_result )); // [0,UINT_MAX]
 static inline {
-	void set_seed( PRNG & prng, uint32_t seed_ ) with( prng ) { state = seed = seed_; } // set seed
 	void ?{}( PRNG & prng ) { set_seed( prng, rdtscl() ); }	// random seed
 	void ?{}( PRNG & prng, uint32_t seed ) { set_seed( prng, seed ); } // fixed seed
 	uint32_t get_seed( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
@@ -401,6 +418,20 @@ static inline {
 	uint32_t prng( PRNG & prng, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
 	uint32_t calls( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
 } // distribution
+
+// Concurrent Pseudo Random-Number Generator : generate repeatable sequence of values that appear random.
+//
+// Interface :
+//   set_seed( 1009 ) - fixed seed for all kernel threads versus random seed
+//   get_seed() - read seed
+//   prng() - generate random value in range [0,UINT_MAX]
+//   prng( u ) - generate random value in range [0,u)
+//   prng( l, u ) - generate random value in range [l,u]
+//
+// Examples : generate random number between 5-21
+//   prng() % 17 + 5;	values 0-16 + 5 = 5-21
+//   prng( 16 + 1 ) + 5;
+//   prng( 5, 21 );
 
 void set_seed( uint32_t seed_ ) OPTIONAL_THREAD;
 uint32_t get_seed() __attribute__(( warn_unused_result ));

@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:35:36 2021
-// Update Count     : 18
+// Last Modified On : Tue Feb  1 09:26:49 2022
+// Update Count     : 20
 //
 #pragma once
 
@@ -41,7 +41,7 @@ class Mutator {
 	virtual Statement * mutate( AsmStmt * asmStmt ) = 0;
 	virtual Statement * mutate( DirectiveStmt * dirStmt ) = 0;
 	virtual Statement * mutate( IfStmt * ifStmt ) = 0;
-	virtual Statement * mutate( WhileStmt * whileStmt ) = 0;
+	virtual Statement * mutate( WhileDoStmt * whileDoStmt ) = 0;
 	virtual Statement * mutate( ForStmt * forStmt ) = 0;
 	virtual Statement * mutate( SwitchStmt * switchStmt ) = 0;
 	virtual Statement * mutate( CaseStmt * caseStmt ) = 0;

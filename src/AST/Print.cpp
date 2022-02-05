@@ -332,10 +332,49 @@ public:
 		print( node->storage );
 		print( node->funcSpec );
 
-		if ( node->type ) {
+
+
+		if ( node->type && node->isTypeFixed ) {
 			node->type->accept( *this );
 		} else {
-			os << "untyped entity";
+			if (!node->type_params.empty()) {
+				os << "forall" << endl;
+				++indent;
+				printAll(node->type_params);
+				os << indent;
+				--indent;
+
+				if (!node->assertions.empty()) {
+					os << "with assertions" << endl;
+					++indent;
+					printAll(node->assertions);
+					os << indent;
+					--indent;
+				}
+			}
+
+			os << "function" << endl;
+			if ( ! node->params.empty() ) {
+				os << indent << "... with parameters" << endl;
+				++indent;
+				printAll( node->params );
+				if ( node->type->isVarArgs ) {
+					os << indent << "and a variable number of other arguments" << endl;
+				}
+				--indent;
+			} else if ( node->type->isVarArgs ) {
+				os << indent+1 << "accepting unspecified arguments" << endl;
+			}
+
+			os << indent << "... returning";
+			if ( node->returns.empty() ) {
+				os << " nothing" << endl;
+			} else {
+				os << endl;
+				++indent;
+				printAll( node->returns );
+				--indent;
+			}
 		}
 
 		if ( ! short_mode && node->stmts ) {
@@ -471,20 +510,20 @@ public:
 
 		++indent;
 		os << indent;
-		safe_print( node->thenPart );
+		safe_print( node->then );
 		--indent;
 
-		if ( node->elsePart != 0 ) {
+		if ( node->else_ != 0 ) {
 			os << indent << "... else:" << endl;
 			++indent;
 			os << indent;
-			node->elsePart->accept( *this );
+			node->else_->accept( *this );
 			--indent;
 		} // if
 		return node;
 	}
 
-	virtual const ast::Stmt * visit( const ast::WhileStmt * node ) override final {
+	virtual const ast::Stmt * visit( const ast::WhileDoStmt * node ) override final {
 		if ( node->isDoWhile ) { os << "Do-"; }
 		os << "While on condition:" << endl;
 		++indent;

@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 10 17:05:35 2022
-// Update Count     : 28
+// Last Modified On : Thu Jan 13 20:11:55 2022
+// Update Count     : 42
 //
 
 #define __cforall_thread__
@@ -24,9 +24,7 @@
 #define __CFA_INVOKE_PRIVATE__
 #include "invoke.h"
 
-uint64_t thread_rand();
-
-extern uint32_t __thread_seed;							// global thread seed
+extern uint32_t __global_random_seed;
 
 //-----------------------------------------------------------------------------
 // Thread ctors and dtors
@@ -40,13 +38,13 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 	curr_cor = &self_cor;
 	self_mon.owner = &this;
 	self_mon.recursion = 1;
-	random_state = __thread_seed;
 	self_mon_p = &self_mon;
 	curr_cluster = &cl;
 	link.next = 0p;
 	link.ts   = -1llu;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
+	random_state = __global_random_seed;
 	#if defined( __CFA_WITH_VERIFY__ )
 		canary = 0x0D15EA5E0D15EA5Ep;
 	#endif
@@ -173,27 +171,13 @@ T & join( T & this ) {
 	return this;
 }
 
-uint64_t thread_rand() {
-	disable_interrupts();
-	uint64_t ret = __tls_rand();
-	enable_interrupts();
-	return ret;
-}
-
+//-----------------------------------------------------------------------------
 #define GENERATOR LCG
 
-inline uint32_t MarsagliaXor( uint32_t & state ) {
-	state ^= state << 6;
-	state ^= state >> 21;
-	state ^= state << 7;
-	return state;
-} // MarsagliaXor
-
-inline uint32_t LCG( uint32_t & state ) {				// linear congruential generator
-	return state = 36969 * (state & 65535) + (state >> 16); // 36969 is NOT prime!
-} // LCG
-
-void set_seed( uint32_t seed ) { active_thread()->random_state = seed; __thread_seed = seed; }
+void set_seed( uint32_t seed ) {
+ 	active_thread()->random_state = __global_random_seed = seed;
+	GENERATOR( active_thread()->random_state );
+} // set_seed
 uint32_t prng( void ) { return GENERATOR( active_thread()->random_state ); } // [0,UINT_MAX]
 
 // Local Variables: //

@@ -33,7 +33,7 @@
 
 // Must be included in *all* AST classes; should be #undef'd at the end of the file
 #define MUTATE_FRIEND \
-    template<typename node_t> friend node_t * mutate(const node_t * node); \
+	template<typename node_t> friend node_t * mutate(const node_t * node); \
 	template<typename node_t> friend node_t * shallowCopy(const node_t * node);
 
 namespace ast {
@@ -133,7 +133,6 @@ public:
 	/// Null for the forward declaration of a function.
 	ptr<CompoundStmt> stmts;
 	std::vector< ptr<Expr> > withExprs;
-
 
 	FunctionDecl( const CodeLocation & loc, const std::string & name, std::vector<ptr<TypeDecl>>&& forall,
 		std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,

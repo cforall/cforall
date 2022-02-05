@@ -191,8 +191,10 @@ am__objects_4 = Common/Assert.$(OBJEXT) \
 am__objects_5 = ControlStruct/ExceptDecl.$(OBJEXT) \
 	ControlStruct/FixLabels.$(OBJEXT) \
 	ControlStruct/ForExprMutator.$(OBJEXT) \
+	ControlStruct/HoistControlDecls.$(OBJEXT) \
 	ControlStruct/LabelFixer.$(OBJEXT) \
 	ControlStruct/LabelGenerator.$(OBJEXT) \
+	ControlStruct/LabelGeneratorNew.$(OBJEXT) \
 	ControlStruct/MLEMutator.$(OBJEXT) \
 	ControlStruct/MultiLevelExit.$(OBJEXT) \
 	ControlStruct/Mutate.$(OBJEXT)
@@ -246,7 +248,8 @@ am__objects_9 = Tuples/Explode.$(OBJEXT) \
 	Tuples/TupleAssignment.$(OBJEXT) \
 	Tuples/TupleExpansion.$(OBJEXT) \
 	Tuples/TupleExpansionNew.$(OBJEXT) Tuples/Tuples.$(OBJEXT)
-am__objects_10 = Validate/CompoundLiteral.$(OBJEXT) \
+am__objects_10 = Validate/Autogen.$(OBJEXT) \
+	Validate/CompoundLiteral.$(OBJEXT) \
 	Validate/HandleAttributes.$(OBJEXT) \
 	Validate/InitializerLength.$(OBJEXT) \
 	Validate/LabelAddressFixer.$(OBJEXT) \
@@ -353,8 +356,10 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po \
 	ControlStruct/$(DEPDIR)/FixLabels.Po \
 	ControlStruct/$(DEPDIR)/ForExprMutator.Po \
+	ControlStruct/$(DEPDIR)/HoistControlDecls.Po \
 	ControlStruct/$(DEPDIR)/LabelFixer.Po \
 	ControlStruct/$(DEPDIR)/LabelGenerator.Po \
+	ControlStruct/$(DEPDIR)/LabelGeneratorNew.Po \
 	ControlStruct/$(DEPDIR)/MLEMutator.Po \
 	ControlStruct/$(DEPDIR)/MultiLevelExit.Po \
 	ControlStruct/$(DEPDIR)/Mutate.Po GenPoly/$(DEPDIR)/Box.Po \
@@ -434,7 +439,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Tuples/$(DEPDIR)/TupleAssignment.Po \
 	Tuples/$(DEPDIR)/TupleExpansion.Po \
 	Tuples/$(DEPDIR)/TupleExpansionNew.Po \
-	Tuples/$(DEPDIR)/Tuples.Po \
+	Tuples/$(DEPDIR)/Tuples.Po Validate/$(DEPDIR)/Autogen.Po \
 	Validate/$(DEPDIR)/CompoundLiteral.Po \
 	Validate/$(DEPDIR)/FindSpecialDecls.Po \
 	Validate/$(DEPDIR)/FindSpecialDeclsNew.Po \
@@ -855,10 +860,14 @@ SRC_CONTROLSTRUCT = \
 	ControlStruct/FixLabels.hpp \
 	ControlStruct/ForExprMutator.cc \
 	ControlStruct/ForExprMutator.h \
+	ControlStruct/HoistControlDecls.cpp \
+	ControlStruct/HoistControlDecls.hpp \
 	ControlStruct/LabelFixer.cc \
 	ControlStruct/LabelFixer.h \
 	ControlStruct/LabelGenerator.cc \
 	ControlStruct/LabelGenerator.h \
+	ControlStruct/LabelGeneratorNew.cpp \
+	ControlStruct/LabelGeneratorNew.hpp \
 	ControlStruct/MLEMutator.cc \
 	ControlStruct/MLEMutator.h \
 	ControlStruct/MultiLevelExit.cpp \
@@ -989,6 +998,8 @@ SRC_TUPLES = \
 	Tuples/Tuples.h
 
 SRC_VALIDATE = \
+	Validate/Autogen.cpp \
+	Validate/Autogen.hpp \
 	Validate/CompoundLiteral.cpp \
 	Validate/CompoundLiteral.hpp \
 	Validate/HandleAttributes.cc \
@@ -1213,9 +1224,15 @@ ControlStruct/FixLabels.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/ForExprMutator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
+ControlStruct/HoistControlDecls.$(OBJEXT):  \
+	ControlStruct/$(am__dirstamp) \
+	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/LabelFixer.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/LabelGenerator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
+	ControlStruct/$(DEPDIR)/$(am__dirstamp)
+ControlStruct/LabelGeneratorNew.$(OBJEXT):  \
+	ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/MLEMutator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
@@ -1415,6 +1432,8 @@ Validate/$(am__dirstamp):
 Validate/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) Validate/$(DEPDIR)
 	@: > Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/Autogen.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/CompoundLiteral.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/HandleAttributes.$(OBJEXT): Validate/$(am__dirstamp) \
@@ -1608,8 +1627,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/FixLabels.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ForExprMutator.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/HoistControlDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelFixer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelGenerator.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelGeneratorNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/MLEMutator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/MultiLevelExit.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/Mutate.Po@am__quote@ # am--include-marker
@@ -1709,6 +1730,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleExpansion.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleExpansionNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/Tuples.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/Autogen.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/CompoundLiteral.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDeclsNew.Po@am__quote@ # am--include-marker
@@ -2009,8 +2031,10 @@ distclean: distclean-am
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po
 	-rm -f ControlStruct/$(DEPDIR)/FixLabels.Po
 	-rm -f ControlStruct/$(DEPDIR)/ForExprMutator.Po
+	-rm -f ControlStruct/$(DEPDIR)/HoistControlDecls.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelFixer.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelGenerator.Po
+	-rm -f ControlStruct/$(DEPDIR)/LabelGeneratorNew.Po
 	-rm -f ControlStruct/$(DEPDIR)/MLEMutator.Po
 	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
 	-rm -f ControlStruct/$(DEPDIR)/Mutate.Po
@@ -2110,6 +2134,7 @@ distclean: distclean-am
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
 	-rm -f Tuples/$(DEPDIR)/TupleExpansionNew.Po
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
+	-rm -f Validate/$(DEPDIR)/Autogen.Po
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
@@ -2218,8 +2243,10 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po
 	-rm -f ControlStruct/$(DEPDIR)/FixLabels.Po
 	-rm -f ControlStruct/$(DEPDIR)/ForExprMutator.Po
+	-rm -f ControlStruct/$(DEPDIR)/HoistControlDecls.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelFixer.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelGenerator.Po
+	-rm -f ControlStruct/$(DEPDIR)/LabelGeneratorNew.Po
 	-rm -f ControlStruct/$(DEPDIR)/MLEMutator.Po
 	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
 	-rm -f ControlStruct/$(DEPDIR)/Mutate.Po
@@ -2319,6 +2346,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
 	-rm -f Tuples/$(DEPDIR)/TupleExpansionNew.Po
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
+	-rm -f Validate/$(DEPDIR)/Autogen.Po
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po

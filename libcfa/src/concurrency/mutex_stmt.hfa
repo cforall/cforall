@@ -37,6 +37,19 @@ forall(L & | is_lock(L)) {
         }
     }
 
+    struct scoped_lock {
+        L * internal_lock;
+    };
+
+    static inline void ?{}( scoped_lock(L) & this, L & internal_lock ) {
+        this.internal_lock = &internal_lock;
+        lock(internal_lock);
+    }
+    
+    static inline void ^?{}( scoped_lock(L) & this ) with(this) {
+        unlock(*internal_lock);
+    }
+
     static inline L * __get_ptr( L & this ) {
         return &this;
     }

@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:17:24 2017
-// Update Count     : 34
+// Last Modified On : Mon Jan 31 22:28:04 2022
+// Update Count     : 35
 //
 
 #pragma once
@@ -25,51 +25,51 @@
 #include "SynTree/SynTree.h"       // for Visitor Nodes
 
 namespace ControlStruct {
-	/// normalizes label definitions and generates multi-level exit labels
-	class LabelGenerator;
+// normalizes label definitions and generates multi-level exit labels
+class LabelGenerator;
 
-	class LabelFixer final : public WithGuards {
-	  public:
-		LabelFixer( LabelGenerator *gen = 0 );
+class LabelFixer final : public WithGuards {
+  public:
+	LabelFixer( LabelGenerator *gen = 0 );
 
-		std::map < Label, Statement * > *resolveJumps() throw ( SemanticErrorException );
+	std::map < Label, Statement * > *resolveJumps() throw ( SemanticErrorException );
 
-		// Declarations
-		void previsit( FunctionDecl *functionDecl );
-		void postvisit( FunctionDecl *functionDecl );
+	// Declarations
+	void previsit( FunctionDecl *functionDecl );
+	void postvisit( FunctionDecl *functionDecl );
 
-		// Statements
-		void previsit( Statement *stmt );
-		void previsit( BranchStmt *branchStmt );
+	// Statements
+	void previsit( Statement *stmt );
+	void previsit( BranchStmt *branchStmt );
 
-		// Expressions
-		void previsit( LabelAddressExpr *addrExpr );
+	// Expressions
+	void previsit( LabelAddressExpr *addrExpr );
 
-		Label setLabelsDef( std::list< Label > &, Statement *definition );
-		template< typename UsageNode >
-		void setLabelsUsg( Label, UsageNode *usage = 0 );
+	Label setLabelsDef( std::list< Label > &, Statement *definition );
+	template< typename UsageNode >
+	void setLabelsUsg( Label, UsageNode *usage = 0 );
+
+  private:
+	class Entry {
+		public:
+		Entry( Statement *to ) : definition( to ) {}
+		bool defined() { return ( definition != 0 ); }
+		bool insideLoop();
+
+		Label get_label() const { return label; }
+		void set_label( Label lab ) { label = lab; }
+
+		Statement *get_definition() const { return definition; }
+		void set_definition( Statement *def ) { definition = def; }
 
 	  private:
-		class Entry {
-			public:
-			Entry( Statement *to ) : definition( to ) {}
-			bool defined() { return ( definition != 0 ); }
-			bool insideLoop();
-
-			Label get_label() const { return label; }
-			void set_label( Label lab ) { label = lab; }
-
-			Statement *get_definition() const { return definition; }
-			void set_definition( Statement *def ) { definition = def; }
-
-		  private:
-			Label label;
-			Statement *definition;
-		};
-
-		std::map < Label, Entry *> labelTable;
-		LabelGenerator *generator;
+		Label label;
+		Statement *definition;
 	};
+
+	std::map < Label, Entry *> labelTable;
+	LabelGenerator *generator;
+};
 } // namespace ControlStruct
 
 // Local Variables: //

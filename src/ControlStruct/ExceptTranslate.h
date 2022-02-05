@@ -30,6 +30,7 @@ namespace ControlStruct {
 	 */
 
 	void translateTries( std::list< Declaration *> & translationUnit );
+	void translateTries( ast::TranslationUnit & transUnit );
 	/* Replaces all try blocks (and their many clauses) with function definitions and calls.
 	 * This uses the exception built-ins to produce typed output and should take place after
 	 * the resolver. It also produces virtual casts and should happen before they are expanded.

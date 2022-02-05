@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Mon Jan 20 16:03:00 2020
-// Update Count     : 71
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Feb  2 20:19:33 2022
+// Update Count     : 90
 //
 
 #include "SynTree/Statement.h"
@@ -28,12 +28,12 @@
 #include "Statement.h"             // for Statement, ForStmt, AsmStmt, Catch...
 #include "SynTree/Label.h"         // for Label, operator<<
 
-using std::string;
-using std::endl;
+using namespace std;
 
-Statement::Statement( const std::list<Label> & labels ) : labels( labels ) {}
 
-void Statement::print( std::ostream & os, Indenter indent ) const {
+Statement::Statement( const list<Label> & labels ) : labels( labels ) {}
+
+void Statement::print( ostream & os, Indenter indent ) const {
 	if ( ! labels.empty() ) {
 		os << indent << "... Labels: {";
 		for ( const Label & l : labels ) {
@@ -53,13 +53,13 @@ ExprStmt::~ExprStmt() {
 	delete expr;
 }
 
-void ExprStmt::print( std::ostream & os, Indenter indent ) const {
-	os << "Expression Statement:" << endl << indent+1;
-	expr->print( os, indent+1 );
+void ExprStmt::print( ostream & os, Indenter indent ) const {
+	os << "Expression Statement:" << endl << indent + 1;
+	expr->print( os, indent + 1 );
 }
 
 
-AsmStmt::AsmStmt( bool voltile, Expression * instruction, std::list<Expression *> output, std::list<Expression *> input, std::list<ConstantExpr *> clobber, std::list<Label> gotolabels ) : Statement(), voltile( voltile ), instruction( instruction ), output( output ), input( input ), clobber( clobber ), gotolabels( gotolabels ) {}
+AsmStmt::AsmStmt( bool voltile, Expression * instruction, const list<Expression *> output, const list<Expression *> input, const list<ConstantExpr *> clobber, const list<Label> gotolabels ) : Statement(), voltile( voltile ), instruction( instruction ), output( output ), input( input ), clobber( clobber ), gotolabels( gotolabels ) {}
 
 AsmStmt::AsmStmt( const AsmStmt & other ) : Statement( other ), voltile( other.voltile ), instruction( maybeClone( other.instruction ) ), gotolabels( other.gotolabels ) {
   cloneAll( other.output, output );
@@ -74,28 +74,28 @@ AsmStmt::~AsmStmt() {
 	deleteAll( clobber );
 }
 
-void AsmStmt::print( std::ostream & os, Indenter indent ) const {
+void AsmStmt::print( ostream & os, Indenter indent ) const {
 	os << "Assembler Statement:" << endl;
-	os << indent+1 << "instruction: " << endl << indent;
-	instruction->print( os, indent+1 );
+	os << indent + 1 << "instruction: " << endl << indent;
+	instruction->print( os, indent + 1 );
 	if ( ! output.empty() ) {
-		os << endl << indent+1 << "output: " << endl;
-		printAll( output, os, indent+1 );
+		os << endl << indent + 1 << "output: " << endl;
+		printAll( output, os, indent + 1 );
 	} // if
 	if ( ! input.empty() ) {
-		os << indent+1 << "input: " << endl;
-		printAll( input, os, indent+1 );
+		os << indent + 1 << "input: " << endl;
+		printAll( input, os, indent + 1 );
 	} // if
 	if ( ! clobber.empty() ) {
-		os << indent+1 << "clobber: " << endl;
-		printAll( clobber, os, indent+1 );
+		os << indent + 1 << "clobber: " << endl;
+		printAll( clobber, os, indent + 1 );
 	} // if
 }
 
 
-DirectiveStmt::DirectiveStmt( const std::string & directive ) : Statement(), directive( directive ) {}
+DirectiveStmt::DirectiveStmt( const string & directive ) : Statement(), directive( directive ) {}
 
-void DirectiveStmt::print( std::ostream & os, Indenter ) const {
+void DirectiveStmt::print( ostream & os, Indenter ) const {
 	os << "GCC Directive:" << directive << endl;
 }
 
@@ -119,12 +119,12 @@ BranchStmt::BranchStmt( Expression * computedTarget, Type type ) throw ( Semanti
 	}
 }
 
-void BranchStmt::print( std::ostream & os, Indenter indent ) const {
-	assert(type < 5);
+void BranchStmt::print( ostream & os, Indenter indent ) const {
+	assertf(type < BranchStmts, "CFA internal error: invalid branch statement" );
 	os << "Branch (" << brType[type] << ")" << endl ;
-	if ( target != "" ) os << indent+1 << "with target: " << target << endl;
-	if ( originalTarget != "" ) os << indent+1 << "with original target: " << originalTarget << endl;
-	if ( computedTarget != nullptr ) os << indent+1 << "with computed target: " << computedTarget << endl;
+	if ( target != "" ) os << indent + 1 << "with target: " << target << endl;
+	if ( originalTarget != "" ) os << indent + 1 << "with original target: " << originalTarget << endl;
+	if ( computedTarget != nullptr ) os << indent + 1 << "with computed target: " << computedTarget << endl;
 }
 
 ReturnStmt::ReturnStmt( Expression * expr ) : Statement(), expr( expr ) {}
@@ -135,57 +135,57 @@ ReturnStmt::~ReturnStmt() {
 	delete expr;
 }
 
-void ReturnStmt::print( std::ostream & os, Indenter indent ) const {
+void ReturnStmt::print( ostream & os, Indenter indent ) const {
 	os << "Return Statement, returning: ";
 	if ( expr != nullptr ) {
-		os << endl << indent+1;
-		expr->print( os, indent+1 );
+		os << endl << indent + 1;
+		expr->print( os, indent + 1 );
 	}
 	os << endl;
 }
 
-IfStmt::IfStmt( Expression * condition, Statement * thenPart, Statement * elsePart, std::list<Statement *> initialization ):
-	Statement(), condition( condition ), thenPart( thenPart ), elsePart( elsePart ), initialization( initialization ) {}
+IfStmt::IfStmt( Expression * condition, Statement * then, Statement * else_, const list<Statement *> initialization ):
+	Statement(), condition( condition ), then( then ), else_( else_ ), initialization( initialization ) {}
 
 IfStmt::IfStmt( const IfStmt & other ) :
-	Statement( other ), condition( maybeClone( other.condition ) ), thenPart( maybeClone( other.thenPart ) ), elsePart( maybeClone( other.elsePart ) ) {
+	Statement( other ), condition( maybeClone( other.condition ) ), then( maybeClone( other.then ) ), else_( maybeClone( other.else_ ) ) {
 	cloneAll( other.initialization, initialization );
 }
 
 IfStmt::~IfStmt() {
 	deleteAll( initialization );
 	delete condition;
-	delete thenPart;
-	delete elsePart;
+	delete then;
+	delete else_;
 }
 
-void IfStmt::print( std::ostream & os, Indenter indent ) const {
+void IfStmt::print( ostream & os, Indenter indent ) const {
 	os << "If on condition: " << endl;
-	os << indent+1;
-	condition->print( os, indent+1 );
+	os << indent + 1;
+	condition->print( os, indent + 1 );
 
 	if ( !initialization.empty() ) {
 		os << indent << "... with initialization: \n";
 		for ( const Statement * stmt : initialization ) {
-			os << indent+1;
-			stmt->print( os, indent+1 );
+			os << indent + 1;
+			stmt->print( os, indent + 1 );
 		}
 		os << endl;
 	}
 
 	os << indent << "... then: " << endl;
 
-	os << indent+1;
-	thenPart->print( os, indent+1 );
+	os << indent + 1;
+	then->print( os, indent + 1 );
 
-	if ( elsePart != nullptr ) {
+	if ( else_ != nullptr ) {
 		os << indent << "... else: " << endl;
-		os << indent+1;
-		elsePart->print( os, indent+1 );
+		os << indent + 1;
+		else_->print( os, indent + 1 );
 	} // if
 }
 
-SwitchStmt::SwitchStmt( Expression * condition, const std::list<Statement *> & statements ):
+SwitchStmt::SwitchStmt( Expression * condition, const list<Statement *> & statements ):
 	Statement(), condition( condition ), statements( statements ) {
 }
 
@@ -200,23 +200,23 @@ SwitchStmt::~SwitchStmt() {
 	deleteAll( statements );
 }
 
-void SwitchStmt::print( std::ostream & os, Indenter indent ) const {
+void SwitchStmt::print( ostream & os, Indenter indent ) const {
 	os << "Switch on condition: ";
 	condition->print( os );
 	os << endl;
 
 	for ( const Statement * stmt : statements ) {
-		stmt->print( os, indent+1 );
+		stmt->print( os, indent + 1 );
 	}
 }
 
-CaseStmt::CaseStmt( Expression * condition, const std::list<Statement *> & statements, bool deflt ) throw ( SemanticErrorException ) :
-	Statement(), condition( condition ), stmts( statements ), _isDefault( deflt ) {
+CaseStmt::CaseStmt( Expression * condition, const list<Statement *> & statements, bool deflt ) throw ( SemanticErrorException ) :
+		Statement(), condition( condition ), stmts( statements ), _isDefault( deflt ) {
 	if ( isDefault() && condition != nullptr ) SemanticError( condition, "default case with condition: " );
 }
 
 CaseStmt::CaseStmt( const CaseStmt & other ) :
-	Statement( other ), condition( maybeClone(other.condition ) ), _isDefault( other._isDefault ) {
+		Statement( other ), condition( maybeClone(other.condition ) ), _isDefault( other._isDefault ) {
 	cloneAll( other.stmts, stmts );
 }
 
@@ -225,13 +225,13 @@ CaseStmt::~CaseStmt() {
 	deleteAll( stmts );
 }
 
-CaseStmt * CaseStmt::makeDefault( const std::list<Label> & labels, std::list<Statement *> stmts ) {
+CaseStmt * CaseStmt::makeDefault( const list<Label> & labels, list<Statement *> stmts ) {
 	CaseStmt * stmt = new CaseStmt( nullptr, stmts, true );
 	stmt->labels = labels;
 	return stmt;
 }
 
-void CaseStmt::print( std::ostream & os, Indenter indent ) const {
+void CaseStmt::print( ostream & os, Indenter indent ) const {
 	if ( isDefault() ) os << indent << "Default ";
 	else {
 		os << indent << "Case ";
@@ -240,39 +240,43 @@ void CaseStmt::print( std::ostream & os, Indenter indent ) const {
 	os << endl;
 
 	for ( Statement * stmt : stmts ) {
-		os << indent+1;
-		stmt->print( os, indent+1 );
+		os << indent + 1;
+		stmt->print( os, indent + 1 );
 	}
 }
 
-WhileStmt::WhileStmt( Expression * condition, Statement * body, std::list< Statement * > & initialization, bool isDoWhile ):
-	Statement(), condition( condition), body( body), initialization( initialization ), isDoWhile( isDoWhile) {
+WhileDoStmt::WhileDoStmt( Expression * condition, Statement * body, const list< Statement * > & initialization, bool isDoWhile ):
+	Statement(), condition( condition ), body( body ), else_( nullptr ), initialization( initialization ), isDoWhile( isDoWhile) {
 }
 
-WhileStmt::WhileStmt( const WhileStmt & other ):
+WhileDoStmt::WhileDoStmt( Expression * condition, Statement * body, Statement * else_, const list< Statement * > & initialization, bool isDoWhile ):
+	Statement(), condition( condition), body( body ), else_( else_ ), initialization( initialization ), isDoWhile( isDoWhile) {
+}
+
+WhileDoStmt::WhileDoStmt( const WhileDoStmt & other ):
 	Statement( other ), condition( maybeClone( other.condition ) ), body( maybeClone( other.body ) ), isDoWhile( other.isDoWhile ) {
 }
 
-WhileStmt::~WhileStmt() {
+WhileDoStmt::~WhileDoStmt() {
 	delete body;
 	delete condition;
 }
 
-void WhileStmt::print( std::ostream & os, Indenter indent ) const {
+void WhileDoStmt::print( ostream & os, Indenter indent ) const {
 	os << "While on condition: " << endl ;
-	condition->print( os, indent+1 );
+	condition->print( os, indent + 1 );
 
 	os << indent << "... with body: " << endl;
 
-	if ( body != nullptr ) body->print( os, indent+1 );
+	if ( body != nullptr ) body->print( os, indent + 1 );
 }
 
-ForStmt::ForStmt( std::list<Statement *> initialization, Expression * condition, Expression * increment, Statement * body ):
-	Statement(), initialization( initialization ), condition( condition ), increment( increment ), body( body ) {
+ForStmt::ForStmt( const list<Statement *> initialization, Expression * condition, Expression * increment, Statement * body, Statement * else_ ):
+	Statement(), initialization( initialization ), condition( condition ), increment( increment ), body( body ), else_( else_ ) {
 }
 
 ForStmt::ForStmt( const ForStmt & other ):
-	Statement( other ), condition( maybeClone( other.condition ) ), increment( maybeClone( other.increment ) ), body( maybeClone( other.body ) ) {
+	Statement( other ), condition( maybeClone( other.condition ) ), increment( maybeClone( other.increment ) ), body( maybeClone( other.body ) ), else_( maybeClone( other.else_ ) ) {
 		cloneAll( other.initialization, initialization );
 
 }
@@ -282,9 +286,10 @@ ForStmt::~ForStmt() {
 	delete condition;
 	delete increment;
 	delete body;
+	delete else_;
 }
 
-void ForStmt::print( std::ostream & os, Indenter indent ) const {
+void ForStmt::print( ostream & os, Indenter indent ) const {
 	Statement::print( os, indent ); // print labels
 
 	os << "For Statement" << endl;
@@ -292,24 +297,29 @@ void ForStmt::print( std::ostream & os, Indenter indent ) const {
 	if ( ! initialization.empty() ) {
 		os << indent << "... initialization: \n";
 		for ( Statement * stmt : initialization ) {
-			os << indent+1;
-			stmt->print( os, indent+1 );
+			os << indent + 1;
+			stmt->print( os, indent + 1 );
 		}
 	}
 
 	if ( condition != nullptr ) {
-		os << indent << "... condition: \n" << indent+1;
-		condition->print( os, indent+1 );
+		os << indent << "... condition: \n" << indent + 1;
+		condition->print( os, indent + 1 );
 	}
 
 	if ( increment != nullptr ) {
-		os << "\n" << indent << "... increment: \n" << indent+1;
-		increment->print( os, indent+1 );
+		os << "\n" << indent << "... increment: \n" << indent + 1;
+		increment->print( os, indent + 1 );
 	}
 
 	if ( body != nullptr ) {
-		os << "\n" << indent << "... with body: \n" << indent+1;
-		body->print( os, indent+1 );
+		os << "\n" << indent << "... with body: \n" << indent + 1;
+		body->print( os, indent + 1 );
+	}
+
+	if ( else_ != nullptr ) {
+		os << "\n" << indent << "... with body: \n" << indent + 1;
+		else_->print( os, indent + 1 );
 	}
 	os << endl;
 }
@@ -328,17 +338,17 @@ ThrowStmt::~ThrowStmt() {
 	delete target;
 }
 
-void ThrowStmt::print( std::ostream & os, Indenter indent) const {
+void ThrowStmt::print( ostream & os, Indenter indent) const {
 	if ( target ) os << "Non-Local ";
 	os << "Throw Statement, raising: ";
-	expr->print(os, indent+1);
+	expr->print(os, indent + 1);
 	if ( target ) {
 		os << "... at: ";
-		target->print(os, indent+1);
+		target->print(os, indent + 1);
 	}
 }
 
-TryStmt::TryStmt( CompoundStmt * tryBlock, std::list<CatchStmt *> & handlers, FinallyStmt * finallyBlock ) :
+TryStmt::TryStmt( CompoundStmt * tryBlock, const list<CatchStmt *> & handlers, FinallyStmt * finallyBlock ) :
 	Statement(), block( tryBlock ),  handlers( handlers ), finallyBlock( finallyBlock ) {
 }
 
@@ -352,22 +362,22 @@ TryStmt::~TryStmt() {
 	delete finallyBlock;
 }
 
-void TryStmt::print( std::ostream & os, Indenter indent ) const {
+void TryStmt::print( ostream & os, Indenter indent ) const {
 	os << "Try Statement" << endl;
-	os << indent << "... with block:" << endl << indent+1;
-	block->print( os, indent+1 );
+	os << indent << "... with block:" << endl << indent + 1;
+	block->print( os, indent + 1 );
 
 	// handlers
 	os << indent << "... and handlers:" << endl;
 	for ( const CatchStmt * stmt : handlers ) {
-		os << indent+1;
-		stmt->print( os, indent+1 );
+		os << indent + 1;
+		stmt->print( os, indent + 1 );
 	}
 
 	// finally block
 	if ( finallyBlock != nullptr ) {
-		os << indent << "... and finally:" << endl << indent+1;
-		finallyBlock->print( os, indent+1 );
+		os << indent << "... and finally:" << endl << indent + 1;
+		finallyBlock->print( os, indent + 1 );
 	} // if
 }
 
@@ -385,21 +395,21 @@ CatchStmt::~CatchStmt() {
 	delete body;
 }
 
-void CatchStmt::print( std::ostream & os, Indenter indent ) const {
+void CatchStmt::print( ostream & os, Indenter indent ) const {
 	os << "Catch " << ((Terminate == kind) ? "Terminate" : "Resume") << " Statement" << endl;
 
 	os << indent << "... catching: ";
-	decl->printShort( os, indent+1 );
+	decl->printShort( os, indent + 1 );
 	os << endl;
 
 	if ( cond ) {
-		os << indent << "... with conditional:" << endl << indent+1;
-		cond->print( os, indent+1 );
+		os << indent << "... with conditional:" << endl << indent + 1;
+		cond->print( os, indent + 1 );
 	}
 
 	os << indent << "... with block:" << endl;
-	os << indent+1;
-	body->print( os, indent+1 );
+	os << indent + 1;
+	body->print( os, indent + 1 );
 }
 
 
@@ -413,10 +423,10 @@ FinallyStmt::~FinallyStmt() {
 	delete block;
 }
 
-void FinallyStmt::print( std::ostream & os, Indenter indent ) const {
+void FinallyStmt::print( ostream & os, Indenter indent ) const {
 	os << "Finally Statement" << endl;
-	os << indent << "... with block:" << endl << indent+1;
-	block->print( os, indent+1 );
+	os << indent << "... with block:" << endl << indent + 1;
+	block->print( os, indent + 1 );
 }
 
 SuspendStmt::SuspendStmt( const SuspendStmt & other )
@@ -428,7 +438,7 @@ SuspendStmt::~SuspendStmt() {
 	delete then;
 }
 
-void SuspendStmt::print( std::ostream & os, Indenter indent ) const {
+void SuspendStmt::print( ostream & os, Indenter indent ) const {
 	os << "Suspend Statement";
 	switch (type) {
 		case None     : os << " with implicit target"; break;
@@ -485,7 +495,7 @@ WaitForStmt::~WaitForStmt() {
 	delete orelse.condition;
 }
 
-void WaitForStmt::print( std::ostream & os, Indenter indent ) const {
+void WaitForStmt::print( ostream & os, Indenter indent ) const {
 	os << "Waitfor Statement" << endl;
 	indent += 1;
 	for( auto & clause : clauses ) {
@@ -520,7 +530,7 @@ void WaitForStmt::print( std::ostream & os, Indenter indent ) const {
 }
 
 
-WithStmt::WithStmt( const std::list< Expression * > & exprs, Statement * stmt ) : Declaration("", noStorageClasses, LinkageSpec::Cforall), exprs( exprs ), stmt( stmt ) {}
+WithStmt::WithStmt( const list< Expression * > & exprs, Statement * stmt ) : Declaration("", noStorageClasses, LinkageSpec::Cforall), exprs( exprs ), stmt( stmt ) {}
 WithStmt::WithStmt( const WithStmt & other ) : Declaration( other ), stmt( maybeClone( other.stmt ) ) {
 	cloneAll( other.exprs, exprs );
 }
@@ -529,19 +539,19 @@ WithStmt::~WithStmt() {
 	delete stmt;
 }
 
-void WithStmt::print( std::ostream & os, Indenter indent ) const {
+void WithStmt::print( ostream & os, Indenter indent ) const {
 	os << "With statement" << endl;
 	os << indent << "... with expressions: " << endl;
-	printAll( exprs, os, indent+1 );
-	os << indent << "... with statement:" << endl << indent+1;
-	stmt->print( os, indent+1 );
+	printAll( exprs, os, indent + 1 );
+	os << indent << "... with statement:" << endl << indent + 1;
+	stmt->print( os, indent + 1 );
 }
 
 
-NullStmt::NullStmt( const std::list<Label> & labels ) : Statement( labels ) {
+NullStmt::NullStmt( const list<Label> & labels ) : Statement( labels ) {
 }
 
-void NullStmt::print( std::ostream & os, Indenter indent ) const {
+void NullStmt::print( ostream & os, Indenter indent ) const {
 	os << "Null Statement" << endl;
 	Statement::print( os, indent );
 }
@@ -557,14 +567,14 @@ ImplicitCtorDtorStmt::~ImplicitCtorDtorStmt() {
 	delete callStmt;
 }
 
-void ImplicitCtorDtorStmt::print( std::ostream & os, Indenter indent ) const {
+void ImplicitCtorDtorStmt::print( ostream & os, Indenter indent ) const {
 	os << "Implicit Ctor Dtor Statement" << endl;
 	os << indent << "... with Ctor/Dtor: ";
-	callStmt->print( os, indent+1);
+	callStmt->print( os, indent + 1);
 	os << endl;
 }
 
-MutexStmt::MutexStmt( Statement * stmt, std::list<Expression *> mutexObjs ) 
+MutexStmt::MutexStmt( Statement * stmt, const list<Expression *> mutexObjs ) 
 	: Statement(), stmt( stmt ), mutexObjs( mutexObjs ) { }
 
 MutexStmt::MutexStmt( const MutexStmt & other ) : Statement( other ), stmt( maybeClone( other.stmt ) ) {
@@ -576,16 +586,16 @@ MutexStmt::~MutexStmt() {
 	delete stmt;
 }
 
-void MutexStmt::print( std::ostream & os, Indenter indent ) const {
+void MutexStmt::print( ostream & os, Indenter indent ) const {
 	os << "Mutex Statement" << endl;
 	os << indent << "... with Expressions: " << endl;
 	for (auto * obj : mutexObjs) {
-		os << indent+1;
-		obj->print( os, indent+1);
+		os << indent + 1;
+		obj->print( os, indent + 1);
 		os << endl;
 	}
-	os << indent << "... with Statement: " << endl << indent+1;
-	stmt->print( os, indent+1 );
+	os << indent << "... with Statement: " << endl << indent + 1;
+	stmt->print( os, indent + 1 );
 }
 
 // Local Variables: //

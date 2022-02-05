@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Mon Feb  3 21:27:18 2020
-## Update Count     : 208
+## Last Modified On : Thu Jan 13 17:06:27 2022
+## Update Count     : 215
 ###############################################################################
 
 # create object files in directory with source files
@@ -36,19 +36,21 @@ $(DEPDIR)/builtins.Po : $(DEPDIR)
 
 # create extra forward types/declarations to reduce inclusion of library files
 extras.cf : ${srcdir}/extras.regx ${srcdir}/extras.c
-	${AM_V_GEN}gcc ${AM_CFLAGS} -E ${srcdir}/extras.c | grep -f ${srcdir}/extras.regx > extras.cf
-	${AM_V_GEN}gcc ${AM_CFLAGS} -E ${srcdir}/extras.c | grep -zo -f ${srcdir}/extras.regx2 | tr '\0' '\n' >> extras.cf
+	@echo '# 2 "${@}"  // needed for error messages from this file' > ${@}
+	${AM_V_GEN}gcc ${AM_CFLAGS} -E ${srcdir}/extras.c | grep -f ${srcdir}/extras.regx >> ${@}
+	${AM_V_GEN}gcc ${AM_CFLAGS} -E ${srcdir}/extras.c | grep -zo -f ${srcdir}/extras.regx2 | tr '\0' '\n' >> ${@}
 
 # create forward declarations for gcc builtins
 gcc-builtins.cf : gcc-builtins.c ${srcdir}/prototypes.sed
-	${AM_V_GEN}gcc -I${srcdir} -E -P $< | sed -r -f ${srcdir}/prototypes.sed > $@
+	@echo '# 2 "${@}"  // needed for error messages from this file' > ${@}
+	${AM_V_GEN}gcc -I${srcdir} -E -P $< | sed -r -f ${srcdir}/prototypes.sed >> ${@}
 
 gcc-builtins.c : ${srcdir}/builtins.def ${srcdir}/prototypes.awk ${srcdir}/sync-builtins.cf ${srcdir}/prototypes.c
-	${AM_V_GEN}gcc -I${srcdir} -E ${srcdir}/prototypes.c | awk -f ${srcdir}/prototypes.awk > $@
+	${AM_V_GEN}gcc -I${srcdir} -E ${srcdir}/prototypes.c | awk -f ${srcdir}/prototypes.awk > ${@}
 
 prelude.cfa : prelude-gen.cc
 	${AM_V_GEN}${CXX} ${AM_CXXFLAGS} ${CXXFLAGS} ${AM_CFLAGS} ${<} -o prelude-gen -Wall -Wextra -O2 -g -std=c++14
-	@./prelude-gen > $@
+	@./prelude-gen > ${@}
 	@rm ./prelude-gen
 
 builtins.def :
@@ -57,13 +59,13 @@ prototypes.awk :
 
 # create forward declarations for cfa builtins
 builtins.cf : builtins.c @LOCAL_CFACC@
-	${AM_V_GEN}gcc ${AM_CFLAGS} -E -P ${<} -o ${@} -MD -MP -MF $(DEPDIR)/builtins.Po -D__cforall
+	${AM_V_GEN}gcc ${AM_CFLAGS} -E ${<} -o ${@} -MD -MP -MF $(DEPDIR)/builtins.Po -D__cforall
 	${AM_V_at}sed -i 's/builtins.o/builtins.cf/g' $(DEPDIR)/builtins.Po
 
 include $(DEPDIR)/builtins.Po
 
 bootloader.c : ${srcdir}/bootloader.cf prelude.cfa extras.cf gcc-builtins.cf builtins.cf @CFACPP@
-	${AM_V_GEN}@CFACPP@ --prelude-dir=${builddir} -tpm ${srcdir}/bootloader.cf $@  # use src/cfa-cpp as not in lib until after install
+	${AM_V_GEN}@CFACPP@ --prelude-dir=${builddir} -tpm ${srcdir}/bootloader.cf ${@}  # use src/cfa-cpp as not in lib until after install
 
 maintainer-clean-local :
 	rm -rf $(DEPDIR)

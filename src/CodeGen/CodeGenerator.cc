@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 19:00:42 2021
-// Update Count     : 536
+// Last Modified On : Wed Feb  2 20:30:30 2022
+// Update Count     : 541
 //
 #include "CodeGenerator.h"
 
@@ -41,7 +41,7 @@ namespace CodeGen {
 	// The kinds of statements that would ideally be followed by whitespace.
 	bool wantSpacing( Statement * stmt) {
 		return dynamic_cast< IfStmt * >( stmt ) || dynamic_cast< CompoundStmt * >( stmt ) ||
-			dynamic_cast< WhileStmt * >( stmt ) || dynamic_cast< ForStmt * >( stmt ) || dynamic_cast< SwitchStmt *>( stmt );
+			dynamic_cast< WhileDoStmt * >( stmt ) || dynamic_cast< ForStmt * >( stmt ) || dynamic_cast< SwitchStmt *>( stmt );
 	}
 
 	void CodeGenerator::extension( Expression * expr ) {
@@ -954,11 +954,11 @@ namespace CodeGen {
 		ifStmt->get_condition()->accept( *visitor );
 		output << " ) ";
 
-		ifStmt->get_thenPart()->accept( *visitor );
+		ifStmt->get_then()->accept( *visitor );
 
-		if ( ifStmt->get_elsePart() != 0) {
+		if ( ifStmt->get_else() != 0) {
 			output << " else ";
-			ifStmt->get_elsePart()->accept( *visitor );
+			ifStmt->get_else()->accept( *visitor );
 		} // if
 	}
 
@@ -1019,6 +1019,7 @@ namespace CodeGen {
 			assertf( ! options.genC, "fallthru should not reach code generation." );
 			output << "fallthru";
 			break;
+		  default: ;									// prevent warning
 		} // switch
 		// print branch target for labelled break/continue/fallthru in debug mode
 		if ( ! options.genC && branchStmt->get_type() != BranchStmt::Goto ) {
@@ -1124,24 +1125,24 @@ namespace CodeGen {
 		with->stmt->accept( *visitor );
 	}
 
-	void CodeGenerator::postvisit( WhileStmt * whileStmt ) {
-		if ( whileStmt->get_isDoWhile() ) {
+	void CodeGenerator::postvisit( WhileDoStmt * whileDoStmt ) {
+		if ( whileDoStmt->get_isDoWhile() ) {
 			output << "do";
 		} else {
 			output << "while (";
-			whileStmt->get_condition()->accept( *visitor );
+			whileDoStmt->get_condition()->accept( *visitor );
 			output << ")";
 		} // if
 		output << " ";
 
-		output << CodeGenerator::printLabels( whileStmt->get_body()->get_labels() );
-		whileStmt->get_body()->accept( *visitor );
+		output << CodeGenerator::printLabels( whileDoStmt->get_body()->get_labels() );
+		whileDoStmt->get_body()->accept( *visitor );
 
 		output << indent;
 
-		if ( whileStmt->get_isDoWhile() ) {
+		if ( whileDoStmt->get_isDoWhile() ) {
 			output << " while (";
-			whileStmt->get_condition()->accept( *visitor );
+			whileDoStmt->get_condition()->accept( *visitor );
 			output << ");";
 		} // if
 	}

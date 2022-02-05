@@ -64,11 +64,17 @@ enum {
 			volatile uint64_t extunpark;
 			volatile  int64_t threads;  // number of threads in the system, includes only local change
 			volatile  int64_t cthreads; // number of threads in the system, includes only local change
+			struct {
+				volatile uint64_t yield;
+				volatile uint64_t rllfwd;
+			} preempt;
 		} threads;
 		struct {
 			volatile uint64_t halts;
 			volatile uint64_t cancels;
+			volatile uint64_t early;
 			volatile uint64_t wakes;
+			volatile uint64_t seen;
 			volatile uint64_t exits;
 		} sleep;
 	};
@@ -88,6 +94,10 @@ enum {
 			} submit;
 			struct {
 				volatile uint64_t external;
+				volatile uint64_t dirty;
+				volatile uint64_t full;
+				volatile uint64_t idle;
+				volatile uint64_t eager;
 			} flush;
 			struct {
 				volatile uint64_t drain;

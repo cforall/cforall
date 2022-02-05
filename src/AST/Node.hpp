@@ -187,6 +187,11 @@ public:
 		if( node ) _inc(node);
 	}
 
+	ptr_base & operator=( const node_t * node ) {
+		assign( node );
+		return *this;
+	}
+
 	template<typename o_node_t>
 	ptr_base & operator=( const o_node_t * node ) {
 		assign( strict_dynamic_cast<const node_t *, nullptr>(node) );

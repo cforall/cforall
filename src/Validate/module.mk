@@ -15,6 +15,8 @@
 ###############################################################################
 
 SRC_VALIDATE = \
+	Validate/Autogen.cpp \
+	Validate/Autogen.hpp \
 	Validate/CompoundLiteral.cpp \
 	Validate/CompoundLiteral.hpp \
 	Validate/HandleAttributes.cc \

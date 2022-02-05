@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Fri Dec  4 15:42:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:35:37 2021
-// Update Count     : 2
+// Last Modified On : Tue Feb  1 09:14:39 2022
+// Update Count     : 3
 //
 
 #include "CodeLocationTools.hpp"
@@ -108,7 +108,7 @@ public:
     macro(AsmStmt, Stmt) \
     macro(DirectiveStmt, Stmt) \
     macro(IfStmt, Stmt) \
-    macro(WhileStmt, Stmt) \
+    macro(WhileDoStmt, Stmt) \
     macro(ForStmt, Stmt) \
     macro(SwitchStmt, Stmt) \
     macro(CaseStmt, Stmt) \

@@ -1,3 +1,5 @@
+#include <clock.hfa>
+#include <fstream.hfa>
 #include <kernel.hfa>
 #include <thread.hfa>
 #include <time.hfa>
@@ -20,34 +22,65 @@ static const unsigned long N = 500ul;
 
 extern void __cfaabi_check_preemption();
 
-static volatile int counter = 0;
+static struct {
+	volatile int counter;
+	volatile Time prev;
+	Duration durations[6];
+} globals;
 
 thread worker_t {
 	int value;
+	unsigned long long spin;
 };
 
 void ?{}( worker_t & this, int value ) {
 	this.value = value;
+	this.spin = 0;
 }
 
 void main(worker_t & this) {
-	while(TEST(counter < N)) {
+	while(TEST(globals.counter < N)) {
+		if(this.spin > 50_000_000_000) abort | "Worker" | this.value | "has been spinning too long! (" | this.spin | ")";
 		__cfaabi_check_preemption();
-		if( (counter % 7) == this.value ) {
+		if( (globals.counter % 7) == this.value ) {
 			__cfaabi_check_preemption();
-			int next = __atomic_add_fetch( &counter, 1, __ATOMIC_SEQ_CST );
+			#if !defined(TEST_LONG)
+				Time now = timeHiRes();
+				Duration diff = now - globals.prev;
+				globals.prev = now;
+			#endif
+			int next = __atomic_add_fetch( &globals.counter, 1, __ATOMIC_SEQ_CST );
 			__cfaabi_check_preemption();
-			if( (next % 100) == 0 ) printf("%d\n", (int)next);
+			if( (next % 100) == 0 ) {
+				#if !defined(TEST_LONG)
+					unsigned idx = next / 100;
+					if (idx >= 6) abort | "Idx from next is invalid: " | idx | "vs" | next;
+					globals.durations[idx] = diff;
+					if(diff > 12`s) serr | "Duration suspiciously large:" | diff;
+				#endif
+				printf("%d\n", (int)next);
+
+			}
 			__cfaabi_check_preemption();
+			this.spin = 0;
 		}
 		__cfaabi_check_preemption();
 		KICK_WATCHDOG;
+		this.spin++;
 	}
 }
 
 int main(int argc, char* argv[]) {
 	processor p;
+	globals.counter = 0;
+	globals.durations[0] = 0;
+	globals.durations[1] = 0;
+	globals.durations[2] = 0;
+	globals.durations[3] = 0;
+	globals.durations[4] = 0;
+	globals.durations[5] = 0;
 	{
+		globals.prev = timeHiRes();
 		worker_t w0 = 0;
 		worker_t w1 = 1;
 		worker_t w2 = 2;

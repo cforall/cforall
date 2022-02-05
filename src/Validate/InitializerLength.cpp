@@ -13,7 +13,7 @@
 // Update Count     : 0
 //
 
-//#include "InitializerLength.hpp"
+#include "InitializerLength.hpp"
 
 #include "AST/Expr.hpp"
 #include "AST/Decl.hpp"

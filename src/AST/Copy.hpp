@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Wed Jul 10 16:13:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Thr Nov 11  9:22:00 2021
-// Update Count     : 2
+// Last Modified On : Wed Dec 15 11:07:00 2021
+// Update Count     : 3
 //
 
 #pragma once
@@ -50,6 +50,16 @@ node_t * deepCopy( const node_t * localRoot ) {
 
 template<>
 Node * deepCopy<Node>( const Node * localRoot );
+
+template<typename node_t, enum Node::ref_type ref_t>
+node_t * shallowCopy( const ptr_base<node_t, ref_t> & localRoot ) {
+	return shallowCopy( localRoot.get() );
+}
+
+template<typename node_t, enum Node::ref_type ref_t>
+node_t * deepCopy( const ptr_base<node_t, ref_t> & localRoot ) {
+	return deepCopy( localRoot.get() );
+}
 
 }
 

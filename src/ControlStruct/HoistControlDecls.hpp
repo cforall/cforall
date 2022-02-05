@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixLabels.hpp -- Normalizes labels and handles multi-level exit labels.
+// HoistControlDecls.hpp -- Desugar Cforall control structures.
 //
 // Author           : Andrew Beach
-// Created On       : Mon Nov  1 09:36:00 2021
+// Created On       : Fri Dec  3 15:31:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 31 22:18:43 2022
-// Update Count     : 2
+// Last Modified On : Mon Jan 31 22:25:07 2022
+// Update Count     : 3
 //
 
 #pragma once
@@ -20,9 +20,9 @@ class TranslationUnit;
 }
 
 namespace ControlStruct {
-// normalizes label definitions and generates multi-level exit labels
-void fixLabels( ast::TranslationUnit & translationUnit );
-}
+// Hoist declarations out of control flow statements into compound statement.
+void hoistControlDecls( ast::TranslationUnit & translationUnit );
+} // namespace ControlStruct
 
 // Local Variables: //
 // tab-width: 4 //

@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 12 18:56:44 2021
-// Update Count     : 13
+// Last Modified On : Tue Feb  1 09:22:33 2022
+// Update Count     : 14
 //
 
 #pragma once
@@ -44,7 +44,7 @@ class ExprStmt;
 class AsmStmt;
 class DirectiveStmt;
 class IfStmt;
-class WhileStmt;
+class WhileDoStmt;
 class ForStmt;
 class SwitchStmt;
 class CaseStmt;

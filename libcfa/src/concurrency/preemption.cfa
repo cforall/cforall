@@ -250,9 +250,20 @@ bool __preemption_enabled() {
 	// access tls as normal
 	bool enabled = __cfaabi_tls.preemption_state.enabled;
 
+	// Check if there is a pending preemption
+	processor   * proc = __cfaabi_tls.this_processor;
+	bool pending = proc ? proc->pending_preemption : false;
+	if( enabled && pending ) proc->pending_preemption = false;
+
 	// create a assembler label after
 	// marked as clobber all to avoid movement
 	__cfaasm_label(check, after);
+
+	// If we can preempt and there is a pending one
+	// this is a good time to yield
+	if( enabled && pending ) {
+		force_yield( __POLL_PREEMPTION );
+	}
 	return enabled;
 }
 
@@ -281,6 +292,8 @@ uintptr_t __cfatls_get( unsigned long int offset ) {
 	// create a assembler label after
 	// marked as clobber all to avoid movement
 	__cfaasm_label(get, after);
+
+	// This is used everywhere, to avoid cost, we DO NOT poll pending preemption
 	return val;
 }
 
@@ -357,7 +370,7 @@ void __cfaabi_check_preemption() {
 	bool ready = __preemption_enabled();
 	if(!ready) { abort("Preemption should be ready"); }
 
-	__cfaasm_label(debug, before);
+	// __cfaasm_label(debug, before);
 
 		sigset_t oldset;
 		int ret;
@@ -376,7 +389,7 @@ void __cfaabi_check_preemption() {
 		if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
 		if(ret == 1) { abort("ERROR SIGTERM is disabled"); }
 
-	__cfaasm_label(debug, after);
+	// __cfaasm_label(debug, after);
 }
 
 #ifdef __CFA_WITH_VERIFY__
@@ -547,14 +560,14 @@ static inline bool preemption_ready( void * ip ) {
 	__cfaasm_label( get    );
 	__cfaasm_label( check  );
 	__cfaasm_label( dsable );
-	__cfaasm_label( debug  );
+	// __cfaasm_label( debug  );
 
 	// Check if preemption is safe
 	bool ready = true;
 	if( __cfaasm_in( ip, get    ) ) { ready = false; goto EXIT; };
 	if( __cfaasm_in( ip, check  ) ) { ready = false; goto EXIT; };
 	if( __cfaasm_in( ip, dsable ) ) { ready = false; goto EXIT; };
-	if( __cfaasm_in( ip, debug  ) ) { ready = false; goto EXIT; };
+	// if( __cfaasm_in( ip, debug  ) ) { ready = false; goto EXIT; };
 	if( !__cfaabi_tls.preemption_state.enabled) { ready = false; goto EXIT; };
 	if( __cfaabi_tls.preemption_state.in_progress ) { ready = false; goto EXIT; };
 
@@ -660,7 +673,12 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 	}
 
 	// Check if it is safe to preempt here
-	if( !preemption_ready( ip ) ) { return; }
+	if( !preemption_ready( ip ) ) {
+		#if !defined(__CFA_NO_STATISTICS__)
+			__cfaabi_tls.this_stats->ready.threads.preempt.rllfwd++;
+		#endif
+		return;
+	}
 
 	__cfaabi_dbg_print_buffer_decl( " KERNEL: preempting core %p (%p @ %p).\n", __cfaabi_tls.this_processor, __cfaabi_tls.this_thread, (void *)(cxt->uc_mcontext.CFA_REG_IP) );
 
@@ -679,6 +697,10 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 	__cfaabi_tls.preemption_state.in_progress = false;
 
 	// Preemption can occur here
+
+	#if !defined(__CFA_NO_STATISTICS__)
+		__cfaabi_tls.this_stats->ready.threads.preempt.yield++;
+	#endif
 
 	force_yield( __ALARM_PREEMPTION ); // Do the actual __cfactx_switch
 }

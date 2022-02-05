@@ -1,18 +1,35 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+// 
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// random.hfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Fri Jan 14 07:18:11 2022
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jan 14 07:18:58 2022
+// Update Count     : 1
+// 
+
 #pragma once
 
 #include <stdint.h>
 
-//--------------------------------------------------
+// Pipelined to allow out-of-order overlap with reduced dependencies. Critically, the current random state is returned
+// (copied), and then compute and store the next random value.
+
 #if defined(__SIZEOF_INT128__)
-	typedef __uint128_t __lehmer64_state_t;
-	static inline uint64_t __lehmer64( __lehmer64_state_t & state ) {
+//--------------------------------------------------
+	static inline uint64_t lehmer64( __uint128_t & state ) {
+		__uint128_t ret = state;
 		state *= 0xda942042e4dd58b5;
-		return state >> 64;
+		return ret >> 64;
 	}
 
 //--------------------------------------------------
-	typedef uint64_t __wyhash64_state_t;
-	static inline uint64_t __wyhash64( __wyhash64_state_t & state ) {
+	static inline uint64_t wyhash64( uint64_t & state ) {
 		state += 0x60bee2bee120fc15;
 		__uint128_t tmp;
 		tmp = (__uint128_t) state * 0xa3b195354a39b70d;
@@ -24,24 +41,33 @@
 #endif
 
 //--------------------------------------------------
-typedef uint64_t __xorshift64_state_t;
-static inline uint64_t __xorshift64( __xorshift64_state_t & state ) {
-	uint64_t x = state;
-	x ^= x << 13;
-	x ^= x >> 7;
-	x ^= x << 17;
-	return state = x;
+static inline uint64_t xorshift_13_7_17( uint64_t & state ) {
+	uint64_t ret = state;
+	state ^= state << 13;
+	state ^= state >> 7;
+	state ^= state << 17;
+	return ret;
 }
+
+//--------------------------------------------------
+static inline uint32_t xorshift_6_21_7( uint32_t & state ) {
+	uint32_t ret = state;
+	state ^= state << 6;
+	state ^= state >> 21;
+	state ^= state << 7;
+	return ret;
+} // xorshift_6_21_7
 
 //--------------------------------------------------
 typedef struct {
   uint32_t a, b, c, d;
   uint32_t counter;
-} __xorwow__state_t;
+} xorwow__state_t;
 
-/* The state array must be initialized to not be all zero in the first four words */
-static inline uint32_t __xorwow( __xorwow__state_t & state ) {
-	/* Algorithm "xorwow" from p. 5 of Marsaglia, "Xorshift RNGs" */
+// The state array must be initialized to not be all zero in the first four words.
+static inline uint32_t xorwow( xorwow__state_t & state ) {
+	// Algorithm "xorwow" from p. 5 of Marsaglia, "Xorshift RNGs".
+	uint32_t ret = state.a + state.counter;
 	uint32_t t = state.d;
 
 	uint32_t const s = state.a;
@@ -55,5 +81,37 @@ static inline uint32_t __xorwow( __xorwow__state_t & state ) {
 	state.a = t;
 
 	state.counter += 362437;
-	return t + state.counter;
+	return ret;
 }
+
+//--------------------------------------------------
+static inline uint32_t LCG( uint32_t & state ) {		// linear congruential generator
+	uint32_t ret = state;
+	state = 36969 * (state & 65535) + (state >> 16);	// 36969 is NOT prime! No not change it!
+	return ret;
+} // LCG
+
+//--------------------------------------------------
+#define M  (1_l64u << 48_l64u)
+#define A  (25214903917_l64u)
+#define AI (18446708753438544741_l64u)
+#define C  (11_l64u)
+#define D  (16_l64u)
+
+// Bi-directional LCG random-number generator
+static inline uint32_t LCGBI_fwd( uint64_t & state ) {
+	state = (A * state + C) & (M - 1);
+	return state >> D;
+}
+
+static inline uint32_t LCGBI_bck( uint64_t & state ) {
+	unsigned int r = state >> D;
+	state = AI * (state - C) & (M - 1);
+	return r;
+}
+
+#undef M
+#undef A
+#undef AI
+#undef C
+#undef D
