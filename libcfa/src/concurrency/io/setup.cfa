@@ -31,7 +31,7 @@
 	void ^?{}($io_context & this) {}
 
 	void __cfa_io_start( processor * proc ) {}
-	bool __cfa_io_flush( processor * proc, int ) {}
+	bool __cfa_io_flush( processor * proc, int ) { return false; }
 	void __cfa_io_stop ( processor * proc ) {}
 
 	$io_arbiter * create(void) { return 0p; }

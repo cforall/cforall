@@ -370,26 +370,22 @@ void __cfaabi_check_preemption() {
 	bool ready = __preemption_enabled();
 	if(!ready) { abort("Preemption should be ready"); }
 
-	// __cfaasm_label(debug, before);
+	sigset_t oldset;
+	int ret;
+	ret = pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
+	if(ret != 0) { abort("ERROR sigprocmask returned %d", ret); }
 
-		sigset_t oldset;
-		int ret;
-		ret = pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
-		if(ret != 0) { abort("ERROR sigprocmask returned %d", ret); }
+	ret = sigismember(&oldset, SIGUSR1);
+	if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+	if(ret == 1) { abort("ERROR SIGUSR1 is disabled"); }
 
-		ret = sigismember(&oldset, SIGUSR1);
-		if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
-		if(ret == 1) { abort("ERROR SIGUSR1 is disabled"); }
+	ret = sigismember(&oldset, SIGALRM);
+	if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+	if(ret == 0) { abort("ERROR SIGALRM is enabled"); }
 
-		ret = sigismember(&oldset, SIGALRM);
-		if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
-		if(ret == 0) { abort("ERROR SIGALRM is enabled"); }
-
-		ret = sigismember(&oldset, SIGTERM);
-		if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
-		if(ret == 1) { abort("ERROR SIGTERM is disabled"); }
-
-	// __cfaasm_label(debug, after);
+	ret = sigismember(&oldset, SIGTERM);
+	if(ret <  0) { abort("ERROR sigismember returned %d", ret); }
+	if(ret == 1) { abort("ERROR SIGTERM is disabled"); }
 }
 
 #ifdef __CFA_WITH_VERIFY__

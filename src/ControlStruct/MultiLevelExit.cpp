@@ -175,7 +175,7 @@ const CompoundStmt * MultiLevelExitCore::previsit(
 
 	auto mutStmt = mutate( stmt );
 	// A child statement may set the break label.
-	mutStmt->kids = move( fixBlock( stmt->kids, false ) );
+	mutStmt->kids = fixBlock( stmt->kids, false );
 
 	if ( isLabeled ) {
 		assert( ! enclosing_control_structures.empty() );

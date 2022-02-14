@@ -42,6 +42,7 @@ AM_CFLAGS = $(if $(test), 2> $(test), ) \
 	-fno-diagnostics-show-caret \
 	-g \
 	-Wall \
+	-Werror=return-type \
 	-Wno-unused-function \
 	-Wno-psabi \
 	-quiet @CFA_FLAGS@

@@ -9,14 +9,15 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 13 21:34:46 2022
-// Update Count     : 636
+// Last Modified On : Sat Feb 12 17:22:25 2022
+// Update Count     : 643
 //
 
 #pragma once
 
 #include "bits/defs.hfa"								// OPTIONAL_THREAD
 #include "bits/align.hfa"								// libAlign
+#include "bits/random.hfa"								// prng
 
 #include <stdlib.h>										// *alloc, strto*, ato*
 #include <heap.hfa>
@@ -207,11 +208,11 @@ static inline forall( T & | sized(T) ) {
 	} // alloc_internal$
 
 	forall( TT... | { T * alloc_internal$( void *, T *, size_t, size_t, S_fill(T), TT ); } ) {
-		T * alloc_internal$( void *       , T * Realloc, size_t Align, size_t Dim, S_fill(T) Fill, T_resize Resize, TT rest) {
+		T * alloc_internal$( void *       , T *        , size_t Align, size_t Dim, S_fill(T) Fill, T_resize Resize, TT rest) {
 	        return alloc_internal$( Resize, (T*)0p, Align, Dim, Fill, rest);
 		}
 
-		T * alloc_internal$( void * Resize, T *        , size_t Align, size_t Dim, S_fill(T) Fill, S_realloc(T) Realloc, TT rest) {
+		T * alloc_internal$( void *        , T *        , size_t Align, size_t Dim, S_fill(T) Fill, S_realloc(T) Realloc, TT rest) {
 	        return alloc_internal$( (void*)0p, Realloc, Align, Dim, Fill, rest);
 		}
 
@@ -387,7 +388,7 @@ long double _Complex random( void );					// [0.0, 1.0)+[0.0, 1.0)i
 //
 // Declaration :
 //   PRNG sprng = { 1009 } - set starting seed versus random seed
-//   
+//
 // Interface :
 //   set_seed( sprng, 1009 ) - set starting seed for ALL kernel threads versus random seed
 //   get_seed( sprng ) - read seed
@@ -409,11 +410,11 @@ struct PRNG {
 }; // PRNG
 
 void set_seed( PRNG & prng, uint32_t seed_ );
-uint32_t prng( PRNG & prng ) __attribute__(( warn_unused_result )); // [0,UINT_MAX]
 static inline {
-	void ?{}( PRNG & prng ) { set_seed( prng, rdtscl() ); }	// random seed
-	void ?{}( PRNG & prng, uint32_t seed ) { set_seed( prng, seed ); } // fixed seed
+	void ?{}( PRNG & prng ) with( prng ) { callcnt = 0; set_seed( prng, rdtscl() ); } // random seed
+	void ?{}( PRNG & prng, uint32_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
 	uint32_t get_seed( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
+	uint32_t prng( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return LCG( state ); } // [0,UINT_MAX]
 	uint32_t prng( PRNG & prng, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint32_t prng( PRNG & prng, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
 	uint32_t calls( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }

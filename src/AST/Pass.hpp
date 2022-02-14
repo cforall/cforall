@@ -237,33 +237,43 @@ private:
 	bool __visit_children() { __pass::bool_ref * ptr = __pass::visit_children(core, 0); return ptr ? *ptr : true; }
 
 private:
-	const ast::Stmt * call_accept( const ast::Stmt * );
-	const ast::Expr * call_accept( const ast::Expr * );
 
-	// requests WithStmtsToAdd directly add to this statement, as if it is a compound.
+	__pass::result1<ast::Stmt> call_accept( const ast::Stmt * );
+	__pass::result1<ast::Expr> call_accept( const ast::Expr * );
 
-	const ast::Stmt * call_accept_as_compound(const ast::Stmt *);
-
+	/// This has a `type` member that is the return type for the
+	/// generic call_accept if the generic call_accept is defined.
 	template< typename node_t >
-	auto call_accept( const node_t * node ) -> typename std::enable_if<
+	using generic_call_accept_result =
+		std::enable_if<
 				!std::is_base_of<ast::Expr, node_t>::value &&
 				!std::is_base_of<ast::Stmt, node_t>::value
-			, decltype( node->accept(*this) )
-		>::type;
+			, __pass::result1<
+				typename std::remove_pointer< typename std::result_of<
+					decltype(&node_t::accept)(node_t*, type&) >::type >::type
+			>
+		>;
+
+	template< typename node_t >
+	auto call_accept( const node_t * node )
+		-> typename generic_call_accept_result<node_t>::type;
+
+	// requests WithStmtsToAdd directly add to this statement, as if it is a compound.
+	__pass::result1<ast::Stmt> call_accept_as_compound(const ast::Stmt *);
 
 	template< template <class...> class container_t >
-	container_t< ptr<Stmt> > call_accept( const container_t< ptr<Stmt> > & );
+	__pass::resultNstmt<container_t> call_accept( const container_t< ptr<Stmt> > & );
 
 	template< template <class...> class container_t, typename node_t >
-	container_t< ptr<node_t> > call_accept( const container_t< ptr<node_t> > & container );
+	__pass::resultN< container_t, node_t > call_accept( const container_t< ptr<node_t> > & container );
 
 public:
 	/// Logic to call the accept and mutate the parent if needed, delegates call to accept
-	template<typename node_t, typename parent_t, typename child_t>
-	void maybe_accept(const node_t * &, child_t parent_t::* child);
+	template<typename node_t, typename parent_t, typename field_t>
+	void maybe_accept(const node_t * &, field_t parent_t::* field);
 
-	template<typename node_t, typename parent_t, typename child_t>
-	void maybe_accept_as_compound(const node_t * &, child_t parent_t::* child);
+	template<typename node_t, typename parent_t, typename field_t>
+	void maybe_accept_as_compound(const node_t * &, field_t parent_t::* field);
 
 private:
 	/// Internal RAII guard for symbol table features

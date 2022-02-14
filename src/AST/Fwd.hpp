@@ -139,7 +139,7 @@ class TypeSubstitution;
 
 typedef unsigned int UniqueId;
 
-struct TranslationUnit;
+class TranslationUnit;
 // TODO: Get from the TranslationUnit:
 extern ptr<Type> sizeType;
 extern const FunctionDecl * dereferenceOperator;

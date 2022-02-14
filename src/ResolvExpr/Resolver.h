@@ -34,7 +34,7 @@ namespace ast {
 	class Init;
 	class StmtExpr;
 	class SymbolTable;
-	struct TranslationUnit;
+	class TranslationUnit;
 	class Type;
 	class TypeEnvironment;
 } // namespace ast
@@ -71,7 +71,7 @@ namespace ResolvExpr {
 	/// Resolves a constructor init expression
 	ast::ptr< ast::Init > resolveCtorInit(
 		const ast::ConstructorInit * ctorInit, const ast::SymbolTable & symtab );
-	/// Resolves a statement expression 
+	/// Resolves a statement expression
 	const ast::Expr * resolveStmtExpr(
 		const ast::StmtExpr * stmtExpr, const ast::SymbolTable & symtab );
 } // namespace ResolvExpr

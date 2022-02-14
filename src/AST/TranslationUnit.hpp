@@ -22,7 +22,8 @@
 
 namespace ast {
 
-struct TranslationUnit {
+class TranslationUnit {
+public:
 	std::list< ptr< Decl > > decls;
 
 	struct Global {

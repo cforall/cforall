@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// MakeLibCfa.h -- 
+// MakeLibCfa.h --
 //
 // Author           : Richard C. Bilson
 // Created On       : Sat May 16 10:42:14 2015
@@ -19,7 +19,7 @@
 
 class Declaration;
 namespace ast {
-	struct TranslationUnit;
+	class TranslationUnit;
 }
 
 namespace LibCfa {

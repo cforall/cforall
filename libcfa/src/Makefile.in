@@ -517,8 +517,8 @@ gdbwaittarget = ""
 # use -no-include-stdhdr to prevent rebuild cycles
 # The built sources must not depend on the installed inst_headers_src
 AM_CFAFLAGS = -quiet -cfalib -I$(srcdir)/stdhdr -I$(srcdir)/concurrency $(if $(findstring ${gdbwaittarget}, ${@}), -XCFA --gdb) @CONFIG_CFAFLAGS@
-AM_CFLAGS = -g -Wall -Wno-unused-function -fPIC -fexceptions -pthread @ARCH_FLAGS@ @CONFIG_CFLAGS@
-AM_CCASFLAGS = -g -Wall -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
+AM_CFLAGS = -g -Wall -Werror=return-type -Wno-unused-function -fPIC -fexceptions -pthread @ARCH_FLAGS@ @CONFIG_CFLAGS@
+AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 @BUILDLIB_FALSE@inst_headers_nosrc = 
 
 #----------------------------------------------------------------------------------------------------------------

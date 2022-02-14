@@ -1,0 +1,269 @@
+//                               -*- Mode: C -*- 
+// 
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+// 
+// PRNG.c -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Dec 29 09:38:12 2021
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Feb 12 12:23:57 2022
+// Update Count     : 342
+// 
+
+#include <fstream.hfa>									// sout
+#include <stdlib.hfa>									// PRNG
+#include <clock.hfa>
+#include <thread.hfa>
+#include <limits.hfa>									// MAX
+#include <math.hfa>										// sqrt
+#include <malloc.h>										// malloc_stats
+#include <locale.h>										// setlocale
+#include <mutex_stmt.hfa>
+
+// FIX ME: spurious characters appear in output
+Duration default_preemption() { return 0; }
+
+#ifdef TIME												// use -O2 -nodebug
+#define STARTTIME start = timeHiRes()
+#define ENDTIME( extra ) sout | wd(0,1, (timeHiRes() - start)`ms / 1000.) | extra "seconds"
+enum { BUCKETS = 100_000, TRIALS = 1_000_000_000 };
+#else
+#define STARTTIME
+#define ENDTIME( extra )
+enum { BUCKETS = 100_000, TRIALS = 100_000_000 };
+#endif // TIME
+
+void avgstd( unsigned int buckets[] ) {
+	unsigned int min = MAX, max = 0;
+	double sum = 0.0, diff;
+	for ( i; BUCKETS ) {
+		if ( buckets[i] < min ) min = buckets[i];
+		if ( buckets[i] > max ) max = buckets[i];
+		sum += buckets[i];
+	} // for
+
+	double avg = sum / BUCKETS;							// average
+	sum = 0.0;
+	for ( i; BUCKETS ) {								// sum squared differences from average
+		diff = buckets[i] - avg;
+		sum += diff * diff;
+	} // for
+	double std = sqrt( sum / BUCKETS );
+	mutex( sout ) sout | "trials"  | TRIALS | "buckets" | BUCKETS
+		| "min" | min | "max" | max
+		| "avg" | wd(0,1, avg) | "std" | wd(0,1, std) | "rstd" | wd(0,1, (avg == 0 ? 0.0 : std / avg * 100)) | "%";
+} // avgstd
+
+
+uint32_t seed = 1009;
+
+thread T1 {};
+void main( T1 & ) {
+	unsigned int * buckets = calloc( BUCKETS );			// too big for task stack
+	for ( TRIALS / 100 ) {
+		buckets[rand() % BUCKETS] += 1;					// concurrent
+	} // for
+	avgstd( buckets );
+	free( buckets );
+} // main
+
+thread T2 {};
+void main( T2 & ) {
+	PRNG prng;
+	if ( seed != 0 ) set_seed( prng, seed );
+	unsigned int * buckets = calloc( BUCKETS );			// too big for task stack
+	for ( TRIALS ) {
+		buckets[prng( prng ) % BUCKETS] += 1;			// concurrent
+	} // for
+	avgstd( buckets );
+	free( buckets );
+} // main
+
+thread T3 {};
+void main( T3 & th ) {
+	unsigned int * buckets = calloc( BUCKETS );			// too big for task stack
+	for ( TRIALS ) {
+		buckets[prng() % BUCKETS] += 1;					// concurrent
+	} // for
+	avgstd( buckets );
+	free( buckets );
+} // main
+
+thread T4 {};
+void main( T4 & th ) {
+	unsigned int * buckets = calloc( BUCKETS );			// too big for task stack
+	for ( TRIALS ) {
+		buckets[prng( th ) % BUCKETS] += 1;	// concurrent
+	} // for
+	avgstd( buckets );
+	free( buckets );
+} // main
+
+// Compiler bug requires hiding declaration of th from the bucket access, otherwise the compiler thinks th is aliased
+// and continually reloads it from memory, which doubles the cost.
+static void dummy( thread$ & th ) __attribute__(( noinline ));
+static void dummy( thread$ & th ) {
+	unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
+	for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
+		buckets[prng( th ) % BUCKETS] += 1;				// sequential
+	} // for
+	avgstd( buckets );
+	free( buckets );
+} // dummy
+
+int main() {
+	// causes leaked storage message
+//	setlocale( LC_NUMERIC, getenv( "LANG" ) );			// print digit separator
+
+	enum { TASKS = 4 };
+	Time start;
+#ifdef TIME												// too slow for test and generates non-repeatable results
+#if 1
+	unsigned int rseed;
+	if ( seed != 0 ) rseed = seed;
+	else rseed = rdtscl();
+	srand( rseed );
+
+	sout | sepDisable;
+	sout | wd(13, "rand()" ) | wd(10, "rand(5)") | wd(13, "rand(0,5)" );
+	for ( 20 ) {
+		sout | wd(13, rand()) | nonl;
+		sout | wd(10, rand() % 5) | nonl;
+		sout | wd(13, rand() % (5 - 0 + 1) + 0);
+	} // for
+	sout | sepEnable;
+	sout | "seed" | rseed;
+
+	sout | nl | "Sequential";
+	STARTTIME;
+	{
+		unsigned int * buckets = calloc( BUCKETS );		// too big for task stack
+		for ( i; TRIALS / 10 ) {
+			buckets[rand() % BUCKETS] += 1;				// sequential
+		} // for
+		avgstd( buckets );
+		free( buckets );
+	}
+	ENDTIME( " x 10 " );
+
+	sout | nl | "Concurrent";
+	STARTTIME;
+	{
+		processor p[TASKS - 1];							// already 1 processor
+		{
+			T1 t[TASKS];
+		} // wait for threads to complete
+	}
+	ENDTIME( " x 100 " );
+#endif // 0
+#endif // TIME
+#if 1
+	PRNG prng;
+	if ( seed != 0 ) set_seed( prng, seed );
+
+	sout | sepDisable;
+	sout | nl | wd(13, "PRNG()" ) | wd(10, "PRNG(5)") | wd(13, "PRNG(0,5)" );
+	for ( 20 ) {
+		sout | wd(13, prng( prng )) | nonl;				// cascading => side-effect functions called in arbitary order
+		sout | wd(10, prng( prng, 5 )) | nonl;
+		sout | wd(13, prng( prng, 0, 5 ));
+	} // for
+	sout | sepEnable;
+	sout | "seed" | get_seed( prng );
+
+	sout | nl | "Sequential";
+	STARTTIME;
+	{
+		unsigned int * buckets = calloc( BUCKETS );		// too big for task stack
+		for ( TRIALS ) {
+			buckets[prng( prng ) % BUCKETS] += 1;		// sequential
+		} // for
+		avgstd( buckets );
+		free( buckets );
+	}
+	ENDTIME();
+
+	sout | nl | "Concurrent";
+	STARTTIME;
+	{
+		processor p[TASKS - 1];							// already 1 processor
+		{
+			T2 t[TASKS];
+		} // wait for threads to complete
+	}
+	ENDTIME();
+#endif // 0
+#if 1
+	if ( seed != 0 ) set_seed( seed );
+
+	sout | sepDisable;
+	sout | nl | wd(13, "prng()" ) | wd(10, "prng(5)") | wd(13, "prng(0,5)" );
+	for ( 20 ) {
+		sout | wd(13, prng()) | nonl;					// cascading => side-effect functions called in arbitary order
+		sout | wd(10, prng( 5 )) | nonl;
+		sout | wd(13, prng( 0, 5 ));
+	} // for
+	sout | sepEnable;
+	sout | "seed" | get_seed( prng );
+
+	sout | nl | "Sequential";
+	STARTTIME;
+	{
+		unsigned int * buckets = calloc( BUCKETS );		// too big for task stack
+		for ( TRIALS ) {
+			buckets[prng() % BUCKETS] += 1;
+		} // for
+		avgstd( buckets );
+		free( buckets );
+	}
+	ENDTIME();
+
+	sout | nl | "Concurrent";
+	STARTTIME;
+	{
+		processor p[TASKS - 1];							// already 1 processor
+		{
+			T3 t[TASKS];
+		} // wait for threads to complete
+	}
+	ENDTIME();
+#endif // 0
+#if 1
+	if ( seed != 0 ) set_seed( seed );
+	thread$ & th = *active_thread();
+
+	sout | sepDisable;
+	sout | nl | wd(13, "prng(t)" ) | wd(10, "prng(t,5)") | wd(13, "prng(t,0,5)" );
+	for ( 20 ) {
+		sout | wd(13, prng( th )) | nonl;				// cascading => side-effect functions called in arbitary order
+		sout | wd(10, prng( th, 5 )) | nonl;
+		sout | wd(13, prng( th, 0, 5 ));
+	} // for
+	sout | sepEnable;
+	sout | "seed" | get_seed( prng );
+
+	sout | nl | "Sequential";
+	STARTTIME;
+	{
+		dummy( th );
+	}
+	ENDTIME();
+
+	sout | nl | "Concurrent";
+	STARTTIME;
+	{
+		processor p[TASKS - 1];							// already 1 processor
+		{
+			T4 t[TASKS];
+		} // wait for threads to complete
+	}
+	ENDTIME();
+#endif // 0
+//	malloc_stats();
+} // main
+
+
+// Local Variables: //
+// compile-command: "cfa -DTIME -O2 -nodebug PRNG.cfa" //
+// End: //

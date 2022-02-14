@@ -172,7 +172,7 @@ struct __attribute__((aligned(128))) __help_cnts_t {
 };
 
 static inline void  ?{}(__timestamp_t & this) { this.tv = 0; this.ma = 0; }
-static inline void ^?{}(__timestamp_t & this) {}
+static inline void ^?{}(__timestamp_t &) {}
 
 struct __attribute__((aligned(128))) __ready_queue_caches_t;
 void  ?{}(__ready_queue_caches_t & this);

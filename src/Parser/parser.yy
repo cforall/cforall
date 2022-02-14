@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  1 11:06:13 2022
-// Update Count     : 5167
+// Last Modified On : Fri Feb 11 14:26:15 2022
+// Update Count     : 5174
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1196,21 +1196,18 @@ iteration_statement:
 	| WHILE '(' conditional_declaration ')' statement	%prec THEN
 		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ) ) ); }
 	| WHILE '(' conditional_declaration ')' statement ELSE statement // CFA
-		// { SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
 		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ), $7 ) ); }
 	| DO statement WHILE '(' ')' ';'					// CFA => do while( 1 )
 		{ $$ = new StatementNode( build_do_while( new ExpressionNode( build_constantInteger( *new string( "1" ) ) ), maybe_build_compound( $2 ) ) ); }
 	| DO statement WHILE '(' comma_expression ')' ';'	%prec THEN
 		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ) ) ); }
 	| DO statement WHILE '(' comma_expression ')' ELSE statement // CFA
-		// { SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
 		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ), $8 ) ); }
 	| FOR '(' ')' statement								// CFA => for ( ;; )
 		{ $$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) ); }
 	| FOR '(' for_control_expression_list ')' statement	%prec THEN
 	  	{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ) ) ); }
 	| FOR '(' for_control_expression_list ')' statement ELSE statement // CFA
-		// { SemanticError( yylloc, "Loop default block is currently unimplemented." ); $$ = nullptr; }
 		{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ), $7 ) ); }
 	;
 
@@ -2728,6 +2725,17 @@ external_definition:
 		}
 	| ASM '(' string_literal ')' ';'					// GCC, global assembler statement
 		{ $$ = DeclarationNode::newAsmStmt( new StatementNode( build_asm( false, $3, 0 ) ) ); }
+	| EXTERN STRINGliteral
+		{
+			linkageStack.push( linkage );				// handle nested extern "C"/"Cforall"
+			linkage = LinkageSpec::update( yylloc, linkage, $2 );
+		}
+	  up external_definition down 
+		{
+			linkage = linkageStack.top();
+			linkageStack.pop();
+			$$ = $5;
+		}
 	| EXTERN STRINGliteral								// C++-style linkage specifier
 		{
 			linkageStack.push( linkage );				// handle nested extern "C"/"Cforall"

@@ -22,7 +22,7 @@ namespace ast {
 template<typename core_t>
 class Pass;
 
-struct TranslationUnit;
+class TranslationUnit;
 
 struct PureVisitor;
 
@@ -122,6 +122,52 @@ namespace __pass {
 
 		static constexpr bool value = std::is_void< ret_t >::value ||
 			std::is_base_of<const node_t, typename std::remove_pointer<ret_t>::type >::value;
+	};
+
+	/// The result is a single node.
+	template< typename node_t >
+	struct result1 {
+		bool differs;
+		const node_t * value;
+
+		template< typename object_t, typename super_t, typename field_t >
+		void apply( object_t *, field_t super_t::* field );
+	};
+
+	/// The result is a container of statements.
+	template< template<class...> class container_t >
+	struct resultNstmt {
+		/// The delta/change on a single node.
+		struct delta {
+			ptr<Stmt> new_val;
+			ssize_t old_idx;
+			bool is_old;
+
+			delta(const Stmt * s, ssize_t i, bool old) :
+				new_val(s), old_idx(i), is_old(old) {}
+		};
+
+		bool differs;
+		container_t< delta > values;
+
+		template< typename object_t, typename super_t, typename field_t >
+		void apply( object_t *, field_t super_t::* field );
+
+		template< template<class...> class incontainer_t >
+		void take_all( incontainer_t<ptr<Stmt>> * stmts );
+
+		template< template<class...> class incontainer_t >
+		void take_all( incontainer_t<ptr<Decl>> * decls );
+	};
+
+	/// The result is a container of nodes.
+	template< template<class...> class container_t, typename node_t >
+	struct resultN {
+		bool differs;
+		container_t<ptr<node_t>> values;
+
+		template< typename object_t, typename super_t, typename field_t >
+		void apply( object_t *, field_t super_t::* field );
 	};
 
 	/// Used by previsit implementation

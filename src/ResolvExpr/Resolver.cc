@@ -1111,7 +1111,7 @@ namespace ResolvExpr {
 			}
 		}
 
-		
+
 	} // anonymous namespace
 /// Establish post-resolver invariants for expressions
 		void finishExpr(
@@ -1157,7 +1157,7 @@ namespace ResolvExpr {
 		}
 
 	namespace {
-		
+
 
 		/// resolve `untyped` to the expression whose candidate satisfies `pred` with the
 		/// lowest cost, returning the resolved version
@@ -1904,8 +1904,23 @@ namespace ResolvExpr {
 			clause2.target.func = funcCandidates.front()->expr;
 
 			clause2.target.args.reserve( clause.target.args.size() );
+			const ast::StructDecl * decl_monitor = symtab.lookupStruct( "monitor$" );
 			for ( auto arg : argsCandidates.front() ) {
-				clause2.target.args.emplace_back( std::move( arg->expr ) );
+				const auto & loc = stmt->location;
+
+				ast::Expr * init = new ast::CastExpr( loc,
+					new ast::UntypedExpr( loc,
+						new ast::NameExpr( loc, "get_monitor" ),
+						{ arg->expr }
+					),
+					new ast::PointerType(
+						new ast::StructInstType(
+							decl_monitor
+						)
+					)
+				);
+
+				clause2.target.args.emplace_back( findSingleExpression( init, symtab ) );
 			}
 
 			// Resolve the conditions as if it were an IfStmt, statements normally
@@ -2076,7 +2091,7 @@ namespace ResolvExpr {
 	bool Resolver_new::on_error(ast::ptr<ast::Decl> & decl) {
 		if (auto functionDecl = decl.as<ast::FunctionDecl>()) {
 			// xxx - can intrinsic gen ever fail?
-			if (functionDecl->linkage == ast::Linkage::AutoGen) { 
+			if (functionDecl->linkage == ast::Linkage::AutoGen) {
 				auto mutDecl = mutate(functionDecl);
 				mutDecl->isDeleted = true;
 				mutDecl->stmts = nullptr;

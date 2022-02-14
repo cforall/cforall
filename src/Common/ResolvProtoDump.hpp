@@ -16,7 +16,7 @@
 #pragma once
 
 namespace ast {
-	struct TranslationUnit;
+	class TranslationUnit;
 }
 
 /// Prints AST as instances for resolv-proto.

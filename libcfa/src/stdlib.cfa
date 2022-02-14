@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 13 21:38:30 2022
-// Update Count     : 593
+// Last Modified On : Thu Feb 10 22:41:39 2022
+// Update Count     : 602
 //
 
 #include "stdlib.hfa"
@@ -225,12 +225,11 @@ long double _Complex random( void ) { return (long double)drand48() + (long doub
 #define GENERATOR LCG
 
 uint32_t __global_random_seed;							// sequential/concurrent
-uint32_t __global_random_state;						// sequential only
+uint32_t __global_random_state;							// sequential only
 
 void set_seed( PRNG & prng, uint32_t seed_ ) with( prng ) { state = seed = seed_; GENERATOR( state ); } // set seed
-uint32_t prng( PRNG & prng ) with( prng ) { callcnt += 1; return GENERATOR( state ); }
 
-void set_seed( uint32_t seed ) { __global_random_seed = seed; GENERATOR( __global_random_state ); }
+void set_seed( uint32_t seed ) { __global_random_state = __global_random_seed = seed; GENERATOR( __global_random_state ); }
 uint32_t get_seed() { return __global_random_seed; }
 uint32_t prng( void ) { return GENERATOR( __global_random_state ); } // [0,UINT_MAX]
 

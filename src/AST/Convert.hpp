@@ -19,7 +19,7 @@
 
 class Declaration;
 namespace ast {
-	struct TranslationUnit;
+	class TranslationUnit;
 };
 
 std::list< Declaration * > convert( const ast::TranslationUnit && translationUnit );

@@ -25,7 +25,7 @@ cfalib_DATA = gcc-builtins.cf builtins.cf extras.cf prelude.cfa bootloader.c def
 EXTRA_DIST = bootloader.cf builtins.c builtins.def extras.c extras.regx extras.regx2 prelude-gen.cc prototypes.awk prototypes.c prototypes.sed sync-builtins.cf
 
 CC = @LOCAL_CFACC@
-AM_CFLAGS = -g -Wall -Wno-unused-function -fPIC @ARCH_FLAGS@ @CONFIG_CFLAGS@
+AM_CFLAGS = -g -Wall -Werror=return-type -Wno-unused-function -fPIC @ARCH_FLAGS@ @CONFIG_CFLAGS@
 AM_CFAFLAGS = @CONFIG_CFAFLAGS@
 
 $(DEPDIR) :

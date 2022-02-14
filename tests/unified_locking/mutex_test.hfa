@@ -53,7 +53,7 @@ void main(LockCheck & this) {
 	}
 }
 
-int test() {
+void test() {
 	uint32_t sum = -32;
 	mo.sum = -32;
 	mo.cnt = 0;

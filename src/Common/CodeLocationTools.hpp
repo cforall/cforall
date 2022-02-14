@@ -16,7 +16,7 @@
 #pragma once
 
 namespace ast {
-	struct TranslationUnit;
+	class TranslationUnit;
 }
 
 // Search the translation unit for unset code locations and print information

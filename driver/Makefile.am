@@ -18,7 +18,7 @@ AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
 ACLOCAL_AMFLAGS  = -I automake
 
 # applies to both programs
-AM_CXXFLAGS = @HOST_FLAGS@ -Wall -O2 -g -std=c++14 -I${abs_top_srcdir}/src -I${abs_top_srcdir}/src/include
+AM_CXXFLAGS = @HOST_FLAGS@ -Wall -Wextra -Werror=return-type -O2 -g -std=c++14 -I${abs_top_srcdir}/src -I${abs_top_srcdir}/src/include
 
 # don't install cfa directly
 noinst_PROGRAMS = cfa

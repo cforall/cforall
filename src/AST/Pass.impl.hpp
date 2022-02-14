@@ -78,11 +78,11 @@ namespace ast {
 		}
 
 		template<typename it_t, template <class...> class container_t>
-		static inline void take_all( it_t it, container_t<ast::ptr<ast::Stmt>> * decls, bool * mutated = nullptr ) {
-			if(empty(decls)) return;
+		static inline void take_all( it_t it, container_t<ast::ptr<ast::Stmt>> * stmts, bool * mutated = nullptr ) {
+			if(empty(stmts)) return;
 
-			std::move(decls->begin(), decls->end(), it);
-			decls->clear();
+			std::move(stmts->begin(), stmts->end(), it);
+			stmts->clear();
 			if(mutated) *mutated = true;
 		}
 
@@ -110,7 +110,6 @@ namespace ast {
 			return val;
 		}
 
-
 		//------------------------------
 		/// Check if value was mutated, different for pointers and containers
 		template<typename lhs_t, typename rhs_t>
@@ -124,14 +123,16 @@ namespace ast {
 		}
 	}
 
+	template< typename node_t >
+	template< typename object_t, typename super_t, typename field_t >
+	void __pass::result1< node_t >::apply( object_t * object, field_t super_t::* field ) {
+		object->*field = value;
+	}
+
 	template< typename core_t >
 	template< typename node_t >
 	auto ast::Pass< core_t >::call_accept( const node_t * node )
-		-> typename std::enable_if<
-				!std::is_base_of<ast::Expr, node_t>::value &&
-				!std::is_base_of<ast::Stmt, node_t>::value
-			, decltype( node->accept(*this) )
-		>::type
+		-> typename ast::Pass< core_t >::template generic_call_accept_result<node_t>::type
 	{
 		__pedantic_pass_assert( __visit_children() );
 		__pedantic_pass_assert( node );
@@ -139,11 +140,17 @@ namespace ast {
 		static_assert( !std::is_base_of<ast::Expr, node_t>::value, "ERROR");
 		static_assert( !std::is_base_of<ast::Stmt, node_t>::value, "ERROR");
 
-		return node->accept( *this );
+		auto nval = node->accept( *this );
+		__pass::result1<
+			typename std::remove_pointer< decltype( node->accept(*this) ) >::type
+		> res;
+		res.differs = nval != node;
+		res.value = nval;
+		return res;
 	}
 
 	template< typename core_t >
-	const ast::Expr * ast::Pass< core_t >::call_accept( const ast::Expr * expr ) {
+	__pass::template result1<ast::Expr> ast::Pass< core_t >::call_accept( const ast::Expr * expr ) {
 		__pedantic_pass_assert( __visit_children() );
 		__pedantic_pass_assert( expr );
 
@@ -152,19 +159,21 @@ namespace ast {
 			*typeSubs_ptr = expr->env;
 		}
 
-		return expr->accept( *this );
+		auto nval = expr->accept( *this );
+		return { nval != expr, nval };
 	}
 
 	template< typename core_t >
-	const ast::Stmt * ast::Pass< core_t >::call_accept( const ast::Stmt * stmt ) {
+	__pass::template result1<ast::Stmt> ast::Pass< core_t >::call_accept( const ast::Stmt * stmt ) {
 		__pedantic_pass_assert( __visit_children() );
 		__pedantic_pass_assert( stmt );
 
-		return stmt->accept( *this );
+		const ast::Stmt * nval = stmt->accept( *this );
+		return { nval != stmt, nval };
 	}
 
 	template< typename core_t >
-	const ast::Stmt * ast::Pass< core_t >::call_accept_as_compound( const ast::Stmt * stmt ) {
+	__pass::template result1<ast::Stmt> ast::Pass< core_t >::call_accept_as_compound( const ast::Stmt * stmt ) {
 		__pedantic_pass_assert( __visit_children() );
 		__pedantic_pass_assert( stmt );
 
@@ -189,7 +198,7 @@ namespace ast {
 
 		// If the pass doesn't want to add anything then we are done
 		if( empty(stmts_before) && empty(stmts_after) && empty(decls_before) && empty(decls_after) ) {
-			return nstmt;
+			return { nstmt != stmt, nstmt };
 		}
 
 		// Make sure that it is either adding statements or declartions but not both
@@ -211,12 +220,62 @@ namespace ast {
 		__pass::take_all( std::back_inserter( compound->kids ), decls_after );
 		__pass::take_all( std::back_inserter( compound->kids ), stmts_after );
 
-		return compound;
+		return {true, compound};
+	}
+
+	template< template <class...> class container_t >
+	template< typename object_t, typename super_t, typename field_t >
+	void __pass::resultNstmt<container_t>::apply(object_t * object, field_t super_t::* field) {
+		auto & container = object->*field;
+		__pedantic_pass_assert( container.size() <= values.size() );
+
+		auto cit = enumerate(container).begin();
+
+		container_t<ptr<Stmt>> nvals;
+		for (delta & d : values) {
+			if ( d.is_old ) {
+				__pedantic_pass_assert( cit.idx <= d.old_idx );
+				std::advance( cit, d.old_idx - cit.idx );
+				nvals.push_back( std::move( (*cit).val) );
+			} else {
+				nvals.push_back( std::move(d.new_val) );
+			}
+		}
+
+		container = std::move(nvals);
+	}
+
+	template< template <class...> class container_t >
+	template< template <class...> class incontainer_t >
+	void __pass::resultNstmt< container_t >::take_all( incontainer_t<ptr<Stmt>> * stmts ) {
+		if (!stmts || stmts->empty()) return;
+
+		std::transform(stmts->begin(), stmts->end(), std::back_inserter( values ),
+			[](ast::ptr<ast::Stmt>& stmt) -> delta {
+				return delta( stmt.release(), -1, false );
+			});
+		stmts->clear();
+		differs = true;
+	}
+
+	template< template<class...> class container_t >
+	template< template<class...> class incontainer_t >
+	void __pass::resultNstmt< container_t >::take_all( incontainer_t<ptr<Decl>> * decls ) {
+		if (!decls || decls->empty()) return;
+
+		std::transform(decls->begin(), decls->end(), std::back_inserter( values ),
+			[](ast::ptr<ast::Decl>& decl) -> delta {
+				auto loc = decl->location;
+				auto stmt = new DeclStmt( loc, decl.release() );
+				return delta( stmt, -1, false );
+			});
+		decls->clear();
+		differs = true;
 	}
 
 	template< typename core_t >
 	template< template <class...> class container_t >
-	container_t< ptr<Stmt> > ast::Pass< core_t >::call_accept( const container_t< ptr<Stmt> > & statements ) {
+	__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept( const container_t< ptr<Stmt> > & statements ) {
 		__pedantic_pass_assert( __visit_children() );
 		if( statements.empty() ) return {};
 
@@ -243,14 +302,15 @@ namespace ast {
 		pass_visitor_stats.max->push(pass_visitor_stats.depth);
 		pass_visitor_stats.avg->push(pass_visitor_stats.depth);
 
-		bool mutated = false;
-		container_t< ptr<Stmt> > new_kids;
-		for( const Stmt * stmt : statements ) {
+		__pass::resultNstmt<container_t> new_kids;
+		for( auto value : enumerate( statements ) ) {
 			try {
+				size_t i = value.idx;
+				const Stmt * stmt = value.val;
 				__pedantic_pass_assert( stmt );
 				const ast::Stmt * new_stmt = stmt->accept( *this );
 				assert( new_stmt );
-				if(new_stmt != stmt ) mutated = true;
+				if(new_stmt != stmt ) { new_kids.differs = true; }
 
 				// Make sure that it is either adding statements or declartions but not both
 				// this is because otherwise the order would be awkward to predict
@@ -260,15 +320,19 @@ namespace ast {
 
 
 				// Take all the statements which should have gone after, N/A for first iteration
-				__pass::take_all( std::back_inserter( new_kids ), decls_before, &mutated );
-				__pass::take_all( std::back_inserter( new_kids ), stmts_before, &mutated );
+				new_kids.take_all( decls_before );
+				new_kids.take_all( stmts_before );
 
 				// Now add the statement if there is one
-				new_kids.emplace_back( new_stmt );
+				if(new_stmt != stmt) {
+					new_kids.values.emplace_back( new_stmt, i, false );
+				} else {
+					new_kids.values.emplace_back( nullptr, i, true );
+				}
 
 				// Take all the declarations that go before
-				__pass::take_all( std::back_inserter( new_kids ), decls_after, &mutated );
-				__pass::take_all( std::back_inserter( new_kids ), stmts_after, &mutated );
+				new_kids.take_all( decls_after );
+				new_kids.take_all( stmts_after );
 			}
 			catch ( SemanticErrorException &e ) {
 				errors.append( e );
@@ -277,12 +341,28 @@ namespace ast {
 		pass_visitor_stats.depth--;
 		if ( !errors.isEmpty() ) { throw errors; }
 
-		return mutated ? new_kids : container_t< ptr<Stmt> >();
+		return new_kids;
+	}
+
+	template< template <class...> class container_t, typename node_t >
+	template< typename object_t, typename super_t, typename field_t >
+	void __pass::resultN<container_t, node_t>::apply(object_t * object, field_t super_t::* field) {
+		auto & container = object->*field;
+		__pedantic_pass_assert( container.size() == values.size() );
+
+		for(size_t i = 0; i < container.size(); i++) {
+			// Take all the elements that are different in 'values'
+			// and swap them into 'container'
+			if( values[i] != nullptr ) std::swap(container[i], values[i]);
+		}
+
+		// Now the original containers should still have the unchanged values
+		// but also contain the new values
 	}
 
 	template< typename core_t >
 	template< template <class...> class container_t, typename node_t >
-	container_t< ast::ptr<node_t> > ast::Pass< core_t >::call_accept( const container_t< ast::ptr<node_t> > & container ) {
+	__pass::template resultN<container_t, node_t> ast::Pass< core_t >::call_accept( const container_t< ast::ptr<node_t> > & container ) {
 		__pedantic_pass_assert( __visit_children() );
 		if( container.empty() ) return {};
 		SemanticErrorException errors;
@@ -292,23 +372,29 @@ namespace ast {
 		pass_visitor_stats.avg->push(pass_visitor_stats.depth);
 
 		bool mutated = false;
-		container_t< ast::ptr<node_t> > new_kids;
+		container_t<ptr<node_t>> new_kids;
 		for ( const node_t * node : container ) {
 			try {
 				__pedantic_pass_assert( node );
 				const node_t * new_stmt = strict_dynamic_cast< const node_t * >( node->accept( *this ) );
-				if(new_stmt != node ) mutated = true;
+				if(new_stmt != node ) {
+					mutated = true;
+					new_kids.emplace_back( new_stmt );
+				} else {
+					new_kids.emplace_back( nullptr );
+				}
 
-				new_kids.emplace_back( new_stmt );
 			}
 			catch( SemanticErrorException &e ) {
 				errors.append( e );
 			}
 		}
+
+		__pedantic_pass_assert( new_kids.size() == container.size() );
 		pass_visitor_stats.depth--;
 		if ( ! errors.isEmpty() ) { throw errors; }
 
-		return mutated ? new_kids : container_t< ast::ptr<node_t> >();
+		return ast::__pass::resultN<container_t, node_t>{ mutated, new_kids };
 	}
 
 	template< typename core_t >
@@ -326,11 +412,11 @@ namespace ast {
 
 		auto new_val = call_accept( old_val );
 
-		static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value || std::is_same<int, decltype(old_val)>::value, "ERROR");
+		static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR");
 
-		if( __pass::differs(old_val, new_val) ) {
+		if( new_val.differs ) {
 			auto new_parent = __pass::mutate<core_t>(parent);
-			new_parent->*child = new_val;
+			new_val.apply(new_parent, child);
 			parent = new_parent;
 		}
 	}
@@ -352,9 +438,9 @@ namespace ast {
 
 		static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value || std::is_same<int, decltype(old_val)>::value, "ERROR");
 
-		if( __pass::differs(old_val, new_val) ) {
+		if( new_val.differs ) {
 			auto new_parent = __pass::mutate<core_t>(parent);
-			new_parent->*child = new_val;
+			new_val.apply( new_parent, child );
 			parent = new_parent;
 		}
 	}
@@ -940,27 +1026,42 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitForStmt * node ) {
 
 			const Expr * func = clause.target.func ? clause.target.func->accept(*this) : nullptr;
 			if(func != clause.target.func) mutated = true;
+			else func = nullptr;
 
 			std::vector<ptr<Expr>> new_args;
 			new_args.reserve(clause.target.args.size());
 			for( const auto & arg : clause.target.args ) {
 				auto a = arg->accept(*this);
-				new_args.push_back( a );
-				if( a != arg ) mutated = true;
+				if( a != arg ) {
+					mutated = true;
+					new_args.push_back( a );
+				} else
+					new_args.push_back( nullptr );
 			}
 
 			const Stmt * stmt = clause.stmt ? clause.stmt->accept(*this) : nullptr;
 			if(stmt != clause.stmt) mutated = true;
+			else stmt = nullptr;
 
 			const Expr * cond = clause.cond ? clause.cond->accept(*this) : nullptr;
 			if(cond != clause.cond) mutated = true;
+			else cond = nullptr;
 
 			new_clauses.push_back( WaitForStmt::Clause{ {func, std::move(new_args) }, stmt, cond } );
 		}
 
 		if(mutated) {
 			auto n = __pass::mutate<core_t>(node);
-			n->clauses = std::move( new_clauses );
+			for(size_t i = 0; i < new_clauses.size(); i++) {
+				if(new_clauses.at(i).target.func != nullptr) std::swap(n->clauses.at(i).target.func, new_clauses.at(i).target.func);
+
+				for(size_t j = 0; j < new_clauses.at(i).target.args.size(); j++) {
+					if(new_clauses.at(i).target.args.at(j) != nullptr) std::swap(n->clauses.at(i).target.args.at(j), new_clauses.at(i).target.args.at(j));
+				}
+
+				if(new_clauses.at(i).stmt != nullptr) std::swap(n->clauses.at(i).stmt, new_clauses.at(i).stmt);
+				if(new_clauses.at(i).cond != nullptr) std::swap(n->clauses.at(i).cond, new_clauses.at(i).cond);
+			}
 			node = n;
 		}
 	}
@@ -968,9 +1069,9 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitForStmt * node ) {
 	#define maybe_accept(field) \
 		if(node->field) { \
 			auto nval = call_accept( node->field ); \
-			if(nval != node->field ) { \
+			if(nval.differs ) { \
 				auto nparent = __pass::mutate<core_t>(node); \
-				nparent->field = nval; \
+				nparent->field = nval.value; \
 				node = nparent; \
 			} \
 		}

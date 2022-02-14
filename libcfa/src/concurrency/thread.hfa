@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  6 16:40:16 2022
-// Update Count     : 7
+// Last Modified On : Fri Feb 11 16:34:07 2022
+// Update Count     : 20
 //
 
 #pragma once
@@ -128,6 +128,19 @@ void sleep( Duration duration );
 forall( T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled, (T))
     | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
 T & join( T & this );
+
+//----------
+// prng
+static inline {
+	uint32_t prng( thread$ & th ) __attribute__(( warn_unused_result )) { return LCG( th.random_state ); } // [0,UINT_MAX]
+	uint32_t prng( thread$ & th, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( th ) % u; } // [0,u)
+	uint32_t prng( thread$ & th, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( th, u - l + 1 ) + l; } // [l,u]
+	forall( T & | is_thread(T) ) {
+		uint32_t prng( T & th ) __attribute__(( warn_unused_result )) { return prng( (thread &)th ); } // [0,UINT_MAX]
+		uint32_t prng( T & th, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( th ) % u; } // [0,u)
+		uint32_t prng( T & th, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( th, u - l + 1 ) + l; } // [l,u]
+	} // distribution
+} // distribution
 
 // Local Variables: //
 // mode: c //

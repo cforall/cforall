@@ -371,24 +371,8 @@ namespace Concurrency {
 				false
 			),
 			new ListInit(
-				map_range < std::list<Initializer*> > ( clause.target.arguments, [this](Expression * expr ){
-					Expression * init = new CastExpr(
-						new UntypedExpr(
-							new NameExpr( "get_monitor" ),
-							{ expr }
-						),
-						new PointerType(
-							noQualifiers,
-							new StructInstType(
-								noQualifiers,
-								decl_monitor
-							)
-						),
-						false
-					);
-
-					ResolvExpr::findSingleExpression( init, indexer );
-					return new SingleInit( init );
+				map_range < std::list<Initializer*> > ( clause.target.arguments, [](Expression * expr ){
+					return new SingleInit( expr );
 				})
 			)
 		);

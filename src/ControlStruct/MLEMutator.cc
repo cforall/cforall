@@ -65,7 +65,7 @@ namespace ControlStruct {
 	}
 
 	// break labels have to come after the statement they break out of, so mutate a statement, then if they inform us
-	// through the breakLabel field tha they need a place to jump to on a break statement, add the break label to the
+	// through the breakLabel field that they need a place to jump to on a break statement, add the break label to the
 	// body of statements
 	void MultiLevelExitMutator::fixBlock( std::list< Statement * > &kids, bool caseClause ) {
 		SemanticErrorException errors;

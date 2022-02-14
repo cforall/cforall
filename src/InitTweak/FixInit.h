@@ -20,7 +20,7 @@
 
 class Declaration;
 namespace ast {
-	struct TranslationUnit;
+	class TranslationUnit;
 }
 
 namespace InitTweak {

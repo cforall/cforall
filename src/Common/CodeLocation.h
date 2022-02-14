@@ -32,6 +32,9 @@ struct CodeLocation {
 	{}
 
 	CodeLocation( const CodeLocation& rhs ) = default;
+	CodeLocation( CodeLocation&& rhs ) = default;
+	CodeLocation& operator=( const CodeLocation & ) = default;
+	CodeLocation& operator=( CodeLocation && ) = default;
 
 	bool isSet () const {
 		return -1 != first_line;

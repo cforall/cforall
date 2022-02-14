@@ -370,6 +370,64 @@ reverse_iterate_t< T > reverseIterate( T & ref ) {
 	return reverse_iterate_t< T >( ref );
 }
 
+template< typename T >
+struct enumerate_t {
+	template<typename val_t>
+	struct value_t {
+		val_t & val;
+		size_t idx;
+	};
+
+	template< typename iter_t, typename val_t >
+	struct iterator_t {
+		iter_t it;
+		size_t idx;
+
+		iterator_t( iter_t _it, size_t _idx ) : it(_it), idx(_idx) {}
+
+		value_t<val_t> operator*() const { return value_t<val_t>{ *it, idx }; }
+
+		bool operator==(const iterator_t & o) const { return o.it == it; }
+		bool operator!=(const iterator_t & o) const { return o.it != it; }
+
+		iterator_t & operator++() {
+			it++;
+			idx++;
+			return *this;
+		}
+
+		using difference_type   = typename std::iterator_traits< iter_t >::difference_type;
+		using value_type        = value_t<val_t>;
+		using pointer           = value_t<val_t> *;
+		using reference         = value_t<val_t> &;
+		using iterator_category = std::forward_iterator_tag;
+	};
+
+	T & ref;
+
+	using iterator = iterator_t< typename T::iterator, typename T::value_type >;
+	using const_iterator = iterator_t< typename T::const_iterator, const typename T::value_type >;
+
+	iterator begin() { return iterator( ref.begin(), 0 ); }
+	iterator end()   { return iterator( ref.end(), ref.size() ); }
+
+	const_iterator begin() const { return const_iterator( ref.cbegin(), 0 ); }
+	const_iterator end()   const { return const_iterator( ref.cend(), ref.size() ); }
+
+	const_iterator cbegin() const { return const_iterator( ref.cbegin(), 0 ); }
+	const_iterator cend()   const { return const_iterator( ref.cend(), ref.size() ); }
+};
+
+template< typename T >
+enumerate_t<T> enumerate( T & ref ) {
+	return enumerate_t< T >{ ref };
+}
+
+template< typename T >
+const enumerate_t< const T > enumerate( const T & ref ) {
+	return enumerate_t< const T >{ ref };
+}
+
 template< typename OutType, typename Range, typename Functor >
 OutType map_range( const Range& range, Functor&& functor ) {
 	OutType out;

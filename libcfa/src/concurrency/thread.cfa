@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 13 20:11:55 2022
-// Update Count     : 42
+// Last Modified On : Sat Feb 12 15:24:18 2022
+// Update Count     : 66
 //
 
 #define __cforall_thread__
@@ -24,7 +24,7 @@
 #define __CFA_INVOKE_PRIVATE__
 #include "invoke.h"
 
-extern uint32_t __global_random_seed;
+extern uint32_t __global_random_seed, __global_random_prime, __global_random_mask;
 
 //-----------------------------------------------------------------------------
 // Thread ctors and dtors
@@ -44,7 +44,7 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 	link.ts   = -1llu;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
-	random_state = __global_random_seed;
+	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();
 	#if defined( __CFA_WITH_VERIFY__ )
 		canary = 0x0D15EA5E0D15EA5Ep;
 	#endif
@@ -175,10 +175,17 @@ T & join( T & this ) {
 #define GENERATOR LCG
 
 void set_seed( uint32_t seed ) {
- 	active_thread()->random_state = __global_random_seed = seed;
-	GENERATOR( active_thread()->random_state );
+	uint32_t & state = active_thread()->random_state;
+	state = __global_random_seed = seed;
+	GENERATOR( state );
+	__global_random_prime = state;
+	__global_random_mask = true;
 } // set_seed
-uint32_t prng( void ) { return GENERATOR( active_thread()->random_state ); } // [0,UINT_MAX]
+
+uint32_t prng( void ) {									// [0,UINT_MAX]
+	uint32_t & state = active_thread()->random_state;
+	return GENERATOR( state );
+} // prng
 
 // Local Variables: //
 // mode: c //
