@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon Jun 5 14:20:42 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov  6 07:42:13 2020
-// Update Count     : 54
+// Last Modified On : Thu Feb 17 11:18:57 2022
+// Update Count     : 59
 //
 
 #define __cforall_thread__
@@ -242,7 +242,7 @@ void update_preemption( processor * this, Duration duration ) {
 
 //----------
 // special case for preemption since used often
-bool __preemption_enabled() {
+__attribute__((optimize("no-reorder-blocks"))) bool __preemption_enabled() {
 	// create a assembler label before
 	// marked as clobber all to avoid movement
 	__cfaasm_label(check, before);

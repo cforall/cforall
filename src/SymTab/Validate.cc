@@ -193,6 +193,28 @@ namespace SymTab {
 		void previsit( UnionDecl * aggrDecl );
 	};
 
+	// These structs are the sub-sub-passes of ForallPointerDecay_old.
+
+	struct TraitExpander_old final {
+		void previsit( FunctionType * );
+		void previsit( StructDecl * );
+		void previsit( UnionDecl * );
+	};
+
+	struct AssertionFixer_old final {
+		void previsit( FunctionType * );
+		void previsit( StructDecl * );
+		void previsit( UnionDecl * );
+	};
+
+	struct CheckOperatorTypes_old final {
+		void previsit( ObjectDecl * );
+	};
+
+	struct FixUniqueIds_old final {
+		void previsit( DeclarationWithType * );
+	};
+
 	struct ReturnChecker : public WithGuards {
 		/// Checks that return statements return nothing if their return type is void
 		/// and return something if the return type is non-void.
@@ -385,7 +407,6 @@ namespace SymTab {
 	}
 
 	void validate_D( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<ForallPointerDecay_old> fpd;
 		{
 			Stats::Heap::newPass("validate-D");
 			Stats::Time::BlockGuard guard("validate-D");
@@ -393,7 +414,7 @@ namespace SymTab {
 				Concurrency::applyKeywords( translationUnit );
 			});
 			Stats::Time::TimeBlock("Forall Pointer Decay", [&]() {
-				acceptAll( translationUnit, fpd ); // must happen before autogenerateRoutines, after Concurrency::applyKeywords because uniqueIds must be set on declaration before resolution
+				decayForallPointers( translationUnit ); // must happen before autogenerateRoutines, after Concurrency::applyKeywords because uniqueIds must be set on declaration before resolution
 			});
 			Stats::Time::TimeBlock("Hoist Control Declarations", [&]() {
 				ControlStruct::hoistControlDecls( translationUnit );  // hoist initialization out of for statements; must happen before autogenerateRoutines
@@ -453,8 +474,31 @@ namespace SymTab {
 	}
 
 	void decayForallPointers( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<ForallPointerDecay_old> fpd;
-		acceptAll( translationUnit, fpd );
+		PassVisitor<TraitExpander_old> te;
+		acceptAll( translationUnit, te );
+		PassVisitor<AssertionFixer_old> af;
+		acceptAll( translationUnit, af );
+		PassVisitor<CheckOperatorTypes_old> cot;
+		acceptAll( translationUnit, cot );
+		PassVisitor<FixUniqueIds_old> fui;
+		acceptAll( translationUnit, fui );
+	}
+
+	void decayForallPointersA( std::list< Declaration * > & translationUnit ) {
+		PassVisitor<TraitExpander_old> te;
+		acceptAll( translationUnit, te );
+	}
+	void decayForallPointersB( std::list< Declaration * > & translationUnit ) {
+		PassVisitor<AssertionFixer_old> af;
+		acceptAll( translationUnit, af );
+	}
+	void decayForallPointersC( std::list< Declaration * > & translationUnit ) {
+		PassVisitor<CheckOperatorTypes_old> cot;
+		acceptAll( translationUnit, cot );
+	}
+	void decayForallPointersD( std::list< Declaration * > & translationUnit ) {
+		PassVisitor<FixUniqueIds_old> fui;
+		acceptAll( translationUnit, fui );
 	}
 
 	void validate( std::list< Declaration * > &translationUnit, __attribute__((unused)) bool doDebug ) {
@@ -469,10 +513,16 @@ namespace SymTab {
 	void validateType( Type * type, const Indexer * indexer ) {
 		PassVisitor<EnumAndPointerDecay_old> epc;
 		PassVisitor<LinkReferenceToTypes_old> lrt( indexer );
-		PassVisitor<ForallPointerDecay_old> fpd;
+		PassVisitor<TraitExpander_old> te;
+		PassVisitor<AssertionFixer_old> af;
+		PassVisitor<CheckOperatorTypes_old> cot;
+		PassVisitor<FixUniqueIds_old> fui;
 		type->accept( epc );
 		type->accept( lrt );
-		type->accept( fpd );
+		type->accept( te );
+		type->accept( af );
+		type->accept( cot );
+		type->accept( fui );
 	}
 
 	void HoistTypeDecls::handleType( Type * type ) {
@@ -971,6 +1021,38 @@ namespace SymTab {
 		} // for
 	}
 
+	/// Replace all traits in assertion lists with their assertions.
+	void expandTraits( std::list< TypeDecl * > & forall ) {
+		for ( TypeDecl * type : forall ) {
+			std::list< DeclarationWithType * > asserts;
+			asserts.splice( asserts.end(), type->assertions );
+			// expand trait instances into their members
+			for ( DeclarationWithType * assertion : asserts ) {
+				if ( TraitInstType * traitInst = dynamic_cast< TraitInstType * >( assertion->get_type() ) ) {
+					// expand trait instance into all of its members
+					expandAssertions( traitInst, back_inserter( type->assertions ) );
+					delete traitInst;
+				} else {
+					// pass other assertions through
+					type->assertions.push_back( assertion );
+				} // if
+			} // for
+		}
+	}
+
+	/// Fix each function in the assertion list and check for invalid void type.
+	void fixAssertions(
+			std::list< TypeDecl * > & forall, BaseSyntaxNode * node ) {
+		for ( TypeDecl * type : forall ) {
+			for ( DeclarationWithType *& assertion : type->assertions ) {
+				bool isVoid = fixFunction( assertion );
+				if ( isVoid ) {
+					SemanticError( node, "invalid type void in assertion of function " );
+				} // if
+			} // for
+		}
+	}
+
 	void ForallPointerDecay_old::previsit( ObjectDecl * object ) {
 		// ensure that operator names only apply to functions or function pointers
 		if ( CodeGen::isOperator( object->name ) && ! dynamic_cast< FunctionType * >( object->type->stripDeclarator() ) ) {
@@ -993,6 +1075,41 @@ namespace SymTab {
 
 	void ForallPointerDecay_old::previsit( UnionDecl * aggrDecl ) {
 		forallFixer( aggrDecl->parameters, aggrDecl );
+	}
+
+	void TraitExpander_old::previsit( FunctionType * ftype ) {
+		expandTraits( ftype->forall );
+	}
+
+	void TraitExpander_old::previsit( StructDecl * aggrDecl ) {
+		expandTraits( aggrDecl->parameters );
+	}
+
+	void TraitExpander_old::previsit( UnionDecl * aggrDecl ) {
+		expandTraits( aggrDecl->parameters );
+	}
+
+	void AssertionFixer_old::previsit( FunctionType * ftype ) {
+		fixAssertions( ftype->forall, ftype );
+	}
+
+	void AssertionFixer_old::previsit( StructDecl * aggrDecl ) {
+		fixAssertions( aggrDecl->parameters, aggrDecl );
+	}
+
+	void AssertionFixer_old::previsit( UnionDecl * aggrDecl ) {
+		fixAssertions( aggrDecl->parameters, aggrDecl );
+	}
+
+	void CheckOperatorTypes_old::previsit( ObjectDecl * object ) {
+		// ensure that operator names only apply to functions or function pointers
+		if ( CodeGen::isOperator( object->name ) && ! dynamic_cast< FunctionType * >( object->type->stripDeclarator() ) ) {
+			SemanticError( object->location, toCString( "operator ", object->name.c_str(), " is not a function or function pointer." )  );
+		}
+	}
+
+	void FixUniqueIds_old::previsit( DeclarationWithType * decl ) {
+		decl->fixUniqueId();
 	}
 
 	void ReturnChecker::checkFunctionReturns( std::list< Declaration * > & translationUnit ) {

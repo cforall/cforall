@@ -17,22 +17,22 @@
 #define _GNU_SOURCE
 
 // C Includes
-#include <errno.h>										// errno
+#include <errno.h>					// errno
 #include <signal.h>
-#include <string.h>										// strerror
-#include <unistd.h>										// sysconf
+#include <string.h>					// strerror
+#include <unistd.h>					// sysconf
 
 extern "C" {
-	#include <limits.h>									// PTHREAD_STACK_MIN
-	#include <unistd.h>									// syscall
-	#include <sys/eventfd.h>							// eventfd
-	#include <sys/mman.h>								// mprotect
-	#include <sys/resource.h>							// getrlimit
+	#include <limits.h>				// PTHREAD_STACK_MIN
+	#include <unistd.h>				// syscall
+	#include <sys/eventfd.h>			// eventfd
+	#include <sys/mman.h>				// mprotect
+	#include <sys/resource.h>			// getrlimit
 }
 
 // CFA Includes
 #include "kernel_private.hfa"
-#include "startup.hfa"									// STARTUP_PRIORITY_XXX
+#include "startup.hfa"					// STARTUP_PRIORITY_XXX
 #include "limits.hfa"
 #include "math.hfa"
 
@@ -735,7 +735,7 @@ void * __create_pthread( pthread_t * pthread, void * (*start)(void *), void * ar
 
 	check( pthread_attr_init( &attr ), "pthread_attr_init" ); // initialize attribute
 
-	size_t stacksize = DEFAULT_STACK_SIZE;
+	size_t stacksize = max( PTHREAD_STACK_MIN, DEFAULT_STACK_SIZE );
 
 	void * stack;
 	#if CFA_PROCESSOR_USE_MMAP

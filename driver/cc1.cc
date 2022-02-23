@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 26 14:23:51 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 21 09:46:24 2021
-// Update Count     : 419
+// Last Modified On : Thu Feb 17 18:04:23 2022
+// Update Count     : 422
 //
 
 #include <iostream>
@@ -60,7 +60,7 @@ static void suffix( const string & arg, const char * args[], int & nargs ) {
 
 static string __CFA_FLAGPREFIX__( "__CFA_FLAG" );		// "__CFA_FLAG__=" suffix
 
-static void checkEnv1( const char * args[], int & nargs ) { // stage 1
+static void checkEnv1() {								// stage 1
 	extern char ** environ;
 
 	for ( int i = 0; environ[i]; i += 1 ) {
@@ -154,7 +154,7 @@ static void Stage1( const int argc, const char * const argv[] ) {
 	#ifdef __DEBUG_H__
 	cerr << "Stage1" << endl;
 	#endif // __DEBUG_H__
-	checkEnv1( args, nargs );							// arguments passed via environment variables
+	checkEnv1();										// arguments passed via environment variables
 	#ifdef __DEBUG_H__
 	for ( int i = 1; i < argc; i += 1 ) {
 		cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;

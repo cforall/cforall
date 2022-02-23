@@ -31,6 +31,7 @@
 using namespace std;
 
 #include "AST/Convert.hpp"
+#include "AST/Print.hpp"
 #include "CompilationState.h"
 #include "../config.h"                      // for CFA_LIBDIR
 #include "CodeGen/FixMain.h"                // for FixMain
@@ -75,6 +76,7 @@ using namespace std;
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
 #include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
+#include "Validate/ForallPointerDecay.hpp"  // for decayForallPointers
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
@@ -330,8 +332,11 @@ int main( int argc, char * argv[] ) {
 		CodeTools::fillLocations( translationUnit );
 
 		if( useNewAST ) {
-			PASS( "Apply Concurrent Keywords", Concurrency::applyKeywords( translationUnit ) );
-			PASS( "Forall Pointer Decay", SymTab::decayForallPointers( translationUnit ) );
+			PASS( "Implement Concurrent Keywords", Concurrency::applyKeywords( translationUnit ) );
+			//PASS( "Forall Pointer Decay - A", SymTab::decayForallPointersA( translationUnit ) );
+			//PASS( "Forall Pointer Decay - B", SymTab::decayForallPointersB( translationUnit ) );
+			//PASS( "Forall Pointer Decay - C", SymTab::decayForallPointersC( translationUnit ) );
+			//PASS( "Forall Pointer Decay - D", SymTab::decayForallPointersD( translationUnit ) );
 			CodeTools::fillLocations( translationUnit );
 
 			if (Stats::Counters::enabled) {
@@ -341,6 +346,11 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			// Must be after implement concurrent keywords; because uniqueIds
+			//   must be set on declaration before resolution.
+			// Must happen before autogen routines are added.
+			PASS( "Forall Pointer Decay", Validate::decayForallPointers( transUnit ) );
 
 			// Must happen before autogen routines are added.
 			PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls( transUnit ) );

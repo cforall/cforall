@@ -15,9 +15,9 @@
 
 #pragma once
 
-trait Not( T ) {
-	void ?{}( T &, zero_t );
-	int !?( T );
+trait Not( U ) {
+	void ?{}( U &, zero_t );
+	int !?( U );
 }; // Not
 
 trait Equality( T | Not( T ) ) {
@@ -25,11 +25,11 @@ trait Equality( T | Not( T ) ) {
 	int ?!=?( T, T );
 }; // Equality
 
-trait Relational( T | Equality( T ) ) {
-	int ?<?( T, T );
-	int ?<=?( T, T );
-	int ?>?( T, T );
-	int ?>=?( T, T );
+trait Relational( U | Equality( U ) ) {
+	int ?<?( U, U );
+	int ?<=?( U, U );
+	int ?>?( U, U );
+	int ?>=?( U, U );
 }; // Relational
 
 trait Signed( T ) {
@@ -38,26 +38,26 @@ trait Signed( T ) {
 	T abs( T );
 }; // Signed
 
-trait Additive( T | Signed( T ) ) {
-	T ?+?( T, T );
-	T ?-?( T, T );
-	T ?+=?( T &, T );
-	T ?-=?( T &, T );
+trait Additive( U | Signed( U ) ) {
+	U ?+?( U, U );
+	U ?-?( U, U );
+	U ?+=?( U &, U );
+	U ?-=?( U &, U );
 }; // Additive
 
 trait Incdec( T | Additive( T ) ) {
 	void ?{}( T &, one_t );
 	// T ?++( T & );
-	// T ++?( T &);
+	// T ++?( T & );
 	// T ?--( T & );
 	// T --?( T & );
 }; // Incdec
 
-trait Multiplicative( T | Incdec( T ) ) {
-	T ?*?( T, T );
-	T ?/?( T, T );
-	T ?%?( T, T );
-	T ?/=?( T &, T );
+trait Multiplicative( U | Incdec( U ) ) {
+	U ?*?( U, U );
+	U ?/?( U, U );
+	U ?%?( U, U );
+	U ?/=?( U &, U );
 }; // Multiplicative
 
 trait Arithmetic( T | Relational( T ) | Multiplicative( T ) ) {

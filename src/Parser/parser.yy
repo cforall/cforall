@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 11 14:26:15 2022
-// Update Count     : 5174
+// Last Modified On : Sat Feb 19 09:47:20 2022
+// Update Count     : 5218
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1051,6 +1051,8 @@ labeled_statement:
 		// labels cannot be identifiers 0 or 1
 	identifier_or_type_name ':' attribute_list_opt statement
 		{ $$ = $4->add_label( $1, $3 ); }
+	| identifier_or_type_name ':' attribute_list_opt error
+		{ SemanticError( yylloc, "previous label must be associated with a statement (where a declaration is not a statement). Move the label or terminate with a semi-colon." ); $$ = nullptr; }
 	;
 
 compound_statement:
@@ -1085,6 +1087,8 @@ statement_list_nodecl:
 	statement
 	| statement_list_nodecl statement
 		{ assert( $1 ); $1->set_last( $2 ); $$ = $1; }
+	| statement_list_nodecl error
+		{ SemanticError( yylloc, "declarations only allowed at the start of the switch body, i.e., after the '{'." ); $$ = nullptr; }
 	;
 
 expression_statement:
@@ -1092,7 +1096,6 @@ expression_statement:
 		{ $$ = new StatementNode( build_expr( $1 ) ); }
 	| MUTEX '(' ')' comma_expression ';'
 		{ $$ = new StatementNode( build_mutex( nullptr, new StatementNode( build_expr( $4 ) ) ) ); }
-		// { SemanticError( yylloc, "Mutex expression is currently unimplemented." ); $$ = nullptr; }
 	;
 
 selection_statement:
@@ -1112,6 +1115,8 @@ selection_statement:
 			// statement.
 			$$ = $7 ? new StatementNode( build_compound( (StatementNode *)((new StatementNode( $7 ))->set_last( sw )) ) ) : sw;
 		}
+	| SWITCH '(' comma_expression ')' '{' error '}'		// CFA
+		{ SemanticError( yylloc, "only declarations can appear before the list of case clauses." ); $$ = nullptr; }
 	| CHOOSE '(' comma_expression ')' case_clause		// CFA
 		{ $$ = new StatementNode( build_switch( false, $3, $5 ) ); }
 	| CHOOSE '(' comma_expression ')' '{' push declaration_list_opt switch_clause_list_opt pop '}' // CFA
@@ -1119,6 +1124,8 @@ selection_statement:
 			StatementNode *sw = new StatementNode( build_switch( false, $3, $8 ) );
 			$$ = $7 ? new StatementNode( build_compound( (StatementNode *)((new StatementNode( $7 ))->set_last( sw )) ) ) : sw;
 		}
+	| CHOOSE '(' comma_expression ')' '{' error '}'		// CFA
+		{ SemanticError( yylloc, "only declarations can appear before the list of case clauses." ); $$ = nullptr; }
 	;
 
 if_statement:
@@ -1157,16 +1164,16 @@ case_value_list:										// CFA
 	;
 
 case_label:												// CFA
-	CASE case_value_list ':'					{ $$ = $2; }
+	CASE error
+		{ SemanticError( yylloc, "missing case list after case." ); $$ = nullptr; }
+	| CASE case_value_list ':'					{ $$ = $2; }
+	| CASE case_value_list error
+		{ SemanticError( yylloc, "missing colon after case list." ); $$ = nullptr; }
 	| DEFAULT ':'								{ $$ = new StatementNode( build_default() ); }
 		// A semantic check is required to ensure only one default clause per switch/choose statement.
+	| DEFAULT error
+		{ SemanticError( yylloc, "missing colon after default." ); $$ = nullptr; }
 	;
-
-//label_list_opt:
-//	// empty
-//	| identifier_or_type_name ':'
-//	| label_list_opt identifier_or_type_name ':'
-//	;
 
 case_label_list:										// CFA
 	case_label

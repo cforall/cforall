@@ -19,6 +19,8 @@ SRC_VALIDATE = \
 	Validate/Autogen.hpp \
 	Validate/CompoundLiteral.cpp \
 	Validate/CompoundLiteral.hpp \
+	Validate/ForallPointerDecay.cpp \
+	Validate/ForallPointerDecay.hpp \
 	Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h \
 	Validate/InitializerLength.cpp \

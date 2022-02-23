@@ -323,7 +323,7 @@ static inline signed int invoke_main(signed int argc, char **argv, char **envp);
 signed int _X13cfa_args_argci_1;
 char **_X13cfa_args_argvPPc_1;
 char **_X13cfa_args_envpPPc_1;
-signed int _X17cfa_main_returnedi_1 = ((signed int )0);
+__attribute__ ((weak)) extern signed int _X17cfa_main_returnedi_1;
 signed int main(signed int _X4argci_1, char **_X4argvPPc_1, char **_X4envpPPc_1){
     __attribute__ ((unused)) signed int _X12_retval_maini_1;
     {
@@ -340,8 +340,11 @@ signed int main(signed int _X4argci_1, char **_X4argvPPc_1, char **_X4envpPPc_1)
 
     signed int _tmp_cp_ret6;
     signed int _X3reti_2 = (((void)(_tmp_cp_ret6=invoke_main(_X4argci_1, _X4argvPPc_1, _X4envpPPc_1))) , _tmp_cp_ret6);
-    {
-        ((void)(_X17cfa_main_returnedi_1=((signed int )1)));
+    if ( ((&_X17cfa_main_returnedi_1)!=((signed int *)0)) ) {
+        {
+            ((void)(_X17cfa_main_returnedi_1=((signed int )1)));
+        }
+
     }
 
     {

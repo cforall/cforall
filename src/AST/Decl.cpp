@@ -38,10 +38,13 @@ static IdMapType idMap;
 void Decl::fixUniqueId() {
 	if ( uniqueId ) return;  // ensure only set once
 	uniqueId = ++lastUniqueId;
-	idMap[ uniqueId ] = this;
+	// The extra readonly pointer is causing some reference counting issues.
+	// idMap[ uniqueId ] = this;
 }
 
 readonly<Decl> Decl::fromId( UniqueId id ) {
+	// Right now this map is always empty, so don't use it.
+	assert( false );
 	IdMapType::const_iterator i = idMap.find( id );
 	if ( i != idMap.end() ) return i->second;
 	return {};

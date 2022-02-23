@@ -15,8 +15,6 @@
 ###############################################################################
 
 SRC_AST = \
-	AST/AssertAcyclic.cpp \
-	AST/AssertAcyclic.hpp \
 	AST/Attribute.cpp \
 	AST/Attribute.hpp \
 	AST/Bitfield.hpp \
@@ -63,6 +61,8 @@ SRC_AST = \
 	AST/TypeEnvironment.hpp \
 	AST/TypeSubstitution.cpp \
 	AST/TypeSubstitution.hpp \
+	AST/Util.cpp \
+	AST/Util.hpp \
 	AST/Visitor.hpp
 
 SRC += $(SRC_AST)

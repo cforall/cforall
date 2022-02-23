@@ -71,8 +71,10 @@ void check_free_space() {
 		return;
 	}
 
-	if((buf.f_bsize * buf.f_bavail) < 536870912) {
-		serr | "Available diskspace is less than ~500Mb: " | (buf.f_bsize * buf.f_bavail);
+	uint64_t avail = buf.f_bavail;
+	avail *= buf.f_bsize;
+	if(avail < 536870912_l64u) {
+		serr | "Available diskspace is less than ~500Mb: " | avail;
 	}
 
 	if(buf.f_favail < 10) {

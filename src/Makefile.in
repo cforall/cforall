@@ -167,14 +167,15 @@ am__v_AR_1 =
 libdemangle_a_AR = $(AR) $(ARFLAGS)
 libdemangle_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am__objects_1 = AST/AssertAcyclic.$(OBJEXT) AST/Attribute.$(OBJEXT) \
-	AST/Convert.$(OBJEXT) AST/Copy.$(OBJEXT) AST/Decl.$(OBJEXT) \
+am__objects_1 = AST/Attribute.$(OBJEXT) AST/Convert.$(OBJEXT) \
+	AST/Copy.$(OBJEXT) AST/Decl.$(OBJEXT) \
 	AST/DeclReplacer.$(OBJEXT) AST/Expr.$(OBJEXT) \
 	AST/GenericSubstitution.$(OBJEXT) AST/Init.$(OBJEXT) \
 	AST/LinkageSpec.$(OBJEXT) AST/Node.$(OBJEXT) \
 	AST/Pass.$(OBJEXT) AST/Print.$(OBJEXT) AST/Stmt.$(OBJEXT) \
 	AST/SymbolTable.$(OBJEXT) AST/Type.$(OBJEXT) \
-	AST/TypeEnvironment.$(OBJEXT) AST/TypeSubstitution.$(OBJEXT)
+	AST/TypeEnvironment.$(OBJEXT) AST/TypeSubstitution.$(OBJEXT) \
+	AST/Util.$(OBJEXT)
 am__objects_2 = CodeGen/CodeGenerator.$(OBJEXT) \
 	CodeGen/FixMain.$(OBJEXT) CodeGen/GenType.$(OBJEXT) \
 	CodeGen/LinkOnce.$(OBJEXT) CodeGen/OperatorTable.$(OBJEXT)
@@ -250,6 +251,7 @@ am__objects_9 = Tuples/Explode.$(OBJEXT) \
 	Tuples/TupleExpansionNew.$(OBJEXT) Tuples/Tuples.$(OBJEXT)
 am__objects_10 = Validate/Autogen.$(OBJEXT) \
 	Validate/CompoundLiteral.$(OBJEXT) \
+	Validate/ForallPointerDecay.$(OBJEXT) \
 	Validate/HandleAttributes.$(OBJEXT) \
 	Validate/InitializerLength.$(OBJEXT) \
 	Validate/LabelAddressFixer.$(OBJEXT) \
@@ -319,16 +321,16 @@ depcomp = $(SHELL) $(top_srcdir)/automake/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	./$(DEPDIR)/MakeLibCfa.Po ./$(DEPDIR)/MakeLibCfaNew.Po \
-	./$(DEPDIR)/main.Po AST/$(DEPDIR)/AssertAcyclic.Po \
-	AST/$(DEPDIR)/Attribute.Po AST/$(DEPDIR)/Convert.Po \
-	AST/$(DEPDIR)/Copy.Po AST/$(DEPDIR)/Decl.Po \
-	AST/$(DEPDIR)/DeclReplacer.Po AST/$(DEPDIR)/Expr.Po \
-	AST/$(DEPDIR)/GenericSubstitution.Po AST/$(DEPDIR)/Init.Po \
-	AST/$(DEPDIR)/LinkageSpec.Po AST/$(DEPDIR)/Node.Po \
-	AST/$(DEPDIR)/Pass.Po AST/$(DEPDIR)/Print.Po \
-	AST/$(DEPDIR)/Stmt.Po AST/$(DEPDIR)/SymbolTable.Po \
-	AST/$(DEPDIR)/Type.Po AST/$(DEPDIR)/TypeEnvironment.Po \
-	AST/$(DEPDIR)/TypeSubstitution.Po \
+	./$(DEPDIR)/main.Po AST/$(DEPDIR)/Attribute.Po \
+	AST/$(DEPDIR)/Convert.Po AST/$(DEPDIR)/Copy.Po \
+	AST/$(DEPDIR)/Decl.Po AST/$(DEPDIR)/DeclReplacer.Po \
+	AST/$(DEPDIR)/Expr.Po AST/$(DEPDIR)/GenericSubstitution.Po \
+	AST/$(DEPDIR)/Init.Po AST/$(DEPDIR)/LinkageSpec.Po \
+	AST/$(DEPDIR)/Node.Po AST/$(DEPDIR)/Pass.Po \
+	AST/$(DEPDIR)/Print.Po AST/$(DEPDIR)/Stmt.Po \
+	AST/$(DEPDIR)/SymbolTable.Po AST/$(DEPDIR)/Type.Po \
+	AST/$(DEPDIR)/TypeEnvironment.Po \
+	AST/$(DEPDIR)/TypeSubstitution.Po AST/$(DEPDIR)/Util.Po \
 	CodeGen/$(DEPDIR)/CodeGenerator.Po \
 	CodeGen/$(DEPDIR)/FixMain.Po CodeGen/$(DEPDIR)/FixNames.Po \
 	CodeGen/$(DEPDIR)/GenType.Po CodeGen/$(DEPDIR)/Generate.Po \
@@ -443,6 +445,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Validate/$(DEPDIR)/CompoundLiteral.Po \
 	Validate/$(DEPDIR)/FindSpecialDecls.Po \
 	Validate/$(DEPDIR)/FindSpecialDeclsNew.Po \
+	Validate/$(DEPDIR)/ForallPointerDecay.Po \
 	Validate/$(DEPDIR)/HandleAttributes.Po \
 	Validate/$(DEPDIR)/InitializerLength.Po \
 	Validate/$(DEPDIR)/LabelAddressFixer.Po \
@@ -744,8 +747,6 @@ MOSTLYCLEANFILES = Parser/lex.cc Parser/parser.cc Parser/parser.hh \
 @WITH_LIBTCMALLOC_TRUE@LIBTCMALLOC = -ltcmalloc
 @WITH_LIBTCMALLOC_TRUE@TCMALLOCFLAG = -DTCMALLOC
 SRC_AST = \
-	AST/AssertAcyclic.cpp \
-	AST/AssertAcyclic.hpp \
 	AST/Attribute.cpp \
 	AST/Attribute.hpp \
 	AST/Bitfield.hpp \
@@ -792,6 +793,8 @@ SRC_AST = \
 	AST/TypeEnvironment.hpp \
 	AST/TypeSubstitution.cpp \
 	AST/TypeSubstitution.hpp \
+	AST/Util.cpp \
+	AST/Util.hpp \
 	AST/Visitor.hpp
 
 SRC_CODEGEN = \
@@ -1002,6 +1005,8 @@ SRC_VALIDATE = \
 	Validate/Autogen.hpp \
 	Validate/CompoundLiteral.cpp \
 	Validate/CompoundLiteral.hpp \
+	Validate/ForallPointerDecay.cpp \
+	Validate/ForallPointerDecay.hpp \
 	Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h \
 	Validate/InitializerLength.cpp \
@@ -1119,8 +1124,6 @@ AST/$(am__dirstamp):
 AST/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) AST/$(DEPDIR)
 	@: > AST/$(DEPDIR)/$(am__dirstamp)
-AST/AssertAcyclic.$(OBJEXT): AST/$(am__dirstamp) \
-	AST/$(DEPDIR)/$(am__dirstamp)
 AST/Attribute.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
 AST/Convert.$(OBJEXT): AST/$(am__dirstamp) \
@@ -1146,6 +1149,7 @@ AST/TypeEnvironment.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
 AST/TypeSubstitution.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
+AST/Util.$(OBJEXT): AST/$(am__dirstamp) AST/$(DEPDIR)/$(am__dirstamp)
 CodeGen/$(am__dirstamp):
 	@$(MKDIR_P) CodeGen
 	@: > CodeGen/$(am__dirstamp)
@@ -1436,6 +1440,8 @@ Validate/Autogen.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/CompoundLiteral.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/ForallPointerDecay.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/HandleAttributes.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/InitializerLength.$(OBJEXT): Validate/$(am__dirstamp) \
@@ -1576,7 +1582,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MakeLibCfa.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MakeLibCfaNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/AssertAcyclic.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Attribute.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Convert.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Copy.Po@am__quote@ # am--include-marker
@@ -1594,6 +1599,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Type.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/TypeEnvironment.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/TypeSubstitution.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Util.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/CodeGenerator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixMain.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixNames.Po@am__quote@ # am--include-marker
@@ -1734,6 +1740,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/CompoundLiteral.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDeclsNew.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ForallPointerDecay.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HandleAttributes.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/InitializerLength.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/LabelAddressFixer.Po@am__quote@ # am--include-marker
@@ -1980,7 +1987,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/MakeLibCfa.Po
 	-rm -f ./$(DEPDIR)/MakeLibCfaNew.Po
 	-rm -f ./$(DEPDIR)/main.Po
-	-rm -f AST/$(DEPDIR)/AssertAcyclic.Po
 	-rm -f AST/$(DEPDIR)/Attribute.Po
 	-rm -f AST/$(DEPDIR)/Convert.Po
 	-rm -f AST/$(DEPDIR)/Copy.Po
@@ -1998,6 +2004,7 @@ distclean: distclean-am
 	-rm -f AST/$(DEPDIR)/Type.Po
 	-rm -f AST/$(DEPDIR)/TypeEnvironment.Po
 	-rm -f AST/$(DEPDIR)/TypeSubstitution.Po
+	-rm -f AST/$(DEPDIR)/Util.Po
 	-rm -f CodeGen/$(DEPDIR)/CodeGenerator.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain.Po
 	-rm -f CodeGen/$(DEPDIR)/FixNames.Po
@@ -2138,6 +2145,7 @@ distclean: distclean-am
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
+	-rm -f Validate/$(DEPDIR)/ForallPointerDecay.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
@@ -2192,7 +2200,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/MakeLibCfa.Po
 	-rm -f ./$(DEPDIR)/MakeLibCfaNew.Po
 	-rm -f ./$(DEPDIR)/main.Po
-	-rm -f AST/$(DEPDIR)/AssertAcyclic.Po
 	-rm -f AST/$(DEPDIR)/Attribute.Po
 	-rm -f AST/$(DEPDIR)/Convert.Po
 	-rm -f AST/$(DEPDIR)/Copy.Po
@@ -2210,6 +2217,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f AST/$(DEPDIR)/Type.Po
 	-rm -f AST/$(DEPDIR)/TypeEnvironment.Po
 	-rm -f AST/$(DEPDIR)/TypeSubstitution.Po
+	-rm -f AST/$(DEPDIR)/Util.Po
 	-rm -f CodeGen/$(DEPDIR)/CodeGenerator.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain.Po
 	-rm -f CodeGen/$(DEPDIR)/FixNames.Po
@@ -2350,6 +2358,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
+	-rm -f Validate/$(DEPDIR)/ForallPointerDecay.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
