@@ -1,0 +1,58 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// string_sharectx -- utility for controlling string sharing / isolation
+//
+// Author           : Michael L. Brooks
+// Created On       : Fri Sep 03 11:00:00 2021
+// Last Modified By : Michael L. Brooks
+// Last Modified On : Fri Sep 03 11:00:00 2021
+// Update Count     : 1
+//
+
+#pragma once
+
+//######################### String Sharing Context #########################
+
+struct VbyteHeap;
+
+// A string_sharectx 
+//
+// Usage:
+// void bar() {
+//    c();
+//    string_sharectx c = {NEW_SHARING};
+//    d();
+// }
+// void foo() {
+//    a();
+//    string_sharectx c = {NO_SHARING};
+//    b();
+//    bar();
+//    e();
+// }
+// int main() {
+//    foo();
+// }
+//
+// a, d: share string character ranges within themselves, not with each other
+// b, c, e: never share anything
+//
+struct string_sharectx {
+    // private
+    VbyteHeap * activeHeap;
+    string_sharectx * older;
+};
+
+enum StringSharectx_Mode { NEW_SHARING, NO_SHARING };
+
+void ?{}( string_sharectx &, StringSharectx_Mode );
+void ^?{}( string_sharectx & );
+
+void ?{}( string_sharectx & ) = void;
+void ?{}( string_sharectx &, string_sharectx ) = void;
+void ?=?( string_sharectx &, string_sharectx ) = void;
+

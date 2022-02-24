@@ -40,8 +40,8 @@ void ?{}(string &s, string & s2);
 void ?=?(string &s, const char* other); // copy assignment from literal
 void ?=?(string &s, const string &other);
 void ?=?(string &s, char other);
-string ?=?(string &s, string other);  // string tolerates memcpys; still saw calls to autogen 
-
+string & ?=?(string &s, string &other);  // surprising ret seems to help avoid calls to autogen
+//string ?=?( string &, string ) = void;
 void ^?{}(string &s);
 
 // Alternate construction: request shared edits
@@ -91,6 +91,11 @@ int find(const string &s, char search);
 int find(const string &s, const string &search);
 int find(const string &s, const char* search);
 int find(const string &s, const char* search, size_t searchsize);
+
+int findFrom(const string &s, size_t fromPos, char search);
+int findFrom(const string &s, size_t fromPos, const string &search);
+int findFrom(const string &s, size_t fromPos, const char* search);
+int findFrom(const string &s, size_t fromPos, const char* search, size_t searchsize);
 
 bool includes(const string &s, const string &search);
 bool includes(const string &s, const char* search);

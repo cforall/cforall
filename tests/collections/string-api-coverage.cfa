@@ -1,4 +1,5 @@
 #include <containers/string.hfa>
+#include <string_sharectx.hfa>
 
 void assertWellFormedHandleList( int maxLen ) { // with(HeapArea)
     // HandleNode *n;
@@ -24,13 +25,24 @@ void assertOnHandleList( string & q ) { // with(HeapArea)
 // Purpose: call each function in string.hfa, top to bottom
 
 int main () {
+
+    #ifdef STRING_SHARING_OFF
+    string_sharectx c = { NO_SHARING };
+    #endif
+
     string s = "hello";
     string s2 = "hello";
     string s3 = "world";
     string frag = "ell";
 
     // IO operator, x2
-    sout | s | s | s;
+    sout | s | s | s;  // hello hello hello
+
+    // empty ctor then assign
+    string sxx;
+    sout | sxx;  // (blank line)
+    sxx = s;
+    sout | sxx;  // hello
 
     // Comparisons
     // all print "true false"

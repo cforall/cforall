@@ -1,11 +1,11 @@
 #include <string_res.hfa>
 
 size_t bytesRemaining() {
-    return DEBUG_string_bytes_avail_until_gc( DEBUG_string_heap );
+    return DEBUG_string_bytes_avail_until_gc( DEBUG_string_heap() );
 }
 
 size_t heapOffsetStart( string_res & s ) {
-    const char * startByte = DEBUG_string_heap_start( DEBUG_string_heap );
+    const char * startByte = DEBUG_string_heap_start( DEBUG_string_heap() );
     assert( s.Handle.s >= startByte );
     return s.Handle.s - startByte;
 }
@@ -119,7 +119,35 @@ void fillCompact_withSharedEdits() {
     PRT_STR_REP(y);
 }
 
+void fillNoCompact() {
+    // show that allocating in a heap filled with mostly live strings (no collectable garbage) causes heap growth
+
+    sout | "======================== fillNoCompact";
+
+    size_t lastTimeBytesAvail = bytesRemaining();
+    assert( lastTimeBytesAvail >= 200 ); // starting this test with nontrivial room
+
+    // mostly fill the pad
+    string_res a = "aaa";  // will have to be moved
+    string_res z = "zzz";
+    for (i; 5) {
+        while ( bytesRemaining() > 10 ) {
+            z += ".";
+        }
+        sout | "about to expand, a = " | a;
+        while ( bytesRemaining() <= 10 ) {
+            z += ".";
+        }
+        sout | "expanded, a = " | a;
+
+        // each growth gives more usable space than the last
+        assert( bytesRemaining() > lastTimeBytesAvail );
+        lastTimeBytesAvail = bytesRemaining();
+    }
+}
+
 int main() {
     basicFillCompact();
     fillCompact_withSharedEdits();
+    fillNoCompact();
 }

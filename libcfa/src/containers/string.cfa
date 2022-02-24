@@ -91,7 +91,7 @@ void ?=?( string & this, char val ) {
     (*this.inner) = val;
 }
 
-string ?=?(string & this, string other) {
+string & ?=?(string & this, string & other) { //// <---- straw man change
     (*this.inner) = (*other.inner);
     return this;
 }
@@ -234,6 +234,22 @@ int find(const string &s, const char* search) {
 
 int find(const string &s, const char* search, size_t searchsize) {
     return find( *s.inner, search, searchsize);
+}
+
+int findFrom(const string &s, size_t fromPos, char search) {
+    return findFrom( *s.inner, fromPos, search );
+}
+
+int findFrom(const string &s, size_t fromPos, const string &search) {
+    return findFrom( *s.inner, fromPos, *search.inner );
+}
+
+int findFrom(const string &s, size_t fromPos, const char* search) {
+    return findFrom( *s.inner, fromPos, search );
+}
+
+int findFrom(const string &s, size_t fromPos, const char* search, size_t searchsize) {
+    return findFrom( *s.inner, fromPos, search, searchsize );
 }
 
 bool includes(const string &s, const string &search) {

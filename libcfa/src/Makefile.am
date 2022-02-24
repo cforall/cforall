@@ -62,6 +62,7 @@ inst_headers_nosrc = \
 	containers/list.hfa \
 	containers/queueLockFree.hfa \
 	containers/stackLockFree.hfa \
+	containers/string_sharectx.hfa \
 	containers/vector2.hfa \
 	vec/vec.hfa \
 	vec/vec2.hfa \

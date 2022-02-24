@@ -1,0 +1,632 @@
+abcdeqqqqqklmnopqrstuvwxyz
+abcde-----qqqqqklmnopqrstuvwxyz
+------------------------------------------------------------------------ warmup
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ----------?     
+abcdefghijklxxxxxopqrstuvwxyz ( wit = klxxxxxopqrst witlen = 13 )
+abcdefghij?uvwxyz
+------------------------------------------------------------------------ 1
+abcdefghijklmnopqrstuvwxyz
+          !               
+          ?               
+abcdefghij=====klmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=====?klmnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+          ?               
+abcdefghij==klmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij==?klmnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+          ?               
+abcdefghij=klmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=?klmnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+          ?               
+abcdefghijklmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?klmnopqrstuvwxyz
+------------------------------------------------------------------------ 2
+abcdefghijklmnopqrstuvwxyz
+          --!             
+            ?             
+abcdefghij=====mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=====?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+            ?             
+abcdefghij==mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij==?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+            ?             
+abcdefghij=mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+            ?             
+abcdefghijmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------ 3
+abcdefghijklmnopqrstuvwxyz
+            !             
+          --?             
+abcdefghijkl=====mnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?=====mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          --?             
+abcdefghijkl==mnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?==mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          --?             
+abcdefghijkl=mnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?=mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          --?             
+abcdefghijklmnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------ 4
+abcdefghijklmnopqrstuvwxyz
+          !               
+            ?             
+abcdefghij=====klmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=====kl?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+            ?             
+abcdefghij==klmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij==kl?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+            ?             
+abcdefghij=klmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=kl?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+            ?             
+abcdefghijklmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghijkl?mnopqrstuvwxyz
+------------------------------------------------------------------------ 5
+abcdefghijklmnopqrstuvwxyz
+            !             
+          ?               
+abcdefghijkl=====mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?kl=====mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          ?               
+abcdefghijkl==mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?kl==mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          ?               
+abcdefghijkl=mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?kl=mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          ?               
+abcdefghijklmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?klmnopqrstuvwxyz
+------------------------------------------------------------------------ 6
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          --?             
+abcdefghij=====mnopqrstuvwxyz ( wit = ===== witlen = 5 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          --?             
+abcdefghij==mnopqrstuvwxyz ( wit = == witlen = 2 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          --?             
+abcdefghij=mnopqrstuvwxyz ( wit = = witlen = 1 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          --?             
+abcdefghijmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------ 7
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          ?               
+abcdefghij=====mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?=====mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          ?               
+abcdefghij==mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?==mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          ?               
+abcdefghij=mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?=mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          ?               
+abcdefghijmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------ 8
+abcdefghijklmnopqrstuvwxyz
+          !               
+          --?             
+abcdefghij=====klmnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij=====?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+          --?             
+abcdefghij==klmnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij==?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+          --?             
+abcdefghij=klmnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij=?mnopqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+          --?             
+abcdefghijklmnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------ 9
+abcdefghijklmnopqrstuvwxyz
+          --!             
+              ?           
+abcdefghij=====mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=====mn?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+              ?           
+abcdefghij==mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij==mn?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+              ?           
+abcdefghij=mnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=mn?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+              ?           
+abcdefghijmnopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghijmn?opqrstuvwxyz
+------------------------------------------------------------------------ 10
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            --?           
+abcdefghij=====opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=====?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            --?           
+abcdefghij==opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij==?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            --?           
+abcdefghij=opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij=?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            --?           
+abcdefghijopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------ 11
+abcdefghijklmnopqrstuvwxyz
+              !           
+          --?             
+abcdefghijklmn=====opqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mn=====opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+              !           
+          --?             
+abcdefghijklmn==opqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mn==opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+              !           
+          --?             
+abcdefghijklmn=opqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mn=opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+              !           
+          --?             
+abcdefghijklmnopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mnopqrstuvwxyz
+------------------------------------------------------------------------ 12
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ----?           
+abcdefghijkl=====opqrstuvwxyz ( wit = kl===== witlen = 7 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ----?           
+abcdefghijkl==opqrstuvwxyz ( wit = kl== witlen = 4 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ----?           
+abcdefghijkl=opqrstuvwxyz ( wit = kl= witlen = 3 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ----?           
+abcdefghijklopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------ 13
+abcdefghijklmnopqrstuvwxyz
+          --!             
+            --?           
+abcdefghij=====mnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghij=====?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+            --?           
+abcdefghij==mnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghij==?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+            --?           
+abcdefghij=mnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghij=?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+            --?           
+abcdefghijmnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------ 14
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            ?             
+abcdefghij=====opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?=====opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            ?             
+abcdefghij==opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?==opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            ?             
+abcdefghij=opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?=opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            ?             
+abcdefghijopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------ 15
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          --?             
+abcdefghijkl=====opqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?=====opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          --?             
+abcdefghijkl==opqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?==opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          --?             
+abcdefghijkl=opqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?=opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          --?             
+abcdefghijklopqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------ 16
+abcdefghijklmnopqrstuvwxyz
+            !             
+          ----?           
+abcdefghijkl=====mnopqrstuvwxyz ( wit = kl=====mn witlen = 9 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          ----?           
+abcdefghijkl==mnopqrstuvwxyz ( wit = kl==mn witlen = 6 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          ----?           
+abcdefghijkl=mnopqrstuvwxyz ( wit = kl=mn witlen = 5 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            !             
+          ----?           
+abcdefghijklmnopqrstuvwxyz ( wit = klmn witlen = 4 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------ 17
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+          --?             
+abcdefghij=====opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?=====opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+          --?             
+abcdefghij==opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?==opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+          --?             
+abcdefghij=opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?=opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+          --?             
+abcdefghijopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------ 18
+abcdefghijklmnopqrstuvwxyz
+          !               
+            --?           
+abcdefghij=====klmnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghij=====kl?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+            --?           
+abcdefghij==klmnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghij==kl?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+            --?           
+abcdefghij=klmnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghij=kl?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          !               
+            --?           
+abcdefghijklmnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghijkl?opqrstuvwxyz
+------------------------------------------------------------------------ 19
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          ----?           
+abcdefghij=====mnopqrstuvwxyz ( wit = =====mn witlen = 7 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          ----?           
+abcdefghij==mnopqrstuvwxyz ( wit = ==mn witlen = 4 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          ----?           
+abcdefghij=mnopqrstuvwxyz ( wit = =mn witlen = 3 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+          ----?           
+abcdefghijmnopqrstuvwxyz ( wit = mn witlen = 2 )
+abcdefghij?opqrstuvwxyz
+------------------------------------------------------------------------ 20
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ?               
+abcdefghijkl=====opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?kl=====opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ?               
+abcdefghijkl==opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?kl==opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ?               
+abcdefghijkl=opqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?kl=opqrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ?               
+abcdefghijklopqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?klopqrstuvwxyz
+------------------------------------------------------------------------ 21
+abcdefghijklmnopqrstuvwxyz
+          --!             
+              --?         
+abcdefghij=====mnopqrstuvwxyz ( wit = op witlen = 2 )
+abcdefghij=====mn?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+              --?         
+abcdefghij==mnopqrstuvwxyz ( wit = op witlen = 2 )
+abcdefghij==mn?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+              --?         
+abcdefghij=mnopqrstuvwxyz ( wit = op witlen = 2 )
+abcdefghij=mn?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          --!             
+              --?         
+abcdefghijmnopqrstuvwxyz ( wit = op witlen = 2 )
+abcdefghijmn?qrstuvwxyz
+------------------------------------------------------------------------ 22
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            ----?         
+abcdefghij=====opqrstuvwxyz ( wit = op witlen = 2 )
+abcdefghij=====?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            ----?         
+abcdefghij==opqrstuvwxyz ( wit = op witlen = 2 )
+abcdefghij==?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            ----?         
+abcdefghij=opqrstuvwxyz ( wit = op witlen = 2 )
+abcdefghij=?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ----!           
+            ----?         
+abcdefghijopqrstuvwxyz ( wit = op witlen = 2 )
+abcdefghij?qrstuvwxyz
+------------------------------------------------------------------------ 23
+abcdefghijklmnopqrstuvwxyz
+          ------!         
+            --?           
+abcdefghij=====qrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?=====qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ------!         
+            --?           
+abcdefghij==qrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?==qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ------!         
+            --?           
+abcdefghij=qrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?=qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+          ------!         
+            --?           
+abcdefghijqrstuvwxyz ( wit =  witlen = 0 )
+abcdefghij?qrstuvwxyz
+------------------------------------------------------------------------ 24
+abcdefghijklmnopqrstuvwxyz
+              --!         
+          --?             
+abcdefghijklmn=====qrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mn=====qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+              --!         
+          --?             
+abcdefghijklmn==qrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mn==qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+              --!         
+          --?             
+abcdefghijklmn=qrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mn=qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+              --!         
+          --?             
+abcdefghijklmnqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?mnqrstuvwxyz
+------------------------------------------------------------------------ 25
+abcdefghijklmnopqrstuvwxyz
+            ----!         
+          ----?           
+abcdefghijkl=====qrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?=====qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            ----!         
+          ----?           
+abcdefghijkl==qrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?==qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            ----!         
+          ----?           
+abcdefghijkl=qrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?=qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            ----!         
+          ----?           
+abcdefghijklqrstuvwxyz ( wit = kl witlen = 2 )
+abcdefghij?qrstuvwxyz
+------------------------------------------------------------------------ 26
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ------?         
+abcdefghijkl=====opqrstuvwxyz ( wit = kl=====op witlen = 9 )
+abcdefghij?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ------?         
+abcdefghijkl==opqrstuvwxyz ( wit = kl==op witlen = 6 )
+abcdefghij?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ------?         
+abcdefghijkl=opqrstuvwxyz ( wit = kl=op witlen = 5 )
+abcdefghij?qrstuvwxyz
+------------------------------------------------------------------------
+abcdefghijklmnopqrstuvwxyz
+            --!           
+          ------?         
+abcdefghijklopqrstuvwxyz ( wit = klop witlen = 4 )
+abcdefghij?qrstuvwxyz

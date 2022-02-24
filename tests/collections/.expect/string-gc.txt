@@ -37,3 +37,14 @@ after reassign, x = 0123456789
 after reassign, y = 0123456789
 x from 5 to 15
 y from 5 to 15
+======================== fillNoCompact
+about to expand, a = aaa
+expanded, a = aaa
+about to expand, a = aaa
+expanded, a = aaa
+about to expand, a = aaa
+expanded, a = aaa
+about to expand, a = aaa
+expanded, a = aaa
+about to expand, a = aaa
+expanded, a = aaa

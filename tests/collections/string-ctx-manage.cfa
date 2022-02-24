@@ -1,0 +1,79 @@
+#include <string.hfa>
+#include <string_sharectx.hfa>
+#include <string_res.hfa>
+
+// In these tests, shared heaps are never remotely full and string sizes are tiny.
+// So here, the SUT should put a yes-sharing string in a heap with lots of spare room.
+// The SUT should always keep a no-sharing string's buffer 1x--2x the string's size.
+// This check uses 3x as a heuristic split between those cases.
+void assertSpareRoomInHeap( string & s, bool expectOversized ) {
+    double bytesInHeap = DEBUG_string_bytes_in_heap(s.inner->Handle.ulink);
+    double bytesUsed =  s.inner->Handle.lnth;
+    double overhead = bytesInHeap / bytesUsed;
+    assert (overhead >= 1);
+    if ( expectOversized )
+        assert( overhead >= 3.0 );
+    else 
+        assert( overhead < 3.0 );
+}
+
+void baseline() {
+    string x = "hi";
+    assertSpareRoomInHeap( x, true );
+
+    string y = x; // construct y in same context, no write yet => no copy yet
+    assertSpareRoomInHeap( y, true );
+    assert( y.inner->Handle.s == x.inner->Handle.s);
+    sout | y; // hi
+
+    x = "bye";
+    assertSpareRoomInHeap( x, true );
+    y = x; // y in same context, no write yet => no copy yet
+    assertSpareRoomInHeap( y, true );
+    assert( y.inner->Handle.s == x.inner->Handle.s);
+    sout | y; // bye
+}
+
+void eagerCopy() {
+    string x = "hi";
+    assertSpareRoomInHeap( x, true );
+    string_sharectx c = { NEW_SHARING };
+
+    string y = x; // construct y in different context => eager copy
+    assertSpareRoomInHeap( y, true );
+    assert( y.inner->Handle.s != x.inner->Handle.s);
+    sout | y; // hi
+
+    x = "bye";
+    assertSpareRoomInHeap( x, true );
+    y = x; // y was already in different context => eager copy
+    assertSpareRoomInHeap( y, true );
+    assert( y.inner->Handle.s != x.inner->Handle.s);
+    sout | y; // bye
+}
+
+void soloAlloc() {
+    string x = "hi";
+    assertSpareRoomInHeap( x, true );
+    string_sharectx c = { NO_SHARING };
+    
+    string y = x; // y allocates into private pad, implying eager copy
+    assertSpareRoomInHeap( y, false );
+    assert( y.inner->Handle.s != x.inner->Handle.s);
+    sout | y; // hi
+
+    x = "bye";
+    assertSpareRoomInHeap( x, true );
+    y = x; // into private y => eager copy
+    assertSpareRoomInHeap( y, false );
+    assert( y.inner->Handle.s != x.inner->Handle.s);
+    sout | y; // bye
+}
+
+
+int main() {
+    baseline();
+    eagerCopy();
+    soloAlloc();
+    printf("done\n");
+}

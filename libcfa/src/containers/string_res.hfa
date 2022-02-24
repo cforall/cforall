@@ -16,6 +16,7 @@
 #pragma once
 
 #include <fstream.hfa>
+#include <string.h>    // e.g. strlen
 
     
 //######################### HandleNode #########################
@@ -26,26 +27,25 @@ struct VbyteHeap;
 struct HandleNode {
     HandleNode *flink;					// forward link
     HandleNode *blink;					// backward link
+    VbyteHeap *ulink;                   // upward link
 
     char *s;						// pointer to byte string
     unsigned int lnth;					// length of byte string
 }; // HandleNode
 
-void ?{}( HandleNode & );			// constructor for header node
-
-void ?{}( HandleNode &, VbyteHeap & );		// constructor for nodes in the handle list
-void ^?{}( HandleNode & );			// destructor for handle nodes
-
-extern VbyteHeap * DEBUG_string_heap;
+VbyteHeap * DEBUG_string_heap();
+size_t DEBUG_string_bytes_in_heap( VbyteHeap * heap );
 size_t DEBUG_string_bytes_avail_until_gc( VbyteHeap * heap );
 const char * DEBUG_string_heap_start( VbyteHeap * heap );
 
+void TUNING_set_string_heap_liveness_threshold( double val );
 
 //######################### String #########################
 
 // A dynamically-sized string
 struct string_res {
     HandleNode Handle; // chars, start, end, global neighbours
+    bool shareEditSet_owns_ulink;
     string_res * shareEditSet_prev;
     string_res * shareEditSet_next;
 };
@@ -73,8 +73,10 @@ size_t size(const string_res &s);
 
 // Constructors, Assignment Operators, Destructor
 void ?{}(string_res &s); // empty string
-void ?{}(string_res &s, const char* initial); // copy from string literal (NULL-terminated)
 void ?{}(string_res &s, const char* buffer, size_t bsize); // copy specific length from buffer
+static inline void ?{}(string_res &s, const char* rhs) { // copy from string literal (NULL-terminated)
+    (s){ rhs, strlen(rhs) };
+}
 
 void ?{}(string_res &s, const string_res & s2) = void;
 void ?{}(string_res &s, string_res & s2) = void;
@@ -85,11 +87,13 @@ static inline void ?{}(string_res &s, const string_res & src, StrResInitMode mod
     ?{}( s, src, mode, 0, size(src));
 }
 
-void assign(string_res &s, const char* buffer, size_t bsize); // copy specific length from buffer
-void ?=?(string_res &s, const char* other); // copy from string literal (NULL-terminated)
-void ?=?(string_res &s, const string_res &other);
-void ?=?(string_res &s, string_res &other);
-void ?=?(string_res &s, char other);
+string_res & assign(string_res &s, const char* buffer, size_t bsize); // copy specific length from buffer
+static inline string_res & ?=?(string_res &s, const char* other) {  // copy from string literal (NULL-terminated)
+    return assign(s, other, strlen(other));
+}
+string_res & ?=?(string_res &s, const string_res &other);
+string_res & ?=?(string_res &s, string_res &other);
+string_res & ?=?(string_res &s, char other);
 
 void ^?{}(string_res &s);
 
@@ -98,12 +102,15 @@ ofstream & ?|?(ofstream &out, const string_res &s);
 void ?|?(ofstream &out, const string_res &s);
 
 // Concatenation
+void append(string_res &s, const char* buffer, size_t bsize);
 void ?+=?(string_res &s, char other); // append a character
 void ?+=?(string_res &s, const string_res &s2); // append-concatenate to first string
-void ?+=?(string_res &s, const char* other);
-void append(string_res &s, const char* buffer, size_t bsize);
+static inline void ?+=?(string_res &s, const char* other) {
+    append( s, other, strlen(other) );
+}
 
 // Character access
+void assignAt(const string_res &s, size_t index, char val);
 char ?[?](const string_res &s, size_t index); // Mike changed to ret by val from Sunjay's ref, to match Peter's
 //char codePointAt(const string_res &s, size_t index); // revisit under Unicode
 
@@ -120,6 +127,11 @@ int find(const string_res &s, char search);
 int find(const string_res &s, const string_res &search);
 int find(const string_res &s, const char* search);
 int find(const string_res &s, const char* search, size_t searchsize);
+
+int findFrom(const string_res &s, size_t fromPos, char search);
+int findFrom(const string_res &s, size_t fromPos, const string_res &search);
+int findFrom(const string_res &s, size_t fromPos, const char* search);
+int findFrom(const string_res &s, size_t fromPos, const char* search, size_t searchsize);
 
 bool includes(const string_res &s, const string_res &search);
 bool includes(const string_res &s, const char* search);

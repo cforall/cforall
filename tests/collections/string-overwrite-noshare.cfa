@@ -1,0 +1,2 @@
+#define STRING_SHARING_OFF
+#include "string-overwrite.cfa"

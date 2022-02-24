@@ -1,4 +1,5 @@
 #include <containers/string.hfa>
+#include <string_sharectx.hfa>
 
 /*
 
@@ -10,7 +11,7 @@ ME = modifier end
 WS = witness start
 WE = witness end
 
-The dest does:
+The test does:
   starts with the entire string being, initially, the alphabet; prints this entire alphabet
   sets up modifier and witness as ranges within it, and prints a visualization of those ranges
   does the main modification
@@ -23,6 +24,7 @@ Deriving the concrete list of cases....
 By definition of a string, MS <= ME and WS <= WE.
 This API's convention has Start positions being inclusive and end positions being exclusive.
 
+                                v Case number in output
 With 1 equivalence class:
 MS = ME = WS = WE               1
 
@@ -117,7 +119,6 @@ void runReplaceCases() {
     char * alphabetTemplate = "abcdefghijklmnopqrstuvwxyz";
     struct { int ms; int me; int ws; int we; char *replaceWith; char *label; } cases[] = {
         { 12, 14, 10, 20, "xxxxx", "warmup" },
-//        { 12, 14, 12, 14, "xxxxx", ""       },  // the bug that got me into this test (should be a dup with case 6)
         { 10, 10, 10, 10, "=====", "1"      },
         { 10, 10, 10, 10, "=="   , ""       },
         { 10, 10, 10, 10, "="    , ""       },
@@ -222,12 +223,6 @@ void runReplaceCases() {
         { 12, 14, 10, 16, "=="   , ""       },
         { 12, 14, 10, 16, "="    , ""       },
         { 12, 14, 10, 16, ""     , ""       },
-/*
-        { , , , , "=====", "NN"     },
-        {  "=="   , ""       },
-        {  "="    , ""       },
-        {  ""     , ""       },
-*/
     };
     for ( i; sizeof(cases)/sizeof(cases[0]) ) {
         sout | "------------------------------------------------------------------------" | cases[i].label;
@@ -237,15 +232,13 @@ void runReplaceCases() {
 }
 
 
-// void f( string & s, string & toEdit ) {
-
-//     sout | s | "|" | toEdit | "|";
-
-//     s(14, 16) = "-";
-//     sout | s | "|" | toEdit | "|";
-// }
-
 int main() {
+
+    #ifdef STRING_SHARING_OFF
+    string_sharectx c = { NO_SHARING };
+    #endif
+
+
     //          0         1         2
     //          01234567890123456789012345
     string s = "abcdefghijklmnopqrstuvwxyz";
