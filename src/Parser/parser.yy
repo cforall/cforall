@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 19 09:47:20 2022
-// Update Count     : 5218
+// Last Modified On : Fri Feb 25 17:54:56 2022
+// Update Count     : 5262
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -609,6 +609,20 @@ primary_expression:
 	//   	{ SemanticError( yylloc, "Resume expression is currently unimplemented." ); $$ = nullptr; }
 	// | RESUME '(' comma_expression ')' compound_statement
 	//   	{ SemanticError( yylloc, "Resume expression is currently unimplemented." ); $$ = nullptr; }
+	| IDENTIFIER IDENTIFIER								// syntax error
+		{
+			SemanticError( yylloc, ::toString( "Adjacent identifiers are not meaningful in an expression. "
+											   "Possible problem is identifier \"", *$1.str,
+											   "\" is a misspelled typename or an incorrectly specified type name, "
+											   "e.g., missing generic parameter or missing struct/union/enum before typename." ) );
+			$$ = nullptr;
+ 		}
+	| IDENTIFIER direct_type							// syntax error
+		{
+			SemanticError( yylloc, ::toString( "Identifier \"", *$1.str, "\" cannot appear before a type. "
+											   "Possible problem is misspelled storage or CV qualifier." ) );
+			$$ = nullptr;
+		}
 	;
 
 generic_assoc_list:										// C11
@@ -1051,8 +1065,13 @@ labeled_statement:
 		// labels cannot be identifiers 0 or 1
 	identifier_or_type_name ':' attribute_list_opt statement
 		{ $$ = $4->add_label( $1, $3 ); }
-	| identifier_or_type_name ':' attribute_list_opt error
-		{ SemanticError( yylloc, "previous label must be associated with a statement (where a declaration is not a statement). Move the label or terminate with a semi-colon." ); $$ = nullptr; }
+	| identifier_or_type_name ':' attribute_list_opt error // syntax error
+		{
+			SemanticError( yylloc, ::toString( "Label \"", *$1.str, "\" must be associated with a statement, "
+											   "where a declaration, case, or default is not a statement. "
+											   "Move the label or terminate with a semi-colon." ) );
+			$$ = nullptr;
+		}
 	;
 
 compound_statement:
@@ -1087,8 +1106,8 @@ statement_list_nodecl:
 	statement
 	| statement_list_nodecl statement
 		{ assert( $1 ); $1->set_last( $2 ); $$ = $1; }
-	| statement_list_nodecl error
-		{ SemanticError( yylloc, "declarations only allowed at the start of the switch body, i.e., after the '{'." ); $$ = nullptr; }
+	| statement_list_nodecl error						// syntax error
+		{ SemanticError( yylloc, "Declarations only allowed at the start of the switch body, i.e., after the '{'." ); $$ = nullptr; }
 	;
 
 expression_statement:
@@ -1115,8 +1134,8 @@ selection_statement:
 			// statement.
 			$$ = $7 ? new StatementNode( build_compound( (StatementNode *)((new StatementNode( $7 ))->set_last( sw )) ) ) : sw;
 		}
-	| SWITCH '(' comma_expression ')' '{' error '}'		// CFA
-		{ SemanticError( yylloc, "only declarations can appear before the list of case clauses." ); $$ = nullptr; }
+	| SWITCH '(' comma_expression ')' '{' error '}'		// CFA, syntax error
+		{ SemanticError( yylloc, "Only declarations can appear before the list of case clauses." ); $$ = nullptr; }
 	| CHOOSE '(' comma_expression ')' case_clause		// CFA
 		{ $$ = new StatementNode( build_switch( false, $3, $5 ) ); }
 	| CHOOSE '(' comma_expression ')' '{' push declaration_list_opt switch_clause_list_opt pop '}' // CFA
@@ -1124,8 +1143,8 @@ selection_statement:
 			StatementNode *sw = new StatementNode( build_switch( false, $3, $8 ) );
 			$$ = $7 ? new StatementNode( build_compound( (StatementNode *)((new StatementNode( $7 ))->set_last( sw )) ) ) : sw;
 		}
-	| CHOOSE '(' comma_expression ')' '{' error '}'		// CFA
-		{ SemanticError( yylloc, "only declarations can appear before the list of case clauses." ); $$ = nullptr; }
+	| CHOOSE '(' comma_expression ')' '{' error '}'		// CFA, syntax error
+		{ SemanticError( yylloc, "Only declarations can appear before the list of case clauses." ); $$ = nullptr; }
 	;
 
 if_statement:
@@ -1164,15 +1183,15 @@ case_value_list:										// CFA
 	;
 
 case_label:												// CFA
-	CASE error
-		{ SemanticError( yylloc, "missing case list after case." ); $$ = nullptr; }
+	CASE error											// syntax error
+		{ SemanticError( yylloc, "Missing case list after case." ); $$ = nullptr; }
 	| CASE case_value_list ':'					{ $$ = $2; }
-	| CASE case_value_list error
-		{ SemanticError( yylloc, "missing colon after case list." ); $$ = nullptr; }
+	| CASE case_value_list error						// syntax error
+		{ SemanticError( yylloc, "Missing colon after case list." ); $$ = nullptr; }
 	| DEFAULT ':'								{ $$ = new StatementNode( build_default() ); }
 		// A semantic check is required to ensure only one default clause per switch/choose statement.
-	| DEFAULT error
-		{ SemanticError( yylloc, "missing colon after default." ); $$ = nullptr; }
+	| DEFAULT error										//  syntax error
+		{ SemanticError( yylloc, "Missing colon after default." ); $$ = nullptr; }
 	;
 
 case_label_list:										// CFA
@@ -1409,8 +1428,8 @@ waitfor_clause:
 		{ $$ = build_waitfor_timeout( $2, maybe_build_compound( $3 ), $1 ); }
 	| when_clause_opt ELSE statement
 		{ $$ = build_waitfor_timeout( nullptr, maybe_build_compound( $3 ), $1 ); }
-		// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
-	| when_clause_opt timeout statement WOR ELSE statement
+	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
+	| when_clause_opt timeout statement WOR ELSE statement // syntax error
 		{ SemanticError( yylloc, "else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
 	| when_clause_opt timeout statement WOR when_clause ELSE statement
 		{ $$ = build_waitfor_timeout( $2, maybe_build_compound( $3 ), $1, maybe_build_compound( $7 ), $5 ); }
