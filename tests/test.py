@@ -417,6 +417,9 @@ if __name__ == "__main__":
 			if is_empty(t.expect()):
 				print('WARNING: test "{}" has empty .expect file'.format(t.target()), file=sys.stderr)
 
+	options.jobs, forceJobs = job_count( options )
+	settings.update_make_cmd(forceJobs, options.jobs)
+
 	# for each build configurations, run the test
 	with Timed() as total_dur:
 		for ast, arch, debug, install in itertools.product(settings.all_ast, settings.all_arch, settings.all_debug, settings.all_install):
@@ -429,17 +432,16 @@ if __name__ == "__main__":
 			# tests are the same across debug/install
 			local_tests = settings.ast.filter( tests )
 			local_tests = settings.arch.filter( local_tests )
-			options.jobs, forceJobs = job_count( options, local_tests )
-			settings.update_make_cmd(forceJobs, options.jobs)
 
 			# check the build configuration works
 			settings.validate()
+			jobs = min(options.jobs, len(local_tests))
 
 			# print configuration
 			print('%s %i tests on %i cores (%s:%s - %s)' % (
 				'Regenerating' if settings.generating else 'Running',
 				len(local_tests),
-				options.jobs,
+				jobs,
 				settings.ast.string,
 				settings.arch.string,
 				settings.debug.string
@@ -449,7 +451,7 @@ if __name__ == "__main__":
 				continue
 
 			# otherwise run all tests and make sure to return the correct error code
-			failed = run_tests(local_tests, options.jobs)
+			failed = run_tests(local_tests, jobs)
 			if failed:
 				if not settings.continue_:
 					break

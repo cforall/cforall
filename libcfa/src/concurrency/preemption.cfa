@@ -96,11 +96,6 @@ static void ?{}(event_kernel_t & this) with( this ) {
 	lock{};
 }
 
-enum {
-	PREEMPT_NORMAL    = 0,
-	PREEMPT_TERMINATE = 1,
-};
-
 //=============================================================================================
 // Kernel Preemption logic
 //=============================================================================================
@@ -663,6 +658,7 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 
 	choose(sfp->si_value.sival_int) {
 		case PREEMPT_NORMAL   : ;// Normal case, nothing to do here
+		case PREEMPT_IO       : ;// I/O asked to stop spinning, nothing to do here
 		case PREEMPT_TERMINATE: verify( __atomic_load_n( &__cfaabi_tls.this_processor->do_terminate, __ATOMIC_SEQ_CST ) );
 		default:
 			abort( "internal error, signal value is %d", sfp->si_value.sival_int );

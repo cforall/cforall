@@ -1,0 +1,106 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// away_fair.cfa -- Test that spinning doesn't cause submissions to get stuck.
+//                  This test should work without io_uring but isn't very useful without
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Mar 2 12:56:51 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <bits/defs.hfa>
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <thread.hfa>
+#include <iofwd.hfa>
+
+Duration default_preemption() {
+	return 0;
+}
+
+enum { TIMES = 1000 };
+
+volatile unsigned counter = 0;
+
+// ----- Spinner -----
+// spins trying to prevent other threads from getting to this processor
+thread Spinner {};
+void ^?{}(Spinner &mutex ) {}
+void main(Spinner &) {
+	unsigned last = 0;
+	for() {
+		unsigned curr = __atomic_load_n(&counter, __ATOMIC_SEQ_CST);
+
+		if(curr >= TIMES) return;
+
+		if(last == curr) {
+			Pause();
+			continue;
+		}
+
+		last = curr;
+		yield();
+	}
+}
+
+// ----- Submitter -----
+// try to submit io but yield so that it's likely we are moved to the slow path
+thread Submitter {};
+void ^?{}(Submitter &mutex ) {}
+void main(Submitter & this) {
+	for(TIMES) {
+		#if CFA_HAVE_LINUX_IO_URING_H
+			io_future_t f;
+			struct io_uring_sqe * sqe;
+			__u32 idx;
+			struct $io_context * ctx = cfa_io_allocate(&sqe, &idx, 1);
+
+			zero_sqe(sqe);
+			sqe->opcode = IORING_OP_NOP;
+			sqe->user_data = (uintptr_t)&f;
+		#endif
+
+		yield( prng( this, 15 ) );
+
+		#if CFA_HAVE_LINUX_IO_URING_H
+			// Submit everything
+			asm volatile("": : :"memory");
+			cfa_io_submit( ctx, &idx, 1, false );
+		#endif
+
+		unsigned i = __atomic_add_fetch( &counter, 1, __ATOMIC_SEQ_CST );
+		if(0 == (i % 100)) sout | i;
+
+		#if CFA_HAVE_LINUX_IO_URING_H
+			wait( f );
+		#endif
+	}
+}
+
+// ----- Yielder -----
+// Add some chaos into the mix
+thread Yielder {};
+void ^?{}(Yielder &mutex ) {}
+void main(Yielder&) {
+	while(TIMES > __atomic_load_n(&counter, __ATOMIC_SEQ_CST)) {
+		yield();
+	}
+}
+
+
+int main() {
+	processor p;
+	sout | "starting";
+	{
+		Yielder y;
+		Spinner s;
+		Submitter io;
+	}
+	sout | "done";
+}

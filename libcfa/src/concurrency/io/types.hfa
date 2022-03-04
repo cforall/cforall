@@ -22,6 +22,7 @@ extern "C" {
 
 #include "bits/locks.hfa"
 #include "bits/queue.hfa"
+#include "iofwd.hfa"
 #include "kernel/fwd.hfa"
 
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
@@ -169,22 +170,3 @@ extern "C" {
 
 	// void __ioctx_prepare_block($io_context & ctx);
 #endif
-
-//-----------------------------------------------------------------------
-// IO user data
-struct io_future_t {
-	future_t self;
-	__s32 result;
-};
-
-static inline {
-	thread$ * fulfil( io_future_t & this, __s32 result, bool do_unpark = true ) {
-		this.result = result;
-		return fulfil(this.self, do_unpark);
-	}
-
-	// Wait for the future to be fulfilled
-	bool wait     ( io_future_t & this ) { return wait     (this.self); }
-	void reset    ( io_future_t & this ) { return reset    (this.self); }
-	bool available( io_future_t & this ) { return available(this.self); }
-}

@@ -250,7 +250,7 @@ void main(processorCtx_t & runner) {
 			// Are we done?
 			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
 
-			if(this->io.pending && !this->io.dirty) {
+			if(__atomic_load_n(&this->io.pending, __ATOMIC_RELAXED) && !__atomic_load_n(&this->io.dirty, __ATOMIC_RELAXED)) {
 				__IO_STATS__(true, io.flush.dirty++; )
 				__cfa_io_flush( this, 0 );
 			}

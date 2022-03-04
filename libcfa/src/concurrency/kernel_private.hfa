@@ -59,6 +59,12 @@ void schedule_thread$( thread$ *, unpark_hint hint ) __attribute__((nonnull (1))
 
 extern bool __preemption_enabled();
 
+enum {
+	PREEMPT_NORMAL    = 0,
+	PREEMPT_TERMINATE = 1,
+	PREEMPT_IO = 2,
+};
+
 static inline void __disable_interrupts_checked() {
 	/* paranoid */ verify( __preemption_enabled() );
 	disable_interrupts();

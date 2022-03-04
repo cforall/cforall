@@ -346,7 +346,7 @@ extern "C" {
 					// If there is no context then we can skip the in progress phase
 					struct oneshot * want = expected == 0p ? 1p : 2p;
 					if(__atomic_compare_exchange_n(&this.ptr, &expected, want, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
-						if( expected == 0p ) { /* paranoid */ verify( this.ptr == 1p); return 0p; }
+						if( expected == 0p ) { return 0p; }
 						thread$ * ret = post( *expected, do_unpark );
 						__atomic_store_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
 						return ret;

@@ -1,0 +1,2 @@
+thread Test {};
+void main(Test&) {}

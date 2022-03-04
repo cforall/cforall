@@ -174,7 +174,7 @@
 
 			/* paranoid */ verify( ! __preemption_enabled() );
 
-			ctx.proc->io.pending = false;
+			__atomic_store_n(&ctx.proc->io.pending, false, __ATOMIC_RELAXED);
 		}
 
 		ready_schedule_lock();
@@ -286,7 +286,7 @@
 
 	//=============================================================================================
 	// submission
-	static inline void __submit( struct $io_context * ctx, __u32 idxs[], __u32 have, bool lazy) {
+	static inline void __submit_only( struct $io_context * ctx, __u32 idxs[], __u32 have) {
 		// We can proceed to the fast path
 		// Get the right objects
 		__sub_ring_t & sq = ctx->sq;
@@ -303,8 +303,14 @@
 		__atomic_store_n(sq.kring.tail, tail + have, __ATOMIC_RELEASE);
 		sq.to_submit += have;
 
-		ctx->proc->io.pending = true;
-		ctx->proc->io.dirty   = true;
+		__atomic_store_n(&ctx->proc->io.pending, true, __ATOMIC_RELAXED);
+		__atomic_store_n(&ctx->proc->io.dirty  , true, __ATOMIC_RELAXED);
+	}
+
+	static inline void __submit( struct $io_context * ctx, __u32 idxs[], __u32 have, bool lazy) {
+		__sub_ring_t & sq = ctx->sq;
+		__submit_only(ctx, idxs, have);
+
 		if(sq.to_submit > 30) {
 			__tls_stats()->io.flush.full++;
 			__cfa_io_flush( ctx->proc, 0 );
@@ -401,10 +407,14 @@
 //=============================================================================================
 // I/O Arbiter
 //=============================================================================================
-	static inline void block(__outstanding_io_queue & queue, __outstanding_io & item) {
+	static inline bool enqueue(__outstanding_io_queue & queue, __outstanding_io & item) {
+		bool was_empty;
+
 		// Lock the list, it's not thread safe
 		lock( queue.lock __cfaabi_dbg_ctx2 );
 		{
+			was_empty = empty(queue.queue);
+
 			// Add our request to the list
 			add( queue.queue, item );
 
@@ -413,7 +423,7 @@
 		}
 		unlock( queue.lock );
 
-		wait( item.sem );
+		return was_empty;
 	}
 
 	static inline bool empty(__outstanding_io_queue & queue ) {
@@ -431,7 +441,9 @@
 		pa.idxs = idxs;
 		pa.want = want;
 
-		block(this.pending, (__outstanding_io&)pa);
+		enqueue(this.pending, (__outstanding_io&)pa);
+
+		wait( pa.sem );
 
 		return pa.ctx;
 
@@ -484,7 +496,16 @@
 		ei.have = have;
 		ei.lazy = lazy;
 
-		block(ctx->ext_sq, (__outstanding_io&)ei);
+		bool we = enqueue(ctx->ext_sq, (__outstanding_io&)ei);
+
+		__atomic_store_n(&ctx->proc->io.pending, true, __ATOMIC_SEQ_CST);
+
+		if( we ) {
+			sigval_t value = { PREEMPT_IO };
+			pthread_sigqueue(ctx->proc->kernel_thread, SIGUSR1, value);
+		}
+
+		wait( ei.sem );
 
 		__cfadbg_print_safe(io, "Kernel I/O : %u submitted from arbiter\n", have);
 	}
@@ -500,7 +521,7 @@
 				while( !empty(ctx.ext_sq.queue) ) {
 					__external_io & ei = (__external_io&)drop( ctx.ext_sq.queue );
 
-					__submit(&ctx, ei.idxs, ei.have, ei.lazy);
+					__submit_only(&ctx, ei.idxs, ei.have);
 
 					post( ei.sem );
 				}

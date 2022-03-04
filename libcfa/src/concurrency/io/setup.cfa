@@ -55,6 +55,7 @@
 	}
 
 	#include "bitmanip.hfa"
+	#include "fstream.hfa"
 	#include "kernel_private.hfa"
 	#include "thread.hfa"
 
@@ -257,6 +258,15 @@
 		// Shutdown the io rings
 		struct __sub_ring_t & sq = this.sq;
 		struct __cmp_ring_t & cq = this.cq;
+		{
+			__u32 fhead = sq.free_ring.head;
+			__u32 ftail = sq.free_ring.tail;
+
+			__u32 total = *sq.num;
+			__u32 avail = ftail - fhead;
+
+			if(avail != total) abort | "Processor (" | (void*)this.proc | ") tearing down ring with" | (total - avail) | "entries allocated but not submitted, out of" | total;
+		}
 
 		// unmap the submit queue entries
 		munmap(sq.sqes, (*sq.num) * sizeof(struct io_uring_sqe));

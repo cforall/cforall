@@ -289,7 +289,7 @@ def path_walk( op ):
 #               system
 ################################################################################
 # count number of jobs to create
-def job_count( options, tests ):
+def job_count( options ):
 	# check if the user already passed in a number of jobs for multi-threading
 	if not options.jobs:
 		make_flags = os.environ.get('MAKEFLAGS')
@@ -316,7 +316,7 @@ def job_count( options, tests ):
 		print('ERROR: Invalid number of jobs', file=sys.stderr)
 		sys.exit(1)
 
-	return min( options.jobs, len(tests) ), force
+	return options.jobs, force
 
 # enable core dumps for all the test children
 resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))

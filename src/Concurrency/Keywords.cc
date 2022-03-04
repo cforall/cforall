@@ -421,8 +421,9 @@ namespace Concurrency {
 		else if ( vtable_name.empty() || !decl->has_body() )
 			;
 		else if ( auto param = isMainFor( decl, cast_target ) ) {
-			// This should never trigger.
-			assert( vtable_decl );
+			if ( !vtable_decl ) {
+				SemanticError( decl, context_error );
+			}
 			// Should be safe because of isMainFor.
 			StructInstType * struct_type = static_cast<StructInstType *>(
 				static_cast<ReferenceType *>( param->get_type() )->base );
