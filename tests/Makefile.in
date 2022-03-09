@@ -864,8 +864,8 @@ uninstall-am:
 	$(LTCFACOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
 	$(am__mv) $$depbase.Tpo $$depbase.Plo
 
-.PHONY: list .validate
-.INTERMEDIATE: .validate .validate.cfa
+.PHONY: list .validate .test_makeflags
+.INTERMEDIATE: .validate .validate.cfa .test_makeflags
 
 dist-hook:
 	echo "Gathering test files"
@@ -895,6 +895,9 @@ distclean-local :
 
 list :
 	@+${TEST_PY} --list ${concurrent}
+
+.test_makeflags:
+	@echo "${MAKEFLAGS}"
 
 .validate: .validate.cfa
 	$(CFACOMPILE) .validate.cfa -fsyntax-only -Wall -Wextra -Werror

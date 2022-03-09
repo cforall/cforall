@@ -65,8 +65,8 @@ CFACCLINK = $(CFACCLOCAL) -quiet $(if $(test), 2> $(test), ) $($(shell echo "${@
 
 PRETTY_PATH=mkdir -p $(dir $(abspath ${@})) && cd ${srcdir} &&
 
-.PHONY: list .validate
-.INTERMEDIATE: .validate .validate.cfa
+.PHONY: list .validate .test_makeflags
+.INTERMEDIATE: .validate .validate.cfa .test_makeflags
 EXTRA_PROGRAMS = avl_test linkonce .dummy_hack # build but do not install
 EXTRA_DIST = test.py \
 	pybin/__init__.py \
@@ -121,6 +121,9 @@ distclean-local :
 
 list :
 	@+${TEST_PY} --list ${concurrent}
+
+.test_makeflags:
+	@echo "${MAKEFLAGS}"
 
 .validate: .validate.cfa
 	$(CFACOMPILE) .validate.cfa -fsyntax-only -Wall -Wextra -Werror

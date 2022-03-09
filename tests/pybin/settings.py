@@ -154,6 +154,7 @@ def init( options ):
 	global dry_run
 	global generating
 	global make
+	global make_jobfds
 	global output_width
 	global timeout
 	global timeout2gdb
@@ -167,6 +168,7 @@ def init( options ):
 	dry_run      = options.dry_run # must be called before tools.config_hash()
 	generating   = options.regenerate_expected
 	make         = ['make']
+	make_jobfds  = []
 	output_width = 24
 	timeout      = Timeouts(options.timeout, options.global_timeout)
 	timeout2gdb  = options.timeout_with_gdb
@@ -176,10 +178,13 @@ def init( options ):
 	if distribute and not os.environ.get('DISTCC_LOG'):
 		os.putenv('DISTCC_LOG', os.path.join(BUILDDIR, 'distcc_error.log'))
 
-def update_make_cmd(force, jobs):
+def update_make_cmd(flags):
 	global make
+	make = ['make', *flags]
 
-	make = ['make'] if not force else ['make', "-j%i" % jobs]
+def update_make_fds(r, w):
+	global make_jobfds
+	make_jobfds = (r, w)
 
 def validate():
 	"""Validate the current configuration and update globals"""

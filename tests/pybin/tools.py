@@ -22,7 +22,7 @@ from pybin import settings
 ################################################################################
 
 # helper functions to run terminal commands
-def sh(*cmd, timeout = False, output_file = None, input_file = None, input_text = None, error = subprocess.STDOUT, ignore_dry_run = False):
+def sh(*cmd, timeout = False, output_file = None, input_file = None, input_text = None, error = subprocess.STDOUT, ignore_dry_run = False, pass_fds = []):
 	try:
 		cmd = list(cmd)
 
@@ -64,7 +64,8 @@ def sh(*cmd, timeout = False, output_file = None, input_file = None, input_text 
 				cmd,
 				**({'input' : bytes(input_text, encoding='utf-8')} if input_text else {'stdin' : input_file}),
 				stdout  = output_file,
-				stderr  = error
+				stderr  = error,
+				pass_fds = pass_fds
 			) as proc:
 
 				try:
@@ -189,7 +190,7 @@ def make(target, *, flags = '', output_file = None, error = None, error_file = N
 		target
 	]
 	cmd = [s for s in cmd if s]
-	return sh(*cmd, output_file=output_file, error=error)
+	return sh(*cmd, output_file=output_file, error=error, pass_fds=settings.make_jobfds)
 
 def make_recon(target):
 	cmd = [
@@ -288,35 +289,145 @@ def path_walk( op ):
 ################################################################################
 #               system
 ################################################################################
+def jobserver_version():
+	make_ret, out = sh('make', '.test_makeflags', '-j2', output_file=subprocess.PIPE)
+	if make_ret != 0:
+		with open (errf, "r") as myfile:
+			error=myfile.read()
+		print("ERROR: cannot find Makefile jobserver version", file=sys.stderr)
+		print("       test returned : \n%s" % out, file=sys.stderr)
+		sys.exit(1)
+
+	re_jobs = re.search("--jobserver-(auth|fds)", out)
+	if not re_jobs:
+		print("ERROR: cannot find Makefile jobserver version", file=sys.stderr)
+		print("       MAKEFLAGS are : \n%s" % out, file=sys.stderr)
+		sys.exit(1)
+
+	return "--jobserver-{}".format(re_jobs.group(1))
+
+def prep_recursive_make(N):
+	if N < 2:
+		return []
+
+	# create the pipe
+	(r, w) = os.pipe()
+
+	# feel it with N-1 tokens, (Why N-1 and not N, I don't know it's in the manpage for make)
+	os.write(w, b'+' * (N - 1));
+
+	# prep the flags for make
+	make_flags = ["-j{}".format(N), "--jobserver-auth={},{}".format(r, w)]
+
+	# tell make about the pipes
+	os.environ["MAKEFLAGS"] = os.environ["MFLAGS"] = " ".join(make_flags)
+
+	# make sure pass the pipes to our children
+	settings.update_make_fds(r, w)
+
+	return make_flags
+
+def prep_unlimited_recursive_make():
+	# prep the flags for make
+	make_flags = ["-j"]
+
+	# tell make about the pipes
+	os.environ["MAKEFLAGS"] = os.environ["MFLAGS"] = "-j"
+
+	return make_flags
+
+
+def eval_hardware():
+	# we can create as many things as we want
+	# how much hardware do we have?
+	if settings.distribute:
+		# remote hardware is allowed
+		# how much do we have?
+		ret, jstr = sh("distcc", "-j", output_file=subprocess.PIPE, ignore_dry_run=True)
+		return int(jstr.strip()) if ret == 0 else multiprocessing.cpu_count()
+	else:
+		# remote isn't allowed, use local cpus
+		return multiprocessing.cpu_count()
+
 # count number of jobs to create
 def job_count( options ):
 	# check if the user already passed in a number of jobs for multi-threading
-	if not options.jobs:
-		make_flags = os.environ.get('MAKEFLAGS')
-		force = bool(make_flags)
-		make_jobs_fds = re.search("--jobserver-(auth|fds)=\s*([0-9]+),([0-9]+)", make_flags) if make_flags else None
-		if make_jobs_fds :
-			tokens = os.read(int(make_jobs_fds.group(2)), 1024)
-			options.jobs = len(tokens)
-			os.write(int(make_jobs_fds.group(3)), tokens)
-		else :
-			if settings.distribute:
-				ret, jstr = sh("distcc", "-j", output_file=subprocess.PIPE, ignore_dry_run=True)
-				if ret == 0:
-					options.jobs = int(jstr.strip())
-				else :
-					options.jobs = multiprocessing.cpu_count()
-			else:
-				options.jobs = multiprocessing.cpu_count()
+	make_env = os.environ.get('MAKEFLAGS')
+	make_flags = make_env.split() if make_env else None
+	jobstr = jobserver_version()
+
+	if options.jobs and make_flags:
+		print('WARNING: -j options should not be specified when called form Make', file=sys.stderr)
+
+	# Top level make is calling the shots, just follow
+	if make_flags:
+		# do we have -j and --jobserver-...
+		jobopt = None
+		exists_fds = None
+		for f in make_flags:
+			jobopt = f if f.startswith("-j") else jobopt
+			exists_fds = f if f.startswith(jobstr) else exists_fds
+
+		# do we have limited parallelism?
+		if exists_fds :
+			try:
+				rfd, wfd = tuple(exists_fds.split('=')[1].split(','))
+			except:
+				print("ERROR: jobserver has unrecoginzable format, was '{}'".format(exists_fds), file=sys.stderr)
+				sys.exit(1)
+
+			# read the token pipe to count number of available tokens and restore the pipe
+			# this assumes the test suite script isn't invoked in parellel with something else
+			tokens = os.read(int(rfd), 65536)
+			os.write(int(wfd), tokens)
+
+			# the number of tokens is off by one for obscure but well documented reason
+			# see man make for more details
+			options.jobs = len(tokens) + 1
+
+		# do we have unlimited parallelism?
+		elif jobopt and jobopt != "-j1":
+			# check that this actually make sense
+			if jobopt != "-j":
+				print("ERROR: -j option passed by make but no {}, was '{}'".format(jobstr, jobopt), file=sys.stderr)
+				sys.exit(1)
+
+			options.jobs = eval_hardware()
+			flags = prep_unlimited_recursive_make()
+
+
+		# then no parallelism
+		else:
+			options.jobs = 1
+
+		# keep all flags make passed along, except the weird 'w' which is about subdirectories
+		flags = [f for f in make_flags if f != 'w']
+
+	# Arguments are calling the shots, fake the top level make
+	elif options.jobs :
+
+		# make sure we have a valid number of jobs that corresponds to user input
+		if options.jobs < 0 :
+			print('ERROR: Invalid number of jobs', file=sys.stderr)
+			sys.exit(1)
+
+		flags = prep_recursive_make(options.jobs)
+
+	# Arguments are calling the shots, fake the top level make, but 0 is a special case
+	elif options.jobs == 0:
+		options.jobs = eval_hardware()
+		flags = prep_unlimited_recursive_make()
+
+	# No one says to run in parallel, then don't
 	else :
-		force = True
+		options.jobs = 1
+		flags = []
 
-	# make sure we have a valid number of jobs that corresponds to user input
-	if options.jobs <= 0 :
-		print('ERROR: Invalid number of jobs', file=sys.stderr)
-		sys.exit(1)
+	# Make sure we call make as expected
+	settings.update_make_cmd( flags )
 
-	return options.jobs, force
+	# return the job count
+	return options.jobs
 
 # enable core dumps for all the test children
 resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))

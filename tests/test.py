@@ -139,7 +139,7 @@ def parse_args():
 	parser.add_argument('--all', help='Run all test available', action='store_true')
 	parser.add_argument('--regenerate-expected', help='Regenerate the .expect by running the specified tets, can be used with --all option', action='store_true')
 	parser.add_argument('--archive-errors', help='If called with a valid path, on test crashes the test script will copy the core dump and the executable to the specified path.', type=str, default='')
-	parser.add_argument('-j', '--jobs', help='Number of tests to run simultaneously', type=int)
+	parser.add_argument('-j', '--jobs', help='Number of tests to run simultaneously, 0 (default) for unlimited', nargs='?', const=0, type=int)
 	parser.add_argument('--list-comp', help='List all valide arguments', action='store_true')
 	parser.add_argument('--list-dist', help='List all tests for distribution', action='store_true')
 	parser.add_argument('-I','--include', help='Directory of test to include, can be used multiple time, All  if omitted', action='append')
@@ -417,8 +417,7 @@ if __name__ == "__main__":
 			if is_empty(t.expect()):
 				print('WARNING: test "{}" has empty .expect file'.format(t.target()), file=sys.stderr)
 
-	options.jobs, forceJobs = job_count( options )
-	settings.update_make_cmd(forceJobs, options.jobs)
+	options.jobs = job_count( options )
 
 	# for each build configurations, run the test
 	with Timed() as total_dur:
