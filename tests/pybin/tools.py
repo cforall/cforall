@@ -69,20 +69,20 @@ def sh(*cmd, timeout = False, output_file = None, input_file = None, input_text 
 			) as proc:
 
 				try:
-					out, _ = proc.communicate(
+					out, errout = proc.communicate(
 						timeout = settings.timeout.single if timeout else None
 					)
 
-					return proc.returncode, out.decode("latin-1") if out else None
+					return proc.returncode, out.decode("latin-1") if out else None, errout.decode("latin-1") if errout else None
 				except subprocess.TimeoutExpired:
 					if settings.timeout2gdb:
 						print("Process {} timeout".format(proc.pid))
 						proc.communicate()
-						return 124, str(None)
+						return 124, str(None), "Subprocess Timeout 2 gdb"
 					else:
 						proc.send_signal(signal.SIGABRT)
 						proc.communicate()
-						return 124, str(None)
+						return 124, str(None), "Subprocess Timeout 2 gdb"
 
 	except Exception as ex:
 		print ("Unexpected error: %s" % ex)
@@ -105,9 +105,9 @@ def is_ascii(fname):
 	if not os.path.isfile(fname):
 		return (False, "No file")
 
-	code, out = sh("file", fname, output_file=subprocess.PIPE)
+	code, out, err = sh("file", fname, output_file=subprocess.PIPE)
 	if code != 0:
-		return (False, "'file EXPECT' failed with code {}".format(code))
+		return (False, "'file EXPECT' failed with code {} '{}'".format(code, err))
 
 	match = re.search(".*: (.*)", out)
 
@@ -241,12 +241,12 @@ def killgroup():
 ################################################################################
 # move a file
 def mv(source, dest):
-	ret, _ = sh("mv", source, dest)
+	ret, _, _ = sh("mv", source, dest)
 	return ret
 
 # cat one file into the other
 def cat(source, dest):
-	ret, _ = sh("cat", source, output_file=dest)
+	ret, _, _ = sh("cat", source, output_file=dest)
 	return ret
 
 # helper function to replace patterns in a file
@@ -290,18 +290,16 @@ def path_walk( op ):
 #               system
 ################################################################################
 def jobserver_version():
-	make_ret, out = sh('make', '.test_makeflags', '-j2', output_file=subprocess.PIPE)
+	make_ret, out, err = sh('make', '.test_makeflags', '-j2', output_file=subprocess.PIPE, error=subprocess.PIPE)
 	if make_ret != 0:
-		with open (errf, "r") as myfile:
-			error=myfile.read()
 		print("ERROR: cannot find Makefile jobserver version", file=sys.stderr)
-		print("       test returned : \n%s" % out, file=sys.stderr)
+		print("       test returned : {} '{}'".format(make_ret, err), file=sys.stderr)
 		sys.exit(1)
 
 	re_jobs = re.search("--jobserver-(auth|fds)", out)
 	if not re_jobs:
 		print("ERROR: cannot find Makefile jobserver version", file=sys.stderr)
-		print("       MAKEFLAGS are : \n%s" % out, file=sys.stderr)
+		print("       MAKEFLAGS are : '{}'".format(out), file=sys.stderr)
 		sys.exit(1)
 
 	return "--jobserver-{}".format(re_jobs.group(1))
@@ -343,7 +341,7 @@ def eval_hardware():
 	if settings.distribute:
 		# remote hardware is allowed
 		# how much do we have?
-		ret, jstr = sh("distcc", "-j", output_file=subprocess.PIPE, ignore_dry_run=True)
+		ret, jstr, _ = sh("distcc", "-j", output_file=subprocess.PIPE, ignore_dry_run=True)
 		return int(jstr.strip()) if ret == 0 else multiprocessing.cpu_count()
 	else:
 		# remote isn't allowed, use local cpus
@@ -444,7 +442,7 @@ def config_hash():
 
 	distcc_hash = os.path.join(settings.SRCDIR, '../tools/build/distcc_hash')
 	config = "%s-%s" % (settings.arch.target, settings.debug.path)
-	_, out = sh(distcc_hash, config, output_file=subprocess.PIPE, ignore_dry_run=True)
+	_, out, _ = sh(distcc_hash, config, output_file=subprocess.PIPE, ignore_dry_run=True)
 	return out.strip()
 
 # get pretty string for time of day

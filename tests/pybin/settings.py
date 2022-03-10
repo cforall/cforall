@@ -191,17 +191,11 @@ def validate():
 
 	global distcc
 	distcc       = "DISTCC_CFA_PATH=~/.cfadistcc/%s/cfa" % tools.config_hash()
-	errf = os.path.join(BUILDDIR, ".validate.err")
-	make_ret, out = tools.make( ".validate", error_file = errf, output_file=subprocess.DEVNULL, error=subprocess.DEVNULL )
+	make_ret, out, err = tools.make( ".validate", output_file=subprocess.PIPE, error=subprocess.PIPE )
 	if make_ret != 0:
-		with open (errf, "r") as myfile:
-			error=myfile.read()
 		print("ERROR: Invalid configuration %s:%s" % (arch.string, debug.string), file=sys.stderr)
-		print("       verify returned : \n%s" % error, file=sys.stderr)
-		tools.rm(errf)
+		print("       verify returned : \n%s" % err, file=sys.stderr)
 		sys.exit(1)
-
-	tools.rm(errf)
 
 def prep_output(tests):
 	global output_width

@@ -194,7 +194,7 @@ def run_single_test(test):
 	# ----------
 	# build, skipping to next test on error
 	with Timed() as comp_dur:
-		make_ret, _ = make( test.target(), output_file=subprocess.DEVNULL, error=out_file, error_file = err_file )
+		make_ret, _, _ = make( test.target(), output_file=subprocess.DEVNULL, error=out_file, error_file = err_file )
 
 	# ----------
 	# RUN
@@ -207,7 +207,7 @@ def run_single_test(test):
 			with Timed() as run_dur:
 				if settings.dry_run or is_exe(exe_file):
 					# run test
-					retcode, _ = sh(exe_file, output_file=out_file, input_file=in_file, timeout=True)
+					retcode, _, _ = sh(exe_file, output_file=out_file, input_file=in_file, timeout=True)
 				else :
 					# simply cat the result into the output
 					retcode = cat(exe_file, out_file)
@@ -225,7 +225,7 @@ def run_single_test(test):
 					error = None
 			else :
 				# fetch return code and error from the diff command
-				retcode, error = diff(cmp_file, out_file)
+				retcode, error, _ = diff(cmp_file, out_file)
 
 		else:
 			if os.stat(out_file).st_size < 1048576:
@@ -234,8 +234,11 @@ def run_single_test(test):
 			else:
 				error = "Output log can't be read, file is bigger than 1MB, see {} for actual error\n".format(out_file)
 
-			ret, info = core_info(exe_file)
-			error = error + info if error else info
+			ret, info, gdberr = core_info(exe_file)
+			if ret == 0:
+				error = error + info if error else info
+			else :
+				error = error + gdberr if error else gdberr
 
 			if settings.archive:
 				error = error + '\n' + core_archive(settings.archive, test.target(), exe_file)
@@ -365,10 +368,10 @@ if __name__ == "__main__":
 		for t in tests:
 			print(os.path.relpath(t.expect(), settings.SRCDIR), end=' ')
 			print(os.path.relpath(t.input() , settings.SRCDIR), end=' ')
-			code, out = make_recon(t.target())
+			code, out, err = make_recon(t.target())
 
 			if code != 0:
-				print('ERROR: recond failed for test {}'.format(t.target()), file=sys.stderr)
+				print('ERROR: recond failed for test {}: {} \'{}\''.format(t.target(), code, err), file=sys.stderr)
 				sys.exit(1)
 
 			print(' '.join(re.findall('([^\s]+\.cfa)', out)), end=' ')
