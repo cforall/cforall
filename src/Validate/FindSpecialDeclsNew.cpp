@@ -29,8 +29,8 @@ namespace Validate {
 namespace {
 
 struct FindDeclsCore : public ast::WithShortCircuiting {
-	ast::TranslationUnit::Global & global;
-	FindDeclsCore( ast::TranslationUnit::Global & g ) : global( g ) {}
+	ast::TranslationGlobal & global;
+	FindDeclsCore( ast::TranslationGlobal & g ) : global( g ) {}
 
 	void previsit( const ast::Decl * decl );
 	void previsit( const ast::FunctionDecl * decl );
@@ -72,12 +72,6 @@ void FindDeclsCore::previsit( const ast::StructDecl * decl ) {
 // Fill the TranslationUnit's dereference, dtorStruct and dtorDestroy fields.
 void findGlobalDecls( ast::TranslationUnit & translationUnit ) {
 	ast::Pass<FindDeclsCore>::run( translationUnit, translationUnit.global );
-
-	// TODO: When everything gets the globals from the translation unit,
-	// remove these.
-	ast::dereferenceOperator = translationUnit.global.dereference;
-	ast::dtorStruct = translationUnit.global.dtorStruct;
-	ast::dtorStructDestroy = translationUnit.global.dtorDestroy;
 
 	// TODO: conditionally generate 'fake' declarations for missing features,
 	// so that translation can proceed in the event that builtins, prelude,

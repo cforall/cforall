@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Thu May 16 14:16:00 2019
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  1 09:09:39 2022
-// Update Count     : 3
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Mar 25 10:30:00 2022
+// Update Count     : 4
 //
 
 #include "Node.hpp"
@@ -18,6 +18,7 @@
 
 #include <csignal>  // MEMORY DEBUG -- for raise
 #include <iostream>
+#include <utility>
 
 #include "Attribute.hpp"
 #include "Decl.hpp"
@@ -75,6 +76,13 @@ void ast::ptr_base<node_t, ref_t>::_dec( const node_t * node, bool do_delete ) {
 template< typename node_t, enum ast::Node::ref_type ref_t >
 void ast::ptr_base<node_t, ref_t>::_check() const {
 	// if(node) assert(node->was_ever_strong == false || node->strong_count > 0);
+}
+
+template< typename node_t, enum ast::Node::ref_type ref_t >
+void ast::ptr_base<node_t, ref_t>::swap( ptr_base & other ) noexcept {
+	std::swap( this->node, other.node );
+	_trap( this->node );
+	_trap( other.node );
 }
 
 template< typename node_t, enum ast::Node::ref_type ref_t >
@@ -151,8 +159,8 @@ template class ast::ptr_base< ast::ForStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::ForStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::SwitchStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::SwitchStmt, ast::Node::ref_type::strong >;
-template class ast::ptr_base< ast::CaseStmt, ast::Node::ref_type::weak >;
-template class ast::ptr_base< ast::CaseStmt, ast::Node::ref_type::strong >;
+template class ast::ptr_base< ast::CaseClause, ast::Node::ref_type::weak >;
+template class ast::ptr_base< ast::CaseClause, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::BranchStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::BranchStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::ReturnStmt, ast::Node::ref_type::weak >;
@@ -161,10 +169,10 @@ template class ast::ptr_base< ast::ThrowStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::ThrowStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::TryStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::TryStmt, ast::Node::ref_type::strong >;
-template class ast::ptr_base< ast::CatchStmt, ast::Node::ref_type::weak >;
-template class ast::ptr_base< ast::CatchStmt, ast::Node::ref_type::strong >;
-template class ast::ptr_base< ast::FinallyStmt, ast::Node::ref_type::weak >;
-template class ast::ptr_base< ast::FinallyStmt, ast::Node::ref_type::strong >;
+template class ast::ptr_base< ast::CatchClause, ast::Node::ref_type::weak >;
+template class ast::ptr_base< ast::CatchClause, ast::Node::ref_type::strong >;
+template class ast::ptr_base< ast::FinallyClause, ast::Node::ref_type::weak >;
+template class ast::ptr_base< ast::FinallyClause, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::WaitForStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::WaitForStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::WithStmt, ast::Node::ref_type::weak >;

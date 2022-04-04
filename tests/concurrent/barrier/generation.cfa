@@ -1,0 +1,58 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// concurrent/barrier/generation.cfa -- simple test that validates barriers by printing
+//                                      alphabetical generations
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Mar 31 16:43:45 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// Test validates barrier by having each thread print ABCD...
+// If the barrier is correct it should print all As, all Bs, etc.
+
+unsigned NUM_THREADS = 9;
+unsigned NUM_LAPS = 53;
+
+#include <concurrency/barrier.hfa>
+#include <fstream.hfa>
+#include <mutex_stmt.hfa>
+#include <thread.hfa>
+
+// The barrier we are testing
+barrier bar = { NUM_THREADS };
+
+
+thread Tester {};
+void main( Tester & this ) {
+	// Repeat the experiment a few times
+	for(NUM_LAPS)
+		// For each letters
+		for(c; 'A' ~= 'Z') {
+			// Yield for chaos
+			yield(prng(this, 10));
+
+			// Print the generation, no newline because
+			mutex(sout) sout | c | nonl;
+
+			// Yield again for more chaos
+			yield(prng(this, 10));
+
+			// Block on the barrier
+			block(bar);
+		}
+}
+
+int main() {
+	processor p[4];
+	{
+		Tester testers[NUM_THREADS];
+	}
+	sout | nl;
+}

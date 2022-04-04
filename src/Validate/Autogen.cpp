@@ -247,7 +247,7 @@ void AutogenerateRoutines_new::previsit( const ast::StructDecl * structDecl ) {
 	for ( const ast::TypeDecl * typeDecl : structDecl->params ) {
 		structInst.params.push_back( new ast::TypeExpr(
 			typeDecl->location,
-			new ast::TypeInstType( typeDecl->name, typeDecl )
+			new ast::TypeInstType( typeDecl )
 		) );
 	}
 	StructFuncGenerator gen( structDecl, &structInst, functionNesting );
@@ -263,7 +263,7 @@ void AutogenerateRoutines_new::previsit( const ast::UnionDecl * unionDecl ) {
 	for ( const ast::TypeDecl * typeDecl : unionDecl->params ) {
 		unionInst.params.push_back( new ast::TypeExpr(
 			unionDecl->location,
-			new ast::TypeInstType( typeDecl->name, typeDecl )
+			new ast::TypeInstType( typeDecl )
 		) );
 	}
 	UnionFuncGenerator gen( unionDecl, &unionInst, functionNesting );

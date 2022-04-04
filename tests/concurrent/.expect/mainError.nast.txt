@@ -1,0 +1,11 @@
+concurrent/mainError.cfa:1:1 error: thread keyword requires threads to be in scope, add #include <thread.hfa>
+thread Test with body
+
+concurrent/mainError.cfa:2:1 error: thread keyword requires threads to be in scope, add #include <thread.hfa>
+main: function
+... with parameters
+  reference to instance of struct Test with body
+... returning nothing
+ with body
+  Compound Statement:
+

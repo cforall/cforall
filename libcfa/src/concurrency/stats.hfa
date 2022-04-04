@@ -102,6 +102,8 @@ enum {
 			struct {
 				volatile uint64_t drain;
 				volatile uint64_t completed;
+				volatile uint64_t locked;
+				volatile uint64_t helped;
 				volatile uint64_t flush;
 				volatile uint64_t submitted;
 				struct {

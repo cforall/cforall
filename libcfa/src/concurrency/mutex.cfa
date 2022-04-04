@@ -20,7 +20,7 @@
 
 #include "mutex.hfa"
 
-#include "kernel_private.hfa"
+#include "kernel/private.hfa"
 
 //-----------------------------------------------------------------------------
 // Locks

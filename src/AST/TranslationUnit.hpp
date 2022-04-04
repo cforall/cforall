@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Jun 11 15:30:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Jun 11 15:42:00 2019
-// Update Count     : 0
+// Last Modified On : Tue Mar 11 11:19:00 2022
+// Update Count     : 1
 //
 
 #pragma once
@@ -22,18 +22,20 @@
 
 namespace ast {
 
+class TranslationGlobal {
+public:
+	std::map< UniqueId, Decl * > idMap;
+
+	ptr<Type> sizeType;
+	const FunctionDecl * dereference;
+	const StructDecl * dtorStruct;
+	const FunctionDecl * dtorDestroy;
+};
+
 class TranslationUnit {
 public:
 	std::list< ptr< Decl > > decls;
-
-	struct Global {
-		std::map< UniqueId, Decl * > idMap;
-
-		ptr<Type> sizeType;
-		const FunctionDecl * dereference;
-		const StructDecl * dtorStruct;
-		const FunctionDecl * dtorDestroy;
-	} global;
+	TranslationGlobal global;
 };
 
 }

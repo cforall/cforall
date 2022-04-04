@@ -57,8 +57,9 @@ inst_headers_nosrc = \
 	bits/stack.hfa \
 	bits/queue.hfa \
 	bits/sequence.hfa \
-	containers/array.hfa \
 	concurrency/iofwd.hfa \
+	concurrency/barrier.hfa \
+	containers/array.hfa \
 	containers/list.hfa \
 	containers/queueLockFree.hfa \
 	containers/stackLockFree.hfa \
@@ -118,6 +119,7 @@ inst_thread_headers_src = \
 	concurrency/coroutine.hfa \
 	concurrency/exception.hfa \
 	concurrency/kernel.hfa \
+	concurrency/kernel/cluster.hfa \
 	concurrency/locks.hfa \
 	concurrency/monitor.hfa \
 	concurrency/mutex.hfa \
@@ -133,7 +135,7 @@ thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} 
 	concurrency/io/types.hfa \
 	concurrency/io/call.cfa \
 	concurrency/iofwd.hfa \
-	concurrency/kernel_private.hfa \
+	concurrency/kernel/private.hfa \
 	concurrency/kernel/startup.cfa \
 	concurrency/preemption.cfa \
 	concurrency/preemption.hfa \

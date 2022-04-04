@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 23:45:33 2019
-// Update Count     : 9
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Mar 16 14:06:00 2022
+// Update Count     : 10
 //
 
 #include <algorithm>                       // for transform
@@ -464,7 +464,7 @@ namespace {
 				if ( ! expr->result.as< ast::ReferenceType >() ) {
 					// resolve ctor/dtor for the new object
 					ast::ptr< ast::Init > ctorInit = ResolvExpr::resolveCtorInit(
-							InitTweak::genCtorInit( location, ret ), spotter.crntFinder.localSyms );
+							InitTweak::genCtorInit( location, ret ), spotter.crntFinder.context );
 					// remove environments from subexpressions of stmtExpr
 					ast::Pass< EnvRemover > rm{ env };
 					ret->init = ctorInit->accept( rm );
@@ -559,7 +559,7 @@ namespace {
 
 					// resolve the cast expression so that rhsCand return type is bound by the cast
 					// type as needed, and transfer the resulting environment
-					ResolvExpr::CandidateFinder finder{ spotter.crntFinder.localSyms, env };
+					ResolvExpr::CandidateFinder finder( spotter.crntFinder.context, env );
 					finder.find( rhsCand->expr, ResolvExpr::ResolvMode::withAdjustment() );
 					assert( finder.candidates.size() == 1 );
 					env = std::move( finder.candidates.front()->env );
@@ -608,7 +608,7 @@ namespace {
 
 					// explode the LHS so that each field of a tuple-valued expr is assigned
 					ResolvExpr::CandidateList lhs;
-					explode( *lhsCand, crntFinder.localSyms, back_inserter(lhs), true );
+					explode( *lhsCand, crntFinder.context.symtab, back_inserter(lhs), true );
 					for ( ResolvExpr::CandidateRef & cand : lhs ) {
 						// each LHS value must be a reference - some come in with a cast, if not
 						// just cast to reference here
@@ -628,7 +628,7 @@ namespace {
 							ResolvExpr::CandidateList rhs;
 							if ( isTuple( rhsCand->expr ) ) {
 								// multiple assignment
-								explode( *rhsCand, crntFinder.localSyms, back_inserter(rhs), true );
+								explode( *rhsCand, crntFinder.context.symtab, back_inserter(rhs), true );
 								matcher.reset(
 									new MultipleAssignMatcher{ *this, expr->location, lhs, rhs } );
 							} else {
@@ -647,7 +647,7 @@ namespace {
 						for ( const ResolvExpr::CandidateList & rhsCand : rhsCands ) {
 							// multiple assignment
 							ResolvExpr::CandidateList rhs;
-							explode( rhsCand, crntFinder.localSyms, back_inserter(rhs), true );
+							explode( rhsCand, crntFinder.context.symtab, back_inserter(rhs), true );
 							matcher.reset(
 								new MultipleAssignMatcher{ *this, expr->location, lhs, rhs } );
 							match();
@@ -677,7 +677,7 @@ namespace {
 					std::cerr << expr << std::endl;
 				)
 
-				ResolvExpr::CandidateFinder finder{ crntFinder.localSyms, matcher->env };
+				ResolvExpr::CandidateFinder finder( crntFinder.context, matcher->env );
 
 				try {
 					finder.find( expr, ResolvExpr::ResolvMode::withAdjustment() );

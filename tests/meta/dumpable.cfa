@@ -13,16 +13,20 @@
 // Update Count     :
 //
 
-#include <limits.h>
 #include <errno.h>
+#include <limits.h>
+#include <string.h>
 
 #include <fstream.hfa>
 
 extern "C" {
+	#include <fcntl.h>
+	#include <unistd.h>
 	#include <sys/prctl.h>
 	#include <sys/resource.h>
 	#include <sys/statvfs.h>
-	#include <unistd.h>
+	#include <sys/stat.h>
+	#include <sys/types.h>
 }
 
 void check_ulimit() {
@@ -101,6 +105,39 @@ void check_dumpflag() {
 	if(r != 1) serr | "dumpable attribute not set to 1 \"(SUID_DUMP_USER, process is dumpable)\", was" | r;
 }
 
+void check_core_pattern() {
+	int ret;
+	int cp = open("/proc/sys/kernel/core_pattern", 0, O_RDONLY);
+	if(cp < 0) {
+		perror("open(/proc/sys/kernel/core_pattern, O_RDONLY) error");
+		return;
+	}
+
+	try {
+		const char * expected = "core\n";
+		const int sz = sizeof("core\n");
+		char buf[512];
+		ret = read(cp, buf, 512);
+		if(ret < 0) {
+			perror("first core pattern read error");
+			return;
+		}
+		ret = strncmp(expected, buf, sz - 1);
+		if(ret != 0) {
+			serr | "/proc/sys/kernel/core_pattern does not contain 'core', was:" | nl | nl | buf | nl
+			     | "Test script expect cores files to be dumped with name 'core' in current working directory." | nl
+			     | "Apport is not supported, it should be deactivated in /etc/default/apport for the test suite to work with core dumps.";
+
+			return;
+		}
+	}
+	finally {
+		ret = close(cp);
+		if(ret < 0) perror("close(/proc/sys/kernel/core_pattern) error");
+	}
+
+}
+
 int main() {
 	check_ulimit();
 
@@ -111,6 +148,8 @@ int main() {
 	check_noconflict();
 
 	check_dumpflag();
+
+	check_core_pattern();
 
 	sout | "Done";
 }

@@ -1,0 +1,72 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// concurrent/barrier/order.cfa -- validates barriers the return value of
+//                                 barrier block
+//
+// Author           : Thierry Delisle
+// Created On       : Fri Apr 01 11:39:09 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// Test validates barrier and block return value by checking
+// that no more than one thread gets the same return value
+
+#include <concurrency/barrier.hfa>
+#include <fstream.hfa>
+#include <mutex_stmt.hfa>
+#include <thread.hfa>
+
+const unsigned NUM_LAPS = 173;
+const unsigned NUM_THREADS = 11;
+
+// The barrier we are testing
+barrier bar = { NUM_THREADS };
+
+// The return values of the previous generation.
+volatile unsigned * generation;
+
+thread Tester {};
+void main( Tester & this ) {
+	// Repeat a few times
+	for(l; NUM_LAPS) {
+		// Yield for chaos
+		yield(prng(this, 10));
+
+		// Block and what order we arrived
+		unsigned ret = block(bar);
+
+		// Check what was the last generation of that last thread in this position
+		unsigned g = generation[ret];
+
+		// Is it what we expect?
+		if(g != l) {
+			// Complain that they are different
+			sout | "Gen" | l | ": Expeced generation at" | ret | "to be" | l | "was" | g;
+		}
+
+		// Mark the expected next generation
+		generation[ret] = l+1;
+	}
+}
+
+int main() {
+	// Create the data ans zero it.
+	volatile unsigned gen_data[NUM_THREADS];
+	for(t; NUM_THREADS)
+		gen_data[t] = 0;
+
+	generation = gen_data;
+
+	// Run the experiment
+	processor p[4];
+	{
+		Tester testers[NUM_THREADS];
+	}
+	sout | "done";
+}

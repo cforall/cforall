@@ -67,7 +67,7 @@ FunctionDecl::FunctionDecl( const CodeLocation & loc, const std::string & name,
 		ftype->returns.emplace_back(ret->get_type());
 	}
 	for (auto & tp : this->type_params) {
-		ftype->forall.emplace_back(new TypeInstType(tp->name, tp));
+		ftype->forall.emplace_back(new TypeInstType(tp));
 		for (auto & ap: tp->assertions) {
 			ftype->assertions.emplace_back(new VariableExpr(loc, ap));
 		}

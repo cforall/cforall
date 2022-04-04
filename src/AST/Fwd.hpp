@@ -46,13 +46,13 @@ class IfStmt;
 class WhileDoStmt;
 class ForStmt;
 class SwitchStmt;
-class CaseStmt;
+class CaseClause;
 class BranchStmt;
 class ReturnStmt;
 class ThrowStmt;
 class TryStmt;
-class CatchStmt;
-class FinallyStmt;
+class CatchClause;
+class FinallyClause;
 class SuspendStmt;
 class WaitForStmt;
 class WithStmt;
@@ -140,10 +140,6 @@ class TypeSubstitution;
 typedef unsigned int UniqueId;
 
 class TranslationUnit;
-// TODO: Get from the TranslationUnit:
-extern ptr<Type> sizeType;
-extern const FunctionDecl * dereferenceOperator;
-extern const StructDecl   * dtorStruct;
-extern const FunctionDecl * dtorStructDestroy;
+class TranslationGlobal;
 
 }

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 25 17:54:56 2022
-// Update Count     : 5262
+// Last Modified On : Mon Mar 14 16:35:29 2022
+// Update Count     : 5276
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -651,7 +651,6 @@ postfix_expression:
 	| postfix_expression '[' assignment_expression ',' tuple_expression_list ']'
 			// Historic, transitional: Disallow commas in subscripts.
 			// Switching to this behaviour may help check if a C compatibilty case uses comma-exprs in subscripts.
-		// { SemanticError( yylloc, "New array subscript is currently unimplemented." ); $$ = nullptr; }
 			// Current: Commas in subscripts make tuples.
 		{ $$ = new ExpressionNode( build_binary_val( OperKinds::Index, $1, new ExpressionNode( build_tuple( (ExpressionNode *)($3->set_last( $5 ) ) )) ) ); }
 	| postfix_expression '[' assignment_expression ']'
@@ -660,6 +659,10 @@ postfix_expression:
 		// little advantage to this feature and many disadvantages. It is possible to write x[(i,j)] in CFA, which is
 		// equivalent to the old x[i,j].
 		{ $$ = new ExpressionNode( build_binary_val( OperKinds::Index, $1, $3 ) ); }
+	| constant '[' assignment_expression ']'			// 3[a], 'a'[a], 3.5[a]
+		{ $$ = new ExpressionNode( build_binary_val( OperKinds::Index, $1, $3 ) ); }
+	| string_literal '[' assignment_expression ']'		// "abc"[3], 3["abc"]
+		{ $$ = new ExpressionNode( build_binary_val( OperKinds::Index, new ExpressionNode( $1 ), $3 ) ); }
 	| postfix_expression '{' argument_expression_list_opt '}' // CFA, constructor call
 		{
 			Token fn;

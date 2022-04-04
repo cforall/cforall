@@ -41,11 +41,6 @@ namespace SymTab {
 	void validate_D( std::list< Declaration * > &translationUnit );
 	void validate_E( std::list< Declaration * > &translationUnit );
 	void validate_F( std::list< Declaration * > &translationUnit );
-	void decayForallPointers( std::list< Declaration * > & translationUnit );
-	void decayForallPointersA( std::list< Declaration * > & translationUnit );
-	void decayForallPointersB( std::list< Declaration * > & translationUnit );
-	void decayForallPointersC( std::list< Declaration * > & translationUnit );
-	void decayForallPointersD( std::list< Declaration * > & translationUnit );
 
 	const ast::Type * validateType(
 		const CodeLocation & loc, const ast::Type * type, const ast::SymbolTable & symtab );

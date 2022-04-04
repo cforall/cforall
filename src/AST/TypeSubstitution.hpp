@@ -36,6 +36,8 @@ namespace ast {
 class TypeSubstitution : public Node {
   public:
 	TypeSubstitution();
+	template< typename FormalContainer, typename ActualContainer >
+	TypeSubstitution( FormalContainer formals, ActualContainer actuals );
 	template< typename FormalIterator, typename ActualIterator >
 	TypeSubstitution( FormalIterator formalBegin, FormalIterator formalEnd, ActualIterator actualBegin );
 	TypeSubstitution( const TypeSubstitution &other );
@@ -75,8 +77,10 @@ class TypeSubstitution : public Node {
 	const Type *lookup( const TypeInstType * formalType ) const;
 	bool empty() const;
 
+	template< typename FormalContainer, typename ActualContainer >
+	void addAll( FormalContainer formals, ActualContainer actuals );
 	template< typename FormalIterator, typename ActualIterator >
-	void add( FormalIterator formalBegin, FormalIterator formalEnd, ActualIterator actualBegin );
+	void addAll( FormalIterator formalBegin, FormalIterator formalEnd, ActualIterator actualBegin );
 
 	/// create a new TypeSubstitution using bindings from env containing all of the type variables in expr
 	static TypeSubstitution * newFromExpr( const Expr * expr, const TypeSubstitution * env );
@@ -111,9 +115,26 @@ class TypeSubstitution : public Node {
 
 };
 
+template< typename FormalContainer, typename ActualContainer >
+TypeSubstitution::TypeSubstitution( FormalContainer formals, ActualContainer actuals ) {
+	assert( formals.size() == actuals.size() );
+	addAll( formals.begin(), formals.end(), actuals.begin() );
+}
+
+template< typename FormalIterator, typename ActualIterator >
+TypeSubstitution::TypeSubstitution( FormalIterator formalBegin, FormalIterator formalEnd, ActualIterator actualBegin ) {
+	addAll( formalBegin, formalEnd, actualBegin );
+}
+
+template< typename FormalContainer, typename ActualContainer >
+void TypeSubstitution::addAll( FormalContainer formals, ActualContainer actuals ) {
+	assert( formals.size() == actuals.size() );
+	addAll( formals.begin(), formals.end(), actuals.begin() );
+}
+
 // this is the only place where type parameters outside a function formal may be substituted.
 template< typename FormalIterator, typename ActualIterator >
-void TypeSubstitution::add( FormalIterator formalBegin, FormalIterator formalEnd, ActualIterator actualBegin ) {
+void TypeSubstitution::addAll( FormalIterator formalBegin, FormalIterator formalEnd, ActualIterator actualBegin ) {
 	// FormalIterator points to a TypeDecl
 	// ActualIterator points to a Type
 	FormalIterator formalIt = formalBegin;
@@ -128,18 +149,10 @@ void TypeSubstitution::add( FormalIterator formalBegin, FormalIterator formalEnd
 				SemanticError( formal, toString( "Attempt to provide non-type parameter: ", toString( *actualIt ).c_str(), " for type parameter " ) );
 			} // if
 		} else {
-			
+			// Is this an error?
 		} // if
 	} // for
 }
-
-
-
-template< typename FormalIterator, typename ActualIterator >
-TypeSubstitution::TypeSubstitution( FormalIterator formalBegin, FormalIterator formalEnd, ActualIterator actualBegin ) {
-	add( formalBegin, formalEnd, actualBegin );
-}
-
 
 } // namespace ast
 

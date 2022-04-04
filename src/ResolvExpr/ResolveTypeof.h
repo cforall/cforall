@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ResolveTypeof.h -- 
+// ResolveTypeof.h --
 //
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 12:14:53 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:38:35 2017
-// Update Count     : 3
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Mar 16 11:33:00 2022
+// Update Count     : 4
 //
 
 #pragma once
@@ -21,14 +21,15 @@ class Indexer;
 }  // namespace SymTab
 namespace ast {
 	class Type;
-	class SymbolTable;
 	class ObjectDecl;
 }
 
 namespace ResolvExpr {
+	struct ResolveContext;
+
 	Type *resolveTypeof( Type*, const SymTab::Indexer &indexer );
-	const ast::Type * resolveTypeof( const ast::Type *, const ast::SymbolTable & );
-	const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ast::SymbolTable & symtab );
+	const ast::Type * resolveTypeof( const ast::Type *, const ResolveContext & );
+	const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ResolveContext & );
 } // namespace ResolvExpr
 
 // Local Variables: //

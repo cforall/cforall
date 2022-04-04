@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// kernel_private.hfa --
+// kernel/private.hfa --
 //
 // Author           : Thierry Delisle
 // Created On       : Mon Feb 13 12:27:26 2017
@@ -16,7 +16,7 @@
 #pragma once
 
 #if !defined(__cforall_thread__)
-	#error kernel_private.hfa should only be included in libcfathread source
+	#error kernel/private.hfa should only be included in libcfathread source
 #endif
 
 #include "kernel.hfa"
@@ -32,14 +32,14 @@ extern "C" {
 	#include <linux/rseq.h>
 #else
 	#ifndef _GNU_SOURCE
-	#error kernel_private requires gnu_source
+	#error kernel/private requires gnu_source
 	#endif
 	#include <sched.h>
 #endif
 }
 
 // Defines whether or not we *want* to use io_uring_enter as the idle_sleep blocking call
-#define CFA_WANT_IO_URING_IDLE
+// #define CFA_WANT_IO_URING_IDLE
 
 // Defines whether or not we *can* use io_uring_enter as the idle_sleep blocking call
 #if defined(CFA_WANT_IO_URING_IDLE) && defined(CFA_HAVE_LINUX_IO_URING_H)
@@ -364,6 +364,9 @@ void ready_queue_grow  (struct cluster * cltr);
 // Decrease the width of the ready queue (number of lanes) by 4
 void ready_queue_shrink(struct cluster * cltr);
 
+//-----------------------------------------------------------------------
+// Decrease the width of the ready queue (number of lanes) by 4
+void ready_queue_close(struct cluster * cltr);
 
 // Local Variables: //
 // mode: c //

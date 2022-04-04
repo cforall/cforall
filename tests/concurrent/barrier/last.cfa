@@ -1,0 +1,84 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// concurrent/barrier/last.cfa -- validates barrier's last hook functionality
+//
+// Author           : Thierry Delisle
+// Created On       : Fri Apr 01 14:24:28 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// Test validates barrier correctly blocks threads, and that the last
+// function is called at the appropriate time.
+
+#include <concurrency/barrier.hfa>
+#include <fstream.hfa>
+#include <mutex_stmt.hfa>
+#include <thread.hfa>
+
+const unsigned NUM_LAPS = 223;
+const unsigned NUM_THREADS = 13;
+
+// The barrier we are testing
+barrier bar = { NUM_THREADS };
+
+// The return values of the previous generation.
+volatile unsigned * generation;
+
+// Check that validate is actually getting called as expected;
+volatile unsigned validate_calls = 0;
+
+void validate() {
+	unsigned vc = validate_calls;
+	unsigned expected = generation[0];
+	for(i; 1 ~ NUM_THREADS) {
+		unsigned obtained = generation[i];
+		if( obtained != expected ) {
+			sout | "Index 0 and" | i | "disagree on current generation:" | expected | "vs" | obtained;
+		}
+	}
+	validate_calls = vc + 1;
+}
+
+thread Tester {
+	unsigned id;
+};
+void main( Tester & this) {
+	park();
+	// Repeat a few times
+	for(l; NUM_LAPS) {
+		// Block
+		block(bar, validate);
+
+		// Update what we thing the generation is
+		generation[this.id]++;
+	}
+}
+
+int main() {
+	// Create the data ans zero it.
+	volatile unsigned gen_data[NUM_THREADS];
+	for(t; NUM_THREADS)
+		gen_data[t] = 0;
+
+	generation = gen_data;
+
+	// Run the experiment
+	processor p[6];
+	{
+		Tester testers[NUM_THREADS];
+		for(i; NUM_THREADS) {
+			testers[i].id = i;
+			unpark(testers[i]);
+		}
+	}
+	if(validate_calls != NUM_LAPS) {
+		sout | "Unexpected number of calls to validate: expcted" | NUM_LAPS | ", got" | validate_calls;
+	}
+	sout | "done";
+}

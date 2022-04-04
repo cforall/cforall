@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 12:12:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 19 16:49:04 2015
-// Update Count     : 3
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Mar 16 16:09:00 2022
+// Update Count     : 4
 //
 
 #include "ResolveTypeof.h"
@@ -21,6 +21,7 @@
 #include "AST/CVQualifiers.hpp"
 #include "AST/Node.hpp"
 #include "AST/Pass.hpp"
+#include "AST/TranslationUnit.hpp"
 #include "AST/Type.hpp"
 #include "AST/TypeEnvironment.hpp"
 #include "Common/PassVisitor.h"  // for PassVisitor
@@ -118,9 +119,10 @@ namespace ResolvExpr {
 
 namespace {
 	struct ResolveTypeof_new : public ast::WithShortCircuiting {
-		const ast::SymbolTable & localSymtab;
+		const ResolveContext & context;
 
-		ResolveTypeof_new( const ast::SymbolTable & syms ) : localSymtab( syms ) {}
+		ResolveTypeof_new( const ResolveContext & context ) :
+			context( context ) {}
 
 		void previsit( const ast::TypeofType * ) { visit_children = false; }
 
@@ -136,7 +138,7 @@ namespace {
 				// typeof wrapping expression
 				ast::TypeEnvironment dummy;
 				ast::ptr< ast::Expr > newExpr =
-					resolveInVoidContext( typeofType->expr, localSymtab, dummy );
+					resolveInVoidContext( typeofType->expr, context, dummy );
 				assert( newExpr->result && ! newExpr->result->isVoid() );
 				newType = newExpr->result;
 			}
@@ -160,21 +162,21 @@ namespace {
 	};
 } // anonymous namespace
 
-const ast::Type * resolveTypeof( const ast::Type * type , const ast::SymbolTable & symtab ) {
-	ast::Pass< ResolveTypeof_new > mutator{ symtab };
+const ast::Type * resolveTypeof( const ast::Type * type , const ResolveContext & context ) {
+	ast::Pass< ResolveTypeof_new > mutator( context );
 	return type->accept( mutator );
 }
 
 struct FixArrayDimension {
-	// should not require a mutable symbol table - prevent pass template instantiation
-	const ast::SymbolTable & _symtab; 
-	FixArrayDimension(const ast::SymbolTable & symtab): _symtab(symtab) {}
+	const ResolveContext & context;
+	FixArrayDimension(const ResolveContext & context) : context( context ) {}
 
 	const ast::ArrayType * previsit (const ast::ArrayType * arrayType) {
 		if (!arrayType->dimension) return arrayType;
 		auto mutType = mutate(arrayType);
-		ast::ptr<ast::Type> sizetype = ast::sizeType ? ast::sizeType : new ast::BasicType(ast::BasicType::LongUnsignedInt); 
-		mutType->dimension = findSingleExpression(arrayType->dimension, sizetype, _symtab);
+		auto globalSizeType = context.global.sizeType;
+		ast::ptr<ast::Type> sizetype = globalSizeType ? globalSizeType : new ast::BasicType(ast::BasicType::LongUnsignedInt);
+		mutType->dimension = findSingleExpression(arrayType->dimension, sizetype, context );
 
 		if (InitTweak::isConstExpr(mutType->dimension)) {
 			mutType->isVarLen = ast::LengthFlag::FixedLen;
@@ -186,43 +188,31 @@ struct FixArrayDimension {
 	}
 };
 
-const ast::Type * fixArrayType( const ast::Type * type, const ast::SymbolTable & symtab) {
-	ast::Pass<FixArrayDimension> visitor {symtab};
+const ast::Type * fixArrayType( const ast::Type * type, const ResolveContext & context ) {
+	ast::Pass<FixArrayDimension> visitor(context);
 	return type->accept(visitor);
 }
 
-const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ast::SymbolTable & symtab ) {
-	if (!decl->isTypeFixed) { 
-		auto mutDecl = mutate(decl);
-		auto resolvedType = resolveTypeof(decl->type, symtab);
-		resolvedType = fixArrayType(resolvedType, symtab);
-		mutDecl->type = resolvedType;
-
-		// check variable length if object is an array.
-		// xxx - should this be part of fixObjectType?
-
-		/*
-		if (auto arrayType = dynamic_cast<const ast::ArrayType *>(resolvedType)) {
-			auto dimExpr = findSingleExpression(arrayType->dimension, ast::sizeType, symtab);
-			if (auto varexpr = arrayType->dimension.as<ast::VariableExpr>()) {// hoisted previously
-				if (InitTweak::isConstExpr(varexpr->var.strict_as<ast::ObjectDecl>()->init)) {
-					auto mutType = mutate(arrayType);
-					mutType->isVarLen = ast::LengthFlag::VariableLen;
-					mutDecl->type = mutType;
-				}
-			}
-		}
-		*/
-
-
-		if (!mutDecl->name.empty()) 
-			mutDecl->mangleName = Mangle::mangle(mutDecl); // do not mangle unnamed variables
-		
-		mutDecl->type = renameTyVars(mutDecl->type, RenameMode::GEN_EXPR_ID);
-		mutDecl->isTypeFixed = true;
-		return mutDecl;
+const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ResolveContext & context ) {
+	if (decl->isTypeFixed) {
+		return decl;
 	}
-	return decl;
+
+	auto mutDecl = mutate(decl);
+	{
+		auto resolvedType = resolveTypeof(decl->type, context);
+		resolvedType = fixArrayType(resolvedType, context);
+		mutDecl->type = resolvedType;
+	}
+
+	// Do not mangle unnamed variables.
+	if (!mutDecl->name.empty()) {
+		mutDecl->mangleName = Mangle::mangle(mutDecl);
+	}
+
+	mutDecl->type = renameTyVars(mutDecl->type, RenameMode::GEN_EXPR_ID);
+	mutDecl->isTypeFixed = true;
+	return mutDecl;
 }
 
 } // namespace ResolvExpr

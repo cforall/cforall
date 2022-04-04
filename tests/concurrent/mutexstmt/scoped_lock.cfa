@@ -1,0 +1,96 @@
+#include <mutex_stmt.hfa>
+#include <locks.hfa>
+
+const unsigned int num_times = 10000;
+
+single_acquisition_lock m1, m2, m3, m4, m5;
+
+bool insideFlag = false;
+int count = 0;
+
+thread T_Mutex_Scoped {};
+
+void main( T_Mutex_Scoped & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		{
+			scoped_lock(single_acquisition_lock) s{m1};
+			count++;
+		}
+		{
+			scoped_lock(single_acquisition_lock) s{m1};
+			assert(!insideFlag);
+			insideFlag = true;
+			assert(insideFlag);
+			insideFlag = false;
+		}
+	}
+}
+
+thread T_Multi_Scoped {};
+
+void main( T_Multi_Scoped & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		{
+			scoped_lock(single_acquisition_lock) s{m1};
+			assert(!insideFlag);
+			insideFlag = true;
+			assert(insideFlag);
+			insideFlag = false;
+		}
+		{
+			scoped_lock(single_acquisition_lock) s1{m1};
+			scoped_lock(single_acquisition_lock) s2{m2};
+			scoped_lock(single_acquisition_lock) s3{m3};
+			scoped_lock(single_acquisition_lock) s4{m4};
+			scoped_lock(single_acquisition_lock) s5{m5};
+			assert(!insideFlag);
+			insideFlag = true;
+			assert(insideFlag);
+			insideFlag = false;
+		}
+		{
+			scoped_lock(single_acquisition_lock) s1{m1};
+			scoped_lock(single_acquisition_lock) s3{m3};
+			assert(!insideFlag);
+			insideFlag = true;
+			assert(insideFlag);
+			insideFlag = false;
+		}
+		{
+			scoped_lock(single_acquisition_lock) s1{m1};
+			scoped_lock(single_acquisition_lock) s2{m2};
+			scoped_lock(single_acquisition_lock) s4{m4};
+			assert(!insideFlag);
+			insideFlag = true;
+			assert(insideFlag);
+			insideFlag = false;
+		}
+		{
+			scoped_lock(single_acquisition_lock) s1{m1};
+			scoped_lock(single_acquisition_lock) s3{m3};
+			scoped_lock(single_acquisition_lock) s4{m4};
+			scoped_lock(single_acquisition_lock) s5{m5};
+			assert(!insideFlag);
+			insideFlag = true;
+			assert(insideFlag);
+			insideFlag = false;
+		}
+	}
+}
+
+int num_tasks = 10;
+int main() {
+	processor p[10];
+
+	printf("Start Test: single scoped lock mutual exclusion\n");
+	{
+		T_Mutex_Scoped t[10];
+	}
+	assert(count == num_tasks * num_times);
+	printf("End Test: single scoped lock mutual exclusion\n");
+	printf("Start Test: multi scoped lock deadlock/mutual exclusion\n");
+	{
+		T_Multi_Scoped t[10];
+	}
+	printf("End Test: multi scoped lock deadlock/mutual exclusion\n");
+}

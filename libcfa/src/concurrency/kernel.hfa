@@ -47,16 +47,36 @@ void  ?{}(io_context_params & this);
 // Processor
 extern struct cluster * mainCluster;
 
-// Processor id, required for scheduling threads
-
-
+// Coroutine used py processors for the 2-step context switch
 coroutine processorCtx_t {
 	struct processor * proc;
 };
 
+struct io_future_t;
 
+// Information needed for idle sleep
 struct __fd_waitctx {
-	volatile int fd;
+	// semaphore/future like object
+	// values can be 0, 1 or some file descriptor.
+	// 0 - is the default state
+	// 1 - means the proc should wake-up immediately
+	// FD - means the proc is going asleep and should be woken by writing to the FD.
+	volatile int sem;
+
+	// The event FD that corresponds to this processor
+	int evfd;
+
+	// buffer into which the proc will read from evfd
+	// unused if not using io_uring for idle sleep
+	void * rdbuf;
+
+	// future use to track the read of the eventfd
+	// unused if not using io_uring for idle sleep
+	io_future_t * ftr;
+
+	volatile unsigned long long wake__time;
+	volatile unsigned long long sleep_time;
+	volatile unsigned long long drain_time;
 };
 
 // Wrapper around kernel threads
@@ -91,6 +111,7 @@ struct __attribute__((aligned(128))) processor {
 
 	struct {
 		$io_context * ctx;
+		unsigned target;
 		volatile bool pending;
 		volatile bool dirty;
 	} io;
@@ -102,10 +123,7 @@ struct __attribute__((aligned(128))) processor {
 	// If true, a preemption was triggered in an unsafe region, the processor must preempt as soon as possible
 	bool pending_preemption;
 
-	// Idle lock (kernel semaphore)
-	int idle_fd;
-
-	// Idle waitctx
+	// context for idle sleep
 	struct __fd_waitctx idle_wctx;
 
 	// Termination synchronisation (user semaphore)
@@ -154,59 +172,19 @@ struct __attribute__((aligned(128))) __intrusive_lane_t;
 void  ?{}(__intrusive_lane_t & this);
 void ^?{}(__intrusive_lane_t & this);
 
-// Aligned timestamps which are used by the relaxed ready queue
+// Aligned timestamps which are used by the ready queue and io subsystem
 struct __attribute__((aligned(128))) __timestamp_t {
 	volatile unsigned long long tv;
 	volatile unsigned long long ma;
 };
 
-struct __attribute__((aligned(16))) __cache_id_t {
-	volatile unsigned id;
-};
-
-// Aligned timestamps which are used by the relaxed ready queue
-struct __attribute__((aligned(128))) __help_cnts_t {
-	volatile unsigned long long src;
-	volatile unsigned long long dst;
-	volatile unsigned long long tri;
-};
-
 static inline void  ?{}(__timestamp_t & this) { this.tv = 0; this.ma = 0; }
 static inline void ^?{}(__timestamp_t &) {}
 
-struct __attribute__((aligned(128))) __ready_queue_caches_t;
-void  ?{}(__ready_queue_caches_t & this);
-void ^?{}(__ready_queue_caches_t & this);
 
-//TODO adjust cache size to ARCHITECTURE
-// Structure holding the ready queue
-struct __ready_queue_t {
-	// Data tracking the actual lanes
-	// On a seperate cacheline from the used struct since
-	// used can change on each push/pop but this data
-	// only changes on shrink/grow
-	struct {
-		// Arary of lanes
-		__intrusive_lane_t * volatile data;
-
-		// Array of times
-		__timestamp_t * volatile tscs;
-
-		__cache_id_t * volatile caches;
-
-		// Array of stats
-		__help_cnts_t * volatile help;
-
-		// Number of lanes (empty or not)
-		volatile size_t count;
-	} lanes;
+struct __attribute__((aligned(16))) __cache_id_t {
+	volatile unsigned id;
 };
-
-void  ?{}(__ready_queue_t & this);
-void ^?{}(__ready_queue_t & this);
-#if !defined(__CFA_NO_STATISTICS__)
-	unsigned cnt(const __ready_queue_t & this, unsigned idx);
-#endif
 
 // Idle Sleep
 struct __cluster_proc_list {
@@ -232,8 +210,35 @@ struct __cluster_proc_list {
 //-----------------------------------------------------------------------------
 // Cluster
 struct __attribute__((aligned(128))) cluster {
-	// Ready queue for threads
-	__ready_queue_t ready_queue;
+	struct {
+		struct {
+			// Arary of subqueues
+			__intrusive_lane_t * data;
+
+			// Time since subqueues were processed
+			__timestamp_t * tscs;
+
+			// Number of subqueue / timestamps
+			size_t count;
+		} readyQ;
+
+		struct {
+			// Array of $io_
+			$io_context ** data;
+
+ 			// Time since subqueues were processed
+			__timestamp_t * tscs;
+
+			// Number of I/O subqueues
+ 			size_t count;
+		} io;
+
+		// Cache each kernel thread belongs to
+		__cache_id_t * caches;
+	} sched;
+
+	// // Ready queue for threads
+	// __ready_queue_t ready_queue;
 
 	// Name of the cluster
 	const char * name;

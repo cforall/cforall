@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 13:48:00 2021
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  2 23:07:54 2022
-// Update Count     : 33
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Mar 28  9:42:00 2022
+// Update Count     : 34
 //
 
 #include "MultiLevelExit.hpp"
@@ -39,7 +39,7 @@ class Entry {
 	Target secondTarget;
 
 	enum Kind {
-		ForStmtK, WhileDoStmtK, CompoundStmtK, IfStmtK, CaseStmtK, SwitchStmtK, TryStmtK
+		ForStmtK, WhileDoStmtK, CompoundStmtK, IfStmtK, CaseClauseK, SwitchStmtK, TryStmtK
 	} kind;
 
 	bool fallDefaultValid = true;
@@ -57,28 +57,28 @@ class Entry {
 		stmt( stmt ), firstTarget( breakExit ), secondTarget(), kind( CompoundStmtK ) {}
 	Entry( const IfStmt *stmt, Label breakExit ) :
 		stmt( stmt ), firstTarget( breakExit ), secondTarget(), kind( IfStmtK ) {}
-	Entry( const CaseStmt *stmt, Label fallExit ) :
-		stmt( stmt ), firstTarget( fallExit ), secondTarget(), kind( CaseStmtK ) {}
+	Entry( const CaseClause *, const CompoundStmt *stmt, Label fallExit ) :
+		stmt( stmt ), firstTarget( fallExit ), secondTarget(), kind( CaseClauseK ) {}
 	Entry( const SwitchStmt *stmt, Label breakExit, Label fallDefaultExit ) :
 		stmt( stmt ), firstTarget( breakExit ), secondTarget( fallDefaultExit ), kind( SwitchStmtK ) {}
 	Entry( const TryStmt *stmt, Label breakExit ) :
 		stmt( stmt ), firstTarget( breakExit ), secondTarget(), kind( TryStmtK ) {}
 
 	bool isContTarget() const { return kind <= WhileDoStmtK; }
-	bool isBreakTarget() const { return kind != CaseStmtK; }
-	bool isFallTarget() const { return kind == CaseStmtK; }
+	bool isBreakTarget() const { return kind != CaseClauseK; }
+	bool isFallTarget() const { return kind == CaseClauseK; }
 	bool isFallDefaultTarget() const { return kind == SwitchStmtK; }
 
 	// These routines set a target as being "used" by a BranchStmt
 	Label useContExit() { assert( kind <= WhileDoStmtK ); return useTarget(secondTarget); }
-	Label useBreakExit() { assert( kind != CaseStmtK ); return useTarget(firstTarget); }
-	Label useFallExit() { assert( kind == CaseStmtK );  return useTarget(firstTarget); }
+	Label useBreakExit() { assert( kind != CaseClauseK ); return useTarget(firstTarget); }
+	Label useFallExit() { assert( kind == CaseClauseK );  return useTarget(firstTarget); }
 	Label useFallDefaultExit() { assert( kind == SwitchStmtK ); return useTarget(secondTarget); }
 
 	// These routines check if a specific label for a statement is used by a BranchStmt
 	bool isContUsed() const { assert( kind <= WhileDoStmtK ); return secondTarget.used; }
-	bool isBreakUsed() const { assert( kind != CaseStmtK ); return firstTarget.used; }
-	bool isFallUsed() const { assert( kind == CaseStmtK ); return firstTarget.used; }
+	bool isBreakUsed() const { assert( kind != CaseClauseK ); return firstTarget.used; }
+	bool isFallUsed() const { assert( kind == CaseClauseK ); return firstTarget.used; }
 	bool isFallDefaultUsed() const { assert( kind == SwitchStmtK ); return secondTarget.used; }
 	void seenDefault() { fallDefaultValid = false; }
 	bool isFallDefaultValid() const { return fallDefaultValid; }
@@ -114,7 +114,7 @@ struct MultiLevelExitCore final :
 	const WhileDoStmt * postvisit( const WhileDoStmt * );
 	void previsit( const ForStmt * );
 	const ForStmt * postvisit( const ForStmt * );
-	const CaseStmt * previsit( const CaseStmt * );
+	const CaseClause * previsit( const CaseClause * );
 	void previsit( const IfStmt * );
 	const IfStmt * postvisit( const IfStmt * );
 	void previsit( const SwitchStmt * );
@@ -122,7 +122,7 @@ struct MultiLevelExitCore final :
 	void previsit( const ReturnStmt * );
 	void previsit( const TryStmt * );
 	void postvisit( const TryStmt * );
-	void previsit( const FinallyStmt * );
+	void previsit( const FinallyClause * );
 
 	const Stmt * mutateLoop( const Stmt * body, Entry& );
 
@@ -287,8 +287,7 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 		  // Check if switch or choose has default clause.
 		  auto switchStmt = strict_dynamic_cast< const SwitchStmt * >( targetEntry->stmt );
 		  bool foundDefault = false;
-		  for ( auto subStmt : switchStmt->stmts ) {
-			  const CaseStmt * caseStmt = subStmt.strict_as<CaseStmt>();
+		  for ( auto caseStmt : switchStmt->cases ) {
 			  if ( caseStmt->isDefault() ) {
 				  foundDefault = true;
 				  break;
@@ -364,7 +363,7 @@ void push_front(
 	vec[ 0 ] = element;
 }
 
-const CaseStmt * MultiLevelExitCore::previsit( const CaseStmt * stmt ) {
+const CaseClause * MultiLevelExitCore::previsit( const CaseClause * stmt ) {
 	visit_children = false;
 
 	// If default, mark seen.
@@ -374,28 +373,30 @@ const CaseStmt * MultiLevelExitCore::previsit( const CaseStmt * stmt ) {
 	}
 
 	// The cond may not exist, but if it does update it now.
-	visitor->maybe_accept( stmt, &CaseStmt::cond );
+	visitor->maybe_accept( stmt, &CaseClause::cond );
 
 	// Just save the mutated node for simplicity.
-	CaseStmt * mutStmt = mutate( stmt );
+	CaseClause * mutStmt = mutate( stmt );
 
-	Label fallLabel = newLabel( "fallThrough", stmt );
+	Label fallLabel = newLabel( "fallThrough", stmt->location );
 	if ( ! mutStmt->stmts.empty() ) {
+		// These should already be in a block.
+		auto first = mutStmt->stmts.front().get_and_mutate();
+		auto block = strict_dynamic_cast<CompoundStmt *>( first );
+
 		// Ensure that the stack isn't corrupted by exceptions in fixBlock.
 		auto guard = makeFuncGuard(
-			[&](){ enclosing_control_structures.emplace_back( mutStmt, fallLabel ); },
+			[&](){ enclosing_control_structures.emplace_back( mutStmt, block, fallLabel ); },
 			[this](){ enclosing_control_structures.pop_back(); }
 			);
 
-		// These should already be in a block.
-		auto block = mutate( mutStmt->stmts.front().strict_as<CompoundStmt>() );
 		block->kids = fixBlock( block->kids, true );
 
 		// Add fallthrough label if necessary.
 		assert( ! enclosing_control_structures.empty() );
 		Entry & entry = enclosing_control_structures.back();
 		if ( entry.isFallUsed() ) {
-			mutStmt->stmts.push_back( labelledNullStmt( mutStmt->location, entry.useFallExit() ) );
+			mutStmt->stmts.push_back( labelledNullStmt( block->location, entry.useFallExit() ) );
 		}
 	}
 	assert( ! enclosing_control_structures.empty() );
@@ -432,24 +433,22 @@ const IfStmt * MultiLevelExitCore::postvisit( const IfStmt * stmt ) {
 	return stmt;
 }
 
-bool isDefaultCase( const ptr<Stmt> & stmt ) {
-	const CaseStmt * caseStmt = stmt.strict_as<CaseStmt>();
-	return caseStmt->isDefault();
+static bool isDefaultCase( const ptr<CaseClause> & caseClause ) {
+	return caseClause->isDefault();
 }
 
 void MultiLevelExitCore::previsit( const SwitchStmt * stmt ) {
 	Label label = newLabel( "switchBreak", stmt );
-	auto it = find_if( stmt->stmts.rbegin(), stmt->stmts.rend(), isDefaultCase );
+	auto it = find_if( stmt->cases.rbegin(), stmt->cases.rend(), isDefaultCase );
 
-	const CaseStmt * defaultCase = it != stmt->stmts.rend() ? (it)->strict_as<CaseStmt>() : nullptr;
-	Label defaultLabel = defaultCase ? newLabel( "fallThroughDefault", defaultCase ) : Label( stmt->location, "" );
+	const CaseClause * defaultCase = it != stmt->cases.rend() ? (*it) : nullptr;
+	Label defaultLabel = defaultCase ? newLabel( "fallThroughDefault", defaultCase->location ) : Label( stmt->location, "" );
 	enclosing_control_structures.emplace_back( stmt, label, defaultLabel );
 	GuardAction( [this]() { enclosing_control_structures.pop_back(); } );
 
 	// Collect valid labels for fallthrough. It starts with all labels at this level, then remove as each is seen during
 	// traversal.
-	for ( const Stmt * stmt : stmt->stmts ) {
-		auto * caseStmt = strict_dynamic_cast< const CaseStmt * >( stmt );
+	for ( const CaseClause * caseStmt : stmt->cases ) {
 		if ( caseStmt->stmts.empty() ) continue;
 		auto block = caseStmt->stmts.front().strict_as<CompoundStmt>();
 		for ( const Stmt * stmt : block->kids ) {
@@ -470,13 +469,13 @@ const SwitchStmt * MultiLevelExitCore::postvisit( const SwitchStmt * stmt ) {
 		// To keep the switch statements uniform (all direct children of a SwitchStmt should be CastStmts), append the
 		// exit label and break to the last case, create a default case if no cases.
 		SwitchStmt * mutStmt = mutate( stmt );
-		if ( mutStmt->stmts.empty() ) {
-			mutStmt->stmts.push_back( new CaseStmt( mutStmt->location, nullptr, {} ) );
+		if ( mutStmt->cases.empty() ) {
+			mutStmt->cases.push_back( new CaseClause( mutStmt->location, nullptr, {} ) );
 		}
 
-		auto caseStmt = mutStmt->stmts.back().strict_as<CaseStmt>();
+		auto caseStmt = mutStmt->cases.back().get();
 		auto mutCase = mutate( caseStmt );
-		mutStmt->stmts.back() = mutCase;
+		mutStmt->cases.back() = mutCase;
 
 		Label label( mutCase->location, "breakLabel" );
 		auto branch = new BranchStmt( mutCase->location, BranchStmt::Break, label );
@@ -513,7 +512,7 @@ void MultiLevelExitCore::postvisit( const TryStmt * stmt ) {
 	}
 }
 
-void MultiLevelExitCore::previsit( const FinallyStmt * ) {
+void MultiLevelExitCore::previsit( const FinallyClause * ) {
 	GuardAction([this, old = move( enclosing_control_structures)](){ enclosing_control_structures = move(old); });
 	enclosing_control_structures = vector<Entry>();
 	GuardValue( inFinally ) = true;

@@ -146,6 +146,10 @@ TraitInstType::TraitInstType(
 
 // --- TypeInstType
 
+TypeInstType::TypeInstType( const TypeDecl * b,
+	CV::Qualifiers q, std::vector<ptr<Attribute>> && as )
+: BaseInstType( b->name, q, move(as) ), base( b ), kind( b->kind ) {}
+
 void TypeInstType::set_base( const TypeDecl * b ) {
 	base = b;
 	kind = b->kind;

@@ -31,7 +31,8 @@ extern "C" {
 }
 
 // CFA Includes
-#include "kernel_private.hfa"
+#include "kernel/private.hfa"
+#include "iofwd.hfa"
 #include "startup.hfa"					// STARTUP_PRIORITY_XXX
 #include "limits.hfa"
 #include "math.hfa"
@@ -96,6 +97,8 @@ static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * 
 // Forward Declarations for other modules
 extern void __kernel_alarm_startup(void);
 extern void __kernel_alarm_shutdown(void);
+extern void __cfa_io_start( processor * );
+extern void __cfa_io_stop ( processor * );
 
 //-----------------------------------------------------------------------------
 // Other Forward Declarations
@@ -110,6 +113,8 @@ KERNEL_STORAGE(processor,            mainProcessor);
 KERNEL_STORAGE(thread$,	             mainThread);
 KERNEL_STORAGE(__stack_t,            mainThreadCtx);
 KERNEL_STORAGE(__scheduler_RWLock_t, __scheduler_lock);
+KERNEL_STORAGE(eventfd_t,            mainIdleEventFd);
+KERNEL_STORAGE(io_future_t,          mainIdleFuture);
 #if !defined(__CFA_NO_STATISTICS__)
 KERNEL_STORAGE(__stats_t, mainProcStats);
 #endif
@@ -223,6 +228,11 @@ static void __kernel_startup(void) {
 	mainProcessor = (processor *)&storage_mainProcessor;
 	(*mainProcessor){};
 
+	mainProcessor->idle_wctx.rdbuf = &storage_mainIdleEventFd;
+	mainProcessor->idle_wctx.ftr   = (io_future_t*)&storage_mainIdleFuture;
+	/* paranoid */ verify( sizeof(storage_mainIdleEventFd) == sizeof(eventfd_t) );
+
+	__cfa_io_start( mainProcessor );
 	register_tls( mainProcessor );
 
 	// Start by initializing the main thread
@@ -304,6 +314,7 @@ static void __kernel_shutdown(void) {
 	mainProcessor->local_data = 0p;
 
 	unregister_tls( mainProcessor );
+	__cfa_io_stop( mainProcessor );
 
 	// Destroy the main processor and its context in reverse order of construction
 	// These were manually constructed so we need manually destroy them
@@ -352,7 +363,15 @@ static void * __invoke_processor(void * arg) {
 	__cfaabi_tls.preemption_state.[enabled, disable_count] = [false, 1];
 	proc->local_data = &__cfaabi_tls;
 
+	__cfa_io_start( proc );
 	register_tls( proc );
+
+	// used for idle sleep when io_uring is present
+	io_future_t future;
+	eventfd_t idle_buf;
+	proc->idle_wctx.ftr = &future;
+	proc->idle_wctx.rdbuf = &idle_buf;
+
 
 	// SKULLDUGGERY: We want to create a context for the processor coroutine
 	// which is needed for the 2-step context switch. However, there is no reason
@@ -394,6 +413,7 @@ static void * __invoke_processor(void * arg) {
 	proc->local_data = 0p;
 
 	unregister_tls( proc );
+	__cfa_io_stop( proc );
 
 	return 0p;
 }
@@ -514,7 +534,7 @@ static void init(processor & this, const char name[], cluster & _cltr, thread$ *
 	this.cltr = &_cltr;
 	this.rdq.its = 0;
 	this.rdq.itr = 0;
-	this.rdq.id  = MAX;
+	this.rdq.id  = 0;
 	this.rdq.target = MAX;
 	this.rdq.last = MAX;
 	this.rdq.cpu = 0;
@@ -531,17 +551,18 @@ static void init(processor & this, const char name[], cluster & _cltr, thread$ *
 
 	this.local_data = 0p;
 
-	this.idle_fd = eventfd(0, 0);
-	if (idle_fd < 0) {
+	idle_wctx.evfd = eventfd(0, 0);
+	if (idle_wctx.evfd < 0) {
 		abort("KERNEL ERROR: PROCESSOR EVENTFD - %s\n", strerror(errno));
 	}
 
-	this.idle_wctx.fd = 0;
+	idle_wctx.sem = 0;
+	idle_wctx.wake__time = 0;
 
 	// I'm assuming these two are reserved for standard input and output
 	// so I'm using them as sentinels with idle_wctx.
-	/* paranoid */ verify( this.idle_fd != 0 );
-	/* paranoid */ verify( this.idle_fd != 1 );
+	/* paranoid */ verify( idle_wctx.evfd != 0 );
+	/* paranoid */ verify( idle_wctx.evfd != 1 );
 
 	#if !defined(__CFA_NO_STATISTICS__)
 		print_stats = 0;
@@ -553,7 +574,7 @@ static void init(processor & this, const char name[], cluster & _cltr, thread$ *
 
 // Not a ctor, it just preps the destruction but should not destroy members
 static void deinit(processor & this) {
-	close(this.idle_fd);
+	close(this.idle_wctx.evfd);
 }
 
 void ?{}(processor & this, const char name[], cluster & _cltr, thread$ * initT) {
@@ -604,7 +625,11 @@ static void ?{}(__cluster_proc_list & this) {
 void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned num_io, const io_context_params & io_params) with( this ) {
 	this.name = name;
 	this.preemption_rate = preemption_rate;
-	ready_queue{};
+	this.sched.readyQ.data = 0p;
+	this.sched.readyQ.tscs = 0p;
+ 	this.sched.readyQ.count = 0;
+	this.sched.io.tscs = 0p;
+	this.sched.caches = 0p;
 
 	#if !defined(__CFA_NO_STATISTICS__)
 		print_stats = 0;
@@ -643,7 +668,16 @@ void ^?{}(cluster & this) {
 
 	// Unlock the RWlock
 	ready_mutate_unlock( last_size );
+
+	ready_queue_close( &this );
+	/* paranoid */ verify( this.sched.readyQ.data == 0p );
+	/* paranoid */ verify( this.sched.readyQ.tscs == 0p );
+ 	/* paranoid */ verify( this.sched.readyQ.count == 0 );
+	/* paranoid */ verify( this.sched.io.tscs == 0p );
+	/* paranoid */ verify( this.sched.caches == 0p );
+
 	enable_interrupts( false ); // Don't poll, could be in main cluster
+
 
 	#if !defined(__CFA_NO_STATISTICS__)
 		if( 0 != this.print_stats ) {

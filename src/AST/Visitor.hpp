@@ -40,13 +40,13 @@ public:
     virtual const ast::Stmt *             visit( const ast::WhileDoStmt          * ) = 0;
     virtual const ast::Stmt *             visit( const ast::ForStmt              * ) = 0;
     virtual const ast::Stmt *             visit( const ast::SwitchStmt           * ) = 0;
-    virtual const ast::Stmt *             visit( const ast::CaseStmt             * ) = 0;
+    virtual const ast::CaseClause *       visit( const ast::CaseClause           * ) = 0;
     virtual const ast::Stmt *             visit( const ast::BranchStmt           * ) = 0;
     virtual const ast::Stmt *             visit( const ast::ReturnStmt           * ) = 0;
     virtual const ast::Stmt *             visit( const ast::ThrowStmt            * ) = 0;
     virtual const ast::Stmt *             visit( const ast::TryStmt              * ) = 0;
-    virtual const ast::Stmt *             visit( const ast::CatchStmt            * ) = 0;
-    virtual const ast::Stmt *             visit( const ast::FinallyStmt          * ) = 0;
+    virtual const ast::CatchClause *      visit( const ast::CatchClause          * ) = 0;
+    virtual const ast::FinallyClause *    visit( const ast::FinallyClause        * ) = 0;
     virtual const ast::Stmt *             visit( const ast::SuspendStmt          * ) = 0;
     virtual const ast::Stmt *             visit( const ast::WaitForStmt          * ) = 0;
     virtual const ast::Decl *             visit( const ast::WithStmt             * ) = 0;

@@ -942,7 +942,7 @@ namespace ResolvExpr {
 		const XInstType * handleRefType( const XInstType * inst, const ast::Type * other ) {
 			// check that the other type is compatible and named the same
 			auto otherInst = dynamic_cast< const XInstType * >( other );
-			this->result = otherInst && inst->name == otherInst->name;
+			if (otherInst && inst->name == otherInst->name) this->result = otherInst;
 			return otherInst;
 		}
 

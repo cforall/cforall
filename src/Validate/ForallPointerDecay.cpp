@@ -40,7 +40,7 @@ ast::FunctionType * makeFuncType( const ast::FunctionDecl * decl ) {
 	}
 	for ( auto & type_param : decl->type_params ) {
 		type->forall.emplace_back(
-			new ast::TypeInstType( type_param->name, type_param ) );
+			new ast::TypeInstType( type_param ) );
 	}
 	for ( auto & assertion : decl->assertions ) {
 		type->assertions.emplace_back( new ast::VariableExpr(
@@ -69,11 +69,7 @@ struct TraitExpander final {
 			toCString( inst ) );
 		AssertionList assertions;
 		// Substitute trait decl parameters for instance parameters.
-		ast::TypeSubstitution sub(
-			inst->base->params.begin(),
-			inst->base->params.end(),
-			inst->params.begin()
-		);
+		ast::TypeSubstitution sub( inst->base->params, inst->params );
 		for ( const ast::ptr<ast::Decl> & decl : inst->base->members ) {
 			ast::ptr<ast::DeclWithType> copy =
 				ast::deepCopy( decl.strict_as<ast::DeclWithType>() );

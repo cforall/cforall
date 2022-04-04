@@ -182,18 +182,19 @@ libcfa_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 libcfathread_la_LIBADD =
 am__libcfathread_la_SOURCES_DIST = concurrency/alarm.hfa \
 	concurrency/coroutine.hfa concurrency/exception.hfa \
-	concurrency/kernel.hfa concurrency/locks.hfa \
-	concurrency/monitor.hfa concurrency/mutex.hfa \
-	concurrency/thread.hfa concurrency/alarm.cfa \
-	concurrency/coroutine.cfa concurrency/exception.cfa \
-	concurrency/kernel.cfa concurrency/locks.cfa \
+	concurrency/kernel.hfa concurrency/kernel/cluster.hfa \
+	concurrency/locks.hfa concurrency/monitor.hfa \
+	concurrency/mutex.hfa concurrency/thread.hfa \
+	concurrency/alarm.cfa concurrency/coroutine.cfa \
+	concurrency/exception.cfa concurrency/kernel.cfa \
+	concurrency/kernel/cluster.cfa concurrency/locks.cfa \
 	concurrency/monitor.cfa concurrency/mutex.cfa \
 	concurrency/thread.cfa bits/signal.hfa \
 	concurrency/clib/cfathread.cfa \
 	concurrency/CtxSwitch-@ARCHITECTURE@.S concurrency/invoke.c \
 	concurrency/io.cfa concurrency/io/setup.cfa \
 	concurrency/io/types.hfa concurrency/io/call.cfa \
-	concurrency/iofwd.hfa concurrency/kernel_private.hfa \
+	concurrency/iofwd.hfa concurrency/kernel/private.hfa \
 	concurrency/kernel/startup.cfa concurrency/preemption.cfa \
 	concurrency/preemption.hfa concurrency/ready_queue.cfa \
 	concurrency/ready_subqueue.hfa concurrency/snzi.hfa \
@@ -201,6 +202,7 @@ am__libcfathread_la_SOURCES_DIST = concurrency/alarm.hfa \
 @BUILDLIB_TRUE@am__objects_4 = concurrency/alarm.lo \
 @BUILDLIB_TRUE@	concurrency/coroutine.lo \
 @BUILDLIB_TRUE@	concurrency/exception.lo concurrency/kernel.lo \
+@BUILDLIB_TRUE@	concurrency/kernel/cluster.lo \
 @BUILDLIB_TRUE@	concurrency/locks.lo concurrency/monitor.lo \
 @BUILDLIB_TRUE@	concurrency/mutex.lo concurrency/thread.lo
 @BUILDLIB_TRUE@am__objects_5 = $(am__objects_1) $(am__objects_4) \
@@ -286,15 +288,16 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	time_t.hfa bits/algorithm.hfa bits/align.hfa \
 	bits/containers.hfa bits/debug.hfa bits/defs.hfa \
 	bits/locks.hfa bits/collection.hfa bits/stack.hfa \
-	bits/queue.hfa bits/sequence.hfa containers/array.hfa \
-	concurrency/iofwd.hfa containers/list.hfa \
-	containers/queueLockFree.hfa containers/stackLockFree.hfa \
-	containers/string_sharectx.hfa containers/vector2.hfa \
-	vec/vec.hfa vec/vec2.hfa vec/vec3.hfa vec/vec4.hfa \
-	concurrency/alarm.hfa concurrency/coroutine.hfa \
+	bits/queue.hfa bits/sequence.hfa concurrency/iofwd.hfa \
+	concurrency/barrier.hfa containers/array.hfa \
+	containers/list.hfa containers/queueLockFree.hfa \
+	containers/stackLockFree.hfa containers/string_sharectx.hfa \
+	containers/vector2.hfa vec/vec.hfa vec/vec2.hfa vec/vec3.hfa \
+	vec/vec4.hfa concurrency/alarm.hfa concurrency/coroutine.hfa \
 	concurrency/exception.hfa concurrency/kernel.hfa \
-	concurrency/locks.hfa concurrency/monitor.hfa \
-	concurrency/mutex.hfa concurrency/thread.hfa bits/random.hfa \
+	concurrency/kernel/cluster.hfa concurrency/locks.hfa \
+	concurrency/monitor.hfa concurrency/mutex.hfa \
+	concurrency/thread.hfa bits/random.hfa \
 	concurrency/clib/cfathread.h concurrency/invoke.h \
 	concurrency/future.hfa concurrency/kernel/fwd.hfa \
 	concurrency/mutex_stmt.hfa
@@ -542,8 +545,9 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	bits/stack.hfa \
 @BUILDLIB_TRUE@	bits/queue.hfa \
 @BUILDLIB_TRUE@	bits/sequence.hfa \
-@BUILDLIB_TRUE@	containers/array.hfa \
 @BUILDLIB_TRUE@	concurrency/iofwd.hfa \
+@BUILDLIB_TRUE@	concurrency/barrier.hfa \
+@BUILDLIB_TRUE@	containers/array.hfa \
 @BUILDLIB_TRUE@	containers/list.hfa \
 @BUILDLIB_TRUE@	containers/queueLockFree.hfa \
 @BUILDLIB_TRUE@	containers/stackLockFree.hfa \
@@ -608,6 +612,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/coroutine.hfa \
 @BUILDLIB_TRUE@	concurrency/exception.hfa \
 @BUILDLIB_TRUE@	concurrency/kernel.hfa \
+@BUILDLIB_TRUE@	concurrency/kernel/cluster.hfa \
 @BUILDLIB_TRUE@	concurrency/locks.hfa \
 @BUILDLIB_TRUE@	concurrency/monitor.hfa \
 @BUILDLIB_TRUE@	concurrency/mutex.hfa \
@@ -623,7 +628,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/io/types.hfa \
 @BUILDLIB_TRUE@	concurrency/io/call.cfa \
 @BUILDLIB_TRUE@	concurrency/iofwd.hfa \
-@BUILDLIB_TRUE@	concurrency/kernel_private.hfa \
+@BUILDLIB_TRUE@	concurrency/kernel/private.hfa \
 @BUILDLIB_TRUE@	concurrency/kernel/startup.cfa \
 @BUILDLIB_TRUE@	concurrency/preemption.cfa \
 @BUILDLIB_TRUE@	concurrency/preemption.hfa \
@@ -793,6 +798,14 @@ concurrency/exception.lo: concurrency/$(am__dirstamp) \
 	concurrency/$(DEPDIR)/$(am__dirstamp)
 concurrency/kernel.lo: concurrency/$(am__dirstamp) \
 	concurrency/$(DEPDIR)/$(am__dirstamp)
+concurrency/kernel/$(am__dirstamp):
+	@$(MKDIR_P) concurrency/kernel
+	@: > concurrency/kernel/$(am__dirstamp)
+concurrency/kernel/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) concurrency/kernel/$(DEPDIR)
+	@: > concurrency/kernel/$(DEPDIR)/$(am__dirstamp)
+concurrency/kernel/cluster.lo: concurrency/kernel/$(am__dirstamp) \
+	concurrency/kernel/$(DEPDIR)/$(am__dirstamp)
 concurrency/locks.lo: concurrency/$(am__dirstamp) \
 	concurrency/$(DEPDIR)/$(am__dirstamp)
 concurrency/monitor.lo: concurrency/$(am__dirstamp) \
@@ -825,12 +838,6 @@ concurrency/io/setup.lo: concurrency/io/$(am__dirstamp) \
 	concurrency/io/$(DEPDIR)/$(am__dirstamp)
 concurrency/io/call.lo: concurrency/io/$(am__dirstamp) \
 	concurrency/io/$(DEPDIR)/$(am__dirstamp)
-concurrency/kernel/$(am__dirstamp):
-	@$(MKDIR_P) concurrency/kernel
-	@: > concurrency/kernel/$(am__dirstamp)
-concurrency/kernel/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) concurrency/kernel/$(DEPDIR)
-	@: > concurrency/kernel/$(DEPDIR)/$(am__dirstamp)
 concurrency/kernel/startup.lo: concurrency/kernel/$(am__dirstamp) \
 	concurrency/kernel/$(DEPDIR)/$(am__dirstamp)
 concurrency/preemption.lo: concurrency/$(am__dirstamp) \

@@ -1203,7 +1203,7 @@ namespace Concurrency {
 					noQualifiers,
 					//new TypeofType( noQualifiers, args.front()->clone() )
 					new TypeofType( noQualifiers, new UntypedExpr(
-							new NameExpr( "__get_type" ),
+							new NameExpr( "__get_mutexstmt_lock_type" ),
 							{ args.front()->clone() }
 						) 
 					)
@@ -1215,7 +1215,7 @@ namespace Concurrency {
 			new ListInit(
 				map_range < std::list<Initializer*> > ( args, [](Expression * var ){
 					return new SingleInit( new UntypedExpr(
-							new NameExpr( "__get_ptr" ),
+							new NameExpr( "__get_mutexstmt_lock_ptr" ),
 							{ var }
 					) );
 					//return new SingleInit( new AddressExpr( var ) );
@@ -1226,7 +1226,7 @@ namespace Concurrency {
 		StructInstType * lock_guard_struct = new StructInstType( noQualifiers, lock_guard_decl );
 		TypeExpr * lock_type_expr = new TypeExpr( 
 			new TypeofType( noQualifiers, new UntypedExpr(
-				new NameExpr( "__get_type" ),
+				new NameExpr( "__get_mutexstmt_lock_type" ),
 				{ args.front()->clone() }
 				) 
 			) 

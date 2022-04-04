@@ -422,7 +422,7 @@ namespace {
 			ast::Label switchLabel{
 				loc, targetLabel.newName(), { new ast::Attribute{ "unused" } } };
 
-			std::vector< ast::ptr< ast::Stmt > > branches;
+			std::vector< ast::ptr< ast::CaseClause > > branches;
 			for ( const ast::Init * init : *listInit ) {
 				auto condition = ast::ConstantExpr::from_ulong( loc, cond );
 				++cond;
@@ -431,7 +431,7 @@ namespace {
 				build( callExpr, indices, init, stmts );
 				stmts.emplace_back(
 					new ast::BranchStmt{ loc, ast::BranchStmt::Break, switchLabel } );
-				branches.emplace_back( new ast::CaseStmt{ loc, condition, std::move( stmts ) } );
+				branches.emplace_back( new ast::CaseClause{ loc, condition, std::move( stmts ) } );
 			}
 			out.emplace_back( new ast::SwitchStmt{ loc, index, std::move( branches ) } );
 			out.emplace_back( new ast::NullStmt{ loc, { switchLabel } } );

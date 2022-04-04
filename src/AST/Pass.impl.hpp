@@ -353,7 +353,7 @@ namespace ast {
 		for(size_t i = 0; i < container.size(); i++) {
 			// Take all the elements that are different in 'values'
 			// and swap them into 'container'
-			if( values[i] != nullptr ) std::swap(container[i], values[i]);
+			if( values[i] != nullptr ) swap(container[i], values[i]);
 		}
 
 		// Now the original containers should still have the unchanged values
@@ -398,15 +398,15 @@ namespace ast {
 	}
 
 	template< typename core_t >
-	template<typename node_t, typename parent_t, typename child_t>
+	template<typename node_t, typename super_t, typename field_t>
 	void ast::Pass< core_t >::maybe_accept(
 		const node_t * & parent,
-		child_t parent_t::*child
+		field_t super_t::*field
 	) {
-		static_assert( std::is_base_of<parent_t, node_t>::value, "Error deducing member object" );
+		static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
 
-		if(__pass::skip(parent->*child)) return;
-		const auto & old_val = __pass::get(parent->*child, 0);
+		if(__pass::skip(parent->*field)) return;
+		const auto & old_val = __pass::get(parent->*field, 0);
 
 		static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR");
 
@@ -416,18 +416,18 @@ namespace ast {
 
 		if( new_val.differs ) {
 			auto new_parent = __pass::mutate<core_t>(parent);
-			new_val.apply(new_parent, child);
+			new_val.apply(new_parent, field);
 			parent = new_parent;
 		}
 	}
 
 	template< typename core_t >
-	template<typename node_t, typename parent_t, typename child_t>
+	template<typename node_t, typename super_t, typename field_t>
 	void ast::Pass< core_t >::maybe_accept_as_compound(
 		const node_t * & parent,
-		child_t parent_t::*child
+		field_t super_t::*child
 	) {
-		static_assert( std::is_base_of<parent_t, node_t>::value, "Error deducing member object" );
+		static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
 
 		if(__pass::skip(parent->*child)) return;
 		const auto & old_val = __pass::get(parent->*child, 0);
@@ -892,24 +892,24 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::SwitchStmt * node ) {
 
 	if ( __visit_children() ) {
 		maybe_accept( node, &SwitchStmt::cond  );
-		maybe_accept( node, &SwitchStmt::stmts );
+		maybe_accept( node, &SwitchStmt::cases );
 	}
 
 	VISIT_END( Stmt, node );
 }
 
 //--------------------------------------------------------------------------
-// CaseStmt
+// CaseClause
 template< typename core_t >
-const ast::Stmt * ast::Pass< core_t >::visit( const ast::CaseStmt * node ) {
+const ast::CaseClause * ast::Pass< core_t >::visit( const ast::CaseClause * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &CaseStmt::cond  );
-		maybe_accept( node, &CaseStmt::stmts );
+		maybe_accept( node, &CaseClause::cond  );
+		maybe_accept( node, &CaseClause::stmts );
 	}
 
-	VISIT_END( Stmt, node );
+	VISIT_END( CaseClause, node );
 }
 
 //--------------------------------------------------------------------------
@@ -963,33 +963,33 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::TryStmt * node ) {
 }
 
 //--------------------------------------------------------------------------
-// CatchStmt
+// CatchClause
 template< typename core_t >
-const ast::Stmt * ast::Pass< core_t >::visit( const ast::CatchStmt * node ) {
+const ast::CatchClause * ast::Pass< core_t >::visit( const ast::CatchClause * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
 		// catch statements introduce a level of scope (for the caught exception)
 		guard_symtab guard { *this };
-		maybe_accept( node, &CatchStmt::decl );
-		maybe_accept( node, &CatchStmt::cond );
-		maybe_accept_as_compound( node, &CatchStmt::body );
+		maybe_accept( node, &CatchClause::decl );
+		maybe_accept( node, &CatchClause::cond );
+		maybe_accept_as_compound( node, &CatchClause::body );
 	}
 
-	VISIT_END( Stmt, node );
+	VISIT_END( CatchClause, node );
 }
 
 //--------------------------------------------------------------------------
-// FinallyStmt
+// FinallyClause
 template< typename core_t >
-const ast::Stmt * ast::Pass< core_t >::visit( const ast::FinallyStmt * node ) {
+const ast::FinallyClause * ast::Pass< core_t >::visit( const ast::FinallyClause * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &FinallyStmt::body );
+		maybe_accept( node, &FinallyClause::body );
 	}
 
-	VISIT_END( Stmt, node );
+	VISIT_END( FinallyClause, node );
 }
 
 //--------------------------------------------------------------------------
@@ -1053,14 +1053,14 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitForStmt * node ) {
 		if(mutated) {
 			auto n = __pass::mutate<core_t>(node);
 			for(size_t i = 0; i < new_clauses.size(); i++) {
-				if(new_clauses.at(i).target.func != nullptr) std::swap(n->clauses.at(i).target.func, new_clauses.at(i).target.func);
+				if(new_clauses.at(i).target.func != nullptr) swap(n->clauses.at(i).target.func, new_clauses.at(i).target.func);
 
 				for(size_t j = 0; j < new_clauses.at(i).target.args.size(); j++) {
-					if(new_clauses.at(i).target.args.at(j) != nullptr) std::swap(n->clauses.at(i).target.args.at(j), new_clauses.at(i).target.args.at(j));
+					if(new_clauses.at(i).target.args.at(j) != nullptr) swap(n->clauses.at(i).target.args.at(j), new_clauses.at(i).target.args.at(j));
 				}
 
-				if(new_clauses.at(i).stmt != nullptr) std::swap(n->clauses.at(i).stmt, new_clauses.at(i).stmt);
-				if(new_clauses.at(i).cond != nullptr) std::swap(n->clauses.at(i).cond, new_clauses.at(i).cond);
+				if(new_clauses.at(i).stmt != nullptr) swap(n->clauses.at(i).stmt, new_clauses.at(i).stmt);
+				if(new_clauses.at(i).cond != nullptr) swap(n->clauses.at(i).cond, new_clauses.at(i).cond);
 			}
 			node = n;
 		}
@@ -2150,20 +2150,18 @@ const ast::TypeSubstitution * ast::Pass< core_t >::visit( const ast::TypeSubstit
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		{
-			bool mutated = false;
-			std::unordered_map< ast::TypeInstType::TypeEnvKey, ast::ptr< ast::Type > > new_map;
-			for ( const auto & p : node->typeEnv ) {
-				guard_symtab guard { *this };
-				auto new_node = p.second->accept( *this );
-				if (new_node != p.second) mutated = true;
-				new_map.insert({ p.first, new_node });
-			}
-			if (mutated) {
-				auto new_node = __pass::mutate<core_t>( node );
-				new_node->typeEnv.swap( new_map );
-				node = new_node;
-			}
+		bool mutated = false;
+		std::unordered_map< ast::TypeInstType::TypeEnvKey, ast::ptr< ast::Type > > new_map;
+		for ( const auto & p : node->typeEnv ) {
+			guard_symtab guard { *this };
+			auto new_node = p.second->accept( *this );
+			if (new_node != p.second) mutated = true;
+			new_map.insert({ p.first, new_node });
+		}
+		if (mutated) {
+			auto new_node = __pass::mutate<core_t>( node );
+			new_node->typeEnv.swap( new_map );
+			node = new_node;
 		}
 	}
 

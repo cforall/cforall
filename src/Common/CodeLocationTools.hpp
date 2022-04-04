@@ -9,13 +9,15 @@
 // Author           : Andrew Beach
 // Created On       : Fri Dec  4 15:35:00 2020
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Dec  9  9:53:00 2020
-// Update Count     : 1
+// Last Modified On : Mon Mar 14 15:14:00 2022
+// Update Count     : 2
 //
 
 #pragma once
 
+struct CodeLocation;
 namespace ast {
+	class Node;
 	class TranslationUnit;
 }
 
@@ -27,3 +29,8 @@ void checkAllCodeLocations( char const *, ast::TranslationUnit const & );
 
 // Assign a nearby code-location to any unset code locations in the forest.
 void forceFillCodeLocations( ast::TranslationUnit & unit );
+
+// Fill in code-locations with a parent code location,
+// using the provided CodeLocation as the base.
+ast::Node const *
+	localFillCodeLocations( CodeLocation const &, ast::Node const * );

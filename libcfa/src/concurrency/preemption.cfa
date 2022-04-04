@@ -30,7 +30,7 @@
 
 #include "bits/debug.hfa"
 #include "bits/signal.hfa"
-#include "kernel_private.hfa"
+#include "kernel/private.hfa"
 
 
 #if !defined(__CFA_DEFAULT_PREEMPTION__)

@@ -15,6 +15,7 @@
 
 #include "CodeGen/GenType.h"           // for genPrettyType
 #include "CodeGen/OperatorTable.h"
+#include "Common/CodeLocationTools.hpp"
 #include "Common/PassVisitor.h"        // for PassVisitor, WithStmtsToAdd
 #include "Common/SemanticError.h"      // for SemanticError
 #include "Common/UniqueName.h"         // for UniqueName
@@ -84,7 +85,7 @@ namespace {
 	/// generate temporary ObjectDecls for each argument and return value of each ImplicitCopyCtorExpr,
 	/// generate/resolve copy construction expressions for each, and generate/resolve destructors for both
 	/// arguments and return value temporaries
-	struct ResolveCopyCtors final : public ast::WithGuards, public ast::WithStmtsToAdd<>, public ast::WithSymbolTable, public ast::WithShortCircuiting, public ast::WithVisitorRef<ResolveCopyCtors> {
+	struct ResolveCopyCtors final : public ast::WithGuards, public ast::WithStmtsToAdd<>, public ast::WithSymbolTable, public ast::WithShortCircuiting, public ast::WithVisitorRef<ResolveCopyCtors>, public ast::WithConstTranslationUnit {
 		const ast::Expr * postvisit( const ast::ImplicitCopyCtorExpr * impCpCtorExpr );
 		const ast::StmtExpr * previsit( const ast::StmtExpr * stmtExpr );
 		const ast::UniqueExpr * previsit( const ast::UniqueExpr * unqExpr );
@@ -188,7 +189,7 @@ namespace {
 	/// generate default/copy ctor and dtor calls for user-defined struct ctor/dtors
 	/// for any member that is missing a corresponding ctor/dtor call.
 	/// error if a member is used before constructed
-	struct GenStructMemberCalls final : public ast::WithGuards, public ast::WithShortCircuiting, public ast::WithSymbolTable, public ast::WithVisitorRef<GenStructMemberCalls> {
+	struct GenStructMemberCalls final : public ast::WithGuards, public ast::WithShortCircuiting, public ast::WithSymbolTable, public ast::WithVisitorRef<GenStructMemberCalls>, public ast::WithConstTranslationUnit {
 		void previsit( const ast::FunctionDecl * funcDecl );
 		const ast::DeclWithType * postvisit( const ast::FunctionDecl * funcDecl );
 
@@ -213,7 +214,7 @@ namespace {
 	};
 
 	/// expands ConstructorExpr nodes into comma expressions, using a temporary for the first argument
-	struct FixCtorExprs final : public ast::WithDeclsToAdd<>, public ast::WithSymbolTable, public ast::WithShortCircuiting {
+	struct FixCtorExprs final : public ast::WithDeclsToAdd<>, public ast::WithSymbolTable, public ast::WithShortCircuiting, public ast::WithConstTranslationUnit {
 		const ast::Expr * postvisit( const ast::ConstructorExpr * ctorExpr );
 	};
 
@@ -508,7 +509,7 @@ namespace {
 		// should only be one alternative for copy ctor and dtor expressions, since all arguments are fixed
 		// (VariableExpr and already resolved expression)
 		CP_CTOR_PRINT( std::cerr << "ResolvingCtorDtor " << untyped << std::endl; )
-		ast::ptr<ast::Expr> resolved = ResolvExpr::findVoidExpression(untyped, symtab);
+		ast::ptr<ast::Expr> resolved = ResolvExpr::findVoidExpression(untyped, { symtab, transUnit().global } );
 		assert( resolved );
 		if ( resolved->env ) {
 			// Extract useful information and discard new environments. Keeping them causes problems in PolyMutator passes.
@@ -552,7 +553,7 @@ namespace {
 
 		ast::ptr<ast::Expr> guard = mutArg;
 
-		ast::ptr<ast::ObjectDecl> tmp = new ast::ObjectDecl({}, "__tmp", mutResult, nullptr );
+		ast::ptr<ast::ObjectDecl> tmp = new ast::ObjectDecl(loc, "__tmp", mutResult, nullptr );
 
 		// create and resolve copy constructor
 		CP_CTOR_PRINT( std::cerr << "makeCtorDtor for an argument" << std::endl; )
@@ -586,13 +587,14 @@ namespace {
 	}
 
 	ast::Expr * ResolveCopyCtors::destructRet( const ast::ObjectDecl * ret, const ast::Expr * arg ) {
+		auto global = transUnit().global;
 		// TODO: refactor code for generating cleanup attribute, since it's common and reused in ~3-4 places
 		// check for existing cleanup attribute before adding another(?)
 		// need to add __Destructor for _tmp_cp variables as well
 
-		assertf( ast::dtorStruct, "Destructor generation requires __Destructor definition." );
-		assertf( ast::dtorStruct->members.size() == 2, "__Destructor definition does not have expected fields." );
-		assertf( ast::dtorStructDestroy, "Destructor generation requires __destroy_Destructor." );
+		assertf( global.dtorStruct, "Destructor generation requires __Destructor definition." );
+		assertf( global.dtorStruct->members.size() == 2, "__Destructor definition does not have expected fields." );
+		assertf( global.dtorDestroy, "Destructor generation requires __destroy_Destructor." );
 
 		const CodeLocation loc = ret->location;
 
@@ -609,7 +611,7 @@ namespace {
 		if ( ! dtor->env ) dtor->env = maybeClone( env );
 		auto dtorFunc = getDtorFunc( ret, new ast::ExprStmt(loc, dtor ), stmtsToAddBefore );
 
-		auto dtorStructType = new ast::StructInstType(ast::dtorStruct);
+		auto dtorStructType = new ast::StructInstType( global.dtorStruct );
 
 		// what does this do???
 		dtorStructType->params.push_back( new ast::TypeExpr(loc, new ast::VoidType() ) );
@@ -621,11 +623,11 @@ namespace {
 
 		static UniqueName namer( "_ret_dtor" );
 		auto retDtor = new ast::ObjectDecl(loc, namer.newName(), dtorStructType, new ast::ListInit(loc, { new ast::SingleInit(loc, ast::ConstantExpr::null(loc) ), new ast::SingleInit(loc, new ast::CastExpr( new ast::VariableExpr(loc, dtorFunc ), dtorType ) ) } ) );
-		retDtor->attributes.push_back( new ast::Attribute( "cleanup", { new ast::VariableExpr(loc, ast::dtorStructDestroy ) } ) );
+		retDtor->attributes.push_back( new ast::Attribute( "cleanup", { new ast::VariableExpr(loc, global.dtorDestroy ) } ) );
 		stmtsToAddBefore.push_back( new ast::DeclStmt(loc, retDtor ) );
 
 		if ( arg ) {
-			auto member = new ast::MemberExpr(loc, ast::dtorStruct->members.front().strict_as<ast::DeclWithType>(), new ast::VariableExpr(loc, retDtor ) );
+			auto member = new ast::MemberExpr(loc, global.dtorStruct->members.front().strict_as<ast::DeclWithType>(), new ast::VariableExpr(loc, retDtor ) );
 			auto object = new ast::CastExpr( new ast::AddressExpr( new ast::VariableExpr(loc, ret ) ), new ast::PointerType(new ast::VoidType() ) );
 			ast::Expr * assign = createBitwiseAssignment( member, object );
 			return new ast::CommaExpr(loc, new ast::CommaExpr(loc, arg, assign ), new ast::VariableExpr(loc, ret ) );
@@ -798,16 +800,22 @@ namespace {
 
 	// to prevent warnings ('_unq0' may be used uninitialized in this function),
 	// insert an appropriate zero initializer for UniqueExpr temporaries.
-	ast::Init * makeInit( const ast::Type * t ) {
+	ast::Init * makeInit( const ast::Type * t, CodeLocation const & loc ) {
 		if ( auto inst = dynamic_cast< const ast::StructInstType * >( t ) ) {
 			// initizer for empty struct must be empty
-			if ( inst->base->members.empty() ) return new ast::ListInit({}, {});
+			if ( inst->base->members.empty() ) {
+				return new ast::ListInit( loc, {} );
+			}
 		} else if ( auto inst = dynamic_cast< const ast::UnionInstType * >( t ) ) {
 			// initizer for empty union must be empty
-			if ( inst->base->members.empty() ) return new ast::ListInit({}, {});
+			if ( inst->base->members.empty() ) {
+				return new ast::ListInit( loc, {} );
+			}
 		}
 
-		return new ast::ListInit( {}, { new ast::SingleInit( {}, ast::ConstantExpr::from_int({}, 0) ) } );
+		return new ast::ListInit( loc, {
+			new ast::SingleInit( loc, ast::ConstantExpr::from_int( loc, 0 ) )
+		} );
 	}
 
 	const ast::UniqueExpr * ResolveCopyCtors::previsit( const ast::UniqueExpr * unqExpr ) {
@@ -831,7 +839,7 @@ namespace {
 				mutExpr->var = var;
 			} else {
 				// expr isn't a call expr, so create a new temporary variable to use to hold the value of the unique expression
-				mutExpr->object = new ast::ObjectDecl( mutExpr->location, toString("_unq", mutExpr->id), mutExpr->result, makeInit( mutExpr->result ) );
+				mutExpr->object = new ast::ObjectDecl( mutExpr->location, toString("_unq", mutExpr->id), mutExpr->result, makeInit( mutExpr->result, mutExpr->location ) );
 				mutExpr->var = new ast::VariableExpr( mutExpr->location, mutExpr->object );
 			}
 
@@ -1171,6 +1179,7 @@ namespace {
 			// need to explicitly re-add function parameters to the indexer in order to resolve copy constructors
 			auto guard = makeFuncGuard( [this]() { symtab.enterScope(); }, [this]() { symtab.leaveScope(); } );
 			symtab.addFunction( function );
+			auto global = transUnit().global;
 
 			// need to iterate through members in reverse in order for
 			// ctor/dtor statements to come out in the right order
@@ -1216,8 +1225,8 @@ namespace {
 							std::list< ast::ptr<ast::Stmt> > stmtsToAdd;
 
 							static UniqueName memberDtorNamer = { "__memberDtor" };
-							assertf( ast::dtorStruct, "builtin __Destructor not found." );
-							assertf( ast::dtorStructDestroy, "builtin __destroy_Destructor not found." );
+							assertf( global.dtorStruct, "builtin __Destructor not found." );
+							assertf( global.dtorDestroy, "builtin __destroy_Destructor not found." );
 
 							ast::Expr * thisExpr = new ast::CastExpr( new ast::AddressExpr( new ast::VariableExpr(loc, thisParam ) ), new ast::PointerType( new ast::VoidType(), ast::CV::Qualifiers() ) );
 							ast::Expr * dtorExpr = new ast::VariableExpr(loc, getDtorFunc( thisParam, callStmt, stmtsToAdd ) );
@@ -1227,8 +1236,8 @@ namespace {
 							dtorFtype->params.emplace_back( new ast::PointerType( new ast::VoidType() ) );
 							auto dtorType = new ast::PointerType( dtorFtype );
 
-							auto destructor = new ast::ObjectDecl(loc, memberDtorNamer.newName(), new ast::StructInstType( ast::dtorStruct ), new ast::ListInit(loc, { new ast::SingleInit(loc, thisExpr ), new ast::SingleInit(loc, new ast::CastExpr( dtorExpr, dtorType ) ) } ) );
-							destructor->attributes.push_back( new ast::Attribute( "cleanup", { new ast::VariableExpr({}, ast::dtorStructDestroy ) } ) );
+							auto destructor = new ast::ObjectDecl(loc, memberDtorNamer.newName(), new ast::StructInstType( global.dtorStruct ), new ast::ListInit(loc, { new ast::SingleInit(loc, thisExpr ), new ast::SingleInit(loc, new ast::CastExpr( dtorExpr, dtorType ) ) } ) );
+							destructor->attributes.push_back( new ast::Attribute( "cleanup", { new ast::VariableExpr( loc, global.dtorDestroy ) } ) );
 							mutStmts->push_front( new ast::DeclStmt(loc, destructor ) );
 							mutStmts->kids.splice( mutStmts->kids.begin(), stmtsToAdd );
 						}
@@ -1322,11 +1331,11 @@ namespace {
 	}
 
 	const ast::Expr * GenStructMemberCalls::postvisit( const ast::UntypedExpr * untypedExpr ) {
-		// Expression * newExpr = untypedExpr;
 		// xxx - functions returning ast::ptr seems wrong...
-		auto res = ResolvExpr::findVoidExpression( untypedExpr, symtab );
-		return res.release();
-		// return newExpr;
+		auto res = ResolvExpr::findVoidExpression( untypedExpr, { symtab, transUnit().global } );
+		// Fix CodeLocation (at least until resolver is fixed).
+		auto fix = localFillCodeLocations( untypedExpr->location, res.release() );
+		return strict_dynamic_cast<const ast::Expr *>( fix );
 	}
 
 	void InsertImplicitCalls::previsit(const ast::UniqueExpr * unqExpr) {
@@ -1360,7 +1369,7 @@ namespace {
 		mutCallExpr->args.front() = firstArg;
 
 		// resolve assignment and dispose of new env
-		auto resolved = ResolvExpr::findVoidExpression( assign, symtab );
+		auto resolved = ResolvExpr::findVoidExpression( assign, { symtab, transUnit().global } );
 		auto mut = resolved.get_and_mutate();
 		assertf(resolved.get() == mut, "newly resolved expression must be unique");
 		mut->env = nullptr;

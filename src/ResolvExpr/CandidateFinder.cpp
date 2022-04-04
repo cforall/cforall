@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Wed Jun 5 14:30:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Oct  1 14:55:00 2019
-// Update Count     : 2
+// Last Modified On : Wed Mar 16 11:58:00 2022
+// Update Count     : 3
 //
 
 #include "CandidateFinder.hpp"
@@ -594,6 +594,7 @@ namespace {
 
 	/// Actually visits expressions to find their candidate interpretations
 	class Finder final : public ast::WithShortCircuiting {
+		const ResolveContext & context;
 		const ast::SymbolTable & symtab;
 	public:
 		// static size_t traceId;
@@ -617,8 +618,8 @@ namespace {
 		} reason;
 
 		Finder( CandidateFinder & f )
-		: symtab( f.localSyms ), selfFinder( f ), candidates( f.candidates ), tenv( f.env ),
-		  targetType( f.targetType ) {}
+		: context( f.context ), symtab( context.symtab ), selfFinder( f ),
+		  candidates( f.candidates ), tenv( f.env ), targetType( f.targetType ) {}
 
 		void previsit( const ast::Node * ) { visit_children = false; }
 
@@ -871,7 +872,7 @@ namespace {
 			// if not tuple assignment, handled as normal function call
 			Tuples::handleTupleAssignment( selfFinder, untypedExpr, argCandidates );
 
-			CandidateFinder funcFinder{ symtab, tenv };
+			CandidateFinder funcFinder( context, tenv );
 			if (auto nameExpr = untypedExpr->func.as<ast::NameExpr>()) {
 				auto kind = ast::SymbolTable::getSpecialFunctionKind(nameExpr->name);
 				if (kind != ast::SymbolTable::SpecialFunctionKind::NUMBER_OF_KINDS) {
@@ -917,7 +918,7 @@ namespace {
 
 			// find function operators
 			ast::ptr< ast::Expr > opExpr = new ast::NameExpr{ untypedExpr->location, "?()" };
-			CandidateFinder opFinder{ symtab, tenv };
+			CandidateFinder opFinder( context, tenv );
 			// okay if there aren't any function operations
 			opFinder.find( opExpr, ResolvMode::withoutFailFast() );
 			PRINT(
@@ -1058,7 +1059,7 @@ namespace {
 		}
 
 		void postvisit( const ast::AddressExpr * addressExpr ) {
-			CandidateFinder finder{ symtab, tenv };
+			CandidateFinder finder( context, tenv );
 			finder.find( addressExpr->arg );
 
 			if( finder.candidates.empty() ) return;
@@ -1078,11 +1079,11 @@ namespace {
 		void postvisit( const ast::CastExpr * castExpr ) {
 			ast::ptr< ast::Type > toType = castExpr->result;
 			assert( toType );
-			toType = resolveTypeof( toType, symtab );
+			toType = resolveTypeof( toType, context );
 			// toType = SymTab::validateType( castExpr->location, toType, symtab );
 			toType = adjustExprType( toType, tenv, symtab );
 
-			CandidateFinder finder{ symtab, tenv, toType };
+			CandidateFinder finder( context, tenv, toType );
 			finder.find( castExpr->arg, ResolvMode::withAdjustment() );
 
 			if( !finder.candidates.empty() ) reason.code = NoMatch;
@@ -1135,7 +1136,7 @@ namespace {
 
 		void postvisit( const ast::VirtualCastExpr * castExpr ) {
 			assertf( castExpr->result, "Implicit virtual cast targets not yet supported." );
-			CandidateFinder finder{ symtab, tenv };
+			CandidateFinder finder( context, tenv );
 			// don't prune here, all alternatives guaranteed to have same type
 			finder.find( castExpr->arg, ResolvMode::withoutPrune() );
 			for ( CandidateRef & r : finder.candidates ) {
@@ -1152,7 +1153,7 @@ namespace {
 			auto inst = ref->base.strict_as<ast::StructInstType>();
 			auto target = inst->base.get();
 
-			CandidateFinder finder{ symtab, tenv };
+			CandidateFinder finder( context, tenv );
 
 			auto pick_alternatives = [target, this](CandidateList & found, bool expect_ref) {
 				for(auto & cand : found) {
@@ -1201,7 +1202,7 @@ namespace {
 		}
 
 		void postvisit( const ast::UntypedMemberExpr * memberExpr ) {
-			CandidateFinder aggFinder{ symtab, tenv };
+			CandidateFinder aggFinder( context, tenv );
 			aggFinder.find( memberExpr->aggregate, ResolvMode::withAdjustment() );
 			for ( CandidateRef & agg : aggFinder.candidates ) {
 				// it's okay for the aggregate expression to have reference type -- cast it to the
@@ -1286,11 +1287,11 @@ namespace {
 			if ( sizeofExpr->type ) {
 				addCandidate(
 					new ast::SizeofExpr{
-						sizeofExpr->location, resolveTypeof( sizeofExpr->type, symtab ) },
+						sizeofExpr->location, resolveTypeof( sizeofExpr->type, context ) },
 					tenv );
 			} else {
 				// find all candidates for the argument to sizeof
-				CandidateFinder finder{ symtab, tenv };
+				CandidateFinder finder( context, tenv );
 				finder.find( sizeofExpr->expr );
 				// find the lowest-cost candidate, otherwise ambiguous
 				CandidateList winners = findMinCost( finder.candidates );
@@ -1310,11 +1311,11 @@ namespace {
 			if ( alignofExpr->type ) {
 				addCandidate(
 					new ast::AlignofExpr{
-						alignofExpr->location, resolveTypeof( alignofExpr->type, symtab ) },
+						alignofExpr->location, resolveTypeof( alignofExpr->type, context ) },
 					tenv );
 			} else {
 				// find all candidates for the argument to alignof
-				CandidateFinder finder{ symtab, tenv };
+				CandidateFinder finder( context, tenv );
 				finder.find( alignofExpr->expr );
 				// find the lowest-cost candidate, otherwise ambiguous
 				CandidateList winners = findMinCost( finder.candidates );
@@ -1353,11 +1354,11 @@ namespace {
 		}
 
 		void postvisit( const ast::LogicalExpr * logicalExpr ) {
-			CandidateFinder finder1{ symtab, tenv };
+			CandidateFinder finder1( context, tenv );
 			finder1.find( logicalExpr->arg1, ResolvMode::withAdjustment() );
 			if ( finder1.candidates.empty() ) return;
 
-			CandidateFinder finder2{ symtab, tenv };
+			CandidateFinder finder2( context, tenv );
 			finder2.find( logicalExpr->arg2, ResolvMode::withAdjustment() );
 			if ( finder2.candidates.empty() ) return;
 
@@ -1383,17 +1384,17 @@ namespace {
 
 		void postvisit( const ast::ConditionalExpr * conditionalExpr ) {
 			// candidates for condition
-			CandidateFinder finder1{ symtab, tenv };
+			CandidateFinder finder1( context, tenv );
 			finder1.find( conditionalExpr->arg1, ResolvMode::withAdjustment() );
 			if ( finder1.candidates.empty() ) return;
 
 			// candidates for true result
-			CandidateFinder finder2{ symtab, tenv };
+			CandidateFinder finder2( context, tenv );
 			finder2.find( conditionalExpr->arg2, ResolvMode::withAdjustment() );
 			if ( finder2.candidates.empty() ) return;
 
 			// candidates for false result
-			CandidateFinder finder3{ symtab, tenv };
+			CandidateFinder finder3( context, tenv );
 			finder3.find( conditionalExpr->arg3, ResolvMode::withAdjustment() );
 			if ( finder3.candidates.empty() ) return;
 
@@ -1444,9 +1445,9 @@ namespace {
 
 		void postvisit( const ast::CommaExpr * commaExpr ) {
 			ast::TypeEnvironment env{ tenv };
-			ast::ptr< ast::Expr > arg1 = resolveInVoidContext( commaExpr->arg1, symtab, env );
+			ast::ptr< ast::Expr > arg1 = resolveInVoidContext( commaExpr->arg1, context, env );
 
-			CandidateFinder finder2{ symtab, env };
+			CandidateFinder finder2( context, env );
 			finder2.find( commaExpr->arg2, ResolvMode::withAdjustment() );
 
 			for ( const CandidateRef & r2 : finder2.candidates ) {
@@ -1459,7 +1460,7 @@ namespace {
 		}
 
 		void postvisit( const ast::ConstructorExpr * ctorExpr ) {
-			CandidateFinder finder{ symtab, tenv };
+			CandidateFinder finder( context, tenv );
 			finder.find( ctorExpr->callExpr, ResolvMode::withoutPrune() );
 			for ( CandidateRef & r : finder.candidates ) {
 				addCandidate( *r, new ast::ConstructorExpr{ ctorExpr->location, r->expr } );
@@ -1468,11 +1469,11 @@ namespace {
 
 		void postvisit( const ast::RangeExpr * rangeExpr ) {
 			// resolve low and high, accept candidates where low and high types unify
-			CandidateFinder finder1{ symtab, tenv };
+			CandidateFinder finder1( context, tenv );
 			finder1.find( rangeExpr->low, ResolvMode::withAdjustment() );
 			if ( finder1.candidates.empty() ) return;
 
-			CandidateFinder finder2{ symtab, tenv };
+			CandidateFinder finder2( context, tenv );
 			finder2.find( rangeExpr->high, ResolvMode::withAdjustment() );
 			if ( finder2.candidates.empty() ) return;
 
@@ -1548,7 +1549,7 @@ namespace {
 		}
 
 		void postvisit( const ast::UniqueExpr * unqExpr ) {
-			CandidateFinder finder{ symtab, tenv };
+			CandidateFinder finder( context, tenv );
 			finder.find( unqExpr->expr, ResolvMode::withAdjustment() );
 			for ( CandidateRef & r : finder.candidates ) {
 				// ensure that the the id is passed on so that the expressions are "linked"
@@ -1557,7 +1558,7 @@ namespace {
 		}
 
 		void postvisit( const ast::StmtExpr * stmtExpr ) {
-			addCandidate( resolveStmtExpr( stmtExpr, symtab ), tenv );
+			addCandidate( resolveStmtExpr( stmtExpr, context ), tenv );
 		}
 
 		void postvisit( const ast::UntypedInitExpr * initExpr ) {
@@ -1569,13 +1570,13 @@ namespace {
 			// O(n^2) checks of d-types with e-types
 			for ( const ast::InitAlternative & initAlt : initExpr->initAlts ) {
 				// calculate target type
-				const ast::Type * toType = resolveTypeof( initAlt.type, symtab );
+				const ast::Type * toType = resolveTypeof( initAlt.type, context );
 				// toType = SymTab::validateType( initExpr->location, toType, symtab );
 				toType = adjustExprType( toType, tenv, symtab );
 				// The call to find must occur inside this loop, otherwise polymorphic return
 				// types are not bound to the initialization type, since return type variables are
 				// only open for the duration of resolving the UntypedExpr.
-				CandidateFinder finder{ symtab, tenv, toType };
+				CandidateFinder finder( context, tenv, toType );
 				finder.find( initExpr->expr, ResolvMode::withAdjustment() );
 				for ( CandidateRef & cand : finder.candidates ) {
 					if(reason.code == NotFound) reason.code = NoMatch;
@@ -1692,7 +1693,7 @@ bool CandidateFinder::pruneCandidates( CandidateList & candidates, CandidateList
 			satisfied.emplace_back(candidate);
 		}
 		else {
-			satisfyAssertions(candidate, localSyms, satisfied, errors);
+			satisfyAssertions(candidate, context.symtab, satisfied, errors);
 			needRecomputeKey = true;
 		}
 
@@ -1854,7 +1855,7 @@ void CandidateFinder::find( const ast::Expr * expr, ResolvMode mode ) {
 		for ( CandidateRef & r : candidates ) {
 			r->expr = ast::mutate_field(
 				r->expr.get(), &ast::Expr::result,
-				adjustExprType( r->expr->result, r->env, localSyms ) );
+				adjustExprType( r->expr->result, r->env, context.symtab ) );
 		}
 	}
 
@@ -1872,7 +1873,7 @@ std::vector< CandidateFinder > CandidateFinder::findSubExprs(
 	std::vector< CandidateFinder > out;
 
 	for ( const auto & x : xs ) {
-		out.emplace_back( localSyms, env );
+		out.emplace_back( context, env );
 		out.back().find( x, ResolvMode::withAdjustment() );
 
 		PRINT(

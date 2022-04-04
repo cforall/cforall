@@ -482,10 +482,14 @@ def core_info(path):
 	core  = os.path.join(os.getcwd(), "core" )
 
 	if not os.path.isfile(core):
-		return 1, "ERR No core dump (limit soft: {} hard: {})".format(*resource.getrlimit(resource.RLIMIT_CORE))
+		return 1, "ERR No core dump, expected '{}' (limit soft: {} hard: {})".format(core, *resource.getrlimit(resource.RLIMIT_CORE))
 
 	try:
-		return sh('gdb', '-n', path, core, '-batch', '-x', cmd, output_file=subprocess.PIPE)
+		ret, out, err = sh('gdb', '-n', path, core, '-batch', '-x', cmd, output_file=subprocess.PIPE)
+		if ret == 0:
+			return 0, out
+		else:
+			return 1, err
 	except:
 		return 1, "ERR Could not read core with gdb"
 

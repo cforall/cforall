@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Nov  9  9:54:00 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Nov  9 15:47:00 2021
-// Update Count     : 0
+// Last Modified On : Wed Mar 16 13:56:00 2022
+// Update Count     : 1
 //
 
 #include "CandidatePrinter.hpp"
@@ -21,6 +21,7 @@
 #include "AST/Stmt.hpp"
 #include "AST/TranslationUnit.hpp"
 #include "ResolvExpr/CandidateFinder.hpp"
+#include "ResolvExpr/Resolver.h"
 
 #include <iostream>
 
@@ -28,14 +29,15 @@ namespace ResolvExpr {
 
 namespace {
 
-class CandidatePrintCore : public ast::WithSymbolTable {
+class CandidatePrintCore : public ast::WithSymbolTable,
+		public ast::WithConstTranslationUnit {
 	std::ostream & os;
 public:
 	CandidatePrintCore( std::ostream & os ) : os( os ) {}
 
 	void postvisit( const ast::ExprStmt * stmt ) {
 		ast::TypeEnvironment env;
-		CandidateFinder finder( symtab, env );
+		CandidateFinder finder( { symtab, transUnit().global }, env );
 		finder.find( stmt->expr, ResolvMode::withAdjustment() );
 		int count = 1;
 		os << "There are " << finder.candidates.size() << " candidates\n";

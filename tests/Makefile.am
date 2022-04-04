@@ -27,7 +27,7 @@ archiveerrors=
 
 DEBUG_FLAGS=-debug -g -O0
 
-quick_test=avl_test operators numericConstants expression enum array typeof cast raii/dtor-early-exit raii/init_once attributes
+quick_test=avl_test operators numericConstants expression enum array typeof cast raii/dtor-early-exit raii/init_once attributes meta/dumpable
 
 concurrent=
 timeouts=

@@ -588,7 +588,7 @@ public:
 		os << endl;
 
 		++indent;
-		for ( const ast::Stmt * stmt : node->stmts ) {
+		for ( const ast::CaseClause * stmt : node->cases ) {
 			stmt->accept( *this );
 		}
 		--indent;
@@ -596,7 +596,7 @@ public:
 		return node;
 	}
 
-	virtual const ast::Stmt * visit( const ast::CaseStmt * node ) override final {
+	virtual const ast::CaseClause * visit( const ast::CaseClause * node ) override final {
 		if ( node->isDefault() ) {
 			os << indent << "Default ";
 		} else {
@@ -678,7 +678,7 @@ public:
 		safe_print( node->body );
 
 		os << indent-1 << "... and handlers:" << endl;
-		for ( const ast::CatchStmt * stmt : node->handlers ) {
+		for ( const ast::CatchClause * stmt : node->handlers ) {
 			os << indent;
 			stmt->accept( *this );
 		}
@@ -692,7 +692,7 @@ public:
 		return node;
 	}
 
-	virtual const ast::Stmt * visit( const ast::CatchStmt * node ) override final {
+	virtual const ast::CatchClause * visit( const ast::CatchClause * node ) override final {
 		os << "Catch ";
 		switch ( node->kind ) {
 		case ast::ExceptionKind::Terminate: os << "Terminate "; break;
@@ -717,7 +717,7 @@ public:
 		return node;
 	}
 
-	virtual const ast::Stmt * visit( const ast::FinallyStmt * node ) override final {
+	virtual const ast::FinallyClause * visit( const ast::FinallyClause * node ) override final {
 		os << "Finally Statement" << endl;
 		os << indent << "... with block:" << endl;
 		++indent;

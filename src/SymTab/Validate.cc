@@ -406,6 +406,17 @@ namespace SymTab {
 		}
 	}
 
+	static void decayForallPointers( std::list< Declaration * > & translationUnit ) {
+		PassVisitor<TraitExpander_old> te;
+		acceptAll( translationUnit, te );
+		PassVisitor<AssertionFixer_old> af;
+		acceptAll( translationUnit, af );
+		PassVisitor<CheckOperatorTypes_old> cot;
+		acceptAll( translationUnit, cot );
+		PassVisitor<FixUniqueIds_old> fui;
+		acceptAll( translationUnit, fui );
+	}
+
 	void validate_D( std::list< Declaration * > & translationUnit ) {
 		{
 			Stats::Heap::newPass("validate-D");
@@ -471,34 +482,6 @@ namespace SymTab {
 					Validate::handleAttributes, translationUnit);
 			}
 		}
-	}
-
-	void decayForallPointers( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<TraitExpander_old> te;
-		acceptAll( translationUnit, te );
-		PassVisitor<AssertionFixer_old> af;
-		acceptAll( translationUnit, af );
-		PassVisitor<CheckOperatorTypes_old> cot;
-		acceptAll( translationUnit, cot );
-		PassVisitor<FixUniqueIds_old> fui;
-		acceptAll( translationUnit, fui );
-	}
-
-	void decayForallPointersA( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<TraitExpander_old> te;
-		acceptAll( translationUnit, te );
-	}
-	void decayForallPointersB( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<AssertionFixer_old> af;
-		acceptAll( translationUnit, af );
-	}
-	void decayForallPointersC( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<CheckOperatorTypes_old> cot;
-		acceptAll( translationUnit, cot );
-	}
-	void decayForallPointersD( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<FixUniqueIds_old> fui;
-		acceptAll( translationUnit, fui );
 	}
 
 	void validate( std::list< Declaration * > &translationUnit, __attribute__((unused)) bool doDebug ) {

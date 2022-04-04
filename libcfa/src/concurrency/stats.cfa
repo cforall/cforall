@@ -54,6 +54,8 @@
 			stats->io.calls.submitted   = 0;
 			stats->io.calls.drain       = 0;
 			stats->io.calls.completed   = 0;
+			stats->io.calls.locked      = 0;
+			stats->io.calls.helped      = 0;
 			stats->io.calls.errors.busy = 0;
 			stats->io.ops.sockread      = 0;
 			stats->io.ops.epllread      = 0;
@@ -122,6 +124,8 @@
 			tally_one( &cltr->io.calls.submitted  , &proc->io.calls.submitted   );
 			tally_one( &cltr->io.calls.drain      , &proc->io.calls.drain       );
 			tally_one( &cltr->io.calls.completed  , &proc->io.calls.completed   );
+			tally_one( &cltr->io.calls.locked     , &proc->io.calls.locked      );
+			tally_one( &cltr->io.calls.helped     , &proc->io.calls.helped      );
 			tally_one( &cltr->io.calls.errors.busy, &proc->io.calls.errors.busy );
 			tally_one( &cltr->io.ops.sockread     , &proc->io.ops.sockread      );
 			tally_one( &cltr->io.ops.epllread     , &proc->io.ops.epllread      );
@@ -204,6 +208,7 @@
 				sstr | "- syscll : "
 				     |   " sub " | eng3(io.calls.submitted) | "/" | eng3(io.calls.flush) | "(" | ws(3, 3, avgsubs) | "/flush)"
 				     | " - cmp " | eng3(io.calls.completed) | "/" | eng3(io.calls.drain) | "(" | ws(3, 3, avgcomp) | "/drain)"
+				     | " - cmp " | eng3(io.calls.locked) | "locked, " | eng3(io.calls.helped) | "helped"
 				     | " - " | eng3(io.calls.errors.busy) | " EBUSY";
 				sstr | " - sub: " | eng3(io.flush.full) | "full, " | eng3(io.flush.dirty) | "drty, " | eng3(io.flush.idle) | "idle, " | eng3(io.flush.eager) | "eagr, " | eng3(io.flush.external) | "ext";
 				sstr | "- ops blk: "

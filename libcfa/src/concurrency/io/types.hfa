@@ -24,6 +24,7 @@ extern "C" {
 #include "bits/queue.hfa"
 #include "iofwd.hfa"
 #include "kernel/fwd.hfa"
+#include "limits.hfa"
 
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
 	#include "bits/sequence.hfa"
@@ -77,6 +78,12 @@ extern "C" {
 	};
 
 	struct __cmp_ring_t {
+		volatile bool lock;
+
+		unsigned id;
+
+		unsigned long long ts;
+
 		// Head and tail of the ring
 		volatile __u32 * head;
 		volatile __u32 * tail;
@@ -127,6 +134,15 @@ extern "C" {
 		__u32 ring_flags;
 		int fd;
 	};
+
+	static inline unsigned long long ts($io_context *& this) {
+		const __u32 head = *this->cq.head;
+		const __u32 tail = *this->cq.tail;
+
+		if(head == tail) return MAX;
+
+		return this->cq.ts;
+	}
 
 	struct __pending_alloc {
 		inline __outstanding_io;

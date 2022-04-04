@@ -18,19 +18,23 @@
 
 // #define __CFA_DEBUG_PRINT_RUNTIME_CORE__
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 //C Includes
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+
 extern "C" {
 	#include <sys/eventfd.h>
 	#include <sys/uio.h>
 }
 
 //CFA Includes
-#include "kernel_private.hfa"
+#include "kernel/private.hfa"
 #include "preemption.hfa"
 #include "strstream.hfa"
 #include "device/cpu.hfa"
@@ -39,6 +43,7 @@ extern "C" {
 //Private includes
 #define __CFA_INVOKE_PRIVATE__
 #include "invoke.h"
+#pragma GCC diagnostic pop
 
 #if !defined(__CFA_NO_STATISTICS__)
 	#define __STATS_DEF( ...) __VA_ARGS__
@@ -126,15 +131,13 @@ static inline bool __must_unpark( thread$ * thrd ) __attribute((nonnull(1)));
 static void __run_thread(processor * this, thread$ * dst);
 static void __wake_one(cluster * cltr);
 
-static void idle_sleep(processor * proc, io_future_t & future, iovec & iov);
+static void idle_sleep(processor * proc);
 static bool mark_idle (__cluster_proc_list & idles, processor & proc);
 static void mark_awake(__cluster_proc_list & idles, processor & proc);
 
-extern void __cfa_io_start( processor * );
-extern bool __cfa_io_drain( processor * );
-extern bool __cfa_io_flush( processor *, int min_comp );
-extern void __cfa_io_stop ( processor * );
-static inline bool __maybe_io_drain( processor * );
+extern bool __cfa_io_drain( processor * proc ) __attribute__((nonnull (1)));
+extern bool __cfa_io_flush( processor * ) __attribute__((nonnull (1)));
+extern void __cfa_io_idle( processor * ) __attribute__((nonnull (1)));
 
 #if defined(CFA_WITH_IO_URING_IDLE)
 	extern bool __kernel_read(processor * proc, io_future_t & future, iovec &, int fd);
@@ -158,12 +161,12 @@ void main(processorCtx_t & runner) {
 	processor * this = runner.proc;
 	verify(this);
 
-	io_future_t future; // used for idle sleep when io_uring is present
-	future.self.ptr = 1p;  // mark it as already fulfilled so we know if there is a pending request or not
-	eventfd_t idle_val;
-	iovec idle_iovec = { &idle_val, sizeof(idle_val) };
+	/* paranoid */ verify( this->idle_wctx.ftr   != 0p );
+	/* paranoid */ verify( this->idle_wctx.rdbuf != 0p );
 
-	__cfa_io_start( this );
+	// used for idle sleep when io_uring is present
+	// mark it as already fulfilled so we know if there is a pending request or not
+	this->idle_wctx.ftr->self.ptr = 1p;
 
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p starting\n", this);
 	#if !defined(__CFA_NO_STATISTICS__)
@@ -188,26 +191,33 @@ void main(processorCtx_t & runner) {
 		MAIN_LOOP:
 		for() {
 			// Check if there is pending io
-			__maybe_io_drain( this );
+			__cfa_io_drain( this );
 
 			// Try to get the next thread
 			readyThread = __next_thread( this->cltr );
 
 			if( !readyThread ) {
+				// there is no point in holding submissions if we are idle
 				__IO_STATS__(true, io.flush.idle++; )
-				__cfa_io_flush( this, 0 );
+				__cfa_io_flush( this );
+
+				// drain again in case something showed up
+				__cfa_io_drain( this );
 
 				readyThread = __next_thread( this->cltr );
 			}
 
 			if( !readyThread ) for(5) {
-				__IO_STATS__(true, io.flush.idle++; )
-
 				readyThread = __next_thread_slow( this->cltr );
 
 				if( readyThread ) break;
 
-				__cfa_io_flush( this, 0 );
+				// It's unlikely we still I/O to submit, but the arbiter could
+				__IO_STATS__(true, io.flush.idle++; )
+				__cfa_io_flush( this );
+
+				// drain again in case something showed up
+				__cfa_io_drain( this );
 			}
 
 			HALT:
@@ -230,7 +240,7 @@ void main(processorCtx_t & runner) {
 					break HALT;
 				}
 
-				idle_sleep( this, future, idle_iovec );
+				idle_sleep( this );
 
 				// We were woken up, remove self from idle
 				mark_awake(this->cltr->procs, * this);
@@ -252,19 +262,12 @@ void main(processorCtx_t & runner) {
 
 			if(__atomic_load_n(&this->io.pending, __ATOMIC_RELAXED) && !__atomic_load_n(&this->io.dirty, __ATOMIC_RELAXED)) {
 				__IO_STATS__(true, io.flush.dirty++; )
-				__cfa_io_flush( this, 0 );
+				__cfa_io_flush( this );
 			}
 		}
 
 		__cfadbg_print_safe(runtime_core, "Kernel : core %p stopping\n", this);
 	}
-
-	for(int i = 0; !available(future); i++) {
-		if(i > 1000) __cfaabi_dbg_write( "ERROR: kernel has bin spinning on a flush after exit loop.\n", 60);
-		__cfa_io_flush( this, 1 );
-	}
-
-	__cfa_io_stop( this );
 
 	post( this->terminated );
 
@@ -633,11 +636,12 @@ static void __wake_one(cluster * this) {
 	if( fdp == 0p ) return;
 
 	int fd = 1;
-	if( __atomic_load_n(&fdp->fd, __ATOMIC_SEQ_CST) != 1 ) {
-		fd = __atomic_exchange_n(&fdp->fd, 1, __ATOMIC_RELAXED);
+	if( __atomic_load_n(&fdp->sem, __ATOMIC_SEQ_CST) != 1 ) {
+		fd = __atomic_exchange_n(&fdp->sem, 1, __ATOMIC_RELAXED);
 	}
 
 	switch(fd) {
+		__attribute__((unused)) int ret;
 	case 0:
 		// If the processor isn't ready to sleep then the exchange will already wake it up
 		#if !defined(__CFA_NO_STATISTICS__)
@@ -655,7 +659,8 @@ static void __wake_one(cluster * this) {
 	default:
 		// If the processor was ready to sleep, we need to wake it up with an actual write
 		val = 1;
-		eventfd_write( fd, val );
+		ret = eventfd_write( fd, val );
+		/* paranoid */ verifyf( ret == 0, "Expected return to be 0, was %d\n", ret );
 
 		#if !defined(__CFA_NO_STATISTICS__)
 			if( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.wakes++;
@@ -676,25 +681,31 @@ void __wake_proc(processor * this) {
 
 	__cfadbg_print_safe(runtime_core, "Kernel : waking Processor %p\n", this);
 
-	this->idle_wctx.fd = 1;
+	this->idle_wctx.sem = 1;
+
+	this->idle_wctx.wake__time = rdtscl();
 
 	eventfd_t val;
 	val = 1;
-	eventfd_write( this->idle_fd, val );
+	__attribute__((unused)) int ret = eventfd_write( this->idle_wctx.evfd, val );
 
+	/* paranoid */ verifyf( ret == 0, "Expected return to be 0, was %d\n", ret );
 	/* paranoid */ verify( ! __preemption_enabled() );
 }
 
-static void idle_sleep(processor * this, io_future_t & future, iovec & iov) {
+static void idle_sleep(processor * this) {
+	/* paranoid */ verify( this->idle_wctx.evfd != 1 );
+	/* paranoid */ verify( this->idle_wctx.evfd != 2 );
+
 	// Tell everyone we are ready to go do sleep
 	for() {
-		int expected = this->idle_wctx.fd;
+		int expected = this->idle_wctx.sem;
 
 		// Someone already told us to wake-up! No time for a nap.
 		if(expected == 1) { return; }
 
 		// Try to mark that we are going to sleep
-		if(__atomic_compare_exchange_n(&this->idle_wctx.fd, &expected, this->idle_fd, false,  __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) ) {
+		if(__atomic_compare_exchange_n(&this->idle_wctx.sem, &expected, this->idle_wctx.evfd, false,  __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) ) {
 			// Every one agreed, taking a nap
 			break;
 		}
@@ -712,7 +723,7 @@ static void idle_sleep(processor * this, io_future_t & future, iovec & iov) {
 
 		{
 			eventfd_t val;
-			ssize_t ret = read( this->idle_fd, &val, sizeof(val) );
+			ssize_t ret = read( this->idle_wctx.evfd, &val, sizeof(val) );
 			if(ret < 0) {
 				switch((int)errno) {
 				case EAGAIN:
@@ -734,22 +745,14 @@ static void idle_sleep(processor * this, io_future_t & future, iovec & iov) {
 			}
 		#endif
 	#else
-		// Do we already have a pending read
-		if(available(future)) {
-			// There is no pending read, we need to add one
-			reset(future);
-
-			__kernel_read(this, future, iov, this->idle_fd );
-		}
-
-		__cfa_io_flush( this, 1 );
+		__cfa_io_idle( this );
 	#endif
 }
 
 static bool mark_idle(__cluster_proc_list & this, processor & proc) {
 	__STATS__(true, ready.sleep.halts++; )
 
-	proc.idle_wctx.fd = 0;
+	proc.idle_wctx.sem = 0;
 
 	/* paranoid */ verify( ! __preemption_enabled() );
 	if(!try_lock( this )) return false;
@@ -830,22 +833,7 @@ extern "C" {
 #include "io/types.hfa"
 #endif
 
-static inline bool __maybe_io_drain( processor * proc ) {
-	bool ret = false;
-	#if defined(CFA_HAVE_LINUX_IO_URING_H)
-		__cfadbg_print_safe(runtime_core, "Kernel : core %p checking io for ring %d\n", proc, proc->io.ctx->fd);
 
-		// Check if we should drain the queue
-		$io_context * ctx = proc->io.ctx;
-		unsigned head = *ctx->cq.head;
-		unsigned tail = *ctx->cq.tail;
-		if(head == tail) return false;
-		ready_schedule_lock();
-		ret = __cfa_io_drain( proc );
-		ready_schedule_unlock();
-	#endif
-	return ret;
-}
 
 //-----------------------------------------------------------------------------
 // Debug
@@ -902,7 +890,7 @@ bool threading_enabled(void) __attribute__((const)) {
 
 	void print_stats_now( cluster & this, int flags ) {
 		crawl_cluster_stats( this );
-		__print_stats( this.stats, this.print_stats, "Cluster", this.name, (void*)&this );
+		__print_stats( this.stats, flags, "Cluster", this.name, (void*)&this );
 	}
 #endif
 // Local Variables: //

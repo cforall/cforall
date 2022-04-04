@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Jan 26 14:09:00 2022
-// Update Count     : 670
+// Last Modified On : Fri Mar 11 10:39:00 2022
+// Update Count     : 671
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -31,7 +31,6 @@
 using namespace std;
 
 #include "AST/Convert.hpp"
-#include "AST/Print.hpp"
 #include "CompilationState.h"
 #include "../config.h"                      // for CFA_LIBDIR
 #include "CodeGen/FixMain.h"                // for FixMain
@@ -332,11 +331,6 @@ int main( int argc, char * argv[] ) {
 		CodeTools::fillLocations( translationUnit );
 
 		if( useNewAST ) {
-			PASS( "Implement Concurrent Keywords", Concurrency::applyKeywords( translationUnit ) );
-			//PASS( "Forall Pointer Decay - A", SymTab::decayForallPointersA( translationUnit ) );
-			//PASS( "Forall Pointer Decay - B", SymTab::decayForallPointersB( translationUnit ) );
-			//PASS( "Forall Pointer Decay - C", SymTab::decayForallPointersC( translationUnit ) );
-			//PASS( "Forall Pointer Decay - D", SymTab::decayForallPointersD( translationUnit ) );
 			CodeTools::fillLocations( translationUnit );
 
 			if (Stats::Counters::enabled) {
@@ -346,6 +340,8 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords( transUnit ) );
 
 			// Must be after implement concurrent keywords; because uniqueIds
 			//   must be set on declaration before resolution.
@@ -496,8 +492,6 @@ int main( int argc, char * argv[] ) {
 
 			PASS( "Translate Tries" , ControlStruct::translateTries( translationUnit ) );
 		}
-
-		
 
 		PASS( "Gen Waitfor" , Concurrency::generateWaitFor( translationUnit ) );
 

@@ -1,0 +1,93 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// cluster.hfa -- file that includes helpers for subsystem that need cluster wide support
+//
+// Author           : Thierry Delisle
+// Created On       : Tue Mar 15 16:40:12 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include "device/cpu.hfa"
+#include "kernel/private.hfa"
+
+#include "limits.hfa"
+
+//-----------------------------------------------------------------------
+// Calc moving average based on existing average, before and current time.
+static inline unsigned long long moving_average(unsigned long long currtsc, unsigned long long instsc, unsigned long long old_avg) {
+	/* paranoid */ verifyf( currtsc < 45000000000000000, "Suspiciously large current time: %'llu (%llx)\n", currtsc, currtsc );
+	/* paranoid */ verifyf( instsc  < 45000000000000000, "Suspiciously large insert time: %'llu (%llx)\n", instsc, instsc );
+	/* paranoid */ verifyf( old_avg < 15000000000000, "Suspiciously large previous average: %'llu (%llx)\n", old_avg, old_avg );
+
+	const unsigned long long new_val = currtsc > instsc ? currtsc - instsc : 0;
+	const unsigned long long total_weight = 16;
+	const unsigned long long new_weight   = 4;
+	const unsigned long long old_weight = total_weight - new_weight;
+	const unsigned long long ret = ((new_weight * new_val) + (old_weight * old_avg)) / total_weight;
+	return ret;
+}
+
+static inline void touch_tsc(__timestamp_t * tscs, size_t idx, unsigned long long ts_prev, unsigned long long ts_next) {
+	if (ts_next == MAX) return;
+	unsigned long long now = rdtscl();
+	unsigned long long pma = __atomic_load_n(&tscs[ idx ].ma, __ATOMIC_RELAXED);
+	__atomic_store_n(&tscs[ idx ].tv, ts_next, __ATOMIC_RELAXED);
+	__atomic_store_n(&tscs[ idx ].ma, moving_average(now, ts_prev, pma), __ATOMIC_RELAXED);
+}
+
+//-----------------------------------------------------------------------
+// Calc age a timestamp should be before needing help.
+forall(Data_t * | { unsigned long long ts(Data_t & this); })
+static inline unsigned long long calc_cutoff(
+	const unsigned long long ctsc,
+	unsigned procid,
+	size_t count,
+	Data_t * data,
+	__timestamp_t * tscs,
+	const unsigned shard_factor
+) {
+	unsigned start = procid;
+	unsigned long long max = 0;
+	for(i; shard_factor) {
+		unsigned long long ptsc = ts(data[start + i]);
+		if(ptsc != -1ull) {
+			/* paranoid */ verify( start + i < count );
+			unsigned long long tsc = moving_average(ctsc, ptsc, tscs[start + i].ma);
+			if(tsc > max) max = tsc;
+		}
+	}
+	return (max + 2 * max) / 2;
+}
+
+static inline unsigned cache_id(struct cluster * cltr, unsigned idx) with (cltr->sched) {
+	// Figure out the current cpu and make sure it is valid
+	const int cpu = __kernel_getcpu();
+	/* paranoid */ verify(cpu >= 0);
+	/* paranoid */ verify(cpu < cpu_info.hthrd_count);
+	unsigned this_cache = cpu_info.llc_map[cpu].cache;
+
+	// Super important: don't write the same value over and over again
+	// We want to maximise our chances that his particular values stays in cache
+	if(caches[idx].id != this_cache)
+		__atomic_store_n(&caches[idx].id, this_cache, __ATOMIC_RELAXED);
+
+	return this_cache;
+}
+
+static struct {
+	const unsigned readyq;
+	const unsigned io;
+} __shard_factor = { 2, 1 };
+
+// Local Variables: //
+// mode: c //
+// tab-width: 4 //
+// End: //

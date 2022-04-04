@@ -31,13 +31,17 @@
 	void ^?{}($io_context & this) {}
 
 	void __cfa_io_start( processor * proc ) {}
-	bool __cfa_io_flush( processor * proc, int ) { return false; }
+	bool __cfa_io_flush( processor * proc ) { return false; }
+	bool __cfa_io_drain( processor * proc ) __attribute__((nonnull (1))) { return false; }
+	void __cfa_io_idle ( processor * ) __attribute__((nonnull (1))) {}
 	void __cfa_io_stop ( processor * proc ) {}
 
 	$io_arbiter * create(void) { return 0p; }
 	void destroy($io_arbiter *) {}
 
 #else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 	#include <errno.h>
 	#include <stdint.h>
 	#include <string.h>
@@ -56,8 +60,10 @@
 
 	#include "bitmanip.hfa"
 	#include "fstream.hfa"
-	#include "kernel_private.hfa"
+	#include "kernel/private.hfa"
+	#include "limits.hfa"
 	#include "thread.hfa"
+#pragma GCC diagnostic pop
 
 	void ?{}(io_context_params & this) {
 		this.num_entries = 256;
@@ -111,7 +117,7 @@
 		this.arbiter = cl.io.arbiter;
 		this.ext_sq.empty = true;
 		(this.ext_sq.queue){};
-		__io_uring_setup( this, cl.io.params, proc->idle_fd );
+		__io_uring_setup( this, cl.io.params, proc->idle_wctx.evfd );
 		__cfadbg_print_safe(io_core, "Kernel I/O : Created ring for io_context %u (%p)\n", this.fd, &this);
 	}
 
@@ -121,9 +127,6 @@
 		__io_uring_teardown( this );
 		__cfadbg_print_safe(io_core, "Kernel I/O : Destroyed ring for io_context %u\n", this.fd);
 	}
-
-	extern void __disable_interrupts_hard();
-	extern void __enable_interrupts_hard();
 
 	static void __io_uring_setup( $io_context & this, const io_context_params & params_in, int procfd ) {
 		// Step 1 : call to setup
@@ -213,6 +216,9 @@
 		sq.to_submit = 0;
 
 		// completion queue
+		cq.lock      = false;
+		cq.id        = MAX;
+		cq.ts        = rdtscl();
 		cq.head      = (volatile __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.head);
 		cq.tail      = (volatile __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.tail);
 		cq.mask      = (   const __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.ring_mask);
@@ -226,14 +232,10 @@
 			// will never succeed if preemption isn't hard blocked
 			__cfadbg_print_safe(io_core, "Kernel I/O : registering %d for completion with ring %d\n", procfd, fd);
 
-			__disable_interrupts_hard();
-
 			int ret = syscall( __NR_io_uring_register, fd, IORING_REGISTER_EVENTFD, &procfd, 1);
 			if (ret < 0) {
 				abort("KERNEL ERROR: IO_URING EVENTFD REGISTER - %s\n", strerror(errno));
 			}
-
-			__enable_interrupts_hard();
 
 			__cfadbg_print_safe(io_core, "Kernel I/O : registered %d for completion with ring %d\n", procfd, fd);
 		#endif

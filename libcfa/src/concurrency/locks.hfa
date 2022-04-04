@@ -163,27 +163,24 @@ static inline bool block(linear_backoff_then_block_lock & this) with(this) {
 	return true;
 }
 
-static inline bool lock(linear_backoff_then_block_lock & this) with(this) {
+static inline void lock(linear_backoff_then_block_lock & this) with(this) {
 	// if owner just return
-	if (active_thread() == owner) return true;
+	if (active_thread() == owner) return;
 	size_t compare_val = 0;
 	int spin = spin_start;
 	// linear backoff
 	for( ;; ) {
 		compare_val = 0;
-		if (internal_try_lock(this, compare_val)) return true;
+		if (internal_try_lock(this, compare_val)) return;
 		if (2 == compare_val) break;
 		for (int i = 0; i < spin; i++) Pause();
 		if (spin >= spin_end) break;
 		spin += spin;
 	}
 
-	if(2 != compare_val && try_lock_contention(this)) return true;
+	if(2 != compare_val && try_lock_contention(this)) return;
 	// block until signalled
-	while (block(this)) if(try_lock_contention(this)) return true;
-
-	// this should never be reached as block(this) always returns true
-	return false;
+	while (block(this)) if(try_lock_contention(this)) return;
 }
 
 static inline void unlock(linear_backoff_then_block_lock & this) with(this) {

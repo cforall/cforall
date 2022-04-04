@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed May  8 13:00:00 2019
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  2 20:06:41 2022
-// Update Count     : 34
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Mar 28  9:50:00 2022
+// Update Count     : 35
 //
 
 #pragma once
@@ -46,6 +46,22 @@ class Stmt : public ParseNode {
 	const Stmt * accept( Visitor & v ) const override = 0;
   private:
 	Stmt * clone() const override = 0;
+	MUTATE_FRIEND
+};
+
+// Base statement component node (only serves to group them).
+class StmtClause : public ParseNode {
+  public:
+	// This is for non-statements that still belong with the statements,
+	// but are not statements, usually some sort of clause. Often these can
+	// (and should) be folded into the approprate parent node, but if they
+	// cannot be, they are sub-types of this type, for organization.
+
+    StmtClause( const CodeLocation & loc )
+		: ParseNode(loc) {}
+
+  private:
+	StmtClause * clone() const override = 0;
 	MUTATE_FRIEND
 };
 
@@ -157,11 +173,12 @@ class IfStmt final : public Stmt {
 class SwitchStmt final : public Stmt {
   public:
 	ptr<Expr> cond;
-	std::vector<ptr<Stmt>> stmts;
+	std::vector<ptr<CaseClause>> cases;
 
-	SwitchStmt( const CodeLocation & loc, const Expr * cond, const std::vector<ptr<Stmt>> && stmts,
+	SwitchStmt( const CodeLocation & loc, const Expr * cond,
+				const std::vector<ptr<CaseClause>> && cases,
 				const std::vector<Label> && labels = {} )
-		: Stmt(loc, std::move(labels)), cond(cond), stmts(std::move(stmts)) {}
+		: Stmt(loc, std::move(labels)), cond(cond), cases(std::move(cases)) {}
 
 	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
@@ -170,21 +187,20 @@ class SwitchStmt final : public Stmt {
 };
 
 // Case label: case ...: or default:
-class CaseStmt final : public Stmt {
+class CaseClause final : public StmtClause {
   public:
 	// Null for the default label.
 	ptr<Expr> cond;
 	std::vector<ptr<Stmt>> stmts;
 
-	CaseStmt( const CodeLocation & loc, const Expr * cond, const std::vector<ptr<Stmt>> && stmts,
-			  const std::vector<Label> && labels = {} )
-		: Stmt(loc, std::move(labels)), cond(cond), stmts(std::move(stmts)) {}
+	CaseClause( const CodeLocation & loc, const Expr * cond, const std::vector<ptr<Stmt>> && stmts )
+		: StmtClause(loc), cond(cond), stmts(std::move(stmts)) {}
 
 	bool isDefault() const { return !cond; }
 
-	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
+	const CaseClause * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
-	CaseStmt * clone() const override { return new CaseStmt{ *this }; }
+	CaseClause * clone() const override { return new CaseClause{ *this }; }
 	MUTATE_FRIEND
 };
 
@@ -297,11 +313,11 @@ class ThrowStmt final : public Stmt {
 class TryStmt final : public Stmt {
   public:
 	ptr<CompoundStmt> body;
-	std::vector<ptr<CatchStmt>> handlers;
-	ptr<FinallyStmt> finally;
+	std::vector<ptr<CatchClause>> handlers;
+	ptr<FinallyClause> finally;
 
 	TryStmt( const CodeLocation & loc, const CompoundStmt * body,
-			 const std::vector<ptr<CatchStmt>> && handlers, const FinallyStmt * finally,
+			 const std::vector<ptr<CatchClause>> && handlers, const FinallyClause * finally,
 			 const std::vector<Label> && labels = {} )
 		: Stmt(loc, std::move(labels)), body(body), handlers(std::move(handlers)), finally(finally) {}
 
@@ -312,35 +328,34 @@ class TryStmt final : public Stmt {
 };
 
 // Catch clause of try statement
-class CatchStmt final : public Stmt {
+class CatchClause final : public StmtClause {
   public:
 	ptr<Decl> decl;
 	ptr<Expr> cond;
 	ptr<Stmt> body;
 	ExceptionKind kind;
 
-	CatchStmt( const CodeLocation & loc, ExceptionKind kind, const Decl * decl, const Expr * cond,
-			   const Stmt * body, const std::vector<Label> && labels = {} )
-		: Stmt(loc, std::move(labels)), decl(decl), cond(cond), body(body), kind(kind) {}
+	CatchClause( const CodeLocation & loc, ExceptionKind kind, const Decl * decl, const Expr * cond,
+			   const Stmt * body )
+		: StmtClause(loc), decl(decl), cond(cond), body(body), kind(kind) {}
 
-	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
+	const CatchClause * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
-	CatchStmt * clone() const override { return new CatchStmt{ *this }; }
+	CatchClause * clone() const override { return new CatchClause{ *this }; }
 	MUTATE_FRIEND
 };
 
 // Finally clause of try statement
-class FinallyStmt final : public Stmt {
+class FinallyClause final : public StmtClause {
   public:
 	ptr<CompoundStmt> body;
 
-	FinallyStmt( const CodeLocation & loc, const CompoundStmt * body,
-				 std::vector<Label> && labels = {} )
-		: Stmt(loc, std::move(labels)), body(body) {}
+	FinallyClause( const CodeLocation & loc, const CompoundStmt * body )
+		: StmtClause(loc), body(body) {}
 
-	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
+	const FinallyClause * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
-	FinallyStmt * clone() const override { return new FinallyStmt{ *this }; }
+	FinallyClause * clone() const override { return new FinallyClause{ *this }; }
 	MUTATE_FRIEND
 };
 

@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 12:18:34 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Feb 18 20:40:38 2019
-// Update Count     : 4
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Mar 16 11:32:00 2022
+// Update Count     : 5
 //
 
 #pragma once
@@ -22,7 +22,9 @@
 class ConstructorInit;
 class Declaration;
 class Expression;
+class DeletedExpr;
 class StmtExpr;
+class Type;
 namespace SymTab {
 	class Indexer;
 } // namespace SymTab
@@ -34,6 +36,7 @@ namespace ast {
 	class Init;
 	class StmtExpr;
 	class SymbolTable;
+	class TranslationGlobal;
 	class TranslationUnit;
 	class Type;
 	class TypeEnvironment;
@@ -54,6 +57,12 @@ namespace ResolvExpr {
 	/// Resolves with-stmts and with-clauses on functions
 	void resolveWithExprs( std::list< Declaration * > & translationUnit );
 
+	/// Helper Type: Passes around information between various sub-calls.
+	struct ResolveContext {
+		const ast::SymbolTable & symtab;
+		const ast::TranslationGlobal & global;
+	};
+
 	/// Checks types and binds syntactic constructs to typed representations
 	void resolve( ast::TranslationUnit& translationUnit );
 	/// Searches expr and returns the first DeletedExpr found, otherwise nullptr
@@ -61,19 +70,19 @@ namespace ResolvExpr {
 	/// Find the expression candidate that is the unique best match for `untyped` in a `void`
 	/// context.
 	ast::ptr< ast::Expr > resolveInVoidContext(
-		const ast::Expr * expr, const ast::SymbolTable & symtab, ast::TypeEnvironment & env );
+		const ast::Expr * expr, const ResolveContext &, ast::TypeEnvironment & env );
 	/// Resolve `untyped` to the single expression whose candidate is the best match for the
 	/// given type.
 	ast::ptr< ast::Expr > findSingleExpression(
-		const ast::Expr * untyped, const ast::Type * type, const ast::SymbolTable & symtab );
+		const ast::Expr * untyped, const ast::Type * type, const ResolveContext & );
 	ast::ptr< ast::Expr > findVoidExpression(
-		const ast::Expr * untyped, const ast::SymbolTable & symtab);
+		const ast::Expr * untyped, const ResolveContext & );
 	/// Resolves a constructor init expression
 	ast::ptr< ast::Init > resolveCtorInit(
-		const ast::ConstructorInit * ctorInit, const ast::SymbolTable & symtab );
+		const ast::ConstructorInit * ctorInit, const ResolveContext & context );
 	/// Resolves a statement expression
 	const ast::Expr * resolveStmtExpr(
-		const ast::StmtExpr * stmtExpr, const ast::SymbolTable & symtab );
+		const ast::StmtExpr * stmtExpr, const ResolveContext & context );
 } // namespace ResolvExpr
 
 // Local Variables: //

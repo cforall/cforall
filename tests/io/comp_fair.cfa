@@ -1,0 +1,139 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// comp_fair.cfa -- Test that spinning doesn't cause completions to get stuck.
+//                  This test should work without io_uring but isn't very useful without
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Mar 10 15:06:50 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+
+#include <concurrency/barrier.hfa>
+#include <fstream.hfa>
+#include <iofwd.hfa>
+#include <kernel.hfa>
+#include <thread.hfa>
+
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+
+struct {
+      barrier & bar;
+      int pipe[2];
+
+} globals;
+
+Duration default_preemption() {
+	return 0;
+}
+
+enum { TIMES = 1000 };
+
+volatile unsigned counter = 0;
+
+
+// ----- Spinner -----
+// spins trying to prevent other threads from getting to this processor
+thread Spinner {};
+void main(Spinner &) {
+	unsigned last = 0;
+	for() {
+		unsigned curr = __atomic_load_n(&counter, __ATOMIC_SEQ_CST);
+
+		if(curr >= TIMES) break;
+
+		if(last == curr) {
+			Pause();
+			continue;
+		}
+
+		last = curr;
+		yield();
+	}
+}
+
+// ----- Reader -----
+// Reader from the pipe to test completion doesn't starve
+thread Reader {};
+void main(Reader & this) {
+      bool do_read = has_user_level_blocking( (fptr_t)async_read );
+
+      for(TIMES) {
+            io_future_t f;
+            if ( do_read ) {
+                  char thrash[1];
+                  async_read(f, globals.pipe[0], thrash, 1, 0);
+            } else {
+                  fulfil(f, 0); // If we don't have user-level blocking just play along
+            }
+
+            block( globals.bar );
+
+		yield( prng( this, 15 ) );
+
+            unsigned i = __atomic_add_fetch( &counter, 1, __ATOMIC_SEQ_CST );
+		if(0 == (i % 100)) sout | i;
+
+            wait( f );
+
+            if(f.result < 0)
+                  abort | "Read error" | -f.result | ":" | strerror(-f.result);
+
+            block( globals.bar );
+      }
+}
+
+// ----- Writer -----
+// Writes to the pipe so the Reader can unblock
+// takes its sweet time so the Reader has to block
+thread Writer {};
+void main(Writer & this) {
+      for(TIMES) {
+            block( globals.bar );
+
+            sleep( 1`us );
+
+            char buf[1] = { '+' };
+            int ret = write( globals.pipe[1], buf, 1 );
+            if(ret < 0)
+                  abort | "Write error" | errno | ":" | strerror(errno);
+
+            block( globals.bar );
+      }
+}
+
+// ----- Yielder -----
+// Add some chaos into the mix
+thread Yielder {};
+void ^?{}(Yielder &mutex ) {}
+void main(Yielder&) {
+	while(TIMES > __atomic_load_n(&counter, __ATOMIC_SEQ_CST)) {
+		yield();
+	}
+}
+
+int main() {
+      barrier bar = { 2 };
+      &globals.bar = &bar;
+      int ret = pipe(globals.pipe);
+      if(ret != 0)
+            abort | "Pipe error" | errno | ":" | strerror(errno);
+
+     	processor p;
+	sout | "starting";
+	{
+		Yielder y;
+		Spinner s;
+		Reader ior;
+            Writer iow;
+	}
+	sout | "done";
+}

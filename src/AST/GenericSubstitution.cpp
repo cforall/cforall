@@ -44,7 +44,7 @@ namespace {
 		void makeSub( const BaseInstType * ty ) {
 			visit_children = false;
 			const AggregateDecl * aggr = ty->aggr();
-			sub = TypeSubstitution{ aggr->params.begin(), aggr->params.end(), ty->params.begin() };
+			sub = TypeSubstitution( aggr->params, ty->params );
 		}
 
 	public:

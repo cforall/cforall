@@ -18,7 +18,7 @@
 
 #include "thread.hfa"
 
-#include "kernel_private.hfa"
+#include "kernel/private.hfa"
 #include "exception.hfa"
 
 #define __CFA_INVOKE_PRIVATE__

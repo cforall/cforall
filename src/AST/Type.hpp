@@ -420,6 +420,10 @@ public:
 		const std::string& n, const TypeDecl * b, CV::Qualifiers q = {},
 		std::vector<ptr<Attribute>> && as = {} )
 	: BaseInstType( n, q, std::move(as) ), base( b ), kind( b->kind ) {}
+
+	TypeInstType( const TypeDecl * b,
+		CV::Qualifiers q = {}, std::vector<ptr<Attribute>> && as = {} );
+
 	TypeInstType( const std::string& n, TypeDecl::Kind k, CV::Qualifiers q = {},
 		std::vector<ptr<Attribute>> && as = {} )
 	: BaseInstType( n, q, std::move(as) ), base(), kind( k ) {}

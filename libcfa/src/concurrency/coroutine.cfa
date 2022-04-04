@@ -26,7 +26,7 @@
 #include <sys/mman.h>									// mprotect
 #include <unwind.h>
 
-#include "kernel_private.hfa"
+#include "kernel/private.hfa"
 #include "exception.hfa"
 #include "math.hfa"
 

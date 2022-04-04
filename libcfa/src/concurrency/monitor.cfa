@@ -21,7 +21,7 @@
 #include <stdlib.hfa>
 #include <inttypes.h>
 
-#include "kernel_private.hfa"
+#include "kernel/private.hfa"
 
 #include "bits/algorithm.hfa"
 

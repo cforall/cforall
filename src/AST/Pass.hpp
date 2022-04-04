@@ -148,13 +148,13 @@ public:
 	const ast::Stmt *             visit( const ast::WhileDoStmt          * ) override final;
 	const ast::Stmt *             visit( const ast::ForStmt              * ) override final;
 	const ast::Stmt *             visit( const ast::SwitchStmt           * ) override final;
-	const ast::Stmt *             visit( const ast::CaseStmt             * ) override final;
+	const ast::CaseClause *       visit( const ast::CaseClause           * ) override final;
 	const ast::Stmt *             visit( const ast::BranchStmt           * ) override final;
 	const ast::Stmt *             visit( const ast::ReturnStmt           * ) override final;
 	const ast::Stmt *             visit( const ast::ThrowStmt            * ) override final;
 	const ast::Stmt *             visit( const ast::TryStmt              * ) override final;
-	const ast::Stmt *             visit( const ast::CatchStmt            * ) override final;
-	const ast::Stmt *             visit( const ast::FinallyStmt          * ) override final;
+	const ast::CatchClause *      visit( const ast::CatchClause          * ) override final;
+	const ast::FinallyClause *    visit( const ast::FinallyClause        * ) override final;
 	const ast::Stmt *             visit( const ast::SuspendStmt          * ) override final;
 	const ast::Stmt *             visit( const ast::WaitForStmt          * ) override final;
 	const ast::Decl *             visit( const ast::WithStmt             * ) override final;

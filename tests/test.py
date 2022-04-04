@@ -234,11 +234,8 @@ def run_single_test(test):
 			else:
 				error = "Output log can't be read, file is bigger than 1MB, see {} for actual error\n".format(out_file)
 
-			ret, info, gdberr = core_info(exe_file)
-			if ret == 0:
-				error = error + info if error else info
-			else :
-				error = error + gdberr if error else gdberr
+			ret, info = core_info(exe_file)
+			error = error + info if error else info
 
 			if settings.archive:
 				error = error + '\n' + core_archive(settings.archive, test.target(), exe_file)

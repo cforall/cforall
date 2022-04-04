@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Thu May 09 15::37::05 2019
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  2 13:19:22 2022
-// Update Count     : 41
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Mar 16 15:01:00 2022
+// Update Count     : 42
 //
 
 #include "Convert.hpp"
@@ -48,16 +48,13 @@ struct to {
 
 //================================================================================================
 namespace ast {
+// These are the shared local information used by ConverterNewToOld and
+// ConverterOldToNew to update the global information in the two versions.
 
-// This is to preserve the FindSpecialDecls hack. It does not (and perhaps should not)
-// allow us to use the same stratagy in the new ast.
-// xxx - since convert back pass works, this concern seems to be unnecessary.
-
-// these need to be accessed in new FixInit now
-ast::ptr<ast::Type> sizeType = nullptr;
-const ast::FunctionDecl * dereferenceOperator = nullptr;
-const ast::StructDecl   * dtorStruct = nullptr;
-const ast::FunctionDecl * dtorStructDestroy = nullptr;
+static ast::ptr<ast::Type> sizeType = nullptr;
+static const ast::FunctionDecl * dereferenceOperator = nullptr;
+static const ast::StructDecl   * dtorStruct = nullptr;
+static const ast::FunctionDecl * dtorStructDestroy = nullptr;
 
 }
 
@@ -355,6 +352,11 @@ private:
 		return nullptr;
 	}
 
+	void clausePostamble( Statement * stmt, const ast::StmtClause * node ) {
+		stmt->location = node->location;
+		this->node = stmt;
+	}
+
 	const ast::CompoundStmt * visit( const ast::CompoundStmt * node ) override final {
 		if ( inCache( node ) ) return nullptr;
 		auto stmt = new CompoundStmt( get<Statement>().acceptL( node->kids ) );
@@ -403,19 +405,20 @@ private:
 		if ( inCache( node ) ) return nullptr;
 		auto stmt = new SwitchStmt(
 			get<Expression>().accept1( node->cond ),
-			get<Statement>().acceptL( node->stmts )
+			get<Statement>().acceptL( node->cases )
 		);
 		return stmtPostamble( stmt, node );
 	}
 
-	const ast::Stmt * visit( const ast::CaseStmt * node ) override final {
+	const ast::CaseClause * visit( const ast::CaseClause * node ) override final {
 		if ( inCache( node ) ) return nullptr;
 		auto stmt = new CaseStmt(
 			get<Expression>().accept1( node->cond ),
 			get<Statement>().acceptL( node->stmts ),
 			node->isDefault()
 		);
-		return stmtPostamble( stmt, node );
+		clausePostamble( stmt, node );
+		return nullptr;
 	}
 
 	const ast::Stmt * visit( const ast::WhileDoStmt * node ) override final {
@@ -511,7 +514,7 @@ private:
 		return stmtPostamble( stmt, node );
 	}
 
-	const ast::Stmt * visit( const ast::CatchStmt * node ) override final {
+	const ast::CatchClause * visit( const ast::CatchClause * node ) override final {
 		if ( inCache( node ) ) return nullptr;
 		CatchStmt::Kind kind;
 		switch (node->kind) {
@@ -522,7 +525,7 @@ private:
 			kind = CatchStmt::Resume;
 			break;
 		default:
-			assertf(false, "Invalid ast::CatchStmt::Kind: %d\n", node->kind);
+			assertf(false, "Invalid ast::ExceptionKind: %d\n", node->kind);
 		}
 		auto stmt = new CatchStmt(
 			kind,
@@ -530,13 +533,13 @@ private:
 			get<Expression>().accept1( node->cond ),
 			get<Statement>().accept1( node->body )
 		);
-		return stmtPostamble( stmt, node );
+		return clausePostamble( stmt, node ), nullptr;
 	}
 
-	const ast::Stmt * visit( const ast::FinallyStmt * node ) override final {
+	const ast::FinallyClause * visit( const ast::FinallyClause * node ) override final {
 		if ( inCache( node ) ) return nullptr;
 		auto stmt = new FinallyStmt( get<CompoundStmt>().accept1( node->body ) );
-		return stmtPostamble( stmt, node );
+		return clausePostamble( stmt, node ), nullptr;
 	}
 
 	const ast::Stmt * visit(const ast::SuspendStmt * node ) override final {
@@ -1886,7 +1889,7 @@ private:
 		this->node = new ast::SwitchStmt(
 			old->location,
 			GET_ACCEPT_1(condition, Expr),
-			GET_ACCEPT_V(statements, Stmt),
+			GET_ACCEPT_V(statements, CaseClause),
 			GET_LABELS_V(old->labels)
 		);
 		cache.emplace( old, this->node );
@@ -1894,12 +1897,13 @@ private:
 
 	virtual void visit( const CaseStmt * old ) override final {
 		if ( inCache( old ) ) return;
-		this->node = new ast::CaseStmt(
+		this->node = new ast::CaseClause(
 			old->location,
 			GET_ACCEPT_1(condition, Expr),
-			GET_ACCEPT_V(stmts, Stmt),
-			GET_LABELS_V(old->labels)
+			GET_ACCEPT_V(stmts, Stmt)
 		);
+		auto labels = GET_LABELS_V(old->labels);
+		assertf(labels.empty(), "Labels found on CaseStmt.");
 		cache.emplace( old, this->node );
 	}
 
@@ -2007,8 +2011,8 @@ private:
 		this->node = new ast::TryStmt(
 			old->location,
 			GET_ACCEPT_1(block, CompoundStmt),
-			GET_ACCEPT_V(handlers, CatchStmt),
-			GET_ACCEPT_1(finallyBlock, FinallyStmt),
+			GET_ACCEPT_V(handlers, CatchClause),
+			GET_ACCEPT_1(finallyBlock, FinallyClause),
 			GET_LABELS_V(old->labels)
 		);
 		cache.emplace( old, this->node );
@@ -2028,24 +2032,26 @@ private:
 			assertf(false, "Invalid CatchStmt::Kind %d\n", old->kind);
 		}
 
-		this->node = new ast::CatchStmt(
+		this->node = new ast::CatchClause(
 			old->location,
 			kind,
 			GET_ACCEPT_1(decl, Decl),
 			GET_ACCEPT_1(cond, Expr),
-			GET_ACCEPT_1(body, Stmt),
-			GET_LABELS_V(old->labels)
+			GET_ACCEPT_1(body, Stmt)
 		);
+		auto labels = GET_LABELS_V(old->labels);
+		assertf(labels.empty(), "Labels found on CatchStmt.");
 		cache.emplace( old, this->node );
 	}
 
 	virtual void visit( const FinallyStmt * old ) override final {
 		if ( inCache( old ) ) return;
-		this->node = new ast::FinallyStmt(
+		this->node = new ast::FinallyClause(
 			old->location,
-			GET_ACCEPT_1(block, CompoundStmt),
-			GET_LABELS_V(old->labels)
+			GET_ACCEPT_1(block, CompoundStmt)
 		);
+		auto labels = GET_LABELS_V(old->labels);
+		assertf(labels.empty(), "Labels found on FinallyStmt.");
 		cache.emplace( old, this->node );
 	}
 
@@ -2710,7 +2716,7 @@ private:
 		auto foralls = GET_ACCEPT_V( forall, TypeDecl );
 
 		for (auto & param : foralls) {
-			ty->forall.emplace_back(new ast::TypeInstType(param->name, param));
+			ty->forall.emplace_back(new ast::TypeInstType(param));
 			for (auto asst : param->assertions) {
 				ty->assertions.emplace_back(new ast::VariableExpr({}, asst));
 			}

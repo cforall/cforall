@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Sun May 17 12:17:01 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  1 16:27:14 2022
-// Update Count     : 245
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Mar 18 10:41:00 2022
+// Update Count     : 247
 //
 
 #include <cassert>                       // for strict_dynamic_cast, assert
@@ -996,7 +996,7 @@ namespace ResolvExpr {
 
 		/// Calls the CandidateFinder and finds the single best candidate
 		CandidateRef findUnfinishedKindExpression(
-			const ast::Expr * untyped, const ast::SymbolTable & symtab, const std::string & kind,
+			const ast::Expr * untyped, const ResolveContext & context, const std::string & kind,
 			std::function<bool(const Candidate &)> pred = anyCandidate, ResolvMode mode = {}
 		) {
 			if ( ! untyped ) return nullptr;
@@ -1006,7 +1006,7 @@ namespace ResolvExpr {
 
 			++recursion_level;
 			ast::TypeEnvironment env;
-			CandidateFinder finder{ symtab, env };
+			CandidateFinder finder( context, env );
 			finder.find( untyped, recursion_level == 1 ? mode.atTopLevel() : mode );
 			--recursion_level;
 
@@ -1128,14 +1128,15 @@ namespace ResolvExpr {
 		}
 
 	ast::ptr< ast::Expr > resolveInVoidContext(
-		const ast::Expr * expr, const ast::SymbolTable & symtab, ast::TypeEnvironment & env
+		const ast::Expr * expr, const ResolveContext & context,
+		ast::TypeEnvironment & env
 	) {
 		assertf( expr, "expected a non-null expression" );
 
 		// set up and resolve expression cast to void
 		ast::ptr< ast::CastExpr > untyped = new ast::CastExpr{ expr };
 		CandidateRef choice = findUnfinishedKindExpression(
-			untyped, symtab, "", anyCandidate, ResolvMode::withAdjustment() );
+			untyped, context, "", anyCandidate, ResolvMode::withAdjustment() );
 
 		// a cast expression has either 0 or 1 interpretations (by language rules);
 		// if 0, an exception has already been thrown, and this code will not run
@@ -1148,10 +1149,10 @@ namespace ResolvExpr {
 	/// Resolve `untyped` to the expression whose candidate is the best match for a `void`
 		/// context.
 		ast::ptr< ast::Expr > findVoidExpression(
-			const ast::Expr * untyped, const ast::SymbolTable & symtab
+			const ast::Expr * untyped, const ResolveContext & context
 		) {
 			ast::TypeEnvironment env;
-			ast::ptr< ast::Expr > newExpr = resolveInVoidContext( untyped, symtab, env );
+			ast::ptr< ast::Expr > newExpr = resolveInVoidContext( untyped, context, env );
 			finishExpr( newExpr, env, untyped->env );
 			return newExpr;
 		}
@@ -1162,35 +1163,36 @@ namespace ResolvExpr {
 		/// resolve `untyped` to the expression whose candidate satisfies `pred` with the
 		/// lowest cost, returning the resolved version
 		ast::ptr< ast::Expr > findKindExpression(
-			const ast::Expr * untyped, const ast::SymbolTable & symtab,
+			const ast::Expr * untyped, const ResolveContext & context,
 			std::function<bool(const Candidate &)> pred = anyCandidate,
 			const std::string & kind = "", ResolvMode mode = {}
 		) {
 			if ( ! untyped ) return {};
 			CandidateRef choice =
-				findUnfinishedKindExpression( untyped, symtab, kind, pred, mode );
+				findUnfinishedKindExpression( untyped, context, kind, pred, mode );
 			ResolvExpr::finishExpr( choice->expr, choice->env, untyped->env );
 			return std::move( choice->expr );
 		}
 
 		/// Resolve `untyped` to the single expression whose candidate is the best match
 		ast::ptr< ast::Expr > findSingleExpression(
-			const ast::Expr * untyped, const ast::SymbolTable & symtab
+			const ast::Expr * untyped, const ResolveContext & context
 		) {
 			Stats::ResolveTime::start( untyped );
-			auto res = findKindExpression( untyped, symtab );
+			auto res = findKindExpression( untyped, context );
 			Stats::ResolveTime::stop();
 			return res;
 		}
 	} // anonymous namespace
 
 	ast::ptr< ast::Expr > findSingleExpression(
-		const ast::Expr * untyped, const ast::Type * type, const ast::SymbolTable & symtab
+		const ast::Expr * untyped, const ast::Type * type,
+		const ResolveContext & context
 	) {
 		assert( untyped && type );
 		ast::ptr< ast::Expr > castExpr = new ast::CastExpr{ untyped, type };
-		ast::ptr< ast::Expr > newExpr = findSingleExpression( castExpr, symtab );
-		removeExtraneousCast( newExpr, symtab );
+		ast::ptr< ast::Expr > newExpr = findSingleExpression( castExpr, context );
+		removeExtraneousCast( newExpr, context.symtab );
 		return newExpr;
 	}
 
@@ -1216,9 +1218,9 @@ namespace ResolvExpr {
 
 		/// Resolve `untyped` as an integral expression, returning the resolved version
 		ast::ptr< ast::Expr > findIntegralExpression(
-			const ast::Expr * untyped, const ast::SymbolTable & symtab
+			const ast::Expr * untyped, const ResolveContext & context
 		) {
-			return findKindExpression( untyped, symtab, hasIntegralType, "condition" );
+			return findKindExpression( untyped, context, hasIntegralType, "condition" );
 		}
 
 		/// check if a type is a character type
@@ -1248,13 +1250,17 @@ namespace ResolvExpr {
 		ast::CurrentObject currentObject;
 		// for work previously in GenInit
 		static InitTweak::ManagedTypes_new managedTypes;
+		ResolveContext context;
 
 		bool inEnumDecl = false;
 
 	public:
 		static size_t traceId;
-		Resolver_new() = default;
-		Resolver_new( const ast::SymbolTable & syms ) { symtab = syms; }
+		Resolver_new( const ast::TranslationGlobal & global ) :
+			context{ symtab, global } {}
+		Resolver_new( const ResolveContext & context ) :
+			ast::WithSymbolTable{ context.symtab },
+			context{ symtab, context.global } {}
 
 		const ast::FunctionDecl * previsit( const ast::FunctionDecl * );
 		const ast::FunctionDecl * postvisit( const ast::FunctionDecl * );
@@ -1271,15 +1277,15 @@ namespace ResolvExpr {
 		const ast::AsmExpr *         previsit( const ast::AsmExpr * );
 		const ast::AsmStmt *         previsit( const ast::AsmStmt * );
 		const ast::IfStmt *          previsit( const ast::IfStmt * );
-		const ast::WhileDoStmt *       previsit( const ast::WhileDoStmt * );
+		const ast::WhileDoStmt *     previsit( const ast::WhileDoStmt * );
 		const ast::ForStmt *         previsit( const ast::ForStmt * );
 		const ast::SwitchStmt *      previsit( const ast::SwitchStmt * );
-		const ast::CaseStmt *        previsit( const ast::CaseStmt * );
+		const ast::CaseClause *      previsit( const ast::CaseClause * );
 		const ast::BranchStmt *      previsit( const ast::BranchStmt * );
 		const ast::ReturnStmt *      previsit( const ast::ReturnStmt * );
 		const ast::ThrowStmt *       previsit( const ast::ThrowStmt * );
-		const ast::CatchStmt *       previsit( const ast::CatchStmt * );
-		const ast::CatchStmt *       postvisit( const ast::CatchStmt * );
+		const ast::CatchClause *     previsit( const ast::CatchClause * );
+		const ast::CatchClause *     postvisit( const ast::CatchClause * );
 		const ast::WaitForStmt *     previsit( const ast::WaitForStmt * );
 		const ast::WithStmt *        previsit( const ast::WithStmt * );
 
@@ -1298,34 +1304,34 @@ namespace ResolvExpr {
 	InitTweak::ManagedTypes_new Resolver_new::managedTypes;
 
 	void resolve( ast::TranslationUnit& translationUnit ) {
-		ast::Pass< Resolver_new >::run( translationUnit );
+		ast::Pass< Resolver_new >::run( translationUnit, translationUnit.global );
 	}
 
 	ast::ptr< ast::Init > resolveCtorInit(
-		const ast::ConstructorInit * ctorInit, const ast::SymbolTable & symtab
+		const ast::ConstructorInit * ctorInit, const ResolveContext & context
 	) {
 		assert( ctorInit );
-		ast::Pass< Resolver_new > resolver{ symtab };
+		ast::Pass< Resolver_new > resolver( context );
 		return ctorInit->accept( resolver );
 	}
 
 	const ast::Expr * resolveStmtExpr(
-		const ast::StmtExpr * stmtExpr, const ast::SymbolTable & symtab
+		const ast::StmtExpr * stmtExpr, const ResolveContext & context
 	) {
 		assert( stmtExpr );
-		ast::Pass< Resolver_new > resolver{ symtab };
+		ast::Pass< Resolver_new > resolver( context );
 		auto ret = mutate(stmtExpr->accept(resolver));
 		strict_dynamic_cast< ast::StmtExpr * >( ret )->computeResult();
 		return ret;
 	}
 
 	namespace {
-		const ast::Attribute * handleAttribute(const CodeLocation & loc, const ast::Attribute * attr, const ast::SymbolTable & symtab) {
+		const ast::Attribute * handleAttribute(const CodeLocation & loc, const ast::Attribute * attr, const ResolveContext & context) {
 			std::string name = attr->normalizedName();
 			if (name == "constructor" || name == "destructor") {
 				if (attr->params.size() == 1) {
 					auto arg = attr->params.front();
-					auto resolved = ResolvExpr::findSingleExpression( arg, new ast::BasicType( ast::BasicType::LongLongSignedInt ), symtab );
+					auto resolved = ResolvExpr::findSingleExpression( arg, new ast::BasicType( ast::BasicType::LongLongSignedInt ), context );
 					auto result = eval(arg);
 
 					auto mutAttr = mutate(attr);
@@ -1368,7 +1374,7 @@ namespace ResolvExpr {
 			auto mutType = mutDecl->type.get_and_mutate();
 
 			for (auto & attr: mutDecl->attributes) {
-				attr = handleAttribute(mutDecl->location, attr, symtab);
+				attr = handleAttribute(mutDecl->location, attr, context );
 			}
 
 			// handle assertions
@@ -1378,10 +1384,10 @@ namespace ResolvExpr {
 			mutType->assertions.clear();
 			for (auto & typeParam : mutDecl->type_params) {
 				symtab.addType(typeParam);
-				mutType->forall.emplace_back(new ast::TypeInstType(typeParam->name, typeParam));
+				mutType->forall.emplace_back(new ast::TypeInstType(typeParam));
 			}
 			for (auto & asst : mutDecl->assertions) {
-				asst = fixObjectType(asst.strict_as<ast::ObjectDecl>(), symtab);
+				asst = fixObjectType(asst.strict_as<ast::ObjectDecl>(), context);
 				symtab.addId(asst);
 				mutType->assertions.emplace_back(new ast::VariableExpr(functionDecl->location, asst));
 			}
@@ -1393,12 +1399,12 @@ namespace ResolvExpr {
 			std::vector<ast::ptr<ast::Type>> returnTypes;
 
 			for (auto & param : mutDecl->params) {
-				param = fixObjectType(param.strict_as<ast::ObjectDecl>(), symtab);
+				param = fixObjectType(param.strict_as<ast::ObjectDecl>(), context);
 				symtab.addId(param);
 				paramTypes.emplace_back(param->get_type());
 			}
 			for (auto & ret : mutDecl->returns) {
-				ret = fixObjectType(ret.strict_as<ast::ObjectDecl>(), symtab);
+				ret = fixObjectType(ret.strict_as<ast::ObjectDecl>(), context);
 				returnTypes.emplace_back(ret->get_type());
 			}
 			// since function type in decl is just a view of param types, need to update that as well
@@ -1469,13 +1475,13 @@ namespace ResolvExpr {
 		if ( inEnumDecl && dynamic_cast< const ast::EnumInstType * >( objectDecl->get_type() ) ) {
 			// enumerator initializers should not use the enum type to initialize, since the
 			// enum type is still incomplete at this point. Use `int` instead.
-			objectDecl = fixObjectType(objectDecl, symtab);
+			objectDecl = fixObjectType(objectDecl, context);
 			currentObject = ast::CurrentObject{
 				objectDecl->location, new ast::BasicType{ ast::BasicType::SignedInt } };
 		}
 		else {
 			if (!objectDecl->isTypeFixed) {
-				auto newDecl = fixObjectType(objectDecl, symtab);
+				auto newDecl = fixObjectType(objectDecl, context);
 				auto mutDecl = mutate(newDecl);
 
 				// generate CtorInit wrapper when necessary.
@@ -1506,7 +1512,7 @@ namespace ResolvExpr {
 		for (auto & member: aggDecl->members) {
 			// nested type decls are hoisted already. no need to do anything
 			if (auto obj = member.as<ast::ObjectDecl>()) {
-				member = fixObjectType(obj, symtab);
+				member = fixObjectType(obj, context);
 			}
 		}
 	}
@@ -1529,26 +1535,26 @@ namespace ResolvExpr {
 	) {
 		return ast::mutate_field(
 			assertDecl, &ast::StaticAssertDecl::cond,
-			findIntegralExpression( assertDecl->cond, symtab ) );
+			findIntegralExpression( assertDecl->cond, context ) );
 	}
 
 	template< typename PtrType >
-	const PtrType * handlePtrType( const PtrType * type, const ast::SymbolTable & symtab ) {
+	const PtrType * handlePtrType( const PtrType * type, const ResolveContext & context ) {
 		if ( type->dimension ) {
-			ast::ptr< ast::Type > sizeType = ast::sizeType;
+			ast::ptr< ast::Type > sizeType = context.global.sizeType;
 			ast::mutate_field(
 				type, &PtrType::dimension,
-				findSingleExpression( type->dimension, sizeType, symtab ) );
+				findSingleExpression( type->dimension, sizeType, context ) );
 		}
 		return type;
 	}
 
 	const ast::ArrayType * Resolver_new::previsit( const ast::ArrayType * at ) {
-		return handlePtrType( at, symtab );
+		return handlePtrType( at, context );
 	}
 
 	const ast::PointerType * Resolver_new::previsit( const ast::PointerType * pt ) {
-		return handlePtrType( pt, symtab );
+		return handlePtrType( pt, context );
 	}
 
 	const ast::ExprStmt * Resolver_new::previsit( const ast::ExprStmt * exprStmt ) {
@@ -1556,14 +1562,14 @@ namespace ResolvExpr {
 		assertf( exprStmt->expr, "ExprStmt has null expression in resolver" );
 
 		return ast::mutate_field(
-			exprStmt, &ast::ExprStmt::expr, findVoidExpression( exprStmt->expr, symtab ) );
+			exprStmt, &ast::ExprStmt::expr, findVoidExpression( exprStmt->expr, context ) );
 	}
 
 	const ast::AsmExpr * Resolver_new::previsit( const ast::AsmExpr * asmExpr ) {
 		visit_children = false;
 
 		asmExpr = ast::mutate_field(
-			asmExpr, &ast::AsmExpr::operand, findVoidExpression( asmExpr->operand, symtab ) );
+			asmExpr, &ast::AsmExpr::operand, findVoidExpression( asmExpr->operand, context ) );
 
 		return asmExpr;
 	}
@@ -1577,23 +1583,23 @@ namespace ResolvExpr {
 
 	const ast::IfStmt * Resolver_new::previsit( const ast::IfStmt * ifStmt ) {
 		return ast::mutate_field(
-			ifStmt, &ast::IfStmt::cond, findIntegralExpression( ifStmt->cond, symtab ) );
+			ifStmt, &ast::IfStmt::cond, findIntegralExpression( ifStmt->cond, context ) );
 	}
 
 	const ast::WhileDoStmt * Resolver_new::previsit( const ast::WhileDoStmt * whileDoStmt ) {
 		return ast::mutate_field(
-			whileDoStmt, &ast::WhileDoStmt::cond, findIntegralExpression( whileDoStmt->cond, symtab ) );
+			whileDoStmt, &ast::WhileDoStmt::cond, findIntegralExpression( whileDoStmt->cond, context ) );
 	}
 
 	const ast::ForStmt * Resolver_new::previsit( const ast::ForStmt * forStmt ) {
 		if ( forStmt->cond ) {
 			forStmt = ast::mutate_field(
-				forStmt, &ast::ForStmt::cond, findIntegralExpression( forStmt->cond, symtab ) );
+				forStmt, &ast::ForStmt::cond, findIntegralExpression( forStmt->cond, context ) );
 		}
 
 		if ( forStmt->inc ) {
 			forStmt = ast::mutate_field(
-				forStmt, &ast::ForStmt::inc, findVoidExpression( forStmt->inc, symtab ) );
+				forStmt, &ast::ForStmt::inc, findVoidExpression( forStmt->inc, context ) );
 		}
 
 		return forStmt;
@@ -1603,12 +1609,12 @@ namespace ResolvExpr {
 		GuardValue( currentObject );
 		switchStmt = ast::mutate_field(
 			switchStmt, &ast::SwitchStmt::cond,
-			findIntegralExpression( switchStmt->cond, symtab ) );
+			findIntegralExpression( switchStmt->cond, context ) );
 		currentObject = ast::CurrentObject{ switchStmt->location, switchStmt->cond->result };
 		return switchStmt;
 	}
 
-	const ast::CaseStmt * Resolver_new::previsit( const ast::CaseStmt * caseStmt ) {
+	const ast::CaseClause * Resolver_new::previsit( const ast::CaseClause * caseStmt ) {
 		if ( caseStmt->cond ) {
 			std::deque< ast::InitAlternative > initAlts = currentObject.getOptions();
 			assertf( initAlts.size() == 1, "SwitchStmt did not correctly resolve an integral "
@@ -1616,7 +1622,7 @@ namespace ResolvExpr {
 
 			ast::ptr< ast::Expr > untyped =
 				new ast::CastExpr{ caseStmt->location, caseStmt->cond, initAlts.front().type };
-			ast::ptr< ast::Expr > newExpr = findSingleExpression( untyped, symtab );
+			ast::ptr< ast::Expr > newExpr = findSingleExpression( untyped, context );
 
 			// case condition cannot have a cast in C, so it must be removed here, regardless of
 			// whether it would perform a conversion.
@@ -1624,7 +1630,7 @@ namespace ResolvExpr {
 				swap_and_save_env( newExpr, castExpr->arg );
 			}
 
-			caseStmt = ast::mutate_field( caseStmt, &ast::CaseStmt::cond, newExpr );
+			caseStmt = ast::mutate_field( caseStmt, &ast::CaseClause::cond, newExpr );
 		}
 		return caseStmt;
 	}
@@ -1637,7 +1643,7 @@ namespace ResolvExpr {
 			ast::ptr< ast::Type > target = new ast::PointerType{ new ast::VoidType{} };
 			branchStmt = ast::mutate_field(
 				branchStmt, &ast::BranchStmt::computedTarget,
-				findSingleExpression( branchStmt->computedTarget, target, symtab ) );
+				findSingleExpression( branchStmt->computedTarget, target, context ) );
 		}
 		return branchStmt;
 	}
@@ -1647,7 +1653,7 @@ namespace ResolvExpr {
 		if ( returnStmt->expr ) {
 			returnStmt = ast::mutate_field(
 				returnStmt, &ast::ReturnStmt::expr,
-				findSingleExpression( returnStmt->expr, functionReturn, symtab ) );
+				findSingleExpression( returnStmt->expr, functionReturn, context ) );
 		}
 		return returnStmt;
 	}
@@ -1662,40 +1668,40 @@ namespace ResolvExpr {
 				new ast::PointerType{ new ast::StructInstType{ exceptionDecl } };
 			throwStmt = ast::mutate_field(
 				throwStmt, &ast::ThrowStmt::expr,
-				findSingleExpression( throwStmt->expr, exceptType, symtab ) );
+				findSingleExpression( throwStmt->expr, exceptType, context ) );
 		}
 		return throwStmt;
 	}
 
-	const ast::CatchStmt * Resolver_new::previsit( const ast::CatchStmt * catchStmt ) {
+	const ast::CatchClause * Resolver_new::previsit( const ast::CatchClause * catchClause ) {
 		// Until we are very sure this invarent (ifs that move between passes have then)
 		// holds, check it. This allows a check for when to decode the mangling.
-		if ( auto ifStmt = catchStmt->body.as<ast::IfStmt>() ) {
+		if ( auto ifStmt = catchClause->body.as<ast::IfStmt>() ) {
 			assert( ifStmt->then );
 		}
 		// Encode the catchStmt so the condition can see the declaration.
-		if ( catchStmt->cond ) {
-			ast::CatchStmt * stmt = mutate( catchStmt );
-			stmt->body = new ast::IfStmt( stmt->location, stmt->cond, nullptr, stmt->body );
-			stmt->cond = nullptr;
-			return stmt;
+		if ( catchClause->cond ) {
+			ast::CatchClause * clause = mutate( catchClause );
+			clause->body = new ast::IfStmt( clause->location, clause->cond, nullptr, clause->body );
+			clause->cond = nullptr;
+			return clause;
 		}
-		return catchStmt;
+		return catchClause;
 	}
 
-	const ast::CatchStmt * Resolver_new::postvisit( const ast::CatchStmt * catchStmt ) {
+	const ast::CatchClause * Resolver_new::postvisit( const ast::CatchClause * catchClause ) {
 		// Decode the catchStmt so everything is stored properly.
-		const ast::IfStmt * ifStmt = catchStmt->body.as<ast::IfStmt>();
+		const ast::IfStmt * ifStmt = catchClause->body.as<ast::IfStmt>();
 		if ( nullptr != ifStmt && nullptr == ifStmt->then ) {
 			assert( ifStmt->cond );
 			assert( ifStmt->else_ );
-			ast::CatchStmt * stmt = ast::mutate( catchStmt );
-			stmt->cond = ifStmt->cond;
-			stmt->body = ifStmt->else_;
+			ast::CatchClause * clause = ast::mutate( catchClause );
+			clause->cond = ifStmt->cond;
+			clause->body = ifStmt->else_;
 			// ifStmt should be implicately deleted here.
-			return stmt;
+			return clause;
 		}
-		return catchStmt;
+		return catchClause;
 	}
 
 	const ast::WaitForStmt * Resolver_new::previsit( const ast::WaitForStmt * stmt ) {
@@ -1706,7 +1712,7 @@ namespace ResolvExpr {
 			const ast::WaitForStmt::Clause & clause = stmt->clauses[i];
 
 			ast::TypeEnvironment env;
-			CandidateFinder funcFinder{ symtab, env };
+			CandidateFinder funcFinder( context, env );
 
 			// Find all candidates for a function in canonical form
 			funcFinder.find( clause.target.func, ResolvMode::withAdjustment() );
@@ -1920,11 +1926,11 @@ namespace ResolvExpr {
 					)
 				);
 
-				clause2.target.args.emplace_back( findSingleExpression( init, symtab ) );
+				clause2.target.args.emplace_back( findSingleExpression( init, context ) );
 			}
 
 			// Resolve the conditions as if it were an IfStmt, statements normally
-			clause2.cond = findSingleExpression( clause.cond, symtab );
+			clause2.cond = findSingleExpression( clause.cond, context );
 			clause2.stmt = clause.stmt->accept( *visitor );
 
 			// set results into stmt
@@ -1939,8 +1945,8 @@ namespace ResolvExpr {
 
 			ast::ptr< ast::Type > target =
 				new ast::BasicType{ ast::BasicType::LongLongUnsignedInt };
-			timeout2.time = findSingleExpression( stmt->timeout.time, target, symtab );
-			timeout2.cond = findSingleExpression( stmt->timeout.cond, symtab );
+			timeout2.time = findSingleExpression( stmt->timeout.time, target, context );
+			timeout2.cond = findSingleExpression( stmt->timeout.cond, context );
 			timeout2.stmt = stmt->timeout.stmt->accept( *visitor );
 
 			// set results into stmt
@@ -1953,7 +1959,7 @@ namespace ResolvExpr {
 			// resolve the condition like IfStmt, stmts normally
 			ast::WaitForStmt::OrElse orElse2;
 
-			orElse2.cond = findSingleExpression( stmt->orElse.cond, symtab );
+			orElse2.cond = findSingleExpression( stmt->orElse.cond, context );
 			orElse2.stmt = stmt->orElse.stmt->accept( *visitor );
 
 			// set results into stmt
@@ -1974,7 +1980,7 @@ namespace ResolvExpr {
 	void Resolver_new::resolveWithExprs(std::vector<ast::ptr<ast::Expr>> & exprs, std::list<ast::ptr<ast::Stmt>> & stmtsToAdd) {
 		for (auto & expr : exprs) {
 			// only struct- and union-typed expressions are viable candidates
-			expr = findKindExpression( expr, symtab, structOrUnion, "with expression" );
+			expr = findKindExpression( expr, context, structOrUnion, "with expression" );
 
 			// if with expression might be impure, create a temporary so that it is evaluated once
 			if ( Tuples::maybeImpure( expr ) ) {
@@ -2000,7 +2006,7 @@ namespace ResolvExpr {
 		// cursor.
 		ast::ptr< ast::Expr > untyped = new ast::UntypedInitExpr{
 			singleInit->location, singleInit->value, currentObject.getOptions() };
-		ast::ptr<ast::Expr> newExpr = findSingleExpression( untyped, symtab );
+		ast::ptr<ast::Expr> newExpr = findSingleExpression( untyped, context );
 		const ast::InitExpr * initExpr = newExpr.strict_as< ast::InitExpr >();
 
 		// move cursor to the object that is actually initialized

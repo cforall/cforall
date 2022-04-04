@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Fri Dec  4 15:42:00 2020
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  1 09:14:39 2022
-// Update Count     : 3
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Mar 14 15:14:00 2022
+// Update Count     : 4
 //
 
 #include "CodeLocationTools.hpp"
@@ -111,13 +111,13 @@ public:
     macro(WhileDoStmt, Stmt) \
     macro(ForStmt, Stmt) \
     macro(SwitchStmt, Stmt) \
-    macro(CaseStmt, Stmt) \
+    macro(CaseClause, CaseClause) \
     macro(BranchStmt, Stmt) \
     macro(ReturnStmt, Stmt) \
     macro(ThrowStmt, Stmt) \
     macro(TryStmt, Stmt) \
-    macro(CatchStmt, Stmt) \
-    macro(FinallyStmt, Stmt) \
+    macro(CatchClause, CatchClause) \
+    macro(FinallyClause, FinallyClause) \
     macro(SuspendStmt, Stmt) \
     macro(WaitForStmt, Stmt) \
     macro(WithStmt, Decl) \
@@ -238,6 +238,27 @@ public:
 	}
 };
 
+class LocalFillCore : public ast::WithGuards {
+	CodeLocation const * parent;
+public:
+	LocalFillCore( CodeLocation const & location ) : parent( &location ) {
+		assert( location.isSet() );
+	}
+
+	template<typename node_t>
+	auto previsit( node_t const * node )
+			-> typename std::enable_if<has_code_location<node_t>::value, node_t const *>::type {
+		if ( node->location.isSet() ) {
+			GuardValue( parent ) = &node->location;
+			return node;
+		} else {
+			node_t * mut = ast::mutate( node );
+			mut->location = *parent;
+			return mut;
+		}
+	}
+};
+
 } // namespace
 
 void checkAllCodeLocations( ast::TranslationUnit const & unit ) {
@@ -276,4 +297,10 @@ void checkAllCodeLocations( char const * label, ast::TranslationUnit const & uni
 
 void forceFillCodeLocations( ast::TranslationUnit & unit ) {
 	ast::Pass<FillCore>::run( unit );
+}
+
+ast::Node const * localFillCodeLocations(
+		CodeLocation const & location , ast::Node const * node ) {
+	ast::Pass<LocalFillCore> visitor( location );
+	return node->accept( visitor );
 }

@@ -247,6 +247,7 @@ extern "C" {
 
 			// check if the future is available
 			bool available( future_t & this ) {
+				while( this.ptr == 2p ) Pause();
 				return this.ptr == 1p;
 			}
 

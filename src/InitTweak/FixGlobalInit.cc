@@ -112,20 +112,29 @@ namespace InitTweak {
 		ast::Pass<GlobalFixer_new> fixer;
 		accept_all(translationUnit, fixer);
 
+		// Say these magic declarations come at the end of the file.
+		CodeLocation const & location = translationUnit.decls.back()->location;
+
 		if ( !fixer.core.initStmts.empty() ) {
 			std::vector<ast::ptr<ast::Expr>> ctorParams;
-			if (inLibrary) ctorParams.emplace_back(ast::ConstantExpr::from_int({}, 200));
-			auto initFunction = new ast::FunctionDecl({}, "__global_init__", {}, {}, {}, new ast::CompoundStmt({}, std::move(fixer.core.initStmts)), 
-				ast::Storage::Static, ast::Linkage::C, {new ast::Attribute("constructor", std::move(ctorParams))});
+			if (inLibrary) ctorParams.emplace_back(ast::ConstantExpr::from_int(location, 200));
+			auto initFunction = new ast::FunctionDecl(location,
+				"__global_init__", {}, {}, {},
+				new ast::CompoundStmt(location, std::move(fixer.core.initStmts)),
+				ast::Storage::Static, ast::Linkage::C,
+				{new ast::Attribute("constructor", std::move(ctorParams))});
 
 			translationUnit.decls.emplace_back( initFunction );
 		} // if
 
 		if ( !fixer.core.destroyStmts.empty() ) {
 			std::vector<ast::ptr<ast::Expr>> dtorParams;
-			if (inLibrary) dtorParams.emplace_back(ast::ConstantExpr::from_int({}, 200));
-			auto destroyFunction = new ast::FunctionDecl({}, "__global_destroy__", {}, {}, {}, new ast::CompoundStmt({}, std::move(fixer.core.destroyStmts)), 
-				ast::Storage::Static, ast::Linkage::C, {new ast::Attribute("destructor", std::move(dtorParams))});
+			if (inLibrary) dtorParams.emplace_back(ast::ConstantExpr::from_int(location, 200));
+			auto destroyFunction = new ast::FunctionDecl( location,
+				"__global_destroy__", {}, {}, {},
+				new ast::CompoundStmt(location, std::move(fixer.core.destroyStmts)),
+				ast::Storage::Static, ast::Linkage::C,
+				{new ast::Attribute("destructor", std::move(dtorParams))});
 
 			translationUnit.decls.emplace_back(destroyFunction);
 		} // if

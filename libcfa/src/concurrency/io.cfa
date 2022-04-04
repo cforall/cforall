@@ -40,7 +40,8 @@
 	#include "stats.hfa"
 	#include "kernel.hfa"
 	#include "kernel/fwd.hfa"
-	#include "kernel_private.hfa"
+	#include "kernel/private.hfa"
+	#include "kernel/cluster.hfa"
 	#include "io/types.hfa"
 
 	__attribute__((unused)) static const char * opcodes[] = {
@@ -92,65 +93,16 @@
 	static inline __u32 __release_sqes( struct $io_context & );
 	extern void __kernel_unpark( thread$ * thrd, unpark_hint );
 
-	bool __cfa_io_drain( processor * proc ) {
-		/* paranoid */ verify( ! __preemption_enabled() );
-		/* paranoid */ verify( ready_schedule_islocked() );
-		/* paranoid */ verify( proc );
-		/* paranoid */ verify( proc->io.ctx );
-
-		// Drain the queue
-		$io_context * ctx = proc->io.ctx;
-		unsigned head = *ctx->cq.head;
-		unsigned tail = *ctx->cq.tail;
-		const __u32 mask = *ctx->cq.mask;
-
-		__u32 count = tail - head;
-		__STATS__( false, io.calls.drain++; io.calls.completed += count; )
-
-		if(count == 0) return false;
-
-		for(i; count) {
-			unsigned idx = (head + i) & mask;
-			volatile struct io_uring_cqe & cqe = ctx->cq.cqes[idx];
-
-			/* paranoid */ verify(&cqe);
-
-			struct io_future_t * future = (struct io_future_t *)(uintptr_t)cqe.user_data;
-			__cfadbg_print_safe( io, "Kernel I/O : Syscall completed : cqe %p, result %d for %p\n", &cqe, cqe.res, future );
-
-			__kernel_unpark( fulfil( *future, cqe.res, false ), UNPARK_LOCAL );
-		}
-
-		__cfadbg_print_safe(io, "Kernel I/O : %u completed\n", count);
-
-		// Mark to the kernel that the cqe has been seen
-		// Ensure that the kernel only sees the new value of the head index after the CQEs have been read.
-		__atomic_store_n( ctx->cq.head, head + count, __ATOMIC_SEQ_CST );
-
-		/* paranoid */ verify( ready_schedule_islocked() );
-		/* paranoid */ verify( ! __preemption_enabled() );
-
-		return true;
-	}
-
-	bool __cfa_io_flush( processor * proc, int min_comp ) {
-		/* paranoid */ verify( ! __preemption_enabled() );
-		/* paranoid */ verify( proc );
-		/* paranoid */ verify( proc->io.ctx );
-
-		__attribute__((unused)) cluster * cltr = proc->cltr;
-		$io_context & ctx = *proc->io.ctx;
-
-		__ioarbiter_flush( ctx );
-
-		if(ctx.sq.to_submit != 0 || min_comp > 0) {
-
-			__STATS__( true, io.calls.flush++; )
-			int ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, min_comp, min_comp > 0 ? IORING_ENTER_GETEVENTS : 0, (sigset_t *)0p, _NSIG / 8);
+	static void ioring_syscsll( struct $io_context & ctx, unsigned int min_comp, unsigned int flags ) {
+		__STATS__( true, io.calls.flush++; )
+		int ret;
+		for() {
+			ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, min_comp, flags, (sigset_t *)0p, _NSIG / 8);
 			if( ret < 0 ) {
 				switch((int)errno) {
-				case EAGAIN:
 				case EINTR:
+					continue;
+				case EAGAIN:
 				case EBUSY:
 					// Update statistics
 					__STATS__( false, io.calls.errors.busy ++; )
@@ -159,28 +111,173 @@
 					abort( "KERNEL ERROR: IO_URING SYSCALL - (%d) %s\n", (int)errno, strerror(errno) );
 				}
 			}
-
-			__cfadbg_print_safe(io, "Kernel I/O : %u submitted to io_uring %d\n", ret, ctx.fd);
-			__STATS__( true, io.calls.submitted += ret; )
-			/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
-			/* paranoid */ verify( ctx.sq.to_submit >= ret );
-
-			ctx.sq.to_submit -= ret;
-
-			/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
-
-			// Release the consumed SQEs
-			__release_sqes( ctx );
-
-			/* paranoid */ verify( ! __preemption_enabled() );
-
-			__atomic_store_n(&ctx.proc->io.pending, false, __ATOMIC_RELAXED);
+			break;
 		}
 
+		__cfadbg_print_safe(io, "Kernel I/O : %u submitted to io_uring %d\n", ret, ctx.fd);
+		__STATS__( true, io.calls.submitted += ret; )
+		/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
+		/* paranoid */ verify( ctx.sq.to_submit >= ret );
+
+		ctx.sq.to_submit -= ret;
+
+		/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
+
+		// Release the consumed SQEs
+		__release_sqes( ctx );
+
+		/* paranoid */ verify( ! __preemption_enabled() );
+
+		__atomic_store_n(&ctx.proc->io.pending, false, __ATOMIC_RELAXED);
+	}
+
+	static bool try_acquire( $io_context * ctx ) __attribute__((nonnull(1))) {
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( ready_schedule_islocked() );
+
+
+		{
+			const __u32 head = *ctx->cq.head;
+			const __u32 tail = *ctx->cq.tail;
+
+			if(head == tail) return false;
+		}
+
+		// Drain the queue
+		if(!__atomic_try_acquire(&ctx->cq.lock)) {
+			__STATS__( false, io.calls.locked++; )
+			return false;
+		}
+
+		return true;
+	}
+
+	static bool __cfa_do_drain( $io_context * ctx, cluster * cltr ) __attribute__((nonnull(1, 2))) {
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( ready_schedule_islocked() );
+		/* paranoid */ verify( ctx->cq.lock == true );
+
+		const __u32 mask = *ctx->cq.mask;
+		unsigned long long ts_prev = ctx->cq.ts;
+
+		// re-read the head and tail in case it already changed.
+		const __u32 head = *ctx->cq.head;
+		const __u32 tail = *ctx->cq.tail;
+		const __u32 count = tail - head;
+		__STATS__( false, io.calls.drain++; io.calls.completed += count; )
+
+		for(i; count) {
+			unsigned idx = (head + i) & mask;
+			volatile struct io_uring_cqe & cqe = ctx->cq.cqes[idx];
+
+			/* paranoid */ verify(&cqe);
+
+			struct io_future_t * future = (struct io_future_t *)(uintptr_t)cqe.user_data;
+			// __cfadbg_print_safe( io, "Kernel I/O : Syscall completed : cqe %p, result %d for %p\n", &cqe, cqe.res, future );
+
+			__kernel_unpark( fulfil( *future, cqe.res, false ), UNPARK_LOCAL );
+		}
+
+		unsigned long long ts_next = ctx->cq.ts = rdtscl();
+
+		// Mark to the kernel that the cqe has been seen
+		// Ensure that the kernel only sees the new value of the head index after the CQEs have been read.
+		__atomic_store_n( ctx->cq.head, head + count, __ATOMIC_SEQ_CST );
+		ctx->proc->idle_wctx.drain_time = ts_next;
+
+		__cfadbg_print_safe(io, "Kernel I/O : %u completed age %llu\n", count, ts_next);
+		/* paranoid */ verify( ready_schedule_islocked() );
+		/* paranoid */ verify( ! __preemption_enabled() );
+
+		__atomic_unlock(&ctx->cq.lock);
+
+		touch_tsc( cltr->sched.io.tscs, ctx->cq.id, ts_prev, ts_next );
+
+		return true;
+	}
+
+	bool __cfa_io_drain( processor * proc ) {
+		bool local = false;
+		bool remote = false;
+
 		ready_schedule_lock();
-		bool ret = __cfa_io_drain( proc );
+
+		cluster * const cltr = proc->cltr;
+		$io_context * const ctx = proc->io.ctx;
+		/* paranoid */ verify( cltr );
+		/* paranoid */ verify( ctx );
+
+		with(cltr->sched) {
+			const size_t ctxs_count = io.count;
+
+			/* paranoid */ verify( ready_schedule_islocked() );
+			/* paranoid */ verify( ! __preemption_enabled() );
+			/* paranoid */ verify( active_processor() == proc );
+			/* paranoid */ verify( __shard_factor.io > 0 );
+			/* paranoid */ verify( ctxs_count > 0 );
+			/* paranoid */ verify( ctx->cq.id < ctxs_count );
+
+			const unsigned this_cache = cache_id(cltr, ctx->cq.id / __shard_factor.io);
+			const unsigned long long ctsc = rdtscl();
+
+			if(proc->io.target == MAX) {
+				uint64_t chaos = __tls_rand();
+				unsigned ext = chaos & 0xff;
+				unsigned other  = (chaos >> 8) % (ctxs_count);
+
+				if(ext < 3 || __atomic_load_n(&caches[other / __shard_factor.io].id, __ATOMIC_RELAXED) == this_cache) {
+					proc->io.target = other;
+				}
+			}
+			else {
+				const unsigned target = proc->io.target;
+				/* paranoid */ verify( io.tscs[target].tv != MAX );
+				HELP: if(target < ctxs_count) {
+					const unsigned long long cutoff = calc_cutoff(ctsc, ctx->cq.id, ctxs_count, io.data, io.tscs, __shard_factor.io);
+					const unsigned long long age = moving_average(ctsc, io.tscs[target].tv, io.tscs[target].ma);
+					__cfadbg_print_safe(io, "Kernel I/O: Help attempt on %u from %u, age %'llu vs cutoff %'llu, %s\n", target, ctx->cq.id, age, cutoff, age > cutoff ? "yes" : "no");
+					if(age <= cutoff) break HELP;
+
+					if(!try_acquire(io.data[target])) break HELP;
+
+					if(!__cfa_do_drain( io.data[target], cltr )) break HELP;
+
+					remote = true;
+					__STATS__( false, io.calls.helped++; )
+				}
+				proc->io.target = MAX;
+			}
+		}
+
+
+		// Drain the local queue
+		if(try_acquire( proc->io.ctx )) {
+			local = __cfa_do_drain( proc->io.ctx, cltr );
+		}
+
+		/* paranoid */ verify( ready_schedule_islocked() );
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( active_processor() == proc );
+
 		ready_schedule_unlock();
-		return ret;
+		return local || remote;
+	}
+
+	bool __cfa_io_flush( processor * proc ) {
+		/* paranoid */ verify( ! __preemption_enabled() );
+		/* paranoid */ verify( proc );
+		/* paranoid */ verify( proc->io.ctx );
+
+		$io_context & ctx = *proc->io.ctx;
+
+		__ioarbiter_flush( ctx );
+
+		if(ctx.sq.to_submit != 0) {
+			ioring_syscsll(ctx, 0, 0);
+
+		}
+
+		return __cfa_io_drain( proc );
 	}
 
 //=============================================================================================
@@ -208,7 +305,7 @@
 	static inline void __fill(struct io_uring_sqe * out_sqes[], __u32 want, __u32 idxs[], struct $io_context * ctx)  {
 		struct io_uring_sqe * sqes = ctx->sq.sqes;
 		for(i; want) {
-			__cfadbg_print_safe(io, "Kernel I/O : filling loop\n");
+			// __cfadbg_print_safe(io, "Kernel I/O : filling loop\n");
 			out_sqes[i] = &sqes[idxs[i]];
 		}
 	}
@@ -226,7 +323,7 @@
 
 		// copy all the indexes we want from the available list
 		for(i; want) {
-			__cfadbg_print_safe(io, "Kernel I/O : allocating loop\n");
+			// __cfadbg_print_safe(io, "Kernel I/O : allocating loop\n");
 			idxs[i] = sq.free_ring.array[(fhead + i) & mask];
 		}
 
@@ -243,7 +340,7 @@
 	// for convenience, return both the index and the pointer to the sqe
 	// sqe == &sqes[idx]
 	struct $io_context * cfa_io_allocate(struct io_uring_sqe * sqes[], __u32 idxs[], __u32 want) {
-		__cfadbg_print_safe(io, "Kernel I/O : attempting to allocate %u\n", want);
+		// __cfadbg_print_safe(io, "Kernel I/O : attempting to allocate %u\n", want);
 
 		disable_interrupts();
 		processor * proc = __cfaabi_tls.this_processor;
@@ -251,7 +348,7 @@
 		/* paranoid */ verify( __cfaabi_tls.this_processor );
 		/* paranoid */ verify( ctx );
 
-		__cfadbg_print_safe(io, "Kernel I/O : attempting to fast allocation\n");
+		// __cfadbg_print_safe(io, "Kernel I/O : attempting to fast allocation\n");
 
 		// We can proceed to the fast path
 		if( __alloc(ctx, idxs, want) ) {
@@ -259,7 +356,7 @@
 			__STATS__( true, io.alloc.fast += 1; )
 			enable_interrupts();
 
-			__cfadbg_print_safe(io, "Kernel I/O : fast allocation successful from ring %d\n", ctx->fd);
+			// __cfadbg_print_safe(io, "Kernel I/O : fast allocation successful from ring %d\n", ctx->fd);
 
 			__fill( sqes, want, idxs, ctx );
 			return ctx;
@@ -274,11 +371,11 @@
 		$io_arbiter * ioarb = proc->cltr->io.arbiter;
 		/* paranoid */ verify( ioarb );
 
-		__cfadbg_print_safe(io, "Kernel I/O : falling back on arbiter for allocation\n");
+		// __cfadbg_print_safe(io, "Kernel I/O : falling back on arbiter for allocation\n");
 
 		struct $io_context * ret = __ioarbiter_allocate(*ioarb, idxs, want);
 
-		__cfadbg_print_safe(io, "Kernel I/O : slow allocation completed from ring %d\n", ret->fd);
+		// __cfadbg_print_safe(io, "Kernel I/O : slow allocation completed from ring %d\n", ret->fd);
 
 		__fill( sqes, want, idxs,ret );
 		return ret;
@@ -295,7 +392,7 @@
 
 		// Add the sqes to the array
 		for( i; have ) {
-			__cfadbg_print_safe(io, "Kernel I/O : __submit loop\n");
+			// __cfadbg_print_safe(io, "Kernel I/O : __submit loop\n");
 			sq.kring.array[ (tail + i) & mask ] = idxs[i];
 		}
 
@@ -313,16 +410,16 @@
 
 		if(sq.to_submit > 30) {
 			__tls_stats()->io.flush.full++;
-			__cfa_io_flush( ctx->proc, 0 );
+			__cfa_io_flush( ctx->proc );
 		}
 		if(!lazy) {
 			__tls_stats()->io.flush.eager++;
-			__cfa_io_flush( ctx->proc, 0 );
+			__cfa_io_flush( ctx->proc );
 		}
 	}
 
 	void cfa_io_submit( struct $io_context * inctx, __u32 idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1))) {
-		__cfadbg_print_safe(io, "Kernel I/O : attempting to submit %u (%s)\n", have, lazy ? "lazy" : "eager");
+		// __cfadbg_print_safe(io, "Kernel I/O : attempting to submit %u (%s)\n", have, lazy ? "lazy" : "eager");
 
 		disable_interrupts();
 		processor * proc = __cfaabi_tls.this_processor;
@@ -339,7 +436,7 @@
 			__STATS__( true, io.submit.fast += 1; )
 			enable_interrupts();
 
-			__cfadbg_print_safe(io, "Kernel I/O : submitted on fast path\n");
+			// __cfadbg_print_safe(io, "Kernel I/O : submitted on fast path\n");
 			return;
 		}
 
@@ -347,7 +444,7 @@
 		__STATS__( true, io.submit.slow += 1; )
 		enable_interrupts();
 
-		__cfadbg_print_safe(io, "Kernel I/O : falling back on arbiter for submission\n");
+		// __cfadbg_print_safe(io, "Kernel I/O : falling back on arbiter for submission\n");
 
 		__ioarbiter_submit(inctx, idxs, have, lazy);
 	}
@@ -391,7 +488,7 @@
 		// We acquired an previous-head/current-head range
 		// go through the range and release the sqes
 		for( i; count ) {
-			__cfadbg_print_safe(io, "Kernel I/O : release loop\n");
+			// __cfadbg_print_safe(io, "Kernel I/O : release loop\n");
 			__u32 idx = ctx.sq.kring.array[ (phead + i) & mask ];
 			ctx.sq.free_ring.array[ (ftail + i) & mask ] = idx;
 		}
@@ -431,7 +528,7 @@
 	}
 
 	static $io_context * __ioarbiter_allocate( $io_arbiter & this, __u32 idxs[], __u32 want ) {
-		__cfadbg_print_safe(io, "Kernel I/O : arbiter allocating\n");
+		// __cfadbg_print_safe(io, "Kernel I/O : arbiter allocating\n");
 
 		__STATS__( false, io.alloc.block += 1; )
 
@@ -543,7 +640,10 @@
 			struct io_uring_sqe * sqe;
 
 			// We can proceed to the fast path
-			if( !__alloc(ctx, &idx, 1) ) return false;
+			if( !__alloc(ctx, &idx, 1) ) {
+				/* paranoid */ verify( false ); // for now check if this happens, next time just abort the sleep.
+				return false;
+			}
 
 			// Allocation was successful
 			__fill( &sqe, 1, &idx, ctx );
@@ -573,12 +673,47 @@
 			asm volatile("": : :"memory");
 
 			/* paranoid */ verify( sqe->user_data == (uintptr_t)&future );
-			__submit( ctx, &idx, 1, true );
+			__submit_only( ctx, &idx, 1 );
 
 			/* paranoid */ verify( proc == __cfaabi_tls.this_processor );
 			/* paranoid */ verify( ! __preemption_enabled() );
 
 			return true;
+		}
+
+		void __cfa_io_idle( processor * proc ) {
+			iovec iov;
+			__atomic_acquire( &proc->io.ctx->cq.lock );
+
+			__attribute__((used)) volatile bool was_reset = false;
+
+			with( proc->idle_wctx) {
+
+				// Do we already have a pending read
+				if(available(*ftr)) {
+					// There is no pending read, we need to add one
+					reset(*ftr);
+
+					iov.iov_base = rdbuf;
+					iov.iov_len  = sizeof(eventfd_t);
+					__kernel_read(proc, *ftr, iov, evfd );
+					ftr->result = 0xDEADDEAD;
+					*((eventfd_t *)rdbuf) = 0xDEADDEADDEADDEAD;
+					was_reset = true;
+				}
+			}
+
+			if( !__atomic_load_n( &proc->do_terminate, __ATOMIC_SEQ_CST ) ) {
+				__ioarbiter_flush( *proc->io.ctx );
+				proc->idle_wctx.sleep_time = rdtscl();
+				ioring_syscsll( *proc->io.ctx, 1, IORING_ENTER_GETEVENTS);
+			}
+
+			ready_schedule_lock();
+			__cfa_do_drain( proc->io.ctx, proc->cltr );
+			ready_schedule_unlock();
+
+			asm volatile ("" :: "m" (was_reset));
 		}
 	#endif
 #endif

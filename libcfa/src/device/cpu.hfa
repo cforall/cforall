@@ -13,6 +13,8 @@
 // Update Count     :
 //
 
+#pragma once
+
 #include <stddef.h>
 
 // Map from cpu entry to a structure detailling cpus with common topologies

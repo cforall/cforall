@@ -9,12 +9,14 @@
 // Author           : Andrew Beach
 // Created On       : Mon Aug 31 11:07:00 2020
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr 21 10:30:00 2021
-// Update Count     : 2
+// Last Modified On : Wec Dec  8 16:58:00 2021
+// Update Count     : 3
 //
 
 #include <list>  // for list
 
+#include <string>
+#include "AST/Fwd.hpp"
 class Declaration;
 class StructDecl;
 class Expression;
@@ -34,6 +36,9 @@ ObjectDecl * makeVtableForward(
 /* Create a forward declaration of a vtable of the given type.
  * vtableType node is consumed.
  */
+ast::ObjectDecl * makeVtableForward(
+	CodeLocation const & location, std::string const & name,
+	ast::StructInstType const * vtableType );
 
 ObjectDecl * makeVtableInstance(
 	std::string const & name,
@@ -42,22 +47,37 @@ ObjectDecl * makeVtableInstance(
 /* Create an initialized definition of a vtable.
  * vtableType and init (if provided) nodes are consumed.
  */
+ast::ObjectDecl * makeVtableInstance(
+	CodeLocation const & location,
+	std::string const & name,
+	ast::StructInstType const * vtableType,
+	ast::Type const * objectType,
+	ast::Init const * init = nullptr );
 
 // Some special code for how exceptions interact with virtual tables.
 FunctionDecl * makeGetExceptionForward( Type * vtableType, Type * exceptType );
 /* Create a forward declaration of the exception virtual function
  * linking the vtableType to the exceptType. Both nodes are consumed.
  */
+ast::FunctionDecl * makeGetExceptionForward(
+	CodeLocation const & location,
+	ast::Type const * vtableType,
+	ast::Type const * exceptType );
 
 FunctionDecl * makeGetExceptionFunction(
 	ObjectDecl * vtableInstance, Type * exceptType );
 /* Create the definition of the exception virtual function.
  * exceptType node is consumed.
  */
+ast::FunctionDecl * makeGetExceptionFunction(
+	CodeLocation const & location,
+	ast::ObjectDecl const * vtableInstance, ast::Type const * exceptType );
 
 ObjectDecl * makeTypeIdInstance( StructInstType const * typeIdType );
 /* Build an instance of the type-id from the type of the type-id.
  * TODO: Should take the parent type. Currently locked to the exception_t.
  */
+ast::ObjectDecl * makeTypeIdInstance(
+	const CodeLocation & location, ast::StructInstType const * typeIdType );
 
 }

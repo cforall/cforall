@@ -11,31 +11,32 @@ trait is_lock(L & | sized(L)) {
 	void unlock( L & );
 };
 
+
+struct __mutex_stmt_lock_guard {
+    void ** lockarr;
+    __lock_size_t count;
+};
+
+static inline void ?{}( __mutex_stmt_lock_guard & this, void * lockarr [], __lock_size_t count  ) {
+    this.lockarr = lockarr;
+    this.count = count;
+
+    // Sort locks based on address
+    __libcfa_small_sort(this.lockarr, count);
+
+    // acquire locks in order
+    // for ( size_t i = 0; i < count; i++ ) {
+    //     lock(*this.lockarr[i]);
+    // }
+}
+
+static inline void ^?{}( __mutex_stmt_lock_guard & this ) with(this) {
+    // for ( size_t i = count; i > 0; i-- ) {
+    //     unlock(*lockarr[i - 1]);
+    // }
+}
+
 forall(L & | is_lock(L)) {
-
-    struct __mutex_stmt_lock_guard {
-        L ** lockarr;
-        __lock_size_t count;
-    };
-    
-    static inline void ?{}( __mutex_stmt_lock_guard(L) & this, L * lockarr [], __lock_size_t count  ) {
-        this.lockarr = lockarr;
-        this.count = count;
-
-        // Sort locks based on address
-        __libcfa_small_sort(this.lockarr, count);
-
-        // acquire locks in order
-        for ( size_t i = 0; i < count; i++ ) {
-            lock(*this.lockarr[i]);
-        }
-    }
-    
-    static inline void ^?{}( __mutex_stmt_lock_guard(L) & this ) with(this) {
-        for ( size_t i = count; i > 0; i-- ) {
-            unlock(*lockarr[i - 1]);
-        }
-    }
 
     struct scoped_lock {
         L * internal_lock;
@@ -50,11 +51,11 @@ forall(L & | is_lock(L)) {
         unlock(*internal_lock);
     }
 
-    static inline L * __get_ptr( L & this ) {
+    static inline void * __get_mutexstmt_lock_ptr( L & this ) {
         return &this;
     }
 
-    static inline L __get_type( L & this );
+    static inline L __get_mutexstmt_lock_type( L & this );
 
-    static inline L __get_type( L * this );
+    static inline L __get_mutexstmt_lock_type( L * this );
 }

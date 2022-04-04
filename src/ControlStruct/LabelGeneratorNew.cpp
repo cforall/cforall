@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// LabelGenerator.cc --
+// LabelGeneratorNew.cpp --
 //
 // Author           : Peter A. Buhr
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  2 09:11:17 2022
-// Update Count     : 72
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Mar 28 10:03:00 2022
+// Update Count     : 73
 //
 
 using namespace std;
@@ -24,15 +24,28 @@ using namespace ast;
 
 namespace ControlStruct {
 
-Label newLabel( const string & suffix, const Stmt * stmt ) {
+enum { size = 128 };
+
+static int newLabelPre( char buf[size], const string & suffix ) {
 	static int current = 0;
 
-	assertf( stmt, "CFA internal error: parameter statement cannot be null pointer" );
-
-	enum { size = 128 };
-	char buf[size];										// space to build label
 	int len = snprintf( buf, size, "__L%d__%s", current++, suffix.c_str() );
 	assertf( len < size, "CFA Internal error: buffer overflow creating label" );
+	return len;
+}
+
+static Label newLabelPost( char buf[size], const CodeLocation & location ) {
+	Label ret_label( location, buf );
+	ret_label.attributes.push_back( new Attribute( "unused" ) );
+	return ret_label;
+}
+
+Label newLabel( const string & suffix, const Stmt * stmt ) {
+	// Buffer for string manipulation.
+	char buf[size];
+
+	assertf( stmt, "CFA internal error: parameter statement cannot be null pointer" );
+	int len = newLabelPre( buf, suffix );
 
 	// What does this do?
 	if ( ! stmt->labels.empty() ) {
@@ -40,9 +53,15 @@ Label newLabel( const string & suffix, const Stmt * stmt ) {
 		assertf( len < size - len, "CFA Internal error: buffer overflow creating label" );
 	} // if
 
-	Label ret_label( stmt->location, buf );
-	ret_label.attributes.push_back( new Attribute( "unused" ) );
-	return ret_label;
+	return newLabelPost( buf, stmt->location );
+}
+
+Label newLabel( const string & suffix, const CodeLocation & location ) {
+	// Buffer for string manipulation.
+	char buf[size];
+
+	newLabelPre( buf, suffix );
+	return newLabelPost( buf, location );
 }
 
 } // namespace ControlStruct

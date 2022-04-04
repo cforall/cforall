@@ -8,24 +8,25 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 31 18:03:09 2022
-// Update Count     : 27
+// Last Modified By : Andrew Beach
+// Last Modified On : Fir Mar 25 15:40:00 2022
+// Update Count     : 28
 //
 
 #pragma once
 
 #include <string>										// for string
 
-class Statement;
+class CodeLocation;
 
 namespace ast {
-	class Stmt;
 	class Label;
+	class Stmt;
 } // namespace ast
 
 namespace ControlStruct {
 	ast::Label newLabel( const std::string &, const ast::Stmt * );
+	ast::Label newLabel( const std::string &, const CodeLocation & );
 } // namespace ControlStruct
 
 // Local Variables: //

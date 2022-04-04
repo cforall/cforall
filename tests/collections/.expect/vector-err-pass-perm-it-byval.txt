@@ -1,4 +1,4 @@
-error: Unique best alternative includes deleted identifier in Generated Cast of:
+collections/vector-demo.cfa:95:1 error: Unique best alternative includes deleted identifier in Generated Cast of:
   Application of
     Deleted Expression
       Variable Expression: ?{}: static inline forall

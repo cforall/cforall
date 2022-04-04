@@ -1,0 +1,59 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// concurrent/readyQ/barrier_sleeper.cfa -- testing the ready-queue
+//
+// Author           : Thierry Delisle
+// Created On       : Fri Apr 01 14:01:00 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// Test validates that processors running out of work repeatedly won't deadlock
+// Processors and thread are removed in an interleaved fashion for a weirder case.
+
+#include <concurrency/barrier.hfa>
+#include <fstream.hfa>
+#include <time.hfa>
+#include <thread.hfa>
+
+const unsigned NUM_LAPS = 173;
+const unsigned NUM_THREADS = 11;
+
+barrier bar = { NUM_THREADS };
+
+thread Eager {};
+void main( Eager & ) {
+	for(NUM_LAPS) {
+		block(bar);
+	}
+}
+
+thread Sleeper{};
+void main( Sleeper & ) {
+	for(NUM_LAPS) {
+		sleep(500`us);
+		block(bar);
+	}
+}
+
+int main() {
+	{
+		processor p1[2];
+		{
+			if (NUM_THREADS <= 4) sout | "Insufficient threads";
+			Eager e[NUM_THREADS - 3];
+			{
+				processor p2[2];
+				{
+					Sleeper s[3];
+				}
+			}
+		}
+	}
+	sout | "Done";
+}

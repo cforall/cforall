@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Wed May 8 10:27:04 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Jun 5 9:47:00 2020
-// Update Count     : 6
+// Last Modified On : Fri Mar 25 10:33:00 2022
+// Update Count     : 7
 //
 
 #pragma once
@@ -102,8 +102,8 @@ node_t * mutate( const node_t * node ) {
 }
 
 /// Mutate a node field (only clones if not equal to existing value)
-template<typename node_t, typename parent_t, typename field_t, typename assn_t>
-const node_t * mutate_field( const node_t * node, field_t parent_t::* field, assn_t && val ) {
+template<typename node_t, typename super_t, typename field_t, typename assn_t>
+const node_t * mutate_field( const node_t * node, field_t super_t::* field, assn_t && val ) {
 	// skip mutate if equivalent
 	if ( node->*field == val ) return node;
 
@@ -114,9 +114,9 @@ const node_t * mutate_field( const node_t * node, field_t parent_t::* field, ass
 }
 
 /// Mutate a single index of a node field (only clones if not equal to existing value)
-template<typename node_t, typename parent_t, typename coll_t, typename ind_t, typename field_t>
+template<typename node_t, typename super_t, typename coll_t, typename ind_t, typename field_t>
 const node_t * mutate_field_index(
-	const node_t * node, coll_t parent_t::* field, ind_t i, field_t && val
+	const node_t * node, coll_t super_t::* field, ind_t i, field_t && val
 ) {
 	// skip mutate if equivalent
 	if  ( (node->*field)[i] == val ) return node;
@@ -128,8 +128,8 @@ const node_t * mutate_field_index(
 }
 
 /// Mutate an entire indexed collection by cloning to accepted value
-template<typename node_t, typename parent_t, typename coll_t>
-const node_t * mutate_each( const node_t * node, coll_t parent_t::* field, Visitor & v ) {
+template<typename node_t, typename super_t, typename coll_t>
+const node_t * mutate_each( const node_t * node, coll_t super_t::* field, Visitor & v ) {
 	for ( unsigned i = 0; i < (node->*field).size(); ++i ) {
 		node = mutate_field_index( node, field, i, (node->*field)[i]->accept( v ) );
 	}
@@ -229,6 +229,9 @@ public:
 		return *this;
 	}
 
+	/// Swaps the nodes contained within two pointers.
+	void swap( ptr_base & other ) noexcept;
+
 	const node_t * get() const { _check(); return  node; }
 	const node_t * operator->() const { _check(); return  node; }
 	const node_t & operator* () const { _check(); return *node; }
@@ -291,6 +294,13 @@ using ptr = ptr_base< node_t, Node::ref_type::strong >;
 /// Observing pointer to node
 template< typename node_t >
 using readonly = ptr_base< node_t, Node::ref_type::weak >;
+
+/// Non-member swap that an participate in overload resolution.
+template< typename node_t, enum Node::ref_type ref_t >
+void swap( ptr_base< node_t, ref_t > & l, ptr_base< node_t, ref_t > & r ) {
+	l.swap( r );
+}
+
 }
 
 // Local Variables: //

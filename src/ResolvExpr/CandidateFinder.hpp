@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Wed Jun 5 14:30:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Oct  1  9:51:00 2019
-// Update Count     : 2
+// Last Modified On : Wed Mar 16 15:22:00 2022
+// Update Count     : 3
 //
 
 #pragma once
@@ -24,18 +24,20 @@
 
 namespace ResolvExpr {
 
+struct ResolveContext;
+
 /// Data to perform expression resolution
 struct CandidateFinder {
 	CandidateList candidates;          ///< List of candidate resolutions
-	const ast::SymbolTable & localSyms;   ///< Symbol table to lookup candidates
+	const ResolveContext & context;  ///< Information about where the canditates are being found.
 	const ast::TypeEnvironment & env;  ///< Substitutions performed in this resolution
 	ast::ptr< ast::Type > targetType;  ///< Target type for resolution
 	std::set< std::string > otypeKeys;  /// different type may map to same key
 
 	CandidateFinder(
-		const ast::SymbolTable & syms, const ast::TypeEnvironment & env,
+		const ResolveContext & context, const ast::TypeEnvironment & env,
 		const ast::Type * tt = nullptr )
-	: candidates(), localSyms( syms ), env( env ), targetType( tt ) {}
+	: candidates(), context( context ), env( env ), targetType( tt ) {}
 
 	/// Fill candidates with feasible resolutions for `expr`
 	void find( const ast::Expr * expr, ResolvMode mode = {} );

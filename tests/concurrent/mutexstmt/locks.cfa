@@ -3,6 +3,8 @@
 
 const unsigned int num_times = 10000;
 
+Duration default_preemption() { return 0; }
+
 single_acquisition_lock m1, m2, m3, m4, m5;
 
 thread T_Mutex {};
@@ -21,10 +23,20 @@ void main( T_Mutex & this ) {
 	}
 }
 
+void refTest( single_acquisition_lock & m ) {
+	mutex ( m ) {
+		assert(!insideFlag);
+		insideFlag = true;
+		assert(insideFlag);
+		insideFlag = false;
+	}
+}
+
 thread T_Multi {};
 
 void main( T_Multi & this ) {
 	for (unsigned int i = 0; i < num_times; i++) {
+		refTest( m1 );
 		mutex ( m1 ) {
 			assert(!insideFlag);
 			insideFlag = true;
@@ -58,68 +70,38 @@ void main( T_Multi & this ) {
 	}
 }
 
-thread T_Mutex_Scoped {};
+single_acquisition_lock l1;
+linear_backoff_then_block_lock l2;
+owner_lock l3;
 
-void main( T_Mutex_Scoped & this ) {
+monitor monitor_t {};
+
+monitor_t l4;
+
+thread T_Multi_Poly {};
+
+void main( T_Multi_Poly & this ) {
 	for (unsigned int i = 0; i < num_times; i++) {
-		{
-			scoped_lock(single_acquisition_lock) s{m1};
-			count++;
-		}
-		{
-			scoped_lock(single_acquisition_lock) s{m1};
+		refTest( l1 );
+		mutex ( l1, l4 ) {
 			assert(!insideFlag);
 			insideFlag = true;
 			assert(insideFlag);
 			insideFlag = false;
 		}
-	}
-}
-
-thread T_Multi_Scoped {};
-
-void main( T_Multi_Scoped & this ) {
-	for (unsigned int i = 0; i < num_times; i++) {
-		{
-			scoped_lock(single_acquisition_lock) s{m1};
+		mutex ( l1, l2, l3 ) {
 			assert(!insideFlag);
 			insideFlag = true;
 			assert(insideFlag);
 			insideFlag = false;
 		}
-		{
-			scoped_lock(single_acquisition_lock) s1{m1};
-			scoped_lock(single_acquisition_lock) s2{m2};
-			scoped_lock(single_acquisition_lock) s3{m3};
-			scoped_lock(single_acquisition_lock) s4{m4};
-			scoped_lock(single_acquisition_lock) s5{m5};
+		mutex ( l3, l1, l4 ) {
 			assert(!insideFlag);
 			insideFlag = true;
 			assert(insideFlag);
 			insideFlag = false;
 		}
-		{
-			scoped_lock(single_acquisition_lock) s1{m1};
-			scoped_lock(single_acquisition_lock) s3{m3};
-			assert(!insideFlag);
-			insideFlag = true;
-			assert(insideFlag);
-			insideFlag = false;
-		}
-		{
-			scoped_lock(single_acquisition_lock) s1{m1};
-			scoped_lock(single_acquisition_lock) s2{m2};
-			scoped_lock(single_acquisition_lock) s4{m4};
-			assert(!insideFlag);
-			insideFlag = true;
-			assert(insideFlag);
-			insideFlag = false;
-		}
-		{
-			scoped_lock(single_acquisition_lock) s1{m1};
-			scoped_lock(single_acquisition_lock) s3{m3};
-			scoped_lock(single_acquisition_lock) s4{m4};
-			scoped_lock(single_acquisition_lock) s5{m5};
+		mutex ( l1, l2, l4 ) {
 			assert(!insideFlag);
 			insideFlag = true;
 			assert(insideFlag);
@@ -130,30 +112,22 @@ void main( T_Multi_Scoped & this ) {
 
 int num_tasks = 10;
 int main() {
-	processor p[10];
+	processor p[num_tasks - 1];
 
 	printf("Start Test: single lock mutual exclusion\n");
 	{
-		T_Mutex t[10];
+		T_Mutex t[num_tasks];
 	}
 	assert(count == num_tasks * num_times);
 	printf("End Test: single lock mutual exclusion\n");
 	printf("Start Test: multi lock deadlock/mutual exclusion\n");
 	{
-		T_Multi t[10];
+		T_Multi t[num_tasks];
 	}
 	printf("End Test: multi lock deadlock/mutual exclusion\n");
-	
-	count = 0;
-	printf("Start Test: single scoped lock mutual exclusion\n");
+	printf("Start Test: multi polymorphic lock deadlock/mutual exclusion\n");
 	{
-		T_Mutex_Scoped t[10];
+		T_Multi_Poly t[num_tasks];
 	}
-	assert(count == num_tasks * num_times);
-	printf("End Test: single scoped lock mutual exclusion\n");
-	printf("Start Test: multi scoped lock deadlock/mutual exclusion\n");
-	{
-		T_Multi_Scoped t[10];
-	}
-	printf("End Test: multi scoped lock deadlock/mutual exclusion\n");	
+	printf("End Test: multi polymorphic lock deadlock/mutual exclusion\n");
 }
