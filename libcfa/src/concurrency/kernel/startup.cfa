@@ -629,6 +629,7 @@ void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned n
 	this.sched.readyQ.tscs = 0p;
  	this.sched.readyQ.count = 0;
 	this.sched.io.tscs = 0p;
+	this.sched.io.data = 0p;
 	this.sched.caches = 0p;
 
 	#if !defined(__CFA_NO_STATISTICS__)

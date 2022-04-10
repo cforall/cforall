@@ -394,9 +394,11 @@ namespace SymTab {
 			Stats::Time::TimeBlock("Translate Dimensions", [&]() {
 				TranslateDimensionGenericParameters::translateDimensions( translationUnit );
 			});
+			if (!useNewAST) {
 			Stats::Time::TimeBlock("Resolve Enum Initializers", [&]() {
 				acceptAll( translationUnit, rei ); // must happen after translateDimensions because rei needs identifier lookup, which needs name mangling
 			});
+			}
 			Stats::Time::TimeBlock("Check Function Returns", [&]() {
 				ReturnChecker::checkFunctionReturns( translationUnit );
 			});

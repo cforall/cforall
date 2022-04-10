@@ -3,10 +3,7 @@ errors/scope.cfa:20:1 error: duplicate function definition for butThisIsAnError:
 ... with parameters
   double
 ... returning
-  _retval_butThisIsAnError: double
-  ... with attributes:
-    Attribute with name: unused
-
-... with body
-  CompoundStmt
+  double
+ with body
+  Compound Statement:
 

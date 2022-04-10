@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 12 12:23:57 2022
-// Update Count     : 342
+// Last Modified On : Sat Apr  9 15:21:14 2022
+// Update Count     : 344
 // 
 
 #include <fstream.hfa>									// sout
@@ -20,9 +20,6 @@
 #include <malloc.h>										// malloc_stats
 #include <locale.h>										// setlocale
 #include <mutex_stmt.hfa>
-
-// FIX ME: spurious characters appear in output
-Duration default_preemption() { return 0; }
 
 #ifdef TIME												// use -O2 -nodebug
 #define STARTTIME start = timeHiRes()

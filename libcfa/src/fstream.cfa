@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 10 08:45:05 2022
-// Update Count     : 513
+// Last Modified On : Sat Apr  9 14:55:54 2022
+// Update Count     : 515
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -160,7 +160,9 @@ int fmt( ofstream & os, const char format[], ... ) {
 	int len;
     for ( cnt; 10 ) {
 		errno = 0;
+		disable_interrupts();
 		len = vfprintf( (FILE *)(os.file$), format, args );
+		enable_interrupts();
 	  if ( len != EOF || errno != EINTR ) break;		// timer interrupt ?
 	  if ( cnt == 9 ) abort( "ofstream fmt EINTR spinning exceeded" );
     } // for
@@ -292,7 +294,9 @@ int fmt( ifstream & is, const char format[], ... ) {
 	int len;
     for () {											// no check for EINTR limit waiting for keyboard input
 		errno = 0;
+		disable_interrupts();
 		len = vfscanf( (FILE *)(is.file$), format, args );
+		enable_interrupts();
 	  if ( len != EOF || errno != EINTR ) break;		// timer interrupt ?
     } // for
 	if ( len == EOF ) {

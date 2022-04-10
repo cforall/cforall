@@ -9,15 +9,13 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  1 18:40:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 14 09:13:18 2022
-// Update Count     : 74
+// Last Modified On : Sat Apr  9 15:22:03 2022
+// Update Count     : 76
 // 
 
 #include <fstream.hfa>
 #include <thread.hfa>
 #include <mutex_stmt.hfa>
-
-Duration default_preemption() { return 0; }
 
 thread T {};
 void main( T & ) {
