@@ -75,6 +75,7 @@ public:
     virtual const ast::Expr *             visit( const ast::ConditionalExpr      * ) = 0;
     virtual const ast::Expr *             visit( const ast::CommaExpr            * ) = 0;
     virtual const ast::Expr *             visit( const ast::TypeExpr             * ) = 0;
+    virtual const ast::Expr *             visit( const ast::DimensionExpr        * ) = 0;
     virtual const ast::Expr *             visit( const ast::AsmExpr              * ) = 0;
     virtual const ast::Expr *             visit( const ast::ImplicitCopyCtorExpr * ) = 0;
     virtual const ast::Expr *             visit( const ast::ConstructorExpr      * ) = 0;

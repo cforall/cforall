@@ -143,6 +143,9 @@ class ObjectDecl : public DeclarationWithType {
 	virtual DeclarationWithType * acceptMutator( Mutator & m )  override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 	virtual void printShort( std::ostream & os, Indenter indent = {} ) const override;
+
+	// TODO: Move to the right place
+	void checkAssignedValue() const;
 };
 
 class FunctionDecl : public DeclarationWithType {
@@ -286,7 +289,7 @@ class AggregateDecl : public Declaration {
 	bool has_body() const { return body; }
 	AggregateDecl * set_body( bool body ) { AggregateDecl::body = body; return this; }
 
-	virtual void print( std::ostream & os, Indenter indent = {} ) const override final;
+	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 	virtual void printShort( std::ostream & os, Indenter indent = {} ) const override;
   protected:
 	virtual const char * typeString() const = 0;
@@ -334,8 +337,11 @@ class UnionDecl : public AggregateDecl {
 class EnumDecl : public AggregateDecl {
 	typedef AggregateDecl Parent;
   public:
-	EnumDecl( const std::string & name, const std::list< Attribute * > & attributes = std::list< class Attribute * >(), LinkageSpec::Spec linkage = LinkageSpec::Cforall ) : Parent( name, attributes, linkage ) {}
-	EnumDecl( const EnumDecl & other ) : Parent( other ) {}
+	EnumDecl( const std::string & name,
+	 const std::list< Attribute * > & attributes = std::list< class Attribute * >(),
+	  LinkageSpec::Spec linkage = LinkageSpec::Cforall,
+	  Type * baseType = nullptr ) : Parent( name, attributes, linkage ) , base( baseType ){}
+	EnumDecl( const EnumDecl & other ) : Parent( other ), base( other.base ) {}
 
 	bool valueOf( Declaration * enumerator, long long int & value );
 
@@ -343,8 +349,11 @@ class EnumDecl : public AggregateDecl {
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
 	virtual Declaration * acceptMutator( Mutator & m )  override { return m.mutate( this ); }
-  private:
+	Type * base;
 	std::unordered_map< std::string, long long int > enumValues;
+	virtual void print( std::ostream & os, Indenter indent = {} ) const override final;
+  private:
+	// std::unordered_map< std::string, long long int > enumValues;
 	virtual const char * typeString() const override;
 };
 

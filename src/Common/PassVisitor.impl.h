@@ -753,6 +753,7 @@ void PassVisitor< pass_type >::visit( EnumDecl * node ) {
 	indexerAddEnum( node );
 
 	// unlike structs, traits, and unions, enums inject their members into the global scope
+	// if ( node->base ) maybeAccept_impl( node->base, *this ); // Need this? Maybe not?
 	maybeAccept_impl( node->parameters, *this );
 	maybeAccept_impl( node->members   , *this );
 	maybeAccept_impl( node->attributes, *this );

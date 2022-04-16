@@ -146,6 +146,7 @@ public:
     macro(ConditionalExpr, Expr) \
     macro(CommaExpr, Expr) \
     macro(TypeExpr, Expr) \
+    macro(DimensionExpr, Expr) \
     macro(AsmExpr, Expr) \
     macro(ImplicitCopyCtorExpr, Expr) \
     macro(ConstructorExpr, Expr) \

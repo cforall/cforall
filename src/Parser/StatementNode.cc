@@ -365,6 +365,7 @@ StatementNode * maybe_build_compound( StatementNode * first ) {
 	return first;
 } // maybe_build_compound
 
+// Question
 Statement * build_asm( bool voltile, Expression * instruction, ExpressionNode * output, ExpressionNode * input, ExpressionNode * clobber, LabelNode * gotolabels ) {
 	list< Expression * > out, in;
 	list< ConstantExpr * > clob;

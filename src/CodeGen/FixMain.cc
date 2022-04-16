@@ -90,7 +90,7 @@ ObjectDecl * signedIntObj() {
 		new BasicType( Type::Qualifiers(), BasicType::SignedInt ), nullptr );
 }
 
-ObjectDecl * charStarObj() {
+ObjectDecl * makeArgvObj() {
 	return new ObjectDecl(
 		"", Type::StorageClasses(), LinkageSpec::Cforall, 0,
 		new PointerType( Type::Qualifiers(),
@@ -116,7 +116,7 @@ std::string mangled_2_argument_main() {
 	FunctionType* main_type = new FunctionType( Type::Qualifiers(), false );
 	main_type->get_returnVals().push_back( signedIntObj() );
 	main_type->get_parameters().push_back( signedIntObj() );
-	main_type->get_parameters().push_back( charStarObj() );
+	main_type->get_parameters().push_back( makeArgvObj() );
 	return create_mangled_main_function_name( main_type );
 }
 

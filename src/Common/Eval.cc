@@ -111,7 +111,7 @@ struct EvalNew : public ast::WithShortCircuiting {
 		// TODO: perform type conversion on value if valid
 	}
 
-	void postvisit( const ast::VariableExpr * expr ) {
+	void postvisit( const ast::VariableExpr * expr ) { // No hit
 		if ( const ast::EnumInstType * inst = dynamic_cast<const ast::EnumInstType *>(expr->result.get()) ) {
 			if ( const ast::EnumDecl * decl = inst->base ) {
 				if ( decl->valueOf( expr->var, value ) ) { // value filled by valueOf

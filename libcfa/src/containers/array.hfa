@@ -1,3 +1,4 @@
+#include <assert.h>
 
 
 forall( __CFA_tysys_id_only_X & ) struct tag {};
@@ -33,18 +34,22 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
     // int                      int              int                        int
 
     static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, int i ) {
+        assert( i < N );
         return (Timmed &) a.strides[i];
     }
 
     static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, unsigned int i ) {
+        assert( i < N );
         return (Timmed &) a.strides[i];
     }
 
     static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, long int i ) {
+        assert( i < N );
         return (Timmed &) a.strides[i];
     }
 
     static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, unsigned long int i ) {
+        assert( i < N );
         return (Timmed &) a.strides[i];
     }
 

@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Oct 22 16:08:00 2021
-// Update Count     : 6
+// Last Modified On : Fri Mar 18 14:22:00 2022
+// Update Count     : 7
 //
 
 #pragma once
@@ -30,6 +30,7 @@ namespace InitTweak {
 
 	/// Converts return statements into copy constructor calls on the hidden return variable
 	void fixReturnStatements( std::list< Declaration * > & translationUnit );
+	void fixReturnStatements( ast::TranslationUnit & translationUnit );
 
 	/// generates a single ctor/dtor statement using objDecl as the 'this' parameter and arg as the optional argument
 	ImplicitCtorDtorStmt * genCtorDtor( const std::string & fname, ObjectDecl * objDecl, Expression * arg = nullptr );

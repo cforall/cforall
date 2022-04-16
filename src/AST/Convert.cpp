@@ -272,7 +272,7 @@ private:
 		// attributes come from constructor
 		decl->parent = get<AggregateDecl>().accept1( node->parent );
 		declPostamble( decl, node );
-		return nullptr;
+		return nullptr; // ??
 	}
 
 	const ast::Decl * visit( const ast::StructDecl * node ) override final {
@@ -306,9 +306,10 @@ private:
 		auto decl = new EnumDecl(
 			node->name,
 			get<Attribute>().acceptL( node->attributes ),
-			LinkageSpec::Spec( node->linkage.val )
+			LinkageSpec::Spec( node->linkage.val ),
+			get<Type>().accept1(node->base)
 		);
-		return aggregatePostamble( decl, node );
+		return aggregatePostamble( decl, node ); // Node info, including members, processed in aggregatePostamble
 	}
 
 	const ast::Decl * visit( const ast::TraitDecl * node ) override final {
@@ -949,6 +950,12 @@ private:
 		return nullptr;
 	}
 
+	const ast::Expr * visit( const ast::DimensionExpr * node ) override final {
+		auto expr = visitBaseExpr( node, new DimensionExpr( node->name ) );
+		this->node = expr;
+		return nullptr;
+	}
+
 	const ast::Expr * visit( const ast::AsmExpr * node ) override final {
 		auto expr = visitBaseExpr( node,
 			new AsmExpr(
@@ -1469,7 +1476,7 @@ public:
 	ast::Decl * decl() {
 		return strict_dynamic_cast< ast::Decl * >( node );
 	}
-
+	
 	ConverterOldToNew() = default;
 	ConverterOldToNew(const ConverterOldToNew &) = delete;
 	ConverterOldToNew(ConverterOldToNew &&) = delete;
@@ -1497,6 +1504,7 @@ private:
 #	define GET_ACCEPT_1(child, type) \
 		getAccept1< ast::type, decltype( old->child ) >( old->child )
 
+
 	template<typename NewT, typename OldC>
 	std::vector< ast::ptr<NewT> > getAcceptV( const OldC& old ) {
 		std::vector< ast::ptr<NewT> > ret;
@@ -1511,6 +1519,9 @@ private:
 
 #	define GET_ACCEPT_V(child, type) \
 		getAcceptV< ast::type, decltype( old->child ) >( old->child )
+
+#	define GET_ACCEPT_E(child, type) \
+		getAccept1< ast::type, decltype( old->base ) >( old->base )
 
 	template<typename NewT, typename OldC>
 	std::deque< ast::ptr<NewT> > getAcceptD( const OldC& old ) {
@@ -1712,13 +1723,16 @@ private:
 		this->node = decl;
 	}
 
+	// Convert SynTree::EnumDecl to AST::EnumDecl
 	virtual void visit( const EnumDecl * old ) override final {
 		if ( inCache( old ) ) return;
 		auto decl = new ast::EnumDecl(
 			old->location,
 			old->name,
 			GET_ACCEPT_V(attributes, Attribute),
-			{ old->linkage.val }
+			{ old->linkage.val },
+			GET_ACCEPT_1(base, Type),
+			old->enumValues
 		);
 		cache.emplace( old, decl );
 		decl->parent = GET_ACCEPT_1(parent, AggregateDecl);
@@ -1728,7 +1742,6 @@ private:
 		decl->extension  = old->extension;
 		decl->uniqueId   = old->uniqueId;
 		decl->storage    = { old->storageClasses.val };
-
 		this->node = decl;
 	}
 
@@ -2455,14 +2468,9 @@ private:
 	}
 
 	virtual void visit( const DimensionExpr * old ) override final {
-		// DimensionExpr gets desugared away in Validate.
-		// As long as new-AST passes don't use it, this cheap-cheerful error
-		// detection helps ensure that these occurrences have been compiled
-		// away, as expected.  To move the DimensionExpr boundary downstream
-		// or move the new-AST translation boundary upstream, implement
-		// DimensionExpr in the new AST and implement a conversion.
-		(void) old;
-		assert(false && "DimensionExpr should not be present at new-AST boundary");
+		this->node = visitBaseExpr( old,
+			new ast::DimensionExpr( old->location, old->name )
+		);
 	}
 
 	virtual void visit( const AsmExpr * old ) override final {
@@ -2766,10 +2774,10 @@ private:
 		postvisit( old, ty );
 	}
 
-	virtual void visit( const EnumInstType * old ) override final {
-		ast::EnumInstType * ty;
+	virtual void visit( const EnumInstType * old ) override final { // Here is visiting the EnumInst Decl not the usage.
+		ast::EnumInstType * ty; 
 		if ( old->baseEnum ) {
-			ty = new ast::EnumInstType{
+			ty = new ast::EnumInstType{ // Probably here: missing the specification of the base
 				GET_ACCEPT_1( baseEnum, EnumDecl ),
 				cv( old ),
 				GET_ACCEPT_V( attributes, Attribute )

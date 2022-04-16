@@ -401,10 +401,10 @@ namespace {
 				ast::ptr<ast::Stmt> ctorStmt = genCtorDtor(
 					retVal->location, "?{}", retVal, stmt->expr );
 				assertf( ctorStmt,
-					"ReturnFixer: genCtorDtor returned nllptr: %s / %s",
+					"ReturnFixer: genCtorDtor returned nullptr: %s / %s",
 					toString( retVal ).c_str(),
 					toString( stmt->expr ).c_str() );
-					stmtsToAddBefore.push_back( ctorStmt );
+				stmtsToAddBefore.push_back( ctorStmt );
 
 				// Return the retVal object.
 				ast::ReturnStmt * mutStmt = ast::mutate( stmt );
@@ -420,6 +420,10 @@ namespace {
 
 	void genInit( ast::TranslationUnit & transUnit ) {
 		ast::Pass<HoistArrayDimension_NoResolve_New>::run( transUnit );
+		ast::Pass<ReturnFixer_New>::run( transUnit );
+	}
+
+	void fixReturnStatements( ast::TranslationUnit & transUnit ) {
 		ast::Pass<ReturnFixer_New>::run( transUnit );
 	}
 

@@ -1,0 +1,22 @@
+#include <stdio.h>
+
+enum(int) IntEnum {
+    zero,
+    one,
+    thousand = 1000,
+    thousand_one,
+    two_thousand = 2000,
+    two_thousand_one,
+    two_thousand_two
+};
+
+int main() {
+    printf("%d\n", zero);
+    printf("%d\n", one);
+    printf("%d\n", thousand);
+    printf("%d\n", thousand_one);
+    printf("%d\n", two_thousand);
+    printf("%d\n", two_thousand_one);
+    printf("%d\n", two_thousand_two);
+    return 0;
+}

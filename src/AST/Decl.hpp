@@ -301,16 +301,22 @@ private:
 /// enum declaration `enum Foo { ... };`
 class EnumDecl final : public AggregateDecl {
 public:
+	ptr<Type> base;
+
 	EnumDecl( const CodeLocation& loc, const std::string& name,
-		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall )
-	: AggregateDecl( loc, name, std::move(attrs), linkage ), enumValues() {}
+		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall, Type * base = nullptr,
+		 std::unordered_map< std::string, long long > enumValues = std::unordered_map< std::string, long long >() )
+	: AggregateDecl( loc, name, std::move(attrs), linkage ), base(base), enumValues(enumValues) {}
 
 	/// gets the integer value for this enumerator, returning true iff value found
+	// Maybe it is not used in producing the enum value
 	bool valueOf( const Decl * enumerator, long long& value ) const;
 
 	const Decl * accept( Visitor & v ) const override { return v.visit( this ); }
 
 	const char * typeString() const override { return aggrString( Enum ); }
+
+	bool isTyped() {return base && base.get();}
 
 private:
 	EnumDecl * clone() const override { return new EnumDecl{ *this }; }

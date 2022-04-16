@@ -574,12 +574,11 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 			} };
 			__pass::symtab::addId( core, 0, func );
 			if ( __visit_children() ) {
-				// parameter declarations
-				maybe_accept( node, &FunctionDecl::params );
-				maybe_accept( node, &FunctionDecl::returns );
-				// type params and assertions
 				maybe_accept( node, &FunctionDecl::type_params );
 				maybe_accept( node, &FunctionDecl::assertions );
+				maybe_accept( node, &FunctionDecl::params );
+				maybe_accept( node, &FunctionDecl::returns );
+				maybe_accept( node, &FunctionDecl::type );
 				// First remember that we are now within a function.
 				ValueGuard< bool > oldInFunction( inFunction );
 				inFunction = true;
@@ -1521,6 +1520,20 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::TypeExpr * node ) {
 }
 
 //--------------------------------------------------------------------------
+// DimensionExpr
+template< typename core_t >
+const ast::Expr * ast::Pass< core_t >::visit( const ast::DimensionExpr * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		guard_symtab guard { *this };
+		maybe_accept( node, &DimensionExpr::result );
+	}
+
+	VISIT_END( Expr, node );
+}
+
+//--------------------------------------------------------------------------
 // AsmExpr
 template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::AsmExpr * node ) {
@@ -1858,7 +1871,7 @@ const ast::Type * ast::Pass< core_t >::visit( const ast::PointerType * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		// xxx - should PointerType visit/mutate dimension?
+		maybe_accept( node, &PointerType::dimension );
 		maybe_accept( node, &PointerType::base );
 	}
 

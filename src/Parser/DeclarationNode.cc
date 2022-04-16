@@ -77,7 +77,7 @@ DeclarationNode::~DeclarationNode() {
 	delete variable.assertions;
 	delete variable.initializer;
 
-	delete type;
+// 	delete type;
 	delete bitfieldWidth;
 
 	delete asmStmt;
@@ -252,7 +252,7 @@ DeclarationNode * DeclarationNode::newAggregate( AggregateDecl::Aggregate kind, 
 	return newnode;
 } // DeclarationNode::newAggregate
 
-DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body ) {
+DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, bool typed) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Enum );
 	newnode->type->enumeration.name = name == nullptr ? new string( DeclarationNode::anonymous.newName() ) : name;
@@ -262,6 +262,8 @@ DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode
 	return newnode;
 } // DeclarationNode::newEnum
 
+
+
 DeclarationNode * DeclarationNode::newName( const string * name ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	assert( ! newnode->name );
@@ -269,7 +271,7 @@ DeclarationNode * DeclarationNode::newName( const string * name ) {
 	return newnode;
 } // DeclarationNode::newName
 
-DeclarationNode * DeclarationNode::newEnumConstant( const string * name, ExpressionNode * constant ) {
+DeclarationNode * DeclarationNode::newEnumConstant( const string * name, ExpressionNode * constant ) { // Marker
 	DeclarationNode * newnode = newName( name );
 	newnode->enumeratorValue.reset( constant );
 	return newnode;
@@ -660,6 +662,14 @@ DeclarationNode * DeclarationNode::addType( DeclarationNode * o ) {
 			set_last( o->get_next()->clone() );
 		} // if
 	} // if
+	delete o;
+	return this;
+}
+
+DeclarationNode * DeclarationNode::addEnumBase( DeclarationNode * o ) {
+	if ( o && o -> type)  {
+		type->base= o->type;
+	}
 	delete o;
 	return this;
 }

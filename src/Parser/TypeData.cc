@@ -917,16 +917,21 @@ NamedTypeDecl * buildSymbolic( const TypeData * td, std::list< Attribute * > att
 
 EnumDecl * buildEnum( const TypeData * td, std::list< Attribute * > attributes, LinkageSpec::Spec linkage ) {
 	assert( td->kind == TypeData::Enum );
-	EnumDecl * ret = new EnumDecl( *td->enumeration.name, attributes, linkage );
+	Type * baseType = td->base ? typebuild(td->base) : nullptr;
+	EnumDecl * ret = new EnumDecl( *td->enumeration.name, attributes, linkage, baseType );
 	buildList( td->enumeration.constants, ret->get_members() );
 	list< Declaration * >::iterator members = ret->get_members().begin();
-	for ( const DeclarationNode * cur = td->enumeration. constants; cur != nullptr; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ), ++members ) {
+	for ( const DeclarationNode * cur = td->enumeration.constants; cur != nullptr; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ), ++members ) {
 		if ( cur->has_enumeratorValue() ) {
 			ObjectDecl * member = dynamic_cast< ObjectDecl * >(* members);
 			member->set_init( new SingleInit( maybeMoveBuild< Expression >( cur->consume_enumeratorValue() ) ) );
+		} else {
+			if ( baseType && (!dynamic_cast<BasicType *>(baseType) || !dynamic_cast<BasicType *>(baseType)->isWholeNumber())) {
+				SemanticError( td->location, "A non whole number enum value decl must be explicitly initialized." );
+			}
 		} // if
 	} // for
-	ret->set_body( td->enumeration.body );
+	ret->set_body( td->enumeration.body ); // Boolean; if it has body
 	return ret;
 } // buildEnum
 

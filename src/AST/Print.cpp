@@ -209,6 +209,14 @@ private:
 			--indent;
 		}
 
+		auto ptrToEnum = dynamic_cast<const ast::EnumDecl *>(node);
+		if ( ! short_mode && ptrToEnum && ptrToEnum->base ) {
+			os << endl << indent << ".. with (enum) base" << endl;
+			++indent;
+			ptrToEnum->base->accept( *this );
+			--indent;  
+		}
+
 		os << endl;
 	}
 
@@ -1087,6 +1095,13 @@ public:
 
 	virtual const ast::Expr * visit( const ast::TypeExpr * node ) override final {
 		safe_print( node->type );
+		postprint( node );
+
+		return node;
+	}
+
+	virtual const ast::Expr * visit( const ast::DimensionExpr * node ) override final {
+		os << "Type-Sys Value: " << node->name;
 		postprint( node );
 
 		return node;

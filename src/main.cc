@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Mar 11 10:39:00 2022
-// Update Count     : 671
+// Last Modified On : Wed Apr 13 11:11:00 2022
+// Update Count     : 672
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -74,11 +74,13 @@ using namespace std;
 #include "SynTree/Visitor.h"                // for acceptAll
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
+#include "Validate/GenericParameter.hpp"    // for fillGenericParameters, tr...
 #include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
 #include "Validate/ForallPointerDecay.hpp"  // for decayForallPointers
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
+#include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
 #include "Virtual/ExpandCasts.h"            // for expandCasts
 
 static void NewPass( const char * const name ) {
@@ -326,7 +328,6 @@ int main( int argc, char * argv[] ) {
 		// add the assignment statement after the initialization of a type parameter
 		PASS( "Validate-A", SymTab::validate_A( translationUnit ) );
 		PASS( "Validate-B", SymTab::validate_B( translationUnit ) );
-		PASS( "Validate-C", SymTab::validate_C( translationUnit ) );
 
 		CodeTools::fillLocations( translationUnit );
 
@@ -340,6 +341,17 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			// Check as early as possible. Can't happen before
+			// LinkReferenceToType, observed failing when attempted
+			// before eliminateTypedef
+			PASS( "Validate Generic Parameters", Validate::fillGenericParameters( transUnit ) );
+
+			PASS( "Translate Dimensions", Validate::translateDimensionParameters( transUnit ) );
+			PASS( "Check Function Returns", Validate::checkReturnStatements( transUnit ) );
+
+			// Must happen before Autogen.
+			PASS( "Fix Return Statements", InitTweak::fixReturnStatements( transUnit ) );
 
 			PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords( transUnit ) );
 
@@ -425,6 +437,7 @@ int main( int argc, char * argv[] ) {
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Validate-C", SymTab::validate_C( translationUnit ) );
 			PASS( "Validate-D", SymTab::validate_D( translationUnit ) );
 			PASS( "Validate-E", SymTab::validate_E( translationUnit ) );
 			PASS( "Validate-F", SymTab::validate_F( translationUnit ) );

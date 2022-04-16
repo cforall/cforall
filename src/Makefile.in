@@ -252,9 +252,11 @@ am__objects_9 = Tuples/Explode.$(OBJEXT) \
 am__objects_10 = Validate/Autogen.$(OBJEXT) \
 	Validate/CompoundLiteral.$(OBJEXT) \
 	Validate/ForallPointerDecay.$(OBJEXT) \
+	Validate/GenericParameter.$(OBJEXT) \
 	Validate/HandleAttributes.$(OBJEXT) \
 	Validate/InitializerLength.$(OBJEXT) \
 	Validate/LabelAddressFixer.$(OBJEXT) \
+	Validate/ReturnCheck.$(OBJEXT) \
 	Validate/FindSpecialDeclsNew.$(OBJEXT) \
 	Validate/FindSpecialDecls.$(OBJEXT)
 am__objects_11 = CompilationState.$(OBJEXT) $(am__objects_1) \
@@ -446,9 +448,11 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Validate/$(DEPDIR)/FindSpecialDecls.Po \
 	Validate/$(DEPDIR)/FindSpecialDeclsNew.Po \
 	Validate/$(DEPDIR)/ForallPointerDecay.Po \
+	Validate/$(DEPDIR)/GenericParameter.Po \
 	Validate/$(DEPDIR)/HandleAttributes.Po \
 	Validate/$(DEPDIR)/InitializerLength.Po \
 	Validate/$(DEPDIR)/LabelAddressFixer.Po \
+	Validate/$(DEPDIR)/ReturnCheck.Po \
 	Virtual/$(DEPDIR)/ExpandCasts.Po Virtual/$(DEPDIR)/Tables.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -1007,12 +1011,16 @@ SRC_VALIDATE = \
 	Validate/CompoundLiteral.hpp \
 	Validate/ForallPointerDecay.cpp \
 	Validate/ForallPointerDecay.hpp \
+	Validate/GenericParameter.cpp \
+	Validate/GenericParameter.hpp \
 	Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h \
 	Validate/InitializerLength.cpp \
 	Validate/InitializerLength.hpp \
 	Validate/LabelAddressFixer.cpp \
 	Validate/LabelAddressFixer.hpp \
+	Validate/ReturnCheck.cpp \
+	Validate/ReturnCheck.hpp \
 	Validate/FindSpecialDeclsNew.cpp \
 	Validate/FindSpecialDecls.cc \
 	Validate/FindSpecialDecls.h
@@ -1442,11 +1450,15 @@ Validate/CompoundLiteral.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/ForallPointerDecay.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/GenericParameter.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/HandleAttributes.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/InitializerLength.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/LabelAddressFixer.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/ReturnCheck.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/FindSpecialDeclsNew.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
@@ -1741,9 +1753,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDeclsNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ForallPointerDecay.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/GenericParameter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HandleAttributes.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/InitializerLength.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/LabelAddressFixer.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ReturnCheck.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Virtual/$(DEPDIR)/ExpandCasts.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Virtual/$(DEPDIR)/Tables.Po@am__quote@ # am--include-marker
 
@@ -2146,9 +2160,11 @@ distclean: distclean-am
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
 	-rm -f Validate/$(DEPDIR)/ForallPointerDecay.Po
+	-rm -f Validate/$(DEPDIR)/GenericParameter.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
+	-rm -f Validate/$(DEPDIR)/ReturnCheck.Po
 	-rm -f Virtual/$(DEPDIR)/ExpandCasts.Po
 	-rm -f Virtual/$(DEPDIR)/Tables.Po
 	-rm -f Makefile
@@ -2359,9 +2375,11 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
 	-rm -f Validate/$(DEPDIR)/ForallPointerDecay.Po
+	-rm -f Validate/$(DEPDIR)/GenericParameter.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
+	-rm -f Validate/$(DEPDIR)/ReturnCheck.Po
 	-rm -f Virtual/$(DEPDIR)/ExpandCasts.Po
 	-rm -f Virtual/$(DEPDIR)/Tables.Po
 	-rm -f Makefile

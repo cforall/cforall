@@ -183,6 +183,7 @@ public:
 	const ast::Expr *             visit( const ast::ConditionalExpr      * ) override final;
 	const ast::Expr *             visit( const ast::CommaExpr            * ) override final;
 	const ast::Expr *             visit( const ast::TypeExpr             * ) override final;
+	const ast::Expr *             visit( const ast::DimensionExpr        * ) override final;
 	const ast::Expr *             visit( const ast::AsmExpr              * ) override final;
 	const ast::Expr *             visit( const ast::ImplicitCopyCtorExpr * ) override final;
 	const ast::Expr *             visit( const ast::ConstructorExpr      * ) override final;

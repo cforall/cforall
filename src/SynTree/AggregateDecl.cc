@@ -58,7 +58,6 @@ void AggregateDecl::print( std::ostream &os, Indenter indent ) const {
 		os << " " << LinkageSpec::name( linkage );
 	} // if
 	os << " with body " << has_body();
-
 	if ( ! parameters.empty() ) {
 		os << endl << indent << "... with parameters" << endl;
 		printAll( parameters, os, indent+1 );
@@ -104,6 +103,16 @@ StructInstType * StructDecl::makeInst( std::list< Expression * > && new_paramete
 const char * UnionDecl::typeString() const { return aggrString( Union ); }
 
 const char * EnumDecl::typeString() const { return aggrString( Enum ); }
+
+void EnumDecl::print( std::ostream & os, Indenter indent ) const {
+	AggregateDecl::print(os, indent);
+	os << " with base? " << (base? "True" : "False") << std::endl;
+	if ( base ) {
+		os << "Base Type of Enum:" << std::endl;
+		base->print(os, indent);
+	}
+	os <<  std::endl << "End of EnumDecl::print" << std::endl;
+}
 
 const char * TraitDecl::typeString() const { return aggrString( Trait ); }
 

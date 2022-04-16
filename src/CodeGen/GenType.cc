@@ -252,8 +252,14 @@ namespace CodeGen {
 	}
 
 	void GenType::postvisit( EnumInstType * enumInst ) {
-		typeString = enumInst->name + " " + typeString;
-		if ( options.genC ) typeString = "enum " + typeString;
+		if ( enumInst->baseEnum->base ) {
+			typeString = genType(enumInst->baseEnum->base, "", options) + typeString;
+		} else {
+			typeString = enumInst->name + " " + typeString;
+			if ( options.genC ) {
+				typeString = "enum " + typeString;
+			} 
+		} 
 		handleQualifiers( enumInst );
 	}
 

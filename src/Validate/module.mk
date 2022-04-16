@@ -21,12 +21,16 @@ SRC_VALIDATE = \
 	Validate/CompoundLiteral.hpp \
 	Validate/ForallPointerDecay.cpp \
 	Validate/ForallPointerDecay.hpp \
+	Validate/GenericParameter.cpp \
+	Validate/GenericParameter.hpp \
 	Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h \
 	Validate/InitializerLength.cpp \
 	Validate/InitializerLength.hpp \
 	Validate/LabelAddressFixer.cpp \
 	Validate/LabelAddressFixer.hpp \
+	Validate/ReturnCheck.cpp \
+	Validate/ReturnCheck.hpp \
 	Validate/FindSpecialDeclsNew.cpp \
 	Validate/FindSpecialDecls.cc \
 	Validate/FindSpecialDecls.h

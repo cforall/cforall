@@ -603,6 +603,19 @@ private:
 	MUTATE_FRIEND
 };
 
+class DimensionExpr final : public Expr {
+public:
+	std::string name;
+
+	DimensionExpr( const CodeLocation & loc, std::string name )
+	: Expr( loc ), name( name ) {}
+
+	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
+private:
+	DimensionExpr * clone() const override { return new DimensionExpr{ *this }; }
+	MUTATE_FRIEND
+};
+
 /// A GCC "asm constraint operand" used in an asm statement, e.g. `[output] "=f" (result)`.
 /// https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Machine-Constraints.html#Machine-Constraints
 class AsmExpr final : public Expr {

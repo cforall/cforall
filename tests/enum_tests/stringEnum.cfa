@@ -1,0 +1,11 @@
+#include <stdio.h>
+
+enum(char *) IntEnum {
+    zero="zero",
+    one="one"
+};
+
+int main() {
+    printf("zero: %s, one: %s\n", zero, one);
+    return 0;
+}

@@ -273,31 +273,56 @@ namespace CodeGen {
 
 	void CodeGenerator::postvisit( EnumDecl * enumDecl ) {
 		extension( enumDecl );
-		output << "enum ";
-		genAttributes( enumDecl->get_attributes() );
-
-		output << enumDecl->get_name();
-
 		std::list< Declaration* > &memb = enumDecl->get_members();
-
-		if ( ! memb.empty() ) {
-			output << " {" << endl;
-
-			++indent;
+		if (enumDecl->base && ! memb.empty()) {
+			unsigned long long last_val = -1;
 			for ( std::list< Declaration* >::iterator i = memb.begin(); i != memb.end();  i++) {
 				ObjectDecl * obj = dynamic_cast< ObjectDecl* >( *i );
 				assert( obj );
-				output << indent << mangleName( obj );
-				if ( obj->get_init() ) {
-					output << " = ";
-					obj->get_init()->accept( *visitor );
-				} // if
-				output << "," << endl;
+				output << "static const ";
+				output << genType(enumDecl->base, "", options) << " ";
+				output << mangleName( obj ) << " ";
+				output << " = ";
+				output << "(" << genType(enumDecl->base, "", options) << ")";
+				if ( (BasicType *)(enumDecl->base) && ((BasicType *)(enumDecl->base))->isWholeNumber() ) {
+					if ( obj->get_init() ) {
+						obj->get_init()->accept( *visitor );
+						last_val = ((ConstantExpr *)(((SingleInit *)(obj->init))->value))->constant.get_ival();
+					} else {
+						output << ++last_val;
+					} // if
+				} else {
+					if ( obj->get_init() ) {
+						obj->get_init()->accept( *visitor ); 
+					} else {
+						// Should not reach here!
+					}
+				}
+				output << ";" << endl;
 			} // for
+		} else {
+			output << "enum ";
+			genAttributes( enumDecl->get_attributes() );
 
+			output << enumDecl->get_name();
+
+			if ( ! memb.empty() ) {
+				output << " {" << endl;
+
+				++indent;
+				for ( std::list< Declaration* >::iterator i = memb.begin(); i != memb.end();  i++) {
+					ObjectDecl * obj = dynamic_cast< ObjectDecl* >( *i );
+					assert( obj );
+					output << indent << mangleName( obj );
+					if ( obj->get_init() ) {
+						output << " = ";
+						obj->get_init()->accept( *visitor );
+					} // if
+					output << "," << endl;
+				} // for
 			--indent;
-
 			output << indent << "}";
+			} // if
 		} // if
 	}
 
@@ -346,7 +371,7 @@ namespace CodeGen {
 				output << ".";
 				des->accept( *visitor );
 			} else {
-				// otherwise, it has to be a ConstantExpr or CastExpr, initializing array eleemnt
+				// otherwise, it has to be a ConstantExpr or CastExpr, initializing array element
 				output << "[";
 				des->accept( *visitor );
 				output << "]";
@@ -660,6 +685,10 @@ namespace CodeGen {
 		if ( variableExpr->get_var()->get_linkage() == LinkageSpec::Intrinsic && (opInfo = operatorLookup( variableExpr->get_var()->get_name() )) && opInfo->type == OT_CONSTANT ) {
 			output << opInfo->symbol;
 		} else {
+			// if (dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type()) 
+			// && dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type())->baseEnum->base) {
+			// 	output << '(' <<genType(dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type())->baseEnum->base, "", options) << ')';
+			// }
 			output << mangleName( variableExpr->get_var() );
 		} // if
 	}

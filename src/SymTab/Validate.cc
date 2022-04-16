@@ -973,9 +973,21 @@ namespace SymTab {
 				if ( field->init ) {
 					// need to resolve enumerator initializers early so that other passes that determine if an expression is constexpr have the appropriate information.
 					SingleInit * init = strict_dynamic_cast<SingleInit *>( field->init );
-					ResolvExpr::findSingleExpression( init->value, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), indexer );
+					if ( !enumDecl->base || dynamic_cast<BasicType *>(enumDecl->base))
+						ResolvExpr::findSingleExpression( init->value, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), indexer );
+					else {
+						if (dynamic_cast<PointerType *>(enumDecl->base)) {
+							auto typePtr = dynamic_cast<PointerType *>(enumDecl->base);
+							ResolvExpr::findSingleExpression( init->value,
+							 new PointerType( Type::Qualifiers(), typePtr->base ), indexer );
+						} else {
+							ResolvExpr::findSingleExpression( init->value, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), indexer );
+						}
+					}
+					
 				}
 			}
+
 		} // if
 	}
 
@@ -1239,7 +1251,12 @@ namespace SymTab {
 		} else if ( UnionInstType * aggDecl = dynamic_cast< UnionInstType * >( designatorType ) ) {
 			declsToAddBefore.push_back( new UnionDecl( aggDecl->name, noAttributes, tyDecl->linkage ) );
 		} else if ( EnumInstType * enumDecl = dynamic_cast< EnumInstType * >( designatorType ) ) {
-			declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, tyDecl->linkage ) );
+			// declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, tyDecl->linkage, enumDecl->baseEnum->base ) );
+			if (enumDecl->baseEnum) {
+				declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, tyDecl->linkage, enumDecl->baseEnum->base ) );
+			} else {
+				declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, tyDecl->linkage ) );
+			}
 		} // if
 		return tyDecl->clone();
 	}

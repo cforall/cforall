@@ -26,6 +26,9 @@ class TranslationUnit;
 
 struct PureVisitor;
 
+template<typename node_t>
+node_t * deepCopy( const node_t * localRoot );
+
 namespace __pass {
 	typedef std::function<void( void * )> cleanup_func_t;
 	typedef std::function<void( cleanup_func_t, void * )> at_cleanup_t;
@@ -395,7 +398,9 @@ namespace __pass {
 		template<typename core_t>
 		static inline auto addStructFwd( core_t & core, int, const ast::StructDecl * decl ) -> decltype( core.symtab.addStruct( decl ), void() ) {
 			ast::StructDecl * fwd = new ast::StructDecl( decl->location, decl->name );
-			fwd->params = decl->params;
+			for ( const auto & param : decl->params ) {
+				fwd->params.push_back( deepCopy( param.get() ) );
+			}
 			core.symtab.addStruct( fwd );
 		}
 
@@ -404,8 +409,10 @@ namespace __pass {
 
 		template<typename core_t>
 		static inline auto addUnionFwd( core_t & core, int, const ast::UnionDecl * decl ) -> decltype( core.symtab.addUnion( decl ), void() ) {
-			UnionDecl * fwd = new UnionDecl( decl->location, decl->name );
-			fwd->params = decl->params;
+			ast::UnionDecl * fwd = new ast::UnionDecl( decl->location, decl->name );
+			for ( const auto & param : decl->params ) {
+				fwd->params.push_back( deepCopy( param.get() ) );
+			}
 			core.symtab.addUnion( fwd );
 		}
 

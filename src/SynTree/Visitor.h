@@ -34,7 +34,7 @@ class Visitor {
 	virtual void visit( const StructDecl * aggregateDecl ) = 0;
 	virtual void visit( UnionDecl * node ) { visit( const_cast<const UnionDecl *>(node) ); }
 	virtual void visit( const UnionDecl * aggregateDecl ) = 0;
-	virtual void visit( EnumDecl * node ) { visit( const_cast<const EnumDecl *>(node) ); }
+	virtual void visit( EnumDecl * node ) { visit( const_cast<const EnumDecl *>(node) ); } // Marker 1
 	virtual void visit( const EnumDecl * aggregateDecl ) = 0;
 	virtual void visit( TraitDecl * node ) { visit( const_cast<const TraitDecl *>(node) ); }
 	virtual void visit( const TraitDecl * aggregateDecl ) = 0;
@@ -189,7 +189,7 @@ class Visitor {
 	virtual void visit( const StructInstType * aggregateUseType ) = 0;
 	virtual void visit( UnionInstType * node ) { visit( const_cast<const UnionInstType *>(node) ); }
 	virtual void visit( const UnionInstType * aggregateUseType ) = 0;
-	virtual void visit( EnumInstType * node ) { visit( const_cast<const EnumInstType *>(node) ); }
+	virtual void visit( EnumInstType * node ) { visit( const_cast<const EnumInstType *>(node) ); } // Marker 2
 	virtual void visit( const EnumInstType * aggregateUseType ) = 0;
 	virtual void visit( TraitInstType * node ) { visit( const_cast<const TraitInstType *>(node) ); }
 	virtual void visit( const TraitInstType * aggregateUseType ) = 0;

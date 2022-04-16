@@ -234,7 +234,7 @@ struct DeclarationNode : public ParseNode {
 	static DeclarationNode * newQualifiedType( DeclarationNode *, DeclarationNode * );
 	static DeclarationNode * newFunction( const std::string * name, DeclarationNode * ret, DeclarationNode * param, StatementNode * body );
 	static DeclarationNode * newAggregate( AggregateDecl::Aggregate kind, const std::string * name, ExpressionNode * actuals, DeclarationNode * fields, bool body );
-	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body );
+	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed );
 	static DeclarationNode * newEnumConstant( const std::string * name, ExpressionNode * constant );
 	static DeclarationNode * newName( const std::string * );
 	static DeclarationNode * newFromTypeGen( const std::string *, ExpressionNode * params );
@@ -264,6 +264,7 @@ struct DeclarationNode : public ParseNode {
 	DeclarationNode * copySpecifiers( DeclarationNode * );
 	DeclarationNode * addType( DeclarationNode * );
 	DeclarationNode * addTypedef();
+	DeclarationNode * addEnumBase( DeclarationNode * );
 	DeclarationNode * addAssertions( DeclarationNode * );
 	DeclarationNode * addName( std::string * );
 	DeclarationNode * addAsmName( DeclarationNode * );

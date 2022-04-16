@@ -332,7 +332,13 @@ namespace ResolvExpr {
 			} // if
 		} else if ( dynamic_cast< const EnumInstType * >( dest ) ) {
 			// xxx - not positive this is correct, but appears to allow casting int => enum
-			cost = Cost::unsafe;
+			// TODO
+			EnumDecl * decl = dynamic_cast< const EnumInstType * >( dest )->baseEnum;
+			if ( decl->base ) {
+				cost = Cost::infinity;
+			} else {
+				cost = Cost::unsafe;
+			} // if
 		} // if
 		// no cases for zero_t/one_t because it should not be possible to convert int, etc. to zero_t/one_t.
 	}
@@ -609,7 +615,12 @@ void ConversionCost_new::postvisit( const ast::BasicType * basicType ) {
 		}
 	} else if ( dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 		// xxx - not positive this is correct, but appears to allow casting int => enum
-		cost = Cost::unsafe;
+		const ast::EnumDecl * decl = (dynamic_cast< const ast::EnumInstType * >( dst ))->base.get();
+		if ( decl->base ) {
+			cost = Cost::infinity;
+		} else {
+			cost = Cost::unsafe;
+		} // if
 	}
 }
 

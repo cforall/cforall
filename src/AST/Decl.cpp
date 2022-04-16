@@ -135,8 +135,34 @@ bool EnumDecl::valueOf( const Decl * enumerator, long long& value ) const {
 	}
 
 	auto it = enumValues.find( enumerator->name );
+	
 	if ( it != enumValues.end() ) {
-		value = it->second;
+			
+		// Handle typed enum by casting the value in (C++) compiler
+		// if ( base ) { // A typed enum
+		// 	if ( const BasicType * bt = dynamic_cast<const BasicType *>(base) ) {
+		// 		switch( bt->kind ) {
+		// 			case BasicType::Kind::Bool:	value = (bool) it->second; break;
+		// 			case BasicType::Kind::Char: value = (char) it->second; break;
+		// 			case BasicType::Kind::SignedChar: value = (signed char) it->second; break;
+		// 			case BasicType::Kind::UnsignedChar: value = (unsigned char) it->second; break;
+		// 			case BasicType::Kind::ShortSignedInt: value = (short signed int) it->second; break;
+		// 			case BasicType::Kind::SignedInt: value = (signed int) it->second; break;
+		// 			case BasicType::Kind::UnsignedInt: value = (unsigned int) it->second; break;
+		// 			case BasicType::Kind::LongSignedInt: value = (long signed int) it->second; break;
+		// 			case BasicType::Kind::LongUnsignedInt: value = (long unsigned int) it->second; break;
+		// 			case BasicType::Kind::LongLongSignedInt: value = (long long signed int) it->second; break;
+		// 			case BasicType::Kind::LongLongUnsignedInt: value = (long long unsigned int) it->second; break; 
+		// 			// TODO: value should be able to handle long long unsigned int
+
+		// 			default:
+		// 			value = it->second;
+		// 		}
+		// 	}
+		// } else {
+			value = it->second;
+		//}
+
 		return true;
 	}
 	return false;
