@@ -379,7 +379,7 @@ if ( N ) {																		\
 %type<decl> elaborated_type elaborated_type_nobody
 
 %type<decl> enumerator_list enum_type enum_type_nobody
-%type<en> enumerator_value_opt
+%type<in> enumerator_value_opt
 
 %type<decl> external_definition external_definition_list external_definition_list_opt
 
@@ -2304,22 +2304,20 @@ bit_subrange_size:
 
 enum_type: // static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed );												// enum
 	ENUM attribute_list_opt '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( nullptr, $4, true, false )->addQualifiers( $2 ); }
+		{ $$ = DeclarationNode::newEnum( nullptr, $4, true )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3 ); }
 	  '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $3, $6, true, false )->addQualifiers( $2 ); }
+		{ $$ = DeclarationNode::newEnum( $3, $6, true )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt typedef_name				// unqualified type name
 	  '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $3->name, $5, true, false )->addQualifiers( $2 ); }
+		{ $$ = DeclarationNode::newEnum( $3->name, $5, true )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 	 	{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) 
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
-			// SemanticError( yylloc, "Typed enumeration is currently unimplemented." ); $$ = nullptr;
 
-			$$ = DeclarationNode::newEnum( nullptr, $7, true, true ) ->addQualifiers( $5 )  -> addEnumBase( $3 );
-			// $$ = DeclarationNode::newEnum( nullptr, $7, true, true ) ->addQualifiers( $5 );
+			$$ = DeclarationNode::newEnum( nullptr, $7, true ) ->addQualifiers( $5 )  -> addEnumBase( $3 );
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt // Question: why attributes/qualifier after identifier
 		{
@@ -2328,35 +2326,33 @@ enum_type: // static DeclarationNode * newEnum( const std::string * name, Declar
 		}
 	  '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $6, $10, true, true ) -> addQualifiers( $5 ) -> addQualifiers( $7 ) -> addEnumBase( $3 );
-			// $$ = DeclarationNode::newEnum( $6, $10, true, true ) -> addQualifiers( $5 ) -> addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6, $10, true ) -> addQualifiers( $5 ) -> addQualifiers( $7 ) -> addEnumBase( $3 );
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 			typedefTable.makeTypedef( *$6->name );
-			$$ = DeclarationNode::newEnum( $6->name, $9, true, true ) -> addQualifiers( $5 ) -> addQualifiers( $7 ) -> addEnumBase( $3 );
-			// $$ = DeclarationNode::newEnum( $6->name, $9, true, true ) -> addQualifiers( $5 ) -> addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6->name, $9, true ) -> addQualifiers( $5 ) -> addQualifiers( $7 ) -> addEnumBase( $3 );
 		}
 	| enum_type_nobody
 	;
 
 enum_type_nobody:										// enum - {...}
 	ENUM attribute_list_opt identifier
-		{ typedefTable.makeTypedef( *$3 ); $$ = DeclarationNode::newEnum( $3, 0, false, false )->addQualifiers( $2 ); }
+		{ typedefTable.makeTypedef( *$3 ); $$ = DeclarationNode::newEnum( $3, 0, false )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt type_name					// qualified type name
-		{ typedefTable.makeTypedef( *$3->type->symbolic.name );	$$ = DeclarationNode::newEnum( $3->type->symbolic.name, 0, false, false )->addQualifiers( $2 ); }
+		{ typedefTable.makeTypedef( *$3->type->symbolic.name );	$$ = DeclarationNode::newEnum( $3->type->symbolic.name, 0, false )->addQualifiers( $2 ); }
 	;
 
 enumerator_list:
 	identifier_or_type_name enumerator_value_opt
-		{ $$ = DeclarationNode::newEnumConstant( $1, $2 ); }
+		{ $$ = DeclarationNode::newEnumValueGeneric( $1, $2 ); }
 	| INLINE type_name
-		{ $$ = DeclarationNode::newEnumConstant( new string("inline"), nullptr ); }
+		{ $$ = DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ); }
 	| enumerator_list ',' identifier_or_type_name enumerator_value_opt
-		{ $$ = $1->appendList( DeclarationNode::newEnumConstant( $3, $4 ) ); }
+		{ $$ = $1->appendList( DeclarationNode::newEnumValueGeneric( $3, $4 ) ); }
 	| enumerator_list ',' INLINE type_name enumerator_value_opt
-		{ $$ = $1->appendList( DeclarationNode::newEnumConstant( new string("inline"), nullptr ) ); }
+		{ $$ = $1->appendList( DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ) ); }
 	;
 
 enumerator_value_opt:
@@ -2365,7 +2361,7 @@ enumerator_value_opt:
 	// | '=' constant_expression
 	// 	{ $$ = $2; }
 	| simple_assignment_operator initializer
-		{ $$ = $2->get_expression(); }					// FIX ME: enum only deals with constant_expression
+		{ $$ = $1 == OperKinds::Assign ? $2 : $2->set_maybeConstructed( false ); }
 	;
 
 cfa_parameter_ellipsis_list_opt:						// CFA, abstract + real

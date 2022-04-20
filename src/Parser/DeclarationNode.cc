@@ -252,7 +252,7 @@ DeclarationNode * DeclarationNode::newAggregate( AggregateDecl::Aggregate kind, 
 	return newnode;
 } // DeclarationNode::newAggregate
 
-DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, bool typed) {
+DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Enum );
 	newnode->type->enumeration.name = name == nullptr ? new string( DeclarationNode::anonymous.newName() ) : name;
@@ -271,11 +271,25 @@ DeclarationNode * DeclarationNode::newName( const string * name ) {
 	return newnode;
 } // DeclarationNode::newName
 
-DeclarationNode * DeclarationNode::newEnumConstant( const string * name, ExpressionNode * constant ) { // Marker
+DeclarationNode * DeclarationNode::newEnumConstant( const string * name, ExpressionNode * constant ) {
 	DeclarationNode * newnode = newName( name );
 	newnode->enumeratorValue.reset( constant );
 	return newnode;
 } // DeclarationNode::newEnumConstant
+
+DeclarationNode * DeclarationNode::newEnumValueGeneric( const string * name, InitializerNode * init ) {
+	if ( init ) { // list init {} or a singleInit
+		if ( init->get_expression() ) { // singleInit
+			return newEnumConstant( name, init->get_expression() );
+		} else { // TODO: listInit
+			DeclarationNode * newnode = newName( name );
+			newnode->initializer = init;
+			return newnode;
+		} // if
+	} else {
+		return newName( name ); // Not explicitly inited enum value;
+	} // if
+} // DeclarationNode::newEnumGeneric
 
 DeclarationNode * DeclarationNode::newFromTypedef( const string * name ) {
 	DeclarationNode * newnode = new DeclarationNode;

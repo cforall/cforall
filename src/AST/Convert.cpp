@@ -2774,10 +2774,10 @@ private:
 		postvisit( old, ty );
 	}
 
-	virtual void visit( const EnumInstType * old ) override final { // Here is visiting the EnumInst Decl not the usage.
+	virtual void visit( const EnumInstType * old ) override final {
 		ast::EnumInstType * ty; 
 		if ( old->baseEnum ) {
-			ty = new ast::EnumInstType{ // Probably here: missing the specification of the base
+			ty = new ast::EnumInstType{
 				GET_ACCEPT_1( baseEnum, EnumDecl ),
 				cv( old ),
 				GET_ACCEPT_V( attributes, Attribute )

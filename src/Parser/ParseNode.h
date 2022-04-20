@@ -234,8 +234,9 @@ struct DeclarationNode : public ParseNode {
 	static DeclarationNode * newQualifiedType( DeclarationNode *, DeclarationNode * );
 	static DeclarationNode * newFunction( const std::string * name, DeclarationNode * ret, DeclarationNode * param, StatementNode * body );
 	static DeclarationNode * newAggregate( AggregateDecl::Aggregate kind, const std::string * name, ExpressionNode * actuals, DeclarationNode * fields, bool body );
-	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed );
+	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body );
 	static DeclarationNode * newEnumConstant( const std::string * name, ExpressionNode * constant );
+	static DeclarationNode * newEnumValueGeneric( const std::string * name, InitializerNode * init );
 	static DeclarationNode * newName( const std::string * );
 	static DeclarationNode * newFromTypeGen( const std::string *, ExpressionNode * params );
 	static DeclarationNode * newTypeParam( TypeDecl::Kind, const std::string * );

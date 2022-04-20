@@ -100,6 +100,7 @@ Initializer * InitializerNode::build() const {
 		return new ListInit( initlist, designlist, maybeConstructed );
 	} else {
 		if ( get_expression() ) {
+			assertf( get_expression()->expr, "The expression of initializer must have value" );
 			return new SingleInit( maybeBuild< Expression >( get_expression() ), maybeConstructed );
 		} // if
 	} // if
