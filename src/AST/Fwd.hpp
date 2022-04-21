@@ -55,6 +55,7 @@ class CatchClause;
 class FinallyClause;
 class SuspendStmt;
 class WaitForStmt;
+class WaitForClause;
 class WithStmt;
 class DeclStmt;
 class NullStmt;

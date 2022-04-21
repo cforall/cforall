@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thu May 09 15::37::05 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Mar 16 15:01:00 2022
-// Update Count     : 42
+// Last Modified On : Wed Apr 20 13:58:00 2022
+// Update Count     : 43
 //
 
 #include "Convert.hpp"
@@ -561,23 +561,29 @@ private:
 		stmt->clauses.reserve( node->clauses.size() );
 		for ( auto clause : node->clauses ) {
 			stmt->clauses.push_back({{
-					get<Expression>().accept1( clause.target.func ),
-					get<Expression>().acceptL( clause.target.args ),
+					get<Expression>().accept1( clause->target_func ),
+					get<Expression>().acceptL( clause->target_args ),
 				},
-				get<Statement>().accept1( clause.stmt ),
-				get<Expression>().accept1( clause.cond ),
+				get<Statement>().accept1( clause->stmt ),
+				get<Expression>().accept1( clause->cond ),
 			});
 		}
 		stmt->timeout = {
-			get<Expression>().accept1( node->timeout.time ),
-			get<Statement>().accept1( node->timeout.stmt ),
-			get<Expression>().accept1( node->timeout.cond ),
+			get<Expression>().accept1( node->timeout_time ),
+			get<Statement>().accept1( node->timeout_stmt ),
+			get<Expression>().accept1( node->timeout_cond ),
 		};
 		stmt->orelse = {
-			get<Statement>().accept1( node->orElse.stmt ),
-			get<Expression>().accept1( node->orElse.cond ),
+			get<Statement>().accept1( node->else_stmt ),
+			get<Expression>().accept1( node->else_cond ),
 		};
 		return stmtPostamble( stmt, node );
+	}
+
+	const ast::WaitForClause * visit( const ast::WaitForClause * node ) override final {
+		// There is no old-AST WaitForClause, so this should never be called.
+		assert( !node );
+		return nullptr;
 	}
 
 	const ast::Decl * visit( const ast::WithStmt * node ) override final {
@@ -2095,24 +2101,20 @@ private:
 
 		stmt->clauses.reserve( old->clauses.size() );
 		for (size_t i = 0 ; i < old->clauses.size() ; ++i) {
-			stmt->clauses.push_back({
-				ast::WaitForStmt::Target{
-					GET_ACCEPT_1(clauses[i].target.function, Expr),
-					GET_ACCEPT_V(clauses[i].target.arguments, Expr)
-				},
-				GET_ACCEPT_1(clauses[i].statement, Stmt),
-				GET_ACCEPT_1(clauses[i].condition, Expr)
-			});
+			auto clause = new ast::WaitForClause( old->location );
+
+			clause->target_func = GET_ACCEPT_1(clauses[i].target.function, Expr);
+			clause->target_args = GET_ACCEPT_V(clauses[i].target.arguments, Expr);
+			clause->stmt = GET_ACCEPT_1(clauses[i].statement, Stmt);
+			clause->cond = GET_ACCEPT_1(clauses[i].condition, Expr);
+
+			stmt->clauses.push_back( clause );
 		}
-		stmt->timeout = {
-			GET_ACCEPT_1(timeout.time, Expr),
-			GET_ACCEPT_1(timeout.statement, Stmt),
-			GET_ACCEPT_1(timeout.condition, Expr),
-		};
-		stmt->orElse = {
-			GET_ACCEPT_1(orelse.statement, Stmt),
-			GET_ACCEPT_1(orelse.condition, Expr),
-		};
+		stmt->timeout_time = GET_ACCEPT_1(timeout.time, Expr);
+		stmt->timeout_stmt = GET_ACCEPT_1(timeout.statement, Stmt);
+		stmt->timeout_cond = GET_ACCEPT_1(timeout.condition, Expr);
+		stmt->else_stmt = GET_ACCEPT_1(orelse.statement, Stmt);
+		stmt->else_cond = GET_ACCEPT_1(orelse.condition, Expr);
 
 		this->node = stmt;
 		cache.emplace( old, this->node );

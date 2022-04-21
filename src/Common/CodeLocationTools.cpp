@@ -120,6 +120,7 @@ public:
     macro(FinallyClause, FinallyClause) \
     macro(SuspendStmt, Stmt) \
     macro(WaitForStmt, Stmt) \
+    macro(WaitForClause, WaitForClause) \
     macro(WithStmt, Decl) \
     macro(NullStmt, NullStmt) \
     macro(DeclStmt, Stmt) \

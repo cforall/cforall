@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Wed May  8 13:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Mar 28  9:50:00 2022
-// Update Count     : 35
+// Last Modified On : Wed Apr 20 14:34:00 2022
+// Update Count     : 36
 //
 
 #pragma once
@@ -377,31 +377,12 @@ class SuspendStmt final : public Stmt {
 // Waitfor statement: when (...) waitfor (... , ...) ... timeout(...) ... else ...
 class WaitForStmt final : public Stmt {
   public:
-	struct Target {
-		ptr<Expr> func;
-		std::vector<ptr<Expr>> args;
-	};
-
-	struct Clause {
-		Target target;
-		ptr<Stmt> stmt;
-		ptr<Expr> cond;
-	};
-
-	struct Timeout {
-		ptr<Expr> time;
-		ptr<Stmt> stmt;
-		ptr<Expr> cond;
-	};
-
-	struct OrElse {
-		ptr<Stmt> stmt;
-		ptr<Expr> cond;
-	};
-
-	std::vector<Clause> clauses;
-	Timeout timeout;
-	OrElse orElse;
+	std::vector<ptr<WaitForClause>> clauses;
+	ptr<Expr> timeout_time;
+	ptr<Stmt> timeout_stmt;
+	ptr<Expr> timeout_cond;
+	ptr<Stmt> else_stmt;
+	ptr<Expr> else_cond;
 
 	WaitForStmt( const CodeLocation & loc, const std::vector<Label> && labels = {} )
 		: Stmt(loc, std::move(labels)) {}
@@ -410,6 +391,22 @@ class WaitForStmt final : public Stmt {
   private:
 	WaitForStmt * clone() const override { return new WaitForStmt{ *this }; }
 	MUTATE_FRIEND
+};
+
+class WaitForClause final : public StmtClause {
+  public:
+    ptr<Expr> target_func;
+    std::vector<ptr<Expr>> target_args;
+    ptr<Stmt> stmt;
+    ptr<Expr> cond;
+
+    WaitForClause( const CodeLocation & loc )
+		: StmtClause( loc ) {}
+
+	const WaitForClause * accept( Visitor & v ) const override { return v.visit( this ); }
+  private:
+    WaitForClause * clone() const override { return new WaitForClause{ *this }; }
+    MUTATE_FRIEND
 };
 
 // Any declaration in a (compound) statement.

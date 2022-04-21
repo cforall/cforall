@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Sun May 17 12:17:01 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Mar 18 10:41:00 2022
-// Update Count     : 247
+// Last Modified On : Wed Apr 20 10:41:00 2022
+// Update Count     : 248
 //
 
 #include <cassert>                       // for strict_dynamic_cast, assert
@@ -1737,30 +1737,30 @@ namespace ResolvExpr {
 
 		// Resolve all clauses first
 		for ( unsigned i = 0; i < stmt->clauses.size(); ++i ) {
-			const ast::WaitForStmt::Clause & clause = stmt->clauses[i];
+			const ast::WaitForClause & clause = *stmt->clauses[i];
 
 			ast::TypeEnvironment env;
 			CandidateFinder funcFinder( context, env );
 
 			// Find all candidates for a function in canonical form
-			funcFinder.find( clause.target.func, ResolvMode::withAdjustment() );
+			funcFinder.find( clause.target_func, ResolvMode::withAdjustment() );
 
 			if ( funcFinder.candidates.empty() ) {
 				stringstream ss;
 				ss << "Use of undeclared indentifier '";
-				ss << clause.target.func.strict_as< ast::NameExpr >()->name;
+				ss << clause.target_func.strict_as< ast::NameExpr >()->name;
 				ss << "' in call to waitfor";
 				SemanticError( stmt->location, ss.str() );
 			}
 
-			if ( clause.target.args.empty() ) {
+			if ( clause.target_args.empty() ) {
 				SemanticError( stmt->location,
 					"Waitfor clause must have at least one mutex parameter");
 			}
 
 			// Find all alternatives for all arguments in canonical form
 			std::vector< CandidateFinder > argFinders =
-				funcFinder.findSubExprs( clause.target.args );
+				funcFinder.findSubExprs( clause.target_args );
 
 			// List all combinations of arguments
 			std::vector< CandidateList > possibilities;
@@ -1933,11 +1933,11 @@ namespace ResolvExpr {
 			// TODO: need to use findDeletedExpr to ensure no deleted identifiers are used.
 
 			// build new clause
-			ast::WaitForStmt::Clause clause2;
+			auto clause2 = new ast::WaitForClause( clause.location );
 
-			clause2.target.func = funcCandidates.front()->expr;
+			clause2->target_func = funcCandidates.front()->expr;
 
-			clause2.target.args.reserve( clause.target.args.size() );
+			clause2->target_args.reserve( clause.target_args.size() );
 			const ast::StructDecl * decl_monitor = symtab.lookupStruct( "monitor$" );
 			for ( auto arg : argsCandidates.front() ) {
 				const auto & loc = stmt->location;
@@ -1954,45 +1954,44 @@ namespace ResolvExpr {
 					)
 				);
 
-				clause2.target.args.emplace_back( findSingleExpression( init, context ) );
+				clause2->target_args.emplace_back( findSingleExpression( init, context ) );
 			}
 
 			// Resolve the conditions as if it were an IfStmt, statements normally
-			clause2.cond = findSingleExpression( clause.cond, context );
-			clause2.stmt = clause.stmt->accept( *visitor );
+			clause2->cond = findSingleExpression( clause.cond, context );
+			clause2->stmt = clause.stmt->accept( *visitor );
 
 			// set results into stmt
 			auto n = mutate( stmt );
-			n->clauses[i] = std::move( clause2 );
+			n->clauses[i] = clause2;
 			stmt = n;
 		}
 
-		if ( stmt->timeout.stmt ) {
+		if ( stmt->timeout_stmt ) {
 			// resolve the timeout as a size_t, the conditions like IfStmt, and stmts normally
-			ast::WaitForStmt::Timeout timeout2;
-
 			ast::ptr< ast::Type > target =
 				new ast::BasicType{ ast::BasicType::LongLongUnsignedInt };
-			timeout2.time = findSingleExpression( stmt->timeout.time, target, context );
-			timeout2.cond = findSingleExpression( stmt->timeout.cond, context );
-			timeout2.stmt = stmt->timeout.stmt->accept( *visitor );
+			auto timeout_time = findSingleExpression( stmt->timeout_time, target, context );
+			auto timeout_cond = findSingleExpression( stmt->timeout_cond, context );
+			auto timeout_stmt = stmt->timeout_stmt->accept( *visitor );
 
 			// set results into stmt
 			auto n = mutate( stmt );
-			n->timeout = std::move( timeout2 );
+			n->timeout_time = std::move( timeout_time );
+			n->timeout_cond = std::move( timeout_cond );
+			n->timeout_stmt = std::move( timeout_stmt );
 			stmt = n;
 		}
 
-		if ( stmt->orElse.stmt ) {
+		if ( stmt->else_stmt ) {
 			// resolve the condition like IfStmt, stmts normally
-			ast::WaitForStmt::OrElse orElse2;
-
-			orElse2.cond = findSingleExpression( stmt->orElse.cond, context );
-			orElse2.stmt = stmt->orElse.stmt->accept( *visitor );
+			auto else_cond = findSingleExpression( stmt->else_cond, context );
+			auto else_stmt = stmt->else_stmt->accept( *visitor );
 
 			// set results into stmt
 			auto n = mutate( stmt );
-			n->orElse = std::move( orElse2 );
+			n->else_cond = std::move( else_cond );
+			n->else_stmt = std::move( else_stmt );
 			stmt = n;
 		}
 

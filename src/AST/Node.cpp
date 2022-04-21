@@ -175,6 +175,8 @@ template class ast::ptr_base< ast::FinallyClause, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::FinallyClause, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::WaitForStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::WaitForStmt, ast::Node::ref_type::strong >;
+template class ast::ptr_base< ast::WaitForClause, ast::Node::ref_type::weak >;
+template class ast::ptr_base< ast::WaitForClause, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::WithStmt, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::WithStmt, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::DeclStmt, ast::Node::ref_type::weak >;

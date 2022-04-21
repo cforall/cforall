@@ -1009,83 +1009,33 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::SuspendStmt * node ) {
 template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitForStmt * node ) {
 	VISIT_START( node );
-		// for( auto & clause : node->clauses ) {
-		// 	maybeAccept_impl( clause.target.function, *this );
-		// 	maybeAccept_impl( clause.target.arguments, *this );
-
-		// 	maybeAccept_impl( clause.statement, *this );
-		// 	maybeAccept_impl( clause.condition, *this );
-		// }
 
 	if ( __visit_children() ) {
-		std::vector<WaitForStmt::Clause> new_clauses;
-		new_clauses.reserve( node->clauses.size() );
-		bool mutated = false;
-		for( const auto & clause : node->clauses ) {
-
-			const Expr * func = clause.target.func ? clause.target.func->accept(*this) : nullptr;
-			if(func != clause.target.func) mutated = true;
-			else func = nullptr;
-
-			std::vector<ptr<Expr>> new_args;
-			new_args.reserve(clause.target.args.size());
-			for( const auto & arg : clause.target.args ) {
-				auto a = arg->accept(*this);
-				if( a != arg ) {
-					mutated = true;
-					new_args.push_back( a );
-				} else
-					new_args.push_back( nullptr );
-			}
-
-			const Stmt * stmt = clause.stmt ? clause.stmt->accept(*this) : nullptr;
-			if(stmt != clause.stmt) mutated = true;
-			else stmt = nullptr;
-
-			const Expr * cond = clause.cond ? clause.cond->accept(*this) : nullptr;
-			if(cond != clause.cond) mutated = true;
-			else cond = nullptr;
-
-			new_clauses.push_back( WaitForStmt::Clause{ {func, std::move(new_args) }, stmt, cond } );
-		}
-
-		if(mutated) {
-			auto n = __pass::mutate<core_t>(node);
-			for(size_t i = 0; i < new_clauses.size(); i++) {
-				if(new_clauses.at(i).target.func != nullptr) swap(n->clauses.at(i).target.func, new_clauses.at(i).target.func);
-
-				for(size_t j = 0; j < new_clauses.at(i).target.args.size(); j++) {
-					if(new_clauses.at(i).target.args.at(j) != nullptr) swap(n->clauses.at(i).target.args.at(j), new_clauses.at(i).target.args.at(j));
-				}
-
-				if(new_clauses.at(i).stmt != nullptr) swap(n->clauses.at(i).stmt, new_clauses.at(i).stmt);
-				if(new_clauses.at(i).cond != nullptr) swap(n->clauses.at(i).cond, new_clauses.at(i).cond);
-			}
-			node = n;
-		}
+		maybe_accept( node, &WaitForStmt::clauses );
+		maybe_accept( node, &WaitForStmt::timeout_time );
+		maybe_accept( node, &WaitForStmt::timeout_stmt );
+		maybe_accept( node, &WaitForStmt::timeout_cond );
+		maybe_accept( node, &WaitForStmt::else_stmt );
+		maybe_accept( node, &WaitForStmt::else_cond );
 	}
-
-	#define maybe_accept(field) \
-		if(node->field) { \
-			auto nval = call_accept( node->field ); \
-			if(nval.differs ) { \
-				auto nparent = __pass::mutate<core_t>(node); \
-				nparent->field = nval.value; \
-				node = nparent; \
-			} \
-		}
-
-	if ( __visit_children() ) {
-		maybe_accept( timeout.time );
-		maybe_accept( timeout.stmt );
-		maybe_accept( timeout.cond );
-		maybe_accept( orElse.stmt  );
-		maybe_accept( orElse.cond  );
-	}
-
-	#undef maybe_accept
 
 	VISIT_END( Stmt, node );
+}
+
+//--------------------------------------------------------------------------
+// WaitForClause
+template< typename core_t >
+const ast::WaitForClause * ast::Pass< core_t >::visit( const ast::WaitForClause * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		maybe_accept( node, &WaitForClause::target_func );
+		maybe_accept( node, &WaitForClause::target_args );
+		maybe_accept( node, &WaitForClause::stmt );
+		maybe_accept( node, &WaitForClause::cond );
+	}
+
+	VISIT_END( WaitForClause, node );
 }
 
 //--------------------------------------------------------------------------

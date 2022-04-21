@@ -759,52 +759,57 @@ public:
 		os << "Waitfor Statement" << endl;
 		indent += 2;
 		for( const auto & clause : node->clauses ) {
-			os << indent-1 << "target function: ";
-			safe_print( clause.target.func );
-
-			if ( ! clause.target.args.empty() ) {
-				os << endl << indent-1 << "... with arguments:" << endl;
-				for( const ast::Expr * arg : clause.target.args ) {
-					arg->accept( *this );
-				}
-			}
-
-			if ( clause.stmt ) {
-				os << indent-1 << "... with statment:" << endl;
-				clause.stmt->accept( *this );
-			}
-
-			if ( clause.cond ) {
-				os << indent-1 << "... with condition:" << endl;
-				clause.cond->accept( *this );
-			}
+			clause->accept( *this );
 		}
 
-		if ( node->timeout.time ) {
+		if ( node->timeout_time ) {
 			os << indent-1 << "timeout of:" << endl;
-			node->timeout.time->accept( *this );
+			node->timeout_time->accept( *this );
 
-			if ( node->timeout.stmt ) {
+			if ( node->timeout_stmt ) {
 				os << indent-1 << "... with statment:" << endl;
-				node->timeout.stmt->accept( *this );
+				node->timeout_stmt->accept( *this );
 			}
 
-			if ( node->timeout.cond ) {
+			if ( node->timeout_cond ) {
 				os << indent-1 << "... with condition:" << endl;
-				node->timeout.cond->accept( *this );
+				node->timeout_cond->accept( *this );
 			}
 		}
 
-		if ( node->orElse.stmt ) {
+		if ( node->else_stmt ) {
 			os << indent-1 << "else:" << endl;
-			node->orElse.stmt->accept( *this );
+			node->else_stmt->accept( *this );
 
-			if ( node->orElse.cond ) {
+			if ( node->else_cond ) {
 				os << indent-1 << "... with condition:" << endl;
-				node->orElse.cond->accept( *this );
+				node->else_cond->accept( *this );
 			}
 		}
-		indent -= 2;
+
+		return node;
+	}
+
+	virtual const ast::WaitForClause * visit( const ast::WaitForClause * node ) override final {
+		os << indent-1 << "target function: ";
+		safe_print( node->target_func );
+
+		if ( !node->target_args.empty() ) {
+			os << endl << indent-1 << "... with arguments:" << endl;
+			for( const ast::Expr * arg : node->target_args ) {
+				arg->accept( *this );
+			}
+		}
+
+		if ( node->stmt ) {
+			os << indent-1 << "... with statment:" << endl;
+			node->stmt->accept( *this );
+		}
+
+		if ( node->cond ) {
+			os << indent-1 << "... with condition:" << endl;
+			node->cond->accept( *this );
+		}
 
 		return node;
 	}
