@@ -9,14 +9,13 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May 26 11:23:55 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug  8 17:36:48 2020
-// Update Count     : 16
+// Last Modified On : Thu Apr 21 22:52:25 2022
+// Update Count     : 21
 // 
 
 #pragma once
 
-size_t default_mmap_start();							// CFA extras
-size_t default_heap_expansion();
+#include <malloc.h>
 
 bool traceHeap();
 bool traceHeapOn();
@@ -33,25 +32,31 @@ bool checkFreeOff();
 // supported mallopt options
 #ifndef M_MMAP_THRESHOLD
 #define M_MMAP_THRESHOLD (-1)
-#endif // M_TOP_PAD
+#endif // M_MMAP_THRESHOLD
+
 #ifndef M_TOP_PAD
 #define M_TOP_PAD (-2)
 #endif // M_TOP_PAD
 
 extern "C" {
-	void * aalloc( size_t dim, size_t elemSize );
-	void * resize( void * oaddr, size_t size );
-	void * amemalign( size_t align, size_t dim, size_t elemSize );
-	void * cmemalign( size_t align, size_t dim, size_t elemSize );
+	// New allocation operations.
+	void * aalloc( size_t dim, size_t elemSize ) __attribute__ ((malloc));
+	void * resize( void * oaddr, size_t size ) __attribute__ ((malloc));
+	void * amemalign( size_t align, size_t dim, size_t elemSize ) __attribute__ ((malloc));
+	void * cmemalign( size_t align, size_t dim, size_t elemSize ) __attribute__ ((malloc));
 	size_t malloc_alignment( void * addr );
 	bool malloc_zero_fill( void * addr );
 	size_t malloc_size( void * addr );
-	size_t malloc_usable_size( void * addr );
 	int malloc_stats_fd( int fd );
+	size_t malloc_usable_size( void * addr );
+	size_t malloc_expansion();							// heap expansion size (bytes)
+	size_t malloc_mmap_start();							// crossover allocation size from sbrk to mmap
+	size_t malloc_unfreed();							// heap unfreed size (bytes)
 } // extern "C"
 
-void * resize( void * oaddr, size_t nalign, size_t size );
-void * realloc( void * oaddr, size_t nalign, size_t size );
+void * resize( void * oaddr, size_t alignment, size_t size );
+void * realloc( void * oaddr, size_t alignment, size_t size );
+void * reallocarray( void * oaddr, size_t nalign, size_t dim, size_t elemSize );
 
 // Local Variables: //
 // mode: c //

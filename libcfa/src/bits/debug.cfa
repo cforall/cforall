@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thu Mar 30 12:30:01 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 17 11:07:13 2020
-// Update Count     : 12
+// Last Modified On : Fri Apr 22 18:20:26 2022
+// Update Count     : 13
 //
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ extern "C" {
 	void __cfaabi_bits_acquire() __attribute__((__weak__)) {}
 	void __cfaabi_bits_release() __attribute__((__weak__)) {}
 
-	void __cfaabi_bits_print_safe  ( int fd, const char fmt[], ... ) __attribute__(( format(printf, 2, 3) )) {
+	int __cfaabi_bits_print_safe  ( int fd, const char fmt[], ... ) __attribute__(( format(printf, 2, 3) )) {
 		va_list args;
 
 		va_start( args, fmt );
@@ -54,9 +54,10 @@ extern "C" {
 
 		__cfaabi_bits_release();
 		va_end( args );
+		return len;
 	}
 
-	void __cfaabi_bits_print_nolock( int fd, const char fmt[], ... ) __attribute__(( format(printf, 2, 3) )) {
+	int __cfaabi_bits_print_nolock( int fd, const char fmt[], ... ) __attribute__(( format(printf, 2, 3) )) {
 		va_list args;
 
 		va_start( args, fmt );
@@ -65,14 +66,16 @@ extern "C" {
 		__cfaabi_bits_write( fd, buffer, len );
 
 		va_end( args );
+		return len;
 	}
 
-	void __cfaabi_bits_print_vararg( int fd, const char fmt[], va_list args ) {
+	int __cfaabi_bits_print_vararg( int fd, const char fmt[], va_list args ) {
 		int len = vsnprintf( buffer, buffer_size, fmt, args );
 		__cfaabi_bits_write( fd, buffer, len );
+		return len;
 	}
 
-	void __cfaabi_bits_print_buffer( int fd, char in_buffer[], int in_buffer_size, const char fmt[], ... ) __attribute__(( format(printf, 4, 5) )) {
+	int __cfaabi_bits_print_buffer( int fd, char in_buffer[], int in_buffer_size, const char fmt[], ... ) __attribute__(( format(printf, 4, 5) )) {
 		va_list args;
 
 		va_start( args, fmt );
@@ -81,5 +84,6 @@ extern "C" {
 		__cfaabi_bits_write( fd, in_buffer, len );
 
 		va_end( args );
+		return len;
 	}
 }
