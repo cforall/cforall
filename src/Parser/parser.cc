@@ -9826,7 +9826,7 @@ yyreduce:
 			if ( (yyvsp[-6].decl)->storageClasses.val != 0 || (yyvsp[-6].decl)->type->qualifiers.val != 0 ) 
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 
-			(yyval.decl) = DeclarationNode::newEnum( nullptr, (yyvsp[-2].decl), true ) ->addQualifiers( (yyvsp[-4].decl) )  -> addEnumBase( (yyvsp[-6].decl) );
+			(yyval.decl) = DeclarationNode::newEnum( nullptr, (yyvsp[-2].decl), true, (yyvsp[-6].decl) ) ->addQualifiers( (yyvsp[-4].decl) );
 		}
 #line 9832 "Parser/parser.cc"
     break;
@@ -9843,7 +9843,7 @@ yyreduce:
   case 589:
 #line 2328 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
-			(yyval.decl) = DeclarationNode::newEnum( (yyvsp[-6].tok), (yyvsp[-2].decl), true ) -> addQualifiers( (yyvsp[-7].decl) ) -> addQualifiers( (yyvsp[-5].decl) ) -> addEnumBase( (yyvsp[-9].decl) );
+			(yyval.decl) = DeclarationNode::newEnum( (yyvsp[-6].tok), (yyvsp[-2].decl), true, (yyvsp[-9].decl) ) -> addQualifiers( (yyvsp[-7].decl) ) -> addQualifiers( (yyvsp[-5].decl) );
 		}
 #line 9849 "Parser/parser.cc"
     break;
@@ -9853,7 +9853,7 @@ yyreduce:
                 {
 			if ( (yyvsp[-8].decl)->storageClasses.val != 0 || (yyvsp[-8].decl)->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 			typedefTable.makeTypedef( *(yyvsp[-5].decl)->name );
-			(yyval.decl) = DeclarationNode::newEnum( (yyvsp[-5].decl)->name, (yyvsp[-2].decl), true ) -> addQualifiers( (yyvsp[-6].decl) ) -> addQualifiers( (yyvsp[-4].decl) ) -> addEnumBase( (yyvsp[-8].decl) );
+			(yyval.decl) = DeclarationNode::newEnum( (yyvsp[-5].decl)->name, (yyvsp[-2].decl), true, (yyvsp[-8].decl) ) -> addQualifiers( (yyvsp[-6].decl) ) -> addQualifiers( (yyvsp[-4].decl) );
 		}
 #line 9859 "Parser/parser.cc"
     break;

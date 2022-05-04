@@ -1729,7 +1729,7 @@ private:
 		this->node = decl;
 	}
 
-	// Convert SynTree::EnumDecl to AST::EnumDecl
+
 	virtual void visit( const EnumDecl * old ) override final {
 		if ( inCache( old ) ) return;
 		auto decl = new ast::EnumDecl(
@@ -2728,7 +2728,8 @@ private:
 		for (auto & param : foralls) {
 			ty->forall.emplace_back(new ast::TypeInstType(param));
 			for (auto asst : param->assertions) {
-				ty->assertions.emplace_back(new ast::VariableExpr({}, asst));
+				ty->assertions.emplace_back(
+					new ast::VariableExpr(param->location, asst));
 			}
 		}
 		visitType( old, ty );

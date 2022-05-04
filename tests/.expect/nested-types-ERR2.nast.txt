@@ -1,0 +1,7 @@
+nested-types.cfa:100:25: warning: Compiled
+nested-types.cfa:86:1 error: Use of undefined global type Z
+nested-types.cfa:87:1 error: Qualified type requires an aggregate on the left, but has: signed int
+nested-types.cfa:88:1 error: Undefined type in qualified type: Qualified Type:
+  instance of struct S with body
+  instance of type Z (not function type)
+

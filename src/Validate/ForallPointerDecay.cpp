@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Dec  7 16:15:00 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Feb 11 10:59:00 2022
-// Update Count     : 0
+// Last Modified On : Sat Apr 23 13:10:00 2022
+// Update Count     : 1
 //
 
 #include "ForallPointerDecay.hpp"
@@ -234,6 +234,11 @@ void decayForallPointers( ast::TranslationUnit & transUnit ) {
 	ast::Pass<AssertionFunctionFixer>::run( transUnit );
 	ast::Pass<OberatorChecker>::run( transUnit );
 	ast::Pass<UniqueFixCore>::run( transUnit );
+}
+
+std::vector<ast::ptr<ast::DeclWithType>> expandAssertions(
+		std::vector<ast::ptr<ast::DeclWithType>> const & old ) {
+	return TraitExpander::expandAssertions( old );
 }
 
 } // namespace Validate

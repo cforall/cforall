@@ -2302,7 +2302,7 @@ bit_subrange_size:
 		{ $$ = $2; }
 	;
 
-enum_type: // static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed );												// enum
+enum_type:
 	ENUM attribute_list_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( nullptr, $4, true )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt identifier
@@ -2317,22 +2317,22 @@ enum_type: // static DeclarationNode * newEnum( const std::string * name, Declar
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) 
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 
-			$$ = DeclarationNode::newEnum( nullptr, $7, true ) ->addQualifiers( $5 )  -> addEnumBase( $3 );
+			$$ = DeclarationNode::newEnum( nullptr, $7, true, $3 ) ->addQualifiers( $5 );
 		}
-	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt // Question: why attributes/qualifier after identifier
+	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 			typedefTable.makeTypedef( *$6 );
 		}
 	  '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $6, $10, true ) -> addQualifiers( $5 ) -> addQualifiers( $7 ) -> addEnumBase( $3 );
+			$$ = DeclarationNode::newEnum( $6, $10, true, $3 ) -> addQualifiers( $5 ) -> addQualifiers( $7 );
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 			typedefTable.makeTypedef( *$6->name );
-			$$ = DeclarationNode::newEnum( $6->name, $9, true ) -> addQualifiers( $5 ) -> addQualifiers( $7 ) -> addEnumBase( $3 );
+			$$ = DeclarationNode::newEnum( $6->name, $9, true, $3 ) -> addQualifiers( $5 ) -> addQualifiers( $7 );
 		}
 	| enum_type_nobody
 	;

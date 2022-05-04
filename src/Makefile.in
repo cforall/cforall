@@ -251,9 +251,12 @@ am__objects_9 = Tuples/Explode.$(OBJEXT) \
 	Tuples/TupleExpansionNew.$(OBJEXT) Tuples/Tuples.$(OBJEXT)
 am__objects_10 = Validate/Autogen.$(OBJEXT) \
 	Validate/CompoundLiteral.$(OBJEXT) \
+	Validate/EliminateTypedef.$(OBJEXT) \
+	Validate/FixQualifiedTypes.$(OBJEXT) \
 	Validate/ForallPointerDecay.$(OBJEXT) \
 	Validate/GenericParameter.$(OBJEXT) \
 	Validate/HandleAttributes.$(OBJEXT) \
+	Validate/HoistStruct.$(OBJEXT) \
 	Validate/InitializerLength.$(OBJEXT) \
 	Validate/LabelAddressFixer.$(OBJEXT) \
 	Validate/ReturnCheck.$(OBJEXT) \
@@ -445,11 +448,14 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Tuples/$(DEPDIR)/TupleExpansionNew.Po \
 	Tuples/$(DEPDIR)/Tuples.Po Validate/$(DEPDIR)/Autogen.Po \
 	Validate/$(DEPDIR)/CompoundLiteral.Po \
+	Validate/$(DEPDIR)/EliminateTypedef.Po \
 	Validate/$(DEPDIR)/FindSpecialDecls.Po \
 	Validate/$(DEPDIR)/FindSpecialDeclsNew.Po \
+	Validate/$(DEPDIR)/FixQualifiedTypes.Po \
 	Validate/$(DEPDIR)/ForallPointerDecay.Po \
 	Validate/$(DEPDIR)/GenericParameter.Po \
 	Validate/$(DEPDIR)/HandleAttributes.Po \
+	Validate/$(DEPDIR)/HoistStruct.Po \
 	Validate/$(DEPDIR)/InitializerLength.Po \
 	Validate/$(DEPDIR)/LabelAddressFixer.Po \
 	Validate/$(DEPDIR)/ReturnCheck.Po \
@@ -1009,16 +1015,23 @@ SRC_VALIDATE = \
 	Validate/Autogen.hpp \
 	Validate/CompoundLiteral.cpp \
 	Validate/CompoundLiteral.hpp \
+	Validate/EliminateTypedef.cpp \
+	Validate/EliminateTypedef.hpp \
+	Validate/FixQualifiedTypes.cpp \
+	Validate/FixQualifiedTypes.hpp \
 	Validate/ForallPointerDecay.cpp \
 	Validate/ForallPointerDecay.hpp \
 	Validate/GenericParameter.cpp \
 	Validate/GenericParameter.hpp \
 	Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h \
+	Validate/HoistStruct.cpp \
+	Validate/HoistStruct.hpp \
 	Validate/InitializerLength.cpp \
 	Validate/InitializerLength.hpp \
 	Validate/LabelAddressFixer.cpp \
 	Validate/LabelAddressFixer.hpp \
+	Validate/NoIdSymbolTable.hpp \
 	Validate/ReturnCheck.cpp \
 	Validate/ReturnCheck.hpp \
 	Validate/FindSpecialDeclsNew.cpp \
@@ -1448,11 +1461,17 @@ Validate/Autogen.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/CompoundLiteral.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/EliminateTypedef.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/FixQualifiedTypes.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/ForallPointerDecay.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/GenericParameter.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/HandleAttributes.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/HoistStruct.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/InitializerLength.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
@@ -1750,11 +1769,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/Tuples.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/Autogen.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/CompoundLiteral.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/EliminateTypedef.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDeclsNew.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FixQualifiedTypes.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ForallPointerDecay.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/GenericParameter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HandleAttributes.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HoistStruct.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/InitializerLength.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/LabelAddressFixer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ReturnCheck.Po@am__quote@ # am--include-marker
@@ -2157,11 +2179,14 @@ distclean: distclean-am
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
 	-rm -f Validate/$(DEPDIR)/Autogen.Po
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
+	-rm -f Validate/$(DEPDIR)/EliminateTypedef.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
+	-rm -f Validate/$(DEPDIR)/FixQualifiedTypes.Po
 	-rm -f Validate/$(DEPDIR)/ForallPointerDecay.Po
 	-rm -f Validate/$(DEPDIR)/GenericParameter.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
+	-rm -f Validate/$(DEPDIR)/HoistStruct.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
 	-rm -f Validate/$(DEPDIR)/ReturnCheck.Po
@@ -2372,11 +2397,14 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
 	-rm -f Validate/$(DEPDIR)/Autogen.Po
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
+	-rm -f Validate/$(DEPDIR)/EliminateTypedef.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
+	-rm -f Validate/$(DEPDIR)/FixQualifiedTypes.Po
 	-rm -f Validate/$(DEPDIR)/ForallPointerDecay.Po
 	-rm -f Validate/$(DEPDIR)/GenericParameter.Po
 	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
+	-rm -f Validate/$(DEPDIR)/HoistStruct.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
 	-rm -f Validate/$(DEPDIR)/ReturnCheck.Po

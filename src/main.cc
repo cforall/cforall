@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr 13 11:11:00 2022
-// Update Count     : 672
+// Last Modified On : Fri Apr 29  9:52:00 2022
+// Update Count     : 673
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -74,10 +74,13 @@ using namespace std;
 #include "SynTree/Visitor.h"                // for acceptAll
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
-#include "Validate/GenericParameter.hpp"    // for fillGenericParameters, tr...
-#include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
-#include "Validate/ForallPointerDecay.hpp"  // for decayForallPointers
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
+#include "Validate/EliminateTypedef.hpp"    // for eliminateTypedef
+#include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
+#include "Validate/FixQualifiedTypes.hpp"   // for fixQualifiedTypes
+#include "Validate/ForallPointerDecay.hpp"  // for decayForallPointers
+#include "Validate/GenericParameter.hpp"    // for fillGenericParameters, tr...
+#include "Validate/HoistStruct.hpp"         // for hoistStruct
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
@@ -327,7 +330,9 @@ int main( int argc, char * argv[] ) {
 
 		// add the assignment statement after the initialization of a type parameter
 		PASS( "Validate-A", SymTab::validate_A( translationUnit ) );
-		PASS( "Validate-B", SymTab::validate_B( translationUnit ) );
+
+		// Must happen before auto-gen, because it uses the sized flag.
+		PASS( "Link Reference To Types", SymTab::linkReferenceToTypes( translationUnit ) );
 
 		CodeTools::fillLocations( translationUnit );
 
@@ -341,6 +346,13 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			// Must happen after Link References To Types,
+			// because aggregate members are accessed.
+			PASS( "Fix Qualified Types", Validate::fixQualifiedTypes( transUnit ) );
+
+			PASS( "Hoist Struct", Validate::hoistStruct( transUnit ) );
+			PASS( "Eliminate Typedef", Validate::eliminateTypedef( transUnit ) );
 
 			// Check as early as possible. Can't happen before
 			// LinkReferenceToType, observed failing when attempted
@@ -437,6 +449,7 @@ int main( int argc, char * argv[] ) {
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Validate-B", SymTab::validate_B( translationUnit ) );
 			PASS( "Validate-C", SymTab::validate_C( translationUnit ) );
 			PASS( "Validate-D", SymTab::validate_D( translationUnit ) );
 			PASS( "Validate-E", SymTab::validate_E( translationUnit ) );

@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Fri Mar 21 10:02:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr 13 10:09:00 2022
-// Update Count     : 0
+// Last Modified On : Fri Apr 22 16:43:00 2022
+// Update Count     : 1
 //
 
 #include "GenericParameter.hpp"
@@ -21,6 +21,7 @@
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
 #include "AST/Type.hpp"
+#include "Validate/NoIdSymbolTable.hpp"
 
 namespace Validate {
 
@@ -137,33 +138,8 @@ struct ValidateGenericParamsCore : public ast::WithGuards {
 
 // --------------------------------------------------------------------------
 
-// A SymbolTable that only has the operations used in the Translate Dimension
-// pass. More importantly, it doesn't have some methods that should no be
-// called by the Pass template (lookupId and addId).
-class NoIdSymbolTable {
-	ast::SymbolTable base;
-public:
-#	define FORWARD_X( func, types_and_names, just_names ) \
-	inline auto func types_and_names -> decltype( base.func just_names ) { \
-		return base.func just_names ; \
-	}
-#	define FORWARD_0( func )         FORWARD_X( func, (),             () )
-#	define FORWARD_1( func, type )   FORWARD_X( func, (type arg),     (arg) )
-#	define FORWARD_2( func, t0, t1 ) FORWARD_X( func, (t0 a0, t1 a1), (a0, a1) )
-
-	FORWARD_0( enterScope )
-	FORWARD_0( leaveScope )
-	FORWARD_1( lookupType, const std::string &        )
-	FORWARD_1( addType   , const ast::NamedTypeDecl * )
-	FORWARD_1( addStruct , const ast::StructDecl *    )
-	FORWARD_1( addEnum   , const ast::EnumDecl *      )
-	FORWARD_1( addUnion  , const ast::UnionDecl *     )
-	FORWARD_1( addTrait  , const ast::TraitDecl *     )
-	FORWARD_2( addWith   , const std::vector< ast::ptr<ast::Expr> > &, const ast::Decl * )
-};
-
-struct TranslateDimensionCore : public ast::WithGuards {
-	NoIdSymbolTable symtab;
+struct TranslateDimensionCore :
+		public WithNoIdSymbolTable, public ast::WithGuards {
 
 	// SUIT: Struct- or Union- InstType
 	// Situational awareness:

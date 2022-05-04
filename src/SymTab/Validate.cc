@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 21:50:04 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Nov 12 11:00:00 2021
-// Update Count     : 364
+// Last Modified On : Fri Apr 29  9:45:00 2022
+// Update Count     : 365
 //
 
 // The "validate" phase of translation is used to take a syntax tree and convert it into a standard form that aims to be
@@ -142,6 +142,7 @@ namespace SymTab {
 	/// Associates forward declarations of aggregates with their definitions
 	struct LinkReferenceToTypes_old final : public WithIndexer, public WithGuards, public WithVisitorRef<LinkReferenceToTypes_old>, public WithShortCircuiting {
 		LinkReferenceToTypes_old( const Indexer * indexer );
+
 		void postvisit( TypeInstType * typeInst );
 
 		void postvisit( EnumInstType * enumInst );
@@ -369,13 +370,17 @@ namespace SymTab {
 		}
 	}
 
-	void validate_B( std::list< Declaration * > & translationUnit ) {
+	void linkReferenceToTypes( std::list< Declaration * > & translationUnit ) {
 		PassVisitor<LinkReferenceToTypes_old> lrt( nullptr );
+		acceptAll( translationUnit, lrt ); // must happen before autogen, because sized flag needs to propagate to generated functions
+	}
+
+	void validate_B( std::list< Declaration * > & translationUnit ) {
 		PassVisitor<FixQualifiedTypes> fixQual;
 		{
 			Stats::Heap::newPass("validate-B");
 			Stats::Time::BlockGuard guard("validate-B");
-			acceptAll( translationUnit, lrt ); // must happen before autogen, because sized flag needs to propagate to generated functions
+			//linkReferenceToTypes( translationUnit );
 			mutateAll( translationUnit, fixQual ); // must happen after LinkReferenceToTypes_old, because aggregate members are accessed
 			HoistStruct::hoistStruct( translationUnit );
 			EliminateTypedef::eliminateTypedef( translationUnit );
@@ -759,7 +764,6 @@ namespace SymTab {
 			forwardEnums[ enumInst->name ].push_back( enumInst );
 		} // if
 	}
-
 	void LinkReferenceToTypes_old::postvisit( StructInstType * structInst ) {
 		const StructDecl * st = local_indexer->lookupStruct( structInst->name );
 		// it's not a semantic error if the struct is not found, just an implicit forward declaration
@@ -885,6 +889,14 @@ namespace SymTab {
 
 	void LinkReferenceToTypes_old::postvisit( EnumDecl * enumDecl ) {
 		// visit enum members first so that the types of self-referencing members are updated properly
+		// Replace the enum base; right now it works only for StructEnum
+		if ( enumDecl->base && dynamic_cast<TypeInstType*>(enumDecl->base) ) {
+			std::string baseName = static_cast<TypeInstType*>(enumDecl->base)->name;
+			const StructDecl * st = local_indexer->lookupStruct( baseName );
+			if ( st ) {
+				enumDecl->base = new StructInstType(Type::Qualifiers(),const_cast<StructDecl *>(st)); // Just linking in the node
+			}
+		}
 		if ( enumDecl->body ) {
 			ForwardEnumsType::iterator fwds = forwardEnums.find( enumDecl->name );
 			if ( fwds != forwardEnums.end() ) {

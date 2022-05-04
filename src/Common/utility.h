@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 11 13:00:36 2020
-// Update Count     : 50
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Apr 25 14:26:00 2022
+// Update Count     : 51
 //
 
 #pragma once
@@ -227,6 +227,12 @@ void filter( Container< E *, Args... > & container, UnaryPredicate pred, bool do
 		} // if
 		i = it;
 	} // while
+}
+
+template<typename Container, typename Pred>
+void erase_if( Container & cont, Pred && pred ) {
+	auto keep_end = std::remove_if( cont.begin(), cont.end(), pred );
+	cont.erase( keep_end, cont.end() );
 }
 
 template< typename... Args >

@@ -252,13 +252,18 @@ DeclarationNode * DeclarationNode::newAggregate( AggregateDecl::Aggregate kind, 
 	return newnode;
 } // DeclarationNode::newAggregate
 
-DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body) {
+DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, DeclarationNode * base) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Enum );
 	newnode->type->enumeration.name = name == nullptr ? new string( DeclarationNode::anonymous.newName() ) : name;
 	newnode->type->enumeration.constants = constants;
 	newnode->type->enumeration.body = body;
 	newnode->type->enumeration.anon = name == nullptr;
+	if ( base && base->type)  {
+		newnode->type->base = base->type;	
+	} // if
+
+	// Check: if base has TypeData
 	return newnode;
 } // DeclarationNode::newEnum
 
@@ -289,7 +294,7 @@ DeclarationNode * DeclarationNode::newEnumValueGeneric( const string * name, Ini
 	} else {
 		return newName( name ); // Not explicitly inited enum value;
 	} // if
-} // DeclarationNode::newEnumGeneric
+} // DeclarationNode::newEnumValueGeneric
 
 DeclarationNode * DeclarationNode::newFromTypedef( const string * name ) {
 	DeclarationNode * newnode = new DeclarationNode;

@@ -1,17 +1,17 @@
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-// 
-// forall.cfa -- 
-// 
+//
+// forall.cfa --
+//
 // Author           : Peter A. Buhr
 // Created On       : Wed May  9 08:48:15 2018
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Sat Jun  5 10:06:08 2021
 // Update Count     : 36
-// 
+//
 
 void g1() {
 	forall( T ) T f( T ) {};
@@ -44,7 +44,9 @@ void g2() {
 	f( x, z );
 }
 
-typedef forall ( T ) int (* f)( int );
+// commented this out since it is not clearly meaningful
+// and not really representable in the ast
+// typedef forall ( T ) int (* f)( int );
 
 forall( T )
 void swap( T left, T right ) {
@@ -169,7 +171,7 @@ forall( T | { T ?+?( T, T ); } ) {
 	}
 }
 
-forall( T | { T ?+?( T, T ); } ) forall( S | { T ?+?( T, S ); } ) 
+forall( T | { T ?+?( T, T ); } ) forall( S | { T ?+?( T, S ); } )
 struct XW { T t; };
 XW(int,int) xww;
 

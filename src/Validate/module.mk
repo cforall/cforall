@@ -19,16 +19,23 @@ SRC_VALIDATE = \
 	Validate/Autogen.hpp \
 	Validate/CompoundLiteral.cpp \
 	Validate/CompoundLiteral.hpp \
+	Validate/EliminateTypedef.cpp \
+	Validate/EliminateTypedef.hpp \
+	Validate/FixQualifiedTypes.cpp \
+	Validate/FixQualifiedTypes.hpp \
 	Validate/ForallPointerDecay.cpp \
 	Validate/ForallPointerDecay.hpp \
 	Validate/GenericParameter.cpp \
 	Validate/GenericParameter.hpp \
 	Validate/HandleAttributes.cc \
 	Validate/HandleAttributes.h \
+	Validate/HoistStruct.cpp \
+	Validate/HoistStruct.hpp \
 	Validate/InitializerLength.cpp \
 	Validate/InitializerLength.hpp \
 	Validate/LabelAddressFixer.cpp \
 	Validate/LabelAddressFixer.hpp \
+	Validate/NoIdSymbolTable.hpp \
 	Validate/ReturnCheck.cpp \
 	Validate/ReturnCheck.hpp \
 	Validate/FindSpecialDeclsNew.cpp \

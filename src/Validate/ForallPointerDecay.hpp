@@ -9,13 +9,17 @@
 // Author           : Andrew Beach
 // Created On       : Tue Dec  7 16:15:00 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Dec  8 11:50:00 2021
-// Update Count     : 0
+// Last Modified On : Sat Apr 23 13:13:00 2022
+// Update Count     : 1
 //
 
 #pragma once
 
+#include <vector>
+#include "AST/Node.hpp"
+
 namespace ast {
+	class DeclWithType;
 	class TranslationUnit;
 }
 
@@ -25,6 +29,10 @@ namespace Validate {
 /// Also checks that operator names are used properly on functions and
 /// assigns unique IDs. This is a "legacy" pass.
 void decayForallPointers( ast::TranslationUnit & transUnit );
+
+/// Expand all traits in an assertion list.
+std::vector<ast::ptr<ast::DeclWithType>> expandAssertions(
+        std::vector<ast::ptr<ast::DeclWithType>> const & );
 
 }
 

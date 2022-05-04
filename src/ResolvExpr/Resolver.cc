@@ -426,6 +426,7 @@ namespace ResolvExpr {
 		if ( inEnumDecl && dynamic_cast< EnumInstType * >( objectDecl->get_type() ) ) {
 			// enumerator initializers should not use the enum type to initialize, since
 			// the enum type is still incomplete at this point. Use signed int instead.
+			// TODO: BasicType::SignedInt may not longer be true
 			currentObject = CurrentObject( new BasicType( Type::Qualifiers(), BasicType::SignedInt ) );
 		}
 	}
@@ -1476,24 +1477,7 @@ namespace ResolvExpr {
 			// enumerator initializers should not use the enum type to initialize, since the
 			// enum type is still incomplete at this point. Use `int` instead.
 
-			if (dynamic_cast< const ast::EnumInstType * >( objectDecl->get_type() )->base->base) { // const ast::PointerType &
-				// const ast::Type * enumBase =  (dynamic_cast< const ast::EnumInstType * >( objectDecl->get_type() )->base->base.get());
-				// const ast::PointerType * enumBaseAsPtr = dynamic_cast<const ast::PointerType *>(enumBase);
-
-				// if ( enumBaseAsPtr ) {
-				// 	const ast::Type * pointerBase = enumBaseAsPtr->base.get();
-				// 	if ( dynamic_cast<const ast::BasicType *>(pointerBase) ) {
-				// 		objectDecl = fixObjectType(objectDecl, context);
-				// 		if (dynamic_cast<const ast::BasicType *>(pointerBase)->kind == ast::BasicType::Char)
-				// 		currentObject = ast::CurrentObject{
-				// 	 		objectDecl->location,  new ast::PointerType{ 
-				// 			 	new ast::BasicType{ ast::BasicType::Char }
-				// 			} };
-				// 	} else {
-				// 		objectDecl = fixObjectType(objectDecl, context);
-				// 		currentObject = ast::CurrentObject{objectDecl->location, new ast::BasicType{ ast::BasicType::SignedInt } };
-				// 	}
-				// }
+			if (dynamic_cast< const ast::EnumInstType * >( objectDecl->get_type() )->base->base) {
 				objectDecl = fixObjectType( objectDecl, context );
 				const ast::Type * enumBase =  (dynamic_cast< const ast::EnumInstType * >( objectDecl->get_type() )->base->base.get());
 				currentObject = ast::CurrentObject{ 

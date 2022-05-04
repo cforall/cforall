@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 12 17:22:25 2022
-// Update Count     : 643
+// Last Modified On : Mon Apr 18 17:57:36 2022
+// Update Count     : 644
 //
 
 #pragma once
@@ -208,28 +208,28 @@ static inline forall( T & | sized(T) ) {
 	} // alloc_internal$
 
 	forall( TT... | { T * alloc_internal$( void *, T *, size_t, size_t, S_fill(T), TT ); } ) {
-		T * alloc_internal$( void *       , T *        , size_t Align, size_t Dim, S_fill(T) Fill, T_resize Resize, TT rest) {
+		T * alloc_internal$( void *, T *, size_t Align, size_t Dim, S_fill(T) Fill, T_resize Resize, TT rest ) {
 	        return alloc_internal$( Resize, (T*)0p, Align, Dim, Fill, rest);
 		}
 
-		T * alloc_internal$( void *        , T *        , size_t Align, size_t Dim, S_fill(T) Fill, S_realloc(T) Realloc, TT rest) {
+		T * alloc_internal$( void *, T *, size_t Align, size_t Dim, S_fill(T) Fill, S_realloc(T) Realloc, TT rest ) {
 	        return alloc_internal$( (void*)0p, Realloc, Align, Dim, Fill, rest);
 		}
 
-		T * alloc_internal$( void * Resize, T * Realloc, size_t      , size_t Dim, S_fill(T) Fill, T_align Align, TT rest) {
+		T * alloc_internal$( void * Resize, T * Realloc, size_t, size_t Dim, S_fill(T) Fill, T_align Align, TT rest ) {
 	        return alloc_internal$( Resize, Realloc, Align, Dim, Fill, rest);
 		}
 
-		T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T)     , S_fill(T) Fill, TT rest) {
-	        return alloc_internal$( Resize, Realloc, Align, Dim, Fill, rest);
+		T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T), S_fill(T) Fill, TT rest ) {
+	        return alloc_internal$( Resize, Realloc, Align, Dim, Fill, rest );
 		}
 
 	    T * alloc( TT all ) {
-	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), (size_t)1, (S_fill(T)){'0'}, all);
+	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), (size_t)1, (S_fill(T)){'0'}, all );
 	    }
 
 	    T * alloc( size_t dim, TT all ) {
-	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), dim, (S_fill(T)){'0'}, all);
+	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), dim, (S_fill(T)){'0'}, all );
 	    }
 	} // distribution TT
 } // distribution T

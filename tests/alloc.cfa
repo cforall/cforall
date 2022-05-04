@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb  3 07:56:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov 12 10:02:18 2020
-// Update Count     : 432
+// Last Modified On : Mon Apr 18 17:13:52 2022
+// Update Count     : 433
 //
 
 #include <assert.h>
@@ -46,7 +46,7 @@ int main( void ) {
 	printf( "CFA alloc %#x\n", *ip );
 	free( ip );
 
-	ip = alloc( fill`fill );								// CFA alloc, fill
+	ip = alloc( fill`fill );							// CFA alloc, fill
 	printf( "CFA alloc, fill %08x\n", *ip );
 	free( ip );
 
@@ -83,13 +83,13 @@ int main( void ) {
 	printf( "\n" );
 	free( ip );
 
-	ip = alloc( 2 * dim, ((int)0xdeadbeef)`fill );				// CFA array alloc, fill
+	ip = alloc( 2 * dim, ((int)0xdeadbeef)`fill );		// CFA array alloc, fill
 	printf( "CFA array alloc, fill %#hhx\n", 0xdeadbeef );
 	for ( i; 2 * dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 
-	ip1 = alloc( 2 * dim, [ip, 2 * dim]`fill );				// CFA array alloc, fill
+	ip1 = alloc( 2 * dim, [ip, 2 * dim]`fill );			// CFA array alloc, fill
 	printf( "CFA array alloc, fill from array\n" );
 	for ( i; 2 * dim ) { printf( "%#x %#x, ", ip[i], ip1[i] ); }
 	free( ip1 );
@@ -116,57 +116,57 @@ int main( void ) {
 	// realloc, array types
 	printf( "\n" );
 
-	ip = alloc( dim, ip`realloc );								// CFA realloc array alloc
+	ip = alloc( dim, ip`realloc );						// CFA realloc array alloc
 	for ( i; dim ) { ip[i] = 0xdeadbeef; }
 	printf( "CFA realloc array alloc\n" );
 	for ( i; dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 
-	ip = alloc( 2 * dim, ip`realloc );							// CFA realloc array alloc
+	ip = alloc( 2 * dim, ip`realloc );					// CFA realloc array alloc
 	for ( i; dim ~ 2 * dim ) { ip[i] = 0x1010101; }		// fill upper part
 	printf( "CFA realloc array alloc\n" );
 	for ( i; 2 * dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 
-	ip = alloc( dim, ip`realloc );								// CFA realloc array alloc
+	ip = alloc( dim, ip`realloc );						// CFA realloc array alloc
 	printf( "CFA realloc array alloc\n" );
 	for ( i; dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 
-	ip = alloc( 3 * dim, ip`realloc, fill`fill );				// CFA realloc array alloc, fill
+	ip = alloc( 3 * dim, ip`realloc, fill`fill );		// CFA realloc array alloc, fill
 	printf( "CFA realloc array alloc, fill\n" );
 	for ( i; 3 * dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 
-	ip = alloc( dim, ip`realloc, fill`fill );					// CFA realloc array alloc, fill
+	ip = alloc( dim, ip`realloc, fill`fill );			// CFA realloc array alloc, fill
 	printf( "CFA realloc array alloc, fill\n" );
 	for ( i; dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 
-	ip = alloc( 3 * dim, ip`realloc, fill`fill );				// CFA realloc array alloc, fill
+	ip = alloc( 3 * dim, ip`realloc, fill`fill );		// CFA realloc array alloc, fill
 	printf( "CFA realloc array alloc, fill\n" );
 	for ( i; 3 * dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 #if 0 // FIX ME
-	ip = alloc( 5 * dim, ip`realloc, 5`fill );					// CFA realloc array alloc, 5
+	ip = alloc( 5 * dim, ip`realloc, 5`fill );			// CFA realloc array alloc, 5
 	printf( "CFA realloc array alloc, 5\n" );
 	for ( i; 5 * dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 
-	ip = alloc( dim, ip`realloc, 5`fill );						// CFA realloc array alloc, 5
+	ip = alloc( dim, ip`realloc, 5`fill );				// CFA realloc array alloc, 5
 	printf( "CFA realloc array alloc, 5\n" );
 	for ( i; dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
 	// do not free
 
-	ip = alloc( 5 * dim, ip`realloc, 5`fill );					// CFA realloc array alloc, 5
+	ip = alloc( 5 * dim, ip`realloc, 5`fill );			// CFA realloc array alloc, 5
 	printf( "CFA realloc array alloc, 5\n" );
 	for ( i; 5 * dim ) { printf( "%#x ", ip[i] ); }
 	printf( "\n" );
@@ -209,14 +209,14 @@ int main( void ) {
 
 	int const_count, dest_count;
 	struct Struct { int x; double y; };
-	void  ?{}( Struct & a ) {					// construct
+	void  ?{}( Struct & a ) {							// construct
 		a.[ x, y ] = [ -1, -1.0 ];
 	}
-	void  ?{}( Struct & a, int x, double y ) {	// initialize
+	void  ?{}( Struct & a, int x, double y ) {			// initialize
 		a.[ x, y ] = [ x, y ];
 		const_count++;
 	}
-	void ^?{}( Struct & a ) {  dest_count++; }	// destruct
+	void ^?{}( Struct & a ) {  dest_count++; }			// destruct
 	Struct st, st1, sta[dim], sta1[dim], * stp, * stp1;
 
 	// alignment, non-array types
@@ -265,7 +265,7 @@ int main( void ) {
 	printf( "CFA alloc_align fill %d %g\n", stp->x, stp->y );
 	// do not free
 
-	stp = &(*alloc( stp`realloc, 4096`align )){ 42, 42.5 };		// CFA realign
+	stp = &(*alloc( stp`realloc, 4096`align )){ 42, 42.5 };	// CFA realign
 	assert( (uintptr_t)stp % 4096 == 0 );
 	printf( "CFA alloc_align %d %g\n", stp->x, stp->y );
 	free( stp );
@@ -303,7 +303,7 @@ int main( void ) {
 	printf( "\n" );
 	free( stp1 );
 
-	stp = alloc( dim, stp`realloc, 4096`align );				// CFA aligned realloc array
+	stp = alloc( dim, stp`realloc, 4096`align );		// CFA aligned realloc array
 	assert( (uintptr_t)stp % 4096 == 0 );
 	for ( i; dim ) { stp[i] = (Struct){ 42, 42.5 }; }
 	printf( "CFA realloc array alloc_align\n" );
@@ -339,27 +339,27 @@ int main( void ) {
 
 	const_count = dest_count = 0;
 	stp = new( 42, 42.5 );
-	assert( const_count == 1 && dest_count == 0 );						// assertion for testing
+	assert( const_count == 1 && dest_count == 0 );		// assertion for testing
 	stp1 = new( 42, 42.5 );
-	assert( const_count == 2 && dest_count == 0 );						// assertion for testing
+	assert( const_count == 2 && dest_count == 0 );		// assertion for testing
 
 	printf( "CFA new initialize\n%d %g %d %g\n", stp->x, stp->y, stp1->x, stp1->y );
 	delete( stp, stp1 );
-	assert( const_count == 2 && dest_count == 2 );						// assertion for testing
+	assert( const_count == 2 && dest_count == 2 );		// assertion for testing
 
 	// new, array types
 	stp = anew( dim, 42, 42.5 );
-	assert( const_count == 2 + dim && dest_count == 2 );				// assertion for testing
+	assert( const_count == 2 + dim && dest_count == 2 ); // assertion for testing
 	printf( "CFA array new initialize\n" );
 	for ( i; dim ) { printf( "%d %g, ", stp[i].x, stp[i].y ); }
 	printf( "\n" );
 
 	stp1 = anew( dim, 42, 42.5 );
-	assert( const_count == 2 + 2 * dim && dest_count == 2 );			// assertion for testing
+	assert( const_count == 2 + 2 * dim && dest_count == 2 ); // assertion for testing
 	for ( i; dim ) { printf( "%d %g, ", stp1[i].x, stp1[i].y ); }
 	printf( "\n" );
 	adelete( stp, stp1 );
-	assert( const_count == 2 + 2 * dim && dest_count == 2 + 2 * dim);	// assertion for testing
+	assert( const_count == 2 + 2 * dim && dest_count == 2 + 2 * dim); // assertion for testing
 
 	// extras
 	printf( "\n" );
@@ -372,7 +372,7 @@ int main( void ) {
 	*ip = 0xdeadbeef;
 	printf( "CFA deep malloc %#x\n", *ip );
 
-	dp = alloc(5.0`fill); // just for testing multiple free
+	dp = alloc(5.0`fill);								// just for testing multiple free
 	assert(*dp == 5.0);
 	free( ip, dp, 0p );
 

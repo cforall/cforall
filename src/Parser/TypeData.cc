@@ -388,6 +388,10 @@ void TypeData::print( ostream &os, int indent ) const {
 		if ( enumeration.body ) {
 			os << string( indent + 2, ' ' ) << " with body" << endl;
 		} // if
+		if ( base ) {
+			os << "for ";
+			base->print( os, indent + 2 );
+		} // if
 		break;
 	  case EnumConstant:
 		os << "enumeration constant ";
@@ -925,13 +929,15 @@ EnumDecl * buildEnum( const TypeData * td, std::list< Attribute * > attributes, 
 		if ( cur->has_enumeratorValue() ) {
 			ObjectDecl * member = dynamic_cast< ObjectDecl * >(* members);
 			member->set_init( new SingleInit( maybeMoveBuild< Expression >( cur->consume_enumeratorValue() ) ) );
-		} else {
+		} else if ( !cur->initializer ) {
 			if ( baseType && (!dynamic_cast<BasicType *>(baseType) || !dynamic_cast<BasicType *>(baseType)->isWholeNumber())) {
 				SemanticError( td->location, "A non whole number enum value decl must be explicitly initialized." );
 			}
-		} // if
+		}
+		// else cur is a List Initializer and has been set as init in buildList()
+		// if
 	} // for
-	ret->set_body( td->enumeration.body ); // Boolean; if it has body
+	ret->set_body( td->enumeration.body );
 	return ret;
 } // buildEnum
 
