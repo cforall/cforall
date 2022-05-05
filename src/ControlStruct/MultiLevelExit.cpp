@@ -593,6 +593,12 @@ list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
 			errors.append( e );
 		}
 
+		// check if loop node and if so add else clause if it exists
+		const WhileDoStmt * whilePtr = dynamic_cast<const WhileDoStmt *>(kid.get());
+		if ( whilePtr && whilePtr->else_) ret.push_back(whilePtr->else_);
+		const ForStmt * forPtr = dynamic_cast<const ForStmt *>(kid.get());
+		if ( forPtr && forPtr->else_) ret.push_back(forPtr->else_);
+
 		if ( ! break_label.empty() ) {
 			ret.push_back( labelledNullStmt( ret.back()->location, break_label ) );
 			break_label = Label( CodeLocation(), "" );

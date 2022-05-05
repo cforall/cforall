@@ -17,6 +17,9 @@ condition_variable( owner_lock ) c_o;
 linear_backoff_then_block_lock l;
 condition_variable( linear_backoff_then_block_lock ) c_l;
 
+fast_block_lock f;
+fast_cond_var( fast_block_lock ) f_c_f;
+
 thread T_C_M_WS1 {};
 
 void main( T_C_M_WS1 & this ) {
@@ -98,6 +101,20 @@ void main( T_C_L_WB1 & this ) {
 			wait(c_l,l);
 		}
 		unlock(l);
+	}
+}
+
+thread T_F_C_F_WS1 {};
+
+void main( T_F_C_F_WS1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(f);
+		if(empty(f_c_f) && i != num_times - 1) {
+			wait(f_c_f,f);
+		}else{
+			notify_one(f_c_f);
+			unlock(f);
+		}
 	}
 }
 
@@ -321,4 +338,11 @@ int main() {
 		T_C_S_WNF t1[2];
 	}
 	printf("Done Test 12\n");
+
+	printf("Start Test 13: fast block lock and fast cond var single wait/notify\n");
+	{
+		T_F_C_F_WS1 t1[2];
+	}
+	printf("Done Test 13\n");
+	
 }

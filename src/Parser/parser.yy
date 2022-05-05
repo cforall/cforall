@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 14 16:35:29 2022
-// Update Count     : 5276
+// Last Modified On : Wed May  4 17:22:48 2022
+// Update Count     : 5279
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -110,7 +110,7 @@ void distExt( DeclarationNode * declaration ) {
 } // distExt
 
 void distInl( DeclarationNode * declaration ) {
-	// distribute EXTENSION across all declarations
+	// distribute INLINE across all declarations
 	for ( DeclarationNode *iter = declaration; iter != nullptr; iter = (DeclarationNode *)iter->get_next() ) {
 		iter->set_inLine( true );
 	} // for
@@ -1220,20 +1220,35 @@ switch_clause_list:										// CFA
 	;
 
 iteration_statement:
-	WHILE '(' ')' statement								// CFA => while ( 1 )
+	WHILE '(' ')' statement								%prec THEN // CFA => while ( 1 )
 		{ $$ = new StatementNode( build_while( new CondCtl( nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ), maybe_build_compound( $4 ) ) ); }
+	| WHILE '(' ')' statement ELSE statement			// CFA
+		{
+			$$ = new StatementNode( build_while( new CondCtl( nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ), maybe_build_compound( $4 ) ) );
+			SemanticWarning( yylloc, Warning::SuperfluousElse );
+		}
 	| WHILE '(' conditional_declaration ')' statement	%prec THEN
 		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ) ) ); }
 	| WHILE '(' conditional_declaration ')' statement ELSE statement // CFA
 		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ), $7 ) ); }
 	| DO statement WHILE '(' ')' ';'					// CFA => do while( 1 )
 		{ $$ = new StatementNode( build_do_while( new ExpressionNode( build_constantInteger( *new string( "1" ) ) ), maybe_build_compound( $2 ) ) ); }
-	| DO statement WHILE '(' comma_expression ')' ';'	%prec THEN
+	| DO statement WHILE '(' ')' ELSE statement			// CFA
+		{
+			$$ = new StatementNode( build_do_while( new ExpressionNode( build_constantInteger( *new string( "1" ) ) ), maybe_build_compound( $2 ) ) );
+			SemanticWarning( yylloc, Warning::SuperfluousElse );
+		}
+	| DO statement WHILE '(' comma_expression ')' ';'
 		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ) ) ); }
 	| DO statement WHILE '(' comma_expression ')' ELSE statement // CFA
 		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ), $8 ) ); }
-	| FOR '(' ')' statement								// CFA => for ( ;; )
+	| FOR '(' ')' statement								%prec THEN // CFA => for ( ;; )
 		{ $$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) ); }
+	| FOR '(' ')' statement ELSE statement				// CFA
+		{
+			$$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) );
+			SemanticWarning( yylloc, Warning::SuperfluousElse );
+		}
 	| FOR '(' for_control_expression_list ')' statement	%prec THEN
 	  	{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ) ) ); }
 	| FOR '(' for_control_expression_list ')' statement ELSE statement // CFA
@@ -2317,7 +2332,7 @@ enum_type:
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) 
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 
-			$$ = DeclarationNode::newEnum( nullptr, $7, true, $3 ) ->addQualifiers( $5 );
+			$$ = DeclarationNode::newEnum( nullptr, $7, true, $3 )->addQualifiers( $5 );
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
@@ -2326,13 +2341,13 @@ enum_type:
 		}
 	  '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $6, $10, true, $3 ) -> addQualifiers( $5 ) -> addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6, $10, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 			typedefTable.makeTypedef( *$6->name );
-			$$ = DeclarationNode::newEnum( $6->name, $9, true, $3 ) -> addQualifiers( $5 ) -> addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6->name, $9, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
 	| enum_type_nobody
 	;

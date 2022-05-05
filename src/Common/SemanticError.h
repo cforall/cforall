@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 19 10:09:17 2018
-// Update Count     : 31
+// Last Modified On : Wed May  4 14:08:26 2022
+// Update Count     : 35
 //
 
 #pragma once
@@ -58,6 +58,7 @@ constexpr WarningData WarningFormats[] = {
 	{"qualifiers-zero_t-one_t", Severity::Warn    , "questionable use of type qualifier %s with %s"              },
 	{"aggregate-forward-decl" , Severity::Warn    , "forward declaration of nested aggregate: %s"                },
 	{"superfluous-decl"       , Severity::Warn    , "declaration does not allocate storage: %s"                  },
+	{"superfluous-else"       , Severity::Warn    , "else clause never executed for empty loop conditional"      },
 	{"gcc-attributes"         , Severity::Warn    , "invalid attribute: %s"                                      },
 	{"c++-like-copy"          , Severity::Warn    , "Constructor from reference is not a valid copy constructor" },
 };
@@ -68,6 +69,7 @@ enum class Warning {
 	BadQualifiersZeroOne,
 	AggrForwardDecl,
 	SuperfluousDecl,
+	SuperfluousElse,
 	GccAttributes,
 	CppCopy,
 	NUMBER_OF_WARNINGS, // This MUST be the last warning
@@ -78,7 +80,7 @@ static_assert(
 	"Each warning format should have a corresponding warning enum value"
 );
 
-#define SemanticWarning(loc, id, ...) SemanticWarningImpl(loc, id, WarningFormats[(int)id].message, __VA_ARGS__)
+#define SemanticWarning(loc, id, ...) SemanticWarningImpl(loc, id, WarningFormats[(int)id].message, ##__VA_ARGS__)
 
 void SemanticWarningImpl (CodeLocation loc, Warning warn, const char * const fmt, ...) __attribute__((format(printf, 3, 4)));
 

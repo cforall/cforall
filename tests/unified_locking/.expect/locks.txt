@@ -22,3 +22,5 @@ Start Test 11: no lock condition variable wait/notify
 Done Test 11
 Start Test 12: locked condition variable wait/notify with front()
 Done Test 12
+Start Test 13: fast block lock and fast cond var single wait/notify
+Done Test 13

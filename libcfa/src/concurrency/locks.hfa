@@ -72,6 +72,8 @@ static inline size_t on_wait  ( owner_lock & this ) { return on_wait ( (blocking
 static inline void   on_wakeup( owner_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
 static inline void   on_notify( owner_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
 
+//-----------------------------------------------------------------------------
+// MCS Lock
 struct mcs_node {
 	mcs_node * volatile next;
 	single_sem sem;
@@ -97,6 +99,8 @@ static inline void unlock(mcs_lock & l, mcs_node & n) {
 	if(next) post(next->sem);
 }
 
+//-----------------------------------------------------------------------------
+// Linear backoff Spinlock
 struct linear_backoff_then_block_lock {
 	// Spin lock used for mutual exclusion
 	__spinlock_t spinlock;
@@ -198,6 +202,58 @@ static inline size_t on_wait(linear_backoff_then_block_lock & this) { unlock(thi
 static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { lock(this); }
 
 //-----------------------------------------------------------------------------
+// Fast Block Lock
+
+// High efficiency minimal blocking lock
+// - No reacquire for cond var
+// - No recursive acquisition
+// - No ownership
+struct fast_block_lock {
+	// Spin lock used for mutual exclusion
+	__spinlock_t lock;
+
+	// List of blocked threads
+	dlist( thread$ ) blocked_threads;
+
+	bool held:1;
+};
+
+static inline void  ?{}( fast_block_lock & this ) with(this) {
+	lock{};
+	blocked_threads{};
+	held = false;
+}
+static inline void ^?{}( fast_block_lock & this ) {}
+static inline void ?{}( fast_block_lock & this, fast_block_lock this2 ) = void;
+static inline void ?=?( fast_block_lock & this, fast_block_lock this2 ) = void;
+
+// if this is called recursively IT WILL DEADLOCK!!!!!
+static inline void lock(fast_block_lock & this) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	if (held) {
+		insert_last( blocked_threads, *active_thread() );
+		unlock( lock );
+		park( );
+		return;
+	}
+	held = true;
+	unlock( lock );
+}
+
+static inline void unlock(fast_block_lock & this) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	/* paranoid */ verifyf( held != false, "Attempt to release lock %p that isn't held", &this );
+	thread$ * t = &try_pop_front( blocked_threads );
+	held = ( t ? true : false );
+	unpark( t );
+	unlock( lock );
+}
+
+static inline void on_notify(fast_block_lock & this, struct thread$ * t ) { unpark(t); }
+static inline size_t on_wait(fast_block_lock & this) { unlock(this); return 0; }
+static inline void on_wakeup(fast_block_lock & this, size_t recursion ) { }
+
+//-----------------------------------------------------------------------------
 // is_blocking_lock
 trait is_blocking_lock(L & | sized(L)) {
 	// For synchronization locks to use when acquiring
@@ -225,6 +281,16 @@ forall(L & | is_blocking_lock(L)) {
 //-----------------------------------------------------------------------------
 // Synchronization Locks
 forall(L & | is_blocking_lock(L)) {
+
+	//-----------------------------------------------------------------------------
+	// condition_variable
+
+	// The multi-tool condition variable
+	// - can pass timeouts to wait for either a signal or timeout
+	// - can wait without passing a lock
+	// - can have waiters reacquire different locks while waiting on the same cond var
+	// - has shadow queue
+	// - can be signalled outside of critical sections with no locks held
 	struct condition_variable {
 		// Spin lock used for mutual exclusion
 		__spinlock_t lock;
@@ -257,4 +323,34 @@ forall(L & | is_blocking_lock(L)) {
 	void wait( condition_variable(L) & this, L & l, uintptr_t info );
 	bool wait( condition_variable(L) & this, L & l, Duration duration );
 	bool wait( condition_variable(L) & this, L & l, uintptr_t info, Duration duration );
+
+	//-----------------------------------------------------------------------------
+	// fast_cond_var
+
+	// The trimmed and slim condition variable
+	// - no internal lock so you must hold a lock while using this cond var
+	// - signalling without holding branded lock is UNSAFE!
+	// - only allows usage of one lock, cond var is branded after usage
+	struct fast_cond_var {
+		// List of blocked threads
+		dlist( info_thread(L) ) blocked_threads;
+
+		#ifdef __CFA_DEBUG__
+		L * lock_used;
+		#endif
+	};
+
+
+	void  ?{}( fast_cond_var(L) & this );
+	void ^?{}( fast_cond_var(L) & this );
+
+	bool notify_one( fast_cond_var(L) & this );
+	bool notify_all( fast_cond_var(L) & this );
+
+	uintptr_t front( fast_cond_var(L) & this );
+
+	bool empty  ( fast_cond_var(L) & this );
+
+	void wait( fast_cond_var(L) & this, L & l );
+	void wait( fast_cond_var(L) & this, L & l, uintptr_t info );
 }
