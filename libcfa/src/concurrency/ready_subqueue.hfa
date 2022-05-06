@@ -82,6 +82,7 @@ static inline [* thread$, unsigned long long] pop( __intrusive_lane_t & this ) {
 	/* paranoid */ verify( node->link.ts   == MAX  );
 	/* paranoid */ verify( node->link.ts   != 0  );
 	/* paranoid */ verify( this.anchor.ts  != 0  );
+	/* paranoid */ verify( (this.anchor.ts  == MAX) == is_empty );
 	return [node, this.anchor.ts];
 }
 
@@ -92,7 +93,7 @@ static inline bool is_empty(__intrusive_lane_t & this) {
 
 // Return the timestamp
 static inline unsigned long long ts(__intrusive_lane_t & this) {
-	// Cannot verify here since it may not be locked
+	// Cannot verify 'emptiness' here since it may not be locked
 	/* paranoid */ verify(this.anchor.ts != 0);
 	return this.anchor.ts;
 }
