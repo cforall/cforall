@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan 12 16:54:55 2021
-// Update Count     : 23
+// Last Modified By : Andrew Beach
+// Last Modified On : Thu May  5 12:10:00 2022
+// Update Count     : 24
 //
 
 #include "Decl.hpp"
@@ -52,7 +52,7 @@ readonly<Decl> Decl::fromId( UniqueId id ) {
 
 // --- FunctionDecl
 
-FunctionDecl::FunctionDecl( const CodeLocation & loc, const std::string & name, 
+FunctionDecl::FunctionDecl( const CodeLocation & loc, const std::string & name,
 	std::vector<ptr<TypeDecl>>&& forall,
 	std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
 	CompoundStmt * stmts, Storage::Classes storage, Linkage::Spec linkage,
@@ -73,6 +73,32 @@ FunctionDecl::FunctionDecl( const CodeLocation & loc, const std::string & name,
 		}
 	}
 	this->type = ftype;
+}
+
+FunctionDecl::FunctionDecl( const CodeLocation & location, const std::string & name,
+	std::vector<ptr<TypeDecl>>&& forall, std::vector<ptr<DeclWithType>>&& assertions,
+	std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
+	CompoundStmt * stmts, Storage::Classes storage, Linkage::Spec linkage,
+	std::vector<ptr<Attribute>>&& attrs, Function::Specs fs, bool isVarArgs)
+: DeclWithType( location, name, storage, linkage, std::move(attrs), fs ),
+		params( std::move(params) ), returns( std::move(returns) ),
+		type_params( std::move( forall) ), assertions( std::move( assertions ) ),
+		type( nullptr ), stmts( stmts ) {
+	FunctionType * type = new FunctionType( (isVarArgs) ? VariableArgs : FixedArgs );
+	for ( auto & param : this->params ) {
+		type->params.emplace_back( param->get_type() );
+	}
+	for ( auto & ret : this->returns ) {
+		type->returns.emplace_back( ret->get_type() );
+	}
+	for ( auto & param : this->type_params ) {
+		type->forall.emplace_back( new TypeInstType( param ) );
+	}
+	for ( auto & assertion : this->assertions ) {
+		type->assertions.emplace_back(
+			new VariableExpr( assertion->location, assertion ) );
+	}
+	this->type = type;
 }
 
 

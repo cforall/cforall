@@ -92,10 +92,10 @@ class ConverterNewToOld : public ast::Visitor {
 		}
 	};
 
-    template<typename T>
-    Getter<T> get() {
-        return Getter<T>{ *this };
-    }
+	template<typename T>
+	Getter<T> get() {
+		return Getter<T>{ *this };
+	}
 
 	Label makeLabel(Statement * labelled, const ast::Label& label) {
 		// This probably will leak memory, but only until we get rid of the old tree.
@@ -1650,6 +1650,7 @@ private:
 			old->name,
 			// GET_ACCEPT_1(type, FunctionType),
 			std::move(forall),
+			std::move(assertions),
 			std::move(paramVars),
 			std::move(returnVars),
 			{},
@@ -1663,7 +1664,6 @@ private:
 		// decl->type = ftype;
 		cache.emplace( old, decl );
 
-		decl->assertions = std::move(assertions);
 		decl->withExprs = GET_ACCEPT_V(withExprs, Expr);
 		decl->stmts = GET_ACCEPT_1(statements, CompoundStmt);
 		decl->scopeLevel = old->scopeLevel;

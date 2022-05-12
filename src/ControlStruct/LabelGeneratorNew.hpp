@@ -17,7 +17,7 @@
 
 #include <string>										// for string
 
-class CodeLocation;
+struct CodeLocation;
 
 namespace ast {
 	class Label;

@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Fri Dec  4 15:42:00 2020
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Mar 14 15:14:00 2022
-// Update Count     : 4
+// Last Modified On : Wed May 11 16:16:00 2022
+// Update Count     : 5
 //
 
 #include "CodeLocationTools.hpp"
@@ -23,66 +23,73 @@
 
 namespace {
 
-// There are a lot of helpers in this file that could be used much more
-// generally if anyone has another use for them.
-
-// Check if a node type has a code location.
-template<typename node_t>
-struct has_code_location : public std::is_base_of<ast::ParseNode, node_t> {};
-
-template<typename node_t, bool has_location>
-struct __GetCL;
-
-template<typename node_t>
-struct __GetCL<node_t, true> {
-	static inline CodeLocation const * get( node_t const * node ) {
-		return &node->location;
-	}
-
-	static inline CodeLocation * get( node_t * node ) {
-		return &node->location;
-	}
-};
-
-template<typename node_t>
-struct __GetCL<node_t, false> {
-	static inline CodeLocation * get( node_t const * ) {
-		return nullptr;
-	}
-};
-
-template<typename node_t>
-CodeLocation const * get_code_location( node_t const * node ) {
-	return __GetCL< node_t, has_code_location< node_t >::value >::get( node );
-}
-
-template<typename node_t>
-CodeLocation * get_code_location( node_t * node ) {
-	return __GetCL< node_t, has_code_location< node_t >::value >::get( node );
-}
-
 // Fill every location with a nearby (parent) location.
 class FillCore : public ast::WithGuards {
 	CodeLocation const * parent;
+
+	template<typename node_t>
+	node_t const * parse_visit( node_t const * node ) {
+		if ( node->location.isUnset() ) {
+			assert( parent );
+			node_t * newNode = ast::mutate( node );
+			newNode->location = *parent;
+			return newNode;
+		}
+		GuardValue( parent ) = &node->location;
+		return node;
+	}
+
+	bool hasUnsetLabels( const ast::Stmt * stmt ) {
+		for ( const ast::Label& label : stmt->labels ) {
+			if ( label.location.isUnset() ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	template<typename node_t>
+	node_t const * stmt_visit( node_t const * node ) {
+		assert( node->location.isSet() );
+
+		if ( hasUnsetLabels( node ) ) {
+			node_t * newNode = ast::mutate( node );
+			for ( ast::Label& label : newNode->labels ) {
+				if ( label.location.isUnset() ) {
+					label.location = newNode->location;
+				}
+			}
+			return newNode;
+		}
+		return node;
+	}
+
+	template<typename node_t>
+	auto visit( node_t const * node, long ) {
+		return node;
+	}
+
+	template<typename node_t>
+	auto visit( node_t const * node, int ) -> typename
+			std::remove_reference< decltype( node->location, node ) >::type {
+		return parse_visit( node );
+	}
+
+	template<typename node_t>
+	auto visit( node_t const * node, char ) -> typename
+			std::remove_reference< decltype( node->labels, node ) >::type {
+		return stmt_visit( parse_visit( node ) );
+	}
+
 public:
 	FillCore() : parent( nullptr ) {}
+	FillCore( const CodeLocation& location ) : parent( &location ) {
+		assert( location.isSet() );
+	}
 
 	template<typename node_t>
 	node_t const * previsit( node_t const * node ) {
-		GuardValue( parent );
-		CodeLocation const * location = get_code_location( node );
-		if ( location && location->isUnset() ) {
-			assert( parent );
-			node_t * newNode = ast::mutate( node );
-			CodeLocation * newLocation = get_code_location( newNode );
-			assert( newLocation );
-			*newLocation = *parent;
-			parent = newLocation;
-			return newNode;
-		} else if ( location ) {
-			parent = location;
-		}
-		return node;
+		return visit( node, '\0' );
 	}
 };
 
@@ -232,31 +239,9 @@ public:
 	{}
 
 	template<typename node_t>
-	void previsit( node_t const * node ) {
-		CodeLocation const * location = get_code_location( node );
-		if ( location && location->isUnset() ) {
+	auto previsit( node_t const * node ) -> decltype( node->location, void() ) {
+		if ( node->location.isUnset() ) {
 			unset.push_back( node );
-		}
-	}
-};
-
-class LocalFillCore : public ast::WithGuards {
-	CodeLocation const * parent;
-public:
-	LocalFillCore( CodeLocation const & location ) : parent( &location ) {
-		assert( location.isSet() );
-	}
-
-	template<typename node_t>
-	auto previsit( node_t const * node )
-			-> typename std::enable_if<has_code_location<node_t>::value, node_t const *>::type {
-		if ( node->location.isSet() ) {
-			GuardValue( parent ) = &node->location;
-			return node;
-		} else {
-			node_t * mut = ast::mutate( node );
-			mut->location = *parent;
-			return mut;
 		}
 	}
 };
@@ -303,6 +288,6 @@ void forceFillCodeLocations( ast::TranslationUnit & unit ) {
 
 ast::Node const * localFillCodeLocations(
 		CodeLocation const & location , ast::Node const * node ) {
-	ast::Pass<LocalFillCore> visitor( location );
+	ast::Pass<FillCore> visitor( location );
 	return node->accept( visitor );
 }

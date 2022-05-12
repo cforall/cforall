@@ -33,7 +33,7 @@ public:
 	std::string name;
 	std::vector< ptr<Attribute> > attributes;
 
-	Label( CodeLocation loc, const std::string& name = "",
+	Label( const CodeLocation& loc, const std::string& name = "",
 		std::vector<ptr<Attribute>> && attrs = std::vector<ptr<Attribute>>{} )
 	: location( loc ), name( name ), attributes( attrs ) {}
 

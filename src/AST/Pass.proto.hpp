@@ -130,8 +130,8 @@ namespace __pass {
 	/// The result is a single node.
 	template< typename node_t >
 	struct result1 {
-		bool differs;
-		const node_t * value;
+		bool differs = false;
+		const node_t * value = nullptr;
 
 		template< typename object_t, typename super_t, typename field_t >
 		void apply( object_t *, field_t super_t::* field );
@@ -150,7 +150,7 @@ namespace __pass {
 				new_val(s), old_idx(i), is_old(old) {}
 		};
 
-		bool differs;
+		bool differs = false;
 		container_t< delta > values;
 
 		template< typename object_t, typename super_t, typename field_t >
@@ -166,7 +166,7 @@ namespace __pass {
 	/// The result is a container of nodes.
 	template< template<class...> class container_t, typename node_t >
 	struct resultN {
-		bool differs;
+		bool differs = false;
 		container_t<ptr<node_t>> values;
 
 		template< typename object_t, typename super_t, typename field_t >

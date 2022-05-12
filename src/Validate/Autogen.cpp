@@ -349,6 +349,7 @@ ast::FunctionDecl * FuncGenerator::genProto( const std::string& name,
 		getLocation(),
 		name,
 		std::move( type_params ),
+		std::move( assertions ),
 		std::move( params ),
 		std::move( returns ),
 		// Only a prototype, no body.
@@ -359,7 +360,6 @@ ast::FunctionDecl * FuncGenerator::genProto( const std::string& name,
 		std::vector<ast::ptr<ast::Attribute>>(),
 		// Auto-generated routines are inline to avoid conflicts.
 		ast::Function::Specs( ast::Function::Inline ) );
-	decl->assertions = std::move( assertions );
 	decl->fixUniqueId();
 	return decl;
 }

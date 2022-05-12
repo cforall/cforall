@@ -17,6 +17,7 @@
 
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
+#include "Common/CodeLocationTools.hpp"
 #include "LabelGeneratorNew.hpp"
 
 #include <set>
@@ -617,7 +618,9 @@ const CompoundStmt * multiLevelExitUpdate(
 	// Must start in the body, so FunctionDecls can be a stopping point.
 	Pass<MultiLevelExitCore> visitor( labelTable );
 	const CompoundStmt * ret = stmt->accept( visitor );
-	return ret;
+	// There are some unset code locations slipping in, possibly by Labels.
+	const Node * node = localFillCodeLocations( ret->location, ret );
+	return strict_dynamic_cast<const CompoundStmt *>( node );
 }
 } // namespace ControlStruct
 

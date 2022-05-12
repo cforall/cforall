@@ -207,7 +207,27 @@ bool parse_yesno(const char * arg, bool & value ) {
 		return true;
 	}
 
+	if(strcmp(arg, "Y") == 0) {
+		value = true;
+		return true;
+	}
+
+	if(strcmp(arg, "y") == 0) {
+		value = true;
+		return true;
+	}
+
 	if(strcmp(arg, "no") == 0) {
+		value = false;
+		return true;
+	}
+
+	if(strcmp(arg, "N") == 0) {
+		value = false;
+		return true;
+	}
+
+	if(strcmp(arg, "n") == 0) {
 		value = false;
 		return true;
 	}

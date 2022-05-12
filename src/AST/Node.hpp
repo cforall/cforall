@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Wed May 8 10:27:04 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Mar 25 10:33:00 2022
-// Update Count     : 7
+// Last Modified On : Mon May  9 10:20:00 2022
+// Update Count     : 8
 //
 
 #pragma once
@@ -48,7 +48,11 @@ public:
 	};
 
 	bool unique() const { return strong_count == 1; }
-	bool isManaged() const {return strong_count > 0; }
+	bool isManaged() const { return strong_count > 0; }
+	bool isReferenced() const { return weak_count > 0; }
+	bool isStable() const {
+		return (1 == strong_count || (1 < strong_count && 0 == weak_count));
+	}
 
 private:
 	/// Make a copy of this node; should be overridden in subclass with more precise return type

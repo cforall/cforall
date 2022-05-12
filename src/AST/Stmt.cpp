@@ -8,21 +8,33 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed May  8 13:00:00 2019
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  2 19:01:20 2022
-// Update Count     : 3
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue May  3 15:18:20 2022
+// Update Count     : 4
 //
 
 #include "Stmt.hpp"
 
-
+#include "Copy.hpp"
 #include "DeclReplacer.hpp"
 #include "Type.hpp"
 
 namespace ast {
 
 // --- CompoundStmt
-CompoundStmt::CompoundStmt( const CompoundStmt& other ) : Stmt(other), kids(other.kids) {
+CompoundStmt::CompoundStmt( const CompoundStmt& other ) : Stmt(other), kids() {
+	// Statements can have weak references to them, if that happens inserting
+	// the original node into the new list will put the original node in a
+	// bad state, where it cannot be mutated. To avoid this, just perform an
+	// additional shallow copy on the statement.
+	for ( const Stmt * kid : other.kids ) {
+		if ( kid->isReferenced() ) {
+			kids.emplace_back( ast::shallowCopy( kid ) );
+		} else {
+			kids.emplace_back( kid );
+		}
+	}
+
 	// when cloning a compound statement, we may end up cloning declarations which
 	// are referred to by VariableExprs throughout the block. Cloning a VariableExpr
 	// does a shallow copy, so the VariableExpr will end up pointing to the original

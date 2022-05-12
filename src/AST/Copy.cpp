@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thr Nov 11  9:16:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Thr Nov 11  9:28:00 2021
-// Update Count     : 0
+// Last Modified On : Tue May  3 16:28:00 2022
+// Update Count     : 1
 //
 
 #include "Copy.hpp"
@@ -74,6 +74,10 @@ public:
 
 	void postvisit( const StmtExpr * node ) {
 		readonlyInsert( &node->resultExpr );
+	}
+
+	void postvisit( const UniqueExpr * node ) {
+		readonlyInsert( &node->object );
 	}
 
 	void postvisit( const MemberExpr * node ) {

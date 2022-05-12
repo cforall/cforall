@@ -783,7 +783,7 @@ class UniqueExpr final : public Expr {
 	static unsigned long long nextId;
 public:
 	ptr<Expr> expr;
-	ptr<ObjectDecl> object;
+	readonly<ObjectDecl> object;
 	ptr<VariableExpr> var;
 	unsigned long long id;
 
