@@ -57,7 +57,7 @@ class StmtClause : public ParseNode {
 	// (and should) be folded into the approprate parent node, but if they
 	// cannot be, they are sub-types of this type, for organization.
 
-    StmtClause( const CodeLocation & loc )
+	StmtClause( const CodeLocation & loc )
 		: ParseNode(loc) {}
 
   private:
@@ -395,18 +395,18 @@ class WaitForStmt final : public Stmt {
 
 class WaitForClause final : public StmtClause {
   public:
-    ptr<Expr> target_func;
-    std::vector<ptr<Expr>> target_args;
-    ptr<Stmt> stmt;
-    ptr<Expr> cond;
+	ptr<Expr> target_func;
+	std::vector<ptr<Expr>> target_args;
+	ptr<Stmt> stmt;
+	ptr<Expr> cond;
 
-    WaitForClause( const CodeLocation & loc )
+	WaitForClause( const CodeLocation & loc )
 		: StmtClause( loc ) {}
 
 	const WaitForClause * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
-    WaitForClause * clone() const override { return new WaitForClause{ *this }; }
-    MUTATE_FRIEND
+	WaitForClause * clone() const override { return new WaitForClause{ *this }; }
+	MUTATE_FRIEND
 };
 
 // Any declaration in a (compound) statement.

@@ -453,41 +453,34 @@ namespace {
 		mutExpr->env = nullptr;
 
 		auto expr = new ast::ImplicitCopyCtorExpr( appExpr->location, mutExpr );
-		// Move the type substitution to the new top-level, if it is attached to the appExpr.
-		// Ensure it is not deleted with the ImplicitCopyCtorExpr by removing it before deletion.
-		// The substitution is needed to obtain the type of temporary variables so that copy constructor
-		// calls can be resolved.
+		// Move the type substitution to the new top-level. The substitution
+		// is needed to obtain the type of temporary variables so that copy
+		// constructor calls can be resolved.
 		assert( typeSubs );
-		// assert (mutExpr->env);
 		expr->env = tmp;
-		// mutExpr->env = nullptr;
-		//std::swap( expr->env, appExpr->env );
 		return expr;
 	}
 
 	void ResolveCopyCtors::previsit(const ast::Expr * expr) {
-		if (expr->env) {
-			GuardValue(env);
-			GuardValue(envModified);
-			env = expr->env->clone();
-			envModified = false;
+		if ( nullptr == expr->env ) {
+			return;
 		}
+		GuardValue( env ) = expr->env->clone();
+		GuardValue( envModified ) = false;
 	}
 
 	const ast::Expr * ResolveCopyCtors::postvisit(const ast::Expr * expr) {
-		if (expr->env) {
-			if (envModified) {
-				auto mutExpr = mutate(expr);
-				mutExpr->env = env;
-				return mutExpr;
-			}
-			else {
-				// env was not mutated, skip and delete the shallow copy
-				delete env;
-				return expr;
-			}
-		}
-		else {
+		// No local environment, skip.
+		if ( nullptr == expr->env ) {
+			return expr;
+		// Environment was modified, mutate and replace.
+		} else if ( envModified ) {
+			auto mutExpr = mutate(expr);
+			mutExpr->env = env;
+			return mutExpr;
+		// Environment was not mutated, delete the shallow copy before guard.
+		} else {
+			delete env;
 			return expr;
 		}
 	}
@@ -496,14 +489,13 @@ namespace {
 
 	const ast::Expr * ResolveCopyCtors::makeCtorDtor( const std::string & fname, const ast::ObjectDecl * var, const ast::Expr * cpArg ) {
 		assert( var );
-		assert (var->isManaged());
-		assert (!cpArg || cpArg->isManaged());
+		assert( var->isManaged() );
+		assert( !cpArg || cpArg->isManaged() );
 		// arrays are not copy constructed, so this should always be an ExprStmt
 		ast::ptr< ast::Stmt > stmt = genCtorDtor(var->location, fname, var, cpArg );
 		assertf( stmt, "ResolveCopyCtors: genCtorDtor returned nullptr: %s / %s / %s", fname.c_str(), toString( var ).c_str(), toString( cpArg ).c_str() );
 		auto exprStmt = stmt.strict_as<ast::ImplicitCtorDtorStmt>()->callStmt.strict_as<ast::ExprStmt>();
 		ast::ptr<ast::Expr> untyped = exprStmt->expr; // take ownership of expr
-		// exprStmt->expr = nullptr;
 
 		// resolve copy constructor
 		// should only be one alternative for copy ctor and dtor expressions, since all arguments are fixed
@@ -515,12 +507,10 @@ namespace {
 			// Extract useful information and discard new environments. Keeping them causes problems in PolyMutator passes.
 			env->add( *resolved->env );
 			envModified = true;
-			// delete resolved->env;
 			auto mut = mutate(resolved.get());
 			assertf(mut == resolved.get(), "newly resolved expression must be unique");
 			mut->env = nullptr;
 		} // if
-		// delete stmt;
 		if ( auto assign = resolved.as<ast::TupleAssignExpr>() ) {
 			// fix newly generated StmtExpr
 			previsit( assign->stmtExpr );

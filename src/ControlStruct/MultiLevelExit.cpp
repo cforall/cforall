@@ -228,98 +228,98 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 
 	// Labels on different stmts require different approaches to access
 	switch ( stmt->kind ) {
-	  case BranchStmt::Goto:
+	case BranchStmt::Goto:
 		return stmt;
-	  case BranchStmt::Continue:
-	  case BranchStmt::Break: {
-		  bool isContinue = stmt->kind == BranchStmt::Continue;
-		  // Handle unlabeled break and continue.
-		  if ( stmt->target.empty() ) {
-			  if ( isContinue ) {
-				  targetEntry = findEnclosingControlStructure( isContinueTarget );
-			  } else {
-				  if ( enclosing_control_structures.empty() ) {
+	case BranchStmt::Continue:
+	case BranchStmt::Break: {
+		bool isContinue = stmt->kind == BranchStmt::Continue;
+		// Handle unlabeled break and continue.
+		if ( stmt->target.empty() ) {
+			if ( isContinue ) {
+				targetEntry = findEnclosingControlStructure( isContinueTarget );
+			} else {
+				if ( enclosing_control_structures.empty() ) {
 					  SemanticError( stmt->location,
 									 "'break' outside a loop, 'switch', or labelled block" );
-				  }
-				  targetEntry = findEnclosingControlStructure( isBreakTarget );
-			  }
-			  // Handle labeled break and continue.
-		  } else {
-			  // Lookup label in table to find attached control structure.
-			  targetEntry = findEnclosingControlStructure(
-				  [ targetStmt = target_table.at(stmt->target) ](auto entry){
+				}
+				targetEntry = findEnclosingControlStructure( isBreakTarget );
+			}
+			// Handle labeled break and continue.
+		} else {
+			// Lookup label in table to find attached control structure.
+			targetEntry = findEnclosingControlStructure(
+				[ targetStmt = target_table.at(stmt->target) ](auto entry){
 					  return entry.stmt == targetStmt;
-				  } );
-		  }
-		  // Ensure that selected target is valid.
-		  if ( targetEntry == enclosing_control_structures.rend() || ( isContinue && ! isContinueTarget( *targetEntry ) ) ) {
-			  SemanticError( stmt->location, toString( (isContinue ? "'continue'" : "'break'"),
+				} );
+		}
+		// Ensure that selected target is valid.
+		if ( targetEntry == enclosing_control_structures.rend() || ( isContinue && ! isContinueTarget( *targetEntry ) ) ) {
+			SemanticError( stmt->location, toString( (isContinue ? "'continue'" : "'break'"),
 							" target must be an enclosing ", (isContinue ? "loop: " : "control structure: "),
 							stmt->originalTarget ) );
-		  }
-		  break;
-	  }
-	  // handle fallthrough in case/switch stmts
-	  case BranchStmt::FallThrough: {
-		  targetEntry = findEnclosingControlStructure( isFallthroughTarget );
-		  // Check that target is valid.
-		  if ( targetEntry == enclosing_control_structures.rend() ) {
-			  SemanticError( stmt->location, "'fallthrough' must be enclosed in a 'switch' or 'choose'" );
-		  }
-		  if ( ! stmt->target.empty() ) {
-			  // Labelled fallthrough: target must be a valid fallthough label.
-			  if ( ! fallthrough_labels.count( stmt->target ) ) {
-				  SemanticError( stmt->location, toString( "'fallthrough' target must be a later case statement: ",
+		}
+		break;
+	}
+	// handle fallthrough in case/switch stmts
+	case BranchStmt::FallThrough: {
+		targetEntry = findEnclosingControlStructure( isFallthroughTarget );
+		// Check that target is valid.
+		if ( targetEntry == enclosing_control_structures.rend() ) {
+			SemanticError( stmt->location, "'fallthrough' must be enclosed in a 'switch' or 'choose'" );
+		}
+		if ( ! stmt->target.empty() ) {
+			// Labelled fallthrough: target must be a valid fallthough label.
+			if ( ! fallthrough_labels.count( stmt->target ) ) {
+				SemanticError( stmt->location, toString( "'fallthrough' target must be a later case statement: ",
 														   stmt->originalTarget ) );
-			  }
-			  return new BranchStmt( stmt->location, BranchStmt::Goto, stmt->originalTarget );
-		  }
-		  break;
-	  }
-	  case BranchStmt::FallThroughDefault: {
-		  targetEntry = findEnclosingControlStructure( isFallthroughDefaultTarget );
+			}
+			return new BranchStmt( stmt->location, BranchStmt::Goto, stmt->originalTarget );
+		}
+		break;
+	}
+	case BranchStmt::FallThroughDefault: {
+		targetEntry = findEnclosingControlStructure( isFallthroughDefaultTarget );
 
-		  // Check if in switch or choose statement.
-		  if ( targetEntry == enclosing_control_structures.rend() ) {
-			  SemanticError( stmt->location, "'fallthrough' must be enclosed in a 'switch' or 'choose'" );
-		  }
+		// Check if in switch or choose statement.
+		if ( targetEntry == enclosing_control_structures.rend() ) {
+			SemanticError( stmt->location, "'fallthrough' must be enclosed in a 'switch' or 'choose'" );
+		}
 
-		  // Check if switch or choose has default clause.
-		  auto switchStmt = strict_dynamic_cast< const SwitchStmt * >( targetEntry->stmt );
-		  bool foundDefault = false;
-		  for ( auto caseStmt : switchStmt->cases ) {
-			  if ( caseStmt->isDefault() ) {
-				  foundDefault = true;
-				  break;
-			  }
-		  }
-		  if ( ! foundDefault ) {
-			  SemanticError( stmt->location, "'fallthrough default' must be enclosed in a 'switch' or 'choose'"
-							 "control structure with a 'default' clause" );
-		  }
-		  break;
-	  }
-	  default:
+		// Check if switch or choose has default clause.
+		auto switchStmt = strict_dynamic_cast< const SwitchStmt * >( targetEntry->stmt );
+		bool foundDefault = false;
+		for ( auto caseStmt : switchStmt->cases ) {
+			if ( caseStmt->isDefault() ) {
+				foundDefault = true;
+				break;
+			}
+		}
+		if ( ! foundDefault ) {
+			SemanticError( stmt->location, "'fallthrough default' must be enclosed in a 'switch' or 'choose'"
+						   "control structure with a 'default' clause" );
+		}
+		break;
+	}
+	default:
 		assert( false );
 	}
 
 	// Branch error checks: get the appropriate label name, which is always replaced.
 	Label exitLabel( CodeLocation(), "" );
 	switch ( stmt->kind ) {
-	  case BranchStmt::Break:
+	case BranchStmt::Break:
 		assert( ! targetEntry->useBreakExit().empty() );
 		exitLabel = targetEntry->useBreakExit();
 		break;
-	  case BranchStmt::Continue:
+	case BranchStmt::Continue:
 		assert( ! targetEntry->useContExit().empty() );
 		exitLabel = targetEntry->useContExit();
 		break;
-	  case BranchStmt::FallThrough:
+	case BranchStmt::FallThrough:
 		assert( ! targetEntry->useFallExit().empty() );
 		exitLabel = targetEntry->useFallExit();
 		break;
-	  case BranchStmt::FallThroughDefault:
+	case BranchStmt::FallThroughDefault:
 		assert( ! targetEntry->useFallDefaultExit().empty() );
 		exitLabel = targetEntry->useFallDefaultExit();
 		// Check that fallthrough default comes before the default clause.
@@ -327,7 +327,7 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 			SemanticError( stmt->location, "'fallthrough default' must precede the 'default' clause" );
 		}
 		break;
-	  default:
+	default:
 		assert(0);
 	}
 
@@ -588,17 +588,32 @@ list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
 			}
 		}
 
+		ptr<Stmt> else_stmt = nullptr;
+		Stmt * loop_kid = nullptr;
+		// check if loop node and if so add else clause if it exists
+		const WhileDoStmt * whilePtr = dynamic_cast<const WhileDoStmt *>(kid.get());
+		if ( whilePtr && whilePtr->else_) {
+			else_stmt = whilePtr->else_;
+			WhileDoStmt * mutate_ptr = mutate(whilePtr);
+			mutate_ptr->else_ = nullptr;
+			loop_kid = mutate_ptr;
+		}
+		const ForStmt * forPtr = dynamic_cast<const ForStmt *>(kid.get());
+		if ( forPtr && forPtr->else_) {
+			else_stmt = forPtr->else_;
+			ForStmt * mutate_ptr = mutate(forPtr);
+			mutate_ptr->else_ = nullptr;
+			loop_kid = mutate_ptr;
+		}
+
 		try {
-			ret.push_back( kid->accept( *visitor ) );
+			if (else_stmt) ret.push_back( loop_kid->accept( *visitor ) );
+			else ret.push_back( kid->accept( *visitor ) );
 		} catch ( SemanticErrorException & e ) {
 			errors.append( e );
 		}
 
-		// check if loop node and if so add else clause if it exists
-		const WhileDoStmt * whilePtr = dynamic_cast<const WhileDoStmt *>(kid.get());
-		if ( whilePtr && whilePtr->else_) ret.push_back(whilePtr->else_);
-		const ForStmt * forPtr = dynamic_cast<const ForStmt *>(kid.get());
-		if ( forPtr && forPtr->else_) ret.push_back(forPtr->else_);
+		if (else_stmt) ret.push_back(else_stmt);
 
 		if ( ! break_label.empty() ) {
 			ret.push_back( labelledNullStmt( ret.back()->location, break_label ) );
