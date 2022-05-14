@@ -26,6 +26,9 @@
 #include "concurrency/invoke.h"
 #include "stdhdr/assert.h"
 #include "virtual.h"
+
+#pragma GCC visibility push(default)
+
 #include "lsda.h"
 
 /* The exception class for our exceptions. Because of the vendor component
@@ -260,7 +263,7 @@ static void __cfaehm_begin_unwind(void(*defaultHandler)(exception_t *)) {
 	if ( ret != _URC_END_OF_STACK ) {
 #else // defined( __ARM_ARCH )
 	// The return code from _Unwind_RaiseException seems to be corrupt on ARM at end of stack.
-	// This workaround tries to keep default exception handling working. 
+	// This workaround tries to keep default exception handling working.
 	if ( ret == _URC_FATAL_PHASE1_ERROR || ret == _URC_FATAL_PHASE2_ERROR ) {
 #endif
 		printf("UNWIND ERROR %d after raise exception\n", ret);

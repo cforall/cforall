@@ -35,7 +35,7 @@ extern void __cfactx_thrd_leave();
 extern void disable_interrupts() OPTIONAL_THREAD;
 extern void enable_interrupts( _Bool poll );
 
-void __cfactx_invoke_coroutine(
+libcfa_public void __cfactx_invoke_coroutine(
 	void (*main)(void *),
 	void *this
 ) {
@@ -69,14 +69,14 @@ static _Unwind_Reason_Code __cfactx_coroutine_unwindstop(
 	return _URC_FATAL_PHASE2_ERROR;
 }
 
-void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct coroutine$ * cor) __attribute__ ((__noreturn__));
+libcfa_public void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct coroutine$ * cor) __attribute__ ((__noreturn__));
 void __cfactx_coroutine_unwind(struct _Unwind_Exception * storage, struct coroutine$ * cor) {
 	_Unwind_Reason_Code ret = _Unwind_ForcedUnwind( storage, __cfactx_coroutine_unwindstop, cor );
 	printf("UNWIND ERROR %d after force unwind\n", ret);
 	abort();
 }
 
-void __cfactx_invoke_thread(
+libcfa_public void __cfactx_invoke_thread(
 	void (*main)(void *),
 	void *this
 ) {
@@ -97,7 +97,7 @@ void __cfactx_invoke_thread(
 	__cabi_abort( "Resumed dead thread" );
 }
 
-void __cfactx_start(
+libcfa_public void __cfactx_start(
 	void (*main)(void *),
 	struct coroutine$ * cor,
 	void *this,

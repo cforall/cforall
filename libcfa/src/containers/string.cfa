@@ -17,6 +17,7 @@
 #include "string_res.hfa"
 #include <stdlib.hfa>
 
+#pragma GCC visibility push(default)
 
 /*
 Implementation Principle: typical operation translates to the equivalent

@@ -20,6 +20,8 @@
 #include <complex.h>
 #include "limits.hfa"
 
+#pragma GCC visibility push(default)
+
 // Integral Constants
 
 const signed char MIN = SCHAR_MIN;

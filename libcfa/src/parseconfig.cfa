@@ -13,6 +13,8 @@
 #include "parseconfig.hfa"
 
 
+#pragma GCC visibility push(default)
+
 // *********************************** exceptions ***********************************
 
 
@@ -109,7 +111,7 @@ static vtable(Validation_Failure) Validation_Failure_vt;
 } // add_kv_pair
 
 
-[ bool ] comments( & ifstream in, [] char name ) {
+static [ bool ] comments( & ifstream in, [] char name ) {
 	while () {
 		in | name;
 	  if ( eof( in ) ) return true;

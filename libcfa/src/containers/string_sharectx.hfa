@@ -15,11 +15,13 @@
 
 #pragma once
 
+#pragma GCC visibility push(default)
+
 //######################### String Sharing Context #########################
 
 struct VbyteHeap;
 
-// A string_sharectx 
+// A string_sharectx
 //
 // Usage:
 // void bar() {

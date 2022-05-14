@@ -31,6 +31,7 @@ extern void *memcpy (void *__restrict __dest, const void *__restrict __src, size
 #include "math.hfa"										// isfinite, floor, ceiling_div
 #include "bitmanip.hfa"									// high1
 
+#pragma GCC visibility push(default)
 
 // *********************************** ostream ***********************************
 

@@ -16,6 +16,7 @@
 #include <containers/result.hfa>
 #include <assert.h>
 
+#pragma GCC visibility push(default)
 
 forall(T, E)
 void ?{}(result(T, E) & this) {

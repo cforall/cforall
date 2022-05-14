@@ -110,10 +110,6 @@ namespace Mangle {
 	};
 }
 
-extern "C" {
-	char * cforall_demangle(const char *, int);
-}
-
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

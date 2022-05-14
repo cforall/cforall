@@ -17,6 +17,8 @@
 #include "common.hfa"
 #include <stdlib.h>					// div_t, *div
 
+#pragma GCC visibility push(default)
+
 //---------------------------------------
 
 [ int, int ] div( int num, int denom ) { div_t qr = div( num, denom ); return [ qr.quot, qr.rem ]; }

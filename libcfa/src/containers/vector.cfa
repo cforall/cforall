@@ -17,8 +17,10 @@
 
 #include <stdlib.hfa>
 
+#pragma GCC visibility push(default)
+
 forall(T, allocator_t | allocator_c(T, allocator_t))
-void copy_internal(vector(T, allocator_t)* this, vector(T, allocator_t)* other);
+static void copy_internal(vector(T, allocator_t)* this, vector(T, allocator_t)* other);
 
 //------------------------------------------------------------------------------
 //Initialization
@@ -82,7 +84,7 @@ void clear(vector(T, allocator_t)* this)
 //Internal Helpers
 
 forall(T, allocator_t | allocator_c(T, allocator_t))
-void copy_internal(vector(T, allocator_t)* this, vector(T, allocator_t)* other)
+static void copy_internal(vector(T, allocator_t)* this, vector(T, allocator_t)* other)
 {
 	this->size = other->size;
 	for(size_t i = 0; i < this->size; i++) {

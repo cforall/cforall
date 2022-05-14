@@ -24,6 +24,8 @@ extern "C" {
 #include "common.hfa"
 #include "limits.hfa"
 
+#pragma GCC visibility push(default)
+
 extern int cfa_args_argc __attribute__((weak));
 extern char ** cfa_args_argv __attribute__((weak));
 extern char ** cfa_args_envp __attribute__((weak));

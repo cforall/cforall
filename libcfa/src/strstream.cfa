@@ -1,17 +1,17 @@
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
-// 
+//
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// strstream.cfa -- 
-// 
+// strstream.cfa --
+//
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:24:35 2021
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Sun Oct 10 16:13:20 2021
 // Update Count     : 101
-// 
+//
 
 #include "strstream.hfa"
 #include "fstream.hfa"									// abort
@@ -23,6 +23,7 @@
 #include <errno.h>										// errno
 #include <unistd.h>										// sbrk, sysconf
 
+#pragma GCC visibility push(default)
 
 // *********************************** strstream ***********************************
 

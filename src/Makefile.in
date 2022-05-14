@@ -748,8 +748,8 @@ SRCDEMANGLE = CompilationState.cc $(SRC_AST) $(SRC_CODEGEN) \
 	GenPoly/GenPoly.cc GenPoly/GenPoly.h GenPoly/Lvalue.cc \
 	GenPoly/Lvalue.h InitTweak/GenInit.cc InitTweak/GenInit.h \
 	InitTweak/InitTweak.cc InitTweak/InitTweak.h $(SRC_RESOLVEXPR) \
-	$(SRC_SYMTAB) SymTab/Demangle.cc $(SRC_SYNTREE) $(SRC_TUPLES) \
-	$(SRC_VALIDATE) Virtual/Tables.cc
+	$(SRC_SYMTAB) SymTab/Demangle.cc SymTab/Demangle.h \
+	$(SRC_SYNTREE) $(SRC_TUPLES) $(SRC_VALIDATE) Virtual/Tables.cc
 MAINTAINERCLEANFILES = ${libdir}/${notdir ${cfa_cpplib_PROGRAMS}}
 MOSTLYCLEANFILES = Parser/lex.cc Parser/parser.cc Parser/parser.hh \
 	Parser/parser.output

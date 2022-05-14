@@ -17,6 +17,8 @@
 #include "fstream.hfa"
 #include "stdlib.hfa"
 
+#pragma GCC visibility push(default)
+
 forall( T | Arithmetic( T ) ) {
 	// helper routines
 

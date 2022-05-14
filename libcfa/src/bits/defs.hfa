@@ -36,6 +36,8 @@ typedef int_fast16_t __lock_size_t;
 #define __cfa_dlink(x) struct { struct x * next; struct x * back; } __dlink_substitute
 #endif
 
+#define libcfa_public __attribute__((visibility("default")))
+
 #ifdef __cforall
 void abort( const char fmt[], ... ) __attribute__ (( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ ));
 void abort( bool signalAbort, const char fmt[], ... ) __attribute__ (( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));

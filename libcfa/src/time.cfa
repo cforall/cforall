@@ -18,6 +18,8 @@
 #include <stdio.h>										// snprintf
 #include <assert.h>
 
+#pragma GCC visibility push(default)
+
 static char * nanomsd( long int ns, char * buf ) {		// most significant digits
 	snprintf( buf, 16, ".%09ld", ns );
 	int i;

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Demangler.cc --
+// Demangle.cc -- Convert a mangled name into a human readable name.
 //
 // Author           : Rob Schluntz
 // Created On       : Thu Jul 19 12:52:41 2018

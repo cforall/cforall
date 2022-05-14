@@ -28,4 +28,6 @@ SRC_SYMTAB = \
       SymTab/Validate.h
 
 SRC += $(SRC_SYMTAB)
-SRCDEMANGLE += $(SRC_SYMTAB) SymTab/Demangle.cc
+SRCDEMANGLE += $(SRC_SYMTAB) \
+	SymTab/Demangle.cc \
+	SymTab/Demangle.h

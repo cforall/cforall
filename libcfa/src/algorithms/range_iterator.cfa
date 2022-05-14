@@ -19,7 +19,9 @@
 
 #include <fstream.hfa>
 
-void main(RangeIter & this) {
+#include "bits/defs.hfa"
+
+void main(RangeIter & this) libcfa_public {
 	for() {
 		this._start = -1;
 		this._stop = -1;

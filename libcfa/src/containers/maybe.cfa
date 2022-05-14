@@ -16,6 +16,7 @@
 #include <containers/maybe.hfa>
 #include <assert.h>
 
+#pragma GCC visibility push(default)
 
 forall(T)
 void ?{}(maybe(T) & this) {

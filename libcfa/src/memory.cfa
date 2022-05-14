@@ -16,6 +16,8 @@
 #include "memory.hfa"
 #include "stdlib.hfa"
 
+#pragma GCC visibility push(default)
+
 // Internal data object.
 forall(T & | sized(T), Args... | { void ?{}(T &, Args); })
 void ?{}(counter_data(T) & this, Args args) {

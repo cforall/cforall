@@ -16,6 +16,8 @@
 #include "virtual.h"
 #include "assert.h"
 
+#pragma GCC visibility push(default)
+
 int __cfavir_is_parent(
 		__cfavir_type_id parent,
 		__cfavir_type_id child ) {
