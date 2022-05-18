@@ -23,6 +23,8 @@
 #include <kernel.hfa>
 #include <stdlib.hfa>
 
+#pragma GCC visibility push(default)
+
 //-----------------------------------------------------------------------------
 // info_thread
 forall(L & | is_blocking_lock(L)) {
@@ -115,7 +117,7 @@ bool try_lock( blocking_lock & this ) with( this ) {
 	return ret;
 }
 
-void pop_and_set_new_owner( blocking_lock & this ) with( this ) {
+static void pop_and_set_new_owner( blocking_lock & this ) with( this ) {
 	thread$ * t = &try_pop_front( blocked_threads );
 	owner = t;
 	recursion_count = ( t ? 1 : 0 );
@@ -191,7 +193,7 @@ forall(L & | is_blocking_lock(L)) {
 
 	void ^?{}( alarm_node_wrap(L) & this ) { }
 
-	void timeout_handler ( alarm_node_wrap(L) & this ) with( this ) {
+	static void timeout_handler ( alarm_node_wrap(L) & this ) with( this ) {
 		// This condition_variable member is called from the kernel, and therefore, cannot block, but it can spin.
 		lock( cond->lock __cfaabi_dbg_ctx2 );
 
@@ -215,7 +217,7 @@ forall(L & | is_blocking_lock(L)) {
 	}
 
 	// this casts the alarm node to our wrapped type since we used type erasure
-	void alarm_node_wrap_cast( alarm_node_t & a ) { timeout_handler( (alarm_node_wrap(L) &)a ); }
+	static void alarm_node_wrap_cast( alarm_node_t & a ) { timeout_handler( (alarm_node_wrap(L) &)a ); }
 }
 
 //-----------------------------------------------------------------------------
@@ -232,7 +234,7 @@ forall(L & | is_blocking_lock(L)) {
 
 	void ^?{}( condition_variable(L) & this ){ }
 
-	void process_popped( condition_variable(L) & this, info_thread(L) & popped ) with( this ) {
+	static void process_popped( condition_variable(L) & this, info_thread(L) & popped ) with( this ) {
 		if(&popped != 0p) {
 			popped.signalled = true;
 			count--;
@@ -277,7 +279,7 @@ forall(L & | is_blocking_lock(L)) {
 
 	int counter( condition_variable(L) & this ) with(this) { return count; }
 
-	size_t queue_and_get_recursion( condition_variable(L) & this, info_thread(L) * i ) with(this) {
+	static size_t queue_and_get_recursion( condition_variable(L) & this, info_thread(L) * i ) with(this) {
 		// add info_thread to waiting queue
 		insert_last( blocked_threads, *i );
 		count++;
@@ -290,7 +292,7 @@ forall(L & | is_blocking_lock(L)) {
 	}
 
 	// helper for wait()'s' with no timeout
-	void queue_info_thread( condition_variable(L) & this, info_thread(L) & i ) with(this) {
+	static void queue_info_thread( condition_variable(L) & this, info_thread(L) & i ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		size_t recursion_count = queue_and_get_recursion(this, &i);
 		unlock( lock );
@@ -307,7 +309,7 @@ forall(L & | is_blocking_lock(L)) {
 		queue_info_thread( this, i );
 
 	// helper for wait()'s' with a timeout
-	void queue_info_thread_timeout( condition_variable(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
+	static void queue_info_thread_timeout( condition_variable(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		size_t recursion_count = queue_and_get_recursion(this, &info);
 		alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
@@ -342,7 +344,7 @@ forall(L & | is_blocking_lock(L)) {
 	//-----------------------------------------------------------------------------
 	// fast_cond_var
 	void  ?{}( fast_cond_var(L) & this ){
-		this.blocked_threads{}; 
+		this.blocked_threads{};
 		#ifdef __CFA_DEBUG__
 		this.lock_used = 0p;
 		#endif

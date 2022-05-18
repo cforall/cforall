@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 23:14:38 2019
-// Update Count     : 7
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon May 16 14:09:00 2022
+// Update Count     : 8
 //
 
 #include <cassert>                       // for strict_dynamic_cast
@@ -124,11 +124,8 @@ namespace GenPoly {
 		};
 	} // namespace
 
-	static bool referencesEliminated = false;
-	// used by UntypedExpr::createDeref to determine whether result type of dereference should be ReferenceType or value type.
-	bool referencesPermissable() {
-		return ! referencesEliminated;
-	}
+	// Stored elsewhere (Lvalue2, initially false).
+	extern bool referencesEliminated;
 
 	void convertLvalue( std::list< Declaration* > & translationUnit ) {
 		PassVisitor<ReferenceConversions> refCvt;

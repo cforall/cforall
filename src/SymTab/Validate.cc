@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 21:50:04 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Apr 29  9:45:00 2022
-// Update Count     : 365
+// Last Modified On : Tue May 17 14:36:00 2022
+// Update Count     : 366
 //
 
 // The "validate" phase of translation is used to take a syntax tree and convert it into a standard form that aims to be
@@ -73,6 +73,7 @@
 #include "ResolvExpr/Resolver.h"       // for findSingleExpression
 #include "ResolvExpr/ResolveTypeof.h"  // for resolveTypeof
 #include "SymTab/Autogen.h"            // for SizeType
+#include "SymTab/ValidateType.h"       // for decayEnumsAndPointers, decayFo...
 #include "SynTree/LinkageSpec.h"       // for C
 #include "SynTree/Attribute.h"         // for noAttributes, Attribute
 #include "SynTree/Constant.h"          // for Constant
@@ -133,48 +134,6 @@ namespace SymTab {
 		void postvisit( FunctionType * ftype );
 	};
 
-	/// Replaces enum types by int, and function or array types in function parameter and return lists by appropriate pointers.
-	struct EnumAndPointerDecay_old {
-		void previsit( EnumDecl * aggregateDecl );
-		void previsit( FunctionType * func );
-	};
-
-	/// Associates forward declarations of aggregates with their definitions
-	struct LinkReferenceToTypes_old final : public WithIndexer, public WithGuards, public WithVisitorRef<LinkReferenceToTypes_old>, public WithShortCircuiting {
-		LinkReferenceToTypes_old( const Indexer * indexer );
-
-		void postvisit( TypeInstType * typeInst );
-
-		void postvisit( EnumInstType * enumInst );
-		void postvisit( StructInstType * structInst );
-		void postvisit( UnionInstType * unionInst );
-		void postvisit( TraitInstType * traitInst );
-		void previsit( QualifiedType * qualType );
-		void postvisit( QualifiedType * qualType );
-
-		void postvisit( EnumDecl * enumDecl );
-		void postvisit( StructDecl * structDecl );
-		void postvisit( UnionDecl * unionDecl );
-		void postvisit( TraitDecl * traitDecl );
-
-		void previsit( StructDecl * structDecl );
-		void previsit( UnionDecl * unionDecl );
-
-		void renameGenericParams( std::list< TypeDecl * > & params );
-
-	  private:
-		const Indexer * local_indexer;
-
-		typedef std::map< std::string, std::list< EnumInstType * > > ForwardEnumsType;
-		typedef std::map< std::string, std::list< StructInstType * > > ForwardStructsType;
-		typedef std::map< std::string, std::list< UnionInstType * > > ForwardUnionsType;
-		ForwardEnumsType forwardEnums;
-		ForwardStructsType forwardStructs;
-		ForwardUnionsType forwardUnions;
-		/// true if currently in a generic type body, so that type parameter instances can be renamed appropriately
-		bool inGeneric = false;
-	};
-
 	/// Does early resolution on the expressions that give enumeration constants their values
 	struct ResolveEnumInitializers final : public WithIndexer, public WithGuards, public WithVisitorRef<ResolveEnumInitializers>, public WithShortCircuiting {
 		ResolveEnumInitializers( const Indexer * indexer );
@@ -192,28 +151,6 @@ namespace SymTab {
 		void previsit( FunctionType * ftype );
 		void previsit( StructDecl * aggrDecl );
 		void previsit( UnionDecl * aggrDecl );
-	};
-
-	// These structs are the sub-sub-passes of ForallPointerDecay_old.
-
-	struct TraitExpander_old final {
-		void previsit( FunctionType * );
-		void previsit( StructDecl * );
-		void previsit( UnionDecl * );
-	};
-
-	struct AssertionFixer_old final {
-		void previsit( FunctionType * );
-		void previsit( StructDecl * );
-		void previsit( UnionDecl * );
-	};
-
-	struct CheckOperatorTypes_old final {
-		void previsit( ObjectDecl * );
-	};
-
-	struct FixUniqueIds_old final {
-		void previsit( DeclarationWithType * );
 	};
 
 	struct ReturnChecker : public WithGuards {
@@ -357,7 +294,6 @@ namespace SymTab {
 	};
 
 	void validate_A( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<EnumAndPointerDecay_old> epc;
 		PassVisitor<HoistTypeDecls> hoistDecls;
 		{
 			Stats::Heap::newPass("validate-A");
@@ -366,13 +302,8 @@ namespace SymTab {
 			acceptAll( translationUnit, hoistDecls );
 			ReplaceTypedef::replaceTypedef( translationUnit );
 			ReturnTypeFixer::fix( translationUnit ); // must happen before autogen
-			acceptAll( translationUnit, epc ); // must happen before VerifyCtorDtorAssign, because void return objects should not exist; before LinkReferenceToTypes_old because it is an indexer and needs correct types for mangling
+			decayEnumsAndPointers( translationUnit ); // must happen before VerifyCtorDtorAssign, because void return objects should not exist; before LinkReferenceToTypes_old because it is an indexer and needs correct types for mangling
 		}
-	}
-
-	void linkReferenceToTypes( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<LinkReferenceToTypes_old> lrt( nullptr );
-		acceptAll( translationUnit, lrt ); // must happen before autogen, because sized flag needs to propagate to generated functions
 	}
 
 	void validate_B( std::list< Declaration * > & translationUnit ) {
@@ -411,17 +342,6 @@ namespace SymTab {
 				InitTweak::fixReturnStatements( translationUnit ); // must happen before autogen
 			});
 		}
-	}
-
-	static void decayForallPointers( std::list< Declaration * > & translationUnit ) {
-		PassVisitor<TraitExpander_old> te;
-		acceptAll( translationUnit, te );
-		PassVisitor<AssertionFixer_old> af;
-		acceptAll( translationUnit, af );
-		PassVisitor<CheckOperatorTypes_old> cot;
-		acceptAll( translationUnit, cot );
-		PassVisitor<FixUniqueIds_old> fui;
-		acceptAll( translationUnit, fui );
 	}
 
 	void validate_D( std::list< Declaration * > & translationUnit ) {
@@ -498,21 +418,6 @@ namespace SymTab {
 		validate_D( translationUnit );
 		validate_E( translationUnit );
 		validate_F( translationUnit );
-	}
-
-	void validateType( Type * type, const Indexer * indexer ) {
-		PassVisitor<EnumAndPointerDecay_old> epc;
-		PassVisitor<LinkReferenceToTypes_old> lrt( indexer );
-		PassVisitor<TraitExpander_old> te;
-		PassVisitor<AssertionFixer_old> af;
-		PassVisitor<CheckOperatorTypes_old> cot;
-		PassVisitor<FixUniqueIds_old> fui;
-		type->accept( epc );
-		type->accept( lrt );
-		type->accept( te );
-		type->accept( af );
-		type->accept( cot );
-		type->accept( fui );
 	}
 
 	void HoistTypeDecls::handleType( Type * type ) {
@@ -707,126 +612,6 @@ namespace SymTab {
 		}, true);
 	}
 
-	void EnumAndPointerDecay_old::previsit( EnumDecl * enumDecl ) {
-		// Set the type of each member of the enumeration to be EnumConstant
-		for ( std::list< Declaration * >::iterator i = enumDecl->members.begin(); i != enumDecl->members.end(); ++i ) {
-			ObjectDecl * obj = dynamic_cast< ObjectDecl * >( * i );
-			assert( obj );
-			obj->set_type( new EnumInstType( Type::Qualifiers( Type::Const ), enumDecl->name ) );
-		} // for
-	}
-
-	namespace {
-		template< typename DWTList >
-		void fixFunctionList( DWTList & dwts, bool isVarArgs, FunctionType * func ) {
-			auto nvals = dwts.size();
-			bool containsVoid = false;
-			for ( auto & dwt : dwts ) {
-				// fix each DWT and record whether a void was found
-				containsVoid |= fixFunction( dwt );
-			}
-
-			// the only case in which "void" is valid is where it is the only one in the list
-			if ( containsVoid && ( nvals > 1 || isVarArgs ) ) {
-				SemanticError( func, "invalid type void in function type " );
-			}
-
-			// one void is the only thing in the list; remove it.
-			if ( containsVoid ) {
-				delete dwts.front();
-				dwts.clear();
-			}
-		}
-	}
-
-	void EnumAndPointerDecay_old::previsit( FunctionType * func ) {
-		// Fix up parameters and return types
-		fixFunctionList( func->parameters, func->isVarArgs, func );
-		fixFunctionList( func->returnVals, false, func );
-	}
-
-	LinkReferenceToTypes_old::LinkReferenceToTypes_old( const Indexer * other_indexer ) : WithIndexer( false ) {
-		if ( other_indexer ) {
-			local_indexer = other_indexer;
-		} else {
-			local_indexer = &indexer;
-		} // if
-	}
-
-	void LinkReferenceToTypes_old::postvisit( EnumInstType * enumInst ) {
-		const EnumDecl * st = local_indexer->lookupEnum( enumInst->name );
-		// it's not a semantic error if the enum is not found, just an implicit forward declaration
-		if ( st ) {
-			enumInst->baseEnum = const_cast<EnumDecl *>(st); // Just linking in the node
-		} // if
-		if ( ! st || ! st->body ) {
-			// use of forward declaration
-			forwardEnums[ enumInst->name ].push_back( enumInst );
-		} // if
-	}
-	void LinkReferenceToTypes_old::postvisit( StructInstType * structInst ) {
-		const StructDecl * st = local_indexer->lookupStruct( structInst->name );
-		// it's not a semantic error if the struct is not found, just an implicit forward declaration
-		if ( st ) {
-			structInst->baseStruct = const_cast<StructDecl *>(st); // Just linking in the node
-		} // if
-		if ( ! st || ! st->body ) {
-			// use of forward declaration
-			forwardStructs[ structInst->name ].push_back( structInst );
-		} // if
-	}
-
-	void LinkReferenceToTypes_old::postvisit( UnionInstType * unionInst ) {
-		const UnionDecl * un = local_indexer->lookupUnion( unionInst->name );
-		// it's not a semantic error if the union is not found, just an implicit forward declaration
-		if ( un ) {
-			unionInst->baseUnion = const_cast<UnionDecl *>(un); // Just linking in the node
-		} // if
-		if ( ! un || ! un->body ) {
-			// use of forward declaration
-			forwardUnions[ unionInst->name ].push_back( unionInst );
-		} // if
-	}
-
-	void LinkReferenceToTypes_old::previsit( QualifiedType * ) {
-		visit_children = false;
-	}
-
-	void LinkReferenceToTypes_old::postvisit( QualifiedType * qualType ) {
-		// linking only makes sense for the 'oldest ancestor' of the qualified type
-		qualType->parent->accept( * visitor );
-	}
-
-	template< typename Decl >
-	void normalizeAssertions( std::list< Decl * > & assertions ) {
-		// ensure no duplicate trait members after the clone
-		auto pred = [](Decl * d1, Decl * d2) {
-			// only care if they're equal
-			DeclarationWithType * dwt1 = dynamic_cast<DeclarationWithType *>( d1 );
-			DeclarationWithType * dwt2 = dynamic_cast<DeclarationWithType *>( d2 );
-			if ( dwt1 && dwt2 ) {
-				if ( dwt1->name == dwt2->name && ResolvExpr::typesCompatible( dwt1->get_type(), dwt2->get_type(), SymTab::Indexer() ) ) {
-					// std::cerr << "=========== equal:" << std::endl;
-					// std::cerr << "d1: " << d1 << std::endl;
-					// std::cerr << "d2: " << d2 << std::endl;
-					return false;
-				}
-			}
-			return d1 < d2;
-		};
-		std::set<Decl *, decltype(pred)> unique_members( assertions.begin(), assertions.end(), pred );
-		// if ( unique_members.size() != assertions.size() ) {
-		// 	std::cerr << "============different" << std::endl;
-		// 	std::cerr << unique_members.size() << " " << assertions.size() << std::endl;
-		// }
-
-		std::list< Decl * > order;
-		order.splice( order.end(), assertions );
-		std::copy_if( order.begin(), order.end(), back_inserter( assertions ), [&]( Decl * decl ) {
-			return unique_members.count( decl );
-		});
-	}
-
 	// expand assertions from trait instance, performing the appropriate type variable substitutions
 	template< typename Iterator >
 	void expandAssertions( TraitInstType * inst, Iterator out ) {
@@ -837,137 +622,6 @@ namespace SymTab {
 		}
 		// substitute trait decl parameters for instance parameters
 		applySubstitution( inst->baseTrait->parameters.begin(), inst->baseTrait->parameters.end(), inst->parameters.begin(), asserts.begin(), asserts.end(), out );
-	}
-
-	void LinkReferenceToTypes_old::postvisit( TraitDecl * traitDecl ) {
-		if ( traitDecl->name == "sized" ) {
-			// "sized" is a special trait - flick the sized status on for the type variable
-			assertf( traitDecl->parameters.size() == 1, "Built-in trait 'sized' has incorrect number of parameters: %zd", traitDecl->parameters.size() );
-			TypeDecl * td = traitDecl->parameters.front();
-			td->set_sized( true );
-		}
-
-		// move assertions from type parameters into the body of the trait
-		for ( TypeDecl * td : traitDecl->parameters ) {
-			for ( DeclarationWithType * assert : td->assertions ) {
-				if ( TraitInstType * inst = dynamic_cast< TraitInstType * >( assert->get_type() ) ) {
-					expandAssertions( inst, back_inserter( traitDecl->members ) );
-				} else {
-					traitDecl->members.push_back( assert->clone() );
-				}
-			}
-			deleteAll( td->assertions );
-			td->assertions.clear();
-		} // for
-	}
-
-	void LinkReferenceToTypes_old::postvisit( TraitInstType * traitInst ) {
-		// handle other traits
-		const TraitDecl * traitDecl = local_indexer->lookupTrait( traitInst->name );
-		if ( ! traitDecl ) {
-			SemanticError( traitInst->location, "use of undeclared trait " + traitInst->name );
-		} // if
-		if ( traitDecl->parameters.size() != traitInst->parameters.size() ) {
-			SemanticError( traitInst, "incorrect number of trait parameters: " );
-		} // if
-		traitInst->baseTrait = const_cast<TraitDecl *>(traitDecl); // Just linking in the node
-
-		// need to carry over the 'sized' status of each decl in the instance
-		for ( auto p : group_iterate( traitDecl->parameters, traitInst->parameters ) ) {
-			TypeExpr * expr = dynamic_cast< TypeExpr * >( std::get<1>(p) );
-			if ( ! expr ) {
-				SemanticError( std::get<1>(p), "Expression parameters for trait instances are currently unsupported: " );
-			}
-			if ( TypeInstType * inst = dynamic_cast< TypeInstType * >( expr->get_type() ) ) {
-				TypeDecl * formalDecl = std::get<0>(p);
-				TypeDecl * instDecl = inst->baseType;
-				if ( formalDecl->get_sized() ) instDecl->set_sized( true );
-			}
-		}
-		// normalizeAssertions( traitInst->members );
-	}
-
-	void LinkReferenceToTypes_old::postvisit( EnumDecl * enumDecl ) {
-		// visit enum members first so that the types of self-referencing members are updated properly
-		// Replace the enum base; right now it works only for StructEnum
-		if ( enumDecl->base && dynamic_cast<TypeInstType*>(enumDecl->base) ) {
-			std::string baseName = static_cast<TypeInstType*>(enumDecl->base)->name;
-			const StructDecl * st = local_indexer->lookupStruct( baseName );
-			if ( st ) {
-				enumDecl->base = new StructInstType(Type::Qualifiers(),const_cast<StructDecl *>(st)); // Just linking in the node
-			}
-		}
-		if ( enumDecl->body ) {
-			ForwardEnumsType::iterator fwds = forwardEnums.find( enumDecl->name );
-			if ( fwds != forwardEnums.end() ) {
-				for ( std::list< EnumInstType * >::iterator inst = fwds->second.begin(); inst != fwds->second.end(); ++inst ) {
-					(* inst)->baseEnum = enumDecl;
-				} // for
-				forwardEnums.erase( fwds );
-			} // if
-		} // if
-	}
-
-	void LinkReferenceToTypes_old::renameGenericParams( std::list< TypeDecl * > & params ) {
-		// rename generic type parameters uniquely so that they do not conflict with user-defined function forall parameters, e.g.
-		//   forall(otype T)
-		//   struct Box {
-		//     T x;
-		//   };
-		//   forall(otype T)
-		//   void f(Box(T) b) {
-		//     ...
-		//   }
-		// The T in Box and the T in f are different, so internally the naming must reflect that.
-		GuardValue( inGeneric );
-		inGeneric = ! params.empty();
-		for ( TypeDecl * td : params ) {
-			td->name = "__" + td->name + "_generic_";
-		}
-	}
-
-	void LinkReferenceToTypes_old::previsit( StructDecl * structDecl ) {
-		renameGenericParams( structDecl->parameters );
-	}
-
-	void LinkReferenceToTypes_old::previsit( UnionDecl * unionDecl ) {
-		renameGenericParams( unionDecl->parameters );
-	}
-
-	void LinkReferenceToTypes_old::postvisit( StructDecl * structDecl ) {
-		// visit struct members first so that the types of self-referencing members are updated properly
-		// xxx - need to ensure that type parameters match up between forward declarations and definition (most importantly, number of type parameters and their defaults)
-		if ( structDecl->body ) {
-			ForwardStructsType::iterator fwds = forwardStructs.find( structDecl->name );
-			if ( fwds != forwardStructs.end() ) {
-				for ( std::list< StructInstType * >::iterator inst = fwds->second.begin(); inst != fwds->second.end(); ++inst ) {
-					(* inst)->baseStruct = structDecl;
-				} // for
-				forwardStructs.erase( fwds );
-			} // if
-		} // if
-	}
-
-	void LinkReferenceToTypes_old::postvisit( UnionDecl * unionDecl ) {
-		if ( unionDecl->body ) {
-			ForwardUnionsType::iterator fwds = forwardUnions.find( unionDecl->name );
-			if ( fwds != forwardUnions.end() ) {
-				for ( std::list< UnionInstType * >::iterator inst = fwds->second.begin(); inst != fwds->second.end(); ++inst ) {
-					(* inst)->baseUnion = unionDecl;
-				} // for
-				forwardUnions.erase( fwds );
-			} // if
-		} // if
-	}
-
-	void LinkReferenceToTypes_old::postvisit( TypeInstType * typeInst ) {
-		// ensure generic parameter instances are renamed like the base type
-		if ( inGeneric && typeInst->baseType ) typeInst->name = typeInst->baseType->name;
-		if ( const NamedTypeDecl * namedTypeDecl = local_indexer->lookupType( typeInst->name ) ) {
-			if ( const TypeDecl * typeDecl = dynamic_cast< const TypeDecl * >( namedTypeDecl ) ) {
-				typeInst->set_isFtype( typeDecl->kind == TypeDecl::Ftype );
-			} // if
-		} // if
 	}
 
 	ResolveEnumInitializers::ResolveEnumInitializers( const Indexer * other_indexer ) : WithIndexer( true ) {
@@ -996,7 +650,6 @@ namespace SymTab {
 							ResolvExpr::findSingleExpression( init->value, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), indexer );
 						}
 					}
-					
 				}
 			}
 
@@ -1084,41 +737,6 @@ namespace SymTab {
 
 	void ForallPointerDecay_old::previsit( UnionDecl * aggrDecl ) {
 		forallFixer( aggrDecl->parameters, aggrDecl );
-	}
-
-	void TraitExpander_old::previsit( FunctionType * ftype ) {
-		expandTraits( ftype->forall );
-	}
-
-	void TraitExpander_old::previsit( StructDecl * aggrDecl ) {
-		expandTraits( aggrDecl->parameters );
-	}
-
-	void TraitExpander_old::previsit( UnionDecl * aggrDecl ) {
-		expandTraits( aggrDecl->parameters );
-	}
-
-	void AssertionFixer_old::previsit( FunctionType * ftype ) {
-		fixAssertions( ftype->forall, ftype );
-	}
-
-	void AssertionFixer_old::previsit( StructDecl * aggrDecl ) {
-		fixAssertions( aggrDecl->parameters, aggrDecl );
-	}
-
-	void AssertionFixer_old::previsit( UnionDecl * aggrDecl ) {
-		fixAssertions( aggrDecl->parameters, aggrDecl );
-	}
-
-	void CheckOperatorTypes_old::previsit( ObjectDecl * object ) {
-		// ensure that operator names only apply to functions or function pointers
-		if ( CodeGen::isOperator( object->name ) && ! dynamic_cast< FunctionType * >( object->type->stripDeclarator() ) ) {
-			SemanticError( object->location, toCString( "operator ", object->name.c_str(), " is not a function or function pointer." )  );
-		}
-	}
-
-	void FixUniqueIds_old::previsit( DeclarationWithType * decl ) {
-		decl->fixUniqueId();
 	}
 
 	void ReturnChecker::checkFunctionReturns( std::list< Declaration * > & translationUnit ) {

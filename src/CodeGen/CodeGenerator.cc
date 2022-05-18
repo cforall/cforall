@@ -1237,18 +1237,6 @@ namespace CodeGen {
 	}
 } // namespace CodeGen
 
-
-unsigned Indenter::tabsize = 2;
-
-std::ostream & operator<<( std::ostream & out, const BaseSyntaxNode * node ) {
-	if ( node ) {
-		node->print( out );
-	} else {
-		out << "nullptr";
-	}
-	return out;
-}
-
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

@@ -23,6 +23,7 @@ SRC_SYNTREE = \
       SynTree/Attribute.h \
       SynTree/AttrType.cc \
       SynTree/BaseSyntaxNode.h \
+      SynTree/BaseSyntaxNode.cc \
       SynTree/BasicType.cc \
       SynTree/CommaExpr.cc \
       SynTree/CompoundStmt.cc \

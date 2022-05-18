@@ -140,7 +140,7 @@ void unregister_self( alarm_node_t * this ) {
 // Utilities
 //=============================================================================================
 
-void sleep( Duration duration ) {
+void sleep( Duration duration ) libcfa_public {
 	alarm_node_t node = { active_thread(), duration, 0`s };
 
 	register_self( &node );

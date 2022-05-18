@@ -9,25 +9,22 @@
 ##
 ## Author           : Richard C. Bilson
 ## Created On       : Mon Jun  1 17:49:17 2015
-## Last Modified By : Rob Schluntz
-## Last Modified On : Fri May 13 11:36:24 2016
-## Update Count     : 3
+## Last Modified By : Andrew Beach
+## Last Modified On : Tue May 17 14:31:00 2022
+## Update Count     : 4
 ###############################################################################
 
-SRC += \
-	InitTweak/FixGlobalInit.cc \
-	InitTweak/FixGlobalInit.h \
-	InitTweak/FixInit.cc \
-	InitTweak/FixInit.h \
-	InitTweak/GenInit.cc \
-	InitTweak/GenInit.h \
-	InitTweak/InitTweak.cc \
-	InitTweak/InitTweak.h \
-	InitTweak/FixInitNew.cpp
-
-SRCDEMANGLE += \
+SRC_INITTWEAK = \
 	InitTweak/GenInit.cc \
 	InitTweak/GenInit.h \
 	InitTweak/InitTweak.cc \
 	InitTweak/InitTweak.h
 
+SRC += $(SRC_INITTWEAK) \
+	InitTweak/FixGlobalInit.cc \
+	InitTweak/FixGlobalInit.h \
+	InitTweak/FixInit.cc \
+	InitTweak/FixInit.h \
+	InitTweak/FixInitNew.cpp
+
+SRCDEMANGLE += $(SRC_INITTWEAK)

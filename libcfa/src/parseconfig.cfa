@@ -19,7 +19,7 @@
 
 
 // TODO: Add names of missing config entries to exception (see further below)
-static vtable(Missing_Config_Entries) Missing_Config_Entries_vt;
+vtable(Missing_Config_Entries) Missing_Config_Entries_vt;
 
 [ void ] ?{}( & Missing_Config_Entries this, unsigned int num_missing ) {
 	this.virtual_table = &Missing_Config_Entries_vt;
@@ -32,7 +32,7 @@ static vtable(Missing_Config_Entries) Missing_Config_Entries_vt;
 } // msg
 
 
-static vtable(Parse_Failure) Parse_Failure_vt;
+vtable(Parse_Failure) Parse_Failure_vt;
 
 [ void ] ?{}( & Parse_Failure this, [] char failed_key, [] char failed_value ) {
 	this.virtual_table = &Parse_Failure_vt;
@@ -54,7 +54,7 @@ static vtable(Parse_Failure) Parse_Failure_vt;
 }
 
 
-static vtable(Validation_Failure) Validation_Failure_vt;
+vtable(Validation_Failure) Validation_Failure_vt;
 
 [ void ] ?{}( & Validation_Failure this, [] char failed_key, [] char failed_value ) {
 	this.virtual_table = &Validation_Failure_vt;

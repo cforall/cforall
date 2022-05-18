@@ -108,7 +108,8 @@ static inline int __kernel_getcpu() {
 
 //-----------------------------------------------------------------------------
 // Processor
-void main(processorCtx_t *);
+void main(processorCtx_t &);
+static inline coroutine$* get_coroutine(processorCtx_t & this) { return &this.self; }
 
 void * __create_pthread( pthread_t *, void * (*)(void *), void * );
 void __destroy_pthread( pthread_t pthread, void * stack, void ** retval );

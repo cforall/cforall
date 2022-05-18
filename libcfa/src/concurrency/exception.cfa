@@ -63,11 +63,11 @@ STOP_AT_END_FUNCTION(coroutine_cancelstop,
 
 extern "C" {
 
-struct exception_context_t * this_exception_context(void) {
+struct exception_context_t * this_exception_context(void) libcfa_public {
 	return &__get_stack( active_coroutine() )->exception_context;
 }
 
-_Unwind_Reason_Code __cfaehm_cancellation_unwind( struct _Unwind_Exception * unwind_exception ) {
+_Unwind_Reason_Code __cfaehm_cancellation_unwind( struct _Unwind_Exception * unwind_exception ) libcfa_public {
 	_Unwind_Stop_Fn stop_func;
 	void * stop_param;
 

@@ -30,6 +30,7 @@ extern "C" {
 	#include <fcntl.h>
 }
 
+#include "bits/defs.hfa"
 #include "algorithms/range_iterator.hfa"
 
 // search a string for character 'character' but looking atmost at len
@@ -455,4 +456,4 @@ extern "C" {
 	}
 }
 
-cpu_info_t cpu_info;
+libcfa_public cpu_info_t cpu_info;

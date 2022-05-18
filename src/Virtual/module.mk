@@ -10,11 +10,12 @@
 ## Author           : Andrew Beach
 ## Created On       : Tus Jul 25 10:18:00 2017
 ## Last Modified By : Andrew Beach
-## Last Modified On : Tus Jul 25 10:18:00 2017
-## Update Count     : 0
+## Last Modified On : Tus May 17 14:59:00 2022
+## Update Count     : 1
 ###############################################################################
 
-SRC += Virtual/ExpandCasts.cc Virtual/ExpandCasts.h \
-	Virtual/Tables.cc Virtual/Tables.h
-
-SRCDEMANGLE += Virtual/Tables.cc
+SRC += \
+	Virtual/ExpandCasts.cc \
+	Virtual/ExpandCasts.h \
+	Virtual/Tables.cc \
+	Virtual/Tables.h

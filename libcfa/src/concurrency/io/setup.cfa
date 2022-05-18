@@ -25,7 +25,7 @@
 #include "kernel.hfa"
 
 #if !defined(CFA_HAVE_LINUX_IO_URING_H)
-	void ?{}(io_context_params & this) {}
+	void ?{}(io_context_params & this) libcfa_public {}
 
 	void  ?{}($io_context & this, struct cluster & cl) {}
 	void ^?{}($io_context & this) {}
@@ -65,7 +65,7 @@
 	#include "thread.hfa"
 #pragma GCC diagnostic pop
 
-	void ?{}(io_context_params & this) {
+	void ?{}(io_context_params & this) libcfa_public {
 		this.num_entries = 256;
 	}
 

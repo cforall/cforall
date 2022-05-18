@@ -35,36 +35,36 @@
 
 static bool traceHeap = false;
 
-inline bool traceHeap() { return traceHeap; }
+inline bool traceHeap() libcfa_public { return traceHeap; }
 
-bool traceHeapOn() {
+bool traceHeapOn() libcfa_public {
 	bool temp = traceHeap;
 	traceHeap = true;
 	return temp;
 } // traceHeapOn
 
-bool traceHeapOff() {
+bool traceHeapOff() libcfa_public {
 	bool temp = traceHeap;
 	traceHeap = false;
 	return temp;
 } // traceHeapOff
 
-bool traceHeapTerm() { return false; }
+bool traceHeapTerm() libcfa_public { return false; }
 
 
 static bool prtFree = false;
 
-bool prtFree() {
+static bool prtFree() {
 	return prtFree;
 } // prtFree
 
-bool prtFreeOn() {
+static bool prtFreeOn() {
 	bool temp = prtFree;
 	prtFree = true;
 	return temp;
 } // prtFreeOn
 
-bool prtFreeOff() {
+static bool prtFreeOff() {
 	bool temp = prtFree;
 	prtFree = false;
 	return temp;
@@ -387,8 +387,9 @@ static size_t heapExpand;								// sbrk advance
 static size_t mmapStart;								// cross over point for mmap
 static unsigned int maxBucketsUsed;						// maximum number of buckets in use
 // extern visibility, used by runtime kernel
-size_t __page_size;										// architecture pagesize
-int __map_prot;											// common mmap/mprotect protection
+// would be cool to remove libcfa_public but it's needed for libcfathread
+libcfa_public size_t __page_size;							// architecture pagesize
+libcfa_public int __map_prot;								// common mmap/mprotect protection
 
 
 // thunk problem
@@ -726,7 +727,7 @@ static inline void doFree( void * addr ) with( heapManager ) {
 } // doFree
 
 
-size_t prtFree( Heap & manager ) with( manager ) {
+static size_t prtFree( Heap & manager ) with( manager ) {
 	size_t total = 0;
 	#ifdef __STATISTICS__
 	__cfaabi_bits_acquire();
@@ -878,7 +879,7 @@ static inline void * memalignNoStats( size_t alignment, size_t size ) {
 extern "C" {
 	// Allocates size bytes and returns a pointer to the allocated memory.  The contents are undefined. If size is 0,
 	// then malloc() returns a unique pointer value that can later be successfully passed to free().
-	void * malloc( size_t size ) {
+	void * malloc( size_t size ) libcfa_public {
 		#ifdef __STATISTICS__
 		if ( likely( size > 0 ) ) {
 			__atomic_add_fetch( &stats.malloc_calls, 1, __ATOMIC_SEQ_CST );
@@ -893,7 +894,7 @@ extern "C" {
 
 
 	// Same as malloc() except size bytes is an array of dim elements each of elemSize bytes.
-	void * aalloc( size_t dim, size_t elemSize ) {
+	void * aalloc( size_t dim, size_t elemSize ) libcfa_public {
 		size_t size = dim * elemSize;
 		#ifdef __STATISTICS__
 		if ( likely( size > 0 ) ) {
@@ -909,7 +910,7 @@ extern "C" {
 
 
 	// Same as aalloc() with memory set to zero.
-	void * calloc( size_t dim, size_t elemSize ) {
+	void * calloc( size_t dim, size_t elemSize ) libcfa_public {
 		size_t size = dim * elemSize;
 	  if ( unlikely( size ) == 0 ) {			// 0 BYTE ALLOCATION RETURNS NULL POINTER
 			#ifdef __STATISTICS__
@@ -950,7 +951,7 @@ extern "C" {
 	// 0p, then the call is equivalent to malloc(size), for all values of size; if size is equal to zero, and oaddr is
 	// not 0p, then the call is equivalent to free(oaddr). Unless oaddr is 0p, it must have been returned by an earlier
 	// call to malloc(), alloc(), calloc() or realloc(). If the area pointed to was moved, a free(oaddr) is done.
-	void * resize( void * oaddr, size_t size ) {
+	void * resize( void * oaddr, size_t size ) libcfa_public {
 		// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
 	  if ( unlikely( size == 0 ) ) {					// special cases
 			#ifdef __STATISTICS__
@@ -995,7 +996,7 @@ extern "C" {
 
 	// Same as resize() but the contents are unchanged in the range from the start of the region up to the minimum of
 	// the old and new sizes.
-	void * realloc( void * oaddr, size_t size ) {
+	void * realloc( void * oaddr, size_t size ) libcfa_public {
 		// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
 	  if ( unlikely( size == 0 ) ) {					// special cases
 			#ifdef __STATISTICS__
@@ -1059,13 +1060,13 @@ extern "C" {
 
 
 	// Same as realloc() except the new allocation size is large enough for an array of nelem elements of size elsize.
-	void * reallocarray( void * oaddr, size_t dim, size_t elemSize ) {
+	void * reallocarray( void * oaddr, size_t dim, size_t elemSize ) libcfa_public {
 		return realloc( oaddr, dim * elemSize );
 	} // reallocarray
 
 
 	// Same as malloc() except the memory address is a multiple of alignment, which must be a power of two. (obsolete)
-	void * memalign( size_t alignment, size_t size ) {
+	void * memalign( size_t alignment, size_t size ) libcfa_public {
 		#ifdef __STATISTICS__
 		if ( likely( size > 0 ) ) {
 			__atomic_add_fetch( &stats.memalign_calls, 1, __ATOMIC_SEQ_CST );
@@ -1080,7 +1081,7 @@ extern "C" {
 
 
 	// Same as aalloc() with memory alignment.
-	void * amemalign( size_t alignment, size_t dim, size_t elemSize ) {
+	void * amemalign( size_t alignment, size_t dim, size_t elemSize ) libcfa_public {
 		size_t size = dim * elemSize;
 		#ifdef __STATISTICS__
 		if ( likely( size > 0 ) ) {
@@ -1096,7 +1097,7 @@ extern "C" {
 
 
 	// Same as calloc() with memory alignment.
-	void * cmemalign( size_t alignment, size_t dim, size_t elemSize ) {
+	void * cmemalign( size_t alignment, size_t dim, size_t elemSize ) libcfa_public {
 		size_t size = dim * elemSize;
 	  if ( unlikely( size ) == 0 ) {					// 0 BYTE ALLOCATION RETURNS NULL POINTER
 			#ifdef __STATISTICS__
@@ -1135,7 +1136,7 @@ extern "C" {
 
 	// Same as memalign(), but ISO/IEC 2011 C11 Section 7.22.2 states: the value of size shall be an integral multiple
 	// of alignment. This requirement is universally ignored.
-	void * aligned_alloc( size_t alignment, size_t size ) {
+	void * aligned_alloc( size_t alignment, size_t size ) libcfa_public {
 		return memalign( alignment, size );
 	} // aligned_alloc
 
@@ -1144,7 +1145,7 @@ extern "C" {
 	// memory shall be a multiple of alignment, which must be a power of two and a multiple of sizeof(void *). If size
 	// is 0, then posix_memalign() returns either 0p, or a unique pointer value that can later be successfully passed to
 	// free(3).
-	int posix_memalign( void ** memptr, size_t alignment, size_t size ) {
+	int posix_memalign( void ** memptr, size_t alignment, size_t size ) libcfa_public {
 	  if ( unlikely( alignment < libAlign() || ! is_pow2( alignment ) ) ) return EINVAL; // check alignment
 		*memptr = memalign( alignment, size );
 		return 0;
@@ -1153,13 +1154,13 @@ extern "C" {
 
 	// Allocates size bytes and returns a pointer to the allocated memory. The memory address shall be a multiple of the
 	// page size.  It is equivalent to memalign(sysconf(_SC_PAGESIZE),size).
-	void * valloc( size_t size ) {
+	void * valloc( size_t size ) libcfa_public {
 		return memalign( __page_size, size );
 	} // valloc
 
 
 	// Same as valloc but rounds size to multiple of page size.
-	void * pvalloc( size_t size ) {
+	void * pvalloc( size_t size ) libcfa_public {
 		return memalign( __page_size, ceiling2( size, __page_size ) ); // round size to multiple of page size
 	} // pvalloc
 
@@ -1167,7 +1168,7 @@ extern "C" {
 	// Frees the memory space pointed to by ptr, which must have been returned by a previous call to malloc(), calloc()
 	// or realloc().  Otherwise, or if free(ptr) has already been called before, undefined behaviour occurs. If ptr is
 	// 0p, no operation is performed.
-	void free( void * addr ) {
+	void free( void * addr ) libcfa_public {
 	  if ( unlikely( addr == 0p ) ) {					// special case
 			#ifdef __STATISTICS__
 			__atomic_add_fetch( &stats.free_null_calls, 1, __ATOMIC_SEQ_CST );
@@ -1188,7 +1189,7 @@ extern "C" {
 
 
 	// Returns the alignment of an allocation.
-	size_t malloc_alignment( void * addr ) {
+	size_t malloc_alignment( void * addr ) libcfa_public {
 	  if ( unlikely( addr == 0p ) ) return libAlign();	// minimum alignment
 		Heap.Storage.Header * header = HeaderAddr( addr );
 		if ( unlikely( AlignmentBit( header ) ) ) {		// fake header ?
@@ -1200,7 +1201,7 @@ extern "C" {
 
 
 	// Returns true if the allocation is zero filled, e.g., allocated by calloc().
-	bool malloc_zero_fill( void * addr ) {
+	bool malloc_zero_fill( void * addr ) libcfa_public {
 	  if ( unlikely( addr == 0p ) ) return false;		// null allocation is not zero fill
 		Heap.Storage.Header * header = HeaderAddr( addr );
 		if ( unlikely( AlignmentBit( header ) ) ) {		// fake header ?
@@ -1211,7 +1212,7 @@ extern "C" {
 
 
 	// Returns original total allocation size (not bucket size) => array size is dimension * sizeof(T).
-	size_t malloc_size( void * addr ) {
+	size_t malloc_size( void * addr ) libcfa_public {
 	  if ( unlikely( addr == 0p ) ) return 0;			// null allocation has zero size
 		Heap.Storage.Header * header = HeaderAddr( addr );
 		if ( unlikely( AlignmentBit( header ) ) ) {		// fake header ?
@@ -1223,7 +1224,7 @@ extern "C" {
 
 	// Returns the number of usable bytes in the block pointed to by ptr, a pointer to a block of memory allocated by
 	// malloc or a related function.
-	size_t malloc_usable_size( void * addr ) {
+	size_t malloc_usable_size( void * addr ) libcfa_public {
 	  if ( unlikely( addr == 0p ) ) return 0;			// null allocation has 0 size
 		Heap.Storage.Header * header;
 		Heap.FreeHeader * freeElem;
@@ -1235,7 +1236,7 @@ extern "C" {
 
 
 	// Prints (on default standard error) statistics about memory allocated by malloc and related functions.
-	void malloc_stats( void ) {
+	void malloc_stats( void ) libcfa_public {
 		#ifdef __STATISTICS__
 		printStats();
 		if ( prtFree() ) prtFree( heapManager );
@@ -1244,7 +1245,7 @@ extern "C" {
 
 
 	// Changes the file descriptor where malloc_stats() writes statistics.
-	int malloc_stats_fd( int fd __attribute__(( unused )) ) {
+	int malloc_stats_fd( int fd __attribute__(( unused )) ) libcfa_public {
 		#ifdef __STATISTICS__
 		int temp = stats_fd;
 		stats_fd = fd;
@@ -1258,7 +1259,7 @@ extern "C" {
 	// Prints an XML string that describes the current state of the memory-allocation implementation in the caller.
 	// The string is printed on the file stream stream.  The exported string includes information about all arenas (see
 	// malloc).
-	int malloc_info( int options, FILE * stream __attribute__(( unused )) ) {
+	int malloc_info( int options, FILE * stream __attribute__(( unused )) ) libcfa_public {
 	  if ( options != 0 ) { errno = EINVAL; return -1; }
 		#ifdef __STATISTICS__
 		return printStatsXML( stream );
@@ -1270,7 +1271,7 @@ extern "C" {
 
 	// Adjusts parameters that control the behaviour of the memory-allocation functions (see malloc). The param argument
 	// specifies the parameter to be modified, and value specifies the new value for that parameter.
-	int mallopt( int option, int value ) {
+	int mallopt( int option, int value ) libcfa_public {
 	  if ( value < 0 ) return 0;
 		choose( option ) {
 		  case M_TOP_PAD:
@@ -1284,7 +1285,7 @@ extern "C" {
 
 
 	// Attempt to release free memory at the top of the heap (by calling sbrk with a suitable argument).
-	int malloc_trim( size_t ) {
+	int malloc_trim( size_t ) libcfa_public {
 		return 0;										// => impossible to release memory
 	} // malloc_trim
 
@@ -1293,31 +1294,31 @@ extern "C" {
 	// or the state of malloc_hook functions pointers).  The state is recorded in a system-dependent opaque data
 	// structure dynamically allocated via malloc, and a pointer to that data structure is returned as the function
 	// result.  (The caller must free this memory.)
-	void * malloc_get_state( void ) {
+	void * malloc_get_state( void ) libcfa_public {
 		return 0p;										// unsupported
 	} // malloc_get_state
 
 
 	// Restores the state of all malloc internal bookkeeping variables to the values recorded in the opaque data
 	// structure pointed to by state.
-	int malloc_set_state( void * ) {
+	int malloc_set_state( void * ) libcfa_public {
 		return 0;										// unsupported
 	} // malloc_set_state
 
 
 	// Sets the amount (bytes) to extend the heap when there is insufficent free storage to service an allocation.
-	__attribute__((weak)) size_t malloc_expansion() { return __CFA_DEFAULT_HEAP_EXPANSION__; }
+	__attribute__((weak)) size_t malloc_expansion() libcfa_public { return __CFA_DEFAULT_HEAP_EXPANSION__; }
 
 	// Sets the crossover point between allocations occuring in the sbrk area or separately mmapped.
-	__attribute__((weak)) size_t malloc_mmap_start() { return __CFA_DEFAULT_MMAP_START__; }
+	__attribute__((weak)) size_t malloc_mmap_start() libcfa_public { return __CFA_DEFAULT_MMAP_START__; }
 
 	// Amount subtracted to adjust for unfreed program storage (debug only).
-	__attribute__((weak)) size_t malloc_unfreed() { return __CFA_DEFAULT_HEAP_UNFREED__; }
+	__attribute__((weak)) size_t malloc_unfreed() libcfa_public { return __CFA_DEFAULT_HEAP_UNFREED__; }
 } // extern "C"
 
 
 // Must have CFA linkage to overload with C linkage realloc.
-void * resize( void * oaddr, size_t nalign, size_t size ) {
+void * resize( void * oaddr, size_t nalign, size_t size ) libcfa_public {
 	// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
   if ( unlikely( size == 0 ) ) {						// special cases
 		#ifdef __STATISTICS__
@@ -1379,7 +1380,7 @@ void * resize( void * oaddr, size_t nalign, size_t size ) {
 } // resize
 
 
-void * realloc( void * oaddr, size_t nalign, size_t size ) {
+void * realloc( void * oaddr, size_t nalign, size_t size ) libcfa_public {
 	// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
   if ( unlikely( size == 0 ) ) {						// special cases
 		#ifdef __STATISTICS__

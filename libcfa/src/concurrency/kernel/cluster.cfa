@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
 // returns the maximum number of processors the RWLock support
-__attribute__((weak)) unsigned __max_processors() {
+__attribute__((weak)) unsigned __max_processors() libcfa_public {
 	const char * max_cores_s = getenv("CFA_MAX_PROCESSORS");
 	if(!max_cores_s) {
 		__cfadbg_print_nolock(ready_queue, "No CFA_MAX_PROCESSORS in ENV\n");

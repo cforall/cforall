@@ -41,7 +41,7 @@
 #include "Resolver.h"              // for resolveStmtExpr
 #include "SymTab/Indexer.h"        // for Indexer
 #include "SymTab/Mangler.h"        // for Mangler
-#include "SymTab/Validate.h"       // for validateType
+#include "SymTab/ValidateType.h"   // for validateType
 #include "SynTree/Constant.h"      // for Constant
 #include "SynTree/Declaration.h"   // for DeclarationWithType, TypeDecl, Dec...
 #include "SynTree/Expression.h"    // for Expression, CastExpr, NameExpr

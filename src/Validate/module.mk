@@ -9,18 +9,23 @@
 ##
 ## Author           : Rob Schluntz
 ## Created On       : Fri Jul 27 10:10:10 2018
-## Last Modified By : Rob Schluntz
-## Last Modified On : Fri Jul 27 10:10:26 2018
-## Update Count     : 2
+## Last Modified By : Andrew Beach
+## Last Modified On : Tue May 17 14:59:00 2022
+## Update Count     : 3
 ###############################################################################
 
 SRC_VALIDATE = \
+	Validate/FindSpecialDecls.cc \
+	Validate/FindSpecialDecls.h
+
+SRC += $(SRC_VALIDATE) \
 	Validate/Autogen.cpp \
 	Validate/Autogen.hpp \
 	Validate/CompoundLiteral.cpp \
 	Validate/CompoundLiteral.hpp \
 	Validate/EliminateTypedef.cpp \
 	Validate/EliminateTypedef.hpp \
+	Validate/FindSpecialDeclsNew.cpp \
 	Validate/FixQualifiedTypes.cpp \
 	Validate/FixQualifiedTypes.hpp \
 	Validate/ForallPointerDecay.cpp \
@@ -37,10 +42,6 @@ SRC_VALIDATE = \
 	Validate/LabelAddressFixer.hpp \
 	Validate/NoIdSymbolTable.hpp \
 	Validate/ReturnCheck.cpp \
-	Validate/ReturnCheck.hpp \
-	Validate/FindSpecialDeclsNew.cpp \
-	Validate/FindSpecialDecls.cc \
-	Validate/FindSpecialDecls.h
+	Validate/ReturnCheck.hpp
 
-SRC += $(SRC_VALIDATE)
 SRCDEMANGLE += $(SRC_VALIDATE)

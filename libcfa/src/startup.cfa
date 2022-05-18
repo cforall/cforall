@@ -40,8 +40,8 @@ extern "C" {
 		#endif // __CFA_DEBUG__
 	} // __cfaabi_appready_shutdown
 
-	void disable_interrupts() __attribute__(( weak )) {}
-	void enable_interrupts() __attribute__(( weak )) {}
+	void disable_interrupts() __attribute__(( weak )) libcfa_public {}
+	void enable_interrupts() __attribute__(( weak )) libcfa_public {}
 
 
 	extern void __cfaabi_interpose_startup( void );
@@ -63,7 +63,7 @@ extern "C" {
 
 struct __spinlock_t;
 extern "C" {
-	void __cfaabi_dbg_record_lock(struct __spinlock_t & this, const char prev_name[]) __attribute__(( weak )) {}
+	void __cfaabi_dbg_record_lock(struct __spinlock_t & this, const char prev_name[]) __attribute__(( weak )) libcfa_public {}
 }
 
 // Local Variables: //

@@ -10,24 +10,27 @@
 ## Author           : Richard C. Bilson
 ## Created On       : Mon Jun  1 17:49:17 2015
 ## Last Modified By : Andrew Beach
-## Last Modified On : Thr Aug 10 16:08:00 2017
-## Update Count     : 4
+## Last Modified On : Tue May 17 14:46:00 2022
+## Update Count     : 5
 ###############################################################################
 
 SRC_SYMTAB = \
-      SymTab/Autogen.cc \
-      SymTab/Autogen.h \
-      SymTab/FixFunction.cc \
-      SymTab/FixFunction.h \
-      SymTab/Indexer.cc \
-      SymTab/Indexer.h \
-      SymTab/Mangler.cc \
-      SymTab/ManglerCommon.cc \
-      SymTab/Mangler.h \
-      SymTab/Validate.cc \
-      SymTab/Validate.h
+	SymTab/Autogen.cc \
+	SymTab/Autogen.h \
+	SymTab/FixFunction.cc \
+	SymTab/FixFunction.h \
+	SymTab/Indexer.cc \
+	SymTab/Indexer.h \
+	SymTab/Mangler.cc \
+	SymTab/ManglerCommon.cc \
+	SymTab/Mangler.h \
+	SymTab/ValidateType.cc \
+	SymTab/ValidateType.h
 
-SRC += $(SRC_SYMTAB)
+SRC += $(SRC_SYMTAB) \
+	SymTab/Validate.cc \
+	SymTab/Validate.h
+
 SRCDEMANGLE += $(SRC_SYMTAB) \
 	SymTab/Demangle.cc \
 	SymTab/Demangle.h

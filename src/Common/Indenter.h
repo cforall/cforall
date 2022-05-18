@@ -9,12 +9,13 @@
 // Author           : Rob Schluntz
 // Created On       : Fri Jun 30 16:55:23 2017
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Aug 11 11:15:00 2017
-// Update Count     : 1
+// Last Modified On : Fri May 13 14:10:00 2022
+// Update Count     : 2
 //
 
-#ifndef INDENTER_H
-#define INDENTER_H
+#pragma once
+
+#include <ostream>
 
 struct Indenter {
 	static unsigned tabsize;  ///< default number of spaces in one level of indentation
@@ -36,5 +37,3 @@ struct Indenter {
 inline std::ostream & operator<<( std::ostream & out, const Indenter & indent ) {
 	return out << std::string(indent.indent * indent.amt, ' ');
 }
-
-#endif // INDENTER_H

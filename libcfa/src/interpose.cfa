@@ -35,13 +35,13 @@ extern "C" {
 // Interposing helpers
 //=============================================================================================
 
-void preload_libgcc(void) {
+static void preload_libgcc(void) {
 	dlopen( "libgcc_s.so.1", RTLD_NOW );
 	if ( const char * error = dlerror() ) abort( "interpose_symbol : internal error pre-loading libgcc, %s\n", error );
 }
 
 typedef void (* generic_fptr_t)(void);
-generic_fptr_t interpose_symbol( const char symbol[], const char version[] ) {
+static generic_fptr_t interpose_symbol( const char symbol[], const char version[] ) {
 	const char * error;
 
 	static void * library;
@@ -82,18 +82,18 @@ generic_fptr_t interpose_symbol( const char symbol[], const char version[] ) {
 // Interposition Startup logic
 //=============================================================================================
 
-void sigHandler_segv( __CFA_SIGPARMS__ );
-void sigHandler_ill ( __CFA_SIGPARMS__ );
-void sigHandler_fpe ( __CFA_SIGPARMS__ );
-void sigHandler_abrt( __CFA_SIGPARMS__ );
-void sigHandler_term( __CFA_SIGPARMS__ );
+static void sigHandler_segv( __CFA_SIGPARMS__ );
+static void sigHandler_ill ( __CFA_SIGPARMS__ );
+static void sigHandler_fpe ( __CFA_SIGPARMS__ );
+static void sigHandler_abrt( __CFA_SIGPARMS__ );
+static void sigHandler_term( __CFA_SIGPARMS__ );
 
-struct {
+static struct {
 	void (* exit)( int ) __attribute__(( __noreturn__ ));
 	void (* abort)( void ) __attribute__(( __noreturn__ ));
 } __cabi_libc;
 
-int cfa_main_returned;
+libcfa_public int cfa_main_returned;
 
 extern "C" {
 	void __cfaabi_interpose_startup( void ) {
@@ -147,24 +147,24 @@ extern "C" {
 //=============================================================================================
 
 // Forward declare abort after the __typeof__ call to avoid ambiguities
-void exit( int status, const char fmt[], ... ) __attribute__(( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));
-void abort( const char fmt[], ... ) __attribute__(( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ ));
-void abort( bool signalAbort, const char fmt[], ... ) __attribute__(( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));
-void __abort( bool signalAbort, const char fmt[], va_list args ) __attribute__(( __nothrow__, __leaf__, __noreturn__ ));
+libcfa_public void exit( int status, const char fmt[], ... ) __attribute__(( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));
+libcfa_public void abort( const char fmt[], ... ) __attribute__(( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ ));
+libcfa_public void abort( bool signalAbort, const char fmt[], ... ) __attribute__(( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));
+libcfa_public void __abort( bool signalAbort, const char fmt[], va_list args ) __attribute__(( __nothrow__, __leaf__, __noreturn__ ));
 
 extern "C" {
-	void abort( void ) __attribute__(( __nothrow__, __leaf__, __noreturn__ )) {
+	libcfa_public void abort( void ) __attribute__(( __nothrow__, __leaf__, __noreturn__ )) {
 		abort( false, "%s", "" );
 	}
 
-	void __cabi_abort( const char fmt[], ... ) __attribute__(( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ )) {
+	libcfa_public void __cabi_abort( const char fmt[], ... ) __attribute__(( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ )) {
 		va_list argp;
 		va_start( argp, fmt );
 		__abort( false, fmt, argp );
 		va_end( argp );
 	}
 
-	void exit( int status ) __attribute__(( __nothrow__, __leaf__, __noreturn__ )) {
+	libcfa_public void exit( int status ) __attribute__(( __nothrow__, __leaf__, __noreturn__ )) {
 		__cabi_libc.exit( status );
 	}
 }

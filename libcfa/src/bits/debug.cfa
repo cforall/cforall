@@ -20,11 +20,14 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#include "bits/defs.hfa"
+
 enum { buffer_size = 4096 };
 static char buffer[ buffer_size ];
 
 extern "C" {
-	void __cfaabi_bits_write( int fd, const char in_buffer[], int len ) {
+	// would be cool to remove libcfa_public but it's needed for libcfathread
+	void __cfaabi_bits_write( int fd, const char in_buffer[], int len ) libcfa_public {
 		// ensure all data is written
 		for ( int count = 0, retcode; count < len; count += retcode ) {
 			in_buffer += count;
@@ -43,7 +46,8 @@ extern "C" {
 	void __cfaabi_bits_acquire() __attribute__((__weak__)) {}
 	void __cfaabi_bits_release() __attribute__((__weak__)) {}
 
-	int __cfaabi_bits_print_safe  ( int fd, const char fmt[], ... ) __attribute__(( format(printf, 2, 3) )) {
+	// would be cool to remove libcfa_public but it's needed for libcfathread
+	int __cfaabi_bits_print_safe  ( int fd, const char fmt[], ... ) __attribute__(( format(printf, 2, 3) )) libcfa_public {
 		va_list args;
 
 		va_start( args, fmt );

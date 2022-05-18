@@ -49,8 +49,6 @@ struct FindMainCore {
 
 }
 
-	bool FixMain::replace_main = false;
-
 	template<typename container>
 	std::string genTypeAt(const container& p, size_t idx) {
 		return genType((*std::next(p.begin(), idx))->get_type(), "");

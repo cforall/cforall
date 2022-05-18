@@ -9,14 +9,17 @@
 ##
 ## Author           : Richard C. Bilson
 ## Created On       : Mon Jun  1 17:49:17 2015
-## Last Modified By : Peter A. Buhr
-## Last Modified On : Sat Jan 29 12:04:19 2022
-## Update Count     : 7
+## Last Modified By : Andrew Beach
+## Last Modified On : Tue May 17 14:30:00 2022
+## Update Count     : 8
 ###############################################################################
 
-SRC_CONTROLSTRUCT = \
+SRC += \
 	ControlStruct/ExceptDecl.cc \
 	ControlStruct/ExceptDecl.h \
+	ControlStruct/ExceptTranslateNew.cpp \
+	ControlStruct/ExceptTranslate.cc \
+	ControlStruct/ExceptTranslate.h \
 	ControlStruct/FixLabels.cpp \
 	ControlStruct/FixLabels.hpp \
 	ControlStruct/ForExprMutator.cc \
@@ -35,11 +38,4 @@ SRC_CONTROLSTRUCT = \
 	ControlStruct/MultiLevelExit.hpp \
 	ControlStruct/Mutate.cc \
 	ControlStruct/Mutate.h
-
-SRC += $(SRC_CONTROLSTRUCT) \
-	ControlStruct/ExceptTranslateNew.cpp \
-	ControlStruct/ExceptTranslate.cc \
-	ControlStruct/ExceptTranslate.h
-
-SRCDEMANGLE += $(SRC_CONTROLSTRUCT)
 

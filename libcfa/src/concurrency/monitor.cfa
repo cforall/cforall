@@ -43,6 +43,10 @@ static inline void unlock_all( monitor$ * locks [], __lock_size_t count );
 static inline void save   ( monitor$ * ctx [], __lock_size_t count, __spinlock_t * locks [], unsigned int /*out*/ recursions [], __waitfor_mask_t /*out*/ masks [] );
 static inline void restore( monitor$ * ctx [], __lock_size_t count, __spinlock_t * locks [], unsigned int /*in */ recursions [], __waitfor_mask_t /*in */ masks [] );
 
+static inline void ?{}(__condition_node_t & this, thread$ * waiting_thread, __lock_size_t count, uintptr_t user_info );
+static inline void ?{}(__condition_criterion_t & this );
+static inline void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t * owner );
+
 static inline void init     ( __lock_size_t count, monitor$ * monitors [], __condition_node_t & waiter, __condition_criterion_t criteria [] );
 static inline void init_push( __lock_size_t count, monitor$ * monitors [], __condition_node_t & waiter, __condition_criterion_t criteria [] );
 
@@ -242,7 +246,7 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 }
 
 // Leave single monitor
-void __leave( monitor$ * this ) {
+static void __leave( monitor$ * this ) {
 	// Lock the monitor spinlock
 	lock( this->lock __cfaabi_dbg_ctx2 );
 
@@ -277,7 +281,7 @@ void __leave( monitor$ * this ) {
 }
 
 // Leave single monitor for the last time
-void __dtor_leave( monitor$ * this, bool join ) {
+static void __dtor_leave( monitor$ * this, bool join ) {
 	__cfaabi_dbg_debug_do(
 		if( active_thread() != this->owner ) {
 			abort( "Destroyed monitor %p has inconsistent owner, expected %p got %p.\n", this, active_thread(), this->owner);
@@ -343,7 +347,7 @@ static inline void leave(monitor$ * monitors [], __lock_size_t count) {
 
 // Ctor for monitor guard
 // Sorts monitors before entering
-void ?{}( monitor_guard_t & this, monitor$ * m [], __lock_size_t count, fptr_t func ) {
+void ?{}( monitor_guard_t & this, monitor$ * m [], __lock_size_t count, fptr_t func ) libcfa_public {
 	thread$ * thrd = active_thread();
 
 	// Store current array
@@ -368,13 +372,13 @@ void ?{}( monitor_guard_t & this, monitor$ * m [], __lock_size_t count, fptr_t f
 	// __cfaabi_dbg_print_safe( "MGUARD : entered\n" );
 }
 
-void ?{}( monitor_guard_t & this, monitor$ * m [], __lock_size_t count ) {
+void ?{}( monitor_guard_t & this, monitor$ * m [], __lock_size_t count ) libcfa_public {
 	this{ m, count, 0p };
 }
 
 
 // Dtor for monitor guard
-void ^?{}( monitor_guard_t & this ) {
+void ^?{}( monitor_guard_t & this ) libcfa_public {
 	// __cfaabi_dbg_print_safe( "MGUARD : leaving %d\n", this.count);
 
 	// Leave the monitors in order
@@ -388,7 +392,7 @@ void ^?{}( monitor_guard_t & this ) {
 
 // Ctor for monitor guard
 // Sorts monitors before entering
-void ?{}( monitor_dtor_guard_t & this, monitor$ * m [], fptr_t func, bool join ) {
+void ?{}( monitor_dtor_guard_t & this, monitor$ * m [], fptr_t func, bool join ) libcfa_public {
 	// optimization
 	thread$ * thrd = active_thread();
 
@@ -408,7 +412,7 @@ void ?{}( monitor_dtor_guard_t & this, monitor$ * m [], fptr_t func, bool join )
 }
 
 // Dtor for monitor guard
-void ^?{}( monitor_dtor_guard_t & this ) {
+void ^?{}( monitor_dtor_guard_t & this ) libcfa_public {
 	// Leave the monitors in order
 	__dtor_leave( this.m, this.join );
 
@@ -418,21 +422,21 @@ void ^?{}( monitor_dtor_guard_t & this ) {
 
 //-----------------------------------------------------------------------------
 // Internal scheduling types
-void ?{}(__condition_node_t & this, thread$ * waiting_thread, __lock_size_t count, uintptr_t user_info ) {
+static void ?{}(__condition_node_t & this, thread$ * waiting_thread, __lock_size_t count, uintptr_t user_info ) {
 	this.waiting_thread = waiting_thread;
 	this.count = count;
 	this.next = 0p;
 	this.user_info = user_info;
 }
 
-void ?{}(__condition_criterion_t & this ) with( this ) {
+static void ?{}(__condition_criterion_t & this ) with( this ) {
 	ready  = false;
 	target = 0p;
 	owner  = 0p;
 	next   = 0p;
 }
 
-void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t & owner ) {
+static void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t & owner ) {
 	this.ready  = false;
 	this.target = target;
 	this.owner  = &owner;
@@ -441,7 +445,7 @@ void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t &
 
 //-----------------------------------------------------------------------------
 // Internal scheduling
-void wait( condition & this, uintptr_t user_info = 0 ) {
+void wait( condition & this, uintptr_t user_info = 0 ) libcfa_public {
 	brand_condition( this );
 
 	// Check that everything is as expected
@@ -495,7 +499,7 @@ void wait( condition & this, uintptr_t user_info = 0 ) {
 	monitor_restore;
 }
 
-bool signal( condition & this ) {
+bool signal( condition & this ) libcfa_public {
 	if( is_empty( this ) ) { return false; }
 
 	//Check that everything is as expected
@@ -537,7 +541,7 @@ bool signal( condition & this ) {
 	return true;
 }
 
-bool signal_block( condition & this ) {
+bool signal_block( condition & this ) libcfa_public {
 	if( !this.blocked.head ) { return false; }
 
 	//Check that everything is as expected
@@ -585,7 +589,7 @@ bool signal_block( condition & this ) {
 }
 
 // Access the user_info of the thread waiting at the front of the queue
-uintptr_t front( condition & this ) {
+uintptr_t front( condition & this ) libcfa_public {
 	verifyf( !is_empty(this),
 		"Attempt to access user data on an empty condition.\n"
 		"Possible cause is not checking if the condition is empty before reading stored data."
@@ -607,7 +611,7 @@ uintptr_t front( condition & this ) {
 // 	- block
 // 		setup mask
 // 		block
-void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) {
+void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_public {
 	// This statment doesn't have a contiguous list of monitors...
 	// Create one!
 	__lock_size_t max = count_max( mask );
@@ -993,7 +997,7 @@ static inline __lock_size_t aggregate( monitor$ * storage [], const __waitfor_ma
 // Enter routine for mutex stmt
 // Can't be accepted since a mutex stmt is effectively an anonymous routine
 // Thus we do not need a monitor group
-void lock( monitor$ * this ) {
+void lock( monitor$ * this ) libcfa_public {
 	thread$ * thrd = active_thread();
 
 	// Lock the monitor spinlock
@@ -1045,7 +1049,7 @@ void lock( monitor$ * this ) {
 
 // Leave routine for mutex stmt
 // Is just a wrapper around __leave for the is_lock trait to see
-void unlock( monitor$ * this ) { __leave( this ); }
+void unlock( monitor$ * this ) libcfa_public { __leave( this ); }
 
 // Local Variables: //
 // mode: c //

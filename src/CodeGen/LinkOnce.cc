@@ -52,6 +52,11 @@ public:
 			attribute->parameters.push_back(
 				new ConstantExpr( Constant::from_string( section_name ) )
 			);
+
+			// Unconditionnaly add "visibility(default)" to anything with gnu.linkonce
+			// visibility is a mess otherwise
+			attributes.push_back(new Attribute("visibility", {new ConstantExpr( Constant::from_string( "default" ) )}));
+
 		}
 		visit_children = false;
 	}

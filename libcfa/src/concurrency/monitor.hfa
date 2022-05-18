@@ -118,9 +118,9 @@ static inline __condition_node_t * & get_next( __condition_node_t & this ) {
 	return this.next;
 }
 
-void ?{}(__condition_node_t & this, thread$ * waiting_thread, __lock_size_t count, uintptr_t user_info );
-void ?{}(__condition_criterion_t & this );
-void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t * owner );
+// void ?{}(__condition_node_t & this, thread$ * waiting_thread, __lock_size_t count, uintptr_t user_info );
+// void ?{}(__condition_criterion_t & this );
+// void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t * owner );
 
 struct condition {
 	// Link list which contains the blocked threads as-well as the information needed to unblock them

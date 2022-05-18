@@ -9,26 +9,29 @@
 ##
 ## Author           : Richard C. Bilson
 ## Created On       : Mon Jun  1 17:49:17 2015
-## Last Modified By : Peter A. Buhr
-## Last Modified On : Sat Dec 14 07:29:42 2019
-## Update Count     : 4
+## Last Modified By : Andrew Beach
+## Last Modified On : Tue May 17 14:26:00 2022
+## Update Count     : 5
 ###############################################################################
 
-#SRC +=  ArgTweak/Rewriter.cc \
-#	ArgTweak/Mutate.cc
-
 SRC_CODEGEN = \
+	CodeGen/FixMain2.cc \
+	CodeGen/FixMain.h \
+	CodeGen/OperatorTable.cc \
+	CodeGen/OperatorTable.h
+
+SRC += $(SRC_CODEGEN) \
 	CodeGen/CodeGenerator.cc \
 	CodeGen/CodeGenerator.h \
+	CodeGen/Generate.cc \
+	CodeGen/Generate.h \
 	CodeGen/FixMain.cc \
-	CodeGen/FixMain.h \
+	CodeGen/FixNames.cc \
+	CodeGen/FixNames.h \
 	CodeGen/GenType.cc \
 	CodeGen/GenType.h \
 	CodeGen/LinkOnce.cc \
 	CodeGen/LinkOnce.h \
-	CodeGen/OperatorTable.cc \
-	CodeGen/OperatorTable.h \
 	CodeGen/Options.h
 
-SRC += $(SRC_CODEGEN) CodeGen/Generate.cc CodeGen/Generate.h CodeGen/FixNames.cc CodeGen/FixNames.h
 SRCDEMANGLE += $(SRC_CODEGEN)

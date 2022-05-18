@@ -9,9 +9,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 21:53:34 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:46:07 2017
-// Update Count     : 4
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue May 17 14:35:00 2022
+// Update Count     : 5
 //
 
 #pragma once
@@ -32,7 +32,6 @@ namespace SymTab {
 
 	/// Normalizes struct and function declarations
 	void validate( std::list< Declaration * > &translationUnit, bool doDebug = false );
-	void validateType( Type *type, const Indexer *indexer );
 
 	// Sub-passes of validate.
 	void validate_A( std::list< Declaration * > &translationUnit );
@@ -41,10 +40,6 @@ namespace SymTab {
 	void validate_D( std::list< Declaration * > &translationUnit );
 	void validate_E( std::list< Declaration * > &translationUnit );
 	void validate_F( std::list< Declaration * > &translationUnit );
-	void linkReferenceToTypes( std::list< Declaration * > &translationUnit );
-
-	const ast::Type * validateType(
-		const CodeLocation & loc, const ast::Type * type, const ast::SymbolTable & symtab );
 } // namespace SymTab
 
 // Local Variables: //

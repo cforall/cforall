@@ -9,19 +9,14 @@
 ##
 ## Author           : Thierry Delisle
 ## Created On       : Mon Mar 13 12:48:40 2017
-## Last Modified By :
-## Last Modified On :
-## Update Count     : 0
+## Last Modified By : Andrew Beach
+## Last Modified On : Tue May 17 13:28:00 2022
+## Update Count     : 1
 ###############################################################################
 
-SRC_CONCURRENCY = \
+SRC += \
 	Concurrency/KeywordsNew.cpp \
-	Concurrency/Keywords.cc
-
-SRC += $(SRC_CONCURRENCY) \
+	Concurrency/Keywords.cc \
 	Concurrency/Keywords.h \
 	Concurrency/Waitfor.cc \
 	Concurrency/Waitfor.h
-
-SRCDEMANGLE += $(SRC_CONCURRENCY)
-

@@ -9,27 +9,30 @@
 ##
 ## Author           : Richard C. Bilson
 ## Created On       : Mon Jun  1 17:49:17 2015
-## Last Modified By : Peter A. Buhr
-## Last Modified On : Mon Jun  1 17:52:30 2015
-## Update Count     : 1
+## Last Modified By : Andrew Beach
+## Last Modified On : Tue May 17 14:31:00 2022
+## Update Count     : 2
 ###############################################################################
 
-SRC += GenPoly/Box.cc \
-       GenPoly/Box.h \
-       GenPoly/ErasableScopedMap.h \
-       GenPoly/FindFunction.cc \
-       GenPoly/FindFunction.h \
-       GenPoly/GenPoly.cc \
-       GenPoly/GenPoly.h \
-       GenPoly/InstantiateGeneric.cc \
-       GenPoly/InstantiateGeneric.h \
-       GenPoly/Lvalue.cc \
-       GenPoly/Lvalue.h \
-       GenPoly/ScopedSet.h \
-       GenPoly/ScrubTyVars.cc \
-       GenPoly/ScrubTyVars.h \
-       GenPoly/Specialize.cc \
-       GenPoly/Specialize.h
+SRC_GENPOLY = \
+	GenPoly/GenPoly.cc \
+	GenPoly/GenPoly.h \
+	GenPoly/Lvalue2.cc \
+	GenPoly/Lvalue.h
 
-SRCDEMANGLE += GenPoly/GenPoly.cc GenPoly/GenPoly.h GenPoly/Lvalue.cc GenPoly/Lvalue.h
+SRC += $(SRC_GENPOLY) \
+	GenPoly/Box.cc \
+	GenPoly/Box.h \
+	GenPoly/ErasableScopedMap.h \
+	GenPoly/FindFunction.cc \
+	GenPoly/FindFunction.h \
+	GenPoly/InstantiateGeneric.cc \
+	GenPoly/InstantiateGeneric.h \
+	GenPoly/Lvalue.cc \
+	GenPoly/ScopedSet.h \
+	GenPoly/ScrubTyVars.cc \
+	GenPoly/ScrubTyVars.h \
+	GenPoly/Specialize.cc \
+	GenPoly/Specialize.h
 
+SRCDEMANGLE += $(SRC_GENPOLY)

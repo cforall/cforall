@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May  4 17:22:48 2022
-// Update Count     : 5279
+// Last Modified On : Sat May 14 09:16:22 2022
+// Update Count     : 5401
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -54,6 +54,8 @@ using namespace std;
 #include "Common/SemanticError.h"						// error_str
 #include "Common/utility.h"								// for maybeMoveBuild, maybeBuild, CodeLo...
 
+#include "SynTree/Attribute.h"     // for Attribute
+
 extern DeclarationNode * parseTree;
 extern LinkageSpec::Spec linkage;
 extern TypedefTable typedefTable;
@@ -92,13 +94,19 @@ bool appendStr( string & to, string & from ) {
 	return true;
 } // appendStr
 
-DeclarationNode * distAttr( DeclarationNode * specifier, DeclarationNode * declList ) {
-	// distribute declaration_specifier across all declared variables, e.g., static, const, __attribute__.
-	DeclarationNode * cur = declList, * cl = (new DeclarationNode)->addType( specifier );
+DeclarationNode * distAttr( DeclarationNode * typeSpec, DeclarationNode * declList ) {
+	// distribute declaration_specifier across all declared variables, e.g., static, const, but not __attribute__.
+	assert( declList );
+//	printf( "distAttr1 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout );
+	DeclarationNode * cur = declList, * cl = (new DeclarationNode)->addType( typeSpec );
+//	printf( "distAttr2 cl %p\n", cl ); cl->type->print( std::cout );
+//	cl->type->aggregate.name = cl->type->aggInst.aggregate->aggregate.name;
+
 	for ( cur = dynamic_cast<DeclarationNode *>( cur->get_next() ); cur != nullptr; cur = dynamic_cast<DeclarationNode *>( cur->get_next() ) ) {
 		cl->cloneBaseType( cur );
 	} // for
 	declList->addType( cl );
+//	printf( "distAttr3 declList %p\n", declList ); declList->print( std::cout, 0 );
 	return declList;
 } // distAttr
 
@@ -170,13 +178,19 @@ DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * field
 	if ( ! fieldList ) {								// field declarator ?
 		if ( ! ( typeSpec->type && (typeSpec->type->kind == TypeData::Aggregate || typeSpec->type->kind == TypeData::Enum) ) ) {
 			stringstream ss;
-			typeSpec->type->print( ss );
+			// printf( "fieldDecl1 typeSpec %p\n", typeSpec ); typeSpec->type->print( std::cout );
 			SemanticWarning( yylloc, Warning::SuperfluousDecl, ss.str().c_str() );
 			return nullptr;
 		} // if
+		// printf( "fieldDecl2 typeSpec %p\n", typeSpec ); typeSpec->type->print( std::cout );
 		fieldList = DeclarationNode::newName( nullptr );
 	} // if
-	return distAttr( typeSpec, fieldList );				// mark all fields in list
+//	return distAttr( typeSpec, fieldList );				// mark all fields in list
+
+	// printf( "fieldDecl3 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout, 0 );
+	DeclarationNode * temp = distAttr( typeSpec, fieldList );				// mark all fields in list
+	// printf( "fieldDecl4 temp %p\n", temp ); temp->print( std::cout, 0 );
+	return temp;
 } // fieldDecl
 
 ForCtrl * forCtrl( ExpressionNode * type, string * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
@@ -1619,6 +1633,12 @@ local_label_list:										// GCC, local label
 
 declaration:											// old & new style declarations
 	c_declaration ';'
+		{
+			// printf( "C_DECLARATION1 %p %s\n", $$, $$->name ? $$->name->c_str() : "(nil)" );
+		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			//   printf( "\tattr %s\n", attr->name.c_str() );
+			// } // for
+		}
 	| cfa_declaration ';'								// CFA
 	| static_assert										// C11
 	;
@@ -1824,6 +1844,12 @@ declaration_specifier_nobody:							// type specifier + storage class - {...}
 type_specifier:											// type specifier
 	basic_type_specifier
 	| sue_type_specifier
+		{
+			// printf( "sue_type_specifier2 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
+		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			//   printf( "\tattr %s\n", attr->name.c_str() );
+			// } // for
+		}
 	| type_type_specifier
 	;
 
@@ -2040,6 +2066,12 @@ indirect_type:
 
 sue_declaration_specifier:								// struct, union, enum + storage class + type specifier
 	sue_type_specifier
+		{
+			// printf( "sue_declaration_specifier %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
+		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			//   printf( "\tattr %s\n", attr->name.c_str() );
+			// } // for
+		}
 	| declaration_qualifier_list sue_type_specifier
 		{ $$ = $2->addQualifiers( $1 ); }
 	| sue_declaration_specifier storage_class			// remaining OBSOLESCENT (see 2)
@@ -2050,6 +2082,12 @@ sue_declaration_specifier:								// struct, union, enum + storage class + type 
 
 sue_type_specifier:										// struct, union, enum + type specifier
 	elaborated_type
+		{
+			// printf( "sue_type_specifier %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
+		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			//   printf( "\tattr %s\n", attr->name.c_str() );
+			// } // for
+		}
 	| type_qualifier_list
 		{ if ( $1->type != nullptr && $1->type->forall ) forall = true; } // remember generic type
 	  elaborated_type
@@ -2122,6 +2160,12 @@ typegen_name:											// CFA
 
 elaborated_type:										// struct, union, enum
 	aggregate_type
+		{
+			// printf( "elaborated_type %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
+		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			//   printf( "\tattr %s\n", attr->name.c_str() );
+			// } // for
+		}
 	| enum_type
 	;
 
@@ -2141,7 +2185,18 @@ aggregate_type:											// struct, union
 			forall = false;								// reset
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
-		{ $$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 ); }
+		{
+			// printf( "aggregate_type1 %s\n", $3.str->c_str() );
+			// if ( $2 )
+			// 	for ( Attribute * attr: reverseIterate( $2->attributes ) ) {
+			// 		printf( "copySpecifiers12 %s\n", attr->name.c_str() );
+			// 	} // for
+			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
+			// printf( "aggregate_type2 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
+			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			// 	printf( "aggregate_type3 %s\n", attr->name.c_str() );
+			// } // for
+		}
 	| aggregate_key attribute_list_opt TYPEDEFname		// unqualified type name
 		{
 			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname ); // create typedef
@@ -2149,6 +2204,7 @@ aggregate_type:											// struct, union
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
 		{
+			// printf( "AGG3\n" );
 			DeclarationNode::newFromTypedef( $3 );
 			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
 		}
@@ -2159,6 +2215,7 @@ aggregate_type:											// struct, union
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
 		{
+			// printf( "AGG4\n" );
 			DeclarationNode::newFromTypeGen( $3, nullptr );
 			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
 		}
@@ -2235,7 +2292,14 @@ field_declaration_list_opt:
 
 field_declaration:
 	type_specifier field_declaring_list_opt ';'
-		{ $$ = fieldDecl( $1, $2 ); }
+		{
+			// printf( "type_specifier1 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
+			$$ = fieldDecl( $1, $2 );
+			// printf( "type_specifier2 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
+		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			//   printf( "\tattr %s\n", attr->name.c_str() );
+			// } // for
+		}
 	| EXTENSION type_specifier field_declaring_list_opt ';'	// GCC
 		{ $$ = fieldDecl( $2, $3 ); distExt( $$ ); }
 	| INLINE type_specifier field_abstract_list_opt ';'	// CFA
@@ -2844,8 +2908,14 @@ external_function_definition:
 with_clause_opt:
 	// empty
 		{ $$ = nullptr; forall = false; }
-	| WITH '(' tuple_expression_list ')'
-		{ $$ = $3; forall = false; }
+	| WITH '(' tuple_expression_list ')' attribute_list_opt
+		{
+			$$ = $3; forall = false;
+			if ( $5 ) {
+				SemanticError( yylloc, "Attributes cannot be associated with function body. Move attribute(s) before \"with\" clause." );
+				$$ = nullptr;
+			} // if
+		}
 	;
 
 function_definition:

@@ -32,7 +32,7 @@ gdbwaittarget=""
 # use -no-include-stdhdr to prevent rebuild cycles
 # The built sources must not depend on the installed inst_headers_src
 AM_CFAFLAGS = -quiet -cfalib -I$(srcdir)/stdhdr -I$(srcdir)/concurrency $(if $(findstring ${gdbwaittarget}, ${@}), -XCFA --gdb) @CONFIG_CFAFLAGS@
-AM_CFLAGS = -g -Wall -Werror=return-type -Wno-unused-function -fPIC -fexceptions -pthread @ARCH_FLAGS@ @CONFIG_CFLAGS@
+AM_CFLAGS = -g -Wall -Werror=return-type -Wno-unused-function -fPIC -fexceptions -fvisibility=hidden -pthread @ARCH_FLAGS@ @CONFIG_CFLAGS@
 AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @CONFIG_CFLAGS@
 CFACC = @CFACC@
 
@@ -193,11 +193,11 @@ prelude.o prelude.lo $(libobjs) $(thread_libobjs) : ../prelude/distribution
 endif ENABLE_DISTCC
 
 prelude.o : prelude.cfa extras.cf gcc-builtins.cf builtins.cf @LOCAL_CFACC@ @CFACPP@
-	${AM_V_GEN}$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -o ${@}
+	${AM_V_GEN}$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -fvisibility=default -o ${@}
 
 prelude.lo: prelude.cfa extras.cf gcc-builtins.cf builtins.cf @LOCAL_CFACC@ @CFACPP@
 	${AM_V_GEN}$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile \
-	$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -o ${@}
+	$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -fvisibility=default -o ${@}
 
 concurrency/io/call.cfa: $(srcdir)/concurrency/io/call.cfa.in
 	${AM_V_GEN}python3 $< > $@

@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 23:45:51 2019
-// Update Count     : 24
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue May 17 15:02:00 2022
+// Update Count     : 25
 //
 
 #include <stddef.h>               // for size_t
@@ -365,52 +365,6 @@ namespace Tuples {
 			}
 		}
 		return nullptr;
-	}
-
-	namespace {
-		/// determines if impurity (read: side-effects) may exist in a piece of code. Currently gives a very crude approximation, wherein any function call expression means the code may be impure
-		struct ImpurityDetector : public WithShortCircuiting {
-			ImpurityDetector( bool ignoreUnique ) : ignoreUnique( ignoreUnique ) {}
-
-			void previsit( const ApplicationExpr * appExpr ) {
-				visit_children = false;
-				if ( const DeclarationWithType * function = InitTweak::getFunction( appExpr ) ) {
-					if ( function->linkage == LinkageSpec::Intrinsic ) {
-						if ( function->name == "*?" || function->name == "?[?]" ) {
-							// intrinsic dereference, subscript are pure, but need to recursively look for impurity
-							visit_children = true;
-							return;
-						}
-					}
-				}
-				maybeImpure = true;
-			}
-			void previsit( const UntypedExpr * ) { maybeImpure = true; visit_children = false; }
-			void previsit( const UniqueExpr * ) {
-				if ( ignoreUnique ) {
-					// bottom out at unique expression.
-					// The existence of a unique expression doesn't change the purity of an expression.
-					// That is, even if the wrapped expression is impure, the wrapper protects the rest of the expression.
-					visit_children = false;
-					return;
-				}
-			}
-
-			bool maybeImpure = false;
-			bool ignoreUnique;
-		};
-	} // namespace
-
-	bool maybeImpure( const Expression * expr ) {
-		PassVisitor<ImpurityDetector> detector( false );
-		expr->accept( detector );
-		return detector.pass.maybeImpure;
-	}
-
-	bool maybeImpureIgnoreUnique( const Expression * expr ) {
-		PassVisitor<ImpurityDetector> detector( true );
-		expr->accept( detector );
-		return detector.pass.maybeImpure;
 	}
 } // namespace Tuples
 

@@ -69,6 +69,7 @@ using namespace std;
 #include "ResolvExpr/CandidatePrinter.hpp"  // for printCandidates
 #include "ResolvExpr/Resolver.h"            // for resolve
 #include "SymTab/Validate.h"                // for validate
+#include "SymTab/ValidateType.h"            // for linkReferenceToTypes
 #include "SynTree/LinkageSpec.h"            // for Spec, Cforall, Intrinsic
 #include "SynTree/Declaration.h"            // for Declaration
 #include "SynTree/Visitor.h"                // for acceptAll

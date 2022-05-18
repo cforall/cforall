@@ -26,6 +26,8 @@
 
 extern uint32_t __global_random_seed, __global_random_prime, __global_random_mask;
 
+#pragma GCC visibility push(default)
+
 //-----------------------------------------------------------------------------
 // Thread ctors and dtors
 void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage, size_t storageSize ) with( this ) {

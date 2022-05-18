@@ -17,6 +17,8 @@
 
 #include "bits/weakso_locks.hfa"
 
+#pragma GCC visibility push(default)
+
 void  ?{}( blocking_lock &, bool, bool ) {}
 void ^?{}( blocking_lock & ) {}
 

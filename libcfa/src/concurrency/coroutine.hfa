@@ -112,8 +112,6 @@ static inline void $ctx_switch( coroutine$ * src, coroutine$ * dst ) __attribute
 }
 
 extern void __stack_prepare( __stack_info_t * this, size_t size /* ignored if storage already allocated */);
-extern void __stack_clean  ( __stack_info_t * this );
-
 
 // Suspend implementation inlined for performance
 extern "C" {

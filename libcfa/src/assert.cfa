@@ -18,6 +18,7 @@
 #include <stdio.h>								// fprintf
 #include <unistd.h>								// STDERR_FILENO
 #include "bits/debug.hfa"
+#include "bits/defs.hfa"
 
 extern "C" {
 	extern const char * __progname;						// global name of running executable (argv[0])
@@ -25,13 +26,15 @@ extern "C" {
 	#define CFA_ASSERT_FMT "Cforall Assertion error \"%s\" from program \"%s\" in \"%s\" at line %d in file \"%s\""
 
 	// called by macro assert in assert.h
-	void __assert_fail( const char assertion[], const char file[], unsigned int line, const char function[] ) {
+	// would be cool to remove libcfa_public but it's needed for libcfathread
+	void __assert_fail( const char assertion[], const char file[], unsigned int line, const char function[] ) libcfa_public {
 		__cfaabi_bits_print_safe( STDERR_FILENO, CFA_ASSERT_FMT ".\n", assertion, __progname, function, line, file );
 		abort();
 	}
 
 	// called by macro assertf
-	void __assert_fail_f( const char assertion[], const char file[], unsigned int line, const char function[], const char fmt[], ... ) {
+	// would be cool to remove libcfa_public but it's needed for libcfathread
+	void __assert_fail_f( const char assertion[], const char file[], unsigned int line, const char function[], const char fmt[], ... ) libcfa_public {
 		__cfaabi_bits_acquire();
 		__cfaabi_bits_print_nolock( STDERR_FILENO, CFA_ASSERT_FMT ": ", assertion, __progname, function, line, file );
 

@@ -119,7 +119,7 @@ KERNEL_STORAGE(io_future_t,          mainIdleFuture);
 KERNEL_STORAGE(__stats_t, mainProcStats);
 #endif
 
-cluster              * mainCluster;
+cluster              * mainCluster libcfa_public;
 processor            * mainProcessor;
 thread$              * mainThread;
 __scheduler_RWLock_t * __scheduler_lock;
@@ -168,7 +168,7 @@ struct current_stack_info_t {
 	void * context;       // address of cfa_context_t
 };
 
-void ?{}( current_stack_info_t & this ) {
+static void ?{}( current_stack_info_t & this ) {
 	__stack_context_t ctx;
 	CtxGet( ctx );
 	this.base = ctx.FP;
@@ -208,8 +208,8 @@ static void __kernel_startup(void) {
 
 	// Construct the processor context of the main processor
 	void ?{}(processorCtx_t & this, processor * proc) {
-		(this.__cor){ "Processor" };
-		this.__cor.starter = 0p;
+		(this.self){ "Processor" };
+		this.self.starter = 0p;
 		this.proc = proc;
 	}
 
@@ -525,7 +525,7 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 // Processor
 // Construct the processor context of non-main processors
 static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * info) {
-	(this.__cor){ info };
+	(this.self){ info };
 	this.proc = proc;
 }
 
@@ -577,7 +577,7 @@ static void deinit(processor & this) {
 	close(this.idle_wctx.evfd);
 }
 
-void ?{}(processor & this, const char name[], cluster & _cltr, thread$ * initT) {
+void ?{}(processor & this, const char name[], cluster & _cltr, thread$ * initT) libcfa_public {
 	( this.terminated ){};
 	( this.runner ){};
 
@@ -590,12 +590,12 @@ void ?{}(processor & this, const char name[], cluster & _cltr, thread$ * initT) 
 	this.stack = __create_pthread( &this.kernel_thread, __invoke_processor, (void *)&this );
 }
 
-void ?{}(processor & this, const char name[], cluster & _cltr) {
+void ?{}(processor & this, const char name[], cluster & _cltr) libcfa_public {
 	(this){name, _cltr, 0p};
 }
 
 extern size_t __page_size;
-void ^?{}(processor & this) with( this ){
+void ^?{}(processor & this) libcfa_public with( this ) {
 	/* paranoid */ verify( !__atomic_load_n(&do_terminate, __ATOMIC_ACQUIRE) );
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p signaling termination\n", &this);
 
@@ -622,7 +622,7 @@ static void ?{}(__cluster_proc_list & this) {
 	this.total = 0;
 }
 
-void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned num_io, const io_context_params & io_params) with( this ) {
+void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned num_io, const io_context_params & io_params) libcfa_public with( this ) {
 	this.name = name;
 	this.preemption_rate = preemption_rate;
 	this.sched.readyQ.data = 0p;
@@ -657,7 +657,7 @@ void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned n
 	enable_interrupts( false ); // Don't poll, could be in main cluster
 }
 
-void ^?{}(cluster & this) {
+void ^?{}(cluster & this) libcfa_public {
 	destroy(this.io.arbiter);
 
 	// Lock the RWlock so no-one pushes/pops while we are changing the queue

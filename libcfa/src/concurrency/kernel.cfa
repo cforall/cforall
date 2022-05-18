@@ -388,7 +388,7 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 }
 
 // KERNEL_ONLY
-void returnToKernel() {
+static void returnToKernel() {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	coroutine$ * proc_cor = get_coroutine(kernelTLS().this_processor->runner);
 	thread$ * thrd_src = kernelTLS().this_thread;
@@ -546,7 +546,7 @@ void __kernel_unpark( thread$ * thrd, unpark_hint hint ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 }
 
-void unpark( thread$ * thrd, unpark_hint hint ) {
+void unpark( thread$ * thrd, unpark_hint hint ) libcfa_public {
 	if( !thrd ) return;
 
 	if(__must_unpark(thrd)) {
@@ -557,7 +557,7 @@ void unpark( thread$ * thrd, unpark_hint hint ) {
 	}
 }
 
-void park( void ) {
+void park( void ) libcfa_public {
 	__disable_interrupts_checked();
 		/* paranoid */ verify( kernelTLS().this_thread->preempted == __NO_PREEMPTION );
 		returnToKernel();
@@ -600,7 +600,7 @@ extern "C" {
 }
 
 // KERNEL ONLY
-bool force_yield( __Preemption_Reason reason ) {
+bool force_yield( __Preemption_Reason reason ) libcfa_public {
 	__disable_interrupts_checked();
 		thread$ * thrd = kernelTLS().this_thread;
 		/* paranoid */ verify(thrd->state == Active);
@@ -848,14 +848,14 @@ __cfaabi_dbg_debug_do(
 
 //-----------------------------------------------------------------------------
 // Debug
-bool threading_enabled(void) __attribute__((const)) {
+bool threading_enabled(void) __attribute__((const)) libcfa_public {
 	return true;
 }
 
 //-----------------------------------------------------------------------------
 // Statistics
 #if !defined(__CFA_NO_STATISTICS__)
-	void print_halts( processor & this ) {
+	void print_halts( processor & this ) libcfa_public {
 		this.print_halts = true;
 	}
 
@@ -872,7 +872,7 @@ bool threading_enabled(void) __attribute__((const)) {
 		}
 	}
 
-	void crawl_cluster_stats( cluster & this ) {
+	static void crawl_cluster_stats( cluster & this ) {
 		// Stop the world, otherwise stats could get really messed-up
 		// this doesn't solve all problems but does solve many
 		// so it's probably good enough
@@ -888,7 +888,7 @@ bool threading_enabled(void) __attribute__((const)) {
 	}
 
 
-	void print_stats_now( cluster & this, int flags ) {
+	void print_stats_now( cluster & this, int flags ) libcfa_public {
 		crawl_cluster_stats( this );
 		__print_stats( this.stats, flags, "Cluster", this.name, (void*)&this );
 	}

@@ -325,19 +325,21 @@ void main( __cfainit & this ) {
 	this.init( this.arg );
 }
 
+#pragma GCC visibility push(default)
+
 //================================================================================
 // Main Api
 extern "C" {
-	int cfathread_cluster_create(cfathread_cluster_t * cl) __attribute__((nonnull(1))) {
+	int cfathread_cluster_create(cfathread_cluster_t * cl) __attribute__((nonnull(1))) libcfa_public {
 		*cl = new();
 		return 0;
 	}
 
-	cfathread_cluster_t cfathread_cluster_self(void) {
+	cfathread_cluster_t cfathread_cluster_self(void) libcfa_public {
 		return active_cluster();
 	}
 
-	int cfathread_cluster_print_stats( cfathread_cluster_t cl ) {
+	int cfathread_cluster_print_stats( cfathread_cluster_t cl ) libcfa_public {
 		#if !defined(__CFA_NO_STATISTICS__)
 			print_stats_at_exit( *cl, CFA_STATS_READY_Q | CFA_STATS_IO );
 			print_stats_now( *cl, CFA_STATS_READY_Q | CFA_STATS_IO );

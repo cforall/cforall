@@ -9,24 +9,74 @@
 // Author           : Andrew Beach
 // Created On       : Mon Jun 17 14:41:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Jun 18  9:31:00 2019
-// Update Count     : 1
+// Last Modified On : Mon May 16 16:15:00 2022
+// Update Count     : 2
 //
 
 #include "Tuples.h"
 
 #include "AST/Pass.hpp"
 #include "AST/LinkageSpec.hpp"
+#include "Common/PassVisitor.h"
 #include "InitTweak/InitTweak.h"
 
 namespace Tuples {
 
 namespace {
+	/// Checks if impurity (read: side-effects) may exist in a piece of code.
+	/// Currently gives a very crude approximation, wherein any function
+	/// call expression means the code may be impure.
+	struct ImpurityDetector_old : public WithShortCircuiting {
+		bool const ignoreUnique;
+		bool maybeImpure;
+
+		ImpurityDetector_old( bool ignoreUnique ) :
+			ignoreUnique( ignoreUnique ), maybeImpure( false )
+		{}
+
+		void previsit( const ApplicationExpr * appExpr ) {
+			visit_children = false;
+			if ( const DeclarationWithType * function =
+					InitTweak::getFunction( appExpr ) ) {
+				if ( function->linkage == LinkageSpec::Intrinsic ) {
+					if ( function->name == "*?" || function->name == "?[?]" ) {
+						// intrinsic dereference, subscript are pure,
+						// but need to recursively look for impurity
+						visit_children = true;
+						return;
+					}
+				}
+			}
+			maybeImpure = true;
+		}
+
+		void previsit( const UntypedExpr * ) {
+			maybeImpure = true;
+			visit_children = false;
+		}
+
+		void previsit( const UniqueExpr * ) {
+			if ( ignoreUnique ) {
+				// bottom out at unique expression.
+				// The existence of a unique expression doesn't change the purity of an expression.
+				// That is, even if the wrapped expression is impure, the wrapper protects the rest of the expression.
+				visit_children = false;
+				return;
+			}
+		}
+	};
+
+	bool detectImpurity( const Expression * expr, bool ignoreUnique ) {
+		PassVisitor<ImpurityDetector_old> detector( ignoreUnique );
+		expr->accept( detector );
+		return detector.pass.maybeImpure;
+	}
+
 	/// Determines if impurity (read: side-effects) may exist in a piece of code. Currently gives
 	/// a very crude approximation, wherein any function call expression means the code may be
 	/// impure.
     struct ImpurityDetector : public ast::WithShortCircuiting {
-		bool maybeImpure = false;
+		bool result = false;
 
 		void previsit( ast::ApplicationExpr const * appExpr ) {
 			if ( ast::DeclWithType const * function = InitTweak::getFunction( appExpr ) ) {
@@ -35,33 +85,35 @@ namespace {
 					return;
 				}
 			}
-			maybeImpure = true; visit_children = false;
+			result = true; visit_children = false;
 		}
 		void previsit( ast::UntypedExpr const * ) {
-			maybeImpure = true; visit_children = false;
+			result = true; visit_children = false;
 		}
 	};
+
 	struct ImpurityDetectorIgnoreUnique : public ImpurityDetector {
 		using ImpurityDetector::previsit;
 		void previsit( ast::UniqueExpr const * ) {
 			visit_children = false;
 		}
 	};
-
-	template<typename Detector>
-	bool detectImpurity( const ast::Expr * expr ) {
-		ast::Pass<Detector> detector;
-		expr->accept( detector );
-		return detector.core.maybeImpure;
-	}
 } // namespace
 
 bool maybeImpure( const ast::Expr * expr ) {
-	return detectImpurity<ImpurityDetector>( expr );
+	return ast::Pass<ImpurityDetector>::read( expr );
 }
 
 bool maybeImpureIgnoreUnique( const ast::Expr * expr ) {
-	return detectImpurity<ImpurityDetectorIgnoreUnique>( expr );
+	return ast::Pass<ImpurityDetectorIgnoreUnique>::read( expr );
+}
+
+bool maybeImpure( const Expression * expr ) {
+	return detectImpurity( expr, false );
+}
+
+bool maybeImpureIgnoreUnique( const Expression * expr ) {
+	return detectImpurity( expr, true );
 }
 
 } // namespace Tuples

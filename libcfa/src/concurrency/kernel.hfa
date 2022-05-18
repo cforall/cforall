@@ -48,7 +48,9 @@ void  ?{}(io_context_params & this);
 extern struct cluster * mainCluster;
 
 // Coroutine used py processors for the 2-step context switch
-coroutine processorCtx_t {
+
+struct processorCtx_t {
+	struct coroutine$ self;
 	struct processor * proc;
 };
 

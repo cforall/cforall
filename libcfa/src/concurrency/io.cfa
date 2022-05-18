@@ -339,7 +339,7 @@
 	// able to see which entries can be used and which are already un used by an other thread
 	// for convenience, return both the index and the pointer to the sqe
 	// sqe == &sqes[idx]
-	struct $io_context * cfa_io_allocate(struct io_uring_sqe * sqes[], __u32 idxs[], __u32 want) {
+	struct $io_context * cfa_io_allocate(struct io_uring_sqe * sqes[], __u32 idxs[], __u32 want) libcfa_public {
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to allocate %u\n", want);
 
 		disable_interrupts();
@@ -418,7 +418,7 @@
 		}
 	}
 
-	void cfa_io_submit( struct $io_context * inctx, __u32 idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1))) {
+	void cfa_io_submit( struct $io_context * inctx, __u32 idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1))) libcfa_public {
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to submit %u (%s)\n", have, lazy ? "lazy" : "eager");
 
 		disable_interrupts();
