@@ -17,7 +17,6 @@
 
 #include "bits/weakso_locks.hfa"						// mutex_lock
 #include "iostream.hfa"
-#include <exception.hfa>
 
 
 // *********************************** ofstream ***********************************

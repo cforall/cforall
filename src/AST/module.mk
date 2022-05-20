@@ -28,7 +28,6 @@ SRC_AST = \
 	AST/Decl.hpp \
 	AST/DeclReplacer.cpp \
 	AST/DeclReplacer.hpp \
-	AST/Eval.hpp \
 	AST/Expr.cpp \
 	AST/Expr.hpp \
 	AST/FunctionSpec.hpp \

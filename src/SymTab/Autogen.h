@@ -20,7 +20,6 @@
 #include <string>                 // for string
 
 #include "AST/Decl.hpp"
-#include "AST/Eval.hpp"
 #include "AST/Expr.hpp"
 #include "AST/Init.hpp"
 #include "AST/Node.hpp"
@@ -70,8 +69,8 @@ namespace SymTab {
 
 	template< typename OutIter >
 	ast::ptr< ast::Stmt > genCall(
-		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam, 
-		const CodeLocation & loc, const std::string & fname, OutIter && out, 
+		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+		const CodeLocation & loc, const std::string & fname, OutIter && out,
 		const ast::Type * type, const ast::Type * addCast, LoopDirection forward = LoopForward );
 
 	/// inserts into out a generated call expression to function fname with arguments dstParam and srcParam. Should only be called with non-array types.
@@ -127,14 +126,14 @@ namespace SymTab {
 		return listInit;
 	}
 
-	/// inserts into out a generated call expression to function fname with arguments dstParam and 
+	/// inserts into out a generated call expression to function fname with arguments dstParam and
 	/// srcParam. Should only be called with non-array types.
-	/// optionally returns a statement which must be inserted prior to the containing loop, if 
+	/// optionally returns a statement which must be inserted prior to the containing loop, if
 	/// there is one
 	template< typename OutIter >
-	ast::ptr< ast::Stmt > genScalarCall( 
-		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam, 
-		const CodeLocation & loc, std::string fname, OutIter && out, const ast::Type * type, 
+	ast::ptr< ast::Stmt > genScalarCall(
+		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+		const CodeLocation & loc, std::string fname, OutIter && out, const ast::Type * type,
 		const ast::Type * addCast = nullptr
 	) {
 		bool isReferenceCtorDtor = false;
@@ -152,15 +151,15 @@ namespace SymTab {
 		ast::UntypedExpr * fExpr = new ast::UntypedExpr{ loc, new ast::NameExpr{ loc, fname } };
 
 		if ( addCast ) {
-			// cast to T& with qualifiers removed, so that qualified objects can be constructed and 
-			// destructed with the same functions as non-qualified objects. Unfortunately, lvalue 
-			// is considered a qualifier - for AddressExpr to resolve, its argument must have an 
+			// cast to T& with qualifiers removed, so that qualified objects can be constructed and
+			// destructed with the same functions as non-qualified objects. Unfortunately, lvalue
+			// is considered a qualifier - for AddressExpr to resolve, its argument must have an
 			// lvalue-qualified type, so remove all qualifiers except lvalue.
 			// xxx -- old code actually removed lvalue too...
 			ast::ptr< ast::Type > guard = addCast;  // prevent castType from mutating addCast
 			ast::ptr< ast::Type > castType = addCast;
-			ast::remove_qualifiers( 
-				castType, 
+			ast::remove_qualifiers(
+				castType,
 				ast::CV::Const | ast::CV::Volatile | ast::CV::Restrict | ast::CV::Atomic );
 			dstParam = new ast::CastExpr{ dstParam, new ast::ReferenceType{ castType } };
 		}
@@ -180,7 +179,7 @@ namespace SymTab {
 		*out++ = new ast::ExprStmt{ loc, fExpr };
 
 		srcParam.clearArrayIndices();
-		
+
 		return listInit;
 	}
 
@@ -248,14 +247,14 @@ namespace SymTab {
 		*out++ = block;
 	}
 
-	/// Store in out a loop which calls fname on each element of the array with srcParam and 
+	/// Store in out a loop which calls fname on each element of the array with srcParam and
 	/// dstParam as arguments. If forward is true, loop goes from 0 to N-1, else N-1 to 0
 	template< typename OutIter >
 	void genArrayCall(
-		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam, 
-		const CodeLocation & loc, const std::string & fname, OutIter && out, 
-		const ast::ArrayType * array, const ast::Type * addCast = nullptr, 
-		LoopDirection forward = LoopForward 
+		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+		const CodeLocation & loc, const std::string & fname, OutIter && out,
+		const ast::ArrayType * array, const ast::Type * addCast = nullptr,
+		LoopDirection forward = LoopForward
 	) {
 		static UniqueName indexName( "_index" );
 
@@ -278,34 +277,37 @@ namespace SymTab {
 			update = "++?";
 		} else {
 			// generate: for ( int i = N-1; i >= 0; --i )
-			begin = ast::call( 
-				loc, "?-?", array->dimension, ast::ConstantExpr::from_int( loc, 1 ) );
+			begin = ast::UntypedExpr::createCall( loc, "?-?",
+				{ array->dimension, ast::ConstantExpr::from_int( loc, 1 ) } );
 			end = ast::ConstantExpr::from_int( loc, 0 );
 			cmp = "?>=?";
 			update = "--?";
 		}
 
-		ast::ptr< ast::DeclWithType > index = new ast::ObjectDecl{ 
-			loc, indexName.newName(), new ast::BasicType{ ast::BasicType::SignedInt }, 
+		ast::ptr< ast::DeclWithType > index = new ast::ObjectDecl{
+			loc, indexName.newName(), new ast::BasicType{ ast::BasicType::SignedInt },
 			new ast::SingleInit{ loc, begin } };
 		ast::ptr< ast::Expr > indexVar = new ast::VariableExpr{ loc, index };
-		
-		ast::ptr< ast::Expr > cond = ast::call( loc, cmp, indexVar, end );
-		
-		ast::ptr< ast::Expr > inc = ast::call( loc, update, indexVar );
-		
-		ast::ptr< ast::Expr > dstIndex = ast::call( loc, "?[?]", dstParam, indexVar );
-		
-		// srcParam must keep track of the array indices to build the source parameter and/or 
+
+		ast::ptr< ast::Expr > cond = ast::UntypedExpr::createCall(
+			loc, cmp, { indexVar, end } );
+
+		ast::ptr< ast::Expr > inc = ast::UntypedExpr::createCall(
+			loc, update, { indexVar } );
+
+		ast::ptr< ast::Expr > dstIndex = ast::UntypedExpr::createCall(
+			loc, "?[?]", { dstParam, indexVar } );
+
+		// srcParam must keep track of the array indices to build the source parameter and/or
 		// array list initializer
 		srcParam.addArrayIndex( indexVar, array->dimension );
 
 		// for stmt's body, eventually containing call
 		ast::CompoundStmt * body = new ast::CompoundStmt{ loc };
-		ast::ptr< ast::Stmt > listInit = genCall( 
-			srcParam, dstIndex, loc, fname, std::back_inserter( body->kids ), array->base, addCast, 
+		ast::ptr< ast::Stmt > listInit = genCall(
+			srcParam, dstIndex, loc, fname, std::back_inserter( body->kids ), array->base, addCast,
 			forward );
-		
+
 		// block containing the stmt and index variable
 		ast::CompoundStmt * block = new ast::CompoundStmt{ loc };
 		block->push_back( new ast::DeclStmt{ loc, index } );
@@ -327,17 +329,17 @@ namespace SymTab {
 
 	template< typename OutIter >
 	ast::ptr< ast::Stmt > genCall(
-		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam, 
-		const CodeLocation & loc, const std::string & fname, OutIter && out, 
+		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+		const CodeLocation & loc, const std::string & fname, OutIter && out,
 		const ast::Type * type, const ast::Type * addCast, LoopDirection forward
 	) {
 		if ( auto at = dynamic_cast< const ast::ArrayType * >( type ) ) {
-			genArrayCall( 
-				srcParam, dstParam, loc, fname, std::forward< OutIter >(out), at, addCast, 
+			genArrayCall(
+				srcParam, dstParam, loc, fname, std::forward< OutIter >(out), at, addCast,
 				forward );
 			return {};
 		} else {
-			return genScalarCall( 
+			return genScalarCall(
 				srcParam, dstParam, loc, fname, std::forward< OutIter >( out ), type, addCast );
 		}
 	}
@@ -376,10 +378,10 @@ namespace SymTab {
 		}
 	}
 
-	static inline ast::ptr< ast::Stmt > genImplicitCall( 
-		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam, 
-		const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * obj, 
-		LoopDirection forward = LoopForward 
+	static inline ast::ptr< ast::Stmt > genImplicitCall(
+		InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+		const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * obj,
+		LoopDirection forward = LoopForward
 	) {
 		// unnamed bit fields are not copied as they cannot be accessed
 		if ( isUnnamedBitfield( obj ) ) return {};
@@ -391,7 +393,7 @@ namespace SymTab {
 		}
 
 		std::vector< ast::ptr< ast::Stmt > > stmts;
-		genCall( 
+		genCall(
 			srcParam, dstParam, loc, fname, back_inserter( stmts ), obj->type, addCast, forward );
 
 		if ( stmts.empty() ) {
@@ -399,7 +401,7 @@ namespace SymTab {
 		} else if ( stmts.size() == 1 ) {
 			const ast::Stmt * callStmt = stmts.front();
 			if ( addCast ) {
-				// implicitly generated ctor/dtor calls should be wrapped so that later passes are 
+				// implicitly generated ctor/dtor calls should be wrapped so that later passes are
 				// aware they were generated.
 				callStmt = new ast::ImplicitCtorDtorStmt{ callStmt->location, callStmt };
 			}
@@ -416,4 +418,3 @@ namespace SymTab {
 // mode: c++ //
 // compile-command: "make install" //
 // End: //
-

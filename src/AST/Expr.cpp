@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Wed May 15 17:00:00 2019
 // Last Modified By : Andrew Beach
-// Created On       : Tue Nov 30 14:23:00 2021
-// Update Count     : 7
+// Created On       : Wed May 18 13:56:00 2022
+// Update Count     : 8
 //
 
 #include "Expr.hpp"
@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "Copy.hpp"                // for shallowCopy
-#include "Eval.hpp"                // for call
 #include "GenericSubstitution.hpp"
 #include "LinkageSpec.hpp"
 #include "Stmt.hpp"
@@ -66,10 +65,15 @@ bool ApplicationExpr::get_lvalue() const {
 
 // --- UntypedExpr
 
+bool UntypedExpr::get_lvalue() const {
+	std::string fname = InitTweak::getFunctionName( this );
+	return lvalueFunctionNames.count( fname );
+}
+
 UntypedExpr * UntypedExpr::createDeref( const CodeLocation & loc, const Expr * arg ) {
 	assert( arg );
 
-	UntypedExpr * ret = call( loc, "*?", arg );
+	UntypedExpr * ret = createCall( loc, "*?", { arg } );
 	if ( const Type * ty = arg->result ) {
 		const Type * base = InitTweak::getPointerBase( ty );
 		assertf( base, "expected pointer type in dereference (type was %s)", toString( ty ).c_str() );
@@ -86,21 +90,22 @@ UntypedExpr * UntypedExpr::createDeref( const CodeLocation & loc, const Expr * a
 	return ret;
 }
 
-bool UntypedExpr::get_lvalue() const {
-	std::string fname = InitTweak::getFunctionName( this );
-	return lvalueFunctionNames.count( fname );
-}
-
 UntypedExpr * UntypedExpr::createAssign( const CodeLocation & loc, const Expr * lhs, const Expr * rhs ) {
 	assert( lhs && rhs );
 
-	UntypedExpr * ret = call( loc, "?=?", lhs, rhs );
+	UntypedExpr * ret = createCall( loc, "?=?", { lhs, rhs } );
 	if ( lhs->result && rhs->result ) {
 		// if both expressions are typed, assumes that this assignment is a C bitwise assignment,
 		// so the result is the type of the RHS
 		ret->result = rhs->result;
 	}
 	return ret;
+}
+
+UntypedExpr * UntypedExpr::createCall( const CodeLocation & loc,
+		const std::string & name, std::vector<ptr<Expr>> && args ) {
+	return new UntypedExpr( loc,
+			new NameExpr( loc, name ), std::move( args ) );
 }
 
 // --- VariableExpr

@@ -42,6 +42,16 @@ class Test:
 	def target_executable(self):
 		return os.path.normpath( os.path.join(settings.BUILDDIR, self.path, self.name) )
 
+	def format_target(self, width):
+		target = self.target()
+		length = len(target)
+		if length < width:
+			return '{0:{width}}'.format(target, width=width)
+		elif length == width:
+			return target
+		else:
+			return '...' + target[3-width:]
+
 	@staticmethod
 	def valid_name(name):
 		return not name.endswith( ('.c', '.cc', '.cpp', '.cfa') )

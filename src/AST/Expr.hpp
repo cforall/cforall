@@ -229,6 +229,9 @@ public:
 	static UntypedExpr * createDeref( const CodeLocation & loc, const Expr * arg );
 	/// Creates a new assignment expression
 	static UntypedExpr * createAssign( const CodeLocation & loc, const Expr * lhs, const Expr * rhs );
+	/// Creates a new call of a variable.
+	static UntypedExpr * createCall( const CodeLocation & loc,
+		const std::string & name, std::vector<ptr<Expr>> && args );
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:

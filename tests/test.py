@@ -251,7 +251,7 @@ def run_single_test(test):
 def run_test_worker(t) :
 	try :
 		# print formated name
-		name_txt = '{0:{width}}  '.format(t.target(), width=settings.output_width)
+		name_txt = t.format_target(width=settings.output_width) + '  '
 
 		retcode, error, duration = run_single_test(t)
 

@@ -200,3 +200,5 @@ def validate():
 def prep_output(tests):
 	global output_width
 	output_width = max(map(lambda t: len(t.target()), tests))
+	# 35 is the maximum width of the name field before we get line wrapping.
+	output_width = min(output_width, 35)
