@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 10 16:36:44 2022
-// Update Count     : 776
+// Last Modified On : Sun May 22 08:27:20 2022
+// Update Count     : 779
 //
 
 #ifdef __CFA__
@@ -46,8 +46,10 @@ extern "C" {
 #include <eti.h>										// may not be installed, comes with ncurses
 #endif
 #include <execinfo.h>
-#include <expat.h>
+#if __has_include( "expat.h" )
+#include <expat.h>										// may not be installed
 #include <expat_external.h>
+#endif
 #include <fcntl.h>
 #include <features.h>
 #include <fenv.h>
@@ -78,7 +80,9 @@ extern "C" {
 #include <limits.h>
 //#include <link.h>										// CFA bug #240 nested anonymous enum fails
 #include <locale.h>
-#include <ltdl.h>
+#if __has_include( "ltdl.h" )
+#include <ltdl.h>										// may not be installed
+#endif
 //#include <malloc.h>									// cannot include in extern "C" because of CFA #include_next
 #include <math.h>
 #include <mcheck.h>
