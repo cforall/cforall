@@ -1,0 +1,5 @@
+nested_function.cfa: In function '_X1fFi___2':
+nested_function.cfa:44:5: error: no return statement in function returning non-void [-Werror=return-type]
+nested_function.cfa: In function '_X20get_exception_vtableFS22ThreadCancelled_vtable_S1T__PS15ThreadCancelled_S1T___1':
+nested_function.cfa:25:36: warning: unused variable '_retvalue' [-Wunused-variable]
+cc1: some warnings being treated as errors

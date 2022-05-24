@@ -1,0 +1,49 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// nested_function.cfa -- Test nested functions run on user-thread stacks.
+//
+// Author           : Peter A. Buhr
+// Created On       : Mon May 23 22:21:30 2022
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon May 23 22:24:28 2022
+// Update Count     : 2
+// 
+
+#include <thread.hfa>
+#include <fstream.hfa>
+#include <stdlib.hfa>
+
+thread T {};
+
+enum { VALUES = 10_000 };
+int values[VALUES];
+
+void main( T & t ) {
+	int f() {
+		int i = 0;
+		void h( void ) {								// nest routine
+			int j = i;									// non-local reference
+			void g( void ) {							// nest routine
+				i += 1;									// non-local reference
+				j += 1;									// non-local reference
+				if ( i < 3 ) h();
+			} // g
+			if ( prng( 6 ) == 0 ) g();					// prevent compiler inlining
+			else h();
+			i += 1;
+			sout | "j" | j | bsearchl( j, values, VALUES ); // has internal nested compare routine
+		} // h
+		h();
+		sout | "i" | i | bsearchl( i, values, VALUES ); // has internal nested compare routine
+	} // f
+	f();
+}
+int main() {
+	set_seed( 1003 );
+	for ( i; VALUES ) values[i] = i;
+	T t[5];
+}
