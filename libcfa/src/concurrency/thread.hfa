@@ -31,10 +31,11 @@ trait is_thread(T &) {
 	thread$ * get_thread(T& this);
 };
 
-EHM_FORALL_EXCEPTION(ThreadCancelled, (thread_t &), (thread_t)) (
+forall(thread_t &)
+exception ThreadCancelled {
 	thread_t * the_thread;
 	exception_t * the_exception;
-);
+};
 
 forall(T &)
 void copy(ThreadCancelled(T) * dst, ThreadCancelled(T) * src);
@@ -78,8 +79,8 @@ struct thread_dtor_guard_t {
 	monitor_dtor_guard_t mg;
 };
 
-forall( T & | is_thread(T) | IS_EXCEPTION(ThreadCancelled, (T))
-    | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
+forall( T & | is_thread(T) | IS_EXCEPTION(ThreadCancelled(T))
+	| { EHM_DEFAULT_VTABLE(ThreadCancelled(T)); })
 void ?{}( thread_dtor_guard_t & this, T & thrd, void(*)(ThreadCancelled(T) &) );
 void ^?{}( thread_dtor_guard_t & this );
 
@@ -125,8 +126,8 @@ void sleep( Duration duration );
 
 //----------
 // join
-forall( T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled, (T))
-    | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
+forall( T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled(T))
+	| { EHM_DEFAULT_VTABLE(ThreadCancelled(T)); })
 T & join( T & this );
 
 //----------

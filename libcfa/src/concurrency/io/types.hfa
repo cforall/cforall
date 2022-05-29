@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <limits.h>
+
 extern "C" {
 	#include <linux/types.h>
 }
@@ -24,7 +26,6 @@ extern "C" {
 #include "bits/queue.hfa"
 #include "iofwd.hfa"
 #include "kernel/fwd.hfa"
-#include "limits.hfa"
 
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
 	#include "bits/sequence.hfa"
@@ -139,7 +140,7 @@ extern "C" {
 		const __u32 head = *this->cq.head;
 		const __u32 tail = *this->cq.tail;
 
-		if(head == tail) return MAX;
+		if(head == tail) return ULLONG_MAX;
 
 		return this->cq.ts;
 	}

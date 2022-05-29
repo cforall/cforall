@@ -61,7 +61,7 @@ const char * msg(CoroutineCancelled(T) *) libcfa_public {
 // This code should not be inlined. It is the error path on resume.
 forall(T & | is_coroutine(T))
 void __cfaehm_cancelled_coroutine(
-		T & cor, coroutine$ * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)) ) libcfa_public {
+		T & cor, coroutine$ * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled(T)) ) libcfa_public {
 	verify( desc->cancellation );
 	desc->state = Cancelled;
 	exception_t * except = __cfaehm_cancellation_exception( desc->cancellation );
@@ -145,7 +145,7 @@ void ^?{}(coroutine$& this) libcfa_public {
 
 // Part of the Public API
 // Not inline since only ever called once per coroutine
-forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
+forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled(T)); })
 void prime(T& cor) libcfa_public {
 	coroutine$* this = get_coroutine(cor);
 	assert(this->state == Start);

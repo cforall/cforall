@@ -21,10 +21,11 @@
 
 //-----------------------------------------------------------------------------
 // Exception thrown from resume when a coroutine stack is cancelled.
-EHM_FORALL_EXCEPTION(CoroutineCancelled, (coroutine_t &), (coroutine_t)) (
+forall(coroutine_t &)
+exception CoroutineCancelled {
 	coroutine_t * the_coroutine;
 	exception_t * the_exception;
-);
+};
 
 forall(T &)
 void copy(CoroutineCancelled(T) * dst, CoroutineCancelled(T) * src);
@@ -36,7 +37,7 @@ const char * msg(CoroutineCancelled(T) *);
 // Coroutine trait
 // Anything that implements this trait can be resumed.
 // Anything that is resumed is a coroutine.
-trait is_coroutine(T & | IS_RESUMPTION_EXCEPTION(CoroutineCancelled, (T))) {
+trait is_coroutine(T & | IS_RESUMPTION_EXCEPTION(CoroutineCancelled(T))) {
 	void main(T & this);
 	coroutine$ * get_coroutine(T & this);
 };
@@ -59,7 +60,7 @@ static inline void ?{}( coroutine$ & this, const char name[], size_t stackSize )
 
 //-----------------------------------------------------------------------------
 // Public coroutine API
-forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
+forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled(T)); })
 void prime(T & cor);
 
 static inline struct coroutine$ * active_coroutine() { return active_thread()->curr_cor; }
@@ -138,10 +139,10 @@ extern "C" {
 
 forall(T & | is_coroutine(T))
 void __cfaehm_cancelled_coroutine(
-	T & cor, coroutine$ * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)) );
+	T & cor, coroutine$ * desc, EHM_DEFAULT_VTABLE(CoroutineCancelled(T)) );
 
 // Resume implementation inlined for performance
-forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled, (T)); })
+forall(T & | is_coroutine(T) | { EHM_DEFAULT_VTABLE(CoroutineCancelled(T)); })
 static inline T & resume(T & cor) {
 	// optimization : read TLS once and reuse it
 	// Safety note: this is preemption safe since if

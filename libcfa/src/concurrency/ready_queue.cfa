@@ -124,7 +124,7 @@ __attribute__((hot)) struct thread$ * pop_fast(struct cluster * cltr) with (cltr
 	const unsigned this_cache = cache_id(cltr, this / __shard_factor.readyq);
 	const unsigned long long ctsc = rdtscl();
 
-	if(proc->rdq.target == MAX) {
+	if(proc->rdq.target == UINT_MAX) {
 		uint64_t chaos = __tls_rand();
 		unsigned ext = chaos & 0xff;
 		unsigned other  = (chaos >> 8) % (lanes_count);
@@ -136,7 +136,7 @@ __attribute__((hot)) struct thread$ * pop_fast(struct cluster * cltr) with (cltr
 	else {
 		const unsigned target = proc->rdq.target;
 		__cfadbg_print_safe(ready_queue, "Kernel : %u considering helping %u, tcsc %llu\n", this, target, readyQ.tscs[target].tv);
-		/* paranoid */ verify( readyQ.tscs[target].tv != MAX );
+		/* paranoid */ verify( readyQ.tscs[target].tv != ULLONG_MAX );
 		if(target < lanes_count) {
 			const unsigned long long cutoff = calc_cutoff(ctsc, proc->rdq.id, lanes_count, cltr->sched.readyQ.data, cltr->sched.readyQ.tscs, __shard_factor.readyq);
 			const unsigned long long age = moving_average(ctsc, readyQ.tscs[target].tv, readyQ.tscs[target].ma);
@@ -146,7 +146,7 @@ __attribute__((hot)) struct thread$ * pop_fast(struct cluster * cltr) with (cltr
 				if(t) return t;
 			}
 		}
-		proc->rdq.target = MAX;
+		proc->rdq.target = UINT_MAX;
 	}
 
 	for(__shard_factor.readyq) {
@@ -244,7 +244,7 @@ static inline struct thread$ * search(struct cluster * cltr) {
 //-----------------------------------------------------------------------
 // get preferred ready for new thread
 unsigned ready_queue_new_preferred() {
-	unsigned pref = MAX;
+	unsigned pref = UINT_MAX;
 	if(struct thread$ * thrd = publicTLS_get( this_thread )) {
 		pref = thrd->preferred;
 	}

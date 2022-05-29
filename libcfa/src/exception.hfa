@@ -9,178 +9,24 @@
 // Author           : Andrew Beach
 // Created On       : Thu Apr  7 10:25:00 2020
 // Last Modified By : Andrew Beach
-// Last Modified On : Thr Apr  8 15:16:00 2021
-// Update Count     : 4
+// Last Modified On : Wed May 25 17:20:00 2022
+// Update Count     : 5
 //
 
 // Everything below this line should be considered a patch while the exception
 // objects themselves are designed and  created and should be removed in time.
 // -----------------------------------------------------------------------------------------------
 
-// EHM_EXCEPTION(exception_name)(fields...);
-// Create an exception (a virtual structure that inherits from exception_t)
-// with the given name and fields.
-#define EHM_EXCEPTION(exception_name) \
-	_EHM_TYPE_ID_STRUCT(exception_name, ); \
-	_EHM_TYPE_ID_VALUE(exception_name, ); \
-	_EHM_VIRTUAL_TABLE_STRUCT(exception_name, , ); \
-	_EHM_EXCEPTION_STRUCT(exception_name, , )
-
-// EHM_EXTERN_VTABLE(exception_name, table_name);
-// Forward declare a virtual table called table_name for exception_name type.
-#define EHM_EXTERN_VTABLE(exception_name, table_name) \
-	_EHM_EXTERN_VTABLE(exception_name, , table_name)
-
-// EHM_VIRTUAL_TABLE(exception_name, table_name);
-// Define a virtual table called table_name for exception_name type.
-#define EHM_VIRTUAL_TABLE(exception_name, table_name) \
-	_EHM_DEFINE_COPY(exception_name, ) \
-	_EHM_DEFINE_MSG(exception_name, ) \
-	_EHM_VIRTUAL_TABLE(exception_name, , table_name)
-
-// EHM_FORALL_EXCEPTION(exception_name, (assertions), (parameters))(fields...);
-// As EHM_EXCEPTION but for polymorphic types instead of monomorphic ones.
-// The assertions list should include all polymorphic parameters and
-// assertions inside a parentisized list. Parameters should include all the
-// polymorphic parameter names inside a parentisized list (same order).
-#define EHM_FORALL_EXCEPTION(exception_name, assertions, parameters) \
-	_EHM_TYPE_ID_STRUCT(exception_name, forall assertions); \
-	_EHM_VIRTUAL_TABLE_STRUCT(exception_name, forall assertions, parameters); \
-	_EHM_EXCEPTION_STRUCT(exception_name, forall assertions, parameters)
-
-// EHM_FORALL_EXTERN_VTABLE(exception_name, (arguments), table_name);
-// As EHM_EXTERN_VTABLE but for polymorphic types instead of monomorphic ones.
-// Arguments should be the parentisized list of polymorphic arguments.
-#define EHM_FORALL_EXTERN_VTABLE(exception_name, arguments, table_name) \
-	_EHM_EXTERN_VTABLE(exception_name, arguments, table_name)
-
-// EHM_FORALL_VIRTUAL_TABLE(exception_name, (arguments), table_name);
-// As EHM_VIRTUAL_TABLE but for polymorphic types instead of monomorphic ones.
-// Arguments should be the parentisized list of polymorphic arguments.
-#define EHM_FORALL_VIRTUAL_TABLE(exception_name, arguments, table_name) \
-	_EHM_TYPE_ID_VALUE(exception_name, arguments); \
-	_EHM_DEFINE_COPY(exception_name, arguments) \
-	_EHM_DEFINE_MSG(exception_name, arguments) \
-	_EHM_VIRTUAL_TABLE(exception_name, arguments, table_name)
-
-// EHM_DEFAULT_VTABLE(exception_name, (arguments))
+// EHM_DEFAULT_VTABLE(exception_type)
 // Create a declaration for a (possibly polymorphic) default vtable.
-#define EHM_DEFAULT_VTABLE(exception_name, arguments) \
-	_EHM_VTABLE_TYPE(exception_name) arguments & const _default_vtable
+// Mostly used by and for the currency module.
+#define EHM_DEFAULT_VTABLE(type) vtable(type) & const _default_vtable
 
-// IS_EXCEPTION(exception_name [, (...parameters)])
-// IS_RESUMPTION_EXCEPTION(exception_name [, (parameters...)])
-// IS_TERMINATION_EXCEPTION(exception_name [, (parameters...)])
-// Create an assertion that exception_name, possibly with the qualifing parameters, is the given
-// kind of exception with the standard vtable with the same parameters if applicable.
-#define IS_EXCEPTION(...) _IS_EXCEPTION(is_exception, __VA_ARGS__, , ~)
-#define IS_RESUMPTION_EXCEPTION(...) _IS_EXCEPTION(is_resumption_exception, __VA_ARGS__, , ~)
-#define IS_TERMINATION_EXCEPTION(...) _IS_EXCEPTION(is_termination_exception, __VA_ARGS__, , ~)
-
-// Macros starting with a leading underscore are internal.
-
-// Create an exception type definition. must be tailing, can be polymorphic.
-#define _EHM_EXCEPTION_STRUCT(exception_name, forall_clause, parameters) \
-	forall_clause struct exception_name { \
-		_EHM_VTABLE_TYPE(exception_name) parameters const * virtual_table; \
-		_CLOSE
-
-// Create a (possibly polymorphic) virtual table forward declaration.
-#define _EHM_EXTERN_VTABLE(exception_name, arguments, table_name) \
-	extern const _EHM_VTABLE_TYPE(exception_name) arguments table_name
-
-// Create a (possibly polymorphic) virtual table definition.
-#define _EHM_VIRTUAL_TABLE(exception_type, arguments, table_name) \
-	const _EHM_VTABLE_TYPE(exception_type) arguments table_name @= { \
-		.__cfavir_typeid : &_EHM_TYPE_ID_NAME(exception_type), \
-		.size : sizeof(struct exception_type arguments), \
-		.copy : copy, \
-		.^?{} : ^?{}, \
-		.msg : msg, \
-	}
-
-// Create a (possibly polymorphic) copy function from an assignment operator.
-#define _EHM_DEFINE_FORALL_COPY(exception_name, forall_clause, parameters) \
-	forall_clause void copy(exception_name parameters * this, \
-			exception_name parameters * that) { \
-		*this = *that; \
-	}
-
-#define _EHM_DEFINE_COPY(exception_name, arguments) \
-	void copy(exception_name arguments * this, exception_name arguments * that) { \
-		*this = *that; \
-	}
-
-// Create a (possibly polymorphic) msg function
-#define _EHM_DEFINE_FORALL_MSG(exception_name, forall_clause, parameters) \
-	forall_clause const char * msg(exception_name parameters * this) { \
-		return #exception_name #parameters; \
-	}
-
-#define _EHM_DEFINE_MSG(exception_name, arguments) \
-	const char * msg(exception_name arguments * this) { \
-		return #exception_name #arguments; \
-	}
-
-// Produces the C compatable name of the virtual table type for a virtual type.
-#define _EHM_VTABLE_TYPE(type_name) struct _GLUE2(type_name,_vtable)
-
-// Create the vtable type for exception name.
-#define _EHM_VIRTUAL_TABLE_STRUCT(exception_name, forall_clause, parameters) \
-	forall_clause struct exception_name; \
-	forall_clause _EHM_VTABLE_TYPE(exception_name) { \
-		_EHM_TYPE_ID_TYPE(exception_name) parameters const * __cfavir_typeid; \
-		size_t size; \
-		void (*copy)(exception_name parameters * this, exception_name parameters * other); \
-		void (*^?{})(exception_name parameters & this); \
-		const char * (*msg)(exception_name parameters * this); \
-	}
-
-// Define the function required to satify the trait for exceptions.
-#define _EHM_TRAIT_FUNCTION(exception_name, forall_clause, parameters) \
-	forall_clause inline void mark_exception( \
-		exception_name parameters const &, \
-		_EHM_VTABLE_TYPE(exception_name) parameters const &) {} \
-
-#define __EHM_TRAIT_FUNCTION(exception_name, forall_clause, parameters) \
-	forall_clause inline _EHM_VTABLE_TYPE(exception_name) parameters const & \
-			get_exception_vtable(exception_name parameters const & this) { \
-		/* This comes before the structure definition, but we know the offset. */ \
-		/* return (_EHM_VTABLE_TYPE(exception_name) parameters const &)this; */ \
-		assert(false); \
-	}
-
-// Generates a new type-id structure. This is used to mangle the name of the
-// type-id instance so it also includes polymorphic information. Must be the
-// direct decendent of exception_t.
-// The second field is used to recover type information about the exception.
-#define _EHM_TYPE_ID_STRUCT(exception_name, forall_clause) \
-	forall_clause _EHM_TYPE_ID_TYPE(exception_name) { \
-		__cfavir_type_info const * parent; \
-	}
-
-// Generate a new type-id value.
-#define _EHM_TYPE_ID_VALUE(exception_name, arguments) \
-	__attribute__((cfa_linkonce)) \
-	_EHM_TYPE_ID_TYPE(exception_name) arguments const \
-			_EHM_TYPE_ID_NAME(exception_name) = { \
-		&__cfatid_exception_t, \
-	}
-
-// _EHM_TYPE_ID_STRUCT and _EHM_TYPE_ID_VALUE are the two that would need to
-// be updated to extend the hierarchy if we are still using macros when that
-// is added.
-
-// Produce the C compatable name of the type-id type for an exception type.
-#define _EHM_TYPE_ID_TYPE(exception_name) \
-	struct _GLUE2(__cfatid_struct_, exception_name)
-
-// Produce the name of the instance of the type-id for an exception type.
-#define _EHM_TYPE_ID_NAME(exception_name) _GLUE2(__cfatid_,exception_name)
-
-#define _IS_EXCEPTION(kind, exception_name, parameters, ...) \
-	kind(exception_name parameters, _EHM_VTABLE_TYPE(exception_name) parameters)
-
-// Internal helper macros:
-#define _CLOSE(...) __VA_ARGS__ }
-#define _GLUE2(left, right) left##right
+// IS_EXCEPTION(exception_type)
+// IS_RESUMPTION_EXCEPTION(exception_type)
+// IS_TERMINATION_EXCEPTION(exception_type)
+// Create an assertion that exception_type is the given kind of exception.
+// This is used to mimic associated types so the vtable type is unmentioned.
+#define IS_EXCEPTION(type) is_exception(type, vtable(type))
+#define IS_RESUMPTION_EXCEPTION(type) is_resumption_exception(type, vtable(type))
+#define IS_TERMINATION_EXCEPTION(type) is_termination_exception(type, vtable(type))

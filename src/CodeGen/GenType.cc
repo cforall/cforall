@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed May  1 15:24:00 2019
-// Update Count     : 23
+// Last Modified On : Fri May 20 11:18:00 2022
+// Update Count     : 24
 //
 #include "GenType.h"
 
@@ -49,6 +49,7 @@ namespace CodeGen {
 		void postvisit( GlobalScopeType * globalType );
 		void postvisit( TraitInstType * inst );
 		void postvisit( TypeofType * typeof );
+		void postvisit( VTableType * vtable );
 		void postvisit( QualifiedType * qualType );
 
 	  private:
@@ -258,12 +259,13 @@ namespace CodeGen {
 			typeString = enumInst->name + " " + typeString;
 			if ( options.genC ) {
 				typeString = "enum " + typeString;
-			} 
-		} 
+			}
+		}
 		handleQualifiers( enumInst );
 	}
 
 	void GenType::postvisit( TypeInstType * typeInst ) {
+		assertf( ! options.genC, "Type instance types should not reach code generation." );
 		typeString = typeInst->name + " " + typeString;
 		handleQualifiers( typeInst );
 	}
@@ -317,6 +319,14 @@ namespace CodeGen {
 		os << ") " << typeString;
 		typeString = os.str();
 		handleQualifiers( typeof );
+	}
+
+	void GenType::postvisit( VTableType * vtable ) {
+		assertf( ! options.genC, "Virtual table types should not reach code generation." );
+		std::ostringstream os;
+		os << "vtable(" << genType( vtable->base, "", options ) << ") " << typeString;
+		typeString = os.str();
+		handleQualifiers( vtable );
 	}
 
 	void GenType::postvisit( QualifiedType * qualType ) {

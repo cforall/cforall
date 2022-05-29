@@ -3,17 +3,15 @@
 //
 // quasiKeyword.cfa -- test that quasi-keywords can be used for variable and functions names, as well as keywords in
 //					   control structures.
-// 
+//
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb 17 10:33:49 2021
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Sat Jun  5 10:07:59 2021
 // Update Count     : 8
-// 
+//
 
-#include <exception.hfa>
-
-EHM_EXCEPTION( E )();
+exception E {};
 
 void catch( int i ) {}
 void recover( int i ) {}
@@ -48,7 +46,7 @@ int main(int argc, char const *argv[]) {
 		try {
 		} fixup ( E * ) {
 		} finally {
-		} 
+		}
 	else catch = 3;
 
     #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!

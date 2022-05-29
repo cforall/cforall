@@ -18,8 +18,9 @@
 
 #include "thread.hfa"
 
-#include "kernel/private.hfa"
 #include "exception.hfa"
+#include "kernel/private.hfa"
+#include "limits.hfa"
 
 #define __CFA_INVOKE_PRIVATE__
 #include "invoke.h"
@@ -43,7 +44,7 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 	self_mon_p = &self_mon;
 	curr_cluster = &cl;
 	link.next = 0p;
-	link.ts   = -1llu;
+	link.ts   = MAX;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
 	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();
@@ -87,8 +88,8 @@ static void default_thread_cancel_handler(ThreadCancelled(T) & ) {
 	abort( "Unhandled thread cancellation.\n" );
 }
 
-forall(T & | is_thread(T) | IS_EXCEPTION(ThreadCancelled, (T))
-    | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
+forall(T & | is_thread(T) | IS_EXCEPTION(ThreadCancelled(T))
+    | { EHM_DEFAULT_VTABLE(ThreadCancelled(T)); })
 void ?{}( thread_dtor_guard_t & this,
 		T & thrd, void(*cancelHandler)(ThreadCancelled(T) &)) {
 	monitor$ * m = get_monitor(thrd);
@@ -166,8 +167,8 @@ void ^?{}( scoped(T)& this ) with( this ) {
 }
 
 //-----------------------------------------------------------------------------
-forall(T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled, (T))
-    | { EHM_DEFAULT_VTABLE(ThreadCancelled, (T)); })
+forall(T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled(T))
+	| { EHM_DEFAULT_VTABLE(ThreadCancelled(T)); })
 T & join( T & this ) {
 	thread_dtor_guard_t guard = { this, defaultResumptionHandler };
 	return this;

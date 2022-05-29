@@ -14,11 +14,10 @@
 //
 
 #include <stdlib.hfa>
-#include <exception.hfa>
 #include "../exceptions/with-threads.hfa"
 
-EHM_EXCEPTION(ping)();
-EHM_VIRTUAL_TABLE(ping, ping_vt);
+exception ping {};
+vtable(ping) ping_vt;
 
 int main(void) {
 	try {

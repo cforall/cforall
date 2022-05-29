@@ -8,9 +8,9 @@
 //
 // Author           : Henry Xue
 // Created On       : Tue Jul 20 04:10:50 2021
-// Last Modified By : Henry Xue
-// Last Modified On : Tue Aug 03 10:42:26 2021
-// Update Count     : 4
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed May 25 16:43:00 2022
+// Update Count     : 5
 //
 
 #include "ExceptDecl.h"
@@ -38,14 +38,13 @@ const std::list< Expression *> & makeParameters(
 	return *parameters;
 }
 
-TypeInstType * makeExceptInstType(
+StructInstType * makeExceptInstType(
 	const std::string & exceptionName,
 	const std::list< Expression *> & parameters
 ) {
-	TypeInstType * exceptInstType = new TypeInstType(
+	StructInstType * exceptInstType = new StructInstType(
 		noQualifiers,
-		exceptionName,
-		false
+		exceptionName
 	);
 	cloneAll( parameters, exceptInstType->parameters );
 	return exceptInstType;
@@ -150,7 +149,7 @@ StructDecl * ehmTypeIdStruct(
 		LinkageSpec::Cforall,
 		nullptr,
 		new PointerType( noQualifiers,
-			new TypeInstType( Type::Const, "__cfavir_type_info", false ) ),
+			new StructInstType( Type::Const, "__cfavir_type_info" ) ),
 		nullptr
 	) );
 	structDecl->set_body( true );
@@ -256,7 +255,7 @@ StructDecl * ehmVirtualTableStruct(
 StructDecl * ehmExceptionStruct(
 	const std::string & exceptionName,
 	const std::list< TypeDecl *> & forallClause,
-	const std::list< Expression *> & parameters, 
+	const std::list< Expression *> & parameters,
 	const std::list< Declaration *> & members
 ) {
 	StructInstType * vtableType = new StructInstType(
@@ -301,7 +300,7 @@ ObjectDecl * ehmTypeIdExtern(
 
 ObjectDecl * ehmExternVtable(
 	const std::string & exceptionName,
-	const std::list< Expression *> & parameters, 
+	const std::list< Expression *> & parameters,
 	const std::string & tableName
 ) {
 	StructInstType * vtableType = new StructInstType(
@@ -456,9 +455,28 @@ DeclarationWithType * ExceptDeclCore::postmutate( ObjectDecl * objectDecl ) {
 	return objectDecl;
 }
 
+class VTableCore : public WithDeclsToAdd {
+public:
+	// Remove any remaining vtable type nodes in the tree.
+	Type * postmutate( VTableType * vtableType );
+};
+
+Type * VTableCore::postmutate( VTableType * vtableType ) {
+	auto inst = strict_dynamic_cast<ReferenceToType *>( vtableType->base );
+
+	std::string vtableName = Virtual::vtableTypeName( inst->name );
+	StructInstType * newType = new StructInstType( noQualifiers, vtableName );
+	cloneAll( inst->parameters, newType->parameters );
+
+	delete vtableType;
+	return newType;
+}
+
 void translateExcept( std::list< Declaration *> & translationUnit ) {
 	PassVisitor<ExceptDeclCore> translator;
 	mutateAll( translationUnit, translator );
+	PassVisitor<VTableCore> typeTranslator;
+	mutateAll( translationUnit, typeTranslator );
 }
 
 }

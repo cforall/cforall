@@ -232,11 +232,11 @@ static void check_readyQ( cluster * cltr ) with (cltr->sched) {
 
 					if(is_empty(sl)) {
 						assert( sl.anchor.next == 0p );
-						assert( sl.anchor.ts   == -1llu );
+						assert( sl.anchor.ts   == MAX );
 						assert( mock_head(sl)  == sl.prev );
 					} else {
 						assert( sl.anchor.next != 0p );
-						assert( sl.anchor.ts   != -1llu );
+						assert( sl.anchor.ts   != MAX );
 						assert( mock_head(sl)  != sl.prev );
 					}
 			}
@@ -258,11 +258,11 @@ static void assign_list(unsigned & valrq, unsigned & valio, dlist(processor) & l
 	for(unsigned i = 0; i < count; i++) {
 		/* paranoid */ verifyf( it, "Unexpected null iterator, at index %u of %u\n", i, count);
 		it->rdq.id = valrq;
-		it->rdq.target = MAX;
+		it->rdq.target = UINT_MAX;
 		valrq += __shard_factor.readyq;
 		#if defined(CFA_HAVE_LINUX_IO_URING_H)
 			it->io.ctx->cq.id = valio;
-			it->io.target = MAX;
+			it->io.target = UINT_MAX;
 			valio += __shard_factor.io;
 		#endif
 		it = &(*it)`next;
@@ -471,7 +471,7 @@ void ?{}( __intrusive_lane_t & this ) {
 	this.lock = false;
 	this.prev = mock_head(this);
 	this.anchor.next = 0p;
-	this.anchor.ts   = -1llu;
+	this.anchor.ts   = MAX;
 	#if !defined(__CFA_NO_STATISTICS__)
 		this.cnt  = 0;
 	#endif
@@ -483,7 +483,7 @@ void ?{}( __intrusive_lane_t & this ) {
 	/* paranoid */ verify( &mock_head(this)->link.next == &this.anchor.next );
 	/* paranoid */ verify( &mock_head(this)->link.ts   == &this.anchor.ts   );
 	/* paranoid */ verify( mock_head(this)->link.next == 0p );
-	/* paranoid */ verify( mock_head(this)->link.ts   == -1llu  );
+	/* paranoid */ verify( mock_head(this)->link.ts   == MAX );
 	/* paranoid */ verify( mock_head(this) == this.prev );
 	/* paranoid */ verify( __alignof__(__intrusive_lane_t) == 128 );
 	/* paranoid */ verify( __alignof__(this) == 128 );
@@ -494,7 +494,7 @@ void ?{}( __intrusive_lane_t & this ) {
 void ^?{}( __intrusive_lane_t & this ) {
 	// Make sure the list is empty
 	/* paranoid */ verify( this.anchor.next == 0p );
-	/* paranoid */ verify( this.anchor.ts   == -1llu );
+	/* paranoid */ verify( this.anchor.ts   == MAX );
 	/* paranoid */ verify( mock_head(this)  == this.prev );
 }
 

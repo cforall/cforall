@@ -220,7 +220,7 @@
 			const unsigned this_cache = cache_id(cltr, ctx->cq.id / __shard_factor.io);
 			const unsigned long long ctsc = rdtscl();
 
-			if(proc->io.target == MAX) {
+			if(proc->io.target == UINT_MAX) {
 				uint64_t chaos = __tls_rand();
 				unsigned ext = chaos & 0xff;
 				unsigned other  = (chaos >> 8) % (ctxs_count);
@@ -231,7 +231,7 @@
 			}
 			else {
 				const unsigned target = proc->io.target;
-				/* paranoid */ verify( io.tscs[target].tv != MAX );
+				/* paranoid */ verify( io.tscs[target].tv != ULLONG_MAX );
 				HELP: if(target < ctxs_count) {
 					const unsigned long long cutoff = calc_cutoff(ctsc, ctx->cq.id, ctxs_count, io.data, io.tscs, __shard_factor.io);
 					const unsigned long long age = moving_average(ctsc, io.tscs[target].tv, io.tscs[target].ma);
@@ -245,7 +245,7 @@
 					remote = true;
 					__STATS__( true, io.calls.helped++; )
 				}
-				proc->io.target = MAX;
+				proc->io.target = UINT_MAX;
 			}
 		}
 
