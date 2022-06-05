@@ -64,6 +64,9 @@ namespace ResolvExpr {
 		Cost cost;
 		const TypeEnvironment &env;
 		CostFunction costFunc;
+	  private:
+	  	// refactor for code resue
+	  	void conversionCostFromBasicToBasic( const BasicType * src, const BasicType* dest );
 	};
 
 	typedef std::function<int(const Type *, const Type *, const SymTab::Indexer &, const TypeEnvironment &)> PtrsFunction;
@@ -110,6 +113,9 @@ public:
 	void postvisit( const ast::VarArgsType * varArgsType );
 	void postvisit( const ast::ZeroType * zeroType );
 	void postvisit( const ast::OneType * oneType );
+private:
+	// refactor for code resue
+	void conversionCostFromBasicToBasic( const ast::BasicType * src, const ast::BasicType* dest );
 };
 
 Cost convertToReferenceCost( const ast::Type * src, const ast::ReferenceType * dest,

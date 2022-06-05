@@ -401,6 +401,10 @@ ast::FunctionDecl * FuncGenerator::genAssignProto() const {
 	// Only the name is different, so just reuse the generation function.
 	auto retval = srcParam();
 	retval->name = "_ret";
+	// xxx - Adding this unused attribute can slience unused variable warning
+	// However, some code might not be compiled as expected
+	// Temporarily disabled
+	// retval->attributes.push_back(new ast::Attribute("unused"));
 	return genProto( "?=?", { dstParam(), srcParam() }, { retval } );
 }
 

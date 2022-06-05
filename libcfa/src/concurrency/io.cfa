@@ -158,32 +158,41 @@
 		/* paranoid */ verify( ctx->cq.lock == true );
 
 		const __u32 mask = *ctx->cq.mask;
+		const __u32 num  = *ctx->cq.num;
 		unsigned long long ts_prev = ctx->cq.ts;
+		unsigned long long ts_next;
 
-		// re-read the head and tail in case it already changed.
-		const __u32 head = *ctx->cq.head;
-		const __u32 tail = *ctx->cq.tail;
-		const __u32 count = tail - head;
-		__STATS__( false, io.calls.drain++; io.calls.completed += count; )
+		// We might need to do this multiple times if more events completed than can fit in the queue.
+		for() {
+			// re-read the head and tail in case it already changed.
+			const __u32 head = *ctx->cq.head;
+			const __u32 tail = *ctx->cq.tail;
+			const __u32 count = tail - head;
+			__STATS__( false, io.calls.drain++; io.calls.completed += count; )
 
-		for(i; count) {
-			unsigned idx = (head + i) & mask;
-			volatile struct io_uring_cqe & cqe = ctx->cq.cqes[idx];
+			for(i; count) {
+				unsigned idx = (head + i) & mask;
+				volatile struct io_uring_cqe & cqe = ctx->cq.cqes[idx];
 
-			/* paranoid */ verify(&cqe);
+				/* paranoid */ verify(&cqe);
 
-			struct io_future_t * future = (struct io_future_t *)(uintptr_t)cqe.user_data;
-			// __cfadbg_print_safe( io, "Kernel I/O : Syscall completed : cqe %p, result %d for %p\n", &cqe, cqe.res, future );
+				struct io_future_t * future = (struct io_future_t *)(uintptr_t)cqe.user_data;
+				// __cfadbg_print_safe( io, "Kernel I/O : Syscall completed : cqe %p, result %d for %p\n", &cqe, cqe.res, future );
 
-			__kernel_unpark( fulfil( *future, cqe.res, false ), UNPARK_LOCAL );
+				__kernel_unpark( fulfil( *future, cqe.res, false ), UNPARK_LOCAL );
+			}
+
+			ts_next = ctx->cq.ts = rdtscl();
+
+			// Mark to the kernel that the cqe has been seen
+			// Ensure that the kernel only sees the new value of the head index after the CQEs have been read.
+			__atomic_store_n( ctx->cq.head, head + count, __ATOMIC_SEQ_CST );
+			ctx->proc->idle_wctx.drain_time = ts_next;
+
+			if(likely(count < num)) break;
+
+			ioring_syscsll( *ctx, 0, IORING_ENTER_GETEVENTS);
 		}
-
-		unsigned long long ts_next = ctx->cq.ts = rdtscl();
-
-		// Mark to the kernel that the cqe has been seen
-		// Ensure that the kernel only sees the new value of the head index after the CQEs have been read.
-		__atomic_store_n( ctx->cq.head, head + count, __ATOMIC_SEQ_CST );
-		ctx->proc->idle_wctx.drain_time = ts_next;
 
 		__cfadbg_print_safe(io, "Kernel I/O : %u completed age %llu\n", count, ts_next);
 		/* paranoid */ verify( ready_schedule_islocked() );

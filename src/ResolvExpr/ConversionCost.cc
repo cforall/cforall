@@ -320,22 +320,29 @@ namespace ResolvExpr {
 		cost = Cost::infinity;
 	}
 
+	// refactor for code resue
+	void ConversionCost::conversionCostFromBasicToBasic(const BasicType * src, const BasicType * dest) {
+		int tableResult = costMatrix[ src->kind ][ dest->kind ];
+		if ( tableResult == -1 ) {
+			cost = Cost::unsafe;
+		} else {
+			cost = Cost::zero;
+			cost.incSafe( tableResult );
+			cost.incSign( signMatrix[ src->kind ][ dest->kind ] );
+		} // if
+	} // ConversionCost::conversionCostFromBasicToBasic
+
 	void ConversionCost::postvisit(const BasicType * basicType) {
 		if ( const BasicType * destAsBasic = dynamic_cast< const BasicType * >( dest ) ) {
-			int tableResult = costMatrix[ basicType->kind ][ destAsBasic->kind ];
-			if ( tableResult == -1 ) {
-				cost = Cost::unsafe;
-			} else {
-				cost = Cost::zero;
-				cost.incSafe( tableResult );
-				cost.incSign( signMatrix[ basicType->kind ][ destAsBasic->kind ] );
-			} // if
-		} else if ( dynamic_cast< const EnumInstType * >( dest ) ) {
-			// xxx - not positive this is correct, but appears to allow casting int => enum
-			// TODO
-			EnumDecl * decl = dynamic_cast< const EnumInstType * >( dest )->baseEnum;
-			if ( decl->base ) {
-				cost = Cost::infinity;
+			conversionCostFromBasicToBasic(basicType, destAsBasic);
+		} else if ( const EnumInstType * enumInst = dynamic_cast< const EnumInstType * >( dest ) ) {
+			const EnumDecl * base_enum = enumInst->baseEnum;
+			if ( const Type * base = base_enum->base ) { // if the base enum has a base (if it is typed)
+				if ( const BasicType * enumBaseAstBasic = dynamic_cast< const BasicType *> (base) ) {
+					conversionCostFromBasicToBasic(basicType, enumBaseAstBasic);
+				} else {
+					cost = Cost::infinity;
+				} // if
 			} else {
 				cost = Cost::unsafe;
 			} // if
@@ -397,12 +404,17 @@ namespace ResolvExpr {
 
 	void ConversionCost::postvisit( const FunctionType * ) {}
 
-	void ConversionCost::postvisit( const EnumInstType * ) {
-		static Type::Qualifiers q;
-		static BasicType integer( q, BasicType::SignedInt );
-		cost = costFunc( &integer, dest, srcIsLvalue, indexer, env );  // safe if dest >= int
+	void ConversionCost::postvisit( const EnumInstType * enumInst) {
+		const EnumDecl * enumDecl = enumInst -> baseEnum;
+		if ( const Type * enumType = enumDecl -> base ) { // if it is a typed enum
+			cost = costFunc( enumType, dest, srcIsLvalue, indexer, env );
+		} else {
+			static Type::Qualifiers q;
+			static BasicType integer( q, BasicType::SignedInt );
+			cost = costFunc( &integer, dest, srcIsLvalue, indexer, env );  // safe if dest >= int
+		} // if
 		if ( cost < Cost::unsafe ) {
-			cost.incSafe();
+				cost.incSafe();
 		} // if
 	}
 
@@ -603,24 +615,31 @@ void ConversionCost_new::postvisit( const ast::VoidType * voidType ) {
 	cost = Cost::infinity;
 }
 
+void ConversionCost_new::conversionCostFromBasicToBasic( const ast::BasicType * src, const ast::BasicType* dest ) {
+	int tableResult = costMatrix[ src->kind ][ dest->kind ];
+	if ( tableResult == -1 ) {
+		cost = Cost::unsafe;
+	} else {
+		cost = Cost::zero;
+		cost.incSafe( tableResult );
+		cost.incSign( signMatrix[ src->kind ][ dest->kind ] );
+	}
+}
+
 void ConversionCost_new::postvisit( const ast::BasicType * basicType ) {
 	if ( const ast::BasicType * dstAsBasic = dynamic_cast< const ast::BasicType * >( dst ) ) {
-		int tableResult = costMatrix[ basicType->kind ][ dstAsBasic->kind ];
-		if ( tableResult == -1 ) {
-			cost = Cost::unsafe;
+		conversionCostFromBasicToBasic( basicType, dstAsBasic );
+	} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
+		const ast::EnumDecl * enumDecl = enumInst->base.get();
+		if ( const ast::Type * enumType = enumDecl->base.get() ) {
+			if ( const ast::BasicType * enumTypeAsBasic = dynamic_cast<const ast::BasicType *>(enumType) ) {
+				conversionCostFromBasicToBasic( basicType, enumTypeAsBasic );
+			} else {
+				cost = Cost::infinity;
+			}
 		} else {
-			cost = Cost::zero;
-			cost.incSafe( tableResult );
-			cost.incSign( signMatrix[ basicType->kind ][ dstAsBasic->kind ] );
+            cost = Cost::unsafe;
 		}
-	} else if ( dynamic_cast< const ast::EnumInstType * >( dst ) ) {
-		// xxx - not positive this is correct, but appears to allow casting int => enum
-		const ast::EnumDecl * decl = (dynamic_cast< const ast::EnumInstType * >( dst ))->base.get();
-		if ( decl->base ) {
-			cost = Cost::infinity;
-		} else {
-			cost = Cost::unsafe;
-		} // if
 	}
 }
 
@@ -672,9 +691,14 @@ void ConversionCost_new::postvisit( const ast::FunctionType * functionType ) {
 }
 
 void ConversionCost_new::postvisit( const ast::EnumInstType * enumInstType ) {
-	(void)enumInstType;
-	static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
-	cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
+	const ast::EnumDecl * baseEnum = enumInstType->base;
+	if ( const ast::Type * baseType = baseEnum->base ) {
+		cost = costCalc( baseType, dst, srcIsLvalue, symtab, env );
+	} else {
+		(void)enumInstType;
+		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
+		cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
+	}
 	if ( cost < Cost::unsafe ) {
 		cost.incSafe();
 	}

@@ -303,7 +303,10 @@ namespace CodeTools {
 			void previsit( UnionInstType* ut ) { handleAggregate( ut ); }
 
 			// replace enums with int
-			void previsit( EnumInstType* ) { ss << (int)BasicType::SignedInt; }
+			void previsit( EnumInstType* ) { 
+				// TODO: add the meaningful representation of typed int
+				ss << (int)BasicType::SignedInt; 
+			}
 
 			void previsit( TypeInstType* vt ) {
 				// print closed variables as named types

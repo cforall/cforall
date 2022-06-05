@@ -898,6 +898,16 @@ namespace {
 						}
 
 						if (argType.as<ast::PointerType>()) funcFinder.otypeKeys.insert(Mangle::Encoding::pointer);
+						else if (const ast::EnumInstType * enumInst = argType.as<ast::EnumInstType>()) {
+							const ast::EnumDecl * enumDecl = enumInst->base;
+							if ( const ast::Type* enumType = enumDecl->base ) {
+								// instance of enum (T) is a instance of type (T) 
+								funcFinder.otypeKeys.insert(Mangle::mangle(enumType, Mangle::NoGenericParams | Mangle::Type));
+							} else {
+								// instance of an untyped enum is techically int
+								funcFinder.otypeKeys.insert(Mangle::mangle(enumDecl, Mangle::NoGenericParams | Mangle::Type));
+							}
+						} 
 						else funcFinder.otypeKeys.insert(Mangle::mangle(argType, Mangle::NoGenericParams | Mangle::Type));
 					}
 				}
@@ -917,7 +927,7 @@ namespace {
 			reason.code = NoMatch;
 
 			// find function operators
-			ast::ptr< ast::Expr > opExpr = new ast::NameExpr{ untypedExpr->location, "?()" };
+			ast::ptr< ast::Expr > opExpr = new ast::NameExpr{ untypedExpr->location, "?()" }; // ??? why not ?{}
 			CandidateFinder opFinder( context, tenv );
 			// okay if there aren't any function operations
 			opFinder.find( opExpr, ResolvMode::withoutFailFast() );

@@ -367,7 +367,7 @@ namespace {
 	}
 
 	struct ReturnFixer_New final :
-			public ast::WithStmtsToAdd<>, ast::WithGuards {
+			public ast::WithStmtsToAdd<>, ast::WithGuards, ast::WithShortCircuiting {
 		void previsit( const ast::FunctionDecl * decl );
 		const ast::ReturnStmt * previsit( const ast::ReturnStmt * stmt );
 	private:
@@ -375,6 +375,7 @@ namespace {
 	};
 
 	void ReturnFixer_New::previsit( const ast::FunctionDecl * decl ) {
+		if (decl->linkage == ast::Linkage::Intrinsic) visit_children = false;
 		GuardValue( funcDecl ) = decl;
 	}
 

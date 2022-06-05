@@ -137,7 +137,7 @@
 
 		__u32 nentries = params_in.num_entries != 0 ? params_in.num_entries : 256;
 		if( !is_pow2(nentries) ) {
-			abort("ERROR: I/O setup 'num_entries' must be a power of 2\n");
+			abort("ERROR: I/O setup 'num_entries' must be a power of 2, was %u\n", nentries);
 		}
 
 		int fd = syscall(__NR_io_uring_setup, nentries, &params );

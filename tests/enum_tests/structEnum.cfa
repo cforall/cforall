@@ -1,0 +1,33 @@
+#include <stdio.h>
+
+struct Point {
+    int x;
+    char y;
+};
+
+enum(Point) PointEnum {
+    first={
+        100,
+        'c'
+    },
+    second={
+        200,
+        'a'
+    }
+};
+
+// The only valid usage
+struct Point apple = first;
+// Failed due to Qualified name is currently unimplemented.
+// struct Point banana = PointEnum.first;
+
+int main() {
+    printf("%d %c\n", apple.x, apple.y);
+    // Failed; enumInstType is now not a real type and not instantiated. 
+    // Not sure if we want that
+    // printf("%d %c\n", second.x, second.y);
+    return 0;
+}
+
+
+
