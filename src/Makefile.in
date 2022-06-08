@@ -253,7 +253,8 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	CodeGen/LinkOnce.$(OBJEXT) CodeTools/DeclStats.$(OBJEXT) \
 	CodeTools/ResolvProtoDump.$(OBJEXT) \
 	CodeTools/TrackLoc.$(OBJEXT) Concurrency/KeywordsNew.$(OBJEXT) \
-	Concurrency/Keywords.$(OBJEXT) Concurrency/Waitfor.$(OBJEXT) \
+	Concurrency/Keywords.$(OBJEXT) \
+	Concurrency/WaitforNew.$(OBJEXT) Concurrency/Waitfor.$(OBJEXT) \
 	$(am__objects_3) Common/DebugMalloc.$(OBJEXT) \
 	ControlStruct/ExceptDecl.$(OBJEXT) \
 	ControlStruct/ExceptTranslateNew.$(OBJEXT) \
@@ -355,6 +356,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Concurrency/$(DEPDIR)/Keywords.Po \
 	Concurrency/$(DEPDIR)/KeywordsNew.Po \
 	Concurrency/$(DEPDIR)/Waitfor.Po \
+	Concurrency/$(DEPDIR)/WaitforNew.Po \
 	ControlStruct/$(DEPDIR)/ExceptDecl.Po \
 	ControlStruct/$(DEPDIR)/ExceptTranslate.Po \
 	ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po \
@@ -719,9 +721,10 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	CodeTools/ResolvProtoDump.cc CodeTools/ResolvProtoDump.h \
 	CodeTools/TrackLoc.cc CodeTools/TrackLoc.h \
 	Concurrency/KeywordsNew.cpp Concurrency/Keywords.cc \
-	Concurrency/Keywords.h Concurrency/Waitfor.cc \
-	Concurrency/Waitfor.h $(SRC_COMMON) Common/DebugMalloc.cc \
-	ControlStruct/ExceptDecl.cc ControlStruct/ExceptDecl.h \
+	Concurrency/Keywords.h Concurrency/WaitforNew.cpp \
+	Concurrency/Waitfor.cc Concurrency/Waitfor.h $(SRC_COMMON) \
+	Common/DebugMalloc.cc ControlStruct/ExceptDecl.cc \
+	ControlStruct/ExceptDecl.h \
 	ControlStruct/ExceptTranslateNew.cpp \
 	ControlStruct/ExceptTranslate.cc \
 	ControlStruct/ExceptTranslate.h ControlStruct/FixLabels.cpp \
@@ -1440,6 +1443,8 @@ Concurrency/KeywordsNew.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/Keywords.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
+Concurrency/WaitforNew.$(OBJEXT): Concurrency/$(am__dirstamp) \
+	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/Waitfor.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Common/DebugMalloc.$(OBJEXT): Common/$(am__dirstamp) \
@@ -1653,6 +1658,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Keywords.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/KeywordsNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Waitfor.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/WaitforNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptDecl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptTranslate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po@am__quote@ # am--include-marker
@@ -2068,6 +2074,7 @@ distclean: distclean-am
 	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
 	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
+	-rm -f Concurrency/$(DEPDIR)/WaitforNew.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptDecl.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslate.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po
@@ -2291,6 +2298,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
 	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
+	-rm -f Concurrency/$(DEPDIR)/WaitforNew.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptDecl.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslate.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po

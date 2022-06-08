@@ -126,7 +126,7 @@ namespace InitTweak {
 	///    .section .data,"a"
 	///    .section .data#,"a"
 	/// to avoid assembler warning "ignoring changed section attributes for .data"
-	void addDataSectonAttribute( ObjectDecl * objDecl );
+	void addDataSectionAttribute( ObjectDecl * objDecl );
 
 	void addDataSectionAttribute( ast::ObjectDecl * objDecl );
 

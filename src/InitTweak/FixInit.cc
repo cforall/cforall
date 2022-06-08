@@ -805,7 +805,7 @@ namespace InitTweak {
 						// The ojbect needs to go in the data section, regardless of dtor complexity below.
 						// The attribute works, and is meant to apply, both for leaving the static local alone,
 						// and for hoisting it out as a static global.
-						addDataSectonAttribute( objDecl );
+						addDataSectionAttribute( objDecl );
 
 						// originally wanted to take advantage of gcc nested functions, but
 						// we get memory errors with this approach. To remedy this, the static

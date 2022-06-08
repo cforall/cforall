@@ -586,7 +586,7 @@ bool InitExpander_new::addReference() {
 	}
 
 	bool isConstructable( const ast::Type * type ) {
-		return ! dynamic_cast< const ast::VarArgsType * >( type ) && ! dynamic_cast< const ast::ReferenceType * >( type ) 
+		return ! dynamic_cast< const ast::VarArgsType * >( type ) && ! dynamic_cast< const ast::ReferenceType * >( type )
 		&& ! dynamic_cast< const ast::FunctionType * >( type ) && ! Tuples::isTtype( type );
 	}
 
@@ -1024,7 +1024,7 @@ bool InitExpander_new::addReference() {
 		static ast::ptr<ast::FunctionDecl> assign = nullptr;
 		if (!assign) {
 			auto td = new ast::TypeDecl({}, "T", {}, nullptr, ast::TypeDecl::Dtype, true);
-			assign = new ast::FunctionDecl({}, "?=?", {}, 
+			assign = new ast::FunctionDecl({}, "?=?", {},
 			{ new ast::ObjectDecl({}, "_dst", new ast::ReferenceType(new ast::TypeInstType("T", td))),
 			  new ast::ObjectDecl({}, "_src", new ast::TypeInstType("T", td))},
 			{ new ast::ObjectDecl({}, "_ret", new ast::TypeInstType("T", td))}, nullptr, {}, ast::Linkage::Intrinsic);
@@ -1094,9 +1094,9 @@ bool InitExpander_new::addReference() {
 			const ast::Expr * arg = addressExpr->arg;
 
 			// address of a variable or member expression is constexpr
-			if ( ! dynamic_cast< const ast::NameExpr * >( arg ) 
-			&& ! dynamic_cast< const ast::VariableExpr * >( arg ) 
-			&& ! dynamic_cast< const ast::MemberExpr * >( arg ) 
+			if ( ! dynamic_cast< const ast::NameExpr * >( arg )
+			&& ! dynamic_cast< const ast::VariableExpr * >( arg )
+			&& ! dynamic_cast< const ast::MemberExpr * >( arg )
 			&& ! dynamic_cast< const ast::UntypedMemberExpr * >( arg ) ) result = false;
 		}
 
@@ -1240,26 +1240,27 @@ bool isCopyFunction( const ast::FunctionDecl * decl ) {
 		return isCopyFunction( decl, "?{}" );
 	}
 
-	void addDataSectonAttribute( ObjectDecl * objDecl ) {
+	#if defined( __x86_64 ) || defined( __i386 ) // assembler comment to prevent assembler warning message
+		#define ASM_COMMENT "#"
+	#else // defined( __ARM_ARCH )
+		#define ASM_COMMENT "//"
+	#endif
+	static const char * const data_section =  ".data" ASM_COMMENT;
+	static const char * const tlsd_section = ".tdata" ASM_COMMENT;
+	void addDataSectionAttribute( ObjectDecl * objDecl ) {
+		const bool is_tls = objDecl->get_storageClasses().is_threadlocal;
+		const char * section = is_tls ? tlsd_section : data_section;
 		objDecl->attributes.push_back(new Attribute("section", {
-			new ConstantExpr( Constant::from_string(".data"
-#if defined( __x86_64 ) || defined( __i386 ) // assembler comment to prevent assembler warning message
-					"#"
-#else // defined( __ARM_ARCH )
-					"//"
-#endif
-				))}));
+			new ConstantExpr( Constant::from_string( section ) )
+		}));
 	}
 
 	void addDataSectionAttribute( ast::ObjectDecl * objDecl ) {
+		const bool is_tls = objDecl->storage.is_threadlocal;
+		const char * section = is_tls ? tlsd_section : data_section;
 		objDecl->attributes.push_back(new ast::Attribute("section", {
-			ast::ConstantExpr::from_string(objDecl->location, ".data"
-#if defined( __x86_64 ) || defined( __i386 ) // assembler comment to prevent assembler warning message
-					"#"
-#else // defined( __ARM_ARCH )
-					"//"
-#endif
-				)}));
+			ast::ConstantExpr::from_string(objDecl->location, section)
+		}));
 	}
 
 }

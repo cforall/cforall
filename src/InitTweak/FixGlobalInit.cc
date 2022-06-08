@@ -161,7 +161,7 @@ namespace InitTweak {
 				ctorInit->dtor = nullptr;
 			} // if
 			if ( Statement * ctor = ctorInit->ctor ) {
-				addDataSectonAttribute( objDecl );
+				addDataSectionAttribute( objDecl );
 				initStatements.push_back( ctor );
 				objDecl->init = nullptr;
 				ctorInit->ctor = nullptr;

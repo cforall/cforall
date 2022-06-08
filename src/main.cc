@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Apr 29  9:52:00 2022
-// Update Count     : 673
+// Last Modified On : Tue Jun  7 13:29:00 2022
+// Update Count     : 674
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -446,7 +446,8 @@ int main( int argc, char * argv[] ) {
 			// Currently not working due to unresolved issues with UniqueExpr
 			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( transUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
 
-			PASS( "Translate Tries" , ControlStruct::translateTries( transUnit ) );
+			PASS( "Translate Tries", ControlStruct::translateTries( transUnit ) );
+			PASS( "Gen Waitfor", Concurrency::generateWaitFor( transUnit ) );
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
@@ -516,11 +517,9 @@ int main( int argc, char * argv[] ) {
 			} // if
 
 			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( translationUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
-
-			PASS( "Translate Tries" , ControlStruct::translateTries( translationUnit ) );
+			PASS( "Translate Tries", ControlStruct::translateTries( translationUnit ) );
+			PASS( "Gen Waitfor", Concurrency::generateWaitFor( translationUnit ) );
 		}
-
-		PASS( "Gen Waitfor" , Concurrency::generateWaitFor( translationUnit ) );
 
 		PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
 
