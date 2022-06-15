@@ -194,12 +194,6 @@ extern "C" {
 		// monitors currently held by this thread
 		struct __monitor_group_t monitors;
 
-		// used to put threads on user data structures
-		struct {
-			struct thread$ * next;
-			struct thread$ * back;
-		} seqable;
-
 		// used to put threads on dlist data structure
 		__cfa_dlink(thread$);
 
@@ -207,6 +201,12 @@ extern "C" {
 			struct thread$ * next;
 			struct thread$ * prev;
 		} node;
+
+		// used to store state between clh lock/unlock
+		volatile bool * clh_prev;
+
+		// used to point to this thd's current clh node
+		volatile bool * clh_node;
 
 		struct processor * last_proc;
 
@@ -237,22 +237,6 @@ extern "C" {
 
 		static inline [thread$ *&, thread$ *& ] __get( thread$ & this ) __attribute__((const)) {
 			return this.node.[next, prev];
-		}
-
-		static inline thread$ * volatile & ?`next ( thread$ * this )  __attribute__((const)) {
-			return this->seqable.next;
-		}
-
-		static inline thread$ *& Back( thread$ * this ) __attribute__((const)) {
-			return this->seqable.back;
-		}
-
-		static inline thread$ *& Next( thread$ * this ) __attribute__((const)) {
-				return this->seqable.next;
-		}
-
-		static inline bool listed( thread$ * this ) {
-			return this->seqable.next != 0p;
 		}
 
 		static inline void ?{}(__monitor_group_t & this) {

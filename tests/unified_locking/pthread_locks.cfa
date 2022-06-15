@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include "locks.hfa"
+#include <stdlib.hfa>
+#include <thread.hfa>
+
+const unsigned int num_times = 50000;
+
+simple_owner_lock l;
+pthread_cond_var( simple_owner_lock ) c;
+
+volatile int counter = 0;
+
+thread Wait_Signal_1 {};
+
+void main( Wait_Signal_1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(l);
+		if(empty(c) && i != num_times - 1) {
+			wait(c,l);
+		}else{
+			notify_one(c);
+		}
+		unlock(l);
+	}
+}
+
+thread Wait_3_Signal_3 {};
+
+void main( Wait_3_Signal_3 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(l);
+        counter++;
+		if(counter == 4 || i == num_times - 1) {
+            counter = 0;
+			notify_all(c);
+		}else{
+			wait(c,l);
+		}
+		unlock(l);
+	}
+}
+
+thread Rec_Lock_Wait_Signal_1 {};
+
+void main( Rec_Lock_Wait_Signal_1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(l);
+		lock(l);
+		lock(l);
+		if(empty(c) && i != num_times - 1) {
+			wait(c,l);
+		}else{
+			notify_one(c);
+		}
+		unlock(l);
+		unlock(l);
+		unlock(l);
+	}
+}
+
+int main() {
+	processor p[3];
+	printf("Start Test 1: lock and condition variable single wait/notify\n");
+	{
+		Wait_Signal_1 t1[2];
+	}
+	printf("Done Test 1\n");
+
+	printf("Start Test 2: lock and condition variable 3 wait/notify all\n");
+	{
+		Wait_3_Signal_3 t1[4];
+	}
+	printf("Done Test 2\n");
+
+	printf("Start Test 3: lock and condition variable multiple acquire and wait/notify\n");
+	{
+		Rec_Lock_Wait_Signal_1 t1[2];
+	}
+	printf("Done Test 3\n");
+}

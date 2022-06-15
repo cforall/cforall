@@ -2,6 +2,8 @@
 
 #include <assert.h>
 
+#include <bits/defs.hfa>
+
 forall( T &) {
 	//------------------------------------------------------------
 	// Queue based on the MCS lock

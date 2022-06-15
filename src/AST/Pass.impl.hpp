@@ -181,10 +181,10 @@ namespace ast {
 		using __pass::empty;
 
 		// get the stmts/decls that will need to be spliced in
-		auto stmts_before = __pass::stmtsToAddBefore( core, 0);
-		auto stmts_after  = __pass::stmtsToAddAfter ( core, 0);
-		auto decls_before = __pass::declsToAddBefore( core, 0);
-		auto decls_after  = __pass::declsToAddAfter ( core, 0);
+		auto stmts_before = __pass::stmtsToAddBefore( core, 0 );
+		auto stmts_after  = __pass::stmtsToAddAfter ( core, 0 );
+		auto decls_before = __pass::declsToAddBefore( core, 0 );
+		auto decls_after  = __pass::declsToAddAfter ( core, 0 );
 
 		// These may be modified by subnode but most be restored once we exit this statemnet.
 		ValueGuardPtr< const ast::TypeSubstitution * > __old_env         ( __pass::typeSubs( core, 0 ) );
@@ -316,8 +316,6 @@ namespace ast {
 				// this is because otherwise the order would be awkward to predict
 				assert(( empty( stmts_before ) && empty( stmts_after ))
 				    || ( empty( decls_before ) && empty( decls_after )) );
-
-
 
 				// Take all the statements which should have gone after, N/A for first iteration
 				new_kids.take_all( decls_before );
@@ -2114,8 +2112,8 @@ const ast::TypeSubstitution * ast::Pass< core_t >::visit( const ast::TypeSubstit
 
 	if ( __visit_children() ) {
 		bool mutated = false;
-		std::unordered_map< ast::TypeInstType::TypeEnvKey, ast::ptr< ast::Type > > new_map;
-		for ( const auto & p : node->typeEnv ) {
+		ast::TypeSubstitution::TypeMap new_map;
+		for ( const auto & p : node->typeMap ) {
 			guard_symtab guard { *this };
 			auto new_node = p.second->accept( *this );
 			if (new_node != p.second) mutated = true;
@@ -2123,7 +2121,7 @@ const ast::TypeSubstitution * ast::Pass< core_t >::visit( const ast::TypeSubstit
 		}
 		if (mutated) {
 			auto new_node = __pass::mutate<core_t>( node );
-			new_node->typeEnv.swap( new_map );
+			new_node->typeMap.swap( new_map );
 			node = new_node;
 		}
 	}

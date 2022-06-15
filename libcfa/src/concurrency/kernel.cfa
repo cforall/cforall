@@ -833,19 +833,6 @@ extern "C" {
 #include "io/types.hfa"
 #endif
 
-
-
-//-----------------------------------------------------------------------------
-// Debug
-__cfaabi_dbg_debug_do(
-	extern "C" {
-		void __cfaabi_dbg_record_lock(__spinlock_t & this, const char prev_name[]) {
-			this.prev_name = prev_name;
-			this.prev_thrd = kernelTLS().this_thread;
-		}
-	}
-)
-
 //-----------------------------------------------------------------------------
 // Debug
 bool threading_enabled(void) __attribute__((const)) libcfa_public {

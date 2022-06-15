@@ -52,13 +52,13 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 		canary = 0x0D15EA5E0D15EA5Ep;
 	#endif
 
-	seqable.next = 0p;
-	seqable.back = 0p;
-
 	node.next = 0p;
 	node.prev = 0p;
-	doregister(curr_cluster, this);
 
+	clh_node = malloc( );
+	*clh_node = false;
+
+	doregister(curr_cluster, this);
 	monitors{ &self_mon_p, 1, (fptr_t)0 };
 }
 
@@ -66,6 +66,7 @@ void ^?{}(thread$& this) with( this ) {
 	#if defined( __CFA_WITH_VERIFY__ )
 		canary = 0xDEADDEADDEADDEADp;
 	#endif
+	free(clh_node);
 	unregister(curr_cluster, this);
 	^self_cor{};
 }

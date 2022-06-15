@@ -218,6 +218,39 @@ forall(L & | is_blocking_lock(L)) {
 
 	// this casts the alarm node to our wrapped type since we used type erasure
 	static void alarm_node_wrap_cast( alarm_node_t & a ) { timeout_handler( (alarm_node_wrap(L) &)a ); }
+
+	struct pthread_alarm_node_wrap {
+		alarm_node_t alarm_node;
+		pthread_cond_var(L) * cond;
+		info_thread(L) * info_thd;
+	};
+
+	void ?{}( pthread_alarm_node_wrap(L) & this, Duration alarm, Duration period, Alarm_Callback callback, pthread_cond_var(L) * c, info_thread(L) * i ) {
+		this.alarm_node{ callback, alarm, period };
+		this.cond = c;
+		this.info_thd = i;
+	}
+
+	void ^?{}( pthread_alarm_node_wrap(L) & this ) { }
+
+	static void timeout_handler ( pthread_alarm_node_wrap(L) & this ) with( this ) {
+		// This pthread_cond_var member is called from the kernel, and therefore, cannot block, but it can spin.
+		lock( cond->lock __cfaabi_dbg_ctx2 );
+
+		// this check is necessary to avoid a race condition since this timeout handler
+		// 	may still be called after a thread has been removed from the queue but
+		// 	before the alarm is unregistered
+		if ( (*info_thd)`isListed ) {	// is thread on queue
+			info_thd->signalled = false;
+			// remove this thread O(1)
+			remove( *info_thd );
+			on_notify(*info_thd->lock, info_thd->t);
+		}
+		unlock( cond->lock );
+	}
+
+	// this casts the alarm node to our wrapped type since we used type erasure
+	static void pthread_alarm_node_wrap_cast( alarm_node_t & a ) { timeout_handler( (pthread_alarm_node_wrap(L) &)a ); }
 }
 
 //-----------------------------------------------------------------------------
@@ -387,8 +420,95 @@ forall(L & | is_blocking_lock(L)) {
 		park( );
 		on_wakeup(*i.lock, recursion_count);
 	}
-}
 
+	//-----------------------------------------------------------------------------
+	// pthread_cond_var
+
+	void  ?{}( pthread_cond_var(L) & this ) with(this) {
+		blocked_threads{};
+		lock{};
+	}
+
+	void ^?{}( pthread_cond_var(L) & this ) { }
+
+	bool notify_one( pthread_cond_var(L) & this ) with(this) { 
+		lock( lock __cfaabi_dbg_ctx2 );
+		bool ret = ! blocked_threads`isEmpty;
+		if ( ret ) {
+			info_thread(L) & popped = try_pop_front( blocked_threads );
+			on_notify(*popped.lock, popped.t);
+		}
+		unlock( lock );
+		return ret;
+	}
+
+	bool notify_all( pthread_cond_var(L) & this ) with(this) { 
+		lock( lock __cfaabi_dbg_ctx2 );
+		bool ret = ! blocked_threads`isEmpty;
+		while( ! blocked_threads`isEmpty ) {
+			info_thread(L) & popped = try_pop_front( blocked_threads );
+			on_notify(*popped.lock, popped.t);
+		}
+		unlock( lock );
+		return ret;
+	}
+
+	uintptr_t front( pthread_cond_var(L) & this ) with(this) { return blocked_threads`isEmpty ? NULL : blocked_threads`first.info; }
+	bool empty ( pthread_cond_var(L) & this ) with(this) { return blocked_threads`isEmpty; }
+
+	static size_t queue_and_get_recursion( pthread_cond_var(L) & this, info_thread(L) * i ) with(this) {
+		// add info_thread to waiting queue
+		insert_last( blocked_threads, *i );
+		size_t recursion_count = 0;
+		recursion_count = on_wait( *i->lock );
+		return recursion_count;
+	}
+	
+	static void queue_info_thread_timeout( pthread_cond_var(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
+		lock( lock __cfaabi_dbg_ctx2 );
+		size_t recursion_count = queue_and_get_recursion(this, &info);
+		pthread_alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
+		register_self( &node_wrap.alarm_node );
+		unlock( lock );
+
+		// blocks here
+		park();
+
+		// unregisters alarm so it doesn't go off if this happens first
+		unregister_self( &node_wrap.alarm_node );
+
+		// resets recursion count here after waking
+		if (info.lock) on_wakeup(*info.lock, recursion_count);
+	}
+
+	void wait( pthread_cond_var(L) & this, L & l ) with(this) {
+		wait( this, l, 0 );
+	}
+
+	void wait( pthread_cond_var(L) & this, L & l, uintptr_t info ) with(this) {
+		lock( lock __cfaabi_dbg_ctx2 );
+		info_thread( L ) i = { active_thread(), info, &l };
+		size_t recursion_count = queue_and_get_recursion(this, &i);
+		unlock( lock );
+		park( );
+		on_wakeup(*i.lock, recursion_count);
+	}
+
+	#define PTHREAD_WAIT_TIME( u, l, t ) \
+		info_thread( L ) i = { active_thread(), u, l }; \
+		queue_info_thread_timeout(this, i, t, pthread_alarm_node_wrap_cast ); \
+		return i.signalled;
+
+	bool wait( pthread_cond_var(L) & this, L & l, timespec t ) {
+		Duration d = { t };
+		WAIT_TIME( 0, &l , d )
+	}
+	
+	bool wait( pthread_cond_var(L) & this, L & l, uintptr_t info, timespec t  ) {
+		Duration d = { t };
+		WAIT_TIME( info, &l , d )
+	}
+}
 //-----------------------------------------------------------------------------
 // Semaphore
 void  ?{}( semaphore & this, int count = 1 ) {

@@ -1,0 +1,8 @@
+#include <locks.hfa>
+
+#define LOCK block_spin_lock
+#include "mutex_test.hfa"
+
+int main() {
+    test();
+}

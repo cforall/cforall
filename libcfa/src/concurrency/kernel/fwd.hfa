@@ -199,7 +199,6 @@ extern "C" {
 				for() {
 					struct thread$ * expected = this.ptr;
 					if(expected == 1p) return false;
-					/* paranoid */ verify( expected == 0p );
 					if(__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 						park();
 						/* paranoid */ verify( this.ptr == 1p );
@@ -212,7 +211,7 @@ extern "C" {
 			// return true if a thread was unparked
 			thread$ * post(oneshot & this, bool do_unpark = true) {
 				struct thread$ * got = __atomic_exchange_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
-				if( got == 0p ) return 0p;
+				if( got == 0p || got == 1p ) return 0p;
 				if(do_unpark) unpark( got );
 				return got;
 			}
@@ -262,7 +261,6 @@ extern "C" {
 					if(expected == 1p) return false; // Yes, just return false (didn't block)
 
 					// The future is not fulfilled, try to setup the wait context
-					/* paranoid */ verify( expected == 0p );
 					if(__atomic_compare_exchange_n(&this.ptr, &expected, &wait_ctx, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 						return true;
 					}
@@ -274,32 +272,36 @@ extern "C" {
 			// futures that weren't fulfilled before the thread woke up
 			// should retract the wait ctx
 			// intented to be use by wait, wait_any, waitfor, etc. rather than used directly
-			void retract( future_t & this, oneshot & wait_ctx ) {
-				// Remove the wait context
-				struct oneshot * got = __atomic_exchange_n( &this.ptr, 0p, __ATOMIC_SEQ_CST);
+			bool retract( future_t & this, oneshot & wait_ctx ) {
+				for() {
+					struct oneshot * expected = this.ptr;
 
-				// got == 0p: future was never actually setup, just return
-				if( got == 0p ) return;
+					// expected == 0p: future was never actually setup, just return
+					if( expected == 0p ) return false;
 
-				// got == wait_ctx: since fulfil does an atomic_swap,
-				// if we got back the original then no one else saw context
-				// It is safe to delete (which could happen after the return)
-				if( got == &wait_ctx ) return;
+					// expected == 1p: the future is ready and the context was fully consumed
+					// the server won't use the pointer again
+					// It is safe to delete (which could happen after the return)
+					if( expected == 1p ) return true;
 
-				// got == 1p: the future is ready and the context was fully consumed
-				// the server won't use the pointer again
-				// It is safe to delete (which could happen after the return)
-				if( got == 1p ) return;
+					// expected == 2p: the future is ready but the context hasn't fully been consumed
+					// spin until it is safe to move on
+					if( expected == 2p ) {
+						while( this.ptr != 1p ) Pause();
+						/* paranoid */ verify( this.ptr == 1p );
+						return true;
+					}
 
-				// got == 2p: the future is ready but the context hasn't fully been consumed
-				// spin until it is safe to move on
-				if( got == 2p ) {
-					while( this.ptr != 1p ) Pause();
-					return;
+					// expected != wait_ctx: the future was setup with a different context ?!?!
+					// something went wrong here, abort
+					if( expected != &wait_ctx ) abort("Future in unexpected state");
+
+					// we still have the original context, then no one else saw it
+					// attempt to remove the context so it doesn't get consumed.
+					if(__atomic_compare_exchange_n( &this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+						return false;
+					}
 				}
-
-				// got == any thing else, something wen't wrong here, abort
-				abort("Future in unexpected state");
 			}
 
 			// Mark the future as abandoned, meaning it will be deleted by the server
@@ -377,6 +379,29 @@ extern "C" {
 				// with potential calls to avail
 				// this.ptr = 1p;
 				return ret;
+			}
+
+			// Wait for any future to be fulfilled
+			forall(T& | sized(T) | { bool setup( T&, oneshot & ); bool retract( T&, oneshot & ); })
+			T & wait_any( T * futures, size_t num_futures ) {
+				oneshot temp;
+
+				// setup all futures
+				// if any are already satisfied return
+				for ( i; num_futures ) {
+					if( !setup(futures[i], temp) ) return futures[i];
+				}
+
+				// Wait context is setup, just wait on it
+				wait( temp );
+
+				size_t ret;
+				// attempt to retract all futures
+				for ( i; num_futures ) {
+					if ( retract( futures[i], temp ) ) ret = i;
+				}
+
+				return futures[ret];
 			}
 		}
 

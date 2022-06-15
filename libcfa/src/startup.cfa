@@ -62,9 +62,6 @@ extern "C" {
 } // extern "C"
 
 struct __spinlock_t;
-extern "C" {
-	void __cfaabi_dbg_record_lock(struct __spinlock_t & this, const char prev_name[]) __attribute__(( weak )) libcfa_public {}
-}
 
 // Local Variables: //
 // mode: c //

@@ -37,53 +37,58 @@ TypeSubstitution &TypeSubstitution::operator=( const TypeSubstitution &other ) {
 }
 
 void TypeSubstitution::initialize( const TypeSubstitution &src, TypeSubstitution &dest ) {
-	dest.typeEnv.clear();
+	dest.typeMap.clear();
 	dest.add( src );
 }
 
 void TypeSubstitution::add( const TypeSubstitution &other ) {
-	for ( TypeEnvType::const_iterator i = other.typeEnv.begin(); i != other.typeEnv.end(); ++i ) {
-		typeEnv[ i->first ] = i->second;
+	for ( TypeMap::const_iterator i = other.typeMap.begin(); i != other.typeMap.end(); ++i ) {
+		typeMap[ i->first ] = i->second;
 	} // for
 }
 
 void TypeSubstitution::add( const TypeInstType * formalType, const Type *actualType ) {
-	typeEnv[ *formalType ] = actualType;
+	typeMap[ *formalType ] = actualType;
 }
 
 void TypeSubstitution::add( const TypeInstType::TypeEnvKey & key, const Type * actualType) {
-	typeEnv[ key ] = actualType;
+	typeMap[ key ] = actualType;
 }
 
 void TypeSubstitution::remove( const TypeInstType * formalType ) {
-	TypeEnvType::iterator i = typeEnv.find( *formalType );
-	if ( i != typeEnv.end() ) {
-		typeEnv.erase( *formalType );
+	TypeMap::iterator i = typeMap.find( *formalType );
+	if ( i != typeMap.end() ) {
+		typeMap.erase( *formalType );
 	} // if
 }
 
-const Type *TypeSubstitution::lookup( const TypeInstType * formalType ) const {
-	TypeEnvType::const_iterator i = typeEnv.find( *formalType );
+const Type *TypeSubstitution::lookup(
+		const TypeInstType::TypeEnvKey & formalType ) const {
+	TypeMap::const_iterator i = typeMap.find( formalType );
 
 	// break on not in substitution set
-	if ( i == typeEnv.end() ) return 0;
+	if ( i == typeMap.end() ) return 0;
 
 	// attempt to transitively follow TypeInstType links.
 	while ( const TypeInstType *actualType = i->second.as<TypeInstType>()) {
 		// break cycles in the transitive follow
-		if ( *formalType == *actualType ) break;
+		if ( formalType == *actualType ) break;
 
 		// Look for the type this maps to, returning previous mapping if none-such
-		i = typeEnv.find( *actualType );
-		if ( i == typeEnv.end() ) return actualType;
+		i = typeMap.find( *actualType );
+		if ( i == typeMap.end() ) return actualType;
 	}
 
 	// return type from substitution set
 	return i->second;
 }
 
+const Type *TypeSubstitution::lookup( const TypeInstType * formalType ) const {
+	return lookup( ast::TypeInstType::TypeEnvKey( *formalType ) );
+}
+
 bool TypeSubstitution::empty() const {
-	return typeEnv.empty();
+	return typeMap.empty();
 }
 
 namespace {
@@ -118,7 +123,7 @@ void TypeSubstitution::normalize() {
 	do {
 		sub.core.subCount = 0;
 		sub.core.freeOnly = true;
-		for ( TypeEnvType::iterator i = typeEnv.begin(); i != typeEnv.end(); ++i ) {
+		for ( TypeMap::iterator i = typeMap.begin(); i != typeMap.end(); ++i ) {
 			i->second = i->second->accept( sub );
 		}
 	} while ( sub.core.subCount );
@@ -128,8 +133,8 @@ const Type * TypeSubstitution::Substituter::postvisit( const TypeInstType *inst 
 	BoundVarsType::const_iterator bound = boundVars.find( *inst );
 	if ( bound != boundVars.end() ) return inst;
 
-	TypeEnvType::const_iterator i = sub.typeEnv.find( *inst );
-	if ( i == sub.typeEnv.end() ) {
+	TypeMap::const_iterator i = sub.typeMap.find( *inst );
+	if ( i == sub.typeMap.end() ) {
 		return inst;
 	} else {
 		// cut off infinite loop for the case where a type is bound to itself.

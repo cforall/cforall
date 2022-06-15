@@ -74,6 +74,7 @@ class TypeSubstitution : public Node {
 	void add( const TypeInstType::TypeEnvKey & key, const Type *actualType );
 	void add( const TypeSubstitution &other );
 	void remove( const TypeInstType * formalType );
+	const Type *lookup( const TypeInstType::TypeEnvKey & formalType ) const;
 	const Type *lookup( const TypeInstType * formalType ) const;
 	bool empty() const;
 
@@ -103,15 +104,15 @@ class TypeSubstitution : public Node {
 	template<typename core_t>
 	friend class Pass;
 
-	typedef std::unordered_map< TypeInstType::TypeEnvKey, ptr<Type> > TypeEnvType;
-	TypeEnvType typeEnv;
+	typedef std::unordered_map< TypeInstType::TypeEnvKey, ptr<Type> > TypeMap;
+	TypeMap typeMap;
 
   public:
-	// has to come after declaration of typeEnv
-	auto begin()       -> decltype( typeEnv.begin() ) { return typeEnv.begin(); }
-	auto   end()       -> decltype( typeEnv.  end() ) { return typeEnv.  end(); }
-	auto begin() const -> decltype( typeEnv.begin() ) { return typeEnv.begin(); }
-	auto   end() const -> decltype( typeEnv.  end() ) { return typeEnv.  end(); }
+	// has to come after declaration of typeMap
+	auto begin()       -> decltype( typeMap.begin() ) { return typeMap.begin(); }
+	auto   end()       -> decltype( typeMap.  end() ) { return typeMap.  end(); }
+	auto begin() const -> decltype( typeMap.begin() ) { return typeMap.begin(); }
+	auto   end() const -> decltype( typeMap.  end() ) { return typeMap.  end(); }
 
 };
 
@@ -143,7 +144,7 @@ void TypeSubstitution::addAll( FormalIterator formalBegin, FormalIterator formal
 		if ( const TypeDecl *formal = formalIt->template as<TypeDecl>() ) {
 			if ( const TypeExpr *actual = actualIt->template as<TypeExpr>() ) {
 				if ( formal->name != "" ) {
-					typeEnv[ formal ] = actual->type;
+					typeMap[ formal ] = actual->type;
 				} // if
 			} else {
 				SemanticError( formal, toString( "Attempt to provide non-type parameter: ", toString( *actualIt ).c_str(), " for type parameter " ) );

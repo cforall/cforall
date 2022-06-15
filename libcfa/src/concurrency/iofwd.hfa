@@ -75,6 +75,8 @@ static inline {
 	bool wait     ( io_future_t & this ) { return wait     (this.self); }
 	void reset    ( io_future_t & this ) { return reset    (this.self); }
 	bool available( io_future_t & this ) { return available(this.self); }
+	bool setup    ( io_future_t & this, oneshot & ctx ) { return setup  (this.self, ctx); }
+	bool retract  ( io_future_t & this, oneshot & ctx ) { return retract(this.self, ctx); }
 }
 
 //----------

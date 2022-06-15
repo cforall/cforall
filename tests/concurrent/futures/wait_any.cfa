@@ -1,0 +1,77 @@
+#include <thread.hfa>
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <mutex_stmt.hfa>
+#include <locks.hfa>
+
+simple_owner_lock l;
+pthread_cond_var( simple_owner_lock ) c;
+
+size_t num_futures = 10;
+
+future_t * futures;
+
+size_t * shuffle_arr;
+
+size_t numtimes = 10;
+
+volatile bool done = false;
+
+void synchronize() {
+    lock(l);
+    if (empty(c)) {
+        wait(c,l);
+    } else {
+        for ( i; num_futures ) {
+            reset(futures[i]);
+        }
+        notify_one(c);
+    }
+    unlock(l);
+}
+
+thread Waiter {};
+void main( Waiter & this ) {
+    for (numtimes) {
+        wait_any(futures, num_futures);
+        synchronize();
+    }
+    done = true;
+    while (done) notify_one(c);
+}
+
+thread Deliverer {};
+void main( Deliverer & this ) {
+    while (!done) {
+        size_t num_satisfy = random(1,num_futures);
+        for ( i; num_satisfy ) {								// random shuffle a few values
+			swap( shuffle_arr[random(num_futures)], shuffle_arr[random(num_futures)] );
+		}
+        for ( i; num_satisfy ) {
+            fulfil(futures[shuffle_arr[i]]);
+        }
+        synchronize();
+    }
+    done = false;
+}
+
+int main() {
+	sout | "start";
+    futures = alloc( num_futures );
+    shuffle_arr = alloc( num_futures );
+    for ( i; num_futures ) {								// random shuffle a few values
+        futures[i]{};
+        swap( shuffle_arr[random(num_futures)], shuffle_arr[random(num_futures)] );
+    }
+    for ( i; num_futures ) {
+        shuffle_arr[i] = i;
+    }
+	processor procs[1];
+	{
+		Waiter w;
+		Deliverer d;
+	}
+    free( futures );
+    free( shuffle_arr );
+	sout | "done";
+}

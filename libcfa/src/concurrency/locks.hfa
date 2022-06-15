@@ -100,6 +100,72 @@ static inline void unlock(mcs_lock & l, mcs_node & n) {
 }
 
 //-----------------------------------------------------------------------------
+// MCS Spin Lock
+// - No recursive acquisition
+// - Needs to be released by owner
+
+struct mcs_spin_node {
+	mcs_spin_node * volatile next;
+	volatile bool locked;
+};
+
+struct mcs_spin_queue {
+	mcs_spin_node * volatile tail;
+};
+
+static inline void ?{}(mcs_spin_node & this) { this.next = 0p; this.locked = true; }
+
+static inline mcs_spin_node * volatile & ?`next ( mcs_spin_node * node ) {
+	return node->next;
+}
+
+struct mcs_spin_lock {
+	mcs_spin_queue queue;
+};
+
+static inline void lock(mcs_spin_lock & l, mcs_spin_node & n) {
+	mcs_spin_node * prev = __atomic_exchange_n(&l.queue.tail, &n, __ATOMIC_SEQ_CST);
+	if(prev != 0p) {
+		prev->next = &n;
+		while(n.locked) Pause();
+	}
+}
+
+static inline void unlock(mcs_spin_lock & l, mcs_spin_node & n) {
+	mcs_spin_node * n_ptr = &n;
+	if (!__atomic_compare_exchange_n(&l.queue.tail, &n_ptr, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) ) {
+		while (n.next == 0p) {}
+		n.next->locked = false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// CLH Spinlock
+// - No recursive acquisition
+// - Needs to be released by owner
+
+struct clh_lock {
+	volatile bool * volatile tail;
+};
+
+static inline void  ?{}( clh_lock & this ) { this.tail = malloc(); *this.tail = true; }
+static inline void ^?{}( clh_lock & this ) { free(this.tail); }
+
+static inline void lock(clh_lock & l) {
+	thread$ * curr_thd = active_thread();
+	*(curr_thd->clh_node) = false;
+	volatile bool * prev = __atomic_exchange_n((bool **)(&l.tail), (bool *)(curr_thd->clh_node), __ATOMIC_SEQ_CST);
+	while(!__atomic_load_n(prev, __ATOMIC_ACQUIRE)) Pause();
+	curr_thd->clh_prev = prev;
+}
+
+static inline void unlock(clh_lock & l) {
+	thread$ * curr_thd = active_thread();
+	__atomic_store_n(curr_thd->clh_node, true, __ATOMIC_RELEASE);
+	curr_thd->clh_node = curr_thd->clh_prev;
+}
+
+//-----------------------------------------------------------------------------
 // Linear backoff Spinlock
 struct linear_backoff_then_block_lock {
 	// Spin lock used for mutual exclusion
@@ -204,18 +270,24 @@ static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recur
 //-----------------------------------------------------------------------------
 // Fast Block Lock
 
-// High efficiency minimal blocking lock
+// minimal blocking lock
 // - No reacquire for cond var
 // - No recursive acquisition
 // - No ownership
 struct fast_block_lock {
-	// Spin lock used for mutual exclusion
-	__spinlock_t lock;
-
 	// List of blocked threads
 	dlist( thread$ ) blocked_threads;
 
+	// Spin lock used for mutual exclusion
+	__spinlock_t lock;
+
+	// flag showing if lock is held
 	bool held:1;
+
+	#ifdef __CFA_DEBUG__
+	// for deadlock detection
+	struct thread$ * owner;
+	#endif
 };
 
 static inline void  ?{}( fast_block_lock & this ) with(this) {
@@ -230,6 +302,10 @@ static inline void ?=?( fast_block_lock & this, fast_block_lock this2 ) = void;
 // if this is called recursively IT WILL DEADLOCK!!!!!
 static inline void lock(fast_block_lock & this) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
+
+	#ifdef __CFA_DEBUG__
+	assert(!(held && owner == active_thread()));
+	#endif
 	if (held) {
 		insert_last( blocked_threads, *active_thread() );
 		unlock( lock );
@@ -237,6 +313,9 @@ static inline void lock(fast_block_lock & this) with(this) {
 		return;
 	}
 	held = true;
+	#ifdef __CFA_DEBUG__
+	owner = active_thread();
+	#endif
 	unlock( lock );
 }
 
@@ -245,6 +324,9 @@ static inline void unlock(fast_block_lock & this) with(this) {
 	/* paranoid */ verifyf( held != false, "Attempt to release lock %p that isn't held", &this );
 	thread$ * t = &try_pop_front( blocked_threads );
 	held = ( t ? true : false );
+	#ifdef __CFA_DEBUG__
+	owner = ( t ? t : 0p );
+	#endif
 	unpark( t );
 	unlock( lock );
 }
@@ -252,6 +334,278 @@ static inline void unlock(fast_block_lock & this) with(this) {
 static inline void on_notify(fast_block_lock & this, struct thread$ * t ) { unpark(t); }
 static inline size_t on_wait(fast_block_lock & this) { unlock(this); return 0; }
 static inline void on_wakeup(fast_block_lock & this, size_t recursion ) { }
+
+//-----------------------------------------------------------------------------
+// simple_owner_lock
+
+// pthread owner lock
+// - reacquire for cond var
+// - recursive acquisition
+// - ownership
+struct simple_owner_lock {
+	// List of blocked threads
+	dlist( thread$ ) blocked_threads;
+
+	// Spin lock used for mutual exclusion
+	__spinlock_t lock;
+
+	// owner showing if lock is held
+	struct thread$ * owner;
+
+	size_t recursion_count;
+};
+
+static inline void  ?{}( simple_owner_lock & this ) with(this) {
+	lock{};
+	blocked_threads{};
+	owner = 0p;
+	recursion_count = 0;
+}
+static inline void ^?{}( simple_owner_lock & this ) {}
+static inline void ?{}( simple_owner_lock & this, simple_owner_lock this2 ) = void;
+static inline void ?=?( simple_owner_lock & this, simple_owner_lock this2 ) = void;
+
+static inline void lock(simple_owner_lock & this) with(this) {
+	if (owner == active_thread()) {
+		recursion_count++;
+		return;
+	}
+	lock( lock __cfaabi_dbg_ctx2 );
+
+	if (owner != 0p) {
+		insert_last( blocked_threads, *active_thread() );
+		unlock( lock );
+		park( );
+		return;
+	}
+	owner = active_thread();
+	recursion_count = 1;
+	unlock( lock );
+}
+
+// TODO: fix duplicate def issue and bring this back
+// void pop_and_set_new_owner( simple_owner_lock & this ) with( this ) {
+	// thread$ * t = &try_pop_front( blocked_threads );
+	// owner = t;
+	// recursion_count = ( t ? 1 : 0 );
+	// unpark( t );
+// }
+
+static inline void unlock(simple_owner_lock & this) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	/* paranoid */ verifyf( owner != 0p, "Attempt to release lock %p that isn't held", &this );
+	/* paranoid */ verifyf( owner == active_thread(), "Thread %p other than the owner %p attempted to release owner lock %p", owner, active_thread(), &this );
+	// if recursion count is zero release lock and set new owner if one is waiting
+	recursion_count--;
+	if ( recursion_count == 0 ) {
+		// pop_and_set_new_owner( this );
+		thread$ * t = &try_pop_front( blocked_threads );
+		owner = t;
+		recursion_count = ( t ? 1 : 0 );
+		unpark( t );
+	}
+	unlock( lock );
+}
+
+static inline void on_notify(simple_owner_lock & this, struct thread$ * t ) with(this) {
+	lock( lock __cfaabi_dbg_ctx2 );
+	// lock held
+	if ( owner != 0p ) {
+		insert_last( blocked_threads, *t );
+		unlock( lock );
+	}
+	// lock not held
+	else {
+		owner = t;
+		recursion_count = 1;
+		unpark( t );
+		unlock( lock );
+	}
+}
+
+static inline size_t on_wait(simple_owner_lock & this) with(this) { 
+	lock( lock __cfaabi_dbg_ctx2 );
+	/* paranoid */ verifyf( owner != 0p, "Attempt to release lock %p that isn't held", &this );
+	/* paranoid */ verifyf( owner == active_thread(), "Thread %p other than the owner %p attempted to release owner lock %p", owner, active_thread(), &this );
+
+	size_t ret = recursion_count;
+
+	// pop_and_set_new_owner( this );
+
+	thread$ * t = &try_pop_front( blocked_threads );
+	owner = t;
+	recursion_count = ( t ? 1 : 0 );
+	unpark( t );
+
+	unlock( lock );
+	return ret;
+}
+
+static inline void on_wakeup(simple_owner_lock & this, size_t recursion ) with(this) { recursion_count = recursion; }
+
+//-----------------------------------------------------------------------------
+// Spin Queue Lock
+
+// - No reacquire for cond var
+// - No recursive acquisition
+// - No ownership
+// - spin lock with no locking/atomics in unlock
+struct spin_queue_lock {
+	// Spin lock used for mutual exclusion
+	mcs_spin_lock lock;
+
+	// flag showing if lock is held
+	volatile bool held;
+
+	#ifdef __CFA_DEBUG__
+	// for deadlock detection
+	struct thread$ * owner;
+	#endif
+};
+
+static inline void  ?{}( spin_queue_lock & this ) with(this) {
+	lock{};
+	held = false;
+}
+static inline void ^?{}( spin_queue_lock & this ) {}
+static inline void ?{}( spin_queue_lock & this, spin_queue_lock this2 ) = void;
+static inline void ?=?( spin_queue_lock & this, spin_queue_lock this2 ) = void;
+
+// if this is called recursively IT WILL DEADLOCK!!!!!
+static inline void lock(spin_queue_lock & this) with(this) {
+	mcs_spin_node node;
+	#ifdef __CFA_DEBUG__
+	assert(!(held && owner == active_thread()));
+	#endif
+	lock( lock, node );
+	while(held) Pause();
+	held = true;
+	// printf("locked\n");
+	unlock( lock, node );
+	#ifdef __CFA_DEBUG__
+	owner = active_thread();
+	#endif
+}
+
+static inline void unlock(spin_queue_lock & this) with(this) {
+	// printf("unlocked\n");
+	#ifdef __CFA_DEBUG__
+	owner = 0p;
+	#endif
+	held = false;
+}
+
+static inline void on_notify(spin_queue_lock & this, struct thread$ * t ) { unpark(t); }
+static inline size_t on_wait(spin_queue_lock & this) { unlock(this); return 0; }
+static inline void on_wakeup(spin_queue_lock & this, size_t recursion ) { }
+
+
+//-----------------------------------------------------------------------------
+// MCS Block Spin Lock
+
+// - No reacquire for cond var
+// - No recursive acquisition
+// - No ownership
+// - Blocks but first node spins (like spin queue but blocking for not first thd)
+struct mcs_block_spin_lock {
+	// Spin lock used for mutual exclusion
+	mcs_lock lock;
+
+	// flag showing if lock is held
+	volatile bool held;
+
+	#ifdef __CFA_DEBUG__
+	// for deadlock detection
+	struct thread$ * owner;
+	#endif
+};
+
+static inline void  ?{}( mcs_block_spin_lock & this ) with(this) {
+	lock{};
+	held = false;
+}
+static inline void ^?{}( mcs_block_spin_lock & this ) {}
+static inline void ?{}( mcs_block_spin_lock & this, mcs_block_spin_lock this2 ) = void;
+static inline void ?=?( mcs_block_spin_lock & this, mcs_block_spin_lock this2 ) = void;
+
+// if this is called recursively IT WILL DEADLOCK!!!!!
+static inline void lock(mcs_block_spin_lock & this) with(this) {
+	mcs_node node;
+	#ifdef __CFA_DEBUG__
+	assert(!(held && owner == active_thread()));
+	#endif
+	lock( lock, node );
+	while(held) Pause();
+	held = true;
+	unlock( lock, node );
+	#ifdef __CFA_DEBUG__
+	owner = active_thread();
+	#endif
+}
+
+static inline void unlock(mcs_block_spin_lock & this) with(this) {
+	#ifdef __CFA_DEBUG__
+	owner = 0p;
+	#endif
+	held = false;
+}
+
+static inline void on_notify(mcs_block_spin_lock & this, struct thread$ * t ) { unpark(t); }
+static inline size_t on_wait(mcs_block_spin_lock & this) { unlock(this); return 0; }
+static inline void on_wakeup(mcs_block_spin_lock & this, size_t recursion ) { }
+
+//-----------------------------------------------------------------------------
+// Block Spin Lock
+
+// - No reacquire for cond var
+// - No recursive acquisition
+// - No ownership
+// - Blocks but first node spins (like spin queue but blocking for not first thd)
+struct block_spin_lock {
+	// Spin lock used for mutual exclusion
+	fast_block_lock lock;
+
+	// flag showing if lock is held
+	volatile bool held;
+
+	#ifdef __CFA_DEBUG__
+	// for deadlock detection
+	struct thread$ * owner;
+	#endif
+};
+
+static inline void  ?{}( block_spin_lock & this ) with(this) {
+	lock{};
+	held = false;
+}
+static inline void ^?{}( block_spin_lock & this ) {}
+static inline void ?{}( block_spin_lock & this, block_spin_lock this2 ) = void;
+static inline void ?=?( block_spin_lock & this, block_spin_lock this2 ) = void;
+
+// if this is called recursively IT WILL DEADLOCK!!!!!
+static inline void lock(block_spin_lock & this) with(this) {
+	#ifdef __CFA_DEBUG__
+	assert(!(held && owner == active_thread()));
+	#endif
+	lock( lock );
+	while(held) Pause();
+	held = true;
+	unlock( lock );
+	#ifdef __CFA_DEBUG__
+	owner = active_thread();
+	#endif
+}
+
+static inline void unlock(block_spin_lock & this) with(this) {
+	#ifdef __CFA_DEBUG__
+	owner = 0p;
+	#endif
+	held = false;
+}
+
+static inline void on_notify(block_spin_lock & this, struct thread$ * t ) { unpark(t); }
+static inline size_t on_wait(block_spin_lock & this) { unlock(this); return 0; }
+static inline void on_wakeup(block_spin_lock & this, size_t recursion ) { }
 
 //-----------------------------------------------------------------------------
 // is_blocking_lock
@@ -331,15 +685,14 @@ forall(L & | is_blocking_lock(L)) {
 	// - no internal lock so you must hold a lock while using this cond var
 	// - signalling without holding branded lock is UNSAFE!
 	// - only allows usage of one lock, cond var is branded after usage
+
 	struct fast_cond_var {
 		// List of blocked threads
 		dlist( info_thread(L) ) blocked_threads;
-
 		#ifdef __CFA_DEBUG__
 		L * lock_used;
 		#endif
 	};
-
 
 	void  ?{}( fast_cond_var(L) & this );
 	void ^?{}( fast_cond_var(L) & this );
@@ -348,9 +701,34 @@ forall(L & | is_blocking_lock(L)) {
 	bool notify_all( fast_cond_var(L) & this );
 
 	uintptr_t front( fast_cond_var(L) & this );
-
 	bool empty  ( fast_cond_var(L) & this );
 
 	void wait( fast_cond_var(L) & this, L & l );
 	void wait( fast_cond_var(L) & this, L & l, uintptr_t info );
+
+
+	//-----------------------------------------------------------------------------
+	// pthread_cond_var
+	//
+	// - cond var with minimal footprint
+	// - supports operations needed for phthread cond
+
+	struct pthread_cond_var {
+		dlist( info_thread(L) ) blocked_threads;
+		__spinlock_t lock;
+	};
+
+	void  ?{}( pthread_cond_var(L) & this );
+	void ^?{}( pthread_cond_var(L) & this );
+
+	bool notify_one( pthread_cond_var(L) & this );
+	bool notify_all( pthread_cond_var(L) & this );
+
+	uintptr_t front( pthread_cond_var(L) & this );
+	bool empty ( pthread_cond_var(L) & this );
+
+	void wait( pthread_cond_var(L) & this, L & l );
+	void wait( pthread_cond_var(L) & this, L & l, uintptr_t info );
+	bool wait( pthread_cond_var(L) & this, L & l, timespec t );
+	bool wait( pthread_cond_var(L) & this, L & l, uintptr_t info, timespec t );
 }

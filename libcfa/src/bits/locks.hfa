@@ -25,33 +25,17 @@
 struct __spinlock_t {
 	// Wrap in struct to prevent false sharing with debug info
 	volatile bool lock;
-	#ifdef __CFA_DEBUG__
-		// previous function to acquire the lock
-		const char * prev_name;
-		// previous thread to acquire the lock
-		void* prev_thrd;
-		// keep track of number of times we had to spin, just in case the number is unexpectedly huge
-		size_t spin_count;
-	#endif
 };
 
 #ifdef __cforall
 	extern "C" {
 		extern void disable_interrupts() OPTIONAL_THREAD;
 		extern void enable_interrupts( bool poll = true ) OPTIONAL_THREAD;
-
-		#ifdef __CFA_DEBUG__
-			void __cfaabi_dbg_record_lock(__spinlock_t & this, const char prev_name[]);
-		#else
-			#define __cfaabi_dbg_record_lock(x, y)
-		#endif
+		#define __cfaabi_dbg_record_lock(x, y)
 	}
 
 	static inline void ?{}( __spinlock_t & this ) {
 		this.lock = 0;
-		#ifdef __CFA_DEBUG__
-			this.spin_count = 0;
-		#endif
 	}
 
 	// Lock the spinlock, return false if already acquired
@@ -76,9 +60,6 @@ struct __spinlock_t {
 		disable_interrupts();
 		for ( unsigned int i = 1;; i += 1 ) {
 			if ( (this.lock == 0) && (__atomic_test_and_set( &this.lock, __ATOMIC_ACQUIRE ) == 0) ) break;
-			#ifdef __CFA_DEBUG__
-				this.spin_count++;
-			#endif
 			#ifndef NOEXPBACK
 				// exponential spin
 				for ( volatile unsigned int s = 0; s < spin; s += 1 ) Pause();

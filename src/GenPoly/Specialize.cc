@@ -246,6 +246,7 @@ namespace GenPoly {
 		for ( ; actualBegin != actualEnd; ++actualBegin ) {
 			structureArg( (*actualBegin)->get_type(), argBegin, argEnd, back_inserter( appExpr->get_args() ) );
 		}
+		assertf( argBegin == argEnd, "Did not structure all arguments." );
 
 		appExpr->env = TypeSubstitution::newFromExpr( appExpr, env );
 		if ( inferParams ) {
