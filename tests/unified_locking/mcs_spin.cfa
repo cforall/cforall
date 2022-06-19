@@ -1,0 +1,78 @@
+
+#include <fstream.hfa>
+#include <locks.hfa>
+#include <thread.hfa>
+
+const unsigned int num_times = 50;
+
+struct MutexObj {
+	mcs_spin_lock l;
+	thread$ * id;
+	uint32_t sum;
+	uint32_t cnt;
+};
+
+MutexObj mo;
+
+void trash() {
+	unsigned t[100];
+	for(i; 100) {
+		t[i] = 0xDEADBEEF;
+	}
+}
+
+uint32_t cs() {
+	thread$ * me = active_thread();
+	uint32_t value;
+    mcs_spin_node node;
+	lock(mo.l, node);
+	{
+		uint32_t tsum = mo.sum;
+		uint32_t cnt = mo.cnt;
+		mo.id = me;
+		yield(random(5));
+		value = ((uint32_t)random()) ^ ((uint32_t)me);
+		if(mo.id != me) sout | "Intruder!";
+		mo.cnt = cnt + 1;
+		mo.sum = tsum + value;
+	}
+	unlock(mo.l, node);
+	return value;
+}
+
+thread LockCheck {
+	uint32_t sum;
+};
+
+void main(LockCheck & this) {
+	this.sum = 0;
+	for(num_times) {
+		trash();
+		this.sum += cs();
+		trash();
+		yield(random(10));
+	}
+}
+
+void test() {
+	uint32_t sum = -32;
+	mo.sum = -32;
+	mo.cnt = 0;
+	processor p[2];
+	sout | "Starting";
+	{
+		LockCheck checkers[13];
+		for(i;13) {
+			sum += join(checkers[i]).sum;
+		}
+	}
+	sout | "Done!";
+	if(mo.cnt != (13 * num_times)) sout | "Invalid cs count!" | mo.cnt | "vs "| (13 * num_times) | "(13 *" | num_times | ')';
+	if(sum == mo.sum) sout | "Match!";
+	else sout | "No Match!" | sum | "vs" | mo.sum;
+}
+
+int main() {
+    test();
+	return 0;
+}

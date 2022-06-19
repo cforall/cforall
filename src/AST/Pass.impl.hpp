@@ -286,10 +286,10 @@ namespace ast {
 		using __pass::empty;
 
 		// get the stmts/decls that will need to be spliced in
-		auto stmts_before = __pass::stmtsToAddBefore( core, 0);
-		auto stmts_after  = __pass::stmtsToAddAfter ( core, 0);
-		auto decls_before = __pass::declsToAddBefore( core, 0);
-		auto decls_after  = __pass::declsToAddAfter ( core, 0);
+		auto stmts_before = __pass::stmtsToAddBefore( core, 0 );
+		auto stmts_after  = __pass::stmtsToAddAfter ( core, 0 );
+		auto decls_before = __pass::declsToAddBefore( core, 0 );
+		auto decls_after  = __pass::declsToAddAfter ( core, 0 );
 
 		// These may be modified by subnode but most be restored once we exit this statemnet.
 		ValueGuardPtr< typename std::remove_pointer< decltype(stmts_before) >::type > __old_decls_before( stmts_before );
