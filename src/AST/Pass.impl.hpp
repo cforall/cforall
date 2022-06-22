@@ -647,6 +647,7 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::EnumDecl * node ) {
 
 	if ( __visit_children() ) {
 		// unlike structs, traits, and unions, enums inject their members into the global scope
+		maybe_accept( node, &EnumDecl::base );
 		maybe_accept( node, &EnumDecl::params     );
 		maybe_accept( node, &EnumDecl::members    );
 		maybe_accept( node, &EnumDecl::attributes );

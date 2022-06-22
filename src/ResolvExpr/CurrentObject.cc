@@ -72,7 +72,7 @@ namespace ResolvExpr {
 		/// walks the current object using the given designators as a guide
 		virtual void setPosition( std::list< Expression * > & designators ) = 0;
 
-		/// retrieve the list of possible Type/Designaton pairs for the current position in the currect object
+		/// retrieve the list of possible Type/Designation pairs for the current position in the currect object
 		virtual std::list<InitAlternative> operator*() const = 0;
 
 		/// true if the iterator is not currently at the end

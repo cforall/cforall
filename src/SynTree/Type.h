@@ -273,7 +273,7 @@ class BasicType : public Type {
 
 class PointerType : public Type {
   public:
-	Type *base;
+	Type * base;
 
 	// In C99, pointer types can be qualified in many ways e.g., int f( int a[ static 3 ] )
 	Expression *dimension;
@@ -515,8 +515,8 @@ class UnionInstType : public ReferenceToType {
 class EnumInstType : public ReferenceToType {
 	typedef ReferenceToType Parent;
   public:
-	// this decl is not "owned" by the union inst; it is merely a pointer to elsewhere in the tree,
-	// where the union used in this type is actually defined
+	// this decl is not "owned" by the enum inst; it is merely a pointer to elsewhere in the tree,
+	// where the enum used in this type is actually defined
 	EnumDecl *baseEnum = nullptr;
 
 	EnumInstType( const Type::Qualifiers & tq, const std::string & name, const std::list< Attribute * > & attributes = std::list< Attribute * >()  ) : Parent( tq, name, attributes ) {}

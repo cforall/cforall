@@ -477,9 +477,8 @@ static inline void lock(spin_queue_lock & this) with(this) {
 	assert(!(held && owner == active_thread()));
 	#endif
 	lock( lock, node );
-	while(held) Pause();
-	held = true;
-	// printf("locked\n");
+	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
+	__atomic_store_n(&held, true, __ATOMIC_SEQ_CST);
 	unlock( lock, node );
 	#ifdef __CFA_DEBUG__
 	owner = active_thread();
@@ -487,11 +486,10 @@ static inline void lock(spin_queue_lock & this) with(this) {
 }
 
 static inline void unlock(spin_queue_lock & this) with(this) {
-	// printf("unlocked\n");
 	#ifdef __CFA_DEBUG__
 	owner = 0p;
 	#endif
-	held = false;
+	__atomic_store_n(&held, false, __ATOMIC_RELEASE);
 }
 
 static inline void on_notify(spin_queue_lock & this, struct thread$ * t ) { unpark(t); }

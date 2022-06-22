@@ -221,13 +221,21 @@ void LinkReferenceToTypes_old::postvisit( TraitInstType * traitInst ) {
 void LinkReferenceToTypes_old::postvisit( EnumDecl * enumDecl ) {
 	// visit enum members first so that the types of self-referencing members are updated properly
 	// Replace the enum base; right now it works only for StructEnum
-	if ( enumDecl->base && dynamic_cast<TypeInstType*>(enumDecl->base) ) {
-		std::string baseName = static_cast<TypeInstType*>(enumDecl->base)->name;
-		const StructDecl * st = local_indexer->lookupStruct( baseName );
-		if ( st ) {
-			enumDecl->base = new StructInstType(Type::Qualifiers(),const_cast<StructDecl *>(st)); // Just linking in the node
+	if ( enumDecl->base ) {
+		if ( const TypeInstType * base = dynamic_cast< TypeInstType * >(enumDecl->base) ) {
+			if ( const StructDecl * decl = local_indexer->lookupStruct( base->name ) ) {
+				enumDecl->base = new StructInstType( Type::Qualifiers(), const_cast< StructDecl * >( decl ) ); // Just linking in the node
+			}
+		} else if ( const PointerType * ptr = dynamic_cast< PointerType * >(enumDecl->base) ) {
+			if ( const TypeInstType * ptrBase = dynamic_cast< TypeInstType * >( ptr->base ) ) {
+				if ( const StructDecl * decl = local_indexer->lookupStruct( ptrBase->name ) ) {
+					enumDecl->base = new PointerType( Type::Qualifiers(),
+						new StructInstType( Type::Qualifiers(), const_cast< StructDecl * >( decl ) ) );
+				}
+			}
 		}
 	}
+	
 	if ( enumDecl->body ) {
 		ForwardEnumsType::iterator fwds = forwardEnums.find( enumDecl->name );
 		if ( fwds != forwardEnums.end() ) {

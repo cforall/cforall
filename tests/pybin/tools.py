@@ -45,7 +45,7 @@ def sh(*cmd, timeout = False, output_file = None, input_file = None, input_text 
 				cmd += input_file
 
 			print(cmd)
-			return 0, None
+			return 0, None, None
 
 		with contextlib.ExitStack() as onexit:
 			# add input redirection if needed
@@ -290,7 +290,7 @@ def path_walk( op ):
 #               system
 ################################################################################
 def jobserver_version():
-	make_ret, out, err = sh('make', '.test_makeflags', '-j2', output_file=subprocess.PIPE, error=subprocess.PIPE)
+	make_ret, out, err = sh('make', '.test_makeflags', '-j2', ignore_dry_run = True, output_file=subprocess.PIPE, error=subprocess.PIPE)
 	if make_ret != 0:
 		print("ERROR: cannot find Makefile jobserver version", file=sys.stderr)
 		print("       test returned : {} '{}'".format(make_ret, err), file=sys.stderr)

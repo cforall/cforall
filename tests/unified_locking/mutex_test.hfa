@@ -21,11 +21,12 @@ void trash() {
 	}
 }
 
-uint32_t cs() {
+uint32_t cs(uint32_t & entries) {
 	thread$ * me = active_thread();
 	uint32_t value;
 	lock(mo.l);
 	{
+		entries++;
 		uint32_t tsum = mo.sum;
 		uint32_t cnt = mo.cnt;
 		mo.id = me;
@@ -41,13 +42,15 @@ uint32_t cs() {
 
 thread LockCheck {
 	uint32_t sum;
+	uint32_t entries;
 };
 
 void main(LockCheck & this) {
 	this.sum = 0;
+	this.entries = 0;
 	for(num_times) {
 		trash();
-		this.sum += cs();
+		this.sum += cs( this.entries );
 		trash();
 		yield(random(10));
 	}
@@ -57,16 +60,20 @@ void test() {
 	uint32_t sum = -32;
 	mo.sum = -32;
 	mo.cnt = 0;
+	uint32_t real_entries = 0;
 	processor p[2];
 	sout | "Starting";
 	{
 		LockCheck checkers[13];
 		for(i;13) {
-			sum += join(checkers[i]).sum;
+			LockCheck & curr = join(checkers[i]);
+			sum += curr.sum;
+			real_entries += curr.entries;
 		}
 	}
 	sout | "Done!";
-	if(mo.cnt != (13 * num_times)) sout | "Invalid cs count!" | mo.cnt | "vs "| (13 * num_times) | "(13 *" | num_times | ')';
+	if(real_entries != (13 * num_times)) sout | "Invalid real cs count!" | mo.cnt | "vs "| (13 * num_times) | "(13 *" | num_times | ')';
+	if(mo.cnt != (13 * num_times)) sout | "Invalid concurrent cs count!" | mo.cnt | "vs "| (13 * num_times) | "(13 *" | num_times | ')';
 	if(sum == mo.sum) sout | "Match!";
 	else sout | "No Match!" | sum | "vs" | mo.sum;
 }
