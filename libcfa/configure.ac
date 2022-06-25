@@ -180,6 +180,7 @@ AH_TEMPLATE([CFA_HAVE_IOSQE_ASYNC],[Defined if io_uring support is present when 
 AH_TEMPLATE([CFA_HAVE_IOSQE_BUFFER_SELECT],[Defined if io_uring support is present when compiling libcfathread and supports the flag BUFFER_SELEC.])
 AH_TEMPLATE([CFA_HAVE_SPLICE_F_FD_IN_FIXED],[Defined if io_uring support is present when compiling libcfathread and supports the flag SPLICE_F_FD_IN_FIXED.])
 AH_TEMPLATE([CFA_HAVE_IORING_SETUP_ATTACH_WQ],[Defined if io_uring support is present when compiling libcfathread and supports the flag IORING_SETUP_ATTACH_WQ.])
+AH_TEMPLATE([CFA_HAVE_IORING_REGISTER_IOWQ_MAX_WORKERS],[Defined if io_uring support is present when compiling libcfathread and supports the flag IORING_REGISTER_IOWQ_MAX_WORKERS.])
 AH_TEMPLATE([CFA_HAVE_PREADV2],[Defined if preadv2 support is present when compiling libcfathread.])
 AH_TEMPLATE([CFA_HAVE_PWRITEV2],[Defined if pwritev2 support is present when compiling libcfathread.])
 AH_TEMPLATE([CFA_HAVE_PWRITEV2],[Defined if pwritev2 support is present when compiling libcfathread.])
@@ -188,7 +189,7 @@ AH_TEMPLATE([CFA_HAVE_OPENAT2],[Defined if openat2 support is present when compi
 AH_TEMPLATE([__CFA_NO_STATISTICS__],[Defined if libcfathread was compiled without support for statistics.])
 
 define(ioring_ops, [IORING_OP_NOP,IORING_OP_READV,IORING_OP_WRITEV,IORING_OP_FSYNC,IORING_OP_READ_FIXED,IORING_OP_WRITE_FIXED,IORING_OP_POLL_ADD,IORING_OP_POLL_REMOVE,IORING_OP_SYNC_FILE_RANGE,IORING_OP_SENDMSG,IORING_OP_RECVMSG,IORING_OP_TIMEOUT,IORING_OP_TIMEOUT_REMOVE,IORING_OP_ACCEPT,IORING_OP_ASYNC_CANCEL,IORING_OP_LINK_TIMEOUT,IORING_OP_CONNECT,IORING_OP_FALLOCATE,IORING_OP_OPENAT,IORING_OP_CLOSE,IORING_OP_FILES_UPDATE,IORING_OP_STATX,IORING_OP_READ,IORING_OP_WRITE,IORING_OP_FADVISE,IORING_OP_MADVISE,IORING_OP_SEND,IORING_OP_RECV,IORING_OP_OPENAT2,IORING_OP_EPOLL_CTL,IORING_OP_SPLICE,IORING_OP_PROVIDE_BUFFERS,IORING_OP_REMOVE_BUFFER,IORING_OP_TEE])
-define(ioring_flags, [IOSQE_FIXED_FILE,IOSQE_IO_DRAIN,IOSQE_IO_LINK,IOSQE_IO_HARDLINK,IOSQE_ASYNC,IOSQE_BUFFER_SELECT,SPLICE_F_FD_IN_FIXED,IORING_SETUP_ATTACH_WQ])
+define(ioring_flags, [IOSQE_FIXED_FILE,IOSQE_IO_DRAIN,IOSQE_IO_LINK,IOSQE_IO_HARDLINK,IOSQE_ASYNC,IOSQE_BUFFER_SELECT,SPLICE_F_FD_IN_FIXED,IORING_SETUP_ATTACH_WQ,IORING_REGISTER_IOWQ_MAX_WORKERS])
 
 define(ioring_from_decls, [
 	m4_foreach([op], [ioring_ops], [

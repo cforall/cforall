@@ -27,6 +27,7 @@
 #include "AST/Decl.hpp"
 #include "AST/DeclReplacer.hpp"
 #include "AST/Expr.hpp"
+#include "AST/Inspect.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
 #include "AST/SymbolTable.hpp"
@@ -120,7 +121,7 @@ public:
 	{}
 
 	// Built-ins do not use autogeneration.
-	bool shouldAutogen() const final { return !decl->linkage.is_builtin; }
+	bool shouldAutogen() const final { return !decl->linkage.is_builtin && !structHasFlexibleArray(decl); }
 private:
 	void genFuncBody( ast::FunctionDecl * decl ) final;
 	void genFieldCtors() final;
@@ -182,9 +183,11 @@ public:
 		FuncGenerator( type, functionNesting ), decl( decl )
 	{
 		// TODO: These functions are somewhere between instrinsic and autogen,
-		// could possibly use a new linkage type. For now we just make them
-		// intrinsic to code-gen them as C assignments.
-		proto_linkage = ast::Linkage::Intrinsic;
+		// could possibly use a new linkage type. For now we just make the
+		// basic ones intrinsic to code-gen them as C assignments.
+		const auto & real_type = decl->base;
+		const auto & basic = real_type.as<ast::BasicType>();
+		if(!real_type || (basic && basic->isInteger())) proto_linkage = ast::Linkage::Intrinsic;
 	}
 
 	bool shouldAutogen() const final { return true; }
@@ -401,10 +404,6 @@ ast::FunctionDecl * FuncGenerator::genAssignProto() const {
 	// Only the name is different, so just reuse the generation function.
 	auto retval = srcParam();
 	retval->name = "_ret";
-	// xxx - Adding this unused attribute can slience unused variable warning
-	// However, some code might not be compiled as expected
-	// Temporarily disabled
-	// retval->attributes.push_back(new ast::Attribute("unused"));
 	return genProto( "?=?", { dstParam(), srcParam() }, { retval } );
 }
 

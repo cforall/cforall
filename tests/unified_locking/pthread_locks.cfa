@@ -2,11 +2,16 @@
 #include "locks.hfa"
 #include <stdlib.hfa>
 #include <thread.hfa>
+#include <time.h>
+#include <stdlib.hfa>
 
-const unsigned int num_times = 50000;
+const unsigned int num_times = 50;
 
 simple_owner_lock l;
 pthread_cond_var( simple_owner_lock ) c;
+
+owner_lock l2;
+condition_variable( owner_lock ) c2;
 
 volatile int counter = 0;
 
@@ -58,8 +63,25 @@ void main( Rec_Lock_Wait_Signal_1 & this ) {
 	}
 }
 
+thread Wait_Time_Signal_1 {};
+
+void main( Wait_Time_Signal_1 & this ) {
+	for (unsigned int i = 0; i < num_times; i++) {
+		lock(l);
+		if(empty(c) || random(10) >= 9 ) {
+			timespec t;
+			clock_gettime(CLOCK_REALTIME, &t);
+			timespec waitTime{0,1};
+			bool woken = wait(c,l, t + waitTime);
+		}else{
+			notify_one(c);
+		}
+		unlock(l);
+	}
+}
+
 int main() {
-	processor p[3];
+	processor p[1];
 	printf("Start Test 1: lock and condition variable single wait/notify\n");
 	{
 		Wait_Signal_1 t1[2];
@@ -77,4 +99,10 @@ int main() {
 		Rec_Lock_Wait_Signal_1 t1[2];
 	}
 	printf("Done Test 3\n");
+
+	printf("Start Test 4: lock and condition variable single timed wait/notify\n");
+	{
+		Wait_Time_Signal_1 t1[2];
+	}
+	printf("Done Test 4\n");
 }

@@ -641,24 +641,24 @@ namespace {
 	}
 
 ast::ConstructorInit * genCtorInit( const CodeLocation & loc, const ast::ObjectDecl * objDecl ) {
-	// call into genImplicitCall from Autogen.h to generate calls to ctor/dtor for each 
+	// call into genImplicitCall from Autogen.h to generate calls to ctor/dtor for each
 	// constructable object
 	InitExpander_new srcParam{ objDecl->init }, nullParam{ (const ast::Init *)nullptr };
 	ast::ptr< ast::Expr > dstParam = new ast::VariableExpr(loc, objDecl);
-	
-	ast::ptr< ast::Stmt > ctor = SymTab::genImplicitCall( 
+
+	ast::ptr< ast::Stmt > ctor = SymTab::genImplicitCall(
 		srcParam, dstParam, loc, "?{}", objDecl );
-	ast::ptr< ast::Stmt > dtor = SymTab::genImplicitCall( 
-		nullParam, dstParam, loc, "^?{}", objDecl, 
+	ast::ptr< ast::Stmt > dtor = SymTab::genImplicitCall(
+		nullParam, dstParam, loc, "^?{}", objDecl,
 		SymTab::LoopBackward );
-	
+
 	// check that either both ctor and dtor are present, or neither
 	assert( (bool)ctor == (bool)dtor );
 
 	if ( ctor ) {
-		// need to remember init expression, in case no ctors exist. If ctor does exist, want to 
+		// need to remember init expression, in case no ctors exist. If ctor does exist, want to
 		// use ctor expression instead of init.
-		ctor.strict_as< ast::ImplicitCtorDtorStmt >(); 
+		ctor.strict_as< ast::ImplicitCtorDtorStmt >();
 		dtor.strict_as< ast::ImplicitCtorDtorStmt >();
 
 		return new ast::ConstructorInit{ loc, ctor, dtor, objDecl->init };

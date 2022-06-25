@@ -236,7 +236,6 @@ forall(L & | is_blocking_lock(L)) {
 	static void timeout_handler ( pthread_alarm_node_wrap(L) & this ) with( this ) {
 		// This pthread_cond_var member is called from the kernel, and therefore, cannot block, but it can spin.
 		lock( cond->lock __cfaabi_dbg_ctx2 );
-
 		// this check is necessary to avoid a race condition since this timeout handler
 		// 	may still be called after a thread has been removed from the queue but
 		// 	before the alarm is unregistered
@@ -346,8 +345,10 @@ forall(L & | is_blocking_lock(L)) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		size_t recursion_count = queue_and_get_recursion(this, &info);
 		alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
-		register_self( &node_wrap.alarm_node );
 		unlock( lock );
+
+		// registers alarm outside cond lock to avoid deadlock
+		register_self( &node_wrap.alarm_node );
 
 		// blocks here
 		park();
@@ -436,6 +437,7 @@ forall(L & | is_blocking_lock(L)) {
 		bool ret = ! blocked_threads`isEmpty;
 		if ( ret ) {
 			info_thread(L) & popped = try_pop_front( blocked_threads );
+			popped.signalled = true;
 			on_notify(*popped.lock, popped.t);
 		}
 		unlock( lock );
@@ -447,6 +449,7 @@ forall(L & | is_blocking_lock(L)) {
 		bool ret = ! blocked_threads`isEmpty;
 		while( ! blocked_threads`isEmpty ) {
 			info_thread(L) & popped = try_pop_front( blocked_threads );
+			popped.signalled = true;
 			on_notify(*popped.lock, popped.t);
 		}
 		unlock( lock );
@@ -468,8 +471,10 @@ forall(L & | is_blocking_lock(L)) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		size_t recursion_count = queue_and_get_recursion(this, &info);
 		pthread_alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
-		register_self( &node_wrap.alarm_node );
 		unlock( lock );
+
+		// registers alarm outside cond lock to avoid deadlock
+		register_self( &node_wrap.alarm_node );
 
 		// blocks here
 		park();
@@ -499,14 +504,22 @@ forall(L & | is_blocking_lock(L)) {
 		queue_info_thread_timeout(this, i, t, pthread_alarm_node_wrap_cast ); \
 		return i.signalled;
 
+	Duration getDuration(timespec t) {
+		timespec currTime;
+		clock_gettime(CLOCK_REALTIME, &currTime);
+		Duration waitUntil = { t };
+		Duration currDur = { currTime };
+		if ( currDur >= waitUntil ) return currDur - waitUntil;
+		Duration zero = { 0 };
+		return zero;
+	}
+
 	bool wait( pthread_cond_var(L) & this, L & l, timespec t ) {
-		Duration d = { t };
-		WAIT_TIME( 0, &l , d )
+		PTHREAD_WAIT_TIME( 0, &l , getDuration( t ) )
 	}
 	
 	bool wait( pthread_cond_var(L) & this, L & l, uintptr_t info, timespec t  ) {
-		Duration d = { t };
-		WAIT_TIME( info, &l , d )
+		PTHREAD_WAIT_TIME( info, &l , getDuration( t ) )
 	}
 }
 //-----------------------------------------------------------------------------

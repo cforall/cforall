@@ -536,6 +536,7 @@ namespace Mangle {
 			maybeAccept( refType->base.get(), *visitor );
 		}
 
+		__attribute__((unused))
 		inline std::vector< ast::ptr< ast::Type > > getTypes( const std::vector< ast::ptr< ast::DeclWithType > > & decls ) {
 			std::vector< ast::ptr< ast::Type > > ret;
 			std::transform( decls.begin(), decls.end(), std::back_inserter( ret ),

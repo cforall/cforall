@@ -1276,7 +1276,8 @@ namespace GenPoly {
 		DeclarationWithType * Pass2::postmutate( FunctionDecl *functionDecl ) {
 			FunctionType * ftype = functionDecl->type;
 			if ( ! ftype->returnVals.empty() && functionDecl->statements ) {
-				if ( ! isPrefix( functionDecl->name, "_thunk" ) && ! isPrefix( functionDecl->name, "_adapter" ) ) { // xxx - remove check for prefix once thunks properly use ctor/dtors
+				// intrinsic functions won't be using the _retval so no need to generate it.
+				if ( functionDecl->linkage != LinkageSpec::Intrinsic && !isPrefix( functionDecl->name, "_thunk" ) && ! isPrefix( functionDecl->name, "_adapter" ) ) { // xxx - remove check for prefix once thunks properly use ctor/dtors
 					assert( ftype->returnVals.size() == 1 );
 					DeclarationWithType * retval = ftype->returnVals.front();
 					if ( retval->name == "" ) {

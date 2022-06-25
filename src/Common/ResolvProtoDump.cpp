@@ -226,7 +226,7 @@ public:
 		handleAggregate( type );
 	}
 
-	void previsit( const ast::EnumInstType * enumInst) {
+	void previsit( const ast::EnumInstType * ) {
 		// TODO: Add the meaningful text representation of typed enum
 		ss << (int)ast::BasicType::SignedInt;
 	}

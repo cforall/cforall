@@ -56,6 +56,9 @@ using namespace std;
 
 #include "SynTree/Attribute.h"     // for Attribute
 
+// lex uses __null in a boolean context, it's fine.
+#pragma GCC diagnostic ignored "-Wparentheses-equality"
+
 extern DeclarationNode * parseTree;
 extern LinkageSpec::Spec linkage;
 extern TypedefTable typedefTable;
@@ -1239,7 +1242,7 @@ iteration_statement:
 	| WHILE '(' ')' statement ELSE statement			// CFA
 		{
 			$$ = new StatementNode( build_while( new CondCtl( nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ), maybe_build_compound( $4 ) ) );
-			SemanticWarning( yylloc, Warning::SuperfluousElse );
+			SemanticWarning( yylloc, Warning::SuperfluousElse, "" );
 		}
 	| WHILE '(' conditional_declaration ')' statement	%prec THEN
 		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ) ) ); }
@@ -1250,7 +1253,7 @@ iteration_statement:
 	| DO statement WHILE '(' ')' ELSE statement			// CFA
 		{
 			$$ = new StatementNode( build_do_while( new ExpressionNode( build_constantInteger( *new string( "1" ) ) ), maybe_build_compound( $2 ) ) );
-			SemanticWarning( yylloc, Warning::SuperfluousElse );
+			SemanticWarning( yylloc, Warning::SuperfluousElse, "" );
 		}
 	| DO statement WHILE '(' comma_expression ')' ';'
 		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ) ) ); }
@@ -1261,7 +1264,7 @@ iteration_statement:
 	| FOR '(' ')' statement ELSE statement				// CFA
 		{
 			$$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) );
-			SemanticWarning( yylloc, Warning::SuperfluousElse );
+			SemanticWarning( yylloc, Warning::SuperfluousElse, "" );
 		}
 	| FOR '(' for_control_expression_list ')' statement	%prec THEN
 	  	{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ) ) ); }
@@ -2393,7 +2396,7 @@ enum_type:
 		{ $$ = DeclarationNode::newEnum( $3->name, $5, true )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 	 	{
-			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) 
+			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 )
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 
 			$$ = DeclarationNode::newEnum( nullptr, $7, true, $3 )->addQualifiers( $5 );
@@ -2840,7 +2843,7 @@ external_definition:
 			linkageStack.push( linkage );				// handle nested extern "C"/"Cforall"
 			linkage = LinkageSpec::update( yylloc, linkage, $2 );
 		}
-	  up external_definition down 
+	  up external_definition down
 		{
 			linkage = linkageStack.top();
 			linkageStack.pop();

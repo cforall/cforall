@@ -4,3 +4,5 @@ Start Test 2: lock and condition variable 3 wait/notify all
 Done Test 2
 Start Test 3: lock and condition variable multiple acquire and wait/notify
 Done Test 3
+Start Test 4: lock and condition variable single timed wait/notify
+Done Test 4

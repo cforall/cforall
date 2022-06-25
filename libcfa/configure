@@ -17133,6 +17133,7 @@ fi
 
 
 
+
 for ac_header in linux/io_uring.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "linux/io_uring.h" "ac_cv_header_linux_io_uring_h" "$ac_includes_default"
@@ -19545,6 +19546,14 @@ fi
 "
 if test "x$ac_cv_have_decl_IORING_SETUP_ATTACH_WQ" = xyes; then :
   $as_echo "#define CFA_HAVE_IORING_SETUP_ATTACH_WQ 1" >>confdefs.h
+
+fi
+
+
+		ac_fn_c_check_decl "$LINENO" "IORING_REGISTER_IOWQ_MAX_WORKERS" "ac_cv_have_decl_IORING_REGISTER_IOWQ_MAX_WORKERS" "#include <linux/io_uring.h>
+"
+if test "x$ac_cv_have_decl_IORING_REGISTER_IOWQ_MAX_WORKERS" = xyes; then :
+  $as_echo "#define CFA_HAVE_IORING_REGISTER_IOWQ_MAX_WORKERS 1" >>confdefs.h
 
 fi
 

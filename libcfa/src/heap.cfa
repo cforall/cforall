@@ -508,7 +508,6 @@ static inline bool headers( const char name[] __attribute__(( unused )), void * 
 	#ifdef __CFA_DEBUG__
 	checkHeader( header < (Heap.Storage.Header *)heapBegin || (Heap.Storage.Header *)heapEnd < header, name, addr ); // bad address ? (offset could be + or -)
 
-	Heap * homeManager;
 	if ( unlikely( freeHead == 0p || // freed and only free-list node => null link
 				   // freed and link points at another free block not to a bucket in the bucket array.
 				   freeHead < &freeLists[0] || &freeLists[NoBucketSizes] <= freeHead ) ) {

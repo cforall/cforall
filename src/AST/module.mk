@@ -36,6 +36,8 @@ SRC_AST = \
 	AST/GenericSubstitution.hpp \
 	AST/Init.cpp \
 	AST/Init.hpp \
+	AST/Inspect.cpp \
+	AST/Inspect.hpp \
 	AST/Label.hpp \
 	AST/LinkageSpec.cpp \
 	AST/LinkageSpec.hpp \

@@ -293,7 +293,7 @@ namespace CodeGen {
 					} // if
 				} else {
 					if ( obj->get_init() ) {
-						obj->get_init()->accept( *visitor ); 
+						obj->get_init()->accept( *visitor );
 					} else {
 						// Should not reach here!
 					}
@@ -682,10 +682,12 @@ namespace CodeGen {
 	void CodeGenerator::postvisit( VariableExpr * variableExpr ) {
 		extension( variableExpr );
 		const OperatorInfo * opInfo;
-		if ( variableExpr->get_var()->get_linkage() == LinkageSpec::Intrinsic && (opInfo = operatorLookup( variableExpr->get_var()->get_name() )) && opInfo->type == OT_CONSTANT ) {
+		if( dynamic_cast<ZeroType*>( variableExpr->get_var()->get_type() ) ) {
+			output << "0";
+		} else if ( variableExpr->get_var()->get_linkage() == LinkageSpec::Intrinsic && (opInfo = operatorLookup( variableExpr->get_var()->get_name() )) && opInfo->type == OT_CONSTANT ) {
 			output << opInfo->symbol;
 		} else {
-			// if (dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type()) 
+			// if (dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type())
 			// && dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type())->baseEnum->base) {
 			// 	output << '(' <<genType(dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type())->baseEnum->base, "", options) << ')';
 			// }

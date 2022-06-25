@@ -81,6 +81,9 @@ void rm_underscore() {
 
 // Stop warning due to incorrectly generated flex code.
 #pragma GCC diagnostic ignored "-Wsign-compare"
+
+// lex uses __null in a boolean context, it's fine.
+#pragma GCC diagnostic ignored "-Wnull-conversion"
 %}
 
 binary [0-1]

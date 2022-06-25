@@ -168,11 +168,11 @@ am__objects_1 = AST/Attribute.$(OBJEXT) AST/Convert.$(OBJEXT) \
 	AST/Copy.$(OBJEXT) AST/Decl.$(OBJEXT) \
 	AST/DeclReplacer.$(OBJEXT) AST/Expr.$(OBJEXT) \
 	AST/GenericSubstitution.$(OBJEXT) AST/Init.$(OBJEXT) \
-	AST/LinkageSpec.$(OBJEXT) AST/Node.$(OBJEXT) \
-	AST/Pass.$(OBJEXT) AST/Print.$(OBJEXT) AST/Stmt.$(OBJEXT) \
-	AST/SymbolTable.$(OBJEXT) AST/Type.$(OBJEXT) \
-	AST/TypeEnvironment.$(OBJEXT) AST/TypeSubstitution.$(OBJEXT) \
-	AST/Util.$(OBJEXT)
+	AST/Inspect.$(OBJEXT) AST/LinkageSpec.$(OBJEXT) \
+	AST/Node.$(OBJEXT) AST/Pass.$(OBJEXT) AST/Print.$(OBJEXT) \
+	AST/Stmt.$(OBJEXT) AST/SymbolTable.$(OBJEXT) \
+	AST/Type.$(OBJEXT) AST/TypeEnvironment.$(OBJEXT) \
+	AST/TypeSubstitution.$(OBJEXT) AST/Util.$(OBJEXT)
 am__objects_2 = CodeGen/FixMain2.$(OBJEXT) \
 	CodeGen/OperatorTable.$(OBJEXT)
 am__objects_3 = Common/Assert.$(OBJEXT) \
@@ -328,11 +328,11 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	AST/$(DEPDIR)/Convert.Po AST/$(DEPDIR)/Copy.Po \
 	AST/$(DEPDIR)/Decl.Po AST/$(DEPDIR)/DeclReplacer.Po \
 	AST/$(DEPDIR)/Expr.Po AST/$(DEPDIR)/GenericSubstitution.Po \
-	AST/$(DEPDIR)/Init.Po AST/$(DEPDIR)/LinkageSpec.Po \
-	AST/$(DEPDIR)/Node.Po AST/$(DEPDIR)/Pass.Po \
-	AST/$(DEPDIR)/Print.Po AST/$(DEPDIR)/Stmt.Po \
-	AST/$(DEPDIR)/SymbolTable.Po AST/$(DEPDIR)/Type.Po \
-	AST/$(DEPDIR)/TypeEnvironment.Po \
+	AST/$(DEPDIR)/Init.Po AST/$(DEPDIR)/Inspect.Po \
+	AST/$(DEPDIR)/LinkageSpec.Po AST/$(DEPDIR)/Node.Po \
+	AST/$(DEPDIR)/Pass.Po AST/$(DEPDIR)/Print.Po \
+	AST/$(DEPDIR)/Stmt.Po AST/$(DEPDIR)/SymbolTable.Po \
+	AST/$(DEPDIR)/Type.Po AST/$(DEPDIR)/TypeEnvironment.Po \
 	AST/$(DEPDIR)/TypeSubstitution.Po AST/$(DEPDIR)/Util.Po \
 	CodeGen/$(DEPDIR)/CodeGenerator.Po \
 	CodeGen/$(DEPDIR)/FixMain.Po CodeGen/$(DEPDIR)/FixMain2.Po \
@@ -807,6 +807,8 @@ SRC_AST = \
 	AST/GenericSubstitution.hpp \
 	AST/Init.cpp \
 	AST/Init.hpp \
+	AST/Inspect.cpp \
+	AST/Inspect.hpp \
 	AST/Label.hpp \
 	AST/LinkageSpec.cpp \
 	AST/LinkageSpec.hpp \
@@ -1142,6 +1144,8 @@ AST/Expr.$(OBJEXT): AST/$(am__dirstamp) AST/$(DEPDIR)/$(am__dirstamp)
 AST/GenericSubstitution.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
 AST/Init.$(OBJEXT): AST/$(am__dirstamp) AST/$(DEPDIR)/$(am__dirstamp)
+AST/Inspect.$(OBJEXT): AST/$(am__dirstamp) \
+	AST/$(DEPDIR)/$(am__dirstamp)
 AST/LinkageSpec.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
 AST/Node.$(OBJEXT): AST/$(am__dirstamp) AST/$(DEPDIR)/$(am__dirstamp)
@@ -1618,6 +1622,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Expr.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/GenericSubstitution.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Init.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Inspect.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/LinkageSpec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Node.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Pass.Po@am__quote@ # am--include-marker
@@ -2034,6 +2039,7 @@ distclean: distclean-am
 	-rm -f AST/$(DEPDIR)/Expr.Po
 	-rm -f AST/$(DEPDIR)/GenericSubstitution.Po
 	-rm -f AST/$(DEPDIR)/Init.Po
+	-rm -f AST/$(DEPDIR)/Inspect.Po
 	-rm -f AST/$(DEPDIR)/LinkageSpec.Po
 	-rm -f AST/$(DEPDIR)/Node.Po
 	-rm -f AST/$(DEPDIR)/Pass.Po
@@ -2258,6 +2264,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f AST/$(DEPDIR)/Expr.Po
 	-rm -f AST/$(DEPDIR)/GenericSubstitution.Po
 	-rm -f AST/$(DEPDIR)/Init.Po
+	-rm -f AST/$(DEPDIR)/Inspect.Po
 	-rm -f AST/$(DEPDIR)/LinkageSpec.Po
 	-rm -f AST/$(DEPDIR)/Node.Po
 	-rm -f AST/$(DEPDIR)/Pass.Po
