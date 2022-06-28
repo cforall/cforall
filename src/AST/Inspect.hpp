@@ -4,17 +4,20 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Node.hpp --
+// Inspect.hpp -- Helpers to get information from the AST.
 //
 // Author           : Thierry Delisle
 // Created On       : Fri Jun 24 13:16:31 2022
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Jun 27 15:35:00 2022
+// Update Count     : 1
 //
 
 #include "AST/Fwd.hpp"
 
 namespace ast {
-	bool structHasFlexibleArray( const ast::StructDecl * );
+
+// Does the structure end in a flexable array declaration?
+bool structHasFlexibleArray( const ast::StructDecl * );
+
 }

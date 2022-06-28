@@ -315,7 +315,7 @@ public:
 
 	EnumDecl( const CodeLocation& loc, const std::string& name,
 		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall, Type * base = nullptr,
-		 std::unordered_map< std::string, long long > enumValues = std::unordered_map< std::string, long long >() )
+		std::unordered_map< std::string, long long > enumValues = std::unordered_map< std::string, long long >() )
 	: AggregateDecl( loc, name, std::move(attrs), linkage ), base(base), enumValues(enumValues) {}
 
 	/// gets the integer value for this enumerator, returning true iff value found

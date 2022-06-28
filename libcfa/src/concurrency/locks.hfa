@@ -532,8 +532,8 @@ static inline void lock(mcs_block_spin_lock & this) with(this) {
 	assert(!(held && owner == active_thread()));
 	#endif
 	lock( lock, node );
-	while(held) Pause();
-	held = true;
+	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
+	__atomic_store_n(&held, true, __ATOMIC_SEQ_CST);
 	unlock( lock, node );
 	#ifdef __CFA_DEBUG__
 	owner = active_thread();
@@ -544,7 +544,7 @@ static inline void unlock(mcs_block_spin_lock & this) with(this) {
 	#ifdef __CFA_DEBUG__
 	owner = 0p;
 	#endif
-	held = false;
+	__atomic_store_n(&held, false, __ATOMIC_SEQ_CST);
 }
 
 static inline void on_notify(mcs_block_spin_lock & this, struct thread$ * t ) { unpark(t); }
@@ -585,8 +585,8 @@ static inline void lock(block_spin_lock & this) with(this) {
 	assert(!(held && owner == active_thread()));
 	#endif
 	lock( lock );
-	while(held) Pause();
-	held = true;
+	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
+	__atomic_store_n(&held, true, __ATOMIC_RELEASE);
 	unlock( lock );
 	#ifdef __CFA_DEBUG__
 	owner = active_thread();
@@ -597,7 +597,7 @@ static inline void unlock(block_spin_lock & this) with(this) {
 	#ifdef __CFA_DEBUG__
 	owner = 0p;
 	#endif
-	held = false;
+	__atomic_store_n(&held, false, __ATOMIC_RELEASE);
 }
 
 static inline void on_notify(block_spin_lock & this, struct thread$ * t ) { unpark(t); }
