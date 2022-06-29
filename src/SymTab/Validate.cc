@@ -311,7 +311,7 @@ namespace SymTab {
 		{
 			Stats::Heap::newPass("validate-B");
 			Stats::Time::BlockGuard guard("validate-B");
-			//linkReferenceToTypes( translationUnit );
+			linkReferenceToTypes( translationUnit ); // Must happen before auto-gen, because it uses the sized flag.
 			mutateAll( translationUnit, fixQual ); // must happen after LinkReferenceToTypes_old, because aggregate members are accessed
 			HoistStruct::hoistStruct( translationUnit );
 			EliminateTypedef::eliminateTypedef( translationUnit );

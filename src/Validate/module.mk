@@ -40,6 +40,8 @@ SRC += $(SRC_VALIDATE) \
 	Validate/InitializerLength.hpp \
 	Validate/LabelAddressFixer.cpp \
 	Validate/LabelAddressFixer.hpp \
+	Validate/LinkReferenceToTypes.cpp \
+	Validate/LinkReferenceToTypes.hpp \
 	Validate/NoIdSymbolTable.hpp \
 	Validate/ReturnCheck.cpp \
 	Validate/ReturnCheck.hpp

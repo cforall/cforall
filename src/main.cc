@@ -84,6 +84,7 @@ using namespace std;
 #include "Validate/HoistStruct.hpp"         // for hoistStruct
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
+#include "Validate/LinkReferenceToTypes.hpp" // for linkReferenceToTypes
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
 #include "Virtual/ExpandCasts.h"            // for expandCasts
 
@@ -332,9 +333,6 @@ int main( int argc, char * argv[] ) {
 		// add the assignment statement after the initialization of a type parameter
 		PASS( "Validate-A", SymTab::validate_A( translationUnit ) );
 
-		// Must happen before auto-gen, because it uses the sized flag.
-		PASS( "Link Reference To Types", SymTab::linkReferenceToTypes( translationUnit ) );
-
 		CodeTools::fillLocations( translationUnit );
 
 		if( useNewAST ) {
@@ -347,6 +345,9 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			// Must happen before auto-gen, because it uses the sized flag.
+			PASS( "Link Reference To Types", Validate::linkReferenceToTypes( transUnit ) );
 
 			// Must happen after Link References To Types,
 			// because aggregate members are accessed.

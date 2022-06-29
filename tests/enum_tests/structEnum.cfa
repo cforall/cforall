@@ -23,11 +23,8 @@ struct Point apple = first;
 
 int main() {
     printf("%d %c\n", apple.x, apple.y);
-    // Failed; enumInstType is now not a real type and not instantiated. 
+    // Failed; enumInstType is now not a real type and not instantiated.
     // Not sure if we want that
     // printf("%d %c\n", second.x, second.y);
     return 0;
 }
-
-
-
