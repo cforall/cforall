@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 23:56:39 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 16 15:07:20 2019
-// Update Count     : 31
+// Last Modified On : Fri Jul  1 09:12:33 2022
+// Update Count     : 32
 //
 
 #include <list>                  // for list
@@ -124,7 +124,7 @@ bool EnumDecl::valueOf( Declaration * enumerator, long long int & value ) {
 			if ( field->init ) {
 				SingleInit * init = strict_dynamic_cast< SingleInit * >( field->init );
 				auto result = eval( init->value );
-				if ( ! result.second ) SemanticError( init->location, toString( "Non-constexpr in initialization of enumerator: ", field ) );
+				if ( ! result.second ) SemanticError( init->location, toString( "Enumerator value for '", field, "' is not an integer constant" ) );
 				currentValue = result.first;
 			}
 			assertf( enumValues.count( field->name ) == 0, "Enum %s has multiple members with the name %s", name.c_str(), field->name.c_str() );

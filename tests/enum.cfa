@@ -23,6 +23,22 @@ void f( void ) {
 	Fruits f2;
 }
 
+// test constant-expressions
+
+struct S {
+    int i;
+};
+enum K { P = 3 + 4 };
+enum Y { W = 9 + (3 && 4 || 7)};
+int p[W];
+enum { X = W + -3 + ~1 / 2 * (int)4 + sizeof(struct S) + _Alignof(struct S) || 3 && 5 + (3 ? 1 : 2 ) + __builtin_offsetof(struct S, i ) };
+int x[X];
+enum { B = 3 + 4 - 7 * 20 / 34 << 3 >> 4 > 8 < 9 <= 23 >= 42 == 12 != 13  & 4 ^ 2 | 8 + sizeof(struct S) + _Alignof(struct S) };
+int y[B];
+enum { J = +3 + -4 / ~20 * ! 0 };
+int z[J] = { 1, 2, 3 };
+int aa[41] @= { [3] : 3, [1] : 6 };
+
 //Dummy main
 int main(int argc, char const *argv[]) {
 	printf( "done\n" );				// non-empty .expect file

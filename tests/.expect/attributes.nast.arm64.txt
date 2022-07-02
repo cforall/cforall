@@ -1337,11 +1337,7 @@ signed int _X2adFi___1(){
             ((void)((*_X4_dstM12__anonymous4_2)=_X4_srcM12__anonymous4_2));
         }
 
-        {
-            ((void)(_X4_retM12__anonymous4_2=(*_X4_dstM12__anonymous4_2)) /* ?{} */);
-        }
-
-        return _X4_retM12__anonymous4_2;
+        return (*_X4_dstM12__anonymous4_2);
     }
     {
         ((void)sizeof(enum __anonymous4 ));

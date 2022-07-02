@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Tue Jun 13 15:28:32 2017
-// Last Modified By : Rob Schluntz
-// Last Modified On : Tue Jun 13 15:28:44 2017
-// Update Count     : 2
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jul  1 09:16:01 2022
+// Update Count     : 15
 //
 
 #include <stddef.h>                    // for size_t
@@ -157,8 +157,8 @@ namespace ResolvExpr {
 		}
 
 	private:
-		void setSize( Expression * expr ) { // replace this logic with an eval call
-			auto res = eval(expr);
+		void setSize( Expression * expr ) {
+			auto res = eval( expr );
 			if (res.second) {
 				size = res.first;
 			} else {
@@ -169,26 +169,30 @@ namespace ResolvExpr {
 	public:
 		void setPosition( Expression * expr ) {
 			// need to permit integer-constant-expressions, including: integer constants, enumeration constants, character constants, sizeof expressions, _Alignof expressions, cast expressions
-			if ( ConstantExpr * constExpr = dynamic_cast< ConstantExpr * >( expr ) ) {
-				try {
-					index = constExpr->intValue();
-				} catch( SemanticErrorException & ) {
-					SemanticError( expr, "Constant expression of non-integral type in array designator: " );
-				}
-			} else if ( CastExpr * castExpr = dynamic_cast< CastExpr * >( expr ) ) {
-				setPosition( castExpr->get_arg() );
-			} else if ( VariableExpr * varExpr = dynamic_cast< VariableExpr * >( expr ) ) {
-				EnumInstType * inst = dynamic_cast<EnumInstType *>( varExpr->get_result() );
-				assertf( inst, "ArrayIterator given variable that isn't an enum constant : %s", toString( expr ).c_str() );
-				long long int value;
-				if ( inst->baseEnum->valueOf( varExpr->var, value ) ) {
-					index = value;
-				}
-			} else if ( dynamic_cast< SizeofExpr * >( expr ) || dynamic_cast< AlignofExpr * >( expr ) ) {
-				index = 0; // xxx - get actual sizeof/alignof value?
-			} else {
-				assertf( false, "bad designator given to ArrayIterator: %s", toString( expr ).c_str() );
-			}
+			auto arg = eval( expr );
+			index = arg.first;
+			return;
+
+			// if ( ConstantExpr * constExpr = dynamic_cast< ConstantExpr * >( expr ) ) {
+			// 	try {
+			// 		index = constExpr->intValue();
+			// 	} catch( SemanticErrorException & ) {
+			// 		SemanticError( expr, "Constant expression of non-integral type in array designator: " );
+			// 	}
+			// } else if ( CastExpr * castExpr = dynamic_cast< CastExpr * >( expr ) ) {
+			// 	setPosition( castExpr->get_arg() );
+			// } else if ( VariableExpr * varExpr = dynamic_cast< VariableExpr * >( expr ) ) {
+			// 	EnumInstType * inst = dynamic_cast<EnumInstType *>( varExpr->get_result() );
+			// 	assertf( inst, "ArrayIterator given variable that isn't an enum constant : %s", toString( expr ).c_str() );
+			// 	long long int value;
+			// 	if ( inst->baseEnum->valueOf( varExpr->var, value ) ) {
+			// 		index = value;
+			// 	}
+			// } else if ( dynamic_cast< SizeofExpr * >( expr ) || dynamic_cast< AlignofExpr * >( expr ) ) {
+			// 	index = 0; // xxx - get actual sizeof/alignof value?
+			// } else {
+			// 	assertf( false, "4 bad designator given to ArrayIterator: %s", toString( expr ).c_str() );
+			// }
 		}
 
 		virtual void setPosition( std::list< Expression * > & designators ) {
@@ -328,7 +332,7 @@ namespace ResolvExpr {
 					} // for
 					assertf( false, "could not find member in %s: %s", kind.c_str(), toString( varExpr ).c_str() );
 				} else {
-					assertf( false, "bad designator given to %s: %s", kind.c_str(), toString( designators.front() ).c_str() );
+					assertf( false, "3 bad designator given to %s: %s", kind.c_str(), toString( designators.front() ).c_str() );
 				} // if
 			} // if
 		}
@@ -636,17 +640,15 @@ namespace ast {
 		std::unique_ptr< MemberIterator > memberIter;
 
 		void setSize( const Expr * expr ) {
-			auto res = eval(expr);
+			auto res = eval( expr );
 			if ( ! res.second ) {
-				SemanticError( location,
-					toString("Array designator must be a constant expression: ", expr ) );
+				SemanticError( location, toString( "Array designator must be a constant expression: ", expr ) );
 			}
 			size = res.first;
 		}
 
 	public:
-		ArrayIterator( const CodeLocation & loc, const ArrayType * at )
-		: location( loc ), array( at ), base( at->base ) {
+		ArrayIterator( const CodeLocation & loc, const ArrayType * at ) : location( loc ), array( at ), base( at->base ) {
 			PRINT( std::cerr << "Creating array iterator: " << at << std::endl; )
 			memberIter.reset( createMemberIterator( loc, base ) );
 			if ( at->isVarLen ) {
@@ -659,24 +661,24 @@ namespace ast {
 			// need to permit integer-constant-expressions, including: integer constants,
 			// enumeration constants, character constants, sizeof expressions, alignof expressions,
 			// cast expressions
-			if ( auto constExpr = dynamic_cast< const ConstantExpr * >( expr ) ) {
-				try {
-					index = constExpr->intValue();
-				} catch ( SemanticErrorException & ) {
-					SemanticError( expr,
-						"Constant expression of non-integral type in array designator: " );
-				}
-			} else if ( auto castExpr = dynamic_cast< const CastExpr * >( expr ) ) {
-				setPosition( castExpr->arg );
-			} else if (
-				dynamic_cast< const SizeofExpr * >( expr )
-				|| dynamic_cast< const AlignofExpr * >( expr )
-			) {
-				index = 0;
-			} else {
-				assertf( false,
-					"bad designator given to ArrayIterator: %s", toString( expr ).c_str() );
-			}
+
+			auto arg = eval( expr );
+			index = arg.first;
+			return;
+
+			// if ( auto constExpr = dynamic_cast< const ConstantExpr * >( expr ) ) {
+			// 	try {
+			// 		index = constExpr->intValue();
+			// 	} catch ( SemanticErrorException & ) {
+			// 		SemanticError( expr, "Constant expression of non-integral type in array designator: " );
+			// 	}
+			// } else if ( auto castExpr = dynamic_cast< const CastExpr * >( expr ) ) {
+			// 	setPosition( castExpr->arg );
+			// } else if ( dynamic_cast< const SizeofExpr * >( expr ) || dynamic_cast< const AlignofExpr * >( expr ) ) {
+			// 	index = 0;
+			// } else {
+			// 	assertf( false,	"2 bad designator given to ArrayIterator: %s", toString( expr ).c_str() );
+			// }
 		}
 
 		void setPosition(
@@ -722,8 +724,7 @@ namespace ast {
 			if ( memberIter && *memberIter ) {
 				std::deque< InitAlternative > ret = memberIter->first();
 				for ( InitAlternative & alt : ret ) {
-					alt.designation.get_and_mutate()->designators.emplace_front(
-						ConstantExpr::from_ulong( location, index ) );
+					alt.designation.get_and_mutate()->designators.emplace_front( ConstantExpr::from_ulong( location, index ) );
 				}
 				return ret;
 			}
@@ -787,11 +788,9 @@ namespace ast {
 					memberIter->setPosition( begin, end );
 					return;
 				}
-				assertf( false,
-					"could not find member in %s: %s", kind.c_str(), toString( varExpr ).c_str() );
+				assertf( false, "could not find member in %s: %s", kind.c_str(), toString( varExpr ).c_str() );
 			} else {
-				assertf( false,
-					"bad designator given to %s: %s", kind.c_str(), toString( *begin ).c_str() );
+				assertf( false, "1 bad designator given to %s: %s", kind.c_str(), toString( *begin ).c_str() );
 			}
 		}
 

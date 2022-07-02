@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat May 14 09:16:22 2022
-// Update Count     : 5401
+// Last Modified On : Fri Jul  1 15:35:08 2022
+// Update Count     : 5405
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -2440,10 +2440,10 @@ enumerator_list:
 enumerator_value_opt:
 	// empty
 		{ $$ = nullptr; }
-	// | '=' constant_expression
-	// 	{ $$ = $2; }
-	| simple_assignment_operator initializer
-		{ $$ = $1 == OperKinds::Assign ? $2 : $2->set_maybeConstructed( false ); }
+	| '=' constant_expression					{ $$ = new InitializerNode( $2 ); }
+	| '=' '{' initializer_list_opt comma_opt '}' { $$ = new InitializerNode( $3, true ); }
+	// | simple_assignment_operator initializer
+	// 	{ $$ = $1 == OperKinds::Assign ? $2 : $2->set_maybeConstructed( false ); }
 	;
 
 cfa_parameter_ellipsis_list_opt:						// CFA, abstract + real
