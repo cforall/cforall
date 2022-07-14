@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 21:50:04 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue May 17 14:36:00 2022
-// Update Count     : 366
+// Last Modified On : Tue Jul 12 15:00:00 2022
+// Update Count     : 367
 //
 
 // The "validate" phase of translation is used to take a syntax tree and convert it into a standard form that aims to be
@@ -293,7 +293,7 @@ namespace SymTab {
 		Expression * postmutate( AddressExpr * addrExpr );
 	};
 
-	void validate_A( std::list< Declaration * > & translationUnit ) {
+	void validate( std::list< Declaration * > &translationUnit, __attribute__((unused)) bool doDebug ) {
 		PassVisitor<HoistTypeDecls> hoistDecls;
 		{
 			Stats::Heap::newPass("validate-A");
@@ -304,9 +304,6 @@ namespace SymTab {
 			ReturnTypeFixer::fix( translationUnit ); // must happen before autogen
 			decayEnumsAndPointers( translationUnit ); // must happen before VerifyCtorDtorAssign, because void return objects should not exist; before LinkReferenceToTypes_old because it is an indexer and needs correct types for mangling
 		}
-	}
-
-	void validate_B( std::list< Declaration * > & translationUnit ) {
 		PassVisitor<FixQualifiedTypes> fixQual;
 		{
 			Stats::Heap::newPass("validate-B");
@@ -316,9 +313,6 @@ namespace SymTab {
 			HoistStruct::hoistStruct( translationUnit );
 			EliminateTypedef::eliminateTypedef( translationUnit );
 		}
-	}
-
-	void validate_C( std::list< Declaration * > & translationUnit ) {
 		PassVisitor<ValidateGenericParameters> genericParams;
 		PassVisitor<ResolveEnumInitializers> rei( nullptr );
 		{
@@ -342,9 +336,6 @@ namespace SymTab {
 				InitTweak::fixReturnStatements( translationUnit ); // must happen before autogen
 			});
 		}
-	}
-
-	void validate_D( std::list< Declaration * > & translationUnit ) {
 		{
 			Stats::Heap::newPass("validate-D");
 			Stats::Time::BlockGuard guard("validate-D");
@@ -361,9 +352,6 @@ namespace SymTab {
 				autogenerateRoutines( translationUnit ); // moved up, used to be below compoundLiteral - currently needs EnumAndPointerDecay_old
 			});
 		}
-	}
-
-	void validate_E( std::list< Declaration * > & translationUnit ) {
 		PassVisitor<CompoundLiteral> compoundliteral;
 		{
 			Stats::Heap::newPass("validate-E");
@@ -383,9 +371,6 @@ namespace SymTab {
 				});
 			}
 		}
-	}
-
-	void validate_F( std::list< Declaration * > & translationUnit ) {
 		PassVisitor<LabelAddressFixer> labelAddrFixer;
 		{
 			Stats::Heap::newPass("validate-F");
@@ -409,15 +394,6 @@ namespace SymTab {
 					Validate::handleAttributes, translationUnit);
 			}
 		}
-	}
-
-	void validate( std::list< Declaration * > &translationUnit, __attribute__((unused)) bool doDebug ) {
-		validate_A( translationUnit );
-		validate_B( translationUnit );
-		validate_C( translationUnit );
-		validate_D( translationUnit );
-		validate_E( translationUnit );
-		validate_F( translationUnit );
 	}
 
 	void HoistTypeDecls::handleType( Type * type ) {

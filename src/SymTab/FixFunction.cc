@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 16:19:49 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar  6 23:36:59 2017
-// Update Count     : 6
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue Jul 12 14:28:00 2022
+// Update Count     : 7
 //
 
 #include "FixFunction.h"
@@ -121,6 +121,12 @@ namespace {
 				array->qualifiers };
 		}
 
+		void previsit( const ast::FunctionType * ) { visit_children = false; }
+
+		const ast::Type * postvisit( const ast::FunctionType * type ) {
+			return new ast::PointerType( type );
+		}
+
 		void previsit( const ast::VoidType * ) { isVoid = true; }
 
 		void previsit( const ast::BasicType * ) { visit_children = false; }
@@ -142,6 +148,13 @@ const ast::DeclWithType * fixFunction( const ast::DeclWithType * dwt, bool & isV
 	dwt = dwt->accept( fixer );
 	isVoid |= fixer.core.isVoid;
 	return dwt;
+}
+
+const ast::Type * fixFunction( const ast::Type * type, bool & isVoid ) {
+	ast::Pass< FixFunction_new > fixer;
+	type = type->accept( fixer );
+	isVoid |= fixer.core.isVoid;
+	return type;
 }
 
 } // namespace SymTab

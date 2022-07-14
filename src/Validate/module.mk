@@ -25,9 +25,13 @@ SRC += $(SRC_VALIDATE) \
 	Validate/CompoundLiteral.hpp \
 	Validate/EliminateTypedef.cpp \
 	Validate/EliminateTypedef.hpp \
+	Validate/EnumAndPointerDecay.cpp \
+	Validate/EnumAndPointerDecay.hpp \
 	Validate/FindSpecialDeclsNew.cpp \
 	Validate/FixQualifiedTypes.cpp \
 	Validate/FixQualifiedTypes.hpp \
+	Validate/FixReturnTypes.cpp \
+	Validate/FixReturnTypes.hpp \
 	Validate/ForallPointerDecay.cpp \
 	Validate/ForallPointerDecay.hpp \
 	Validate/GenericParameter.cpp \
@@ -36,6 +40,8 @@ SRC += $(SRC_VALIDATE) \
 	Validate/HandleAttributes.h \
 	Validate/HoistStruct.cpp \
 	Validate/HoistStruct.hpp \
+	Validate/HoistTypeDecls.cpp \
+	Validate/HoistTypeDecls.hpp \
 	Validate/InitializerLength.cpp \
 	Validate/InitializerLength.hpp \
 	Validate/LabelAddressFixer.cpp \
@@ -43,7 +49,11 @@ SRC += $(SRC_VALIDATE) \
 	Validate/LinkReferenceToTypes.cpp \
 	Validate/LinkReferenceToTypes.hpp \
 	Validate/NoIdSymbolTable.hpp \
+	Validate/ReplaceTypedef.cpp \
+	Validate/ReplaceTypedef.hpp \
 	Validate/ReturnCheck.cpp \
-	Validate/ReturnCheck.hpp
+	Validate/ReturnCheck.hpp \
+	Validate/VerifyCtorDtorAssign.cpp \
+	Validate/VerifyCtorDtorAssign.hpp
 
 SRCDEMANGLE += $(SRC_VALIDATE)

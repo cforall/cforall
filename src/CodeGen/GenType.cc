@@ -253,7 +253,7 @@ namespace CodeGen {
 	}
 
 	void GenType::postvisit( EnumInstType * enumInst ) {
-		if ( enumInst->baseEnum->base ) {
+		if ( enumInst->baseEnum && enumInst->baseEnum->base ) {
 			typeString = genType(enumInst->baseEnum->base, "", options) + typeString;
 		} else {
 			typeString = enumInst->name + " " + typeString;

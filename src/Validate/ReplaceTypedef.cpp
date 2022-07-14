@@ -1,0 +1,386 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2018 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// ReplaceTypedef.cpp --
+//
+// Author           : Andrew Beach
+// Created On       : Tue Jun 29 14:59:00 2022
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Jul 13 14:45:00 2022
+// Update Count     : 1
+//
+
+#include "ReplaceTypedef.hpp"
+
+#include "AST/Pass.hpp"
+#include "Common/ScopedMap.h"
+#include "Common/UniqueName.h"
+#include "Common/utility.h"
+#include "ResolvExpr/typeops.h"
+
+namespace Validate {
+
+namespace {
+
+bool isNonParameterAttribute( ast::Attribute const * attr ) {
+	static const std::vector<std::string> bad_names = {
+		"aligned", "__aligned__",
+	};
+	for ( auto name : bad_names ) {
+		if ( name == attr->name ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+struct ReplaceTypedefCore final :
+		public ast::WithVisitorRef<ReplaceTypedefCore>,
+		public ast::WithGuards,
+		public ast::WithShortCircuiting,
+		public ast::WithDeclsToAdd<> {
+
+	void previsit( ast::ParseNode const * node );
+	void previsit( ast::QualifiedType const * );
+	ast::Type const * postvisit( ast::QualifiedType const * );
+	ast::Type const * postvisit( ast::TypeInstType const * );
+	ast::Decl const * postvisit( ast::TypedefDecl const * );
+	void previsit( ast::TypeDecl const * );
+	void previsit( ast::FunctionDecl const * );
+	void previsit( ast::ObjectDecl const * );
+	ast::DeclWithType const * postvisit( ast::ObjectDecl const * );
+
+	void previsit( ast::CastExpr const * );
+	void previsit( ast::CompoundStmt const * );
+	void postvisit( ast::CompoundStmt const * );
+
+	ast::StructDecl const * previsit( ast::StructDecl const * );
+	ast::UnionDecl const * previsit( ast::UnionDecl const * );
+	void previsit( ast::EnumDecl const * );
+	void previsit( ast::TraitDecl const * );
+
+	template<typename AggrDecl>
+	void addImplicitTypedef( AggrDecl * aggDecl );
+	template<typename AggrDecl>
+	AggrDecl const * handleAggregate( AggrDecl const * aggDecl );
+
+	using TypedefDeclPtr = ast::ptr<ast::TypedefDecl>;
+	using TypedefMap = ScopedMap<std::string, std::pair<TypedefDeclPtr, int>>;
+	using TypeDeclMap = ScopedMap<std::string, ast::TypeDecl const *>;
+
+	TypedefMap typedefNames;
+	TypeDeclMap typedeclNames;
+	CodeLocation const * nearestLocation = nullptr;
+	int scopeLevel;
+	bool isAtFunctionTop = false;
+};
+
+void ReplaceTypedefCore::previsit( ast::ParseNode const * node ) {
+	GuardValue( nearestLocation ) = &node->location;
+}
+
+void ReplaceTypedefCore::previsit( ast::QualifiedType const * ) {
+	visit_children = false;
+}
+
+ast::Type const * ReplaceTypedefCore::postvisit(
+		ast::QualifiedType const * type ) {
+	// Replacing typedefs only makes sense for the 'oldest ancestor'
+	// of the qualified type.
+	return ast::mutate_field( type, &ast::QualifiedType::parent,
+		type->parent->accept( *visitor ) );
+}
+
+ast::Type const * ReplaceTypedefCore::postvisit(
+		ast::TypeInstType const * type ) {
+	// Instances of typedef types will come here. If it is an instance
+	// of a typedef type, link the instance to its actual type.
+	TypedefMap::const_iterator def = typedefNames.find( type->name );
+	if ( def != typedefNames.end() ) {
+		ast::Type * ret = ast::deepCopy( def->second.first->base );
+		ret->qualifiers |= type->qualifiers;
+		// We ignore certain attributes on function parameters if they arrive
+		// by typedef. GCC appears to do the same thing.
+		if ( isAtFunctionTop ) {
+			erase_if( ret->attributes, isNonParameterAttribute );
+		}
+		for ( const auto & attribute : type->attributes ) {
+			ret->attributes.push_back( attribute );
+		}
+		// Place instance parameters on the typedef'd type.
+		if ( !type->params.empty() ) {
+			auto rtt = dynamic_cast<ast::BaseInstType *>( ret );
+			if ( !rtt ) {
+				assert( nearestLocation );
+				SemanticError( *nearestLocation, "Cannot apply type parameters to base type of " + type->name );
+			}
+			rtt->params.clear();
+			for ( auto it : type->params ) {
+				rtt->params.push_back( ast::deepCopy( it ) );
+			}
+			// Recursively fix typedefs on parameters.
+			ast::mutate_each( rtt, &ast::BaseInstType::params, *visitor );
+		}
+		return ret;
+	} else {
+		TypeDeclMap::const_iterator base = typedeclNames.find( type->name );
+		if ( base == typedeclNames.end() ) {
+			assert( nearestLocation );
+			SemanticError( *nearestLocation, toString( "Use of undefined type ", type->name ) );
+		}
+		return ast::mutate_field( type, &ast::TypeInstType::base, base->second );
+	}
+}
+
+struct VarLenChecker : public ast::WithShortCircuiting {
+	bool result = false;
+	void previsit( ast::FunctionType const * ) { visit_children = false; }
+	void previsit( ast::ArrayType const * at ) { result |= at->isVarLen; }
+};
+
+ast::Decl const * ReplaceTypedefCore::postvisit(
+		ast::TypedefDecl const * decl ) {
+	if ( 1 == typedefNames.count( decl->name ) &&
+			typedefNames[ decl->name ].second == scopeLevel ) {
+		ast::Type const * t0 = decl->base;
+		ast::Type const * t1 = typedefNames[ decl->name ].first->base;
+		// Cannot redefine VLA typedefs. Note: this is slightly incorrect,
+		// because our notion of VLAs at this point in the translator is
+		// imprecise. In particular, this will disallow redefining typedefs
+		// with arrays whose dimension is an enumerator or a cast of a
+		// constant/enumerator. The effort required to fix this corner case
+		// likely outweighs the utility of allowing it.
+		if ( !ResolvExpr::typesCompatible( t0, t1, ast::SymbolTable() )
+				|| ast::Pass<VarLenChecker>::read( t0 )
+				|| ast::Pass<VarLenChecker>::read( t1 ) ) {
+			SemanticError( decl->location, "Cannot redefine typedef: " + decl->name );
+		}
+	} else {
+		typedefNames[ decl->name ] =
+			std::make_pair( TypedefDeclPtr( decl ), scopeLevel );
+	}
+
+	// When a typedef is a forward declaration:
+	// >	typedef struct screen SCREEN;
+	// the declaration portion must be retained:
+	// >	struct screen;
+	// because the expansion of the typedef is:
+	// >	void func( SCREEN * p ) -> void func( struct screen * p );
+	// hence type name "screen" must be defined.
+	// Note: qualifiers on the typedef are not used for the forward declaration.
+
+	ast::Type const * designatorType = decl->base->stripDeclarator();
+	if ( auto structType = dynamic_cast<ast::StructInstType const *>( designatorType ) ) {
+		declsToAddBefore.push_back( new ast::StructDecl(
+			decl->location, structType->name, ast::AggregateDecl::Struct, {},
+			decl->linkage ) );
+	} else if ( auto unionType = dynamic_cast<ast::UnionInstType const *>( designatorType ) ) {
+		declsToAddBefore.push_back( new ast::UnionDecl(
+			decl->location, unionType->name, {}, decl->linkage ) );
+	} else if ( auto enumType = dynamic_cast<ast::EnumInstType const *>( designatorType ) ) {
+		declsToAddBefore.push_back( new ast::EnumDecl(
+			decl->location, enumType->name, {}, decl->linkage,
+			( (enumType->base) ? enumType->base->base : nullptr )
+			) );
+	}
+	return ast::deepCopy( decl );
+}
+
+void ReplaceTypedefCore::previsit( ast::TypeDecl const * decl ) {
+	previsit( (ast::ParseNode const *)decl );
+	TypedefMap::iterator iter = typedefNames.find( decl->name );
+	if ( iter != typedefNames.end() ) {
+		typedefNames.erase( iter );
+	}
+	typedeclNames.insert( decl->name, decl );
+}
+
+void ReplaceTypedefCore::previsit( ast::FunctionDecl const * decl ) {
+	previsit( (ast::ParseNode const *)decl );
+	GuardScope( typedefNames );
+	GuardScope( typedeclNames );
+	GuardValue( isAtFunctionTop ) = true;
+}
+
+void ReplaceTypedefCore::previsit( ast::ObjectDecl const * decl ) {
+	previsit( (ast::ParseNode const *)decl );
+	GuardScope( typedefNames );
+	GuardScope( typedeclNames );
+}
+
+ast::DeclWithType const * ReplaceTypedefCore::postvisit(
+		ast::ObjectDecl const * decl ) {
+	if ( ast::FunctionType const * type = decl->type.as<ast::FunctionType>() ) {
+		using DWTVector = std::vector<ast::ptr<ast::DeclWithType>>;
+		using DeclVector = std::vector<ast::ptr<ast::TypeDecl>>;
+		CodeLocation const & location = decl->location;
+		UniqueName paramNamer( decl->name + "Param" );
+
+		// Replace the current object declaration with a function declaration.
+		ast::FunctionDecl const * newDecl = new ast::FunctionDecl(
+			location,
+			decl->name,
+			map_range<DeclVector>( type->forall, []( const ast::TypeInstType * inst ) {
+				return ast::deepCopy( inst->base );
+			} ),
+			map_range<DWTVector>( type->assertions, []( const ast::VariableExpr * expr ) {
+				return ast::deepCopy( expr->var );
+			} ),
+			map_range<DWTVector>( type->params, [&location, &paramNamer]( const ast::Type * type ) {
+				assert( type );
+				return new ast::ObjectDecl( location, paramNamer.newName(), ast::deepCopy( type ) );
+			} ),
+			map_range<DWTVector>( type->returns, [&location, &paramNamer]( const ast::Type * type ) {
+				assert( type );
+				return new ast::ObjectDecl( location, paramNamer.newName(), ast::deepCopy( type ) );
+			} ),
+			nullptr,
+			decl->storage,
+			decl->linkage,
+			{/* attributes */},
+			decl->funcSpec
+		);
+		return newDecl;
+	}
+	return decl;
+}
+
+void ReplaceTypedefCore::previsit( ast::CastExpr const * expr ) {
+	previsit( (ast::ParseNode const *)expr );
+	GuardScope( typedefNames );
+	GuardScope( typedeclNames );
+}
+
+void ReplaceTypedefCore::previsit( ast::CompoundStmt const * expr ) {
+	previsit( (ast::ParseNode const *)expr );
+	GuardScope( typedefNames );
+	GuardScope( typedeclNames );
+	GuardValue( isAtFunctionTop ) = false;
+	scopeLevel += 1;
+}
+
+void ReplaceTypedefCore::postvisit( ast::CompoundStmt const * ) {
+	scopeLevel -= 1;
+}
+
+ast::StructDecl const * ReplaceTypedefCore::previsit( ast::StructDecl const * decl ) {
+	previsit( (ast::ParseNode const *)decl );
+	visit_children = false;
+	addImplicitTypedef( decl );
+	return handleAggregate( decl );
+}
+
+ast::UnionDecl const * ReplaceTypedefCore::previsit( ast::UnionDecl const * decl ) {
+	previsit( (ast::ParseNode const *)decl );
+	visit_children = false;
+	addImplicitTypedef( decl );
+	return handleAggregate( decl );
+}
+
+void ReplaceTypedefCore::previsit( ast::EnumDecl const * decl ) {
+	previsit( (ast::ParseNode const *)decl );
+	addImplicitTypedef( decl );
+}
+
+void ReplaceTypedefCore::previsit( ast::TraitDecl const * decl ) {
+	previsit( (ast::ParseNode const *)decl );
+	GuardScope( typedefNames );
+	GuardScope( typedeclNames );
+}
+
+template<typename AggrDecl>
+void ReplaceTypedefCore::addImplicitTypedef( AggrDecl * aggrDecl ) {
+	if ( 0 != typedefNames.count( aggrDecl->name ) ) {
+		return;
+	}
+	ast::Type * type = nullptr;
+	if ( auto structDecl = dynamic_cast<const ast::StructDecl *>( aggrDecl ) ) {
+		type = new ast::StructInstType( structDecl->name );
+	} else if ( auto unionDecl = dynamic_cast<const ast::UnionDecl *>( aggrDecl ) ) {
+		type = new ast::UnionInstType( unionDecl->name );
+	} else if ( auto enumDecl = dynamic_cast<const ast::EnumDecl *>( aggrDecl ) ) {
+		type = new ast::EnumInstType( enumDecl->name );
+	}
+	assert( type );
+
+	TypedefDeclPtr typeDecl = new ast::TypedefDecl( aggrDecl->location,
+		aggrDecl->name, ast::Storage::Classes(), type, aggrDecl->linkage );
+	// Add the implicit typedef to the AST.
+	declsToAddBefore.push_back( ast::deepCopy( typeDecl.get() ) );
+	// Shore the name in the map of names.
+	typedefNames[ aggrDecl->name ] =
+		std::make_pair( std::move( typeDecl ), scopeLevel );
+}
+
+template<typename AggrDecl>
+AggrDecl const * ReplaceTypedefCore::handleAggregate( AggrDecl const * decl ) {
+	SemanticErrorException errors;
+
+	ValueGuard<decltype(declsToAddBefore)> oldBeforeDecls( declsToAddBefore );
+	ValueGuard<decltype(declsToAddAfter )> oldAfterDecls(  declsToAddAfter );
+	declsToAddBefore.clear();
+	declsToAddAfter.clear();
+
+	GuardScope( typedefNames );
+	GuardScope( typedeclNames );
+	decl = mutate_each( decl, &ast::AggregateDecl::params, *visitor );
+	decl = mutate_each( decl, &ast::AggregateDecl::attributes, *visitor );
+
+	auto mut = ast::mutate( decl );
+
+	std::vector<ast::ptr<ast::Decl>> members;
+	// Unroll accept_all for decl->members so that implicit typedefs for
+	// nested types are added to the aggregate body.
+	for ( ast::ptr<ast::Decl> const & member : mut->members ) {
+		assert( declsToAddAfter.empty() );
+		ast::Decl const * newMember = nullptr;
+		try {
+			newMember = member->accept( *visitor );
+		} catch ( SemanticErrorException & e ) {
+			errors.append( e );
+		}
+		if ( !declsToAddBefore.empty() ) {
+			for ( auto declToAdd : declsToAddBefore ) {
+				members.push_back( declToAdd );
+			}
+			declsToAddBefore.clear();
+		}
+		members.push_back( newMember );
+	}
+	assert( declsToAddAfter.empty() );
+	if ( !errors.isEmpty() ) { throw errors; }
+
+	mut->members.clear();
+	for ( auto member : members ) {
+		mut->members.push_back( member );
+	}
+
+	return mut;
+}
+
+} // namespace
+
+void replaceTypedef( ast::TranslationUnit & translationUnit ) {
+	ast::Pass<ReplaceTypedefCore> pass;
+	ast::accept_all( translationUnit, pass );
+	if ( pass.core.typedefNames.count( "size_t" ) ) {
+		translationUnit.global.sizeType =
+			ast::deepCopy( pass.core.typedefNames["size_t"].first->base );
+	} else {
+		// Missing the global definition, default to long unsigned int.
+		// Perhaps this should be a warning instead.
+		translationUnit.global.sizeType =
+			new ast::BasicType( ast::BasicType::LongUnsignedInt );
+	}
+}
+
+} // namespace Validate
+
+// Local Variables: //
+// tab-width: 4 //
+// mode: c++ //
+// compile-command: "make install" //
+// End: //

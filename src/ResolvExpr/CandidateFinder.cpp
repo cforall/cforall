@@ -40,7 +40,6 @@
 #include "AST/Type.hpp"
 #include "Common/utility.h"       // for move, copy
 #include "SymTab/Mangler.h"
-#include "SymTab/Validate.h"      // for validateType
 #include "Tuples/Tuples.h"        // for handleTupleAssignment
 #include "InitTweak/InitTweak.h"  // for getPointerBase
 
@@ -1090,7 +1089,6 @@ namespace {
 			ast::ptr< ast::Type > toType = castExpr->result;
 			assert( toType );
 			toType = resolveTypeof( toType, context );
-			// toType = SymTab::validateType( castExpr->location, toType, symtab );
 			toType = adjustExprType( toType, tenv, symtab );
 
 			CandidateFinder finder( context, tenv, toType );
@@ -1581,7 +1579,6 @@ namespace {
 			for ( const ast::InitAlternative & initAlt : initExpr->initAlts ) {
 				// calculate target type
 				const ast::Type * toType = resolveTypeof( initAlt.type, context );
-				// toType = SymTab::validateType( initExpr->location, toType, symtab );
 				toType = adjustExprType( toType, tenv, symtab );
 				// The call to find must occur inside this loop, otherwise polymorphic return
 				// types are not bound to the initialization type, since return type variables are

@@ -253,7 +253,7 @@ extern "C" {
 			// Prepare the future to be waited on
 			// intented to be use by wait, wait_any, waitfor, etc. rather than used directly
 			bool setup( future_t & this, oneshot & wait_ctx ) {
-				/* paranoid */ verify( wait_ctx.ptr == 0p );
+				/* paranoid */ verify( wait_ctx.ptr == 0p || wait_ctx.ptr == 1p );
 				// The future needs to set the wait context
 				for() {
 					struct oneshot * expected = this.ptr;
@@ -273,35 +273,33 @@ extern "C" {
 			// should retract the wait ctx
 			// intented to be use by wait, wait_any, waitfor, etc. rather than used directly
 			bool retract( future_t & this, oneshot & wait_ctx ) {
-				for() {
-					struct oneshot * expected = this.ptr;
+				struct oneshot * expected = this.ptr;
 
-					// expected == 0p: future was never actually setup, just return
-					if( expected == 0p ) return false;
-
-					// expected == 1p: the future is ready and the context was fully consumed
-					// the server won't use the pointer again
-					// It is safe to delete (which could happen after the return)
-					if( expected == 1p ) return true;
-
-					// expected == 2p: the future is ready but the context hasn't fully been consumed
-					// spin until it is safe to move on
-					if( expected == 2p ) {
-						while( this.ptr != 1p ) Pause();
-						/* paranoid */ verify( this.ptr == 1p );
-						return true;
-					}
-
-					// expected != wait_ctx: the future was setup with a different context ?!?!
-					// something went wrong here, abort
-					if( expected != &wait_ctx ) abort("Future in unexpected state");
-
+				// attempt to remove the context so it doesn't get consumed.
+				if(__atomic_compare_exchange_n( &this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 					// we still have the original context, then no one else saw it
-					// attempt to remove the context so it doesn't get consumed.
-					if(__atomic_compare_exchange_n( &this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
-						return false;
-					}
+					return false;
 				}
+
+				// expected == 0p: future was never actually setup, just return
+				if( expected == 0p ) return false;
+
+				// expected == 1p: the future is ready and the context was fully consumed
+				// the server won't use the pointer again
+				// It is safe to delete (which could happen after the return)
+				if( expected == 1p ) return true;
+
+				// expected == 2p: the future is ready but the context hasn't fully been consumed
+				// spin until it is safe to move on
+				if( expected == 2p ) {
+					while( this.ptr != 1p ) Pause();
+					/* paranoid */ verify( this.ptr == 1p );
+					return true;
+				}
+
+				// anything else: the future was setup with a different context ?!?!
+				// something went wrong here, abort
+				abort("Future in unexpected state");
 			}
 
 			// Mark the future as abandoned, meaning it will be deleted by the server

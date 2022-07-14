@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 17:02:08 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:45:55 2017
-// Update Count     : 4
+// Last Modified On : Tue Jul 12 14:19:00 2022
+// Update Count     : 5
 //
 
 #pragma once
@@ -20,6 +20,7 @@
 
 namespace ast {
 	class DeclWithType;
+	class Type;
 }
 
 namespace SymTab {
@@ -30,6 +31,7 @@ namespace SymTab {
 	/// Returns declaration with function and array types replaced by equivalent pointer types.
 	/// Sets isVoid to true if type is void
 	const ast::DeclWithType * fixFunction( const ast::DeclWithType * dwt, bool & isVoid );
+	const ast::Type * fixFunction( const ast::Type * type, bool & isVoid );
 } // namespace SymTab
 
 // Local Variables: //

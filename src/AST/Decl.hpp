@@ -314,7 +314,7 @@ public:
 	ptr<Type> base;
 
 	EnumDecl( const CodeLocation& loc, const std::string& name,
-		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall, Type * base = nullptr,
+		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall, Type const * base = nullptr,
 		std::unordered_map< std::string, long long > enumValues = std::unordered_map< std::string, long long >() )
 	: AggregateDecl( loc, name, std::move(attrs), linkage ), base(base), enumValues(enumValues) {}
 

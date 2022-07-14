@@ -167,12 +167,15 @@ private:
 		auto type = get<Type>().accept1( node->type );
 		auto attr = get<Attribute>().acceptL( node->attributes );
 
+		// This field can be unset very early on (Pre-FixReturnTypes).
+		auto newType = (type) ? type->clone() : nullptr;
+
 		auto decl = new ObjectDecl(
 			node->name,
 			Type::StorageClasses( node->storage.val ),
 			LinkageSpec::Spec( node->linkage.val ),
 			bfwd,
-			type->clone(),
+			newType,
 			nullptr, // prevent infinite loop
 			attr,
 			Type::FuncSpecifiers( node->funcSpec.val )
@@ -1578,13 +1581,14 @@ private:
 	// Now all the visit functions:
 
 	virtual void visit( const ObjectDecl * old ) override final {
+		if ( inCache( old ) ) {
+			return;
+		}
 		auto&& type = GET_ACCEPT_1(type, Type);
 		auto&& init = GET_ACCEPT_1(init, Init);
 		auto&& bfwd = GET_ACCEPT_1(bitfieldWidth, Expr);
 		auto&& attr = GET_ACCEPT_V(attributes, Attribute);
-		if ( inCache( old ) ) {
-			return;
-		}
+
 		auto decl = new ast::ObjectDecl(
 			old->location,
 			old->name,

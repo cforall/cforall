@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Jun  7 13:29:00 2022
-// Update Count     : 674
+// Last Modified On : Tue Jul 12 12:02:00 2022
+// Update Count     : 675
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -77,15 +77,20 @@ using namespace std;
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/EliminateTypedef.hpp"    // for eliminateTypedef
+#include "Validate/EnumAndPointerDecay.hpp" // for decayEnumsAndPointers
 #include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
 #include "Validate/FixQualifiedTypes.hpp"   // for fixQualifiedTypes
+#include "Validate/FixReturnTypes.hpp"      // for fixReturnTypes
 #include "Validate/ForallPointerDecay.hpp"  // for decayForallPointers
 #include "Validate/GenericParameter.hpp"    // for fillGenericParameters, tr...
 #include "Validate/HoistStruct.hpp"         // for hoistStruct
+#include "Validate/HoistTypeDecls.hpp"      // for hoistTypeDecls
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
 #include "Validate/LinkReferenceToTypes.hpp" // for linkReferenceToTypes
+#include "Validate/ReplaceTypedef.hpp"      // for replaceTypedef
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
+#include "Validate/VerifyCtorDtorAssign.hpp" // for verifyCtorDtorAssign
 #include "Virtual/ExpandCasts.h"            // for expandCasts
 
 static void NewPass( const char * const name ) {
@@ -330,9 +335,6 @@ int main( int argc, char * argv[] ) {
 			return EXIT_SUCCESS;
 		} // if
 
-		// add the assignment statement after the initialization of a type parameter
-		PASS( "Validate-A", SymTab::validate_A( translationUnit ) );
-
 		CodeTools::fillLocations( translationUnit );
 
 		if( useNewAST ) {
@@ -345,6 +347,24 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			// Must happen before auto-gen, or anything that examines ops.
+			PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign( transUnit ) );
+
+			PASS( "Hoist Type Decls", Validate::hoistTypeDecls( transUnit ) );
+			// Hoist Type Decls pulls some declarations out of contexts where
+			// locations are not tracked. Perhaps they should be, but for now
+			// the full fill solves it.
+			forceFillCodeLocations( transUnit );
+
+			PASS( "Replace Typedefs", Validate::replaceTypedef( transUnit ) );
+
+			// Must happen before auto-gen.
+			PASS( "Fix Return Types", Validate::fixReturnTypes( transUnit ) );
+
+			// Must happen before Link Reference to Types, it needs correct
+			// types for mangling.
+			PASS( "Enum and Pointer Decay", Validate::decayEnumsAndPointers( transUnit ) );
 
 			// Must happen before auto-gen, because it uses the sized flag.
 			PASS( "Link Reference To Types", Validate::linkReferenceToTypes( transUnit ) );
@@ -452,11 +472,8 @@ int main( int argc, char * argv[] ) {
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
-			PASS( "Validate-B", SymTab::validate_B( translationUnit ) );
-			PASS( "Validate-C", SymTab::validate_C( translationUnit ) );
-			PASS( "Validate-D", SymTab::validate_D( translationUnit ) );
-			PASS( "Validate-E", SymTab::validate_E( translationUnit ) );
-			PASS( "Validate-F", SymTab::validate_F( translationUnit ) );
+			// add the assignment statement after the initialization of a type parameter
+			PASS( "Validate", SymTab::validate( translationUnit ) );
 
 			if ( symtabp ) {
 				deleteAll( translationUnit );

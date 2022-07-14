@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  1 09:23:21 2022
-// Update Count     : 64
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Jun 29 14:32:00 2022
+// Update Count     : 65
 //
 
 #pragma once
@@ -25,6 +25,10 @@
 #include "SynTree/Declaration.h"  // for DeclarationWithType (ptr only), Fun...
 #include "SynTree/Visitor.h"      // for Visitor
 #include "SynTree/SynTree.h"      // for Visitor Nodes
+
+namespace ast {
+	class DeclWithType;
+}
 
 namespace CodeGen {
 	struct CodeGenerator : public WithShortCircuiting, public WithGuards, public WithVisitorRef<CodeGenerator> {
@@ -181,6 +185,7 @@ namespace CodeGen {
 
 	/// returns C-compatible name of declaration
 	std::string genName( DeclarationWithType * decl );
+	std::string genName( ast::DeclWithType const * decl );
 
 	inline std::ostream & operator<<( std::ostream & os, const CodeGenerator::LineEnder & endl ) {
 		return endl( os );

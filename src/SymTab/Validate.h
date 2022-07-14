@@ -10,36 +10,19 @@
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 21:53:34 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue May 17 14:35:00 2022
-// Update Count     : 5
+// Last Modified On : Tue Jul 12 15:30:00 2022
+// Update Count     : 6
 //
 
 #pragma once
 
 #include <list>  // for list
 
-struct CodeLocation;
-class  Declaration;
-class  Type;
-
-namespace ast {
-	class Type;
-	class SymbolTable;
-}
+class Declaration;
 
 namespace SymTab {
-	class Indexer;
-
 	/// Normalizes struct and function declarations
 	void validate( std::list< Declaration * > &translationUnit, bool doDebug = false );
-
-	// Sub-passes of validate.
-	void validate_A( std::list< Declaration * > &translationUnit );
-	void validate_B( std::list< Declaration * > &translationUnit );
-	void validate_C( std::list< Declaration * > &translationUnit );
-	void validate_D( std::list< Declaration * > &translationUnit );
-	void validate_E( std::list< Declaration * > &translationUnit );
-	void validate_F( std::list< Declaration * > &translationUnit );
 } // namespace SymTab
 
 // Local Variables: //

@@ -8,15 +8,16 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  2 20:30:30 2022
-// Update Count     : 541
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Jun 29 14:34:00 2022
+// Update Count     : 542
 //
 #include "CodeGenerator.h"
 
 #include <cassert>                   // for assert, assertf
 #include <list>                      // for _List_iterator, list, list<>::it...
 
+#include "AST/Decl.hpp"              // for DeclWithType
 #include "Common/UniqueName.h"       // for UniqueName
 #include "Common/utility.h"          // for CodeLocation, toString
 #include "GenType.h"                 // for genType
@@ -1237,6 +1238,15 @@ namespace CodeGen {
 			return decl->get_name();
 		} // if
 	}
+
+std::string genName( ast::DeclWithType const * decl ) {
+	if ( const OperatorInfo * opInfo = operatorLookup( decl->name ) ) {
+		return opInfo->outputName;
+	} else {
+		return decl->name;
+	}
+}
+
 } // namespace CodeGen
 
 // Local Variables: //

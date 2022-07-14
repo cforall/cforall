@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Wed Apr 20 16:37:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Apr 25 14:26:00 2022
-// Update Count     : 0
+// Last Modified On : Mon Jul 11 16:30:00 2022
+// Update Count     : 1
 //
 
 #include "Validate/EliminateTypedef.hpp"
@@ -27,9 +27,15 @@ namespace Validate {
 namespace {
 
 struct EliminateTypedefCore {
+	// Remove typedefs from inside aggregates.
 	ast::StructDecl const * previsit( ast::StructDecl const * decl );
 	ast::UnionDecl const * previsit( ast::UnionDecl const * decl );
+	// Remove typedefs from statement lists.
 	ast::CompoundStmt const * previsit( ast::CompoundStmt const * stmt );
+	// Remove typedefs from control structure initializers.
+	ast::IfStmt const * previsit( ast::IfStmt const * stmt );
+	ast::ForStmt const * previsit( ast::ForStmt const * stmt );
+	ast::WhileDoStmt const * previsit( ast::WhileDoStmt const * stmt );
 };
 
 bool isTypedef( ast::ptr<ast::Decl> const & decl ) {
@@ -60,6 +66,18 @@ ast::UnionDecl const * EliminateTypedefCore::previsit( ast::UnionDecl const * de
 
 ast::CompoundStmt const * EliminateTypedefCore::previsit( ast::CompoundStmt const * stmt ) {
 	return field_erase_if( stmt, &ast::CompoundStmt::kids, isTypedefStmt );
+}
+
+ast::IfStmt const * EliminateTypedefCore::previsit( ast::IfStmt const * stmt ) {
+	return field_erase_if( stmt, &ast::IfStmt::inits, isTypedefStmt );
+}
+
+ast::ForStmt const * EliminateTypedefCore::previsit( ast::ForStmt const * stmt ) {
+	return field_erase_if( stmt, &ast::ForStmt::inits, isTypedefStmt );
+}
+
+ast::WhileDoStmt const * EliminateTypedefCore::previsit( ast::WhileDoStmt const * stmt ) {
+	return field_erase_if( stmt, &ast::WhileDoStmt::inits, isTypedefStmt );
 }
 
 } // namespace
