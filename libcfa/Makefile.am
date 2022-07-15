@@ -17,3 +17,5 @@
 AUTOMAKE_OPTIONS = foreign # do not require all the GNU file names
 ACLOCAL_AMFLAGS  = -I automake
 SUBDIRS = prelude src      # order important
+
+DISTCLEANFILES = config.data

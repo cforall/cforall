@@ -847,13 +847,13 @@ maintainer-clean-generic:
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-recursive
 
-clean-am: clean-generic clean-libtool clean-local mostlyclean-am
+clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -f Makefile
 distclean-am: clean-am distclean-generic distclean-hdr \
-	distclean-libtool distclean-local distclean-tags
+	distclean-libtool distclean-tags
 
 dvi: dvi-recursive
 
@@ -903,8 +903,7 @@ maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-recursive
 
-mostlyclean-am: mostlyclean-generic mostlyclean-libtool \
-	mostlyclean-local
+mostlyclean-am: mostlyclean-generic mostlyclean-libtool
 
 pdf: pdf-recursive
 
@@ -922,21 +921,20 @@ uninstall-man: uninstall-man1
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
 	am--refresh check check-am clean clean-cscope clean-generic \
-	clean-libtool clean-local cscope cscopelist-am ctags ctags-am \
-	dist dist-all dist-bzip2 dist-gzip dist-lzip dist-shar \
-	dist-tarZ dist-xz dist-zip distcheck distclean \
-	distclean-generic distclean-hdr distclean-libtool \
-	distclean-local distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-man1 install-pdf install-pdf-am install-ps \
+	clean-libtool cscope cscopelist-am ctags ctags-am dist \
+	dist-all dist-bzip2 dist-gzip dist-lzip dist-shar dist-tarZ \
+	dist-xz dist-zip distcheck distclean distclean-generic \
+	distclean-hdr distclean-libtool distclean-tags distcleancheck \
+	distdir distuninstallcheck dvi dvi-am html html-am info \
+	info-am install install-am install-data install-data-am \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-info install-info-am \
+	install-man install-man1 install-pdf install-pdf-am install-ps \
 	install-ps-am install-strip installcheck installcheck-am \
 	installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool mostlyclean-local pdf pdf-am ps ps-am tags \
-	tags-am uninstall uninstall-am uninstall-man uninstall-man1
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-man uninstall-man1
 
 .PRECIOUS: Makefile
 
@@ -961,21 +959,10 @@ status: @LIBCFA_TARGET_MAKEFILES@
 	@./config.status --config | sed "s/ /\n\t/g; s/\t'/\t/g; s/'\n/\n/g; s/^'//g; s/'$$//g"
 	@find libcfa -name config.status -printf "\n%h\n\t" -exec {} --config \; | sed "s/ /\n\t/g; s/\t'/\t/g; s/'\n/\n/g; s/^'//g; s/'$$//g"
 
-mostlyclean-local: @LIBCFA_TARGET_MAKEFILES@
-	for dir in @LIBCFA_TARGET_DIRS@; do \
-		$(MAKE) -C $${dir} mostlyclean; \
-	done
+@LIBCFA_TARGET_DIRS@::
+	$(MAKE) -C $@ $(MAKECMDGOALS)
 
-clean-local: @LIBCFA_TARGET_MAKEFILES@
-	for dir in @LIBCFA_TARGET_DIRS@; do \
-		$(MAKE) -C $${dir} clean; \
-	done
-
-distclean-local: @LIBCFA_TARGET_MAKEFILES@
-	for dir in @LIBCFA_TARGET_DIRS@; do \
-		$(MAKE) -C $${dir} distclean; \
-		rm $${dir}/config.data; \
-	done
+mostlyclean clean distclean maintainer-clean: @LIBCFA_TARGET_DIRS@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

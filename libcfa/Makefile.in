@@ -362,6 +362,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign # do not require all the GNU file names
 ACLOCAL_AMFLAGS = -I automake
 SUBDIRS = prelude src      # order important
+DISTCLEANFILES = config.data
 all: all-recursive
 
 .SUFFIXES:
@@ -738,6 +739,7 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

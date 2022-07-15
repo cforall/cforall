@@ -51,18 +51,7 @@ status: @LIBCFA_TARGET_MAKEFILES@
 	@./config.status --config | sed "s/ /\n\t/g; s/\t'/\t/g; s/'\n/\n/g; s/^'//g; s/'$$//g"
 	@find libcfa -name config.status -printf "\n%h\n\t" -exec {} --config \; | sed "s/ /\n\t/g; s/\t'/\t/g; s/'\n/\n/g; s/^'//g; s/'$$//g"
 
-mostlyclean-local: @LIBCFA_TARGET_MAKEFILES@
-	for dir in @LIBCFA_TARGET_DIRS@; do \
-		$(MAKE) -C $${dir} mostlyclean; \
-	done
+@LIBCFA_TARGET_DIRS@::
+	$(MAKE) -C $@ $(MAKECMDGOALS)
 
-clean-local: @LIBCFA_TARGET_MAKEFILES@
-	for dir in @LIBCFA_TARGET_DIRS@; do \
-		$(MAKE) -C $${dir} clean; \
-	done
-
-distclean-local: @LIBCFA_TARGET_MAKEFILES@
-	for dir in @LIBCFA_TARGET_DIRS@; do \
-		$(MAKE) -C $${dir} distclean; \
-		rm $${dir}/config.data; \
-	done
+mostlyclean clean distclean maintainer-clean: @LIBCFA_TARGET_DIRS@
