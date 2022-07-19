@@ -8,9 +8,9 @@
 //
 // Author           : Henry Xue
 // Created On       : Tue Jul 20 04:10:50 2021
-// Last Modified By : Henry Xue
-// Last Modified On : Tue Jul 20 04:10:50 2021
-// Update Count     : 1
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue Jul 12 15:49:00 2022
+// Update Count     : 2
 //
 
 #pragma once
@@ -19,6 +19,11 @@
 
 class Declaration;
 
+namespace ast {
+	class TranslationUnit;
+}
+
 namespace ControlStruct {
 	void translateExcept( std::list< Declaration *> & translationUnit );
+	void translateExcept( ast::TranslationUnit & translationUnit );
 }

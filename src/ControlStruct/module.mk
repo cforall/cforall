@@ -16,6 +16,7 @@
 
 SRC += \
 	ControlStruct/ExceptDecl.cc \
+	ControlStruct/ExceptDeclNew.cpp \
 	ControlStruct/ExceptDecl.h \
 	ControlStruct/ExceptTranslateNew.cpp \
 	ControlStruct/ExceptTranslate.cc \

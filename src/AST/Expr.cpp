@@ -271,7 +271,7 @@ ConstantExpr * ConstantExpr::from_string( const CodeLocation & loc, const std::s
 	const Type * charType = new BasicType( BasicType::Char );
 	// Adjust the length of the string for the terminator.
 	const Expr * strSize = from_ulong( loc, str.size() + 1 );
-	const Type * strType = new ArrayType( charType, strSize, FixedLen, StaticDim );
+	const Type * strType = new ArrayType( charType, strSize, FixedLen, DynamicDim );
 	const std::string strValue = "\"" + str + "\"";
 	return new ConstantExpr( loc, strType, strValue, std::nullopt );
 }

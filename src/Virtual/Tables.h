@@ -18,8 +18,13 @@
 #include <string>
 #include "AST/Fwd.hpp"
 class Declaration;
-class StructDecl;
 class Expression;
+class FunctionDecl;
+class Initializer;
+class ObjectDecl;
+class StructDecl;
+class StructInstType;
+class Type;
 
 namespace Virtual {
 

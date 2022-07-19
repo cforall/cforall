@@ -148,8 +148,7 @@ struct MultiLevelExitCore final :
 	}
 };
 
-NullStmt * labelledNullStmt(
-	const CodeLocation & cl, const Label & label ) {
+NullStmt * labelledNullStmt( const CodeLocation & cl, const Label & label ) {
 	return new NullStmt( cl, vector<Label>{ label } );
 }
 
@@ -163,7 +162,7 @@ void MultiLevelExitCore::previsit( const FunctionDecl * ) {
 }
 
 const CompoundStmt * MultiLevelExitCore::previsit(
-	const CompoundStmt * stmt ) {
+		const CompoundStmt * stmt ) {
 	visit_children = false;
 
 	// if the stmt is labelled then generate a label to check in postvisit if the label is used
@@ -188,8 +187,7 @@ const CompoundStmt * MultiLevelExitCore::previsit(
 	return mutStmt;
 }
 
-size_t getUnusedIndex(
-	const Stmt * stmt, const Label & originalTarget ) {
+size_t getUnusedIndex( const Stmt * stmt, const Label & originalTarget ) {
 	const size_t size = stmt->labels.size();
 
 	// If the label is empty, do not add unused attribute.
@@ -209,8 +207,7 @@ size_t getUnusedIndex(
 			 originalTarget.name.c_str(), toString( stmt ).c_str() );
 }
 
-const Stmt * addUnused(
-	const Stmt * stmt, const Label & originalTarget ) {
+const Stmt * addUnused( const Stmt * stmt, const Label & originalTarget ) {
 	size_t i = getUnusedIndex( stmt, originalTarget );
 	if ( i == stmt->labels.size() ) {
 		return stmt;
@@ -355,8 +352,7 @@ const ForStmt * MultiLevelExitCore::postvisit( const ForStmt * stmt ) {
 }
 
 // Mimic what the built-in push_front would do anyways. It is O(n).
-void push_front(
-	vector<ptr<Stmt>> & vec, const Stmt * element ) {
+void push_front( vector<ptr<Stmt>> & vec, const Stmt * element ) {
 	vec.emplace_back( nullptr );
 	for ( size_t i = vec.size() - 1 ; 0 < i ; --i ) {
 		vec[ i ] = move( vec[ i - 1 ] );
@@ -589,21 +585,17 @@ list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
 		}
 
 		ptr<Stmt> else_stmt = nullptr;
-		Stmt * loop_kid = nullptr;
+		const Stmt * loop_kid = nullptr;
 		// check if loop node and if so add else clause if it exists
-		const WhileDoStmt * whilePtr = dynamic_cast<const WhileDoStmt *>(kid.get());
-		if ( whilePtr && whilePtr->else_) {
+		const WhileDoStmt * whilePtr = kid.as<WhileDoStmt>();
+		if ( whilePtr && whilePtr->else_ ) {
 			else_stmt = whilePtr->else_;
-			WhileDoStmt * mutate_ptr = mutate(whilePtr);
-			mutate_ptr->else_ = nullptr;
-			loop_kid = mutate_ptr;
+			loop_kid = mutate_field( whilePtr, &WhileDoStmt::else_, nullptr );
 		}
-		const ForStmt * forPtr = dynamic_cast<const ForStmt *>(kid.get());
-		if ( forPtr && forPtr->else_) {
+		const ForStmt * forPtr = kid.as<ForStmt>();
+		if ( forPtr && forPtr->else_ ) {
 			else_stmt = forPtr->else_;
-			ForStmt * mutate_ptr = mutate(forPtr);
-			mutate_ptr->else_ = nullptr;
-			loop_kid = mutate_ptr;
+			loop_kid = mutate_field( forPtr, &ForStmt::else_, nullptr );
 		}
 
 		try {

@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Jul 12 12:02:00 2022
-// Update Count     : 675
+// Last Modified On : Mon Jul 18 11:08:00 2022
+// Update Count     : 676
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -329,17 +329,7 @@ int main( int argc, char * argv[] ) {
 		CodeTools::fillLocations( translationUnit );
 		Stats::Time::StopBlock();
 
-		PASS( "Translate Exception Declarations", ControlStruct::translateExcept( translationUnit ) );
-		if ( exdeclp ) {
-			dump( translationUnit );
-			return EXIT_SUCCESS;
-		} // if
-
-		CodeTools::fillLocations( translationUnit );
-
 		if( useNewAST ) {
-			CodeTools::fillLocations( translationUnit );
-
 			if (Stats::Counters::enabled) {
 				ast::pass_visitor_stats.avg = Stats::Counters::build<Stats::Counters::AverageCounter<double>>("Average Depth - New");
 				ast::pass_visitor_stats.max = Stats::Counters::build<Stats::Counters::MaxCounter<double>>("Max depth - New");
@@ -347,6 +337,12 @@ int main( int argc, char * argv[] ) {
 			auto transUnit = convert( move( translationUnit ) );
 
 			forceFillCodeLocations( transUnit );
+
+			PASS( "Translate Exception Declarations", ControlStruct::translateExcept( transUnit ) );
+			if ( exdeclp ) {
+				dump( move( transUnit ) );
+				return EXIT_SUCCESS;
+			}
 
 			// Must happen before auto-gen, or anything that examines ops.
 			PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign( transUnit ) );
@@ -472,6 +468,12 @@ int main( int argc, char * argv[] ) {
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
+			PASS( "Translate Exception Declarations", ControlStruct::translateExcept( translationUnit ) );
+			if ( exdeclp ) {
+				dump( translationUnit );
+				return EXIT_SUCCESS;
+			} // if
+
 			// add the assignment statement after the initialization of a type parameter
 			PASS( "Validate", SymTab::validate( translationUnit ) );
 
