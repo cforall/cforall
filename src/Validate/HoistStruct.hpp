@@ -21,7 +21,7 @@ namespace ast {
 
 namespace Validate {
 
-/// Flattens nested type declarations.
+/// Flattens nested type declarations. (Run right after Fix Qualified Types.)
 void hoistStruct( ast::TranslationUnit & translationUnit );
 
 }

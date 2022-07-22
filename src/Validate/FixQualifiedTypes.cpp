@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixQualifiedTypes.cpp --
+// FixQualifiedTypes.cpp -- Replace the qualified type with a direct type.
 //
 // Author           : Andrew Beach
 // Created On       : Thr Apr 21 11:13:00 2022
@@ -75,7 +75,6 @@ struct FixQualifiedTypesCore :
 							ast::Type * ret = ast::deepCopy( decl->base );
 							ret->qualifiers = type->qualifiers;
 							ast::TypeSubstitution sub( aggr->params, instp->params );
-							// = parent->genericSubstitution();
 							auto result = sub.apply(ret);
 							return result.node.release();
 						}

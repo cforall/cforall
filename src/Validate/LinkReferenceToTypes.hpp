@@ -21,6 +21,9 @@ namespace ast {
 
 namespace Validate {
 
+/// Fills in the base value of various instance types, and some related
+/// adjustments, such as setting the sized flag.
+/// Because of the sized flag, it must happen before auto-gen.
 void linkReferenceToTypes( ast::TranslationUnit & translationUnit );
 
 }

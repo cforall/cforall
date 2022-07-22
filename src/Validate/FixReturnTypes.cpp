@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixReturnTypes.cpp --
+// FixReturnTypes.cpp -- Unifies the representation of return types.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun 29 11:06:00 2022

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ExceptDecl.cc --
+// ExceptDecl.cc -- Handles declarations of exception types.
 //
 // Author           : Henry Xue
 // Created On       : Tue Jul 20 04:10:50 2021

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// EnumAndPointerDecay.cpp --
+// EnumAndPointerDecay.cpp -- Normalizes enumerations and types in functions.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun 28 15:50:00 2022

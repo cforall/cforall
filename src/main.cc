@@ -344,9 +344,7 @@ int main( int argc, char * argv[] ) {
 				return EXIT_SUCCESS;
 			}
 
-			// Must happen before auto-gen, or anything that examines ops.
 			PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign( transUnit ) );
-
 			PASS( "Hoist Type Decls", Validate::hoistTypeDecls( transUnit ) );
 			// Hoist Type Decls pulls some declarations out of contexts where
 			// locations are not tracked. Perhaps they should be, but for now
@@ -354,47 +352,22 @@ int main( int argc, char * argv[] ) {
 			forceFillCodeLocations( transUnit );
 
 			PASS( "Replace Typedefs", Validate::replaceTypedef( transUnit ) );
-
-			// Must happen before auto-gen.
 			PASS( "Fix Return Types", Validate::fixReturnTypes( transUnit ) );
-
-			// Must happen before Link Reference to Types, it needs correct
-			// types for mangling.
 			PASS( "Enum and Pointer Decay", Validate::decayEnumsAndPointers( transUnit ) );
 
-			// Must happen before auto-gen, because it uses the sized flag.
 			PASS( "Link Reference To Types", Validate::linkReferenceToTypes( transUnit ) );
 
-			// Must happen after Link References To Types,
-			// because aggregate members are accessed.
 			PASS( "Fix Qualified Types", Validate::fixQualifiedTypes( transUnit ) );
-
 			PASS( "Hoist Struct", Validate::hoistStruct( transUnit ) );
 			PASS( "Eliminate Typedef", Validate::eliminateTypedef( transUnit ) );
-
-			// Check as early as possible. Can't happen before
-			// LinkReferenceToType, observed failing when attempted
-			// before eliminateTypedef
 			PASS( "Validate Generic Parameters", Validate::fillGenericParameters( transUnit ) );
-
 			PASS( "Translate Dimensions", Validate::translateDimensionParameters( transUnit ) );
 			PASS( "Check Function Returns", Validate::checkReturnStatements( transUnit ) );
-
-			// Must happen before Autogen.
 			PASS( "Fix Return Statements", InitTweak::fixReturnStatements( transUnit ) );
-
 			PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords( transUnit ) );
-
-			// Must be after implement concurrent keywords; because uniqueIds
-			//   must be set on declaration before resolution.
-			// Must happen before autogen routines are added.
 			PASS( "Forall Pointer Decay", Validate::decayForallPointers( transUnit ) );
-
-			// Must happen before autogen routines are added.
 			PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls( transUnit ) );
 
-			// Must be after enum and pointer decay.
-			// Must be before compound literals.
 			PASS( "Generate Autogen Routines", Validate::autogenerateRoutines( transUnit ) );
 
 			PASS( "Implement Mutex", Concurrency::implementMutex( transUnit ) );

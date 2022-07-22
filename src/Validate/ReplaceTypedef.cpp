@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ReplaceTypedef.cpp --
+// ReplaceTypedef.cpp -- Fill in all typedefs with the underlying type.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun 29 14:59:00 2022

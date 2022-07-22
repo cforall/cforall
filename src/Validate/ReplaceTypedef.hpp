@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ReplaceTypedef.hpp --
+// ReplaceTypedef.hpp -- Fill in all typedefs with the underlying type.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun 29 14:58:00 2022
@@ -21,6 +21,7 @@ namespace ast {
 
 namespace Validate {
 
+/// Uses of typedef are replaced with the type in the typedef.
 void replaceTypedef( ast::TranslationUnit & translationUnit );
 
 }

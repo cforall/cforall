@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// VerifyCtorDtorAssign.cpp --
+// VerifyCtorDtorAssign.cpp -- Check the form of operators.
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jul  4 10:26:00 2022

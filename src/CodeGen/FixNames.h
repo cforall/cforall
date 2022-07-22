@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixNames.h --
+// FixNames.h -- Adjustments to typed declarations.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -25,7 +25,8 @@ namespace ast {
 namespace CodeGen {
 	/// mangles object and function names
 	void fixNames( std::list< Declaration* > & translationUnit );
-	void fixNames( ast::TranslationUnit & translationUnit );
+/// Sets scope levels and fills in main's default return.
+void fixNames( ast::TranslationUnit & translationUnit );
 } // namespace CodeGen
 
 // Local Variables: //

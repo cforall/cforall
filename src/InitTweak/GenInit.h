@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// GenInit.h --
+// GenInit.h -- Generate initializers, and other stuff.
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
@@ -28,7 +28,8 @@ namespace InitTweak {
 	void genInit( std::list< Declaration * > & translationUnit );
 	void genInit( ast::TranslationUnit & translationUnit );
 
-	/// Converts return statements into copy constructor calls on the hidden return variable
+	/// Converts return statements into copy constructor calls on the hidden return variable.
+	/// This pass must happen before auto-gen.
 	void fixReturnStatements( std::list< Declaration * > & translationUnit );
 	void fixReturnStatements( ast::TranslationUnit & translationUnit );
 

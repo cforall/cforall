@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// GenericParameter.hpp --
+// GenericParameter.hpp -- Generic parameter related passes.
 //
 // Author           : Andrew Beach
 // Created On       : Fri Mar 21 10:02:00 2022

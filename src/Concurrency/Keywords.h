@@ -27,11 +27,11 @@ namespace Concurrency {
 	void implementMutexFuncs( std::list< Declaration * > & translationUnit );
 	void implementThreadStarter( std::list< Declaration * > & translationUnit );
 
-/// Implement the sue-like keywords and the suspend keyword.
+/// Implement the sue-like keywords and the suspend keyword. Pre-Autogen
 void implementKeywords( ast::TranslationUnit & translationUnit );
-/// Implement the mutex parameters and mutex statement.
+/// Implement the mutex parameters and mutex statement. Post-Autogen
 void implementMutex( ast::TranslationUnit & translationUnit );
-/// Add the thread starter code to constructors.
+/// Add the thread starter code to constructors. Post-Autogen
 void implementThreadStarter( ast::TranslationUnit & translationUnit );
 };
 

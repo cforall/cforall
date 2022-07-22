@@ -20,7 +20,8 @@ class TranslationUnit;
 }
 
 namespace ControlStruct {
-// Hoist declarations out of control flow statements into compound statement.
+/// Hoist declarations out of control flow statements into compound statement.
+/// Must happen before auto-gen routines are added.
 void hoistControlDecls( ast::TranslationUnit & translationUnit );
 } // namespace ControlStruct
 

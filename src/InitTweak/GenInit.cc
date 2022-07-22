@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// GenInit.cc --
+// GenInit.cc -- Generate initializers, and other stuff.
 //
 // Author           : Rob Schluntz
 // Created On       : Mon May 18 07:44:20 2015

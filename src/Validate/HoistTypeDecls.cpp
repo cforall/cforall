@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// HoistTypeDecls.cpp --
+// HoistTypeDecls.cpp -- Hoists declarations of implicitly declared types.
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jul  4  9:52:00 2022

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// GenericParameter.hpp --
+// GenericParameter.hpp -- Generic parameter related passes.
 //
 // Author           : Andrew Beach
 // Created On       : Fri Mar 21  9:55:00 2022
@@ -22,6 +22,8 @@ namespace ast {
 namespace Validate {
 
 /// Perform substutions for generic parameters and fill in defaults.
+/// Check as early as possible, but it can't happen before Link References to
+/// Types and observed failing when attempted before eliminate typedef.
 void fillGenericParameters( ast::TranslationUnit & translationUnit );
 
 /// Replace dimension generic parameters with a fixed type of that size.

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// LabelAddressFixer.hpp --
+// LabelAddressFixer.hpp -- Create label address expressions.
 //
 // Author           : Andrew Beach
 // Created On       : Fri Nov 12 16:29:00 2021
@@ -19,6 +19,8 @@ namespace ast {
 
 namespace Validate {
 
+/// Label addresses are not actually created in the parser, this pass finds
+/// the patterns that represent the label address expression.
 void fixLabelAddresses( ast::TranslationUnit & translationUnit );
 
 }

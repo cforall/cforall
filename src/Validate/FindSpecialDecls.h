@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FindSpecialDeclarations.h --
+// FindSpecialDeclarations.h -- Find special declarations used in the compiler.
 //
 // Author           : Rob Schluntz
 // Created On       : Thu Aug 30 09:49:02 2018
@@ -42,7 +42,7 @@ namespace Validate {
 	/// find and remember some of the special declarations that are useful for generating code, so that they do not have to be discovered multiple times.
 	void findSpecialDecls( std::list< Declaration * > & translationUnit );
 
-/// find and remember some of the special declarations that are useful for
+/// Find and remember some of the special declarations that are useful for
 /// generating code, so that they do not have to be discovered multiple times.
 void findGlobalDecls( ast::TranslationUnit & translationUnit );
 

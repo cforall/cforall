@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// HoistTypeDecls.hpp --
+// HoistTypeDecls.hpp -- Hoists declarations of implicitly declared types.
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jul  4  9:51:00 2022
@@ -21,6 +21,9 @@ namespace ast {
 
 namespace Validate {
 
+/// There are some places where a type can be declared but are usually only
+/// referenced (with an *InstType). This inserts the declarations before
+/// they are referenced.
 void hoistTypeDecls( ast::TranslationUnit & translationUnit );
 
 }

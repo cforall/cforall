@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// EnumAndPointerDecay.hpp --
+// EnumAndPointerDecay.hpp -- Normalizes enumerations and types in functions.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun 28 15:48:00 2022
@@ -21,6 +21,9 @@ namespace ast {
 
 namespace Validate {
 
+/// Fix the parameter and return types of functions. Also assigns types to
+/// enumeration values. This must happen before Link Reference to Types,
+/// it needs correct types for mangling, and before auto-gen.
 void decayEnumsAndPointers( ast::TranslationUnit & translationUnit );
 
 }

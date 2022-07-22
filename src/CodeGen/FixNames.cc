@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixNames.cc --
+// FixNames.cc -- Adjustments to typed declarations.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Oct 29 15:49:00 2021
-// Update Count     : 23
+// Last Modified On : Wed Jul 20 11:49:00 2022
+// Update Count     : 24
 //
 
 #include "FixNames.h"
@@ -86,7 +86,7 @@ namespace CodeGen {
 	}
 
 /// Does work with the main function and scopeLevels.
-class FixNames_new : public ast::WithGuards {
+class FixNames_new final {
 	int scopeLevel = 1;
 
 	bool shouldSetScopeLevel( const ast::DeclWithType * dwt ) {
@@ -102,16 +102,12 @@ public:
 	}
 
 	const ast::FunctionDecl *postvisit( const ast::FunctionDecl *functionDecl ) {
-		// This store is used to ensure a maximum of one call to mutate.
-		ast::FunctionDecl * mutDecl = nullptr;
-
-		if ( shouldSetScopeLevel( functionDecl ) ) {
-			mutDecl = ast::mutate( functionDecl );
-			mutDecl->scopeLevel = scopeLevel;
-		}
-
 		if ( FixMain::isMain( functionDecl ) ) {
-			if ( !mutDecl ) { mutDecl = ast::mutate( functionDecl ); }
+			auto mutDecl = ast::mutate( functionDecl );
+
+			if ( shouldSetScopeLevel( mutDecl ) ) {
+				mutDecl->scopeLevel = scopeLevel;
+			}
 
 			int nargs = mutDecl->params.size();
 			if ( 0 != nargs && 2 != nargs && 3 != nargs ) {
@@ -123,12 +119,21 @@ public:
 					ast::ConstantExpr::from_int( mutDecl->location, 0 )
 				)
 			);
+
+			return mutDecl;
+		} else if ( shouldSetScopeLevel( functionDecl ) ) {
+			return ast::mutate_field( functionDecl, &ast::FunctionDecl::scopeLevel, scopeLevel );
+		} else {
+			return functionDecl;
 		}
-		return mutDecl ? mutDecl : functionDecl;
 	}
 
 	void previsit( const ast::CompoundStmt * ) {
-		GuardValue( scopeLevel ) += 1;
+		scopeLevel += 1;
+	}
+
+	void postvisit( const ast::CompoundStmt * ) {
+		scopeLevel -= 1;
 	}
 };
 

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixReturnTypes.hpp --
+// FixReturnTypes.hpp -- Unifies the representation of return types.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun 29 11:01:00 2022
@@ -21,8 +21,9 @@ namespace ast {
 
 namespace Validate {
 
-// This pass needs to happen early so that other passes can find tuple types
-// in the right places, especially for function return types.
+/// This pass needs to happen early so that other passes can find tuple types
+/// in the right places, especially for function return types.
+/// Must happen before auto-gen.
 void fixReturnTypes( ast::TranslationUnit & translationUnit );
 
 }

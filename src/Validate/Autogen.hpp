@@ -21,6 +21,8 @@ namespace ast {
 
 namespace Validate {
 
+/// Generate routines for all data types in the translation unit.
+/// A lot of passes have to happen either before or after this pass.
 void autogenerateRoutines( ast::TranslationUnit & translationUnit );
 
 }

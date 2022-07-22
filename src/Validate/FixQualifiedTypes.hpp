@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixQualifiedTypes.hpp --
+// FixQualifiedTypes.hpp -- Replace the qualified type with a direct type.
 //
 // Author           : Andrew Beach
 // Created On       : Thr Apr 21 11:11:00 2022
@@ -21,6 +21,9 @@ namespace ast {
 
 namespace Validate {
 
+/// Replaces qualified types with an unqualified NamedTypeDecl.
+/// Must happen after Link References To Types,
+/// because aggregate members are accessed.
 void fixQualifiedTypes( ast::TranslationUnit & translationUnit );
 
 }

@@ -28,6 +28,9 @@ namespace Validate {
 /// Cleans up assertion lists and expands traits.
 /// Also checks that operator names are used properly on functions and
 /// assigns unique IDs. This is a "legacy" pass.
+/// Must be after implement concurrent keywords; because uniqueIds must be
+/// set on declaration before resolution.
+/// Must happen before auto-gen routines are added.
 void decayForallPointers( ast::TranslationUnit & transUnit );
 
 /// Expand all traits in an assertion list.

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Tuples.h --
+// Tuples.cc -- A collection of tuple operations.
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jun 17 14:41:00 2019

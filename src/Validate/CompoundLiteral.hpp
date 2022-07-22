@@ -22,6 +22,7 @@ namespace ast {
 namespace Validate {
 
 /// Use variables to implement compound literals.
+/// Must happen after auto-gen routines are added.
 void handleCompoundLiterals( ast::TranslationUnit & translationUnit );
 
 }

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// VerifyCtorDtorAssign.hpp --
+// VerifyCtorDtorAssign.hpp -- Check the form of operators.
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jul  4 10:25:00 2022
@@ -21,6 +21,8 @@ namespace ast {
 
 namespace Validate {
 
+/// Check that constructors, destructors and assignments all have the correct
+/// form. Must happen before auto-gen or anything that examines operators.
 void verifyCtorDtorAssign( ast::TranslationUnit & translationUnit );
 
 }

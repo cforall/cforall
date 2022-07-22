@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// LabelAddressFixer.cpp --
+// LabelAddressFixer.cpp -- Create label address expressions.
 //
 // Author           : Andrew Beach
 // Created On       : Fri Nov 12 16:30:00 2021
