@@ -670,6 +670,7 @@ stdhdr = $(shell find $(srcdir)/stdhdr -type f -printf "%p ")
 cfa_includedir = $(CFA_INCDIR)
 nobase_cfa_include_HEADERS = ${stdhdr} ${inst_headers_src} ${inst_headers_nosrc} ${inst_thread_headers_src} ${inst_thread_headers_nosrc}
 EXTRA_DIST = stdhdr
+DISTCLEANFILES = $(libdeps) $(thread_libdeps)
 all: all-am
 
 .SUFFIXES:
@@ -1103,6 +1104,7 @@ distclean-generic:
 	-rm -f containers/$(am__dirstamp)
 	-rm -f device/$(DEPDIR)/$(am__dirstamp)
 	-rm -f device/$(am__dirstamp)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1119,7 +1121,7 @@ distclean: distclean-am
 	-rm -f concurrency/$(DEPDIR)/invoke.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-local distclean-tags
+	distclean-tags
 
 dvi: dvi-am
 
@@ -1191,14 +1193,14 @@ uninstall-am: uninstall-libLTLIBRARIES \
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
 	clean-generic clean-libLTLIBRARIES clean-libtool cscopelist-am \
 	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-local distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-libLTLIBRARIES \
-	install-man install-nobase_cfa_includeHEADERS install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-libLTLIBRARIES install-man \
+	install-nobase_cfa_includeHEADERS install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic maintainer-clean-local mostlyclean \
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
 	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
@@ -1242,8 +1244,8 @@ concurrency/io/call.cfa: $(srcdir)/concurrency/io/call.cfa.in
 maintainer-clean-local:
 	-rm -rf ${CFA_INCDIR} ${CFA_LIBDIR}
 
-distclean-local:
-	find ${builddir} -path '*.Plo' -delete
+#distclean-local:
+#	find ${builddir} -path '*.Plo' -delete
 
 # $(AM_V_CFA)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
 # 	$(CFACOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\

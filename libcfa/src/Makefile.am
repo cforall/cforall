@@ -215,13 +215,14 @@ stdhdr = $(shell find $(srcdir)/stdhdr -type f -printf "%p ")
 cfa_includedir = $(CFA_INCDIR)
 nobase_cfa_include_HEADERS = ${stdhdr} ${inst_headers_src} ${inst_headers_nosrc} ${inst_thread_headers_src} ${inst_thread_headers_nosrc}
 EXTRA_DIST = stdhdr
+DISTCLEANFILES = $(libdeps) $(thread_libdeps)
 
 #----------------------------------------------------------------------------------------------------------------
 maintainer-clean-local:
 	-rm -rf ${CFA_INCDIR} ${CFA_LIBDIR}
 
-distclean-local:
-	find ${builddir} -path '*.Plo' -delete
+#distclean-local:
+#	find ${builddir} -path '*.Plo' -delete
 
 
 # $(AM_V_CFA)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\

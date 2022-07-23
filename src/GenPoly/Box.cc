@@ -188,8 +188,6 @@ namespace GenPoly {
 
 			/// Enters a new scope for type-variables, adding the type variables from ty
 			void beginTypeScope( Type *ty );
-			/// Exits the type-variable scope
-			void endTypeScope();
 			/// Enters a new scope for knowLayouts and knownOffsets and queues exit calls
 			void beginGenericScope();
 
@@ -197,6 +195,7 @@ namespace GenPoly {
 			ScopedSet< std::string > knownOffsets;          ///< Set of non-generic types for which the offset array exists in the current scope, indexed by offsetofName
 			UniqueName bufNamer;                           ///< Namer for VLA buffers
 			Expression * addrMember = nullptr;             ///< AddressExpr argument is MemberExpr?
+			bool expect_func_type = false;                 ///< used to avoid recursing too deep in type decls
 		};
 
 		/// Replaces initialization of polymorphic values with alloca, declaration of dtype/ftype with appropriate void expression, sizeof expressions of polymorphic types with the proper variable, and strips fields from generic struct declarations.
@@ -1418,6 +1417,11 @@ namespace GenPoly {
 
 		void PolyGenericCalculator::beginGenericScope() {
 			GuardScope( *this );
+			// We expect the first function type see to be the type relating to this scope
+			// but any further type is probably some unrelated function pointer
+			// keep track of which is the first
+			GuardValue( expect_func_type );
+			expect_func_type = true;
 		}
 
 		void PolyGenericCalculator::premutate( ObjectDecl *objectDecl ) {
@@ -1467,6 +1471,23 @@ namespace GenPoly {
 
 		void PolyGenericCalculator::premutate( FunctionType *funcType ) {
 			beginTypeScope( funcType );
+
+			GuardValue( expect_func_type );
+
+			if(!expect_func_type) {
+				GuardAction( [this]() {
+					knownLayouts.endScope();
+					knownOffsets.endScope();
+				});
+				// If this is the first function type we see
+				// Then it's the type of the declaration and we care about it
+				knownLayouts.beginScope();
+				knownOffsets.beginScope();
+			}
+
+			// The other functions type we will see in this scope are probably functions parameters
+			// they don't help us with the layout and offsets so don't mark them as known in this scope
+			expect_func_type = false;
 
 			// make sure that any type information passed into the function is accounted for
 			for ( std::list< DeclarationWithType* >::const_iterator fnParm = funcType->get_parameters().begin(); fnParm != funcType->get_parameters().end(); ++fnParm ) {
@@ -1744,6 +1765,8 @@ namespace GenPoly {
 
 					stmtsToAddBefore.push_back( new ExprStmt( layoutCall ) );
 				}
+
+				// std::cout << "TRUE 2" << std::endl;
 
 				return true;
 			} else if ( UnionInstType *unionTy = dynamic_cast< UnionInstType* >( ty ) ) {
