@@ -154,11 +154,6 @@ namespace ast {
 		__pedantic_pass_assert( __visit_children() );
 		__pedantic_pass_assert( expr );
 
-		const ast::TypeSubstitution ** typeSubs_ptr = __pass::typeSubs( core, 0 );
-		if ( typeSubs_ptr && expr->env ) {
-			*typeSubs_ptr = expr->env;
-		}
-
 		auto nval = expr->accept( *this );
 		return { nval != expr, nval };
 	}
@@ -170,6 +165,20 @@ namespace ast {
 
 		const ast::Stmt * nval = stmt->accept( *this );
 		return { nval != stmt, nval };
+	}
+
+	template< typename core_t >
+	__pass::template result1<ast::Expr> ast::Pass< core_t >::call_accept_top( const ast::Expr * expr ) {
+		__pedantic_pass_assert( __visit_children() );
+		__pedantic_pass_assert( expr );
+
+		const ast::TypeSubstitution ** typeSubs_ptr = __pass::typeSubs( core, 0 );
+		if ( typeSubs_ptr && expr->env ) {
+			*typeSubs_ptr = expr->env;
+		}
+
+		auto nval = expr->accept( *this );
+		return { nval != expr, nval };
 	}
 
 	template< typename core_t >
@@ -409,6 +418,30 @@ namespace ast {
 		static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR");
 
 		auto new_val = call_accept( old_val );
+
+		static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR");
+
+		if( new_val.differs ) {
+			auto new_parent = __pass::mutate<core_t>(parent);
+			new_val.apply(new_parent, field);
+			parent = new_parent;
+		}
+	}
+
+	template< typename core_t >
+	template<typename node_t, typename super_t, typename field_t>
+	void ast::Pass< core_t >::maybe_accept_top(
+		const node_t * & parent,
+		field_t super_t::*field
+	) {
+		static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
+
+		if(__pass::skip(parent->*field)) return;
+		const auto & old_val = __pass::get(parent->*field, 0);
+
+		static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR");
+
+		auto new_val = call_accept_top( old_val );
 
 		static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR");
 
@@ -755,7 +788,7 @@ const ast::StaticAssertDecl * ast::Pass< core_t >::visit( const ast::StaticAsser
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &StaticAssertDecl::cond );
+		maybe_accept_top( node, &StaticAssertDecl::cond );
 		maybe_accept( node, &StaticAssertDecl::msg  );
 	}
 
@@ -797,7 +830,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ExprStmt * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &ExprStmt::expr );
+		maybe_accept_top( node, &ExprStmt::expr );
 	}
 
 	VISIT_END( Stmt, node );
@@ -838,7 +871,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::IfStmt * node ) {
 		// if statements introduce a level of scope (for the initialization)
 		guard_symtab guard { *this };
 		maybe_accept( node, &IfStmt::inits    );
-		maybe_accept( node, &IfStmt::cond     );
+		maybe_accept_top( node, &IfStmt::cond     );
 		maybe_accept_as_compound( node, &IfStmt::then );
 		maybe_accept_as_compound( node, &IfStmt::else_ );
 	}
@@ -856,7 +889,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::WhileDoStmt * node ) {
 		// while statements introduce a level of scope (for the initialization)
 		guard_symtab guard { *this };
 		maybe_accept( node, &WhileDoStmt::inits );
-		maybe_accept( node, &WhileDoStmt::cond  );
+		maybe_accept_top( node, &WhileDoStmt::cond  );
 		maybe_accept_as_compound( node, &WhileDoStmt::body  );
 	}
 
@@ -874,8 +907,8 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ForStmt * node ) {
 		guard_symtab guard { *this };
 		// xxx - old ast does not create WithStmtsToAdd scope for loop inits. should revisit this later.
 		maybe_accept( node, &ForStmt::inits );
-		maybe_accept( node, &ForStmt::cond  );
-		maybe_accept( node, &ForStmt::inc   );
+		maybe_accept_top( node, &ForStmt::cond  );
+		maybe_accept_top( node, &ForStmt::inc   );
 		maybe_accept_as_compound( node, &ForStmt::body  );
 	}
 
@@ -889,7 +922,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::SwitchStmt * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &SwitchStmt::cond  );
+		maybe_accept_top( node, &SwitchStmt::cond  );
 		maybe_accept( node, &SwitchStmt::cases );
 	}
 
@@ -903,7 +936,7 @@ const ast::CaseClause * ast::Pass< core_t >::visit( const ast::CaseClause * node
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &CaseClause::cond  );
+		maybe_accept_top( node, &CaseClause::cond  );
 		maybe_accept( node, &CaseClause::stmts );
 	}
 
@@ -925,7 +958,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ReturnStmt * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &ReturnStmt::expr );
+		maybe_accept_top( node, &ReturnStmt::expr );
 	}
 
 	VISIT_END( Stmt, node );
@@ -970,7 +1003,7 @@ const ast::CatchClause * ast::Pass< core_t >::visit( const ast::CatchClause * no
 		// catch statements introduce a level of scope (for the caught exception)
 		guard_symtab guard { *this };
 		maybe_accept( node, &CatchClause::decl );
-		maybe_accept( node, &CatchClause::cond );
+		maybe_accept_top( node, &CatchClause::cond );
 		maybe_accept_as_compound( node, &CatchClause::body );
 	}
 
@@ -2057,7 +2090,7 @@ const ast::Init * ast::Pass< core_t >::visit( const ast::SingleInit * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &SingleInit::value );
+		maybe_accept_top( node, &SingleInit::value );
 	}
 
 	VISIT_END( Init, node );

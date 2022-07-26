@@ -1262,6 +1262,14 @@ namespace {
 				CandidateRef newCand = std::make_shared<Candidate>(
 					newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, Cost::zero,
 					cost );
+
+				if (newCand->expr->env) {
+					newCand->env.add(*newCand->expr->env);
+					auto mutExpr = newCand->expr.get_and_mutate();
+					mutExpr->env  = nullptr;
+					newCand->expr = mutExpr;
+				}
+
 				PRINT(
 					std::cerr << "decl is ";
 					ast::print( std::cerr, data.id );

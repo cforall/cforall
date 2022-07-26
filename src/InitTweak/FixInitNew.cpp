@@ -72,7 +72,7 @@ namespace {
 
 	/// wrap function application expressions as ImplicitCopyCtorExpr nodes so that it is easy to identify which
 	/// function calls need their parameters to be copy constructed
-	struct InsertImplicitCalls : public ast::WithConstTypeSubstitution, public ast::WithShortCircuiting {
+	struct InsertImplicitCalls : public ast::WithShortCircuiting {
 		const ast::Expr * postvisit( const ast::ApplicationExpr * appExpr );
 
 		// only handles each UniqueExpr once
@@ -456,7 +456,6 @@ namespace {
 		// Move the type substitution to the new top-level. The substitution
 		// is needed to obtain the type of temporary variables so that copy
 		// constructor calls can be resolved.
-		assert( typeSubs );
 		expr->env = tmp;
 		return expr;
 	}

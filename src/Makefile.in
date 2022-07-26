@@ -272,8 +272,9 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	GenPoly/Box.$(OBJEXT) GenPoly/FindFunction.$(OBJEXT) \
 	GenPoly/InstantiateGeneric.$(OBJEXT) GenPoly/Lvalue.$(OBJEXT) \
 	GenPoly/ScrubTyVars.$(OBJEXT) GenPoly/Specialize.$(OBJEXT) \
-	$(am__objects_5) InitTweak/FixGlobalInit.$(OBJEXT) \
-	InitTweak/FixInit.$(OBJEXT) InitTweak/FixInitNew.$(OBJEXT) \
+	GenPoly/SpecializeNew.$(OBJEXT) $(am__objects_5) \
+	InitTweak/FixGlobalInit.$(OBJEXT) InitTweak/FixInit.$(OBJEXT) \
+	InitTweak/FixInitNew.$(OBJEXT) \
 	Parser/DeclarationNode.$(OBJEXT) \
 	Parser/ExpressionNode.$(OBJEXT) \
 	Parser/InitializerNode.$(OBJEXT) Parser/lex.$(OBJEXT) \
@@ -382,6 +383,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	GenPoly/$(DEPDIR)/Lvalue.Po GenPoly/$(DEPDIR)/Lvalue2.Po \
 	GenPoly/$(DEPDIR)/ScrubTyVars.Po \
 	GenPoly/$(DEPDIR)/Specialize.Po \
+	GenPoly/$(DEPDIR)/SpecializeNew.Po \
 	InitTweak/$(DEPDIR)/FixGlobalInit.Po \
 	InitTweak/$(DEPDIR)/FixInit.Po \
 	InitTweak/$(DEPDIR)/FixInitNew.Po \
@@ -759,16 +761,16 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	GenPoly/InstantiateGeneric.cc GenPoly/InstantiateGeneric.h \
 	GenPoly/Lvalue.cc GenPoly/ScopedSet.h GenPoly/ScrubTyVars.cc \
 	GenPoly/ScrubTyVars.h GenPoly/Specialize.cc \
-	GenPoly/Specialize.h $(SRC_INITTWEAK) \
-	InitTweak/FixGlobalInit.cc InitTweak/FixGlobalInit.h \
-	InitTweak/FixInit.cc InitTweak/FixInit.h \
-	InitTweak/FixInitNew.cpp Parser/DeclarationNode.cc \
-	Parser/ExpressionNode.cc Parser/InitializerNode.cc \
-	Parser/lex.ll Parser/ParseNode.cc Parser/ParseNode.h \
-	Parser/parser.yy Parser/ParserTypes.h Parser/parserutility.cc \
-	Parser/parserutility.h Parser/StatementNode.cc \
-	Parser/TypeData.cc Parser/TypeData.h Parser/TypedefTable.cc \
-	Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
+	GenPoly/SpecializeNew.cpp GenPoly/Specialize.h \
+	$(SRC_INITTWEAK) InitTweak/FixGlobalInit.cc \
+	InitTweak/FixGlobalInit.h InitTweak/FixInit.cc \
+	InitTweak/FixInit.h InitTweak/FixInitNew.cpp \
+	Parser/DeclarationNode.cc Parser/ExpressionNode.cc \
+	Parser/InitializerNode.cc Parser/lex.ll Parser/ParseNode.cc \
+	Parser/ParseNode.h Parser/parser.yy Parser/ParserTypes.h \
+	Parser/parserutility.cc Parser/parserutility.h \
+	Parser/StatementNode.cc Parser/TypeData.cc Parser/TypeData.h \
+	Parser/TypedefTable.cc Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
 	ResolvExpr/AlternativePrinter.cc \
 	ResolvExpr/AlternativePrinter.h \
 	ResolvExpr/CandidatePrinter.cpp \
@@ -1523,6 +1525,8 @@ GenPoly/ScrubTyVars.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/Specialize.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
+GenPoly/SpecializeNew.$(OBJEXT): GenPoly/$(am__dirstamp) \
+	GenPoly/$(DEPDIR)/$(am__dirstamp)
 InitTweak/FixGlobalInit.$(OBJEXT): InitTweak/$(am__dirstamp) \
 	InitTweak/$(DEPDIR)/$(am__dirstamp)
 InitTweak/FixInit.$(OBJEXT): InitTweak/$(am__dirstamp) \
@@ -1721,6 +1725,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Lvalue2.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/ScrubTyVars.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Specialize.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/SpecializeNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@InitTweak/$(DEPDIR)/FixGlobalInit.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@InitTweak/$(DEPDIR)/FixInit.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@InitTweak/$(DEPDIR)/FixInitNew.Po@am__quote@ # am--include-marker
@@ -2145,6 +2150,7 @@ distclean: distclean-am
 	-rm -f GenPoly/$(DEPDIR)/Lvalue2.Po
 	-rm -f GenPoly/$(DEPDIR)/ScrubTyVars.Po
 	-rm -f GenPoly/$(DEPDIR)/Specialize.Po
+	-rm -f GenPoly/$(DEPDIR)/SpecializeNew.Po
 	-rm -f InitTweak/$(DEPDIR)/FixGlobalInit.Po
 	-rm -f InitTweak/$(DEPDIR)/FixInit.Po
 	-rm -f InitTweak/$(DEPDIR)/FixInitNew.Po
@@ -2377,6 +2383,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f GenPoly/$(DEPDIR)/Lvalue2.Po
 	-rm -f GenPoly/$(DEPDIR)/ScrubTyVars.Po
 	-rm -f GenPoly/$(DEPDIR)/Specialize.Po
+	-rm -f GenPoly/$(DEPDIR)/SpecializeNew.Po
 	-rm -f InitTweak/$(DEPDIR)/FixGlobalInit.Po
 	-rm -f InitTweak/$(DEPDIR)/FixInit.Po
 	-rm -f InitTweak/$(DEPDIR)/FixInitNew.Po

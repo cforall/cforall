@@ -64,9 +64,22 @@ namespace {
 }
 
 Expr * SymbolTable::IdData::combine( const CodeLocation & loc, ResolvExpr::Cost & cost ) const {
-	Expr * ret = ( baseExpr ) ?
-		(Expr *)new MemberExpr{ loc, id, referenceToRvalueConversion( baseExpr, cost ) } :
-		(Expr *)new VariableExpr{ loc, id };
+	Expr * ret;
+	if ( baseExpr ) {
+		if (baseExpr->env) {
+			Expr * base = shallowCopy(baseExpr);
+			const TypeSubstitution * subs = baseExpr->env;
+			base->env = nullptr;
+			ret = new MemberExpr{loc, id, referenceToRvalueConversion( base, cost )};
+			ret->env = subs;
+		}
+		else {
+			ret = new MemberExpr{ loc, id, referenceToRvalueConversion( baseExpr, cost ) };
+		}
+	}
+	else {
+		ret = new VariableExpr{ loc, id };
+	}
 	if ( deleter ) { ret = new DeletedExpr{ loc, ret, deleter }; }
 	return ret;
 }
@@ -771,7 +784,11 @@ void SymbolTable::addMembers(
 					if ( ! dynamic_cast<const StructInstType *>(rty)
 						&& ! dynamic_cast<const UnionInstType *>(rty) ) continue;
 					ResolvExpr::Cost cost = ResolvExpr::Cost::zero;
+					ast::ptr<ast::TypeSubstitution> tmp = expr->env;
+					expr = mutate_field(expr, &Expr::env, nullptr);
 					const Expr * base = ResolvExpr::referenceToRvalueConversion( expr, cost );
+					base = mutate_field(base, &Expr::env, tmp);
+
 					addMembers(
 						rty->aggr(), new MemberExpr{ base->location, dwt, base }, handleConflicts );
 				}

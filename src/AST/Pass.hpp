@@ -263,6 +263,9 @@ private:
 	// requests WithStmtsToAdd directly add to this statement, as if it is a compound.
 	__pass::result1<ast::Stmt> call_accept_as_compound(const ast::Stmt *);
 
+	// requests type environment to be updated (why is it implemented like this?)
+	__pass::result1<ast::Expr> call_accept_top(const ast::Expr *);
+
 	template< template <class...> class container_t >
 	__pass::resultNstmt<container_t> call_accept( const container_t< ptr<Stmt> > & );
 
@@ -276,6 +279,9 @@ public:
 
 	template<typename node_t, typename parent_t, typename field_t>
 	void maybe_accept_as_compound(const node_t * &, field_t parent_t::* field);
+
+	template<typename node_t, typename parent_t, typename field_t>
+	void maybe_accept_top(const node_t * &, field_t parent_t::* field);
 
 private:
 	/// Internal RAII guard for symbol table features

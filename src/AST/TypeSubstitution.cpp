@@ -96,7 +96,7 @@ namespace {
 		const TypeSubstitution * env;
 		TypeSubstitution * newEnv;
 		EnvTrimmer( const TypeSubstitution * env, TypeSubstitution * newEnv ) : env( env ), newEnv( newEnv ){}
-		void previsit( FunctionType * ftype ) {
+		void previsit( const FunctionType * ftype ) {
 			// transfer known bindings for seen type variables
 			for (auto & formal : ftype->forall) {
 				if ( const Type * t = env->lookup( formal ) ) {

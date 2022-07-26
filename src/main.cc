@@ -438,6 +438,8 @@ int main( int argc, char * argv[] ) {
 
 			PASS( "Translate Tries", ControlStruct::translateTries( transUnit ) );
 			PASS( "Gen Waitfor", Concurrency::generateWaitFor( transUnit ) );
+			PASS( "Convert Specializations",  GenPoly::convertSpecializations( transUnit ) ); // needs to happen before tuple types are expanded
+
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
@@ -512,9 +514,12 @@ int main( int argc, char * argv[] ) {
 			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( translationUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
 			PASS( "Translate Tries", ControlStruct::translateTries( translationUnit ) );
 			PASS( "Gen Waitfor", Concurrency::generateWaitFor( translationUnit ) );
+			PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
+
 		}
 
-		PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
+
+		// PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
 
 		PASS( "Expand Tuples", Tuples::expandTuples( translationUnit ) ); // xxx - is this the right place for this?
 

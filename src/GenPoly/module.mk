@@ -33,6 +33,7 @@ SRC += $(SRC_GENPOLY) \
 	GenPoly/ScrubTyVars.cc \
 	GenPoly/ScrubTyVars.h \
 	GenPoly/Specialize.cc \
+	GenPoly/SpecializeNew.cpp \
 	GenPoly/Specialize.h
 
 SRCDEMANGLE += $(SRC_GENPOLY)

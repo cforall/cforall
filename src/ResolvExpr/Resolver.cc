@@ -1554,9 +1554,12 @@ namespace ResolvExpr {
 	const PtrType * handlePtrType( const PtrType * type, const ResolveContext & context ) {
 		if ( type->dimension ) {
 			ast::ptr< ast::Type > sizeType = context.global.sizeType;
+			ast::ptr< ast::Expr > dimension = findSingleExpression( type->dimension, sizeType, context );
+			assertf(dimension->env->empty(), "array dimension expr has nonempty env");
+			dimension.get_and_mutate()->env = nullptr;
 			ast::mutate_field(
 				type, &PtrType::dimension,
-				findSingleExpression( type->dimension, sizeType, context ) );
+				dimension);
 		}
 		return type;
 	}
@@ -2006,6 +2009,9 @@ namespace ResolvExpr {
 				}
 				// since tmp is freshly created, this should modify tmp in-place
 				tmp->accept( *visitor );
+			}
+			else if (expr->env && expr->env->empty()) {
+				expr = ast::mutate_field(expr.get(), &ast::Expr::env, nullptr);
 			}
 		}
 	}
