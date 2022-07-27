@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Specialize.h -- 
+// Specialize.h -- Generate thunks to specialize polymorphic functions.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -16,9 +16,11 @@
 #pragma once
 
 #include <list>  // for list
-#include "AST/TranslationUnit.hpp"
 
 class Declaration;
+namespace ast {
+	class TranslationUnit;
+}
 
 namespace GenPoly {
 	/// generates thunks where needed

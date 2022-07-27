@@ -596,12 +596,16 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 		{
 			guard_symtab guard { *this };
 			// implicit add __func__ identifier as specified in the C manual 6.4.2.2
+			// This is a C name and so has C linkage.
 			static ast::ptr< ast::ObjectDecl > func{ new ast::ObjectDecl{
 				CodeLocation{}, "__func__",
 				new ast::ArrayType{
 					new ast::BasicType{ ast::BasicType::Char, ast::CV::Const },
 					nullptr, VariableLen, DynamicDim
-				}
+				},
+				nullptr,
+				ast::Storage::Classes(),
+				ast::Linkage::C,
 			} };
 			__pass::symtab::addId( core, 0, func );
 			if ( __visit_children() ) {

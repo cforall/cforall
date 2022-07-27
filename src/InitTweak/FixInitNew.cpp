@@ -594,7 +594,6 @@ namespace {
 		// if the chosen destructor is intrinsic, elide the generated dtor handler
 		if ( arg && isIntrinsicCallExpr( dtor ) ) {
 			return new ast::CommaExpr(loc, arg, new ast::VariableExpr(loc, ret ) );
-			// return;
 		}
 
 		if ( ! dtor->env ) dtor->env = maybeClone( env );
@@ -653,7 +652,6 @@ namespace {
 		const ast::Type * result = appExpr->result;
 		if ( ! result->isVoid() ) {
 			static UniqueName retNamer("_tmp_cp_ret");
-			// result = result->clone();
 			auto subResult = env->apply( result ).node;
 			auto ret = new ast::ObjectDecl(loc, retNamer.newName(), subResult, nullptr );
 			auto mutType = mutate(ret->type.get());
@@ -832,8 +830,6 @@ namespace {
 				mutExpr->var = new ast::VariableExpr( mutExpr->location, mutExpr->object );
 			}
 
-			// stmtsToAddBefore.splice( stmtsToAddBefore.end(), fixer.pass.stmtsToAddBefore );
-			// stmtsToAddAfter.splice( stmtsToAddAfter.end(), fixer.pass.stmtsToAddAfter );
 			unqMap[mutExpr->id] = mutExpr;
 		} else {
 			// take data from other UniqueExpr to ensure consistency
@@ -1348,7 +1344,6 @@ namespace {
 		// xxx - ideally we would reuse the temporary generated from the copy constructor passes from within firstArg if it exists and not generate a temporary if it's unnecessary.
 		auto tmp = new ast::ObjectDecl(loc, tempNamer.newName(), callExpr->args.front()->result );
 		declsToAddBefore.push_back( tmp );
-		// delete ctorExpr;
 
 		// build assignment and replace constructor's first argument with new temporary
 		auto mutCallExpr = callExpr.get_and_mutate();

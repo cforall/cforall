@@ -1541,7 +1541,6 @@ namespace ResolvExpr {
 		// don't need to fix types for enum fields
 	}
 
-
 	const ast::StaticAssertDecl * Resolver_new::previsit(
 		const ast::StaticAssertDecl * assertDecl
 	) {
@@ -1553,13 +1552,11 @@ namespace ResolvExpr {
 	template< typename PtrType >
 	const PtrType * handlePtrType( const PtrType * type, const ResolveContext & context ) {
 		if ( type->dimension ) {
-			ast::ptr< ast::Type > sizeType = context.global.sizeType;
+			const ast::Type * sizeType = context.global.sizeType.get();
 			ast::ptr< ast::Expr > dimension = findSingleExpression( type->dimension, sizeType, context );
 			assertf(dimension->env->empty(), "array dimension expr has nonempty env");
 			dimension.get_and_mutate()->env = nullptr;
-			ast::mutate_field(
-				type, &PtrType::dimension,
-				dimension);
+			ast::mutate_field( type, &PtrType::dimension, dimension );
 		}
 		return type;
 	}

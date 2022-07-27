@@ -189,10 +189,7 @@ ast::ObjectDecl * TryMutatorCore::make_index_object(
 	return new ast::ObjectDecl(
 		location,
 		"__handler_index",
-		new ast::BasicType(ast::BasicType::SignedInt),
-		nullptr, //init
-		ast::Storage::Classes{},
-		ast::Linkage::Cforall
+		new ast::BasicType( ast::BasicType::SignedInt )
 		);
 }
 
@@ -202,12 +199,7 @@ ast::ObjectDecl * TryMutatorCore::make_exception_object(
 	return new ast::ObjectDecl(
 		location,
 		"__exception_inst",
-		new ast::PointerType(
-			new ast::StructInstType( except_decl )
-			),
-		nullptr, //init
-		ast::Storage::Classes{},
-		ast::Linkage::Cforall
+		new ast::PointerType( new ast::StructInstType( except_decl ) )
 		);
 }
 

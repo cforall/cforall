@@ -109,10 +109,7 @@ ast::StructDecl const * createTypeIdStruct(
 		location,
 		"parent",
 		new ast::PointerType(
-			new ast::StructInstType( "__cfavir_type_info", ast::CV::Const ) ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+			new ast::StructInstType( "__cfavir_type_info", ast::CV::Const ) )
 	) );
 	decl->body = true;
 	for ( ast::ptr<ast::TypeDecl> const & param : forallClause ) {
@@ -165,42 +162,27 @@ ast::StructDecl const * createVirtualTableStruct(
 	ast::ObjectDecl * typeId = new ast::ObjectDecl(
 		location,
 		"__cfavir_typeid",
-		new ast::PointerType( typeIdType ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::PointerType( typeIdType )
 	);
 	ast::ObjectDecl * size = new ast::ObjectDecl(
 		location,
 		"size",
-		new ast::TypeInstType( "size_t", ast::TypeDecl::Dtype ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::TypeInstType( "size_t", ast::TypeDecl::Dtype )
 	);
 	ast::ObjectDecl * copy = new ast::ObjectDecl(
 		location,
 		"copy",
-		new ast::PointerType( createCopyFuncType( exceptionName, params ) ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::PointerType( createCopyFuncType( exceptionName, params ) )
 	);
 	ast::ObjectDecl * dtor = new ast::ObjectDecl(
 		location,
 		"^?{}",
-		new ast::PointerType( createDtorFuncType( exceptionName, params ) ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::PointerType( createDtorFuncType( exceptionName, params ) )
 	);
 	ast::ObjectDecl * msg = new ast::ObjectDecl(
 		location,
 		"msg",
-		new ast::PointerType( createMsgFuncType( exceptionName, params ) ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::PointerType( createMsgFuncType( exceptionName, params ) )
 	);
 	ast::StructDecl * decl = new ast::StructDecl(
 		location,
@@ -228,10 +210,7 @@ ast::StructDecl const * createExceptionStruct(
 		location,
 		"virtual_table",
 		new ast::PointerType(
-			createVTableInstType( exceptionName, params ) ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+			createVTableInstType( exceptionName, params ) )
 	) );
 	for ( ast::ptr<ast::Decl> const & member : members ) {
 		decl->members.push_back( ast::deepCopy( member ) );
@@ -288,30 +267,17 @@ ast::FunctionDecl const * createCopy(
 				location,
 				"this",
 				new ast::PointerType(
-					createExceptionInstType( exceptionName, params ) ),
-				nullptr,
-				ast::Storage::Classes(),
-				ast::Linkage::Cforall
+					createExceptionInstType( exceptionName, params ) )
 			),
 			new ast::ObjectDecl(
 				location,
 				"that",
 				new ast::PointerType(
-					createExceptionInstType( exceptionName, params ) ),
-				nullptr,
-				ast::Storage::Classes(),
-				ast::Linkage::Cforall
+					createExceptionInstType( exceptionName, params ) )
 			),
 		},
 		{
-			new ast::ObjectDecl(
-				location,
-				"",
-				new ast::VoidType(),
-				nullptr,
-				ast::Storage::Classes(),
-				ast::Linkage::Cforall
-			),
+			new ast::ObjectDecl( location, "", new ast::VoidType() ),
 		},
 		new ast::CompoundStmt( location, {
 			new ast::ExprStmt( location,
@@ -365,10 +331,7 @@ ast::FunctionDecl const * createMsg(
 				location,
 				"this",
 				new ast::PointerType(
-					createExceptionInstType( exceptionName, params ) ),
-				nullptr,
-				ast::Storage::Classes(),
-				ast::Linkage::Cforall
+					createExceptionInstType( exceptionName, params ) )
 			),
 		},
 		{
@@ -376,10 +339,7 @@ ast::FunctionDecl const * createMsg(
 				location,
 				"",
 				new ast::PointerType(
-					new ast::BasicType( ast::BasicType::Char, ast::CV::Const ) ),
-				nullptr,
-				ast::Storage::Classes(),
-				ast::Linkage::Cforall
+					new ast::BasicType( ast::BasicType::Char, ast::CV::Const ) )
 			),
 		},
 		new ast::CompoundStmt( location, {
@@ -431,9 +391,7 @@ ast::ObjectDecl const * createVirtualTable(
 		location,
 		tableName,
 		createVTableInstType( exceptionName, params ),
-		new ast::ListInit( location, std::move( inits ), std::move( dsigs ) ),
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::ListInit( location, std::move( inits ), std::move( dsigs ) )
 	);
 }
 

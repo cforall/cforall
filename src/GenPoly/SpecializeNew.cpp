@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// SpecializeNew.cpp --
+// SpecializeNew.cpp -- Generate thunks to specialize polymorphic functions.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun  7 13:37:00 2022
@@ -200,11 +200,6 @@ ast::ApplicationExpr * SpecializeCore::handleExplicitParams(
 		*actual = doSpecialization( (*actual)->location,
 			*formal, *actual, getInferredParams( expr ) );
 	}
-	//for ( auto pair : group_iterate( formal->params, mut->args ) ) {
-	//	const ast::ptr<ast::Type> & formal = std::get<0>( pair );
-	//	ast::ptr<ast::Expr> & actual = std::get<1>( pair );
-	//	*actual = doSpecialization( (*actual)->location, *formal, *actual, getInferredParams( expr ) );
-	//}
 	return mut;
 }
 
@@ -226,31 +221,15 @@ void explodeSimple( const CodeLocation & location,
 	}
 }
 
-// Restructures the arguments to match the structure of the formal parameters
-// of the actual function. [begin, end) are the exploded arguments.
-template<typename Iterator, typename OutIterator>
-void structureArg( const CodeLocation & location, const ast::Type * type,
-		Iterator & begin, Iterator end, OutIterator out ) {
-	if ( auto tuple = dynamic_cast<const ast::TupleType *>( type ) ) {
-		std::vector<ast::ptr<ast::Expr>> exprs;
-		for ( const ast::Type * t : *tuple ) {
-			structureArg( location, t, begin, end, std::back_inserter( exprs ) );
-		}
-		*out++ = new ast::TupleExpr( location, std::move( exprs ) );
-	} else {
-		assertf( begin != end, "reached the end of the arguments while structuring" );
-		*out++ = *begin++;
-	}
-}
-
-#if 0
+// Restructures arguments to match the structure of the formal parameters
+// of the actual function. Returns the next structured argument.
 template<typename Iterator>
 const ast::Expr * structureArg(
 		const CodeLocation& location, const ast::ptr<ast::Type> & type,
 		Iterator & begin, const Iterator & end ) {
-	if ( auto tuple = type->as<ast::TupleType>() ) {
+	if ( auto tuple = type.as<ast::TupleType>() ) {
 		std::vector<ast::ptr<ast::Expr>> exprs;
-		for ( const ast::Type * t : *tuple ) {
+		for ( const ast::ptr<ast::Type> & t : *tuple ) {
 			exprs.push_back( structureArg( location, t, begin, end ) );
 		}
 		return new ast::TupleExpr( location, std::move( exprs ) );
@@ -259,7 +238,6 @@ const ast::Expr * structureArg(
 		return *begin++;
 	}
 }
-#endif
 
 namespace {
 	struct TypeInstFixer : public ast::WithShortCircuiting {
@@ -269,8 +247,9 @@ namespace {
 		const ast::TypeInstType * postvisit(const ast::TypeInstType * typeInst) {
 			if (typeMap.count(typeInst->base)) {
 				ast::TypeInstType * newInst = mutate(typeInst);
-				newInst->expr_id = typeMap[typeInst->base].first;
-				newInst->formal_usage = typeMap[typeInst->base].second;
+				auto const & pair = typeMap[typeInst->base];
+				newInst->expr_id = pair.first;
+				newInst->formal_usage = pair.second;
 				return newInst;
 			}
 			return typeInst;
@@ -290,8 +269,6 @@ const ast::Expr * SpecializeCore::createThunkFunction(
 	if ( typeSubs ) {
 		// Must replace only occurrences of type variables
 		// that occure free in the thunk's type.
-		//ast::TypeSubstitution::ApplyResult<ast::FunctionType>
-		//	typeSubs->applyFree( newType );
 		auto result = typeSubs->applyFree( newType );
 		newType = result.node.release();
 	}
@@ -299,29 +276,22 @@ const ast::Expr * SpecializeCore::createThunkFunction(
 	using DWTVector = std::vector<ast::ptr<ast::DeclWithType>>;
 	using DeclVector = std::vector<ast::ptr<ast::TypeDecl>>;
 
-	//const std::string & thunkName = thunkNamer.newName();
-	//UniqueName paramNamer(thunkName + "Param");
 	UniqueName paramNamer( paramPrefix );
 
-	//auto toParamDecl = [&location, &paramNamer]( const ast::Type * type ) {
-	//	return new ast::ObjectDecl(
-	//		location, paramNamer.newName(), ast::deepCopy( type ) );
-	//};
-
 	// Create new thunk with same signature as formal type.
-
-	// std::map<const ast::TypeDecl *, std::pair<int, int>> typeMap;
 	ast::Pass<TypeInstFixer> fixer;
 	for (const auto & kv : newType->forall) {
 		if (fixer.core.typeMap.count(kv->base)) {
-			std::cerr << location << ' ' << kv->base->name << ' ' << kv->expr_id << '_' << kv->formal_usage << ',' 
-			<< fixer.core.typeMap[kv->base].first << '_' << fixer.core.typeMap[kv->base].second << std::endl;
+			std::cerr << location << ' ' << kv->base->name
+				<< ' ' << kv->expr_id << '_' << kv->formal_usage
+				<< ',' << fixer.core.typeMap[kv->base].first
+				<< '_' << fixer.core.typeMap[kv->base].second << std::endl;
 			assertf(false, "multiple formals in specialize");
 		}
 		else {
 			fixer.core.typeMap[kv->base] = std::make_pair(kv->expr_id, kv->formal_usage);
 		}
-	} 
+	}
 
 	ast::CompoundStmt * thunkBody = new ast::CompoundStmt( location );
 	ast::FunctionDecl * thunkFunc = new ast::FunctionDecl(
@@ -344,10 +314,7 @@ const ast::Expr * SpecializeCore::createThunkFunction(
 		ast::Linkage::C
 		);
 
-	// thunkFunc->accept(fixer);
 	thunkFunc->fixUniqueId();
-
-
 
 	// Thunks may be generated and not used, avoid them.
 	thunkFunc->attributes.push_back( new ast::Attribute( "unused" ) );
@@ -374,10 +341,7 @@ const ast::Expr * SpecializeCore::createThunkFunction(
 	for ( ast::ptr<ast::DeclWithType> & param : thunkFunc->params ) {
 		// Name each thunk parameter and explode it.
 		// These are then threaded back into the actual function call.
-		//param->name = paramNamer.newName();
 		ast::DeclWithType * mutParam = ast::mutate( param.get() );
-		// - Should be renamed earlier. -
-		//mutParam->name = paramNamer.newName();
 		explodeSimple( location, new ast::VariableExpr( location, mutParam ),
 			std::back_inserter( args ) );
 	}
@@ -387,8 +351,8 @@ const ast::Expr * SpecializeCore::createThunkFunction(
 	std::vector<ast::ptr<ast::Expr>>::iterator
 		argBegin = args.begin(), argEnd = args.end();
 	for ( const auto & actualArg : actualType->params ) {
-		structureArg( location, actualArg.get(), argBegin, argEnd,
-			std::back_inserter( app->args ) );
+		app->args.push_back(
+			structureArg( location, actualArg.get(), argBegin, argEnd ) );
 	}
 	assertf( argBegin == argEnd, "Did not structure all arguments." );
 
@@ -468,12 +432,11 @@ const ast::Expr * SpecializeCore::postvisit(
 
 	// Create thunks for the inferred parameters.
 	// This is not needed for intrinsic calls, because they aren't
-	// actually passed
-	//
-	// need to handle explicit params before inferred params so that
-	// explicit params do not recieve a changed set of inferParams (and
-	// change them again) alternatively, if order starts to matter then
-	// copy appExpr's inferParams and pass them to handleExplicitParams.
+	// actually passed to the function. It needs to handle explicit params
+	// before inferred params so that explicit params do not recieve a
+	// changed set of inferParams (and change them again).
+	// Alternatively, if order starts to matter then copy expr's inferParams
+	// and pass them to handleExplicitParams.
 	ast::ApplicationExpr * mut = handleExplicitParams( expr );
 	if ( !mut->inferred.hasParams() ) {
 		return mut;
@@ -499,7 +462,6 @@ const ast::Expr * SpecializeCore::postvisit( const ast::CastExpr * expr ) {
 		expr->location, expr->result, expr->arg, getInferredParams( expr ) );
 	if ( specialized != expr->arg ) {
 		// Assume that the specialization incorporates the cast.
-		std::cerr << expr <<std::endl;
 		return specialized;
 	} else {
 		return expr;

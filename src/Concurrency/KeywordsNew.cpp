@@ -397,9 +397,7 @@ void ConcurrentSueKeyword::handleMain(
 			Virtual::concurrentDefaultVTableName(),
 			new ast::ReferenceType( vtable_object->type, ast::CV::Const ),
 			new ast::SingleInit( location,
-				new ast::VariableExpr( location, vtable_object ) ),
-			ast::Storage::Classes(),
-			ast::Linkage::Cforall
+				new ast::VariableExpr( location, vtable_object ) )
 		)
 	);
 	declsToAddAfter.push_back( Virtual::makeGetExceptionFunction(
@@ -470,19 +468,13 @@ const ast::FunctionDecl * ConcurrentSueKeyword::forwardDeclare(
 	ast::ObjectDecl * this_decl = new ast::ObjectDecl(
 		location,
 		"this",
-		new ast::ReferenceType( new ast::StructInstType( decl ) ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::ReferenceType( new ast::StructInstType( decl ) )
 	);
 
 	ast::ObjectDecl * ret_decl = new ast::ObjectDecl(
 		location,
 		"ret",
-		new ast::PointerType( new ast::StructInstType( type_decl ) ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::PointerType( new ast::StructInstType( type_decl ) )
 	);
 
 	ast::FunctionDecl * get_decl = new ast::FunctionDecl(
@@ -529,10 +521,7 @@ ConcurrentSueKeyword::StructAndField ConcurrentSueKeyword::addField(
 	ast::ObjectDecl * field = new ast::ObjectDecl(
 		location,
 		field_name,
-		new ast::StructInstType( type_decl ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::StructInstType( type_decl )
 	);
 
 	auto mutDecl = ast::mutate( decl );
@@ -576,10 +565,7 @@ void ConcurrentSueKeyword::addLockUnlockRoutines(
 	ast::ObjectDecl * this_decl = new ast::ObjectDecl(
 		location,
 		"this",
-		new ast::ReferenceType( new ast::StructInstType( decl ) ),
-		nullptr,
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		new ast::ReferenceType( new ast::StructInstType( decl ) )
 	);
 
 	ast::FunctionDecl * lock_decl = new ast::FunctionDecl(
@@ -1076,9 +1062,7 @@ ast::CompoundStmt * MutexKeyword::addDtorStatements(
 					argType, ast::ExplicitCast
 				) }
 			)
-		),
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		)
 	);
 
 	assert( generic_func );
@@ -1106,9 +1090,7 @@ ast::CompoundStmt * MutexKeyword::addDtorStatements(
 				},
 				{},
 				ast::MaybeConstruct
-			),
-			ast::Storage::Classes(),
-			ast::Linkage::Cforall
+			)
 		))
 	);
 
@@ -1160,9 +1142,7 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 					);
 				}
 			)
-		),
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		)
 	);
 
 	assert( generic_func );
@@ -1189,9 +1169,7 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 				},
 				{},
 				ast::MaybeConstruct
-			),
-			ast::Storage::Classes(),
-			ast::Linkage::Cforall
+			)
 		))
 	);
 
@@ -1295,9 +1273,7 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 					);
 				}
 			)
-		),
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		)
 	);
 
 	ast::StructInstType * lock_guard_struct =
@@ -1369,9 +1345,7 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 					},
 					{},
 					ast::MaybeConstruct
-				),
-				ast::Storage::Classes(),
-				ast::Linkage::Cforall
+				)
 			)
 		)
 	);
@@ -1512,9 +1486,7 @@ ast::CompoundStmt * MutexKeyword::addThreadDtorStatements(
 				},
 				{},
 				ast::MaybeConstruct
-			),
-			ast::Storage::Classes(),
-			ast::Linkage::Cforall
+			)
 		)
 	));
 

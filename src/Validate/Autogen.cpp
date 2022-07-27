@@ -369,14 +369,12 @@ ast::FunctionDecl * FuncGenerator::genProto( const std::string& name,
 
 ast::ObjectDecl * FuncGenerator::dstParam() const {
 	return new ast::ObjectDecl( getLocation(), "_dst",
-		new ast::ReferenceType( ast::deepCopy( type ) ),
-		nullptr, {}, ast::Linkage::Cforall );
+		new ast::ReferenceType( ast::deepCopy( type ) ) );
 }
 
 ast::ObjectDecl * FuncGenerator::srcParam() const {
 	return new ast::ObjectDecl( getLocation(), "_src",
-		ast::deepCopy( type ),
-		nullptr, {}, ast::Linkage::Cforall );
+		ast::deepCopy( type ) );
 }
 
 /// Use the current type T to create `void ?{}(T & _dst)`.
@@ -428,7 +426,6 @@ ast::FunctionDecl * FuncGenerator::genFieldCtorProto(
 		paramType->attributes.clear();
 		ast::ObjectDecl * param = new ast::ObjectDecl(
 			getLocation(), member->name, paramType );
-		param->linkage = ast::Linkage::Cforall;
 		for ( auto & attr : member->attributes ) {
 			if ( attr->isValidOnFuncParam() ) {
 				param->attributes.push_back( attr );

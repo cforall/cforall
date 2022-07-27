@@ -438,8 +438,9 @@ int main( int argc, char * argv[] ) {
 
 			PASS( "Translate Tries", ControlStruct::translateTries( transUnit ) );
 			PASS( "Gen Waitfor", Concurrency::generateWaitFor( transUnit ) );
-			PASS( "Convert Specializations",  GenPoly::convertSpecializations( transUnit ) ); // needs to happen before tuple types are expanded
 
+			// Needs to happen before tuple types are expanded.
+			PASS( "Convert Specializations",  GenPoly::convertSpecializations( transUnit ) );
 
 			translationUnit = convert( move( transUnit ) );
 		} else {
@@ -515,11 +516,7 @@ int main( int argc, char * argv[] ) {
 			PASS( "Translate Tries", ControlStruct::translateTries( translationUnit ) );
 			PASS( "Gen Waitfor", Concurrency::generateWaitFor( translationUnit ) );
 			PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
-
 		}
-
-
-		// PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
 
 		PASS( "Expand Tuples", Tuples::expandTuples( translationUnit ) ); // xxx - is this the right place for this?
 

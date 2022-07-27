@@ -107,7 +107,7 @@ public:
 
 	ObjectDecl( const CodeLocation & loc, const std::string & name, const Type * type,
 		const Init * init = nullptr, Storage::Classes storage = {},
-		Linkage::Spec linkage = Linkage::C, const Expr * bitWd = nullptr,
+		Linkage::Spec linkage = Linkage::Cforall, const Expr * bitWd = nullptr,
 		std::vector< ptr<Attribute> > && attrs = {}, Function::Specs fs = {} )
 	: DeclWithType( loc, name, storage, linkage, std::move(attrs), fs ), type( type ),
 	  init( init ), bitfieldWidth( bitWd ) {}
@@ -142,13 +142,13 @@ public:
 
 	FunctionDecl( const CodeLocation & loc, const std::string & name, std::vector<ptr<TypeDecl>>&& forall,
 		std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
-		CompoundStmt * stmts, Storage::Classes storage = {}, Linkage::Spec linkage = Linkage::C,
+		CompoundStmt * stmts, Storage::Classes storage = {}, Linkage::Spec linkage = Linkage::Cforall,
 		std::vector<ptr<Attribute>>&& attrs = {}, Function::Specs fs = {}, bool isVarArgs = false);
 
 	FunctionDecl( const CodeLocation & location, const std::string & name,
 		std::vector<ptr<TypeDecl>>&& forall, std::vector<ptr<DeclWithType>>&& assertions,
 		std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
-		CompoundStmt * stmts, Storage::Classes storage = {}, Linkage::Spec linkage = Linkage::C,
+		CompoundStmt * stmts, Storage::Classes storage = {}, Linkage::Spec linkage = Linkage::Cforall,
 		std::vector<ptr<Attribute>>&& attrs = {}, Function::Specs fs = {}, bool isVarArgs = false);
 
 	const Type * get_type() const override;

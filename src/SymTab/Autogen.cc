@@ -257,12 +257,12 @@ namespace SymTab {
 		return ftype;
 	}
 
-	/// 
+	/// Given type T, generate type of default ctor/dtor, i.e. function type void (*) (T &).
 	ast::FunctionDecl * genDefaultFunc(const CodeLocation loc, const std::string fname, const ast::Type * paramType, bool maybePolymorphic) {
 		std::vector<ast::ptr<ast::TypeDecl>> typeParams;
 		if (maybePolymorphic) typeParams = getGenericParams(paramType);
 		auto dstParam = new ast::ObjectDecl(loc, "_dst", new ast::ReferenceType(paramType), nullptr, {}, ast::Linkage::Cforall);
-		return new ast::FunctionDecl(loc, fname, std::move(typeParams), {dstParam}, {}, new ast::CompoundStmt(loc));
+		return new ast::FunctionDecl(loc, fname, std::move(typeParams), {dstParam}, {}, new ast::CompoundStmt(loc), {}, ast::Linkage::Cforall);
 	}
 
 	/// given type T, generate type of copy ctor, i.e. function type void (*) (T *, T)

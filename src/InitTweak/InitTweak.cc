@@ -26,6 +26,7 @@
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
 #include "AST/Type.hpp"
+#include "CodeGen/OperatorTable.h" // for isConstructor, isDestructor, isCto...
 #include "Common/PassVisitor.h"
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/UniqueName.h"     // for UniqueName
@@ -769,7 +770,6 @@ bool InitExpander_new::addReference() {
 		bool allofCtorDtor( Statement * stmt, const Predicate & pred ) {
 			std::list< Expression * > callExprs;
 			collectCtorDtorCalls( stmt, callExprs );
-			// if ( callExprs.empty() ) return false; // xxx - do I still need this check?
 			return std::all_of( callExprs.begin(), callExprs.end(), pred);
 		}
 
@@ -900,7 +900,7 @@ bool InitExpander_new::addReference() {
 				return nameExpr->get_name();
 			} else if ( VariableExpr * varExpr = dynamic_cast< VariableExpr * >( func ) ) {
 				return varExpr->get_var()->get_name();
-			}	else if ( CastExpr * castExpr = dynamic_cast< CastExpr * >( func ) ) {
+			} else if ( CastExpr * castExpr = dynamic_cast< CastExpr * >( func ) ) {
 				return funcName( castExpr->get_arg() );
 			} else if ( MemberExpr * memberExpr = dynamic_cast< MemberExpr * >( func ) ) {
 				return memberExpr->get_member()->get_name();
@@ -922,7 +922,7 @@ bool InitExpander_new::addReference() {
 				return nameExpr->name;
 			} else if ( const ast::VariableExpr * varExpr = dynamic_cast< const ast::VariableExpr * >( func ) ) {
 				return varExpr->var->name;
-			}	else if ( const ast::CastExpr * castExpr = dynamic_cast< const ast::CastExpr * >( func ) ) {
+			} else if ( const ast::CastExpr * castExpr = dynamic_cast< const ast::CastExpr * >( func ) ) {
 				return funcName( castExpr->arg );
 			} else if ( const ast::MemberExpr * memberExpr = dynamic_cast< const ast::MemberExpr * >( func ) ) {
 				return memberExpr->member->name;
@@ -990,8 +990,7 @@ bool InitExpander_new::addReference() {
 	}
 
 	Type * isPointerType( Type * type ) {
-		if ( getPointerBase( type ) ) return type;
-		else return nullptr;
+		return getPointerBase( type ) ? type : nullptr;
 	}
 
 	ApplicationExpr * createBitwiseAssignment( Expression * dst, Expression * src ) {
@@ -1013,7 +1012,6 @@ bool InitExpander_new::addReference() {
 			for (int depth = src->result->referenceDepth(); depth > 0; depth--) {
 				src = new AddressExpr( src );
 			}
-			// src = new CastExpr( src, new ReferenceType( noQualifiers, src->result->stripReferences()->clone() ) );
 		}
 		return new ApplicationExpr( VariableExpr::functionPointer( assign ), { dst, src } );
 	}
@@ -1166,12 +1164,6 @@ bool InitExpander_new::addReference() {
 		return true;
 	}
 
-	bool isConstructor( const std::string & str ) { return str == "?{}"; }
-	bool isDestructor( const std::string & str ) { return str == "^?{}"; }
-	bool isAssignment( const std::string & str ) { return str == "?=?"; }
-	bool isCtorDtor( const std::string & str ) { return isConstructor( str ) || isDestructor( str ); }
-	bool isCtorDtorAssign( const std::string & str ) { return isCtorDtor( str ) || isAssignment( str ); }
-
 	const FunctionDecl * isCopyFunction( const Declaration * decl, const std::string & fname ) {
 		const FunctionDecl * function = dynamic_cast< const FunctionDecl * >( decl );
 		if ( ! function ) return nullptr;
@@ -1191,19 +1183,19 @@ bool InitExpander_new::addReference() {
 	}
 
 bool isAssignment( const ast::FunctionDecl * decl ) {
-	return isAssignment( decl->name ) && isCopyFunction( decl );
+	return CodeGen::isAssignment( decl->name ) && isCopyFunction( decl );
 }
 
 bool isDestructor( const ast::FunctionDecl * decl ) {
-	return isDestructor( decl->name );
+	return CodeGen::isDestructor( decl->name );
 }
 
 bool isDefaultConstructor( const ast::FunctionDecl * decl ) {
-	return isConstructor( decl->name ) && 1 == decl->params.size();
+	return CodeGen::isConstructor( decl->name ) && 1 == decl->params.size();
 }
 
 bool isCopyConstructor( const ast::FunctionDecl * decl ) {
-	return isConstructor( decl->name ) && 2 == decl->params.size();
+	return CodeGen::isConstructor( decl->name ) && 2 == decl->params.size();
 }
 
 bool isCopyFunction( const ast::FunctionDecl * decl ) {
@@ -1221,13 +1213,13 @@ bool isCopyFunction( const ast::FunctionDecl * decl ) {
 		return isCopyFunction( decl, "?=?" );
 	}
 	const FunctionDecl * isDestructor( const Declaration * decl ) {
-		if ( isDestructor( decl->name ) ) {
+		if ( CodeGen::isDestructor( decl->name ) ) {
 			return dynamic_cast< const FunctionDecl * >( decl );
 		}
 		return nullptr;
 	}
 	const FunctionDecl * isDefaultConstructor( const Declaration * decl ) {
-		if ( isConstructor( decl->name ) ) {
+		if ( CodeGen::isConstructor( decl->name ) ) {
 			if ( const FunctionDecl * func = dynamic_cast< const FunctionDecl * >( decl ) ) {
 				if ( func->type->parameters.size() == 1 ) {
 					return func;
