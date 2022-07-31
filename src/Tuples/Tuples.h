@@ -31,8 +31,8 @@ namespace Tuples {
 	// TupleAssignment.cc
 	void handleTupleAssignment( ResolvExpr::AlternativeFinder & currentFinder, UntypedExpr * assign,
 		std::vector< ResolvExpr::AlternativeFinder >& args );
-	void handleTupleAssignment( 
-		ResolvExpr::CandidateFinder & finder, const ast::UntypedExpr * assign, 
+	void handleTupleAssignment(
+		ResolvExpr::CandidateFinder & finder, const ast::UntypedExpr * assign,
 		std::vector< ResolvExpr::CandidateFinder > & args );
 
 	// TupleExpansion.cc
@@ -42,6 +42,7 @@ namespace Tuples {
 
 	/// replaces tuple-related elements, such as TupleType, TupleExpr, TupleAssignExpr, etc.
 	void expandTuples( std::list< Declaration * > & translationUnit );
+	void expandTuples( ast::TranslationUnit & translaionUnit );
 
 	/// replaces UniqueExprs with a temporary variable and one call
 	void expandUniqueExpr( std::list< Declaration * > & translationUnit );

@@ -45,6 +45,8 @@
 			stats->io.alloc.block       = 0;
 			stats->io.submit.fast       = 0;
 			stats->io.submit.slow       = 0;
+			stats->io.submit.eagr       = 0;
+			stats->io.submit.nblk       = 0;
 			stats->io.flush.external    = 0;
 			stats->io.flush.dirty       = 0;
 			stats->io.flush.full        = 0;
@@ -115,6 +117,8 @@
 			tally_one( &cltr->io.alloc.block      , &proc->io.alloc.block       );
 			tally_one( &cltr->io.submit.fast      , &proc->io.submit.fast       );
 			tally_one( &cltr->io.submit.slow      , &proc->io.submit.slow       );
+			tally_one( &cltr->io.submit.eagr      , &proc->io.submit.eagr       );
+			tally_one( &cltr->io.submit.nblk      , &proc->io.submit.nblk       );
 			tally_one( &cltr->io.flush.external   , &proc->io.flush.external    );
 			tally_one( &cltr->io.flush.dirty      , &proc->io.flush.dirty       );
 			tally_one( &cltr->io.flush.full       , &proc->io.flush.full        );
@@ -196,6 +200,8 @@
 					double avgfasts = (100.0 * (double)io.submit.fast) / total_submits;
 					sstr | "fast," | eng3(io.submit.slow) | "slow (" | ws(3, 3, avgfasts) | "%)" | nonl;
 				}
+				sstr | " - eager" | eng3(io.submit.eagr) | nonl;
+				sstr | " - no-wait" | eng3(io.submit.nblk) | nonl;
 				sstr | nl;
 
 				if(io.alloc.fail || io.alloc.revoke || io.alloc.block)

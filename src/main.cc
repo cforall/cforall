@@ -442,6 +442,8 @@ int main( int argc, char * argv[] ) {
 			// Needs to happen before tuple types are expanded.
 			PASS( "Convert Specializations",  GenPoly::convertSpecializations( transUnit ) );
 
+			PASS( "Expand Tuples", Tuples::expandTuples( transUnit ) );
+
 			translationUnit = convert( move( transUnit ) );
 		} else {
 			PASS( "Translate Exception Declarations", ControlStruct::translateExcept( translationUnit ) );
@@ -516,9 +518,8 @@ int main( int argc, char * argv[] ) {
 			PASS( "Translate Tries", ControlStruct::translateTries( translationUnit ) );
 			PASS( "Gen Waitfor", Concurrency::generateWaitFor( translationUnit ) );
 			PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
+			PASS( "Expand Tuples", Tuples::expandTuples( translationUnit ) ); // xxx - is this the right place for this?
 		}
-
-		PASS( "Expand Tuples", Tuples::expandTuples( translationUnit ) ); // xxx - is this the right place for this?
 
 		if ( tuplep ) {
 			dump( translationUnit );

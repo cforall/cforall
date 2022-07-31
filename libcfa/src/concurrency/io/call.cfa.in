@@ -33,6 +33,7 @@ Prelude = """#define __cforall_thread__
 #include "bits/defs.hfa"
 #include "kernel.hfa"
 #include "io/types.hfa"
+#include "stats.hfa"
 
 //=============================================================================================
 // I/O uring backend
@@ -225,7 +226,9 @@ SyncTemplate = """{ret} cfa_{name}({params}, __u64 submit_flags) {{
 
 	async_{name}( future, {args}, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {{
 		errno = -future.result;
 		return -1;

@@ -240,10 +240,10 @@
 			}
 			else {
 				const unsigned target = proc->io.target;
-				/* paranoid */ verify( io.tscs[target].tv != ULLONG_MAX );
+				/* paranoid */ verify( io.tscs[target].t.tv != ULLONG_MAX );
 				HELP: if(target < ctxs_count) {
 					const unsigned long long cutoff = calc_cutoff(ctsc, ctx->cq.id, ctxs_count, io.data, io.tscs, __shard_factor.io);
-					const unsigned long long age = moving_average(ctsc, io.tscs[target].tv, io.tscs[target].ma);
+					const unsigned long long age = moving_average(ctsc, io.tscs[target].t.tv, io.tscs[target].t.ma);
 					__cfadbg_print_safe(io, "Kernel I/O: Help attempt on %u from %u, age %'llu vs cutoff %'llu, %s\n", target, ctx->cq.id, age, cutoff, age > cutoff ? "yes" : "no");
 					if(age <= cutoff) break HELP;
 
@@ -431,6 +431,7 @@
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to submit %u (%s)\n", have, lazy ? "lazy" : "eager");
 
 		disable_interrupts();
+		__STATS__( true, if(!lazy) io.submit.eagr += 1; )
 		processor * proc = __cfaabi_tls.this_processor;
 		$io_context * ctx = proc->io.ctx;
 		/* paranoid */ verify( __cfaabi_tls.this_processor );

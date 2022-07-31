@@ -16,6 +16,7 @@
 #include "bits/defs.hfa"
 #include "kernel.hfa"
 #include "io/types.hfa"
+#include "stats.hfa"
 
 //=============================================================================================
 // I/O uring backend
@@ -241,7 +242,9 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 	
 		async_preadv2( future, fd, iov, iovcnt, offset, flags, submit_flags );
 	
-		wait( future );
+		__attribute__((unused)) bool parked;
+		parked = wait( future );
+		__STATS__(false, if(!parked) io.submit.nblk += 1; )
 		if( future.result < 0 ) {
 			errno = -future.result;
 			return -1;
@@ -301,7 +304,9 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 	
 		async_pwritev2( future, fd, iov, iovcnt, offset, flags, submit_flags );
 	
-		wait( future );
+		__attribute__((unused)) bool parked;
+		parked = wait( future );
+		__STATS__(false, if(!parked) io.submit.nblk += 1; )
 		if( future.result < 0 ) {
 			errno = -future.result;
 			return -1;
@@ -357,7 +362,9 @@ int cfa_fsync(int fd, __u64 submit_flags) {
 
 	async_fsync( future, fd, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -415,7 +422,9 @@ int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event, __u64 sub
 
 	async_epoll_ctl( future, epfd, op, fd, event, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -473,7 +482,9 @@ int cfa_sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int fla
 
 	async_sync_file_range( future, fd, offset, nbytes, flags, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -531,7 +542,9 @@ ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u64 submi
 
 	async_sendmsg( future, sockfd, msg, flags, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -589,7 +602,9 @@ ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flag
 
 	async_recvmsg( future, sockfd, msg, flags, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -647,7 +662,9 @@ ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submi
 
 	async_send( future, sockfd, buf, len, flags, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -705,7 +722,9 @@ ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flag
 
 	async_recv( future, sockfd, buf, len, flags, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -763,7 +782,9 @@ int cfa_accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags
 
 	async_accept4( future, sockfd, addr, addrlen, flags, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -820,7 +841,9 @@ int cfa_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u6
 
 	async_connect( future, sockfd, addr, addrlen, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -878,7 +901,9 @@ int cfa_fallocate(int fd, int mode, off_t offset, off_t len, __u64 submit_flags)
 
 	async_fallocate( future, fd, mode, offset, len, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -936,7 +961,9 @@ int cfa_posix_fadvise(int fd, off_t offset, off_t len, int advice, __u64 submit_
 
 	async_posix_fadvise( future, fd, offset, len, advice, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -993,7 +1020,9 @@ int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags) {
 
 	async_madvise( future, addr, length, advice, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -1051,7 +1080,9 @@ int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 su
 
 	async_openat( future, dirfd, pathname, flags, mode, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -1110,7 +1141,9 @@ int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 su
 	
 		async_openat2( future, dirfd, pathname, how, size, submit_flags );
 	
-		wait( future );
+		__attribute__((unused)) bool parked;
+		parked = wait( future );
+		__STATS__(false, if(!parked) io.submit.nblk += 1; )
 		if( future.result < 0 ) {
 			errno = -future.result;
 			return -1;
@@ -1166,7 +1199,9 @@ int cfa_close(int fd, __u64 submit_flags) {
 
 	async_close( future, fd, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -1226,7 +1261,9 @@ int cfa_close(int fd, __u64 submit_flags) {
 	
 		async_statx( future, dirfd, pathname, flags, mask, statxbuf, submit_flags );
 	
-		wait( future );
+		__attribute__((unused)) bool parked;
+		parked = wait( future );
+		__STATS__(false, if(!parked) io.submit.nblk += 1; )
 		if( future.result < 0 ) {
 			errno = -future.result;
 			return -1;
@@ -1284,7 +1321,9 @@ ssize_t cfa_read(int fd, void * buf, size_t count, __u64 submit_flags) {
 
 	async_read( future, fd, buf, count, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -1341,7 +1380,9 @@ ssize_t cfa_write(int fd, void * buf, size_t count, __u64 submit_flags) {
 
 	async_write( future, fd, buf, count, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -1401,7 +1442,9 @@ ssize_t cfa_splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out,
 
 	async_splice( future, fd_in, off_in, fd_out, off_out, len, flags, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;
@@ -1459,7 +1502,9 @@ ssize_t cfa_tee(int fd_in, int fd_out, size_t len, unsigned int flags, __u64 sub
 
 	async_tee( future, fd_in, fd_out, len, flags, submit_flags );
 
-	wait( future );
+	__attribute__((unused)) bool parked;
+	parked = wait( future );
+	__STATS__(false, if(!parked) io.submit.nblk += 1; )
 	if( future.result < 0 ) {
 		errno = -future.result;
 		return -1;

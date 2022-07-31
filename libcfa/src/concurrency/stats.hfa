@@ -91,6 +91,8 @@ enum {
 			struct {
 				volatile uint64_t fast;
 				volatile uint64_t slow;
+				volatile uint64_t eagr;
+				volatile uint64_t nblk;
 			} submit;
 			struct {
 				volatile uint64_t external;
@@ -129,7 +131,7 @@ enum {
 		};
 	#endif
 
-	struct __attribute__((aligned(128))) __stats_t {
+	struct __attribute__((aligned(64))) __stats_t {
 		__stats_readyQ_t ready;
 		#if defined(CFA_HAVE_LINUX_IO_URING_H)
 			__stats_io_t    io;

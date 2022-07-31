@@ -151,7 +151,7 @@ thread_local struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "i
 	// No data needed
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
 	extern "Cforall" {
-		__attribute__((aligned(128))) thread_local volatile struct rseq __cfaabi_rseq @= {
+		__attribute__((aligned(64))) thread_local volatile struct rseq __cfaabi_rseq @= {
 			.cpu_id : RSEQ_CPU_ID_UNINITIALIZED,
 		};
 	}

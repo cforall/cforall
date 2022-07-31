@@ -38,9 +38,9 @@ static inline unsigned long long moving_average(unsigned long long currtsc, unsi
 static inline void touch_tsc(__timestamp_t * tscs, size_t idx, unsigned long long ts_prev, unsigned long long ts_next) {
 	if (ts_next == ULLONG_MAX) return;
 	unsigned long long now = rdtscl();
-	unsigned long long pma = __atomic_load_n(&tscs[ idx ].ma, __ATOMIC_RELAXED);
-	__atomic_store_n(&tscs[ idx ].tv, ts_next, __ATOMIC_RELAXED);
-	__atomic_store_n(&tscs[ idx ].ma, moving_average(now, ts_prev, pma), __ATOMIC_RELAXED);
+	unsigned long long pma = __atomic_load_n(&tscs[ idx ].t.ma, __ATOMIC_RELAXED);
+	__atomic_store_n(&tscs[ idx ].t.tv, ts_next, __ATOMIC_RELAXED);
+	__atomic_store_n(&tscs[ idx ].t.ma, moving_average(now, ts_prev, pma), __ATOMIC_RELAXED);
 }
 
 //-----------------------------------------------------------------------
@@ -60,7 +60,7 @@ static inline unsigned long long calc_cutoff(
 		unsigned long long ptsc = ts(data[start + i]);
 		if(ptsc != ULLONG_MAX) {
 			/* paranoid */ verify( start + i < count );
-			unsigned long long tsc = moving_average(ctsc, ptsc, tscs[start + i].ma);
+			unsigned long long tsc = moving_average(ctsc, ptsc, tscs[start + i].t.ma);
 			if(tsc > max) max = tsc;
 		}
 	}

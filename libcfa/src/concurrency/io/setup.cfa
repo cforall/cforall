@@ -228,8 +228,6 @@
 
 		#if !defined(CFA_WITH_IO_URING_IDLE)
 			// Step 4 : eventfd
-			// io_uring_register is so f*cking slow on some machine that it
-			// will never succeed if preemption isn't hard blocked
 			__cfadbg_print_safe(io_core, "Kernel I/O : registering %d for completion with ring %d\n", procfd, fd);
 
 			int ret = syscall( __NR_io_uring_register, fd, IORING_REGISTER_EVENTFD, &procfd, 1);
@@ -239,6 +237,21 @@
 
 			__cfadbg_print_safe(io_core, "Kernel I/O : registered %d for completion with ring %d\n", procfd, fd);
 		#endif
+
+		// #if defined(CFA_HAVE_IORING_REGISTER_IOWQ_MAX_WORKERS)
+		// 	// Step 5 : max worker count
+		// 	__cfadbg_print_safe(io_core, "Kernel I/O : lmiting max workers for ring %d\n", fd);
+
+		// 	unsigned int maxes[2];
+		// 	maxes[0] = 64; // max number of bounded workers (Regular files / block)
+		// 	maxes[1] = 64;  // max number of unbounded workers (IOSQE_ASYNC)
+		// 	int ret = syscall( __NR_io_uring_register, fd, IORING_REGISTER_IOWQ_MAX_WORKERS, maxes, 2);
+		// 	if (ret < 0) {
+		// 		abort("KERNEL ERROR: IO_URING MAX WORKER REGISTER - %s\n", strerror(errno));
+		// 	}
+
+		// 	__cfadbg_print_safe(io_core, "Kernel I/O : lmited max workers for ring %d\n", fd);
+		// #endif
 
 		// some paranoid checks
 		/* paranoid */ verifyf( (*cq.mask) == ((*cq.num) - 1ul32), "IO_URING Expected mask to be %u (%u entries), was %u", (*cq.num) - 1ul32, *cq.num, *cq.mask  );
@@ -345,7 +358,7 @@
 		this.pending.empty = true;
 	}
 
-	void ^?{}( $io_arbiter & this ) {}
+	void ^?{}( $io_arbiter & mutex this ) {}
 
 	$io_arbiter * create(void) {
 		return new();

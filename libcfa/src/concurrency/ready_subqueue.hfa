@@ -5,23 +5,26 @@
 #include "limits.hfa"
 
 // Intrusives lanes which are used by the relaxed ready queue
-struct __attribute__((aligned(128))) __intrusive_lane_t {
-	struct thread$ * prev;
+union __attribute__((aligned(64))) __intrusive_lane_t {
+	struct {
+		struct thread$ * prev;
 
-	// spin lock protecting the queue
-	volatile bool lock;
+		// spin lock protecting the queue
+		volatile bool lock;
 
-	__thread_desc_link anchor;
+		__thread_desc_link anchor;
 
-	#if !defined(__CFA_NO_STATISTICS__)
-		unsigned cnt;
-	#endif
+		#if !defined(__CFA_NO_STATISTICS__)
+			unsigned cnt;
+		#endif
+	} l;
+	char __padding[192];
 };
 
 // Get the head pointer (one before the first element) from the anchor
 static inline thread$ * mock_head(const __intrusive_lane_t & this) {
 	thread$ * rhead = (thread$ *)(
-		(uintptr_t)( &this.anchor ) - __builtin_offsetof( thread$, link )
+		(uintptr_t)( &this.l.anchor ) - __builtin_offsetof( thread$, link )
 	);
 	return rhead;
 }
@@ -29,29 +32,29 @@ static inline thread$ * mock_head(const __intrusive_lane_t & this) {
 // Push a thread onto this lane
 // returns true of lane was empty before push, false otherwise
 static inline void push( __intrusive_lane_t & this, thread$ * node ) {
-	/* paranoid */ verify( this.lock );
+	/* paranoid */ verify( this.l.lock );
 	/* paranoid */ verify( node->link.next == 0p );
 	/* paranoid */ verify( __atomic_load_n(&node->link.ts, __ATOMIC_RELAXED) == MAX  );
-	/* paranoid */ verify( this.prev->link.next == 0p );
-	/* paranoid */ verify( __atomic_load_n(&this.prev->link.ts, __ATOMIC_RELAXED)   == MAX  );
-	if( this.anchor.next == 0p ) {
-		/* paranoid */ verify( this.anchor.next == 0p );
-		/* paranoid */ verify( __atomic_load_n(&this.anchor.ts, __ATOMIC_RELAXED) == MAX );
-		/* paranoid */ verify( __atomic_load_n(&this.anchor.ts, __ATOMIC_RELAXED) != 0  );
-		/* paranoid */ verify( this.prev == mock_head( this ) );
+	/* paranoid */ verify( this.l.prev->link.next == 0p );
+	/* paranoid */ verify( __atomic_load_n(&this.l.prev->link.ts, __ATOMIC_RELAXED)   == MAX  );
+	if( this.l.anchor.next == 0p ) {
+		/* paranoid */ verify( this.l.anchor.next == 0p );
+		/* paranoid */ verify( __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED) == MAX );
+		/* paranoid */ verify( __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED) != 0  );
+		/* paranoid */ verify( this.l.prev == mock_head( this ) );
 	} else {
-		/* paranoid */ verify( this.anchor.next != 0p );
-		/* paranoid */ verify( __atomic_load_n(&this.anchor.ts, __ATOMIC_RELAXED) != MAX );
-		/* paranoid */ verify( __atomic_load_n(&this.anchor.ts, __ATOMIC_RELAXED) != 0  );
-		/* paranoid */ verify( this.prev != mock_head( this ) );
+		/* paranoid */ verify( this.l.anchor.next != 0p );
+		/* paranoid */ verify( __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED) != MAX );
+		/* paranoid */ verify( __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED) != 0  );
+		/* paranoid */ verify( this.l.prev != mock_head( this ) );
 	}
 
 	// Get the relevant nodes locally
-	this.prev->link.next = node;
-	__atomic_store_n(&this.prev->link.ts, rdtscl(), __ATOMIC_RELAXED);
-	this.prev = node;
+	this.l.prev->link.next = node;
+	__atomic_store_n(&this.l.prev->link.ts, rdtscl(), __ATOMIC_RELAXED);
+	this.l.prev = node;
 	#if !defined(__CFA_NO_STATISTICS__)
-		this.cnt++;
+		this.l.cnt++;
 	#endif
 }
 
@@ -59,26 +62,26 @@ static inline void push( __intrusive_lane_t & this, thread$ * node ) {
 // returns popped
 // returns true of lane was empty before push, false otherwise
 static inline [* thread$, unsigned long long] pop( __intrusive_lane_t & this ) {
-	/* paranoid */ verify( this.lock );
-	/* paranoid */ verify( this.anchor.next != 0p );
-	/* paranoid */ verify( __atomic_load_n(&this.anchor.ts, __ATOMIC_RELAXED) != MAX );
-	/* paranoid */ verify( __atomic_load_n(&this.anchor.ts, __ATOMIC_RELAXED) != 0   );
+	/* paranoid */ verify( this.l.lock );
+	/* paranoid */ verify( this.l.anchor.next != 0p );
+	/* paranoid */ verify( __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED) != MAX );
+	/* paranoid */ verify( __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED) != 0   );
 
 	// Get the relevant nodes locally
-	thread$ * node = this.anchor.next;
-	this.anchor.next = node->link.next;
-	__atomic_store_n(&this.anchor.ts, __atomic_load_n(&node->link.ts, __ATOMIC_RELAXED), __ATOMIC_RELAXED);
-	bool is_empty = this.anchor.next == 0p;
+	thread$ * node = this.l.anchor.next;
+	this.l.anchor.next = node->link.next;
+	__atomic_store_n(&this.l.anchor.ts, __atomic_load_n(&node->link.ts, __ATOMIC_RELAXED), __ATOMIC_RELAXED);
+	bool is_empty = this.l.anchor.next == 0p;
 	node->link.next = 0p;
 	__atomic_store_n(&node->link.ts, ULLONG_MAX, __ATOMIC_RELAXED);
 	#if !defined(__CFA_NO_STATISTICS__)
-		this.cnt--;
+		this.l.cnt--;
 	#endif
 
 	// Update head time stamp
-	if(is_empty) this.prev = mock_head( this );
+	if(is_empty) this.l.prev = mock_head( this );
 
-	unsigned long long ats = __atomic_load_n(&this.anchor.ts, __ATOMIC_RELAXED);
+	unsigned long long ats = __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED);
 	/* paranoid */ verify( node->link.next == 0p );
 	/* paranoid */ verify( __atomic_load_n(&node->link.ts , __ATOMIC_RELAXED) == MAX );
 	/* paranoid */ verify( __atomic_load_n(&node->link.ts , __ATOMIC_RELAXED) != 0   );
@@ -89,13 +92,13 @@ static inline [* thread$, unsigned long long] pop( __intrusive_lane_t & this ) {
 
 // Check whether or not list is empty
 static inline bool is_empty(__intrusive_lane_t & this) {
-	return this.anchor.next == 0p;
+	return this.l.anchor.next == 0p;
 }
 
 // Return the timestamp
 static inline unsigned long long ts(__intrusive_lane_t & this) {
 	// Cannot verify 'emptiness' here since it may not be locked
-	/* paranoid */ verify(this.anchor.ts != 0);
-	/* paranoid */ static_assert(__atomic_always_lock_free(sizeof(this.anchor.ts), &this.anchor.ts));
-	return __atomic_load_n(&this.anchor.ts, __ATOMIC_RELAXED);
+	/* paranoid */ verify(this.l.anchor.ts != 0);
+	/* paranoid */ static_assert(__atomic_always_lock_free(sizeof(this.l.anchor.ts), &this.l.anchor.ts));
+	return __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED);
 }

@@ -228,16 +228,16 @@ static void check_readyQ( cluster * cltr ) with (cltr->sched) {
 			const unsigned lanes_count = readyQ.count;
 			for( idx ; lanes_count ) {
 				__intrusive_lane_t & sl = readyQ.data[idx];
-				assert(!readyQ.data[idx].lock);
+				assert(!readyQ.data[idx].l.lock);
 
 					if(is_empty(sl)) {
-						assert( sl.anchor.next == 0p );
-						assert( sl.anchor.ts   == MAX );
-						assert( mock_head(sl)  == sl.prev );
+						assert( sl.l.anchor.next == 0p );
+						assert( sl.l.anchor.ts   == MAX );
+						assert( mock_head(sl)  == sl.l.prev );
 					} else {
-						assert( sl.anchor.next != 0p );
-						assert( sl.anchor.ts   != MAX );
-						assert( mock_head(sl)  != sl.prev );
+						assert( sl.l.anchor.next != 0p );
+						assert( sl.l.anchor.ts   != MAX );
+						assert( mock_head(sl)  != sl.l.prev );
 					}
 			}
 		}
@@ -248,8 +248,8 @@ static void check_readyQ( cluster * cltr ) with (cltr->sched) {
 // fixes the list so that the pointers back to anchors aren't left dangling
 static inline void fix(__intrusive_lane_t & ll) {
 	if(is_empty(ll)) {
-		verify(ll.anchor.next == 0p);
-		ll.prev = mock_head(ll);
+		verify(ll.l.anchor.next == 0p);
+		ll.l.prev = mock_head(ll);
 	}
 }
 
@@ -298,8 +298,8 @@ static void reassign_cltr_id(struct cluster * cltr) {
 static void fix_times( __timestamp_t * volatile & tscs, unsigned count ) {
 	tscs = alloc(count, tscs`realloc);
 	for(i; count) {
-		tscs[i].tv = rdtscl();
-		tscs[i].ma = 0;
+		tscs[i].t.tv = rdtscl();
+		tscs[i].t.ma = 0;
 	}
 }
 
@@ -399,7 +399,7 @@ void ready_queue_shrink(struct cluster * cltr) {
 		// redistribute old data
 		for( idx; ncount ~ ocount) {
 			// Lock is not strictly needed but makes checking invariants much easier
-			__attribute__((unused)) bool locked = __atomic_try_acquire(&readyQ.data[idx].lock);
+			__attribute__((unused)) bool locked = __atomic_try_acquire(&readyQ.data[idx].l.lock);
 			verify(locked);
 
 			// As long as we can pop from this lane to push the threads somewhere else in the queue
@@ -417,7 +417,7 @@ void ready_queue_shrink(struct cluster * cltr) {
 			}
 
 			// Unlock the lane
-			__atomic_unlock(&readyQ.data[idx].lock);
+			__atomic_unlock(&readyQ.data[idx].l.lock);
 
 			// TODO print the queue statistics here
 
@@ -466,36 +466,40 @@ void ready_queue_close(struct cluster * cltr) {
 	free( cltr->sched.caches );
 }
 
+#define nested_offsetof(type, field) ((off_t)(&(((type*)0)-> field)))
+
 // Ctor
 void ?{}( __intrusive_lane_t & this ) {
-	this.lock = false;
-	this.prev = mock_head(this);
-	this.anchor.next = 0p;
-	this.anchor.ts   = MAX;
+	this.l.lock = false;
+	this.l.prev = mock_head(this);
+	this.l.anchor.next = 0p;
+	this.l.anchor.ts   = MAX;
 	#if !defined(__CFA_NO_STATISTICS__)
-		this.cnt  = 0;
+		this.l.cnt  = 0;
 	#endif
 
 	// We add a boat-load of assertions here because the anchor code is very fragile
-	/* paranoid */ _Static_assert( offsetof( thread$, link ) == offsetof(__intrusive_lane_t, anchor) );
-	/* paranoid */ verify( offsetof( thread$, link ) == offsetof(__intrusive_lane_t, anchor) );
-	/* paranoid */ verify( ((uintptr_t)( mock_head(this) ) + offsetof( thread$, link )) == (uintptr_t)(&this.anchor) );
-	/* paranoid */ verify( &mock_head(this)->link.next == &this.anchor.next );
-	/* paranoid */ verify( &mock_head(this)->link.ts   == &this.anchor.ts   );
+	/* paranoid */ _Static_assert( offsetof( thread$, link ) == nested_offsetof(__intrusive_lane_t, l.anchor) );
+	/* paranoid */ verify( offsetof( thread$, link ) == nested_offsetof(__intrusive_lane_t, l.anchor) );
+	/* paranoid */ verify( ((uintptr_t)( mock_head(this) ) + offsetof( thread$, link )) == (uintptr_t)(&this.l.anchor) );
+	/* paranoid */ verify( &mock_head(this)->link.next == &this.l.anchor.next );
+	/* paranoid */ verify( &mock_head(this)->link.ts   == &this.l.anchor.ts   );
 	/* paranoid */ verify( mock_head(this)->link.next == 0p );
 	/* paranoid */ verify( mock_head(this)->link.ts   == MAX );
-	/* paranoid */ verify( mock_head(this) == this.prev );
-	/* paranoid */ verify( __alignof__(__intrusive_lane_t) == 128 );
-	/* paranoid */ verify( __alignof__(this) == 128 );
-	/* paranoid */ verifyf( ((intptr_t)(&this) % 128) == 0, "Expected address to be aligned %p %% 128 == %zd", &this, ((intptr_t)(&this) % 128) );
+	/* paranoid */ verify( mock_head(this) == this.l.prev );
+	/* paranoid */ verify( __alignof__(__intrusive_lane_t) == 64 );
+	/* paranoid */ verify( __alignof__(this) == 64 );
+	/* paranoid */ verifyf( ((intptr_t)(&this) % 64) == 0, "Expected address to be aligned %p %% 64 == %zd", &this, ((intptr_t)(&this) % 64) );
 }
+
+#undef nested_offsetof
 
 // Dtor is trivial
 void ^?{}( __intrusive_lane_t & this ) {
 	// Make sure the list is empty
-	/* paranoid */ verify( this.anchor.next == 0p );
-	/* paranoid */ verify( this.anchor.ts   == MAX );
-	/* paranoid */ verify( mock_head(this)  == this.prev );
+	/* paranoid */ verify( this.l.anchor.next == 0p );
+	/* paranoid */ verify( this.l.anchor.ts   == MAX );
+	/* paranoid */ verify( mock_head(this)    == this.l.prev );
 }
 
 #if   defined(CFA_HAVE_LINUX_LIBRSEQ)

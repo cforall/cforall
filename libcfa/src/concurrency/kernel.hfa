@@ -82,7 +82,7 @@ struct __fd_waitctx {
 };
 
 // Wrapper around kernel threads
-struct __attribute__((aligned(128))) processor {
+struct __attribute__((aligned(64))) processor {
 	// Cluster from which to get threads
 	struct cluster * cltr;
 
@@ -170,17 +170,20 @@ static inline void  ?{}(processor & this, const char name[])     { this{name, *m
 // Cluster Tools
 
 // Intrusives lanes which are used by the ready queue
-struct __attribute__((aligned(128))) __intrusive_lane_t;
+union __attribute__((aligned(64))) __intrusive_lane_t;
 void  ?{}(__intrusive_lane_t & this);
 void ^?{}(__intrusive_lane_t & this);
 
 // Aligned timestamps which are used by the ready queue and io subsystem
-struct __attribute__((aligned(128))) __timestamp_t {
-	volatile unsigned long long tv;
-	volatile unsigned long long ma;
+union __attribute__((aligned(64))) __timestamp_t {
+	struct {
+		volatile unsigned long long tv;
+		volatile unsigned long long ma;
+	} t;
+	char __padding[192];
 };
 
-static inline void  ?{}(__timestamp_t & this) { this.tv = 0; this.ma = 0; }
+static inline void  ?{}(__timestamp_t & this) { this.t.tv = 0; this.t.ma = 0; }
 static inline void ^?{}(__timestamp_t &) {}
 
 
@@ -211,7 +214,7 @@ struct __cluster_proc_list {
 
 //-----------------------------------------------------------------------------
 // Cluster
-struct __attribute__((aligned(128))) cluster {
+struct __attribute__((aligned(64))) cluster {
 	struct {
 		struct {
 			// Arary of subqueues

@@ -34,7 +34,7 @@ enum __Preemption_Reason { __NO_PREEMPTION, __ALARM_PREEMPTION, __POLL_PREEMPTIO
 #ifdef __cforall
 extern "C" {
 	extern "Cforall" {
-		extern __attribute__((aligned(128))) thread_local struct KernelThreadData {
+		extern __attribute__((aligned(64))) thread_local struct KernelThreadData {
 			struct thread$          * volatile this_thread;
 			struct processor        * volatile this_processor;
 			volatile bool sched_lock;

@@ -87,7 +87,7 @@ void __thread_finish( thread$ * thrd );
 	// No data needed
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
 	extern "Cforall" {
-		extern __attribute__((aligned(128))) thread_local volatile struct rseq __cfaabi_rseq;
+		extern __attribute__((aligned(64))) thread_local volatile struct rseq __cfaabi_rseq;
 	}
 #else
 	// No data needed

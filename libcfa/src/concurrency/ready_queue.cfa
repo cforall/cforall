@@ -80,11 +80,11 @@ __attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, unp
 				i = start + (r % __shard_factor.readyq);
 				/* paranoid */ verify( i < lanes_count );
 				// If we can't lock it retry
-			} while( !__atomic_try_acquire( &readyQ.data[i].lock ) );
+			} while( !__atomic_try_acquire( &readyQ.data[i].l.lock ) );
 		} else {
 			do {
 				i = __tls_rand() % lanes_count;
-			} while( !__atomic_try_acquire( &readyQ.data[i].lock ) );
+			} while( !__atomic_try_acquire( &readyQ.data[i].l.lock ) );
 		}
 	} else {
 		do {
@@ -92,14 +92,14 @@ __attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, unp
 			i = proc->rdq.id + (r % __shard_factor.readyq);
 			/* paranoid */ verify( i < lanes_count );
 			// If we can't lock it retry
-		} while( !__atomic_try_acquire( &readyQ.data[i].lock ) );
+		} while( !__atomic_try_acquire( &readyQ.data[i].l.lock ) );
 	}
 
 	// Actually push it
 	push(readyQ.data[i], thrd);
 
 	// Unlock and return
-	__atomic_unlock( &readyQ.data[i].lock );
+	__atomic_unlock( &readyQ.data[i].l.lock );
 
 	#if !defined(__CFA_NO_STATISTICS__)
 		if(unlikely(external || remote)) __atomic_fetch_add(&cltr->stats->ready.push.extrn.success, 1, __ATOMIC_RELAXED);
@@ -135,11 +135,11 @@ __attribute__((hot)) struct thread$ * pop_fast(struct cluster * cltr) with (cltr
 	}
 	else {
 		const unsigned target = proc->rdq.target;
-		__cfadbg_print_safe(ready_queue, "Kernel : %u considering helping %u, tcsc %llu\n", this, target, readyQ.tscs[target].tv);
-		/* paranoid */ verify( readyQ.tscs[target].tv != ULLONG_MAX );
+		__cfadbg_print_safe(ready_queue, "Kernel : %u considering helping %u, tcsc %llu\n", this, target, readyQ.tscs[target].t.tv);
+		/* paranoid */ verify( readyQ.tscs[target].t.tv != ULLONG_MAX );
 		if(target < lanes_count) {
 			const unsigned long long cutoff = calc_cutoff(ctsc, proc->rdq.id, lanes_count, cltr->sched.readyQ.data, cltr->sched.readyQ.tscs, __shard_factor.readyq);
-			const unsigned long long age = moving_average(ctsc, readyQ.tscs[target].tv, readyQ.tscs[target].ma);
+			const unsigned long long age = moving_average(ctsc, readyQ.tscs[target].t.tv, readyQ.tscs[target].t.ma);
 			__cfadbg_print_safe(ready_queue, "Kernel : Help attempt on %u from %u, age %'llu vs cutoff %'llu, %s\n", target, this, age, cutoff, age > cutoff ? "yes" : "no");
 			if(age > cutoff) {
 				thread$ * t = try_pop(cltr, target __STATS(, __tls_stats()->ready.pop.help));
@@ -187,13 +187,13 @@ static inline struct thread$ * try_pop(struct cluster * cltr, unsigned w __STATS
 	}
 
 	// If we can't get the lock retry
-	if( !__atomic_try_acquire(&lane.lock) ) {
+	if( !__atomic_try_acquire(&lane.l.lock) ) {
 		return 0p;
 	}
 
 	// If list is empty, unlock and retry
 	if( is_empty(lane) ) {
-		__atomic_unlock(&lane.lock);
+		__atomic_unlock(&lane.l.lock);
 		return 0p;
 	}
 
@@ -205,10 +205,10 @@ static inline struct thread$ * try_pop(struct cluster * cltr, unsigned w __STATS
 
 	/* paranoid */ verify(thrd);
 	/* paranoid */ verify(ts_next);
-	/* paranoid */ verify(lane.lock);
+	/* paranoid */ verify(lane.l.lock);
 
 	// Unlock and return
-	__atomic_unlock(&lane.lock);
+	__atomic_unlock(&lane.l.lock);
 
 	// Update statistics
 	__STATS( stats.success++; )
