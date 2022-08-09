@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 14 17:36:57 2021
-// Update Count     : 1154
+// Last Modified On : Mon Aug  8 17:07:00 2022
+// Update Count     : 1185
 //
 
 #include <cassert>                 // for assert, assertf, strict_dynamic_cast
@@ -127,8 +127,6 @@ void DeclarationNode::print( std::ostream & os, int indent ) const {
 	os << string( indent, ' ' );
 	if ( name ) {
 		os << *name << ": ";
-	} else {
-		os << "unnamed: ";
 	} // if
 
 	if ( linkage != LinkageSpec::Cforall ) {
@@ -153,8 +151,11 @@ void DeclarationNode::print( std::ostream & os, int indent ) const {
 		os << endl << string( indent + 2, ' ' ) << "with initializer ";
 		initializer->printOneLine( os );
 		os << " maybe constructed? " << initializer->get_maybeConstructed();
-
 	} // if
+
+	for ( Attribute * attr: reverseIterate( attributes ) ) {
+		os << string( indent + 2, ' ' ) << "attr " << attr->name.c_str();
+	} // for
 
 	os << endl;
 }
@@ -242,7 +243,7 @@ DeclarationNode * DeclarationNode::newAggregate( AggregateDecl::Aggregate kind, 
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Aggregate );
 	newnode->type->aggregate.kind = kind;
-	newnode->type->aggregate.name =  name == nullptr ? new string( DeclarationNode::anonymous.newName() ) : name;
+	newnode->type->aggregate.name = name == nullptr ? new string( DeclarationNode::anonymous.newName() ) : name;
 	newnode->type->aggregate.actuals = actuals;
 	newnode->type->aggregate.fields = fields;
 	newnode->type->aggregate.body = body;
@@ -517,7 +518,7 @@ DeclarationNode * DeclarationNode::copySpecifiers( DeclarationNode * q ) {
 	funcSpecs |= q->funcSpecs;
 	storageClasses |= q->storageClasses;
 
-	for ( Attribute *attr: reverseIterate( q->attributes ) ) {
+	for ( Attribute * attr: reverseIterate( q->attributes ) ) {
 		attributes.push_front( attr->clone() );
 	} // for
 	return this;
@@ -682,6 +683,7 @@ DeclarationNode * DeclarationNode::addType( DeclarationNode * o ) {
 		} // if
 	} // if
 	delete o;
+
 	return this;
 }
 

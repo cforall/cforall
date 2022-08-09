@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  1 08:41:03 2022
-// Update Count     : 117
+// Last Modified On : Sat Aug  6 12:11:59 2022
+// Update Count     : 119
 //
 
 #include <utility> // for pair
@@ -216,9 +216,9 @@ struct EvalNew : public ast::WithShortCircuiting {
 			} else if (fname == "?*?") {
 				value = arg1.first * arg2.first;
 			} else if (fname == "?/?") {
-				value = arg1.first / arg2.first;
+				if ( arg2.first ) value = arg1.first / arg2.first;
 			} else if (fname == "?%?") {
-				value = arg1.first % arg2.first;
+				if ( arg2.first ) value = arg1.first % arg2.first;
 			} else if (fname == "?<<?") {
 				value = arg1.first << arg2.first;
 			} else if (fname == "?>>?") {

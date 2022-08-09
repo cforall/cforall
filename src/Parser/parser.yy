@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  1 15:35:08 2022
-// Update Count     : 5405
+// Last Modified On : Mon Aug  8 15:45:04 2022
+// Update Count     : 5574
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -57,7 +57,7 @@ using namespace std;
 #include "SynTree/Attribute.h"     // for Attribute
 
 // lex uses __null in a boolean context, it's fine.
-#pragma GCC diagnostic ignored "-Wparentheses-equality"
+//#pragma GCC diagnostic ignored "-Wparentheses-equality"
 
 extern DeclarationNode * parseTree;
 extern LinkageSpec::Spec linkage;
@@ -196,6 +196,23 @@ DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * field
 	return temp;
 } // fieldDecl
 
+#define NEW_ZERO new ExpressionNode( build_constantInteger( *new string( "0" ) ) )
+#define NEW_ONE  new ExpressionNode( build_constantInteger( *new string( "1" ) ) )
+
+ForCtrl * forCtrl( DeclarationNode * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
+	if ( index->initializer ) {
+		SemanticError( yylloc, "Direct initialization disallowed. Use instead: type var; initialization ~ comparison ~ increment." );
+	} // if
+	if ( index->next ) {
+		SemanticError( yylloc, "Multiple loop indexes disallowed in for-loop declaration." );
+	} // if
+	return new ForCtrl( index->addInitializer( new InitializerNode( start ) ),
+		// NULL comp/inc => leave blank
+		comp ? new ExpressionNode( build_binary_val( compop, new ExpressionNode( build_varref( new string( *index->name ) ) ), comp ) ) : nullptr,
+		inc ? new ExpressionNode( build_binary_val( compop == OperKinds::LThan || compop == OperKinds::LEThan ? // choose += or -= for upto/downto
+							OperKinds::PlusAssn : OperKinds::MinusAssn, new ExpressionNode( build_varref( new string( *index->name ) ) ), inc ) ) : nullptr );
+} // forCtrl
+
 ForCtrl * forCtrl( ExpressionNode * type, string * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	ConstantExpr * constant = dynamic_cast<ConstantExpr *>(type->expr.get());
 	if ( constant && (constant->get_constant()->get_value() == "0" || constant->get_constant()->get_value() == "1") ) {
@@ -205,9 +222,9 @@ ForCtrl * forCtrl( ExpressionNode * type, string * index, ExpressionNode * start
 	return new ForCtrl(
 		distAttr( DeclarationNode::newTypeof( type, true ), DeclarationNode::newName( index )->addInitializer( new InitializerNode( start ) ) ),
 		// NULL comp/inc => leave blank
-		comp ? new ExpressionNode( build_binary_val( compop, new ExpressionNode( build_varref( new string( *index ) ) ), comp ) ) : 0,
+		comp ? new ExpressionNode( build_binary_val( compop, new ExpressionNode( build_varref( new string( *index ) ) ), comp ) ) : nullptr,
 		inc ? new ExpressionNode( build_binary_val( compop == OperKinds::LThan || compop == OperKinds::LEThan ? // choose += or -= for upto/downto
-							OperKinds::PlusAssn : OperKinds::MinusAssn, new ExpressionNode( build_varref( new string( *index ) ) ), inc ) ) : 0 );
+							OperKinds::PlusAssn : OperKinds::MinusAssn, new ExpressionNode( build_varref( new string( *index ) ) ), inc ) ) : nullptr );
 } // forCtrl
 
 ForCtrl * forCtrl( ExpressionNode * type, ExpressionNode * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
@@ -345,7 +362,7 @@ if ( N ) {																		\
 %type<en> argument_expression_list_opt	argument_expression_list	argument_expression			default_initializer_opt
 %type<ifctl> conditional_declaration
 %type<fctl> for_control_expression		for_control_expression_list
-%type<compop> inclexcl
+%type<compop> updown updowneq downupdowneq
 %type<en> subrange
 %type<decl> asm_name_opt
 %type<en> asm_operands_opt				asm_operands_list			asm_operand
@@ -1238,10 +1255,10 @@ switch_clause_list:										// CFA
 
 iteration_statement:
 	WHILE '(' ')' statement								%prec THEN // CFA => while ( 1 )
-		{ $$ = new StatementNode( build_while( new CondCtl( nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ), maybe_build_compound( $4 ) ) ); }
+		{ $$ = new StatementNode( build_while( new CondCtl( nullptr, NEW_ONE ), maybe_build_compound( $4 ) ) ); }
 	| WHILE '(' ')' statement ELSE statement			// CFA
 		{
-			$$ = new StatementNode( build_while( new CondCtl( nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ), maybe_build_compound( $4 ) ) );
+			$$ = new StatementNode( build_while( new CondCtl( nullptr, NEW_ONE ), maybe_build_compound( $4 ) ) );
 			SemanticWarning( yylloc, Warning::SuperfluousElse, "" );
 		}
 	| WHILE '(' conditional_declaration ')' statement	%prec THEN
@@ -1249,10 +1266,10 @@ iteration_statement:
 	| WHILE '(' conditional_declaration ')' statement ELSE statement // CFA
 		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ), $7 ) ); }
 	| DO statement WHILE '(' ')' ';'					// CFA => do while( 1 )
-		{ $$ = new StatementNode( build_do_while( new ExpressionNode( build_constantInteger( *new string( "1" ) ) ), maybe_build_compound( $2 ) ) ); }
+		{ $$ = new StatementNode( build_do_while( NEW_ONE, maybe_build_compound( $2 ) ) ); }
 	| DO statement WHILE '(' ')' ELSE statement			// CFA
 		{
-			$$ = new StatementNode( build_do_while( new ExpressionNode( build_constantInteger( *new string( "1" ) ) ), maybe_build_compound( $2 ) ) );
+			$$ = new StatementNode( build_do_while( NEW_ONE, maybe_build_compound( $2 ) ) );
 			SemanticWarning( yylloc, Warning::SuperfluousElse, "" );
 		}
 	| DO statement WHILE '(' comma_expression ')' ';'
@@ -1304,54 +1321,108 @@ for_control_expression:
 		{ $$ = new ForCtrl( $1, $2, $4 ); }
 
 	| comma_expression									// CFA
-		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), new ExpressionNode( build_constantInteger( *new string( "0" ) ) ),
-						OperKinds::LThan, $1->clone(), new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ); }
-	| '=' comma_expression								// CFA
-		{ $$ = forCtrl( $2, new string( DeclarationNode::anonymous.newName() ), new ExpressionNode( build_constantInteger( *new string( "0" ) ) ),
-						OperKinds::LEThan, $2->clone(), new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ); }
-	| comma_expression inclexcl comma_expression		// CFA
-		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), $1->clone(), $2, $3, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ); }
-	| comma_expression inclexcl comma_expression '~' comma_expression // CFA
+		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), NEW_ZERO, OperKinds::LThan, $1->clone(), NEW_ONE ); }
+	| downupdowneq comma_expression						// CFA
+		{ $$ = forCtrl( $2, new string( DeclarationNode::anonymous.newName() ), $1 == OperKinds::GThan || $1 == OperKinds::GEThan ? $2->clone() : NEW_ZERO, $1, $2->clone(), NEW_ONE ); }
+	| comma_expression updowneq comma_expression		// CFA
+		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), $1->clone(), $2, $3, NEW_ONE ); }
+	| '@' updowneq comma_expression						// CFA
+		{ $$ = forCtrl( $3, new string( DeclarationNode::anonymous.newName() ),
+						$2 == OperKinds::GThan || $2 == OperKinds::GEThan ? $3->clone() : NEW_ZERO, $2, $3->clone(), NEW_ONE ); }
+	| comma_expression updown '@'						// CFA
+		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), $1->clone(), $2, nullptr, NEW_ONE ); }
+
+	| comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), $1->clone(), $2, $3, $5 ); }
+	| '@' updowneq comma_expression '~' comma_expression // CFA
+		{ $$ = forCtrl( $3, new string( DeclarationNode::anonymous.newName() ),
+						$2 == OperKinds::GThan || $2 == OperKinds::GEThan ? $3->clone() : NEW_ZERO,	$2, $3->clone(), $5 ); }
+	| comma_expression updown '@' '~' comma_expression	// CFA
+		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), $1->clone(), $2, nullptr, $5 ); }
+	| comma_expression updown '@' '~' '@'				// CFA
+		{
+			if ( $2 == OperKinds::GThan ) { SemanticError( yylloc, "Negative range \"-~\" is meaningless when comparison and iterator are empty. Use \"~\"." ); $$ = nullptr; }
+			else $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), $1->clone(), $2, nullptr, nullptr );
+		}
 	| comma_expression ';'								// CFA
 		{ $$ = forCtrl( new ExpressionNode( build_constantInteger( *new string( "0u" ) ) ), $1, nullptr, OperKinds::LThan, nullptr, nullptr ); }
 	| comma_expression ';' comma_expression				// CFA
-		{ $$ = forCtrl( $3, $1, new ExpressionNode( build_constantInteger( *new string( "0" ) ) ),
-						OperKinds::LThan, $3->clone(), new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ); }
-	| comma_expression ';' '=' comma_expression			// CFA
-		{ $$ = forCtrl( $4, $1, new ExpressionNode( build_constantInteger( *new string( "0" ) ) ),
-						OperKinds::LEThan, $4->clone(), new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ); }
-	| comma_expression ';' comma_expression inclexcl comma_expression // CFA
-		{ $$ = forCtrl( $3, $1, $3->clone(), $4, $5, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ); }
-	| comma_expression ';' comma_expression inclexcl comma_expression '~' comma_expression // CFA
+		{ $$ = forCtrl( $3, $1, NEW_ZERO, OperKinds::LThan, $3->clone(), NEW_ONE ); }
+	| comma_expression ';' downupdowneq comma_expression // CFA
+		{ $$ = forCtrl( $4, $1, $3 == OperKinds::GThan || $3 == OperKinds::GEThan ? $4->clone() : NEW_ZERO, $3, $4->clone(), NEW_ONE ); }
+	| comma_expression ';' comma_expression updowneq comma_expression // CFA
+		{ $$ = forCtrl( $3, $1, $3->clone(), $4, $5, NEW_ONE ); }
+	| comma_expression ';' '@' updowneq comma_expression // CFA
+		{ $$ = forCtrl( $5, $1,	$4 == OperKinds::GThan || $4 == OperKinds::GEThan ? $5->clone() : NEW_ZERO, $4, $5->clone(), NEW_ONE ); }
+	| comma_expression ';' comma_expression updown '@'	// CFA
+		{ $$ = forCtrl( $3, $1, $3->clone(), $4, nullptr, NEW_ONE ); }
+
+	| comma_expression ';' comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( $3, $1, $3->clone(), $4, $5, $7 ); }
+	| comma_expression ';' '@' updowneq comma_expression '~' comma_expression // CFA
+		{ $$ = forCtrl( $5, $1,	$4 == OperKinds::GThan || $4 == OperKinds::GEThan ? $5->clone() : NEW_ZERO, $4, $5->clone(), $7 ); }
+	| comma_expression ';' comma_expression updown '@' '~' comma_expression // CFA
+		{ $$ = forCtrl( $3, $1, $3->clone(), $4, nullptr, $7 ); }
+	| comma_expression ';' comma_expression updown '@' '~' '@' // CFA
+		{
+			if ( $4 == OperKinds::GThan ) { SemanticError( yylloc, "Negative range \"-~\" is meaningless when comparison and iterator are empty. Use \"~\"." ); $$ = nullptr; }
+			else $$ = forCtrl( $3, $1, $3->clone(), $4, nullptr, nullptr );
+		}
+
+	| declaration comma_expression						// CFA
+		{ $$ = forCtrl( $1, NEW_ZERO, OperKinds::LThan, $2, NEW_ONE ); }
+	| declaration downupdowneq comma_expression			// CFA
+		{ $$ = forCtrl( $1, $2 == OperKinds::GThan || $2 == OperKinds::GEThan ? $3->clone() : NEW_ZERO, $2, $3, NEW_ONE ); }
+	| declaration comma_expression updowneq comma_expression // CFA
+		{ $$ = forCtrl( $1, $2, $3, $4, NEW_ONE ); }
+	| declaration '@' updowneq comma_expression			// CFA
+		{ $$ = forCtrl( $1, $3 == OperKinds::GThan || $3 == OperKinds::GEThan ? $4->clone() : NEW_ZERO, $3, $4, NEW_ONE ); }
+	| declaration comma_expression updown '@'			// CFA
+		{ $$ = forCtrl( $1, $2, $3, nullptr, NEW_ONE ); }
+
+	| declaration comma_expression updowneq comma_expression '~' comma_expression // CFA
+		{ $$ = forCtrl( $1, $2, $3, $4, $6 ); }
+	| declaration '@' updowneq comma_expression '~' comma_expression // CFA
+		{ $$ = forCtrl( $1, $3 == OperKinds::GThan || $3 == OperKinds::GEThan ? $4->clone() : NEW_ZERO, $3, $4, $6 ); }
+	| declaration comma_expression updown '@' '~' comma_expression // CFA
+		{ $$ = forCtrl( $1, $2, $3, nullptr, $6 ); }
+	| declaration comma_expression updown '@' '~' '@'	// CFA
+		{
+			if ( $3 == OperKinds::GThan ) { SemanticError( yylloc, "Negative range \"-~\" is meaningless when comparison and iterator are empty. Use \"~\"." ); $$ = nullptr; }
+			else $$ = forCtrl( $1, $2, $3, nullptr, nullptr );
+		}
 
 	| comma_expression ';' TYPEDEFname					// CFA, array type
 		{
-			SemanticError( yylloc, "Array interator is currently unimplemented." ); $$ = nullptr;
-			$$ = forCtrl( new ExpressionNode( build_varref( $3 ) ), $1, nullptr, OperKinds::Range, nullptr, nullptr );
+			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
+			//$$ = forCtrl( new ExpressionNode( build_varref( $3 ) ), $1, nullptr, OperKinds::Range, nullptr, nullptr );
 		}
-
-		// There is a S/R conflicit if ~ and -~ are factored out.
-	| comma_expression ';' comma_expression '~' '@'		// CFA
-		{ $$ = forCtrl( $3, $1, $3->clone(), OperKinds::LThan, nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ); }
-	| comma_expression ';' comma_expression ErangeDown '@' // CFA
-		{ $$ = forCtrl( $3, $1, $3->clone(), OperKinds::GThan, nullptr, new ExpressionNode( build_constantInteger( *new string( "1" ) ) ) ); }
-	| comma_expression ';' comma_expression '~' '@' '~' comma_expression // CFA
-		{ $$ = forCtrl( $3, $1, $3->clone(), OperKinds::LThan, nullptr, $7 ); }
-	| comma_expression ';' comma_expression ErangeDown '@' '~' comma_expression // CFA
-		{ $$ = forCtrl( $3, $1, $3->clone(), OperKinds::GThan, nullptr, $7 ); }
-	| comma_expression ';' comma_expression '~' '@' '~' '@' // CFA
-		{ $$ = forCtrl( $3, $1, $3->clone(), OperKinds::LThan, nullptr, nullptr ); }
+	| comma_expression ';' downupdowneq TYPEDEFname		// CFA, array type
+		{
+			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
+		}
  	;
 
-inclexcl:
-	'~'
-		{ $$ = OperKinds::LThan; }
+downupdowneq:
+	ErangeDown
+		{ $$ = OperKinds::GThan; }
 	| ErangeUpEq
 		{ $$ = OperKinds::LEThan; }
+	| ErangeDownEq
+		{ $$ = OperKinds::GEThan; }
+ 	;
+
+updown:
+	'~'
+		{ $$ = OperKinds::LThan; }
 	| ErangeDown
 		{ $$ = OperKinds::GThan; }
+ 	;
+
+updowneq:
+	updown
+	| ErangeUpEq
+		{ $$ = OperKinds::LEThan; }
 	| ErangeDownEq
 		{ $$ = OperKinds::GEThan; }
  	;
@@ -2394,6 +2465,8 @@ enum_type:
 	| ENUM attribute_list_opt typedef_name				// unqualified type name
 	  '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( $3->name, $5, true )->addQualifiers( $2 ); }
+	| ENUM '(' ')' attribute_list_opt '{' enumerator_list comma_opt '}'
+		{ SemanticError( yylloc, "Unvalued enumerated type is currently unimplemented." ); $$ = nullptr; }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 	 	{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 )

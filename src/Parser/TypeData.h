@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:18:36 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 14 17:44:05 2021
-// Update Count     : 202
+// Last Modified On : Tue May 10 22:18:49 2022
+// Update Count     : 203
 //
 
 #pragma once
@@ -26,7 +26,7 @@
 
 struct TypeData {
 	enum Kind { Basic, Pointer, Reference, Array, Function, Aggregate, AggregateInst, Enum, EnumConstant, Symbolic,
-				SymbolicInst, Tuple, Typeof, Basetypeof, Vtable, Builtin, GlobalScope, Qualified, Unknown };
+				SymbolicInst, Tuple, Basetypeof, Typeof, Vtable, Builtin, GlobalScope, Qualified, Unknown };
 
 	struct Aggregate_t {
 		AggregateDecl::Aggregate kind;

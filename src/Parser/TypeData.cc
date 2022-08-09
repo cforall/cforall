@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:12:51 2015
-// Last Modified By : Henry Xue
-// Last Modified On : Tue Jul 20 04:10:50 2021
-// Update Count     : 673
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue May 10 22:36:52 2022
+// Update Count     : 677
 //
 
 #include <cassert>                 // for assert
@@ -282,14 +282,8 @@ void TypeData::print( ostream &os, int indent ) const {
 	  case Basic:
 		if ( signedness != DeclarationNode::NoSignedness ) os << DeclarationNode::signednessNames[ signedness ] << " ";
 		if ( length != DeclarationNode::NoLength ) os << DeclarationNode::lengthNames[ length ] << " ";
-		if ( complextype == DeclarationNode::NoComplexType ) { // basic type
-			assert( basictype != DeclarationNode::NoBasicType );
-			os << DeclarationNode::basicTypeNames[ basictype ] << " ";
-		} else {										// complex type
-			// handle double _Complex
-			if ( basictype != DeclarationNode::NoBasicType ) os << DeclarationNode::basicTypeNames[ basictype ] << " ";
-			os << DeclarationNode::complexTypeNames[ complextype ] << " ";
-		} // if
+		if ( complextype != DeclarationNode::NoComplexType ) os << DeclarationNode::complexTypeNames[ complextype ] << " ";
+		if ( basictype != DeclarationNode::NoBasicType ) os << DeclarationNode::basicTypeNames[ basictype ] << " ";
 		break;
 	  case Pointer:
 		os << "pointer ";
@@ -436,11 +430,15 @@ void TypeData::print( ostream &os, int indent ) const {
 		#if defined(__GNUC__) && __GNUC__ >= 7
 			__attribute__((fallthrough));
 		#endif
+		// FALL THROUGH
 	  case Typeof:
 		os << "type-of expression ";
 		if ( typeexpr ) {
 			typeexpr->print( os, indent + 2 );
 		} // if
+		break;
+	  case Vtable:
+		os << "vtable";
 		break;
 	  case Builtin:
 		os << DeclarationNode::builtinTypeNames[builtintype];

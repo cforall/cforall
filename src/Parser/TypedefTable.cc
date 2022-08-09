@@ -9,14 +9,15 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:20:13 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 19 08:30:14 2021
-// Update Count     : 262
+// Last Modified On : Tue Feb 15 08:27:24 2022
+// Update Count     : 275
 //
 
 
 #include "TypedefTable.h"
 #include <cassert>										// for assert
 #include <iostream>
+using namespace std;
 
 #if 0
 #define debugPrint( code ) code
@@ -27,18 +28,18 @@
 using namespace std;									// string, iostream
 
 debugPrint(
-static const char *kindName( int kind ) {
-	switch ( kind ) {
-	  case IDENTIFIER: return "identifier";
-	  case TYPEDIMname: return "typedim";
-	  case TYPEDEFname: return "typedef";
-	  case TYPEGENname: return "typegen";
-	  default:
-		cerr << "Error: cfa-cpp internal error, invalid kind of identifier" << endl;
-		abort();
-	} // switch
-} // kindName
-)
+	static const char *kindName( int kind ) {
+		switch ( kind ) {
+		  case IDENTIFIER: return "identifier";
+		  case TYPEDIMname: return "typedim";
+		  case TYPEDEFname: return "typedef";
+		  case TYPEGENname: return "typegen";
+		  default:
+			cerr << "Error: cfa-cpp internal error, invalid kind of identifier" << endl;
+			abort();
+		} // switch
+	} // kindName
+);
 
 TypedefTable::~TypedefTable() {
 	if ( ! SemanticErrorThrow && kindTable.currentScope() != 0 ) {
@@ -79,16 +80,16 @@ void TypedefTable::makeTypedef( const string & name, int kind ) {
 } // TypedefTable::makeTypedef
 
 void TypedefTable::addToScope( const string & identifier, int kind, const char * locn __attribute__((unused)) ) {
-	auto scope = kindTable.currentScope();
+	KindTable::size_type scope = kindTable.currentScope();
 	debugPrint( cerr << "Adding current at " << locn << " " << identifier << " as " << kindName( kind ) << " scope " << scope << endl );
 	kindTable.insertAt( scope, identifier, kind );
 } // TypedefTable::addToScope
 
 void TypedefTable::addToEnclosingScope( const string & identifier, int kind, const char * locn __attribute__((unused)) ) {
-	auto scope = kindTable.currentScope() - 1 - kindTable.getNote( kindTable.currentScope() - 1 ).level;
-//	auto scope = level - kindTable.getNote( kindTable.currentScope() - 1 ).level;
+	KindTable::size_type scope = kindTable.currentScope() - 1 - kindTable.getNote( kindTable.currentScope() - 1 ).level;
+//	size_type scope = level - kindTable.getNote( kindTable.currentScope() - 1 ).level;
 	debugPrint( cerr << "Adding enclosing at " << locn << " " << identifier << " as " << kindName( kind ) << " scope " << scope << " level " << level << " note " << kindTable.getNote( kindTable.currentScope() - 1 ).level << endl );
-	auto ret = kindTable.insertAt( scope, identifier, kind );
+	pair< KindTable::iterator, bool > ret = kindTable.insertAt( scope, identifier, kind );
 	if ( ! ret.second ) ret.first->second = kind;		// exists => update
 } // TypedefTable::addToEnclosingScope
 

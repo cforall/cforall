@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug  8 18:32:59 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 12 17:55:26 2019
-// Update Count     : 108
+// Last Modified On : Mon Aug  8 16:00:39 2022
+// Update Count     : 113
 // 
 
 #include <fstream.hfa>
@@ -42,14 +42,14 @@ int main() {
 	for ( 0 ) { sout | "A"; }							sout | "zero" | nl;
 	for ( 1 ) { sout | "A"; }							sout | nl;
 	for ( 10 ) { sout | "A"; }							sout | nl;
-	for ( = 10 ) { sout | "A"; }						sout | nl;
+	for ( ~= 10 ) { sout | "A"; }						sout | nl;
 	for ( 1 ~= 10 ~ 2 ) { sout | "B"; }					sout | nl;
 	for ( 10 -~= 1 ~ 2 ) { sout | "C"; }				sout | nl;
 	for ( 0.5 ~ 5.5 ) { sout | "D"; }					sout | nl;
 	for ( 5.5 -~ 0.5 ) { sout | "E"; }					sout | nl | nl;
 
 	for ( i; 10 ) { sout | i; }							sout | nl;
-	for ( i; = 10 ) { sout | i; }						sout | nl;
+	for ( i; ~= 10 ) { sout | i; }						sout | nl;
 	for ( i; 1 ~= 10 ~ 2 ) { sout | i; }				sout | nl;
 	for ( i; 10 -~= 1 ~ 2 ) { sout | i; }				sout | nl;
 	for ( i; 0.5 ~ 5.5 ) { sout | i; }					sout | nl;
@@ -88,7 +88,7 @@ int main() {
 	enum { N = 10 };
 	for ( N ) { sout | "N"; }							sout | nl;
 	for ( i; N ) { sout | i; }							sout | nl;
-	for ( i; = N ) { sout | i; }						sout | nl;
+	for ( i; ~= N ) { sout | i; }						sout | nl;
 	for ( i; N -~ 0 ) { sout | i; }						sout | nl | nl;
 
 	const int start = 3, comp = 10, inc = 2;
