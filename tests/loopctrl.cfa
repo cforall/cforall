@@ -9,11 +9,84 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug  8 18:32:59 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug  8 16:00:39 2022
-// Update Count     : 113
+// Last Modified On : Tue Aug  9 20:42:27 2022
+// Update Count     : 145
 // 
 
 #include <fstream.hfa>
+
+void fred() {
+	// Test all possible loop syntax.
+
+	int s = 0, c = 10, i = 2;
+
+	for ( c ) { sout | "A"; }						sout | nl;
+	for ( ~= c ) { sout | "B"; }					sout | nl;
+	for ( -~ c ) { sout | "C"; }					sout | nl;
+	for ( -~= c ) { sout | "D"; }					sout | nl;
+
+	for ( s ~ c ) { sout | "A"; }					sout | nl;
+	for ( s ~= c ) { sout | "B"; }					sout | nl;
+	for ( s -~ c ) { sout | "C"; }					sout | nl;
+	for ( s -~= c ) { sout | "D"; }					sout | nl;
+
+	for ( s ~ c ~ i ) { sout | "A"; }				sout | nl;
+	for ( s ~= c ~ i ) { sout | "B"; }				sout | nl;
+	for ( s -~ c ~ i ) { sout | "C"; }				sout | nl;
+	for ( s -~= c ~ i ) { sout | "D"; }				sout | nl;
+
+	for ( j; c ) { sout | j; }							sout | nl;
+	for ( j; ~= c ) { sout | j; }					sout | nl;
+	for ( j; -~ c ) { sout | j; }					sout | nl;
+	for ( j; -~= c ) { sout | j; }					sout | nl;
+
+	for ( j; s ~ c ) { sout | j; }					sout | nl;
+	for ( j; s ~= c ) { sout | j; }					sout | nl;
+	for ( j; s -~ c ) { sout | j; }					sout | nl;
+	for ( j; s -~= c ) { sout | j; }				sout | nl;
+
+	for ( j; s ~ c ~ i ) { sout | j; }				sout | nl;
+	for ( j; s ~= c ~ i ) { sout | j; }				sout | nl;
+	for ( j; s -~ c ~ i ) { sout | j; }				sout | nl;
+	for ( j; s -~= c ~ i ) { sout | j; }			sout | nl;
+
+	// CANNOT DIRECTLY INITIALIZE INDEX VARIABLE, ONLY SINGLE LOOP INDEX VARIABLE IN DECLARATION
+
+	for ( j; c ) { sout | j; }						sout | nl;
+	for ( int j; c ) { sout | j; }					sout | nl;
+	for ( int j; ~= c ) { sout | j; }				sout | nl;
+	for ( int j; -~ c ) { sout | j; }				sout | nl;
+	for ( int j; -~= c ) { sout | j; }				sout | nl;
+
+	for ( int j; s ~ c ) { sout | j; }				sout | nl;
+	for ( int j; s ~= c ) { sout | j; }				sout | nl;
+	for ( int j; s -~ c ) { sout | j; }				sout | nl;
+	for ( int j; s -~= c ) { sout | j; }			sout | nl;
+
+	for ( int j; s ~ c ~ i ) { sout | j; }			sout | nl;
+	for ( int j; s ~= c ~ i ) { sout | j; }			sout | nl;
+	for ( int j; s -~ c ~ i ) { sout | j; }			sout | nl;
+	for ( int j; s -~= c ~ i ) { sout | j; }		sout | nl;
+
+	for ( j; s ~ @ ) { if ( j == 10 ) break; sout | j; }				sout | nl;
+	for ( j; s -~ @ ) { if ( j == -10 ) break; sout | j; }				sout | nl;
+	for ( j; s ~ @ ~ i ) { if ( j == 10 ) break; sout | j; }			sout | nl;
+	for ( j; s -~ @ ~ i ) { if ( j == -10 ) break; sout | j; }			sout | nl;
+	for ( j; s ~ @ ~ @ ) { if ( j == 10 ) break; sout | j; j += 1; }	sout | nl;
+
+	for ( int j; s ~ @ ) { if ( j == 10 ) break; sout | j; j += 1; }	sout | nl;
+	for ( int j; s -~ @ ) { if ( j == -10 ) break; sout | j; j -= 1; }	sout | nl;
+	for ( int j; s ~ @ ~ i ) { if ( j == 10 ) break; sout | j; }		sout | nl;
+	for ( int j; s -~ @ ~ i ) { if ( j == -10 ) break; sout | j; }		sout | nl;
+	for ( int j; s ~ @ ~ @ ) { if ( j == 10 ) break; sout | j; j += 1; } sout | nl;
+
+	// enum E { A, B, C, D };
+	// for ( e; A ~= C ) { sout | j; }
+	// for ( e; A ~= D ) { sout | j; }
+	// for ( e; A -~= D ~ 2 ) { sout | j; }
+	// for ( e; E ) { sout | j; }
+	// for ( e; -~ E ) { sout | j; }
+}
 
 struct S { int i, j; };
 void ?{}( S & s ) { s.[i, j] = 0; }
@@ -34,6 +107,8 @@ ofstream & ?|?( ofstream & os, S v ) { return os | '(' | v.i | v.j | ')'; }
 void & ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
 
 int main() {
+	// Test some loop options.
+
 	sout | nlOff;										// turn off auto newline
 	while () { sout | "empty"; break; }					sout | nl;
 	do { sout | "empty"; break; } while ();				sout | nl;
@@ -44,18 +119,18 @@ int main() {
 	for ( 10 ) { sout | "A"; }							sout | nl;
 	for ( ~= 10 ) { sout | "A"; }						sout | nl;
 	for ( 1 ~= 10 ~ 2 ) { sout | "B"; }					sout | nl;
-	for ( 10 -~= 1 ~ 2 ) { sout | "C"; }				sout | nl;
+	for ( 1 -~= 10 ~ 2 ) { sout | "C"; }				sout | nl;
 	for ( 0.5 ~ 5.5 ) { sout | "D"; }					sout | nl;
-	for ( 5.5 -~ 0.5 ) { sout | "E"; }					sout | nl | nl;
+	for ( 0.5 -~ 5.5 ) { sout | "E"; }					sout | nl | nl;
 
 	for ( i; 10 ) { sout | i; }							sout | nl;
 	for ( i; ~= 10 ) { sout | i; }						sout | nl;
 	for ( i; 1 ~= 10 ~ 2 ) { sout | i; }				sout | nl;
-	for ( i; 10 -~= 1 ~ 2 ) { sout | i; }				sout | nl;
+	for ( i; 1 -~= 10 ~ 2 ) { sout | i; }				sout | nl;
 	for ( i; 0.5 ~ 5.5 ) { sout | i; }					sout | nl;
-	for ( i; 5.5 -~ 0.5 ) { sout | i; }					sout | nl;
+	for ( i; 0.5 -~ 5.5 ) { sout | i; }					sout | nl;
 	for ( ui; 2u ~= 10u ~ 2u ) { sout | ui; }			sout | nl;
-	for ( ui; 10u -~= 2u ~ 2u ) { sout | ui; }			sout | nl | nl;
+	for ( ui; 2u -~= 10u ~ 2u ) { sout | ui; }			sout | nl | nl;
 
 	// @ means do nothing
 	for ( i; 1 ~ @ ) {
@@ -88,24 +163,11 @@ int main() {
 	enum { N = 10 };
 	for ( N ) { sout | "N"; }							sout | nl;
 	for ( i; N ) { sout | i; }							sout | nl;
-	for ( i; ~= N ) { sout | i; }						sout | nl;
-	for ( i; N -~ 0 ) { sout | i; }						sout | nl | nl;
+	for ( i; ~=  N ) { sout | i; }						sout | nl;
+	for ( i; -~= N ) { sout | i; }						sout | nl | nl;
 
 	const int start = 3, comp = 10, inc = 2;
 	for ( i; start ~ comp ~ inc + 1 ) { sout | i; }		sout | nl | nl;
-
-	for ( S s = (S){0}; s < (S){10,10}; s += (S){1} ) { sout | s; } sout | nl;
-	for ( s; (S){10,10} ) { sout | s; } sout | nl;
-	sout | nl;
-	for ( s; (S){0} ~ (S){10,10} ) { sout | s; }		 sout | nl;
-	for ( s; (S){0} ~ (S){10,10} ~ (S){1} ) { sout | s; } sout | nl;
-	for ( s; (S){0} ~= (S){10,10} ) { sout | s; }		 sout | nl;
-	for ( s; (S){0} ~= (S){10,10} ~ (S){1} ) { sout | s; } sout | nl;
-	sout | nl;
-	for ( s; (S){10,10} -~ (S){0} ) { sout | s; }		 sout | nl;
-	for ( s; (S){10,10} -~ (S){0} ~ (S){1} ) { sout | s; } sout | nl;
-	for ( s; (S){10,10} -~= (S){0} ) { sout | s; }		 sout | nl;
-	for ( s; (S){10,10} -~= (S){0} ~ (S){1} ) { sout | s; } sout | nl | nl;
 
 	for ( i; 10 : j; -5 ~ @ ) { sout | i | j; } sout | nl;
 	for ( i; 10 : j; -5 -~ @ ) { sout | i | j; } sout | nl;
@@ -120,6 +182,21 @@ int main() {
 	for ( j; -5 -~ @ ~ 2 : i; 10 : k; 1.5 ~ @ ) { sout | i | j | k; } sout | nl;
 	for ( j; -5 -~ @ ~ 2 : k; 1.5 ~ @ : i; 10 ) { sout | i | j | k; } sout | nl;
 	for ( k; 1.5 ~ @ : j; -5 -~ @ ~ 2 : i; 10 ) { sout | i | j | k; } sout | nl;
+
+	for ( S s = (S){0}; s < (S){10,10}; s += (S){1} ) { sout | s; } sout | nl;
+	for ( s; (S){10,10} ) { sout | s; } sout | nl;
+	sout | nl;
+	for ( s; (S){0} ~ (S){10,10} ) { sout | s; }		 sout | nl;
+	for ( s; (S){0} ~ (S){10,10} ~ (S){1} ) { sout | s; } sout | nl;
+	for ( s; (S){0} ~= (S){10,10} ) { sout | s; }		 sout | nl;
+	for ( s; (S){0} ~= (S){10,10} ~ (S){1} ) { sout | s; } sout | nl;
+	sout | nl;
+	for ( s; (S){0} -~  (S){10,10} ) { sout | s; }		 sout | nl;
+	for ( s; (S){0} -~  (S){10,10} ~ (S){1} ) { sout | s; } sout | nl;
+	for ( s; (S){0} -~= (S){10,10} ) { sout | s; }		 sout | nl;
+	for ( s; (S){0} -~= (S){10,10} ~ (S){1} ) { sout | s; } sout | nl | nl;
+
+	fred();
 }
 
 // Local Variables: //

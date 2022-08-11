@@ -19,30 +19,32 @@ ofstream & ?|?( ofstream & os, S v ) { return os | '(' | v.i | v.j | ')'; }
 void & ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
 
 int main() {
-    sout | nlOff;										// turn off auto newline
-	while () { sout | "empty"; break; } else { sout | "else"; }					    sout | nl;
-	do { sout | "empty"; break; } while () else { sout | "else"; }				    sout | nl;
-	for () { sout | "empty"; break; } else { sout | "else"; }					    sout | nl | nl;
+	// Test some loop options.
 
-    do { sout | "false"; } while (false) else { sout | "else"; }				    sout | nl | nl;
+	sout | nlOff;										// turn off auto newline
+	while () { sout | "empty"; break; } else { sout | "else"; }						sout | nl;
+	do { sout | "empty"; break; } while () else { sout | "else"; }					sout | nl;
+	for () { sout | "empty"; break; } else { sout | "else"; }						sout | nl | nl;
 
-	for ( 0 ) { sout | "A"; } else { sout | "else"; }	        				    sout | "zero" | nl;
+	do { sout | "false"; } while (false) else { sout | "else"; }					sout | nl | nl;
+
+	for ( 0 ) { sout | "A"; } else { sout | "else"; }								sout | "zero" | nl;
 	for ( 1 ) { sout | "A"; } else { sout | "else"; }								sout | nl;
-	for ( 10 ) { sout | "A"; } else { sout | "else"; }							    sout | nl;
+	for ( 10 ) { sout | "A"; } else { sout | "else"; }								sout | nl;
 	for ( ~= 10 ) { sout | "A"; } else { sout | "else"; }							sout | nl;
 	for ( 1 ~= 10 ~ 2 ) { sout | "B"; } else { sout | "else"; }						sout | nl;
-	for ( 10 -~= 1 ~ 2 ) { sout | "C"; } else { sout | "else"; }					sout | nl;
+	for ( 1 -~= 10 ~ 2 ) { sout | "C"; } else { sout | "else"; }					sout | nl;
 	for ( 0.5 ~ 5.5 ) { sout | "D"; } else { sout | "else"; }						sout | nl;
-	for ( 5.5 -~ 0.5 ) { sout | "E"; } else { sout | "else"; }						sout | nl | nl;
+	for ( 0.5 -~ 5.5 ) { sout | "E"; } else { sout | "else"; }						sout | nl | nl;
 
 	for ( i; 10 ) { sout | i; } else { sout | "else"; }								sout | nl;
 	for ( i; ~= 10 ) { sout | i; } else { sout | "else"; }							sout | nl;
 	for ( i; 1 ~= 10 ~ 2 ) { sout | i; } else { sout | "else"; }					sout | nl;
-	for ( i; 10 -~= 1 ~ 2 ) { sout | i; } else { sout | "else"; }					sout | nl;
+	for ( i; 1 -~= 10 ~ 2 ) { sout | i; } else { sout | "else"; }					sout | nl;
 	for ( i; 0.5 ~ 5.5 ) { sout | i; } else { sout | "else"; }						sout | nl;
-	for ( i; 5.5 -~ 0.5 ) { sout | i; } else { sout | "else"; }						sout | nl;
+	for ( i; 0.5 -~ 5.5 ) { sout | i; } else { sout | "else"; }						sout | nl;
 	for ( ui; 2u ~= 10u ~ 2u ) { sout | ui; } else { sout | "else"; }				sout | nl;
-	for ( ui; 10u -~= 2u ~ 2u ) { sout | ui; } else { sout | "else"; }				sout | nl | nl;
+	for ( ui; 2u -~= 10u ~ 2u ) { sout | ui; } else { sout | "else"; }				sout | nl | nl;
 
 	// @ means do nothing
 	for ( i; 1 ~ @ ) {
@@ -76,7 +78,7 @@ int main() {
 	for ( N ) { sout | "N"; } else { sout | "else"; }							sout | nl;
 	for ( i; N ) { sout | i; } else { sout | "else"; }							sout | nl;
 	for ( i; ~= N ) { sout | i; } else { sout | "else"; }						sout | nl;
-	for ( i; N -~ 0 ) { sout | i; } else { sout | "else"; }						sout | nl | nl;
+	for ( i; -~= N ) { sout | i; } else { sout | "else"; }						sout | nl | nl;
 
 	const int start = 3, comp = 10, inc = 2;
 	for ( i; start ~ comp ~ inc + 1 ) { sout | i; } else { sout | "else"; }		sout | nl | nl;
@@ -89,10 +91,10 @@ int main() {
 	for ( s; (S){0} ~= (S){10,10} ) { sout | s; } else { sout | "else"; }		 sout | nl;
 	for ( s; (S){0} ~= (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl;
 	sout | nl;
-	for ( s; (S){10,10} -~ (S){0} ) { sout | s; } else { sout | "else"; }		 sout | nl;
-	for ( s; (S){10,10} -~ (S){0} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl;
-	for ( s; (S){10,10} -~= (S){0} ) { sout | s; } else { sout | "else"; }		 sout | nl;
-	for ( s; (S){10,10} -~= (S){0} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl | nl;
+	for ( s; (S){0} -~  (S){10,10} ) { sout | s; } else { sout | "else"; }		 sout | nl;
+	for ( s; (S){0} -~  (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl;
+	for ( s; (S){0} -~= (S){10,10} ) { sout | s; } else { sout | "else"; }		 sout | nl;
+	for ( s; (S){0} -~= (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl | nl;
 
 	for ( i; 10 : j; -5 ~ @ ) { sout | i | j; } else { sout | "else"; } sout | nl;
 	for ( i; 10 : j; -5 -~ @ ) { sout | i | j; } else { sout | "else"; } sout | nl;
