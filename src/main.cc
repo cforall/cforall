@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Jul 18 11:08:00 2022
-// Update Count     : 676
+// Last Modified On : Thu 11 12:18:00 2022
+// Update Count     : 677
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -444,6 +444,14 @@ int main( int argc, char * argv[] ) {
 
 			PASS( "Expand Tuples", Tuples::expandTuples( transUnit ) );
 
+			if ( tuplep ) {
+				dump( move( transUnit ) );
+				return EXIT_SUCCESS;
+			} // if
+
+			// Must come after Translate Tries.
+			PASS( "Virtual Expand Casts", Virtual::expandCasts( transUnit ) );
+
 			translationUnit = convert( move( transUnit ) );
 		} else {
 			PASS( "Translate Exception Declarations", ControlStruct::translateExcept( translationUnit ) );
@@ -519,14 +527,14 @@ int main( int argc, char * argv[] ) {
 			PASS( "Gen Waitfor", Concurrency::generateWaitFor( translationUnit ) );
 			PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
 			PASS( "Expand Tuples", Tuples::expandTuples( translationUnit ) ); // xxx - is this the right place for this?
+
+			if ( tuplep ) {
+				dump( translationUnit );
+				return EXIT_SUCCESS;
+			} // if
+
+			PASS( "Virtual Expand Casts", Virtual::expandCasts( translationUnit ) ); // Must come after translateEHM
 		}
-
-		if ( tuplep ) {
-			dump( translationUnit );
-			return EXIT_SUCCESS;
-		} // if
-
-		PASS( "Virtual Expand Casts", Virtual::expandCasts( translationUnit ) ); // Must come after translateEHM
 
 		PASS( "Instantiate Generics", GenPoly::instantiateGeneric( translationUnit ) );
 		if ( genericsp ) {

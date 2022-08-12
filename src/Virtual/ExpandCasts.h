@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Jul 24 13:54:00 2017
 // Last Modified By : Andrew Beach
-// Last Modified On : Tus Jul 25 14:51:00 2017
-// Update Count     : 0
+// Last Modified On : Fri Jul 29 14:40:00 2022
+// Update Count     : 1
 //
 
 #pragma once
@@ -18,11 +18,15 @@
 #include <list>  // for list
 
 class Declaration;
+namespace ast {
+	class TranslationUnit;
+}
 
 namespace Virtual {
-	void expandCasts( std::list< Declaration * > & translationUnit );
-	// Breaks all virtual cast nodes up into translatable nodes.
+void expandCasts( std::list< Declaration * > & translationUnit );
+void expandCasts( ast::TranslationUnit & translationUnit );
+// Breaks all virtual cast nodes up into translatable nodes.
 
-	// Later this might just set some information so it can happen at CodeGen.
+// Later this might just set some information so it can happen at CodeGen.
 
 }
