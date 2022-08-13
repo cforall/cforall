@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug  8 18:32:59 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  9 20:42:27 2022
-// Update Count     : 145
+// Last Modified On : Thu Aug 11 23:04:35 2022
+// Update Count     : 160
 // 
 
 #include <fstream.hfa>
@@ -69,15 +69,15 @@ void fred() {
 	for ( int j; s -~= c ~ i ) { sout | j; }		sout | nl;
 
 	for ( j; s ~ @ ) { if ( j == 10 ) break; sout | j; }				sout | nl;
-	for ( j; s -~ @ ) { if ( j == -10 ) break; sout | j; }				sout | nl;
+	for ( j; @ -~ s ) { if ( j == -10 ) break; sout | j; }				sout | nl;
 	for ( j; s ~ @ ~ i ) { if ( j == 10 ) break; sout | j; }			sout | nl;
-	for ( j; s -~ @ ~ i ) { if ( j == -10 ) break; sout | j; }			sout | nl;
+	for ( j; @ -~ s ~ i ) { if ( j == -10 ) break; sout | j; }			sout | nl;
 	for ( j; s ~ @ ~ @ ) { if ( j == 10 ) break; sout | j; j += 1; }	sout | nl;
 
 	for ( int j; s ~ @ ) { if ( j == 10 ) break; sout | j; j += 1; }	sout | nl;
-	for ( int j; s -~ @ ) { if ( j == -10 ) break; sout | j; j -= 1; }	sout | nl;
+	for ( int j; @ -~ s ) { if ( j == -10 ) break; sout | j; j -= 1; }	sout | nl;
 	for ( int j; s ~ @ ~ i ) { if ( j == 10 ) break; sout | j; }		sout | nl;
-	for ( int j; s -~ @ ~ i ) { if ( j == -10 ) break; sout | j; }		sout | nl;
+	for ( int j; @ -~ s ~ i ) { if ( j == -10 ) break; sout | j; }		sout | nl;
 	for ( int j; s ~ @ ~ @ ) { if ( j == 10 ) break; sout | j; j += 1; } sout | nl;
 
 	// enum E { A, B, C, D };
@@ -137,7 +137,7 @@ int main() {
 	  if ( i > 10 ) break;
 		sout | i;
 	}													sout | nl;
-	for ( i; 10 -~ @ ) {
+	for ( i; @ -~ 10 ) {
 	  if ( i < 0 ) break;
 		sout | i;
 	}													sout | nl;
@@ -150,7 +150,7 @@ int main() {
 		sout | i;
 		i += 1.7;
 	}													sout | nl;
-	for ( i; 10 -~ @ ~ 2 ) {
+	for ( i; @ -~ 10 ~ 2 ) {
 	  if ( i < 0 ) break;
 		sout | i;
 	}													sout | nl;
@@ -163,25 +163,25 @@ int main() {
 	enum { N = 10 };
 	for ( N ) { sout | "N"; }							sout | nl;
 	for ( i; N ) { sout | i; }							sout | nl;
-	for ( i; ~=  N ) { sout | i; }						sout | nl;
+	for ( i; ~= N ) { sout | i; }						sout | nl;
 	for ( i; -~= N ) { sout | i; }						sout | nl | nl;
 
 	const int start = 3, comp = 10, inc = 2;
 	for ( i; start ~ comp ~ inc + 1 ) { sout | i; }		sout | nl | nl;
 
 	for ( i; 10 : j; -5 ~ @ ) { sout | i | j; } sout | nl;
-	for ( i; 10 : j; -5 -~ @ ) { sout | i | j; } sout | nl;
+	for ( i; 10 : j; @ -~ -5 ) { sout | i | j; } sout | nl;
 	for ( i; 10 : j; -5 ~ @ ~ 2 ) { sout | i | j; } sout | nl;
-	for ( i; 10 : j; -5 -~ @ ~ 2 ) { sout | i | j; } sout | nl | nl;
+	for ( i; 10 : j; @ -~ -5 ~ 2 ) { sout | i | j; } sout | nl | nl;
 
 	for ( j; -5 ~ @ : i; 10 ) { sout | i | j; } sout | nl;
-	for ( j; -5 -~ @ : i; 10 ) { sout | i | j; } sout | nl;
+	for ( j; @ -~ -5 : i; 10 ) { sout | i | j; } sout | nl;
 	for ( j; -5 ~ @ ~ 2 : i; 10 ) { sout | i | j; } sout | nl;
-	for ( j; -5 -~ @ ~ 2 : i; 10 ) { sout | i | j; } sout | nl | nl;
+	for ( j; @ -~ -5 ~ 2 : i; 10 ) { sout | i | j; } sout | nl | nl;
 
-	for ( j; -5 -~ @ ~ 2 : i; 10 : k; 1.5 ~ @ ) { sout | i | j | k; } sout | nl;
-	for ( j; -5 -~ @ ~ 2 : k; 1.5 ~ @ : i; 10 ) { sout | i | j | k; } sout | nl;
-	for ( k; 1.5 ~ @ : j; -5 -~ @ ~ 2 : i; 10 ) { sout | i | j | k; } sout | nl;
+	for ( j; @ -~ -5 ~ 2 : i; 10 : k; 1.5 ~ @ ) { sout | i | j | k; } sout | nl;
+	for ( j; @ -~ -5 ~ 2 : k; 1.5 ~ @ : i; 10 ) { sout | i | j | k; } sout | nl;
+	for ( k; 1.5 ~ @ : j; @ -~ -5 ~ 2 : i; 10 ) { sout | i | j | k; } sout | nl;
 
 	for ( S s = (S){0}; s < (S){10,10}; s += (S){1} ) { sout | s; } sout | nl;
 	for ( s; (S){10,10} ) { sout | s; } sout | nl;

@@ -51,7 +51,7 @@ int main() {
 	  if ( i > 10 ) break;
 		sout | i;
 	} else { sout | "else"; }														sout | nl;
-	for ( i; 10 -~ @ ) {
+	for ( i; @ -~ 10 ) {
 	  if ( i < 0 ) break;
 		sout | i;
 	} else { sout | "else"; }														sout | nl;
@@ -64,7 +64,7 @@ int main() {
 		sout | i;
 		i += 1.7;
 	} else { sout | "else"; }														sout | nl;
-	for ( i; 10 -~ @ ~ 2 ) {
+	for ( i; @ -~ 10 ~ 2 ) {
 	  if ( i < 0 ) break;
 		sout | i;
 	} else { sout | "else"; }														sout | nl;
@@ -83,6 +83,20 @@ int main() {
 	const int start = 3, comp = 10, inc = 2;
 	for ( i; start ~ comp ~ inc + 1 ) { sout | i; } else { sout | "else"; }		sout | nl | nl;
 
+	for ( i; 10 : j; -5 ~ @ ) { sout | i | j; } else { sout | "else"; } sout | nl;
+	for ( i; 10 : j; @ -~ -5 ) { sout | i | j; } else { sout | "else"; } sout | nl;
+	for ( i; 10 : j; -5 ~ @ ~ 2 ) { sout | i | j; } else { sout | "else"; } sout | nl;
+	for ( i; 10 : j; @ -~ -5 ~ 2 ) { sout | i | j; } else { sout | "else"; } sout | nl | nl;
+
+	for ( j; -5 ~ @ : i; 10 ) { sout | i | j; } else { sout | "else"; } sout | nl;
+	for ( j; @ -~ -5 : i; 10 ) { sout | i | j; } else { sout | "else"; } sout | nl;
+	for ( j; -5 ~ @ ~ 2 : i; 10 ) { sout | i | j; } else { sout | "else"; } sout | nl;
+	for ( j; @ -~ -5 ~ 2 : i; 10 ) { sout | i | j; } else { sout | "else"; } sout | nl | nl;
+
+	for ( j; @ -~ -5 ~ 2 : i; 10 : k; 1.5 ~ @ ) { sout | i | j | k; } else { sout | "else"; } sout | nl;
+	for ( j; @ -~ -5 ~ 2 : k; 1.5 ~ @ : i; 10 ) { sout | i | j | k; } else { sout | "else"; } sout | nl;
+	for ( k; 1.5 ~ @ : j; @ -~ -5 ~ 2 : i; 10 ) { sout | i | j | k; } else { sout | "else"; } sout | nl;
+
 	for ( S s = (S){0}; s < (S){10,10}; s += (S){1} ) { sout | s; } else { sout | "else"; } sout | nl;
 	for ( s; (S){10,10} ) { sout | s; } else { sout | "else"; } sout | nl;
 	sout | nl;
@@ -95,18 +109,4 @@ int main() {
 	for ( s; (S){0} -~  (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl;
 	for ( s; (S){0} -~= (S){10,10} ) { sout | s; } else { sout | "else"; }		 sout | nl;
 	for ( s; (S){0} -~= (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl | nl;
-
-	for ( i; 10 : j; -5 ~ @ ) { sout | i | j; } else { sout | "else"; } sout | nl;
-	for ( i; 10 : j; -5 -~ @ ) { sout | i | j; } else { sout | "else"; } sout | nl;
-	for ( i; 10 : j; -5 ~ @ ~ 2 ) { sout | i | j; } else { sout | "else"; } sout | nl;
-	for ( i; 10 : j; -5 -~ @ ~ 2 ) { sout | i | j; } else { sout | "else"; } sout | nl | nl;
-
-	for ( j; -5 ~ @ : i; 10 ) { sout | i | j; } else { sout | "else"; } sout | nl;
-	for ( j; -5 -~ @ : i; 10 ) { sout | i | j; } else { sout | "else"; } sout | nl;
-	for ( j; -5 ~ @ ~ 2 : i; 10 ) { sout | i | j; } else { sout | "else"; } sout | nl;
-	for ( j; -5 -~ @ ~ 2 : i; 10 ) { sout | i | j; } else { sout | "else"; } sout | nl | nl;
-
-	for ( j; -5 -~ @ ~ 2 : i; 10 : k; 1.5 ~ @ ) { sout | i | j | k; } else { sout | "else"; } sout | nl;
-	for ( j; -5 -~ @ ~ 2 : k; 1.5 ~ @ : i; 10 ) { sout | i | j | k; } else { sout | "else"; } sout | nl;
-	for ( k; 1.5 ~ @ : j; -5 -~ @ ~ 2 : i; 10 ) { sout | i | j | k; } else { sout | "else"; } sout | nl;
 }

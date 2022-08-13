@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  9 17:21:46 2022
-// Update Count     : 5629
+// Last Modified On : Fri Aug 12 07:59:58 2022
+// Update Count     : 5649
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1328,23 +1328,36 @@ for_control_expression:
 
 	| comma_expression updowneq comma_expression		// CFA
 		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $2, $1->clone(), $3 ), $2, UPDOWN( $2, $3->clone(), $1->clone() ), NEW_ONE ); }
-	| '@' updowneq comma_expression						// CFA, error
-		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is not useful." ); $$ = nullptr; }
+	| '@' updowneq comma_expression						// CFA
+		{
+			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else $$ = forCtrl( $3, new string( DeclarationNode::anonymous.newName() ), $3->clone(), $2, nullptr, NEW_ONE );
+		}
 	| comma_expression updowneq '@'						// CFA
-		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is not useful." ); $$ = nullptr; }
-
+		{
+			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing comparison ('@') with an anonymous loop index is meaningless." ); $$ = nullptr; }
+			else { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; } 
+		}
 	| comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $2, $1->clone(), $3 ), $2, UPDOWN( $2, $3->clone(), $1->clone() ), $5 ); }
-	| '@' updowneq comma_expression '~' comma_expression // CFA, error
-		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is not useful." ); $$ = nullptr; }
-	| comma_expression updowneq '@' '~' comma_expression // CFA, error
-		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is not useful." ); $$ = nullptr; }
+	| '@' updowneq comma_expression '~' comma_expression // CFA
+		{
+			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else $$ = forCtrl( $3, new string( DeclarationNode::anonymous.newName() ), $3->clone(), $2, nullptr, $5 );
+		}
+	| comma_expression updowneq '@' '~' comma_expression // CFA
+		{
+			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing comparison ('@') with an anonymous loop index is meaningless." ); $$ = nullptr; }
+			else { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; } 
+		}
 	| comma_expression updowneq comma_expression '~' '@' // CFA, error
-		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is not useful." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "Missing increment ('@') with an anonymous loop index is meaningless." ); $$ = nullptr; }
 	| '@' updowneq comma_expression '~' '@'				// CFA, error
-		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is not useful." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is meaningless." ); $$ = nullptr; }
 	| comma_expression updowneq '@' '~' '@'				// CFA, error
-		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is not useful." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is meaningless." ); $$ = nullptr; }
+	| '@' updowneq '@' '~' '@'							// CFA, error
+		{ SemanticError( yylloc, "Missing loop fields ('@') with an anonymous loop index is meaningless." ); $$ = nullptr; }
 
 	| comma_expression ';' comma_expression				// CFA
 		{ $$ = forCtrl( $3, $1, NEW_ZERO, OperKinds::LThan, $3->clone(), NEW_ONE ); }
@@ -1353,33 +1366,48 @@ for_control_expression:
 
 	| comma_expression ';' comma_expression updowneq comma_expression // CFA
 		{ $$ = forCtrl( $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), NEW_ONE ); }
-	| comma_expression ';' '@' updowneq comma_expression // CFA, error
-		{ SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+	| comma_expression ';' '@' updowneq comma_expression // CFA
+		{
+			if ( $4 == OperKinds::LThan || $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else $$ = forCtrl( $5, $1, $5->clone(), $4, nullptr, NEW_ONE );
+		}
 	| comma_expression ';' comma_expression updowneq '@' // CFA
 		{
-			if ( $4 == OperKinds::LEThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, "Decrement with missing comparison is meaningless. Use \"~\"." ); $$ = nullptr; }
+			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing comparison is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( $3, $1, $3->clone(), $4, nullptr, NEW_ONE );
 		}
+	| comma_expression ';' '@' updowneq '@'				// CFA, error
+		{ SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
 
 	| comma_expression ';' comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), $7 ); }
 	| comma_expression ';' '@' updowneq comma_expression '~' comma_expression // CFA, error
-		{ SemanticError( yylloc, "Missing start declaration so cannot compare." ); $$ = nullptr; }
+		{
+			if ( $4 == OperKinds::LThan || $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else $$ = forCtrl( $5, $1, $5->clone(), $4, nullptr, $7 );
+		}
 	| comma_expression ';' comma_expression updowneq '@' '~' comma_expression // CFA
 		{
-			if ( $4 == OperKinds::LEThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, "Equal for comparison is meaningless with missing comparison. Use \"~\"." ); $$ = nullptr; }
+			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing comparison is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( $3, $1, $3->clone(), $4, nullptr, $7 );
 		}
 	| comma_expression ';' comma_expression updowneq comma_expression '~' '@' // CFA
 		{ $$ = forCtrl( $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), nullptr ); }
 	| comma_expression ';' '@' updowneq comma_expression '~' '@' // CFA, error
-		{ SemanticError( yylloc, "Missing start declaration so cannot compare." ); $$ = nullptr; }
+		{
+			if ( $4 == OperKinds::LThan || $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else $$ = forCtrl( $5, $1, $5->clone(), $4, nullptr, nullptr );
+		}
 	| comma_expression ';' comma_expression updowneq '@' '~' '@' // CFA
 		{
-			if ( $4 == OperKinds::GThan ) { SemanticError( yylloc, "Negative range \"-~\" is meaningless when comparison and iterator are empty. Use \"~\"." ); $$ = nullptr; }
-			else if ( $4 == OperKinds::LEThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, "Equal for comparison is meaningless with missing comparison. Use \"~\"." ); $$ = nullptr; }
+			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing comparison is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( $3, $1, $3->clone(), $4, nullptr, nullptr );
 		}
+	| comma_expression ';' '@' updowneq '@' '~' '@' // CFA
+		{ SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
 
 	| declaration comma_expression						// CFA
 		{ $$ = forCtrl( $1, NEW_ZERO, OperKinds::LThan, $2, NEW_ONE ); }
@@ -1388,33 +1416,46 @@ for_control_expression:
 
 	| declaration comma_expression updowneq comma_expression // CFA
 		{ $$ = forCtrl( $1, UPDOWN( $3, $2->clone(), $4 ), $3, UPDOWN( $3, $4->clone(), $2->clone() ), NEW_ONE ); }
-	| declaration '@' updowneq comma_expression			// CFA, error
-		{ SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+	| declaration '@' updowneq comma_expression			// CFA
+		{
+			if ( $3 == OperKinds::LThan || $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else $$ = forCtrl( $1, $4, $3, nullptr, NEW_ONE );
+		}
 	| declaration comma_expression updowneq '@'			// CFA
 		{
-			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, "Decrement with missing comparison is meaningless. Use \"~\"." ); $$ = nullptr; }
+			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing comparison is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( $1, $2, $3, nullptr, NEW_ONE );
 		}
 
 	| declaration comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( $1, UPDOWN( $3, $2, $4 ), $3, UPDOWN( $3, $4->clone(), $2->clone() ), $6 ); }
-	| declaration '@' updowneq comma_expression '~' comma_expression // CFA, error
-		{ SemanticError( yylloc, "Missing start declaration so cannot compare." ); $$ = nullptr; }
+	| declaration '@' updowneq comma_expression '~' comma_expression // CFA
+		{
+			if ( $3 == OperKinds::LThan || $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else $$ = forCtrl( $1, $4, $3, nullptr, $6 );
+		}
 	| declaration comma_expression updowneq '@' '~' comma_expression // CFA
 		{
-			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, "Equal for comparison is meaningless with missing comparison. Use \"~\"." ); $$ = nullptr; }
+			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing comparison is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( $1, $2, $3, nullptr, $6 );
 		}
 	| declaration comma_expression updowneq comma_expression '~' '@' // CFA
 		{ $$ = forCtrl( $1, UPDOWN( $3, $2, $4 ), $3, UPDOWN( $3, $4->clone(), $2->clone() ), nullptr ); }
-	| declaration '@' updowneq comma_expression '~' '@' // CFA, error
-		{ SemanticError( yylloc, "Missing start declaration so cannot compare." ); $$ = nullptr; }
+	| declaration '@' updowneq comma_expression '~' '@' // CFA
+		{
+			if ( $3 == OperKinds::LThan || $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else $$ = forCtrl( $1, $4, $3, nullptr, nullptr );
+		}
 	| declaration comma_expression updowneq '@' '~' '@'	// CFA
 		{
-			if ( $3 == OperKinds::GThan ) { SemanticError( yylloc, "Negative range \"-~\" is meaningless when comparison and iterator are empty. Use \"~\"." ); $$ = nullptr; }
-			else if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, "Equal for comparison is meaningless with missing comparison. Use \"~\"." ); $$ = nullptr; }
+			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing comparison is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( $1, $2, $3, nullptr, nullptr );
 		}
+	| declaration '@' updowneq '@' '~' '@'				// CFA, error
+		{ SemanticError( yylloc, "Missing start value so cannot compare." ); $$ = nullptr; }
 
 	| comma_expression ';' TYPEDEFname					// CFA, array type
 		{
