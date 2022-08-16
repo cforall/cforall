@@ -34,8 +34,8 @@ extern "C" {
 //-----------------------------------------------------------------------------
 // I/O
 struct cluster;
-struct $io_context;
-struct $io_arbiter;
+struct io_context$;
+struct io_arbiter$;
 
 struct io_context_params {
 	int num_entries;
@@ -112,7 +112,7 @@ struct __attribute__((aligned(64))) processor {
 	unsigned unique_id;
 
 	struct {
-		$io_context * ctx;
+		io_context$ * ctx;
 		unsigned target;
 		volatile bool pending;
 		volatile bool dirty;
@@ -229,7 +229,7 @@ struct __attribute__((aligned(64))) cluster {
 
 		struct {
 			// Array of $io_
-			$io_context ** data;
+			io_context$ ** data;
 
  			// Time since subqueues were processed
 			__timestamp_t * tscs;
@@ -266,7 +266,7 @@ struct __attribute__((aligned(64))) cluster {
 	} node;
 
 	struct {
-		$io_arbiter * arbiter;
+		io_arbiter$ * arbiter;
 		io_context_params params;
 	} io;
 

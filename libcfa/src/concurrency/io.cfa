@@ -82,18 +82,18 @@
 		"INVALID_OP"
 	};
 
-	static $io_context * __ioarbiter_allocate( $io_arbiter & this, __u32 idxs[], __u32 want );
-	static void __ioarbiter_submit( $io_context * , __u32 idxs[], __u32 have, bool lazy );
-	static void __ioarbiter_flush ( $io_context & );
-	static inline void __ioarbiter_notify( $io_context & ctx );
+	static io_context$ * __ioarbiter_allocate( io_arbiter$ & this, __u32 idxs[], __u32 want );
+	static void __ioarbiter_submit( io_context$ * , __u32 idxs[], __u32 have, bool lazy );
+	static void __ioarbiter_flush ( io_context$ & );
+	static inline void __ioarbiter_notify( io_context$ & ctx );
 //=============================================================================================
 // I/O Polling
 //=============================================================================================
-	static inline unsigned __flush( struct $io_context & );
-	static inline __u32 __release_sqes( struct $io_context & );
+	static inline unsigned __flush( struct io_context$ & );
+	static inline __u32 __release_sqes( struct io_context$ & );
 	extern void __kernel_unpark( thread$ * thrd, unpark_hint );
 
-	static void ioring_syscsll( struct $io_context & ctx, unsigned int min_comp, unsigned int flags ) {
+	static void ioring_syscsll( struct io_context$ & ctx, unsigned int min_comp, unsigned int flags ) {
 		__STATS__( true, io.calls.flush++; )
 		int ret;
 		for() {
@@ -131,7 +131,7 @@
 		__atomic_store_n(&ctx.proc->io.pending, false, __ATOMIC_RELAXED);
 	}
 
-	static bool try_acquire( $io_context * ctx ) __attribute__((nonnull(1))) {
+	static bool try_acquire( io_context$ * ctx ) __attribute__((nonnull(1))) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( ready_schedule_islocked() );
 
@@ -152,7 +152,7 @@
 		return true;
 	}
 
-	static bool __cfa_do_drain( $io_context * ctx, cluster * cltr ) __attribute__((nonnull(1, 2))) {
+	static bool __cfa_do_drain( io_context$ * ctx, cluster * cltr ) __attribute__((nonnull(1, 2))) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( ready_schedule_islocked() );
 		/* paranoid */ verify( ctx->cq.lock == true );
@@ -212,7 +212,7 @@
 		ready_schedule_lock();
 
 		cluster * const cltr = proc->cltr;
-		$io_context * const ctx = proc->io.ctx;
+		io_context$ * const ctx = proc->io.ctx;
 		/* paranoid */ verify( cltr );
 		/* paranoid */ verify( ctx );
 
@@ -277,7 +277,7 @@
 		/* paranoid */ verify( proc );
 		/* paranoid */ verify( proc->io.ctx );
 
-		$io_context & ctx = *proc->io.ctx;
+		io_context$ & ctx = *proc->io.ctx;
 
 		__ioarbiter_flush( ctx );
 
@@ -311,7 +311,7 @@
 	//=============================================================================================
 	// Allocation
 	// for user's convenience fill the sqes from the indexes
-	static inline void __fill(struct io_uring_sqe * out_sqes[], __u32 want, __u32 idxs[], struct $io_context * ctx)  {
+	static inline void __fill(struct io_uring_sqe * out_sqes[], __u32 want, __u32 idxs[], struct io_context$ * ctx)  {
 		struct io_uring_sqe * sqes = ctx->sq.sqes;
 		for(i; want) {
 			// __cfadbg_print_safe(io, "Kernel I/O : filling loop\n");
@@ -321,7 +321,7 @@
 
 	// Try to directly allocate from the a given context
 	// Not thread-safe
-	static inline bool __alloc(struct $io_context * ctx, __u32 idxs[], __u32 want) {
+	static inline bool __alloc(struct io_context$ * ctx, __u32 idxs[], __u32 want) {
 		__sub_ring_t & sq = ctx->sq;
 		const __u32 mask  = *sq.mask;
 		__u32 fhead = sq.free_ring.head;    // get the current head of the queue
@@ -348,12 +348,12 @@
 	// able to see which entries can be used and which are already un used by an other thread
 	// for convenience, return both the index and the pointer to the sqe
 	// sqe == &sqes[idx]
-	struct $io_context * cfa_io_allocate(struct io_uring_sqe * sqes[], __u32 idxs[], __u32 want) libcfa_public {
+	struct io_context$ * cfa_io_allocate(struct io_uring_sqe * sqes[], __u32 idxs[], __u32 want) libcfa_public {
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to allocate %u\n", want);
 
 		disable_interrupts();
 		processor * proc = __cfaabi_tls.this_processor;
-		$io_context * ctx = proc->io.ctx;
+		io_context$ * ctx = proc->io.ctx;
 		/* paranoid */ verify( __cfaabi_tls.this_processor );
 		/* paranoid */ verify( ctx );
 
@@ -377,12 +377,12 @@
 		__STATS__( true, io.alloc.slow += 1; )
 		enable_interrupts();
 
-		$io_arbiter * ioarb = proc->cltr->io.arbiter;
+		io_arbiter$ * ioarb = proc->cltr->io.arbiter;
 		/* paranoid */ verify( ioarb );
 
 		// __cfadbg_print_safe(io, "Kernel I/O : falling back on arbiter for allocation\n");
 
-		struct $io_context * ret = __ioarbiter_allocate(*ioarb, idxs, want);
+		struct io_context$ * ret = __ioarbiter_allocate(*ioarb, idxs, want);
 
 		// __cfadbg_print_safe(io, "Kernel I/O : slow allocation completed from ring %d\n", ret->fd);
 
@@ -392,7 +392,7 @@
 
 	//=============================================================================================
 	// submission
-	static inline void __submit_only( struct $io_context * ctx, __u32 idxs[], __u32 have) {
+	static inline void __submit_only( struct io_context$ * ctx, __u32 idxs[], __u32 have) {
 		// We can proceed to the fast path
 		// Get the right objects
 		__sub_ring_t & sq = ctx->sq;
@@ -413,7 +413,7 @@
 		__atomic_store_n(&ctx->proc->io.dirty  , true, __ATOMIC_RELAXED);
 	}
 
-	static inline void __submit( struct $io_context * ctx, __u32 idxs[], __u32 have, bool lazy) {
+	static inline void __submit( struct io_context$ * ctx, __u32 idxs[], __u32 have, bool lazy) {
 		__sub_ring_t & sq = ctx->sq;
 		__submit_only(ctx, idxs, have);
 
@@ -427,13 +427,13 @@
 		}
 	}
 
-	void cfa_io_submit( struct $io_context * inctx, __u32 idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1))) libcfa_public {
+	void cfa_io_submit( struct io_context$ * inctx, __u32 idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1))) libcfa_public {
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to submit %u (%s)\n", have, lazy ? "lazy" : "eager");
 
 		disable_interrupts();
 		__STATS__( true, if(!lazy) io.submit.eagr += 1; )
 		processor * proc = __cfaabi_tls.this_processor;
-		$io_context * ctx = proc->io.ctx;
+		io_context$ * ctx = proc->io.ctx;
 		/* paranoid */ verify( __cfaabi_tls.this_processor );
 		/* paranoid */ verify( ctx );
 
@@ -464,7 +464,7 @@
 	// Go through the ring's submit queue and release everything that has already been consumed
 	// by io_uring
 	// This cannot be done by multiple threads
-	static __u32 __release_sqes( struct $io_context & ctx ) {
+	static __u32 __release_sqes( struct io_context$ & ctx ) {
 		const __u32 mask = *ctx.sq.mask;
 
 		__attribute__((unused))
@@ -537,7 +537,7 @@
 		return __atomic_load_n( &queue.empty, __ATOMIC_SEQ_CST);
 	}
 
-	static $io_context * __ioarbiter_allocate( $io_arbiter & this, __u32 idxs[], __u32 want ) {
+	static io_context$ * __ioarbiter_allocate( io_arbiter$ & this, __u32 idxs[], __u32 want ) {
 		// __cfadbg_print_safe(io, "Kernel I/O : arbiter allocating\n");
 
 		__STATS__( false, io.alloc.block += 1; )
@@ -556,7 +556,7 @@
 
 	}
 
-	static void __ioarbiter_notify( $io_arbiter & this, $io_context * ctx ) {
+	static void __ioarbiter_notify( io_arbiter$ & this, io_context$ * ctx ) {
 		/* paranoid */ verify( !empty(this.pending.queue) );
 
 		lock( this.pending.lock __cfaabi_dbg_ctx2 );
@@ -586,14 +586,14 @@
 		unlock( this.pending.lock );
 	}
 
-	static void __ioarbiter_notify( $io_context & ctx ) {
+	static void __ioarbiter_notify( io_context$ & ctx ) {
 		if(!empty( ctx.arbiter->pending )) {
 			__ioarbiter_notify( *ctx.arbiter, &ctx );
 		}
 	}
 
 	// Simply append to the pending
-	static void __ioarbiter_submit( $io_context * ctx, __u32 idxs[], __u32 have, bool lazy ) {
+	static void __ioarbiter_submit( io_context$ * ctx, __u32 idxs[], __u32 have, bool lazy ) {
 		__cfadbg_print_safe(io, "Kernel I/O : submitting %u from the arbiter to context %u\n", have, ctx->fd);
 
 		__cfadbg_print_safe(io, "Kernel I/O : waiting to submit %u\n", have);
@@ -617,7 +617,7 @@
 		__cfadbg_print_safe(io, "Kernel I/O : %u submitted from arbiter\n", have);
 	}
 
-	static void __ioarbiter_flush( $io_context & ctx ) {
+	static void __ioarbiter_flush( io_context$ & ctx ) {
 		if(!empty( ctx.ext_sq )) {
 			__STATS__( false, io.flush.external += 1; )
 
@@ -641,7 +641,7 @@
 
 	#if defined(CFA_WITH_IO_URING_IDLE)
 		bool __kernel_read(processor * proc, io_future_t & future, iovec & iov, int fd) {
-			$io_context * ctx = proc->io.ctx;
+			io_context$ * ctx = proc->io.ctx;
 			/* paranoid */ verify( ! __preemption_enabled() );
 			/* paranoid */ verify( proc == __cfaabi_tls.this_processor );
 			/* paranoid */ verify( ctx );

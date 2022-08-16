@@ -304,10 +304,14 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 	// Actually run the thread
 	RUNNING:  while(true) {
 		thrd_dst->preempted = __NO_PREEMPTION;
-		thrd_dst->state = Active;
 
 		// Update global state
 		kernelTLS().this_thread = thrd_dst;
+
+		// Update the state after setting this_thread
+		// so that the debugger can find all active threads
+		// in tls storage
+		thrd_dst->state = Active;
 
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( kernelTLS().this_thread == thrd_dst );
@@ -334,9 +338,6 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 		/* paranoid */ verify( kernelTLS().this_thread == thrd_dst );
 		/* paranoid */ verify( ! __preemption_enabled() );
 
-		// Reset global state
-		kernelTLS().this_thread = 0p;
-
 		// We just finished running a thread, there are a few things that could have happened.
 		// 1 - Regular case : the thread has blocked and now one has scheduled it yet.
 		// 2 - Racy case    : the thread has blocked but someone has already tried to schedule it.
@@ -345,12 +346,20 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 		// In case 2, we lost the race so we now own the thread.
 
 		if(unlikely(thrd_dst->preempted != __NO_PREEMPTION)) {
+			// Reset the this_thread now that we know
+			// the state isn't active anymore
+			kernelTLS().this_thread = 0p;
+
 			// The thread was preempted, reschedule it and reset the flag
 			schedule_thread$( thrd_dst, UNPARK_LOCAL );
 			break RUNNING;
 		}
 
 		if(unlikely(thrd_dst->state == Halting)) {
+			// Reset the this_thread now that we know
+			// the state isn't active anymore
+			kernelTLS().this_thread = 0p;
+
 			// The thread has halted, it should never be scheduled/run again
 			// finish the thread
 			__thread_finish( thrd_dst );
@@ -359,6 +368,10 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 
 		/* paranoid */ verify( thrd_dst->state == Active );
 		thrd_dst->state = Blocked;
+
+		// Reset the this_thread now that we know
+		// the state isn't active anymore
+		kernelTLS().this_thread = 0p;
 
 		// set state of processor coroutine to active and the thread to inactive
 		int old_ticket = __atomic_fetch_sub(&thrd_dst->ticket, 1, __ATOMIC_SEQ_CST);

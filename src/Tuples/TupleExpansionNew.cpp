@@ -9,8 +9,8 @@
 // Author           : Henry Xue
 // Created On       : Mon Aug 23 15:36:09 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Jul 29 14:06:00 2022
-// Update Count     : 2
+// Last Modified On : Mon Aug 15 17:00:00 2022
+// Update Count     : 3
 //
 
 #include "Tuples.h"
@@ -99,18 +99,17 @@ const ast::Expr * UniqueExprExpander::postvisit( const ast::UniqueExpr * unqExpr
 	return ast::deepCopy(decls[id].get());
 }
 
-struct TupleAssignExpander {
+/// Replaces Tuple Assign & Index Expressions, and Tuple Types.
+struct TupleMainExpander :
+		public ast::WithGuards,
+		public ast::WithVisitorRef<TupleMainExpander>,
+		public ast::WithDeclsToAdd<> {
 	ast::Expr const * postvisit( ast::TupleAssignExpr const * expr ) {
 		// Just move the env on the new top level expression.
 		return ast::mutate_field( expr->stmtExpr.get(),
 			&ast::TupleAssignExpr::env, expr->env.get() );
 	}
-};
 
-struct TupleTypeReplacer :
-		public ast::WithGuards,
-		public ast::WithVisitorRef<TupleTypeReplacer>,
-		public ast::WithDeclsToAdd<> {
 	void previsit( ast::ParseNode const * node ) {
 		GuardValue( location ) = &node->location;
 	}
@@ -184,12 +183,7 @@ struct TupleTypeReplacer :
 		}
 		return newType;
 	}
-private:
-	ScopedMap< int, ast::StructDecl const * > typeMap;
-	CodeLocation const * location = nullptr;
-};
 
-struct TupleIndexExpander {
 	ast::Expr const * postvisit( ast::TupleIndexExpr const * expr ) {
 		CodeLocation const & location = expr->location;
 		ast::Expr const * tuple = expr->tuple.get();
@@ -220,6 +214,9 @@ struct TupleIndexExpander {
 		memberExpr->env = env;
 		return memberExpr;
 	}
+private:
+	ScopedMap< int, ast::StructDecl const * > typeMap;
+	CodeLocation const * location = nullptr;
 };
 
 ast::Expr const * replaceTupleExpr(
@@ -274,10 +271,8 @@ void expandUniqueExpr( ast::TranslationUnit & translationUnit ) {
 }
 
 void expandTuples( ast::TranslationUnit & translationUnit ) {
-	// These may not have to be seperate passes.
-	ast::Pass<TupleAssignExpander>::run( translationUnit );
-	ast::Pass<TupleTypeReplacer>::run( translationUnit );
-	ast::Pass<TupleIndexExpander>::run( translationUnit );
+	// These can't just be combined simply (there might be a way with work).
+	ast::Pass<TupleMainExpander>::run( translationUnit );
 	ast::Pass<TupleExprExpander>::run( translationUnit );
 }
 

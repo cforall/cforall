@@ -138,8 +138,8 @@ void unregister( struct cluster * cltr, struct thread$ & thrd );
 
 //-----------------------------------------------------------------------------
 // I/O
-$io_arbiter * create(void);
-void destroy($io_arbiter *);
+io_arbiter$ * create(void);
+void destroy(io_arbiter$ *);
 
 //=======================================================================
 // Cluster lock API

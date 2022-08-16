@@ -27,8 +27,8 @@
 #if !defined(CFA_HAVE_LINUX_IO_URING_H)
 	void ?{}(io_context_params & this) libcfa_public {}
 
-	void  ?{}($io_context & this, struct cluster & cl) {}
-	void ^?{}($io_context & this) {}
+	void  ?{}(io_context$ & this, struct cluster & cl) {}
+	void ^?{}(io_context$ & this) {}
 
 	void __cfa_io_start( processor * proc ) {}
 	bool __cfa_io_flush( processor * proc ) { return false; }
@@ -36,8 +36,8 @@
 	void __cfa_io_idle ( processor * ) __attribute__((nonnull (1))) {}
 	void __cfa_io_stop ( processor * proc ) {}
 
-	$io_arbiter * create(void) { return 0p; }
-	void destroy($io_arbiter *) {}
+	io_arbiter$ * create(void) { return 0p; }
+	void destroy(io_arbiter$ *) {}
 
 #else
 #pragma GCC diagnostic push
@@ -104,14 +104,14 @@
 
 
 
-	static void __io_uring_setup ( $io_context & this, const io_context_params & params_in, int procfd );
-	static void __io_uring_teardown( $io_context & this );
-	static void __epoll_register($io_context & ctx);
-	static void __epoll_unregister($io_context & ctx);
-	void __ioarbiter_register( $io_arbiter & mutex, $io_context & ctx );
-	void __ioarbiter_unregister( $io_arbiter & mutex, $io_context & ctx );
+	static void __io_uring_setup ( io_context$ & this, const io_context_params & params_in, int procfd );
+	static void __io_uring_teardown( io_context$ & this );
+	static void __epoll_register(io_context$ & ctx);
+	static void __epoll_unregister(io_context$ & ctx);
+	void __ioarbiter_register( io_arbiter$ & mutex, io_context$ & ctx );
+	void __ioarbiter_unregister( io_arbiter$ & mutex, io_context$ & ctx );
 
-	void ?{}($io_context & this, processor * proc, struct cluster & cl) {
+	void ?{}(io_context$ & this, processor * proc, struct cluster & cl) {
 		/* paranoid */ verify( cl.io.arbiter );
 		this.proc = proc;
 		this.arbiter = cl.io.arbiter;
@@ -121,14 +121,14 @@
 		__cfadbg_print_safe(io_core, "Kernel I/O : Created ring for io_context %u (%p)\n", this.fd, &this);
 	}
 
-	void ^?{}($io_context & this) {
+	void ^?{}(io_context$ & this) {
 		__cfadbg_print_safe(io_core, "Kernel I/O : tearing down io_context %u\n", this.fd);
 
 		__io_uring_teardown( this );
 		__cfadbg_print_safe(io_core, "Kernel I/O : Destroyed ring for io_context %u\n", this.fd);
 	}
 
-	static void __io_uring_setup( $io_context & this, const io_context_params & params_in, int procfd ) {
+	static void __io_uring_setup( io_context$ & this, const io_context_params & params_in, int procfd ) {
 		// Step 1 : call to setup
 		struct io_uring_params params;
 		memset(&params, 0, sizeof(params));
@@ -269,7 +269,7 @@
 		this.fd         = fd;
 	}
 
-	static void __io_uring_teardown( $io_context & this ) {
+	static void __io_uring_teardown( io_context$ & this ) {
 		// Shutdown the io rings
 		struct __sub_ring_t & sq = this.sq;
 		struct __cmp_ring_t & cq = this.cq;
@@ -312,7 +312,7 @@
 //=============================================================================================
 // I/O Context Sleep
 //=============================================================================================
-	// static inline void __epoll_ctl($io_context & ctx, int op, const char * error) {
+	// static inline void __epoll_ctl(io_context$ & ctx, int op, const char * error) {
 	// 	struct epoll_event ev;
 	// 	ev.events = EPOLLIN | EPOLLONESHOT;
 	// 	ev.data.u64 = (__u64)&ctx;
@@ -322,11 +322,11 @@
 	// 	}
 	// }
 
-	// static void __epoll_register($io_context & ctx) {
+	// static void __epoll_register(io_context$ & ctx) {
 	// 	__epoll_ctl(ctx, EPOLL_CTL_ADD, "ADD");
 	// }
 
-	// static void __epoll_unregister($io_context & ctx) {
+	// static void __epoll_unregister(io_context$ & ctx) {
 	// 	// Read the current epoch so we know when to stop
 	// 	size_t curr = __atomic_load_n(&iopoll.epoch, __ATOMIC_SEQ_CST);
 
@@ -345,7 +345,7 @@
 	// 	while(curr == iopoll.epoch && !iopoll.stopped) Pause();
 	// }
 
-	// void __ioctx_prepare_block($io_context & ctx) {
+	// void __ioctx_prepare_block(io_context$ & ctx) {
 	// 	__cfadbg_print_safe(io_core, "Kernel I/O - epoll : Re-arming io poller %d (%p)\n", ctx.fd, &ctx);
 	// 	__epoll_ctl(ctx, EPOLL_CTL_MOD, "REARM");
 	// }
@@ -354,16 +354,16 @@
 //=============================================================================================
 // I/O Context Misc Setup
 //=============================================================================================
-	void ?{}( $io_arbiter & this ) {
+	void ?{}( io_arbiter$ & this ) {
 		this.pending.empty = true;
 	}
 
-	void ^?{}( $io_arbiter & mutex this ) {}
+	void ^?{}( io_arbiter$ & mutex this ) {}
 
-	$io_arbiter * create(void) {
+	io_arbiter$ * create(void) {
 		return new();
 	}
-	void destroy($io_arbiter * arbiter) {
+	void destroy(io_arbiter$ * arbiter) {
 		delete(arbiter);
 	}
 

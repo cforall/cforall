@@ -32,7 +32,7 @@ extern "C" {
 	#include "monitor.hfa"
 
 	struct processor;
-	monitor $io_arbiter;
+	monitor io_arbiter$;
 
 	//-----------------------------------------------------------------------
 	// Ring Data structure
@@ -124,8 +124,8 @@ extern "C" {
 	};
 
 
-	struct __attribute__((aligned(64))) $io_context {
-		$io_arbiter * arbiter;
+	struct __attribute__((aligned(64))) io_context$ {
+		io_arbiter$ * arbiter;
 		processor * proc;
 
 		__outstanding_io_queue ext_sq;
@@ -136,7 +136,7 @@ extern "C" {
 		int fd;
 	};
 
-	static inline unsigned long long ts($io_context *& this) {
+	static inline unsigned long long ts(io_context$ *& this) {
 		const __u32 head = *this->cq.head;
 		const __u32 tail = *this->cq.tail;
 
@@ -149,10 +149,10 @@ extern "C" {
 		inline __outstanding_io;
 		__u32 * idxs;
 		__u32 want;
-		$io_context * ctx;
+		io_context$ * ctx;
 	};
 
-	monitor __attribute__((aligned(64))) $io_arbiter {
+	monitor __attribute__((aligned(64))) io_arbiter$ {
 		__outstanding_io_queue pending;
 	};
 
@@ -185,5 +185,5 @@ extern "C" {
 		#endif
 	#endif
 
-	// void __ioctx_prepare_block($io_context & ctx);
+	// void __ioctx_prepare_block(io_context$ & ctx);
 #endif

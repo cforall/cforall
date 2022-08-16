@@ -277,7 +277,7 @@ static void reassign_cltr_id(struct cluster * cltr) {
 }
 
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
-	static void assign_io($io_context ** data, size_t count, dlist(processor) & list) {
+	static void assign_io(io_context$ ** data, size_t count, dlist(processor) & list) {
 		processor * it = &list`first;
 		while(it) {
 			/* paranoid */ verifyf( it, "Unexpected null iterator\n");

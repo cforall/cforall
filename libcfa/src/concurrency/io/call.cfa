@@ -57,8 +57,8 @@
 		#endif
 	;
 
-	extern struct $io_context * cfa_io_allocate(struct io_uring_sqe * out_sqes[], __u32 out_idxs[], __u32 want)  __attribute__((nonnull (1,2)));
-	extern void cfa_io_submit( struct $io_context * in_ctx, __u32 in_idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1,2)));
+	extern struct io_context$ * cfa_io_allocate(struct io_uring_sqe * out_sqes[], __u32 out_idxs[], __u32 want)  __attribute__((nonnull (1,2)));
+	extern void cfa_io_submit( struct io_context$ * in_ctx, __u32 in_idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1,2)));
 #endif
 
 //=============================================================================================
@@ -209,7 +209,7 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 			__u8 sflags = REGULAR_FLAGS & submit_flags;
 			__u32 idx;
 			struct io_uring_sqe * sqe;
-			struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+			struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 	
 			sqe->opcode = IORING_OP_READV;
 			sqe->user_data = (uintptr_t)&future;
@@ -271,7 +271,7 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 			__u8 sflags = REGULAR_FLAGS & submit_flags;
 			__u32 idx;
 			struct io_uring_sqe * sqe;
-			struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+			struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 	
 			sqe->opcode = IORING_OP_WRITEV;
 			sqe->user_data = (uintptr_t)&future;
@@ -332,7 +332,7 @@ inline void async_fsync(io_future_t & future, int fd, __u64 submit_flags) {
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_FSYNC;
 		sqe->user_data = (uintptr_t)&future;
@@ -389,7 +389,7 @@ inline void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, stru
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_EPOLL_CTL;
 		sqe->user_data = (uintptr_t)&future;
@@ -449,7 +449,7 @@ inline void async_sync_file_range(io_future_t & future, int fd, off64_t offset, 
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_SYNC_FILE_RANGE;
 		sqe->user_data = (uintptr_t)&future;
@@ -509,7 +509,7 @@ inline void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr 
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_SENDMSG;
 		sqe->user_data = (uintptr_t)&future;
@@ -569,7 +569,7 @@ inline void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, 
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_RECVMSG;
 		sqe->user_data = (uintptr_t)&future;
@@ -629,7 +629,7 @@ inline void async_send(io_future_t & future, int sockfd, const void *buf, size_t
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_SEND;
 		sqe->user_data = (uintptr_t)&future;
@@ -689,7 +689,7 @@ inline void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, 
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_RECV;
 		sqe->user_data = (uintptr_t)&future;
@@ -749,7 +749,7 @@ inline void async_accept4(io_future_t & future, int sockfd, struct sockaddr *add
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_ACCEPT;
 		sqe->user_data = (uintptr_t)&future;
@@ -809,7 +809,7 @@ inline void async_connect(io_future_t & future, int sockfd, const struct sockadd
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_CONNECT;
 		sqe->user_data = (uintptr_t)&future;
@@ -868,7 +868,7 @@ inline void async_fallocate(io_future_t & future, int fd, int mode, off_t offset
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_FALLOCATE;
 		sqe->user_data = (uintptr_t)&future;
@@ -928,7 +928,7 @@ inline void async_posix_fadvise(io_future_t & future, int fd, off_t offset, off_
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_FADVISE;
 		sqe->user_data = (uintptr_t)&future;
@@ -988,7 +988,7 @@ inline void async_madvise(io_future_t & future, void *addr, size_t length, int a
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_MADVISE;
 		sqe->user_data = (uintptr_t)&future;
@@ -1047,7 +1047,7 @@ inline void async_openat(io_future_t & future, int dirfd, const char *pathname, 
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_OPENAT;
 		sqe->user_data = (uintptr_t)&future;
@@ -1108,7 +1108,7 @@ int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 su
 			__u8 sflags = REGULAR_FLAGS & submit_flags;
 			__u32 idx;
 			struct io_uring_sqe * sqe;
-			struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+			struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 	
 			sqe->opcode = IORING_OP_OPENAT2;
 			sqe->user_data = (uintptr_t)&future;
@@ -1169,7 +1169,7 @@ inline void async_close(io_future_t & future, int fd, __u64 submit_flags) {
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_CLOSE;
 		sqe->user_data = (uintptr_t)&future;
@@ -1227,7 +1227,7 @@ int cfa_close(int fd, __u64 submit_flags) {
 			__u8 sflags = REGULAR_FLAGS & submit_flags;
 			__u32 idx;
 			struct io_uring_sqe * sqe;
-			struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+			struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 	
 			sqe->opcode = IORING_OP_STATX;
 			sqe->user_data = (uintptr_t)&future;
@@ -1289,7 +1289,7 @@ inline void async_read(io_future_t & future, int fd, void * buf, size_t count, _
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_READ;
 		sqe->user_data = (uintptr_t)&future;
@@ -1348,7 +1348,7 @@ inline void async_write(io_future_t & future, int fd, void * buf, size_t count, 
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_WRITE;
 		sqe->user_data = (uintptr_t)&future;
@@ -1407,7 +1407,7 @@ inline void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_SPLICE;
 		sqe->user_data = (uintptr_t)&future;
@@ -1469,7 +1469,7 @@ inline void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, u
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_TEE;
 		sqe->user_data = (uintptr_t)&future;

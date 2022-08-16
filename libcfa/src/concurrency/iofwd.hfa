@@ -48,7 +48,7 @@ extern "C" {
 typedef __off64_t off64_t;
 
 struct cluster;
-struct $io_context;
+struct io_context$;
 
 struct iovec;
 struct msghdr;
@@ -81,8 +81,8 @@ static inline {
 
 //----------
 // underlying calls
-extern struct $io_context * cfa_io_allocate(struct io_uring_sqe * out_sqes[], __u32 out_idxs[], __u32 want)  __attribute__((nonnull (1,2)));
-extern void cfa_io_submit( struct $io_context * in_ctx, __u32 in_idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1,2)));
+extern struct io_context$ * cfa_io_allocate(struct io_uring_sqe * out_sqes[], __u32 out_idxs[], __u32 want)  __attribute__((nonnull (1,2)));
+extern void cfa_io_submit( struct io_context$ * in_ctx, __u32 in_idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1,2)));
 
 //----------
 // synchronous calls

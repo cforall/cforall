@@ -59,7 +59,7 @@ void main(Submitter & this) {
 			io_future_t f;
 			struct io_uring_sqe * sqe;
 			__u32 idx;
-			struct $io_context * ctx = cfa_io_allocate(&sqe, &idx, 1);
+			struct io_context$ * ctx = cfa_io_allocate(&sqe, &idx, 1);
 
 			zero_sqe(sqe);
 			sqe->opcode = IORING_OP_NOP;

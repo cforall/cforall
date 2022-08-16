@@ -74,8 +74,8 @@ Prelude = """#define __cforall_thread__
 		#endif
 	;
 
-	extern struct $io_context * cfa_io_allocate(struct io_uring_sqe * out_sqes[], __u32 out_idxs[], __u32 want)  __attribute__((nonnull (1,2)));
-	extern void cfa_io_submit( struct $io_context * in_ctx, __u32 in_idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1,2)));
+	extern struct io_context$ * cfa_io_allocate(struct io_uring_sqe * out_sqes[], __u32 out_idxs[], __u32 want)  __attribute__((nonnull (1,2)));
+	extern void cfa_io_submit( struct io_context$ * in_ctx, __u32 in_idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1,2)));
 #endif
 
 //=============================================================================================
@@ -199,7 +199,7 @@ AsyncTemplate = """inline void async_{name}(io_future_t & future, {params}, __u6
 		__u8 sflags = REGULAR_FLAGS & submit_flags;
 		__u32 idx;
 		struct io_uring_sqe * sqe;
-		struct $io_context * ctx = cfa_io_allocate( &sqe, &idx, 1 );
+		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
 		sqe->opcode = IORING_OP_{op};
 		sqe->user_data = (uintptr_t)&future;
