@@ -23,8 +23,6 @@
 //-----------------------------------------------------------------------
 // Calc moving average based on existing average, before and current time.
 static inline unsigned long long moving_average(unsigned long long currtsc, unsigned long long instsc, unsigned long long old_avg) {
-	/* paranoid */ verifyf( currtsc < 45000000000000000, "Suspiciously large current time: %'llu (%llx)\n", currtsc, currtsc );
-	/* paranoid */ verifyf( instsc  < 45000000000000000, "Suspiciously large insert time: %'llu (%llx)\n", instsc, instsc );
 	/* paranoid */ verifyf( old_avg < 15000000000000, "Suspiciously large previous average: %'llu (%llx)\n", old_avg, old_avg );
 
 	const unsigned long long new_val = currtsc > instsc ? currtsc - instsc : 0;
