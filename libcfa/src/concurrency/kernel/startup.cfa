@@ -112,7 +112,7 @@ KERNEL_STORAGE(cluster,	             mainCluster);
 KERNEL_STORAGE(processor,            mainProcessor);
 KERNEL_STORAGE(thread$,	             mainThread);
 KERNEL_STORAGE(__stack_t,            mainThreadCtx);
-KERNEL_STORAGE(__scheduler_RWLock_t, __scheduler_lock);
+// KERNEL_STORAGE(__scheduler_RWLock_t, __scheduler_lock);
 KERNEL_STORAGE(eventfd_t,            mainIdleEventFd);
 KERNEL_STORAGE(io_future_t,          mainIdleFuture);
 #if !defined(__CFA_NO_STATISTICS__)
@@ -122,7 +122,6 @@ KERNEL_STORAGE(__stats_t, mainProcStats);
 cluster              * mainCluster libcfa_public;
 processor            * mainProcessor;
 thread$              * mainThread;
-__scheduler_RWLock_t * __scheduler_lock;
 
 extern "C" {
 	struct { __dllist_t(cluster) list; __spinlock_t lock; } __cfa_dbg_global_clusters;
@@ -146,6 +145,8 @@ thread_local struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "i
 		0,
 	#endif
 };
+
+__scheduler_RWLock_t __scheduler_lock @= { 0 };
 
 #if   defined(CFA_HAVE_LINUX_LIBRSEQ)
 	// No data needed
@@ -197,8 +198,8 @@ static void __kernel_startup(void) {
 	/* paranoid */ verify( verify_fwd_bck_rng() );
 
 	// Initialize the global scheduler lock
-	__scheduler_lock = (__scheduler_RWLock_t*)&storage___scheduler_lock;
-	(*__scheduler_lock){};
+	// __scheduler_lock = (__scheduler_RWLock_t*)&storage___scheduler_lock;
+	(__scheduler_lock){};
 
 	// Initialize the main cluster
 	mainCluster = (cluster *)&storage_mainCluster;
@@ -335,7 +336,7 @@ static void __kernel_shutdown(void) {
 
 	^(*mainCluster){};
 
-	^(*__scheduler_lock){};
+	^(__scheduler_lock){};
 
 	^(__cfa_dbg_global_clusters.list){};
 	^(__cfa_dbg_global_clusters.lock){};

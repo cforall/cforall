@@ -109,7 +109,7 @@ void ^?{}(__scheduler_RWLock_t & this) {
 
 //=======================================================================
 // Lock-Free registering/unregistering of threads
-unsigned register_proc_id( void ) with(__scheduler_lock->lock) {
+unsigned register_proc_id( void ) with(__scheduler_lock.lock) {
 	__kernel_rseq_register();
 
 	bool * handle = (bool *)&kernelTLS().sched_lock;
@@ -131,11 +131,11 @@ unsigned register_proc_id( void ) with(__scheduler_lock->lock) {
 		}
 	}
 
-	if(max <= alloc) abort("Trying to create more than %ud processors", __scheduler_lock->lock.max);
+	if(max <= alloc) abort("Trying to create more than %ud processors", __scheduler_lock.lock.max);
 
 	// Step - 2 : F&A to get a new spot in the array.
 	uint_fast32_t n = __atomic_fetch_add(&alloc, 1, __ATOMIC_SEQ_CST);
-	if(max <= n) abort("Trying to create more than %ud processors", __scheduler_lock->lock.max);
+	if(max <= n) abort("Trying to create more than %ud processors", __scheduler_lock.lock.max);
 
 	// Step - 3 : Mark space as used and then publish it.
 	data[n] = handle;
@@ -153,7 +153,7 @@ unsigned register_proc_id( void ) with(__scheduler_lock->lock) {
 	return n;
 }
 
-void unregister_proc_id( unsigned id ) with(__scheduler_lock->lock) {
+void unregister_proc_id( unsigned id ) with(__scheduler_lock.lock) {
 	/* paranoid */ verify(id < ready);
 	/* paranoid */ verify(id == kernelTLS().sched_id);
 	/* paranoid */ verify(data[id] == &kernelTLS().sched_lock);
@@ -168,7 +168,7 @@ void unregister_proc_id( unsigned id ) with(__scheduler_lock->lock) {
 //-----------------------------------------------------------------------
 // Writer side : acquire when changing the ready queue, e.g. adding more
 //  queues or removing them.
-uint_fast32_t ready_mutate_lock( void ) with(__scheduler_lock->lock) {
+uint_fast32_t ready_mutate_lock( void ) with(__scheduler_lock.lock) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 
 	// Step 1 : lock global lock
@@ -195,7 +195,7 @@ uint_fast32_t ready_mutate_lock( void ) with(__scheduler_lock->lock) {
 	return s;
 }
 
-void ready_mutate_unlock( uint_fast32_t last_s ) with(__scheduler_lock->lock) {
+void ready_mutate_unlock( uint_fast32_t last_s ) with(__scheduler_lock.lock) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 
 	// Step 1 : release local locks

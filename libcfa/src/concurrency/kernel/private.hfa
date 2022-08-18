@@ -185,8 +185,10 @@ static inline void __atomic_unlock(volatile bool * ll) {
 // simplicity and performance
 union __attribute__((aligned(64))) __scheduler_RWLock_t {
 	struct {
+		__attribute__((aligned(64))) char padding;
+
 		// total cachelines allocated
-		unsigned int max;
+		__attribute__((aligned(64))) unsigned int max;
 
 		// cachelines currently in use
 		volatile unsigned int alloc;
@@ -207,12 +209,12 @@ union __attribute__((aligned(64))) __scheduler_RWLock_t {
 void  ?{}(__scheduler_RWLock_t & this);
 void ^?{}(__scheduler_RWLock_t & this);
 
-extern __scheduler_RWLock_t * __scheduler_lock;
+extern __scheduler_RWLock_t __scheduler_lock;
 
 //-----------------------------------------------------------------------
 // Reader side : acquire when using the ready queue to schedule but not
 //  creating/destroying queues
-static inline void ready_schedule_lock(void) with(__scheduler_lock->lock) {
+static inline void ready_schedule_lock(void) with(__scheduler_lock.lock) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( ! kernelTLS().in_sched_lock );
 	/* paranoid */ verify( data[kernelTLS().sched_id] == &kernelTLS().sched_lock );
@@ -237,7 +239,7 @@ static inline void ready_schedule_lock(void) with(__scheduler_lock->lock) {
 	#endif
 }
 
-static inline void ready_schedule_unlock(void) with(__scheduler_lock->lock) {
+static inline void ready_schedule_unlock(void) with(__scheduler_lock.lock) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( data[kernelTLS().sched_id] == &kernelTLS().sched_lock );
 	/* paranoid */ verify( !kernelTLS().this_processor || kernelTLS().this_processor->unique_id == kernelTLS().sched_id );
@@ -258,7 +260,7 @@ static inline void ready_schedule_unlock(void) with(__scheduler_lock->lock) {
 	}
 
 	static inline bool ready_mutate_islocked() {
-		return __scheduler_lock->lock.write_lock;
+		return __scheduler_lock.lock.write_lock;
 	}
 #endif
 
