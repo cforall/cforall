@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 18 17:57:36 2022
-// Update Count     : 644
+// Last Modified On : Thu Aug 25 18:07:06 2022
+// Update Count     : 645
 //
 
 #pragma once
@@ -191,7 +191,7 @@ static inline forall( T & | sized(T) ) {
 		if ( Fill.tag == 'c' ) {
 			memset( (char *)ptr + copy_end, (int)Fill.c, Dim * size - copy_end );
 		} else if ( Fill.tag == 't' ) {
-			for ( int i = copy_end; i < Dim * size; i += size ) {
+			for ( i; copy_end ~ Dim * size ~ size ) {
 				#pragma GCC diagnostic push
 				#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 				assert( size <= sizeof(Fill.t) );

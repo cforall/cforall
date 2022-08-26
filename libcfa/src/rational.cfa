@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:54:28 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 20 16:30:06 2021
-// Update Count     : 193
+// Last Modified On : Thu Aug 25 18:09:58 2022
+// Update Count     : 194
 //
 
 #include "rational.hfa"
@@ -25,7 +25,7 @@ forall( T | Arithmetic( T ) ) {
 	// Calculate greatest common denominator of two numbers, the first of which may be negative. Used to reduce
 	// rationals.  alternative: https://en.wikipedia.org/wiki/Binary_GCD_algorithm
 	static T gcd( T a, T b ) {
-		for ( ;; ) {									// Euclid's algorithm
+		for () {										// Euclid's algorithm
 			T r = a % b;
 		  if ( r == (T){0} ) break;
 			a = b;
@@ -245,7 +245,7 @@ Rational(T) narrow( double f, T md ) {
 	T ai, t;
 
 	// find terms until denom gets too big
-	for ( ;; ) {
+	for () {
 		ai = convert( f );
 	  if ( ! (m10 * ai + m11 <= md) ) break;
 		t = m00 * ai + m01;

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb 10 22:41:39 2022
-// Update Count     : 602
+// Last Modified On : Thu Aug 25 22:41:14 2022
+// Update Count     : 604
 //
 
 #include "stdlib.hfa"
@@ -34,7 +34,7 @@
 forall( T & | sized(T), TT... | { void ?{}( T &, TT ); } )
 T * anew( size_t dim, TT p ) {
 	T * arr = alloc( dim );
-	for ( unsigned int i = 0; i < dim; i += 1 ) {
+	for ( i; dim ) {
 		(arr[i]){ p };									// run constructor
 	} // for
 	return arr;
@@ -44,7 +44,7 @@ forall( T & | sized(T) | { void ^?{}( T & ); } )
 void adelete( T arr[] ) {
 	if ( arr ) {										// ignore null
 		size_t dim = malloc_size( arr ) / sizeof( T );
-		for ( int i = dim - 1; i >= 0; i -= 1 ) {		// reverse allocation order, must be unsigned
+		for ( i; 0 -~= dim - 1 ) {						// reverse allocation order, must be unsigned
 			^(arr[i]){};								// run destructor
 		} // for
 		free( arr );
@@ -55,7 +55,7 @@ forall( T & | sized(T) | { void ^?{}( T & ); }, TT... | { void adelete( TT ); } 
 void adelete( T arr[], TT rest ) {
 	if ( arr ) {										// ignore null
 		size_t dim = malloc_size( arr ) / sizeof( T );
-		for ( int i = dim - 1; i >= 0; i -= 1 ) {		// reverse allocation order, must be unsigned
+		for ( i; 0 -~= dim - 1 ) {						// reverse allocation order, must be unsigned
 			^(arr[i]){};								// run destructor
 		} // for
 		free( arr );

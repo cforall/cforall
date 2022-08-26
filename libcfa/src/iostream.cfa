@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan 19 08:15:53 2022
-// Update Count     : 1352
+// Last Modified On : Thu Aug 25 18:05:49 2022
+// Update Count     : 1354
 //
 
 #include "iostream.hfa"
@@ -196,7 +196,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 			int len = snprintf( buf, size, format, ##__VA_ARGS__, val ); \
 			fmt( os, "%s", buf ); \
 			if ( isfinite( val ) ) { /* if number, print decimal point when no fraction or exponent */ \
-				for ( int i = 0;; i += 1 ) { \
+				for ( i; 0 ~ @ ) { \
 					if ( i == len ) { fmt( os, "." ); break; } \
 					if ( buf[i] == '.' || buf[i] == 'e' || buf[i] == 'E' ) break; /* decimal point or scientific ? */ \
 				} /* for */ \
