@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 22 23:05:55 2022
-// Update Count     : 5651
+// Last Modified On : Sat Aug 27 13:21:28 2022
+// Update Count     : 5661
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1324,31 +1324,36 @@ for_control_expression:
 	| declaration comma_expression_opt ';' comma_expression_opt // C99, declaration has ';'
 		{ $$ = new ForCtrl( $1, $2, $4 ); }
 
-	| comma_expression									// CFA
+	| '@' ';' comma_expression							// CFA, empty loop-index
+		{ $$ = new ForCtrl( (ExpressionNode *)nullptr, $3, nullptr ); }
+	| '@' ';' comma_expression ';' comma_expression		// CFA, empty loop-index
+		{ $$ = new ForCtrl( (ExpressionNode *)nullptr, $3, $5 ); }
+
+	| comma_expression									// CFA, anonymous loop-index
 		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), NEW_ZERO, OperKinds::LThan, $1->clone(), NEW_ONE ); }
-	| downupdowneq comma_expression						// CFA
+	| downupdowneq comma_expression						// CFA, anonymous loop-index
 		{ $$ = forCtrl( $2, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $1, NEW_ZERO, $2->clone() ), $1, UPDOWN( $1, $2->clone(), NEW_ZERO ), NEW_ONE ); }
 
-	| comma_expression updowneq comma_expression		// CFA
+	| comma_expression updowneq comma_expression		// CFA, anonymous loop-index
 		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $2, $1->clone(), $3 ), $2, UPDOWN( $2, $3->clone(), $1->clone() ), NEW_ONE ); }
-	| '@' updowneq comma_expression						// CFA
+	| '@' updowneq comma_expression						// CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( $3, new string( DeclarationNode::anonymous.newName() ), $3->clone(), $2, nullptr, NEW_ONE );
 		}
-	| comma_expression updowneq '@'						// CFA
+	| comma_expression updowneq '@'						// CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
 			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; } 
 		}
-	| comma_expression updowneq comma_expression '~' comma_expression // CFA
+	| comma_expression updowneq comma_expression '~' comma_expression // CFA, anonymous loop-index
 		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $2, $1->clone(), $3 ), $2, UPDOWN( $2, $3->clone(), $1->clone() ), $5 ); }
-	| '@' updowneq comma_expression '~' comma_expression // CFA
+	| '@' updowneq comma_expression '~' comma_expression // CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( $3, new string( DeclarationNode::anonymous.newName() ), $3->clone(), $2, nullptr, $5 );
 		}
-	| comma_expression updowneq '@' '~' comma_expression // CFA
+	| comma_expression updowneq '@' '~' comma_expression // CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
 			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; } 
