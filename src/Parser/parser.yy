@@ -292,7 +292,7 @@ if ( N ) {																		\
 // keywords
 %token TYPEDEF
 %token EXTERN STATIC AUTO REGISTER
-%token THREADLOCAL										// C11
+%token THREADLOCALGCC THREADLOCALC11						// GCC, C11
 %token INLINE FORTRAN									// C99, extension ISO/IEC 9899:1999 Section J.5.9(1)
 %token NORETURN											// C11
 %token CONST VOLATILE
@@ -1344,7 +1344,7 @@ for_control_expression:
 	| comma_expression updowneq '@'						// CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; } 
+			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 		}
 	| comma_expression updowneq comma_expression '~' comma_expression // CFA, anonymous loop-index
 		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $2, $1->clone(), $3 ), $2, UPDOWN( $2, $3->clone(), $1->clone() ), $5 ); }
@@ -1356,7 +1356,7 @@ for_control_expression:
 	| comma_expression updowneq '@' '~' comma_expression // CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; } 
+			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 		}
 	| comma_expression updowneq comma_expression '~' '@' // CFA, error
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
@@ -2081,8 +2081,10 @@ storage_class:
 		{ $$ = DeclarationNode::newStorageClass( Type::Auto ); }
 	| REGISTER
 		{ $$ = DeclarationNode::newStorageClass( Type::Register ); }
-	| THREADLOCAL										// C11
-		{ $$ = DeclarationNode::newStorageClass( Type::Threadlocal ); }
+	| THREADLOCALGCC										// GCC
+		{ $$ = DeclarationNode::newStorageClass( Type::ThreadlocalGcc ); }
+	| THREADLOCALC11										// C11
+		{ $$ = DeclarationNode::newStorageClass( Type::ThreadlocalC11 ); }
 		// Put function specifiers here to simplify parsing rules, but separate them semantically.
 	| INLINE											// C99
 		{ $$ = DeclarationNode::newFuncSpecifier( Type::Inline ); }

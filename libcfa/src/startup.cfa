@@ -40,8 +40,17 @@ extern "C" {
 		#endif // __CFA_DEBUG__
 	} // __cfaabi_appready_shutdown
 
-	void disable_interrupts() __attribute__(( weak )) libcfa_public {}
-	void enable_interrupts() __attribute__(( weak )) libcfa_public {}
+	void disable_interrupts() __attribute__(( weak )) libcfa_nopreempt libcfa_public {}
+	void enable_interrupts() __attribute__(( weak )) libcfa_nopreempt libcfa_public {}
+	bool poll_interrupts() __attribute__(( weak )) libcfa_nopreempt libcfa_public { return false; }
+
+	__attribute__((visibility("hidden"))) extern void * const __start_cfatext_nopreempt;
+	__attribute__((visibility("hidden"))) extern void * const __stop_cfatext_nopreempt;
+
+	__attribute__((visibility("protected"))) const __cfa_nopreempt_region __libcfa_nopreempt @= {
+		(void * const)&__start_cfatext_nopreempt,
+		(void * const)&__stop_cfatext_nopreempt
+	};
 
 
 	extern void __cfaabi_interpose_startup( void );

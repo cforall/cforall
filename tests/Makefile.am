@@ -53,14 +53,14 @@ AM_CFAFLAGS = -XCFA --deterministic-out
 TARGET_CFA = $(if $(filter $(installed),yes), @CFACC_INSTALL@, @CFACC@)
 
 # adjust CC to current flags
-CC = LC_ALL=C $(if $(DISTCC_CFA_PATH),distcc $(DISTCC_CFA_PATH) ${ARCH_FLAGS} ${AST_FLAGS},$(TARGET_CFA) ${DEBUG_FLAGS} ${ARCH_FLAGS} ${AST_FLAGS})
+CC = LC_ALL=C $(if $(DISTCC_CFA_PATH),distcc $(DISTCC_CFA_PATH) ${ARCH_FLAGS} ,$(TARGET_CFA) ${DEBUG_FLAGS} ${ARCH_FLAGS})
 CFACC = $(CC)
 
 # get local binary for depedencies
 CFACCBIN = @CFACC@
 
 # adjusted CC but without the actual distcc call
-CFACCLOCAL = $(if $(DISTCC_CFA_PATH),$(DISTCC_CFA_PATH) ${ARCH_FLAGS} ${AST_FLAGS},$(TARGET_CFA) ${DEBUG_FLAGS} ${ARCH_FLAGS} ${AST_FLAGS})
+CFACCLOCAL = $(if $(DISTCC_CFA_PATH),$(DISTCC_CFA_PATH) ${ARCH_FLAGS} ,$(TARGET_CFA) ${DEBUG_FLAGS} ${ARCH_FLAGS})
 CFACCLINK = $(CFACCLOCAL) -quiet $(if $(test), 2> $(test), ) $($(shell echo "${@}_FLAGSLD" | sed 's/-\|\//_/g'))
 
 PRETTY_PATH=mkdir -p $(dir $(abspath ${@})) && cd ${srcdir} &&

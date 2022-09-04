@@ -1,17 +1,17 @@
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-// 
-// declarationSpecifier.cfa -- 
-// 
+//
+// declarationSpecifier.cfa --
+//
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug 17 08:21:04 2016
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Tue Apr 30 18:20:36 2019
 // Update Count     : 4
-// 
+//
 
 typedef short int Int;
 
@@ -50,6 +50,9 @@ const static struct { Int i; } volatile x33;
 struct { Int i; } static const volatile x34;
 struct { Int i; } const static volatile x35;
 struct { Int i; } const volatile static x36;
+
+_Thread_local int x37;
+__thread int x38;
 
 static inline const volatile int f11();
 inline const volatile static int f12();

@@ -663,7 +663,7 @@ bootloader.c : ${srcdir}/bootloader.cf prelude.cfa extras.cf gcc-builtins.cf bui
 maintainer-clean-local :
 	rm -rf $(DEPDIR)
 
-@ENABLE_DISTCC_TRUE@distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ gcc-builtins.cf builtins.cf extras.cf prelude.cfa bootloader.c $(srcdir)/../../tools/build/push2dist.sh
+@ENABLE_DISTCC_TRUE@distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ defines.hfa gcc-builtins.cf builtins.cf extras.cf prelude.cfa bootloader.c $(srcdir)/../../tools/build/push2dist.sh
 @ENABLE_DISTCC_TRUE@	${AM_V_GEN}$(srcdir)/../../tools/build/push2dist.sh @CFADIR_HASH@ @DIST_BWLIMIT@
 @ENABLE_DISTCC_TRUE@	@echo "Dummy file to track distribution to remote hosts" > ${@}
 

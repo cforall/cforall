@@ -132,7 +132,7 @@ extern int __map_prot;
 
 //-----------------------------------------------------------------------------
 // Global state
-thread_local struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "initial-exec" ))) @= {
+__thread struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "initial-exec" ))) @= {
 	NULL,												// cannot use 0p
 	NULL,
 	false,
@@ -152,7 +152,7 @@ __scheduler_RWLock_t __scheduler_lock @= { 0 };
 	// No data needed
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
 	extern "Cforall" {
-		__attribute__((aligned(64))) thread_local volatile struct rseq __cfaabi_rseq @= {
+		__attribute__((aligned(64))) __thread volatile struct rseq __cfaabi_rseq @= {
 			.cpu_id : RSEQ_CPU_ID_UNINITIALIZED,
 		};
 	}

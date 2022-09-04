@@ -23,7 +23,6 @@
 
 #define likely(x)   __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
-#define thread_local _Thread_local
 
 typedef void (*fptr_t)();
 typedef int_fast16_t __lock_size_t;
@@ -36,7 +35,23 @@ typedef int_fast16_t __lock_size_t;
 #define __cfa_dlink(x) struct { struct x * next; struct x * back; } __dlink_substitute
 #endif
 
+
+#if defined(__has_attribute)
+#if !__has_attribute(__noclone__)
+#define ATTRIBUTE_NOCLONE
+#endif
+#endif
+#ifndef ATTRIBUTE_NOCLONE
+#define ATTRIBUTE_NOCLONE __attribute__((__noclone__))
+#endif
+
 #define libcfa_public __attribute__((visibility("default")))
+#define libcfa_nopreempt __attribute__((section("cfatext_nopreempt"))) __attribute__((__noinline__)) ATTRIBUTE_NOCLONE
+
+struct __cfa_nopreempt_region {
+	void * start;
+	void * stop;
+};
 
 #ifdef __cforall
 void abort( const char fmt[], ... ) __attribute__ (( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ ));

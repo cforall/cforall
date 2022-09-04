@@ -87,7 +87,7 @@ void __thread_finish( thread$ * thrd );
 	// No data needed
 #elif defined(CFA_HAVE_LINUX_RSEQ_H)
 	extern "Cforall" {
-		extern __attribute__((aligned(64))) thread_local volatile struct rseq __cfaabi_rseq;
+		extern __attribute__((aligned(64))) __thread volatile struct rseq __cfaabi_rseq;
 	}
 #else
 	// No data needed
@@ -160,20 +160,29 @@ void unregister_proc_id( unsigned );
 // simple spinlock underlying the RWLock
 // Blocking acquire
 static inline void __atomic_acquire(volatile bool * ll) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify(ll);
+
 	while( __builtin_expect(__atomic_exchange_n(ll, (bool)true, __ATOMIC_SEQ_CST), false) ) {
 		while(__atomic_load_n(ll, (int)__ATOMIC_RELAXED))
 			Pause();
 	}
 	/* paranoid */ verify(*ll);
+	/* paranoid */ verify( ! __preemption_enabled() );
 }
 
 // Non-Blocking acquire
 static inline bool __atomic_try_acquire(volatile bool * ll) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify(ll);
+
 	return !__atomic_exchange_n(ll, (bool)true, __ATOMIC_SEQ_CST);
 }
 
 // Release
 static inline void __atomic_unlock(volatile bool * ll) {
+	/* paranoid */ verify( ! __preemption_enabled() );
+	/* paranoid */ verify(ll);
 	/* paranoid */ verify(*ll);
 	__atomic_store_n(ll, (bool)false, __ATOMIC_RELEASE);
 }

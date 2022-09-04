@@ -1240,7 +1240,7 @@ bool isCopyFunction( const ast::FunctionDecl * decl ) {
 	static const char * const data_section =  ".data" ASM_COMMENT;
 	static const char * const tlsd_section = ".tdata" ASM_COMMENT;
 	void addDataSectionAttribute( ObjectDecl * objDecl ) {
-		const bool is_tls = objDecl->get_storageClasses().is_threadlocal;
+		const bool is_tls = objDecl->get_storageClasses().is_threadlocal_any();
 		const char * section = is_tls ? tlsd_section : data_section;
 		objDecl->attributes.push_back(new Attribute("section", {
 			new ConstantExpr( Constant::from_string( section ) )
@@ -1248,7 +1248,7 @@ bool isCopyFunction( const ast::FunctionDecl * decl ) {
 	}
 
 	void addDataSectionAttribute( ast::ObjectDecl * objDecl ) {
-		const bool is_tls = objDecl->storage.is_threadlocal;
+		const bool is_tls = objDecl->storage.is_threadlocal_any();
 		const char * section = is_tls ? tlsd_section : data_section;
 		objDecl->attributes.push_back(new ast::Attribute("section", {
 			ast::ConstantExpr::from_string(objDecl->location, section)

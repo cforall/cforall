@@ -227,6 +227,7 @@
 		cq.cqes = (struct io_uring_cqe *)(((intptr_t)cq.ring_ptr) + params.cq_off.cqes);
 
 		#if !defined(CFA_WITH_IO_URING_IDLE)
+		{
 			// Step 4 : eventfd
 			__cfadbg_print_safe(io_core, "Kernel I/O : registering %d for completion with ring %d\n", procfd, fd);
 
@@ -236,9 +237,14 @@
 			}
 
 			__cfadbg_print_safe(io_core, "Kernel I/O : registered %d for completion with ring %d\n", procfd, fd);
+		}
 		#endif
 
+		// TODO: implement a proper version of this.
+		// I have not found a better maximum that works in general but users should be able to configure it
+		// the same way they configure other I/O options
 		// #if defined(CFA_HAVE_IORING_REGISTER_IOWQ_MAX_WORKERS)
+		// {
 		// 	// Step 5 : max worker count
 		// 	__cfadbg_print_safe(io_core, "Kernel I/O : lmiting max workers for ring %d\n", fd);
 
@@ -251,6 +257,7 @@
 		// 	}
 
 		// 	__cfadbg_print_safe(io_core, "Kernel I/O : lmited max workers for ring %d\n", fd);
+		// }
 		// #endif
 
 		// some paranoid checks

@@ -1,12 +1,12 @@
-meta/archVast.cfa:28:1 error: Cannot choose between 3 alternatives for expression
+meta/arch.cfa:28:1 error: Cannot choose between 3 alternatives for expression
 Explicit Cast of:
-  Name: FX86
+  Name: FX64
 ... to:
   char
 ... with resolved type:
   char Alternatives are:
 Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
-      Variable Expression: FX86: double
+      Variable Expression: FX64: double
       ... with resolved type:
         double
     ... to:
@@ -19,7 +19,7 @@ Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
   Environment:
 
 Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
-      Variable Expression: FX86: function
+      Variable Expression: FX64: function
         accepting unspecified arguments
       ... returning nothing
 
@@ -38,7 +38,7 @@ Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
   Environment:
 
 Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
-      Variable Expression: FX86: signed int
+      Variable Expression: FX64: signed int
       ... with resolved type:
         signed int
     ... to:

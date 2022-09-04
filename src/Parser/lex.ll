@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Sun Jun 20 18:41:09 2021
- * Update Count     : 759
+ * Last Modified On : Tue Aug 30 18:39:54 2022
+ * Update Count     : 760
  */
 
 %option yylineno
@@ -313,7 +313,8 @@ struct			{ KEYWORD_RETURN(STRUCT); }
 suspend			{ KEYWORD_RETURN(SUSPEND); }			// CFA
 switch			{ KEYWORD_RETURN(SWITCH); }
 thread			{ KEYWORD_RETURN(THREAD); }				// C11
-_Thread_local	{ KEYWORD_RETURN(THREADLOCAL); }		// C11
+__thread		{ KEYWORD_RETURN(THREADLOCALGCC); }		// GCC
+_Thread_local	{ KEYWORD_RETURN(THREADLOCALC11); }		// C11
 throw			{ KEYWORD_RETURN(THROW); }				// CFA
 throwResume		{ KEYWORD_RETURN(THROWRESUME); }		// CFA
 timeout			{ QKEYWORD_RETURN(TIMEOUT); }			// CFA

@@ -4,11 +4,11 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// comp_fair.cfa -- Test that spinning doesn't cause completions to get stuck.
-//                  This test should work without io_uring but isn't very useful without
+// comp_basic.cfa -- Test that simple completions work correctly
+//                   even when mixing io_uring and regular calls
 //
 // Author           : Thierry Delisle
-// Created On       : Thu Mar 10 15:06:50 2022
+// Created On       : Thu Sep 01 11:27:08 2022
 // Last Modified By :
 // Last Modified On :
 // Update Count     :
@@ -39,26 +39,6 @@ enum { TIMES = 1000 };
 
 volatile unsigned counter = 0;
 
-
-// ----- Spinner -----
-// spins trying to prevent other threads from getting to this processor
-thread Spinner {};
-void main(Spinner &) {
-	unsigned last = 0;
-	for() {
-		unsigned curr = __atomic_load_n(&counter, __ATOMIC_SEQ_CST);
-
-		if(curr >= TIMES) break;
-
-		if(last == curr) {
-			Pause();
-			continue;
-		}
-
-		last = curr;
-		yield();
-	}
-}
 
 // ----- Reader -----
 // Reader from the pipe to test completion doesn't starve
@@ -110,16 +90,6 @@ void main(Writer & this) {
 	}
 }
 
-// ----- Yielder -----
-// Add some chaos into the mix
-thread Yielder {};
-void ^?{}(Yielder &mutex ) {}
-void main(Yielder&) {
-	while(TIMES > __atomic_load_n(&counter, __ATOMIC_SEQ_CST)) {
-		yield();
-	}
-}
-
 int main() {
 	barrier bar = { 2 };
 	&globals.bar = &bar;
@@ -127,11 +97,8 @@ int main() {
 	if(ret != 0)
 		abort | "Pipe error" | errno | ":" | strerror(errno);
 
-     	processor p;
-	sout | "starting";
+     	sout | "starting";
 	{
-		Yielder y;
-		Spinner s;
 		Reader ior;
 		Writer iow;
 	}

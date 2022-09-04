@@ -79,7 +79,7 @@ Type::~Type() {
 
 // These must remain in the same order as the corresponding bit fields.
 const char * Type::FuncSpecifiersNames[] = { "inline", "_Noreturn", "fortran" };
-const char * Type::StorageClassesNames[] = { "extern", "static", "auto", "register", "_Thread_local" };
+const char * Type::StorageClassesNames[] = { "extern", "static", "auto", "register", "__thread", "_Thread_local" };
 const char * Type::QualifiersNames[] = { "const", "restrict", "volatile", "mutex", "_Atomic" };
 
 Type * Type::stripDeclarator() {

@@ -261,7 +261,7 @@ DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode
 	newnode->type->enumeration.body = body;
 	newnode->type->enumeration.anon = name == nullptr;
 	if ( base && base->type)  {
-		newnode->type->base = base->type;	
+		newnode->type->base = base->type;
 	} // if
 
 	// Check: if base has TypeData
@@ -504,7 +504,7 @@ void DeclarationNode::checkSpecifiers( DeclarationNode * src ) {
 				} // if
 			} // for
 			// src is the new item being added and has a single bit
-		} else if ( ! src->storageClasses.is_threadlocal ) { // conflict ?
+		} else if ( ! src->storageClasses.is_threadlocal_any() ) { // conflict ?
 			appendError( error, string( "conflicting " ) + Type::StorageClassesNames[storageClasses.ffs()] +
 						 " & " + Type::StorageClassesNames[src->storageClasses.ffs()] );
 			src->storageClasses.reset();				// FIX to preserve invariant of one basic storage specifier

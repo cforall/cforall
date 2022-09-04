@@ -1225,7 +1225,7 @@ $(thread_libobjs) : @LOCAL_CFACC@ @CFACPP@ prelude.cfa
 
 -include $(thread_libdeps)
 
-@ENABLE_DISTCC_TRUE@../prelude/distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ ../prelude/gcc-builtins.cf ../prelude/builtins.cf ../prelude/extras.cf ../prelude/prelude.cfa ../prelude/bootloader.c $(srcdir)/../../tools/build/push2dist.sh
+@ENABLE_DISTCC_TRUE@../prelude/distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ ../prelude/defines.hfa ../prelude/gcc-builtins.cf ../prelude/builtins.cf ../prelude/extras.cf ../prelude/prelude.cfa ../prelude/bootloader.c $(srcdir)/../../tools/build/push2dist.sh
 @ENABLE_DISTCC_TRUE@	@+make -C ../prelude distribution
 
 @ENABLE_DISTCC_TRUE@prelude.o prelude.lo $(libobjs) $(thread_libobjs) : ../prelude/distribution

@@ -201,18 +201,11 @@ AsyncTemplate = """inline void async_{name}(io_future_t & future, {params}, __u6
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_{op};
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;{body}
+		sqe->user_data = (uintptr_t)&future;
+		{body}
 
 		asm volatile("": : :"memory");
 

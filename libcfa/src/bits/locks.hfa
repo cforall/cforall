@@ -31,6 +31,7 @@ struct __spinlock_t {
 	extern "C" {
 		extern void disable_interrupts() OPTIONAL_THREAD;
 		extern void enable_interrupts( bool poll = true ) OPTIONAL_THREAD;
+		extern bool poll_interrupts() OPTIONAL_THREAD;
 		#define __cfaabi_dbg_record_lock(x, y)
 	}
 

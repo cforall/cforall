@@ -211,18 +211,11 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 			struct io_uring_sqe * sqe;
 			struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 	
+			memset(sqe, 0, sizeof(*sqe));
 			sqe->opcode = IORING_OP_READV;
-			sqe->user_data = (uintptr_t)&future;
 			sqe->flags = sflags;
-			sqe->ioprio = 0;
-			sqe->fd = 0;
-			sqe->off = 0;
-			sqe->addr = 0;
-			sqe->len = 0;
-			sqe->fsync_flags = 0;
-			sqe->__pad2[0] = 0;
-			sqe->__pad2[1] = 0;
-			sqe->__pad2[2] = 0;
+			sqe->user_data = (uintptr_t)&future;
+			
 			sqe->fd = fd;
 			sqe->off = offset;
 			sqe->addr = (uintptr_t)iov;
@@ -273,18 +266,11 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 			struct io_uring_sqe * sqe;
 			struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 	
+			memset(sqe, 0, sizeof(*sqe));
 			sqe->opcode = IORING_OP_WRITEV;
-			sqe->user_data = (uintptr_t)&future;
 			sqe->flags = sflags;
-			sqe->ioprio = 0;
-			sqe->fd = 0;
-			sqe->off = 0;
-			sqe->addr = 0;
-			sqe->len = 0;
-			sqe->fsync_flags = 0;
-			sqe->__pad2[0] = 0;
-			sqe->__pad2[1] = 0;
-			sqe->__pad2[2] = 0;
+			sqe->user_data = (uintptr_t)&future;
+			
 			sqe->fd = fd;
 			sqe->off = offset;
 			sqe->addr = (uintptr_t)iov;
@@ -334,18 +320,11 @@ inline void async_fsync(io_future_t & future, int fd, __u64 submit_flags) {
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_FSYNC;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = fd;
 
 		asm volatile("": : :"memory");
@@ -391,18 +370,11 @@ inline void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, stru
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_EPOLL_CTL;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = epfd;
 		sqe->addr = fd;
 		sqe->len = op;
@@ -451,18 +423,11 @@ inline void async_sync_file_range(io_future_t & future, int fd, off64_t offset, 
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_SYNC_FILE_RANGE;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = fd;
 		sqe->off = offset;
 		sqe->len = nbytes;
@@ -511,18 +476,11 @@ inline void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr 
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_SENDMSG;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = sockfd;
 		sqe->addr = (uintptr_t)(struct msghdr *)msg;
 		sqe->len = 1;
@@ -571,18 +529,11 @@ inline void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, 
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_RECVMSG;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = sockfd;
 		sqe->addr = (uintptr_t)(struct msghdr *)msg;
 		sqe->len = 1;
@@ -631,18 +582,11 @@ inline void async_send(io_future_t & future, int sockfd, const void *buf, size_t
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_SEND;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = sockfd;
 		sqe->addr = (uintptr_t)buf;
 		sqe->len = len;
@@ -691,18 +635,11 @@ inline void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, 
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_RECV;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = sockfd;
 		sqe->addr = (uintptr_t)buf;
 		sqe->len = len;
@@ -751,18 +688,11 @@ inline void async_accept4(io_future_t & future, int sockfd, struct sockaddr *add
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_ACCEPT;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = sockfd;
 		sqe->addr = (uintptr_t)addr;
 		sqe->addr2 = (uintptr_t)addrlen;
@@ -811,18 +741,11 @@ inline void async_connect(io_future_t & future, int sockfd, const struct sockadd
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_CONNECT;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = sockfd;
 		sqe->addr = (uintptr_t)addr;
 		sqe->off = addrlen;
@@ -870,18 +793,11 @@ inline void async_fallocate(io_future_t & future, int fd, int mode, off_t offset
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_FALLOCATE;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = fd;
 		sqe->addr = (uintptr_t)len;
 		sqe->len = mode;
@@ -930,18 +846,11 @@ inline void async_posix_fadvise(io_future_t & future, int fd, off_t offset, off_
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_FADVISE;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = fd;
 		sqe->off = offset;
 		sqe->len = len;
@@ -990,18 +899,11 @@ inline void async_madvise(io_future_t & future, void *addr, size_t length, int a
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_MADVISE;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->addr = (uintptr_t)addr;
 		sqe->len = length;
 		sqe->fadvise_advice = advice;
@@ -1049,18 +951,11 @@ inline void async_openat(io_future_t & future, int dirfd, const char *pathname, 
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_OPENAT;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = dirfd;
 		sqe->addr = (uintptr_t)pathname;
 		sqe->len = mode;
@@ -1110,18 +1005,11 @@ int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 su
 			struct io_uring_sqe * sqe;
 			struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 	
+			memset(sqe, 0, sizeof(*sqe));
 			sqe->opcode = IORING_OP_OPENAT2;
-			sqe->user_data = (uintptr_t)&future;
 			sqe->flags = sflags;
-			sqe->ioprio = 0;
-			sqe->fd = 0;
-			sqe->off = 0;
-			sqe->addr = 0;
-			sqe->len = 0;
-			sqe->fsync_flags = 0;
-			sqe->__pad2[0] = 0;
-			sqe->__pad2[1] = 0;
-			sqe->__pad2[2] = 0;
+			sqe->user_data = (uintptr_t)&future;
+			
 			sqe->fd = dirfd;
 			sqe->addr = pathname;
 			sqe->len = sizeof(*how);
@@ -1171,18 +1059,11 @@ inline void async_close(io_future_t & future, int fd, __u64 submit_flags) {
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_CLOSE;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = fd;
 
 		asm volatile("": : :"memory");
@@ -1229,18 +1110,11 @@ int cfa_close(int fd, __u64 submit_flags) {
 			struct io_uring_sqe * sqe;
 			struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 	
+			memset(sqe, 0, sizeof(*sqe));
 			sqe->opcode = IORING_OP_STATX;
-			sqe->user_data = (uintptr_t)&future;
 			sqe->flags = sflags;
-			sqe->ioprio = 0;
-			sqe->fd = 0;
-			sqe->off = 0;
-			sqe->addr = 0;
-			sqe->len = 0;
-			sqe->fsync_flags = 0;
-			sqe->__pad2[0] = 0;
-			sqe->__pad2[1] = 0;
-			sqe->__pad2[2] = 0;
+			sqe->user_data = (uintptr_t)&future;
+			
 			sqe->fd = dirfd;
 			sqe->off = (uintptr_t)statxbuf;
 			sqe->addr = pathname;
@@ -1291,18 +1165,11 @@ inline void async_read(io_future_t & future, int fd, void * buf, size_t count, _
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_READ;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = fd;
 		sqe->addr = (uintptr_t)buf;
 		sqe->len = count;
@@ -1350,18 +1217,11 @@ inline void async_write(io_future_t & future, int fd, void * buf, size_t count, 
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_WRITE;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->fd = fd;
 		sqe->addr = (uintptr_t)buf;
 		sqe->len = count;
@@ -1409,18 +1269,11 @@ inline void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_SPLICE;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->splice_fd_in = fd_in;
 		sqe->splice_off_in = off_in ? (__u64)*off_in : (__u64)-1;
 		sqe->fd = fd_out;
@@ -1471,18 +1324,11 @@ inline void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, u
 		struct io_uring_sqe * sqe;
 		struct io_context$ * ctx = cfa_io_allocate( &sqe, &idx, 1 );
 
+		memset(sqe, 0, sizeof(*sqe));
 		sqe->opcode = IORING_OP_TEE;
-		sqe->user_data = (uintptr_t)&future;
 		sqe->flags = sflags;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
+		sqe->user_data = (uintptr_t)&future;
+		
 		sqe->splice_fd_in = fd_in;
 		sqe->fd = fd_out;
 		sqe->len = len;

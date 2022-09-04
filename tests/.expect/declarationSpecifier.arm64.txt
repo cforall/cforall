@@ -734,6 +734,8 @@ static inline void _X12_constructorFv_S13__anonymous15s_autogen___1(struct __ano
 
 }
 static volatile const struct __anonymous15 _X3x36KVS13__anonymous15_1;
+_Thread_local signed int _X3x37i_1;
+__thread signed int _X3x38i_1;
 static inline volatile const signed int _X3f11Fi___1();
 static inline volatile const signed int _X3f12Fi___1();
 static inline volatile const signed int _X3f13Fi___1();

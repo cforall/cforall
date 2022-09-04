@@ -30,7 +30,7 @@ int ``_Alignas, ``_Alignof, ``__alignof, ``__alignof__, ``asm, ``__asm, ``__asm_
 	``ftype, ``_Generic, ``goto, ``if, ``_Imaginary, ``__imag, ``__imag__, ``inline, ``__inline, ``__inline__, ``int,
 	``__int128, ``__label__, ``long, ``lvalue, ``_Noreturn, ``__builtin_offsetof, ``otype, ``register, ``restrict,
 	``__restrict, ``__restrict__, ``return, ``short, ``signed, ``__signed, ``__signed__, ``sizeof, ``static,
-	``_Static_assert, ``struct, ``switch, ``_Thread_local, ``throw, ``throwResume, ``trait, ``try, ``typedef,
+	``_Static_assert, ``struct, ``switch, ``_thread, ``_Thread_local, ``throw, ``throwResume, ``trait, ``try, ``typedef,
 	``typeof, ``__typeof, ``__typeof__, ``union, ``unsigned, ``__builtin_va_list, ``void, ``volatile, ``__volatile,
 	``__volatile__, ``while;
 

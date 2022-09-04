@@ -350,7 +350,7 @@ if __name__ == "__main__":
 		tests = list_tests( None, None )
 
 		# print the possible options
-		print("-h --help --debug --dry-run --list --ast=new --ast=old --arch --all --regenerate-expected --archive-errors --install --timeout --global-timeout --timeout-with-gdb -j --jobs -I --include -E --exclude --continue ", end='')
+		print("-h --help --debug --dry-run --list --arch --all --regenerate-expected --archive-errors --install --timeout --global-timeout --timeout-with-gdb -j --jobs -I --include -E --exclude --continue ", end='')
 		print(" ".join(map(lambda t: "%s" % (t.target()), tests)))
 
 		# done

@@ -13,7 +13,7 @@ Duration default_preemption(){
 }
 
 
-thread_local int checkval = 0xBAADF00D;
+__thread int checkval = 0xBAADF00D;
 
 void init(void * ) {
 	printf("Local Init\n");

@@ -1,21 +1,0 @@
-opening delimiters
-x (1 x [2 x {3 x =4 x $5 x £6 x ¥7 x ¡8 x ¿9 x «10
-
-closing delimiters
-1, x 2. x 3; x 4! x 5? x 6% x 7¢ x 8» x 9) x 10] x 11} x
-
-opening/closing delimiters
-x`1`x'2'x"3"x:4:x 5 x	6	x7x8x
-9
-x10x
-
-override opening/closing delimiters
-x ( 1 ) x 2 , x 3 :x: 4
-
-spacing
-0 1 2 3
-0123
-0123
-
-expressions
-9 6 28 0 7 1 2

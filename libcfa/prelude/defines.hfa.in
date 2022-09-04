@@ -140,6 +140,10 @@
 #undef CFA_HAVE_IORING_OP_WRITE_FIXED
 
 /* Defined if io_uring support is present when compiling libcfathread and
+   supports the flag IORING_REGISTER_IOWQ_MAX_WORKERS. */
+#undef CFA_HAVE_IORING_REGISTER_IOWQ_MAX_WORKERS
+
+/* Defined if io_uring support is present when compiling libcfathread and
    supports the flag IORING_SETUP_ATTACH_WQ. */
 #undef CFA_HAVE_IORING_SETUP_ATTACH_WQ
 

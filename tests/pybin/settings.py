@@ -101,15 +101,15 @@ class AST:
 		if ast == "new":
 			self.target = ast
 			self.string = "New AST"
-			self.flags  = """AST_FLAGS=-XCFA,--new-ast"""
+			self.flags  = """"""
 		elif ast == "old":
 			self.target = ast
 			self.string = "Old AST"
-			self.flags  = """AST_FLAGS=-XCFA,--old-ast"""
+			self.flags  = """"""
 		elif ast == None:
 			self.target = "new" if config.NEWAST else "old"
 			self.string = "Default AST (%s)" % self.target
-			self.flags  = """AST_FLAGS="""
+			self.flags  = """"""
 		else:
 			print("""ERROR: Invalid ast configuration, must be "old", "new" or left unspecified, was %s""" % (value), file=sys.stderr)
 			sys.exit(1)

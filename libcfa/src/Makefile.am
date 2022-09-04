@@ -185,7 +185,7 @@ thread_libdeps = $(join \
 
 if ENABLE_DISTCC
 
-../prelude/distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ ../prelude/gcc-builtins.cf ../prelude/builtins.cf ../prelude/extras.cf ../prelude/prelude.cfa ../prelude/bootloader.c $(srcdir)/../../tools/build/push2dist.sh
+../prelude/distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ ../prelude/defines.hfa ../prelude/gcc-builtins.cf ../prelude/builtins.cf ../prelude/extras.cf ../prelude/prelude.cfa ../prelude/bootloader.c $(srcdir)/../../tools/build/push2dist.sh
 	@+make -C ../prelude distribution
 
 prelude.o prelude.lo $(libobjs) $(thread_libobjs) : ../prelude/distribution

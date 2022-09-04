@@ -1,17 +1,17 @@
-meta/archVast.cfa:28:1 error: Cannot choose between 3 alternatives for expression
+meta/arch.cfa:28:1 error: Cannot choose between 3 alternatives for expression
 Explicit Cast of:
   Name: FX86
 ... to:
   char
-with resolved type:
+... with resolved type:
   char Alternatives are:
 Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: FX86: double
-      with resolved type:
+      ... with resolved type:
         double
     ... to:
       char
-    with resolved type:
+    ... with resolved type:
       char
   (types:
     char
@@ -23,14 +23,14 @@ Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
         accepting unspecified arguments
       ... returning nothing
 
-      with resolved type:
+      ... with resolved type:
         pointer to function
           accepting unspecified arguments
         ... returning nothing
 
     ... to:
       char
-    with resolved type:
+    ... with resolved type:
       char
   (types:
     char
@@ -39,11 +39,11 @@ Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
 
 Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: FX86: signed int
-      with resolved type:
+      ... with resolved type:
         signed int
     ... to:
       char
-    with resolved type:
+    ... with resolved type:
       char
   (types:
     char

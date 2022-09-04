@@ -83,7 +83,7 @@ class Type : public BaseSyntaxNode {
 		BFCommon( FuncSpecifiers, NumFuncSpecifier )
 	}; // FuncSpecifiers
 
-	enum { Extern = 1 << 0, Static = 1 << 1, Auto = 1 << 2, Register = 1 << 3, Threadlocal = 1 << 4, NumStorageClass = 5 };
+	enum { Extern = 1 << 0, Static = 1 << 1, Auto = 1 << 2, Register = 1 << 3, ThreadlocalGcc = 1 << 4, ThreadlocalC11 = 1 << 5, NumStorageClass = 6 };
 	static const char * StorageClassesNames[];
 	union StorageClasses {
 		unsigned int val;
@@ -92,13 +92,16 @@ class Type : public BaseSyntaxNode {
 			bool is_static : 1;
 			bool is_auto : 1;
 			bool is_register : 1;
-			bool is_threadlocal : 1;
+			bool is_threadlocalGcc : 1;
+			bool is_threadlocalC11 : 1;
 		};
 
 		StorageClasses() : val( 0 ) {}
 		StorageClasses( unsigned int val ) : val( val ) {}
 		// equality (==, !=) works implicitly on first field "val", relational operations are undefined.
 		BFCommon( StorageClasses, NumStorageClass )
+
+		bool is_threadlocal_any() { return this->is_threadlocalC11 || this->is_threadlocalGcc; }
 	}; // StorageClasses
 
 	enum { Const = 1 << 0, Restrict = 1 << 1, Volatile = 1 << 2, Mutex = 1 << 3, Atomic = 1 << 4, NumTypeQualifier = 5 };

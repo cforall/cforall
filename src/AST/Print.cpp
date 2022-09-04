@@ -85,7 +85,7 @@ private:
 		);
 
 		static constexpr auto StorageClasses = make_array<const char*>(
-			"extern", "static", "auto", "register", "_Thread_local"
+			"extern", "static", "auto", "register", "__thread", "_Thread_local"
 		);
 
 		static constexpr auto Qualifiers = make_array<const char*>(
@@ -214,7 +214,7 @@ private:
 			os << endl << indent << ".. with (enum) base" << endl;
 			++indent;
 			ptrToEnum->base->accept( *this );
-			--indent;  
+			--indent;
 		}
 
 		os << endl;
@@ -1622,6 +1622,6 @@ void printShort( ostream & os, const ast::Decl * node, Indenter indent ) {
 // The size here needs to be explicit but at least the compiler will produce an error
 // if the wrong size is specified
 constexpr array<const char*, 3> Printer::Names::FuncSpecifiers;
-constexpr array<const char*, 5> Printer::Names::StorageClasses;
+constexpr array<const char*, 6> Printer::Names::StorageClasses;
 constexpr array<const char*, 6> Printer::Names::Qualifiers;
 }

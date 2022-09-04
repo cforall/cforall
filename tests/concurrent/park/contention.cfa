@@ -1,7 +1,7 @@
 #include <kernel.hfa>
 #include <thread.hfa>
 
-thread_local drand48_data buffer = { 0 };
+__thread drand48_data buffer = { 0 };
 int myrand() {
 	long int result;
 	lrand48_r(&buffer, &result);

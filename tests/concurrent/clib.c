@@ -7,7 +7,7 @@ extern "C" {
 void _exit(int status);
 }
 
-thread_local struct drand48_data buffer = { 0 };
+_Thread_local struct drand48_data buffer = { 0 };
 int myrand() {
 	long int result;
 	lrand48_r(&buffer, &result);

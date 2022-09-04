@@ -75,7 +75,7 @@ DISTCLEANFILES = $(DEPDIR)/builtins.Po
 MAINTAINERCLEANFILES = ${addprefix ${libdir}/,${cfalib_DATA}} ${addprefix ${libdir}/,${lib_LIBRARIES}}
 
 if ENABLE_DISTCC
-distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ gcc-builtins.cf builtins.cf extras.cf prelude.cfa bootloader.c $(srcdir)/../../tools/build/push2dist.sh
+distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ defines.hfa gcc-builtins.cf builtins.cf extras.cf prelude.cfa bootloader.c $(srcdir)/../../tools/build/push2dist.sh
 	${AM_V_GEN}$(srcdir)/../../tools/build/push2dist.sh @CFADIR_HASH@ @DIST_BWLIMIT@
 	@echo "Dummy file to track distribution to remote hosts" > ${@}
 

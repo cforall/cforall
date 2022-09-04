@@ -237,7 +237,7 @@ void update_preemption( processor * this, Duration duration ) {
 
 //----------
 // special case for preemption since used often
-__attribute__((optimize("no-reorder-blocks"))) bool __preemption_enabled() libcfa_public {
+__attribute__((optimize("no-reorder-blocks"))) bool __preemption_enabled() libcfa_nopreempt libcfa_public {
 	// create a assembler label before
 	// marked as clobber all to avoid movement
 	__cfaasm_label(check, before);
@@ -271,11 +271,26 @@ static inline bool __cfaasm_in( void * ip, struct asm_region & region ) {
 	return ip >= region.before && ip <= region.after;
 }
 
+extern "C" {
+	__attribute__((visibility("hidden"))) extern void * const __start_cfatext_nopreempt;
+	__attribute__((visibility("hidden"))) extern void * const __stop_cfatext_nopreempt;
+
+	extern const __cfa_nopreempt_region __libcfa_nopreempt;
+	__attribute__((visibility("protected"))) const __cfa_nopreempt_region __libcfathrd_nopreempt @= {
+		(void * const)&__start_cfatext_nopreempt,
+		(void * const)&__stop_cfatext_nopreempt
+	};
+}
+
+static inline bool __cfaabi_in( void * const ip, const struct __cfa_nopreempt_region & const region ) {
+	return ip >= region.start && ip <= region.stop;
+}
+
 
 //----------
 // Get data from the TLS block
 // struct asm_region __cfaasm_get;
-uintptr_t __cfatls_get( unsigned long int offset ) __attribute__((__noinline__, visibility("default"))); //no inline to avoid problems
+uintptr_t __cfatls_get( unsigned long int offset ) libcfa_nopreempt libcfa_public; //no inline to avoid problems
 uintptr_t __cfatls_get( unsigned long int offset ) {
 	// create a assembler label before
 	// marked as clobber all to avoid movement
@@ -294,7 +309,7 @@ uintptr_t __cfatls_get( unsigned long int offset ) {
 
 extern "C" {
 	// Disable interrupts by incrementing the counter
-	__attribute__((__noinline__, visibility("default"))) void disable_interrupts() libcfa_public {
+	void disable_interrupts() libcfa_nopreempt libcfa_public {
 		// create a assembler label before
 		// marked as clobber all to avoid movement
 		__cfaasm_label(dsable, before);
@@ -325,7 +340,7 @@ extern "C" {
 
 	// Enable interrupts by decrementing the counter
 	// If counter reaches 0, execute any pending __cfactx_switch
-	void enable_interrupts( bool poll ) libcfa_public {
+	void enable_interrupts( bool poll ) libcfa_nopreempt libcfa_public {
 		// Cache the processor now since interrupts can start happening after the atomic store
 		processor   * proc = __cfaabi_tls.this_processor;
 		/* paranoid */ verify( !poll || proc );
@@ -356,6 +371,29 @@ extern "C" {
 				}
 			}
 		}
+	}
+
+	// Check whether or not there is pending preemption
+	// force_yield( __POLL_PREEMPTION ) if appropriate
+	// return true if the thread was in an interruptable state
+	// i.e. on a real processor and not in the kernel
+	// (can return true even if no preemption was pending)
+	bool poll_interrupts() libcfa_public {
+		// Cache the processor now since interrupts can start happening after the atomic store
+		processor   * proc = publicTLS_get( this_processor );
+		if ( ! proc ) return false;
+		if ( ! __preemption_enabled() ) return false;
+
+		with( __cfaabi_tls.preemption_state ){
+			// Signal the compiler that a fence is needed but only for signal handlers
+			__atomic_signal_fence(__ATOMIC_RELEASE);
+			if( proc->pending_preemption ) {
+				proc->pending_preemption = false;
+				force_yield( __POLL_PREEMPTION );
+			}
+		}
+
+		return true;
 	}
 }
 
@@ -462,103 +500,16 @@ void __enable_interrupts_hard() {
 }
 
 //-----------------------------------------------------------------------------
-// Some assembly required
-#if defined( __i386 )
-	#ifdef __PIC__
-		#define RELOC_PRELUDE( label ) \
-			"calll   .Lcfaasm_prelude_" #label "$pb\n\t" \
-			".Lcfaasm_prelude_" #label "$pb:\n\t" \
-			"popl    %%eax\n\t" \
-			".Lcfaasm_prelude_" #label "_end:\n\t" \
-			"addl    $_GLOBAL_OFFSET_TABLE_+(.Lcfaasm_prelude_" #label "_end-.Lcfaasm_prelude_" #label "$pb), %%eax\n\t"
-		#define RELOC_PREFIX ""
-		#define RELOC_SUFFIX "@GOT(%%eax)"
-	#else
-		#define RELOC_PREFIX "$"
-		#define RELOC_SUFFIX ""
-	#endif
-	#define __cfaasm_label( label ) struct asm_region label = \
-		({ \
-			struct asm_region region; \
-			asm( \
-				RELOC_PRELUDE( label ) \
-				"movl " RELOC_PREFIX "__cfaasm_" #label "_before" RELOC_SUFFIX ", %[vb]\n\t" \
-				"movl " RELOC_PREFIX "__cfaasm_" #label "_after"  RELOC_SUFFIX ", %[va]\n\t" \
-				 : [vb]"=r"(region.before), [va]"=r"(region.after) \
-			); \
-			region; \
-		});
-#elif defined( __x86_64 )
-	#ifdef __PIC__
-		#define RELOC_PREFIX ""
-		#define RELOC_SUFFIX "@GOTPCREL(%%rip)"
-	#else
-		#define RELOC_PREFIX "$"
-		#define RELOC_SUFFIX ""
-	#endif
-	#define __cfaasm_label( label ) struct asm_region label = \
-		({ \
-			struct asm_region region; \
-			asm( \
-				"movq " RELOC_PREFIX "__cfaasm_" #label "_before" RELOC_SUFFIX ", %[vb]\n\t" \
-				"movq " RELOC_PREFIX "__cfaasm_" #label "_after"  RELOC_SUFFIX ", %[va]\n\t" \
-				 : [vb]"=r"(region.before), [va]"=r"(region.after) \
-			); \
-			region; \
-		});
-#elif defined( __aarch64__ )
-	#ifdef __PIC__
-		// Note that this works only for gcc
-		#define __cfaasm_label( label ) struct asm_region label = \
-		({ \
-			struct asm_region region; \
-			asm( \
-				"adrp %[vb], _GLOBAL_OFFSET_TABLE_"                              "\n\t" \
-        			"ldr  %[vb], [%[vb], #:gotpage_lo15:__cfaasm_" #label "_before]" "\n\t" \
-				"adrp %[va], _GLOBAL_OFFSET_TABLE_"                              "\n\t" \
-        			"ldr  %[va], [%[va], #:gotpage_lo15:__cfaasm_" #label "_after]"  "\n\t" \
-				 : [vb]"=r"(region.before), [va]"=r"(region.after) \
-			); \
-			region; \
-		});
-	#else
-		#error this is not the right thing to do
-		/*
-		#define __cfaasm_label( label ) struct asm_region label = \
-		({ \
-			struct asm_region region; \
-			asm( \
-				"adrp %[vb], __cfaasm_" #label "_before"              "\n\t" \
-        			"add  %[vb], %[vb], :lo12:__cfaasm_" #label "_before" "\n\t" \
-				"adrp %[va], :got:__cfaasm_" #label "_after"          "\n\t" \
-        			"add  %[va], %[va], :lo12:__cfaasm_" #label "_after"  "\n\t" \
-				 : [vb]"=r"(region.before), [va]"=r"(region.after) \
-			); \
-			region; \
-		});
-		*/
-	#endif
-#else
-	#error unknown hardware architecture
-#endif
-
 // KERNEL ONLY
 // Check if a __cfactx_switch signal handler shoud defer
 // If true  : preemption is safe
 // If false : preemption is unsafe and marked as pending
 static inline bool preemption_ready( void * ip ) {
-	// Get all the region for which it is not safe to preempt
-	__cfaasm_label( get    );
-	__cfaasm_label( check  );
-	__cfaasm_label( dsable );
-	// __cfaasm_label( debug  );
-
 	// Check if preemption is safe
 	bool ready = true;
-	if( __cfaasm_in( ip, get    ) ) { ready = false; goto EXIT; };
-	if( __cfaasm_in( ip, check  ) ) { ready = false; goto EXIT; };
-	if( __cfaasm_in( ip, dsable ) ) { ready = false; goto EXIT; };
-	// if( __cfaasm_in( ip, debug  ) ) { ready = false; goto EXIT; };
+	if( __cfaabi_in( ip, __libcfa_nopreempt ) ) { ready = false; goto EXIT; };
+	if( __cfaabi_in( ip, __libcfathrd_nopreempt ) ) { ready = false; goto EXIT; };
+
 	if( !__cfaabi_tls.preemption_state.enabled) { ready = false; goto EXIT; };
 	if( __cfaabi_tls.preemption_state.in_progress ) { ready = false; goto EXIT; };
 
@@ -642,7 +593,7 @@ void ^?{}( preemption_scope & this ) {
 //=============================================================================================
 // Kernel Signal Handlers
 //=============================================================================================
-__cfaabi_dbg_debug_do( static thread_local void * last_interrupt = 0; )
+__cfaabi_dbg_debug_do( static __thread void * last_interrupt = 0; )
 
 // Context switch signal handler
 // Receives SIGUSR1 signal and causes the current thread to yield
