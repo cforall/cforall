@@ -270,6 +270,7 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	ControlStruct/MultiLevelExit.$(OBJEXT) \
 	ControlStruct/Mutate.$(OBJEXT) $(am__objects_4) \
 	GenPoly/Box.$(OBJEXT) GenPoly/FindFunction.$(OBJEXT) \
+	GenPoly/InstantiateGenericNew.$(OBJEXT) \
 	GenPoly/InstantiateGeneric.$(OBJEXT) GenPoly/Lvalue.$(OBJEXT) \
 	GenPoly/ScrubTyVars.$(OBJEXT) GenPoly/Specialize.$(OBJEXT) \
 	GenPoly/SpecializeNew.$(OBJEXT) $(am__objects_5) \
@@ -380,6 +381,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	ControlStruct/$(DEPDIR)/Mutate.Po GenPoly/$(DEPDIR)/Box.Po \
 	GenPoly/$(DEPDIR)/FindFunction.Po GenPoly/$(DEPDIR)/GenPoly.Po \
 	GenPoly/$(DEPDIR)/InstantiateGeneric.Po \
+	GenPoly/$(DEPDIR)/InstantiateGenericNew.Po \
 	GenPoly/$(DEPDIR)/Lvalue.Po GenPoly/$(DEPDIR)/Lvalue2.Po \
 	GenPoly/$(DEPDIR)/ScrubTyVars.Po \
 	GenPoly/$(DEPDIR)/Specialize.Po \
@@ -605,7 +607,6 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFAULT_NEW_AST = @DEFAULT_NEW_AST@
 DEFS = @DEFS@
 DEMANGLER = @DEMANGLER@
 DEPDIR = @DEPDIR@
@@ -758,6 +759,7 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	ControlStruct/Mutate.h $(SRC_GENPOLY) GenPoly/Box.cc \
 	GenPoly/Box.h GenPoly/ErasableScopedMap.h \
 	GenPoly/FindFunction.cc GenPoly/FindFunction.h \
+	GenPoly/InstantiateGenericNew.cpp \
 	GenPoly/InstantiateGeneric.cc GenPoly/InstantiateGeneric.h \
 	GenPoly/Lvalue.cc GenPoly/ScopedSet.h GenPoly/ScrubTyVars.cc \
 	GenPoly/ScrubTyVars.h GenPoly/Specialize.cc \
@@ -1055,7 +1057,7 @@ cfa_cpplibdir = $(CFA_LIBDIR)
 ___driver_cfa_cpp_SOURCES = $(SRC)
 ___driver_cfa_cpp_LDADD = -ldl $(LIBPROFILER) $(LIBTCMALLOC)
 EXTRA_DIST = include/cassert include/optional BasicTypes-gen.cc
-AM_CXXFLAGS = @HOST_FLAGS@ -Wno-deprecated -Wall -Wextra -Werror=return-type -DDEBUG_ALL -I./Parser -I$(srcdir)/Parser -I$(srcdir)/include -DYY_NO_INPUT -O3 -g -std=c++14 $(TCMALLOCFLAG)
+AM_CXXFLAGS = @HOST_FLAGS@ -Wno-deprecated -Wall -Wextra -Werror=return-type -DDEBUG_ALL -I./Parser -I$(srcdir)/Parser -I$(srcdir)/include -DYY_NO_INPUT -O3 -g -std=c++17 $(TCMALLOCFLAG)
 AM_LDFLAGS = @HOST_FLAGS@ -Xlinker -export-dynamic
 ARFLAGS = cr
 demangler_SOURCES = SymTab/demangler.cc # test driver for the demangler, also useful as a sanity check that libdemangle.a is complete
@@ -1517,6 +1519,8 @@ GenPoly/Box.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/FindFunction.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
+GenPoly/InstantiateGenericNew.$(OBJEXT): GenPoly/$(am__dirstamp) \
+	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/InstantiateGeneric.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/Lvalue.$(OBJEXT): GenPoly/$(am__dirstamp) \
@@ -1721,6 +1725,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/FindFunction.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/GenPoly.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/InstantiateGeneric.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/InstantiateGenericNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Lvalue.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Lvalue2.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/ScrubTyVars.Po@am__quote@ # am--include-marker
@@ -2146,6 +2151,7 @@ distclean: distclean-am
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
 	-rm -f GenPoly/$(DEPDIR)/GenPoly.Po
 	-rm -f GenPoly/$(DEPDIR)/InstantiateGeneric.Po
+	-rm -f GenPoly/$(DEPDIR)/InstantiateGenericNew.Po
 	-rm -f GenPoly/$(DEPDIR)/Lvalue.Po
 	-rm -f GenPoly/$(DEPDIR)/Lvalue2.Po
 	-rm -f GenPoly/$(DEPDIR)/ScrubTyVars.Po
@@ -2379,6 +2385,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
 	-rm -f GenPoly/$(DEPDIR)/GenPoly.Po
 	-rm -f GenPoly/$(DEPDIR)/InstantiateGeneric.Po
+	-rm -f GenPoly/$(DEPDIR)/InstantiateGenericNew.Po
 	-rm -f GenPoly/$(DEPDIR)/Lvalue.Po
 	-rm -f GenPoly/$(DEPDIR)/Lvalue2.Po
 	-rm -f GenPoly/$(DEPDIR)/ScrubTyVars.Po

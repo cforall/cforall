@@ -96,28 +96,6 @@ class Debug:
 		self.flags  = """DEBUG_FLAGS=%s""" % ("-debug -O0" if value else "-nodebug -O2")
 		self.path   = "debug" if value else "nodebug"
 
-class AST:
-	def __init__(self, ast):
-		if ast == "new":
-			self.target = ast
-			self.string = "New AST"
-			self.flags  = """"""
-		elif ast == "old":
-			self.target = ast
-			self.string = "Old AST"
-			self.flags  = """"""
-		elif ast == None:
-			self.target = "new" if config.NEWAST else "old"
-			self.string = "Default AST (%s)" % self.target
-			self.flags  = """"""
-		else:
-			print("""ERROR: Invalid ast configuration, must be "old", "new" or left unspecified, was %s""" % (value), file=sys.stderr)
-			sys.exit(1)
-
-	def filter(self, tests):
-
-		return [test for test in tests if not test.astv or self.target == test.astv]
-
 class Install:
 	def __init__(self, value):
 		if value:
@@ -140,11 +118,9 @@ class Timeouts:
 		return value
 
 def init( options ):
-	global all_ast
 	global all_arch
 	global all_debug
 	global all_install
-	global ast
 	global arch
 	global debug
 	global archive
@@ -159,7 +135,6 @@ def init( options ):
 	global timeout
 	global timeout2gdb
 
-	all_ast      = [AST(o)          for o in list(dict.fromkeys(options.ast    ))] if options.ast  else [AST(None)]
 	all_arch     = [Architecture(o) for o in list(dict.fromkeys(options.arch   ))] if options.arch else [Architecture(None)]
 	all_debug    = [Debug(o)        for o in list(dict.fromkeys(options.debug  ))]
 	all_install  = [Install(o)      for o in list(dict.fromkeys(options.install))]

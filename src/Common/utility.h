@@ -321,6 +321,8 @@ struct ValueGuardPtr {
 	T* ref;
 
 	ValueGuardPtr(T * inRef) : old( inRef ? *inRef : T() ), ref(inRef) {}
+	ValueGuardPtr(const ValueGuardPtr& other) = delete;
+	ValueGuardPtr(ValueGuardPtr&& other) : old(other.old), ref(other.ref) { other.ref = nullptr; }
 	~ValueGuardPtr() { if( ref ) *ref = old; }
 };
 

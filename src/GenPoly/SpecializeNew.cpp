@@ -239,23 +239,21 @@ const ast::Expr * structureArg(
 	}
 }
 
-namespace {
-	struct TypeInstFixer : public ast::WithShortCircuiting {
-		std::map<const ast::TypeDecl *, std::pair<int, int>> typeMap;
+struct TypeInstFixer final : public ast::WithShortCircuiting {
+	std::map<const ast::TypeDecl *, std::pair<int, int>> typeMap;
 
-		void previsit(const ast::TypeDecl *) { visit_children = false; }
-		const ast::TypeInstType * postvisit(const ast::TypeInstType * typeInst) {
-			if (typeMap.count(typeInst->base)) {
-				ast::TypeInstType * newInst = mutate(typeInst);
-				auto const & pair = typeMap[typeInst->base];
-				newInst->expr_id = pair.first;
-				newInst->formal_usage = pair.second;
-				return newInst;
-			}
-			return typeInst;
+	void previsit(const ast::TypeDecl *) { visit_children = false; }
+	const ast::TypeInstType * postvisit(const ast::TypeInstType * typeInst) {
+		if (typeMap.count(typeInst->base)) {
+			ast::TypeInstType * newInst = mutate(typeInst);
+			auto const & pair = typeMap[typeInst->base];
+			newInst->expr_id = pair.first;
+			newInst->formal_usage = pair.second;
+			return newInst;
 		}
-	};
-}
+		return typeInst;
+	}
+};
 
 const ast::Expr * SpecializeCore::createThunkFunction(
 		const CodeLocation & location,

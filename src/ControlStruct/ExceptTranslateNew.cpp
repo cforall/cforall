@@ -31,7 +31,7 @@ namespace {
 		block->push_back(new ast::DeclStmt(block->location, item));
 	}
 
-class TranslateThrowsCore : public ast::WithGuards {
+class TranslateThrowsCore final : public ast::WithGuards {
 	const ast::ObjectDecl * terminateHandlerExcept;
 	enum Context { NoHandler, TerHandler, ResHandler } currentContext;
 
@@ -135,7 +135,7 @@ const ast::Stmt * TranslateThrowsCore::postvisit(
 }
 
 
-class TryMutatorCore {
+class TryMutatorCore final {
 	// The built in types used in translation.
 	const ast::StructDecl * except_decl;
 	const ast::StructDecl * node_decl;

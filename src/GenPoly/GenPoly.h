@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:22:57 2017
-// Update Count     : 7
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Aug 19 16:03:00 2022
+// Update Count     : 8
 //
 
 #pragma once
@@ -26,7 +26,9 @@
 
 namespace GenPoly {
 
+	// TODO Via some tricks this works for ast::TypeDecl::Data as well.
 	typedef ErasableScopedMap< std::string, TypeDecl::Data > TyVarMap;
+
 	/// Replaces a TypeInstType by its referrent in the environment, if applicable
 	Type* replaceTypeInst( Type* type, const TypeSubstitution* env );
 
@@ -40,6 +42,7 @@ namespace GenPoly {
 
 	/// returns dynamic-layout type if is dynamic-layout type in tyVars, NULL otherwise; will look up substitution in env if provided
 	ReferenceToType *isDynType( Type *type, const TyVarMap &tyVars, const TypeSubstitution *env = 0 );
+	const ast::BaseInstType *isDynType( const ast::Type *type, const TyVarMap &tyVars, const ast::TypeSubstitution *typeSubs = 0 );
 
 	/// true iff function has dynamic-layout return type under the given type variable map
 	ReferenceToType *isDynRet( FunctionType *function, const TyVarMap &tyVars );
@@ -82,6 +85,7 @@ namespace GenPoly {
 
 	/// true iff types are structurally identical, where TypeInstType's match any type.
 	bool typesPolyCompatible( Type *aty, Type *bty );
+	bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs );
 
 	/// true if arg requires boxing given exprTyVars
 	bool needsBoxing( Type * param, Type * arg, const TyVarMap &exprTyVars, const TypeSubstitution * env );

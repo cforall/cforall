@@ -216,7 +216,7 @@ class TypeDecl final : public NamedTypeDecl {
 	const char * genTypeString() const;
 
 	/// convenience accessor to match Type::isComplete()
-	bool isComplete() { return sized; }
+	bool isComplete() const { return sized; }
 
 	const Decl * accept( Visitor & v ) const override { return v.visit( this ); }
   private:

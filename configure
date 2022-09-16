@@ -730,7 +730,6 @@ ENABLE_DISTCC_FALSE
 ENABLE_DISTCC_TRUE
 DOendif
 DOifskipcompile
-DEFAULT_NEW_AST
 CFA_NAME
 am__untar
 am__tar
@@ -804,7 +803,6 @@ ac_user_opts='
 enable_option_checking
 enable_silent_rules
 with_cfa_name
-enable_new_ast
 enable_distcc
 with_bwlimit
 with_target_hosts
@@ -1469,7 +1467,6 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
-  --enable-new-ast     whether or not to use new ast as the default AST algorithm
   --enable-distcc     whether or not to enable distributed compilation
   --enable-gprofiler     whether or not to enable gprofiler tools (if available)
   --enable-demangler     whether or not to build the demangler (executable and library)
@@ -3133,27 +3130,6 @@ fi
 
 
 #==============================================================================
-# New AST toggling support
-
-DEFAULT_NEW_AST="True"
-# Check whether --enable-new-ast was given.
-if test "${enable_new_ast+set}" = set; then :
-  enableval=$enable_new_ast; case "${enableval}" in
-		yes) newast=true ; DEFAULT_NEW_AST="True"  ;;
-		no)  newast=false; DEFAULT_NEW_AST="False" ;;
-		*) as_fn_error $? "bad value ${enableval} for --enable-new-ast" "$LINENO" 5 ;;
-	esac
-else
-  newast=true
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define CFA_USE_NEW_AST $newast
-_ACEOF
-
-
-
-#==============================================================================
 # version information
 
 rm -f version
@@ -3367,10 +3343,6 @@ do
 		# skip gprofiler for libcfa
 		\'--enable-gprofiler=*) ;;
 		\'--disable-gprofiler) ;;
-
-		# skip the target hosts
-		\'--enable-new-ast=*) ;;
-		\'--disable-new-ast) ;;
 
 		# skip this, it only causes problems
 		\'--srcdir=*) ;;

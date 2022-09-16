@@ -10,10 +10,9 @@ class Test:
 		self.name = ''
 		self.path = ''
 		self.arch = ''
-		self.astv = ''
 
 	def toString(self):
-		return "{:25s} ({:5s} arch, {:s} ast: {:s})".format( self.name, self.arch if self.arch else "Any", self.astv if self.astv else "Any", self.target() )
+		return "{:25s} ({:5s} arch: {:s})".format( self.name, self.arch if self.arch else "Any", self.target() )
 
 	def prepare(self):
 		mkdir( (self.output_log(), self.error_log(), self.input()            ) )
@@ -21,8 +20,7 @@ class Test:
 
 	def expect(self):
 		arch = '' if not self.arch else ".%s" % self.arch
-		astv = '' if not self.astv else ".nast" if self.astv == "new" else ".oast"
-		return os.path.normpath( os.path.join(settings.SRCDIR  , self.path, ".expect", "%s%s%s.txt" % (self.name,astv,arch)) )
+		return os.path.normpath( os.path.join(settings.SRCDIR  , self.path, ".expect", "%s%s.txt" % (self.name,arch)) )
 
 	def error_log(self):
 		return os.path.normpath( os.path.join(settings.BUILDDIR, self.path, ".err"   , "%s.log" % self.name) )
@@ -57,12 +55,11 @@ class Test:
 		return not name.endswith( ('.c', '.cc', '.cpp', '.cfa') )
 
 	@staticmethod
-	def new_target(target, arch, astv):
+	def new_target(target, arch):
 		test = Test()
 		test.name = os.path.basename(target)
 		test.path = os.path.relpath (os.path.dirname(target), settings.SRCDIR)
 		test.arch = arch.target if arch else ''
-		test.astv = astv.target if astv else ''
 		return test
 
 

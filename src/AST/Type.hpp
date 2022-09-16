@@ -82,19 +82,19 @@ private:
 /// Clear/reset the qualifiers on this type, cloning only if necessary
 template< enum Node::ref_type ref_t >
 void reset_qualifiers( ptr_base< Type, ref_t > & p, CV::Qualifiers q = {} ) {
-	if ( p->qualifiers.val != q.val ) p.get_and_mutate()->qualifiers = q;
+	if ( p->qualifiers != q ) p.get_and_mutate()->qualifiers = q;
 }
 
 /// Add the specified qualifiers to this type, cloning only if necessary
 template< enum Node::ref_type ref_t >
 void add_qualifiers( ptr_base< Type, ref_t > & p, CV::Qualifiers q ) {
-	if ( ( p->qualifiers.val & q.val ) != q.val ) p.get_and_mutate()->qualifiers |= q;
+	if ( ( p->qualifiers & q ) != q ) p.get_and_mutate()->qualifiers |= q;
 }
 
 /// Remove the specified qualifiers from this type, cloning only if necessary
 template< enum Node::ref_type ref_t >
 void remove_qualifiers( ptr_base< Type, ref_t > & p, CV::Qualifiers q ) {
-	if ( ( p->qualifiers.val & q.val ) != 0 ) p.get_and_mutate()->qualifiers -= q;
+	if ( ( p->qualifiers & q ) != 0 ) p.get_and_mutate()->qualifiers -= q;
 }
 
 /// `void`

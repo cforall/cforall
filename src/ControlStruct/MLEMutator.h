@@ -40,7 +40,7 @@ namespace ControlStruct {
 		void premutate( FunctionDecl * );
 
 		void premutate( CompoundStmt *cmpndStmt );
-		Statement * postmutate( BranchStmt *branchStmt ) throw ( SemanticErrorException );
+		Statement * postmutate( BranchStmt *branchStmt );
 		void premutate( WhileDoStmt *whileDoStmt );
 		Statement * postmutate( WhileDoStmt *whileDoStmt );
 		void premutate( ForStmt *forStmt );

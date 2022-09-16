@@ -326,6 +326,10 @@ void accept_all( ast::TranslationUnit &, ast::Pass<core_t> & visitor );
 /// If used the visitor will always clone nodes.
 struct PureVisitor {};
 
+struct WithCodeLocation {
+	const CodeLocation * location = nullptr;
+};
+
 /// Keep track of the polymorphic const TypeSubstitution * typeSubs for the current expression.
 struct WithConstTypeSubstitution {
 	const TypeSubstitution * typeSubs = nullptr;

@@ -100,7 +100,7 @@ namespace Concurrency {
 
 namespace {
 
-class GenerateWaitForCore :
+class GenerateWaitForCore final :
 		public ast::WithSymbolTable, public ast::WithConstTranslationUnit {
 	const ast::FunctionDecl * decl_waitfor    = nullptr;
 	const ast::StructDecl   * decl_mask       = nullptr;

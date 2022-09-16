@@ -26,6 +26,7 @@ SRC += $(SRC_GENPOLY) \
 	GenPoly/ErasableScopedMap.h \
 	GenPoly/FindFunction.cc \
 	GenPoly/FindFunction.h \
+	GenPoly/InstantiateGenericNew.cpp \
 	GenPoly/InstantiateGeneric.cc \
 	GenPoly/InstantiateGeneric.h \
 	GenPoly/Lvalue.cc \

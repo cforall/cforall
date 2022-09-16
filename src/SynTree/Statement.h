@@ -199,7 +199,7 @@ class CaseStmt : public Statement {
 	Expression * condition;
 	std::list<Statement *> stmts;
 
-	CaseStmt( Expression * conditions, const std::list<Statement *> & stmts, bool isdef = false ) throw (SemanticErrorException);
+	CaseStmt( Expression * conditions, const std::list<Statement *> & stmts, bool isdef = false );
 	CaseStmt( const CaseStmt & other );
 	virtual ~CaseStmt();
 
@@ -288,8 +288,8 @@ class BranchStmt : public Statement {
 	Expression * computedTarget;
 	Type type;
 
-	BranchStmt( Label target, Type ) throw (SemanticErrorException);
-	BranchStmt( Expression * computedTarget, Type ) throw (SemanticErrorException);
+	BranchStmt( Label target, Type );
+	BranchStmt( Expression * computedTarget, Type );
 
 	Label get_originalTarget() { return originalTarget; }
 	Label get_target() { return target; }

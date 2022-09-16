@@ -22,21 +22,12 @@ def find_tests():
 	expected = []
 
 	def match_test(path):
-		match = re.search("^%s\/([\w\/\-_]*).expect\/([\w\-_]+)(\.nast|\.oast)?(\.[\w\-_]+)?\.txt$" % settings.SRCDIR, path)
+		match = re.search("^%s\/([\w\/\-_]*).expect\/([\w\-_]+)(\.[\w\-_]+)?\.txt$" % settings.SRCDIR, path)
 		if match :
 			test = Test()
 			test.name = match.group(2)
 			test.path = match.group(1)
-			test.arch = match.group(4)[1:] if match.group(4) else None
-
-			astv = match.group(3)[1:] if match.group(3) else None
-			if astv == 'oast':
-				test.astv = 'old'
-			elif astv == 'nast':
-				test.astv = 'new'
-			elif astv:
-				print('ERROR: "%s", expect file has astv but it is not "nast" or "oast"' % testname, file=sys.stderr)
-				sys.exit(1)
+			test.arch = match.group(3)[1:] if match.group(3) else None
 
 			expected.append(test)
 
@@ -80,32 +71,24 @@ def valid_tests( options ):
 			if Test.valid_name(testname):
 				# this is a valid name, let's check if it already exists
 				found = [test for test in all_tests if canonical_path( test.target() ) == testname]
-				setup = itertools.product(settings.all_arch if options.arch else [None], settings.all_ast if options.ast else [None])
+				setup = itertools.product(settings.all_arch if options.arch else [None])
 				if not found:
-					# it's a new name, create it according to the name and specified architecture/ast version
-					tests.extend( [Test.new_target(testname, arch, ast) for arch, ast in setup] )
+					# it's a new name, create it according to the name and specified architecture
+					tests.extend( [Test.new_target(testname, arch) for arch in setup] )
 				elif len(found) == 1 and not found[0].arch:
 					# we found a single test, the user better be wanting to create a cross platform test
 					if options.arch:
 						print('ERROR: "%s", test has no specified architecture but --arch was specified, ignoring it' % testname, file=sys.stderr)
-					elif options.ast:
-						print('ERROR: "%s", test has no specified ast version but --ast was specified, ignoring it' % testname, file=sys.stderr)
 					else:
 						tests.append( found[0] )
 				else:
 					# this test is already cross platform, just add a test for each platform the user asked
-					tests.extend( [Test.new_target(testname, arch, ast) for arch, ast in setup] )
+					tests.extend( [Test.new_target(testname, arch) for arch in setup] )
 
 					# print a warning if it users didn't ask for a specific architecture
 					found_arch = [f.arch for f in found if f.arch]
 					if found_arch and not options.arch:
 						print('WARNING: "%s", test has architecture specific expected files but --arch was not specified, regenerating only for current host' % testname, file=sys.stderr)
-
-
-					# print a warning if it users didn't ask for a specific ast version
-					found_astv = [f.astv for f in found if f.astv]
-					if found_astv and not options.ast:
-						print('WARNING: "%s", test has ast version specific expected files but --ast was not specified, regenerating only for current ast' % testname, file=sys.stderr)
 
 			else :
 				print('ERROR: "%s", tests are not allowed to end with a C/C++/CFA extension, ignoring it' % testname, file=sys.stderr)
@@ -126,7 +109,6 @@ def valid_tests( options ):
 def parse_args():
 	# create a parser with the arguments for the tests script
 	parser = argparse.ArgumentParser(description='Script which runs cforall tests')
-	parser.add_argument('--ast', help='Test for specific ast', type=comma_separated(str), default=None)
 	parser.add_argument('--arch', help='Test for specific architecture', type=comma_separated(str), default=None)
 	parser.add_argument('--debug', help='Run all tests in debug or release', type=comma_separated(yes_no), default='yes')
 	parser.add_argument('--install', help='Run all tests based on installed binaries or tree binaries', type=comma_separated(yes_no), default='no')
@@ -421,27 +403,24 @@ if __name__ == "__main__":
 
 	# for each build configurations, run the test
 	with Timed() as total_dur:
-		for ast, arch, debug, install in itertools.product(settings.all_ast, settings.all_arch, settings.all_debug, settings.all_install):
-			settings.ast     = ast
+		for arch, debug, install in itertools.product(settings.all_arch, settings.all_debug, settings.all_install):
 			settings.arch    = arch
 			settings.debug   = debug
 			settings.install = install
 
 			# filter out the tests for a different architecture
 			# tests are the same across debug/install
-			local_tests = settings.ast.filter( tests )
-			local_tests = settings.arch.filter( local_tests )
+			local_tests = settings.arch.filter( tests )
 
 			# check the build configuration works
 			settings.validate()
 			jobs = min(options.jobs, len(local_tests))
 
 			# print configuration
-			print('%s %i tests on %i cores (%s:%s - %s)' % (
+			print('%s %i tests on %i cores (%s - %s)' % (
 				'Regenerating' if settings.generating else 'Running',
 				len(local_tests),
 				jobs,
-				settings.ast.string,
 				settings.arch.string,
 				settings.debug.string
 			))

@@ -181,7 +181,6 @@ def make(target, *, flags = '', output_file = None, error = None, error_file = N
 		*settings.make,
 		'-s' if silent else None,
 		test_param,
-		settings.ast.flags,
 		settings.arch.flags,
 		settings.debug.flags,
 		settings.install.flags,

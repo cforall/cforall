@@ -100,7 +100,7 @@ const ast::Expr * UniqueExprExpander::postvisit( const ast::UniqueExpr * unqExpr
 }
 
 /// Replaces Tuple Assign & Index Expressions, and Tuple Types.
-struct TupleMainExpander :
+struct TupleMainExpander final :
 		public ast::WithGuards,
 		public ast::WithVisitorRef<TupleMainExpander>,
 		public ast::WithDeclsToAdd<> {
@@ -253,7 +253,7 @@ ast::Expr const * replaceTupleExpr(
 	}
 }
 
-struct TupleExprExpander {
+struct TupleExprExpander final {
 	ast::Expr const * postvisit( ast::TupleExpr const * expr ) {
 		return replaceTupleExpr( expr->location,
 			expr->result, expr->exprs, expr->env );

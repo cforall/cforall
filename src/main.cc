@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu 11 12:18:00 2022
-// Update Count     : 677
+// Last Modified On : Thu Sep 15 13:58:00 2022
+// Update Count     : 678
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -37,25 +37,20 @@ using namespace std;
 #include "CodeGen/FixNames.h"               // for fixNames
 #include "CodeGen/Generate.h"               // for generate
 #include "CodeGen/LinkOnce.h"               // for translateLinkOnce
-#include "CodeTools/DeclStats.h"            // for printDeclStats
-#include "CodeTools/ResolvProtoDump.h"      // for dumpAsResolvProto
 #include "CodeTools/TrackLoc.h"             // for fillLocations
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
 #include "Common/CompilerError.h"           // for CompilerError
 #include "Common/DeclStats.hpp"             // for printDeclStats
 #include "Common/ResolvProtoDump.hpp"       // for dumpAsResolverProto
-#include "Common/Stats.h"
-#include "Common/PassVisitor.h"
-#include "Common/SemanticError.h"           // for SemanticError
+#include "Common/Stats.h"                   // for Stats
 #include "Common/UnimplementedError.h"      // for UnimplementedError
 #include "Common/utility.h"                 // for deleteAll, filter, printAll
 #include "Concurrency/Keywords.h"           // for implementMutex, implement...
 #include "Concurrency/Waitfor.h"            // for generateWaitfor
 #include "ControlStruct/ExceptDecl.h"       // for translateExcept
-#include "ControlStruct/ExceptTranslate.h"  // for translateEHM
+#include "ControlStruct/ExceptTranslate.h"  // for translateThrows, translat...
 #include "ControlStruct/FixLabels.hpp"      // for fixLabels
 #include "ControlStruct/HoistControlDecls.hpp" //  hoistControlDecls
-#include "ControlStruct/Mutate.h"           // for mutate
 #include "GenPoly/Box.h"                    // for box
 #include "GenPoly/InstantiateGeneric.h"     // for instantiateGeneric
 #include "GenPoly/Lvalue.h"                 // for convertLvalue
@@ -65,14 +60,10 @@ using namespace std;
 #include "MakeLibCfa.h"                     // for makeLibCfa
 #include "Parser/ParseNode.h"               // for DeclarationNode, buildList
 #include "Parser/TypedefTable.h"            // for TypedefTable
-#include "ResolvExpr/AlternativePrinter.h"  // for AlternativePrinter
 #include "ResolvExpr/CandidatePrinter.hpp"  // for printCandidates
 #include "ResolvExpr/Resolver.h"            // for resolve
-#include "SymTab/Validate.h"                // for validate
-#include "SymTab/ValidateType.h"            // for linkReferenceToTypes
 #include "SynTree/LinkageSpec.h"            // for Spec, Cforall, Intrinsic
 #include "SynTree/Declaration.h"            // for Declaration
-#include "SynTree/Visitor.h"                // for acceptAll
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
@@ -329,214 +320,132 @@ int main( int argc, char * argv[] ) {
 		CodeTools::fillLocations( translationUnit );
 		Stats::Time::StopBlock();
 
-		if( useNewAST ) {
-			if (Stats::Counters::enabled) {
-				ast::pass_visitor_stats.avg = Stats::Counters::build<Stats::Counters::AverageCounter<double>>("Average Depth - New");
-				ast::pass_visitor_stats.max = Stats::Counters::build<Stats::Counters::MaxCounter<double>>("Max depth - New");
-			}
-			auto transUnit = convert( move( translationUnit ) );
+		if (Stats::Counters::enabled) {
+			ast::pass_visitor_stats.avg = Stats::Counters::build<Stats::Counters::AverageCounter<double>>("Average Depth - New");
+			ast::pass_visitor_stats.max = Stats::Counters::build<Stats::Counters::MaxCounter<double>>("Max depth - New");
+		}
+		auto transUnit = convert( move( translationUnit ) );
 
-			forceFillCodeLocations( transUnit );
+		forceFillCodeLocations( transUnit );
 
-			PASS( "Translate Exception Declarations", ControlStruct::translateExcept( transUnit ) );
-			if ( exdeclp ) {
-				dump( move( transUnit ) );
-				return EXIT_SUCCESS;
-			}
-
-			PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign( transUnit ) );
-			PASS( "Hoist Type Decls", Validate::hoistTypeDecls( transUnit ) );
-			// Hoist Type Decls pulls some declarations out of contexts where
-			// locations are not tracked. Perhaps they should be, but for now
-			// the full fill solves it.
-			forceFillCodeLocations( transUnit );
-
-			PASS( "Replace Typedefs", Validate::replaceTypedef( transUnit ) );
-			PASS( "Fix Return Types", Validate::fixReturnTypes( transUnit ) );
-			PASS( "Enum and Pointer Decay", Validate::decayEnumsAndPointers( transUnit ) );
-
-			PASS( "Link Reference To Types", Validate::linkReferenceToTypes( transUnit ) );
-
-			PASS( "Fix Qualified Types", Validate::fixQualifiedTypes( transUnit ) );
-			PASS( "Hoist Struct", Validate::hoistStruct( transUnit ) );
-			PASS( "Eliminate Typedef", Validate::eliminateTypedef( transUnit ) );
-			PASS( "Validate Generic Parameters", Validate::fillGenericParameters( transUnit ) );
-			PASS( "Translate Dimensions", Validate::translateDimensionParameters( transUnit ) );
-			PASS( "Check Function Returns", Validate::checkReturnStatements( transUnit ) );
-			PASS( "Fix Return Statements", InitTweak::fixReturnStatements( transUnit ) );
-			PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords( transUnit ) );
-			PASS( "Forall Pointer Decay", Validate::decayForallPointers( transUnit ) );
-			PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls( transUnit ) );
-
-			PASS( "Generate Autogen Routines", Validate::autogenerateRoutines( transUnit ) );
-
-			PASS( "Implement Mutex", Concurrency::implementMutex( transUnit ) );
-			PASS( "Implement Thread Start", Concurrency::implementThreadStarter( transUnit ) );
-			PASS( "Compound Literal", Validate::handleCompoundLiterals( transUnit ) );
-			PASS( "Set Length From Initializer", Validate::setLengthFromInitializer( transUnit ) );
-			PASS( "Find Global Decls", Validate::findGlobalDecls( transUnit ) );
-			PASS( "Fix Label Address", Validate::fixLabelAddresses( transUnit ) );
-
-			if ( symtabp ) {
-				return EXIT_SUCCESS;
-			} // if
-
-			if ( expraltp ) {
-				ResolvExpr::printCandidates( transUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			if ( validp ) {
-				dump( move( transUnit ) );
-				return EXIT_SUCCESS;
-			} // if
-
-			PASS( "Translate Throws", ControlStruct::translateThrows( transUnit ) );
-			PASS( "Fix Labels", ControlStruct::fixLabels( transUnit ) );
-			PASS( "Fix Names", CodeGen::fixNames( transUnit ) );
-			PASS( "Gen Init", InitTweak::genInit( transUnit ) );
-			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( transUnit ) );
-
-			if ( libcfap ) {
-				// Generate the bodies of cfa library functions.
-				LibCfa::makeLibCfa( transUnit );
-			} // if
-
-			if ( declstatsp ) {
-				printDeclStats( transUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			if ( bresolvep ) {
-				dump( move( transUnit ) );
-				return EXIT_SUCCESS;
-			} // if
-
-			if ( resolvprotop ) {
-				dumpAsResolverProto( transUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			PASS( "Resolve", ResolvExpr::resolve( transUnit ) );
-			if ( exprp ) {
-				dump( move( transUnit ) );
-				return EXIT_SUCCESS;
-			} // if
-
-			forceFillCodeLocations( transUnit );
-
-			PASS( "Fix Init", InitTweak::fix(transUnit, buildingLibrary()));
-
-			// fix ObjectDecl - replaces ConstructorInit nodes
-			if ( ctorinitp ) {
-				dump( move( transUnit ) );
-				return EXIT_SUCCESS;
-			} // if
-
-			// Currently not working due to unresolved issues with UniqueExpr
-			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( transUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
-
-			PASS( "Translate Tries", ControlStruct::translateTries( transUnit ) );
-			PASS( "Gen Waitfor", Concurrency::generateWaitFor( transUnit ) );
-
-			// Needs to happen before tuple types are expanded.
-			PASS( "Convert Specializations",  GenPoly::convertSpecializations( transUnit ) );
-
-			PASS( "Expand Tuples", Tuples::expandTuples( transUnit ) );
-
-			if ( tuplep ) {
-				dump( move( transUnit ) );
-				return EXIT_SUCCESS;
-			} // if
-
-			// Must come after Translate Tries.
-			PASS( "Virtual Expand Casts", Virtual::expandCasts( transUnit ) );
-
-			translationUnit = convert( move( transUnit ) );
-		} else {
-			PASS( "Translate Exception Declarations", ControlStruct::translateExcept( translationUnit ) );
-			if ( exdeclp ) {
-				dump( translationUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			// add the assignment statement after the initialization of a type parameter
-			PASS( "Validate", SymTab::validate( translationUnit ) );
-
-			if ( symtabp ) {
-				deleteAll( translationUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			if ( expraltp ) {
-				PassVisitor<ResolvExpr::AlternativePrinter> printer( cout );
-				acceptAll( translationUnit, printer );
-				return EXIT_SUCCESS;
-			} // if
-
-			if ( validp ) {
-				dump( translationUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			PASS( "Translate Throws", ControlStruct::translateThrows( translationUnit ) );
-			PASS( "Fix Labels", ControlStruct::fixLabels( translationUnit ) );
-			PASS( "Fix Names", CodeGen::fixNames( translationUnit ) );
-			PASS( "Gen Init", InitTweak::genInit( translationUnit ) );
-			PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( translationUnit ) );
-
-			if ( libcfap ) {
-				// Generate the bodies of cfa library functions.
-				LibCfa::makeLibCfa( translationUnit );
-			} // if
-
-			if ( declstatsp ) {
-				CodeTools::printDeclStats( translationUnit );
-				deleteAll( translationUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			if ( bresolvep ) {
-				dump( translationUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			CodeTools::fillLocations( translationUnit );
-
-			if ( resolvprotop ) {
-				CodeTools::dumpAsResolvProto( translationUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			PASS( "Resolve", ResolvExpr::resolve( translationUnit ) );
-			if ( exprp ) {
-				dump( translationUnit );
-				return EXIT_SUCCESS;
-			}
-
-			PASS( "Fix Init", InitTweak::fix( translationUnit, buildingLibrary() ) );
-
-			// fix ObjectDecl - replaces ConstructorInit nodes
-			if ( ctorinitp ) {
-				dump ( translationUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( translationUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
-			PASS( "Translate Tries", ControlStruct::translateTries( translationUnit ) );
-			PASS( "Gen Waitfor", Concurrency::generateWaitFor( translationUnit ) );
-			PASS( "Convert Specializations",  GenPoly::convertSpecializations( translationUnit ) ); // needs to happen before tuple types are expanded
-			PASS( "Expand Tuples", Tuples::expandTuples( translationUnit ) ); // xxx - is this the right place for this?
-
-			if ( tuplep ) {
-				dump( translationUnit );
-				return EXIT_SUCCESS;
-			} // if
-
-			PASS( "Virtual Expand Casts", Virtual::expandCasts( translationUnit ) ); // Must come after translateEHM
+		PASS( "Translate Exception Declarations", ControlStruct::translateExcept( transUnit ) );
+		if ( exdeclp ) {
+			dump( move( transUnit ) );
+			return EXIT_SUCCESS;
 		}
 
-		PASS( "Instantiate Generics", GenPoly::instantiateGeneric( translationUnit ) );
+		PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign( transUnit ) );
+		PASS( "Hoist Type Decls", Validate::hoistTypeDecls( transUnit ) );
+		// Hoist Type Decls pulls some declarations out of contexts where
+		// locations are not tracked. Perhaps they should be, but for now
+		// the full fill solves it.
+		forceFillCodeLocations( transUnit );
+
+		PASS( "Replace Typedefs", Validate::replaceTypedef( transUnit ) );
+		PASS( "Fix Return Types", Validate::fixReturnTypes( transUnit ) );
+		PASS( "Enum and Pointer Decay", Validate::decayEnumsAndPointers( transUnit ) );
+
+		PASS( "Link Reference To Types", Validate::linkReferenceToTypes( transUnit ) );
+
+		PASS( "Fix Qualified Types", Validate::fixQualifiedTypes( transUnit ) );
+		PASS( "Hoist Struct", Validate::hoistStruct( transUnit ) );
+		PASS( "Eliminate Typedef", Validate::eliminateTypedef( transUnit ) );
+		PASS( "Validate Generic Parameters", Validate::fillGenericParameters( transUnit ) );
+		PASS( "Translate Dimensions", Validate::translateDimensionParameters( transUnit ) );
+		PASS( "Check Function Returns", Validate::checkReturnStatements( transUnit ) );
+		PASS( "Fix Return Statements", InitTweak::fixReturnStatements( transUnit ) );
+		PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords( transUnit ) );
+		PASS( "Forall Pointer Decay", Validate::decayForallPointers( transUnit ) );
+		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls( transUnit ) );
+
+		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines( transUnit ) );
+
+		PASS( "Implement Mutex", Concurrency::implementMutex( transUnit ) );
+		PASS( "Implement Thread Start", Concurrency::implementThreadStarter( transUnit ) );
+		PASS( "Compound Literal", Validate::handleCompoundLiterals( transUnit ) );
+		PASS( "Set Length From Initializer", Validate::setLengthFromInitializer( transUnit ) );
+		PASS( "Find Global Decls", Validate::findGlobalDecls( transUnit ) );
+		PASS( "Fix Label Address", Validate::fixLabelAddresses( transUnit ) );
+
+		if ( symtabp ) {
+			return EXIT_SUCCESS;
+		} // if
+
+		if ( expraltp ) {
+			ResolvExpr::printCandidates( transUnit );
+			return EXIT_SUCCESS;
+		} // if
+
+		if ( validp ) {
+			dump( move( transUnit ) );
+			return EXIT_SUCCESS;
+		} // if
+
+		PASS( "Translate Throws", ControlStruct::translateThrows( transUnit ) );
+		PASS( "Fix Labels", ControlStruct::fixLabels( transUnit ) );
+		PASS( "Fix Names", CodeGen::fixNames( transUnit ) );
+		PASS( "Gen Init", InitTweak::genInit( transUnit ) );
+		PASS( "Expand Member Tuples" , Tuples::expandMemberTuples( transUnit ) );
+
+		if ( libcfap ) {
+			// Generate the bodies of cfa library functions.
+			LibCfa::makeLibCfa( transUnit );
+		} // if
+
+		if ( declstatsp ) {
+			printDeclStats( transUnit );
+			return EXIT_SUCCESS;
+		} // if
+
+		if ( bresolvep ) {
+			dump( move( transUnit ) );
+			return EXIT_SUCCESS;
+		} // if
+
+		if ( resolvprotop ) {
+			dumpAsResolverProto( transUnit );
+			return EXIT_SUCCESS;
+		} // if
+
+		PASS( "Resolve", ResolvExpr::resolve( transUnit ) );
+		if ( exprp ) {
+			dump( move( transUnit ) );
+			return EXIT_SUCCESS;
+		} // if
+
+		forceFillCodeLocations( transUnit );
+
+		PASS( "Fix Init", InitTweak::fix(transUnit, buildingLibrary()));
+
+		// fix ObjectDecl - replaces ConstructorInit nodes
+		if ( ctorinitp ) {
+			dump( move( transUnit ) );
+			return EXIT_SUCCESS;
+		} // if
+
+		// Currently not working due to unresolved issues with UniqueExpr
+		PASS( "Expand Unique Expr", Tuples::expandUniqueExpr( transUnit ) ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
+
+		PASS( "Translate Tries", ControlStruct::translateTries( transUnit ) );
+		PASS( "Gen Waitfor", Concurrency::generateWaitFor( transUnit ) );
+
+		// Needs to happen before tuple types are expanded.
+		PASS( "Convert Specializations",  GenPoly::convertSpecializations( transUnit ) );
+
+		PASS( "Expand Tuples", Tuples::expandTuples( transUnit ) );
+
+		if ( tuplep ) {
+			dump( move( transUnit ) );
+			return EXIT_SUCCESS;
+		} // if
+
+		// Must come after Translate Tries.
+		PASS( "Virtual Expand Casts", Virtual::expandCasts( transUnit ) );
+
+		PASS( "Instantiate Generics", GenPoly::instantiateGeneric( transUnit ) );
+
+		translationUnit = convert( move( transUnit ) );
+
 		if ( genericsp ) {
 			dump( translationUnit );
 			return EXIT_SUCCESS;
@@ -619,7 +528,7 @@ int main( int argc, char * argv[] ) {
 } // main
 
 
-static const char optstring[] = ":c:ghlLmNnpdOAP:S:twW:D:";
+static const char optstring[] = ":c:ghlLmNnpdP:S:twW:D:";
 
 enum { PreludeDir = 128 };
 static struct option long_opts[] = {
@@ -633,8 +542,6 @@ static struct option long_opts[] = {
 	{ "no-prelude", no_argument, nullptr, 'n' },
 	{ "prototypes", no_argument, nullptr, 'p' },
 	{ "deterministic-out", no_argument, nullptr, 'd' },
-	{ "old-ast", no_argument, nullptr, 'O'},
-	{ "new-ast", no_argument, nullptr, 'A'},
 	{ "print", required_argument, nullptr, 'P' },
 	{ "prelude-dir", required_argument, nullptr, PreludeDir },
 	{ "statistics", required_argument, nullptr, 'S' },
@@ -656,8 +563,6 @@ static const char * description[] = {
 	"do not read prelude",								// -n
 	"do not generate prelude prototypes => prelude not printed", // -p
 	"only print deterministic output",                  // -d
-	"Use the old-ast",									// -O
-	"Use the new-ast",									// -A
 	"print",											// -P
 	"<directory> prelude directory for debug/nodebug",	// no flag
 	"<option-list> enable profiling information: counters, heap, time, all, none", // -S
@@ -765,12 +670,6 @@ static void parse_cmdline( int argc, char * argv[] ) {
 			break;
 		  case 'd':                                     // don't print non-deterministic output
 			deterministic_output = true;
-			break;
-		  case 'O':                                     // don't print non-deterministic output
-			useNewAST = false;
-			break;
-		  case 'A':                                     // don't print non-deterministic output
-			useNewAST = true;
 			break;
 		  case 'P':										// print options
 			for ( int i = 0;; i += 1 ) {

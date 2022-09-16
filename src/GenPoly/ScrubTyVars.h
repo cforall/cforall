@@ -8,15 +8,16 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:21:47 2017
-// Update Count     : 2
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Aug 19 14:14:00 2022
+// Update Count     : 3
 //
 
 #pragma once
 
 #include <cassert>            // for assert
 
+#include "AST/Fwd.hpp"        // for Node
 #include "Common/PassVisitor.h"
 #include "GenPoly.h"          // for TyVarMap, isPolyType, isDynType
 #include "SynTree/Mutator.h"  // for Mutator
@@ -106,6 +107,16 @@ namespace GenPoly {
 		PassVisitor<ScrubTyVars> scrubber;
 		return static_cast< SynTreeClass * >( target->acceptMutator( scrubber ) );
 	}
+
+/// For all polymorphic types, replaces generic types, with the appropriate
+/// void type, and sizeof/alignof expressions with the proper variable.
+template<typename node_t>
+node_t const * scrubAllTypeVars( node_t const * target ) {
+	return strict_dynamic_cast<node_t const *>( scrubAllTypeVars<ast::Node>( target ) );
+}
+
+template<>
+ast::Node const * scrubAllTypeVars<ast::Node>( const ast::Node * target );
 
 } // namespace GenPoly
 

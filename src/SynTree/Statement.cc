@@ -104,7 +104,7 @@ const char * BranchStmt::brType[] = {
 	"Goto", "Break", "Continue", "Fall Through", "Fall Through Default",
 };
 
-BranchStmt::BranchStmt( Label target, Type type ) throw ( SemanticErrorException ) :
+BranchStmt::BranchStmt( Label target, Type type ) :
 	Statement(), originalTarget( target ), target( target ), computedTarget( nullptr ), type( type ) {
 	//actually this is a syntactic error signaled by the parser
 	if ( type == BranchStmt::Goto && target.empty() ) {
@@ -112,7 +112,7 @@ BranchStmt::BranchStmt( Label target, Type type ) throw ( SemanticErrorException
 	}
 }
 
-BranchStmt::BranchStmt( Expression * computedTarget, Type type ) throw ( SemanticErrorException ) :
+BranchStmt::BranchStmt( Expression * computedTarget, Type type ) :
 	Statement(), computedTarget( computedTarget ), type( type ) {
 	if ( type != BranchStmt::Goto || computedTarget == nullptr ) {
 		SemanticError( computedTarget->location, "Computed target not valid in branch statement");
@@ -210,7 +210,7 @@ void SwitchStmt::print( ostream & os, Indenter indent ) const {
 	}
 }
 
-CaseStmt::CaseStmt( Expression * condition, const list<Statement *> & statements, bool deflt ) throw ( SemanticErrorException ) :
+CaseStmt::CaseStmt( Expression * condition, const list<Statement *> & statements, bool deflt ) :
 		Statement(), condition( condition ), stmts( statements ), _isDefault( deflt ) {
 	if ( isDefault() && condition != nullptr ) SemanticError( condition, "default case with condition: " );
 }
@@ -574,7 +574,7 @@ void ImplicitCtorDtorStmt::print( ostream & os, Indenter indent ) const {
 	os << endl;
 }
 
-MutexStmt::MutexStmt( Statement * stmt, const list<Expression *> mutexObjs ) 
+MutexStmt::MutexStmt( Statement * stmt, const list<Expression *> mutexObjs )
 	: Statement(), stmt( stmt ), mutexObjs( mutexObjs ) { }
 
 MutexStmt::MutexStmt( const MutexStmt & other ) : Statement( other ), stmt( maybeClone( other.stmt ) ) {

@@ -140,8 +140,7 @@ namespace ControlStruct {
 	}
 
 
-	Statement *MultiLevelExitMutator::postmutate( BranchStmt *branchStmt )
-			throw ( SemanticErrorException ) {
+	Statement *MultiLevelExitMutator::postmutate( BranchStmt *branchStmt ) {
 		std::string originalTarget = branchStmt->originalTarget;
 
 		std::list< Entry >::reverse_iterator targetEntry;

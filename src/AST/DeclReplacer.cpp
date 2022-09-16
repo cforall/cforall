@@ -8,111 +8,111 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed May 8 13:00:00 2019
-// Last Modified By : Aaron B. Moss
-// Last Modified On : Wed May 8 13:00:00 2019
-// Update Count     : 1
+// Last Modified By : Andrew Beach
+// Last Modified On : Thr Sep 15 11:55:00 2022
+// Update Count     : 2
 //
 
 #include "DeclReplacer.hpp"
-#include "Expr.hpp"
-#include "Type.hpp"
 
+#include "Expr.hpp"
 #include "Pass.hpp"
+#include "Type.hpp"
 
 namespace ast {
 
 namespace DeclReplacer {
-	namespace {
-		struct DeclReplacer {
-		private:
-			const DeclMap & declMap;
-			const TypeMap & typeMap;
-			bool debug;
 
-		public:
-			DeclReplacer(const DeclMap & declMap, const TypeMap & typeMap, bool debug)
-				: declMap( declMap ), typeMap( typeMap ), debug( debug )
-			{}
+namespace {
+	struct DeclReplacer {
+	private:
+		const DeclMap & declMap;
+		const TypeMap & typeMap;
+		bool debug;
 
-			const ast::VariableExpr * previsit( const ast::VariableExpr * );
-			const ast::TypeInstType * previsit( const ast::TypeInstType * );
-		};
+	public:
+		DeclReplacer( const DeclMap & declMap, const TypeMap & typeMap, bool debug )
+			: declMap( declMap ), typeMap( typeMap ), debug( debug )
+		{}
 
-		struct VarExprReplacer {
-		private:
-			const ExprMap & exprMap;
-			
-		public:
-			VarExprReplacer(const ExprMap & exprMap): exprMap (exprMap) {}
+		const ast::VariableExpr * previsit( const ast::VariableExpr * );
+		const ast::TypeInstType * previsit( const ast::TypeInstType * );
+	};
 
-			const Expr * postvisit (const VariableExpr *);
-		};
-	}
+	struct VarExprReplacer {
+	private:
+		const ExprMap & exprMap;
 
-	const ast::Node * replace( const ast::Node * node, const DeclMap & declMap, const TypeMap & typeMap, bool debug ) {
-		if(!node) return nullptr;
-		Pass<DeclReplacer> replacer = { declMap, typeMap, debug };
-		return node->accept( replacer );
-	}
+	public:
+		VarExprReplacer( const ExprMap & exprMap ) : exprMap( exprMap ) {}
 
-	const ast::Node * replace( const ast::Node * node, const DeclMap & declMap, bool debug ) {
-		TypeMap typeMap;
-		return replace( node, declMap, typeMap, debug );
-	}
+		const Expr * postvisit( const VariableExpr * );
+	};
+} // namespace
 
-	const ast::Node * replace( const ast::Node * node, const TypeMap & typeMap, bool debug ) {
-		DeclMap declMap;
-		return replace( node, declMap, typeMap, debug );
-	}
-
-	const ast::Node * replace( const ast::Node * node, const ExprMap & exprMap) {
-		Pass<VarExprReplacer> replacer = {exprMap};
-		return node->accept( replacer );
-	}
-
-	namespace {
-		// replace variable with new node from decl map
-		const ast::VariableExpr * DeclReplacer::previsit( const VariableExpr * varExpr ) {
-			// xxx - assertions and parameters aren't accounted for in this... (i.e. they aren't inserted into the map when it's made, only DeclStmts are)
-			if ( !declMap.count( varExpr->var ) ) return varExpr;
-
-			auto replacement = declMap.at( varExpr->var );
-			if ( debug ) {
-				std::cerr << "replacing variable reference: "
-					<< (void*)varExpr->var.get() << " " << varExpr->var
-					<< " with " << (void*)replacement << " " << replacement
-					<< std::endl;
-			}
-			auto nexpr = mutate(varExpr);
-			nexpr->var = replacement;
-			return nexpr;
-		}
-
-		const TypeInstType * DeclReplacer::previsit( const TypeInstType * inst ) {
-			if ( !typeMap.count( inst->base ) ) return inst;
-
-			auto replacement = typeMap.at( inst->base );
-			if ( debug ) {
-				std::cerr << "replacing type reference: "
-					<< (void*)inst->base.get() << " " << inst->base
-					<< " with " << (void*)replacement << " " << replacement
-					<< std::endl;
-			}
-			auto ninst = mutate(inst);
-			ninst->base = replacement;
-			return ninst;
-		}
-
-		const Expr * VarExprReplacer::postvisit( const VariableExpr * expr ) {
-			if (!exprMap.count(expr->var)) return expr;
-
-			return exprMap.at(expr->var);
-		}
-
-	}
+const ast::Node * replace( const ast::Node * node, const DeclMap & declMap, const TypeMap & typeMap, bool debug ) {
+	if(!node) return nullptr;
+	Pass<DeclReplacer> replacer = { declMap, typeMap, debug };
+	return node->accept( replacer );
 }
 
+const ast::Node * replace( const ast::Node * node, const DeclMap & declMap, bool debug ) {
+	TypeMap typeMap;
+	return replace( node, declMap, typeMap, debug );
 }
+
+const ast::Node * replace( const ast::Node * node, const TypeMap & typeMap, bool debug ) {
+	DeclMap declMap;
+	return replace( node, declMap, typeMap, debug );
+}
+
+const ast::Node * replace( const ast::Node * node, const ExprMap & exprMap ) {
+	Pass<VarExprReplacer> replacer = {exprMap};
+	return node->accept( replacer );
+}
+
+namespace {
+	// replace variable with new node from decl map
+	const ast::VariableExpr * DeclReplacer::previsit( const VariableExpr * varExpr ) {
+		// xxx - assertions and parameters aren't accounted for in this... (i.e. they aren't inserted into the map when it's made, only DeclStmts are)
+		if ( !declMap.count( varExpr->var ) ) return varExpr;
+
+		auto replacement = declMap.at( varExpr->var );
+		if ( debug ) {
+			std::cerr << "replacing variable reference: "
+				<< (void*)varExpr->var.get() << " " << varExpr->var
+				<< " with " << (void*)replacement << " " << replacement
+				<< std::endl;
+		}
+		auto nexpr = mutate(varExpr);
+		nexpr->var = replacement;
+		return nexpr;
+	}
+
+	const TypeInstType * DeclReplacer::previsit( const TypeInstType * inst ) {
+		if ( !typeMap.count( inst->base ) ) return inst;
+
+		auto replacement = typeMap.at( inst->base );
+		if ( debug ) {
+			std::cerr << "replacing type reference: "
+				<< (void*)inst->base.get() << " " << inst->base
+				<< " with " << (void*)replacement << " " << replacement
+				<< std::endl;
+		}
+		auto ninst = mutate(inst);
+		ninst->base = replacement;
+		return ninst;
+	}
+
+	const Expr * VarExprReplacer::postvisit( const VariableExpr * expr ) {
+		if ( !exprMap.count( expr->var ) ) return expr;
+		return exprMap.at( expr->var );
+	}
+} // namespace
+
+} // namespace DeclReplacer
+
+} // namespace ast
 
 // Local Variables: //
 // tab-width: 4 //

@@ -25,20 +25,6 @@ AC_ARG_PROGRAM
 M4CFA_PROGRAM_NAME
 
 #==============================================================================
-# New AST toggling support
-AH_TEMPLATE([CFA_USE_NEW_AST],[Sets whether or not to use the new-ast, this is adefault value and can be overrided by --old-ast and --new-ast])
-DEFAULT_NEW_AST="True"
-AC_ARG_ENABLE(new-ast,
-	[  --enable-new-ast     whether or not to use new ast as the default AST algorithm],
-	[case "${enableval}" in
-		yes) newast=true ; DEFAULT_NEW_AST="True"  ;;
-		no)  newast=false; DEFAULT_NEW_AST="False" ;;
-		*) AC_MSG_ERROR([bad value ${enableval} for --enable-new-ast]) ;;
-	esac],[newast=true])
-AC_DEFINE_UNQUOTED([CFA_USE_NEW_AST], $newast)
-AC_SUBST(DEFAULT_NEW_AST)
-
-#==============================================================================
 # version information
 
 rm -f version
@@ -138,10 +124,6 @@ do
 		# skip gprofiler for libcfa
 		\'--enable-gprofiler=*) ;;
 		\'--disable-gprofiler) ;;
-
-		# skip the target hosts
-		\'--enable-new-ast=*) ;;
-		\'--disable-new-ast) ;;
 
 		# skip this, it only causes problems
 		\'--srcdir=*) ;;

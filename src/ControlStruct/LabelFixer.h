@@ -32,7 +32,7 @@ class LabelFixer final : public WithGuards {
   public:
 	LabelFixer( LabelGenerator *gen = 0 );
 
-	std::map < Label, Statement * > *resolveJumps() throw ( SemanticErrorException );
+	std::map < Label, Statement * > *resolveJumps();
 
 	// Declarations
 	void previsit( FunctionDecl *functionDecl );

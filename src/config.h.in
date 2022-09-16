@@ -27,10 +27,6 @@
 /* Location of cfa install. */
 #undef CFA_PREFIX
 
-/* Sets whether or not to use the new-ast, this is adefault value and can be
-   overrided by --old-ast and --new-ast */
-#undef CFA_USE_NEW_AST
-
 /* Major.Minor */
 #undef CFA_VERSION
 

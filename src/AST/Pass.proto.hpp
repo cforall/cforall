@@ -325,6 +325,19 @@ namespace __pass {
 		return core.on_error(decl);
 	}
 
+	template< typename core_t, typename node_t >
+	static auto make_location_guard( core_t & core, node_t * node, int )
+			-> decltype( node->location, ValueGuardPtr<const CodeLocation *>( &core.location ) ) {
+		ValueGuardPtr<const CodeLocation *> guard( &core.location );
+		core.location = &node->location;
+		return guard;
+	}
+
+	template< typename core_t, typename node_t >
+	static auto make_location_guard( core_t &, node_t *, long ) -> int {
+		return 0;
+	}
+
 	// Another feature of the templated visitor is that it calls beginScope()/endScope() for compound statement.
 	// All passes which have such functions are assumed desire this behaviour
 	// detect it using the same strategy

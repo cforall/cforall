@@ -316,7 +316,7 @@ public:
 	}
 };
 
-struct ExpandCastsCore {
+struct ExpandCastsCore final {
 	void previsit( ast::FunctionDecl const * decl );
 	void previsit( ast::StructDecl const * decl );
 	void previsit( ast::ObjectDecl const * decl );
@@ -361,6 +361,7 @@ ast::Type const * getBaseType( ast::ptr<ast::Type> const & type ) {
 	}
 }
 
+/// Copy newType, but give the copy the params of the oldType.
 ast::StructInstType * polyCopy(
 		ast::StructInstType const * oldType,
 		ast::StructInstType const * newType ) {

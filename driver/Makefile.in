@@ -219,7 +219,6 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFAULT_NEW_AST = @DEFAULT_NEW_AST@
 DEFS = @DEFS@
 DEMANGLER = @DEMANGLER@
 DEPDIR = @DEPDIR@
@@ -341,7 +340,7 @@ AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
 ACLOCAL_AMFLAGS = -I automake
 
 # applies to both programs
-AM_CXXFLAGS = @HOST_FLAGS@ -Wall -Wextra -Werror=return-type -O2 -g -std=c++14 -I${abs_top_srcdir}/src -I${abs_top_srcdir}/src/include
+AM_CXXFLAGS = @HOST_FLAGS@ -Wall -Wextra -Werror=return-type -O2 -g -std=c++17 -I${abs_top_srcdir}/src -I${abs_top_srcdir}/src/include
 cfa_SOURCES = cfa.cc
 
 # put into lib for now

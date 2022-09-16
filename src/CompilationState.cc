@@ -30,7 +30,7 @@ int
 	nopreludep = false,
 	genproto = false,
 	deterministic_output = false,
-	useNewAST = CFA_USE_NEW_AST,
+	useNewAST = true,
 	nomainp = false,
 	parsep = false,
 	resolvep = false,

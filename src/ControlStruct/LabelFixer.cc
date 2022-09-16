@@ -118,7 +118,7 @@ void LabelFixer::setLabelsUsg( Label orgValue, UsageNode *use ) {
 }
 
 // Builds a table that maps a label to its defining statement.
-std::map<Label, Statement * > * LabelFixer::resolveJumps() throw ( SemanticErrorException ) {
+std::map<Label, Statement * > * LabelFixer::resolveJumps() {
 	std::map< Label, Statement * > *ret = new std::map< Label, Statement * >();
 	for ( std::map< Label, Entry * >::iterator i = labelTable.begin(); i != labelTable.end(); ++i ) {
 		if ( ! i->second->defined() ) {

@@ -8,16 +8,18 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar 16 15:44:27 2017
-// Update Count     : 3
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Aug 19 16:10:00 2022
+// Update Count     : 4
 //
 
 #include <utility>                      // for pair
 
+#include "AST/Pass.hpp"
 #include "GenPoly.h"                    // for mangleType, TyVarMap, alignof...
 #include "GenPoly/ErasableScopedMap.h"  // for ErasableScopedMap<>::const_it...
 #include "ScrubTyVars.h"
+#include "SymTab/Mangler.h"             // for mangle, typeMode
 #include "SynTree/Declaration.h"        // for TypeDecl, TypeDecl::Data, Typ...
 #include "SynTree/Expression.h"         // for Expression (ptr only), NameExpr
 #include "SynTree/Mutator.h"            // for Mutator
@@ -111,6 +113,164 @@ namespace GenPoly {
 		}
 		return pointer;
 	}
+
+namespace {
+
+enum class ScrubMode {
+	FromMap,
+	DynamicFromMap,
+	All,
+};
+
+struct ScrubTypeVars :
+	public ast::WithGuards,
+	public ast::WithShortCircuiting,
+	public ast::WithVisitorRef<ScrubTypeVars> {
+
+	ScrubTypeVars( ScrubMode m, TyVarMap const * tv ) :
+			mode ( m ), typeVars( tv ) {}
+
+	void previsit( ast::TypeInstType const * ) { visit_children = false; }
+	void previsit( ast::StructInstType const * ) { visit_children = false; }
+	void previsit( ast::UnionInstType const * ) { visit_children = false; }
+	void previsit( ast::SizeofExpr const * expr ) { primeBaseScrub( expr->type ); }
+	void previsit( ast::AlignofExpr const * expr ) { primeBaseScrub( expr->type ); }
+	void previsit( ast::PointerType const * type ) { primeBaseScrub( type->base ); }
+
+	ast::Type const * postvisit( ast::TypeInstType const * type );
+	ast::Type const * postvisit( ast::StructInstType const * type );
+	ast::Type const * postvisit( ast::UnionInstType const * type );
+	ast::Expr const * postvisit( ast::SizeofExpr const * expr );
+	ast::Expr const * postvisit( ast::AlignofExpr const * expr );
+	ast::Type const * postvisit( ast::PointerType const * type );
+
+private:
+	ScrubMode const mode;
+	/// Type varriables to scrub.
+	TyVarMap const * const typeVars;
+	/// Value cached by primeBaseScrub.
+	ast::Type const * dynType = nullptr;
+
+	/// Returns the type if it should be scrubbed, nullptr otherwise.
+	ast::Type const * shouldScrub( ast::Type const * type ) {
+		switch ( mode ) {
+		case ScrubMode::FromMap:
+			return isPolyType( type, *typeVars );
+		case ScrubMode::DynamicFromMap:
+			return isDynType( type, *typeVars );
+		case ScrubMode::All:
+			return isPolyType( type );
+		default:
+			assertf( false, "Invalid ScrubMode in shouldScrub." );
+			throw;
+		}
+	}
+
+	void primeBaseScrub( ast::Type const * type ) {
+		// Need to determine whether type needs to be scrubbed to
+		// determine whether automatic recursion is necessary.
+		if ( ast::Type const * t = shouldScrub( type ) ) {
+			visit_children = false;
+			GuardValue( dynType ) = t;
+		}
+	}
+
+	ast::Type const * postvisitAggregateType(
+			ast::BaseInstType const * type ) {
+		if ( !shouldScrub( type ) ) return type;
+		return new ast::PointerType( new ast::VoidType( type->qualifiers ) );
+	}
+};
+
+ast::Type const * ScrubTypeVars::postvisit( ast::TypeInstType const * type ) {
+	// This implies that mode == ScrubMode::All.
+	if ( !typeVars ) {
+		if ( ast::TypeDecl::Ftype == type->kind ) {
+			return new ast::PointerType(
+				new ast::FunctionType( ast::FixedArgs ) );
+		} else {
+			return new ast::PointerType(
+				new ast::VoidType( type->qualifiers ) );
+		}
+	}
+
+	auto typeVar = typeVars->find( type->name );
+	if ( typeVar == typeVars->end() ) {
+		return type;
+	}
+
+	switch ( typeVar->second.kind ) {
+	case ast::TypeDecl::Dtype:
+	case ast::TypeDecl::Ttype:
+		return new ast::PointerType(
+			new ast::VoidType( type->qualifiers ) );
+	case ast::TypeDecl::Ftype:
+		return new ast::PointerType(
+			new ast::FunctionType( ast::VariableArgs ) );
+	default:
+		assertf( false,
+			"Unhandled type variable kind: %d", typeVar->second.kind );
+		throw; // Just in case the assert is removed, stop here.
+	}
+}
+
+ast::Type const * ScrubTypeVars::postvisit( ast::StructInstType const * type ) {
+	return postvisitAggregateType( type );
+}
+
+ast::Type const * ScrubTypeVars::postvisit( ast::UnionInstType const * type ) {
+	return postvisitAggregateType( type );
+}
+
+ast::Expr const * ScrubTypeVars::postvisit( ast::SizeofExpr const * expr ) {
+	// sizeof( T ) becomes the _sizeof_T parameter.
+	if ( dynType ) {
+		return new ast::NameExpr( expr->location,
+			sizeofName( Mangle::mangle( dynType, Mangle::typeMode() ) ) );
+	} else {
+		return expr;
+	}
+}
+
+ast::Expr const * ScrubTypeVars::postvisit( ast::AlignofExpr const * expr ) {
+	// alignof( T ) becomes the _alignof_T parameter.
+	if ( dynType ) {
+		return new ast::NameExpr( expr->location,
+			alignofName( Mangle::mangle( dynType, Mangle::typeMode() ) ) );
+	} else {
+		return expr;
+	}
+}
+
+ast::Type const * ScrubTypeVars::postvisit( ast::PointerType const * type ) {
+	if ( dynType ) {
+		ast::Type * ret = ast::mutate( dynType->accept( *visitor ) );
+		ret->qualifiers |= type->qualifiers;
+		return ret;
+	} else {
+		return type;
+	}
+}
+
+const ast::Node * scrubTypeVarsBase(
+		const ast::Node * target,
+		ScrubMode mode, const TyVarMap * typeVars ) {
+	if ( ScrubMode::All == mode ) {
+		assert( nullptr == typeVars );
+	} else {
+		assert( nullptr != typeVars );
+	}
+	ast::Pass<ScrubTypeVars> visitor( mode, typeVars );
+	return target->accept( visitor );
+}
+
+} // namespace
+
+template<>
+ast::Node const * scrubAllTypeVars<ast::Node>( const ast::Node * target ) {
+	return scrubTypeVarsBase( target, ScrubMode::All, nullptr );
+}
+
 } // namespace GenPoly
 
 // Local Variables: //

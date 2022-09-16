@@ -18,12 +18,17 @@
 #include <list>  // for list
 
 class Declaration;
+namespace ast {
+	class TranslationUnit;
+}
 
 namespace GenPoly {
-	/// Replaces all generic types that have static layout with concrete instantiations.
-	/// Types with concrete values for otype parameters will be template-expanded, while
-	/// dtype and ftype parameters will be replaced by the appropriate void type.
-	void instantiateGeneric( std::list< Declaration* > &translationUnit );
+/// Replaces all generic types that have static layout with concrete
+/// instantiations. Types with concrete values for otype parameters will be
+/// template-expanded, while dtype and ftype parameters will be replaced by
+/// the appropriate void type.
+void instantiateGeneric( std::list< Declaration* > &translationUnit );
+void instantiateGeneric( ast::TranslationUnit & translationUnit );
 } // namespace GenPoly
 
 // Local Variables: //
