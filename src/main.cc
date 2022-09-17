@@ -324,13 +324,13 @@ int main( int argc, char * argv[] ) {
 			ast::pass_visitor_stats.avg = Stats::Counters::build<Stats::Counters::AverageCounter<double>>("Average Depth - New");
 			ast::pass_visitor_stats.max = Stats::Counters::build<Stats::Counters::MaxCounter<double>>("Max depth - New");
 		}
-		auto transUnit = convert( move( translationUnit ) );
+		auto transUnit = convert( std::move( translationUnit ) );
 
 		forceFillCodeLocations( transUnit );
 
 		PASS( "Translate Exception Declarations", ControlStruct::translateExcept( transUnit ) );
 		if ( exdeclp ) {
-			dump( move( transUnit ) );
+			dump( std::move( transUnit ) );
 			return EXIT_SUCCESS;
 		}
 
@@ -377,7 +377,7 @@ int main( int argc, char * argv[] ) {
 		} // if
 
 		if ( validp ) {
-			dump( move( transUnit ) );
+			dump( std::move( transUnit ) );
 			return EXIT_SUCCESS;
 		} // if
 
@@ -398,7 +398,7 @@ int main( int argc, char * argv[] ) {
 		} // if
 
 		if ( bresolvep ) {
-			dump( move( transUnit ) );
+			dump( std::move( transUnit ) );
 			return EXIT_SUCCESS;
 		} // if
 
@@ -409,7 +409,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Resolve", ResolvExpr::resolve( transUnit ) );
 		if ( exprp ) {
-			dump( move( transUnit ) );
+			dump( std::move( transUnit ) );
 			return EXIT_SUCCESS;
 		} // if
 
@@ -419,7 +419,7 @@ int main( int argc, char * argv[] ) {
 
 		// fix ObjectDecl - replaces ConstructorInit nodes
 		if ( ctorinitp ) {
-			dump( move( transUnit ) );
+			dump( std::move( transUnit ) );
 			return EXIT_SUCCESS;
 		} // if
 
@@ -435,7 +435,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Expand Tuples", Tuples::expandTuples( transUnit ) );
 
 		if ( tuplep ) {
-			dump( move( transUnit ) );
+			dump( std::move( transUnit ) );
 			return EXIT_SUCCESS;
 		} // if
 
@@ -444,7 +444,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Instantiate Generics", GenPoly::instantiateGeneric( transUnit ) );
 
-		translationUnit = convert( move( transUnit ) );
+		translationUnit = convert( std::move( transUnit ) );
 
 		if ( genericsp ) {
 			dump( translationUnit );
@@ -787,7 +787,7 @@ static void dump( list< Declaration * > & translationUnit, ostream & out ) {
 } // dump
 
 static void dump( ast::TranslationUnit && transUnit, ostream & out ) {
-	std::list< Declaration * > translationUnit = convert( move( transUnit ) );
+	std::list< Declaration * > translationUnit = convert( std::move( transUnit ) );
 	dump( translationUnit, out );
 }
 

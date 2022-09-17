@@ -507,7 +507,7 @@ namespace Concurrency {
 		) );
 		ObjectDecl * vtable_object = Virtual::makeVtableForward(
 			"_default_vtable_object_declaration",
-			vtable_decl->makeInst( move( poly_args ) ) );
+			vtable_decl->makeInst( std::move( poly_args ) ) );
 		declsToAddBefore.push_back( vtable_object );
 		declsToAddBefore.push_back(
 			new ObjectDecl(
@@ -680,7 +680,7 @@ namespace Concurrency {
 		/*
 			void lock (monitor_t & this) {
 				lock(get_monitor(this));
-			}	
+			}
 		*/
 		FunctionDecl * lock_decl = new FunctionDecl(
 			"lock",
@@ -699,7 +699,7 @@ namespace Concurrency {
 
 		CompoundStmt * lock_statement = new CompoundStmt();
 		lock_statement->push_back(
-			new ExprStmt( 
+			new ExprStmt(
 				new UntypedExpr (
 					new NameExpr( "lock" ),
 					{
@@ -715,7 +715,7 @@ namespace Concurrency {
 		/*
 			void unlock (monitor_t & this) {
 				unlock(get_monitor(this));
-			}	
+			}
 		*/
 		FunctionDecl * unlock_decl = new FunctionDecl(
 			"unlock",
@@ -735,7 +735,7 @@ namespace Concurrency {
 		);
 
 		unlock_statement->push_back(
-			new ExprStmt( 
+			new ExprStmt(
 				new UntypedExpr(
 					new NameExpr( "unlock" ),
 					{
@@ -745,7 +745,7 @@ namespace Concurrency {
 			)
 		);
 		unlock_decl->set_statements( unlock_statement );
-		
+
 		// pushes routines to declsToAddAfter to add at a later time
 		declsToAddAfter.push_back( lock_decl );
 		declsToAddAfter.push_back( unlock_decl );
@@ -1053,7 +1053,7 @@ namespace Concurrency {
 		else if( decl->name == "thread_dtor_guard_t" && decl->body ) {
 			assert( !thread_guard_decl );
 			thread_guard_decl = decl;
-		} 
+		}
 		else if ( decl->name == "__mutex_stmt_lock_guard" && decl->body ) {
 			assert( !lock_guard_decl );
 			lock_guard_decl = decl;
@@ -1205,7 +1205,7 @@ namespace Concurrency {
 					new TypeofType( noQualifiers, new UntypedExpr(
 							new NameExpr( "__get_mutexstmt_lock_type" ),
 							{ args.front()->clone() }
-						) 
+						)
 					)
 				),
 				new ConstantExpr( Constant::from_ulong( args.size() ) ),
@@ -1224,12 +1224,12 @@ namespace Concurrency {
 		);
 
 		StructInstType * lock_guard_struct = new StructInstType( noQualifiers, lock_guard_decl );
-		TypeExpr * lock_type_expr = new TypeExpr( 
+		TypeExpr * lock_type_expr = new TypeExpr(
 			new TypeofType( noQualifiers, new UntypedExpr(
 				new NameExpr( "__get_mutexstmt_lock_type" ),
 				{ args.front()->clone() }
-				) 
-			) 
+				)
+			)
 		);
 
 		lock_guard_struct->parameters.push_back( lock_type_expr ) ;

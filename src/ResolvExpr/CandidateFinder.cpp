@@ -268,15 +268,15 @@ namespace {
 			ast::AssertionSet && need, ast::AssertionSet && have, ast::OpenVarSet && open,
 			unsigned nextArg, unsigned tupleStart = 0, Cost cost = Cost::zero,
 			unsigned nextExpl = 0, unsigned explAlt = 0 )
-		: parent(parent), expr( expr ), cost( cost ), env( move( env ) ), need( move( need ) ),
-		  have( move( have ) ), open( move( open ) ), nextArg( nextArg ), tupleStart( tupleStart ),
+		: parent(parent), expr( expr ), cost( cost ), env( std::move( env ) ), need( std::move( need ) ),
+		  have( std::move( have ) ), open( std::move( open ) ), nextArg( nextArg ), tupleStart( tupleStart ),
 		  nextExpl( nextExpl ), explAlt( explAlt ) {}
 
 		ArgPack(
 			const ArgPack & o, ast::TypeEnvironment && env, ast::AssertionSet && need,
 			ast::AssertionSet && have, ast::OpenVarSet && open, unsigned nextArg, Cost added )
-		: parent( o.parent ), expr( o.expr ), cost( o.cost + added ), env( move( env ) ),
-		  need( move( need ) ), have( move( have ) ), open( move( open ) ), nextArg( nextArg ),
+		: parent( o.parent ), expr( o.expr ), cost( o.cost + added ), env( std::move( env ) ),
+		  need( std::move( need ) ), have( std::move( have ) ), open( std::move( open ) ), nextArg( nextArg ),
 		  tupleStart( o.tupleStart ), nextExpl( 0 ), explAlt( 0 ) {}
 
 		/// true if this pack is in the middle of an exploded argument
@@ -300,7 +300,7 @@ namespace {
 			}
 			// reset pack to appropriate tuple
 			std::vector< ast::ptr< ast::Expr > > exprv( exprs.begin(), exprs.end() );
-			expr = new ast::TupleExpr{ expr->location, move( exprv ) };
+			expr = new ast::TupleExpr{ expr->location, std::move( exprv ) };
 			tupleStart = pack->tupleStart - 1;
 			parent = pack->parent;
 		}
@@ -403,7 +403,7 @@ namespace {
 								ttype, argType, newResult.env, newResult.need, newResult.have,
 								newResult.open, symtab )
 						) {
-							finalResults.emplace_back( move( newResult ) );
+							finalResults.emplace_back( std::move( newResult ) );
 						}
 
 						continue;
@@ -422,16 +422,16 @@ namespace {
 						// skip empty tuple arguments by (nearly) cloning parent into next gen
 						if ( expl.exprs.empty() ) {
 							results.emplace_back(
-								results[i], move( env ), copy( results[i].need ),
-								copy( results[i].have ), move( open ), nextArg + 1, expl.cost );
+								results[i], std::move( env ), copy( results[i].need ),
+								copy( results[i].have ), std::move( open ), nextArg + 1, expl.cost );
 
 							continue;
 						}
 
 						// add new result
 						results.emplace_back(
-							i, expl.exprs.front(), move( env ), copy( results[i].need ),
-							copy( results[i].have ), move( open ), nextArg + 1, nTuples,
+							i, expl.exprs.front(), std::move( env ), copy( results[i].need ),
+							copy( results[i].have ), std::move( open ), nextArg + 1, nTuples,
 							expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
 					}
 				}
@@ -443,7 +443,7 @@ namespace {
 
 			// splice final results onto results
 			for ( std::size_t i = 0; i < finalResults.size(); ++i ) {
-				results.emplace_back( move( finalResults[i] ) );
+				results.emplace_back( std::move( finalResults[i] ) );
 			}
 			return ! finalResults.empty();
 		}
@@ -477,7 +477,7 @@ namespace {
 					if ( nextExpl == expl.exprs.size() ) { nextExpl = 0; }
 
 					results.emplace_back(
-						i, expr, move( env ), move( need ), move( have ), move( open ), nextArg,
+						i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ), nextArg,
 						nTuples, Cost::zero, nextExpl, results[i].explAlt );
 				}
 
@@ -493,8 +493,8 @@ namespace {
 
 					if ( unify( paramType, cnst->result, env, need, have, open, symtab ) ) {
 						results.emplace_back(
-							i, new ast::DefaultArgExpr{ cnst->location, cnst }, move( env ),
-							move( need ), move( have ), move( open ), nextArg, nTuples );
+							i, new ast::DefaultArgExpr{ cnst->location, cnst }, std::move( env ),
+							std::move( need ), std::move( have ), std::move( open ), nextArg, nTuples );
 					}
 				}
 
@@ -515,7 +515,7 @@ namespace {
 				// skip empty tuple arguments by (nearly) cloning parent into next gen
 				if ( expl.exprs.empty() ) {
 					results.emplace_back(
-						results[i], move( env ), move( need ), move( have ), move( open ),
+						results[i], std::move( env ), std::move( need ), std::move( have ), std::move( open ),
 						nextArg + 1, expl.cost );
 
 					continue;
@@ -537,7 +537,7 @@ namespace {
 				if ( unify( paramType, argType, env, need, have, open, symtab ) ) {
 					// add new result
 					results.emplace_back(
-						i, expr, move( env ), move( need ), move( have ), move( open ),
+						i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
 						nextArg + 1, nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
 				}
 			}
@@ -575,7 +575,7 @@ namespace {
 				components.emplace_back(
 					restructureCast( idx, toType->getComponent( i ), isGenerated ) );
 			}
-			return new ast::TupleExpr{ arg->location, move( components ) };
+			return new ast::TupleExpr{ arg->location, std::move( components ) };
 		} else {
 			// handle normally
 			return new ast::CastExpr{ arg->location, arg, toType, isGenerated };
@@ -671,7 +671,7 @@ namespace {
 				pack = &results[pack->parent];
 			}
 			std::vector< ast::ptr< ast::Expr > > vargs( args.begin(), args.end() );
-			appExpr->args = move( vargs );
+			appExpr->args = std::move( vargs );
 			// build and validate new candidate
 			auto newCand =
 				std::make_shared<Candidate>( appExpr, result.env, result.open, result.need, cost );
@@ -782,8 +782,8 @@ namespace {
 							// skip empty tuple arguments by (nearly) cloning parent into next gen
 							if ( expl.exprs.empty() ) {
 								results.emplace_back(
-									results[i], move( env ), copy( results[i].need ),
-									copy( results[i].have ), move( open ), nextArg + 1,
+									results[i], std::move( env ), copy( results[i].need ),
+									copy( results[i].have ), std::move( open ), nextArg + 1,
 									expl.cost );
 
 								continue;
@@ -791,8 +791,8 @@ namespace {
 
 							// add new result
 							results.emplace_back(
-								i, expl.exprs.front(), move( env ), copy( results[i].need ),
-								copy( results[i].have ), move( open ), nextArg + 1, 0, expl.cost,
+								i, expl.exprs.front(), std::move( env ), copy( results[i].need ),
+								copy( results[i].have ), std::move( open ), nextArg + 1, 0, expl.cost,
 								expl.exprs.size() == 1 ? 0 : 1, j );
 						}
 					}
@@ -842,7 +842,7 @@ namespace {
 				// add anonymous member interpretations whenever an aggregate value type is seen
 				// as a member expression
 				addAnonConversions( newCand );
-				candidates.emplace_back( move( newCand ) );
+				candidates.emplace_back( std::move( newCand ) );
 			}
 		}
 
@@ -900,13 +900,13 @@ namespace {
 						else if (const ast::EnumInstType * enumInst = argType.as<ast::EnumInstType>()) {
 							const ast::EnumDecl * enumDecl = enumInst->base;
 							if ( const ast::Type* enumType = enumDecl->base ) {
-								// instance of enum (T) is a instance of type (T) 
+								// instance of enum (T) is a instance of type (T)
 								funcFinder.otypeKeys.insert(Mangle::mangle(enumType, Mangle::NoGenericParams | Mangle::Type));
 							} else {
 								// instance of an untyped enum is techically int
 								funcFinder.otypeKeys.insert(Mangle::mangle(enumDecl, Mangle::NoGenericParams | Mangle::Type));
 							}
-						} 
+						}
 						else funcFinder.otypeKeys.insert(Mangle::mangle(argType, Mangle::NoGenericParams | Mangle::Type));
 					}
 				}
@@ -985,7 +985,7 @@ namespace {
 				for ( const CandidateRef & func : funcFinder ) {
 					funcE.emplace_back( *func, symtab );
 				}
-				argExpansions.emplace_front( move( funcE ) );
+				argExpansions.emplace_front( std::move( funcE ) );
 
 				for ( const CandidateRef & op : opFinder ) {
 					try {
@@ -1029,10 +1029,10 @@ namespace {
 
 				if ( cvtCost != Cost::infinity ) {
 					withFunc->cvtCost = cvtCost;
-					candidates.emplace_back( move( withFunc ) );
+					candidates.emplace_back( std::move( withFunc ) );
 				}
 			}
-			found = move( candidates );
+			found = std::move( candidates );
 
 			// use a new list so that candidates are not examined by addAnonConversions twice
 			CandidateList winners = findMinCost( found );
@@ -1130,7 +1130,7 @@ namespace {
 					thisCost.incSafe( discardedValues );
 					CandidateRef newCand = std::make_shared<Candidate>(
 						restructureCast( cand->expr, toType, castExpr->isGenerated ),
-						copy( cand->env ), move( open ), move( need ), cand->cost,
+						copy( cand->env ), std::move( open ), std::move( need ), cand->cost,
 						cand->cost + thisCost );
 					inferParameters( newCand, matches );
 				}
@@ -1284,7 +1284,7 @@ namespace {
 				// add anonymous member interpretations whenever an aggregate value type is seen
 				// as a name expression
 				addAnonConversions( newCand );
-				candidates.emplace_back( move( newCand ) );
+				candidates.emplace_back( std::move( newCand ) );
 			}
 		}
 
@@ -1393,7 +1393,7 @@ namespace {
 					addCandidate(
 						new ast::LogicalExpr{
 							logicalExpr->location, r1->expr, r2->expr, logicalExpr->isAnd },
-						move( env ), move( open ), move( need ), r1->cost + r2->cost );
+						std::move( env ), std::move( open ), std::move( need ), r1->cost + r2->cost );
 				}
 			}
 		}
@@ -1451,7 +1451,7 @@ namespace {
 								newExpr->arg3, newExpr->result, symtab, env, cost );
 							// output candidate
 							CandidateRef newCand = std::make_shared<Candidate>(
-								newExpr, move( env ), move( open ), move( need ), cost );
+								newExpr, std::move( env ), std::move( open ), std::move( need ), cost );
 							inferParameters( newCand, candidates );
 						}
 					}
@@ -1518,7 +1518,7 @@ namespace {
 						newExpr->result = common ? common : r1->expr->result;
 						// add candidate
 						CandidateRef newCand = std::make_shared<Candidate>(
-							newExpr, move( env ), move( open ), move( need ),
+							newExpr, std::move( env ), std::move( open ), std::move( need ),
 							r1->cost + r2->cost );
 						inferParameters( newCand, candidates );
 					}
@@ -1547,8 +1547,8 @@ namespace {
 				}
 
 				addCandidate(
-					new ast::TupleExpr{ tupleExpr->location, move( exprs ) },
-					move( env ), move( open ), move( need ), sumCost( subs ) );
+					new ast::TupleExpr{ tupleExpr->location, std::move( exprs ) },
+					std::move( env ), std::move( open ), std::move( need ), sumCost( subs ) );
 			}
 		}
 
@@ -1634,7 +1634,7 @@ namespace {
 							new ast::InitExpr{
 								initExpr->location, restructureCast( cand->expr, toType ),
 								initAlt.designation },
-							move(env), move( open ), move( need ), cand->cost, thisCost );
+							std::move(env), std::move( open ), std::move( need ), cand->cost, thisCost );
 						inferParameters( newCand, matches );
 					}
 				}
@@ -1767,7 +1767,7 @@ bool CandidateFinder::pruneCandidates( CandidateList & candidates, CandidateList
 		ast::ptr< ast::Type > newResult = cand->expr->result;
 		cand->env.applyFree( newResult );
 		cand->expr = ast::mutate_field(
-			cand->expr.get(), &ast::Expr::result, move( newResult ) );
+			cand->expr.get(), &ast::Expr::result, std::move( newResult ) );
 
 		out.emplace_back( cand );
 	}
@@ -1853,7 +1853,7 @@ void CandidateFinder::find( const ast::Expr * expr, ResolvMode mode ) {
 		}
 
 		auto oldsize = candidates.size();
-		candidates = move( pruned );
+		candidates = std::move( pruned );
 
 		PRINT(
 			std::cerr << "there are " << oldsize << " alternatives before elimination" << std::endl;

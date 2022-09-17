@@ -32,7 +32,7 @@ template <typename C, typename... T>
 constexpr array<C,sizeof...(T)> make_array(T&&... values)
 {
 	return array<C,sizeof...(T)>{
-		forward<T>(values)...
+		std::forward<T>(values)...
 	};
 }
 

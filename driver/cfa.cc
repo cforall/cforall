@@ -53,11 +53,6 @@ static bool prefix( const string & arg, const string & pre ) { // check if strin
 	return arg.substr( 0, pre.size() ) == pre;
 } // prefix
 
-static inline bool ends_with(const string & str, const string & sfix) {
-	if (sfix.size() > str.size()) return false;
-	return std::equal(str.rbegin(), str.rbegin() + sfix.size(), sfix.rbegin(), sfix.rend());
-}
-
 // check if string has suffix
 static bool suffix( const string & arg ) {
 	enum { NumSuffixes = 3 };

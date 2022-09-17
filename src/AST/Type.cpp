@@ -142,13 +142,13 @@ template class SueInstType<EnumDecl>;
 
 TraitInstType::TraitInstType(
 	const TraitDecl * b, CV::Qualifiers q, std::vector<ptr<Attribute>>&& as )
-: BaseInstType( b->name, q, move(as) ), base( b ) {}
+: BaseInstType( b->name, q, std::move(as) ), base( b ) {}
 
 // --- TypeInstType
 
 TypeInstType::TypeInstType( const TypeDecl * b,
 	CV::Qualifiers q, std::vector<ptr<Attribute>> && as )
-: BaseInstType( b->name, q, move(as) ), base( b ), kind( b->kind ) {}
+: BaseInstType( b->name, q, std::move(as) ), base( b ), kind( b->kind ) {}
 
 void TypeInstType::set_base( const TypeDecl * b ) {
 	base = b;
@@ -160,7 +160,7 @@ bool TypeInstType::isComplete() const { return base->sized; }
 // --- TupleType
 
 TupleType::TupleType( std::vector<ptr<Type>> && ts, CV::Qualifiers q )
-: Type( q ), types( move(ts) ), members() {
+: Type( q ), types( std::move(ts) ), members() {
 	// This constructor is awkward. `TupleType` needs to contain objects so that members can be
 	// named, but members without initializer nodes end up getting constructors, which breaks
 	// things. This happens because the object decls have to be visited so that their types are
