@@ -12,8 +12,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Oct 31 15:14:38 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Aug 12 14:18:07 2020
-// Update Count     : 13
+// Last Modified On : Mon Sep 19 18:51:53 2022
+// Update Count     : 17
 //
 
 #pragma once
@@ -59,11 +59,11 @@ struct __spinlock_t {
 		#endif
 
 		disable_interrupts();
-		for ( unsigned int i = 1;; i += 1 ) {
+		for ( i; 1 ~ @ ) {
 			if ( (this.lock == 0) && (__atomic_test_and_set( &this.lock, __ATOMIC_ACQUIRE ) == 0) ) break;
 			#ifndef NOEXPBACK
 				// exponential spin
-				for ( volatile unsigned int s = 0; s < spin; s += 1 ) Pause();
+			for ( volatile unsigned int s; 0 ~ spin ) Pause();
 
 				// slowly increase by powers of 2
 				if ( i % 64 == 0 ) spin += spin;

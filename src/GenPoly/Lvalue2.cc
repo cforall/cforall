@@ -22,5 +22,4 @@ bool referencesPermissable() {
 	return !referencesEliminated;
 }
 
-
 }

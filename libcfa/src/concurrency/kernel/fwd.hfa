@@ -178,17 +178,18 @@ extern "C" {
 		// Synchronozation primitive which only supports a single thread and one post
 		// Similar to a binary semaphore with a 'one shot' semantic
 		// is expected to be discarded after each party call their side
+		enum(struct thread$ *) { oneshot_ARMED = 0p, oneshot_FULFILLED = 1p };
 		struct oneshot {
 			// Internal state :
-			//     0p     : is initial state (wait will block)
-			//     1p     : fulfilled (wait won't block)
+			// armed      : initial state, wait will block
+			// fulfilled  : wait won't block
 			// any thread : a thread is currently waiting
 			struct thread$ * volatile ptr;
 		};
 
 		static inline {
 			void  ?{}(oneshot & this) {
-				this.ptr = 0p;
+				this.ptr = oneshot_ARMED;
 			}
 
 			void ^?{}(oneshot &) {}
@@ -198,10 +199,10 @@ extern "C" {
 			bool wait(oneshot & this) {
 				for() {
 					struct thread$ * expected = this.ptr;
-					if(expected == 1p) return false;
+					if(expected == oneshot_FULFILLED) return false;
 					if(__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 						park();
-						/* paranoid */ verify( this.ptr == 1p );
+						/* paranoid */ verify( this.ptr == oneshot_FULFILLED );
 						return true;
 					}
 				}
@@ -210,8 +211,8 @@ extern "C" {
 			// Mark as fulfilled, wake thread if needed
 			// return true if a thread was unparked
 			thread$ * post(oneshot & this, bool do_unpark = true) {
-				struct thread$ * got = __atomic_exchange_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
-				if( got == 0p || got == 1p ) return 0p;
+				struct thread$ * got = __atomic_exchange_n( &this.ptr, oneshot_FULFILLED, __ATOMIC_SEQ_CST);
+				if( got == oneshot_ARMED || got == oneshot_FULFILLED ) return 0p;
 				if(do_unpark) unpark( got );
 				return got;
 			}
@@ -222,43 +223,44 @@ extern "C" {
 		// to block on the same instance, permitting users to block a single
 		// thread on "any of" [a given set of] futures.
 		// does not support multiple threads waiting on the same future
+		enum(struct oneshot *) { future_ARMED = 0p, future_FULFILLED = 1p, future_PROGRESS = 2p, future_ABANDONED = 3p };
 		struct future_t {
 			// Internal state :
-			//     0p      : is initial state (wait will block)
-			//     1p      : fulfilled (wait won't block)
-			//     2p      : in progress ()
-			//     3p      : abandoned, server should delete
+			// armed       : initial state, wait will block
+			// fulfilled   : result is ready, wait won't block
+			// progress    : someone else is in the process of fulfilling this
+			// abandoned   : client no longer cares, server should delete
 			// any oneshot : a context has been setup to wait, a thread could wait on it
 			struct oneshot * volatile ptr;
 		};
 
 		static inline {
 			void  ?{}(future_t & this) {
-				this.ptr = 0p;
+				this.ptr = future_ARMED;
 			}
 
 			void ^?{}(future_t &) {}
 
 			void reset(future_t & this) {
 				// needs to be in 0p or 1p
-				__atomic_exchange_n( &this.ptr, 0p, __ATOMIC_SEQ_CST);
+				__atomic_exchange_n( &this.ptr, future_ARMED, __ATOMIC_SEQ_CST);
 			}
 
 			// check if the future is available
 			bool available( future_t & this ) {
-				while( this.ptr == 2p ) Pause();
-				return this.ptr == 1p;
+				while( this.ptr == future_PROGRESS ) Pause();
+				return this.ptr == future_FULFILLED;
 			}
 
 			// Prepare the future to be waited on
 			// intented to be use by wait, wait_any, waitfor, etc. rather than used directly
 			bool setup( future_t & this, oneshot & wait_ctx ) {
-				/* paranoid */ verify( wait_ctx.ptr == 0p || wait_ctx.ptr == 1p );
+				/* paranoid */ verify( wait_ctx.ptr == oneshot_ARMED || wait_ctx.ptr == oneshot_FULFILLED );
 				// The future needs to set the wait context
 				for() {
 					struct oneshot * expected = this.ptr;
 					// Is the future already fulfilled?
-					if(expected == 1p) return false; // Yes, just return false (didn't block)
+					if(expected == future_FULFILLED) return false; // Yes, just return false (didn't block)
 
 					// The future is not fulfilled, try to setup the wait context
 					if(__atomic_compare_exchange_n(&this.ptr, &expected, &wait_ctx, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
@@ -276,24 +278,24 @@ extern "C" {
 				struct oneshot * expected = this.ptr;
 
 				// attempt to remove the context so it doesn't get consumed.
-				if(__atomic_compare_exchange_n( &this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+				if(__atomic_compare_exchange_n( &this.ptr, &expected, future_ARMED, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 					// we still have the original context, then no one else saw it
 					return false;
 				}
 
-				// expected == 0p: future was never actually setup, just return
-				if( expected == 0p ) return false;
+				// expected == ARMED: future was never actually setup, just return
+				if( expected == future_ARMED ) return false;
 
-				// expected == 1p: the future is ready and the context was fully consumed
+				// expected == FULFILLED: the future is ready and the context was fully consumed
 				// the server won't use the pointer again
 				// It is safe to delete (which could happen after the return)
-				if( expected == 1p ) return true;
+				if( expected == future_FULFILLED ) return true;
 
-				// expected == 2p: the future is ready but the context hasn't fully been consumed
+				// expected == PROGRESS: the future is ready but the context hasn't fully been consumed
 				// spin until it is safe to move on
-				if( expected == 2p ) {
-					while( this.ptr != 1p ) Pause();
-					/* paranoid */ verify( this.ptr == 1p );
+				if( expected == future_PROGRESS ) {
+					while( this.ptr != future_FULFILLED ) Pause();
+					/* paranoid */ verify( this.ptr == future_FULFILLED );
 					return true;
 				}
 
@@ -304,23 +306,23 @@ extern "C" {
 
 			// Mark the future as abandoned, meaning it will be deleted by the server
 			bool abandon( future_t & this ) {
-				/* paranoid */ verify( this.ptr != 3p );
+				/* paranoid */ verify( this.ptr != future_ABANDONED );
 
 				// Mark the future as abandonned
-				struct oneshot * got = __atomic_exchange_n( &this.ptr, 3p, __ATOMIC_SEQ_CST);
+				struct oneshot * got = __atomic_exchange_n( &this.ptr, future_ABANDONED, __ATOMIC_SEQ_CST);
 
 				// If the future isn't already fulfilled, let the server delete it
-				if( got == 0p ) return false;
+				if( got == future_ARMED ) return false;
 
-				// got == 2p: the future is ready but the context hasn't fully been consumed
+				// got == PROGRESS: the future is ready but the context hasn't fully been consumed
 				// spin until it is safe to move on
-				if( got == 2p ) {
-					while( this.ptr != 1p ) Pause();
-					got = 1p;
+				if( got == future_PROGRESS ) {
+					while( this.ptr != future_FULFILLED ) Pause();
+					got = future_FULFILLED;
 				}
 
 				// The future is completed delete it now
-				/* paranoid */ verify( this.ptr != 1p );
+				/* paranoid */ verify( this.ptr != future_FULFILLED );
 				free( &this );
 				return true;
 			}
@@ -335,21 +337,21 @@ extern "C" {
 						#pragma GCC diagnostic push
 						#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
 					#endif
-						if( expected == 3p ) { free( &this ); return 0p; }
+						if( expected == future_ABANDONED ) { free( &this ); return 0p; }
 					#if defined(__GNUC__) && __GNUC__ >= 7
 						#pragma GCC diagnostic pop
 					#endif
 
-					/* paranoid */ verify( expected != 1p ); // Future is already fulfilled, should not happen
-					/* paranoid */ verify( expected != 2p ); // Future is bein fulfilled by someone else, this is even less supported then the previous case.
+					/* paranoid */ verify( expected != future_FULFILLED ); // Future is already fulfilled, should not happen
+					/* paranoid */ verify( expected != future_PROGRESS ); // Future is bein fulfilled by someone else, this is even less supported then the previous case.
 
 					// If there is a wait context, we need to consume it and mark it as consumed after
 					// If there is no context then we can skip the in progress phase
-					struct oneshot * want = expected == 0p ? 1p : 2p;
+					struct oneshot * want = expected == future_ARMED ? future_FULFILLED : future_PROGRESS;
 					if(__atomic_compare_exchange_n(&this.ptr, &expected, want, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
-						if( expected == 0p ) { return 0p; }
+						if( expected == future_ARMED ) { return 0p; }
 						thread$ * ret = post( *expected, do_unpark );
-						__atomic_store_n( &this.ptr, 1p, __ATOMIC_SEQ_CST);
+						__atomic_store_n( &this.ptr, future_FULFILLED, __ATOMIC_SEQ_CST);
 						return ret;
 					}
 				}
@@ -365,13 +367,13 @@ extern "C" {
 				bool ret = wait( temp );
 
 				// Wait for the future to tru
-				while( this.ptr == 2p ) Pause();
+				while( this.ptr == future_PROGRESS ) Pause();
 				// Make sure the state makes sense
 				// Should be fulfilled, could be in progress but it's out of date if so
 				// since if that is the case, the oneshot was fulfilled (unparking this thread)
 				// and the oneshot should not be needed any more
 				__attribute__((unused)) struct oneshot * was = this.ptr;
-				/* paranoid */ verifyf( was == 1p, "Expected this.ptr to be 1p, was %p\n", was );
+				/* paranoid */ verifyf( was == future_FULFILLED, "Expected this.ptr to be 1p, was %p\n", was );
 
 				// Mark the future as fulfilled, to be consistent
 				// with potential calls to avail

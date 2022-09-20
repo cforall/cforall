@@ -492,6 +492,12 @@ namespace CodeGen {
 					// there are no intrinsic definitions of 0/1 or label addresses as functions
 					assert( false );
 				} // switch
+			} else if( varExpr->get_var()->get_linkage() == LinkageSpec::BuiltinCFA && varExpr->get_var()->get_name() == "intptr" ) {
+				// THIS is a hack to make it a constant until a proper constexpr solution is created
+				output << "((void*)";
+				std::list< Expression* >::iterator arg = applicationExpr->get_args().begin();
+				(*arg++)->accept( *visitor );
+				output << ")";
 			} else {
 				varExpr->accept( *visitor );
 				output << "(";

@@ -411,7 +411,6 @@ public:
 		TypeEnvKey(const TypeInstType & inst): base(inst.base), formal_usage(inst.formal_usage), expr_id(inst.expr_id) {}
 		std::string typeString() const { return std::string("_") + std::to_string(formal_usage) + "_" + std::to_string(expr_id) + "_" + base->name; }
 		bool operator==(const TypeEnvKey & other) const { return base == other.base && formal_usage == other.formal_usage && expr_id == other.expr_id; }
-
 	};
 
 	bool operator==(const TypeInstType & other) const { return base == other.base && formal_usage == other.formal_usage && expr_id == other.expr_id; }

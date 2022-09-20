@@ -62,7 +62,7 @@ static inline unsigned long long calc_cutoff(
 			if(tsc > max) max = tsc;
 		}
 	}
-	return (max + 2 * max) / 2;
+	return 8 * max;
 }
 
 static inline unsigned cache_id(struct cluster * cltr, unsigned idx) with (cltr->sched) {

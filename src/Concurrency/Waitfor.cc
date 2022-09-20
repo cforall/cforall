@@ -401,7 +401,7 @@ namespace Concurrency {
 		));
 
 		clause.target.function = nullptr;
-		clause.target.arguments.empty();
+		clause.target.arguments.clear();
 		clause.condition = nullptr;
 	}
 

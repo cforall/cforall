@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 25 18:05:49 2022
-// Update Count     : 1354
+// Last Modified On : Sat Aug 27 15:04:15 2022
+// Update Count     : 1358
 //
 
 #include "iostream.hfa"
@@ -764,7 +764,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 			_Ostream_Manip(unsigned char) fmtuc @= { 0, f.wd, f.pc, f.base, {'\0'} };
 			fmtuc.flags.pc = f.flags.pc;
 			fmtuc.flags.nobsdp = f.flags.nobsdp;
-			for ( unsigned int i = 0; f.val[i] != '\0'; i += 1 ) {
+			for ( i; 0 ~ @ : @; f.val[i] != '\0' ) {
 				fmtuc.val = f.val[i];
 //				os | fmtuc | nonl;
 				(ostype &)(os | fmtuc);
@@ -930,7 +930,7 @@ forall( istype & | basic_istream( istype ) ) {
 		// If the input is too large, the value returned is undefined. If there is no input, no value is returned
 		if ( fmt( is, "%39[0-9]%*[0-9]", s ) == 1 ) {	// take first 39 characters, ignore remaining
 			ullli = 0;
-			for ( unsigned int i = 0; s[i] != '\0'; i += 1 ) {
+			for ( i; 0 ~ @ : @; s[i] != '\0' ) {
 				ullli = ullli * 10 + s[i] - '0';
 			} // for
 			if ( sign ) ullli = -ullli;
