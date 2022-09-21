@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Tue Aug 30 18:39:54 2022
- * Update Count     : 760
+ * Last Modified On : Tue Sep 20 21:18:55 2022
+ * Update Count     : 762
  */
 
 %option yylineno
@@ -81,9 +81,6 @@ void rm_underscore() {
 
 // Stop warning due to incorrectly generated flex code.
 #pragma GCC diagnostic ignored "-Wsign-compare"
-
-// lex uses __null in a boolean context, it's fine.
-#pragma GCC diagnostic ignored "-Wnull-conversion"
 %}
 
 binary [0-1]

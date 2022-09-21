@@ -162,6 +162,38 @@ class NameExpr : public Expression {
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
+// [Qualifier].name; Qualifier is the type_name from the parser
+class QualifiedNameExpr : public Expression {
+  public:
+	Declaration * type_decl;
+	std::string name;
+	DeclarationWithType * var;
+
+	QualifiedNameExpr( Declaration * decl, std::string name): Expression(), type_decl(decl), name(name) {}
+	QualifiedNameExpr( const QualifiedNameExpr & other): Expression(other), type_decl(other.type_decl), name(other.name), var(other.var) {}
+	DeclarationWithType * get_var() const { return var; }
+	void set_var( DeclarationWithType * newValue ) { var = newValue; }
+
+	virtual ~QualifiedNameExpr() {
+		delete var;
+		delete type_decl;
+	}
+
+	virtual QualifiedNameExpr * clone() const override {
+		return new QualifiedNameExpr( * this );
+	}
+	virtual void accept( Visitor & v ) override { v.visit(this); }
+	virtual void accept( Visitor & v ) const override { v.visit(this); }
+	virtual Expression * acceptMutator( Mutator & m ) override { 
+		return m.mutate( this ); 
+	}
+	
+	virtual void print( std::ostream & os, Indenter indent = {} ) const override {
+		type_decl->print( os, indent );
+		os << name << std::endl;
+	}
+};
+
 /// VariableExpr represents an expression that simply refers to the value of a named variable.
 /// Does not take ownership of var.
 class VariableExpr : public Expression {

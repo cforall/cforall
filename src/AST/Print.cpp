@@ -89,7 +89,7 @@ private:
 		);
 
 		static constexpr auto Qualifiers = make_array<const char*>(
-			"const", "restrict", "volatile", "lvalue", "mutex", "_Atomic"
+			"const", "restrict", "volatile", "mutex", "_Atomic"
 		);
 	};
 
@@ -901,6 +901,17 @@ public:
 		return node;
 	}
 
+	virtual const ast::Expr * visit( const ast::QualifiedNameExpr * node ) override final {
+		os << "QualifiedNameExpr: " << std::endl;
+		os << ++indent << "Type: ";
+		safe_print( node->type_decl );
+		os << std::endl;
+		os <<  indent << "Name: " << node->name  << std::endl;
+		--indent;
+		postprint( node );
+		return node;
+	}
+
 	virtual const ast::Expr * visit( const ast::AddressExpr * node ) override final {
 		os << "Address of:" << endl;
 		++indent;
@@ -1623,5 +1634,5 @@ void printShort( ostream & os, const ast::Decl * node, Indenter indent ) {
 // if the wrong size is specified
 constexpr array<const char*, 3> Printer::Names::FuncSpecifiers;
 constexpr array<const char*, 6> Printer::Names::StorageClasses;
-constexpr array<const char*, 6> Printer::Names::Qualifiers;
+constexpr array<const char*, 5> Printer::Names::Qualifiers;
 }

@@ -100,6 +100,8 @@ class Visitor {
 	virtual void visit( const UntypedExpr * untypedExpr ) = 0;
 	virtual void visit( NameExpr * node ) { visit( const_cast<const NameExpr *>(node) ); }
 	virtual void visit( const NameExpr * nameExpr ) = 0;
+	virtual void visit( QualifiedNameExpr * node ) { visit( const_cast<const QualifiedNameExpr*>(node) );}
+	virtual void visit( const QualifiedNameExpr* qualifiednameExpr ) = 0;
 	virtual void visit( CastExpr * node ) { visit( const_cast<const CastExpr *>(node) ); }
 	virtual void visit( const CastExpr * castExpr ) = 0;
 	virtual void visit( KeywordCastExpr * node ) { visit( const_cast<const KeywordCastExpr *>(node) ); }

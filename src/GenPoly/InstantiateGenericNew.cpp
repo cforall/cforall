@@ -21,6 +21,7 @@
 #include <vector>                      // for vector
 
 #include "AST/Copy.hpp"                // for deepCopy
+#include "AST/Create.hpp"              // for asForward
 #include "AST/Pass.hpp"                // for Pass, WithGuard, WithShortCi...
 #include "AST/TranslationUnit.hpp"     // for TranslationUnit
 #include "CodeGen/OperatorTable.h"     // for isAssignment
@@ -254,18 +255,6 @@ void substituteMembersHere(
 /// Strips the instances' type parameters.
 void stripInstParams( ast::BaseInstType * inst ) {
 	inst->params.clear();
-}
-
-// TODO: I think this should become a generic helper.
-template<typename Aggr>
-Aggr * asForward( Aggr const * decl ) {
-	if ( !decl->body ) {
-		return nullptr;
-	}
-	Aggr * mut = ast::deepCopy( decl );
-	mut->body = false;
-	mut->members.clear();
-	return mut;
 }
 
 bool isGenericType( ast::Type const * type ) {
@@ -552,7 +541,7 @@ ast::Type const * GenericInstantiator::fixInstType(
 
 			// Forward declare before recursion. (TODO: Only when needed, #199.)
 			insert( inst, typeSubs, newDecl );
-			if ( AggrDecl const * forwardDecl = asForward( newDecl ) ) {
+			if ( AggrDecl const * forwardDecl = ast::asForward( newDecl ) ) {
 				declsToAddBefore.push_back( forwardDecl );
 			}
 			// Recursively instantiate members:

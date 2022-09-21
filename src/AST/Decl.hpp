@@ -311,12 +311,14 @@ private:
 /// enum declaration `enum Foo { ... };`
 class EnumDecl final : public AggregateDecl {
 public:
+	bool isTyped;
 	ptr<Type> base;
 
-	EnumDecl( const CodeLocation& loc, const std::string& name,
-		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall, Type const * base = nullptr,
+	EnumDecl( const CodeLocation& loc, const std::string& name, bool isTyped = false, 
+		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall,
+		Type const * base = nullptr,
 		std::unordered_map< std::string, long long > enumValues = std::unordered_map< std::string, long long >() )
-	: AggregateDecl( loc, name, std::move(attrs), linkage ), base(base), enumValues(enumValues) {}
+	: AggregateDecl( loc, name, std::move(attrs), linkage ), isTyped(isTyped), base(base), enumValues(enumValues) {}
 
 	/// gets the integer value for this enumerator, returning true iff value found
 	// Maybe it is not used in producing the enum value
@@ -326,7 +328,6 @@ public:
 
 	const char * typeString() const override { return aggrString( Enum ); }
 
-	bool isTyped() {return base && base.get();}
 
 private:
 	EnumDecl * clone() const override { return new EnumDecl{ *this }; }

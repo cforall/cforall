@@ -136,6 +136,7 @@ public:
     macro(ApplicationExpr, Expr) \
     macro(UntypedExpr, Expr) \
     macro(NameExpr, Expr) \
+	macro(QualifiedNameExpr, Expr) \
     macro(AddressExpr, Expr) \
     macro(LabelAddressExpr, Expr) \
     macro(CastExpr, Expr) \

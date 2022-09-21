@@ -1926,6 +1926,42 @@ Expression * PassVisitor< pass_type >::mutate( NameExpr * node ) {
 }
 
 //--------------------------------------------------------------------------
+// QualifiedNameExpr
+template< typename pass_type >
+void PassVisitor< pass_type >::visit( QualifiedNameExpr * node ) {
+	VISIT_START( node );
+
+	indexerScopedAccept( node->result, *this );
+	maybeAccept_impl( node->type_decl, *this );
+	maybeAccept_impl( node->var, *this );
+
+	VISIT_END( node );
+}
+
+template< typename pass_type >
+void PassVisitor< pass_type >::visit( const QualifiedNameExpr * node ) {
+	VISIT_START( node );
+
+	indexerScopedAccept( node->result, *this );
+	maybeAccept_impl( node->type_decl, *this );
+	maybeAccept_impl( node->var, *this );
+
+	VISIT_END( node );
+}
+
+template< typename pass_type >
+Expression * PassVisitor< pass_type >::mutate( QualifiedNameExpr * node ) {
+	MUTATE_START( node );
+
+    indexerScopedMutate( node->env   , *this );
+    indexerScopedMutate( node->result, *this );
+	maybeMutate_impl( node->type_decl, *this );
+	maybeAccept_impl( node->var, *this );
+
+	MUTATE_END( Expression, node );
+}
+
+//--------------------------------------------------------------------------
 // CastExpr
 template< typename pass_type >
 void PassVisitor< pass_type >::visit( CastExpr * node ) {

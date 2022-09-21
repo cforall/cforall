@@ -4,6 +4,8 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <assert.h>
+
 extern "C" {
 	#include <getopt.h>
 	#include <sys/ioctl.h>
@@ -71,6 +73,7 @@ void parse_args(
 	check_args(options, opt_count);
 
 	int maxv = 'h';
+	assert( opt_count > 0 );
 	char optstring[opt_count * 3] = { '\0' };
 	{
 		int idx = 0;

@@ -863,6 +863,11 @@ namespace {
 			}
 		}
 
+		void postvisit( const ast::QualifiedNameExpr * qualifiedNameExpr ) {
+			auto mangleName = Mangle::mangle(qualifiedNameExpr->var);
+			addCandidate( qualifiedNameExpr, tenv );
+		}
+
 		void postvisit( const ast::UntypedExpr * untypedExpr ) {
 			std::vector< CandidateFinder > argCandidates =
 				selfFinder.findSubExprs( untypedExpr->args );
@@ -896,17 +901,17 @@ namespace {
 							break;
 						}
 
-						if (argType.as<ast::PointerType>()) funcFinder.otypeKeys.insert(Mangle::Encoding::pointer);
-						else if (const ast::EnumInstType * enumInst = argType.as<ast::EnumInstType>()) {
-							const ast::EnumDecl * enumDecl = enumInst->base;
-							if ( const ast::Type* enumType = enumDecl->base ) {
-								// instance of enum (T) is a instance of type (T)
-								funcFinder.otypeKeys.insert(Mangle::mangle(enumType, Mangle::NoGenericParams | Mangle::Type));
-							} else {
-								// instance of an untyped enum is techically int
-								funcFinder.otypeKeys.insert(Mangle::mangle(enumDecl, Mangle::NoGenericParams | Mangle::Type));
-							}
-						}
+						if (argType.as<ast::PointerType>()) funcFinder.otypeKeys.insert(Mangle::Encoding::pointer);						
+						// else if (const ast::EnumInstType * enumInst = argType.as<ast::EnumInstType>()) {
+						// 	const ast::EnumDecl * enumDecl = enumInst->base; // Here
+						// 	if ( const ast::Type* enumType = enumDecl->base ) {
+						// 		// instance of enum (T) is a instance of type (T) 
+						// 		funcFinder.otypeKeys.insert(Mangle::mangle(enumType, Mangle::NoGenericParams | Mangle::Type));
+						// 	} else {
+						// 		// instance of an untyped enum is techically int
+						// 		funcFinder.otypeKeys.insert(Mangle::mangle(enumDecl, Mangle::NoGenericParams | Mangle::Type));
+						// 	}
+						// }
 						else funcFinder.otypeKeys.insert(Mangle::mangle(argType, Mangle::NoGenericParams | Mangle::Type));
 					}
 				}

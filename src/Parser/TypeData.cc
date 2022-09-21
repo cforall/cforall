@@ -545,7 +545,6 @@ Type * typebuild( const TypeData * td ) {
 	  case TypeData::AggregateInst:
 		return buildAggInst( td );
 	  case TypeData::EnumConstant:
-		// the name gets filled in later -- by SymTab::Validate
 		return new EnumInstType( buildQualifiers( td ), "" );
 	  case TypeData::SymbolicInst:
 		return buildSymbolicInst( td );
@@ -920,16 +919,18 @@ NamedTypeDecl * buildSymbolic( const TypeData * td, std::list< Attribute * > att
 EnumDecl * buildEnum( const TypeData * td, std::list< Attribute * > attributes, LinkageSpec::Spec linkage ) {
 	assert( td->kind == TypeData::Enum );
 	Type * baseType = td->base ? typebuild(td->base) : nullptr;
-	EnumDecl * ret = new EnumDecl( *td->enumeration.name, attributes, linkage, baseType );
+	EnumDecl * ret = new EnumDecl( *td->enumeration.name, attributes, td->enumeration.typed, linkage, baseType );
 	buildList( td->enumeration.constants, ret->get_members() );
 	list< Declaration * >::iterator members = ret->get_members().begin();
 	for ( const DeclarationNode * cur = td->enumeration.constants; cur != nullptr; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ), ++members ) {
-		if ( cur->has_enumeratorValue() ) {
+		if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
+			SemanticError( td->location, "Enumerator of enum(void) cannot have an explicit initializer value." );
+		} else if ( cur->has_enumeratorValue() ) {
 			ObjectDecl * member = dynamic_cast< ObjectDecl * >(* members);
 			member->set_init( new SingleInit( maybeMoveBuild< Expression >( cur->consume_enumeratorValue() ) ) );
 		} else if ( !cur->initializer ) {
 			if ( baseType && (!dynamic_cast<BasicType *>(baseType) || !dynamic_cast<BasicType *>(baseType)->isWholeNumber())) {
-				SemanticError( td->location, "A non whole number enum value decl must be explicitly initialized." );
+				SemanticError( td->location, "Enumerators of an non-integer typed enum must be explicitly initialized." );
 			}
 		}
 		// else cur is a List Initializer and has been set as init in buildList()

@@ -164,6 +164,20 @@ namespace ResolvExpr {
 
 		ast::Type * newFirst  = shallowCopy( first  );
 		ast::Type * newSecond = shallowCopy( second );
+		if ( auto temp = dynamic_cast<const ast::EnumInstType *>(first) ) {
+			if ( !dynamic_cast< const ast::EnumInstType * >( second ) ) {
+				const ast::EnumDecl * baseEnum = dynamic_cast<const ast::EnumDecl *>(temp->base.get());
+				if ( auto t = baseEnum->base.get() ) {
+					newFirst = ast::shallowCopy( t );
+				}
+			}
+		} else if ( auto temp = dynamic_cast<const ast::EnumInstType *>(second) ) {
+			const ast::EnumDecl * baseEnum = dynamic_cast<const ast::EnumDecl *>(temp->base.get());
+			if ( auto t = baseEnum->base.get() ) {
+				newSecond = ast::shallowCopy( t );
+			}
+		}
+
 		newFirst ->qualifiers = {};
 		newSecond->qualifiers = {};
 		ast::ptr< ast::Type > t1_(newFirst );
@@ -692,6 +706,52 @@ namespace ResolvExpr {
 		}
 	}
 
+	namespace {
+				/// Replaces ttype variables with their bound types.
+		/// If this isn't done when satifying ttype assertions, then argument lists can have
+		/// different size and structure when they should be compatible.
+		struct TtypeExpander_new : public ast::WithShortCircuiting, public ast::PureVisitor {
+			ast::TypeEnvironment & tenv;
+
+			TtypeExpander_new( ast::TypeEnvironment & env ) : tenv( env ) {}
+
+			const ast::Type * postvisit( const ast::TypeInstType * typeInst ) {
+				if ( const ast::EqvClass * clz = tenv.lookup( *typeInst ) ) {
+					// expand ttype parameter into its actual type
+					if ( clz->data.kind == ast::TypeDecl::Ttype && clz->bound ) {
+						return clz->bound;
+					}
+				}
+				return typeInst;
+			}
+		};
+	}
+	
+	std::vector< ast::ptr< ast::Type > > flattenList(
+		const std::vector< ast::ptr< ast::Type > > & src, ast::TypeEnvironment & env
+	) {
+		std::vector< ast::ptr< ast::Type > > dst;
+		dst.reserve( src.size() );
+		for ( const auto & d : src ) {
+			ast::Pass<TtypeExpander_new> expander{ env };
+			// TtypeExpander pass is impure (may mutate nodes in place)
+			// need to make nodes shared to prevent accidental mutation
+			ast::ptr<ast::Type> dc = d->accept(expander);
+			auto types = flatten( dc );
+			for ( ast::ptr< ast::Type > & t : types ) {
+				// outermost const, volatile, _Atomic qualifiers in parameters should not play
+				// a role in the unification of function types, since they do not determine
+				// whether a function is callable.
+				// NOTE: **must** consider at least mutex qualifier, since functions can be
+				// overloaded on outermost mutex and a mutex function has different
+				// requirements than a non-mutex function
+				remove_qualifiers( t, ast::CV::Const | ast::CV::Volatile | ast::CV::Atomic );
+				dst.emplace_back( t );
+			}
+		}
+		return dst;
+	}
+
 	class Unify_new final : public ast::WithShortCircuiting {
 		const ast::Type * type2;
 		ast::TypeEnvironment & tenv;
@@ -763,65 +823,6 @@ namespace ResolvExpr {
 		}
 
 	private:
-		/// Replaces ttype variables with their bound types.
-		/// If this isn't done when satifying ttype assertions, then argument lists can have
-		/// different size and structure when they should be compatible.
-		struct TtypeExpander_new : public ast::WithShortCircuiting, public ast::PureVisitor {
-			ast::TypeEnvironment & tenv;
-
-			TtypeExpander_new( ast::TypeEnvironment & env ) : tenv( env ) {}
-
-			const ast::Type * postvisit( const ast::TypeInstType * typeInst ) {
-				if ( const ast::EqvClass * clz = tenv.lookup( *typeInst ) ) {
-					// expand ttype parameter into its actual type
-					if ( clz->data.kind == ast::TypeDecl::Ttype && clz->bound ) {
-						return clz->bound;
-					}
-				}
-				return typeInst;
-			}
-		};
-
-		/// returns flattened version of `src`
-		static std::vector< ast::ptr< ast::Type > > flattenList(
-			const std::vector< ast::ptr< ast::Type > > & src, ast::TypeEnvironment & env
-		) {
-			std::vector< ast::ptr< ast::Type > > dst;
-			dst.reserve( src.size() );
-			for ( const auto & d : src ) {
-				ast::Pass<TtypeExpander_new> expander{ env };
-				// TtypeExpander pass is impure (may mutate nodes in place)
-				// need to make nodes shared to prevent accidental mutation
-				ast::ptr<ast::Type> dc = d->accept(expander);
-				auto types = flatten( dc );
-				for ( ast::ptr< ast::Type > & t : types ) {
-					// outermost const, volatile, _Atomic qualifiers in parameters should not play
-					// a role in the unification of function types, since they do not determine
-					// whether a function is callable.
-					// NOTE: **must** consider at least mutex qualifier, since functions can be
-					// overloaded on outermost mutex and a mutex function has different
-					// requirements than a non-mutex function
-					remove_qualifiers( t, ast::CV::Const | ast::CV::Volatile | ast::CV::Atomic );
-					dst.emplace_back( t );
-				}
-			}
-			return dst;
-		}
-
-		/// Creates a tuple type based on a list of DeclWithType
-		template< typename Iter >
-		static const ast::Type * tupleFromTypes( Iter crnt, Iter end ) {
-			std::vector< ast::ptr< ast::Type > > types;
-			while ( crnt != end ) {
-				// it is guaranteed that a ttype variable will be bound to a flat tuple, so ensure
-				// that this results in a flat tuple
-				flatten( *crnt, types );
-
-				++crnt;
-			}
-
-			return new ast::TupleType{ std::move(types) };
-		}
 
 		template< typename Iter >
 		static bool unifyTypeList(
@@ -987,7 +988,7 @@ namespace ResolvExpr {
 
 				if ( isTuple && isTuple2 ) {
 					++it; ++jt;  // skip ttype parameters before break
-				} else if ( isTuple ) {
+				} else if ( isTuple ) { 
 					// bundle remaining params into tuple
 					pty2 = tupleFromExprs( param2, jt, params2.end(), pty->qualifiers );
 					++it;  // skip ttype parameter for break
@@ -1033,18 +1034,7 @@ namespace ResolvExpr {
 
 	private:
 		/// Creates a tuple type based on a list of Type
-		static const ast::Type * tupleFromTypes(
-			const std::vector< ast::ptr< ast::Type > > & tys
-		) {
-			std::vector< ast::ptr< ast::Type > > out;
-			for ( const ast::Type * ty : tys ) {
-				// it is guaranteed that a ttype variable will be bound to a flat tuple, so ensure
-				// that this results in a flat tuple
-				flatten( ty, out );
-			}
-
-			return new ast::TupleType{ std::move(out) };
-		}
+		
 
 		static bool unifyList(
 			const std::vector< ast::ptr< ast::Type > > & list1,
@@ -1216,7 +1206,7 @@ namespace ResolvExpr {
 				return false;
 			}
 
-		} else if (( common = commonType( t1, t2, widen, symtab, env, open ) )) {
+		} else if ( common = commonType( t1, t2, env, need, have, open, widen, symtab )) {
 			// no exact unification, but common type
 			auto c = shallowCopy(common.get());
 			c->qualifiers = q1 | q2;

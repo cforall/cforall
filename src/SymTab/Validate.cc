@@ -856,12 +856,13 @@ namespace SymTab {
 			declsToAddBefore.push_back( new StructDecl( aggDecl->name, AggregateDecl::Struct, noAttributes, tyDecl->linkage ) );
 		} else if ( UnionInstType * aggDecl = dynamic_cast< UnionInstType * >( designatorType ) ) {
 			declsToAddBefore.push_back( new UnionDecl( aggDecl->name, noAttributes, tyDecl->linkage ) );
-		} else if ( EnumInstType * enumDecl = dynamic_cast< EnumInstType * >( designatorType ) ) {
+		} else if ( EnumInstType * enumInst = dynamic_cast< EnumInstType * >( designatorType ) ) {
 			// declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, tyDecl->linkage, enumDecl->baseEnum->base ) );
-			if (enumDecl->baseEnum) {
-				declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, tyDecl->linkage, enumDecl->baseEnum->base ) );
+			if ( enumInst->baseEnum ) {
+				const EnumDecl * enumDecl = enumInst->baseEnum;
+				declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, enumDecl->isTyped, tyDecl->linkage, enumDecl->base ) );
 			} else {
-				declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, tyDecl->linkage ) );
+				declsToAddBefore.push_back( new EnumDecl( enumInst->name, noAttributes, tyDecl->linkage ) );
 			}
 		} // if
 		return tyDecl->clone();

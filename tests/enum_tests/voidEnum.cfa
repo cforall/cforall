@@ -1,0 +1,26 @@
+#include <fstream.hfa>
+
+enum() voidEnum {
+    a, b, c
+    /*** 
+    * ,d = 10 // Disable; 
+    * //error: Enumerator of enum(void) cannot have an explicit initial value.
+    */
+};
+
+// void foo (const enum voidEnum & t){}
+
+int main() {
+    enum voidEnum v_1 = a;
+    enum voidEnum v_2 = b;
+    // foo(b);
+    // enum voidEnum v_3 = 10;
+    // Error as int cannot convert to void enum
+    if ( v_1 == v_2 ) {
+        sout | "Equal" | nl;
+    } else {
+        sout | "Not Equal" | nl;
+    }
+    sout | a | nl;
+    sout | b | nl;
+}

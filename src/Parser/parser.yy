@@ -636,7 +636,7 @@ primary_expression:
 	| '(' compound_statement ')'						// GCC, lambda expression
 		{ $$ = new ExpressionNode( new StmtExpr( dynamic_cast<CompoundStmt *>(maybeMoveBuild<Statement>($2) ) ) ); }
 	| type_name '.' identifier							// CFA, nested type
-		{ SemanticError( yylloc, "Qualified name is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new ExpressionNode( build_qualified_expr( $1, build_varref( $3 ) ) ); }
 	| type_name '.' '[' field_name_list ']'				// CFA, nested type / tuple field selector
 		{ SemanticError( yylloc, "Qualified name is currently unimplemented." ); $$ = nullptr; }
 	| GENERIC '(' assignment_expression ',' generic_assoc_list ')' // C11
@@ -2537,22 +2537,24 @@ bit_subrange_size:
 
 enum_type:
 	ENUM attribute_list_opt '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( nullptr, $4, true )->addQualifiers( $2 ); }
+		{ $$ = DeclarationNode::newEnum( nullptr, $4, true, false )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3 ); }
 	  '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $3, $6, true )->addQualifiers( $2 ); }
+		{ $$ = DeclarationNode::newEnum( $3, $6, true, false )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt typedef_name				// unqualified type name
 	  '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $3->name, $5, true )->addQualifiers( $2 ); }
-	| ENUM '(' ')' attribute_list_opt '{' enumerator_list comma_opt '}'
-		{ SemanticError( yylloc, "Unvalued enumerated type is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = DeclarationNode::newEnum( $3->name, $5, true, false )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 	 	{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 )
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 
-			$$ = DeclarationNode::newEnum( nullptr, $7, true, $3 )->addQualifiers( $5 );
+			$$ = DeclarationNode::newEnum( nullptr, $7, true, true, $3 )->addQualifiers( $5 );
+		}
+	| ENUM '(' ')' attribute_list_opt '{' enumerator_list comma_opt '}'
+		{
+			$$ = DeclarationNode::newEnum( nullptr, $6, true, true )->addQualifiers( $4 );
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
@@ -2561,22 +2563,29 @@ enum_type:
 		}
 	  '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $6, $10, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6, $10, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
+	| ENUM '(' ')' attribute_list_opt identifier attribute_list_opt
+	  '{' enumerator_list comma_opt '}'
+		{
+			$$ = DeclarationNode::newEnum( $5, $8, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
+		}	
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
-			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
-			typedefTable.makeTypedef( *$6->name );
-			$$ = DeclarationNode::newEnum( $6->name, $9, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6->name, $9, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
+		}
+	| ENUM '(' ')' attribute_list_opt typedef_name attribute_list_opt '{' enumerator_list comma_opt '}'
+		{
+			$$ = DeclarationNode::newEnum( $5->name, $8, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
 		}
 	| enum_type_nobody
 	;
 
 enum_type_nobody:										// enum - {...}
 	ENUM attribute_list_opt identifier
-		{ typedefTable.makeTypedef( *$3 ); $$ = DeclarationNode::newEnum( $3, 0, false )->addQualifiers( $2 ); }
-	| ENUM attribute_list_opt type_name					// qualified type name
-		{ typedefTable.makeTypedef( *$3->type->symbolic.name );	$$ = DeclarationNode::newEnum( $3->type->symbolic.name, 0, false )->addQualifiers( $2 ); }
+		{ typedefTable.makeTypedef( *$3 ); $$ = DeclarationNode::newEnum( $3, 0, false, false )->addQualifiers( $2 ); }
+	| ENUM attribute_list_opt type_name	
+		{ typedefTable.makeTypedef( *$3->type->symbolic.name );	$$ = DeclarationNode::newEnum( $3->type->symbolic.name, 0, false, false )->addQualifiers( $2 ); }
 	;
 
 enumerator_list:

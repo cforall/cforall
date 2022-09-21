@@ -102,6 +102,7 @@ class InitExpr;
 class DeletedExpr;
 class DefaultArgExpr;
 class GenericExpr;
+class QualifiedNameExpr;
 
 class Type;
 class VoidType;

@@ -1875,8 +1875,8 @@ char *yytext;
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Tue Aug 30 18:39:54 2022
- * Update Count     : 760
+ * Last Modified On : Tue Sep 20 21:18:55 2022
+ * Update Count     : 762
  */
 #line 21 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 // The lexer assumes the program has been preprocessed by cpp. Hence, all user level preprocessor directive have been
@@ -1942,11 +1942,8 @@ void rm_underscore() {
 
 // Stop warning due to incorrectly generated flex code.
 #pragma GCC diagnostic ignored "-Wsign-compare"
-
-// lex uses __null in a boolean context, it's fine.
-#pragma GCC diagnostic ignored "-Wnull-conversion"
-#line 1949 "Parser/lex.cc"
-#line 97 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 1946 "Parser/lex.cc"
+#line 94 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 				// identifier, GCC: $ in identifier
 				// numeric constants, CFA: '_' in constant
 				// CFA: explicit l8/l16/l32/l64/l128, char 'hh', short 'h', int 'n'
@@ -1962,7 +1959,7 @@ void rm_underscore() {
 
 
 
-#line 1966 "Parser/lex.cc"
+#line 1963 "Parser/lex.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -2184,10 +2181,10 @@ YY_DECL
 		}
 
 	{
-#line 172 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 169 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 
 				/* line directives */
-#line 2191 "Parser/lex.cc"
+#line 2188 "Parser/lex.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2258,7 +2255,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 174 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 171 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 {
 	/* " stop editor highlighting */
 	static char filename[FILENAME_MAX];					// temporarily store current source-file name
@@ -2284,721 +2281,721 @@ YY_RULE_SETUP
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 196 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 193 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { RETURN_VAL( DIRECTIVE ); }
 	YY_BREAK
 /* ignore C style comments (ALSO HANDLED BY CPP) */
 case 3:
 YY_RULE_SETUP
-#line 199 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 196 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { BEGIN COMMENT; }
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 200 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 197 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 ;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 201 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 198 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { BEGIN 0; }
 	YY_BREAK
 /* ignore C++ style comments (ALSO HANDLED BY CPP) */
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 204 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 201 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 ;
 	YY_BREAK
 /* ignore whitespace */
 case 7:
 YY_RULE_SETUP
-#line 207 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 204 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { WHITE_RETURN(' '); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 208 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 205 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { WHITE_RETURN(' '); }
 	YY_BREAK
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 209 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 206 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NEWLINE_RETURN(); }
 	YY_BREAK
 /* keywords */
 case 10:
 YY_RULE_SETUP
-#line 212 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 209 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ALIGNAS); }			// C11
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 213 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 210 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ALIGNOF); }			// C11
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 214 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 211 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ALIGNOF); }			// GCC
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 215 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 212 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ALIGNOF); }			// GCC
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 216 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 213 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ASM); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 217 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 214 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ASM); }				// GCC
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 218 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 215 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ASM); }				// GCC
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 219 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 216 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ATOMIC); }				// C11
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 220 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 217 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ATTRIBUTE); }			// GCC
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 221 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 218 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ATTRIBUTE); }			// GCC
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 222 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 219 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(AUTO); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 223 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 220 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(AUTO_TYPE); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 224 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 221 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(BASETYPEOF); }			// CFA
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 225 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 222 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(BOOL); }				// C99
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 226 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 223 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(BREAK); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 227 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 224 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(CASE); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 228 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 225 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { QKEYWORD_RETURN(CATCH); }				// CFA
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 229 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 226 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { QKEYWORD_RETURN(CATCHRESUME); }		// CFA
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 230 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 227 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(CHAR); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 231 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 228 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(CHOOSE); }				// CFA
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 232 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 229 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(COERCE); }				// CFA
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 233 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 230 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(COMPLEX); }			// C99
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 234 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 231 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(COMPLEX); }			// GCC
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 235 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 232 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(COMPLEX); }			// GCC
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 236 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 233 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(CONST); }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 237 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 234 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(CONST); }				// GCC
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 238 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 235 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(CONST); }				// GCC
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 239 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 236 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(CONTINUE); }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 240 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 237 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(COROUTINE); }			// CFA
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 241 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 238 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(DECIMAL32); }			// GCC
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 242 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 239 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(DECIMAL64); }			// GCC
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 243 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 240 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(DECIMAL128); }			// GCC
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 244 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 241 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(DEFAULT); }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 245 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 242 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(DISABLE); }			// CFA
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 246 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 243 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(DO); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 247 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 244 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(DOUBLE); }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 248 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 245 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(DTYPE); }				// CFA
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 249 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 246 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ELSE); }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 250 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 247 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ENABLE); }				// CFA
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 251 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 248 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(ENUM); }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 252 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 249 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(EXTENSION); }			// GCC
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 253 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 250 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(EXCEPTION); }			// CFA
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 254 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 251 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(EXTERN); }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 255 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 252 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(FALLTHROUGH); }		// CFA
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 256 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 253 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(FALLTHRU); }			// CFA
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 257 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 254 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { QKEYWORD_RETURN(FINALLY); }			// CFA
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 258 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 255 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { QKEYWORD_RETURN(FIXUP); }				// CFA
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 259 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 256 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(FLOAT); }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 260 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 257 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(uuFLOAT80); }			// GCC
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 261 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 258 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(uuFLOAT80); }			// GCC
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 262 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 259 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(uuFLOAT128); }			// GCC
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 263 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 260 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(uuFLOAT128); }			// GCC
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 264 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 261 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { FLOATXX(uFLOAT16); }					// GCC
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 265 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 262 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { FLOATXX(uFLOAT32); }					// GCC
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 266 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 263 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { FLOATXX(uFLOAT32X); }					// GCC
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 267 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 264 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { FLOATXX(uFLOAT64); }					// GCC
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 268 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 265 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { FLOATXX(uFLOAT64X); }					// GCC
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 269 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 266 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { FLOATXX(uFLOAT128); }					// GCC
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 270 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 267 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { FLOATXX(uFLOAT128); }					// GCC
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 271 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 268 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(FOR); }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 272 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 269 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(FORALL); }				// CFA
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 273 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 270 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(FORTRAN); }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 274 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 271 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(FTYPE); }				// CFA
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 275 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 272 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(GENERATOR); }			// CFA
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 276 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 273 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(GENERIC); }			// C11
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 277 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 274 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(GOTO); }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 278 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 275 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(IF); }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 279 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 276 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(IMAGINARY); }			// C99
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 280 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 277 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(IMAGINARY); }			// GCC
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 281 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 278 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(IMAGINARY); }			// GCC
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 282 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 279 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(INLINE); }				// C99
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 283 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 280 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(INLINE); }				// GCC
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 284 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 281 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(INLINE); }				// GCC
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 285 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 282 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(INT); }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 286 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 283 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(INT128); }				// CFA
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 287 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 284 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(INT128); }				// GCC
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 288 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 285 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(INT128); }				// GCC
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 289 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 286 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(LABEL); }				// GCC
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 290 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 287 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(LONG); }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 291 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 288 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(MONITOR); }			// CFA
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 292 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 289 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(MUTEX); }				// CFA
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 293 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 290 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(NORETURN); }			// C11
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 294 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 291 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(OFFSETOF); }		// GCC
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 295 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 292 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(ONE_T); }				// CFA
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 296 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 293 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { QKEYWORD_RETURN(WOR); }				// CFA
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 297 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 294 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(OTYPE); }				// CFA
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 298 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 295 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { QKEYWORD_RETURN(RECOVER); }			// CFA
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 299 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 296 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(REGISTER); }
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 300 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 297 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(THROWRESUME); }		// CFA
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 301 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 298 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(RESTRICT); }			// C99
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 302 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 299 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(RESTRICT); }			// GCC
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 303 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 300 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(RESTRICT); }			// GCC
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 304 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 301 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(RETURN); }
 	YY_BREAK
 /* resume			{ KEYWORD_RETURN(RESUME); }				// CFA */
 case 103:
 YY_RULE_SETUP
-#line 306 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 303 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(SHORT); }
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 307 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 304 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(SIGNED); }
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 308 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 305 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(SIGNED); }				// GCC
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 309 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 306 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(SIGNED); }				// GCC
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 310 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 307 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(SIZEOF); }
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 311 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 308 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(STATIC); }
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 312 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 309 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(STATICASSERT); }		// C11
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 313 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 310 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(STRUCT); }
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 314 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 311 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(SUSPEND); }			// CFA
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 315 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 312 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(SWITCH); }
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 316 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 313 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(THREAD); }				// C11
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 317 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 314 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(THREADLOCALGCC); }		// GCC
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 318 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 315 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(THREADLOCALC11); }		// C11
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 319 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 316 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(THROW); }				// CFA
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 320 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 317 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(THROWRESUME); }		// CFA
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 321 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 318 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { QKEYWORD_RETURN(TIMEOUT); }			// CFA
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 322 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 319 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(TRAIT); }				// CFA
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 323 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 320 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(TRY); }				// CFA
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 324 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 321 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(TTYPE); }				// CFA
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 325 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 322 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(TYPEDEF); }
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 326 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 323 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(TYPEOF); }				// GCC
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 327 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 324 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(TYPEOF); }				// GCC
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 328 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 325 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(TYPEOF); }				// GCC
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 329 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 326 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(TYPEID); }				// GCC
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 330 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 327 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(UNION); }
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 331 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 328 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(UINT128); }			// GCC
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 332 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 329 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(UNSIGNED); }
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 333 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 330 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(VALIST); }			// GCC
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 334 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 331 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(VIRTUAL); }			// CFA
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 335 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 332 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(VOID); }
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 336 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 333 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(VOLATILE); }
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 337 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 334 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(VOLATILE); }			// GCC
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 338 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 335 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(VOLATILE); }			// GCC
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 339 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 336 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(VTABLE); }				// CFA
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 340 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 337 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(WAITFOR); }			// CFA
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 341 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 338 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(WHEN); }				// CFA
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 342 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 339 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(WHILE); }
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 343 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 340 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { KEYWORD_RETURN(WITH); }				// CFA
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 344 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 341 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(ZERO_T); }				// CFA
 	YY_BREAK
 /* identifier */
 case 142:
 YY_RULE_SETUP
-#line 347 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 344 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { IDENTIFIER_RETURN(); }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 348 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 345 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 {										// CFA
 	yytext[yyleng] = '\0'; yytext += 2;					// SKULLDUGGERY: remove backquotes (ok to shorten?)
 	IDENTIFIER_RETURN();
@@ -3007,409 +3004,409 @@ YY_RULE_SETUP
 /* numeric constants */
 case 144:
 YY_RULE_SETUP
-#line 354 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 351 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(INTEGERconstant); }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 355 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 352 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(INTEGERconstant); }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 356 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 353 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(INTEGERconstant); }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 357 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 354 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(INTEGERconstant); }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 358 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 355 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(FLOATING_DECIMALconstant); } // must appear before floating_constant
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 359 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 356 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(FLOATING_FRACTIONconstant); } // must appear before floating_constant
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 360 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 357 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(FLOATINGconstant); }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 361 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 358 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NUMERIC_RETURN(FLOATINGconstant); }
 	YY_BREAK
 /* character constant, allows empty value */
 case 152:
 YY_RULE_SETUP
-#line 364 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 361 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { BEGIN QUOTE; rm_underscore(); strtext = new string( yytext, yyleng ); }
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 365 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 362 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { strtext->append( yytext, yyleng ); }
 	YY_BREAK
 case 154:
 /* rule 154 can match eol */
 YY_RULE_SETUP
-#line 366 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 363 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { BEGIN 0; strtext->append( yytext, yyleng ); RETURN_STR(CHARACTERconstant); }
 	YY_BREAK
 /* ' stop editor highlighting */
 /* string constant */
 case 155:
 YY_RULE_SETUP
-#line 370 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 367 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { BEGIN STRING; rm_underscore(); strtext = new string( yytext, yyleng ); }
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 371 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 368 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { strtext->append( yytext, yyleng ); }
 	YY_BREAK
 case 157:
 /* rule 157 can match eol */
 YY_RULE_SETUP
-#line 372 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 369 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { BEGIN 0; strtext->append( yytext, yyleng ); RETURN_STR(STRINGliteral); }
 	YY_BREAK
 /* " stop editor highlighting */
 /* common character/string constant */
 case 158:
 YY_RULE_SETUP
-#line 376 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 373 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { rm_underscore(); strtext->append( yytext, yyleng ); }
 	YY_BREAK
 case 159:
 /* rule 159 can match eol */
 YY_RULE_SETUP
-#line 377 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 374 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 {}						// continuation (ALSO HANDLED BY CPP)
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 378 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 375 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { strtext->append( yytext, yyleng ); } // unknown escape character
 	YY_BREAK
 /* punctuation */
 case 161:
 YY_RULE_SETUP
-#line 381 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 378 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 382 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 379 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 383 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 380 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 384 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 381 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 385 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 382 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 386 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 383 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 387 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 384 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 388 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 385 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 389 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 386 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }					// also operator
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 390 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 387 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 391 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 388 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 392 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 389 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }					// also operator
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 393 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 390 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ELLIPSIS); }
 	YY_BREAK
 /* alternative C99 brackets, "<:" & "<:<:" handled by preprocessor */
 case 174:
 YY_RULE_SETUP
-#line 396 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 393 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { RETURN_VAL('['); }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 397 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 394 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { RETURN_VAL(']'); }
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 398 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 395 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { RETURN_VAL('{'); }
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 399 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 396 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { RETURN_VAL('}'); }
 	YY_BREAK
 /* operators */
 case 178:
 YY_RULE_SETUP
-#line 402 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 399 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 403 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 400 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 404 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 401 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 405 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 402 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 406 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 403 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }					// CFA, exponentiation
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 407 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 404 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 184:
 YY_RULE_SETUP
-#line 408 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 405 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
-#line 409 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 406 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 186:
 YY_RULE_SETUP
-#line 410 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 407 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 187:
 YY_RULE_SETUP
-#line 411 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 408 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-#line 412 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 409 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 189:
 YY_RULE_SETUP
-#line 413 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 410 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 190:
 YY_RULE_SETUP
-#line 414 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 411 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 191:
 YY_RULE_SETUP
-#line 415 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 412 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-#line 416 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 413 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { ASCIIOP_RETURN(); }
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-#line 418 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 415 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ICR); }
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-#line 419 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 416 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(DECR); }
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-#line 420 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 417 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(EQ); }
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-#line 421 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 418 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(NE); }
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-#line 422 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 419 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(LS); }
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-#line 423 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 420 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(RS); }
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-#line 424 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 421 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(LE); }
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-#line 425 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 422 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(GE); }
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-#line 426 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 423 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ANDAND); }
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-#line 427 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 424 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(OROR); }
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-#line 428 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 425 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ARROW); }
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-#line 429 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 426 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(PLUSassign); }
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-#line 430 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 427 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(MINUSassign); }
 	YY_BREAK
 case 206:
 YY_RULE_SETUP
-#line 431 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 428 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(EXPassign); }			// CFA, exponentiation
 	YY_BREAK
 case 207:
 YY_RULE_SETUP
-#line 432 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 429 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(MULTassign); }
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-#line 433 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 430 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(DIVassign); }
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 434 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 431 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(MODassign); }
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 435 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 432 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ANDassign); }
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 436 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 433 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ORassign); }
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-#line 437 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 434 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ERassign); }
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-#line 438 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 435 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(LSassign); }
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-#line 439 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 436 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(RSassign); }
 	YY_BREAK
 case 215:
 YY_RULE_SETUP
-#line 441 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 438 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ATassign); }			// CFA
 	YY_BREAK
 case 216:
 YY_RULE_SETUP
-#line 442 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 439 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ErangeUpEq); }			// CFA
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-#line 443 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 440 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ErangeDown); }			// CFA
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-#line 444 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 441 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { NAMEDOP_RETURN(ErangeDownEq); }		// CFA
 	YY_BREAK
 /* CFA, operator identifier */
 case 219:
 YY_RULE_SETUP
-#line 447 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 444 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { IDENTIFIER_RETURN(); }				// unary
 	YY_BREAK
 case 220:
 YY_RULE_SETUP
-#line 448 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 445 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { IDENTIFIER_RETURN(); }
 	YY_BREAK
 case 221:
 YY_RULE_SETUP
-#line 449 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 446 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { IDENTIFIER_RETURN(); }
 	YY_BREAK
 case 222:
 YY_RULE_SETUP
-#line 450 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 447 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 {										// postfix operator
 	yylval.tok.str = new string( &yytext[2] );			// remove ?`
 	yylval.tok.str = build_postfix_name( yylval.tok.str ); // add prefix
@@ -3418,7 +3415,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 223:
 YY_RULE_SETUP
-#line 455 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 452 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { IDENTIFIER_RETURN(); }		// binary
 	YY_BREAK
 /*
@@ -3449,7 +3446,7 @@ YY_RULE_SETUP
 	*/
 case 224:
 YY_RULE_SETUP
-#line 482 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 479 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 {
 	// 1 or 2 character unary operator ?
 	int i = yytext[1] == '?' ? 1 : 2;
@@ -3464,15 +3461,15 @@ YY_RULE_SETUP
 /* unknown character */
 case 225:
 YY_RULE_SETUP
-#line 494 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 491 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 { yyerror( "unknown character" ); }
 	YY_BREAK
 case 226:
 YY_RULE_SETUP
-#line 496 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 493 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 ECHO;
 	YY_BREAK
-#line 3476 "Parser/lex.cc"
+#line 3473 "Parser/lex.cc"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
 case YY_STATE_EOF(BKQUOTE):
@@ -4454,7 +4451,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 496 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
+#line 493 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 
 
 // ----end of lexer----

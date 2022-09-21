@@ -64,6 +64,8 @@ namespace SymTab {
 				void postvisit( const OneType * oneType );
 				void postvisit( const QualifiedType * qualType );
 
+				void postvisit( const QualifiedNameExpr * qualNameExpr );
+
 				std::string get_mangleName() { return mangleName; }
 			  private:
 				std::string mangleName;         ///< Mangled name being constructed
@@ -306,6 +308,10 @@ namespace SymTab {
 				}
 			}
 
+			void Mangler_old::postvisit( const QualifiedNameExpr * qual ) {
+				maybeAccept( qual->var, *visitor );
+			}
+
 			void Mangler_old::postvisit( const TypeDecl * decl ) {
 				// TODO: is there any case where mangling a TypeDecl makes sense? If so, this code needs to be
 				// fixed to ensure that two TypeDecls mangle to the same name when they are the same type and vice versa.
@@ -416,6 +422,7 @@ namespace Mangle {
 			void postvisit( const ast::ZeroType * zeroType );
 			void postvisit( const ast::OneType * oneType );
 			void postvisit( const ast::QualifiedType * qualType );
+			void postvisit( const ast::QualifiedNameExpr * qualNameExpr );
 
 			std::string get_mangleName() { return mangleName; }
 		  private:
@@ -644,6 +651,9 @@ namespace Mangle {
 				inQualifiedType = false;
 				mangleName += Encoding::qualifiedTypeEnd;
 			}
+		}
+		void Mangler_new::postvisit( const ast::QualifiedNameExpr * qual ) {
+			maybeAccept( qual->var.get(), *visitor );
 		}
 
 		void Mangler_new::postvisit( const ast::TypeDecl * decl ) {

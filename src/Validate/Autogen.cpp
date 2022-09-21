@@ -235,6 +235,13 @@ void AutogenerateRoutines_new::previsit( const ast::EnumDecl * enumDecl ) {
 	// Must visit children (enum constants) to add them to the symbol table.
 	if ( !enumDecl->body ) return;
 
+	// if ( auto enumBaseType = enumDecl->base ) {
+	// 	if ( auto enumBaseTypeAsStructInst = dynamic_cast<const ast::StructInstType *>(enumBaseType.get()) ) {
+	// 		const ast::StructDecl * structDecl = enumBaseTypeAsStructInst->base.get();
+	// 		this->previsit( structDecl );
+	// 	}
+	// }
+
 	ast::EnumInstType enumInst( enumDecl->name );
 	enumInst.base = enumDecl;
 	EnumFuncGenerator gen( enumDecl, &enumInst, functionNesting );

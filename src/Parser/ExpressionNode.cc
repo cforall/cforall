@@ -508,6 +508,30 @@ NameExpr * build_varref( const string * name ) {
 	return expr;
 } // build_varref
 
+QualifiedNameExpr * build_qualified_expr( const DeclarationNode * decl_node, const NameExpr * name ) {
+	Declaration * newDecl = maybeBuild< Declaration >(decl_node);
+	if ( DeclarationWithType * newDeclWithType = dynamic_cast< DeclarationWithType * >( newDecl ) ) {
+		const Type * t = newDeclWithType->get_type();
+		if ( t ) {
+			if ( const TypeInstType * typeInst = dynamic_cast<const TypeInstType *>( t ) ) {
+				newDecl= new EnumDecl( typeInst->name );
+			}
+		}
+	}
+	auto ret =  new QualifiedNameExpr( newDecl, name->name );
+	if ( auto e = dynamic_cast<EnumDecl*>(newDecl) ) {
+		auto enumInst = new EnumInstType( Type::Qualifiers(), e );
+		auto obj = new ObjectDecl( name->name, Type::StorageClasses(), LinkageSpec::Cforall, nullptr, enumInst, nullptr );
+		ret->set_var( obj );
+	}
+	return ret;
+}
+
+QualifiedNameExpr * build_qualified_expr( const EnumDecl * decl_node, const NameExpr * name ) {
+	EnumDecl * newDecl = const_cast< EnumDecl * >( decl_node );
+	return new QualifiedNameExpr( newDecl, name->name );
+}
+
 DimensionExpr * build_dimensionref( const string * name ) {
 	DimensionExpr * expr = new DimensionExpr( *name );
 	delete name;

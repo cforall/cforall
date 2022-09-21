@@ -59,11 +59,13 @@ struct monitor_dtor_guard_t {
 void ?{}( monitor_dtor_guard_t & this, monitor$ ** m, void (*func)(), bool join );
 void ^?{}( monitor_dtor_guard_t & this );
 
+/*
 static inline forall( T & | sized(T) | { void ^?{}( T & mutex ); } )
 void delete( T * th ) {
 	if(th) ^(*th){};
 	free( th );
 }
+*/
 
 static inline forall( T & | sized(T) | { void ^?{}( T & mutex ); } )
 void adelete( T arr[] ) {

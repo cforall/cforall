@@ -1477,9 +1477,9 @@ namespace ResolvExpr {
 			// enumerator initializers should not use the enum type to initialize, since the
 			// enum type is still incomplete at this point. Use `int` instead.
 
-			if (dynamic_cast< const ast::EnumInstType * >( objectDecl->get_type() )->base->base) {
+			if ( auto enumBase = dynamic_cast< const ast::EnumInstType * >
+				( objectDecl->get_type() )->base->base ) {
 				objectDecl = fixObjectType( objectDecl, context );
-				const ast::Type * enumBase =  (dynamic_cast< const ast::EnumInstType * >( objectDecl->get_type() )->base->base.get());
 				currentObject = ast::CurrentObject{ 
 					objectDecl->location, 
 					enumBase
@@ -1492,7 +1492,7 @@ namespace ResolvExpr {
 
 		}
 		else {
-			if (!objectDecl->isTypeFixed) {
+			if ( !objectDecl->isTypeFixed ) {
 				auto newDecl = fixObjectType(objectDecl, context);
 				auto mutDecl = mutate(newDecl);
 

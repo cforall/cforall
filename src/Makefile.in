@@ -165,7 +165,7 @@ libdemangle_a_AR = $(AR) $(ARFLAGS)
 libdemangle_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
 am__objects_1 = AST/Attribute.$(OBJEXT) AST/Convert.$(OBJEXT) \
-	AST/Copy.$(OBJEXT) AST/Decl.$(OBJEXT) \
+	AST/Copy.$(OBJEXT) AST/Create.$(OBJEXT) AST/Decl.$(OBJEXT) \
 	AST/DeclReplacer.$(OBJEXT) AST/Expr.$(OBJEXT) \
 	AST/GenericSubstitution.$(OBJEXT) AST/Init.$(OBJEXT) \
 	AST/Inspect.$(OBJEXT) AST/LinkageSpec.$(OBJEXT) \
@@ -335,13 +335,14 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	./$(DEPDIR)/MakeLibCfa.Po ./$(DEPDIR)/MakeLibCfaNew.Po \
 	./$(DEPDIR)/main.Po AST/$(DEPDIR)/Attribute.Po \
 	AST/$(DEPDIR)/Convert.Po AST/$(DEPDIR)/Copy.Po \
-	AST/$(DEPDIR)/Decl.Po AST/$(DEPDIR)/DeclReplacer.Po \
-	AST/$(DEPDIR)/Expr.Po AST/$(DEPDIR)/GenericSubstitution.Po \
-	AST/$(DEPDIR)/Init.Po AST/$(DEPDIR)/Inspect.Po \
-	AST/$(DEPDIR)/LinkageSpec.Po AST/$(DEPDIR)/Node.Po \
-	AST/$(DEPDIR)/Pass.Po AST/$(DEPDIR)/Print.Po \
-	AST/$(DEPDIR)/Stmt.Po AST/$(DEPDIR)/SymbolTable.Po \
-	AST/$(DEPDIR)/Type.Po AST/$(DEPDIR)/TypeEnvironment.Po \
+	AST/$(DEPDIR)/Create.Po AST/$(DEPDIR)/Decl.Po \
+	AST/$(DEPDIR)/DeclReplacer.Po AST/$(DEPDIR)/Expr.Po \
+	AST/$(DEPDIR)/GenericSubstitution.Po AST/$(DEPDIR)/Init.Po \
+	AST/$(DEPDIR)/Inspect.Po AST/$(DEPDIR)/LinkageSpec.Po \
+	AST/$(DEPDIR)/Node.Po AST/$(DEPDIR)/Pass.Po \
+	AST/$(DEPDIR)/Print.Po AST/$(DEPDIR)/Stmt.Po \
+	AST/$(DEPDIR)/SymbolTable.Po AST/$(DEPDIR)/Type.Po \
+	AST/$(DEPDIR)/TypeEnvironment.Po \
 	AST/$(DEPDIR)/TypeSubstitution.Po AST/$(DEPDIR)/Util.Po \
 	CodeGen/$(DEPDIR)/CodeGenerator.Po \
 	CodeGen/$(DEPDIR)/FixMain.Po CodeGen/$(DEPDIR)/FixMain2.Po \
@@ -820,6 +821,8 @@ SRC_AST = \
 	AST/Convert.hpp \
 	AST/Copy.cpp \
 	AST/Copy.hpp \
+	AST/Create.cpp \
+	AST/Create.hpp \
 	AST/CVQualifiers.hpp \
 	AST/Decl.cpp \
 	AST/Decl.hpp \
@@ -1163,6 +1166,8 @@ AST/Attribute.$(OBJEXT): AST/$(am__dirstamp) \
 AST/Convert.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
 AST/Copy.$(OBJEXT): AST/$(am__dirstamp) AST/$(DEPDIR)/$(am__dirstamp)
+AST/Create.$(OBJEXT): AST/$(am__dirstamp) \
+	AST/$(DEPDIR)/$(am__dirstamp)
 AST/Decl.$(OBJEXT): AST/$(am__dirstamp) AST/$(DEPDIR)/$(am__dirstamp)
 AST/DeclReplacer.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
@@ -1661,6 +1666,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Attribute.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Convert.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Copy.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Create.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Decl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/DeclReplacer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Expr.Po@am__quote@ # am--include-marker
@@ -2087,6 +2093,7 @@ distclean: distclean-am
 	-rm -f AST/$(DEPDIR)/Attribute.Po
 	-rm -f AST/$(DEPDIR)/Convert.Po
 	-rm -f AST/$(DEPDIR)/Copy.Po
+	-rm -f AST/$(DEPDIR)/Create.Po
 	-rm -f AST/$(DEPDIR)/Decl.Po
 	-rm -f AST/$(DEPDIR)/DeclReplacer.Po
 	-rm -f AST/$(DEPDIR)/Expr.Po
@@ -2321,6 +2328,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f AST/$(DEPDIR)/Attribute.Po
 	-rm -f AST/$(DEPDIR)/Convert.Po
 	-rm -f AST/$(DEPDIR)/Copy.Po
+	-rm -f AST/$(DEPDIR)/Create.Po
 	-rm -f AST/$(DEPDIR)/Decl.Po
 	-rm -f AST/$(DEPDIR)/DeclReplacer.Po
 	-rm -f AST/$(DEPDIR)/Expr.Po

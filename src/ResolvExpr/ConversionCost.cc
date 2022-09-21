@@ -21,10 +21,12 @@
 
 #include "ResolvExpr/Cost.h"             // for Cost
 #include "ResolvExpr/TypeEnvironment.h"  // for EqvClass, TypeEnvironment
+#include "ResolvExpr/Unify.h"
 #include "SymTab/Indexer.h"              // for Indexer
 #include "SynTree/Declaration.h"         // for TypeDecl, NamedTypeDecl
 #include "SynTree/Type.h"                // for Type, BasicType, TypeInstType
 #include "typeops.h"                     // for typesCompatibleIgnoreQualifiers
+
 
 namespace ResolvExpr {
 #if 0
@@ -337,7 +339,7 @@ namespace ResolvExpr {
 			conversionCostFromBasicToBasic(basicType, destAsBasic);
 		} else if ( const EnumInstType * enumInst = dynamic_cast< const EnumInstType * >( dest ) ) {
 			const EnumDecl * base_enum = enumInst->baseEnum;
-			if ( const Type * base = base_enum->base ) { // if the base enum has a base (if it is typed)
+			if ( const Type * base = base_enum->base ) {
 				if ( const BasicType * enumBaseAstBasic = dynamic_cast< const BasicType *> (base) ) {
 					conversionCostFromBasicToBasic(basicType, enumBaseAstBasic);
 				} else {
@@ -631,7 +633,9 @@ void ConversionCost_new::postvisit( const ast::BasicType * basicType ) {
 		conversionCostFromBasicToBasic( basicType, dstAsBasic );
 	} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 		const ast::EnumDecl * enumDecl = enumInst->base.get();
-		if ( const ast::Type * enumType = enumDecl->base.get() ) {
+		if ( enumDecl->isTyped && !enumDecl->base.get() ) {
+			cost = Cost::infinity; 
+		} else if ( const ast::Type * enumType = enumDecl->base.get() ) {
 			if ( const ast::BasicType * enumTypeAsBasic = dynamic_cast<const ast::BasicType *>(enumType) ) {
 				conversionCostFromBasicToBasic( basicType, enumTypeAsBasic );
 			} else {
@@ -654,7 +658,27 @@ void ConversionCost_new::postvisit( const ast::PointerType * pointerType ) {
 			} else {
 				cost = Cost::safe;
 			}
-		} else {
+		}
+		/*
+		else if ( const ast::FunctionType * dstFunc = dstAsPtr->base.as<ast::FunctionType>()) {
+			if (const ast::FunctionType * srcFunc = pointerType->base.as<ast::FunctionType>()) {
+				if (dstFunc->params.empty() && dstFunc->isVarArgs ) {
+					cost = Cost::unsafe; // assign any function to variadic fptr
+				}
+			}
+			else {
+				ast::AssertionSet need, have; // unused
+				ast::OpenVarSet open;
+				env.extractOpenVars(open);
+				ast::TypeEnvironment tenv = env;
+				if ( unify(dstAsPtr->base, pointerType->base, tenv, need, have, open, symtab) ) {
+					cost = Cost::safe;
+				}
+			}
+			// else infinity
+		}
+		*/
+		else {
 			int assignResult = ptrsAssignable( pointerType->base, dstAsPtr->base, env );
 			if ( 0 < assignResult && tq1 <= tq2 ) {
 				if ( tq1 == tq2 ) {
@@ -693,7 +717,7 @@ void ConversionCost_new::postvisit( const ast::FunctionType * functionType ) {
 void ConversionCost_new::postvisit( const ast::EnumInstType * enumInstType ) {
 	const ast::EnumDecl * baseEnum = enumInstType->base;
 	if ( const ast::Type * baseType = baseEnum->base ) {
-		cost = costCalc( baseType, dst, srcIsLvalue, symtab, env );
+		costCalc( baseType, dst, srcIsLvalue, symtab, env );
 	} else {
 		(void)enumInstType;
 		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };

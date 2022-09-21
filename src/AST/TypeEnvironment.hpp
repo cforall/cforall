@@ -55,6 +55,12 @@ namespace ast {
 /// recorded. More investigation is needed.
 struct AssertCompare {
 	bool operator()( const VariableExpr * d1, const VariableExpr * d2 ) const {
+		auto kind1 = ast::SymbolTable::getSpecialFunctionKind(d1->var->name);
+		auto kind2 = ast::SymbolTable::getSpecialFunctionKind(d2->var->name);
+		// heuristics optimization: force special functions to go last
+		if (kind1 > kind2) return true;
+		else if (kind1 < kind2) return false;
+
 		int cmp = d1->var->name.compare( d2->var->name );
 		return cmp < 0 || ( cmp == 0 && d1->result < d2->result );
 	}

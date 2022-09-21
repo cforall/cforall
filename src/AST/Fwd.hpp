@@ -66,6 +66,7 @@ class Expr;
 class ApplicationExpr;
 class UntypedExpr;
 class NameExpr;
+class QualifiedNameExpr;
 class AddressExpr;
 class LabelAddressExpr;
 class CastExpr;

@@ -58,6 +58,7 @@ struct TypeData {
 		DeclarationNode * constants = nullptr;
 		bool body;
 		bool anon;
+		bool typed;
 	};
 
 	struct Function_t {

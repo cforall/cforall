@@ -132,6 +132,8 @@ public:
 	virtual void visit( const UntypedExpr * untypedExpr ) override final;
 	virtual void visit( NameExpr * nameExpr ) override final;
 	virtual void visit( const NameExpr * nameExpr ) override final;
+	virtual void visit ( QualifiedNameExpr * qualifiedNameExpr ) override final;
+	virtual void visit ( const QualifiedNameExpr * qualifiedNameExpr ) override final;
 	virtual void visit( CastExpr * castExpr ) override final;
 	virtual void visit( const CastExpr * castExpr ) override final;
 	virtual void visit( KeywordCastExpr * castExpr ) override final;
@@ -324,7 +326,7 @@ public:
 	virtual Expression * mutate( UntypedTupleExpr * tupleExpr ) override final;
 	virtual Expression * mutate( TupleExpr * tupleExpr ) override final;
 	virtual Expression * mutate( TupleIndexExpr * tupleExpr ) override final;
-	virtual Expression * mutate( TupleAssignExpr * assignExpr ) override final;
+	virtual Expression * mutate( TupleAssignExpr * assignExpr ) override final; 
 	virtual Expression * mutate( StmtExpr *  stmtExpr ) override final;
 	virtual Expression * mutate( UniqueExpr *  uniqueExpr ) override final;
 	virtual Expression * mutate( UntypedInitExpr *  initExpr ) override final;
@@ -332,6 +334,7 @@ public:
 	virtual Expression * mutate( DeletedExpr *  delExpr ) override final;
 	virtual Expression * mutate( DefaultArgExpr * argExpr ) override final;
 	virtual Expression * mutate( GenericExpr * genExpr ) override final;
+	virtual Expression * mutate( QualifiedNameExpr * qualifiedNameExpr ) override final;
 
 	virtual Type * mutate( VoidType * basicType ) override final;
 	virtual Type * mutate( BasicType * basicType ) override final;

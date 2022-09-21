@@ -182,7 +182,7 @@ ast::Decl const * ReplaceTypedefCore::postvisit(
 			decl->location, unionType->name, {}, decl->linkage ) );
 	} else if ( auto enumType = dynamic_cast<ast::EnumInstType const *>( designatorType ) ) {
 		declsToAddBefore.push_back( new ast::EnumDecl(
-			decl->location, enumType->name, {}, decl->linkage,
+			decl->location, enumType->name, false, {}, decl->linkage,
 			( (enumType->base) ? enumType->base->base : nullptr )
 			) );
 	}

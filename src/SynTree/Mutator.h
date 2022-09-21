@@ -97,6 +97,7 @@ class Mutator {
 	virtual Expression * mutate( DeletedExpr * delExpr ) = 0;
 	virtual Expression * mutate( DefaultArgExpr * argExpr ) = 0;
 	virtual Expression * mutate( GenericExpr * genExpr ) = 0;
+	virtual Expression * mutate( QualifiedNameExpr * qualifiedNameExpr ) = 0;
 
 	virtual Type * mutate( VoidType * basicType ) = 0;
 	virtual Type * mutate( BasicType * basicType ) = 0;

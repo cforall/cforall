@@ -309,6 +309,7 @@ private:
 		auto decl = new EnumDecl(
 			node->name,
 			get<Attribute>().acceptL( node->attributes ),
+			false, // Temporary
 			LinkageSpec::Spec( node->linkage.val ),
 			get<Type>().accept1(node->base)
 		);
@@ -725,6 +726,19 @@ private:
 			new NameExpr(
 				node->name
 			)
+		);
+		this->node = expr;
+		return nullptr;
+	}
+
+	const ast::Expr * visit( const ast::QualifiedNameExpr * node ) override final {
+		auto temp = new QualifiedNameExpr(
+				get<Declaration>().accept1(node->type_decl),
+				node->name
+		);
+		temp->var = get<DeclarationWithType>().accept1(node->var);
+		auto expr = visitBaseExpr( node,
+			temp
 		);
 		this->node = expr;
 		return nullptr;
@@ -1739,6 +1753,7 @@ private:
 		auto decl = new ast::EnumDecl(
 			old->location,
 			old->name,
+			old->isTyped,
 			GET_ACCEPT_V(attributes, Attribute),
 			{ old->linkage.val },
 			GET_ACCEPT_1(base, Type),
@@ -2261,6 +2276,19 @@ private:
 			new ast::NameExpr(
 				old->location,
 				old->get_name()
+			)
+		);
+	}
+
+	/// xxx - type_decl should be DeclWithType in the final design
+	/// type_decl is set to EnumDecl as a temporary fix
+	virtual void visit( const QualifiedNameExpr * old ) override final {
+		this->node = visitBaseExpr( old,
+			new ast::QualifiedNameExpr (
+				old->location,
+				GET_ACCEPT_1(type_decl, Decl),
+				GET_ACCEPT_1(var, DeclWithType),
+				old->name
 			)
 		);
 	}

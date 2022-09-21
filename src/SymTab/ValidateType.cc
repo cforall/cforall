@@ -81,6 +81,8 @@ struct LinkReferenceToTypes_old final : public WithIndexer, public WithGuards, p
 	void previsit( QualifiedType * qualType );
 	void postvisit( QualifiedType * qualType );
 
+	void postvisit( QualifiedNameExpr * qualExpr );
+
 	void postvisit( EnumDecl * enumDecl );
 	void postvisit( StructDecl * structDecl );
 	void postvisit( UnionDecl * unionDecl );
@@ -156,6 +158,11 @@ void LinkReferenceToTypes_old::previsit( QualifiedType * ) {
 void LinkReferenceToTypes_old::postvisit( QualifiedType * qualType ) {
 	// linking only makes sense for the 'oldest ancestor' of the qualified type
 	qualType->parent->accept( * visitor );
+}
+
+void LinkReferenceToTypes_old::postvisit( QualifiedNameExpr * qualExpr ) {
+	const EnumDecl * st = local_indexer->lookupEnum( qualExpr->type_decl->name );
+	qualExpr->type_decl = const_cast<EnumDecl *>(st);
 }
 
 // expand assertions from trait instance, performing the appropriate type variable substitutions

@@ -18,6 +18,8 @@
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
 #include "Validate/NoIdSymbolTable.hpp"
+#include "SymTab/Mangler.h"            // for Mangler
+#include "AST/LinkageSpec.hpp"			   // for Linkage
 
 namespace Validate {
 
@@ -88,6 +90,34 @@ struct FixQualifiedTypesCore :
 			SemanticError( *location, toString("Undefined type in qualified type: ", type) );
 		}
 	}
+
+	ast::Expr const * postvisit( ast::QualifiedNameExpr const * t) {
+		assert( location );
+		if ( t->type_decl ) {
+        	auto enumName = t->type_decl->name;
+        	const ast::EnumDecl * enumDecl = symtab.lookupEnum( enumName );
+			for ( ast::ptr<ast::Decl> const & member : enumDecl->members ) {
+				if ( auto memberAsObj = member.as<ast::ObjectDecl>() ) {
+					if ( memberAsObj->name == t->name ) {
+						return new ast::VariableExpr( t->location, memberAsObj );
+					}
+				} else {
+					assertf( false, "unhandled qualified child type");
+				}
+			}
+
+
+        	auto var = new ast::ObjectDecl( t->var->location, t->name,
+			 new ast::EnumInstType(enumDecl, ast::CV::Const), nullptr, {}, ast::Linkage::Cforall );
+			var->scopeLevel = 1; // 1 for now; should copy the scopeLevel of the enumValue
+			var->mangleName = Mangle::mangle( var );
+			return new ast::VariableExpr( t->location, var );
+        	// return ret;
+        }
+
+		return t;
+	}
+
 };
 
 } // namespace

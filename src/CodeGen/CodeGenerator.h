@@ -102,6 +102,7 @@ namespace CodeGen {
 		void postvisit( DeletedExpr * );
 		void postvisit( DefaultArgExpr * );
 		void postvisit( GenericExpr * );
+		void postvisit( QualifiedNameExpr *);
 
 		//*** Statements
 		void postvisit( CompoundStmt * );

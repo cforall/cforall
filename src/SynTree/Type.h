@@ -344,7 +344,6 @@ class QualifiedType : public Type {
 public:
 	Type * parent;
 	Type * child;
-
 	QualifiedType( const Type::Qualifiers & tq, Type * parent, Type * child );
 	QualifiedType( const QualifiedType & tq );
 	virtual ~QualifiedType();

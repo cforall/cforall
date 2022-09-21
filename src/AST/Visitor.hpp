@@ -58,6 +58,7 @@ public:
     virtual const ast::Expr *             visit( const ast::ApplicationExpr      * ) = 0;
     virtual const ast::Expr *             visit( const ast::UntypedExpr          * ) = 0;
     virtual const ast::Expr *             visit( const ast::NameExpr             * ) = 0;
+    virtual const ast::Expr *             visit( const ast::QualifiedNameExpr    * ) = 0;
     virtual const ast::Expr *             visit( const ast::AddressExpr          * ) = 0;
     virtual const ast::Expr *             visit( const ast::LabelAddressExpr     * ) = 0;
     virtual const ast::Expr *             visit( const ast::CastExpr             * ) = 0;

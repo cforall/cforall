@@ -144,7 +144,6 @@ class ObjectDecl : public DeclarationWithType {
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 	virtual void printShort( std::ostream & os, Indenter indent = {} ) const override;
 
-	// TODO: Move to the right place
 	void checkAssignedValue() const;
 };
 
@@ -337,20 +336,23 @@ class UnionDecl : public AggregateDecl {
 class EnumDecl : public AggregateDecl {
 	typedef AggregateDecl Parent;
   public:
+  	bool isTyped;
+	Type * base;
+
 	EnumDecl( const std::string & name,
 	 const std::list< Attribute * > & attributes = std::list< class Attribute * >(),
-	  LinkageSpec::Spec linkage = LinkageSpec::Cforall,
-	  Type * baseType = nullptr ) : Parent( name, attributes, linkage ) , base( baseType ){}
-	EnumDecl( const EnumDecl & other ) : Parent( other ), base( other.base ) {}
-
+	  bool isTyped = false, LinkageSpec::Spec linkage = LinkageSpec::Cforall,
+	  Type * baseType = nullptr ) 
+	  : Parent( name, attributes, linkage ),isTyped(isTyped), base( baseType ) {}
+	EnumDecl( const EnumDecl & other ) 
+	  : Parent( other ), isTyped( other.isTyped), base( other.base ) {}
 	bool valueOf( Declaration * enumerator, long long int & value );
-
 	virtual EnumDecl * clone() const override { return new EnumDecl( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
 	virtual Declaration * acceptMutator( Mutator & m )  override { return m.mutate( this ); }
-	Type * base;
-	std::unordered_map< std::string, long long int > enumValues;
+
+	std::unordered_map< std::string, long long int > enumValues; // This attribute is unused
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override final;
   private:
 	// std::unordered_map< std::string, long long int > enumValues;

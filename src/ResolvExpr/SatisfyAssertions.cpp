@@ -35,6 +35,7 @@
 #include "AST/Print.hpp"
 #include "AST/SymbolTable.hpp"
 #include "AST/TypeEnvironment.hpp"
+#include "FindOpenVars.h"
 #include "Common/FilterCombos.h"
 #include "Common/Indenter.h"
 #include "GenPoly/GenPoly.h"
@@ -160,7 +161,7 @@ namespace {
 	}
 
 	/// Satisfy a single assertion
-	bool satisfyAssertion( ast::AssertionList::value_type & assn, SatState & sat ) {
+	bool satisfyAssertion( ast::AssertionList::value_type & assn, SatState & sat, bool allowConversion = false, bool skipUnbound = false) {
 		// skip unused assertions
 		if ( ! assn.second.isUsed ) return true;
 
@@ -179,6 +180,7 @@ namespace {
 			std::string otypeKey = "";
 			if (thisArgType.as<ast::PointerType>()) otypeKey = Mangle::Encoding::pointer;
 			else if (!isUnboundType(thisArgType)) otypeKey = Mangle::mangle(thisArgType, Mangle::Type | Mangle::NoGenericParams);
+			else if (skipUnbound) return false;
 
 			candidates = sat.symtab.specialLookupId(kind, otypeKey);
 		}
@@ -204,17 +206,37 @@ namespace {
 				renameTyVars( adjustExprType( candidate->get_type(), newEnv, sat.symtab ), GEN_USAGE, false );
 
 			// only keep candidates which unify
-			if ( unify( toType, adjType, newEnv, newNeed, have, newOpen, sat.symtab ) ) {
-				// set up binding slot for recursive assertions
-				ast::UniqueId crntResnSlot = 0;
-				if ( ! newNeed.empty() ) {
-					crntResnSlot = ++globalResnSlot;
-					for ( auto & a : newNeed ) { a.second.resnSlot = crntResnSlot; }
-				}
 
-				matches.emplace_back(
-					cdata, adjType, std::move( newEnv ), std::move( have ), std::move( newNeed ),
-					std::move( newOpen ), crntResnSlot );
+			ast::OpenVarSet closed;
+			findOpenVars( toType, newOpen, closed, newNeed, have, FirstClosed );
+			findOpenVars( adjType, newOpen, closed, newNeed, have, FirstOpen );
+			if ( allowConversion ) {
+				if ( auto c = commonType( toType, adjType, newEnv, newNeed, have, newOpen, WidenMode {true, true}, sat.symtab ) ) {
+					// set up binding slot for recursive assertions
+					ast::UniqueId crntResnSlot = 0;
+					if ( ! newNeed.empty() ) {
+						crntResnSlot = ++globalResnSlot;
+						for ( auto & a : newNeed ) { a.second.resnSlot = crntResnSlot; }
+					}
+
+					matches.emplace_back(
+						cdata, adjType, std::move( newEnv ), std::move( have ), std::move( newNeed ),
+						std::move( newOpen ), crntResnSlot );
+				}
+			}
+			else {
+				if ( unifyExact( toType, adjType, newEnv, newNeed, have, newOpen, WidenMode {true, true}, sat.symtab ) ) {
+					// set up binding slot for recursive assertions
+					ast::UniqueId crntResnSlot = 0;
+					if ( ! newNeed.empty() ) {
+						crntResnSlot = ++globalResnSlot;
+						for ( auto & a : newNeed ) { a.second.resnSlot = crntResnSlot; }
+					}
+
+					matches.emplace_back(
+						cdata, adjType, std::move( newEnv ), std::move( have ), std::move( newNeed ),
+						std::move( newOpen ), crntResnSlot );
+				}
 			}
 		}
 
@@ -412,18 +434,20 @@ void satisfyAssertions(
 	for ( unsigned level = 0; level < recursionLimit; ++level ) {
 		// for each current mutually-compatible set of assertions
 		for ( SatState & sat : sats ) {
+			bool allowConversion = false;
 			// stop this branch if a better option is already found
 			auto it = thresholds.find( pruneKey( *sat.cand ) );
 			if ( it != thresholds.end() && it->second < sat.costs ) goto nextSat;
 
 			// should a limit be imposed? worst case here is O(n^2) but very unlikely to happen.
+
 			for (unsigned resetCount = 0; ; ++resetCount) {
 				ast::AssertionList next;
 				resetTyVarRenaming();
 				// make initial pass at matching assertions
 				for ( auto & assn : sat.need ) {
 					// fail early if any assertion is not satisfiable
-					if ( ! satisfyAssertion( assn, sat ) ) {
+					if ( ! satisfyAssertion( assn, sat, allowConversion, !next.empty() ) ) {
 						next.emplace_back(assn);
 						// goto nextSat;
 					}
@@ -432,16 +456,24 @@ void satisfyAssertions(
 				if (next.empty()) break;
 				// fail if nothing resolves
 				else if (next.size() == sat.need.size()) {
-					Indenter tabs{ 3 };
-					std::ostringstream ss;
-					ss << tabs << "Unsatisfiable alternative:\n";
-					print( ss, *sat.cand, ++tabs );
-					ss << (tabs-1) << "Could not satisfy assertion:\n";
-					ast::print( ss, next[0].first, tabs );
+					if (allowConversion) {
+						Indenter tabs{ 3 };
+						std::ostringstream ss;
+						ss << tabs << "Unsatisfiable alternative:\n";
+						print( ss, *sat.cand, ++tabs );
+						ss << (tabs-1) << "Could not satisfy assertion:\n";
+						ast::print( ss, next[0].first, tabs );
 
-					errors.emplace_back( ss.str() );
-					goto nextSat;
+						errors.emplace_back( ss.str() );
+						goto nextSat;
+					}
+
+					else {
+						allowConversion = true;
+						continue;
+					}
 				}
+				allowConversion = false;
 				sat.need = std::move(next);
 			}
 

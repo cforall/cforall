@@ -253,6 +253,21 @@ private:
 	MUTATE_FRIEND
 };
 
+class QualifiedNameExpr final : public Expr {
+public:
+	ptr<Decl> type_decl;
+	ptr<DeclWithType> var;
+	std::string name;
+
+	QualifiedNameExpr( const CodeLocation & loc, const Decl * d, const DeclWithType * r, const std::string & n ) 
+	: Expr( loc ), type_decl( d ), var(r), name( n ) {}
+
+	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
+private:
+	QualifiedNameExpr * clone() const override { return new QualifiedNameExpr{ *this }; }
+	MUTATE_FRIEND
+};
+
 /// A reference to a named variable.
 class VariableExpr final : public Expr {
 public:

@@ -137,8 +137,14 @@ namespace ResolvExpr {
 	// in CommonType.cc
 	Type * commonType( Type * type1, Type * type2, bool widenFirst, bool widenSecond, const SymTab::Indexer & indexer, TypeEnvironment & env, const OpenVarSet & openVars );
 	ast::ptr< ast::Type > commonType(
-		const ast::ptr< ast::Type > & type1, const ast::ptr< ast::Type > & type2, WidenMode widen,
-		const ast::SymbolTable & symtab, ast::TypeEnvironment & env, const ast::OpenVarSet & open );
+		const ast::ptr< ast::Type > & type1, const ast::ptr< ast::Type > & type2,
+			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
+			const ast::OpenVarSet & open, WidenMode widen, const ast::SymbolTable & symtab
+	);
+	// in Unify.cc
+	std::vector< ast::ptr< ast::Type > > flattenList(
+		const std::vector< ast::ptr< ast::Type > > & src, ast::TypeEnvironment & env
+	);
 
 	// in PolyCost.cc
 	int polyCost( Type * type, const TypeEnvironment & env, const SymTab::Indexer & indexer );
@@ -180,7 +186,7 @@ namespace ResolvExpr {
 	}
 
 	/// flatten tuple type into existing list of types
-	static inline void flatten(
+	inline void flatten(
 		const ast::Type * type, std::vector< ast::ptr< ast::Type > > & out
 	) {
 		if ( auto tupleType = dynamic_cast< const ast::TupleType * >( type ) ) {
@@ -193,12 +199,35 @@ namespace ResolvExpr {
 	}
 
 	/// flatten tuple type into list of types
-	static inline std::vector< ast::ptr< ast::Type > > flatten( const ast::Type * type ) {
+	inline std::vector< ast::ptr< ast::Type > > flatten( const ast::Type * type ) {
 		std::vector< ast::ptr< ast::Type > > out;
 		out.reserve( type->size() );
 		flatten( type, out );
 		return out;
 	}
+
+	template< typename Iter >
+	const ast::Type * tupleFromTypes( Iter crnt, Iter end ) {
+		std::vector< ast::ptr< ast::Type > > types;
+		while ( crnt != end ) {
+			// it is guaranteed that a ttype variable will be bound to a flat tuple, so ensure
+			// that this results in a flat tuple
+			flatten( *crnt, types );
+
+			++crnt;
+		}
+
+
+		return new ast::TupleType{ std::move(types) };
+	}
+
+	inline const ast::Type * tupleFromTypes(
+		const std::vector< ast::ptr< ast::Type > > & tys
+	) {
+		return tupleFromTypes( tys.begin(), tys.end() );
+	}
+
+	
 
 	// in TypeEnvironment.cc
 	bool isFtype( const Type * type );

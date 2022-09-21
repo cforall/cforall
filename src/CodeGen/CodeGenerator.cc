@@ -276,7 +276,8 @@ namespace CodeGen {
 		extension( enumDecl );
 		std::list< Declaration* > &memb = enumDecl->get_members();
 		if (enumDecl->base && ! memb.empty()) {
-			unsigned long long last_val = -1;
+			unsigned long long last_val = -1; // if the first enum value has no explicit initializer, 
+			// as other 
 			for ( std::list< Declaration* >::iterator i = memb.begin(); i != memb.end();  i++) {
 				ObjectDecl * obj = dynamic_cast< ObjectDecl* >( *i );
 				assert( obj );
@@ -694,10 +695,6 @@ namespace CodeGen {
 		} else if ( variableExpr->get_var()->get_linkage() == LinkageSpec::Intrinsic && (opInfo = operatorLookup( variableExpr->get_var()->get_name() )) && opInfo->type == OT_CONSTANT ) {
 			output << opInfo->symbol;
 		} else {
-			// if (dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type())
-			// && dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type())->baseEnum->base) {
-			// 	output << '(' <<genType(dynamic_cast<EnumInstType *>(variableExpr->get_var()->get_type())->baseEnum->base, "", options) << ')';
-			// }
 			output << mangleName( variableExpr->get_var() );
 		} // if
 	}
@@ -916,6 +913,11 @@ namespace CodeGen {
 		output << ")";
 	}
 
+	// QualifiedNameExpr should not reach to CodeGen. 
+	// FixQualifiedName Convert QualifiedNameExpr to VariableExpr
+	void CodeGenerator::postvisit( QualifiedNameExpr * expr ) {
+		output << "/* label */" << mangleName(expr->var);
+	}
 
 	// *** Statements
 	void CodeGenerator::postvisit( CompoundStmt * compoundStmt ) {

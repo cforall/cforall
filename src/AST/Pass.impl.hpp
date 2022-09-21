@@ -1198,6 +1198,19 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::NameExpr * node ) {
 }
 
 //--------------------------------------------------------------------------
+// QualifiedNameExpr
+template< typename core_t >
+const ast::Expr * ast::Pass< core_t >::visit( const ast::QualifiedNameExpr * node ) {
+	VISIT_START( node );
+	if ( __visit_children() ) {
+		guard_symtab guard { *this };
+		maybe_accept( node, &QualifiedNameExpr::var );
+		maybe_accept( node, &QualifiedNameExpr::type_decl );
+	}
+	VISIT_END( Expr, node );
+}
+
+//--------------------------------------------------------------------------
 // CastExpr
 template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::CastExpr * node ) {

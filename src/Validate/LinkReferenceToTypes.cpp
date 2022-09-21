@@ -45,6 +45,7 @@ struct LinkTypesCore : public WithNoIdSymbolTable,
 	ast::UnionDecl const * previsit( ast::UnionDecl const * decl );
 	void postvisit( ast::UnionDecl const * decl );
 	ast::TraitDecl const * postvisit( ast::TraitDecl const * decl );
+	ast::QualifiedNameExpr const * previsit( ast::QualifiedNameExpr const * decl);
 
 private:
 	using ForwardStructsType =
@@ -289,6 +290,39 @@ ast::TraitDecl const * LinkTypesCore::postvisit( ast::TraitDecl const * decl ) {
 		}
 	}
 	return mut;
+}
+
+ast::QualifiedNameExpr const * LinkTypesCore::previsit( ast::QualifiedNameExpr const * decl ) {
+	// Try to lookup type
+	if ( auto objDecl = decl->type_decl.as<ast::ObjectDecl>() ) {
+		if ( auto inst = objDecl->type.as<ast::TypeInstType>()) {
+			if ( auto enumDecl = symtab.lookupEnum ( inst->name ) ) {
+				auto mut = ast::mutate( decl );
+				mut->type_decl = enumDecl;
+				auto enumInst = new ast::EnumInstType( enumDecl );
+				enumInst->name = decl->name;
+				// Adding result; addCandidate() use result
+				mut->result = enumInst;
+				decl = mut;
+			}
+		}
+	} else if ( auto enumDecl = decl->type_decl.as<ast::EnumDecl>() ) {
+		auto mut = ast::mutate( decl );
+		auto enumInst = new ast::EnumInstType( enumDecl );
+		enumInst->name = decl->name;
+		// Adding result; addCandidate() use result
+		mut->result = enumInst;
+		decl = mut;
+	}
+	// ast::EnumDecl const * decl = symtab.lookupEnum( type->name );
+	// // It's not a semantic error if the enum is not found, just an implicit forward declaration.
+	// if ( decl ) {
+	// 	// Just linking in the node.
+	// 	auto mut = ast::mutate( type );
+	// 	mut->base = const_cast<ast::EnumDecl *>( decl );
+	// 	type = mut;
+	// }
+	return decl;
 }
 
 } // namespace
