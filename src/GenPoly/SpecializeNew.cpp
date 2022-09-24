@@ -15,15 +15,13 @@
 
 #include "Specialize.h"
 
-#include "AST/Pass.hpp"
+#include "AST/Inspect.hpp"               // for isIntrinsicCallExpr
+#include "AST/Pass.hpp"                  // for Pass
 #include "AST/TypeEnvironment.hpp"       // for OpenVarSet, AssertionSet
 #include "Common/UniqueName.h"           // for UniqueName
 #include "GenPoly/GenPoly.h"             // for getFunctionType
-#include "InitTweak/InitTweak.h"         // for isIntrinsicCallExpr
 #include "ResolvExpr/FindOpenVars.h"     // for findOpenVars
 #include "ResolvExpr/TypeEnvironment.h"  // for FirstOpen, FirstClosed
-
-#include "AST/Print.hpp"
 
 namespace GenPoly {
 
@@ -424,7 +422,7 @@ const ast::Expr * SpecializeCore::doSpecialization(
 
 const ast::Expr * SpecializeCore::postvisit(
 		const ast::ApplicationExpr * expr ) {
-	if ( InitTweak::isIntrinsicCallExpr( expr ) ) {
+	if ( ast::isIntrinsicCallExpr( expr ) ) {
 		return expr;
 	}
 

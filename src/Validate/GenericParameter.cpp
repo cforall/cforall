@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// GenericParameter.hpp -- Generic parameter related passes.
+// GenericParameter.cpp -- Generic parameter related passes.
 //
 // Author           : Andrew Beach
 // Created On       : Fri Mar 21 10:02:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Apr 22 16:43:00 2022
-// Update Count     : 1
+// Last Modified On : Tue Sep 20 16:28:00 2022
+// Update Count     : 2
 //
 
 #include "GenericParameter.hpp"
@@ -118,21 +118,15 @@ const InstType * validateGeneric(
 	return result.node.release();
 }
 
-struct ValidateGenericParamsCore : public ast::WithGuards {
-	const CodeLocation * locationPtr = nullptr;
-
-	void previsit( const ast::ParseNode * node ) {
-		GuardValue( locationPtr ) = &node->location;
-	}
-
+struct ValidateGenericParamsCore : public ast::WithCodeLocation {
 	const ast::StructInstType * previsit( const ast::StructInstType * type ) {
-		assert( locationPtr );
-		return validateGeneric( *locationPtr, type );
+		assert( location );
+		return validateGeneric( *location, type );
 	}
 
 	const ast::UnionInstType * previsit( const ast::UnionInstType * type ) {
-		assert( locationPtr );
-		return validateGeneric( *locationPtr, type );
+		assert( location );
+		return validateGeneric( *location, type );
 	}
 };
 

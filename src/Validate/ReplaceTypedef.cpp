@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Jun 29 14:59:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Jul 13 14:45:00 2022
-// Update Count     : 1
+// Last Modified On : Tue Sep 20 17:00:00 2022
+// Update Count     : 2
 //
 
 #include "ReplaceTypedef.hpp"
@@ -38,12 +38,12 @@ bool isNonParameterAttribute( ast::Attribute const * attr ) {
 }
 
 struct ReplaceTypedefCore final :
-		public ast::WithVisitorRef<ReplaceTypedefCore>,
+		public ast::WithCodeLocation,
+		public ast::WithDeclsToAdd<>,
 		public ast::WithGuards,
 		public ast::WithShortCircuiting,
-		public ast::WithDeclsToAdd<> {
+		public ast::WithVisitorRef<ReplaceTypedefCore> {
 
-	void previsit( ast::ParseNode const * node );
 	void previsit( ast::QualifiedType const * );
 	ast::Type const * postvisit( ast::QualifiedType const * );
 	ast::Type const * postvisit( ast::TypeInstType const * );
@@ -73,14 +73,9 @@ struct ReplaceTypedefCore final :
 
 	TypedefMap typedefNames;
 	TypeDeclMap typedeclNames;
-	CodeLocation const * nearestLocation = nullptr;
 	int scopeLevel;
 	bool isAtFunctionTop = false;
 };
-
-void ReplaceTypedefCore::previsit( ast::ParseNode const * node ) {
-	GuardValue( nearestLocation ) = &node->location;
-}
 
 void ReplaceTypedefCore::previsit( ast::QualifiedType const * ) {
 	visit_children = false;
@@ -114,8 +109,8 @@ ast::Type const * ReplaceTypedefCore::postvisit(
 		if ( !type->params.empty() ) {
 			auto rtt = dynamic_cast<ast::BaseInstType *>( ret );
 			if ( !rtt ) {
-				assert( nearestLocation );
-				SemanticError( *nearestLocation, "Cannot apply type parameters to base type of " + type->name );
+				assert( location );
+				SemanticError( *location, "Cannot apply type parameters to base type of " + type->name );
 			}
 			rtt->params.clear();
 			for ( auto it : type->params ) {
@@ -128,8 +123,8 @@ ast::Type const * ReplaceTypedefCore::postvisit(
 	} else {
 		TypeDeclMap::const_iterator base = typedeclNames.find( type->name );
 		if ( base == typedeclNames.end() ) {
-			assert( nearestLocation );
-			SemanticError( *nearestLocation, toString( "Use of undefined type ", type->name ) );
+			assert( location );
+			SemanticError( *location, toString( "Use of undefined type ", type->name ) );
 		}
 		return ast::mutate_field( type, &ast::TypeInstType::base, base->second );
 	}
@@ -190,7 +185,6 @@ ast::Decl const * ReplaceTypedefCore::postvisit(
 }
 
 void ReplaceTypedefCore::previsit( ast::TypeDecl const * decl ) {
-	previsit( (ast::ParseNode const *)decl );
 	TypedefMap::iterator iter = typedefNames.find( decl->name );
 	if ( iter != typedefNames.end() ) {
 		typedefNames.erase( iter );
@@ -198,15 +192,13 @@ void ReplaceTypedefCore::previsit( ast::TypeDecl const * decl ) {
 	typedeclNames.insert( decl->name, decl );
 }
 
-void ReplaceTypedefCore::previsit( ast::FunctionDecl const * decl ) {
-	previsit( (ast::ParseNode const *)decl );
+void ReplaceTypedefCore::previsit( ast::FunctionDecl const * ) {
 	GuardScope( typedefNames );
 	GuardScope( typedeclNames );
 	GuardValue( isAtFunctionTop ) = true;
 }
 
-void ReplaceTypedefCore::previsit( ast::ObjectDecl const * decl ) {
-	previsit( (ast::ParseNode const *)decl );
+void ReplaceTypedefCore::previsit( ast::ObjectDecl const * ) {
 	GuardScope( typedefNames );
 	GuardScope( typedeclNames );
 }
@@ -216,12 +208,12 @@ ast::DeclWithType const * ReplaceTypedefCore::postvisit(
 	if ( ast::FunctionType const * type = decl->type.as<ast::FunctionType>() ) {
 		using DWTVector = std::vector<ast::ptr<ast::DeclWithType>>;
 		using DeclVector = std::vector<ast::ptr<ast::TypeDecl>>;
-		CodeLocation const & location = decl->location;
+		CodeLocation const & declLocation = decl->location;
 		UniqueName paramNamer( decl->name + "Param" );
 
 		// Replace the current object declaration with a function declaration.
 		ast::FunctionDecl const * newDecl = new ast::FunctionDecl(
-			location,
+			declLocation,
 			decl->name,
 			map_range<DeclVector>( type->forall, []( const ast::TypeInstType * inst ) {
 				return ast::deepCopy( inst->base );
@@ -229,13 +221,13 @@ ast::DeclWithType const * ReplaceTypedefCore::postvisit(
 			map_range<DWTVector>( type->assertions, []( const ast::VariableExpr * expr ) {
 				return ast::deepCopy( expr->var );
 			} ),
-			map_range<DWTVector>( type->params, [&location, &paramNamer]( const ast::Type * type ) {
+			map_range<DWTVector>( type->params, [&declLocation, &paramNamer]( const ast::Type * type ) {
 				assert( type );
-				return new ast::ObjectDecl( location, paramNamer.newName(), ast::deepCopy( type ) );
+				return new ast::ObjectDecl( declLocation, paramNamer.newName(), ast::deepCopy( type ) );
 			} ),
-			map_range<DWTVector>( type->returns, [&location, &paramNamer]( const ast::Type * type ) {
+			map_range<DWTVector>( type->returns, [&declLocation, &paramNamer]( const ast::Type * type ) {
 				assert( type );
-				return new ast::ObjectDecl( location, paramNamer.newName(), ast::deepCopy( type ) );
+				return new ast::ObjectDecl( declLocation, paramNamer.newName(), ast::deepCopy( type ) );
 			} ),
 			nullptr,
 			decl->storage,
@@ -248,14 +240,12 @@ ast::DeclWithType const * ReplaceTypedefCore::postvisit(
 	return decl;
 }
 
-void ReplaceTypedefCore::previsit( ast::CastExpr const * expr ) {
-	previsit( (ast::ParseNode const *)expr );
+void ReplaceTypedefCore::previsit( ast::CastExpr const * ) {
 	GuardScope( typedefNames );
 	GuardScope( typedeclNames );
 }
 
-void ReplaceTypedefCore::previsit( ast::CompoundStmt const * expr ) {
-	previsit( (ast::ParseNode const *)expr );
+void ReplaceTypedefCore::previsit( ast::CompoundStmt const * ) {
 	GuardScope( typedefNames );
 	GuardScope( typedeclNames );
 	GuardValue( isAtFunctionTop ) = false;
@@ -267,26 +257,22 @@ void ReplaceTypedefCore::postvisit( ast::CompoundStmt const * ) {
 }
 
 ast::StructDecl const * ReplaceTypedefCore::previsit( ast::StructDecl const * decl ) {
-	previsit( (ast::ParseNode const *)decl );
 	visit_children = false;
 	addImplicitTypedef( decl );
 	return handleAggregate( decl );
 }
 
 ast::UnionDecl const * ReplaceTypedefCore::previsit( ast::UnionDecl const * decl ) {
-	previsit( (ast::ParseNode const *)decl );
 	visit_children = false;
 	addImplicitTypedef( decl );
 	return handleAggregate( decl );
 }
 
 void ReplaceTypedefCore::previsit( ast::EnumDecl const * decl ) {
-	previsit( (ast::ParseNode const *)decl );
 	addImplicitTypedef( decl );
 }
 
-void ReplaceTypedefCore::previsit( ast::TraitDecl const * decl ) {
-	previsit( (ast::ParseNode const *)decl );
+void ReplaceTypedefCore::previsit( ast::TraitDecl const * ) {
 	GuardScope( typedefNames );
 	GuardScope( typedeclNames );
 }

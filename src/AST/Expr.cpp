@@ -21,6 +21,7 @@
 
 #include "Copy.hpp"                // for shallowCopy
 #include "GenericSubstitution.hpp"
+#include "Inspect.hpp"
 #include "LinkageSpec.hpp"
 #include "Stmt.hpp"
 #include "Type.hpp"
@@ -28,7 +29,6 @@
 #include "Common/utility.h"
 #include "Common/SemanticError.h"
 #include "GenPoly/Lvalue.h"        // for referencesPermissable
-#include "InitTweak/InitTweak.h"   // for getFunction, getPointerBase
 #include "ResolvExpr/typeops.h"    // for extractResultType
 #include "Tuples/Tuples.h"         // for makeTupleType
 
@@ -57,7 +57,7 @@ ApplicationExpr::ApplicationExpr( const CodeLocation & loc, const Expr * f,
 }
 
 bool ApplicationExpr::get_lvalue() const {
-	if ( const DeclWithType * func = InitTweak::getFunction( this ) ) {
+	if ( const DeclWithType * func = getFunction( this ) ) {
 		return func->linkage == Linkage::Intrinsic && lvalueFunctionNames.count( func->name );
 	}
 	return false;
@@ -66,7 +66,7 @@ bool ApplicationExpr::get_lvalue() const {
 // --- UntypedExpr
 
 bool UntypedExpr::get_lvalue() const {
-	std::string fname = InitTweak::getFunctionName( this );
+	std::string fname = getFunctionName( this );
 	return lvalueFunctionNames.count( fname );
 }
 
@@ -75,7 +75,7 @@ UntypedExpr * UntypedExpr::createDeref( const CodeLocation & loc, const Expr * a
 
 	UntypedExpr * ret = createCall( loc, "*?", { arg } );
 	if ( const Type * ty = arg->result ) {
-		const Type * base = InitTweak::getPointerBase( ty );
+		const Type * base = getPointerBase( ty );
 		assertf( base, "expected pointer type in dereference (type was %s)", toString( ty ).c_str() );
 
 		if ( GenPoly::referencesPermissable() ) {
@@ -334,7 +334,7 @@ ConstructorExpr::ConstructorExpr( const CodeLocation & loc, const Expr * call )
 	// allow resolver to type a constructor used as an expression if it has the same type as its
 	// first argument
 	assert( callExpr );
-	const Expr * arg = InitTweak::getCallArg( callExpr, 0 );
+	const Expr * arg = getCallArg( callExpr, 0 );
 	assert( arg );
 	result = arg->result;
 }

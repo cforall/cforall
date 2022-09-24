@@ -355,7 +355,7 @@ const ForStmt * MultiLevelExitCore::postvisit( const ForStmt * stmt ) {
 void push_front( vector<ptr<Stmt>> & vec, const Stmt * element ) {
 	vec.emplace_back( nullptr );
 	for ( size_t i = vec.size() - 1 ; 0 < i ; --i ) {
-		vec[ i ] = move( vec[ i - 1 ] );
+		vec[ i ] = std::move( vec[ i - 1 ] );
 	}
 	vec[ 0 ] = element;
 }
@@ -510,7 +510,7 @@ void MultiLevelExitCore::postvisit( const TryStmt * stmt ) {
 }
 
 void MultiLevelExitCore::previsit( const FinallyClause * ) {
-	GuardAction([this, old = move( enclosing_control_structures)](){ enclosing_control_structures = move(old); });
+	GuardAction([this, old = std::move( enclosing_control_structures)](){ enclosing_control_structures = std::move(old); });
 	enclosing_control_structures = vector<Entry>();
 	GuardValue( inFinally ) = true;
 }

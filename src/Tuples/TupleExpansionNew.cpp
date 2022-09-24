@@ -9,8 +9,8 @@
 // Author           : Henry Xue
 // Created On       : Mon Aug 23 15:36:09 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Aug 15 17:00:00 2022
-// Update Count     : 3
+// Last Modified On : Tue Sep 20 16:17:00 2022
+// Update Count     : 4
 //
 
 #include "Tuples.h"
@@ -101,21 +101,17 @@ const ast::Expr * UniqueExprExpander::postvisit( const ast::UniqueExpr * unqExpr
 
 /// Replaces Tuple Assign & Index Expressions, and Tuple Types.
 struct TupleMainExpander final :
+		public ast::WithCodeLocation,
+		public ast::WithDeclsToAdd<>,
 		public ast::WithGuards,
-		public ast::WithVisitorRef<TupleMainExpander>,
-		public ast::WithDeclsToAdd<> {
+		public ast::WithVisitorRef<TupleMainExpander> {
 	ast::Expr const * postvisit( ast::TupleAssignExpr const * expr ) {
 		// Just move the env on the new top level expression.
 		return ast::mutate_field( expr->stmtExpr.get(),
 			&ast::TupleAssignExpr::env, expr->env.get() );
 	}
 
-	void previsit( ast::ParseNode const * node ) {
-		GuardValue( location ) = &node->location;
-	}
-
-	void previsit( ast::CompoundStmt const * stmt ) {
-		previsit( (ast::ParseNode const *)stmt );
+	void previsit( ast::CompoundStmt const * ) {
 		GuardScope( typeMap );
 	}
 
@@ -216,7 +212,6 @@ struct TupleMainExpander final :
 	}
 private:
 	ScopedMap< int, ast::StructDecl const * > typeMap;
-	CodeLocation const * location = nullptr;
 };
 
 ast::Expr const * replaceTupleExpr(

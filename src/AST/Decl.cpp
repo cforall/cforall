@@ -57,8 +57,9 @@ FunctionDecl::FunctionDecl( const CodeLocation & loc, const std::string & name,
 	std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
 	CompoundStmt * stmts, Storage::Classes storage, Linkage::Spec linkage,
 	std::vector<ptr<Attribute>>&& attrs, Function::Specs fs, bool isVarArgs)
-: DeclWithType( loc, name, storage, linkage, std::move(attrs), fs ), params(std::move(params)), returns(std::move(returns)),
-	type_params(std::move(forall)), stmts( stmts ) {
+: DeclWithType( loc, name, storage, linkage, std::move(attrs), fs ),
+	type_params(std::move(forall)), assertions(),
+	params(std::move(params)), returns(std::move(returns)), stmts( stmts ) {
 	FunctionType * ftype = new FunctionType(static_cast<ArgumentFlag>(isVarArgs));
 	for (auto & param : this->params) {
 		ftype->params.emplace_back(param->get_type());
@@ -81,8 +82,8 @@ FunctionDecl::FunctionDecl( const CodeLocation & location, const std::string & n
 	CompoundStmt * stmts, Storage::Classes storage, Linkage::Spec linkage,
 	std::vector<ptr<Attribute>>&& attrs, Function::Specs fs, bool isVarArgs)
 : DeclWithType( location, name, storage, linkage, std::move(attrs), fs ),
-		params( std::move(params) ), returns( std::move(returns) ),
 		type_params( std::move( forall) ), assertions( std::move( assertions ) ),
+		params( std::move(params) ), returns( std::move(returns) ),
 		type( nullptr ), stmts( stmts ) {
 	FunctionType * type = new FunctionType( (isVarArgs) ? VariableArgs : FixedArgs );
 	for ( auto & param : this->params ) {
@@ -161,9 +162,9 @@ bool EnumDecl::valueOf( const Decl * enumerator, long long& value ) const {
 	}
 
 	auto it = enumValues.find( enumerator->name );
-	
+
 	if ( it != enumValues.end() ) {
-			
+
 		// Handle typed enum by casting the value in (C++) compiler
 		// if ( base ) { // A typed enum
 		// 	if ( const BasicType * bt = dynamic_cast<const BasicType *>(base) ) {
@@ -178,7 +179,7 @@ bool EnumDecl::valueOf( const Decl * enumerator, long long& value ) const {
 		// 			case BasicType::Kind::LongSignedInt: value = (long signed int) it->second; break;
 		// 			case BasicType::Kind::LongUnsignedInt: value = (long unsigned int) it->second; break;
 		// 			case BasicType::Kind::LongLongSignedInt: value = (long long signed int) it->second; break;
-		// 			case BasicType::Kind::LongLongUnsignedInt: value = (long long unsigned int) it->second; break; 
+		// 			case BasicType::Kind::LongLongUnsignedInt: value = (long long unsigned int) it->second; break;
 		// 			// TODO: value should be able to handle long long unsigned int
 
 		// 			default:

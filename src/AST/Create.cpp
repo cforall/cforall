@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Sep 20 13:28:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Sep 20 14:55:00 2022
-// Update Count     : 0
+// Last Modified On : Tue Sep 21  9:29:00 2022
+// Update Count     : 1
 //
 
 #include "AST/Create.hpp"
@@ -18,6 +18,7 @@
 #include "AST/Attribute.hpp"
 #include "AST/Copy.hpp"
 #include "AST/Decl.hpp"
+#include "AST/Type.hpp"
 
 namespace ast {
 
@@ -34,6 +35,25 @@ namespace {
 	}
 
 } // namespace
+
+FunctionDecl * asForward( FunctionDecl const * decl ) {
+	if ( nullptr == decl->stmts ) {
+		return nullptr;
+	}
+	return new ast::FunctionDecl( decl->location,
+		decl->name,
+		vectorCopy( decl->type_params ),
+		vectorCopy( decl->assertions ),
+		vectorCopy( decl->params ),
+		vectorCopy( decl->returns ),
+		nullptr,
+		decl->storage,
+		decl->linkage,
+		vectorCopy( decl->attributes ),
+		decl->funcSpec,
+		decl->type->isVarArgs
+	);
+}
 
 StructDecl * asForward( StructDecl const * decl ) {
 	if ( !decl->body ) {

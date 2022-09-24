@@ -327,6 +327,7 @@ void accept_all( ast::TranslationUnit &, ast::Pass<core_t> & visitor );
 /// If used the visitor will always clone nodes.
 struct PureVisitor {};
 
+/// Keep track of the nearest parent node's location field.
 struct WithCodeLocation {
 	const CodeLocation * location = nullptr;
 };
@@ -392,14 +393,6 @@ public:
 	template< typename Func >
 	void GuardAction( Func func ) {
 		at_cleanup( [func](void *) { func(); }, nullptr );
-	}
-
-	/// When this node is finished being visited, call a member of an object.
-	template<typename T>
-	void GuardMethod( T * obj, void (T::*method)() ) {
-		at_cleanup( [ method ]( void * object ) {
-			static_cast< T * >( object )->method();
-		}, static_cast< void * >( obj ) );
 	}
 };
 

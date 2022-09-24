@@ -9,15 +9,32 @@
 // Author           : Thierry Delisle
 // Created On       : Fri Jun 24 13:16:31 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Jun 27 15:35:00 2022
-// Update Count     : 1
+// Last Modified On : Thr Sep 22 13:44:00 2022
+// Update Count     : 2
 //
 
 #include "AST/Fwd.hpp"
 
 namespace ast {
 
-// Does the structure end in a flexable array declaration?
-bool structHasFlexibleArray( const ast::StructDecl * );
+/// Returns the base type of an pointer/array/reference type,
+/// if the argument is not one of those types, return null.
+const Type * getPointerBase( const Type * );
+
+/// Get the declaration of the function called (ApplicationExpr or UntypedExpr).
+const DeclWithType * getFunction( const Expr * expr );
+
+/// Get the name of the function being called.
+std::string getFunctionName( const Expr * expr );
+
+/// Returns the argument to a call expression in position N, indexed from 0.
+const Expr * getCallArg( const Expr * call, unsigned pos );
+
+/// Does the structure end in a flexable array declaration?
+bool structHasFlexibleArray( const StructDecl * );
+
+/// If the expression is an application whose target function is an
+/// intrinsic, then returns a pointer to that application.
+const ApplicationExpr * isIntrinsicCallExpr( const Expr * expr );
 
 }

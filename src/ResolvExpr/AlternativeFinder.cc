@@ -298,7 +298,7 @@ namespace ResolvExpr {
 				printAlts( winners, stream, 1 );
 				SemanticError( expr->location, stream.str() );
 			}
-			alternatives = move(pruned);
+			alternatives = std::move(pruned);
 			PRINT(
 				std::cerr << "there are " << oldsize << " alternatives before elimination" << std::endl;
 			)
@@ -572,14 +572,14 @@ namespace ResolvExpr {
 				AssertionSet&& have, OpenVarSet&& openVars, unsigned nextArg,
 				unsigned tupleStart = 0, Cost cost = Cost::zero, unsigned nextExpl = 0,
 				unsigned explAlt = 0 )
-			: parent(parent), expr(expr->clone()), cost(cost), env(move(env)), need(move(need)),
-			  have(move(have)), openVars(move(openVars)), nextArg(nextArg), tupleStart(tupleStart),
+			: parent(parent), expr(expr->clone()), cost(cost), env(std::move(env)), need(std::move(need)),
+			  have(std::move(have)), openVars(std::move(openVars)), nextArg(nextArg), tupleStart(tupleStart),
 			  nextExpl(nextExpl), explAlt(explAlt) {}
 
 		ArgPack(const ArgPack& o, TypeEnvironment&& env, AssertionSet&& need, AssertionSet&& have,
 				OpenVarSet&& openVars, unsigned nextArg, Cost added )
 			: parent(o.parent), expr(o.expr ? o.expr->clone() : nullptr), cost(o.cost + added),
-			  env(move(env)), need(move(need)), have(move(have)), openVars(move(openVars)),
+			  env(std::move(env)), need(std::move(need)), have(std::move(have)), openVars(std::move(openVars)),
 			  nextArg(nextArg), tupleStart(o.tupleStart), nextExpl(0), explAlt(0) {}
 
 		/// true iff this pack is in the middle of an exploded argument
@@ -706,7 +706,7 @@ namespace ResolvExpr {
 						// check unification for ttype before adding to final
 						if ( unify( ttype, argType, newResult.env, newResult.need, newResult.have,
 								newResult.openVars, indexer ) ) {
-							finalResults.push_back( move(newResult) );
+							finalResults.push_back( std::move(newResult) );
 						}
 
 						continue;
@@ -725,16 +725,16 @@ namespace ResolvExpr {
 						// skip empty tuple arguments by (near-)cloning parent into next gen
 						if ( expl.exprs.empty() ) {
 							results.emplace_back(
-								results[i], move(env), copy(results[i].need),
-								copy(results[i].have), move(openVars), nextArg + 1, expl.cost );
+								results[i], std::move(env), copy(results[i].need),
+								copy(results[i].have), std::move(openVars), nextArg + 1, expl.cost );
 
 							continue;
 						}
 
 						// add new result
 						results.emplace_back(
-							i, expl.exprs.front().get(), move(env), copy(results[i].need),
-							copy(results[i].have), move(openVars), nextArg + 1,
+							i, expl.exprs.front().get(), std::move(env), copy(results[i].need),
+							copy(results[i].have), std::move(openVars), nextArg + 1,
 							nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
 					}
 				}
@@ -746,7 +746,7 @@ namespace ResolvExpr {
 
 			// splice final results onto results
 			for ( std::size_t i = 0; i < finalResults.size(); ++i ) {
-				results.push_back( move(finalResults[i]) );
+				results.push_back( std::move(finalResults[i]) );
 			}
 			return ! finalResults.empty();
 		}
@@ -782,7 +782,7 @@ namespace ResolvExpr {
 					}
 
 					results.emplace_back(
-						i, expr, move(env), move(need), move(have), move(openVars), nextArg,
+						i, expr, std::move(env), std::move(need), std::move(have), std::move(openVars), nextArg,
 						nTuples, Cost::zero, nextExpl, results[i].explAlt );
 				}
 
@@ -800,8 +800,8 @@ namespace ResolvExpr {
 						if ( unify( formalType, cnst->get_type(), env, need, have, openVars,
 								indexer ) ) {
 							results.emplace_back(
-								i, new DefaultArgExpr( cnstExpr ), move(env), move(need), move(have),
-								move(openVars), nextArg, nTuples );
+								i, new DefaultArgExpr( cnstExpr ), std::move(env), std::move(need), std::move(have),
+								std::move(openVars), nextArg, nTuples );
 						}
 					}
 				}
@@ -823,7 +823,7 @@ namespace ResolvExpr {
 				// skip empty tuple arguments by (near-)cloning parent into next gen
 				if ( expl.exprs.empty() ) {
 					results.emplace_back(
-						results[i], move(env), move(need), move(have), move(openVars),
+						results[i], std::move(env), std::move(need), std::move(have), std::move(openVars),
 						nextArg + 1, expl.cost );
 
 					continue;
@@ -845,7 +845,7 @@ namespace ResolvExpr {
 				if ( unify( formalType, actualType, env, need, have, openVars, indexer ) ) {
 					// add new result
 					results.emplace_back(
-						i, expr, move(env), move(need), move(have), move(openVars), nextArg + 1,
+						i, expr, std::move(env), std::move(need), std::move(have), std::move(openVars), nextArg + 1,
 						nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
 				}
 			}
@@ -961,16 +961,16 @@ namespace ResolvExpr {
 						// skip empty tuple arguments by (near-)cloning parent into next gen
 						if ( expl.exprs.empty() ) {
 							results.emplace_back(
-								results[i], move(env), copy(results[i].need),
-								copy(results[i].have), move(openVars), nextArg + 1, expl.cost );
+								results[i], std::move(env), copy(results[i].need),
+								copy(results[i].have), std::move(openVars), nextArg + 1, expl.cost );
 
 							continue;
 						}
 
 						// add new result
 						results.emplace_back(
-							i, expl.exprs.front().get(), move(env), copy(results[i].need),
-							copy(results[i].have), move(openVars), nextArg + 1, 0,
+							i, expl.exprs.front().get(), std::move(env), copy(results[i].need),
+							copy(results[i].have), std::move(openVars), nextArg + 1, 0,
 							expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
 					}
 				}
@@ -1066,7 +1066,7 @@ namespace ResolvExpr {
 			for ( const Alternative& actual : funcFinder ) {
 				funcE.emplace_back( actual, indexer );
 			}
-			argExpansions.insert( argExpansions.begin(), move(funcE) );
+			argExpansions.insert( argExpansions.begin(), std::move(funcE) );
 
 			for ( AltList::iterator funcOp = funcOpFinder.alternatives.begin();
 					funcOp != funcOpFinder.alternatives.end(); ++funcOp ) {
@@ -1115,7 +1115,7 @@ namespace ResolvExpr {
 			} // if
 		} // for
 
-		candidates = move(alternatives);
+		candidates = std::move(alternatives);
 
 		// use a new list so that alternatives are not examined by addAnonConversions twice.
 		AltList winners;

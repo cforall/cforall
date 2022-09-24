@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thr Apr 21 11:41:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Jun 28 14:58:00 2022
-// Update Count     : 1
+// Last Modified On : Tue Sep 20 16:17:00 2022
+// Update Count     : 2
 //
 
 #include "Validate/LinkReferenceToTypes.hpp"
@@ -25,10 +25,10 @@ namespace Validate {
 namespace {
 
 struct LinkTypesCore : public WithNoIdSymbolTable,
+		public ast::WithCodeLocation,
 		public ast::WithGuards,
-		public ast::WithVisitorRef<LinkTypesCore>,
-		public ast::WithShortCircuiting {
-
+		public ast::WithShortCircuiting,
+		public ast::WithVisitorRef<LinkTypesCore> {
 	ast::TypeInstType const * postvisit( ast::TypeInstType const * type );
 	ast::EnumInstType const * postvisit( ast::EnumInstType const * type );
 	ast::StructInstType const * postvisit( ast::StructInstType const * type );
@@ -36,8 +36,6 @@ struct LinkTypesCore : public WithNoIdSymbolTable,
 	ast::TraitInstType const * postvisit( ast::TraitInstType const * type );
 	void previsit( ast::QualifiedType const * type );
 	void postvisit( ast::QualifiedType const * type );
-
-	void previsit( ast::ParseNode const * node );
 
 	ast::EnumDecl const * postvisit( ast::EnumDecl const * decl );
 	ast::StructDecl const * previsit( ast::StructDecl const * decl );
@@ -59,7 +57,6 @@ private:
 	ForwardUnionsType forwardUnions;
 	ForwardEnumsType forwardEnums;
 
-	const CodeLocation * location = nullptr;
 	/// true if currently in a generic type body,
 	/// so that type parameter instances can be renamed appropriately
 	bool inGeneric = false;
@@ -178,10 +175,6 @@ void LinkTypesCore::postvisit( ast::QualifiedType const * type ) {
 	type->parent->accept( *visitor );
 }
 
-void LinkTypesCore::previsit( ast::ParseNode const * node ) {
-	GuardValue( location ) = &node->location;
-}
-
 ast::EnumDecl const * LinkTypesCore::postvisit( ast::EnumDecl const * decl ) {
 	// After visiting enum members for self-referencing members,
 	// we replace the enum base. Right now it only works for StructDecl.
@@ -224,11 +217,9 @@ template<typename AggrDecl>
 AggrDecl const * LinkTypesCore::renameGenericParams( AggrDecl const * decl ) {
 	GuardValue( inGeneric ) = !decl->params.empty();
 	if ( !inGeneric ) {
-		GuardValue( location ) = &decl->location;
 		return decl;
 	}
 	auto mut = ast::mutate( decl );
-	GuardValue( location ) = &mut->location;
 	for ( ast::ptr<ast::TypeDecl> & typeDecl : mut->params ) {
 		typeDecl.get_and_mutate()->name = "__" + typeDecl->name + "_generic_";
 	}

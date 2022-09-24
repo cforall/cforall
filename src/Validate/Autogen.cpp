@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thu Dec  2 13:44:00 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Thr Jan 27  9:29:00 2022
-// Update Count     : 1
+// Last Modified On : Tue Sep 20 16:00:00 2022
+// Update Count     : 2
 //
 
 #include "Autogen.hpp"
@@ -24,6 +24,7 @@
 #include <vector>                  // for vector
 
 #include "AST/Attribute.hpp"
+#include "AST/Create.hpp"
 #include "AST/Decl.hpp"
 #include "AST/DeclReplacer.hpp"
 #include "AST/Expr.hpp"
@@ -327,8 +328,8 @@ void FuncGenerator::produceDecl( const ast::FunctionDecl * decl ) {
 /// Make a forward declaration of the decl and add it to forwards.
 void FuncGenerator::produceForwardDecl( const ast::FunctionDecl * decl ) {
 	if (0 != functionNesting) return;
-	ast::FunctionDecl * fwd = ast::deepCopy( decl );
-	fwd->stmts = nullptr;
+	ast::FunctionDecl * fwd =
+		( decl->stmts ) ? ast::asForward( decl ) : ast::deepCopy( decl ) ;
 	fwd->fixUniqueId();
 	forwards.push_back( fwd );
 }

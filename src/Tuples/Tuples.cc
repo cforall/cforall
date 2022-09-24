@@ -16,6 +16,7 @@
 #include "Tuples.h"
 
 #include "AST/Pass.hpp"
+#include "AST/Inspect.hpp"
 #include "AST/LinkageSpec.hpp"
 #include "Common/PassVisitor.h"
 #include "InitTweak/InitTweak.h"
@@ -79,7 +80,7 @@ namespace {
 		bool result = false;
 
 		void previsit( ast::ApplicationExpr const * appExpr ) {
-			if ( ast::DeclWithType const * function = InitTweak::getFunction( appExpr ) ) {
+			if ( ast::DeclWithType const * function = ast::getFunction( appExpr ) ) {
 				if ( function->linkage == ast::Linkage::Intrinsic
 						&& ( function->name == "*?" || function->name == "?[?]" ) ) {
 					return;

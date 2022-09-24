@@ -13,6 +13,7 @@
 #include <unordered_set>               // for unordered_set
 #include <utility>                     // for pair
 
+#include "AST/Inspect.hpp"             // for getFunction, getPointerBase, g...
 #include "CodeGen/GenType.h"           // for genPrettyType
 #include "CodeGen/OperatorTable.h"
 #include "Common/CodeLocationTools.hpp"
@@ -23,7 +24,6 @@
 #include "FixGlobalInit.h"             // for fixGlobalInit
 #include "GenInit.h"                   // for genCtorDtor
 #include "GenPoly/GenPoly.h"           // for getFunctionType
-#include "InitTweak.h"                 // for getFunctionName, getCallArg
 #include "ResolvExpr/Resolver.h"       // for findVoidExpression
 #include "ResolvExpr/typeops.h"        // for typesCompatible
 #include "SymTab/Autogen.h"            // for genImplicitCall

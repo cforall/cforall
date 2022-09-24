@@ -15,6 +15,7 @@
 
 #include <utility> // for pair
 
+#include "AST/Inspect.hpp"
 #include "Common/PassVisitor.h"
 #include "CodeGen/OperatorTable.h"						// access: OperatorInfo
 #include "AST/Pass.hpp"
@@ -176,7 +177,7 @@ struct EvalNew : public ast::WithShortCircuiting {
 	}
 
 	void postvisit( const ast::ApplicationExpr * expr ) {
-		const ast::DeclWithType * function = InitTweak::getFunction(expr);
+		const ast::DeclWithType * function = ast::getFunction(expr);
 		if ( ! function || function->linkage != ast::Linkage::Intrinsic ) { valid = false; return; }
 		const std::string & fname = function->name;
 		assertf( expr->args.size() == 1 || expr->args.size() == 2, "Intrinsic function with %zd arguments: %s", expr->args.size(), fname.c_str() );

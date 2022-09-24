@@ -124,10 +124,10 @@ private:
 /// Object declaration `int foo()`
 class FunctionDecl : public DeclWithType {
 public:
-	std::vector<ptr<DeclWithType>> params;
-	std::vector<ptr<DeclWithType>> returns;
 	std::vector<ptr<TypeDecl>> type_params;
 	std::vector<ptr<DeclWithType>> assertions;
+	std::vector<ptr<DeclWithType>> params;
+	std::vector<ptr<DeclWithType>> returns;
 	// declared type, derived from parameter declarations
 	ptr<FunctionType> type;
 	/// Null for the forward declaration of a function.

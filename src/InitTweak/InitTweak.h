@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Fri May 13 11:26:36 2016
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Dec  6 13:20:00 2021
-// Update Count     : 8
+// Last Modified On : Wed Sep 22  9:21:00 2022
+// Update Count     : 9
 //
 
 #pragma once
@@ -73,11 +73,9 @@ namespace InitTweak {
 	/// returns the declaration of the function called by the expr (must be ApplicationExpr or UntypedExpr)
 	DeclarationWithType * getFunction( Expression * expr );
 	const DeclarationWithType * getFunction( const Expression * expr );
-	const ast::DeclWithType * getFunction( const ast::Expr * expr );
 
 	/// Non-Null if expr is a call expression whose target function is intrinsic
 	ApplicationExpr * isIntrinsicCallExpr( Expression * expr );
-	const ast::ApplicationExpr * isIntrinsicCallExpr( const ast::Expr * expr);
 
 	/// True if stmt is a call statement where the function called is intrinsic and takes one parameter.
 	/// Intended to be used for default ctor/dtor calls, but might have use elsewhere.
@@ -97,15 +95,12 @@ namespace InitTweak {
 
 	/// returns the name of the function being called
 	std::string getFunctionName( Expression * expr );
-	std::string getFunctionName( const ast::Expr * expr );
 
 	/// returns the argument to a call expression in position N indexed from 0
 	Expression *& getCallArg( Expression * callExpr, unsigned int pos );
-	const ast::Expr * getCallArg( const ast::Expr * call, unsigned pos );
 
 	/// returns the base type of a PointerType or ArrayType, else returns NULL
 	Type * getPointerBase( Type * );
-	const ast::Type* getPointerBase( const ast::Type* );
 
 	/// returns the argument if it is a PointerType or ArrayType, else returns NULL
 	Type * isPointerType( Type * );

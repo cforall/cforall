@@ -20,6 +20,7 @@
 #include "AST/Copy.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Expr.hpp"
+#include "AST/Inspect.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
 #include "AST/DeclReplacer.hpp"
@@ -1527,7 +1528,7 @@ const ast::FunctionDecl * ThreadStarter::postvisit( const ast::FunctionDecl * de
 	// Modify this declaration, the extra checks to see if we will are first.
 	const ast::ptr<ast::DeclWithType> & param = decl->params.front();
 	auto type = dynamic_cast<const ast::StructInstType *>(
-		InitTweak::getPointerBase( param->get_type() ) );
+		ast::getPointerBase( param->get_type() ) );
 	if ( nullptr == type ) return decl;
 	if ( !type->base->is_thread() ) return decl;
 	if ( !thread_decl || !thread_ctor_seen ) {

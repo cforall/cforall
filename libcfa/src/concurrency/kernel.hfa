@@ -135,7 +135,7 @@ struct __attribute__((aligned(64))) processor {
 	void * stack;
 
 	// Link lists fields
-	inline dlink(processor);
+	dlink(processor) link;
 
 	// special init fields
 	// This is needed for memcached integration
@@ -157,7 +157,12 @@ struct __attribute__((aligned(64))) processor {
 	const char * last_enable;
 #endif
 };
-P9_EMBEDDED( processor, dlink(processor) )
+// P9_EMBEDDED( processor, dlink(processor) )
+static inline tytagref( dlink(processor), dlink(processor) ) ?`inner( processor & this ) {
+    dlink(processor) & b = this.link;
+    tytagref( dlink(processor), dlink(processor) ) result = { b };
+    return result;
+}
 
 void  ?{}(processor & this, const char name[], struct cluster & cltr);
 void ^?{}(processor & this);

@@ -57,9 +57,9 @@ using namespace std;
 #include "SynTree/Attribute.h"     // for Attribute
 
 // lex uses __null in a boolean context, it's fine.
-#pragma GCC diagnostic ignored "-Wpragmas"
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wparentheses-equality"
-#pragma GCC diagnostic warning "-Wpragmas"
+#endif
 
 extern DeclarationNode * parseTree;
 extern LinkageSpec::Spec linkage;
@@ -2569,7 +2569,7 @@ enum_type:
 	  '{' enumerator_list comma_opt '}'
 		{
 			$$ = DeclarationNode::newEnum( $5, $8, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
-		}	
+		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
 			$$ = DeclarationNode::newEnum( $6->name, $9, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
@@ -2584,7 +2584,7 @@ enum_type:
 enum_type_nobody:										// enum - {...}
 	ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3 ); $$ = DeclarationNode::newEnum( $3, 0, false, false )->addQualifiers( $2 ); }
-	| ENUM attribute_list_opt type_name	
+	| ENUM attribute_list_opt type_name
 		{ typedefTable.makeTypedef( *$3->type->symbolic.name );	$$ = DeclarationNode::newEnum( $3->type->symbolic.name, 0, false, false )->addQualifiers( $2 ); }
 	;
 

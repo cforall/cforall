@@ -276,13 +276,13 @@ namespace CodeGen {
 		extension( enumDecl );
 		std::list< Declaration* > &memb = enumDecl->get_members();
 		if (enumDecl->base && ! memb.empty()) {
-			unsigned long long last_val = -1; // if the first enum value has no explicit initializer, 
-			// as other 
+			unsigned long long last_val = -1; // if the first enum value has no explicit initializer,
+			// as other
 			for ( std::list< Declaration* >::iterator i = memb.begin(); i != memb.end();  i++) {
 				ObjectDecl * obj = dynamic_cast< ObjectDecl* >( *i );
 				assert( obj );
-				output << "static const ";
-				output << genType(enumDecl->base, "", options) << " ";
+				output << "static ";
+				output << genType(enumDecl->base, "", options) << " const ";
 				output << mangleName( obj ) << " ";
 				output << " = ";
 				output << "(" << genType(enumDecl->base, "", options) << ")";
@@ -913,7 +913,7 @@ namespace CodeGen {
 		output << ")";
 	}
 
-	// QualifiedNameExpr should not reach to CodeGen. 
+	// QualifiedNameExpr should not reach to CodeGen.
 	// FixQualifiedName Convert QualifiedNameExpr to VariableExpr
 	void CodeGenerator::postvisit( QualifiedNameExpr * expr ) {
 		output << "/* label */" << mangleName(expr->var);

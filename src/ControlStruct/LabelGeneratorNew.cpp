@@ -13,13 +13,13 @@
 // Update Count     : 73
 //
 
-using namespace std;
-
 #include "LabelGeneratorNew.hpp"
 
 #include "AST/Attribute.hpp"
 #include "AST/Label.hpp"
 #include "AST/Stmt.hpp"
+
+using namespace std;
 using namespace ast;
 
 namespace ControlStruct {

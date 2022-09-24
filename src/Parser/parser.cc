@@ -89,9 +89,9 @@ using namespace std;
 #include "SynTree/Attribute.h"     // for Attribute
 
 // lex uses __null in a boolean context, it's fine.
-#pragma GCC diagnostic ignored "-Wpragmas"
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wparentheses-equality"
-#pragma GCC diagnostic warning "-Wpragmas"
+#endif
 
 extern DeclarationNode * parseTree;
 extern LinkageSpec::Spec linkage;

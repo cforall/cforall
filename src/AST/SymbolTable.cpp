@@ -19,6 +19,7 @@
 
 #include "Decl.hpp"
 #include "Expr.hpp"
+#include "Inspect.hpp"
 #include "Type.hpp"
 #include "CodeGen/OperatorTable.h"  // for isCtorDtorAssign
 #include "Common/SemanticError.h"
@@ -465,7 +466,7 @@ namespace {
 		const auto & params = ftype->params;
 		assert( ! params.empty() );
 		// use base type of pointer, so that qualifiers on the pointer type aren't considered.
-		const Type * base = InitTweak::getPointerBase( params.front() );
+		const Type * base = ast::getPointerBase( params.front() );
 		assert( base );
 		if (stripParams) {
 			if (dynamic_cast<const PointerType *>(base)) return Mangle::Encoding::pointer;

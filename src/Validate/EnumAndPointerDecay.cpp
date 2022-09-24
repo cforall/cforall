@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Jun 28 15:50:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Jul 12 14:45:00 2022
-// Update Count     : 0
+// Last Modified On : Tue Sep 20 16:14:00 2022
+// Update Count     : 1
 //
 
 #include "EnumAndPointerDecay.hpp"
@@ -25,17 +25,11 @@ namespace Validate {
 
 namespace {
 
-struct EnumAndPointerDecayCore final : public ast::WithGuards {
-	CodeLocation const * location = nullptr;
-	void previsit( ast::ParseNode const * node );
+struct EnumAndPointerDecayCore final : public ast::WithCodeLocation {
 	ast::EnumDecl const * previsit( ast::EnumDecl const * decl );
 	ast::FunctionDecl const * previsit( ast::FunctionDecl const * decl );
 	ast::FunctionType const * previsit( ast::FunctionType const * type );
 };
-
-void EnumAndPointerDecayCore::previsit( ast::ParseNode const * node ) {
-	GuardValue( location ) = &node->location;
-}
 
 ast::EnumDecl const * EnumAndPointerDecayCore::previsit(
 		ast::EnumDecl const * decl ) {
@@ -49,7 +43,6 @@ ast::EnumDecl const * EnumAndPointerDecayCore::previsit(
 		member = ast::mutate_field( object, &ast::ObjectDecl::type,
 			new ast::EnumInstType( decl, ast::CV::Const ) );
 	}
-	GuardValue( location ) = &decl->location;
 	return mut;
 }
 
@@ -78,7 +71,6 @@ void fixFunctionList( CodeLocation const & location, bool isVarArgs,
 ast::FunctionDecl const * EnumAndPointerDecayCore::previsit(
 		ast::FunctionDecl const * decl ) {
 	auto mut = ast::mutate( decl );
-	GuardValue( location ) = &decl->location;
 	ast::ArgumentFlag isVarArgs = mut->type->isVarArgs;
 	// It seems fixFunction (via fixFunctionList) does the pointer decay part.
 	fixFunctionList( mut->location, isVarArgs, mut->params );

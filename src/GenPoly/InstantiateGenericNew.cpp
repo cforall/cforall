@@ -22,6 +22,7 @@
 
 #include "AST/Copy.hpp"                // for deepCopy
 #include "AST/Create.hpp"              // for asForward
+#include "AST/Inspect.hpp"             // for getFunction
 #include "AST/Pass.hpp"                // for Pass, WithGuard, WithShortCi...
 #include "AST/TranslationUnit.hpp"     // for TranslationUnit
 #include "CodeGen/OperatorTable.h"     // for isAssignment
@@ -29,7 +30,6 @@
 #include "Common/UniqueName.h"         // for UniqueName
 #include "GenPoly/GenPoly.h"           // for isPolyType, typesPolyCompatible
 #include "GenPoly/ScrubTyVars.h"       // for scrubAll
-#include "InitTweak/InitTweak.h"       // for getFunction
 #include "ResolvExpr/typeops.h"        // for typesCompatible
 
 namespace GenPoly {
@@ -293,7 +293,7 @@ private:
 ast::ApplicationExpr const * FixDtypeStatic::previsit(
 		ast::ApplicationExpr const * expr ) {
 	GuardValue( isLValueArg ) = false;
-	ast::Decl const * function = InitTweak::getFunction( expr );
+	ast::Decl const * function = ast::getFunction( expr );
 	if ( ast::Linkage::Intrinsic != function->linkage
 			|| !CodeGen::isAssignment( function->name ) ) {
 		return expr;

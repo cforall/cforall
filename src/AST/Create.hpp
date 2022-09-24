@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Sep 20 13:25:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Sep 20 14:38:00 2022
-// Update Count     : 0
+// Last Modified On : Tue Sep 20 15:34:00 2022
+// Update Count     : 1
 //
 
 #include "AST/Fwd.hpp"
@@ -20,6 +20,7 @@ namespace ast {
 /// Create a forward declaration of the existing declaration.
 /// If the argument is already a forward declaration, return nullptr instead.
 /// More efficient than the deepCopy and clear pattern.
+FunctionDecl * asForward( FunctionDecl const * );
 StructDecl * asForward( StructDecl const * );
 UnionDecl * asForward( UnionDecl const * );
 

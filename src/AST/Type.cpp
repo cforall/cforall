@@ -21,8 +21,8 @@
 
 #include "Decl.hpp"
 #include "Init.hpp"
+#include "Inspect.hpp"
 #include "Common/utility.h"      // for copy, move
-#include "InitTweak/InitTweak.h" // for getPointerBase
 #include "Tuples/Tuples.h"       // for isTtype
 
 namespace ast {
@@ -35,7 +35,7 @@ const Type * Type::getComponent( unsigned i ) const {
 const Type * Type::stripDeclarator() const {
 	const Type * t;
 	const Type * a;
-	for ( t = this; (a = InitTweak::getPointerBase( t )); t = a );
+	for ( t = this; (a = ast::getPointerBase( t )); t = a );
 	return t;
 }
 

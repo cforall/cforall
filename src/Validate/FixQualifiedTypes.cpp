@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thr Apr 21 11:13:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Apr 22 11:36:00 2022
-// Update Count     : 0
+// Last Modified On : Tue Sep 20 16:15:00 2022
+// Update Count     : 1
 //
 
 #include "Validate/FixQualifiedTypes.hpp"
@@ -26,13 +26,8 @@ namespace Validate {
 namespace {
 
 struct FixQualifiedTypesCore :
-		public WithNoIdSymbolTable, public ast::WithGuards {
-	CodeLocation const * location = nullptr;
-
-	void previsit( ast::ParseNode const * node ) {
-		GuardValue( location ) = &node->location;
-	}
-
+		public WithNoIdSymbolTable,
+		public ast::WithCodeLocation {
 	ast::Type const * postvisit( ast::QualifiedType const * type ) {
 		assert( location );
 

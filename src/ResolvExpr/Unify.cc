@@ -726,7 +726,7 @@ namespace ResolvExpr {
 			}
 		};
 	}
-	
+
 	std::vector< ast::ptr< ast::Type > > flattenList(
 		const std::vector< ast::ptr< ast::Type > > & src, ast::TypeEnvironment & env
 	) {
@@ -988,7 +988,7 @@ namespace ResolvExpr {
 
 				if ( isTuple && isTuple2 ) {
 					++it; ++jt;  // skip ttype parameters before break
-				} else if ( isTuple ) { 
+				} else if ( isTuple ) {
 					// bundle remaining params into tuple
 					pty2 = tupleFromExprs( param2, jt, params2.end(), pty->qualifiers );
 					++it;  // skip ttype parameter for break
@@ -1034,7 +1034,6 @@ namespace ResolvExpr {
 
 	private:
 		/// Creates a tuple type based on a list of Type
-		
 
 		static bool unifyList(
 			const std::vector< ast::ptr< ast::Type > > & list1,
@@ -1173,9 +1172,8 @@ namespace ResolvExpr {
 		} else if ( isopen2 ) {
 			return env.bindVar( var2, type1, entry2->second, need, have, open, widen, symtab );
 		} else {
-			ast::Pass<Unify_new> comparator{ type2, env, need, have, open, widen, symtab };
-			type1->accept( comparator );
-			return comparator.core.result;
+			return ast::Pass<Unify_new>::read(
+				type1, type2, env, need, have, open, widen, symtab );
 		}
 	}
 
@@ -1206,7 +1204,7 @@ namespace ResolvExpr {
 				return false;
 			}
 
-		} else if ( common = commonType( t1, t2, env, need, have, open, widen, symtab )) {
+		} else if (( common = commonType( t1, t2, env, need, have, open, widen, symtab ))) {
 			// no exact unification, but common type
 			auto c = shallowCopy(common.get());
 			c->qualifiers = q1 | q2;

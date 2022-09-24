@@ -24,6 +24,10 @@
 
 //**************************** Includes and Defines ****************************
 
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wnull-conversion"
+#endif
+
 // trigger before each matching rule's action
 #define YY_USER_ACTION \
 	yylloc.first_line = yylineno; \

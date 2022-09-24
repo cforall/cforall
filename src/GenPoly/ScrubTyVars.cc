@@ -200,11 +200,11 @@ ast::Type const * ScrubTypeVars::postvisit( ast::TypeInstType const * type ) {
 	}
 
 	switch ( typeVar->second.kind ) {
-	case ast::TypeDecl::Dtype:
-	case ast::TypeDecl::Ttype:
+	case ::TypeDecl::Dtype:
+	case ::TypeDecl::Ttype:
 		return new ast::PointerType(
 			new ast::VoidType( type->qualifiers ) );
-	case ast::TypeDecl::Ftype:
+	case ::TypeDecl::Ftype:
 		return new ast::PointerType(
 			new ast::FunctionType( ast::VariableArgs ) );
 	default:
