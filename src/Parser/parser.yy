@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 27 13:21:28 2022
-// Update Count     : 5661
+// Last Modified On : Mon Sep 26 08:45:53 2022
+// Update Count     : 5704
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -246,6 +246,16 @@ ForCtrl * forCtrl( ExpressionNode * type, ExpressionNode * index, ExpressionNode
 		SemanticError( yylloc, "Expression disallowed. Only loop-index name allowed." ); return nullptr;
 	} // if
 } // forCtrl
+
+static void IdentifierBeforeIdentifier( string & identifier1, string & identifier2, const char * kind ) {
+	SemanticError( yylloc, ::toString( "Adjacent identifiers \"", identifier1, "\" and \"", identifier2, "\" are not meaningful in a", kind, ".\n"
+				   "Possible cause is misspelled type name or missing generic parameter." ) );
+} // IdentifierBeforeIdentifier
+
+static void IdentifierBeforeType( string & identifier, const char * kind ) {
+	SemanticError( yylloc, ::toString( "Identifier \"", identifier, "\" cannot appear before a ", kind, ".\n"
+				   "Possible cause is misspelled storage/CV qualifier, misspelled typename, or missing generic parameter." ) );
+} // IdentifierBeforeType
 
 bool forall = false;									// aggregate have one or more forall qualifiers ?
 
@@ -650,19 +660,17 @@ primary_expression:
 	// | RESUME '(' comma_expression ')' compound_statement
 	//   	{ SemanticError( yylloc, "Resume expression is currently unimplemented." ); $$ = nullptr; }
 	| IDENTIFIER IDENTIFIER								// syntax error
-		{
-			SemanticError( yylloc, ::toString( "Adjacent identifiers are not meaningful in an expression. "
-											   "Possible problem is identifier \"", *$1.str,
-											   "\" is a misspelled typename or an incorrectly specified type name, "
-											   "e.g., missing generic parameter or missing struct/union/enum before typename." ) );
-			$$ = nullptr;
- 		}
-	| IDENTIFIER direct_type							// syntax error
-		{
-			SemanticError( yylloc, ::toString( "Identifier \"", *$1.str, "\" cannot appear before a type. "
-											   "Possible problem is misspelled storage or CV qualifier." ) );
-			$$ = nullptr;
-		}
+		{ IdentifierBeforeIdentifier( *$1.str, *$2.str, "n expression" ); $$ = nullptr; }
+	| IDENTIFIER type_qualifier							// syntax error
+		{ IdentifierBeforeType( *$1.str, "type qualifier" ); $$ = nullptr; }
+	| IDENTIFIER storage_class							// syntax error
+		{ IdentifierBeforeType( *$1.str, "storage class" ); $$ = nullptr; }
+	| IDENTIFIER basic_type_name						// syntax error
+		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
+	| IDENTIFIER TYPEDEFname							// syntax error
+		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
+	| IDENTIFIER TYPEGENname							// syntax error
+		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
 	;
 
 generic_assoc_list:										// C11
@@ -2992,6 +3000,18 @@ external_definition:
 	DIRECTIVE
 		{ $$ = DeclarationNode::newDirectiveStmt( new StatementNode( build_directive( $1 ) ) ); }
 	| declaration
+	| IDENTIFIER IDENTIFIER
+		{ IdentifierBeforeIdentifier( *$1.str, *$2.str, " declaration" ); $$ = nullptr; }
+	| IDENTIFIER type_qualifier							// syntax error
+		{ IdentifierBeforeType( *$1.str, "type qualifier" ); $$ = nullptr; }
+	| IDENTIFIER storage_class							// syntax error
+		{ IdentifierBeforeType( *$1.str, "storage class" ); $$ = nullptr; }
+	| IDENTIFIER basic_type_name						// syntax error
+		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
+	| IDENTIFIER TYPEDEFname							// syntax error
+		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
+	| IDENTIFIER TYPEGENname							// syntax error
+		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
 	| external_function_definition
 	| EXTENSION external_definition						// GCC, multiple __extension__ allowed, meaning unknown
 		{

@@ -9,8 +9,8 @@
 // Author           : Henry Xue
 // Created On       : Mon Aug 23 15:36:09 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Sep 20 16:17:00 2022
-// Update Count     : 4
+// Last Modified On : Mon Sep 26 10:25:00 2022
+// Update Count     : 5
 //
 
 #include "Tuples.h"
@@ -29,7 +29,29 @@ struct MemberTupleExpander final : public ast::WithShortCircuiting, public ast::
 
 struct UniqueExprExpander final : public ast::WithDeclsToAdd<> {
 	const ast::Expr * postvisit( const ast::UniqueExpr * unqExpr );
-	std::map< int, ast::ptr<ast::Expr> > decls; // not vector, because order added may not be increasing order
+	// Not a vector, because they may not be adding in increasing order.
+	std::map< int, ast::ptr<ast::Expr> > decls;
+};
+
+/// Replaces Tuple Assign & Index Expressions, and Tuple Types.
+struct TupleMainExpander final :
+		public ast::WithCodeLocation,
+		public ast::WithDeclsToAdd<>,
+		public ast::WithGuards,
+		public ast::WithVisitorRef<TupleMainExpander> {
+	ast::Expr const * postvisit( ast::TupleAssignExpr const * expr );
+
+	void previsit( ast::CompoundStmt const * );
+	ast::Expr const * postvisit( ast::Expr const * expr );
+	ast::Type const * postvisit( ast::TupleType const * type );
+
+	ast::Expr const * postvisit( ast::TupleIndexExpr const * expr );
+private:
+	ScopedMap< int, ast::StructDecl const * > typeMap;
+};
+
+struct TupleExprExpander final {
+	ast::Expr const * postvisit( ast::TupleExpr const * expr );
 };
 
 /// given a expression representing the member and an expression representing the aggregate,
@@ -99,120 +121,122 @@ const ast::Expr * UniqueExprExpander::postvisit( const ast::UniqueExpr * unqExpr
 	return ast::deepCopy(decls[id].get());
 }
 
-/// Replaces Tuple Assign & Index Expressions, and Tuple Types.
-struct TupleMainExpander final :
-		public ast::WithCodeLocation,
-		public ast::WithDeclsToAdd<>,
-		public ast::WithGuards,
-		public ast::WithVisitorRef<TupleMainExpander> {
-	ast::Expr const * postvisit( ast::TupleAssignExpr const * expr ) {
-		// Just move the env on the new top level expression.
-		return ast::mutate_field( expr->stmtExpr.get(),
-			&ast::TupleAssignExpr::env, expr->env.get() );
-	}
+// Handles expansion of tuple assignment.
+ast::Expr const * TupleMainExpander::postvisit(
+		ast::TupleAssignExpr const * expr ) {
+	// Just move the env on the new top level expression.
+	return ast::mutate_field( expr->stmtExpr.get(),
+		&ast::TupleAssignExpr::env, expr->env.get() );
+}
 
-	void previsit( ast::CompoundStmt const * ) {
-		GuardScope( typeMap );
-	}
+// Context information for tuple type expansion.
+void TupleMainExpander::previsit( ast::CompoundStmt const * ) {
+	GuardScope( typeMap );
+}
 
-	ast::Expr const * postvisit( ast::Expr const * expr ) {
-		if ( nullptr == expr->env ) {
-			return expr;
-		}
-		// TypeSubstitutions are never visited in the new Pass template,
-		// so it is done manually here, where all types have to be replaced.
-		return ast::mutate_field( expr, &ast::Expr::env,
-			expr->env->accept( *visitor ) );
+// Make sure types in a TypeSubstitution are expanded.
+ast::Expr const * TupleMainExpander::postvisit( ast::Expr const * expr ) {
+	if ( nullptr == expr->env ) {
+		return expr;
 	}
+	return ast::mutate_field( expr, &ast::Expr::env,
+		expr->env->accept( *visitor ) );
+}
 
-	ast::Type const * postvisit( ast::TupleType const * type ) {
-		assert( location );
-		unsigned tupleSize = type->size();
-		if ( !typeMap.count( tupleSize ) ) {
-			ast::StructDecl * decl = new ast::StructDecl( *location,
-				toString( "_tuple", tupleSize, "_" )
+// Create a generic tuple structure of a given size.
+ast::StructDecl * createTupleStruct(
+		unsigned int tupleSize, CodeLocation const & location ) {
+	ast::StructDecl * decl = new ast::StructDecl( location,
+		toString( "_tuple", tupleSize, "_" )
+	);
+	decl->body = true;
+
+	for ( size_t i = 0 ; i < tupleSize ; ++i ) {
+		ast::TypeDecl * typeParam = new ast::TypeDecl( location,
+			toString( "tuple_param_", tupleSize, "_", i ),
+			ast::Storage::Classes(),
+			nullptr,
+			ast::TypeDecl::Dtype,
+			true
 			);
-			decl->body = true;
-
-			for ( size_t i = 0 ; i < tupleSize ; ++i ) {
-				ast::TypeDecl * typeParam = new ast::TypeDecl( *location,
-					toString( "tuple_param_", tupleSize, "_", i ),
-					ast::Storage::Classes(),
-					nullptr,
-					ast::TypeDecl::Dtype,
-					true
-					);
-				ast::ObjectDecl * member = new ast::ObjectDecl( *location,
-					toString( "field_", i ),
-					new ast::TypeInstType( typeParam )
-					);
-				decl->params.push_back( typeParam );
-				decl->members.push_back( member );
-			}
-
-			// Empty structures are not standard C. Add a dummy field to
-			// empty tuples to silence warnings when a compound literal
-			// `_tuple0_` is created.
-			if ( tupleSize == 0 ) {
-				decl->members.push_back(
-					new ast::ObjectDecl( *location,
-						"dummy",
-						new ast::BasicType( ast::BasicType::SignedInt ),
-						nullptr,
-						ast::Storage::Classes(),
-						// Does this have to be a C linkage?
-						ast::Linkage::C
-					)
-				);
-			}
-			typeMap[tupleSize] = decl;
-			declsToAddBefore.push_back( decl );
-		}
-
-		ast::StructDecl const * decl = typeMap[ tupleSize ];
-		ast::StructInstType * newType =
-			new ast::StructInstType( decl, type->qualifiers );
-		for ( auto pair : group_iterate( type->types, decl->params ) ) {
-			ast::Type const * t = std::get<0>( pair );
-			newType->params.push_back(
-				new ast::TypeExpr( *location, ast::deepCopy( t ) ) );
-		}
-		return newType;
+		ast::ObjectDecl * member = new ast::ObjectDecl( location,
+			toString( "field_", i ),
+			new ast::TypeInstType( typeParam )
+			);
+		decl->params.push_back( typeParam );
+		decl->members.push_back( member );
 	}
 
-	ast::Expr const * postvisit( ast::TupleIndexExpr const * expr ) {
-		CodeLocation const & location = expr->location;
-		ast::Expr const * tuple = expr->tuple.get();
-		assert( tuple );
-		unsigned int index = expr->index;
-		ast::TypeSubstitution const * env = expr->env.get();
-
-		if ( auto tupleExpr = dynamic_cast<ast::TupleExpr const *>( tuple ) ) {
-			// Optimization: If it is a definitely pure tuple expr,
-			// then it can reduce to the only relevant component.
-			if ( !maybeImpureIgnoreUnique( tupleExpr ) ) {
-				assert( index < tupleExpr->exprs.size() );
-				ast::ptr<ast::Expr> const & expr =
-					*std::next( tupleExpr->exprs.begin(), index );
-				ast::Expr * ret = ast::mutate( expr.get() );
-				ret->env = env;
-				return ret;
-			}
-		}
-
-		auto type = tuple->result.strict_as<ast::StructInstType>();
-		ast::StructDecl const * structDecl = type->base;
-		assert( index < structDecl->members.size() );
-		ast::ptr<ast::Decl> const & member =
-			*std::next( structDecl->members.begin(), index );
-		ast::MemberExpr * memberExpr = new ast::MemberExpr( location,
-			member.strict_as<ast::DeclWithType>(), tuple );
-		memberExpr->env = env;
-		return memberExpr;
+	// Empty structures are not standard C. Add a dummy field to
+	// empty tuples to silence warnings when a compound literal
+	// `_tuple0_` is created.
+	if ( tupleSize == 0 ) {
+		decl->members.push_back(
+			new ast::ObjectDecl( location,
+				"dummy",
+				new ast::BasicType( ast::BasicType::SignedInt ),
+				nullptr,
+				ast::Storage::Classes(),
+				// Does this have to be a C linkage?
+				ast::Linkage::C
+			)
+		);
 	}
-private:
-	ScopedMap< int, ast::StructDecl const * > typeMap;
-};
+	return decl;
+}
+
+ast::Type const * TupleMainExpander::postvisit( ast::TupleType const * type ) {
+	assert( location );
+	unsigned tupleSize = type->size();
+	if ( !typeMap.count( tupleSize ) ) {
+		ast::StructDecl * decl = createTupleStruct( tupleSize, *location );
+		typeMap[tupleSize] = decl;
+		declsToAddBefore.push_back( decl );
+	}
+
+	ast::StructDecl const * decl = typeMap[ tupleSize ];
+	ast::StructInstType * newType =
+		new ast::StructInstType( decl, type->qualifiers );
+	for ( auto pair : group_iterate( type->types, decl->params ) ) {
+		ast::Type const * t = std::get<0>( pair );
+		newType->params.push_back(
+			new ast::TypeExpr( *location, ast::deepCopy( t ) ) );
+	}
+	return newType;
+}
+
+// Expand a tuple index into a field access in the underlying structure.
+ast::Expr const * TupleMainExpander::postvisit(
+		ast::TupleIndexExpr const * expr ) {
+	CodeLocation const & location = expr->location;
+	ast::Expr const * tuple = expr->tuple.get();
+	assert( tuple );
+	unsigned int index = expr->index;
+	ast::TypeSubstitution const * env = expr->env.get();
+
+	if ( auto tupleExpr = dynamic_cast<ast::TupleExpr const *>( tuple ) ) {
+		// Optimization: If it is a definitely pure tuple expr,
+		// then it can reduce to the only relevant component.
+		if ( !maybeImpureIgnoreUnique( tupleExpr ) ) {
+			assert( index < tupleExpr->exprs.size() );
+			ast::ptr<ast::Expr> const & expr =
+				*std::next( tupleExpr->exprs.begin(), index );
+			ast::Expr * ret = ast::mutate( expr.get() );
+			ret->env = env;
+			return ret;
+		}
+	}
+
+	auto type = tuple->result.strict_as<ast::StructInstType>();
+	ast::StructDecl const * structDecl = type->base;
+	assert( index < structDecl->members.size() );
+	ast::ptr<ast::Decl> const & member =
+		*std::next( structDecl->members.begin(), index );
+	ast::MemberExpr * memberExpr = new ast::MemberExpr( location,
+		member.strict_as<ast::DeclWithType>(), tuple );
+	memberExpr->env = env;
+	return memberExpr;
+}
 
 ast::Expr const * replaceTupleExpr(
 		CodeLocation const & location,
@@ -248,12 +272,10 @@ ast::Expr const * replaceTupleExpr(
 	}
 }
 
-struct TupleExprExpander final {
-	ast::Expr const * postvisit( ast::TupleExpr const * expr ) {
-		return replaceTupleExpr( expr->location,
-			expr->result, expr->exprs, expr->env );
-	}
-};
+ast::Expr const * TupleExprExpander::postvisit( ast::TupleExpr const * expr ) {
+	return replaceTupleExpr( expr->location,
+		expr->result, expr->exprs, expr->env );
+}
 
 } // namespace
 
