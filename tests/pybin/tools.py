@@ -22,7 +22,7 @@ from pybin import settings
 ################################################################################
 
 # helper functions to run terminal commands
-def sh(*cmd, timeout = False, output_file = None, input_file = None, input_text = None, error = subprocess.STDOUT, ignore_dry_run = False, pass_fds = []):
+def sh(*cmd, timeout = False, output_file = None, input_file = None, input_text = None, error = subprocess.STDOUT, ignore_dry_run = False, pass_fds = [], nice = False):
 	try:
 		cmd = list(cmd)
 
@@ -57,17 +57,27 @@ def sh(*cmd, timeout = False, output_file = None, input_file = None, input_text 
 			# add error redirection if needed
 			error = openfd(error, 'w', onexit, False)
 
+			# prepare the parameters to the call
+			popen_kwargs = {
+				'stdout' : output_file,
+				'stderr' : error,
+				'pass_fds': pass_fds,
+			}
+
+			# depending on how we are passing inputs we need to set a different argument to popen
+			if input_text:
+				popen_kwargs['input'] = bytes(input_text, encoding='utf-8')
+			else:
+				popen_kwargs['stdin'] = input_file
+
+			# we might want to nice this so it's not to obnixious to users
+			if nice:
+				popen_kwargs['preexec_fn'] = lambda: os.nice(5)
+
 			# run the desired command
 			# use with statement to make sure proc is cleaned
 			# don't use subprocess.run because we want to send SIGABRT on exit
-			with subprocess.Popen(
-				cmd,
-				**({'input' : bytes(input_text, encoding='utf-8')} if input_text else {'stdin' : input_file}),
-				stdout  = output_file,
-				stderr  = error,
-				pass_fds = pass_fds
-			) as proc:
-
+			with subprocess.Popen( cmd, **popen_kwargs ) as proc:
 				try:
 					out, errout = proc.communicate(
 						timeout = settings.timeout.single if timeout else None

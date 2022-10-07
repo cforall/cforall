@@ -17,52 +17,116 @@
 
 #include "device/cpu.hfa"
 #include "kernel/private.hfa"
+#include "math.hfa"
 
 #include <limits.h>
 
-//-----------------------------------------------------------------------
-// Calc moving average based on existing average, before and current time.
-static inline unsigned long long moving_average(unsigned long long currtsc, unsigned long long instsc, unsigned long long old_avg) {
-	/* paranoid */ verifyf( old_avg < 15000000000000, "Suspiciously large previous average: %'llu (%llx)\n", old_avg, old_avg );
+#include "clock.hfa"
 
-	const unsigned long long new_val = currtsc > instsc ? currtsc - instsc : 0;
-	const unsigned long long total_weight = 16;
-	const unsigned long long new_weight   = 4;
-	const unsigned long long old_weight = total_weight - new_weight;
-	const unsigned long long ret = ((new_weight * new_val) + (old_weight * old_avg)) / total_weight;
+#if   defined(READYQ_USE_LINEAR_AVG)
+
+// no conversion needed in this case
+static inline __readyQ_avg_t __to_readyQ_avg(unsigned long long intsc) { return intsc; }
+
+// warn normally all ints
+#define warn_large_before warnf( !strict || old_avg < 33_000_000_000, "Suspiciously large previous average: %'llu (%llx), %'ldms \n", old_avg, old_avg, program()`ms )
+#define warn_large_after warnf( !strict || ret < 33_000_000_000, "Suspiciously large new average after %'ldms cputime: %'llu (%llx) from %'llu-%'llu (%'llu, %'llu) and %'llu\n", program()`ms, ret, ret, currtsc, intsc, new_val, new_val / 1000000, old_avg )
+
+// 8X linear factor is just 8 * x
+#define AVG_FACTOR( x ) (8 * (x))
+
+#elif defined(READYQ_USE_LOGDBL_AVG)
+
+// convert to log2 scale but using double
+static inline __readyQ_avg_t __to_readyQ_avg(unsigned long long intsc) { if(unlikely(0 == intsc)) return 0.0; else return log2(intsc); }
+
+#define warn_large_before warnf( !strict || old_avg < 35.0, "Suspiciously large previous average: %'lf, %'ldms \n", old_avg, program()`ms )
+#define warn_large_after warnf( !strict || ret < 35.3, "Suspiciously large new average after %'ldms cputime: %'lf from %'llu-%'llu (%'llu, %'llu) and %'lf\n", program()`ms, ret, currtsc, intsc, new_val, new_val / 1000000, old_avg ); \
+verify(ret >= 0)
+
+// 8X factor in logscale is log2(8X) = log2(8) + log2(X) = 3 + log2(X)
+#define AVG_FACTOR( x ) (3.0 + (x))
+
+// we need to overload the __atomic_load_n because they don't support double
+static inline double __atomic_load_n(volatile double * ptr, int mem) {
+	volatile uint64_t * uptr = (volatile uint64_t *)ptr;
+	_Static_assert(sizeof(*uptr) == sizeof(*ptr));
+	uint64_t ret = 0;
+	ret = __atomic_load_n(uptr, mem);
+	uint64_t *rp = &ret;
+	double ret = *(volatile double *)rp;
+	/* paranoid */ verify( ret == 0 || ret > 3e-100 );
 	return ret;
 }
 
-static inline void touch_tsc(__timestamp_t * tscs, size_t idx, unsigned long long ts_prev, unsigned long long ts_next) {
+// we need to overload the __atomic_store_n because they don't support double
+static inline void __atomic_store_n(volatile double * ptr, double val, int mem) {
+	/* paranoid */ verify( val == 0 || val > 3e-100 );
+	volatile uint64_t * uptr = (volatile uint64_t *)ptr;
+	_Static_assert(sizeof(*uptr) == sizeof(*ptr));
+	uint64_t * valp = (uint64_t *)&val;
+	__atomic_store_n(uptr, *valp, mem);
+}
+
+#elif defined(READYQ_USE_LOGDBL_AVG)
+
+//convert to log2 scale but with fix point u32.32 values
+static inline __readyQ_avg_t __to_readyQ_avg(unsigned long long intsc) { return ulog2_32_32(tsc); }
+
+// 8X factor, +3 in logscale (see above) is + 0x3.00000000
+#define AVG_FACTOR( x ) (0x3_00000000ull + (x))
+
+#else
+#error must pick a scheme for averaging
+#endif
+
+//-----------------------------------------------------------------------
+// Calc moving average based on existing average, before and current time.
+static inline __readyQ_avg_t moving_average(unsigned long long currtsc, unsigned long long intsc, __readyQ_avg_t old_avg, bool strict) {
+	(void)strict; // disable the warning around the fact this is unused in release.
+	/* paranoid */ warn_large_before;
+
+	const unsigned long long new_val = currtsc > intsc ? currtsc - intsc : 0;
+	const __readyQ_avg_t total_weight = 16;
+	const __readyQ_avg_t new_weight   = 12;
+	const __readyQ_avg_t old_weight = total_weight - new_weight;
+	const __readyQ_avg_t ret = ((new_weight * __to_readyQ_avg(new_val)) + (old_weight * old_avg)) / total_weight;
+
+	/* paranoid */ warn_large_after;
+	return ret;
+}
+
+static inline void touch_tsc(__timestamp_t * tscs, size_t idx, unsigned long long ts_prev, unsigned long long ts_next, bool strict) {
 	if (ts_next == ULLONG_MAX) return;
 	unsigned long long now = rdtscl();
-	unsigned long long pma = __atomic_load_n(&tscs[ idx ].t.ma, __ATOMIC_RELAXED);
+	__readyQ_avg_t pma = __atomic_load_n(&tscs[ idx ].t.ma, __ATOMIC_RELAXED);
 	__atomic_store_n(&tscs[ idx ].t.tv, ts_next, __ATOMIC_RELAXED);
-	__atomic_store_n(&tscs[ idx ].t.ma, moving_average(now, ts_prev, pma), __ATOMIC_RELAXED);
+	__atomic_store_n(&tscs[ idx ].t.ma, moving_average(now, ts_prev, pma, strict), __ATOMIC_RELAXED);
 }
 
 //-----------------------------------------------------------------------
 // Calc age a timestamp should be before needing help.
 forall(Data_t * | { unsigned long long ts(Data_t & this); })
-static inline unsigned long long calc_cutoff(
+static inline __readyQ_avg_t calc_cutoff(
 	const unsigned long long ctsc,
 	unsigned procid,
 	size_t count,
 	Data_t * data,
 	__timestamp_t * tscs,
-	const unsigned shard_factor
+	const unsigned shard_factor,
+	bool strict
 ) {
 	unsigned start = procid;
-	unsigned long long max = 0;
+	__readyQ_avg_t max = 0;
 	for(i; shard_factor) {
 		unsigned long long ptsc = ts(data[start + i]);
 		if(ptsc != ULLONG_MAX) {
 			/* paranoid */ verify( start + i < count );
-			unsigned long long tsc = moving_average(ctsc, ptsc, tscs[start + i].t.ma);
-			if(tsc > max) max = tsc;
+			__readyQ_avg_t avg = moving_average(ctsc, ptsc, tscs[start + i].t.ma, strict);
+			if(avg > max) max = avg;
 		}
 	}
-	return 8 * max;
+	return AVG_FACTOR( max );
 }
 
 static inline unsigned cache_id(struct cluster * cltr, unsigned idx) with (cltr->sched) {

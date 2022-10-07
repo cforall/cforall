@@ -9,13 +9,14 @@
 // Author           : Thierry Delisle
 // Created On       : Fri Jun 24 13:16:31 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Sep 22 13:50:00 2022
-// Update Count     : 2
+// Last Modified On : Mon Oct  3 11:04:00 2022
+// Update Count     : 3
 //
 
 #include "Inspect.hpp"
 
 #include <iostream>
+#include <iterator>
 
 #include "AST/Decl.hpp"
 #include "AST/Expr.hpp"
@@ -26,28 +27,16 @@
 
 namespace ast {
 
-const Type * getPointerBase( const Type * t ) {
-	if ( const auto * p = dynamic_cast< const PointerType * >( t ) ) {
+const Type * getPointerBase( const Type * type ) {
+	if ( const auto * p = dynamic_cast< const PointerType * >( type ) ) {
 		return p->base;
-	} else if ( const auto * a = dynamic_cast< const ArrayType * >( t ) ) {
+	} else if ( auto a = dynamic_cast< const ArrayType * >( type ) ) {
 		return a->base;
-	} else if ( const auto * r = dynamic_cast< const ReferenceType * >( t ) ) {
+	} else if ( auto r = dynamic_cast< const ReferenceType * >( type ) ) {
 		return r->base;
 	} else {
 		return nullptr;
 	}
-}
-
-template<typename CallExpr>
-static const Expr * callArg( const CallExpr * call, unsigned int pos ) {
-	assertf( pos < call->args.size(),
-		"getCallArg for argument that doesn't exist: (%u); %s.",
-		pos, toString( call ).c_str() );
-	for ( const Expr * arg : call->args ) {
-		if ( 0 == pos ) return arg;
-		--pos;
-	}
-	assert( false );
 }
 
 template<typename CallExpr, typename Ret>
@@ -55,28 +44,29 @@ static Ret throughDeref( const CallExpr * expr, Ret(*func)( const Expr * ) ) {
 	// In `(*f)(x)` the function we want is `f`.
 	std::string name = getFunctionName( expr );
 	assertf( name == "*?", "Unexpected untyped expression: %s", name.c_str() );
-	assertf( !expr->args.empty(), "Cannot get function name from dereference with no arguments" );
+	assertf( !expr->args.empty(), "Cannot pass through dereference with no arguments." );
 	return func( expr->args.front() );
 }
 
 static const DeclWithType * getCalledFunction( const Expr * expr ) {
 	assert( expr );
-	if ( const ast::VariableExpr * varExpr = dynamic_cast< const ast::VariableExpr * >( expr ) ) {
+	if ( const auto * varExpr = dynamic_cast< const VariableExpr * >( expr ) ) {
 		return varExpr->var;
-	} else if ( const ast::MemberExpr * memberExpr = dynamic_cast< const ast::MemberExpr * >( expr ) ) {
+	} else if ( auto memberExpr = dynamic_cast< const MemberExpr * >( expr ) ) {
 		return memberExpr->member;
-	} else if ( const ast::CastExpr * castExpr = dynamic_cast< const ast::CastExpr * >( expr ) ) {
+	} else if ( auto castExpr = dynamic_cast< const CastExpr * >( expr ) ) {
 		return getCalledFunction( castExpr->arg );
-	} else if ( const ast::UntypedExpr * untypedExpr = dynamic_cast< const ast::UntypedExpr * >( expr ) ) {
+	} else if ( auto untypedExpr = dynamic_cast< const UntypedExpr * >( expr ) ) {
 		return throughDeref( untypedExpr, getCalledFunction );
-	} else if ( const ast::ApplicationExpr * appExpr = dynamic_cast< const ast::ApplicationExpr * > ( expr ) ) {
+	} else if ( auto appExpr = dynamic_cast< const ApplicationExpr * > ( expr ) ) {
 		return throughDeref( appExpr, getCalledFunction );
-	} else if ( const ast::AddressExpr * addrExpr = dynamic_cast< const ast::AddressExpr * >( expr ) ) {
+	} else if ( auto addrExpr = dynamic_cast< const AddressExpr * >( expr ) ) {
 		return getCalledFunction( addrExpr->arg );
-	} else if ( const ast::CommaExpr * commaExpr = dynamic_cast< const ast::CommaExpr * >( expr ) ) {
+	} else if ( auto commaExpr = dynamic_cast< const CommaExpr * >( expr ) ) {
 		return getCalledFunction( commaExpr->arg2 );
+	} else {
+		return nullptr;
 	}
-	return nullptr;
 }
 
 const DeclWithType * getFunction( const Expr * expr ) {
@@ -84,8 +74,9 @@ const DeclWithType * getFunction( const Expr * expr ) {
 		return getCalledFunction( app->func );
 	} else if ( auto untyped = dynamic_cast< const UntypedExpr * >( expr ) ) {
 		return getCalledFunction( untyped->func );
+	} else {
+		assertf( false, "getFunction received unknown expression: %s", toString( expr ).c_str() );
 	}
-	assertf( false, "getFunction received unknown expression: %s", toString( expr ).c_str() );
 }
 
 // There is a lot of overlap with getCalledFunction. Ideally it would use
@@ -93,21 +84,21 @@ const DeclWithType * getFunction( const Expr * expr ) {
 // NameExpr and UntypedMemberExpr only work on this version.
 static std::string funcName( const Expr * func ) {
 	assert( func );
-	if ( const ast::NameExpr * nameExpr = dynamic_cast< const ast::NameExpr * >( func ) ) {
+	if ( const auto * nameExpr = dynamic_cast< const NameExpr * >( func ) ) {
 		return nameExpr->name;
-	} else if ( const ast::VariableExpr * varExpr = dynamic_cast< const ast::VariableExpr * >( func ) ) {
+	} else if ( auto varExpr = dynamic_cast< const VariableExpr * >( func ) ) {
 		return varExpr->var->name;
-	} else if ( const ast::CastExpr * castExpr = dynamic_cast< const ast::CastExpr * >( func ) ) {
+	} else if ( auto castExpr = dynamic_cast< const CastExpr * >( func ) ) {
 		return funcName( castExpr->arg );
-	} else if ( const ast::MemberExpr * memberExpr = dynamic_cast< const ast::MemberExpr * >( func ) ) {
+	} else if ( auto memberExpr = dynamic_cast< const MemberExpr * >( func ) ) {
 		return memberExpr->member->name;
-	} else if ( const ast::UntypedMemberExpr * memberExpr = dynamic_cast< const ast::UntypedMemberExpr * > ( func ) ) {
+	} else if ( auto memberExpr = dynamic_cast< const UntypedMemberExpr * >( func ) ) {
 		return funcName( memberExpr->member );
-	} else if ( const ast::UntypedExpr * untypedExpr = dynamic_cast< const ast::UntypedExpr * >( func ) ) {
+	} else if ( auto untypedExpr = dynamic_cast< const UntypedExpr * >( func ) ) {
 		return throughDeref( untypedExpr, funcName );
-	} else if ( const ast::ApplicationExpr * appExpr = dynamic_cast< const ast::ApplicationExpr * >( func ) ) {
+	} else if ( auto appExpr = dynamic_cast< const ApplicationExpr * >( func ) ) {
 		return throughDeref( appExpr, funcName );
-	} else if ( const ast::ConstructorExpr * ctorExpr = dynamic_cast< const ast::ConstructorExpr * >( func ) ) {
+	} else if ( auto ctorExpr = dynamic_cast< const ConstructorExpr * >( func ) ) {
 		return funcName( getCallArg( ctorExpr->callExpr, 0 ) );
 	} else {
 		assertf( false, "Unexpected expression type being called as a function in call expression: %s", toString( func ).c_str() );
@@ -115,17 +106,24 @@ static std::string funcName( const Expr * func ) {
 }
 
 std::string getFunctionName( const Expr * expr ) {
-	// There's some unforunate overlap here with getCalledFunction. Ideally
-	// this would be able to use getCalledFunction and return the name of the
-	// DeclWithType, but this needs to work for NameExpr and UntypedMemberExpr,
-	// where getCalledFunction can't possibly do anything reasonable.
+	// There's some unforunate overlap here with getFunction. See above.
 	if ( auto app = dynamic_cast< const ApplicationExpr * >( expr ) ) {
 		return funcName( app->func );
 	} else if ( auto untyped = dynamic_cast< const UntypedExpr * >( expr ) ) {
 		return funcName( untyped->func );
 	} else {
-		assertf( false, "Unexpected expression type passed to getFunctionName: %s", toString( expr ).c_str() );
+		assertf( false, "getFunctionName received unknown expression: %s", toString( expr ).c_str() );
 	}
+}
+
+template<typename CallExpr>
+static const Expr * callArg( const CallExpr * call, unsigned int pos ) {
+	assertf( pos < call->args.size(),
+		"callArg for argument that doesn't exist: (%u); %s.",
+		pos, toString( call ).c_str() );
+	auto it = call->args.begin();
+	std::advance( it, pos );
+	return *it;
 }
 
 const Expr * getCallArg( const Expr * call, unsigned int pos ) {
@@ -136,15 +134,14 @@ const Expr * getCallArg( const Expr * call, unsigned int pos ) {
 	} else if ( auto tupleAssn = dynamic_cast< const TupleAssignExpr * >( call ) ) {
 		const std::list<ptr<Stmt>>& stmts = tupleAssn->stmtExpr->stmts->kids;
 		assertf( !stmts.empty(), "TupleAssignExpr missing statements." );
-		auto stmt  = strict_dynamic_cast< const ExprStmt * >( stmts.back().get() );
-		auto tuple = strict_dynamic_cast< const TupleExpr * >( stmt->expr.get() );
+		auto stmt  = stmts.back().strict_as< ExprStmt >();
+		auto tuple = stmt->expr.strict_as< TupleExpr >();
 		assertf( !tuple->exprs.empty(), "TupleAssignExpr has empty tuple expr." );
 		return getCallArg( tuple->exprs.front(), pos );
 	} else if ( auto ctor = dynamic_cast< const ImplicitCopyCtorExpr * >( call ) ) {
 		return getCallArg( ctor->callExpr, pos );
 	} else {
-		assertf( false, "Unexpected expression type passed to getCallArg: %s",
-			toString( call ).c_str() );
+		assertf( false, "Unexpected expression type passed to getCallArg: %s", toString( call ).c_str() );
 	}
 }
 
@@ -164,10 +161,10 @@ const ApplicationExpr * isIntrinsicCallExpr( const Expr * expr ) {
 	if ( !appExpr ) return nullptr;
 
 	const DeclWithType * func = getCalledFunction( appExpr->func );
-	assertf( func,
-		"getCalledFunction returned nullptr: %s", toString( appExpr->func ).c_str() );
+	assertf( func, "getCalledFunction returned nullptr: %s",
+		toString( appExpr->func ).c_str() );
 
-	return func->linkage == ast::Linkage::Intrinsic ? appExpr : nullptr;
+	return func->linkage == Linkage::Intrinsic ? appExpr : nullptr;
 }
 
 } // namespace ast

@@ -29,6 +29,7 @@ SRC += $(SRC_GENPOLY) \
 	GenPoly/InstantiateGenericNew.cpp \
 	GenPoly/InstantiateGeneric.cc \
 	GenPoly/InstantiateGeneric.h \
+	GenPoly/LvalueNew.cpp \
 	GenPoly/Lvalue.cc \
 	GenPoly/ScopedSet.h \
 	GenPoly/ScrubTyVars.cc \

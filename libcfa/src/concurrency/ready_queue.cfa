@@ -61,7 +61,7 @@ static inline struct thread$ * search(struct cluster * cltr);
 
 //-----------------------------------------------------------------------
 __attribute__((hot)) void push(struct cluster * cltr, struct thread$ * thrd, unpark_hint hint) with (cltr->sched) {
-	processor * const proc = kernelTLS().this_processor;
+	struct processor * const proc = kernelTLS().this_processor;
 	const bool external = (!proc) || (cltr != proc->cltr);
 	const bool remote   = hint == UNPARK_REMOTE;
 	const size_t lanes_count = readyQ.count;
@@ -115,7 +115,7 @@ __attribute__((hot)) struct thread$ * pop_fast(struct cluster * cltr) with (cltr
 	/* paranoid */ verify( kernelTLS().this_processor );
 	/* paranoid */ verify( kernelTLS().this_processor->rdq.id < lanes_count );
 
-	processor * const proc = kernelTLS().this_processor;
+	struct processor * const proc = kernelTLS().this_processor;
 	unsigned this = proc->rdq.id;
 	/* paranoid */ verify( this < lanes_count );
 	__cfadbg_print_safe(ready_queue, "Kernel : pop from %u\n", this);
@@ -138,8 +138,8 @@ __attribute__((hot)) struct thread$ * pop_fast(struct cluster * cltr) with (cltr
 		__cfadbg_print_safe(ready_queue, "Kernel : %u considering helping %u, tcsc %llu\n", this, target, readyQ.tscs[target].t.tv);
 		/* paranoid */ verify( readyQ.tscs[target].t.tv != ULLONG_MAX );
 		if(target < lanes_count) {
-			const unsigned long long cutoff = calc_cutoff(ctsc, proc->rdq.id, lanes_count, cltr->sched.readyQ.data, cltr->sched.readyQ.tscs, __shard_factor.readyq);
-			const unsigned long long age = moving_average(ctsc, readyQ.tscs[target].t.tv, readyQ.tscs[target].t.ma);
+			const __readyQ_avg_t cutoff = calc_cutoff(ctsc, proc->rdq.id, lanes_count, cltr->sched.readyQ.data, cltr->sched.readyQ.tscs, __shard_factor.readyq, true);
+			const __readyQ_avg_t age = moving_average(ctsc, readyQ.tscs[target].t.tv, readyQ.tscs[target].t.ma, false);
 			__cfadbg_print_safe(ready_queue, "Kernel : Help attempt on %u from %u, age %'llu vs cutoff %'llu, %s\n", target, this, age, cutoff, age > cutoff ? "yes" : "no");
 			if(age > cutoff) {
 				thread$ * t = try_pop(cltr, target __STATS(, __tls_stats()->ready.pop.help));
@@ -213,7 +213,7 @@ static inline struct thread$ * try_pop(struct cluster * cltr, unsigned w __STATS
 	// Update statistics
 	__STATS( stats.success++; )
 
-	touch_tsc(readyQ.tscs, w, ts_prev, ts_next);
+	touch_tsc(readyQ.tscs, w, ts_prev, ts_next, true);
 
 	thrd->preferred = w / __shard_factor.readyq;
 

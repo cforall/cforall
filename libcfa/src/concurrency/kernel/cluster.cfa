@@ -220,6 +220,9 @@ void ready_mutate_unlock( uint_fast32_t last_s ) with(__scheduler_lock.lock) {
 // Cluster growth
 static const unsigned __readyq_single_shard = 2;
 
+void  ?{}(__timestamp_t & this) { this.t.tv = 0; this.t.ma = 0; }
+void ^?{}(__timestamp_t &) {}
+
 //-----------------------------------------------------------------------
 // Check that all the intrusive queues in the data structure are still consistent
 static void check_readyQ( cluster * cltr ) with (cltr->sched) {
@@ -253,8 +256,8 @@ static inline void fix(__intrusive_lane_t & ll) {
 	}
 }
 
-static void assign_list(unsigned & valrq, unsigned & valio, dlist(processor) & list, unsigned count) {
-	processor * it = &list`first;
+static void assign_list(unsigned & valrq, unsigned & valio, dlist(struct processor) & list, unsigned count) {
+	struct processor * it = &list`first;
 	for(unsigned i = 0; i < count; i++) {
 		/* paranoid */ verifyf( it, "Unexpected null iterator, at index %u of %u\n", i, count);
 		it->rdq.id = valrq;
@@ -277,8 +280,8 @@ static void reassign_cltr_id(struct cluster * cltr) {
 }
 
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
-	static void assign_io(io_context$ ** data, size_t count, dlist(processor) & list) {
-		processor * it = &list`first;
+	static void assign_io(io_context$ ** data, size_t count, dlist(struct processor) & list) {
+		struct processor * it = &list`first;
 		while(it) {
 			/* paranoid */ verifyf( it, "Unexpected null iterator\n");
 			/* paranoid */ verifyf( it->io.ctx->cq.id < count, "Processor %p has id %u above count %zu\n", it, it->rdq.id, count);

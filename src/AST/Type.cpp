@@ -175,7 +175,7 @@ TupleType::TupleType( std::vector<ptr<Type>> && ts, CV::Qualifiers q )
 	members.reserve( types.size() );
 	for ( const Type * ty : types ) {
 		members.emplace_back( new ObjectDecl{
-			CodeLocation{}, "", ty, new ListInit( CodeLocation{}, {}, {}, NoConstruct ),
+			CodeLocation(), "", ty, new ListInit( CodeLocation(), {}, {}, NoConstruct ),
 			Storage::Classes{}, Linkage::Cforall } );
 	}
 }

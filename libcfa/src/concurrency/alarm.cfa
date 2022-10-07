@@ -54,7 +54,7 @@ void ?{}( alarm_node_t & this, thread$ * thrd, Duration alarm, Duration period) 
 	this.initial = alarm;
 	this.period  = period;
 	this.thrd = thrd;
-	this.timeval = __kernel_get_time() + alarm;
+	this.deadline = __kernel_get_time() + alarm;
 	set = false;
 	type = User;
 }
@@ -63,7 +63,7 @@ void ?{}( alarm_node_t & this, processor * proc, Duration alarm, Duration period
 	this.initial = alarm;
 	this.period  = period;
 	this.proc = proc;
-	this.timeval = __kernel_get_time() + alarm;
+	this.deadline = __kernel_get_time() + alarm;
 	set = false;
 	type = Kernel;
 }
@@ -71,7 +71,7 @@ void ?{}( alarm_node_t & this, Alarm_Callback callback, Duration alarm, Duration
 	this.callback = callback;
 	this.initial = alarm;
 	this.period  = period;
-	this.timeval = __kernel_get_time() + alarm;
+	this.deadline = __kernel_get_time() + alarm;
 	set = false;
 	type = Callback;
 }
@@ -84,7 +84,7 @@ void ^?{}( alarm_node_t & this ) {
 
 void insert( alarm_list_t * this, alarm_node_t * n ) {
 	alarm_node_t * it = & (*this)`first;
-	while( it && (n->timeval > it->timeval) ) {
+	while( it && (n->deadline > it->deadline) ) {
 		it = & (*it)`next;
 	}
 	if ( it ) {
@@ -115,9 +115,9 @@ void register_self( alarm_node_t * this ) {
 		/* paranoid */ verify( validate( alarms ) );
 
 		Time curr = __kernel_get_time();
-		__cfadbg_print_safe( preemption, " KERNEL: alarm inserting %p (%lu -> %lu).\n", this, curr.tn, this->timeval.tn );
+		__cfadbg_print_safe( preemption, " KERNEL: alarm inserting %p (%lu -> %lu).\n", this, curr.tn, this->deadline.tn );
 		insert( &alarms, this );
-		__kernel_set_timer( this->timeval - curr);
+		__kernel_set_timer( this->deadline - curr);
 		this->set = true;
 	}
 	unlock( event_kernel->lock );

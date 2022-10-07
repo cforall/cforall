@@ -880,11 +880,11 @@ bool InitExpander_new::addReference() {
 	ast::Expr * createBitwiseAssignment (const ast::Expr * dst, const ast::Expr * src) {
 		static ast::ptr<ast::FunctionDecl> assign = nullptr;
 		if (!assign) {
-			auto td = new ast::TypeDecl({}, "T", {}, nullptr, ast::TypeDecl::Dtype, true);
-			assign = new ast::FunctionDecl({}, "?=?", {},
-			{ new ast::ObjectDecl({}, "_dst", new ast::ReferenceType(new ast::TypeInstType("T", td))),
-			  new ast::ObjectDecl({}, "_src", new ast::TypeInstType("T", td))},
-			{ new ast::ObjectDecl({}, "_ret", new ast::TypeInstType("T", td))}, nullptr, {}, ast::Linkage::Intrinsic);
+			auto td = new ast::TypeDecl(CodeLocation(), "T", {}, nullptr, ast::TypeDecl::Dtype, true);
+			assign = new ast::FunctionDecl(CodeLocation(), "?=?", {},
+			{ new ast::ObjectDecl(CodeLocation(), "_dst", new ast::ReferenceType(new ast::TypeInstType("T", td))),
+			  new ast::ObjectDecl(CodeLocation(), "_src", new ast::TypeInstType("T", td))},
+			{ new ast::ObjectDecl(CodeLocation(), "_ret", new ast::TypeInstType("T", td))}, nullptr, {}, ast::Linkage::Intrinsic);
 		}
 		if (dst->result.as<ast::ReferenceType>()) {
 			for (int depth = dst->result->referenceDepth(); depth > 0; depth--) {

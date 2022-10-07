@@ -26,18 +26,21 @@ extern "C" {
 	#define __VSTRINGIFY__(str) __STRINGIFY__(str)
 	#define assertf( expr, fmt, ... ) ((expr) ? ((void)0) : __assert_fail_f(__VSTRINGIFY__(expr), __FILE__, __LINE__, __PRETTY_FUNCTION__, fmt, ## __VA_ARGS__ ))
 
+	void __assert_warn_f( const char assertion[], const char file[], unsigned int line, const char function[], const char fmt[], ... ) __attribute__((format( printf, 5, 6) ));
 	void __assert_fail_f( const char assertion[], const char file[], unsigned int line, const char function[], const char fmt[], ... ) __attribute__((noreturn, format( printf, 5, 6) ));
 #endif
 
 #if !defined(NDEBUG) && (defined(__CFA_DEBUG__) || defined(__CFA_VERIFY__))
+	#define __CFA_WITH_VERIFY__
 	#define verify(x) assert(x)
 	#define verifyf(x, ...) assertf(x, __VA_ARGS__)
 	#define verifyfail(...)
-	#define __CFA_WITH_VERIFY__
+	#define warnf( expr, fmt, ... ) ({ static bool check_once##__LINE__ = false; if( false == check_once##__LINE__ && false == (expr)) { check_once##__LINE__ = true; __assert_warn_f(__VSTRINGIFY__(expr), __FILE__, __LINE__, __PRETTY_FUNCTION__, fmt, ## __VA_ARGS__ ); } })
 #else
 	#define verify(x)
 	#define verifyf(x, ...)
 	#define verifyfail(...)
+	#define warnf( expr, fmt, ... )
 #endif
 
 #ifdef __cforall

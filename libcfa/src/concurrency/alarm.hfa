@@ -56,7 +56,7 @@ struct alarm_node_t {
 		Alarm_Callback callback;	// callback to handle event
 	};
 
-	Time timeval;           // actual time at which the alarm goes off
+	Time deadline;          // actual time at which the alarm goes off
 	enum alarm_type type;	// true if this is not a user defined alarm
 	bool set		:1;	// whether or not the alarm has be registered
 };

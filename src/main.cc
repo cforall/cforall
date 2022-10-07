@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu Sep 15 13:58:00 2022
-// Update Count     : 678
+// Last Modified On : Wed Oct  5 12:06:00 2022
+// Update Count     : 679
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -443,15 +443,14 @@ int main( int argc, char * argv[] ) {
 		PASS( "Virtual Expand Casts", Virtual::expandCasts( transUnit ) );
 
 		PASS( "Instantiate Generics", GenPoly::instantiateGeneric( transUnit ) );
-
-		translationUnit = convert( std::move( transUnit ) );
-
 		if ( genericsp ) {
-			dump( translationUnit );
+			dump( std::move( transUnit ) );
 			return EXIT_SUCCESS;
 		} // if
 
-		PASS( "Convert L-Value", GenPoly::convertLvalue( translationUnit ) );
+		PASS( "Convert L-Value", GenPoly::convertLvalue( transUnit ) );
+
+		translationUnit = convert( std::move( transUnit ) );
 
 		if ( bboxp ) {
 			dump( translationUnit );

@@ -65,16 +65,19 @@ namespace GenPoly {
 			TyVarMap scopeTyVars;
 		};
 
-		/// Adds layout-generation functions to polymorphic types
+		/// Adds layout-generation functions to polymorphic types.
 		class LayoutFunctionBuilder final : public WithDeclsToAdd, public WithVisitorRef<LayoutFunctionBuilder>, public WithShortCircuiting {
-			unsigned int functionNesting = 0;  // current level of nested functions
+			// Current level of nested functions:
+			unsigned int functionNesting = 0;
 		public:
 			void previsit( FunctionDecl *functionDecl );
 			void previsit( StructDecl *structDecl );
 			void previsit( UnionDecl *unionDecl );
 		};
 
-		/// Replaces polymorphic return types with out-parameters, replaces calls to polymorphic functions with adapter calls as needed, and adds appropriate type variables to the function call
+		/// Replaces polymorphic return types with out-parameters,
+		/// replaces calls to polymorphic functions with adapter calls,
+		/// and adds appropriate type variables to the function call.
 		class Pass1 final : public BoxPass, public WithConstTypeSubstitution, public WithStmtsToAdd, public WithGuards, public WithVisitorRef<Pass1>, public WithShortCircuiting {
 		  public:
 			Pass1();
@@ -145,7 +148,7 @@ namespace GenPoly {
 			std::map< UniqueId, std::string > adapterName;
 		};
 
-		/// Replaces member and size/align/offsetof expressions on polymorphic generic types with calculated expressions.
+		/// * Replaces member and size/align/offsetof expressions on polymorphic generic types with calculated expressions.
 		/// * Replaces member expressions for polymorphic types with calculated add-field-offset-and-dereference
 		/// * Calculates polymorphic offsetof expressions from offset array
 		/// * Inserts dynamic calculation of polymorphic type layouts where needed
@@ -198,7 +201,10 @@ namespace GenPoly {
 			bool expect_func_type = false;                 ///< used to avoid recursing too deep in type decls
 		};
 
-		/// Replaces initialization of polymorphic values with alloca, declaration of dtype/ftype with appropriate void expression, sizeof expressions of polymorphic types with the proper variable, and strips fields from generic struct declarations.
+		/// Replaces initialization of polymorphic values with alloca,
+		/// declaration of dtype/ftype with appropriate void expression,
+		/// sizeof expressions of polymorphic types with the proper variable,
+		/// and strips fields from generic struct declarations.
 		struct Pass3 final : public BoxPass, public WithGuards {
 			template< typename DeclClass >
 			void handleDecl( DeclClass * decl, Type * type );

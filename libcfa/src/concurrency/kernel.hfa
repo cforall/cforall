@@ -180,16 +180,10 @@ void  ?{}(__intrusive_lane_t & this);
 void ^?{}(__intrusive_lane_t & this);
 
 // Aligned timestamps which are used by the ready queue and io subsystem
-union __attribute__((aligned(64))) __timestamp_t {
-	struct {
-		volatile unsigned long long tv;
-		volatile unsigned long long ma;
-	} t;
-	char __padding[192];
-};
+union __attribute__((aligned(64))) __timestamp_t;
 
-static inline void  ?{}(__timestamp_t & this) { this.t.tv = 0; this.t.ma = 0; }
-static inline void ^?{}(__timestamp_t &) {}
+void  ?{}(__timestamp_t & this);
+void ^?{}(__timestamp_t &);
 
 
 struct __attribute__((aligned(16))) __cache_id_t {

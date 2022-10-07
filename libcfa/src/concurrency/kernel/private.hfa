@@ -48,8 +48,30 @@ extern "C" {
 	#endif
 #endif
 
+// #define READYQ_USE_LINEAR_AVG
+#define READYQ_USE_LOGDBL_AVG
+// #define READYQ_USE_LOGINT_AVG
+
+#if   defined(READYQ_USE_LINEAR_AVG)
+typedef unsigned long long __readyQ_avg_t;
+#elif defined(READYQ_USE_LOGDBL_AVG)
+typedef double __readyQ_avg_t;
+#elif defined(READYQ_USE_LOGDBL_AVG)
+typedef unsigned long long __readyQ_avg_t;
+#else
+#error must pick a scheme for averaging
+#endif
+
 //-----------------------------------------------------------------------------
 // Scheduler
+union __attribute__((aligned(64))) __timestamp_t {
+	struct {
+		volatile unsigned long long tv;
+		volatile __readyQ_avg_t ma;
+	} t;
+	char __padding[192];
+};
+
 extern "C" {
 	void disable_interrupts() OPTIONAL_THREAD;
 	void enable_interrupts( bool poll = true );

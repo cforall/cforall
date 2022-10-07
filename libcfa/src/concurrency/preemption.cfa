@@ -103,7 +103,7 @@ static void ?{}(event_kernel_t & this) with( this ) {
 // Get next expired node
 static inline alarm_node_t * get_expired( alarm_list_t * alarms, Time currtime ) {
 	if( ! & (*alarms)`first ) return 0p;						// If no alarms return null
-	if( (*alarms)`first.timeval >= currtime ) return 0p;	// If alarms head not expired return null
+	if( (*alarms)`first.deadline >= currtime ) return 0p;	// If alarms head not expired return null
 	return pop(alarms);									// Otherwise just pop head
 }
 
@@ -139,14 +139,14 @@ static void tick_preemption(void) {
 		// Check if this is a periodic alarm
 		if( period > 0 ) {
 			__cfadbg_print_buffer_local( preemption, " KERNEL: alarm period is %lu.\n", period`ns );
-			node->timeval = currtime + period;  // Alarm is periodic, add currtime to it (used cached current time)
+			node->deadline = currtime + period;  // Alarm is periodic, add currtime to it (used cached current time)
 			insert( alarms, node );             // Reinsert the node for the next time it triggers
 		}
 	}
 
 	// If there are still alarms pending, reset the timer
 	if( & (*alarms)`first ) {
-		Duration delta = (*alarms)`first.timeval - currtime;
+		Duration delta = (*alarms)`first.deadline - currtime;
 		__kernel_set_timer( delta );
 	}
 }

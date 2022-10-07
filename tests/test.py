@@ -22,7 +22,7 @@ def find_tests():
 	expected = []
 
 	def match_test(path):
-		match = re.search("^%s\/([\w\/\-_]*).expect\/([\w\-_]+)(\.[\w\-_]+)?\.txt$" % settings.SRCDIR, path)
+		match = re.search("^%s\/([\w\/\-_]*).expect\/([\w\-_\+]+)(\.[\w\-_]+)?\.txt$" % settings.SRCDIR, path)
 		if match :
 			test = Test()
 			test.name = match.group(2)
@@ -189,7 +189,7 @@ def run_single_test(test):
 			with Timed() as run_dur:
 				if settings.dry_run or is_exe(exe_file):
 					# run test
-					retcode, _, _ = sh(exe_file, output_file=out_file, input_file=in_file, timeout=True)
+					retcode, _, _ = sh(exe_file, output_file=out_file, input_file=in_file, timeout=True, nice=True)
 				else :
 					# simply cat the result into the output
 					retcode = cat(exe_file, out_file)

@@ -200,12 +200,12 @@
 
 		__atomic_unlock(&ctx->cq.lock);
 
-		touch_tsc( cltr->sched.io.tscs, ctx->cq.id, ts_prev, ts_next );
+		touch_tsc( cltr->sched.io.tscs, ctx->cq.id, ts_prev, ts_next, false );
 
 		return true;
 	}
 
-	bool __cfa_io_drain( processor * proc ) {
+	bool __cfa_io_drain( struct processor * proc ) {
 		bool local = false;
 		bool remote = false;
 
@@ -242,8 +242,8 @@
 				const unsigned target = proc->io.target;
 				/* paranoid */ verify( io.tscs[target].t.tv != ULLONG_MAX );
 				HELP: if(target < ctxs_count) {
-					const unsigned long long cutoff = calc_cutoff(ctsc, ctx->cq.id, ctxs_count, io.data, io.tscs, __shard_factor.io);
-					const unsigned long long age = moving_average(ctsc, io.tscs[target].t.tv, io.tscs[target].t.ma);
+					const __readyQ_avg_t cutoff = calc_cutoff(ctsc, ctx->cq.id, ctxs_count, io.data, io.tscs, __shard_factor.io, false);
+					const __readyQ_avg_t age = moving_average(ctsc, io.tscs[target].t.tv, io.tscs[target].t.ma, false);
 					__cfadbg_print_safe(io, "Kernel I/O: Help attempt on %u from %u, age %'llu vs cutoff %'llu, %s\n", target, ctx->cq.id, age, cutoff, age > cutoff ? "yes" : "no");
 					if(age <= cutoff) break HELP;
 
@@ -272,7 +272,7 @@
 		return local || remote;
 	}
 
-	bool __cfa_io_flush( processor * proc ) {
+	bool __cfa_io_flush( struct processor * proc ) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( proc );
 		/* paranoid */ verify( proc->io.ctx );
@@ -352,7 +352,7 @@
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to allocate %u\n", want);
 
 		disable_interrupts();
-		processor * proc = __cfaabi_tls.this_processor;
+		struct processor * proc = __cfaabi_tls.this_processor;
 		io_context$ * ctx = proc->io.ctx;
 		/* paranoid */ verify( __cfaabi_tls.this_processor );
 		/* paranoid */ verify( ctx );
@@ -432,7 +432,7 @@
 
 		disable_interrupts();
 		__STATS__( true, if(!lazy) io.submit.eagr += 1; )
-		processor * proc = __cfaabi_tls.this_processor;
+		struct processor * proc = __cfaabi_tls.this_processor;
 		io_context$ * ctx = proc->io.ctx;
 		/* paranoid */ verify( __cfaabi_tls.this_processor );
 		/* paranoid */ verify( ctx );
@@ -640,7 +640,7 @@
 	}
 
 	#if defined(CFA_WITH_IO_URING_IDLE)
-		bool __kernel_read(processor * proc, io_future_t & future, iovec & iov, int fd) {
+		bool __kernel_read(struct processor * proc, io_future_t & future, iovec & iov, int fd) {
 			io_context$ * ctx = proc->io.ctx;
 			/* paranoid */ verify( ! __preemption_enabled() );
 			/* paranoid */ verify( proc == __cfaabi_tls.this_processor );
@@ -691,7 +691,7 @@
 			return true;
 		}
 
-		void __cfa_io_idle( processor * proc ) {
+		void __cfa_io_idle( struct processor * proc ) {
 			iovec iov;
 			__atomic_acquire( &proc->io.ctx->cq.lock );
 

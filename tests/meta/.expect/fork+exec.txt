@@ -1,0 +1,44 @@
+no arg:
+arguments are:
+    None
+Success!
+Child status:
+    WIFEXITED   : 1
+    WEXITSTATUS : 0
+    WIFSIGNALED : 0
+    WTERMSIG    : 0
+    WCOREDUMP   : 0
+    WIFSTOPPED  : 0
+    WSTOPSIG    : 0
+    WIFCONTINUED: 0
+1 arg:
+arguments are:
+    'Hello World!'
+Success!
+Child status:
+    WIFEXITED   : 1
+    WEXITSTATUS : 0
+    WIFSIGNALED : 0
+    WTERMSIG    : 0
+    WCOREDUMP   : 0
+    WIFSTOPPED  : 0
+    WSTOPSIG    : 0
+    WIFCONTINUED: 0
+5 arg:
+arguments are:
+    'Hi,'
+    'my'
+    'name'
+    'is'
+    'Fred'
+Success!
+Child status:
+    WIFEXITED   : 1
+    WEXITSTATUS : 0
+    WIFSIGNALED : 0
+    WTERMSIG    : 0
+    WCOREDUMP   : 0
+    WIFSTOPPED  : 0
+    WSTOPSIG    : 0
+    WIFCONTINUED: 0
+All Done!

@@ -24,6 +24,7 @@ extern "C" {
 	extern const char * __progname;						// global name of running executable (argv[0])
 
 	#define CFA_ASSERT_FMT "Cforall Assertion error \"%s\" from program \"%s\" in \"%s\" at line %d in file \"%s\""
+	#define CFA_WARNING_FMT "Cforall Assertion warning \"%s\" from program \"%s\" in \"%s\" at line %d in file \"%s\""
 
 	// called by macro assert in assert.h
 	// would be cool to remove libcfa_public but it's needed for libcfathread
@@ -46,6 +47,21 @@ extern "C" {
 		__cfaabi_bits_print_nolock( STDERR_FILENO, "\n" );
 		__cfaabi_bits_release();
 		abort();
+	}
+
+	// called by macro warnf
+	// would be cool to remove libcfa_public but it's needed for libcfathread
+	void __assert_warn_f( const char assertion[], const char file[], unsigned int line, const char function[], const char fmt[], ... ) libcfa_public {
+		__cfaabi_bits_acquire();
+		__cfaabi_bits_print_nolock( STDERR_FILENO, CFA_WARNING_FMT ": ", assertion, __progname, function, line, file );
+
+		va_list args;
+		va_start( args, fmt );
+		__cfaabi_bits_print_vararg( STDERR_FILENO, fmt, args );
+		va_end( args );
+
+		__cfaabi_bits_print_nolock( STDERR_FILENO, "\n" );
+		__cfaabi_bits_release();
 	}
 }
 

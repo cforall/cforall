@@ -315,7 +315,7 @@ void SymbolTable::addType( const NamedTypeDecl * decl ) {
 }
 
 void SymbolTable::addStruct( const std::string &id ) {
-	addStruct( new StructDecl( CodeLocation{}, id ) );
+	addStruct( new StructDecl( CodeLocation(), id ) );
 }
 
 void SymbolTable::addStruct( const StructDecl * decl ) {
@@ -357,7 +357,7 @@ void SymbolTable::addEnum( const EnumDecl *decl ) {
 }
 
 void SymbolTable::addUnion( const std::string &id ) {
-	addUnion( new UnionDecl( CodeLocation{}, id ) );
+	addUnion( new UnionDecl( CodeLocation(), id ) );
 }
 
 void SymbolTable::addUnion( const UnionDecl * decl ) {

@@ -126,7 +126,7 @@ extern "C" {
 
 	struct __attribute__((aligned(64))) io_context$ {
 		io_arbiter$ * arbiter;
-		processor * proc;
+		struct processor * proc;
 
 		__outstanding_io_queue ext_sq;
 
