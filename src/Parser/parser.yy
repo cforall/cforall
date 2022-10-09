@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 26 08:45:53 2022
-// Update Count     : 5704
+// Last Modified On : Sat Oct  8 08:21:18 2022
+// Update Count     : 5709
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -102,16 +102,16 @@ bool appendStr( string & to, string & from ) {
 DeclarationNode * distAttr( DeclarationNode * typeSpec, DeclarationNode * declList ) {
 	// distribute declaration_specifier across all declared variables, e.g., static, const, but not __attribute__.
 	assert( declList );
-//	printf( "distAttr1 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout );
+	// printf( "distAttr1 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout );
 	DeclarationNode * cur = declList, * cl = (new DeclarationNode)->addType( typeSpec );
-//	printf( "distAttr2 cl %p\n", cl ); cl->type->print( std::cout );
-//	cl->type->aggregate.name = cl->type->aggInst.aggregate->aggregate.name;
+	// printf( "distAttr2 cl %p\n", cl ); cl->type->print( std::cout );
+	// cl->type->aggregate.name = cl->type->aggInst.aggregate->aggregate.name;
 
 	for ( cur = dynamic_cast<DeclarationNode *>( cur->get_next() ); cur != nullptr; cur = dynamic_cast<DeclarationNode *>( cur->get_next() ) ) {
 		cl->cloneBaseType( cur );
 	} // for
 	declList->addType( cl );
-//	printf( "distAttr3 declList %p\n", declList ); declList->print( std::cout, 0 );
+	// printf( "distAttr3 declList %p\n", declList ); declList->print( std::cout, 0 );
 	return declList;
 } // distAttr
 
@@ -3042,6 +3042,7 @@ external_definition:
 			linkageStack.pop();
 			$$ = $6;
 		}
+	// global distribution
 	| type_qualifier_list
 		{
 			if ( $1->type->qualifiers.val ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
@@ -3066,8 +3067,8 @@ external_definition:
 		}
 	| declaration_qualifier_list type_qualifier_list
 		{
-			if ( ($1->type && $1->type->qualifiers.val) || $2->type->qualifiers.val ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
-			if ( ($1->type && $1->type->forall) || $2->type->forall ) forall = true; // remember generic type
+			if ( ($1->type && $1->type->qualifiers.val) || ($2->type && $2->type->qualifiers.val) ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
+			if ( ($1->type && $1->type->forall) || ($2->type && $2->type->forall) ) forall = true; // remember generic type
 		}
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
 		{

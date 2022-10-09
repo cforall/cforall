@@ -168,7 +168,7 @@ namespace CodeGen {
 	}
 
 	void GenType::postvisit( ReferenceType * refType ) {
-		assert( refType->base != 0);
+		assert( 0 != refType->base );
 		assertf( ! options.genC, "Reference types should not reach code generation." );
 		handleQualifiers( refType );
 		typeString = "&" + typeString;

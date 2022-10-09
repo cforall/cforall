@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Sep 14  9:24:00 2022
-// Update Count     : 15
+// Last Modified On : Fri Oct  7 15:25:00 2022
+// Update Count     : 16
 //
 
 #include "GenPoly.h"
@@ -63,15 +63,6 @@ namespace GenPoly {
 			return false;
 		}
 
-		__attribute__((unused))
-		bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const TyVarMap & tyVars, const ast::TypeSubstitution * env) {
-			for (auto &param : params) {
-				auto paramType = param.strict_as<ast::TypeExpr>();
-				if (isPolyType(paramType->type, tyVars, env)) return true;
-			}
-			return false;
-		}
-
 		/// Checks a parameter list for dynamic-layout parameters from tyVars; will substitute according to env if present
 		bool hasDynParams( std::list< Expression* >& params, const TyVarMap &tyVars, const TypeSubstitution *env ) {
 			for ( std::list< Expression* >::iterator param = params.begin(); param != params.end(); ++param ) {
@@ -82,11 +73,14 @@ namespace GenPoly {
 			return false;
 		}
 
-		bool hasDynParams( const std::vector<ast::ptr<ast::Expr>> & params, const TyVarMap &tyVars, const ast::TypeSubstitution *typeSubs ) {
-			for ( ast::ptr<ast::Expr> const & param : params ) {
-				auto paramType = param.as<ast::TypeExpr>();
-				assertf( paramType, "Aggregate parameters should be type expressions." );
-				if ( isDynType( paramType->type, tyVars, typeSubs ) ) {
+		bool hasDynParams(
+				const std::vector<ast::ptr<ast::Expr>> & params,
+				const TypeVarMap & typeVars,
+				const ast::TypeSubstitution * subst ) {
+			for ( ast::ptr<ast::Expr> const & paramExpr : params ) {
+				auto param = paramExpr.as<ast::TypeExpr>();
+				assertf( param, "Aggregate parameters should be type expressions." );
+				if ( isDynType( param->type.get(), typeVars, subst ) ) {
 					return true;
 				}
 			}
@@ -194,6 +188,22 @@ namespace GenPoly {
 		return nullptr;
 	}
 
+const ast::Type * isPolyType( const ast::Type * type,
+		const TypeVarMap & typeVars, const ast::TypeSubstitution * subst ) {
+	type = replaceTypeInst( type, subst );
+
+	if ( auto inst = dynamic_cast< const ast::TypeInstType * >( type ) ) {
+		if ( typeVars.find( inst->typeString() ) != typeVars.end() ) return type;
+	} else if ( auto array = dynamic_cast< const ast::ArrayType * >( type ) ) {
+		return isPolyType( array->base, subst );
+	} else if ( auto sue = dynamic_cast< const ast::StructInstType * >( type ) ) {
+		if ( hasPolyParams( sue->params, subst ) ) return type;
+	} else if ( auto sue = dynamic_cast< const ast::UnionInstType * >( type ) ) {
+		if ( hasPolyParams( sue->params, subst ) ) return type;
+	}
+	return nullptr;
+}
+
 	ReferenceToType *isDynType( Type *type, const TyVarMap &tyVars, const TypeSubstitution *env ) {
 		type = replaceTypeInst( type, env );
 
@@ -210,31 +220,40 @@ namespace GenPoly {
 		return 0;
 	}
 
-	const ast::BaseInstType *isDynType( const ast::Type *type, const TyVarMap &tyVars, const ast::TypeSubstitution *typeSubs ) {
-		type = replaceTypeInst( type, typeSubs );
+const ast::BaseInstType * isDynType(
+		const ast::Type * type, const TypeVarMap & typeVars,
+		const ast::TypeSubstitution * subst ) {
+	type = replaceTypeInst( type, subst );
 
-		if ( auto inst = dynamic_cast<ast::TypeInstType const *>( type ) ) {
-			auto var = tyVars.find( inst->name );
-			if ( var != tyVars.end() && var->second.isComplete ) {
-				return inst;
-			}
-		} else if ( auto inst = dynamic_cast<ast::StructInstType const *>( type ) ) {
-			if ( hasDynParams( inst->params, tyVars, typeSubs ) ) {
-				return inst;
-			}
-		} else if ( auto inst = dynamic_cast<ast::UnionInstType const *>( type ) ) {
-			if ( hasDynParams( inst->params, tyVars, typeSubs ) ) {
-				return inst;
-			}
+	if ( auto inst = dynamic_cast<ast::TypeInstType const *>( type ) ) {
+		auto var = typeVars.find( inst->name );
+		if ( var != typeVars.end() && var->second.isComplete ) {
+
 		}
-		return nullptr;
+	} else if ( auto inst = dynamic_cast<ast::StructInstType const *>( type ) ) {
+		if ( hasDynParams( inst->params, typeVars, subst ) ) {
+			return inst;
+		}
+	} else if ( auto inst = dynamic_cast<ast::UnionInstType const *>( type ) ) {
+		if ( hasDynParams( inst->params, typeVars, subst ) ) {
+			return inst;
+		}
 	}
+	return nullptr;
+}
 
 	ReferenceToType *isDynRet( FunctionType *function, const TyVarMap &forallTypes ) {
 		if ( function->get_returnVals().empty() ) return 0;
 
 		return (ReferenceToType*)isDynType( function->get_returnVals().front()->get_type(), forallTypes );
 	}
+
+const ast::BaseInstType *isDynRet(
+		const ast::FunctionType * type, const TypeVarMap & typeVars ) {
+	if ( type->returns.empty() ) return nullptr;
+
+	return isDynType( type->returns.front(), typeVars );
+}
 
 	ReferenceToType *isDynRet( FunctionType *function ) {
 		if ( function->get_returnVals().empty() ) return 0;
@@ -258,6 +277,18 @@ namespace GenPoly {
 		} // for
 		return false;
 	}
+
+bool needsAdapter(
+		ast::FunctionType const * adaptee, const TypeVarMap & typeVars ) {
+	if ( isDynRet( adaptee, typeVars ) ) return true;
+
+	for ( auto param : adaptee->params ) {
+		if ( isDynType( param, typeVars ) ) {
+			return true;
+		}
+	}
+	return false;
+}
 
 	Type *isPolyPtr( Type *type, const TypeSubstitution *env ) {
 		type = replaceTypeInst( type, env );
@@ -310,6 +341,26 @@ namespace GenPoly {
 
 		return isPolyType( type, tyVars, env );
 	}
+
+ast::Type const * hasPolyBase(
+		ast::Type const * type, const TypeVarMap & typeVars,
+		int * levels, const ast::TypeSubstitution * subst ) {
+	int level_count = 0;
+
+	while ( true ) {
+		type = replaceTypeInst( type, subst );
+
+		if ( auto ptr = dynamic_cast<ast::PointerType const *>( type ) ) {
+			type = ptr->base;
+			++level_count;
+		} else {
+			break;
+		}
+	}
+
+	if ( nullptr != levels ) { *levels = level_count; }
+	return isPolyType( type, typeVars, subst );
+}
 
 	bool includesPolyType( Type *type, const TypeSubstitution *env ) {
 		type = replaceTypeInst( type, env );
@@ -684,14 +735,6 @@ bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 	}
 }
 
-	namespace {
-		// temporary hack to avoid re-implementing anything related to TyVarMap
-		// does this work? these two structs have identical definitions.
-		inline TypeDecl::Data convData(const ast::TypeDecl::Data & data) {
-			return *reinterpret_cast<const TypeDecl::Data *>(&data);
-		}
-	}
-
 	bool needsBoxing( Type * param, Type * arg, const TyVarMap &exprTyVars, const TypeSubstitution * env ) {
 		// is parameter is not polymorphic, don't need to box
 		if ( ! isPolyType( param, exprTyVars ) ) return false;
@@ -702,14 +745,19 @@ bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 		return ! isPolyType( newType );
 	}
 
-	bool needsBoxing( const ast::Type * param, const ast::Type * arg, const TyVarMap &exprTyVars, const ast::TypeSubstitution * env) {
-		// is parameter is not polymorphic, don't need to box
-		if ( ! isPolyType( param, exprTyVars ) ) return false;
-		ast::ptr<ast::Type> newType = arg;
-		if ( env ) env->apply( newType );
-		// if the argument's type is polymorphic, we don't need to box again!
-		return ! isPolyType( newType );
+bool needsBoxing( const ast::Type * param, const ast::Type * arg,
+		const TypeVarMap & typeVars, const ast::TypeSubstitution * subst ) {
+	// Don't need to box if the parameter is not polymorphic.
+	if ( !isPolyType( param, typeVars ) ) return false;
+
+	ast::ptr<ast::Type> newType = arg;
+	if ( subst ) {
+		int count = subst->apply( newType );
+		(void)count;
 	}
+	// Only need to box if the argument is not also polymorphic.
+	return !isPolyType( newType );
+}
 
 	bool needsBoxing( Type * param, Type * arg, ApplicationExpr * appExpr, const TypeSubstitution * env ) {
 		FunctionType * function = getFunctionType( appExpr->function->result );
@@ -719,22 +767,24 @@ bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 		return needsBoxing( param, arg, exprTyVars, env );
 	}
 
-	bool needsBoxing( const ast::Type * param, const ast::Type * arg, const ast::ApplicationExpr * appExpr, const ast::TypeSubstitution * env) {
-		const ast::FunctionType * function = getFunctionType(appExpr->func->result);
-		assertf( function, "ApplicationExpr has non-function type: %s", toString( appExpr->func->result ).c_str() );
-		TyVarMap exprTyVars(TypeDecl::Data{});
-		makeTyVarMap(function, exprTyVars);
-		return needsBoxing(param, arg, exprTyVars, env);
-
-	}
+bool needsBoxing(
+		const ast::Type * param, const ast::Type * arg,
+		const ast::ApplicationExpr * expr,
+		const ast::TypeSubstitution * subst ) {
+	const ast::FunctionType * function = getFunctionType( expr->func->result );
+	assertf( function, "ApplicationExpr has non-function type: %s", toString( expr->func->result ).c_str() );
+	TypeVarMap exprTyVars = { ast::TypeDecl::Data() };
+	makeTypeVarMap( function, exprTyVars );
+	return needsBoxing( param, arg, exprTyVars, subst );
+}
 
 	void addToTyVarMap( TypeDecl * tyVar, TyVarMap &tyVarMap ) {
 		tyVarMap.insert( tyVar->name, TypeDecl::Data{ tyVar } );
 	}
 
-	void addToTyVarMap( const ast::TypeInstType * tyVar, TyVarMap & tyVarMap) {
-		tyVarMap.insert(tyVar->typeString(), convData(ast::TypeDecl::Data{tyVar->base}));
-	}
+void addToTypeVarMap( const ast::TypeInstType * type, TypeVarMap & typeVars ) {
+	typeVars.insert( type->typeString(), ast::TypeDecl::Data( type->base ) );
+}
 
 	void makeTyVarMap( Type *type, TyVarMap &tyVarMap ) {
 		for ( Type::ForallList::const_iterator tyVar = type->get_forall().begin(); tyVar != type->get_forall().end(); ++tyVar ) {
@@ -746,17 +796,17 @@ bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 		}
 	}
 
-	void makeTyVarMap(const ast::Type * type, TyVarMap & tyVarMap) {
-		if (auto ptype = dynamic_cast<const ast::FunctionType *>(type)) {
- 			for (auto & tyVar : ptype->forall) {
-				assert (tyVar);
-				addToTyVarMap(tyVar, tyVarMap);
-			}
-		}
-		if (auto pointer = dynamic_cast<const ast::PointerType *>(type)) {
-			makeTyVarMap(pointer->base, tyVarMap);
+void makeTypeVarMap( const ast::Type * type, TypeVarMap & typeVars ) {
+	if ( auto func = dynamic_cast<ast::FunctionType const *>( type ) ) {
+		for ( auto & typeVar : func->forall ) {
+			assert( typeVar );
+			addToTypeVarMap( typeVar, typeVars );
 		}
 	}
+	if ( auto pointer = dynamic_cast<ast::PointerType const *>( type ) ) {
+		makeTypeVarMap( pointer->base, typeVars );
+	}
+}
 
 	void printTyVarMap( std::ostream &os, const TyVarMap &tyVarMap ) {
 		for ( TyVarMap::const_iterator i = tyVarMap.begin(); i != tyVarMap.end(); ++i ) {
@@ -764,6 +814,13 @@ bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 		} // for
 		os << std::endl;
 	}
+
+void printTypeVarMap( std::ostream &os, const TypeVarMap & typeVars ) {
+	for ( auto const & pair : typeVars ) {
+		os << pair.first << " (" << pair.second << ") ";
+	} // for
+	os << std::endl;
+}
 
 } // namespace GenPoly
 

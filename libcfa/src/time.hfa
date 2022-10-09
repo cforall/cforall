@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Mar 14 23:18:57 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 21 06:32:31 2021
-// Update Count     : 667
+// Last Modified On : Sat Oct  8 09:07:48 2022
+// Update Count     : 668
 //
 
 #pragma once
@@ -26,7 +26,7 @@ enum { TIMEGRAN = 1_000_000_000LL };					// nanosecond granularity, except for t
 
 //######################### Duration #########################
 
-static inline {
+static inline __attribute__((always_inline)) {
 	void ?{}( Duration & dur, timeval t ) with( dur ) { tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_usec * 1000; }
 	void ?{}( Duration & dur, timespec t ) with( dur ) { tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_nsec; }
 
@@ -114,7 +114,7 @@ static inline {
 
 //######################### C timeval #########################
 
-static inline {
+static inline __attribute__((always_inline)) {
 	void ?{}( timeval & t ) {}
 	void ?{}( timeval & t, time_t sec, suseconds_t usec ) { t.tv_sec = sec; t.tv_usec = usec; }
 	void ?{}( timeval & t, time_t sec ) { t{ sec, 0 }; }
@@ -129,7 +129,7 @@ static inline {
 
 //######################### C timespec #########################
 
-static inline {
+static inline __attribute__((always_inline)) {
 	void ?{}( timespec & t ) {}
 	void ?{}( timespec & t, time_t sec, __syscall_slong_t nsec ) { t.tv_sec = sec; t.tv_nsec = nsec; }
 	void ?{}( timespec & t, time_t sec ) { t{ sec, 0}; }
@@ -144,7 +144,7 @@ static inline {
 
 //######################### C itimerval #########################
 
-static inline {
+static inline __attribute__((always_inline)) {
 	void ?{}( itimerval & itv, Duration alarm ) with( itv ) {
 		// itimerval contains durations but but uses time data-structure timeval.
 		it_value{ alarm`s, (alarm % 1`s)`us };			// seconds, microseconds
@@ -161,7 +161,7 @@ static inline {
 //######################### Time #########################
 
 void ?{}( Time & time, int year, int month = 1, int day = 1, int hour = 0, int min = 0, int sec = 0, int64_t nsec = 0 );
-static inline {
+static inline __attribute__((always_inline)) {
 	void ?{}( Time & time, timeval t ) with( time ) { tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_usec * 1000; }
 	void ?{}( Time & time, timespec t ) with( time ) { tn = (int64_t)t.tv_sec * TIMEGRAN + t.tv_nsec; }
 
@@ -193,17 +193,17 @@ static inline {
 } // distribution
 
 char * yy_mm_dd( Time time, char * buf );
-static inline char * ?`ymd( Time time, char * buf ) {	// short form
+static inline __attribute__((always_inline)) char * ?`ymd( Time time, char * buf ) {	// short form
 	return yy_mm_dd( time, buf );
 } // ymd
 
 char * mm_dd_yy( Time time, char * buf );
-static inline char * ?`mdy( Time time, char * buf ) {	// short form
+static inline __attribute__((always_inline)) char * ?`mdy( Time time, char * buf ) {	// short form
 	return mm_dd_yy( time, buf );
 } // mdy
 
 char * dd_mm_yy( Time time, char * buf );
-static inline char * ?`dmy( Time time, char * buf ) {	// short form
+static inline __attribute__((always_inline)) char * ?`dmy( Time time, char * buf ) {	// short form
 	return dd_mm_yy( time, buf );;
 } // dmy
 
@@ -211,14 +211,14 @@ size_t strftime( char buf[], size_t size, const char fmt[], Time time );
 
 //------------------------- timeval (cont) -------------------------
 
-static inline void ?{}( timeval & t, Time time ) with( t, time ) {
+static inline __attribute__((always_inline)) void ?{}( timeval & t, Time time ) with( t, time ) {
 	tv_sec = tn / TIMEGRAN;								// seconds
 	tv_usec = tn % TIMEGRAN / (TIMEGRAN / 1_000_000LL);	// microseconds
 } // ?{}
 
 //------------------------- timespec (cont) -------------------------
 
-static inline void ?{}( timespec & t, Time time ) with( t, time ) {
+static inline __attribute__((always_inline)) void ?{}( timespec & t, Time time ) with( t, time ) {
 	tv_sec = tn / TIMEGRAN;								// seconds
 	tv_nsec = tn % TIMEGRAN;							// nanoseconds
 } // ?{}

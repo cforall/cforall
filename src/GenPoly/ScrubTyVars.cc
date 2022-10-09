@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Aug 19 16:10:00 2022
-// Update Count     : 4
+// Last Modified On : Fri Oct  7 15:42:00 2022
+// Update Count     : 5
 //
 
 #include <utility>                      // for pair
@@ -127,7 +127,7 @@ struct ScrubTypeVars :
 	public ast::WithShortCircuiting,
 	public ast::WithVisitorRef<ScrubTypeVars> {
 
-	ScrubTypeVars( ScrubMode m, TyVarMap const * tv ) :
+	ScrubTypeVars( ScrubMode m, TypeVarMap const * tv ) :
 			mode ( m ), typeVars( tv ) {}
 
 	void previsit( ast::TypeInstType const * ) { visit_children = false; }
@@ -147,7 +147,7 @@ struct ScrubTypeVars :
 private:
 	ScrubMode const mode;
 	/// Type varriables to scrub.
-	TyVarMap const * const typeVars;
+	TypeVarMap const * const typeVars;
 	/// Value cached by primeBaseScrub.
 	ast::Type const * dynType = nullptr;
 
@@ -254,7 +254,7 @@ ast::Type const * ScrubTypeVars::postvisit( ast::PointerType const * type ) {
 
 const ast::Node * scrubTypeVarsBase(
 		const ast::Node * target,
-		ScrubMode mode, const TyVarMap * typeVars ) {
+		ScrubMode mode, const TypeVarMap * typeVars ) {
 	if ( ScrubMode::All == mode ) {
 		assert( nullptr == typeVars );
 	} else {
@@ -265,6 +265,18 @@ const ast::Node * scrubTypeVarsBase(
 }
 
 } // namespace
+
+template<>
+ast::Node const * scrubTypeVars<ast::Node>(
+        const ast::Node * target, const TypeVarMap & typeVars ) {
+	return scrubTypeVarsBase( target, ScrubMode::FromMap, &typeVars );
+}
+
+template<>
+ast::Node const * scrubTypeVarsDynamic<ast::Node>(
+        ast::Node const * target, const TypeVarMap & typeVars ) {
+	return scrubTypeVarsBase( target, ScrubMode::DynamicFromMap, &typeVars );
+}
 
 template<>
 ast::Node const * scrubAllTypeVars<ast::Node>( const ast::Node * target ) {

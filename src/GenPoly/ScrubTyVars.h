@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Aug 19 14:14:00 2022
-// Update Count     : 3
+// Last Modified On : Fri Oct  7 15:51:00 2022
+// Update Count     : 4
 //
 
 #pragma once
@@ -108,12 +108,42 @@ namespace GenPoly {
 		return static_cast< SynTreeClass * >( target->acceptMutator( scrubber ) );
 	}
 
+/// For all polymorphic types with type variables in `typeVars`,
+/// replaces generic types, dtypes, and ftypes with the appropriate void type,
+/// and sizeof/alignof expressions with the proper variable.
+template<typename node_t>
+node_t const * scrubTypeVars(
+		node_t const * target, const TypeVarMap & typeVars ) {
+	return strict_dynamic_cast<node_t const *>(
+			scrubTypeVars<ast::Node>( target ) );
+}
+
+/// For all dynamic-layout types with type variables in `typeVars`,
+/// replaces generic types, dtypes, and ftypes with the appropriate void type,
+/// and sizeof/alignof expressions with the proper variable.
+template<typename node_t>
+ast::Node const * scrubTypeVarsDynamic(
+		node_t const * target, const TypeVarMap & typeVars ) {
+	return strict_dynamic_cast<node_t const *>(
+			scrubTypeVarsDynamic<ast::Node>( target, typeVars ) );
+}
+
 /// For all polymorphic types, replaces generic types, with the appropriate
 /// void type, and sizeof/alignof expressions with the proper variable.
 template<typename node_t>
 node_t const * scrubAllTypeVars( node_t const * target ) {
-	return strict_dynamic_cast<node_t const *>( scrubAllTypeVars<ast::Node>( target ) );
+	return strict_dynamic_cast<node_t const *>(
+			scrubAllTypeVars<ast::Node>( target ) );
 }
+
+// We specialize for Node as a base case.
+template<>
+ast::Node const * scrubTypeVars<ast::Node>(
+		const ast::Node * target, const TypeVarMap & typeVars );
+
+template<>
+ast::Node const * scrubTypeVarsDynamic<ast::Node>(
+		ast::Node const * target, const TypeVarMap & typeVars );
 
 template<>
 ast::Node const * scrubAllTypeVars<ast::Node>( const ast::Node * target );

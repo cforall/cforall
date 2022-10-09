@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Mar 14 18:12:27 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 23 21:39:28 2020
-// Update Count     : 140
+// Last Modified On : Sat Oct  8 08:28:15 2022
+// Update Count     : 142
 // 
 
 #pragma once
@@ -20,11 +20,9 @@
 
 // Bits are numbered 1-N.
 
-#include <assert.h>
-
 #define __bitsizeof( n ) (sizeof(n) * __CHAR_BIT__)
 
-static inline {
+static inline __attribute__((always_inline)) {
 	// Count leading 0 bits.
 	unsigned int leading0s( unsigned char n ) { return n != 0 ? __builtin_clz( n ) - (__bitsizeof(unsigned int) - __bitsizeof(n)) : __bitsizeof(n); }
 	unsigned int leading0s( unsigned short int n ) { return n != 0 ? __builtin_clz( n ) - (__bitsizeof(unsigned int) - __bitsizeof(n)) : __bitsizeof(n); }
