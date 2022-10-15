@@ -1,0 +1,93 @@
+no arg:
+yes/no     :false
+Y/N        :false
+y/n        :false
+true/false :false
+set true   :false
+set false  :true
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+all true/set arg:
+yes/no     :true
+Y/N        :true
+y/n        :true
+true/false :true
+set true   :true
+set false  :false
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+all false/unset arg:
+yes/no     :false
+Y/N        :false
+y/n        :false
+true/false :false
+set true   :false
+set false  :true
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+gibberish arg 1:
+Argument 'true' for option y could not be parsed
+
+Usage:
+  parsebools [OPTIONS]...
+testing bool parameters
+  -e, --yesno       test yes/no
+  -y, --YN          test yes/no
+  -n, --yn          test yes/no
+  -t, --truefalse   test true/false
+  -s, --settrue     test set true
+  -u, --setfalse    test set false
+  -h, --help        print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+gibberish arg 2:
+Argument 'yes' for option t could not be parsed
+
+Usage:
+  parsebools [OPTIONS]...
+testing bool parameters
+  -e, --yesno       test yes/no
+  -y, --YN          test yes/no
+  -n, --yn          test yes/no
+  -t, --truefalse   test true/false
+  -s, --settrue     test set true
+  -u, --setfalse    test set false
+  -h, --help        print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+gibberish arg 3:
+parsebools: invalid option -- '='
+Usage:
+  parsebools [OPTIONS]...
+testing bool parameters
+  -e, --yesno       test yes/no
+  -y, --YN          test yes/no
+  -n, --yn          test yes/no
+  -t, --truefalse   test true/false
+  -s, --settrue     test set true
+  -u, --setfalse    test set false
+  -h, --help        print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+gibberish arg 4:
+parsebools: invalid option -- '='
+Usage:
+  parsebools [OPTIONS]...
+testing bool parameters
+  -e, --yesno       test yes/no
+  -y, --YN          test yes/no
+  -n, --yn          test yes/no
+  -t, --truefalse   test true/false
+  -s, --settrue     test set true
+  -u, --setfalse    test set false
+  -h, --help        print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+All Done!

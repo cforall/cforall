@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jul  4 23:25:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  4 12:58:49 2020
-// Update Count     : 15
+// Last Modified On : Sun Oct  9 21:28:22 2022
+// Update Count     : 16
 //
 
 #ifdef __cforall
@@ -30,7 +30,7 @@ extern "C" {
 	void __assert_fail_f( const char assertion[], const char file[], unsigned int line, const char function[], const char fmt[], ... ) __attribute__((noreturn, format( printf, 5, 6) ));
 #endif
 
-#if !defined(NDEBUG) && (defined(__CFA_DEBUG__) || defined(__CFA_VERIFY__))
+#if ! defined(NDEBUG) && (defined(__CFA_DEBUG__) || defined(__CFA_VERIFY__))
 	#define __CFA_WITH_VERIFY__
 	#define verify(x) assert(x)
 	#define verifyf(x, ...) assertf(x, __VA_ARGS__)

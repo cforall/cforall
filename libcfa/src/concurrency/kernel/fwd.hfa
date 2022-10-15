@@ -275,7 +275,7 @@ extern "C" {
 			// should retract the wait ctx
 			// intented to be use by wait, wait_any, waitfor, etc. rather than used directly
 			bool retract( future_t & this, oneshot & wait_ctx ) {
-				struct oneshot * expected = this.ptr;
+				struct oneshot * expected = &wait_ctx;
 
 				// attempt to remove the context so it doesn't get consumed.
 				if(__atomic_compare_exchange_n( &this.ptr, &expected, future_ARMED, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {

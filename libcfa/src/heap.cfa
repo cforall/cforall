@@ -9,10 +9,11 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 29 19:05:03 2022
-// Update Count     : 1167
+// Last Modified On : Thu Oct 13 22:21:52 2022
+// Update Count     : 1557
 //
 
+#include <stdio.h>
 #include <string.h>										// memset, memcpy
 #include <limits.h>										// ULONG_MAX
 #include <stdlib.h>										// EXIT_FAILURE
@@ -20,17 +21,53 @@
 #include <unistd.h>										// STDERR_FILENO, sbrk, sysconf
 #include <malloc.h>										// memalign, malloc_usable_size
 #include <sys/mman.h>									// mmap, munmap
+extern "C" {
 #include <sys/sysinfo.h>								// get_nprocs
+} // extern "C"
 
 #include "bits/align.hfa"								// libAlign
 #include "bits/defs.hfa"								// likely, unlikely
-#include "bits/locks.hfa"								// __spinlock_t
+#include "concurrency/kernel/fwd.hfa"					// __POLL_PREEMPTION
 #include "startup.hfa"									// STARTUP_PRIORITY_MEMORY
-#include "math.hfa"										// min
+#include "math.hfa"										// ceiling, min
 #include "bitmanip.hfa"									// is_pow2, ceiling2
 
-#define FASTLOOKUP
-#define __STATISTICS__
+// supported mallopt options
+#ifndef M_MMAP_THRESHOLD
+#define M_MMAP_THRESHOLD (-1)
+#endif // M_MMAP_THRESHOLD
+
+#ifndef M_TOP_PAD
+#define M_TOP_PAD (-2)
+#endif // M_TOP_PAD
+
+#define FASTLOOKUP										// use O(1) table lookup from allocation size to bucket size
+#define RETURNSPIN										// toggle spinlock / lockfree stack
+#define OWNERSHIP										// return freed memory to owner thread
+
+#define CACHE_ALIGN 64
+#define CALIGN __attribute__(( aligned(CACHE_ALIGN) ))
+
+#define TLSMODEL __attribute__(( tls_model("initial-exec") ))
+
+//#define __STATISTICS__
+
+enum {
+	// The default extension heap amount in units of bytes. When the current heap reaches the brk address, the brk
+	// address is extended by the extension amount.
+	__CFA_DEFAULT_HEAP_EXPANSION__ = 10 * 1024 * 1024,
+
+	// The mmap crossover point during allocation. Allocations less than this amount are allocated from buckets; values
+	// greater than or equal to this value are mmap from the operating system.
+	__CFA_DEFAULT_MMAP_START__ = 512 * 1024 + 1,
+
+	// The default unfreed storage amount in units of bytes. When the uC++ program ends it subtracts this amount from
+	// the malloc/free counter to adjust for storage the program does not free.
+	__CFA_DEFAULT_HEAP_UNFREED__ = 0
+}; // enum
+
+
+//####################### Heap Trace/Print ####################
 
 
 static bool traceHeap = false;
@@ -54,36 +91,53 @@ bool traceHeapTerm() libcfa_public { return false; }
 
 static bool prtFree = false;
 
-static bool prtFree() {
+bool prtFree() {
 	return prtFree;
 } // prtFree
 
-static bool prtFreeOn() {
+bool prtFreeOn() {
 	bool temp = prtFree;
 	prtFree = true;
 	return temp;
 } // prtFreeOn
 
-static bool prtFreeOff() {
+bool prtFreeOff() {
 	bool temp = prtFree;
 	prtFree = false;
 	return temp;
 } // prtFreeOff
 
 
-enum {
-	// The default extension heap amount in units of bytes. When the current heap reaches the brk address, the brk
-	// address is extended by the extension amount.
-	__CFA_DEFAULT_HEAP_EXPANSION__ = 10 * 1024 * 1024,
+//######################### Spin Lock #########################
 
-	// The mmap crossover point during allocation. Allocations less than this amount are allocated from buckets; values
-	// greater than or equal to this value are mmap from the operating system.
-	__CFA_DEFAULT_MMAP_START__ = 512 * 1024 + 1,
 
-	// The default unfreed storage amount in units of bytes. When the uC++ program ends it subtracts this amount from
-	// the malloc/free counter to adjust for storage the program does not free.
-	__CFA_DEFAULT_HEAP_UNFREED__ = 0
-}; // enum
+// pause to prevent excess processor bus usage
+#if defined( __i386 ) || defined( __x86_64 )
+	#define Pause() __asm__ __volatile__ ( "pause" : : : )
+#elif defined(__ARM_ARCH)
+	#define Pause() __asm__ __volatile__ ( "YIELD" : : : )
+#else
+	#error unsupported architecture
+#endif
+
+typedef volatile uintptr_t SpinLock_t CALIGN;			// aligned addressable word-size
+
+static inline __attribute__((always_inline)) void lock( volatile SpinLock_t & slock ) {
+	enum { SPIN_START = 4, SPIN_END = 64 * 1024, };
+	unsigned int spin = SPIN_START;
+
+	for ( unsigned int i = 1;; i += 1 ) {
+	  if ( slock == 0 && __atomic_test_and_set( &slock, __ATOMIC_SEQ_CST ) == 0 ) break; // Fence
+		for ( volatile unsigned int s = 0; s < spin; s += 1 ) Pause(); // exponential spin
+		spin += spin;									// powers of 2
+		//if ( i % 64 == 0 ) spin += spin;				// slowly increase by powers of 2
+		if ( spin > SPIN_END ) spin = SPIN_END;			// cap spinning
+	} // for
+} // spin_lock
+
+static inline __attribute__((always_inline)) void unlock( volatile SpinLock_t & slock ) {
+	__atomic_clear( &slock, __ATOMIC_SEQ_CST );			// Fence
+} // spin_unlock
 
 
 //####################### Heap Statistics ####################
@@ -119,8 +173,8 @@ union HeapStatistics {
 		unsigned long long int realloc_storage_request, realloc_storage_alloc;
 		unsigned int free_calls, free_null_calls;
 		unsigned long long int free_storage_request, free_storage_alloc;
-		unsigned int away_pulls, away_pushes;
-		unsigned long long int away_storage_request, away_storage_alloc;
+		unsigned int return_pulls, return_pushes;
+		unsigned long long int return_storage_request, return_storage_alloc;
 		unsigned int mmap_calls, mmap_0_calls;			// no zero calls
 		unsigned long long int mmap_storage_request, mmap_storage_alloc;
 		unsigned int munmap_calls, munmap_0_calls;		// no zero calls
@@ -130,7 +184,7 @@ union HeapStatistics {
 }; // HeapStatistics
 
 static_assert( sizeof(HeapStatistics) == CntTriples * sizeof(StatsOverlay),
- 			   "Heap statistics counter-triplets does not match with array size" );
+			   "Heap statistics counter-triplets does not match with array size" );
 
 static void HeapStatisticsCtor( HeapStatistics & stats ) {
 	memset( &stats, '\0', sizeof(stats) );				// very fast
@@ -202,44 +256,91 @@ struct Heap {
 
 	static_assert( libAlign() >= sizeof( Storage ), "minimum alignment < sizeof( Storage )" );
 
-	struct FreeHeader {
-		size_t blockSize __attribute__(( aligned (8) )); // size of allocations on this list
+	struct __attribute__(( aligned (8) )) FreeHeader {
+		size_t blockSize __attribute__(( aligned(8) )); // size of allocations on this list
 		#if BUCKETLOCK == SPINLOCK
-		__spinlock_t lock;
-		Storage * freeList;
+		#ifdef OWNERSHIP
+		#ifdef RETURNSPIN
+		SpinLock_t returnLock;
+		#endif // RETURNSPIN
+		Storage * returnList;							// other thread return list
+		#endif // OWNERSHIP
+		Storage * freeList;								// thread free list
 		#else
 		StackLF(Storage) freeList;
 		#endif // BUCKETLOCK
-	} __attribute__(( aligned (8) )); // FreeHeader
+		Heap * homeManager;								// heap owner (free storage to bucket, from bucket to heap)
+	}; // FreeHeader
 
 	FreeHeader freeLists[NoBucketSizes];				// buckets for different allocation sizes
+	void * heapBuffer;									// start of free storage in buffer
+	size_t heapReserve;									// amount of remaining free storage in buffer
 
-	__spinlock_t extlock;								// protects allocation-buffer extension
-	void * heapBegin;									// start of heap
-	void * heapEnd;										// logical end of heap
-	size_t heapRemaining;								// amount of storage not allocated in the current chunk
+	#if defined( __STATISTICS__ ) || defined( __CFA_DEBUG__ )
+	Heap * nextHeapManager;								// intrusive link of existing heaps; traversed to collect statistics or check unfreed storage
+	#endif // __STATISTICS__ || __CFA_DEBUG__
+	Heap * nextFreeHeapManager;							// intrusive link of free heaps from terminated threads; reused by new threads
+
+	#ifdef __CFA_DEBUG__
+	int64_t allocUnfreed;								// running total of allocations minus frees; can be negative
+	#endif // __CFA_DEBUG__
+
+	#ifdef __STATISTICS__
+	HeapStatistics stats;								// local statistic table for this heap
+	#endif // __STATISTICS__
 }; // Heap
 
 #if BUCKETLOCK == LOCKFREE
-static inline {
+inline __attribute__((always_inline))
+static {
 	Link(Heap.Storage) * ?`next( Heap.Storage * this ) { return &this->header.kind.real.next; }
 	void ?{}( Heap.FreeHeader & ) {}
 	void ^?{}( Heap.FreeHeader & ) {}
 } // distribution
 #endif // LOCKFREE
 
-static inline size_t getKey( const Heap.FreeHeader & freeheader ) { return freeheader.blockSize; }
+
+struct HeapMaster {
+	SpinLock_t extLock;									// protects allocation-buffer extension
+	SpinLock_t mgrLock;									// protects freeHeapManagersList, heapManagersList, heapManagersStorage, heapManagersStorageEnd
+
+	void * heapBegin;									// start of heap
+	void * heapEnd;										// logical end of heap
+	size_t heapRemaining;								// amount of storage not allocated in the current chunk
+	size_t pageSize;									// architecture pagesize
+	size_t heapExpand;									// sbrk advance
+	size_t mmapStart;									// cross over point for mmap
+	unsigned int maxBucketsUsed;						// maximum number of buckets in use
+
+	Heap * heapManagersList;							// heap-list head
+	Heap * freeHeapManagersList;						// free-list head
+
+	// Heap superblocks are not linked; heaps in superblocks are linked via intrusive links.
+	Heap * heapManagersStorage;							// next heap to use in heap superblock
+	Heap * heapManagersStorageEnd;						// logical heap outside of superblock's end
+
+	#ifdef __STATISTICS__
+	HeapStatistics stats;								// global stats for thread-local heaps to add there counters when exiting
+	unsigned long int threads_started, threads_exited;	// counts threads that have started and exited
+	unsigned long int reused_heap, new_heap;			// counts reusability of heaps
+	unsigned int sbrk_calls;
+	unsigned long long int sbrk_storage;
+	int stats_fd;
+	#endif // __STATISTICS__
+}; // HeapMaster
 
 
 #ifdef FASTLOOKUP
-enum { LookupSizes = 65_536 + sizeof(Heap.Storage) }; // number of fast lookup sizes
+enum { LookupSizes = 65_536 + sizeof(Heap.Storage) };	// number of fast lookup sizes
 static unsigned char lookup[LookupSizes];				// O(1) lookup for small sizes
 #endif // FASTLOOKUP
 
-static const off_t mmapFd = -1;							// fake or actual fd for anonymous file
-#ifdef __CFA_DEBUG__
-static bool heapBoot = 0;								// detect recursion during boot
-#endif // __CFA_DEBUG__
+static volatile bool heapMasterBootFlag = false;		// trigger for first heap
+static HeapMaster heapMaster @= {};						// program global
+
+static void heapMasterCtor();
+static void heapMasterDtor();
+static Heap * getHeap();
 
 
 // Size of array must harmonize with NoBucketSizes and individual bucket sizes must be multiple of 16.
@@ -267,47 +368,243 @@ static const unsigned int bucketSizes[] @= {			// different bucket sizes
 
 static_assert( NoBucketSizes == sizeof(bucketSizes) / sizeof(bucketSizes[0] ), "size of bucket array wrong" );
 
-// The constructor for heapManager is called explicitly in memory_startup.
-static Heap heapManager __attribute__(( aligned (128) )) @= {}; // size of cache line to prevent false sharing
+
+// extern visibility, used by runtime kernel
+libcfa_public size_t __page_size;						// architecture pagesize
+libcfa_public int __map_prot;							// common mmap/mprotect protection
+
+
+// Thread-local storage is allocated lazily when the storage is accessed.
+static __thread size_t PAD1 CALIGN TLSMODEL __attribute__(( unused )); // protect false sharing
+static __thread Heap * volatile heapManager CALIGN TLSMODEL;
+static __thread size_t PAD2 CALIGN TLSMODEL __attribute__(( unused )); // protect further false sharing
+
+
+// declare helper functions for HeapMaster
+void noMemory();										// forward, called by "builtin_new" when malloc returns 0
+
+
+// generic Bsearchl does not inline, so substitute with hand-coded binary-search.
+inline __attribute__((always_inline))
+static size_t Bsearchl( unsigned int key, const unsigned int vals[], size_t dim ) {
+	size_t l = 0, m, h = dim;
+	while ( l < h ) {
+		m = (l + h) / 2;
+		if ( (unsigned int &)(vals[m]) < key ) {		// cast away const
+			l = m + 1;
+		} else {
+			h = m;
+		} // if
+	} // while
+	return l;
+} // Bsearchl
+
+
+void heapMasterCtor() with( heapMaster ) {
+	// Singleton pattern to initialize heap master
+
+	verify( bucketSizes[0] == (16 + sizeof(Heap.Storage)) );
+
+	__page_size = sysconf( _SC_PAGESIZE );
+	__map_prot = PROT_READ | PROT_WRITE | PROT_EXEC;
+
+	?{}( extLock );
+	?{}( mgrLock );
+
+	char * end = (char *)sbrk( 0 );
+	heapBegin = heapEnd = sbrk( (char *)ceiling2( (long unsigned int)end, libAlign() ) - end ); // move start of heap to multiple of alignment
+	heapRemaining = 0;
+	heapExpand = malloc_expansion();
+	mmapStart = malloc_mmap_start();
+
+	// find the closest bucket size less than or equal to the mmapStart size
+	maxBucketsUsed = Bsearchl( mmapStart, bucketSizes, NoBucketSizes ); // binary search
+
+	verify( (mmapStart >= pageSize) && (bucketSizes[NoBucketSizes - 1] >= mmapStart) );
+	verify( maxBucketsUsed < NoBucketSizes );			// subscript failure ?
+	verify( mmapStart <= bucketSizes[maxBucketsUsed] ); // search failure ?
+
+	heapManagersList = 0p;
+	freeHeapManagersList = 0p;
+
+	heapManagersStorage = 0p;
+	heapManagersStorageEnd = 0p;
+
+	#ifdef __STATISTICS__
+	HeapStatisticsCtor( stats );						// clear statistic counters
+	threads_started = threads_exited = 0;
+	reused_heap = new_heap = 0;
+	sbrk_calls = sbrk_storage = 0;
+	stats_fd = STDERR_FILENO;
+	#endif // __STATISTICS__
+
+	#ifdef FASTLOOKUP
+	for ( unsigned int i = 0, idx = 0; i < LookupSizes; i += 1 ) {
+		if ( i > bucketSizes[idx] ) idx += 1;
+		lookup[i] = idx;
+		verify( i <= bucketSizes[idx] );
+		verify( (i <= 32 && idx == 0) || (i > bucketSizes[idx - 1]) );
+	} // for
+	#endif // FASTLOOKUP
+
+	heapMasterBootFlag = true;
+} // heapMasterCtor
+
+
+#define NO_MEMORY_MSG "**** Error **** insufficient heap memory available to allocate %zd new bytes."
+
+Heap * getHeap() with( heapMaster ) {
+	Heap * heap;
+	if ( freeHeapManagersList ) {						// free heap for reused ?
+		heap = freeHeapManagersList;
+		freeHeapManagersList = heap->nextFreeHeapManager;
+
+		#ifdef __STATISTICS__
+		reused_heap += 1;
+		#endif // __STATISTICS__
+	} else {											// free heap not found, create new
+		// Heap size is about 12K, FreeHeader (128 bytes because of cache alignment) * NoBucketSizes (91) => 128 heaps *
+		// 12K ~= 120K byte superblock.  Where 128-heap superblock handles a medium sized multi-processor server.
+		size_t remaining = heapManagersStorageEnd - heapManagersStorage; // remaining free heaps in superblock
+		if ( ! heapManagersStorage || remaining != 0 ) {
+			// Each block of heaps is a multiple of the number of cores on the computer.
+			int HeapDim = get_nprocs();					// get_nprocs_conf does not work
+			size_t size = HeapDim * sizeof( Heap );
+
+			heapManagersStorage = (Heap *)mmap( 0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 );
+			if ( unlikely( heapManagersStorage == (Heap *)MAP_FAILED ) ) { // failed ?
+				if ( errno == ENOMEM ) abort( NO_MEMORY_MSG, size ); // no memory
+				// Do not call strerror( errno ) as it may call malloc.
+				abort( "**** Error **** attempt to allocate block of heaps of size %zu bytes and mmap failed with errno %d.", size, errno );
+			} // if
+			heapManagersStorageEnd = &heapManagersStorage[HeapDim]; // outside array
+		} // if
+
+		heap = heapManagersStorage;
+		heapManagersStorage = heapManagersStorage + 1; // bump next heap
+
+		#if defined( __STATISTICS__ ) || defined( __CFA_DEBUG__ )
+		heap->nextHeapManager = heapManagersList;
+		#endif // __STATISTICS__ || __CFA_DEBUG__
+		heapManagersList = heap;
+
+		#ifdef __STATISTICS__
+		new_heap += 1;
+		#endif // __STATISTICS__
+
+		with( *heap ) {
+			for ( unsigned int j = 0; j < NoBucketSizes; j += 1 ) { // initialize free lists
+				#ifdef OWNERSHIP
+				#ifdef RETURNSPIN
+				?{}( freeLists[j].returnLock );
+				#endif // RETURNSPIN
+				freeLists[j].returnList = 0p;
+				#endif // OWNERSHIP
+				freeLists[j].freeList = 0p;
+				freeLists[j].homeManager = heap;
+				freeLists[j].blockSize = bucketSizes[j];
+			} // for
+	
+			heapBuffer = 0p;
+			heapReserve = 0;
+			nextFreeHeapManager = 0p;
+			#ifdef __CFA_DEBUG__
+			allocUnfreed = 0;
+			#endif // __CFA_DEBUG__
+		} // with
+	} // if
+
+	return heap;
+} // getHeap
+
+
+void heapManagerCtor() libcfa_public {
+	if ( unlikely( ! heapMasterBootFlag ) ) heapMasterCtor();
+
+	lock( heapMaster.mgrLock );		// protect heapMaster counters
+
+	// get storage for heap manager
+
+	heapManager = getHeap();
+
+	#ifdef __STATISTICS__
+	HeapStatisticsCtor( heapManager->stats );			// heap local
+	heapMaster.threads_started += 1;
+	#endif // __STATISTICS__
+
+	unlock( heapMaster.mgrLock );
+} // heapManagerCtor
+
+
+void heapManagerDtor() libcfa_public {
+	lock( heapMaster.mgrLock );
+
+	// place heap on list of free heaps for reusability
+	heapManager->nextFreeHeapManager = heapMaster.freeHeapManagersList;
+	heapMaster.freeHeapManagersList = heapManager;
+
+	#ifdef __STATISTICS__
+	heapMaster.threads_exited += 1;
+	#endif // __STATISTICS__
+
+	// Do not set heapManager to NULL because it is used after Cforall is shutdown but before the program shuts down.
+
+	unlock( heapMaster.mgrLock );
+} // heapManagerDtor
 
 
 //####################### Memory Allocation Routines Helpers ####################
 
 
-#ifdef __CFA_DEBUG__
-static size_t allocUnfreed;								// running total of allocations minus frees
-
-static void prtUnfreed() {
-	if ( allocUnfreed != 0 ) {
-		// DO NOT USE STREAMS AS THEY MAY BE UNAVAILABLE AT THIS POINT.
-		char helpText[512];
-		__cfaabi_bits_print_buffer( STDERR_FILENO, helpText, sizeof(helpText),
-									"CFA warning (UNIX pid:%ld) : program terminating with %zu(0x%zx) bytes of storage allocated but not freed.\n"
-									"Possible cause is unfreed storage allocated by the program or system/library routines called from the program.\n",
-									(long int)getpid(), allocUnfreed, allocUnfreed ); // always print the UNIX pid
-	} // if
-} // prtUnfreed
-
 extern int cfa_main_returned;							// from interpose.cfa
 extern "C" {
+	void memory_startup( void ) {
+		if ( ! heapMasterBootFlag ) heapManagerCtor();	// sanity check
+	} // memory_startup
+
+	void memory_shutdown( void ) {
+		heapManagerDtor();
+	} // memory_shutdown
+
 	void heapAppStart() {								// called by __cfaabi_appready_startup
-		allocUnfreed = 0;
+		verify( heapManager );
+		#ifdef __CFA_DEBUG__
+		heapManager->allocUnfreed = 0;					// clear prior allocation counts
+		#endif // __CFA_DEBUG__
+
+		#ifdef __STATISTICS__
+		HeapStatisticsCtor( heapManager->stats );		// clear prior statistic counters
+		#endif // __STATISTICS__
 	} // heapAppStart
 
 	void heapAppStop() {								// called by __cfaabi_appready_startdown
-		fclose( stdin ); fclose( stdout );
-		if ( cfa_main_returned ) prtUnfreed();			// do not check unfreed storage if exit called
+		fclose( stdin ); fclose( stdout );				// free buffer storage
+	  if ( ! cfa_main_returned ) return;				// do not check unfreed storage if exit called
+
+		#ifdef __CFA_DEBUG__
+		// allocUnfreed is set to 0 when a heap is created and it accumulates any unfreed storage during its multiple thread
+		// usages.  At the end, add up each heap allocUnfreed value across all heaps to get the total unfreed storage.
+		int64_t allocUnfreed = 0;
+		for ( Heap * heap = heapMaster.heapManagersList; heap; heap = heap->nextHeapManager ) {
+			allocUnfreed += heap->allocUnfreed;
+		} // for
+
+		allocUnfreed -= malloc_unfreed();				// subtract any user specified unfreed storage
+		if ( allocUnfreed > 0 ) {
+			// DO NOT USE STREAMS AS THEY MAY BE UNAVAILABLE AT THIS POINT.
+			char helpText[512];
+			__cfaabi_bits_print_buffer( STDERR_FILENO, helpText, sizeof(helpText),
+										"CFA warning (UNIX pid:%ld) : program terminating with %ju(0x%jx) bytes of storage allocated but not freed.\n"
+										"Possible cause is unfreed storage allocated by the program or system/library routines called from the program.\n",
+										(long int)getpid(), allocUnfreed, allocUnfreed ); // always print the UNIX pid
+		} // if
+		#endif // __CFA_DEBUG__
 	} // heapAppStop
 } // extern "C"
-#endif // __CFA_DEBUG__
 
 
 #ifdef __STATISTICS__
 static HeapStatistics stats;							// zero filled
-static unsigned int sbrk_calls;
-static unsigned long long int sbrk_storage;
-// Statistics file descriptor (changed by malloc_stats_fd).
-static int stats_fd = STDERR_FILENO;					// default stderr
 
 #define prtFmt \
 	"\nHeap statistics: (storage request / allocation)\n" \
@@ -320,26 +617,32 @@ static int stats_fd = STDERR_FILENO;					// default stderr
 	"  resize    >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n" \
 	"  realloc   >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n" \
 	"  free      !null calls %'u; null calls %'u; storage %'llu / %'llu bytes\n" \
-	"  sbrk      calls %'u; storage %'llu bytes\n"						\
-	"  mmap      calls %'u; storage %'llu / %'llu bytes\n"				\
-	"  munmap    calls %'u; storage %'llu / %'llu bytes\n"				\
+	"  return    pulls %'u; pushes %'u; storage %'llu / %'llu bytes\n" \
+	"  sbrk      calls %'u; storage %'llu bytes\n" \
+	"  mmap      calls %'u; storage %'llu / %'llu bytes\n" \
+	"  munmap    calls %'u; storage %'llu / %'llu bytes\n" \
+	"  threads   started %'lu; exited %'lu\n" \
+	"  heaps     new %'lu; reused %'lu\n"
 
 // Use "write" because streams may be shutdown when calls are made.
-static int printStats() {								// see malloc_stats
+static int printStats( HeapStatistics & stats ) with( heapMaster, stats ) {	// see malloc_stats
 	char helpText[sizeof(prtFmt) + 1024];				// space for message and values
-	return __cfaabi_bits_print_buffer( STDERR_FILENO, helpText, sizeof(helpText), prtFmt,
-			stats.malloc_calls, stats.malloc_0_calls, stats.malloc_storage_request, stats.malloc_storage_alloc,
-			stats.aalloc_calls, stats.aalloc_0_calls, stats.aalloc_storage_request, stats.aalloc_storage_alloc,
-			stats.calloc_calls, stats.calloc_0_calls, stats.calloc_storage_request, stats.calloc_storage_alloc,
-			stats.memalign_calls, stats.memalign_0_calls, stats.memalign_storage_request, stats.memalign_storage_alloc,
-			stats.amemalign_calls, stats.amemalign_0_calls, stats.amemalign_storage_request, stats.amemalign_storage_alloc,
-			stats.cmemalign_calls, stats.cmemalign_0_calls, stats.cmemalign_storage_request, stats.cmemalign_storage_alloc,
-			stats.resize_calls, stats.resize_0_calls, stats.resize_storage_request, stats.resize_storage_alloc,
-			stats.realloc_calls, stats.realloc_0_calls, stats.realloc_storage_request, stats.realloc_storage_alloc,
-			stats.free_calls, stats.free_null_calls, stats.free_storage_request, stats.free_storage_alloc,
+	return __cfaabi_bits_print_buffer( stats_fd, helpText, sizeof(helpText), prtFmt,
+			malloc_calls, malloc_0_calls, malloc_storage_request, malloc_storage_alloc,
+			aalloc_calls, aalloc_0_calls, aalloc_storage_request, aalloc_storage_alloc,
+			calloc_calls, calloc_0_calls, calloc_storage_request, calloc_storage_alloc,
+			memalign_calls, memalign_0_calls, memalign_storage_request, memalign_storage_alloc,
+			amemalign_calls, amemalign_0_calls, amemalign_storage_request, amemalign_storage_alloc,
+			cmemalign_calls, cmemalign_0_calls, cmemalign_storage_request, cmemalign_storage_alloc,
+			resize_calls, resize_0_calls, resize_storage_request, resize_storage_alloc,
+			realloc_calls, realloc_0_calls, realloc_storage_request, realloc_storage_alloc,
+			free_calls, free_null_calls, free_storage_request, free_storage_alloc,
+			return_pulls, return_pushes, return_storage_request, return_storage_alloc,
 			sbrk_calls, sbrk_storage,
-			stats.mmap_calls, stats.mmap_storage_request, stats.mmap_storage_alloc,
-			stats.munmap_calls, stats.munmap_storage_request, stats.munmap_storage_alloc
+			mmap_calls, mmap_storage_request, mmap_storage_alloc,
+			munmap_calls, munmap_storage_request, munmap_storage_alloc,
+			threads_started, threads_exited,
+			new_heap, reused_heap
 		);
 } // printStats
 
@@ -357,64 +660,57 @@ static int printStats() {								// see malloc_stats
 	"<total type=\"resize\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
 	"<total type=\"realloc\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
 	"<total type=\"free\" !null=\"%'u;\" 0 null=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
+	"<total type=\"return\" pulls=\"%'u;\" 0 pushes=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
 	"<total type=\"sbrk\" count=\"%'u;\" size=\"%'llu\"/> bytes\n" \
 	"<total type=\"mmap\" count=\"%'u;\" size=\"%'llu / %'llu\" / > bytes\n" \
 	"<total type=\"munmap\" count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
+	"<total type=\"threads\" started=\"%'lu;\" exited=\"%'lu\"/>\n" \
+	"<total type=\"heaps\" new=\"%'lu;\" reused=\"%'lu\"/>\n" \
 	"</malloc>"
 
-static int printStatsXML( FILE * stream ) {				// see malloc_info
+static int printStatsXML( HeapStatistics & stats, FILE * stream ) with( heapMaster, stats ) { // see malloc_info
 	char helpText[sizeof(prtFmtXML) + 1024];			// space for message and values
 	return __cfaabi_bits_print_buffer( fileno( stream ), helpText, sizeof(helpText), prtFmtXML,
-			stats.malloc_calls, stats.malloc_0_calls, stats.malloc_storage_request, stats.malloc_storage_alloc,
-			stats.aalloc_calls, stats.aalloc_0_calls, stats.aalloc_storage_request, stats.aalloc_storage_alloc,
-			stats.calloc_calls, stats.calloc_0_calls, stats.calloc_storage_request, stats.calloc_storage_alloc,
-			stats.memalign_calls, stats.memalign_0_calls, stats.memalign_storage_request, stats.memalign_storage_alloc,
-			stats.amemalign_calls, stats.amemalign_0_calls, stats.amemalign_storage_request, stats.amemalign_storage_alloc,
-			stats.cmemalign_calls, stats.cmemalign_0_calls, stats.cmemalign_storage_request, stats.cmemalign_storage_alloc,
-			stats.resize_calls, stats.resize_0_calls, stats.resize_storage_request, stats.resize_storage_alloc,
-			stats.realloc_calls, stats.realloc_0_calls, stats.realloc_storage_request, stats.realloc_storage_alloc,
-			stats.free_calls, stats.free_null_calls, stats.free_storage_request, stats.free_storage_alloc,
+			malloc_calls, malloc_0_calls, malloc_storage_request, malloc_storage_alloc,
+			aalloc_calls, aalloc_0_calls, aalloc_storage_request, aalloc_storage_alloc,
+			calloc_calls, calloc_0_calls, calloc_storage_request, calloc_storage_alloc,
+			memalign_calls, memalign_0_calls, memalign_storage_request, memalign_storage_alloc,
+			amemalign_calls, amemalign_0_calls, amemalign_storage_request, amemalign_storage_alloc,
+			cmemalign_calls, cmemalign_0_calls, cmemalign_storage_request, cmemalign_storage_alloc,
+			resize_calls, resize_0_calls, resize_storage_request, resize_storage_alloc,
+			realloc_calls, realloc_0_calls, realloc_storage_request, realloc_storage_alloc,
+			free_calls, free_null_calls, free_storage_request, free_storage_alloc,
+			return_pulls, return_pushes, return_storage_request, return_storage_alloc,
 			sbrk_calls, sbrk_storage,
-			stats.mmap_calls, stats.mmap_storage_request, stats.mmap_storage_alloc,
-			stats.munmap_calls, stats.munmap_storage_request, stats.munmap_storage_alloc
+			mmap_calls, mmap_storage_request, mmap_storage_alloc,
+		    munmap_calls, munmap_storage_request, munmap_storage_alloc,
+			threads_started, threads_exited,
+			new_heap, reused_heap
 		);
 } // printStatsXML
+
+static HeapStatistics & collectStats( HeapStatistics & stats ) with( heapMaster ) {
+	lock( mgrLock );
+
+	stats += heapMaster.stats;
+	for ( Heap * heap = heapManagersList; heap; heap = heap->nextHeapManager ) {
+		stats += heap->stats;
+	} // for
+
+	unlock( mgrLock );
+	return stats;
+} // collectStats
 #endif // __STATISTICS__
 
 
-// statically allocated variables => zero filled.
-static size_t heapExpand;								// sbrk advance
-static size_t mmapStart;								// cross over point for mmap
-static unsigned int maxBucketsUsed;						// maximum number of buckets in use
-// extern visibility, used by runtime kernel
-// would be cool to remove libcfa_public but it's needed for libcfathread
-libcfa_public size_t __page_size;							// architecture pagesize
-libcfa_public int __map_prot;								// common mmap/mprotect protection
-
-
-// thunk problem
-size_t Bsearchl( unsigned int key, const unsigned int * vals, size_t dim ) {
-	size_t l = 0, m, h = dim;
-	while ( l < h ) {
-		m = (l + h) / 2;
-		if ( (unsigned int &)(vals[m]) < key ) {		// cast away const
-			l = m + 1;
-		} else {
-			h = m;
-		} // if
-	} // while
-	return l;
-} // Bsearchl
-
-
-static inline bool setMmapStart( size_t value ) {		// true => mmapped, false => sbrk
+static bool setMmapStart( size_t value ) with( heapMaster ) { // true => mmapped, false => sbrk
   if ( value < __page_size || bucketSizes[NoBucketSizes - 1] < value ) return false;
 	mmapStart = value;									// set global
 
 	// find the closest bucket size less than or equal to the mmapStart size
-	maxBucketsUsed = Bsearchl( (unsigned int)mmapStart, bucketSizes, NoBucketSizes ); // binary search
-	assert( maxBucketsUsed < NoBucketSizes );			// subscript failure ?
-	assert( mmapStart <= bucketSizes[maxBucketsUsed] ); // search failure ?
+	maxBucketsUsed = Bsearchl( mmapStart, bucketSizes, NoBucketSizes ); // binary search
+	verify( maxBucketsUsed < NoBucketSizes );			// subscript failure ?
+	verify( mmapStart <= bucketSizes[maxBucketsUsed] ); // search failure ?
 	return true;
 } // setMmapStart
 
@@ -437,14 +733,16 @@ static inline bool setMmapStart( size_t value ) {		// true => mmapped, false => 
 #define DataStorage( bsize, addr, header ) (bsize - ( (char *)addr - (char *)header ))
 
 
-static inline void checkAlign( size_t alignment ) {
+inline __attribute__((always_inline))
+static void checkAlign( size_t alignment ) {
 	if ( unlikely( alignment < libAlign() || ! is_pow2( alignment ) ) ) {
 		abort( "**** Error **** alignment %zu for memory allocation is less than %d and/or not a power of 2.", alignment, libAlign() );
 	} // if
 } // checkAlign
 
 
-static inline void checkHeader( bool check, const char name[], void * addr ) {
+inline __attribute__((always_inline))
+static void checkHeader( bool check, const char name[], void * addr ) {
 	if ( unlikely( check ) ) {							// bad address ?
 		abort( "**** Error **** attempt to %s storage %p with address outside the heap.\n"
 			   "Possible cause is duplicate free on same block or overwriting of memory.",
@@ -469,7 +767,8 @@ static inline void checkHeader( bool check, const char name[], void * addr ) {
 #define MarkMmappedBit( size ) ((size) | 4)
 
 
-static inline void fakeHeader( Heap.Storage.Header *& header, size_t & alignment ) {
+inline __attribute__((always_inline))
+static void fakeHeader( Heap.Storage.Header *& header, size_t & alignment ) {
 	if ( unlikely( AlignmentBit( header ) ) ) {			// fake header ?
 		alignment = ClearAlignmentBit( header );		// clear flag from value
 		#ifdef __CFA_DEBUG__
@@ -482,8 +781,9 @@ static inline void fakeHeader( Heap.Storage.Header *& header, size_t & alignment
 } // fakeHeader
 
 
-static inline bool headers( const char name[] __attribute__(( unused )), void * addr, Heap.Storage.Header *& header,
-							Heap.FreeHeader *& freeHead, size_t & size, size_t & alignment ) with( heapManager ) {
+inline __attribute__((always_inline))
+static bool headers( const char name[] __attribute__(( unused )), void * addr, Heap.Storage.Header *& header,
+							Heap.FreeHeader *& freeHead, size_t & size, size_t & alignment ) with( heapMaster, *heapManager ) {
 	header = HeaderAddr( addr );
 
 	#ifdef __CFA_DEBUG__
@@ -508,9 +808,11 @@ static inline bool headers( const char name[] __attribute__(( unused )), void * 
 	#ifdef __CFA_DEBUG__
 	checkHeader( header < (Heap.Storage.Header *)heapBegin || (Heap.Storage.Header *)heapEnd < header, name, addr ); // bad address ? (offset could be + or -)
 
+	Heap * homeManager;
 	if ( unlikely( freeHead == 0p || // freed and only free-list node => null link
 				   // freed and link points at another free block not to a bucket in the bucket array.
-				   freeHead < &freeLists[0] || &freeLists[NoBucketSizes] <= freeHead ) ) {
+				   (homeManager = freeHead->homeManager, freeHead < &homeManager->freeLists[0] ||
+					&homeManager->freeLists[NoBucketSizes] <= freeHead ) ) ) {
 		abort( "**** Error **** attempt to %s storage %p with corrupted header.\n"
 			   "Possible cause is duplicate free on same block or overwriting of header information.",
 			   name, addr );
@@ -520,137 +822,234 @@ static inline bool headers( const char name[] __attribute__(( unused )), void * 
 	return false;
 } // headers
 
-// #ifdef __CFA_DEBUG__
-// #if __SIZEOF_POINTER__ == 4
-// #define MASK 0xdeadbeef
-// #else
-// #define MASK 0xdeadbeefdeadbeef
-// #endif
-// #define STRIDE size_t
 
-// static void * Memset( void * addr, STRIDE size ) {		// debug only
-// 	if ( size % sizeof(STRIDE) != 0 ) abort( "Memset() : internal error, size %zd not multiple of %zd.", size, sizeof(STRIDE) );
-// 	if ( (STRIDE)addr % sizeof(STRIDE) != 0 ) abort( "Memset() : internal error, addr %p not multiple of %zd.", addr, sizeof(STRIDE) );
-
-// 	STRIDE * end = (STRIDE *)addr + size / sizeof(STRIDE);
-// 	for ( STRIDE * p = (STRIDE *)addr; p < end; p += 1 ) *p = MASK;
-// 	return addr;
-// } // Memset
-// #endif // __CFA_DEBUG__
-
-
-#define NO_MEMORY_MSG "insufficient heap memory available for allocating %zd new bytes."
-
-static inline void * extend( size_t size ) with( heapManager ) {
-	lock( extlock __cfaabi_dbg_ctx2 );
+static void * master_extend( size_t size ) with( heapMaster ) {
+	lock( extLock );
 
 	ptrdiff_t rem = heapRemaining - size;
 	if ( unlikely( rem < 0 ) ) {
 		// If the size requested is bigger than the current remaining storage, increase the size of the heap.
 
-		size_t increase = ceiling2( size > heapExpand ? size : heapExpand, __page_size );
+		size_t increase = ceiling2( size > heapExpand ? size : heapExpand, libAlign() );
 		// Do not call abort or strerror( errno ) as they may call malloc.
-		if ( sbrk( increase ) == (void *)-1 ) {			// failed, no memory ?
-			unlock( extlock );
-			__cfaabi_bits_print_nolock( STDERR_FILENO, NO_MEMORY_MSG, size );
-			_exit( EXIT_FAILURE );						// give up
+		if ( unlikely( sbrk( increase ) == (void *)-1 ) ) {	// failed, no memory ?
+			unlock( extLock );
+			abort( NO_MEMORY_MSG, size );				// no memory
 		} // if
 
 		// Make storage executable for thunks.
 		if ( mprotect( (char *)heapEnd + heapRemaining, increase, __map_prot ) ) {
-			unlock( extlock );
-			__cfaabi_bits_print_nolock( STDERR_FILENO, "extend() : internal error, mprotect failure, heapEnd:%p size:%zd, errno:%d.\n", heapEnd, increase, errno );
-			_exit( EXIT_FAILURE );
+			unlock( extLock );
+			abort( "**** Error **** attempt to make heap storage executable for thunks and mprotect failed with errno %d.", errno );
 		} // if
+
+		rem = heapRemaining + increase - size;
 
 		#ifdef __STATISTICS__
 		sbrk_calls += 1;
 		sbrk_storage += increase;
 		#endif // __STATISTICS__
-
-		#ifdef __CFA_DEBUG__
-		// Set new memory to garbage so subsequent uninitialized usages might fail.
-		memset( (char *)heapEnd + heapRemaining, '\xde', increase );
-		//Memset( (char *)heapEnd + heapRemaining, increase );
-		#endif // __CFA_DEBUG__
-
-		rem = heapRemaining + increase - size;
 	} // if
 
 	Heap.Storage * block = (Heap.Storage *)heapEnd;
 	heapRemaining = rem;
 	heapEnd = (char *)heapEnd + size;
-	unlock( extlock );
+
+	unlock( extLock );
 	return block;
-} // extend
+} // master_extend
 
 
-static inline void * doMalloc( size_t size ) with( heapManager ) {
-	Heap.Storage * block;						// pointer to new block of storage
+__attribute__(( noinline ))
+static void * manager_extend( size_t size ) with( *heapManager ) {
+	ptrdiff_t rem = heapReserve - size;
+
+	if ( unlikely( rem < 0 ) ) {						// negative
+		// If the size requested is bigger than the current remaining reserve, use the current reserve to populate
+		// smaller freeLists, and increase the reserve.
+
+		rem = heapReserve;								// positive
+
+		if ( rem >= bucketSizes[0] ) {					// minimal size ? otherwise ignore
+			size_t bucket;
+			#ifdef FASTLOOKUP
+			if ( likely( rem < LookupSizes ) ) bucket = lookup[rem];
+			#endif // FASTLOOKUP
+				bucket = Bsearchl( rem, bucketSizes, heapMaster.maxBucketsUsed );
+			verify( 0 <= bucket && bucket <= heapMaster.maxBucketsUsed );
+			Heap.FreeHeader * freeHead = &(freeLists[bucket]);
+
+			// The remaining storage many not be bucket size, whereas all other allocations are. Round down to previous
+			// bucket size in this case.
+			if ( unlikely( freeHead->blockSize > (size_t)rem ) ) freeHead -= 1;
+			Heap.Storage * block = (Heap.Storage *)heapBuffer;
+
+			block->header.kind.real.next = freeHead->freeList; // push on stack
+			freeHead->freeList = block;
+		} // if
+
+		size_t increase = ceiling( size > ( heapMaster.heapExpand / 10 ) ? size : ( heapMaster.heapExpand / 10 ), libAlign() );
+		heapBuffer = master_extend( increase );
+		rem = increase - size;
+	} // if
+
+	Heap.Storage * block = (Heap.Storage *)heapBuffer;
+	heapReserve = rem;
+	heapBuffer = (char *)heapBuffer + size;
+
+	return block;
+} // manager_extend
+
+
+#define BOOT_HEAP_MANAGER \
+  	if ( unlikely( ! heapMasterBootFlag ) ) { \
+		heapManagerCtor(); /* trigger for first heap */ \
+	} /* if */
+
+#ifdef __STATISTICS__
+#define STAT_NAME __counter
+#define STAT_PARM , unsigned int STAT_NAME
+#define STAT_ARG( name ) , name
+#define STAT_0_CNT( counter ) stats.counters[counter].calls_0 += 1
+#else
+#define STAT_NAME
+#define STAT_PARM
+#define STAT_ARG( name )
+#define STAT_0_CNT( counter )
+#endif // __STATISTICS__
+
+#define PROLOG( counter, ... ) \
+	BOOT_HEAP_MANAGER; \
+	if ( unlikely( size == 0 ) ||						/* 0 BYTE ALLOCATION RETURNS NULL POINTER */ \
+		unlikely( size > ULONG_MAX - sizeof(Heap.Storage) ) ) { /* error check */ \
+		STAT_0_CNT( counter ); \
+		__VA_ARGS__; \
+		return 0p; \
+	} /* if */
+
+
+#define SCRUB_SIZE 1024lu
+// Do not use '\xfe' for scrubbing because dereferencing an address composed of it causes a SIGSEGV *without* a valid IP
+// pointer in the interrupt frame.
+#define SCRUB '\xff'
+
+static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapManager ) {
+	PROLOG( STAT_NAME );
+
+	verify( heapManager );
+	Heap.Storage * block;								// pointer to new block of storage
 
 	// Look up size in the size list.  Make sure the user request includes space for the header that must be allocated
 	// along with the block and is a multiple of the alignment size.
-
 	size_t tsize = size + sizeof(Heap.Storage);
 
-	if ( likely( tsize < mmapStart ) ) {				// small size => sbrk
-		size_t posn;
+	#ifdef __STATISTICS__
+	stats.counters[STAT_NAME].calls += 1;
+	stats.counters[STAT_NAME].request += size;
+	#endif // __STATISTICS__
+
+	#ifdef __CFA_DEBUG__
+	allocUnfreed += size;
+	#endif // __CFA_DEBUG__
+
+	if ( likely( tsize < heapMaster.mmapStart ) ) {		// small size => sbrk
+		size_t bucket;
 		#ifdef FASTLOOKUP
-		if ( tsize < LookupSizes ) posn = lookup[tsize];
+		if ( likely( tsize < LookupSizes ) ) bucket = lookup[tsize];
 		else
 		#endif // FASTLOOKUP
-			posn = Bsearchl( (unsigned int)tsize, bucketSizes, (size_t)maxBucketsUsed );
-		Heap.FreeHeader * freeElem = &freeLists[posn];
-		verify( freeElem <= &freeLists[maxBucketsUsed] ); // subscripting error ?
-		verify( tsize <= freeElem->blockSize );			// search failure ?
-		tsize = freeElem->blockSize;					// total space needed for request
+			bucket = Bsearchl( tsize, bucketSizes, heapMaster.maxBucketsUsed );
+		verify( 0 <= bucket && bucket <= heapMaster.maxBucketsUsed );
+		Heap.FreeHeader * freeHead = &freeLists[bucket];
+
+		verify( freeHead <= &freeLists[heapMaster.maxBucketsUsed] ); // subscripting error ?
+		verify( tsize <= freeHead->blockSize );			// search failure ?
+
+		tsize = freeHead->blockSize;					// total space needed for request
+		#ifdef __STATISTICS__
+		stats.counters[STAT_NAME].alloc += tsize;
+		#endif // __STATISTICS__
 
 		// Spin until the lock is acquired for this particular size of block.
 
 		#if BUCKETLOCK == SPINLOCK
-		lock( freeElem->lock __cfaabi_dbg_ctx2 );
-		block = freeElem->freeList;						// remove node from stack
+		block = freeHead->freeList;						// remove node from stack
 		#else
-		block = pop( freeElem->freeList );
+		block = pop( freeHead->freeList );
 		#endif // BUCKETLOCK
 		if ( unlikely( block == 0p ) ) {				// no free block ?
-			#if BUCKETLOCK == SPINLOCK
-			unlock( freeElem->lock );
-			#endif // BUCKETLOCK
-
-			// Freelist for that size was empty, so carve it out of the heap if there's enough left, or get some more
+			#ifdef OWNERSHIP
+			// Freelist for that size is empty, so carve it out of the heap, if there is enough left, or get some more
 			// and then carve it off.
+			#ifdef RETURNSPIN
+			#if BUCKETLOCK == SPINLOCK
+			lock( freeHead->returnLock );
+			block = freeHead->returnList;
+			freeHead->returnList = 0p;
+			unlock( freeHead->returnLock );
+			#else
+			block = __atomic_exchange_n( &freeHead->returnList, nullptr, __ATOMIC_SEQ_CST );
+			#endif // RETURNSPIN
 
-			block = (Heap.Storage *)extend( tsize );	// mutual exclusion on call
-		#if BUCKETLOCK == SPINLOCK
+			if ( likely( block == 0p ) ) {			// return list also empty?
+			#endif // OWNERSHIP
+				// Do not leave kernel thread as manager_extend accesses heapManager.
+				disable_interrupts();
+				block = (Heap.Storage *)manager_extend( tsize ); // mutual exclusion on call
+				enable_interrupts( false );
+
+				// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
+
+				#ifdef __CFA_DEBUG__
+				// Scrub new memory so subsequent uninitialized usages might fail. Only scrub the first 1024 bytes.
+				memset( block->data, SCRUB, min( SCRUB_SIZE, tsize - sizeof(Heap.Storage) ) );
+				#endif // __CFA_DEBUG__
+			#endif // BUCKETLOCK
+			#ifdef OWNERSHIP
+			} else {									// merge returnList into freeHead
+				#ifdef __STATISTICS__
+				stats.return_pulls += 1;
+				#endif // __STATISTICS__
+
+				// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
+
+				freeHead->freeList = block->header.kind.real.next;
+			} // if
+			#endif // OWNERSHIP
 		} else {
-			freeElem->freeList = block->header.kind.real.next;
-			unlock( freeElem->lock );
-		#endif // BUCKETLOCK
+			// Memory is scrubbed in doFree.
+			freeHead->freeList = block->header.kind.real.next;
 		} // if
 
-		block->header.kind.real.home = freeElem;		// pointer back to free list of apropriate size
+		block->header.kind.real.home = freeHead;		// pointer back to free list of apropriate size
 	} else {											// large size => mmap
   if ( unlikely( size > ULONG_MAX - __page_size ) ) return 0p;
 		tsize = ceiling2( tsize, __page_size );			// must be multiple of page size
 		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.mmap_calls, 1, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.mmap_storage_request, size, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.mmap_storage_alloc, tsize, __ATOMIC_SEQ_CST );
+		stats.counters[STAT_NAME].alloc += tsize;
+		stats.mmap_calls += 1;
+		stats.mmap_storage_request += size;
+		stats.mmap_storage_alloc += tsize;
 		#endif // __STATISTICS__
 
-		block = (Heap.Storage *)mmap( 0, tsize, __map_prot, MAP_PRIVATE | MAP_ANONYMOUS, mmapFd, 0 );
-		if ( block == (Heap.Storage *)MAP_FAILED ) { // failed ?
+		disable_interrupts();
+		block = (Heap.Storage *)mmap( 0, tsize, __map_prot, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 );
+		enable_interrupts( false );
+
+		// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
+
+		if ( unlikely( block == (Heap.Storage *)MAP_FAILED ) ) { // failed ?
 			if ( errno == ENOMEM ) abort( NO_MEMORY_MSG, tsize ); // no memory
 			// Do not call strerror( errno ) as it may call malloc.
-			abort( "(Heap &)0x%p.doMalloc() : internal error, mmap failure, size:%zu errno:%d.", &heapManager, tsize, errno );
-		} //if
-		#ifdef __CFA_DEBUG__
-		// Set new memory to garbage so subsequent uninitialized usages might fail.
-		memset( block, '\xde', tsize );
-		//Memset( block, tsize );
-		#endif // __CFA_DEBUG__
+			abort( "**** Error **** attempt to allocate large object (> %zu) of size %zu bytes and mmap failed with errno %d.", size, heapMaster.mmapStart, errno );
+		} // if
 		block->header.kind.real.blockSize = MarkMmappedBit( tsize ); // storage size for munmap
+
+		#ifdef __CFA_DEBUG__
+		// Scrub new memory so subsequent uninitialized usages might fail. Only scrub the first 1024 bytes.  The rest of
+		// the storage set to 0 by mmap.
+		memset( block->data, SCRUB, min( SCRUB_SIZE, tsize - sizeof(Heap.Storage) ) );
+		#endif // __CFA_DEBUG__
 	} // if
 
 	block->header.kind.real.size = size;				// store allocation size
@@ -658,7 +1057,6 @@ static inline void * doMalloc( size_t size ) with( heapManager ) {
 	verify( ((uintptr_t)addr & (libAlign() - 1)) == 0 ); // minimum alignment ?
 
 	#ifdef __CFA_DEBUG__
-	__atomic_add_fetch( &allocUnfreed, tsize, __ATOMIC_SEQ_CST );
 	if ( traceHeap() ) {
 		char helpText[64];
 		__cfaabi_bits_print_buffer( STDERR_FILENO, helpText, sizeof(helpText),
@@ -666,73 +1064,122 @@ static inline void * doMalloc( size_t size ) with( heapManager ) {
 	} // if
 	#endif // __CFA_DEBUG__
 
+//	poll_interrupts();									// call rollforward
+
 	return addr;
 } // doMalloc
 
 
-static inline void doFree( void * addr ) with( heapManager ) {
-	#ifdef __CFA_DEBUG__
-	if ( unlikely( heapManager.heapBegin == 0p ) ) {
-		abort( "doFree( %p ) : internal error, called before heap is initialized.", addr );
-	} // if
-	#endif // __CFA_DEBUG__
+static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
+	verify( addr );
+
+	// detect free after thread-local storage destruction and use global stats in that case
 
 	Heap.Storage.Header * header;
-	Heap.FreeHeader * freeElem;
-	size_t size, alignment;								// not used (see realloc)
+	Heap.FreeHeader * freeHead;
+	size_t size, alignment;
 
-	if ( headers( "free", addr, header, freeElem, size, alignment ) ) { // mmapped ?
+	bool mapped = headers( "free", addr, header, freeHead, size, alignment );
+	#if defined( __STATISTICS__ ) || defined( __CFA_DEBUG__ )
+	size_t rsize = header->kind.real.size;				// optimization
+	#endif // __STATISTICS__ || __CFA_DEBUG__
+
+	#ifdef __STATISTICS__
+	stats.free_storage_request += rsize;
+	stats.free_storage_alloc += size;
+	#endif // __STATISTICS__
+
+	#ifdef __CFA_DEBUG__
+	allocUnfreed -= rsize;
+	#endif // __CFA_DEBUG__
+
+	if ( unlikely( mapped ) ) {							// mmapped ?
 		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.munmap_calls, 1, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.munmap_storage_request, header->kind.real.size, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.munmap_storage_alloc, size, __ATOMIC_SEQ_CST );
+		stats.munmap_calls += 1;
+		stats.munmap_storage_request += rsize;
+		stats.munmap_storage_alloc += size;
 		#endif // __STATISTICS__
-		if ( munmap( header, size ) == -1 ) {
-			abort( "Attempt to deallocate storage %p not allocated or with corrupt header.\n"
-				   "Possible cause is invalid pointer.",
-				   addr );
+
+		// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
+
+		// Does not matter where this storage is freed.
+		if ( unlikely( munmap( header, size ) == -1 ) ) {
+			// Do not call strerror( errno ) as it may call malloc.
+			abort( "**** Error **** attempt to deallocate large object %p and munmap failed with errno %d.\n"
+				   "Possible cause is invalid delete pointer: either not allocated or with corrupt header.",
+				   addr, errno );
 		} // if
 	} else {
 		#ifdef __CFA_DEBUG__
-		// Set free memory to garbage so subsequent usages might fail.
-		memset( ((Heap.Storage *)header)->data, '\xde', freeElem->blockSize - sizeof( Heap.Storage ) );
-		//Memset( ((Heap.Storage *)header)->data, freeElem->blockSize - sizeof( Heap.Storage ) );
+		// memset is NOT always inlined!
+		disable_interrupts();
+		// Scrub old memory so subsequent usages might fail. Only scrub the first/last SCRUB_SIZE bytes.
+		char * data = ((Heap.Storage *)header)->data;	// data address
+		size_t dsize = size - sizeof(Heap.Storage);		// data size
+		if ( dsize <= SCRUB_SIZE * 2 ) {
+			memset( data, SCRUB, dsize );				// scrub all
+		} else {
+			memset( data, SCRUB, SCRUB_SIZE );			// scrub front
+			memset( data + dsize - SCRUB_SIZE, SCRUB, SCRUB_SIZE ); // scrub back
+		} // if
+		enable_interrupts( false );
 		#endif // __CFA_DEBUG__
 
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.free_calls, 1, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.free_storage_request, header->kind.real.size, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.free_storage_alloc, size, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
+		if ( likely( heapManager == freeHead->homeManager ) ) { // belongs to this thread
+			header->kind.real.next = freeHead->freeList; // push on stack
+			freeHead->freeList = (Heap.Storage *)header;
+		} else {										// return to thread owner
+			verify( heapManager );
 
-		#if BUCKETLOCK == SPINLOCK
-		lock( freeElem->lock __cfaabi_dbg_ctx2 );		// acquire spin lock
-		header->kind.real.next = freeElem->freeList;	// push on stack
-		freeElem->freeList = (Heap.Storage *)header;
-		unlock( freeElem->lock );						// release spin lock
-		#else
-		push( freeElem->freeList, *(Heap.Storage *)header );
-		#endif // BUCKETLOCK
+			#ifdef OWNERSHIP
+			#ifdef RETURNSPIN
+			lock( freeHead->returnLock );
+			header->kind.real.next = freeHead->returnList; // push to bucket return list
+			freeHead->returnList = (Heap.Storage *)header;
+			unlock( freeHead->returnLock );
+			#else										// lock free
+			header->kind.real.next = freeHead->returnList; // link new node to top node
+			// CAS resets header->kind.real.next = freeHead->returnList on failure
+			while ( ! __atomic_compare_exchange_n( &freeHead->returnList, &header->kind.real.next, header,
+												   false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) );
+			#endif // RETURNSPIN
+
+			#else										// no OWNERSHIP
+
+			freeHead = &heap->freeLists[ClearStickyBits( header->kind.real.home ) - &freeHead->homeManager->freeLists[0]];
+			header->kind.real.next = freeHead->freeList; // push on stack
+			freeHead->freeList = (Heap.Storage *)header;
+			#endif // ! OWNERSHIP
+
+			#ifdef __U_STATISTICS__
+			stats.return_pushes += 1;
+			stats.return_storage_request += rsize;
+			stats.return_storage_alloc += size;
+			#endif // __U_STATISTICS__
+
+			// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
+		} // if
 	} // if
 
 	#ifdef __CFA_DEBUG__
-	__atomic_add_fetch( &allocUnfreed, -size, __ATOMIC_SEQ_CST );
 	if ( traceHeap() ) {
 		char helpText[64];
 		__cfaabi_bits_print_buffer( STDERR_FILENO, helpText, sizeof(helpText),
 									"Free( %p ) size:%zu\n", addr, size ); // print debug/nodebug
 	} // if
 	#endif // __CFA_DEBUG__
+
+//	poll_interrupts();									// call rollforward
 } // doFree
 
 
-static size_t prtFree( Heap & manager ) with( manager ) {
+size_t prtFree( Heap & manager ) with( manager ) {
 	size_t total = 0;
 	#ifdef __STATISTICS__
 	__cfaabi_bits_acquire();
 	__cfaabi_bits_print_nolock( STDERR_FILENO, "\nBin lists (bin size : free blocks on list)\n" );
 	#endif // __STATISTICS__
-	for ( unsigned int i = 0; i < maxBucketsUsed; i += 1 ) {
+	for ( unsigned int i = 0; i < heapMaster.maxBucketsUsed; i += 1 ) {
 		size_t size = freeLists[i].blockSize;
 		#ifdef __STATISTICS__
 		unsigned int N = 0;
@@ -763,86 +1210,32 @@ static size_t prtFree( Heap & manager ) with( manager ) {
 	__cfaabi_bits_print_nolock( STDERR_FILENO, "\ntotal free blocks:%zu\n", total );
 	__cfaabi_bits_release();
 	#endif // __STATISTICS__
-	return (char *)heapEnd - (char *)heapBegin - total;
+	return (char *)heapMaster.heapEnd - (char *)heapMaster.heapBegin - total;
 } // prtFree
 
 
-static void ?{}( Heap & manager ) with( manager ) {
-	__page_size = sysconf( _SC_PAGESIZE );
-	__map_prot = PROT_READ | PROT_WRITE | PROT_EXEC;
+#ifdef __STATISTICS__
+static void incCalls( intptr_t statName ) libcfa_nopreempt {
+	heapManager->stats.counters[statName].calls += 1;
+} // incCalls
 
-	for ( unsigned int i = 0; i < NoBucketSizes; i += 1 ) { // initialize the free lists
-		freeLists[i].blockSize = bucketSizes[i];
-	} // for
+static void incZeroCalls( intptr_t statName ) libcfa_nopreempt {
+	heapManager->stats.counters[statName].calls_0 += 1;
+} // incZeroCalls
+#endif // __STATISTICS__
 
-	#ifdef FASTLOOKUP
-	unsigned int idx = 0;
-	for ( unsigned int i = 0; i < LookupSizes; i += 1 ) {
-		if ( i > bucketSizes[idx] ) idx += 1;
-		lookup[i] = idx;
-	} // for
-	#endif // FASTLOOKUP
-
-	if ( ! setMmapStart( malloc_mmap_start() ) ) {
-		abort( "Heap : internal error, mmap start initialization failure." );
-	} // if
-	heapExpand = malloc_expansion();
-
-	char * end = (char *)sbrk( 0 );
-	heapBegin = heapEnd = sbrk( (char *)ceiling2( (long unsigned int)end, __page_size ) - end ); // move start of heap to multiple of alignment
-} // Heap
+#ifdef __CFA_DEBUG__
+static void incUnfreed( intptr_t offset ) libcfa_nopreempt {
+	heapManager->allocUnfreed += offset;
+} // incUnfreed
+#endif // __CFA_DEBUG__
 
 
-static void ^?{}( Heap & ) {
-	#ifdef __STATISTICS__
-	if ( traceHeapTerm() ) {
-		printStats();
-		// prtUnfreed() called in heapAppStop()
-	} // if
-	#endif // __STATISTICS__
-} // ~Heap
-
-
-static void memory_startup( void ) __attribute__(( constructor( STARTUP_PRIORITY_MEMORY ) ));
-void memory_startup( void ) {
-	#ifdef __CFA_DEBUG__
-	if ( heapBoot ) {									// check for recursion during system boot
-		abort( "boot() : internal error, recursively invoked during system boot." );
-	} // if
-	heapBoot = true;
-	#endif // __CFA_DEBUG__
-
-	//verify( heapManager.heapBegin != 0 );
-	//heapManager{};
-	if ( heapManager.heapBegin == 0p ) heapManager{};	// sanity check
-} // memory_startup
-
-static void memory_shutdown( void ) __attribute__(( destructor( STARTUP_PRIORITY_MEMORY ) ));
-void memory_shutdown( void ) {
-	^heapManager{};
-} // memory_shutdown
-
-
-static inline void * mallocNoStats( size_t size ) {		// necessary for malloc statistics
-	verify( heapManager.heapBegin != 0p );				// called before memory_startup ?
-  if ( unlikely( size ) == 0 ) return 0p;				// 0 BYTE ALLOCATION RETURNS NULL POINTER
-
-#if __SIZEOF_POINTER__ == 8
-	verify( size < ((typeof(size_t))1 << 48) );
-#endif // __SIZEOF_POINTER__ == 8
-	return doMalloc( size );
-} // mallocNoStats
-
-
-static inline void * memalignNoStats( size_t alignment, size_t size ) {
-  if ( unlikely( size ) == 0 ) return 0p;				// 0 BYTE ALLOCATION RETURNS NULL POINTER
-
-	#ifdef __CFA_DEBUG__
+static void * memalignNoStats( size_t alignment, size_t size STAT_PARM ) {
 	checkAlign( alignment );							// check alignment
-	#endif // __CFA_DEBUG__
 
-	// if alignment <= default alignment, do normal malloc as two headers are unnecessary
-  if ( unlikely( alignment <= libAlign() ) ) return mallocNoStats( size );
+	// if alignment <= default alignment or size == 0, do normal malloc as two headers are unnecessary
+  if ( unlikely( alignment <= libAlign() || size == 0 ) ) return doMalloc( size STAT_ARG( STAT_NAME ) );
 
 	// Allocate enough storage to guarantee an address on the alignment boundary, and sufficient space before it for
 	// administrative storage. NOTE, WHILE THERE ARE 2 HEADERS, THE FIRST ONE IS IMPLICITLY CREATED BY DOMALLOC.
@@ -853,18 +1246,24 @@ static inline void * memalignNoStats( size_t alignment, size_t size ) {
 
 	// subtract libAlign() because it is already the minimum alignment
 	// add sizeof(Storage) for fake header
-	char * addr = (char *)mallocNoStats( size + alignment - libAlign() + sizeof(Heap.Storage) );
+	size_t offset = alignment - libAlign() + sizeof(Heap.Storage);
+	char * addr = (char *)doMalloc( size + offset STAT_ARG( STAT_NAME ) );
 
 	// address in the block of the "next" alignment address
 	char * user = (char *)ceiling2( (uintptr_t)(addr + sizeof(Heap.Storage)), alignment );
 
 	// address of header from malloc
-	Heap.Storage.Header * RealHeader = HeaderAddr( addr );
-	RealHeader->kind.real.size = size;					// correct size to eliminate above alignment offset
-	// address of fake header * before* the alignment location
+	Heap.Storage.Header * realHeader = HeaderAddr( addr );
+	realHeader->kind.real.size = size;					// correct size to eliminate above alignment offset
+	#ifdef __CFA_DEBUG__
+	incUnfreed( -offset );								// adjustment off the offset from call to doMalloc
+	#endif // __CFA_DEBUG__
+
+	// address of fake header *before* the alignment location
 	Heap.Storage.Header * fakeHeader = HeaderAddr( user );
+
 	// SKULLDUGGERY: insert the offset to the start of the actual storage block and remember alignment
-	fakeHeader->kind.fake.offset = (char *)fakeHeader - (char *)RealHeader;
+	fakeHeader->kind.fake.offset = (char *)fakeHeader - (char *)realHeader;
 	// SKULLDUGGERY: odd alignment implies fake header
 	fakeHeader->kind.fake.alignment = MarkAlignmentBit( alignment );
 
@@ -879,63 +1278,35 @@ extern "C" {
 	// Allocates size bytes and returns a pointer to the allocated memory.  The contents are undefined. If size is 0,
 	// then malloc() returns a unique pointer value that can later be successfully passed to free().
 	void * malloc( size_t size ) libcfa_public {
-		#ifdef __STATISTICS__
-		if ( likely( size > 0 ) ) {
-			__atomic_add_fetch( &stats.malloc_calls, 1, __ATOMIC_SEQ_CST );
-			__atomic_add_fetch( &stats.malloc_storage_request, size, __ATOMIC_SEQ_CST );
-		} else {
-			__atomic_add_fetch( &stats.malloc_0_calls, 1, __ATOMIC_SEQ_CST );
-		} // if
-		#endif // __STATISTICS__
-
-		return mallocNoStats( size );
+		return doMalloc( size STAT_ARG( MALLOC ) );
 	} // malloc
 
 
 	// Same as malloc() except size bytes is an array of dim elements each of elemSize bytes.
 	void * aalloc( size_t dim, size_t elemSize ) libcfa_public {
-		size_t size = dim * elemSize;
-		#ifdef __STATISTICS__
-		if ( likely( size > 0 ) ) {
-			__atomic_add_fetch( &stats.aalloc_calls, 1, __ATOMIC_SEQ_CST );
-			__atomic_add_fetch( &stats.aalloc_storage_request, size, __ATOMIC_SEQ_CST );
-		} else {
-			__atomic_add_fetch( &stats.aalloc_0_calls, 1, __ATOMIC_SEQ_CST );
-		} // if
-		#endif // __STATISTICS__
-
-		return mallocNoStats( size );
+		return doMalloc( dim * elemSize STAT_ARG( AALLOC ) );
 	} // aalloc
 
 
 	// Same as aalloc() with memory set to zero.
 	void * calloc( size_t dim, size_t elemSize ) libcfa_public {
 		size_t size = dim * elemSize;
-	  if ( unlikely( size ) == 0 ) {			// 0 BYTE ALLOCATION RETURNS NULL POINTER
-			#ifdef __STATISTICS__
-			__atomic_add_fetch( &stats.calloc_0_calls, 1, __ATOMIC_SEQ_CST );
-			#endif // __STATISTICS__
-			return 0p;
-		} // if
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.calloc_calls, 1, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.calloc_storage_request, dim * elemSize, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
+		char * addr = (char *)doMalloc( size STAT_ARG( CALLOC ) );
 
-		char * addr = (char *)mallocNoStats( size );
+	  if ( unlikely( addr == NULL ) ) return NULL;		// stop further processing if 0p is returned
 
 		Heap.Storage.Header * header;
-		Heap.FreeHeader * freeElem;
+		Heap.FreeHeader * freeHead;
 		size_t bsize, alignment;
 
 		#ifndef __CFA_DEBUG__
 		bool mapped =
 			#endif // __CFA_DEBUG__
-			headers( "calloc", addr, header, freeElem, bsize, alignment );
+			headers( "calloc", addr, header, freeHead, bsize, alignment );
 
 		#ifndef __CFA_DEBUG__
 		// Mapped storage is zero filled, but in debug mode mapped memory is scrubbed in doMalloc, so it has to be reset to zero.
-		if ( ! mapped )
+		if ( likely( ! mapped ) )
 		#endif // __CFA_DEBUG__
 			// <-------0000000000000000000000000000UUUUUUUUUUUUUUUUUUUUUUUUU> bsize (bucket size) U => undefined
 			// `-header`-addr                      `-size
@@ -951,102 +1322,82 @@ extern "C" {
 	// not 0p, then the call is equivalent to free(oaddr). Unless oaddr is 0p, it must have been returned by an earlier
 	// call to malloc(), alloc(), calloc() or realloc(). If the area pointed to was moved, a free(oaddr) is done.
 	void * resize( void * oaddr, size_t size ) libcfa_public {
-		// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
-	  if ( unlikely( size == 0 ) ) {					// special cases
-			#ifdef __STATISTICS__
-			__atomic_add_fetch( &stats.resize_0_calls, 1, __ATOMIC_SEQ_CST );
-			#endif // __STATISTICS__
-			free( oaddr );
-			return 0p;
+	  if ( unlikely( oaddr == 0p ) ) {				// => malloc( size )
+			return doMalloc( size STAT_ARG( RESIZE ) );
 		} // if
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.resize_calls, 1, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
 
-	  if ( unlikely( oaddr == 0p ) ) {
-			#ifdef __STATISTICS__
-			__atomic_add_fetch( &stats.resize_storage_request, size, __ATOMIC_SEQ_CST );
-			#endif // __STATISTICS__
-			return mallocNoStats( size );
-		} // if
+		PROLOG( RESIZE, doFree( oaddr ) );				// => free( oaddr )
 
 		Heap.Storage.Header * header;
-		Heap.FreeHeader * freeElem;
+		Heap.FreeHeader * freeHead;
 		size_t bsize, oalign;
-		headers( "resize", oaddr, header, freeElem, bsize, oalign );
+		headers( "resize", oaddr, header, freeHead, bsize, oalign );
 
 		size_t odsize = DataStorage( bsize, oaddr, header ); // data storage available in bucket
 		// same size, DO NOT preserve STICKY PROPERTIES.
 		if ( oalign == libAlign() && size <= odsize && odsize <= size * 2 ) { // allow 50% wasted storage for smaller size
 			ClearZeroFillBit( header );					// no alignment and turn off 0 fill
+			#ifdef __CFA_DEBUG__
+			incUnfreed( size - header->kind.real.size ); // adjustment off the size difference
+			#endif // __CFA_DEBUG__
 			header->kind.real.size = size;				// reset allocation size
+			#ifdef __STATISTICS__
+			incCalls( RESIZE );
+			#endif // __STATISTICS__
 			return oaddr;
 		} // if
 
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.resize_storage_request, size, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
-
 		// change size, DO NOT preserve STICKY PROPERTIES.
-		free( oaddr );
-		return mallocNoStats( size );					// create new area
+		doFree( oaddr );								// free previous storage
+
+		return doMalloc( size STAT_ARG( RESIZE ) );		// create new area
 	} // resize
 
 
 	// Same as resize() but the contents are unchanged in the range from the start of the region up to the minimum of
 	// the old and new sizes.
 	void * realloc( void * oaddr, size_t size ) libcfa_public {
-		// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
-	  if ( unlikely( size == 0 ) ) {					// special cases
-			#ifdef __STATISTICS__
-			__atomic_add_fetch( &stats.realloc_0_calls, 1, __ATOMIC_SEQ_CST );
-			#endif // __STATISTICS__
-			free( oaddr );
-			return 0p;
+	  if ( unlikely( oaddr == 0p ) ) {					// => malloc( size )
+		  return doMalloc( size STAT_ARG( REALLOC ) );
 		} // if
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.realloc_calls, 1, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
 
-	  if ( unlikely( oaddr == 0p ) ) {
-			#ifdef __STATISTICS__
-			__atomic_add_fetch( &stats.realloc_storage_request, size, __ATOMIC_SEQ_CST );
-			#endif // __STATISTICS__
-			return mallocNoStats( size );
-		} // if
+		PROLOG( REALLOC, doFree( oaddr ) );				// => free( oaddr )
 
 		Heap.Storage.Header * header;
-		Heap.FreeHeader * freeElem;
+		Heap.FreeHeader * freeHead;
 		size_t bsize, oalign;
-		headers( "realloc", oaddr, header, freeElem, bsize, oalign );
+		headers( "realloc", oaddr, header, freeHead, bsize, oalign );
 
 		size_t odsize = DataStorage( bsize, oaddr, header ); // data storage available in bucket
 		size_t osize = header->kind.real.size;			// old allocation size
 		bool ozfill = ZeroFillBit( header );			// old allocation zero filled
 	  if ( unlikely( size <= odsize ) && odsize <= size * 2 ) { // allow up to 50% wasted storage
-	  		header->kind.real.size = size;				// reset allocation size
+			#ifdef __CFA_DEBUG__
+			incUnfreed( size - header->kind.real.size ); // adjustment off the size difference
+			#endif // __CFA_DEBUG__
+			header->kind.real.size = size;				// reset allocation size
 	  		if ( unlikely( ozfill ) && size > osize ) {	// previous request zero fill and larger ?
 	  			memset( (char *)oaddr + osize, '\0', size - osize ); // initialize added storage
 	  		} // if
+			#ifdef __STATISTICS__
+			incCalls( REALLOC );
+			#endif // __STATISTICS__
 			return oaddr;
 		} // if
-
-		#ifdef __STATISTICS__
-	  	__atomic_add_fetch( &stats.realloc_storage_request, size, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
 
 		// change size and copy old content to new storage
 
 		void * naddr;
-		if ( likely( oalign == libAlign() ) ) {			// previous request not aligned ?
-			naddr = mallocNoStats( size );				// create new area
+		if ( likely( oalign <= libAlign() ) ) {			// previous request not aligned ?
+			naddr = doMalloc( size STAT_ARG( REALLOC ) ); // create new area
 		} else {
-			naddr = memalignNoStats( oalign, size );	// create new aligned area
+			naddr = memalignNoStats( oalign, size STAT_ARG( REALLOC ) ); // create new aligned area
 		} // if
 
-		headers( "realloc", naddr, header, freeElem, bsize, oalign );
+		headers( "realloc", naddr, header, freeHead, bsize, oalign );
+		// To preserve prior fill, the entire bucket must be copied versus the size.
 		memcpy( naddr, oaddr, min( osize, size ) );		// copy bytes
-		free( oaddr );
+		doFree( oaddr );								// free previous storage
 
 		if ( unlikely( ozfill ) ) {						// previous request zero fill ?
 			MarkZeroFilledBit( header );				// mark new request as zero filled
@@ -1066,59 +1417,31 @@ extern "C" {
 
 	// Same as malloc() except the memory address is a multiple of alignment, which must be a power of two. (obsolete)
 	void * memalign( size_t alignment, size_t size ) libcfa_public {
-		#ifdef __STATISTICS__
-		if ( likely( size > 0 ) ) {
-			__atomic_add_fetch( &stats.memalign_calls, 1, __ATOMIC_SEQ_CST );
-			__atomic_add_fetch( &stats.memalign_storage_request, size, __ATOMIC_SEQ_CST );
-		} else {
-			__atomic_add_fetch( &stats.memalign_0_calls, 1, __ATOMIC_SEQ_CST );
-		} // if
-		#endif // __STATISTICS__
-
-		return memalignNoStats( alignment, size );
+		return memalignNoStats( alignment, size STAT_ARG( MEMALIGN ) );
 	} // memalign
 
 
 	// Same as aalloc() with memory alignment.
 	void * amemalign( size_t alignment, size_t dim, size_t elemSize ) libcfa_public {
-		size_t size = dim * elemSize;
-		#ifdef __STATISTICS__
-		if ( likely( size > 0 ) ) {
-			__atomic_add_fetch( &stats.cmemalign_calls, 1, __ATOMIC_SEQ_CST );
-			__atomic_add_fetch( &stats.cmemalign_storage_request, size, __ATOMIC_SEQ_CST );
-		} else {
-			__atomic_add_fetch( &stats.cmemalign_0_calls, 1, __ATOMIC_SEQ_CST );
-		} // if
-		#endif // __STATISTICS__
-
-		return memalignNoStats( alignment, size );
+		return memalignNoStats( alignment, dim * elemSize STAT_ARG( AMEMALIGN ) );
 	} // amemalign
 
 
 	// Same as calloc() with memory alignment.
 	void * cmemalign( size_t alignment, size_t dim, size_t elemSize ) libcfa_public {
 		size_t size = dim * elemSize;
-	  if ( unlikely( size ) == 0 ) {					// 0 BYTE ALLOCATION RETURNS NULL POINTER
-			#ifdef __STATISTICS__
-			__atomic_add_fetch( &stats.cmemalign_0_calls, 1, __ATOMIC_SEQ_CST );
-			#endif // __STATISTICS__
-			return 0p;
-		} // if
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.cmemalign_calls, 1, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.cmemalign_storage_request, dim * elemSize, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
+		char * addr = (char *)memalignNoStats( alignment, size STAT_ARG( CMEMALIGN ) );
 
-		char * addr = (char *)memalignNoStats( alignment, size );
+	  if ( unlikely( addr == NULL ) ) return NULL;		// stop further processing if 0p is returned
 
 		Heap.Storage.Header * header;
-		Heap.FreeHeader * freeElem;
+		Heap.FreeHeader * freeHead;
 		size_t bsize;
 
 		#ifndef __CFA_DEBUG__
 		bool mapped =
 			#endif // __CFA_DEBUG__
-			headers( "cmemalign", addr, header, freeElem, bsize, alignment );
+			headers( "cmemalign", addr, header, freeHead, bsize, alignment );
 
 		// Mapped storage is zero filled, but in debug mode mapped memory is scrubbed in doMalloc, so it has to be reset to zero.
 		#ifndef __CFA_DEBUG__
@@ -1168,22 +1491,21 @@ extern "C" {
 	// or realloc().  Otherwise, or if free(ptr) has already been called before, undefined behaviour occurs. If ptr is
 	// 0p, no operation is performed.
 	void free( void * addr ) libcfa_public {
+//		verify( heapManager );
+
 	  if ( unlikely( addr == 0p ) ) {					// special case
 			#ifdef __STATISTICS__
-			__atomic_add_fetch( &stats.free_null_calls, 1, __ATOMIC_SEQ_CST );
+		  if ( heapManager )
+			incZeroCalls( FREE );
 			#endif // __STATISTICS__
-
-			// #ifdef __CFA_DEBUG__
-			// if ( traceHeap() ) {
-			// 	#define nullmsg "Free( 0x0 ) size:0\n"
-			// 	// Do not debug print free( 0p ), as it can cause recursive entry from sprintf.
-			// 	__cfaabi_dbg_write( nullmsg, sizeof(nullmsg) - 1 );
-			// } // if
-			// #endif // __CFA_DEBUG__
 			return;
-		} // exit
+		} // if
 
-		doFree( addr );
+		#ifdef __STATISTICS__
+		incCalls( FREE );
+		#endif // __STATISTICS__
+
+		doFree( addr );									// handles heapManager == nullptr
 	} // free
 
 
@@ -1226,10 +1548,10 @@ extern "C" {
 	size_t malloc_usable_size( void * addr ) libcfa_public {
 	  if ( unlikely( addr == 0p ) ) return 0;			// null allocation has 0 size
 		Heap.Storage.Header * header;
-		Heap.FreeHeader * freeElem;
+		Heap.FreeHeader * freeHead;
 		size_t bsize, alignment;
 
-		headers( "malloc_usable_size", addr, header, freeElem, bsize, alignment );
+		headers( "malloc_usable_size", addr, header, freeHead, bsize, alignment );
 		return DataStorage( bsize, addr, header );		// data storage in bucket
 	} // malloc_usable_size
 
@@ -1237,17 +1559,23 @@ extern "C" {
 	// Prints (on default standard error) statistics about memory allocated by malloc and related functions.
 	void malloc_stats( void ) libcfa_public {
 		#ifdef __STATISTICS__
-		printStats();
-		if ( prtFree() ) prtFree( heapManager );
+		HeapStatistics stats;
+		HeapStatisticsCtor( stats );
+		if ( printStats( collectStats( stats ) ) == -1 ) {
+		#else
+		#define MALLOC_STATS_MSG "malloc_stats statistics disabled.\n"
+		if ( write( STDERR_FILENO, MALLOC_STATS_MSG, sizeof( MALLOC_STATS_MSG ) - 1 /* size includes '\0' */ ) == -1 ) {
 		#endif // __STATISTICS__
+			abort( "**** Error **** write failed in malloc_stats" );
+		} // if
 	} // malloc_stats
 
 
 	// Changes the file descriptor where malloc_stats() writes statistics.
 	int malloc_stats_fd( int fd __attribute__(( unused )) ) libcfa_public {
 		#ifdef __STATISTICS__
-		int temp = stats_fd;
-		stats_fd = fd;
+		int temp = heapMaster.stats_fd;
+		heapMaster.stats_fd = fd;
 		return temp;
 		#else
 		return -1;										// unsupported
@@ -1261,7 +1589,9 @@ extern "C" {
 	int malloc_info( int options, FILE * stream __attribute__(( unused )) ) libcfa_public {
 	  if ( options != 0 ) { errno = EINVAL; return -1; }
 		#ifdef __STATISTICS__
-		return printStatsXML( stream );
+		HeapStatistics stats;
+		HeapStatisticsCtor( stats );
+		return printStatsXML( collectStats( stats ), stream ); // returns bytes written or -1
 		#else
 		return 0;										// unsupported
 		#endif // __STATISTICS__
@@ -1274,7 +1604,7 @@ extern "C" {
 	  if ( value < 0 ) return 0;
 		choose( option ) {
 		  case M_TOP_PAD:
-			heapExpand = ceiling2( value, __page_size );
+			heapMaster.heapExpand = ceiling2( value, __page_size );
 			return 1;
 		  case M_MMAP_THRESHOLD:
 			if ( setMmapStart( value ) ) return 1;
@@ -1318,27 +1648,11 @@ extern "C" {
 
 // Must have CFA linkage to overload with C linkage realloc.
 void * resize( void * oaddr, size_t nalign, size_t size ) libcfa_public {
-	// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
-  if ( unlikely( size == 0 ) ) {						// special cases
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.resize_0_calls, 1, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
-		free( oaddr );
-		return 0p;
+  if ( unlikely( oaddr == 0p ) ) {						// => malloc( size )
+		return memalignNoStats( nalign, size STAT_ARG( RESIZE ) );
 	} // if
 
-	if ( unlikely( nalign < libAlign() ) ) nalign = libAlign(); // reset alignment to minimum
-	#ifdef __CFA_DEBUG__
-	else checkAlign( nalign );							// check alignment
-	#endif // __CFA_DEBUG__
-
-  if ( unlikely( oaddr == 0p ) ) {
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.resize_calls, 1, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.resize_storage_request, size, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
-		return memalignNoStats( nalign, size );
-	} // if
+	PROLOG( RESIZE, doFree( oaddr ) );					// => free( oaddr )
 
 	// Attempt to reuse existing alignment.
 	Heap.Storage.Header * header = HeaderAddr( oaddr );
@@ -1346,21 +1660,28 @@ void * resize( void * oaddr, size_t nalign, size_t size ) libcfa_public {
 	size_t oalign;
 
 	if ( unlikely( isFakeHeader ) ) {
+		checkAlign( nalign );							// check alignment
 		oalign = ClearAlignmentBit( header );			// old alignment
 		if ( unlikely( (uintptr_t)oaddr % nalign == 0	// lucky match ?
 			 && ( oalign <= nalign						// going down
 				  || (oalign >= nalign && oalign <= 256) ) // little alignment storage wasted ?
 			) ) {
 			HeaderAddr( oaddr )->kind.fake.alignment = MarkAlignmentBit( nalign ); // update alignment (could be the same)
-			Heap.FreeHeader * freeElem;
+			Heap.FreeHeader * freeHead;
 			size_t bsize, oalign;
-			headers( "resize", oaddr, header, freeElem, bsize, oalign );
+			headers( "resize", oaddr, header, freeHead, bsize, oalign );
 			size_t odsize = DataStorage( bsize, oaddr, header ); // data storage available in bucket
 
 			if ( size <= odsize && odsize <= size * 2 ) { // allow 50% wasted data storage
 				HeaderAddr( oaddr )->kind.fake.alignment = MarkAlignmentBit( nalign ); // update alignment (could be the same)
 				ClearZeroFillBit( header );				// turn off 0 fill
+				#ifdef __CFA_DEBUG__
+				incUnfreed( size - header->kind.real.size ); // adjustment off the size difference
+				#endif // __CFA_DEBUG__
 				header->kind.real.size = size;			// reset allocation size
+				#ifdef __STATISTICS__
+				incCalls( RESIZE );
+				#endif // __STATISTICS__
 				return oaddr;
 			} // if
 		} // if
@@ -1369,44 +1690,25 @@ void * resize( void * oaddr, size_t nalign, size_t size ) libcfa_public {
 		return resize( oaddr, size );					// duplicate special case checks
 	} // if
 
-	#ifdef __STATISTICS__
-	__atomic_add_fetch( &stats.resize_storage_request, size, __ATOMIC_SEQ_CST );
-	#endif // __STATISTICS__
-
 	// change size, DO NOT preserve STICKY PROPERTIES.
-	free( oaddr );
-	return memalignNoStats( nalign, size );				// create new aligned area
+	doFree( oaddr );									// free previous storage
+	return memalignNoStats( nalign, size STAT_ARG( RESIZE ) ); // create new aligned area
 } // resize
 
 
 void * realloc( void * oaddr, size_t nalign, size_t size ) libcfa_public {
-	// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
-  if ( unlikely( size == 0 ) ) {						// special cases
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.realloc_0_calls, 1, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
-		free( oaddr );
-		return 0p;
+  if ( unlikely( oaddr == 0p ) ) {						// => malloc( size )
+		return memalignNoStats( nalign, size STAT_ARG( REALLOC ) );
 	} // if
 
-	if ( unlikely( nalign < libAlign() ) ) nalign = libAlign(); // reset alignment to minimum
-	#ifdef __CFA_DEBUG__
-	else checkAlign( nalign );							// check alignment
-	#endif // __CFA_DEBUG__
-
-  if ( unlikely( oaddr == 0p ) ) {
-		#ifdef __STATISTICS__
-		__atomic_add_fetch( &stats.realloc_calls, 1, __ATOMIC_SEQ_CST );
-		__atomic_add_fetch( &stats.realloc_storage_request, size, __ATOMIC_SEQ_CST );
-		#endif // __STATISTICS__
-		return memalignNoStats( nalign, size );
-	} // if
+	PROLOG( REALLOC, doFree( oaddr ) );					// => free( oaddr )
 
 	// Attempt to reuse existing alignment.
 	Heap.Storage.Header * header = HeaderAddr( oaddr );
 	bool isFakeHeader = AlignmentBit( header );			// old fake header ?
 	size_t oalign;
 	if ( unlikely( isFakeHeader ) ) {
+		checkAlign( nalign );							// check alignment
 		oalign = ClearAlignmentBit( header );			// old alignment
 		if ( unlikely( (uintptr_t)oaddr % nalign == 0	// lucky match ?
 			 && ( oalign <= nalign						// going down
@@ -1420,25 +1722,20 @@ void * realloc( void * oaddr, size_t nalign, size_t size ) libcfa_public {
 		return realloc( oaddr, size );					// duplicate special case checks
 	} // if
 
-	#ifdef __STATISTICS__
-	__atomic_add_fetch( &stats.realloc_calls, 1, __ATOMIC_SEQ_CST );
-	__atomic_add_fetch( &stats.realloc_storage_request, size, __ATOMIC_SEQ_CST );
-	#endif // __STATISTICS__
-
-	Heap.FreeHeader * freeElem;
+	Heap.FreeHeader * freeHead;
 	size_t bsize;
-	headers( "realloc", oaddr, header, freeElem, bsize, oalign );
+	headers( "realloc", oaddr, header, freeHead, bsize, oalign );
 
 	// change size and copy old content to new storage
 
 	size_t osize = header->kind.real.size;				// old allocation size
 	bool ozfill = ZeroFillBit( header );				// old allocation zero filled
 
-	void * naddr = memalignNoStats( nalign, size );		// create new aligned area
+	void * naddr = memalignNoStats( nalign, size STAT_ARG( REALLOC ) ); // create new aligned area
 
-	headers( "realloc", naddr, header, freeElem, bsize, oalign );
+	headers( "realloc", naddr, header, freeHead, bsize, oalign );
 	memcpy( naddr, oaddr, min( osize, size ) );			// copy bytes
-	free( oaddr );
+	doFree( oaddr );									// free previous storage
 
 	if ( unlikely( ozfill ) ) {							// previous request zero fill ?
 		MarkZeroFilledBit( header );					// mark new request as zero filled
@@ -1448,6 +1745,11 @@ void * realloc( void * oaddr, size_t nalign, size_t size ) libcfa_public {
 	} // if
 	return naddr;
 } // realloc
+
+
+void * reallocarray( void * oaddr, size_t nalign, size_t dim, size_t elemSize ) __THROW {
+	return realloc( oaddr, nalign, dim * elemSize );
+} // reallocarray
 
 
 // Local Variables: //

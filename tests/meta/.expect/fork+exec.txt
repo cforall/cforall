@@ -3,27 +3,15 @@ arguments are:
     None
 Success!
 Child status:
-    WIFEXITED   : 1
-    WEXITSTATUS : 0
-    WIFSIGNALED : 0
-    WTERMSIG    : 0
-    WCOREDUMP   : 0
-    WIFSTOPPED  : 0
-    WSTOPSIG    : 0
-    WIFCONTINUED: 0
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
 1 arg:
 arguments are:
     'Hello World!'
 Success!
 Child status:
-    WIFEXITED   : 1
-    WEXITSTATUS : 0
-    WIFSIGNALED : 0
-    WTERMSIG    : 0
-    WCOREDUMP   : 0
-    WIFSTOPPED  : 0
-    WSTOPSIG    : 0
-    WIFCONTINUED: 0
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
 5 arg:
 arguments are:
     'Hi,'
@@ -33,12 +21,6 @@ arguments are:
     'Fred'
 Success!
 Child status:
-    WIFEXITED   : 1
-    WEXITSTATUS : 0
-    WIFSIGNALED : 0
-    WTERMSIG    : 0
-    WCOREDUMP   : 0
-    WIFSTOPPED  : 0
-    WSTOPSIG    : 0
-    WIFCONTINUED: 0
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
 All Done!

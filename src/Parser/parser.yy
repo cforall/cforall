@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  8 08:21:18 2022
-// Update Count     : 5709
+// Last Modified On : Fri Oct 14 14:04:43 2022
+// Update Count     : 5751
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -304,7 +304,7 @@ if ( N ) {																		\
 // keywords
 %token TYPEDEF
 %token EXTERN STATIC AUTO REGISTER
-%token THREADLOCALGCC THREADLOCALC11						// GCC, C11
+%token THREADLOCALGCC THREADLOCALC11					// GCC, C11
 %token INLINE FORTRAN									// C99, extension ISO/IEC 9899:1999 Section J.5.9(1)
 %token NORETURN											// C11
 %token CONST VOLATILE
@@ -317,7 +317,7 @@ if ( N ) {																		\
 %token uFLOAT16 uFLOAT32 uFLOAT32X uFLOAT64 uFLOAT64X uFLOAT128 // GCC
 %token DECIMAL32 DECIMAL64 DECIMAL128					// GCC
 %token ZERO_T ONE_T										// CFA
-%token SIZEOF TYPEOF VALIST AUTO_TYPE					// GCC
+%token SIZEOF TYPEOF VA_LIST VA_ARG AUTO_TYPE			// GCC
 %token OFFSETOF BASETYPEOF TYPEID						// CFA
 %token ENUM STRUCT UNION
 %token EXCEPTION										// CFA
@@ -408,7 +408,7 @@ if ( N ) {																		\
 
 // declarations
 %type<decl> abstract_declarator abstract_ptr abstract_array abstract_function array_dimension multi_array_dimension
-%type<decl> abstract_parameter_declarator abstract_parameter_ptr abstract_parameter_array abstract_parameter_function array_parameter_dimension array_parameter_1st_dimension
+%type<decl> abstract_parameter_declarator_opt abstract_parameter_declarator abstract_parameter_ptr abstract_parameter_array abstract_parameter_function array_parameter_dimension array_parameter_1st_dimension
 %type<decl> abstract_parameter_declaration
 
 %type<aggKey> aggregate_key aggregate_data aggregate_control
@@ -697,9 +697,9 @@ generic_association:									// C11
 postfix_expression:
 	primary_expression
 	| postfix_expression '[' assignment_expression ',' tuple_expression_list ']'
-			// Historic, transitional: Disallow commas in subscripts.
-			// Switching to this behaviour may help check if a C compatibilty case uses comma-exprs in subscripts.
-			// Current: Commas in subscripts make tuples.
+		// Historic, transitional: Disallow commas in subscripts.
+		// Switching to this behaviour may help check if a C compatibilty case uses comma-exprs in subscripts.
+		// Current: Commas in subscripts make tuples.
 		{ $$ = new ExpressionNode( build_binary_val( OperKinds::Index, $1, new ExpressionNode( build_tuple( (ExpressionNode *)($3->set_last( $5 ) ) )) ) ); }
 	| postfix_expression '[' assignment_expression ']'
 		// CFA, comma_expression disallowed in this context because it results in a common user error: subscripting a
@@ -719,6 +719,10 @@ postfix_expression:
 		}
 	| postfix_expression '(' argument_expression_list_opt ')'
 		{ $$ = new ExpressionNode( build_func( $1, $3 ) ); }
+	| VA_ARG '(' primary_expression ',' declaration_specifier_nobody abstract_parameter_declarator_opt ')'
+		// { SemanticError( yylloc, "va_arg is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new ExpressionNode( build_func( new ExpressionNode( build_varref( new string( "__builtin_va_arg") ) ),
+											   (ExpressionNode *)($3->set_last( (ExpressionNode *)($6 ? $6->addType( $5 ) : $5) )) ) ); }
 	| postfix_expression '`' identifier					// CFA, postfix call
 		{ $$ = new ExpressionNode( build_func( new ExpressionNode( build_varref( build_postfix_name( $3 ) ) ), $1 ) ); }
 	| constant '`' identifier							// CFA, postfix call
@@ -2155,7 +2159,7 @@ basic_type_name:
 		{ $$ = DeclarationNode::newLength( DeclarationNode::Short ); }
 	| LONG
 		{ $$ = DeclarationNode::newLength( DeclarationNode::Long ); }
-	| VALIST											// GCC, __builtin_va_list
+	| VA_LIST											// GCC, __builtin_va_list
 		{ $$ = DeclarationNode::newBuiltinType( DeclarationNode::Valist ); }
 	| AUTO_TYPE
 		{ $$ = DeclarationNode::newBuiltinType( DeclarationNode::AutoType ); }
@@ -3674,6 +3678,12 @@ multi_array_dimension:
 // not as redundant parentheses around a redeclaration of T. Finally, the pattern also precludes declaring an array of
 // functions versus a pointer to an array of functions, and returning arrays and functions versus pointers to arrays and
 // functions.
+
+abstract_parameter_declarator_opt:
+	// empty
+		{ $$ = nullptr; }
+	| abstract_parameter_declarator
+	;
 
 abstract_parameter_declarator:
 	abstract_parameter_ptr

@@ -550,7 +550,7 @@
 
 		enqueue(this.pending, (__outstanding_io&)pa);
 
-		wait( pa.sem );
+		wait( pa.waitctx );
 
 		return pa.ctx;
 
@@ -577,7 +577,7 @@
 
 				pa.ctx = ctx;
 
-				post( pa.sem );
+				post( pa.waitctx );
 			}
 
 			this.pending.empty = true;
@@ -612,7 +612,7 @@
 			pthread_sigqueue(ctx->proc->kernel_thread, SIGUSR1, value);
 		}
 
-		wait( ei.sem );
+		wait( ei.waitctx );
 
 		__cfadbg_print_safe(io, "Kernel I/O : %u submitted from arbiter\n", have);
 	}
@@ -630,7 +630,7 @@
 
 					__submit_only(&ctx, ei.idxs, ei.have);
 
-					post( ei.sem );
+					post( ei.waitctx );
 				}
 
 				ctx.ext_sq.empty = true;

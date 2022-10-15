@@ -1,3 +1,18 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// parseargs.cfa -- PUBLIC
+// API for arguments parsing (argc, argv)
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Oct 12 15:28:01 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
 #pragma once
 
 struct cfa_option {

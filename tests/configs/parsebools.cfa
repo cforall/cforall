@@ -1,0 +1,148 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// configs/parsebools.cfa
+// Testing parsing of boolean arguments
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Oct 12 15:28:01 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <parseargs.hfa>
+#include <fstream.hfa>
+
+#include "../meta/fork+exec.hfa"
+
+int main(int argc, char * argv[]) {
+	check_main(argv[0]);
+
+	bool YN = false;
+	bool Yn = false;
+	bool yn = false;
+	bool tf = false;
+	bool st = false;
+	bool sf = true;
+
+	cfa_option options[] = {
+		{'e', "yesno",     "test yes/no",     YN, parse_yesno},
+		{'y', "YN",        "test yes/no",     Yn, parse_yesno},
+		{'n', "yn",        "test yes/no",     yn, parse_yesno},
+		{'t', "truefalse", "test true/false", tf, parse_truefalse},
+		{'s', "settrue",   "test set true",   st, parse_settrue},
+		{'u', "setfalse",  "test set false",  sf, parse_setfalse},
+	};
+	int options_cnt = sizeof(options) / sizeof(cfa_option);
+
+	char **left;
+	parse_args( options, options_cnt, "[OPTIONS]...\ntesting bool parameters", left);
+
+	sout | "yes/no     :" | YN;
+	sout | "Y/N        :" | Yn;
+	sout | "y/n        :" | yn;
+	sout | "true/false :" | tf;
+	sout | "set true   :" | st;
+	sout | "set false  :" | sf;
+}
+
+int true_main(const char * path, char * env[]) {
+	printf("no arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsebools", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("all true/set arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsebools", "-e=yes", "-y=Y", "-n=y", "-t=true", "-s", "-u", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("all false/unset arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsebools", "-e=no", "-y=N", "-n=n", "-t=false", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("gibberish arg 1:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsebools", "-y=true", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("gibberish arg 2:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsebools", "-t=yes", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("gibberish arg 3:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsebools", "-s=yes", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("gibberish arg 4:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsebools", "-u=yes", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("All Done!\n");
+
+	return 0;
+}

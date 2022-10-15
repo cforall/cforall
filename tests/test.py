@@ -71,7 +71,7 @@ def valid_tests( options ):
 			if Test.valid_name(testname):
 				# this is a valid name, let's check if it already exists
 				found = [test for test in all_tests if canonical_path( test.target() ) == testname]
-				setup = itertools.product(settings.all_arch if options.arch else [None])
+				setup = settings.all_arch if options.arch else [None]
 				if not found:
 					# it's a new name, create it according to the name and specified architecture
 					tests.extend( [Test.new_target(testname, arch) for arch in setup] )

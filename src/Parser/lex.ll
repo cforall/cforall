@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Tue Sep 20 21:18:55 2022
- * Update Count     : 762
+ * Last Modified On : Thu Oct 13 20:46:04 2022
+ * Update Count     : 764
  */
 
 %option yylineno
@@ -330,7 +330,8 @@ typeid			{ KEYWORD_RETURN(TYPEID); }				// GCC
 union			{ KEYWORD_RETURN(UNION); }
 __uint128_t		{ KEYWORD_RETURN(UINT128); }			// GCC
 unsigned		{ KEYWORD_RETURN(UNSIGNED); }
-__builtin_va_list { KEYWORD_RETURN(VALIST); }			// GCC
+__builtin_va_arg { KEYWORD_RETURN(VA_ARG); }			// GCC
+__builtin_va_list { KEYWORD_RETURN(VA_LIST); }			// GCC
 virtual			{ KEYWORD_RETURN(VIRTUAL); }			// CFA
 void			{ KEYWORD_RETURN(VOID); }
 volatile		{ KEYWORD_RETURN(VOLATILE); }

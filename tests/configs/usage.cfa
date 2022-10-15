@@ -1,0 +1,122 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// configs/usage.cfa
+// Testing printing of usage for arguments
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Oct 12 15:28:01 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <parseargs.hfa>
+#include <fstream.hfa>
+
+#include "../meta/fork+exec.hfa"
+
+int main() {
+	char * fake_argv[] = { "./usage" };
+
+	sout | "No args, no errors";
+	if(pid_t child = strict_fork(); child == 0) {
+		cfa_option opts[0];
+		print_args_usage(1, fake_argv, opts, 0, "Test usage", false);
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	sout | "No args, with errors";
+	if(pid_t child = strict_fork(); child == 0) {
+		cfa_option opts[0];
+		print_args_usage(1, fake_argv, opts, 0, "Test usage", true);
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	sout | "Args with short names only:";
+	if(pid_t child = strict_fork(); child == 0) {
+		int a, b, c;
+		cfa_option opts[] = {
+			{'a', "", "First arg", a },
+			{'b', "", "Second arg", b },
+			{'c', "", "Third arg", c },
+		};
+		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	sout | "Args with long names only:";
+	if(pid_t child = strict_fork(); child == 0) {
+		int a, b, c;
+		cfa_option opts[] = {
+			{'\0', "AA", "First arg", a },
+			{'\0', "BB", "Second arg", b },
+			{'\0', "CC", "Third arg", c },
+		};
+		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	sout | "Mix of short and long args:";
+	if(pid_t child = strict_fork(); child == 0) {
+		int a, b, c;
+		cfa_option opts[] = {
+			{'a', "", "First arg", a },
+			{'b', "BBBB", "Second arg", b },
+			{'\0', "CC", "Third arg", c },
+		};
+		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	sout | "Mix of short and long and some missing description:";
+	if(pid_t child = strict_fork(); child == 0) {
+		int a, b, c;
+		cfa_option opts[] = {
+			{'a', "", "First arg", a },
+			{'b', "BBBB", "", b },
+			{'\0', "CC", "Third arg", c },
+		};
+		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	sout | "Mix of short and long and some long description:";
+	if(pid_t child = strict_fork(); child == 0) {
+		int a, b, c;
+		cfa_option opts[] = {
+			{'a', "", "First arg\nThe description has multiple lines,\n...for some reason", a },
+			{'b', "BBBB", "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", b },
+			{'\0', "CC", "Third arg", c },
+		};
+		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+}
+
+// no used
+static int true_main(const char * path, char * env[]) { return 0; }

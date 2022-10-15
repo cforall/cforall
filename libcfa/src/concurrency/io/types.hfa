@@ -106,7 +106,7 @@ extern "C" {
 
 	struct __outstanding_io {
 		inline Colable;
-		single_sem sem;
+		oneshot waitctx;
 	};
 	static inline __outstanding_io *& Next( __outstanding_io * n ) { return (__outstanding_io *)Next( (Colable *)n ); }
 

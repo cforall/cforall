@@ -1,10 +1,27 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// parseargs.cfa
+// implementation of arguments parsing (argc, argv)
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Oct 12 15:28:01 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
 #include "parseargs.hfa"
 
+#include <assert.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <assert.h>
 
 extern "C" {
 	#include <getopt.h>
@@ -73,8 +90,7 @@ void parse_args(
 	check_args(options, opt_count);
 
 	int maxv = 'h';
-	assert( opt_count > 0 );
-	char optstring[opt_count * 3] = { '\0' };
+	char optstring[(opt_count * 3) + 2] = { '\0' };
 	{
 		int idx = 0;
 		for(i; opt_count) {
@@ -146,25 +162,62 @@ void parse_args(
 	}
 }
 
+static inline int next_newline(const char * str) {
+	int ret;
+	const char * ptr = strstr(str, "\n");
+	if(!ptr) return MAX;
+
+	/* paranoid */ verify( str <= ptr);
+	intptr_t low = (intptr_t)str;
+	intptr_t hi  = (intptr_t)ptr;
+	ret = hi - low;
+
+	return ret;
+}
+
 //-----------------------------------------------------------------------------
 // Print usage
 static void printopt(FILE * out, int width, int max, char sn, const char * ln, const char * help) {
+	// check how wide we should be printing
+	// this includes all options and the help message
 	int hwidth = max - (11 + width);
 	if(hwidth <= 0) hwidth = max;
 
-	char sname[4] = { ' ', ' ', ' ', '\0' };
-	if(sn != '\0') {
-		sname[0] = '-';
-		sname[1] = sn;
-		sname[2] = ',';
-	}
+	// check which pieces we have
+	bool has_ln = ln && strcmp("", ln);
+	bool has_help = help && strcmp("", help);
 
-	fprintf(out, "  %s --%-*s   %.*s\n", sname, width, ln, hwidth, help);
-	for() {
-		help += min(strlen(help), hwidth);
-		if('\0' == *help) break;
-		fprintf(out, "%*s%.*s\n", width + 11, "", hwidth, help);
+	// print the small name if present
+	if(sn != '\0') fprintf(out, "  -%c", sn);
+	else fprintf(out, "    ");
+
+	// print a comma if we have both short and long names
+	if(sn != '\0' && has_ln) fprintf(out, ", ");
+	else fprintf(out, "  ");
+
+	// print the long name if present
+	if(has_ln)        fprintf(out, "--%-*s", width, ln);
+	else if(has_help) fprintf(out, "  %-*s", width, "");
+
+	if(has_help) {
+		// print the help
+		// We need to wrap at the max width, and also indent newlines so everything is nice and pretty
+
+		// for each line to print
+		for() {
+			//find out if there is a newline
+			int nextnl = next_newline(help);
+			int real = min(min(strlen(help), hwidth), nextnl);
+
+			fprintf(out, "   %.*s", real, help);
+			// printf("%d %d\n", real, nextnl);
+			help += real;
+			if( nextnl == real ) help++;
+			if('\0' == *help) break;
+			fprintf(out, "\n%*s", width + 8, "");
+		}
 	}
+	fprintf(out, "\n");
 }
 
 void print_args_usage(cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
@@ -271,17 +324,46 @@ bool parse(const char * arg, const char * & value ) {
 
 bool parse(const char * arg, int & value) {
 	char * end;
-	int r = strtoll(arg, &end, 10);
+
+	errno = 0;
+	long long int r = strtoll(arg, &end, 0);
+	if(errno) return false;
 	if(*end != '\0') return false;
+	if(r > (int)MAX) return false;
+	if(r < (int)MIN) return false;
 
 	value = r;
 	return true;
 }
 
+static unsigned long long int strict_strtoull( const char * arg, int base) {
+	errno = 0;
+	{
+		const char * in = arg;
+		for() {
+			if('\0' == *in) {
+				errno = EINVAL;
+				return 0;
+			}
+			if(!isspace(*in)) break;
+			in++;
+		}
+		if(!isdigit(*in)) {
+			errno = EINVAL;
+			return 0;
+		}
+	}
+
+	*char end;
+	unsigned long long int r = strtoull(arg, &end, base);
+	if(*end != '\0') errno = EINVAL;
+	if(errno) return 0;
+	return r;
+}
+
 bool parse(const char * arg, unsigned & value) {
-	char * end;
-	unsigned long long int r = strtoull(arg, &end, 10);
-	if(*end != '\0') return false;
+	unsigned long long int r = strict_strtoull(arg, 0);
+	if(errno) return false;
 	if(r > (unsigned)MAX) return false;
 
 	value = r;
@@ -289,9 +371,8 @@ bool parse(const char * arg, unsigned & value) {
 }
 
 bool parse(const char * arg, unsigned long & value) {
-	char * end;
-	unsigned long long int r = strtoull(arg, &end, 10);
-	if(*end != '\0') return false;
+	unsigned long long int r = strict_strtoull(arg, 0);
+	if(errno) return false;
 	if(r > (unsigned long)MAX) return false;
 
 	value = r;
@@ -299,13 +380,12 @@ bool parse(const char * arg, unsigned long & value) {
 }
 
 bool parse(const char * arg, unsigned long long & value) {
-        char * end;
-        unsigned long long int r = strtoull(arg, &end, 10);
-        if(*end != '\0') return false;
-        if(r > (unsigned long long)MAX) return false;
+	unsigned long long int r = strict_strtoull(arg, 0);
+	if(errno) return false;
+	if(r > (unsigned long long)MAX) return false;
 
-        value = r;
-        return true;
+	value = r;
+	return true;
 }
 
 bool parse(const char * arg, double & value) {

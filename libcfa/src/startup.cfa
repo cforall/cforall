@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 24 16:21:57 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 17 16:41:54 2022
-// Update Count     : 55
+// Last Modified On : Thu Oct  6 13:51:57 2022
+// Update Count     : 57
 //
 
 #include <time.h>										// tzset
@@ -23,21 +23,29 @@ extern uint32_t __global_random_seed;					// sequential/concurrent
 extern uint32_t __global_random_state;					// sequential
 
 extern "C" {
+	void __cfaabi_memory_startup( void ) __attribute__(( constructor( STARTUP_PRIORITY_MEMORY ) ));
+	void __cfaabi_memory_startup( void ) {
+		extern void memory_startup();
+		memory_startup();
+	} // __cfaabi_memory_startup
+
+	void __cfaabi_memory_shutdown( void ) __attribute__(( destructor( STARTUP_PRIORITY_MEMORY ) ));
+	void __cfaabi_memory_shutdown( void ) {
+		extern void memory_shutdown();
+		memory_shutdown();
+	} // __cfaabi_memory_shutdown
+
 	void __cfaabi_appready_startup( void ) __attribute__(( constructor( STARTUP_PRIORITY_APPREADY ) ));
 	void __cfaabi_appready_startup( void ) {
 		tzset();										// initialize time global variables
-		#ifdef __CFA_DEBUG__
 		extern void heapAppStart();
 		heapAppStart();
-		#endif // __CFA_DEBUG__
 	} // __cfaabi_appready_startup
 
 	void __cfaabi_appready_shutdown( void ) __attribute__(( destructor( STARTUP_PRIORITY_APPREADY ) ));
 	void __cfaabi_appready_shutdown( void ) {
-		#ifdef __CFA_DEBUG__
 		extern void heapAppStop();
 		heapAppStop();
-		#endif // __CFA_DEBUG__
 	} // __cfaabi_appready_shutdown
 
 	void disable_interrupts() __attribute__(( weak )) libcfa_nopreempt libcfa_public {}

@@ -1,9 +1,9 @@
+#include <fstream.hfa>									// sout
 #include <malloc.h>										// malloc_usable_size
 #include <stdint.h>										// uintptr_t
 #include <stdlib.hfa>									// access C malloc, realloc
 #include <string.h>										// memcmp
 
-int last_failed;
 int tests_total;
 int tests_failed;
 size_t tAlign = 32;
@@ -12,100 +12,100 @@ typedef struct S1 T1;
 
 void test_base( void * ip, size_t size, size_t align ) {
 	tests_total += 1;
-//	printf( "DEBUG: starting test %d\n", tests_total);
+	// sout | "DEBUG: starting test" | tests_total;
 	bool passed = (malloc_size( ip ) == size) && (malloc_usable_size( ip ) >= size) && (malloc_alignment( ip ) == align) && ((uintptr_t)ip % align  == 0);
 	if ( ! passed ) {
-		printf( "failed test %3d: %4zu %4zu but got %4zu ( %3zu ) %4zu\n", tests_total, size, align, malloc_size( ip ), malloc_usable_size( ip ), malloc_alignment( ip ) );
+		sout | "base failed test" | tests_total | "ip" | ip | "size" | size | "align" | align | "but got size" | malloc_size( ip ) | "usable" | malloc_usable_size( ip ) | "align" | malloc_alignment( ip );
 		tests_failed += 1;
 	} // if
-//	printf( "DEBUG: done test %d\n", tests_total);
+	// sout | "DEBUG: done test" | tests_total;
 }
 
 void test_fill( void * ip_, size_t start, size_t end, char fill ) {
 	tests_total += 1;
-//	printf( "DEBUG: starting test %d\n", tests_total );
+	// sout | "DEBUG: starting test" | tests_total;
 	bool passed = true;
 	char * ip = (char *) ip_;
 	for ( i; start ~ end ) passed = passed && (ip[i] == fill);
 	if ( ! passed ) {
-		printf( "failed test %3d: fill C\n", tests_total );
+		sout | "fill1 failed test" | tests_total | "fill C";
 		tests_failed += 1;
 	} // if
-//	printf( "DEBUG: done test %d\n", tests_total );
+	// sout | "DEBUG: done test" | tests_total;
 }
 
 void test_fill( void * ip_, size_t start, size_t end, int fill ) {
 	tests_total += 1;
-//	printf( "DEBUG: starting test %d\n", tests_total );
+	// sout | "DEBUG: starting test" tests_total;
 	bool passed = true;
 	int * ip = (int *)ip_;
-	for (i; start ~ end ) passed = passed && (ip[i] == fill);
+	for ( i; start ~ end ) passed = passed && (ip[i] == fill);
 	if ( ! passed ) {
-		printf( "failed test %3d: fill int\n", tests_total );
+		sout | "fill2 failed test" | tests_total | "fill int";
 		tests_failed += 1;
 	} // if
-//	printf( "DEBUG: done test %d\n", tests_total );
+	// sout | "DEBUG: done test" | tests_total;
 }
 
 void test_fill( void * ip_, size_t start, size_t end, int * fill ) {
 	tests_total += 1;
-//	printf( "DEBUG: starting test %d\n", tests_total );
+	// sout | "DEBUG: starting test" | tests_total;
 	bool passed = memcmp((void*)((uintptr_t )ip_ + start ), (void*)fill, end ) == 0;
 	if ( ! passed ) {
-		printf( "failed test %3d: fill int A\n", tests_total );
+		sout | "fill3 failed test" | tests_total | "fill int A";
 		tests_failed += 1;
 	} // if
-//	printf( "DEBUG: done test %d\n", tests_total );
+	// sout | "DEBUG: done test" | tests_total;
 }
 
 void test_fill( void * ip_, size_t start, size_t end, T1 fill ) {
 	tests_total += 1;
-//	printf( "DEBUG: starting test %d\n", tests_total );
+	// sout | "DEBUG: starting test" | tests_total;
 	bool passed = true;
 	T1 * ip = (T1 *) ip_;
 	for ( i; start ~ end ) passed = passed && (ip[i].data == fill.data );
 	if ( ! passed ) {
-		printf( "failed test %3d: fill T1\n", tests_total );
+		sout | "fill4 failed test" | tests_total | "fill T1";
 		tests_failed += 1;
 	} // if
-//	printf( "DEBUG: done test %d\n", tests_total );
+	// sout | "DEBUG: done test" | tests_total;
 }
 
 void test_fill( void * ip_, size_t start, size_t end, T1 * fill ) {
 	tests_total += 1;
-//	printf( "DEBUG: starting test %d\n", tests_total );
+	// sout | "DEBUG: starting test" | tests_total;
 	bool passed = memcmp( (void*)((uintptr_t )ip_ + start ), (void*)fill, end ) == 0;
 	if ( ! passed ) {
-		printf( "failed test %3d: fill T1 A\n", tests_total );
+		sout | "fill5 failed test" | tests_total | "fill T1 A";
 		tests_failed += 1;
 	} // if
-//	printf( "DEBUG: done test %d\n", tests_total );
+	// sout | "DEBUG: done test" | tests_total;
 }
 
 void test_use( int * ip, size_t dim ) {
 	tests_total += 1;
-//	printf( "DEBUG: starting test %d\n", tests_total );
+	// sout | "DEBUG: starting test" | tests_total;
 	bool passed = true;
 	for ( i; 0 ~ dim ) ip[i] = 0xdeadbeef;
 	for ( i; 0 ~ dim ) passed = passed &&  (ip[i] == 0xdeadbeef);
 	if ( ! passed ) {
-		printf( "failed test %3d: use int\n", tests_total );
+		sout | "use1 failed test" | tests_total | "use int";
 		tests_failed += 1;
 	} // if
-//	printf( "DEBUG: done test %d\n", tests_total );
+	// sout | "DEBUG: done test" | tests_total;
 }
 
 void test_use( T1 * ip, size_t dim ) {
 	tests_total += 1;
-//	printf( "DEBUG: starting test %d\n", tests_total );
+	// sout | "DEBUG: starting test" | tests_total;
 	bool passed = true;
 	for ( i; 0 ~ dim ) ip[i].data = 0xdeadbeef;
 	for ( i; 0 ~ dim ) passed = passed &&  (ip[i].data == 0xdeadbeef);
 	if ( ! passed ) {
-		printf( "failed test %3d: use T1\n", tests_total );
+		sout | "use2 failed test" | tests_total | "use T1";
 		tests_failed += 1;
 	} // if
-//	printf( "DEBUG: done test %d\n", tests_total );
+	// sout | "DEBUG: done test" | tests_total;
 }
 
 int main( void ) {
@@ -116,6 +116,7 @@ int main( void ) {
 	int FillT = 9;
 	char FillC = 'a';
 	int * FillA = calloc( dim / 4 );
+
 	T1 FillT1 = { FillT };
 	T1 * FillT1A = (T1 *)(void *) malloc( (dim / 4) * sizeof(T1) );
 	for ( i; 0 ~ (dim / 4) ) FillT1A[i] = FillT1;
@@ -128,7 +129,6 @@ int main( void ) {
 
 	// testing alloc
 
-	last_failed = -1;
 	tests_total = 0;
 	tests_failed = 0;
 
@@ -152,7 +152,7 @@ int main( void ) {
 	test_use( ip, elemSize / elemSize );
 	free( ip );
 
-	ip = alloc( ((double *)0p)`resize );
+	ip = alloc( 0p`resize );
 	test_base( ip, elemSize, libAlign );
 	test_use( ip, elemSize / elemSize );
 	free( ip );
@@ -494,14 +494,13 @@ int main( void ) {
 	test_base( ip, 0, libAlign );
 	free( ip );
 
-	if ( tests_failed == 0 ) printf( "PASSED alloc tests\n\n" );
-	else printf( "failed alloc tests : %d/%d\n\n", tests_failed, tests_total );
+	if ( tests_failed == 0 ) sout | "PASSED alloc tests" | nl | nl;
+	else sout | "failed alloc tests :" | tests_failed | tests_total | nl | nl;
 
-	// testing alloc ( aligned struct )
+	// testing alloc (aligned struct)
 
 	elemSize = sizeof(T1);
 	size = dim * elemSize;
-	last_failed = -1;
 	tests_total = 0;
 	tests_failed = 0;
 
@@ -867,10 +866,10 @@ int main( void ) {
 	test_base( t1p, 0, libAlign );
 	free( t1p );
 
-	if ( tests_failed == 0) printf( "PASSED alloc tests (aligned struct)\n\n");
-	else printf( "failed alloc tests ( aligned struct ) : %d/%d\n\n", tests_failed, tests_total );
+	if ( tests_failed == 0) sout | "PASSED alloc tests (aligned struct)" | nl | nl;
+	else sout | "failed alloc tests ( aligned struct ) :" | tests_failed | tests_total | nl;
 
-	printf( "(if applicable) alignment error below indicates memory trashing caused by test_use.\n\n");
+	sout | "(if applicable) alignment error below indicates memory trashing caused by test_use." | nl | nl;
 	free( FillA );
 	free( FillT1A );
 } // main

@@ -12,23 +12,11 @@
 // Last Modified On :
 // Update Count     :
 //
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
-#include <errno.h>
-#include <signal.h>
-
-extern "C" {
-	#include <sys/types.h>
-	#include <sys/wait.h>
-	#include <unistd.h>
-}
-
-int true_main(const char * exec);
+#include "fork+exec.hfa"
 
 int main(int argc, char * argv[]) {
-	if(!getenv("CFATEST_FORK_EXEC_TEXT")) return true_main(argv[0]);
+	check_main(argv[0]);
 
 	printf("arguments are:\n");
 	if(argc == 1) printf("    None\n");
@@ -41,43 +29,9 @@ int main(int argc, char * argv[]) {
 	return 0;
 }
 
-int do_wait(pid_t pid) {
-	int wstatus;
-	int options = 0;
-	pid_t ret = waitpid(pid, &wstatus, options);
-	fflush(stdout);
-	if(ret < 0) {
-		fprintf(stderr, "Fork returned with error: %d '%s'\n", errno, strerror(errno));
-		exit(1);
-	}
-	return wstatus;
-}
 
-pid_t strict_fork(void) {
-	fflush(stdout);
-	pid_t ret = fork();
-	if(ret < 0) {
-		fprintf(stderr, "Fork returned with error: %d '%s'\n", errno, strerror(errno));
-		exit(1);
-	}
-	return ret;
-}
 
-void print_status(int wstatus) {
-	printf("Child status:\n");
-	printf("    WIFEXITED   : %d\n", WIFEXITED(wstatus));
-	printf("    WEXITSTATUS : %d\n", WEXITSTATUS(wstatus));
-	printf("    WIFSIGNALED : %d\n", WIFSIGNALED(wstatus));
-	printf("    WTERMSIG    : %d\n", WTERMSIG(wstatus));
-	printf("    WCOREDUMP   : %d\n", WCOREDUMP(wstatus));
-	printf("    WIFSTOPPED  : %d\n", WIFSTOPPED(wstatus));
-	printf("    WSTOPSIG    : %d\n", WSTOPSIG(wstatus));
-	printf("    WIFCONTINUED: %d\n", WIFCONTINUED(wstatus));
-}
-
-int true_main(const char * path) {
-	char * env[] = { "CFATEST_FORK_EXEC_TEXT=1", 0p };
-
+int true_main(const char * path, char * env[]) {
 	printf("no arg:\n");
 	if(pid_t child = strict_fork(); child == 0) {
 		int ret = execle(path, path, (const char*)0p, env);

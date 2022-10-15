@@ -166,7 +166,7 @@ public:
 	const ast::Expr *             visit( const ast::ApplicationExpr      * ) override final;
 	const ast::Expr *             visit( const ast::UntypedExpr          * ) override final;
 	const ast::Expr *             visit( const ast::NameExpr             * ) override final;
-	const ast::Expr *			  visit( const ast::QualifiedNameExpr	 * ) override final;
+	const ast::Expr *             visit( const ast::QualifiedNameExpr	 * ) override final;
 	const ast::Expr *             visit( const ast::AddressExpr          * ) override final;
 	const ast::Expr *             visit( const ast::LabelAddressExpr     * ) override final;
 	const ast::Expr *             visit( const ast::CastExpr             * ) override final;

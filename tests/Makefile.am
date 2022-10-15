@@ -75,17 +75,18 @@ EXTRA_DIST = test.py \
 	pybin/test_run.py \
 	pybin/tools.py \
 	long_tests.hfa \
+	avltree/avl-private.h \
+	avltree/avl.h \
+	concurrent/clib_tls.c \
+	concurrent/clib.c \
 	configs/.in/parseconfig-all.txt \
 	configs/.in/parseconfig-errors.txt \
 	configs/.in/parseconfig-missing.txt \
+	exceptions/except-io.hfa \
+	exceptions/with-threads.hfa \
 	io/.in/io.data \
 	io/.in/many_read.data \
-	avltree/avl.h \
-	avltree/avl-private.h \
-	concurrent/clib.c \
-	concurrent/clib_tls.c \
-	exceptions/with-threads.hfa \
-	exceptions/except-io.hfa \
+	meta/fork+exec.hfa \
 	unified_locking/mutex_test.hfa
 
 dist-hook:

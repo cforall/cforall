@@ -115,7 +115,7 @@ template<typename node_t>
 node_t const * scrubTypeVars(
 		node_t const * target, const TypeVarMap & typeVars ) {
 	return strict_dynamic_cast<node_t const *>(
-			scrubTypeVars<ast::Node>( target ) );
+			scrubTypeVars<ast::Node>( target, typeVars ) );
 }
 
 /// For all dynamic-layout types with type variables in `typeVars`,

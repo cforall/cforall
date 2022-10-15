@@ -183,6 +183,9 @@ static void ?{}( current_stack_info_t & this ) {
 }
 
 
+extern void heapManagerCtor();
+extern void heapManagerDtor();
+
 //=============================================================================================
 // Kernel Setup logic
 //=============================================================================================
@@ -364,6 +367,8 @@ static void * __invoke_processor(void * arg) {
 	__cfaabi_tls.preemption_state.[enabled, disable_count] = [false, 1];
 	proc->local_data = &__cfaabi_tls;
 
+	heapManagerCtor();									// initialize heap
+
 	__cfa_io_start( proc );
 	register_tls( proc );
 
@@ -415,6 +420,8 @@ static void * __invoke_processor(void * arg) {
 
 	unregister_tls( proc );
 	__cfa_io_stop( proc );
+
+	heapManagerDtor();									// de-initialize heap
 
 	return 0p;
 }

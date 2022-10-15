@@ -1,0 +1,146 @@
+no arg:
+int                :-3
+unsigned           :3
+unsigned long      :3
+unsigned long long :3
+double             :3.3
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+all 0 arg:
+int                :0
+unsigned           :0
+unsigned long      :0
+unsigned long long :0
+double             :0.
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+negative vals arg:
+int                :-1
+unsigned           :3
+unsigned long      :3
+unsigned long long :3
+double             :-1.
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+funky notation arg:
+int                :16
+unsigned           :32
+unsigned long      :768
+unsigned long long :16384
+double             :5000000.
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+big values arg:
+int                :2147483647
+unsigned           :4294967295
+unsigned long      :4294967295
+unsigned long long :18446744073709551615
+double             :5000000.
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+too big values arg:
+Argument '2147483648' for option i could not be parsed
+
+Usage:
+  parsenums [OPTIONS]...
+testing bool parameters
+  -i, --int                test int
+  -u, --unsigned           test unsigned
+  -l, --unsignedlong       test unsigned long
+  -L, --unsignedlonglong   test unsigned long long
+  -d, --double             test double
+  -h, --help               print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+Argument '4294967296' for option u could not be parsed
+
+Usage:
+  parsenums [OPTIONS]...
+testing bool parameters
+  -i, --int                test int
+  -u, --unsigned           test unsigned
+  -l, --unsignedlong       test unsigned long
+  -L, --unsignedlonglong   test unsigned long long
+  -d, --double             test double
+  -h, --help               print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+Argument '4294967296' for option l could not be parsed
+
+Usage:
+  parsenums [OPTIONS]...
+testing bool parameters
+  -i, --int                test int
+  -u, --unsigned           test unsigned
+  -l, --unsignedlong       test unsigned long
+  -L, --unsignedlonglong   test unsigned long long
+  -d, --double             test double
+  -h, --help               print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+Argument '18446744073709551616' for option L could not be parsed
+
+Usage:
+  parsenums [OPTIONS]...
+testing bool parameters
+  -i, --int                test int
+  -u, --unsigned           test unsigned
+  -l, --unsignedlong       test unsigned long
+  -L, --unsignedlonglong   test unsigned long long
+  -d, --double             test double
+  -h, --help               print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+negative errors arg:
+Argument '-1' for option u could not be parsed
+
+Usage:
+  parsenums [OPTIONS]...
+testing bool parameters
+  -i, --int                test int
+  -u, --unsigned           test unsigned
+  -l, --unsignedlong       test unsigned long
+  -L, --unsignedlonglong   test unsigned long long
+  -d, --double             test double
+  -h, --help               print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+Argument '-1' for option l could not be parsed
+
+Usage:
+  parsenums [OPTIONS]...
+testing bool parameters
+  -i, --int                test int
+  -u, --unsigned           test unsigned
+  -l, --unsignedlong       test unsigned long
+  -L, --unsignedlonglong   test unsigned long long
+  -d, --double             test double
+  -h, --help               print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+Argument '-1' for option L could not be parsed
+
+Usage:
+  parsenums [OPTIONS]...
+testing bool parameters
+  -i, --int                test int
+  -u, --unsigned           test unsigned
+  -l, --unsignedlong       test unsigned long
+  -L, --unsignedlonglong   test unsigned long long
+  -d, --double             test double
+  -h, --help               print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+All Done!

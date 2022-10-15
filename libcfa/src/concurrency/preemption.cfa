@@ -231,44 +231,11 @@ void update_preemption( processor * this, Duration duration ) {
 // want to dedicate one of the general registers to hold the TLS pointer and there was a free coprocessor register
 // available.
 
-//-----------------------------------------------------------------------------
-// Some assembly required
-#define __cfaasm_label(label, when) when: asm volatile goto(".global __cfaasm_" #label "_" #when "\n" "__cfaasm_" #label "_" #when ":":::"memory":when)
-
 //----------
 // special case for preemption since used often
-__attribute__((optimize("no-reorder-blocks"))) bool __preemption_enabled() libcfa_nopreempt libcfa_public {
-	// create a assembler label before
-	// marked as clobber all to avoid movement
-	__cfaasm_label(check, before);
-
+bool __preemption_enabled() libcfa_nopreempt libcfa_public {
 	// access tls as normal
-	bool enabled = __cfaabi_tls.preemption_state.enabled;
-
-	// Check if there is a pending preemption
-	processor   * proc = __cfaabi_tls.this_processor;
-	bool pending = proc ? proc->pending_preemption : false;
-	if( enabled && pending ) proc->pending_preemption = false;
-
-	// create a assembler label after
-	// marked as clobber all to avoid movement
-	__cfaasm_label(check, after);
-
-	// If we can preempt and there is a pending one
-	// this is a good time to yield
-	if( enabled && pending ) {
-		force_yield( __POLL_PREEMPTION );
-	}
-	return enabled;
-}
-
-struct asm_region {
-	void * before;
-	void * after;
-};
-
-static inline bool __cfaasm_in( void * ip, struct asm_region & region ) {
-	return ip >= region.before && ip <= region.after;
+	return __cfaabi_tls.preemption_state.enabled;
 }
 
 extern "C" {
@@ -292,16 +259,8 @@ static inline bool __cfaabi_in( void * const ip, const struct __cfa_nopreempt_re
 // struct asm_region __cfaasm_get;
 uintptr_t __cfatls_get( unsigned long int offset ) libcfa_nopreempt libcfa_public; //no inline to avoid problems
 uintptr_t __cfatls_get( unsigned long int offset ) {
-	// create a assembler label before
-	// marked as clobber all to avoid movement
-	__cfaasm_label(get, before);
-
 	// access tls as normal (except for pointer arithmetic)
 	uintptr_t val = *(uintptr_t*)((uintptr_t)&__cfaabi_tls + offset);
-
-	// create a assembler label after
-	// marked as clobber all to avoid movement
-	__cfaasm_label(get, after);
 
 	// This is used everywhere, to avoid cost, we DO NOT poll pending preemption
 	return val;
@@ -309,33 +268,22 @@ uintptr_t __cfatls_get( unsigned long int offset ) {
 
 extern "C" {
 	// Disable interrupts by incrementing the counter
-	void disable_interrupts() libcfa_nopreempt libcfa_public {
-		// create a assembler label before
-		// marked as clobber all to avoid movement
-		__cfaasm_label(dsable, before);
+	void disable_interrupts() libcfa_nopreempt libcfa_public with( __cfaabi_tls.preemption_state ) {
+		#if GCC_VERSION > 50000
+		static_assert(__atomic_always_lock_free(sizeof(enabled), &enabled), "Must be lock-free");
+		#endif
 
-		with( __cfaabi_tls.preemption_state ) {
-			#if GCC_VERSION > 50000
-			static_assert(__atomic_always_lock_free(sizeof(enabled), &enabled), "Must be lock-free");
-			#endif
+		// Set enabled flag to false
+		// should be atomic to avoid preemption in the middle of the operation.
+		// use memory order RELAXED since there is no inter-thread on this variable requirements
+		__atomic_store_n(&enabled, false, __ATOMIC_RELAXED);
 
-			// Set enabled flag to false
-			// should be atomic to avoid preemption in the middle of the operation.
-			// use memory order RELAXED since there is no inter-thread on this variable requirements
-			__atomic_store_n(&enabled, false, __ATOMIC_RELAXED);
+		// Signal the compiler that a fence is needed but only for signal handlers
+		__atomic_signal_fence(__ATOMIC_ACQUIRE);
 
-			// Signal the compiler that a fence is needed but only for signal handlers
-			__atomic_signal_fence(__ATOMIC_ACQUIRE);
-
-			__attribute__((unused)) unsigned short new_val = disable_count + 1;
-			disable_count = new_val;
-			verify( new_val < 65_000u );              // If this triggers someone is disabling interrupts without enabling them
-		}
-
-		// create a assembler label after
-		// marked as clobber all to avoid movement
-		__cfaasm_label(dsable, after);
-
+		__attribute__((unused)) unsigned short new_val = disable_count + 1;
+		disable_count = new_val;
+		verify( new_val < 65_000u );              // If this triggers someone is disabling interrupts without enabling them
 	}
 
 	// Enable interrupts by decrementing the counter
@@ -378,19 +326,17 @@ extern "C" {
 	// return true if the thread was in an interruptable state
 	// i.e. on a real processor and not in the kernel
 	// (can return true even if no preemption was pending)
-	bool poll_interrupts() libcfa_public {
+	bool poll_interrupts() libcfa_nopreempt libcfa_public {
 		// Cache the processor now since interrupts can start happening after the atomic store
-		processor   * proc = publicTLS_get( this_processor );
+		processor   * proc =  __cfaabi_tls.this_processor;
 		if ( ! proc ) return false;
-		if ( ! __preemption_enabled() ) return false;
+		if ( ! __cfaabi_tls.preemption_state.enabled ) return false;
 
-		with( __cfaabi_tls.preemption_state ){
-			// Signal the compiler that a fence is needed but only for signal handlers
-			__atomic_signal_fence(__ATOMIC_RELEASE);
-			if( proc->pending_preemption ) {
-				proc->pending_preemption = false;
-				force_yield( __POLL_PREEMPTION );
-			}
+		// Signal the compiler that a fence is needed but only for signal handlers
+		__atomic_signal_fence(__ATOMIC_RELEASE);
+		if( unlikely( proc->pending_preemption ) ) {
+			proc->pending_preemption = false;
+			force_yield( __POLL_PREEMPTION );
 		}
 
 		return true;

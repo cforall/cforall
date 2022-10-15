@@ -1,0 +1,66 @@
+No args, no errors
+Usage:
+  ./usage Test usage
+  -h, --help   print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+No args, with errors
+Usage:
+  ./usage Test usage
+  -h, --help   print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 1, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 1, IFCONTINUED: 0
+
+Args with short names only:
+Usage:
+  ./usage Test usage
+  -a       First arg
+  -b       Second arg
+  -c       Third arg
+  -h, --help   print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+Args with long names only:
+Usage:
+  ./usage Test usage
+      --AA   First arg
+      --BB   Second arg
+      --CC   Third arg
+  -h, --help   print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+Mix of short and long args:
+Usage:
+  ./usage Test usage
+  -a           First arg
+  -b, --BBBB   Second arg
+      --CC     Third arg
+  -h, --help   print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+Mix of short and long and some missing description:
+Usage:
+  ./usage Test usage
+  -a           First arg
+  -b, --BBBB
+      --CC     Third arg
+  -h, --help   print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+
+Mix of short and long and some long description:
+Usage:
+  ./usage Test usage
+  -a           First arg
+               The description has multiple lines,
+               ...for some reason
+  -b, --BBBB   12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+      --CC     Third arg
+  -h, --help   print this help message
+Child status:
+IFEXITED   : 1, EXITSTATUS : 0, IFSIGNALED : 0, TERMSIG    : 0, COREDUMP   : 0, IFSTOPPED  : 0, STOPSIG    : 0, IFCONTINUED: 0
+

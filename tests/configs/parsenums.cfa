@@ -1,0 +1,218 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// configs/parsenums.cfa
+// Testing parsing of integer arguments
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Oct 12 15:28:01 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <parseargs.hfa>
+#include <fstream.hfa>
+
+#include "../meta/fork+exec.hfa"
+
+#if __SIZEOF_LONG__ == 4
+	#define BIG_UNSIGNED_LONG "4294967295"
+	#define TOO_BIG_UNSIGNED_LONG "4294967296"
+#elif  __SIZEOF_LONG__ == 8
+	#define BIG_UNSIGNED_LONG "18446744073709551615"
+	#define TOO_BIG_UNSIGNED_LONG "18446744073709551616"
+#else
+	#error unexpected size of long
+#endif
+
+int true_main(const char * exec);
+
+int main(int argc, char * argv[]) {
+	check_main(argv[0]);
+
+	int i = -3;
+	unsigned u = 3;
+	unsigned long ul = 3;
+	unsigned long long ull = 3;
+	double d = 3.3;
+
+
+	cfa_option options[] = {
+		{ 'i', "int",              "test int",                i   },
+		{ 'u', "unsigned",         "test unsigned",           u   },
+		{ 'l', "unsignedlong",     "test unsigned long",      ul  },
+		{ 'L', "unsignedlonglong", "test unsigned long long", ull },
+		{ 'd', "double",           "test double",             d   },
+	};
+	int options_cnt = sizeof(options) / sizeof(cfa_option);
+
+	char **left;
+	parse_args( options, options_cnt, "[OPTIONS]...\ntesting bool parameters", left);
+
+	sout | "int                :" | i;
+	sout | "unsigned           :" | u;
+	sout | "unsigned long      :" | ul;
+	sout | "unsigned long long :" | ull;
+	sout | "double             :" | d;
+}
+
+int true_main(const char * path, char * env[]) {
+	printf("no arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("all 0 arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-i=0", "-u=0", "-l=0", "-L=0", "-d=0", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("negative vals arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-i=-1", "-d=-1", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("funky notation arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-i=0x10", "-u=0x20", "-l=0x300", "-L=0x4000", "-d=5e6", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("big values arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-i=2147483647", "-u=4294967295", "-l=" BIG_UNSIGNED_LONG, "-L=18446744073709551615", "-d=5e6", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("too big values arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-i=2147483648", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-u=4294967296", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-l=" TOO_BIG_UNSIGNED_LONG, (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-L=18446744073709551616", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("negative errors arg:\n");
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-u=-1", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-l=-1", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	if(pid_t child = strict_fork(); child == 0) {
+		int ret = execle(path, "parsenums", "-L=-1", (const char*)0p, env);
+		if(ret < 0) {
+			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
+			exit(1);
+		}
+	}
+	else {
+		int status = do_wait(child);
+		print_status(status);
+	}
+
+	printf("All Done!\n");
+
+	return 0;
+}
