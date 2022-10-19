@@ -309,11 +309,11 @@ private:
 		auto decl = new EnumDecl(
 			node->name,
 			get<Attribute>().acceptL( node->attributes ),
-			false, // Temporary
+			node->isTyped,
 			LinkageSpec::Spec( node->linkage.val ),
 			get<Type>().accept1(node->base)
 		);
-		return aggregatePostamble( decl, node ); // Node info, including members, processed in aggregatePostamble
+		return aggregatePostamble( decl, node );
 	}
 
 	const ast::Decl * visit( const ast::TraitDecl * node ) override final {
@@ -736,7 +736,6 @@ private:
 				get<Declaration>().accept1(node->type_decl),
 				node->name
 		);
-		temp->var = get<DeclarationWithType>().accept1(node->var);
 		auto expr = visitBaseExpr( node,
 			temp
 		);
@@ -1614,6 +1613,7 @@ private:
 			std::move(attr),
 			{ old->get_funcSpec().val }
 		);
+		decl->enumInLine = old->enumInLine;
 		cache.emplace(old, decl);
 		assert(cache.find( old ) != cache.end());
 		decl->scopeLevel = old->scopeLevel;
@@ -2280,14 +2280,11 @@ private:
 		);
 	}
 
-	/// xxx - type_decl should be DeclWithType in the final design
-	/// type_decl is set to EnumDecl as a temporary fix
 	virtual void visit( const QualifiedNameExpr * old ) override final {
 		this->node = visitBaseExpr( old,
 			new ast::QualifiedNameExpr (
 				old->location,
 				GET_ACCEPT_1(type_decl, Decl),
-				GET_ACCEPT_1(var, DeclWithType),
 				old->name
 			)
 		);

@@ -2604,7 +2604,7 @@ enumerator_list:
 	identifier_or_type_name enumerator_value_opt
 		{ $$ = DeclarationNode::newEnumValueGeneric( $1, $2 ); }
 	| INLINE type_name
-		{ $$ = DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ); }
+		{ $$ = DeclarationNode::newEnumInLine( *$2->type->symbolic.name ); }
 	| enumerator_list ',' identifier_or_type_name enumerator_value_opt
 		{ $$ = $1->appendList( DeclarationNode::newEnumValueGeneric( $3, $4 ) ); }
 	| enumerator_list ',' INLINE type_name enumerator_value_opt

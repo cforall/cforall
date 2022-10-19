@@ -120,6 +120,7 @@ class ObjectDecl : public DeclarationWithType {
 	Type * type;
 	Initializer * init;
 	Expression * bitfieldWidth;
+	bool enumInLine = false;
 
 	ObjectDecl( const std::string & name, Type::StorageClasses scs, LinkageSpec::Spec linkage, Expression * bitfieldWidth, Type * type, Initializer * init,
 				const std::list< Attribute * > attributes = std::list< Attribute * >(), Type::FuncSpecifiers fs = Type::FuncSpecifiers() );

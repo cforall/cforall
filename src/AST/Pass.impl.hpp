@@ -1204,7 +1204,6 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::QualifiedNameExpr * nod
 	VISIT_START( node );
 	if ( __visit_children() ) {
 		guard_symtab guard { *this };
-		maybe_accept( node, &QualifiedNameExpr::var );
 		maybe_accept( node, &QualifiedNameExpr::type_decl );
 	}
 	VISIT_END( Expr, node );

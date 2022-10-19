@@ -522,7 +522,6 @@ QualifiedNameExpr * build_qualified_expr( const DeclarationNode * decl_node, con
 	if ( auto e = dynamic_cast<EnumDecl*>(newDecl) ) {
 		auto enumInst = new EnumInstType( Type::Qualifiers(), e );
 		auto obj = new ObjectDecl( name->name, Type::StorageClasses(), LinkageSpec::Cforall, nullptr, enumInst, nullptr );
-		ret->set_var( obj );
 	}
 	return ret;
 }

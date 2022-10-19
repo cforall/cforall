@@ -104,6 +104,9 @@ public:
 	ptr<Type> type;
 	ptr<Init> init;
 	ptr<Expr> bitfieldWidth;
+	bool enumInLine = false; // A flag vairable to tell the compile:
+	// this is not a real object declaration. It is a place holder for 
+	// a set of enum value (ObjectDecl).
 
 	ObjectDecl( const CodeLocation & loc, const std::string & name, const Type * type,
 		const Init * init = nullptr, Storage::Classes storage = {},
@@ -311,8 +314,9 @@ private:
 /// enum declaration `enum Foo { ... };`
 class EnumDecl final : public AggregateDecl {
 public:
-	bool isTyped;
-	ptr<Type> base;
+	bool isTyped; // isTyped indicated if the enum has a declaration like:
+	// enum (type_optional) Name {...} 
+	ptr<Type> base; // if isTyped == true && base.get() == nullptr, it is a "void" type enum
 
 	EnumDecl( const CodeLocation& loc, const std::string& name, bool isTyped = false, 
 		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall,

@@ -1933,7 +1933,6 @@ void PassVisitor< pass_type >::visit( QualifiedNameExpr * node ) {
 
 	indexerScopedAccept( node->result, *this );
 	maybeAccept_impl( node->type_decl, *this );
-	maybeAccept_impl( node->var, *this );
 
 	VISIT_END( node );
 }
@@ -1944,7 +1943,6 @@ void PassVisitor< pass_type >::visit( const QualifiedNameExpr * node ) {
 
 	indexerScopedAccept( node->result, *this );
 	maybeAccept_impl( node->type_decl, *this );
-	maybeAccept_impl( node->var, *this );
 
 	VISIT_END( node );
 }
@@ -1956,7 +1954,6 @@ Expression * PassVisitor< pass_type >::mutate( QualifiedNameExpr * node ) {
     indexerScopedMutate( node->env   , *this );
     indexerScopedMutate( node->result, *this );
 	maybeMutate_impl( node->type_decl, *this );
-	maybeAccept_impl( node->var, *this );
 
 	MUTATE_END( Expression, node );
 }

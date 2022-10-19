@@ -913,12 +913,6 @@ namespace CodeGen {
 		output << ")";
 	}
 
-	// QualifiedNameExpr should not reach to CodeGen.
-	// FixQualifiedName Convert QualifiedNameExpr to VariableExpr
-	void CodeGenerator::postvisit( QualifiedNameExpr * expr ) {
-		output << "/* label */" << mangleName(expr->var);
-	}
-
 	// *** Statements
 	void CodeGenerator::postvisit( CompoundStmt * compoundStmt ) {
 		std::list<Statement*> ks = compoundStmt->get_kids();

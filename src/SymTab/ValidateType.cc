@@ -80,9 +80,8 @@ struct LinkReferenceToTypes_old final : public WithIndexer, public WithGuards, p
 	void postvisit( TraitInstType * traitInst );
 	void previsit( QualifiedType * qualType );
 	void postvisit( QualifiedType * qualType );
-
 	void postvisit( QualifiedNameExpr * qualExpr );
-
+	
 	void postvisit( EnumDecl * enumDecl );
 	void postvisit( StructDecl * structDecl );
 	void postvisit( UnionDecl * unionDecl );

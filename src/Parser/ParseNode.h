@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  2 09:15:49 2022
-// Update Count     : 905
+// Last Modified On : Tue Oct 18 14:15:37 2022
+// Update Count     : 936
 //
 
 #pragma once
@@ -239,6 +239,7 @@ struct DeclarationNode : public ParseNode {
 	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base = nullptr );
 	static DeclarationNode * newEnumConstant( const std::string * name, ExpressionNode * constant );
 	static DeclarationNode * newEnumValueGeneric( const std::string * name, InitializerNode * init );
+	static DeclarationNode * newEnumInLine( const std::string name );
 	static DeclarationNode * newName( const std::string * );
 	static DeclarationNode * newFromTypeGen( const std::string *, ExpressionNode * params );
 	static DeclarationNode * newTypeParam( TypeDecl::Kind, const std::string * );
@@ -338,6 +339,7 @@ struct DeclarationNode : public ParseNode {
 	TypeData * type = nullptr;
 
 	bool inLine = false;
+	bool enumInLine = false; 
 	Type::FuncSpecifiers funcSpecs;
 	Type::StorageClasses storageClasses;
 
@@ -462,7 +464,11 @@ void buildList( const NodeType * firstNode, Container< SynTreeType *, Args... > 
 		} catch( SemanticErrorException & e ) {
 			errors.append( e );
 		} // try
-		cur = dynamic_cast< NodeType * >( cur->get_next() );
+		const ParseNode * temp = (cur->get_next());
+		cur = dynamic_cast< const NodeType * >( temp );	// should not return nullptr
+		if ( ! cur && temp ) {							// non-homogeneous nodes ?
+			SemanticError( cur->location, "internal error, non-homogeneous nodes founds in buildList processing." );
+		} // if
 	} // while
 	if ( ! errors.isEmpty() ) {
 		throw errors;

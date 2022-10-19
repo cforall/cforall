@@ -857,7 +857,6 @@ namespace SymTab {
 		} else if ( UnionInstType * aggDecl = dynamic_cast< UnionInstType * >( designatorType ) ) {
 			declsToAddBefore.push_back( new UnionDecl( aggDecl->name, noAttributes, tyDecl->linkage ) );
 		} else if ( EnumInstType * enumInst = dynamic_cast< EnumInstType * >( designatorType ) ) {
-			// declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, tyDecl->linkage, enumDecl->baseEnum->base ) );
 			if ( enumInst->baseEnum ) {
 				const EnumDecl * enumDecl = enumInst->baseEnum;
 				declsToAddBefore.push_back( new EnumDecl( enumDecl->name, noAttributes, enumDecl->isTyped, tyDecl->linkage, enumDecl->base ) );

@@ -167,15 +167,11 @@ class QualifiedNameExpr : public Expression {
   public:
 	Declaration * type_decl;
 	std::string name;
-	DeclarationWithType * var;
 
 	QualifiedNameExpr( Declaration * decl, std::string name): Expression(), type_decl(decl), name(name) {}
-	QualifiedNameExpr( const QualifiedNameExpr & other): Expression(other), type_decl(other.type_decl), name(other.name), var(other.var) {}
-	DeclarationWithType * get_var() const { return var; }
-	void set_var( DeclarationWithType * newValue ) { var = newValue; }
+	QualifiedNameExpr( const QualifiedNameExpr & other): Expression(other), type_decl(other.type_decl), name(other.name) {}
 
 	virtual ~QualifiedNameExpr() {
-		delete var;
 		delete type_decl;
 	}
 

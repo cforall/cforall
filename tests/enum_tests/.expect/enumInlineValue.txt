@@ -1,0 +1,4 @@
+enumB.A is 5
+enumB.B is 6
+enumB.D is 11
+enumB.E is 12

@@ -101,13 +101,10 @@ struct FixQualifiedTypesCore :
 				}
 			}
 
-
-        	auto var = new ast::ObjectDecl( t->var->location, t->name,
-			 new ast::EnumInstType(enumDecl, ast::CV::Const), nullptr, {}, ast::Linkage::Cforall );
-			var->scopeLevel = 1; // 1 for now; should copy the scopeLevel of the enumValue
+        	auto var = new ast::ObjectDecl( t->location, t->name,
+			new ast::EnumInstType(enumDecl, ast::CV::Const), nullptr, {}, ast::Linkage::Cforall );
 			var->mangleName = Mangle::mangle( var );
 			return new ast::VariableExpr( t->location, var );
-        	// return ret;
         }
 
 		return t;

@@ -1,0 +1,18 @@
+#include <fstream.hfa>
+enum enumA {
+    A=5, B, C=10, D
+};
+
+enum enumB {
+    inline enumA,
+    E, F
+};
+
+int main() {
+    enum enumB val = A;
+    sout | "enumB.A is" | val;
+    enum enumB val2= enumB.B;
+    sout | "enumB.B is" | val2;
+    sout | "enumB.D is" | enumB.D;
+    sout | "enumB.E is" | enumB.E;
+}

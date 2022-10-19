@@ -297,6 +297,12 @@ DeclarationNode * DeclarationNode::newEnumValueGeneric( const string * name, Ini
 	} // if
 } // DeclarationNode::newEnumValueGeneric
 
+DeclarationNode * DeclarationNode::newEnumInLine( const string name ) {
+	DeclarationNode * newnode = newName( new std::string(name) );
+	newnode->enumInLine = true;
+	return newnode;
+}
+
 DeclarationNode * DeclarationNode::newFromTypedef( const string * name ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::SymbolicInst );

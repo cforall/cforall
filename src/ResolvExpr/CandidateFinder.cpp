@@ -863,11 +863,6 @@ namespace {
 			}
 		}
 
-		void postvisit( const ast::QualifiedNameExpr * qualifiedNameExpr ) {
-			auto mangleName = Mangle::mangle(qualifiedNameExpr->var);
-			addCandidate( qualifiedNameExpr, tenv );
-		}
-
 		void postvisit( const ast::UntypedExpr * untypedExpr ) {
 			std::vector< CandidateFinder > argCandidates =
 				selfFinder.findSubExprs( untypedExpr->args );

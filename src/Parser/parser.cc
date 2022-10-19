@@ -10903,7 +10903,7 @@ yyreduce:
 
   case 638:
 #line 2607 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.decl) = DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ); }
+                { (yyval.decl) = DeclarationNode::newEnumInLine( *(yyvsp[0].decl)->type->symbolic.name ); }
 #line 10908 "Parser/parser.cc"
     break;
 
