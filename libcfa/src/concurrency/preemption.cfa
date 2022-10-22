@@ -351,7 +351,7 @@ void __cfaabi_check_preemption() libcfa_public {
 
 	sigset_t oldset;
 	int ret;
-	ret = pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
+	ret = __cfaabi_pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
 	if(ret != 0) { abort("ERROR sigprocmask returned %d", ret); }
 
 	ret = sigismember(&oldset, SIGUSR1);
@@ -384,7 +384,7 @@ static inline void signal_unblock( int sig ) {
 	sigemptyset( &mask );
 	sigaddset( &mask, sig );
 
-	if ( pthread_sigmask( SIG_UNBLOCK, &mask, 0p ) == -1 ) {
+	if ( __cfaabi_pthread_sigmask( SIG_UNBLOCK, &mask, 0p ) == -1 ) {
 	    abort( "internal error, pthread_sigmask" );
 	}
 }
@@ -395,7 +395,7 @@ static inline void signal_block( int sig ) {
 	sigemptyset( &mask );
 	sigaddset( &mask, sig );
 
-	if ( pthread_sigmask( SIG_BLOCK, &mask, 0p ) == -1 ) {
+	if ( __cfaabi_pthread_sigmask( SIG_BLOCK, &mask, 0p ) == -1 ) {
 		abort( "internal error, pthread_sigmask" );
 	}
 }
@@ -403,7 +403,7 @@ static inline void signal_block( int sig ) {
 // kill wrapper : signal a processor
 static void preempt( processor * this ) {
 	sigval_t value = { PREEMPT_NORMAL };
-	pthread_sigqueue( this->kernel_thread, SIGUSR1, value );
+	__cfaabi_pthread_sigqueue( this->kernel_thread, SIGUSR1, value );
 }
 
 // reserved for future use
@@ -414,7 +414,7 @@ static void timeout( thread$ * this ) {
 void __disable_interrupts_hard() {
 	sigset_t oldset;
 	int ret;
-	ret = pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
+	ret = __cfaabi_pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
 	if(ret != 0) { abort("ERROR sigprocmask returned %d", ret); }
 
 	ret = sigismember(&oldset, SIGUSR1);
@@ -433,7 +433,7 @@ void __enable_interrupts_hard() {
 
 	sigset_t oldset;
 	int ret;
-	ret = pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
+	ret = __cfaabi_pthread_sigmask(0, ( const sigset_t * ) 0p, &oldset);  // workaround trac#208: cast should be unnecessary
 	if(ret != 0) { abort("ERROR sigprocmask returned %d", ret); }
 
 	ret = sigismember(&oldset, SIGUSR1);
@@ -504,7 +504,7 @@ void __kernel_alarm_shutdown() {
 	// Notify the alarm thread of the shutdown
 	sigval val;
 	val.sival_int = 0;
-	pthread_sigqueue( alarm_thread, SIGALRM, val );
+	__cfaabi_pthread_sigqueue( alarm_thread, SIGALRM, val );
 
 	// Wait for the preemption thread to finish
 
@@ -578,7 +578,7 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 	#if GCC_VERSION > 50000
 	static_assert( sizeof( sigset_t ) == sizeof( cxt->uc_sigmask ), "Expected cxt->uc_sigmask to be of sigset_t" );
 	#endif
-	if ( pthread_sigmask( SIG_SETMASK, (sigset_t *)&(cxt->uc_sigmask), 0p ) == -1 ) {
+	if ( __cfaabi_pthread_sigmask( SIG_SETMASK, (sigset_t *)&(cxt->uc_sigmask), 0p ) == -1 ) {
 		abort( "internal error, sigprocmask" );
 	}
 
@@ -606,7 +606,7 @@ static void * alarm_loop( __attribute__((unused)) void * args ) {
 	// Block sigalrms to control when they arrive
 	sigset_t mask;
 	sigfillset(&mask);
-	if ( pthread_sigmask( SIG_BLOCK, &mask, 0p ) == -1 ) {
+	if ( __cfaabi_pthread_sigmask( SIG_BLOCK, &mask, 0p ) == -1 ) {
 	    abort( "internal error, pthread_sigmask" );
 	}
 

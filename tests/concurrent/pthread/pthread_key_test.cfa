@@ -1,0 +1,126 @@
+
+/* test pthread_key_create/set_specific/get_specific
+    get specific == set specific
+    dtor is invoked (no mem leak)
+*/
+
+
+extern "C"{
+
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <errno.h>
+    #include <pthread.h>
+
+    #define THREADS 5
+    #define BUFFSZ  48
+    pthread_key_t   key;
+    volatile int total_value,total_value_getspec;
+    pthread_mutex_t value_mutex;
+
+    void            *threadfunc(void *parm)
+    {
+        int        status;
+        void      *value;
+        int        threadnum;
+        int       *tnum;
+        void      *getvalue;
+        char       Buffer[BUFFSZ];
+
+        tnum = (int*)parm;
+        threadnum = *tnum;
+
+        //printf("Thread %d executing\n", threadnum);
+        value = (void *)(rand()%100);
+        status = pthread_setspecific(key, (void *) value);
+        if ( status !=  0) {
+            printf("pthread_setspecific failed, thread %d, errno %d",
+                                                        threadnum, errno);
+            return (void*)12;
+        }
+        pthread_mutex_lock(&value_mutex);
+        total_value_getspec += (int)value;
+        total_value += (int)pthread_getspecific(key);
+        pthread_mutex_unlock(&value_mutex);
+
+
+        if (!(value = malloc(sizeof(Buffer))))
+            printf("Thread %d could not allocate storage, errno = %d\n",
+                                                        threadnum, errno);
+        status = pthread_setspecific(key, (void *) value);
+        if ( status !=  0) {
+            printf("pthread_setspecific failed, thread %d, errno %d",
+                                                        threadnum, errno);
+            return (void*)12;
+        }
+        //printf("Thread %d setspecific value: %d\n", threadnum, value);
+
+        getvalue = 0;
+        getvalue = pthread_getspecific(key);
+
+        if (getvalue != value) {
+        printf("getvalue not valid, getvalue=%d", (u_int64_t)getvalue);
+            return (void*)68;
+        }
+
+        pthread_exit((void *)0);
+    }
+
+    void  destr_fn(void *parm)
+    {
+
+        printf("Destructor function invoked\n");
+        free(parm);
+    }
+
+
+    int main() {
+        int          getvalue;
+        int          status;
+        int          i;
+        int          threadparm[THREADS];
+        pthread_t    threadid[THREADS];
+        void*          thread_stat[THREADS];
+
+        // rand seed for testing
+        srand(1003);
+        pthread_mutex_init(&value_mutex, NULL);
+
+        // testing getspec and setspec
+        total_value = 0;
+        total_value_getspec = 0;
+
+        if ((status = pthread_key_create(&key, destr_fn )) < 0) {
+            printf("pthread_key_create failed, errno=%d", errno);
+            exit(1);
+        }
+
+        // create 3 THREADS, pass each its number
+        for (i=0; i<THREADS; i++) {
+            threadparm[i] = i+1;
+            status = pthread_create( &threadid[i],
+                                    NULL,
+                                    threadfunc,
+                                    (void *)&threadparm[i]);
+            if ( status <  0) {
+            printf("pthread_create failed, errno=%d", errno);
+            exit(2);
+            }
+        }
+
+        for ( i=0; i<THREADS; i++) {
+            status = pthread_join( threadid[i], (void **)&thread_stat[i]);
+            if ( status <  0) {
+            printf("pthread_join failed, thread %d, errno=%d\n", i+1, errno);
+            }
+
+            if (thread_stat[i] != 0)   {
+                printf("bad thread status, thread %d, status=%d\n", i+1,
+                                                        (u_int64_t)thread_stat[i]);
+            }
+        }
+        printf("total value is %d, total value by pthread_getspecific is %d\n", total_value, total_value_getspec);
+        exit(0);
+    }   // main
+}
+

@@ -358,19 +358,34 @@ extern "C" {
 
 		int idxs = count_cache_indexes();
 
+		// Do we actually have a cache?
+		if(idxs == 0) {
+			// if not just fake the data structure, it makes things easier.
+			cpu_info.hthrd_count = cpus_c;
+			cpu_info.llc_count = 0;
+			struct cpu_map_entry_t * entries = alloc(cpu_info.hthrd_count);
+			for(i; cpu_info.hthrd_count) {
+				entries[i].self  = i;
+				entries[i].start = 0;
+				entries[i].count = cpu_info.hthrd_count;
+				entries[i].cache = 0;
+			}
+			cpu_info.llc_map = entries;
+			return;
+		}
+
 		// Count actual cache levels
 		unsigned cache_levels = 0;
 		unsigned llc = 0;
-		if (idxs != 0) {
-			unsigned char prev = -1u;
-			void first(unsigned idx, unsigned char level, const char * map, size_t len) {
-				/* paranoid */ verifyf(level < prev, "Index %u of cpu 0 has cache levels out of order: %u then %u", idx, (unsigned)prev, (unsigned)level);
-				llc = max(llc, level);
-				prev = level;
-				cache_levels++;
-			}
-			foreach_cacheidx(0, idxs, first);
+
+		unsigned char prev = -1u;
+		void first(unsigned idx, unsigned char level, const char * map, size_t len) {
+			/* paranoid */ verifyf(level < prev, "Index %u of cpu 0 has cache levels out of order: %u then %u", idx, (unsigned)prev, (unsigned)level);
+			llc = max(llc, level);
+			prev = level;
+			cache_levels++;
 		}
+		foreach_cacheidx(0, idxs, first);
 
 		// Read in raw data
 		raw_cache_instance ** raw = build_raw_cache_table(cpus_c, cpus, idxs, cache_levels);

@@ -1,0 +1,6 @@
+Destructor function invoked
+Destructor function invoked
+Destructor function invoked
+Destructor function invoked
+Destructor function invoked
+total value is 207, total value by pthread_getspecific is 207

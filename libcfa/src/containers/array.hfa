@@ -1,3 +1,5 @@
+#pragma once
+
 #include <assert.h>
 
 
@@ -17,23 +19,52 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
 
     // About the choice of integral types offered as subscript overloads:
     // Intent is to cover these use cases:
+    //    a[0]                                                // i : zero_t
+    //    a[1]                                                // i : one_t
+    //    a[2]                                                // i : int
     //    float foo( ptrdiff_t i ) { return a[i]; }           // i : ptrdiff_t
+    //    float foo( size_t i ) { return a[i]; }              // i : size_t
     //    forall( [N] ) ... for( i; N ) { total += a[i]; }    // i : typeof( sizeof(42) )
     //    for( i; 5 ) { total += a[i]; }                      // i : int
+    //
     // It gets complicated by:
     // -  CFA does overloading on concrete types, like int and unsigned int, not on typedefed
     //    types like size_t.  So trying to overload on ptrdiff_t vs int works in 64-bit mode
     //    but not in 32-bit mode.
     // -  Given bug of Trac #247, CFA gives sizeof expressions type unsigned long int, when it
     //    should give them type size_t.
-    //    
-    //                          gcc -m32         cfa -m32 given bug         gcc -m64
+    //
+    //                          gcc -m32         cfa -m32 given bug         gcc -m64 (and cfa)
     // ptrdiff_t                int              int                        long int
     // size_t                   unsigned int     unsigned int               unsigned long int
     // typeof( sizeof(42) )     unsigned int     unsigned long int          unsigned long int
     // int                      int              int                        int
+    //
+    // So the solution must support types {zero_t, one_t, int, unsigned int, long int, unsigned long int}
+    //
+    // The solution cannot rely on implicit conversions (e.g. just have one overload for ptrdiff_t)
+    // because assertion satisfaction requires types to match exacly.  Both higher-dimensional
+    // subscripting and operations on slices use asserted subscript operators.  The test case
+    // array-container/array-sbscr-cases covers the combinations.  Mike beleives that commenting out
+    // any of the current overloads leads to one of those cases failing, either on 64- or 32-bit.
+    // Mike is open to being shown a smaller set of overloads that still passes the test.
+
+    static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, zero_t ) {
+        assert( 0 < N );
+        return (Timmed &) a.strides[0];
+    }
+
+    static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, one_t ) {
+        assert( 1 < N );
+        return (Timmed &) a.strides[1];
+    }
 
     static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, int i ) {
+        assert( i < N );
+        return (Timmed &) a.strides[i];
+    }
+
+    static inline const Timmed & ?[?]( const arpk(N, S, Timmed, Tbase) & a, int i ) {
         assert( i < N );
         return (Timmed &) a.strides[i];
     }
@@ -43,7 +74,17 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
         return (Timmed &) a.strides[i];
     }
 
+    static inline const Timmed & ?[?]( const arpk(N, S, Timmed, Tbase) & a, unsigned int i ) {
+        assert( i < N );
+        return (Timmed &) a.strides[i];
+    }
+
     static inline Timmed & ?[?]( arpk(N, S, Timmed, Tbase) & a, long int i ) {
+        assert( i < N );
+        return (Timmed &) a.strides[i];
+    }
+
+    static inline const Timmed & ?[?]( const arpk(N, S, Timmed, Tbase) & a, long int i ) {
         assert( i < N );
         return (Timmed &) a.strides[i];
     }
@@ -53,9 +94,16 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
         return (Timmed &) a.strides[i];
     }
 
+    static inline const Timmed & ?[?]( const arpk(N, S, Timmed, Tbase) & a, unsigned long int i ) {
+        assert( i < N );
+        return (Timmed &) a.strides[i];
+    }
+
     static inline size_t ?`len( arpk(N, S, Timmed, Tbase) & a ) {
         return N;
     }
+
+    static inline void __taglen( tag(arpk(N, S, Timmed, Tbase)), tag(N) ) {}
 
     // workaround #226 (and array relevance thereof demonstrated in mike102/otype-slow-ndims.cfa)
     static inline void ?{}( arpk(N, S, Timmed, Tbase) & this ) {
@@ -82,14 +130,14 @@ static inline arpk(N, Trslt, Trslt, Tatom) mkar_( tag(Tatom), tag(N), ZTags ) {}
 
     // Make a FOREACH macro
     #define FE_0(WHAT)
-    #define FE_1(WHAT, X) WHAT(X) 
+    #define FE_1(WHAT, X) WHAT(X)
     #define FE_2(WHAT, X, ...) WHAT(X)FE_1(WHAT, __VA_ARGS__)
     #define FE_3(WHAT, X, ...) WHAT(X)FE_2(WHAT, __VA_ARGS__)
     #define FE_4(WHAT, X, ...) WHAT(X)FE_3(WHAT, __VA_ARGS__)
     #define FE_5(WHAT, X, ...) WHAT(X)FE_4(WHAT, __VA_ARGS__)
     //... repeat as needed
 
-    #define GET_MACRO(_0,_1,_2,_3,_4,_5,NAME,...) NAME 
+    #define GET_MACRO(_0,_1,_2,_3,_4,_5,NAME,...) NAME
     #define FOR_EACH(action,...) \
     GET_MACRO(_0,__VA_ARGS__,FE_5,FE_4,FE_3,FE_2,FE_1,FE_0)(action,__VA_ARGS__)
 
@@ -114,7 +162,7 @@ static inline TC & ?[?]( TA & this, IxAB ab, IxBC bc ) {
     return this[ab][bc];
 }
 
-#else 
+#else
 
 // Workaround form.  Listing all possibilities up to 4 dims.
 
@@ -135,6 +183,13 @@ static inline TC & ?[?]( TA & this, IxAB_0 ab0, IxAB_1 ab1, IxAB_2 ab2, IxBC bc 
 
 #endif
 
+// Available for users to work around Trac #265
+// If `a[...0...]` isn't working, try `a[...ix0...]` instead.
+
+#define ix0 ((ptrdiff_t)0)
+
+
+
 //
 // Rotation
 //
@@ -154,7 +209,7 @@ static inline tag(arpk(N, S, recr, Tbase)) enq_( tag(Tbase), tag(Nq), tag(Sq), t
 }
 
 // Wrapper
-struct all_t {} all;
+extern struct all_t {} all;
 forall( [N], S & | sized(S), Te &, result &, Tbase & | { tag(result) enq_( tag(Tbase), tag(N), tag(S), tag(Te) ); } )
 static inline result & ?[?]( arpk(N, S, Te, Tbase) & this, all_t ) {
     return (result&) this;
@@ -164,7 +219,25 @@ static inline result & ?[?]( arpk(N, S, Te, Tbase) & this, all_t ) {
 // Trait of array or slice
 //
 
-trait ar(A &, Tv &) {
-    Tv& ?[?]( A&, ptrdiff_t );
-    size_t ?`len( A& );
-};
+// desired:
+// trait ar(A &, Tv &, [N]) {
+//     Tv& ?[?]( A&, zero_t );
+//     Tv& ?[?]( A&, one_t  );
+//     Tv& ?[?]( A&, int    );
+//                   ...
+//     size_t ?`len( A& );
+//     void __taglen( tag(C), tag(N) );
+// };
+
+// working around N's not being accepted as arguments to traits
+
+#define ar(A, Tv, N) {                 \
+    Tv& ?[?]( A&, zero_t );            \
+    Tv& ?[?]( A&, one_t );             \
+    Tv& ?[?]( A&, int );               \
+    Tv& ?[?]( A&, unsigned int );      \
+    Tv& ?[?]( A&, long int );          \
+    Tv& ?[?]( A&, unsigned long int ); \
+    size_t ?`len( A& );                \
+    void __taglen( tag(A), tag(N) );   \
+}

@@ -66,6 +66,7 @@ SRC_AST = \
 	AST/TypeSubstitution.hpp \
 	AST/Util.cpp \
 	AST/Util.hpp \
+	AST/Vector.hpp \
 	AST/Visitor.hpp
 
 SRC += $(SRC_AST)

@@ -14,10 +14,12 @@
 // Update Count     :
 //
 
-#include <parseargs.hfa>
 #include <fstream.hfa>
 
 #include "../meta/fork+exec.hfa"
+
+// last as workaround to parser bug
+#include <parseargs.hfa>
 
 #if __SIZEOF_LONG__ == 4
 	#define BIG_UNSIGNED_LONG "4294967295"
@@ -41,17 +43,15 @@ int main(int argc, char * argv[]) {
 	double d = 3.3;
 
 
-	cfa_option options[] = {
-		{ 'i', "int",              "test int",                i   },
-		{ 'u', "unsigned",         "test unsigned",           u   },
-		{ 'l', "unsignedlong",     "test unsigned long",      ul  },
-		{ 'L', "unsignedlonglong", "test unsigned long long", ull },
-		{ 'd', "double",           "test double",             d   },
-	};
-	int options_cnt = sizeof(options) / sizeof(cfa_option);
+	array( cfa_option, 5 ) options;
+	options[0] = (cfa_option){ 'i', "int",              "test int",                i   };
+	options[1] = (cfa_option){ 'u', "unsigned",         "test unsigned",           u   };
+	options[2] = (cfa_option){ 'l', "unsignedlong",     "test unsigned long",      ul  };
+	options[3] = (cfa_option){ 'L', "unsignedlonglong", "test unsigned long long", ull };
+	options[4] = (cfa_option){ 'd', "double",           "test double",             d   };
 
 	char **left;
-	parse_args( options, options_cnt, "[OPTIONS]...\ntesting bool parameters", left);
+	parse_args( options, "[OPTIONS]...\ntesting bool parameters", left);
 
 	sout | "int                :" | i;
 	sout | "unsigned           :" | u;

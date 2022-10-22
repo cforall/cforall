@@ -14,10 +14,12 @@
 // Update Count     :
 //
 
-#include <parseargs.hfa>
 #include <fstream.hfa>
 
 #include "../meta/fork+exec.hfa"
+
+// last as a work around to a parse bug
+#include <parseargs.hfa>
 
 int main(int argc, char * argv[]) {
 	check_main(argv[0]);
@@ -29,18 +31,16 @@ int main(int argc, char * argv[]) {
 	bool st = false;
 	bool sf = true;
 
-	cfa_option options[] = {
-		{'e', "yesno",     "test yes/no",     YN, parse_yesno},
-		{'y', "YN",        "test yes/no",     Yn, parse_yesno},
-		{'n', "yn",        "test yes/no",     yn, parse_yesno},
-		{'t', "truefalse", "test true/false", tf, parse_truefalse},
-		{'s', "settrue",   "test set true",   st, parse_settrue},
-		{'u', "setfalse",  "test set false",  sf, parse_setfalse},
-	};
-	int options_cnt = sizeof(options) / sizeof(cfa_option);
+	array( cfa_option, 6 ) options;
+	options[0] = (cfa_option){'e', "yesno",     "test yes/no",     YN, parse_yesno};
+	options[1] = (cfa_option){'y', "YN",        "test yes/no",     Yn, parse_yesno};
+	options[2] = (cfa_option){'n', "yn",        "test yes/no",     yn, parse_yesno};
+	options[3] = (cfa_option){'t', "truefalse", "test true/false", tf, parse_truefalse};
+	options[4] = (cfa_option){'s', "settrue",   "test set true",   st, parse_settrue};
+	options[5] = (cfa_option){'u', "setfalse",  "test set false",  sf, parse_setfalse};
 
 	char **left;
-	parse_args( options, options_cnt, "[OPTIONS]...\ntesting bool parameters", left);
+	parse_args( options, "[OPTIONS]...\ntesting bool parameters", left);
 
 	sout | "yes/no     :" | YN;
 	sout | "Y/N        :" | Yn;

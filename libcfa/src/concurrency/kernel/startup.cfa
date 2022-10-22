@@ -221,7 +221,7 @@ static void __kernel_startup(void) {
 		( this.terminated ){};
 		( this.runner ){};
 		init( this, "Main Processor", *mainCluster, 0p );
-		kernel_thread = pthread_self();
+		kernel_thread = __cfaabi_pthread_self();
 
 		runner{ &this };
 		__cfadbg_print_safe(runtime_core, "Kernel : constructed main processor context %p\n", &runner);
@@ -282,8 +282,17 @@ static void __kernel_startup(void) {
 
 }
 
+extern "C"{
+	void pthread_delete_kernel_threads_();
+}
+
+
 static void __kernel_shutdown(void) {
 	if(!cfa_main_returned) return;
+
+	//delete kernel threads for pthread_concurrency
+	pthread_delete_kernel_threads_();
+
 	/* paranoid */ verify( __preemption_enabled() );
 	disable_interrupts();
 	/* paranoid */ verify( ! __preemption_enabled() );
@@ -776,7 +785,7 @@ static void check( int ret, const char func[] ) {
 void * __create_pthread( pthread_t * pthread, void * (*start)(void *), void * arg ) {
 	pthread_attr_t attr;
 
-	check( pthread_attr_init( &attr ), "pthread_attr_init" ); // initialize attribute
+	check( __cfaabi_pthread_attr_init( &attr ), "pthread_attr_init" ); // initialize attribute
 
 	size_t stacksize = max( PTHREAD_STACK_MIN, DEFAULT_STACK_SIZE );
 
@@ -803,23 +812,23 @@ void * __create_pthread( pthread_t * pthread, void * (*start)(void *), void * ar
 		);
 	#endif
 
-	check( pthread_attr_setstack( &attr, stack, stacksize ), "pthread_attr_setstack" );
-	check( pthread_create( pthread, &attr, start, arg ), "pthread_create" );
+	check( __cfaabi_pthread_attr_setstack( &attr, stack, stacksize ), "pthread_attr_setstack" );
+	check( __cfaabi_pthread_create( pthread, &attr, start, arg ), "pthread_create" );
 	return stack;
 }
 
 void __destroy_pthread( pthread_t pthread, void * stack, void ** retval ) {
-	int err = pthread_join( pthread, retval );
+	int err = __cfaabi_pthread_join( pthread, retval );
 	if( err != 0 ) abort("KERNEL ERROR: joining pthread %p caused error %s\n", (void*)pthread, strerror(err));
 
 	#if CFA_PROCESSOR_USE_MMAP
 		pthread_attr_t attr;
 
-		check( pthread_attr_init( &attr ), "pthread_attr_init" ); // initialize attribute
+		check( __cfaabi_pthread_attr_init( &attr ), "pthread_attr_init" ); // initialize attribute
 
 		size_t stacksize;
 		// default stack size, normally defined by shell limit
-		check( pthread_attr_getstacksize( &attr, &stacksize ), "pthread_attr_getstacksize" );
+		check( __cfaabi_pthread_attr_getstacksize( &attr, &stacksize ), "pthread_attr_getstacksize" );
 		assert( stacksize >= PTHREAD_STACK_MIN );
 		stacksize += __page_size;
 

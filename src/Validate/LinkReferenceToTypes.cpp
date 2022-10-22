@@ -208,8 +208,8 @@ ast::EnumDecl const * LinkTypesCore::postvisit( ast::EnumDecl const * decl ) {
 		auto member = (*it).as<ast::ObjectDecl>();
 		if ( member->enumInLine ) {
 			auto targetEnum = symtab.lookupEnum( member->name );
-			if (targetEnum) {			
-				for (auto singleMamber : targetEnum->members) {
+			if ( targetEnum ) {			
+				for ( auto singleMamber : targetEnum->members ) {
 					auto tm = singleMamber.as<ast::ObjectDecl>();
 					auto t = new ast::ObjectDecl(
 						member->location, // use the "inline" location
@@ -223,10 +223,19 @@ ast::EnumDecl const * LinkTypesCore::postvisit( ast::EnumDecl const * decl ) {
 						{}, // enum member doesn't have attribute
 						tm->funcSpec
 					);
+					t->importValue = true;
 					buffer.push_back(t);
 				}
 			}
 		} else {
+			auto search_it = std::find_if( buffer.begin(), buffer.end(), [member](ast::ptr<ast::Decl> cur) {
+				auto curAsObjDecl = cur.as<ast::ObjectDecl>();
+				return (curAsObjDecl->importValue) && (curAsObjDecl->name == member->name);
+			});
+			if ( search_it != buffer.end() ) {
+				buffer.erase( search_it ); // Found an import enum value that has the same name
+				// override the imported value
+			}
 			buffer.push_back( *it );
 		}
 	}

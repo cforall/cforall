@@ -126,6 +126,7 @@ inst_thread_headers_src = \
 	concurrency/thread.hfa
 
 thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} \
+	interpose_thread.cfa \
 	bits/signal.hfa \
 	concurrency/clib/cfathread.cfa \
 	concurrency/CtxSwitch-@ARCHITECTURE@.S \
@@ -144,7 +145,8 @@ thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} 
 	concurrency/snzi.hfa \
 	concurrency/stats.cfa \
 	concurrency/stats.hfa \
-	concurrency/stats.hfa
+	concurrency/stats.hfa \
+	concurrency/pthread.cfa
 
 else
 inst_headers_src =

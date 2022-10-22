@@ -49,12 +49,14 @@ extern int cfa_args_argc __attribute__((weak));
 extern char ** cfa_args_argv __attribute__((weak));
 extern char ** cfa_args_envp __attribute__((weak));
 
-static void usage(char * cmd, cfa_option options[], size_t opt_count, const char * usage, FILE * out)  __attribute__ ((noreturn));
+forall([N])
+static void usage(char * cmd, const array( cfa_option, N ) & options, const char * usage, FILE * out)  __attribute__ ((noreturn));
 //-----------------------------------------------------------------------------
 // checking
-static void check_args(cfa_option options[], size_t opt_count) {
-	for(i; opt_count) {
-		for(j; opt_count) {
+forall([N])
+static void check_args( const array( cfa_option, N ) & options ) {
+	for(i; N) {
+		for(j; N) {
 			if(i == j) continue;
 
 			if( options[i].short_name != '\0'
@@ -69,96 +71,103 @@ static void check_args(cfa_option options[], size_t opt_count) {
 
 //-----------------------------------------------------------------------------
 // Parsing args
-void parse_args( cfa_option options[], size_t opt_count, const char * usage, char ** & left ) {
-	if( 0p != &cfa_args_argc ) {
-		parse_args(cfa_args_argc, cfa_args_argv, options, opt_count, usage, left );
+forall([opt_count]) {
+	void parse_args( const array( cfa_option, opt_count ) & options, const char * usage, char ** & left ) {
+		if( 0p != &cfa_args_argc ) {
+			parse_args(cfa_args_argc, cfa_args_argv, options, usage, left );
+		}
+		else {
+			char * temp = "";
+			parse_args(0, &temp, options, usage, left );
+		}
 	}
-	else {
-		char * temp = "";
-		parse_args(0, &temp, options, opt_count, usage, left );
-	}
-}
 
-void parse_args(
-	int argc,
-	char * argv[],
-	cfa_option options[],
-	size_t opt_count,
-	const char * usage,
-	char ** & left
-) {
-	check_args(options, opt_count);
+	void parse_args(
+		int argc,
+		char * argv[],
+		const array( cfa_option, opt_count ) & options,
+		const char * usage,
+		char ** & left
+	) {
+		check_args(options);
 
-	int maxv = 'h';
-	char optstring[(opt_count * 3) + 2] = { '\0' };
-	{
-		int idx = 0;
-		for(i; opt_count) {
-			if (options[i].short_name) {
-				maxv = max(options[i].short_name, maxv);
-				optstring[idx] = options[i].short_name;
-				idx++;
-				if(    ((intptr_t)options[i].parse) != ((intptr_t)parse_settrue)
-				&& ((intptr_t)options[i].parse) != ((intptr_t)parse_setfalse) ) {
-					optstring[idx] = ':';
+		int maxv = 'h';
+		char optstring[(opt_count * 3) + 2] = { '\0' };
+		{
+			int idx = 0;
+			for(i; opt_count) {
+				if (options[i].short_name) {
+					maxv = max(options[i].short_name, maxv);
+					optstring[idx] = options[i].short_name;
+					idx++;
+					if(    ((intptr_t)options[i].parse) != ((intptr_t)parse_settrue)
+					&& ((intptr_t)options[i].parse) != ((intptr_t)parse_setfalse) ) {
+						optstring[idx] = ':';
+						idx++;
+					}
+				}
+			}
+			optstring[idx+0] = 'h';
+			optstring[idx+1] = '\0';
+		}
+
+		struct option optarr[opt_count + 2];
+		{
+			int idx = 0;
+			for(i; opt_count) {
+				if(options[i].long_name) {
+					// we don't have the mutable keyword here, which is really what we would want
+					int & val_ref = (int &)(const int &)options[i].val;
+					val_ref = (options[i].short_name != '\0') ? ((int)options[i].short_name) : ++maxv;
+
+					optarr[idx].name = options[i].long_name;
+					optarr[idx].flag = 0p;
+					optarr[idx].val  = options[i].val;
+					if(    ((intptr_t)options[i].parse) == ((intptr_t)parse_settrue)
+					|| ((intptr_t)options[i].parse) == ((intptr_t)parse_setfalse) ) {
+						optarr[idx].has_arg = no_argument;
+					} else {
+						optarr[idx].has_arg = required_argument;
+					}
 					idx++;
 				}
 			}
+			optarr[idx+0].[name, has_arg, flag, val] = ["help", no_argument, 0, 'h'];
+			optarr[idx+1].[name, has_arg, flag, val] = [0, no_argument, 0, 0];
 		}
-		optstring[idx+0] = 'h';
-		optstring[idx+1] = '\0';
-	}
 
-	struct option optarr[opt_count + 2];
-	{
-		int idx = 0;
-		for(i; opt_count) {
-			if(options[i].long_name) {
-				options[i].val = (options[i].short_name != '\0') ? ((int)options[i].short_name) : ++maxv;
-				optarr[idx].name = options[i].long_name;
-				optarr[idx].flag = 0p;
-				optarr[idx].val  = options[i].val;
-				if(    ((intptr_t)options[i].parse) == ((intptr_t)parse_settrue)
-				    || ((intptr_t)options[i].parse) == ((intptr_t)parse_setfalse) ) {
-					optarr[idx].has_arg = no_argument;
-				} else {
-					optarr[idx].has_arg = required_argument;
-				}
-				idx++;
-			}
-		}
-		optarr[idx+0].[name, has_arg, flag, val] = ["help", no_argument, 0, 'h'];
-		optarr[idx+1].[name, has_arg, flag, val] = [0, no_argument, 0, 0];
-	}
+		FILE * out = stderr;
+		NEXT_ARG:
+		for() {
+			int idx = 0;
+			int opt = getopt_long(argc, argv, optstring, optarr, &idx);
+			switch(opt) {
+				case -1:
+					if(&left != 0p) left = argv + optind;
+					return;
+				case 'h':
+					out = stdout;
+				case '?':
+					usage(argv[0], options, usage, out);
+				default:
+					for(i; opt_count) {
+						if(opt == options[i].val) {
+							const char * arg = optarg ? optarg : "";
+							if( arg[0] == '=' ) { arg++; }
+							// work around for some weird bug
+							void * variable = options[i].variable;
+							bool (*parse_func)(const char *, void * ) = options[i].parse;
+							bool success = parse_func( arg, variable );
+							if(success) continue NEXT_ARG;
 
-	FILE * out = stderr;
-	NEXT_ARG:
-	for() {
-		int idx = 0;
-		int opt = getopt_long(argc, argv, optstring, optarr, &idx);
-		switch(opt) {
-			case -1:
-				if(&left != 0p) left = argv + optind;
-				return;
-			case 'h':
-				out = stdout;
-			case '?':
-				usage(argv[0], options, opt_count, usage, out);
-			default:
-				for(i; opt_count) {
-					if(opt == options[i].val) {
-						const char * arg = optarg ? optarg : "";
-						if( arg[0] == '=' ) { arg++; }
-						bool success = options[i].parse( arg, options[i].variable );
-						if(success) continue NEXT_ARG;
-
-						fprintf(out, "Argument '%s' for option %c could not be parsed\n\n", arg, (char)opt);
-						usage(argv[0], options, opt_count, usage, out);
+							fprintf(out, "Argument '%s' for option %c could not be parsed\n\n", arg, (char)opt);
+							usage(argv[0], options, usage, out);
+						}
 					}
-				}
-				abort("Internal parse arg error\n");
-		}
+					abort("Internal parse arg error\n");
+			}
 
+		}
 	}
 }
 
@@ -221,17 +230,30 @@ static void printopt(FILE * out, int width, int max, char sn, const char * ln, c
 }
 
 void print_args_usage(cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
-	usage(cfa_args_argv[0], options, opt_count, usage, error ? stderr : stdout);
+	const array( cfa_option, opt_count ) & arr = (const array( cfa_option, opt_count ) &) *options;
+	usage(cfa_args_argv[0], arr, usage, error ? stderr : stdout);
 }
 
 void print_args_usage(int , char * argv[], cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
-	usage(argv[0], options, opt_count, usage, error ? stderr : stdout);
+	const array( cfa_option, opt_count ) & arr = (const array( cfa_option, opt_count ) &) *options;
+	usage(argv[0], arr, usage, error ? stderr : stdout);
 }
 
-static void usage(char * cmd, cfa_option options[], size_t opt_count, const char * help, FILE * out) __attribute__((noreturn)) {
+forall( [N] ) {
+	void print_args_usage( const array(cfa_option, N ) & options, const char * usage, bool error) {
+		usage(cfa_args_argv[0], options, usage, error ? stderr : stdout);
+	}
+
+	void print_args_usage(int argc, char * argv[], const array( cfa_option, N ) & options, const char * usage, bool error) {
+		usage(argv[0], options, usage, error ? stderr : stdout);
+	}
+}
+
+forall([N])
+static void usage(char * cmd, const array( cfa_option, N ) & options, const char * help, FILE * out) __attribute__((noreturn)) {
 	int width = 0;
 	{
-		for(i; opt_count) {
+		for(i; N) {
 			if(options[i].long_name) {
 				int w = strlen(options[i].long_name);
 				if(w > width) width = w;
@@ -250,7 +272,7 @@ static void usage(char * cmd, cfa_option options[], size_t opt_count, const char
 
 	fprintf(out, "Usage:\n  %s %s\n", cmd, help);
 
-	for(i; opt_count) {
+	for(i; N) {
 		printopt(out, width, max_width, options[i].short_name, options[i].long_name, options[i].help);
 	}
 	fprintf(out, "  -%c, --%-*s   %s\n", 'h', width, "help", "print this help message");

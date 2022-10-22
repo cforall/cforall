@@ -1,0 +1,125 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// interpose_thread.c --
+//
+// Author           : Thierry Delisle
+// Created On       : Wed Sep 21 11:55:16 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#include <stdarg.h>										// va_start, va_end
+#include <stdio.h>
+#include <string.h>										// strlen
+#include <signal.h>
+#include <pthread.h>
+extern "C" {
+#include <dlfcn.h>										// dlopen, dlsym
+#include <execinfo.h>									// backtrace, messages
+}
+
+#include "bits/debug.hfa"
+#include "bits/defs.hfa"
+#include <assert.h>
+
+//=============================================================================================
+// Interposing helpers
+//=============================================================================================
+
+typedef void (* generic_fptr_t)(void);
+
+generic_fptr_t interpose_symbol(
+	generic_fptr_t (*do_interpose_symbol)( void * library, const char symbol[], const char version[] ),
+	const char symbol[],
+	const char version[]
+) libcfa_public {
+	const char * error;
+
+	static void * library;
+	if ( ! library ) {
+		#if defined( RTLD_NEXT )
+			library = RTLD_NEXT;
+		#else
+			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
+			library = dlopen( "libpthread.so", RTLD_LAZY );
+			error = dlerror();
+			if ( error ) {
+				abort( "interpose_symbol : failed to open libpthread, %s\n", error );
+			}
+		#endif
+	} // if
+
+	return do_interpose_symbol(library, symbol, version);
+}
+
+#define INTERPOSE( x, ver ) __cabi_libpthread.x = (typeof(__cabi_libpthread.x))interpose_symbol( do_interpose_symbol, #x, ver )
+
+//=============================================================================================
+// Interposition Startup logic
+//=============================================================================================
+
+static struct {
+	int (*pthread_create)(pthread_t *_thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+	int (*pthread_join)(pthread_t _thread, void **retval);
+	pthread_t (*pthread_self)(void);
+	int (*pthread_attr_init)(pthread_attr_t *attr);
+	int (*pthread_attr_destroy)(pthread_attr_t *attr);
+	int (*pthread_attr_setstack)( pthread_attr_t *attr, void *stackaddr, size_t stacksize );
+	int (*pthread_attr_getstacksize)( const pthread_attr_t *attr, size_t *stacksize );
+	int (*pthread_sigmask)(int how, const sigset_t *set, sigset_t *oldset);
+	int (*pthread_sigqueue)(pthread_t _thread, int sig, const union sigval value);
+} __cabi_libpthread;
+
+extern "C" {
+	void __cfathreadabi_interpose_startup( generic_fptr_t (*do_interpose_symbol)( void * library, const char symbol[], const char version[] ) ) libcfa_public {
+		const char *version = 0p;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
+		INTERPOSE( pthread_create , version );
+		INTERPOSE( pthread_join , version );
+		INTERPOSE( pthread_self , version );
+		INTERPOSE( pthread_attr_init , version );
+		INTERPOSE( pthread_attr_destroy , version );
+		INTERPOSE( pthread_attr_setstack , version );
+		INTERPOSE( pthread_attr_getstacksize , version );
+		INTERPOSE( pthread_sigmask , version );
+		INTERPOSE( pthread_sigqueue , version );
+#pragma GCC diagnostic pop
+	}
+
+	int __cfaabi_pthread_create(pthread_t *_thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg){
+		return __cabi_libpthread.pthread_create(_thread, attr, start_routine, arg);
+	}
+
+	int __cfaabi_pthread_join(pthread_t _thread, void **retval){
+		return __cabi_libpthread.pthread_join(_thread, retval);
+	}
+
+	pthread_t __cfaabi_pthread_self(void){
+		return __cabi_libpthread.pthread_self();
+	}
+	int __cfaabi_pthread_attr_init(pthread_attr_t *attr){
+		return __cabi_libpthread.pthread_attr_init(attr);
+	}
+	int __cfaabi_pthread_attr_destroy(pthread_attr_t *attr){
+		return __cabi_libpthread.pthread_attr_destroy(attr);
+	}
+	int __cfaabi_pthread_attr_setstack( pthread_attr_t *attr, void *stackaddr, size_t stacksize ){
+		return __cabi_libpthread.pthread_attr_setstack(attr, stackaddr, stacksize);
+	}
+	int read_pthread_attr_getstacksize( const pthread_attr_t *attr, size_t *stacksize ){
+		return __cabi_libpthread.pthread_attr_getstacksize(attr, stacksize);
+	}
+	int __cfaabi_pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset){
+		return __cabi_libpthread.pthread_sigmask(how, set, oldset);
+	}
+	int __cfaabi_pthread_sigqueue(pthread_t _thread, int sig, const union sigval value){
+		return __cabi_libpthread.pthread_sigqueue(_thread, sig, value);
+	}
+}

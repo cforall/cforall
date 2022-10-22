@@ -189,7 +189,7 @@ am__libcfathread_la_SOURCES_DIST = concurrency/alarm.hfa \
 	concurrency/exception.cfa concurrency/kernel.cfa \
 	concurrency/kernel/cluster.cfa concurrency/locks.cfa \
 	concurrency/monitor.cfa concurrency/mutex.cfa \
-	concurrency/thread.cfa bits/signal.hfa \
+	concurrency/thread.cfa interpose_thread.cfa bits/signal.hfa \
 	concurrency/clib/cfathread.cfa \
 	concurrency/CtxSwitch-@ARCHITECTURE@.S concurrency/invoke.c \
 	concurrency/io.cfa concurrency/io/setup.cfa \
@@ -198,7 +198,8 @@ am__libcfathread_la_SOURCES_DIST = concurrency/alarm.hfa \
 	concurrency/kernel/startup.cfa concurrency/preemption.cfa \
 	concurrency/preemption.hfa concurrency/ready_queue.cfa \
 	concurrency/ready_subqueue.hfa concurrency/snzi.hfa \
-	concurrency/stats.cfa concurrency/stats.hfa
+	concurrency/stats.cfa concurrency/stats.hfa \
+	concurrency/pthread.cfa
 @BUILDLIB_TRUE@am__objects_4 = concurrency/alarm.lo \
 @BUILDLIB_TRUE@	concurrency/coroutine.lo \
 @BUILDLIB_TRUE@	concurrency/exception.lo concurrency/kernel.lo \
@@ -206,13 +207,15 @@ am__libcfathread_la_SOURCES_DIST = concurrency/alarm.hfa \
 @BUILDLIB_TRUE@	concurrency/locks.lo concurrency/monitor.lo \
 @BUILDLIB_TRUE@	concurrency/mutex.lo concurrency/thread.lo
 @BUILDLIB_TRUE@am__objects_5 = $(am__objects_1) $(am__objects_4) \
+@BUILDLIB_TRUE@	interpose_thread.lo \
 @BUILDLIB_TRUE@	concurrency/clib/cfathread.lo \
 @BUILDLIB_TRUE@	concurrency/CtxSwitch-@ARCHITECTURE@.lo \
 @BUILDLIB_TRUE@	concurrency/invoke.lo concurrency/io.lo \
 @BUILDLIB_TRUE@	concurrency/io/setup.lo concurrency/io/call.lo \
 @BUILDLIB_TRUE@	concurrency/kernel/startup.lo \
 @BUILDLIB_TRUE@	concurrency/preemption.lo \
-@BUILDLIB_TRUE@	concurrency/ready_queue.lo concurrency/stats.lo
+@BUILDLIB_TRUE@	concurrency/ready_queue.lo concurrency/stats.lo \
+@BUILDLIB_TRUE@	concurrency/pthread.lo
 am_libcfathread_la_OBJECTS = $(am__objects_5)
 libcfathread_la_OBJECTS = $(am_libcfathread_la_OBJECTS)
 libcfathread_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
@@ -619,6 +622,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/thread.hfa
 
 @BUILDLIB_TRUE@thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} \
+@BUILDLIB_TRUE@	interpose_thread.cfa \
 @BUILDLIB_TRUE@	bits/signal.hfa \
 @BUILDLIB_TRUE@	concurrency/clib/cfathread.cfa \
 @BUILDLIB_TRUE@	concurrency/CtxSwitch-@ARCHITECTURE@.S \
@@ -637,7 +641,8 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/snzi.hfa \
 @BUILDLIB_TRUE@	concurrency/stats.cfa \
 @BUILDLIB_TRUE@	concurrency/stats.hfa \
-@BUILDLIB_TRUE@	concurrency/stats.hfa
+@BUILDLIB_TRUE@	concurrency/stats.hfa \
+@BUILDLIB_TRUE@	concurrency/pthread.cfa
 
 
 #----------------------------------------------------------------------------------------------------------------
@@ -846,6 +851,8 @@ concurrency/preemption.lo: concurrency/$(am__dirstamp) \
 concurrency/ready_queue.lo: concurrency/$(am__dirstamp) \
 	concurrency/$(DEPDIR)/$(am__dirstamp)
 concurrency/stats.lo: concurrency/$(am__dirstamp) \
+	concurrency/$(DEPDIR)/$(am__dirstamp)
+concurrency/pthread.lo: concurrency/$(am__dirstamp) \
 	concurrency/$(DEPDIR)/$(am__dirstamp)
 
 libcfathread.la: $(libcfathread_la_OBJECTS) $(libcfathread_la_DEPENDENCIES) $(EXTRA_libcfathread_la_DEPENDENCIES) 

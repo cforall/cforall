@@ -1,0 +1,96 @@
+// tested pthread once,create,join
+
+                                                          
+                                                                                
+                                                            
+#include <fstream.hfa>
+#include <thread.hfa>                                                                    
+#define THREADS 20                                                                                                                                                    
+
+extern "C"{
+    #include <pthread.h>
+    #include <stdio.h>
+    #include <errno.h> 
+    int             once_counter=0;                                                 
+    pthread_once_t  once_control = PTHREAD_ONCE_INIT;                               
+                                                                                    
+    void  once_fn(void)                                                             
+    {                                                                               
+    puts("in once_fn");                                                            
+    once_counter++;                                                                
+    }                                                                               
+                                                                                    
+    void            *threadfunc(void *parm)                                         
+    {                                                                               
+    int        status;                                                             
+    int        threadnum;                                                          
+    int        *tnum;                                                              
+                                                                                    
+    tnum = (int *)parm;                                                                   
+    threadnum = *tnum;                                                             
+                                                                                    
+    //printf("Thread %d executing\n", threadnum);                                    
+                                                                                    
+    status = pthread_once(&once_control, once_fn);                                 
+    if ( status <  0)                                                              
+        printf("pthread_once failed, thread %d, errno=%d\n", threadnum,             
+                                                                errno);             
+                                                                                    
+    //pthread_exit((void *)0);  
+    return NULL;                                                     
+    }  
+
+
+    void once_rtn(){
+        printf("in once init\n");
+    }
+    void test(){
+
+        processor p[10];
+        
+
+        int          status;                                                           
+        int          i;                                                                
+        int          threadparm[THREADS];                                              
+        pthread_t    threadid[THREADS];                                                
+        void*          thread_stat[THREADS];                                             
+                                                                                        
+        for (i=0; i<THREADS; i++) {                                                    
+            threadparm[i] = i+1;                                                        
+            status = pthread_create( &threadid[i],                                      
+                                    NULL,                                              
+                                    threadfunc,                                        
+                                    (void *)&threadparm[i]);                           
+            if ( status <  0) {                                                         
+            printf("pthread_create failed, errno=%d", errno);                        
+            exit(2);                                                                 
+            }                                                                           
+        }                                                                             
+                                                                                        
+        for ( i=0; i<THREADS; i++) {                                                   
+            status = pthread_join( threadid[i], (void **)&thread_stat[i]);               
+            if ( status <  0)                                                           
+            printf("pthread_join failed, thread %d, errno=%d\n", i+1, errno);        
+                                                                                        
+            if (thread_stat[i] != 0)                                                    
+                printf("bad thread status, thread %d, status=%d\n", i+1,                
+                                                        (int)thread_stat[i]);             
+        }                                                                             
+                                                                                        
+        if (once_counter != 1) {
+            printf("once_fn did not get control once, counter=%d",once_counter);         
+            exit(1);
+        }                                                        
+        
+        exit(0);
+        
+    }
+}
+
+
+
+int main(int argc, char const *argv[])
+{
+    test();
+    return 0;
+}

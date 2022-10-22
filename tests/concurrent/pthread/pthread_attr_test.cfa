@@ -1,0 +1,29 @@
+/* test attr init; set stack; get stack */
+
+#include <fstream.hfa>
+#include <thread.hfa>
+
+void* foo(void* _attr){
+    size_t size;
+    pthread_attr_t* attr = (pthread_attr_t*)_attr;
+    int status = pthread_attr_getstacksize(attr, &size);
+    if (status != 0){
+        sout | "error return code";
+        exit(1);
+    }
+    sout | "stack size is " | size;
+    return NULL;
+}
+
+int main(int argc, char const *argv[])
+{
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setstacksize(&attr, 123456789);
+    pthread_t thr;
+    void* res;
+    pthread_create(&thr, &attr, foo, (void*)&attr);
+    pthread_join(thr, &res);
+    pthread_attr_destroy(&attr);
+    return 0;
+}

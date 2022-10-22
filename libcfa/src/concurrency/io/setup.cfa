@@ -343,7 +343,7 @@
 	// 	// Notify the io poller thread of the shutdown
 	// 	iopoll.run = false;
 	// 	sigval val = { 1 };
-	// 	pthread_sigqueue( iopoll.thrd, SIGUSR1, val );
+	// 	__cfaabi_pthread_sigqueue( iopoll.thrd, SIGUSR1, val );
 
 	// 	// Make sure all this is done
 	// 	__atomic_thread_fence(__ATOMIC_SEQ_CST);

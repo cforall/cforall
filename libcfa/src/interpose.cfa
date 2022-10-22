@@ -41,22 +41,8 @@ static void preload_libgcc(void) {
 }
 
 typedef void (* generic_fptr_t)(void);
-static generic_fptr_t interpose_symbol( const char symbol[], const char version[] ) {
+static generic_fptr_t do_interpose_symbol( void * library, const char symbol[], const char version[] ) {
 	const char * error;
-
-	static void * library;
-	if ( ! library ) {
-		#if defined( RTLD_NEXT )
-			library = RTLD_NEXT;
-		#else
-			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
-			library = dlopen( "libc.so.6", RTLD_LAZY );
-			error = dlerror();
-			if ( error ) {
-				abort( "interpose_symbol : failed to open libc, %s\n", error );
-			}
-		#endif
-	} // if
 
 	union { generic_fptr_t fptr; void * ptr; } originalFunc;
 
@@ -74,6 +60,39 @@ static generic_fptr_t interpose_symbol( const char symbol[], const char version[
 	if ( error ) abort( "interpose_symbol : internal error, %s\n", error );
 
 	return originalFunc.fptr;
+}
+
+static generic_fptr_t interpose_symbol( const char symbol[], const char version[] ) {
+	const char * error;
+
+	static void * library;
+	static void * pthread_library;
+	if ( ! library ) {
+		#if defined( RTLD_NEXT )
+			library = RTLD_NEXT;
+		#else
+			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
+			library = dlopen( "libc.so.6", RTLD_LAZY );
+			error = dlerror();
+			if ( error ) {
+				abort( "interpose_symbol : failed to open libc, %s\n", error );
+			}
+		#endif
+	} // if
+	if ( ! pthread_library ) {
+		#if defined( RTLD_NEXT )
+			pthread_library = RTLD_NEXT;
+		#else
+			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
+			pthread_library = dlopen( "libpthread.so", RTLD_LAZY );
+			error = dlerror();
+			if ( error ) {
+				abort( "interpose_symbol : failed to open libpthread, %s\n", error );
+			}
+		#endif
+	} // if
+
+	return do_interpose_symbol(library, symbol, version);
 }
 
 #define INTERPOSE_LIBC( x, ver ) __cabi_libc.x = (typeof(__cabi_libc.x))interpose_symbol( #x, ver )
@@ -96,6 +115,7 @@ static struct {
 libcfa_public int cfa_main_returned;
 
 extern "C" {
+	void __cfathreadabi_interpose_startup( generic_fptr_t (*do_interpose_symbol)( void * library, const char symbol[], const char version[] ) ) __attribute__((weak));
 	void __cfaabi_interpose_startup( void ) {
 		const char *version = 0p;
 		cfa_main_returned = 0;
@@ -107,6 +127,8 @@ extern "C" {
 		INTERPOSE_LIBC( abort, version );
 		INTERPOSE_LIBC( exit , version );
 #pragma GCC diagnostic pop
+
+		if(__cfathreadabi_interpose_startup) __cfathreadabi_interpose_startup( do_interpose_symbol );
 
 		// As a precaution (and necessity), errors that result in termination are delivered on a separate stack because
 		// task stacks might be very small (4K) and the signal delivery corrupts memory to the point that a clean

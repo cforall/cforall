@@ -19,6 +19,8 @@
 	#error kernel/private.hfa should only be included in libcfathread source
 #endif
 
+#include <signal.h>
+
 #include "kernel.hfa"
 #include "thread.hfa"
 
@@ -47,7 +49,6 @@ extern "C" {
 		#define CFA_WITH_IO_URING_IDLE
 	#endif
 #endif
-
 // #define READYQ_USE_LINEAR_AVG
 #define READYQ_USE_LOGDBL_AVG
 // #define READYQ_USE_LOGINT_AVG
@@ -61,6 +62,18 @@ typedef unsigned long long __readyQ_avg_t;
 #else
 #error must pick a scheme for averaging
 #endif
+
+extern "C" {
+	__attribute__((visibility("protected"))) int __cfaabi_pthread_create(pthread_t *_thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+	__attribute__((visibility("protected"))) int __cfaabi_pthread_join(pthread_t _thread, void **retval);
+	__attribute__((visibility("protected"))) pthread_t __cfaabi_pthread_self(void);
+	__attribute__((visibility("protected"))) int __cfaabi_pthread_attr_init(pthread_attr_t *attr);
+	__attribute__((visibility("protected"))) int __cfaabi_pthread_attr_destroy(pthread_attr_t *attr);
+	__attribute__((visibility("protected"))) int __cfaabi_pthread_attr_setstack( pthread_attr_t *attr, void *stackaddr, size_t stacksize );
+	__attribute__((visibility("protected"))) int __cfaabi_pthread_attr_getstacksize( const pthread_attr_t *attr, size_t *stacksize );
+	__attribute__((visibility("protected"))) int __cfaabi_pthread_sigqueue(pthread_t _thread, int sig, const union sigval value);
+	__attribute__((visibility("protected"))) int __cfaabi_pthread_sigmask( int how, const sigset_t *set, sigset_t *oset);
+}
 
 //-----------------------------------------------------------------------------
 // Scheduler

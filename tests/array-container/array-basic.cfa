@@ -77,10 +77,10 @@ float total1d_low( arpk(N, S, float, float ) & a ) {
     return total;
 }
 
-forall( A & | ar(A, float) )
+forall( [N], A & | ar(A, float, N) )
 float total1d_hi( A & a ) {
     float total = 0.0f;
-    for (i; a`len)
+    for (i; N)
         total += a[i];
     return total;
 }

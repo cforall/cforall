@@ -609,7 +609,7 @@
 
 		if( we ) {
 			sigval_t value = { PREEMPT_IO };
-			pthread_sigqueue(ctx->proc->kernel_thread, SIGUSR1, value);
+			__cfaabi_pthread_sigqueue(ctx->proc->kernel_thread, SIGUSR1, value);
 		}
 
 		wait( ei.waitctx );

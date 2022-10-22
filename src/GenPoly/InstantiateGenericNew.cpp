@@ -25,6 +25,7 @@
 #include "AST/Inspect.hpp"             // for getFunction
 #include "AST/Pass.hpp"                // for Pass, WithGuard, WithShortCi...
 #include "AST/TranslationUnit.hpp"     // for TranslationUnit
+#include "AST/Vector.hpp"              // for vector
 #include "CodeGen/OperatorTable.h"     // for isAssignment
 #include "Common/ScopedMap.h"          // for ScopedMap
 #include "Common/UniqueName.h"         // for UniqueName
@@ -38,19 +39,19 @@ namespace {
 
 // Utilities:
 
-using type_vector = std::vector< ast::ptr< ast::TypeExpr > >;
+using type_vector = ast::vector< ast::TypeExpr >;
 
 /// Abstracts type equality for a list of parameter types.
 struct TypeList {
 	TypeList() : params() {}
-	TypeList( std::vector< ast::ptr< ast::Type > > const & params ) :
+	TypeList( ast::vector< ast::Type > const & params ) :
 		params( params ) {}
-	TypeList( std::vector< ast::ptr< ast::Type > > && params ) :
+	TypeList( ast::vector< ast::Type > && params ) :
 		params( std::move( params ) ) {}
 	TypeList( TypeList const & that ) : params( that.params ) {}
 	TypeList( TypeList && that ) : params( std::move( that.params ) ) {}
 
-	TypeList( std::vector< ast::ptr< ast::TypeExpr > > const & exprs ) :
+	TypeList( ast::vector< ast::TypeExpr > const & exprs ) :
 			params() {
 		for ( auto expr : exprs ) {
 			params.emplace_back( ast::deepCopy( expr->type ) );
@@ -81,7 +82,7 @@ struct TypeList {
 		return true;
 	}
 
-	std::vector<ast::ptr<ast::Type>> params;
+	ast::vector<ast::Type> params;
 };
 
 /// Maps a key and a TypeList to a valuue. Also supports scoping.
@@ -102,7 +103,8 @@ public:
 	/// Gets the value for the (declaration, type list) pair,
 	/// returns null if no such value exists.
 	ast::AggregateDecl const * lookup(
-			ast::AggregateDecl const * key, type_vector const & params ) const {
+			ast::AggregateDecl const * key,
+			type_vector const & params ) const {
 		// This type repackaging is used for the helpers.
 		ast::ptr<ast::AggregateDecl> ptr = key;
 		TypeList typeList( params );
@@ -149,7 +151,7 @@ GenericType & operator|=( GenericType & gt, const GenericType & ht ) {
 	return gt;
 }
 
-bool isDtypeStatic( std::vector<ast::ptr<ast::TypeDecl>> const & baseParams ) {
+bool isDtypeStatic( ast::vector<ast::TypeDecl> const & baseParams ) {
 	return std::all_of( baseParams.begin(), baseParams.end(),
 		[]( ast::TypeDecl const * td ){ return !td->isComplete(); }
 	);
@@ -160,9 +162,9 @@ bool isDtypeStatic( std::vector<ast::ptr<ast::TypeDecl>> const & baseParams ) {
 /// conversions, concrete if there is a concrete instantiation requiring at
 /// least one parameter type, and dynamic if there is no concrete instantiation.
 GenericType makeSubstitutions(
-		std::vector<ast::ptr<ast::TypeExpr>> & out,
-		std::vector<ast::ptr<ast::TypeDecl>> const & baseParams,
-		std::vector<ast::ptr<ast::Expr>> const & params ) {
+		ast::vector<ast::TypeExpr> & out,
+		ast::vector<ast::TypeDecl> const & baseParams,
+		ast::vector<ast::Expr> const & params ) {
 	GenericType gt = GenericType::dtypeStatic;
 
 	// Substitute concrete types for given parameters,
@@ -213,11 +215,11 @@ GenericType makeSubstitutions(
 
 /// Substitutes types of members according to baseParams => typeSubs,
 /// returning the result in a new vector.
-std::vector<ast::ptr<ast::Decl>> substituteMembers(
-		std::vector<ast::ptr<ast::Decl>> const & members,
-		std::vector<ast::ptr<ast::TypeDecl>> const & baseParams,
-		std::vector<ast::ptr<ast::TypeExpr>> const & typeSubs ) {
-	std::vector<ast::ptr<ast::Decl>> out;
+ast::vector<ast::Decl> substituteMembers(
+		ast::vector<ast::Decl> const & members,
+		ast::vector<ast::TypeDecl> const & baseParams,
+		ast::vector<ast::TypeExpr> const & typeSubs ) {
+	ast::vector<ast::Decl> out;
 	ast::TypeSubstitution subs( baseParams, typeSubs );
 	for ( ast::ptr<ast::Decl> const & member : members ) {
 		// Create a manual copy to avoid in-place mutation.
@@ -234,9 +236,9 @@ std::vector<ast::ptr<ast::Decl>> substituteMembers(
 /// Substitutes types of members according to baseParams => typeSubs,
 /// modifying them in-place.
 void substituteMembersHere(
-		std::vector<ast::ptr<ast::Decl>> & members,
-		std::vector<ast::ptr<ast::TypeDecl>> const & baseParams,
-		std::vector<ast::ptr<ast::TypeExpr>> const & typeSubs ) {
+		ast::vector<ast::Decl> & members,
+		ast::vector<ast::TypeDecl> const & baseParams,
+		ast::vector<ast::TypeExpr> const & typeSubs ) {
 	ast::TypeSubstitution subs( baseParams, typeSubs );
 	for ( ast::ptr<ast::Decl> & member : members ) {
 		// The member must be mutated in place to avoid breaking
@@ -284,7 +286,7 @@ private:
 		Aggr const * inst, ast::MemberExpr const * memberExpr );
 
 	ast::Expr const * fixMemberExpr(
-		std::vector<ast::ptr<ast::TypeDecl>> const & baseParams,
+		ast::vector<ast::TypeDecl> const & baseParams,
 		ast::MemberExpr const * memberExpr );
 
 	bool isLValueArg = false;
@@ -348,7 +350,7 @@ ast::Expr const * FixDtypeStatic::fixMemberExpr(
 }
 
 ast::Expr const * FixDtypeStatic::fixMemberExpr(
-		std::vector<ast::ptr<ast::TypeDecl>> const & baseParams,
+		ast::vector<ast::TypeDecl> const & baseParams,
 		ast::MemberExpr const * memberExpr ) {
 	// Need to cast dtype-static member expressions to their actual type
 	// before the actual type type is erased.
@@ -460,7 +462,7 @@ private:
 	void insert( ast::UnionInstType const * inst,
 		type_vector const & typeSubs, ast::UnionDecl const * decl );
 
-	void replaceParametersWithConcrete( std::vector<ast::ptr<ast::Expr>> & params );
+	void replaceParametersWithConcrete( ast::vector<ast::Expr> & params );
 	ast::Type const * replaceWithConcrete( ast::Type const * type, bool doClone );
 
 	template<typename AggrDecl>
@@ -469,8 +471,8 @@ private:
 	/// Strips a dtype-static aggregate decl of its type parameters,
 	/// marks it as stripped.
 	void stripDtypeParams( ast::AggregateDecl * base,
-		std::vector<ast::ptr<ast::TypeDecl>> & baseParams,
-		std::vector<ast::ptr<ast::TypeExpr>> const & typeSubs );
+		ast::vector<ast::TypeDecl> & baseParams,
+		ast::vector<ast::TypeExpr> const & typeSubs );
 };
 
 // I think this and the UnionInstType can be made into a template function.
@@ -510,7 +512,7 @@ ast::Type const * GenericInstantiator::fixInstType(
 	// Check if the type can be concretely instantiated;
 	// and put substitutions in typeSubs.
 	assertf( inst->base, "Base data-type has parameters." );
-	std::vector<ast::ptr<ast::TypeExpr>> typeSubs;
+	ast::vector<ast::TypeExpr> typeSubs;
 	GenericType gt = makeSubstitutions( typeSubs, inst->base->params, inst->params );
 	switch ( gt ) {
 	case GenericType::dtypeStatic:
@@ -569,7 +571,7 @@ void GenericInstantiator::previsit( ast::MemberExpr const * expr ) {
 		// Find the location of the member:
 		ast::AggregateDecl const * aggr =
 			expr->aggregate->result.strict_as<ast::BaseInstType>()->aggr();
-		std::vector<ast::ptr<ast::Decl>> const & members = aggr->members;
+		ast::vector<ast::Decl> const & members = aggr->members;
 		auto it = std::find( members.begin(), members.end(), expr->member );
 		memberIndex = std::distance( members.begin(), it );
 		assertf( memberIndex < (int)members.size(), "Could not find member %s in generic type %s.", toString( expr->member ).c_str(), toString( expr->aggregate ).c_str() );
@@ -642,7 +644,7 @@ void GenericInstantiator::insert( ast::UnionInstType const * inst,
 }
 
 void GenericInstantiator::replaceParametersWithConcrete(
-		std::vector<ast::ptr<ast::Expr>> & params ) {
+		ast::vector<ast::Expr> & params ) {
 	for ( ast::ptr<ast::Expr> & param : params ) {
 		auto paramType = param.as<ast::TypeExpr>();
 		assertf( paramType, "Aggregate parameters should be type expressions." );
@@ -672,8 +674,8 @@ ast::Type const * GenericInstantiator::replaceWithConcrete(
 
 void GenericInstantiator::stripDtypeParams(
 		ast::AggregateDecl * base,
-		std::vector<ast::ptr<ast::TypeDecl>> & baseParams,
-		std::vector<ast::ptr<ast::TypeExpr>> const & typeSubs ) {
+		ast::vector<ast::TypeDecl> & baseParams,
+		ast::vector<ast::TypeExpr> const & typeSubs ) {
 	substituteMembersHere( base->members, baseParams, typeSubs );
 
 	baseParams.clear();

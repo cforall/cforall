@@ -14,18 +14,18 @@
 // Update Count     :
 //
 
-#include <parseargs.hfa>
 #include <fstream.hfa>
-
 #include "../meta/fork+exec.hfa"
+#include <parseargs.hfa>
+
 
 int main() {
 	char * fake_argv[] = { "./usage" };
 
 	sout | "No args, no errors";
 	if(pid_t child = strict_fork(); child == 0) {
-		cfa_option opts[0];
-		print_args_usage(1, fake_argv, opts, 0, "Test usage", false);
+		array( cfa_option, 0 ) opts;
+		print_args_usage(1, fake_argv, opts, "Test usage", false);
 	}
 	else {
 		int status = do_wait(child);
@@ -34,8 +34,8 @@ int main() {
 
 	sout | "No args, with errors";
 	if(pid_t child = strict_fork(); child == 0) {
-		cfa_option opts[0];
-		print_args_usage(1, fake_argv, opts, 0, "Test usage", true);
+		array( cfa_option, 0 ) opts;
+		print_args_usage(1, fake_argv, opts, "Test usage", true);
 	}
 	else {
 		int status = do_wait(child);
@@ -45,12 +45,11 @@ int main() {
 	sout | "Args with short names only:";
 	if(pid_t child = strict_fork(); child == 0) {
 		int a, b, c;
-		cfa_option opts[] = {
-			{'a', "", "First arg", a },
-			{'b', "", "Second arg", b },
-			{'c', "", "Third arg", c },
-		};
-		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+		array( cfa_option, 3 ) opts;
+		opts[0] = (cfa_option){'a', "", "First arg", a };
+		opts[1] = (cfa_option){'b', "", "Second arg", b };
+		opts[2] = (cfa_option){'c', "", "Third arg", c };
+		print_args_usage(1, fake_argv, opts, "Test usage", false);
 	}
 	else {
 		int status = do_wait(child);
@@ -60,12 +59,11 @@ int main() {
 	sout | "Args with long names only:";
 	if(pid_t child = strict_fork(); child == 0) {
 		int a, b, c;
-		cfa_option opts[] = {
-			{'\0', "AA", "First arg", a },
-			{'\0', "BB", "Second arg", b },
-			{'\0', "CC", "Third arg", c },
-		};
-		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+		array( cfa_option, 3 ) opts;
+		opts[0] = (cfa_option){'\0', "AA", "First arg", a };
+		opts[1] = (cfa_option){'\0', "BB", "Second arg", b };
+		opts[2] = (cfa_option){'\0', "CC", "Third arg", c };
+		print_args_usage(1, fake_argv, opts, "Test usage", false);
 	}
 	else {
 		int status = do_wait(child);
@@ -75,12 +73,11 @@ int main() {
 	sout | "Mix of short and long args:";
 	if(pid_t child = strict_fork(); child == 0) {
 		int a, b, c;
-		cfa_option opts[] = {
-			{'a', "", "First arg", a },
-			{'b', "BBBB", "Second arg", b },
-			{'\0', "CC", "Third arg", c },
-		};
-		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+		array( cfa_option, 3 ) opts;
+		opts[0] = (cfa_option){'a', "", "First arg", a };
+		opts[1] = (cfa_option){'b', "BBBB", "Second arg", b };
+		opts[2] = (cfa_option){'\0', "CC", "Third arg", c };
+		print_args_usage(1, fake_argv, opts, "Test usage", false);
 	}
 	else {
 		int status = do_wait(child);
@@ -90,12 +87,11 @@ int main() {
 	sout | "Mix of short and long and some missing description:";
 	if(pid_t child = strict_fork(); child == 0) {
 		int a, b, c;
-		cfa_option opts[] = {
-			{'a', "", "First arg", a },
-			{'b', "BBBB", "", b },
-			{'\0', "CC", "Third arg", c },
-		};
-		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+		array( cfa_option, 3 ) opts;
+		opts[0] = (cfa_option){'a', "", "First arg", a };
+		opts[1] = (cfa_option){'b', "BBBB", "", b };
+		opts[2] = (cfa_option){'\0', "CC", "Third arg", c };
+		print_args_usage(1, fake_argv, opts, "Test usage", false);
 	}
 	else {
 		int status = do_wait(child);
@@ -105,12 +101,11 @@ int main() {
 	sout | "Mix of short and long and some long description:";
 	if(pid_t child = strict_fork(); child == 0) {
 		int a, b, c;
-		cfa_option opts[] = {
-			{'a', "", "First arg\nThe description has multiple lines,\n...for some reason", a },
-			{'b', "BBBB", "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", b },
-			{'\0', "CC", "Third arg", c },
-		};
-		print_args_usage(1, fake_argv, opts, 3, "Test usage", false);
+		array( cfa_option, 3 ) opts;
+		opts[0] = (cfa_option){'a', "", "First arg\nThe description has multiple lines,\n...for some reason", a };
+		opts[1] = (cfa_option){'b', "BBBB", "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", b };
+		opts[2] = (cfa_option){'\0', "CC", "Third arg", c };
+		print_args_usage(1, fake_argv, opts, "Test usage", false);
 	}
 	else {
 		int status = do_wait(child);

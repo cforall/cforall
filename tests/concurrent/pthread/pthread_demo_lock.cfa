@@ -1,0 +1,124 @@
+#include <fstream.hfa>
+#include <thread.hfa>
+/* 
+    test pthread_mutex to provide mutual exclusion
+    test pthread_mutex_trylock not block when lock is acquired by others; test pthread_mutex_trylock can acquire the lock
+*/
+volatile int cnt_nolock = 0;
+volatile int cnt_lock = 0;
+volatile int cnt_trylock = 0;
+extern "C"{
+    static pthread_mutex_t _mutex;
+}
+
+/* mutex pthread routine  */
+// unlocked increnment
+void* inc_unlock(void* cnt){
+    for (int i = 0; i < (uint64_t)cnt; i++){
+        cnt_nolock++;
+    }   // for
+    return NULL;
+}   
+// locked increment
+void* inc_lock(void* cnt){
+    pthread_mutex_lock(&_mutex);
+    for (int i = 0; i < (uint64_t)cnt; i++){
+        cnt_lock++;
+    }   // for
+    pthread_mutex_unlock(&_mutex);
+    return NULL;
+}
+
+/* test lock vs unlock */
+void test_unlock(){
+    pthread_t threads[20];
+    for (int i = 0; i < 20; i++){
+        pthread_create(&threads[i], NULL, inc_unlock, (void*)100000000);
+    }
+    for (int i = 0; i < 20; i++){
+        void * res = NULL;
+        pthread_join(threads[i], &res);
+    }
+    sout | "unlock res is" | cnt_nolock;
+    cnt_nolock = 0;
+}
+extern "C"{
+    void test_lock(){
+        pthread_mutex_init(&_mutex, NULL);
+        pthread_t threads[20];
+        for (int i = 0; i < 20; i++){
+            
+            pthread_create(&threads[i], NULL, inc_lock, (void*)100000000);
+        }
+        for (int i = 0; i < 20; i++){
+            void * res = NULL;
+            pthread_join(threads[i], &res);
+        }
+        sout | "lock res is" | cnt_lock;
+        pthread_mutex_destroy(&_mutex);
+        if (cnt_lock != 100000000 * 20) {
+            sout | "pthread mutex not working";
+            exit(1);
+        }
+        cnt_lock = 0;
+    }
+}
+
+
+/* mutex trylock pthread routine  */
+void* trylock_test2(void* arg){
+    int res = pthread_mutex_trylock(&_mutex);
+    sout | "in trylocktest2 res1 is" | res;
+    res = pthread_mutex_trylock(&_mutex);
+    sout | "in trylocktest2 res2 is" | res;
+    pthread_mutex_lock(&_mutex);
+    for (int i = 0; i < (uint64_t)arg; i++) cnt_trylock++;
+    pthread_mutex_unlock(&_mutex);
+    return NULL;
+}
+
+void* trylock_test1(void* arg){
+    int res = pthread_mutex_trylock(&_mutex);
+    sout | "in trylocktest1 res1 is" | res;
+    res = pthread_mutex_trylock(&_mutex);
+    sout | "in trylocktest1 res2 is" | res;
+    pthread_t task2;
+    pthread_create(&task2, NULL, trylock_test2, (void*)100000000);
+
+    // inc cnt then release the lock
+    for (int i = 0; i < (uint64_t)arg; i++) cnt_trylock++;
+    pthread_mutex_unlock(&_mutex);
+    pthread_mutex_unlock(&_mutex);
+    void * dummy = NULL;
+    pthread_join(task2, &dummy);
+    sout | "cnt_trylock is " | cnt_trylock;
+    return NULL;
+}
+
+// trylock test
+void test_trylock(){
+    pthread_mutex_init(&_mutex, NULL);
+    pthread_t task1;
+    pthread_create(&task1, NULL, trylock_test1, (void*)100000000);
+    void * dummy = NULL;
+    pthread_join(task1,&dummy);
+    pthread_mutex_destroy(&_mutex);
+    if (cnt_trylock != 100000000 * 2) {
+        sout | "pthread try mutex not working";
+        exit(1);
+    }
+    cnt_trylock = 0;
+}
+
+
+
+int main(int argc, char const *argv[])
+{
+    
+    // compare unlock vs lock
+    test_lock();
+    // test trylock
+    test_trylock();
+    
+    return 0;
+}

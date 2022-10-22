@@ -104,9 +104,9 @@ public:
 	ptr<Type> type;
 	ptr<Init> init;
 	ptr<Expr> bitfieldWidth;
-	bool enumInLine = false; // A flag vairable to tell the compile:
-	// this is not a real object declaration. It is a place holder for 
-	// a set of enum value (ObjectDecl).
+	bool enumInLine = false; // enum inline is not a real object declaration. 
+	// It is a place holder for a set of enum value (ObjectDecl)
+	bool importValue = false; // if the value copied from somewhere else
 
 	ObjectDecl( const CodeLocation & loc, const std::string & name, const Type * type,
 		const Init * init = nullptr, Storage::Classes storage = {},

@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 18 14:15:37 2022
-// Update Count     : 936
+// Last Modified On : Tue Oct 18 16:22:15 2022
+// Update Count     : 937
 //
 
 #pragma once
@@ -467,7 +467,7 @@ void buildList( const NodeType * firstNode, Container< SynTreeType *, Args... > 
 		const ParseNode * temp = (cur->get_next());
 		cur = dynamic_cast< const NodeType * >( temp );	// should not return nullptr
 		if ( ! cur && temp ) {							// non-homogeneous nodes ?
-			SemanticError( cur->location, "internal error, non-homogeneous nodes founds in buildList processing." );
+			SemanticError( temp->location, "internal error, non-homogeneous nodes founds in buildList processing." );
 		} // if
 	} // while
 	if ( ! errors.isEmpty() ) {

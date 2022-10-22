@@ -5,7 +5,7 @@ enum enumA {
 
 enum enumB {
     inline enumA,
-    E, F
+    E, B=10
 };
 
 int main() {

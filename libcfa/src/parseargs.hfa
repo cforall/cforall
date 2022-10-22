@@ -15,13 +15,15 @@
 //
 #pragma once
 
+#include <array.hfa>
+
 struct cfa_option {
-      int val; // reserved
-      char short_name;
-      const char * long_name;
-      const char * help;
-      void * variable;
-      bool (*parse)(const char *, void * );
+	int val; // reserved
+	char short_name;
+	const char * long_name;
+	const char * help;
+	void * variable;
+	bool (*parse)(const char *, void * );
 };
 
 extern cfa_option last_option;
@@ -30,29 +32,39 @@ static inline void ?{}( cfa_option & this ) {}
 
 forall(T & | { bool parse(const char *, T & ); })
 static inline void ?{}( cfa_option & this, char short_name, const char * long_name, const char * help, T & variable ) {
-      this.val        = 0;
-      this.short_name = short_name;
-      this.long_name  = long_name;
-      this.help       = help;
-      this.variable   = (void*)&variable;
-      this.parse      = (bool (*)(const char *, void * ))parse;
+	this.val        = 0;
+	this.short_name = short_name;
+	this.long_name  = long_name;
+	this.help       = help;
+	this.variable   = (void*)&variable;
+	this.parse      = (bool (*)(const char *, void * ))parse;
 }
 
 forall(T &)
 static inline void ?{}( cfa_option & this, char short_name, const char * long_name, const char * help, T & variable, bool (*parse)(const char *, T & )) {
-      this.val        = 0;
-      this.short_name = short_name;
-      this.long_name  = long_name;
-      this.help       = help;
-      this.variable   = (void*)&variable;
-      this.parse      = (bool (*)(const char *, void * ))parse;
+	this.val        = 0;
+	this.short_name = short_name;
+	this.long_name  = long_name;
+	this.help       = help;
+	this.variable   = (void*)&variable;
+	this.parse      = (bool (*)(const char *, void * ))parse;
 }
 
 void parse_args( cfa_option options[], size_t opt_count, const char * usage, char ** & left );
 void parse_args( int argc, char * argv[], cfa_option options[], size_t opt_count, const char * usage, char ** & left );
 
+forall( [N] ) {
+	void parse_args( const array( cfa_option, N ) & options, const char * usage, char ** & left );
+	void parse_args( int argc, char * argv[], const array( cfa_option, N ) & options, const char * usage, char ** & left );
+}
+
 void print_args_usage(cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn));
 void print_args_usage(int argc, char * argv[], cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn));
+
+forall( [N] ) {
+	void print_args_usage( const array(cfa_option, N ) & options, const char * usage, bool error)  __attribute__ ((noreturn));
+	void print_args_usage(int argc, char * argv[], const array( cfa_option, N ) & options, const char * usage, bool error)  __attribute__ ((noreturn));
+}
 
 bool parse_yesno    (const char *, bool & );
 bool parse_truefalse(const char *, bool & );

@@ -49,6 +49,7 @@ AddressExpr::AddressExpr( Expression *arg ) : Expression(), arg( arg ) {
 			if ( ReferenceType * refType = dynamic_cast< ReferenceType * >( arg->result ) ) {
 				set_result( addrType( refType->base ) );
 			} else {
+				if(!arg->result->location.isSet()) arg->result->location = arg->location;
 				SemanticError( arg->result, "Attempt to take address of non-lvalue expression: " );
 			} // if
 		}

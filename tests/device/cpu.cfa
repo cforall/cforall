@@ -116,6 +116,7 @@ static size_t read_cpuidxinfo_into(unsigned cpu, unsigned idx, const char * file
 
 unsigned find_idx() {
 	int idxs = count_cache_indexes();
+	if( 0 == idxs ) return 0;
 
 	unsigned found_level = 0;
 	unsigned found = MAX;
@@ -178,7 +179,7 @@ int main() {
 	//-----------------------------------------------------------------------
 	unsigned idx = find_idx();
 	// For all procs check mapping is consistent
-	for(cpu_me; cpu_info.hthrd_count) {
+	if( idx > 0 ) for(cpu_me; cpu_info.hthrd_count) {
 		char buf_me[32];
 		size_t len_me = read_cpuidxinfo_into(cpu_me, idx, "shared_cpu_list", buf_me, 32);
 		for(cpu_them; cpu_info.hthrd_count) {

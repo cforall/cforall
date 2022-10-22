@@ -1,0 +1,41 @@
+#include <fstream.hfa>
+#include <thread.hfa>
+/* test pthread create/join/exit */
+
+int arr[20];
+
+void* fetch(void* idx){
+    int res = arr[(uint64_t)idx];
+    pthread_exit((void*)res);
+    sout | "it should not be here";
+    exit(1);
+    //return (void*)res;
+}
+
+void arr_init(){
+    for (int i = 0; i < 20; i++){
+        arr[i] = i;
+    }
+}
+
+int main(int argc, char const *argv[])
+{
+    pthread_t threads[20];
+    arr_init();
+    int status;
+    for (int i = 0; i < 20; i++){
+        status = pthread_create(&threads[i], NULL, fetch, (void*)i);
+        if (status != 0) exit(1);
+    }
+    int res = 0;
+    for (int i = 0; i < 20; i++){
+        void* _res = NULL;
+        status = pthread_join(threads[i], &_res);
+        if (status != 0) exit(2);
+        if (((uint64_t)_res) != i) exit(3);
+        res += (uint64_t)_res;
+    }
+    sout | "final res is" | res;
+
+    return 0;
+}

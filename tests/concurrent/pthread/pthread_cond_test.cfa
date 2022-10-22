@@ -1,0 +1,46 @@
+/* small test of pthread cond */
+
+#include <fstream.hfa>
+#include <thread.hfa>
+#include <pthread.h>
+
+int done_flag = 0;
+pthread_mutex_t _mutex;
+pthread_cond_t cond;
+
+extern "C"{
+    void* S1(void* arg){
+        pthread_mutex_lock(&_mutex);
+        for (int i = 0; i < 1000; i++) sout | "S1 done " | i;
+        done_flag = 1;
+        pthread_mutex_unlock(&_mutex);
+        pthread_cond_signal(&cond);
+        return NULL;
+    }
+
+    void* S2(void* arg){
+        pthread_mutex_lock(&_mutex);
+        if (!done_flag) pthread_cond_wait(&cond, &_mutex);
+        sout | "S2 statement done!";
+        pthread_mutex_unlock(&_mutex);
+        return NULL;
+    }
+}
+
+
+
+int main(int argc, char const *argv[])
+{
+    /* code */
+    pthread_mutex_init(&_mutex, NULL);
+    pthread_cond_init(&cond, NULL);
+    pthread_t s1,s2;
+    pthread_create(&s1, NULL, S1, NULL);
+    pthread_create(&s2, NULL, S2, NULL);
+    void* res = NULL;
+    pthread_join(s1, &res);
+    pthread_join(s2, &res);
+    pthread_mutex_destroy(&_mutex);
+    pthread_cond_destroy(&cond);
+    return 0;
+}
