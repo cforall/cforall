@@ -1,0 +1,85 @@
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <thread.hfa>
+
+#include <stdatomic.h>
+#include <assert.h>
+
+struct cluster_wrapper {
+	cluster self;
+	const uint64_t canary;
+	struct {
+		volatile uint64_t want;
+		volatile uint64_t have;
+	} checksum;
+};
+
+void ?{}( cluster_wrapper & this ) {
+	(this.self){};
+	(*(uint64_t *)&this.canary) = 0xDEAD2BADDEAD2BAD;
+	this.checksum.want = 0;
+	this.checksum.have = 0;
+}
+
+void ^?{}( cluster_wrapper & this ) {
+	assert(this.canary == 0xDEAD2BADDEAD2BAD);
+}
+
+static cluster_wrapper * the_clusters;
+static unsigned cluster_cnt;
+
+thread MyThread {
+
+};
+
+void ?{}( MyThread & this ) {}
+
+void checkcl( MyThread & this, cluster * cl) {
+	if(((thread&)this).curr_cluster != cl) {
+		abort | "Thread has unexpected cluster";
+	}
+}
+
+void main( MyThread & this ) {
+	waitfor( migrate : this ) {
+		assert( ((thread&)this).curr_cluster == active_cluster() );
+		assert( ((thread&)this).curr_cluster == active_processor()->cltr );
+	}
+
+	struct cluster_wrapper * curr = (struct cluster_wrapper *)&the_clusters[0];
+
+	for(100) {
+		unsigned idx = prng( this, cluster_cnt );
+
+		struct cluster_wrapper * next = &the_clusters[ idx ];
+		assert(next->canary == 0xDEAD2BADDEAD2BAD);
+
+		// next->
+
+		migrate( this, next->self );
+
+		assert( active_cluster() == &next->self );
+		assert( ((thread&)this).curr_cluster == active_cluster() );
+		assert( ((thread&)this).curr_cluster == active_processor()->cltr );
+	}
+}
+
+int main() {
+	cluster_cnt = 3;
+	cluster_wrapper cl[cluster_cnt];
+	the_clusters = cl;
+
+	{
+		set_concurrency( cl[0].self, 2 );
+		set_concurrency( cl[1].self, 2 );
+		set_concurrency( cl[2].self, 1 );
+
+		MyThread threads[17];
+		for(i;17) {
+			migrate( threads[i], cl[0].self );
+		}
+
+	}
+	// non-empty .expect file
+	printf( "done\n" );
+}

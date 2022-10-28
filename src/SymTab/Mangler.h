@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 21:44:03 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:45:30 2017
-// Update Count     : 15
+// Last Modified By : Andrew Beach
+// Last Modified On : Thu Oct 27 11:58:00 2022
+// Update Count     : 16
 //
 
 #pragma once
@@ -21,7 +21,6 @@
 #include <utility>            // for pair
 
 #include "AST/Bitfield.hpp"
-#include "AST/Fwd.hpp"
 #include "SynTree/SynTree.h"  // for Types
 #include "SynTree/Visitor.h"  // for Visitor, maybeAccept
 
@@ -32,6 +31,9 @@
 // * CFA instead has to handle type parameters and assertion parameters.
 // * Currently name compression is not implemented.
 
+namespace ast {
+	class Node;
+}
 namespace ResolvExpr {
 	class TypeEnvironment;
 }
@@ -100,10 +102,13 @@ namespace Mangle {
 
 	using Mode = bitfield<mangle_flags>;
 
-	static inline Mode typeMode() { return NoOverrideable | Type; }
-
-	/// Mangle declaration name
+	/// Mangle declaration name.
 	std::string mangle( const ast::Node * decl, Mode mode = {} );
+
+	/// Most common mangle configuration for types.
+	static inline std::string mangleType( const ast::Node * type ) {
+		return mangle( type, { NoOverrideable | Type } );
+	}
 
 	namespace Encoding {
 		using namespace SymTab::Mangler::Encoding;

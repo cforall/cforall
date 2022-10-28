@@ -19,7 +19,7 @@
 #include "GenPoly.h"                    // for mangleType, TyVarMap, alignof...
 #include "GenPoly/ErasableScopedMap.h"  // for ErasableScopedMap<>::const_it...
 #include "ScrubTyVars.h"
-#include "SymTab/Mangler.h"             // for mangle, typeMode
+#include "SymTab/Mangler.h"             // for mangleType
 #include "SynTree/Declaration.h"        // for TypeDecl, TypeDecl::Data, Typ...
 #include "SynTree/Expression.h"         // for Expression (ptr only), NameExpr
 #include "SynTree/Mutator.h"            // for Mutator
@@ -194,7 +194,7 @@ ast::Type const * ScrubTypeVars::postvisit( ast::TypeInstType const * type ) {
 		}
 	}
 
-	auto typeVar = typeVars->find( type->name );
+	auto typeVar = typeVars->find( *type );
 	if ( typeVar == typeVars->end() ) {
 		return type;
 	}
@@ -226,7 +226,7 @@ ast::Expr const * ScrubTypeVars::postvisit( ast::SizeofExpr const * expr ) {
 	// sizeof( T ) becomes the _sizeof_T parameter.
 	if ( dynType ) {
 		return new ast::NameExpr( expr->location,
-			sizeofName( Mangle::mangle( dynType, Mangle::typeMode() ) ) );
+			sizeofName( Mangle::mangleType( dynType ) ) );
 	} else {
 		return expr;
 	}
@@ -236,7 +236,7 @@ ast::Expr const * ScrubTypeVars::postvisit( ast::AlignofExpr const * expr ) {
 	// alignof( T ) becomes the _alignof_T parameter.
 	if ( dynType ) {
 		return new ast::NameExpr( expr->location,
-			alignofName( Mangle::mangle( dynType, Mangle::typeMode() ) ) );
+			alignofName( Mangle::mangleType( dynType ) ) );
 	} else {
 		return expr;
 	}

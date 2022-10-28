@@ -146,6 +146,12 @@ TraitInstType::TraitInstType(
 
 // --- TypeInstType
 
+bool TypeInstType::operator==( const TypeInstType & other ) const {
+	return base == other.base
+		&& formal_usage == other.formal_usage
+		&& expr_id == other.expr_id;
+}
+
 TypeInstType::TypeInstType( const TypeDecl * b,
 	CV::Qualifiers q, std::vector<ptr<Attribute>> && as )
 : BaseInstType( b->name, q, std::move(as) ), base( b ), kind( b->kind ) {}
@@ -156,6 +162,35 @@ void TypeInstType::set_base( const TypeDecl * b ) {
 }
 
 bool TypeInstType::isComplete() const { return base->sized; }
+
+std::string TypeInstType::TypeEnvKey::typeString() const {
+	return std::string("_") + std::to_string(formal_usage)
+		+ "_" + std::to_string(expr_id) + "_" + base->name;
+}
+
+bool TypeInstType::TypeEnvKey::operator==(
+		const TypeInstType::TypeEnvKey & other ) const {
+	return base == other.base
+		&& formal_usage == other.formal_usage
+		&& expr_id == other.expr_id;
+}
+
+bool TypeInstType::TypeEnvKey::operator<(
+		const TypeInstType::TypeEnvKey & other ) const {
+	// TypeEnvKey ordering is an arbitrary total ordering.
+	// It doesn't mean anything but allows for a sorting.
+	if ( base < other.base ) {
+		return true;
+	} else if ( other.base < base ) {
+		return false;
+	} else if ( formal_usage < other.formal_usage ) {
+		return true;
+	} else if ( other.formal_usage < formal_usage ) {
+		return false;
+	} else {
+		return expr_id < other.expr_id;
+	}
+}
 
 // --- TupleType
 

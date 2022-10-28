@@ -49,6 +49,7 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 	last_proc = 0p;
 	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();
 	#if defined( __CFA_WITH_VERIFY__ )
+		executing = 0p;
 		canary = 0x0D15EA5E0D15EA5Ep;
 	#endif
 
@@ -173,6 +174,52 @@ forall(T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled(T))
 T & join( T & this ) {
 	thread_dtor_guard_t guard = { this, defaultResumptionHandler };
 	return this;
+}
+
+//-----------------------------------------------------------------------------
+bool migrate( thread$ * thrd, struct cluster & cl ) {
+
+	monitor$ * tmon = get_monitor(thrd);
+	monitor$ * __monitors[] = { tmon };
+	monitor_guard_t __guard = { __monitors, 1 };
+
+
+	{
+		// if nothing needs to be done, return false
+		if( thrd->curr_cluster == &cl ) return false;
+
+		// are we migrating ourself?
+		const bool local = thrd == active_thread();
+
+		/* paranoid */ verify( !local || &cl != active_cluster() );
+		/* paranoid */ verify( !local || thrd->curr_cluster == active_cluster() );
+		/* paranoid */ verify( !local || thrd->curr_cluster == active_processor()->cltr );
+		/* paranoid */ verify( local || tmon->signal_stack.top->owner->waiting_thread == thrd );
+		/* paranoid */ verify( local || tmon->signal_stack.top );
+
+		// make sure we aren't interrupted while doing this
+		// not as important if we aren't local
+		disable_interrupts();
+
+		// actually move the thread
+		unregister( thrd->curr_cluster, *thrd );
+		thrd->curr_cluster = &cl;
+		doregister( thrd->curr_cluster, *thrd );
+
+		// restore interrupts
+		enable_interrupts();
+
+		// if this is the local thread, we are still running on the old cluster
+		if(local) yield();
+
+		/* paranoid */ verify( !local || &cl == active_cluster() );
+		/* paranoid */ verify( !local || thrd->curr_cluster == active_cluster() );
+		/* paranoid */ verify( !local || thrd->curr_cluster == active_processor()->cltr );
+		/* paranoid */ verify(  local || tmon->signal_stack.top );
+		/* paranoid */ verify(  local || tmon->signal_stack.top->owner->waiting_thread == thrd );
+
+		return true;
+	}
 }
 
 //-----------------------------------------------------------------------------

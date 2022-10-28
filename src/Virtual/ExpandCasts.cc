@@ -294,8 +294,7 @@ public:
 	// Attempt to insert an instance into the map. If there is a conflict,
 	// returns the previous declaration for error messages.
 	ast::ObjectDecl const * insert( ast::ObjectDecl const * typeIdDecl ) {
-		std::string const & mangledName =
-				Mangle::mangle( typeIdDecl->type, Mangle::typeMode() );
+		std::string mangledName = Mangle::mangleType( typeIdDecl->type );
 		ast::ObjectDecl const *& value = instances[ mangledName ];
 		if ( value ) {
 			if ( typeIdDecl->storage.is_extern ) {
@@ -309,8 +308,7 @@ public:
 	}
 
 	ast::ObjectDecl const * lookup( ast::Type const * typeIdType ) {
-		std::string const & mangledName =
-				Mangle::mangle( typeIdType, Mangle::typeMode() );
+		std::string mangledName = Mangle::mangleType( typeIdType );
 		auto const it = instances.find( mangledName );
 		return ( instances.end() == it ) ? nullptr : it->second;
 	}

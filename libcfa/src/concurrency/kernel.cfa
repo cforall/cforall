@@ -320,6 +320,7 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 		/* paranoid */ verify( thrd_dst->state != Halted );
 		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ) || thrd_dst->curr_cor == proc_cor || thrd_dst->corctx_flag, "ERROR : Destination thread$ %p has been corrupted.\n StackPointer too small.\n", thrd_dst ); // add escape condition if we are setting up the processor
 		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit) || thrd_dst->curr_cor == proc_cor || thrd_dst->corctx_flag, "ERROR : Destination thread$ %p has been corrupted.\n StackPointer too large.\n", thrd_dst ); // add escape condition if we are setting up the processor
+		/* paranoid */ verify( __atomic_exchange_n( &thrd_dst->executing, this, __ATOMIC_SEQ_CST) == 0p );
 		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_dst->canary );
 
 
@@ -331,10 +332,11 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 
 
 		/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd_dst->canary );
+		/* paranoid */ verify( __atomic_exchange_n( &thrd_dst->executing, 0p, __ATOMIC_SEQ_CST) == this );
 		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) > ((uintptr_t)__get_stack(thrd_dst->curr_cor)->limit) || thrd_dst->corctx_flag, "ERROR : Destination thread$ %p has been corrupted.\n StackPointer too large.\n", thrd_dst );
 		/* paranoid */ verifyf( ((uintptr_t)thrd_dst->context.SP) < ((uintptr_t)__get_stack(thrd_dst->curr_cor)->base ) || thrd_dst->corctx_flag, "ERROR : Destination thread$ %p has been corrupted.\n StackPointer too small.\n", thrd_dst );
+		/* paranoid */ verify( thrd_dst->state != Halted );
 		/* paranoid */ verify( thrd_dst->context.SP );
-		/* paranoid */ verify( thrd_dst->curr_cluster == this->cltr );
 		/* paranoid */ verify( kernelTLS().this_thread == thrd_dst );
 		/* paranoid */ verify( ! __preemption_enabled() );
 

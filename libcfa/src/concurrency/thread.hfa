@@ -131,6 +131,14 @@ forall( T & | is_thread(T) | IS_RESUMPTION_EXCEPTION(ThreadCancelled(T))
 T & join( T & this );
 
 //----------
+// misc
+bool migrate( thread$ * thrd, struct cluster & cl );
+
+forall( T & | is_thread(T) )
+static inline bool migrate( T & mutex thrd, struct cluster & cl ) { return migrate( &(thread&)thrd, cl ); }
+
+
+//----------
 // prng
 static inline {
 	uint32_t prng( thread$ & th ) __attribute__(( warn_unused_result )) { return LCG( th.random_state ); } // [0,UINT_MAX]

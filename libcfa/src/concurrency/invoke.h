@@ -213,6 +213,7 @@ extern "C" {
 		uint32_t random_state;							// fast random numbers
 
 		#if defined( __CFA_WITH_VERIFY__ )
+			struct processor * volatile executing;
 			void * canary;
 		#endif
 	};

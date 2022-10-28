@@ -16,6 +16,8 @@
 #define __cforall_thread__
 #define _GNU_SOURCE
 
+// #define __CFA_DEBUG_PRINT_RUNTIME_CORE__
+
 // C Includes
 #include <errno.h>					// errno
 #include <signal.h>
@@ -335,7 +337,7 @@ static void __kernel_shutdown(void) {
 		deinit( this );
 
 		/* paranoid */ verify( this.do_terminate == true );
-		__cfaabi_dbg_print_safe("Kernel : destroyed main processor context %p\n", &runner);
+		__cfadbg_print_safe(runtime_core, "Kernel : destroyed main processor context %p\n", &runner);
 	}
 
 	^(*mainProcessor){};
@@ -396,7 +398,7 @@ static void * __invoke_processor(void * arg) {
 	info.storage = &ctx;
 	(proc->runner){ proc, &info };
 
-	__cfaabi_dbg_print_safe("Coroutine : created stack %p\n", get_coroutine(proc->runner)->stack.storage);
+	__cfadbg_print_safe(runtime_core, "Coroutine : created stack %p\n", get_coroutine(proc->runner)->stack.storage);
 
 	//Set global state
 	__cfaabi_tls.this_thread = 0p;
@@ -528,6 +530,7 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 	last_proc = 0p;
 	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();
 	#if defined( __CFA_WITH_VERIFY__ )
+		executing = 0p;
 		canary = 0x0D15EA5E0D15EA5Ep;
 	#endif
 
@@ -660,6 +663,9 @@ void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned n
 	io.arbiter = create();
 	io.params = io_params;
 
+	managed.procs = 0p;
+	managed.cnt = 0;
+
 	doregister(this);
 
 	// Lock the RWlock so no-one pushes/pops while we are changing the queue
@@ -675,6 +681,8 @@ void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned n
 }
 
 void ^?{}(cluster & this) libcfa_public {
+	set_concurrency( this, 0 );
+
 	destroy(this.io.arbiter);
 
 	// Lock the RWlock so no-one pushes/pops while we are changing the queue
@@ -844,6 +852,31 @@ void __destroy_pthread( pthread_t pthread, void * stack, void ** retval ) {
 		);
 		free( stack );
 	#endif
+}
+
+unsigned set_concurrency( cluster & this, unsigned new ) libcfa_public {
+	unsigned old = this.managed.cnt;
+
+	__cfadbg_print_safe(runtime_core, "Kernel : resizing cluster from %u to %u\n", old, (unsigned)new);
+
+	// Delete all the old unneeded procs
+	if(old > new) for(i; (unsigned)new ~ old) {
+		__cfadbg_print_safe(runtime_core, "Kernel : destroying %u\n", i);
+		delete( this.managed.procs[i] );
+	}
+
+	// Allocate new array (uses realloc and memcpies the data)
+	this.managed.procs = alloc( new, this.managed.procs`realloc );
+	this.managed.cnt = new;
+
+	// Create the desired new procs
+	if(old < new) for(i; old ~ new) {
+		__cfadbg_print_safe(runtime_core, "Kernel : constructing %u\n", i);
+		(*(this.managed.procs[i] = alloc())){ this };
+	}
+
+	// return the old count
+	return old;
 }
 
 #if defined(__CFA_WITH_VERIFY__)

@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Oct  7 15:06:00 2022
-// Update Count     : 9
+// Last Modified On : Mon Oct 24 15:18:00 2022
+// Update Count     : 11
 //
 
 #pragma once
@@ -21,18 +21,19 @@
 #include "ErasableScopedMap.h"    // for ErasableScopedMap
 #include "AST/Decl.hpp"           // for TypeDecl::Data
 #include "AST/Fwd.hpp"            // for ApplicationExpr, BaseInstType, Func...
+#include "AST/Type.hpp"           // for TypeInstType::TypeEnvKey
 #include "SymTab/Mangler.h"       // for Mangler
 #include "SynTree/Declaration.h"  // for TypeDecl::Data, AggregateDecl, Type...
 #include "SynTree/SynTree.h"      // for Visitor Nodes
 
 namespace GenPoly {
 
-	// TODO Via some tricks this works for ast::TypeDecl::Data as well.
 	typedef ErasableScopedMap< std::string, TypeDecl::Data > TyVarMap;
-	using TypeVarMap = ErasableScopedMap< std::string, ast::TypeDecl::Data >;
+	using TypeVarMap = ErasableScopedMap< ast::TypeInstType::TypeEnvKey, ast::TypeDecl::Data >;
 
 	/// Replaces a TypeInstType by its referrent in the environment, if applicable
 	Type* replaceTypeInst( Type* type, const TypeSubstitution* env );
+	const ast::Type * replaceTypeInst( const ast::Type *, const ast::TypeSubstitution * );
 
 	/// returns polymorphic type if is polymorphic type, NULL otherwise; will look up substitution in env if provided
 	Type *isPolyType( Type *type, const TypeSubstitution *env = 0 );
@@ -52,6 +53,7 @@ namespace GenPoly {
 
 	/// true iff function has dynamic-layout return type under the type variable map generated from its forall-parameters
 	ReferenceToType *isDynRet( FunctionType *function );
+	const ast::BaseInstType *isDynRet( const ast::FunctionType * func );
 
 	/// A function needs an adapter if it returns a dynamic-layout value or if any of its parameters have dynamic-layout type
 	bool needsAdapter( FunctionType *adaptee, const TyVarMap &tyVarr );
@@ -111,7 +113,6 @@ namespace GenPoly {
 
 	/// Prints type variable map
 	void printTyVarMap( std::ostream &os, const TyVarMap &tyVarMap );
-	void printTypeVarMap( std::ostream &os, const TypeVarMap & typeVars );
 
 	/// Gets the mangled name of this type; alias for SymTab::Mangler::mangleType().
 	inline std::string mangleType( Type *ty ) { return SymTab::Mangler::mangleType( ty ); }
@@ -127,6 +128,9 @@ namespace GenPoly {
 
 	/// Gets the name of the layout function for a given aggregate type, given its declaration
 	inline std::string layoutofName( AggregateDecl *decl ) { return std::string( "_layoutof_" ) + decl->get_name(); }
+	inline std::string layoutofName( ast::AggregateDecl const * decl ) {
+		return std::string( "_layoutof_" ) + decl->name;
+	}
 
 } // namespace GenPoly
 

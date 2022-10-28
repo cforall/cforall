@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 #include "bits/weakso_locks.hfa"
-#include "containers/queueLockFree.hfa"
+#include "containers/lockfree.hfa"
 #include "containers/list.hfa"
 
 #include "limits.hfa"
@@ -422,7 +422,7 @@ static inline void on_notify(simple_owner_lock & this, struct thread$ * t ) with
 	}
 }
 
-static inline size_t on_wait(simple_owner_lock & this) with(this) { 
+static inline size_t on_wait(simple_owner_lock & this) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	/* paranoid */ verifyf( owner != 0p, "Attempt to release lock %p that isn't held", &this );
 	/* paranoid */ verifyf( owner == active_thread(), "Thread %p other than the owner %p attempted to release owner lock %p", owner, active_thread(), &this );

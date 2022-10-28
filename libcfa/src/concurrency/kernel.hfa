@@ -159,9 +159,9 @@ struct __attribute__((aligned(64))) processor {
 };
 // P9_EMBEDDED( processor, dlink(processor) )
 static inline tytagref( dlink(processor), dlink(processor) ) ?`inner( processor & this ) {
-    dlink(processor) & b = this.link;
-    tytagref( dlink(processor), dlink(processor) ) result = { b };
-    return result;
+	dlink(processor) & b = this.link;
+	tytagref( dlink(processor), dlink(processor) ) result = { b };
+	return result;
 }
 
 void  ?{}(processor & this, const char name[], struct cluster & cltr);
@@ -269,6 +269,11 @@ struct __attribute__((aligned(64))) cluster {
 		io_context_params params;
 	} io;
 
+	struct {
+		struct processor ** procs;
+		unsigned cnt;
+	} managed;
+
 	#if !defined(__CFA_NO_STATISTICS__)
 		struct __stats_t * stats;
 		int print_stats;
@@ -296,6 +301,10 @@ static inline [cluster *&, cluster *& ] __get( cluster & this ) __attribute__((c
 
 static inline struct processor * active_processor() { return publicTLS_get( this_processor ); } // UNSAFE
 static inline struct cluster   * active_cluster  () { return publicTLS_get( this_processor )->cltr; }
+
+// set the number of internal processors
+// these processors are in addition to any explicitly declared processors
+unsigned set_concurrency( cluster & this, unsigned new_count );
 
 #if !defined(__CFA_NO_STATISTICS__)
 	void print_stats_now( cluster & this, int flags );

@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Oct  7 15:25:00 2022
-// Update Count     : 16
+// Last Modified On : Mon Oct 24 15:19:00 2022
+// Update Count     : 17
 //
 
 #include "GenPoly.h"
@@ -193,7 +193,7 @@ const ast::Type * isPolyType( const ast::Type * type,
 	type = replaceTypeInst( type, subst );
 
 	if ( auto inst = dynamic_cast< const ast::TypeInstType * >( type ) ) {
-		if ( typeVars.find( inst->typeString() ) != typeVars.end() ) return type;
+		if ( typeVars.find( *inst ) != typeVars.end() ) return type;
 	} else if ( auto array = dynamic_cast< const ast::ArrayType * >( type ) ) {
 		return isPolyType( array->base, subst );
 	} else if ( auto sue = dynamic_cast< const ast::StructInstType * >( type ) ) {
@@ -226,7 +226,7 @@ const ast::BaseInstType * isDynType(
 	type = replaceTypeInst( type, subst );
 
 	if ( auto inst = dynamic_cast<ast::TypeInstType const *>( type ) ) {
-		auto var = typeVars.find( inst->name );
+		auto var = typeVars.find( *inst );
 		if ( var != typeVars.end() && var->second.isComplete ) {
 
 		}
@@ -783,7 +783,7 @@ bool needsBoxing(
 	}
 
 void addToTypeVarMap( const ast::TypeInstType * type, TypeVarMap & typeVars ) {
-	typeVars.insert( type->typeString(), ast::TypeDecl::Data( type->base ) );
+	typeVars.insert( *type, ast::TypeDecl::Data( type->base ) );
 }
 
 	void makeTyVarMap( Type *type, TyVarMap &tyVarMap ) {
@@ -814,13 +814,6 @@ void makeTypeVarMap( const ast::Type * type, TypeVarMap & typeVars ) {
 		} // for
 		os << std::endl;
 	}
-
-void printTypeVarMap( std::ostream &os, const TypeVarMap & typeVars ) {
-	for ( auto const & pair : typeVars ) {
-		os << pair.first << " (" << pair.second << ") ";
-	} // for
-	os << std::endl;
-}
 
 } // namespace GenPoly
 

@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 21:40:29 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 11 21:56:06 2021
-// Update Count     : 74
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Oct 21 16:18:00 2022
+// Update Count     : 75
 //
 #include "Mangler.h"
 
@@ -417,7 +417,8 @@ namespace Mangle {
 			void postvisit( const ast::OneType * oneType );
 			void postvisit( const ast::QualifiedType * qualType );
 
-			std::string get_mangleName() { return mangleName; }
+			/// The result is the current constructed mangled name.
+			std::string result() const { return mangleName; }
 		  private:
 			std::string mangleName;         ///< Mangled name being constructed
 			typedef std::map< std::string, std::pair< int, int > > VarMapType;
@@ -443,11 +444,8 @@ namespace Mangle {
 		}; // Mangler_new
 	} // namespace
 
-
 	std::string mangle( const ast::Node * decl, Mangle::Mode mode ) {
-		ast::Pass<Mangler_new> mangler( mode );
-		maybeAccept( decl, mangler );
-		return mangler.core.get_mangleName();
+		return ast::Pass<Mangler_new>::read( decl, mode );
 	}
 
 	namespace {
@@ -688,10 +686,9 @@ namespace Mangle {
 						varNums[ decl->name ] = std::make_pair( nextVarNum, (int)decl->kind );
 					} // for
 					for ( auto & assert : ptype->assertions ) {
-						ast::Pass<Mangler_new> sub_mangler(
-							mangleOverridable, typeMode, mangleGenericParams, nextVarNum, varNums );
-						assert->var->accept( sub_mangler );
-						assertionNames.push_back( sub_mangler.core.get_mangleName() );
+						assertionNames.push_back( ast::Pass<Mangler_new>::read(
+							assert->var.get(),
+							mangleOverridable, typeMode, mangleGenericParams, nextVarNum, varNums ) );
 						acount++;
 					} // for
 					mangleName += std::to_string( dcount ) + "_" + std::to_string( fcount ) + "_" + std::to_string( vcount ) + "_" + std::to_string( acount ) + "_";

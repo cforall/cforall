@@ -1,5 +1,5 @@
 #include <fstream.hfa>
-#include <queueLockFree.hfa>
+#include <containers/lockfree.hfa>
 #include <thread.hfa>
 
 const unsigned int num_times = 50000;

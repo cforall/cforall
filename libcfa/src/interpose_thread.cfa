@@ -73,6 +73,7 @@ static struct {
 	int (*pthread_attr_getstacksize)( const pthread_attr_t *attr, size_t *stacksize );
 	int (*pthread_sigmask)(int how, const sigset_t *set, sigset_t *oldset);
 	int (*pthread_sigqueue)(pthread_t _thread, int sig, const union sigval value);
+	int (*pthread_once)(pthread_once_t *once_control, void (*init_routine)(void));
 } __cabi_libpthread;
 
 extern "C" {
@@ -90,6 +91,7 @@ extern "C" {
 		INTERPOSE( pthread_attr_getstacksize , version );
 		INTERPOSE( pthread_sigmask , version );
 		INTERPOSE( pthread_sigqueue , version );
+		INTERPOSE( pthread_once , version );
 #pragma GCC diagnostic pop
 	}
 
@@ -104,22 +106,32 @@ extern "C" {
 	pthread_t __cfaabi_pthread_self(void){
 		return __cabi_libpthread.pthread_self();
 	}
+
 	int __cfaabi_pthread_attr_init(pthread_attr_t *attr){
 		return __cabi_libpthread.pthread_attr_init(attr);
 	}
+
 	int __cfaabi_pthread_attr_destroy(pthread_attr_t *attr){
 		return __cabi_libpthread.pthread_attr_destroy(attr);
 	}
+
 	int __cfaabi_pthread_attr_setstack( pthread_attr_t *attr, void *stackaddr, size_t stacksize ){
 		return __cabi_libpthread.pthread_attr_setstack(attr, stackaddr, stacksize);
 	}
+
 	int read_pthread_attr_getstacksize( const pthread_attr_t *attr, size_t *stacksize ){
 		return __cabi_libpthread.pthread_attr_getstacksize(attr, stacksize);
 	}
+
 	int __cfaabi_pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset){
 		return __cabi_libpthread.pthread_sigmask(how, set, oldset);
 	}
-	int __cfaabi_pthread_sigqueue(pthread_t _thread, int sig, const union sigval value){
+
+	int __cfaabi_pthread_sigqueue(pthread_t _thread, int sig, const union sigval value) {
 		return __cabi_libpthread.pthread_sigqueue(_thread, sig, value);
+	}
+
+	int __cfaabi_pthread_once(pthread_once_t *once_control, void (*init_routine)(void)) {
+		return __cabi_libpthread.pthread_once(once_control, init_routine);
 	}
 }

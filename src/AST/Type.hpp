@@ -407,13 +407,16 @@ public:
 		int expr_id = 0;
 
 		TypeEnvKey() = default;
-		TypeEnvKey(const TypeDecl * base, int formal_usage = 0, int expr_id = 0): base(base), formal_usage(formal_usage), expr_id(expr_id) {}
-		TypeEnvKey(const TypeInstType & inst): base(inst.base), formal_usage(inst.formal_usage), expr_id(inst.expr_id) {}
-		std::string typeString() const { return std::string("_") + std::to_string(formal_usage) + "_" + std::to_string(expr_id) + "_" + base->name; }
-		bool operator==(const TypeEnvKey & other) const { return base == other.base && formal_usage == other.formal_usage && expr_id == other.expr_id; }
+		TypeEnvKey(const TypeDecl * base, int formal_usage = 0, int expr_id = 0)
+		: base(base), formal_usage(formal_usage), expr_id(expr_id) {}
+		TypeEnvKey(const TypeInstType & inst)
+		: base(inst.base), formal_usage(inst.formal_usage), expr_id(inst.expr_id) {}
+		std::string typeString() const;
+		bool operator==(const TypeEnvKey & other) const;
+		bool operator<(const TypeEnvKey & other) const;
 	};
 
-	bool operator==(const TypeInstType & other) const { return base == other.base && formal_usage == other.formal_usage && expr_id == other.expr_id; }
+	bool operator==(const TypeInstType & other) const;
 
 	TypeInstType(
 		const std::string& n, const TypeDecl * b, CV::Qualifiers q = {},

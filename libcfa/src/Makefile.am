@@ -61,8 +61,7 @@ inst_headers_nosrc = \
 	concurrency/barrier.hfa \
 	containers/array.hfa \
 	containers/list.hfa \
-	containers/queueLockFree.hfa \
-	containers/stackLockFree.hfa \
+	containers/lockfree.hfa \
 	containers/string_sharectx.hfa \
 	containers/vector2.hfa \
 	vec/vec.hfa \

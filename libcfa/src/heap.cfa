@@ -210,7 +210,7 @@ static HeapStatistics & ?+=?( HeapStatistics & lhs, const HeapStatistics & rhs )
 #define BUCKETLOCK SPINLOCK
 #if BUCKETLOCK == SPINLOCK
 #elif BUCKETLOCK == LOCKFREE
-#include <stackLockFree.hfa>
+#include <containers/lockfree.hfa>
 #else
 	#error undefined lock type for bucket lock
 #endif // LOCKFREE
@@ -504,7 +504,7 @@ Heap * getHeap() with( heapMaster ) {
 				freeLists[j].homeManager = heap;
 				freeLists[j].blockSize = bucketSizes[j];
 			} // for
-	
+
 			heapBuffer = 0p;
 			heapReserve = 0;
 			nextFreeHeapManager = 0p;
