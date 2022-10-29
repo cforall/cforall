@@ -235,6 +235,13 @@ private:
 		return declWithTypePostamble( decl, node );
 	}
 
+	// InlineValueDecl vanish after EnumAndPointerDecay pass so no necessary to implement NewToOld
+	const ast::DeclWithType * visit( const ast::InlineValueDecl * node ) override final {	
+		assert( false );
+		(void) node;
+		return nullptr;
+	}
+
 	const ast::Decl * namedTypePostamble( NamedTypeDecl * decl, const ast::NamedTypeDecl * node ) {
 		// base comes from constructor
 		decl->assertions = get<DeclarationWithType>().acceptL( node->assertions );
@@ -1858,6 +1865,34 @@ private:
 		decl->extension  = old->extension;
 		decl->uniqueId   = old->uniqueId;
 		decl->storage    = { old->storageClasses.val };
+
+		this->node = decl;
+	}
+
+	virtual void visit( const InlineValueDecl * old ) override final {
+		if ( inCache( old ) ) {
+			return;
+		}
+		auto&& type = GET_ACCEPT_1(type, Type);
+		auto&& attr = GET_ACCEPT_V(attributes, Attribute);
+ 
+		auto decl = new ast::InlineValueDecl(
+			old->location,
+			old->name,
+			type,
+			{ old->get_storageClasses().val },
+			{ old->linkage.val },
+			std::move(attr),
+			{ old->get_funcSpec().val }
+		);
+		cache.emplace(old, decl);
+		assert(cache.find( old ) != cache.end());
+		decl->scopeLevel = old->scopeLevel;
+		decl->mangleName = old->mangleName;
+		decl->isDeleted  = old->isDeleted;
+		decl->asmName    = GET_ACCEPT_1(asmName, Expr);
+		decl->uniqueId   = old->uniqueId;
+		decl->extension  = old->extension;
 
 		this->node = decl;
 	}

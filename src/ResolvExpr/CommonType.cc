@@ -990,7 +990,6 @@ namespace ResolvExpr {
 				result = ref;
 				add_qualifiers( result, type2->qualifiers );
 			} else {
-				// xxx - does unifying a ref with typed enumInst makes sense?
 				if (!dynamic_cast<const ast::EnumInstType *>(type2))
 					result = commonType( type2, ref, tenv, need, have, open, widen, symtab );
 			}
@@ -1009,8 +1008,6 @@ namespace ResolvExpr {
 		}
 
 		void postvisit( const ast::EnumInstType * enumInst ) {
-			// reuse BasicType/EnumInstType common type by swapping
-			// xxx - is this already handled by unify?
 			if (!dynamic_cast<const ast::EnumInstType *>(type2))
 				result = commonType( type2, enumInst, tenv, need, have, open, widen, symtab);
 		}

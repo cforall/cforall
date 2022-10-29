@@ -36,6 +36,7 @@ class TypedefDecl;
 class AsmDecl;
 class DirectiveDecl;
 class StaticAssertDecl;
+class InlineValueDecl;
 
 class Stmt;
 class CompoundStmt;

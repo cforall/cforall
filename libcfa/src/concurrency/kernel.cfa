@@ -290,7 +290,7 @@ static int * __volatile_errno() { asm(""); return &errno; }
 static void __run_thread(processor * this, thread$ * thrd_dst) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verifyf( thrd_dst->state == Ready || thrd_dst->preempted != __NO_PREEMPTION, "state : %d, preempted %d\n", thrd_dst->state, thrd_dst->preempted);
-	/* paranoid */ verifyf( thrd_dst->link.next == 0p, "Expected null got %p", thrd_dst->link.next );
+	/* paranoid */ verifyf( thrd_dst->rdy_link.next == 0p, "Expected null got %p", thrd_dst->rdy_link.next );
 	__builtin_prefetch( thrd_dst->context.SP );
 
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p running thread %p (%s)\n", this, thrd_dst, thrd_dst->self_cor.name);
@@ -453,7 +453,7 @@ static void __schedule_thread( thread$ * thrd, unpark_hint hint ) {
 	/* paranoid */ 	if( thrd->preempted != __NO_PREEMPTION ) assertf(thrd->state == Active,
 					"Error preempted thread marked as not currently running, state %d, preemption %d\n", thrd->state, thrd->preempted );
 	/* paranoid */ #endif
-	/* paranoid */ verifyf( thrd->link.next == 0p, "Expected null got %p", thrd->link.next );
+	/* paranoid */ verifyf( thrd->rdy_link.next == 0p, "Expected null got %p", thrd->rdy_link.next );
 	/* paranoid */ verify( 0x0D15EA5E0D15EA5Ep == thrd->canary );
 
 	if (thrd->preempted == __NO_PREEMPTION) thrd->state = Ready;
@@ -601,10 +601,12 @@ extern "C" {
 		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) > ((uintptr_t)__get_stack(thrd->curr_cor)->limit), "ERROR : thread$ %p has been corrupted.\n StackPointer too large.\n", thrd );
 		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) < ((uintptr_t)__get_stack(thrd->curr_cor)->base ), "ERROR : thread$ %p has been corrupted.\n StackPointer too small.\n", thrd );
 
-		thrd->state = Halting;
 		if( TICKET_RUNNING != thrd->ticket ) { abort( "Thread terminated with pending unpark" ); }
 		if( thrd != this->owner ) { abort( "Thread internal monitor has incorrect owner" ); }
 		if( this->recursion != 1) { abort( "Thread internal monitor has unbalanced recursion" ); }
+
+		thrd->state = Halting;
+		thrd->ticket = TICKET_DEAD;
 
 		// Leave the thread
 		returnToKernel();
@@ -625,7 +627,7 @@ bool force_yield( __Preemption_Reason reason ) libcfa_public {
 		// intrusive fields then we can't use them to preempt the thread
 		// If that is the case, abandon the preemption.
 		bool preempted = false;
-		if(thrd->link.next == 0p) {
+		if(thrd->rdy_link.next == 0p) {
 			preempted = true;
 			thrd->preempted = reason;
 			returnToKernel();

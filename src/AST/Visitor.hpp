@@ -32,6 +32,7 @@ public:
     virtual const ast::AsmDecl *          visit( const ast::AsmDecl              * ) = 0;
     virtual const ast::DirectiveDecl *    visit( const ast::DirectiveDecl        * ) = 0;
     virtual const ast::StaticAssertDecl * visit( const ast::StaticAssertDecl     * ) = 0;
+    virtual const ast::DeclWithType *     visit( const ast::InlineValueDecl      * ) = 0;
     virtual const ast::CompoundStmt *     visit( const ast::CompoundStmt         * ) = 0;
     virtual const ast::Stmt *             visit( const ast::ExprStmt             * ) = 0;
     virtual const ast::Stmt *             visit( const ast::AsmStmt              * ) = 0;

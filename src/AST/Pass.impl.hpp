@@ -802,6 +802,22 @@ const ast::StaticAssertDecl * ast::Pass< core_t >::visit( const ast::StaticAsser
 }
 
 //--------------------------------------------------------------------------
+// DeclWithType
+template< typename core_t >
+const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::InlineValueDecl * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		{
+			guard_symtab guard { *this };
+			maybe_accept( node, &InlineValueDecl::type );
+		}
+	}
+
+	VISIT_END( DeclWithType, node );
+}
+
+//--------------------------------------------------------------------------
 // CompoundStmt
 template< typename core_t >
 const ast::CompoundStmt * ast::Pass< core_t >::visit( const ast::CompoundStmt * node ) {

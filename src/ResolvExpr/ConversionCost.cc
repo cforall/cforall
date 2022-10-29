@@ -719,7 +719,6 @@ void ConversionCost_new::postvisit( const ast::EnumInstType * enumInstType ) {
 	if ( const ast::Type * baseType = baseEnum->base ) {
 		costCalc( baseType, dst, srcIsLvalue, symtab, env );
 	} else {
-		(void)enumInstType;
 		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
 		cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
 	}

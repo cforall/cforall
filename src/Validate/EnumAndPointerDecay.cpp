@@ -20,12 +20,13 @@
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "SymTab/FixFunction.h"
+#include "Validate/NoIdSymbolTable.hpp"
 
 namespace Validate {
 
 namespace {
 
-struct EnumAndPointerDecayCore final : public ast::WithCodeLocation {
+struct EnumAndPointerDecayCore final : public WithNoIdSymbolTable, public ast::WithCodeLocation {
 	ast::EnumDecl const * previsit( ast::EnumDecl const * decl );
 	ast::FunctionDecl const * previsit( ast::FunctionDecl const * decl );
 	ast::FunctionType const * previsit( ast::FunctionType const * type );
@@ -38,11 +39,31 @@ ast::EnumDecl const * EnumAndPointerDecayCore::previsit(
 	}
 	// Set the type of each member of the enumeration to be EnumContant.
 	auto mut = ast::mutate( decl );
-	for ( ast::ptr<ast::Decl> & member : mut->members ) {
-		ast::ObjectDecl const * object = member.strict_as<ast::ObjectDecl>();
-		member = ast::mutate_field( object, &ast::ObjectDecl::type,
-			new ast::EnumInstType( decl, ast::CV::Const ) );
+	std::vector<ast::ptr<ast::Decl>> buffer;
+	for ( auto it = decl->members.begin(); it != decl->members.end(); ++it ) {
+		if ( ast::ObjectDecl const * object = (*it).as<ast::ObjectDecl>() ) {
+			buffer.push_back( ast::mutate_field( object, &ast::ObjectDecl::type, new ast::EnumInstType( decl, ast::CV::Const ) ) );
+		} else if ( ast::InlineValueDecl const * value = (*it).as<ast::InlineValueDecl>() ) {
+			if ( auto targetEnum = symtab.lookupEnum( value->name ) ) {
+				for ( auto singleMember : targetEnum->members ) {
+					auto copyingMember = singleMember.as<ast::ObjectDecl>();
+					buffer.push_back( new ast::ObjectDecl(
+						value->location, // use the "inline" location
+						copyingMember->name,
+						new ast::EnumInstType( decl, ast::CV::Const ),
+						// Construct a new EnumInstType as the type
+						copyingMember->init,
+						copyingMember->storage,
+						copyingMember->linkage,
+						copyingMember->bitfieldWidth,
+						{},
+						copyingMember->funcSpec
+					) );
+				}
+			}
+		}
 	}
+	mut->members = buffer;
 	return mut;
 }
 

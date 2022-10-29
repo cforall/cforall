@@ -924,11 +924,8 @@ EnumDecl * buildEnum( const TypeData * td, std::list< Attribute * > attributes, 
 	list< Declaration * >::iterator members = ret->get_members().begin();
 	for ( const DeclarationNode * cur = td->enumeration.constants; cur != nullptr; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ), ++members ) {
 		if ( cur->enumInLine ) {
-			// Tell the compiler this is a inline value placeholder
-			ObjectDecl * member = dynamic_cast< ObjectDecl* >(* members);
-			member->enumInLine = true;
-		}
-		if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
+			// Do Nothing
+		} else if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
 			SemanticError( td->location, "Enumerator of enum(void) cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {
 			ObjectDecl * member = dynamic_cast< ObjectDecl * >(* members);

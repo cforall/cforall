@@ -482,13 +482,13 @@ void ?{}( __intrusive_lane_t & this ) {
 	#endif
 
 	// We add a boat-load of assertions here because the anchor code is very fragile
-	/* paranoid */ _Static_assert( offsetof( thread$, link ) == nested_offsetof(__intrusive_lane_t, l.anchor) );
-	/* paranoid */ verify( offsetof( thread$, link ) == nested_offsetof(__intrusive_lane_t, l.anchor) );
-	/* paranoid */ verify( ((uintptr_t)( mock_head(this) ) + offsetof( thread$, link )) == (uintptr_t)(&this.l.anchor) );
-	/* paranoid */ verify( &mock_head(this)->link.next == &this.l.anchor.next );
-	/* paranoid */ verify( &mock_head(this)->link.ts   == &this.l.anchor.ts   );
-	/* paranoid */ verify( mock_head(this)->link.next == 0p );
-	/* paranoid */ verify( mock_head(this)->link.ts   == MAX );
+	/* paranoid */ _Static_assert( offsetof( thread$, rdy_link ) == nested_offsetof(__intrusive_lane_t, l.anchor) );
+	/* paranoid */ verify( offsetof( thread$, rdy_link ) == nested_offsetof(__intrusive_lane_t, l.anchor) );
+	/* paranoid */ verify( ((uintptr_t)( mock_head(this) ) + offsetof( thread$, rdy_link )) == (uintptr_t)(&this.l.anchor) );
+	/* paranoid */ verify( &mock_head(this)->rdy_link.next == &this.l.anchor.next );
+	/* paranoid */ verify( &mock_head(this)->rdy_link.ts   == &this.l.anchor.ts   );
+	/* paranoid */ verify( mock_head(this)->rdy_link.next == 0p );
+	/* paranoid */ verify( mock_head(this)->rdy_link.ts   == MAX );
 	/* paranoid */ verify( mock_head(this) == this.l.prev );
 	/* paranoid */ verify( __alignof__(__intrusive_lane_t) == 64 );
 	/* paranoid */ verify( __alignof__(this) == 64 );

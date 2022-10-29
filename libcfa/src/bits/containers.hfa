@@ -151,6 +151,7 @@ struct __queue {
 		}
 
 		void append( __queue(T) & this, T * val ) with(this) {
+			verify(get_next( *val ) == 0p);
 			verify(this.tail != 0p);
 			verify(*this.tail == 1p);
 			*this.tail = val;

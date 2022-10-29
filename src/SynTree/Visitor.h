@@ -48,6 +48,8 @@ class Visitor {
 	virtual void visit( const DirectiveDecl * directiveDecl ) = 0;
 	virtual void visit( StaticAssertDecl * node ) { visit( const_cast<const StaticAssertDecl *>(node) ); }
 	virtual void visit( const StaticAssertDecl * assertDecl ) = 0;
+	virtual void visit( InlineValueDecl * node ) { visit( const_cast<const InlineValueDecl *>(node) ); }
+	virtual void visit( const InlineValueDecl * valueDecl ) = 0;
 
 	virtual void visit( CompoundStmt * node ) { visit( const_cast<const CompoundStmt *>(node) ); }
 	virtual void visit( const CompoundStmt * compoundStmt ) = 0;

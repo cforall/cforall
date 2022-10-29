@@ -518,12 +518,7 @@ QualifiedNameExpr * build_qualified_expr( const DeclarationNode * decl_node, con
 			}
 		}
 	}
-	auto ret =  new QualifiedNameExpr( newDecl, name->name );
-	if ( auto e = dynamic_cast<EnumDecl*>(newDecl) ) {
-		auto enumInst = new EnumInstType( Type::Qualifiers(), e );
-		auto obj = new ObjectDecl( name->name, Type::StorageClasses(), LinkageSpec::Cforall, nullptr, enumInst, nullptr );
-	}
-	return ret;
+	return new QualifiedNameExpr( newDecl, name->name );
 }
 
 QualifiedNameExpr * build_qualified_expr( const EnumDecl * decl_node, const NameExpr * name ) {

@@ -184,6 +184,7 @@ ast::EnumDecl const * LinkTypesCore::postvisit( ast::EnumDecl const * decl ) {
 				mut->base = new ast::StructInstType( structDecl );
 				decl = mut;
 			}
+			// visit the base
 		} else if ( auto ptr = decl->base.as<ast::PointerType>() ) {
 			if ( auto base = ptr->base.as<ast::TypeInstType>() ) {
 				if ( auto structDecl = symtab.lookupStruct( base->name ) ) {
@@ -202,45 +203,6 @@ ast::EnumDecl const * LinkTypesCore::postvisit( ast::EnumDecl const * decl ) {
 	}
 
 	// The following section 
-	auto mut = ast::mutate( decl );
-	std::vector<ast::ptr<ast::Decl>> buffer;
-	for ( auto it = decl->members.begin(); it != decl->members.end(); ++it) {
-		auto member = (*it).as<ast::ObjectDecl>();
-		if ( member->enumInLine ) {
-			auto targetEnum = symtab.lookupEnum( member->name );
-			if ( targetEnum ) {			
-				for ( auto singleMamber : targetEnum->members ) {
-					auto tm = singleMamber.as<ast::ObjectDecl>();
-					auto t = new ast::ObjectDecl(
-						member->location, // use the "inline" location
-						tm->name,
-						new ast::EnumInstType( decl, ast::CV::Const ),
-						// Construct a new EnumInstType as the type
-						tm->init,
-						tm->storage,
-						tm->linkage,
-						tm->bitfieldWidth,
-						{}, // enum member doesn't have attribute
-						tm->funcSpec
-					);
-					t->importValue = true;
-					buffer.push_back(t);
-				}
-			}
-		} else {
-			auto search_it = std::find_if( buffer.begin(), buffer.end(), [member](ast::ptr<ast::Decl> cur) {
-				auto curAsObjDecl = cur.as<ast::ObjectDecl>();
-				return (curAsObjDecl->importValue) && (curAsObjDecl->name == member->name);
-			});
-			if ( search_it != buffer.end() ) {
-				buffer.erase( search_it ); // Found an import enum value that has the same name
-				// override the imported value
-			}
-			buffer.push_back( *it );
-		}
-	}
-	mut->members = buffer;
-	decl = mut;
 
 	ForwardEnumsType::iterator fwds = forwardEnums.find( decl->name );
 	if ( fwds != forwardEnums.end() ) {

@@ -220,32 +220,6 @@ namespace GenPoly {
 		};
 	} // anonymous namespace
 
-	/// version of mutateAll with special handling for translation unit so you can check the end of the prelude when debugging
-	template< typename MutatorType >
-	inline void mutateTranslationUnit( std::list< Declaration* > &translationUnit, MutatorType &mutator ) {
-		bool seenIntrinsic = false;
-		SemanticErrorException errors;
-		for ( typename std::list< Declaration* >::iterator i = translationUnit.begin(); i != translationUnit.end(); ++i ) {
-			try {
-				if ( *i ) {
-					if ( (*i)->get_linkage() == LinkageSpec::Intrinsic ) {
-						seenIntrinsic = true;
-					} else if ( seenIntrinsic ) {
-						seenIntrinsic = false; // break on this line when debugging for end of prelude
-					}
-
-					*i = dynamic_cast< Declaration* >( (*i)->acceptMutator( mutator ) );
-					assert( *i );
-				} // if
-			} catch( SemanticErrorException &e ) {
-				errors.append( e );
-			} // try
-		} // for
-		if ( ! errors.isEmpty() ) {
-			throw errors;
-		} // if
-	}
-
 	void box( std::list< Declaration *>& translationUnit ) {
 		PassVisitor<LayoutFunctionBuilder> layoutBuilder;
 		PassVisitor<Pass1> pass1;
@@ -274,9 +248,9 @@ namespace GenPoly {
 	std::list< TypeDecl* > takeOtypeOnly( std::list< TypeDecl* > &decls ) {
 		std::list< TypeDecl * > otypeDecls;
 
-		for ( std::list< TypeDecl* >::const_iterator decl = decls.begin(); decl != decls.end(); ++decl ) {
-			if ( (*decl)->isComplete() ) {
-				otypeDecls.push_back( *decl );
+		for ( TypeDecl * const decl : decls ) {
+			if ( decl->isComplete() ) {
+				otypeDecls.push_back( decl );
 			}
 		}
 
@@ -287,8 +261,8 @@ namespace GenPoly {
 	void addOtypeParams( FunctionType *layoutFnType, std::list< TypeDecl* > &otypeParams ) {
 		BasicType sizeAlignType( Type::Qualifiers(), BasicType::LongUnsignedInt );
 
-		for ( std::list< TypeDecl* >::const_iterator param = otypeParams.begin(); param != otypeParams.end(); ++param ) {
-			TypeInstType paramType( Type::Qualifiers(), (*param)->get_name(), *param );
+		for ( TypeDecl * const param : otypeParams ) {
+			TypeInstType paramType( Type::Qualifiers(), param->get_name(), param );
 			std::string paramName = mangleType( &paramType );
 			layoutFnType->get_parameters().push_back( new ObjectDecl( sizeofName( paramName ), Type::StorageClasses(), LinkageSpec::Cforall, 0, sizeAlignType.clone(), 0 ) );
 			layoutFnType->get_parameters().push_back( new ObjectDecl( alignofName( paramName ), Type::StorageClasses(), LinkageSpec::Cforall, 0, sizeAlignType.clone(), 0 ) );
@@ -305,13 +279,6 @@ namespace GenPoly {
 													 std::list< Attribute * >(), Type::FuncSpecifiers( Type::Inline ) );
 		layoutDecl->fixUniqueId();
 		return layoutDecl;
-	}
-
-	/// Makes a unary operation
-	Expression *makeOp( const std::string &name, Expression *arg ) {
-		UntypedExpr *expr = new UntypedExpr( new NameExpr( name ) );
-		expr->args.push_back( arg );
-		return expr;
 	}
 
 	/// Makes a binary operation
@@ -443,8 +410,8 @@ namespace GenPoly {
 		// calculate union layout in function body
 		addExpr( layoutDecl->get_statements(), makeOp( "?=?", derefVar( sizeParam ), new ConstantExpr( Constant::from_ulong( 1 ) ) ) );
 		addExpr( layoutDecl->get_statements(), makeOp( "?=?", derefVar( alignParam ), new ConstantExpr( Constant::from_ulong( 1 ) ) ) );
-		for ( std::list< Declaration* >::const_iterator member = unionDecl->get_members().begin(); member != unionDecl->get_members().end(); ++member ) {
-			DeclarationWithType *dwt = dynamic_cast< DeclarationWithType * >( *member );
+		for ( Declaration * const member : unionDecl->members ) {
+			DeclarationWithType *dwt = dynamic_cast< DeclarationWithType * >( member );
 			assert( dwt );
 			Type *memberType = dwt->get_type();
 
@@ -472,17 +439,16 @@ namespace GenPoly {
 			// if the return type or a parameter type involved polymorphic types, then the adapter will need
 			// to take those polymorphic types as pointers. Therefore, there can be two different functions
 			// with the same mangled name, so we need to further mangle the names.
-			for ( std::list< DeclarationWithType *>::iterator retval = function->get_returnVals().begin(); retval != function->get_returnVals().end(); ++retval ) {
-				if ( isPolyType( (*retval)->get_type(), tyVars ) ) {
+			for ( DeclarationWithType * const ret : function->get_returnVals() ) {
+				if ( isPolyType( ret->get_type(), tyVars ) ) {
 					name << "P";
 				} else {
 					name << "M";
 				}
 			}
 			name << "_";
-			std::list< DeclarationWithType *> &paramList = function->get_parameters();
-			for ( std::list< DeclarationWithType *>::iterator arg = paramList.begin(); arg != paramList.end(); ++arg ) {
-				if ( isPolyType( (*arg)->get_type(), tyVars ) ) {
+			for ( DeclarationWithType * const arg : function->get_parameters() ) {
+				if ( isPolyType( arg->get_type(), tyVars ) ) {
 					name << "P";
 				} else {
 					name << "M";
@@ -524,20 +490,20 @@ namespace GenPoly {
 
 				std::list< DeclarationWithType *> &paramList = functionType->parameters;
 				std::list< FunctionType *> functions;
-				for ( Type::ForallList::iterator tyVar = functionType->forall.begin(); tyVar != functionType->forall.end(); ++tyVar ) {
-					for ( std::list< DeclarationWithType *>::iterator assert = (*tyVar)->assertions.begin(); assert != (*tyVar)->assertions.end(); ++assert ) {
-						findFunction( (*assert)->get_type(), functions, scopeTyVars, needsAdapter );
+				for ( TypeDecl * const tyVar : functionType->forall ) {
+					for ( DeclarationWithType * const assert : tyVar->assertions ) {
+						findFunction( assert->get_type(), functions, scopeTyVars, needsAdapter );
 					} // for
 				} // for
-				for ( std::list< DeclarationWithType *>::iterator arg = paramList.begin(); arg != paramList.end(); ++arg ) {
-					findFunction( (*arg)->get_type(), functions, scopeTyVars, needsAdapter );
+				for ( DeclarationWithType * const arg : paramList ) {
+					findFunction( arg->get_type(), functions, scopeTyVars, needsAdapter );
 				} // for
 
-				for ( std::list< FunctionType *>::iterator funType = functions.begin(); funType != functions.end(); ++funType ) {
-					std::string mangleName = mangleAdapterName( *funType, scopeTyVars );
+				for ( FunctionType * const funType : functions ) {
+					std::string mangleName = mangleAdapterName( funType, scopeTyVars );
 					if ( adapters.find( mangleName ) == adapters.end() ) {
 						std::string adapterName = makeAdapterName( mangleName );
-						adapters.insert( std::pair< std::string, DeclarationWithType *>( mangleName, new ObjectDecl( adapterName, Type::StorageClasses(), LinkageSpec::C, nullptr, new PointerType( Type::Qualifiers(), makeAdapterType( *funType, scopeTyVars ) ), nullptr ) ) );
+						adapters.insert( std::pair< std::string, DeclarationWithType *>( mangleName, new ObjectDecl( adapterName, Type::StorageClasses(), LinkageSpec::C, nullptr, new PointerType( Type::Qualifiers(), makeAdapterType( funType, scopeTyVars ) ), nullptr ) ) );
 					} // if
 				} // for
 				// std::cerr << "end function: " << functionDecl->get_mangleName() << std::endl;
@@ -594,11 +560,11 @@ namespace GenPoly {
 
 		void Pass1::passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars ) {
 			// pass size/align for type variables
-			for ( TyVarMap::const_iterator tyParm = exprTyVars.begin(); tyParm != exprTyVars.end(); ++tyParm ) {
+			for ( std::pair<std::string, TypeDecl::Data> const & tyParam : exprTyVars ) {
 				ResolvExpr::EqvClass eqvClass;
 				assert( env );
-				if ( tyParm->second.isComplete ) {
-					Type *concrete = env->lookup( tyParm->first );
+				if ( tyParam.second.isComplete ) {
+					Type *concrete = env->lookup( tyParam.first );
 					if ( concrete ) {
 						arg = appExpr->get_args().insert( arg, new SizeofExpr( concrete->clone() ) );
 						arg++;
@@ -606,7 +572,7 @@ namespace GenPoly {
 						arg++;
 					} else {
 						// xxx - should this be an assertion?
-						SemanticError( appExpr, toString( *env, "\nunbound type variable: ", tyParm->first, " in application " ) );
+						SemanticError( appExpr, toString( *env, "\nunbound type variable: ", tyParam.first, " in application " ) );
 					} // if
 				} // if
 			} // for
@@ -922,24 +888,23 @@ namespace GenPoly {
 
 		void Pass1::passAdapters( ApplicationExpr * appExpr, FunctionType * functionType, const TyVarMap & exprTyVars ) {
 			// collect a list of function types passed as parameters or implicit parameters (assertions)
-			std::list< DeclarationWithType *> &paramList = functionType->get_parameters();
-			std::list< FunctionType *> functions;
-			for ( Type::ForallList::iterator tyVar = functionType->get_forall().begin(); tyVar != functionType->get_forall().end(); ++tyVar ) {
-				for ( std::list< DeclarationWithType *>::iterator assert = (*tyVar)->get_assertions().begin(); assert != (*tyVar)->get_assertions().end(); ++assert ) {
-					findFunction( (*assert)->get_type(), functions, exprTyVars, needsAdapter );
+			std::list< FunctionType*> functions;
+			for ( TypeDecl * const tyVar : functionType->get_forall() ) {
+				for ( DeclarationWithType * const assert : tyVar->get_assertions() ) {
+					findFunction( assert->get_type(), functions, exprTyVars, needsAdapter );
 				} // for
 			} // for
-			for ( std::list< DeclarationWithType *>::iterator arg = paramList.begin(); arg != paramList.end(); ++arg ) {
-				findFunction( (*arg)->get_type(), functions, exprTyVars, needsAdapter );
+			for ( DeclarationWithType * const arg : functionType->get_parameters() ) {
+				findFunction( arg->get_type(), functions, exprTyVars, needsAdapter );
 			} // for
 
 			// parameter function types for which an appropriate adapter has been generated.  we cannot use the types
 			// after applying substitutions, since two different parameter types may be unified to the same type
 			std::set< std::string > adaptersDone;
 
-			for ( std::list< FunctionType *>::iterator funType = functions.begin(); funType != functions.end(); ++funType ) {
-				FunctionType *originalFunction = (*funType)->clone();
-				FunctionType *realFunction = (*funType)->clone();
+			for ( FunctionType * const funType : functions ) {
+				FunctionType *originalFunction = funType->clone();
+				FunctionType *realFunction = funType->clone();
 				std::string mangleName = SymTab::Mangler::mangle( realFunction );
 
 				// only attempt to create an adapter or pass one as a parameter if we haven't already done so for this
@@ -957,7 +922,7 @@ namespace GenPoly {
 					AdapterIter adapter = adapters.find( mangleName );
 					if ( adapter == adapters.end() ) {
 						// adapter has not been created yet in the current scope, so define it
-						FunctionDecl *newAdapter = makeAdapter( *funType, realFunction, mangleName, exprTyVars );
+						FunctionDecl *newAdapter = makeAdapter( funType, realFunction, mangleName, exprTyVars );
 						std::pair< AdapterIter, bool > answer = adapters.insert( std::pair< std::string, DeclarationWithType *>( mangleName, newAdapter ) );
 						adapter = answer.first;
 						stmtsToAddBefore.push_back( new DeclStmt( newAdapter ) );
@@ -1260,18 +1225,18 @@ namespace GenPoly {
 		void Pass2::addAdapters( FunctionType *functionType ) {
 			std::list< DeclarationWithType *> &paramList = functionType->parameters;
 			std::list< FunctionType *> functions;
-			for ( std::list< DeclarationWithType *>::iterator arg = paramList.begin(); arg != paramList.end(); ++arg ) {
-				Type *orig = (*arg)->get_type();
+			for (  DeclarationWithType * const arg : functionType->parameters ) {
+				Type *orig = arg->get_type();
 				findAndReplaceFunction( orig, functions, scopeTyVars, needsAdapter );
-				(*arg)->set_type( orig );
+				arg->set_type( orig );
 			}
 			std::set< std::string > adaptersDone;
-			for ( std::list< FunctionType *>::iterator funType = functions.begin(); funType != functions.end(); ++funType ) {
-				std::string mangleName = mangleAdapterName( *funType, scopeTyVars );
+			for ( FunctionType * const funType : functions ) {
+				std::string mangleName = mangleAdapterName( funType, scopeTyVars );
 				if ( adaptersDone.find( mangleName ) == adaptersDone.end() ) {
 					std::string adapterName = makeAdapterName( mangleName );
 					// adapter may not be used in body, pass along with unused attribute.
-					paramList.push_front( new ObjectDecl( adapterName, Type::StorageClasses(), LinkageSpec::C, 0, new PointerType( Type::Qualifiers(), makeAdapterType( *funType, scopeTyVars ) ), 0, { new Attribute( "unused" ) } ) );
+					paramList.push_front( new ObjectDecl( adapterName, Type::StorageClasses(), LinkageSpec::C, 0, new PointerType( Type::Qualifiers(), makeAdapterType( funType, scopeTyVars ) ), 0, { new Attribute( "unused" ) } ) );
 					adaptersDone.insert( adaptersDone.begin(), mangleName );
 				}
 			}
@@ -1348,11 +1313,11 @@ namespace GenPoly {
 			                   { new Attribute( "unused" ) } );
 			ObjectDecl newPtr( "", Type::StorageClasses(), LinkageSpec::C, 0,
 			                   new PointerType( Type::Qualifiers(), new BasicType( Type::Qualifiers(), BasicType::LongUnsignedInt ) ), 0 );
-			for ( Type::ForallList::const_iterator tyParm = funcType->get_forall().begin(); tyParm != funcType->get_forall().end(); ++tyParm ) {
+			for ( TypeDecl * const tyParam : funcType->get_forall() ) {
 				ObjectDecl *sizeParm, *alignParm;
 				// add all size and alignment parameters to parameter list
-				if ( (*tyParm)->isComplete() ) {
-					TypeInstType parmType( Type::Qualifiers(), (*tyParm)->get_name(), *tyParm );
+				if ( tyParam->isComplete() ) {
+					TypeInstType parmType( Type::Qualifiers(), tyParam->get_name(), tyParam );
 					std::string parmName = mangleType( &parmType );
 
 					sizeParm = newObj.clone();
@@ -1366,18 +1331,18 @@ namespace GenPoly {
 					++last;
 				}
 				// move all assertions into parameter list
-				for ( std::list< DeclarationWithType *>::iterator assert = (*tyParm)->get_assertions().begin(); assert != (*tyParm)->get_assertions().end(); ++assert ) {
+				for ( DeclarationWithType * const assert : tyParam->get_assertions() ) {
 					// assertion parameters may not be used in body, pass along with unused attribute.
-					(*assert)->get_attributes().push_back( new Attribute( "unused" ) );
-					inferredParams.push_back( *assert );
+					assert->get_attributes().push_back( new Attribute( "unused" ) );
+					inferredParams.push_back( assert );
 				}
-				(*tyParm)->get_assertions().clear();
+				tyParam->get_assertions().clear();
 			}
 
 			// add size/align for generic parameter types to parameter list
 			std::set< std::string > seenTypes; // sizeofName for generic types we've seen
-			for ( std::list< DeclarationWithType* >::const_iterator fnParm = last; fnParm != funcType->get_parameters().end(); ++fnParm ) {
-				Type *polyType = isPolyType( (*fnParm)->get_type(), scopeTyVars );
+			for ( DeclarationWithType * const fnParam : funcType->get_parameters() ) {
+				Type *polyType = isPolyType( fnParam->get_type(), scopeTyVars );
 				if ( polyType && ! dynamic_cast< TypeInstType* >( polyType ) ) {
 					std::string typeName = mangleType( polyType );
 					if ( seenTypes.count( typeName ) ) continue;
@@ -1496,9 +1461,9 @@ namespace GenPoly {
 			expect_func_type = false;
 
 			// make sure that any type information passed into the function is accounted for
-			for ( std::list< DeclarationWithType* >::const_iterator fnParm = funcType->get_parameters().begin(); fnParm != funcType->get_parameters().end(); ++fnParm ) {
+			for ( DeclarationWithType * const fnParam : funcType->get_parameters() ) {
 				// condition here duplicates that in Pass2::mutate( FunctionType* )
-				Type *polyType = isPolyType( (*fnParm)->get_type(), scopeTyVars );
+				Type *polyType = isPolyType( fnParam->get_type(), scopeTyVars );
 				if ( polyType && ! dynamic_cast< TypeInstType* >( polyType ) ) {
 					knownLayouts.insert( mangleType( polyType ) );
 				}
@@ -1571,20 +1536,21 @@ namespace GenPoly {
 
 		/// Finds the member in the base list that matches the given declaration; returns its index, or -1 if not present
 		long findMember( DeclarationWithType *memberDecl, std::list< Declaration* > &baseDecls ) {
-			long i = 0;
-			for(std::list< Declaration* >::const_iterator decl = baseDecls.begin(); decl != baseDecls.end(); ++decl, ++i ) {
-				if ( memberDecl->get_name() != (*decl)->get_name() )
+			for ( auto pair : enumerate( baseDecls ) ) {
+				Declaration * decl = pair.val;
+				size_t i = pair.idx;
+				if ( memberDecl->get_name() != decl->get_name() )
 					continue;
 
 				if ( memberDecl->get_name().empty() ) {
 					// plan-9 field: match on unique_id
-					if ( memberDecl->get_uniqueId() == (*decl)->get_uniqueId() )
+					if ( memberDecl->get_uniqueId() == decl->get_uniqueId() )
 						return i;
 					else
 						continue;
 				}
 
-				DeclarationWithType *declWithType = strict_dynamic_cast< DeclarationWithType* >( *decl );
+				DeclarationWithType *declWithType = strict_dynamic_cast< DeclarationWithType* >( decl );
 
 				if ( memberDecl->get_mangleName().empty() || declWithType->get_mangleName().empty() ) {
 					// tuple-element field: expect neither had mangled name; accept match on simple name (like field_2) only
@@ -1695,15 +1661,15 @@ namespace GenPoly {
 		}
 
 		void PolyGenericCalculator::addOtypeParamsToLayoutCall( UntypedExpr *layoutCall, const std::list< Type* > &otypeParams ) {
-			for ( std::list< Type* >::const_iterator param = otypeParams.begin(); param != otypeParams.end(); ++param ) {
-				if ( findGeneric( *param ) ) {
+			for ( Type * const param : otypeParams ) {
+				if ( findGeneric( param ) ) {
 					// push size/align vars for a generic parameter back
-					std::string paramName = mangleType( *param );
+					std::string paramName = mangleType( param );
 					layoutCall->get_args().push_back( new NameExpr( sizeofName( paramName ) ) );
 					layoutCall->get_args().push_back( new NameExpr( alignofName( paramName ) ) );
 				} else {
-					layoutCall->get_args().push_back( new SizeofExpr( (*param)->clone() ) );
-					layoutCall->get_args().push_back( new AlignofExpr( (*param)->clone() ) );
+					layoutCall->get_args().push_back( new SizeofExpr( param->clone() ) );
+					layoutCall->get_args().push_back( new AlignofExpr( param->clone() ) );
 				}
 			}
 		}
@@ -1964,3 +1930,4 @@ namespace GenPoly {
 // mode: c++ //
 // compile-command: "make install" //
 // End: //
+

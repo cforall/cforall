@@ -524,8 +524,8 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 	self_mon.owner = &this;
 	self_mon.recursion = 1;
 	self_mon_p = &self_mon;
-	link.next = 0p;
-	link.ts   = MAX;
+	rdy_link.next = 0p;
+	rdy_link.ts   = MAX;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
 	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();

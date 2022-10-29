@@ -43,8 +43,8 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 	self_mon.recursion = 1;
 	self_mon_p = &self_mon;
 	curr_cluster = &cl;
-	link.next = 0p;
-	link.ts   = MAX;
+	rdy_link.next = 0p;
+	rdy_link.ts   = MAX;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
 	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();

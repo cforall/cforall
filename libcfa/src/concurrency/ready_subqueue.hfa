@@ -24,7 +24,7 @@ union __attribute__((aligned(64))) __intrusive_lane_t {
 // Get the head pointer (one before the first element) from the anchor
 static inline thread$ * mock_head(const __intrusive_lane_t & this) {
 	thread$ * rhead = (thread$ *)(
-		(uintptr_t)( &this.l.anchor ) - __builtin_offsetof( thread$, link )
+		(uintptr_t)( &this.l.anchor ) - __builtin_offsetof( thread$, rdy_link )
 	);
 	return rhead;
 }
@@ -33,10 +33,10 @@ static inline thread$ * mock_head(const __intrusive_lane_t & this) {
 // returns true of lane was empty before push, false otherwise
 static inline void push( __intrusive_lane_t & this, thread$ * node ) {
 	/* paranoid */ verify( this.l.lock );
-	/* paranoid */ verify( node->link.next == 0p );
-	/* paranoid */ verify( __atomic_load_n(&node->link.ts, __ATOMIC_RELAXED) == MAX  );
-	/* paranoid */ verify( this.l.prev->link.next == 0p );
-	/* paranoid */ verify( __atomic_load_n(&this.l.prev->link.ts, __ATOMIC_RELAXED)   == MAX  );
+	/* paranoid */ verify( node->rdy_link.next == 0p );
+	/* paranoid */ verify( __atomic_load_n(&node->rdy_link.ts, __ATOMIC_RELAXED) == MAX  );
+	/* paranoid */ verify( this.l.prev->rdy_link.next == 0p );
+	/* paranoid */ verify( __atomic_load_n(&this.l.prev->rdy_link.ts, __ATOMIC_RELAXED)   == MAX  );
 	if( this.l.anchor.next == 0p ) {
 		/* paranoid */ verify( this.l.anchor.next == 0p );
 		/* paranoid */ verify( __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED) == MAX );
@@ -50,8 +50,8 @@ static inline void push( __intrusive_lane_t & this, thread$ * node ) {
 	}
 
 	// Get the relevant nodes locally
-	this.l.prev->link.next = node;
-	__atomic_store_n(&this.l.prev->link.ts, rdtscl(), __ATOMIC_RELAXED);
+	this.l.prev->rdy_link.next = node;
+	__atomic_store_n(&this.l.prev->rdy_link.ts, rdtscl(), __ATOMIC_RELAXED);
 	this.l.prev = node;
 	#if !defined(__CFA_NO_STATISTICS__)
 		this.l.cnt++;
@@ -69,11 +69,11 @@ static inline [* thread$, unsigned long long] pop( __intrusive_lane_t & this ) {
 
 	// Get the relevant nodes locally
 	thread$ * node = this.l.anchor.next;
-	this.l.anchor.next = node->link.next;
-	__atomic_store_n(&this.l.anchor.ts, __atomic_load_n(&node->link.ts, __ATOMIC_RELAXED), __ATOMIC_RELAXED);
+	this.l.anchor.next = node->rdy_link.next;
+	__atomic_store_n(&this.l.anchor.ts, __atomic_load_n(&node->rdy_link.ts, __ATOMIC_RELAXED), __ATOMIC_RELAXED);
 	bool is_empty = this.l.anchor.next == 0p;
-	node->link.next = 0p;
-	__atomic_store_n(&node->link.ts, ULLONG_MAX, __ATOMIC_RELAXED);
+	node->rdy_link.next = 0p;
+	__atomic_store_n(&node->rdy_link.ts, ULLONG_MAX, __ATOMIC_RELAXED);
 	#if !defined(__CFA_NO_STATISTICS__)
 		this.l.cnt--;
 	#endif
@@ -82,9 +82,9 @@ static inline [* thread$, unsigned long long] pop( __intrusive_lane_t & this ) {
 	if(is_empty) this.l.prev = mock_head( this );
 
 	unsigned long long ats = __atomic_load_n(&this.l.anchor.ts, __ATOMIC_RELAXED);
-	/* paranoid */ verify( node->link.next == 0p );
-	/* paranoid */ verify( __atomic_load_n(&node->link.ts , __ATOMIC_RELAXED) == MAX );
-	/* paranoid */ verify( __atomic_load_n(&node->link.ts , __ATOMIC_RELAXED) != 0   );
+	/* paranoid */ verify( node->rdy_link.next == 0p );
+	/* paranoid */ verify( __atomic_load_n(&node->rdy_link.ts , __ATOMIC_RELAXED) == MAX );
+	/* paranoid */ verify( __atomic_load_n(&node->rdy_link.ts , __ATOMIC_RELAXED) != 0   );
 	/* paranoid */ verify( ats != 0 );
 	/* paranoid */ verify( (ats == MAX) == is_empty );
 	return [node, ats];

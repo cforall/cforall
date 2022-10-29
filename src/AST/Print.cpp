@@ -400,6 +400,13 @@ public:
 		return node;
 	}
 
+	virtual const ast::DeclWithType * visit( const ast::InlineValueDecl * node ) override final {
+		os << "inline ";
+		if ( ! node->name.empty() ) os << node->name;
+
+		return node;
+	}
+
 	virtual const ast::Decl * visit( const ast::UnionDecl * node ) override final {
 		print(node);
 		return node;

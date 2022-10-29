@@ -158,7 +158,7 @@ extern "C" {
 
 		// Link lists fields
 		// instrusive link field for threads
-		struct __thread_desc_link link;
+		struct __thread_desc_link rdy_link;
 
 		// current execution status for coroutine
 		// Possible values are:
@@ -195,7 +195,7 @@ extern "C" {
 		struct __monitor_group_t monitors;
 
 		// used to put threads on dlist data structure
-		__cfa_dlink(thread$);
+		__cfa_dlink1(thread$) user_link;
 
 		struct {
 			struct thread$ * next;
@@ -217,9 +217,7 @@ extern "C" {
 			void * canary;
 		#endif
 	};
-	#ifdef __cforall
-		P9_EMBEDDED( thread$, dlink(thread$) )
-	#endif
+
 	// Wrapper for gdb
 	struct cfathread_thread_t { struct thread$ debug; };
 
@@ -233,11 +231,17 @@ extern "C" {
 	extern "Cforall" {
 
 		static inline thread$ *& get_next( thread$ & this ) __attribute__((const)) {
-			return this.link.next;
+			return this.user_link.next;
 		}
 
 		static inline [thread$ *&, thread$ *& ] __get( thread$ & this ) __attribute__((const)) {
 			return this.node.[next, prev];
+		}
+
+		static inline tytagref( dlink(thread$), dlink(thread$) ) ?`inner( thread$ & this ) {
+			dlink(thread$) & b = this.user_link;
+			tytagref( dlink(thread$), dlink(thread$) ) result = { b };
+			return result;
 		}
 
 		static inline void ?{}(__monitor_group_t & this) {

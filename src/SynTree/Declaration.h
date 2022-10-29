@@ -448,6 +448,31 @@ public:
 	virtual void printShort( std::ostream & os, Indenter indent = {} ) const override;
 };
 
+
+class InlineValueDecl : public DeclarationWithType {
+	typedef DeclarationWithType Parent;
+  public:
+	Type * type;
+
+	InlineValueDecl( const std::string & name, Type::StorageClasses scs, LinkageSpec::Spec linkage, Type * type,
+				const std::list< Attribute * > attributes = std::list< Attribute * >(), Type::FuncSpecifiers fs = Type::FuncSpecifiers() );
+	InlineValueDecl( const InlineValueDecl & other );
+	virtual ~InlineValueDecl();
+
+	virtual Type * get_type() const override { return type; }
+	virtual void set_type(Type * newType) override { type = newType; }
+
+	static InlineValueDecl * newInlineValueDecl( const std::string & name, Type * type );
+
+	virtual InlineValueDecl * clone() const override { return new InlineValueDecl( *this ); }
+	virtual void accept( Visitor & v ) override { v.visit( this ); }
+	virtual void accept( Visitor & v ) const override { v.visit( this ); }
+	virtual DeclarationWithType * acceptMutator( Mutator & m )  override { return m.mutate( this ); }
+	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
+	virtual void printShort( std::ostream & os, Indenter indent = {} ) const override;
+
+};
+
 std::ostream & operator<<( std::ostream & os, const TypeDecl::Data & data );
 
 // Local Variables: //

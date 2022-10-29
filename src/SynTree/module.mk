@@ -41,6 +41,7 @@ SRC_SYNTREE = \
       SynTree/FunctionType.cc \
       SynTree/Initializer.cc \
       SynTree/Initializer.h \
+      SynTree/InlineValueDecl.cc \
       SynTree/Label.h \
       SynTree/LinkageSpec.cc \
       SynTree/LinkageSpec.h \

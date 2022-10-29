@@ -165,6 +165,7 @@ __cfaabi_dbg_debug_do(
 #define TICKET_BLOCKED (-1) // thread is blocked
 #define TICKET_RUNNING ( 0) // thread is running
 #define TICKET_UNBLOCK ( 1) // thread should ignore next block
+#define TICKET_DEAD    (0xDEAD) // thread should never be unparked
 
 //-----------------------------------------------------------------------------
 // Utils

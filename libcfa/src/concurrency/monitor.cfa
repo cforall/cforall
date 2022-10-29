@@ -121,9 +121,9 @@ static void __enter( monitor$ * this, const __monitor_group_t & group ) {
 		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
 
 		// Some one else has the monitor, wait in line for it
-		/* paranoid */ verify( thrd->link.next == 0p );
+		/* paranoid */ verify( thrd->user_link.next == 0p );
 		append( this->entry_queue, thrd );
-		/* paranoid */ verify( thrd->link.next == 1p );
+		/* paranoid */ verify( thrd->user_link.next == 1p );
 
 		unlock( this->lock );
 		park();
@@ -232,9 +232,9 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 		this->dtor_node = &waiter;
 
 		// Some one else has the monitor, wait in line for it
-		/* paranoid */ verify( thrd->link.next == 0p );
+		/* paranoid */ verify( thrd->user_link.next == 0p );
 		append( this->entry_queue, thrd );
-		/* paranoid */ verify( thrd->link.next == 1p );
+		/* paranoid */ verify( thrd->user_link.next == 1p );
 		unlock( this->lock );
 
 		// Park current thread waiting
@@ -790,7 +790,7 @@ static inline thread$ * next_thread( monitor$ * this ) {
 	// Get the next thread in the entry_queue
 	thread$ * new_owner = pop_head( this->entry_queue );
 	/* paranoid */ verifyf( !this->owner || active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
-	/* paranoid */ verify( !new_owner || new_owner->link.next == 0p );
+	/* paranoid */ verify( !new_owner || new_owner->user_link.next == 0p );
 	__set_owner( this, new_owner );
 
 	return new_owner;
@@ -934,24 +934,36 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 
 	__queue_t(thread$) & entry_queue = monitors[0]->entry_queue;
 
+	#if defined( __CFA_WITH_VERIFY__ )
+		thread$ * last = 0p;
+	#endif
 	// For each thread in the entry-queue
 	for(	thread$ ** thrd_it = &entry_queue.head;
 		(*thrd_it) != 1p;
-		thrd_it = &(*thrd_it)->link.next
+		thrd_it = &get_next(**thrd_it)
 	) {
+		thread$ * curr = *thrd_it;
+
+		/* paranoid */ verifyf( !last || last->user_link.next == curr, "search not making progress, from %p (%p) to %p", last, last->user_link.next, curr );
+		/* paranoid */ verifyf( curr != last, "search not making progress, from %p to %p", last, curr );
+
 		// For each acceptable check if it matches
 		int i = 0;
 		__acceptable_t * end   = end  (mask);
 		__acceptable_t * begin = begin(mask);
 		for( __acceptable_t * it = begin; it != end; it++, i++ ) {
 			// Check if we have a match
-			if( *it == (*thrd_it)->monitors ) {
+			if( *it == curr->monitors ) {
 
 				// If we have a match return it
 				// after removeing it from the entry queue
 				return [remove( entry_queue, thrd_it ), i];
 			}
 		}
+
+		#if defined( __CFA_WITH_VERIFY__ )
+			last = curr;
+		#endif
 	}
 
 	return [0, -1];
@@ -1024,9 +1036,9 @@ void lock( monitor$ * this ) libcfa_public {
 		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
 
 		// Some one else has the monitor, wait in line for it
-		/* paranoid */ verify( thrd->link.next == 0p );
+		/* paranoid */ verify( thrd->user_link.next == 0p );
 		append( this->entry_queue, thrd );
-		/* paranoid */ verify( thrd->link.next == 1p );
+		/* paranoid */ verify( thrd->user_link.next == 1p );
 
 		unlock( this->lock );
 		park();

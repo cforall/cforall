@@ -475,7 +475,6 @@ private:
 		ast::vector<ast::TypeExpr> const & typeSubs );
 };
 
-// I think this and the UnionInstType can be made into a template function.
 ast::Type const * GenericInstantiator::postvisit(
 		ast::StructInstType const * inst ) {
 	return fixInstType( inst );
