@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Oct 13 22:21:52 2022
-// Update Count     : 1557
+// Last Modified On : Sun Oct 30 15:33:13 2022
+// Update Count     : 1580
 //
 
 #include <stdio.h>
@@ -42,8 +42,11 @@ extern "C" {
 #endif // M_TOP_PAD
 
 #define FASTLOOKUP										// use O(1) table lookup from allocation size to bucket size
-#define RETURNSPIN										// toggle spinlock / lockfree stack
 #define OWNERSHIP										// return freed memory to owner thread
+#define RETURNSPIN										// toggle spinlock / lockfree queue
+#if ! defined( OWNERSHIP ) && defined( RETURNSPIN )
+#warning "RETURNSPIN is ignored without OWNERSHIP; suggest commenting out RETURNSPIN"
+#endif // ! OWNERSHIP && RETURNSPIN
 
 #define CACHE_ALIGN 64
 #define CALIGN __attribute__(( aligned(CACHE_ALIGN) ))
@@ -108,7 +111,23 @@ bool prtFreeOff() {
 } // prtFreeOff
 
 
-//######################### Spin Lock #########################
+//######################### Helpers #########################
+
+
+// generic Bsearchl does not inline, so substitute with hand-coded binary-search.
+inline __attribute__((always_inline))
+static size_t Bsearchl( unsigned int key, const unsigned int vals[], size_t dim ) {
+	size_t l = 0, m, h = dim;
+	while ( l < h ) {
+		m = (l + h) / 2;
+		if ( (unsigned int &)(vals[m]) < key ) {		// cast away const
+			l = m + 1;
+		} else {
+			h = m;
+		} // if
+	} // while
+	return l;
+} // Bsearchl
 
 
 // pause to prevent excess processor bus usage
@@ -205,16 +224,6 @@ static HeapStatistics & ?+=?( HeapStatistics & lhs, const HeapStatistics & rhs )
 #endif // __STATISTICS__
 
 
-#define SPINLOCK 0
-#define LOCKFREE 1
-#define BUCKETLOCK SPINLOCK
-#if BUCKETLOCK == SPINLOCK
-#elif BUCKETLOCK == LOCKFREE
-#include <containers/lockfree.hfa>
-#else
-	#error undefined lock type for bucket lock
-#endif // LOCKFREE
-
 // Recursive definitions: HeapManager needs size of bucket array and bucket area needs sizeof HeapManager storage.
 // Break recursion by hardcoding number of buckets and statically checking number is correct after bucket array defined.
 enum { NoBucketSizes = 91 };							// number of buckets sizes
@@ -231,15 +240,10 @@ struct Heap {
 								// FreeHeader * home;		// allocated block points back to home locations (must overlay alignment)
 								void * home;			// allocated block points back to home locations (must overlay alignment)
 								size_t blockSize;		// size for munmap (must overlay alignment)
-								#if BUCKETLOCK == SPINLOCK
 								Storage * next;			// freed block points to next freed block of same size
-								#endif // SPINLOCK
 							};
 							size_t size;				// allocation size in bytes
 						};
-						#if BUCKETLOCK == LOCKFREE
-						Link(Storage) next;				// freed block points next freed block of same size (double-wide)
-						#endif // LOCKFREE
 					};
 				} real; // RealHeader
 
@@ -258,17 +262,14 @@ struct Heap {
 
 	struct __attribute__(( aligned (8) )) FreeHeader {
 		size_t blockSize __attribute__(( aligned(8) )); // size of allocations on this list
-		#if BUCKETLOCK == SPINLOCK
 		#ifdef OWNERSHIP
 		#ifdef RETURNSPIN
 		SpinLock_t returnLock;
 		#endif // RETURNSPIN
 		Storage * returnList;							// other thread return list
 		#endif // OWNERSHIP
+
 		Storage * freeList;								// thread free list
-		#else
-		StackLF(Storage) freeList;
-		#endif // BUCKETLOCK
 		Heap * homeManager;								// heap owner (free storage to bucket, from bucket to heap)
 	}; // FreeHeader
 
@@ -289,15 +290,6 @@ struct Heap {
 	HeapStatistics stats;								// local statistic table for this heap
 	#endif // __STATISTICS__
 }; // Heap
-
-#if BUCKETLOCK == LOCKFREE
-inline __attribute__((always_inline))
-static {
-	Link(Heap.Storage) * ?`next( Heap.Storage * this ) { return &this->header.kind.real.next; }
-	void ?{}( Heap.FreeHeader & ) {}
-	void ^?{}( Heap.FreeHeader & ) {}
-} // distribution
-#endif // LOCKFREE
 
 
 struct HeapMaster {
@@ -384,22 +376,6 @@ static __thread size_t PAD2 CALIGN TLSMODEL __attribute__(( unused )); // protec
 void noMemory();										// forward, called by "builtin_new" when malloc returns 0
 
 
-// generic Bsearchl does not inline, so substitute with hand-coded binary-search.
-inline __attribute__((always_inline))
-static size_t Bsearchl( unsigned int key, const unsigned int vals[], size_t dim ) {
-	size_t l = 0, m, h = dim;
-	while ( l < h ) {
-		m = (l + h) / 2;
-		if ( (unsigned int &)(vals[m]) < key ) {		// cast away const
-			l = m + 1;
-		} else {
-			h = m;
-		} // if
-	} // while
-	return l;
-} // Bsearchl
-
-
 void heapMasterCtor() with( heapMaster ) {
 	// Singleton pattern to initialize heap master
 
@@ -408,8 +384,8 @@ void heapMasterCtor() with( heapMaster ) {
 	__page_size = sysconf( _SC_PAGESIZE );
 	__map_prot = PROT_READ | PROT_WRITE | PROT_EXEC;
 
-	?{}( extLock );
-	?{}( mgrLock );
+	extLock = 0;
+	mgrLock = 0;
 
 	char * end = (char *)sbrk( 0 );
 	heapBegin = heapEnd = sbrk( (char *)ceiling2( (long unsigned int)end, libAlign() ) - end ); // move start of heap to multiple of alignment
@@ -496,10 +472,11 @@ Heap * getHeap() with( heapMaster ) {
 			for ( unsigned int j = 0; j < NoBucketSizes; j += 1 ) { // initialize free lists
 				#ifdef OWNERSHIP
 				#ifdef RETURNSPIN
-				?{}( freeLists[j].returnLock );
-				#endif // RETURNSPIN
+				freeLists[j].returnLock = 0;
 				freeLists[j].returnList = 0p;
+				#endif // RETURNSPIN
 				#endif // OWNERSHIP
+
 				freeLists[j].freeList = 0p;
 				freeLists[j].homeManager = heap;
 				freeLists[j].blockSize = bucketSizes[j];
@@ -709,6 +686,7 @@ static bool setMmapStart( size_t value ) with( heapMaster ) { // true => mmapped
 
 	// find the closest bucket size less than or equal to the mmapStart size
 	maxBucketsUsed = Bsearchl( mmapStart, bucketSizes, NoBucketSizes ); // binary search
+
 	verify( maxBucketsUsed < NoBucketSizes );			// subscript failure ?
 	verify( mmapStart <= bucketSizes[maxBucketsUsed] ); // search failure ?
 	return true;
@@ -970,28 +948,30 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 		stats.counters[STAT_NAME].alloc += tsize;
 		#endif // __STATISTICS__
 
-		// Spin until the lock is acquired for this particular size of block.
-
-		#if BUCKETLOCK == SPINLOCK
 		block = freeHead->freeList;						// remove node from stack
-		#else
-		block = pop( freeHead->freeList );
-		#endif // BUCKETLOCK
 		if ( unlikely( block == 0p ) ) {				// no free block ?
+			// Freelist for this size is empty, so check return list (OWNERSHIP), carve it out of the heap, if there
+			// is enough left, or get some more heap storage and carve it off.
 			#ifdef OWNERSHIP
-			// Freelist for that size is empty, so carve it out of the heap, if there is enough left, or get some more
-			// and then carve it off.
-			#ifdef RETURNSPIN
-			#if BUCKETLOCK == SPINLOCK
-			lock( freeHead->returnLock );
-			block = freeHead->returnList;
-			freeHead->returnList = 0p;
-			unlock( freeHead->returnLock );
-			#else
-			block = __atomic_exchange_n( &freeHead->returnList, nullptr, __ATOMIC_SEQ_CST );
-			#endif // RETURNSPIN
+			if ( unlikely( freeHead->returnList ) ) {	// race, get next time if lose race
+				#ifdef RETURNSPIN
+				lock( freeHead->returnLock );
+				block = freeHead->returnList;
+				freeHead->returnList = 0p;
+				unlock( freeHead->returnLock );
+				#else
+				block = __atomic_exchange_n( &freeHead->returnList, 0p, __ATOMIC_SEQ_CST );
+				#endif // RETURNSPIN
 
-			if ( likely( block == 0p ) ) {			// return list also empty?
+				verify( block );
+				#ifdef __STATISTICS__
+				stats.return_pulls += 1;
+				#endif // __STATISTICS__
+
+				// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
+
+				freeHead->freeList = block->header.kind.real.next; // merge returnList into freeHead
+			} else {
 			#endif // OWNERSHIP
 				// Do not leave kernel thread as manager_extend accesses heapManager.
 				disable_interrupts();
@@ -1001,19 +981,10 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 				// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
 
 				#ifdef __CFA_DEBUG__
-				// Scrub new memory so subsequent uninitialized usages might fail. Only scrub the first 1024 bytes.
+				// Scrub new memory so subsequent uninitialized usages might fail. Only scrub the first SCRUB_SIZE bytes.
 				memset( block->data, SCRUB, min( SCRUB_SIZE, tsize - sizeof(Heap.Storage) ) );
 				#endif // __CFA_DEBUG__
-			#endif // BUCKETLOCK
 			#ifdef OWNERSHIP
-			} else {									// merge returnList into freeHead
-				#ifdef __STATISTICS__
-				stats.return_pulls += 1;
-				#endif // __STATISTICS__
-
-				// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
-
-				freeHead->freeList = block->header.kind.real.next;
 			} // if
 			#endif // OWNERSHIP
 		} else {
@@ -1025,6 +996,7 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 	} else {											// large size => mmap
   if ( unlikely( size > ULONG_MAX - __page_size ) ) return 0p;
 		tsize = ceiling2( tsize, __page_size );			// must be multiple of page size
+
 		#ifdef __STATISTICS__
 		stats.counters[STAT_NAME].alloc += tsize;
 		stats.mmap_calls += 1;
@@ -1041,13 +1013,14 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 		if ( unlikely( block == (Heap.Storage *)MAP_FAILED ) ) { // failed ?
 			if ( errno == ENOMEM ) abort( NO_MEMORY_MSG, tsize ); // no memory
 			// Do not call strerror( errno ) as it may call malloc.
-			abort( "**** Error **** attempt to allocate large object (> %zu) of size %zu bytes and mmap failed with errno %d.", size, heapMaster.mmapStart, errno );
+			abort( "**** Error **** attempt to allocate large object (> %zu) of size %zu bytes and mmap failed with errno %d.",
+				   size, heapMaster.mmapStart, errno );
 		} // if
 		block->header.kind.real.blockSize = MarkMmappedBit( tsize ); // storage size for munmap
 
 		#ifdef __CFA_DEBUG__
-		// Scrub new memory so subsequent uninitialized usages might fail. Only scrub the first 1024 bytes.  The rest of
-		// the storage set to 0 by mmap.
+		// Scrub new memory so subsequent uninitialized usages might fail. Only scrub the first SCRUB_SIZE bytes. The
+		// rest of the storage set to 0 by mmap.
 		memset( block->data, SCRUB, min( SCRUB_SIZE, tsize - sizeof(Heap.Storage) ) );
 		#endif // __CFA_DEBUG__
 	} // if
@@ -1125,13 +1098,13 @@ static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
 		enable_interrupts( false );
 		#endif // __CFA_DEBUG__
 
+		#ifdef OWNERSHIP
 		if ( likely( heapManager == freeHead->homeManager ) ) { // belongs to this thread
 			header->kind.real.next = freeHead->freeList; // push on stack
 			freeHead->freeList = (Heap.Storage *)header;
 		} else {										// return to thread owner
 			verify( heapManager );
 
-			#ifdef OWNERSHIP
 			#ifdef RETURNSPIN
 			lock( freeHead->returnLock );
 			header->kind.real.next = freeHead->returnList; // push to bucket return list
@@ -1140,25 +1113,26 @@ static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
 			#else										// lock free
 			header->kind.real.next = freeHead->returnList; // link new node to top node
 			// CAS resets header->kind.real.next = freeHead->returnList on failure
-			while ( ! __atomic_compare_exchange_n( &freeHead->returnList, &header->kind.real.next, header,
+			while ( ! __atomic_compare_exchange_n( &freeHead->returnList, &header->kind.real.next, (Heap.Storage *)header,
 												   false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) );
 			#endif // RETURNSPIN
-
-			#else										// no OWNERSHIP
-
-			freeHead = &heap->freeLists[ClearStickyBits( header->kind.real.home ) - &freeHead->homeManager->freeLists[0]];
-			header->kind.real.next = freeHead->freeList; // push on stack
-			freeHead->freeList = (Heap.Storage *)header;
-			#endif // ! OWNERSHIP
-
-			#ifdef __U_STATISTICS__
-			stats.return_pushes += 1;
-			stats.return_storage_request += rsize;
-			stats.return_storage_alloc += size;
-			#endif // __U_STATISTICS__
-
-			// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
 		} // if
+
+		#else											// no OWNERSHIP
+
+		// kind.real.home is address in owner thread's freeLists, so compute the equivalent position in this thread's freeList.
+		freeHead = &freeLists[ClearStickyBits( (Heap.FreeHeader *)(header->kind.real.home) ) - &freeHead->homeManager->freeLists[0]];
+		header->kind.real.next = freeHead->freeList;	// push on stack
+		freeHead->freeList = (Heap.Storage *)header;
+		#endif // ! OWNERSHIP
+
+		#ifdef __U_STATISTICS__
+		stats.return_pushes += 1;
+		stats.return_storage_request += rsize;
+		stats.return_storage_alloc += size;
+		#endif // __U_STATISTICS__
+
+		// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
 	} // if
 
 	#ifdef __CFA_DEBUG__
@@ -1185,16 +1159,7 @@ size_t prtFree( Heap & manager ) with( manager ) {
 		unsigned int N = 0;
 		#endif // __STATISTICS__
 
-		#if BUCKETLOCK == SPINLOCK
 		for ( Heap.Storage * p = freeLists[i].freeList; p != 0p; p = p->header.kind.real.next ) {
-		#else
-			for(;;) {
-//		for ( Heap.Storage * p = top( freeLists[i].freeList ); p != 0p; p = (p)`next->top ) {
-//		for ( Heap.Storage * p = top( freeLists[i].freeList ); p != 0p; /* p = getNext( p )->top */) {
-//			Heap.Storage * temp = p->header.kind.real.next.top; // FIX ME: direct assignent fails, initialization works`
-//			typeof(p) temp = (( p )`next)->top;			// FIX ME: direct assignent fails, initialization works`
-//			p = temp;
-		#endif // BUCKETLOCK
 			total += size;
 			#ifdef __STATISTICS__
 			N += 1;

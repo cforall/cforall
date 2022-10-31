@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct 14 14:04:43 2022
-// Update Count     : 5751
+// Last Modified On : Fri Oct 28 15:27:08 2022
+// Update Count     : 5764
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -2552,11 +2552,11 @@ enum_type:
 		{ $$ = DeclarationNode::newEnum( nullptr, $4, true, false )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3 ); }
-	  '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $3, $6, true, false )->addQualifiers( $2 ); }
+	  hide_opt '{' enumerator_list comma_opt '}'
+		{ $$ = DeclarationNode::newEnum( $3, $7, true, false )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt typedef_name				// unqualified type name
-	  '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $3->name, $5, true, false )->addQualifiers( $2 ); }
+	  hide_opt '{' enumerator_list comma_opt '}'
+		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 	 	{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 )
@@ -2573,24 +2573,31 @@ enum_type:
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 			typedefTable.makeTypedef( *$6 );
 		}
-	  '{' enumerator_list comma_opt '}'
+	  hide_opt '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $6, $10, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6, $11, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
 	| ENUM '(' ')' attribute_list_opt identifier attribute_list_opt
-	  '{' enumerator_list comma_opt '}'
+	  hide_opt '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $5, $8, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
+			$$ = DeclarationNode::newEnum( $5, $9, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
 		}
-	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt '{' enumerator_list comma_opt '}'
+	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt
+	  hide_opt '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $6->name, $9, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6->name, $10, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
-	| ENUM '(' ')' attribute_list_opt typedef_name attribute_list_opt '{' enumerator_list comma_opt '}'
+	| ENUM '(' ')' attribute_list_opt typedef_name attribute_list_opt
+	  hide_opt '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $5->name, $8, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
+			$$ = DeclarationNode::newEnum( $5->name, $9, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
 		}
 	| enum_type_nobody
+	;
+
+hide_opt:
+	// empty
+	| '!'
 	;
 
 enum_type_nobody:										// enum - {...}
@@ -2601,14 +2608,19 @@ enum_type_nobody:										// enum - {...}
 	;
 
 enumerator_list:
-	identifier_or_type_name enumerator_value_opt
-		{ $$ = DeclarationNode::newEnumValueGeneric( $1, $2 ); }
+	hide_visible_opt identifier_or_type_name enumerator_value_opt
+		{ $$ = DeclarationNode::newEnumValueGeneric( $2, $3 ); }
 	| INLINE type_name
 		{ $$ = DeclarationNode::newEnumInLine( *$2->type->symbolic.name ); }
-	| enumerator_list ',' identifier_or_type_name enumerator_value_opt
-		{ $$ = $1->appendList( DeclarationNode::newEnumValueGeneric( $3, $4 ) ); }
+	| enumerator_list ',' hide_visible_opt identifier_or_type_name enumerator_value_opt
+		{ $$ = $1->appendList( DeclarationNode::newEnumValueGeneric( $4, $5 ) ); }
 	| enumerator_list ',' INLINE type_name enumerator_value_opt
 		{ $$ = $1->appendList( DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ) ); }
+	;
+
+hide_visible_opt:
+	hide_opt
+	| '^'
 	;
 
 enumerator_value_opt:
