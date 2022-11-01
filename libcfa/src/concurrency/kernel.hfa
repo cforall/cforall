@@ -255,7 +255,7 @@ struct __attribute__((aligned(64))) cluster {
 
 	// List of threads
 	__spinlock_t thread_list_lock;
-	__dllist_t(struct thread$) threads;
+	dlist(struct thread$, thread$.cltr_link) threads;
 	unsigned int nthreads;
 
 	// Link lists fields

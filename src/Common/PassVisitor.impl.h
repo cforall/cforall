@@ -606,6 +606,7 @@ DeclarationWithType * PassVisitor< pass_type >::mutate( FunctionDecl * node ) {
 			);
 			indexerAddId( &func );
 			maybeMutate_impl( node->type, *this );
+			maybeMutate_impl( node->attributes, *this );
 			// First remember that we are now within a function.
 			ValueGuard< bool > oldInFunction( inFunction );
 			inFunction = true;
@@ -614,7 +615,6 @@ DeclarationWithType * PassVisitor< pass_type >::mutate( FunctionDecl * node ) {
 			ValueGuard< bool > oldAtFunctionTop( atFunctionTop );
 			atFunctionTop = true;
 			maybeMutate_impl( node->statements, *this );
-			maybeMutate_impl( node->attributes, *this );
 		}
 	}
 

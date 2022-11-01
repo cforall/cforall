@@ -194,13 +194,13 @@ extern "C" {
 		// monitors currently held by this thread
 		struct __monitor_group_t monitors;
 
-		// used to put threads on dlist data structure
+		// intrusive link fields, used for locks, monitors and any user defined data structure
+		// default link fields for dlist
 		__cfa_dlink1(thread$) user_link;
 
-		struct {
-			struct thread$ * next;
-			struct thread$ * prev;
-		} node;
+		// secondary intrusive link fields, used for global cluster list
+		// default link fields for dlist
+		__cfa_dlink2(thread$, cltr_link);
 
 		// used to store state between clh lock/unlock
 		volatile bool * clh_prev;
@@ -229,13 +229,12 @@ extern "C" {
 
 	#ifdef __cforall
 	extern "Cforall" {
+		static inline thread$ * volatile & ?`next ( thread$ * this ) {
+			return this->user_link.next;
+		}
 
 		static inline thread$ *& get_next( thread$ & this ) __attribute__((const)) {
 			return this.user_link.next;
-		}
-
-		static inline [thread$ *&, thread$ *& ] __get( thread$ & this ) __attribute__((const)) {
-			return this.node.[next, prev];
 		}
 
 		static inline tytagref( dlink(thread$), dlink(thread$) ) ?`inner( thread$ & this ) {
@@ -243,6 +242,9 @@ extern "C" {
 			tytagref( dlink(thread$), dlink(thread$) ) result = { b };
 			return result;
 		}
+
+		P9_EMBEDDED(thread$, thread$.cltr_link)
+		P9_EMBEDDED(thread$.cltr_link, dlink(thread$))
 
 		static inline void ?{}(__monitor_group_t & this) {
 			(this.data){0p};

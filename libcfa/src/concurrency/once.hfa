@@ -1,0 +1,106 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// once.hfa -- Algorithms to prevent concurrent calls to cause duplicate calls
+//
+// Author           : Thierry Delisle
+// Created On       : Thu Oct 11:40:47 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#pragma once
+
+#include "containers/lockfree.hfa"
+#include "kernel/fwd.hfa"
+
+enum once_state {
+	ARMED = 0,
+	IN_PROGRESS,
+	READY
+};
+
+struct once_flag {
+	volatile int state;
+	poison_list( thread$ ) waiters;
+};
+
+static inline {
+	void ?{}(once_flag & this) { this.state = ARMED; }
+
+	void once_wait$(once_flag & this) {
+		// just push the thread to the list
+		if(push( this.waiters, active_thread() )) {
+			// the list wasn't poisoned, push was successful, just park.
+			park();
+		}
+	}
+
+	void once_call$( once_flag & this, void (*func)(void) ) {
+		/* paranoid */ verify( once_state.IN_PROGRESS == __atomic_load_n(&this.state, __ATOMIC_RELAXED) );
+		/* paranoid */ verify( ! is_poisoned(this.waiters) );
+
+		// call the thing we are here for!
+		func();
+
+		/* paranoid */ verify( ! is_poisoned(this.waiters) );
+		/* paranoid */ verify( once_state.IN_PROGRESS == __atomic_load_n(&this.state, __ATOMIC_RELAXED) );
+
+		// Mark the call as being done.
+		__atomic_store_n( &this.state, (int)once_state.IN_PROGRESS, __ATOMIC_SEQ_CST );
+
+		// wake up the sleepers and make sure no new sleeper arrives
+		thread$ * sleeper = poison( this.waiters );
+
+		/* paranoid */ verify( ! is_poisoned(this.waiters) );
+		/* paranoid */ verify( once_state.READY == __atomic_load_n(&this.state, __ATOMIC_RELAXED) );
+
+		while(sleeper != 0p) {
+			// find the next thread now because unpark invalidates the pointer
+			thread$ * next = advance(sleeper);
+
+			// wake-up the thread, invalidates pointer
+			unpark( sleeper );
+
+			// update the current
+			sleeper = next;
+		}
+	}
+
+	bool call_once( once_flag & this, void (*func)(void) ) {
+		// is the call already done?
+		if(likely(once_state.READY == __atomic_load_n(&this.state, __ATOMIC_RELAXED))) {
+			/* paranoid */ verify( is_poisoned(this.waiters) );
+			return false;
+		}
+
+		// Try to CAS ourself as the thread that will actually call the function
+		int expected = ARMED;
+		if( __atomic_compare_exchange_n( &this.state, &expected, (int)once_state.IN_PROGRESS, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) ) {
+
+			// we won the race, call the function
+			once_call$( this, func );
+
+			/* paranoid */ verify( is_poisoned(this.waiters) );
+			/* paranoid */ verify( once_state.READY == __atomic_load_n(&this.state, __ATOMIC_RELAXED) );
+
+			// in case someone cares, this call did do the underlying call
+			return true;
+		}
+		else {
+
+			// someone else is doing the call, just wait
+			once_wait$( this );
+
+			/* paranoid */ verify( is_poisoned(this.waiters) );
+			/* paranoid */ verify( once_state.READY == __atomic_load_n(&this.state, __ATOMIC_RELAXED) );
+
+			// in case someone cares, someone else did the call
+			return false;
+		}
+	}
+}

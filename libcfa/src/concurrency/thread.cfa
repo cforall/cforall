@@ -53,9 +53,6 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 		canary = 0x0D15EA5E0D15EA5Ep;
 	#endif
 
-	node.next = 0p;
-	node.prev = 0p;
-
 	clh_node = malloc( );
 	*clh_node = false;
 

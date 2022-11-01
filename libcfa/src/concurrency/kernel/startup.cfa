@@ -534,8 +534,6 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 		canary = 0x0D15EA5E0D15EA5Ep;
 	#endif
 
-	node.next = 0p;
-	node.prev = 0p;
 	doregister(curr_cluster, this);
 
 	monitors{ &self_mon_p, 1, (fptr_t)0 };
@@ -658,7 +656,7 @@ void ?{}(cluster & this, const char name[], Duration preemption_rate, unsigned n
 		__init_stats( stats );
 	#endif
 
-	threads{ __get };
+	threads{};
 
 	io.arbiter = create();
 	io.params = io_params;
@@ -738,14 +736,18 @@ static void unregister( cluster     & cltr ) {
 void doregister( cluster * cltr, thread$ & thrd ) {
 	lock      (cltr->thread_list_lock __cfaabi_dbg_ctx2);
 	cltr->nthreads += 1;
-	push_front(cltr->threads, thrd);
+	insert_first(cltr->threads, thrd);
 	unlock    (cltr->thread_list_lock);
 }
 
 void unregister( cluster * cltr, thread$ & thrd ) {
 	lock  (cltr->thread_list_lock __cfaabi_dbg_ctx2);
-	remove(cltr->threads, thrd );
-	cltr->nthreads -= 1;
+	{
+		tytagref( dlink(thread$), dlink(thread$) ) ?`inner( thread$ & this ) = void;
+		with( DLINK_VIA( thread$, thread$.cltr_link ) )
+			remove( thrd );
+		cltr->nthreads -= 1;
+	}
 	unlock(cltr->thread_list_lock);
 }
 

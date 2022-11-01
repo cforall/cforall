@@ -110,6 +110,7 @@ inst_thread_headers_nosrc = \
 	concurrency/clib/cfathread.h \
 	concurrency/invoke.h \
 	concurrency/future.hfa \
+	concurrency/once.hfa \
 	concurrency/kernel/fwd.hfa \
 	concurrency/mutex_stmt.hfa
 

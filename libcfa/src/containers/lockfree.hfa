@@ -141,13 +141,14 @@ forall( T &) {
 	};
 
 	static inline void ?{}(poison_list(T) & this) { this.head = 0p; }
+	static inline bool is_poisoned( const poison_list(T) & this ) { return 1p == this.head; }
 
  	static inline forall(| { T * volatile & ?`next ( T * ); })
 	{
 		// Adds an element to the list
 		// Multi-Thread Safe, Lock-Free
-		T * push(poison_list(T) & this, T * elem) __attribute__((artificial));
-		T * push(poison_list(T) & this, T * elem) {
+		bool push(poison_list(T) & this, T * elem) __attribute__((artificial));
+		bool push(poison_list(T) & this, T * elem) {
 			/* paranoid */ verify(0p == (elem`next));
 			__atomic_store_n( &elem`next, (T*)1p, __ATOMIC_RELAXED );
 
@@ -155,19 +156,20 @@ forall( T &) {
 			T * expected = this.head;
 			for() {
 				// check if it's poisoned
-				if(expected == 1p) return 0p;
+				if(expected == 1p) return false;
 
 				// try to CAS the elem in
 				if(__atomic_compare_exchange_n(&this.head, &expected, elem, true, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED)) {
 					// We managed to exchange in, we are done
 
-					// We should never succeed the CAS if it's poisonned.
-					/* paranoid */ verify( expected != 1p );
+					// We should never succeed the CAS if it's poisonned and the elem should be 1p.
+					/* paranoid */ verify( expected  != 1p );
+					/* paranoid */ verify( elem`next == 1p );
 
 					// If we aren't the first, we need to tell the person before us
 					// No need to
 					elem`next = expected;
-					return expected;
+					return true;
 				}
 			}
 		}
@@ -189,7 +191,7 @@ forall( T &) {
 		T * poison(poison_list(T) & this) __attribute__((artificial));
 		T * poison(poison_list(T) & this) {
 			T * ret = __atomic_exchange_n( &this.head, (T*)1p, __ATOMIC_SEQ_CST );
-			/* paranoid */ verify( ret != (T*)1p );
+			/* paranoid */ verifyf( ret != (T*)1p, "Poison list %p poisoned more than once!", &this );
 			return ret;
 		}
 	}

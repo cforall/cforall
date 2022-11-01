@@ -67,10 +67,7 @@ namespace GenPoly {
 
 		/// Adds layout-generation functions to polymorphic types.
 		class LayoutFunctionBuilder final : public WithDeclsToAdd, public WithVisitorRef<LayoutFunctionBuilder>, public WithShortCircuiting {
-			// Current level of nested functions:
-			unsigned int functionNesting = 0;
 		public:
-			void previsit( FunctionDecl *functionDecl );
 			void previsit( StructDecl *structDecl );
 			void previsit( UnionDecl *unionDecl );
 		};
@@ -236,14 +233,6 @@ namespace GenPoly {
 
 	////////////////////////////////// LayoutFunctionBuilder ////////////////////////////////////////////
 
-	void LayoutFunctionBuilder::previsit( FunctionDecl *functionDecl ) {
-		visit_children = false;
-		maybeAccept( functionDecl->get_functionType(), *visitor );
-		++functionNesting;
-		maybeAccept( functionDecl->get_statements(), *visitor );
-		--functionNesting;
-	}
-
 	/// Get a list of type declarations that will affect a layout function
 	std::list< TypeDecl* > takeOtypeOnly( std::list< TypeDecl* > &decls ) {
 		std::list< TypeDecl * > otypeDecls;
@@ -270,11 +259,11 @@ namespace GenPoly {
 	}
 
 	/// Builds a layout function declaration
-	FunctionDecl *buildLayoutFunctionDecl( AggregateDecl *typeDecl, unsigned int functionNesting, FunctionType *layoutFnType ) {
+	FunctionDecl *buildLayoutFunctionDecl( AggregateDecl *typeDecl, bool isInFunction, FunctionType *layoutFnType ) {
 		// Routines at global scope marked "static" to prevent multiple definitions is separate translation units
 		// because each unit generates copies of the default routines for each aggregate.
 		FunctionDecl *layoutDecl = new FunctionDecl( layoutofName( typeDecl ),
-													 functionNesting > 0 ? Type::StorageClasses() : Type::StorageClasses( Type::Static ),
+													 isInFunction ? Type::StorageClasses() : Type::StorageClasses( Type::Static ),
 													 LinkageSpec::AutoGen, layoutFnType, new CompoundStmt(),
 													 std::list< Attribute * >(), Type::FuncSpecifiers( Type::Inline ) );
 		layoutDecl->fixUniqueId();
@@ -346,31 +335,26 @@ namespace GenPoly {
 		addOtypeParams( layoutFnType, otypeParams );
 
 		// build function decl
-		FunctionDecl *layoutDecl = buildLayoutFunctionDecl( structDecl, functionNesting, layoutFnType );
+		FunctionDecl *layoutDecl = buildLayoutFunctionDecl( structDecl, isInFunction(), layoutFnType );
 
 		// calculate struct layout in function body
 
 		// initialize size and alignment to 0 and 1 (will have at least one member to re-edit size)
 		addExpr( layoutDecl->get_statements(), makeOp( "?=?", derefVar( sizeParam ), new ConstantExpr( Constant::from_ulong( 0 ) ) ) );
 		addExpr( layoutDecl->get_statements(), makeOp( "?=?", derefVar( alignParam ), new ConstantExpr( Constant::from_ulong( 1 ) ) ) );
-		unsigned long n_members = 0;
-		bool firstMember = true;
-		for ( Declaration* member : structDecl->get_members() ) {
-			DeclarationWithType *dwt = dynamic_cast< DeclarationWithType * >( member );
+		for ( auto index_member : enumerate( structDecl->members ) ) {
+			DeclarationWithType *dwt = dynamic_cast< DeclarationWithType * >( index_member.val );
 			assert( dwt );
 			Type *memberType = dwt->get_type();
 
-			if ( firstMember ) {
-				firstMember = false;
-			} else {
+			if ( 0 < index_member.idx ) {
 				// make sure all members after the first (automatically aligned at 0) are properly padded for alignment
 				addStmt( layoutDecl->get_statements(), makeAlignTo( derefVar( sizeParam ), new AlignofExpr( memberType->clone() ) ) );
 			}
 
 			// place current size in the current offset index
-			addExpr( layoutDecl->get_statements(), makeOp( "?=?", makeOp( "?[?]", new VariableExpr( offsetParam ), new ConstantExpr( Constant::from_ulong( n_members ) ) ),
+			addExpr( layoutDecl->get_statements(), makeOp( "?=?", makeOp( "?[?]", new VariableExpr( offsetParam ), new ConstantExpr( Constant::from_ulong( index_member.idx ) ) ),
 			                                                      derefVar( sizeParam ) ) );
-			++n_members;
 
 			// add member size to current size
 			addExpr( layoutDecl->get_statements(), makeOp( "?+=?", derefVar( sizeParam ), new SizeofExpr( memberType->clone() ) ) );
@@ -405,7 +389,7 @@ namespace GenPoly {
 		addOtypeParams( layoutFnType, otypeParams );
 
 		// build function decl
-		FunctionDecl *layoutDecl = buildLayoutFunctionDecl( unionDecl, functionNesting, layoutFnType );
+		FunctionDecl *layoutDecl = buildLayoutFunctionDecl( unionDecl, isInFunction(), layoutFnType );
 
 		// calculate union layout in function body
 		addExpr( layoutDecl->get_statements(), makeOp( "?=?", derefVar( sizeParam ), new ConstantExpr( Constant::from_ulong( 1 ) ) ) );
@@ -637,8 +621,8 @@ namespace GenPoly {
 		}
 
 		void Pass1::replaceParametersWithConcrete( ApplicationExpr *appExpr, std::list< Expression* >& params ) {
-			for ( std::list< Expression* >::iterator param = params.begin(); param != params.end(); ++param ) {
-				TypeExpr *paramType = dynamic_cast< TypeExpr* >( *param );
+			for ( Expression * const param : params ) {
+				TypeExpr *paramType = dynamic_cast< TypeExpr* >( param );
 				assertf(paramType, "Aggregate parameters should be type expressions");
 				paramType->set_type( replaceWithConcrete( appExpr, paramType->get_type(), false ) );
 			}
@@ -757,22 +741,23 @@ namespace GenPoly {
 		}
 
 		void Pass1::boxParams( ApplicationExpr *appExpr, FunctionType *function, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars ) {
-			for ( std::list< DeclarationWithType *>::const_iterator param = function->get_parameters().begin(); param != function->parameters.end(); ++param, ++arg ) {
-				assertf( arg != appExpr->args.end(), "boxParams: missing argument for param %s to %s in %s", toString( *param ).c_str(), toString( function ).c_str(), toString( appExpr ).c_str() );
-				addCast( *arg, (*param)->get_type(), exprTyVars );
-				boxParam( (*param)->get_type(), *arg, exprTyVars );
+			for ( DeclarationWithType * param : function->parameters ) {
+				assertf( arg != appExpr->args.end(), "boxParams: missing argument for param %s to %s in %s", toString( param ).c_str(), toString( function ).c_str(), toString( appExpr ).c_str() );
+				addCast( *arg, param->get_type(), exprTyVars );
+				boxParam( param->get_type(), *arg, exprTyVars );
+				++arg;
 			} // for
 		}
 
 		void Pass1::addInferredParams( ApplicationExpr *appExpr, FunctionType *functionType, std::list< Expression *>::iterator &arg, const TyVarMap &tyVars ) {
 			std::list< Expression *>::iterator cur = arg;
-			for ( Type::ForallList::iterator tyVar = functionType->get_forall().begin(); tyVar != functionType->get_forall().end(); ++tyVar ) {
-				for ( std::list< DeclarationWithType *>::iterator assert = (*tyVar)->assertions.begin(); assert != (*tyVar)->assertions.end(); ++assert ) {
-					InferredParams::const_iterator inferParam = appExpr->inferParams.find( (*assert)->get_uniqueId() );
-					assertf( inferParam != appExpr->inferParams.end(), "addInferredParams missing inferred parameter: %s in: %s", toString( *assert ).c_str(), toString( appExpr ).c_str() );
+			for ( TypeDecl * const tyVar : functionType->forall ) {
+				for ( DeclarationWithType * const assert : tyVar->assertions ) {
+					InferredParams::const_iterator inferParam = appExpr->inferParams.find( assert->get_uniqueId() );
+					assertf( inferParam != appExpr->inferParams.end(), "addInferredParams missing inferred parameter: %s in: %s", toString( assert ).c_str(), toString( appExpr ).c_str() );
 					Expression *newExpr = inferParam->second.expr->clone();
-					addCast( newExpr, (*assert)->get_type(), tyVars );
-					boxParam( (*assert)->get_type(), newExpr, tyVars );
+					addCast( newExpr, assert->get_type(), tyVars );
+					boxParam( assert->get_type(), newExpr, tyVars );
 					appExpr->get_args().insert( cur, newExpr );
 				} // for
 			} // for
@@ -1225,7 +1210,7 @@ namespace GenPoly {
 		void Pass2::addAdapters( FunctionType *functionType ) {
 			std::list< DeclarationWithType *> &paramList = functionType->parameters;
 			std::list< FunctionType *> functions;
-			for (  DeclarationWithType * const arg : functionType->parameters ) {
+			for ( DeclarationWithType * const arg : functionType->parameters ) {
 				Type *orig = arg->get_type();
 				findAndReplaceFunction( orig, functions, scopeTyVars, needsAdapter );
 				arg->set_type( orig );

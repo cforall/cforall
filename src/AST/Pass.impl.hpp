@@ -616,6 +616,7 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 				maybe_accept( node, &FunctionDecl::params );
 				maybe_accept( node, &FunctionDecl::returns );
 				maybe_accept( node, &FunctionDecl::type );
+				maybe_accept( node, &FunctionDecl::attributes );
 				// First remember that we are now within a function.
 				ValueGuard< bool > oldInFunction( inFunction );
 				inFunction = true;
@@ -624,7 +625,6 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 				ValueGuard< bool > oldAtFunctionTop( atFunctionTop );
 				atFunctionTop = true;
 				maybe_accept( node, &FunctionDecl::stmts );
-				maybe_accept( node, &FunctionDecl::attributes );
 			}
 		}
 	}

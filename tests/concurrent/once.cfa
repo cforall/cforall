@@ -1,0 +1,44 @@
+#include <barrier.hfa>
+#include <fstream.hfa>
+#include <kernel.hfa>
+#include <once.hfa>
+#include <thread.hfa>
+
+once_flag global;
+
+volatile int check;
+
+void reset() {
+	(global){};
+	check = 0;
+}
+
+void must_once(void) {
+	int prev = __atomic_fetch_add( &check, 1, __ATOMIC_SEQ_CST );
+	if(prev != 0) {
+		abort | "'must_once' appears to have been called more than once, check was" | prev;
+	}
+}
+
+barrier barr = { 11 };
+
+thread Tester {};
+
+void main( Tester & this ) {
+	for(500) {
+		block( barr, reset );
+
+		// sometime yields
+		yield(prng(this, 3));
+	}
+}
+
+int main() {
+	processor p[2];
+
+	sout | "starting";
+	{
+		Tester testers[11];
+	}
+	sout | "done";
+}
