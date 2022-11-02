@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Aug 16 10:51:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Sep 13 16:03:00 2022
-// Update Count     : 0
+// Last Modified On : Mon Oct 31 16:48:00 2022
+// Update Count     : 1
 //
 
 #include "InstantiateGeneric.h"
@@ -377,25 +377,37 @@ ast::Expr const * FixDtypeStatic::fixMemberExpr(
 		//   };
 		//   Ptr(int) p;
 		//   int i;
+		// The original expression:
 		//   p.x = &i;
-		// becomes
-		//   int *& _dtype_static_member_0 = (int **)&p.x;
-		//   _dtype_static_member_0 = &i;
+		// Becomes the expression/declaration:
+		//   int *& _dtype_static_member_0;
+		//   (_dtype_static_member_0 = (int**)&p.x,
+		//    _dtype_static_member_0) = &i;
+
+		// The declaration is simple:
 		static UniqueName tmpNamer( "_dtype_static_member_" );
-		ast::Expr * init = new ast::CastExpr( location,
-			new ast::AddressExpr( location, memberExpr ),
-			new ast::PointerType( ast::deepCopy( concType ) ),
-			ast::ExplicitCast
-		);
 		ast::ObjectDecl * tmp = new ast::ObjectDecl( location,
 			tmpNamer.newName(),
 			new ast::ReferenceType( concType ),
-			new ast::SingleInit( location, init ),
+			nullptr,
 			ast::Storage::Classes(),
 			ast::Linkage::C
 		);
 		stmtsToAddBefore.push_back( new ast::DeclStmt( location, tmp ) );
-		return new ast::VariableExpr( location, tmp );
+
+		// The expression is more complex, uses references and reference /
+		// pointer parity. But breaking it up risks reordering.
+		return new ast::CommaExpr( location,
+			ast::UntypedExpr::createAssign( location,
+				new ast::VariableExpr( location, tmp ),
+				new ast::CastExpr( location,
+					new ast::AddressExpr( location, memberExpr ),
+					new ast::PointerType( ast::deepCopy( concType ) ),
+					ast::ExplicitCast
+				)
+			),
+			new ast::VariableExpr( location, tmp )
+		);
 	} else {
 		// Here, it can simply add a cast to actual types.
 		return new ast::CastExpr( location,

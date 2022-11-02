@@ -119,7 +119,7 @@ namespace GenPoly {
 
 	const ast::Type * replaceTypeInst(const ast::Type * type, const ast::TypeSubstitution * env) {
 		if (!env) return type;
-		if (auto typeInst = dynamic_cast<const ast::TypeInstType*> (type)) {
+		if ( auto typeInst = dynamic_cast<const ast::TypeInstType*>(type) ) {
 			auto newType = env->lookup(typeInst);
 			if (newType) return newType;
 		}
@@ -228,7 +228,7 @@ const ast::BaseInstType * isDynType(
 	if ( auto inst = dynamic_cast<ast::TypeInstType const *>( type ) ) {
 		auto var = typeVars.find( *inst );
 		if ( var != typeVars.end() && var->second.isComplete ) {
-
+			return inst;
 		}
 	} else if ( auto inst = dynamic_cast<ast::StructInstType const *>( type ) ) {
 		if ( hasDynParams( inst->params, typeVars, subst ) ) {

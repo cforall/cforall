@@ -1,0 +1,20 @@
+forall(T &)
+struct A {
+    T * next;
+};
+
+struct B {
+    A(B) link;
+};
+
+int main(void) {
+	B end = { { 0p } };
+	B two = { { &end } };
+	B one = { { &two } };
+	B * head = &one;
+
+	for (B ** it = &head ; (*it)->link.next ; it = &(*it)->link.next) {
+		printf("loop\n");
+	}
+	printf("done\n");
+}

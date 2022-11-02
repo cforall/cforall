@@ -549,15 +549,14 @@ namespace GenPoly {
 				assert( env );
 				if ( tyParam.second.isComplete ) {
 					Type *concrete = env->lookup( tyParam.first );
-					if ( concrete ) {
-						arg = appExpr->get_args().insert( arg, new SizeofExpr( concrete->clone() ) );
-						arg++;
-						arg = appExpr->get_args().insert( arg, new AlignofExpr( concrete->clone() ) );
-						arg++;
-					} else {
-						// xxx - should this be an assertion?
-						SemanticError( appExpr, toString( *env, "\nunbound type variable: ", tyParam.first, " in application " ) );
-					} // if
+					// If there is an unbound type variable, it should have detected already.
+					assertf( concrete, "Unbound type variable: %s in: %s",
+						toCString( tyParam.first ), toCString( *env ) );
+
+					arg = appExpr->get_args().insert( arg, new SizeofExpr( concrete->clone() ) );
+					arg++;
+					arg = appExpr->get_args().insert( arg, new AlignofExpr( concrete->clone() ) );
+					arg++;
 				} // if
 			} // for
 
@@ -675,38 +674,6 @@ namespace GenPoly {
 			return ret;
 		}
 
-		void Pass1::boxParam( Type *param, Expression *&arg, const TyVarMap &exprTyVars ) {
-			assertf( arg->result, "arg does not have result: %s", toString( arg ).c_str() );
-			if ( ! needsBoxing( param, arg->result, exprTyVars, env ) ) return;
-
-			if ( arg->get_lvalue() ) {
-				// argument expression may be CFA lvalue, but not C lvalue -- apply generalizedLvalue transformations.
-				// if ( VariableExpr * varExpr = dynamic_cast< VariableExpr * >( arg ) ) {
-				// 	if ( dynamic_cast<ArrayType *>( varExpr->var->get_type() ) ){
-				// 		// temporary hack - don't box arrays, because &arr is not the same as &arr[0]
-				// 		return;
-				// 	}
-				// }
-				arg =  generalizedLvalue( new AddressExpr( arg ) );
-				if ( ! ResolvExpr::typesCompatible( param, arg->get_result(), SymTab::Indexer() ) ) {
-					// silence warnings by casting boxed parameters when the actual type does not match up with the formal type.
-					arg = new CastExpr( arg, param->clone() );
-				}
-			} else {
-				// use type computed in unification to declare boxed variables
-				Type * newType = param->clone();
-				if ( env ) env->apply( newType );
-				ObjectDecl *newObj = ObjectDecl::newObject( tempNamer.newName(), newType, nullptr );
-				newObj->get_type()->get_qualifiers() = Type::Qualifiers(); // TODO: is this right???
-				stmtsToAddBefore.push_back( new DeclStmt( newObj ) );
-				UntypedExpr *assign = new UntypedExpr( new NameExpr( "?=?" ) ); // TODO: why doesn't this just use initialization syntax?
-				assign->get_args().push_back( new VariableExpr( newObj ) );
-				assign->get_args().push_back( arg );
-				stmtsToAddBefore.push_back( new ExprStmt( assign ) );
-				arg = new AddressExpr( new VariableExpr( newObj ) );
-			} // if
-		}
-
 		// find instances of polymorphic type parameters
 		struct PolyFinder {
 			const TyVarMap * tyVars = nullptr;
@@ -740,10 +707,42 @@ namespace GenPoly {
 			} // if
 		}
 
+		void Pass1::boxParam( Type *param, Expression *&arg, const TyVarMap &exprTyVars ) {
+			assertf( arg->result, "arg does not have result: %s", toString( arg ).c_str() );
+			addCast( arg, param, exprTyVars );
+			if ( ! needsBoxing( param, arg->result, exprTyVars, env ) ) return;
+
+			if ( arg->get_lvalue() ) {
+				// argument expression may be CFA lvalue, but not C lvalue -- apply generalizedLvalue transformations.
+				// if ( VariableExpr * varExpr = dynamic_cast< VariableExpr * >( arg ) ) {
+				// 	if ( dynamic_cast<ArrayType *>( varExpr->var->get_type() ) ){
+				// 		// temporary hack - don't box arrays, because &arr is not the same as &arr[0]
+				// 		return;
+				// 	}
+				// }
+				arg =  generalizedLvalue( new AddressExpr( arg ) );
+				if ( ! ResolvExpr::typesCompatible( param, arg->get_result(), SymTab::Indexer() ) ) {
+					// silence warnings by casting boxed parameters when the actual type does not match up with the formal type.
+					arg = new CastExpr( arg, param->clone() );
+				}
+			} else {
+				// use type computed in unification to declare boxed variables
+				Type * newType = param->clone();
+				if ( env ) env->apply( newType );
+				ObjectDecl *newObj = ObjectDecl::newObject( tempNamer.newName(), newType, nullptr );
+				newObj->get_type()->get_qualifiers() = Type::Qualifiers(); // TODO: is this right???
+				stmtsToAddBefore.push_back( new DeclStmt( newObj ) );
+				UntypedExpr *assign = new UntypedExpr( new NameExpr( "?=?" ) ); // TODO: why doesn't this just use initialization syntax?
+				assign->get_args().push_back( new VariableExpr( newObj ) );
+				assign->get_args().push_back( arg );
+				stmtsToAddBefore.push_back( new ExprStmt( assign ) );
+				arg = new AddressExpr( new VariableExpr( newObj ) );
+			} // if
+		}
+
 		void Pass1::boxParams( ApplicationExpr *appExpr, FunctionType *function, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars ) {
 			for ( DeclarationWithType * param : function->parameters ) {
 				assertf( arg != appExpr->args.end(), "boxParams: missing argument for param %s to %s in %s", toString( param ).c_str(), toString( function ).c_str(), toString( appExpr ).c_str() );
-				addCast( *arg, param->get_type(), exprTyVars );
 				boxParam( param->get_type(), *arg, exprTyVars );
 				++arg;
 			} // for
@@ -756,7 +755,6 @@ namespace GenPoly {
 					InferredParams::const_iterator inferParam = appExpr->inferParams.find( assert->get_uniqueId() );
 					assertf( inferParam != appExpr->inferParams.end(), "addInferredParams missing inferred parameter: %s in: %s", toString( assert ).c_str(), toString( appExpr ).c_str() );
 					Expression *newExpr = inferParam->second.expr->clone();
-					addCast( newExpr, assert->get_type(), tyVars );
 					boxParam( assert->get_type(), newExpr, tyVars );
 					appExpr->get_args().insert( cur, newExpr );
 				} // for
@@ -787,13 +785,12 @@ namespace GenPoly {
 		Expression *makeAdapterArg( DeclarationWithType *param, DeclarationWithType *arg, DeclarationWithType *realParam, const TyVarMap &tyVars ) {
 			assert( param );
 			assert( arg );
-			if ( isPolyType( realParam->get_type(), tyVars ) ) {
-				if ( ! isPolyType( arg->get_type() ) ) {
-					UntypedExpr *deref = new UntypedExpr( new NameExpr( "*?" ) );
-					deref->args.push_back( new CastExpr( new VariableExpr( param ), new PointerType( Type::Qualifiers(), arg->get_type()->clone() ) ) );
-					deref->result = arg->get_type()->clone();
-					return deref;
-				} // if
+			if ( isPolyType( realParam->get_type(), tyVars )
+					&& ! isPolyType( arg->get_type() ) ) {
+				UntypedExpr *deref = new UntypedExpr( new NameExpr( "*?" ) );
+				deref->args.push_back( new CastExpr( new VariableExpr( param ), new PointerType( Type::Qualifiers(), arg->get_type()->clone() ) ) );
+				deref->result = arg->get_type()->clone();
+				return deref;
 			} // if
 			return new VariableExpr( param );
 		}
@@ -1129,17 +1126,24 @@ namespace GenPoly {
 			return ret;
 		}
 
-		Expression * Pass1::postmutate( UntypedExpr *expr ) {
+		bool isPolyDeref( UntypedExpr * expr, TyVarMap const & scopeTyVars, TypeSubstitution const * env ) {
 			if ( expr->result && isPolyType( expr->result, scopeTyVars, env ) ) {
 				if ( NameExpr *name = dynamic_cast< NameExpr *>( expr->function ) ) {
 					if ( name->name == "*?" ) {
-						Expression *ret = expr->args.front();
-						expr->args.clear();
-						delete expr;
-						return ret;
+						return true;
 					} // if
 				} // if
 			} // if
+			return false;
+		}
+
+		Expression * Pass1::postmutate( UntypedExpr *expr ) {
+			if ( isPolyDeref( expr, scopeTyVars, env ) ) {
+				Expression *ret = expr->args.front();
+				expr->args.clear();
+				delete expr;
+				return ret;
+			}
 			return expr;
 		}
 
@@ -1149,16 +1153,12 @@ namespace GenPoly {
 
 			bool needs = false;
 			if ( UntypedExpr *expr = dynamic_cast< UntypedExpr *>( addrExpr->arg ) ) {
-				if ( expr->result && isPolyType( expr->result, scopeTyVars, env ) ) {
-					if ( NameExpr *name = dynamic_cast< NameExpr *>( expr->function ) ) {
-						if ( name->name == "*?" ) {
-							if ( ApplicationExpr * appExpr = dynamic_cast< ApplicationExpr * >( expr->args.front() ) ) {
-								assert( appExpr->function->result );
-								FunctionType *function = getFunctionType( appExpr->function->result );
-								assert( function );
-								needs = needsAdapter( function, scopeTyVars );
-							} // if
-						} // if
+				if ( isPolyDeref( expr, scopeTyVars, env ) ) {
+					if ( ApplicationExpr * appExpr = dynamic_cast< ApplicationExpr * >( expr->args.front() ) ) {
+						assert( appExpr->function->result );
+						FunctionType *function = getFunctionType( appExpr->function->result );
+						assert( function );
+						needs = needsAdapter( function, scopeTyVars );
 					} // if
 				} // if
 			} // if
@@ -1431,14 +1431,9 @@ namespace GenPoly {
 			GuardValue( expect_func_type );
 
 			if(!expect_func_type) {
-				GuardAction( [this]() {
-					knownLayouts.endScope();
-					knownOffsets.endScope();
-				});
 				// If this is the first function type we see
 				// Then it's the type of the declaration and we care about it
-				knownLayouts.beginScope();
-				knownOffsets.beginScope();
+				GuardScope( *this );
 			}
 
 			// The other functions type we will see in this scope are probably functions parameters

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 30 15:33:13 2022
-// Update Count     : 1580
+// Last Modified On : Sun Oct 30 20:56:20 2022
+// Update Count     : 1584
 //
 
 #include <stdio.h>
@@ -498,7 +498,7 @@ Heap * getHeap() with( heapMaster ) {
 void heapManagerCtor() libcfa_public {
 	if ( unlikely( ! heapMasterBootFlag ) ) heapMasterCtor();
 
-	lock( heapMaster.mgrLock );		// protect heapMaster counters
+	lock( heapMaster.mgrLock );							// protect heapMaster counters
 
 	// get storage for heap manager
 
@@ -809,10 +809,9 @@ static void * master_extend( size_t size ) with( heapMaster ) {
 		// If the size requested is bigger than the current remaining storage, increase the size of the heap.
 
 		size_t increase = ceiling2( size > heapExpand ? size : heapExpand, libAlign() );
-		// Do not call abort or strerror( errno ) as they may call malloc.
 		if ( unlikely( sbrk( increase ) == (void *)-1 ) ) {	// failed, no memory ?
 			unlock( extLock );
-			abort( NO_MEMORY_MSG, size );				// no memory
+			abort( NO_MEMORY_MSG, size );				// give up
 		} // if
 
 		// Make storage executable for thunks.
