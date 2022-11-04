@@ -98,20 +98,28 @@ namespace GenPoly {
 			/// passes extra type parameters into a polymorphic function application
 			void passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars );
 			/// wraps a function application with a new temporary for the out-parameter return value
-			Expression *addRetParam( ApplicationExpr *appExpr, Type *retType, std::list< Expression *>::iterator &arg );
-			/// Replaces all the type parameters of a generic type with their concrete equivalents under the current environment
-			void replaceParametersWithConcrete( ApplicationExpr *appExpr, std::list< Expression* >& params );
-			/// Replaces a polymorphic type with its concrete equivalant under the current environment (returns itself if concrete).
-			/// If `doClone` is set to false, will not clone interior types
-			Type *replaceWithConcrete( ApplicationExpr *appExpr, Type *type, bool doClone = true );
+			Expression *addRetParam( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, Type *retType );
 			/// wraps a function application returning a polymorphic type with a new temporary for the out-parameter return value
-			Expression *addDynRetParam( ApplicationExpr *appExpr, Type *polyType, std::list< Expression *>::iterator &arg );
-			Expression *applyAdapter( ApplicationExpr *appExpr, FunctionType *function, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars );
-			void boxParam( Type *formal, Expression *&arg, const TyVarMap &exprTyVars );
-			void boxParams( ApplicationExpr *appExpr, FunctionType *function, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars );
-			void addInferredParams( ApplicationExpr *appExpr, FunctionType *functionType, std::list< Expression *>::iterator &arg, const TyVarMap &tyVars );
+			Expression *addDynRetParam( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, Type *polyType );
+			/// Converts a function call into a call of the adapter with the
+			/// original function as the first argument (all other arguments
+			/// are pushed back). May adjust return value.
+			Expression *applyAdapter( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *function, const TyVarMap &exprTyVars );
+			/// Modifies the `arg`, replacing it with a boxed expression
+			/// that matches `formal` under the current TyVarMap.
+			void boxParam( Expression *&arg, Type *formal, const TyVarMap &exprTyVars );
+			/// Box an argument of `appExpr` for each parameter in `function`
+			/// starting at `arg`.
+			/// `exprTyVars` is the function's type variables.
+			void boxParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *function, const TyVarMap &exprTyVars );
+			/// Boxes each assertion and inserts them into `appExpr` at
+			/// `arg`. `exprTyVars` is the function's type variables.
+			void addInferredParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *functionType, const TyVarMap &tyVars );
 			/// Stores assignment operators from assertion list in local map of assignment operations
 			void passAdapters( ApplicationExpr *appExpr, FunctionType *functionType, const TyVarMap &exprTyVars );
+			/// Creates an adapter definition from `adaptee` to `realType`, using
+			/// `mangleName` as the base name for the adapter. `tyVars` is the map of
+			/// type variables for the function type of the adapted expression.
 			FunctionDecl *makeAdapter( FunctionType *adaptee, FunctionType *realType, const std::string &mangleName, const TyVarMap &tyVars );
 			/// Replaces intrinsic operator functions with their arithmetic desugaring
 			Expression *handleIntrinsics( ApplicationExpr *appExpr );
@@ -449,6 +457,10 @@ namespace GenPoly {
 			return "_adapter" + mangleName;
 		}
 
+		/// Replaces a polymorphic type with its concrete equivalant under the current environment (returns itself if concrete).
+		/// If `doClone` is set to false, will not clone interior types
+		Type *replaceWithConcrete( Type *type, TypeSubstitution const * env, bool doClone = true );
+
 		Pass1::Pass1() : tempNamer( "_temp" ) {}
 
 		void Pass1::premutate( FunctionDecl *functionDecl ) {
@@ -571,7 +583,7 @@ namespace GenPoly {
 
 			// a polymorphic return type may need to be added to the argument list
 			if ( polyRetType ) {
-				Type *concRetType = replaceWithConcrete( appExpr, polyRetType );
+				Type *concRetType = replaceWithConcrete( polyRetType, env );
 				passArgTypeVars( appExpr, polyRetType, concRetType, arg, exprTyVars, seenTypes );
 				++fnArg; // skip the return parameter in the argument list
 			}
@@ -590,7 +602,7 @@ namespace GenPoly {
 			return newObj;
 		}
 
-		Expression *Pass1::addRetParam( ApplicationExpr *appExpr, Type *retType, std::list< Expression *>::iterator &arg ) {
+		Expression *Pass1::addRetParam( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, Type *retType ) {
 			// Create temporary to hold return value of polymorphic function and produce that temporary as a result
 			// using a comma expression.
 			assert( retType );
@@ -619,15 +631,18 @@ namespace GenPoly {
 			return commaExpr;
 		}
 
-		void Pass1::replaceParametersWithConcrete( ApplicationExpr *appExpr, std::list< Expression* >& params ) {
+		/// Replaces all the type parameters of a generic type with their concrete equivalents under the current environment
+		void replaceParametersWithConcrete( std::list< Expression* >& params, TypeSubstitution const * env ) {
 			for ( Expression * const param : params ) {
 				TypeExpr *paramType = dynamic_cast< TypeExpr* >( param );
 				assertf(paramType, "Aggregate parameters should be type expressions");
-				paramType->set_type( replaceWithConcrete( appExpr, paramType->get_type(), false ) );
+				paramType->set_type( replaceWithConcrete( paramType->get_type(), env, false ) );
 			}
 		}
 
-		Type *Pass1::replaceWithConcrete( ApplicationExpr *appExpr, Type *type, bool doClone ) {
+		// See forward definition.
+		Type *replaceWithConcrete( Type *type, TypeSubstitution const * env, bool doClone ) {
+			assert( env );
 			if ( TypeInstType *typeInst = dynamic_cast< TypeInstType * >( type ) ) {
 				Type *concrete = env->lookup( typeInst->get_name() );
 				if ( concrete == 0 ) {
@@ -638,30 +653,29 @@ namespace GenPoly {
 				if ( doClone ) {
 					structType = structType->clone();
 				}
-				replaceParametersWithConcrete( appExpr, structType->get_parameters() );
+				replaceParametersWithConcrete( structType->get_parameters(), env );
 				return structType;
 			} else if ( UnionInstType *unionType = dynamic_cast< UnionInstType* >( type ) ) {
 				if ( doClone ) {
 					unionType = unionType->clone();
 				}
-				replaceParametersWithConcrete( appExpr, unionType->get_parameters() );
+				replaceParametersWithConcrete( unionType->get_parameters(), env );
 				return unionType;
 			}
 			return type;
 		}
 
-		Expression *Pass1::addDynRetParam( ApplicationExpr *appExpr, Type *dynType, std::list< Expression *>::iterator &arg ) {
-			assert( env );
-			Type *concrete = replaceWithConcrete( appExpr, dynType );
+		Expression *Pass1::addDynRetParam( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, Type *dynType ) {
+			Type *concrete = replaceWithConcrete( dynType, env );
 			// add out-parameter for return value
-			return addRetParam( appExpr, concrete, arg );
+			return addRetParam( appExpr, arg, concrete );
 		}
 
-		Expression *Pass1::applyAdapter( ApplicationExpr *appExpr, FunctionType *function, std::list< Expression *>::iterator &arg, const TyVarMap &tyVars ) {
+		Expression *Pass1::applyAdapter( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *function, const TyVarMap &tyVars ) {
 			Expression *ret = appExpr;
 //			if ( ! function->get_returnVals().empty() && isPolyType( function->get_returnVals().front()->get_type(), tyVars ) ) {
 			if ( isDynRet( function, tyVars ) ) {
-				ret = addRetParam( appExpr, function->returnVals.front()->get_type(), arg );
+				ret = addRetParam( appExpr, arg, function->returnVals.front()->get_type() );
 			} // if
 			std::string mangleName = mangleAdapterName( function, tyVars );
 			std::string adapterName = makeAdapterName( mangleName );
@@ -707,7 +721,7 @@ namespace GenPoly {
 			} // if
 		}
 
-		void Pass1::boxParam( Type *param, Expression *&arg, const TyVarMap &exprTyVars ) {
+		void Pass1::boxParam( Expression *&arg, Type *param, const TyVarMap &exprTyVars ) {
 			assertf( arg->result, "arg does not have result: %s", toString( arg ).c_str() );
 			addCast( arg, param, exprTyVars );
 			if ( ! needsBoxing( param, arg->result, exprTyVars, env ) ) return;
@@ -720,7 +734,7 @@ namespace GenPoly {
 				// 		return;
 				// 	}
 				// }
-				arg =  generalizedLvalue( new AddressExpr( arg ) );
+				arg = generalizedLvalue( new AddressExpr( arg ) );
 				if ( ! ResolvExpr::typesCompatible( param, arg->get_result(), SymTab::Indexer() ) ) {
 					// silence warnings by casting boxed parameters when the actual type does not match up with the formal type.
 					arg = new CastExpr( arg, param->clone() );
@@ -729,10 +743,12 @@ namespace GenPoly {
 				// use type computed in unification to declare boxed variables
 				Type * newType = param->clone();
 				if ( env ) env->apply( newType );
-				ObjectDecl *newObj = ObjectDecl::newObject( tempNamer.newName(), newType, nullptr );
-				newObj->get_type()->get_qualifiers() = Type::Qualifiers(); // TODO: is this right???
-				stmtsToAddBefore.push_back( new DeclStmt( newObj ) );
-				UntypedExpr *assign = new UntypedExpr( new NameExpr( "?=?" ) ); // TODO: why doesn't this just use initialization syntax?
+				ObjectDecl *newObj = makeTemporary( newType );
+				// TODO: is this right??? (Why wouldn't it be?)
+				newObj->get_type()->get_qualifiers() = Type::Qualifiers();
+				// TODO: why doesn't this just use initialization syntax?
+				// (Possibly to ensure code is run at the right time.)
+				UntypedExpr *assign = new UntypedExpr( new NameExpr( "?=?" ) );
 				assign->get_args().push_back( new VariableExpr( newObj ) );
 				assign->get_args().push_back( arg );
 				stmtsToAddBefore.push_back( new ExprStmt( assign ) );
@@ -740,22 +756,22 @@ namespace GenPoly {
 			} // if
 		}
 
-		void Pass1::boxParams( ApplicationExpr *appExpr, FunctionType *function, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars ) {
+		void Pass1::boxParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *function, const TyVarMap &exprTyVars ) {
 			for ( DeclarationWithType * param : function->parameters ) {
 				assertf( arg != appExpr->args.end(), "boxParams: missing argument for param %s to %s in %s", toString( param ).c_str(), toString( function ).c_str(), toString( appExpr ).c_str() );
-				boxParam( param->get_type(), *arg, exprTyVars );
+				boxParam( *arg, param->get_type(), exprTyVars );
 				++arg;
 			} // for
 		}
 
-		void Pass1::addInferredParams( ApplicationExpr *appExpr, FunctionType *functionType, std::list< Expression *>::iterator &arg, const TyVarMap &tyVars ) {
+		void Pass1::addInferredParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *functionType, const TyVarMap &tyVars ) {
 			std::list< Expression *>::iterator cur = arg;
 			for ( TypeDecl * const tyVar : functionType->forall ) {
 				for ( DeclarationWithType * const assert : tyVar->assertions ) {
 					InferredParams::const_iterator inferParam = appExpr->inferParams.find( assert->get_uniqueId() );
 					assertf( inferParam != appExpr->inferParams.end(), "addInferredParams missing inferred parameter: %s in: %s", toString( assert ).c_str(), toString( appExpr ).c_str() );
 					Expression *newExpr = inferParam->second.expr->clone();
-					boxParam( assert->get_type(), newExpr, tyVars );
+					boxParam( newExpr, assert->get_type(), tyVars );
 					appExpr->get_args().insert( cur, newExpr );
 				} // for
 			} // for
@@ -1102,7 +1118,7 @@ namespace GenPoly {
 			if ( dynRetType ) {
 				// std::cerr << "dynRetType: " << dynRetType << std::endl;
 				Type *concRetType = appExpr->get_result()->isVoid() ? nullptr : appExpr->get_result();
-				ret = addDynRetParam( appExpr, concRetType, arg ); // xxx - used to use dynRetType instead of concRetType
+				ret = addDynRetParam( appExpr, arg, concRetType ); // xxx - used to use dynRetType instead of concRetType
 			} else if ( needsAdapter( function, scopeTyVars ) && ! needsAdapter( function, exprTyVars) ) { // xxx - exprTyVars is used above...?
 				// xxx - the ! needsAdapter check may be incorrect. It seems there is some situation where an adapter is applied where it shouldn't be, and this fixes it for some cases. More investigation is needed.
 
@@ -1110,17 +1126,17 @@ namespace GenPoly {
 				// printTyVarMap( std::cerr, scopeTyVars );
 				// std::cerr << *env << std::endl;
 				// change the application so it calls the adapter rather than the passed function
-				ret = applyAdapter( appExpr, function, arg, scopeTyVars );
+				ret = applyAdapter( appExpr, arg, function, scopeTyVars );
 			} // if
 			arg = appExpr->get_args().begin();
 
-			Type *concRetType = replaceWithConcrete( appExpr, dynRetType );
+			Type *concRetType = replaceWithConcrete( dynRetType, env );
 			passTypeVars( appExpr, concRetType, arg, exprTyVars ); // xxx - used to use dynRetType instead of concRetType; this changed so that the correct type paramaters are passed for return types (it should be the concrete type's parameters, not the formal type's)
-			addInferredParams( appExpr, function, arg, exprTyVars );
+			addInferredParams( appExpr, arg, function, exprTyVars );
 
 			arg = paramBegin;
 
-			boxParams( appExpr, function, arg, exprTyVars );
+			boxParams( appExpr, arg, function, exprTyVars );
 			passAdapters( appExpr, function, exprTyVars );
 
 			return ret;

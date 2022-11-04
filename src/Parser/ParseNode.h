@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 18 16:22:15 2022
-// Update Count     : 937
+// Last Modified On : Wed Nov  2 21:27:07 2022
+// Update Count     : 939
 //
 
 #pragma once
@@ -167,6 +167,8 @@ enum class OperKinds {
 	UnPlus, UnMinus, AddressOf, PointTo, Neg, BitNeg, Incr, IncrPost, Decr, DecrPost,
 	Ctor, Dtor,
 }; // OperKinds
+
+enum class EnumHiding { Visible, Hide };
 
 struct LabelNode {
 	std::list< Label > labels;
