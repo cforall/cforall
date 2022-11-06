@@ -96,15 +96,18 @@ namespace GenPoly {
 			/// Pass the extra type parameters from polymorphic generic arguments or return types into a function application
 			void passArgTypeVars( ApplicationExpr *appExpr, Type *parmType, Type *argBaseType, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars, std::set< std::string > &seenTypes );
 			/// passes extra type parameters into a polymorphic function application
-			void passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars );
+			/// Returns an iterator to the first argument after the added
+			/// arguments, which are added at the beginning.
+			std::list< Expression *>::iterator passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, const TyVarMap &exprTyVars );
 			/// wraps a function application with a new temporary for the out-parameter return value
-			Expression *addRetParam( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, Type *retType );
+			/// The new out-parameter is the new first parameter.
+			Expression *addRetParam( ApplicationExpr *appExpr, Type *retType );
 			/// wraps a function application returning a polymorphic type with a new temporary for the out-parameter return value
-			Expression *addDynRetParam( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, Type *polyType );
+			Expression *addDynRetParam( ApplicationExpr *appExpr, Type *polyType );
 			/// Converts a function call into a call of the adapter with the
 			/// original function as the first argument (all other arguments
 			/// are pushed back). May adjust return value.
-			Expression *applyAdapter( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *function, const TyVarMap &exprTyVars );
+			Expression *applyAdapter( ApplicationExpr *appExpr, FunctionType *function );
 			/// Modifies the `arg`, replacing it with a boxed expression
 			/// that matches `formal` under the current TyVarMap.
 			void boxParam( Expression *&arg, Type *formal, const TyVarMap &exprTyVars );
@@ -554,11 +557,12 @@ namespace GenPoly {
 			}
 		}
 
-		void Pass1::passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars ) {
+		std::list< Expression *>::iterator Pass1::passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, const TyVarMap &exprTyVars ) {
+			assert( env );
+			std::list< Expression *>::iterator arg = appExpr->args.begin();
 			// pass size/align for type variables
 			for ( std::pair<std::string, TypeDecl::Data> const & tyParam : exprTyVars ) {
 				ResolvExpr::EqvClass eqvClass;
-				assert( env );
 				if ( tyParam.second.isComplete ) {
 					Type *concrete = env->lookup( tyParam.first );
 					// If there is an unbound type variable, it should have detected already.
@@ -573,7 +577,7 @@ namespace GenPoly {
 			} // for
 
 			// add size/align for generic types to parameter list
-			if ( ! appExpr->get_function()->result ) return;
+			if ( ! appExpr->get_function()->result ) return arg;
 			FunctionType *funcType = getFunctionType( appExpr->get_function()->get_result() );
 			assert( funcType );
 
@@ -594,6 +598,7 @@ namespace GenPoly {
 				Type * argType = (*fnArg)->get_result();
 				passArgTypeVars( appExpr, (*fnParm)->get_type(), argType, arg, exprTyVars, seenTypes );
 			}
+			return arg;
 		}
 
 		ObjectDecl *Pass1::makeTemporary( Type *type ) {
@@ -602,7 +607,7 @@ namespace GenPoly {
 			return newObj;
 		}
 
-		Expression *Pass1::addRetParam( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, Type *retType ) {
+		Expression *Pass1::addRetParam( ApplicationExpr *appExpr, Type *retType ) {
 			// Create temporary to hold return value of polymorphic function and produce that temporary as a result
 			// using a comma expression.
 			assert( retType );
@@ -622,8 +627,8 @@ namespace GenPoly {
 			if ( ! isPolyType( paramExpr->get_result(), scopeTyVars, env ) ) {
 				paramExpr = new AddressExpr( paramExpr );
 			} // if
-			arg = appExpr->args.insert( arg, paramExpr ); // add argument to function call
-			arg++;
+			// Add argument to function call.
+			appExpr->args.push_front( paramExpr );
 			// Build a comma expression to call the function and emulate a normal return.
 			CommaExpr *commaExpr = new CommaExpr( appExpr, retExpr );
 			commaExpr->env = appExpr->env;
@@ -665,19 +670,19 @@ namespace GenPoly {
 			return type;
 		}
 
-		Expression *Pass1::addDynRetParam( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, Type *dynType ) {
+		Expression *Pass1::addDynRetParam( ApplicationExpr *appExpr, Type *dynType ) {
 			Type *concrete = replaceWithConcrete( dynType, env );
 			// add out-parameter for return value
-			return addRetParam( appExpr, arg, concrete );
+			return addRetParam( appExpr, concrete );
 		}
 
-		Expression *Pass1::applyAdapter( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *function, const TyVarMap &tyVars ) {
+		Expression *Pass1::applyAdapter( ApplicationExpr *appExpr, FunctionType *function ) {
 			Expression *ret = appExpr;
 //			if ( ! function->get_returnVals().empty() && isPolyType( function->get_returnVals().front()->get_type(), tyVars ) ) {
-			if ( isDynRet( function, tyVars ) ) {
-				ret = addRetParam( appExpr, arg, function->returnVals.front()->get_type() );
+			if ( isDynRet( function, scopeTyVars ) ) {
+				ret = addRetParam( appExpr, function->returnVals.front()->get_type() );
 			} // if
-			std::string mangleName = mangleAdapterName( function, tyVars );
+			std::string mangleName = mangleAdapterName( function, scopeTyVars );
 			std::string adapterName = makeAdapterName( mangleName );
 
 			// cast adaptee to void (*)(), since it may have any type inside a polymorphic function
@@ -1096,8 +1101,6 @@ namespace GenPoly {
 			} // if
 
 			Expression *ret = appExpr;
-
-			std::list< Expression *>::iterator arg = appExpr->get_args().begin();
 			std::list< Expression *>::iterator paramBegin = appExpr->get_args().begin();
 
 			TyVarMap exprTyVars( TypeDecl::Data{} );
@@ -1118,7 +1121,7 @@ namespace GenPoly {
 			if ( dynRetType ) {
 				// std::cerr << "dynRetType: " << dynRetType << std::endl;
 				Type *concRetType = appExpr->get_result()->isVoid() ? nullptr : appExpr->get_result();
-				ret = addDynRetParam( appExpr, arg, concRetType ); // xxx - used to use dynRetType instead of concRetType
+				ret = addDynRetParam( appExpr, concRetType ); // xxx - used to use dynRetType instead of concRetType
 			} else if ( needsAdapter( function, scopeTyVars ) && ! needsAdapter( function, exprTyVars) ) { // xxx - exprTyVars is used above...?
 				// xxx - the ! needsAdapter check may be incorrect. It seems there is some situation where an adapter is applied where it shouldn't be, and this fixes it for some cases. More investigation is needed.
 
@@ -1126,17 +1129,17 @@ namespace GenPoly {
 				// printTyVarMap( std::cerr, scopeTyVars );
 				// std::cerr << *env << std::endl;
 				// change the application so it calls the adapter rather than the passed function
-				ret = applyAdapter( appExpr, arg, function, scopeTyVars );
+				ret = applyAdapter( appExpr, function );
 			} // if
-			arg = appExpr->get_args().begin();
 
 			Type *concRetType = replaceWithConcrete( dynRetType, env );
-			passTypeVars( appExpr, concRetType, arg, exprTyVars ); // xxx - used to use dynRetType instead of concRetType; this changed so that the correct type paramaters are passed for return types (it should be the concrete type's parameters, not the formal type's)
+			std::list< Expression *>::iterator arg =
+				passTypeVars( appExpr, concRetType, exprTyVars ); // xxx - used to use dynRetType instead of concRetType; this changed so that the correct type paramaters are passed for return types (it should be the concrete type's parameters, not the formal type's)
 			addInferredParams( appExpr, arg, function, exprTyVars );
 
-			arg = paramBegin;
+			// This needs to point at the original first argument.
+			boxParams( appExpr, paramBegin, function, exprTyVars );
 
-			boxParams( appExpr, arg, function, exprTyVars );
 			passAdapters( appExpr, function, exprTyVars );
 
 			return ret;
