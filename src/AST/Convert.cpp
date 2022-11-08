@@ -1620,7 +1620,6 @@ private:
 			std::move(attr),
 			{ old->get_funcSpec().val }
 		);
-		decl->enumInLine = old->enumInLine;
 		cache.emplace(old, decl);
 		assert(cache.find( old ) != cache.end());
 		decl->scopeLevel = old->scopeLevel;
