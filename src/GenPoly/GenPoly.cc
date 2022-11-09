@@ -117,6 +117,15 @@ namespace GenPoly {
 		return type;
 	}
 
+	const Type* replaceTypeInst( const Type* type, const TypeSubstitution* env ) {
+		if ( ! env ) return type;
+		if ( auto typeInst = dynamic_cast< const TypeInstType* >( type ) ) {
+			Type *newType = env->lookup( typeInst->get_name() );
+			if ( newType ) return newType;
+		}
+		return type;
+	}
+
 	const ast::Type * replaceTypeInst(const ast::Type * type, const ast::TypeSubstitution * env) {
 		if (!env) return type;
 		if ( auto typeInst = dynamic_cast<const ast::TypeInstType*>(type) ) {

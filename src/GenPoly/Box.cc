@@ -57,7 +57,7 @@
 
 namespace GenPoly {
 	namespace {
-		FunctionType *makeAdapterType( FunctionType *adaptee, const TyVarMap &tyVars );
+		FunctionType *makeAdapterType( FunctionType const *adaptee, const TyVarMap &tyVars );
 
 		class BoxPass {
 		protected:
@@ -123,7 +123,7 @@ namespace GenPoly {
 			/// Creates an adapter definition from `adaptee` to `realType`, using
 			/// `mangleName` as the base name for the adapter. `tyVars` is the map of
 			/// type variables for the function type of the adapted expression.
-			FunctionDecl *makeAdapter( FunctionType *adaptee, FunctionType *realType, const std::string &mangleName, const TyVarMap &tyVars );
+			FunctionDecl *makeAdapter( FunctionType const *adaptee, FunctionType *realType, const std::string &mangleName, const TyVarMap &tyVars );
 			/// Replaces intrinsic operator functions with their arithmetic desugaring
 			Expression *handleIntrinsics( ApplicationExpr *appExpr );
 			/// Inserts a new temporary variable into the current scope with an auto-generated name
@@ -189,7 +189,7 @@ namespace GenPoly {
 			/// Makes a new variable in the current scope with the given name, type & optional initializer
 			ObjectDecl *makeVar( const std::string &name, Type *type, Initializer *init = 0 );
 			/// returns true if the type has a dynamic layout; such a layout will be stored in appropriately-named local variables when the function returns
-			bool findGeneric( Type *ty );
+			bool findGeneric( Type const *ty );
 			/// adds type parameters to the layout call; will generate the appropriate parameters if needed
 			void addOtypeParamsToLayoutCall( UntypedExpr *layoutCall, const std::list< Type* > &otypeParams );
 			/// change the type of generic aggregate members to char[]
@@ -425,7 +425,7 @@ namespace GenPoly {
 	////////////////////////////////////////// Pass1 ////////////////////////////////////////////////////
 
 	namespace {
-		std::string makePolyMonoSuffix( FunctionType * function, const TyVarMap &tyVars ) {
+		std::string makePolyMonoSuffix( FunctionType const * function, const TyVarMap &tyVars ) {
 			std::stringstream name;
 
 			// NOTE: this function previously used isPolyObj, which failed to produce
@@ -434,7 +434,7 @@ namespace GenPoly {
 			// if the return type or a parameter type involved polymorphic types, then the adapter will need
 			// to take those polymorphic types as pointers. Therefore, there can be two different functions
 			// with the same mangled name, so we need to further mangle the names.
-			for ( DeclarationWithType * const ret : function->get_returnVals() ) {
+			for ( DeclarationWithType const * const ret : function->returnVals ) {
 				if ( isPolyType( ret->get_type(), tyVars ) ) {
 					name << "P";
 				} else {
@@ -442,7 +442,7 @@ namespace GenPoly {
 				}
 			}
 			name << "_";
-			for ( DeclarationWithType * const arg : function->get_parameters() ) {
+			for ( DeclarationWithType const * const arg : function->parameters ) {
 				if ( isPolyType( arg->get_type(), tyVars ) ) {
 					name << "P";
 				} else {
@@ -452,7 +452,7 @@ namespace GenPoly {
 			return name.str();
 		}
 
-		std::string mangleAdapterName( FunctionType * function, const TyVarMap &tyVars ) {
+		std::string mangleAdapterName( FunctionType const * function, const TyVarMap &tyVars ) {
 			return SymTab::Mangler::mangle( function ) + makePolyMonoSuffix( function, tyVars );
 		}
 
@@ -488,7 +488,7 @@ namespace GenPoly {
 				makeTyVarMap( functionType, scopeTyVars );
 
 				std::list< DeclarationWithType *> &paramList = functionType->parameters;
-				std::list< FunctionType *> functions;
+				std::list< FunctionType const *> functions;
 				for ( TypeDecl * const tyVar : functionType->forall ) {
 					for ( DeclarationWithType * const assert : tyVar->assertions ) {
 						findFunction( assert->get_type(), functions, scopeTyVars, needsAdapter );
@@ -498,7 +498,7 @@ namespace GenPoly {
 					findFunction( arg->get_type(), functions, scopeTyVars, needsAdapter );
 				} // for
 
-				for ( FunctionType * const funType : functions ) {
+				for ( FunctionType const * const funType : functions ) {
 					std::string mangleName = mangleAdapterName( funType, scopeTyVars );
 					if ( adapters.find( mangleName ) == adapters.end() ) {
 						std::string adapterName = makeAdapterName( mangleName );
@@ -793,7 +793,7 @@ namespace GenPoly {
 			funcType->get_returnVals().clear();
 		}
 
-		FunctionType *makeAdapterType( FunctionType *adaptee, const TyVarMap &tyVars ) {
+		FunctionType *makeAdapterType( FunctionType const *adaptee, const TyVarMap &tyVars ) {
 			// actually make the adapter type
 			FunctionType *adapter = adaptee->clone();
 			if ( isDynRet( adapter, tyVars ) ) {
@@ -803,7 +803,11 @@ namespace GenPoly {
 			return adapter;
 		}
 
-		Expression *makeAdapterArg( DeclarationWithType *param, DeclarationWithType *arg, DeclarationWithType *realParam, const TyVarMap &tyVars ) {
+		Expression *makeAdapterArg(
+				DeclarationWithType *param,
+				DeclarationWithType const *arg,
+				DeclarationWithType const *realParam,
+				const TyVarMap &tyVars ) {
 			assert( param );
 			assert( arg );
 			if ( isPolyType( realParam->get_type(), tyVars )
@@ -816,7 +820,13 @@ namespace GenPoly {
 			return new VariableExpr( param );
 		}
 
-		void addAdapterParams( ApplicationExpr *adapteeApp, std::list< DeclarationWithType *>::iterator arg, std::list< DeclarationWithType *>::iterator param, std::list< DeclarationWithType *>::iterator paramEnd, std::list< DeclarationWithType *>::iterator realParam, const TyVarMap &tyVars ) {
+		void addAdapterParams(
+				ApplicationExpr *adapteeApp,
+				std::list< DeclarationWithType *>::const_iterator arg,
+				std::list< DeclarationWithType *>::const_iterator param,
+				std::list< DeclarationWithType *>::const_iterator paramEnd,
+				std::list< DeclarationWithType *>::const_iterator realParam,
+				const TyVarMap &tyVars ) {
 			UniqueName paramNamer( "_p" );
 			for ( ; param != paramEnd; ++param, ++arg, ++realParam ) {
 				if ( (*param)->get_name() == "" ) {
@@ -827,7 +837,7 @@ namespace GenPoly {
 			} // for
 		}
 
-		FunctionDecl *Pass1::makeAdapter( FunctionType *adaptee, FunctionType *realType, const std::string &mangleName, const TyVarMap &tyVars ) {
+		FunctionDecl *Pass1::makeAdapter( FunctionType const *adaptee, FunctionType *realType, const std::string &mangleName, const TyVarMap &tyVars ) {
 			FunctionType *adapterType = makeAdapterType( adaptee, tyVars );
 			adapterType = ScrubTyVars::scrub( adapterType, tyVars );
 			DeclarationWithType *adapteeDecl = adapterType->get_parameters().front();
@@ -844,29 +854,29 @@ namespace GenPoly {
 			ApplicationExpr *adapteeApp = new ApplicationExpr( new CastExpr( new VariableExpr( adapteeDecl ), new PointerType( Type::Qualifiers(), realType ) ) );
 			Statement *bodyStmt;
 
-			Type::ForallList::iterator tyArg = realType->get_forall().begin();
-			Type::ForallList::iterator tyParam = adapterType->get_forall().begin();
-			Type::ForallList::iterator realTyParam = adaptee->get_forall().begin();
+			Type::ForallList::const_iterator tyArg = realType->forall.begin();
+			Type::ForallList::const_iterator tyParam = adapterType->forall.begin();
+			Type::ForallList::const_iterator realTyParam = adaptee->forall.begin();
 			for ( ; tyParam != adapterType->get_forall().end(); ++tyArg, ++tyParam, ++realTyParam ) {
 				assert( tyArg != realType->get_forall().end() );
-				std::list< DeclarationWithType *>::iterator assertArg = (*tyArg)->get_assertions().begin();
-				std::list< DeclarationWithType *>::iterator assertParam = (*tyParam)->get_assertions().begin();
-				std::list< DeclarationWithType *>::iterator realAssertParam = (*realTyParam)->get_assertions().begin();
+				std::list< DeclarationWithType *>::const_iterator assertArg = (*tyArg)->get_assertions().begin();
+				std::list< DeclarationWithType *>::const_iterator assertParam = (*tyParam)->get_assertions().begin();
+				std::list< DeclarationWithType *>::const_iterator realAssertParam = (*realTyParam)->get_assertions().begin();
 				for ( ; assertParam != (*tyParam)->get_assertions().end(); ++assertArg, ++assertParam, ++realAssertParam ) {
 					assert( assertArg != (*tyArg)->get_assertions().end() );
 					adapteeApp->get_args().push_back( makeAdapterArg( *assertParam, *assertArg, *realAssertParam, tyVars ) );
 				} // for
 			} // for
 
-			std::list< DeclarationWithType *>::iterator arg = realType->get_parameters().begin();
-			std::list< DeclarationWithType *>::iterator param = adapterType->get_parameters().begin();
-			std::list< DeclarationWithType *>::iterator realParam = adaptee->get_parameters().begin();
+			std::list< DeclarationWithType *>::const_iterator arg = realType->parameters.begin();
+			std::list< DeclarationWithType *>::const_iterator param = adapterType->parameters.begin();
+			std::list< DeclarationWithType *>::const_iterator realParam = adaptee->parameters.begin();
 			param++;		// skip adaptee parameter in the adapter type
 			if ( realType->get_returnVals().empty() ) {
 				// void return
 				addAdapterParams( adapteeApp, arg, param, adapterType->get_parameters().end(), realParam, tyVars );
 				bodyStmt = new ExprStmt( adapteeApp );
-			} else if ( isDynType( adaptee->get_returnVals().front()->get_type(), tyVars ) ) {
+			} else if ( isDynType( adaptee->returnVals.front()->get_type(), tyVars ) ) {
 				// return type T
 				if ( (*param)->get_name() == "" ) {
 					(*param)->set_name( "_ret" );
@@ -891,7 +901,7 @@ namespace GenPoly {
 
 		void Pass1::passAdapters( ApplicationExpr * appExpr, FunctionType * functionType, const TyVarMap & exprTyVars ) {
 			// collect a list of function types passed as parameters or implicit parameters (assertions)
-			std::list< FunctionType*> functions;
+			std::list<FunctionType const *> functions;
 			for ( TypeDecl * const tyVar : functionType->get_forall() ) {
 				for ( DeclarationWithType * const assert : tyVar->get_assertions() ) {
 					findFunction( assert->get_type(), functions, exprTyVars, needsAdapter );
@@ -905,7 +915,7 @@ namespace GenPoly {
 			// after applying substitutions, since two different parameter types may be unified to the same type
 			std::set< std::string > adaptersDone;
 
-			for ( FunctionType * const funType : functions ) {
+			for ( FunctionType const * const funType : functions ) {
 				FunctionType *originalFunction = funType->clone();
 				FunctionType *realFunction = funType->clone();
 				std::string mangleName = SymTab::Mangler::mangle( realFunction );
@@ -939,12 +949,7 @@ namespace GenPoly {
 		} // passAdapters
 
 		Expression *makeIncrDecrExpr( ApplicationExpr *appExpr, Type *polyType, bool isIncr ) {
-			NameExpr *opExpr;
-			if ( isIncr ) {
-				opExpr = new NameExpr( "?+=?" );
-			} else {
-				opExpr = new NameExpr( "?-=?" );
-			} // if
+			NameExpr *opExpr = new NameExpr( ( isIncr ) ? "?+=?" : "?-=?" );
 			UntypedExpr *addAssign = new UntypedExpr( opExpr );
 			if ( AddressExpr *address = dynamic_cast< AddressExpr *>( appExpr->get_args().front() ) ) {
 				addAssign->get_args().push_back( address->get_arg() );
@@ -1145,9 +1150,9 @@ namespace GenPoly {
 			return ret;
 		}
 
-		bool isPolyDeref( UntypedExpr * expr, TyVarMap const & scopeTyVars, TypeSubstitution const * env ) {
+		bool isPolyDeref( UntypedExpr const * expr, TyVarMap const & scopeTyVars, TypeSubstitution const * env ) {
 			if ( expr->result && isPolyType( expr->result, scopeTyVars, env ) ) {
-				if ( NameExpr *name = dynamic_cast< NameExpr *>( expr->function ) ) {
+				if ( auto name = dynamic_cast<NameExpr const *>( expr->function ) ) {
 					if ( name->name == "*?" ) {
 						return true;
 					} // if
@@ -1228,14 +1233,14 @@ namespace GenPoly {
 
 		void Pass2::addAdapters( FunctionType *functionType ) {
 			std::list< DeclarationWithType *> &paramList = functionType->parameters;
-			std::list< FunctionType *> functions;
+			std::list< FunctionType const *> functions;
 			for ( DeclarationWithType * const arg : functionType->parameters ) {
 				Type *orig = arg->get_type();
 				findAndReplaceFunction( orig, functions, scopeTyVars, needsAdapter );
 				arg->set_type( orig );
 			}
 			std::set< std::string > adaptersDone;
-			for ( FunctionType * const funType : functions ) {
+			for ( FunctionType const * const funType : functions ) {
 				std::string mangleName = mangleAdapterName( funType, scopeTyVars );
 				if ( adaptersDone.find( mangleName ) == adaptersDone.end() ) {
 					std::string adapterName = makeAdapterName( mangleName );
@@ -1470,7 +1475,7 @@ namespace GenPoly {
 		}
 
 		/// converts polymorphic type T into a suitable monomorphic representation, currently: __attribute__((aligned(8)) char[size_T]
-		Type * polyToMonoType( Type * declType ) {
+		Type * polyToMonoType( Type const * declType ) {
 			Type * charType = new BasicType( Type::Qualifiers(), BasicType::Kind::Char);
 			Expression * size = new NameExpr( sizeofName( mangleType(declType) ) );
 			Attribute * aligned = new Attribute( "aligned", std::list<Expression*>{ new ConstantExpr( Constant::from_int(8) ) } );
@@ -1567,7 +1572,7 @@ namespace GenPoly {
 		}
 
 		/// Returns an index expression into the offset array for a type
-		Expression *makeOffsetIndex( Type *objectType, long i ) {
+		Expression *makeOffsetIndex( Type const *objectType, long i ) {
 			ConstantExpr *fieldIndex = new ConstantExpr( Constant::from_ulong( i ) );
 			UntypedExpr *fieldOffset = new UntypedExpr( new NameExpr( "?[?]" ) );
 			fieldOffset->get_args().push_back( new NameExpr( offsetofName( mangleType( objectType ) ) ) );
@@ -1674,7 +1679,7 @@ namespace GenPoly {
 		}
 
 		/// returns true if any of the otype parameters have a dynamic layout and puts all otype parameters in the output list
-		bool findGenericParams( std::list< TypeDecl* > &baseParams, std::list< Expression* > &typeParams, std::list< Type* > &out ) {
+		bool findGenericParams( std::list< TypeDecl* > const &baseParams, std::list< Expression* > const &typeParams, std::list< Type* > &out ) {
 			bool hasDynamicLayout = false;
 
 			std::list< TypeDecl* >::const_iterator baseParam = baseParams.begin();
@@ -1694,23 +1699,23 @@ namespace GenPoly {
 			return hasDynamicLayout;
 		}
 
-		bool PolyGenericCalculator::findGeneric( Type *ty ) {
+		bool PolyGenericCalculator::findGeneric( Type const *ty ) {
 			ty = replaceTypeInst( ty, env );
 
-			if ( TypeInstType *typeInst = dynamic_cast< TypeInstType* >( ty ) ) {
+			if ( auto typeInst = dynamic_cast< TypeInstType const * >( ty ) ) {
 				if ( scopeTyVars.find( typeInst->get_name() ) != scopeTyVars.end() ) {
 					// NOTE assumes here that getting put in the scopeTyVars included having the layout variables set
 					return true;
 				}
 				return false;
-			} else if ( StructInstType *structTy = dynamic_cast< StructInstType* >( ty ) ) {
+			} else if ( auto structTy = dynamic_cast< StructInstType const * >( ty ) ) {
 				// check if this type already has a layout generated for it
 				std::string typeName = mangleType( ty );
 				if ( knownLayouts.find( typeName ) != knownLayouts.end() ) return true;
 
 				// check if any of the type parameters have dynamic layout; if none do, this type is (or will be) monomorphized
 				std::list< Type* > otypeParams;
-				if ( ! findGenericParams( *structTy->get_baseParameters(), structTy->get_parameters(), otypeParams ) ) return false;
+				if ( ! findGenericParams( *structTy->get_baseParameters(), structTy->parameters, otypeParams ) ) return false;
 
 				// insert local variables for layout and generate call to layout function
 				knownLayouts.insert( typeName );  // done early so as not to interfere with the later addition of parameters to the layout call
@@ -1740,14 +1745,14 @@ namespace GenPoly {
 				// std::cout << "TRUE 2" << std::endl;
 
 				return true;
-			} else if ( UnionInstType *unionTy = dynamic_cast< UnionInstType* >( ty ) ) {
+			} else if ( auto unionTy = dynamic_cast< UnionInstType const * >( ty ) ) {
 				// check if this type already has a layout generated for it
 				std::string typeName = mangleType( ty );
 				if ( knownLayouts.find( typeName ) != knownLayouts.end() ) return true;
 
 				// check if any of the type parameters have dynamic layout; if none do, this type is (or will be) monomorphized
 				std::list< Type* > otypeParams;
-				if ( ! findGenericParams( *unionTy->get_baseParameters(), unionTy->get_parameters(), otypeParams ) ) return false;
+				if ( ! findGenericParams( *unionTy->get_baseParameters(), unionTy->parameters, otypeParams ) ) return false;
 
 				// insert local variables for layout and generate call to layout function
 				knownLayouts.insert( typeName );  // done early so as not to interfere with the later addition of parameters to the layout call

@@ -33,6 +33,7 @@ namespace GenPoly {
 
 	/// Replaces a TypeInstType by its referrent in the environment, if applicable
 	Type* replaceTypeInst( Type* type, const TypeSubstitution* env );
+	const Type* replaceTypeInst( const Type* type, const TypeSubstitution* env );
 	const ast::Type * replaceTypeInst( const ast::Type *, const ast::TypeSubstitution * );
 
 	/// returns polymorphic type if is polymorphic type, NULL otherwise; will look up substitution in env if provided
@@ -115,7 +116,7 @@ namespace GenPoly {
 	void printTyVarMap( std::ostream &os, const TyVarMap &tyVarMap );
 
 	/// Gets the mangled name of this type; alias for SymTab::Mangler::mangleType().
-	inline std::string mangleType( Type *ty ) { return SymTab::Mangler::mangleType( ty ); }
+	inline std::string mangleType( const Type *ty ) { return SymTab::Mangler::mangleType( ty ); }
 
 	/// Gets the name of the sizeof parameter for the type, given its mangled name
 	inline std::string sizeofName( const std::string &name ) { return std::string( "_sizeof_" ) + name; }

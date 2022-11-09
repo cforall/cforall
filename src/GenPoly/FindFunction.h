@@ -26,9 +26,9 @@ namespace GenPoly {
 	typedef bool (*FindFunctionPredicate)( FunctionType*, const TyVarMap& );
 
 	/// recursively walk `type`, placing all functions that match `predicate` under `tyVars` into `functions`
-	void findFunction( Type *type, std::list< FunctionType* > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate );
+	void findFunction( Type *type, std::list< FunctionType const * > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate );
 	/// like `findFunction`, but also replaces the function type with void ()(void)
-	void findAndReplaceFunction( Type *&type, std::list< FunctionType* > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate );
+	void findAndReplaceFunction( Type *&type, std::list< FunctionType const * > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate );
 } // namespace GenPoly
 
 // Local Variables: //

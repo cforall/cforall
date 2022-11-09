@@ -28,7 +28,7 @@
 namespace GenPoly {
 	class FindFunction : public WithGuards, public WithVisitorRef<FindFunction>, public WithShortCircuiting {
 	  public:
-		FindFunction( std::list< FunctionType* > &functions, const TyVarMap &tyVars, bool replaceMode, FindFunctionPredicate predicate );
+		FindFunction( std::list< FunctionType const* > &functions, const TyVarMap &tyVars, bool replaceMode, FindFunctionPredicate predicate );
 
 		void premutate( FunctionType * functionType );
 		Type * postmutate( FunctionType * functionType );
@@ -36,23 +36,23 @@ namespace GenPoly {
 	  private:
 		void handleForall( const Type::ForallList &forall );
 
-		std::list< FunctionType* > &functions;
+		std::list< FunctionType const * > & functions;
 		TyVarMap tyVars;
 		bool replaceMode;
 		FindFunctionPredicate predicate;
 	};
 
-	void findFunction( Type *type, std::list< FunctionType* > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate ) {
+	void findFunction( Type *type, std::list< FunctionType const * > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate ) {
 		PassVisitor<FindFunction> finder( functions, tyVars, false, predicate );
 		type->acceptMutator( finder );
 	}
 
-	void findAndReplaceFunction( Type *&type, std::list< FunctionType* > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate ) {
+	void findAndReplaceFunction( Type *&type, std::list< FunctionType const * > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate ) {
 		PassVisitor<FindFunction> finder( functions, tyVars, true, predicate );
 		type = type->acceptMutator( finder );
 	}
 
-	FindFunction::FindFunction( std::list< FunctionType* > &functions, const TyVarMap &tyVars, bool replaceMode, FindFunctionPredicate predicate )
+	FindFunction::FindFunction( std::list< FunctionType const * > &functions, const TyVarMap &tyVars, bool replaceMode, FindFunctionPredicate predicate )
 		: functions( functions ), tyVars( tyVars ), replaceMode( replaceMode ), predicate( predicate ) {
 	}
 
