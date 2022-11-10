@@ -451,49 +451,77 @@ OutType map_range( const Range& range, Functor&& functor ) {
 }
 
 // -----------------------------------------------------------------------------
-// Helper struct and function to support
-// for ( val : group_iterate( container1, container2, ... ) ) {}
-// syntax to have a for each that iterates multiple containers of the same length
-// TODO: update to use variadic arguments
+// Helper struct and function to support:
+// for ( auto val : group_iterate( container1, container2, ... ) ) { ... }
+// This iteraters through multiple containers of the same size.
 
-template< typename T1, typename T2 >
-struct group_iterate_t {
-private:
-	std::tuple<T1, T2> args;
-public:
-	group_iterate_t( bool skipBoundsCheck, const T1 & v1, const T2 & v2 ) : args(v1, v2) {
-		assertf(skipBoundsCheck || v1.size() == v2.size(), "group iteration requires containers of the same size: <%zd, %zd>.", v1.size(), v2.size());
-	};
+template<typename... Args>
+class group_iterate_t {
+	using Iterables = std::tuple<Args...>;
+	Iterables iterables;
 
-	typedef std::tuple<decltype(*std::get<0>(args).begin()), decltype(*std::get<1>(args).begin())> value_type;
-	typedef decltype(std::get<0>(args).begin()) T1Iter;
-	typedef decltype(std::get<1>(args).begin()) T2Iter;
+	template<size_t I> using Iter = decltype(std::get<I>(iterables).begin());
+	template<size_t I> using Data = decltype(*std::get<I>(iterables).begin());
+	template<typename> struct base_iterator;
 
-	struct iterator {
-		typedef std::tuple<T1Iter, T2Iter> IterTuple;
-		IterTuple it;
-		iterator( T1Iter i1, T2Iter i2 ) : it( i1, i2 ) {}
-		iterator operator++() {
-			return iterator( ++std::get<0>(it), ++std::get<1>(it) );
+	template<std::size_t... Is>
+	struct base_iterator<std::integer_sequence<std::size_t, Is...>> {
+		using value_type = std::tuple< Data<Is>... >;
+		std::tuple<Iter<Is>...> iterators;
+
+		base_iterator( Iter<Is>... is ) : iterators( is... ) {}
+		base_iterator operator++() {
+			return base_iterator( ++std::get<Is>( iterators )... );
 		}
-		bool operator!=( const iterator &other ) const { return it != other.it; }
-		value_type operator*() const { return std::tie( *std::get<0>(it), *std::get<1>(it) ); }
+		bool operator!=( const base_iterator& other ) const {
+			return iterators != other.iterators;
+		}
+		value_type operator*() const {
+			return std::tie( *std::get<Is>( iterators )... );
+		}
+
+		static base_iterator make_begin( Iterables & data ) {
+			return base_iterator( std::get<Is>( data ).begin()... );
+		}
+		static base_iterator make_end( Iterables & data ) {
+			return base_iterator( std::get<Is>( data ).end()... );
+		}
 	};
 
-	iterator begin() { return iterator( std::get<0>(args).begin(), std::get<1>(args).begin() ); }
-	iterator end() { return iterator( std::get<0>(args).end(), std::get<1>(args).end() ); }
+public:
+	group_iterate_t( const Args &... args ) : iterables( args... ) {}
+
+	using iterator = base_iterator<decltype(
+		std::make_integer_sequence<std::size_t, sizeof...(Args)>())>;
+
+	iterator begin() { return iterator::make_begin( iterables ); }
+	iterator end() { return iterator::make_end( iterables ); }
 };
 
-/// performs bounds check to ensure that all arguments are of the same length.
-template< typename... Args >
-group_iterate_t<Args...> group_iterate( Args &&... args ) {
-	return group_iterate_t<Args...>(false, std::forward<Args>( args )...);
+// Helpers for the bounds checks (the non-varatic part of group_iterate):
+static inline void runGroupBoundsCheck(size_t size0, size_t size1) {
+	assertf( size0 == size1,
+		"group iteration requires containers of the same size: <%zd, %zd>.",
+		size0, size1 );
 }
 
-/// does not perform a bounds check - requires user to ensure that iteration terminates when appropriate.
+static inline void runGroupBoundsCheck(size_t size0, size_t size1, size_t size2) {
+	assertf( size0 == size1 && size1 == size2,
+		"group iteration requires containers of the same size: <%zd, %zd, %zd>.",
+		size0, size1, size2 );
+}
+
+/// Performs bounds check to ensure that all arguments are of the same length.
+template< typename... Args >
+group_iterate_t<Args...> group_iterate( Args &&... args ) {
+	runGroupBoundsCheck( args.size()... );
+	return group_iterate_t<Args...>( std::forward<Args>( args )... );
+}
+
+/// Does not perform a bounds check - requires user to ensure that iteration terminates when appropriate.
 template< typename... Args >
 group_iterate_t<Args...> unsafe_group_iterate( Args &&... args ) {
-	return group_iterate_t<Args...>(true, std::forward<Args>( args )...);
+	return group_iterate_t<Args...>( std::forward<Args>( args )... );
 }
 
 // -----------------------------------------------------------------------------

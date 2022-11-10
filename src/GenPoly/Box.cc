@@ -581,6 +581,7 @@ namespace GenPoly {
 			FunctionType *funcType = getFunctionType( appExpr->get_function()->get_result() );
 			assert( funcType );
 
+			// These iterators don't advance in unison.
 			std::list< DeclarationWithType* >::const_iterator fnParm = funcType->get_parameters().begin();
 			std::list< Expression* >::const_iterator fnArg = arg;
 			std::set< std::string > seenTypes; ///< names for generic types we've seen
@@ -854,17 +855,15 @@ namespace GenPoly {
 			ApplicationExpr *adapteeApp = new ApplicationExpr( new CastExpr( new VariableExpr( adapteeDecl ), new PointerType( Type::Qualifiers(), realType ) ) );
 			Statement *bodyStmt;
 
-			Type::ForallList::const_iterator tyArg = realType->forall.begin();
-			Type::ForallList::const_iterator tyParam = adapterType->forall.begin();
-			Type::ForallList::const_iterator realTyParam = adaptee->forall.begin();
-			for ( ; tyParam != adapterType->get_forall().end(); ++tyArg, ++tyParam, ++realTyParam ) {
-				assert( tyArg != realType->get_forall().end() );
-				std::list< DeclarationWithType *>::const_iterator assertArg = (*tyArg)->get_assertions().begin();
-				std::list< DeclarationWithType *>::const_iterator assertParam = (*tyParam)->get_assertions().begin();
-				std::list< DeclarationWithType *>::const_iterator realAssertParam = (*realTyParam)->get_assertions().begin();
-				for ( ; assertParam != (*tyParam)->get_assertions().end(); ++assertArg, ++assertParam, ++realAssertParam ) {
-					assert( assertArg != (*tyArg)->get_assertions().end() );
-					adapteeApp->get_args().push_back( makeAdapterArg( *assertParam, *assertArg, *realAssertParam, tyVars ) );
+			for ( auto tys : group_iterate( realType->forall, adapterType->forall, adaptee->forall ) ) {
+				TypeDecl * tyArg = std::get<0>( tys );
+				TypeDecl * tyParam = std::get<1>( tys );
+				TypeDecl * realTyParam = std::get<2>( tys );
+				for ( auto asserts : group_iterate( tyArg->assertions, tyParam->assertions, realTyParam->assertions ) ) {
+					DeclarationWithType * assertArg = std::get<0>( asserts );
+					DeclarationWithType * assertParam = std::get<1>( asserts );
+					DeclarationWithType * realAssertParam = std::get<2>( asserts );
+					adapteeApp->args.push_back( makeAdapterArg( assertParam, assertArg, realAssertParam, tyVars ) );
 				} // for
 			} // for
 
@@ -1092,8 +1091,8 @@ namespace GenPoly {
 
 		Expression *Pass1::postmutate( ApplicationExpr *appExpr ) {
 			// std::cerr << "mutate appExpr: " << InitTweak::getFunctionName( appExpr ) << std::endl;
-			// for ( TyVarMap::iterator i = scopeTyVars.begin(); i != scopeTyVars.end(); ++i ) {
-			// 	std::cerr << i->first << " ";
+			// for ( auto tyVar : scopeTyVars ) {
+			// 	std::cerr << tyVar.first << " ";
 			// }
 			// std::cerr << "\n";
 
@@ -1682,19 +1681,18 @@ namespace GenPoly {
 		bool findGenericParams( std::list< TypeDecl* > const &baseParams, std::list< Expression* > const &typeParams, std::list< Type* > &out ) {
 			bool hasDynamicLayout = false;
 
-			std::list< TypeDecl* >::const_iterator baseParam = baseParams.begin();
-			std::list< Expression* >::const_iterator typeParam = typeParams.begin();
-			for ( ; baseParam != baseParams.end() && typeParam != typeParams.end(); ++baseParam, ++typeParam ) {
+			for ( auto paramPair : group_iterate( baseParams, typeParams ) ) {
+				TypeDecl * baseParam = std::get<0>( paramPair );
+				Expression * typeParam = std::get<1>( paramPair );
 				// skip non-otype parameters
-				if ( ! (*baseParam)->isComplete() ) continue;
-				TypeExpr *typeExpr = dynamic_cast< TypeExpr* >( *typeParam );
+				if ( ! baseParam->isComplete() ) continue;
+				TypeExpr *typeExpr = dynamic_cast< TypeExpr* >( typeParam );
 				assert( typeExpr && "all otype parameters should be type expressions" );
 
 				Type *type = typeExpr->get_type();
 				out.push_back( type );
 				if ( isPolyType( type ) ) hasDynamicLayout = true;
 			}
-			assert( baseParam == baseParams.end() && typeParam == typeParams.end() );
 
 			return hasDynamicLayout;
 		}
@@ -1850,12 +1848,10 @@ namespace GenPoly {
 
 					// build initializer list for offset array
 					std::list< Initializer* > inits;
-					for ( std::list< Declaration* >::const_iterator member = baseMembers.begin(); member != baseMembers.end(); ++member ) {
-						if ( DeclarationWithType *memberDecl = dynamic_cast< DeclarationWithType* >( *member ) ) {
-							inits.push_back( new SingleInit( new OffsetofExpr( ty->clone(), memberDecl ) ) );
-						} else {
-							assertf( false, "Requesting offset of Non-DWT member: %s", toString( *member ).c_str() );
-						}
+					for ( Declaration * const member : baseMembers ) {
+						DeclarationWithType *memberDecl = dynamic_cast< DeclarationWithType* >( member );
+						assertf( memberDecl, "Requesting offset of Non-DWT member: %s", toString( member ).c_str() );
+						inits.push_back( new SingleInit( new OffsetofExpr( ty->clone(), memberDecl ) ) );
 					}
 
 					// build the offset array and replace the pack with a reference to it
