@@ -1046,9 +1046,9 @@ StaticAssertDecl * PassVisitor< pass_type >::mutate( StaticAssertDecl * node ) {
 }
 
 //--------------------------------------------------------------------------
-// InlineValueDecl
+// InlineMemberDecl
 template< typename pass_type >
-void PassVisitor< pass_type >::visit( InlineValueDecl * node ) {
+void PassVisitor< pass_type >::visit( InlineMemberDecl * node ) {
 	VISIT_START( node );
 
 	maybeAccept_impl( node->type, *this );
@@ -1057,7 +1057,7 @@ void PassVisitor< pass_type >::visit( InlineValueDecl * node ) {
 }
 
 template< typename pass_type >
-void PassVisitor< pass_type >::visit( const InlineValueDecl * node ) {
+void PassVisitor< pass_type >::visit( const InlineMemberDecl * node ) {
 	VISIT_START( node );
 
 	maybeAccept_impl( node->type, *this );
@@ -1066,7 +1066,7 @@ void PassVisitor< pass_type >::visit( const InlineValueDecl * node ) {
 }
 
 template< typename pass_type >
-DeclarationWithType * PassVisitor< pass_type >::mutate( InlineValueDecl * node ) {
+DeclarationWithType * PassVisitor< pass_type >::mutate( InlineMemberDecl * node ) {
 	MUTATE_START( node );
 
 	maybeMutate_impl( node->type, *this );

@@ -35,7 +35,7 @@ class Mutator {
 	virtual AsmDecl * mutate( AsmDecl * asmDecl ) = 0;
 	virtual DirectiveDecl * mutate( DirectiveDecl * directiveDecl ) = 0;
 	virtual StaticAssertDecl * mutate( StaticAssertDecl * assertDecl ) = 0;
-	virtual DeclarationWithType * mutate( InlineValueDecl * inlineValueDecl ) = 0;
+	virtual DeclarationWithType * mutate( InlineMemberDecl * InlineMemberDecl ) = 0;
 
 	virtual CompoundStmt * mutate( CompoundStmt * compoundStmt ) = 0;
 	virtual Statement * mutate( ExprStmt * exprStmt ) = 0;

@@ -449,22 +449,22 @@ public:
 };
 
 
-class InlineValueDecl : public DeclarationWithType {
+class InlineMemberDecl : public DeclarationWithType {
 	typedef DeclarationWithType Parent;
   public:
 	Type * type;
 
-	InlineValueDecl( const std::string & name, Type::StorageClasses scs, LinkageSpec::Spec linkage, Type * type,
+	InlineMemberDecl( const std::string & name, Type::StorageClasses scs, LinkageSpec::Spec linkage, Type * type,
 				const std::list< Attribute * > attributes = std::list< Attribute * >(), Type::FuncSpecifiers fs = Type::FuncSpecifiers() );
-	InlineValueDecl( const InlineValueDecl & other );
-	virtual ~InlineValueDecl();
+	InlineMemberDecl( const InlineMemberDecl & other );
+	virtual ~InlineMemberDecl();
 
 	virtual Type * get_type() const override { return type; }
 	virtual void set_type(Type * newType) override { type = newType; }
 
-	static InlineValueDecl * newInlineValueDecl( const std::string & name, Type * type );
+	static InlineMemberDecl * newInlineMemberDecl( const std::string & name, Type * type );
 
-	virtual InlineValueDecl * clone() const override { return new InlineValueDecl( *this ); }
+	virtual InlineMemberDecl * clone() const override { return new InlineMemberDecl( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
 	virtual DeclarationWithType * acceptMutator( Mutator & m )  override { return m.mutate( this ); }

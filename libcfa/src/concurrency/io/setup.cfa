@@ -33,7 +33,6 @@
 	void __cfa_io_start( processor * proc ) {}
 	bool __cfa_io_flush( processor * proc ) { return false; }
 	bool __cfa_io_drain( processor * proc ) __attribute__((nonnull (1))) { return false; }
-	void __cfa_io_idle ( processor * ) __attribute__((nonnull (1))) {}
 	void __cfa_io_stop ( processor * proc ) {}
 
 	io_arbiter$ * create(void) { return 0p; }
@@ -315,47 +314,6 @@
 		^(*proc->io.ctx){};
 		free(proc->io.ctx);
 	}
-
-//=============================================================================================
-// I/O Context Sleep
-//=============================================================================================
-	// static inline void __epoll_ctl(io_context$ & ctx, int op, const char * error) {
-	// 	struct epoll_event ev;
-	// 	ev.events = EPOLLIN | EPOLLONESHOT;
-	// 	ev.data.u64 = (__u64)&ctx;
-	// 	int ret = epoll_ctl(iopoll.epollfd, op, ctx.efd, &ev);
-	// 	if (ret < 0) {
-	// 		abort( "KERNEL ERROR: EPOLL %s - (%d) %s\n", error, (int)errno, strerror(errno) );
-	// 	}
-	// }
-
-	// static void __epoll_register(io_context$ & ctx) {
-	// 	__epoll_ctl(ctx, EPOLL_CTL_ADD, "ADD");
-	// }
-
-	// static void __epoll_unregister(io_context$ & ctx) {
-	// 	// Read the current epoch so we know when to stop
-	// 	size_t curr = __atomic_load_n(&iopoll.epoch, __ATOMIC_SEQ_CST);
-
-	// 	// Remove the fd from the iopoller
-	// 	__epoll_ctl(ctx, EPOLL_CTL_DEL, "REMOVE");
-
-	// 	// Notify the io poller thread of the shutdown
-	// 	iopoll.run = false;
-	// 	sigval val = { 1 };
-	// 	__cfaabi_pthread_sigqueue( iopoll.thrd, SIGUSR1, val );
-
-	// 	// Make sure all this is done
-	// 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
-
-	// 	// Wait for the next epoch
-	// 	while(curr == iopoll.epoch && !iopoll.stopped) Pause();
-	// }
-
-	// void __ioctx_prepare_block(io_context$ & ctx) {
-	// 	__cfadbg_print_safe(io_core, "Kernel I/O - epoll : Re-arming io poller %d (%p)\n", ctx.fd, &ctx);
-	// 	__epoll_ctl(ctx, EPOLL_CTL_MOD, "REARM");
-	// }
 
 
 //=============================================================================================

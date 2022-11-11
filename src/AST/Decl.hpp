@@ -410,11 +410,11 @@ private:
 	MUTATE_FRIEND
 };
 
-class InlineValueDecl final : public DeclWithType {
+class InlineMemberDecl final : public DeclWithType {
 public:
 	ptr<Type> type;
 
-	InlineValueDecl( const CodeLocation & loc, const std::string & name, const Type * type,
+	InlineMemberDecl( const CodeLocation & loc, const std::string & name, const Type * type,
 		Storage::Classes storage = {}, Linkage::Spec linkage = Linkage::Cforall,
 		std::vector< ptr<Attribute> > && attrs = {}, Function::Specs fs = {} )
 	: DeclWithType( loc, name, storage, linkage, std::move(attrs), fs ), type( type ) {}
@@ -424,7 +424,7 @@ public:
 
 	const DeclWithType * accept( Visitor& v ) const override { return v.visit( this ); }
 private:
-	InlineValueDecl * clone() const override { return new InlineValueDecl{ *this }; }
+	InlineMemberDecl * clone() const override { return new InlineMemberDecl{ *this }; }
 	MUTATE_FRIEND
 };
 }

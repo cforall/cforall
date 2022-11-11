@@ -110,7 +110,7 @@ public:
     macro(AsmDecl, AsmDecl) \
     macro(DirectiveDecl, DirectiveDecl) \
     macro(StaticAssertDecl, StaticAssertDecl) \
-    macro(InlineValueDecl, DeclWithType) \
+    macro(InlineMemberDecl, DeclWithType) \
     macro(CompoundStmt, CompoundStmt) \
     macro(ExprStmt, Stmt) \
     macro(AsmStmt, Stmt) \

@@ -140,7 +140,7 @@ public:
 	const ast::AsmDecl *          visit( const ast::AsmDecl              * ) override final;
 	const ast::DirectiveDecl *    visit( const ast::DirectiveDecl        * ) override final;
 	const ast::StaticAssertDecl * visit( const ast::StaticAssertDecl     * ) override final;
-	const ast::DeclWithType	*     visit( const ast::InlineValueDecl      * ) override final;
+	const ast::DeclWithType	*     visit( const ast::InlineMemberDecl      * ) override final;
 	const ast::CompoundStmt *     visit( const ast::CompoundStmt         * ) override final;
 	const ast::Stmt *             visit( const ast::ExprStmt             * ) override final;
 	const ast::Stmt *             visit( const ast::AsmStmt              * ) override final;

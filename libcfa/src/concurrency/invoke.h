@@ -145,11 +145,22 @@ extern "C" {
 	};
 
 	// Link lists fields
-	// instrusive link field for threads
+	// instrusive link field for threads in the ready-queue
 	struct __thread_desc_link {
 		struct thread$ * next;
 		volatile unsigned long long ts;
 	};
+
+	// Link lists fields
+	// instrusive link field for threads in the user_link/cltr_link
+	struct __thread_user_link {
+		#ifdef __cforall
+			inline dlink(thread$);
+		#else
+			struct thread$ * next; struct thread$ * back;
+		#endif
+	};
+	_Static_assert(sizeof(struct __thread_user_link) == 2 * sizeof(struct thread$ *), "__thread_user_link should be consistent in C and Cforall");
 
 	struct thread$ {
 		// Core threading fields
@@ -196,11 +207,11 @@ extern "C" {
 
 		// intrusive link fields, used for locks, monitors and any user defined data structure
 		// default link fields for dlist
-		__cfa_dlink1(thread$) user_link;
+		struct __thread_user_link user_link;
 
 		// secondary intrusive link fields, used for global cluster list
 		// default link fields for dlist
-		__cfa_dlink2(thread$, cltr_link);
+		struct __thread_user_link cltr_link;
 
 		// used to store state between clh lock/unlock
 		volatile bool * clh_prev;
@@ -243,8 +254,14 @@ extern "C" {
 			return result;
 		}
 
-		P9_EMBEDDED(thread$, thread$.cltr_link)
-		P9_EMBEDDED(thread$.cltr_link, dlink(thread$))
+		static inline tytagref(struct __thread_user_link, dlink(thread$)) ?`inner( struct thread$ & this ) {
+			struct __thread_user_link & ib = this.cltr_link;
+			dlink(thread$) & b = ib`inner;
+			tytagref(struct __thread_user_link, dlink(thread$)) result = { b };
+			return result;
+		}
+
+		P9_EMBEDDED(struct __thread_user_link, dlink(thread$))
 
 		static inline void ?{}(__monitor_group_t & this) {
 			(this.data){0p};

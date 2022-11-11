@@ -40,15 +40,6 @@ extern "C" {
 #endif
 }
 
-// Defines whether or not we *want* to use io_uring_enter as the idle_sleep blocking call
-// #define CFA_WANT_IO_URING_IDLE
-
-// Defines whether or not we *can* use io_uring_enter as the idle_sleep blocking call
-#if defined(CFA_WANT_IO_URING_IDLE) && defined(CFA_HAVE_LINUX_IO_URING_H)
-	#if defined(CFA_HAVE_IORING_OP_READ) || (defined(CFA_HAVE_READV) && defined(CFA_HAVE_IORING_OP_READV))
-		#define CFA_WITH_IO_URING_IDLE
-	#endif
-#endif
 // #define READYQ_USE_LINEAR_AVG
 #define READYQ_USE_LOGDBL_AVG
 // #define READYQ_USE_LOGINT_AVG

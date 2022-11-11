@@ -137,11 +137,7 @@ static void mark_awake(__cluster_proc_list & idles, processor & proc);
 
 extern bool __cfa_io_drain( processor * proc ) __attribute__((nonnull (1)));
 extern bool __cfa_io_flush( processor * ) __attribute__((nonnull (1)));
-extern void __cfa_io_idle( processor * ) __attribute__((nonnull (1)));
 
-#if defined(CFA_WITH_IO_URING_IDLE)
-	extern bool __kernel_read(processor * proc, io_future_t & future, iovec &, int fd);
-#endif
 
 extern void __disable_interrupts_hard();
 extern void __enable_interrupts_hard();
@@ -160,13 +156,6 @@ void main(processorCtx_t & runner) {
 
 	processor * this = runner.proc;
 	verify(this);
-
-	/* paranoid */ verify( this->idle_wctx.ftr   != 0p );
-	/* paranoid */ verify( this->idle_wctx.rdbuf != 0p );
-
-	// used for idle sleep when io_uring is present
-	// mark it as already fulfilled so we know if there is a pending request or not
-	this->idle_wctx.ftr->self.ptr = 1p;
 
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p starting\n", this);
 	#if !defined(__CFA_NO_STATISTICS__)
@@ -729,40 +718,36 @@ static void idle_sleep(processor * this) {
 	}
 
 
-	#if !defined(CFA_WITH_IO_URING_IDLE)
-		#if !defined(__CFA_NO_STATISTICS__)
-			if(this->print_halts) {
-				__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl());
-			}
-		#endif
+	#if !defined(__CFA_NO_STATISTICS__)
+		if(this->print_halts) {
+			__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl());
+		}
+	#endif
 
-		__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle_fd);
+	__cfadbg_print_safe(runtime_core, "Kernel : core %p waiting on eventfd %d\n", this, this->idle_fd);
 
-		{
-			eventfd_t val;
-			ssize_t ret = read( this->idle_wctx.evfd, &val, sizeof(val) );
-			if(ret < 0) {
-				switch((int)errno) {
-				case EAGAIN:
-				#if EAGAIN != EWOULDBLOCK
-					case EWOULDBLOCK:
-				#endif
-				case EINTR:
-					// No need to do anything special here, just assume it's a legitimate wake-up
-					break;
-				default:
-					abort( "KERNEL : internal error, read failure on idle eventfd, error(%d) %s.", (int)errno, strerror( (int)errno ) );
-				}
+	{
+		eventfd_t val;
+		ssize_t ret = read( this->idle_wctx.evfd, &val, sizeof(val) );
+		if(ret < 0) {
+			switch((int)errno) {
+			case EAGAIN:
+			#if EAGAIN != EWOULDBLOCK
+				case EWOULDBLOCK:
+			#endif
+			case EINTR:
+				// No need to do anything special here, just assume it's a legitimate wake-up
+				break;
+			default:
+				abort( "KERNEL : internal error, read failure on idle eventfd, error(%d) %s.", (int)errno, strerror( (int)errno ) );
 			}
 		}
+	}
 
-		#if !defined(__CFA_NO_STATISTICS__)
-			if(this->print_halts) {
-				__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl());
-			}
-		#endif
-	#else
-		__cfa_io_idle( this );
+	#if !defined(__CFA_NO_STATISTICS__)
+		if(this->print_halts) {
+			__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl());
+		}
 	#endif
 }
 
@@ -778,6 +763,7 @@ static bool mark_idle(__cluster_proc_list & this, processor & proc) {
 		remove(proc);
 		insert_first(this.idles, proc);
 
+		// update the pointer to the head wait context, which should now point to this proc.
 		__atomic_store_n(&this.fdw, &proc.idle_wctx, __ATOMIC_SEQ_CST);
 	unlock( this );
 	/* paranoid */ verify( ! __preemption_enabled() );
@@ -794,6 +780,7 @@ static void mark_awake(__cluster_proc_list & this, processor & proc) {
 		insert_last(this.actives, proc);
 
 		{
+			// update the pointer to the head wait context
 			struct __fd_waitctx * wctx = 0;
 			if(!this.idles`isEmpty) wctx = &this.idles`first.idle_wctx;
 			__atomic_store_n(&this.fdw, wctx, __ATOMIC_SEQ_CST);

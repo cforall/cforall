@@ -235,8 +235,8 @@ private:
 		return declWithTypePostamble( decl, node );
 	}
 
-	// InlineValueDecl vanish after EnumAndPointerDecay pass so no necessary to implement NewToOld
-	const ast::DeclWithType * visit( const ast::InlineValueDecl * node ) override final {	
+	// InlineMemberDecl vanish after EnumAndPointerDecay pass so no necessary to implement NewToOld
+	const ast::DeclWithType * visit( const ast::InlineMemberDecl * node ) override final {	
 		assert( false );
 		(void) node;
 		return nullptr;
@@ -1868,14 +1868,14 @@ private:
 		this->node = decl;
 	}
 
-	virtual void visit( const InlineValueDecl * old ) override final {
+	virtual void visit( const InlineMemberDecl * old ) override final {
 		if ( inCache( old ) ) {
 			return;
 		}
 		auto&& type = GET_ACCEPT_1(type, Type);
 		auto&& attr = GET_ACCEPT_V(attributes, Attribute);
  
-		auto decl = new ast::InlineValueDecl(
+		auto decl = new ast::InlineMemberDecl(
 			old->location,
 			old->name,
 			type,

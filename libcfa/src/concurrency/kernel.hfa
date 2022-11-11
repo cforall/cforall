@@ -63,19 +63,13 @@ struct __fd_waitctx {
 	// 0 - is the default state
 	// 1 - means the proc should wake-up immediately
 	// FD - means the proc is going asleep and should be woken by writing to the FD.
+	//      The FD value should always be the evfd field just below.
 	volatile int sem;
 
 	// The event FD that corresponds to this processor
 	int evfd;
 
-	// buffer into which the proc will read from evfd
-	// unused if not using io_uring for idle sleep
-	void * rdbuf;
-
-	// future use to track the read of the eventfd
-	// unused if not using io_uring for idle sleep
-	io_future_t * ftr;
-
+	// Used for debugging, should be removed eventually.
 	volatile unsigned long long wake__time;
 	volatile unsigned long long sleep_time;
 	volatile unsigned long long drain_time;
@@ -255,7 +249,7 @@ struct __attribute__((aligned(64))) cluster {
 
 	// List of threads
 	__spinlock_t thread_list_lock;
-	dlist(struct thread$, thread$.cltr_link) threads;
+	dlist(struct thread$, struct __thread_user_link) threads;
 	unsigned int nthreads;
 
 	// Link lists fields

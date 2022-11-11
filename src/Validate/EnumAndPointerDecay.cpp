@@ -43,7 +43,7 @@ ast::EnumDecl const * EnumAndPointerDecayCore::previsit(
 	for ( auto it = decl->members.begin(); it != decl->members.end(); ++it ) {
 		if ( ast::ObjectDecl const * object = (*it).as<ast::ObjectDecl>() ) {
 			buffer.push_back( ast::mutate_field( object, &ast::ObjectDecl::type, new ast::EnumInstType( decl, ast::CV::Const ) ) );
-		} else if ( ast::InlineValueDecl const * value = (*it).as<ast::InlineValueDecl>() ) {
+		} else if ( ast::InlineMemberDecl const * value = (*it).as<ast::InlineMemberDecl>() ) {
 			if ( auto targetEnum = symtab.lookupEnum( value->name ) ) {
 				for ( auto singleMember : targetEnum->members ) {
 					auto copyingMember = singleMember.as<ast::ObjectDecl>();

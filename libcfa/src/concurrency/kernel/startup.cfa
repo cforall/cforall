@@ -114,9 +114,6 @@ KERNEL_STORAGE(cluster,	             mainCluster);
 KERNEL_STORAGE(processor,            mainProcessor);
 KERNEL_STORAGE(thread$,	             mainThread);
 KERNEL_STORAGE(__stack_t,            mainThreadCtx);
-// KERNEL_STORAGE(__scheduler_RWLock_t, __scheduler_lock);
-KERNEL_STORAGE(eventfd_t,            mainIdleEventFd);
-KERNEL_STORAGE(io_future_t,          mainIdleFuture);
 #if !defined(__CFA_NO_STATISTICS__)
 KERNEL_STORAGE(__stats_t, mainProcStats);
 #endif
@@ -233,10 +230,6 @@ static void __kernel_startup(void) {
 	// (the coroutine that contains the processing control flow)
 	mainProcessor = (processor *)&storage_mainProcessor;
 	(*mainProcessor){};
-
-	mainProcessor->idle_wctx.rdbuf = &storage_mainIdleEventFd;
-	mainProcessor->idle_wctx.ftr   = (io_future_t*)&storage_mainIdleFuture;
-	/* paranoid */ verify( sizeof(storage_mainIdleEventFd) == sizeof(eventfd_t) );
 
 	__cfa_io_start( mainProcessor );
 	register_tls( mainProcessor );
@@ -382,13 +375,6 @@ static void * __invoke_processor(void * arg) {
 
 	__cfa_io_start( proc );
 	register_tls( proc );
-
-	// used for idle sleep when io_uring is present
-	io_future_t future;
-	eventfd_t idle_buf;
-	proc->idle_wctx.ftr = &future;
-	proc->idle_wctx.rdbuf = &idle_buf;
-
 
 	// SKULLDUGGERY: We want to create a context for the processor coroutine
 	// which is needed for the 2-step context switch. However, there is no reason
@@ -744,7 +730,7 @@ void unregister( cluster * cltr, thread$ & thrd ) {
 	lock  (cltr->thread_list_lock __cfaabi_dbg_ctx2);
 	{
 		tytagref( dlink(thread$), dlink(thread$) ) ?`inner( thread$ & this ) = void;
-		with( DLINK_VIA( thread$, thread$.cltr_link ) )
+		with( DLINK_VIA( thread$, struct __thread_user_link ) )
 			remove( thrd );
 		cltr->nthreads -= 1;
 	}

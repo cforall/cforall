@@ -223,7 +223,7 @@ am__objects_8 = SynTree/AddressExpr.$(OBJEXT) \
 	SynTree/DeclReplacer.$(OBJEXT) SynTree/DeclStmt.$(OBJEXT) \
 	SynTree/Expression.$(OBJEXT) SynTree/FunctionDecl.$(OBJEXT) \
 	SynTree/FunctionType.$(OBJEXT) SynTree/Initializer.$(OBJEXT) \
-	SynTree/InlineValueDecl.$(OBJEXT) \
+	SynTree/InlineMemberDecl.$(OBJEXT) \
 	SynTree/LinkageSpec.$(OBJEXT) SynTree/NamedTypeDecl.$(OBJEXT) \
 	SynTree/ObjectDecl.$(OBJEXT) SynTree/PointerType.$(OBJEXT) \
 	SynTree/ReferenceToType.$(OBJEXT) \
@@ -448,7 +448,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	SynTree/$(DEPDIR)/FunctionDecl.Po \
 	SynTree/$(DEPDIR)/FunctionType.Po \
 	SynTree/$(DEPDIR)/Initializer.Po \
-	SynTree/$(DEPDIR)/InlineValueDecl.Po \
+	SynTree/$(DEPDIR)/InlineMemberDecl.Po \
 	SynTree/$(DEPDIR)/LinkageSpec.Po \
 	SynTree/$(DEPDIR)/NamedTypeDecl.Po \
 	SynTree/$(DEPDIR)/ObjectDecl.Po \
@@ -1021,7 +1021,7 @@ SRC_SYNTREE = \
       SynTree/FunctionType.cc \
       SynTree/Initializer.cc \
       SynTree/Initializer.h \
-      SynTree/InlineValueDecl.cc \
+      SynTree/InlineMemberDecl.cc \
       SynTree/Label.h \
       SynTree/LinkageSpec.cc \
       SynTree/LinkageSpec.h \
@@ -1388,7 +1388,7 @@ SynTree/FunctionType.$(OBJEXT): SynTree/$(am__dirstamp) \
 	SynTree/$(DEPDIR)/$(am__dirstamp)
 SynTree/Initializer.$(OBJEXT): SynTree/$(am__dirstamp) \
 	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/InlineValueDecl.$(OBJEXT): SynTree/$(am__dirstamp) \
+SynTree/InlineMemberDecl.$(OBJEXT): SynTree/$(am__dirstamp) \
 	SynTree/$(DEPDIR)/$(am__dirstamp)
 SynTree/LinkageSpec.$(OBJEXT): SynTree/$(am__dirstamp) \
 	SynTree/$(DEPDIR)/$(am__dirstamp)
@@ -1818,7 +1818,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/FunctionDecl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/FunctionType.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/Initializer.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/InlineValueDecl.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/InlineMemberDecl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/LinkageSpec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/NamedTypeDecl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/ObjectDecl.Po@am__quote@ # am--include-marker
@@ -2247,7 +2247,7 @@ distclean: distclean-am
 	-rm -f SynTree/$(DEPDIR)/FunctionDecl.Po
 	-rm -f SynTree/$(DEPDIR)/FunctionType.Po
 	-rm -f SynTree/$(DEPDIR)/Initializer.Po
-	-rm -f SynTree/$(DEPDIR)/InlineValueDecl.Po
+	-rm -f SynTree/$(DEPDIR)/InlineMemberDecl.Po
 	-rm -f SynTree/$(DEPDIR)/LinkageSpec.Po
 	-rm -f SynTree/$(DEPDIR)/NamedTypeDecl.Po
 	-rm -f SynTree/$(DEPDIR)/ObjectDecl.Po
@@ -2484,7 +2484,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f SynTree/$(DEPDIR)/FunctionDecl.Po
 	-rm -f SynTree/$(DEPDIR)/FunctionType.Po
 	-rm -f SynTree/$(DEPDIR)/Initializer.Po
-	-rm -f SynTree/$(DEPDIR)/InlineValueDecl.Po
+	-rm -f SynTree/$(DEPDIR)/InlineMemberDecl.Po
 	-rm -f SynTree/$(DEPDIR)/LinkageSpec.Po
 	-rm -f SynTree/$(DEPDIR)/NamedTypeDecl.Po
 	-rm -f SynTree/$(DEPDIR)/ObjectDecl.Po

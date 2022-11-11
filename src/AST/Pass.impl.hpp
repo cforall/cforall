@@ -804,13 +804,13 @@ const ast::StaticAssertDecl * ast::Pass< core_t >::visit( const ast::StaticAsser
 //--------------------------------------------------------------------------
 // DeclWithType
 template< typename core_t >
-const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::InlineValueDecl * node ) {
+const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::InlineMemberDecl * node ) {
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
 		{
 			guard_symtab guard { *this };
-			maybe_accept( node, &InlineValueDecl::type );
+			maybe_accept( node, &InlineMemberDecl::type );
 		}
 	}
 

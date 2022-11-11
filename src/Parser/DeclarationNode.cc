@@ -26,7 +26,7 @@
 #include "Parser/ParseNode.h"      // for DeclarationNode, ExpressionNode
 #include "SynTree/LinkageSpec.h"   // for Spec, linkageName, Cforall
 #include "SynTree/Attribute.h"     // for Attribute
-#include "SynTree/Declaration.h"   // for TypeDecl, ObjectDecl, InlineValueDecl, Declaration
+#include "SynTree/Declaration.h"   // for TypeDecl, ObjectDecl, InlineMemberDecl, Declaration
 #include "SynTree/Expression.h"    // for Expression, ConstantExpr
 #include "SynTree/Statement.h"     // for AsmStmt
 #include "SynTree/Type.h"          // for Type, Type::StorageClasses, Type::...
@@ -1165,7 +1165,7 @@ Declaration * DeclarationNode::build() const {
 		SemanticError( this, "invalid function specifier for " );
 	} // if
 	if ( enumInLine ) {
-		return new InlineValueDecl( *name, storageClasses, linkage, nullptr );
+		return new InlineMemberDecl( *name, storageClasses, linkage, nullptr );
 	} // if
 	assertf( name, "ObjectDecl must a have name\n" );
 	return (new ObjectDecl( *name, storageClasses, linkage, maybeBuild< Expression >( bitfieldWidth ), nullptr, maybeBuild< Initializer >( initializer ) ))->set_asmName( asmName )->set_extension( extension );

@@ -80,8 +80,8 @@ public:
 	virtual void visit( const DirectiveDecl * directiveDecl ) override final;
 	virtual void visit( StaticAssertDecl * assertDecl ) override final;
 	virtual void visit( const StaticAssertDecl * assertDecl ) override final;
-	virtual void visit( InlineValueDecl * valueDecl ) override final;
-	virtual void visit( const InlineValueDecl * valueDecl ) override final;
+	virtual void visit( InlineMemberDecl * valueDecl ) override final;
+	virtual void visit( const InlineMemberDecl * valueDecl ) override final;
 
 	virtual void visit( CompoundStmt * compoundStmt ) override final;
 	virtual void visit( const CompoundStmt * compoundStmt ) override final;
@@ -274,7 +274,7 @@ public:
 	virtual AsmDecl * mutate( AsmDecl * asmDecl ) override final;
 	virtual DirectiveDecl * mutate( DirectiveDecl * directiveDecl ) override final;
 	virtual StaticAssertDecl * mutate( StaticAssertDecl * assertDecl ) override final;
-	virtual DeclarationWithType * mutate( InlineValueDecl * valueDecl ) override final;
+	virtual DeclarationWithType * mutate( InlineMemberDecl * valueDecl ) override final;
 
 	virtual CompoundStmt * mutate( CompoundStmt * compoundStmt ) override final;
 	virtual Statement * mutate( ExprStmt * exprStmt ) override final;
