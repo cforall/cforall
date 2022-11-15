@@ -1763,6 +1763,7 @@ private:
 			GET_ACCEPT_V(attributes, Attribute),
 			{ old->linkage.val },
 			GET_ACCEPT_1(base, Type),
+			old->hide == EnumDecl::EnumHiding::Hide ? ast::EnumDecl::EnumHiding::Hide : ast::EnumDecl::EnumHiding::Visible,
 			old->enumValues
 		);
 		cache.emplace( old, decl );
@@ -1874,7 +1875,7 @@ private:
 		}
 		auto&& type = GET_ACCEPT_1(type, Type);
 		auto&& attr = GET_ACCEPT_V(attributes, Attribute);
- 
+
 		auto decl = new ast::InlineMemberDecl(
 			old->location,
 			old->name,

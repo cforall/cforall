@@ -2557,10 +2557,10 @@ enum_type:
 	| ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3 ); }
 	  hide_opt '{' enumerator_list comma_opt '}'
-	  { $$ = DeclarationNode::newEnum( $3, $7, true, false )->addQualifiers( $2 ); }
+	  { $$ = DeclarationNode::newEnum( $3, $7, true, false, nullptr, $5 )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt typedef_name				// unqualified type name
 	  hide_opt '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false )->addQualifiers( $2 ); }
+		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false, nullptr, $4 )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 	 	{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 )
@@ -2579,22 +2579,22 @@ enum_type:
 		}
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $6, $11, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6, $11, true, true, $3, $9 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
 	| ENUM '(' ')' attribute_list_opt identifier attribute_list_opt
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $5, $9, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
+			$$ = DeclarationNode::newEnum( $5, $9, true, true, nullptr, $7 )->addQualifiers( $4 )->addQualifiers( $6 );
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $6->name, $10, true, true, $3 )->addQualifiers( $5 )->addQualifiers( $7 );
+			$$ = DeclarationNode::newEnum( $6->name, $10, true, true, $3, $8 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
 	| ENUM '(' ')' attribute_list_opt typedef_name attribute_list_opt
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{
-			$$ = DeclarationNode::newEnum( $5->name, $9, true, true, nullptr )->addQualifiers( $4 )->addQualifiers( $6 );
+			$$ = DeclarationNode::newEnum( $5->name, $9, true, true, nullptr, $7 )->addQualifiers( $4 )->addQualifiers( $6 );
 		}
 	| enum_type_nobody
 	;

@@ -685,11 +685,18 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::EnumDecl * node ) {
 	__pass::symtab::addEnum( core, 0, node );
 
 	if ( __visit_children() ) {
-		// unlike structs, traits, and unions, enums inject their members into the global scope
-		maybe_accept( node, &EnumDecl::base );
-		maybe_accept( node, &EnumDecl::params     );
-		maybe_accept( node, &EnumDecl::members    );
-		maybe_accept( node, &EnumDecl::attributes );
+		if ( node->hide == ast::EnumDecl::EnumHiding::Hide ) {
+			guard_symtab guard { *this };
+			maybe_accept( node, &EnumDecl::base );
+			maybe_accept( node, &EnumDecl::params     );
+			maybe_accept( node, &EnumDecl::members    );
+			maybe_accept( node, &EnumDecl::attributes );
+		} else {
+			maybe_accept( node, &EnumDecl::base );
+			maybe_accept( node, &EnumDecl::params     );
+			maybe_accept( node, &EnumDecl::members    );
+			maybe_accept( node, &EnumDecl::attributes );
+		}
 	}
 
 	VISIT_END( Decl, node );
@@ -802,7 +809,7 @@ const ast::StaticAssertDecl * ast::Pass< core_t >::visit( const ast::StaticAsser
 }
 
 //--------------------------------------------------------------------------
-// DeclWithType
+// InlineMemberDecl
 template< typename core_t >
 const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::InlineMemberDecl * node ) {
 	VISIT_START( node );

@@ -40,24 +40,27 @@ ast::EnumDecl const * EnumAndPointerDecayCore::previsit(
 	// Set the type of each member of the enumeration to be EnumContant.
 	auto mut = ast::mutate( decl );
 	std::vector<ast::ptr<ast::Decl>> buffer;
-	for ( auto it = decl->members.begin(); it != decl->members.end(); ++it ) {
-		if ( ast::ObjectDecl const * object = (*it).as<ast::ObjectDecl>() ) {
-			buffer.push_back( ast::mutate_field( object, &ast::ObjectDecl::type, new ast::EnumInstType( decl, ast::CV::Const ) ) );
-		} else if ( ast::InlineMemberDecl const * value = (*it).as<ast::InlineMemberDecl>() ) {
+	for ( auto member : decl->members ) {
+		if ( ast::ObjectDecl const * object = member.as<ast::ObjectDecl>() ) {
+			buffer.push_back( ast::mutate_field( object,
+				&ast::ObjectDecl::type,
+				new ast::EnumInstType( decl, ast::CV::Const ) ) );
+		} else if ( auto value = member.as<ast::InlineMemberDecl>() ) {
 			if ( auto targetEnum = symtab.lookupEnum( value->name ) ) {
-				for ( auto singleMember : targetEnum->members ) {
-					auto copyingMember = singleMember.as<ast::ObjectDecl>();
+				for ( auto enumMember : targetEnum->members ) {
+					auto enumObject = enumMember.strict_as<ast::ObjectDecl>();
 					buffer.push_back( new ast::ObjectDecl(
-						value->location, // use the "inline" location
-						copyingMember->name,
+						// Get the location from the "inline" declaration.
+						value->location,
+						enumObject->name,
+						// Construct a new EnumInstType as the type.
 						new ast::EnumInstType( decl, ast::CV::Const ),
-						// Construct a new EnumInstType as the type
-						copyingMember->init,
-						copyingMember->storage,
-						copyingMember->linkage,
-						copyingMember->bitfieldWidth,
+						enumObject->init,
+						enumObject->storage,
+						enumObject->linkage,
+						enumObject->bitfieldWidth,
 						{},
-						copyingMember->funcSpec
+						enumObject->funcSpec
 					) );
 				}
 			}

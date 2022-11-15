@@ -339,12 +339,13 @@ class EnumDecl : public AggregateDecl {
   public:
   	bool isTyped;
 	Type * base;
+	enum EnumHiding { Visible, Hide } hide;
 
 	EnumDecl( const std::string & name,
 	 const std::list< Attribute * > & attributes = std::list< class Attribute * >(),
 	  bool isTyped = false, LinkageSpec::Spec linkage = LinkageSpec::Cforall,
 	  Type * baseType = nullptr ) 
-	  : Parent( name, attributes, linkage ),isTyped(isTyped), base( baseType ) {}
+	  : Parent( name, attributes, linkage ), isTyped(isTyped), base( baseType ) {}
 	EnumDecl( const EnumDecl & other ) 
 	  : Parent( other ), isTyped( other.isTyped), base( other.base ) {}
 	bool valueOf( Declaration * enumerator, long long int & value );

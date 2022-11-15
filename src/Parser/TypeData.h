@@ -59,6 +59,7 @@ struct TypeData {
 		bool body;
 		bool anon;
 		bool typed;
+		EnumHiding hiding;
 	};
 
 	struct Function_t {

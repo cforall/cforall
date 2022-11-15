@@ -460,31 +460,37 @@ class group_iterate_t {
 	using Iterables = std::tuple<Args...>;
 	Iterables iterables;
 
+	// Getting the iterator and value types this way preserves const.
 	template<size_t I> using Iter = decltype(std::get<I>(iterables).begin());
 	template<size_t I> using Data = decltype(*std::get<I>(iterables).begin());
 	template<typename> struct base_iterator;
 
-	template<std::size_t... Is>
-	struct base_iterator<std::integer_sequence<std::size_t, Is...>> {
-		using value_type = std::tuple< Data<Is>... >;
-		std::tuple<Iter<Is>...> iterators;
+	// This inner template puts the sequence of `0, 1, ... sizeof...(Args)-1`
+	// into a pack. These are the indexes into the tuples, so unpacking can
+	// go over each element of the tuple.
+	// The std::integer_sequence is just used to build that sequence.
+	// A library reference will probably explain it better than I can.
+	template<std::size_t... Indices>
+	struct base_iterator<std::integer_sequence<std::size_t, Indices...>> {
+		using value_type = std::tuple< Data<Indices>... >;
+		std::tuple<Iter<Indices>...> iterators;
 
-		base_iterator( Iter<Is>... is ) : iterators( is... ) {}
+		base_iterator( Iter<Indices>... is ) : iterators( is... ) {}
 		base_iterator operator++() {
-			return base_iterator( ++std::get<Is>( iterators )... );
+			return base_iterator( ++std::get<Indices>( iterators )... );
 		}
 		bool operator!=( const base_iterator& other ) const {
 			return iterators != other.iterators;
 		}
 		value_type operator*() const {
-			return std::tie( *std::get<Is>( iterators )... );
+			return std::tie( *std::get<Indices>( iterators )... );
 		}
 
 		static base_iterator make_begin( Iterables & data ) {
-			return base_iterator( std::get<Is>( data ).begin()... );
+			return base_iterator( std::get<Indices>( data ).begin()... );
 		}
 		static base_iterator make_end( Iterables & data ) {
-			return base_iterator( std::get<Is>( data ).end()... );
+			return base_iterator( std::get<Indices>( data ).end()... );
 		}
 	};
 

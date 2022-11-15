@@ -922,6 +922,7 @@ EnumDecl * buildEnum( const TypeData * td, std::list< Attribute * > attributes, 
 	EnumDecl * ret = new EnumDecl( *td->enumeration.name, attributes, td->enumeration.typed, linkage, baseType );
 	buildList( td->enumeration.constants, ret->get_members() );
 	list< Declaration * >::iterator members = ret->get_members().begin();
+	ret->hide = td->enumeration.hiding == EnumHiding::Hide ? EnumDecl::EnumHiding::Hide : EnumDecl::EnumHiding::Visible;
 	for ( const DeclarationNode * cur = td->enumeration.constants; cur != nullptr; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ), ++members ) {
 		if ( cur->enumInLine ) {
 			// Do Nothing

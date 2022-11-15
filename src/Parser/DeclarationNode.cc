@@ -253,7 +253,7 @@ DeclarationNode * DeclarationNode::newAggregate( AggregateDecl::Aggregate kind, 
 	return newnode;
 } // DeclarationNode::newAggregate
 
-DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base) {
+DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base, EnumHiding hiding ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Enum );
 	newnode->type->enumeration.name = name == nullptr ? new string( DeclarationNode::anonymous.newName() ) : name;
@@ -261,6 +261,7 @@ DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode
 	newnode->type->enumeration.body = body;
 	newnode->type->enumeration.anon = name == nullptr;
 	newnode->type->enumeration.typed = typed;
+	newnode->type->enumeration.hiding = hiding;
 	if ( base && base->type)  {
 		newnode->type->base = base->type;
 	} // if

@@ -314,12 +314,13 @@ public:
 	bool isTyped; // isTyped indicated if the enum has a declaration like:
 	// enum (type_optional) Name {...} 
 	ptr<Type> base; // if isTyped == true && base.get() == nullptr, it is a "void" type enum
+	enum class EnumHiding { Visible, Hide } hide;
 
-	EnumDecl( const CodeLocation& loc, const std::string& name, bool isTyped = false, 
+	EnumDecl( const CodeLocation& loc, const std::string& name, bool isTyped = false,
 		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall,
-		Type const * base = nullptr,
+		Type const * base = nullptr, EnumHiding hide = EnumHiding::Hide,
 		std::unordered_map< std::string, long long > enumValues = std::unordered_map< std::string, long long >() )
-	: AggregateDecl( loc, name, std::move(attrs), linkage ), isTyped(isTyped), base(base), enumValues(enumValues) {}
+	: AggregateDecl( loc, name, std::move(attrs), linkage ), isTyped(isTyped), base(base), hide(hide), enumValues(enumValues) {}
 
 	/// gets the integer value for this enumerator, returning true iff value found
 	// Maybe it is not used in producing the enum value
@@ -396,6 +397,7 @@ private:
 	MUTATE_FRIEND
 };
 
+/// Static Assertion `_Static_assert( ... , ... );`
 class StaticAssertDecl : public Decl {
 public:
 	ptr<Expr> cond;
@@ -410,6 +412,7 @@ private:
 	MUTATE_FRIEND
 };
 
+/// Inline Member Declaration `inline TypeName;`
 class InlineMemberDecl final : public DeclWithType {
 public:
 	ptr<Type> type;
@@ -427,6 +430,7 @@ private:
 	InlineMemberDecl * clone() const override { return new InlineMemberDecl{ *this }; }
 	MUTATE_FRIEND
 };
+
 }
 
 #undef MUTATE_FRIEND
