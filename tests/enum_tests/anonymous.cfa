@@ -1,0 +1,8 @@
+#include <stdio.h>
+enum(unsigned long int ) { nthreads = 17 };
+
+int main() {
+    printf("%lu", nthreads);
+}
+
+

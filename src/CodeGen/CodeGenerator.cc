@@ -289,7 +289,11 @@ namespace CodeGen {
 				if ( (BasicType *)(enumDecl->base) && ((BasicType *)(enumDecl->base))->isWholeNumber() ) {
 					if ( obj->get_init() ) {
 						obj->get_init()->accept( *visitor );
-						last_val = ((ConstantExpr *)(((SingleInit *)(obj->init))->value))->constant.get_ival();
+						Expression* expr = ((SingleInit *)(obj->init))->value;
+						while ( auto temp = dynamic_cast<CastExpr *>(expr) ) {
+							expr = temp->arg;
+						}
+						last_val = ((ConstantExpr *)expr)->constant.get_ival();
 					} else {
 						output << ++last_val;
 					} // if
