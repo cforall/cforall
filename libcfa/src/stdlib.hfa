@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 25 18:07:06 2022
-// Update Count     : 645
+// Last Modified On : Tue Nov 22 22:48:59 2022
+// Update Count     : 736
 //
 
 #pragma once
@@ -403,21 +403,53 @@ long double _Complex random( void );					// [0.0, 1.0)+[0.0, 1.0)i
 //   prng( sprng, 5, 21 );
 //   calls( sprng );
 
-struct PRNG {
+trait basic_prng( PRNG &, R ) {
+	void set_seed( PRNG & prng, R seed );				// set seed
+	R get_seed( PRNG & prng );							// get seed
+	R prng( PRNG & prng );
+	void ?{}( PRNG & prng );							// random seed
+	void ?{}( PRNG & prng, R seed );					// fixed seed
+}; // basic_prng
+
+static inline forall( PRNG &, R | basic_prng( PRNG, R ) | { R ?%?( R, R ); } ) {
+	R prng( PRNG & prng, R u ) { return prng( prng ) % u; } // [0,u)
+}
+static inline forall( PRNG &, R | basic_prng( PRNG, R ) | { R ?+?( R, R ); R ?-?( R, R ); R ?%?( R, R ); void ?{}( R &, one_t ); } ) {
+	R prng( PRNG & prng, R l, R u ) { return prng( prng, u - l + (R){1} ) + l; } // [l,u]
+}
+
+struct PRNG32 {
 	uint32_t callcnt;									// call count
 	uint32_t seed;										// current seed
-	uint32_t state;										// random state
+	PRNG_ARG_T state;									// random state
 }; // PRNG
 
-void set_seed( PRNG & prng, uint32_t seed_ );
 static inline {
-	void ?{}( PRNG & prng ) with( prng ) { callcnt = 0; set_seed( prng, rdtscl() ); } // random seed
-	void ?{}( PRNG & prng, uint32_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
-	uint32_t get_seed( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
-	uint32_t prng( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return LCG( state ); } // [0,UINT_MAX]
-	uint32_t prng( PRNG & prng, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
-	uint32_t prng( PRNG & prng, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
-	uint32_t calls( PRNG & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
+	void set_seed( PRNG32 & prng, uint32_t seed_ ) with( prng ) { state = seed = seed_; PRNG_NAME( state ); } // set seed
+	uint32_t get_seed( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
+	uint32_t prng( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME( state ); } // [0,UINT_MAX]
+	uint32_t prng( PRNG32 & prng, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
+	uint32_t prng( PRNG32 & prng, size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
+	uint32_t calls( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
+	void ?{}( PRNG32 & prng ) with( prng ) { callcnt = 0; set_seed( prng, rdtscl() ); } // random seed
+	void ?{}( PRNG32 & prng, uint32_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
+} // distribution
+
+struct PRNG64 {
+	uint64_t callcnt;									// call count
+	uint64_t seed;										// current seed
+	PRNG_ARG_T state;									// random state
+}; // PRNG
+
+static inline {
+	void set_seed( PRNG64 & prng, uint64_t seed_ ) with( prng ) { state = seed = seed_; PRNG_NAME( state ); } // set seed
+	uint64_t get_seed( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
+	uint64_t prng( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME( state ); } // [0,UINT_MAX]
+	uint64_t prng( PRNG64 & prng, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
+	uint64_t prng( PRNG64 & prng, size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
+	uint64_t calls( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
+	void ?{}( PRNG64 & prng ) with( prng ) { callcnt = 0; set_seed( prng, rdtscl() ); } // random seed
+	void ?{}( PRNG64 & prng, uint64_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
 } // distribution
 
 // Concurrent Pseudo Random-Number Generator : generate repeatable sequence of values that appear random.
@@ -434,12 +466,13 @@ static inline {
 //   prng( 16 + 1 ) + 5;
 //   prng( 5, 21 );
 
-void set_seed( uint32_t seed_ ) OPTIONAL_THREAD;
-uint32_t get_seed() __attribute__(( warn_unused_result ));
-uint32_t prng( void ) __attribute__(( warn_unused_result )) OPTIONAL_THREAD; // [0,UINT_MAX]
+// Harmonize with concurrency/thread.hfa.
+void set_seed( size_t seed_ ) OPTIONAL_THREAD;
+size_t get_seed() __attribute__(( warn_unused_result ));
+size_t prng( void ) __attribute__(( warn_unused_result )) OPTIONAL_THREAD; // [0,UINT_MAX]
 static inline {
-	uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
-	uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
+	size_t prng( size_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
+	size_t prng( size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
 } // distribution
 
 //---------------------------------------

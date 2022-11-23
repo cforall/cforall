@@ -9,13 +9,14 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan  9 19:06:45 2022
-// Update Count     : 48
+// Last Modified On : Mon Nov 21 17:40:24 2022
+// Update Count     : 55
 //
 
 #include "bits/containers.hfa"
 #include "bits/defs.hfa"
 #include "bits/locks.hfa"
+#include "bits/random.hfa"
 #include "kernel/fwd.hfa"
 
 #ifdef __cforall
@@ -221,7 +222,7 @@ extern "C" {
 
 		struct processor * last_proc;
 
-		uint32_t random_state;							// fast random numbers
+		PRNG_ARG_T random_state;						// fast random numbers
 
 		#if defined( __CFA_WITH_VERIFY__ )
 			struct processor * volatile executing;

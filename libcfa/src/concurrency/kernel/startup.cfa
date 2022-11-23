@@ -38,6 +38,7 @@ extern "C" {
 #include "startup.hfa"					// STARTUP_PRIORITY_XXX
 #include "limits.hfa"
 #include "math.hfa"
+#include "bits/random.hfa"								// prng
 
 #define CFA_PROCESSOR_USE_MMAP 0
 
@@ -106,7 +107,8 @@ extern void __cfa_io_stop ( processor * );
 // Other Forward Declarations
 extern void __wake_proc(processor *);
 extern int cfa_main_returned;							// from interpose.cfa
-uint32_t __global_random_prime = 4_294_967_291u, __global_random_mask = false;
+PRNG_ARG_T __global_random_prime = 4_294_967_291u;
+bool __global_random_mask = false;
 
 //-----------------------------------------------------------------------------
 // Kernel storage
@@ -512,6 +514,10 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 	self_mon_p = &self_mon;
 	rdy_link.next = 0p;
 	rdy_link.ts   = MAX;
+	user_link.next = 0p;
+	user_link.prev = 0p;
+	cltr_link.next = 0p;
+	cltr_link.prev = 0p;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
 	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();

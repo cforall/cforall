@@ -36,13 +36,13 @@ void main( Tester & this ) {
 		// For each letters
 		for(c; 'A' ~= 'Z') {
 			// Yield for chaos
-			yield(prng(this, 10));
+			yield( prng(this, 10) );
 
 			// Print the generation, no newline because
 			mutex(sout) sout | c | nonl;
 
 			// Yield again for more chaos
-			yield(prng(this, 10));
+			yield( prng(this, 10) );
 
 			// Block on the barrier
 			block(bar);

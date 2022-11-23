@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov  2 21:31:21 2022
-// Update Count     : 5810
+// Last Modified On : Mon Nov 21 22:34:30 2022
+// Update Count     : 5848
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -382,7 +382,7 @@ if ( N ) {																		\
 %type<en> argument_expression_list_opt	argument_expression_list	argument_expression			default_initializer_opt
 %type<ifctl> conditional_declaration
 %type<fctl> for_control_expression		for_control_expression_list
-%type<compop> updown updowneq downupdowneq
+%type<compop> upupeq updown updowneq downupdowneq
 %type<en> subrange
 %type<decl> asm_name_opt
 %type<en> asm_operands_opt				asm_operands_list			asm_operand
@@ -488,7 +488,7 @@ if ( N ) {																		\
 %type<decl> type type_no_function
 %type<decl> type_parameter type_parameter_list type_initializer_opt
 
-%type<en> type_parameters_opt type_list
+%type<en> type_parameters_opt type_list array_type_list
 
 %type<decl> type_qualifier type_qualifier_name forall type_qualifier_list_opt type_qualifier_list
 %type<decl> type_specifier type_specifier_nobody
@@ -2557,7 +2557,7 @@ enum_type:
 	| ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3 ); }
 	  hide_opt '{' enumerator_list comma_opt '}'
-	  { $$ = DeclarationNode::newEnum( $3, $7, true, false, nullptr, $5 )->addQualifiers( $2 ); }
+		{ $$ = DeclarationNode::newEnum( $3, $7, true, false, nullptr, $5 )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt typedef_name				// unqualified type name
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false, nullptr, $4 )->addQualifiers( $2 ); }
@@ -3652,11 +3652,34 @@ array_dimension:
 		{ $$ = DeclarationNode::newArray( 0, 0, false ); }
 	| '[' ']' multi_array_dimension
 		{ $$ = DeclarationNode::newArray( 0, 0, false )->addArray( $3 ); }
-	| '[' push assignment_expression pop ',' comma_expression ']'
+		// Cannot use constant_expression because of tuples => semantic check
+	| '[' push assignment_expression pop ',' comma_expression ']' // CFA
 		{ $$ = DeclarationNode::newArray( $3, 0, false )->addArray( DeclarationNode::newArray( $6, 0, false ) ); }
 		// { SemanticError( yylloc, "New array dimension is currently unimplemented." ); $$ = nullptr; }
+	| '[' push array_type_list pop ']'					// CFA
+		{ SemanticError( yylloc, "Type array dimension is currently unimplemented." ); $$ = nullptr; }
 	| multi_array_dimension
 	;
+
+array_type_list:
+	basic_type_name
+		{ $$ = new ExpressionNode( new TypeExpr( maybeMoveBuildType( $1 ) ) ); }
+	| type_name
+		{ $$ = new ExpressionNode( new TypeExpr( maybeMoveBuildType( $1 ) ) ); }
+	| assignment_expression upupeq assignment_expression
+	| array_type_list ',' basic_type_name
+		{ $$ = (ExpressionNode *)($1->set_last( new ExpressionNode( new TypeExpr( maybeMoveBuildType( $3 ) ) ) )); }
+	| array_type_list ',' type_name 
+		{ $$ = (ExpressionNode *)($1->set_last( new ExpressionNode( new TypeExpr( maybeMoveBuildType( $3 ) ) ) )); }
+	| array_type_list ',' assignment_expression upupeq assignment_expression
+	;
+
+upupeq:
+	'~'
+		{ $$ = OperKinds::LThan; }
+	| ErangeUpEq
+		{ $$ = OperKinds::LEThan; }
+ 	;
 
 multi_array_dimension:
 	'[' push assignment_expression pop ']'

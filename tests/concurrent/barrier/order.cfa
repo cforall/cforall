@@ -36,7 +36,7 @@ void main( Tester & this ) {
 	// Repeat a few times
 	for(l; NUM_LAPS) {
 		// Yield for chaos
-		yield(prng(this, 10));
+		yield( prng(this, 10) );
 
 		// Block and what order we arrived
 		unsigned ret = block(bar);

@@ -29,7 +29,7 @@ void main( Tester & this ) {
 		block( barr, reset );
 
 		// sometime yields
-		yield(prng(this, 3));
+		yield( prng(this, 3) );
 	}
 }
 

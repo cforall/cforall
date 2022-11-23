@@ -119,7 +119,7 @@ extern "C" {
 		}
 
 		// Yield: yield N times
-		static inline void yield( unsigned times ) {
+		static inline void yield( size_t times ) {
 			for( times ) {
 				yield();
 			}

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr  9 15:21:14 2022
-// Update Count     : 344
+// Last Modified On : Tue Nov 22 22:51:12 2022
+// Update Count     : 381
 // 
 
 #include <fstream.hfa>									// sout
@@ -20,6 +20,12 @@
 #include <malloc.h>										// malloc_stats
 #include <locale.h>										// setlocale
 #include <mutex_stmt.hfa>
+
+#ifdef __x86_64__										// 64-bit architecture
+#define PRNG PRNG64
+#else													// 32-bit architecture
+#define PRNG PRNG32
+#endif // __x86_64__
 
 #ifdef TIME												// use -O2 -nodebug
 #define STARTTIME start = timeHiRes()
@@ -53,7 +59,7 @@ void avgstd( unsigned int buckets[] ) {
 } // avgstd
 
 
-uint32_t seed = 1009;
+unsigned int seed = 1009;
 
 thread T1 {};
 void main( T1 & ) {
@@ -157,6 +163,7 @@ int main() {
 #endif // TIME
 #if 1
 	PRNG prng;
+
 	if ( seed != 0 ) set_seed( prng, seed );
 
 	sout | sepDisable;

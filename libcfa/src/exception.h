@@ -142,7 +142,7 @@ static inline void defaultTerminationHandler(exceptT & except) {
 	return cancel_stack( except );
 }
 
-forall(exceptT &, virtualT & | is_exception(exceptT, virtualT))
+forall(exceptT &, virtualT & | is_termination_exception(exceptT, virtualT))
 static inline void defaultResumptionHandler(exceptT & except) {
 	throw except;
 }

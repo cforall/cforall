@@ -25,12 +25,12 @@ Duration default_preemption() {
 	return 0;
 }
 
-PRNG lead_rng;
+PRNG64 lead_rng;
 volatile unsigned leader;
 volatile size_t lead_idx;
 
-const unsigned nthreads = 17;
-const unsigned stop_count = 327;
+const uint64_t nthreads = 17;
+const uint64_t stop_count = 327;
 
 thread$ * the_main;
 

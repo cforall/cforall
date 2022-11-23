@@ -9,18 +9,19 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 24 16:21:57 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Oct  6 13:51:57 2022
-// Update Count     : 57
+// Last Modified On : Sun Nov 20 21:26:40 2022
+// Update Count     : 59
 //
 
 #include <time.h>										// tzset
 #include <locale.h>										// setlocale
 #include <stdlib.h>										// getenv
 #include "bits/defs.hfa"								// rdtscl
+#include "bits/random.hfa"								// rdtscl
 #include "startup.hfa"
 
-extern uint32_t __global_random_seed;					// sequential/concurrent
-extern uint32_t __global_random_state;					// sequential
+extern PRNG_ARG_T __global_random_seed;					// sequential/concurrent
+extern PRNG_ARG_T __global_random_state;				// sequential
 
 extern "C" {
 	void __cfaabi_memory_startup( void ) __attribute__(( constructor( STARTUP_PRIORITY_MEMORY ) ));

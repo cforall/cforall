@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 25 22:41:14 2022
-// Update Count     : 604
+// Last Modified On : Tue Nov 22 22:18:36 2022
+// Update Count     : 613
 //
 
 #include "stdlib.hfa"
@@ -224,17 +224,13 @@ long double _Complex random( void ) { return (long double)drand48() + (long doub
 
 //---------------------------------------
 
-#define GENERATOR LCG
-
 // would be cool to make hidden but it's needed for libcfathread
-__attribute__((visibility("default"))) uint32_t __global_random_seed;							// sequential/concurrent
-__attribute__((visibility("hidden"))) uint32_t __global_random_state;							// sequential only
+__attribute__((visibility("default"))) PRNG_ARG_T __global_random_seed; // sequential/concurrent
+__attribute__((visibility("hidden"))) PRNG_ARG_T __global_random_state; // sequential only
 
-void set_seed( PRNG & prng, uint32_t seed_ ) with( prng ) { state = seed = seed_; GENERATOR( state ); } // set seed
-
-void set_seed( uint32_t seed ) { __global_random_state = __global_random_seed = seed; GENERATOR( __global_random_state ); }
-uint32_t get_seed() { return __global_random_seed; }
-uint32_t prng( void ) { return GENERATOR( __global_random_state ); } // [0,UINT_MAX]
+void set_seed( size_t seed ) { __global_random_state = __global_random_seed = seed; PRNG_NAME( __global_random_state ); }
+size_t get_seed() { return __global_random_seed; }
+size_t prng( void ) { return PRNG_NAME( __global_random_state ); } // [0,UINT_MAX]
 
 //---------------------------------------
 
