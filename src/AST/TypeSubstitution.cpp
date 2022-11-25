@@ -51,7 +51,7 @@ void TypeSubstitution::add( const TypeInstType * formalType, const Type *actualT
 	typeMap[ *formalType ] = actualType;
 }
 
-void TypeSubstitution::add( const TypeInstType::TypeEnvKey & key, const Type * actualType) {
+void TypeSubstitution::add( const TypeEnvKey & key, const Type * actualType) {
 	typeMap[ key ] = actualType;
 }
 
@@ -63,7 +63,7 @@ void TypeSubstitution::remove( const TypeInstType * formalType ) {
 }
 
 const Type *TypeSubstitution::lookup(
-		const TypeInstType::TypeEnvKey & formalType ) const {
+		const TypeEnvKey & formalType ) const {
 	TypeMap::const_iterator i = typeMap.find( formalType );
 
 	// break on not in substitution set
@@ -84,7 +84,7 @@ const Type *TypeSubstitution::lookup(
 }
 
 const Type *TypeSubstitution::lookup( const TypeInstType * formalType ) const {
-	return lookup( ast::TypeInstType::TypeEnvKey( *formalType ) );
+	return lookup( ast::TypeEnvKey( *formalType ) );
 }
 
 bool TypeSubstitution::empty() const {

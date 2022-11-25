@@ -124,7 +124,7 @@ const char * TypeDecl::genTypeString() const {
 	return kindNames[ kind ];
 }
 
-std::ostream & operator<< ( std::ostream & out, const TypeDecl::Data & data ) {
+std::ostream & operator<< ( std::ostream & out, const TypeData & data ) {
 	return out << data.kind << ", " << data.isComplete;
 }
 

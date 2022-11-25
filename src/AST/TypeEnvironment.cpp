@@ -81,7 +81,7 @@ void print( std::ostream & out, const EqvClass & clz, Indenter indent ) {
 	out << std::endl;
 }
 
-const EqvClass * TypeEnvironment::lookup( const TypeInstType::TypeEnvKey & var ) const {
+const EqvClass * TypeEnvironment::lookup( const TypeEnvKey & var ) const {
 	for ( ClassList::const_iterator i = env.begin(); i != env.end(); ++i ) {
 		if ( i->vars.find( var ) != i->vars.end() ) return &*i;
 	}
@@ -121,7 +121,7 @@ void TypeEnvironment::add( const TypeSubstitution & sub ) {
 
 void TypeEnvironment::writeToSubstitution( TypeSubstitution & sub ) const {
 	for ( const auto & clz : env ) {
-		TypeInstType::TypeEnvKey clzRep;
+		TypeEnvKey clzRep;
 		bool first = true;
 		for ( const auto & var : clz.vars ) {
 			if ( clz.bound ) {
@@ -145,10 +145,10 @@ namespace {
 	/// Implements occurs check by traversing type
 	struct Occurs : public ast::WithVisitorRef<Occurs> {
 		bool result;
-		std::unordered_set< TypeInstType::TypeEnvKey > vars;
+		std::unordered_set< TypeEnvKey > vars;
 		const TypeEnvironment & tenv;
 
-		Occurs( const TypeInstType::TypeEnvKey & var, const TypeEnvironment & env )
+		Occurs( const TypeEnvKey & var, const TypeEnvironment & env )
 		: result( false ), vars(), tenv( env ) {
 			if ( const EqvClass * clz = tenv.lookup( var ) ) {
 				vars = clz->vars;
@@ -169,7 +169,7 @@ namespace {
 	};
 
 	/// true if `var` occurs in `ty` under `env`
-	bool occurs( const Type * ty, const TypeInstType::TypeEnvKey & var, const TypeEnvironment & env ) {
+	bool occurs( const Type * ty, const TypeEnvKey & var, const TypeEnvironment & env ) {
 		Pass<Occurs> occur{ var, env };
 		maybe_accept( ty, occur );
 		return occur.core.result;
@@ -257,7 +257,7 @@ bool isFtype( const Type * type ) {
 
 namespace {
 	/// true if the given type can be bound to the given type variable
-	bool tyVarCompatible( const TypeDecl::Data & data, const Type * type ) {
+	bool tyVarCompatible( const TypeData & data, const Type * type ) {
 		switch ( data.kind ) {
 		  case TypeDecl::Dtype:
 			// to bind to an object type variable, the type must not be a function type.
@@ -278,7 +278,7 @@ namespace {
 }
 
 bool TypeEnvironment::bindVar(
-		const TypeInstType * typeInst, const Type * bindTo, const TypeDecl::Data & data,
+		const TypeInstType * typeInst, const Type * bindTo, const TypeData & data,
 		AssertionSet & need, AssertionSet & have, const OpenVarSet & open, WidenMode widen,
 		const SymbolTable & symtab
 ) {
@@ -318,7 +318,7 @@ bool TypeEnvironment::bindVar(
 }
 
 bool TypeEnvironment::bindVarToVar(
-		const TypeInstType * var1, const TypeInstType * var2, TypeDecl::Data && data,
+		const TypeInstType * var1, const TypeInstType * var2, TypeData && data,
 		AssertionSet & need, AssertionSet & have, const OpenVarSet & open,
 		WidenMode widen, const SymbolTable & symtab
 ) {
@@ -456,7 +456,7 @@ bool TypeEnvironment::mergeClasses(
 	return true;
 }
 
-TypeEnvironment::ClassList::iterator TypeEnvironment::internal_lookup( const TypeInstType::TypeEnvKey & var ) {
+TypeEnvironment::ClassList::iterator TypeEnvironment::internal_lookup( const TypeEnvKey & var ) {
 	for ( ClassList::iterator i = env.begin(); i != env.end(); ++i ) {
 		if ( i->vars.count( var ) ) return i;
 	}

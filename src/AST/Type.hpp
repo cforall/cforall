@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Jul 14 15:54:00 2021
-// Update Count     : 7
+// Last Modified On : Thu Nov 24  9:47:00 2022
+// Update Count     : 8
 //
 
 #pragma once
@@ -389,6 +389,8 @@ private:
 	MUTATE_FRIEND
 };
 
+struct TypeEnvKey;
+
 /// instance of named type alias (typedef or variable)
 class TypeInstType final : public BaseInstType {
 public:
@@ -399,22 +401,6 @@ public:
 	TypeDecl::Kind kind;
 	int formal_usage = 0;
 	int expr_id = 0;
-
-	// compact representation used for map lookups.
-	struct TypeEnvKey {
-		const TypeDecl * base = nullptr;
-		int formal_usage = 0;
-		int expr_id = 0;
-
-		TypeEnvKey() = default;
-		TypeEnvKey(const TypeDecl * base, int formal_usage = 0, int expr_id = 0)
-		: base(base), formal_usage(formal_usage), expr_id(expr_id) {}
-		TypeEnvKey(const TypeInstType & inst)
-		: base(inst.base), formal_usage(inst.formal_usage), expr_id(inst.expr_id) {}
-		std::string typeString() const;
-		bool operator==(const TypeEnvKey & other) const;
-		bool operator<(const TypeEnvKey & other) const;
-	};
 
 	bool operator==(const TypeInstType & other) const;
 
@@ -432,8 +418,7 @@ public:
 
 	TypeInstType( const TypeInstType & o ) = default;
 
-	TypeInstType( const TypeEnvKey & key )
-	: BaseInstType(key.base->name), base(key.base), kind(key.base->kind), formal_usage(key.formal_usage), expr_id(key.expr_id) {}
+	TypeInstType( const TypeEnvKey & key );
 
 	/// sets `base`, updating `kind` correctly
 	void set_base( const TypeDecl * );
@@ -452,6 +437,22 @@ public:
 private:
 	TypeInstType * clone() const override { return new TypeInstType{ *this }; }
 	MUTATE_FRIEND
+};
+
+/// Compact representation of TypeInstType used for map lookups.
+struct TypeEnvKey {
+	const TypeDecl * base = nullptr;
+	int formal_usage = 0;
+	int expr_id = 0;
+
+	TypeEnvKey() = default;
+	TypeEnvKey(const TypeDecl * base, int formal_usage = 0, int expr_id = 0)
+	: base(base), formal_usage(formal_usage), expr_id(expr_id) {}
+	TypeEnvKey(const TypeInstType & inst)
+	: base(inst.base), formal_usage(inst.formal_usage), expr_id(inst.expr_id) {}
+	std::string typeString() const;
+	bool operator==(const TypeEnvKey & other) const;
+	bool operator<(const TypeEnvKey & other) const;
 };
 
 /// tuple type e.g. `[int, char]`
@@ -559,8 +560,8 @@ bool isUnboundType(const Type * type);
 
 namespace std {
 	template<>
-	struct hash<typename ast::TypeInstType::TypeEnvKey> {
-		size_t operator() (const ast::TypeInstType::TypeEnvKey & x) const {
+	struct hash<typename ast::TypeEnvKey> {
+		size_t operator() (const ast::TypeEnvKey & x) const {
 			const size_t p = 1000007;
 			size_t res = reinterpret_cast<size_t>(x.base);
 			res = p * res + x.formal_usage;

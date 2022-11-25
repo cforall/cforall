@@ -1165,7 +1165,7 @@ namespace ResolvExpr {
 		if ( isopen1 && isopen2 ) {
 			if ( entry1->second.kind != entry2->second.kind ) return false;
 			return env.bindVarToVar(
-				var1, var2, ast::TypeDecl::Data{ entry1->second, entry2->second }, need, have,
+				var1, var2, ast::TypeData{ entry1->second, entry2->second }, need, have,
 				open, widen, symtab );
 		} else if ( isopen1 ) {
 			return env.bindVar( var1, type2, entry1->second, need, have, open, widen, symtab );

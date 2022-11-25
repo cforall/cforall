@@ -41,7 +41,7 @@ namespace {
 		int next_expr_id = 1;
 		int next_usage_id = 1;
 		ScopedMap< std::string, std::string > nameMap;
-		ScopedMap< std::string, ast::TypeInstType::TypeEnvKey > idMap;
+		ScopedMap< std::string, ast::TypeEnvKey > idMap;
 	public:
 		void reset() {
 			level = 0;
@@ -120,8 +120,8 @@ namespace {
 				else {
 					assert(false);
 				}
-				idMap[ td->name ] = ast::TypeInstType::TypeEnvKey(*mut);
-				
+				idMap[ td->name ] = ast::TypeEnvKey( *mut );
+
 				td = mut;
 			}
 

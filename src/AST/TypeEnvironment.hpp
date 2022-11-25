@@ -78,7 +78,7 @@ struct AssertionSetValue {
 using AssertionSet = std::map< const VariableExpr *, AssertionSetValue, AssertCompare >;
 
 /// Set of open variables
-using OpenVarSet = std::unordered_map< TypeInstType::TypeEnvKey, TypeDecl::Data >;
+using OpenVarSet = std::unordered_map< TypeEnvKey, TypeData >;
 
 /// Merges one set of open vars into another
 /// merges one set of open vars into another
@@ -94,10 +94,10 @@ void print( std::ostream &, const OpenVarSet &, Indenter indent = {} );
 /// Represents an equivalence class of bound type variables, optionally with the concrete type
 /// they bind to.
 struct EqvClass {
-	std::unordered_set< TypeInstType::TypeEnvKey > vars;
+	std::unordered_set< TypeEnvKey > vars;
 	ptr<Type> bound;
 	bool allowWidening;
-	TypeDecl::Data data;
+	TypeData data;
 
 	EqvClass() : vars(), bound(), allowWidening( true ), data() {}
 
@@ -110,17 +110,17 @@ struct EqvClass {
 	: vars{ *inst }, bound(), allowWidening( true ), data( inst->base ) {}
 
 	/// Singleton class constructor from substitution
-	EqvClass( const TypeInstType::TypeEnvKey & v, const Type * b )
+	EqvClass( const TypeEnvKey & v, const Type * b )
 	: vars{ v }, bound( b ), allowWidening( false ), data( TypeDecl::Dtype, false ) {}
 
 	/// Single-var constructor (strips qualifiers from bound type)
-	EqvClass( const TypeInstType::TypeEnvKey & v, const Type * b, bool w, const TypeDecl::Data & d )
+	EqvClass( const TypeEnvKey & v, const Type * b, bool w, const TypeData & d )
 	: vars{ v }, bound( b ), allowWidening( w ), data( d ) {
 		reset_qualifiers( bound );
 	}
 
 	/// Double-var constructor
-	EqvClass( const TypeInstType::TypeEnvKey & v, const TypeInstType::TypeEnvKey & u, bool w, const TypeDecl::Data & d )
+	EqvClass( const TypeEnvKey & v, const TypeEnvKey & u, bool w, const TypeData & d )
 	: vars{ v, u }, bound(), allowWidening( w ), data( d ) {}
 
 };
@@ -136,7 +136,7 @@ class TypeEnvironment {
 
 public:
 	/// Finds the equivalence class containing a variable; nullptr for none such
-	const EqvClass * lookup( const TypeInstType::TypeEnvKey & var ) const;
+	const EqvClass * lookup( const TypeEnvKey & var ) const;
 
 	/// Add a new equivalence class for each type variable
 	void add( const FunctionType::ForallList & tyDecls );
@@ -180,14 +180,14 @@ public:
 	/// Binds the type class represented by `typeInst` to the type `bindTo`; will add the class if
 	/// needed. Returns false on failure.
 	bool bindVar(
-		const TypeInstType * typeInst, const Type * bindTo, const TypeDecl::Data & data,
+		const TypeInstType * typeInst, const Type * bindTo, const TypeData & data,
 		AssertionSet & need, AssertionSet & have, const OpenVarSet & openVars,
 		ResolvExpr::WidenMode widen, const SymbolTable & symtab );
 
 	/// Binds the type classes represented by `var1` and `var2` together; will add one or both
 	/// classes if needed. Returns false on failure.
 	bool bindVarToVar(
-		const TypeInstType * var1, const TypeInstType * var2, TypeDecl::Data && data,
+		const TypeInstType * var1, const TypeInstType * var2, TypeData && data,
 		AssertionSet & need, AssertionSet & have, const OpenVarSet & openVars,
 		ResolvExpr::WidenMode widen, const SymbolTable & symtab );
 
@@ -212,7 +212,7 @@ private:
 		const SymbolTable & symtab );
 
 	/// Private lookup API; returns array index of string, or env.size() for not found
-	ClassList::iterator internal_lookup( const TypeInstType::TypeEnvKey & );
+	ClassList::iterator internal_lookup( const TypeEnvKey & );
 };
 
 void print( std::ostream & out, const TypeEnvironment & env, Indenter indent = {} );

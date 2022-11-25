@@ -782,7 +782,7 @@ bool needsBoxing(
 		const ast::TypeSubstitution * subst ) {
 	const ast::FunctionType * function = getFunctionType( expr->func->result );
 	assertf( function, "ApplicationExpr has non-function type: %s", toString( expr->func->result ).c_str() );
-	TypeVarMap exprTyVars = { ast::TypeDecl::Data() };
+	TypeVarMap exprTyVars = { ast::TypeData() };
 	makeTypeVarMap( function, exprTyVars );
 	return needsBoxing( param, arg, exprTyVars, subst );
 }
@@ -792,7 +792,7 @@ bool needsBoxing(
 	}
 
 void addToTypeVarMap( const ast::TypeInstType * type, TypeVarMap & typeVars ) {
-	typeVars.insert( *type, ast::TypeDecl::Data( type->base ) );
+	typeVars.insert( *type, ast::TypeData( type->base ) );
 }
 
 	void makeTyVarMap( Type *type, TyVarMap &tyVarMap ) {

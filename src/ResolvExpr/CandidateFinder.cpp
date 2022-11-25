@@ -220,7 +220,7 @@ namespace {
 		ast::AssertionSet & need
 	) {
 		for ( auto & tyvar : type->forall ) {
-			unifiableVars[ *tyvar ] = ast::TypeDecl::Data{ tyvar->base };
+			unifiableVars[ *tyvar ] = ast::TypeData{ tyvar->base };
 		}
 		for ( auto & assn : type->assertions ) {
 			need[ assn ].isUsed = true;

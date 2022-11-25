@@ -19,17 +19,20 @@
 #include <string>                 // for string, allocator, operator+, basic...
 
 #include "ErasableScopedMap.h"    // for ErasableScopedMap
-#include "AST/Decl.hpp"           // for TypeDecl::Data
+#include "AST/Decl.hpp"           // for AggregateDecl
 #include "AST/Fwd.hpp"            // for ApplicationExpr, BaseInstType, Func...
-#include "AST/Type.hpp"           // for TypeInstType::TypeEnvKey
 #include "SymTab/Mangler.h"       // for Mangler
 #include "SynTree/Declaration.h"  // for TypeDecl::Data, AggregateDecl, Type...
 #include "SynTree/SynTree.h"      // for Visitor Nodes
 
+namespace ast {
+	struct TypeEnvKey;
+}
+
 namespace GenPoly {
 
 	typedef ErasableScopedMap< std::string, TypeDecl::Data > TyVarMap;
-	using TypeVarMap = ErasableScopedMap< ast::TypeInstType::TypeEnvKey, ast::TypeDecl::Data >;
+	using TypeVarMap = ErasableScopedMap< ast::TypeEnvKey, ast::TypeData >;
 
 	/// Replaces a TypeInstType by its referrent in the environment, if applicable
 	Type* replaceTypeInst( Type* type, const TypeSubstitution* env );

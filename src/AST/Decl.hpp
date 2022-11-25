@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu May  5 12:09:00 2022
-// Update Count     : 33
+// Last Modified On : Thu Nov 24  9:44:00 2022
+// Update Count     : 34
 //
 
 #pragma once
@@ -190,21 +190,6 @@ class TypeDecl final : public NamedTypeDecl {
 	bool sized;
 	ptr<Type> init;
 
-	/// Data extracted from a type decl
-	struct Data {
-		Kind kind;
-		bool isComplete;
-
-		Data() : kind( NUMBER_OF_KINDS ), isComplete( false ) {}
-		Data( const TypeDecl * d ) : kind( d->kind ), isComplete( d->sized ) {}
-		Data( Kind k, bool c ) : kind( k ), isComplete( c ) {}
-		Data( const Data & d1, const Data & d2 )
-			: kind( d1.kind ), isComplete( d1.isComplete || d2.isComplete ) {}
-
-		bool operator==( const Data & o ) const { return kind == o.kind && isComplete == o.isComplete; }
-		bool operator!=( const Data & o ) const { return !(*this == o); }
-	};
-
 	TypeDecl(
 		const CodeLocation & loc, const std::string & name, Storage::Classes storage,
 		const Type * b, TypeDecl::Kind k, bool s, const Type * i = nullptr )
@@ -224,7 +209,22 @@ class TypeDecl final : public NamedTypeDecl {
 	MUTATE_FRIEND
 };
 
-std::ostream & operator<< ( std::ostream &, const TypeDecl::Data & );
+/// Data extracted from a TypeDecl.
+struct TypeData {
+	TypeDecl::Kind kind;
+	bool isComplete;
+
+	TypeData() : kind( TypeDecl::NUMBER_OF_KINDS ), isComplete( false ) {}
+	TypeData( const TypeDecl * d ) : kind( d->kind ), isComplete( d->sized ) {}
+	TypeData( TypeDecl::Kind k, bool c ) : kind( k ), isComplete( c ) {}
+	TypeData( const TypeData & d1, const TypeData & d2 )
+		: kind( d1.kind ), isComplete( d1.isComplete || d2.isComplete ) {}
+
+	bool operator==( const TypeData & o ) const { return kind == o.kind && isComplete == o.isComplete; }
+	bool operator!=( const TypeData & o ) const { return !(*this == o); }
+};
+
+std::ostream & operator<< ( std::ostream &, const TypeData & );
 
 /// C-style typedef `typedef Foo Bar`
 class TypedefDecl final : public NamedTypeDecl {

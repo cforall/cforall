@@ -71,10 +71,10 @@ class TypeSubstitution : public Node {
 	}
 
 	void add( const TypeInstType * formalType, const Type *actualType );
-	void add( const TypeInstType::TypeEnvKey & key, const Type *actualType );
+	void add( const TypeEnvKey & key, const Type *actualType );
 	void add( const TypeSubstitution &other );
 	void remove( const TypeInstType * formalType );
-	const Type *lookup( const TypeInstType::TypeEnvKey & formalType ) const;
+	const Type *lookup( const TypeEnvKey & formalType ) const;
 	const Type *lookup( const TypeInstType * formalType ) const;
 	bool empty() const;
 
@@ -104,7 +104,7 @@ class TypeSubstitution : public Node {
 	template<typename core_t>
 	friend class Pass;
 
-	typedef std::unordered_map< TypeInstType::TypeEnvKey, ptr<Type> > TypeMap;
+	typedef std::unordered_map< TypeEnvKey, ptr<Type> > TypeMap;
 	TypeMap typeMap;
 
   public:
@@ -183,7 +183,7 @@ struct TypeSubstitution::Substituter : public WithGuards, public WithVisitorRef<
 		const TypeSubstitution & sub;
 		int subCount = 0;
 		bool freeOnly;
-		typedef std::unordered_set< TypeInstType::TypeEnvKey > BoundVarsType;
+		typedef std::unordered_set< TypeEnvKey > BoundVarsType;
 		BoundVarsType boundVars;
 
 };

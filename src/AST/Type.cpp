@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Mon May 13 15:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu Jul 23 14:16:00 2020
-// Update Count     : 5
+// Last Modified On : Thu Nov 24  9:49:00 2022
+// Update Count     : 6
 //
 
 #include "Type.hpp"
@@ -146,6 +146,9 @@ TraitInstType::TraitInstType(
 
 // --- TypeInstType
 
+TypeInstType::TypeInstType( const TypeEnvKey & key )
+: BaseInstType(key.base->name), base(key.base), kind(key.base->kind), formal_usage(key.formal_usage), expr_id(key.expr_id) {}
+
 bool TypeInstType::operator==( const TypeInstType & other ) const {
 	return base == other.base
 		&& formal_usage == other.formal_usage
@@ -163,20 +166,20 @@ void TypeInstType::set_base( const TypeDecl * b ) {
 
 bool TypeInstType::isComplete() const { return base->sized; }
 
-std::string TypeInstType::TypeEnvKey::typeString() const {
+std::string TypeEnvKey::typeString() const {
 	return std::string("_") + std::to_string(formal_usage)
 		+ "_" + std::to_string(expr_id) + "_" + base->name;
 }
 
-bool TypeInstType::TypeEnvKey::operator==(
-		const TypeInstType::TypeEnvKey & other ) const {
+bool TypeEnvKey::operator==(
+		const TypeEnvKey & other ) const {
 	return base == other.base
 		&& formal_usage == other.formal_usage
 		&& expr_id == other.expr_id;
 }
 
-bool TypeInstType::TypeEnvKey::operator<(
-		const TypeInstType::TypeEnvKey & other ) const {
+bool TypeEnvKey::operator<(
+		const TypeEnvKey & other ) const {
 	// TypeEnvKey ordering is an arbitrary total ordering.
 	// It doesn't mean anything but allows for a sorting.
 	if ( base < other.base ) {

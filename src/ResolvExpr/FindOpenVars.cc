@@ -112,14 +112,14 @@ namespace ResolvExpr {
 				// mark open/closed variables
 				if ( nextIsOpen ) {
 					for ( auto & decl : type->forall ) {
-						open[ *decl ] = ast::TypeDecl::Data{ decl->base };
+						open[ *decl ] = ast::TypeData{ decl->base };
 					}
 					for ( auto & assert : type->assertions ) {
 						need[ assert ].isUsed = false;
 					}
 				} else {
 					for ( auto & decl : type->forall ) {
-						closed[ *decl ] = ast::TypeDecl::Data{ decl->base };	
+						closed[ *decl ] = ast::TypeData{ decl->base };
 					}
 					for ( auto & assert : type->assertions ) {
 						have[ assert ].isUsed = false;
