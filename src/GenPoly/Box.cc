@@ -36,7 +36,6 @@
 #include "GenPoly/GenPoly.h"             // for TyVarMap, isPolyType, mangle...
 #include "InitTweak/InitTweak.h"         // for getFunctionName, isAssignment
 #include "Lvalue.h"                      // for generalizedLvalue
-#include "ResolvExpr/TypeEnvironment.h"  // for EqvClass
 #include "ResolvExpr/typeops.h"          // for typesCompatible
 #include "ScopedSet.h"                   // for ScopedSet, ScopedSet<>::iter...
 #include "ScrubTyVars.h"                 // for ScrubTyVars
@@ -94,6 +93,7 @@ namespace GenPoly {
 			void endScope();
 		  private:
 			/// Pass the extra type parameters from polymorphic generic arguments or return types into a function application
+			/// Will insert 0, 2 or 3 more arguments.
 			void passArgTypeVars( ApplicationExpr *appExpr, Type *parmType, Type *argBaseType, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars, std::set< std::string > &seenTypes );
 			/// passes extra type parameters into a polymorphic function application
 			/// Returns an iterator to the first argument after the added
@@ -487,14 +487,13 @@ namespace GenPoly {
 
 				makeTyVarMap( functionType, scopeTyVars );
 
-				std::list< DeclarationWithType *> &paramList = functionType->parameters;
 				std::list< FunctionType const *> functions;
 				for ( TypeDecl * const tyVar : functionType->forall ) {
 					for ( DeclarationWithType * const assert : tyVar->assertions ) {
 						findFunction( assert->get_type(), functions, scopeTyVars, needsAdapter );
 					} // for
 				} // for
-				for ( DeclarationWithType * const arg : paramList ) {
+				for ( DeclarationWithType * const arg : functionType->parameters ) {
 					findFunction( arg->get_type(), functions, scopeTyVars, needsAdapter );
 				} // for
 
@@ -561,19 +560,22 @@ namespace GenPoly {
 			assert( env );
 			std::list< Expression *>::iterator arg = appExpr->args.begin();
 			// pass size/align for type variables
+			// NOTE: This is iterating over a map. This means the sorting
+			// order of the keys changes behaviour, as the iteration order
+			// is visible outside the loop.
+			// TODO: I cannot figure out how this gets matched in the later
+			// passes the modify the function.
 			for ( std::pair<std::string, TypeDecl::Data> const & tyParam : exprTyVars ) {
-				ResolvExpr::EqvClass eqvClass;
-				if ( tyParam.second.isComplete ) {
-					Type *concrete = env->lookup( tyParam.first );
-					// If there is an unbound type variable, it should have detected already.
-					assertf( concrete, "Unbound type variable: %s in: %s",
-						toCString( tyParam.first ), toCString( *env ) );
+				if ( !tyParam.second.isComplete ) continue;
+				Type *concrete = env->lookup( tyParam.first );
+				// If there is an unbound type variable, it should have detected already.
+				assertf( concrete, "Unbound type variable: %s in: %s",
+					toCString( tyParam.first ), toCString( *env ) );
 
-					arg = appExpr->get_args().insert( arg, new SizeofExpr( concrete->clone() ) );
-					arg++;
-					arg = appExpr->get_args().insert( arg, new AlignofExpr( concrete->clone() ) );
-					arg++;
-				} // if
+				arg = appExpr->get_args().insert( arg, new SizeofExpr( concrete->clone() ) );
+				arg++;
+				arg = appExpr->get_args().insert( arg, new AlignofExpr( concrete->clone() ) );
+				arg++;
 			} // for
 
 			// add size/align for generic types to parameter list
@@ -581,22 +583,26 @@ namespace GenPoly {
 			FunctionType *funcType = getFunctionType( appExpr->get_function()->get_result() );
 			assert( funcType );
 
-			// These iterators don't advance in unison.
-			std::list< DeclarationWithType* >::const_iterator fnParm = funcType->get_parameters().begin();
-			std::list< Expression* >::const_iterator fnArg = arg;
-			std::set< std::string > seenTypes; ///< names for generic types we've seen
+			// Iterator over the original function arguments.
+			std::list< Expression* >::const_iterator fnArg;
+			// Names for generic types we've seen.
+			std::set< std::string > seenTypes;
 
 			// a polymorphic return type may need to be added to the argument list
 			if ( polyRetType ) {
 				Type *concRetType = replaceWithConcrete( polyRetType, env );
 				passArgTypeVars( appExpr, polyRetType, concRetType, arg, exprTyVars, seenTypes );
-				++fnArg; // skip the return parameter in the argument list
+				// Skip the return parameter in the argument list.
+				fnArg = arg + 1;
+			} else {
+				fnArg = arg;
 			}
 
 			// add type information args for presently unseen types in parameter list
+			std::list< DeclarationWithType* >::const_iterator fnParm = funcType->get_parameters().begin();
 			for ( ; fnParm != funcType->get_parameters().end() && fnArg != appExpr->get_args().end(); ++fnParm, ++fnArg ) {
-				if ( ! (*fnArg)->get_result() ) continue;
 				Type * argType = (*fnArg)->get_result();
+				if ( ! argType ) continue;
 				passArgTypeVars( appExpr, (*fnParm)->get_type(), argType, arg, exprTyVars, seenTypes );
 			}
 			return arg;
@@ -679,7 +685,6 @@ namespace GenPoly {
 
 		Expression *Pass1::applyAdapter( ApplicationExpr *appExpr, FunctionType *function ) {
 			Expression *ret = appExpr;
-//			if ( ! function->get_returnVals().empty() && isPolyType( function->get_returnVals().front()->get_type(), tyVars ) ) {
 			if ( isDynRet( function, scopeTyVars ) ) {
 				ret = addRetParam( appExpr, function->returnVals.front()->get_type() );
 			} // if
@@ -771,14 +776,14 @@ namespace GenPoly {
 		}
 
 		void Pass1::addInferredParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *functionType, const TyVarMap &tyVars ) {
-			std::list< Expression *>::iterator cur = arg;
 			for ( TypeDecl * const tyVar : functionType->forall ) {
 				for ( DeclarationWithType * const assert : tyVar->assertions ) {
 					InferredParams::const_iterator inferParam = appExpr->inferParams.find( assert->get_uniqueId() );
 					assertf( inferParam != appExpr->inferParams.end(), "addInferredParams missing inferred parameter: %s in: %s", toString( assert ).c_str(), toString( appExpr ).c_str() );
 					Expression *newExpr = inferParam->second.expr->clone();
 					boxParam( newExpr, assert->get_type(), tyVars );
-					appExpr->get_args().insert( cur, newExpr );
+					arg = appExpr->get_args().insert( arg, newExpr );
+					++arg;
 				} // for
 			} // for
 		}
@@ -921,8 +926,8 @@ namespace GenPoly {
 
 				// only attempt to create an adapter or pass one as a parameter if we haven't already done so for this
 				// pre-substitution parameter function type.
-				if ( adaptersDone.find( mangleName ) == adaptersDone.end() ) {
-					adaptersDone.insert( adaptersDone.begin(), mangleName );
+				// The second part of the insert result is "is the value new".
+				if ( adaptersDone.insert( mangleName ).second ) {
 
 					// apply substitution to type variables to figure out what the adapter's type should look like
 					assert( env );
@@ -1105,6 +1110,7 @@ namespace GenPoly {
 			} // if
 
 			Expression *ret = appExpr;
+			// Save iterator to the first original parameter (works with lists).
 			std::list< Expression *>::iterator paramBegin = appExpr->get_args().begin();
 
 			TyVarMap exprTyVars( TypeDecl::Data{} );
@@ -1171,6 +1177,7 @@ namespace GenPoly {
 		}
 
 		void Pass1::premutate( AddressExpr * ) { visit_children = false; }
+
 		Expression * Pass1::postmutate( AddressExpr * addrExpr ) {
 			assert( addrExpr->arg->result && ! addrExpr->arg->result->isVoid() );
 
@@ -1231,7 +1238,6 @@ namespace GenPoly {
 ////////////////////////////////////////// Pass2 ////////////////////////////////////////////////////
 
 		void Pass2::addAdapters( FunctionType *functionType ) {
-			std::list< DeclarationWithType *> &paramList = functionType->parameters;
 			std::list< FunctionType const *> functions;
 			for ( DeclarationWithType * const arg : functionType->parameters ) {
 				Type *orig = arg->get_type();
@@ -1244,11 +1250,11 @@ namespace GenPoly {
 				if ( adaptersDone.find( mangleName ) == adaptersDone.end() ) {
 					std::string adapterName = makeAdapterName( mangleName );
 					// adapter may not be used in body, pass along with unused attribute.
-					paramList.push_front( new ObjectDecl( adapterName, Type::StorageClasses(), LinkageSpec::C, 0, new PointerType( Type::Qualifiers(), makeAdapterType( funType, scopeTyVars ) ), 0, { new Attribute( "unused" ) } ) );
+					functionType->parameters.push_front(
+						new ObjectDecl( adapterName, Type::StorageClasses(), LinkageSpec::C, 0, new PointerType( Type::Qualifiers(), makeAdapterType( funType, scopeTyVars ) ), 0, { new Attribute( "unused" ) } ) );
 					adaptersDone.insert( adaptersDone.begin(), mangleName );
 				}
 			}
-//  deleteAll( functions );
 		}
 
 		DeclarationWithType * Pass2::postmutate( FunctionDecl *functionDecl ) {
@@ -1321,6 +1327,8 @@ namespace GenPoly {
 			                   { new Attribute( "unused" ) } );
 			ObjectDecl newPtr( "", Type::StorageClasses(), LinkageSpec::C, 0,
 			                   new PointerType( Type::Qualifiers(), new BasicType( Type::Qualifiers(), BasicType::LongUnsignedInt ) ), 0 );
+			// NOTE: This loop somehow consistently matching one in
+			// `passTypeVars` even though it does loop in the same way.
 			for ( TypeDecl * const tyParam : funcType->get_forall() ) {
 				ObjectDecl *sizeParm, *alignParm;
 				// add all size and alignment parameters to parameter list
