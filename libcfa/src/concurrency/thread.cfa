@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 22 22:18:37 2022
-// Update Count     : 81
+// Last Modified On : Wed Nov 30 18:14:07 2022
+// Update Count     : 95
 //
 
 #define __cforall_thread__
@@ -25,7 +25,8 @@
 #define __CFA_INVOKE_PRIVATE__
 #include "invoke.h"
 
-extern PRNG_ARG_T __global_random_seed, __global_random_prime;
+extern size_t __global_random_seed;
+extern size_t __global_random_prime;
 extern bool __global_random_mask;
 
 #pragma GCC visibility push(default)
@@ -52,7 +53,7 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 	cltr_link.prev = 0p;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
-	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();
+	PRNG_SET_SEED( random_state, __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl() );
 	#if defined( __CFA_WITH_VERIFY__ )
 		executing = 0p;
 		canary = 0x0D15EA5E0D15EA5Ep;
@@ -227,15 +228,16 @@ bool migrate( thread$ * thrd, struct cluster & cl ) {
 //-----------------------------------------------------------------------------
 
 void set_seed( size_t seed ) {
-	PRNG_ARG_T & state = active_thread()->random_state;
-	state = __global_random_seed = seed;
+	PRNG_STATE_T & state = active_thread()->random_state;
+	__global_random_seed = seed;
+	PRNG_SET_SEED( state, seed );
 	(void)PRNG_NAME( state );							// prime PRNG
-	__global_random_prime = state;
+	__global_random_prime = seed;
 	__global_random_mask = true;
 } // set_seed
 
 size_t prng( void ) {									// [0,UINT_MAX]
-	PRNG_ARG_T & state = active_thread()->random_state;
+	PRNG_STATE_T( & state ) = active_thread()->random_state;
 	return PRNG_NAME( state );
 } // prng
 

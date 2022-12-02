@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 21 17:40:24 2022
-// Update Count     : 55
+// Last Modified On : Tue Nov 29 20:42:21 2022
+// Update Count     : 56
 //
 
 #include "bits/containers.hfa"
@@ -222,7 +222,7 @@ extern "C" {
 
 		struct processor * last_proc;
 
-		PRNG_ARG_T random_state;						// fast random numbers
+		PRNG_STATE_T random_state;						// fast random numbers
 
 		#if defined( __CFA_WITH_VERIFY__ )
 			struct processor * volatile executing;

@@ -49,7 +49,7 @@ MyThread ** threads;
 static void waitgroup() {
 	for(i; nthreads) {
 		while( threads[i]->idx != lead_idx ) {
-			Pause();
+			sched_yield();
 		}
 	}
 }

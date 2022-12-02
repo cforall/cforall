@@ -9,46 +9,159 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jan 14 07:18:11 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 21 17:50:12 2022
-// Update Count     : 15
+// Last Modified On : Thu Dec  1 11:52:08 2022
+// Update Count     : 115
 // 
 
 #pragma once
 
 #include <stdint.h>
 
+#define GLUE2( x, y ) x##y
+#define GLUE( x, y ) GLUE2( x, y )
+
 // Set default PRNG for architecture size.
 #ifdef __x86_64__										// 64-bit architecture
 #define LEHMER64
-#else													// 32-bit architecture
 #define XORSHIFT_6_21_7
+//#define XOSHIRO256PP
+//#define XOSHIRO128PP
+#else													// 32-bit architecture
+#define XORSHIFT_13_7_17
+#define XORSHIFT_6_21_7
+//#define XOSHIRO256PP
+//#define XOSHIRO128PP
 #endif // __x86_64__
 
 // C/CFA PRNG name and random-state.
+
 #ifdef LEHMER64
-#define PRNG_NAME lehmer64
-#define PRNG_ARG_T __uint128_t
+#define PRNG_NAME_64 lehmer64
+#define PRNG_STATE_64_T __uint128_t
 #endif // LEHMER64
 
+#ifdef XORSHIFT_13_7_17
+#define PRNG_NAME_64 xorshift_13_7_17
+#define PRNG_STATE_64_T uint64_t
+#endif // XORSHIFT_13_7_17
+
 #ifdef XORSHIFT_6_21_7
-#define PRNG_NAME xorshift_6_21_7
-#define PRNG_ARG_T uint32_t
+#define PRNG_NAME_32 xorshift_6_21_7
+#define PRNG_STATE_32_T uint32_t
 #endif // XORSHIFT_6_21_7
+
+#ifdef XOSHIRO256PP
+#define PRNG_NAME_64 xoshiro256pp
+#define PRNG_STATE_64_T struct GLUE(PRNG_NAME_64,_t)
+PRNG_STATE_64_T { uint64_t s[4]; };
+#endif // XOSHIRO256PP
+
+#ifdef XOSHIRO128PP
+#define PRNG_NAME_32 xoshiro128pp
+#define PRNG_STATE_32_T struct GLUE(PRNG_NAME_32,_t)
+PRNG_STATE_32_T { uint32_t s[4]; };
+#endif // XOSHIRO128PP
+
+#define PRNG_SET_SEED_64 GLUE(PRNG_NAME_64,_set_seed)
+#define PRNG_SET_SEED_32 GLUE(PRNG_NAME_32,_set_seed)
+
+
+// Default PRNG used by runtime.
+#ifdef __x86_64__										// 64-bit architecture
+#define PRNG_NAME PRNG_NAME_64
+#define PRNG_STATE_T PRNG_STATE_64_T
+#else													// 32-bit architecture
+#define PRNG_NAME PRNG_NAME_32
+#define PRNG_STATE_T PRNG_STATE_32_T
+#endif // __x86_64__
+
+#define PRNG_SET_SEED GLUE(PRNG_NAME,_set_seed)
+
 
 #ifdef __cforall										// don't include in C code (invoke.h)
 
-// Pipelined to allow out-of-order overlap with reduced dependencies. Critically, the current random state is returned
-// (copied), and then compute and store the next random value.
+// https://prng.di.unimi.it/xoshiro128plusplus.c
+//
+// This is xoshiro128++ 1.0, one of our 32-bit all-purpose, rock-solid generators. It has excellent speed, a state size
+// (128 bits) that is large enough for mild parallelism, and it passes all tests we are aware of.
+//
+// For generating just single-precision (i.e., 32-bit) floating-point numbers, xoshiro128+ is even faster.
+//
+// The state must be seeded so that it is not everywhere zero.
 
-#if defined(__SIZEOF_INT128__)
-//--------------------------------------------------
+#ifndef XOSHIRO128PP
+struct xoshiro128pp_t { uint32_t s[4]; };
+#endif // ! XOSHIRO128PP
+
+static inline uint32_t xoshiro128pp( xoshiro128pp_t & rs ) with(rs) {
+	inline uint32_t rotl( const uint32_t x, int k ) {
+		return (x << k) | (x >> (32 - k));
+	}
+
+	const uint32_t result = rotl( s[0] + s[3], 7 ) + s[0];
+	const uint32_t t = s[1] << 9;
+
+	s[2] ^= s[0];
+	s[3] ^= s[1];
+	s[1] ^= s[2];
+	s[0] ^= s[3];
+	s[2] ^= t;
+	s[3] = rotl( s[3], 11 );
+	return result;
+}
+
+static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed ) {
+	state = (xoshiro128pp_t){ {seed, seed, seed, seed} };
+} // xoshiro128pp_set_seed
+
+// This is xoshiro256++ 1.0, one of our all-purpose, rock-solid generators.  It has excellent (sub-ns) speed, a state
+// (256 bits) that is large enough for any parallel application, and it passes all tests we are aware of.
+//
+// For generating just floating-point numbers, xoshiro256+ is even faster.
+//
+// The state must be seeded so that it is not everywhere zero. If you have a 64-bit seed, we suggest to seed a
+// splitmix64 generator and use its output to fill s.
+
+#ifndef XOSHIRO256PP
+struct xoshiro256pp_t { uint64_t s[4]; };
+#endif // ! XOSHIRO256PP
+
+static inline uint64_t xoshiro256pp( xoshiro256pp_t & rs ) with(rs) {
+	inline uint64_t rotl(const uint64_t x, int k) {
+		return (x << k) | (x >> (64 - k));
+	}
+
+	const uint64_t result = rotl( s[0] + s[3], 23 ) + s[0];
+	const uint64_t t = s[1] << 17;
+
+	s[2] ^= s[0];
+	s[3] ^= s[1];
+	s[1] ^= s[2];
+	s[0] ^= s[3];
+	s[2] ^= t;
+	s[3] = rotl( s[3], 45 );
+	return result;
+}
+
+static inline void xoshiro256pp_set_seed( xoshiro256pp_t & state,  uint64_t seed ) {
+	state = (xoshiro256pp_t){ {seed, seed, seed, seed} };
+} // xoshiro256pp_set_seed
+
+#ifdef __SIZEOF_INT128__
+	// Pipelined to allow out-of-order overlap with reduced dependencies. Critically, the current random state is
+	// returned (copied), and then compute and store the next random value.
+	//--------------------------------------------------
 	static inline uint64_t lehmer64( __uint128_t & state ) {
 		__uint128_t ret = state;
 		state *= 0xda942042e4dd58b5;
 		return ret >> 64;
-	}
+	} // lehmer64
 
-//--------------------------------------------------
+	static inline void lehmer64_set_seed( __uint128_t & state, uint64_t seed ) {
+		state = seed;
+	} // lehmer64_set_seed
+
+	//--------------------------------------------------
 	static inline uint64_t wyhash64( uint64_t & state ) {
 		state += 0x60bee2bee120fc15;
 		__uint128_t tmp;
@@ -58,7 +171,11 @@
 		uint64_t m2 = (tmp >> 64) ^ tmp;
 		return m2;
 	}
-#endif
+
+	static inline void wyhash64_set_seed( __uint128_t & state, uint64_t seed ) {
+		state = seed;
+	} // lehmer64_set_seed
+#endif // __SIZEOF_INT128__
 
 //--------------------------------------------------
 static inline uint64_t xorshift_13_7_17( uint64_t & state ) {
@@ -69,6 +186,10 @@ static inline uint64_t xorshift_13_7_17( uint64_t & state ) {
 	return ret;
 }
 
+static inline void xorshift_13_7_17_set_seed( uint64_t & state, uint32_t seed ) {
+	state = seed;
+}
+
 //--------------------------------------------------
 static inline uint32_t xorshift_6_21_7( uint32_t & state ) {
 	uint32_t ret = state;
@@ -77,6 +198,10 @@ static inline uint32_t xorshift_6_21_7( uint32_t & state ) {
 	state ^= state << 7;
 	return ret;
 } // xorshift_6_21_7
+
+static inline void xorshift_6_21_7_set_seed( uint32_t & state, uint32_t seed ) {
+	state = seed;
+}
 
 //--------------------------------------------------
 typedef struct {
@@ -104,13 +229,7 @@ static inline uint32_t xorwow( xorwow__state_t & state ) {
 	return ret;
 }
 
-//--------------------------------------------------
-static inline uint32_t LCG( uint32_t & state ) {		// linear congruential generator
-	uint32_t ret = state;
-	state = 36969 * (state & 65535) + (state >> 16);	// 36969 is NOT prime! No not change it!
-	return ret;
-} // LCG
-
+// Used in __tls_rand_fwd
 //--------------------------------------------------
 #define M  (1_l64u << 48_l64u)
 #define A  (25214903917_l64u)

@@ -107,7 +107,7 @@ extern void __cfa_io_stop ( processor * );
 // Other Forward Declarations
 extern void __wake_proc(processor *);
 extern int cfa_main_returned;							// from interpose.cfa
-PRNG_ARG_T __global_random_prime = 4_294_967_291u;
+size_t __global_random_prime = 4_294_967_291u;
 bool __global_random_mask = false;
 
 //-----------------------------------------------------------------------------
@@ -134,16 +134,16 @@ extern int __map_prot;
 //-----------------------------------------------------------------------------
 // Global state
 __thread struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "initial-exec" ))) @= {
-	NULL,												// cannot use 0p
-	NULL,
-	false,
-	{ 1, false, false },
-	0,
-	{ 0, 0 },
-	NULL,
+	.this_thread : NULL,								// cannot use 0p
+	.this_processor : NULL,
+	.sched_lock : false,
+	.preemption_state : { .disable_count : 1, .enabled : false, .in_progress : false },
+	// random_state uninitialized
+	.ready_rng : { .fwd_seed : 0, .bck_seed : 0 },
+	.this_stats : NULL,
 	#ifdef __CFA_WITH_VERIFY__
-		false,
-		0,
+		.in_sched_lock : false,
+		.sched_id : 0,
 	#endif
 };
 
@@ -520,7 +520,7 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 	cltr_link.prev = 0p;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
-	random_state = __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl();
+	PRNG_SET_SEED( random_state,  __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl() );
 	#if defined( __CFA_WITH_VERIFY__ )
 		executing = 0p;
 		canary = 0x0D15EA5E0D15EA5Ep;

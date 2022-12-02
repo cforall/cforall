@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 22 22:18:36 2022
-// Update Count     : 613
+// Last Modified On : Wed Nov 30 18:14:05 2022
+// Update Count     : 622
 //
 
 #include "stdlib.hfa"
@@ -225,10 +225,10 @@ long double _Complex random( void ) { return (long double)drand48() + (long doub
 //---------------------------------------
 
 // would be cool to make hidden but it's needed for libcfathread
-__attribute__((visibility("default"))) PRNG_ARG_T __global_random_seed; // sequential/concurrent
-__attribute__((visibility("hidden"))) PRNG_ARG_T __global_random_state; // sequential only
+__attribute__((visibility("default"))) size_t __global_random_seed; // sequential/concurrent
+__attribute__((visibility("hidden"))) PRNG_STATE_T __global_random_state; // sequential only
 
-void set_seed( size_t seed ) { __global_random_state = __global_random_seed = seed; PRNG_NAME( __global_random_state ); }
+void set_seed( size_t seed ) { __global_random_seed = seed; PRNG_SET_SEED( __global_random_state, seed ); PRNG_NAME( __global_random_state ); }
 size_t get_seed() { return __global_random_seed; }
 size_t prng( void ) { return PRNG_NAME( __global_random_state ); } // [0,UINT_MAX]
 

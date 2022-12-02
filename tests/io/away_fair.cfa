@@ -40,7 +40,7 @@ void main(Spinner &) {
 		if(curr >= TIMES) return;
 
 		if(last == curr) {
-			Pause();
+			sched_yield();
 			continue;
 		}
 

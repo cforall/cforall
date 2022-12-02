@@ -562,9 +562,10 @@ namespace GenPoly {
 			// pass size/align for type variables
 			// NOTE: This is iterating over a map. This means the sorting
 			// order of the keys changes behaviour, as the iteration order
-			// is visible outside the loop.
-			// TODO: I cannot figure out how this gets matched in the later
-			// passes the modify the function.
+			// is visible outside the loop. - The order matches the orignal
+			// order because the vars have been renamed with numbers that,
+			// even when converted to strings, sort in the original order.
+			// (At least, that is the best explination I have.)
 			for ( std::pair<std::string, TypeDecl::Data> const & tyParam : exprTyVars ) {
 				if ( !tyParam.second.isComplete ) continue;
 				Type *concrete = env->lookup( tyParam.first );
@@ -1327,8 +1328,6 @@ namespace GenPoly {
 			                   { new Attribute( "unused" ) } );
 			ObjectDecl newPtr( "", Type::StorageClasses(), LinkageSpec::C, 0,
 			                   new PointerType( Type::Qualifiers(), new BasicType( Type::Qualifiers(), BasicType::LongUnsignedInt ) ), 0 );
-			// NOTE: This loop somehow consistently matching one in
-			// `passTypeVars` even though it does loop in the same way.
 			for ( TypeDecl * const tyParam : funcType->get_forall() ) {
 				ObjectDecl *sizeParm, *alignParm;
 				// add all size and alignment parameters to parameter list

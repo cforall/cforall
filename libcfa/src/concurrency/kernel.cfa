@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 31 07:08:20 2020
-// Update Count     : 71
+// Last Modified On : Wed Nov 30 18:14:08 2022
+// Update Count     : 76
 //
 
 #define __cforall_thread__
@@ -150,7 +150,7 @@ extern void __enable_interrupts_hard();
 void main(processorCtx_t & runner) {
 	// Because of a bug, we couldn't initialized the seed on construction
 	// Do it here
-	__cfaabi_tls.rand_seed ^= rdtscl();
+	PRNG_SET_SEED( __cfaabi_tls.random_state, rdtscl() );
 	__cfaabi_tls.ready_rng.fwd_seed = 25214903917_l64u * (rdtscl() ^ (uintptr_t)&runner);
 	__tls_rand_advance_bck();
 

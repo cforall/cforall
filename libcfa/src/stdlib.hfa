@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 22 22:48:59 2022
-// Update Count     : 736
+// Last Modified On : Wed Nov 30 18:18:26 2022
+// Update Count     : 760
 //
 
 #pragma once
@@ -421,13 +421,13 @@ static inline forall( PRNG &, R | basic_prng( PRNG, R ) | { R ?+?( R, R ); R ?-?
 struct PRNG32 {
 	uint32_t callcnt;									// call count
 	uint32_t seed;										// current seed
-	PRNG_ARG_T state;									// random state
+	PRNG_STATE_32_T state;								// random state
 }; // PRNG
 
 static inline {
-	void set_seed( PRNG32 & prng, uint32_t seed_ ) with( prng ) { state = seed = seed_; PRNG_NAME( state ); } // set seed
+	void set_seed( PRNG32 & prng, uint32_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_32( state, seed ); PRNG_NAME_32( state ); } // set seed
 	uint32_t get_seed( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
-	uint32_t prng( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME( state ); } // [0,UINT_MAX]
+	uint32_t prng( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME_32( state ); } // [0,UINT_MAX]
 	uint32_t prng( PRNG32 & prng, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint32_t prng( PRNG32 & prng, size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
 	uint32_t calls( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
@@ -438,13 +438,13 @@ static inline {
 struct PRNG64 {
 	uint64_t callcnt;									// call count
 	uint64_t seed;										// current seed
-	PRNG_ARG_T state;									// random state
+	PRNG_STATE_64_T state;								// random state
 }; // PRNG
 
 static inline {
-	void set_seed( PRNG64 & prng, uint64_t seed_ ) with( prng ) { state = seed = seed_; PRNG_NAME( state ); } // set seed
+	void set_seed( PRNG64 & prng, uint64_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_64( state, seed ); PRNG_NAME_64( state ); } // set seed
 	uint64_t get_seed( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
-	uint64_t prng( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME( state ); } // [0,UINT_MAX]
+	uint64_t prng( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME_64( state ); } // [0,UINT_MAX]
 	uint64_t prng( PRNG64 & prng, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint64_t prng( PRNG64 & prng, size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
 	uint64_t calls( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }

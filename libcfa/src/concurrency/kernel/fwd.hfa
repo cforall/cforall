@@ -45,18 +45,14 @@ extern "C" {
 				volatile bool in_progress;
 			} preemption_state;
 
-			#if defined(__SIZEOF_INT128__)
-				__uint128_t rand_seed;
-			#else
-				uint64_t rand_seed;
-			#endif
+			PRNG_STATE_T random_state;
+
 			struct {
 				uint64_t fwd_seed;
 				uint64_t bck_seed;
 			} ready_rng;
 
 			struct __stats_t        * volatile this_stats;
-
 
 			#ifdef __CFA_WITH_VERIFY__
 				// Debug, check if the rwlock is owned for reading
@@ -75,13 +71,14 @@ extern "C" {
 		extern uintptr_t __cfatls_get( unsigned long int member );
 		#define publicTLS_get( member ) ((typeof(__cfaabi_tls.member))__cfatls_get( __builtin_offsetof(KernelThreadData, member) ))
 
-		static inline uint64_t __tls_rand() {
-			return
-			#if defined(__SIZEOF_INT128__)
-				lehmer64( kernelTLS().rand_seed );
-			#else
-				xorshift_13_7_17( kernelTLS().rand_seed );
-			#endif
+		static inline
+			#ifdef __x86_64__							// 64-bit architecture
+			uint64_t
+			#else										// 32-bit architecture
+			uint32_t
+			#endif // __x86_64__
+		__tls_rand() {
+			return PRNG_NAME( kernelTLS().random_state );
 		}
 
 		static inline unsigned __tls_rand_fwd() {

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 24 16:21:57 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 20 21:26:40 2022
-// Update Count     : 59
+// Last Modified On : Wed Nov 30 18:14:06 2022
+// Update Count     : 68
 //
 
 #include <time.h>										// tzset
@@ -20,8 +20,8 @@
 #include "bits/random.hfa"								// rdtscl
 #include "startup.hfa"
 
-extern PRNG_ARG_T __global_random_seed;					// sequential/concurrent
-extern PRNG_ARG_T __global_random_state;				// sequential
+extern size_t __global_random_seed;						// sequential/concurrent
+extern PRNG_STATE_T __global_random_state;				// sequential
 
 extern "C" {
 	void __cfaabi_memory_startup( void ) __attribute__(( constructor( STARTUP_PRIORITY_MEMORY ) ));
@@ -68,7 +68,8 @@ extern "C" {
 
 	void __cfaabi_core_startup( void ) __attribute__(( constructor( STARTUP_PRIORITY_CORE ) ));
 	void __cfaabi_core_startup( void ) {
-		__global_random_state = __global_random_seed = rdtscl();
+		__global_random_seed = rdtscl();
+		PRNG_SET_SEED( __global_random_state, __global_random_seed );
 		__cfaabi_interpose_startup();
 		__cfaabi_device_startup();
 	} // __cfaabi_core_startup
