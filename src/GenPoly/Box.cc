@@ -94,7 +94,7 @@ namespace GenPoly {
 		  private:
 			/// Pass the extra type parameters from polymorphic generic arguments or return types into a function application
 			/// Will insert 0, 2 or 3 more arguments.
-			void passArgTypeVars( ApplicationExpr *appExpr, Type *parmType, Type *argBaseType, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars, std::set< std::string > &seenTypes );
+			std::list< Expression *>::iterator passArgTypeVars( ApplicationExpr *appExpr, Type *parmType, Type *argBaseType, std::list< Expression *>::iterator arg, const TyVarMap &exprTyVars, std::set< std::string > &seenTypes );
 			/// passes extra type parameters into a polymorphic function application
 			/// Returns an iterator to the first argument after the added
 			/// arguments, which are added at the beginning.
@@ -530,11 +530,11 @@ namespace GenPoly {
 			}
 		}
 
-		void Pass1::passArgTypeVars( ApplicationExpr *appExpr, Type *parmType, Type *argBaseType, std::list< Expression *>::iterator &arg, const TyVarMap &exprTyVars, std::set< std::string > &seenTypes ) {
+		std::list< Expression *>::iterator Pass1::passArgTypeVars( ApplicationExpr *appExpr, Type *parmType, Type *argBaseType, std::list< Expression *>::iterator arg, const TyVarMap &exprTyVars, std::set< std::string > &seenTypes ) {
 			Type *polyType = isPolyType( parmType, exprTyVars );
 			if ( polyType && ! dynamic_cast< TypeInstType* >( polyType ) ) {
 				std::string typeName = mangleType( polyType );
-				if ( seenTypes.count( typeName ) ) return;
+				if ( seenTypes.count( typeName ) ) return arg;
 
 				arg = appExpr->get_args().insert( arg, new SizeofExpr( argBaseType->clone() ) );
 				arg++;
@@ -554,6 +554,7 @@ namespace GenPoly {
 
 				seenTypes.insert( typeName );
 			}
+			return arg;
 		}
 
 		std::list< Expression *>::iterator Pass1::passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, const TyVarMap &exprTyVars ) {
@@ -592,7 +593,7 @@ namespace GenPoly {
 			// a polymorphic return type may need to be added to the argument list
 			if ( polyRetType ) {
 				Type *concRetType = replaceWithConcrete( polyRetType, env );
-				passArgTypeVars( appExpr, polyRetType, concRetType, arg, exprTyVars, seenTypes );
+				arg = passArgTypeVars( appExpr, polyRetType, concRetType, arg, exprTyVars, seenTypes );
 				// Skip the return parameter in the argument list.
 				fnArg = arg + 1;
 			} else {
@@ -604,7 +605,7 @@ namespace GenPoly {
 			for ( ; fnParm != funcType->get_parameters().end() && fnArg != appExpr->get_args().end(); ++fnParm, ++fnArg ) {
 				Type * argType = (*fnArg)->get_result();
 				if ( ! argType ) continue;
-				passArgTypeVars( appExpr, (*fnParm)->get_type(), argType, arg, exprTyVars, seenTypes );
+				arg = passArgTypeVars( appExpr, (*fnParm)->get_type(), argType, arg, exprTyVars, seenTypes );
 			}
 			return arg;
 		}
