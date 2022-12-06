@@ -67,7 +67,7 @@ PRETTY_PATH=mkdir -p $(dir $(abspath ${@})) && cd ${srcdir} &&
 
 .PHONY: list .validate .test_makeflags
 .INTERMEDIATE: .validate .validate.cfa .test_makeflags
-EXTRA_PROGRAMS = avl_test linkonce .dummy_hack # build but do not install
+EXTRA_PROGRAMS = avl_test linkonce linking/mangling/anon .dummy_hack # build but do not install
 EXTRA_DIST = test.py \
 	pybin/__init__.py \
 	pybin/print-core.gdb \
@@ -100,6 +100,7 @@ dist-hook:
 
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
+linking_mangling_anon_SOURCES = linking/mangling/header.hfa linking/mangling/lib.cfa linking/mangling/main.cfa
 # automake doesn't know we still need C/CPP rules so pretend like we have a C program
 nodist__dummy_hack_SOURCES = .dummy_hack.c .dummy_hackxx.cpp
 

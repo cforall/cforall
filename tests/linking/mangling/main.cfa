@@ -1,0 +1,17 @@
+#include <fstream.hfa>
+
+struct { int a; } test; //purposefully before the include
+
+#include "header.hfa"
+
+int main() {
+	a_global_with_no_type.some_int = 6;
+	a_global_with_no_type.some_other_int = 7;
+
+	a_typedefed_global.some_int = 8;
+	a_typedefed_global.a_float = 9.0f;
+
+	sout | "Done!";
+
+	return 0;
+}

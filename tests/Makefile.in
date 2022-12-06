@@ -91,7 +91,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 EXTRA_PROGRAMS = avl_test$(EXEEXT) linkonce$(EXEEXT) \
-	.dummy_hack$(EXEEXT)
+	linking/mangling/anon$(EXEEXT) .dummy_hack$(EXEEXT)
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/automake/libtool.m4 \
@@ -122,6 +122,10 @@ am_avl_test_OBJECTS = avltree/avl_test.$(OBJEXT) \
 	avltree/avl4.$(OBJEXT) avltree/avl-private.$(OBJEXT)
 avl_test_OBJECTS = $(am_avl_test_OBJECTS)
 avl_test_LDADD = $(LDADD)
+am_linking_mangling_anon_OBJECTS = linking/mangling/lib.$(OBJEXT) \
+	linking/mangling/main.$(OBJEXT)
+linking_mangling_anon_OBJECTS = $(am_linking_mangling_anon_OBJECTS)
+linking_mangling_anon_LDADD = $(LDADD)
 am_linkonce_OBJECTS = link-once/main.$(OBJEXT) \
 	link-once/partner.$(OBJEXT)
 linkonce_OBJECTS = $(am_linkonce_OBJECTS)
@@ -180,8 +184,9 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(nodist__dummy_hack_SOURCES) $(avl_test_SOURCES) \
+	$(linking_mangling_anon_SOURCES) $(linkonce_SOURCES)
+DIST_SOURCES = $(avl_test_SOURCES) $(linking_mangling_anon_SOURCES) \
 	$(linkonce_SOURCES)
-DIST_SOURCES = $(avl_test_SOURCES) $(linkonce_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -460,6 +465,7 @@ EXTRA_DIST = test.py \
 
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
+linking_mangling_anon_SOURCES = linking/mangling/header.hfa linking/mangling/lib.cfa linking/mangling/main.cfa
 # automake doesn't know we still need C/CPP rules so pretend like we have a C program
 nodist__dummy_hack_SOURCES = .dummy_hack.c .dummy_hackxx.cpp
 
@@ -550,6 +556,20 @@ avltree/avl-private.$(OBJEXT): avltree/$(am__dirstamp) \
 avl_test$(EXEEXT): $(avl_test_OBJECTS) $(avl_test_DEPENDENCIES) $(EXTRA_avl_test_DEPENDENCIES) 
 	@rm -f avl_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(avl_test_OBJECTS) $(avl_test_LDADD) $(LIBS)
+linking/mangling/$(am__dirstamp):
+	@$(MKDIR_P) linking/mangling
+	@: > linking/mangling/$(am__dirstamp)
+linking/mangling/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) linking/mangling/$(DEPDIR)
+	@: > linking/mangling/$(DEPDIR)/$(am__dirstamp)
+linking/mangling/lib.$(OBJEXT): linking/mangling/$(am__dirstamp) \
+	linking/mangling/$(DEPDIR)/$(am__dirstamp)
+linking/mangling/main.$(OBJEXT): linking/mangling/$(am__dirstamp) \
+	linking/mangling/$(DEPDIR)/$(am__dirstamp)
+
+linking/mangling/anon$(EXEEXT): $(linking_mangling_anon_OBJECTS) $(linking_mangling_anon_DEPENDENCIES) $(EXTRA_linking_mangling_anon_DEPENDENCIES) linking/mangling/$(am__dirstamp)
+	@rm -f linking/mangling/anon$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(linking_mangling_anon_OBJECTS) $(linking_mangling_anon_LDADD) $(LIBS)
 link-once/$(am__dirstamp):
 	@$(MKDIR_P) link-once
 	@: > link-once/$(am__dirstamp)
@@ -569,6 +589,7 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f avltree/*.$(OBJEXT)
 	-rm -f link-once/*.$(OBJEXT)
+	-rm -f linking/mangling/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -635,6 +656,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf linking/mangling/.libs linking/mangling/_libs
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -758,6 +780,8 @@ distclean-generic:
 	-rm -f avltree/$(am__dirstamp)
 	-rm -f link-once/$(DEPDIR)/$(am__dirstamp)
 	-rm -f link-once/$(am__dirstamp)
+	-rm -f linking/mangling/$(DEPDIR)/$(am__dirstamp)
+	-rm -f linking/mangling/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

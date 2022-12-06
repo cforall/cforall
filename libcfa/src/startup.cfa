@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 24 16:21:57 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 30 18:14:06 2022
-// Update Count     : 68
+// Last Modified On : Mon Dec  5 11:41:58 2022
+// Update Count     : 73
 //
 
 #include <time.h>										// tzset
@@ -70,6 +70,7 @@ extern "C" {
 	void __cfaabi_core_startup( void ) {
 		__global_random_seed = rdtscl();
 		PRNG_SET_SEED( __global_random_state, __global_random_seed );
+
 		__cfaabi_interpose_startup();
 		__cfaabi_device_startup();
 	} // __cfaabi_core_startup

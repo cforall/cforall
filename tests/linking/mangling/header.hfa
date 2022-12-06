@@ -1,0 +1,13 @@
+#pragma once
+
+typedef struct /* anonymous */ {
+	int some_int;
+	float a_float;
+} name_but_a_typedefed_t;
+
+extern name_but_a_typedefed_t a_typedefed_global;
+
+extern struct {
+	int some_int;
+	int some_other_int;
+} a_global_with_no_type;

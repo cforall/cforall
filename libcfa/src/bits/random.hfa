@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jan 14 07:18:11 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  1 11:52:08 2022
-// Update Count     : 115
+// Last Modified On : Mon Dec  5 13:13:14 2022
+// Update Count     : 128
 // 
 
 #pragma once
@@ -29,11 +29,11 @@
 #else													// 32-bit architecture
 #define XORSHIFT_13_7_17
 #define XORSHIFT_6_21_7
-//#define XOSHIRO256PP
-//#define XOSHIRO128PP
 #endif // __x86_64__
 
-// C/CFA PRNG name and random-state.
+// Define C/CFA PRNG name and random-state.
+
+// SKULLDUGGERY: typedefs name struct and typedef with the same name to deal with CFA typedef numbering problem.
 
 #ifdef LEHMER64
 #define PRNG_NAME_64 lehmer64
@@ -52,14 +52,20 @@
 
 #ifdef XOSHIRO256PP
 #define PRNG_NAME_64 xoshiro256pp
-#define PRNG_STATE_64_T struct GLUE(PRNG_NAME_64,_t)
-PRNG_STATE_64_T { uint64_t s[4]; };
+#define PRNG_STATE_64_T GLUE(PRNG_NAME_64,_t)
+typedef struct PRNG_STATE_64_T { uint64_t s[4]; } PRNG_STATE_64_T;
 #endif // XOSHIRO256PP
 
 #ifdef XOSHIRO128PP
 #define PRNG_NAME_32 xoshiro128pp
-#define PRNG_STATE_32_T struct GLUE(PRNG_NAME_32,_t)
-PRNG_STATE_32_T { uint32_t s[4]; };
+#define PRNG_STATE_32_T GLUE(PRNG_NAME_32,_t)
+typedef struct PRNG_STATE_32_T { uint32_t s[4]; } PRNG_STATE_32_T;
+#endif // XOSHIRO128PP
+
+#ifdef XORWOW
+#define PRNG_NAME_32 xorwow
+#define PRNG_STATE_32_T GLUE(PRNG_NAME_32,_t)
+typedef struct PRNG_STATE_32_T { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T;
 #endif // XOSHIRO128PP
 
 #define PRNG_SET_SEED_64 GLUE(PRNG_NAME_64,_set_seed)
@@ -80,40 +86,8 @@ PRNG_STATE_32_T { uint32_t s[4]; };
 
 #ifdef __cforall										// don't include in C code (invoke.h)
 
-// https://prng.di.unimi.it/xoshiro128plusplus.c
+// https://prng.di.unimi.it/xoshiro256starstar.c
 //
-// This is xoshiro128++ 1.0, one of our 32-bit all-purpose, rock-solid generators. It has excellent speed, a state size
-// (128 bits) that is large enough for mild parallelism, and it passes all tests we are aware of.
-//
-// For generating just single-precision (i.e., 32-bit) floating-point numbers, xoshiro128+ is even faster.
-//
-// The state must be seeded so that it is not everywhere zero.
-
-#ifndef XOSHIRO128PP
-struct xoshiro128pp_t { uint32_t s[4]; };
-#endif // ! XOSHIRO128PP
-
-static inline uint32_t xoshiro128pp( xoshiro128pp_t & rs ) with(rs) {
-	inline uint32_t rotl( const uint32_t x, int k ) {
-		return (x << k) | (x >> (32 - k));
-	}
-
-	const uint32_t result = rotl( s[0] + s[3], 7 ) + s[0];
-	const uint32_t t = s[1] << 9;
-
-	s[2] ^= s[0];
-	s[3] ^= s[1];
-	s[1] ^= s[2];
-	s[0] ^= s[3];
-	s[2] ^= t;
-	s[3] = rotl( s[3], 11 );
-	return result;
-}
-
-static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed ) {
-	state = (xoshiro128pp_t){ {seed, seed, seed, seed} };
-} // xoshiro128pp_set_seed
-
 // This is xoshiro256++ 1.0, one of our all-purpose, rock-solid generators.  It has excellent (sub-ns) speed, a state
 // (256 bits) that is large enough for any parallel application, and it passes all tests we are aware of.
 //
@@ -123,13 +97,13 @@ static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed 
 // splitmix64 generator and use its output to fill s.
 
 #ifndef XOSHIRO256PP
-struct xoshiro256pp_t { uint64_t s[4]; };
+typedef struct xoshiro256pp_t { uint64_t s[4]; } xoshiro256pp_t;
 #endif // ! XOSHIRO256PP
 
 static inline uint64_t xoshiro256pp( xoshiro256pp_t & rs ) with(rs) {
 	inline uint64_t rotl(const uint64_t x, int k) {
 		return (x << k) | (x >> (64 - k));
-	}
+	} // rotl
 
 	const uint64_t result = rotl( s[0] + s[3], 23 ) + s[0];
 	const uint64_t t = s[1] << 17;
@@ -141,11 +115,45 @@ static inline uint64_t xoshiro256pp( xoshiro256pp_t & rs ) with(rs) {
 	s[2] ^= t;
 	s[3] = rotl( s[3], 45 );
 	return result;
-}
+} // xoshiro256pp
 
 static inline void xoshiro256pp_set_seed( xoshiro256pp_t & state,  uint64_t seed ) {
 	state = (xoshiro256pp_t){ {seed, seed, seed, seed} };
 } // xoshiro256pp_set_seed
+
+// https://prng.di.unimi.it/xoshiro128plusplus.c
+//
+// This is xoshiro128++ 1.0, one of our 32-bit all-purpose, rock-solid generators. It has excellent speed, a state size
+// (128 bits) that is large enough for mild parallelism, and it passes all tests we are aware of.
+//
+// For generating just single-precision (i.e., 32-bit) floating-point numbers, xoshiro128+ is even faster.
+//
+// The state must be seeded so that it is not everywhere zero.
+
+#ifndef XOSHIRO128PP
+typedef struct xoshiro128pp_t { uint32_t s[4]; } xoshiro128pp_t;
+#endif // ! XOSHIRO128PP
+
+static inline uint32_t xoshiro128pp( xoshiro128pp_t & rs ) with(rs) {
+	inline uint32_t rotl( const uint32_t x, int k ) {
+		return (x << k) | (x >> (32 - k));
+	} // rotl
+
+	const uint32_t result = rotl( s[0] + s[3], 7 ) + s[0];
+	const uint32_t t = s[1] << 9;
+
+	s[2] ^= s[0];
+	s[3] ^= s[1];
+	s[1] ^= s[2];
+	s[0] ^= s[3];
+	s[2] ^= t;
+	s[3] = rotl( s[3], 11 );
+	return result;
+} // xoshiro128pp
+
+static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed ) {
+	state = (xoshiro128pp_t){ {seed, seed, seed, seed} };
+} // xoshiro128pp_set_seed
 
 #ifdef __SIZEOF_INT128__
 	// Pipelined to allow out-of-order overlap with reduced dependencies. Critically, the current random state is
@@ -184,13 +192,17 @@ static inline uint64_t xorshift_13_7_17( uint64_t & state ) {
 	state ^= state >> 7;
 	state ^= state << 17;
 	return ret;
-}
+} // xorshift_13_7_17
 
 static inline void xorshift_13_7_17_set_seed( uint64_t & state, uint32_t seed ) {
 	state = seed;
-}
+} // xorshift_13_7_17_set_seed
 
 //--------------------------------------------------
+// Marsaglia shift-XOR PRNG with thread-local state
+// Period is 4G-1
+// 0 is absorbing and must be avoided
+// Low-order bits are not particularly random
 static inline uint32_t xorshift_6_21_7( uint32_t & state ) {
 	uint32_t ret = state;
 	state ^= state << 6;
@@ -201,16 +213,15 @@ static inline uint32_t xorshift_6_21_7( uint32_t & state ) {
 
 static inline void xorshift_6_21_7_set_seed( uint32_t & state, uint32_t seed ) {
 	state = seed;
-}
+} // xorshift_6_21_7_set_seed
 
 //--------------------------------------------------
-typedef struct {
-	uint32_t a, b, c, d;
-	uint32_t counter;
-} xorwow__state_t;
+// The state array must be initialized to non-zero in the first four words.
+#ifndef XORWOW
+typedef struct xorwow_t { uint32_t a, b, c, d, counter; } xorwow_t;
+#endif // ! XORWOW
 
-// The state array must be initialized to not be all zero in the first four words.
-static inline uint32_t xorwow( xorwow__state_t & state ) {
+static inline uint32_t xorwow( xorwow_t & state ) {
 	// Algorithm "xorwow" from p. 5 of Marsaglia, "Xorshift RNGs".
 	uint32_t ret = state.a + state.counter;
 	uint32_t t = state.d;
@@ -227,10 +238,14 @@ static inline uint32_t xorwow( xorwow__state_t & state ) {
 
 	state.counter += 362437;
 	return ret;
-}
+} // xorwow
 
-// Used in __tls_rand_fwd
+static inline void xorwow_set_seed( xorwow_t & state, uint32_t seed ) {
+	state = (xorwow_t){ seed, seed, seed, seed, 0 };
+} // xorwow_set_seed
+
 //--------------------------------------------------
+// Used in __tls_rand_fwd
 #define M  (1_l64u << 48_l64u)
 #define A  (25214903917_l64u)
 #define AI (18446708753438544741_l64u)
@@ -241,13 +256,13 @@ static inline uint32_t xorwow( xorwow__state_t & state ) {
 static inline uint32_t LCGBI_fwd( uint64_t & state ) {
 	state = (A * state + C) & (M - 1);
 	return state >> D;
-}
+} // LCGBI_fwd
 
 static inline uint32_t LCGBI_bck( uint64_t & state ) {
 	unsigned int r = state >> D;
 	state = AI * (state - C) & (M - 1);
 	return r;
-}
+} // LCGBI_bck
 
 #undef M
 #undef A
