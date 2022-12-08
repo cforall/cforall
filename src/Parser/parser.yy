@@ -550,7 +550,7 @@ if ( N ) {																		\
 %start translation_unit									// parse-tree root
 
 %%
-//************************* Namespace Management ********************************
+// ************************ Namespace Management ********************************
 
 // The C grammar is not context free because it relies on the distinct terminal symbols "identifier" and "TYPEDEFname",
 // which are lexically identical.
@@ -587,7 +587,7 @@ pop:
 		{ typedefTable.leaveScope(); }
 	;
 
-//************************* CONSTANTS ********************************
+// ************************ CONSTANTS ********************************
 
 constant:
 		// ENUMERATIONconstant is not included here; it is treated as a variable with type "enumeration constant".
@@ -633,7 +633,7 @@ string_literal_list:									// juxtaposed strings are concatenated
 		}
 	;
 
-//************************* EXPRESSIONS ********************************
+// ************************ EXPRESSIONS ********************************
 
 primary_expression:
 	IDENTIFIER											// typedef name cannot be used as a variable name
@@ -1100,7 +1100,7 @@ comma_expression_opt:
 	| comma_expression
 	;
 
-//*************************** STATEMENTS *******************************
+// ************************** STATEMENTS *******************************
 
 statement:
 	labeled_statement
@@ -1757,7 +1757,7 @@ label_list:
 		}
 	;
 
-//******************************* DECLARATIONS *********************************
+// ****************************** DECLARATIONS *********************************
 
 declaration_list_opt:									// used at beginning of switch statement
 	// empty
@@ -2990,7 +2990,7 @@ trait_declaring_list:									// CFA
 		{ $$ = $1->appendList( $1->cloneBaseType( $5 ) ); }
 	;
 
-//***************************** EXTERNAL DEFINITIONS *****************************
+// **************************** EXTERNAL DEFINITIONS *****************************
 
 translation_unit:
 	// empty, input file
@@ -4012,7 +4012,7 @@ cfa_abstract_function:									// CFA
 // 4) ISO/IEC 9899:1999 Section 6.11.7(1) : "The use of function definitions with separate parameter identifier and
 //    declaration lists (not prototype-format parameter type and identifier declarators) is an obsolescent feature.
 
-//************************* MISCELLANEOUS ********************************
+// ************************ MISCELLANEOUS ********************************
 
 comma_opt:												// redundant comma
 	// empty

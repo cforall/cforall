@@ -7,7 +7,7 @@ typedef struct /* anonymous */ {
 
 extern name_but_a_typedefed_t a_typedefed_global;
 
-extern struct {
+extern struct /* anonymous */ {
 	int some_int;
 	int some_other_int;
 } a_global_with_no_type;
