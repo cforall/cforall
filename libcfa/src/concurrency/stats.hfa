@@ -93,9 +93,11 @@ enum {
 				volatile uint64_t slow;
 				volatile uint64_t eagr;
 				volatile uint64_t nblk;
+				volatile uint64_t extr;
 			} submit;
 			struct {
 				volatile uint64_t external;
+				volatile uint64_t signal;
 				volatile uint64_t dirty;
 				volatile uint64_t full;
 				volatile uint64_t idle;
