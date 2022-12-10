@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jan 14 07:18:11 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec  5 13:13:14 2022
-// Update Count     : 128
+// Last Modified On : Fri Dec  9 17:23:49 2022
+// Update Count     : 170
 // 
 
 #pragma once
@@ -22,33 +22,26 @@
 
 // Set default PRNG for architecture size.
 #ifdef __x86_64__										// 64-bit architecture
-#define LEHMER64
-#define XORSHIFT_6_21_7
-//#define XOSHIRO256PP
-//#define XOSHIRO128PP
+	// 64-bit generators
+	#define LEHMER64
+	//#define XORSHIFT_12_25_27
+	//#define XOSHIRO256PP
+	//#define KISS_64
+
+	// 32-bit generators
+	#define XORSHIFT_6_21_7
+	//#define XOSHIRO128PP
 #else													// 32-bit architecture
-#define XORSHIFT_13_7_17
-#define XORSHIFT_6_21_7
+	// 64-bit generators
+	#define XORSHIFT_13_7_17
+
+	// 32-bit generators
+	#define XORSHIFT_6_21_7
 #endif // __x86_64__
 
 // Define C/CFA PRNG name and random-state.
 
 // SKULLDUGGERY: typedefs name struct and typedef with the same name to deal with CFA typedef numbering problem.
-
-#ifdef LEHMER64
-#define PRNG_NAME_64 lehmer64
-#define PRNG_STATE_64_T __uint128_t
-#endif // LEHMER64
-
-#ifdef XORSHIFT_13_7_17
-#define PRNG_NAME_64 xorshift_13_7_17
-#define PRNG_STATE_64_T uint64_t
-#endif // XORSHIFT_13_7_17
-
-#ifdef XORSHIFT_6_21_7
-#define PRNG_NAME_32 xorshift_6_21_7
-#define PRNG_STATE_32_T uint32_t
-#endif // XORSHIFT_6_21_7
 
 #ifdef XOSHIRO256PP
 #define PRNG_NAME_64 xoshiro256pp
@@ -61,6 +54,37 @@ typedef struct PRNG_STATE_64_T { uint64_t s[4]; } PRNG_STATE_64_T;
 #define PRNG_STATE_32_T GLUE(PRNG_NAME_32,_t)
 typedef struct PRNG_STATE_32_T { uint32_t s[4]; } PRNG_STATE_32_T;
 #endif // XOSHIRO128PP
+
+#ifdef LEHMER64
+#define PRNG_NAME_64 lehmer64
+#define PRNG_STATE_64_T __uint128_t
+#endif // LEHMER64
+
+#ifdef WYHASH64
+#define PRNG_NAME_64 wyhash64
+#define PRNG_STATE_64_T uint64_t
+#endif // LEHMER64
+
+#ifdef XORSHIFT_13_7_17
+#define PRNG_NAME_64 xorshift_13_7_17
+#define PRNG_STATE_64_T uint64_t
+#endif // XORSHIFT_13_7_17
+
+#ifdef XORSHIFT_6_21_7
+#define PRNG_NAME_32 xorshift_6_21_7
+#define PRNG_STATE_32_T uint32_t
+#endif // XORSHIFT_6_21_7
+
+#ifdef XORSHIFT_12_25_27
+#define PRNG_NAME_64 xorshift_12_25_27
+#define PRNG_STATE_64_T uint64_t
+#endif // XORSHIFT_12_25_27
+
+#ifdef KISS_64
+#define PRNG_NAME_64 kiss_64
+#define PRNG_STATE_64_T GLUE(PRNG_NAME_64,_t)
+typedef struct PRNG_STATE_64_T { uint64_t z, w, jsr, jcong; } PRNG_STATE_64_T;
+#endif // KISS_^64
 
 #ifdef XORWOW
 #define PRNG_NAME_32 xorwow
@@ -83,6 +107,10 @@ typedef struct PRNG_STATE_32_T { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T
 
 #define PRNG_SET_SEED GLUE(PRNG_NAME,_set_seed)
 
+
+// ALL PRNG ALGORITHMS ARE OPTIMIZED SO THAT THE PRNG LOGIC CAN HAPPEN IN PARALLEL WITH THE USE OF THE RESULT.
+// Therefore, the set_seed routine primes the PRNG by calling it with the state so the seed is not return as the
+// first random value.
 
 #ifdef __cforall										// don't include in C code (invoke.h)
 
@@ -119,6 +147,7 @@ static inline uint64_t xoshiro256pp( xoshiro256pp_t & rs ) with(rs) {
 
 static inline void xoshiro256pp_set_seed( xoshiro256pp_t & state,  uint64_t seed ) {
 	state = (xoshiro256pp_t){ {seed, seed, seed, seed} };
+	xoshiro256pp( state );
 } // xoshiro256pp_set_seed
 
 // https://prng.di.unimi.it/xoshiro128plusplus.c
@@ -153,6 +182,7 @@ static inline uint32_t xoshiro128pp( xoshiro128pp_t & rs ) with(rs) {
 
 static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed ) {
 	state = (xoshiro128pp_t){ {seed, seed, seed, seed} };
+	xoshiro128pp( state );								// prime
 } // xoshiro128pp_set_seed
 
 #ifdef __SIZEOF_INT128__
@@ -167,22 +197,25 @@ static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed 
 
 	static inline void lehmer64_set_seed( __uint128_t & state, uint64_t seed ) {
 		state = seed;
+		lehmer64( state );
 	} // lehmer64_set_seed
 
 	//--------------------------------------------------
 	static inline uint64_t wyhash64( uint64_t & state ) {
-		state += 0x60bee2bee120fc15;
+		uint64_t ret = state;
+		state += 0x_60be_e2be_e120_fc15;
 		__uint128_t tmp;
-		tmp = (__uint128_t) state * 0xa3b195354a39b70d;
+		tmp = (__uint128_t) ret * 0x_a3b1_9535_4a39_b70d;
 		uint64_t m1 = (tmp >> 64) ^ tmp;
-		tmp = (__uint128_t)m1 * 0x1b03738712fad5c9;
+		tmp = (__uint128_t)m1 * 0x_1b03_7387_12fa_d5c9;
 		uint64_t m2 = (tmp >> 64) ^ tmp;
 		return m2;
-	}
+	} // wyhash64
 
-	static inline void wyhash64_set_seed( __uint128_t & state, uint64_t seed ) {
+	static inline void wyhash64_set_seed( uint64_t & state, uint64_t seed ) {
 		state = seed;
-	} // lehmer64_set_seed
+		wyhash64( state );								// prime
+	} // wyhash64_set_seed
 #endif // __SIZEOF_INT128__
 
 //--------------------------------------------------
@@ -194,8 +227,9 @@ static inline uint64_t xorshift_13_7_17( uint64_t & state ) {
 	return ret;
 } // xorshift_13_7_17
 
-static inline void xorshift_13_7_17_set_seed( uint64_t & state, uint32_t seed ) {
+static inline void xorshift_13_7_17_set_seed( uint64_t & state, uint64_t seed ) {
 	state = seed;
+	xorshift_13_7_17( state );							// prime
 } // xorshift_13_7_17_set_seed
 
 //--------------------------------------------------
@@ -213,7 +247,45 @@ static inline uint32_t xorshift_6_21_7( uint32_t & state ) {
 
 static inline void xorshift_6_21_7_set_seed( uint32_t & state, uint32_t seed ) {
 	state = seed;
+	xorshift_6_21_7( state );							// prime
 } // xorshift_6_21_7_set_seed
+
+//--------------------------------------------------
+// The state must be seeded with a nonzero value.
+static inline uint64_t xorshift_12_25_27( uint64_t & state ) {
+	uint64_t ret = state;
+	state ^= state >> 12;
+	state ^= state << 25;
+	state ^= state >> 27;
+	return ret * 0x_2545_F491_4F6C_DD1D;
+} // xorshift_12_25_27
+
+static inline void xorshift_12_25_27_set_seed( uint64_t & state, uint64_t seed ) {
+	state = seed;
+	xorshift_12_25_27( state );							// prime
+} // xorshift_12_25_27_set_seed
+
+//--------------------------------------------------
+// The state must be seeded with a nonzero value.
+#ifndef KISS_64
+typedef struct kiss_64_t { uint64_t z, w, jsr, jcong; } kiss_64_t;
+#endif // ! KISS_64
+
+static inline uint64_t kiss_64( kiss_64_t & state ) with(state) {
+	kiss_64_t ret = state;
+	z = 36969 * (z & 65535) + (z >> 16);
+	w = 18000 * (w & 65535) + (w >> 16);
+	jsr ^= (jsr << 17);
+	jsr ^= (jsr << 13);
+	jsr ^= (jsr << 5);
+	jcong = 69069 * jcong + 1234567;
+	return ((ret.z << 16 + ret.w) ^ ret.jcong) + ret.jsr;
+} // kiss_64
+
+static inline void kiss_64_set_seed( kiss_64_t & state, uint64_t seed ) with(state) {
+	z = 1; w = 1; jsr = 4; jcong = seed;
+	kiss_64( state );									// prime
+} // kiss_64_set_seed
 
 //--------------------------------------------------
 // The state array must be initialized to non-zero in the first four words.
@@ -221,27 +293,27 @@ static inline void xorshift_6_21_7_set_seed( uint32_t & state, uint32_t seed ) {
 typedef struct xorwow_t { uint32_t a, b, c, d, counter; } xorwow_t;
 #endif // ! XORWOW
 
-static inline uint32_t xorwow( xorwow_t & state ) {
+static inline uint32_t xorwow( xorwow_t & state ) with(state) {
 	// Algorithm "xorwow" from p. 5 of Marsaglia, "Xorshift RNGs".
-	uint32_t ret = state.a + state.counter;
-	uint32_t t = state.d;
+	uint32_t ret = a + counter;
+	uint32_t t = d;
 
-	uint32_t const s = state.a;
-	state.d = state.c;
-	state.c = state.b;
-	state.b = s;
+	uint32_t const s = a;
+	d = c;
+	c = b;
+	b = s;
 
 	t ^= t >> 2;
 	t ^= t << 1;
 	t ^= s ^ (s << 4);
-	state.a = t;
-
-	state.counter += 362437;
+	a = t;
+	counter += 362437;
 	return ret;
 } // xorwow
 
 static inline void xorwow_set_seed( xorwow_t & state, uint32_t seed ) {
 	state = (xorwow_t){ seed, seed, seed, seed, 0 };
+	xorwow( state );									// prime
 } // xorwow_set_seed
 
 //--------------------------------------------------

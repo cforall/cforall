@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 30 18:14:07 2022
-// Update Count     : 95
+// Last Modified On : Fri Dec  9 15:13:04 2022
+// Update Count     : 98
 //
 
 #define __cforall_thread__
@@ -229,9 +229,8 @@ bool migrate( thread$ * thrd, struct cluster & cl ) {
 
 void set_seed( size_t seed ) {
 	PRNG_STATE_T & state = active_thread()->random_state;
-	__global_random_seed = seed;
 	PRNG_SET_SEED( state, seed );
-	(void)PRNG_NAME( state );							// prime PRNG
+	__global_random_seed = seed;
 	__global_random_prime = seed;
 	__global_random_mask = true;
 } // set_seed

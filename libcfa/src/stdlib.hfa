@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 30 18:18:26 2022
-// Update Count     : 760
+// Last Modified On : Fri Dec  9 15:11:30 2022
+// Update Count     : 763
 //
 
 #pragma once
@@ -425,8 +425,8 @@ struct PRNG32 {
 }; // PRNG
 
 static inline {
-	void set_seed( PRNG32 & prng, uint32_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_32( state, seed ); PRNG_NAME_32( state ); } // set seed
-	uint32_t get_seed( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
+	void set_seed( PRNG32 & prng, uint32_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_32( state, seed ); }
+	uint32_t get_seed( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; }
 	uint32_t prng( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME_32( state ); } // [0,UINT_MAX]
 	uint32_t prng( PRNG32 & prng, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint32_t prng( PRNG32 & prng, size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
@@ -442,8 +442,8 @@ struct PRNG64 {
 }; // PRNG
 
 static inline {
-	void set_seed( PRNG64 & prng, uint64_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_64( state, seed ); PRNG_NAME_64( state ); } // set seed
-	uint64_t get_seed( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; } // get seed
+	void set_seed( PRNG64 & prng, uint64_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_64( state, seed ); }
+	uint64_t get_seed( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; }
 	uint64_t prng( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME_64( state ); } // [0,UINT_MAX]
 	uint64_t prng( PRNG64 & prng, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint64_t prng( PRNG64 & prng, size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]

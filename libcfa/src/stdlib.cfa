@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec  5 11:59:03 2022
-// Update Count     : 628
+// Last Modified On : Fri Dec  9 15:11:30 2022
+// Update Count     : 631
 //
 
 #include "stdlib.hfa"
@@ -231,7 +231,6 @@ __attribute__((visibility("hidden"))) PRNG_STATE_T __global_random_state; // seq
 void set_seed( size_t seed ) {
 	__global_random_seed = seed;
 	PRNG_SET_SEED( __global_random_state, seed );
-	PRNG_NAME( __global_random_state );
 } // set_seed
 
 size_t get_seed() { return __global_random_seed; }
