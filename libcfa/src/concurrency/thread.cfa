@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 15:13:04 2022
-// Update Count     : 98
+// Last Modified On : Sun Dec 11 20:56:54 2022
+// Update Count     : 102
 //
 
 #define __cforall_thread__
@@ -181,12 +181,9 @@ T & join( T & this ) {
 
 //-----------------------------------------------------------------------------
 bool migrate( thread$ * thrd, struct cluster & cl ) {
-
 	monitor$ * tmon = get_monitor(thrd);
 	monitor$ * __monitors[] = { tmon };
 	monitor_guard_t __guard = { __monitors, 1 };
-
-
 	{
 		// if nothing needs to be done, return false
 		if( thrd->curr_cluster == &cl ) return false;
@@ -236,8 +233,7 @@ void set_seed( size_t seed ) {
 } // set_seed
 
 size_t prng( void ) {									// [0,UINT_MAX]
-	PRNG_STATE_T( & state ) = active_thread()->random_state;
-	return PRNG_NAME( state );
+	return PRNG_NAME( active_thread()->random_state );
 } // prng
 
 // Local Variables: //

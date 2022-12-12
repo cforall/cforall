@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 15:11:30 2022
-// Update Count     : 763
+// Last Modified On : Sun Dec 11 18:25:53 2022
+// Update Count     : 765
 //
 
 #pragma once
@@ -428,8 +428,8 @@ static inline {
 	void set_seed( PRNG32 & prng, uint32_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_32( state, seed ); }
 	uint32_t get_seed( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; }
 	uint32_t prng( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME_32( state ); } // [0,UINT_MAX]
-	uint32_t prng( PRNG32 & prng, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
-	uint32_t prng( PRNG32 & prng, size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
+	uint32_t prng( PRNG32 & prng, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
+	uint32_t prng( PRNG32 & prng, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
 	uint32_t calls( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
 	void ?{}( PRNG32 & prng ) with( prng ) { callcnt = 0; set_seed( prng, rdtscl() ); } // random seed
 	void ?{}( PRNG32 & prng, uint32_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
@@ -445,8 +445,8 @@ static inline {
 	void set_seed( PRNG64 & prng, uint64_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_64( state, seed ); }
 	uint64_t get_seed( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; }
 	uint64_t prng( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME_64( state ); } // [0,UINT_MAX]
-	uint64_t prng( PRNG64 & prng, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
-	uint64_t prng( PRNG64 & prng, size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
+	uint64_t prng( PRNG64 & prng, uint64_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
+	uint64_t prng( PRNG64 & prng, uint64_t l, uint64_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
 	uint64_t calls( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
 	void ?{}( PRNG64 & prng ) with( prng ) { callcnt = 0; set_seed( prng, rdtscl() ); } // random seed
 	void ?{}( PRNG64 & prng, uint64_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
@@ -467,8 +467,8 @@ static inline {
 //   prng( 5, 21 );
 
 // Harmonize with concurrency/thread.hfa.
-void set_seed( size_t seed_ ) OPTIONAL_THREAD;
-size_t get_seed() __attribute__(( warn_unused_result ));
+void set_seed( size_t seed_ ) OPTIONAL_THREAD;			// set global seed
+size_t get_seed() __attribute__(( warn_unused_result )); // get global seed
 size_t prng( void ) __attribute__(( warn_unused_result )) OPTIONAL_THREAD; // [0,UINT_MAX]
 static inline {
 	size_t prng( size_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)

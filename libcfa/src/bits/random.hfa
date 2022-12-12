@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jan 14 07:18:11 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 17:23:49 2022
-// Update Count     : 170
+// Last Modified On : Sun Dec 11 18:43:58 2022
+// Update Count     : 171
 // 
 
 #pragma once
@@ -279,7 +279,7 @@ static inline uint64_t kiss_64( kiss_64_t & state ) with(state) {
 	jsr ^= (jsr << 13);
 	jsr ^= (jsr << 5);
 	jcong = 69069 * jcong + 1234567;
-	return ((ret.z << 16 + ret.w) ^ ret.jcong) + ret.jsr;
+	return (((ret.z << 16) + ret.w) ^ ret.jcong) + ret.jsr;
 } // kiss_64
 
 static inline void kiss_64_set_seed( kiss_64_t & state, uint64_t seed ) with(state) {
