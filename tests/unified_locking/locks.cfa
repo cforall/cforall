@@ -113,8 +113,8 @@ void main( T_F_C_F_WS1 & this ) {
 			wait(f_c_f,f);
 		}else{
 			notify_one(f_c_f);
-			unlock(f);
 		}
+		unlock(f);
 	}
 }
 

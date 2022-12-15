@@ -29,6 +29,17 @@
 #include "time_t.hfa"
 #include "time.hfa"
 
+#include <fstream.hfa>
+
+
+// futex headers
+#include <linux/futex.h>      /* Definition of FUTEX_* constants */
+#include <sys/syscall.h>      /* Definition of SYS_* constants */
+#include <unistd.h>
+
+// undef to make a number of the locks not reacquire upon waking from a condlock
+#define REACQ 1
+
 //-----------------------------------------------------------------------------
 // Semaphore
 struct semaphore {
@@ -139,6 +150,77 @@ static inline void unlock(mcs_spin_lock & l, mcs_spin_node & n) {
 }
 
 //-----------------------------------------------------------------------------
+// futex_mutex
+
+// - No cond var support
+// - Kernel thd blocking alternative to the spinlock
+// - No ownership (will deadlock on reacq)
+struct futex_mutex {
+	// lock state any state other than UNLOCKED is locked
+	// enum LockState { UNLOCKED = 0, UNCONTENDED = 1, CONTENDED = 2 };
+	
+	// stores a lock state
+	int val; 
+};
+
+// to use for FUTEX_WAKE and FUTEX_WAIT (other futex calls will need more params)
+static inline int futex(int *uaddr, int futex_op, int val) {
+    return syscall(SYS_futex, uaddr, futex_op, val, NULL, NULL, 0);
+}
+
+static inline void  ?{}( futex_mutex & this ) with(this) { val = 0; }
+
+static inline bool internal_try_lock(futex_mutex & this, int & compare_val) with(this) {
+	return __atomic_compare_exchange_n((int*)&val, (int*)&compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+}
+
+static inline int internal_exchange(futex_mutex & this) with(this) {
+	return __atomic_exchange_n((int*)&val, 2, __ATOMIC_ACQUIRE);
+}
+
+// if this is called recursively IT WILL DEADLOCK!!!!!
+static inline void lock(futex_mutex & this) with(this) {
+	int state;
+
+	
+	// // linear backoff omitted for now
+	// for( int spin = 4; spin < 1024; spin += spin) {
+	// 	state = 0;
+	// 	// if unlocked, lock and return
+	// 	if (internal_try_lock(this, state)) return;
+	// 	if (2 == state) break;
+	// 	for (int i = 0; i < spin; i++) Pause();
+	// }
+
+	// no contention try to acquire
+	if (internal_try_lock(this, state)) return;
+	
+	// if not in contended state, set to be in contended state
+	if (state != 2) state = internal_exchange(this);
+
+	// block and spin until we win the lock
+	while (state != 0) {
+		futex((int*)&val, FUTEX_WAIT, 2); // if val is not 2 this returns with EWOULDBLOCK
+		state = internal_exchange(this);
+	}
+}
+
+static inline void unlock(futex_mutex & this) with(this) {
+	// if uncontended do atomice unlock and then return
+	if (__atomic_fetch_sub(&val, 1, __ATOMIC_RELEASE) == 1) return; // TODO: try acq/rel
+	
+	// otherwise threads are blocked so we must wake one
+	__atomic_store_n((int *)&val, 0, __ATOMIC_RELEASE);
+	futex((int *)&val, FUTEX_WAKE, 1);
+}
+
+static inline void on_notify( futex_mutex & f, thread$ * t){ unpark(t); }
+static inline size_t on_wait( futex_mutex & f ) {unlock(f); return 0;}
+
+// to set recursion count after getting signalled;
+static inline void on_wakeup( futex_mutex & f, size_t recursion ) {}
+
+//-----------------------------------------------------------------------------
 // CLH Spinlock
 // - No recursive acquisition
 // - Needs to be released by owner
@@ -164,47 +246,39 @@ static inline void unlock(clh_lock & l) {
 	curr_thd->clh_node = curr_thd->clh_prev;
 }
 
+static inline void on_notify(clh_lock & this, struct thread$ * t ) { unpark(t); }
+static inline size_t on_wait(clh_lock & this) { unlock(this); return 0; }
+static inline void on_wakeup(clh_lock & this, size_t recursion ) {
+	#ifdef REACQ
+	lock(this);
+	#endif
+}
+
+
 //-----------------------------------------------------------------------------
 // Linear backoff Spinlock
 struct linear_backoff_then_block_lock {
 	// Spin lock used for mutual exclusion
 	__spinlock_t spinlock;
 
-	// Current thread owning the lock
-	struct thread$ * owner;
-
 	// List of blocked threads
 	dlist( thread$ ) blocked_threads;
 
 	// Used for comparing and exchanging
 	volatile size_t lock_value;
-
-	// used for linear backoff spinning
-	int spin_start;
-	int spin_end;
-	int spin_count;
-
-	// after unsuccessful linear backoff yield this many times
-	int yield_count;
 };
 
-static inline void  ?{}( linear_backoff_then_block_lock & this, int spin_start, int spin_end, int spin_count, int yield_count ) {
+static inline void  ?{}( linear_backoff_then_block_lock & this ) {
 	this.spinlock{};
 	this.blocked_threads{};
 	this.lock_value = 0;
-	this.spin_start = spin_start;
-	this.spin_end = spin_end;
-	this.spin_count = spin_count;
-	this.yield_count = yield_count;
 }
-static inline void  ?{}( linear_backoff_then_block_lock & this ) { this{4, 1024, 16, 0}; }
 static inline void ^?{}( linear_backoff_then_block_lock & this ) {}
-static inline void ?{}( linear_backoff_then_block_lock & this, linear_backoff_then_block_lock this2 ) = void;
-static inline void ?=?( linear_backoff_then_block_lock & this, linear_backoff_then_block_lock this2 ) = void;
+// static inline void ?{}( linear_backoff_then_block_lock & this, linear_backoff_then_block_lock this2 ) = void;
+// static inline void ?=?( linear_backoff_then_block_lock & this, linear_backoff_then_block_lock this2 ) = void;
 
 static inline bool internal_try_lock(linear_backoff_then_block_lock & this, size_t & compare_val) with(this) {
 	if (__atomic_compare_exchange_n(&lock_value, &compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)) {
-		owner = active_thread();
 		return true;
 	}
 	return false;
@@ -214,14 +288,13 @@ static inline bool try_lock(linear_backoff_then_block_lock & this) { size_t comp
 
 static inline bool try_lock_contention(linear_backoff_then_block_lock & this) with(this) {
 	if (__atomic_exchange_n(&lock_value, 2, __ATOMIC_ACQUIRE) == 0) {
-		owner = active_thread();
 		return true;
 	}
 	return false;
 }
 
 static inline bool block(linear_backoff_then_block_lock & this) with(this) {
-	lock( spinlock __cfaabi_dbg_ctx2 );
+	lock( spinlock __cfaabi_dbg_ctx2 ); // TODO change to lockfree queue (MPSC)
 	if (lock_value != 2) {
 		unlock( spinlock );
 		return true;
@@ -233,17 +306,15 @@ static inline bool block(linear_backoff_then_block_lock & this) with(this) {
 }
 
 static inline void lock(linear_backoff_then_block_lock & this) with(this) {
-	// if owner just return
-	if (active_thread() == owner) return;
 	size_t compare_val = 0;
-	int spin = spin_start;
+	int spin = 4;
 	// linear backoff
 	for( ;; ) {
 		compare_val = 0;
 		if (internal_try_lock(this, compare_val)) return;
 		if (2 == compare_val) break;
 		for (int i = 0; i < spin; i++) Pause();
-		if (spin >= spin_end) break;
+		if (spin >= 1024) break;
 		spin += spin;
 	}
 
@@ -253,8 +324,6 @@ static inline void lock(linear_backoff_then_block_lock & this) with(this) {
 }
 
 static inline void unlock(linear_backoff_then_block_lock & this) with(this) {
-	verify(lock_value > 0);
-    owner = 0p;
     if (__atomic_exchange_n(&lock_value, 0, __ATOMIC_RELEASE) == 1) return;
 	lock( spinlock __cfaabi_dbg_ctx2 );
 	thread$ * t = &try_pop_front( blocked_threads );
@@ -264,7 +333,11 @@ static inline void unlock(linear_backoff_then_block_lock & this) with(this) {
 
 static inline void on_notify(linear_backoff_then_block_lock & this, struct thread$ * t ) { unpark(t); }
 static inline size_t on_wait(linear_backoff_then_block_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { lock(this); }
+static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { 
+	#ifdef REACQ
+	lock(this);
+	#endif
+}
 
 //-----------------------------------------------------------------------------
 // Fast Block Lock
@@ -282,11 +355,6 @@ struct fast_block_lock {
 
 	// flag showing if lock is held
 	bool held:1;
-
-	#ifdef __CFA_DEBUG__
-	// for deadlock detection
-	struct thread$ * owner;
-	#endif
 };
 
 static inline void  ?{}( fast_block_lock & this ) with(this) {
@@ -301,20 +369,13 @@ static inline void ?=?( fast_block_lock & this, fast_block_lock this2 ) = void;
 // if this is called recursively IT WILL DEADLOCK!!!!!
 static inline void lock(fast_block_lock & this) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
-
-	#ifdef __CFA_DEBUG__
-	assert(!(held && owner == active_thread()));
-	#endif
-	if (held) {
+	if ( held ) {
 		insert_last( blocked_threads, *active_thread() );
 		unlock( lock );
 		park( );
 		return;
 	}
 	held = true;
-	#ifdef __CFA_DEBUG__
-	owner = active_thread();
-	#endif
 	unlock( lock );
 }
 
@@ -323,14 +384,19 @@ static inline void unlock(fast_block_lock & this) with(this) {
 	/* paranoid */ verifyf( held != false, "Attempt to release lock %p that isn't held", &this );
 	thread$ * t = &try_pop_front( blocked_threads );
 	held = ( t ? true : false );
-	#ifdef __CFA_DEBUG__
-	owner = ( t ? t : 0p );
-	#endif
 	unpark( t );
 	unlock( lock );
 }
 
-static inline void on_notify(fast_block_lock & this, struct thread$ * t ) { unpark(t); }
+static inline void on_notify(fast_block_lock & this, struct thread$ * t ) with(this) {
+	#ifdef REACQ
+		lock( lock __cfaabi_dbg_ctx2 );
+		insert_last( blocked_threads, *t );
+		unlock( lock );
+	#else
+		unpark(t);
+	#endif
+}
 static inline size_t on_wait(fast_block_lock & this) { unlock(this); return 0; }
 static inline void on_wakeup(fast_block_lock & this, size_t recursion ) { }
 
@@ -411,15 +477,14 @@ static inline void on_notify(simple_owner_lock & this, struct thread$ * t ) with
 	// lock held
 	if ( owner != 0p ) {
 		insert_last( blocked_threads, *t );
-		unlock( lock );
 	}
 	// lock not held
 	else {
 		owner = t;
 		recursion_count = 1;
 		unpark( t );
-		unlock( lock );
 	}
+	unlock( lock );
 }
 
 static inline size_t on_wait(simple_owner_lock & this) with(this) {
@@ -473,28 +538,25 @@ static inline void ?=?( spin_queue_lock & this, spin_queue_lock this2 ) = void;
 // if this is called recursively IT WILL DEADLOCK!!!!!
 static inline void lock(spin_queue_lock & this) with(this) {
 	mcs_spin_node node;
-	#ifdef __CFA_DEBUG__
-	assert(!(held && owner == active_thread()));
-	#endif
 	lock( lock, node );
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
 	__atomic_store_n(&held, true, __ATOMIC_SEQ_CST);
 	unlock( lock, node );
-	#ifdef __CFA_DEBUG__
-	owner = active_thread();
-	#endif
 }
 
 static inline void unlock(spin_queue_lock & this) with(this) {
-	#ifdef __CFA_DEBUG__
-	owner = 0p;
-	#endif
 	__atomic_store_n(&held, false, __ATOMIC_RELEASE);
 }
 
-static inline void on_notify(spin_queue_lock & this, struct thread$ * t ) { unpark(t); }
+static inline void on_notify(spin_queue_lock & this, struct thread$ * t ) {
+	unpark(t);
+}
 static inline size_t on_wait(spin_queue_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(spin_queue_lock & this, size_t recursion ) { }
+static inline void on_wakeup(spin_queue_lock & this, size_t recursion ) {
+	#ifdef REACQ
+	lock(this);
+	#endif
+}
 
 
 //-----------------------------------------------------------------------------
@@ -510,11 +572,6 @@ struct mcs_block_spin_lock {
 
 	// flag showing if lock is held
 	volatile bool held;
-
-	#ifdef __CFA_DEBUG__
-	// for deadlock detection
-	struct thread$ * owner;
-	#endif
 };
 
 static inline void  ?{}( mcs_block_spin_lock & this ) with(this) {
@@ -528,28 +585,23 @@ static inline void ?=?( mcs_block_spin_lock & this, mcs_block_spin_lock this2 ) 
 // if this is called recursively IT WILL DEADLOCK!!!!!
 static inline void lock(mcs_block_spin_lock & this) with(this) {
 	mcs_node node;
-	#ifdef __CFA_DEBUG__
-	assert(!(held && owner == active_thread()));
-	#endif
 	lock( lock, node );
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
 	__atomic_store_n(&held, true, __ATOMIC_SEQ_CST);
 	unlock( lock, node );
-	#ifdef __CFA_DEBUG__
-	owner = active_thread();
-	#endif
 }
 
 static inline void unlock(mcs_block_spin_lock & this) with(this) {
-	#ifdef __CFA_DEBUG__
-	owner = 0p;
-	#endif
 	__atomic_store_n(&held, false, __ATOMIC_SEQ_CST);
 }
 
 static inline void on_notify(mcs_block_spin_lock & this, struct thread$ * t ) { unpark(t); }
 static inline size_t on_wait(mcs_block_spin_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(mcs_block_spin_lock & this, size_t recursion ) { }
+static inline void on_wakeup(mcs_block_spin_lock & this, size_t recursion ) {
+	#ifdef REACQ
+	lock(this);
+	#endif
+}
 
 //-----------------------------------------------------------------------------
 // Block Spin Lock
@@ -564,11 +616,6 @@ struct block_spin_lock {
 
 	// flag showing if lock is held
 	volatile bool held;
-
-	#ifdef __CFA_DEBUG__
-	// for deadlock detection
-	struct thread$ * owner;
-	#endif
 };
 
 static inline void  ?{}( block_spin_lock & this ) with(this) {
@@ -581,28 +628,42 @@ static inline void ?=?( block_spin_lock & this, block_spin_lock this2 ) = void;
 
 // if this is called recursively IT WILL DEADLOCK!!!!!
 static inline void lock(block_spin_lock & this) with(this) {
-	#ifdef __CFA_DEBUG__
-	assert(!(held && owner == active_thread()));
-	#endif
 	lock( lock );
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
 	__atomic_store_n(&held, true, __ATOMIC_RELEASE);
 	unlock( lock );
-	#ifdef __CFA_DEBUG__
-	owner = active_thread();
-	#endif
 }
 
 static inline void unlock(block_spin_lock & this) with(this) {
-	#ifdef __CFA_DEBUG__
-	owner = 0p;
-	#endif
 	__atomic_store_n(&held, false, __ATOMIC_RELEASE);
 }
 
-static inline void on_notify(block_spin_lock & this, struct thread$ * t ) { unpark(t); }
+static inline void on_notify(block_spin_lock & this, struct thread$ * t ) with(this.lock) {
+  #ifdef REACQ
+	// first we acquire internal fast_block_lock
+	lock( lock __cfaabi_dbg_ctx2 );
+	if ( held ) { // if internal fast_block_lock is held
+		insert_last( blocked_threads, *t );
+		unlock( lock );
+		return;
+	}
+	// if internal fast_block_lock is not held
+	held = true;
+	unlock( lock );
+
+  #endif
+	unpark(t);
+	
+}
 static inline size_t on_wait(block_spin_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(block_spin_lock & this, size_t recursion ) { }
+static inline void on_wakeup(block_spin_lock & this, size_t recursion ) with(this) {
+  #ifdef REACQ
+	// now we acquire the entire block_spin_lock upon waking up
+	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
+	__atomic_store_n(&held, true, __ATOMIC_RELEASE);
+	unlock( lock ); // Now we release the internal fast_spin_lock
+  #endif
+}
 
 //-----------------------------------------------------------------------------
 // is_blocking_lock

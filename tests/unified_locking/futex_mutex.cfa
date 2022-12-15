@@ -1,0 +1,8 @@
+#include <locks.hfa>
+
+#define LOCK futex_mutex
+#include "mutex_test.hfa"
+
+int main() {
+    test();
+}

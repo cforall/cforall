@@ -413,7 +413,7 @@ forall(L & | is_blocking_lock(L)) {
 		// brand cond lock with lock
 		#ifdef __CFA_DEBUG__
 			if ( lock_used == 0p ) lock_used = &l;
-			else { assert(lock_used == &l); }
+			else assert(lock_used == &l);
 		#endif
 		info_thread( L ) i = { active_thread(), info, &l };
 		insert_last( blocked_threads, i );
