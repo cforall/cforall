@@ -36,7 +36,11 @@ extern "C" {
 
 	//-----------------------------------------------------------------------
 	// Ring Data structure
-      struct __sub_ring_t {
+	// represent the io_uring submission ring which contains operations that will be sent to io_uring for processing
+	struct __sub_ring_t {
+		// lock needed because remote processors might need to flush the instance 
+		__spinlock_t lock;
+
 		struct {
 			// Head and tail of the ring (associated with array)
 			volatile __u32 * head;	 // one passed last index consumed by the kernel
@@ -57,7 +61,7 @@ extern "C" {
 		} free_ring;
 
 		// number of sqes to submit on next system call.
-		__u32 to_submit;
+		volatile __u32 to_submit;
 
 		// number of entries and mask to go with it
 		const __u32 * num;
@@ -76,13 +80,20 @@ extern "C" {
 		// The location and size of the mmaped area
 		void * ring_ptr;
 		size_t ring_sz;
+
+		// for debug purposes, whether or not the last flush was due to a arbiter flush
+		bool last_external;
 	};
 
+	// represent the io_uring completion ring which contains operations that have completed
 	struct __cmp_ring_t {
-		volatile bool lock;
+		// needed because remote processors can help drain the buffer
+		volatile bool try_lock;
 
+		// id of the ring, used for the helping/topology algorithms
 		unsigned id;
 
+		// timestamp from last time it was drained
 		unsigned long long ts;
 
 		// Head and tail of the ring
@@ -104,55 +115,92 @@ extern "C" {
 		size_t ring_sz;
 	};
 
+	// struct representing an io operation that still needs processing
+	// actual operations are expected to inherit from this
 	struct __outstanding_io {
+		// intrusive link fields
 		inline Colable;
+
+		// primitive on which to block until the io is processed
 		oneshot waitctx;
 	};
 	static inline __outstanding_io *& Next( __outstanding_io * n ) { return (__outstanding_io *)Next( (Colable *)n ); }
 
+	// queue of operations that are outstanding
 	struct __outstanding_io_queue {
+		// spinlock for protection
+		// TODO: changing to a lock that blocks, I haven't examined whether it should be a kernel or user lock
 		__spinlock_t lock;
+
+		// the actual queue
 		Queue(__outstanding_io) queue;
+
+		// volatile used to avoid the need for taking the lock if it's empty
 		volatile bool empty;
 	};
 
+	// struct representing an operation that was submitted 
 	struct __external_io {
+		// inherits from outstanding io
 		inline __outstanding_io;
+
+		// pointer and count to an array of ids to be submitted
 		__u32 * idxs;
 		__u32 have;
+
+		// whether or not these can be accumulated before flushing the buffer
 		bool lazy;
 	};
 
-
+	// complete io_context, contains all the data for io submission and completion
 	struct __attribute__((aligned(64))) io_context$ {
+		// arbiter, used in cases where threads for migrated at unfortunate moments
 		io_arbiter$ * arbiter;
+
+		// which prcessor the context is tied to
 		struct processor * proc;
 
+		// queue of io submissions that haven't beeen processed.
 		__outstanding_io_queue ext_sq;
 
+		// io_uring ring data structures
 		struct __sub_ring_t sq;
 		struct __cmp_ring_t cq;
+
+		// flag the io_uring rings where created with
 		__u32 ring_flags;
+
+		// file descriptor that identifies the io_uring instance
 		int fd;
 	};
 
+	// short hand to check when the io_context was last processed (io drained)
 	static inline unsigned long long ts(io_context$ *& this) {
 		const __u32 head = *this->cq.head;
 		const __u32 tail = *this->cq.tail;
 
+		// if there is no pending completions, just pretend it's infinetely recent
 		if(head == tail) return ULLONG_MAX;
 
 		return this->cq.ts;
 	}
 
+	// structure represeting allocations that couldn't succeed locally
 	struct __pending_alloc {
+		// inherit from outstanding io
 		inline __outstanding_io;
+
+		// array and size of the desired allocation
 		__u32 * idxs;
 		__u32 want;
+
+		// output param, the context the io was allocated from 
 		io_context$ * ctx;
 	};
 
+	// arbiter that handles cases where the context tied to the local processor is unable to satisfy the io
 	monitor __attribute__((aligned(64))) io_arbiter$ {
+		// contains a queue of io for pending allocations
 		__outstanding_io_queue pending;
 	};
 

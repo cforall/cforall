@@ -84,7 +84,7 @@
 
 	static io_context$ * __ioarbiter_allocate( io_arbiter$ & this, __u32 idxs[], __u32 want );
 	static void __ioarbiter_submit( io_context$ * , __u32 idxs[], __u32 have, bool lazy );
-	static void __ioarbiter_flush ( io_context$ & );
+	static void __ioarbiter_flush ( io_context$ &, bool kernel );
 	static inline void __ioarbiter_notify( io_context$ & ctx );
 //=============================================================================================
 // I/O Polling
@@ -93,10 +93,20 @@
 	static inline __u32 __release_sqes( struct io_context$ & );
 	extern void __kernel_unpark( thread$ * thrd, unpark_hint );
 
+	static inline void __post(oneshot & this, bool kernel, unpark_hint hint) {
+		thread$ * t = post( this, false );
+		if(kernel) __kernel_unpark( t, hint );
+		else unpark( t, hint );
+	}
+
+	// actual system call of io uring
+	// wrap so everything that needs to happen around it is always done
+	//   i.e., stats, book keeping, sqe reclamation, etc.
 	static void ioring_syscsll( struct io_context$ & ctx, unsigned int min_comp, unsigned int flags ) {
 		__STATS__( true, io.calls.flush++; )
 		int ret;
 		for() {
+			// do the system call in a loop, repeat on interrupts
 			ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, min_comp, flags, (sigset_t *)0p, _NSIG / 8);
 			if( ret < 0 ) {
 				switch((int)errno) {
@@ -119,7 +129,8 @@
 		/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
 		/* paranoid */ verify( ctx.sq.to_submit >= ret );
 
-		ctx.sq.to_submit -= ret;
+		// keep track of how many still need submitting
+		__atomic_fetch_sub(&ctx.sq.to_submit, ret, __ATOMIC_SEQ_CST);
 
 		/* paranoid */ verify( ctx.sq.to_submit <= *ctx.sq.num );
 
@@ -128,35 +139,42 @@
 
 		/* paranoid */ verify( ! __preemption_enabled() );
 
+		// mark that there is no pending io left
 		__atomic_store_n(&ctx.proc->io.pending, false, __ATOMIC_RELAXED);
 	}
 
+	// try to acquire an io context for draining, helping means we never *need* to drain, we can always do it later
 	static bool try_acquire( io_context$ * ctx ) __attribute__((nonnull(1))) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( ready_schedule_islocked() );
 
 
 		{
+			// if there is nothing to drain there is no point in acquiring anything
 			const __u32 head = *ctx->cq.head;
 			const __u32 tail = *ctx->cq.tail;
 
 			if(head == tail) return false;
 		}
 
-		// Drain the queue
-		if(!__atomic_try_acquire(&ctx->cq.lock)) {
+		// try a simple spinlock acquire, it's likely there are completions to drain
+		if(!__atomic_try_acquire(&ctx->cq.try_lock)) {
+			// some other processor already has it
 			__STATS__( false, io.calls.locked++; )
 			return false;
 		}
 
+		// acquired!!
 		return true;
 	}
 
+	// actually drain the completion
 	static bool __cfa_do_drain( io_context$ * ctx, cluster * cltr ) __attribute__((nonnull(1, 2))) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( ready_schedule_islocked() );
-		/* paranoid */ verify( ctx->cq.lock == true );
+		/* paranoid */ verify( ctx->cq.try_lock == true );
 
+		// get all the invariants and initial state
 		const __u32 mask = *ctx->cq.mask;
 		const __u32 num  = *ctx->cq.num;
 		unsigned long long ts_prev = ctx->cq.ts;
@@ -165,23 +183,29 @@
 		// We might need to do this multiple times if more events completed than can fit in the queue.
 		for() {
 			// re-read the head and tail in case it already changed.
+			// count the difference between the two
 			const __u32 head = *ctx->cq.head;
 			const __u32 tail = *ctx->cq.tail;
 			const __u32 count = tail - head;
 			__STATS__( false, io.calls.drain++; io.calls.completed += count; )
 
+			// for everything between head and tail, drain it
 			for(i; count) {
 				unsigned idx = (head + i) & mask;
 				volatile struct io_uring_cqe & cqe = ctx->cq.cqes[idx];
 
 				/* paranoid */ verify(&cqe);
 
+				// find the future in the completion
 				struct io_future_t * future = (struct io_future_t *)(uintptr_t)cqe.user_data;
 				// __cfadbg_print_safe( io, "Kernel I/O : Syscall completed : cqe %p, result %d for %p\n", &cqe, cqe.res, future );
 
+				// don't directly fulfill the future, preemption is disabled so we need to use kernel_unpark
 				__kernel_unpark( fulfil( *future, cqe.res, false ), UNPARK_LOCAL );
 			}
 
+			// update the timestamps accordingly
+			// keep a local copy so we can update the relaxed copy
 			ts_next = ctx->cq.ts = rdtscl();
 
 			// Mark to the kernel that the cqe has been seen
@@ -189,8 +213,10 @@
 			__atomic_store_n( ctx->cq.head, head + count, __ATOMIC_SEQ_CST );
 			ctx->proc->idle_wctx.drain_time = ts_next;
 
+			// we finished draining the completions... unless the ring buffer was full and there are more secret completions in the kernel.
 			if(likely(count < num)) break;
 
+			// the ring buffer was full, there could be more stuff in the kernel.
 			ioring_syscsll( *ctx, 0, IORING_ENTER_GETEVENTS);
 		}
 
@@ -198,17 +224,37 @@
 		/* paranoid */ verify( ready_schedule_islocked() );
 		/* paranoid */ verify( ! __preemption_enabled() );
 
-		__atomic_unlock(&ctx->cq.lock);
+		// everything is drained, we can release the lock
+		__atomic_unlock(&ctx->cq.try_lock);
 
+		// update the relaxed timestamp
 		touch_tsc( cltr->sched.io.tscs, ctx->cq.id, ts_prev, ts_next, false );
 
 		return true;
 	}
 
+	// call from a processor to flush
+	// contains all the bookkeeping a proc must do, not just the barebones flushing logic
+	void __cfa_do_flush( io_context$ & ctx, bool kernel ) {
+		/* paranoid */ verify( ! __preemption_enabled() );
+
+		// flush any external requests
+		ctx.sq.last_external = false; // clear the external bit, the arbiter will reset it if needed
+		__ioarbiter_flush( ctx, kernel );
+
+		// if submitting must be submitted, do the system call
+		if(ctx.sq.to_submit != 0) {
+			ioring_syscsll(ctx, 0, 0);
+		}
+	}
+
+	// call from a processor to drain
+	// contains all the bookkeeping a proc must do, not just the barebones draining logic
 	bool __cfa_io_drain( struct processor * proc ) {
 		bool local = false;
 		bool remote = false;
 
+		// make sure no ones creates/destroys io contexts
 		ready_schedule_lock();
 
 		cluster * const cltr = proc->cltr;
@@ -216,6 +262,7 @@
 		/* paranoid */ verify( cltr );
 		/* paranoid */ verify( ctx );
 
+		// Help if needed
 		with(cltr->sched) {
 			const size_t ctxs_count = io.count;
 
@@ -229,35 +276,50 @@
 			const unsigned this_cache = cache_id(cltr, ctx->cq.id / __shard_factor.io);
 			const unsigned long long ctsc = rdtscl();
 
+			// only help once every other time
+			// pick a target when not helping
 			if(proc->io.target == UINT_MAX) {
 				uint64_t chaos = __tls_rand();
+				// choose who to help and whether to accept helping far processors 
 				unsigned ext = chaos & 0xff;
 				unsigned other  = (chaos >> 8) % (ctxs_count);
 
+				// if the processor is on the same cache line or is lucky ( 3 out of 256 odds ) help it
 				if(ext < 3 || __atomic_load_n(&caches[other / __shard_factor.io].id, __ATOMIC_RELAXED) == this_cache) {
 					proc->io.target = other;
 				}
 			}
 			else {
+				// a target was picked last time, help it
 				const unsigned target = proc->io.target;
 				/* paranoid */ verify( io.tscs[target].t.tv != ULLONG_MAX );
+				// make sure the target hasn't stopped existing since last time
 				HELP: if(target < ctxs_count) {
+					// calculate it's age and how young it could be before we give ip on helping
 					const __readyQ_avg_t cutoff = calc_cutoff(ctsc, ctx->cq.id, ctxs_count, io.data, io.tscs, __shard_factor.io, false);
 					const __readyQ_avg_t age = moving_average(ctsc, io.tscs[target].t.tv, io.tscs[target].t.ma, false);
 					__cfadbg_print_safe(io, "Kernel I/O: Help attempt on %u from %u, age %'llu vs cutoff %'llu, %s\n", target, ctx->cq.id, age, cutoff, age > cutoff ? "yes" : "no");
+					// is the target older than the cutoff, recall 0 is oldest and bigger ints are younger
 					if(age <= cutoff) break HELP;
 
-					if(!try_acquire(io.data[target])) break HELP;
+					// attempt to help the submission side
+					__cfa_do_flush( *io.data[target], true );
 
+					// attempt to help the completion side
+					if(!try_acquire(io.data[target])) break HELP; // already acquire no help needed
+
+					// actually help
 					if(!__cfa_do_drain( io.data[target], cltr )) break HELP;
 
+					// track we did help someone
 					remote = true;
 					__STATS__( true, io.calls.helped++; )
 				}
+
+				// reset the target
 				proc->io.target = UINT_MAX;
 			}
 		}
-
 
 		// Drain the local queue
 		if(try_acquire( proc->io.ctx )) {
@@ -269,23 +331,23 @@
 		/* paranoid */ verify( active_processor() == proc );
 
 		ready_schedule_unlock();
+
+		// return true if some completion entry, local or remote, was drained
 		return local || remote;
 	}
 
+
+
+	// call from a processor to flush
+	// contains all the bookkeeping a proc must do, not just the barebones flushing logic
 	bool __cfa_io_flush( struct processor * proc ) {
 		/* paranoid */ verify( ! __preemption_enabled() );
 		/* paranoid */ verify( proc );
 		/* paranoid */ verify( proc->io.ctx );
 
-		io_context$ & ctx = *proc->io.ctx;
+		__cfa_do_flush( *proc->io.ctx, false );
 
-		__ioarbiter_flush( ctx );
-
-		if(ctx.sq.to_submit != 0) {
-			ioring_syscsll(ctx, 0, 0);
-
-		}
-
+		// also drain since some stuff will immediately complete
 		return __cfa_io_drain( proc );
 	}
 
@@ -392,7 +454,10 @@
 
 	//=============================================================================================
 	// submission
-	static inline void __submit_only( struct io_context$ * ctx, __u32 idxs[], __u32 have) {
+	// barebones logic to submit a group of sqes
+	static inline void __submit_only( struct io_context$ * ctx, __u32 idxs[], __u32 have, bool lock) {
+		if(!lock) 
+			lock( ctx->ext_sq.lock __cfaabi_dbg_ctx2 );
 		// We can proceed to the fast path
 		// Get the right objects
 		__sub_ring_t & sq = ctx->sq;
@@ -407,15 +472,20 @@
 
 		// Make the sqes visible to the submitter
 		__atomic_store_n(sq.kring.tail, tail + have, __ATOMIC_RELEASE);
-		sq.to_submit += have;
+		__atomic_fetch_add(&sq.to_submit, have, __ATOMIC_SEQ_CST);
 
+		// set the bit to mark things need to be flushed
 		__atomic_store_n(&ctx->proc->io.pending, true, __ATOMIC_RELAXED);
 		__atomic_store_n(&ctx->proc->io.dirty  , true, __ATOMIC_RELAXED);
+
+		if(!lock) 
+			unlock( ctx->ext_sq.lock );
 	}
 
+	// submission logic + maybe flushing
 	static inline void __submit( struct io_context$ * ctx, __u32 idxs[], __u32 have, bool lazy) {
 		__sub_ring_t & sq = ctx->sq;
-		__submit_only(ctx, idxs, have);
+		__submit_only(ctx, idxs, have, false);
 
 		if(sq.to_submit > 30) {
 			__tls_stats()->io.flush.full++;
@@ -427,6 +497,8 @@
 		}
 	}
 
+	// call from a processor to flush
+	// might require arbitration if the thread was migrated after the allocation
 	void cfa_io_submit( struct io_context$ * inctx, __u32 idxs[], __u32 have, bool lazy ) __attribute__((nonnull (1))) libcfa_public {
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to submit %u (%s)\n", have, lazy ? "lazy" : "eager");
 
@@ -440,6 +512,7 @@
 		// Can we proceed to the fast path
 		if( ctx == inctx )		// We have the right instance?
 		{
+			// yes! fast submit
 			__submit(ctx, idxs, have, lazy);
 
 			// Mark the instance as no longer in-use, re-enable interrupts and return
@@ -506,6 +579,7 @@
 		ctx.sq.kring.released = chead;		// note up to were we processed
 		__atomic_store_n(&ctx.sq.free_ring.tail, ftail + count, __ATOMIC_SEQ_CST);
 
+		// notify the allocator that new allocations can be made
 		__ioarbiter_notify(ctx);
 
 		return count;
@@ -556,27 +630,39 @@
 
 	}
 
+	// notify the arbiter that new allocations are available
 	static void __ioarbiter_notify( io_arbiter$ & this, io_context$ * ctx ) {
 		/* paranoid */ verify( !empty(this.pending.queue) );
+		/* paranoid */ verify( __preemption_enabled() );
 
+		// mutual exclusion is needed
 		lock( this.pending.lock __cfaabi_dbg_ctx2 );
 		{
+			__cfadbg_print_safe(io, "Kernel I/O : notifying\n");
+
+			// as long as there are pending allocations try to satisfy them
+			// for simplicity do it in FIFO order
 			while( !empty(this.pending.queue) ) {
-				__cfadbg_print_safe(io, "Kernel I/O : notifying\n");
+				// get first pending allocs
 				__u32 have = ctx->sq.free_ring.tail - ctx->sq.free_ring.head;
 				__pending_alloc & pa = (__pending_alloc&)head( this.pending.queue );
 
+				// check if we have enough to satisfy the request
 				if( have > pa.want ) goto DONE;
+
+				// if there are enough allocations it means we can drop the request
 				drop( this.pending.queue );
 
 				/* paranoid */__attribute__((unused)) bool ret =
 
+				// actually do the alloc
 				__alloc(ctx, pa.idxs, pa.want);
 
 				/* paranoid */ verify( ret );
 
+				// write out which context statisfied the request and post
+				// this 
 				pa.ctx = ctx;
-
 				post( pa.waitctx );
 			}
 
@@ -584,58 +670,98 @@
 			DONE:;
 		}
 		unlock( this.pending.lock );
+
+		/* paranoid */ verify( __preemption_enabled() );
 	}
 
+	// short hand to avoid the mutual exclusion of the pending is empty regardless
 	static void __ioarbiter_notify( io_context$ & ctx ) {
-		if(!empty( ctx.arbiter->pending )) {
-			__ioarbiter_notify( *ctx.arbiter, &ctx );
-		}
+		if(empty( ctx.arbiter->pending )) return;
+		__ioarbiter_notify( *ctx.arbiter, &ctx );
 	}
 
-	// Simply append to the pending
+	// Submit from outside the local processor: append to the outstanding list
 	static void __ioarbiter_submit( io_context$ * ctx, __u32 idxs[], __u32 have, bool lazy ) {
 		__cfadbg_print_safe(io, "Kernel I/O : submitting %u from the arbiter to context %u\n", have, ctx->fd);
 
 		__cfadbg_print_safe(io, "Kernel I/O : waiting to submit %u\n", have);
 
+		// create the intrusive object to append
 		__external_io ei;
 		ei.idxs = idxs;
 		ei.have = have;
 		ei.lazy = lazy;
 
+		// enqueue the io
 		bool we = enqueue(ctx->ext_sq, (__outstanding_io&)ei);
 
+		// mark pending
 		__atomic_store_n(&ctx->proc->io.pending, true, __ATOMIC_SEQ_CST);
 
+		// if this is the first to be enqueued, signal the processor in an attempt to speed up flushing
+		// if it's not the first enqueue, a signal is already in transit
 		if( we ) {
 			sigval_t value = { PREEMPT_IO };
 			__cfaabi_pthread_sigqueue(ctx->proc->kernel_thread, SIGUSR1, value);
+			__STATS__( false, io.flush.signal += 1; )
 		}
+		__STATS__( false, io.submit.extr += 1; )
 
+		// to avoid dynamic allocation/memory reclamation headaches, wait for it to have been submitted
 		wait( ei.waitctx );
 
 		__cfadbg_print_safe(io, "Kernel I/O : %u submitted from arbiter\n", have);
 	}
 
-	static void __ioarbiter_flush( io_context$ & ctx ) {
-		if(!empty( ctx.ext_sq )) {
-			__STATS__( false, io.flush.external += 1; )
+	// flush the io arbiter: move all external io operations to the submission ring
+	static void __ioarbiter_flush( io_context$ & ctx, bool kernel ) {
+		// if there are no external operations just return
+		if(empty( ctx.ext_sq )) return;
 
-			__cfadbg_print_safe(io, "Kernel I/O : arbiter flushing\n");
+		// stats and logs
+		__STATS__( false, io.flush.external += 1; )
+		__cfadbg_print_safe(io, "Kernel I/O : arbiter flushing\n");
 
-			lock( ctx.ext_sq.lock __cfaabi_dbg_ctx2 );
-			{
-				while( !empty(ctx.ext_sq.queue) ) {
-					__external_io & ei = (__external_io&)drop( ctx.ext_sq.queue );
+		// this can happen from multiple processors, mutual exclusion is needed
+		lock( ctx.ext_sq.lock __cfaabi_dbg_ctx2 );
+		{
+			// pop each operation one at a time.
+			// There is no wait morphing because of the io sq ring
+			while( !empty(ctx.ext_sq.queue) ) {
+				// drop the element from the queue
+				__external_io & ei = (__external_io&)drop( ctx.ext_sq.queue );
 
-					__submit_only(&ctx, ei.idxs, ei.have);
+				// submit it
+				__submit_only(&ctx, ei.idxs, ei.have, true);
 
-					post( ei.waitctx );
-				}
-
-				ctx.ext_sq.empty = true;
+				// wake the thread that was waiting on it
+				// since this can both be called from kernel and user, check the flag before posting
+				__post( ei.waitctx, kernel, UNPARK_LOCAL );
 			}
-			unlock(ctx.ext_sq.lock );
+
+			// mark the queue as empty
+			ctx.ext_sq.empty = true;
+			ctx.sq.last_external = true;
+		}
+		unlock(ctx.ext_sq.lock );
+	}
+
+	extern "C" {
+		// debug functions used for gdb
+		// io_uring doesn't yet support gdb soe the kernel-shared data structures aren't viewable in gdb
+		// these functions read the data that gdb can't and should be removed once the support is added
+		static __u32 __cfagdb_cq_head( io_context$ * ctx ) __attribute__((nonnull(1),used,noinline)) { return *ctx->cq.head; }
+		static __u32 __cfagdb_cq_tail( io_context$ * ctx ) __attribute__((nonnull(1),used,noinline)) { return *ctx->cq.tail; }
+		static __u32 __cfagdb_cq_mask( io_context$ * ctx ) __attribute__((nonnull(1),used,noinline)) { return *ctx->cq.mask; }
+		static __u32 __cfagdb_sq_head( io_context$ * ctx ) __attribute__((nonnull(1),used,noinline)) { return *ctx->sq.kring.head; }
+		static __u32 __cfagdb_sq_tail( io_context$ * ctx ) __attribute__((nonnull(1),used,noinline)) { return *ctx->sq.kring.tail; }
+		static __u32 __cfagdb_sq_mask( io_context$ * ctx ) __attribute__((nonnull(1),used,noinline)) { return *ctx->sq.mask; }
+
+		// fancier version that reads an sqe and copies it out.
+		static struct io_uring_sqe __cfagdb_sq_at( io_context$ * ctx, __u32 at ) __attribute__((nonnull(1),used,noinline)) {
+			__u32 ax = at & *ctx->sq.mask;
+			__u32 ix = ctx->sq.kring.array[ax];
+			return ctx->sq.sqes[ix];
 		}
 	}
 #endif

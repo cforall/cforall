@@ -215,7 +215,7 @@
 		sq.to_submit = 0;
 
 		// completion queue
-		cq.lock      = false;
+		cq.try_lock  = false;
 		cq.id        = MAX;
 		cq.ts        = rdtscl();
 		cq.head      = (volatile __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.head);

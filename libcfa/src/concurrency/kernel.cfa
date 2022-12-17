@@ -258,6 +258,9 @@ void main(processorCtx_t & runner) {
 		__cfadbg_print_safe(runtime_core, "Kernel : core %p stopping\n", this);
 	}
 
+	__cfa_io_flush( this );
+	__cfa_io_drain( this );
+
 	post( this->terminated );
 
 	if(this == mainProcessor) {
