@@ -29,6 +29,8 @@ SRC += \
        Parser/ParserTypes.h \
        Parser/parserutility.cc \
        Parser/parserutility.h \
+       Parser/RunParser.cpp \
+       Parser/RunParser.hpp \
        Parser/StatementNode.cc \
        Parser/TypeData.cc \
        Parser/TypeData.h \

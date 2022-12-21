@@ -282,9 +282,10 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Parser/ExpressionNode.$(OBJEXT) \
 	Parser/InitializerNode.$(OBJEXT) Parser/lex.$(OBJEXT) \
 	Parser/ParseNode.$(OBJEXT) Parser/parser.$(OBJEXT) \
-	Parser/parserutility.$(OBJEXT) Parser/StatementNode.$(OBJEXT) \
-	Parser/TypeData.$(OBJEXT) Parser/TypedefTable.$(OBJEXT) \
-	$(am__objects_6) ResolvExpr/AlternativePrinter.$(OBJEXT) \
+	Parser/parserutility.$(OBJEXT) Parser/RunParser.$(OBJEXT) \
+	Parser/StatementNode.$(OBJEXT) Parser/TypeData.$(OBJEXT) \
+	Parser/TypedefTable.$(OBJEXT) $(am__objects_6) \
+	ResolvExpr/AlternativePrinter.$(OBJEXT) \
 	ResolvExpr/CandidatePrinter.$(OBJEXT) $(am__objects_7) \
 	SymTab/Validate.$(OBJEXT) $(am__objects_8) $(am__objects_9) \
 	$(am__objects_10) Validate/Autogen.$(OBJEXT) \
@@ -398,7 +399,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Parser/$(DEPDIR)/DeclarationNode.Po \
 	Parser/$(DEPDIR)/ExpressionNode.Po \
 	Parser/$(DEPDIR)/InitializerNode.Po \
-	Parser/$(DEPDIR)/ParseNode.Po \
+	Parser/$(DEPDIR)/ParseNode.Po Parser/$(DEPDIR)/RunParser.Po \
 	Parser/$(DEPDIR)/StatementNode.Po Parser/$(DEPDIR)/TypeData.Po \
 	Parser/$(DEPDIR)/TypedefTable.Po Parser/$(DEPDIR)/lex.Po \
 	Parser/$(DEPDIR)/parser.Po Parser/$(DEPDIR)/parserutility.Po \
@@ -776,7 +777,8 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	Parser/ExpressionNode.cc Parser/InitializerNode.cc \
 	Parser/lex.ll Parser/ParseNode.cc Parser/ParseNode.h \
 	Parser/parser.yy Parser/ParserTypes.h Parser/parserutility.cc \
-	Parser/parserutility.h Parser/StatementNode.cc \
+	Parser/parserutility.h Parser/RunParser.cpp \
+	Parser/RunParser.hpp Parser/StatementNode.cc \
 	Parser/TypeData.cc Parser/TypeData.h Parser/TypedefTable.cc \
 	Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
 	ResolvExpr/AlternativePrinter.cc \
@@ -1576,6 +1578,8 @@ Parser/parser.$(OBJEXT): Parser/$(am__dirstamp) \
 	Parser/$(DEPDIR)/$(am__dirstamp)
 Parser/parserutility.$(OBJEXT): Parser/$(am__dirstamp) \
 	Parser/$(DEPDIR)/$(am__dirstamp)
+Parser/RunParser.$(OBJEXT): Parser/$(am__dirstamp) \
+	Parser/$(DEPDIR)/$(am__dirstamp)
 Parser/StatementNode.$(OBJEXT): Parser/$(am__dirstamp) \
 	Parser/$(DEPDIR)/$(am__dirstamp)
 Parser/TypeData.$(OBJEXT): Parser/$(am__dirstamp) \
@@ -1758,6 +1762,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/ExpressionNode.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/InitializerNode.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/ParseNode.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/RunParser.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/StatementNode.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/TypeData.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/TypedefTable.Po@am__quote@ # am--include-marker
@@ -2187,6 +2192,7 @@ distclean: distclean-am
 	-rm -f Parser/$(DEPDIR)/ExpressionNode.Po
 	-rm -f Parser/$(DEPDIR)/InitializerNode.Po
 	-rm -f Parser/$(DEPDIR)/ParseNode.Po
+	-rm -f Parser/$(DEPDIR)/RunParser.Po
 	-rm -f Parser/$(DEPDIR)/StatementNode.Po
 	-rm -f Parser/$(DEPDIR)/TypeData.Po
 	-rm -f Parser/$(DEPDIR)/TypedefTable.Po
@@ -2424,6 +2430,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Parser/$(DEPDIR)/ExpressionNode.Po
 	-rm -f Parser/$(DEPDIR)/InitializerNode.Po
 	-rm -f Parser/$(DEPDIR)/ParseNode.Po
+	-rm -f Parser/$(DEPDIR)/RunParser.Po
 	-rm -f Parser/$(DEPDIR)/StatementNode.Po
 	-rm -f Parser/$(DEPDIR)/TypeData.Po
 	-rm -f Parser/$(DEPDIR)/TypedefTable.Po

@@ -1,2 +1,0 @@
-producer total value is 23426
-consumer total value is 23426

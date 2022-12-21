@@ -835,12 +835,10 @@ const ast::CompoundStmt * ast::Pass< core_t >::visit( const ast::CompoundStmt * 
 		auto guard1 = makeFuncGuard( [this, enterScope = !this->atFunctionTop]() {
 			if ( enterScope ) {
 				__pass::symtab::enter(core, 0);
-				__pass::scope::enter(core, 0);
 			}
 		}, [this, leaveScope = !this->atFunctionTop]() {
 			if ( leaveScope ) {
 				__pass::symtab::leave(core, 0);
-				__pass::scope::leave(core, 0);
 			}
 		});
 		ValueGuard< bool > guard2( atFunctionTop );

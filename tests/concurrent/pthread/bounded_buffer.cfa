@@ -62,11 +62,11 @@ forall( T ){
 }
 
 void *producer( void *arg ) {
-	Buffer(int) &buf = *(Buffer(int)*)arg;
-	const int NoOfItems = rand() % 40;
+    Buffer(int) &buf = *(Buffer(int)*)arg;
+	const int NoOfItems = prng(*active_thread(), 40);
 	int item;
 	for ( int i = 1; i <= NoOfItems; i += 1 ) {			// produce a bunch of items
-		item = rand() % 100 + 1;						// produce a random number
+		item = prng(*active_thread(), 1, 101);			// produce a random number
 		//sout | "Producer:" | pthread_self() | " value:" | item;
 		insert( buf,item );								// insert element into queue
         pthread_mutex_lock(&producer_cnt_lock);
@@ -100,7 +100,7 @@ int main() {
     pthread_mutex_init(&producer_cnt_lock, NULL);
     pthread_mutex_init(&consumer_cnt_lock, NULL);
 	// parallelism
-    srandom( 1003 );
+    set_seed( 1003 );
 
 	processor p[5];
     {

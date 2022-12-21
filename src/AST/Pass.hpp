@@ -65,6 +65,10 @@ namespace ast {
 // | WithSymbolTable       - provides symbol table functionality
 //
 // Other Special Members:
+// | beginScope            - A method with no parameters or return value, called each time the
+//                           visitor enters a block.
+// | endScope              - A method with no parameters or return value, called each time the
+//                           visitor leaves a block.
 // | result                - Either a method that takes no parameters or a field. If a method (or
 //                           callable field) get_result calls it, otherwise the value is returned.
 //-------------------------------------------------------------------------------------------------

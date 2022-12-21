@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 23:40:34 2019
-// Update Count     : 347
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Dec 19 16:36:00 2022
+// Update Count     : 348
 //
 
 #include <algorithm>                     // for mismatch
@@ -71,12 +71,13 @@ namespace GenPoly {
 			void previsit( UnionDecl *unionDecl );
 		};
 
+		/// Updates the call sites of polymorphic functions.
 		/// Replaces polymorphic return types with out-parameters,
 		/// replaces calls to polymorphic functions with adapter calls,
 		/// and adds appropriate type variables to the function call.
-		class Pass1 final : public BoxPass, public WithConstTypeSubstitution, public WithStmtsToAdd, public WithGuards, public WithVisitorRef<Pass1>, public WithShortCircuiting {
+		class CallAdapter final : public BoxPass, public WithConstTypeSubstitution, public WithStmtsToAdd, public WithGuards, public WithVisitorRef<CallAdapter>, public WithShortCircuiting {
 		  public:
-			Pass1();
+			CallAdapter();
 
 			void premutate( FunctionDecl * functionDecl );
 			void premutate( TypeDecl * typeDecl );
@@ -137,9 +138,10 @@ namespace GenPoly {
 			UniqueName tempNamer;
 		};
 
+		/// Updates declarations (and types) that require adapters.
 		/// * Moves polymorphic returns in function types to pointer-type parameters
 		/// * adds type size and assertion parameters to parameter lists
-		struct Pass2 final : public BoxPass, public WithGuards {
+		struct DeclAdapter final : public BoxPass, public WithGuards {
 			void handleAggDecl();
 
 			DeclarationWithType * postmutate( FunctionDecl *functionDecl );
@@ -209,40 +211,35 @@ namespace GenPoly {
 			bool expect_func_type = false;                 ///< used to avoid recursing too deep in type decls
 		};
 
+		/// Erases unneeded/unwanted polymorphic information.
 		/// Replaces initialization of polymorphic values with alloca,
 		/// declaration of dtype/ftype with appropriate void expression,
 		/// sizeof expressions of polymorphic types with the proper variable,
 		/// and strips fields from generic struct declarations.
-		struct Pass3 final : public BoxPass, public WithGuards {
-			template< typename DeclClass >
-			void handleDecl( DeclClass * decl, Type * type );
-
+		struct Eraser final {
 			void premutate( ObjectDecl * objectDecl );
 			void premutate( FunctionDecl * functionDecl );
 			void premutate( TypedefDecl * typedefDecl );
 			void premutate( StructDecl * structDecl );
 			void premutate( UnionDecl * unionDecl );
-			void premutate( TypeDecl * typeDecl );
-			void premutate( PointerType * pointerType );
-			void premutate( FunctionType * funcType );
 		};
 	} // anonymous namespace
 
 	void box( std::list< Declaration *>& translationUnit ) {
 		PassVisitor<LayoutFunctionBuilder> layoutBuilder;
-		PassVisitor<Pass1> pass1;
-		PassVisitor<Pass2> pass2;
+		PassVisitor<CallAdapter> callAdapter;
+		PassVisitor<DeclAdapter> declAdapter;
 		PassVisitor<PolyGenericCalculator> polyCalculator;
-		PassVisitor<Pass3> pass3;
+		PassVisitor<Eraser> eraser;
 
 		acceptAll( translationUnit, layoutBuilder );
-		mutateAll( translationUnit, pass1 );
-		mutateAll( translationUnit, pass2 );
+		mutateAll( translationUnit, callAdapter );
+		mutateAll( translationUnit, declAdapter );
 		mutateAll( translationUnit, polyCalculator );
-		mutateAll( translationUnit, pass3 );
+		mutateAll( translationUnit, eraser );
 	}
 
-	////////////////////////////////// LayoutFunctionBuilder ////////////////////////////////////////////
+////////////////////////////////// LayoutFunctionBuilder ////////////////////////////////////////
 
 	/// Get a list of type declarations that will affect a layout function
 	std::list< TypeDecl* > takeOtypeOnly( std::list< TypeDecl* > &decls ) {
@@ -422,7 +419,7 @@ namespace GenPoly {
 		declsToAddAfter.push_back( layoutDecl );
 	}
 
-	////////////////////////////////////////// Pass1 ////////////////////////////////////////////////////
+////////////////////////////////////////////// CallAdapter //////////////////////////////////////
 
 	namespace {
 		std::string makePolyMonoSuffix( FunctionType const * function, const TyVarMap &tyVars ) {
@@ -464,9 +461,9 @@ namespace GenPoly {
 		/// If `doClone` is set to false, will not clone interior types
 		Type *replaceWithConcrete( Type *type, TypeSubstitution const * env, bool doClone = true );
 
-		Pass1::Pass1() : tempNamer( "_temp" ) {}
+		CallAdapter::CallAdapter() : tempNamer( "_temp" ) {}
 
-		void Pass1::premutate( FunctionDecl *functionDecl ) {
+		void CallAdapter::premutate( FunctionDecl *functionDecl ) {
 			if ( functionDecl->get_statements() ) {		// empty routine body ?
 				// std::cerr << "mutating function: " << functionDecl->get_mangleName() << std::endl;
 				GuardScope( scopeTyVars );
@@ -508,11 +505,11 @@ namespace GenPoly {
 			} // if
 		}
 
-		void Pass1::premutate( TypeDecl *typeDecl ) {
+		void CallAdapter::premutate( TypeDecl *typeDecl ) {
 			addToTyVarMap( typeDecl, scopeTyVars );
 		}
 
-		void Pass1::premutate( CommaExpr *commaExpr ) {
+		void CallAdapter::premutate( CommaExpr *commaExpr ) {
 			// Attempting to find application expressions that were mutated by the copy constructor passes
 			// to use an explicit return variable, so that the variable can be reused as a parameter to the
 			// call rather than creating a new temp variable. Previously this step was an optimization, but
@@ -530,7 +527,7 @@ namespace GenPoly {
 			}
 		}
 
-		std::list< Expression *>::iterator Pass1::passArgTypeVars( ApplicationExpr *appExpr, Type *parmType, Type *argBaseType, std::list< Expression *>::iterator arg, const TyVarMap &exprTyVars, std::set< std::string > &seenTypes ) {
+		std::list< Expression *>::iterator CallAdapter::passArgTypeVars( ApplicationExpr *appExpr, Type *parmType, Type *argBaseType, std::list< Expression *>::iterator arg, const TyVarMap &exprTyVars, std::set< std::string > &seenTypes ) {
 			Type *polyType = isPolyType( parmType, exprTyVars );
 			if ( polyType && ! dynamic_cast< TypeInstType* >( polyType ) ) {
 				std::string typeName = mangleType( polyType );
@@ -557,7 +554,7 @@ namespace GenPoly {
 			return arg;
 		}
 
-		std::list< Expression *>::iterator Pass1::passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, const TyVarMap &exprTyVars ) {
+		std::list< Expression *>::iterator CallAdapter::passTypeVars( ApplicationExpr *appExpr, Type *polyRetType, const TyVarMap &exprTyVars ) {
 			assert( env );
 			std::list< Expression *>::iterator arg = appExpr->args.begin();
 			// pass size/align for type variables
@@ -610,13 +607,13 @@ namespace GenPoly {
 			return arg;
 		}
 
-		ObjectDecl *Pass1::makeTemporary( Type *type ) {
+		ObjectDecl *CallAdapter::makeTemporary( Type *type ) {
 			ObjectDecl *newObj = new ObjectDecl( tempNamer.newName(), Type::StorageClasses(), LinkageSpec::C, 0, type, 0 );
 			stmtsToAddBefore.push_back( new DeclStmt( newObj ) );
 			return newObj;
 		}
 
-		Expression *Pass1::addRetParam( ApplicationExpr *appExpr, Type *retType ) {
+		Expression *CallAdapter::addRetParam( ApplicationExpr *appExpr, Type *retType ) {
 			// Create temporary to hold return value of polymorphic function and produce that temporary as a result
 			// using a comma expression.
 			assert( retType );
@@ -679,13 +676,13 @@ namespace GenPoly {
 			return type;
 		}
 
-		Expression *Pass1::addDynRetParam( ApplicationExpr *appExpr, Type *dynType ) {
+		Expression *CallAdapter::addDynRetParam( ApplicationExpr *appExpr, Type *dynType ) {
 			Type *concrete = replaceWithConcrete( dynType, env );
 			// add out-parameter for return value
 			return addRetParam( appExpr, concrete );
 		}
 
-		Expression *Pass1::applyAdapter( ApplicationExpr *appExpr, FunctionType *function ) {
+		Expression *CallAdapter::applyAdapter( ApplicationExpr *appExpr, FunctionType *function ) {
 			Expression *ret = appExpr;
 			if ( isDynRet( function, scopeTyVars ) ) {
 				ret = addRetParam( appExpr, function->returnVals.front()->get_type() );
@@ -734,7 +731,7 @@ namespace GenPoly {
 			} // if
 		}
 
-		void Pass1::boxParam( Expression *&arg, Type *param, const TyVarMap &exprTyVars ) {
+		void CallAdapter::boxParam( Expression *&arg, Type *param, const TyVarMap &exprTyVars ) {
 			assertf( arg->result, "arg does not have result: %s", toString( arg ).c_str() );
 			addCast( arg, param, exprTyVars );
 			if ( ! needsBoxing( param, arg->result, exprTyVars, env ) ) return;
@@ -769,7 +766,7 @@ namespace GenPoly {
 			} // if
 		}
 
-		void Pass1::boxParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *function, const TyVarMap &exprTyVars ) {
+		void CallAdapter::boxParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *function, const TyVarMap &exprTyVars ) {
 			for ( DeclarationWithType * param : function->parameters ) {
 				assertf( arg != appExpr->args.end(), "boxParams: missing argument for param %s to %s in %s", toString( param ).c_str(), toString( function ).c_str(), toString( appExpr ).c_str() );
 				boxParam( *arg, param->get_type(), exprTyVars );
@@ -777,7 +774,7 @@ namespace GenPoly {
 			} // for
 		}
 
-		void Pass1::addInferredParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *functionType, const TyVarMap &tyVars ) {
+		void CallAdapter::addInferredParams( ApplicationExpr *appExpr, std::list< Expression *>::iterator arg, FunctionType *functionType, const TyVarMap &tyVars ) {
 			for ( TypeDecl * const tyVar : functionType->forall ) {
 				for ( DeclarationWithType * const assert : tyVar->assertions ) {
 					InferredParams::const_iterator inferParam = appExpr->inferParams.find( assert->get_uniqueId() );
@@ -845,7 +842,7 @@ namespace GenPoly {
 			} // for
 		}
 
-		FunctionDecl *Pass1::makeAdapter( FunctionType const *adaptee, FunctionType *realType, const std::string &mangleName, const TyVarMap &tyVars ) {
+		FunctionDecl *CallAdapter::makeAdapter( FunctionType const *adaptee, FunctionType *realType, const std::string &mangleName, const TyVarMap &tyVars ) {
 			FunctionType *adapterType = makeAdapterType( adaptee, tyVars );
 			adapterType = ScrubTyVars::scrub( adapterType, tyVars );
 			DeclarationWithType *adapteeDecl = adapterType->get_parameters().front();
@@ -905,7 +902,7 @@ namespace GenPoly {
 			return new FunctionDecl( adapterName, Type::StorageClasses(), LinkageSpec::C, adapterType, adapterBody );
 		}
 
-		void Pass1::passAdapters( ApplicationExpr * appExpr, FunctionType * functionType, const TyVarMap & exprTyVars ) {
+		void CallAdapter::passAdapters( ApplicationExpr * appExpr, FunctionType * functionType, const TyVarMap & exprTyVars ) {
 			// collect a list of function types passed as parameters or implicit parameters (assertions)
 			std::list<FunctionType const *> functions;
 			for ( TypeDecl * const tyVar : functionType->get_forall() ) {
@@ -973,7 +970,7 @@ namespace GenPoly {
 			return addAssign;
 		}
 
-		Expression *Pass1::handleIntrinsics( ApplicationExpr *appExpr ) {
+		Expression *CallAdapter::handleIntrinsics( ApplicationExpr *appExpr ) {
 			if ( VariableExpr *varExpr = dynamic_cast< VariableExpr *>( appExpr->function ) ) {
 				if ( varExpr->var->linkage == LinkageSpec::Intrinsic ) {
 					if ( varExpr->var->name == "?[?]" ) {
@@ -1096,7 +1093,7 @@ namespace GenPoly {
 			return 0;
 		}
 
-		Expression *Pass1::postmutate( ApplicationExpr *appExpr ) {
+		Expression *CallAdapter::postmutate( ApplicationExpr *appExpr ) {
 			// std::cerr << "mutate appExpr: " << InitTweak::getFunctionName( appExpr ) << std::endl;
 			// for ( auto tyVar : scopeTyVars ) {
 			// 	std::cerr << tyVar.first << " ";
@@ -1168,7 +1165,7 @@ namespace GenPoly {
 			return false;
 		}
 
-		Expression * Pass1::postmutate( UntypedExpr *expr ) {
+		Expression * CallAdapter::postmutate( UntypedExpr *expr ) {
 			if ( isPolyDeref( expr, scopeTyVars, env ) ) {
 				Expression *ret = expr->args.front();
 				expr->args.clear();
@@ -1178,9 +1175,9 @@ namespace GenPoly {
 			return expr;
 		}
 
-		void Pass1::premutate( AddressExpr * ) { visit_children = false; }
+		void CallAdapter::premutate( AddressExpr * ) { visit_children = false; }
 
-		Expression * Pass1::postmutate( AddressExpr * addrExpr ) {
+		Expression * CallAdapter::postmutate( AddressExpr * addrExpr ) {
 			assert( addrExpr->arg->result && ! addrExpr->arg->result->isVoid() );
 
 			bool needs = false;
@@ -1211,7 +1208,7 @@ namespace GenPoly {
 			} // if
 		}
 
-		void Pass1::premutate( ReturnStmt *returnStmt ) {
+		void CallAdapter::premutate( ReturnStmt *returnStmt ) {
 			if ( retval && returnStmt->expr ) {
 				assert( returnStmt->expr->result && ! returnStmt->expr->result->isVoid() );
 				delete returnStmt->expr;
@@ -1219,27 +1216,27 @@ namespace GenPoly {
 			} // if
 		}
 
-		void Pass1::premutate( PointerType *pointerType ) {
+		void CallAdapter::premutate( PointerType *pointerType ) {
 			GuardScope( scopeTyVars );
 			makeTyVarMap( pointerType, scopeTyVars );
 		}
 
-		void Pass1::premutate( FunctionType *functionType ) {
+		void CallAdapter::premutate( FunctionType *functionType ) {
 			GuardScope( scopeTyVars );
 			makeTyVarMap( functionType, scopeTyVars );
 		}
 
-		void Pass1::beginScope() {
+		void CallAdapter::beginScope() {
 			adapters.beginScope();
 		}
 
-		void Pass1::endScope() {
+		void CallAdapter::endScope() {
 			adapters.endScope();
 		}
 
-////////////////////////////////////////// Pass2 ////////////////////////////////////////////////////
+////////////////////////////////////////// DeclAdapter //////////////////////////////////////////
 
-		void Pass2::addAdapters( FunctionType *functionType ) {
+		void DeclAdapter::addAdapters( FunctionType *functionType ) {
 			std::list< FunctionType const *> functions;
 			for ( DeclarationWithType * const arg : functionType->parameters ) {
 				Type *orig = arg->get_type();
@@ -1259,7 +1256,7 @@ namespace GenPoly {
 			}
 		}
 
-		DeclarationWithType * Pass2::postmutate( FunctionDecl *functionDecl ) {
+		DeclarationWithType * DeclAdapter::postmutate( FunctionDecl *functionDecl ) {
 			FunctionType * ftype = functionDecl->type;
 			if ( ! ftype->returnVals.empty() && functionDecl->statements ) {
 				// intrinsic functions won't be using the _retval so no need to generate it.
@@ -1284,31 +1281,31 @@ namespace GenPoly {
 			return functionDecl;
 		}
 
-		void Pass2::premutate( StructDecl * ) {
+		void DeclAdapter::premutate( StructDecl * ) {
 			// prevent tyVars from leaking into containing scope
 			GuardScope( scopeTyVars );
 		}
 
-		void Pass2::premutate( UnionDecl * ) {
+		void DeclAdapter::premutate( UnionDecl * ) {
 			// prevent tyVars from leaking into containing scope
 			GuardScope( scopeTyVars );
 		}
 
-		void Pass2::premutate( TraitDecl * ) {
+		void DeclAdapter::premutate( TraitDecl * ) {
 			// prevent tyVars from leaking into containing scope
 			GuardScope( scopeTyVars );
 		}
 
-		void Pass2::premutate( TypeDecl *typeDecl ) {
+		void DeclAdapter::premutate( TypeDecl *typeDecl ) {
 			addToTyVarMap( typeDecl, scopeTyVars );
 		}
 
-		void Pass2::premutate( PointerType *pointerType ) {
+		void DeclAdapter::premutate( PointerType *pointerType ) {
 			GuardScope( scopeTyVars );
 			makeTyVarMap( pointerType, scopeTyVars );
 		}
 
-		void Pass2::premutate( FunctionType *funcType ) {
+		void DeclAdapter::premutate( FunctionType *funcType ) {
 			GuardScope( scopeTyVars );
 			makeTyVarMap( funcType, scopeTyVars );
 
@@ -1392,7 +1389,7 @@ namespace GenPoly {
 			addAdapters( funcType );
 		}
 
-////////////////////////////////////////// PolyGenericCalculator ////////////////////////////////////////////////////
+////////////////////////////////////////// PolyGenericCalculator ////////////////////////////////
 
 		PolyGenericCalculator::PolyGenericCalculator()
 			: knownLayouts(), knownOffsets(), bufNamer( "_buf" ) {}
@@ -1473,7 +1470,7 @@ namespace GenPoly {
 
 			// make sure that any type information passed into the function is accounted for
 			for ( DeclarationWithType * const fnParam : funcType->get_parameters() ) {
-				// condition here duplicates that in Pass2::mutate( FunctionType* )
+				// condition here duplicates that in DeclAdapter::mutate( FunctionType* )
 				Type *polyType = isPolyType( fnParam->get_type(), scopeTyVars );
 				if ( polyType && ! dynamic_cast< TypeInstType* >( polyType ) ) {
 					knownLayouts.insert( mangleType( polyType ) );
@@ -1883,52 +1880,31 @@ namespace GenPoly {
 			knownOffsets.endScope();
 		}
 
-////////////////////////////////////////// Pass3 ////////////////////////////////////////////////////
+////////////////////////////////////////// Eraser ///////////////////////////////////////////////
 
-		template< typename DeclClass >
-		void Pass3::handleDecl( DeclClass * decl, Type * type ) {
-			GuardScope( scopeTyVars );
-			makeTyVarMap( type, scopeTyVars );
-			ScrubTyVars::scrubAll( decl );
+		void Eraser::premutate( ObjectDecl * objectDecl ) {
+			ScrubTyVars::scrubAll( objectDecl );
 		}
 
-		void Pass3::premutate( ObjectDecl * objectDecl ) {
-			handleDecl( objectDecl, objectDecl->type );
+		void Eraser::premutate( FunctionDecl * functionDecl ) {
+			ScrubTyVars::scrubAll( functionDecl );
 		}
 
-		void Pass3::premutate( FunctionDecl * functionDecl ) {
-			handleDecl( functionDecl, functionDecl->type );
-		}
-
-		void Pass3::premutate( TypedefDecl * typedefDecl ) {
-			handleDecl( typedefDecl, typedefDecl->base );
+		void Eraser::premutate( TypedefDecl * typedefDecl ) {
+			ScrubTyVars::scrubAll( typedefDecl );
 		}
 
 		/// Strips the members from a generic aggregate
-		void stripGenericMembers(AggregateDecl * decl) {
+		static void stripGenericMembers( AggregateDecl * decl ) {
 			if ( ! decl->parameters.empty() ) decl->members.clear();
 		}
 
-		void Pass3::premutate( StructDecl * structDecl ) {
+		void Eraser::premutate( StructDecl * structDecl ) {
 			stripGenericMembers( structDecl );
 		}
 
-		void Pass3::premutate( UnionDecl * unionDecl ) {
+		void Eraser::premutate( UnionDecl * unionDecl ) {
 			stripGenericMembers( unionDecl );
-		}
-
-		void Pass3::premutate( TypeDecl * typeDecl ) {
-			addToTyVarMap( typeDecl, scopeTyVars );
-		}
-
-		void Pass3::premutate( PointerType * pointerType ) {
-			GuardScope( scopeTyVars );
-			makeTyVarMap( pointerType, scopeTyVars );
-		}
-
-		void Pass3::premutate( FunctionType * functionType ) {
-			GuardScope( scopeTyVars );
-			makeTyVarMap( functionType, scopeTyVars );
 		}
 	} // anonymous namespace
 } // namespace GenPoly
@@ -1938,4 +1914,3 @@ namespace GenPoly {
 // mode: c++ //
 // compile-command: "make install" //
 // End: //
-

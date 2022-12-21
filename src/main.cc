@@ -58,8 +58,7 @@ using namespace std;
 #include "InitTweak/FixInit.h"              // for fix
 #include "InitTweak/GenInit.h"              // for genInit
 #include "MakeLibCfa.h"                     // for makeLibCfa
-#include "Parser/ParseNode.h"               // for DeclarationNode, buildList
-#include "Parser/TypedefTable.h"            // for TypedefTable
+#include "Parser/RunParser.hpp"             // for buildList, dumpParseTree,...
 #include "ResolvExpr/CandidatePrinter.hpp"  // for printCandidates
 #include "ResolvExpr/Resolver.h"            // for resolve
 #include "SynTree/LinkageSpec.h"            // for Spec, Cforall, Intrinsic
@@ -108,16 +107,11 @@ static void NewPass( const char * const name ) {
 	pass;                                   \
 	Stats::Time::StopBlock();
 
-LinkageSpec::Spec linkage = LinkageSpec::Cforall;
-TypedefTable typedefTable;
-DeclarationNode * parseTree = nullptr;					// program parse tree
-
 static bool waiting_for_gdb = false;					// flag to set cfa-cpp to wait for gdb on start
 
 static string PreludeDirector = "";
 
 static void parse_cmdline( int argc, char * argv[] );
-static void parse( FILE * input, LinkageSpec::Spec linkage, bool shouldExit = false );
 static void dump( list< Declaration * > & translationUnit, ostream & out = cout );
 static void dump( ast::TranslationUnit && transUnit, ostream & out = cout );
 
@@ -300,14 +294,11 @@ int main( int argc, char * argv[] ) {
 		parse( input, libcfap ? LinkageSpec::Intrinsic : LinkageSpec::Cforall, yydebug );
 
 		if ( parsep ) {
-			parseTree->printList( cout );
-			delete parseTree;
+			dumpParseTree( cout );
 			return EXIT_SUCCESS;
 		} // if
 
-		buildList( parseTree, translationUnit );
-		delete parseTree;
-		parseTree = nullptr;
+		translationUnit = buildUnit();
 
 		if ( astp ) {
 			dump( translationUnit );
@@ -746,22 +737,6 @@ static void parse_cmdline( int argc, char * argv[] ) {
 	// 	cout << w.name << ' ' << (int)w.severity << endl;
 	// } // for
 } // parse_cmdline
-
-static void parse( FILE * input, LinkageSpec::Spec linkage, bool shouldExit ) {
-	extern int yyparse( void );
-	extern FILE * yyin;
-	extern int yylineno;
-
-	::linkage = linkage;								// set globals
-	yyin = input;
-	yylineno = 1;
-	int parseStatus = yyparse();
-
-	fclose( input );
-	if ( shouldExit || parseStatus != 0 ) {
-		exit( parseStatus );
-	} // if
-} // parse
 
 static bool notPrelude( Declaration * decl ) {
 	return ! LinkageSpec::isBuiltin( decl->get_linkage() );
