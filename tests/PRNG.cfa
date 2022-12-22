@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 22 22:51:12 2022
-// Update Count     : 381
+// Last Modified On : Wed Dec 21 20:39:59 2022
+// Update Count     : 406
 // 
 
 #include <fstream.hfa>									// sout
@@ -59,7 +59,7 @@ void avgstd( unsigned int buckets[] ) {
 } // avgstd
 
 
-unsigned int seed = 1009;
+size_t seed = 1009;
 
 thread T1 {};
 void main( T1 & ) {
@@ -115,9 +115,13 @@ static void dummy( thread$ & th ) {
 	free( buckets );
 } // dummy
 
+
 int main() {
 	// causes leaked storage message
-//	setlocale( LC_NUMERIC, getenv( "LANG" ) );			// print digit separator
+	// setlocale( LC_NUMERIC, getenv( "LANG" ) );			// print digit separator
+	// locale_t loc = newlocale( LC_NUMERIC_MASK, getenv( "LANG" ), (locale_t)0p );
+	// if ( loc == (locale_t)0p ) abort( "newlocale" );
+	// uselocale( loc );
 
 	enum { TASKS = 4 };
 	Time start;
@@ -129,11 +133,11 @@ int main() {
 	srand( rseed );
 
 	sout | sepDisable;
-	sout | wd(13, "rand()" ) | wd(10, "rand(5)") | wd(13, "rand(0,5)" );
+	sout | wd(26, "rand()" ) | wd(12, "rand(5)") | wd(12, "rand(0,5)" );
 	for ( 20 ) {
-		sout | wd(13, rand()) | nonl;
-		sout | wd(10, rand() % 5) | nonl;
-		sout | wd(13, rand() % (5 - 0 + 1) + 0);
+		sout | wd(26, rand()) | nonl;
+		sout | wd(12, rand() % 5) | nonl;
+		sout | wd(12, rand() % (5 - 0 + 1) + 0);
 	} // for
 	sout | sepEnable;
 	sout | "seed" | rseed;
@@ -167,11 +171,11 @@ int main() {
 	if ( seed != 0 ) set_seed( prng, seed );
 
 	sout | sepDisable;
-	sout | nl | wd(13, "PRNG()" ) | wd(10, "PRNG(5)") | wd(13, "PRNG(0,5)" );
+	sout | nl | wd(26, "PRNG()" ) | wd(12, "PRNG(5)") | wd(12, "PRNG(0,5)" );
 	for ( 20 ) {
-		sout | wd(13, prng( prng )) | nonl;				// cascading => side-effect functions called in arbitary order
-		sout | wd(10, prng( prng, 5 )) | nonl;
-		sout | wd(13, prng( prng, 0, 5 ));
+		sout | wd(26, prng( prng )) | nonl;				// cascading => side-effect functions called in arbitary order
+		sout | wd(12, prng( prng, 5 )) | nonl;
+		sout | wd(12, prng( prng, 0, 5 ));
 	} // for
 	sout | sepEnable;
 	sout | "seed" | get_seed( prng );
@@ -202,11 +206,11 @@ int main() {
 	if ( seed != 0 ) set_seed( seed );
 
 	sout | sepDisable;
-	sout | nl | wd(13, "prng()" ) | wd(10, "prng(5)") | wd(13, "prng(0,5)" );
+	sout | nl | wd(26, "prng()" ) | wd(12, "prng(5)") | wd(12, "prng(0,5)" );
 	for ( 20 ) {
-		sout | wd(13, prng()) | nonl;					// cascading => side-effect functions called in arbitary order
-		sout | wd(10, prng( 5 )) | nonl;
-		sout | wd(13, prng( 0, 5 ));
+		sout | wd(26, prng()) | nonl;					// cascading => side-effect functions called in arbitary order
+		sout | wd(12, prng( 5 )) | nonl;
+		sout | wd(12, prng( 0, 5 ));
 	} // for
 	sout | sepEnable;
 	sout | "seed" | get_seed( prng );
@@ -238,11 +242,11 @@ int main() {
 	thread$ & th = *active_thread();
 
 	sout | sepDisable;
-	sout | nl | wd(13, "prng(t)" ) | wd(10, "prng(t,5)") | wd(13, "prng(t,0,5)" );
+	sout | nl | wd(26, "prng(t)" ) | wd(12, "prng(t,5)") | wd(12, "prng(t,0,5)" );
 	for ( 20 ) {
-		sout | wd(13, prng( th )) | nonl;				// cascading => side-effect functions called in arbitary order
-		sout | wd(10, prng( th, 5 )) | nonl;
-		sout | wd(13, prng( th, 0, 5 ));
+		sout | wd(26, prng( th )) | nonl;				// cascading => side-effect functions called in arbitary order
+		sout | wd(12, prng( th, 5 )) | nonl;
+		sout | wd(12, prng( th, 0, 5 ));
 	} // for
 	sout | sepEnable;
 	sout | "seed" | get_seed( prng );
@@ -265,6 +269,7 @@ int main() {
 	ENDTIME();
 #endif // 0
 //	malloc_stats();
+	// freelocale( loc );
 } // main
 
 

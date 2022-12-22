@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jan 14 07:18:11 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 11 18:43:58 2022
-// Update Count     : 171
+// Last Modified On : Wed Dec 14 20:32:53 2022
+// Update Count     : 177
 // 
 
 #pragma once
@@ -23,20 +23,22 @@
 // Set default PRNG for architecture size.
 #ifdef __x86_64__										// 64-bit architecture
 	// 64-bit generators
-	#define LEHMER64
+	//#define LEHMER64
 	//#define XORSHIFT_12_25_27
-	//#define XOSHIRO256PP
+	#define XOSHIRO256PP
 	//#define KISS_64
 
 	// 32-bit generators
-	#define XORSHIFT_6_21_7
-	//#define XOSHIRO128PP
+	//#define XORSHIFT_6_21_7
+	#define XOSHIRO128PP
 #else													// 32-bit architecture
 	// 64-bit generators
-	#define XORSHIFT_13_7_17
+	//#define XORSHIFT_13_7_17
+	#define XOSHIRO256PP
 
 	// 32-bit generators
-	#define XORSHIFT_6_21_7
+	//#define XORSHIFT_6_21_7
+	#define XOSHIRO128PP
 #endif // __x86_64__
 
 // Define C/CFA PRNG name and random-state.
@@ -46,13 +48,13 @@
 #ifdef XOSHIRO256PP
 #define PRNG_NAME_64 xoshiro256pp
 #define PRNG_STATE_64_T GLUE(PRNG_NAME_64,_t)
-typedef struct PRNG_STATE_64_T { uint64_t s[4]; } PRNG_STATE_64_T;
+typedef struct PRNG_STATE_64_T { uint64_t s0, s1, s2, s3; } PRNG_STATE_64_T;
 #endif // XOSHIRO256PP
 
 #ifdef XOSHIRO128PP
 #define PRNG_NAME_32 xoshiro128pp
 #define PRNG_STATE_32_T GLUE(PRNG_NAME_32,_t)
-typedef struct PRNG_STATE_32_T { uint32_t s[4]; } PRNG_STATE_32_T;
+typedef struct PRNG_STATE_32_T { uint32_t s0, s1, s2, s3; } PRNG_STATE_32_T;
 #endif // XOSHIRO128PP
 
 #ifdef LEHMER64
@@ -109,8 +111,10 @@ typedef struct PRNG_STATE_32_T { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T
 
 
 // ALL PRNG ALGORITHMS ARE OPTIMIZED SO THAT THE PRNG LOGIC CAN HAPPEN IN PARALLEL WITH THE USE OF THE RESULT.
-// Therefore, the set_seed routine primes the PRNG by calling it with the state so the seed is not return as the
-// first random value.
+// Specifically, the current random state is copied for returning, before computing the next value.  As a consequence,
+// the set_seed routine primes the PRNG by calling it with the state so the seed is not return as the first random
+// value.
+
 
 #ifdef __cforall										// don't include in C code (invoke.h)
 
@@ -125,28 +129,28 @@ typedef struct PRNG_STATE_32_T { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T
 // splitmix64 generator and use its output to fill s.
 
 #ifndef XOSHIRO256PP
-typedef struct xoshiro256pp_t { uint64_t s[4]; } xoshiro256pp_t;
+typedef struct xoshiro256pp_t { uint64_t s0, s1, s2, s3; } xoshiro256pp_t;
 #endif // ! XOSHIRO256PP
 
 static inline uint64_t xoshiro256pp( xoshiro256pp_t & rs ) with(rs) {
-	inline uint64_t rotl(const uint64_t x, int k) {
+	inline uint64_t rotl( const uint64_t x, int k ) {
 		return (x << k) | (x >> (64 - k));
 	} // rotl
 
-	const uint64_t result = rotl( s[0] + s[3], 23 ) + s[0];
-	const uint64_t t = s[1] << 17;
+	const uint64_t result = rotl( s0 + s3, 23 ) + s0;
+	const uint64_t t = s1 << 17;
 
-	s[2] ^= s[0];
-	s[3] ^= s[1];
-	s[1] ^= s[2];
-	s[0] ^= s[3];
-	s[2] ^= t;
-	s[3] = rotl( s[3], 45 );
+	s2 ^= s0;
+	s3 ^= s1;
+	s1 ^= s2;
+	s0 ^= s3;
+	s2 ^= t;
+	s3 = rotl( s3, 45 );
 	return result;
 } // xoshiro256pp
 
-static inline void xoshiro256pp_set_seed( xoshiro256pp_t & state,  uint64_t seed ) {
-	state = (xoshiro256pp_t){ {seed, seed, seed, seed} };
+static inline void xoshiro256pp_set_seed( xoshiro256pp_t & state, uint64_t seed ) {
+	state = (xoshiro256pp_t){ seed, seed, seed, seed };
 	xoshiro256pp( state );
 } // xoshiro256pp_set_seed
 
@@ -160,7 +164,7 @@ static inline void xoshiro256pp_set_seed( xoshiro256pp_t & state,  uint64_t seed
 // The state must be seeded so that it is not everywhere zero.
 
 #ifndef XOSHIRO128PP
-typedef struct xoshiro128pp_t { uint32_t s[4]; } xoshiro128pp_t;
+typedef struct xoshiro128pp_t { uint32_t s0, s1, s2, s3; } xoshiro128pp_t;
 #endif // ! XOSHIRO128PP
 
 static inline uint32_t xoshiro128pp( xoshiro128pp_t & rs ) with(rs) {
@@ -168,26 +172,24 @@ static inline uint32_t xoshiro128pp( xoshiro128pp_t & rs ) with(rs) {
 		return (x << k) | (x >> (32 - k));
 	} // rotl
 
-	const uint32_t result = rotl( s[0] + s[3], 7 ) + s[0];
-	const uint32_t t = s[1] << 9;
+	const uint32_t result = rotl( s0 + s3, 7 ) + s0;
+	const uint32_t t = s1 << 9;
 
-	s[2] ^= s[0];
-	s[3] ^= s[1];
-	s[1] ^= s[2];
-	s[0] ^= s[3];
-	s[2] ^= t;
-	s[3] = rotl( s[3], 11 );
+	s2 ^= s0;
+	s3 ^= s1;
+	s1 ^= s2;
+	s0 ^= s3;
+	s2 ^= t;
+	s3 = rotl( s3, 11 );
 	return result;
 } // xoshiro128pp
 
 static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed ) {
-	state = (xoshiro128pp_t){ {seed, seed, seed, seed} };
+	state = (xoshiro128pp_t){ seed, seed, seed, seed };
 	xoshiro128pp( state );								// prime
 } // xoshiro128pp_set_seed
 
 #ifdef __SIZEOF_INT128__
-	// Pipelined to allow out-of-order overlap with reduced dependencies. Critically, the current random state is
-	// returned (copied), and then compute and store the next random value.
 	//--------------------------------------------------
 	static inline uint64_t lehmer64( __uint128_t & state ) {
 		__uint128_t ret = state;
@@ -196,8 +198,9 @@ static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed 
 	} // lehmer64
 
 	static inline void lehmer64_set_seed( __uint128_t & state, uint64_t seed ) {
+		// The seed needs to be coprime with the 2^64 modulus to get the argest period, so no factors of 2 in the seed.
 		state = seed;
-		lehmer64( state );
+		lehmer64( state );								// prime
 	} // lehmer64_set_seed
 
 	//--------------------------------------------------
@@ -271,20 +274,20 @@ static inline void xorshift_12_25_27_set_seed( uint64_t & state, uint64_t seed )
 typedef struct kiss_64_t { uint64_t z, w, jsr, jcong; } kiss_64_t;
 #endif // ! KISS_64
 
-static inline uint64_t kiss_64( kiss_64_t & state ) with(state) {
-	kiss_64_t ret = state;
+static inline uint64_t kiss_64( kiss_64_t & rs ) with(rs) {
+	kiss_64_t ret = rs;
 	z = 36969 * (z & 65535) + (z >> 16);
 	w = 18000 * (w & 65535) + (w >> 16);
-	jsr ^= (jsr << 17);
 	jsr ^= (jsr << 13);
+	jsr ^= (jsr >> 17);
 	jsr ^= (jsr << 5);
 	jcong = 69069 * jcong + 1234567;
 	return (((ret.z << 16) + ret.w) ^ ret.jcong) + ret.jsr;
 } // kiss_64
 
-static inline void kiss_64_set_seed( kiss_64_t & state, uint64_t seed ) with(state) {
+static inline void kiss_64_set_seed( kiss_64_t & rs, uint64_t seed ) with(rs) {
 	z = 1; w = 1; jsr = 4; jcong = seed;
-	kiss_64( state );									// prime
+	kiss_64( rs );										// prime
 } // kiss_64_set_seed
 
 //--------------------------------------------------
@@ -293,7 +296,7 @@ static inline void kiss_64_set_seed( kiss_64_t & state, uint64_t seed ) with(sta
 typedef struct xorwow_t { uint32_t a, b, c, d, counter; } xorwow_t;
 #endif // ! XORWOW
 
-static inline uint32_t xorwow( xorwow_t & state ) with(state) {
+static inline uint32_t xorwow( xorwow_t & rs ) with(rs) {
 	// Algorithm "xorwow" from p. 5 of Marsaglia, "Xorshift RNGs".
 	uint32_t ret = a + counter;
 	uint32_t t = d;
@@ -311,9 +314,9 @@ static inline uint32_t xorwow( xorwow_t & state ) with(state) {
 	return ret;
 } // xorwow
 
-static inline void xorwow_set_seed( xorwow_t & state, uint32_t seed ) {
-	state = (xorwow_t){ seed, seed, seed, seed, 0 };
-	xorwow( state );									// prime
+static inline void xorwow_set_seed( xorwow_t & rs, uint32_t seed ) {
+	rs = (xorwow_t){ seed, seed, seed, seed, 0 };
+	xorwow( rs );										// prime
 } // xorwow_set_seed
 
 //--------------------------------------------------
@@ -325,14 +328,14 @@ static inline void xorwow_set_seed( xorwow_t & state, uint32_t seed ) {
 #define D  (16_l64u)
 
 // Bi-directional LCG random-number generator
-static inline uint32_t LCGBI_fwd( uint64_t & state ) {
-	state = (A * state + C) & (M - 1);
-	return state >> D;
+static inline uint32_t LCGBI_fwd( uint64_t & rs ) {
+	rs = (A * rs + C) & (M - 1);
+	return rs >> D;
 } // LCGBI_fwd
 
-static inline uint32_t LCGBI_bck( uint64_t & state ) {
-	unsigned int r = state >> D;
-	state = AI * (state - C) & (M - 1);
+static inline uint32_t LCGBI_bck( uint64_t & rs ) {
+	unsigned int r = rs >> D;
+	rs = AI * (rs - C) & (M - 1);
 	return r;
 } // LCGBI_bck
 

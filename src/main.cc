@@ -319,6 +319,12 @@ int main( int argc, char * argv[] ) {
 
 		forceFillCodeLocations( transUnit );
 
+		PASS( "Hoist Type Decls", Validate::hoistTypeDecls( transUnit ) );
+		// Hoist Type Decls pulls some declarations out of contexts where
+		// locations are not tracked. Perhaps they should be, but for now
+		// the full fill solves it.
+		forceFillCodeLocations( transUnit );
+
 		PASS( "Translate Exception Declarations", ControlStruct::translateExcept( transUnit ) );
 		if ( exdeclp ) {
 			dump( std::move( transUnit ) );
@@ -326,12 +332,6 @@ int main( int argc, char * argv[] ) {
 		}
 
 		PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign( transUnit ) );
-		PASS( "Hoist Type Decls", Validate::hoistTypeDecls( transUnit ) );
-		// Hoist Type Decls pulls some declarations out of contexts where
-		// locations are not tracked. Perhaps they should be, but for now
-		// the full fill solves it.
-		forceFillCodeLocations( transUnit );
-
 		PASS( "Replace Typedefs", Validate::replaceTypedef( transUnit ) );
 		PASS( "Fix Return Types", Validate::fixReturnTypes( transUnit ) );
 		PASS( "Enum and Pointer Decay", Validate::decayEnumsAndPointers( transUnit ) );
