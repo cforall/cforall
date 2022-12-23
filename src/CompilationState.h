@@ -31,7 +31,6 @@ extern int
 	deterministic_output,
 	useNewAST,
 	nomainp,
-	parsep,
 	resolvep,
 	resolvprotop,
 	symtabp,

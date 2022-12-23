@@ -227,6 +227,7 @@ int main( int argc, char * argv[] ) {
 	FILE * input;										// use FILE rather than istream because yyin is FILE
 	ostream * output = & cout;
 	list< Declaration * > translationUnit;
+	ast::TranslationUnit transUnit;
 
 	Signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO );
 	Signal( SIGBUS, sigSegvBusHandler, SA_SIGINFO );
@@ -293,31 +294,19 @@ int main( int argc, char * argv[] ) {
 
 		parse( input, libcfap ? LinkageSpec::Intrinsic : LinkageSpec::Cforall, yydebug );
 
-		if ( parsep ) {
-			dumpParseTree( cout );
-			return EXIT_SUCCESS;
-		} // if
-
-		translationUnit = buildUnit();
+		transUnit = buildUnit();
 
 		if ( astp ) {
-			dump( translationUnit );
+			dump( std::move( transUnit ) );
 			return EXIT_SUCCESS;
 		} // if
 
-		// Temporary: fill locations after parsing so that every node has a location, for early error messages.
-		// Eventually we should pass the locations from the parser to every node, but this quick and dirty solution
-		// works okay for now.
-		CodeTools::fillLocations( translationUnit );
 		Stats::Time::StopBlock();
 
 		if (Stats::Counters::enabled) {
 			ast::pass_visitor_stats.avg = Stats::Counters::build<Stats::Counters::AverageCounter<double>>("Average Depth - New");
 			ast::pass_visitor_stats.max = Stats::Counters::build<Stats::Counters::MaxCounter<double>>("Max depth - New");
 		}
-		auto transUnit = convert( std::move( translationUnit ) );
-
-		forceFillCodeLocations( transUnit );
 
 		PASS( "Hoist Type Decls", Validate::hoistTypeDecls( transUnit ) );
 		// Hoist Type Decls pulls some declarations out of contexts where
@@ -473,7 +462,13 @@ int main( int argc, char * argv[] ) {
 	} catch ( SemanticErrorException & e ) {
 		if ( errorp ) {
 			cerr << "---AST at error:---" << endl;
-			dump( translationUnit, cerr );
+			// We check which section the errors came from without looking at
+			// transUnit because std::move means it could look like anything.
+			if ( !translationUnit.empty() ) {
+				dump( translationUnit, cerr );
+			} else {
+				dump( std::move( transUnit ), cerr );
+			}
 			cerr << endl << "---End of AST, begin error message:---\n" << endl;
 		} // if
 		e.print();
@@ -577,7 +572,6 @@ static struct Printopts {
 	{ "pretty", prettycodegenp, true, "prettyprint for ascodegen flag" },
 	{ "rproto", resolvprotop, true, "resolver-proto instance" },
 	{ "rsteps", resolvep, true, "print resolver steps" },
-	{ "tree", parsep, true, "print parse tree" },
 	// code dumps
 	{ "ast", astp, true, "print AST after parsing" },
 	{ "exdecl", exdeclp, true, "print AST after translating exception decls" },

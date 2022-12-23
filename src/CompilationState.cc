@@ -32,7 +32,6 @@ int
 	deterministic_output = false,
 	useNewAST = true,
 	nomainp = false,
-	parsep = false,
 	resolvep = false,
 	resolvprotop = false,
 	symtabp = false,

@@ -9,17 +9,18 @@
 // Author           : Andrew Beach
 // Created On       : Mon Dec 19 10:42:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Dec 19 11:15:00 2022
-// Update Count     : 0
+// Last Modified On : Thr Dec 22 10:23:00 2022
+// Update Count     : 1
 //
 
 #pragma once
 
 #include <iosfwd>                           // for ostream
-#include <list>                             // for list
 
 #include "SynTree/LinkageSpec.h"            // for Spec
-class Declaration;
+namespace ast {
+	class TranslationUnit;
+}
 
 // The Parser does not have an enclosing namespace.
 
@@ -29,12 +30,9 @@ class Declaration;
 /// error or if alwaysExit is true.
 void parse( FILE * input, LinkageSpec::Spec linkage, bool alwaysExit = false );
 
-/// Drain the internal accumulator of parsed code and print it to the stream.
-void dumpParseTree( std::ostream & );
-
 /// Drain the internal accumulator of parsed code and build a translation
 /// unit from it.
-std::list<Declaration *> buildUnit(void);
+ast::TranslationUnit buildUnit(void);
 
 // Local Variables: //
 // tab-width: 4 //
