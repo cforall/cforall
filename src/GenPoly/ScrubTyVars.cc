@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Oct  7 15:42:00 2022
-// Update Count     : 5
+// Last Modified On : Wed Dec  7 17:01:00 2022
+// Update Count     : 6
 //
 
 #include <utility>                      // for pair
@@ -115,12 +115,6 @@ namespace GenPoly {
 	}
 
 namespace {
-
-enum class ScrubMode {
-	FromMap,
-	DynamicFromMap,
-	All,
-};
 
 struct ScrubTypeVars :
 	public ast::WithGuards,
@@ -252,35 +246,17 @@ ast::Type const * ScrubTypeVars::postvisit( ast::PointerType const * type ) {
 	}
 }
 
+} // namespace
+
 const ast::Node * scrubTypeVarsBase(
-		const ast::Node * target,
-		ScrubMode mode, const TypeVarMap * typeVars ) {
+		const ast::Node * node, const TypeVarMap * typeVars, ScrubMode mode ) {
 	if ( ScrubMode::All == mode ) {
 		assert( nullptr == typeVars );
 	} else {
 		assert( nullptr != typeVars );
 	}
 	ast::Pass<ScrubTypeVars> visitor( mode, typeVars );
-	return target->accept( visitor );
-}
-
-} // namespace
-
-template<>
-ast::Node const * scrubTypeVars<ast::Node>(
-        const ast::Node * target, const TypeVarMap & typeVars ) {
-	return scrubTypeVarsBase( target, ScrubMode::FromMap, &typeVars );
-}
-
-template<>
-ast::Node const * scrubTypeVarsDynamic<ast::Node>(
-        ast::Node const * target, const TypeVarMap & typeVars ) {
-	return scrubTypeVarsBase( target, ScrubMode::DynamicFromMap, &typeVars );
-}
-
-template<>
-ast::Node const * scrubAllTypeVars<ast::Node>( const ast::Node * target ) {
-	return scrubTypeVarsBase( target, ScrubMode::All, nullptr );
+	return node->accept( visitor );
 }
 
 } // namespace GenPoly

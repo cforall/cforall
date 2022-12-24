@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Oct  7 15:51:00 2022
-// Update Count     : 4
+// Last Modified On : Wed Dec  7 16:57:00 2022
+// Update Count     : 5
 //
 
 #pragma once
@@ -108,6 +108,13 @@ namespace GenPoly {
 		return static_cast< SynTreeClass * >( target->acceptMutator( scrubber ) );
 	}
 
+// ScrubMode and scrubTypeVarsBase are internal.
+enum class ScrubMode { FromMap, DynamicFromMap, All };
+
+const ast::Node * scrubTypeVarsBase(
+	const ast::Node * target, const TypeVarMap * typeVars, ScrubMode mode );
+
+
 /// For all polymorphic types with type variables in `typeVars`,
 /// replaces generic types, dtypes, and ftypes with the appropriate void type,
 /// and sizeof/alignof expressions with the proper variable.
@@ -115,17 +122,17 @@ template<typename node_t>
 node_t const * scrubTypeVars(
 		node_t const * target, const TypeVarMap & typeVars ) {
 	return strict_dynamic_cast<node_t const *>(
-			scrubTypeVars<ast::Node>( target, typeVars ) );
+			scrubTypeVarsBase( target, &typeVars, ScrubMode::FromMap ) );
 }
 
 /// For all dynamic-layout types with type variables in `typeVars`,
 /// replaces generic types, dtypes, and ftypes with the appropriate void type,
 /// and sizeof/alignof expressions with the proper variable.
 template<typename node_t>
-ast::Node const * scrubTypeVarsDynamic(
+node_t const * scrubTypeVarsDynamic(
 		node_t const * target, const TypeVarMap & typeVars ) {
 	return strict_dynamic_cast<node_t const *>(
-			scrubTypeVarsDynamic<ast::Node>( target, typeVars ) );
+			scrubTypeVarsBase( target, &typeVars, ScrubMode::DynamicFromMap ) );
 }
 
 /// For all polymorphic types, replaces generic types, with the appropriate
@@ -133,20 +140,8 @@ ast::Node const * scrubTypeVarsDynamic(
 template<typename node_t>
 node_t const * scrubAllTypeVars( node_t const * target ) {
 	return strict_dynamic_cast<node_t const *>(
-			scrubAllTypeVars<ast::Node>( target ) );
+			scrubTypeVarsBase( target, nullptr, ScrubMode::All ) );
 }
-
-// We specialize for Node as a base case.
-template<>
-ast::Node const * scrubTypeVars<ast::Node>(
-		const ast::Node * target, const TypeVarMap & typeVars );
-
-template<>
-ast::Node const * scrubTypeVarsDynamic<ast::Node>(
-		ast::Node const * target, const TypeVarMap & typeVars );
-
-template<>
-ast::Node const * scrubAllTypeVars<ast::Node>( const ast::Node * target );
 
 } // namespace GenPoly
 
