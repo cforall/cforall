@@ -9,22 +9,21 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 30 20:56:20 2022
-// Update Count     : 1584
+// Last Modified On : Wed Dec 28 12:37:38 2022
+// Update Count     : 1597
 //
 
 #include <stdio.h>
 #include <string.h>										// memset, memcpy
 #include <limits.h>										// ULONG_MAX
-#include <stdlib.h>										// EXIT_FAILURE
 #include <errno.h>										// errno, ENOMEM, EINVAL
-#include <unistd.h>										// STDERR_FILENO, sbrk, sysconf
-#include <malloc.h>										// memalign, malloc_usable_size
+#include <unistd.h>										// STDERR_FILENO, sbrk, sysconf, write
 #include <sys/mman.h>									// mmap, munmap
 extern "C" {
 #include <sys/sysinfo.h>								// get_nprocs
 } // extern "C"
 
+#include "heap.hfa"
 #include "bits/align.hfa"								// libAlign
 #include "bits/defs.hfa"								// likely, unlikely
 #include "concurrency/kernel/fwd.hfa"					// __POLL_PREEMPTION
@@ -139,14 +138,14 @@ static size_t Bsearchl( unsigned int key, const unsigned int vals[], size_t dim 
 	#error unsupported architecture
 #endif
 
-typedef volatile uintptr_t SpinLock_t CALIGN;			// aligned addressable word-size
+typedef volatile uintptr_t SpinLock_t;
 
 static inline __attribute__((always_inline)) void lock( volatile SpinLock_t & slock ) {
 	enum { SPIN_START = 4, SPIN_END = 64 * 1024, };
 	unsigned int spin = SPIN_START;
 
 	for ( unsigned int i = 1;; i += 1 ) {
-	  if ( slock == 0 && __atomic_test_and_set( &slock, __ATOMIC_SEQ_CST ) == 0 ) break; // Fence
+	  if ( slock == 0 && __atomic_test_and_set( &slock, __ATOMIC_ACQUIRE ) == 0 ) break; // Fence
 		for ( volatile unsigned int s = 0; s < spin; s += 1 ) Pause(); // exponential spin
 		spin += spin;									// powers of 2
 		//if ( i % 64 == 0 ) spin += spin;				// slowly increase by powers of 2
@@ -155,7 +154,7 @@ static inline __attribute__((always_inline)) void lock( volatile SpinLock_t & sl
 } // spin_lock
 
 static inline __attribute__((always_inline)) void unlock( volatile SpinLock_t & slock ) {
-	__atomic_clear( &slock, __ATOMIC_SEQ_CST );			// Fence
+	__atomic_clear( &slock, __ATOMIC_RELEASE );			// Fence
 } // spin_unlock
 
 
@@ -260,8 +259,8 @@ struct Heap {
 
 	static_assert( libAlign() >= sizeof( Storage ), "minimum alignment < sizeof( Storage )" );
 
-	struct __attribute__(( aligned (8) )) FreeHeader {
-		size_t blockSize __attribute__(( aligned(8) )); // size of allocations on this list
+	struct CALIGN FreeHeader {
+		size_t blockSize CALIGN;						// size of allocations on this list
 		#ifdef OWNERSHIP
 		#ifdef RETURNSPIN
 		SpinLock_t returnLock;
@@ -283,7 +282,7 @@ struct Heap {
 	Heap * nextFreeHeapManager;							// intrusive link of free heaps from terminated threads; reused by new threads
 
 	#ifdef __CFA_DEBUG__
-	int64_t allocUnfreed;								// running total of allocations minus frees; can be negative
+	ptrdiff_t allocUnfreed;								// running total of allocations minus frees; can be negative
 	#endif // __CFA_DEBUG__
 
 	#ifdef __STATISTICS__
@@ -368,7 +367,7 @@ libcfa_public int __map_prot;							// common mmap/mprotect protection
 
 // Thread-local storage is allocated lazily when the storage is accessed.
 static __thread size_t PAD1 CALIGN TLSMODEL __attribute__(( unused )); // protect false sharing
-static __thread Heap * volatile heapManager CALIGN TLSMODEL;
+static __thread Heap * heapManager CALIGN TLSMODEL;
 static __thread size_t PAD2 CALIGN TLSMODEL __attribute__(( unused )); // protect further false sharing
 
 
@@ -442,7 +441,7 @@ Heap * getHeap() with( heapMaster ) {
 		// Heap size is about 12K, FreeHeader (128 bytes because of cache alignment) * NoBucketSizes (91) => 128 heaps *
 		// 12K ~= 120K byte superblock.  Where 128-heap superblock handles a medium sized multi-processor server.
 		size_t remaining = heapManagersStorageEnd - heapManagersStorage; // remaining free heaps in superblock
-		if ( ! heapManagersStorage || remaining != 0 ) {
+		if ( ! heapManagersStorage || remaining == 0 ) {
 			// Each block of heaps is a multiple of the number of cores on the computer.
 			int HeapDim = get_nprocs();					// get_nprocs_conf does not work
 			size_t size = HeapDim * sizeof( Heap );
@@ -561,7 +560,7 @@ extern "C" {
 		#ifdef __CFA_DEBUG__
 		// allocUnfreed is set to 0 when a heap is created and it accumulates any unfreed storage during its multiple thread
 		// usages.  At the end, add up each heap allocUnfreed value across all heaps to get the total unfreed storage.
-		int64_t allocUnfreed = 0;
+		ptrdiff_t allocUnfreed = 0;
 		for ( Heap * heap = heapMaster.heapManagersList; heap; heap = heap->nextHeapManager ) {
 			allocUnfreed += heap->allocUnfreed;
 		} // for
@@ -571,7 +570,7 @@ extern "C" {
 			// DO NOT USE STREAMS AS THEY MAY BE UNAVAILABLE AT THIS POINT.
 			char helpText[512];
 			__cfaabi_bits_print_buffer( STDERR_FILENO, helpText, sizeof(helpText),
-										"CFA warning (UNIX pid:%ld) : program terminating with %ju(0x%jx) bytes of storage allocated but not freed.\n"
+										"CFA warning (UNIX pid:%ld) : program terminating with %td(%#tx) bytes of storage allocated but not freed.\n"
 										"Possible cause is unfreed storage allocated by the program or system/library routines called from the program.\n",
 										(long int)getpid(), allocUnfreed, allocUnfreed ); // always print the UNIX pid
 		} // if
@@ -949,7 +948,7 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 
 		block = freeHead->freeList;						// remove node from stack
 		if ( unlikely( block == 0p ) ) {				// no free block ?
-			// Freelist for this size is empty, so check return list (OWNERSHIP), carve it out of the heap, if there
+			// Freelist for this size is empty, so check return list (OWNERSHIP), or carve it out of the heap if there
 			// is enough left, or get some more heap storage and carve it off.
 			#ifdef OWNERSHIP
 			if ( unlikely( freeHead->returnList ) ) {	// race, get next time if lose race
@@ -1114,6 +1113,12 @@ static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
 			// CAS resets header->kind.real.next = freeHead->returnList on failure
 			while ( ! __atomic_compare_exchange_n( &freeHead->returnList, &header->kind.real.next, (Heap.Storage *)header,
 												   false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) );
+
+			#ifdef __STATISTICS__
+			stats.return_pushes += 1;
+			stats.return_storage_request += rsize;
+			stats.return_storage_alloc += size;
+			#endif // __STATISTICS__
 			#endif // RETURNSPIN
 		} // if
 
@@ -1124,12 +1129,6 @@ static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
 		header->kind.real.next = freeHead->freeList;	// push on stack
 		freeHead->freeList = (Heap.Storage *)header;
 		#endif // ! OWNERSHIP
-
-		#ifdef __U_STATISTICS__
-		stats.return_pushes += 1;
-		stats.return_storage_request += rsize;
-		stats.return_storage_alloc += size;
-		#endif // __U_STATISTICS__
 
 		// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
 	} // if
@@ -1179,11 +1178,11 @@ size_t prtFree( Heap & manager ) with( manager ) {
 
 
 #ifdef __STATISTICS__
-static void incCalls( intptr_t statName ) libcfa_nopreempt {
+static void incCalls( size_t statName ) libcfa_nopreempt {
 	heapManager->stats.counters[statName].calls += 1;
 } // incCalls
 
-static void incZeroCalls( intptr_t statName ) libcfa_nopreempt {
+static void incZeroCalls( size_t statName ) libcfa_nopreempt {
 	heapManager->stats.counters[statName].calls_0 += 1;
 } // incZeroCalls
 #endif // __STATISTICS__
@@ -1455,8 +1454,6 @@ extern "C" {
 	// or realloc().  Otherwise, or if free(ptr) has already been called before, undefined behaviour occurs. If ptr is
 	// 0p, no operation is performed.
 	void free( void * addr ) libcfa_public {
-//		verify( heapManager );
-
 	  if ( unlikely( addr == 0p ) ) {					// special case
 			#ifdef __STATISTICS__
 		  if ( heapManager )

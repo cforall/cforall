@@ -9,13 +9,13 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jan 14 07:18:11 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 14 20:32:53 2022
-// Update Count     : 177
+// Last Modified On : Thu Dec 22 20:54:22 2022
+// Update Count     : 178
 // 
 
 #pragma once
 
-#include <stdint.h>
+#include <stdint.h>										// uintXX_t
 
 #define GLUE2( x, y ) x##y
 #define GLUE( x, y ) GLUE2( x, y )
@@ -193,12 +193,12 @@ static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed 
 	//--------------------------------------------------
 	static inline uint64_t lehmer64( __uint128_t & state ) {
 		__uint128_t ret = state;
-		state *= 0xda942042e4dd58b5;
+		state *= 0x_da94_2042_e4dd_58b5;
 		return ret >> 64;
 	} // lehmer64
 
 	static inline void lehmer64_set_seed( __uint128_t & state, uint64_t seed ) {
-		// The seed needs to be coprime with the 2^64 modulus to get the argest period, so no factors of 2 in the seed.
+		// The seed needs to be coprime with the 2^64 modulus to get the largest period, so no factors of 2 in the seed.
 		state = seed;
 		lehmer64( state );								// prime
 	} // lehmer64_set_seed
