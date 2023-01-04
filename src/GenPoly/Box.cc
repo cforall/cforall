@@ -423,29 +423,20 @@ namespace GenPoly {
 
 	namespace {
 		std::string makePolyMonoSuffix( FunctionType const * function, const TyVarMap &tyVars ) {
-			std::stringstream name;
-
 			// NOTE: this function previously used isPolyObj, which failed to produce
 			// the correct thing in some situations. It's not clear to me why this wasn't working.
 
 			// if the return type or a parameter type involved polymorphic types, then the adapter will need
 			// to take those polymorphic types as pointers. Therefore, there can be two different functions
 			// with the same mangled name, so we need to further mangle the names.
+			std::stringstream name;
 			for ( DeclarationWithType const * const ret : function->returnVals ) {
-				if ( isPolyType( ret->get_type(), tyVars ) ) {
-					name << "P";
-				} else {
-					name << "M";
-				}
+				name << ( isPolyType( ret->get_type(), tyVars ) ? 'P' : 'M' );
 			}
-			name << "_";
+			name << '_';
 			for ( DeclarationWithType const * const arg : function->parameters ) {
-				if ( isPolyType( arg->get_type(), tyVars ) ) {
-					name << "P";
-				} else {
-					name << "M";
-				}
-			} // for
+				name << ( isPolyType( arg->get_type(), tyVars ) ? 'P' : 'M' );
+			}
 			return name.str();
 		}
 
