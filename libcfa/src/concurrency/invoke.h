@@ -214,9 +214,6 @@ extern "C" {
 		// default link fields for dlist
 		struct __thread_user_link cltr_link;
 
-		// used to store state between clh lock/unlock
-		volatile bool * clh_prev;
-
 		// used to point to this thd's current clh node
 		volatile bool * clh_node;
 

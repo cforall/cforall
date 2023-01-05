@@ -488,7 +488,6 @@ namespace __pass {
 
 		template<typename core_t>
 		static inline auto replace( core_t &, long, const ast::TypeInstType *& ) {}
-
 	} // namespace forall
 
 	// For passes that need access to the global context. Sreaches `translationUnit`
@@ -505,17 +504,20 @@ namespace __pass {
 		}
 	}
 
-	template<typename core_t>
-	static inline auto get_result( core_t & core, char ) -> decltype( core.result() ) {
-		return core.result();
-	}
+	// For passes, usually utility passes, that have a result.
+	namespace result {
+		template<typename core_t>
+		static inline auto get( core_t & core, char ) -> decltype( core.result() ) {
+			return core.result();
+		}
 
-	template<typename core_t>
-	static inline auto get_result( core_t & core, int ) -> decltype( core.result ) {
-		return core.result;
-	}
+		template<typename core_t>
+		static inline auto get( core_t & core, int ) -> decltype( core.result ) {
+			return core.result;
+		}
 
-	template<typename core_t>
-	static inline void get_result( core_t &, long ) {}
+		template<typename core_t>
+		static inline void get( core_t &, long ) {}
+	}
 } // namespace __pass
 } // namespace ast

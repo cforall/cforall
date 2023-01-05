@@ -85,8 +85,8 @@ public:
 		: core( std::forward<Args>( args )... )
 	{
 		// After the pass is constructed, check if it wants the have a pointer to the wrapping visitor
-		type * const * visitor = __pass::visitor(core, 0);
-		if(visitor) {
+		type * const * visitor = __pass::visitor( core, 0 );
+		if ( visitor ) {
 			*const_cast<type **>( visitor ) = this;
 		}
 	}
@@ -97,8 +97,8 @@ public:
 	core_t core;
 
 	/// If the core defines a result, call it if possible, otherwise return it.
-	inline auto get_result() -> decltype( __pass::get_result( core, '0' ) ) {
-		return __pass::get_result( core, '0' );
+	inline auto get_result() -> decltype( __pass::result::get( core, '0' ) ) {
+		return __pass::result::get( core, '0' );
 	}
 
 	/// Construct and run a pass on a translation unit.

@@ -227,6 +227,7 @@ static inline void on_wakeup( futex_mutex & f, size_t recursion ) {}
 
 struct clh_lock {
 	volatile bool * volatile tail;
+    volatile bool * volatile head;
 };
 
 static inline void  ?{}( clh_lock & this ) { this.tail = malloc(); *this.tail = true; }
@@ -236,14 +237,13 @@ static inline void lock(clh_lock & l) {
 	thread$ * curr_thd = active_thread();
 	*(curr_thd->clh_node) = false;
 	volatile bool * prev = __atomic_exchange_n((bool **)(&l.tail), (bool *)(curr_thd->clh_node), __ATOMIC_SEQ_CST);
-	while(!__atomic_load_n(prev, __ATOMIC_ACQUIRE)) Pause();
-	curr_thd->clh_prev = prev;
+	while(!__atomic_load_n(prev, __ATOMIC_SEQ_CST)) Pause();
+    __atomic_store_n((bool **)(&l.head), (bool *)curr_thd->clh_node, __ATOMIC_SEQ_CST);
+    curr_thd->clh_node = prev;
 }
 
 static inline void unlock(clh_lock & l) {
-	thread$ * curr_thd = active_thread();
-	__atomic_store_n(curr_thd->clh_node, true, __ATOMIC_RELEASE);
-	curr_thd->clh_node = curr_thd->clh_prev;
+	__atomic_store_n((bool *)(l.head), true, __ATOMIC_SEQ_CST);
 }
 
 static inline void on_notify(clh_lock & this, struct thread$ * t ) { unpark(t); }

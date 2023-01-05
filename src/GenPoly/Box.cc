@@ -555,7 +555,7 @@ namespace GenPoly {
 			// order because the vars have been renamed with numbers that,
 			// even when converted to strings, sort in the original order.
 			// (At least, that is the best explination I have.)
-			for ( std::pair<std::string, TypeDecl::Data> const & tyParam : exprTyVars ) {
+			for ( std::pair<const std::string, TypeDecl::Data> const & tyParam : exprTyVars ) {
 				if ( !tyParam.second.isComplete ) continue;
 				Type *concrete = env->lookup( tyParam.first );
 				// If there is an unbound type variable, it should have detected already.
