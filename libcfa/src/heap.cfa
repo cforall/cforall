@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 28 12:37:38 2022
-// Update Count     : 1597
+// Last Modified On : Fri Dec 30 08:37:37 2022
+// Update Count     : 1605
 //
 
 #include <stdio.h>
@@ -804,7 +804,7 @@ static void * master_extend( size_t size ) with( heapMaster ) {
 	lock( extLock );
 
 	ptrdiff_t rem = heapRemaining - size;
-	if ( unlikely( rem < 0 ) ) {
+	if ( unlikely( rem < 0 ) ) {						// negative ?
 		// If the size requested is bigger than the current remaining storage, increase the size of the heap.
 
 		size_t increase = ceiling2( size > heapExpand ? size : heapExpand, libAlign() );
@@ -840,13 +840,13 @@ __attribute__(( noinline ))
 static void * manager_extend( size_t size ) with( *heapManager ) {
 	ptrdiff_t rem = heapReserve - size;
 
-	if ( unlikely( rem < 0 ) ) {						// negative
+	if ( unlikely( rem < 0 ) ) {						// negative ?
 		// If the size requested is bigger than the current remaining reserve, use the current reserve to populate
 		// smaller freeLists, and increase the reserve.
 
 		rem = heapReserve;								// positive
 
-		if ( rem >= bucketSizes[0] ) {					// minimal size ? otherwise ignore
+		if ( (unsigned int)rem >= bucketSizes[0] ) {	// minimal size ? otherwise ignore
 			size_t bucket;
 			#ifdef FASTLOOKUP
 			if ( likely( rem < LookupSizes ) ) bucket = lookup[rem];
@@ -855,7 +855,7 @@ static void * manager_extend( size_t size ) with( *heapManager ) {
 			verify( 0 <= bucket && bucket <= heapMaster.maxBucketsUsed );
 			Heap.FreeHeader * freeHead = &(freeLists[bucket]);
 
-			// The remaining storage many not be bucket size, whereas all other allocations are. Round down to previous
+			// The remaining storage may not be bucket size, whereas all other allocations are. Round down to previous
 			// bucket size in this case.
 			if ( unlikely( freeHead->blockSize > (size_t)rem ) ) freeHead -= 1;
 			Heap.Storage * block = (Heap.Storage *)heapBuffer;

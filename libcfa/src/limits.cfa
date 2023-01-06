@@ -9,13 +9,13 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 18:06:52 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar  1 16:22:51 2018
-// Update Count     : 74
+// Last Modified On : Thu Jan  5 22:27:40 2023
+// Update Count     : 84
 //
 
+#define _GNU_SOURCE										// access long double M_*l in math.h
 #include <limits.h>
 #include <float.h>
-#define __USE_GNU										// get M_* constants
 #include <math.h>
 #include <complex.h>
 #include "limits.hfa"
