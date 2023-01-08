@@ -1,0 +1,197 @@
+#include <thread.hfa>
+#include <future.hfa>
+
+enum {NFUTURES = 10};
+
+thread Server {
+	int pending, done, iteration;
+	future(int) * request;
+};
+
+void ?{}( Server & this ) {
+	((thread&)this){"Server Thread"};
+	this.pending = 0;
+	this.done = 0;
+	this.iteration = 0;
+	this.request = 0p;
+}
+
+void ^?{}( Server & mutex this ) {
+	assert(this.pending == 0);
+	this.request = 0p;
+}
+
+void init( Server & this , future(int) * f ) {
+	this.request = f;
+}
+
+void call( Server & mutex this ) {
+	this.pending++;
+}
+
+void finish( Server & mutex this ) {
+	this.done++;
+}
+
+void main( Server & this ) {
+	MAIN_LOOP:
+	for() {
+		waitfor( ^?{} : this ) {
+			break;
+		}
+		or waitfor( call: this ) {
+			if (this.pending != NFUTURES) { continue MAIN_LOOP; }
+
+			this.pending = 0;
+			fulfil( *this.request, this.iteration );
+			this.iteration++;
+
+			for(NFUTURES) {
+				waitfor( finish: this );
+			}
+
+			reset( *this.request );
+			this.done = 0;
+		}
+	}
+
+}
+
+Server * the_server;
+thread Worker {};
+void ?{}(Worker & this) {
+	((thread&)this){"Worker Thread"};
+}
+
+future(int) * shared_future;
+
+void thrash(void) {
+	volatile int locals[250];
+	for(i; 250) {
+		locals[i] = 0xdeadbeef;
+	}
+}
+
+void work(int num) {
+	call( *the_server );
+	int res = get( *shared_future );
+	if( res != num ) abort();
+	finish( *the_server );
+}
+
+void main( Worker & ) {
+	for (i; 10) {
+		thrash();
+		work(i);
+		thrash();
+	}
+}
+
+thread Worker2 {};
+
+semaphore before{0};
+semaphore after_server{0};
+semaphore after_worker{0};
+
+void work2( int num ) {
+    P( before );
+	int res = get( *shared_future );
+	if( res != num ) abort();
+	V( after_server );
+    P( after_worker );
+}
+
+void main( Worker2 & ) {
+	for (i; 10) {
+		thrash();
+		work2(i);
+		thrash();
+	}
+}
+
+thread Server2 {};
+
+void main( Server2 & ) {
+	for (i; 10) {
+		fulfil( *shared_future , i );
+        V( before, NFUTURES );
+        for ( i; NFUTURES ) P( after_server );
+        reset( *shared_future );
+        V( after_worker, NFUTURES );
+	}
+}
+
+thread Worker3 {};
+
+void work3( int num ) {
+    [int, bool] tt;
+    do {
+        tt = try_get( *shared_future );
+    } while ( ! tt.1 );
+	if( tt.0 != num ) abort();
+	V( after_server );
+    P( after_worker );
+}
+
+void main( Worker3 & ) {
+	for (i; 10) {
+		thrash();
+		work3(i);
+		thrash();
+	}
+}
+
+thread Server3 {};
+
+void main( Server3 & ) {
+	for (i; 10) {
+		fulfil( *shared_future , i );
+        for ( i; NFUTURES ) P( after_server );
+        reset( *shared_future );
+        V( after_worker, NFUTURES );
+	}
+}
+
+int main() {
+	printf( "start 1: blocking path future test\n" );
+	processor procs[2];
+	shared_future = new();
+	{
+		Server server;
+		the_server = &server;
+		init(server, shared_future);
+		{
+			Worker workers[NFUTURES];
+		}
+	}
+	delete( shared_future );
+	printf( "done 1\n" );
+
+    printf( "start 2: nonblocking path future test\n" );
+    shared_future = new();
+
+    {
+        Server2 server;
+		{
+			Worker2 workers[NFUTURES];
+		}
+	}
+
+    delete( shared_future );
+	printf( "done 2\n" );
+
+    printf( "start 3: try_get future test\n" );
+    shared_future = new();
+
+    {
+        Worker3 workers[NFUTURES];
+		{
+			Server3 server;
+		}
+	}
+
+    delete( shared_future );
+	printf( "done 3\n" );
+
+    // C_TODO: add test for select statement once it is implemented
+}

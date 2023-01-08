@@ -225,9 +225,9 @@ AM_PROG_AS
 # These are often not installed and people miss seeing the "no", so stop the configure.
 AC_PROG_YACC
 if test "${YACC}" = "yacc" ; then echo "Error: bison required." ; exit 1 ; fi
-AC_PROG_LEX
+AC_PROG_LEX(yywrap)
 if test "${LEX}" = "lex" ; then echo "Error: flex required." ; exit 1 ; fi
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_INSTALL
 
 # Checks for libraries.
@@ -283,14 +283,14 @@ AM_COND_IF([CFORALL_DISTRIBUTE], [
 		benchmark/io/http/Makefile
 		tools/Makefile
 		tools/prettyprinter/Makefile
+		benchmark/Cargo.toml
 	])
-
-	AC_OUTPUT(benchmark/Cargo.toml)
 ])
 
 AC_CONFIG_LINKS([tests/test.py:tests/test.py])
+AC_CONFIG_FILES([tests/config.py])
 
-AC_OUTPUT(tests/config.py)
+AC_OUTPUT
 
 # Final text
 AC_MSG_RESULT(Cforall configuraton completed. Type "make -j 8 install".)

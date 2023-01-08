@@ -1,0 +1,61 @@
+#include "containers/list.hfa"
+#include <stdint.h>
+#include <kernel.hfa>
+#include <locks.hfa>
+
+struct select_node {
+    thread$ * blocked_thread;
+    void ** race_flag;
+    inline dlink(select_node);
+};
+P9_EMBEDDED( select_node, dlink(select_node) )
+
+void ?{}( select_node & this ) {
+    this.blocked_thread = 0p;
+    this.race_flag = 0p;
+}
+
+void ?{}( select_node & this, thread$ * blocked_thread ) {
+    this.blocked_thread = blocked_thread;
+    this.race_flag = 0p;
+}
+
+void ?{}( select_node & this, thread$ * blocked_thread, void ** race_flag ) {
+    this.blocked_thread = blocked_thread;
+    this.race_flag = race_flag;
+}
+
+void ^?{}( select_node & this ) {}
+
+
+//-----------------------------------------------------------------------------
+// is_selectable
+trait is_selectable(T & | sized(T)) {
+    // For registering a select on a selectable concurrency primitive
+    // return 0p if primitive not accessible yet
+    // return 1p if primitive gets acquired
+    // return 2p if primitive is accessible but some other primitive won the race
+    // C_TODO: add enum for return values
+    void * register_select( T &, select_node & );
+
+    void unregister_select( T &, select_node &  );
+};
+
+static inline bool install_select_winner( select_node & this, void * primitive_ptr ) with(this) {
+    // temporary needed for atomic instruction
+    void * cmp_flag = 0p;
+    
+    // if we dont win the selector race we need to potentially 
+    //   ignore this node and move to the next one so we return accordingly
+    if ( *race_flag != 0p || 
+        !__atomic_compare_exchange_n(
+            race_flag, 
+            &cmp_flag, 
+            primitive_ptr, 
+            false,
+            __ATOMIC_SEQ_CST,
+            __ATOMIC_SEQ_CST
+        )
+    ) return false; // lost race and some other node triggered select
+    return true; // won race so this node is what the select proceeds with
+}

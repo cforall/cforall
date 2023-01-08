@@ -4,7 +4,7 @@ enum {NFUTURES = 10};
 
 thread Server {
 	int cnt;
-	future(int) * requests[NFUTURES];
+	single_future(int) * requests[NFUTURES];
 };
 
 void ?{}( Server & this ) {
@@ -23,13 +23,13 @@ void ^?{}( Server & mutex this ) {
 
 void process( Server & this, int i ) {
 	if( this.requests[i] == 0p ) return;
-	future(int) * f = this.requests[i];
+	single_future(int) * f = this.requests[i];
 	this.requests[i] = 0p;
 	this.cnt--;
 	fulfil( *f , i);
 }
 
-void call( Server & mutex this, future(int) & f ) {
+void call( Server & mutex this, single_future(int) & f ) {
 	for(i; NFUTURES) {
 		if( this.requests[i] == 0p ) {
 			this.requests[i] = &f;
@@ -69,7 +69,7 @@ void thrash(void) {
 }
 
 void work(void) {
-	future(int) mine;
+	single_future(int) mine;
 	call( *the_server, mine );
 	wait( mine );
 }

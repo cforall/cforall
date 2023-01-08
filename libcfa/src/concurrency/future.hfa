@@ -4,52 +4,224 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// io/types.hfa --
+// concurrency/future.hfa --
 //
-// Author           : Thierry Delisle & Peiran Hong
+// Author           : Thierry Delisle & Peiran Hong & Colby Parsons
 // Created On       : Wed Jan 06 17:33:18 2021
 // Last Modified By :
 // Last Modified On :
 // Update Count     :
 //
 
-#pragma once
+// #pragma once
 
 #include "bits/locks.hfa"
 #include "monitor.hfa"
+#include "select.hfa"
+
+//----------------------------------------------------------------------------
+// future
+// I don't use future_t here since I need to use a lock for this future
+//  since it supports multiple consumers
+//  future_t is lockfree and uses atomics which aren't needed given we use locks here
+forall( T ) {
+    // enum(int) { FUTURE_EMPTY = 0, FUTURE_FULFILLED = 1 }; // Enums seem to be broken so feel free to add this back afterwards
+
+    // temporary enum replacement
+    const int FUTURE_EMPTY = 0;
+    const int FUTURE_FULFILLED = 1;
+
+	struct future {
+		int state;
+		T result;
+		dlist( select_node ) waiters;
+        futex_mutex lock;
+	};
+
+    struct future_node {
+        inline select_node;
+        T * my_result;
+    };
+
+    // C_TODO: perhaps allow exceptions to be inserted like uC++?
+
+	static inline {
+
+        void ?{}( future_node(T) & this, thread$ * blocked_thread, T * my_result ) {
+            ((select_node &)this){ blocked_thread };
+            this.my_result = my_result;
+        }
+
+        void ?{}(future(T) & this) {
+			this.waiters{};
+            this.state = FUTURE_EMPTY;
+		}
+
+		// Reset future back to original state
+		void reset(future(T) & this) with(this)
+        {
+            lock( lock );
+            if( ! waiters`isEmpty )
+                abort("Attempting to reset a future with blocked waiters");
+            state = FUTURE_EMPTY;
+            unlock( lock );
+        }
+
+		// check if the future is available
+        // currently no mutual exclusion because I can't see when you need this call to be synchronous or protected
+		bool available( future(T) & this ) { return this.state; }
+
+
+        // memcpy wrapper to help copy values
+        void copy_T( T & from, T & to ) {
+            memcpy((void *)&to, (void *)&from, sizeof(T));
+        }
+
+        // internal helper to signal waiters off of the future
+        void _internal_flush( future(T) & this ) with(this) {
+            while( ! waiters`isEmpty ) {
+                select_node &s = try_pop_front( waiters );
+
+                if ( s.race_flag == 0p )
+                    // poke in result so that woken threads do not need to reacquire any locks
+                    // *(((future_node(T) &)s).my_result) = result;
+                    copy_T( result, *(((future_node(T) &)s).my_result) );
+                else if ( !install_select_winner( s, &this ) ) continue;
+                
+                // only unpark if future is not selected
+                // or if it is selected we only unpark if we win the race
+                unpark( s.blocked_thread );
+            }
+        }
+
+		// Fulfil the future, returns whether or not someone was unblocked
+		bool fulfil( future(T) & this, T & val ) with(this) {
+            lock( lock );
+            if( state != FUTURE_EMPTY )
+                abort("Attempting to fulfil a future that has already been fulfilled");
+
+            copy_T( val, result );
+
+            bool ret_val = ! waiters`isEmpty;
+            state = FUTURE_FULFILLED;
+			_internal_flush( this );
+            unlock( lock );
+            return ret_val;
+		}
+
+		// Wait for the future to be fulfilled
+		// Also return whether the thread had to block or not
+		[T, bool] get( future(T) & this ) with( this ) {
+            lock( lock );
+            T ret_val;
+            if( state == FUTURE_FULFILLED ) {
+                copy_T( result, ret_val );
+                unlock( lock );
+                return [ret_val, false];
+            }
+
+            future_node(T) node = { active_thread(), &ret_val };
+            insert_last( waiters, ((select_node &)node) );
+            unlock( lock );
+            park( );
+
+			return [ret_val, true];
+		}
+
+		// Wait for the future to be fulfilled
+		T get( future(T) & this ) {
+			[T, bool] tt;
+			tt = get(this);
+			return tt.0;
+		}
+
+        // Gets value if it is available and returns [ val, true ]
+        // otherwise returns [ default_val, false]
+        // will not block
+        [T, bool] try_get( future(T) & this ) with(this) {
+            lock( lock );
+            T ret_val;
+            if( state == FUTURE_FULFILLED ) {
+                copy_T( result, ret_val );
+                unlock( lock );
+                return [ret_val, true];
+            }
+            unlock( lock );
+            // cast to (T *) needed to trick the resolver to let me return *0p
+            return [ret_val, false];
+        }
+
+        void * register_select( future(T) & this, select_node & s ) with(this) {
+            lock( lock );
+
+            // future not ready -> insert select node and return 0p
+            if( state == FUTURE_EMPTY ) {
+                insert_last( waiters, s );
+                unlock( lock );
+                return 0p;
+            }
+
+            // future ready and we won race to install it as the select winner return 1p
+            if ( install_select_winner( s, &this ) ) {
+                unlock( lock );
+                return 1p;
+            }
+
+            unlock( lock );
+            // future ready and we lost race to install it as the select winner
+            return 2p;
+        }
+
+        void unregister_select( future(T) & this, select_node & s ) with(this) {
+            lock( lock );
+            if ( s`isListed ) remove( s );
+            unlock( lock );
+        }
+		
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------
+// These futures below do not support select statements so they may not be as useful as 'future'
+//  however the 'single_future' is cheap and cheerful and is most likely more performant than 'future'
+//  since it uses raw atomics and no locks afaik
+//
+// As far as 'multi_future' goes I can't see many use cases as it will be less performant than 'future'
+//  since it is monitor based and also is not compatible with select statements
+//--------------------------------------------------------------------------------------------------------
 
 forall( T ) {
-	struct future {
+	struct single_future {
 		inline future_t;
 		T result;
 	};
 
 	static inline {
 		// Reset future back to original state
-		void reset(future(T) & this) { reset( (future_t&)this ); }
+		void reset(single_future(T) & this) { reset( (future_t&)this ); }
 
 		// check if the future is available
-		bool available( future(T) & this ) { return available( (future_t&)this ); }
+		bool available( single_future(T) & this ) { return available( (future_t&)this ); }
 
 		// Mark the future as abandoned, meaning it will be deleted by the server
 		// This doesn't work beause of the potential need for a destructor
-		void abandon( future(T) & this );
+		void abandon( single_future(T) & this );
 
 		// Fulfil the future, returns whether or not someone was unblocked
-		thread$ * fulfil( future(T) & this, T result ) {
+		thread$ * fulfil( single_future(T) & this, T result ) {
 			this.result = result;
 			return fulfil( (future_t&)this );
 		}
 
 		// Wait for the future to be fulfilled
 		// Also return whether the thread had to block or not
-		[T, bool] wait( future(T) & this ) {
+		[T, bool] wait( single_future(T) & this ) {
 			bool r = wait( (future_t&)this );
 			return [this.result, r];
 		}
 
 		// Wait for the future to be fulfilled
-		T wait( future(T) & this ) {
+		T wait( single_future(T) & this ) {
 			[T, bool] tt;
 			tt = wait(this);
 			return tt.0;

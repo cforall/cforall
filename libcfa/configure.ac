@@ -121,7 +121,7 @@ LT_INIT([disable-static])
 AC_PROG_CXX
 AC_PROG_CC
 AM_PROG_AS
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
@@ -245,7 +245,7 @@ AC_CONFIG_FILES([src/concurrency/io/call.cfa], [python3 ${srcdir}/src/concurrenc
 
 AC_CONFIG_HEADERS(prelude/defines.hfa)
 
-AC_OUTPUT()
+AC_OUTPUT
 
 # Final text
 AC_MSG_RESULT(Cforall library configuraton completed. Type "make -j 8 install".)
