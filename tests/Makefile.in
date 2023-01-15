@@ -461,7 +461,8 @@ EXTRA_DIST = test.py \
 	io/.in/io.data \
 	io/.in/many_read.data \
 	meta/fork+exec.hfa \
-	unified_locking/mutex_test.hfa
+	concurrent/unified_locking/mutex_test.hfa \
+    concurrent/channels/parallel_harness.hfa
 
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa

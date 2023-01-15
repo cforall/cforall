@@ -272,38 +272,39 @@ namespace CodeGen {
 		handleAggregate( unionDecl, "union " );
 	}
 
+	template<typename pass_type>
+	inline void genEnumInitializer( PassVisitor<pass_type> * visitor, Type * baseType, std::ostream & output,
+	Initializer * init, long long * cur_val, Options options) {
+		auto baseTypeAsBasic = baseType ? dynamic_cast<BasicType *>( baseType ) : nullptr;
+		if ( init ) { // If value has an explicit initiazatior 
+			output << " = "; 
+			output << "(" << genType(baseType, "", options) << ")";
+			init->accept( *visitor );
+			if ( baseTypeAsBasic && baseTypeAsBasic->isInteger() ) { // if it is an integral type and initilizer offered, 
+			// need to update the cur_val
+				Expression* expr = ((SingleInit *)(init))->value;
+				while ( auto temp = dynamic_cast<CastExpr *>(expr) ) { // unwrap introduced cast
+					expr = temp->arg;
+				}
+				*cur_val = ((ConstantExpr *)expr)->constant.get_ival()+1;
+			}
+		} else if ( baseTypeAsBasic && baseTypeAsBasic->isInteger() ) { // integral implicitly init to cur_val + 1
+			output << " = " << "(" << genType(baseType, "", options) << ")";
+			output << (*cur_val)++;
+		}
+	}
+
 	void CodeGenerator::postvisit( EnumDecl * enumDecl ) {
 		extension( enumDecl );
 		std::list< Declaration* > &memb = enumDecl->get_members();
 		if (enumDecl->base && ! memb.empty()) {
-			unsigned long long last_val = -1; // if the first enum value has no explicit initializer,
-			// as other
+			long long cur_val = 0;
 			for ( std::list< Declaration* >::iterator i = memb.begin(); i != memb.end();  i++) {
 				ObjectDecl * obj = dynamic_cast< ObjectDecl* >( *i );
 				assert( obj );
 				output << "static ";
-				output << genType(enumDecl->base, "", options) << " const ";
-				output << mangleName( obj ) << " ";
-				output << " = ";
-				output << "(" << genType(enumDecl->base, "", options) << ")";
-				if ( (BasicType *)(enumDecl->base) && ((BasicType *)(enumDecl->base))->isWholeNumber() ) {
-					if ( obj->get_init() ) {
-						obj->get_init()->accept( *visitor );
-						Expression* expr = ((SingleInit *)(obj->init))->value;
-						while ( auto temp = dynamic_cast<CastExpr *>(expr) ) {
-							expr = temp->arg;
-						}
-						last_val = ((ConstantExpr *)expr)->constant.get_ival();
-					} else {
-						output << ++last_val;
-					} // if
-				} else {
-					if ( obj->get_init() ) {
-						obj->get_init()->accept( *visitor );
-					} else {
-						// Should not reach here!
-					}
-				}
+				output << genType(enumDecl->base, mangleName( obj ), options);
+				genEnumInitializer( visitor, enumDecl->base, output, obj->get_init(), &cur_val, options);
 				output << ";" << endl;
 			} // for
 		} else {

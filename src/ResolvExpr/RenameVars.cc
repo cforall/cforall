@@ -82,19 +82,16 @@ namespace {
 		}
 
 		const ast::TypeInstType * rename( const ast::TypeInstType * type ) {
-			// rename
 			auto it = idMap.find( type->name );
-			if ( it != idMap.end() ) {
-				// unconditionally mutate because map will *always* have different name
-				ast::TypeInstType * mut = ast::shallowCopy( type );
-				// reconcile base node since some copies might have been made
-				mut->base = it->second.base;
-				mut->formal_usage = it->second.formal_usage;
-				mut->expr_id = it->second.expr_id;
-	            type = mut;
-			}
+			if ( it == idMap.end() ) return type;
 
-			return type;
+			// Unconditionally mutate because map will *always* have different name.
+			ast::TypeInstType * mut = ast::shallowCopy( type );
+			// Reconcile base node since some copies might have been made.
+			mut->base = it->second.base;
+			mut->formal_usage = it->second.formal_usage;
+			mut->expr_id = it->second.expr_id;
+			return mut;
 		}
 
 		const ast::FunctionType * openLevel( const ast::FunctionType * type, RenameMode mode ) {
@@ -186,7 +183,6 @@ void renameTyVars( Type * t ) {
 }
 
 const ast::Type * renameTyVars( const ast::Type * t, RenameMode mode, bool reset ) {
-	// ast::Type *tc = ast::deepCopy(t);
 	ast::Pass<RenameVars_new> renamer;
 	renamer.core.mode = mode;
 	if (mode == GEN_USAGE && reset) {

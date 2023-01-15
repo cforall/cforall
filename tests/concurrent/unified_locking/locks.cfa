@@ -14,8 +14,8 @@ condition_variable( single_acquisition_lock ) c_s;
 owner_lock o;
 condition_variable( owner_lock ) c_o;
 
-linear_backoff_then_block_lock l;
-condition_variable( linear_backoff_then_block_lock ) c_l;
+exp_backoff_then_block_lock l;
+condition_variable( exp_backoff_then_block_lock ) c_l;
 
 fast_block_lock f;
 fast_cond_var( fast_block_lock ) f_c_f;

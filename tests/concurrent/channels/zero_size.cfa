@@ -1,0 +1,7 @@
+#include "parallel_harness.hfa"
+
+size_t Processors = 10, Channels = 1, Producers = 10, Consumers = 10, ChannelSize = 0;
+
+int main() {
+    test(Processors, Channels, Producers, Consumers, ChannelSize);
+}

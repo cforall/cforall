@@ -1,0 +1,198 @@
+#include <locks.hfa>
+#include <fstream.hfa>
+#include <stdio.h>
+#include <channel.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+
+// user defines this
+// #define BIG 1
+
+owner_lock o;
+
+unsigned long long total_operations = 0;
+
+struct bigObject {
+    size_t a;
+    size_t b;
+    size_t c;
+    size_t d;
+    size_t e;
+    size_t f;
+    size_t g;
+    size_t h;
+};
+
+void ?{}( bigObject & this, size_t i ) with(this) { a = i; b = i; c = i; d = i; e = i; f = i; g = i; h = i; }
+void ?{}( bigObject & this ) { this{0}; }
+
+#ifdef BIG
+typedef channel( bigObject ) Channel;
+#else
+typedef channel( size_t ) Channel;
+#endif
+
+Channel * channels;
+
+volatile bool cons_done = false, prod_done = false;
+volatile int cons_done_count = 0;
+size_t cons_check = 0, prod_check = 0;
+
+thread Consumer {
+    size_t i;
+};
+static inline void ?{}( Consumer & c, size_t i, cluster & clu ) {
+    ((thread &)c){ clu };
+    c.i = i; 
+}
+void main(Consumer & this) {
+    unsigned long long runs = 0;
+    size_t my_check = 0;
+    for ( ;; ) {
+        if ( cons_done ) break;
+        #ifdef BIG
+        bigObject j = remove( channels[ this.i ] );
+        my_check = my_check ^ (j.a + j.b + j.c + j.d + j.d + j.e + j.f + j.g + j.h);
+        #else
+        size_t j = remove( channels[ this.i ] );
+        my_check = my_check ^ j;
+        #endif
+        
+        if ( !prod_done ) runs++;
+    }
+    lock(o);
+    total_operations += runs;
+    cons_done_count++;
+    cons_check = cons_check ^ my_check;
+    // sout | "C: " | runs;
+    unlock(o);
+}
+
+thread Producer {
+    size_t i;
+};
+static inline void ?{}( Producer & p, size_t i, cluster & clu ) {
+    ((thread &)p){ clu };
+    p.i = i;
+}
+void main(Producer & this) {
+    unsigned long long runs = 0;
+    size_t my_check = 0;
+    for ( ;; ) {
+        if ( prod_done ) break;
+        #ifdef BIG
+        bigObject j{(size_t)runs};
+        insert( channels[ this.i ], j );
+        my_check = my_check ^ (j.a + j.b + j.c + j.d + j.d + j.e + j.f + j.g + j.h);
+        #else
+        insert( channels[ this.i ], (size_t)runs );
+        my_check = my_check ^ ((size_t)runs);
+        #endif
+        runs++;
+    }
+    lock(o);
+    total_operations += runs;
+    prod_check = prod_check ^ my_check;
+    // sout | "P: " | runs;
+    unlock(o);
+}
+
+
+int test( size_t Processors, size_t Channels, size_t Producers, size_t Consumers, size_t ChannelSize ) {
+    size_t Clusters = 1;
+    // create a cluster
+    cluster clus[Clusters];
+    processor * proc[Processors];
+    for ( i; Processors ) {
+        (*(proc[i] = alloc())){clus[i % Clusters]};
+    }
+
+    channels = anew( Channels );
+
+    // sout | "Processors: " | Processors | " ProdsPerChan: " | Producers | " ConsPerChan: " | Consumers | "Channels: " | Channels | " Channel Size: " | ChannelSize;
+    
+    for ( i; Channels ) {
+        channels[i]{ ChannelSize };
+    }
+
+    sout | "start";
+    Consumer * c[Consumers * Channels];
+    Producer * p[Producers * Channels];
+
+    for ( i; Consumers * Channels ) {
+        (*(c[i] = alloc())){ i % Channels, clus[i % Clusters] };
+    }
+
+    for ( i; Producers * Channels ) {
+        (*(p[i] = alloc())){ i % Channels, clus[i % Clusters] };
+    }
+
+    sleep(10`s);
+    prod_done = true;
+
+    for ( i; Producers * Channels ) {
+        delete(p[i]);
+    }
+
+    sout | "prods";
+    cons_done = true;
+    while( cons_done_count != Consumers * Channels ) {
+        for ( i; Channels ) {
+            if ( has_waiting_consumers( channels[i] ) ){
+                #ifdef BIG
+                bigObject b{0};
+                insert( channels[i], b );
+                #else
+                insert( channels[i], 0 );
+                #endif
+            }
+        }
+        
+    }
+    // for ( i; Channels ) {
+    //     // sout | get_count( channels[i] );
+    //     if ( get_count( channels[i] ) < Consumers ){
+    //         #ifdef BIG
+    //         bigObject b{0};
+    //         #endif
+    //         for ( j; Consumers ) {
+    //             #ifdef BIG
+    //             insert( channels[i], b );
+    //             #else
+    //             insert( channels[i], 0 );
+    //             #endif
+    //         }
+    //     }
+    // }
+    sout | "cons";
+    for ( i; Consumers * Channels ) {
+        delete(c[i]);
+    }
+
+    sout | "flush";
+    for ( i; Channels ) {
+        for ( ;; ) {
+            if ( get_count( channels[i] ) > 0 ) {
+                #ifdef BIG
+                bigObject j = remove( channels[ i ] );
+                cons_check = cons_check ^ (j.a + j.b + j.c + j.d + j.d + j.e + j.f + j.g + j.h);
+                #else
+                size_t j = remove( channels[ i ] );
+                cons_check = cons_check ^ j;
+                #endif
+            } else break;
+        }
+    }
+
+    adelete( channels );
+    // sout | "total channel ops: " | total_operations;
+    if ( cons_check != prod_check )
+        sout | "CHECKSUM MISMATCH !!!";
+    // print_stats_now( *active_cluster(), CFA_STATS_READY_Q);
+
+    for ( i; Processors ) {
+        delete(proc[i]);
+    }
+    sout | "done";
+    return 0;
+}

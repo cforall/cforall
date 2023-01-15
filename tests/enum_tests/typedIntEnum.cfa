@@ -11,12 +11,12 @@ enum(int) IntEnum {
 };
 
 int main() {
-    printf("%d\n", zero);
-    printf("%d\n", one);
-    printf("%d\n", thousand);
-    printf("%d\n", thousand_one);
-    printf("%d\n", two_thousand);
-    printf("%d\n", two_thousand_one);
-    printf("%d\n", two_thousand_two);
+    printf("0=%d\n", zero);
+    printf("1=%d\n", one);
+    printf("1000=%d\n", thousand);
+    printf("1001=%d\n", thousand_one);
+    printf("2000=%d\n", two_thousand);
+    printf("2001=%d\n", two_thousand_one);
+    printf("2002=%d\n", two_thousand_two);
     return 0;
 }

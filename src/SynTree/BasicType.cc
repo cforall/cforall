@@ -28,23 +28,6 @@ void BasicType::print( std::ostream &os, Indenter indent ) const {
 	os << BasicType::typeNames[ kind ];
 }
 
-bool BasicType::isWholeNumber() const {
-	return kind == Bool || 
-		kind ==Char ||
-		kind == SignedChar ||
-		kind == UnsignedChar ||
-		kind == ShortSignedInt ||
-		kind == ShortUnsignedInt ||
-		kind == SignedInt ||
-		kind == UnsignedInt ||
-		kind == LongSignedInt ||
-		kind == LongUnsignedInt ||
-		kind == LongLongSignedInt ||
-		kind ==LongLongUnsignedInt ||
-		kind == SignedInt128 ||
-		kind == UnsignedInt128;
-}
-
 bool BasicType::isInteger() const {
 	return kind <= UnsignedInt128;
 }

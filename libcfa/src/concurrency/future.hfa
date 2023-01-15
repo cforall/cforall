@@ -55,6 +55,7 @@ forall( T ) {
         void ?{}(future(T) & this) {
 			this.waiters{};
             this.state = FUTURE_EMPTY;
+            this.lock{};
 		}
 
 		// Reset future back to original state
@@ -147,7 +148,7 @@ forall( T ) {
                 return [ret_val, true];
             }
             unlock( lock );
-            // cast to (T *) needed to trick the resolver to let me return *0p
+            
             return [ret_val, false];
         }
 

@@ -37,8 +37,10 @@
 #include <sys/syscall.h>      /* Definition of SYS_* constants */
 #include <unistd.h>
 
-// undef to make a number of the locks not reacquire upon waking from a condlock
-#define REACQ 1
+// C_TODO: cleanup this and locks.cfa
+// - appropriate separation of interface and impl
+// - clean up unused/unneeded locks
+// - change messy big blocking lock from inheritance to composition to remove need for flags
 
 //-----------------------------------------------------------------------------
 // Semaphore
@@ -248,16 +250,12 @@ static inline void unlock(clh_lock & l) {
 
 static inline void on_notify(clh_lock & this, struct thread$ * t ) { unpark(t); }
 static inline size_t on_wait(clh_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(clh_lock & this, size_t recursion ) {
-	#ifdef REACQ
-	lock(this);
-	#endif
-}
+static inline void on_wakeup(clh_lock & this, size_t recursion ) { lock(this); }
 
 
 //-----------------------------------------------------------------------------
-// Linear backoff Spinlock
-struct linear_backoff_then_block_lock {
+// Exponential backoff then block lock
+struct exp_backoff_then_block_lock {
 	// Spin lock used for mutual exclusion
 	__spinlock_t spinlock;
 
@@ -268,32 +266,32 @@ struct linear_backoff_then_block_lock {
 	volatile size_t lock_value;
 };
 
-static inline void  ?{}( linear_backoff_then_block_lock & this ) {
+static inline void  ?{}( exp_backoff_then_block_lock & this ) {
 	this.spinlock{};
 	this.blocked_threads{};
 	this.lock_value = 0;
 }
-static inline void ^?{}( linear_backoff_then_block_lock & this ) {}
-// static inline void ?{}( linear_backoff_then_block_lock & this, linear_backoff_then_block_lock this2 ) = void;
-// static inline void ?=?( linear_backoff_then_block_lock & this, linear_backoff_then_block_lock this2 ) = void;
+static inline void ^?{}( exp_backoff_then_block_lock & this ) {}
+// static inline void ?{}( exp_backoff_then_block_lock & this, exp_backoff_then_block_lock this2 ) = void;
+// static inline void ?=?( exp_backoff_then_block_lock & this, exp_backoff_then_block_lock this2 ) = void;
 
-static inline bool internal_try_lock(linear_backoff_then_block_lock & this, size_t & compare_val) with(this) {
+static inline bool internal_try_lock(exp_backoff_then_block_lock & this, size_t & compare_val) with(this) {
 	if (__atomic_compare_exchange_n(&lock_value, &compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)) {
 		return true;
 	}
 	return false;
 }
 
-static inline bool try_lock(linear_backoff_then_block_lock & this) { size_t compare_val = 0; return internal_try_lock(this, compare_val); }
+static inline bool try_lock(exp_backoff_then_block_lock & this) { size_t compare_val = 0; return internal_try_lock(this, compare_val); }
 
-static inline bool try_lock_contention(linear_backoff_then_block_lock & this) with(this) {
+static inline bool try_lock_contention(exp_backoff_then_block_lock & this) with(this) {
 	if (__atomic_exchange_n(&lock_value, 2, __ATOMIC_ACQUIRE) == 0) {
 		return true;
 	}
 	return false;
 }
 
-static inline bool block(linear_backoff_then_block_lock & this) with(this) {
+static inline bool block(exp_backoff_then_block_lock & this) with(this) {
 	lock( spinlock __cfaabi_dbg_ctx2 ); // TODO change to lockfree queue (MPSC)
 	if (lock_value != 2) {
 		unlock( spinlock );
@@ -305,7 +303,7 @@ static inline bool block(linear_backoff_then_block_lock & this) with(this) {
 	return true;
 }
 
-static inline void lock(linear_backoff_then_block_lock & this) with(this) {
+static inline void lock(exp_backoff_then_block_lock & this) with(this) {
 	size_t compare_val = 0;
 	int spin = 4;
 	// linear backoff
@@ -323,7 +321,7 @@ static inline void lock(linear_backoff_then_block_lock & this) with(this) {
 	while (block(this)) if(try_lock_contention(this)) return;
 }
 
-static inline void unlock(linear_backoff_then_block_lock & this) with(this) {
+static inline void unlock(exp_backoff_then_block_lock & this) with(this) {
     if (__atomic_exchange_n(&lock_value, 0, __ATOMIC_RELEASE) == 1) return;
 	lock( spinlock __cfaabi_dbg_ctx2 );
 	thread$ * t = &try_pop_front( blocked_threads );
@@ -331,13 +329,9 @@ static inline void unlock(linear_backoff_then_block_lock & this) with(this) {
 	unpark( t );
 }
 
-static inline void on_notify(linear_backoff_then_block_lock & this, struct thread$ * t ) { unpark(t); }
-static inline size_t on_wait(linear_backoff_then_block_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(linear_backoff_then_block_lock & this, size_t recursion ) { 
-	#ifdef REACQ
-	lock(this);
-	#endif
-}
+static inline void on_notify(exp_backoff_then_block_lock & this, struct thread$ * t ) { unpark(t); }
+static inline size_t on_wait(exp_backoff_then_block_lock & this) { unlock(this); return 0; }
+static inline void on_wakeup(exp_backoff_then_block_lock & this, size_t recursion ) { lock(this); }
 
 //-----------------------------------------------------------------------------
 // Fast Block Lock
@@ -389,13 +383,9 @@ static inline void unlock(fast_block_lock & this) with(this) {
 }
 
 static inline void on_notify(fast_block_lock & this, struct thread$ * t ) with(this) {
-	#ifdef REACQ
-		lock( lock __cfaabi_dbg_ctx2 );
-		insert_last( blocked_threads, *t );
-		unlock( lock );
-	#else
-		unpark(t);
-	#endif
+    lock( lock __cfaabi_dbg_ctx2 );
+    insert_last( blocked_threads, *t );
+    unlock( lock );
 }
 static inline size_t on_wait(fast_block_lock & this) { unlock(this); return 0; }
 static inline void on_wakeup(fast_block_lock & this, size_t recursion ) { }
@@ -552,11 +542,7 @@ static inline void on_notify(spin_queue_lock & this, struct thread$ * t ) {
 	unpark(t);
 }
 static inline size_t on_wait(spin_queue_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(spin_queue_lock & this, size_t recursion ) {
-	#ifdef REACQ
-	lock(this);
-	#endif
-}
+static inline void on_wakeup(spin_queue_lock & this, size_t recursion ) { lock(this); }
 
 
 //-----------------------------------------------------------------------------
@@ -597,11 +583,7 @@ static inline void unlock(mcs_block_spin_lock & this) with(this) {
 
 static inline void on_notify(mcs_block_spin_lock & this, struct thread$ * t ) { unpark(t); }
 static inline size_t on_wait(mcs_block_spin_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(mcs_block_spin_lock & this, size_t recursion ) {
-	#ifdef REACQ
-	lock(this);
-	#endif
-}
+static inline void on_wakeup(mcs_block_spin_lock & this, size_t recursion ) {lock(this); }
 
 //-----------------------------------------------------------------------------
 // Block Spin Lock
@@ -639,7 +621,6 @@ static inline void unlock(block_spin_lock & this) with(this) {
 }
 
 static inline void on_notify(block_spin_lock & this, struct thread$ * t ) with(this.lock) {
-  #ifdef REACQ
 	// first we acquire internal fast_block_lock
 	lock( lock __cfaabi_dbg_ctx2 );
 	if ( held ) { // if internal fast_block_lock is held
@@ -651,18 +632,14 @@ static inline void on_notify(block_spin_lock & this, struct thread$ * t ) with(t
 	held = true;
 	unlock( lock );
 
-  #endif
 	unpark(t);
-	
 }
 static inline size_t on_wait(block_spin_lock & this) { unlock(this); return 0; }
 static inline void on_wakeup(block_spin_lock & this, size_t recursion ) with(this) {
-  #ifdef REACQ
 	// now we acquire the entire block_spin_lock upon waking up
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
 	__atomic_store_n(&held, true, __ATOMIC_RELEASE);
 	unlock( lock ); // Now we release the internal fast_spin_lock
-  #endif
 }
 
 //-----------------------------------------------------------------------------

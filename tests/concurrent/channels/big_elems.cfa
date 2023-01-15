@@ -1,0 +1,8 @@
+#define BIG 1
+#include "parallel_harness.hfa"
+
+size_t Processors = 10, Channels = 10, Producers = 40, Consumers = 40, ChannelSize = 128;
+
+int main() {
+    test(Processors, Channels, Producers, Consumers, ChannelSize);
+}

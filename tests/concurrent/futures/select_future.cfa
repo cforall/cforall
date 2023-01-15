@@ -1,5 +1,6 @@
 #include <thread.hfa>
 #include <future.hfa>
+#include <concurrency/barrier.hfa>
 
 enum {NFUTURES = 10};
 
@@ -121,6 +122,8 @@ void main( Server2 & ) {
 	}
 }
 
+barrier bar = { NFUTURES + 1 };
+
 thread Worker3 {};
 
 void work3( int num ) {
@@ -130,7 +133,7 @@ void work3( int num ) {
     } while ( ! tt.1 );
 	if( tt.0 != num ) abort();
 	V( after_server );
-    P( after_worker );
+    block(bar);
 }
 
 void main( Worker3 & ) {
@@ -148,13 +151,13 @@ void main( Server3 & ) {
 		fulfil( *shared_future , i );
         for ( i; NFUTURES ) P( after_server );
         reset( *shared_future );
-        V( after_worker, NFUTURES );
+        block(bar);
 	}
 }
 
 int main() {
 	printf( "start 1: blocking path future test\n" );
-	processor procs[2];
+	processor procs[11];
 	shared_future = new();
 	{
 		Server server;

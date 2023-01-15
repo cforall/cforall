@@ -270,7 +270,6 @@ class BasicType : public Type {
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
 	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
-	bool isWholeNumber() const;
 	bool isInteger() const;
 };
 

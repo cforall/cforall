@@ -438,7 +438,7 @@ extern "C" {
 	//--------------------
 	// Mutex
 	struct cfathread_mutex {
-		linear_backoff_then_block_lock impl;
+		exp_backoff_then_block_lock impl;
 	};
 	int cfathread_mutex_init(cfathread_mutex_t *restrict mut, const cfathread_mutexattr_t *restrict) __attribute__((nonnull (1))) { *mut = new(); return 0; }
 	int cfathread_mutex_destroy(cfathread_mutex_t *mut) __attribute__((nonnull (1))) { delete( *mut ); return 0; }
@@ -453,7 +453,7 @@ extern "C" {
 	//--------------------
 	// Condition
 	struct cfathread_condition {
-		condition_variable(linear_backoff_then_block_lock) impl;
+		condition_variable(exp_backoff_then_block_lock) impl;
 	};
 	int cfathread_cond_init(cfathread_cond_t *restrict cond, const cfathread_condattr_t *restrict) __attribute__((nonnull (1))) { *cond = new(); return 0; }
 	int cfathread_cond_signal(cfathread_cond_t *cond) __attribute__((nonnull (1)))  { notify_one( (*cond)->impl ); return 0; }

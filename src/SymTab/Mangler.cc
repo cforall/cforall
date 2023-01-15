@@ -438,7 +438,7 @@ namespace Mangle {
 
 		  private:
 			void mangleDecl( const ast::DeclWithType *declaration );
-			void mangleRef( const ast::BaseInstType *refType, std::string prefix );
+			void mangleRef( const ast::BaseInstType *refType, const std::string & prefix );
 
 			void printQualifiers( const ast::Type *type );
 		}; // Mangler_new
@@ -534,14 +534,6 @@ namespace Mangle {
 			maybeAccept( refType->base.get(), *visitor );
 		}
 
-		__attribute__((unused))
-		inline std::vector< ast::ptr< ast::Type > > getTypes( const std::vector< ast::ptr< ast::DeclWithType > > & decls ) {
-			std::vector< ast::ptr< ast::Type > > ret;
-			std::transform( decls.begin(), decls.end(), std::back_inserter( ret ),
-							std::mem_fun( &ast::DeclWithType::get_type ) );
-			return ret;
-		}
-
 		void Mangler_new::postvisit( const ast::FunctionType * functionType ) {
 			printQualifiers( functionType );
 			mangleName += Encoding::function;
@@ -557,21 +549,20 @@ namespace Mangle {
 			mangleName += "_";
 		}
 
-		void Mangler_new::mangleRef( const ast::BaseInstType * refType, std::string prefix ) {
+		void Mangler_new::mangleRef(
+				const ast::BaseInstType * refType, const std::string & prefix ) {
 			printQualifiers( refType );
 
 			mangleName += prefix + std::to_string( refType->name.length() ) + refType->name;
 
-			if ( mangleGenericParams ) {
-				if ( ! refType->params.empty() ) {
-					mangleName += "_";
-					for ( const ast::Expr * param : refType->params ) {
-						auto paramType = dynamic_cast< const ast::TypeExpr * >( param );
-						assertf(paramType, "Aggregate parameters should be type expressions: %s", toCString(param));
-						maybeAccept( paramType->type.get(), *visitor );
-					}
-					mangleName += "_";
+			if ( mangleGenericParams && ! refType->params.empty() ) {
+				mangleName += "_";
+				for ( const ast::Expr * param : refType->params ) {
+					auto paramType = dynamic_cast< const ast::TypeExpr * >( param );
+					assertf(paramType, "Aggregate parameters should be type expressions: %s", toCString(param));
+					maybeAccept( paramType->type.get(), *visitor );
 				}
+				mangleName += "_";
 			}
 		}
 
@@ -655,6 +646,7 @@ namespace Mangle {
 			mangleName += Encoding::typeVariables[ decl->kind ] + std::to_string( decl->name.length() ) + decl->name;
 		}
 
+		// For debugging:
 		__attribute__((unused)) void printVarMap( const std::map< std::string, std::pair< int, int > > &varMap, std::ostream &os ) {
 			for ( std::map< std::string, std::pair< int, int > >::const_iterator i = varMap.begin(); i != varMap.end(); ++i ) {
 				os << i->first << "(" << i->second.first << "/" << i->second.second << ")" << std::endl;
@@ -664,38 +656,36 @@ namespace Mangle {
 		void Mangler_new::printQualifiers( const ast::Type * type ) {
 			// skip if not including qualifiers
 			if ( typeMode ) return;
-			if ( auto ptype = dynamic_cast< const ast::FunctionType * >(type) ) {
-				if ( ! ptype->forall.empty() ) {
-					std::list< std::string > assertionNames;
-					int dcount = 0, fcount = 0, vcount = 0, acount = 0;
-					mangleName += Encoding::forall;
-					for ( auto & decl : ptype->forall ) {
-						switch ( decl->kind ) {
-						  case ast::TypeDecl::Kind::Dtype:
-							dcount++;
-							break;
-						  case ast::TypeDecl::Kind::Ftype:
-							fcount++;
-							break;
-						  case ast::TypeDecl::Kind::Ttype:
-							vcount++;
-							break;
-						  default:
-							assertf( false, "unimplemented kind for type variable %s", SymTab::Mangler::Encoding::typeVariables[decl->kind].c_str() );
-						} // switch
-						varNums[ decl->name ] = std::make_pair( nextVarNum, (int)decl->kind );
-					} // for
-					for ( auto & assert : ptype->assertions ) {
-						assertionNames.push_back( ast::Pass<Mangler_new>::read(
-							assert->var.get(),
-							mangleOverridable, typeMode, mangleGenericParams, nextVarNum, varNums ) );
-						acount++;
-					} // for
-					mangleName += std::to_string( dcount ) + "_" + std::to_string( fcount ) + "_" + std::to_string( vcount ) + "_" + std::to_string( acount ) + "_";
-					for(const auto & a : assertionNames) mangleName += a;
-//					std::copy( assertionNames.begin(), assertionNames.end(), std::ostream_iterator< std::string >( mangleName, "" ) );
-					mangleName += "_";
-				} // if
+			auto funcType = dynamic_cast<const ast::FunctionType *>( type );
+			if ( funcType && !funcType->forall.empty() ) {
+				std::list< std::string > assertionNames;
+				int dcount = 0, fcount = 0, vcount = 0, acount = 0;
+				mangleName += Encoding::forall;
+				for ( auto & decl : funcType->forall ) {
+					switch ( decl->kind ) {
+					case ast::TypeDecl::Dtype:
+						dcount++;
+						break;
+					case ast::TypeDecl::Ftype:
+						fcount++;
+						break;
+					case ast::TypeDecl::Ttype:
+						vcount++;
+						break;
+					default:
+						assertf( false, "unimplemented kind for type variable %s", SymTab::Mangler::Encoding::typeVariables[decl->kind].c_str() );
+					} // switch
+					varNums[ decl->name ] = std::make_pair( nextVarNum, (int)decl->kind );
+				} // for
+				for ( auto & assert : funcType->assertions ) {
+					assertionNames.push_back( ast::Pass<Mangler_new>::read(
+						assert->var.get(),
+						mangleOverridable, typeMode, mangleGenericParams, nextVarNum, varNums ) );
+					acount++;
+				} // for
+				mangleName += std::to_string( dcount ) + "_" + std::to_string( fcount ) + "_" + std::to_string( vcount ) + "_" + std::to_string( acount ) + "_";
+				for ( const auto & a : assertionNames ) mangleName += a;
+				mangleName += "_";
 			} // if
 			if ( ! inFunctionType ) {
 				// these qualifiers do not distinguish the outermost type of a function parameter

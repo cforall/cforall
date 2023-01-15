@@ -1,0 +1,108 @@
+#include <locks.hfa>
+
+struct no_reacq_lock {
+    inline exp_backoff_then_block_lock;
+};
+
+// have to override these by hand to get around plan 9 inheritance bug where resolver can't find the appropriate routine to call
+static inline void   ?{}( no_reacq_lock & this ) { ((exp_backoff_then_block_lock &)this){}; }
+static inline bool   try_lock(no_reacq_lock & this) { return try_lock(((exp_backoff_then_block_lock &)this)); }
+static inline void   lock(no_reacq_lock & this) { lock(((exp_backoff_then_block_lock &)this)); }
+static inline void   unlock(no_reacq_lock & this) { unlock(((exp_backoff_then_block_lock &)this)); }
+static inline void   on_notify(no_reacq_lock & this, struct thread$ * t ) { on_notify(((exp_backoff_then_block_lock &)this), t); }
+static inline size_t on_wait(no_reacq_lock & this) { return on_wait(((exp_backoff_then_block_lock &)this)); }
+// override wakeup so that we don't reacquire the lock if using a condvar
+static inline void   on_wakeup( no_reacq_lock & this, size_t recursion ) {}
+
+forall( T ) {
+struct channel {
+    size_t size;
+    size_t front, back, count;
+    T * buffer;
+    fast_cond_var( no_reacq_lock ) prods, cons;
+    no_reacq_lock mutex_lock;
+};
+
+static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
+    size = _size;
+    front = back = count = 0;
+    buffer = anew( size );
+    prods{};
+    cons{};
+    mutex_lock{};
+}
+
+static inline void ?{}( channel(T) &c ){ ((channel(T) &)c){ 0 }; }
+static inline void ^?{}( channel(T) &c ) with(c) { delete( buffer ); }
+static inline size_t get_count( channel(T) & chan ) with(chan) { return count; }
+static inline size_t get_size( channel(T) & chan ) with(chan) { return size; }
+static inline bool has_waiters( channel(T) & chan ) with(chan) { return !empty( cons ) || !empty( prods ); }
+static inline bool has_waiting_consumers( channel(T) & chan ) with(chan) { return !empty( cons ); }
+static inline bool has_waiting_producers( channel(T) & chan ) with(chan) { return !empty( prods ); }
+
+static inline void insert_( channel(T) & chan, T elem ) with(chan) {
+    memcpy((void *)&buffer[back], (void *)&elem, sizeof(T));
+    count += 1;
+    back++;
+    if ( back == size ) back = 0;
+}
+
+
+static inline void insert( channel(T) & chan, T elem ) with(chan) {
+    lock( mutex_lock );
+
+    // have to check for the zero size channel case
+    if ( size == 0 && !empty( cons ) ) {
+        memcpy((void *)front( cons ), (void *)&elem, sizeof(T));
+        notify_one( cons );
+        unlock( mutex_lock );
+        return;
+    }
+
+    // wait if buffer is full, work will be completed by someone else
+    if ( count == size ) { 
+        wait( prods, mutex_lock, (uintptr_t)&elem );
+        return;
+    } // if
+
+    if ( count == 0 && !empty( cons ) )
+        // do waiting consumer work
+        memcpy((void *)front( cons ), (void *)&elem, sizeof(T)); 
+    else insert_( chan, elem );
+    
+    notify_one( cons );
+    unlock( mutex_lock );
+}
+
+static inline T remove( channel(T) & chan ) with(chan) {
+    lock( mutex_lock );
+    T retval;
+
+    // have to check for the zero size channel case
+    if ( size == 0 && !empty( prods ) ) {
+        memcpy((void *)&retval, (void *)front( prods ), sizeof(T));
+        notify_one( prods );
+        unlock( mutex_lock );
+        return retval;
+    }
+
+    // wait if buffer is empty, work will be completed by someone else
+    if (count == 0) { 
+        wait( cons, mutex_lock, (uintptr_t)&retval );
+        return retval;
+    }
+
+    // Remove from buffer
+    memcpy((void *)&retval, (void *)&buffer[front], sizeof(T));
+    count -= 1;
+    front = (front + 1) % size;
+
+    if (count == size - 1 && !empty( prods ) ) 
+        insert_( chan, *((T *)front( prods )) );  // do waiting producer work
+
+    notify_one( prods );
+    unlock( mutex_lock );
+    return retval;
+}
+
+} // forall( T )

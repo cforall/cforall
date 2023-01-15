@@ -71,7 +71,7 @@ void main( T_Multi & this ) {
 }
 
 single_acquisition_lock l1;
-linear_backoff_then_block_lock l2;
+exp_backoff_then_block_lock l2;
 owner_lock l3;
 
 monitor monitor_t {};

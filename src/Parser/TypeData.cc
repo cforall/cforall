@@ -932,7 +932,7 @@ EnumDecl * buildEnum( const TypeData * td, std::list< Attribute * > attributes, 
 			ObjectDecl * member = dynamic_cast< ObjectDecl * >(* members);
 			member->set_init( new SingleInit( maybeMoveBuild< Expression >( cur->consume_enumeratorValue() ) ) );
 		} else if ( !cur->initializer ) {
-			if ( baseType && (!dynamic_cast<BasicType *>(baseType) || !dynamic_cast<BasicType *>(baseType)->isWholeNumber())) {
+			if ( baseType && (!dynamic_cast<BasicType *>(baseType) || !dynamic_cast<BasicType *>(baseType)->isInteger())) {
 				SemanticError( td->location, "Enumerators of an non-integer typed enum must be explicitly initialized." );
 			}
 		}

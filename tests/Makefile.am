@@ -87,7 +87,8 @@ EXTRA_DIST = test.py \
 	io/.in/io.data \
 	io/.in/many_read.data \
 	meta/fork+exec.hfa \
-	unified_locking/mutex_test.hfa
+	concurrent/unified_locking/mutex_test.hfa \
+    concurrent/channels/parallel_harness.hfa
 
 dist-hook:
 	echo "Gathering test files"
