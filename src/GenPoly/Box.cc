@@ -910,35 +910,33 @@ namespace GenPoly {
 			std::set< std::string > adaptersDone;
 
 			for ( FunctionType const * const funType : functions ) {
-				FunctionType *originalFunction = funType->clone();
-				FunctionType *realFunction = funType->clone();
-				std::string mangleName = SymTab::Mangler::mangle( realFunction );
+				std::string mangleName = SymTab::Mangler::mangle( funType );
 
 				// only attempt to create an adapter or pass one as a parameter if we haven't already done so for this
 				// pre-substitution parameter function type.
 				// The second part of the insert result is "is the value new".
-				if ( adaptersDone.insert( mangleName ).second ) {
+				if ( !adaptersDone.insert( mangleName ).second ) continue;
 
-					// apply substitution to type variables to figure out what the adapter's type should look like
-					assert( env );
-					env->apply( realFunction );
-					mangleName = SymTab::Mangler::mangle( realFunction );
-					mangleName += makePolyMonoSuffix( originalFunction, exprTyVars );
+				// Apply substitution to type variables to figure out what the adapter's type should look like.
+				assert( env );
+				FunctionType *realType = funType->clone();
+				env->apply( realType );
+				mangleName = SymTab::Mangler::mangle( realType );
+				mangleName += makePolyMonoSuffix( funType, exprTyVars );
 
-					typedef ScopedMap< std::string, DeclarationWithType* >::iterator AdapterIter;
-					AdapterIter adapter = adapters.find( mangleName );
-					if ( adapter == adapters.end() ) {
-						// adapter has not been created yet in the current scope, so define it
-						FunctionDecl *newAdapter = makeAdapter( funType, realFunction, mangleName, exprTyVars );
-						std::pair< AdapterIter, bool > answer = adapters.insert( std::pair< std::string, DeclarationWithType *>( mangleName, newAdapter ) );
-						adapter = answer.first;
-						stmtsToAddBefore.push_back( new DeclStmt( newAdapter ) );
-					} // if
-					assert( adapter != adapters.end() );
-
-					// add the appropriate adapter as a parameter
-					appExpr->get_args().push_front( new VariableExpr( adapter->second ) );
+				typedef ScopedMap< std::string, DeclarationWithType* >::iterator AdapterIter;
+				AdapterIter adapter = adapters.find( mangleName );
+				if ( adapter == adapters.end() ) {
+					// Adapter has not been created yet in the current scope, so define it.
+					FunctionDecl *newAdapter = makeAdapter( funType, realType, mangleName, exprTyVars );
+					std::pair< AdapterIter, bool > answer = adapters.insert( mangleName, newAdapter );
+					adapter = answer.first;
+					stmtsToAddBefore.push_back( new DeclStmt( newAdapter ) );
 				} // if
+				assert( adapter != adapters.end() );
+
+				// Add the appropriate adapter as a parameter.
+				appExpr->args.push_front( new VariableExpr( adapter->second ) );
 			} // for
 		} // passAdapters
 
