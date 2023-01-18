@@ -22,10 +22,11 @@
 #include "ConversionCost.h"              // for ConversionCost
 #include "Cost.h"                        // for Cost, Cost::infinity
 #include "ResolvExpr/TypeEnvironment.h"  // for TypeEnvironment, EqvClass
+#include "ResolvExpr/typeops.h"          // for ptrsCastable
+#include "ResolvExpr/Unify.h"            // for typesCompatibleIgnoreQualifiers
 #include "SymTab/Indexer.h"              // for Indexer
 #include "SynTree/Declaration.h"         // for TypeDecl, NamedTypeDecl
 #include "SynTree/Type.h"                // for PointerType, Type, TypeInstType
-#include "typeops.h"                     // for typesCompatibleIgnoreQualifiers
 
 #if 0
 #define PRINT(x) x

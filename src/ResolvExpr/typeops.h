@@ -85,17 +85,6 @@ namespace ResolvExpr {
 		const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
 		const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );
 
-	// in ConversionCost.cc
-	Cost conversionCost( const Type * src, const Type * dest, bool srcIsLvalue,
-		const SymTab::Indexer & indexer, const TypeEnvironment & env );
-	Cost conversionCost(
-		const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
-		const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );
-
-	// in AlternativeFinder.cc
-	Cost computeConversionCost( Type * actualType, Type * formalType, bool actualIsLvalue,
-		const SymTab::Indexer & indexer, const TypeEnvironment & env );
-
 	// in PtrsAssignable.cc
 	int ptrsAssignable( const Type * src, const Type * dest, const TypeEnvironment & env );
 	int ptrsAssignable( const ast::Type * src, const ast::Type * dst,
@@ -107,43 +96,12 @@ namespace ResolvExpr {
 		const ast::Type * src, const ast::Type * dst, const ast::SymbolTable & symtab,
 		const ast::TypeEnvironment & env );
 
-	// in Unify.cc
-	bool typesCompatible( const Type *, const Type *, const SymTab::Indexer & indexer, const TypeEnvironment & env );
-	bool typesCompatibleIgnoreQualifiers( const Type *, const Type *, const SymTab::Indexer & indexer, const TypeEnvironment & env );
-
-	inline bool typesCompatible( const Type * t1, const Type * t2, const SymTab::Indexer & indexer ) {
-		TypeEnvironment env;
-		return typesCompatible( t1, t2, indexer, env );
-	}
-
-	inline bool typesCompatibleIgnoreQualifiers( const Type * t1, const Type * t2, const SymTab::Indexer & indexer ) {
-		TypeEnvironment env;
-		return typesCompatibleIgnoreQualifiers( t1, t2, indexer, env );
-	}
-
-	bool typesCompatible(
-		const ast::Type *, const ast::Type *, const ast::SymbolTable & symtab = {},
-		const ast::TypeEnvironment & env = {} );
-
-	bool typesCompatibleIgnoreQualifiers(
-		const ast::Type *, const ast::Type *, const ast::SymbolTable &,
-		const ast::TypeEnvironment & env = {} );
-
-	/// creates the type represented by the list of returnVals in a FunctionType. The caller owns the return value.
-	Type * extractResultType( FunctionType * functionType );
-	/// Creates or extracts the type represented by the list of returns in a `FunctionType`.
-	ast::ptr<ast::Type> extractResultType( const ast::FunctionType * func );
-
 	// in CommonType.cc
 	Type * commonType( Type * type1, Type * type2, bool widenFirst, bool widenSecond, const SymTab::Indexer & indexer, TypeEnvironment & env, const OpenVarSet & openVars );
 	ast::ptr< ast::Type > commonType(
 		const ast::ptr< ast::Type > & type1, const ast::ptr< ast::Type > & type2,
 			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
 			const ast::OpenVarSet & open, WidenMode widen, const ast::SymbolTable & symtab
-	);
-	// in Unify.cc
-	std::vector< ast::ptr< ast::Type > > flattenList(
-		const std::vector< ast::ptr< ast::Type > > & src, ast::TypeEnvironment & env
 	);
 
 	// in PolyCost.cc
@@ -167,11 +125,6 @@ namespace ResolvExpr {
 		}
 		return false;
 	}
-
-	// in AlternativeFinder.cc
-	void referenceToRvalueConversion( Expression *& expr, Cost & cost );
-	// in CandidateFinder.cpp
-	const ast::Expr * referenceToRvalueConversion( const ast::Expr * expr, Cost & cost );
 
 	/// flatten tuple type into list of types
 	template< typename OutputIterator >
@@ -226,8 +179,6 @@ namespace ResolvExpr {
 	) {
 		return tupleFromTypes( tys.begin(), tys.end() );
 	}
-
-	
 
 	// in TypeEnvironment.cc
 	bool isFtype( const Type * type );

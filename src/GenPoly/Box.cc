@@ -13,6 +13,8 @@
 // Update Count     : 348
 //
 
+#include "Box.h"
+
 #include <algorithm>                     // for mismatch
 #include <cassert>                       // for assert, strict_dynamic_cast
 #include <iostream>                      // for operator<<, stringstream
@@ -22,8 +24,6 @@
 #include <set>                           // for set
 #include <string>                        // for string, allocator, basic_string
 #include <utility>                       // for pair
-
-#include "Box.h"
 
 #include "CodeGen/OperatorTable.h"
 #include "Common/PassVisitor.h"          // for PassVisitor
@@ -36,7 +36,7 @@
 #include "GenPoly/GenPoly.h"             // for TyVarMap, isPolyType, mangle...
 #include "InitTweak/InitTweak.h"         // for getFunctionName, isAssignment
 #include "Lvalue.h"                      // for generalizedLvalue
-#include "ResolvExpr/typeops.h"          // for typesCompatible
+#include "ResolvExpr/Unify.h"            // for typesCompatible
 #include "ScopedSet.h"                   // for ScopedSet, ScopedSet<>::iter...
 #include "ScrubTyVars.h"                 // for ScrubTyVars
 #include "SymTab/Indexer.h"              // for Indexer

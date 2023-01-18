@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ApplicationExpr.cc.cc --
+// ApplicationExpr.cc --
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -25,7 +25,7 @@
 #include "Declaration.h"         // for Declaration
 #include "Expression.h"          // for ParamEntry, ApplicationExpr, Expression
 #include "InitTweak/InitTweak.h" // for getFunction
-#include "ResolvExpr/typeops.h"  // for extractResultType
+#include "ResolvExpr/Unify.h"    // for extractResultType
 #include "Type.h"                // for Type, PointerType, FunctionType
 
 ParamEntry::ParamEntry( UniqueId decl, Declaration * declptr, Type * actualType, Type * formalType, Expression* expr )

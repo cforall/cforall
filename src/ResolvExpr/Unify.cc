@@ -49,12 +49,36 @@ namespace ast {
 }
 
 namespace SymTab {
-class Indexer;
+	class Indexer;
 }  // namespace SymTab
 
 // #define DEBUG
 
 namespace ResolvExpr {
+
+// Template Helpers:
+template< typename Iterator1, typename Iterator2 >
+bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, Iterator2 list2End, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer, std::list< Type* > &commonTypes ) {
+	for ( ; list1Begin != list1End && list2Begin != list2End; ++list1Begin, ++list2Begin ) {
+		Type *commonType = 0;
+		if ( ! unify( *list1Begin, *list2Begin, env, needAssertions, haveAssertions, openVars, indexer, commonType ) ) {
+			return false;
+		} // if
+		commonTypes.push_back( commonType );
+	} // for
+	return ( list1Begin == list1End && list2Begin == list2End );
+}
+
+template< typename Iterator1, typename Iterator2 >
+bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, Iterator2 list2End, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer ) {
+	std::list< Type* > commonTypes;
+	if ( unifyList( list1Begin, list1End, list2Begin, list2End, env, needAssertions, haveAssertions,  openVars, indexer, commonTypes ) ) {
+		deleteAll( commonTypes );
+		return true;
+	} else {
+		return false;
+	} // if
+}
 
 	struct Unify_old : public WithShortCircuiting {
 		Unify_old( Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, const OpenVarSet &openVars, WidenMode widen, const SymTab::Indexer &indexer );

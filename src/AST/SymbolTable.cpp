@@ -21,13 +21,14 @@
 #include "Expr.hpp"
 #include "Inspect.hpp"
 #include "Type.hpp"
-#include "CodeGen/OperatorTable.h"  // for isCtorDtorAssign
+#include "CodeGen/OperatorTable.h"         // for isCtorDtorAssign
 #include "Common/SemanticError.h"
 #include "Common/Stats/Counter.h"
 #include "GenPoly/GenPoly.h"
 #include "InitTweak/InitTweak.h"
 #include "ResolvExpr/Cost.h"
-#include "ResolvExpr/typeops.h"
+#include "ResolvExpr/CandidateFinder.hpp"  // for referenceToRvalueConversion
+#include "ResolvExpr/Unify.h"
 #include "SymTab/Mangler.h"
 
 namespace ast {

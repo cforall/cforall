@@ -30,7 +30,8 @@
 #include "GenPoly/GenPoly.h"       // for getFunctionType
 #include "InitTweak/InitTweak.h"   // for isConstructor, isCopyFunction, isC...
 #include "Mangler.h"               // for Mangler
-#include "ResolvExpr/typeops.h"    // for typesCompatible
+#include "ResolvExpr/AlternativeFinder.h"  // for referenceToRvalueConversion
+#include "ResolvExpr/Unify.h"      // for typesCompatible
 #include "SynTree/LinkageSpec.h"   // for isMangled, isOverridable, Spec
 #include "SynTree/Constant.h"      // for Constant
 #include "SynTree/Declaration.h"   // for DeclarationWithType, FunctionDecl

@@ -19,7 +19,7 @@
 #include "Common/ScopedMap.h"
 #include "Common/UniqueName.h"
 #include "Common/utility.h"
-#include "ResolvExpr/typeops.h"
+#include "ResolvExpr/Unify.h"
 
 namespace Validate {
 

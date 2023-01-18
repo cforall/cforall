@@ -34,7 +34,7 @@
 #include "Common/utility.h"        // for toString, deleteAll, maybeClone
 #include "GenPoly/GenPoly.h"       // for getFunctionType
 #include "InitTweak.h"
-#include "ResolvExpr/typeops.h"    // for typesCompatibleIgnoreQualifiers
+#include "ResolvExpr/Unify.h"      // for typesCompatibleIgnoreQualifiers
 #include "SymTab/Autogen.h"
 #include "SymTab/Indexer.h"        // for Indexer
 #include "SynTree/LinkageSpec.h"   // for Spec, isBuiltin, Intrinsic

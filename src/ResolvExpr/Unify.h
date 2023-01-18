@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 13:09:04 2015
-// Last Modified By : Aaron B. Moss
-// Last Modified On : Mon Jun 18 11:58:00 2018
-// Update Count     : 4
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue Jan 17 11:12:00 2023
+// Update Count     : 5
 //
 
 #pragma once
@@ -36,58 +36,63 @@ namespace ast {
 }
 
 namespace ResolvExpr {
-	bool unify( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer );
-	bool unify( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer, Type *&commonType );
-	bool unifyExact( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer );
-	bool unifyInexact( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, const OpenVarSet &openVars, WidenMode widen, const SymTab::Indexer &indexer, Type *&common );
 
-	template< typename Iterator1, typename Iterator2 >
-	bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, Iterator2 list2End, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer, std::list< Type* > &commonTypes ) {
-		for ( ; list1Begin != list1End && list2Begin != list2End; ++list1Begin, ++list2Begin ) {
-			Type *commonType = 0;
-			if ( ! unify( *list1Begin, *list2Begin, env, needAssertions, haveAssertions, openVars, indexer, commonType ) ) {
-				return false;
-			} // if
-			commonTypes.push_back( commonType );
-		} // for
-		if ( list1Begin != list1End || list2Begin != list2End ) {
-			return false;
-		} else {
-			return true;
-		} // if
-	}
+bool unify( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer );
+bool unify( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer, Type *&commonType );
+bool unifyExact( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer );
+bool unifyInexact( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, const OpenVarSet &openVars, WidenMode widen, const SymTab::Indexer &indexer, Type *&common );
 
-	template< typename Iterator1, typename Iterator2 >
-	bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, Iterator2 list2End, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer ) {
-		std::list< Type* > commonTypes;
-		if ( unifyList( list1Begin, list1End, list2Begin, list2End, env, needAssertions, haveAssertions, openVars, indexer, commonTypes ) ) {
-			deleteAll( commonTypes );
-			return true;
-		} else {
-			return false;
-		} // if
-	}
+bool typesCompatible( const Type *, const Type *, const SymTab::Indexer & indexer, const TypeEnvironment & env );
+bool typesCompatibleIgnoreQualifiers( const Type *, const Type *, const SymTab::Indexer & indexer, const TypeEnvironment & env );
 
-	bool unify( 
-		const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2, 
-		ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have, 
-		ast::OpenVarSet & open, const ast::SymbolTable & symtab );
+inline bool typesCompatible( const Type * t1, const Type * t2, const SymTab::Indexer & indexer ) {
+	TypeEnvironment env;
+	return typesCompatible( t1, t2, indexer, env );
+}
 
-	bool unify( 
-		const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2, 
-		ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have, 
-		ast::OpenVarSet & open, const ast::SymbolTable & symtab, ast::ptr<ast::Type> & common );
+inline bool typesCompatibleIgnoreQualifiers( const Type * t1, const Type * t2, const SymTab::Indexer & indexer ) {
+	TypeEnvironment env;
+	return typesCompatibleIgnoreQualifiers( t1, t2, indexer, env );
+}
 
-	bool unifyExact( 
-		const ast::Type * type1, const ast::Type * type2, ast::TypeEnvironment & env, 
-		ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open, 
-		WidenMode widen, const ast::SymbolTable & symtab );
+bool unify(
+	const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
+	ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
+	ast::OpenVarSet & open, const ast::SymbolTable & symtab );
 
-	bool unifyInexact( 
-		const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2, 
-		ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have, 
-		const ast::OpenVarSet & open, WidenMode widen, const ast::SymbolTable & symtab, 
-		ast::ptr<ast::Type> & common );
+bool unify(
+	const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
+	ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
+	ast::OpenVarSet & open, const ast::SymbolTable & symtab, ast::ptr<ast::Type> & common );
+
+bool unifyExact(
+	const ast::Type * type1, const ast::Type * type2, ast::TypeEnvironment & env,
+	ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
+	WidenMode widen, const ast::SymbolTable & symtab );
+
+bool unifyInexact(
+	const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
+	ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
+	const ast::OpenVarSet & open, WidenMode widen, const ast::SymbolTable & symtab,
+	ast::ptr<ast::Type> & common );
+
+bool typesCompatible(
+	const ast::Type *, const ast::Type *, const ast::SymbolTable & symtab = {},
+	const ast::TypeEnvironment & env = {} );
+
+bool typesCompatibleIgnoreQualifiers(
+	const ast::Type *, const ast::Type *, const ast::SymbolTable & symtab = {},
+	const ast::TypeEnvironment & env = {} );
+
+/// Creates the type represented by the list of returnVals in a FunctionType.
+/// The caller owns the return value.
+Type * extractResultType( FunctionType * functionType );
+/// Creates or extracts the type represented by returns in a `FunctionType`.
+ast::ptr<ast::Type> extractResultType( const ast::FunctionType * func );
+
+std::vector<ast::ptr<ast::Type>> flattenList(
+	const std::vector<ast::ptr<ast::Type>> & src, ast::TypeEnvironment & env
+);
 
 } // namespace ResolvExpr
 

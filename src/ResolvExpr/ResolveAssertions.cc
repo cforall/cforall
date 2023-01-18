@@ -30,6 +30,7 @@
 #include "Common/Indenter.h"        // for Indenter
 #include "Common/utility.h"         // for sort_mins
 #include "GenPoly/GenPoly.h"        // for getFunctionType
+#include "ResolvExpr/AlternativeFinder.h"  // for computeConversionCost
 #include "ResolvExpr/RenameVars.h"  // for renameTyVars
 #include "SymTab/Indexer.h"         // for Indexer
 #include "SymTab/Mangler.h"         // for Mangler

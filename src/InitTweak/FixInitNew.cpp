@@ -25,7 +25,7 @@
 #include "GenInit.h"                   // for genCtorDtor
 #include "GenPoly/GenPoly.h"           // for getFunctionType
 #include "ResolvExpr/Resolver.h"       // for findVoidExpression
-#include "ResolvExpr/typeops.h"        // for typesCompatible
+#include "ResolvExpr/Unify.h"          // for typesCompatible
 #include "SymTab/Autogen.h"            // for genImplicitCall
 #include "SymTab/Indexer.h"            // for Indexer
 #include "SymTab/Mangler.h"            // for Mangler

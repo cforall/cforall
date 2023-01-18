@@ -32,6 +32,10 @@ namespace SymTab {
 namespace ResolvExpr {
 	class TypeEnvironment;
 
+	Cost conversionCost(
+		const Type * src, const Type * dest, bool srcIsLvalue,
+		const SymTab::Indexer & indexer, const TypeEnvironment & env );
+
 	typedef std::function<Cost(const Type *, const Type *, bool,
 		const SymTab::Indexer &, const TypeEnvironment &)> CostFunction;
 
@@ -79,6 +83,14 @@ using CostCalculation = std::function<Cost(const ast::Type *, const ast::Type *,
 using PtrsCalculation = std::function<int(const ast::Type *, const ast::Type *,
 	const ast::SymbolTable &, const ast::TypeEnvironment &)>;
 
+Cost conversionCost(
+	const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
+	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );
+
+Cost convertToReferenceCost( const ast::Type * src, const ast::ReferenceType * dest,
+	bool srcIsLvalue, const ast::SymbolTable & indexer, const ast::TypeEnvironment & env,
+	PtrsCalculation func );
+
 #warning when the old ConversionCost is removed, get ride of the _new suffix.
 class ConversionCost_new : public ast::WithShortCircuiting {
 protected:
@@ -117,10 +129,6 @@ private:
 	// refactor for code resue
 	void conversionCostFromBasicToBasic( const ast::BasicType * src, const ast::BasicType* dest );
 };
-
-Cost convertToReferenceCost( const ast::Type * src, const ast::ReferenceType * dest,
-	bool srcIsLvalue, const ast::SymbolTable & indexer, const ast::TypeEnvironment & env,
-	PtrsCalculation func );
 
 } // namespace ResolvExpr
 

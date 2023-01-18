@@ -19,7 +19,7 @@
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "CodeGen/CodeGenerator.h"
-#include "ResolvExpr/typeops.h"
+#include "ResolvExpr/Unify.h"
 
 namespace ast {
     class TranslationUnit;

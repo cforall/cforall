@@ -489,6 +489,8 @@ ast::Type const * hasPolyBase(
 			}
 		}
 
+		/// Flattens a list of types.
+		// There is another flattenList in Unify.
 		void flattenList( vector<ast::ptr<ast::Type>> const & src,
 				vector<ast::ptr<ast::Type>> & out ) {
 			for ( auto const & type : src ) {

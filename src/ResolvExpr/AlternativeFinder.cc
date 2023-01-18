@@ -13,6 +13,8 @@
 // Update Count     : 38
 //
 
+#include "AlternativeFinder.h"
+
 #include <algorithm>               // for copy
 #include <cassert>                 // for strict_dynamic_cast, assert, assertf
 #include <cstddef>                 // for size_t
@@ -26,12 +28,12 @@
 
 #include "CompilationState.h"      // for resolvep
 #include "Alternative.h"           // for AltList, Alternative
-#include "AlternativeFinder.h"
 #include "AST/Expr.hpp"
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for deleteAll, printAll, CodeLocation
+#include "ConversionCost.h"        // for conversionCost
 #include "Cost.h"                  // for Cost, Cost::zero, operator<<, Cost...
 #include "ExplodedActual.h"        // for ExplodedActual
 #include "InitTweak/InitTweak.h"   // for getFunctionName

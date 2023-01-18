@@ -62,7 +62,8 @@
 #include "Indexer.h"                   // for Indexer
 #include "InitTweak/GenInit.h"         // for fixReturnStatements
 #include "InitTweak/InitTweak.h"       // for isCtorDtorAssign
-#include "ResolvExpr/typeops.h"        // for typesCompatible
+#include "ResolvExpr/typeops.h"        // for extractResultType
+#include "ResolvExpr/Unify.h"          // for typesCompatible
 #include "ResolvExpr/Resolver.h"       // for findSingleExpression
 #include "ResolvExpr/ResolveTypeof.h"  // for resolveTypeof
 #include "SymTab/Autogen.h"            // for SizeType

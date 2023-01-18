@@ -24,13 +24,14 @@
 
 #include "Candidate.hpp"
 #include "CompilationState.h"
+#include "ConversionCost.h"       // for conversionCast
 #include "Cost.h"
 #include "ExplodedArg.hpp"
 #include "RenameVars.h"           // for renameTyVars
 #include "Resolver.h"
 #include "ResolveTypeof.h"
 #include "SatisfyAssertions.hpp"
-#include "typeops.h"              // for adjustExprType, conversionCost, polyCost, specCost
+#include "typeops.h"              // for adjustExprType, polyCost, specCost
 #include "Unify.h"
 #include "AST/Expr.hpp"
 #include "AST/Node.hpp"

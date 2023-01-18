@@ -29,7 +29,7 @@
 #include "Common/utility.h"
 #include "Common/SemanticError.h"
 #include "GenPoly/Lvalue.h"        // for referencesPermissable
-#include "ResolvExpr/typeops.h"    // for extractResultType
+#include "ResolvExpr/Unify.h"      // for extractResultType
 #include "Tuples/Tuples.h"         // for makeTupleType
 
 namespace ast {

@@ -62,6 +62,11 @@ Cost computeConversionCost(
 	const ast::Type * argType, const ast::Type * paramType, bool argIsLvalue,
 	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );
 
+/// Create an expression that preforms reference to rvalue conversion on
+/// the given expression and update the cost of the expression.
+const ast::Expr * referenceToRvalueConversion(
+	const ast::Expr * expr, Cost & cost );
+
 } // namespace ResolvExpr
 
 // Local Variables: //

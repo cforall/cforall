@@ -34,6 +34,11 @@ class Indexer;
 namespace ResolvExpr {
 	struct ArgPack;
 
+	Cost computeConversionCost( Type * actualType, Type * formalType, bool actualIsLvalue,
+		const SymTab::Indexer & indexer, const TypeEnvironment & env );
+
+	void referenceToRvalueConversion( Expression *& expr, Cost & cost );
+
 	/// First index is which argument, second index is which alternative for that argument,
 	/// third index is which exploded element of that alternative
 	using ExplodedArgs_old = std::vector< std::vector< ExplodedActual > >;
