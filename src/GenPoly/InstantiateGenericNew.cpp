@@ -31,7 +31,7 @@
 #include "Common/UniqueName.h"         // for UniqueName
 #include "GenPoly/GenPoly.h"           // for isPolyType, typesPolyCompatible
 #include "GenPoly/ScrubTyVars.h"       // for scrubAll
-#include "ResolvExpr/typeops.h"        // for adjustExprType
+#include "ResolvExpr/AdjustExprType.hpp"  // for adjustExprType
 #include "ResolvExpr/Unify.h"          // for typesCompatible
 
 namespace GenPoly {

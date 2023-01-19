@@ -22,10 +22,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "AdjustExprType.hpp"
 #include "Candidate.hpp"
 #include "CandidateFinder.hpp"
+#include "CommonType.hpp"
 #include "Cost.h"
 #include "RenameVars.h"
+#include "SpecCost.hpp"
 #include "typeops.h"
 #include "Unify.h"
 #include "AST/Decl.hpp"

@@ -27,7 +27,7 @@
 #include "Common/utility.h"            // for deleteAll, cloneAll
 #include "GenPoly.h"                   // for isPolyType, typesPolyCompatible
 #include "InitTweak/InitTweak.h"
-#include "ResolvExpr/typeops.h"        // for adjustExprType
+#include "ResolvExpr/AdjustExprType.hpp"  // for adjustExprType
 #include "ResolvExpr/Unify.h"          // for typesCompatible
 #include "ScopedSet.h"                 // for ScopedSet, ScopedSet<>::iterator
 #include "ScrubTyVars.h"               // for ScrubTyVars

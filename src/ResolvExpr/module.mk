@@ -16,6 +16,7 @@
 
 SRC_RESOLVEXPR = \
       ResolvExpr/AdjustExprType.cc \
+      ResolvExpr/AdjustExprType.hpp \
       ResolvExpr/Alternative.cc \
       ResolvExpr/AlternativeFinder.cc \
       ResolvExpr/AlternativeFinder.h \
@@ -25,7 +26,9 @@ SRC_RESOLVEXPR = \
       ResolvExpr/CandidateFinder.hpp \
       ResolvExpr/Candidate.hpp \
       ResolvExpr/CastCost.cc \
+      ResolvExpr/CastCost.hpp \
       ResolvExpr/CommonType.cc \
+      ResolvExpr/CommonType.hpp \
       ResolvExpr/ConversionCost.cc \
       ResolvExpr/ConversionCost.h \
       ResolvExpr/Cost.h \
@@ -39,8 +42,11 @@ SRC_RESOLVEXPR = \
       ResolvExpr/FindOpenVars.h \
       ResolvExpr/Occurs.cc \
       ResolvExpr/PolyCost.cc \
+      ResolvExpr/PolyCost.hpp \
       ResolvExpr/PtrsAssignable.cc \
+      ResolvExpr/PtrsAssignable.hpp \
       ResolvExpr/PtrsCastable.cc \
+      ResolvExpr/PtrsCastable.hpp \
       ResolvExpr/RenameVars.cc \
       ResolvExpr/RenameVars.h \
       ResolvExpr/ResolveAssertions.cc \
@@ -53,6 +59,7 @@ SRC_RESOLVEXPR = \
       ResolvExpr/SatisfyAssertions.cpp \
       ResolvExpr/SatisfyAssertions.hpp \
       ResolvExpr/SpecCost.cc \
+      ResolvExpr/SpecCost.hpp \
       ResolvExpr/TypeEnvironment.cc \
       ResolvExpr/TypeEnvironment.h \
       ResolvExpr/typeops.h \

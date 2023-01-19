@@ -13,6 +13,8 @@
 // Update Count     : 9
 //
 
+#include "CastCost.hpp"
+
 #include <cassert>                       // for assert
 
 #include "AST/Print.hpp"
@@ -21,6 +23,8 @@
 #include "AST/TypeEnvironment.hpp"
 #include "ConversionCost.h"              // for ConversionCost
 #include "Cost.h"                        // for Cost, Cost::infinity
+#include "ResolvExpr/ConversionCost.h"   // for conversionCost
+#include "ResolvExpr/PtrsCastable.hpp"   // for ptrsCastable
 #include "ResolvExpr/TypeEnvironment.h"  // for TypeEnvironment, EqvClass
 #include "ResolvExpr/typeops.h"          // for ptrsCastable
 #include "ResolvExpr/Unify.h"            // for typesCompatibleIgnoreQualifiers

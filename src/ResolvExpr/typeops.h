@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sun May 17 07:28:22 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Oct  1 09:45:00 2019
-// Update Count     : 6
+// Last Modified On : Wed Jan 18 11:54:00 2023
+// Update Count     : 7
 //
 
 #pragma once
@@ -59,59 +59,6 @@ namespace ResolvExpr {
 			*out++ = result;
 		}
 	}
-
-	// in AdjustExprType.cc
-	/// Replaces array types with the equivalent pointer, and function types with a pointer-to-function
-	void adjustExprType( Type *& type, const TypeEnvironment & env, const SymTab::Indexer & indexer );
-
-	/// Replaces array types with the equivalent pointer, and function types with a pointer-to-function using empty TypeEnvironment and Indexer
-	void adjustExprType( Type *& type );
-
-	template< typename ForwardIterator >
-	void adjustExprTypeList( ForwardIterator begin, ForwardIterator end, const TypeEnvironment & env, const SymTab::Indexer & indexer ) {
-		while ( begin != end ) {
-			adjustExprType( *begin++, env, indexer );
-		} // while
-	}
-
-	/// Replaces array types with equivalent pointer, and function types with a pointer-to-function
-	const ast::Type * adjustExprType(
-		const ast::Type * type, const ast::TypeEnvironment & env, const ast::SymbolTable & symtab );
-
-	// in CastCost.cc
-	Cost castCost( const Type * src, const Type * dest, bool srcIsLvalue,
-		const SymTab::Indexer & indexer, const TypeEnvironment & env );
-	Cost castCost(
-		const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
-		const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );
-
-	// in PtrsAssignable.cc
-	int ptrsAssignable( const Type * src, const Type * dest, const TypeEnvironment & env );
-	int ptrsAssignable( const ast::Type * src, const ast::Type * dst,
-		const ast::TypeEnvironment & env );
-
-	// in PtrsCastable.cc
-	int ptrsCastable( const Type * src, const Type * dest, const TypeEnvironment & env, const SymTab::Indexer & indexer );
-	int ptrsCastable(
-		const ast::Type * src, const ast::Type * dst, const ast::SymbolTable & symtab,
-		const ast::TypeEnvironment & env );
-
-	// in CommonType.cc
-	Type * commonType( Type * type1, Type * type2, bool widenFirst, bool widenSecond, const SymTab::Indexer & indexer, TypeEnvironment & env, const OpenVarSet & openVars );
-	ast::ptr< ast::Type > commonType(
-		const ast::ptr< ast::Type > & type1, const ast::ptr< ast::Type > & type2,
-			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-			const ast::OpenVarSet & open, WidenMode widen, const ast::SymbolTable & symtab
-	);
-
-	// in PolyCost.cc
-	int polyCost( Type * type, const TypeEnvironment & env, const SymTab::Indexer & indexer );
-	int polyCost(
-		const ast::Type * type, const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );
-
-	// in SpecCost.cc
-	int specCost( Type * type );
-	int specCost( const ast::Type * type );
 
 	// in Occurs.cc
 	bool occurs( const Type * type, const std::string & varName, const TypeEnvironment & env );
@@ -169,7 +116,6 @@ namespace ResolvExpr {
 
 			++crnt;
 		}
-
 
 		return new ast::TupleType{ std::move(types) };
 	}

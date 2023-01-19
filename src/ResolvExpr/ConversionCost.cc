@@ -21,11 +21,11 @@
 
 #include "ResolvExpr/Cost.h"             // for Cost
 #include "ResolvExpr/TypeEnvironment.h"  // for EqvClass, TypeEnvironment
-#include "ResolvExpr/Unify.h"
+#include "ResolvExpr/Unify.h"            // for typesCompatibleIgnoreQualifiers
+#include "ResolvExpr/PtrsAssignable.hpp" // for ptrsAssignable
 #include "SymTab/Indexer.h"              // for Indexer
 #include "SynTree/Declaration.h"         // for TypeDecl, NamedTypeDecl
 #include "SynTree/Type.h"                // for Type, BasicType, TypeInstType
-#include "typeops.h"                     // for typesCompatibleIgnoreQualifiers
 
 
 namespace ResolvExpr {

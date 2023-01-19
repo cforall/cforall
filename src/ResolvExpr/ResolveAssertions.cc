@@ -25,6 +25,7 @@
 #include <utility>                  // for move
 #include <vector>                   // for vector
 
+#include "AdjustExprType.hpp"       // for adjustExprType
 #include "Alternative.h"            // for Alternative, AssertionItem, AssertionList
 #include "Common/FilterCombos.h"    // for filterCombos
 #include "Common/Indenter.h"        // for Indenter
@@ -32,11 +33,11 @@
 #include "GenPoly/GenPoly.h"        // for getFunctionType
 #include "ResolvExpr/AlternativeFinder.h"  // for computeConversionCost
 #include "ResolvExpr/RenameVars.h"  // for renameTyVars
+#include "SpecCost.hpp"             // for specCost
 #include "SymTab/Indexer.h"         // for Indexer
 #include "SymTab/Mangler.h"         // for Mangler
 #include "SynTree/Expression.h"     // for InferredParams
 #include "TypeEnvironment.h"        // for TypeEnvironment, etc.
-#include "typeops.h"                // for adjustExprType, specCost
 #include "Unify.h"                  // for unify
 
 namespace ResolvExpr {

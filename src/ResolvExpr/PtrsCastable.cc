@@ -13,17 +13,19 @@
 // Update Count     : 9
 //
 
+#include "PtrsCastable.hpp"
+
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "AST/TypeEnvironment.hpp"
 #include "Common/PassVisitor.h"
+#include "ResolvExpr/PtrsAssignable.hpp" // for ptrsAssignable
 #include "ResolvExpr/TypeEnvironment.h"  // for EqvClass, TypeEnvironment
 #include "SymTab/Indexer.h"              // for Indexer
 #include "SynTree/Declaration.h"         // for TypeDecl, TypeDecl::Kind::Ftype
 #include "SynTree/Type.h"                // for TypeInstType, Type, BasicType
 #include "SynTree/Visitor.h"             // for Visitor
-#include "typeops.h"                     // for ptrsAssignable
 
 namespace ResolvExpr {
 	struct PtrsCastable_old : public WithShortCircuiting  {
@@ -290,9 +292,7 @@ int ptrsCastable(
 	if ( dynamic_cast< const ast::VoidType * >( dst ) ) {
 		return objectCast( src, env, symtab );
 	} else {
-		ast::Pass< PtrsCastable_new > ptrs{ dst, env, symtab };
-		src->accept( ptrs );
-		return ptrs.core.result;
+		return ast::Pass<PtrsCastable_new>::read( src, dst, env, symtab );
 	}
 }
 

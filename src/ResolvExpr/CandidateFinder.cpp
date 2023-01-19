@@ -22,16 +22,20 @@
 #include <unordered_map>
 #include <vector>
 
+#include "AdjustExprType.hpp"
 #include "Candidate.hpp"
+#include "CastCost.hpp"           // for castCost
 #include "CompilationState.h"
 #include "ConversionCost.h"       // for conversionCast
 #include "Cost.h"
 #include "ExplodedArg.hpp"
+#include "PolyCost.hpp"
 #include "RenameVars.h"           // for renameTyVars
 #include "Resolver.h"
 #include "ResolveTypeof.h"
 #include "SatisfyAssertions.hpp"
-#include "typeops.h"              // for adjustExprType, polyCost, specCost
+#include "SpecCost.hpp"
+#include "typeops.h"              // for combos
 #include "Unify.h"
 #include "AST/Expr.hpp"
 #include "AST/Node.hpp"

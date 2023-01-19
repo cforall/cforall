@@ -18,7 +18,7 @@
 namespace ResolvExpr {
 	struct WidenMode {
 		WidenMode( bool first, bool second ): first( first ), second( second ) {}
-		
+
 		WidenMode &operator|=( const WidenMode &other ) {
 			first |= other.first; second |= other.second; return *this;
 		}
@@ -34,7 +34,7 @@ namespace ResolvExpr {
 		WidenMode operator&( const WidenMode &other ) {
 			WidenMode newWM( *this ); newWM &= other; return newWM;
 		}
-		
+
 		operator bool() { return first && second; }
 
 		bool first : 1, second : 1;

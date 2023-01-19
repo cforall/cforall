@@ -13,6 +13,8 @@
 // Update Count     : 24
 //
 
+#include "CommonType.hpp"
+
 #include <cassert>                       // for strict_dynamic_cast
 #include <map>                           // for _Rb_tree_const_iterator
 #include <utility>                       // for pair

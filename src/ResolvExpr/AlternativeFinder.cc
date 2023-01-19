@@ -27,20 +27,24 @@
 #include <vector>                  // for vector
 
 #include "CompilationState.h"      // for resolvep
+#include "AdjustExprType.hpp"      // for adjustExprType
 #include "Alternative.h"           // for AltList, Alternative
 #include "AST/Expr.hpp"
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
+#include "CastCost.hpp"            // for castCost
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for deleteAll, printAll, CodeLocation
 #include "ConversionCost.h"        // for conversionCost
 #include "Cost.h"                  // for Cost, Cost::zero, operator<<, Cost...
 #include "ExplodedActual.h"        // for ExplodedActual
 #include "InitTweak/InitTweak.h"   // for getFunctionName
+#include "PolyCost.hpp"            // for polyCost
 #include "RenameVars.h"            // for RenameVars, global_renamer
 #include "ResolveAssertions.h"     // for resolveAssertions
 #include "ResolveTypeof.h"         // for resolveTypeof
 #include "Resolver.h"              // for resolveStmtExpr
+#include "SpecCost.hpp"            // for specCost
 #include "SymTab/Indexer.h"        // for Indexer
 #include "SymTab/Mangler.h"        // for Mangler
 #include "SymTab/ValidateType.h"   // for validateType
@@ -52,8 +56,8 @@
 #include "SynTree/Type.h"          // for Type, FunctionType, PointerType
 #include "Tuples/Explode.h"        // for explode
 #include "Tuples/Tuples.h"         // for isTtype, handleTupleAssignment
+#include "typeops.h"               // for combos
 #include "Unify.h"                 // for unify
-#include "typeops.h"               // for adjustExprType, polyCost, castCost
 
 #define PRINT( text ) if ( resolvep ) { text }
 //#define DEBUG_COST

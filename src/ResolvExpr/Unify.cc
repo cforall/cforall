@@ -32,7 +32,9 @@
 #include "AST/Type.hpp"
 #include "AST/TypeEnvironment.hpp"
 #include "Common/PassVisitor.h"     // for PassVisitor
+#include "CommonType.hpp"           // for commonType
 #include "FindOpenVars.h"           // for findOpenVars
+#include "SpecCost.hpp"             // for SpecCost
 #include "SynTree/LinkageSpec.h"    // for C
 #include "SynTree/Constant.h"       // for Constant
 #include "SynTree/Declaration.h"    // for TypeDecl, TypeDecl::Data, Declarati...
@@ -42,7 +44,7 @@
 #include "SynTree/Visitor.h"        // for Visitor
 #include "Tuples/Tuples.h"          // for isTtype
 #include "TypeEnvironment.h"        // for EqvClass, AssertionSet, OpenVarSet
-#include "typeops.h"                // for flatten, occurs, commonType
+#include "typeops.h"                // for flatten, occurs
 
 namespace ast {
 	class SymbolTable;
