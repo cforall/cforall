@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 21 22:34:30 2022
-// Update Count     : 5848
+// Last Modified On : Fri Jan 20 12:11:56 2023
+// Update Count     : 5855
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -330,7 +330,7 @@ if ( N ) {																		\
 %token SUSPEND											// CFA
 %token ATTRIBUTE EXTENSION								// GCC
 %token IF ELSE SWITCH CASE DEFAULT DO WHILE FOR BREAK CONTINUE GOTO RETURN
-%token CHOOSE FALLTHRU FALLTHROUGH WITH WHEN WAITFOR	// CFA
+%token CHOOSE FALLTHRU FALLTHROUGH WITH WHEN WAITFOR WAITUNTIL // CFA
 %token DISABLE ENABLE TRY THROW THROWRESUME AT			// CFA
 %token ASM												// C99, extension ISO/IEC 9899:1999 Section J.5.10(1)
 %token ALIGNAS ALIGNOF GENERIC STATICASSERT				// C11
@@ -1938,6 +1938,7 @@ cfa_typedef_declaration:								// CFA
 typedef_declaration:
 	TYPEDEF type_specifier declarator
 		{
+			// if type_specifier is an anon aggregate => name 
 			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "4" );
 			$$ = $3->addType( $2 )->addTypedef();
 		}
@@ -2472,6 +2473,8 @@ field_declaration:
 		}
 	| EXTENSION type_specifier field_declaring_list_opt ';'	// GCC
 		{ $$ = fieldDecl( $2, $3 ); distExt( $$ ); }
+	| STATIC type_specifier field_declaring_list_opt ';' // CFA
+	   	{ SemanticError( yylloc, "STATIC aggregate field qualifier currently unimplemented." ); $$ = nullptr; }
 	| INLINE type_specifier field_abstract_list_opt ';'	// CFA
 		{
 			if ( ! $3 ) {								// field declarator ?

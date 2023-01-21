@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Thu Oct 13 20:46:04 2022
- * Update Count     : 764
+ * Last Modified On : Fri Jan 20 12:08:37 2023
+ * Update Count     : 766
  */
 
 %option yylineno
@@ -339,6 +339,7 @@ __volatile		{ KEYWORD_RETURN(VOLATILE); }			// GCC
 __volatile__	{ KEYWORD_RETURN(VOLATILE); }			// GCC
 vtable			{ KEYWORD_RETURN(VTABLE); }				// CFA
 waitfor			{ KEYWORD_RETURN(WAITFOR); }			// CFA
+waituntil		{ KEYWORD_RETURN(WAITUNTIL); }			// CFA
 when			{ KEYWORD_RETURN(WHEN); }				// CFA
 while			{ KEYWORD_RETURN(WHILE); }
 with			{ KEYWORD_RETURN(WITH); }				// CFA

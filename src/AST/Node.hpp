@@ -18,7 +18,6 @@
 #include <cassert>
 #include <cstddef>     // for nullptr_t
 #include <iosfwd>
-#include <type_traits> // for remove_reference
 
 #include "Common/ErrorObjects.h"  // for SemanticErrorException
 
@@ -35,8 +34,8 @@ public:
 	Node() = default;
 	Node(const Node&) : strong_count(0), weak_count(0) {}
 	Node(Node&&) : strong_count(0), weak_count(0) {}
-	Node& operator= (const Node&) = delete;
-	Node& operator= (Node&&) = delete;
+	Node& operator=(const Node&) = delete;
+	Node& operator=(Node&&) = delete;
 	virtual ~Node() {}
 
 	virtual const Node * accept( Visitor & v ) const = 0;

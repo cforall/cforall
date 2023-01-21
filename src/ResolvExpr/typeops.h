@@ -17,15 +17,7 @@
 
 #include <vector>
 
-#include "Cost.h"
-#include "TypeEnvironment.h"
-#include "WidenMode.h"
-#include "AST/Fwd.hpp"
-#include "AST/Node.hpp"
-#include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
-#include "AST/TypeEnvironment.hpp"
-#include "SynTree/SynTree.h"
 #include "SynTree/Type.h"
 
 namespace SymTab {
@@ -33,6 +25,8 @@ namespace SymTab {
 }
 
 namespace ResolvExpr {
+	class TypeEnvironment;
+
 	// combos: takes a list of sets and returns a set of lists representing every possible way of forming a list by
 	// picking one element out of each set
 	template< typename InputIterator, typename OutputIterator >

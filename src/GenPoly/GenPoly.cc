@@ -23,7 +23,9 @@
 #include <utility>                      // for pair
 #include <vector>                       // for vector
 
+#include "AST/Expr.hpp"
 #include "AST/Type.hpp"
+#include "AST/TypeSubstitution.hpp"
 #include "GenPoly/ErasableScopedMap.h"  // for ErasableScopedMap<>::const_it...
 #include "ResolvExpr/typeops.h"         // for flatten
 #include "SynTree/Constant.h"           // for Constant
