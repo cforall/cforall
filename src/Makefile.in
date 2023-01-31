@@ -253,7 +253,8 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	CodeGen/FixNames.$(OBJEXT) CodeGen/GenType.$(OBJEXT) \
 	CodeGen/LinkOnce.$(OBJEXT) CodeTools/DeclStats.$(OBJEXT) \
 	CodeTools/ResolvProtoDump.$(OBJEXT) \
-	CodeTools/TrackLoc.$(OBJEXT) Concurrency/KeywordsNew.$(OBJEXT) \
+	CodeTools/TrackLoc.$(OBJEXT) Concurrency/Actors.$(OBJEXT) \
+	Concurrency/KeywordsNew.$(OBJEXT) \
 	Concurrency/Keywords.$(OBJEXT) \
 	Concurrency/WaitforNew.$(OBJEXT) Concurrency/Waitfor.$(OBJEXT) \
 	$(am__objects_3) Common/DebugMalloc.$(OBJEXT) \
@@ -366,6 +367,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Common/Stats/$(DEPDIR)/Heap.Po \
 	Common/Stats/$(DEPDIR)/ResolveTime.Po \
 	Common/Stats/$(DEPDIR)/Stats.Po Common/Stats/$(DEPDIR)/Time.Po \
+	Concurrency/$(DEPDIR)/Actors.Po \
 	Concurrency/$(DEPDIR)/Keywords.Po \
 	Concurrency/$(DEPDIR)/KeywordsNew.Po \
 	Concurrency/$(DEPDIR)/Waitfor.Po \
@@ -743,6 +745,7 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	CodeGen/Options.h CodeTools/DeclStats.cc CodeTools/DeclStats.h \
 	CodeTools/ResolvProtoDump.cc CodeTools/ResolvProtoDump.h \
 	CodeTools/TrackLoc.cc CodeTools/TrackLoc.h \
+	Concurrency/Actors.cpp Concurrency/Actors.hpp \
 	Concurrency/KeywordsNew.cpp Concurrency/Keywords.cc \
 	Concurrency/Keywords.h Concurrency/WaitforNew.cpp \
 	Concurrency/Waitfor.cc Concurrency/Waitfor.h $(SRC_COMMON) \
@@ -1492,6 +1495,8 @@ Concurrency/$(am__dirstamp):
 Concurrency/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) Concurrency/$(DEPDIR)
 	@: > Concurrency/$(DEPDIR)/$(am__dirstamp)
+Concurrency/Actors.$(OBJEXT): Concurrency/$(am__dirstamp) \
+	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/KeywordsNew.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/Keywords.$(OBJEXT): Concurrency/$(am__dirstamp) \
@@ -1732,6 +1737,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/ResolveTime.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Stats.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Time.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Actors.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Keywords.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/KeywordsNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Waitfor.Po@am__quote@ # am--include-marker
@@ -2162,6 +2168,7 @@ distclean: distclean-am
 	-rm -f Common/Stats/$(DEPDIR)/ResolveTime.Po
 	-rm -f Common/Stats/$(DEPDIR)/Stats.Po
 	-rm -f Common/Stats/$(DEPDIR)/Time.Po
+	-rm -f Concurrency/$(DEPDIR)/Actors.Po
 	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
 	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
@@ -2400,6 +2407,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Common/Stats/$(DEPDIR)/ResolveTime.Po
 	-rm -f Common/Stats/$(DEPDIR)/Stats.Po
 	-rm -f Common/Stats/$(DEPDIR)/Time.Po
+	-rm -f Concurrency/$(DEPDIR)/Actors.Po
 	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
 	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po

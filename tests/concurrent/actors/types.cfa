@@ -1,0 +1,118 @@
+#include <actor.hfa>
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+#include <stdio.h>
+#include <mutex_stmt.hfa>
+
+struct derived_actor {
+    inline actor;
+    int counter;
+};
+static inline void ?{}( derived_actor & this ) { ((actor &)this){}; this.counter = 0; }
+
+struct d_msg {
+    inline message;
+    int num;
+};
+static inline void ?{}( d_msg & this ) { ((message &)this){}; }
+
+// this isn't a valid receive routine since int is not a message type
+Allocation receive( derived_actor & receiver, int i ) with( receiver ) {
+    mutex(sout) sout | i;
+    counter++;
+    if ( counter == 2 ) return Finished;
+    return Nodelete; 
+}
+
+struct derived_actor2 {
+    inline actor;
+};
+static inline void ?{}( derived_actor2 & this ) { ((actor &)this){}; }
+
+struct derived_actor3 {
+    inline actor;
+};
+static inline void ?{}( derived_actor3 & this ) { ((actor &)this){}; }
+
+struct d_msg2 {
+    inline message;
+    int num;
+};
+static inline void ?{}( d_msg2 & this ) { ((message &)this){}; }
+
+Allocation receive( derived_actor2 & receiver, d_msg & msg ) {
+    mutex(sout) sout | msg.num;
+    return Finished;
+}
+
+Allocation receive( derived_actor & receiver, d_msg & msg ) {
+    return receive( receiver, msg.num );
+}
+
+Allocation receive( derived_actor3 & receiver, d_msg & msg ) {
+    mutex(sout) sout | msg.num;
+    if ( msg.num == -1 ) return Nodelete;
+    return Finished;
+}
+
+Allocation receive( derived_actor3 & receiver, d_msg2 & msg ) {
+    mutex(sout) sout | msg.num;
+    return Finished;
+}
+
+size_t Processors = 3;
+
+int main( int argc, char * argv[] ) {
+    printf("start\n");
+
+    processor p[Processors - 1];
+
+    printf("basic test\n"); 
+    start_actor_system( Processors ); // test passing number of processors
+    derived_actor a;
+    d_msg b, c;
+    b.num = 1;
+    c.num = 2;
+    a | b | c;
+    stop_actor_system();
+
+    printf("same message and different actors test\n");
+    start_actor_system(); // let system detect # of processors
+    derived_actor2 d_ac2_0, d_ac2_1;
+    d_msg d_ac2_msg;
+    d_ac2_msg.num = 3;
+    d_ac2_0 | d_ac2_msg;
+    d_ac2_1 | d_ac2_msg;
+    stop_actor_system();
+
+    
+    {
+        printf("same message and different actor types test\n");
+        executor e{ 0, Processors, Processors == 1 ? 1 : Processors * 4, false };
+        start_actor_system( e ); // pass an explicit executor
+        derived_actor2 d_ac2_2;
+        derived_actor3 d_ac3_0;
+        d_msg d_ac23_msg;
+        d_ac23_msg.num = 4;
+        d_ac3_0 | d_ac23_msg;
+        d_ac2_2 | d_ac23_msg;
+        stop_actor_system();
+    } // RAII to clean up executor
+
+    {
+        printf("different message types, one actor test\n");
+        executor e{ 1, Processors, Processors == 1 ? 1 : Processors * 4, true };
+        start_actor_system( Processors );
+        derived_actor3 a3;
+        d_msg b1;
+        d_msg2 c2;
+        b1.num = -1;
+        c2.num = 5;
+        a3 | b1 | c2;
+        stop_actor_system();
+    } // RAII to clean up executor
+
+    printf("end\n");
+    return 0;
+}

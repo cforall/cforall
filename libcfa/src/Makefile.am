@@ -114,7 +114,8 @@ inst_thread_headers_nosrc = \
 	concurrency/kernel/fwd.hfa \
 	concurrency/mutex_stmt.hfa \
     concurrency/select.hfa \
-    concurrency/channel.hfa
+    concurrency/channel.hfa \
+    concurrency/actor.hfa 
 
 inst_thread_headers_src = \
 	concurrency/alarm.hfa \

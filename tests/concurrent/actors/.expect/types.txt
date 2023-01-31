@@ -1,0 +1,14 @@
+start
+basic test
+1
+2
+same message and different actors test
+3
+3
+same message and different actor types test
+4
+4
+different message types, one actor test
+-1
+5
+end

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 20 12:11:56 2023
-// Update Count     : 5855
+// Last Modified On : Mon Jan 30 20:47:27 2023
+// Update Count     : 5859
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1644,9 +1644,9 @@ waitfor_statement:
 
 exception_statement:
 	TRY compound_statement handler_clause 					%prec THEN
-		{ $$ = new StatementNode( build_try( $2, $3, 0 ) ); }
+		{ $$ = new StatementNode( build_try( $2, $3, nullptr ) ); }
 	| TRY compound_statement finally_clause
-		{ $$ = new StatementNode( build_try( $2, 0, $3 ) ); }
+		{ $$ = new StatementNode( build_try( $2, nullptr, $3 ) ); }
 	| TRY compound_statement handler_clause finally_clause
 		{ $$ = new StatementNode( build_try( $2, $3, $4 ) ); }
 	;
@@ -1698,7 +1698,7 @@ enable_disable_key:
 
 asm_statement:
 	ASM asm_volatile_opt '(' string_literal ')' ';'
-		{ $$ = new StatementNode( build_asm( $2, $4, 0 ) ); }
+		{ $$ = new StatementNode( build_asm( $2, $4, nullptr ) ); }
 	| ASM asm_volatile_opt '(' string_literal ':' asm_operands_opt ')' ';' // remaining GCC
 		{ $$ = new StatementNode( build_asm( $2, $4, $6 ) ); }
 	| ASM asm_volatile_opt '(' string_literal ':' asm_operands_opt ':' asm_operands_opt ')' ';'
@@ -1706,7 +1706,7 @@ asm_statement:
 	| ASM asm_volatile_opt '(' string_literal ':' asm_operands_opt ':' asm_operands_opt ':' asm_clobbers_list_opt ')' ';'
 		{ $$ = new StatementNode( build_asm( $2, $4, $6, $8, $10 ) ); }
 	| ASM asm_volatile_opt GOTO '(' string_literal ':' ':' asm_operands_opt ':' asm_clobbers_list_opt ':' label_list ')' ';'
-		{ $$ = new StatementNode( build_asm( $2, $5, 0, $8, $10, $12 ) ); }
+		{ $$ = new StatementNode( build_asm( $2, $5, nullptr, $8, $10, $12 ) ); }
 	;
 
 asm_volatile_opt:										// GCC
@@ -1879,17 +1879,17 @@ cfa_function_declaration:								// CFA
 cfa_function_specifier:									// CFA
 //	'[' ']' identifier_or_type_name '(' push cfa_parameter_ellipsis_list_opt pop ')' // S/R conflict
 //		{
-//			$$ = DeclarationNode::newFunction( $3, DeclarationNode::newTuple( 0 ), $6, 0, true );
+//			$$ = DeclarationNode::newFunction( $3, DeclarationNode::newTuple( 0 ), $6, nullptr, true );
 //		}
 //	'[' ']' identifier '(' push cfa_parameter_ellipsis_list_opt pop ')'
 //		{
 //			typedefTable.setNextIdentifier( *$5 );
-//			$$ = DeclarationNode::newFunction( $5, DeclarationNode::newTuple( 0 ), $8, 0, true );
+//			$$ = DeclarationNode::newFunction( $5, DeclarationNode::newTuple( 0 ), $8, nullptr, true );
 //		}
 //	| '[' ']' TYPEDEFname '(' push cfa_parameter_ellipsis_list_opt pop ')'
 //		{
 //			typedefTable.setNextIdentifier( *$5 );
-//			$$ = DeclarationNode::newFunction( $5, DeclarationNode::newTuple( 0 ), $8, 0, true );
+//			$$ = DeclarationNode::newFunction( $5, DeclarationNode::newTuple( 0 ), $8, nullptr, true );
 //		}
 //	| '[' ']' typegen_name
 		// identifier_or_type_name must be broken apart because of the sequence:
@@ -1901,9 +1901,9 @@ cfa_function_specifier:									// CFA
 		// flattened to allow lookahead to the '(' without having to reduce identifier_or_type_name.
 	cfa_abstract_tuple identifier_or_type_name '(' push cfa_parameter_ellipsis_list_opt pop ')' attribute_list_opt
 		// To obtain LR(1 ), this rule must be factored out from function return type (see cfa_abstract_declarator).
-		{ $$ = DeclarationNode::newFunction( $2, $1, $5, 0 )->addQualifiers( $8 ); }
+		{ $$ = DeclarationNode::newFunction( $2, $1, $5, nullptr )->addQualifiers( $8 ); }
 	| cfa_function_return identifier_or_type_name '(' push cfa_parameter_ellipsis_list_opt pop ')' attribute_list_opt
-		{ $$ = DeclarationNode::newFunction( $2, $1, $5, 0 )->addQualifiers( $8 ); }
+		{ $$ = DeclarationNode::newFunction( $2, $1, $5, nullptr )->addQualifiers( $8 ); }
 	;
 
 cfa_function_return:									// CFA
@@ -1995,8 +1995,22 @@ declaring_list:
 
 declaration_specifier:									// type specifier + storage class
 	basic_declaration_specifier
-	| sue_declaration_specifier
 	| type_declaration_specifier
+	| sue_declaration_specifier
+	| sue_declaration_specifier invalid_types
+		{
+			SemanticError( yylloc,
+						  ::toString( "Missing ';' after end of ",
+									  $1->type->enumeration.name ? "enum" : AggregateDecl::aggrString( $1->type->aggregate.kind ),
+									  " declaration" ) );
+			$$ = nullptr;
+		}
+	;
+
+invalid_types:
+	aggregate_key
+	| basic_type_name
+	| indirect_type
 	;
 
 declaration_specifier_nobody:							// type specifier + storage class - {...}
@@ -2611,9 +2625,9 @@ hide_opt:
 
 enum_type_nobody:										// enum - {...}
 	ENUM attribute_list_opt identifier
-		{ typedefTable.makeTypedef( *$3 ); $$ = DeclarationNode::newEnum( $3, 0, false, false )->addQualifiers( $2 ); }
+		{ typedefTable.makeTypedef( *$3 ); $$ = DeclarationNode::newEnum( $3, nullptr, false, false )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt type_name
-		{ typedefTable.makeTypedef( *$3->type->symbolic.name );	$$ = DeclarationNode::newEnum( $3->type->symbolic.name, 0, false, false )->addQualifiers( $2 ); }
+		{ typedefTable.makeTypedef( *$3->type->symbolic.name );	$$ = DeclarationNode::newEnum( $3->type->symbolic.name, nullptr, false, false )->addQualifiers( $2 ); }
 	;
 
 enumerator_list:
@@ -2952,7 +2966,7 @@ type_declarator_name:									// CFA
 	identifier_or_type_name
 		{
 			typedefTable.addToEnclosingScope( *$1, TYPEDEFname, "10" );
-			$$ = DeclarationNode::newTypeDecl( $1, 0 );
+			$$ = DeclarationNode::newTypeDecl( $1, nullptr );
 		}
 	| identifier_or_type_name '(' type_parameter_list ')'
 		{
@@ -2963,9 +2977,13 @@ type_declarator_name:									// CFA
 
 trait_specifier:										// CFA
 	TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' '}'
-		{ $$ = DeclarationNode::newTrait( $2, $4, 0 ); }
+		{ $$ = DeclarationNode::newTrait( $2, $4, nullptr ); }
+	| FORALL '(' type_parameter_list ')' TRAIT identifier_or_type_name '{' '}' // alternate
+		{ $$ = DeclarationNode::newTrait( $6, $3, nullptr ); }
 	| TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' push trait_declaration_list pop '}'
 		{ $$ = DeclarationNode::newTrait( $2, $4, $8 ); }
+	| FORALL '(' type_parameter_list ')' TRAIT identifier_or_type_name '{' push trait_declaration_list pop '}' // alternate
+		{ $$ = DeclarationNode::newTrait( $6, $3, $9 ); }
 	;
 
 trait_declaration_list:									// CFA
@@ -3045,7 +3063,7 @@ external_definition:
 			$$ = $2;
 		}
 	| ASM '(' string_literal ')' ';'					// GCC, global assembler statement
-		{ $$ = DeclarationNode::newAsmStmt( new StatementNode( build_asm( false, $3, 0 ) ) ); }
+		{ $$ = DeclarationNode::newAsmStmt( new StatementNode( build_asm( false, $3, nullptr ) ) ); }
 	| EXTERN STRINGliteral
 		{
 			linkageStack.push( linkage );				// handle nested extern "C"/"Cforall"
@@ -3289,7 +3307,7 @@ variable_declarator:
 
 variable_ptr:
 	ptrref_operator variable_declarator
-		{ $$ = $2->addPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list variable_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' variable_ptr ')' attribute_list_opt			// redundant parenthesis
@@ -3353,7 +3371,7 @@ function_no_ptr:
 
 function_ptr:
 	ptrref_operator function_declarator
-		{ $$ = $2->addPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list function_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' function_ptr ')' attribute_list_opt
@@ -3405,7 +3423,7 @@ KR_function_no_ptr:
 
 KR_function_ptr:
 	ptrref_operator KR_function_declarator
-		{ $$ = $2->addPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list KR_function_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' KR_function_ptr ')'
@@ -3461,7 +3479,7 @@ variable_type_redeclarator:
 
 type_ptr:
 	ptrref_operator variable_type_redeclarator
-		{ $$ = $2->addPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list variable_type_redeclarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' type_ptr ')' attribute_list_opt				// redundant parenthesis
@@ -3519,7 +3537,7 @@ identifier_parameter_declarator:
 
 identifier_parameter_ptr:
 	ptrref_operator identifier_parameter_declarator
-		{ $$ = $2->addPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list identifier_parameter_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' identifier_parameter_ptr ')' attribute_list_opt // redundant parenthesis
@@ -3576,7 +3594,7 @@ typedef_name:
 
 type_parameter_ptr:
 	ptrref_operator type_parameter_redeclarator
-		{ $$ = $2->addPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list type_parameter_redeclarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' type_parameter_ptr ')' attribute_list_opt		// redundant parenthesis
@@ -3619,11 +3637,11 @@ abstract_declarator:
 
 abstract_ptr:
 	ptrref_operator
-		{ $$ = DeclarationNode::newPointer( 0, $1 ); }
+		{ $$ = DeclarationNode::newPointer( nullptr, $1 ); }
 	| ptrref_operator type_qualifier_list
 		{ $$ = DeclarationNode::newPointer( $2, $1 ); }
 	| ptrref_operator abstract_declarator
-		{ $$ = $2->addPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list abstract_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' abstract_ptr ')' attribute_list_opt
@@ -3652,12 +3670,12 @@ abstract_function:
 array_dimension:
 		// Only the first dimension can be empty.
 	'[' ']'
-		{ $$ = DeclarationNode::newArray( 0, 0, false ); }
+		{ $$ = DeclarationNode::newArray( nullptr, nullptr, false ); }
 	| '[' ']' multi_array_dimension
-		{ $$ = DeclarationNode::newArray( 0, 0, false )->addArray( $3 ); }
+		{ $$ = DeclarationNode::newArray( nullptr, nullptr, false )->addArray( $3 ); }
 		// Cannot use constant_expression because of tuples => semantic check
 	| '[' push assignment_expression pop ',' comma_expression ']' // CFA
-		{ $$ = DeclarationNode::newArray( $3, 0, false )->addArray( DeclarationNode::newArray( $6, 0, false ) ); }
+		{ $$ = DeclarationNode::newArray( $3, nullptr, false )->addArray( DeclarationNode::newArray( $6, nullptr, false ) ); }
 		// { SemanticError( yylloc, "New array dimension is currently unimplemented." ); $$ = nullptr; }
 	| '[' push array_type_list pop ']'					// CFA
 		{ SemanticError( yylloc, "Type array dimension is currently unimplemented." ); $$ = nullptr; }
@@ -3686,11 +3704,11 @@ upupeq:
 
 multi_array_dimension:
 	'[' push assignment_expression pop ']'
-		{ $$ = DeclarationNode::newArray( $3, 0, false ); }
+		{ $$ = DeclarationNode::newArray( $3, nullptr, false ); }
 	| '[' push '*' pop ']'								// C99
 		{ $$ = DeclarationNode::newVarArray( 0 ); }
 	| multi_array_dimension '[' push assignment_expression pop ']'
-		{ $$ = $1->addArray( DeclarationNode::newArray( $4, 0, false ) ); }
+		{ $$ = $1->addArray( DeclarationNode::newArray( $4, nullptr, false ) ); }
 	| multi_array_dimension '[' push '*' pop ']'		// C99
 		{ $$ = $1->addArray( DeclarationNode::newVarArray( 0 ) ); }
 	;
@@ -3787,12 +3805,12 @@ array_parameter_dimension:
 
 array_parameter_1st_dimension:
 	'[' ']'
-		{ $$ = DeclarationNode::newArray( 0, 0, false ); }
+		{ $$ = DeclarationNode::newArray( nullptr, nullptr, false ); }
 		// multi_array_dimension handles the '[' '*' ']' case
 	| '[' push type_qualifier_list '*' pop ']'			// remaining C99
 		{ $$ = DeclarationNode::newVarArray( $3 ); }
 	| '[' push type_qualifier_list pop ']'
-		{ $$ = DeclarationNode::newArray( 0, $3, false ); }
+		{ $$ = DeclarationNode::newArray( nullptr, $3, false ); }
 		// multi_array_dimension handles the '[' assignment_expression ']' case
 	| '[' push type_qualifier_list assignment_expression pop ']'
 		{ $$ = DeclarationNode::newArray( $4, $3, false ); }
@@ -3821,11 +3839,11 @@ variable_abstract_declarator:
 
 variable_abstract_ptr:
 	ptrref_operator
-		{ $$ = DeclarationNode::newPointer( 0, $1 ); }
+		{ $$ = DeclarationNode::newPointer( nullptr, $1 ); }
 	| ptrref_operator type_qualifier_list
 		{ $$ = DeclarationNode::newPointer( $2, $1 ); }
 	| ptrref_operator variable_abstract_declarator
-		{ $$ = $2->addPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list variable_abstract_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' variable_abstract_ptr ')' attribute_list_opt	// redundant parenthesis
@@ -3867,15 +3885,15 @@ cfa_identifier_parameter_declarator_no_tuple:			// CFA
 cfa_identifier_parameter_ptr:							// CFA
 		// No SUE declaration in parameter list.
 	ptrref_operator type_specifier_nobody
-		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| type_qualifier_list ptrref_operator type_specifier_nobody
 		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( $1, $2 ) ); }
 	| ptrref_operator cfa_abstract_function
-		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| type_qualifier_list ptrref_operator cfa_abstract_function
 		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( $1, $2 ) ); }
 	| ptrref_operator cfa_identifier_parameter_declarator_tuple
-		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| type_qualifier_list ptrref_operator cfa_identifier_parameter_declarator_tuple
 		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( $1, $2 ) ); }
 	;
@@ -3884,22 +3902,22 @@ cfa_identifier_parameter_array:							// CFA
 		// Only the first dimension can be empty or have qualifiers. Empty dimension must be factored out due to
 		// shift/reduce conflict with new-style empty (void) function return type.
 	'[' ']' type_specifier_nobody
-		{ $$ = $3->addNewArray( DeclarationNode::newArray( 0, 0, false ) ); }
+		{ $$ = $3->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
 	| cfa_array_parameter_1st_dimension type_specifier_nobody
 		{ $$ = $2->addNewArray( $1 ); }
 	| '[' ']' multi_array_dimension type_specifier_nobody
-		{ $$ = $4->addNewArray( $3 )->addNewArray( DeclarationNode::newArray( 0, 0, false ) ); }
+		{ $$ = $4->addNewArray( $3 )->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
 	| cfa_array_parameter_1st_dimension multi_array_dimension type_specifier_nobody
 		{ $$ = $3->addNewArray( $2 )->addNewArray( $1 ); }
 	| multi_array_dimension type_specifier_nobody
 		{ $$ = $2->addNewArray( $1 ); }
 
 	| '[' ']' cfa_identifier_parameter_ptr
-		{ $$ = $3->addNewArray( DeclarationNode::newArray( 0, 0, false ) ); }
+		{ $$ = $3->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
 	| cfa_array_parameter_1st_dimension cfa_identifier_parameter_ptr
 		{ $$ = $2->addNewArray( $1 ); }
 	| '[' ']' multi_array_dimension cfa_identifier_parameter_ptr
-		{ $$ = $4->addNewArray( $3 )->addNewArray( DeclarationNode::newArray( 0, 0, false ) ); }
+		{ $$ = $4->addNewArray( $3 )->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
 	| cfa_array_parameter_1st_dimension multi_array_dimension cfa_identifier_parameter_ptr
 		{ $$ = $3->addNewArray( $2 )->addNewArray( $1 ); }
 	| multi_array_dimension cfa_identifier_parameter_ptr
@@ -3955,15 +3973,15 @@ cfa_abstract_declarator_no_tuple:						// CFA
 
 cfa_abstract_ptr:										// CFA
 	ptrref_operator type_specifier
-		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| type_qualifier_list ptrref_operator type_specifier
 		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( $1, $2 ) ); }
 	| ptrref_operator cfa_abstract_function
-		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| type_qualifier_list ptrref_operator cfa_abstract_function
 		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( $1, $2 ) ); }
 	| ptrref_operator cfa_abstract_declarator_tuple
-		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( 0, $1 ) ); }
+		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| type_qualifier_list ptrref_operator cfa_abstract_declarator_tuple
 		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( $1, $2 ) ); }
 	;

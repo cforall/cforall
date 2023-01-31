@@ -1,0 +1,67 @@
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+#include <stdio.h>
+#include <mutex_stmt.hfa>
+#include <actor.hfa>
+
+struct ping {
+    inline actor;
+};
+static inline void ?{}( ping & this ) { ((actor &)this){}; }
+
+struct pong {
+    inline actor;
+};
+static inline void ?{}( pong & this ) { ((actor &)this){}; }
+
+struct p_msg {
+    inline message;
+    size_t count;
+};
+static inline void ?{}( p_msg & this ) { ((message &)this){}; this.count = 0; }
+
+ping * pi;
+pong * po;
+size_t times = 100000;
+
+Allocation receive( ping & receiver, p_msg & msg ) {
+    msg.count++;
+    if ( msg.count > times ) return Finished;
+
+    Allocation retval = Nodelete;
+    if ( msg.count == times ) retval = Finished;
+    *po | msg;
+    return retval;
+}
+
+Allocation receive( pong & receiver, p_msg & msg ) {
+    msg.count++;
+    if ( msg.count > times ) return Finished;
+    
+    Allocation retval = Nodelete;
+    if ( msg.count == times ) retval = Finished;
+    *pi | msg;
+    return retval;
+}
+
+size_t Processors = 2;
+
+int main( int argc, char * argv[] ) {
+    printf("start\n");
+
+    processor p[Processors - 1];
+
+    start_actor_system( Processors ); // test passing number of processors
+
+    ping pi_actor;
+    pong po_actor;
+    po = &po_actor;
+    pi = &pi_actor;
+    p_msg m;
+    pi_actor | m;
+    stop_actor_system();
+
+    printf("end\n");
+    return 0;
+}

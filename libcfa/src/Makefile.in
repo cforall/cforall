@@ -304,7 +304,8 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	concurrency/clib/cfathread.h concurrency/invoke.h \
 	concurrency/future.hfa concurrency/once.hfa \
 	concurrency/kernel/fwd.hfa concurrency/mutex_stmt.hfa \
-	concurrency/select.hfa concurrency/channel.hfa
+	concurrency/select.hfa concurrency/channel.hfa \
+	concurrency/actor.hfa
 HEADERS = $(nobase_cfa_include_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -610,7 +611,8 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/kernel/fwd.hfa \
 @BUILDLIB_TRUE@	concurrency/mutex_stmt.hfa \
 @BUILDLIB_TRUE@    concurrency/select.hfa \
-@BUILDLIB_TRUE@    concurrency/channel.hfa
+@BUILDLIB_TRUE@    concurrency/channel.hfa \
+@BUILDLIB_TRUE@    concurrency/actor.hfa 
 
 @BUILDLIB_FALSE@inst_thread_headers_src = 
 @BUILDLIB_TRUE@inst_thread_headers_src = \

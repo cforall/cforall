@@ -510,11 +510,6 @@ struct spin_queue_lock {
 
 	// flag showing if lock is held
 	volatile bool held;
-
-	#ifdef __CFA_DEBUG__
-	// for deadlock detection
-	struct thread$ * owner;
-	#endif
 };
 
 static inline void  ?{}( spin_queue_lock & this ) with(this) {
@@ -525,7 +520,7 @@ static inline void ^?{}( spin_queue_lock & this ) {}
 static inline void ?{}( spin_queue_lock & this, spin_queue_lock this2 ) = void;
 static inline void ?=?( spin_queue_lock & this, spin_queue_lock this2 ) = void;
 
-// if this is called recursively IT WILL DEADLOCK!!!!!
+// if this is called recursively IT WILL DEADLOCK!
 static inline void lock(spin_queue_lock & this) with(this) {
 	mcs_spin_node node;
 	lock( lock, node );

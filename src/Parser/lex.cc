@@ -1884,8 +1884,8 @@ char *yytext;
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Fri Jan 20 12:08:37 2023
- * Update Count     : 766
+ * Last Modified On : Mon Jan 30 19:03:34 2023
+ * Update Count     : 767
  */
 #line 21 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 // The lexer assumes the program has been preprocessed by cpp. Hence, all user level preprocessor directive have been
@@ -4482,7 +4482,7 @@ void yyfree (void * ptr )
 void yyerror( const char * errmsg ) {
 	SemanticErrorThrow = true;
 	cerr << (yyfilename ? yyfilename : "*unknown file*") << ':' << yylineno << ':' << column - yyleng + 1
-		 << ": " << ErrorHelpers::error_str() << errmsg << " at token \"" << (yytext[0] == '\0' ? "EOF" : yytext) << '"' << endl;
+		 << ": " << ErrorHelpers::error_str() << errmsg << " before token \"" << (yytext[0] == '\0' ? "EOF" : yytext) << '"' << endl;
 }
 
 // Local Variables: //

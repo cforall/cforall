@@ -1,0 +1,128 @@
+#include <actor.hfa>
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+#include <stdio.h>
+
+unsigned int xr = 100, xc = 100, yc = 100, Processors = 1; // default values
+
+struct derived_actor {
+    inline actor;
+};
+void ?{}( derived_actor & this ) { ((actor &)this){}; }
+
+struct derived_msg {
+    inline message;
+    int * Z;
+	int * X;
+    int ** Y;
+};
+
+void ?{}( derived_msg & this ) {}
+void ?{}( derived_msg & this, int * Z, int * X, int ** Y ) {
+    ((message &) this){ Finished };
+    this.Z = Z;
+    this.X = X;
+    this.Y = Y;
+}
+
+Allocation receive( derived_actor & receiver, derived_msg & msg ) {
+    for ( unsigned int i = 0; i < yc; i += 1 ) { // multiply X_row by Y_col and sum products
+        msg.Z[i] = 0;
+        for ( unsigned int j = 0; j < xc; j += 1 ) {
+            msg.Z[i] += msg.X[j] * msg.Y[j][i];
+        } // for
+    } // for
+    return Finished;
+}
+
+int main( int argc, char * argv[] ) {
+    switch ( argc ) {
+	  case 5:
+		if ( strcmp( argv[4], "d" ) != 0 ) {			// default ?
+			Processors = atoi( argv[4] );
+			if ( Processors < 1 ) goto Usage;
+		} // if
+	  case 4:
+		if ( strcmp( argv[3], "d" ) != 0 ) {			// default ?
+			xr = atoi( argv[3] );
+			if ( xr < 1 ) goto Usage;
+		} // if
+	  case 3:
+		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
+			xc = atoi( argv[2] );
+			if ( xc < 1 ) goto Usage;
+		} // if
+	  case 2:
+		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
+			yc = atoi( argv[1] );
+			if ( yc < 1 ) goto Usage;
+		} // if
+	  case 1:											// use defaults
+		break;
+	  default:
+	  Usage:
+		sout | "Usage: " | argv[0]
+			 | " [ yc (> 0) | 'd' (default " | yc
+			 | ") ] [ xc (> 0) | 'd' (default " | xc
+			 | ") ] [ xr (> 0) | 'd' (default " | xr
+			 | ") ] [ processors (> 0) | 'd' (default " | Processors
+			 | ") ]" ;
+		exit( EXIT_FAILURE );
+	} // switch
+
+    unsigned int r, c;
+	int * Z[xr], * X[xr], * Y[xc];
+
+	for ( r = 0; r < xr; r += 1 ) {						// create/initialize X matrix
+		X[r] = aalloc( xc );
+		for ( c = 0; c < xc; c += 1 ) {
+			X[r][c] = r * c % 37;						// for timing
+		} // for
+	} // for
+	for ( r = 0; r < xc; r += 1 ) {						// create/initialize Y matrix
+		Y[r] = aalloc( yc );
+		for ( c = 0; c < yc; c += 1 ) {
+			Y[r][c] = r * c % 37;						// for timing
+		} // for
+	} // for
+	for ( r = 0; r < xr; r += 1 ) {						// create Z matrix
+		Z[r] = aalloc( yc );
+	} // for
+
+    executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 16, true };
+
+    printf("starting\n");
+
+    start_actor_system( e );
+
+    printf("started\n");
+
+    derived_msg messages[xr];
+
+    derived_actor actors[xr];
+
+	for ( unsigned int r = 0; r < xr; r += 1 ) {
+		messages[r]{ Z[r], X[r], Y };
+	} // for
+
+	for ( unsigned int r = 0; r < xr; r += 1 ) {
+		actors[r] | messages[r];
+	} // for
+
+    printf("stopping\n");
+
+    stop_actor_system();
+
+    printf("stopped\n");
+
+    for ( r = 0; r < xr; r += 1 ) {						// deallocate X and Z matrices
+		free( X[r] );
+        free( Z[r] );
+	} // for
+	for ( r = 0; r < xc; r += 1 ) {						// deallocate Y matrix
+        free( Y[r] );
+	} // for
+
+    return 0;
+}

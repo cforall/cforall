@@ -15,9 +15,11 @@
 ###############################################################################
 
 SRC += \
+	Concurrency/Actors.cpp \
+	Concurrency/Actors.hpp \
 	Concurrency/KeywordsNew.cpp \
 	Concurrency/Keywords.cc \
 	Concurrency/Keywords.h \
 	Concurrency/WaitforNew.cpp \
 	Concurrency/Waitfor.cc \
-	Concurrency/Waitfor.h
+	Concurrency/Waitfor.h 

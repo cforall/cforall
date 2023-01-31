@@ -45,6 +45,7 @@ using namespace std;
 #include "Common/Stats.h"                   // for Stats
 #include "Common/UnimplementedError.h"      // for UnimplementedError
 #include "Common/utility.h"                 // for deleteAll, filter, printAll
+#include "Concurrency/Actors.hpp"           // for implementActors
 #include "Concurrency/Keywords.h"           // for implementMutex, implement...
 #include "Concurrency/Waitfor.h"            // for generateWaitfor
 #include "ControlStruct/ExceptDecl.h"       // for translateExcept
@@ -339,6 +340,8 @@ int main( int argc, char * argv[] ) {
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls( transUnit ) );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines( transUnit ) );
+
+        PASS( "Implement Actors", Concurrency::implementActors( transUnit ) );
 
 		PASS( "Implement Mutex", Concurrency::implementMutex( transUnit ) );
 		PASS( "Implement Thread Start", Concurrency::implementThreadStarter( transUnit ) );
