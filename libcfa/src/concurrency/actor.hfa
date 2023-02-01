@@ -1,6 +1,9 @@
+#pragma once
+
 #include <locks.hfa>
 #include <limits.hfa>
 #include <list.hfa>
+#include <kernel.hfa>
 
 #ifdef __CFA_DEBUG__
 #define CFA_DEBUG( stmt ) stmt

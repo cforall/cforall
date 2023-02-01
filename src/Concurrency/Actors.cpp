@@ -20,59 +20,173 @@
 #include "AST/Stmt.hpp"
 #include "AST/TranslationUnit.hpp"
 #include "AST/Expr.hpp"
+#include <algorithm>
 using namespace ast;
+using namespace std;
 
 namespace Concurrency {
 
 struct CollectactorStructDecls : public ast::WithGuards {
-    std::map<const StructDecl *, int> & actorStructDecls;
-    std::map<const StructDecl *, int>  & messageStructDecls;
+    unordered_set<const StructDecl *> & actorStructDecls;
+    unordered_set<const StructDecl *>  & messageStructDecls;
     const StructDecl ** requestDecl;
     const EnumDecl ** allocationDecl;
     const StructDecl ** actorDecl;
     const StructDecl ** msgDecl;
     StructDecl * parentDecl;
     bool insideStruct = false;
+    bool namedDecl = false;
 
+    // finds and sets a ptr to the Allocation enum, which is needed in the next pass
     void previsit( const EnumDecl * decl ) {
         if( decl->name == "Allocation" ) *allocationDecl = decl;
     }
 
+    // finds and sets a ptr to the actor, message, and request structs, which are needed in the next pass
     void previsit( const StructDecl * decl ) {
         GuardValue(insideStruct);
         insideStruct = true;
         parentDecl = mutate( decl );
         if( decl->name == "actor" ) *actorDecl = decl;
         if( decl->name == "message" ) *msgDecl = decl;
-        if( decl->name == "request" ) *requestDecl = decl;        
+        if( decl->name == "request" ) *requestDecl = decl;
 	}
 
+    // this catches structs of the form:
+    //     struct dummy_actor { actor a; };
+    // since they should be:
+    //     struct dummy_actor { inline actor; };
+    void previsit ( const ObjectDecl * decl ) {
+        if ( insideStruct && ! decl->name.empty() ) {
+            GuardValue(namedDecl);
+            namedDecl = true;
+        }
+    }
+
+    // this collects the valid actor and message struct decl pts
     void postvisit( const StructInstType * node ) {
         if ( ! *actorDecl || ! *msgDecl ) return;
-        if ( insideStruct ) {
+        if ( insideStruct && !namedDecl ) {
             if ( node->aggr() == *actorDecl ) {
-                actorStructDecls.insert({parentDecl, 1});
+                actorStructDecls.insert( parentDecl );
             } else if ( node->aggr() == *msgDecl ) {
-                messageStructDecls.insert({parentDecl, 1});
+                messageStructDecls.insert( parentDecl );
             }
         }
 	}
 
   public:
-    CollectactorStructDecls( std::map<const StructDecl *, int> & actorStructDecls, std::map<const StructDecl *, int> & messageStructDecls,
+    CollectactorStructDecls( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls,
         const StructDecl ** requestDecl, const EnumDecl ** allocationDecl, const StructDecl ** actorDecl, const StructDecl ** msgDecl ) 
         : actorStructDecls( actorStructDecls ), messageStructDecls( messageStructDecls ), requestDecl( requestDecl ), 
         allocationDecl( allocationDecl ), actorDecl(actorDecl), msgDecl(msgDecl) {}
 };
 
+// keeps track of all fwdDecls of message routines so that we can hoist them to right after the appropriate decls
+class FwdDeclTable {
+
+    // tracks which decls we have seen so that we can hoist the FunctionDecl to the highest point possible
+    struct FwdDeclData { 
+        const StructDecl * actorDecl;
+        const StructDecl * msgDecl;
+        FunctionDecl * fwdDecl;
+        bool actorFound;
+        bool msgFound;
+
+        bool readyToInsert() { return actorFound && msgFound; }
+        bool foundActor() { actorFound = true; return readyToInsert(); }
+        bool foundMsg() { msgFound = true; return readyToInsert(); }
+
+        FwdDeclData( const StructDecl * actorDecl, const StructDecl * msgDecl, FunctionDecl * fwdDecl ) :
+            actorDecl(actorDecl), msgDecl(msgDecl), fwdDecl(fwdDecl), actorFound(false), msgFound(false) {}
+    };
+
+    // map indexed by actor struct ptr
+    // value is map of all FwdDeclData that contains said actor struct ptr
+    // inner map is indexed by the message struct ptr of FwdDeclData
+    unordered_map<const StructDecl *, unordered_map<const StructDecl *, FwdDeclData *>> actorMap;
+
+    // this map is the same except the outer map is indexed by message ptr and the inner is indexed by actor ptr
+    unordered_map<const StructDecl *, unordered_map<const StructDecl *, FwdDeclData *>> msgMap;
+
+    void insert( const StructDecl * decl, const StructDecl * otherDecl, unordered_map<const StructDecl *, unordered_map<const StructDecl *, FwdDeclData *>> & map, FwdDeclData * data ) {
+        auto iter = map.find( decl );
+        if ( iter != map.end() ) { // if decl exists in map append data to existing inner map
+            iter->second.emplace( make_pair( otherDecl, data ) );
+        } else { // else create inner map for key
+            map.emplace( make_pair( decl, unordered_map<const StructDecl *, FwdDeclData *>( { make_pair( otherDecl, data ) } ) ) );
+        }
+    }
+
+  public:
+    // insert decl into table so that we can fwd declare it later (average cost: O(1))
+    void insertDecl( const StructDecl * actorDecl, const StructDecl * msgDecl, FunctionDecl * fwdDecl ) {
+        FwdDeclData * declToInsert = new FwdDeclData( actorDecl, msgDecl, fwdDecl );
+        insert( actorDecl, msgDecl, actorMap, declToInsert );
+        insert( msgDecl, actorDecl, msgMap, declToInsert );
+    }
+
+    // returns list of decls to insert after current struct decl
+    // Over the entire pass the runtime of this routine is O(r) where r is the # of receive routines
+    list<FunctionDecl *> updateDecl( const StructDecl * decl, bool isMsg ) {
+        unordered_map<const StructDecl *, unordered_map<const StructDecl *, FwdDeclData *>> & map = isMsg ? msgMap : actorMap;
+        unordered_map<const StructDecl *, unordered_map<const StructDecl *, FwdDeclData *>> & otherMap =  isMsg ? actorMap : msgMap;
+        auto iter = map.find( decl );
+        list<FunctionDecl *> toInsertAfter; // this is populated with decls that are ready to insert
+        if ( iter == map.end() ) return toInsertAfter;
+        
+        // iterate over inner map
+        unordered_map<const StructDecl *, FwdDeclData *> & currInnerMap = iter->second;
+        for ( auto innerIter = currInnerMap.begin(); innerIter != currInnerMap.end(); ) {
+            FwdDeclData * currentDatum = innerIter->second;
+            bool readyToInsert = isMsg ? currentDatum->foundMsg() : currentDatum->foundActor();
+            if ( ! readyToInsert ) { ++innerIter; continue; }
+            
+            // readyToInsert is true so we are good to insert the forward decl of the message fn
+            toInsertAfter.push_back( currentDatum->fwdDecl );
+
+            // need to remove from other map before deleting
+            // find inner map in other map ( other map is actor map if original is msg map and vice versa )
+            const StructDecl * otherDecl = isMsg ? currentDatum->actorDecl : currentDatum->msgDecl;
+            auto otherMapIter = otherMap.find( otherDecl );
+
+            unordered_map<const StructDecl *, FwdDeclData *> & otherInnerMap = otherMapIter->second;
+
+            // find the FwdDeclData we need to remove in the other inner map
+            auto otherInnerIter = otherInnerMap.find( decl );
+
+            // remove references to deleted FwdDeclData from current inner map
+            innerIter = currInnerMap.erase( innerIter ); // this does the increment so no explicit inc needed
+
+            // remove references to deleted FwdDeclData from other inner map
+            otherInnerMap.erase( otherInnerIter );
+            
+            // if other inner map is now empty, remove key from other outer map
+            if ( otherInnerMap.empty() )
+                otherMap.erase( otherDecl );
+
+            // now we are safe to delete the FwdDeclData since we are done with it
+            // and we have removed all references to it from our data structures
+            delete currentDatum;
+        }
+
+        // if current inner map is now empty, remove key from outer map.
+        // Have to do this after iterating for safety
+        if ( currInnerMap.empty() )
+            map.erase( decl );
+
+        return toInsertAfter;
+    }
+};
+
 struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
-    std::map<const StructDecl *, int> & actorStructDecls;
-    std::map<const StructDecl *, int>  & messageStructDecls;
+    unordered_set<const StructDecl *> & actorStructDecls;
+    unordered_set<const StructDecl *>  & messageStructDecls;
     const StructDecl ** requestDecl;
     const EnumDecl ** allocationDecl;
     const StructDecl ** actorDecl;
     const StructDecl ** msgDecl;
-    std::vector<FunctionDecl *> & forwardDecls;
+    FwdDeclTable & forwardDecls;
 
 	void postvisit( const FunctionDecl * decl ) {
         // return if not of the form receive( param1, param2 ) or if it is a forward decl
@@ -89,7 +203,9 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
         if ( !arg1InstType || !arg2InstType ) return;
 
         // If the struct instances are derived actor and message types then generate the message send routine
-        if ( actorStructDecls.count( arg1InstType->aggr() ) && messageStructDecls.count( arg2InstType->aggr() ) ) {
+        auto actorIter = actorStructDecls.find( arg1InstType->aggr() );
+        auto messageIter = messageStructDecls.find( arg2InstType->aggr() );
+        if ( actorIter != actorStructDecls.end() && messageIter != messageStructDecls.end() ) {
 
             // check that we have found all the decls we need from <actor.hfa>
             if ( !*allocationDecl || !*requestDecl ) 
@@ -224,7 +340,8 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
             );
             
             // forward decls to resolve use before decl problem for '|' routines
-            forwardDecls.push_back( ast::deepCopy( sendOperatorFunction ) );
+            forwardDecls.insertDecl( *actorIter, *messageIter , ast::deepCopy( sendOperatorFunction ) );
+            // forwardDecls.push_back( ast::deepCopy( sendOperatorFunction ) );
 
             sendOperatorFunction->stmts = sendBody;
             declsToAddAfter.push_back( sendOperatorFunction );
@@ -232,53 +349,53 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
 	}
 
   public:
-    GenReceiveDecls( std::map<const StructDecl *, int> & actorStructDecls, std::map<const StructDecl *, int> & messageStructDecls,
+    GenReceiveDecls( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls,
         const StructDecl ** requestDecl, const EnumDecl ** allocationDecl, const StructDecl ** actorDecl, const StructDecl ** msgDecl, 
-        std::vector<FunctionDecl *> & forwardDecls ) : actorStructDecls(actorStructDecls), messageStructDecls(messageStructDecls), 
+        FwdDeclTable & forwardDecls ) : actorStructDecls(actorStructDecls), messageStructDecls(messageStructDecls), 
         requestDecl(requestDecl), allocationDecl(allocationDecl), actorDecl(actorDecl), msgDecl(msgDecl), forwardDecls(forwardDecls) {}
 };
 
 struct GenFwdDecls : public ast::WithDeclsToAdd<> {
-    std::map<const StructDecl *, int> & actorStructDecls;
-    std::map<const StructDecl *, int>  & messageStructDecls;
-    std::vector<FunctionDecl *> & forwardDecls;
-    bool done;
+    unordered_set<const StructDecl *> & actorStructDecls;
+    unordered_set<const StructDecl *>  & messageStructDecls;
+    FwdDeclTable & forwardDecls;
 
-    void postvisit( const FunctionDecl * decl ) {
-        if ( done ) return;
-        // return if not of the form receive( param1, param2 ) or if it is a forward decl
-        if ( decl->name != "receive" || decl->params.size() != 2 || !decl->stmts ) return;
+    void postvisit( const StructDecl * decl ) {
+        list<FunctionDecl *> toAddAfter;
+        auto actorIter = actorStructDecls.find( decl );
+        if ( actorIter != actorStructDecls.end() ) { // this is a derived actor decl
+            // get list of fwd decls that we can now insert
+            toAddAfter = forwardDecls.updateDecl( decl, false );
 
-        // the params should be references
-        const ReferenceType * derivedActorRef = dynamic_cast<const ReferenceType *>(decl->params.at(0)->get_type());
-        const ReferenceType * derivedMsgRef = dynamic_cast<const ReferenceType *>(decl->params.at(1)->get_type());
-        if ( !derivedActorRef || !derivedMsgRef ) return;
+            // get rid of decl from actorStructDecls since we no longer need it
+            actorStructDecls.erase( actorIter );
+        } else {
+            auto messageIter = messageStructDecls.find( decl );
+            if ( messageIter == messageStructDecls.end() ) return;
 
-        // the references should be to struct instances
-        const StructInstType * arg1InstType = dynamic_cast<const StructInstType *>(derivedActorRef->base.get());
-        const StructInstType * arg2InstType = dynamic_cast<const StructInstType *>(derivedMsgRef->base.get());
-        if ( !arg1InstType || !arg2InstType ) return;
+            toAddAfter = forwardDecls.updateDecl( decl, true );
 
-        // If the struct instances are derived actor and message types then generate the message send routine
-        if ( actorStructDecls.count( arg1InstType->aggr() ) && messageStructDecls.count( arg2InstType->aggr() ) ) {
-            done = true;
-            for ( const auto & func : forwardDecls ) {
-                declsToAddBefore.push_back( func );
-            }
+            // get rid of decl from messageStructDecls since we no longer need it
+            messageStructDecls.erase( messageIter );
+        }
+
+        // add the fwd decls to declsToAddAfter
+        for ( FunctionDecl * func : toAddAfter ) {
+            declsToAddAfter.push_back( func );
         }
     }
 
   public:
-    GenFwdDecls( std::map<const StructDecl *, int> & actorStructDecls, std::map<const StructDecl *, int> & messageStructDecls, 
-        std::vector<FunctionDecl *> & forwardDecls ) : actorStructDecls(actorStructDecls), messageStructDecls(messageStructDecls),
-        forwardDecls(forwardDecls), done(false) {}
+    GenFwdDecls( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls, 
+        FwdDeclTable & forwardDecls ) : actorStructDecls(actorStructDecls), messageStructDecls(messageStructDecls),
+        forwardDecls(forwardDecls) {}
 };
 
 void implementActors( TranslationUnit & translationUnit ) {
-    // maps to collect all derived actor and message types
-    std::map<const StructDecl *, int> actorStructDecls;
-    std::map<const StructDecl *, int> messageStructDecls;
-    std::vector<FunctionDecl *> forwardDecls;
+    // unordered_maps to collect all derived actor and message types
+    unordered_set<const StructDecl *> actorStructDecls;
+    unordered_set<const StructDecl *> messageStructDecls;
+    FwdDeclTable forwardDecls;
 
     // for storing through the passes
     // these are populated with various important struct decls

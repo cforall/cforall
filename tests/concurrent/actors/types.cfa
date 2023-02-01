@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <mutex_stmt.hfa>
 
+struct dummy_actor { actor a; }; // this won't work since the actor isn't inlined
+
 struct derived_actor {
     inline actor;
     int counter;
@@ -25,10 +27,20 @@ Allocation receive( derived_actor & receiver, int i ) with( receiver ) {
     return Nodelete; 
 }
 
+Allocation receive( derived_actor & receiver, d_msg & msg ) {
+    return receive( receiver, msg.num );
+}
+
 struct derived_actor2 {
+    struct nested { int i; }; // testing nested before inline
     inline actor;
 };
 static inline void ?{}( derived_actor2 & this ) { ((actor &)this){}; }
+
+Allocation receive( derived_actor2 & receiver, d_msg & msg ) {
+    mutex(sout) sout | msg.num;
+    return Finished;
+}
 
 struct derived_actor3 {
     inline actor;
@@ -40,15 +52,6 @@ struct d_msg2 {
     int num;
 };
 static inline void ?{}( d_msg2 & this ) { ((message &)this){}; }
-
-Allocation receive( derived_actor2 & receiver, d_msg & msg ) {
-    mutex(sout) sout | msg.num;
-    return Finished;
-}
-
-Allocation receive( derived_actor & receiver, d_msg & msg ) {
-    return receive( receiver, msg.num );
-}
 
 Allocation receive( derived_actor3 & receiver, d_msg & msg ) {
     mutex(sout) sout | msg.num;

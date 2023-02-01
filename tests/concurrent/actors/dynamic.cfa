@@ -1,0 +1,74 @@
+#include <actor.hfa>
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+#include <stdio.h>
+
+int Times = 50000;								// default values
+
+struct derived_actor {
+    inline actor;
+};
+void ?{}( derived_actor & this ) { ((actor &)this){}; }
+
+struct derived_msg {
+    inline message;
+    int cnt;
+};
+
+void ?{}( derived_msg & this, int cnt ) {
+    ((message &) this){ Delete };
+    this.cnt = cnt;
+}
+void ?{}( derived_msg & this ) { ((derived_msg &)this){ 0 }; }
+
+
+Allocation receive( derived_actor & receiver, derived_msg & msg ) {
+    if ( msg.cnt >= Times ) {
+        sout | "Done";
+        return Delete;
+    }
+    derived_msg * d_msg = alloc();
+    (*d_msg){ msg.cnt + 1 };
+    derived_actor * d_actor = alloc();
+    (*d_actor){};
+    *d_actor | *d_msg;
+    return Delete;
+}
+
+int main( int argc, char * argv[] ) {
+    switch ( argc ) {
+	  case 2:
+		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
+			Times = atoi( argv[1] );
+			if ( Times < 1 ) goto Usage;
+		} // if
+	  case 1:											// use defaults
+		break;
+	  default:
+	  Usage:
+		sout | "Usage: " | argv[0] | " [ times (> 0) ]";
+		exit( EXIT_FAILURE );
+	} // switch
+
+    printf("starting\n");
+
+    executor e{ 0, 1, 1, false };
+    start_actor_system( e );
+
+    printf("started\n");
+
+    derived_msg * d_msg = alloc();
+    (*d_msg){};
+    derived_actor * d_actor = alloc();
+    (*d_actor){};
+    *d_actor | *d_msg;
+
+    printf("stopping\n");
+
+    stop_actor_system();
+
+    printf("stopped\n");
+
+    return 0;
+}

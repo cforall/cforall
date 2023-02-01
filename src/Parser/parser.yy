@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 30 20:47:27 2023
-// Update Count     : 5859
+// Last Modified On : Tue Jan 31 08:55:11 2023
+// Update Count     : 5861
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -2079,11 +2079,12 @@ type_qualifier_name:
 	| ATOMIC
 		{ $$ = DeclarationNode::newTypeQualifier( Type::Atomic ); }
 	| forall
+		{ $$ = DeclarationNode::newForall( $1 ); }
 	;
 
 forall:
 	FORALL '(' type_parameter_list ')'					// CFA
-		{ $$ = DeclarationNode::newForall( $3 ); }
+		{ $$ = $3; }
 	;
 
 declaration_qualifier_list:
@@ -2978,12 +2979,12 @@ type_declarator_name:									// CFA
 trait_specifier:										// CFA
 	TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' '}'
 		{ $$ = DeclarationNode::newTrait( $2, $4, nullptr ); }
-	| FORALL '(' type_parameter_list ')' TRAIT identifier_or_type_name '{' '}' // alternate
-		{ $$ = DeclarationNode::newTrait( $6, $3, nullptr ); }
+	| forall TRAIT identifier_or_type_name '{' '}' // alternate
+		{ $$ = DeclarationNode::newTrait( $3, $1, nullptr ); }
 	| TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' push trait_declaration_list pop '}'
 		{ $$ = DeclarationNode::newTrait( $2, $4, $8 ); }
-	| FORALL '(' type_parameter_list ')' TRAIT identifier_or_type_name '{' push trait_declaration_list pop '}' // alternate
-		{ $$ = DeclarationNode::newTrait( $6, $3, $9 ); }
+	| forall TRAIT identifier_or_type_name '{' push trait_declaration_list pop '}' // alternate
+		{ $$ = DeclarationNode::newTrait( $3, $1, $6 ); }
 	;
 
 trait_declaration_list:									// CFA
