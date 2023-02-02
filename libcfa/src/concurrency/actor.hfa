@@ -40,47 +40,93 @@ struct request {
 };
 P9_EMBEDDED( request, dlink(request) )
 
-void ?{}( request & this ) { this.stop = true; } // default ctor makes a sentinel
-void ?{}( request & this, actor * receiver, message * msg, __receive_fn fn ) {
+static inline void ?{}( request & this ) { this.stop = true; } // default ctor makes a sentinel
+static inline void ?{}( request & this, actor * receiver, message * msg, __receive_fn fn ) {
     this.receiver = receiver;
     this.msg = msg;
     this.fn = fn;
     this.stop = false;
 }
+static inline void ?{}( request & this, request & copy ) {
+    this.receiver = copy.receiver;
+    this.msg = copy.msg;
+    this.fn = copy.fn;
+    this.stop = copy.stop;
+}
 
+// hybrid data structure. Copies until buffer is full and then allocates for intrusive list
+struct copy_queue {
+    dlist( request ) list;
+    request * buffer;
+    size_t count, buffer_size, index;
+};
+static inline void ?{}( copy_queue & this ) {}
+static inline void ?{}( copy_queue & this, size_t buf_size ) with(this) { 
+    list{};
+    buffer_size = buf_size;
+    buffer = aalloc( buffer_size );
+    count = 0;
+    index = 0;
+}
+static inline void ^?{}( copy_queue & this ) with(this) { adelete(buffer); }
+
+static inline void insert( copy_queue & this, request & elem ) with(this) {
+    if ( count < buffer_size ) { // fast path ( no alloc )
+        buffer[count]{ elem };
+        count++;
+        return;
+    }
+    request * new_elem = alloc();
+    (*new_elem){ elem };
+    insert_last( list, *new_elem );
+}
+
+// once you start removing you need to remove all elements
+// it is not supported to call insert() before the list is fully empty
+// should_delete is an output param
+static inline request & remove( copy_queue & this, bool & should_delete ) with(this) {
+    if ( count > 0 ) {
+        count--;
+        should_delete = false;
+        size_t old_idx = index;
+        index = count == 0 ? 0 : index + 1;
+        return buffer[old_idx];
+    }
+    should_delete = true;
+    return try_pop_front( list );
+}
+
+static inline bool isEmpty( copy_queue & this ) with(this) { return count == 0 && list`isEmpty; }
+
+static size_t __buffer_size = 10; // C_TODO: rework this to be passed from executor through ctors (no need for global)
 struct work_queue {
     futex_mutex mutex_lock; 
-    dlist( request ) input;						// unbounded list of work requests
+    copy_queue * c_queue; // C_TODO: try putting this on the stack with ptr juggling
 }; // work_queue
-void ?{}( work_queue & this ) with(this) { input{}; mutex_lock{}; }
+static inline void ?{}( work_queue & this ) with(this) { 
+    c_queue = alloc();
+    (*c_queue){ __buffer_size }; // C_TODO: support passing copy buff size as arg to executor
+}
+static inline void ^?{}( work_queue & this ) with(this) { delete( c_queue ); }
 
-void insert( work_queue & this, request & elem ) with(this) {
+static inline void insert( work_queue & this, request & elem ) with(this) {
     lock( mutex_lock );
-    insert_last( input, elem );
+    insert( *c_queue, elem );
     unlock( mutex_lock );
 } // insert
 
-void transfer( work_queue & this, dlist(request) & transferTo ) with(this) {
+static inline void transfer( work_queue & this, copy_queue ** transfer_to ) with(this) {
     lock( mutex_lock );
-
-    //C_TODO CHANGE
-    // transferTo->transfer( input );              // transfer input to output
-
-    // this is awfully inefficient but Ill use it until transfer is implemented
-    request * r;
-    while ( ! input`isEmpty ) {
-        r = &try_pop_front( input );
-        if ( r ) insert_last( transferTo, *r );
-    }
-
-    // transfer( input, transferTo );
-
+    // swap copy queue ptrs
+    copy_queue * temp = *transfer_to;
+    *transfer_to = c_queue;
+    c_queue = temp;
     unlock( mutex_lock );
 } // transfer
 
 thread worker {
     work_queue * request_queues;
-    dlist( request ) current_queue;
+    copy_queue * current_queue;
 	request & req;
     unsigned int start, range;
 };
@@ -88,10 +134,12 @@ thread worker {
 static inline void ?{}( worker & this, cluster & clu, work_queue * request_queues, unsigned int start, unsigned int range ) {
     ((thread &)this){ clu };
     this.request_queues = request_queues;
-    this.current_queue{};
+    this.current_queue = alloc();
+    (*this.current_queue){ __buffer_size };
     this.start = start;
     this.range = range;
 }
+static inline void ^?{}( worker & mutex this ) with(this) { delete( current_queue ); }
 
 struct executor {
     cluster * cluster;							    // if workers execute on separate cluster
@@ -102,8 +150,9 @@ struct executor {
 	bool seperate_clus;								// use same or separate cluster for executor
 }; // executor
 
-static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int nworkers, unsigned int nrqueues, bool seperate_clus ) with(this) {
+static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int nworkers, unsigned int nrqueues, bool seperate_clus, size_t buf_size ) with(this) {
     if ( nrqueues < nworkers ) abort( "nrqueues needs to be >= nworkers\n" );
+    __buffer_size = buf_size;
     this.nprocessors = nprocessors;
     this.nworkers = nworkers;
     this.nrqueues = nrqueues;
@@ -129,7 +178,7 @@ static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int 
         (*(workers[i] = alloc())){ *cluster, request_queues, start, range };
     } // for
 }
-
+static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int nworkers, unsigned int nrqueues, bool seperate_clus ) { this{ nprocessors, nworkers, nrqueues, seperate_clus, __buffer_size }; }
 static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int nworkers, unsigned int nrqueues ) { this{ nprocessors, nworkers, nrqueues, __DEFAULT_EXECUTOR_SEPCLUS__ }; }
 static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int nworkers ) { this{ nprocessors, nworkers, __DEFAULT_EXECUTOR_RQUEUES__ }; }
 static inline void ?{}( executor & this, unsigned int nprocessors ) { this{ nprocessors, __DEFAULT_EXECUTOR_WORKERS__ }; }
@@ -149,9 +198,9 @@ static inline void ^?{}( executor & this ) with(this) {
         delete( processors[i] );
     } // for
 
-    delete( workers );
-    delete( request_queues );
-    delete( processors );
+    adelete( workers );
+    adelete( request_queues );
+    adelete( processors );
     if ( seperate_clus ) delete( cluster );
 }
 
@@ -172,7 +221,7 @@ struct actor {
     Allocation allocation_;			// allocation action
 };
 
-void ?{}( actor & this ) {
+static inline void ?{}( actor & this ) {
     // Once an actor is allocated it must be sent a message or the actor system cannot stop. Hence, its receive
     // member must be called to end it
     verifyf( __actor_executor_, "Creating actor before calling start_actor_system()." ); 
@@ -180,7 +229,7 @@ void ?{}( actor & this ) {
     this.ticket = get_next_ticket( *__actor_executor_ );
     __atomic_fetch_add( &__num_actors_, 1, __ATOMIC_SEQ_CST );
 }
-void ^?{}( actor & this ) {}
+static inline void ^?{}( actor & this ) {}
 
 static inline void check_actor( actor & this ) {
     if ( this.allocation_ != Nodelete ) {
@@ -206,9 +255,9 @@ struct message {
     Allocation allocation_;			// allocation action
 };
 
-void ?{}( message & this ) { this.allocation_ = Nodelete; }
-void ?{}( message & this, Allocation allocation ) { this.allocation_ = allocation; }
-void ^?{}( message & this ) {}
+static inline void ?{}( message & this ) { this.allocation_ = Nodelete; }
+static inline void ?{}( message & this, Allocation allocation ) { this.allocation_ = allocation; }
+static inline void ^?{}( message & this ) {}
 
 static inline void check_message( message & this ) {
     switch ( this.allocation_ ) {						// analyze message status
@@ -219,7 +268,7 @@ static inline void check_message( message & this ) {
     } // switch
 }
 
-void deliver_request( request & this ) {
+static inline void deliver_request( request & this ) {
     Allocation actor_allocation = this.fn( *this.receiver, *this.msg );
     this.receiver->allocation_ = actor_allocation;
     check_actor( *this.receiver );
@@ -227,16 +276,18 @@ void deliver_request( request & this ) {
 }
 
 void main( worker & this ) with(this) {
+    bool should_delete;
     Exit:
     for ( unsigned int i = 0;; i = (i + 1) % range ) { // cycle through set of request buffers
-        transfer( request_queues[i + start], current_queue );
-        while ( ! current_queue`isEmpty ) {
-            &req = &try_pop_front( current_queue );
+        // C_TODO: potentially check queue count instead of immediately trying to transfer
+        transfer( request_queues[i + start], &current_queue );
+        while ( ! isEmpty( *current_queue ) ) {
+            &req = &remove( *current_queue, should_delete );
             if ( !&req ) continue; // possibly add some work stealing/idle sleep here
             if ( req.stop ) break Exit;
             deliver_request( req );
 
-            delete( &req );
+            if ( should_delete ) delete( &req );
         } // while
     } // for
 }
@@ -252,7 +303,7 @@ static inline void send( actor & this, request & req ) {
 static inline void start_actor_system( size_t num_thds ) {
     __actor_executor_thd = active_thread();
     __actor_executor_ = alloc();
-    (*__actor_executor_){ 0, num_thds, num_thds * 16 };
+    (*__actor_executor_){ 0, num_thds, num_thds == 1 ? 1 : num_thds * 16 };
 }
 
 static inline void start_actor_system() { start_actor_system( active_cluster()->procs.total ); }

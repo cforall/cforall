@@ -179,6 +179,8 @@ class FwdDeclTable {
     }
 };
 
+#define __ALLOC 0
+
 struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
     unordered_set<const StructDecl *> & actorStructDecls;
     unordered_set<const StructDecl *>  & messageStructDecls;
@@ -225,6 +227,7 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
             */
             CompoundStmt * sendBody = new CompoundStmt( decl->location );
 
+            #if __ALLOC
             // Generates: request * new_req = alloc();
             sendBody->push_back( new DeclStmt(
                 decl->location,
@@ -235,6 +238,17 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
                     new SingleInit( decl->location, new UntypedExpr( decl->location, new NameExpr( decl->location, "alloc" ), {} ) )
                 )
             ));
+            #else
+            // Generates: request new_req;
+            sendBody->push_back( new DeclStmt(
+                decl->location,
+                new ObjectDecl(
+                    decl->location,
+                    "new_req",
+                    new StructInstType( *requestDecl )
+                )
+            ));
+            #endif
             
             // Function type is: Allocation (*)( derived_actor &, derived_msg & )
             FunctionType * derivedReceive = new FunctionType();
@@ -275,6 +289,7 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
                 )
             ));
 
+            #if __ALLOC
             // Generates: (*new_req){ &receiver, &msg, fn };
             sendBody->push_back( new ExprStmt(
                 decl->location,
@@ -304,6 +319,37 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
 					}
 				)
 			));
+            #else
+            // Generates: new_req{ &receiver, &msg, fn };
+            sendBody->push_back( new ExprStmt(
+                decl->location,
+				new UntypedExpr (
+                    decl->location, 
+					new NameExpr( decl->location, "?{}" ),
+					{
+						new NameExpr( decl->location, "new_req" ),
+                        new AddressExpr( new NameExpr( decl->location, "receiver" ) ),
+                        new AddressExpr( new NameExpr( decl->location, "msg" ) ),
+                        new NameExpr( decl->location, "fn" )
+					}
+				)
+			));
+
+            // Generates: send( receiver, new_req );
+            sendBody->push_back( new ExprStmt(
+                decl->location,
+				new UntypedExpr (
+                    decl->location,
+					new NameExpr( decl->location, "send" ),
+					{
+						{
+                            new NameExpr( decl->location, "receiver" ),
+                            new NameExpr( decl->location, "new_req" )
+                        }
+					}
+				)
+			));
+            #endif
             
             // Generates: return receiver;
             sendBody->push_back( new ReturnStmt( decl->location, new NameExpr( decl->location, "receiver" ) ) );

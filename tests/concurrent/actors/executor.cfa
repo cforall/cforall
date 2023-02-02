@@ -1,0 +1,109 @@
+#include <actor.hfa>
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+#include <stdio.h>
+
+// int Actors = 40000, Set = 100, Rounds = 100, Processors = 1, Batch = 1, BufSize = 10; // default values
+int Actors = 1000, Set = 20, Rounds = 10, Processors = 1, Batch = 1, BufSize = 10; // other defaults for test to run in reasonable time
+
+static int ids = 0;
+struct d_actor { 
+    inline actor;
+    d_actor * gstart;
+    int id, rounds, recs, sends;
+};
+void ?{}( d_actor & this ) with(this) {
+    ((actor &)this){};
+    id = ids++;
+    gstart = (&this + (id / Set * Set - id)); // remember group-start array-element
+    rounds = Set * Rounds;	// send at least one message to each group member
+    recs = 0;
+    sends = 0;
+}
+
+struct d_msg { inline message; } shared_msg;
+void ?{}( d_msg & this ) { ((message &) this){ Nodelete }; }
+
+Allocation receive( d_actor & this, d_msg & msg ) with( this ) {
+    if ( recs == rounds ) return Finished;
+    if ( recs % Batch == 0 ) {
+        for ( i; Batch ) {
+            gstart[sends % Set] | shared_msg;
+            sends += 1;
+        }
+    }
+    recs += 1;
+    return Nodelete;
+}
+
+int main( int argc, char * argv[] ) {
+    switch ( argc ) {
+	  case 7:
+		if ( strcmp( argv[6], "d" ) != 0 ) {			// default ?
+			BufSize = atoi( argv[6] );
+			if ( BufSize < 0 ) goto Usage;
+		} // if
+	  case 6:
+		if ( strcmp( argv[5], "d" ) != 0 ) {			// default ?
+			Batch = atoi( argv[5] );
+			if ( Batch < 1 ) goto Usage;
+		} // if
+	  case 5:
+		if ( strcmp( argv[4], "d" ) != 0 ) {			// default ?
+			Processors = atoi( argv[4] );
+			if ( Processors < 1 ) goto Usage;
+		} // if
+	  case 4:
+		if ( strcmp( argv[3], "d" ) != 0 ) {			// default ?
+			Rounds = atoi( argv[3] );
+			if ( Rounds < 1 ) goto Usage;
+		} // if
+	  case 3:
+		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
+			Set = atoi( argv[2] );
+			if ( Set < 1 ) goto Usage;
+		} // if
+	  case 2:
+		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
+			Actors = atoi( argv[1] );
+			if ( Actors < 1 || Actors <= Set || Actors % Set != 0 ) goto Usage;
+		} // if
+	  case 1:											// use defaults
+		break;
+	  default:
+	  Usage:
+		sout | "Usage: " | argv[0]
+             | " [ actors (> 0 && > set && actors % set == 0 ) | 'd' (default " | Actors
+			 | ") ] [ set (> 0) | 'd' (default " | Set
+			 | ") ] [ rounds (> 0) | 'd' (default " | Rounds
+			 | ") ] [ processors (> 0) | 'd' (default " | Processors
+			 | ") ] [ batch (> 0) | 'd' (default " | Batch
+			 | ") ] [ buffer size (>= 0) | 'd' (default " | BufSize
+			 | ") ]" ;
+		exit( EXIT_FAILURE );
+	} // switch
+
+    
+    executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 512, true, BufSize };
+
+    printf("starting\n");
+
+    start_actor_system( e );
+
+    printf("started\n");
+
+    d_actor actors[ Actors ];
+
+	for ( i; Actors ) {
+		actors[i] | shared_msg;
+	} // for
+
+    printf("stopping\n");
+
+    stop_actor_system();
+
+    printf("stopped\n");
+
+    return 0;
+}

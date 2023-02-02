@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-unsigned int xr = 100, xc = 100, yc = 100, Processors = 1; // default values
+unsigned int xr = 500, xc = 500, yc = 500, Processors = 1; // default values
 
 struct derived_actor {
     inline actor;

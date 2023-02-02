@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-int Times = 50000;								// default values
+int Times = 1000000;								// default values
 
 struct derived_actor {
     inline actor;
