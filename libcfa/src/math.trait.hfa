@@ -9,43 +9,49 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 16 15:40:52 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 20 17:47:19 2021
-// Update Count     : 19
+// Last Modified On : Thu Feb  2 11:36:56 2023
+// Update Count     : 20
 // 
 
 #pragma once
 
-trait Not( U ) {
+forall( U )
+trait Not {
 	void ?{}( U &, zero_t );
 	int !?( U );
 }; // Not
 
-trait Equality( T | Not( T ) ) {
+forall( T | Not( T ) )
+trait Equality {
 	int ?==?( T, T );
 	int ?!=?( T, T );
 }; // Equality
 
-trait Relational( U | Equality( U ) ) {
+forall( U | Equality( U ) )
+trait Relational {
 	int ?<?( U, U );
 	int ?<=?( U, U );
 	int ?>?( U, U );
 	int ?>=?( U, U );
 }; // Relational
 
-trait Signed( T ) {
+forall ( T )
+trait Signed {
 	T +?( T );
 	T -?( T );
 	T abs( T );
 }; // Signed
 
-trait Additive( U | Signed( U ) ) {
+forall( U | Signed( U ) )
+trait Additive {
 	U ?+?( U, U );
 	U ?-?( U, U );
 	U ?+=?( U &, U );
 	U ?-=?( U &, U );
 }; // Additive
 
-trait Incdec( T | Additive( T ) ) {
+forall( T | Additive( T ) )
+trait Incdec {
 	void ?{}( T &, one_t );
 	// T ?++( T & );
 	// T ++?( T & );
@@ -53,14 +59,16 @@ trait Incdec( T | Additive( T ) ) {
 	// T --?( T & );
 }; // Incdec
 
-trait Multiplicative( U | Incdec( U ) ) {
+forall( U | Incdec( U ) )
+trait Multiplicative {
 	U ?*?( U, U );
 	U ?/?( U, U );
 	U ?%?( U, U );
 	U ?/=?( U &, U );
 }; // Multiplicative
 
-trait Arithmetic( T | Relational( T ) | Multiplicative( T ) ) {
+forall( T | Relational( T ) | Multiplicative( T ) )
+trait Arithmetic {
 }; // Arithmetic
 
 // Local Variables: //

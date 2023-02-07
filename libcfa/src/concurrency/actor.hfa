@@ -24,6 +24,9 @@
 // Define if executor is created in a separate cluster
 #define __DEFAULT_EXECUTOR_SEPCLUS__ false
 
+// when you flip this make sure to recompile compiler and flip the appropriate flag there too in Actors.cpp
+#define __ALLOC 0
+
 // forward decls
 struct actor;
 struct message;
@@ -57,20 +60,29 @@ static inline void ?{}( request & this, request & copy ) {
 // hybrid data structure. Copies until buffer is full and then allocates for intrusive list
 struct copy_queue {
     dlist( request ) list;
+    #if ! __ALLOC
     request * buffer;
     size_t count, buffer_size, index;
+    #endif
 };
 static inline void ?{}( copy_queue & this ) {}
 static inline void ?{}( copy_queue & this, size_t buf_size ) with(this) { 
     list{};
+    #if ! __ALLOC
     buffer_size = buf_size;
     buffer = aalloc( buffer_size );
     count = 0;
     index = 0;
+    #endif
 }
-static inline void ^?{}( copy_queue & this ) with(this) { adelete(buffer); }
+static inline void ^?{}( copy_queue & this ) with(this) {
+    #if ! __ALLOC
+    adelete(buffer);
+    #endif
+}
 
 static inline void insert( copy_queue & this, request & elem ) with(this) {
+    #if ! __ALLOC
     if ( count < buffer_size ) { // fast path ( no alloc )
         buffer[count]{ elem };
         count++;
@@ -79,12 +91,16 @@ static inline void insert( copy_queue & this, request & elem ) with(this) {
     request * new_elem = alloc();
     (*new_elem){ elem };
     insert_last( list, *new_elem );
+    #else
+    insert_last( list, elem );
+    #endif
 }
 
 // once you start removing you need to remove all elements
 // it is not supported to call insert() before the list is fully empty
 // should_delete is an output param
 static inline request & remove( copy_queue & this, bool & should_delete ) with(this) {
+    #if ! __ALLOC
     if ( count > 0 ) {
         count--;
         should_delete = false;
@@ -92,31 +108,42 @@ static inline request & remove( copy_queue & this, bool & should_delete ) with(t
         index = count == 0 ? 0 : index + 1;
         return buffer[old_idx];
     }
+    #endif
     should_delete = true;
     return try_pop_front( list );
 }
 
-static inline bool isEmpty( copy_queue & this ) with(this) { return count == 0 && list`isEmpty; }
+static inline bool isEmpty( copy_queue & this ) with(this) {
+    #if ! __ALLOC
+    return count == 0 && list`isEmpty;
+    #else
+    return list`isEmpty;
+    #endif
+}
 
 static size_t __buffer_size = 10; // C_TODO: rework this to be passed from executor through ctors (no need for global)
 struct work_queue {
-    futex_mutex mutex_lock; 
+    __spinlock_t mutex_lock;
+    copy_queue owned_queue;
     copy_queue * c_queue; // C_TODO: try putting this on the stack with ptr juggling
+
 }; // work_queue
 static inline void ?{}( work_queue & this ) with(this) { 
-    c_queue = alloc();
-    (*c_queue){ __buffer_size }; // C_TODO: support passing copy buff size as arg to executor
+    // c_queue = alloc();
+    // (*c_queue){ __buffer_size };
+    owned_queue{ __buffer_size };
+    c_queue = &owned_queue;
 }
-static inline void ^?{}( work_queue & this ) with(this) { delete( c_queue ); }
+// static inline void ^?{}( work_queue & this ) with(this) { delete( c_queue ); }
 
 static inline void insert( work_queue & this, request & elem ) with(this) {
-    lock( mutex_lock );
+    lock( mutex_lock __cfaabi_dbg_ctx2 );
     insert( *c_queue, elem );
     unlock( mutex_lock );
 } // insert
 
 static inline void transfer( work_queue & this, copy_queue ** transfer_to ) with(this) {
-    lock( mutex_lock );
+    lock( mutex_lock __cfaabi_dbg_ctx2 );
     // swap copy queue ptrs
     copy_queue * temp = *transfer_to;
     *transfer_to = c_queue;
@@ -125,6 +152,7 @@ static inline void transfer( work_queue & this, copy_queue ** transfer_to ) with
 } // transfer
 
 thread worker {
+    copy_queue owned_queue;
     work_queue * request_queues;
     copy_queue * current_queue;
 	request & req;
@@ -134,12 +162,14 @@ thread worker {
 static inline void ?{}( worker & this, cluster & clu, work_queue * request_queues, unsigned int start, unsigned int range ) {
     ((thread &)this){ clu };
     this.request_queues = request_queues;
-    this.current_queue = alloc();
-    (*this.current_queue){ __buffer_size };
+    // this.current_queue = alloc();
+    // (*this.current_queue){ __buffer_size };
+    this.owned_queue{ __buffer_size };
+    this.current_queue = &this.owned_queue;
     this.start = start;
     this.range = range;
 }
-static inline void ^?{}( worker & mutex this ) with(this) { delete( current_queue ); }
+// static inline void ^?{}( worker & mutex this ) with(this) { delete( current_queue ); }
 
 struct executor {
     cluster * cluster;							    // if workers execute on separate cluster

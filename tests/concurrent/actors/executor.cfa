@@ -85,7 +85,7 @@ int main( int argc, char * argv[] ) {
 	} // switch
 
     
-    executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 512, true, BufSize };
+    executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 512, true };
 
     printf("starting\n");
 

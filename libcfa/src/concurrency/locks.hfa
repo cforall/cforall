@@ -639,7 +639,8 @@ static inline void on_wakeup(block_spin_lock & this, size_t recursion ) with(thi
 
 //-----------------------------------------------------------------------------
 // is_blocking_lock
-trait is_blocking_lock(L & | sized(L)) {
+forall( L & | sized(L) )
+trait is_blocking_lock {
 	// For synchronization locks to use when acquiring
 	void on_notify( L &, struct thread$ * );
 

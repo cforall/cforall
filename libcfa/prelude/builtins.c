@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 21 16:21:03 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 14 08:45:54 2021
-// Update Count     : 133
+// Last Modified On : Thu Feb  2 11:33:56 2023
+// Update Count     : 135
 //
 
 #define __cforall_builtins__
@@ -63,7 +63,8 @@ struct generator$ {
 static inline void  ?{}(generator$ & this) { ((int&)this) = 0; }
 static inline void ^?{}(generator$ &) {}
 
-trait is_generator(T &) {
+forall( T & )
+trait is_generator {
       void main(T & this);
       generator$ * get_generator(T & this);
 };

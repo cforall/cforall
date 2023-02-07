@@ -1,1 +1,21 @@
-forall.cfa:244:25: warning: Compiled
+1
+f
+97
+f
+g
+f
+f
+g
+fT
+fT
+fT
+fTU
+fTU
+fTU
+1 2
+2 1
+1, 2
+@ 0 2 0 4 6.4 6.4 6.4 6.4+3.i 4
+3. 3.
+45
+12 3

@@ -11,8 +11,8 @@
 // Author           : Thierry Delisle
 // Created On       : Fri May 25 01:24:09 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  4 09:16:53 2019
-// Update Count     : 1
+// Last Modified On : Thu Feb  2 11:46:08 2023
+// Update Count     : 2
 //
 
 #pragma once
@@ -69,7 +69,8 @@ void lock(recursive_mutex_lock & this) __attribute__((deprecated("use concurrenc
 bool try_lock(recursive_mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
 void unlock(recursive_mutex_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
 
-trait is_lock(L & | sized(L)) {
+forall( L & | sized(L) )
+trait is_lock {
 	void lock  (L &);
 	void unlock(L &);
 };

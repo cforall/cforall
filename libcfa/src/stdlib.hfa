@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 11 18:25:53 2022
-// Update Count     : 765
+// Last Modified On : Thu Feb  2 11:30:04 2023
+// Update Count     : 766
 //
 
 #pragma once
@@ -403,7 +403,8 @@ long double _Complex random( void );					// [0.0, 1.0)+[0.0, 1.0)i
 //   prng( sprng, 5, 21 );
 //   calls( sprng );
 
-trait basic_prng( PRNG &, R ) {
+forall( PRNG &, R )
+trait basic_prng {
 	void set_seed( PRNG & prng, R seed );				// set seed
 	R get_seed( PRNG & prng );							// get seed
 	R prng( PRNG & prng );

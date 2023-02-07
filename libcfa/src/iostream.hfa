@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 10 10:02:07 2021
-// Update Count     : 407
+// Last Modified On : Thu Feb  2 11:25:39 2023
+// Update Count     : 410
 //
 
 #pragma once
@@ -21,7 +21,8 @@
 // *********************************** ostream ***********************************
 
 
-trait basic_ostream( ostype & ) {
+forall( ostype & )
+trait basic_ostream {
 	// private
 	bool sepPrt$( ostype & );							// get separator state (on/off)
 	void sepReset$( ostype & );							// set separator state to default state
@@ -50,7 +51,8 @@ trait basic_ostream( ostype & ) {
 	int fmt( ostype &, const char format[], ... ) __attribute__(( format(printf, 2, 3) ));
 }; // basic_ostream
 	
-trait ostream( ostype & | basic_ostream( ostype ) ) {
+forall( ostype & | basic_ostream( ostype ) )
+trait ostream {
 	bool fail( ostype & );								// operation failed?
 	void clear( ostype & );
 	int flush( ostype & );
@@ -59,11 +61,13 @@ trait ostream( ostype & | basic_ostream( ostype ) ) {
 	ostype & write( ostype &, const char [], size_t );
 }; // ostream
 
-// trait writeable( T ) {
+// forall( T )
+// trait writeable {
 // 	forall( ostype & | ostream( ostype ) ) ostype & ?|?( ostype &, T );
 // }; // writeable
 
-trait writeable( T, ostype & | ostream( ostype ) ) {
+forall( T, ostype & | ostream( ostype ) )
+	trait writeable {
 	ostype & ?|?( ostype &, T );
 }; // writeable
 
@@ -289,7 +293,8 @@ forall( ostype & | basic_ostream( ostype ) ) {
 // *********************************** istream ***********************************
 
 
-trait basic_istream( istype & ) {
+forall( istype & )
+trait basic_istream {
 	// private
 	bool getANL$( istype & );							// get scan newline (on/off)
 	// public
@@ -301,7 +306,8 @@ trait basic_istream( istype & ) {
 	bool eof( istype & );
 }; // basic_istream
 
-trait istream( istype & | basic_istream( istype ) ) {
+forall( istype & | basic_istream( istype ) )
+trait istream {
 	bool fail( istype & );
 	void clear( istype & );
 	void open( istype & is, const char name[] );
@@ -309,7 +315,8 @@ trait istream( istype & | basic_istream( istype ) ) {
 	istype & read( istype &, char [], size_t );
 }; // istream
 
-trait readable( T ) {
+forall( T )
+trait readable {
 	forall( istype & | istream( istype ) ) istype & ?|?( istype &, T );
 }; // readable
 

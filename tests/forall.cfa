@@ -9,36 +9,44 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May  9 08:48:15 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun  5 10:06:08 2021
-// Update Count     : 36
+// Last Modified On : Sun Feb  5 07:54:43 2023
+// Update Count     : 90
 //
 
-void g1() {
-	forall( T ) T f( T ) {};
-	void f( int ) {};
-	void h( void (*p)(void) ) {};
+#include <fstream.hfa>
 
-	int x;
-	void (*y)(void);
-	char z;
-	float w;
+void g1() {
+	forall( T ) T f( T p ) { sout | 'f'; return p;  };
+	void f( int p ) { sout | p; };
+	void g( void ) { sout | 'g'; };
+	void h( void (*p)(void) ) { p(); };
+
+	int x = 1;
+	void (*y)(void) = g;
+	char z = 'a';
+	float w = 3.5;
 
 	f( x );
 	f( y );
 	f( z );
 	f( w );
+	h( y );
+	f( y );
 	h( f( y ) );
 }
 
 void g2() {
-	forall( T ) void f( T, T ) {}
-	forall( T, U ) void f( T, U ) {}
+	forall( T ) void f( T, T ) { sout | "fT"; }
+	forall( T, U ) void f( T, U ) { sout | "fTU"; }
 
 	int x;
 	float y;
-	int *z;
-	float *w;
+	int * z;
+	float * w;
 
+	f( x, x );
+	f( y, y );
+	f( w, w );
 	f( x, y );
 	f( z, w );
 	f( x, z );
@@ -49,13 +57,18 @@ void g2() {
 // typedef forall ( T ) int (* f)( int );
 
 forall( T )
-void swap( T left, T right ) {
-	T temp = left;
-	left = right;
-	right = temp;
+void swap( T & left, T & right ) {						// by reference
+    T temp = left;
+    left = right;
+    right = temp;
 }
 
-trait sumable( T ) {
+forall( T )
+[ T, T ] swap( T i, T j ) {								// by value
+    return [ j, i ];
+}
+
+forall( T ) trait sumable {
 	void ?{}( T &, zero_t );							// 0 literal constructor
 	T ?+?( T, T );										// assortment of additions
 	T ?+=?( T &, T );
@@ -63,7 +76,7 @@ trait sumable( T ) {
 	T ?++( T & );
 }; // sumable
 
-forall( T | sumable( T ) )						// use trait
+forall( T | sumable( T ) )								// use trait
 T sum( size_t size, T a[] ) {
 	T total = 0;										// initialize by 0 constructor
 	for ( size_t i = 0; i < size; i += 1 )
@@ -71,7 +84,7 @@ T sum( size_t size, T a[] ) {
 	return total;
 } // sum
 
-forall( T | { T ?+?( T, T ); T ?++( T & ); [T] ?+=?( T &,T ); } )
+forall( T | { T ?+?( T, T ); T ?++( T & ); [T] ?+=?( T &, T ); } )
 T twice( T t ) {
 	return t + t;
 }
@@ -81,14 +94,19 @@ T min( T t1, T t2 ) {
 	return t1 < t2 ? t1 : t2;
 }
 
-int fred() {
-	int x = 1, y = 2, a[10];
+void fred() {
+	int x = 1, y = 2, a[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 	float f;
 
+	sout | x | y;
 	swap( x, y );
-	twice( x );
+	sout | x | y | nl | swap( x, y );
+	// [ x, y ] = swap( y, x );
+	sout | twice( ' ' ) | ' ' | twice( 0hh ) | twice( 1h ) | twice( 0n ) | twice( 2 )
+		 | twice( 3.2f ) | twice( 3.2 ) | twice( 3.2d ) | twice( 3.2+1.5i ) | twice( x );
 	f = min( 4.0, 3.0 );
-	sum( 10, a );
+	sout | f | min( 4.0, 3.0 );
+	sout | sum( 10, a );
 }
 
 // Multiple forall
@@ -185,19 +203,20 @@ forall( T ) static forall( S ) {
 }
 
 forall( T ) {
-	extern "C" {
+//	extern "C" {
 		struct SS { T t; };
-		T foo( T ) {}
-	}
+		T foo( T p ) { return p; }
+//	}
 }
 
 SS(int) s;
 W(int,int) w;
 
-int jane() {
+void jane() {
 //	int j = bar( 3, 4 );
 	int k = baz( 3, 4, 5 );
 	int i = foo( 3 );
+	sout | k | i;
 }
 
 forall( T ) void check_otype() {
@@ -210,6 +229,7 @@ forall( T ) void check_otype() {
 
 	T t;
 	T t2 = t;
+	sout | &tr | tp;
 }
 
 forall( T * ) void check_dstype() {
@@ -241,7 +261,10 @@ forall( T & ) void check_dtype() {
 // w3 g3;
 
 int main( void ) {
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	g1();
+	g2();
+	fred();
+	jane();
 }
 
 // Local Variables: //

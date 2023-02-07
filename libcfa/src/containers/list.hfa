@@ -8,9 +8,9 @@
 //
 // Author           : Michael Brooks
 // Created On       : Wed Apr 22 18:00:00 2020
-// Last Modified By : Michael Brooks
-// Last Modified On : Wed Apr 22 18:00:00 2020
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Feb  2 11:32:26 2023
+// Update Count     : 2
 //
 
 #pragma once
@@ -22,7 +22,8 @@ struct tytagref {
     inline T &;
 };
 
-trait embedded( tOuter &, tMid &, tInner & ) {
+forall( tOuter &, tMid &, tInner & )
+trait embedded {
     tytagref( tMid, tInner ) ?`inner( tOuter & );
 };
 

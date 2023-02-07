@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jul  5 18:00:07 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 17 11:02:46 2020
-// Update Count     : 4
+// Last Modified On : Thu Feb  2 11:41:24 2023
+// Update Count     : 5
 //
 
 #pragma once
@@ -49,8 +49,8 @@ static inline T* data(heap_allocator(T)* this)
 
 //------------------------------------------------------------------------------
 //Declaration
-trait allocator_c(T, allocator_t)
-{
+forall( T, allocator_t )
+trait allocator_c {
 	void realloc_storage(allocator_t*, size_t);
 	T* data(allocator_t*);
 };

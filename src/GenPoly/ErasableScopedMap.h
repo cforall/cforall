@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ScopedMap.h --
+// ErasableScopedMap.h --
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed Dec 2 11:37:00 2015
@@ -50,7 +50,7 @@ public:
 	typedef typename Scope::pointer pointer;
 	typedef typename Scope::const_pointer const_pointer;
 
-	// Both iterator types are complete bidirection iterators, defined below.
+	// Both iterator types are complete bidirectional iterators, see below.
 	class iterator;
 	class const_iterator;
 
@@ -117,6 +117,12 @@ public:
 	}
 	std::pair< iterator, bool > insert( const Key &key, const Value &value ) { return insert( std::make_pair( key, value ) ); }
 
+	Value& operator[] ( const Key &key ) {
+		iterator slot = find( key );
+		if ( slot != end() ) return slot->second;
+		return insert( key, Value() ).first->second;
+	}
+
 	/// Marks the given element as erased from this scope inward; returns 1 for erased an element, 0 otherwise
 	size_type erase( const Key &key ) {
 		typename Scope::iterator val = scopes.back().find( key );
@@ -129,10 +135,8 @@ public:
 		}
 	}
 
-	Value& operator[] ( const Key &key ) {
-		iterator slot = find( key );
-		if ( slot != end() ) return slot->second;
-		return insert( key, Value() ).first->second;
+	bool contains( const Key & key ) const {
+		return find( key ) != cend();
 	}
 };
 

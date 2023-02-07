@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Oct 31 16:38:50 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan 15 07:42:35 2020
-// Update Count     : 28
+// Last Modified On : Thu Feb  2 11:33:08 2023
+// Update Count     : 29
 
 #pragma once
 
@@ -68,7 +68,8 @@ struct __small_array {
 //-----------------------------------------------------------------------------
 
 #ifdef __cforall
-	trait is_node(T &) {
+	forall( T & )
+	trait is_node {
 		T *& get_next( T & );
 	};
 #endif

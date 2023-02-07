@@ -185,10 +185,7 @@ ast::Decl const * ReplaceTypedefCore::postvisit(
 }
 
 void ReplaceTypedefCore::previsit( ast::TypeDecl const * decl ) {
-	TypedefMap::iterator iter = typedefNames.find( decl->name );
-	if ( iter != typedefNames.end() ) {
-		typedefNames.erase( iter );
-	}
+	typedefNames.erase( decl->name );
 	typedeclNames.insert( decl->name, decl );
 }
 

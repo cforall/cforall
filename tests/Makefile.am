@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Sat Jun  5 14:49:25 2021
-## Update Count     : 92
+## Last Modified On : Fri Feb  3 23:06:44 2023
+## Update Count     : 94
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -88,7 +88,7 @@ EXTRA_DIST = test.py \
 	io/.in/many_read.data \
 	meta/fork+exec.hfa \
 	concurrent/unified_locking/mutex_test.hfa \
-    concurrent/channels/parallel_harness.hfa
+	concurrent/channels/parallel_harness.hfa
 
 dist-hook:
 	echo "Gathering test files"
@@ -182,7 +182,7 @@ $(GENERATED_CODE): % : %.cfa $(CFACCBIN)
 # tests that just validate syntax and compiler output should be compared to stderr
 CFACOMPILE_SYNTAX = $(CFACOMPILETEST) -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o $(abspath ${@})
 
-SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator forall \
+SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator \
 	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment
 $(SYNTAX_ONLY_CODE): % : %.cfa $(CFACCBIN)
 	$(CFACOMPILE_SYNTAX)

@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May  4 14:08:26 2022
-// Update Count     : 35
+// Last Modified On : Thu Feb  2 10:59:10 2023
+// Update Count     : 36
 //
 
 #pragma once
@@ -53,14 +53,15 @@ struct WarningData {
 };
 
 constexpr WarningData WarningFormats[] = {
-	{"self-assign"            , Severity::Warn    , "self assignment of expression: %s"                          },
-	{"reference-conversion"   , Severity::Warn    , "rvalue to reference conversion of rvalue: %s"               },
-	{"qualifiers-zero_t-one_t", Severity::Warn    , "questionable use of type qualifier %s with %s"              },
-	{"aggregate-forward-decl" , Severity::Warn    , "forward declaration of nested aggregate: %s"                },
-	{"superfluous-decl"       , Severity::Warn    , "declaration does not allocate storage: %s"                  },
-	{"superfluous-else"       , Severity::Warn    , "else clause never executed for empty loop conditional"      },
-	{"gcc-attributes"         , Severity::Warn    , "invalid attribute: %s"                                      },
-	{"c++-like-copy"          , Severity::Warn    , "Constructor from reference is not a valid copy constructor" },
+	{"self-assign"              , Severity::Warn    , "self assignment of expression: %s"                          },
+	{"reference-conversion"     , Severity::Warn    , "rvalue to reference conversion of rvalue: %s"               },
+	{"qualifiers-zero_t-one_t"  , Severity::Warn    , "questionable use of type qualifier %s with %s"              },
+	{"aggregate-forward-decl"   , Severity::Warn    , "forward declaration of nested aggregate: %s"                },
+	{"superfluous-decl"         , Severity::Warn    , "declaration does not allocate storage: %s"                  },
+	{"superfluous-else"         , Severity::Warn    , "else clause never executed for empty loop conditional"      },
+	{"gcc-attributes"           , Severity::Warn    , "invalid attribute: %s"                                      },
+	{"c++-like-copy"            , Severity::Warn    , "Constructor from reference is not a valid copy constructor" },
+	{"depreciated-trait-syntax" , Severity::Warn    , "trait type-parameters are now specified using the forall clause" },
 };
 
 enum class Warning {
@@ -72,6 +73,7 @@ enum class Warning {
 	SuperfluousElse,
 	GccAttributes,
 	CppCopy,
+	DeprecTraitSyntax,
 	NUMBER_OF_WARNINGS, // This MUST be the last warning
 };
 

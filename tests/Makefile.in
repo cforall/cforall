@@ -462,7 +462,7 @@ EXTRA_DIST = test.py \
 	io/.in/many_read.data \
 	meta/fork+exec.hfa \
 	concurrent/unified_locking/mutex_test.hfa \
-    concurrent/channels/parallel_harness.hfa
+	concurrent/channels/parallel_harness.hfa
 
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
@@ -490,7 +490,7 @@ GENERATED_CODE = declarationSpecifier gccExtensions extension attributes functio
 #------------------------------------------------------------------------------
 # tests that just validate syntax and compiler output should be compared to stderr
 CFACOMPILE_SYNTAX = $(CFACOMPILETEST) -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o $(abspath ${@})
-SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator forall \
+SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator \
 	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment
 
 all: all-am

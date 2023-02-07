@@ -177,33 +177,29 @@ private:
 };
 
 ast::Type const * ScrubTypeVars::postvisit( ast::TypeInstType const * type ) {
+	ast::TypeDecl::Kind kind;
 	// This implies that mode == ScrubMode::All.
 	if ( !typeVars ) {
-		if ( ast::TypeDecl::Ftype == type->kind ) {
-			return new ast::PointerType(
-				new ast::FunctionType( ast::FixedArgs ) );
-		} else {
-			return new ast::PointerType(
-				new ast::VoidType( type->qualifiers ) );
+		kind = type->kind;
+	} else {
+		// Otherwise, only scrub the type var if it is in map.
+		auto typeVar = typeVars->find( *type );
+		if ( typeVar == typeVars->end() ) {
+			return type;
 		}
+		kind = typeVar->second.kind;
 	}
 
-	auto typeVar = typeVars->find( *type );
-	if ( typeVar == typeVars->end() ) {
-		return type;
-	}
-
-	switch ( typeVar->second.kind ) {
-	case ::TypeDecl::Dtype:
-	case ::TypeDecl::Ttype:
+	switch ( kind ) {
+	case ast::TypeDecl::Dtype:
+	case ast::TypeDecl::Ttype:
 		return new ast::PointerType(
 			new ast::VoidType( type->qualifiers ) );
-	case ::TypeDecl::Ftype:
+	case ast::TypeDecl::Ftype:
 		return new ast::PointerType(
 			new ast::FunctionType( ast::VariableArgs ) );
 	default:
-		assertf( false,
-			"Unhandled type variable kind: %d", typeVar->second.kind );
+		assertf( false, "Unhandled type variable kind: %d", kind );
 		throw; // Just in case the assert is removed, stop here.
 	}
 }

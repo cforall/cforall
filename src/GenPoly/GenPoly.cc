@@ -171,7 +171,7 @@ namespace GenPoly {
 		type = replaceTypeInst( type, env );
 
 		if ( TypeInstType *typeInst = dynamic_cast< TypeInstType * >( type ) ) {
-			if ( tyVars.find( typeInst->get_name() ) != tyVars.end() ) {
+			if ( tyVars.contains( typeInst->get_name() ) ) {
 				return type;
 			}
 		} else if ( ArrayType * arrayType = dynamic_cast< ArrayType * >( type ) ) {
@@ -188,7 +188,7 @@ namespace GenPoly {
 		type = replaceTypeInst( type, env );
 
 		if ( auto typeInst = dynamic_cast< const ast::TypeInstType * >( type ) ) {
-			return tyVars.find(typeInst->typeString()) != tyVars.end() ? type : nullptr;
+			if ( tyVars.contains( typeInst->typeString() ) ) return type;
 		} else if ( auto arrayType = dynamic_cast< const ast::ArrayType * >( type ) ) {
 			return isPolyType( arrayType->base, env );
 		} else if ( auto structType = dynamic_cast< const ast::StructInstType* >( type ) ) {
@@ -204,7 +204,7 @@ const ast::Type * isPolyType( const ast::Type * type,
 	type = replaceTypeInst( type, subst );
 
 	if ( auto inst = dynamic_cast< const ast::TypeInstType * >( type ) ) {
-		if ( typeVars.find( *inst ) != typeVars.end() ) return type;
+		if ( typeVars.contains( *inst ) ) return type;
 	} else if ( auto array = dynamic_cast< const ast::ArrayType * >( type ) ) {
 		return isPolyType( array->base, subst );
 	} else if ( auto sue = dynamic_cast< const ast::StructInstType * >( type ) ) {
@@ -392,7 +392,7 @@ ast::Type const * hasPolyBase(
 		type = replaceTypeInst( type, env );
 
 		if ( TypeInstType *typeInstType = dynamic_cast< TypeInstType * >( type ) ) {
-			if ( tyVars.find( typeInstType->get_name() ) != tyVars.end() ) {
+			if ( tyVars.contains( typeInstType->get_name() ) ) {
 				return true;
 			}
 		} else if ( PointerType *pointerType = dynamic_cast< PointerType* >( type ) ) {

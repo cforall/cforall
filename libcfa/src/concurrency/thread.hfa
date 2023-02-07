@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 22 22:18:34 2022
-// Update Count     : 35
+// Last Modified On : Thu Feb  2 11:27:59 2023
+// Update Count     : 37
 //
 
 #pragma once
@@ -26,7 +26,8 @@
 
 //-----------------------------------------------------------------------------
 // thread trait
-trait is_thread(T &) {
+forall( T & )
+trait is_thread {
 	void ^?{}(T& mutex this);
 	void main(T& this);
 	thread$ * get_thread(T& this);

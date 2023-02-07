@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz and Thierry Delisle
 // Created On       : Sat Feb 16 08:44:58 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr  2 17:18:24 2019
-// Update Count     : 37
+// Last Modified On : Thu Feb  2 11:40:01 2023
+// Update Count     : 38
 //
 
 #include <algorithm>
@@ -158,7 +158,7 @@ constexpr auto make_array(T&&... values) ->
 
 int main() {
 	cout << "# 2 \"prelude.cfa\"  // needed for error messages from this file" << endl;
-	cout << "trait sized(T &) {};" << endl;
+	cout << "forall( T & ) trait sized {};" << endl;
 
 	cout << "//////////////////////////" << endl;
 	cout << "// Arithmetic Operators //" << endl;

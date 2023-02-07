@@ -179,7 +179,7 @@ class FwdDeclTable {
     }
 };
 
-#define __ALLOC 0
+#define __ALLOC 0 // C_TODO: complete swap to no-alloc version
 
 struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
     unordered_set<const StructDecl *> & actorStructDecls;
@@ -224,7 +224,7 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
                     send( receiver, *new_req );
                     return receiver;
                 }
-            */
+            */ // C_TODO: update this with new no alloc version
             CompoundStmt * sendBody = new CompoundStmt( decl->location );
 
             #if __ALLOC

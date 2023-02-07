@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan 31 08:55:11 2023
-// Update Count     : 5861
+// Last Modified On : Thu Feb  2 21:36:16 2023
+// Update Count     : 5865
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -2978,11 +2978,17 @@ type_declarator_name:									// CFA
 
 trait_specifier:										// CFA
 	TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' '}'
-		{ $$ = DeclarationNode::newTrait( $2, $4, nullptr ); }
-	| forall TRAIT identifier_or_type_name '{' '}' // alternate
+		{
+			SemanticWarning( yylloc, Warning::DeprecTraitSyntax, "" );
+			$$ = DeclarationNode::newTrait( $2, $4, nullptr );
+		}
+	| forall TRAIT identifier_or_type_name '{' '}'		// alternate
 		{ $$ = DeclarationNode::newTrait( $3, $1, nullptr ); }
 	| TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' push trait_declaration_list pop '}'
-		{ $$ = DeclarationNode::newTrait( $2, $4, $8 ); }
+		{
+			SemanticWarning( yylloc, Warning::DeprecTraitSyntax, "" );
+			$$ = DeclarationNode::newTrait( $2, $4, $8 );
+		}
 	| forall TRAIT identifier_or_type_name '{' push trait_declaration_list pop '}' // alternate
 		{ $$ = DeclarationNode::newTrait( $3, $1, $6 ); }
 	;

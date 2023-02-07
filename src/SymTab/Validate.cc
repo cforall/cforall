@@ -862,11 +862,7 @@ namespace SymTab {
 	}
 
 	void ReplaceTypedef::premutate( TypeDecl * typeDecl ) {
-		TypedefMap::iterator i = typedefNames.find( typeDecl->name );
-		if ( i != typedefNames.end() ) {
-			typedefNames.erase( i ) ;
-		} // if
-
+		typedefNames.erase( typeDecl->name );
 		typedeclNames.insert( typeDecl->name, typeDecl );
 	}
 

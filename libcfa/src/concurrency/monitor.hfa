@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thd Feb 23 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  4 07:55:32 2019
-// Update Count     : 11
+// Last Modified On : Thu Feb  2 11:29:21 2023
+// Update Count     : 12
 //
 
 #pragma once
@@ -21,7 +21,8 @@
 #include "invoke.h"
 #include "stdlib.hfa"
 
-trait is_monitor(T &) {
+forall( T & )
+trait is_monitor {
 	monitor$ * get_monitor( T & );
 	void ^?{}( T & mutex );
 };

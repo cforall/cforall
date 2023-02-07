@@ -36,7 +36,7 @@ class ScopedMap {
 
 		template<typename N>
 		Scope(N && n) : map(), note(std::forward<N>(n)) {}
-		
+
 		Scope() = default;
 		Scope(const Scope &) = default;
 		Scope(Scope &&) = default;
@@ -45,7 +45,8 @@ class ScopedMap {
 	};
 	typedef std::vector< Scope > ScopeList;
 
-	ScopeList scopes; ///< scoped list of maps
+	/// Scoped list of maps.
+	ScopeList scopes;
 public:
 	typedef typename MapType::key_type key_type;
 	typedef typename MapType::mapped_type mapped_type;
@@ -57,160 +58,9 @@ public:
 	typedef typename MapType::pointer pointer;
 	typedef typename MapType::const_pointer const_pointer;
 
-	class iterator : public std::iterator< std::bidirectional_iterator_tag, value_type > {
-	friend class ScopedMap;
-	friend class const_iterator;
-		typedef typename ScopedMap::MapType::iterator wrapped_iterator;
-		typedef typename ScopedMap::ScopeList scope_list;
-		typedef typename scope_list::size_type size_type;
-
-		/// Checks if this iterator points to a valid item
-		bool is_valid() const {
-			return it != (*scopes)[level].map.end();
-		}
-
-		/// Increments on invalid
-		iterator & next_valid() {
-			if ( ! is_valid() ) { ++(*this); }
-			return *this;
-		}
-
-		/// Decrements on invalid
-		iterator & prev_valid() {
-			if ( ! is_valid() ) { --(*this); }
-			return *this;
-		}
-
-		iterator(scope_list & _scopes, const wrapped_iterator & _it, size_type inLevel)
-			: scopes(&_scopes), it(_it), level(inLevel) {}
-	public:
-		iterator(const iterator & that) : scopes(that.scopes), it(that.it), level(that.level) {}
-		iterator & operator= (const iterator & that) {
-			scopes = that.scopes; level = that.level; it = that.it;
-			return *this;
-		}
-
-		reference operator* () { return *it; }
-		pointer operator-> () const { return it.operator->(); }
-
-		iterator & operator++ () {
-			if ( it == (*scopes)[level].map.end() ) {
-				if ( level == 0 ) return *this;
-				--level;
-				it = (*scopes)[level].map.begin();
-			} else {
-				++it;
-			}
-			return next_valid();
-		}
-		iterator operator++ (int) { iterator tmp = *this; ++(*this); return tmp; }
-
-		iterator & operator-- () {
-			// may fail if this is the begin iterator; allowed by STL spec
-			if ( it == (*scopes)[level].map.begin() ) {
-				++level;
-				it = (*scopes)[level].map.end();
-			}
-			--it;
-			return prev_valid();
-		}
-		iterator operator-- (int) { iterator tmp = *this; --(*this); return tmp; }
-
-		bool operator== (const iterator & that) const {
-			return scopes == that.scopes && level == that.level && it == that.it;
-		}
-		bool operator!= (const iterator & that) const { return !( *this == that ); }
-
-		size_type get_level() const { return level; }
-
-		Note & get_note() { return (*scopes)[level].note; }
-		const Note & get_note() const { return (*scopes)[level].note; }
-
-	private:
-		scope_list *scopes;
-		wrapped_iterator it;
-		size_type level;
-	};
-
-	class const_iterator : public std::iterator< std::bidirectional_iterator_tag,
-	                                             value_type > {
-	friend class ScopedMap;
-		typedef typename ScopedMap::MapType::iterator wrapped_iterator;
-		typedef typename ScopedMap::MapType::const_iterator wrapped_const_iterator;
-		typedef typename ScopedMap::ScopeList scope_list;
-		typedef typename scope_list::size_type size_type;
-
-		/// Checks if this iterator points to a valid item
-		bool is_valid() const {
-			return it != (*scopes)[level].map.end();
-		}
-
-		/// Increments on invalid
-		const_iterator & next_valid() {
-			if ( ! is_valid() ) { ++(*this); }
-			return *this;
-		}
-
-		/// Decrements on invalid
-		const_iterator & prev_valid() {
-			if ( ! is_valid() ) { --(*this); }
-			return *this;
-		}
-
-		const_iterator(scope_list const & _scopes, const wrapped_const_iterator & _it, size_type inLevel)
-			: scopes(&_scopes), it(_it), level(inLevel) {}
-	public:
-		const_iterator(const iterator & that) : scopes(that.scopes), it(that.it), level(that.level) {}
-		const_iterator(const const_iterator & that) : scopes(that.scopes), it(that.it), level(that.level) {}
-		const_iterator & operator= (const iterator & that) {
-			scopes = that.scopes; level = that.level; it = that.it;
-			return *this;
-		}
-		const_iterator & operator= (const const_iterator & that) {
-			scopes = that.scopes; level = that.level; it = that.it;
-			return *this;
-		}
-
-		const_reference operator* () { return *it; }
-		const_pointer operator-> () { return it.operator->(); }
-
-		const_iterator & operator++ () {
-			if ( it == (*scopes)[level].map.end() ) {
-				if ( level == 0 ) return *this;
-				--level;
-				it = (*scopes)[level].map.begin();
-			} else {
-				++it;
-			}
-			return next_valid();
-		}
-		const_iterator operator++ (int) { const_iterator tmp = *this; ++(*this); return tmp; }
-
-		const_iterator & operator-- () {
-			// may fail if this is the begin iterator; allowed by STL spec
-			if ( it == (*scopes)[level].map.begin() ) {
-				++level;
-				it = (*scopes)[level].map.end();
-			}
-			--it;
-			return prev_valid();
-		}
-		const_iterator operator-- (int) { const_iterator tmp = *this; --(*this); return tmp; }
-
-		bool operator== (const const_iterator & that) const {
-			return scopes == that.scopes && level == that.level && it == that.it;
-		}
-		bool operator!= (const const_iterator & that) const { return !( *this == that ); }
-
-		size_type get_level() const { return level; }
-
-		const Note & get_note() const { return (*scopes)[level].note; }
-
-	private:
-		scope_list const *scopes;
-		wrapped_const_iterator it;
-		size_type level;
-	};
+	// Both iterator types are complete bidrectional iterators, see below.
+	class iterator;
+	class const_iterator;
 
 	/// Starts a new scope
 	void beginScope() {
@@ -296,13 +146,6 @@ public:
 		return std::make_pair( iterator(scopes, std::move( res.first ), scopes.size()-1), std::move( res.second ) );
 	}
 
-	template< typename value_type_t >
-	std::pair< iterator, bool > insert( iterator at, value_type_t && value ) {
-		MapType & scope = (*at.scopes)[ at.level ].map;
-		std::pair< typename MapType::iterator, bool > res = scope.insert( std::forward<value_type_t>( value ) );
-		return std::make_pair( iterator(scopes, std::move( res.first ), at.level), std::move( res.second ) );
-	}
-
 	template< typename value_t >
 	std::pair< iterator, bool > insert( const Key & key, value_t && value ) { return insert( std::make_pair( key, std::forward<value_t>( value ) ) ); }
 
@@ -323,11 +166,13 @@ public:
 		return insert( key, Value() ).first->second;
 	}
 
-	iterator erase( iterator pos ) {
-		MapType & scope = (*pos.scopes)[ pos.level ].map;
-		const typename iterator::wrapped_iterator & new_it = scope.erase( pos.it );
-		iterator it( *pos.scopes, new_it, pos.level );
-		return it.next_valid();
+	/// Erases element with key in the innermost scope that has it.
+	size_type erase( const Key & key ) {
+		for ( auto it = scopes.rbegin() ; it != scopes.rend() ; ++it ) {
+			size_type i = it->map.erase( key );
+			if ( 0 != i ) return i;
+		}
+		return 0;
 	}
 
 	size_type count( const Key & key ) const {
@@ -342,6 +187,168 @@ public:
 
 		return c;
 	}
+
+	bool contains( const Key & key ) const {
+		return find( key ) != cend();
+	}
+};
+
+template<typename Key, typename Value, typename Note>
+class ScopedMap<Key, Value, Note>::iterator :
+		public std::iterator< std::bidirectional_iterator_tag, value_type > {
+	friend class ScopedMap;
+	friend class const_iterator;
+	typedef typename ScopedMap::MapType::iterator wrapped_iterator;
+	typedef typename ScopedMap::ScopeList scope_list;
+	typedef typename scope_list::size_type size_type;
+
+	/// Checks if this iterator points to a valid item
+	bool is_valid() const {
+		return it != (*scopes)[level].map.end();
+	}
+
+	/// Increments on invalid
+	iterator & next_valid() {
+		if ( ! is_valid() ) { ++(*this); }
+		return *this;
+	}
+
+	/// Decrements on invalid
+	iterator & prev_valid() {
+		if ( ! is_valid() ) { --(*this); }
+		return *this;
+	}
+
+	iterator(scope_list & _scopes, const wrapped_iterator & _it, size_type inLevel)
+		: scopes(&_scopes), it(_it), level(inLevel) {}
+public:
+	iterator(const iterator & that) : scopes(that.scopes), it(that.it), level(that.level) {}
+	iterator & operator= (const iterator & that) {
+		scopes = that.scopes; level = that.level; it = that.it;
+		return *this;
+	}
+
+	reference operator* () { return *it; }
+	pointer operator-> () const { return it.operator->(); }
+
+	iterator & operator++ () {
+		if ( it == (*scopes)[level].map.end() ) {
+			if ( level == 0 ) return *this;
+			--level;
+			it = (*scopes)[level].map.begin();
+		} else {
+			++it;
+		}
+		return next_valid();
+	}
+	iterator operator++ (int) { iterator tmp = *this; ++(*this); return tmp; }
+
+	iterator & operator-- () {
+		// may fail if this is the begin iterator; allowed by STL spec
+		if ( it == (*scopes)[level].map.begin() ) {
+			++level;
+			it = (*scopes)[level].map.end();
+		}
+		--it;
+		return prev_valid();
+	}
+	iterator operator-- (int) { iterator tmp = *this; --(*this); return tmp; }
+
+	bool operator== (const iterator & that) const {
+		return scopes == that.scopes && level == that.level && it == that.it;
+	}
+	bool operator!= (const iterator & that) const { return !( *this == that ); }
+
+	size_type get_level() const { return level; }
+
+	Note & get_note() { return (*scopes)[level].note; }
+	const Note & get_note() const { return (*scopes)[level].note; }
+
+private:
+	scope_list *scopes;
+	wrapped_iterator it;
+	size_type level;
+};
+
+template<typename Key, typename Value, typename Note>
+class ScopedMap<Key, Value, Note>::const_iterator :
+		public std::iterator< std::bidirectional_iterator_tag, value_type > {
+	friend class ScopedMap;
+	typedef typename ScopedMap::MapType::iterator wrapped_iterator;
+	typedef typename ScopedMap::MapType::const_iterator wrapped_const_iterator;
+	typedef typename ScopedMap::ScopeList scope_list;
+	typedef typename scope_list::size_type size_type;
+
+	/// Checks if this iterator points to a valid item
+	bool is_valid() const {
+		return it != (*scopes)[level].map.end();
+	}
+
+	/// Increments on invalid
+	const_iterator & next_valid() {
+		if ( ! is_valid() ) { ++(*this); }
+		return *this;
+	}
+
+	/// Decrements on invalid
+	const_iterator & prev_valid() {
+		if ( ! is_valid() ) { --(*this); }
+		return *this;
+	}
+
+	const_iterator(scope_list const & _scopes, const wrapped_const_iterator & _it, size_type inLevel)
+		: scopes(&_scopes), it(_it), level(inLevel) {}
+public:
+	const_iterator(const iterator & that) : scopes(that.scopes), it(that.it), level(that.level) {}
+	const_iterator(const const_iterator & that) : scopes(that.scopes), it(that.it), level(that.level) {}
+	const_iterator & operator= (const iterator & that) {
+		scopes = that.scopes; level = that.level; it = that.it;
+		return *this;
+	}
+	const_iterator & operator= (const const_iterator & that) {
+		scopes = that.scopes; level = that.level; it = that.it;
+		return *this;
+	}
+
+	const_reference operator* () { return *it; }
+	const_pointer operator-> () { return it.operator->(); }
+
+	const_iterator & operator++ () {
+		if ( it == (*scopes)[level].map.end() ) {
+			if ( level == 0 ) return *this;
+			--level;
+			it = (*scopes)[level].map.begin();
+		} else {
+			++it;
+		}
+		return next_valid();
+	}
+	const_iterator operator++ (int) { const_iterator tmp = *this; ++(*this); return tmp; }
+
+	const_iterator & operator-- () {
+		// may fail if this is the begin iterator; allowed by STL spec
+		if ( it == (*scopes)[level].map.begin() ) {
+			++level;
+			it = (*scopes)[level].map.end();
+		}
+		--it;
+		return prev_valid();
+	}
+	const_iterator operator-- (int) { const_iterator tmp = *this; --(*this); return tmp; }
+
+	bool operator== (const const_iterator & that) const {
+		return scopes == that.scopes && level == that.level && it == that.it;
+	}
+	bool operator!= (const const_iterator & that) const { return !( *this == that ); }
+
+	size_type get_level() const { return level; }
+
+	const Note & get_note() const { return (*scopes)[level].note; }
+
+private:
+	scope_list const *scopes;
+	wrapped_const_iterator it;
+	size_type level;
 };
 
 // Local Variables: //

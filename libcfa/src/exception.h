@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jun 26 15:11:00 2017
-// Last Modified By : Andrew Beach
-// Last Modified On : Thr Apr  8 15:20:00 2021
-// Update Count     : 12
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Feb  2 11:20:19 2023
+// Update Count     : 13
 //
 
 #pragma once
@@ -100,7 +100,8 @@ static inline exception_t * __cfaehm_cancellation_exception(
 // Not all the built-ins can be expressed in C. These can't be
 // implemented in the .c file either so they all have to be inline.
 
-trait is_exception(exceptT &, virtualT &) {
+forall( exceptT &, virtualT & )
+trait is_exception {
 	/* The first field must be a pointer to a virtual table.
 	 * That virtual table must be a decendent of the base exception virtual table.
 	 * The virtual table must point at the prober type-id.
@@ -108,11 +109,13 @@ trait is_exception(exceptT &, virtualT &) {
 	 */
 };
 
-trait is_termination_exception(exceptT &, virtualT & | is_exception(exceptT, virtualT)) {
+forall( exceptT &, virtualT & | is_exception(exceptT, virtualT) )
+trait is_termination_exception {
 	void defaultTerminationHandler(exceptT &);
 };
 
-trait is_resumption_exception(exceptT &, virtualT & | is_exception(exceptT, virtualT)) {
+forall( exceptT &, virtualT & | is_exception(exceptT, virtualT) )
+trait is_resumption_exception {
 	void defaultResumptionHandler(exceptT &);
 };
 

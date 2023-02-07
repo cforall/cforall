@@ -9,14 +9,15 @@
 // Author           : Richard C. Bilson
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  7 08:37:25 2017
-// Update Count     : 10
+// Last Modified On : Thu Feb  2 11:21:50 2023
+// Update Count     : 11
 //
 
 #pragma once
 
 // An iterator can be used to traverse a data structure.
-trait iterator( iterator_type, elt_type ) {
+forall( iterator_type, elt_type )
+trait iterator {
 	// point to the next element
 //	iterator_type ?++( iterator_type & );
 	iterator_type ++?( iterator_type & );
@@ -30,7 +31,8 @@ trait iterator( iterator_type, elt_type ) {
 	elt_type & *?( iterator_type );
 };
 
-trait iterator_for( iterator_type, collection_type, elt_type | iterator( iterator_type, elt_type ) ) {
+forall( iterator_type, collection_type, elt_type | iterator( iterator_type, elt_type ) )
+	trait iterator_for {
 //	[ iterator_type begin, iterator_type end ] get_iterators( collection_type );
 	iterator_type begin( collection_type );
 	iterator_type end( collection_type );

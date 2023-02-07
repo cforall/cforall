@@ -487,7 +487,7 @@ namespace GenPoly {
 
 				for ( FunctionType const * const funType : functions ) {
 					std::string mangleName = mangleAdapterName( funType, scopeTyVars );
-					if ( adapters.find( mangleName ) == adapters.end() ) {
+					if ( !adapters.contains( mangleName ) ) {
 						std::string adapterName = makeAdapterName( mangleName );
 						adapters.insert( std::pair< std::string, DeclarationWithType *>( mangleName, new ObjectDecl( adapterName, Type::StorageClasses(), LinkageSpec::C, nullptr, new PointerType( Type::Qualifiers(), makeAdapterType( funType, scopeTyVars ) ), nullptr ) ) );
 					} // if
@@ -1486,7 +1486,7 @@ namespace GenPoly {
 					Type * ty = replaceTypeInst( field->type, env );
 					if ( TypeInstType *typeInst = dynamic_cast< TypeInstType* >( ty ) ) {
 						// do not try to monomorphize generic parameters
-						if ( scopeTyVars.find( typeInst->get_name() ) != scopeTyVars.end() && ! genericParams.count( typeInst->name ) ) {
+						if ( scopeTyVars.contains( typeInst->get_name() ) && ! genericParams.count( typeInst->name ) ) {
 							// polymorphic aggregate members should be converted into monomorphic members.
 							// Using char[size_T] here respects the expected sizing rules of an aggregate type.
 							Type * newType = polyToMonoType( field->type );
@@ -1695,7 +1695,7 @@ namespace GenPoly {
 			ty = replaceTypeInst( ty, env );
 
 			if ( auto typeInst = dynamic_cast< TypeInstType const * >( ty ) ) {
-				if ( scopeTyVars.find( typeInst->get_name() ) != scopeTyVars.end() ) {
+				if ( scopeTyVars.contains( typeInst->get_name() ) ) {
 					// NOTE assumes here that getting put in the scopeTyVars included having the layout variables set
 					return true;
 				}
@@ -1703,7 +1703,7 @@ namespace GenPoly {
 			} else if ( auto structTy = dynamic_cast< StructInstType const * >( ty ) ) {
 				// check if this type already has a layout generated for it
 				std::string typeName = mangleType( ty );
-				if ( knownLayouts.find( typeName ) != knownLayouts.end() ) return true;
+				if ( knownLayouts.contains( typeName ) ) return true;
 
 				// check if any of the type parameters have dynamic layout; if none do, this type is (or will be) monomorphized
 				std::list< Type* > otypeParams;
@@ -1740,7 +1740,7 @@ namespace GenPoly {
 			} else if ( auto unionTy = dynamic_cast< UnionInstType const * >( ty ) ) {
 				// check if this type already has a layout generated for it
 				std::string typeName = mangleType( ty );
-				if ( knownLayouts.find( typeName ) != knownLayouts.end() ) return true;
+				if ( knownLayouts.contains( typeName ) ) return true;
 
 				// check if any of the type parameters have dynamic layout; if none do, this type is (or will be) monomorphized
 				std::list< Type* > otypeParams;
@@ -1831,7 +1831,7 @@ namespace GenPoly {
 				ret = new NameExpr( offsetofName( mangleType( ty ) ) );
 			} else {
 				std::string offsetName = offsetofName( mangleType( ty ) );
-				if ( knownOffsets.find( offsetName ) != knownOffsets.end() ) {
+				if ( knownOffsets.contains( offsetName ) ) {
 					// use the already-generated offsets for this type
 					ret = new NameExpr( offsetName );
 				} else {
