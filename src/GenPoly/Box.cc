@@ -79,6 +79,7 @@ namespace GenPoly {
 		  public:
 			CallAdapter();
 
+			void premutate( Declaration * declaration );
 			void premutate( FunctionDecl * functionDecl );
 			void premutate( TypeDecl * typeDecl );
 			void premutate( CommaExpr * commaExpr );
@@ -453,6 +454,11 @@ namespace GenPoly {
 		Type *replaceWithConcrete( Type *type, TypeSubstitution const * env, bool doClone = true );
 
 		CallAdapter::CallAdapter() : tempNamer( "_temp" ) {}
+
+		void CallAdapter::premutate( Declaration * ) {
+			// Prevent type declaration information from leaking out.
+			GuardScope( scopeTyVars );
+		}
 
 		void CallAdapter::premutate( FunctionDecl *functionDecl ) {
 			if ( functionDecl->get_statements() ) {		// empty routine body ?

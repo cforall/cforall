@@ -179,8 +179,6 @@ class FwdDeclTable {
     }
 };
 
-#define __ALLOC 0 // C_TODO: complete swap to no-alloc version
-
 struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
     unordered_set<const StructDecl *> & actorStructDecls;
     unordered_set<const StructDecl *>  & messageStructDecls;
@@ -217,28 +215,16 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
             // The following generates this send message operator routine for all receive(derived_actor &, derived_msg &) functions
             /*
                 static inline derived_actor & ?|?( derived_actor & receiver, derived_msg & msg ) {
-                    request * new_req = alloc();
+                    request new_req;
                     Allocation (*my_work_fn)( derived_actor &, derived_msg & ) = receive;
                     __receive_fn fn = (__receive_fn)my_work_fn;
-                    (*new_req){ &receiver, &msg, fn };
-                    send( receiver, *new_req );
+                    new_req{ &receiver, &msg, fn };
+                    send( receiver, new_req );
                     return receiver;
                 }
             */ // C_TODO: update this with new no alloc version
             CompoundStmt * sendBody = new CompoundStmt( decl->location );
 
-            #if __ALLOC
-            // Generates: request * new_req = alloc();
-            sendBody->push_back( new DeclStmt(
-                decl->location,
-                new ObjectDecl(
-                    decl->location,
-                    "new_req",
-                    new PointerType( new StructInstType( *requestDecl ) ),
-                    new SingleInit( decl->location, new UntypedExpr( decl->location, new NameExpr( decl->location, "alloc" ), {} ) )
-                )
-            ));
-            #else
             // Generates: request new_req;
             sendBody->push_back( new DeclStmt(
                 decl->location,
@@ -248,7 +234,6 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
                     new StructInstType( *requestDecl )
                 )
             ));
-            #endif
             
             // Function type is: Allocation (*)( derived_actor &, derived_msg & )
             FunctionType * derivedReceive = new FunctionType();
@@ -289,37 +274,6 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
                 )
             ));
 
-            #if __ALLOC
-            // Generates: (*new_req){ &receiver, &msg, fn };
-            sendBody->push_back( new ExprStmt(
-                decl->location,
-				new UntypedExpr (
-                    decl->location, 
-					new NameExpr( decl->location, "?{}" ),
-					{
-						new UntypedExpr( decl->location, new NameExpr( decl->location, "*?" ), {  new NameExpr( decl->location, "new_req" ) } ),
-                        new AddressExpr( new NameExpr( decl->location, "receiver" ) ),
-                        new AddressExpr( new NameExpr( decl->location, "msg" ) ),
-                        new NameExpr( decl->location, "fn" )
-					}
-				)
-			));
-
-            // Generates: send( receiver, *new_req );
-            sendBody->push_back( new ExprStmt(
-                decl->location,
-				new UntypedExpr (
-                    decl->location,
-					new NameExpr( decl->location, "send" ),
-					{
-						{
-                            new NameExpr( decl->location, "receiver" ),
-                            new UntypedExpr( decl->location, new NameExpr( decl->location, "*?" ), {  new NameExpr( decl->location, "new_req" ) } )
-                        }
-					}
-				)
-			));
-            #else
             // Generates: new_req{ &receiver, &msg, fn };
             sendBody->push_back( new ExprStmt(
                 decl->location,
@@ -349,7 +303,6 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
 					}
 				)
 			));
-            #endif
             
             // Generates: return receiver;
             sendBody->push_back( new ReturnStmt( decl->location, new NameExpr( decl->location, "receiver" ) ) );
