@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug  7 09:18:56 2021
-// Update Count     : 1077
+// Last Modified On : Mon Jan 16 15:52:05 2023
+// Update Count     : 1078
 //
 
 #include <cassert>                 // for assert
@@ -172,10 +172,10 @@ Expression * build_constantInteger( string & str ) {
 		posn = str.find_last_of( "zZ" );				// size_t
 		if ( posn != string::npos ) { Unsigned = true; type = 2; ltype = 4; str.erase( posn, 1 ); goto FINI; }
 
-		posn = str.rfind( "hh" );						// char
+		posn = str.rfind( "hh" );						// signed char
 		if ( posn != string::npos ) { type = 1; str.erase( posn, 2 ); goto FINI; }
 
-		posn = str.rfind( "HH" );						// char
+		posn = str.rfind( "HH" );						// signed char
 		if ( posn != string::npos ) { type = 1; str.erase( posn, 2 ); goto FINI; }
 
 		posn = str.find_last_of( "hH" );				// short
