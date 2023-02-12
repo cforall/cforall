@@ -39,11 +39,9 @@ using namespace std;
 #include "CodeGen/LinkOnce.h"               // for translateLinkOnce
 #include "CodeTools/TrackLoc.h"             // for fillLocations
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
-#include "Common/CompilerError.h"           // for CompilerError
 #include "Common/DeclStats.hpp"             // for printDeclStats
 #include "Common/ResolvProtoDump.hpp"       // for dumpAsResolverProto
 #include "Common/Stats.h"                   // for Stats
-#include "Common/UnimplementedError.h"      // for UnimplementedError
 #include "Common/utility.h"                 // for deleteAll, filter, printAll
 #include "Concurrency/Actors.hpp"           // for implementActors
 #include "Concurrency/Keywords.h"           // for implementMutex, implement...
@@ -475,19 +473,6 @@ int main( int argc, char * argv[] ) {
 			cerr << endl << "---End of AST, begin error message:---\n" << endl;
 		} // if
 		e.print();
-		if ( output != &cout ) {
-			delete output;
-		} // if
-		return EXIT_FAILURE;
-	} catch ( UnimplementedError & e ) {
-		cout << "Sorry, " << e.get_what() << " is not currently implemented" << endl;
-		if ( output != &cout ) {
-			delete output;
-		} // if
-		return EXIT_FAILURE;
-	} catch ( CompilerError & e ) {
-		cerr << "Compiler Error: " << e.get_what() << endl;
-		cerr << "(please report bugs to [REDACTED])" << endl;
 		if ( output != &cout ) {
 			delete output;
 		} // if

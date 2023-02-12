@@ -19,7 +19,6 @@ SRC_COMMON = \
 	Common/CodeLocation.h \
 	Common/CodeLocationTools.hpp \
 	Common/CodeLocationTools.cpp \
-	Common/CompilerError.h \
 	Common/Debug.h \
 	Common/DeclStats.hpp \
 	Common/DeclStats.cpp \
@@ -51,7 +50,6 @@ SRC_COMMON = \
 	Common/Stats/Stats.cc \
 	Common/Stats/Time.cc \
 	Common/Stats/Time.h \
-	Common/UnimplementedError.h \
 	Common/UniqueName.cc \
 	Common/UniqueName.h \
 	Common/utility.h \
