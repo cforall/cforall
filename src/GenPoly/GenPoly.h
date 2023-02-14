@@ -110,10 +110,12 @@ namespace GenPoly {
 	/// Adds the type variable `tyVar` to `tyVarMap`
 	void addToTyVarMap( TypeDecl * tyVar, TyVarMap &tyVarMap );
 	void addToTypeVarMap( const ast::TypeDecl * type, TypeVarMap & typeVars );
+	void addToTypeVarMap( const ast::TypeInstType * type, TypeVarMap & typeVars );
 
 	/// Adds the declarations in the forall list of type (and its pointed-to type if it's a pointer type) to `tyVarMap`
 	void makeTyVarMap( Type *type, TyVarMap &tyVarMap );
 	void makeTypeVarMap( const ast::Type * type, TypeVarMap & typeVars );
+	void makeTypeVarMap( const ast::FunctionDecl * decl, TypeVarMap & typeVars );
 
 	/// Prints type variable map
 	void printTyVarMap( std::ostream &os, const TyVarMap &tyVarMap );

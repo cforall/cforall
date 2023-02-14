@@ -274,6 +274,14 @@ const ast::BaseInstType *isDynRet(
 		return (ReferenceToType*)isDynType( function->get_returnVals().front()->get_type(), forallTypes );
 	}
 
+const ast::BaseInstType *isDynRet( const ast::FunctionType * func ) {
+	if ( func->returns.empty() ) return nullptr;
+
+	TypeVarMap forallTypes = { ast::TypeData() };
+	makeTypeVarMap( func, forallTypes );
+	return isDynType( func->returns.front(), forallTypes );
+}
+
 	bool needsAdapter( FunctionType *adaptee, const TyVarMap &tyVars ) {
 // 		if ( ! adaptee->get_returnVals().empty() && isPolyType( adaptee->get_returnVals().front()->get_type(), tyVars ) ) {
 // 			return true;
@@ -318,6 +326,17 @@ bool needsAdapter(
 		}
 		return 0;
 	}
+
+const ast::Type * isPolyPtr(
+		const ast::Type * type, const TypeVarMap & typeVars,
+		const ast::TypeSubstitution * typeSubs ) {
+	type = replaceTypeInst( type, typeSubs );
+
+	if ( auto * ptr = dynamic_cast<ast::PointerType const *>( type ) ) {
+		return isPolyType( ptr->base, typeVars, typeSubs );
+	}
+	return nullptr;
+}
 
 	Type * hasPolyBase( Type *type, int *levels, const TypeSubstitution *env ) {
 		int dummy;
@@ -795,8 +814,12 @@ bool needsBoxing(
 		tyVarMap.insert( tyVar->name, TypeDecl::Data{ tyVar } );
 	}
 
+void addToTypeVarMap( const ast::TypeDecl * decl, TypeVarMap & typeVars ) {
+	typeVars.insert( ast::TypeEnvKey( decl, 0, 0 ), ast::TypeData( decl ) );
+}
+
 void addToTypeVarMap( const ast::TypeInstType * type, TypeVarMap & typeVars ) {
-	typeVars.insert( *type, ast::TypeData( type->base ) );
+	typeVars.insert( ast::TypeEnvKey( *type ), ast::TypeData( type->base ) );
 }
 
 	void makeTyVarMap( Type *type, TyVarMap &tyVarMap ) {
@@ -818,6 +841,12 @@ void makeTypeVarMap( const ast::Type * type, TypeVarMap & typeVars ) {
 	}
 	if ( auto pointer = dynamic_cast<ast::PointerType const *>( type ) ) {
 		makeTypeVarMap( pointer->base, typeVars );
+	}
+}
+
+void makeTypeVarMap( const ast::FunctionDecl * decl, TypeVarMap & typeVars ) {
+	for ( auto & typeDecl : decl->type_params ) {
+		addToTypeVarMap( typeDecl, typeVars );
 	}
 }
 
