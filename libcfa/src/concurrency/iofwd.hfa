@@ -15,7 +15,9 @@
 
 #pragma once
 
+#include <sys/socket.h> // first include because of anonymous types __SOCKADDR_ARG, __CONST_SOCKADDR_ARG
 #include <unistd.h>
+
 extern "C" {
 	#include <asm/types.h>
 	#include <sys/stat.h> // needed for mode_t
@@ -52,7 +54,6 @@ struct io_context$;
 
 struct iovec;
 struct msghdr;
-struct sockaddr;
 struct statx;
 struct epoll_event;
 
@@ -99,8 +100,8 @@ extern  ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u
 extern ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
 extern ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
 extern ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
-extern int cfa_accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags);
-extern int cfa_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags);
+extern int cfa_accept4(int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags);
+extern int cfa_connect(int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags);
 extern int cfa_fallocate(int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
 extern int cfa_posix_fadvise(int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
 extern int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags);
@@ -132,8 +133,8 @@ extern void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr 
 extern void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
 extern void async_send(io_future_t & future, int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
 extern void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
-extern void async_accept4(io_future_t & future, int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags);
-extern void async_connect(io_future_t & future, int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags);
+extern void async_accept4(io_future_t & future, int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags);
+extern void async_connect(io_future_t & future, int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags);
 extern void async_fallocate(io_future_t & future, int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
 extern void async_posix_fadvise(io_future_t & future, int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
 extern void async_madvise(io_future_t & future, void *addr, size_t length, int advice, __u64 submit_flags);

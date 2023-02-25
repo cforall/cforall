@@ -37,7 +37,7 @@ monitor global_data_t {
 };
 
 // Use a global struct because the order needs to match with Signaller thread
-struct {
+static struct {
 	global_t mut;
 	global_data_t data;
 } globals;

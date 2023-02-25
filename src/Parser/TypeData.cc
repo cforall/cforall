@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:12:51 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 10 22:36:52 2022
-// Update Count     : 677
+// Last Modified On : Sun Feb 19 11:00:46 2023
+// Update Count     : 679
 //
 
 #include <cassert>                 // for assert
@@ -374,7 +374,7 @@ void TypeData::print( ostream &os, int indent ) const {
 		} // if
 		break;
 	  case Enum:
-		os << "enumeration ";
+		os << "enumeration " << *enumeration.name << endl;;
 		if ( enumeration.constants ) {
 			os << "with constants" << endl;
 			enumeration.constants->printList( os, indent + 2 );

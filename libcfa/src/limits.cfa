@@ -9,11 +9,10 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 18:06:52 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  5 22:27:40 2023
-// Update Count     : 84
+// Last Modified On : Fri Feb 17 12:25:39 2023
+// Update Count     : 87
 //
 
-#define _GNU_SOURCE										// access long double M_*l in math.h
 #include <limits.h>
 #include <float.h>
 #include <math.h>

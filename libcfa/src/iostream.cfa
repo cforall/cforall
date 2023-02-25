@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 27 15:04:15 2022
-// Update Count     : 1358
+// Last Modified On : Mon Jan  9 09:27:58 2023
+// Update Count     : 1361
 //
 
 #include "iostream.hfa"
@@ -666,7 +666,7 @@ static const char *suffixes[] = {
 				len += 1; \
 			} /* if */ \
 			if ( ! f.flags.nobsdp || (exp10 < SUFFIXES_START) || (exp10 > SUFFIXES_END) ) { \
-				len2 = snprintf( &buf[len], size - len, "e%d", exp10 ); \
+				len2 = snprintf( &buf[len], size - len, "e%d", (int)exp10 /* ambiguity with function exp10 */ ); \
 			} else { \
 				len2 = snprintf( &buf[len], size - len, "%s", suffixes[(exp10 - SUFFIXES_START) / 3] ); \
 			} /* if */ \

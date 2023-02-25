@@ -14,22 +14,19 @@
 //
 
 #define __cforall_thread__
-#define _GNU_SOURCE
 
 // #define __CFA_DEBUG_PRINT_RUNTIME_CORE__
 
 // C Includes
-#include <errno.h>					// errno
+#include <errno.h>										// errno
 #include <signal.h>
-#include <string.h>					// strerror
-#include <unistd.h>					// sysconf
-
+#include <string.h>										// strerror
+#include <unistd.h>
+#include <limits.h>										// PTHREAD_STACK_MIN
 extern "C" {
-	#include <limits.h>				// PTHREAD_STACK_MIN
-	#include <unistd.h>				// syscall
-	#include <sys/eventfd.h>			// eventfd
-	#include <sys/mman.h>				// mprotect
-	#include <sys/resource.h>			// getrlimit
+	#include <sys/eventfd.h>							// eventfd
+	#include <sys/mman.h>								// mprotect
+	#include <sys/resource.h>							// getrlimit
 }
 
 // CFA Includes

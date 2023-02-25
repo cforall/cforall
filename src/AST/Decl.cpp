@@ -19,7 +19,7 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "Common/utility.h"
+#include "Common/Eval.h"       // for eval
 
 #include "Fwd.hpp"             // for UniqueId
 #include "Init.hpp"

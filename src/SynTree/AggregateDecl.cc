@@ -18,6 +18,7 @@
 #include <string>                // for operator<<, string, char_traits
 
 #include "Attribute.h"           // for Attribute
+#include "Common/Eval.h"         // for eval
 #include "Common/utility.h"      // for printAll, cloneAll, deleteAll
 #include "Declaration.h"         // for AggregateDecl, TypeDecl, Declaration
 #include "Expression.h"

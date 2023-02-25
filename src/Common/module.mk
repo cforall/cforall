@@ -24,11 +24,13 @@ SRC_COMMON = \
 	Common/DeclStats.cpp \
 	Common/ErrorObjects.h \
 	Common/Eval.cc \
+	Common/Eval.h \
 	Common/Examine.cc \
 	Common/Examine.h \
 	Common/FilterCombos.h \
 	Common/Indenter.h \
 	Common/Indenter.cc \
+	Common/Iterate.hpp \
 	Common/PassVisitor.cc \
 	Common/PassVisitor.h \
 	Common/PassVisitor.impl.h \

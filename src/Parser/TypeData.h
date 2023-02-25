@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:18:36 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 10 22:18:49 2022
-// Update Count     : 203
+// Last Modified On : Fri Feb 24 14:25:02 2023
+// Update Count     : 205
 //
 
 #pragma once
@@ -36,12 +36,11 @@ struct TypeData {
 		DeclarationNode * fields = nullptr;
 		bool body;
 		bool anon;
-
 		bool tagged;
 		const std::string * parent = nullptr;
 	};
 
-	struct AggInst_t {
+	struct AggInst_t {									// handles SUE
 		TypeData * aggregate = nullptr;
 		ExpressionNode * params = nullptr;
 		bool hoistType;

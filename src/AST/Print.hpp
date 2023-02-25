@@ -15,15 +15,12 @@
 
 #pragma once
 
-#include <iostream>
-#include <utility>   // for forward
+#include <iosfwd>
 
-#include "AST/Node.hpp"
+#include "AST/Fwd.hpp"
 #include "Common/Indenter.h"
 
 namespace ast {
-
-class Decl;
 
 /// Print a node with the given indenter
 void print( std::ostream & os, const ast::Node * node, Indenter indent = {} );
@@ -42,5 +39,12 @@ void printAll( std::ostream & os, const Coll & c, Indenter indent = {} ) {
 		os << std::endl;
 	}
 }
+
+/// Print each cv-qualifier used in the set, followed by a space.
+void print( std::ostream & os, CV::Qualifiers );
+/// Print each function specifier used in the set, followed by a space.
+void print( std::ostream & os, Function::Specs );
+/// Print each storage class used in the set, followed by a space.
+void print( std::ostream & os, Storage::Classes );
 
 }

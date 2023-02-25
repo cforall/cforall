@@ -15,6 +15,8 @@
 
 #pragma once
 
+template<typename> struct bitfield;
+
 #include "AST/Node.hpp"
 
 namespace ast {
@@ -145,5 +147,23 @@ typedef unsigned int UniqueId;
 
 class TranslationUnit;
 class TranslationGlobal;
+
+// For the following types, only use the using type.
+namespace CV {
+	struct qualifier_flags;
+	using Qualifiers = bitfield<qualifier_flags>;
+}
+namespace Function {
+	struct spec_flags;
+	using Specs = bitfield<spec_flags>;
+}
+namespace Storage {
+	struct class_flags;
+	using Classes = bitfield<class_flags>;
+}
+namespace Linkage {
+	struct spec_flags;
+	using Spec = bitfield<spec_flags>;
+}
 
 }

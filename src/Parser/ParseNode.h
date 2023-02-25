@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov  2 21:27:07 2022
-// Update Count     : 939
+// Last Modified On : Sun Feb 19 09:02:37 2023
+// Update Count     : 940
 //
 
 #pragma once
@@ -26,7 +26,8 @@
 #include "Common/CodeLocation.h"   // for CodeLocation
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/UniqueName.h"     // for UniqueName
-#include "Common/utility.h"        // for maybeClone, maybeBuild
+#include "Common/utility.h"        // for maybeClone
+#include "Parser/parserutility.h"  // for maybeBuild
 #include "SynTree/LinkageSpec.h"   // for Spec
 #include "SynTree/Declaration.h"   // for Aggregate
 #include "SynTree/Expression.h"    // for Expression, ConstantExpr (ptr only)
@@ -323,13 +324,6 @@ struct DeclarationNode : public ParseNode {
 	};
 	Variable_t variable;
 
-	struct Attr_t {
-//		const std::string * name;
-		ExpressionNode * expr;
-		DeclarationNode * type;
-	};
-	Attr_t attr;
-
 	struct StaticAssert_t {
 		ExpressionNode * condition;
 		Expression * message;
@@ -341,7 +335,7 @@ struct DeclarationNode : public ParseNode {
 	TypeData * type = nullptr;
 
 	bool inLine = false;
-	bool enumInLine = false; 
+	bool enumInLine = false;
 	Type::FuncSpecifiers funcSpecs;
 	Type::StorageClasses storageClasses;
 

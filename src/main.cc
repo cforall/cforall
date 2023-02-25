@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Oct  5 12:06:00 2022
-// Update Count     : 679
+// Last Modified On : Thr Feb 16 10:08:00 2023
+// Update Count     : 680
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -271,27 +271,27 @@ int main( int argc, char * argv[] ) {
 			// Read to gcc builtins, if not generating the cfa library
 			FILE * gcc_builtins = fopen( (PreludeDirector + "/gcc-builtins.cf").c_str(), "r" );
 			assertf( gcc_builtins, "cannot open gcc-builtins.cf\n" );
-			parse( gcc_builtins, LinkageSpec::Compiler );
+			parse( gcc_builtins, ast::Linkage::Compiler );
 
 			// read the extra prelude in, if not generating the cfa library
 			FILE * extras = fopen( (PreludeDirector + "/extras.cf").c_str(), "r" );
 			assertf( extras, "cannot open extras.cf\n" );
-			parse( extras, LinkageSpec::BuiltinC );
+			parse( extras, ast::Linkage::BuiltinC );
 
 			if ( ! libcfap ) {
 				// read the prelude in, if not generating the cfa library
 				FILE * prelude = fopen( (PreludeDirector + "/prelude.cfa").c_str(), "r" );
 				assertf( prelude, "cannot open prelude.cfa\n" );
-				parse( prelude, LinkageSpec::Intrinsic );
+				parse( prelude, ast::Linkage::Intrinsic );
 
 				// Read to cfa builtins, if not generating the cfa library
 				FILE * builtins = fopen( (PreludeDirector + "/builtins.cf").c_str(), "r" );
 				assertf( builtins, "cannot open builtins.cf\n" );
-				parse( builtins, LinkageSpec::BuiltinCFA );
+				parse( builtins, ast::Linkage::BuiltinCFA );
 			} // if
 		} // if
 
-		parse( input, libcfap ? LinkageSpec::Intrinsic : LinkageSpec::Cforall, yydebug );
+		parse( input, libcfap ? ast::Linkage::Intrinsic : ast::Linkage::Cforall, yydebug );
 
 		transUnit = buildUnit();
 
@@ -339,8 +339,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines( transUnit ) );
 
-        PASS( "Implement Actors", Concurrency::implementActors( transUnit ) );
-
+		PASS( "Implement Actors", Concurrency::implementActors( transUnit ) );
 		PASS( "Implement Mutex", Concurrency::implementMutex( transUnit ) );
 		PASS( "Implement Thread Start", Concurrency::implementThreadStarter( transUnit ) );
 		PASS( "Compound Literal", Validate::handleCompoundLiterals( transUnit ) );

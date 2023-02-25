@@ -38,20 +38,13 @@ generic_fptr_t interpose_symbol(
 	const char symbol[],
 	const char version[]
 ) libcfa_public {
-	const char * error;
-
 	static void * library;
 	if ( ! library ) {
-		#if defined( RTLD_NEXT )
-			library = RTLD_NEXT;
-		#else
-			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
-			library = dlopen( "libpthread.so", RTLD_LAZY );
-			error = dlerror();
-			if ( error ) {
-				abort( "interpose_symbol : failed to open libpthread, %s\n", error );
-			}
-		#endif
+		library = dlopen( "libpthread.so", RTLD_LAZY );
+		const char * error = dlerror();
+		if ( error ) {
+			abort( "interpose_symbol : failed to open libpthread, %s\n", error );
+		}
 	} // if
 
 	return do_interpose_symbol(library, symbol, version);

@@ -9,12 +9,11 @@
 // Author           : Thierry Delisle
 // Created On       : Mon Jun 5 14:20:42 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb 17 11:18:57 2022
-// Update Count     : 59
+// Last Modified On : Mon Jan  9 08:42:59 2023
+// Update Count     : 60
 //
 
 #define __cforall_thread__
-#define _GNU_SOURCE
 
 // #define __CFA_DEBUG_PRINT_PREEMPTION__
 

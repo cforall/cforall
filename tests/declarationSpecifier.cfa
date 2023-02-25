@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug 17 08:21:04 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 30 18:20:36 2019
-// Update Count     : 4
+// Last Modified On : Thu Feb 23 20:53:31 2023
+// Update Count     : 8
 //
 
 typedef short int Int;
@@ -24,14 +24,13 @@ const short int volatile static x6;
 const short volatile int static x7;
 short int volatile static const x8;
 
-const volatile struct { int i; } x10;
-const struct { int i; } volatile x11;
-struct { int i; } const volatile x12;
-static const volatile struct { int i; } x13;
-const static struct { int i; } volatile x14;
-struct { int i; } static const volatile x15;
-struct { int i; } const static volatile x16;
-struct { int i; } const volatile static x17;
+static const volatile struct { int i; } x10;
+static const struct { int i; } volatile x11;
+static struct { int i; } const volatile x12;
+const static struct { int i; } volatile x13;
+struct { int i; } static const volatile x14;
+struct { int i; } const static volatile x15;
+struct { int i; } const volatile static x16;
 
 const Int volatile x20;
 static const Int volatile x21;
@@ -42,14 +41,13 @@ const Int volatile static x25;
 const volatile Int static x26;
 Int volatile static const x27;
 
-const volatile struct { Int i; } x29;
-const struct { Int i; } volatile x30;
-struct { Int i; } const volatile x31;
-static const volatile struct { Int i; } x32;
-const static struct { Int i; } volatile x33;
-struct { Int i; } static const volatile x34;
-struct { Int i; } const static volatile x35;
-struct { Int i; } const volatile static x36;
+static const volatile struct { Int i; } x29;
+static const struct { Int i; } volatile x30;
+static struct { Int i; } const volatile x31;
+const static struct { Int i; } volatile x32;
+struct { Int i; } static const volatile x33;
+struct { Int i; } const static volatile x34;
+struct { Int i; } const volatile static x35;
 
 _Thread_local int x37;
 __thread int x38;

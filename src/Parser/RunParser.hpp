@@ -9,15 +9,15 @@
 // Author           : Andrew Beach
 // Created On       : Mon Dec 19 10:42:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Thr Dec 22 10:23:00 2022
-// Update Count     : 1
+// Last Modified On : Thr Feb 16 10:08:00 2023
+// Update Count     : 2
 //
 
 #pragma once
 
 #include <iosfwd>                           // for ostream
 
-#include "SynTree/LinkageSpec.h"            // for Spec
+#include "AST/LinkageSpec.hpp"              // for Spec
 namespace ast {
 	class TranslationUnit;
 }
@@ -28,7 +28,7 @@ namespace ast {
 /// value provided. Results are saved to the internal accumulator.
 /// The input file is closed when complete. Exits instead of returning on
 /// error or if alwaysExit is true.
-void parse( FILE * input, LinkageSpec::Spec linkage, bool alwaysExit = false );
+void parse( FILE * input, ast::Linkage::Spec linkage, bool alwaysExit = false );
 
 /// Drain the internal accumulator of parsed code and build a translation
 /// unit from it.

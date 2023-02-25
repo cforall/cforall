@@ -145,9 +145,9 @@ static inline unsigned cache_id(struct cluster * cltr, unsigned idx) with (cltr-
 	return this_cache;
 }
 
-static struct {
-	const unsigned readyq;
-	const unsigned io;
+const static struct {
+	unsigned readyq;
+	unsigned io;
 } __shard_factor = { 2, 1 };
 
 // Local Variables: //

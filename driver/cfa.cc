@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 14 21:55:12 2021
-// Update Count     : 467
+// Last Modified On : Tue Feb 14 22:46:38 2023
+// Update Count     : 470
 //
 
 #include <iostream>
@@ -443,6 +443,7 @@ int main( int argc, char * argv[] ) {
 	} // if
 
 	args[nargs++] = "-fexceptions";						// add exception flags (unconditionally)
+	args[nargs++] = "-D_GNU_SOURCE";					// force gnu libraries
 
 	// add flags based on the type of compile
 

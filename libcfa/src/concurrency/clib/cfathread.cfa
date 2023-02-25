@@ -15,6 +15,10 @@
 
 // #define EPOLL_FOR_SOCKETS
 
+#include <sys/socket.h> // first include because of anonymous types __SOCKADDR_ARG, __CONST_SOCKADDR_ARG
+#include <string.h>
+#include <errno.h>
+
 #include "fstream.hfa"
 #include "locks.hfa"
 #include "kernel.hfa"
@@ -25,15 +29,9 @@
 
 #include "cfathread.h"
 
-extern "C" {
-		#include <string.h>
-		#include <errno.h>
-}
-
 extern void ?{}(processor &, const char[], cluster &, thread$ *);
 extern "C" {
-      extern void __cfactx_invoke_thread(void (*main)(void *), void * this);
-	extern int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
+	extern void __cfactx_invoke_thread(void (*main)(void *), void * this);
 }
 
 extern Time __kernel_get_time();
@@ -471,13 +469,11 @@ extern "C" {
 	}
 }
 
+#include <unistd.h>
+
 #include <iofwd.hfa>
 
 extern "C" {
-	#include <unistd.h>
-	#include <sys/types.h>
-	#include <sys/socket.h>
-
 	//--------------------
 	// IO operations
 	int cfathread_socket(int domain, int type, int protocol) {
@@ -487,7 +483,7 @@ extern "C" {
 		#endif
 		, protocol);
 	}
-	int cfathread_bind(int socket, const struct sockaddr *address, socklen_t address_len) {
+	int cfathread_bind(int socket, __CONST_SOCKADDR_ARG address, socklen_t address_len) {
 		return bind(socket, address, address_len);
 	}
 
@@ -495,7 +491,7 @@ extern "C" {
 		return listen(socket, backlog);
 	}
 
-	int cfathread_accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len) {
+	int cfathread_accept(int socket, __SOCKADDR_ARG address, socklen_t *restrict address_len) {
 		#if defined(EPOLL_FOR_SOCKETS)
 			int ret;
 			for() {
@@ -512,7 +508,7 @@ extern "C" {
 		#endif
 	}
 
-	int cfathread_connect(int socket, const struct sockaddr *address, socklen_t address_len) {
+	int cfathread_connect(int socket, __CONST_SOCKADDR_ARG address, socklen_t address_len) {
 		#if defined(EPOLL_FOR_SOCKETS)
 			int ret;
 			for() {

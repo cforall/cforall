@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 21:36:16 2023
-// Update Count     : 5865
+// Last Modified On : Fri Feb 24 14:46:55 2023
+// Update Count     : 5983
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -54,7 +54,7 @@ using namespace std;
 #include "Common/SemanticError.h"						// error_str
 #include "Common/utility.h"								// for maybeMoveBuild, maybeBuild, CodeLo...
 
-#include "SynTree/Attribute.h"     // for Attribute
+#include "SynTree/Attribute.h"							// for Attribute
 
 // lex uses __null in a boolean context, it's fine.
 #ifdef __clang__
@@ -1940,7 +1940,7 @@ typedef_declaration:
 		{
 			// if type_specifier is an anon aggregate => name 
 			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "4" );
-			$$ = $3->addType( $2 )->addTypedef();
+			$$ = $3->addType( $2 )->addTypedef();		// watchout frees $2 and $3
 		}
 	| typedef_declaration pop ',' push declarator
 		{
@@ -1950,7 +1950,7 @@ typedef_declaration:
 	| type_qualifier_list TYPEDEF type_specifier declarator // remaining OBSOLESCENT (see 2 )
 		{
 			typedefTable.addToEnclosingScope( *$4->name, TYPEDEFname, "6" );
-			$$ = $4->addType( $3 )->addQualifiers( $1 )->addTypedef();
+			$$ = $4->addQualifiers( $1 )->addType( $3 )->addTypedef();
 		}
 	| type_specifier TYPEDEF declarator
 		{
@@ -1960,7 +1960,7 @@ typedef_declaration:
 	| type_specifier TYPEDEF type_qualifier_list declarator
 		{
 			typedefTable.addToEnclosingScope( *$4->name, TYPEDEFname, "8" );
-			$$ = $4->addQualifiers( $1 )->addTypedef()->addType( $1 );
+			$$ = $4->addQualifiers( $1 )->addType( $1 )->addTypedef();
 		}
 	;
 
@@ -1982,6 +1982,16 @@ c_declaration:
 	| typedef_declaration
 	| typedef_expression								// deprecated GCC, naming expression type
 	| sue_declaration_specifier
+		{
+			assert( $1->type );
+			if ( $1->type->qualifiers.any() ) {			// CV qualifiers ?
+				SemanticError( yylloc, "Useless type qualifier(s) in empty declaration." ); $$ = nullptr;
+			}
+			// enums are never empty declarations because there must have at least one enumeration.
+			if ( $1->type->kind == TypeData::AggregateInst && $1->storageClasses.any() ) { // storage class ?
+				SemanticError( yylloc, "Useless storage qualifier(s) in empty aggregate declaration." ); $$ = nullptr;
+			}
+		}
 	;
 
 declaring_list:
@@ -1999,10 +2009,9 @@ declaration_specifier:									// type specifier + storage class
 	| sue_declaration_specifier
 	| sue_declaration_specifier invalid_types
 		{
-			SemanticError( yylloc,
-						  ::toString( "Missing ';' after end of ",
-									  $1->type->enumeration.name ? "enum" : AggregateDecl::aggrString( $1->type->aggregate.kind ),
-									  " declaration" ) );
+			SemanticError( yylloc, ::toString( "Missing ';' after end of ",
+				$1->type->enumeration.name ? "enum" : AggregateDecl::aggrString( $1->type->aggregate.kind ),
+				" declaration" ) );
 			$$ = nullptr;
 		}
 	;
@@ -2581,7 +2590,7 @@ enum_type:
 		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false, nullptr, $4 )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 	 	{
-			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 )
+			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.any() )
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 
 			$$ = DeclarationNode::newEnum( nullptr, $7, true, true, $3 )->addQualifiers( $5 );
@@ -2592,7 +2601,7 @@ enum_type:
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
-			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
+			if ( $3->storageClasses.any() || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 			typedefTable.makeTypedef( *$6 );
 		}
 	  hide_opt '{' enumerator_list comma_opt '}'
@@ -3051,6 +3060,18 @@ external_definition:
 	DIRECTIVE
 		{ $$ = DeclarationNode::newDirectiveStmt( new StatementNode( build_directive( $1 ) ) ); }
 	| declaration
+		{
+			// Variable declarations of anonymous types requires creating a unique type-name across multiple translation
+			// unit, which is a dubious task, especially because C uses name rather than structural typing; hence it is
+			// disallowed at the moment.
+			if ( $1->linkage == LinkageSpec::Cforall && ! $1->storageClasses.is_static && $1->type && $1->type->kind == TypeData::AggregateInst ) {
+				if ( $1->type->aggInst.aggregate->kind == TypeData::Enum && $1->type->aggInst.aggregate->enumeration.anon ) {
+					SemanticError( yylloc, "extern anonymous enumeration is currently unimplemented." ); $$ = nullptr;
+				} else if ( $1->type->aggInst.aggregate->aggregate.anon ) { // handles struct or union
+					SemanticError( yylloc, "extern anonymous struct/union is currently unimplemented." ); $$ = nullptr;
+				}
+			}
+		}
 	| IDENTIFIER IDENTIFIER
 		{ IdentifierBeforeIdentifier( *$1.str, *$2.str, " declaration" ); $$ = nullptr; }
 	| IDENTIFIER type_qualifier							// syntax error
@@ -3096,7 +3117,7 @@ external_definition:
 	// global distribution
 	| type_qualifier_list
 		{
-			if ( $1->type->qualifiers.val ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
+			if ( $1->type->qualifiers.any() ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
 			if ( $1->type->forall ) forall = true;		// remember generic type
 		}
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
@@ -3107,7 +3128,7 @@ external_definition:
 		}
 	| declaration_qualifier_list
 		{
-			if ( $1->type && $1->type->qualifiers.val ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
+			if ( $1->type && $1->type->qualifiers.any() ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
 			if ( $1->type && $1->type->forall ) forall = true; // remember generic type
 		}
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
@@ -3118,7 +3139,7 @@ external_definition:
 		}
 	| declaration_qualifier_list type_qualifier_list
 		{
-			if ( ($1->type && $1->type->qualifiers.val) || ($2->type && $2->type->qualifiers.val) ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
+			if ( ($1->type && $1->type->qualifiers.any()) || ($2->type && $2->type->qualifiers.any()) ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
 			if ( ($1->type && $1->type->forall) || ($2->type && $2->type->forall) ) forall = true; // remember generic type
 		}
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace

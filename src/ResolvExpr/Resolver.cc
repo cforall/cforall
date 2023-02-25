@@ -37,6 +37,7 @@
 #include "AST/Print.hpp"
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
+#include "Common/Eval.h"                 // for eval
 #include "Common/PassVisitor.h"          // for PassVisitor
 #include "Common/SemanticError.h"        // for SemanticError
 #include "Common/Stats/ResolveTime.h"    // for ResolveTime::start(), ResolveTime::stop()

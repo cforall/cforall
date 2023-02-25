@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun May 22 08:27:20 2022
-// Update Count     : 779
+// Last Modified On : Wed Feb 22 10:16:58 2023
+// Update Count     : 811
 //
 
 #ifdef __CFA__
@@ -71,7 +71,7 @@ extern "C" {
 #include <grp.h>
 #include <gshadow.h>
 #include <iconv.h>
-#include <ifaddrs.h>
+//#include <ifaddrs.h>									// causes warning messages that break the build
 #include <inttypes.h>
 #include <langinfo.h>
 #include <lastlog.h>
@@ -96,7 +96,7 @@ extern "C" {
 #if __has_include( "ncurses_dll.h" )
 #include <ncurses_dll.h>								// may not be installed, comes with ncurses
 #endif
-#include <netdb.h>
+//#include <netdb.h>
 #include <nl_types.h>
 #include <nss.h>
 #include <obstack.h>
@@ -110,7 +110,7 @@ extern "C" {
 #include <pty.h>
 #include <pwd.h>
 #include <regex.h>
-#include <resolv.h>
+//#include <resolv.h>
 #include <re_comp.h>
 #include <sched.h>
 #include <search.h>
@@ -169,7 +169,7 @@ extern "C" {
 } // extern "C"
 #endif // __CFA__
 
-int main( int argc, char const * argv[] ) {
+int main() {
     #pragma GCC warning "Compiled"							// force non-empty .expect file, NO TABS!!!
 }
 

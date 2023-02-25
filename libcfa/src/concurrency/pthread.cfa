@@ -14,7 +14,6 @@
 //
 
 #define __cforall_thread__
-#define _GNU_SOURCE
 
 #include <signal.h>
 #include <pthread.h>
@@ -34,7 +33,7 @@ enum { PTHREAD_KEYS_MAX = 1024 };
 
 struct pthread_values{
 	inline Seqable;
-	void* value;
+	void * value;
 	bool in_use;
 };
 
@@ -50,19 +49,19 @@ static inline {
 
 struct pthread_keys {
 	bool in_use;
-	void (*destructor)( void * );
+	void (* destructor)( void * );
 	Sequence(pthread_values) threads;
 };
 
-static void ?{}(pthread_keys& k){
+static void ?{}(pthread_keys& k) {
 	k.threads{};
 }
 
 // Create storage separately to ensure no constructors are called.
 static pthread_keys cfa_pthread_keys_storage[PTHREAD_KEYS_MAX] __attribute__((aligned (16)));
 
-static void init_pthread_storage(){
-	for (int i = 0; i < PTHREAD_KEYS_MAX; i++){
+static void init_pthread_storage() {
+	for ( int i = 0; i < PTHREAD_KEYS_MAX; i++ ) {
 		cfa_pthread_keys_storage[i]{};
 	}
 }
@@ -95,18 +94,18 @@ static int cfa_pthreads_no_kernel_threads = 1;	// number of kernel threads
 typedef pthread_cond_var(simple_owner_lock) cfa2pthr_cond_var_t;
 
 /* condvar helper routines */
-static void init(pthread_cond_t* pcond){
+static void init(pthread_cond_t * pcond) {
 	static_assert(sizeof(pthread_cond_t) >= sizeof(cfa2pthr_cond_var_t),"sizeof(pthread_t) < sizeof(cfa2pthr_cond_var_t)");
-	cfa2pthr_cond_var_t* _cond = (cfa2pthr_cond_var_t*)pcond;
+	cfa2pthr_cond_var_t * _cond = (cfa2pthr_cond_var_t *)pcond;
 	?{}(*_cond);
 }
 
-static cfa2pthr_cond_var_t* get(pthread_cond_t* pcond){
+static cfa2pthr_cond_var_t * get(pthread_cond_t * pcond) {
 	static_assert(sizeof(pthread_cond_t) >= sizeof(cfa2pthr_cond_var_t),"sizeof(pthread_t) < sizeof(cfa2pthr_cond_var_t)");
-	return (cfa2pthr_cond_var_t*)pcond;
+	return (cfa2pthr_cond_var_t *)pcond;
 }
 
-static void destroy(pthread_cond_t* cond){
+static void destroy(pthread_cond_t * cond) {
 	static_assert(sizeof(pthread_cond_t) >= sizeof(cfa2pthr_cond_var_t),"sizeof(pthread_t) < sizeof(cfa2pthr_cond_var_t)");
 	^?{}(*get(cond));
 }
@@ -115,10 +114,10 @@ static void destroy(pthread_cond_t* cond){
 //######################### Mutex Helper #########################
 
 /* mutex helper routines */
-static void mutex_check(pthread_mutex_t* t){
+static void mutex_check(pthread_mutex_t * t) {
 	// Use double check to improve performance.
 	// Check is safe on x86; volatile prevents compiler reordering
-	volatile pthread_mutex_t *const mutex_ = t;
+	volatile pthread_mutex_t * const mutex_ = t;
 
 	// SKULLDUGGERY: not a portable way to access the kind field, /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
 	int _lock_val = ((pthread_mutex_t *)mutex_)->__data.__lock;
@@ -135,18 +134,18 @@ static void mutex_check(pthread_mutex_t* t){
 } // mutex_check
 
 
-static void init(pthread_mutex_t* plock){
+static void init(pthread_mutex_t * plock) {
 	static_assert(sizeof(pthread_mutex_t) >= sizeof(simple_owner_lock),"sizeof(pthread_mutex_t) < sizeof(simple_owner_lock)");
-	simple_owner_lock* _lock = (simple_owner_lock*)plock;
+	simple_owner_lock * _lock = (simple_owner_lock *)plock;
 	?{}(*_lock);
 }
 
-static simple_owner_lock* get(pthread_mutex_t* plock){
+static simple_owner_lock * get(pthread_mutex_t * plock) {
 	static_assert(sizeof(pthread_mutex_t) >= sizeof(simple_owner_lock),"sizeof(pthread_mutex_t) < sizeof(simple_owner_lock)");
-	return (simple_owner_lock*)plock;
+	return (simple_owner_lock *)plock;
 }
 
-static void destroy(pthread_mutex_t* plock){
+static void destroy(pthread_mutex_t * plock) {
 	static_assert(sizeof(pthread_mutex_t) >= sizeof(simple_owner_lock),"sizeof(pthread_mutex_t) < sizeof(simple_owner_lock)");
 	^?{}(*get(plock));
 }
@@ -156,25 +155,25 @@ struct cfaPthread_attr_t {								// thread attributes
 		int contentionscope;
 		int detachstate;
 		size_t stacksize;
-		void *stackaddr;
+		void * stackaddr;
 		int policy;
 		int inheritsched;
 		struct sched_param param;
 } typedef cfaPthread_attr_t;
 
-static const cfaPthread_attr_t default_attrs{
+static const cfaPthread_attr_t default_attrs {
 	0,
 	0,
-	(size_t)65000,
-	(void *)NULL,
+	65_000,
+	NULL,
 	0,
 	0,
 	{0}
 };
 
-static cfaPthread_attr_t* get(const pthread_attr_t* attr){
-	static_assert(sizeof(pthread_attr_t) >= sizeof(cfaPthread_attr_t),"sizeof(pthread_attr_t) < sizeof(cfaPthread_attr_t)");
-	return (cfaPthread_attr_t*)attr;
+static cfaPthread_attr_t * get(const pthread_attr_t * attr) {
+	static_assert(sizeof(pthread_attr_t) >= sizeof(cfaPthread_attr_t), "sizeof(pthread_attr_t) < sizeof(cfaPthread_attr_t)");
+	return (cfaPthread_attr_t *)attr;
 }
 
 
@@ -189,16 +188,16 @@ thread cfaPthread{
 	pthread_t pthreadId;
 
 	// pthreads return value
-	void *joinval;
+	void * joinval;
 
 	// pthread attributes
 	pthread_attr_t pthread_attr;
 
-	void *(*start_routine)(void *);
-	void *start_arg;
+	void *(* start_routine)(void *);
+	void * start_arg;
 
 	// thread local data
-	pthread_values* pthreadData;
+	pthread_values * pthreadData;
 
 	// flag used for tryjoin
 	bool isTerminated;
@@ -206,34 +205,34 @@ thread cfaPthread{
 
 /* thread part routines */
 //  cfaPthread entry point
-void main(cfaPthread& _thread) with(_thread){
-	joinval =  start_routine(start_arg);
+void main(cfaPthread & _thread) with(_thread) {
+	joinval = start_routine(start_arg);
 	isTerminated = true;
 }
 
-static cfaPthread *lookup( pthread_t p ){
-	static_assert(sizeof(pthread_t) >= sizeof(cfaPthread*),"sizeof(pthread_t) < sizeof(cfaPthread*)");
-	return (cfaPthread*)p;
+static cfaPthread * lookup( pthread_t p ) {
+	static_assert(sizeof(pthread_t) >= sizeof(cfaPthread *),"sizeof(pthread_t) < sizeof(cfaPthread *)");
+	return (cfaPthread *)p;
 }
 
-static void pthread_deletespecific_( pthread_values* values )  { // see uMachContext::invokeTask
-	pthread_values* value;
-	pthread_keys* key;
+static void pthread_deletespecific_( pthread_values * values )  { // see uMachContext::invokeTask
+	pthread_values * value;
+	pthread_keys * key;
 	bool destcalled = true;
-	if (values != NULL){
+	if (values != NULL) {
 		for ( int attempts = 0; attempts < PTHREAD_DESTRUCTOR_ITERATIONS && destcalled ; attempts += 1 ) {
 			destcalled = false;
 			lock(key_lock);
-			for (int i = 0; i < PTHREAD_KEYS_MAX; i++){
+			for ( int i = 0; i < PTHREAD_KEYS_MAX; i++ ) {
 				// for each valid key
-				if ( values[i].in_use){
+				if ( values[i].in_use) {
 					value = &values[i];
 					key = &cfa_pthread_keys[i];
 					value->in_use = false;
 					remove(key->threads, *value);
 					// if  a  key  value  has  a  non-NULL  destructor pointer,  and  the  thread  has  a  non-NULL  value associated with that key,
 					// the value of the key is set to NULL, and then the function pointed to is called with the previously associated value as its sole argument.
-					if (value->value != NULL && key->destructor != NULL){
+					if (value->value != NULL && key->destructor != NULL) {
 						unlock(key_lock);
 						key->destructor(value->value); // run destructor
 						lock(key_lock);
@@ -248,14 +247,14 @@ static void pthread_deletespecific_( pthread_values* values )  { // see uMachCon
 	}   // if
 }
 
-static void ^?{}(cfaPthread & mutex t){
+static void ^?{}(cfaPthread & mutex t) {
 	// delete pthread local storage
 	pthread_values * values = t.pthreadData;
 	pthread_deletespecific_(values);
 }
 
-static void ?{}(cfaPthread &t, pthread_t* _thread, const pthread_attr_t * _attr,void *(*start_routine)(void *), void * arg) {
-	static_assert(sizeof(pthread_t) >= sizeof(cfaPthread*), "pthread_t too small to hold a pointer: sizeof(pthread_t) < sizeof(cfaPthread*)");
+static void ?{}(cfaPthread & t, pthread_t * _thread, const pthread_attr_t * _attr,void *(* start_routine)(void *), void * arg) {
+	static_assert(sizeof(pthread_t) >= sizeof(cfaPthread *), "pthread_t too small to hold a pointer: sizeof(pthread_t) < sizeof(cfaPthread *)");
 
 	// set up user thread stackSize
 	cfaPthread_attr_t * attr = get(_attr);
@@ -277,42 +276,42 @@ static void ?{}(cfaPthread &t, pthread_t* _thread, const pthread_attr_t * _attr,
 extern "C"{
 	//######################### Pthread Attrs #########################
 
-	int pthread_attr_init(pthread_attr_t *attr) libcfa_public __THROW {
-		cfaPthread_attr_t* _attr = get(attr);
+	int pthread_attr_init(pthread_attr_t * attr) libcfa_public __THROW {
+		cfaPthread_attr_t * _attr = get(attr);
 		?{}(*_attr, default_attrs);
 		return 0;
 	}
-	int pthread_attr_destroy(pthread_attr_t *attr) libcfa_public __THROW {
+	int pthread_attr_destroy(pthread_attr_t * attr) libcfa_public __THROW {
 		^?{}(*get(attr));
 		return 0;
 	}
 
-	int pthread_attr_setscope( pthread_attr_t *attr, int contentionscope ) libcfa_public __THROW {
+	int pthread_attr_setscope( pthread_attr_t * attr, int contentionscope ) libcfa_public __THROW {
 		get( attr )->contentionscope = contentionscope;
 		return 0;
 	} // pthread_attr_setscope
 
-	int pthread_attr_getscope( const pthread_attr_t *attr, int *contentionscope ) libcfa_public __THROW {
+	int pthread_attr_getscope( const pthread_attr_t * attr, int * contentionscope ) libcfa_public __THROW {
 		*contentionscope = get( attr )->contentionscope;
 		return 0;
 	} // pthread_attr_getscope
 
-	int pthread_attr_setdetachstate( pthread_attr_t *attr, int detachstate ) libcfa_public __THROW {
+	int pthread_attr_setdetachstate( pthread_attr_t * attr, int detachstate ) libcfa_public __THROW {
 		get( attr )->detachstate = detachstate;
 		return 0;
 	} // pthread_attr_setdetachstate
 
-	int pthread_attr_getdetachstate( const pthread_attr_t *attr, int *detachstate ) libcfa_public __THROW {
+	int pthread_attr_getdetachstate( const pthread_attr_t * attr, int * detachstate ) libcfa_public __THROW {
 		*detachstate = get( attr )->detachstate;
 		return 0;
 	} // pthread_attr_getdetachstate
 
-	int pthread_attr_setstacksize( pthread_attr_t *attr, size_t stacksize ) libcfa_public __THROW {
+	int pthread_attr_setstacksize( pthread_attr_t * attr, size_t stacksize ) libcfa_public __THROW {
 		get( attr )->stacksize = stacksize;
 		return 0;
 	} // pthread_attr_setstacksize
 
-	int pthread_attr_getstacksize( const pthread_attr_t *attr, size_t *stacksize ) libcfa_public __THROW {
+	int pthread_attr_getstacksize( const pthread_attr_t * attr, size_t * stacksize ) libcfa_public __THROW {
 		*stacksize = get( attr )->stacksize;
 		return 0;
 	} // pthread_attr_getstacksize
@@ -325,23 +324,23 @@ extern "C"{
 		return 0;
 	} // pthread_attr_setguardsize
 
-	int pthread_attr_setstackaddr( pthread_attr_t *attr, void *stackaddr ) libcfa_public __THROW {
+	int pthread_attr_setstackaddr( pthread_attr_t * attr, void * stackaddr ) libcfa_public __THROW {
 		get( attr )->stackaddr = stackaddr;
 		return 0;
 	} // pthread_attr_setstackaddr
 
-	int pthread_attr_getstackaddr( const pthread_attr_t *attr, void **stackaddr ) libcfa_public __THROW {
+	int pthread_attr_getstackaddr( const pthread_attr_t * attr, void ** stackaddr ) libcfa_public __THROW {
 		*stackaddr = get( attr )->stackaddr;
 		return 0;
 	} // pthread_attr_getstackaddr
 
-	int pthread_attr_setstack( pthread_attr_t *attr, void *stackaddr, size_t stacksize ) libcfa_public __THROW {
+	int pthread_attr_setstack( pthread_attr_t * attr, void * stackaddr, size_t stacksize ) libcfa_public __THROW {
 		get( attr )->stackaddr = stackaddr;
 		get( attr )->stacksize = stacksize;
 		return 0;
 	} // pthread_attr_setstack
 
-	int pthread_attr_getstack( const pthread_attr_t *attr, void **stackaddr, size_t *stacksize ) libcfa_public __THROW {
+	int pthread_attr_getstack( const pthread_attr_t * attr, void ** stackaddr, size_t * stacksize ) libcfa_public __THROW {
 		*stackaddr = get( attr )->stackaddr;
 		*stacksize = get( attr )->stacksize;
 		return 0;
@@ -350,7 +349,7 @@ extern "C"{
 	// Initialize thread attribute *attr with attributes corresponding to the
 	// already running thread threadID. It shall be called on unitialized attr
 	// and destroyed with pthread_attr_destroy when no longer needed.
-	int pthread_getattr_np( pthread_t threadID, pthread_attr_t *attr ) libcfa_public __THROW { // GNU extension
+	int pthread_getattr_np( pthread_t threadID, pthread_attr_t * attr ) libcfa_public __THROW { // GNU extension
 		check_nonnull(attr);
 
 		// copy all fields
@@ -362,20 +361,19 @@ extern "C"{
 
 	//######################### Threads #########################
 
-	int pthread_create(pthread_t * _thread, const pthread_attr_t * attr, void *(*start_routine)(void *), void * arg) libcfa_public __THROW {
-		cfaPthread *t = alloc();
+	int pthread_create(pthread_t * _thread, const pthread_attr_t * attr, void *(* start_routine)(void *), void * arg) libcfa_public __THROW {
+		cfaPthread * t = alloc();
 		(*t){_thread, attr, start_routine, arg};
 		return 0;
 	}
 
-
-	int pthread_join(pthread_t _thread, void **value_ptr) libcfa_public __THROW {
+	int pthread_join(pthread_t _thread, void ** value_ptr) libcfa_public __THROW {
 		// if thread is invalid
 		if (_thread == NULL) return EINVAL;
 		if (_thread == pthread_self()) return EDEADLK;
 
 		// get user thr pointer
-		cfaPthread* p = lookup(_thread);
+		cfaPthread * p = lookup(_thread);
 		try {
 			join(*p);
 		}
@@ -388,12 +386,12 @@ extern "C"{
 		return 0;
 	}
 
-	int pthread_tryjoin_np(pthread_t _thread, void **value_ptr) libcfa_public __THROW {
+	int pthread_tryjoin_np(pthread_t _thread, void ** value_ptr) libcfa_public __THROW {
 		// if thread is invalid
 		if (_thread == NULL) return EINVAL;
 		if (_thread == pthread_self()) return EDEADLK;
 
-		cfaPthread* p = lookup(_thread);
+		cfaPthread * p = lookup(_thread);
 
 		// thread not finished ?
 		if (!p->isTerminated) return EBUSY;
@@ -411,7 +409,7 @@ extern "C"{
 
 	void pthread_exit(void * status) libcfa_public __THROW {
 		pthread_t pid = pthread_self();
-		cfaPthread* _thread = (cfaPthread*)pid;
+		cfaPthread * _thread = (cfaPthread *)pid;
 		_thread->joinval = status;  // set return value
 		_thread->isTerminated = 1;  // set terminated flag
 		cancel_stack((pthread_exit_exp){&exp_vt});
@@ -425,7 +423,7 @@ extern "C"{
 
 	//######################### Mutex #########################
 
-	int pthread_mutex_init(pthread_mutex_t *_mutex, const pthread_mutexattr_t *attr) libcfa_public __THROW {
+	int pthread_mutex_init(pthread_mutex_t *_mutex, const pthread_mutexattr_t * attr) libcfa_public __THROW {
 		check_nonnull(_mutex);
 		init(_mutex);
 		return 0;
@@ -434,8 +432,8 @@ extern "C"{
 
 	int pthread_mutex_destroy(pthread_mutex_t *_mutex) libcfa_public __THROW {
 		check_nonnull(_mutex);
-		simple_owner_lock* _lock = get(_mutex);
-		if (_lock->owner != NULL){
+		simple_owner_lock * _lock = get(_mutex);
+		if (_lock->owner != NULL) {
 			return EBUSY;
 		}
 		destroy(_mutex);
@@ -445,15 +443,15 @@ extern "C"{
 	int pthread_mutex_lock(pthread_mutex_t *_mutex) libcfa_public __THROW {
 		check_nonnull(_mutex);
 		mutex_check(_mutex);
-		simple_owner_lock* _lock = get(_mutex);
+		simple_owner_lock * _lock = get(_mutex);
 		lock(*_lock);
 		return 0;
 	}   //pthread_mutex_lock_
 
 	int pthread_mutex_unlock(pthread_mutex_t *_mutex) libcfa_public __THROW {
 		check_nonnull(_mutex);
-		simple_owner_lock* _lock = get(_mutex);
-		if (_lock->owner != active_thread()){
+		simple_owner_lock * _lock = get(_mutex);
+		if (_lock->owner != active_thread()) {
 			return EPERM;
 		} // current thread does not hold the mutex
 		unlock(*_lock);
@@ -462,8 +460,8 @@ extern "C"{
 
 	int pthread_mutex_trylock(pthread_mutex_t *_mutex) libcfa_public __THROW {
 		check_nonnull(_mutex);
-		simple_owner_lock* _lock = get(_mutex);
-		if (_lock->owner != active_thread() && _lock->owner != NULL){
+		simple_owner_lock * _lock = get(_mutex);
+		if (_lock->owner != active_thread() && _lock->owner != NULL) {
 			return EBUSY;
 		}   // if mutex is owned
 		lock(*_lock);
@@ -473,13 +471,13 @@ extern "C"{
 	//######################### Conditional Variable #########################
 
 	/* conditional variable routines */
-	int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr) libcfa_public __THROW {
+	int pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr) libcfa_public __THROW {
 		check_nonnull(cond);
 		init(cond);
 		return 0;
 	}  //pthread_cond_init
 
-	int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *_mutex) libcfa_public __THROW {
+	int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t *_mutex) libcfa_public __THROW {
 		check_nonnull(_mutex);
 		check_nonnull(cond);
 		wait(*get(cond), *get(_mutex));
@@ -493,17 +491,17 @@ extern "C"{
 		return 0;
 	} // pthread_cond_timedwait
 
-	int pthread_cond_signal(pthread_cond_t *cond) libcfa_public __THROW {
+	int pthread_cond_signal(pthread_cond_t * cond) libcfa_public __THROW {
 		check_nonnull(cond);
 		return notify_one(*get(cond));
 	} // pthread_cond_signal
 
-	int pthread_cond_broadcast(pthread_cond_t *cond) libcfa_public __THROW {
+	int pthread_cond_broadcast(pthread_cond_t * cond) libcfa_public __THROW {
 		check_nonnull(cond);
 		return notify_all(*get(cond));
 	} // pthread_cond_broadcast
 
-	int pthread_cond_destroy(pthread_cond_t *cond) libcfa_public __THROW {
+	int pthread_cond_destroy(pthread_cond_t * cond) libcfa_public __THROW {
 		check_nonnull(cond);
 		destroy(cond);
 		return 0;
@@ -513,7 +511,7 @@ extern "C"{
 
 	//######################### Local storage #########################
 
-	int pthread_once(pthread_once_t *once_control, void (*init_routine)(void)) libcfa_public __THROW {
+	int pthread_once(pthread_once_t * once_control, void (* init_routine)(void)) libcfa_public __THROW {
 		static_assert(sizeof(pthread_once_t) >= sizeof(int),"sizeof(pthread_once_t) < sizeof(int)");
 		check_nonnull(once_control);
 		check_nonnull(init_routine);
@@ -526,7 +524,7 @@ extern "C"{
 		return 0;
 	} // pthread_once
 
-	int pthread_key_create( pthread_key_t *key, void (*destructor)( void * ) ) libcfa_public __THROW {
+	int pthread_key_create( pthread_key_t * key, void (* destructor)( void * ) ) libcfa_public __THROW {
 		lock(key_lock);
 		for ( int i = 0; i < PTHREAD_KEYS_MAX; i += 1 ) {
 			if ( ! cfa_pthread_keys[i].in_use ) {
@@ -561,15 +559,15 @@ extern "C"{
 		return 0;
 	}   // pthread_key_delete
 
-	int pthread_setspecific( pthread_key_t key, const void *value ) libcfa_public __THROW {
+	int pthread_setspecific( pthread_key_t key, const void * value ) libcfa_public __THROW {
 		// get current thread
-		cfaPthread* t = lookup(pthread_self());
+		cfaPthread * t = lookup(pthread_self());
 		// if current thread's pthreadData is NULL; initialize it
-		pthread_values* values;
-		if (t->pthreadData == NULL){
+		pthread_values * values;
+		if (t->pthreadData == NULL) {
 			values = anew( PTHREAD_KEYS_MAX);
 			t->pthreadData = values;
-			for (int i = 0;i < PTHREAD_KEYS_MAX; i++){
+			for ( int i = 0;i < PTHREAD_KEYS_MAX; i++ ) {
 				t->pthreadData[i].in_use = false;
 			}   // for
 		}   else {
@@ -592,11 +590,11 @@ extern "C"{
 		return 0;
 	} //pthread_setspecific
 
-	void* pthread_getspecific(pthread_key_t key) libcfa_public __THROW {
+	void * pthread_getspecific(pthread_key_t key) libcfa_public __THROW {
 		if (key >= PTHREAD_KEYS_MAX || ! cfa_pthread_keys[key].in_use) return NULL;
 
 		// get current thread
-		cfaPthread* t = lookup(pthread_self());
+		cfaPthread * t = lookup(pthread_self());
 		if (t->pthreadData == NULL) return NULL;
 		lock(key_lock);
 		pthread_values &entry = ((pthread_values *)t->pthreadData)[key];
@@ -604,7 +602,7 @@ extern "C"{
 			unlock( key_lock );
 			return NULL;
 		} // if
-		void *value = entry.value;
+		void * value = entry.value;
 		unlock(key_lock);
 
 		return value;
@@ -874,21 +872,21 @@ extern "C"{
 
 	//######################### Parallelism #########################
 
-	int pthread_setaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) libcfa_public __THROW {
-		abort( "pthread_setaffinity_np" );
-	} // pthread_setaffinity_np
+	// int pthread_setaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) libcfa_public __THROW {
+	// 	abort( "pthread_setaffinity_np" );
+	// } // pthread_setaffinity_np
 
-	int pthread_getaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) libcfa_public __THROW {
-		abort( "pthread_getaffinity_np" );
-	} // pthread_getaffinity_np
+	// int pthread_getaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) libcfa_public __THROW {
+	// 	abort( "pthread_getaffinity_np" );
+	// } // pthread_getaffinity_np
 
-	int pthread_attr_setaffinity_np( pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) libcfa_public __THROW {
-		abort( "pthread_attr_setaffinity_np" );
-	} // pthread_attr_setaffinity_np
+	// int pthread_attr_setaffinity_np( pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) libcfa_public __THROW {
+	// 	abort( "pthread_attr_setaffinity_np" );
+	// } // pthread_attr_setaffinity_np
 
-	int pthread_attr_getaffinity_np( __const pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) libcfa_public __THROW {
-		abort( "pthread_attr_getaffinity_np" );
-	} // pthread_attr_getaffinity_np
+	// int pthread_attr_getaffinity_np( __const pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) libcfa_public __THROW {
+	// 	abort( "pthread_attr_getaffinity_np" );
+	// } // pthread_attr_getaffinity_np
 
 	//######################### Cancellation #########################
 
@@ -905,16 +903,15 @@ extern "C"{
 		return 0;
 	} // pthread_cancel
 
-	int pthread_setcancelstate( int state, int *oldstate ) libcfa_public __THROW {
+	int pthread_setcancelstate( int state, int * oldstate ) libcfa_public __THROW {
 		abort("pthread_setcancelstate not implemented");
 		return 0;
 	} // pthread_setcancelstate
 
-	int pthread_setcanceltype( int type, int *oldtype ) libcfa_public __THROW {
+	int pthread_setcanceltype( int type, int * oldtype ) libcfa_public __THROW {
 		abort("pthread_setcanceltype not implemented");
 		return 0;
 	} // pthread_setcanceltype
 } // extern "C"
 
 #pragma GCC diagnostic pop
-

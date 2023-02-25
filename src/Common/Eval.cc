@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// utility.h --
+// Eval.cc -- Evaluate parts of the ast at compile time.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -12,6 +12,8 @@
 // Last Modified On : Sat Aug  6 12:11:59 2022
 // Update Count     : 119
 //
+
+#include "Eval.h"
 
 #include <utility> // for pair
 

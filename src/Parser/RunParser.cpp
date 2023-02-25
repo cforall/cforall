@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Dec 19 11:00:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Thr Dec 22 10:18:00 2022
-// Update Count     : 1
+// Last Modified On : Thr Feb 16 10:08:00 2023
+// Update Count     : 2
 //
 
 #include "RunParser.hpp"
@@ -23,11 +23,11 @@
 #include "Parser/TypedefTable.h"            // for TypedefTable
 
 // Variables global to the parsing code.
-LinkageSpec::Spec linkage = LinkageSpec::Cforall;
+ast::Linkage::Spec linkage = ast::Linkage::Cforall;
 TypedefTable typedefTable;
 DeclarationNode * parseTree = nullptr;
 
-void parse( FILE * input, LinkageSpec::Spec linkage, bool alwaysExit ) {
+void parse( FILE * input, ast::Linkage::Spec linkage, bool alwaysExit ) {
 	extern int yyparse( void );
 	extern FILE * yyin;
 	extern int yylineno;

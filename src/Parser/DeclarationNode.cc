@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug  8 17:07:00 2022
-// Update Count     : 1185
+// Last Modified On : Fri Feb 24 11:10:03 2023
+// Update Count     : 1400
 //
 
 #include <cassert>                 // for assert, assertf, strict_dynamic_cast
@@ -60,19 +60,11 @@ DeclarationNode::DeclarationNode() :
 	variable.assertions = nullptr;
 	variable.initializer = nullptr;
 
-//	attr.name = nullptr;
-	attr.expr = nullptr;
-	attr.type = nullptr;
-
 	assert.condition = nullptr;
 	assert.message = nullptr;
 }
 
 DeclarationNode::~DeclarationNode() {
-//	delete attr.name;
-	delete attr.expr;
-	delete attr.type;
-
 //	delete variable.name;
 	delete variable.assertions;
 	delete variable.initializer;
@@ -114,10 +106,6 @@ DeclarationNode * DeclarationNode::clone() const {
 	newnode->variable.assertions = maybeClone( variable.assertions );
 	newnode->variable.initializer = maybeClone( variable.initializer );
 
-//	newnode->attr.name = attr.name ? new string( *attr.name ) : nullptr;
-	newnode->attr.expr = maybeClone( attr.expr );
-	newnode->attr.type = maybeClone( attr.type );
-
 	newnode->assert.condition = maybeClone( assert.condition );
 	newnode->assert.message = maybeClone( assert.message );
 	return newnode;
@@ -153,9 +141,12 @@ void DeclarationNode::print( std::ostream & os, int indent ) const {
 		os << " maybe constructed? " << initializer->get_maybeConstructed();
 	} // if
 
-	for ( Attribute * attr: reverseIterate( attributes ) ) {
-		os << string( indent + 2, ' ' ) << "attr " << attr->name.c_str();
-	} // for
+	if ( ! attributes.empty() ) {
+		os << string( indent + 2, ' ' ) << "with attributes " << endl;
+		for ( Attribute * attr: reverseIterate( attributes ) ) {
+			os << string( indent + 4, ' ' ) << attr->name.c_str() << endl;
+		} // for
+	} // if
 
 	os << endl;
 }
@@ -243,26 +234,26 @@ DeclarationNode * DeclarationNode::newAggregate( AggregateDecl::Aggregate kind, 
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Aggregate );
 	newnode->type->aggregate.kind = kind;
-	newnode->type->aggregate.name = name == nullptr ? new string( DeclarationNode::anonymous.newName() ) : name;
+	newnode->type->aggregate.anon = name == nullptr;
+	newnode->type->aggregate.name = newnode->type->aggregate.anon ? new string( DeclarationNode::anonymous.newName() ) : name;
 	newnode->type->aggregate.actuals = actuals;
 	newnode->type->aggregate.fields = fields;
 	newnode->type->aggregate.body = body;
 	newnode->type->aggregate.tagged = false;
 	newnode->type->aggregate.parent = nullptr;
-	newnode->type->aggregate.anon = name == nullptr;
 	return newnode;
 } // DeclarationNode::newAggregate
 
 DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base, EnumHiding hiding ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Enum );
-	newnode->type->enumeration.name = name == nullptr ? new string( DeclarationNode::anonymous.newName() ) : name;
+	newnode->type->enumeration.anon = name == nullptr;
+	newnode->type->enumeration.name = newnode->type->enumeration.anon ? new string( DeclarationNode::anonymous.newName() ) : name;
 	newnode->type->enumeration.constants = constants;
 	newnode->type->enumeration.body = body;
-	newnode->type->enumeration.anon = name == nullptr;
 	newnode->type->enumeration.typed = typed;
 	newnode->type->enumeration.hiding = hiding;
-	if ( base && base->type)  {
+	if ( base && base->type )  {
 		newnode->type->base = base->type;
 	} // if
 
@@ -575,7 +566,7 @@ DeclarationNode * DeclarationNode::addQualifiers( DeclarationNode * q ) {
 	} // if
 
 	checkQualifiers( type, q->type );
-	if ( (builtin == Zero || builtin == One) && q->type->qualifiers.val != 0 && error.length() == 0 ) {
+	if ( (builtin == Zero || builtin == One) && q->type->qualifiers.any() && error.length() == 0 ) {
 		SemanticWarning( yylloc, Warning::BadQualifiersZeroOne, Type::QualifiersNames[ilog2( q->type->qualifiers.val )], builtinTypeNames[builtin] );
 	} // if
 	addQualifiersToType( q->type, type );
@@ -988,23 +979,60 @@ void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & 
 
 	for ( const DeclarationNode * cur = firstNode; cur; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ) ) {
 		try {
-			bool extracted = false;
-			bool anon = false;
+			bool extracted = false, anon = false;
+			AggregateDecl * unionDecl = nullptr;
+
 			if ( DeclarationNode * extr = cur->extractAggregate() ) {
-				// handle the case where a structure declaration is contained within an object or type declaration
+				// Handle the case where a SUE declaration is contained within an object or type declaration.
+
+				assert( cur->type );
+				// Replace anonymous SUE name with typedef name to prevent anonymous naming problems across translation units.
+				if ( cur->type->kind == TypeData::Symbolic && cur->type->symbolic.isTypedef ) {
+					assert( extr->type );
+					// Handle anonymous aggregates: typedef struct { int i; } foo
+					extr->type->qualifiers.reset();		// clear any CVs associated with the aggregate
+					if ( extr->type->kind == TypeData::Aggregate && extr->type->aggregate.anon ) {
+						delete extr->type->aggregate.name;
+						extr->type->aggregate.name = new string( "__anonymous_" + *cur->name );
+						extr->type->aggregate.anon = false;
+						assert( cur->type->base );
+						if ( cur->type->base ) {
+							delete cur->type->base->aggInst.aggregate->aggregate.name;
+							cur->type->base->aggInst.aggregate->aggregate.name = new string( "__anonymous_" + *cur->name );
+							cur->type->base->aggInst.aggregate->aggregate.anon = false;
+							cur->type->base->aggInst.aggregate->qualifiers.reset();
+						} // if
+					} // if
+					// Handle anonymous enumeration: typedef enum { A, B, C } foo
+					if ( extr->type->kind == TypeData::Enum && extr->type->enumeration.anon ) {
+						delete extr->type->enumeration.name;
+						extr->type->enumeration.name = new string( "__anonymous_" + *cur->name );
+						extr->type->enumeration.anon = false;
+						assert( cur->type->base );
+						if ( cur->type->base ) {
+							delete cur->type->base->aggInst.aggregate->enumeration.name;
+							cur->type->base->aggInst.aggregate->enumeration.name = new string( "__anonymous_" + *cur->name );
+							cur->type->base->aggInst.aggregate->enumeration.anon = false;
+						} // if
+					} // if
+				} // if
+
 				Declaration * decl = extr->build();
 				if ( decl ) {
-					// hoist the structure declaration
+					// Remember the declaration if it is a union aggregate ?
+					unionDecl = dynamic_cast<UnionDecl *>( decl );
+
 					decl->location = cur->location;
-					* out++ = decl;
+					*out++ = decl;
 
 					// need to remember the cases where a declaration contains an anonymous aggregate definition
 					extracted = true;
 					assert( extr->type );
 					if ( extr->type->kind == TypeData::Aggregate ) {
+						// typedef struct { int A } B is the only case?
 						anon = extr->type->aggregate.anon;
 					} else if ( extr->type->kind == TypeData::Enum ) {
-						// xxx - is it useful to have an implicit anonymous enum member?
+						// typedef enum { A } B is the only case?
 						anon = extr->type->enumeration.anon;
 					}
 				} // if
@@ -1013,6 +1041,35 @@ void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & 
 
 			Declaration * decl = cur->build();
 			if ( decl ) {
+				if ( TypedefDecl * typedefDecl = dynamic_cast<TypedefDecl *>( decl ) ) {
+					if ( unionDecl ) {					// is the typedef alias a union aggregate ?
+						// This code handles a special issue with the attribute transparent_union.
+						//
+						//    typedef union U { int i; } typedef_name __attribute__(( aligned(16) )) __attribute__(( transparent_union ))
+						//
+						// Here the attribute aligned goes with the typedef_name, so variables declared of this type are
+						// aligned.  However, the attribute transparent_union must be moved from the typedef_name to
+						// alias union U.  Currently, this is the only know attribute that must be moved from typedef to
+						// alias.
+
+						// If typedef is an alias for a union, then its alias type was hoisted above and remembered.
+						if ( UnionInstType * unionInstType = dynamic_cast<UnionInstType *>( typedefDecl->base ) ) {
+							// Remove all transparent_union attributes from typedef and move to alias union.
+							list<Attribute *>::iterator attr;
+							for ( attr = unionInstType->attributes.begin(); attr != unionInstType->attributes.end(); ) { // forward order
+								if ( (*attr)->name == "transparent_union" || (*attr)->name == "__transparent_union__" ) {
+									list<Attribute *>::iterator cur = attr; // remember current node
+									attr++;				// advance iterator
+									unionDecl->attributes.emplace_back( *cur ); // move current
+									unionInstType->attributes.erase( cur ); // remove current
+								} else {
+									attr++;				// advance iterator
+								} // if
+							} // for
+						} // if
+					} // if
+				} // if
+
 				// don't include anonymous declaration for named aggregates, but do include them for anonymous aggregates, e.g.:
 				// struct S {
 				//   struct T { int x; }; // no anonymous member
@@ -1174,12 +1231,6 @@ Declaration * DeclarationNode::build() const {
 
 Type * DeclarationNode::buildType() const {
 	assert( type );
-
-	if ( attr.expr ) {
-		return new AttrType( buildQualifiers( type ), *name, attr.expr->build(), attributes );
-	} else if ( attr.type ) {
-		return new AttrType( buildQualifiers( type ), *name, attr.type->buildType(), attributes );
-	} // if
 
 	switch ( type->kind ) {
 	  case TypeData::Enum:

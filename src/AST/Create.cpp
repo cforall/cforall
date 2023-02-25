@@ -19,6 +19,7 @@
 #include "AST/Copy.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Type.hpp"
+#include "Common/Iterate.hpp"
 
 namespace ast {
 

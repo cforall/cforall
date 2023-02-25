@@ -30,6 +30,11 @@ Header = """//
 
 Prelude = """#define __cforall_thread__
 
+#include <sys/socket.h> // first include because of anonymous types __SOCKADDR_ARG, __CONST_SOCKADDR_ARG
+#include <unistd.h>
+#include <errno.h>
+#include <time.hfa>
+
 #include "bits/defs.hfa"
 #include "kernel.hfa"
 #include "io/types.hfa"
@@ -42,9 +47,7 @@ Prelude = """#define __cforall_thread__
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
 	#include <assert.h>
 	#include <stdint.h>
-	#include <errno.h>
 	#include <linux/io_uring.h>
-
 	#include "kernel/fwd.hfa"
 
 	static const __u8 REGULAR_FLAGS = 0
@@ -81,17 +84,8 @@ Prelude = """#define __cforall_thread__
 //=============================================================================================
 // I/O Forwards
 //=============================================================================================
-#include <time.hfa>
-
-// Some forward declarations
-#include <errno.h>
-#include <unistd.h>
 
 extern "C" {
-	#include <asm/types.h>
-	#include <sys/socket.h>
-	#include <sys/syscall.h>
-
 #if defined(CFA_HAVE_PREADV2)
 	struct iovec;
 	extern ssize_t preadv2 (int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
@@ -117,8 +111,6 @@ extern "C" {
 	extern ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
 	extern ssize_t send(int sockfd, const void *buf, size_t len, int flags);
 	extern ssize_t recv(int sockfd, void *buf, size_t len, int flags);
-	extern int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
-	extern int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 	extern int fallocate(int fd, int mode, off_t offset, off_t len);
 	extern int posix_fadvise(int fd, off_t offset, off_t len, int advice);
@@ -291,16 +283,16 @@ calls = [
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_ACCEPT
-	Call('ACCEPT', 'int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags)', {
+	Call('ACCEPT', 'int accept4(int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(uintptr_t)addr',
+		'addr': '(uintptr_t)&addr',
 		'addr2': '(uintptr_t)addrlen',
 		'accept_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_CONNECT
-	Call('CONNECT', 'int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)', {
+	Call('CONNECT', 'int connect(int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen)', {
 		'fd': 'sockfd',
-		'addr': '(uintptr_t)addr',
+		'addr': '(uintptr_t)&addr',
 		'off': 'addrlen'
 	}),
 	# CFA_HAVE_IORING_OP_FALLOCATE

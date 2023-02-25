@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Wed Mar 29 16:10:31 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  5 22:23:57 2023
-// Update Count     : 180
+// Last Modified On : Fri Feb 24 15:31:03 2023
+// Update Count     : 185
 //
 
 #include <stdarg.h>										// va_start, va_end
@@ -44,16 +44,7 @@ static generic_fptr_t do_interpose_symbol( void * library, const char symbol[], 
 
 	union { generic_fptr_t fptr; void * ptr; } originalFunc;
 
-	#if defined( _GNU_SOURCE )
-		if ( version ) {
-			originalFunc.ptr = dlvsym( library, symbol, version );
-		} else {
-			originalFunc.ptr = dlsym( library, symbol );
-		}
-	#else
-		originalFunc.ptr = dlsym( library, symbol );
-	#endif // _GNU_SOURCE
-
+	originalFunc.ptr = dlsym( library, symbol );
 	error = dlerror();
 	if ( error ) abort( "interpose_symbol : internal error, %s\n", error );
 
@@ -61,33 +52,22 @@ static generic_fptr_t do_interpose_symbol( void * library, const char symbol[], 
 }
 
 static generic_fptr_t interpose_symbol( const char symbol[], const char version[] ) {
-	const char * error;
-
 	static void * library;
 	static void * pthread_library;
+
 	if ( ! library ) {
-		#if defined( RTLD_NEXT )
-			library = RTLD_NEXT;
-		#else
-			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
-			library = dlopen( "libc.so.6", RTLD_LAZY );
-			error = dlerror();
-			if ( error ) {
-				abort( "interpose_symbol : failed to open libc, %s\n", error );
-			}
-		#endif
+		library = dlopen( "libc.so.6", RTLD_LAZY );
+		const char * error = dlerror();
+		if ( error ) {
+			abort( "interpose_symbol : failed to open libc, %s\n", error );
+		} // if
 	} // if
 	if ( ! pthread_library ) {
-		#if defined( RTLD_NEXT )
-			pthread_library = RTLD_NEXT;
-		#else
-			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
-			pthread_library = dlopen( "libpthread.so", RTLD_LAZY );
-			error = dlerror();
-			if ( error ) {
-				abort( "interpose_symbol : failed to open libpthread, %s\n", error );
-			}
-		#endif
+		pthread_library = dlopen( "libpthread.so", RTLD_LAZY );
+		const char * error = dlerror();
+		if ( error ) {
+			abort( "interpose_symbol : failed to open libpthread, %s\n", error );
+		} // if
 	} // if
 
 	return do_interpose_symbol(library, symbol, version);
@@ -120,11 +100,11 @@ extern "C" {
 
 		preload_libgcc();
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
 		INTERPOSE_LIBC( abort, version );
 		INTERPOSE_LIBC( exit , version );
-#pragma GCC diagnostic pop
+		#pragma GCC diagnostic pop
 
 		if(__cfathreadabi_interpose_startup) __cfathreadabi_interpose_startup( do_interpose_symbol );
 
@@ -292,16 +272,16 @@ void abort( const char fmt[], ... ) {
 	va_list args;
 	va_start( args, fmt );
 	__abort( false, fmt, args );
-    // CONTROL NEVER REACHES HERE!
+	// CONTROL NEVER REACHES HERE!
 	va_end( args );
 }
 
 void abort( bool signalAbort, const char fmt[], ... ) {
-    va_list args;
-    va_start( args, fmt );
-    __abort( signalAbort, fmt, args );
-    // CONTROL NEVER REACHES HERE!
-    va_end( args );
+	va_list args;
+	va_start( args, fmt );
+	__abort( signalAbort, fmt, args );
+	// CONTROL NEVER REACHES HERE!
+	va_end( args );
 }
 
 void sigHandler_segv( __CFA_SIGPARMS__ ) {

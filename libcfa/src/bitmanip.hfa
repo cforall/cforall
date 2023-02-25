@@ -10,11 +10,13 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Mar 14 18:12:27 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  8 08:28:15 2022
-// Update Count     : 142
+// Last Modified On : Mon Jan  9 09:02:43 2023
+// Update Count     : 144
 // 
 
 #pragma once
+
+#include "bits/debug.hfa"								// verify
 
 // Reference: Bit Twiddling Hacks: http://graphics.stanford.edu/%7Eseander/bithacks.html#CountBitsSetNaive
 

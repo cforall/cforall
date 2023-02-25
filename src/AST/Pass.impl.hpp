@@ -21,6 +21,7 @@
 
 #include "AST/TranslationUnit.hpp"
 #include "AST/TypeSubstitution.hpp"
+#include "Common/Iterate.hpp"
 
 #define VISIT_START( node ) \
 	using namespace ast; \

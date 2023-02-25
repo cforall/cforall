@@ -16,6 +16,7 @@
 #include "HandleAttributes.h"
 
 #include "CompilationState.h"
+#include "Common/Eval.h"
 #include "Common/PassVisitor.h"
 #include "Common/SemanticError.h"
 #include "ResolvExpr/Resolver.h"

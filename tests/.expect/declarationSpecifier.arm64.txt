@@ -50,7 +50,7 @@ static inline void _X12_constructorFv_S12__anonymous0i_autogen___1(struct __anon
     }
 
 }
-volatile const struct __anonymous0 _X3x10KVS12__anonymous0_1;
+static volatile const struct __anonymous0 _X3x10KVS12__anonymous0_1;
 struct __anonymous1 {
     signed int _X1ii_1;
 };
@@ -95,7 +95,7 @@ static inline void _X12_constructorFv_S12__anonymous1i_autogen___1(struct __anon
     }
 
 }
-volatile const struct __anonymous1 _X3x11KVS12__anonymous1_1;
+static volatile const struct __anonymous1 _X3x11KVS12__anonymous1_1;
 struct __anonymous2 {
     signed int _X1ii_1;
 };
@@ -140,7 +140,7 @@ static inline void _X12_constructorFv_S12__anonymous2i_autogen___1(struct __anon
     }
 
 }
-volatile const struct __anonymous2 _X3x12KVS12__anonymous2_1;
+static volatile const struct __anonymous2 _X3x12KVS12__anonymous2_1;
 struct __anonymous3 {
     signed int _X1ii_1;
 };
@@ -321,51 +321,6 @@ static inline void _X12_constructorFv_S12__anonymous6i_autogen___1(struct __anon
 
 }
 static volatile const struct __anonymous6 _X3x16KVS12__anonymous6_1;
-struct __anonymous7 {
-    signed int _X1ii_1;
-};
-static inline void _X12_constructorFv_S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1);
-static inline void _X12_constructorFv_S12__anonymous7S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, struct __anonymous7 _X4_srcS12__anonymous7_1);
-static inline void _X11_destructorFv_S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1);
-static inline struct __anonymous7 _X16_operator_assignFS12__anonymous7_S12__anonymous7S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, struct __anonymous7 _X4_srcS12__anonymous7_1);
-static inline void _X12_constructorFv_S12__anonymous7i_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, signed int _X1ii_1);
-static inline void _X12_constructorFv_S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1){
-    {
-        ((void)((*_X4_dstS12__anonymous7_1)._X1ii_1) /* ?{} */);
-    }
-
-}
-static inline void _X12_constructorFv_S12__anonymous7S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, struct __anonymous7 _X4_srcS12__anonymous7_1){
-    {
-        ((void)((*_X4_dstS12__anonymous7_1)._X1ii_1=_X4_srcS12__anonymous7_1._X1ii_1) /* ?{} */);
-    }
-
-}
-static inline void _X11_destructorFv_S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1){
-    {
-        ((void)((*_X4_dstS12__anonymous7_1)._X1ii_1) /* ^?{} */);
-    }
-
-}
-static inline struct __anonymous7 _X16_operator_assignFS12__anonymous7_S12__anonymous7S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, struct __anonymous7 _X4_srcS12__anonymous7_1){
-    struct __anonymous7 _X4_retS12__anonymous7_1;
-    {
-        ((void)((*_X4_dstS12__anonymous7_1)._X1ii_1=_X4_srcS12__anonymous7_1._X1ii_1));
-    }
-
-    {
-        ((void)_X12_constructorFv_S12__anonymous7S12__anonymous7_autogen___1((&_X4_retS12__anonymous7_1), (*_X4_dstS12__anonymous7_1)));
-    }
-
-    return _X4_retS12__anonymous7_1;
-}
-static inline void _X12_constructorFv_S12__anonymous7i_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, signed int _X1ii_1){
-    {
-        ((void)((*_X4_dstS12__anonymous7_1)._X1ii_1=_X1ii_1) /* ?{} */);
-    }
-
-}
-static volatile const struct __anonymous7 _X3x17KVS12__anonymous7_1;
 volatile const signed short int _X3x20KVs_1;
 static volatile const signed short int _X3x21KVs_1;
 static volatile const signed short int _X3x22KVs_1;
@@ -374,6 +329,51 @@ static volatile const signed short int _X3x24KVs_1;
 static volatile const signed short int _X3x25KVs_1;
 static volatile const signed short int _X3x26KVs_1;
 static volatile const signed short int _X3x27KVs_1;
+struct __anonymous7 {
+    signed short int _X1is_1;
+};
+static inline void _X12_constructorFv_S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1);
+static inline void _X12_constructorFv_S12__anonymous7S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, struct __anonymous7 _X4_srcS12__anonymous7_1);
+static inline void _X11_destructorFv_S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1);
+static inline struct __anonymous7 _X16_operator_assignFS12__anonymous7_S12__anonymous7S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, struct __anonymous7 _X4_srcS12__anonymous7_1);
+static inline void _X12_constructorFv_S12__anonymous7s_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, signed short int _X1is_1);
+static inline void _X12_constructorFv_S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1){
+    {
+        ((void)((*_X4_dstS12__anonymous7_1)._X1is_1) /* ?{} */);
+    }
+
+}
+static inline void _X12_constructorFv_S12__anonymous7S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, struct __anonymous7 _X4_srcS12__anonymous7_1){
+    {
+        ((void)((*_X4_dstS12__anonymous7_1)._X1is_1=_X4_srcS12__anonymous7_1._X1is_1) /* ?{} */);
+    }
+
+}
+static inline void _X11_destructorFv_S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1){
+    {
+        ((void)((*_X4_dstS12__anonymous7_1)._X1is_1) /* ^?{} */);
+    }
+
+}
+static inline struct __anonymous7 _X16_operator_assignFS12__anonymous7_S12__anonymous7S12__anonymous7_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, struct __anonymous7 _X4_srcS12__anonymous7_1){
+    struct __anonymous7 _X4_retS12__anonymous7_1;
+    {
+        ((void)((*_X4_dstS12__anonymous7_1)._X1is_1=_X4_srcS12__anonymous7_1._X1is_1));
+    }
+
+    {
+        ((void)_X12_constructorFv_S12__anonymous7S12__anonymous7_autogen___1((&_X4_retS12__anonymous7_1), (*_X4_dstS12__anonymous7_1)));
+    }
+
+    return _X4_retS12__anonymous7_1;
+}
+static inline void _X12_constructorFv_S12__anonymous7s_autogen___1(struct __anonymous7 *_X4_dstS12__anonymous7_1, signed short int _X1is_1){
+    {
+        ((void)((*_X4_dstS12__anonymous7_1)._X1is_1=_X1is_1) /* ?{} */);
+    }
+
+}
+static volatile const struct __anonymous7 _X3x29KVS12__anonymous7_1;
 struct __anonymous8 {
     signed short int _X1is_1;
 };
@@ -418,7 +418,7 @@ static inline void _X12_constructorFv_S12__anonymous8s_autogen___1(struct __anon
     }
 
 }
-volatile const struct __anonymous8 _X3x29KVS12__anonymous8_1;
+static volatile const struct __anonymous8 _X3x30KVS12__anonymous8_1;
 struct __anonymous9 {
     signed short int _X1is_1;
 };
@@ -463,7 +463,7 @@ static inline void _X12_constructorFv_S12__anonymous9s_autogen___1(struct __anon
     }
 
 }
-volatile const struct __anonymous9 _X3x30KVS12__anonymous9_1;
+static volatile const struct __anonymous9 _X3x31KVS12__anonymous9_1;
 struct __anonymous10 {
     signed short int _X1is_1;
 };
@@ -508,7 +508,7 @@ static inline void _X12_constructorFv_S13__anonymous10s_autogen___1(struct __ano
     }
 
 }
-volatile const struct __anonymous10 _X3x31KVS13__anonymous10_1;
+static volatile const struct __anonymous10 _X3x32KVS13__anonymous10_1;
 struct __anonymous11 {
     signed short int _X1is_1;
 };
@@ -553,7 +553,7 @@ static inline void _X12_constructorFv_S13__anonymous11s_autogen___1(struct __ano
     }
 
 }
-static volatile const struct __anonymous11 _X3x32KVS13__anonymous11_1;
+static volatile const struct __anonymous11 _X3x33KVS13__anonymous11_1;
 struct __anonymous12 {
     signed short int _X1is_1;
 };
@@ -598,7 +598,7 @@ static inline void _X12_constructorFv_S13__anonymous12s_autogen___1(struct __ano
     }
 
 }
-static volatile const struct __anonymous12 _X3x33KVS13__anonymous12_1;
+static volatile const struct __anonymous12 _X3x34KVS13__anonymous12_1;
 struct __anonymous13 {
     signed short int _X1is_1;
 };
@@ -643,97 +643,7 @@ static inline void _X12_constructorFv_S13__anonymous13s_autogen___1(struct __ano
     }
 
 }
-static volatile const struct __anonymous13 _X3x34KVS13__anonymous13_1;
-struct __anonymous14 {
-    signed short int _X1is_1;
-};
-static inline void _X12_constructorFv_S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1);
-static inline void _X12_constructorFv_S13__anonymous14S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, struct __anonymous14 _X4_srcS13__anonymous14_1);
-static inline void _X11_destructorFv_S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1);
-static inline struct __anonymous14 _X16_operator_assignFS13__anonymous14_S13__anonymous14S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, struct __anonymous14 _X4_srcS13__anonymous14_1);
-static inline void _X12_constructorFv_S13__anonymous14s_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, signed short int _X1is_1);
-static inline void _X12_constructorFv_S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1){
-    {
-        ((void)((*_X4_dstS13__anonymous14_1)._X1is_1) /* ?{} */);
-    }
-
-}
-static inline void _X12_constructorFv_S13__anonymous14S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, struct __anonymous14 _X4_srcS13__anonymous14_1){
-    {
-        ((void)((*_X4_dstS13__anonymous14_1)._X1is_1=_X4_srcS13__anonymous14_1._X1is_1) /* ?{} */);
-    }
-
-}
-static inline void _X11_destructorFv_S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1){
-    {
-        ((void)((*_X4_dstS13__anonymous14_1)._X1is_1) /* ^?{} */);
-    }
-
-}
-static inline struct __anonymous14 _X16_operator_assignFS13__anonymous14_S13__anonymous14S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, struct __anonymous14 _X4_srcS13__anonymous14_1){
-    struct __anonymous14 _X4_retS13__anonymous14_1;
-    {
-        ((void)((*_X4_dstS13__anonymous14_1)._X1is_1=_X4_srcS13__anonymous14_1._X1is_1));
-    }
-
-    {
-        ((void)_X12_constructorFv_S13__anonymous14S13__anonymous14_autogen___1((&_X4_retS13__anonymous14_1), (*_X4_dstS13__anonymous14_1)));
-    }
-
-    return _X4_retS13__anonymous14_1;
-}
-static inline void _X12_constructorFv_S13__anonymous14s_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, signed short int _X1is_1){
-    {
-        ((void)((*_X4_dstS13__anonymous14_1)._X1is_1=_X1is_1) /* ?{} */);
-    }
-
-}
-static volatile const struct __anonymous14 _X3x35KVS13__anonymous14_1;
-struct __anonymous15 {
-    signed short int _X1is_1;
-};
-static inline void _X12_constructorFv_S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1);
-static inline void _X12_constructorFv_S13__anonymous15S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, struct __anonymous15 _X4_srcS13__anonymous15_1);
-static inline void _X11_destructorFv_S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1);
-static inline struct __anonymous15 _X16_operator_assignFS13__anonymous15_S13__anonymous15S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, struct __anonymous15 _X4_srcS13__anonymous15_1);
-static inline void _X12_constructorFv_S13__anonymous15s_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, signed short int _X1is_1);
-static inline void _X12_constructorFv_S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1){
-    {
-        ((void)((*_X4_dstS13__anonymous15_1)._X1is_1) /* ?{} */);
-    }
-
-}
-static inline void _X12_constructorFv_S13__anonymous15S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, struct __anonymous15 _X4_srcS13__anonymous15_1){
-    {
-        ((void)((*_X4_dstS13__anonymous15_1)._X1is_1=_X4_srcS13__anonymous15_1._X1is_1) /* ?{} */);
-    }
-
-}
-static inline void _X11_destructorFv_S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1){
-    {
-        ((void)((*_X4_dstS13__anonymous15_1)._X1is_1) /* ^?{} */);
-    }
-
-}
-static inline struct __anonymous15 _X16_operator_assignFS13__anonymous15_S13__anonymous15S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, struct __anonymous15 _X4_srcS13__anonymous15_1){
-    struct __anonymous15 _X4_retS13__anonymous15_1;
-    {
-        ((void)((*_X4_dstS13__anonymous15_1)._X1is_1=_X4_srcS13__anonymous15_1._X1is_1));
-    }
-
-    {
-        ((void)_X12_constructorFv_S13__anonymous15S13__anonymous15_autogen___1((&_X4_retS13__anonymous15_1), (*_X4_dstS13__anonymous15_1)));
-    }
-
-    return _X4_retS13__anonymous15_1;
-}
-static inline void _X12_constructorFv_S13__anonymous15s_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, signed short int _X1is_1){
-    {
-        ((void)((*_X4_dstS13__anonymous15_1)._X1is_1=_X1is_1) /* ?{} */);
-    }
-
-}
-static volatile const struct __anonymous15 _X3x36KVS13__anonymous15_1;
+static volatile const struct __anonymous13 _X3x35KVS13__anonymous13_1;
 _Thread_local signed int _X3x37i_1;
 __thread signed int _X3x38i_1;
 static inline volatile const signed int _X3f11Fi___1();
@@ -752,6 +662,96 @@ static inline volatile const signed short int _X3f25Fs___1();
 static inline volatile const signed short int _X3f26Fs___1();
 static inline volatile const signed short int _X3f27Fs___1();
 static inline volatile const signed short int _X3f28Fs___1();
+struct __anonymous14 {
+    signed int _X1ii_1;
+};
+static inline void _X12_constructorFv_S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1);
+static inline void _X12_constructorFv_S13__anonymous14S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, struct __anonymous14 _X4_srcS13__anonymous14_1);
+static inline void _X11_destructorFv_S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1);
+static inline struct __anonymous14 _X16_operator_assignFS13__anonymous14_S13__anonymous14S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, struct __anonymous14 _X4_srcS13__anonymous14_1);
+static inline void _X12_constructorFv_S13__anonymous14i_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, signed int _X1ii_1);
+static inline void _X12_constructorFv_S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1){
+    {
+        ((void)((*_X4_dstS13__anonymous14_1)._X1ii_1) /* ?{} */);
+    }
+
+}
+static inline void _X12_constructorFv_S13__anonymous14S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, struct __anonymous14 _X4_srcS13__anonymous14_1){
+    {
+        ((void)((*_X4_dstS13__anonymous14_1)._X1ii_1=_X4_srcS13__anonymous14_1._X1ii_1) /* ?{} */);
+    }
+
+}
+static inline void _X11_destructorFv_S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1){
+    {
+        ((void)((*_X4_dstS13__anonymous14_1)._X1ii_1) /* ^?{} */);
+    }
+
+}
+static inline struct __anonymous14 _X16_operator_assignFS13__anonymous14_S13__anonymous14S13__anonymous14_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, struct __anonymous14 _X4_srcS13__anonymous14_1){
+    struct __anonymous14 _X4_retS13__anonymous14_1;
+    {
+        ((void)((*_X4_dstS13__anonymous14_1)._X1ii_1=_X4_srcS13__anonymous14_1._X1ii_1));
+    }
+
+    {
+        ((void)_X12_constructorFv_S13__anonymous14S13__anonymous14_autogen___1((&_X4_retS13__anonymous14_1), (*_X4_dstS13__anonymous14_1)));
+    }
+
+    return _X4_retS13__anonymous14_1;
+}
+static inline void _X12_constructorFv_S13__anonymous14i_autogen___1(struct __anonymous14 *_X4_dstS13__anonymous14_1, signed int _X1ii_1){
+    {
+        ((void)((*_X4_dstS13__anonymous14_1)._X1ii_1=_X1ii_1) /* ?{} */);
+    }
+
+}
+static inline volatile const struct __anonymous14 _X3f31FS13__anonymous14___1();
+struct __anonymous15 {
+    signed int _X1ii_1;
+};
+static inline void _X12_constructorFv_S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1);
+static inline void _X12_constructorFv_S13__anonymous15S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, struct __anonymous15 _X4_srcS13__anonymous15_1);
+static inline void _X11_destructorFv_S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1);
+static inline struct __anonymous15 _X16_operator_assignFS13__anonymous15_S13__anonymous15S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, struct __anonymous15 _X4_srcS13__anonymous15_1);
+static inline void _X12_constructorFv_S13__anonymous15i_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, signed int _X1ii_1);
+static inline void _X12_constructorFv_S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1){
+    {
+        ((void)((*_X4_dstS13__anonymous15_1)._X1ii_1) /* ?{} */);
+    }
+
+}
+static inline void _X12_constructorFv_S13__anonymous15S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, struct __anonymous15 _X4_srcS13__anonymous15_1){
+    {
+        ((void)((*_X4_dstS13__anonymous15_1)._X1ii_1=_X4_srcS13__anonymous15_1._X1ii_1) /* ?{} */);
+    }
+
+}
+static inline void _X11_destructorFv_S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1){
+    {
+        ((void)((*_X4_dstS13__anonymous15_1)._X1ii_1) /* ^?{} */);
+    }
+
+}
+static inline struct __anonymous15 _X16_operator_assignFS13__anonymous15_S13__anonymous15S13__anonymous15_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, struct __anonymous15 _X4_srcS13__anonymous15_1){
+    struct __anonymous15 _X4_retS13__anonymous15_1;
+    {
+        ((void)((*_X4_dstS13__anonymous15_1)._X1ii_1=_X4_srcS13__anonymous15_1._X1ii_1));
+    }
+
+    {
+        ((void)_X12_constructorFv_S13__anonymous15S13__anonymous15_autogen___1((&_X4_retS13__anonymous15_1), (*_X4_dstS13__anonymous15_1)));
+    }
+
+    return _X4_retS13__anonymous15_1;
+}
+static inline void _X12_constructorFv_S13__anonymous15i_autogen___1(struct __anonymous15 *_X4_dstS13__anonymous15_1, signed int _X1ii_1){
+    {
+        ((void)((*_X4_dstS13__anonymous15_1)._X1ii_1=_X1ii_1) /* ?{} */);
+    }
+
+}
+static inline volatile const struct __anonymous15 _X3f32FS13__anonymous15___1();
 struct __anonymous16 {
     signed int _X1ii_1;
 };
@@ -796,7 +796,7 @@ static inline void _X12_constructorFv_S13__anonymous16i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous16 _X3f31FS13__anonymous16___1();
+static inline volatile const struct __anonymous16 _X3f33FS13__anonymous16___1();
 struct __anonymous17 {
     signed int _X1ii_1;
 };
@@ -841,7 +841,7 @@ static inline void _X12_constructorFv_S13__anonymous17i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous17 _X3f32FS13__anonymous17___1();
+static inline volatile const struct __anonymous17 _X3f34FS13__anonymous17___1();
 struct __anonymous18 {
     signed int _X1ii_1;
 };
@@ -886,7 +886,7 @@ static inline void _X12_constructorFv_S13__anonymous18i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous18 _X3f33FS13__anonymous18___1();
+static inline volatile const struct __anonymous18 _X3f35FS13__anonymous18___1();
 struct __anonymous19 {
     signed int _X1ii_1;
 };
@@ -931,7 +931,7 @@ static inline void _X12_constructorFv_S13__anonymous19i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous19 _X3f34FS13__anonymous19___1();
+static inline volatile const struct __anonymous19 _X3f36FS13__anonymous19___1();
 struct __anonymous20 {
     signed int _X1ii_1;
 };
@@ -976,7 +976,7 @@ static inline void _X12_constructorFv_S13__anonymous20i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous20 _X3f35FS13__anonymous20___1();
+static inline volatile const struct __anonymous20 _X3f37FS13__anonymous20___1();
 struct __anonymous21 {
     signed int _X1ii_1;
 };
@@ -1021,97 +1021,7 @@ static inline void _X12_constructorFv_S13__anonymous21i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous21 _X3f36FS13__anonymous21___1();
-struct __anonymous22 {
-    signed int _X1ii_1;
-};
-static inline void _X12_constructorFv_S13__anonymous22_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1);
-static inline void _X12_constructorFv_S13__anonymous22S13__anonymous22_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1, struct __anonymous22 _X4_srcS13__anonymous22_1);
-static inline void _X11_destructorFv_S13__anonymous22_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1);
-static inline struct __anonymous22 _X16_operator_assignFS13__anonymous22_S13__anonymous22S13__anonymous22_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1, struct __anonymous22 _X4_srcS13__anonymous22_1);
-static inline void _X12_constructorFv_S13__anonymous22i_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1, signed int _X1ii_1);
-static inline void _X12_constructorFv_S13__anonymous22_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1){
-    {
-        ((void)((*_X4_dstS13__anonymous22_1)._X1ii_1) /* ?{} */);
-    }
-
-}
-static inline void _X12_constructorFv_S13__anonymous22S13__anonymous22_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1, struct __anonymous22 _X4_srcS13__anonymous22_1){
-    {
-        ((void)((*_X4_dstS13__anonymous22_1)._X1ii_1=_X4_srcS13__anonymous22_1._X1ii_1) /* ?{} */);
-    }
-
-}
-static inline void _X11_destructorFv_S13__anonymous22_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1){
-    {
-        ((void)((*_X4_dstS13__anonymous22_1)._X1ii_1) /* ^?{} */);
-    }
-
-}
-static inline struct __anonymous22 _X16_operator_assignFS13__anonymous22_S13__anonymous22S13__anonymous22_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1, struct __anonymous22 _X4_srcS13__anonymous22_1){
-    struct __anonymous22 _X4_retS13__anonymous22_1;
-    {
-        ((void)((*_X4_dstS13__anonymous22_1)._X1ii_1=_X4_srcS13__anonymous22_1._X1ii_1));
-    }
-
-    {
-        ((void)_X12_constructorFv_S13__anonymous22S13__anonymous22_autogen___1((&_X4_retS13__anonymous22_1), (*_X4_dstS13__anonymous22_1)));
-    }
-
-    return _X4_retS13__anonymous22_1;
-}
-static inline void _X12_constructorFv_S13__anonymous22i_autogen___1(struct __anonymous22 *_X4_dstS13__anonymous22_1, signed int _X1ii_1){
-    {
-        ((void)((*_X4_dstS13__anonymous22_1)._X1ii_1=_X1ii_1) /* ?{} */);
-    }
-
-}
-static inline volatile const struct __anonymous22 _X3f37FS13__anonymous22___1();
-struct __anonymous23 {
-    signed int _X1ii_1;
-};
-static inline void _X12_constructorFv_S13__anonymous23_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1);
-static inline void _X12_constructorFv_S13__anonymous23S13__anonymous23_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1, struct __anonymous23 _X4_srcS13__anonymous23_1);
-static inline void _X11_destructorFv_S13__anonymous23_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1);
-static inline struct __anonymous23 _X16_operator_assignFS13__anonymous23_S13__anonymous23S13__anonymous23_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1, struct __anonymous23 _X4_srcS13__anonymous23_1);
-static inline void _X12_constructorFv_S13__anonymous23i_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1, signed int _X1ii_1);
-static inline void _X12_constructorFv_S13__anonymous23_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1){
-    {
-        ((void)((*_X4_dstS13__anonymous23_1)._X1ii_1) /* ?{} */);
-    }
-
-}
-static inline void _X12_constructorFv_S13__anonymous23S13__anonymous23_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1, struct __anonymous23 _X4_srcS13__anonymous23_1){
-    {
-        ((void)((*_X4_dstS13__anonymous23_1)._X1ii_1=_X4_srcS13__anonymous23_1._X1ii_1) /* ?{} */);
-    }
-
-}
-static inline void _X11_destructorFv_S13__anonymous23_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1){
-    {
-        ((void)((*_X4_dstS13__anonymous23_1)._X1ii_1) /* ^?{} */);
-    }
-
-}
-static inline struct __anonymous23 _X16_operator_assignFS13__anonymous23_S13__anonymous23S13__anonymous23_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1, struct __anonymous23 _X4_srcS13__anonymous23_1){
-    struct __anonymous23 _X4_retS13__anonymous23_1;
-    {
-        ((void)((*_X4_dstS13__anonymous23_1)._X1ii_1=_X4_srcS13__anonymous23_1._X1ii_1));
-    }
-
-    {
-        ((void)_X12_constructorFv_S13__anonymous23S13__anonymous23_autogen___1((&_X4_retS13__anonymous23_1), (*_X4_dstS13__anonymous23_1)));
-    }
-
-    return _X4_retS13__anonymous23_1;
-}
-static inline void _X12_constructorFv_S13__anonymous23i_autogen___1(struct __anonymous23 *_X4_dstS13__anonymous23_1, signed int _X1ii_1){
-    {
-        ((void)((*_X4_dstS13__anonymous23_1)._X1ii_1=_X1ii_1) /* ?{} */);
-    }
-
-}
-static inline volatile const struct __anonymous23 _X3f38FS13__anonymous23___1();
+static inline volatile const struct __anonymous21 _X3f38FS13__anonymous21___1();
 static inline volatile const signed short int _X3f41Fs___1();
 static inline volatile const signed short int _X3f42Fs___1();
 static inline volatile const signed short int _X3f43Fs___1();

@@ -8,19 +8,18 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Tue Sep 22 15:31:20 2020
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Feb 16 12:00:32 2023
+// Update Count     : 5
 //
 
 #if defined(__cforall) || defined(__cplusplus)
+#include <sys/socket.h> // first include because of anonymous types __SOCKADDR_ARG, __CONST_SOCKADDR_ARG
+#include <unistd.h>
+#include <errno.h>
+
 extern "C" {
 #endif
-	#include <asm/types.h>
-	#include <errno.h>
-	#include <unistd.h>
-
-
 	//--------------------
 	// Basic types
 
@@ -72,7 +71,7 @@ extern "C" {
 	typedef struct cfathread_mutex_attr {
 	} cfathread_mutexattr_t;
 	typedef struct cfathread_mutex * cfathread_mutex_t;
-	int cfathread_mutex_init(cfathread_mutex_t *restrict mut, const cfathread_mutexattr_t *restrict attr) __attribute__((nonnull (1)));
+	int cfathread_mutex_init(cfathread_mutex_t * restrict mut, const cfathread_mutexattr_t * restrict attr) __attribute__((nonnull (1)));
 	int cfathread_mutex_destroy(cfathread_mutex_t *mut) __attribute__((nonnull (1)));
 	int cfathread_mutex_lock(cfathread_mutex_t *mut) __attribute__((nonnull (1)));
 	int cfathread_mutex_trylock(cfathread_mutex_t *mut) __attribute__((nonnull (1)));
@@ -90,13 +89,11 @@ extern "C" {
 
 	//--------------------
 	// IO operations
-	struct sockaddr;
-	struct msghdr;
 	int cfathread_socket(int domain, int type, int protocol);
-	int cfathread_bind(int socket, const struct sockaddr *address, socklen_t address_len);
+	int cfathread_bind(int socket, __CONST_SOCKADDR_ARG address, socklen_t address_len);
 	int cfathread_listen(int socket, int backlog);
-	int cfathread_accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len);
-	int cfathread_connect(int socket, const struct sockaddr *address, socklen_t address_len);
+	int cfathread_accept(int socket, __SOCKADDR_ARG address, socklen_t * restrict address_len);
+	int cfathread_connect(int socket, __CONST_SOCKADDR_ARG address, socklen_t address_len);
 	int cfathread_dup(int fildes);
 	int cfathread_close(int fildes);
 	ssize_t cfathread_sendmsg(int socket, const struct msghdr *message, int flags);

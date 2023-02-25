@@ -29,7 +29,6 @@
 #include "Alternative.h"            // for Alternative, AssertionItem, AssertionList
 #include "Common/FilterCombos.h"    // for filterCombos
 #include "Common/Indenter.h"        // for Indenter
-#include "Common/utility.h"         // for sort_mins
 #include "GenPoly/GenPoly.h"        // for getFunctionType
 #include "ResolvExpr/AlternativeFinder.h"  // for computeConversionCost
 #include "ResolvExpr/RenameVars.h"  // for renameTyVars

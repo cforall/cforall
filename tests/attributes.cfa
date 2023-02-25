@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Feb  6 16:07:02 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 15 13:53:31 2021
-// Update Count     : 38
+// Last Modified On : Thu Feb 23 20:33:07 2023
+// Update Count     : 39
 // 
 
 
@@ -21,7 +21,7 @@ int la() {
 
 
 // aggregate_name
-struct __attribute__(( unused )) {} Dummy;
+static struct __attribute__(( unused )) {} Dummy;
 struct __attribute__(( unused )) Agn1;
 struct __attribute__(( unused )) Agn2 {};
 enum __attribute__(( unused )) { E1 };

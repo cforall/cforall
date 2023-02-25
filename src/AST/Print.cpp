@@ -28,12 +28,36 @@ using namespace std;
 
 namespace ast {
 
-template <typename C, typename... T>
-constexpr array<C,sizeof...(T)> make_array(T&&... values)
-{
-	return array<C,sizeof...(T)>{
-		std::forward<T>(values)...
-	};
+namespace {
+
+template<typename C, typename... T>
+constexpr array<C, sizeof...(T)> make_array( T&&... values ) {
+	return array<C, sizeof...(T)>{ std::forward<T>( values )... };
+}
+
+namespace Names {
+	static constexpr auto FuncSpecifiers = make_array<const char*>(
+		"inline", "_Noreturn", "fortran"
+	);
+
+	static constexpr auto StorageClasses = make_array<const char*>(
+		"extern", "static", "auto", "register", "__thread", "_Thread_local"
+	);
+
+	static constexpr auto Qualifiers = make_array<const char*>(
+		"const", "restrict", "volatile", "mutex", "_Atomic"
+	);
+}
+
+template<typename bits_t, size_t N>
+void print( ostream & os, const bits_t & bits,
+		const array<const char *, N> & names ) {
+	if ( !bits.any() ) return;
+	for ( size_t i = 0 ; i < N ; i += 1 ) {
+		if ( bits[i] ) {
+			os << names[i] << ' ';
+		}
+	}
 }
 
 class Printer final : public Visitor {
@@ -78,43 +102,6 @@ private:
 	}
 
 	static const char* Names[];
-
-	struct Names {
-		static constexpr auto FuncSpecifiers = make_array<const char*>(
-			"inline", "_Noreturn", "fortran"
-		);
-
-		static constexpr auto StorageClasses = make_array<const char*>(
-			"extern", "static", "auto", "register", "__thread", "_Thread_local"
-		);
-
-		static constexpr auto Qualifiers = make_array<const char*>(
-			"const", "restrict", "volatile", "mutex", "_Atomic"
-		);
-	};
-
-	template<typename storage_t, size_t N>
-	void print(const storage_t & storage, const array<const char *, N> & Names ) {
-		if ( storage.any() ) {
-			for ( size_t i = 0; i < Names.size(); i += 1 ) {
-				if ( storage[i] ) {
-					os << Names[i] << ' ';
-				}
-			}
-		}
-	}
-
-	void print( const ast::Function::Specs & specs ) {
-		print(specs, Names::FuncSpecifiers);
-	}
-
-	void print( const ast::Storage::Classes & storage ) {
-		print(storage, Names::StorageClasses);
-	}
-
-	void print( const ast::CV::Qualifiers & qualifiers ) {
-		print(qualifiers, Names::Qualifiers);
-	}
 
 	void print( const std::vector<ast::Label> & labels ) {
 		if ( labels.empty() ) return;
@@ -229,7 +216,7 @@ private:
 			os << Linkage::name( node->linkage ) << " ";
 		}
 
-		print( node->storage );
+		ast::print( os, node->storage );
 		os << node->typeString();
 
 		if ( node->base ) {
@@ -271,18 +258,18 @@ private:
 	}
 
 	void preprint( const ast::Type * node ) {
-		print( node->qualifiers );
+		ast::print( os, node->qualifiers );
 	}
 
 	void preprint( const ast::FunctionType * node ) {
 		print( node->forall );
 		print( node->assertions );
-		print( node->qualifiers );
+		ast::print( os, node->qualifiers );
 	}
 
 	void preprint( const ast::BaseInstType * node ) {
 		print( node->attributes );
-		print( node->qualifiers );
+		ast::print( os, node->qualifiers );
 	}
 
 public:
@@ -293,7 +280,7 @@ public:
 			os << Linkage::name( node->linkage ) << " ";
 		}
 
-		print( node->storage );
+		ast::print( os, node->storage );
 
 		if ( node->type ) {
 			node->type->accept( *this );
@@ -337,10 +324,8 @@ public:
 
 		if ( ! short_mode ) printAll( node->attributes );
 
-		print( node->storage );
-		print( node->funcSpec );
-
-
+		ast::print( os, node->storage );
+		ast::print( os, node->funcSpec );
 
 		if ( node->type && node->isTypeFixed ) {
 			node->type->accept( *this );
@@ -1626,6 +1611,8 @@ public:
 
 };
 
+} // namespace
+
 void print( ostream & os, const ast::Node * node, Indenter indent ) {
 	Printer printer { os, indent, false };
 	node->accept(printer);
@@ -1636,10 +1623,16 @@ void printShort( ostream & os, const ast::Decl * node, Indenter indent ) {
 	node->accept(printer);
 }
 
-// Annoyingly these needed to be defined out of line to avoid undefined references.
-// The size here needs to be explicit but at least the compiler will produce an error
-// if the wrong size is specified
-constexpr array<const char*, 3> Printer::Names::FuncSpecifiers;
-constexpr array<const char*, 6> Printer::Names::StorageClasses;
-constexpr array<const char*, 5> Printer::Names::Qualifiers;
+void print( ostream & os, Function::Specs specs ) {
+	print( os, specs, Names::FuncSpecifiers );
 }
+
+void print( ostream & os, Storage::Classes storage ) {
+	print( os, storage, Names::StorageClasses );
+}
+
+void print( ostream & os, CV::Qualifiers qualifiers ) {
+	print( os, qualifiers, Names::Qualifiers );
+}
+
+} // namespace ast

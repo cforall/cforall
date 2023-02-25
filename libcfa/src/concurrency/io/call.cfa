@@ -13,6 +13,11 @@
 
 #define __cforall_thread__
 
+#include <sys/socket.h> // first include because of anonymous types __SOCKADDR_ARG, __CONST_SOCKADDR_ARG
+#include <unistd.h>
+#include <errno.h>
+#include <time.hfa>
+
 #include "bits/defs.hfa"
 #include "kernel.hfa"
 #include "io/types.hfa"
@@ -25,9 +30,7 @@
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
 	#include <assert.h>
 	#include <stdint.h>
-	#include <errno.h>
 	#include <linux/io_uring.h>
-
 	#include "kernel/fwd.hfa"
 
 	static const __u8 REGULAR_FLAGS = 0
@@ -64,17 +67,8 @@
 //=============================================================================================
 // I/O Forwards
 //=============================================================================================
-#include <time.hfa>
-
-// Some forward declarations
-#include <errno.h>
-#include <unistd.h>
 
 extern "C" {
-	#include <asm/types.h>
-	#include <sys/socket.h>
-	#include <sys/syscall.h>
-
 #if defined(CFA_HAVE_PREADV2)
 	struct iovec;
 	extern ssize_t preadv2 (int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
@@ -100,8 +94,6 @@ extern "C" {
 	extern ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
 	extern ssize_t send(int sockfd, const void *buf, size_t len, int flags);
 	extern ssize_t recv(int sockfd, void *buf, size_t len, int flags);
-	extern int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
-	extern int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 	extern int fallocate(int fd, int mode, off_t offset, off_t len);
 	extern int posix_fadvise(int fd, off_t offset, off_t len, int advice);
@@ -139,8 +131,8 @@ ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u64 submi
 ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
 ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
 ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
-int cfa_accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags);
-int cfa_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags);
+int cfa_accept4(int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags);
+int cfa_connect(int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags);
 int cfa_fallocate(int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
 int cfa_posix_fadvise(int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
 int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags);
@@ -172,8 +164,8 @@ void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr *msg, i
 void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
 void async_send(io_future_t & future, int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
 void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
-void async_accept4(io_future_t & future, int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags);
-void async_connect(io_future_t & future, int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags);
+void async_accept4(io_future_t & future, int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags);
+void async_connect(io_future_t & future, int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags);
 void async_fallocate(io_future_t & future, int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
 void async_posix_fadvise(io_future_t & future, int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
 void async_madvise(io_future_t & future, void *addr, size_t length, int advice, __u64 submit_flags);
@@ -673,7 +665,7 @@ ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flag
 // accept4
 //----------
 // asynchronous call
-inline void async_accept4(io_future_t & future, int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags) {
+inline void async_accept4(io_future_t & future, int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_ACCEPT)
 		ssize_t res = accept4(sockfd, addr, addrlen, flags);
 		if (res >= 0) {
@@ -694,7 +686,7 @@ inline void async_accept4(io_future_t & future, int sockfd, struct sockaddr *add
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (uintptr_t)addr;
+		sqe->addr = (uintptr_t)&addr;
 		sqe->addr2 = (uintptr_t)addrlen;
 		sqe->accept_flags = flags;
 
@@ -707,7 +699,7 @@ inline void async_accept4(io_future_t & future, int sockfd, struct sockaddr *add
 
 //----------
 // synchronous call
-int cfa_accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags, __u64 submit_flags) {
+int cfa_accept4(int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags) {
 	io_future_t future;
 
 	async_accept4( future, sockfd, addr, addrlen, flags, submit_flags );
@@ -726,7 +718,7 @@ int cfa_accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags
 // connect
 //----------
 // asynchronous call
-inline void async_connect(io_future_t & future, int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags) {
+inline void async_connect(io_future_t & future, int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_CONNECT)
 		ssize_t res = connect(sockfd, addr, addrlen);
 		if (res >= 0) {
@@ -747,7 +739,7 @@ inline void async_connect(io_future_t & future, int sockfd, const struct sockadd
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (uintptr_t)addr;
+		sqe->addr = (uintptr_t)&addr;
 		sqe->off = addrlen;
 
 		asm volatile("": : :"memory");
@@ -759,7 +751,7 @@ inline void async_connect(io_future_t & future, int sockfd, const struct sockadd
 
 //----------
 // synchronous call
-int cfa_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen, __u64 submit_flags) {
+int cfa_connect(int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags) {
 	io_future_t future;
 
 	async_connect( future, sockfd, addr, addrlen, submit_flags );

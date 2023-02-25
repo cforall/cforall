@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 15:11:30 2022
-// Update Count     : 631
+// Last Modified On : Thu Feb 16 16:31:34 2023
+// Update Count     : 633
 //
 
 #include "stdlib.hfa"
@@ -19,7 +19,6 @@
 
 //---------------------------------------
 
-#define _XOPEN_SOURCE 600								// posix_memalign, *rand48
 #include <string.h>										// memcpy, memset
 //#include <math.h>										// fabsf, fabs, fabsl
 #include <complex.h>									// _Complex_I

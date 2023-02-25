@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Jul 14 15:40:00 2021
-// Update Count     : 171
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Feb 19 22:37:10 2023
+// Update Count     : 176
 //
 
 #pragma once
@@ -22,7 +22,8 @@
 #include <string>            // for string
 
 #include "BaseSyntaxNode.h"  // for BaseSyntaxNode
-#include "Common/utility.h"  // for operator+
+#include "Common/Iterate.hpp"// for operator+
+#include "Common/utility.h"  // for toCString
 #include "Mutator.h"         // for Mutator
 #include "SynTree.h"         // for AST nodes
 #include "Visitor.h"         // for Visitor
@@ -123,10 +124,10 @@ class Type : public BaseSyntaxNode {
 		bool operator==( Qualifiers other ) const { return (val & Mask) == (other.val & Mask); }
 		bool operator!=( Qualifiers other ) const { return (val & Mask) != (other.val & Mask); }
 		bool operator<=( Qualifiers other ) const {
-			return is_const    <= other.is_const        //Any non-const converts to const without cost
-					&& is_volatile <= other.is_volatile     //Any non-volatile converts to volatile without cost
-					&& is_mutex    >= other.is_mutex        //Any mutex converts to non-mutex without cost
-					&& is_atomic   == other.is_atomic;      //No conversion from atomic to non atomic is free
+			return is_const    <= other.is_const        // Any non-const converts to const without cost
+				&& is_volatile <= other.is_volatile		// Any non-volatile converts to volatile without cost
+				&& is_mutex    >= other.is_mutex		// Any mutex converts to non-mutex without cost
+				&& is_atomic   == other.is_atomic;		// No conversion from atomic to non atomic is free
 		}
 		bool operator<( Qualifiers other ) const { return *this != other && *this <= other; }
 	 	bool operator>=( Qualifiers other ) const { return ! (*this < other); }
@@ -188,10 +189,10 @@ class Type : public BaseSyntaxNode {
 
 	virtual TypeSubstitution genericSubstitution() const;
 
-	virtual Type *clone() const = 0;
+	virtual Type * clone() const = 0;
 	virtual void accept( Visitor & v ) = 0;
 	virtual void accept( Visitor & v ) const = 0;
-	virtual Type *acceptMutator( Mutator & m ) = 0;
+	virtual Type * acceptMutator( Mutator & m ) = 0;
 	virtual void print( std::ostream & os, Indenter indent = {} ) const;
 };
 
@@ -206,10 +207,10 @@ class VoidType : public Type {
 	virtual unsigned size() const override { return 0; };
 	virtual bool isComplete() const override { return false; }
 
-	virtual VoidType *clone() const override { return new VoidType( *this ); }
+	virtual VoidType * clone() const override { return new VoidType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
@@ -258,17 +259,17 @@ class BasicType : public Type {
 	} kind;
 	// GENERATED END
 
-	static const char *typeNames[];						// string names for basic types, MUST MATCH with Kind
+	static const char * typeNames[];					// string names for basic types, MUST MATCH with Kind
 
 	BasicType( const Type::Qualifiers & tq, Kind bt, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
 
 	Kind get_kind() const { return kind; }
 	void set_kind( Kind newValue ) { kind = newValue; }
 
-	virtual BasicType *clone() const override { return new BasicType( *this ); }
+	virtual BasicType * clone() const override { return new BasicType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 	bool isInteger() const;
 };
@@ -278,19 +279,19 @@ class PointerType : public Type {
 	Type * base;
 
 	// In C99, pointer types can be qualified in many ways e.g., int f( int a[ static 3 ] )
-	Expression *dimension;
+	Expression * dimension;
 	bool isVarLen;
 	bool isStatic;
 
-	PointerType( const Type::Qualifiers & tq, Type *base, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
-	PointerType( const Type::Qualifiers & tq, Type *base, Expression *dimension, bool isVarLen, bool isStatic, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
+	PointerType( const Type::Qualifiers & tq, Type * base, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
+	PointerType( const Type::Qualifiers & tq, Type * base, Expression * dimension, bool isVarLen, bool isStatic, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
 	PointerType( const PointerType& );
 	virtual ~PointerType();
 
-	Type *get_base() { return base; }
-	void set_base( Type *newValue ) { base = newValue; }
-	Expression *get_dimension() { return dimension; }
-	void set_dimension( Expression *newValue ) { dimension = newValue; }
+	Type * get_base() { return base; }
+	void set_base( Type * newValue ) { base = newValue; }
+	Expression * get_dimension() { return dimension; }
+	void set_dimension( Expression * newValue ) { dimension = newValue; }
 	bool get_isVarLen() { return isVarLen; }
 	void set_isVarLen( bool newValue ) { isVarLen = newValue; }
 	bool get_isStatic() { return isStatic; }
@@ -300,28 +301,28 @@ class PointerType : public Type {
 
 	virtual bool isComplete() const override { return ! isVarLen; }
 
-	virtual PointerType *clone() const override { return new PointerType( *this ); }
+	virtual PointerType * clone() const override { return new PointerType( * this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
 class ArrayType : public Type {
   public:
-	Type *base;
-	Expression *dimension;
+	Type * base;
+	Expression * dimension;
 	bool isVarLen;
 	bool isStatic;
 
-	ArrayType( const Type::Qualifiers & tq, Type *base, Expression *dimension, bool isVarLen, bool isStatic, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
+	ArrayType( const Type::Qualifiers & tq, Type * base, Expression * dimension, bool isVarLen, bool isStatic, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
 	ArrayType( const ArrayType& );
 	virtual ~ArrayType();
 
-	Type *get_base() { return base; }
-	void set_base( Type *newValue ) { base = newValue; }
-	Expression *get_dimension() { return dimension; }
-	void set_dimension( Expression *newValue ) { dimension = newValue; }
+	Type * get_base() { return base; }
+	void set_base( Type * newValue ) { base = newValue; }
+	Expression * get_dimension() { return dimension; }
+	void set_dimension( Expression * newValue ) { dimension = newValue; }
 	bool get_isVarLen() { return isVarLen; }
 	void set_isVarLen( bool newValue ) { isVarLen = newValue; }
 	bool get_isStatic() { return isStatic; }
@@ -332,10 +333,10 @@ class ArrayType : public Type {
 	// See 6.7.6.2
 	virtual bool isComplete() const override { return dimension || isVarLen; }
 
-	virtual ArrayType *clone() const override { return new ArrayType( *this ); }
+	virtual ArrayType * clone() const override { return new ArrayType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
@@ -347,23 +348,23 @@ public:
 	QualifiedType( const QualifiedType & tq );
 	virtual ~QualifiedType();
 
-	virtual QualifiedType *clone() const override { return new QualifiedType( *this ); }
+	virtual QualifiedType * clone() const override { return new QualifiedType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
 class ReferenceType : public Type {
 public:
-	Type *base;
+	Type * base;
 
-	ReferenceType( const Type::Qualifiers & tq, Type *base, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
+	ReferenceType( const Type::Qualifiers & tq, Type * base, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
 	ReferenceType( const ReferenceType & );
 	virtual ~ReferenceType();
 
-	Type *get_base() { return base; }
-	void set_base( Type *newValue ) { base = newValue; }
+	Type * get_base() { return base; }
+	void set_base( Type * newValue ) { base = newValue; }
 
 	virtual int referenceDepth() const override;
 
@@ -374,10 +375,10 @@ public:
 
 	virtual TypeSubstitution genericSubstitution() const override;
 
-	virtual ReferenceType *clone() const override { return new ReferenceType( *this ); }
+	virtual ReferenceType * clone() const override { return new ReferenceType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
@@ -404,16 +405,16 @@ class FunctionType : public Type {
 
 	bool isUnprototyped() const { return isVarArgs && parameters.size() == 0; }
 
-	virtual FunctionType *clone() const override { return new FunctionType( *this ); }
+	virtual FunctionType * clone() const override { return new FunctionType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
 class ReferenceToType : public Type {
   public:
-	std::list< Expression* > parameters;
+	std::list< Expression * > parameters;
 	std::string name;
 	bool hoistType;
 
@@ -427,9 +428,9 @@ class ReferenceToType : public Type {
 	bool get_hoistType() const { return hoistType; }
 	void set_hoistType( bool newValue ) { hoistType = newValue; }
 
-	virtual ReferenceToType *clone() const override = 0;
+	virtual ReferenceToType * clone() const override = 0;
 	virtual void accept( Visitor & v ) override = 0;
-	virtual Type *acceptMutator( Mutator & m ) override = 0;
+	virtual Type * acceptMutator( Mutator & m ) override = 0;
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 
 	virtual void lookup( __attribute__((unused)) const std::string & name, __attribute__((unused)) std::list< Declaration* > & foundDecls ) const {}
@@ -442,14 +443,14 @@ class StructInstType : public ReferenceToType {
   public:
 	// this decl is not "owned" by the struct inst; it is merely a pointer to elsewhere in the tree,
 	// where the structure used in this type is actually defined
-	StructDecl *baseStruct;
+	StructDecl * baseStruct;
 
 	StructInstType( const Type::Qualifiers & tq, const std::string & name, const std::list< Attribute * > & attributes = std::list< Attribute * >()  ) : Parent( tq, name, attributes ), baseStruct( 0 ) {}
 	StructInstType( const Type::Qualifiers & tq, StructDecl * baseStruct, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
 	StructInstType( const StructInstType & other ) : Parent( other ), baseStruct( other.baseStruct ) {}
 
-	StructDecl *get_baseStruct() const { return baseStruct; }
-	void set_baseStruct( StructDecl *newValue ) { baseStruct = newValue; }
+	StructDecl * get_baseStruct() const { return baseStruct; }
+	void set_baseStruct( StructDecl * newValue ) { baseStruct = newValue; }
 
 	/// Accesses generic parameters of base struct (NULL if none such)
 	std::list<TypeDecl*> * get_baseParameters();
@@ -465,10 +466,10 @@ class StructInstType : public ReferenceToType {
 	/// Clones declarations into "foundDecls", caller responsible for freeing
 	void lookup( const std::string & name, std::list< Declaration* > & foundDecls ) const override;
 
-	virtual StructInstType *clone() const override { return new StructInstType( *this ); }
+	virtual StructInstType * clone() const override { return new StructInstType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
   private:
@@ -480,13 +481,13 @@ class UnionInstType : public ReferenceToType {
   public:
 	// this decl is not "owned" by the union inst; it is merely a pointer to elsewhere in the tree,
 	// where the union used in this type is actually defined
-	UnionDecl *baseUnion;
+	UnionDecl * baseUnion;
 
 	UnionInstType( const Type::Qualifiers & tq, const std::string & name, const std::list< Attribute * > & attributes = std::list< Attribute * >()  ) : Parent( tq, name, attributes ), baseUnion( 0 ) {}
 	UnionInstType( const Type::Qualifiers & tq, UnionDecl * baseUnion, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
 	UnionInstType( const UnionInstType & other ) : Parent( other ), baseUnion( other.baseUnion ) {}
 
-	UnionDecl *get_baseUnion() const { return baseUnion; }
+	UnionDecl * get_baseUnion() const { return baseUnion; }
 	void set_baseUnion( UnionDecl * newValue ) { baseUnion = newValue; }
 
 	/// Accesses generic parameters of base union (NULL if none such)
@@ -503,10 +504,10 @@ class UnionInstType : public ReferenceToType {
 	/// Clones declarations into "foundDecls", caller responsible for freeing
 	void lookup( const std::string & name, std::list< Declaration* > & foundDecls ) const override;
 
-	virtual UnionInstType *clone() const override { return new UnionInstType( *this ); }
+	virtual UnionInstType * clone() const override { return new UnionInstType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
   private:
@@ -518,23 +519,23 @@ class EnumInstType : public ReferenceToType {
   public:
 	// this decl is not "owned" by the enum inst; it is merely a pointer to elsewhere in the tree,
 	// where the enum used in this type is actually defined
-	EnumDecl *baseEnum = nullptr;
+	EnumDecl * baseEnum = nullptr;
 
 	EnumInstType( const Type::Qualifiers & tq, const std::string & name, const std::list< Attribute * > & attributes = std::list< Attribute * >()  ) : Parent( tq, name, attributes ) {}
 	EnumInstType( const Type::Qualifiers & tq, EnumDecl * baseEnum, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
 	EnumInstType( const EnumInstType & other ) : Parent( other ), baseEnum( other.baseEnum ) {}
 
-	EnumDecl *get_baseEnum() const { return baseEnum; }
-	void set_baseEnum( EnumDecl *newValue ) { baseEnum = newValue; }
+	EnumDecl * get_baseEnum() const { return baseEnum; }
+	void set_baseEnum( EnumDecl * newValue ) { baseEnum = newValue; }
 
 	virtual bool isComplete() const override;
 
 	virtual AggregateDecl * getAggr() const override;
 
-	virtual EnumInstType *clone() const override { return new EnumInstType( *this ); }
+	virtual EnumInstType * clone() const override { return new EnumInstType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
   private:
@@ -555,10 +556,10 @@ class TraitInstType : public ReferenceToType {
 
 	virtual bool isComplete() const override;
 
-	virtual TraitInstType *clone() const override { return new TraitInstType( *this ); }
+	virtual TraitInstType * clone() const override { return new TraitInstType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
   private:
 	virtual std::string typeString() const override;
 };
@@ -568,25 +569,25 @@ class TypeInstType : public ReferenceToType {
   public:
 	// this decl is not "owned" by the type inst; it is merely a pointer to elsewhere in the tree,
 	// where the type used here is actually defined
-	TypeDecl *baseType;
+	TypeDecl * baseType;
 	bool isFtype;
 
-	TypeInstType( const Type::Qualifiers & tq, const std::string & name, TypeDecl *baseType, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
+	TypeInstType( const Type::Qualifiers & tq, const std::string & name, TypeDecl * baseType, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
 	TypeInstType( const Type::Qualifiers & tq, const std::string & name, bool isFtype, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
 	TypeInstType( const TypeInstType & other );
 	~TypeInstType();
 
-	TypeDecl *get_baseType() const { return baseType; }
-	void set_baseType( TypeDecl *newValue );
+	TypeDecl * get_baseType() const { return baseType; }
+	void set_baseType( TypeDecl * newValue );
 	bool get_isFtype() const { return isFtype; }
 	void set_isFtype( bool newValue ) { isFtype = newValue; }
 
 	virtual bool isComplete() const override;
 
-	virtual TypeInstType *clone() const override { return new TypeInstType( *this ); }
+	virtual TypeInstType * clone() const override { return new TypeInstType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
   private:
 	virtual std::string typeString() const override;
@@ -621,82 +622,82 @@ class TupleType : public Type {
 
 	// virtual bool isComplete() const override { return true; } // xxx - not sure if this is right, might need to recursively check complete-ness
 
-	virtual TupleType *clone() const override { return new TupleType( *this ); }
+	virtual TupleType * clone() const override { return new TupleType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
 class TypeofType : public Type {
   public:
-	Expression *expr;    ///< expression to take the type of
-	bool is_basetypeof;  ///< true iff is basetypeof type
+	Expression * expr;		///< expression to take the type of
+	bool is_basetypeof;		///< true iff is basetypeof type
 
-	TypeofType( const Type::Qualifiers & tq, Expression *expr, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
-	TypeofType( const Type::Qualifiers & tq, Expression *expr, bool is_basetypeof,
+	TypeofType( const Type::Qualifiers & tq, Expression * expr, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
+	TypeofType( const Type::Qualifiers & tq, Expression * expr, bool is_basetypeof,
 		const std::list< Attribute * > & attributes = std::list< Attribute * >() );
 	TypeofType( const TypeofType& );
 	virtual ~TypeofType();
 
-	Expression *get_expr() const { return expr; }
-	void set_expr( Expression *newValue ) { expr = newValue; }
+	Expression * get_expr() const { return expr; }
+	void set_expr( Expression * newValue ) { expr = newValue; }
 
 	virtual bool isComplete() const override { assert( false ); return false; }
 
-	virtual TypeofType *clone() const override { return new TypeofType( *this ); }
+	virtual TypeofType * clone() const override { return new TypeofType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
 class VTableType : public Type {
 public:
-	Type *base;
+	Type * base;
 
-	VTableType( const Type::Qualifiers & tq, Type *base,
+	VTableType( const Type::Qualifiers & tq, Type * base,
 		const std::list< Attribute * > & attributes = std::list< Attribute * >() );
 	VTableType( const VTableType & );
 	virtual ~VTableType();
 
-	Type *get_base() { return base; }
-	void set_base( Type *newValue ) { base = newValue; }
+	Type * get_base() { return base; }
+	void set_base( Type * newValue ) { base = newValue; }
 
-	virtual VTableType *clone() const override { return new VTableType( *this ); }
+	virtual VTableType * clone() const override { return new VTableType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
 class AttrType : public Type {
   public:
 	std::string name;
-	Expression *expr;
-	Type *type;
+	Expression * expr;
+	Type * type;
 	bool isType;
 
-	AttrType( const Type::Qualifiers & tq, const std::string & name, Expression *expr, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
-	AttrType( const Type::Qualifiers & tq, const std::string & name, Type *type, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
+	AttrType( const Type::Qualifiers & tq, const std::string & name, Expression * expr, const std::list< Attribute * > & attributes = std::list< Attribute * >() );
+	AttrType( const Type::Qualifiers & tq, const std::string & name, Type * type, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
 	AttrType( const AttrType& );
 	virtual ~AttrType();
 
 	const std::string & get_name() const { return name; }
 	void set_name( const std::string & newValue ) { name = newValue; }
-	Expression *get_expr() const { return expr; }
-	void set_expr( Expression *newValue ) { expr = newValue; }
-	Type *get_type() const { return type; }
-	void set_type( Type *newValue ) { type = newValue; }
+	Expression * get_expr() const { return expr; }
+	void set_expr( Expression * newValue ) { expr = newValue; }
+	Type * get_type() const { return type; }
+	void set_type( Type * newValue ) { type = newValue; }
 	bool get_isType() const { return isType; }
 	void set_isType( bool newValue ) { isType = newValue; }
 
 	virtual bool isComplete() const override { assert( false ); } // xxx - not sure what to do here
 
-	virtual AttrType *clone() const override { return new AttrType( *this ); }
+	virtual AttrType * clone() const override { return new AttrType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
@@ -708,10 +709,10 @@ class VarArgsType : public Type {
 
 	virtual bool isComplete() const override{ return true; } // xxx - is this right?
 
-	virtual VarArgsType *clone() const override { return new VarArgsType( *this ); }
+	virtual VarArgsType * clone() const override { return new VarArgsType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
@@ -721,10 +722,10 @@ class ZeroType : public Type {
 	ZeroType();
 	ZeroType( Type::Qualifiers tq, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
 
-	virtual ZeroType *clone() const override { return new ZeroType( *this ); }
+	virtual ZeroType * clone() const override { return new ZeroType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
@@ -734,10 +735,10 @@ class OneType : public Type {
 	OneType();
 	OneType( Type::Qualifiers tq, const std::list< Attribute * > & attributes = std::list< Attribute * >()  );
 
-	virtual OneType *clone() const override { return new OneType( *this ); }
+	virtual OneType * clone() const override { return new OneType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 
@@ -745,10 +746,10 @@ class GlobalScopeType : public Type {
   public:
 	GlobalScopeType();
 
-	virtual GlobalScopeType *clone() const override { return new GlobalScopeType( *this ); }
+	virtual GlobalScopeType * clone() const override { return new GlobalScopeType( *this ); }
 	virtual void accept( Visitor & v ) override { v.visit( this ); }
 	virtual void accept( Visitor & v ) const override { v.visit( this ); }
-	virtual Type *acceptMutator( Mutator & m ) override { return m.mutate( this ); }
+	virtual Type * acceptMutator( Mutator & m ) override { return m.mutate( this ); }
 	virtual void print( std::ostream & os, Indenter indent = {} ) const override;
 };
 

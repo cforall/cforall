@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May  9 08:48:15 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb  5 07:54:43 2023
-// Update Count     : 90
+// Last Modified On : Thu Feb 23 20:29:59 2023
+// Update Count     : 91
 //
 
 #include <fstream.hfa>
@@ -194,7 +194,7 @@ struct XW { T t; };
 XW(int,int) xww;
 
 forall( T ) struct S { T t; } (int) x, y, z;
-forall( T ) struct { T t; } (int) a, b, c;
+static forall( T ) struct { T t; } (int) a, b, c;
 
 forall( T ) static forall( S ) {
     forall( X ) struct U {

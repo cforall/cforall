@@ -33,6 +33,7 @@ namespace ast {
 	class ConstructorInit;
 	class Decl;
 	class DeletedExpr;
+	class Expr;
 	class Init;
 	class StmtExpr;
 	class SymbolTable;

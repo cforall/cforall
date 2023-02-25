@@ -9,13 +9,13 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb  7 19:07:07 2020
-// Update Count     : 25
+// Last Modified On : Thu Feb 23 20:31:05 2023
+// Update Count     : 26
 //
 
 #include <fstream.hfa>
 
-struct {
+static struct {
 	int ``otype;
 	int ``struct;
 } st = { 10, 10 };

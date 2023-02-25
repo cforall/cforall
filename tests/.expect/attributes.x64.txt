@@ -25,7 +25,7 @@ static inline struct __anonymous0 _X16_operator_assignFS12__anonymous0_S12__anon
 
     return _X4_retS12__anonymous0_1;
 }
-__attribute__ ((unused)) struct __anonymous0 _X5DummyS12__anonymous0_1;
+__attribute__ ((unused)) static struct __anonymous0 _X5DummyS12__anonymous0_1;
 struct __attribute__ ((unused)) Agn1;
 struct __attribute__ ((unused)) Agn2 {
 };

@@ -25,10 +25,9 @@
 #include <string.h>
 #include <unistd.h>
 
-struct {
+static struct {
 	barrier & bar;
 	int pipe[2];
-
 } globals;
 
 Duration default_preemption() {

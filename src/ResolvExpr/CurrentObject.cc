@@ -25,8 +25,9 @@
 #include "AST/GenericSubstitution.hpp" // for genericSubstitution
 #include "AST/Init.hpp"                // for Designation
 #include "AST/Node.hpp"                // for readonly
-#include "AST/Print.hpp"                // for readonly
+#include "AST/Print.hpp"               // for readonly
 #include "AST/Type.hpp"
+#include "Common/Eval.h"               // for eval
 #include "Common/Indenter.h"           // for Indenter, operator<<
 #include "Common/SemanticError.h"      // for SemanticError
 #include "Common/utility.h"            // for toString

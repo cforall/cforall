@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 16 15:52:05 2023
-// Update Count     : 1078
+// Last Modified On : Sat Feb 11 14:49:00 2023
+// Update Count     : 1079
 //
 
 #include <cassert>                 // for assert
@@ -591,7 +591,7 @@ Expression * build_unary_val( OperKinds op, ExpressionNode * expr_node ) {
 
 Expression * build_unary_ptr( OperKinds op, ExpressionNode * expr_node ) {
 	list< Expression * > args;
-	args.push_back(  maybeMoveBuild< Expression >(expr_node) ); // xxx -- this is exactly the same as the val case now, refactor this code.
+	args.push_back( maybeMoveBuild< Expression >(expr_node) ); // xxx -- this is exactly the same as the val case now, refactor this code.
 	return new UntypedExpr( new NameExpr( OperName[ (int)op ] ), args );
 } // build_unary_ptr
 
