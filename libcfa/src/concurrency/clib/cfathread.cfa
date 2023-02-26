@@ -15,9 +15,10 @@
 
 // #define EPOLL_FOR_SOCKETS
 
-#include <sys/socket.h> // first include because of anonymous types __SOCKADDR_ARG, __CONST_SOCKADDR_ARG
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 #include "fstream.hfa"
 #include "locks.hfa"
@@ -26,7 +27,7 @@
 #include "thread.hfa"
 #include "time.hfa"
 #include "stdlib.hfa"
-
+#include "iofwd.hfa"
 #include "cfathread.h"
 
 extern void ?{}(processor &, const char[], cluster &, thread$ *);
@@ -468,10 +469,6 @@ extern "C" {
 		return ETIMEDOUT;
 	}
 }
-
-#include <unistd.h>
-
-#include <iofwd.hfa>
 
 extern "C" {
 	//--------------------

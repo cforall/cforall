@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 24 14:46:55 2023
-// Update Count     : 5983
+// Last Modified On : Sat Feb 25 13:23:16 2023
+// Update Count     : 5989
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1172,8 +1172,6 @@ statement_list_nodecl:
 expression_statement:
 	comma_expression_opt ';'
 		{ $$ = new StatementNode( build_expr( $1 ) ); }
-	| MUTEX '(' ')' comma_expression ';'
-		{ $$ = new StatementNode( build_mutex( nullptr, new StatementNode( build_expr( $4 ) ) ) ); }
 	;
 
 selection_statement:
@@ -1281,7 +1279,7 @@ iteration_statement:
 	| WHILE '(' ')' statement ELSE statement			// CFA
 		{
 			$$ = new StatementNode( build_while( new CondCtl( nullptr, NEW_ONE ), maybe_build_compound( $4 ) ) );
-			SemanticWarning( yylloc, Warning::SuperfluousElse, "" );
+			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
 	| WHILE '(' conditional_declaration ')' statement	%prec THEN
 		{ $$ = new StatementNode( build_while( $3, maybe_build_compound( $5 ) ) ); }
@@ -1292,7 +1290,7 @@ iteration_statement:
 	| DO statement WHILE '(' ')' ELSE statement			// CFA
 		{
 			$$ = new StatementNode( build_do_while( NEW_ONE, maybe_build_compound( $2 ) ) );
-			SemanticWarning( yylloc, Warning::SuperfluousElse, "" );
+			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
 	| DO statement WHILE '(' comma_expression ')' ';'
 		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ) ) ); }
@@ -1303,7 +1301,7 @@ iteration_statement:
 	| FOR '(' ')' statement ELSE statement				// CFA
 		{
 			$$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) );
-			SemanticWarning( yylloc, Warning::SuperfluousElse, "" );
+			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
 	| FOR '(' for_control_expression_list ')' statement	%prec THEN
 	  	{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ) ) ); }
@@ -1583,10 +1581,13 @@ with_statement:
 		{ $$ = new StatementNode( build_with( $3, $5 ) ); }
 	;
 
-// If MUTEX becomes a general qualifier, there are shift/reduce conflicts, so change syntax to "with mutex".
+// If MUTEX becomes a general qualifier, there are shift/reduce conflicts, so possibly change syntax to "with mutex".
 mutex_statement:
-	MUTEX '(' argument_expression_list ')' statement
-		{ $$ = new StatementNode( build_mutex( $3, $5 ) ); }
+	MUTEX '(' argument_expression_list_opt ')' statement
+		{
+			if ( ! $3 ) { SemanticError( yylloc, "mutex argument list cannot be empty." ); $$ = nullptr; }
+			$$ = new StatementNode( build_mutex( $3, $5 ) );
+		}
 	;
 
 when_clause:
@@ -2988,14 +2989,14 @@ type_declarator_name:									// CFA
 trait_specifier:										// CFA
 	TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' '}'
 		{
-			SemanticWarning( yylloc, Warning::DeprecTraitSyntax, "" );
+			SemanticWarning( yylloc, Warning::DeprecTraitSyntax );
 			$$ = DeclarationNode::newTrait( $2, $4, nullptr );
 		}
 	| forall TRAIT identifier_or_type_name '{' '}'		// alternate
 		{ $$ = DeclarationNode::newTrait( $3, $1, nullptr ); }
 	| TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' push trait_declaration_list pop '}'
 		{
-			SemanticWarning( yylloc, Warning::DeprecTraitSyntax, "" );
+			SemanticWarning( yylloc, Warning::DeprecTraitSyntax );
 			$$ = DeclarationNode::newTrait( $2, $4, $8 );
 		}
 	| forall TRAIT identifier_or_type_name '{' push trait_declaration_list pop '}' // alternate

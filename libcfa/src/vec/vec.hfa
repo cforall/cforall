@@ -17,37 +17,48 @@
 
 #include <math.hfa>
 
-trait fromint(T) {
+forall(T)
+trait fromint {
     void ?{}(T&, int);
 };
-trait zeroinit(T) {
+forall(T)
+trait zeroinit {
     void ?{}(T&, zero_t);
 };
-trait zero_assign(T) {
+forall(T)
+trait zero_assign {
     T ?=?(T&, zero_t);
 };
-trait subtract(T) {
+forall(T)
+trait subtract {
     T ?-?(T, T);
 };
-trait negate(T) {
+forall(T)
+trait negate {
     T -?(T);
 };
-trait add(T) {
+forall(T)
+trait add {
     T ?+?(T, T);
 };
-trait multiply(T) {
+forall(T)
+trait multiply {
     T ?*?(T, T);
 };
-trait divide(T) {
+forall(T)
+trait divide {
     T ?/?(T, T);
 };
-trait lessthan(T) {
+forall(T)
+trait lessthan {
     int ?<?(T, T);
 };
-trait equality(T) {
+forall(T)
+trait equality {
     int ?==?(T, T);
 };
-trait sqrt(T) {
+forall(T)
+trait sqrt {
     T sqrt(T);
 };
 

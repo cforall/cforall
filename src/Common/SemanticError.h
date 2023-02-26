@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 10:59:10 2023
-// Update Count     : 36
+// Last Modified On : Sat Feb 25 12:01:31 2023
+// Update Count     : 37
 //
 
 #pragma once
@@ -55,7 +55,7 @@ struct WarningData {
 constexpr WarningData WarningFormats[] = {
 	{"self-assign"              , Severity::Warn    , "self assignment of expression: %s"                          },
 	{"reference-conversion"     , Severity::Warn    , "rvalue to reference conversion of rvalue: %s"               },
-	{"qualifiers-zero_t-one_t"  , Severity::Warn    , "questionable use of type qualifier %s with %s"              },
+	{"qualifiers-zero_t-one_t"  , Severity::Warn    , "questionable use of type qualifier(s) with %s"              },
 	{"aggregate-forward-decl"   , Severity::Warn    , "forward declaration of nested aggregate: %s"                },
 	{"superfluous-decl"         , Severity::Warn    , "declaration does not allocate storage: %s"                  },
 	{"superfluous-else"         , Severity::Warn    , "else clause never executed for empty loop conditional"      },

@@ -138,7 +138,7 @@ int test( size_t Processors, size_t Channels, size_t Producers, size_t Consumers
     cons_done = true;
     while( cons_done_count != Consumers * Channels ) {
         for ( i; Channels ) {
-            if ( has_waiting_consumers( channels[i] ) ){
+            if ( has_waiters( channels[i] ) ){
                 #ifdef BIG
                 bigObject b{0};
                 insert( channels[i], b );

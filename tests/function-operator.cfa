@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Fri Aug 25 15:21:11 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 11 18:27:45 2019
-// Update Count     : 10
+// Last Modified On : Sat Feb 25 07:26:10 2023
+// Update Count     : 12
 //
 
 #include <fstream.hfa>
@@ -21,9 +21,12 @@
 #define end(array) (&array[length(array)])
 
 // STL-like Algorithms
-trait Assignable(T &, U &) { T ?=?(T &, U); };
-trait Copyable(T &) { void ?{}(T &, T); };
-trait Destructable(T &) { void ^?{}(T &); };
+forall(T &, U &)
+trait Assignable { T ?=?(T &, U); };
+forall(T &)
+trait Copyable { void ?{}(T &, T); };
+forall(T &)
+trait Destructable { void ^?{}(T &); };
 
 trait Iterator(iter & | sized(iter) | Copyable(iter) | Destructable(iter), T) {
 	T & *?(iter);

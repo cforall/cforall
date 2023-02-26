@@ -30,9 +30,9 @@ Header = """//
 
 Prelude = """#define __cforall_thread__
 
-#include <sys/socket.h> // first include because of anonymous types __SOCKADDR_ARG, __CONST_SOCKADDR_ARG
 #include <unistd.h>
 #include <errno.h>
+#include <sys/socket.h>
 #include <time.hfa>
 
 #include "bits/defs.hfa"

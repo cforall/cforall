@@ -14,6 +14,130 @@ static inline size_t on_wait(no_reacq_lock & this) { return on_wait(((exp_backof
 // override wakeup so that we don't reacquire the lock if using a condvar
 static inline void   on_wakeup( no_reacq_lock & this, size_t recursion ) {}
 
+#define __PREVENTION_CHANNEL
+#ifdef __PREVENTION_CHANNEL
+forall( T ) {
+struct channel {
+    size_t size;
+    size_t front, back, count;
+    T * buffer;
+    thread$ * chair;
+    T * chair_elem;
+    exp_backoff_then_block_lock c_lock, p_lock;
+    __spinlock_t mutex_lock;
+};
+
+static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
+    size = _size;
+    front = back = count = 0;
+    buffer = anew( size );
+    chair = 0p;
+    mutex_lock{};
+    c_lock{};
+    p_lock{};
+}
+
+static inline void ?{}( channel(T) &c ){ ((channel(T) &)c){ 0 }; }
+static inline void ^?{}( channel(T) &c ) with(c) { delete( buffer ); }
+static inline size_t get_count( channel(T) & chan ) with(chan) { return count; }
+static inline size_t get_size( channel(T) & chan ) with(chan) { return size; }
+static inline bool has_waiters( channel(T) & chan ) with(chan) { return chair != 0p; }
+
+static inline void insert_( channel(T) & chan, T & elem ) with(chan) {
+    memcpy((void *)&buffer[back], (void *)&elem, sizeof(T));
+    count += 1;
+    back++;
+    if ( back == size ) back = 0;
+}
+
+static inline void insert( channel(T) & chan, T elem ) with( chan ) {
+    lock( p_lock );
+    lock( mutex_lock __cfaabi_dbg_ctx2 );
+
+    // have to check for the zero size channel case
+    if ( size == 0 && chair != 0p ) {
+        memcpy((void *)chair_elem, (void *)&elem, sizeof(T));
+        unpark( chair );
+        chair = 0p;
+        unlock( mutex_lock );
+        unlock( p_lock );
+        unlock( c_lock );
+        return;
+    }
+
+    // wait if buffer is full, work will be completed by someone else
+    if ( count == size ) {
+        chair = active_thread();
+        chair_elem = &elem;
+        unlock( mutex_lock );
+        park( );
+        return;
+    } // if
+
+    if ( chair != 0p ) {
+        memcpy((void *)chair_elem, (void *)&elem, sizeof(T));
+        unpark( chair );
+        chair = 0p;
+        unlock( mutex_lock );
+        unlock( p_lock );
+        unlock( c_lock );
+        return;
+    }
+    else insert_( chan, elem );
+
+    unlock( mutex_lock );
+    unlock( p_lock );
+}
+
+static inline T remove( channel(T) & chan ) with(chan) {
+    lock( c_lock );
+    lock( mutex_lock __cfaabi_dbg_ctx2 );
+    T retval;
+
+    // have to check for the zero size channel case
+    if ( size == 0 && chair != 0p ) {
+        memcpy((void *)&retval, (void *)chair_elem, sizeof(T));
+        unpark( chair );
+        chair = 0p;
+        unlock( mutex_lock );
+        unlock( p_lock );
+        unlock( c_lock );
+        return retval;
+    }
+
+    // wait if buffer is empty, work will be completed by someone else
+    if ( count == 0 ) { 
+        chair = active_thread();
+        chair_elem = &retval;
+        unlock( mutex_lock );
+        park( );
+        return retval;
+    }
+
+    // Remove from buffer
+    memcpy((void *)&retval, (void *)&buffer[front], sizeof(T));
+    count -= 1;
+    front = (front + 1) % size;
+
+    if ( chair != 0p ) {
+        insert_( chan, *chair_elem );  // do waiting producer work
+        unpark( chair );
+        chair = 0p;
+        unlock( mutex_lock );
+        unlock( p_lock );
+        unlock( c_lock );
+        return retval;
+    }
+
+    unlock( mutex_lock );
+    unlock( c_lock );
+    return retval;
+}
+
+} // forall( T )
+#endif
+
+#ifndef __PREVENTION_CHANNEL
 forall( T ) {
 struct channel {
     size_t size;
@@ -40,7 +164,7 @@ static inline bool has_waiters( channel(T) & chan ) with(chan) { return !empty( 
 static inline bool has_waiting_consumers( channel(T) & chan ) with(chan) { return !empty( cons ); }
 static inline bool has_waiting_producers( channel(T) & chan ) with(chan) { return !empty( prods ); }
 
-static inline void insert_( channel(T) & chan, T elem ) with(chan) {
+static inline void insert_( channel(T) & chan, T & elem ) with(chan) {
     memcpy((void *)&buffer[back], (void *)&elem, sizeof(T));
     count += 1;
     back++;
@@ -106,3 +230,4 @@ static inline T remove( channel(T) & chan ) with(chan) {
 }
 
 } // forall( T )
+#endif

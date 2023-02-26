@@ -8,7 +8,8 @@ extern "C" {
 // #include <types.h>
 // #include <lib.h>
 
-trait Comparable(T) {
+forall(T)
+trait Comparable {
   int ?<?(T, T);
 };
 

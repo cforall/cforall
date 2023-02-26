@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 24 11:10:03 2023
-// Update Count     : 1400
+// Last Modified On : Sat Feb 25 12:15:40 2023
+// Update Count     : 1404
 //
 
 #include <cassert>                 // for assert, assertf, strict_dynamic_cast
@@ -567,7 +567,7 @@ DeclarationNode * DeclarationNode::addQualifiers( DeclarationNode * q ) {
 
 	checkQualifiers( type, q->type );
 	if ( (builtin == Zero || builtin == One) && q->type->qualifiers.any() && error.length() == 0 ) {
-		SemanticWarning( yylloc, Warning::BadQualifiersZeroOne, Type::QualifiersNames[ilog2( q->type->qualifiers.val )], builtinTypeNames[builtin] );
+		SemanticWarning( yylloc, Warning::BadQualifiersZeroOne, builtinTypeNames[builtin] );
 	} // if
 	addQualifiersToType( q->type, type );
 
