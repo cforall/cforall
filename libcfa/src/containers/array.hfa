@@ -8,11 +8,37 @@ forall( __CFA_tysys_id_only_X & ) struct tag {};
 #define ztag(n) ttag(n)
 
 
+// 
+// The `array` macro is the public interface.
+// It computes the type of a dense (trivially strided) array.
+// All user-declared objects are dense arrays.
 //
-// Single-dim array sruct (with explicit packing and atom)
+// The `arpk` (ARray with PacKing info explicit) type is, generally, a slice with _any_ striding.
+// This type is meant for internal use.
+// CFA programmers should not instantiate it directly, nor access its field.
+// CFA programmers should call ?[?] on it.
+// Yet user-given `array(stuff)` expands to `arpk(stuff')`.
+// The comments here explain the resulting internals.
 //
-
+// Just as a plain-C "multidimesional" array is really array-of-array-of-...,
+// so does arpk generally show up as arpk-of-arpk-of...
+//
+// In the example of `array(float, 3, 4, 5) a;`,
+// `typeof(a)` is an `arpk` instantiation.
+// These comments explain _its_ arguments, i.e. those of the topmost `arpk` level.
+//
+// [N]    : the number of elements in `a`; 3 in the example
+// S      : carries the stride size (distance in bytes between &myA[0] and &myA[1]), in sizeof(S); 
+//          same as Timmed when striding is trivial, same as Timmed in the example
+// Timmed : (T-immediate) the inner type; conceptually, `typeof(a)` is "arpk of Timmed";
+//          array(float, 4, 5) in the example
+// Tbase  : (T-base) the deepest element type that is not arpk; float in the example
+//
 forall( [N], S & | sized(S), Timmed &, Tbase & ) {
+
+    //
+    // Single-dim array sruct (with explicit packing and atom)
+    //
     struct arpk {
         S strides[N];
     };
