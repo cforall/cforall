@@ -1,0 +1,50 @@
+#include <actor.hfa>
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+#include <stdio.h>
+
+struct Server { int val; inline actor; };
+
+void ?{}( Server & this ) { this.val = 999; }
+void ^?{}( Server & this ) { this.val = 777; }
+
+int main() {
+    sout | "Start";
+
+    sout | "Finished";
+    {
+        start_actor_system();
+        Server s[10];
+        for ( i; 10 ) {
+            s[i] << FinishedMsg;
+        }
+        stop_actor_system();
+    }
+
+    sout | "Delete";
+    {
+        start_actor_system();
+        for ( i; 10 ) {
+            Server * s = alloc();
+            (*s){};
+            (*s) << DeleteMsg;
+        }
+        stop_actor_system();
+    }
+
+    sout | "Destroy";
+    {
+        start_actor_system();
+        Server s[10];
+        for ( i; 10 )
+            s[i] << DestroyMsg;
+        stop_actor_system();
+        for ( i; 10 )
+            if (s[i].val != 777)
+                sout | "Error: dtor not called correctly.";
+    }
+
+    sout | "Done";
+    return 0;
+}

@@ -16,9 +16,6 @@
 // #define EPOLL_FOR_SOCKETS
 
 #include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/socket.h>
 
 #include "fstream.hfa"
 #include "locks.hfa"

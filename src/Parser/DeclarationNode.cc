@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 25 12:15:40 2023
-// Update Count     : 1404
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue Mar 14 11:56:00 2023
+// Update Count     : 1406
 //
 
 #include <cassert>                 // for assert, assertf, strict_dynamic_cast
@@ -40,13 +40,23 @@ extern TypedefTable typedefTable;
 using namespace std;
 
 // These must harmonize with the corresponding DeclarationNode enumerations.
-const char * DeclarationNode::basicTypeNames[] = { "void", "_Bool", "char", "int", "int128",
-												   "float", "double", "long double", "float80", "float128",
-												   "_float16", "_float32", "_float32x", "_float64", "_float64x", "_float128", "_float128x", "NoBasicTypeNames" };
-const char * DeclarationNode::complexTypeNames[] = { "_Complex", "NoComplexTypeNames", "_Imaginary" }; // Imaginary unsupported => parse, but make invisible and print error message
-const char * DeclarationNode::signednessNames[] = { "signed", "unsigned", "NoSignednessNames" };
-const char * DeclarationNode::lengthNames[] = { "short", "long", "long long", "NoLengthNames" };
-const char * DeclarationNode::builtinTypeNames[] = { "__builtin_va_list", "__auto_type", "zero_t", "one_t", "NoBuiltinTypeNames" };
+const char * DeclarationNode::basicTypeNames[] = {
+	"void", "_Bool", "char", "int", "int128",
+	"float", "double", "long double", "float80", "float128",
+	"_float16", "_float32", "_float32x", "_float64", "_float64x", "_float128", "_float128x", "NoBasicTypeNames"
+};
+const char * DeclarationNode::complexTypeNames[] = {
+	"_Complex", "NoComplexTypeNames", "_Imaginary"
+}; // Imaginary unsupported => parse, but make invisible and print error message
+const char * DeclarationNode::signednessNames[] = {
+	"signed", "unsigned", "NoSignednessNames"
+};
+const char * DeclarationNode::lengthNames[] = {
+	"short", "long", "long long", "NoLengthNames"
+};
+const char * DeclarationNode::builtinTypeNames[] = {
+	"__builtin_va_list", "__auto_type", "zero_t", "one_t", "NoBuiltinTypeNames"
+};
 
 UniqueName DeclarationNode::anonymous( "__anonymous" );
 
@@ -69,7 +79,7 @@ DeclarationNode::~DeclarationNode() {
 	delete variable.assertions;
 	delete variable.initializer;
 
-// 	delete type;
+//	delete type;
 	delete bitfieldWidth;
 
 	delete asmStmt;
@@ -503,8 +513,9 @@ void DeclarationNode::checkSpecifiers( DeclarationNode * src ) {
 			} // for
 			// src is the new item being added and has a single bit
 		} else if ( ! src->storageClasses.is_threadlocal_any() ) { // conflict ?
-			appendError( error, string( "conflicting " ) + Type::StorageClassesNames[storageClasses.ffs()] +
-						 " & " + Type::StorageClassesNames[src->storageClasses.ffs()] );
+			appendError( error, string( "conflicting " )
+				+ Type::StorageClassesNames[storageClasses.ffs()]
+				+ " & " + Type::StorageClassesNames[src->storageClasses.ffs()] );
 			src->storageClasses.reset();				// FIX to preserve invariant of one basic storage specifier
 		} // if
 	} // if
@@ -588,12 +599,12 @@ static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 		addTypeToType( src, dst->base );
 	} else {
 		switch ( dst->kind ) {
-		  case TypeData::Unknown:
+		case TypeData::Unknown:
 			src->qualifiers |= dst->qualifiers;
 			dst = src;
 			src = nullptr;
 			break;
-		  case TypeData::Basic:
+		case TypeData::Basic:
 			dst->qualifiers |= src->qualifiers;
 			if ( src->kind != TypeData::Unknown ) {
 				assert( src->kind == TypeData::Basic );
@@ -621,10 +632,10 @@ static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 					SemanticError( yylloc, src, string( "conflicting type specifier " ) + DeclarationNode::lengthNames[ src->length ] + " in type: " );
 			} // if
 			break;
-		  default:
+		default:
 			switch ( src->kind ) {
-			  case TypeData::Aggregate:
-			  case TypeData::Enum:
+			case TypeData::Aggregate:
+			case TypeData::Enum:
 				dst->base = new TypeData( TypeData::AggregateInst );
 				dst->base->aggInst.aggregate = src;
 				if ( src->kind == TypeData::Aggregate ) {
@@ -633,7 +644,7 @@ static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 				dst->base->qualifiers |= src->qualifiers;
 				src = nullptr;
 				break;
-			  default:
+			default:
 				if ( dst->forall ) {
 					dst->forall->appendList( src->forall );
 				} else {
@@ -705,24 +716,24 @@ DeclarationNode * DeclarationNode::addTypedef() {
 
 DeclarationNode * DeclarationNode::addAssertions( DeclarationNode * assertions ) {
 	if ( variable.tyClass != TypeDecl::NUMBER_OF_KINDS ) {
-	  	if ( variable.assertions ) {
-	  		variable.assertions->appendList( assertions );
-	  	} else {
-	  		variable.assertions = assertions;
-	  	} // if
-	  	return this;
+		if ( variable.assertions ) {
+			variable.assertions->appendList( assertions );
+		} else {
+			variable.assertions = assertions;
+		} // if
+		return this;
 	} // if
 
 	assert( type );
 	switch ( type->kind ) {
-	  case TypeData::Symbolic:
+	case TypeData::Symbolic:
 		if ( type->symbolic.assertions ) {
 			type->symbolic.assertions->appendList( assertions );
 		} else {
 			type->symbolic.assertions = assertions;
 		} // if
 		break;
-	  default:
+	default:
 		assert( false );
 	} // switch
 
@@ -821,8 +832,8 @@ DeclarationNode * DeclarationNode::addNewPointer( DeclarationNode * p ) {
 		assert( p->type->kind == TypeData::Pointer || p->type->kind == TypeData::Reference );
 		if ( type ) {
 			switch ( type->kind ) {
-			  case TypeData::Aggregate:
-			  case TypeData::Enum:
+			case TypeData::Aggregate:
+			case TypeData::Enum:
 				p->type->base = new TypeData( TypeData::AggregateInst );
 				p->type->base->aggInst.aggregate = type;
 				if ( type->kind == TypeData::Aggregate ) {
@@ -831,7 +842,7 @@ DeclarationNode * DeclarationNode::addNewPointer( DeclarationNode * p ) {
 				p->type->base->qualifiers |= type->qualifiers;
 				break;
 
-			  default:
+			default:
 				p->type->base = type;
 			} // switch
 			type = nullptr;
@@ -853,13 +864,13 @@ static TypeData * findLast( TypeData * a ) {
 }
 
 DeclarationNode * DeclarationNode::addNewArray( DeclarationNode * a ) {
-  if ( ! a ) return this;
+	if ( ! a ) return this;
 	assert( a->type->kind == TypeData::Array );
 	TypeData * lastArray = findLast( a->type );
 	if ( type ) {
 		switch ( type->kind ) {
-		  case TypeData::Aggregate:
-		  case TypeData::Enum:
+		case TypeData::Aggregate:
+		case TypeData::Enum:
 			lastArray->base = new TypeData( TypeData::AggregateInst );
 			lastArray->base->aggInst.aggregate = type;
 			if ( type->kind == TypeData::Aggregate ) {
@@ -867,7 +878,7 @@ DeclarationNode * DeclarationNode::addNewArray( DeclarationNode * a ) {
 			} // if
 			lastArray->base->qualifiers |= type->qualifiers;
 			break;
-		  default:
+		default:
 			lastArray->base = type;
 		} // switch
 		type = nullptr;
@@ -1203,7 +1214,7 @@ Declaration * DeclarationNode::build() const {
 			SemanticError( this, "invalid type qualifier for " );
 		} // if
 		bool isDelete = initializer && initializer->get_isDelete();
-		Declaration * decl = buildDecl( type, name ? *name : string( "" ), storageClasses, maybeBuild< Expression >( bitfieldWidth ), funcSpecs, linkage, asmName, isDelete ? nullptr : maybeBuild< Initializer >(initializer), attributes )->set_extension( extension );
+		Declaration * decl = buildDecl( type, name ? *name : string( "" ), storageClasses, maybeBuild( bitfieldWidth ), funcSpecs, linkage, asmName, isDelete ? nullptr : maybeBuild(initializer), attributes )->set_extension( extension );
 		if ( isDelete ) {
 			DeclarationWithType * dwt = strict_dynamic_cast<DeclarationWithType *>( decl );
 			dwt->isDeleted = true;
@@ -1212,7 +1223,7 @@ Declaration * DeclarationNode::build() const {
 	} // if
 
 	if ( assert.condition ) {
-		return new StaticAssertDecl( maybeBuild< Expression >( assert.condition ), strict_dynamic_cast< ConstantExpr * >( maybeClone( assert.message ) ) );
+		return new StaticAssertDecl( maybeBuild( assert.condition ), strict_dynamic_cast< ConstantExpr * >( maybeClone( assert.message ) ) );
 	}
 
 	// SUE's cannot have function specifiers, either
@@ -1226,25 +1237,25 @@ Declaration * DeclarationNode::build() const {
 		return new InlineMemberDecl( *name, storageClasses, linkage, nullptr );
 	} // if
 	assertf( name, "ObjectDecl must a have name\n" );
-	return (new ObjectDecl( *name, storageClasses, linkage, maybeBuild< Expression >( bitfieldWidth ), nullptr, maybeBuild< Initializer >( initializer ) ))->set_asmName( asmName )->set_extension( extension );
+	return (new ObjectDecl( *name, storageClasses, linkage, maybeBuild( bitfieldWidth ), nullptr, maybeBuild( initializer ) ))->set_asmName( asmName )->set_extension( extension );
 }
 
 Type * DeclarationNode::buildType() const {
 	assert( type );
 
 	switch ( type->kind ) {
-	  case TypeData::Enum:
-	  case TypeData::Aggregate: {
-		  ReferenceToType * ret = buildComAggInst( type, attributes, linkage );
-		  buildList( type->aggregate.actuals, ret->get_parameters() );
-		  return ret;
-	  }
-	  case TypeData::Symbolic: {
-		  TypeInstType * ret = new TypeInstType( buildQualifiers( type ), *type->symbolic.name, false, attributes );
-		  buildList( type->symbolic.actuals, ret->get_parameters() );
-		  return ret;
-	  }
-	  default:
+	case TypeData::Enum:
+	case TypeData::Aggregate: {
+		ReferenceToType * ret = buildComAggInst( type, attributes, linkage );
+		buildList( type->aggregate.actuals, ret->get_parameters() );
+		return ret;
+	}
+	case TypeData::Symbolic: {
+		TypeInstType * ret = new TypeInstType( buildQualifiers( type ), *type->symbolic.name, false, attributes );
+		buildList( type->symbolic.actuals, ret->get_parameters() );
+		return ret;
+	}
+	default:
 		Type * simpletypes = typebuild( type );
 		simpletypes->get_attributes() = attributes;		// copy because member is const
 		return simpletypes;

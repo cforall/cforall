@@ -6,11 +6,7 @@
 
 int Times = 1000000;								// default values
 
-struct derived_actor {
-    inline actor;
-};
-void ?{}( derived_actor & this ) { ((actor &)this){}; }
-
+struct derived_actor { inline actor; };
 struct derived_msg {
     inline message;
     int cnt;
@@ -22,7 +18,6 @@ void ?{}( derived_msg & this, int cnt ) {
 }
 void ?{}( derived_msg & this ) { ((derived_msg &)this){ 0 }; }
 
-
 Allocation receive( derived_actor & receiver, derived_msg & msg ) {
     if ( msg.cnt >= Times ) {
         sout | "Done";
@@ -32,7 +27,7 @@ Allocation receive( derived_actor & receiver, derived_msg & msg ) {
     (*d_msg){ msg.cnt + 1 };
     derived_actor * d_actor = alloc();
     (*d_actor){};
-    *d_actor | *d_msg;
+    *d_actor << *d_msg;
     return Delete;
 }
 
@@ -62,7 +57,7 @@ int main( int argc, char * argv[] ) {
     (*d_msg){};
     derived_actor * d_actor = alloc();
     (*d_actor){};
-    *d_actor | *d_msg;
+    *d_actor << *d_msg;
 
     printf("stopping\n");
 

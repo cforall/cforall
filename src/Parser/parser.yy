@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 25 13:23:16 2023
-// Update Count     : 5989
+// Last Modified On : Tue Mar 14 09:37:58 2023
+// Update Count     : 5990
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -205,6 +205,25 @@ DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * field
 #define MISSING_LOW "Missing low value for up-to range so index is uninitialized."
 #define MISSING_HIGH "Missing high value for down-to range so index is uninitialized."
 
+static ForCtrl * makeForCtrl(
+		DeclarationNode * init,
+		enum OperKinds compop,
+		ExpressionNode * comp,
+		ExpressionNode * inc ) {
+	// Wrap both comp/inc if they are non-null.
+	if ( comp ) comp = new ExpressionNode( build_binary_val(
+		compop,
+		new ExpressionNode( build_varref( new string( *init->name ) ) ),
+		comp ) );
+	if ( inc ) inc = new ExpressionNode( build_binary_val(
+		// choose += or -= for upto/downto
+		compop == OperKinds::LThan || compop == OperKinds::LEThan ? OperKinds::PlusAssn : OperKinds::MinusAssn,
+		new ExpressionNode( build_varref( new string( *init->name ) ) ),
+		inc ) );
+	// The StatementNode call frees init->name, it must happen later.
+	return new ForCtrl( new StatementNode( init ), comp, inc );
+}
+
 ForCtrl * forCtrl( DeclarationNode * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	if ( index->initializer ) {
 		SemanticError( yylloc, "Direct initialization disallowed. Use instead: type var; initialization ~ comparison ~ increment." );
@@ -212,25 +231,20 @@ ForCtrl * forCtrl( DeclarationNode * index, ExpressionNode * start, enum OperKin
 	if ( index->next ) {
 		SemanticError( yylloc, "Multiple loop indexes disallowed in for-loop declaration." );
 	} // if
-	return new ForCtrl( index->addInitializer( new InitializerNode( start ) ),
-		// NULL comp/inc => leave blank
-		comp ? new ExpressionNode( build_binary_val( compop, new ExpressionNode( build_varref( new string( *index->name ) ) ), comp ) ) : nullptr,
-		inc ? new ExpressionNode( build_binary_val( compop == OperKinds::LThan || compop == OperKinds::LEThan ? // choose += or -= for upto/downto
-							OperKinds::PlusAssn : OperKinds::MinusAssn, new ExpressionNode( build_varref( new string( *index->name ) ) ), inc ) ) : nullptr );
+	DeclarationNode * initDecl = index->addInitializer( new InitializerNode( start ) );
+	return makeForCtrl( initDecl, compop, comp, inc );
 } // forCtrl
 
 ForCtrl * forCtrl( ExpressionNode * type, string * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	ConstantExpr * constant = dynamic_cast<ConstantExpr *>(type->expr.get());
 	if ( constant && (constant->get_constant()->get_value() == "0" || constant->get_constant()->get_value() == "1") ) {
-		type = new ExpressionNode( new CastExpr( maybeMoveBuild<Expression>(type), new BasicType( Type::Qualifiers(), BasicType::SignedInt ) ) );
+		type = new ExpressionNode( new CastExpr( maybeMoveBuild( type ), new BasicType( Type::Qualifiers(), BasicType::SignedInt ) ) );
 	} // if
-//	type = new ExpressionNode( build_func( new ExpressionNode( build_varref( new string( "__for_control_index_constraints__" ) ) ), type ) );
-	return new ForCtrl(
-		distAttr( DeclarationNode::newTypeof( type, true ), DeclarationNode::newName( index )->addInitializer( new InitializerNode( start ) ) ),
-		// NULL comp/inc => leave blank
-		comp ? new ExpressionNode( build_binary_val( compop, new ExpressionNode( build_varref( new string( *index ) ) ), comp ) ) : nullptr,
-		inc ? new ExpressionNode( build_binary_val( compop == OperKinds::LThan || compop == OperKinds::LEThan ? // choose += or -= for upto/downto
-							OperKinds::PlusAssn : OperKinds::MinusAssn, new ExpressionNode( build_varref( new string( *index ) ) ), inc ) ) : nullptr );
+	DeclarationNode * initDecl = distAttr(
+		DeclarationNode::newTypeof( type, true ),
+		DeclarationNode::newName( index )->addInitializer( new InitializerNode( start ) )
+	);
+	return makeForCtrl( initDecl, compop, comp, inc );
 } // forCtrl
 
 ForCtrl * forCtrl( ExpressionNode * type, ExpressionNode * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
@@ -648,7 +662,7 @@ primary_expression:
 	| '(' comma_expression ')'
 		{ $$ = $2; }
 	| '(' compound_statement ')'						// GCC, lambda expression
-		{ $$ = new ExpressionNode( new StmtExpr( dynamic_cast<CompoundStmt *>(maybeMoveBuild<Statement>($2) ) ) ); }
+		{ $$ = new ExpressionNode( new StmtExpr( dynamic_cast<CompoundStmt *>(maybeMoveBuild( $2 ) ) ) ); }
 	| type_name '.' identifier							// CFA, nested type
 		{ $$ = new ExpressionNode( build_qualified_expr( $1, build_varref( $3 ) ) ); }
 	| type_name '.' '[' field_name_list ']'				// CFA, nested type / tuple field selector
@@ -656,7 +670,7 @@ primary_expression:
 	| GENERIC '(' assignment_expression ',' generic_assoc_list ')' // C11
 		{
 			// add the missing control expression to the GenericExpr and return it
-			$5->control = maybeMoveBuild<Expression>( $3 );
+			$5->control = maybeMoveBuild( $3 );
 			$$ = new ExpressionNode( $5 );
 		}
 	// | RESUME '(' comma_expression ')'
@@ -692,10 +706,10 @@ generic_association:									// C11
 	type_no_function ':' assignment_expression
 		{
 			// create a GenericExpr wrapper with one association pair
-			$$ = new GenericExpr( nullptr, { { maybeMoveBuildType($1), maybeMoveBuild<Expression>( $3 ) } } );
+			$$ = new GenericExpr( nullptr, { { maybeMoveBuildType($1), maybeMoveBuild( $3 ) } } );
 		}
 	| DEFAULT ':' assignment_expression
-		{ $$ = new GenericExpr( nullptr, { { maybeMoveBuild<Expression>( $3 ) } } ); }
+		{ $$ = new GenericExpr( nullptr, { { maybeMoveBuild( $3 ) } } ); }
 	;
 
 postfix_expression:
@@ -750,9 +764,9 @@ postfix_expression:
 	| postfix_expression ARROW '[' field_name_list ']'	// CFA, tuple field selector
 		{ $$ = new ExpressionNode( build_pfieldSel( $1, build_tuple( $4 ) ) ); }
 	| postfix_expression ICR
-	  	{ $$ = new ExpressionNode( build_unary_ptr( OperKinds::IncrPost, $1 ) ); }
+	  	{ $$ = new ExpressionNode( build_unary_val( OperKinds::IncrPost, $1 ) ); }
 	| postfix_expression DECR
-	  	{ $$ = new ExpressionNode( build_unary_ptr( OperKinds::DecrPost, $1 ) ); }
+	  	{ $$ = new ExpressionNode( build_unary_val( OperKinds::DecrPost, $1 ) ); }
 	| '(' type_no_function ')' '{' initializer_list_opt comma_opt '}' // C99, compound-literal
 		{ $$ = new ExpressionNode( build_compoundLiteral( $2, new InitializerNode( $5, true ) ) ); }
 	| '(' type_no_function ')' '@' '{' initializer_list_opt comma_opt '}' // CFA, explicit C compound-literal
@@ -792,15 +806,15 @@ field_name_list:										// CFA, tuple field selector
 field:													// CFA, tuple field selector
 	field_name
 	| FLOATING_DECIMALconstant field
-		{ $$ = new ExpressionNode( build_fieldSel( new ExpressionNode( build_field_name_FLOATING_DECIMALconstant( *$1 ) ), maybeMoveBuild<Expression>( $2 ) ) ); }
+		{ $$ = new ExpressionNode( build_fieldSel( new ExpressionNode( build_field_name_FLOATING_DECIMALconstant( *$1 ) ), maybeMoveBuild( $2 ) ) ); }
 	| FLOATING_DECIMALconstant '[' field_name_list ']'
 		{ $$ = new ExpressionNode( build_fieldSel( new ExpressionNode( build_field_name_FLOATING_DECIMALconstant( *$1 ) ), build_tuple( $3 ) ) ); }
 	| field_name '.' field
-		{ $$ = new ExpressionNode( build_fieldSel( $1, maybeMoveBuild<Expression>( $3 ) ) ); }
+		{ $$ = new ExpressionNode( build_fieldSel( $1, maybeMoveBuild( $3 ) ) ); }
 	| field_name '.' '[' field_name_list ']'
 		{ $$ = new ExpressionNode( build_fieldSel( $1, build_tuple( $4 ) ) ); }
 	| field_name ARROW field
-		{ $$ = new ExpressionNode( build_pfieldSel( $1, maybeMoveBuild<Expression>( $3 ) ) ); }
+		{ $$ = new ExpressionNode( build_pfieldSel( $1, maybeMoveBuild( $3 ) ) ); }
 	| field_name ARROW '[' field_name_list ']'
 		{ $$ = new ExpressionNode( build_pfieldSel( $1, build_tuple( $4 ) ) ); }
 	;
@@ -842,13 +856,13 @@ unary_expression:
 		{
 			switch ( $1 ) {
 			  case OperKinds::AddressOf:
-				$$ = new ExpressionNode( new AddressExpr( maybeMoveBuild<Expression>( $2 ) ) );
+				$$ = new ExpressionNode( new AddressExpr( maybeMoveBuild( $2 ) ) );
 				break;
 			  case OperKinds::PointTo:
 				$$ = new ExpressionNode( build_unary_val( $1, $2 ) );
 				break;
 			  case OperKinds::And:
-				$$ = new ExpressionNode( new AddressExpr( new AddressExpr( maybeMoveBuild<Expression>( $2 ) ) ) );
+				$$ = new ExpressionNode( new AddressExpr( new AddressExpr( maybeMoveBuild( $2 ) ) ) );
 				break;
 			  default:
 				assert( false );
@@ -857,15 +871,15 @@ unary_expression:
 	| unary_operator cast_expression
 	  	{ $$ = new ExpressionNode( build_unary_val( $1, $2 ) ); }
 	| ICR unary_expression
-	  	{ $$ = new ExpressionNode( build_unary_ptr( OperKinds::Incr, $2 ) ); }
+	  	{ $$ = new ExpressionNode( build_unary_val( OperKinds::Incr, $2 ) ); }
 	| DECR unary_expression
-	  	{ $$ = new ExpressionNode( build_unary_ptr( OperKinds::Decr, $2 ) ); }
+	  	{ $$ = new ExpressionNode( build_unary_val( OperKinds::Decr, $2 ) ); }
 	| SIZEOF unary_expression
-		{ $$ = new ExpressionNode( new SizeofExpr( maybeMoveBuild<Expression>( $2 ) ) ); }
+		{ $$ = new ExpressionNode( new SizeofExpr( maybeMoveBuild( $2 ) ) ); }
 	| SIZEOF '(' type_no_function ')'
 		{ $$ = new ExpressionNode( new SizeofExpr( maybeMoveBuildType( $3 ) ) ); }
 	| ALIGNOF unary_expression							// GCC, variable alignment
-		{ $$ = new ExpressionNode( new AlignofExpr( maybeMoveBuild<Expression>( $2 ) ) ); }
+		{ $$ = new ExpressionNode( new AlignofExpr( maybeMoveBuild( $2 ) ) ); }
 	| ALIGNOF '(' type_no_function ')'					// GCC, type alignment
 		{ $$ = new ExpressionNode( new AlignofExpr( maybeMoveBuildType( $3 ) ) ); }
 	| OFFSETOF '(' type_no_function ',' identifier ')'
@@ -900,9 +914,9 @@ cast_expression:
 	| '(' aggregate_control '*' ')' cast_expression		// CFA
 		{ $$ = new ExpressionNode( build_keyword_cast( $2, $5 ) ); }
 	| '(' VIRTUAL ')' cast_expression					// CFA
-		{ $$ = new ExpressionNode( new VirtualCastExpr( maybeMoveBuild<Expression>( $4 ), maybeMoveBuildType( nullptr ) ) ); }
+		{ $$ = new ExpressionNode( new VirtualCastExpr( maybeMoveBuild( $4 ), maybeMoveBuildType( nullptr ) ) ); }
 	| '(' VIRTUAL type_no_function ')' cast_expression	// CFA
-		{ $$ = new ExpressionNode( new VirtualCastExpr( maybeMoveBuild<Expression>( $5 ), maybeMoveBuildType( $3 ) ) ); }
+		{ $$ = new ExpressionNode( new VirtualCastExpr( maybeMoveBuild( $5 ), maybeMoveBuildType( $3 ) ) ); }
 	| '(' RETURN type_no_function ')' cast_expression	// CFA
 		{ SemanticError( yylloc, "Return cast is currently unimplemented." ); $$ = nullptr; }
 	| '(' COERCE type_no_function ')' cast_expression	// CFA
@@ -1091,7 +1105,7 @@ tuple_expression_list:
 comma_expression:
 	assignment_expression
 	| comma_expression ',' assignment_expression
-		{ $$ = new ExpressionNode( new CommaExpr( maybeMoveBuild<Expression>( $1 ), maybeMoveBuild<Expression>( $3 ) ) ); }
+		{ $$ = new ExpressionNode( new CommaExpr( maybeMoveBuild( $1 ), maybeMoveBuild( $3 ) ) ); }
 	;
 
 comma_expression_opt:
@@ -1229,7 +1243,7 @@ conditional_declaration:
 case_value:												// CFA
 	constant_expression							{ $$ = $1; }
 	| constant_expression ELLIPSIS constant_expression	// GCC, subrange
-		{ $$ = new ExpressionNode( new RangeExpr( maybeMoveBuild<Expression>( $1 ), maybeMoveBuild<Expression>( $3 ) ) ); }
+		{ $$ = new ExpressionNode( new RangeExpr( maybeMoveBuild( $1 ), maybeMoveBuild( $3 ) ) ); }
 	| subrange											// CFA, subrange
 	;
 
@@ -1297,10 +1311,10 @@ iteration_statement:
 	| DO statement WHILE '(' comma_expression ')' ELSE statement // CFA
 		{ $$ = new StatementNode( build_do_while( $5, maybe_build_compound( $2 ), $8 ) ); }
 	| FOR '(' ')' statement								%prec THEN // CFA => for ( ;; )
-		{ $$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) ); }
+		{ $$ = new StatementNode( build_for( new ForCtrl( nullptr, nullptr, nullptr ), maybe_build_compound( $4 ) ) ); }
 	| FOR '(' ')' statement ELSE statement				// CFA
 		{
-			$$ = new StatementNode( build_for( new ForCtrl( (ExpressionNode * )nullptr, (ExpressionNode * )nullptr, (ExpressionNode * )nullptr ), maybe_build_compound( $4 ) ) );
+			$$ = new StatementNode( build_for( new ForCtrl( nullptr, nullptr, nullptr ), maybe_build_compound( $4 ) ) );
 			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
 	| FOR '(' for_control_expression_list ')' statement	%prec THEN
@@ -1334,16 +1348,19 @@ for_control_expression_list:
 
 for_control_expression:
 	';' comma_expression_opt ';' comma_expression_opt
-		{ $$ = new ForCtrl( (ExpressionNode * )nullptr, $2, $4 ); }
+		{ $$ = new ForCtrl( nullptr, $2, $4 ); }
 	| comma_expression ';' comma_expression_opt ';' comma_expression_opt
-		{ $$ = new ForCtrl( $1, $3, $5 ); }
+		{
+			StatementNode * init = $1 ? new StatementNode( new ExprStmt( maybeMoveBuild( $1 ) ) ) : nullptr;
+			$$ = new ForCtrl( init, $3, $5 );
+		}
 	| declaration comma_expression_opt ';' comma_expression_opt // C99, declaration has ';'
-		{ $$ = new ForCtrl( $1, $2, $4 ); }
+		{ $$ = new ForCtrl( new StatementNode( $1 ), $2, $4 ); }
 
 	| '@' ';' comma_expression							// CFA, empty loop-index
-		{ $$ = new ForCtrl( (ExpressionNode *)nullptr, $3, nullptr ); }
+		{ $$ = new ForCtrl( nullptr, $3, nullptr ); }
 	| '@' ';' comma_expression ';' comma_expression		// CFA, empty loop-index
-		{ $$ = new ForCtrl( (ExpressionNode *)nullptr, $3, $5 ); }
+		{ $$ = new ForCtrl( nullptr, $3, $5 ); }
 
 	| comma_expression									// CFA, anonymous loop-index
 		{ $$ = forCtrl( $1, new string( DeclarationNode::anonymous.newName() ), NEW_ZERO, OperKinds::LThan, $1->clone(), NEW_ONE ); }
@@ -1731,9 +1748,9 @@ asm_operands_list:										// GCC
 
 asm_operand:											// GCC
 	string_literal '(' constant_expression ')'
-		{ $$ = new ExpressionNode( new AsmExpr( nullptr, $1, maybeMoveBuild<Expression>( $3 ) ) ); }
+		{ $$ = new ExpressionNode( new AsmExpr( nullptr, $1, maybeMoveBuild( $3 ) ) ); }
 	| '[' IDENTIFIER ']' string_literal '(' constant_expression ')'
-		{ $$ = new ExpressionNode( new AsmExpr( $2, $4, maybeMoveBuild<Expression>( $6 ) ) ); }
+		{ $$ = new ExpressionNode( new AsmExpr( $2, $4, maybeMoveBuild( $6 ) ) ); }
 	;
 
 asm_clobbers_list_opt:									// GCC
@@ -2037,12 +2054,6 @@ declaration_specifier_nobody:							// type specifier + storage class - {...}
 type_specifier:											// type specifier
 	basic_type_specifier
 	| sue_type_specifier
-		{
-			// printf( "sue_type_specifier2 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
-			//   printf( "\tattr %s\n", attr->name.c_str() );
-			// } // for
-		}
 	| type_type_specifier
 	;
 
@@ -2382,16 +2393,7 @@ aggregate_type:											// struct, union
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
 		{
-			// printf( "aggregate_type1 %s\n", $3.str->c_str() );
-			// if ( $2 )
-			// 	for ( Attribute * attr: reverseIterate( $2->attributes ) ) {
-			// 		printf( "copySpecifiers12 %s\n", attr->name.c_str() );
-			// 	} // for
 			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
-			// printf( "aggregate_type2 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
-			// 	printf( "aggregate_type3 %s\n", attr->name.c_str() );
-			// } // for
 		}
 	| aggregate_key attribute_list_opt TYPEDEFname		// unqualified type name
 		{
@@ -2400,7 +2402,6 @@ aggregate_type:											// struct, union
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
 		{
-			// printf( "AGG3\n" );
 			DeclarationNode::newFromTypedef( $3 );
 			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
 		}
@@ -2411,7 +2412,6 @@ aggregate_type:											// struct, union
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
 		{
-			// printf( "AGG4\n" );
 			DeclarationNode::newFromTypeGen( $3, nullptr );
 			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
 		}
@@ -2438,10 +2438,14 @@ aggregate_type_nobody:									// struct, union - {...}
 			// Create new generic declaration with same name as previous forward declaration, where the IDENTIFIER is
 			// switched to a TYPEGENname. Link any generic arguments from typegen_name to new generic declaration and
 			// delete newFromTypeGen.
-			$$ = DeclarationNode::newAggregate( $1, $3->type->symbolic.name, $3->type->symbolic.actuals, nullptr, false )->addQualifiers( $2 );
-			$3->type->symbolic.name = nullptr;
-			$3->type->symbolic.actuals = nullptr;
-			delete $3;
+			if ( $3->type->kind == TypeData::SymbolicInst && ! $3->type->symbolic.isTypedef ) {
+				$$ = $3->addQualifiers( $2 );
+			} else {
+				$$ = DeclarationNode::newAggregate( $1, $3->type->symbolic.name, $3->type->symbolic.actuals, nullptr, false )->addQualifiers( $2 );
+				$3->type->symbolic.name = nullptr;			// copied to $$
+				$3->type->symbolic.actuals = nullptr;
+				delete $3;
+			}
 		}
 	;
 
@@ -2778,7 +2782,7 @@ identifier_or_type_name:
 
 type_no_function:										// sizeof, alignof, cast (constructor)
 	cfa_abstract_declarator_tuple						// CFA
-	| type_specifier
+	| type_specifier									// cannot be type_specifier_nobody, e.g., (struct S {}){} is a thing
 	| type_specifier abstract_declarator
 		{ $$ = $2->addType( $1 ); }
 	;
@@ -2842,7 +2846,7 @@ designator:
 	| '[' push subrange pop ']'							// CFA, multiple array elements
 		{ $$ = $3; }
 	| '[' push constant_expression ELLIPSIS constant_expression pop ']' // GCC, multiple array elements
-		{ $$ = new ExpressionNode( new RangeExpr( maybeMoveBuild<Expression>( $3 ), maybeMoveBuild<Expression>( $5 ) ) ); }
+		{ $$ = new ExpressionNode( new RangeExpr( maybeMoveBuild( $3 ), maybeMoveBuild( $5 ) ) ); }
 	| '.' '[' push field_name_list pop ']'				// CFA, tuple field selector
 		{ $$ = $4; }
 	;
@@ -3230,7 +3234,7 @@ declarator:
 
 subrange:
 	constant_expression '~' constant_expression			// CFA, integer subrange
-		{ $$ = new ExpressionNode( new RangeExpr( maybeMoveBuild<Expression>( $1 ), maybeMoveBuild<Expression>( $3 ) ) ); }
+		{ $$ = new ExpressionNode( new RangeExpr( maybeMoveBuild( $1 ), maybeMoveBuild( $3 ) ) ); }
 	;
 
 asm_name_opt:											// GCC

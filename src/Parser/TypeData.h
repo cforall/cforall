@@ -129,8 +129,10 @@ TypeInstType * buildSymbolicInst( const TypeData * );
 TupleType * buildTuple( const TypeData * );
 TypeofType * buildTypeof( const TypeData * );
 VTableType * buildVtable( const TypeData * );
-Declaration * buildDecl( const TypeData *, const std::string &, Type::StorageClasses, Expression *, Type::FuncSpecifiers funcSpec, LinkageSpec::Spec, Expression * asmName,
-						 Initializer * init = nullptr, std::list< class Attribute * > attributes = std::list< class Attribute * >() );
+Declaration * buildDecl(
+	const TypeData *, const std::string &, Type::StorageClasses, Expression *,
+	Type::FuncSpecifiers funcSpec, LinkageSpec::Spec, Expression * asmName,
+	Initializer * init = nullptr, std::list< class Attribute * > attributes = std::list< class Attribute * >() );
 FunctionType * buildFunction( const TypeData * );
 Declaration * addEnumBase( Declaration *, const TypeData * );
 void buildKRFunction( const TypeData::Function_t & function );

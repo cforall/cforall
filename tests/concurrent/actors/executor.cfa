@@ -14,7 +14,6 @@ struct d_actor {
     int id, rounds, recs, sends;
 };
 void ?{}( d_actor & this ) with(this) {
-    ((actor &)this){};
     id = ids++;
     gstart = (&this + (id / Set * Set - id)); // remember group-start array-element
     rounds = Set * Rounds;	// send at least one message to each group member
@@ -23,13 +22,12 @@ void ?{}( d_actor & this ) with(this) {
 }
 
 struct d_msg { inline message; } shared_msg;
-void ?{}( d_msg & this ) { ((message &) this){ Nodelete }; }
 
 Allocation receive( d_actor & this, d_msg & msg ) with( this ) {
     if ( recs == rounds ) return Finished;
     if ( recs % Batch == 0 ) {
         for ( i; Batch ) {
-            gstart[sends % Set] | shared_msg;
+            gstart[sends % Set] << shared_msg;
             sends += 1;
         }
     }
@@ -84,7 +82,6 @@ int main( int argc, char * argv[] ) {
 		exit( EXIT_FAILURE );
 	} // switch
 
-    
     executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 512, true };
 
     printf("starting\n");
@@ -96,7 +93,7 @@ int main( int argc, char * argv[] ) {
     d_actor actors[ Actors ];
 
 	for ( i; Actors ) {
-		actors[i] | shared_msg;
+		actors[i] << shared_msg;
 	} // for
 
     printf("stopping\n");

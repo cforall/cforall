@@ -68,25 +68,6 @@ __attribute__((weak)) unsigned __max_processors() libcfa_public {
 	return max_cores_l;
 }
 
-#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
-	// No forward declaration needed
-	#define __kernel_rseq_register rseq_register_current_thread
-	#define __kernel_rseq_unregister rseq_unregister_current_thread
-#elif defined(CFA_HAVE_LINUX_RSEQ_H)
-	static void __kernel_raw_rseq_register  (void);
-	static void __kernel_raw_rseq_unregister(void);
-
-	#define __kernel_rseq_register __kernel_raw_rseq_register
-	#define __kernel_rseq_unregister __kernel_raw_rseq_unregister
-#else
-	// No forward declaration needed
-	// No initialization needed
-	static inline void noop(void) {}
-
-	#define __kernel_rseq_register noop
-	#define __kernel_rseq_unregister noop
-#endif
-
 //=======================================================================
 // Cluster wide reader-writer lock
 //=======================================================================
@@ -109,8 +90,6 @@ void ^?{}(__scheduler_RWLock_t & this) {
 //=======================================================================
 // Lock-Free registering/unregistering of threads
 unsigned register_proc_id( void ) with(__scheduler_lock.lock) {
-	__kernel_rseq_register();
-
 	bool * handle = (bool *)&kernelTLS().sched_lock;
 
 	// Step - 1 : check if there is already space in the data
@@ -160,8 +139,6 @@ void unregister_proc_id( unsigned id ) with(__scheduler_lock.lock) {
 	bool * volatile * cell = (bool * volatile *)&data[id]; // Cforall is bugged and the double volatiles causes problems
 
 	__atomic_store_n(cell, 0p, __ATOMIC_RELEASE);
-
-	__kernel_rseq_unregister();
 }
 
 //-----------------------------------------------------------------------
@@ -503,59 +480,3 @@ void ^?{}( __intrusive_lane_t & this ) {
 	/* paranoid */ verify( this.l.anchor.ts   == MAX );
 	/* paranoid */ verify( mock_head(this)    == this.l.prev );
 }
-
-#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
-	// No definition needed
-#elif defined(CFA_HAVE_LINUX_RSEQ_H)
-
-	#if defined( __x86_64 ) || defined( __i386 )
-		#define RSEQ_SIG	0x53053053
-	#elif defined( __ARM_ARCH )
-		#ifdef __ARMEB__
-		#define RSEQ_SIG    0xf3def5e7      /* udf    #24035    ; 0x5de3 (ARMv6+) */
-		#else
-		#define RSEQ_SIG    0xe7f5def3      /* udf    #24035    ; 0x5de3 */
-		#endif
-	#endif
-
-	extern void __disable_interrupts_hard();
-	extern void __enable_interrupts_hard();
-
-	static void __kernel_raw_rseq_register  (void) {
-		/* paranoid */ verify( __cfaabi_rseq.cpu_id == RSEQ_CPU_ID_UNINITIALIZED );
-
-		// int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), 0, (sigset_t *)0p, _NSIG / 8);
-		int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), 0, RSEQ_SIG);
-		if(ret != 0) {
-			int e = errno;
-			switch(e) {
-			case EINVAL: abort("KERNEL ERROR: rseq register invalid argument");
-			case ENOSYS: abort("KERNEL ERROR: rseq register no supported");
-			case EFAULT: abort("KERNEL ERROR: rseq register with invalid argument");
-			case EBUSY : abort("KERNEL ERROR: rseq register already registered");
-			case EPERM : abort("KERNEL ERROR: rseq register sig  argument  on unregistration does not match the signature received on registration");
-			default: abort("KERNEL ERROR: rseq register unexpected return %d", e);
-			}
-		}
-	}
-
-	static void __kernel_raw_rseq_unregister(void) {
-		/* paranoid */ verify( __cfaabi_rseq.cpu_id >= 0 );
-
-		// int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), RSEQ_FLAG_UNREGISTER, (sigset_t *)0p, _NSIG / 8);
-		int ret = syscall(__NR_rseq, &__cfaabi_rseq, sizeof(struct rseq), RSEQ_FLAG_UNREGISTER, RSEQ_SIG);
-		if(ret != 0) {
-			int e = errno;
-			switch(e) {
-			case EINVAL: abort("KERNEL ERROR: rseq unregister invalid argument");
-			case ENOSYS: abort("KERNEL ERROR: rseq unregister no supported");
-			case EFAULT: abort("KERNEL ERROR: rseq unregister with invalid argument");
-			case EBUSY : abort("KERNEL ERROR: rseq unregister already registered");
-			case EPERM : abort("KERNEL ERROR: rseq unregister sig  argument  on unregistration does not match the signature received on registration");
-			default: abort("KERNEL ERROR: rseq unregisteunexpected return %d", e);
-			}
-		}
-	}
-#else
-	// No definition needed
-#endif

@@ -1,0 +1,5 @@
+Start
+Finished
+Delete
+Destroy
+Done

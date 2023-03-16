@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Thu Apr 23 17:31:00 2020
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Mar 13 23:54:57 2023
+// Update Count     : 1
 //
 
 #pragma once
@@ -49,15 +49,7 @@ extern "C" {
 #endif
 typedef __off64_t off64_t;
 
-struct cluster;
-struct io_context$;
-
-struct iovec;
-struct msghdr;
-struct statx;
 struct epoll_event;
-
-struct io_uring_sqe;
 
 //-----------------------------------------------------------------------
 // IO user data
@@ -88,67 +80,67 @@ extern void cfa_io_submit( struct io_context$ * in_ctx, __u32 in_idxs[], __u32 h
 //----------
 // synchronous calls
 #if defined(CFA_HAVE_PREADV2)
-	extern ssize_t cfa_preadv2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+	extern ssize_t cfa_preadv2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
 #endif
 #if defined(CFA_HAVE_PWRITEV2)
-	extern ssize_t cfa_pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+	extern ssize_t cfa_pwritev2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
 #endif
 extern int cfa_fsync(int fd, __u64 submit_flags);
-extern int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags);
+extern int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event * event, __u64 submit_flags);
 extern int cfa_sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags, __u64 submit_flags);
-extern  ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags);
-extern ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
-extern ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
-extern ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
+extern  ssize_t cfa_sendmsg(int sockfd, const struct msghdr * msg, int flags, __u64 submit_flags);
+extern ssize_t cfa_recvmsg(int sockfd, struct msghdr * msg, int flags, __u64 submit_flags);
+extern ssize_t cfa_send(int sockfd, const void * buf, size_t len, int flags, __u64 submit_flags);
+extern ssize_t cfa_recv(int sockfd, void * buf, size_t len, int flags, __u64 submit_flags);
 extern int cfa_accept4(int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags);
 extern int cfa_connect(int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags);
 extern int cfa_fallocate(int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
 extern int cfa_posix_fadvise(int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
-extern int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags);
-extern int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags);
+extern int cfa_madvise(void * addr, size_t length, int advice, __u64 submit_flags);
+extern int cfa_openat(int dirfd, const char * pathname, int flags, mode_t mode, __u64 submit_flags);
 #if defined(CFA_HAVE_OPENAT2)
-	extern int cfa_openat2(int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags);
+	extern int cfa_openat2(int dirfd, const char * pathname, struct open_how * how, size_t size, __u64 submit_flags);
 #endif
 extern int cfa_close(int fd, __u64 submit_flags);
 #if defined(CFA_HAVE_STATX)
-	extern int cfa_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags);
+	extern int cfa_statx(int dirfd, const char * pathname, int flags, unsigned int mask, struct statx * statxbuf, __u64 submit_flags);
 #endif
 extern ssize_t cfa_read(int fd, void * buf, size_t count, __u64 submit_flags);
 extern ssize_t cfa_write(int fd, void * buf, size_t count, __u64 submit_flags);
-extern ssize_t cfa_splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags);
+extern ssize_t cfa_splice(int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags, __u64 submit_flags);
 extern ssize_t cfa_tee(int fd_in, int fd_out, size_t len, unsigned int flags, __u64 submit_flags);
 
 //----------
 // asynchronous calls
 #if defined(CFA_HAVE_PREADV2)
-	extern void async_preadv2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+	extern void async_preadv2(io_future_t & future, int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
 #endif
 #if defined(CFA_HAVE_PWRITEV2)
-	extern void async_pwritev2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+	extern void async_pwritev2(io_future_t & future, int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
 #endif
 extern void async_fsync(io_future_t & future, int fd, __u64 submit_flags);
-extern void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags);
+extern void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, struct epoll_event * event, __u64 submit_flags);
 extern void async_sync_file_range(io_future_t & future, int fd, off64_t offset, off64_t nbytes, unsigned int flags, __u64 submit_flags);
-extern void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags);
-extern void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
-extern void async_send(io_future_t & future, int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
-extern void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
+extern void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr * msg, int flags, __u64 submit_flags);
+extern void async_recvmsg(io_future_t & future, int sockfd, struct msghdr * msg, int flags, __u64 submit_flags);
+extern void async_send(io_future_t & future, int sockfd, const void * buf, size_t len, int flags, __u64 submit_flags);
+extern void async_recv(io_future_t & future, int sockfd, void * buf, size_t len, int flags, __u64 submit_flags);
 extern void async_accept4(io_future_t & future, int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags);
 extern void async_connect(io_future_t & future, int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags);
 extern void async_fallocate(io_future_t & future, int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
 extern void async_posix_fadvise(io_future_t & future, int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
-extern void async_madvise(io_future_t & future, void *addr, size_t length, int advice, __u64 submit_flags);
-extern void async_openat(io_future_t & future, int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags);
+extern void async_madvise(io_future_t & future, void * addr, size_t length, int advice, __u64 submit_flags);
+extern void async_openat(io_future_t & future, int dirfd, const char * pathname, int flags, mode_t mode, __u64 submit_flags);
 #if defined(CFA_HAVE_OPENAT2)
-	extern void async_openat2(io_future_t & future, int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags);
+	extern void async_openat2(io_future_t & future, int dirfd, const char * pathname, struct open_how * how, size_t size, __u64 submit_flags);
 #endif
 extern void async_close(io_future_t & future, int fd, __u64 submit_flags);
 #if defined(CFA_HAVE_STATX)
-	extern void async_statx(io_future_t & future, int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags);
+	extern void async_statx(io_future_t & future, int dirfd, const char * pathname, int flags, unsigned int mask, struct statx * statxbuf, __u64 submit_flags);
 #endif
 void async_read(io_future_t & future, int fd, void * buf, size_t count, __u64 submit_flags);
 extern void async_write(io_future_t & future, int fd, void * buf, size_t count, __u64 submit_flags);
-extern void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags);
+extern void async_splice(io_future_t & future, int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags, __u64 submit_flags);
 extern void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned int flags, __u64 submit_flags);
 
 

@@ -8,9 +8,9 @@
 //
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 11 14:49:00 2023
-// Update Count     : 1079
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue Mar 14 12:00:00 2023
+// Update Count     : 1082
 //
 
 #include <cassert>                 // for assert
@@ -70,7 +70,7 @@ void lnthSuffix( string & str, int & type, int & ltype ) {
 	if ( posn == string::npos ) return;					// no suffix
 	size_t end = str.length() - 1;
 	if ( posn == end ) { type = 3; return; }			// no length after 'l' => long
-	
+
 	string::size_type next = posn + 1;					// advance to length
 	if ( str[next] == '3' ) {							// 32
 		type = ltype = 2;
@@ -121,7 +121,7 @@ static void scanbin( string & str, unsigned long long int & v ) {
 	for ( unsigned int i = 2;; ) {						// ignore prefix
 		if ( str[i] == '1' ) v |= 1;
 		i += 1;
-	  if ( i == last - 1 || (str[i] != '0' && str[i] != '1') ) break;
+		if ( i == last - 1 || (str[i] != '0' && str[i] != '1') ) break;
 		v <<= 1;
 	} // for
 } // scanbin
@@ -156,8 +156,6 @@ Expression * build_constantInteger( string & str ) {
 		goto CLEANUP;
 	} // if
 
-	string::size_type posn;
-
 	// 'u' can appear before or after length suffix
 	if ( str.find_last_of( "uU" ) != string::npos ) Unsigned = true;
 
@@ -165,29 +163,33 @@ Expression * build_constantInteger( string & str ) {
 		lnthSuffix( str, type, ltype );					// could have length suffix
 	} else {
 		// At least one digit in integer constant, so safe to backup while looking for suffix.
-
-		posn = str.find_last_of( "pP" );				// pointer value
-		if ( posn != string::npos ) { ltype = 5; str.erase( posn, 1 ); goto FINI; }
-
-		posn = str.find_last_of( "zZ" );				// size_t
-		if ( posn != string::npos ) { Unsigned = true; type = 2; ltype = 4; str.erase( posn, 1 ); goto FINI; }
-
-		posn = str.rfind( "hh" );						// signed char
-		if ( posn != string::npos ) { type = 1; str.erase( posn, 2 ); goto FINI; }
-
-		posn = str.rfind( "HH" );						// signed char
-		if ( posn != string::npos ) { type = 1; str.erase( posn, 2 ); goto FINI; }
-
-		posn = str.find_last_of( "hH" );				// short
-		if ( posn != string::npos ) { type = 0; str.erase( posn, 1 ); goto FINI; }
-
-		posn = str.find_last_of( "nN" );				// int (natural number)
-		if ( posn != string::npos ) { type = 2; str.erase( posn, 1 ); goto FINI; }
-
-		if ( str.rfind( "ll" ) != string::npos || str.rfind( "LL" ) != string::npos ) { type = 4; goto FINI; }
-
-		lnthSuffix( str, type, ltype );					// must be after check for "ll"
-	  FINI: ;
+		// This declaration and the comma expressions in the conditions mimic
+		// the declare and check pattern allowed in later compiler versions.
+		// (Only some early compilers/C++ standards do not support it.)
+		string::size_type posn;
+		// pointer value
+		if ( posn = str.find_last_of( "pP" ), posn != string::npos ) {
+			ltype = 5; str.erase( posn, 1 );
+		// size_t
+		} else if ( posn = str.find_last_of( "zZ" ), posn != string::npos ) {
+			Unsigned = true; type = 2; ltype = 4; str.erase( posn, 1 );
+		// signed char
+		} else if ( posn = str.rfind( "hh" ), posn != string::npos ) {
+			type = 1; str.erase( posn, 2 );
+		// signed char
+		} else if ( posn = str.rfind( "HH" ), posn != string::npos ) {
+			type = 1; str.erase( posn, 2 );
+		// short
+		} else if ( posn = str.find_last_of( "hH" ), posn != string::npos ) {
+			type = 0; str.erase( posn, 1 );
+		// int (natural number)
+		} else if ( posn = str.find_last_of( "nN" ), posn != string::npos ) {
+			type = 2; str.erase( posn, 1 );
+		} else if ( str.rfind( "ll" ) != string::npos || str.rfind( "LL" ) != string::npos ) {
+			type = 4;
+		} else {
+			lnthSuffix( str, type, ltype );
+		} // if
 	} // if
 
 	// Cannot be just "0"/"1"; sscanf stops at the suffix, if any; value goes over the wall => always generate
@@ -195,7 +197,7 @@ Expression * build_constantInteger( string & str ) {
 #if ! defined(__SIZEOF_INT128__)
 	if ( type == 5 ) SemanticError( yylloc, "int128 constant is not supported on this target " + str );
 #endif // ! __SIZEOF_INT128__
-	
+
 	if ( str[0] == '0' ) {								// radix character ?
 		dec = false;
 		if ( checkX( str[1] ) ) {						// hex constant ?
@@ -205,11 +207,12 @@ Expression * build_constantInteger( string & str ) {
 			} else {									// hex int128 constant
 				unsigned int len = str.length();
 				if ( len > (2 + 16 + 16) ) SemanticError( yylloc, "128-bit hexadecimal constant to large " + str );
-			  if ( len <= (2 + 16) ) goto FHEX1;		// hex digits < 2^64
-				str2 = "0x" + str.substr( len - 16 );
-				sscanf( (char *)str2.c_str(), "%llx", &v2 );
-				str = str.substr( 0, len - 16 );
-			  FHEX1: ;
+				// hex digits < 2^64
+				if ( len > (2 + 16) ) {
+					str2 = "0x" + str.substr( len - 16 );
+					sscanf( (char *)str2.c_str(), "%llx", &v2 );
+					str = str.substr( 0, len - 16 );
+				} // if
 				sscanf( (char *)str.c_str(), "%llx", &v );
 #endif // __SIZEOF_INT128__
 			} // if
@@ -308,8 +311,9 @@ Expression * build_constantInteger( string & str ) {
 		if ( ltype == 6 ) {								// int128, (int128)constant
 //			ret = new CastExpr( ret, new BasicType( Type::Qualifiers(), kind[Unsigned][type] ), false );
 			ret2 = new ConstantExpr( Constant( new BasicType( noQualifiers, BasicType::LongLongSignedInt ), str2, v2 ) );
-			ret = build_compoundLiteral( DeclarationNode::newBasicType( DeclarationNode::Int128 )->addType( DeclarationNode::newSignedNess( DeclarationNode::Unsigned ) ),
-										 new InitializerNode( (InitializerNode *)(new InitializerNode( new ExpressionNode( v2 == 0 ? ret2 : ret ) ))->set_last( new InitializerNode( new ExpressionNode( v2 == 0 ? ret : ret2 ) ) ), true ) );
+			ret = build_compoundLiteral(
+				DeclarationNode::newBasicType( DeclarationNode::Int128 )->addType( DeclarationNode::newSignedNess( DeclarationNode::Unsigned ) ),
+				new InitializerNode( (InitializerNode *)(new InitializerNode( new ExpressionNode( v2 == 0 ? ret2 : ret ) ))->set_last( new InitializerNode( new ExpressionNode( v2 == 0 ? ret : ret2 ) ) ), true ) );
 		} else {										// explicit length, (length_type)constant
 			ret = new CastExpr( ret, new TypeInstType( Type::Qualifiers(), lnthsInt[Unsigned][ltype], false ), false );
 			if ( ltype == 5 ) {							// pointer, intptr( (uintptr_t)constant )
@@ -434,19 +438,19 @@ Expression * build_constantStr( string & str ) {
 
 	Type * strtype;
 	switch ( str[0] ) {									// str has >= 2 characters, i.e, null string "" => safe to look at subscripts 0/1
-	  case 'u':
+	case 'u':
 		if ( str[1] == '8' ) goto Default;				// utf-8 characters => array of char
 		// lookup type of associated typedef
 		strtype = new TypeInstType( Type::Qualifiers( ), "char16_t", false );
 		break;
-	  case 'U':
+	case 'U':
 		strtype = new TypeInstType( Type::Qualifiers( ), "char32_t", false );
 		break;
-	  case 'L':
+	case 'L':
 		strtype = new TypeInstType( Type::Qualifiers( ), "wchar_t", false );
 		break;
-	  Default:											// char default string type
-	  default:
+	Default:											// char default string type
+	default:
 		strtype = new BasicType( Type::Qualifiers( ), BasicType::Char );
 	} // switch
 	ArrayType * at = new ArrayType( noQualifiers, strtype,
@@ -499,7 +503,7 @@ Expression * make_field_name_fraction_constants( Expression * fieldName, Express
 } // make_field_name_fraction_constants
 
 Expression * build_field_name_fraction_constants( Expression * fieldName, ExpressionNode * fracts ) {
-	return make_field_name_fraction_constants( fieldName, maybeMoveBuild< Expression >( fracts ) );
+	return make_field_name_fraction_constants( fieldName, maybeMoveBuild( fracts ) );
 } // build_field_name_fraction_constants
 
 NameExpr * build_varref( const string * name ) {
@@ -509,7 +513,7 @@ NameExpr * build_varref( const string * name ) {
 } // build_varref
 
 QualifiedNameExpr * build_qualified_expr( const DeclarationNode * decl_node, const NameExpr * name ) {
-	Declaration * newDecl = maybeBuild< Declaration >(decl_node);
+	Declaration * newDecl = maybeBuild(decl_node);
 	if ( DeclarationWithType * newDeclWithType = dynamic_cast< DeclarationWithType * >( newDecl ) ) {
 		const Type * t = newDeclWithType->get_type();
 		if ( t ) {
@@ -547,28 +551,28 @@ Expression * build_cast( DeclarationNode * decl_node, ExpressionNode * expr_node
 	Type * targetType = maybeMoveBuildType( decl_node );
 	if ( dynamic_cast< VoidType * >( targetType ) ) {
 		delete targetType;
-		return new CastExpr( maybeMoveBuild< Expression >(expr_node), false );
+		return new CastExpr( maybeMoveBuild( expr_node ), false );
 	} else {
-		return new CastExpr( maybeMoveBuild< Expression >(expr_node), targetType, false );
+		return new CastExpr( maybeMoveBuild( expr_node ), targetType, false );
 	} // if
 } // build_cast
 
 Expression * build_keyword_cast( AggregateDecl::Aggregate target, ExpressionNode * expr_node ) {
-	return new KeywordCastExpr( maybeMoveBuild< Expression >(expr_node), target );
+	return new KeywordCastExpr( maybeMoveBuild( expr_node ), target );
 }
 
 Expression * build_virtual_cast( DeclarationNode * decl_node, ExpressionNode * expr_node ) {
-	return new VirtualCastExpr( maybeMoveBuild< Expression >( expr_node ), maybeMoveBuildType( decl_node ) );
+	return new VirtualCastExpr( maybeMoveBuild( expr_node ), maybeMoveBuildType( decl_node ) );
 } // build_virtual_cast
 
 Expression * build_fieldSel( ExpressionNode * expr_node, Expression * member ) {
-	return new UntypedMemberExpr( member, maybeMoveBuild< Expression >(expr_node) );
+	return new UntypedMemberExpr( member, maybeMoveBuild( expr_node ) );
 } // build_fieldSel
 
 Expression * build_pfieldSel( ExpressionNode * expr_node, Expression * member ) {
 	UntypedExpr * deref = new UntypedExpr( new NameExpr( "*?" ) );
 	deref->location = expr_node->location;
-	deref->get_args().push_back( maybeMoveBuild< Expression >(expr_node) );
+	deref->get_args().push_back( maybeMoveBuild( expr_node ) );
 	UntypedMemberExpr * ret = new UntypedMemberExpr( member, deref );
 	return ret;
 } // build_pfieldSel
@@ -580,37 +584,31 @@ Expression * build_offsetOf( DeclarationNode * decl_node, NameExpr * member ) {
 } // build_offsetOf
 
 Expression * build_and_or( ExpressionNode * expr_node1, ExpressionNode * expr_node2, bool kind ) {
-	return new LogicalExpr( notZeroExpr( maybeMoveBuild< Expression >(expr_node1) ), notZeroExpr( maybeMoveBuild< Expression >(expr_node2) ), kind );
+	return new LogicalExpr( notZeroExpr( maybeMoveBuild( expr_node1 ) ), notZeroExpr( maybeMoveBuild( expr_node2 ) ), kind );
 } // build_and_or
 
 Expression * build_unary_val( OperKinds op, ExpressionNode * expr_node ) {
 	list< Expression * > args;
-	args.push_back( maybeMoveBuild< Expression >(expr_node) );
+	args.push_back( maybeMoveBuild( expr_node ) );
 	return new UntypedExpr( new NameExpr( OperName[ (int)op ] ), args );
 } // build_unary_val
 
-Expression * build_unary_ptr( OperKinds op, ExpressionNode * expr_node ) {
-	list< Expression * > args;
-	args.push_back( maybeMoveBuild< Expression >(expr_node) ); // xxx -- this is exactly the same as the val case now, refactor this code.
-	return new UntypedExpr( new NameExpr( OperName[ (int)op ] ), args );
-} // build_unary_ptr
-
 Expression * build_binary_val( OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 ) {
 	list< Expression * > args;
-	args.push_back( maybeMoveBuild< Expression >(expr_node1) );
-	args.push_back( maybeMoveBuild< Expression >(expr_node2) );
+	args.push_back( maybeMoveBuild( expr_node1 ) );
+	args.push_back( maybeMoveBuild( expr_node2 ) );
 	return new UntypedExpr( new NameExpr( OperName[ (int)op ] ), args );
 } // build_binary_val
 
 Expression * build_binary_ptr( OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 ) {
 	list< Expression * > args;
-	args.push_back( maybeMoveBuild< Expression >(expr_node1) );
-	args.push_back( maybeMoveBuild< Expression >(expr_node2) );
+	args.push_back( maybeMoveBuild( expr_node1 ) );
+	args.push_back( maybeMoveBuild( expr_node2 ) );
 	return new UntypedExpr( new NameExpr( OperName[ (int)op ] ), args );
 } // build_binary_ptr
 
 Expression * build_cond( ExpressionNode * expr_node1, ExpressionNode * expr_node2, ExpressionNode * expr_node3 ) {
-	return new ConditionalExpr( notZeroExpr( maybeMoveBuild< Expression >(expr_node1) ), maybeMoveBuild< Expression >(expr_node2), maybeMoveBuild< Expression >(expr_node3) );
+	return new ConditionalExpr( notZeroExpr( maybeMoveBuild( expr_node1 ) ), maybeMoveBuild( expr_node2 ), maybeMoveBuild( expr_node3 ) );
 } // build_cond
 
 Expression * build_tuple( ExpressionNode * expr_node ) {
@@ -622,31 +620,31 @@ Expression * build_tuple( ExpressionNode * expr_node ) {
 Expression * build_func( ExpressionNode * function, ExpressionNode * expr_node ) {
 	list< Expression * > args;
 	buildMoveList( expr_node, args );
-	return new UntypedExpr( maybeMoveBuild< Expression >(function), args );
+	return new UntypedExpr( maybeMoveBuild( function ), args );
 } // build_func
 
 Expression * build_compoundLiteral( DeclarationNode * decl_node, InitializerNode * kids ) {
-	Declaration * newDecl = maybeBuild< Declaration >(decl_node); // compound literal type
+	Declaration * newDecl = maybeBuild( decl_node ); // compound literal type
 	if ( DeclarationWithType * newDeclWithType = dynamic_cast< DeclarationWithType * >( newDecl ) ) { // non-sue compound-literal type
-		return new CompoundLiteralExpr( newDeclWithType->get_type(), maybeMoveBuild< Initializer >(kids) );
+		return new CompoundLiteralExpr( newDeclWithType->get_type(), maybeMoveBuild( kids ) );
 	// these types do not have associated type information
 	} else if ( StructDecl * newDeclStructDecl = dynamic_cast< StructDecl * >( newDecl )  ) {
 		if ( newDeclStructDecl->has_body() ) {
-			return new CompoundLiteralExpr( new StructInstType( Type::Qualifiers(), newDeclStructDecl ), maybeMoveBuild< Initializer >(kids) );
+			return new CompoundLiteralExpr( new StructInstType( Type::Qualifiers(), newDeclStructDecl ), maybeMoveBuild( kids ) );
 		} else {
-			return new CompoundLiteralExpr( new StructInstType( Type::Qualifiers(), newDeclStructDecl->get_name() ), maybeMoveBuild< Initializer >(kids) );
+			return new CompoundLiteralExpr( new StructInstType( Type::Qualifiers(), newDeclStructDecl->get_name() ), maybeMoveBuild( kids ) );
 		} // if
 	} else if ( UnionDecl * newDeclUnionDecl = dynamic_cast< UnionDecl * >( newDecl )  ) {
 		if ( newDeclUnionDecl->has_body() ) {
-			return new CompoundLiteralExpr( new UnionInstType( Type::Qualifiers(), newDeclUnionDecl ), maybeMoveBuild< Initializer >(kids) );
+			return new CompoundLiteralExpr( new UnionInstType( Type::Qualifiers(), newDeclUnionDecl ), maybeMoveBuild( kids ) );
 		} else {
-			return new CompoundLiteralExpr( new UnionInstType( Type::Qualifiers(), newDeclUnionDecl->get_name() ), maybeMoveBuild< Initializer >(kids) );
+			return new CompoundLiteralExpr( new UnionInstType( Type::Qualifiers(), newDeclUnionDecl->get_name() ), maybeMoveBuild( kids ) );
 		} // if
 	} else if ( EnumDecl * newDeclEnumDecl = dynamic_cast< EnumDecl * >( newDecl )  ) {
 		if ( newDeclEnumDecl->has_body() ) {
-			return new CompoundLiteralExpr( new EnumInstType( Type::Qualifiers(), newDeclEnumDecl ), maybeMoveBuild< Initializer >(kids) );
+			return new CompoundLiteralExpr( new EnumInstType( Type::Qualifiers(), newDeclEnumDecl ), maybeMoveBuild( kids ) );
 		} else {
-			return new CompoundLiteralExpr( new EnumInstType( Type::Qualifiers(), newDeclEnumDecl->get_name() ), maybeMoveBuild< Initializer >(kids) );
+			return new CompoundLiteralExpr( new EnumInstType( Type::Qualifiers(), newDeclEnumDecl->get_name() ), maybeMoveBuild( kids ) );
 		} // if
 	} else {
 		assert( false );
@@ -655,6 +653,4 @@ Expression * build_compoundLiteral( DeclarationNode * decl_node, InitializerNode
 
 // Local Variables: //
 // tab-width: 4 //
-// mode: c++ //
-// compile-command: "make install" //
 // End: //

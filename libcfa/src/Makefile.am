@@ -47,6 +47,7 @@ inst_headers_nosrc = \
 	math.trait.hfa \
 	math.hfa \
 	time_t.hfa \
+	virtual_dtor.hfa \
 	bits/algorithm.hfa \
 	bits/align.hfa \
 	bits/containers.hfa \

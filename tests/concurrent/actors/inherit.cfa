@@ -1,0 +1,52 @@
+#include <actor.hfa>
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <string.h>
+#include <stdio.h>
+#include <mutex_stmt.hfa>
+
+struct Server { inline actor; };
+struct Server2 { inline Server; int b; };
+struct D_msg { int a; inline message; };
+struct D_msg2 { inline D_msg; };
+
+void ^?{}( Server2 & this ) { mutex(sout) sout | 'A'; }
+void ?{}( D_msg & this ) { set_allocation( this, Delete ); }
+void ^?{}( D_msg & this ) { mutex(sout) sout | 'A'; }
+
+Allocation handle() {
+    return Finished;
+}
+
+Allocation receive( Server & receiver, D_msg & msg ) { return handle(); }
+Allocation receive( Server & receiver, D_msg2 & msg ) { return handle(); }
+Allocation receive( Server2 & receiver, D_msg & msg ) { return Delete; }
+Allocation receive( Server2 & receiver, D_msg2 & msg ) { return Delete; }
+
+int main() {
+    sout | "Start";
+    {
+        start_actor_system();
+        D_msg * dm = alloc();
+        (*dm){};
+        D_msg2 dm2;
+        Server2 * s = alloc();
+        (*s){};
+        Server2 * s2 = alloc();
+        (*s2){};
+        *s << *dm;
+        *s2 << dm2;
+        stop_actor_system();
+    }
+    {
+        start_actor_system();
+        Server s[2];
+        D_msg * dm = alloc();
+        (*dm){};
+        D_msg2 dm2;
+        s[0] << *dm;
+        s[1] << dm2;
+        stop_actor_system();
+    }
+    sout | "Finished";
+}

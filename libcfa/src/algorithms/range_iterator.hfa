@@ -8,10 +8,12 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Tue Nov 30 13:06:22 2021
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Mar 13 23:10:35 2023
+// Update Count     : 1
 //
+
+#pragma once
 
 generator RangeIter {
 	const char * text;

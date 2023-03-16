@@ -81,6 +81,7 @@ using namespace std;
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
 #include "Validate/VerifyCtorDtorAssign.hpp" // for verifyCtorDtorAssign
 #include "Virtual/ExpandCasts.h"            // for expandCasts
+#include "Virtual/VirtualDtor.hpp"           // for implementVirtDtors
 
 static void NewPass( const char * const name ) {
 	Stats::Heap::newPass( name );
@@ -340,6 +341,8 @@ int main( int argc, char * argv[] ) {
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines( transUnit ) );
 
 		PASS( "Implement Actors", Concurrency::implementActors( transUnit ) );
+        PASS( "Implement Virtual Destructors", Virtual::implementVirtDtors(transUnit) );
+        
 		PASS( "Implement Mutex", Concurrency::implementMutex( transUnit ) );
 		PASS( "Implement Thread Start", Concurrency::implementThreadStarter( transUnit ) );
 		PASS( "Compound Literal", Validate::handleCompoundLiterals( transUnit ) );

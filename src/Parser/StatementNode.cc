@@ -37,7 +37,7 @@ StatementNode::StatementNode( DeclarationNode * decl ) {
 	assert( decl );
 	DeclarationNode * agg = decl->extractAggregate();
 	if ( agg ) {
-		StatementNode * nextStmt = new StatementNode( new DeclStmt( maybeBuild< Declaration >( decl ) ) );
+		StatementNode * nextStmt = new StatementNode( new DeclStmt( maybeBuild( decl ) ) );
 		set_next( nextStmt );
 		if ( decl->get_next() ) {
 			get_next()->set_next( new StatementNode( dynamic_cast< DeclarationNode * >(decl->get_next()) ) );
@@ -50,7 +50,7 @@ StatementNode::StatementNode( DeclarationNode * decl ) {
 		} // if
 		agg = decl;
 	} // if
-	stmt.reset( new DeclStmt( maybeMoveBuild< Declaration >(agg) ) );
+	stmt.reset( new DeclStmt( maybeMoveBuild( agg ) ) );
 } // StatementNode::StatementNode
 
 StatementNode * StatementNode::append_last_case( StatementNode * stmt ) {
@@ -72,7 +72,7 @@ StatementNode * StatementNode::append_last_case( StatementNode * stmt ) {
 } // StatementNode::append_last_case
 
 Statement * build_expr( ExpressionNode * ctl ) {
-	Expression * e = maybeMoveBuild< Expression >( ctl );
+	Expression * e = maybeMoveBuild( ctl );
 
 	if ( e ) return new ExprStmt( e );
 	else return new NullStmt();
@@ -86,7 +86,7 @@ Expression * build_if_control( CondCtl * ctl, list< Statement * > & init ) {
 	Expression * cond = nullptr;
 	if ( ctl->condition ) {
 		// compare the provided condition against 0
-		cond = notZeroExpr( maybeMoveBuild< Expression >(ctl->condition) );
+		cond = notZeroExpr( maybeMoveBuild( ctl->condition ) );
 	} else {
 		for ( Statement * stmt : init ) {
 			// build the && of all of the declared variables compared against 0
@@ -133,11 +133,11 @@ Statement * build_switch( bool isSwitch, ExpressionNode * ctl, StatementNode * s
 		} // for
 	} // if
 	// aststmt.size() == 0 for switch (...) {}, i.e., no declaration or statements
-	return new SwitchStmt( maybeMoveBuild< Expression >(ctl), aststmt );
+	return new SwitchStmt( maybeMoveBuild( ctl ), aststmt );
 } // build_switch
 
 Statement * build_case( ExpressionNode * ctl ) {
-	return new CaseStmt( maybeMoveBuild< Expression >(ctl), {} ); // stmt starts empty and then added to
+	return new CaseStmt( maybeMoveBuild( ctl ), {} ); // stmt starts empty and then added to
 } // build_case
 
 Statement * build_default() {
@@ -167,7 +167,7 @@ Statement * build_do_while( ExpressionNode * ctl, StatementNode * stmt, Statemen
 	buildMoveList< Statement, StatementNode >( else_, astelse );
 
 	// do-while cannot have declarations in the contitional, so init is always empty
-	return new WhileDoStmt( notZeroExpr( maybeMoveBuild< Expression >(ctl) ), aststmt.front(), astelse.front(), {}, true );
+	return new WhileDoStmt( notZeroExpr( maybeMoveBuild( ctl ) ), aststmt.front(), astelse.front(), {}, true );
 } // build_do_while
 
 Statement * build_for( ForCtrl * forctl, StatementNode * stmt, StatementNode * else_ ) {
@@ -175,10 +175,10 @@ Statement * build_for( ForCtrl * forctl, StatementNode * stmt, StatementNode * e
 	buildMoveList( forctl->init, astinit );
 
 	Expression * astcond = nullptr;						// maybe empty
-	astcond = notZeroExpr( maybeMoveBuild< Expression >(forctl->condition) );
+	astcond = notZeroExpr( maybeMoveBuild( forctl->condition ) );
 
 	Expression * astincr = nullptr;						// maybe empty
-	astincr = maybeMoveBuild< Expression >(forctl->change);
+	astincr = maybeMoveBuild( forctl->change );
 	delete forctl;
 
 	list< Statement * > aststmt;						// loop body, compound created if empty
@@ -198,12 +198,12 @@ Statement * build_branch( BranchStmt::Type kind ) {
 
 Statement * build_branch( string * identifier, BranchStmt::Type kind ) {
 	Statement * ret = new BranchStmt( * identifier, kind );
-	delete identifier; 									// allocated by lexer
+	delete identifier;									// allocated by lexer
 	return ret;
 } // build_branch
 
 Statement * build_computedgoto( ExpressionNode * ctl ) {
-	return new BranchStmt( maybeMoveBuild< Expression >(ctl), BranchStmt::Goto );
+	return new BranchStmt( maybeMoveBuild( ctl ), BranchStmt::Goto );
 } // build_computedgoto
 
 Statement * build_return( ExpressionNode * ctl ) {
@@ -235,8 +235,8 @@ Statement * build_resume_at( ExpressionNode * ctl, ExpressionNode * target ) {
 Statement * build_try( StatementNode * try_, StatementNode * catch_, StatementNode * finally_ ) {
 	list< CatchStmt * > aststmt;
 	buildMoveList< CatchStmt, StatementNode >( catch_, aststmt );
-	CompoundStmt * tryBlock = strict_dynamic_cast< CompoundStmt * >(maybeMoveBuild< Statement >(try_));
-	FinallyStmt * finallyBlock = dynamic_cast< FinallyStmt * >(maybeMoveBuild< Statement >(finally_) );
+	CompoundStmt * tryBlock = strict_dynamic_cast< CompoundStmt * >( maybeMoveBuild( try_ ) );
+	FinallyStmt * finallyBlock = dynamic_cast< FinallyStmt * >( maybeMoveBuild( finally_ ) );
 	return new TryStmt( tryBlock, aststmt, finallyBlock );
 } // build_try
 
@@ -244,7 +244,7 @@ Statement * build_catch( CatchStmt::Kind kind, DeclarationNode * decl, Expressio
 	list< Statement * > aststmt;
 	buildMoveList< Statement, StatementNode >( body, aststmt );
 	assert( aststmt.size() == 1 );
-	return new CatchStmt( kind, maybeMoveBuild< Declaration >(decl), maybeMoveBuild< Expression >(cond), aststmt.front() );
+	return new CatchStmt( kind, maybeMoveBuild( decl ), maybeMoveBuild( cond ), aststmt.front() );
 } // build_catch
 
 Statement * build_finally( StatementNode * stmt ) {
@@ -273,7 +273,7 @@ WaitForStmt * build_waitfor( ExpressionNode * targetExpr, StatementNode * stmt, 
 	auto node = new WaitForStmt();
 
 	WaitForStmt::Target target;
-	target.function = maybeBuild<Expression>( targetExpr );
+	target.function = maybeBuild( targetExpr );
 
 	ExpressionNode * next = dynamic_cast<ExpressionNode *>( targetExpr->get_next() );
 	targetExpr->set_next( nullptr );
@@ -283,8 +283,8 @@ WaitForStmt * build_waitfor( ExpressionNode * targetExpr, StatementNode * stmt, 
 
 	node->clauses.push_back( WaitForStmt::Clause{
 		target,
-		maybeMoveBuild<Statement >( stmt ),
-		notZeroExpr( maybeMoveBuild<Expression>( when ) )
+		maybeMoveBuild( stmt ),
+		notZeroExpr( maybeMoveBuild( when ) )
 	});
 
 	return node;
@@ -292,7 +292,7 @@ WaitForStmt * build_waitfor( ExpressionNode * targetExpr, StatementNode * stmt, 
 
 WaitForStmt * build_waitfor( ExpressionNode * targetExpr, StatementNode * stmt, ExpressionNode * when, WaitForStmt * node ) {
 	WaitForStmt::Target target;
-	target.function = maybeBuild<Expression>( targetExpr );
+	target.function = maybeBuild( targetExpr );
 
 	ExpressionNode * next = dynamic_cast<ExpressionNode *>( targetExpr->get_next() );
 	targetExpr->set_next( nullptr );
@@ -302,8 +302,8 @@ WaitForStmt * build_waitfor( ExpressionNode * targetExpr, StatementNode * stmt, 
 
 	node->clauses.insert( node->clauses.begin(), WaitForStmt::Clause{
 		std::move( target ),
-		maybeMoveBuild<Statement >( stmt ),
-		notZeroExpr( maybeMoveBuild<Expression>( when ) )
+		maybeMoveBuild( stmt ),
+		notZeroExpr( maybeMoveBuild( when ) )
 	});
 
 	return node;
@@ -313,12 +313,12 @@ WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * s
 	auto node = new WaitForStmt();
 
 	if( timeout ) {
-		node->timeout.time      = maybeMoveBuild<Expression>( timeout );
-		node->timeout.statement = maybeMoveBuild<Statement >( stmt    );
-		node->timeout.condition = notZeroExpr( maybeMoveBuild<Expression>( when ) );
+		node->timeout.time      = maybeMoveBuild( timeout );
+		node->timeout.statement = maybeMoveBuild( stmt    );
+		node->timeout.condition = notZeroExpr( maybeMoveBuild( when ) );
 	} else {
-		node->orelse.statement  = maybeMoveBuild<Statement >( stmt );
-		node->orelse.condition  = notZeroExpr( maybeMoveBuild<Expression>( when ) );
+		node->orelse.statement  = maybeMoveBuild( stmt );
+		node->orelse.condition  = notZeroExpr( maybeMoveBuild( when ) );
 	} // if
 
 	return node;
@@ -327,12 +327,12 @@ WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * s
 WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when,  StatementNode * else_, ExpressionNode * else_when ) {
 	auto node = new WaitForStmt();
 
-	node->timeout.time      = maybeMoveBuild<Expression>( timeout );
-	node->timeout.statement = maybeMoveBuild<Statement >( stmt    );
-	node->timeout.condition = notZeroExpr( maybeMoveBuild<Expression>( when ) );
+	node->timeout.time      = maybeMoveBuild( timeout );
+	node->timeout.statement = maybeMoveBuild( stmt    );
+	node->timeout.condition = notZeroExpr( maybeMoveBuild( when ) );
 
-	node->orelse.statement  = maybeMoveBuild<Statement >( else_ );
-	node->orelse.condition  = notZeroExpr( maybeMoveBuild<Expression>( else_when ) );
+	node->orelse.statement  = maybeMoveBuild( else_ );
+	node->orelse.condition  = notZeroExpr( maybeMoveBuild( else_when ) );
 
 	return node;
 } // build_waitfor_timeout
@@ -340,7 +340,7 @@ WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * s
 Statement * build_with( ExpressionNode * exprs, StatementNode * stmt ) {
 	list< Expression * > e;
 	buildMoveList( exprs, e );
-	Statement * s = maybeMoveBuild<Statement>( stmt );
+	Statement * s = maybeMoveBuild( stmt );
 	return new DeclStmt( new WithStmt( e, s ) );
 } // build_with
 
@@ -383,7 +383,7 @@ Statement * build_directive( string * directive ) {
 Statement * build_mutex( ExpressionNode * exprs, StatementNode * stmt ) {
 	list< Expression * > expList;
 	buildMoveList( exprs, expList );
-	Statement * body = maybeMoveBuild<Statement>( stmt );
+	Statement * body = maybeMoveBuild( stmt );
 	return new MutexStmt( body, expList );
 } // build_mutex
 

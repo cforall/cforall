@@ -13,19 +13,18 @@
 // Update Count     :
 //
 
-#include <stdarg.h>										// va_start, va_end
-#include <stdio.h>
-#include <string.h>										// strlen
+#ifdef __i386__											// 32-bit architecture
+#undef _GNU_SOURCE
+#endif // __i386__
+
 #include <signal.h>
 #include <pthread.h>
+#include <signal.h>
 extern "C" {
 #include <dlfcn.h>										// dlopen, dlsym
-#include <execinfo.h>									// backtrace, messages
 }
 
-#include "bits/debug.hfa"
 #include "bits/defs.hfa"
-#include <assert.h>
 
 //=============================================================================================
 // Interposing helpers
@@ -38,16 +37,19 @@ generic_fptr_t interpose_symbol(
 	const char symbol[],
 	const char version[]
 ) libcfa_public {
-	static void * library;
-	if ( ! library ) {
-		library = dlopen( "libpthread.so", RTLD_LAZY );
-		const char * error = dlerror();
-		if ( error ) {
-			abort( "interpose_symbol : failed to open libpthread, %s\n", error );
-		}
-	} // if
+	void * library;
 
-	return do_interpose_symbol(library, symbol, version);
+	#if defined( RTLD_NEXT )
+	library = RTLD_NEXT;
+	#else
+	// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
+	library = dlopen( "libpthread.so", RTLD_LAZY );
+	if ( ! library ) {									// == nullptr
+		abort( "interpose_symbol : failed to open libpthread, %s\n", dlerror() );
+	} // if
+	#endif // RTLD_NEXT
+
+	return do_interpose_symbol( library, symbol, version );
 }
 
 #define INTERPOSE( x, ver ) __cabi_libpthread.x = (typeof(__cabi_libpthread.x))interpose_symbol( do_interpose_symbol, #x, ver )
@@ -75,16 +77,16 @@ extern "C" {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
-		INTERPOSE( pthread_create , version );
-		INTERPOSE( pthread_join , version );
-		INTERPOSE( pthread_self , version );
-		INTERPOSE( pthread_attr_init , version );
-		INTERPOSE( pthread_attr_destroy , version );
-		INTERPOSE( pthread_attr_setstack , version );
-		INTERPOSE( pthread_attr_getstacksize , version );
-		INTERPOSE( pthread_sigmask , version );
-		INTERPOSE( pthread_sigqueue , version );
-		INTERPOSE( pthread_once , version );
+		INTERPOSE( pthread_create, version );
+		INTERPOSE( pthread_join, version );
+		INTERPOSE( pthread_self, version );
+		INTERPOSE( pthread_attr_init, version );
+		INTERPOSE( pthread_attr_destroy, version );
+		INTERPOSE( pthread_attr_setstack, version );
+		INTERPOSE( pthread_attr_getstacksize, version );
+		INTERPOSE( pthread_sigmask, version );
+		INTERPOSE( pthread_sigqueue, version );
+		INTERPOSE( pthread_once, version );
 #pragma GCC diagnostic pop
 	}
 

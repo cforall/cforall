@@ -30,11 +30,11 @@ using namespace std;									// string, iostream
 debugPrint(
 	static const char *kindName( int kind ) {
 		switch ( kind ) {
-		  case IDENTIFIER: return "identifier";
-		  case TYPEDIMname: return "typedim";
-		  case TYPEDEFname: return "typedef";
-		  case TYPEGENname: return "typegen";
-		  default:
+		case IDENTIFIER: return "identifier";
+		case TYPEDIMname: return "typedim";
+		case TYPEDEFname: return "typedef";
+		case TYPEGENname: return "typegen";
+		default:
 			cerr << "Error: cfa-cpp internal error, invalid kind of identifier" << endl;
 			abort();
 		} // switch

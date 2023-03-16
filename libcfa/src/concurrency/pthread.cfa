@@ -597,7 +597,7 @@ extern "C"{
 		cfaPthread * t = lookup(pthread_self());
 		if (t->pthreadData == NULL) return NULL;
 		lock(key_lock);
-		pthread_values &entry = ((pthread_values *)t->pthreadData)[key];
+		pthread_values & entry = ((pthread_values *)t->pthreadData)[key];
 		if ( ! entry.in_use ) {
 			unlock( key_lock );
 			return NULL;

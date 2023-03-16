@@ -5,15 +5,8 @@
 #include <mutex_stmt.hfa>
 #include <actor.hfa>
 
-struct ping {
-    inline actor;
-};
-static inline void ?{}( ping & this ) { ((actor &)this){}; }
-
-struct pong {
-    inline actor;
-};
-static inline void ?{}( pong & this ) { ((actor &)this){}; }
+struct ping { inline actor; };
+struct pong { inline actor; };
 
 struct p_msg {
     inline message;
@@ -31,7 +24,7 @@ Allocation receive( ping & receiver, p_msg & msg ) {
 
     Allocation retval = Nodelete;
     if ( msg.count == times ) retval = Finished;
-    *po | msg;
+    *po << msg;
     return retval;
 }
 
@@ -41,7 +34,7 @@ Allocation receive( pong & receiver, p_msg & msg ) {
     
     Allocation retval = Nodelete;
     if ( msg.count == times ) retval = Finished;
-    *pi | msg;
+    *pi << msg;
     return retval;
 }
 
@@ -59,7 +52,7 @@ int main( int argc, char * argv[] ) {
     po = &po_actor;
     pi = &pi_actor;
     p_msg m;
-    pi_actor | m;
+    pi_actor << m;
     stop_actor_system();
 
     printf("end\n");

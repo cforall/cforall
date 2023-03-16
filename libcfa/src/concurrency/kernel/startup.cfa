@@ -32,7 +32,7 @@ extern "C" {
 // CFA Includes
 #include "kernel/private.hfa"
 #include "iofwd.hfa"
-#include "startup.hfa"					// STARTUP_PRIORITY_XXX
+#include "startup.hfa"									// STARTUP_PRIORITY_XXX
 #include "limits.hfa"
 #include "math.hfa"
 #include "bits/random.hfa"								// prng
@@ -145,18 +145,6 @@ __thread struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "initi
 };
 
 __scheduler_RWLock_t __scheduler_lock @= { 0 };
-
-#if   defined(CFA_HAVE_LINUX_LIBRSEQ)
-	// No data needed
-#elif defined(CFA_HAVE_LINUX_RSEQ_H)
-	extern "Cforall" {
-		__attribute__((aligned(64))) __thread volatile struct rseq __cfaabi_rseq @= {
-			.cpu_id : RSEQ_CPU_ID_UNINITIALIZED,
-		};
-	}
-#else
-	// No data needed
-#endif
 
 //-----------------------------------------------------------------------------
 // Struct to steal stack

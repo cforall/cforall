@@ -106,8 +106,8 @@ namespace {
 		ast::Expr * destructRet( const ast::ObjectDecl * ret, const ast::Expr * arg );
 	private:
 		/// hack to implement WithTypeSubstitution while conforming to mutation safety.
-		ast::TypeSubstitution * env;
-		bool                    envModified;
+		ast::TypeSubstitution * env         = nullptr;
+		bool                    envModified = false;
 	};
 
 	/// collects constructed object decls - used as a base class
@@ -521,7 +521,6 @@ namespace {
 		const ast::Expr * arg, const ast::ImplicitCopyCtorExpr * impCpCtorExpr, const ast::Type * formal )
 	{
 		static UniqueName tempNamer("_tmp_cp");
-		assert( env );
 		const CodeLocation loc = impCpCtorExpr->location;
 		// CP_CTOR_PRINT( std::cerr << "Type Substitution: " << *env << std::endl; )
 		assert( arg->result );
@@ -533,6 +532,7 @@ namespace {
 		// Use applyFree so that types bound in function pointers are not substituted, e.g. in forall(dtype T) void (*)(T).
 
 		// xxx - this originally mutates arg->result in place. is it correct?
+		assert( env );
 		result = env->applyFree( result.get() ).node;
 		auto mutResult = result.get_and_mutate();
 		mutResult->set_const(false);

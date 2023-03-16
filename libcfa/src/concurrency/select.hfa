@@ -1,3 +1,5 @@
+#pragma once
+
 #include "containers/list.hfa"
 #include <stdint.h>
 #include <kernel.hfa>

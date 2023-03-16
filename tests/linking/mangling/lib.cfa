@@ -2,7 +2,11 @@
 
 name_but_a_typedefed_t a_typedefed_global;
 
-struct {
-	int some_int;
-	int some_other_int;
-} a_global_with_no_type;
+// Must be extern C to prevent name mangling.
+extern "C" {
+	// This declaration is necessary to create an instance of a_global_with_no_type.
+	// typeof is a trick to get a_global_with_no_type's type because its type is anonymous.
+	// Otherwise C generates conflicting types for a_global_with_no_type in .h and .c
+	// because C uses name equivalence and the two anonymous types cannot have the same name.
+	typeof(a_global_with_no_type) a_global_with_no_type;
+}

@@ -307,7 +307,8 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Validate/ReplaceTypedef.$(OBJEXT) \
 	Validate/ReturnCheck.$(OBJEXT) \
 	Validate/VerifyCtorDtorAssign.$(OBJEXT) \
-	Virtual/ExpandCasts.$(OBJEXT) Virtual/Tables.$(OBJEXT)
+	Virtual/ExpandCasts.$(OBJEXT) Virtual/Tables.$(OBJEXT) \
+	Virtual/VirtualDtor.$(OBJEXT)
 am____driver_cfa_cpp_OBJECTS = $(am__objects_12)
 ___driver_cfa_cpp_OBJECTS = $(am____driver_cfa_cpp_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -487,7 +488,8 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Validate/$(DEPDIR)/ReplaceTypedef.Po \
 	Validate/$(DEPDIR)/ReturnCheck.Po \
 	Validate/$(DEPDIR)/VerifyCtorDtorAssign.Po \
-	Virtual/$(DEPDIR)/ExpandCasts.Po Virtual/$(DEPDIR)/Tables.Po
+	Virtual/$(DEPDIR)/ExpandCasts.Po Virtual/$(DEPDIR)/Tables.Po \
+	Virtual/$(DEPDIR)/VirtualDtor.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -811,7 +813,8 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	Validate/ReturnCheck.cpp Validate/ReturnCheck.hpp \
 	Validate/VerifyCtorDtorAssign.cpp \
 	Validate/VerifyCtorDtorAssign.hpp Virtual/ExpandCasts.cc \
-	Virtual/ExpandCasts.h Virtual/Tables.cc Virtual/Tables.h
+	Virtual/ExpandCasts.h Virtual/Tables.cc Virtual/Tables.h \
+	Virtual/VirtualDtor.cpp Virtual/VirtualDtor.hpp
 SRCDEMANGLE = CompilationState.cc $(SRC_AST) $(SRC_CODEGEN) \
 	$(SRC_COMMON) $(SRC_GENPOLY) $(SRC_INITTWEAK) \
 	$(SRC_RESOLVEXPR) $(SRC_SYMTAB) SymTab/Demangle.cc \
@@ -1650,6 +1653,8 @@ Virtual/ExpandCasts.$(OBJEXT): Virtual/$(am__dirstamp) \
 	Virtual/$(DEPDIR)/$(am__dirstamp)
 Virtual/Tables.$(OBJEXT): Virtual/$(am__dirstamp) \
 	Virtual/$(DEPDIR)/$(am__dirstamp)
+Virtual/VirtualDtor.$(OBJEXT): Virtual/$(am__dirstamp) \
+	Virtual/$(DEPDIR)/$(am__dirstamp)
 ../driver/$(am__dirstamp):
 	@$(MKDIR_P) ../driver
 	@: > ../driver/$(am__dirstamp)
@@ -1880,6 +1885,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/VerifyCtorDtorAssign.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Virtual/$(DEPDIR)/ExpandCasts.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Virtual/$(DEPDIR)/Tables.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Virtual/$(DEPDIR)/VirtualDtor.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -2311,6 +2317,7 @@ distclean: distclean-am
 	-rm -f Validate/$(DEPDIR)/VerifyCtorDtorAssign.Po
 	-rm -f Virtual/$(DEPDIR)/ExpandCasts.Po
 	-rm -f Virtual/$(DEPDIR)/Tables.Po
+	-rm -f Virtual/$(DEPDIR)/VirtualDtor.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -2550,6 +2557,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Validate/$(DEPDIR)/VerifyCtorDtorAssign.Po
 	-rm -f Virtual/$(DEPDIR)/ExpandCasts.Po
 	-rm -f Virtual/$(DEPDIR)/Tables.Po
+	-rm -f Virtual/$(DEPDIR)/VirtualDtor.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

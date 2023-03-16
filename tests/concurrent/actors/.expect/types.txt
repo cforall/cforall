@@ -11,4 +11,7 @@ same message and different actor types test
 different message types, one actor test
 -1
 5
+nested inheritance actor test
+-1
+5
 end

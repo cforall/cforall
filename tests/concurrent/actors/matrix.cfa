@@ -6,10 +6,7 @@
 
 unsigned int xr = 500, xc = 500, yc = 500, Processors = 1; // default values
 
-struct derived_actor {
-    inline actor;
-};
-void ?{}( derived_actor & this ) { ((actor &)this){}; }
+struct derived_actor { inline actor; };
 
 struct derived_msg {
     inline message;
@@ -20,7 +17,7 @@ struct derived_msg {
 
 void ?{}( derived_msg & this ) {}
 void ?{}( derived_msg & this, int * Z, int * X, int ** Y ) {
-    ((message &) this){ Finished };
+    ((message &) this){ Nodelete };
     this.Z = Z;
     this.X = X;
     this.Y = Y;
@@ -107,7 +104,7 @@ int main( int argc, char * argv[] ) {
 	} // for
 
 	for ( unsigned int r = 0; r < xr; r += 1 ) {
-		actors[r] | messages[r];
+		actors[r] << messages[r];
 	} // for
 
     printf("stopping\n");

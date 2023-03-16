@@ -1,0 +1,38 @@
+// inline this structure to have a virtual dtor.
+// when using this, delete() is also virtual and will be called on the right address
+// using free() directly on polymorphic types may result in unaligned memory deallocation
+//     in multi-inheritance or in single inheritance if the inline isn't the first field
+
+// This supports virtual dtors for both single and multiple inheritance,
+// however it does not support multiple inheritance of the virtual_dtor. e.g.:
+//     given struct A { inline virtual_dtor; } and struct B { inline virtual_dtor; }
+//     struct C { inline A; inline B; } will result in undefined behaviour
+
+struct virtual_dtor {
+    void (*__virtual_dtor_ptr)(virtual_dtor &);
+    void * __virtual_obj_start;
+};
+
+// the following routines are used by the compiler and should not be called directly
+static inline void __CFA_set_virt_dtor( virtual_dtor & this, void (*v_dtor)(virtual_dtor &)) {
+    this.__virtual_dtor_ptr = v_dtor;
+}
+static inline void __CFA_set_virt_start( virtual_dtor & this, void * start) {
+    this.__virtual_obj_start = start;
+}
+static inline void __CFA_setup_dtor( virtual_dtor & this ) with(this) {
+    __virtual_dtor_ptr = 0p;
+    __virtual_obj_start = &this;
+}
+static inline void __CFA_dtor_shutdown( virtual_dtor & this ) with(this) {
+    if ( __virtual_dtor_ptr ) {
+        void (*dtor_ptr)(virtual_dtor &) = __virtual_dtor_ptr;
+        __virtual_dtor_ptr = 0p;
+        dtor_ptr(*((virtual_dtor *)__virtual_obj_start)); // replace actor with base type
+        return;
+    }
+}
+static inline void __CFA_virt_free( virtual_dtor & this ) { free( this.__virtual_obj_start ); }
+static inline void * __CFA_get_virt_start( virtual_dtor & this ) { return this.__virtual_obj_start; }
+static inline void ?{}( virtual_dtor & this ) {}
+static inline void ^?{}( virtual_dtor & this ) {}

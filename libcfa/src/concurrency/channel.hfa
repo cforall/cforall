@@ -1,3 +1,5 @@
+#pragma once
+
 #include <locks.hfa>
 
 struct no_reacq_lock {

@@ -4,10 +4,10 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Actors.hpp -- Implement concurrency constructs from their keywords.
+// VirtualDtor.hpp -- Implement concurrency constructs from their keywords.
 //
 // Author           : Colby Parsons
-// Created On       : Thurs Jan 19 15:16:42 2023
+// Created On       : Tues Mar 14 15:16:42 2023
 // Last Modified By :
 // Last Modified On :
 // Update Count     : 1
@@ -21,8 +21,8 @@ namespace ast {
 	class TranslationUnit;
 }
 
-namespace Concurrency {
-	void implementActors( ast::TranslationUnit & translationUnit );
+namespace Virtual {
+	void implementVirtDtors( ast::TranslationUnit & translationUnit );
 };
 
 // Local Variables: //

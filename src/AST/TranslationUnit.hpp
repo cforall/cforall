@@ -9,14 +9,14 @@
 // Author           : Andrew Beach
 // Created On       : Tue Jun 11 15:30:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Mar 11 11:19:00 2022
-// Update Count     : 1
+// Last Modified On : Thr Mar  9 16:41:00 2023
+// Update Count     : 2
 //
 
 #pragma once
 
 #include <map>
-#include <vector>
+#include <list>
 
 #include "Fwd.hpp"
 
@@ -27,9 +27,9 @@ public:
 	std::map< UniqueId, Decl * > idMap;
 
 	ptr<Type> sizeType;
-	const FunctionDecl * dereference;
-	const StructDecl * dtorStruct;
-	const FunctionDecl * dtorDestroy;
+	const FunctionDecl * dereference = nullptr;
+	const StructDecl * dtorStruct = nullptr;
+	const FunctionDecl * dtorDestroy = nullptr;
 };
 
 class TranslationUnit {

@@ -9,9 +9,11 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 29 20:42:21 2022
-// Update Count     : 56
+// Last Modified On : Tue Mar 14 13:39:31 2023
+// Update Count     : 59
 //
+
+// No not use #pragma once was this file is included twice in some places. It has its own guard system.
 
 #include "bits/containers.hfa"
 #include "bits/defs.hfa"

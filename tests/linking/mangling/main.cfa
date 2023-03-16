@@ -1,6 +1,6 @@
 #include <fstream.hfa>
 
-struct { int a; } test; //purposefully before the include
+static struct { int a; } test; // purposefully before the include to force anonymous name numbering
 
 #include "header.hfa"
 
@@ -12,6 +12,4 @@ int main() {
 	a_typedefed_global.a_float = 9.0f;
 
 	sout | "Done!";
-
-	return 0;
 }

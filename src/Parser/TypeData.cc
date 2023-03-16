@@ -32,40 +32,33 @@ using namespace std;
 
 TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), forall( nullptr ) /*, PTR1( (void*)(0xdeadbeefdeadbeef)), PTR2( (void*)(0xdeadbeefdeadbeef) ) */ {
 	switch ( kind ) {
-	  case Unknown:
-	  case Pointer:
-	  case Reference:
-	  case EnumConstant:
-	  case GlobalScope:
-		// nothing else to initialize
+	case Unknown:
+	case Pointer:
+	case Reference:
+	case EnumConstant:
+	case GlobalScope:
+	case Basic:
+		// No unique data to initialize.
 		break;
-	  case Basic:
-		// basic = new Basic_t;
-		break;
-	  case Array:
-		// array = new Array_t;
+	case Array:
 		array.dimension = nullptr;
 		array.isVarLen = false;
 		array.isStatic = false;
 		break;
-	  case Function:
-		// function = new Function_t;
+	case Function:
 		function.params = nullptr;
 		function.idList = nullptr;
 		function.oldDeclList = nullptr;
 		function.body = nullptr;
 		function.withExprs = nullptr;
 		break;
-		// Enum is an Aggregate, so both structures are initialized together.
-	  case Enum:
-		// enumeration = new Enumeration_t;
+	case Enum:
 		enumeration.name = nullptr;
 		enumeration.constants = nullptr;
 		enumeration.body = false;
 		enumeration.anon = false;
 		break;
-	  case Aggregate:
-		// aggregate = new Aggregate_t;
+	case Aggregate:
 		aggregate.kind = AggregateDecl::NoAggregate;
 		aggregate.name = nullptr;
 		aggregate.params = nullptr;
@@ -76,34 +69,30 @@ TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), f
 		aggregate.parent = nullptr;
 		aggregate.anon = false;
 		break;
-	  case AggregateInst:
-		// aggInst = new AggInst_t;
+	case AggregateInst:
 		aggInst.aggregate = nullptr;
 		aggInst.params = nullptr;
 		aggInst.hoistType = false;
 		break;
-	  case Symbolic:
-	  case SymbolicInst:
-		// symbolic = new Symbolic_t;
+	case Symbolic:
+	case SymbolicInst:
 		symbolic.name = nullptr;
 		symbolic.params = nullptr;
 		symbolic.actuals = nullptr;
 		symbolic.assertions = nullptr;
 		break;
-	  case Tuple:
-		// tuple = new Tuple_t;
+	case Tuple:
 		tuple = nullptr;
 		break;
-	  case Typeof:
-	  case Basetypeof:
-		// typeexpr = new Typeof_t;
+	case Typeof:
+	case Basetypeof:
 		typeexpr = nullptr;
 		break;
-	  case Vtable:
+	case Builtin:
+	case Vtable:
+		// No unique data to initialize.
 		break;
-	  case Builtin:
-		// builtin = new Builtin_t;
-		case Qualified:
+	case Qualified:
 		qualified.parent = nullptr;
 		qualified.child = nullptr;
 		break;
@@ -116,70 +105,61 @@ TypeData::~TypeData() {
 	delete forall;
 
 	switch ( kind ) {
-	  case Unknown:
-	  case Pointer:
-	  case Reference:
-	  case EnumConstant:
-	  case GlobalScope:
-		// nothing to destroy
+	case Unknown:
+	case Pointer:
+	case Reference:
+	case EnumConstant:
+	case GlobalScope:
+		// No unique data to deconstruct.
 		break;
-	  case Basic:
-		// delete basic;
+	case Basic:
 		break;
-	  case Array:
+	case Array:
 		delete array.dimension;
-		// delete array;
 		break;
-	  case Function:
+	case Function:
 		delete function.params;
 		delete function.idList;
 		delete function.oldDeclList;
 		delete function.body;
 		delete function.withExprs;
-		// delete function;
 		break;
-	  case Aggregate:
+	case Aggregate:
 		delete aggregate.name;
 		delete aggregate.params;
 		delete aggregate.actuals;
 		delete aggregate.fields;
-		// delete aggregate;
 		break;
-	  case AggregateInst:
+	case AggregateInst:
 		delete aggInst.aggregate;
 		delete aggInst.params;
-		// delete aggInst;
 		break;
-	  case Enum:
+	case Enum:
 		delete enumeration.name;
 		delete enumeration.constants;
-		// delete enumeration;
 		break;
-	  case Symbolic:
-	  case SymbolicInst:
+	case Symbolic:
+	case SymbolicInst:
 		delete symbolic.name;
 		delete symbolic.params;
 		delete symbolic.actuals;
 		delete symbolic.assertions;
-		// delete symbolic;
 		break;
-	  case Tuple:
-		// delete tuple->members;
+	case Tuple:
 		delete tuple;
 		break;
-	  case Typeof:
-	  case Basetypeof:
-		// delete typeexpr->expr;
+	case Typeof:
+	case Basetypeof:
 		delete typeexpr;
 		break;
-	  case Vtable:
+	case Vtable:
+	case Builtin:
+		// No unique data to deconstruct.
 		break;
-	  case Builtin:
-		// delete builtin;
-		break;
-	  case Qualified:
+	case Qualified:
 		delete qualified.parent;
 		delete qualified.child;
+		break;
 	} // switch
 } // TypeData::~TypeData
 
@@ -191,32 +171,32 @@ TypeData * TypeData::clone() const {
 	newtype->forall = maybeClone( forall );
 
 	switch ( kind ) {
-	  case Unknown:
-	  case EnumConstant:
-	  case Pointer:
-	  case Reference:
-	  case GlobalScope:
+	case Unknown:
+	case EnumConstant:
+	case Pointer:
+	case Reference:
+	case GlobalScope:
 		// nothing else to copy
 		break;
-	  case Basic:
+	case Basic:
 		newtype->basictype = basictype;
 		newtype->complextype = complextype;
 		newtype->signedness = signedness;
 		newtype->length = length;
 		break;
-	  case Array:
+	case Array:
 		newtype->array.dimension = maybeClone( array.dimension );
 		newtype->array.isVarLen = array.isVarLen;
 		newtype->array.isStatic = array.isStatic;
 		break;
-	  case Function:
+	case Function:
 		newtype->function.params = maybeClone( function.params );
 		newtype->function.idList = maybeClone( function.idList );
 		newtype->function.oldDeclList = maybeClone( function.oldDeclList );
 		newtype->function.body = maybeClone( function.body );
 		newtype->function.withExprs = maybeClone( function.withExprs );
 		break;
-	  case Aggregate:
+	case Aggregate:
 		newtype->aggregate.kind = aggregate.kind;
 		newtype->aggregate.name = aggregate.name ? new string( *aggregate.name ) : nullptr;
 		newtype->aggregate.params = maybeClone( aggregate.params );
@@ -227,39 +207,39 @@ TypeData * TypeData::clone() const {
 		newtype->aggregate.tagged = aggregate.tagged;
 		newtype->aggregate.parent = aggregate.parent ? new string( *aggregate.parent ) : nullptr;
 		break;
-	  case AggregateInst:
+	case AggregateInst:
 		newtype->aggInst.aggregate = maybeClone( aggInst.aggregate );
 		newtype->aggInst.params = maybeClone( aggInst.params );
 		newtype->aggInst.hoistType = aggInst.hoistType;
 		break;
-	  case Enum:
+	case Enum:
 		newtype->enumeration.name = enumeration.name ? new string( *enumeration.name ) : nullptr;
 		newtype->enumeration.constants = maybeClone( enumeration.constants );
 		newtype->enumeration.body = enumeration.body;
 		newtype->enumeration.anon = enumeration.anon;
 		break;
-	  case Symbolic:
-	  case SymbolicInst:
+	case Symbolic:
+	case SymbolicInst:
 		newtype->symbolic.name = symbolic.name ? new string( *symbolic.name ) : nullptr;
 		newtype->symbolic.params = maybeClone( symbolic.params );
 		newtype->symbolic.actuals = maybeClone( symbolic.actuals );
 		newtype->symbolic.assertions = maybeClone( symbolic.assertions );
 		newtype->symbolic.isTypedef = symbolic.isTypedef;
 		break;
-	  case Tuple:
+	case Tuple:
 		newtype->tuple = maybeClone( tuple );
 		break;
-	  case Typeof:
-	  case Basetypeof:
+	case Typeof:
+	case Basetypeof:
 		newtype->typeexpr = maybeClone( typeexpr );
 		break;
-	  case Vtable:
+	case Vtable:
 		break;
-	  case Builtin:
+	case Builtin:
 		assert( builtintype == DeclarationNode::Zero || builtintype == DeclarationNode::One );
 		newtype->builtintype = builtintype;
 		break;
-		case Qualified:
+	case Qualified:
 		newtype->qualified.parent = maybeClone( qualified.parent );
 		newtype->qualified.child = maybeClone( qualified.child );
 		break;
@@ -279,27 +259,27 @@ void TypeData::print( ostream &os, int indent ) const {
 	} // if
 
 	switch ( kind ) {
-	  case Basic:
+	case Basic:
 		if ( signedness != DeclarationNode::NoSignedness ) os << DeclarationNode::signednessNames[ signedness ] << " ";
 		if ( length != DeclarationNode::NoLength ) os << DeclarationNode::lengthNames[ length ] << " ";
 		if ( complextype != DeclarationNode::NoComplexType ) os << DeclarationNode::complexTypeNames[ complextype ] << " ";
 		if ( basictype != DeclarationNode::NoBasicType ) os << DeclarationNode::basicTypeNames[ basictype ] << " ";
 		break;
-	  case Pointer:
+	case Pointer:
 		os << "pointer ";
 		if ( base ) {
 			os << "to ";
 			base->print( os, indent );
 		} // if
 		break;
-	  case Reference:
+	case Reference:
 		os << "reference ";
 		if ( base ) {
 			os << "to ";
 			base->print( os, indent );
 		} // if
 		break;
-	  case Array:
+	case Array:
 		if ( array.isStatic ) {
 			os << "static ";
 		} // if
@@ -315,7 +295,7 @@ void TypeData::print( ostream &os, int indent ) const {
 			base->print( os, indent );
 		} // if
 		break;
-	  case Function:
+	case Function:
 		os << "function" << endl;
 		if ( function.params ) {
 			os << string( indent + 2, ' ' ) << "with parameters " << endl;
@@ -343,7 +323,7 @@ void TypeData::print( ostream &os, int indent ) const {
 			function.body->printList( os, indent + 2 );
 		} // if
 		break;
-	  case Aggregate:
+	case Aggregate:
 		os << AggregateDecl::aggrString( aggregate.kind ) << ' ' << *aggregate.name << endl;
 		if ( aggregate.params ) {
 			os << string( indent + 2, ' ' ) << "with type parameters" << endl;
@@ -361,7 +341,7 @@ void TypeData::print( ostream &os, int indent ) const {
 			os << string( indent + 2, ' ' ) << " with body" << endl;
 		} // if
 		break;
-	  case AggregateInst:
+	case AggregateInst:
 		if ( aggInst.aggregate ) {
 			os << "instance of " ;
 			aggInst.aggregate->print( os, indent );
@@ -373,7 +353,7 @@ void TypeData::print( ostream &os, int indent ) const {
 			aggInst.params->printList( os, indent + 2 );
 		} // if
 		break;
-	  case Enum:
+	case Enum:
 		os << "enumeration " << *enumeration.name << endl;;
 		if ( enumeration.constants ) {
 			os << "with constants" << endl;
@@ -387,10 +367,10 @@ void TypeData::print( ostream &os, int indent ) const {
 			base->print( os, indent + 2 );
 		} // if
 		break;
-	  case EnumConstant:
+	case EnumConstant:
 		os << "enumeration constant ";
 		break;
-	  case Symbolic:
+	case Symbolic:
 		if ( symbolic.isTypedef ) {
 			os << "typedef definition ";
 		} else {
@@ -410,7 +390,7 @@ void TypeData::print( ostream &os, int indent ) const {
 			base->print( os, indent + 2 );
 		} // if
 		break;
-	  case SymbolicInst:
+	case SymbolicInst:
 		os << *symbolic.name;
 		if ( symbolic.actuals ) {
 			os << "(";
@@ -418,42 +398,42 @@ void TypeData::print( ostream &os, int indent ) const {
 			os << ")";
 		} // if
 		break;
-	  case Tuple:
+	case Tuple:
 		os << "tuple ";
 		if ( tuple ) {
 			os << "with members" << endl;
 			tuple->printList( os, indent + 2 );
 		} // if
 		break;
-	  case Basetypeof:
+	case Basetypeof:
 		os << "base-";
 		#if defined(__GNUC__) && __GNUC__ >= 7
 			__attribute__((fallthrough));
 		#endif
 		// FALL THROUGH
-	  case Typeof:
+	case Typeof:
 		os << "type-of expression ";
 		if ( typeexpr ) {
 			typeexpr->print( os, indent + 2 );
 		} // if
 		break;
-	  case Vtable:
+	case Vtable:
 		os << "vtable";
 		break;
-	  case Builtin:
+	case Builtin:
 		os << DeclarationNode::builtinTypeNames[builtintype];
 		break;
-	  case GlobalScope:
+	case GlobalScope:
 		break;
-	  case Qualified:
+	case Qualified:
 		qualified.parent->print( os );
 		os << ".";
 		qualified.child->print( os );
 		break;
-	  case Unknown:
+	case Unknown:
 		os << "entity of unknown type ";
 		break;
-	  default:
+	default:
 		os << "internal error: TypeData::print " << kind << endl;
 		assert( false );
 	} // switch
@@ -461,30 +441,30 @@ void TypeData::print( ostream &os, int indent ) const {
 
 const std::string * TypeData::leafName() const {
 	switch ( kind ) {
-	  case Unknown:
-	  case Pointer:
-	  case Reference:
-	  case EnumConstant:
-	  case GlobalScope:
-	  case Array:
-	  case Basic:
-	  case Function:
-	  case AggregateInst:
-	  case Tuple:
-	  case Typeof:
-	  case Basetypeof:
-	  case Builtin:
-	  case Vtable:
+	case Unknown:
+	case Pointer:
+	case Reference:
+	case EnumConstant:
+	case GlobalScope:
+	case Array:
+	case Basic:
+	case Function:
+	case AggregateInst:
+	case Tuple:
+	case Typeof:
+	case Basetypeof:
+	case Builtin:
+	case Vtable:
 		assertf(false, "Tried to get leaf name from kind without a name: %d", kind);
 		break;
-	  case Aggregate:
+	case Aggregate:
 		return aggregate.name;
-	  case Enum:
+	case Enum:
 		return enumeration.name;
-	  case Symbolic:
-	  case SymbolicInst:
+	case Symbolic:
+	case SymbolicInst:
 		return symbolic.name;
-	  case Qualified:
+	case Qualified:
 		return qualified.child->leafName();
 	} // switch
 	assert(false);
@@ -529,48 +509,48 @@ void buildForall( const DeclarationNode * firstNode, ForallList &outputList ) {
 Type * typebuild( const TypeData * td ) {
 	assert( td );
 	switch ( td->kind ) {
-	  case TypeData::Unknown:
+	case TypeData::Unknown:
 		// fill in implicit int
 		return new BasicType( buildQualifiers( td ), BasicType::SignedInt );
-	  case TypeData::Basic:
+	case TypeData::Basic:
 		return buildBasicType( td );
-	  case TypeData::Pointer:
+	case TypeData::Pointer:
 		return buildPointer( td );
-	  case TypeData::Array:
+	case TypeData::Array:
 		return buildArray( td );
-	  case TypeData::Reference:
+	case TypeData::Reference:
 		return buildReference( td );
-	  case TypeData::Function:
+	case TypeData::Function:
 		return buildFunction( td );
-	  case TypeData::AggregateInst:
+	case TypeData::AggregateInst:
 		return buildAggInst( td );
-	  case TypeData::EnumConstant:
+	case TypeData::EnumConstant:
 		return new EnumInstType( buildQualifiers( td ), "" );
-	  case TypeData::SymbolicInst:
+	case TypeData::SymbolicInst:
 		return buildSymbolicInst( td );
-	  case TypeData::Tuple:
+	case TypeData::Tuple:
 		return buildTuple( td );
-	  case TypeData::Typeof:
-	  case TypeData::Basetypeof:
+	case TypeData::Typeof:
+	case TypeData::Basetypeof:
 		return buildTypeof( td );
-	  case TypeData::Vtable:
+	case TypeData::Vtable:
 		return buildVtable( td );
-	  case TypeData::Builtin:
+	case TypeData::Builtin:
 		switch ( td->builtintype ) {
-		  case DeclarationNode::Zero:
+		case DeclarationNode::Zero:
 			return new ZeroType( noQualifiers );
-		  case DeclarationNode::One:
+		case DeclarationNode::One:
 			return new OneType( noQualifiers );
-		  default:
+		default:
 			return new VarArgsType( buildQualifiers( td ) );
 		} // switch
-	  case TypeData::GlobalScope:
+	case TypeData::GlobalScope:
 		return new GlobalScopeType();
-	  case TypeData::Qualified:
+	case TypeData::Qualified:
 		return new QualifiedType( buildQualifiers( td ), typebuild( td->qualified.parent ), typebuild( td->qualified.child ) );
-	  case TypeData::Symbolic:
-	  case TypeData::Enum:
-	  case TypeData::Aggregate:
+	case TypeData::Symbolic:
+	case TypeData::Enum:
+	case TypeData::Aggregate:
 		assert( false );
 	} // switch
 
@@ -582,22 +562,22 @@ TypeData * typeextractAggregate( const TypeData * td, bool toplevel ) {
 	TypeData * ret = nullptr;
 
 	switch ( td->kind ) {
-	  case TypeData::Aggregate:
+	case TypeData::Aggregate:
 		if ( ! toplevel && td->aggregate.body ) {
 			ret = td->clone();
 		} // if
 		break;
-	  case TypeData::Enum:
+	case TypeData::Enum:
 		if ( ! toplevel && td->enumeration.body ) {
 			ret = td->clone();
 		} // if
 		break;
-	  case TypeData::AggregateInst:
+	case TypeData::AggregateInst:
 		if ( td->aggInst.aggregate ) {
 			ret = typeextractAggregate( td->aggInst.aggregate, false );
 		} // if
 		break;
-	  default:
+	default:
 		if ( td->base ) {
 			ret = typeextractAggregate( td->base, false );
 		} // if
@@ -619,7 +599,7 @@ Type * buildBasicType( const TypeData * td ) {
 	BasicType::Kind ret;
 
 	switch ( td->basictype ) {
-	  case DeclarationNode::Void:
+	case DeclarationNode::Void:
 		if ( td->signedness != DeclarationNode::NoSignedness ) {
 			genTSError( DeclarationNode::signednessNames[ td->signedness ], td->basictype );
 		} // if
@@ -629,7 +609,7 @@ Type * buildBasicType( const TypeData * td ) {
 		return new VoidType( buildQualifiers( td ) );
 		break;
 
-	  case DeclarationNode::Bool:
+	case DeclarationNode::Bool:
 		if ( td->signedness != DeclarationNode::NoSignedness ) {
 			genTSError( DeclarationNode::signednessNames[ td->signedness ], td->basictype );
 		} // if
@@ -640,7 +620,7 @@ Type * buildBasicType( const TypeData * td ) {
 		ret = BasicType::Bool;
 		break;
 
-	  case DeclarationNode::Char:
+	case DeclarationNode::Char:
 		// C11 Standard 6.2.5.15: The three types char, signed char, and unsigned char are collectively called the
 		// character types. The implementation shall define char to have the same range, representation, and behavior as
 		// either signed char or unsigned char.
@@ -653,44 +633,44 @@ Type * buildBasicType( const TypeData * td ) {
 		ret = chartype[ td->signedness ];
 		break;
 
-	  case DeclarationNode::Int:
+	case DeclarationNode::Int:
 		static BasicType::Kind inttype[2][4] = {
 			{ BasicType::ShortSignedInt, BasicType::LongSignedInt, BasicType::LongLongSignedInt, BasicType::SignedInt },
 			{ BasicType::ShortUnsignedInt, BasicType::LongUnsignedInt, BasicType::LongLongUnsignedInt, BasicType::UnsignedInt },
 		};
 
-	  Integral: ;
+	Integral: ;
 		if ( td->signedness == DeclarationNode::NoSignedness ) {
 			const_cast<TypeData *>(td)->signedness = DeclarationNode::Signed;
 		} // if
 		ret = inttype[ td->signedness ][ td->length ];
 		break;
 
-	  case DeclarationNode::Int128:
+	case DeclarationNode::Int128:
 		ret = td->signedness == DeclarationNode::Unsigned ? BasicType::UnsignedInt128 : BasicType::SignedInt128;
 		if ( td->length != DeclarationNode::NoLength ) {
 			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
 		} // if
 		break;
 
-	  case DeclarationNode::Float:
-	  case DeclarationNode::Double:
-	  case DeclarationNode::LongDouble:					// not set until below
-	  case DeclarationNode::uuFloat80:
-	  case DeclarationNode::uuFloat128:
-	  case DeclarationNode::uFloat16:
-	  case DeclarationNode::uFloat32:
-	  case DeclarationNode::uFloat32x:
-	  case DeclarationNode::uFloat64:
-	  case DeclarationNode::uFloat64x:
-	  case DeclarationNode::uFloat128:
-	  case DeclarationNode::uFloat128x:
+	case DeclarationNode::Float:
+	case DeclarationNode::Double:
+	case DeclarationNode::LongDouble:					// not set until below
+	case DeclarationNode::uuFloat80:
+	case DeclarationNode::uuFloat128:
+	case DeclarationNode::uFloat16:
+	case DeclarationNode::uFloat32:
+	case DeclarationNode::uFloat32x:
+	case DeclarationNode::uFloat64:
+	case DeclarationNode::uFloat64x:
+	case DeclarationNode::uFloat128:
+	case DeclarationNode::uFloat128x:
 		static BasicType::Kind floattype[2][12] = {
 			{ BasicType::FloatComplex, BasicType::DoubleComplex, BasicType::LongDoubleComplex, (BasicType::Kind)-1, (BasicType::Kind)-1, BasicType::uFloat16Complex, BasicType::uFloat32Complex, BasicType::uFloat32xComplex, BasicType::uFloat64Complex, BasicType::uFloat64xComplex, BasicType::uFloat128Complex, BasicType::uFloat128xComplex, },
 			{ BasicType::Float, BasicType::Double, BasicType::LongDouble, BasicType::uuFloat80, BasicType::uuFloat128, BasicType::uFloat16, BasicType::uFloat32, BasicType::uFloat32x, BasicType::uFloat64, BasicType::uFloat64x, BasicType::uFloat128, BasicType::uFloat128x, },
 		};
 
-	  FloatingPoint: ;
+	FloatingPoint: ;
 		if ( td->signedness != DeclarationNode::NoSignedness ) {
 			genTSError( DeclarationNode::signednessNames[ td->signedness ], td->basictype );
 		} // if
@@ -714,7 +694,7 @@ Type * buildBasicType( const TypeData * td ) {
 		//printf( "XXXX %d %d %d %d\n", td->complextype, td->basictype, DeclarationNode::Float, ret );
 		break;
 
-	  case DeclarationNode::NoBasicType:
+	case DeclarationNode::NoBasicType:
 		// No basic type in declaration => default double for Complex/Imaginary and int type for integral types
 		if ( td->complextype == DeclarationNode::Complex || td->complextype == DeclarationNode::Imaginary ) {
 			const_cast<TypeData *>(td)->basictype = DeclarationNode::Double;
@@ -723,8 +703,8 @@ Type * buildBasicType( const TypeData * td ) {
 
 		const_cast<TypeData *>(td)->basictype = DeclarationNode::Int;
 		goto Integral;
-	  default:
-	  	assertf( false, "unknown basic type" );
+	default:
+		assertf( false, "unknown basic type" );
 		return nullptr;
 	} // switch
 
@@ -749,11 +729,11 @@ PointerType * buildPointer( const TypeData * td ) {
 ArrayType * buildArray( const TypeData * td ) {
 	ArrayType * at;
 	if ( td->base ) {
-		at = new ArrayType( buildQualifiers( td ), typebuild( td->base ), maybeBuild< Expression >( td->array.dimension ),
+		at = new ArrayType( buildQualifiers( td ), typebuild( td->base ), maybeBuild( td->array.dimension ),
 							td->array.isVarLen, td->array.isStatic );
 	} else {
 		at = new ArrayType( buildQualifiers( td ), new BasicType( Type::Qualifiers(), BasicType::SignedInt ),
-							maybeBuild< Expression >( td->array.dimension ), td->array.isVarLen, td->array.isStatic );
+							maybeBuild( td->array.dimension ), td->array.isVarLen, td->array.isStatic );
 	} // if
 	buildForall( td->forall, at->get_forall() );
 	return at;
@@ -776,24 +756,24 @@ AggregateDecl * buildAggregate( const TypeData * td, std::list< Attribute * > at
 	assert( td->kind == TypeData::Aggregate );
 	AggregateDecl * at;
 	switch ( td->aggregate.kind ) {
-	  case AggregateDecl::Struct:
-	  case AggregateDecl::Coroutine:
-	  case AggregateDecl::Exception:
-	  case AggregateDecl::Generator:
-	  case AggregateDecl::Monitor:
-	  case AggregateDecl::Thread:
+	case AggregateDecl::Struct:
+	case AggregateDecl::Coroutine:
+	case AggregateDecl::Exception:
+	case AggregateDecl::Generator:
+	case AggregateDecl::Monitor:
+	case AggregateDecl::Thread:
 		at = new StructDecl( *td->aggregate.name, td->aggregate.kind, attributes, linkage );
 		buildForall( td->aggregate.params, at->get_parameters() );
 		break;
-	  case AggregateDecl::Union:
+	case AggregateDecl::Union:
 		at = new UnionDecl( *td->aggregate.name, attributes, linkage );
 		buildForall( td->aggregate.params, at->get_parameters() );
 		break;
-	  case AggregateDecl::Trait:
+	case AggregateDecl::Trait:
 		at = new TraitDecl( *td->aggregate.name, attributes, linkage );
 		buildList( td->aggregate.params, at->get_parameters() );
 		break;
-	  default:
+	default:
 		assert( false );
 	} // switch
 
@@ -806,56 +786,48 @@ AggregateDecl * buildAggregate( const TypeData * td, std::list< Attribute * > at
 
 ReferenceToType * buildComAggInst( const TypeData * type, std::list< Attribute * > attributes, LinkageSpec::Spec linkage ) {
 	switch ( type->kind ) {
-	  case TypeData::Enum: {
-		  if ( type->enumeration.body ) {
-			  EnumDecl * typedecl = buildEnum( type, attributes, linkage );
-			  return new EnumInstType( buildQualifiers( type ), typedecl );
-		  } else {
-			  return new EnumInstType( buildQualifiers( type ), *type->enumeration.name );
-		  } // if
-	  }
-	  case TypeData::Aggregate: {
-		  ReferenceToType * ret;
-		  if ( type->aggregate.body ) {
-			  AggregateDecl * typedecl = buildAggregate( type, attributes, linkage );
-			  switch ( type->aggregate.kind ) {
-				case AggregateDecl::Struct:
-				case AggregateDecl::Coroutine:
-				case AggregateDecl::Monitor:
-				case AggregateDecl::Thread:
-				  ret = new StructInstType( buildQualifiers( type ), (StructDecl *)typedecl );
-				  break;
-				case AggregateDecl::Union:
-				  ret = new UnionInstType( buildQualifiers( type ), (UnionDecl *)typedecl );
-				  break;
-				case AggregateDecl::Trait:
-				  assert( false );
-				  //ret = new TraitInstType( buildQualifiers( type ), (TraitDecl *)typedecl );
-				  break;
-				default:
-				  assert( false );
-			  } // switch
-		  } else {
-			  switch ( type->aggregate.kind ) {
-				case AggregateDecl::Struct:
-				case AggregateDecl::Coroutine:
-				case AggregateDecl::Monitor:
-				case AggregateDecl::Thread:
-				  ret = new StructInstType( buildQualifiers( type ), *type->aggregate.name );
-				  break;
-				case AggregateDecl::Union:
-				  ret = new UnionInstType( buildQualifiers( type ), *type->aggregate.name );
-				  break;
-				case AggregateDecl::Trait:
-				  ret = new TraitInstType( buildQualifiers( type ), *type->aggregate.name );
-				  break;
-				default:
-				  assert( false );
-			  } // switch
-		  } // if
-		  return ret;
-	  }
-	  default:
+	case TypeData::Enum:
+		if ( type->enumeration.body ) {
+			EnumDecl * typedecl = buildEnum( type, attributes, linkage );
+			return new EnumInstType( buildQualifiers( type ), typedecl );
+		} else {
+			return new EnumInstType( buildQualifiers( type ), *type->enumeration.name );
+		} // if
+	case TypeData::Aggregate:
+		if ( type->aggregate.body ) {
+			AggregateDecl * typedecl = buildAggregate( type, attributes, linkage );
+			switch ( type->aggregate.kind ) {
+			case AggregateDecl::Struct:
+			case AggregateDecl::Coroutine:
+			case AggregateDecl::Monitor:
+			case AggregateDecl::Thread:
+				return new StructInstType( buildQualifiers( type ), (StructDecl *)typedecl );
+			case AggregateDecl::Union:
+				return new UnionInstType( buildQualifiers( type ), (UnionDecl *)typedecl );
+			case AggregateDecl::Trait:
+				assert( false );
+				//return new TraitInstType( buildQualifiers( type ), (TraitDecl *)typedecl );
+				break;
+			default:
+				assert( false );
+			} // switch
+		} else {
+			switch ( type->aggregate.kind ) {
+			case AggregateDecl::Struct:
+			case AggregateDecl::Coroutine:
+			case AggregateDecl::Monitor:
+			case AggregateDecl::Thread:
+				return new StructInstType( buildQualifiers( type ), *type->aggregate.name );
+			case AggregateDecl::Union:
+				return new UnionInstType( buildQualifiers( type ), *type->aggregate.name );
+			case AggregateDecl::Trait:
+				return new TraitInstType( buildQualifiers( type ), *type->aggregate.name );
+			default:
+				assert( false );
+			} // switch
+		} // if
+		return nullptr;
+	default:
 		assert( false );
 	} // switch
 } // buildAggInst
@@ -868,29 +840,27 @@ ReferenceToType * buildAggInst( const TypeData * td ) {
 	ReferenceToType * ret = nullptr;
 	TypeData * type = td->aggInst.aggregate;
 	switch ( type->kind ) {
-	  case TypeData::Enum: {
-		  return new EnumInstType( buildQualifiers( type ), *type->enumeration.name );
-	  }
-	  case TypeData::Aggregate: {
-		  switch ( type->aggregate.kind ) {
-			case AggregateDecl::Struct:
-			case AggregateDecl::Coroutine:
-			case AggregateDecl::Monitor:
-			case AggregateDecl::Thread:
-			  ret = new StructInstType( buildQualifiers( type ), *type->aggregate.name );
-			  break;
-			case AggregateDecl::Union:
-			  ret = new UnionInstType( buildQualifiers( type ), *type->aggregate.name );
-			  break;
-			case AggregateDecl::Trait:
-			  ret = new TraitInstType( buildQualifiers( type ), *type->aggregate.name );
-			  break;
-			default:
-			  assert( false );
-		  } // switch
-	  }
-	  break;
-	  default:
+	case TypeData::Enum:
+		return new EnumInstType( buildQualifiers( type ), *type->enumeration.name );
+	case TypeData::Aggregate:
+		switch ( type->aggregate.kind ) {
+		case AggregateDecl::Struct:
+		case AggregateDecl::Coroutine:
+		case AggregateDecl::Monitor:
+		case AggregateDecl::Thread:
+			ret = new StructInstType( buildQualifiers( type ), *type->aggregate.name );
+			break;
+		case AggregateDecl::Union:
+			ret = new UnionInstType( buildQualifiers( type ), *type->aggregate.name );
+			break;
+		case AggregateDecl::Trait:
+			ret = new TraitInstType( buildQualifiers( type ), *type->aggregate.name );
+			break;
+		default:
+			assert( false );
+		} // switch
+		break;
+	default:
 		assert( false );
 	} // switch
 
@@ -930,7 +900,7 @@ EnumDecl * buildEnum( const TypeData * td, std::list< Attribute * > attributes, 
 			SemanticError( td->location, "Enumerator of enum(void) cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {
 			ObjectDecl * member = dynamic_cast< ObjectDecl * >(* members);
-			member->set_init( new SingleInit( maybeMoveBuild< Expression >( cur->consume_enumeratorValue() ) ) );
+			member->set_init( new SingleInit( maybeMoveBuild( cur->consume_enumeratorValue() ) ) );
 		} else if ( !cur->initializer ) {
 			if ( baseType && (!dynamic_cast<BasicType *>(baseType) || !dynamic_cast<BasicType *>(baseType)->isInteger())) {
 				SemanticError( td->location, "Enumerators of an non-integer typed enum must be explicitly initialized." );
@@ -984,7 +954,7 @@ Declaration * buildDecl( const TypeData * td, const string &name, Type::StorageC
 		} // if
 
 		FunctionDecl * decl;
-		Statement * stmt = maybeBuild<Statement>( td->function.body );
+		Statement * stmt = maybeBuild( td->function.body );
 		CompoundStmt * body = dynamic_cast< CompoundStmt * >( stmt );
 		decl = new FunctionDecl( name, scs, linkage, buildFunction( td ), body, attributes, funcSpec );
 		buildList( td->function.withExprs, decl->withExprs );
@@ -1009,10 +979,10 @@ FunctionType * buildFunction( const TypeData * td ) {
 	buildForall( td->forall, ft->forall );
 	if ( td->base ) {
 		switch ( td->base->kind ) {
-		  case TypeData::Tuple:
+		case TypeData::Tuple:
 			buildList( td->base->tuple, ft->returnVals );
 			break;
-		  default:
+		default:
 			ft->get_returnVals().push_back( dynamic_cast< DeclarationWithType * >( buildDecl( td->base, "", Type::StorageClasses(), nullptr, Type::FuncSpecifiers(), LinkageSpec::Cforall, nullptr ) ) );
 		} // switch
 	} else {

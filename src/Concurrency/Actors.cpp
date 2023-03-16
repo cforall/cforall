@@ -44,12 +44,19 @@ struct CollectactorStructDecls : public ast::WithGuards {
 
     // finds and sets a ptr to the actor, message, and request structs, which are needed in the next pass
     void previsit( const StructDecl * decl ) {
-        GuardValue(insideStruct);
-        insideStruct = true;
-        parentDecl = mutate( decl );
-        if( decl->name == "actor" ) *actorDecl = decl;
-        if( decl->name == "message" ) *msgDecl = decl;
-        if( decl->name == "request" ) *requestDecl = decl;
+        if ( !decl->body ) return;
+        if ( decl->name == "actor" ) {
+            actorStructDecls.insert( decl ); // skip inserting fwd decl
+            *actorDecl = decl;
+        } else if( decl->name == "message" ) {
+            messageStructDecls.insert( decl ); // skip inserting fwd decl
+            *msgDecl = decl;
+        } else if( decl->name == "request" ) *requestDecl = decl;
+        else {
+            GuardValue(insideStruct);
+            insideStruct = true;
+            parentDecl = mutate( decl );
+        }
 	}
 
     // this catches structs of the form:
@@ -63,13 +70,17 @@ struct CollectactorStructDecls : public ast::WithGuards {
         }
     }
 
-    // this collects the valid actor and message struct decl pts
+    // this collects the derived actor and message struct decl ptrs
     void postvisit( const StructInstType * node ) {
         if ( ! *actorDecl || ! *msgDecl ) return;
         if ( insideStruct && !namedDecl ) {
-            if ( node->aggr() == *actorDecl ) {
+            auto actorIter = actorStructDecls.find( node->aggr() );    
+            if ( actorIter != actorStructDecls.end() ) {
                 actorStructDecls.insert( parentDecl );
-            } else if ( node->aggr() == *msgDecl ) {
+                return;
+            }
+            auto messageIter = messageStructDecls.find( node->aggr() );
+            if ( messageIter != messageStructDecls.end() ) {
                 messageStructDecls.insert( parentDecl );
             }
         }
@@ -179,7 +190,10 @@ class FwdDeclTable {
     }
 };
 
-struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
+// generates the definitions of send operators for actors
+// collects data needed for next pass that does the circular defn resolution 
+//     for message send operators (via table above)
+struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
     unordered_set<const StructDecl *> & actorStructDecls;
     unordered_set<const StructDecl *>  & messageStructDecls;
     const StructDecl ** requestDecl;
@@ -188,6 +202,7 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
     const StructDecl ** msgDecl;
     FwdDeclTable & forwardDecls;
 
+    // generates the operator for actor message sends
 	void postvisit( const FunctionDecl * decl ) {
         // return if not of the form receive( param1, param2 ) or if it is a forward decl
         if ( decl->name != "receive" || decl->params.size() != 2 || !decl->stmts ) return;
@@ -206,11 +221,6 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
         auto actorIter = actorStructDecls.find( arg1InstType->aggr() );
         auto messageIter = messageStructDecls.find( arg2InstType->aggr() );
         if ( actorIter != actorStructDecls.end() && messageIter != messageStructDecls.end() ) {
-
-            // check that we have found all the decls we need from <actor.hfa>
-            if ( !*allocationDecl || !*requestDecl ) 
-                SemanticError( decl->location, "using actors requires a header, add #include <actor.hfa>\n" );
-
             //////////////////////////////////////////////////////////////////////
             // The following generates this send message operator routine for all receive(derived_actor &, derived_msg &) functions
             /*
@@ -222,7 +232,7 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
                     send( receiver, new_req );
                     return receiver;
                 }
-            */ // C_TODO: update this with new no alloc version
+            */ 
             CompoundStmt * sendBody = new CompoundStmt( decl->location );
 
             // Generates: request new_req;
@@ -252,13 +262,13 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
                 )
             ));
 
-            // Function type is: Allocation (*)( actor &, messsage & )
+            // Function type is: Allocation (*)( actor &, message & )
             FunctionType * genericReceive = new FunctionType();
             genericReceive->params.push_back( new ReferenceType( new StructInstType( *actorDecl ) ) );
             genericReceive->params.push_back( new ReferenceType( new StructInstType( *msgDecl ) ) );
             genericReceive->returns.push_back( new EnumInstType( *allocationDecl ) );
 
-            // Generates: Allocation (*fn)( actor &, messsage & ) = (Allocation (*)( actor &, messsage & ))my_work_fn;
+            // Generates: Allocation (*fn)( actor &, message & ) = (Allocation (*)( actor &, message & ))my_work_fn;
             // More readable synonymous code: 
             //     typedef Allocation (*__receive_fn)(actor &, message &);
             //     __receive_fn fn = (__receive_fn)my_work_fn;
@@ -310,7 +320,7 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
             // put it all together into the complete function decl from above
             FunctionDecl * sendOperatorFunction = new FunctionDecl(
                 decl->location,
-                "?|?",
+                "?<<?",
                 {},                     // forall
                 {
                     new ObjectDecl(
@@ -340,7 +350,6 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
             
             // forward decls to resolve use before decl problem for '|' routines
             forwardDecls.insertDecl( *actorIter, *messageIter , ast::deepCopy( sendOperatorFunction ) );
-            // forwardDecls.push_back( ast::deepCopy( sendOperatorFunction ) );
 
             sendOperatorFunction->stmts = sendBody;
             declsToAddAfter.push_back( sendOperatorFunction );
@@ -348,17 +357,21 @@ struct GenReceiveDecls : public ast::WithDeclsToAdd<> {
 	}
 
   public:
-    GenReceiveDecls( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls,
+    GenFuncsCreateTables( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls,
         const StructDecl ** requestDecl, const EnumDecl ** allocationDecl, const StructDecl ** actorDecl, const StructDecl ** msgDecl, 
         FwdDeclTable & forwardDecls ) : actorStructDecls(actorStructDecls), messageStructDecls(messageStructDecls), 
         requestDecl(requestDecl), allocationDecl(allocationDecl), actorDecl(actorDecl), msgDecl(msgDecl), forwardDecls(forwardDecls) {}
 };
 
-struct GenFwdDecls : public ast::WithDeclsToAdd<> {
+
+// separate pass is needed since this pass resolves circular defn issues
+// generates the forward declarations of the send operator for actor routines
+struct FwdDeclOperator : public ast::WithDeclsToAdd<> {
     unordered_set<const StructDecl *> & actorStructDecls;
     unordered_set<const StructDecl *>  & messageStructDecls;
     FwdDeclTable & forwardDecls;
 
+    // handles forward declaring the message operator
     void postvisit( const StructDecl * decl ) {
         list<FunctionDecl *> toAddAfter;
         auto actorIter = actorStructDecls.find( decl );
@@ -385,9 +398,8 @@ struct GenFwdDecls : public ast::WithDeclsToAdd<> {
     }
 
   public:
-    GenFwdDecls( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls, 
-        FwdDeclTable & forwardDecls ) : actorStructDecls(actorStructDecls), messageStructDecls(messageStructDecls),
-        forwardDecls(forwardDecls) {}
+    FwdDeclOperator( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls, 
+        FwdDeclTable & forwardDecls ) : actorStructDecls(actorStructDecls), messageStructDecls(messageStructDecls), forwardDecls(forwardDecls) {}
 };
 
 void implementActors( TranslationUnit & translationUnit ) {
@@ -413,14 +425,18 @@ void implementActors( TranslationUnit & translationUnit ) {
     // also populates maps of all derived actors and messages
     Pass<CollectactorStructDecls>::run( translationUnit, actorStructDecls, messageStructDecls, requestDecl, 
         allocationDecl, actorDecl, msgDecl );
-	
+
+    // check that we have found all the decls we need from <actor.hfa>, if not no need to run the rest of this pass
+    if ( !allocationDeclPtr || !requestDeclPtr || !actorDeclPtr || !msgDeclPtr ) 
+        return;
+
     // second pass locates all receive() routines that overload the generic receive fn
     // it then generates the appropriate operator '|' send routines for the receive routines
-    Pass<GenReceiveDecls>::run( translationUnit, actorStructDecls, messageStructDecls, requestDecl, 
+    Pass<GenFuncsCreateTables>::run( translationUnit, actorStructDecls, messageStructDecls, requestDecl, 
         allocationDecl, actorDecl, msgDecl, forwardDecls );
 
     // The third pass forward declares operator '|' send routines
-    Pass<GenFwdDecls>::run( translationUnit, actorStructDecls, messageStructDecls, forwardDecls );
+    Pass<FwdDeclOperator>::run( translationUnit, actorStructDecls, messageStructDecls, forwardDecls );
 }
 
 

@@ -136,26 +136,17 @@ class ExpressionNode final : public ParseNode {
 	template<typename T>
 	bool isExpressionType() const {	return nullptr != dynamic_cast<T>(expr.get()); }
 
-	Expression * build() const { return const_cast<ExpressionNode *>(this)->expr.release(); }
+	Expression * build() const {
+		Expression * node = const_cast<ExpressionNode *>(this)->expr.release();
+		node->set_extension( this->get_extension() );
+		node->location = this->location;
+		return node;
+	}
 
 	std::unique_ptr<Expression> expr;					// public because of lifetime implications
   private:
 	bool extension = false;
 }; // ExpressionNode
-
-template< typename T >
-struct maybeBuild_t< Expression, T > {
-	static inline Expression * doit( const T * orig ) {
-		if ( orig ) {
-			Expression * p = orig->build();
-			p->set_extension( orig->get_extension() );
-			p->location = orig->location;
-			return p;
-		} else {
-			return nullptr;
-		} // if
-	}
-};
 
 // Must harmonize with OperName.
 enum class OperKinds {
@@ -198,7 +189,6 @@ Expression * build_offsetOf( DeclarationNode * decl_node, NameExpr * member );
 Expression * build_and( ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
 Expression * build_and_or( ExpressionNode * expr_node1, ExpressionNode * expr_node2, bool kind );
 Expression * build_unary_val( OperKinds op, ExpressionNode * expr_node );
-Expression * build_unary_ptr( OperKinds op, ExpressionNode * expr_node );
 Expression * build_binary_val( OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
 Expression * build_binary_ptr( OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
 Expression * build_cond( ExpressionNode * expr_node1, ExpressionNode * expr_node2, ExpressionNode * expr_node3 );
@@ -212,9 +202,12 @@ struct TypeData;
 
 struct DeclarationNode : public ParseNode {
 	// These enumerations must harmonize with their names in DeclarationNode.cc.
-	enum BasicType { Void, Bool, Char, Int, Int128,
-					 Float, Double, LongDouble, uuFloat80, uuFloat128,
-					 uFloat16, uFloat32, uFloat32x, uFloat64, uFloat64x, uFloat128, uFloat128x, NoBasicType };
+	enum BasicType {
+		Void, Bool, Char, Int, Int128,
+		Float, Double, LongDouble, uuFloat80, uuFloat128,
+		uFloat16, uFloat32, uFloat32x, uFloat64, uFloat64x, uFloat128, uFloat128x,
+		NoBasicType
+	};
 	static const char * basicTypeNames[];
 	enum ComplexType { Complex, NoComplexType, Imaginary };	// Imaginary unsupported => parse, but make invisible and print error message
 	static const char * complexTypeNames[];
@@ -400,10 +393,8 @@ struct CondCtl {
 };
 
 struct ForCtrl {
-	ForCtrl( ExpressionNode * expr, ExpressionNode * condition, ExpressionNode * change ) :
-		init( new StatementNode( build_expr( expr ) ) ), condition( condition ), change( change ) {}
-	ForCtrl( DeclarationNode * decl, ExpressionNode * condition, ExpressionNode * change ) :
-		init( new StatementNode( decl ) ), condition( condition ), change( change ) {}
+	ForCtrl( StatementNode * stmt, ExpressionNode * condition, ExpressionNode * change ) :
+		init( stmt ), condition( condition ), change( change ) {}
 
 	StatementNode * init;
 	ExpressionNode * condition;
@@ -450,7 +441,7 @@ void buildList( const NodeType * firstNode, Container< SynTreeType *, Args... > 
 
 	while ( cur ) {
 		try {
-			SynTreeType * result = dynamic_cast< SynTreeType * >( maybeBuild< typename std::pointer_traits< decltype(cur->build())>::element_type >( cur ) );
+			SynTreeType * result = dynamic_cast< SynTreeType * >( maybeBuild( cur ) );
 			if ( result ) {
 				result->location = cur->location;
 				* out++ = result;
