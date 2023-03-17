@@ -31,10 +31,34 @@ trait embedded {
 forall (T &)
 static inline tytagref(void, T) ?`inner ( T & this ) { tytagref( void, T ) ret = {this}; return ret; }
 
-// use this on every case of plan-9 inheritance, to make embedded a closure of plan-9 inheritance
-#define P9_EMBEDDED( derived, immedBase ) \
-forall( Tbase &, TdiscardPath & | { tytagref( TdiscardPath, Tbase ) ?`inner( immedBase & ); } ) \
-    static inline tytagref(immedBase, Tbase) ?`inner( derived & this ) { \
+
+//
+// P9_EMBEDDED: Use on every case of plan-9 inheritance, to make "implements embedded" be a closure of plan-9 inheritance.
+//
+// struct foo {
+//    int a, b, c;
+//    inline (bar);
+// };
+// P9_EMBEDDED( foo, bar )
+//
+
+// usual version, for structs that are top-level declarations
+#define P9_EMBEDDED(        derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase, static ) P9_EMBEDDED_BDY_( immedBase )
+
+// special version, for structs that are declared in functions
+#define P9_EMBEDDED_INFUNC( derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase,        ) P9_EMBEDDED_BDY_( immedBase )
+
+// forward declarations of both the above; generally not needed
+// may help you control where the P9_EMBEEDED cruft goes, in case "right after the stuct" isn't where you want it
+#define P9_EMBEDDED_FWD(        derived, immedBase )      P9_EMBEDDED_DECL_( derived, immedBase, static ) ;
+#define P9_EMBEDDED_FWD_INFUNC( derived, immedBase ) auto P9_EMBEDDED_DECL_( derived, immedBase,        ) ;
+
+// private helpers
+#define P9_EMBEDDED_DECL_( derived, immedBase, STORAGE ) \
+    forall( Tbase &, TdiscardPath & | { tytagref( TdiscardPath, Tbase ) ?`inner( immedBase & ); } ) \
+    STORAGE inline tytagref(immedBase, Tbase) ?`inner( derived & this )
+    
+#define P9_EMBEDDED_BDY_( immedBase ) { \
         immedBase & ib = this; \
         Tbase & b = ib`inner; \
         tytagref(immedBase, Tbase) result = { b }; \
