@@ -313,7 +313,9 @@ ast::FunctionDecl * TryMutatorCore::make_finally_function(
 		{}, //return void
 		nullptr,
 		ast::Storage::Classes{},
-		ast::Linkage::Cforall
+		ast::Linkage::Cforall,
+        {},
+        { ast::Function::Inline }
 	);
 }
 
