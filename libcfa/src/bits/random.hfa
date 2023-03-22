@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jan 14 07:18:11 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 22 20:54:22 2022
-// Update Count     : 178
+// Last Modified On : Mon Mar 20 21:45:24 2023
+// Update Count     : 186
 // 
 
 #pragma once
@@ -27,34 +27,36 @@
 	//#define XORSHIFT_12_25_27
 	#define XOSHIRO256PP
 	//#define KISS_64
+    // #define SPLITMIX_64
 
 	// 32-bit generators
 	//#define XORSHIFT_6_21_7
 	#define XOSHIRO128PP
+    // #define SPLITMIX_32
 #else													// 32-bit architecture
 	// 64-bit generators
 	//#define XORSHIFT_13_7_17
 	#define XOSHIRO256PP
+    // #define SPLITMIX_64
 
 	// 32-bit generators
 	//#define XORSHIFT_6_21_7
 	#define XOSHIRO128PP
+    // #define SPLITMIX_32
 #endif // __x86_64__
 
 // Define C/CFA PRNG name and random-state.
 
-// SKULLDUGGERY: typedefs name struct and typedef with the same name to deal with CFA typedef numbering problem.
-
 #ifdef XOSHIRO256PP
 #define PRNG_NAME_64 xoshiro256pp
 #define PRNG_STATE_64_T GLUE(PRNG_NAME_64,_t)
-typedef struct PRNG_STATE_64_T { uint64_t s0, s1, s2, s3; } PRNG_STATE_64_T;
+typedef struct { uint64_t s0, s1, s2, s3; } PRNG_STATE_64_T;
 #endif // XOSHIRO256PP
 
 #ifdef XOSHIRO128PP
 #define PRNG_NAME_32 xoshiro128pp
 #define PRNG_STATE_32_T GLUE(PRNG_NAME_32,_t)
-typedef struct PRNG_STATE_32_T { uint32_t s0, s1, s2, s3; } PRNG_STATE_32_T;
+typedef struct { uint32_t s0, s1, s2, s3; } PRNG_STATE_32_T;
 #endif // XOSHIRO128PP
 
 #ifdef LEHMER64
@@ -82,16 +84,26 @@ typedef struct PRNG_STATE_32_T { uint32_t s0, s1, s2, s3; } PRNG_STATE_32_T;
 #define PRNG_STATE_64_T uint64_t
 #endif // XORSHIFT_12_25_27
 
+#ifdef SPLITMIX_64
+#define PRNG_NAME_64 splitmix64
+#define PRNG_STATE_64_T uint64_t
+#endif // SPLITMIX32
+
+#ifdef SPLITMIX_32
+#define PRNG_NAME_32 splitmix32
+#define PRNG_STATE_32_T uint32_t
+#endif // SPLITMIX32
+
 #ifdef KISS_64
 #define PRNG_NAME_64 kiss_64
 #define PRNG_STATE_64_T GLUE(PRNG_NAME_64,_t)
-typedef struct PRNG_STATE_64_T { uint64_t z, w, jsr, jcong; } PRNG_STATE_64_T;
+typedef struct { uint64_t z, w, jsr, jcong; } PRNG_STATE_64_T;
 #endif // KISS_^64
 
 #ifdef XORWOW
 #define PRNG_NAME_32 xorwow
 #define PRNG_STATE_32_T GLUE(PRNG_NAME_32,_t)
-typedef struct PRNG_STATE_32_T { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T;
+typedef struct { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T;
 #endif // XOSHIRO128PP
 
 #define PRNG_SET_SEED_64 GLUE(PRNG_NAME_64,_set_seed)
@@ -118,6 +130,72 @@ typedef struct PRNG_STATE_32_T { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T
 
 #ifdef __cforall										// don't include in C code (invoke.h)
 
+// https://rosettacode.org/wiki/Pseudo-random_numbers/Splitmix64
+//
+// Splitmix64 is not recommended for demanding random number requirements, but is often used to calculate initial states
+// for other more complex pseudo-random number generators (see https://prng.di.unimi.it).
+// Also https://rosettacode.org/wiki/Pseudo-random_numbers/Splitmix64.
+static inline uint64_t splitmix64( uint64_t & state ) {
+    state += 0x9e3779b97f4a7c15;
+    uint64_t z = state;
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
+    z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
+    return z ^ (z >> 31);
+} // splitmix64
+
+static inline void splitmix64_set_seed( uint64_t & state , uint64_t seed ) {
+    state = seed;
+    splitmix64( state );								// prime
+} // splitmix64_set_seed
+
+// https://github.com/bryc/code/blob/master/jshash/PRNGs.md#splitmix32
+//
+// Splitmix32 is not recommended for demanding random number requirements, but is often used to calculate initial states
+// for other more complex pseudo-random number generators (see https://prng.di.unimi.it).
+
+static inline uint32_t splitmix32( uint32_t & state ) {
+    state += 0x9e3779b9;
+    uint64_t z = state;
+    z = (z ^ (z >> 15)) * 0x85ebca6b;
+    z = (z ^ (z >> 13)) * 0xc2b2ae35;
+    return z ^ (z >> 16);
+} // splitmix32
+
+static inline void splitmix32_set_seed( uint32_t & state, uint64_t seed ) {
+    state = seed;
+    splitmix32( state );								// prime
+} // splitmix32_set_seed
+
+#ifdef __SIZEOF_INT128__
+//--------------------------------------------------
+static inline uint64_t lehmer64( __uint128_t & state ) {
+	__uint128_t ret = state;
+	state *= 0x_da94_2042_e4dd_58b5;
+	return ret >> 64;
+} // lehmer64
+
+static inline void lehmer64_set_seed( __uint128_t & state, uint64_t seed ) {
+	// The seed needs to be coprime with the 2^64 modulus to get the largest period, so no factors of 2 in the seed.
+	state = splitmix64( seed );							// prime
+} // lehmer64_set_seed
+
+//--------------------------------------------------
+static inline uint64_t wyhash64( uint64_t & state ) {
+	uint64_t ret = state;
+	state += 0x_60be_e2be_e120_fc15;
+	__uint128_t tmp;
+	tmp = (__uint128_t) ret * 0x_a3b1_9535_4a39_b70d;
+	uint64_t m1 = (tmp >> 64) ^ tmp;
+	tmp = (__uint128_t)m1 * 0x_1b03_7387_12fa_d5c9;
+	uint64_t m2 = (tmp >> 64) ^ tmp;
+	return m2;
+} // wyhash64
+
+static inline void wyhash64_set_seed( uint64_t & state, uint64_t seed ) {
+	state = splitmix64( seed );							// prime
+} // wyhash64_set_seed
+#endif // __SIZEOF_INT128__
+
 // https://prng.di.unimi.it/xoshiro256starstar.c
 //
 // This is xoshiro256++ 1.0, one of our all-purpose, rock-solid generators.  It has excellent (sub-ns) speed, a state
@@ -129,7 +207,7 @@ typedef struct PRNG_STATE_32_T { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T
 // splitmix64 generator and use its output to fill s.
 
 #ifndef XOSHIRO256PP
-typedef struct xoshiro256pp_t { uint64_t s0, s1, s2, s3; } xoshiro256pp_t;
+typedef struct { uint64_t s0, s1, s2, s3; } xoshiro256pp_t;
 #endif // ! XOSHIRO256PP
 
 static inline uint64_t xoshiro256pp( xoshiro256pp_t & rs ) with(rs) {
@@ -150,8 +228,12 @@ static inline uint64_t xoshiro256pp( xoshiro256pp_t & rs ) with(rs) {
 } // xoshiro256pp
 
 static inline void xoshiro256pp_set_seed( xoshiro256pp_t & state, uint64_t seed ) {
-	state = (xoshiro256pp_t){ seed, seed, seed, seed };
-	xoshiro256pp( state );
+    // To attain repeatable seeding, compute seeds separately because the order of argument evaluation is undefined.
+    uint64_t seed1 = splitmix64( seed );				// prime
+    uint64_t seed2 = splitmix64( seed );
+    uint64_t seed3 = splitmix64( seed );
+    uint64_t seed4 = splitmix64( seed );
+	state = (xoshiro256pp_t){ seed1, seed2, seed3, seed4 };
 } // xoshiro256pp_set_seed
 
 // https://prng.di.unimi.it/xoshiro128plusplus.c
@@ -164,7 +246,7 @@ static inline void xoshiro256pp_set_seed( xoshiro256pp_t & state, uint64_t seed 
 // The state must be seeded so that it is not everywhere zero.
 
 #ifndef XOSHIRO128PP
-typedef struct xoshiro128pp_t { uint32_t s0, s1, s2, s3; } xoshiro128pp_t;
+typedef struct { uint32_t s0, s1, s2, s3; } xoshiro128pp_t;
 #endif // ! XOSHIRO128PP
 
 static inline uint32_t xoshiro128pp( xoshiro128pp_t & rs ) with(rs) {
@@ -185,41 +267,13 @@ static inline uint32_t xoshiro128pp( xoshiro128pp_t & rs ) with(rs) {
 } // xoshiro128pp
 
 static inline void xoshiro128pp_set_seed( xoshiro128pp_t & state, uint32_t seed ) {
-	state = (xoshiro128pp_t){ seed, seed, seed, seed };
-	xoshiro128pp( state );								// prime
+    // To attain repeatable seeding, compute seeds separately because the order of argument evaluation is undefined.
+    uint32_t seed1 = splitmix32( seed );				// prime
+    uint32_t seed2 = splitmix32( seed );
+    uint32_t seed3 = splitmix32( seed );
+    uint32_t seed4 = splitmix32( seed );
+	state = (xoshiro128pp_t){ seed1, seed2, seed3, seed4 };
 } // xoshiro128pp_set_seed
-
-#ifdef __SIZEOF_INT128__
-	//--------------------------------------------------
-	static inline uint64_t lehmer64( __uint128_t & state ) {
-		__uint128_t ret = state;
-		state *= 0x_da94_2042_e4dd_58b5;
-		return ret >> 64;
-	} // lehmer64
-
-	static inline void lehmer64_set_seed( __uint128_t & state, uint64_t seed ) {
-		// The seed needs to be coprime with the 2^64 modulus to get the largest period, so no factors of 2 in the seed.
-		state = seed;
-		lehmer64( state );								// prime
-	} // lehmer64_set_seed
-
-	//--------------------------------------------------
-	static inline uint64_t wyhash64( uint64_t & state ) {
-		uint64_t ret = state;
-		state += 0x_60be_e2be_e120_fc15;
-		__uint128_t tmp;
-		tmp = (__uint128_t) ret * 0x_a3b1_9535_4a39_b70d;
-		uint64_t m1 = (tmp >> 64) ^ tmp;
-		tmp = (__uint128_t)m1 * 0x_1b03_7387_12fa_d5c9;
-		uint64_t m2 = (tmp >> 64) ^ tmp;
-		return m2;
-	} // wyhash64
-
-	static inline void wyhash64_set_seed( uint64_t & state, uint64_t seed ) {
-		state = seed;
-		wyhash64( state );								// prime
-	} // wyhash64_set_seed
-#endif // __SIZEOF_INT128__
 
 //--------------------------------------------------
 static inline uint64_t xorshift_13_7_17( uint64_t & state ) {
@@ -231,8 +285,7 @@ static inline uint64_t xorshift_13_7_17( uint64_t & state ) {
 } // xorshift_13_7_17
 
 static inline void xorshift_13_7_17_set_seed( uint64_t & state, uint64_t seed ) {
-	state = seed;
-	xorshift_13_7_17( state );							// prime
+	state = splitmix64( seed );							// prime
 } // xorshift_13_7_17_set_seed
 
 //--------------------------------------------------
@@ -249,8 +302,7 @@ static inline uint32_t xorshift_6_21_7( uint32_t & state ) {
 } // xorshift_6_21_7
 
 static inline void xorshift_6_21_7_set_seed( uint32_t & state, uint32_t seed ) {
-	state = seed;
-	xorshift_6_21_7( state );							// prime
+    state = splitmix32( seed );							// prime
 } // xorshift_6_21_7_set_seed
 
 //--------------------------------------------------
@@ -264,14 +316,13 @@ static inline uint64_t xorshift_12_25_27( uint64_t & state ) {
 } // xorshift_12_25_27
 
 static inline void xorshift_12_25_27_set_seed( uint64_t & state, uint64_t seed ) {
-	state = seed;
-	xorshift_12_25_27( state );							// prime
+	state = splitmix64( seed );							// prime
 } // xorshift_12_25_27_set_seed
 
 //--------------------------------------------------
 // The state must be seeded with a nonzero value.
 #ifndef KISS_64
-typedef struct kiss_64_t { uint64_t z, w, jsr, jcong; } kiss_64_t;
+typedef struct { uint64_t z, w, jsr, jcong; } kiss_64_t;
 #endif // ! KISS_64
 
 static inline uint64_t kiss_64( kiss_64_t & rs ) with(rs) {
@@ -286,14 +337,13 @@ static inline uint64_t kiss_64( kiss_64_t & rs ) with(rs) {
 } // kiss_64
 
 static inline void kiss_64_set_seed( kiss_64_t & rs, uint64_t seed ) with(rs) {
-	z = 1; w = 1; jsr = 4; jcong = seed;
-	kiss_64( rs );										// prime
+	z = 1; w = 1; jsr = 4; jcong = splitmix64( seed );	// prime
 } // kiss_64_set_seed
 
 //--------------------------------------------------
 // The state array must be initialized to non-zero in the first four words.
 #ifndef XORWOW
-typedef struct xorwow_t { uint32_t a, b, c, d, counter; } xorwow_t;
+typedef struct { uint32_t a, b, c, d, counter; } xorwow_t;
 #endif // ! XORWOW
 
 static inline uint32_t xorwow( xorwow_t & rs ) with(rs) {
@@ -315,15 +365,19 @@ static inline uint32_t xorwow( xorwow_t & rs ) with(rs) {
 } // xorwow
 
 static inline void xorwow_set_seed( xorwow_t & rs, uint32_t seed ) {
-	rs = (xorwow_t){ seed, seed, seed, seed, 0 };
-	xorwow( rs );										// prime
+    // To attain repeatable seeding, compute seeds separately because the order of argument evaluation is undefined.
+    uint32_t seed1 = splitmix32( seed );				// prime
+    uint32_t seed2 = splitmix32( seed );
+    uint32_t seed3 = splitmix32( seed );
+    uint32_t seed4 = splitmix32( seed );
+	rs = (xorwow_t){ seed1, seed2, seed3, seed4, 0 };
 } // xorwow_set_seed
 
 //--------------------------------------------------
 // Used in __tls_rand_fwd
 #define M  (1_l64u << 48_l64u)
-#define A  (25214903917_l64u)
-#define AI (18446708753438544741_l64u)
+#define A  (25_214_903_917_l64u)
+#define AI (18_446_708_753_438_544_741_l64u)
 #define C  (11_l64u)
 #define D  (16_l64u)
 

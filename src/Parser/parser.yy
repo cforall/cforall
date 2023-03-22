@@ -9,7 +9,7 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Mar 14 09:37:58 2023
+// Last Modified On : Tue Mar 21 19:01:00 2023
 // Update Count     : 5990
 //
 
@@ -495,7 +495,8 @@ if ( N ) {																		\
 %type<decl> type_declaration_specifier type_type_specifier type_name typegen_name
 %type<decl> typedef_name typedef_declaration typedef_expression
 
-%type<decl> variable_type_redeclarator type_ptr type_array type_function
+%type<decl> variable_type_redeclarator variable_type_ptr variable_type_array variable_type_function
+%type<decl> general_function_declarator function_type_redeclarator function_type_array function_type_no_ptr function_type_ptr
 
 %type<decl> type_parameter_redeclarator type_parameter_ptr type_parameter_array type_parameter_function
 
@@ -2015,10 +2016,23 @@ c_declaration:
 declaring_list:
 		// A semantic check is required to ensure asm_name only appears on declarations with implicit or explicit static
 		// storage-class
-	declarator asm_name_opt initializer_opt
+	variable_declarator asm_name_opt initializer_opt
 		{ $$ = $1->addAsmName( $2 )->addInitializer( $3 ); }
+	| variable_type_redeclarator asm_name_opt initializer_opt
+		{ $$ = $1->addAsmName( $2 )->addInitializer( $3 ); }
+
+	| general_function_declarator asm_name_opt
+		{ $$ = $1->addAsmName( $2 )->addInitializer( nullptr ); }
+	| general_function_declarator asm_name_opt '=' VOID
+		{ $$ = $1->addAsmName( $2 )->addInitializer( new InitializerNode( true ) ); }
+
 	| declaring_list ',' attribute_list_opt declarator asm_name_opt initializer_opt
 		{ $$ = $1->appendList( $4->addQualifiers( $3 )->addAsmName( $5 )->addInitializer( $6 ) ); }
+	;
+
+general_function_declarator:
+	function_type_redeclarator
+	| function_declarator
 	;
 
 declaration_specifier:									// type specifier + storage class
@@ -2540,6 +2554,9 @@ field_declarator:
 		// A semantic check is required to ensure bit_subrange only appears on integral types.
 		{ $$ = $1->addBitfield( $2 ); }
 	| variable_type_redeclarator bit_subrange_size_opt
+		// A semantic check is required to ensure bit_subrange only appears on integral types.
+		{ $$ = $1->addBitfield( $2 ); }
+	| function_type_redeclarator bit_subrange_size_opt
 		// A semantic check is required to ensure bit_subrange only appears on integral types.
 		{ $$ = $1->addBitfield( $2 ); }
 	;
@@ -3194,7 +3211,7 @@ function_definition:
 			rebindForall( $1, $2 );
 			$$ = $2->addFunctionBody( $4, $3 )->addType( $1 );
 		}
-	| declaration_specifier variable_type_redeclarator with_clause_opt compound_statement
+	| declaration_specifier function_type_redeclarator with_clause_opt compound_statement
 		{
 			rebindForall( $1, $2 );
 			$$ = $2->addFunctionBody( $4, $3 )->addType( $1 );
@@ -3230,6 +3247,7 @@ declarator:
 	variable_declarator
 	| variable_type_redeclarator
 	| function_declarator
+	| function_type_redeclarator
 	;
 
 subrange:
@@ -3480,15 +3498,12 @@ KR_function_array:
 		{ $$ = $3->addQualifiers( $2 ); }
 	;
 
-// This pattern parses a declaration for a variable or function prototype that redefines a type name, e.g.:
+// This pattern parses a declaration for a variable that redefines a type name, e.g.:
 //
 //		typedef int foo;
 //		{
 //		   int foo; // redefine typedef name in new scope
 //		}
-//
-// The pattern precludes declaring an array of functions versus a pointer to an array of functions, and returning arrays
-// and functions versus pointers to arrays and functions.
 
 paren_type:
 	typedef_name
@@ -3503,51 +3518,100 @@ paren_type:
 variable_type_redeclarator:
 	paren_type attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
-	| type_ptr
-	| type_array attribute_list_opt
+	| variable_type_ptr
+	| variable_type_array attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
-	| type_function attribute_list_opt
+	| variable_type_function attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
 	;
 
-type_ptr:
+variable_type_ptr:
 	ptrref_operator variable_type_redeclarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
 	| ptrref_operator type_qualifier_list variable_type_redeclarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
-	| '(' type_ptr ')' attribute_list_opt				// redundant parenthesis
+	| '(' variable_type_ptr ')' attribute_list_opt		// redundant parenthesis
 		{ $$ = $2->addQualifiers( $4 ); }
-	| '(' attribute_list type_ptr ')' attribute_list_opt // redundant parenthesis
+	| '(' attribute_list variable_type_ptr ')' attribute_list_opt // redundant parenthesis
 		{ $$ = $3->addQualifiers( $2 )->addQualifiers( $5 ); }
 	;
 
-type_array:
+variable_type_array:
 	paren_type array_dimension
 		{ $$ = $1->addArray( $2 ); }
-	| '(' type_ptr ')' array_dimension
+	| '(' variable_type_ptr ')' array_dimension
 		{ $$ = $2->addArray( $4 ); }
-	| '(' attribute_list type_ptr ')' array_dimension
+	| '(' attribute_list variable_type_ptr ')' array_dimension
 		{ $$ = $3->addQualifiers( $2 )->addArray( $5 ); }
-	| '(' type_array ')' multi_array_dimension			// redundant parenthesis
+	| '(' variable_type_array ')' multi_array_dimension	// redundant parenthesis
 		{ $$ = $2->addArray( $4 ); }
-	| '(' attribute_list type_array ')' multi_array_dimension // redundant parenthesis
+	| '(' attribute_list variable_type_array ')' multi_array_dimension // redundant parenthesis
 		{ $$ = $3->addQualifiers( $2 )->addArray( $5 ); }
-	| '(' type_array ')'								// redundant parenthesis
+	| '(' variable_type_array ')'						// redundant parenthesis
 		{ $$ = $2; }
-	| '(' attribute_list type_array ')'					// redundant parenthesis
+	| '(' attribute_list variable_type_array ')'		// redundant parenthesis
 		{ $$ = $3->addQualifiers( $2 ); }
 	;
 
-type_function:
+variable_type_function:
+	'(' variable_type_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $2->addParamList( $6 ); }
+	| '(' attribute_list variable_type_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $3->addQualifiers( $2 )->addParamList( $7 ); }
+	| '(' variable_type_function ')'					// redundant parenthesis
+		{ $$ = $2; }
+	| '(' attribute_list variable_type_function ')'		// redundant parenthesis
+		{ $$ = $3->addQualifiers( $2 ); }
+	;
+
+// This pattern parses a declaration for a function prototype that redefines a type name.  It precludes declaring an
+// array of functions versus a pointer to an array of functions, and returning arrays and functions versus pointers to
+// arrays and functions.
+
+function_type_redeclarator:
+	function_type_no_ptr attribute_list_opt
+		{ $$ = $1->addQualifiers( $2 ); }
+	| function_type_ptr
+	| function_type_array attribute_list_opt
+		{ $$ = $1->addQualifiers( $2 ); }
+	;
+
+function_type_no_ptr:
 	paren_type '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $1->addParamList( $4 ); }
-	| '(' type_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
+	| '(' function_type_ptr ')' '(' push parameter_type_list_opt pop ')'
 		{ $$ = $2->addParamList( $6 ); }
-	| '(' attribute_list type_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
+	| '(' attribute_list function_type_ptr ')' '(' push parameter_type_list_opt pop ')'
 		{ $$ = $3->addQualifiers( $2 )->addParamList( $7 ); }
-	| '(' type_function ')'								// redundant parenthesis
+	| '(' function_type_no_ptr ')'						// redundant parenthesis
 		{ $$ = $2; }
-	| '(' attribute_list type_function ')'				// redundant parenthesis
+	| '(' attribute_list function_type_no_ptr ')'		// redundant parenthesis
+		{ $$ = $3->addQualifiers( $2 ); }
+	;
+
+function_type_ptr:
+	ptrref_operator function_type_redeclarator
+		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator type_qualifier_list function_type_redeclarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
+	| '(' function_type_ptr ')' attribute_list_opt
+		{ $$ = $2->addQualifiers( $4 ); }
+	| '(' attribute_list function_type_ptr ')' attribute_list_opt
+		{ $$ = $3->addQualifiers( $2 )->addQualifiers( $5 ); }
+	;
+
+function_type_array:
+	'(' function_type_ptr ')' array_dimension
+		{ $$ = $2->addArray( $4 ); }
+	| '(' attribute_list function_type_ptr ')' array_dimension
+		{ $$ = $3->addQualifiers( $2 )->addArray( $5 ); }
+	| '(' function_type_array ')' multi_array_dimension	// redundant parenthesis
+		{ $$ = $2->addArray( $4 ); }
+	| '(' attribute_list function_type_array ')' multi_array_dimension // redundant parenthesis
+		{ $$ = $3->addQualifiers( $2 )->addArray( $5 ); }
+	| '(' function_type_array ')'						// redundant parenthesis
+		{ $$ = $2; }
+	| '(' attribute_list function_type_array ')'		// redundant parenthesis
 		{ $$ = $3->addQualifiers( $2 ); }
 	;
 
