@@ -27,6 +27,7 @@ struct channel {
     T * chair_elem;
     exp_backoff_then_block_lock c_lock, p_lock;
     __spinlock_t mutex_lock;
+    char __padding[64]; // avoid false sharing in arrays
 };
 
 static inline void ?{}( channel(T) &c, size_t _size ) with(c) {

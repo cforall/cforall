@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Mar 21 19:01:00 2023
-// Update Count     : 5990
+// Last Modified On : Wed Mar 22 21:26:01 2023
+// Update Count     : 6002
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -269,6 +269,14 @@ static void IdentifierBeforeIdentifier( string & identifier1, string & identifie
 static void IdentifierBeforeType( string & identifier, const char * kind ) {
 	SemanticError( yylloc, ::toString( "Identifier \"", identifier, "\" cannot appear before a ", kind, ".\n"
 				   "Possible cause is misspelled storage/CV qualifier, misspelled typename, or missing generic parameter." ) );
+} // IdentifierBeforeType
+
+static bool TypedefForall( DeclarationNode * decl ) {
+	if ( decl->type->forall || (decl->type->kind == TypeData::Aggregate && decl->type->aggregate.params) ) {
+		SemanticError( yylloc, "forall qualifier in typedef is currently unimplemented." );
+		return true;
+	} // if
+	return false;
 } // IdentifierBeforeType
 
 bool forall = false;									// aggregate have one or more forall qualifiers ?
@@ -1957,9 +1965,9 @@ cfa_typedef_declaration:								// CFA
 typedef_declaration:
 	TYPEDEF type_specifier declarator
 		{
-			// if type_specifier is an anon aggregate => name 
 			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "4" );
-			$$ = $3->addType( $2 )->addTypedef();		// watchout frees $2 and $3
+			if ( TypedefForall( $2 ) ) $$ = nullptr;
+			else $$ = $3->addType( $2 )->addTypedef();		// watchout frees $2 and $3
 		}
 	| typedef_declaration pop ',' push declarator
 		{
@@ -1969,17 +1977,20 @@ typedef_declaration:
 	| type_qualifier_list TYPEDEF type_specifier declarator // remaining OBSOLESCENT (see 2 )
 		{
 			typedefTable.addToEnclosingScope( *$4->name, TYPEDEFname, "6" );
-			$$ = $4->addQualifiers( $1 )->addType( $3 )->addTypedef();
+			if ( TypedefForall( $1 ) ) $$ = nullptr;
+			else $$ = $4->addQualifiers( $1 )->addType( $3 )->addTypedef();
 		}
 	| type_specifier TYPEDEF declarator
 		{
 			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "7" );
-			$$ = $3->addType( $1 )->addTypedef();
+			if ( TypedefForall( $1 ) ) $$ = nullptr;
+			else $$ = $3->addType( $1 )->addTypedef();
 		}
 	| type_specifier TYPEDEF type_qualifier_list declarator
 		{
 			typedefTable.addToEnclosingScope( *$4->name, TYPEDEFname, "8" );
-			$$ = $4->addQualifiers( $1 )->addType( $1 )->addTypedef();
+			if ( TypedefForall( $3 ) ) $$ = nullptr;
+			else $$ = $4->addQualifiers( $1 )->addType( $1 )->addTypedef();
 		}
 	;
 

@@ -99,7 +99,7 @@ void main(Producer & this) {
 
 
 int test( size_t Processors, size_t Channels, size_t Producers, size_t Consumers, size_t ChannelSize ) {
-    size_t Clusters = 1;
+    size_t Clusters = Processors;
     // create a cluster
     cluster clus[Clusters];
     processor * proc[Processors];
@@ -107,7 +107,7 @@ int test( size_t Processors, size_t Channels, size_t Producers, size_t Consumers
         (*(proc[i] = alloc())){clus[i % Clusters]};
     }
 
-    channels = anew( Channels );
+    channels = aalloc( Channels );
 
     // sout | "Processors: " | Processors | " ProdsPerChan: " | Producers | " ConsPerChan: " | Consumers | "Channels: " | Channels | " Channel Size: " | ChannelSize;
     
@@ -149,21 +149,7 @@ int test( size_t Processors, size_t Channels, size_t Producers, size_t Consumers
         }
         
     }
-    // for ( i; Channels ) {
-    //     // sout | get_count( channels[i] );
-    //     if ( get_count( channels[i] ) < Consumers ){
-    //         #ifdef BIG
-    //         bigObject b{0};
-    //         #endif
-    //         for ( j; Consumers ) {
-    //             #ifdef BIG
-    //             insert( channels[i], b );
-    //             #else
-    //             insert( channels[i], 0 );
-    //             #endif
-    //         }
-    //     }
-    // }
+
     sout | "cons";
     for ( i; Consumers * Channels ) {
         delete(c[i]);
