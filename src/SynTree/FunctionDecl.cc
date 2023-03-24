@@ -86,6 +86,12 @@ void FunctionDecl::print( std::ostream &os, Indenter indent ) const {
 		os << "untyped entity ";
 	} // if
 
+	if ( !withExprs.empty() ) {
+		os << indent << "... with clause" << std::endl;
+		os << indent + 1;
+		printAll( withExprs, os, indent + 1 );
+	}
+
 	if ( statements ) {
 		os << indent << "... with body" << endl << indent+1;
 		statements->print( os, indent+1 );

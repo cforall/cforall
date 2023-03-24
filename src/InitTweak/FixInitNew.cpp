@@ -1302,17 +1302,10 @@ namespace {
 		}
 	}
 
-	template< typename Visitor, typename... Params >
-	void error( Visitor & v, CodeLocation loc, const Params &... params ) {
-		SemanticErrorException err( loc, toString( params... ) );
-		v.errors.append( err );
-	}
-
 	template< typename... Params >
 	void GenStructMemberCalls::emit( CodeLocation loc, const Params &... params ) {
-		// toggle warnings vs. errors here.
-		// warn( params... );
-		error( *this, loc, params... );
+		SemanticErrorException err( loc, toString( params... ) );
+		errors.append( err );
 	}
 
 	const ast::Expr * GenStructMemberCalls::postvisit( const ast::UntypedExpr * untypedExpr ) {

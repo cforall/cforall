@@ -294,7 +294,7 @@
 				/* paranoid */ verify( io.tscs[target].t.tv != ULLONG_MAX );
 				// make sure the target hasn't stopped existing since last time
 				HELP: if(target < ctxs_count) {
-					// calculate it's age and how young it could be before we give ip on helping
+					// calculate it's age and how young it could be before we give up on helping
 					const __readyQ_avg_t cutoff = calc_cutoff(ctsc, ctx->cq.id, ctxs_count, io.data, io.tscs, __shard_factor.io, false);
 					const __readyQ_avg_t age = moving_average(ctsc, io.tscs[target].t.tv, io.tscs[target].t.ma, false);
 					__cfadbg_print_safe(io, "Kernel I/O: Help attempt on %u from %u, age %'llu vs cutoff %'llu, %s\n", target, ctx->cq.id, age, cutoff, age > cutoff ? "yes" : "no");

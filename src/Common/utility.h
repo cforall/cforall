@@ -189,13 +189,6 @@ void erase_if( Container & cont, Pred && pred ) {
 	cont.erase( keep_end, cont.end() );
 }
 
-template< typename... Params >
-void warn( const Params & ... params ) {
-	std::cerr << "Warning: ";
-	toString_single( std::cerr, params... );
-	std::cerr << std::endl;
-}
-
 // determines if pref is a prefix of str
 static inline bool isPrefix( const std::string & str, const std::string & pref, unsigned int start = 0 ) {
 	if ( pref.size() > str.size() ) return false;

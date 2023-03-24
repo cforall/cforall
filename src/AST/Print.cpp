@@ -370,6 +370,14 @@ public:
 			}
 		}
 
+		if ( ! node->withExprs.empty() ) {
+			// Not with a clause, but the 'with clause'.
+			++indent;
+			os << " with clause" << endl << indent;
+			printAll( node->withExprs );
+			--indent;
+		}
+
 		if ( ! short_mode && node->stmts ) {
 			++indent;
 			os << " with body" << endl << indent;

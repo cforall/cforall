@@ -88,11 +88,11 @@ Prelude = """#define __cforall_thread__
 extern "C" {
 #if defined(CFA_HAVE_PREADV2)
 	struct iovec;
-	extern ssize_t preadv2 (int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
+	extern ssize_t preadv2 (int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags);
 #endif
 #if defined(CFA_HAVE_PWRITEV2)
 	struct iovec;
-	extern ssize_t pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
+	extern ssize_t pwritev2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags);
 #endif
 
 	extern int fsync(int fd);
@@ -107,24 +107,24 @@ extern "C" {
 
 	struct msghdr;
 	struct sockaddr;
-	extern ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
-	extern ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
-	extern ssize_t send(int sockfd, const void *buf, size_t len, int flags);
-	extern ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+	extern ssize_t sendmsg(int sockfd, const struct msghdr * msg, int flags);
+	extern ssize_t recvmsg(int sockfd, struct msghdr * msg, int flags);
+	extern ssize_t send(int sockfd, const void * buf, size_t len, int flags);
+	extern ssize_t recv(int sockfd, void * buf, size_t len, int flags);
 
 	extern int fallocate(int fd, int mode, off_t offset, off_t len);
 	extern int posix_fadvise(int fd, off_t offset, off_t len, int advice);
-	extern int madvise(void *addr, size_t length, int advice);
+	extern int madvise(void * addr, size_t length, int advice);
 
-	extern int openat(int dirfd, const char *pathname, int flags, mode_t mode);
+	extern int openat(int dirfd, const char * pathname, int flags, mode_t mode);
 	extern int close(int fd);
 
-	extern ssize_t read (int fd, void *buf, size_t count);
+	extern ssize_t read (int fd, void * buf, size_t count);
 
 	struct epoll_event;
-	extern int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+	extern int epoll_ctl(int epfd, int op, int fd, struct epoll_event * event);
 
-	extern ssize_t splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags);
+	extern ssize_t splice(int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags);
 	extern ssize_t tee(int fd_in, int fd_out, size_t len, unsigned int flags);
 }
 
@@ -223,29 +223,31 @@ SyncTemplate = """{ret} cfa_{name}({params}, __u64 submit_flags) {{
 
 calls = [
 	# CFA_HAVE_IORING_OP_READV
-	Call('READV', 'ssize_t preadv2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags)', {
+	Call('READV', 'ssize_t preadv2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags)', {
 		'fd'  : 'fd',
-		'off' : 'offset',
-		'addr': '(uintptr_t)iov',
+		'addr': '(typeof(sqe->addr))iov',
 		'len' : 'iovcnt',
+		'off' : 'offset',
+		'rw_flags' : 'flags'
 	}, define = 'CFA_HAVE_PREADV2'),
 	# CFA_HAVE_IORING_OP_WRITEV
-	Call('WRITEV', 'ssize_t pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags)', {
+	Call('WRITEV', 'ssize_t pwritev2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags)', {
 		'fd'  : 'fd',
+		'addr': '(typeof(sqe->addr))iov',
+		'len' : 'iovcnt',
 		'off' : 'offset',
-		'addr': '(uintptr_t)iov',
-		'len' : 'iovcnt'
+		'rw_flags' : 'flags'
 	}, define = 'CFA_HAVE_PWRITEV2'),
 	# CFA_HAVE_IORING_OP_FSYNC
 	Call('FSYNC', 'int fsync(int fd)', {
 		'fd': 'fd'
 	}),
 	# CFA_HAVE_IORING_OP_EPOLL_CTL
-	Call('EPOLL_CTL', 'int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)', {
+	Call('EPOLL_CTL', 'int epoll_ctl(int epfd, int op, int fd, struct epoll_event * event)', {
 		'fd': 'epfd',
-		'addr': 'fd',
 		'len': 'op',
-		'off': '(uintptr_t)event'
+		'addr': 'fd',
+		'off': '(typeof(sqe->off))event'
 	}),
 	# CFA_HAVE_IORING_OP_SYNC_FILE_RANGE
 	Call('SYNC_FILE_RANGE', 'int sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags)', {
@@ -255,52 +257,52 @@ calls = [
 		'sync_range_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_SENDMSG
-	Call('SENDMSG', 'ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)', {
+	Call('SENDMSG', 'ssize_t sendmsg(int sockfd, const struct msghdr * msg, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(uintptr_t)(struct msghdr *)msg',
+		'addr': '(typeof(sqe->addr))(struct msghdr *)msg',
 		'len': '1',
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_RECVMSG
-	Call('RECVMSG', 'ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)', {
+	Call('RECVMSG', 'ssize_t recvmsg(int sockfd, struct msghdr * msg, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(uintptr_t)(struct msghdr *)msg',
+		'addr': '(typeof(sqe->addr))(struct msghdr *)msg',
 		'len': '1',
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_SEND
-	Call('SEND', 'ssize_t send(int sockfd, const void *buf, size_t len, int flags)', {
+	Call('SEND', 'ssize_t send(int sockfd, const void * buf, size_t len, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(uintptr_t)buf',
+		'addr': '(typeof(sqe->addr))buf',
 		'len': 'len',
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_RECV
-	Call('RECV', 'ssize_t recv(int sockfd, void *buf, size_t len, int flags)', {
+	Call('RECV', 'ssize_t recv(int sockfd, void * buf, size_t len, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(uintptr_t)buf',
+		'addr': '(typeof(sqe->addr))buf',
 		'len': 'len',
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_ACCEPT
 	Call('ACCEPT', 'int accept4(int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(uintptr_t)&addr',
-		'addr2': '(uintptr_t)addrlen',
+		'addr': '(typeof(sqe->addr))&addr',
+		'addr2': '(typeof(sqe->addr2))addrlen',
 		'accept_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_CONNECT
 	Call('CONNECT', 'int connect(int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen)', {
 		'fd': 'sockfd',
-		'addr': '(uintptr_t)&addr',
+		'addr': '(typeof(sqe->addr))&addr',
 		'off': 'addrlen'
 	}),
 	# CFA_HAVE_IORING_OP_FALLOCATE
 	Call('FALLOCATE', 'int fallocate(int fd, int mode, off_t offset, off_t len)', {
 		'fd': 'fd',
-		'addr': '(uintptr_t)len',
 		'len': 'mode',
-		'off': 'offset'
+		'off': 'offset',
+		'addr': 'len'
 	}),
 	# CFA_HAVE_IORING_OP_FADVISE
 	Call('FADVISE', 'int posix_fadvise(int fd, off_t offset, off_t len, int advice)', {
@@ -310,55 +312,55 @@ calls = [
 		'fadvise_advice': 'advice'
 	}),
 	# CFA_HAVE_IORING_OP_MADVISE
-	Call('MADVISE', 'int madvise(void *addr, size_t length, int advice)', {
-		'addr': '(uintptr_t)addr',
+	Call('MADVISE', 'int madvise(void * addr, size_t length, int advice)', {
+		'addr': '(typeof(sqe->addr))addr',
 		'len': 'length',
 		'fadvise_advice': 'advice'
 	}),
 	# CFA_HAVE_IORING_OP_OPENAT
-	Call('OPENAT', 'int openat(int dirfd, const char *pathname, int flags, mode_t mode)', {
+	Call('OPENAT', 'int openat(int dirfd, const char * pathname, int flags, mode_t mode)', {
 		'fd': 'dirfd',
-		'addr': '(uintptr_t)pathname',
-		'len': 'mode',
-		'open_flags': 'flags;'
+		'addr': '(typeof(sqe->addr))pathname',
+		'open_flags': 'flags;',
+		'len': 'mode'
 	}),
 	# CFA_HAVE_IORING_OP_OPENAT2
-	Call('OPENAT2', 'int openat2(int dirfd, const char *pathname, struct open_how * how, size_t size)', {
+	Call('OPENAT2', 'int openat2(int dirfd, const char * pathname, struct open_how * how, size_t size)', {
 		'fd': 'dirfd',
-		'addr': 'pathname',
-		'len': 'sizeof(*how)',
-		'off': '(uintptr_t)how',
+		'addr': '(typeof(sqe->addr))pathname',
+		'off': '(typeof(sqe->off))how',
+		'len': 'sizeof(*how)'
 	}, define = 'CFA_HAVE_OPENAT2'),
 	# CFA_HAVE_IORING_OP_CLOSE
 	Call('CLOSE', 'int close(int fd)', {
 		'fd': 'fd'
 	}),
 	# CFA_HAVE_IORING_OP_STATX
-	Call('STATX', 'int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf)', {
+	Call('STATX', 'int statx(int dirfd, const char * pathname, int flags, unsigned int mask, struct statx * statxbuf)', {
 		'fd': 'dirfd',
-		'off': '(uintptr_t)statxbuf',
-		'addr': 'pathname',
+		'addr': '(typeof(sqe->addr))pathname',
+		'statx_flags': 'flags',
 		'len': 'mask',
-		'statx_flags': 'flags'
+		'off': '(typeof(sqe->off))statxbuf'
 	}, define = 'CFA_HAVE_STATX'),
 	# CFA_HAVE_IORING_OP_READ
 	Call('READ', 'ssize_t read(int fd, void * buf, size_t count)', {
 		'fd': 'fd',
-		'addr': '(uintptr_t)buf',
+		'addr': '(typeof(sqe->addr))buf',
 		'len': 'count'
 	}),
 	# CFA_HAVE_IORING_OP_WRITE
 	Call('WRITE', 'ssize_t write(int fd, void * buf, size_t count)', {
 		'fd': 'fd',
-		'addr': '(uintptr_t)buf',
+		'addr': '(typeof(sqe->addr))buf',
 		'len': 'count'
 	}),
 	# CFA_HAVE_IORING_OP_SPLICE
-	Call('SPLICE', 'ssize_t splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags)', {
+	Call('SPLICE', 'ssize_t splice(int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags)', {
 		'splice_fd_in': 'fd_in',
-		'splice_off_in': 'off_in ? (__u64)*off_in : (__u64)-1',
+		'splice_off_in': 'off_in ? (typeof(sqe->splice_off_in))*off_in : (typeof(sqe->splice_off_in))-1',
 		'fd': 'fd_out',
-		'off': 'off_out ? (__u64)*off_out : (__u64)-1',
+		'off': 'off_out ? (typeof(sqe->off))*off_out : (typeof(sqe->off))-1',
 		'len': 'len',
 		'splice_flags': 'flags'
 	}),

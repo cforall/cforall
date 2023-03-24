@@ -71,11 +71,11 @@
 extern "C" {
 #if defined(CFA_HAVE_PREADV2)
 	struct iovec;
-	extern ssize_t preadv2 (int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
+	extern ssize_t preadv2 (int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags);
 #endif
 #if defined(CFA_HAVE_PWRITEV2)
 	struct iovec;
-	extern ssize_t pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags);
+	extern ssize_t pwritev2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags);
 #endif
 
 	extern int fsync(int fd);
@@ -90,24 +90,24 @@ extern "C" {
 
 	struct msghdr;
 	struct sockaddr;
-	extern ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
-	extern ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
-	extern ssize_t send(int sockfd, const void *buf, size_t len, int flags);
-	extern ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+	extern ssize_t sendmsg(int sockfd, const struct msghdr * msg, int flags);
+	extern ssize_t recvmsg(int sockfd, struct msghdr * msg, int flags);
+	extern ssize_t send(int sockfd, const void * buf, size_t len, int flags);
+	extern ssize_t recv(int sockfd, void * buf, size_t len, int flags);
 
 	extern int fallocate(int fd, int mode, off_t offset, off_t len);
 	extern int posix_fadvise(int fd, off_t offset, off_t len, int advice);
-	extern int madvise(void *addr, size_t length, int advice);
+	extern int madvise(void * addr, size_t length, int advice);
 
-	extern int openat(int dirfd, const char *pathname, int flags, mode_t mode);
+	extern int openat(int dirfd, const char * pathname, int flags, mode_t mode);
 	extern int close(int fd);
 
-	extern ssize_t read (int fd, void *buf, size_t count);
+	extern ssize_t read (int fd, void * buf, size_t count);
 
 	struct epoll_event;
-	extern int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+	extern int epoll_ctl(int epfd, int op, int fd, struct epoll_event * event);
 
-	extern ssize_t splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags);
+	extern ssize_t splice(int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags);
 	extern ssize_t tee(int fd_in, int fd_out, size_t len, unsigned int flags);
 }
 
@@ -119,67 +119,67 @@ extern "C" {
 //----------
 // synchronous calls
 #if defined(CFA_HAVE_PREADV2)
-	ssize_t cfa_preadv2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+	ssize_t cfa_preadv2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
 #endif
 #if defined(CFA_HAVE_PWRITEV2)
-	ssize_t cfa_pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+	ssize_t cfa_pwritev2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
 #endif
 int cfa_fsync(int fd, __u64 submit_flags);
-int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags);
+int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event * event, __u64 submit_flags);
 int cfa_sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int flags, __u64 submit_flags);
-ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags);
-ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
-ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
-ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
+ssize_t cfa_sendmsg(int sockfd, const struct msghdr * msg, int flags, __u64 submit_flags);
+ssize_t cfa_recvmsg(int sockfd, struct msghdr * msg, int flags, __u64 submit_flags);
+ssize_t cfa_send(int sockfd, const void * buf, size_t len, int flags, __u64 submit_flags);
+ssize_t cfa_recv(int sockfd, void * buf, size_t len, int flags, __u64 submit_flags);
 int cfa_accept4(int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags);
 int cfa_connect(int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags);
 int cfa_fallocate(int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
 int cfa_posix_fadvise(int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
-int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags);
-int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags);
+int cfa_madvise(void * addr, size_t length, int advice, __u64 submit_flags);
+int cfa_openat(int dirfd, const char * pathname, int flags, mode_t mode, __u64 submit_flags);
 #if defined(CFA_HAVE_OPENAT2)
-	int cfa_openat2(int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags);
+	int cfa_openat2(int dirfd, const char * pathname, struct open_how * how, size_t size, __u64 submit_flags);
 #endif
 int cfa_close(int fd, __u64 submit_flags);
 #if defined(CFA_HAVE_STATX)
-	int cfa_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags);
+	int cfa_statx(int dirfd, const char * pathname, int flags, unsigned int mask, struct statx * statxbuf, __u64 submit_flags);
 #endif
 ssize_t cfa_read(int fd, void * buf, size_t count, __u64 submit_flags);
 ssize_t cfa_write(int fd, void * buf, size_t count, __u64 submit_flags);
-ssize_t cfa_splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags);
+ssize_t cfa_splice(int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags, __u64 submit_flags);
 ssize_t cfa_tee(int fd_in, int fd_out, size_t len, unsigned int flags, __u64 submit_flags);
 
 //----------
 // asynchronous calls
 #if defined(CFA_HAVE_PREADV2)
-	void async_preadv2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+	void async_preadv2(io_future_t & future, int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
 #endif
 #if defined(CFA_HAVE_PWRITEV2)
-	void async_pwritev2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
+	void async_pwritev2(io_future_t & future, int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags);
 #endif
 void async_fsync(io_future_t & future, int fd, __u64 submit_flags);
-void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags);
+void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, struct epoll_event * event, __u64 submit_flags);
 void async_sync_file_range(io_future_t & future, int fd, off64_t offset, off64_t nbytes, unsigned int flags, __u64 submit_flags);
-void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags);
-void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, int flags, __u64 submit_flags);
-void async_send(io_future_t & future, int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags);
-void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, int flags, __u64 submit_flags);
+void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr * msg, int flags, __u64 submit_flags);
+void async_recvmsg(io_future_t & future, int sockfd, struct msghdr * msg, int flags, __u64 submit_flags);
+void async_send(io_future_t & future, int sockfd, const void * buf, size_t len, int flags, __u64 submit_flags);
+void async_recv(io_future_t & future, int sockfd, void * buf, size_t len, int flags, __u64 submit_flags);
 void async_accept4(io_future_t & future, int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags, __u64 submit_flags);
 void async_connect(io_future_t & future, int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen, __u64 submit_flags);
 void async_fallocate(io_future_t & future, int fd, int mode, off_t offset, off_t len, __u64 submit_flags);
 void async_posix_fadvise(io_future_t & future, int fd, off_t offset, off_t len, int advice, __u64 submit_flags);
-void async_madvise(io_future_t & future, void *addr, size_t length, int advice, __u64 submit_flags);
-void async_openat(io_future_t & future, int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags);
+void async_madvise(io_future_t & future, void * addr, size_t length, int advice, __u64 submit_flags);
+void async_openat(io_future_t & future, int dirfd, const char * pathname, int flags, mode_t mode, __u64 submit_flags);
 #if defined(CFA_HAVE_OPENAT2)
-	void async_openat2(io_future_t & future, int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags);
+	void async_openat2(io_future_t & future, int dirfd, const char * pathname, struct open_how * how, size_t size, __u64 submit_flags);
 #endif
 void async_close(io_future_t & future, int fd, __u64 submit_flags);
 #if defined(CFA_HAVE_STATX)
-	void async_statx(io_future_t & future, int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags);
+	void async_statx(io_future_t & future, int dirfd, const char * pathname, int flags, unsigned int mask, struct statx * statxbuf, __u64 submit_flags);
 #endif
 void async_read(io_future_t & future, int fd, void * buf, size_t count, __u64 submit_flags);
 void async_write(io_future_t & future, int fd, void * buf, size_t count, __u64 submit_flags);
-void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags);
+void async_splice(io_future_t & future, int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags, __u64 submit_flags);
 void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned int flags, __u64 submit_flags);
 
 
@@ -188,7 +188,7 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 #if defined(CFA_HAVE_PREADV2)
 	//----------
 	// asynchronous call
-	inline void async_preadv2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
+	inline void async_preadv2(io_future_t & future, int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
 		#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_READV)
 			ssize_t res = preadv2(fd, iov, iovcnt, offset, flags);
 			if (res >= 0) {
@@ -209,9 +209,10 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 			sqe->user_data = (uintptr_t)&future;
 			
 			sqe->fd = fd;
-			sqe->off = offset;
-			sqe->addr = (uintptr_t)iov;
+			sqe->addr = (typeof(sqe->addr))iov;
 			sqe->len = iovcnt;
+			sqe->off = offset;
+			sqe->rw_flags = flags;
 	
 			asm volatile("": : :"memory");
 	
@@ -222,7 +223,7 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 
 	//----------
 	// synchronous call
-	ssize_t cfa_preadv2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
+	ssize_t cfa_preadv2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
 		io_future_t future;
 	
 		async_preadv2( future, fd, iov, iovcnt, offset, flags, submit_flags );
@@ -243,7 +244,7 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 #if defined(CFA_HAVE_PWRITEV2)
 	//----------
 	// asynchronous call
-	inline void async_pwritev2(io_future_t & future, int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
+	inline void async_pwritev2(io_future_t & future, int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
 		#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_WRITEV)
 			ssize_t res = pwritev2(fd, iov, iovcnt, offset, flags);
 			if (res >= 0) {
@@ -264,9 +265,10 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 			sqe->user_data = (uintptr_t)&future;
 			
 			sqe->fd = fd;
-			sqe->off = offset;
-			sqe->addr = (uintptr_t)iov;
+			sqe->addr = (typeof(sqe->addr))iov;
 			sqe->len = iovcnt;
+			sqe->off = offset;
+			sqe->rw_flags = flags;
 	
 			asm volatile("": : :"memory");
 	
@@ -277,7 +279,7 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 
 	//----------
 	// synchronous call
-	ssize_t cfa_pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
+	ssize_t cfa_pwritev2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags, __u64 submit_flags) {
 		io_future_t future;
 	
 		async_pwritev2( future, fd, iov, iovcnt, offset, flags, submit_flags );
@@ -347,7 +349,7 @@ int cfa_fsync(int fd, __u64 submit_flags) {
 // epoll_ctl
 //----------
 // asynchronous call
-inline void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags) {
+inline void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, struct epoll_event * event, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_EPOLL_CTL)
 		ssize_t res = epoll_ctl(epfd, op, fd, event);
 		if (res >= 0) {
@@ -368,9 +370,9 @@ inline void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, stru
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = epfd;
-		sqe->addr = fd;
 		sqe->len = op;
-		sqe->off = (uintptr_t)event;
+		sqe->addr = fd;
+		sqe->off = (typeof(sqe->off))event;
 
 		asm volatile("": : :"memory");
 
@@ -381,7 +383,7 @@ inline void async_epoll_ctl(io_future_t & future, int epfd, int op, int fd, stru
 
 //----------
 // synchronous call
-int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event, __u64 submit_flags) {
+int cfa_epoll_ctl(int epfd, int op, int fd, struct epoll_event * event, __u64 submit_flags) {
 	io_future_t future;
 
 	async_epoll_ctl( future, epfd, op, fd, event, submit_flags );
@@ -453,7 +455,7 @@ int cfa_sync_file_range(int fd, off64_t offset, off64_t nbytes, unsigned int fla
 // sendmsg
 //----------
 // asynchronous call
-inline void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags) {
+inline void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr * msg, int flags, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_SENDMSG)
 		ssize_t res = sendmsg(sockfd, msg, flags);
 		if (res >= 0) {
@@ -474,7 +476,7 @@ inline void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr 
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (uintptr_t)(struct msghdr *)msg;
+		sqe->addr = (typeof(sqe->addr))(struct msghdr *)msg;
 		sqe->len = 1;
 		sqe->msg_flags = flags;
 
@@ -487,7 +489,7 @@ inline void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr 
 
 //----------
 // synchronous call
-ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u64 submit_flags) {
+ssize_t cfa_sendmsg(int sockfd, const struct msghdr * msg, int flags, __u64 submit_flags) {
 	io_future_t future;
 
 	async_sendmsg( future, sockfd, msg, flags, submit_flags );
@@ -506,7 +508,7 @@ ssize_t cfa_sendmsg(int sockfd, const struct msghdr *msg, int flags, __u64 submi
 // recvmsg
 //----------
 // asynchronous call
-inline void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, int flags, __u64 submit_flags) {
+inline void async_recvmsg(io_future_t & future, int sockfd, struct msghdr * msg, int flags, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_RECVMSG)
 		ssize_t res = recvmsg(sockfd, msg, flags);
 		if (res >= 0) {
@@ -527,7 +529,7 @@ inline void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, 
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (uintptr_t)(struct msghdr *)msg;
+		sqe->addr = (typeof(sqe->addr))(struct msghdr *)msg;
 		sqe->len = 1;
 		sqe->msg_flags = flags;
 
@@ -540,7 +542,7 @@ inline void async_recvmsg(io_future_t & future, int sockfd, struct msghdr *msg, 
 
 //----------
 // synchronous call
-ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flags) {
+ssize_t cfa_recvmsg(int sockfd, struct msghdr * msg, int flags, __u64 submit_flags) {
 	io_future_t future;
 
 	async_recvmsg( future, sockfd, msg, flags, submit_flags );
@@ -559,7 +561,7 @@ ssize_t cfa_recvmsg(int sockfd, struct msghdr *msg, int flags, __u64 submit_flag
 // send
 //----------
 // asynchronous call
-inline void async_send(io_future_t & future, int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags) {
+inline void async_send(io_future_t & future, int sockfd, const void * buf, size_t len, int flags, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_SEND)
 		ssize_t res = send(sockfd, buf, len, flags);
 		if (res >= 0) {
@@ -580,7 +582,7 @@ inline void async_send(io_future_t & future, int sockfd, const void *buf, size_t
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (uintptr_t)buf;
+		sqe->addr = (typeof(sqe->addr))buf;
 		sqe->len = len;
 		sqe->msg_flags = flags;
 
@@ -593,7 +595,7 @@ inline void async_send(io_future_t & future, int sockfd, const void *buf, size_t
 
 //----------
 // synchronous call
-ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submit_flags) {
+ssize_t cfa_send(int sockfd, const void * buf, size_t len, int flags, __u64 submit_flags) {
 	io_future_t future;
 
 	async_send( future, sockfd, buf, len, flags, submit_flags );
@@ -612,7 +614,7 @@ ssize_t cfa_send(int sockfd, const void *buf, size_t len, int flags, __u64 submi
 // recv
 //----------
 // asynchronous call
-inline void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, int flags, __u64 submit_flags) {
+inline void async_recv(io_future_t & future, int sockfd, void * buf, size_t len, int flags, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_RECV)
 		ssize_t res = recv(sockfd, buf, len, flags);
 		if (res >= 0) {
@@ -633,7 +635,7 @@ inline void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, 
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (uintptr_t)buf;
+		sqe->addr = (typeof(sqe->addr))buf;
 		sqe->len = len;
 		sqe->msg_flags = flags;
 
@@ -646,7 +648,7 @@ inline void async_recv(io_future_t & future, int sockfd, void *buf, size_t len, 
 
 //----------
 // synchronous call
-ssize_t cfa_recv(int sockfd, void *buf, size_t len, int flags, __u64 submit_flags) {
+ssize_t cfa_recv(int sockfd, void * buf, size_t len, int flags, __u64 submit_flags) {
 	io_future_t future;
 
 	async_recv( future, sockfd, buf, len, flags, submit_flags );
@@ -686,8 +688,8 @@ inline void async_accept4(io_future_t & future, int sockfd, __SOCKADDR_ARG addr,
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (uintptr_t)&addr;
-		sqe->addr2 = (uintptr_t)addrlen;
+		sqe->addr = (typeof(sqe->addr))&addr;
+		sqe->addr2 = (typeof(sqe->addr2))addrlen;
 		sqe->accept_flags = flags;
 
 		asm volatile("": : :"memory");
@@ -739,7 +741,7 @@ inline void async_connect(io_future_t & future, int sockfd, __CONST_SOCKADDR_ARG
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (uintptr_t)&addr;
+		sqe->addr = (typeof(sqe->addr))&addr;
 		sqe->off = addrlen;
 
 		asm volatile("": : :"memory");
@@ -791,9 +793,9 @@ inline void async_fallocate(io_future_t & future, int fd, int mode, off_t offset
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = fd;
-		sqe->addr = (uintptr_t)len;
 		sqe->len = mode;
 		sqe->off = offset;
+		sqe->addr = len;
 
 		asm volatile("": : :"memory");
 
@@ -876,7 +878,7 @@ int cfa_posix_fadvise(int fd, off_t offset, off_t len, int advice, __u64 submit_
 // madvise
 //----------
 // asynchronous call
-inline void async_madvise(io_future_t & future, void *addr, size_t length, int advice, __u64 submit_flags) {
+inline void async_madvise(io_future_t & future, void * addr, size_t length, int advice, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_MADVISE)
 		ssize_t res = madvise(addr, length, advice);
 		if (res >= 0) {
@@ -896,7 +898,7 @@ inline void async_madvise(io_future_t & future, void *addr, size_t length, int a
 		sqe->flags = sflags;
 		sqe->user_data = (uintptr_t)&future;
 		
-		sqe->addr = (uintptr_t)addr;
+		sqe->addr = (typeof(sqe->addr))addr;
 		sqe->len = length;
 		sqe->fadvise_advice = advice;
 
@@ -909,7 +911,7 @@ inline void async_madvise(io_future_t & future, void *addr, size_t length, int a
 
 //----------
 // synchronous call
-int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags) {
+int cfa_madvise(void * addr, size_t length, int advice, __u64 submit_flags) {
 	io_future_t future;
 
 	async_madvise( future, addr, length, advice, submit_flags );
@@ -928,7 +930,7 @@ int cfa_madvise(void *addr, size_t length, int advice, __u64 submit_flags) {
 // openat
 //----------
 // asynchronous call
-inline void async_openat(io_future_t & future, int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags) {
+inline void async_openat(io_future_t & future, int dirfd, const char * pathname, int flags, mode_t mode, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_OPENAT)
 		ssize_t res = openat(dirfd, pathname, flags, mode);
 		if (res >= 0) {
@@ -949,9 +951,9 @@ inline void async_openat(io_future_t & future, int dirfd, const char *pathname, 
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = dirfd;
-		sqe->addr = (uintptr_t)pathname;
-		sqe->len = mode;
+		sqe->addr = (typeof(sqe->addr))pathname;
 		sqe->open_flags = flags;;
+		sqe->len = mode;
 
 		asm volatile("": : :"memory");
 
@@ -962,7 +964,7 @@ inline void async_openat(io_future_t & future, int dirfd, const char *pathname, 
 
 //----------
 // synchronous call
-int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 submit_flags) {
+int cfa_openat(int dirfd, const char * pathname, int flags, mode_t mode, __u64 submit_flags) {
 	io_future_t future;
 
 	async_openat( future, dirfd, pathname, flags, mode, submit_flags );
@@ -982,7 +984,7 @@ int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 su
 #if defined(CFA_HAVE_OPENAT2)
 	//----------
 	// asynchronous call
-	inline void async_openat2(io_future_t & future, int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags) {
+	inline void async_openat2(io_future_t & future, int dirfd, const char * pathname, struct open_how * how, size_t size, __u64 submit_flags) {
 		#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_OPENAT2)
 			ssize_t res = openat2(dirfd, pathname, how, size);
 			if (res >= 0) {
@@ -1003,9 +1005,9 @@ int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 su
 			sqe->user_data = (uintptr_t)&future;
 			
 			sqe->fd = dirfd;
-			sqe->addr = pathname;
+			sqe->addr = (typeof(sqe->addr))pathname;
+			sqe->off = (typeof(sqe->off))how;
 			sqe->len = sizeof(*how);
-			sqe->off = (uintptr_t)how;
 	
 			asm volatile("": : :"memory");
 	
@@ -1016,7 +1018,7 @@ int cfa_openat(int dirfd, const char *pathname, int flags, mode_t mode, __u64 su
 
 	//----------
 	// synchronous call
-	int cfa_openat2(int dirfd, const char *pathname, struct open_how * how, size_t size, __u64 submit_flags) {
+	int cfa_openat2(int dirfd, const char * pathname, struct open_how * how, size_t size, __u64 submit_flags) {
 		io_future_t future;
 	
 		async_openat2( future, dirfd, pathname, how, size, submit_flags );
@@ -1087,7 +1089,7 @@ int cfa_close(int fd, __u64 submit_flags) {
 #if defined(CFA_HAVE_STATX)
 	//----------
 	// asynchronous call
-	inline void async_statx(io_future_t & future, int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags) {
+	inline void async_statx(io_future_t & future, int dirfd, const char * pathname, int flags, unsigned int mask, struct statx * statxbuf, __u64 submit_flags) {
 		#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_STATX)
 			ssize_t res = statx(dirfd, pathname, flags, mask, statxbuf);
 			if (res >= 0) {
@@ -1108,10 +1110,10 @@ int cfa_close(int fd, __u64 submit_flags) {
 			sqe->user_data = (uintptr_t)&future;
 			
 			sqe->fd = dirfd;
-			sqe->off = (uintptr_t)statxbuf;
-			sqe->addr = pathname;
-			sqe->len = mask;
+			sqe->addr = (typeof(sqe->addr))pathname;
 			sqe->statx_flags = flags;
+			sqe->len = mask;
+			sqe->off = (typeof(sqe->off))statxbuf;
 	
 			asm volatile("": : :"memory");
 	
@@ -1122,7 +1124,7 @@ int cfa_close(int fd, __u64 submit_flags) {
 
 	//----------
 	// synchronous call
-	int cfa_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf, __u64 submit_flags) {
+	int cfa_statx(int dirfd, const char * pathname, int flags, unsigned int mask, struct statx * statxbuf, __u64 submit_flags) {
 		io_future_t future;
 	
 		async_statx( future, dirfd, pathname, flags, mask, statxbuf, submit_flags );
@@ -1163,7 +1165,7 @@ inline void async_read(io_future_t & future, int fd, void * buf, size_t count, _
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = fd;
-		sqe->addr = (uintptr_t)buf;
+		sqe->addr = (typeof(sqe->addr))buf;
 		sqe->len = count;
 
 		asm volatile("": : :"memory");
@@ -1215,7 +1217,7 @@ inline void async_write(io_future_t & future, int fd, void * buf, size_t count, 
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = fd;
-		sqe->addr = (uintptr_t)buf;
+		sqe->addr = (typeof(sqe->addr))buf;
 		sqe->len = count;
 
 		asm volatile("": : :"memory");
@@ -1246,7 +1248,7 @@ ssize_t cfa_write(int fd, void * buf, size_t count, __u64 submit_flags) {
 // splice
 //----------
 // asynchronous call
-inline void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags) {
+inline void async_splice(io_future_t & future, int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags, __u64 submit_flags) {
 	#if !defined(CFA_HAVE_LINUX_IO_URING_H) || !defined(CFA_HAVE_IORING_OP_SPLICE)
 		ssize_t res = splice(fd_in, off_in, fd_out, off_out, len, flags);
 		if (res >= 0) {
@@ -1267,9 +1269,9 @@ inline void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->splice_fd_in = fd_in;
-		sqe->splice_off_in = off_in ? (__u64)*off_in : (__u64)-1;
+		sqe->splice_off_in = off_in ? (typeof(sqe->splice_off_in))*off_in : (typeof(sqe->splice_off_in))-1;
 		sqe->fd = fd_out;
-		sqe->off = off_out ? (__u64)*off_out : (__u64)-1;
+		sqe->off = off_out ? (typeof(sqe->off))*off_out : (typeof(sqe->off))-1;
 		sqe->len = len;
 		sqe->splice_flags = flags;
 
@@ -1282,7 +1284,7 @@ inline void async_splice(io_future_t & future, int fd_in, __off64_t *off_in, int
 
 //----------
 // synchronous call
-ssize_t cfa_splice(int fd_in, __off64_t *off_in, int fd_out, __off64_t *off_out, size_t len, unsigned int flags, __u64 submit_flags) {
+ssize_t cfa_splice(int fd_in, __off64_t * off_in, int fd_out, __off64_t * off_out, size_t len, unsigned int flags, __u64 submit_flags) {
 	io_future_t future;
 
 	async_splice( future, fd_in, off_in, fd_out, off_out, len, flags, submit_flags );
