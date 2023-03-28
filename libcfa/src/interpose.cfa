@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Wed Mar 29 16:10:31 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 13 22:39:12 2023
-// Update Count     : 193
+// Last Modified On : Mon Mar 27 21:09:03 2023
+// Update Count     : 196
 //
 
 #include <stdio.h>
@@ -39,8 +39,17 @@ typedef void (* generic_fptr_t)(void);
 static generic_fptr_t do_interpose_symbol( void * library, const char symbol[], const char version[] ) {
 	union { generic_fptr_t fptr; void * ptr; } originalFunc;
 
+	#if defined( _GNU_SOURCE )
+	if ( version ) {
+		originalFunc.ptr = dlvsym( library, symbol, version );
+	} else {
+		originalFunc.ptr = dlsym( library, symbol );
+	} // if
+	#else
 	originalFunc.ptr = dlsym( library, symbol );
-	if ( ! originalFunc.ptr ) {								// == nullptr
+	#endif // _GNU_SOURCE
+
+	if ( ! originalFunc.ptr ) {							// == nullptr
 		abort( "interpose_symbol : internal error, %s\n", dlerror() );
 	} // if
 	return originalFunc.fptr;
@@ -48,6 +57,7 @@ static generic_fptr_t do_interpose_symbol( void * library, const char symbol[], 
 
 static generic_fptr_t interpose_symbol( const char symbol[], const char version[] ) {
 	void * library;
+
 	#if defined( RTLD_NEXT )
 	library = RTLD_NEXT;
 	#else

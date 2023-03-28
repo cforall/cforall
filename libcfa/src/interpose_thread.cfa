@@ -13,6 +13,7 @@
 // Update Count     :
 //
 
+// BUG in 32-bit gcc with interpose: fixed in >= gcc-9.5, gcc-10.4, gcc-12.2
 #ifdef __i386__											// 32-bit architecture
 #undef _GNU_SOURCE
 #endif // __i386__
@@ -32,11 +33,11 @@ extern "C" {
 
 typedef void (* generic_fptr_t)(void);
 
-generic_fptr_t interpose_symbol(
+generic_fptr_t libcfa_public interpose_symbol(
 	generic_fptr_t (*do_interpose_symbol)( void * library, const char symbol[], const char version[] ),
 	const char symbol[],
 	const char version[]
-) libcfa_public {
+) {
 	void * library;
 
 	#if defined( RTLD_NEXT )

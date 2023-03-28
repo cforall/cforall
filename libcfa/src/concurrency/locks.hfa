@@ -252,7 +252,6 @@ static inline void on_notify(clh_lock & this, struct thread$ * t ) { unpark(t); 
 static inline size_t on_wait(clh_lock & this) { unlock(this); return 0; }
 static inline void on_wakeup(clh_lock & this, size_t recursion ) { lock(this); }
 
-
 //-----------------------------------------------------------------------------
 // Exponential backoff then block lock
 struct exp_backoff_then_block_lock {
@@ -271,34 +270,25 @@ static inline void  ?{}( exp_backoff_then_block_lock & this ) {
 	this.blocked_threads{};
 	this.lock_value = 0;
 }
-static inline void ^?{}( exp_backoff_then_block_lock & this ) {}
-// static inline void ?{}( exp_backoff_then_block_lock & this, exp_backoff_then_block_lock this2 ) = void;
-// static inline void ?=?( exp_backoff_then_block_lock & this, exp_backoff_then_block_lock this2 ) = void;
 
 static inline bool internal_try_lock(exp_backoff_then_block_lock & this, size_t & compare_val) with(this) {
-	if (__atomic_compare_exchange_n(&lock_value, &compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)) {
-		return true;
-	}
-	return false;
+	return __atomic_compare_exchange_n(&lock_value, &compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
 static inline bool try_lock(exp_backoff_then_block_lock & this) { size_t compare_val = 0; return internal_try_lock(this, compare_val); }
 
 static inline bool try_lock_contention(exp_backoff_then_block_lock & this) with(this) {
-	if (__atomic_exchange_n(&lock_value, 2, __ATOMIC_ACQUIRE) == 0) {
-		return true;
-	}
-	return false;
+	return !__atomic_exchange_n(&lock_value, 2, __ATOMIC_ACQUIRE);
 }
 
 static inline bool block(exp_backoff_then_block_lock & this) with(this) {
-	lock( spinlock __cfaabi_dbg_ctx2 ); // TODO change to lockfree queue (MPSC)
-	if (lock_value != 2) {
-		unlock( spinlock );
-		return true;
-	}
-	insert_last( blocked_threads, *active_thread() );
-	unlock( spinlock );
+    lock( spinlock __cfaabi_dbg_ctx2 );
+    if (__atomic_load_n( &lock_value, __ATOMIC_SEQ_CST) != 2) {
+        unlock( spinlock );
+        return true;
+    }
+    insert_last( blocked_threads, *active_thread() );
+    unlock( spinlock );
 	park( );
 	return true;
 }
@@ -306,6 +296,7 @@ static inline bool block(exp_backoff_then_block_lock & this) with(this) {
 static inline void lock(exp_backoff_then_block_lock & this) with(this) {
 	size_t compare_val = 0;
 	int spin = 4;
+
 	// linear backoff
 	for( ;; ) {
 		compare_val = 0;
@@ -323,10 +314,10 @@ static inline void lock(exp_backoff_then_block_lock & this) with(this) {
 
 static inline void unlock(exp_backoff_then_block_lock & this) with(this) {
     if (__atomic_exchange_n(&lock_value, 0, __ATOMIC_RELEASE) == 1) return;
-	lock( spinlock __cfaabi_dbg_ctx2 );
-	thread$ * t = &try_pop_front( blocked_threads );
-	unlock( spinlock );
-	unpark( t );
+    lock( spinlock __cfaabi_dbg_ctx2 );
+    thread$ * t = &try_pop_front( blocked_threads );
+    unlock( spinlock );
+    unpark( t );
 }
 
 static inline void on_notify(exp_backoff_then_block_lock & this, struct thread$ * t ) { unpark(t); }
