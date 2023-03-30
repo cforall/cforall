@@ -151,7 +151,7 @@ static void destroy(pthread_mutex_t * plock) {
 }
 
 //######################### Attr helpers #########################
-struct cfaPthread_attr_t {								// thread attributes
+typedef struct cfaPthread_attr_t {						// thread attributes
 		int contentionscope;
 		int detachstate;
 		size_t stacksize;
@@ -159,7 +159,7 @@ struct cfaPthread_attr_t {								// thread attributes
 		int policy;
 		int inheritsched;
 		struct sched_param param;
-} typedef cfaPthread_attr_t;
+} cfaPthread_attr_t;
 
 static const cfaPthread_attr_t default_attrs {
 	0,

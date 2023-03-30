@@ -23,7 +23,6 @@
 
 #include "BaseSyntaxNode.h"  // for BaseSyntaxNode
 #include "Common/Iterate.hpp"// for operator+
-#include "Common/utility.h"  // for toCString
 #include "Mutator.h"         // for Mutator
 #include "SynTree.h"         // for AST nodes
 #include "Visitor.h"         // for Visitor
@@ -185,7 +184,7 @@ class Type : public BaseSyntaxNode {
 
 	virtual bool isComplete() const { return true; }
 
-	virtual AggregateDecl * getAggr() const { assertf( false, "Non-aggregate type: %s", toCString( this ) ); }
+	virtual AggregateDecl * getAggr() const;
 
 	virtual TypeSubstitution genericSubstitution() const;
 

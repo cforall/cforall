@@ -15,6 +15,8 @@
 
 #include "ExceptDecl.h"
 
+#include <sstream>
+
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Print.hpp"

@@ -19,8 +19,8 @@
 #include "Common/CodeLocationTools.hpp"
 #include "Common/PassVisitor.h"        // for PassVisitor, WithStmtsToAdd
 #include "Common/SemanticError.h"      // for SemanticError
+#include "Common/ToString.hpp"         // for toCString
 #include "Common/UniqueName.h"         // for UniqueName
-#include "Common/utility.h"            // for CodeLocation, ValueGuard, toSt...
 #include "FixGlobalInit.h"             // for fixGlobalInit
 #include "GenInit.h"                   // for genCtorDtor
 #include "GenPoly/GenPoly.h"           // for getFunctionType

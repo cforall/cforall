@@ -23,8 +23,8 @@
 
 #include "CodeGen/OperatorTable.h"       // for OperatorInfo, operatorLookup
 #include "Common/PassVisitor.h"
+#include "Common/ToString.hpp"           // for toCString
 #include "Common/SemanticError.h"        // for SemanticError
-#include "Common/utility.h"              // for toString
 #include "ResolvExpr/TypeEnvironment.h"  // for TypeEnvironment
 #include "SynTree/LinkageSpec.h"         // for Spec, isOverridable, AutoGen, Int...
 #include "SynTree/Declaration.h"         // for TypeDecl, DeclarationWithType

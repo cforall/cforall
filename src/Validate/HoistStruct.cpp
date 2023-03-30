@@ -15,9 +15,10 @@
 
 #include "Validate/HoistStruct.hpp"
 
+#include <sstream>
+
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
-#include "Common/utility.h"
 
 namespace Validate {
 

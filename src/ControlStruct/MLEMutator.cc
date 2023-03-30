@@ -24,7 +24,7 @@
 #include <cassert>                         // for assert, assertf
 #include <memory>                          // for allocator_traits<>::value_...
 
-#include "Common/utility.h"                // for toString, operator+
+#include "Common/ToString.hpp"             // for toString
 #include "ControlStruct/LabelGenerator.h"  // for LabelGenerator
 #include "MLEMutator.h"
 #include "SynTree/Attribute.h"             // for Attribute

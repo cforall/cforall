@@ -21,7 +21,6 @@
 #include <iostream>
 #include <list>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -142,26 +141,6 @@ void spliceBegin( std::vector< T > & dst, std::vector< T > & src ) {
 	splice( src, dst );
 	dst.swap( src );
 }
-
-template < typename T >
-void toString_single( std::ostream & os, const T & value ) {
-	os << value;
-}
-
-template < typename T, typename... Params >
-void toString_single( std::ostream & os, const T & value, const Params & ... params ) {
-	os << value;
-	toString_single( os, params ... );
-}
-
-template < typename ... Params >
-std::string toString( const Params & ... params ) {
-	std::ostringstream os;
-	toString_single( os, params... );
-	return os.str();
-}
-
-#define toCString( ... ) toString( __VA_ARGS__ ).c_str()
 
 template< typename... Args >
 auto filter(Args&&... args) -> decltype(std::copy_if(std::forward<Args>(args)...)) {

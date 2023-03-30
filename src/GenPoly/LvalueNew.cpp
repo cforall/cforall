@@ -24,6 +24,7 @@
 #include "AST/LinkageSpec.hpp"         // for Linkage
 #include "AST/Pass.hpp"
 #include "Common/SemanticError.h"      // for SemanticWarning
+#include "Common/ToString.hpp"         // for toCString
 #include "Common/UniqueName.h"         // for UniqueName
 #include "GenPoly/GenPoly.h"           // for genFunctionType
 #include "ResolvExpr/typeops.h"        // for typesCompatible

@@ -21,6 +21,7 @@
 #include "AST/Pass.hpp"
 #include "CodeGen/OperatorTable.h"
 #include "Common/CodeLocation.h"
+#include "Common/ToString.hpp"
 #include "SymTab/FixFunction.h"
 
 #include "AST/Print.hpp"

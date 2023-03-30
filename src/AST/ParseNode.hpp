@@ -39,6 +39,8 @@ private:
 	/// Must be copied in ALL derived classes
 	template<typename node_t>
 	friend node_t * mutate(const node_t * node);
+	template<typename node_t>
+	friend node_t * shallowCopy(const node_t * node);
 };
 
 }

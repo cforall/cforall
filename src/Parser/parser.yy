@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Mar 22 21:26:01 2023
-// Update Count     : 6002
+// Last Modified On : Wed Mar 29 17:56:42 2023
+// Update Count     : 6325
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -43,6 +43,7 @@
 #undef __GNUC_MINOR__
 
 #include <cstdio>
+#include <sstream>
 #include <stack>
 using namespace std;
 
@@ -271,14 +272,6 @@ static void IdentifierBeforeType( string & identifier, const char * kind ) {
 				   "Possible cause is misspelled storage/CV qualifier, misspelled typename, or missing generic parameter." ) );
 } // IdentifierBeforeType
 
-static bool TypedefForall( DeclarationNode * decl ) {
-	if ( decl->type->forall || (decl->type->kind == TypeData::Aggregate && decl->type->aggregate.params) ) {
-		SemanticError( yylloc, "forall qualifier in typedef is currently unimplemented." );
-		return true;
-	} // if
-	return false;
-} // IdentifierBeforeType
-
 bool forall = false;									// aggregate have one or more forall qualifiers ?
 
 // https://www.gnu.org/software/bison/manual/bison.html#Location-Type
@@ -358,8 +351,8 @@ if ( N ) {																		\
 %token ALIGNAS ALIGNOF GENERIC STATICASSERT				// C11
 
 // names and constants: lexer differentiates between identifier and typedef names
-%token<tok> IDENTIFIER		QUOTED_IDENTIFIER	TYPEDIMname		TYPEDEFname		TYPEGENname
-%token<tok> TIMEOUT			WOR					CATCH			RECOVER			CATCHRESUME		FIXUP		FINALLY		// CFA
+%token<tok> IDENTIFIER		TYPEDIMname		TYPEDEFname		TYPEGENname
+%token<tok> TIMEOUT			WAND	WOR			CATCH			RECOVER			CATCHRESUME		FIXUP		FINALLY		// CFA
 %token<tok> INTEGERconstant	CHARACTERconstant	STRINGliteral
 %token<tok> DIRECTIVE
 // Floating point constant is broken into three kinds of tokens because of the ambiguity with tuple indexing and
@@ -428,9 +421,9 @@ if ( N ) {																		\
 %type<sn> exception_statement			handler_clause				finally_clause
 %type<catch_kind> handler_key
 %type<sn> mutex_statement
-%type<en> when_clause					when_clause_opt				waitfor						timeout
-%type<sn> waitfor_statement
-%type<wfs> waitfor_clause
+%type<en> when_clause					when_clause_opt				waitfor		waituntil		timeout
+%type<sn> waitfor_statement				waituntil_statement
+%type<wfs> wor_waitfor_clause			waituntil_clause			wand_waituntil_clause	wor_waituntil_clause
 
 // declarations
 %type<decl> abstract_declarator abstract_ptr abstract_array abstract_function array_dimension multi_array_dimension
@@ -534,9 +527,12 @@ if ( N ) {																		\
 //   `-----------------'		matches IF '(' comma_expression ')' statement . (shift) ELSE statement */
 // Similar issues exit with the waitfor statement.
 
-// Order of these lines matters (low-to-high precedence). THEN is left associative over WOR/TIMEOUT/ELSE, WOR is left
-// associative over TIMEOUT/ELSE, and TIMEOUT is left associative over ELSE.
+// Order of these lines matters (low-to-high precedence). THEN is left associative over WAND/WOR/TIMEOUT/ELSE, WAND/WOR
+// is left associative over TIMEOUT/ELSE, and TIMEOUT is left associative over ELSE.
 %precedence THEN		// rule precedence for IF/WAITFOR statement
+%precedence ANDAND		// token precedence for start of WAND in WAITFOR statement
+%precedence WAND		// token precedence for start of WAND in WAITFOR statement
+%precedence OROR		// token precedence for start of WOR in WAITFOR statement
 %precedence WOR			// token precedence for start of WOR in WAITFOR statement
 %precedence TIMEOUT		// token precedence for start of TIMEOUT in WAITFOR statement
 %precedence CATCH		// token precedence for start of TIMEOUT in WAITFOR statement
@@ -623,6 +619,7 @@ constant:
 
 quasi_keyword:											// CFA
 	TIMEOUT
+	| WAND
 	| WOR
 	| CATCH
 	| RECOVER
@@ -773,9 +770,9 @@ postfix_expression:
 	| postfix_expression ARROW '[' field_name_list ']'	// CFA, tuple field selector
 		{ $$ = new ExpressionNode( build_pfieldSel( $1, build_tuple( $4 ) ) ); }
 	| postfix_expression ICR
-	  	{ $$ = new ExpressionNode( build_unary_val( OperKinds::IncrPost, $1 ) ); }
+		{ $$ = new ExpressionNode( build_unary_val( OperKinds::IncrPost, $1 ) ); }
 	| postfix_expression DECR
-	  	{ $$ = new ExpressionNode( build_unary_val( OperKinds::DecrPost, $1 ) ); }
+		{ $$ = new ExpressionNode( build_unary_val( OperKinds::DecrPost, $1 ) ); }
 	| '(' type_no_function ')' '{' initializer_list_opt comma_opt '}' // C99, compound-literal
 		{ $$ = new ExpressionNode( build_compoundLiteral( $2, new InitializerNode( $5, true ) ) ); }
 	| '(' type_no_function ')' '@' '{' initializer_list_opt comma_opt '}' // CFA, explicit C compound-literal
@@ -803,7 +800,7 @@ argument_expression_list:
 argument_expression:
 	'@'													// CFA, default parameter
 		{ SemanticError( yylloc, "Default parameter for argument is currently unimplemented." ); $$ = nullptr; }
-	 	// { $$ = new ExpressionNode( build_constantInteger( *new string( "2" ) ) ); }
+		// { $$ = new ExpressionNode( build_constantInteger( *new string( "2" ) ) ); }
 	| assignment_expression
 	;
 
@@ -878,11 +875,11 @@ unary_expression:
 			}
 		}
 	| unary_operator cast_expression
-	  	{ $$ = new ExpressionNode( build_unary_val( $1, $2 ) ); }
+		{ $$ = new ExpressionNode( build_unary_val( $1, $2 ) ); }
 	| ICR unary_expression
-	  	{ $$ = new ExpressionNode( build_unary_val( OperKinds::Incr, $2 ) ); }
+		{ $$ = new ExpressionNode( build_unary_val( OperKinds::Incr, $2 ) ); }
 	| DECR unary_expression
-	  	{ $$ = new ExpressionNode( build_unary_val( OperKinds::Decr, $2 ) ); }
+		{ $$ = new ExpressionNode( build_unary_val( OperKinds::Decr, $2 ) ); }
 	| SIZEOF unary_expression
 		{ $$ = new ExpressionNode( new SizeofExpr( maybeMoveBuild( $2 ) ) ); }
 	| SIZEOF '(' type_no_function ')'
@@ -1135,6 +1132,7 @@ statement:
 	| with_statement
 	| mutex_statement
 	| waitfor_statement
+	| waituntil_statement
 	| exception_statement
 	| enable_disable_statement
 		{ SemanticError( yylloc, "enable/disable statement is currently unimplemented." ); $$ = nullptr; }
@@ -1244,7 +1242,7 @@ conditional_declaration:
 		{ $$ = new CondCtl( $1, nullptr ); }
 	| declaration comma_expression						// semi-colon separated
 		{ $$ = new CondCtl( $1, $2 ); }
- 	;
+	;
 
 // CASE and DEFAULT clauses are only allowed in the SWITCH statement, precluding Duff's device. In addition, a case
 // clause allows a list of values and subranges.
@@ -1327,7 +1325,7 @@ iteration_statement:
 			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
 	| FOR '(' for_control_expression_list ')' statement	%prec THEN
-	  	{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ) ) ); }
+		{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ) ) ); }
 	| FOR '(' for_control_expression_list ')' statement ELSE statement // CFA
 		{ $$ = new StatementNode( build_for( $3, maybe_build_compound( $5 ), $7 ) ); }
 	;
@@ -1519,7 +1517,7 @@ for_control_expression:
 			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, "All enumation ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr; }
 			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
 		}
- 	;
+	;
 
 downupdowneq:
 	ErangeDown
@@ -1528,14 +1526,14 @@ downupdowneq:
 		{ $$ = OperKinds::LEThan; }
 	| ErangeDownEq
 		{ $$ = OperKinds::GEThan; }
- 	;
+	;
 
 updown:
 	'~'
 		{ $$ = OperKinds::LThan; }
 	| ErangeDown
 		{ $$ = OperKinds::GThan; }
- 	;
+	;
 
 updowneq:
 	updown
@@ -1543,7 +1541,7 @@ updowneq:
 		{ $$ = OperKinds::LEThan; }
 	| ErangeDownEq
 		{ $$ = OperKinds::GEThan; }
- 	;
+	;
 
 jump_statement:
 	GOTO identifier_or_type_name ';'
@@ -1626,15 +1624,6 @@ when_clause_opt:
 	| when_clause
 	;
 
-waitfor:
-	WAITFOR '(' cast_expression ')'
-		{ $$ = $3; }
-//	| WAITFOR '(' cast_expression ',' argument_expression_list_opt ')'
-//	  	{ $$ = (ExpressionNode *)$3->set_last( $5 ); }
-	| WAITFOR '(' cast_expression_list ':' argument_expression_list_opt ')'
-		{ $$ = (ExpressionNode *)($3->set_last( $5 )); }
-	;
-
 cast_expression_list:
 	cast_expression
 	| cast_expression_list ',' cast_expression
@@ -1643,34 +1632,89 @@ cast_expression_list:
 	;
 
 timeout:
-	TIMEOUT '(' comma_expression ')'	 		{ $$ = $3; }
+	TIMEOUT '(' comma_expression ')'			{ $$ = $3; }
 	;
 
-waitfor_clause:
-	when_clause_opt waitfor statement					%prec THEN
-		{ $$ = build_waitfor( $2, maybe_build_compound( $3 ), $1 ); }
-	| when_clause_opt waitfor statement WOR waitfor_clause
-		{ $$ = build_waitfor( $2, maybe_build_compound( $3 ), $1, $5 ); }
-	| when_clause_opt timeout statement					%prec THEN
-		{ $$ = build_waitfor_timeout( $2, maybe_build_compound( $3 ), $1 ); }
-	| when_clause_opt ELSE statement
-		{ $$ = build_waitfor_timeout( nullptr, maybe_build_compound( $3 ), $1 ); }
-	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
-	| when_clause_opt timeout statement WOR ELSE statement // syntax error
-		{ SemanticError( yylloc, "else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
-	| when_clause_opt timeout statement WOR when_clause ELSE statement
-		{ $$ = build_waitfor_timeout( $2, maybe_build_compound( $3 ), $1, maybe_build_compound( $7 ), $5 ); }
+wor:
+	OROR
+	| WOR
+
+waitfor:
+	WAITFOR '(' cast_expression ')'
+		{ $$ = $3; }
+	| WAITFOR '(' cast_expression_list ':' argument_expression_list_opt ')'
+		{ $$ = (ExpressionNode *)($3->set_last( $5 )); }
 	;
+
+wor_waitfor_clause:
+	when_clause_opt waitfor statement					%prec THEN
+		// Called first: create header for WaitForStmt.
+		{ $$ = build_waitfor( new WaitForStmt(), $1, $2, maybe_build_compound( $3 ) ); }
+	| wor_waitfor_clause wor when_clause_opt waitfor statement	%prec THEN
+		{ $$ = build_waitfor( $1, $3, $4, maybe_build_compound( $5 ) ); }
+	| wor_waitfor_clause wor when_clause_opt ELSE statement
+		{ $$ = build_waitfor_else( $1, $3, maybe_build_compound( $5 ) ); }
+	| wor_waitfor_clause wor when_clause_opt timeout statement	%prec THEN
+		{ $$ = build_waitfor_timeout( $1, $3, $4, maybe_build_compound( $5 ) ); }
+	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
+	| wor_waitfor_clause wor when_clause_opt timeout statement wor ELSE statement // syntax error
+		{ SemanticError( yylloc, "else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
+	| wor_waitfor_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
+		{ $$ = build_waitfor_else( build_waitfor_timeout( $1, $3, $4, maybe_build_compound( $5 ) ), $7, maybe_build_compound( $9 ) ); }
 
 waitfor_statement:
-	when_clause_opt waitfor statement					%prec THEN
- 		{ $$ = new StatementNode( build_waitfor( $2, $3, $1 ) ); }
-	| when_clause_opt waitfor statement WOR waitfor_clause
- 		{ $$ = new StatementNode( build_waitfor( $2, $3, $1, $5 ) ); }
+	wor_waitfor_clause									%prec THEN
+		{ $$ = new StatementNode( $1 ); }
+	;
+
+wand:
+	ANDAND
+	| WAND
+	;
+
+waituntil:
+	WAITUNTIL '(' cast_expression ')'
+		{ $$ = $3; }
+	;
+
+waituntil_clause:
+	when_clause_opt waituntil statement
+		{ printf( "waituntil_clause 1\n" ); $$ = nullptr; }
+	| '(' wor_waituntil_clause ')'
+		{ printf( "waituntil_clause 2\n" ); $$ = nullptr; }
+	;
+
+wand_waituntil_clause:
+	waituntil_clause									%prec THEN
+		{ printf( "wand_waituntil_clause 1\n" ); $$ = nullptr; }
+	| waituntil_clause wand wand_waituntil_clause
+		{ printf( "wand_waituntil_clause 2\n" ); $$ = nullptr; }
+	;
+
+wor_waituntil_clause:
+	wand_waituntil_clause
+		{ printf( "wor_waituntil_clause 1\n" ); $$ = nullptr; }
+	| wor_waituntil_clause wor wor_waituntil_clause		%prec THEN
+		{ printf( "wor_waituntil_clause 2\n" ); $$ = nullptr; }
+	| wor_waituntil_clause wor when_clause_opt ELSE statement
+		{ printf( "wor_waituntil_clause 3\n" ); $$ = nullptr; }
+	| wor_waituntil_clause wor when_clause_opt timeout statement	%prec THEN
+		{ printf( "wor_waituntil_clause 4\n" ); $$ = nullptr; }
+	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
+	| wor_waituntil_clause wor when_clause_opt timeout statement wor ELSE statement // syntax error
+		{ SemanticError( yylloc, "else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
+	| wor_waituntil_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
+		{ printf( "wor_waituntil_clause 6\n" ); $$ = nullptr; }
+	;
+
+waituntil_statement:
+	wor_waituntil_clause								%prec THEN
+		// SKULLDUGGERY: create an empty compound statement to test parsing of waituntil statement.
+		{ $$ = new StatementNode( build_compound( (StatementNode *)0 ) ); }
 	;
 
 exception_statement:
-	TRY compound_statement handler_clause 					%prec THEN
+	TRY compound_statement handler_clause				%prec THEN
 		{ $$ = new StatementNode( build_try( $2, $3, nullptr ) ); }
 	| TRY compound_statement finally_clause
 		{ $$ = new StatementNode( build_try( $2, nullptr, $3 ) ); }
@@ -1830,7 +1874,7 @@ declaration:											// old & new style declarations
 	c_declaration ';'
 		{
 			// printf( "C_DECLARATION1 %p %s\n", $$, $$->name ? $$->name->c_str() : "(nil)" );
-		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
@@ -1966,8 +2010,9 @@ typedef_declaration:
 	TYPEDEF type_specifier declarator
 		{
 			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "4" );
-			if ( TypedefForall( $2 ) ) $$ = nullptr;
-			else $$ = $3->addType( $2 )->addTypedef();		// watchout frees $2 and $3
+			if ( $2->type->forall || ($2->type->kind == TypeData::Aggregate && $2->type->aggregate.params) ) {
+				SemanticError( yylloc, "forall qualifier in typedef is currently unimplemented." ); $$ = nullptr;
+			} else $$ = $3->addType( $2 )->addTypedef(); // watchout frees $2 and $3
 		}
 	| typedef_declaration pop ',' push declarator
 		{
@@ -1975,34 +2020,22 @@ typedef_declaration:
 			$$ = $1->appendList( $1->cloneBaseType( $5 )->addTypedef() );
 		}
 	| type_qualifier_list TYPEDEF type_specifier declarator // remaining OBSOLESCENT (see 2 )
-		{
-			typedefTable.addToEnclosingScope( *$4->name, TYPEDEFname, "6" );
-			if ( TypedefForall( $1 ) ) $$ = nullptr;
-			else $$ = $4->addQualifiers( $1 )->addType( $3 )->addTypedef();
-		}
+		{ SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); $$ = nullptr; }
 	| type_specifier TYPEDEF declarator
-		{
-			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "7" );
-			if ( TypedefForall( $1 ) ) $$ = nullptr;
-			else $$ = $3->addType( $1 )->addTypedef();
-		}
+		{ SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); $$ = nullptr; }
 	| type_specifier TYPEDEF type_qualifier_list declarator
-		{
-			typedefTable.addToEnclosingScope( *$4->name, TYPEDEFname, "8" );
-			if ( TypedefForall( $3 ) ) $$ = nullptr;
-			else $$ = $4->addQualifiers( $1 )->addType( $1 )->addTypedef();
-		}
+		{ SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); $$ = nullptr; }
 	;
 
 typedef_expression:
 		// deprecated GCC, naming expression type: typedef name = exp; gives a name to the type of an expression
 	TYPEDEF identifier '=' assignment_expression
 		{
-			SemanticError( yylloc, "Typedef expression is deprecated, use typeof(...) instead." ); $$ = nullptr;
+			SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); $$ = nullptr;
 		}
 	| typedef_expression pop ',' push identifier '=' assignment_expression
 		{
-			SemanticError( yylloc, "Typedef expression is deprecated, use typeof(...) instead." ); $$ = nullptr;
+			SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); $$ = nullptr;
 		}
 	;
 
@@ -2300,7 +2333,7 @@ sue_declaration_specifier:								// struct, union, enum + storage class + type 
 	sue_type_specifier
 		{
 			// printf( "sue_declaration_specifier %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
@@ -2316,7 +2349,7 @@ sue_type_specifier:										// struct, union, enum + type specifier
 	elaborated_type
 		{
 			// printf( "sue_type_specifier %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
@@ -2394,7 +2427,7 @@ elaborated_type:										// struct, union, enum
 	aggregate_type
 		{
 			// printf( "elaborated_type %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
@@ -2521,14 +2554,14 @@ field_declaration:
 			// printf( "type_specifier1 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
 			$$ = fieldDecl( $1, $2 );
 			// printf( "type_specifier2 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-		  	// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
+			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
 	| EXTENSION type_specifier field_declaring_list_opt ';'	// GCC
 		{ $$ = fieldDecl( $2, $3 ); distExt( $$ ); }
 	| STATIC type_specifier field_declaring_list_opt ';' // CFA
-	   	{ SemanticError( yylloc, "STATIC aggregate field qualifier currently unimplemented." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "STATIC aggregate field qualifier currently unimplemented." ); $$ = nullptr; }
 	| INLINE type_specifier field_abstract_list_opt ';'	// CFA
 		{
 			if ( ! $3 ) {								// field declarator ?
@@ -2539,7 +2572,7 @@ field_declaration:
 			distInl( $3 );
 		}
 	| INLINE aggregate_control ';'						// CFA
-	   	{ SemanticError( yylloc, "INLINE aggregate control currently unimplemented." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "INLINE aggregate control currently unimplemented." ); $$ = nullptr; }
 	| typedef_declaration ';'							// CFA
 	| cfa_field_declaring_list ';'						// CFA, new style field declaration
 	| EXTENSION cfa_field_declaring_list ';'			// GCC
@@ -2622,7 +2655,7 @@ enum_type:
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false, nullptr, $4 )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
-	 	{
+		{
 			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.any() )
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 
@@ -3156,7 +3189,7 @@ external_definition:
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
 		{
 			distQual( $5, $1 );
- 			forall = false;
+			forall = false;
 			$$ = $5;
 		}
 	| declaration_qualifier_list
@@ -3167,7 +3200,7 @@ external_definition:
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
 		{
 			distQual( $5, $1 );
- 			forall = false;
+			forall = false;
 			$$ = $5;
 		}
 	| declaration_qualifier_list type_qualifier_list
@@ -3178,7 +3211,7 @@ external_definition:
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
 		{
 			distQual( $6, $1->addQualifiers( $2 ) );
- 			forall = false;
+			forall = false;
 			$$ = $6;
 		}
 	;
@@ -3385,7 +3418,7 @@ variable_array:
 		{ $$ = $2->addArray( $4 ); }
 	| '(' attribute_list variable_ptr ')' array_dimension
 		{ $$ = $3->addQualifiers( $2 )->addArray( $5 ); }
-	| '(' variable_array ')' multi_array_dimension 		// redundant parenthesis
+	| '(' variable_array ')' multi_array_dimension		// redundant parenthesis
 		{ $$ = $2->addArray( $4 ); }
 	| '(' attribute_list variable_array ')' multi_array_dimension // redundant parenthesis
 		{ $$ = $3->addQualifiers( $2 )->addArray( $5 ); }
@@ -3808,7 +3841,7 @@ upupeq:
 		{ $$ = OperKinds::LThan; }
 	| ErangeUpEq
 		{ $$ = OperKinds::LEThan; }
- 	;
+	;
 
 multi_array_dimension:
 	'[' push assignment_expression pop ']'

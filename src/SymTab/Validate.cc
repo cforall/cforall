@@ -54,8 +54,9 @@
 #include "Common/PassVisitor.h"        // for PassVisitor, WithDeclsToAdd
 #include "Common/ScopedMap.h"          // for ScopedMap
 #include "Common/SemanticError.h"      // for SemanticError
+#include "Common/ToString.hpp"         // for toCString
 #include "Common/UniqueName.h"         // for UniqueName
-#include "Common/utility.h"            // for operator+, cloneAll, deleteAll
+#include "Common/utility.h"            // for cloneAll, deleteAll
 #include "CompilationState.h"          // skip some passes in new-ast build
 #include "Concurrency/Keywords.h"      // for applyKeywords
 #include "FixFunction.h"               // for FixFunction

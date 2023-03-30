@@ -16,10 +16,10 @@
 
 #include <cassert>                   // for assert, assertf
 #include <list>                      // for _List_iterator, list, list<>::it...
+#include <sstream>                   // for stringstream
 
 #include "AST/Decl.hpp"              // for DeclWithType
 #include "Common/UniqueName.h"       // for UniqueName
-#include "Common/utility.h"          // for CodeLocation, toString
 #include "GenType.h"                 // for genType
 #include "InitTweak/InitTweak.h"     // for getPointerBase
 #include "OperatorTable.h"           // for OperatorInfo, operatorLookup

@@ -19,10 +19,7 @@
 
 #include_next <cassert>
 
-#include <string>
-
-template < typename ... Params >
-std::string toString( const Params & ... params );
+#include "Common/ToString.hpp"
 
 #ifdef NDEBUG
 

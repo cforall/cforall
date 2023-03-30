@@ -16,6 +16,7 @@
 #include "Candidate.hpp"
 
 #include <iostream>
+#include <sstream>
 
 #include "AST/Print.hpp"
 
@@ -43,7 +44,7 @@ void print( std::ostream & os, const CandidateList & cands, Indenter indent ) {
 	std::vector<std::string> sorted;
 	sorted.reserve(cands.size());
 	for(const auto & c : cands) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		print( ss, *c, indent );
 		sorted.push_back(ss.str());
 	}

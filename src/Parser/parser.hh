@@ -151,11 +151,11 @@ extern int yydebug;
     GENERIC = 357,
     STATICASSERT = 358,
     IDENTIFIER = 359,
-    QUOTED_IDENTIFIER = 360,
-    TYPEDIMname = 361,
-    TYPEDEFname = 362,
-    TYPEGENname = 363,
-    TIMEOUT = 364,
+    TYPEDIMname = 360,
+    TYPEDEFname = 361,
+    TYPEGENname = 362,
+    TIMEOUT = 363,
+    WAND = 364,
     WOR = 365,
     CATCH = 366,
     RECOVER = 367,
@@ -302,11 +302,11 @@ extern int yydebug;
 #define GENERIC 357
 #define STATICASSERT 358
 #define IDENTIFIER 359
-#define QUOTED_IDENTIFIER 360
-#define TYPEDIMname 361
-#define TYPEDEFname 362
-#define TYPEGENname 363
-#define TIMEOUT 364
+#define TYPEDIMname 360
+#define TYPEDEFname 361
+#define TYPEGENname 362
+#define TIMEOUT 363
+#define WAND 364
 #define WOR 365
 #define CATCH 366
 #define RECOVER 367
@@ -353,7 +353,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 303 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 296 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
 
 	Token tok;
 	ParseNode * pn;

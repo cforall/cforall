@@ -30,6 +30,7 @@
 #include "CodeGen/OperatorTable.h"
 #include "Common/PassVisitor.h"        // for PassVisitor, WithGuards, WithShort...
 #include "Common/SemanticError.h"      // for SemanticError
+#include "Common/ToString.hpp"         // for toCString
 #include "Common/UniqueName.h"         // for UniqueName
 #include "Common/utility.h"            // for ValueGuard, maybeClone
 #include "GenPoly/GenPoly.h"           // for getFunctionType, isPolyType

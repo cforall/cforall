@@ -16,6 +16,7 @@
 #include <cassert>                       // for strict_dynamic_cast
 #include <string>                        // for string
 
+#include "Common/ToString.hpp"           // for toCString
 #include "Common/UniqueName.h"
 #include "Common/PassVisitor.h"
 #include "GenPoly.h"                     // for isPolyType

@@ -15,11 +15,12 @@
 
 #include "Validate/FixQualifiedTypes.hpp"
 
+#include "AST/LinkageSpec.hpp"             // for Linkage
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
+#include "Common/ToString.hpp"             // for toString
+#include "SymTab/Mangler.h"                // for Mangler
 #include "Validate/NoIdSymbolTable.hpp"
-#include "SymTab/Mangler.h"            // for Mangler
-#include "AST/LinkageSpec.hpp"			   // for Linkage
 
 namespace Validate {
 

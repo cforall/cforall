@@ -51,6 +51,7 @@ SRC_COMMON = \
 	Common/Stats/Stats.cc \
 	Common/Stats/Time.cc \
 	Common/Stats/Time.h \
+	Common/ToString.hpp \
 	Common/UniqueName.cc \
 	Common/UniqueName.h \
 	Common/utility.h \

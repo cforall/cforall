@@ -15,6 +15,7 @@
 #include "Type.h"
 
 #include "Attribute.h"                // for Attribute
+#include "Common/ToString.hpp"        // for toCString
 #include "Common/utility.h"           // for cloneAll, deleteAll, printAll
 #include "InitTweak/InitTweak.h"      // for getPointerBase
 #include "SynTree/BaseSyntaxNode.h"   // for BaseSyntaxNode
@@ -103,6 +104,10 @@ const Type * Type::stripReferences() const {
 }
 
 int Type::referenceDepth() const { return 0; }
+
+AggregateDecl * Type::getAggr() const {
+	assertf( false, "Non-aggregate type: %s", toCString( this ) );
+}
 
 TypeSubstitution Type::genericSubstitution() const { assertf( false, "Non-aggregate type: %s", toCString( this ) ); }
 

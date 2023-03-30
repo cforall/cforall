@@ -18,6 +18,7 @@
 #include <cctype>
 #include <iostream>
 #include <set>
+#include <sstream>
 #include <unordered_set>
 
 #include "AST/Copy.hpp"
@@ -25,7 +26,6 @@
 #include "AST/TranslationUnit.hpp"
 #include "AST/Type.hpp"
 #include "CodeGen/OperatorTable.h"
-#include "Common/utility.h"
 
 namespace {
 

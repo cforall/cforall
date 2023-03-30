@@ -38,10 +38,11 @@
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
 #include "Common/Eval.h"                 // for eval
+#include "Common/Iterate.hpp"            // for group_iterate
 #include "Common/PassVisitor.h"          // for PassVisitor
 #include "Common/SemanticError.h"        // for SemanticError
 #include "Common/Stats/ResolveTime.h"    // for ResolveTime::start(), ResolveTime::stop()
-#include "Common/utility.h"              // for ValueGuard, group_iterate
+#include "Common/ToString.hpp"           // for toCString
 #include "InitTweak/GenInit.h"
 #include "InitTweak/InitTweak.h"         // for isIntrinsicSingleArgCallStmt
 #include "ResolvExpr/TypeEnvironment.h"  // for TypeEnvironment

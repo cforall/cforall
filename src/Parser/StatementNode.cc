@@ -10,8 +10,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  2 20:29:30 2022
-// Update Count     : 425
+// Last Modified On : Wed Mar 29 08:51:23 2023
+// Update Count     : 454
 //
 
 #include <cassert>                 // for assert, strict_dynamic_cast, assertf
@@ -267,11 +267,9 @@ SuspendStmt * build_suspend( StatementNode * then, SuspendStmt::Type type ) {
 	}
 
 	return node;
-}
+} // build_suspend
 
-WaitForStmt * build_waitfor( ExpressionNode * targetExpr, StatementNode * stmt, ExpressionNode * when ) {
-	auto node = new WaitForStmt();
-
+WaitForStmt * build_waitfor( WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt ) {
 	WaitForStmt::Target target;
 	target.function = maybeBuild( targetExpr );
 
@@ -281,60 +279,28 @@ WaitForStmt * build_waitfor( ExpressionNode * targetExpr, StatementNode * stmt, 
 
 	delete targetExpr;
 
-	node->clauses.push_back( WaitForStmt::Clause{
-		target,
-		maybeMoveBuild( stmt ),
-		notZeroExpr( maybeMoveBuild( when ) )
-	});
-
-	return node;
-} // build_waitfor
-
-WaitForStmt * build_waitfor( ExpressionNode * targetExpr, StatementNode * stmt, ExpressionNode * when, WaitForStmt * node ) {
-	WaitForStmt::Target target;
-	target.function = maybeBuild( targetExpr );
-
-	ExpressionNode * next = dynamic_cast<ExpressionNode *>( targetExpr->get_next() );
-	targetExpr->set_next( nullptr );
-	buildMoveList< Expression >( next, target.arguments );
-
-	delete targetExpr;
-
-	node->clauses.insert( node->clauses.begin(), WaitForStmt::Clause{
+	existing->clauses.insert( existing->clauses.begin(), WaitForStmt::Clause{
 		std::move( target ),
 		maybeMoveBuild( stmt ),
 		notZeroExpr( maybeMoveBuild( when ) )
 	});
 
-	return node;
+	return existing;
 } // build_waitfor
 
-WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when ) {
-	auto node = new WaitForStmt();
+WaitForStmt * build_waitfor_else( WaitForStmt * existing, ExpressionNode * when, StatementNode * stmt ) {
+	existing->orelse.statement  = maybeMoveBuild( stmt );
+	existing->orelse.condition  = notZeroExpr( maybeMoveBuild( when ) );
 
-	if( timeout ) {
-		node->timeout.time      = maybeMoveBuild( timeout );
-		node->timeout.statement = maybeMoveBuild( stmt    );
-		node->timeout.condition = notZeroExpr( maybeMoveBuild( when ) );
-	} else {
-		node->orelse.statement  = maybeMoveBuild( stmt );
-		node->orelse.condition  = notZeroExpr( maybeMoveBuild( when ) );
-	} // if
+	return existing;
+} // build_waitfor_else
 
-	return node;
-} // build_waitfor_timeout
+WaitForStmt * build_waitfor_timeout( WaitForStmt * existing, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt ) {
+	existing->timeout.time      = maybeMoveBuild( timeout );
+	existing->timeout.statement = maybeMoveBuild( stmt );
+	existing->timeout.condition = notZeroExpr( maybeMoveBuild( when ) );
 
-WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when,  StatementNode * else_, ExpressionNode * else_when ) {
-	auto node = new WaitForStmt();
-
-	node->timeout.time      = maybeMoveBuild( timeout );
-	node->timeout.statement = maybeMoveBuild( stmt    );
-	node->timeout.condition = notZeroExpr( maybeMoveBuild( when ) );
-
-	node->orelse.statement  = maybeMoveBuild( else_ );
-	node->orelse.condition  = notZeroExpr( maybeMoveBuild( else_when ) );
-
-	return node;
+	return existing;
 } // build_waitfor_timeout
 
 Statement * build_with( ExpressionNode * exprs, StatementNode * stmt ) {

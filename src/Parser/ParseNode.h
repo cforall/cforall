@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 19 09:02:37 2023
-// Update Count     : 940
+// Last Modified On : Wed Mar 29 08:40:27 2023
+// Update Count     : 948
 //
 
 #pragma once
@@ -424,10 +424,9 @@ StatementNode * maybe_build_compound( StatementNode * first );
 Statement * build_asm( bool voltile, Expression * instruction, ExpressionNode * output = nullptr, ExpressionNode * input = nullptr, ExpressionNode * clobber = nullptr, LabelNode * gotolabels = nullptr );
 Statement * build_directive( std::string * directive );
 SuspendStmt * build_suspend( StatementNode *, SuspendStmt::Type = SuspendStmt::None);
-WaitForStmt * build_waitfor( ExpressionNode * target, StatementNode * stmt, ExpressionNode * when );
-WaitForStmt * build_waitfor( ExpressionNode * target, StatementNode * stmt, ExpressionNode * when, WaitForStmt * existing );
-WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when );
-WaitForStmt * build_waitfor_timeout( ExpressionNode * timeout, StatementNode * stmt, ExpressionNode * when, StatementNode * else_stmt, ExpressionNode * else_when );
+WaitForStmt * build_waitfor( WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt );
+WaitForStmt * build_waitfor_else( WaitForStmt * existing, ExpressionNode * when, StatementNode * stmt );
+WaitForStmt * build_waitfor_timeout( WaitForStmt * existing, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt );
 Statement * build_with( ExpressionNode * exprs, StatementNode * stmt );
 Statement * build_mutex( ExpressionNode * exprs, StatementNode * stmt );
 

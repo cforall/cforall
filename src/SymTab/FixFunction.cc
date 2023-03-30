@@ -20,7 +20,7 @@
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
-#include "Common/utility.h"       // for maybeClone, copy
+#include "Common/utility.h"       // for copy
 #include "SynTree/Declaration.h"  // for FunctionDecl, ObjectDecl, Declarati...
 #include "SynTree/Expression.h"   // for Expression
 #include "SynTree/Type.h"         // for ArrayType, PointerType, Type, Basic...

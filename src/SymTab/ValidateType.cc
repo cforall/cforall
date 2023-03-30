@@ -17,6 +17,7 @@
 
 #include "CodeGen/OperatorTable.h"
 #include "Common/PassVisitor.h"
+#include "Common/ToString.hpp"
 #include "SymTab/FixFunction.h"
 #include "SynTree/Declaration.h"
 #include "SynTree/Type.h"
