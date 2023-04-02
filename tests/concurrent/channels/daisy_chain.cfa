@@ -1,0 +1,74 @@
+#include <locks.hfa>
+#include <fstream.hfa>
+#include <stdio.h>
+#include <channel.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+#include <string.h>
+
+size_t total_operations = 0;
+size_t Processors = 1, Tasks = 4;
+
+owner_lock o;
+
+typedef channel( int ) Channel;
+
+Channel * chain;
+
+thread Task {};
+void main(Task & this) {
+    size_t runs = 0;
+    try{
+        for ( ;; ) {
+            remove( *chain );
+            insert( *chain, 0 );
+            runs++;
+        }
+    } catch ( channel_closed * e ) {}
+    lock( o );
+    total_operations += runs;
+    unlock( o );
+}
+
+
+int main( int argc, char * argv[] ) {
+    switch ( argc ) {
+	  case 3:
+		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
+			Tasks = atoi( argv[2] );
+            if ( Tasks < 1 ) goto Usage;
+		} // if
+	  case 2:
+		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
+			Processors = atoi( argv[1] );
+			if ( Processors < 1 ) goto Usage;
+		} // if
+	  case 1:											// use defaults
+		break;
+	  default:
+	  Usage:
+		sout | "Usage: " | argv[0]
+             | " [ processors (> 0) | 'd' (default " | Processors
+			 | ") ] [ channel size (>= 0) | 'd' (default " | Tasks
+			 | ") ]" ;
+		exit( EXIT_FAILURE );
+	} // switch
+    processor proc[Processors - 1];
+
+    sout | "start";
+    Channel chainChan{ 1 };
+
+    insert( chainChan, 0 );
+
+    chain = &chainChan;    
+    {
+        Task t[Tasks];
+        sleep(10`s);
+        close( chainChan );
+    }
+    
+    // sout | total_operations;
+    sout | "done";
+
+    return 0;
+}

@@ -1,0 +1,147 @@
+#include <locks.hfa>
+#include <fstream.hfa>
+#include <stdio.h>
+#include <channel.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+#include <string.h>
+
+owner_lock o;
+
+size_t total_operations = 0;
+
+typedef channel( size_t ) Channel;
+
+Channel * channels;
+
+size_t cons_check = 0, prod_check = 0;
+
+thread Consumer {
+    size_t i;
+};
+static inline void ?{}( Consumer & c, size_t i, cluster & clu ) {
+    ((thread &)c){ clu };
+    c.i = i; 
+}
+void main(Consumer & this) {
+    size_t runs = 0;
+    size_t my_check = 0;
+    try {
+        for ( ;; ) {
+            size_t j = remove( channels[ this.i ] );
+            my_check = my_check ^ j;
+            runs++;
+        }
+    } catchResume ( channel_closed * e ) {} // continue to remove until would block
+    catch ( channel_closed * e ) {} 
+    lock(o);
+    total_operations += runs;
+    cons_check = cons_check ^ my_check;
+    // sout | "C: " | runs;
+    unlock(o);
+}
+
+thread Producer {
+    size_t i;
+};
+static inline void ?{}( Producer & p, size_t i, cluster & clu ) {
+    ((thread &)p){ clu };
+    p.i = i;
+}
+void main(Producer & this) {
+    size_t runs = 0;
+    size_t my_check = 0;
+    try {
+        for ( ;; ) {
+            insert( channels[ this.i  ], (size_t)runs );
+            my_check = my_check ^ ((size_t)runs);
+            runs++;
+        }
+    } catch ( channel_closed * e ) {} 
+    lock(o);
+    total_operations += runs;
+    prod_check = prod_check ^ my_check;
+    // sout | "P: " | runs;
+    unlock(o);
+}
+
+static inline int test( size_t Processors, size_t Channels, size_t Producers, size_t Consumers, size_t ChannelSize ) {
+    size_t Clusters = Channels;
+    // create a cluster
+    cluster clus[Clusters];
+    processor * proc[Processors];
+    for ( i; Processors ) {
+        (*(proc[i] = malloc())){clus[i % Clusters]};
+    }
+
+    channels = aalloc( Channels );
+
+    // sout | "Processors: " | Processors | " ProdsPerChan: " | Producers | " ConsPerChan: " | Consumers | "Channels: " | Channels | " Channel Size: " | ChannelSize;
+    
+    for ( i; Channels ) {
+        channels[i]{ ChannelSize };
+    }
+
+    sout | "start";
+    Consumer * c[Consumers * Channels];
+    Producer * p[Producers * Channels];
+
+    for ( j; Channels ) {
+        for ( i; Producers ) {
+            (*(p[i] = malloc())){ j, clus[j % Clusters] };
+        }
+
+        for ( i; Consumers ) {
+            (*(c[i] = malloc())){ j, clus[j % Clusters] };
+        }
+    }
+
+    sleep(10`s);
+
+    for ( i; Channels )
+        close( channels[i] );
+
+    for ( i; Producers * Channels ) {
+        delete(p[i]);
+    }
+    for ( i; Consumers * Channels ) {
+        delete(c[i]);
+    }
+
+    adelete( channels );
+    // sout | total_operations;
+    if ( cons_check != prod_check )
+        sout | "CHECKSUM MISMATCH !!!";
+    // print_stats_now( *active_cluster(), CFA_STATS_READY_Q);
+
+    for ( i; Processors ) {
+        delete(proc[i]);
+    }
+    sout | "done";
+    return 0;
+}
+
+int main( int argc, char * argv[] ) {
+    size_t Processors = 1, Channels = 1, Producers = 4, Consumers = 4, ChannelSize = 128;
+    switch ( argc ) {
+	  case 3:
+		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
+			ChannelSize = atoi( argv[2] );
+		} // if
+	  case 2:
+		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
+			Processors = atoi( argv[1] );
+			if ( Processors < 1 ) goto Usage;
+		} // if
+	  case 1:											// use defaults
+		break;
+	  default:
+	  Usage:
+		sout | "Usage: " | argv[0]
+             | " [ processors (> 0) | 'd' (default " | Processors
+			 | ") ] [ channel size (>= 0) | 'd' (default " | ChannelSize
+			 | ") ]" ;
+		exit( EXIT_FAILURE );
+	} // switch
+    test(Processors, Channels, Producers, Consumers, ChannelSize);
+}

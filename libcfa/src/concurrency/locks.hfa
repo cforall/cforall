@@ -31,7 +31,6 @@
 
 #include <fstream.hfa>
 
-
 // futex headers
 #include <linux/futex.h>      /* Definition of FUTEX_* constants */
 #include <sys/syscall.h>      /* Definition of SYS_* constants */
@@ -154,7 +153,6 @@ static inline void unlock(mcs_spin_lock & l, mcs_spin_node & n) {
 //-----------------------------------------------------------------------------
 // futex_mutex
 
-// - No cond var support
 // - Kernel thd blocking alternative to the spinlock
 // - No ownership (will deadlock on reacq)
 struct futex_mutex {
@@ -184,18 +182,16 @@ static inline int internal_exchange(futex_mutex & this) with(this) {
 static inline void lock(futex_mutex & this) with(this) {
 	int state;
 
-	
-	// // linear backoff omitted for now
-	// for( int spin = 4; spin < 1024; spin += spin) {
-	// 	state = 0;
-	// 	// if unlocked, lock and return
-	// 	if (internal_try_lock(this, state)) return;
-	// 	if (2 == state) break;
-	// 	for (int i = 0; i < spin; i++) Pause();
-	// }
+	for( int spin = 4; spin < 1024; spin += spin) {
+		state = 0;
+		// if unlocked, lock and return
+		if (internal_try_lock(this, state)) return;
+		if (2 == state) break;
+		for (int i = 0; i < spin; i++) Pause();
+	}
 
-	// no contention try to acquire
-	if (internal_try_lock(this, state)) return;
+	// // no contention try to acquire
+	// if (internal_try_lock(this, state)) return;
 	
 	// if not in contended state, set to be in contended state
 	if (state != 2) state = internal_exchange(this);
@@ -208,11 +204,10 @@ static inline void lock(futex_mutex & this) with(this) {
 }
 
 static inline void unlock(futex_mutex & this) with(this) {
-	// if uncontended do atomice unlock and then return
-	if (__atomic_fetch_sub(&val, 1, __ATOMIC_RELEASE) == 1) return; // TODO: try acq/rel
+	// if uncontended do atomic unlock and then return
+    if (__atomic_exchange_n(&val, 0, __ATOMIC_RELEASE) == 1) return;
 	
 	// otherwise threads are blocked so we must wake one
-	__atomic_store_n((int *)&val, 0, __ATOMIC_RELEASE);
 	futex((int *)&val, FUTEX_WAKE, 1);
 }
 
@@ -221,6 +216,74 @@ static inline size_t on_wait( futex_mutex & f ) {unlock(f); return 0;}
 
 // to set recursion count after getting signalled;
 static inline void on_wakeup( futex_mutex & f, size_t recursion ) {}
+
+//-----------------------------------------------------------------------------
+// go_mutex
+
+// - Kernel thd blocking alternative to the spinlock
+// - No ownership (will deadlock on reacq)
+// - Golang's flavour of mutex
+// - Impl taken from Golang: src/runtime/lock_futex.go
+struct go_mutex {
+	// lock state any state other than UNLOCKED is locked
+	// enum LockState { UNLOCKED = 0, LOCKED = 1, SLEEPING = 2 };
+	
+	// stores a lock state
+	int val; 
+};
+
+static inline void  ?{}( go_mutex & this ) with(this) { val = 0; }
+
+static inline bool internal_try_lock(go_mutex & this, int & compare_val, int new_val ) with(this) {
+	return __atomic_compare_exchange_n((int*)&val, (int*)&compare_val, new_val, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+}
+
+static inline int internal_exchange(go_mutex & this, int swap ) with(this) {
+	return __atomic_exchange_n((int*)&val, swap, __ATOMIC_ACQUIRE);
+}
+
+// if this is called recursively IT WILL DEADLOCK!!!!!
+static inline void lock(go_mutex & this) with(this) {
+	int state, init_state;
+
+    // speculative grab
+    state = internal_exchange(this, 1);
+    if ( !state ) return; // state == 0
+    init_state = state;
+    for (;;) {
+        for( int i = 0; i < 4; i++ ) {
+            while( !val ) { // lock unlocked
+                state = 0;
+                if (internal_try_lock(this, state, init_state)) return;
+            }
+            for (int i = 0; i < 30; i++) Pause();
+        }
+
+        while( !val ) { // lock unlocked
+            state = 0;
+            if (internal_try_lock(this, state, init_state)) return;
+        }
+        sched_yield();
+        
+        // if not in contended state, set to be in contended state
+        state = internal_exchange(this, 2);
+        if ( !state ) return; // state == 0
+        init_state = 2;
+        futex((int*)&val, FUTEX_WAIT, 2); // if val is not 2 this returns with EWOULDBLOCK
+    }
+}
+
+static inline void unlock( go_mutex & this ) with(this) {
+	// if uncontended do atomic unlock and then return
+    if (__atomic_exchange_n(&val, 0, __ATOMIC_RELEASE) == 1) return;
+	
+	// otherwise threads are blocked so we must wake one
+	futex((int *)&val, FUTEX_WAKE, 1);
+}
+
+static inline void on_notify( go_mutex & f, thread$ * t){ unpark(t); }
+static inline size_t on_wait( go_mutex & f ) {unlock(f); return 0;}
+static inline void on_wakeup( go_mutex & f, size_t recursion ) {}
 
 //-----------------------------------------------------------------------------
 // CLH Spinlock
@@ -270,6 +333,8 @@ static inline void  ?{}( exp_backoff_then_block_lock & this ) {
 	this.blocked_threads{};
 	this.lock_value = 0;
 }
+
+static inline void  ^?{}( exp_backoff_then_block_lock & this ){}
 
 static inline bool internal_try_lock(exp_backoff_then_block_lock & this, size_t & compare_val) with(this) {
 	return __atomic_compare_exchange_n(&lock_value, &compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);

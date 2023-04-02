@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Mar 29 17:56:42 2023
-// Update Count     : 6325
+// Last Modified On : Thu Mar 30 21:28:25 2023
+// Update Count     : 6328
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1650,7 +1650,7 @@ wor_waitfor_clause:
 	when_clause_opt waitfor statement					%prec THEN
 		// Called first: create header for WaitForStmt.
 		{ $$ = build_waitfor( new WaitForStmt(), $1, $2, maybe_build_compound( $3 ) ); }
-	| wor_waitfor_clause wor when_clause_opt waitfor statement	%prec THEN
+	| wor_waitfor_clause wor when_clause_opt waitfor statement
 		{ $$ = build_waitfor( $1, $3, $4, maybe_build_compound( $5 ) ); }
 	| wor_waitfor_clause wor when_clause_opt ELSE statement
 		{ $$ = build_waitfor_else( $1, $3, maybe_build_compound( $5 ) ); }
@@ -1694,7 +1694,7 @@ wand_waituntil_clause:
 wor_waituntil_clause:
 	wand_waituntil_clause
 		{ printf( "wor_waituntil_clause 1\n" ); $$ = nullptr; }
-	| wor_waituntil_clause wor wor_waituntil_clause		%prec THEN
+	| wor_waituntil_clause wor wand_waituntil_clause
 		{ printf( "wor_waituntil_clause 2\n" ); $$ = nullptr; }
 	| wor_waituntil_clause wor when_clause_opt ELSE statement
 		{ printf( "wor_waituntil_clause 3\n" ); $$ = nullptr; }

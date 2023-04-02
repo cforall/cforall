@@ -2,132 +2,7 @@
 
 #include <locks.hfa>
 #include <list.hfa>
-
-#define __COOP_CHANNEL
-#ifdef __PREVENTION_CHANNEL
-forall( T ) {
-struct channel {
-    size_t size, count, front, back;
-    T * buffer;
-    thread$ * chair;
-    T * chair_elem;
-    exp_backoff_then_block_lock c_lock, p_lock;
-    __spinlock_t mutex_lock;
-    char __padding[64]; // avoid false sharing in arrays of channels
-};
-
-static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
-    size = _size;
-    front = back = count = 0;
-    buffer = aalloc( size );
-    chair = 0p;
-    mutex_lock{};
-    c_lock{};
-    p_lock{};
-}
-
-static inline void ?{}( channel(T) &c ){ ((channel(T) &)c){ 0 }; }
-static inline void ^?{}( channel(T) &c ) with(c) { delete( buffer ); }
-static inline size_t get_count( channel(T) & chan ) with(chan) { return count; }
-static inline size_t get_size( channel(T) & chan ) with(chan) { return size; }
-static inline bool has_waiters( channel(T) & chan ) with(chan) { return chair != 0p; }
-
-static inline void insert_( channel(T) & chan, T & elem ) with(chan) {
-    memcpy((void *)&buffer[back], (void *)&elem, sizeof(T));
-    count += 1;
-    back++;
-    if ( back == size ) back = 0;
-}
-
-static inline void insert( channel(T) & chan, T elem ) with( chan ) {
-    lock( p_lock );
-    lock( mutex_lock __cfaabi_dbg_ctx2 );
-
-    // have to check for the zero size channel case
-    if ( size == 0 && chair != 0p ) {
-        memcpy((void *)chair_elem, (void *)&elem, sizeof(T));
-        unpark( chair );
-        chair = 0p;
-        unlock( mutex_lock );
-        unlock( p_lock );
-        unlock( c_lock );
-        return;
-    }
-
-    // wait if buffer is full, work will be completed by someone else
-    if ( count == size ) {
-        chair = active_thread();
-        chair_elem = &elem;
-        unlock( mutex_lock );
-        park( );
-        return;
-    } // if
-
-    if ( chair != 0p ) {
-        memcpy((void *)chair_elem, (void *)&elem, sizeof(T));
-        unpark( chair );
-        chair = 0p;
-        unlock( mutex_lock );
-        unlock( p_lock );
-        unlock( c_lock );
-        return;
-    }
-    insert_( chan, elem );
-
-    unlock( mutex_lock );
-    unlock( p_lock );
-}
-
-static inline T remove( channel(T) & chan ) with(chan) {
-    lock( c_lock );
-    lock( mutex_lock __cfaabi_dbg_ctx2 );
-    T retval;
-
-    // have to check for the zero size channel case
-    if ( size == 0 && chair != 0p ) {
-        memcpy((void *)&retval, (void *)chair_elem, sizeof(T));
-        unpark( chair );
-        chair = 0p;
-        unlock( mutex_lock );
-        unlock( p_lock );
-        unlock( c_lock );
-        return retval;
-    }
-
-    // wait if buffer is empty, work will be completed by someone else
-    if ( count == 0 ) {
-        chair = active_thread();
-        chair_elem = &retval;
-        unlock( mutex_lock );
-        park( );
-        return retval;
-    }
-
-    // Remove from buffer
-    memcpy((void *)&retval, (void *)&buffer[front], sizeof(T));
-    count -= 1;
-    front++;
-    if ( front == size ) front = 0;
-
-    if ( chair != 0p ) {
-        insert_( chan, *chair_elem );  // do waiting producer work
-        unpark( chair );
-        chair = 0p;
-        unlock( mutex_lock );
-        unlock( p_lock );
-        unlock( c_lock );
-        return retval;
-    }
-
-    unlock( mutex_lock );
-    unlock( c_lock );
-    return retval;
-}
-
-} // forall( T )
-#endif
-
-#ifdef __COOP_CHANNEL
+#include <mutex_stmt.hfa>
 
 // link field used for threads waiting on channel
 struct wait_link {
@@ -147,14 +22,48 @@ static inline void ?{}( wait_link & this, thread$ * t, void * elem ) {
     this.elem = elem;
 }
 
+// wake one thread from the list
+static inline void wake_one( dlist( wait_link ) & queue ) {
+    wait_link & popped = try_pop_front( queue );
+    unpark( popped.t );
+}
+
+// returns true if woken due to shutdown
+// blocks thread on list and releases passed lock
+static inline bool block( dlist( wait_link ) & queue, void * elem_ptr, go_mutex & lock ) {
+    wait_link w{ active_thread(), elem_ptr };
+    insert_last( queue, w );
+    unlock( lock );
+    park();
+    return w.elem == 0p;
+}
+
+// void * used for some fields since exceptions don't work with parametric polymorphism currently
+exception channel_closed {
+    // on failed insert elem is a ptr to the element attempting to be inserted
+    // on failed remove elem ptr is 0p
+    // on resumption of a failed insert this elem will be inserted
+    // so a user may modify it in the resumption handler
+    void * elem;
+
+    // pointer to chan that is closed
+    void * closed_chan;
+};
+vtable(channel_closed) channel_closed_vt;
+
+// #define CHAN_STATS // define this to get channel stats printed in dtor
+
 forall( T ) {
 
-struct channel {
-    size_t size;
-    size_t front, back, count;
+struct __attribute__((aligned(128))) channel {
+    size_t size, front, back, count;
     T * buffer;
-    dlist( wait_link ) prods, cons;
-    exp_backoff_then_block_lock mutex_lock;
+    dlist( wait_link ) prods, cons; // lists of blocked threads
+    go_mutex mutex_lock;            // MX lock
+    bool closed;                    // indicates channel close/open
+    #ifdef CHAN_STATS
+    size_t blocks, operations;      // counts total ops and ops resulting in a blocked thd
+    #endif
 };
 
 static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
@@ -164,63 +73,209 @@ static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
     prods{};
     cons{};
     mutex_lock{};
+    closed = false;
+    #ifdef CHAN_STATS
+    blocks = 0;
+    operations = 0;
+    #endif
 }
 
 static inline void ?{}( channel(T) &c ){ ((channel(T) &)c){ 0 }; }
-static inline void ^?{}( channel(T) &c ) with(c) { delete( buffer ); }
+static inline void ^?{}( channel(T) &c ) with(c) {
+    #ifdef CHAN_STATS
+    printf("Channel %p Blocks: %lu, Operations: %lu, %.2f%% of ops blocked\n", &c, blocks, operations, ((double)blocks)/operations * 100);
+    #endif
+    verifyf( cons`isEmpty && prods`isEmpty, "Attempted to delete channel with waiting threads (Deadlock).\n" );
+    delete( buffer );
+}
 static inline size_t get_count( channel(T) & chan ) with(chan) { return count; }
 static inline size_t get_size( channel(T) & chan ) with(chan) { return size; }
 static inline bool has_waiters( channel(T) & chan ) with(chan) { return !cons`isEmpty || !prods`isEmpty; }
 static inline bool has_waiting_consumers( channel(T) & chan ) with(chan) { return !cons`isEmpty; }
 static inline bool has_waiting_producers( channel(T) & chan ) with(chan) { return !prods`isEmpty; }
 
-static inline void insert_( channel(T) & chan, T & elem ) with(chan) {
+// closes the channel and notifies all blocked threads
+static inline void close( channel(T) & chan ) with(chan) {
+    lock( mutex_lock );
+    closed = true;
+
+    // flush waiting consumers and producers
+    while ( has_waiting_consumers( chan ) ) {
+        cons`first.elem = 0p;
+        wake_one( cons );
+    }
+    while ( has_waiting_producers( chan ) ) {
+        prods`first.elem = 0p;
+        wake_one( prods );
+    }
+    unlock(mutex_lock);
+}
+
+static inline void is_closed( channel(T) & chan ) with(chan) { return closed; }
+
+static inline void flush( channel(T) & chan, T elem ) with(chan) {
+    lock( mutex_lock );
+    while ( count == 0 && !cons`isEmpty ) {
+        memcpy(cons`first.elem, (void *)&elem, sizeof(T)); // do waiting consumer work
+        wake_one( cons );
+    }
+    unlock( mutex_lock );
+}
+
+// handles buffer insert
+static inline void __buf_insert( channel(T) & chan, T & elem ) with(chan) {
     memcpy((void *)&buffer[back], (void *)&elem, sizeof(T));
     count += 1;
     back++;
     if ( back == size ) back = 0;
 }
 
-static inline void wake_one( dlist( wait_link ) & queue ) {
-    wait_link & popped = try_pop_front( queue );
-    unpark( popped.t );
+// does the buffer insert or hands elem directly to consumer if one is waiting
+static inline void __do_insert( channel(T) & chan, T & elem ) with(chan) {
+    if ( count == 0 && !cons`isEmpty ) {
+        memcpy(cons`first.elem, (void *)&elem, sizeof(T)); // do waiting consumer work
+        wake_one( cons );
+    } else __buf_insert( chan, elem );
 }
 
-static inline void block( dlist( wait_link ) & queue, void * elem_ptr, exp_backoff_then_block_lock & lock ) {
-    wait_link w{ active_thread(), elem_ptr };
-    insert_last( queue, w );
-    unlock( lock );
-    park();
+// needed to avoid an extra copy in closed case
+static inline bool __internal_try_insert( channel(T) & chan, T & elem ) with(chan) {
+    lock( mutex_lock );
+    #ifdef CHAN_STATS
+    operations++;
+    #endif
+    if ( count == size ) { unlock( mutex_lock ); return false; }
+    __do_insert( chan, elem );
+    unlock( mutex_lock );
+    return true;
+}
+
+// attempts a nonblocking insert
+// returns true if insert was successful, false otherwise
+static inline bool try_insert( channel(T) & chan, T elem ) { return __internal_try_insert( chan, elem ); }
+
+// handles closed case of insert routine
+static inline void __closed_insert( channel(T) & chan, T & elem ) with(chan) {
+    channel_closed except{&channel_closed_vt, &elem, &chan };
+    throwResume except; // throw closed resumption
+    if ( !__internal_try_insert( chan, elem ) ) throw except; // if try to insert fails (would block), throw termination
 }
 
 static inline void insert( channel(T) & chan, T elem ) with(chan) {
+    // check for close before acquire mx
+    if ( unlikely(closed) ) {
+        __closed_insert( chan, elem );
+        return;
+    } 
+
     lock( mutex_lock );
+
+    #ifdef CHAN_STATS
+    if ( !closed ) operations++;
+    #endif
+
+    // if closed handle
+    if ( unlikely(closed) ) {
+        unlock( mutex_lock );
+        __closed_insert( chan, elem );
+        return;
+    }
 
     // have to check for the zero size channel case
     if ( size == 0 && !cons`isEmpty ) {
         memcpy(cons`first.elem, (void *)&elem, sizeof(T));
         wake_one( cons );
         unlock( mutex_lock );
-        return;
+        return true;
     }
 
     // wait if buffer is full, work will be completed by someone else
     if ( count == size ) {
-        block( prods, &elem, mutex_lock );
+        #ifdef CHAN_STATS
+        blocks++;
+        #endif
+
+        // check for if woken due to close
+        if ( unlikely( block( prods, &elem, mutex_lock ) ) )
+            __closed_insert( chan, elem );
         return;
     } // if
 
     if ( count == 0 && !cons`isEmpty ) {
         memcpy(cons`first.elem, (void *)&elem, sizeof(T)); // do waiting consumer work
         wake_one( cons );
-    } else insert_( chan, elem );
+    } else __buf_insert( chan, elem );
     
     unlock( mutex_lock );
+    return;
+}
+
+// handles buffer remove
+static inline void __buf_remove( channel(T) & chan, T & retval ) with(chan) {
+    memcpy((void *)&retval, (void *)&buffer[front], sizeof(T));
+    count -= 1;
+    front = (front + 1) % size;
+}
+
+// does the buffer remove and potentially does waiting producer work
+static inline void __do_remove( channel(T) & chan, T & retval ) with(chan) {
+    __buf_remove( chan, retval );
+    if (count == size - 1 && !prods`isEmpty ) {
+        __buf_insert( chan, *(T *)prods`first.elem );  // do waiting producer work
+        wake_one( prods );
+    }
+}
+
+// needed to avoid an extra copy in closed case and single return val case
+static inline bool __internal_try_remove( channel(T) & chan, T & retval ) with(chan) {
+    lock( mutex_lock );
+    #ifdef CHAN_STATS
+    operations++;
+    #endif
+    if ( count == 0 ) { unlock( mutex_lock ); return false; }
+    __do_remove( chan, retval );
+    unlock( mutex_lock );
+    return true;
+}
+
+// attempts a nonblocking remove
+// returns [T, true] if insert was successful
+// returns [T, false] if insert was successful (T uninit)
+static inline [T, bool] try_remove( channel(T) & chan ) {
+    T retval;
+    return [ retval, __internal_try_remove( chan, retval ) ];
+}
+
+static inline T try_remove( channel(T) & chan, T elem ) {
+    T retval;
+    __internal_try_remove( chan, retval );
+    return retval;
+}
+
+// handles closed case of insert routine
+static inline void __closed_remove( channel(T) & chan, T & retval ) with(chan) {
+    channel_closed except{&channel_closed_vt, 0p, &chan };
+    throwResume except; // throw resumption
+    if ( !__internal_try_remove( chan, retval ) ) throw except; // if try to remove fails (would block), throw termination
 }
 
 static inline T remove( channel(T) & chan ) with(chan) {
-    lock( mutex_lock );
     T retval;
+    if ( unlikely(closed) ) {
+        __closed_remove( chan, retval );
+        return retval;
+    } 
+    lock( mutex_lock );
+
+    #ifdef CHAN_STATS
+    if ( !closed ) operations++;
+    #endif
+
+    if ( unlikely(closed) ) {
+        unlock( mutex_lock );
+        __closed_remove( chan, retval );
+        return retval;
+    } 
 
     // have to check for the zero size channel case
     if ( size == 0 && !prods`isEmpty ) {
@@ -232,168 +287,19 @@ static inline T remove( channel(T) & chan ) with(chan) {
 
     // wait if buffer is empty, work will be completed by someone else
     if (count == 0) {
-        block( cons, &retval, mutex_lock );
+        #ifdef CHAN_STATS
+        blocks++;
+        #endif
+        // check for if woken due to close
+        if ( unlikely( block( cons, &retval, mutex_lock ) ) )
+            __closed_remove( chan, retval );
         return retval;
     }
 
     // Remove from buffer
-    memcpy((void *)&retval, (void *)&buffer[front], sizeof(T));
-    count -= 1;
-    front = (front + 1) % size;
-
-    if (count == size - 1 && !prods`isEmpty ) {
-        insert_( chan, *(T *)prods`first.elem );  // do waiting producer work
-        wake_one( prods );
-    }
+    __do_remove( chan, retval );
 
     unlock( mutex_lock );
     return retval;
 }
 } // forall( T )
-#endif
-
-#ifdef __BARGE_CHANNEL
-forall( T ) {
-struct channel {
-    size_t size;
-    size_t front, back, count;
-    T * buffer;
-    fast_cond_var( exp_backoff_then_block_lock ) prods, cons;
-    exp_backoff_then_block_lock mutex_lock;
-};
-
-static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
-    size = _size;
-    front = back = count = 0;
-    buffer = aalloc( size );
-    prods{};
-    cons{};
-    mutex_lock{};
-}
-
-static inline void ?{}( channel(T) &c ){ ((channel(T) &)c){ 0 }; }
-static inline void ^?{}( channel(T) &c ) with(c) { delete( buffer ); }
-static inline size_t get_count( channel(T) & chan ) with(chan) { return count; }
-static inline size_t get_size( channel(T) & chan ) with(chan) { return size; }
-static inline bool has_waiters( channel(T) & chan ) with(chan) { return !empty( cons ) || !empty( prods ); }
-static inline bool has_waiting_consumers( channel(T) & chan ) with(chan) { return !empty( cons ); }
-static inline bool has_waiting_producers( channel(T) & chan ) with(chan) { return !empty( prods ); }
-
-static inline void insert_( channel(T) & chan, T & elem ) with(chan) {
-    memcpy((void *)&buffer[back], (void *)&elem, sizeof(T));
-    count += 1;
-    back++;
-    if ( back == size ) back = 0;
-}
-
-
-static inline void insert( channel(T) & chan, T elem ) with(chan) {
-    lock( mutex_lock );
-
-    while ( count == size ) { 
-        wait( prods, mutex_lock );
-    } // if
-
-    insert_( chan, elem );
-    
-    if ( !notify_one( cons ) && count < size )
-        notify_one( prods );
-
-    unlock( mutex_lock );
-}
-
-static inline T remove( channel(T) & chan ) with(chan) {
-    lock( mutex_lock );
-    T retval;
-
-    while (count == 0) { 
-        wait( cons, mutex_lock );
-    }
-
-    memcpy((void *)&retval, (void *)&buffer[front], sizeof(T));
-    count -= 1;
-    front = (front + 1) % size;
-
-    if ( !notify_one( prods ) && count > 0 )
-        notify_one( cons );
-
-    unlock( mutex_lock );
-    return retval;
-}
-
-} // forall( T )
-#endif
-
-#ifdef __NO_WAIT_CHANNEL
-forall( T ) {
-struct channel {
-    size_t size;
-    size_t front, back, count;
-    T * buffer;
-    thread$ * chair;
-    T * chair_elem;
-    exp_backoff_then_block_lock c_lock, p_lock;
-    __spinlock_t mutex_lock;
-};
-
-static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
-    size = _size;
-    front = back = count = 0;
-    buffer = aalloc( size );
-    chair = 0p;
-    mutex_lock{};
-    c_lock{};
-    p_lock{};
-    lock( c_lock );
-}
-
-static inline void ?{}( channel(T) &c ){ ((channel(T) &)c){ 0 }; }
-static inline void ^?{}( channel(T) &c ) with(c) { delete( buffer ); }
-static inline size_t get_count( channel(T) & chan ) with(chan) { return count; }
-static inline size_t get_size( channel(T) & chan ) with(chan) { return size; }
-static inline bool has_waiters( channel(T) & chan ) with(chan) { return c_lock.lock_value != 0; }
-
-static inline void insert_( channel(T) & chan, T & elem ) with(chan) {
-    memcpy((void *)&buffer[back], (void *)&elem, sizeof(T));
-    count += 1;
-    back++;
-    if ( back == size ) back = 0;
-}
-
-static inline void insert( channel(T) & chan, T elem ) with( chan ) {
-    lock( p_lock );
-    lock( mutex_lock __cfaabi_dbg_ctx2 );
-
-    insert_( chan, elem );
-
-    if ( count != size )
-        unlock( p_lock );
-
-    if ( count == 1 )
-        unlock( c_lock );
-        
-    unlock( mutex_lock );
-}
-
-static inline T remove( channel(T) & chan ) with(chan) {
-    lock( c_lock );
-    lock( mutex_lock __cfaabi_dbg_ctx2 );
-    T retval;
-
-    // Remove from buffer
-    memcpy((void *)&retval, (void *)&buffer[front], sizeof(T));
-    count -= 1;
-    front = (front + 1) % size;
-
-    if ( count != 0 )
-        unlock( c_lock );
-
-    if ( count == size - 1 )
-        unlock( p_lock );
-        
-    unlock( mutex_lock );
-    return retval;
-}
-
-} // forall( T )
-#endif

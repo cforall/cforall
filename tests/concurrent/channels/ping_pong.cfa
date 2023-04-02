@@ -1,0 +1,64 @@
+#include <locks.hfa>
+#include <fstream.hfa>
+#include <stdio.h>
+#include <channel.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+#include <string.h>
+
+typedef channel( int ) Channel;
+
+Channel * ping;
+Channel * pong;
+
+bool done = false;
+size_t total_operations = 0;
+
+thread Pong {};
+void main(Pong & this) {
+    try {
+        for ( ;; ) {
+            if ( done ) break;
+            insert( *ping, 0 );
+            remove( *pong );
+        }
+    } catch ( channel_closed * e ) {} 
+}
+
+thread Ping {};
+void main(Ping & this) {
+    try {
+        for ( ;; ) {
+            if ( done ) break;
+            remove( *ping );
+            insert( *pong, 1 );
+            total_operations++;
+        }
+    } catch ( channel_closed * e ) {} 
+}
+
+
+int main( int argc, char * argv[] ) {
+    sout | "start";
+    processor proc[1];
+
+    Channel pingChan{ 1 };
+    Channel pongChan{ 1 };
+
+    ping = &pingChan;
+    pong = &pongChan;
+    
+    {
+        Ping pi;
+        Pong po;
+        sleep(10`s);
+        done = true;
+        close( *pong );
+        close( *ping );
+    }
+
+    // sout | total_operations;
+    
+    sout | "done";
+    return 0;
+}

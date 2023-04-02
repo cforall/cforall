@@ -1,0 +1,88 @@
+#include <locks.hfa>
+#include <fstream.hfa>
+#include <stdio.h>
+#include <channel.hfa>
+#include <thread.hfa>
+#include <time.hfa>
+#include <string.h>
+
+size_t total_operations = 0;
+size_t Processors = 1, Tasks = 4;
+
+owner_lock o;
+
+typedef channel( int ) Channel;
+
+Channel * chain;
+
+bool done = false;
+int id_counter = 0;
+thread Task { int id; int right; };
+static inline void ?{}( Task & this ) with(this) {
+    id = __atomic_fetch_add( &id_counter, 1, __ATOMIC_SEQ_CST );
+    right = (id + 1) % Tasks;
+}
+void main(Task & this) with(this) {
+    size_t runs = 0;
+    try {
+        for ( ;; ) {
+            if ( done ) break;
+            remove( chain[id] );
+            insert( chain[right], 0 );
+            runs++;
+        }
+    } catch ( channel_closed * e ) {}
+    lock( o );
+    total_operations += runs;
+    unlock( o );
+}
+
+
+int main( int argc, char * argv[] ) {
+    switch ( argc ) {
+	  case 3:
+		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
+			Tasks = atoi( argv[2] );
+            if ( Tasks < 1 ) goto Usage;
+		} // if
+	  case 2:
+		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
+			Processors = atoi( argv[1] );
+			if ( Processors < 1 ) goto Usage;
+		} // if
+	  case 1:											// use defaults
+		break;
+	  default:
+	  Usage:
+		sout | "Usage: " | argv[0]
+             | " [ processors (> 0) | 'd' (default " | Processors
+			 | ") ] [ channel size (>= 0) | 'd' (default " | Tasks
+			 | ") ]" ;
+		exit( EXIT_FAILURE );
+	} // switch
+    processor proc[Processors - 1];
+
+    sout | "start";
+
+    chain = aalloc( Tasks );
+    for ( i; Tasks ) {
+        chain[i]{ 1 };
+    }
+
+    insert( chain[0], 0 );
+    {
+        Task t[Tasks];
+        sleep(10`s);
+        done = true;
+        for ( j; Tasks )
+            close( chain[j] );
+    }
+    
+    // sout | total_operations;
+
+    sout | "done";
+
+    adelete(chain);
+
+    return 0;
+}

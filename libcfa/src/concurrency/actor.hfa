@@ -34,7 +34,7 @@
 #define SEARCH 1
 
 // show stats
-// #define STATS
+// #define ACTOR_STATS
 
 // forward decls
 struct actor;
@@ -121,7 +121,7 @@ struct work_queue {
     copy_queue * owned_queue;       // copy queue allocated and cleaned up by this work_queue
     copy_queue * c_queue;           // current queue
     volatile bool being_processed;  // flag to prevent concurrent processing
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     unsigned int id;
     size_t missed;                  // transfers skipped due to being_processed flag being up
     #endif
@@ -131,7 +131,7 @@ static inline void ?{}( work_queue & this, size_t buf_size, unsigned int i ) wit
     (*owned_queue){ buf_size };
     c_queue = owned_queue;
     being_processed = false;
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     id = i;
     missed = 0;
     #endif
@@ -152,7 +152,7 @@ static inline void transfer( work_queue & this, copy_queue ** transfer_to ) with
 
     // check if queue is being processed elsewhere
     if ( unlikely( being_processed ) ) {
-        #ifdef STATS
+        #ifdef ACTOR_STATS
         missed++;
         #endif
         unlock( mutex_lock );
@@ -174,14 +174,14 @@ static inline void transfer( work_queue & this, copy_queue ** transfer_to ) with
 // needed since some info needs to persist past worker lifetimes
 struct worker_info {
     volatile unsigned long long stamp;
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     size_t stolen_from, try_steal, stolen, failed_swaps, msgs_stolen;
     unsigned long long processed;
     size_t gulps;
     #endif
 };
 static inline void ?{}( worker_info & this ) {
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     this.stolen_from = 0;
     this.try_steal = 0;                             // attempts to steal
     this.stolen = 0;                                // successful steals
@@ -193,7 +193,7 @@ static inline void ?{}( worker_info & this ) {
     this.stamp = rdtscl();
 }
 
-// #ifdef STATS
+// #ifdef ACTOR_STATS
 // unsigned int * stolen_arr;
 // unsigned int * replaced_queue;
 // #endif
@@ -205,7 +205,7 @@ thread worker {
     int id;
 };
 
-#ifdef STATS
+#ifdef ACTOR_STATS
 // aggregate counters for statistics
 size_t __total_tries = 0, __total_stolen = 0, __total_workers, __all_gulps = 0,
     __total_failed_swaps = 0, __all_processed = 0, __num_actors_stats = 0, __all_msgs_stolen = 0;
@@ -234,11 +234,11 @@ struct executor {
 	bool seperate_clus;								// use same or separate cluster for executor
 }; // executor
 
-// #ifdef STATS
+// #ifdef ACTOR_STATS
 // __spinlock_t out_lock;
 // #endif
 static inline void ^?{}( worker & mutex this ) with(this) { 
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     __atomic_add_fetch(&__all_gulps, executor_->w_infos[id].gulps,__ATOMIC_SEQ_CST);
     __atomic_add_fetch(&__all_processed, executor_->w_infos[id].processed,__ATOMIC_SEQ_CST);
     __atomic_add_fetch(&__all_msgs_stolen, executor_->w_infos[id].msgs_stolen,__ATOMIC_SEQ_CST);
@@ -275,7 +275,7 @@ static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int 
     if ( nworkers == nrqueues )
         no_steal = true;
     
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     // stolen_arr = aalloc( nrqueues );
     // replaced_queue = aalloc( nrqueues );
     __total_workers = nworkers;
@@ -340,7 +340,7 @@ static inline void ^?{}( executor & this ) with(this) {
         delete( processors[i] );
     } // for
 
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     size_t misses = 0;
     for ( i; nrqueues ) {
         misses += worker_req_queues[i]->missed;
@@ -357,7 +357,7 @@ static inline void ^?{}( executor & this ) with(this) {
     adelete( processors );
     if ( seperate_clus ) delete( cluster );
 
-    #ifdef STATS // print formatted stats
+    #ifdef ACTOR_STATS // print formatted stats
     printf("    Actor System Stats:\n");
     printf("\tActors Created:\t\t\t\t%lu\n\tMessages Sent:\t\t\t\t%lu\n", __num_actors_stats, __all_processed);
     size_t avg_gulps = __all_gulps == 0 ? 0 : __all_processed / __all_gulps;
@@ -403,7 +403,7 @@ static inline void ?{}( actor & this ) with(this) {
     allocation_ = Nodelete;
     ticket = __get_next_ticket( *__actor_executor_ );
     __atomic_fetch_add( &__num_actors_, 1, __ATOMIC_RELAXED );
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     __atomic_fetch_add( &__num_actors_stats, 1, __ATOMIC_SEQ_CST );
     #endif
 }
@@ -512,7 +512,7 @@ static inline void choose_queue( worker & this, unsigned int victim_id, unsigned
         if ( curr_steal_queue == 0p || curr_steal_queue->being_processed || isEmpty( *curr_steal_queue->c_queue ) )
             continue;
 
-        #ifdef STATS
+        #ifdef ACTOR_STATS
         curr_steal_queue = try_swap_queues( this, i + vic_start, swap_idx );
         if ( curr_steal_queue ) {
             executor_->w_infos[id].msgs_stolen += curr_steal_queue->c_queue->count;
@@ -525,7 +525,7 @@ static inline void choose_queue( worker & this, unsigned int victim_id, unsigned
         }
         #else
         curr_steal_queue = try_swap_queues( this, i + vic_start, swap_idx );
-        #endif // STATS
+        #endif // ACTOR_STATS
 
         return;
     }
@@ -557,7 +557,7 @@ static inline void steal_work( worker & this, unsigned int swap_idx ) with(this)
 }
 
 void main( worker & this ) with(this) {
-    // #ifdef STATS
+    // #ifdef ACTOR_STATS
     // for ( i; executor_->nrqueues ) {
     //     replaced_queue[i] = 0;
     //     __atomic_store_n( &stolen_arr[i], 0, __ATOMIC_SEQ_CST );
@@ -586,9 +586,9 @@ void main( worker & this ) with(this) {
             #endif
         }
         transfer( *curr_work_queue, &current_queue );
-        #ifdef STATS
+        #ifdef ACTOR_STATS
         executor_->w_infos[id].gulps++;
-        #endif // STATS
+        #endif // ACTOR_STATS
         #ifdef __STEAL
         if ( isEmpty( *current_queue ) ) {
             if ( unlikely( no_steal ) ) continue;
@@ -598,16 +598,16 @@ void main( worker & this ) with(this) {
 
             __atomic_store_n( &executor_->w_infos[id].stamp, rdtscl(), __ATOMIC_RELAXED );
             
-            #ifdef STATS
+            #ifdef ACTOR_STATS
             executor_->w_infos[id].try_steal++;
-            #endif // STATS
+            #endif // ACTOR_STATS
             
             steal_work( this, start + prng( range ) );
             continue;
         }
         #endif // __STEAL
         while ( ! isEmpty( *current_queue ) ) {
-            #ifdef STATS
+            #ifdef ACTOR_STATS
             executor_->w_infos[id].processed++;
             #endif
             &req = &remove( *current_queue );
@@ -635,7 +635,7 @@ static inline void send( actor & this, request & req ) {
 }
 
 static inline void __reset_stats() {
-    #ifdef STATS
+    #ifdef ACTOR_STATS
     __total_tries = 0;
     __total_stolen = 0;
     __all_gulps = 0;
