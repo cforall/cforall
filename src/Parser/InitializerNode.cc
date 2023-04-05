@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:20:24 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 28 23:27:20 2017
-// Update Count     : 26
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue Apr  4 11:18:00 2023
+// Update Count     : 27
 //
 
 #include <iostream>                // for operator<<, ostream, basic_ostream
@@ -19,11 +19,15 @@
 
 using namespace std;
 
+#include "AST/Expr.hpp"            // for Expr
+#include "AST/Init.hpp"            // for Designator, Init, ListInit, Sing...
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for maybeBuild
 #include "ParseNode.h"             // for InitializerNode, ExpressionNode
-#include "SynTree/Expression.h"    // for Expression
-#include "SynTree/Initializer.h"   // for Initializer, ListInit, SingleInit
+
+static ast::ConstructFlag toConstructFlag( bool maybeConstructed ) {
+	return maybeConstructed ? ast::MaybeConstruct : ast::NoConstruct;
+}
 
 InitializerNode::InitializerNode( ExpressionNode * _expr, bool aggrp, ExpressionNode * des )
 		: expr( _expr ), aggregate( aggrp ), designator( des ), kids( nullptr ), maybeConstructed( true ), isDelete( false ) {
@@ -32,7 +36,7 @@ InitializerNode::InitializerNode( ExpressionNode * _expr, bool aggrp, Expression
 
 	if ( kids )
 		set_last( nullptr );
-} // InitializerNode::InitializerNode
+} // InitializerNode::InitializerNode
 
 InitializerNode::InitializerNode( InitializerNode * init, bool aggrp, ExpressionNode * des )
 		: expr( nullptr ), aggregate( aggrp ), designator( des ), kids( nullptr ), maybeConstructed( true ), isDelete( false ) {
@@ -84,25 +88,31 @@ void InitializerNode::printOneLine( std::ostream &os ) const {
 	} // if
 } // InitializerNode::printOneLine
 
-Initializer * InitializerNode::build() const {
+ast::Init * InitializerNode::build() const {
 	assertf( ! isDelete, "Should not build delete stmt InitializerNode" );
 	if ( aggregate ) {
 		// steal designators from children
-		std::list< Designation * > designlist;
+		std::vector<ast::ptr<ast::Designation>> designlist;
 		InitializerNode * child = next_init();
-		for ( ; child != nullptr; child = dynamic_cast< InitializerNode * >( child->get_next() ) ) {
-			std::list< Expression * > desList;
-			buildList< Expression, ExpressionNode >( child->designator, desList );
-			designlist.push_back( new Designation( desList ) );
+		for ( ; child != nullptr ; child = dynamic_cast< InitializerNode * >( child->get_next() ) ) {
+			std::deque<ast::ptr<ast::Expr>> desList;
+			buildList( child->designator, desList );
+			designlist.push_back(
+				new ast::Designation( location, std::move( desList ) ) );
 		} // for
-		std::list< Initializer * > initlist;
-		buildList< Initializer, InitializerNode >( next_init(), initlist );
-		return new ListInit( initlist, designlist, maybeConstructed );
-	} else {
-		if ( get_expression() ) {
-			assertf( get_expression()->expr, "The expression of initializer must have value" );
-			return new SingleInit( maybeBuild( get_expression() ), maybeConstructed );
-		} // if
+		std::vector<ast::ptr<ast::Init>> initlist;
+		buildList( next_init(), initlist );
+		return new ast::ListInit( location,
+			std::move( initlist ),
+			std::move( designlist ),
+			toConstructFlag( maybeConstructed )
+		);
+	} else if ( get_expression() ) {
+		assertf( get_expression()->expr, "The expression of initializer must have value" );
+		return new ast::SingleInit( location,
+			maybeBuild( get_expression() ),
+			toConstructFlag( maybeConstructed )
+		);
 	} // if
 	return nullptr;
 } // InitializerNode::build

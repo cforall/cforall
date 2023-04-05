@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:30:39 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tus Jul 18 10:12:00 2017
-// Update Count     : 8
+// Last Modified On : Wed Mar  1 10:42:00 2023
+// Update Count     : 9
 //
 
 #include "parserutility.h"
@@ -18,21 +18,29 @@
 #include <list>                  // for list
 #include <string>                // for string
 
-#include "SynTree/Constant.h"    // for Constant
-#include "SynTree/Expression.h"  // for UntypedExpr, CastExpr, ConstantExpr
-#include "SynTree/Type.h"        // for BasicType, ZeroType, BasicType::Kind...
+#include "AST/Expr.hpp"          // for UntypedExpr, CastExpr, ConstantExpr
+#include "AST/Type.hpp"          // for BasicType, ZeroType, BasicType::Kind...
 
 // rewrite
 //    if ( x ) ...
 // as
 //    if ( (int)(x != 0) ) ...
 
-Expression *notZeroExpr( Expression *orig ) {
-	if( !orig ) return nullptr;
-	UntypedExpr *comparison = new UntypedExpr( new NameExpr( "?!=?" ) );
-	comparison->get_args().push_back( orig );
-	comparison->get_args().push_back( new ConstantExpr( Constant( new ZeroType( noQualifiers ), "0", (unsigned long long int)0 ) ) );
-	return new CastExpr( comparison, new BasicType( Type::Qualifiers(), BasicType::SignedInt ) );
+ast::Expr * notZeroExpr( ast::Expr * orig ) {
+	return ( !orig ) ? nullptr : new ast::CastExpr( orig->location,
+		ast::UntypedExpr::createCall( orig->location,
+			"?!=?",
+			{
+				orig,
+				new ast::ConstantExpr( orig->location,
+					new ast::ZeroType(),
+					"0",
+					std::optional<unsigned long long>( 0 )
+				),
+			}
+		),
+		new ast::BasicType( ast::BasicType::SignedInt )
+	);
 }
 
 // Local Variables: //

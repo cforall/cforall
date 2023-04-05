@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Dec 19 11:00:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Thr Feb 16 10:08:00 2023
-// Update Count     : 2
+// Last Modified On : Mon Mar  6  9:42:00 2023
+// Update Count     : 3
 //
 
 #include "RunParser.hpp"
@@ -45,18 +45,15 @@ void parse( FILE * input, ast::Linkage::Spec linkage, bool alwaysExit ) {
 } // parse
 
 ast::TranslationUnit buildUnit(void) {
-	std::list<Declaration *> translationUnit;
-	buildList( parseTree, translationUnit );
-
+	std::vector<ast::ptr<ast::Decl>> decls;
+	buildList( parseTree, decls );
 	delete parseTree;
 	parseTree = nullptr;
 
-	// When the parse/buildList code is translated to the new ast, these
-	// fill passes (and the one after 'Hoist Type Decls') should be redundent
-	// because the code locations should already be filled.
-	CodeTools::fillLocations( translationUnit );
-	ast::TranslationUnit transUnit = convert( std::move( translationUnit ) );
-	forceFillCodeLocations( transUnit );
+	ast::TranslationUnit transUnit;
+	for ( auto decl : decls ) {
+		transUnit.decls.emplace_back( std::move( decl ) );
+	}
 	return transUnit;
 }
 

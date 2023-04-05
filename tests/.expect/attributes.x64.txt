@@ -1350,7 +1350,7 @@ signed int _X4apd3Fi_PiPi__1(__attribute__ ((unused,unused,unused)) signed int *
 signed int _X4apd4Fi_Fi__Fi____1(__attribute__ ((unused,unused,unused)) signed int (*__anonymous_object10)(), __attribute__ ((unused,unused,unused)) signed int (*__anonymous_object11)());
 signed int _X4apd5Fi_Fi_i_Fi_i___1(__attribute__ ((unused,unused,unused)) signed int (*__anonymous_object12)(signed int __param_0), __attribute__ ((unused,unused,unused)) signed int (*__anonymous_object13)(signed int __param_0));
 signed int _X4apd6Fi_Fi__Fi____1(__attribute__ ((unused,unused,unused)) signed int (*__anonymous_object14)(), __attribute__ ((unused,unused,unused)) signed int (*__anonymous_object15)());
-signed int _X4apd7Fi_Fi_i_Fi_i___1(__attribute__ ((unused,unused,unused)) signed int (*__anonymous_object16)(signed int __param_0), __attribute__ ((unused,unused,unused)) signed int (*__anonymous_object17)(signed int __param_0));
+signed int _X4apd7Fi_Fi_i_Fi_i___1(__attribute__ ((unused,unused,unused)) signed int (*__anonymous_object16)(__attribute__ ((unused)) signed int __param_0), __attribute__ ((unused,unused,unused)) signed int (*__anonymous_object17)(__attribute__ ((unused)) signed int __param_0));
 struct Vad {
     __attribute__ ((unused)) signed int :4;
     __attribute__ ((unused)) signed int :4;

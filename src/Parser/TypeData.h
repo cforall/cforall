@@ -8,9 +8,9 @@
 //
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:18:36 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 24 14:25:02 2023
-// Update Count     : 205
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Mar  1 10:44:00 2023
+// Update Count     : 206
 //
 
 #pragma once
@@ -19,17 +19,15 @@
 #include <list>											// for list
 #include <string>										// for string
 
+#include "AST/Type.hpp"									// for Type
 #include "ParseNode.h"									// for DeclarationNode, DeclarationNode::Ag...
-#include "SynTree/LinkageSpec.h"						// for Spec
-#include "SynTree/Type.h"								// for Type, ReferenceToType (ptr only)
-#include "SynTree/SynTree.h"							// for Visitor Nodes
 
 struct TypeData {
 	enum Kind { Basic, Pointer, Reference, Array, Function, Aggregate, AggregateInst, Enum, EnumConstant, Symbolic,
 				SymbolicInst, Tuple, Basetypeof, Typeof, Vtable, Builtin, GlobalScope, Qualified, Unknown };
 
 	struct Aggregate_t {
-		AggregateDecl::Aggregate kind;
+		ast::AggregateDecl::Aggregate kind;
 		const std::string * name = nullptr;
 		DeclarationNode * params = nullptr;
 		ExpressionNode * actuals = nullptr;				// holds actual parameters later applied to AggInst
@@ -40,7 +38,7 @@ struct TypeData {
 		const std::string * parent = nullptr;
 	};
 
-	struct AggInst_t {									// handles SUE
+	struct AggInst_t {
 		TypeData * aggregate = nullptr;
 		ExpressionNode * params = nullptr;
 		bool hoistType;
@@ -92,7 +90,7 @@ struct TypeData {
 	DeclarationNode::Length length = DeclarationNode::NoLength;
 	DeclarationNode::BuiltinType builtintype = DeclarationNode::NoBuiltinType;
 
-	Type::Qualifiers qualifiers;
+	ast::CV::Qualifiers qualifiers;
 	DeclarationNode * forall = nullptr;
 
 	Aggregate_t aggregate;
@@ -113,28 +111,28 @@ struct TypeData {
 	const std::string * leafName() const;
 };
 
-Type * typebuild( const TypeData * );
+ast::Type * typebuild( const TypeData * );
 TypeData * typeextractAggregate( const TypeData * td, bool toplevel = true );
-Type::Qualifiers buildQualifiers( const TypeData * td );
-Type * buildBasicType( const TypeData * );
-PointerType * buildPointer( const TypeData * );
-ArrayType * buildArray( const TypeData * );
-ReferenceType * buildReference( const TypeData * );
-AggregateDecl * buildAggregate( const TypeData *, std::list< Attribute * > );
-ReferenceToType * buildComAggInst( const TypeData *, std::list< Attribute * > attributes, LinkageSpec::Spec linkage );
-ReferenceToType * buildAggInst( const TypeData * );
-TypeDecl * buildVariable( const TypeData * );
-EnumDecl * buildEnum( const TypeData *, std::list< Attribute * >, LinkageSpec::Spec );
-TypeInstType * buildSymbolicInst( const TypeData * );
-TupleType * buildTuple( const TypeData * );
-TypeofType * buildTypeof( const TypeData * );
-VTableType * buildVtable( const TypeData * );
-Declaration * buildDecl(
-	const TypeData *, const std::string &, Type::StorageClasses, Expression *,
-	Type::FuncSpecifiers funcSpec, LinkageSpec::Spec, Expression * asmName,
-	Initializer * init = nullptr, std::list< class Attribute * > attributes = std::list< class Attribute * >() );
-FunctionType * buildFunction( const TypeData * );
-Declaration * addEnumBase( Declaration *, const TypeData * );
+ast::CV::Qualifiers buildQualifiers( const TypeData * td );
+ast::Type * buildBasicType( const TypeData * );
+ast::PointerType * buildPointer( const TypeData * );
+ast::ArrayType * buildArray( const TypeData * );
+ast::ReferenceType * buildReference( const TypeData * );
+ast::AggregateDecl * buildAggregate( const TypeData *, std::vector<ast::ptr<ast::Attribute>> );
+ast::BaseInstType * buildComAggInst( const TypeData *, std::vector<ast::ptr<ast::Attribute>> && attributes, ast::Linkage::Spec linkage );
+ast::BaseInstType * buildAggInst( const TypeData * );
+ast::TypeDecl * buildVariable( const TypeData * );
+ast::EnumDecl * buildEnum( const TypeData *, std::vector<ast::ptr<ast::Attribute>> &&, ast::Linkage::Spec );
+ast::TypeInstType * buildSymbolicInst( const TypeData * );
+ast::TupleType * buildTuple( const TypeData * );
+ast::TypeofType * buildTypeof( const TypeData * );
+ast::VTableType * buildVtable( const TypeData * );
+ast::Decl * buildDecl(
+	const TypeData *, const std::string &, ast::Storage::Classes, ast::Expr *,
+	ast::Function::Specs funcSpec, ast::Linkage::Spec, ast::Expr * asmName,
+	ast::Init * init = nullptr, std::vector<ast::ptr<ast::Attribute>> && attributes = std::vector<ast::ptr<ast::Attribute>>() );
+ast::FunctionType * buildFunctionType( const TypeData * );
+ast::Decl * addEnumBase( Declaration *, const TypeData * );
 void buildKRFunction( const TypeData::Function_t & function );
 
 // Local Variables: //

@@ -353,17 +353,17 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 296 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 297 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
 
 	Token tok;
 	ParseNode * pn;
 	ExpressionNode * en;
 	DeclarationNode * decl;
-	AggregateDecl::Aggregate aggKey;
-	TypeDecl::Kind tclass;
+	ast::AggregateDecl::Aggregate aggKey;
+	ast::TypeDecl::Kind tclass;
 	StatementNode * sn;
-	WaitForStmt * wfs;
-	Expression * constant;
+	ast::WaitForStmt * wfs;
+	ast::Expr * constant;
 	CondCtl * ifctl;
 	ForCtrl * fctl;
 	OperKinds compop;
@@ -373,8 +373,8 @@ union YYSTYPE
 	std::string * str;
 	bool flag;
 	EnumHiding hide;
-	CatchStmt::Kind catch_kind;
-	GenericExpr * genexpr;
+	ast::ExceptionKind catch_kind;
+	ast::GenericExpr * genexpr;
 
 #line 380 "Parser/parser.hh"
 

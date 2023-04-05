@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Mar 14 11:56:00 2023
-// Update Count     : 1406
+// Last Modified On : Tue Apr  4 10:28:00 2023
+// Update Count     : 1392
 //
 
 #include <cassert>                 // for assert, assertf, strict_dynamic_cast
@@ -20,16 +20,20 @@
 #include <ostream>                 // for operator<<, ostream, basic_ostream
 #include <string>                  // for string, operator+, allocator, char...
 
+#include "AST/Attribute.hpp"       // for Attribute
+#include "AST/Copy.hpp"            // for shallowCopy
+#include "AST/Decl.hpp"            // for Decl
+#include "AST/Expr.hpp"            // for Expr
+#include "AST/Print.hpp"           // for print
+#include "AST/Stmt.hpp"            // for AsmStmt, DirectiveStmt
+#include "AST/StorageClasses.hpp"  // for Storage::Class
+#include "AST/Type.hpp"            // for Type
+#include "Common/CodeLocation.h"   // for CodeLocation
+#include "Common/Iterate.hpp"      // for reverseIterate
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/UniqueName.h"     // for UniqueName
-#include "Common/utility.h"        // for maybeClone, maybeBuild, CodeLocation
+#include "Common/utility.h"        // for maybeClone
 #include "Parser/ParseNode.h"      // for DeclarationNode, ExpressionNode
-#include "SynTree/LinkageSpec.h"   // for Spec, linkageName, Cforall
-#include "SynTree/Attribute.h"     // for Attribute
-#include "SynTree/Declaration.h"   // for TypeDecl, ObjectDecl, InlineMemberDecl, Declaration
-#include "SynTree/Expression.h"    // for Expression, ConstantExpr
-#include "SynTree/Statement.h"     // for AsmStmt
-#include "SynTree/Type.h"          // for Type, Type::StorageClasses, Type::...
 #include "TypeData.h"              // for TypeData, TypeData::Aggregate_t
 #include "TypedefTable.h"          // for TypedefTable
 
@@ -60,13 +64,13 @@ const char * DeclarationNode::builtinTypeNames[] = {
 
 UniqueName DeclarationNode::anonymous( "__anonymous" );
 
-extern LinkageSpec::Spec linkage;						// defined in parser.yy
+extern ast::Linkage::Spec linkage;						// defined in parser.yy
 
 DeclarationNode::DeclarationNode() :
 	linkage( ::linkage ) {
 
 //	variable.name = nullptr;
-	variable.tyClass = TypeDecl::NUMBER_OF_KINDS;
+	variable.tyClass = ast::TypeDecl::NUMBER_OF_KINDS;
 	variable.assertions = nullptr;
 	variable.initializer = nullptr;
 
@@ -104,8 +108,8 @@ DeclarationNode * DeclarationNode::clone() const {
 	newnode->enumeratorValue.reset( maybeClone( enumeratorValue.get() ) );
 	newnode->hasEllipsis = hasEllipsis;
 	newnode->linkage = linkage;
-	newnode->asmName = maybeClone( asmName );
-	cloneAll( attributes, newnode->attributes );
+	newnode->asmName = maybeCopy( asmName );
+	newnode->attributes = attributes;
 	newnode->initializer = maybeClone( initializer );
 	newnode->extension = extension;
 	newnode->asmStmt = maybeClone( asmStmt );
@@ -117,7 +121,7 @@ DeclarationNode * DeclarationNode::clone() const {
 	newnode->variable.initializer = maybeClone( variable.initializer );
 
 	newnode->assert.condition = maybeClone( assert.condition );
-	newnode->assert.message = maybeClone( assert.message );
+	newnode->assert.message = maybeCopy( assert.message );
 	return newnode;
 } // DeclarationNode::clone
 
@@ -127,12 +131,12 @@ void DeclarationNode::print( std::ostream & os, int indent ) const {
 		os << *name << ": ";
 	} // if
 
-	if ( linkage != LinkageSpec::Cforall ) {
-		os << LinkageSpec::name( linkage ) << " ";
+	if ( linkage != ast::Linkage::Cforall ) {
+		os << ast::Linkage::name( linkage ) << " ";
 	} // if
 
-	storageClasses.print( os );
-	funcSpecs.print( os );
+	ast::print( os, storageClasses );
+	ast::print( os, funcSpecs );
 
 	if ( type ) {
 		type->print( os, indent );
@@ -153,7 +157,7 @@ void DeclarationNode::print( std::ostream & os, int indent ) const {
 
 	if ( ! attributes.empty() ) {
 		os << string( indent + 2, ' ' ) << "with attributes " << endl;
-		for ( Attribute * attr: reverseIterate( attributes ) ) {
+		for ( ast::ptr<ast::Attribute> const & attr : reverseIterate( attributes ) ) {
 			os << string( indent + 4, ' ' ) << attr->name.c_str() << endl;
 		} // for
 	} // if
@@ -168,19 +172,19 @@ void DeclarationNode::printList( std::ostream & os, int indent ) const {
 	} // if
 }
 
-DeclarationNode * DeclarationNode::newStorageClass( Type::StorageClasses sc ) {
+DeclarationNode * DeclarationNode::newStorageClass( ast::Storage::Classes sc ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->storageClasses = sc;
 	return newnode;
 } // DeclarationNode::newStorageClass
 
-DeclarationNode * DeclarationNode::newFuncSpecifier( Type::FuncSpecifiers fs ) {
+DeclarationNode * DeclarationNode::newFuncSpecifier( ast::Function::Specs fs ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->funcSpecs = fs;
 	return newnode;
 } // DeclarationNode::newFuncSpecifier
 
-DeclarationNode * DeclarationNode::newTypeQualifier( Type::Qualifiers tq ) {
+DeclarationNode * DeclarationNode::newTypeQualifier( ast::CV::Qualifiers tq ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData();
 	newnode->type->qualifiers = tq;
@@ -240,7 +244,7 @@ DeclarationNode * DeclarationNode::newQualifiedType( DeclarationNode * parent, D
 	return newnode;
 }
 
-DeclarationNode * DeclarationNode::newAggregate( AggregateDecl::Aggregate kind, const string * name, ExpressionNode * actuals, DeclarationNode * fields, bool body ) {
+DeclarationNode * DeclarationNode::newAggregate( ast::AggregateDecl::Aggregate kind, const string * name, ExpressionNode * actuals, DeclarationNode * fields, bool body ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Aggregate );
 	newnode->type->aggregate.kind = kind;
@@ -269,8 +273,6 @@ DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode
 
 	return newnode;
 } // DeclarationNode::newEnum
-
-
 
 DeclarationNode * DeclarationNode::newName( const string * name ) {
 	DeclarationNode * newnode = new DeclarationNode;
@@ -323,7 +325,7 @@ DeclarationNode * DeclarationNode::newFromTypeGen( const string * name, Expressi
 	return newnode;
 } // DeclarationNode::newFromTypeGen
 
-DeclarationNode * DeclarationNode::newTypeParam( TypeDecl::Kind tc, const string * name ) {
+DeclarationNode * DeclarationNode::newTypeParam( ast::TypeDecl::Kind tc, const string * name ) {
 	DeclarationNode * newnode = newName( name );
 	newnode->type = nullptr;
 	newnode->variable.tyClass = tc;
@@ -335,7 +337,7 @@ DeclarationNode * DeclarationNode::newTrait( const string * name, DeclarationNod
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::Aggregate );
 	newnode->type->aggregate.name = name;
-	newnode->type->aggregate.kind = AggregateDecl::Trait;
+	newnode->type->aggregate.kind = ast::AggregateDecl::Trait;
 	newnode->type->aggregate.params = params;
 	newnode->type->aggregate.fields = asserts;
 	return newnode;
@@ -345,7 +347,7 @@ DeclarationNode * DeclarationNode::newTraitUse( const string * name, ExpressionN
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = new TypeData( TypeData::AggregateInst );
 	newnode->type->aggInst.aggregate = new TypeData( TypeData::Aggregate );
-	newnode->type->aggInst.aggregate->aggregate.kind = AggregateDecl::Trait;
+	newnode->type->aggInst.aggregate->aggregate.kind = ast::AggregateDecl::Trait;
 	newnode->type->aggInst.aggregate->aggregate.name = name;
 	newnode->type->aggInst.params = params;
 	return newnode;
@@ -380,7 +382,7 @@ DeclarationNode * DeclarationNode::newArray( ExpressionNode * size, DeclarationN
 	newnode->type = new TypeData( TypeData::Array );
 	newnode->type->array.dimension = size;
 	newnode->type->array.isStatic = isStatic;
-	if ( newnode->type->array.dimension == nullptr || newnode->type->array.dimension->isExpressionType<ConstantExpr * >() ) {
+	if ( newnode->type->array.dimension == nullptr || newnode->type->array.dimension->isExpressionType<ast::ConstantExpr *>() ) {
 		newnode->type->array.isVarLen = false;
 	} else {
 		newnode->type->array.isVarLen = true;
@@ -450,9 +452,10 @@ DeclarationNode * DeclarationNode::newFunction( const string * name, Declaration
 DeclarationNode * DeclarationNode::newAttribute( const string * name, ExpressionNode * expr ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->type = nullptr;
-	std::list< Expression * > exprs;
+	std::vector<ast::ptr<ast::Expr>> exprs;
 	buildList( expr, exprs );
-	newnode->attributes.push_back( new Attribute( *name, exprs ) );
+	newnode->attributes.push_back(
+		new ast::Attribute( *name, std::move( exprs ) ) );
 	delete name;
 	return newnode;
 }
@@ -469,55 +472,64 @@ DeclarationNode * DeclarationNode::newAsmStmt( StatementNode * stmt ) {
 	return newnode;
 }
 
-DeclarationNode * DeclarationNode::newStaticAssert( ExpressionNode * condition, Expression * message ) {
+DeclarationNode * DeclarationNode::newStaticAssert( ExpressionNode * condition, ast::Expr * message ) {
 	DeclarationNode * newnode = new DeclarationNode;
 	newnode->assert.condition = condition;
 	newnode->assert.message = message;
 	return newnode;
 }
 
-
-void appendError( string & dst, const string & src ) {
+static void appendError( string & dst, const string & src ) {
 	if ( src.empty() ) return;
 	if ( dst.empty() ) { dst = src; return; }
 	dst += ", " + src;
 } // appendError
 
 void DeclarationNode::checkQualifiers( const TypeData * src, const TypeData * dst ) {
-	const Type::Qualifiers qsrc = src->qualifiers, qdst = dst->qualifiers; // optimization
+	const ast::CV::Qualifiers qsrc = src->qualifiers, qdst = dst->qualifiers; // optimization
+	const ast::CV::Qualifiers duplicates = qsrc & qdst;
 
-	if ( (qsrc & qdst).any() ) {						// duplicates ?
-		for ( unsigned int i = 0; i < Type::NumTypeQualifier; i += 1 ) { // find duplicates
-			if ( qsrc[i] && qdst[i] ) {
-				appendError( error, string( "duplicate " ) + Type::QualifiersNames[i] );
-			} // if
-		} // for
+	if ( duplicates.any() ) {
+		std::stringstream str;
+		str << "duplicate ";
+		ast::print( str, duplicates );
+		str << "qualifier(s)";
+		appendError( error, str.str() );
 	} // for
 } // DeclarationNode::checkQualifiers
 
 void DeclarationNode::checkSpecifiers( DeclarationNode * src ) {
-	if ( (funcSpecs & src->funcSpecs).any() ) {			// duplicates ?
-		for ( unsigned int i = 0; i < Type::NumFuncSpecifier; i += 1 ) { // find duplicates
-			if ( funcSpecs[i] && src->funcSpecs[i] ) {
-				appendError( error, string( "duplicate " ) + Type::FuncSpecifiersNames[i] );
-			} // if
-		} // for
+	ast::Function::Specs fsDups = funcSpecs & src->funcSpecs;
+	if ( fsDups.any() ) {
+		std::stringstream str;
+		str << "duplicate ";
+		ast::print( str, fsDups );
+		str << "function specifier(s)";
+		appendError( error, str.str() );
 	} // if
 
-	if ( storageClasses.any() && src->storageClasses.any() ) { // any reason to check ?
-		if ( (storageClasses & src->storageClasses ).any() ) { // duplicates ?
-			for ( unsigned int i = 0; i < Type::NumStorageClass; i += 1 ) { // find duplicates
-				if ( storageClasses[i] && src->storageClasses[i] ) {
-					appendError( error, string( "duplicate " ) + Type::StorageClassesNames[i] );
-				} // if
-			} // for
-			// src is the new item being added and has a single bit
-		} else if ( ! src->storageClasses.is_threadlocal_any() ) { // conflict ?
-			appendError( error, string( "conflicting " )
-				+ Type::StorageClassesNames[storageClasses.ffs()]
-				+ " & " + Type::StorageClassesNames[src->storageClasses.ffs()] );
-			src->storageClasses.reset();				// FIX to preserve invariant of one basic storage specifier
-		} // if
+	// Skip if everything is unset.
+	if ( storageClasses.any() && src->storageClasses.any() ) {
+		ast::Storage::Classes dups = storageClasses & src->storageClasses;
+		// Check for duplicates.
+		if ( dups.any() ) {
+			std::stringstream str;
+			str << "duplicate ";
+			ast::print( str, dups );
+			str << "storage class(es)";
+			appendError( error, str.str() );
+		// Check for conflicts.
+		} else if ( !src->storageClasses.is_threadlocal_any() ) {
+			std::stringstream str;
+			str << "conflicting ";
+			ast::print( str, ast::Storage::Classes( 1 << storageClasses.ffs() ) );
+			str << "& ";
+			ast::print( str, ast::Storage::Classes( 1 << src->storageClasses.ffs() ) );
+			str << "storage classes";
+			appendError( error, str.str() );
+			// FIX to preserve invariant of one basic storage specifier
+			src->storageClasses.reset();
+		}
 	} // if
 
 	appendError( error, src->error );
@@ -527,9 +539,13 @@ DeclarationNode * DeclarationNode::copySpecifiers( DeclarationNode * q ) {
 	funcSpecs |= q->funcSpecs;
 	storageClasses |= q->storageClasses;
 
-	for ( Attribute * attr: reverseIterate( q->attributes ) ) {
-		attributes.push_front( attr->clone() );
-	} // for
+	std::vector<ast::ptr<ast::Attribute>> tmp;
+	tmp.reserve( q->attributes.size() );
+	for ( auto const & attr : q->attributes ) {
+		tmp.emplace_back( ast::shallowCopy( attr.get() ) );
+	}
+	spliceBegin( attributes, tmp );
+
 	return this;
 } // DeclarationNode::copySpecifiers
 
@@ -715,7 +731,7 @@ DeclarationNode * DeclarationNode::addTypedef() {
 }
 
 DeclarationNode * DeclarationNode::addAssertions( DeclarationNode * assertions ) {
-	if ( variable.tyClass != TypeDecl::NUMBER_OF_KINDS ) {
+	if ( variable.tyClass != ast::TypeDecl::NUMBER_OF_KINDS ) {
 		if ( variable.assertions ) {
 			variable.assertions->appendList( assertions );
 		} else {
@@ -797,9 +813,7 @@ DeclarationNode * DeclarationNode::setBase( TypeData * newType ) {
 
 DeclarationNode * DeclarationNode::copyAttribute( DeclarationNode * a ) {
 	if ( a ) {
-		for ( Attribute *attr: reverseIterate( a->attributes ) ) {
-			attributes.push_front( attr );
-		} // for
+		spliceBegin( attributes, a->attributes );
 		a->attributes.clear();
 	} // if
 	return this;
@@ -920,7 +934,7 @@ DeclarationNode * DeclarationNode::addInitializer( InitializerNode * init ) {
 }
 
 DeclarationNode * DeclarationNode::addTypeInitializer( DeclarationNode * init ) {
-	assertf( variable.tyClass != TypeDecl::NUMBER_OF_KINDS, "Called addTypeInitializer on something that isn't a type variable." );
+	assertf( variable.tyClass != ast::TypeDecl::NUMBER_OF_KINDS, "Called addTypeInitializer on something that isn't a type variable." );
 	variable.initializer = init;
 	return this;
 }
@@ -984,14 +998,15 @@ DeclarationNode * DeclarationNode::extractAggregate() const {
 	return nullptr;
 }
 
-void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & outputList ) {
+void buildList( const DeclarationNode * firstNode,
+		std::vector<ast::ptr<ast::Decl>> & outputList ) {
 	SemanticErrorException errors;
-	std::back_insert_iterator< std::list< Declaration * > > out( outputList );
+	std::back_insert_iterator<std::vector<ast::ptr<ast::Decl>>> out( outputList );
 
 	for ( const DeclarationNode * cur = firstNode; cur; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ) ) {
 		try {
 			bool extracted = false, anon = false;
-			AggregateDecl * unionDecl = nullptr;
+			ast::AggregateDecl * unionDecl = nullptr;
 
 			if ( DeclarationNode * extr = cur->extractAggregate() ) {
 				// Handle the case where a SUE declaration is contained within an object or type declaration.
@@ -1028,10 +1043,10 @@ void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & 
 					} // if
 				} // if
 
-				Declaration * decl = extr->build();
+				ast::Decl * decl = extr->build();
 				if ( decl ) {
 					// Remember the declaration if it is a union aggregate ?
-					unionDecl = dynamic_cast<UnionDecl *>( decl );
+					unionDecl = dynamic_cast<ast::UnionDecl *>( decl );
 
 					decl->location = cur->location;
 					*out++ = decl;
@@ -1050,9 +1065,9 @@ void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & 
 				delete extr;
 			} // if
 
-			Declaration * decl = cur->build();
+			ast::Decl * decl = cur->build();
 			if ( decl ) {
-				if ( TypedefDecl * typedefDecl = dynamic_cast<TypedefDecl *>( decl ) ) {
+				if ( auto typedefDecl = dynamic_cast<ast::TypedefDecl *>( decl ) ) {
 					if ( unionDecl ) {					// is the typedef alias a union aggregate ?
 						// This code handles a special issue with the attribute transparent_union.
 						//
@@ -1064,19 +1079,19 @@ void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & 
 						// alias.
 
 						// If typedef is an alias for a union, then its alias type was hoisted above and remembered.
-						if ( UnionInstType * unionInstType = dynamic_cast<UnionInstType *>( typedefDecl->base ) ) {
+						if ( auto unionInstType = typedefDecl->base.as<ast::UnionInstType>() ) {
+							auto instType = ast::mutate( unionInstType );
 							// Remove all transparent_union attributes from typedef and move to alias union.
-							list<Attribute *>::iterator attr;
-							for ( attr = unionInstType->attributes.begin(); attr != unionInstType->attributes.end(); ) { // forward order
+							for ( auto attr = instType->attributes.begin() ; attr != instType->attributes.end() ; ) { // forward order
+								assert( *attr );
 								if ( (*attr)->name == "transparent_union" || (*attr)->name == "__transparent_union__" ) {
-									list<Attribute *>::iterator cur = attr; // remember current node
-									attr++;				// advance iterator
-									unionDecl->attributes.emplace_back( *cur ); // move current
-									unionInstType->attributes.erase( cur ); // remove current
+									unionDecl->attributes.emplace_back( attr->release() );
+									attr = instType->attributes.erase( attr );
 								} else {
-									attr++;				// advance iterator
+									attr++;
 								} // if
 							} // for
+							typedefDecl->base = instType;
 						} // if
 					} // if
 				} // if
@@ -1089,8 +1104,8 @@ void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & 
 				// };
 				if ( ! (extracted && decl->name == "" && ! anon && ! cur->get_inLine()) ) {
 					if ( decl->name == "" ) {
-						if ( DeclarationWithType * dwt = dynamic_cast<DeclarationWithType *>( decl ) ) {
-							if ( ReferenceToType * aggr = dynamic_cast<ReferenceToType *>( dwt->get_type() ) ) {
+						if ( auto dwt = dynamic_cast<ast::DeclWithType *>( decl ) ) {
+							if ( auto aggr = dynamic_cast<ast::BaseInstType const *>( dwt->get_type() ) ) {
 								if ( aggr->name.find("anonymous") == std::string::npos ) {
 									if ( ! cur->get_inLine() ) {
 										// temporary: warn about anonymous member declarations of named types, since
@@ -1116,35 +1131,41 @@ void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & 
 } // buildList
 
 // currently only builds assertions, function parameters, and return values
-void buildList( const DeclarationNode * firstNode, std::list< DeclarationWithType * > & outputList ) {
+void buildList( const DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithType>> & outputList ) {
 	SemanticErrorException errors;
-	std::back_insert_iterator< std::list< DeclarationWithType * > > out( outputList );
+	std::back_insert_iterator<std::vector<ast::ptr<ast::DeclWithType>>> out( outputList );
 
 	for ( const DeclarationNode * cur = firstNode; cur; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ) ) {
 		try {
-			Declaration * decl = cur->build();
+			ast::Decl * decl = cur->build();
 			assert( decl );
-			if ( DeclarationWithType * dwt = dynamic_cast< DeclarationWithType * >( decl ) ) {
+			if ( ast::DeclWithType * dwt = dynamic_cast<ast::DeclWithType *>( decl ) ) {
 				dwt->location = cur->location;
 				*out++ = dwt;
-			} else if ( StructDecl * agg = dynamic_cast< StructDecl * >( decl ) ) {
+			} else if ( ast::StructDecl * agg = dynamic_cast<ast::StructDecl *>( decl ) ) {
 				// e.g., int foo(struct S) {}
-				StructInstType * inst = new StructInstType( Type::Qualifiers(), agg->name );
-				auto obj = new ObjectDecl( "", Type::StorageClasses(), linkage, nullptr, inst, nullptr );
-				obj->location = cur->location;
+				auto inst = new ast::StructInstType( agg->name );
+				auto obj = new ast::ObjectDecl( cur->location, "", inst );
+				obj->linkage = linkage;
 				*out++ = obj;
 				delete agg;
-			} else if ( UnionDecl * agg = dynamic_cast< UnionDecl * >( decl ) ) {
+			} else if ( ast::UnionDecl * agg = dynamic_cast<ast::UnionDecl *>( decl ) ) {
 				// e.g., int foo(union U) {}
-				UnionInstType * inst = new UnionInstType( Type::Qualifiers(), agg->name );
-				auto obj = new ObjectDecl( "", Type::StorageClasses(), linkage, nullptr, inst, nullptr );
-				obj->location = cur->location;
+				auto inst = new ast::UnionInstType( agg->name );
+				auto obj = new ast::ObjectDecl( cur->location,
+					"", inst, nullptr, ast::Storage::Classes(),
+					linkage );
 				*out++ = obj;
-			} else if ( EnumDecl * agg = dynamic_cast< EnumDecl * >( decl ) ) {
+			} else if ( ast::EnumDecl * agg = dynamic_cast<ast::EnumDecl *>( decl ) ) {
 				// e.g., int foo(enum E) {}
-				EnumInstType * inst = new EnumInstType( Type::Qualifiers(), agg->name );
-				auto obj = new ObjectDecl( "", Type::StorageClasses(), linkage, nullptr, inst, nullptr );
-				obj->location = cur->location;
+				auto inst = new ast::EnumInstType( agg->name );
+				auto obj = new ast::ObjectDecl( cur->location,
+					"",
+					inst,
+					nullptr,
+					ast::Storage::Classes(),
+					linkage
+				);
 				*out++ = obj;
 			} // if
 		} catch( SemanticErrorException & e ) {
@@ -1157,9 +1178,10 @@ void buildList( const DeclarationNode * firstNode, std::list< DeclarationWithTyp
 	} // if
 } // buildList
 
-void buildTypeList( const DeclarationNode * firstNode, std::list< Type * > & outputList ) {
+void buildTypeList( const DeclarationNode * firstNode,
+		std::vector<ast::ptr<ast::Type>> & outputList ) {
 	SemanticErrorException errors;
-	std::back_insert_iterator< std::list< Type * > > out( outputList );
+	std::back_insert_iterator<std::vector<ast::ptr<ast::Type>>> out( outputList );
 	const DeclarationNode * cur = firstNode;
 
 	while ( cur ) {
@@ -1176,23 +1198,32 @@ void buildTypeList( const DeclarationNode * firstNode, std::list< Type * > & out
 	} // if
 } // buildTypeList
 
-Declaration * DeclarationNode::build() const {
+ast::Decl * DeclarationNode::build() const {
 	if ( ! error.empty() ) SemanticError( this, error + " in declaration of " );
 
 	if ( asmStmt ) {
-		return new AsmDecl( strict_dynamic_cast<AsmStmt *>( asmStmt->build() ) );
+		auto stmt = strict_dynamic_cast<ast::AsmStmt *>( asmStmt->build() );
+		return new ast::AsmDecl( stmt->location, stmt );
 	} // if
 	if ( directiveStmt ) {
-		return new DirectiveDecl( strict_dynamic_cast<DirectiveStmt *>( directiveStmt->build() ) );
+		auto stmt = strict_dynamic_cast<ast::DirectiveStmt *>( directiveStmt->build() );
+		return new ast::DirectiveDecl( stmt->location, stmt );
 	} // if
 
-	if ( variable.tyClass != TypeDecl::NUMBER_OF_KINDS ) {
+	if ( variable.tyClass != ast::TypeDecl::NUMBER_OF_KINDS ) {
 		// otype is internally converted to dtype + otype parameters
-		static const TypeDecl::Kind kindMap[] = { TypeDecl::Dtype, TypeDecl::Dtype, TypeDecl::Dtype, TypeDecl::Ftype, TypeDecl::Ttype, TypeDecl::Dimension };
-		static_assert( sizeof(kindMap) / sizeof(kindMap[0]) == TypeDecl::NUMBER_OF_KINDS, "DeclarationNode::build: kindMap is out of sync." );
+		static const ast::TypeDecl::Kind kindMap[] = { ast::TypeDecl::Dtype, ast::TypeDecl::Dtype, ast::TypeDecl::Dtype, ast::TypeDecl::Ftype, ast::TypeDecl::Ttype, ast::TypeDecl::Dimension };
+		static_assert( sizeof(kindMap) / sizeof(kindMap[0]) == ast::TypeDecl::NUMBER_OF_KINDS, "DeclarationNode::build: kindMap is out of sync." );
 		assertf( variable.tyClass < sizeof(kindMap)/sizeof(kindMap[0]), "Variable's tyClass is out of bounds." );
-		TypeDecl * ret = new TypeDecl( *name, Type::StorageClasses(), nullptr, kindMap[ variable.tyClass ], variable.tyClass == TypeDecl::Otype || variable.tyClass == TypeDecl::DStype, variable.initializer ? variable.initializer->buildType() : nullptr );
-		buildList( variable.assertions, ret->get_assertions() );
+		ast::TypeDecl * ret = new ast::TypeDecl( location,
+			*name,
+			ast::Storage::Classes(),
+			(ast::Type *)nullptr,
+			kindMap[ variable.tyClass ],
+			variable.tyClass == ast::TypeDecl::Otype || variable.tyClass == ast::TypeDecl::DStype,
+			variable.initializer ? variable.initializer->buildType() : nullptr
+		);
+		buildList( variable.assertions, ret->assertions );
 		return ret;
 	} // if
 
@@ -1214,16 +1245,28 @@ Declaration * DeclarationNode::build() const {
 			SemanticError( this, "invalid type qualifier for " );
 		} // if
 		bool isDelete = initializer && initializer->get_isDelete();
-		Declaration * decl = buildDecl( type, name ? *name : string( "" ), storageClasses, maybeBuild( bitfieldWidth ), funcSpecs, linkage, asmName, isDelete ? nullptr : maybeBuild(initializer), attributes )->set_extension( extension );
+		ast::Decl * decl = buildDecl(
+			type,
+			name ? *name : string( "" ),
+			storageClasses,
+			maybeBuild( bitfieldWidth ),
+			funcSpecs,
+			linkage,
+			asmName,
+			isDelete ? nullptr : maybeBuild( initializer ),
+			copy( attributes )
+		)->set_extension( extension );
 		if ( isDelete ) {
-			DeclarationWithType * dwt = strict_dynamic_cast<DeclarationWithType *>( decl );
+			auto dwt = strict_dynamic_cast<ast::DeclWithType *>( decl );
 			dwt->isDeleted = true;
 		}
 		return decl;
 	} // if
 
 	if ( assert.condition ) {
-		return new StaticAssertDecl( maybeBuild( assert.condition ), strict_dynamic_cast< ConstantExpr * >( maybeClone( assert.message ) ) );
+		auto cond = maybeBuild( assert.condition );
+		auto msg = strict_dynamic_cast<ast::ConstantExpr *>( maybeCopy( assert.message ) );
+		return new ast::StaticAssertDecl( location, cond, msg );
 	}
 
 	// SUE's cannot have function specifiers, either
@@ -1234,30 +1277,48 @@ Declaration * DeclarationNode::build() const {
 		SemanticError( this, "invalid function specifier for " );
 	} // if
 	if ( enumInLine ) {
-		return new InlineMemberDecl( *name, storageClasses, linkage, nullptr );
+		return new ast::InlineMemberDecl( location,
+			*name, (ast::Type*)nullptr, storageClasses, linkage );
 	} // if
 	assertf( name, "ObjectDecl must a have name\n" );
-	return (new ObjectDecl( *name, storageClasses, linkage, maybeBuild( bitfieldWidth ), nullptr, maybeBuild( initializer ) ))->set_asmName( asmName )->set_extension( extension );
+	auto ret = new ast::ObjectDecl( location,
+		*name,
+		(ast::Type*)nullptr,
+		maybeBuild( initializer ),
+		storageClasses,
+		linkage,
+		maybeBuild( bitfieldWidth )
+	);
+	ret->asmName = asmName;
+	ret->extension = extension;
+	return ret;
 }
 
-Type * DeclarationNode::buildType() const {
+ast::Type * DeclarationNode::buildType() const {
 	assert( type );
 
 	switch ( type->kind ) {
 	case TypeData::Enum:
 	case TypeData::Aggregate: {
-		ReferenceToType * ret = buildComAggInst( type, attributes, linkage );
-		buildList( type->aggregate.actuals, ret->get_parameters() );
+		ast::BaseInstType * ret =
+			buildComAggInst( type, copy( attributes ), linkage );
+		buildList( type->aggregate.actuals, ret->params );
 		return ret;
 	}
 	case TypeData::Symbolic: {
-		TypeInstType * ret = new TypeInstType( buildQualifiers( type ), *type->symbolic.name, false, attributes );
-		buildList( type->symbolic.actuals, ret->get_parameters() );
+		ast::TypeInstType * ret = new ast::TypeInstType(
+			*type->symbolic.name,
+			// This is just a default, the true value is not known yet.
+			ast::TypeDecl::Dtype,
+			buildQualifiers( type ),
+			copy( attributes ) );
+		buildList( type->symbolic.actuals, ret->params );
 		return ret;
 	}
 	default:
-		Type * simpletypes = typebuild( type );
-		simpletypes->get_attributes() = attributes;		// copy because member is const
+		ast::Type * simpletypes = typebuild( type );
+		// copy because member is const
+		simpletypes->attributes = attributes;
 		return simpletypes;
 	} // switch
 }

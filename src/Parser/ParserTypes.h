@@ -3,9 +3,9 @@
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-// 
-// parser.hh -- 
-// 
+//
+// parser.hh --
+//
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 22 08:58:10 2001
 // Last Modified By : Peter A. Buhr

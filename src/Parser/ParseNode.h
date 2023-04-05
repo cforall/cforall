@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Mar 29 08:40:27 2023
-// Update Count     : 948
+// Last Modified By : Andrew Beach
+// Last Modified On : Mon Apr  3 17:55:00 2023
+// Update Count     : 942
 //
 
 #pragma once
@@ -23,17 +23,14 @@
 #include <memory>                  // for unique_ptr, pointer_traits
 #include <string>                  // for string
 
+#include "AST/Expr.hpp"            // for Expr, NameExpr LogicalFlag
+#include "AST/Fwd.hpp"             // for ptr, Decl, DeclWithType,
+#include "AST/Stmt.hpp"            // for Stmt
 #include "Common/CodeLocation.h"   // for CodeLocation
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/UniqueName.h"     // for UniqueName
 #include "Common/utility.h"        // for maybeClone
-#include "Parser/parserutility.h"  // for maybeBuild
-#include "SynTree/LinkageSpec.h"   // for Spec
-#include "SynTree/Declaration.h"   // for Aggregate
-#include "SynTree/Expression.h"    // for Expression, ConstantExpr (ptr only)
-#include "SynTree/Label.h"         // for Label
-#include "SynTree/Statement.h"     // for Statement, BranchStmt, BranchStmt:...
-#include "SynTree/Type.h"          // for Type, Type::FuncSpecifiers, Type::...
+#include "Parser/parserutility.h"  // for maybeBuild, maybeCopy
 
 class Attribute;
 class Declaration;
@@ -107,7 +104,7 @@ class InitializerNode : public ParseNode {
 	void print( std::ostream & os, int indent = 0 ) const;
 	void printOneLine( std::ostream & ) const;
 
-	virtual Initializer * build() const;
+	virtual ast::Init * build() const;
   private:
 	ExpressionNode * expr;
 	bool aggregate;
@@ -121,9 +118,13 @@ class InitializerNode : public ParseNode {
 
 class ExpressionNode final : public ParseNode {
   public:
-	ExpressionNode( Expression * expr = nullptr ) : expr( expr ) {}
+	ExpressionNode( ast::Expr * expr = nullptr ) : expr( expr ) {}
 	virtual ~ExpressionNode() {}
-	virtual ExpressionNode * clone() const override { return expr ? static_cast<ExpressionNode*>((new ExpressionNode( expr->clone() ))->set_next( maybeClone( get_next() ) )) : nullptr; }
+	virtual ExpressionNode * clone() const override {
+		if ( nullptr == expr ) return nullptr;
+		return static_cast<ExpressionNode*>(
+			(new ExpressionNode( ast::shallowCopy( expr.get() ) ))->set_next( maybeCopy( get_next() ) ));
+	}
 
 	bool get_extension() const { return extension; }
 	ExpressionNode * set_extension( bool exten ) { extension = exten; return this; }
@@ -136,14 +137,15 @@ class ExpressionNode final : public ParseNode {
 	template<typename T>
 	bool isExpressionType() const {	return nullptr != dynamic_cast<T>(expr.get()); }
 
-	Expression * build() const {
-		Expression * node = const_cast<ExpressionNode *>(this)->expr.release();
+	ast::Expr * build() const {
+		ast::Expr * node = const_cast<ExpressionNode *>(this)->expr.release();
 		node->set_extension( this->get_extension() );
 		node->location = this->location;
 		return node;
 	}
 
-	std::unique_ptr<Expression> expr;					// public because of lifetime implications
+	// Public because of lifetime implications (what lifetime implications?)
+	std::unique_ptr<ast::Expr> expr;
   private:
 	bool extension = false;
 }; // ExpressionNode
@@ -163,38 +165,39 @@ enum class OperKinds {
 enum class EnumHiding { Visible, Hide };
 
 struct LabelNode {
-	std::list< Label > labels;
+	std::vector<ast::Label> labels;
 };
 
-Expression * build_constantInteger( std::string & str ); // these 4 routines modify the string
-Expression * build_constantFloat( std::string & str );
-Expression * build_constantChar( std::string & str );
-Expression * build_constantStr( std::string & str );
-Expression * build_field_name_FLOATING_FRACTIONconstant( const std::string & str );
-Expression * build_field_name_FLOATING_DECIMALconstant( const std::string & str );
-Expression * build_field_name_FLOATINGconstant( const std::string & str );
-Expression * build_field_name_fraction_constants( Expression * fieldName, ExpressionNode * fracts );
+// These 4 routines modify the string:
+ast::Expr * build_constantInteger( const CodeLocation &, std::string & );
+ast::Expr * build_constantFloat( const CodeLocation &, std::string & );
+ast::Expr * build_constantChar( const CodeLocation &, std::string & );
+ast::Expr * build_constantStr( const CodeLocation &, std::string & );
+ast::Expr * build_field_name_FLOATING_FRACTIONconstant( const CodeLocation &, const std::string & str );
+ast::Expr * build_field_name_FLOATING_DECIMALconstant( const CodeLocation &, const std::string & str );
+ast::Expr * build_field_name_FLOATINGconstant( const CodeLocation &, const std::string & str );
+ast::Expr * build_field_name_fraction_constants( const CodeLocation &, ast::Expr * fieldName, ExpressionNode * fracts );
 
-NameExpr * build_varref( const std::string * name );
-QualifiedNameExpr * build_qualified_expr( const DeclarationNode * decl_node, const NameExpr * name );
-QualifiedNameExpr * build_qualified_expr( const EnumDecl * decl, const NameExpr * name );
-DimensionExpr * build_dimensionref( const std::string * name );
+ast::NameExpr * build_varref( const CodeLocation &, const std::string * name );
+ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation &, const DeclarationNode * decl_node, const ast::NameExpr * name );
+ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation &, const ast::EnumDecl * decl, const ast::NameExpr * name );
+ast::DimensionExpr * build_dimensionref( const CodeLocation &, const std::string * name );
 
-Expression * build_cast( DeclarationNode * decl_node, ExpressionNode * expr_node );
-Expression * build_keyword_cast( AggregateDecl::Aggregate target, ExpressionNode * expr_node );
-Expression * build_virtual_cast( DeclarationNode * decl_node, ExpressionNode * expr_node );
-Expression * build_fieldSel( ExpressionNode * expr_node, Expression * member );
-Expression * build_pfieldSel( ExpressionNode * expr_node, Expression * member );
-Expression * build_offsetOf( DeclarationNode * decl_node, NameExpr * member );
-Expression * build_and( ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
-Expression * build_and_or( ExpressionNode * expr_node1, ExpressionNode * expr_node2, bool kind );
-Expression * build_unary_val( OperKinds op, ExpressionNode * expr_node );
-Expression * build_binary_val( OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
-Expression * build_binary_ptr( OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
-Expression * build_cond( ExpressionNode * expr_node1, ExpressionNode * expr_node2, ExpressionNode * expr_node3 );
-Expression * build_tuple( ExpressionNode * expr_node = nullptr );
-Expression * build_func( ExpressionNode * function, ExpressionNode * expr_node );
-Expression * build_compoundLiteral( DeclarationNode * decl_node, InitializerNode * kids );
+ast::Expr * build_cast( const CodeLocation &, DeclarationNode * decl_node, ExpressionNode * expr_node );
+ast::Expr * build_keyword_cast( const CodeLocation &, ast::AggregateDecl::Aggregate target, ExpressionNode * expr_node );
+ast::Expr * build_virtual_cast( const CodeLocation &, DeclarationNode * decl_node, ExpressionNode * expr_node );
+ast::Expr * build_fieldSel( const CodeLocation &, ExpressionNode * expr_node, ast::Expr * member );
+ast::Expr * build_pfieldSel( const CodeLocation &, ExpressionNode * expr_node, ast::Expr * member );
+ast::Expr * build_offsetOf( const CodeLocation &, DeclarationNode * decl_node, ast::NameExpr * member );
+ast::Expr * build_and( const CodeLocation &, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
+ast::Expr * build_and_or( const CodeLocation &, ExpressionNode * expr_node1, ExpressionNode * expr_node2, ast::LogicalFlag flag );
+ast::Expr * build_unary_val( const CodeLocation &, OperKinds op, ExpressionNode * expr_node );
+ast::Expr * build_binary_val( const CodeLocation &, OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
+ast::Expr * build_binary_ptr( const CodeLocation &, OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
+ast::Expr * build_cond( const CodeLocation &, ExpressionNode * expr_node1, ExpressionNode * expr_node2, ExpressionNode * expr_node3 );
+ast::Expr * build_tuple( const CodeLocation &, ExpressionNode * expr_node = nullptr );
+ast::Expr * build_func( const CodeLocation &, ExpressionNode * function, ExpressionNode * expr_node );
+ast::Expr * build_compoundLiteral( const CodeLocation &, DeclarationNode * decl_node, InitializerNode * kids );
 
 //##############################################################################
 
@@ -218,9 +221,9 @@ struct DeclarationNode : public ParseNode {
 	enum BuiltinType { Valist, AutoType, Zero, One, NoBuiltinType };
 	static const char * builtinTypeNames[];
 
-	static DeclarationNode * newStorageClass( Type::StorageClasses );
-	static DeclarationNode * newFuncSpecifier( Type::FuncSpecifiers );
-	static DeclarationNode * newTypeQualifier( Type::Qualifiers );
+	static DeclarationNode * newStorageClass( ast::Storage::Classes );
+	static DeclarationNode * newFuncSpecifier( ast::Function::Specs );
+	static DeclarationNode * newTypeQualifier( ast::CV::Qualifiers );
 	static DeclarationNode * newBasicType( BasicType );
 	static DeclarationNode * newComplexType( ComplexType );
 	static DeclarationNode * newSignedNess( Signedness );
@@ -231,14 +234,14 @@ struct DeclarationNode : public ParseNode {
 	static DeclarationNode * newFromGlobalScope();
 	static DeclarationNode * newQualifiedType( DeclarationNode *, DeclarationNode * );
 	static DeclarationNode * newFunction( const std::string * name, DeclarationNode * ret, DeclarationNode * param, StatementNode * body );
-	static DeclarationNode * newAggregate( AggregateDecl::Aggregate kind, const std::string * name, ExpressionNode * actuals, DeclarationNode * fields, bool body );
+	static DeclarationNode * newAggregate( ast::AggregateDecl::Aggregate kind, const std::string * name, ExpressionNode * actuals, DeclarationNode * fields, bool body );
 	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base = nullptr, EnumHiding hiding = EnumHiding::Visible );
 	static DeclarationNode * newEnumConstant( const std::string * name, ExpressionNode * constant );
 	static DeclarationNode * newEnumValueGeneric( const std::string * name, InitializerNode * init );
 	static DeclarationNode * newEnumInLine( const std::string name );
 	static DeclarationNode * newName( const std::string * );
 	static DeclarationNode * newFromTypeGen( const std::string *, ExpressionNode * params );
-	static DeclarationNode * newTypeParam( TypeDecl::Kind, const std::string * );
+	static DeclarationNode * newTypeParam( ast::TypeDecl::Kind, const std::string * );
 	static DeclarationNode * newTrait( const std::string * name, DeclarationNode * params, DeclarationNode * asserts );
 	static DeclarationNode * newTraitUse( const std::string * name, ExpressionNode * params );
 	static DeclarationNode * newTypeDecl( const std::string * name, DeclarationNode * typeParams );
@@ -252,7 +255,7 @@ struct DeclarationNode : public ParseNode {
 	static DeclarationNode * newAttribute( const std::string *, ExpressionNode * expr = nullptr ); // gcc attributes
 	static DeclarationNode * newDirectiveStmt( StatementNode * stmt ); // gcc external directive statement
 	static DeclarationNode * newAsmStmt( StatementNode * stmt ); // gcc external asm statement
-	static DeclarationNode * newStaticAssert( ExpressionNode * condition, Expression * message );
+	static DeclarationNode * newStaticAssert( ExpressionNode * condition, ast::Expr * message );
 
 	DeclarationNode();
 	~DeclarationNode();
@@ -293,10 +296,10 @@ struct DeclarationNode : public ParseNode {
 	virtual void print( __attribute__((unused)) std::ostream & os, __attribute__((unused)) int indent = 0 ) const override;
 	virtual void printList( __attribute__((unused)) std::ostream & os, __attribute__((unused)) int indent = 0 ) const override;
 
-	Declaration * build() const;
-	Type * buildType() const;
+	ast::Decl * build() const;
+	ast::Type * buildType() const;
 
-	LinkageSpec::Spec get_linkage() const { return linkage; }
+	ast::Linkage::Spec get_linkage() const { return linkage; }
 	DeclarationNode * extractAggregate() const;
 	bool has_enumeratorValue() const { return (bool)enumeratorValue; }
 	ExpressionNode * consume_enumeratorValue() const { return const_cast<DeclarationNode *>(this)->enumeratorValue.release(); }
@@ -311,7 +314,7 @@ struct DeclarationNode : public ParseNode {
 
 	struct Variable_t {
 //		const std::string * name;
-		TypeDecl::Kind tyClass;
+		ast::TypeDecl::Kind tyClass;
 		DeclarationNode * assertions;
 		DeclarationNode * initializer;
 	};
@@ -319,7 +322,7 @@ struct DeclarationNode : public ParseNode {
 
 	struct StaticAssert_t {
 		ExpressionNode * condition;
-		Expression * message;
+		ast::Expr * message;
 	};
 	StaticAssert_t assert;
 
@@ -329,15 +332,15 @@ struct DeclarationNode : public ParseNode {
 
 	bool inLine = false;
 	bool enumInLine = false;
-	Type::FuncSpecifiers funcSpecs;
-	Type::StorageClasses storageClasses;
+	ast::Function::Specs funcSpecs;
+	ast::Storage::Classes storageClasses;
 
 	ExpressionNode * bitfieldWidth = nullptr;
 	std::unique_ptr<ExpressionNode> enumeratorValue;
 	bool hasEllipsis = false;
-	LinkageSpec::Spec linkage;
-	Expression * asmName = nullptr;
-	std::list< Attribute * > attributes;
+	ast::Linkage::Spec linkage;
+	ast::Expr * asmName = nullptr;
+	std::vector<ast::ptr<ast::Attribute>> attributes;
 	InitializerNode * initializer = nullptr;
 	bool extension = false;
 	std::string error;
@@ -347,10 +350,10 @@ struct DeclarationNode : public ParseNode {
 	static UniqueName anonymous;
 }; // DeclarationNode
 
-Type * buildType( TypeData * type );
+ast::Type * buildType( TypeData * type );
 
-static inline Type * maybeMoveBuildType( const DeclarationNode * orig ) {
-	Type * ret = orig ? orig->buildType() : nullptr;
+static inline ast::Type * maybeMoveBuildType( const DeclarationNode * orig ) {
+	ast::Type * ret = orig ? orig->buildType() : nullptr;
 	delete orig;
 	return ret;
 }
@@ -358,16 +361,26 @@ static inline Type * maybeMoveBuildType( const DeclarationNode * orig ) {
 //##############################################################################
 
 struct StatementNode final : public ParseNode {
-	StatementNode() { stmt = nullptr; }
-	StatementNode( Statement * stmt ) : stmt( stmt ) {}
+	StatementNode() :
+		stmt( nullptr ), clause( nullptr ) {}
+	StatementNode( ast::Stmt * stmt ) :
+		stmt( stmt ), clause( nullptr ) {}
+	StatementNode( ast::StmtClause * clause ) :
+		stmt( nullptr ), clause( clause ) {}
 	StatementNode( DeclarationNode * decl );
 	virtual ~StatementNode() {}
 
 	virtual StatementNode * clone() const final { assert( false ); return nullptr; }
-	Statement * build() const { return const_cast<StatementNode *>(this)->stmt.release(); }
+	ast::Stmt * build() const { return const_cast<StatementNode *>(this)->stmt.release(); }
 
-	virtual StatementNode * add_label( const std::string * name, DeclarationNode * attr = nullptr ) {
-		stmt->get_labels().emplace_back( * name, nullptr, attr ? std::move( attr->attributes ) : std::list< Attribute * > {} );
+	virtual StatementNode * add_label(
+			const CodeLocation & location,
+			const std::string * name,
+			DeclarationNode * attr = nullptr ) {
+		stmt->labels.emplace_back( location,
+			*name,
+			attr ? std::move( attr->attributes )
+				: std::vector<ast::ptr<ast::Attribute>>{} );
 		delete attr;
 		delete name;
 		return this;
@@ -379,10 +392,11 @@ struct StatementNode final : public ParseNode {
 		os << stmt.get() << std::endl;
 	}
 
-	std::unique_ptr<Statement> stmt;
+	std::unique_ptr<ast::Stmt> stmt;
+	std::unique_ptr<ast::StmtClause> clause;
 }; // StatementNode
 
-Statement * build_expr( ExpressionNode * ctl );
+ast::Stmt * build_expr( CodeLocation const &, ExpressionNode * ctl );
 
 struct CondCtl {
 	CondCtl( DeclarationNode * decl, ExpressionNode * condition ) :
@@ -401,58 +415,59 @@ struct ForCtrl {
 	ExpressionNode * change;
 };
 
-Expression * build_if_control( CondCtl * ctl, std::list< Statement * > & init );
-Statement * build_if( CondCtl * ctl, StatementNode * then, StatementNode * else_ );
-Statement * build_switch( bool isSwitch, ExpressionNode * ctl, StatementNode * stmt );
-Statement * build_case( ExpressionNode * ctl );
-Statement * build_default();
-Statement * build_while( CondCtl * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
-Statement * build_do_while( ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
-Statement * build_for( ForCtrl * forctl, StatementNode * stmt, StatementNode * else_ = nullptr );
-Statement * build_branch( BranchStmt::Type kind );
-Statement * build_branch( std::string * identifier, BranchStmt::Type kind );
-Statement * build_computedgoto( ExpressionNode * ctl );
-Statement * build_return( ExpressionNode * ctl );
-Statement * build_throw( ExpressionNode * ctl );
-Statement * build_resume( ExpressionNode * ctl );
-Statement * build_resume_at( ExpressionNode * ctl , ExpressionNode * target );
-Statement * build_try( StatementNode * try_, StatementNode * catch_, StatementNode * finally_ );
-Statement * build_catch( CatchStmt::Kind kind, DeclarationNode * decl, ExpressionNode * cond, StatementNode * body );
-Statement * build_finally( StatementNode * stmt );
-Statement * build_compound( StatementNode * first );
-StatementNode * maybe_build_compound( StatementNode * first );
-Statement * build_asm( bool voltile, Expression * instruction, ExpressionNode * output = nullptr, ExpressionNode * input = nullptr, ExpressionNode * clobber = nullptr, LabelNode * gotolabels = nullptr );
-Statement * build_directive( std::string * directive );
-SuspendStmt * build_suspend( StatementNode *, SuspendStmt::Type = SuspendStmt::None);
-WaitForStmt * build_waitfor( WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt );
-WaitForStmt * build_waitfor_else( WaitForStmt * existing, ExpressionNode * when, StatementNode * stmt );
-WaitForStmt * build_waitfor_timeout( WaitForStmt * existing, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt );
-Statement * build_with( ExpressionNode * exprs, StatementNode * stmt );
-Statement * build_mutex( ExpressionNode * exprs, StatementNode * stmt );
+ast::Stmt * build_if( const CodeLocation &, CondCtl * ctl, StatementNode * then, StatementNode * else_ );
+ast::Stmt * build_switch( const CodeLocation &, bool isSwitch, ExpressionNode * ctl, StatementNode * stmt );
+ast::CaseClause * build_case( ExpressionNode * ctl );
+ast::CaseClause * build_default( const CodeLocation & );
+ast::Stmt * build_while( const CodeLocation &, CondCtl * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
+ast::Stmt * build_do_while( const CodeLocation &, ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
+ast::Stmt * build_for( const CodeLocation &, ForCtrl * forctl, StatementNode * stmt, StatementNode * else_ = nullptr );
+ast::Stmt * build_branch( const CodeLocation &, ast::BranchStmt::Kind kind );
+ast::Stmt * build_branch( const CodeLocation &, std::string * identifier, ast::BranchStmt::Kind kind );
+ast::Stmt * build_computedgoto( ExpressionNode * ctl );
+ast::Stmt * build_return( const CodeLocation &, ExpressionNode * ctl );
+ast::Stmt * build_throw( const CodeLocation &, ExpressionNode * ctl );
+ast::Stmt * build_resume( const CodeLocation &, ExpressionNode * ctl );
+ast::Stmt * build_resume_at( ExpressionNode * ctl , ExpressionNode * target );
+ast::Stmt * build_try( const CodeLocation &, StatementNode * try_, StatementNode * catch_, StatementNode * finally_ );
+ast::CatchClause * build_catch( const CodeLocation &, ast::ExceptionKind kind, DeclarationNode * decl, ExpressionNode * cond, StatementNode * body );
+ast::FinallyClause * build_finally( const CodeLocation &, StatementNode * stmt );
+ast::Stmt * build_compound( const CodeLocation &, StatementNode * first );
+StatementNode * maybe_build_compound( const CodeLocation &, StatementNode * first );
+ast::Stmt * build_asm( const CodeLocation &, bool voltile, ast::Expr * instruction, ExpressionNode * output = nullptr, ExpressionNode * input = nullptr, ExpressionNode * clobber = nullptr, LabelNode * gotolabels = nullptr );
+ast::Stmt * build_directive( const CodeLocation &, std::string * directive );
+ast::SuspendStmt * build_suspend( const CodeLocation &, StatementNode *, ast::SuspendStmt::Type );
+ast::WaitForStmt * build_waitfor( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt );
+ast::WaitForStmt * build_waitfor_else( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, StatementNode * stmt );
+ast::WaitForStmt * build_waitfor_timeout( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt );
+ast::Stmt * build_with( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
+ast::Stmt * build_mutex( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
 
 //##############################################################################
 
-template< typename SynTreeType, typename NodeType, template< typename, typename...> class Container, typename... Args >
-void buildList( const NodeType * firstNode, Container< SynTreeType *, Args... > & outputList ) {
+template<typename AstType, typename NodeType,
+	template<typename, typename...> class Container, typename... Args>
+void buildList( const NodeType * firstNode,
+		Container<ast::ptr<AstType>, Args...> & output ) {
 	SemanticErrorException errors;
-	std::back_insert_iterator< Container< SynTreeType *, Args... > > out( outputList );
+	std::back_insert_iterator<Container<ast::ptr<AstType>, Args...>> out( output );
 	const NodeType * cur = firstNode;
 
 	while ( cur ) {
 		try {
-			SynTreeType * result = dynamic_cast< SynTreeType * >( maybeBuild( cur ) );
-			if ( result ) {
-				result->location = cur->location;
-				* out++ = result;
+			if ( auto result = dynamic_cast<AstType *>( maybeBuild( cur ) ) ) {
+				*out++ = result;
 			} else {
+				assertf(false, __PRETTY_FUNCTION__ );
 				SemanticError( cur->location, "type specifier declaration in forall clause is currently unimplemented." );
 			} // if
 		} catch( SemanticErrorException & e ) {
 			errors.append( e );
 		} // try
-		const ParseNode * temp = (cur->get_next());
-		cur = dynamic_cast< const NodeType * >( temp );	// should not return nullptr
-		if ( ! cur && temp ) {							// non-homogeneous nodes ?
+		const ParseNode * temp = cur->get_next();
+		// Should not return nullptr, then it is non-homogeneous:
+		cur = dynamic_cast<const NodeType *>( temp );
+		if ( !cur && temp ) {
 			SemanticError( temp->location, "internal error, non-homogeneous nodes founds in buildList processing." );
 		} // if
 	} // while
@@ -462,13 +477,15 @@ void buildList( const NodeType * firstNode, Container< SynTreeType *, Args... > 
 }
 
 // in DeclarationNode.cc
-void buildList( const DeclarationNode * firstNode, std::list< Declaration * > & outputList );
-void buildList( const DeclarationNode * firstNode, std::list< DeclarationWithType * > & outputList );
-void buildTypeList( const DeclarationNode * firstNode, std::list< Type * > & outputList );
+void buildList( const DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & outputList );
+void buildList( const DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithType>> & outputList );
+void buildTypeList( const DeclarationNode * firstNode, std::vector<ast::ptr<ast::Type>> & outputList );
 
-template< typename SynTreeType, typename NodeType >
-void buildMoveList( const NodeType * firstNode, std::list< SynTreeType * > & outputList ) {
-	buildList( firstNode, outputList );
+template<typename AstType, typename NodeType,
+	template<typename, typename...> class Container, typename... Args>
+void buildMoveList( const NodeType * firstNode,
+		Container<ast::ptr<AstType>, Args...> & output ) {
+	buildList<AstType, NodeType, Container, Args...>( firstNode, output );
 	delete firstNode;
 }
 

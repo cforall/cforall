@@ -69,7 +69,7 @@ Expr * SymbolTable::IdData::combine( const CodeLocation & loc, ResolvExpr::Cost 
 	Expr * ret;
 	if ( baseExpr ) {
 		if (baseExpr->env) {
-			Expr * base = shallowCopy(baseExpr);
+			Expr * base = deepCopy(baseExpr);
 			const TypeSubstitution * subs = baseExpr->env;
 			base->env = nullptr;
 			ret = new MemberExpr{loc, id, referenceToRvalueConversion( base, cost )};

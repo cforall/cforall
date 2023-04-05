@@ -8,23 +8,23 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:12:51 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 19 11:00:46 2023
-// Update Count     : 679
+// Last Modified By : Andrew Beach
+// Last Modified On : Tue Apr  4 13:39:00 2023
+// Update Count     : 680
 //
+
+#include "TypeData.h"
 
 #include <cassert>                 // for assert
 #include <ostream>                 // for operator<<, ostream, basic_ostream
 
+#include "AST/Decl.hpp"            // for AggregateDecl, ObjectDecl, TypeDe...
+#include "AST/Init.hpp"            // for SingleInit, ListInit
+#include "AST/Print.hpp"           // for print
 #include "Common/SemanticError.h"  // for SemanticError
-#include "Common/utility.h"        // for maybeClone, maybeBuild, maybeMoveB...
+#include "Common/utility.h"        // for splice, spliceBegin
+#include "Parser/parserutility.h"  // for maybeCopy, maybeBuild, maybeMoveB...
 #include "Parser/ParseNode.h"      // for DeclarationNode, ExpressionNode
-#include "SynTree/Declaration.h"   // for TypeDecl, ObjectDecl, FunctionDecl
-#include "SynTree/Expression.h"    // for Expression, ConstantExpr (ptr only)
-#include "SynTree/Initializer.h"   // for SingleInit, Initializer (ptr only)
-#include "SynTree/Statement.h"     // for CompoundStmt, Statement
-#include "SynTree/Type.h"          // for BasicType, Type, Type::ForallList
-#include "TypeData.h"
 
 class Attribute;
 
@@ -59,7 +59,7 @@ TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), f
 		enumeration.anon = false;
 		break;
 	case Aggregate:
-		aggregate.kind = AggregateDecl::NoAggregate;
+		aggregate.kind = ast::AggregateDecl::NoAggregate;
 		aggregate.name = nullptr;
 		aggregate.params = nullptr;
 		aggregate.actuals = nullptr;
@@ -88,8 +88,8 @@ TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), f
 	case Basetypeof:
 		typeexpr = nullptr;
 		break;
-	case Builtin:
 	case Vtable:
+	case Builtin:
 		// No unique data to initialize.
 		break;
 	case Qualified:
@@ -110,9 +110,8 @@ TypeData::~TypeData() {
 	case Reference:
 	case EnumConstant:
 	case GlobalScope:
-		// No unique data to deconstruct.
-		break;
 	case Basic:
+		// No unique data to deconstruct.
 		break;
 	case Array:
 		delete array.dimension;
@@ -249,9 +248,7 @@ TypeData * TypeData::clone() const {
 
 
 void TypeData::print( ostream &os, int indent ) const {
-	for ( int i = 0; i < Type::NumTypeQualifier; i += 1 ) {
-		if ( qualifiers[i] ) os << Type::QualifiersNames[ i ] << ' ';
-	} // for
+	ast::print( os, qualifiers );
 
 	if ( forall ) {
 		os << "forall " << endl;
@@ -324,7 +321,7 @@ void TypeData::print( ostream &os, int indent ) const {
 		} // if
 		break;
 	case Aggregate:
-		os << AggregateDecl::aggrString( aggregate.kind ) << ' ' << *aggregate.name << endl;
+		os << ast::AggregateDecl::aggrString( aggregate.kind ) << ' ' << *aggregate.name << endl;
 		if ( aggregate.params ) {
 			os << string( indent + 2, ' ' ) << "with type parameters" << endl;
 			aggregate.params->printList( os, indent + 4 );
@@ -471,47 +468,317 @@ const std::string * TypeData::leafName() const {
 }
 
 
-template< typename ForallList >
-void buildForall( const DeclarationNode * firstNode, ForallList &outputList ) {
-	buildList( firstNode, outputList );
+void buildForall(
+		const DeclarationNode * firstNode,
+		std::vector<ast::ptr<ast::TypeInstType>> &outputList ) {
+	{
+		std::vector<ast::ptr<ast::Type>> tmpList;
+		buildTypeList( firstNode, tmpList );
+		for ( auto tmp : tmpList ) {
+			outputList.emplace_back(
+				strict_dynamic_cast<const ast::TypeInstType *>(
+					tmp.release() ) );
+		}
+	}
 	auto n = firstNode;
-	for ( typename ForallList::iterator i = outputList.begin(); i != outputList.end(); ++i, n = (DeclarationNode*)n->get_next() ) {
-		TypeDecl * td = static_cast<TypeDecl *>(*i);
-		if ( n->variable.tyClass == TypeDecl::Otype ) {
-			// add assertion parameters to `type' tyvars in reverse order
-			// add dtor:  void ^?{}(T *)
-			FunctionType * dtorType = new FunctionType( Type::Qualifiers(), false );
-			dtorType->get_parameters().push_back( new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new ReferenceType( Type::Qualifiers(), new TypeInstType( Type::Qualifiers(), td->get_name(), *i ) ), nullptr ) );
-			td->get_assertions().push_front( new FunctionDecl( "^?{}", Type::StorageClasses(), LinkageSpec::Cforall, dtorType, nullptr ) );
+	for ( auto i = outputList.begin() ;
+			i != outputList.end() ;
+			++i, n = (DeclarationNode*)n->get_next() ) {
+		// Only the object type class adds additional assertions.
+		if ( n->variable.tyClass != ast::TypeDecl::Otype ) {
+			continue;
+		}
 
-			// add copy ctor:  void ?{}(T *, T)
-			FunctionType * copyCtorType = new FunctionType( Type::Qualifiers(), false );
-			copyCtorType->get_parameters().push_back( new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new ReferenceType( Type::Qualifiers(), new TypeInstType( Type::Qualifiers(), td->get_name(), *i ) ), nullptr ) );
-			copyCtorType->get_parameters().push_back( new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new TypeInstType( Type::Qualifiers(), td->get_name(), *i ), nullptr ) );
-			td->get_assertions().push_front( new FunctionDecl( "?{}", Type::StorageClasses(), LinkageSpec::Cforall, copyCtorType, nullptr ) );
+		ast::TypeDecl const * td = i->strict_as<ast::TypeDecl>();
+		std::vector<ast::ptr<ast::DeclWithType>> newAssertions;
+		auto mutTypeDecl = ast::mutate( td );
+		const CodeLocation & location = mutTypeDecl->location;
+		*i = mutTypeDecl;
 
-			// add default ctor:  void ?{}(T *)
-			FunctionType * ctorType = new FunctionType( Type::Qualifiers(), false );
-			ctorType->get_parameters().push_back( new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new ReferenceType( Type::Qualifiers(), new TypeInstType( Type::Qualifiers(), td->get_name(), *i ) ), nullptr ) );
-			td->get_assertions().push_front( new FunctionDecl( "?{}", Type::StorageClasses(), LinkageSpec::Cforall, ctorType, nullptr ) );
+		// add assertion parameters to `type' tyvars in reverse order
+		// add assignment operator:  T * ?=?(T *, T)
+		newAssertions.push_back( new ast::FunctionDecl(
+			location,
+			"?=?",
+			{}, // forall
+			{}, // assertions
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::ReferenceType( i->get() ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+				new ast::ObjectDecl(
+					location,
+					"",
+					i->get(),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // params
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					i->get(),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // returns
+			(ast::CompoundStmt *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
 
-			// add assignment operator:  T * ?=?(T *, T)
-			FunctionType * assignType = new FunctionType( Type::Qualifiers(), false );
-			assignType->get_parameters().push_back( new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new ReferenceType( Type::Qualifiers(), new TypeInstType( Type::Qualifiers(), td->get_name(), *i ) ), nullptr ) );
-			assignType->get_parameters().push_back( new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new TypeInstType( Type::Qualifiers(), td->get_name(), *i ), nullptr ) );
-			assignType->get_returnVals().push_back( new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new TypeInstType( Type::Qualifiers(), td->get_name(), *i ), nullptr ) );
-			td->get_assertions().push_front( new FunctionDecl( "?=?", Type::StorageClasses(), LinkageSpec::Cforall, assignType, nullptr ) );
-		} // if
+		// add default ctor:  void ?{}(T *)
+		newAssertions.push_back( new ast::FunctionDecl(
+			location,
+			"?{}",
+			{}, // forall
+			{}, // assertions
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::ReferenceType( i->get() ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // params
+			{}, // returns
+			(ast::CompoundStmt *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
+
+		// add copy ctor:  void ?{}(T *, T)
+		newAssertions.push_back( new ast::FunctionDecl(
+			location,
+			"?{}",
+			{}, // forall
+			{}, // assertions
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::ReferenceType( i->get() ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+				new ast::ObjectDecl(
+					location,
+					"",
+					i->get(),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // params
+			{}, // returns
+			(ast::CompoundStmt *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
+
+		// add dtor:  void ^?{}(T *)
+		newAssertions.push_back( new ast::FunctionDecl(
+			location,
+			"^?{}",
+			{}, // forall
+			{}, // assertions
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::ReferenceType( i->get() ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // params
+			{}, // returns
+			(ast::CompoundStmt *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
+
+		spliceBegin( mutTypeDecl->assertions, newAssertions );
+	} // for
+}
+
+
+void buildForall(
+		const DeclarationNode * firstNode,
+		std::vector<ast::ptr<ast::TypeDecl>> &outputForall ) {
+	buildList( firstNode, outputForall );
+	auto n = firstNode;
+	for ( auto i = outputForall.begin() ;
+			i != outputForall.end() ;
+			++i, n = (DeclarationNode*)n->get_next() ) {
+		// Only the object type class adds additional assertions.
+		if ( n->variable.tyClass != ast::TypeDecl::Otype ) {
+			continue;
+		}
+
+		ast::TypeDecl const * td = i->strict_as<ast::TypeDecl>();
+		std::vector<ast::ptr<ast::DeclWithType>> newAssertions;
+		auto mutTypeDecl = ast::mutate( td );
+		const CodeLocation & location = mutTypeDecl->location;
+		*i = mutTypeDecl;
+
+		// add assertion parameters to `type' tyvars in reverse order
+		// add assignment operator:  T * ?=?(T *, T)
+		newAssertions.push_back( new ast::FunctionDecl(
+			location,
+			"?=?",
+			{}, // forall
+			{}, // assertions
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::ReferenceType( new ast::TypeInstType( td->name, *i ) ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::TypeInstType( td->name, *i ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // params
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::TypeInstType( td->name, *i ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // returns
+			(ast::CompoundStmt *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
+
+		// add default ctor:  void ?{}(T *)
+		newAssertions.push_back( new ast::FunctionDecl(
+			location,
+			"?{}",
+			{}, // forall
+			{}, // assertions
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::ReferenceType(
+						new ast::TypeInstType( td->name, i->get() ) ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // params
+			{}, // returns
+			(ast::CompoundStmt *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
+
+		// add copy ctor:  void ?{}(T *, T)
+		newAssertions.push_back( new ast::FunctionDecl(
+			location,
+			"?{}",
+			{}, // forall
+			{}, // assertions
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::ReferenceType(
+						new ast::TypeInstType( td->name, *i ) ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::TypeInstType( td->name, *i ),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // params
+			{}, // returns
+			(ast::CompoundStmt *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
+
+		// add dtor:  void ^?{}(T *)
+		newAssertions.push_back( new ast::FunctionDecl(
+			location,
+			"^?{}",
+			{}, // forall
+			{}, // assertions
+			{
+				new ast::ObjectDecl(
+					location,
+					"",
+					new ast::ReferenceType(
+						new ast::TypeInstType( i->get() )
+					),
+					(ast::Init *)nullptr,
+					ast::Storage::Classes(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr
+				),
+			}, // params
+			{}, // returns
+			(ast::CompoundStmt *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
+
+		spliceBegin( mutTypeDecl->assertions, newAssertions );
 	} // for
 } // buildForall
 
 
-Type * typebuild( const TypeData * td ) {
+ast::Type * typebuild( const TypeData * td ) {
 	assert( td );
 	switch ( td->kind ) {
 	case TypeData::Unknown:
 		// fill in implicit int
-		return new BasicType( buildQualifiers( td ), BasicType::SignedInt );
+		return new ast::BasicType(
+			ast::BasicType::SignedInt,
+			buildQualifiers( td )
+		);
 	case TypeData::Basic:
 		return buildBasicType( td );
 	case TypeData::Pointer:
@@ -521,11 +788,11 @@ Type * typebuild( const TypeData * td ) {
 	case TypeData::Reference:
 		return buildReference( td );
 	case TypeData::Function:
-		return buildFunction( td );
+		return buildFunctionType( td );
 	case TypeData::AggregateInst:
 		return buildAggInst( td );
 	case TypeData::EnumConstant:
-		return new EnumInstType( buildQualifiers( td ), "" );
+		return new ast::EnumInstType( "", buildQualifiers( td ) );
 	case TypeData::SymbolicInst:
 		return buildSymbolicInst( td );
 	case TypeData::Tuple:
@@ -538,16 +805,20 @@ Type * typebuild( const TypeData * td ) {
 	case TypeData::Builtin:
 		switch ( td->builtintype ) {
 		case DeclarationNode::Zero:
-			return new ZeroType( noQualifiers );
+			return new ast::ZeroType();
 		case DeclarationNode::One:
-			return new OneType( noQualifiers );
+			return new ast::OneType();
 		default:
-			return new VarArgsType( buildQualifiers( td ) );
+			return new ast::VarArgsType( buildQualifiers( td ) );
 		} // switch
 	case TypeData::GlobalScope:
-		return new GlobalScopeType();
+		return new ast::GlobalScopeType();
 	case TypeData::Qualified:
-		return new QualifiedType( buildQualifiers( td ), typebuild( td->qualified.parent ), typebuild( td->qualified.child ) );
+		return new ast::QualifiedType(
+			typebuild( td->qualified.parent ),
+			typebuild( td->qualified.child ),
+			buildQualifiers( td )
+		);
 	case TypeData::Symbolic:
 	case TypeData::Enum:
 	case TypeData::Aggregate:
@@ -586,7 +857,7 @@ TypeData * typeextractAggregate( const TypeData * td, bool toplevel ) {
 } // typeextractAggregate
 
 
-Type::Qualifiers buildQualifiers( const TypeData * td ) {
+ast::CV::Qualifiers buildQualifiers( const TypeData * td ) {
 	return td->qualifiers;
 } // buildQualifiers
 
@@ -595,8 +866,8 @@ static string genTSError( string msg, DeclarationNode::BasicType basictype ) {
 	SemanticError( yylloc, string( "invalid type specifier \"" ) + msg + "\" for type \"" + DeclarationNode::basicTypeNames[basictype] + "\"." );
 } // genTSError
 
-Type * buildBasicType( const TypeData * td ) {
-	BasicType::Kind ret;
+ast::Type * buildBasicType( const TypeData * td ) {
+	ast::BasicType::Kind ret;
 
 	switch ( td->basictype ) {
 	case DeclarationNode::Void:
@@ -606,7 +877,7 @@ Type * buildBasicType( const TypeData * td ) {
 		if ( td->length != DeclarationNode::NoLength ) {
 			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
 		} // if
-		return new VoidType( buildQualifiers( td ) );
+		return new ast::VoidType( buildQualifiers( td ) );
 		break;
 
 	case DeclarationNode::Bool:
@@ -617,14 +888,14 @@ Type * buildBasicType( const TypeData * td ) {
 			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
 		} // if
 
-		ret = BasicType::Bool;
+		ret = ast::BasicType::Bool;
 		break;
 
 	case DeclarationNode::Char:
 		// C11 Standard 6.2.5.15: The three types char, signed char, and unsigned char are collectively called the
 		// character types. The implementation shall define char to have the same range, representation, and behavior as
 		// either signed char or unsigned char.
-		static BasicType::Kind chartype[] = { BasicType::SignedChar, BasicType::UnsignedChar, BasicType::Char };
+		static ast::BasicType::Kind chartype[] = { ast::BasicType::SignedChar, ast::BasicType::UnsignedChar, ast::BasicType::Char };
 
 		if ( td->length != DeclarationNode::NoLength ) {
 			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
@@ -634,9 +905,9 @@ Type * buildBasicType( const TypeData * td ) {
 		break;
 
 	case DeclarationNode::Int:
-		static BasicType::Kind inttype[2][4] = {
-			{ BasicType::ShortSignedInt, BasicType::LongSignedInt, BasicType::LongLongSignedInt, BasicType::SignedInt },
-			{ BasicType::ShortUnsignedInt, BasicType::LongUnsignedInt, BasicType::LongLongUnsignedInt, BasicType::UnsignedInt },
+		static ast::BasicType::Kind inttype[2][4] = {
+			{ ast::BasicType::ShortSignedInt, ast::BasicType::LongSignedInt, ast::BasicType::LongLongSignedInt, ast::BasicType::SignedInt },
+			{ ast::BasicType::ShortUnsignedInt, ast::BasicType::LongUnsignedInt, ast::BasicType::LongLongUnsignedInt, ast::BasicType::UnsignedInt },
 		};
 
 	Integral: ;
@@ -647,7 +918,7 @@ Type * buildBasicType( const TypeData * td ) {
 		break;
 
 	case DeclarationNode::Int128:
-		ret = td->signedness == DeclarationNode::Unsigned ? BasicType::UnsignedInt128 : BasicType::SignedInt128;
+		ret = td->signedness == DeclarationNode::Unsigned ? ast::BasicType::UnsignedInt128 : ast::BasicType::SignedInt128;
 		if ( td->length != DeclarationNode::NoLength ) {
 			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
 		} // if
@@ -665,9 +936,9 @@ Type * buildBasicType( const TypeData * td ) {
 	case DeclarationNode::uFloat64x:
 	case DeclarationNode::uFloat128:
 	case DeclarationNode::uFloat128x:
-		static BasicType::Kind floattype[2][12] = {
-			{ BasicType::FloatComplex, BasicType::DoubleComplex, BasicType::LongDoubleComplex, (BasicType::Kind)-1, (BasicType::Kind)-1, BasicType::uFloat16Complex, BasicType::uFloat32Complex, BasicType::uFloat32xComplex, BasicType::uFloat64Complex, BasicType::uFloat64xComplex, BasicType::uFloat128Complex, BasicType::uFloat128xComplex, },
-			{ BasicType::Float, BasicType::Double, BasicType::LongDouble, BasicType::uuFloat80, BasicType::uuFloat128, BasicType::uFloat16, BasicType::uFloat32, BasicType::uFloat32x, BasicType::uFloat64, BasicType::uFloat64x, BasicType::uFloat128, BasicType::uFloat128x, },
+		static ast::BasicType::Kind floattype[2][12] = {
+			{ ast::BasicType::FloatComplex, ast::BasicType::DoubleComplex, ast::BasicType::LongDoubleComplex, (ast::BasicType::Kind)-1, (ast::BasicType::Kind)-1, ast::BasicType::uFloat16Complex, ast::BasicType::uFloat32Complex, ast::BasicType::uFloat32xComplex, ast::BasicType::uFloat64Complex, ast::BasicType::uFloat64xComplex, ast::BasicType::uFloat128Complex, ast::BasicType::uFloat128xComplex, },
+			{ ast::BasicType::Float, ast::BasicType::Double, ast::BasicType::LongDouble, ast::BasicType::uuFloat80, ast::BasicType::uuFloat128, ast::BasicType::uFloat16, ast::BasicType::uFloat32, ast::BasicType::uFloat32x, ast::BasicType::uFloat64, ast::BasicType::uFloat64x, ast::BasicType::uFloat128, ast::BasicType::uFloat128x, },
 		};
 
 	FloatingPoint: ;
@@ -708,153 +979,223 @@ Type * buildBasicType( const TypeData * td ) {
 		return nullptr;
 	} // switch
 
-	BasicType * bt = new BasicType( buildQualifiers( td ), ret );
-	buildForall( td->forall, bt->get_forall() );
+	ast::BasicType * bt = new ast::BasicType( ret, buildQualifiers( td ) );
 	return bt;
 } // buildBasicType
 
 
-PointerType * buildPointer( const TypeData * td ) {
-	PointerType * pt;
+ast::PointerType * buildPointer( const TypeData * td ) {
+	ast::PointerType * pt;
 	if ( td->base ) {
-		pt = new PointerType( buildQualifiers( td ), typebuild( td->base ) );
+		pt = new ast::PointerType(
+			typebuild( td->base ),
+			buildQualifiers( td )
+		);
 	} else {
-		pt = new PointerType( buildQualifiers( td ), new BasicType( Type::Qualifiers(), BasicType::SignedInt ) );
+		pt = new ast::PointerType(
+			new ast::BasicType( ast::BasicType::SignedInt ),
+			buildQualifiers( td )
+		);
 	} // if
-	buildForall( td->forall, pt->get_forall() );
 	return pt;
 } // buildPointer
 
 
-ArrayType * buildArray( const TypeData * td ) {
-	ArrayType * at;
+ast::ArrayType * buildArray( const TypeData * td ) {
+	ast::ArrayType * at;
 	if ( td->base ) {
-		at = new ArrayType( buildQualifiers( td ), typebuild( td->base ), maybeBuild( td->array.dimension ),
-							td->array.isVarLen, td->array.isStatic );
+		at = new ast::ArrayType(
+			typebuild( td->base ),
+			maybeBuild( td->array.dimension ),
+			td->array.isVarLen ? ast::VariableLen : ast::FixedLen,
+			td->array.isStatic ? ast::StaticDim : ast::DynamicDim,
+			buildQualifiers( td )
+		);
 	} else {
-		at = new ArrayType( buildQualifiers( td ), new BasicType( Type::Qualifiers(), BasicType::SignedInt ),
-							maybeBuild( td->array.dimension ), td->array.isVarLen, td->array.isStatic );
+		at = new ast::ArrayType(
+			new ast::BasicType( ast::BasicType::SignedInt ),
+			maybeBuild( td->array.dimension ),
+			td->array.isVarLen ? ast::VariableLen : ast::FixedLen,
+			td->array.isStatic ? ast::StaticDim : ast::DynamicDim,
+			buildQualifiers( td )
+		);
 	} // if
-	buildForall( td->forall, at->get_forall() );
 	return at;
 } // buildArray
 
 
-ReferenceType * buildReference( const TypeData * td ) {
-	ReferenceType * rt;
+ast::ReferenceType * buildReference( const TypeData * td ) {
+	ast::ReferenceType * rt;
 	if ( td->base ) {
-		rt = new ReferenceType( buildQualifiers( td ), typebuild( td->base ) );
+		rt = new ast::ReferenceType(
+			typebuild( td->base ),
+			buildQualifiers( td )
+		);
 	} else {
-		rt = new ReferenceType( buildQualifiers( td ), new BasicType( Type::Qualifiers(), BasicType::SignedInt ) );
+		rt = new ast::ReferenceType(
+			new ast::BasicType( ast::BasicType::SignedInt ),
+			buildQualifiers( td )
+		);
 	} // if
-	buildForall( td->forall, rt->get_forall() );
 	return rt;
 } // buildReference
 
 
-AggregateDecl * buildAggregate( const TypeData * td, std::list< Attribute * > attributes, LinkageSpec::Spec linkage ) {
+ast::AggregateDecl * buildAggregate( const TypeData * td, std::vector<ast::ptr<ast::Attribute>> attributes, ast::Linkage::Spec linkage ) {
 	assert( td->kind == TypeData::Aggregate );
-	AggregateDecl * at;
+	ast::AggregateDecl * at;
 	switch ( td->aggregate.kind ) {
-	case AggregateDecl::Struct:
-	case AggregateDecl::Coroutine:
-	case AggregateDecl::Exception:
-	case AggregateDecl::Generator:
-	case AggregateDecl::Monitor:
-	case AggregateDecl::Thread:
-		at = new StructDecl( *td->aggregate.name, td->aggregate.kind, attributes, linkage );
-		buildForall( td->aggregate.params, at->get_parameters() );
+	case ast::AggregateDecl::Struct:
+	case ast::AggregateDecl::Coroutine:
+	case ast::AggregateDecl::Exception:
+	case ast::AggregateDecl::Generator:
+	case ast::AggregateDecl::Monitor:
+	case ast::AggregateDecl::Thread:
+		at = new ast::StructDecl( td->location,
+			*td->aggregate.name,
+			td->aggregate.kind,
+			std::move( attributes ),
+			linkage
+		);
+		buildForall( td->aggregate.params, at->params );
 		break;
-	case AggregateDecl::Union:
-		at = new UnionDecl( *td->aggregate.name, attributes, linkage );
-		buildForall( td->aggregate.params, at->get_parameters() );
+	case ast::AggregateDecl::Union:
+		at = new ast::UnionDecl( td->location,
+			*td->aggregate.name,
+			std::move( attributes ),
+			linkage
+		);
+		buildForall( td->aggregate.params, at->params );
 		break;
-	case AggregateDecl::Trait:
-		at = new TraitDecl( *td->aggregate.name, attributes, linkage );
-		buildList( td->aggregate.params, at->get_parameters() );
+	case ast::AggregateDecl::Trait:
+		at = new ast::TraitDecl( td->location,
+			*td->aggregate.name,
+			std::move( attributes ),
+			linkage
+		);
+		buildList( td->aggregate.params, at->params );
 		break;
 	default:
 		assert( false );
 	} // switch
 
-	buildList( td->aggregate.fields, at->get_members() );
+	buildList( td->aggregate.fields, at->members );
 	at->set_body( td->aggregate.body );
 
 	return at;
 } // buildAggregate
 
 
-ReferenceToType * buildComAggInst( const TypeData * type, std::list< Attribute * > attributes, LinkageSpec::Spec linkage ) {
+ast::BaseInstType * buildComAggInst(
+		const TypeData * type,
+		std::vector<ast::ptr<ast::Attribute>> && attributes,
+		ast::Linkage::Spec linkage ) {
 	switch ( type->kind ) {
 	case TypeData::Enum:
 		if ( type->enumeration.body ) {
-			EnumDecl * typedecl = buildEnum( type, attributes, linkage );
-			return new EnumInstType( buildQualifiers( type ), typedecl );
+			ast::EnumDecl * typedecl =
+				buildEnum( type, std::move( attributes ), linkage );
+			return new ast::EnumInstType(
+				typedecl,
+				buildQualifiers( type )
+			);
 		} else {
-			return new EnumInstType( buildQualifiers( type ), *type->enumeration.name );
+			return new ast::EnumInstType(
+				*type->enumeration.name,
+				buildQualifiers( type )
+			);
 		} // if
+		break;
 	case TypeData::Aggregate:
 		if ( type->aggregate.body ) {
-			AggregateDecl * typedecl = buildAggregate( type, attributes, linkage );
+			ast::AggregateDecl * typedecl =
+				buildAggregate( type, std::move( attributes ), linkage );
 			switch ( type->aggregate.kind ) {
-			case AggregateDecl::Struct:
-			case AggregateDecl::Coroutine:
-			case AggregateDecl::Monitor:
-			case AggregateDecl::Thread:
-				return new StructInstType( buildQualifiers( type ), (StructDecl *)typedecl );
-			case AggregateDecl::Union:
-				return new UnionInstType( buildQualifiers( type ), (UnionDecl *)typedecl );
-			case AggregateDecl::Trait:
+			case ast::AggregateDecl::Struct:
+			case ast::AggregateDecl::Coroutine:
+			case ast::AggregateDecl::Monitor:
+			case ast::AggregateDecl::Thread:
+				return new ast::StructInstType(
+					strict_dynamic_cast<ast::StructDecl *>( typedecl ),
+					buildQualifiers( type )
+				);
+			case ast::AggregateDecl::Union:
+				return new ast::UnionInstType(
+					strict_dynamic_cast<ast::UnionDecl *>( typedecl ),
+					buildQualifiers( type )
+				);
+			case ast::AggregateDecl::Trait:
 				assert( false );
-				//return new TraitInstType( buildQualifiers( type ), (TraitDecl *)typedecl );
 				break;
 			default:
 				assert( false );
 			} // switch
 		} else {
 			switch ( type->aggregate.kind ) {
-			case AggregateDecl::Struct:
-			case AggregateDecl::Coroutine:
-			case AggregateDecl::Monitor:
-			case AggregateDecl::Thread:
-				return new StructInstType( buildQualifiers( type ), *type->aggregate.name );
-			case AggregateDecl::Union:
-				return new UnionInstType( buildQualifiers( type ), *type->aggregate.name );
-			case AggregateDecl::Trait:
-				return new TraitInstType( buildQualifiers( type ), *type->aggregate.name );
+			case ast::AggregateDecl::Struct:
+			case ast::AggregateDecl::Coroutine:
+			case ast::AggregateDecl::Monitor:
+			case ast::AggregateDecl::Thread:
+				return new ast::StructInstType(
+					*type->aggregate.name,
+					buildQualifiers( type )
+				);
+			case ast::AggregateDecl::Union:
+				return new ast::UnionInstType(
+					*type->aggregate.name,
+					buildQualifiers( type )
+				);
+			case ast::AggregateDecl::Trait:
+				return new ast::TraitInstType(
+					*type->aggregate.name,
+					buildQualifiers( type )
+				);
 			default:
 				assert( false );
 			} // switch
+			break;
 		} // if
-		return nullptr;
+		break;
 	default:
 		assert( false );
 	} // switch
+	assert( false );
 } // buildAggInst
 
 
-ReferenceToType * buildAggInst( const TypeData * td ) {
+ast::BaseInstType * buildAggInst( const TypeData * td ) {
 	assert( td->kind == TypeData::AggregateInst );
 
-	// ReferenceToType * ret = buildComAggInst( td->aggInst.aggregate, std::list< Attribute * >() );
-	ReferenceToType * ret = nullptr;
+	ast::BaseInstType * ret = nullptr;
 	TypeData * type = td->aggInst.aggregate;
 	switch ( type->kind ) {
 	case TypeData::Enum:
-		return new EnumInstType( buildQualifiers( type ), *type->enumeration.name );
+		return new ast::EnumInstType(
+			*type->enumeration.name,
+			buildQualifiers( type )
+		);
 	case TypeData::Aggregate:
 		switch ( type->aggregate.kind ) {
-		case AggregateDecl::Struct:
-		case AggregateDecl::Coroutine:
-		case AggregateDecl::Monitor:
-		case AggregateDecl::Thread:
-			ret = new StructInstType( buildQualifiers( type ), *type->aggregate.name );
+		case ast::AggregateDecl::Struct:
+		case ast::AggregateDecl::Coroutine:
+		case ast::AggregateDecl::Monitor:
+		case ast::AggregateDecl::Thread:
+			ret = new ast::StructInstType(
+				*type->aggregate.name,
+				buildQualifiers( type )
+			);
 			break;
-		case AggregateDecl::Union:
-			ret = new UnionInstType( buildQualifiers( type ), *type->aggregate.name );
+		case ast::AggregateDecl::Union:
+			ret = new ast::UnionInstType(
+				*type->aggregate.name,
+				buildQualifiers( type )
+			);
 			break;
-		case AggregateDecl::Trait:
-			ret = new TraitInstType( buildQualifiers( type ), *type->aggregate.name );
+		case ast::AggregateDecl::Trait:
+			ret = new ast::TraitInstType(
+				*type->aggregate.name,
+				buildQualifiers( type )
+			);
 			break;
 		default:
 			assert( false );
@@ -864,132 +1205,272 @@ ReferenceToType * buildAggInst( const TypeData * td ) {
 		assert( false );
 	} // switch
 
-	ret->set_hoistType( td->aggInst.hoistType );
-	buildList( td->aggInst.params, ret->get_parameters() );
-	buildForall( td->forall, ret->get_forall() );
+	ret->hoistType = td->aggInst.hoistType;
+	buildList( td->aggInst.params, ret->params );
 	return ret;
 } // buildAggInst
 
 
-NamedTypeDecl * buildSymbolic( const TypeData * td, std::list< Attribute * > attributes, const string & name, Type::StorageClasses scs, LinkageSpec::Spec linkage ) {
+ast::NamedTypeDecl * buildSymbolic(
+		const TypeData * td,
+		std::vector<ast::ptr<ast::Attribute>> attributes,
+		const std::string & name,
+		ast::Storage::Classes scs,
+		ast::Linkage::Spec linkage ) {
 	assert( td->kind == TypeData::Symbolic );
-	NamedTypeDecl * ret;
+	ast::NamedTypeDecl * ret;
 	assert( td->base );
 	if ( td->symbolic.isTypedef ) {
-		ret = new TypedefDecl( name, td->location, scs, typebuild( td->base ), linkage );
+		ret = new ast::TypedefDecl(
+			td->location,
+			name,
+			scs,
+			typebuild( td->base ),
+			linkage
+		);
 	} else {
-		ret = new TypeDecl( name, scs, typebuild( td->base ), TypeDecl::Dtype, true );
+		ret = new ast::TypeDecl(
+			td->location,
+			name,
+			scs,
+			typebuild( td->base ),
+			ast::TypeDecl::Dtype,
+			true
+		);
 	} // if
-	buildList( td->symbolic.assertions, ret->get_assertions() );
-	ret->base->attributes.splice( ret->base->attributes.end(), attributes );
+	buildList( td->symbolic.assertions, ret->assertions );
+	splice( ret->base.get_and_mutate()->attributes, attributes );
 	return ret;
 } // buildSymbolic
 
 
-EnumDecl * buildEnum( const TypeData * td, std::list< Attribute * > attributes, LinkageSpec::Spec linkage ) {
+ast::EnumDecl * buildEnum(
+		const TypeData * td,
+		std::vector<ast::ptr<ast::Attribute>> && attributes,
+		ast::Linkage::Spec linkage ) {
 	assert( td->kind == TypeData::Enum );
-	Type * baseType = td->base ? typebuild(td->base) : nullptr;
-	EnumDecl * ret = new EnumDecl( *td->enumeration.name, attributes, td->enumeration.typed, linkage, baseType );
-	buildList( td->enumeration.constants, ret->get_members() );
-	list< Declaration * >::iterator members = ret->get_members().begin();
-	ret->hide = td->enumeration.hiding == EnumHiding::Hide ? EnumDecl::EnumHiding::Hide : EnumDecl::EnumHiding::Visible;
+	ast::Type * baseType = td->base ? typebuild(td->base) : nullptr;
+	ast::EnumDecl * ret = new ast::EnumDecl(
+		td->location,
+		*td->enumeration.name,
+		td->enumeration.typed,
+		std::move( attributes ),
+		linkage,
+		baseType
+	);
+	buildList( td->enumeration.constants, ret->members );
+	auto members = ret->members.begin();
+	ret->hide = td->enumeration.hiding == EnumHiding::Hide ? ast::EnumDecl::EnumHiding::Hide : ast::EnumDecl::EnumHiding::Visible;
 	for ( const DeclarationNode * cur = td->enumeration.constants; cur != nullptr; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ), ++members ) {
 		if ( cur->enumInLine ) {
 			// Do Nothing
 		} else if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
 			SemanticError( td->location, "Enumerator of enum(void) cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {
-			ObjectDecl * member = dynamic_cast< ObjectDecl * >(* members);
-			member->set_init( new SingleInit( maybeMoveBuild( cur->consume_enumeratorValue() ) ) );
+			ast::Decl * member = members->get_and_mutate();
+			ast::ObjectDecl * object = strict_dynamic_cast<ast::ObjectDecl *>( member );
+			object->init = new ast::SingleInit(
+				td->location,
+				maybeMoveBuild( cur->consume_enumeratorValue() ),
+				ast::NoConstruct
+			);
 		} else if ( !cur->initializer ) {
-			if ( baseType && (!dynamic_cast<BasicType *>(baseType) || !dynamic_cast<BasicType *>(baseType)->isInteger())) {
+			if ( baseType && (!dynamic_cast<ast::BasicType *>(baseType) || !dynamic_cast<ast::BasicType *>(baseType)->isInteger())) {
 				SemanticError( td->location, "Enumerators of an non-integer typed enum must be explicitly initialized." );
 			}
 		}
 		// else cur is a List Initializer and has been set as init in buildList()
 		// if
 	} // for
-	ret->set_body( td->enumeration.body );
+	ret->body = td->enumeration.body;
 	return ret;
 } // buildEnum
 
 
-TypeInstType * buildSymbolicInst( const TypeData * td ) {
+ast::TypeInstType * buildSymbolicInst( const TypeData * td ) {
 	assert( td->kind == TypeData::SymbolicInst );
-	TypeInstType * ret = new TypeInstType( buildQualifiers( td ), *td->symbolic.name, false );
-	buildList( td->symbolic.actuals, ret->get_parameters() );
-	buildForall( td->forall, ret->get_forall() );
+	ast::TypeInstType * ret = new ast::TypeInstType(
+		*td->symbolic.name,
+		ast::TypeDecl::Dtype,
+		buildQualifiers( td )
+	);
+	buildList( td->symbolic.actuals, ret->params );
 	return ret;
 } // buildSymbolicInst
 
 
-TupleType * buildTuple( const TypeData * td ) {
+ast::TupleType * buildTuple( const TypeData * td ) {
 	assert( td->kind == TypeData::Tuple );
-	std::list< Type * > types;
+	std::vector<ast::ptr<ast::Type>> types;
 	buildTypeList( td->tuple, types );
-	TupleType * ret = new TupleType( buildQualifiers( td ), types );
-	buildForall( td->forall, ret->get_forall() );
+	ast::TupleType * ret = new ast::TupleType(
+		std::move( types ),
+		buildQualifiers( td )
+	);
 	return ret;
 } // buildTuple
 
 
-TypeofType * buildTypeof( const TypeData * td ) {
+ast::TypeofType * buildTypeof( const TypeData * td ) {
 	assert( td->kind == TypeData::Typeof || td->kind == TypeData::Basetypeof );
 	assert( td->typeexpr );
-	// assert( td->typeexpr->expr );
-	return new TypeofType{ buildQualifiers( td ), td->typeexpr->build(), td->kind == TypeData::Basetypeof };
+	return new ast::TypeofType(
+		td->typeexpr->build(),
+		td->kind == TypeData::Typeof
+			? ast::TypeofType::Typeof : ast::TypeofType::Basetypeof,
+		buildQualifiers( td )
+	);
 } // buildTypeof
 
 
-VTableType * buildVtable( const TypeData * td ) {
+ast::VTableType * buildVtable( const TypeData * td ) {
 	assert( td->base );
-	return new VTableType{ buildQualifiers( td ), typebuild( td->base ) };
+	return new ast::VTableType(
+		typebuild( td->base ),
+		buildQualifiers( td )
+	);
 } // buildVtable
 
 
-Declaration * buildDecl( const TypeData * td, const string &name, Type::StorageClasses scs, Expression * bitfieldWidth, Type::FuncSpecifiers funcSpec, LinkageSpec::Spec linkage, Expression *asmName, Initializer * init, std::list< Attribute * > attributes ) {
+ast::FunctionDecl * buildFunctionDecl(
+		const TypeData * td,
+		const string &name,
+		ast::Storage::Classes scs,
+		ast::Function::Specs funcSpec,
+		ast::Linkage::Spec linkage,
+		ast::Expr * asmName,
+		std::vector<ast::ptr<ast::Attribute>> && attributes ) {
+	assert( td->kind == TypeData::Function );
+	// For some reason FunctionDecl takes a bool instead of an ArgumentFlag.
+	bool isVarArgs = !td->function.params || td->function.params->hasEllipsis;
+	ast::CV::Qualifiers cvq = buildQualifiers( td );
+	std::vector<ast::ptr<ast::TypeDecl>> forall;
+	std::vector<ast::ptr<ast::DeclWithType>> assertions;
+	std::vector<ast::ptr<ast::DeclWithType>> params;
+	std::vector<ast::ptr<ast::DeclWithType>> returns;
+	buildList( td->function.params, params );
+	buildForall( td->forall, forall );
+	// Functions do not store their assertions there anymore.
+	for ( ast::ptr<ast::TypeDecl> & type_param : forall ) {
+		auto mut = type_param.get_and_mutate();
+		splice( assertions, mut->assertions );
+	}
+	if ( td->base ) {
+		switch ( td->base->kind ) {
+		case TypeData::Tuple:
+			buildList( td->base->tuple, returns );
+			break;
+		default:
+			returns.push_back( dynamic_cast<ast::DeclWithType *>(
+				buildDecl(
+					td->base,
+					"",
+					ast::Storage::Classes(),
+					(ast::Expr *)nullptr, // bitfieldWidth
+					ast::Function::Specs(),
+					ast::Linkage::Cforall,
+					(ast::Expr *)nullptr // asmName
+				)
+			) );
+		} // switch
+	} else {
+		returns.push_back( new ast::ObjectDecl(
+			td->location,
+			"",
+			new ast::BasicType( ast::BasicType::SignedInt ),
+			(ast::Init *)nullptr,
+			ast::Storage::Classes(),
+			ast::Linkage::Cforall
+		) );
+	} // if
+	ast::Stmt * stmt = maybeBuild( td->function.body );
+	ast::CompoundStmt * body = dynamic_cast<ast::CompoundStmt *>( stmt );
+	ast::FunctionDecl * decl = new ast::FunctionDecl( td->location,
+		name,
+		std::move( forall ),
+		std::move( assertions ),
+		std::move( params ),
+		std::move( returns ),
+		body,
+		scs,
+		linkage,
+		std::move( attributes ),
+		funcSpec,
+		isVarArgs
+	);
+	buildList( td->function.withExprs, decl->withExprs );
+	decl->asmName = asmName;
+	// This may be redundant on a declaration.
+	decl->type.get_and_mutate()->qualifiers = cvq;
+	return decl;
+} // buildFunctionDecl
+
+
+ast::Decl * buildDecl(
+		const TypeData * td,
+		const string &name,
+		ast::Storage::Classes scs,
+		ast::Expr * bitfieldWidth,
+		ast::Function::Specs funcSpec,
+		ast::Linkage::Spec linkage,
+		ast::Expr * asmName,
+		ast::Init * init,
+		std::vector<ast::ptr<ast::Attribute>> && attributes ) {
 	if ( td->kind == TypeData::Function ) {
 		if ( td->function.idList ) {					// KR function ?
 			buildKRFunction( td->function );			// transform into C11 function
 		} // if
 
-		FunctionDecl * decl;
-		Statement * stmt = maybeBuild( td->function.body );
-		CompoundStmt * body = dynamic_cast< CompoundStmt * >( stmt );
-		decl = new FunctionDecl( name, scs, linkage, buildFunction( td ), body, attributes, funcSpec );
-		buildList( td->function.withExprs, decl->withExprs );
-		return decl->set_asmName( asmName );
+		return buildFunctionDecl(
+			td, name, scs, funcSpec, linkage,
+			asmName, std::move( attributes ) );
 	} else if ( td->kind == TypeData::Aggregate ) {
-		return buildAggregate( td, attributes, linkage );
+		return buildAggregate( td, std::move( attributes ), linkage );
 	} else if ( td->kind == TypeData::Enum ) {
-		return buildEnum( td, attributes, linkage );
+		return buildEnum( td, std::move( attributes ), linkage );
 	} else if ( td->kind == TypeData::Symbolic ) {
-		return buildSymbolic( td, attributes, name, scs, linkage );
+		return buildSymbolic( td, std::move( attributes ), name, scs, linkage );
 	} else {
-		return (new ObjectDecl( name, scs, linkage, bitfieldWidth, typebuild( td ), init, attributes ))->set_asmName( asmName );
+		auto ret = new ast::ObjectDecl( td->location,
+			name,
+			typebuild( td ),
+			init,
+			scs,
+			linkage,
+			bitfieldWidth,
+			std::move( attributes )
+		);
+		ret->asmName = asmName;
+		return ret;
 	} // if
 	return nullptr;
 } // buildDecl
 
 
-FunctionType * buildFunction( const TypeData * td ) {
+ast::FunctionType * buildFunctionType( const TypeData * td ) {
 	assert( td->kind == TypeData::Function );
-	FunctionType * ft = new FunctionType( buildQualifiers( td ), ! td->function.params || td->function.params->hasEllipsis );
-	buildList( td->function.params, ft->parameters );
+	ast::FunctionType * ft = new ast::FunctionType(
+		( !td->function.params || td->function.params->hasEllipsis )
+			? ast::VariableArgs : ast::FixedArgs,
+		buildQualifiers( td )
+	);
+	buildTypeList( td->function.params, ft->params );
 	buildForall( td->forall, ft->forall );
 	if ( td->base ) {
 		switch ( td->base->kind ) {
 		case TypeData::Tuple:
-			buildList( td->base->tuple, ft->returnVals );
+			buildTypeList( td->base->tuple, ft->returns );
 			break;
 		default:
-			ft->get_returnVals().push_back( dynamic_cast< DeclarationWithType * >( buildDecl( td->base, "", Type::StorageClasses(), nullptr, Type::FuncSpecifiers(), LinkageSpec::Cforall, nullptr ) ) );
+			ft->returns.push_back( typebuild( td->base ) );
+			break;
 		} // switch
 	} else {
-		ft->get_returnVals().push_back( new ObjectDecl( "", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new BasicType( Type::Qualifiers(), BasicType::SignedInt ), nullptr ) );
+		ft->returns.push_back(
+			new ast::BasicType( ast::BasicType::SignedInt ) );
 	} // if
 	return ft;
-} // buildFunction
+} // buildFunctionType
 
 
 // Transform KR routine declarations into C99 routine declarations:
@@ -1020,7 +1501,8 @@ void buildKRFunction( const TypeData::Function_t & function ) {
 				if ( ! decl->type ) SemanticError( param->location, string( "duplicate parameter name " ) + *param->name );
 				param->type = decl->type;				// set copy declaration type to parameter type
 				decl->type = nullptr;					// reset declaration type
-				param->attributes.splice( param->attributes.end(), decl->attributes ); // copy and reset attributes from declaration to parameter
+				// Copy and reset attributes from declaration to parameter:
+				splice( param->attributes, decl->attributes );
 			} // if
 		} // for
 		// declaration type still set => type not moved to a matching parameter so there is a missing parameter name

@@ -22,7 +22,7 @@
 // performed and removed from the source. The only exceptions are preprocessor directives passed to the compiler (e.g.,
 // line-number directives) and C/C++ style comments, which are ignored.
 
-//**************************** Includes and Defines ****************************
+// *************************** Includes and Defines ****************************
 
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wnull-conversion"
