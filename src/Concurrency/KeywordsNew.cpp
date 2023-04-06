@@ -778,7 +778,7 @@ const ast::DeclWithType * SuspendKeyword::postvisit(
 }
 
 const ast::Stmt * SuspendKeyword::postvisit( const ast::SuspendStmt * stmt ) {
-	switch ( stmt->type ) {
+	switch ( stmt->kind ) {
 	case ast::SuspendStmt::None:
 		// Use the context to determain the implicit target.
 		if ( in_generator ) {

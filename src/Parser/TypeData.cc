@@ -1396,7 +1396,7 @@ ast::FunctionDecl * buildFunctionDecl(
 		linkage,
 		std::move( attributes ),
 		funcSpec,
-		isVarArgs
+		(isVarArgs) ? ast::VariableArgs : ast::FixedArgs
 	);
 	buildList( td->function.withExprs, decl->withExprs );
 	decl->asmName = asmName;

@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu Nov 24  9:44:00 2022
-// Update Count     : 34
+// Last Modified On : Wed Apr  5 10:42:00 2023
+// Update Count     : 35
 //
 
 #pragma once
@@ -121,6 +121,9 @@ private:
 	MUTATE_FRIEND
 };
 
+/// Function variable arguments flag
+enum ArgumentFlag { FixedArgs, VariableArgs };
+
 /// Object declaration `int foo()`
 class FunctionDecl : public DeclWithType {
 public:
@@ -143,13 +146,13 @@ public:
 	FunctionDecl( const CodeLocation & loc, const std::string & name, std::vector<ptr<TypeDecl>>&& forall,
 		std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
 		CompoundStmt * stmts, Storage::Classes storage = {}, Linkage::Spec linkage = Linkage::Cforall,
-		std::vector<ptr<Attribute>>&& attrs = {}, Function::Specs fs = {}, bool isVarArgs = false);
+		std::vector<ptr<Attribute>>&& attrs = {}, Function::Specs fs = {}, ArgumentFlag isVarArgs = FixedArgs );
 
 	FunctionDecl( const CodeLocation & location, const std::string & name,
 		std::vector<ptr<TypeDecl>>&& forall, std::vector<ptr<DeclWithType>>&& assertions,
 		std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
 		CompoundStmt * stmts, Storage::Classes storage = {}, Linkage::Spec linkage = Linkage::Cforall,
-		std::vector<ptr<Attribute>>&& attrs = {}, Function::Specs fs = {}, bool isVarArgs = false);
+		std::vector<ptr<Attribute>>&& attrs = {}, Function::Specs fs = {}, ArgumentFlag isVarArgs = FixedArgs );
 
 	const Type * get_type() const override;
 	void set_type( const Type * t ) override;

@@ -558,7 +558,7 @@ private:
 		if ( inCache( node ) ) return nullptr;
 		auto stmt = new SuspendStmt();
 		stmt->then   = get<CompoundStmt>().accept1( node->then   );
-		switch(node->type) {
+		switch (node->kind) {
 			case ast::SuspendStmt::None     : stmt->type = SuspendStmt::None     ; break;
 			case ast::SuspendStmt::Coroutine: stmt->type = SuspendStmt::Coroutine; break;
 			case ast::SuspendStmt::Generator: stmt->type = SuspendStmt::Generator; break;
@@ -1682,7 +1682,7 @@ private:
 			{ old->linkage.val },
 			GET_ACCEPT_V(attributes, Attribute),
 			{ old->get_funcSpec().val },
-			old->type->isVarArgs
+			(old->type->isVarArgs) ? ast::VariableArgs : ast::FixedArgs
 		};
 
 		// decl->type = ftype;
@@ -1988,7 +1988,7 @@ private:
 			GET_ACCEPT_1(body, Stmt),
 			GET_ACCEPT_1(else_, Stmt),
 			GET_ACCEPT_V(initialization, Stmt),
-			old->isDoWhile,
+			(old->isDoWhile) ? ast::DoWhile : ast::While,
 			GET_LABELS_V(old->labels)
 		);
 		cache.emplace( old, this->node );
@@ -2130,7 +2130,7 @@ private:
 
 	virtual void visit( const SuspendStmt * old ) override final {
 		if ( inCache( old ) ) return;
-		ast::SuspendStmt::Type type;
+		ast::SuspendStmt::Kind type;
 		switch (old->type) {
 			case SuspendStmt::Coroutine: type = ast::SuspendStmt::Coroutine; break;
 			case SuspendStmt::Generator: type = ast::SuspendStmt::Generator; break;

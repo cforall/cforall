@@ -436,7 +436,7 @@ ast::Stmt * build_compound( const CodeLocation &, StatementNode * first );
 StatementNode * maybe_build_compound( const CodeLocation &, StatementNode * first );
 ast::Stmt * build_asm( const CodeLocation &, bool voltile, ast::Expr * instruction, ExpressionNode * output = nullptr, ExpressionNode * input = nullptr, ExpressionNode * clobber = nullptr, LabelNode * gotolabels = nullptr );
 ast::Stmt * build_directive( const CodeLocation &, std::string * directive );
-ast::SuspendStmt * build_suspend( const CodeLocation &, StatementNode *, ast::SuspendStmt::Type );
+ast::SuspendStmt * build_suspend( const CodeLocation &, StatementNode *, ast::SuspendStmt::Kind );
 ast::WaitForStmt * build_waitfor( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt );
 ast::WaitForStmt * build_waitfor_else( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, StatementNode * stmt );
 ast::WaitForStmt * build_waitfor_timeout( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt );

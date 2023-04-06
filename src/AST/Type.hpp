@@ -264,9 +264,6 @@ private:
 	MUTATE_FRIEND
 };
 
-/// Function variable arguments flag
-enum ArgumentFlag { FixedArgs, VariableArgs };
-
 /// Type of a function `[R1, R2](*)(P1, P2, P3)`
 class FunctionType final : public Type {
 public:

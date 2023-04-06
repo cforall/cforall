@@ -217,7 +217,7 @@ ast::Stmt * build_while( const CodeLocation & location, CondCtl * ctl, Statement
 		aststmt.front(),
 		astelse.empty() ? nullptr : astelse.front().release(),
 		std::move( astinit ),
-		false
+		ast::While
 	);
 } // build_while
 
@@ -236,7 +236,7 @@ ast::Stmt * build_do_while( const CodeLocation & location, ExpressionNode * ctl,
 		aststmt.front(),
 		astelse.empty() ? nullptr : astelse.front().release(),
 		{},
-		true
+		ast::DoWhile
 	);
 } // build_do_while
 
@@ -361,7 +361,7 @@ ast::FinallyClause * build_finally( const CodeLocation & location, StatementNode
 	);
 } // build_finally
 
-ast::SuspendStmt * build_suspend( const CodeLocation & location, StatementNode * then, ast::SuspendStmt::Type type ) {
+ast::SuspendStmt * build_suspend( const CodeLocation & location, StatementNode * then, ast::SuspendStmt::Kind kind ) {
 	std::vector<ast::ptr<ast::Stmt>> stmts;
 	buildMoveList( then, stmts );
 	ast::CompoundStmt const * then2 = nullptr;
@@ -369,9 +369,7 @@ ast::SuspendStmt * build_suspend( const CodeLocation & location, StatementNode *
 		assert( stmts.size() == 1 );
 		then2 = stmts.front().strict_as<ast::CompoundStmt>();
 	}
-	auto node = new ast::SuspendStmt( location, then2, ast::SuspendStmt::None );
-	node->type = type;
-	return node;
+	return new ast::SuspendStmt( location, then2, kind );
 } // build_suspend
 
 ast::WaitForStmt * build_waitfor( const CodeLocation & location, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt ) {

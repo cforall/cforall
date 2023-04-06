@@ -738,10 +738,10 @@ public:
 
 	virtual const ast::Stmt * visit( const ast::SuspendStmt * node ) override final {
 		os << "Suspend Statement";
-		switch (node->type) {
-			case ast::SuspendStmt::None     : os << " with implicit target"; break;
-			case ast::SuspendStmt::Generator: os << " for generator"; break;
-			case ast::SuspendStmt::Coroutine: os << " for coroutine"; break;
+		switch (node->kind) {
+		case ast::SuspendStmt::None     : os << " with implicit target"; break;
+		case ast::SuspendStmt::Generator: os << " for generator"; break;
+		case ast::SuspendStmt::Coroutine: os << " for coroutine"; break;
 		}
 		os << endl;
 

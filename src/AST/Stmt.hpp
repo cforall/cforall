@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Wed May  8 13:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr 20 14:34:00 2022
-// Update Count     : 36
+// Last Modified On : Wed Apr  5 10:34:00 2023
+// Update Count     : 37
 //
 
 #pragma once
@@ -204,6 +204,9 @@ class CaseClause final : public StmtClause {
 	MUTATE_FRIEND
 };
 
+// A while loop or a do-while loop:
+enum WhileDoKind { While, DoWhile };
+
 // While loop: while (...) ... else ... or do ... while (...) else ...;
 class WhileDoStmt final : public Stmt {
   public:
@@ -211,14 +214,14 @@ class WhileDoStmt final : public Stmt {
 	ptr<Stmt> body;
 	ptr<Stmt> else_;
 	std::vector<ptr<Stmt>> inits;
-	bool isDoWhile;
+	WhileDoKind isDoWhile;
 
 	WhileDoStmt( const CodeLocation & loc, const Expr * cond, const Stmt * body,
-				 const std::vector<ptr<Stmt>> && inits, bool isDoWhile = false, const std::vector<Label> && labels = {} )
+				 const std::vector<ptr<Stmt>> && inits, WhileDoKind isDoWhile = While, const std::vector<Label> && labels = {} )
 		: Stmt(loc, std::move(labels)), cond(cond), body(body), else_(nullptr), inits(std::move(inits)), isDoWhile(isDoWhile) {}
 
 	WhileDoStmt( const CodeLocation & loc, const Expr * cond, const Stmt * body, const Stmt * else_,
-				 const std::vector<ptr<Stmt>> && inits, bool isDoWhile = false, const std::vector<Label> && labels = {} )
+				 const std::vector<ptr<Stmt>> && inits, WhileDoKind isDoWhile = While, const std::vector<Label> && labels = {} )
 		: Stmt(loc, std::move(labels)), cond(cond), body(body), else_(else_), inits(std::move(inits)), isDoWhile(isDoWhile) {}
 
 	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
@@ -363,10 +366,10 @@ class FinallyClause final : public StmtClause {
 class SuspendStmt final : public Stmt {
   public:
 	ptr<CompoundStmt> then;
-	enum Type { None, Coroutine, Generator } type = None;
+	enum Kind { None, Coroutine, Generator } kind = None;
 
-	SuspendStmt( const CodeLocation & loc, const CompoundStmt * then, Type type, const std::vector<Label> && labels = {} )
-		: Stmt(loc, std::move(labels)), then(then), type(type) {}
+	SuspendStmt( const CodeLocation & loc, const CompoundStmt * then, Kind kind, const std::vector<Label> && labels = {} )
+		: Stmt(loc, std::move(labels)), then(then), kind(kind) {}
 
 	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
