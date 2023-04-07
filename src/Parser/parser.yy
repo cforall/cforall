@@ -47,11 +47,14 @@
 #include <stack>
 using namespace std;
 
-#include "SynTree/Declaration.h"
-#include "ParseNode.h"
+#include "SynTree/Type.h"                               // for Type
+#include "DeclarationNode.h"                            // for DeclarationNode, ...
+#include "ExpressionNode.h"                             // for ExpressionNode, ...
+#include "InitializerNode.h"                            // for InitializerNode, ...
+#include "ParserTypes.h"
+#include "StatementNode.h"                              // for build_...
 #include "TypedefTable.h"
 #include "TypeData.h"
-#include "SynTree/LinkageSpec.h"
 #include "Common/SemanticError.h"						// error_str
 #include "Common/utility.h"								// for maybeMoveBuild, maybeBuild, CodeLo...
 

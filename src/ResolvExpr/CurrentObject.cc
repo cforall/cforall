@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Tue Jun 13 15:28:32 2017
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  1 09:16:01 2022
-// Update Count     : 15
+// Last Modified By : Andrew Beach
+// Last Modified On : Thu Apr  6 16:25:00 2023
+// Update Count     : 17
 //
 
 #include <stddef.h>                    // for size_t
@@ -592,6 +592,45 @@ namespace ResolvExpr {
 } // namespace ResolvExpr
 
 namespace ast {
+	/// Iterates members of a type by initializer.
+	class MemberIterator {
+	public:
+		virtual ~MemberIterator() {}
+
+		/// Internal set position based on iterator ranges.
+		virtual void setPosition(
+			std::deque< ptr< Expr > >::const_iterator it,
+			std::deque< ptr< Expr > >::const_iterator end ) = 0;
+
+		/// Walks the current object using the given designators as a guide.
+		void setPosition( const std::deque< ptr< Expr > > & designators ) {
+			setPosition( designators.begin(), designators.end() );
+		}
+
+		/// Retrieve the list of possible (Type,Designation) pairs for the
+		/// current position in the current object.
+		virtual std::deque< InitAlternative > operator* () const = 0;
+
+		/// True if the iterator is not currently at the end.
+		virtual operator bool() const = 0;
+
+		/// Moves the iterator by one member in the current object.
+		virtual MemberIterator & bigStep() = 0;
+
+		/// Moves the iterator by one member in the current subobject.
+		virtual MemberIterator & smallStep() = 0;
+
+		/// The type of the current object.
+		virtual const Type * getType() = 0;
+
+		/// The type of the current subobject.
+		virtual const Type * getNext() = 0;
+
+		/// Helper for operator*; aggregates must add designator to each init
+		/// alternative, but adding designators in operator* creates duplicates.
+		virtual std::deque< InitAlternative > first() const = 0;
+	};
+
 	/// create a new MemberIterator that traverses a type correctly
 	MemberIterator * createMemberIterator( const CodeLocation & loc, const Type * type );
 
@@ -683,8 +722,8 @@ namespace ast {
 		}
 
 		void setPosition(
-			std::deque< ptr< Expr > >::const_iterator begin,
-			std::deque< ptr< Expr > >::const_iterator end
+			std::deque<ast::ptr<ast::Expr>>::const_iterator begin,
+			std::deque<ast::ptr<ast::Expr>>::const_iterator end
 		) override {
 			if ( begin == end ) return;
 
@@ -898,11 +937,35 @@ namespace ast {
 	};
 
 	class TupleIterator final : public AggregateIterator {
+		MemberList * memberList;
+
+		TupleIterator( const CodeLocation & loc,
+			const ast::TupleType * inst, MemberList * memberList )
+		: AggregateIterator(
+			loc, "TupleIterator", toString("Tuple", inst->size()), inst, *memberList
+		), memberList( memberList ) {}
+
+		// The two layer constructor, this helper and the destructor
+		// are all to pretend that Tuples have members (they do not).
+		static MemberList * newImaginaryMembers( const ast::TupleType * inst ) {
+			auto ret = new MemberList();
+			ret->reserve( inst->types.size() );
+			for ( const ast::Type * type : inst->types ) {
+				ret->emplace_back( new ast::ObjectDecl(
+					CodeLocation(), "", type,
+					new ast::ListInit( CodeLocation(), {}, {}, ast::NoConstruct )
+				) );
+			}
+			return ret;
+		}
+
 	public:
 		TupleIterator( const CodeLocation & loc, const TupleType * inst )
-		: AggregateIterator(
-			loc, "TupleIterator", toString("Tuple", inst->size()), inst, inst->members
-		) {}
+		: TupleIterator( loc, inst, newImaginaryMembers( inst ) ) {}
+
+		virtual ~TupleIterator() {
+			delete memberList;
+		}
 
 		operator bool() const override {
 			return curMember != members.end() || (memberIter && *memberIter);

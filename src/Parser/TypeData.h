@@ -15,12 +15,12 @@
 
 #pragma once
 
-#include <iosfwd>										// for ostream
-#include <list>											// for list
-#include <string>										// for string
+#include <iosfwd>                                   // for ostream
+#include <list>                                     // for list
+#include <string>                                   // for string
 
-#include "AST/Type.hpp"									// for Type
-#include "ParseNode.h"									// for DeclarationNode, DeclarationNode::Ag...
+#include "AST/Type.hpp"                             // for Type
+#include "DeclarationNode.h"                        // for DeclarationNode
 
 struct TypeData {
 	enum Kind { Basic, Pointer, Reference, Array, Function, Aggregate, AggregateInst, Enum, EnumConstant, Symbolic,

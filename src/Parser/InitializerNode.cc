@@ -13,17 +13,20 @@
 // Update Count     : 27
 //
 
+#include "InitializerNode.h"
+
 #include <iostream>                // for operator<<, ostream, basic_ostream
 #include <list>                    // for list
 #include <string>                  // for operator<<, string
-
-using namespace std;
 
 #include "AST/Expr.hpp"            // for Expr
 #include "AST/Init.hpp"            // for Designator, Init, ListInit, Sing...
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for maybeBuild
-#include "ParseNode.h"             // for InitializerNode, ExpressionNode
+#include "ExpressionNode.h"        // for ExpressionNode
+#include "DeclarationNode.h"       // for buildList
+
+using namespace std;
 
 static ast::ConstructFlag toConstructFlag( bool maybeConstructed ) {
 	return maybeConstructed ? ast::MaybeConstruct : ast::NoConstruct;

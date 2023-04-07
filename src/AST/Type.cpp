@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Mon May 13 15:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu Nov 24  9:49:00 2022
-// Update Count     : 6
+// Last Modified On : Thu Apr  6 15:59:00 2023
+// Update Count     : 7
 //
 
 #include "Type.hpp"
@@ -198,25 +198,7 @@ bool TypeEnvKey::operator<(
 // --- TupleType
 
 TupleType::TupleType( std::vector<ptr<Type>> && ts, CV::Qualifiers q )
-: Type( q ), types( std::move(ts) ), members() {
-	// This constructor is awkward. `TupleType` needs to contain objects so that members can be
-	// named, but members without initializer nodes end up getting constructors, which breaks
-	// things. This happens because the object decls have to be visited so that their types are
-	// kept in sync with the types listed here. Ultimately, the types listed here should perhaps
-	// be eliminated and replaced with a list-view over members. The temporary solution is to
-	// make a `ListInit` with `maybeConstructed = false`, so when the object is visited it is not
-	// constructed. Potential better solutions include:
-	//   a) Separate `TupleType` from its declarations, into `TupleDecl` and `Tuple{Inst?}Type`,
-	//      similar to the aggregate types.
-	//   b) Separate initializer nodes better, e.g. add a `MaybeConstructed` node that is replaced
-	//      by `genInit`, rather than the current boolean flag.
-	members.reserve( types.size() );
-	for ( const Type * ty : types ) {
-		members.emplace_back( new ObjectDecl{
-			CodeLocation(), "", ty, new ListInit( CodeLocation(), {}, {}, NoConstruct ),
-			Storage::Classes{}, Linkage::Cforall } );
-	}
-}
+: Type( q ), types( std::move(ts) ) {}
 
 bool isUnboundType(const Type * type) {
 	if (auto typeInst = dynamic_cast<const TypeInstType *>(type)) {

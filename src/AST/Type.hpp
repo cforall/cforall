@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu Nov 24  9:47:00 2022
-// Update Count     : 8
+// Last Modified On : Thu Apr  6 15:58:00 2023
+// Update Count     : 9
 //
 
 #pragma once
@@ -456,7 +456,6 @@ struct TypeEnvKey {
 class TupleType final : public Type {
 public:
 	std::vector<ptr<Type>> types;
-	std::vector<ptr<Decl>> members;
 
 	TupleType( std::vector<ptr<Type>> && ts, CV::Qualifiers q = {} );
 

@@ -20,8 +20,11 @@ AM_YFLAGS = -d -t -v -Wno-yacc
 
 SRC += \
        Parser/DeclarationNode.cc \
+       Parser/DeclarationNode.h \
        Parser/ExpressionNode.cc \
+       Parser/ExpressionNode.h \
        Parser/InitializerNode.cc \
+       Parser/InitializerNode.h \
        Parser/lex.ll \
        Parser/ParseNode.cc \
        Parser/ParseNode.h \
@@ -32,6 +35,7 @@ SRC += \
        Parser/RunParser.cpp \
        Parser/RunParser.hpp \
        Parser/StatementNode.cc \
+       Parser/StatementNode.h \
        Parser/TypeData.cc \
        Parser/TypeData.h \
        Parser/TypedefTable.cc \

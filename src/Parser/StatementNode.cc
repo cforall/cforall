@@ -14,6 +14,8 @@
 // Update Count     : 427
 //
 
+#include "StatementNode.h"
+
 #include <cassert>                 // for assert, strict_dynamic_cast, assertf
 #include <memory>                  // for unique_ptr
 #include <string>                  // for string
@@ -22,7 +24,8 @@
 #include "AST/Stmt.hpp"            // for Stmt, AsmStmt, BranchStmt, CaseCla...
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for maybeMoveBuild, maybeBuild
-#include "ParseNode.h"             // for StatementNode, ExpressionNode, bui...
+#include "DeclarationNode.h"       // for DeclarationNode
+#include "ExpressionNode.h"        // for ExpressionNode
 #include "parserutility.h"         // for notZeroExpr
 
 class Declaration;
@@ -51,6 +54,19 @@ StatementNode::StatementNode( DeclarationNode * decl ) {
 	CodeLocation declLocation = agg->location;
 	stmt.reset( new ast::DeclStmt( declLocation, maybeMoveBuild( agg ) ) );
 } // StatementNode::StatementNode
+
+StatementNode * StatementNode::add_label(
+		const CodeLocation & location,
+		const std::string * name,
+		DeclarationNode * attr ) {
+	stmt->labels.emplace_back( location,
+		*name,
+		attr ? std::move( attr->attributes )
+			: std::vector<ast::ptr<ast::Attribute>>{} );
+	delete attr;
+	delete name;
+	return this;
+}
 
 StatementNode * StatementNode::append_last_case( StatementNode * stmt ) {
 	StatementNode * prev = this;

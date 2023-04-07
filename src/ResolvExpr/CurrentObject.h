@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Thu Jun  8 11:07:25 2017
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:36:48 2017
-// Update Count     : 3
+// Last Modified By : Andrew Beach
+// Last Modified On : Thu Apr  6 16:14:00 2023
+// Update Count     : 4
 //
 
 #pragma once
@@ -64,43 +64,7 @@ namespace ast {
 	class Type;
 
 	/// Iterates members of a type by initializer
-	class MemberIterator {
-	public:
-		virtual ~MemberIterator() {}
-
-		/// Internal set position based on iterator ranges
-		virtual void setPosition( 
-			std::deque< ptr< Expr > >::const_iterator it, 
-			std::deque< ptr< Expr > >::const_iterator end ) = 0;
-
-		/// walks the current object using the given designators as a guide
-		void setPosition( const std::deque< ptr< Expr > > & designators ) {
-			setPosition( designators.begin(), designators.end() );
-		}
-
-		/// retrieve the list of possible (Type,Designation) pairs for the current position in the 
-		/// current object
-		virtual std::deque< InitAlternative > operator* () const = 0;
-
-		/// true if the iterator is not currently at the end
-		virtual operator bool() const = 0;
-
-		/// moves the iterator by one member in the current object
-		virtual MemberIterator & bigStep() = 0;
-
-		/// moves the iterator by one member in the current subobject
-		virtual MemberIterator & smallStep() = 0;
-
-		/// the type of the current object
-		virtual const Type * getType() = 0;
-
-		/// the type of the current subobject
-		virtual const Type * getNext() = 0;
-	
-		/// helper for operator*; aggregates must add designator to each init alternative, but 
-		/// adding designators in operator* creates duplicates
-		virtual std::deque< InitAlternative > first() const = 0;
-	};
+	class MemberIterator;
 
 	/// Builds initializer lists in resolution
 	class CurrentObject final {

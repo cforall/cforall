@@ -13,6 +13,8 @@
 // Update Count     : 1083
 //
 
+#include "ExpressionNode.h"
+
 #include <cassert>                 // for assert
 #include <stdio.h>                 // for sscanf, size_t
 #include <climits>                 // for LLONG_MAX, LONG_MAX, INT_MAX, UINT...
@@ -24,7 +26,8 @@
 #include "AST/Type.hpp"            // for BaseType, SueInstType
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for maybeMoveBuild, maybeBuild, CodeLo...
-#include "ParseNode.h"             // for ExpressionNode, maybeMoveBuildType
+#include "DeclarationNode.h"       // for DeclarationNode
+#include "InitializerNode.h"       // for InitializerNode
 #include "parserutility.h"         // for notZeroExpr
 
 using namespace std;

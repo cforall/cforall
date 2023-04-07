@@ -23,8 +23,8 @@
 #include "AST/Print.hpp"           // for print
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for splice, spliceBegin
-#include "Parser/parserutility.h"  // for maybeCopy, maybeBuild, maybeMoveB...
-#include "Parser/ParseNode.h"      // for DeclarationNode, ExpressionNode
+#include "Parser/ExpressionNode.h" // for ExpressionNode
+#include "Parser/StatementNode.h"  // for StatementNode
 
 class Attribute;
 

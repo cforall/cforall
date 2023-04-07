@@ -2041,7 +2041,6 @@ const ast::Type * ast::Pass< core_t >::visit( const ast::TupleType * node ) {
 
 	if ( __visit_children() ) {
 		maybe_accept( node, &TupleType::types );
-		maybe_accept( node, &TupleType::members );
 	}
 
 	VISIT_END( Type, node );

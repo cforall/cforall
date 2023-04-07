@@ -43,8 +43,15 @@ unsigned int column = 0;								// position of the end of the last token parsed
 using namespace std;
 
 #include "config.h"										// configure info
+#include "DeclarationNode.h"                            // for DeclarationNode
+#include "ExpressionNode.h"                             // for LabelNode
+#include "InitializerNode.h"                            // for InitializerNode
 #include "ParseNode.h"
+#include "ParserTypes.h"                                // for Token
+#include "StatementNode.h"                              // for CondCtl, ForCtrl
 #include "TypedefTable.h"
+// This (generated) header must come late as it is missing includes.
+#include "parser.hh"                                    // generated info
 
 string * build_postfix_name( string * name );
 

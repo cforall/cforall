@@ -13,6 +13,8 @@
 // Update Count     : 1392
 //
 
+#include "DeclarationNode.h"
+
 #include <cassert>                 // for assert, assertf, strict_dynamic_cast
 #include <iterator>                // for back_insert_iterator
 #include <list>                    // for list
@@ -33,7 +35,9 @@
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/UniqueName.h"     // for UniqueName
 #include "Common/utility.h"        // for maybeClone
-#include "Parser/ParseNode.h"      // for DeclarationNode, ExpressionNode
+#include "Parser/ExpressionNode.h" // for ExpressionNode
+#include "Parser/InitializerNode.h"// for InitializerNode
+#include "Parser/StatementNode.h"  // for StatementNode
 #include "TypeData.h"              // for TypeData, TypeData::Aggregate_t
 #include "TypedefTable.h"          // for TypedefTable
 

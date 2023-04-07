@@ -19,7 +19,7 @@
 #include "AST/TranslationUnit.hpp"          // for TranslationUnit
 #include "CodeTools/TrackLoc.h"             // for fillLocations
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
-#include "Parser/ParseNode.h"               // for DeclarationNode, buildList
+#include "Parser/DeclarationNode.h"         // for DeclarationNode, buildList
 #include "Parser/TypedefTable.h"            // for TypedefTable
 
 // Variables global to the parsing code.

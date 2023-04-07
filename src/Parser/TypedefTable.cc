@@ -15,31 +15,36 @@
 
 
 #include "TypedefTable.h"
-#include <cassert>										// for assert
-#include <iostream>
+
+#include <cassert>                                // for assert
+#include <string>                                 // for string
+#include <iostream>                               // for iostream
+
+#include "ExpressionNode.h"                       // for LabelNode
+#include "ParserTypes.h"                          // for Token
+#include "StatementNode.h"                        // for CondCtl, ForCtrl
+// This (generated) header must come late as it is missing includes.
+#include "parser.hh"              // for IDENTIFIER, TYPEDEFname, TYPEGENname
+
 using namespace std;
 
 #if 0
 #define debugPrint( code ) code
+
+static const char *kindName( int kind ) {
+	switch ( kind ) {
+	case IDENTIFIER: return "identifier";
+	case TYPEDIMname: return "typedim";
+	case TYPEDEFname: return "typedef";
+	case TYPEGENname: return "typegen";
+	default:
+		cerr << "Error: cfa-cpp internal error, invalid kind of identifier" << endl;
+		abort();
+	} // switch
+} // kindName
 #else
 #define debugPrint( code )
 #endif
-
-using namespace std;									// string, iostream
-
-debugPrint(
-	static const char *kindName( int kind ) {
-		switch ( kind ) {
-		case IDENTIFIER: return "identifier";
-		case TYPEDIMname: return "typedim";
-		case TYPEDEFname: return "typedef";
-		case TYPEGENname: return "typegen";
-		default:
-			cerr << "Error: cfa-cpp internal error, invalid kind of identifier" << endl;
-			abort();
-		} // switch
-	} // kindName
-);
 
 TypedefTable::~TypedefTable() {
 	if ( ! SemanticErrorThrow && kindTable.currentScope() != 0 ) {
@@ -77,6 +82,10 @@ void TypedefTable::makeTypedef( const string & name, int kind ) {
 	if ( ! typedefTable.exists( name ) ) {
 		typedefTable.addToEnclosingScope( name, kind, "MTD" );
 	} // if
+} // TypedefTable::makeTypedef
+
+void TypedefTable::makeTypedef( const string & name ) {
+	return makeTypedef( name, TYPEDEFname );
 } // TypedefTable::makeTypedef
 
 void TypedefTable::addToScope( const string & identifier, int kind, const char * locn __attribute__((unused)) ) {

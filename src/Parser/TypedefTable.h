@@ -18,13 +18,11 @@
 #include <string>										// for string
 
 #include "Common/ScopedMap.h"							// for ScopedMap
-#include "ParserTypes.h"
-#include "parser.hh"									// for IDENTIFIER, TYPEDEFname, TYPEGENname
 
 class TypedefTable {
 	struct Note { size_t level; bool forall; };
 	typedef ScopedMap< std::string, int, Note > KindTable;
-	KindTable kindTable;	
+	KindTable kindTable;
 	unsigned int level = 0;
   public:
 	~TypedefTable();
@@ -32,7 +30,8 @@ class TypedefTable {
 	bool exists( const std::string & identifier ) const;
 	bool existsCurr( const std::string & identifier ) const;
 	int isKind( const std::string & identifier ) const;
-	void makeTypedef( const std::string & name, int kind = TYPEDEFname );
+	void makeTypedef( const std::string & name, int kind );
+	void makeTypedef( const std::string & name );
 	void addToScope( const std::string & identifier, int kind, const char * );
 	void addToEnclosingScope( const std::string & identifier, int kind, const char * );
 	bool getEnclForall() { return kindTable.getNote( kindTable.currentScope() -  1 ).forall; }

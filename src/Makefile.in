@@ -779,11 +779,13 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	InitTweak/FixGlobalInit.cc InitTweak/FixGlobalInit.h \
 	InitTweak/FixInit.cc InitTweak/FixInit.h \
 	InitTweak/FixInitNew.cpp Parser/DeclarationNode.cc \
-	Parser/ExpressionNode.cc Parser/InitializerNode.cc \
-	Parser/lex.ll Parser/ParseNode.cc Parser/ParseNode.h \
-	Parser/parser.yy Parser/ParserTypes.h Parser/parserutility.cc \
-	Parser/parserutility.h Parser/RunParser.cpp \
-	Parser/RunParser.hpp Parser/StatementNode.cc \
+	Parser/DeclarationNode.h Parser/ExpressionNode.cc \
+	Parser/ExpressionNode.h Parser/InitializerNode.cc \
+	Parser/InitializerNode.h Parser/lex.ll Parser/ParseNode.cc \
+	Parser/ParseNode.h Parser/parser.yy Parser/ParserTypes.h \
+	Parser/parserutility.cc Parser/parserutility.h \
+	Parser/RunParser.cpp Parser/RunParser.hpp \
+	Parser/StatementNode.cc Parser/StatementNode.h \
 	Parser/TypeData.cc Parser/TypeData.h Parser/TypedefTable.cc \
 	Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
 	ResolvExpr/AlternativePrinter.cc \
