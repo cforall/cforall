@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018
-// Last Modified By : Henry Xue
-// Last Modified On : Tue Jul 20 04:27:35 2021
-// Update Count     : 5
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Apr 10 19:12:50 2023
+// Update Count     : 6
 //
 
 #include "config.h"
@@ -26,6 +26,7 @@ int
 	exprp = false,
 	expraltp = false,
 	genericsp = false,
+	invariant = false,
 	libcfap = false,
 	nopreludep = false,
 	genproto = false,

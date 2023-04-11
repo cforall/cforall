@@ -8,9 +8,9 @@
 //
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Thr Feb 16 10:08:00 2023
-// Update Count     : 680
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Apr 10 21:12:17 2023
+// Update Count     : 682
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -503,16 +503,17 @@ int main( int argc, char * argv[] ) {
 } // main
 
 
-static const char optstring[] = ":c:ghlLmNnpdP:S:twW:D:";
+static const char optstring[] = ":c:ghilLmNnpdP:S:twW:D:";
 
 enum { PreludeDir = 128 };
 static struct option long_opts[] = {
 	{ "colors", required_argument, nullptr, 'c' },
 	{ "gdb", no_argument, nullptr, 'g' },
 	{ "help", no_argument, nullptr, 'h' },
+	{ "invariant", no_argument, nullptr, 'i' },
 	{ "libcfa", no_argument, nullptr, 'l' },
 	{ "linemarks", no_argument, nullptr, 'L' },
-	{ "no-main", no_argument, 0, 'm' },
+	{ "no-main", no_argument, nullptr, 'm' },
 	{ "no-linemarks", no_argument, nullptr, 'N' },
 	{ "no-prelude", no_argument, nullptr, 'n' },
 	{ "prototypes", no_argument, nullptr, 'p' },
@@ -531,6 +532,7 @@ static const char * description[] = {
 	"diagnostic color: never, always, auto",			// -c
 	"wait for gdb to attach",							// -g
 	"print translator help message",					// -h
+	"invariant checking during AST passes",				// -i
 	"generate libcfa.c",								// -l
 	"generate line marks",								// -L
 	"do not replace main",								// -m
@@ -623,6 +625,9 @@ static void parse_cmdline( int argc, char * argv[] ) {
 			break;
 		  case 'h':										// help message
 			usage( argv );								// no return
+			break;
+		  case 'i':										// invariant checking
+			invariant = true;
 			break;
 		  case 'l':										// generate libcfa.c
 			libcfap = true;

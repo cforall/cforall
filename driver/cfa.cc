@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 14 22:46:38 2023
-// Update Count     : 470
+// Last Modified On : Mon Apr 10 21:16:00 2023
+// Update Count     : 476
 //
 
 #include <iostream>
@@ -197,25 +197,29 @@ int main( int argc, char * argv[] ) {
 					args[nargs++] = argv[i];
 				} // if
 			} else if ( arg == "-CFA" ) {
-				CFA_flag = true;						// strip the -CFA flag
+				CFA_flag = true;						// strip -CFA flag
 				link = false;
 				args[nargs++] = "-fsyntax-only";		// stop after stage 2
 			} else if ( arg == "-debug" ) {
-				debug = true;							// strip the debug flag
+				debug = true;							// strip debug flag
 			} else if ( arg == "-nodebug" ) {
-				debug = false;							// strip the nodebug flag
+				debug = false;							// strip nodebug flag
 			} else if ( arg == "-quiet" ) {
-				quiet = true;							// strip the quiet flag
+				quiet = true;							// strip quiet flag
 			} else if ( arg == "-noquiet" ) {
-				quiet = false;							// strip the noquiet flag
+				quiet = false;							// strip noquiet flag
+			} else if ( arg == "-invariant" ) {
+				Putenv( argv, "-" + arg );
+			} else if ( arg == "--invariant" ) {
+				Putenv( argv, arg );
 			} else if ( arg == "-no-include-stdhdr" ) {
-				noincstd_flag = true;					// strip the no-include-stdhdr flag
+				noincstd_flag = true;					// strip no-include-stdhdr flag
 			} else if ( arg == "-nolib" ) {
-				nolib = true;							// strip the nolib flag
+				nolib = true;							// strip nolib flag
 			} else if ( arg == "-help" ) {
-				help = true;							// strip the help flag
+				help = true;							// strip help flag
 			} else if ( arg == "-nohelp" ) {
-				help = false;							// strip the nohelp flag
+				help = false;							// strip nohelp flag
 			} else if ( arg == "-cfalib") {
 				compiling_libs = true;
 			} else if ( arg == "-compiler" ) {
@@ -273,7 +277,7 @@ int main( int argc, char * argv[] ) {
 					nargs += 1;
 				} // if
 			} else if ( prefix( arg, "-B" ) ) {
-				bprefix = arg.substr(2);				// strip the -B flag
+				bprefix = arg.substr(2);				// strip -B flag
 			} else if ( arg == "-c" || arg == "-S" || arg == "-E" || arg == "-M" || arg == "-MM" ) {
 				args[nargs++] = argv[i];				// pass flag along
 				if ( arg == "-E" || arg == "-M" || arg == "-MM" ) {

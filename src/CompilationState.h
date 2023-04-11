@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018
-// Last Modified By : Henry Xue
-// Last Modified On : Tue Jul 20 04:27:35 2021
-// Update Count     : 5
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Apr 10 19:12:53 2023
+// Update Count     : 6
 //
 
 extern int yydebug;                   // set for -g flag (Grammar)
@@ -25,6 +25,7 @@ extern int
 	exprp,
 	expraltp,
 	genericsp,
+	invariant,
 	libcfap,
 	nopreludep,
 	genproto,

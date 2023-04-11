@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Tue Jun 13 15:28:32 2017
 // Last Modified By : Andrew Beach
-// Last Modified On : Thu Apr  6 16:25:00 2023
-// Update Count     : 17
+// Last Modified On : Mon Apr 10  9:40:00 2023
+// Update Count     : 18
 //
 
 #include <stddef.h>                    // for size_t
@@ -936,51 +936,86 @@ namespace ast {
 		}
 	};
 
-	class TupleIterator final : public AggregateIterator {
-		MemberList * memberList;
+	/// Iterates across the positions in a tuple:
+	class TupleIterator final : public MemberIterator {
+		CodeLocation location;
+		ast::TupleType const * const tuple;
+		size_t index = 0;
+		size_t size = 0;
+		std::unique_ptr<MemberIterator> sub_iter;
 
-		TupleIterator( const CodeLocation & loc,
-			const ast::TupleType * inst, MemberList * memberList )
-		: AggregateIterator(
-			loc, "TupleIterator", toString("Tuple", inst->size()), inst, *memberList
-		), memberList( memberList ) {}
-
-		// The two layer constructor, this helper and the destructor
-		// are all to pretend that Tuples have members (they do not).
-		static MemberList * newImaginaryMembers( const ast::TupleType * inst ) {
-			auto ret = new MemberList();
-			ret->reserve( inst->types.size() );
-			for ( const ast::Type * type : inst->types ) {
-				ret->emplace_back( new ast::ObjectDecl(
-					CodeLocation(), "", type,
-					new ast::ListInit( CodeLocation(), {}, {}, ast::NoConstruct )
-				) );
-			}
-			return ret;
+		const ast::Type * typeAtIndex() const {
+			assert( index < size );
+			return tuple->types[ index ].get();
 		}
 
 	public:
-		TupleIterator( const CodeLocation & loc, const TupleType * inst )
-		: TupleIterator( loc, inst, newImaginaryMembers( inst ) ) {}
+		TupleIterator( const CodeLocation & loc, const TupleType * type )
+		: location( loc ), tuple( type ), size( type->size() ) {
+			PRINT( std::cerr << "Creating tuple iterator: " << type << std::endl; )
+			sub_iter.reset( createMemberIterator( loc, typeAtIndex() ) );
+		}
 
-		virtual ~TupleIterator() {
-			delete memberList;
+		void setPosition( const ast::Expr * expr ) {
+			auto arg = eval( expr );
+			index = arg.first;
+		}
+
+		void setPosition(
+				std::deque< ptr< Expr > >::const_iterator begin,
+				std::deque< ptr< Expr > >::const_iterator end ) {
+			if ( begin == end ) return;
+
+			setPosition( *begin );
+			sub_iter->setPosition( ++begin, end );
+		}
+
+		std::deque< InitAlternative > operator*() const override {
+			return first();
 		}
 
 		operator bool() const override {
-			return curMember != members.end() || (memberIter && *memberIter);
+			return index < size;
 		}
 
 		TupleIterator & bigStep() override {
-			PRINT( std::cerr << "bigStep in " << kind << std::endl; )
-			atbegin = false;
-			memberIter = nullptr;
-			curType = nullptr;
-			while ( curMember != members.end() ) {
-				++curMember;
-				if ( init() ) return *this;
-			}
+			++index;
+			sub_iter.reset( index < size ?
+				createMemberIterator( location, typeAtIndex() ) : nullptr );
 			return *this;
+		}
+
+		TupleIterator & smallStep() override {
+			if ( sub_iter ) {
+				PRINT( std::cerr << "has member iter: " << *sub_iter << std::endl; )
+				sub_iter->smallStep();
+				if ( !sub_iter ) {
+					PRINT( std::cerr << "has valid member iter" << std::endl; )
+					return *this;
+				}
+			}
+			return bigStep();
+		}
+
+		const ast::Type * getType() override {
+			return tuple;
+		}
+
+		const ast::Type * getNext() override {
+			return ( sub_iter && *sub_iter ) ? sub_iter->getType() : nullptr;
+		}
+
+		std::deque< InitAlternative > first() const override {
+			PRINT( std::cerr << "first in TupleIterator (" << index << "/" << size << ")" << std::endl; )
+			if ( sub_iter && *sub_iter ) {
+				std::deque< InitAlternative > ret = sub_iter->first();
+				for ( InitAlternative & alt : ret ) {
+					alt.designation.get_and_mutate()->designators.emplace_front(
+						ConstantExpr::from_ulong( location, index ) );
+				}
+				return ret;
+			}
+			return {};
 		}
 	};
 
