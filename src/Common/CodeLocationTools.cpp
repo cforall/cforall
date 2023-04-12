@@ -207,11 +207,11 @@ enum class LeafKind {
 };
 
 struct LeafKindVisitor : public ast::Visitor {
-	LeafKind kind;
+	LeafKind result;
 
 #define VISIT(node_type, return_type) \
 	const ast::return_type * visit( const ast::node_type * ) final { \
-		kind = LeafKind::node_type; \
+		result = LeafKind::node_type; \
 		return nullptr; \
 	}
 	ALL_VISITS(VISIT)
@@ -221,9 +221,7 @@ struct LeafKindVisitor : public ast::Visitor {
 constexpr size_t leaf_kind_count = (1 + (size_t)LeafKind::TypeSubstitution);
 
 LeafKind get_leaf_kind( ast::Node const * node ) {
-	LeafKindVisitor visitor;
-	node->accept( visitor );
-	return visitor.kind;
+	return ast::Pass<LeafKindVisitor>::read( node );
 }
 
 const char * leaf_kind_names[leaf_kind_count] = {

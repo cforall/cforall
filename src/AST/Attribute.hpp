@@ -26,6 +26,7 @@ namespace ast {
 
 class Expr;
 
+/// An entry in an attribute list: `__attribute__(( ... ))`
 class Attribute final : public Node {
 public:
 	std::string name;

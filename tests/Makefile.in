@@ -491,7 +491,7 @@ GENERATED_CODE = declarationSpecifier gccExtensions extension attributes functio
 # tests that just validate syntax and compiler output should be compared to stderr
 CFACOMPILE_SYNTAX = $(CFACOMPILETEST) -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o $(abspath ${@})
 SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator \
-	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment
+	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrent/waitfor/parse
 
 all: all-am
 

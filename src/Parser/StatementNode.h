@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Wed Apr  5 11:42:00 2023
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr  5 11:57:00 2023
-// Update Count     : 0
+// Last Modified On : Tue Apr 11  9:43:00 2023
+// Update Count     : 1
 //
 
 #pragma once
@@ -18,40 +18,42 @@
 #include "ParseNode.h"
 
 struct StatementNode final : public ParseNode {
-	StatementNode() :
-		stmt( nullptr ), clause( nullptr ) {}
-	StatementNode( ast::Stmt * stmt ) :
-		stmt( stmt ), clause( nullptr ) {}
-	StatementNode( ast::StmtClause * clause ) :
-		stmt( nullptr ), clause( clause ) {}
+	StatementNode() : stmt( nullptr ) {}
+	StatementNode( ast::Stmt * stmt ) : stmt( stmt ) {}
 	StatementNode( DeclarationNode * decl );
 	virtual ~StatementNode() {}
 
 	virtual StatementNode * clone() const final { assert( false ); return nullptr; }
-	ast::Stmt * build() const { return const_cast<StatementNode *>(this)->stmt.release(); }
+	ast::Stmt * build() { return stmt.release(); }
 
 	StatementNode * add_label(
 			const CodeLocation & location,
 			const std::string * name,
-			DeclarationNode * attr = nullptr );/* {
-		stmt->labels.emplace_back( location,
-			*name,
-			attr ? std::move( attr->attributes )
-				: std::vector<ast::ptr<ast::Attribute>>{} );
-		delete attr;
-		delete name;
-		return this;
-	}*/
-
-	virtual StatementNode * append_last_case( StatementNode * );
+			DeclarationNode * attr = nullptr );
 
 	virtual void print( std::ostream & os, __attribute__((unused)) int indent = 0 ) const override {
 		os << stmt.get() << std::endl;
 	}
 
 	std::unique_ptr<ast::Stmt> stmt;
-	std::unique_ptr<ast::StmtClause> clause;
 }; // StatementNode
+
+struct ClauseNode final : public ParseNode {
+	ClauseNode( ast::StmtClause * clause ) : clause( clause ) {}
+	virtual ~ClauseNode() {}
+
+	ClauseNode * set_last( ParseNode * newlast ) {
+		ParseNode::set_last( newlast );
+        return this;
+    }
+
+	virtual ClauseNode * clone() const final { assert( false ); return nullptr; }
+	ast::StmtClause * build() { return clause.release(); }
+
+	virtual ClauseNode * append_last_case( StatementNode * );
+
+	std::unique_ptr<ast::StmtClause> clause;
+};
 
 ast::Stmt * build_expr( CodeLocation const &, ExpressionNode * ctl );
 
@@ -73,8 +75,8 @@ struct ForCtrl {
 };
 
 ast::Stmt * build_if( const CodeLocation &, CondCtl * ctl, StatementNode * then, StatementNode * else_ );
-ast::Stmt * build_switch( const CodeLocation &, bool isSwitch, ExpressionNode * ctl, StatementNode * stmt );
-ast::CaseClause * build_case( ExpressionNode * ctl );
+ast::Stmt * build_switch( const CodeLocation &, bool isSwitch, ExpressionNode * ctl, ClauseNode * stmt );
+ast::CaseClause * build_case( const CodeLocation &, ExpressionNode * ctl );
 ast::CaseClause * build_default( const CodeLocation & );
 ast::Stmt * build_while( const CodeLocation &, CondCtl * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
 ast::Stmt * build_do_while( const CodeLocation &, ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
@@ -86,7 +88,7 @@ ast::Stmt * build_return( const CodeLocation &, ExpressionNode * ctl );
 ast::Stmt * build_throw( const CodeLocation &, ExpressionNode * ctl );
 ast::Stmt * build_resume( const CodeLocation &, ExpressionNode * ctl );
 ast::Stmt * build_resume_at( ExpressionNode * ctl , ExpressionNode * target );
-ast::Stmt * build_try( const CodeLocation &, StatementNode * try_, StatementNode * catch_, StatementNode * finally_ );
+ast::Stmt * build_try( const CodeLocation &, StatementNode * try_, ClauseNode * catch_, ClauseNode * finally_ );
 ast::CatchClause * build_catch( const CodeLocation &, ast::ExceptionKind kind, DeclarationNode * decl, ExpressionNode * cond, StatementNode * body );
 ast::FinallyClause * build_finally( const CodeLocation &, StatementNode * stmt );
 ast::Stmt * build_compound( const CodeLocation &, StatementNode * first );

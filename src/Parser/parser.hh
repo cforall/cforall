@@ -362,6 +362,7 @@ union YYSTYPE
 	ast::AggregateDecl::Aggregate aggKey;
 	ast::TypeDecl::Kind tclass;
 	StatementNode * sn;
+	ClauseNode * clause;
 	ast::WaitForStmt * wfs;
 	ast::Expr * constant;
 	CondCtl * ifctl;
@@ -376,7 +377,7 @@ union YYSTYPE
 	ast::ExceptionKind catch_kind;
 	ast::GenericExpr * genexpr;
 
-#line 380 "Parser/parser.hh"
+#line 381 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

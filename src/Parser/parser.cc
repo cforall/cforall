@@ -685,6 +685,7 @@ union YYSTYPE
 	ast::AggregateDecl::Aggregate aggKey;
 	ast::TypeDecl::Kind tclass;
 	StatementNode * sn;
+	ClauseNode * clause;
 	ast::WaitForStmt * wfs;
 	ast::Expr * constant;
 	CondCtl * ifctl;
@@ -699,7 +700,7 @@ union YYSTYPE
 	ast::ExceptionKind catch_kind;
 	ast::GenericExpr * genexpr;
 
-#line 703 "Parser/parser.cc"
+#line 704 "Parser/parser.cc"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -1106,117 +1107,117 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   606,   606,   610,   617,   618,   619,   620,   621,   625,
-     626,   627,   628,   629,   630,   631,   632,   636,   637,   641,
-     642,   647,   651,   652,   663,   665,   667,   671,   672,   674,
-     676,   678,   680,   690,   692,   694,   696,   698,   700,   705,
-     706,   717,   722,   727,   728,   733,   739,   741,   743,   749,
-     751,   755,   757,   759,   761,   763,   765,   767,   769,   771,
-     773,   775,   777,   779,   781,   783,   785,   795,   796,   800,
-     801,   806,   809,   813,   814,   818,   819,   821,   823,   825,
-     827,   829,   834,   836,   838,   846,   847,   855,   858,   859,
-     861,   866,   882,   884,   886,   888,   890,   892,   894,   896,
-     898,   906,   907,   909,   913,   914,   915,   916,   920,   921,
-     923,   925,   927,   929,   931,   933,   935,   942,   943,   944,
-     945,   949,   950,   954,   955,   960,   961,   963,   965,   970,
-     971,   973,   978,   979,   981,   986,   987,   989,   991,   993,
-     998,   999,  1001,  1006,  1007,  1012,  1013,  1018,  1019,  1024,
-    1025,  1030,  1031,  1036,  1037,  1040,  1045,  1050,  1051,  1059,
-    1065,  1066,  1070,  1071,  1075,  1076,  1080,  1081,  1082,  1083,
-    1084,  1085,  1086,  1087,  1088,  1089,  1090,  1100,  1102,  1107,
-    1108,  1110,  1112,  1117,  1118,  1124,  1125,  1131,  1132,  1133,
-    1134,  1135,  1136,  1137,  1138,  1139,  1140,  1141,  1142,  1144,
-    1145,  1151,  1153,  1163,  1165,  1173,  1174,  1179,  1181,  1183,
-    1185,  1187,  1191,  1192,  1194,  1199,  1206,  1208,  1210,  1220,
-    1222,  1224,  1229,  1234,  1237,  1242,  1244,  1246,  1248,  1256,
-    1257,  1259,  1263,  1265,  1269,  1271,  1272,  1274,  1276,  1281,
-    1282,  1286,  1291,  1292,  1296,  1298,  1303,  1305,  1310,  1312,
-    1314,  1316,  1321,  1323,  1325,  1327,  1332,  1334,  1339,  1340,
-    1362,  1364,  1369,  1372,  1374,  1377,  1379,  1382,  1384,  1389,
-    1394,  1396,  1401,  1406,  1408,  1410,  1412,  1414,  1417,  1419,
-    1422,  1424,  1429,  1435,  1438,  1440,  1445,  1451,  1453,  1458,
-    1464,  1467,  1469,  1472,  1474,  1479,  1486,  1488,  1493,  1499,
-    1501,  1506,  1512,  1515,  1520,  1528,  1530,  1532,  1537,  1539,
-    1544,  1545,  1547,  1552,  1554,  1559,  1561,  1563,  1565,  1568,
-    1572,  1575,  1579,  1581,  1583,  1585,  1587,  1589,  1591,  1593,
-    1595,  1597,  1599,  1604,  1605,  1609,  1615,  1623,  1628,  1629,
-    1633,  1634,  1640,  1644,  1645,  1648,  1650,  1655,  1658,  1660,
-    1662,  1665,  1667,  1672,  1677,  1678,  1682,  1687,  1689,  1694,
-    1696,  1701,  1703,  1705,  1707,  1710,  1712,  1717,  1723,  1725,
-    1727,  1732,  1734,  1740,  1741,  1745,  1746,  1747,  1748,  1752,
-    1757,  1758,  1760,  1762,  1764,  1768,  1772,  1773,  1777,  1779,
-    1781,  1783,  1785,  1791,  1792,  1798,  1799,  1803,  1804,  1809,
-    1811,  1820,  1821,  1823,  1828,  1833,  1844,  1845,  1849,  1850,
-    1856,  1857,  1861,  1863,  1867,  1869,  1873,  1874,  1878,  1879,
-    1883,  1890,  1891,  1895,  1897,  1912,  1913,  1914,  1915,  1917,
-    1921,  1923,  1927,  1934,  1936,  1938,  1943,  1944,  1946,  1948,
-    1950,  1982,  1985,  1990,  1992,  1998,  2003,  2008,  2019,  2026,
-    2031,  2033,  2035,  2041,  2045,  2052,  2054,  2055,  2056,  2072,
-    2074,  2077,  2079,  2082,  2087,  2088,  2092,  2093,  2094,  2095,
-    2105,  2106,  2107,  2116,  2117,  2118,  2122,  2123,  2124,  2133,
-    2134,  2135,  2140,  2141,  2150,  2151,  2156,  2157,  2161,  2163,
-    2165,  2167,  2169,  2174,  2179,  2180,  2182,  2192,  2193,  2198,
-    2200,  2202,  2204,  2206,  2208,  2211,  2213,  2215,  2220,  2222,
-    2224,  2226,  2228,  2230,  2232,  2234,  2236,  2238,  2240,  2242,
-    2244,  2246,  2248,  2250,  2252,  2254,  2256,  2258,  2260,  2262,
-    2264,  2266,  2268,  2270,  2272,  2274,  2279,  2280,  2284,  2291,
-    2292,  2298,  2299,  2301,  2303,  2305,  2310,  2312,  2317,  2318,
-    2320,  2322,  2327,  2329,  2331,  2333,  2335,  2337,  2342,  2349,
-    2351,  2353,  2358,  2366,  2365,  2369,  2377,  2378,  2380,  2382,
-    2387,  2388,  2390,  2395,  2396,  2398,  2400,  2405,  2406,  2408,
-    2413,  2415,  2417,  2419,  2420,  2422,  2427,  2429,  2431,  2436,
-    2443,  2447,  2448,  2453,  2452,  2457,  2456,  2466,  2465,  2476,
-    2475,  2485,  2490,  2491,  2496,  2502,  2520,  2521,  2525,  2527,
-    2529,  2535,  2537,  2539,  2541,  2546,  2548,  2553,  2555,  2564,
-    2565,  2570,  2579,  2581,  2583,  2592,  2594,  2595,  2596,  2598,
-    2600,  2601,  2606,  2607,  2608,  2613,  2615,  2618,  2621,  2628,
-    2629,  2630,  2636,  2641,  2643,  2649,  2650,  2656,  2657,  2661,
-    2666,  2669,  2668,  2672,  2675,  2682,  2687,  2686,  2695,  2700,
-    2705,  2710,  2715,  2716,  2721,  2723,  2728,  2730,  2732,  2734,
-    2739,  2740,  2746,  2747,  2748,  2755,  2756,  2758,  2759,  2760,
-    2762,  2764,  2771,  2772,  2774,  2776,  2781,  2782,  2788,  2789,
-    2791,  2792,  2797,  2798,  2799,  2801,  2809,  2810,  2812,  2815,
-    2817,  2821,  2822,  2823,  2825,  2827,  2832,  2834,  2839,  2841,
-    2850,  2852,  2857,  2858,  2859,  2863,  2864,  2865,  2870,  2871,
-    2876,  2877,  2878,  2879,  2883,  2884,  2889,  2890,  2891,  2892,
-    2893,  2907,  2908,  2913,  2914,  2920,  2922,  2925,  2927,  2929,
-    2952,  2953,  2959,  2960,  2966,  2965,  2975,  2974,  2978,  2984,
-    2990,  2991,  2993,  2997,  3002,  3004,  3006,  3008,  3014,  3015,
-    3019,  3020,  3025,  3027,  3034,  3036,  3037,  3039,  3044,  3046,
-    3048,  3053,  3055,  3060,  3065,  3073,  3078,  3080,  3085,  3090,
-    3091,  3096,  3097,  3101,  3102,  3103,  3108,  3110,  3116,  3118,
-    3123,  3125,  3131,  3132,  3136,  3140,  3144,  3146,  3159,  3161,
-    3163,  3165,  3167,  3169,  3171,  3172,  3177,  3180,  3179,  3191,
-    3190,  3203,  3202,  3214,  3213,  3225,  3224,  3238,  3244,  3246,
-    3252,  3253,  3264,  3271,  3276,  3282,  3285,  3288,  3292,  3298,
-    3301,  3304,  3309,  3310,  3311,  3312,  3316,  3322,  3323,  3333,
-    3334,  3338,  3339,  3344,  3349,  3350,  3356,  3357,  3359,  3364,
-    3365,  3366,  3367,  3368,  3370,  3405,  3407,  3412,  3414,  3415,
-    3417,  3422,  3424,  3426,  3428,  3433,  3435,  3437,  3439,  3441,
-    3443,  3445,  3450,  3452,  3454,  3456,  3465,  3467,  3468,  3473,
-    3475,  3477,  3479,  3481,  3486,  3488,  3490,  3492,  3497,  3499,
-    3501,  3503,  3505,  3507,  3519,  3520,  3521,  3525,  3527,  3529,
-    3531,  3533,  3538,  3540,  3542,  3544,  3549,  3551,  3553,  3555,
-    3557,  3559,  3571,  3576,  3581,  3583,  3584,  3586,  3591,  3593,
-    3595,  3597,  3602,  3604,  3606,  3608,  3610,  3612,  3614,  3619,
-    3621,  3623,  3625,  3634,  3636,  3637,  3642,  3644,  3646,  3648,
-    3650,  3655,  3657,  3659,  3661,  3666,  3668,  3670,  3672,  3674,
-    3676,  3686,  3688,  3690,  3691,  3693,  3698,  3700,  3702,  3707,
-    3709,  3711,  3713,  3718,  3720,  3722,  3736,  3738,  3740,  3741,
-    3743,  3748,  3750,  3755,  3757,  3759,  3764,  3766,  3771,  3773,
-    3790,  3791,  3793,  3798,  3800,  3802,  3804,  3806,  3811,  3812,
-    3814,  3816,  3821,  3823,  3825,  3831,  3833,  3836,  3839,  3841,
-    3845,  3847,  3849,  3850,  3852,  3854,  3858,  3860,  3865,  3867,
-    3869,  3871,  3906,  3907,  3911,  3912,  3914,  3916,  3921,  3923,
-    3925,  3927,  3929,  3934,  3935,  3937,  3939,  3944,  3946,  3948,
-    3954,  3955,  3957,  3966,  3969,  3971,  3974,  3976,  3978,  3992,
-    3993,  3995,  4000,  4002,  4004,  4006,  4008,  4013,  4014,  4016,
-    4018,  4023,  4025,  4033,  4034,  4035,  4040,  4041,  4046,  4048,
-    4050,  4052,  4054,  4056,  4063,  4065,  4067,  4069,  4071,  4074,
-    4076,  4078,  4080,  4082,  4087,  4089,  4091,  4096,  4122,  4123,
-    4125,  4129,  4130,  4134,  4136,  4138,  4140,  4142,  4144,  4151,
-    4153,  4155,  4157,  4159,  4161,  4166,  4168,  4170,  4177,  4179,
-    4197,  4199,  4204,  4205
+       0,   608,   608,   612,   619,   620,   621,   622,   623,   627,
+     628,   629,   630,   631,   632,   633,   634,   638,   639,   643,
+     644,   649,   653,   654,   665,   667,   669,   673,   674,   676,
+     678,   680,   682,   692,   694,   696,   698,   700,   702,   707,
+     708,   719,   724,   729,   730,   735,   741,   743,   745,   751,
+     753,   757,   759,   761,   763,   765,   767,   769,   771,   773,
+     775,   777,   779,   781,   783,   785,   787,   797,   798,   802,
+     803,   808,   811,   815,   816,   820,   821,   823,   825,   827,
+     829,   831,   836,   838,   840,   848,   849,   857,   860,   861,
+     863,   868,   884,   886,   888,   890,   892,   894,   896,   898,
+     900,   908,   909,   911,   915,   916,   917,   918,   922,   923,
+     925,   927,   929,   931,   933,   935,   937,   944,   945,   946,
+     947,   951,   952,   956,   957,   962,   963,   965,   967,   972,
+     973,   975,   980,   981,   983,   988,   989,   991,   993,   995,
+    1000,  1001,  1003,  1008,  1009,  1014,  1015,  1020,  1021,  1026,
+    1027,  1032,  1033,  1038,  1039,  1042,  1047,  1052,  1053,  1061,
+    1067,  1068,  1072,  1073,  1077,  1078,  1082,  1083,  1084,  1085,
+    1086,  1087,  1088,  1089,  1090,  1091,  1092,  1102,  1104,  1109,
+    1110,  1112,  1114,  1119,  1120,  1126,  1127,  1133,  1134,  1135,
+    1136,  1137,  1138,  1139,  1140,  1141,  1142,  1143,  1144,  1146,
+    1147,  1153,  1155,  1165,  1167,  1175,  1176,  1181,  1183,  1185,
+    1187,  1189,  1193,  1194,  1196,  1201,  1208,  1210,  1212,  1222,
+    1224,  1226,  1231,  1236,  1239,  1244,  1246,  1248,  1250,  1258,
+    1259,  1261,  1265,  1267,  1271,  1273,  1274,  1276,  1278,  1283,
+    1284,  1288,  1293,  1294,  1298,  1300,  1305,  1307,  1312,  1314,
+    1316,  1318,  1323,  1325,  1327,  1329,  1334,  1336,  1341,  1342,
+    1364,  1366,  1371,  1374,  1376,  1379,  1381,  1384,  1386,  1391,
+    1396,  1398,  1403,  1408,  1410,  1412,  1414,  1416,  1419,  1421,
+    1424,  1426,  1431,  1437,  1440,  1442,  1447,  1453,  1455,  1460,
+    1466,  1469,  1471,  1474,  1476,  1481,  1488,  1490,  1495,  1501,
+    1503,  1508,  1514,  1517,  1522,  1530,  1532,  1534,  1539,  1541,
+    1546,  1547,  1549,  1554,  1556,  1561,  1563,  1565,  1567,  1570,
+    1574,  1577,  1581,  1583,  1585,  1587,  1589,  1591,  1593,  1595,
+    1597,  1599,  1601,  1606,  1607,  1611,  1617,  1625,  1630,  1631,
+    1635,  1636,  1642,  1646,  1647,  1650,  1652,  1657,  1660,  1662,
+    1664,  1667,  1669,  1674,  1679,  1680,  1684,  1689,  1691,  1696,
+    1698,  1703,  1705,  1707,  1709,  1712,  1714,  1719,  1725,  1727,
+    1729,  1734,  1736,  1742,  1743,  1747,  1748,  1749,  1750,  1754,
+    1759,  1760,  1762,  1764,  1766,  1770,  1774,  1775,  1779,  1781,
+    1783,  1785,  1787,  1793,  1794,  1800,  1801,  1805,  1806,  1811,
+    1813,  1822,  1823,  1825,  1830,  1835,  1846,  1847,  1851,  1852,
+    1858,  1859,  1863,  1865,  1869,  1871,  1875,  1876,  1880,  1881,
+    1885,  1892,  1893,  1897,  1899,  1914,  1915,  1916,  1917,  1919,
+    1923,  1925,  1929,  1936,  1938,  1940,  1945,  1946,  1948,  1950,
+    1952,  1984,  1987,  1992,  1994,  2000,  2005,  2010,  2021,  2028,
+    2033,  2035,  2037,  2043,  2047,  2054,  2056,  2057,  2058,  2074,
+    2076,  2079,  2081,  2084,  2089,  2090,  2094,  2095,  2096,  2097,
+    2107,  2108,  2109,  2118,  2119,  2120,  2124,  2125,  2126,  2135,
+    2136,  2137,  2142,  2143,  2152,  2153,  2158,  2159,  2163,  2165,
+    2167,  2169,  2171,  2176,  2181,  2182,  2184,  2194,  2195,  2200,
+    2202,  2204,  2206,  2208,  2210,  2213,  2215,  2217,  2222,  2224,
+    2226,  2228,  2230,  2232,  2234,  2236,  2238,  2240,  2242,  2244,
+    2246,  2248,  2250,  2252,  2254,  2256,  2258,  2260,  2262,  2264,
+    2266,  2268,  2270,  2272,  2274,  2276,  2281,  2282,  2286,  2293,
+    2294,  2300,  2301,  2303,  2305,  2307,  2312,  2314,  2319,  2320,
+    2322,  2324,  2329,  2331,  2333,  2335,  2337,  2339,  2344,  2351,
+    2353,  2355,  2360,  2368,  2367,  2371,  2379,  2380,  2382,  2384,
+    2389,  2390,  2392,  2397,  2398,  2400,  2402,  2407,  2408,  2410,
+    2415,  2417,  2419,  2421,  2422,  2424,  2429,  2431,  2433,  2438,
+    2445,  2449,  2450,  2455,  2454,  2459,  2458,  2468,  2467,  2478,
+    2477,  2487,  2492,  2493,  2498,  2504,  2522,  2523,  2527,  2529,
+    2531,  2537,  2539,  2541,  2543,  2548,  2550,  2555,  2557,  2566,
+    2567,  2572,  2581,  2583,  2585,  2594,  2596,  2597,  2598,  2600,
+    2602,  2603,  2608,  2609,  2610,  2615,  2617,  2620,  2623,  2630,
+    2631,  2632,  2638,  2643,  2645,  2651,  2652,  2658,  2659,  2663,
+    2668,  2671,  2670,  2674,  2677,  2684,  2689,  2688,  2697,  2702,
+    2707,  2712,  2717,  2718,  2723,  2725,  2730,  2732,  2734,  2736,
+    2741,  2742,  2748,  2749,  2750,  2757,  2758,  2760,  2761,  2762,
+    2764,  2766,  2773,  2774,  2776,  2778,  2783,  2784,  2790,  2791,
+    2793,  2794,  2799,  2800,  2801,  2803,  2811,  2812,  2814,  2817,
+    2819,  2823,  2824,  2825,  2827,  2829,  2834,  2836,  2841,  2843,
+    2852,  2854,  2859,  2860,  2861,  2865,  2866,  2867,  2872,  2873,
+    2878,  2879,  2880,  2881,  2885,  2886,  2891,  2892,  2893,  2894,
+    2895,  2909,  2910,  2915,  2916,  2922,  2924,  2927,  2929,  2931,
+    2954,  2955,  2961,  2962,  2968,  2967,  2977,  2976,  2980,  2986,
+    2992,  2993,  2995,  2999,  3004,  3006,  3008,  3010,  3016,  3017,
+    3021,  3022,  3027,  3029,  3036,  3038,  3039,  3041,  3046,  3048,
+    3050,  3055,  3057,  3062,  3067,  3075,  3080,  3082,  3087,  3092,
+    3093,  3098,  3099,  3103,  3104,  3105,  3110,  3112,  3118,  3120,
+    3125,  3127,  3133,  3134,  3138,  3142,  3146,  3148,  3161,  3163,
+    3165,  3167,  3169,  3171,  3173,  3174,  3179,  3182,  3181,  3193,
+    3192,  3205,  3204,  3216,  3215,  3227,  3226,  3240,  3246,  3248,
+    3254,  3255,  3266,  3273,  3278,  3284,  3287,  3290,  3294,  3300,
+    3303,  3306,  3311,  3312,  3313,  3314,  3318,  3324,  3325,  3335,
+    3336,  3340,  3341,  3346,  3351,  3352,  3358,  3359,  3361,  3366,
+    3367,  3368,  3369,  3370,  3372,  3407,  3409,  3414,  3416,  3417,
+    3419,  3424,  3426,  3428,  3430,  3435,  3437,  3439,  3441,  3443,
+    3445,  3447,  3452,  3454,  3456,  3458,  3467,  3469,  3470,  3475,
+    3477,  3479,  3481,  3483,  3488,  3490,  3492,  3494,  3499,  3501,
+    3503,  3505,  3507,  3509,  3521,  3522,  3523,  3527,  3529,  3531,
+    3533,  3535,  3540,  3542,  3544,  3546,  3551,  3553,  3555,  3557,
+    3559,  3561,  3573,  3578,  3583,  3585,  3586,  3588,  3593,  3595,
+    3597,  3599,  3604,  3606,  3608,  3610,  3612,  3614,  3616,  3621,
+    3623,  3625,  3627,  3636,  3638,  3639,  3644,  3646,  3648,  3650,
+    3652,  3657,  3659,  3661,  3663,  3668,  3670,  3672,  3674,  3676,
+    3678,  3688,  3690,  3692,  3693,  3695,  3700,  3702,  3704,  3709,
+    3711,  3713,  3715,  3720,  3722,  3724,  3738,  3740,  3742,  3743,
+    3745,  3750,  3752,  3757,  3759,  3761,  3766,  3768,  3773,  3775,
+    3792,  3793,  3795,  3800,  3802,  3804,  3806,  3808,  3813,  3814,
+    3816,  3818,  3823,  3825,  3827,  3833,  3835,  3838,  3841,  3843,
+    3847,  3849,  3851,  3852,  3854,  3856,  3860,  3862,  3867,  3869,
+    3871,  3873,  3908,  3909,  3913,  3914,  3916,  3918,  3923,  3925,
+    3927,  3929,  3931,  3936,  3937,  3939,  3941,  3946,  3948,  3950,
+    3956,  3957,  3959,  3968,  3971,  3973,  3976,  3978,  3980,  3994,
+    3995,  3997,  4002,  4004,  4006,  4008,  4010,  4015,  4016,  4018,
+    4020,  4025,  4027,  4035,  4036,  4037,  4042,  4043,  4048,  4050,
+    4052,  4054,  4056,  4058,  4065,  4067,  4069,  4071,  4073,  4076,
+    4078,  4080,  4082,  4084,  4089,  4091,  4093,  4098,  4124,  4125,
+    4127,  4131,  4132,  4136,  4138,  4140,  4142,  4144,  4146,  4153,
+    4155,  4157,  4159,  4161,  4163,  4168,  4170,  4172,  4179,  4181,
+    4199,  4201,  4206,  4207
 };
 #endif
 
@@ -7970,165 +7971,165 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 606 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 608 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { typedefTable.enterScope(); }
-#line 7976 "Parser/parser.cc"
+#line 7977 "Parser/parser.cc"
     break;
 
   case 3:
-#line 610 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 612 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { typedefTable.leaveScope(); }
-#line 7982 "Parser/parser.cc"
+#line 7983 "Parser/parser.cc"
     break;
 
   case 4:
-#line 617 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 619 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.en) = new ExpressionNode( build_constantInteger( yylloc, *(yyvsp[0].tok) ) ); }
-#line 7988 "Parser/parser.cc"
+#line 7989 "Parser/parser.cc"
     break;
 
   case 5:
-#line 618 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 620 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                         { (yyval.en) = new ExpressionNode( build_constantFloat( yylloc, *(yyvsp[0].tok) ) ); }
-#line 7994 "Parser/parser.cc"
+#line 7995 "Parser/parser.cc"
     break;
 
   case 6:
-#line 619 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 621 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                         { (yyval.en) = new ExpressionNode( build_constantFloat( yylloc, *(yyvsp[0].tok) ) ); }
-#line 8000 "Parser/parser.cc"
+#line 8001 "Parser/parser.cc"
     break;
 
   case 7:
-#line 620 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 622 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.en) = new ExpressionNode( build_constantFloat( yylloc, *(yyvsp[0].tok) ) ); }
-#line 8006 "Parser/parser.cc"
+#line 8007 "Parser/parser.cc"
     break;
 
   case 8:
-#line 621 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 623 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.en) = new ExpressionNode( build_constantChar( yylloc, *(yyvsp[0].tok) ) ); }
-#line 8012 "Parser/parser.cc"
+#line 8013 "Parser/parser.cc"
     break;
 
   case 20:
-#line 643 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 645 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { Token tok = { new string( DeclarationNode::anonymous.newName() ), yylval.tok.loc }; (yyval.tok) = tok; }
-#line 8018 "Parser/parser.cc"
+#line 8019 "Parser/parser.cc"
     break;
 
   case 21:
-#line 647 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 649 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.constant) = build_constantStr( yylloc, *(yyvsp[0].str) ); }
-#line 8024 "Parser/parser.cc"
+#line 8025 "Parser/parser.cc"
     break;
 
   case 22:
-#line 651 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 653 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.str) = (yyvsp[0].tok); }
-#line 8030 "Parser/parser.cc"
+#line 8031 "Parser/parser.cc"
     break;
 
   case 23:
-#line 653 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 655 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( ! appendStr( *(yyvsp[-1].str), *(yyvsp[0].tok) ) ) YYERROR;		// append 2nd juxtaposed string to 1st
 			delete (yyvsp[0].tok);									// allocated by lexer
 			(yyval.str) = (yyvsp[-1].str);									// conversion from tok to str
 		}
-#line 8040 "Parser/parser.cc"
+#line 8041 "Parser/parser.cc"
     break;
 
   case 24:
-#line 664 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 666 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_varref( yylloc, (yyvsp[0].tok) ) ); }
-#line 8046 "Parser/parser.cc"
+#line 8047 "Parser/parser.cc"
     break;
 
   case 25:
-#line 666 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 668 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_varref( yylloc, (yyvsp[0].tok) ) ); }
-#line 8052 "Parser/parser.cc"
+#line 8053 "Parser/parser.cc"
     break;
 
   case 26:
-#line 670 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 672 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_dimensionref( yylloc, (yyvsp[0].tok) ) ); }
-#line 8058 "Parser/parser.cc"
+#line 8059 "Parser/parser.cc"
     break;
 
   case 28:
-#line 673 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 675 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[-1].en); }
-#line 8064 "Parser/parser.cc"
+#line 8065 "Parser/parser.cc"
     break;
 
   case 29:
-#line 675 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 677 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::StmtExpr( yylloc, dynamic_cast<ast::CompoundStmt *>( maybeMoveBuild( (yyvsp[-1].sn) ) ) ) ); }
-#line 8070 "Parser/parser.cc"
+#line 8071 "Parser/parser.cc"
     break;
 
   case 30:
-#line 677 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 679 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_qualified_expr( yylloc, (yyvsp[-2].decl), build_varref( yylloc, (yyvsp[0].tok) ) ) ); }
-#line 8076 "Parser/parser.cc"
+#line 8077 "Parser/parser.cc"
     break;
 
   case 31:
-#line 679 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 681 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Qualified name is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 8082 "Parser/parser.cc"
+#line 8083 "Parser/parser.cc"
     break;
 
   case 32:
-#line 681 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 683 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// add the missing control expression to the GenericExpr and return it
 			(yyvsp[-1].genexpr)->control = maybeMoveBuild( (yyvsp[-3].en) );
 			(yyval.en) = new ExpressionNode( (yyvsp[-1].genexpr) );
 		}
-#line 8092 "Parser/parser.cc"
+#line 8093 "Parser/parser.cc"
     break;
 
   case 33:
-#line 691 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 693 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeIdentifier( *(yyvsp[-1].tok).str, *(yyvsp[0].tok).str, "n expression" ); (yyval.en) = nullptr; }
-#line 8098 "Parser/parser.cc"
+#line 8099 "Parser/parser.cc"
     break;
 
   case 34:
-#line 693 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 695 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "type qualifier" ); (yyval.en) = nullptr; }
-#line 8104 "Parser/parser.cc"
+#line 8105 "Parser/parser.cc"
     break;
 
   case 35:
-#line 695 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 697 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "storage class" ); (yyval.en) = nullptr; }
-#line 8110 "Parser/parser.cc"
+#line 8111 "Parser/parser.cc"
     break;
 
   case 36:
-#line 697 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 699 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "type" ); (yyval.en) = nullptr; }
-#line 8116 "Parser/parser.cc"
+#line 8117 "Parser/parser.cc"
     break;
 
   case 37:
-#line 699 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 701 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "type" ); (yyval.en) = nullptr; }
-#line 8122 "Parser/parser.cc"
+#line 8123 "Parser/parser.cc"
     break;
 
   case 38:
-#line 701 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 703 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "type" ); (yyval.en) = nullptr; }
-#line 8128 "Parser/parser.cc"
+#line 8129 "Parser/parser.cc"
     break;
 
   case 40:
-#line 707 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 709 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// steal the association node from the singleton and delete the wrapper
 			assert( 1 == (yyvsp[0].genexpr)->associations.size() );
@@ -8136,280 +8137,280 @@ yyreduce:
 			delete (yyvsp[0].genexpr);
 			(yyval.genexpr) = (yyvsp[-2].genexpr);
 		}
-#line 8140 "Parser/parser.cc"
+#line 8141 "Parser/parser.cc"
     break;
 
   case 41:
-#line 718 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 720 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// create a GenericExpr wrapper with one association pair
 			(yyval.genexpr) = new ast::GenericExpr( yylloc, nullptr, { { maybeMoveBuildType( (yyvsp[-2].decl) ), maybeMoveBuild( (yyvsp[0].en) ) } } );
 		}
-#line 8149 "Parser/parser.cc"
+#line 8150 "Parser/parser.cc"
     break;
 
   case 42:
-#line 723 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 725 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.genexpr) = new ast::GenericExpr( yylloc, nullptr, { { maybeMoveBuild( (yyvsp[0].en) ) } } ); }
-#line 8155 "Parser/parser.cc"
+#line 8156 "Parser/parser.cc"
     break;
 
   case 44:
-#line 732 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 734 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, (yyvsp[-5].en), new ExpressionNode( build_tuple( yylloc, (ExpressionNode *)((yyvsp[-3].en)->set_last( (yyvsp[-1].en) ) ) )) ) ); }
-#line 8161 "Parser/parser.cc"
+#line 8162 "Parser/parser.cc"
     break;
 
   case 45:
-#line 738 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 740 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, (yyvsp[-3].en), (yyvsp[-1].en) ) ); }
-#line 8167 "Parser/parser.cc"
+#line 8168 "Parser/parser.cc"
     break;
 
   case 46:
-#line 740 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 742 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, (yyvsp[-3].en), (yyvsp[-1].en) ) ); }
-#line 8173 "Parser/parser.cc"
+#line 8174 "Parser/parser.cc"
     break;
 
   case 47:
-#line 742 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 744 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, new ExpressionNode( (yyvsp[-3].constant) ), (yyvsp[-1].en) ) ); }
-#line 8179 "Parser/parser.cc"
+#line 8180 "Parser/parser.cc"
     break;
 
   case 48:
-#line 744 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 746 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			Token fn;
 			fn.str = new std::string( "?{}" );			// location undefined - use location of '{'?
 			(yyval.en) = new ExpressionNode( new ast::ConstructorExpr( yylloc, build_func( yylloc, new ExpressionNode( build_varref( yylloc, fn ) ), (ExpressionNode *)( (yyvsp[-3].en) )->set_last( (yyvsp[-1].en) ) ) ) );
 		}
-#line 8189 "Parser/parser.cc"
+#line 8190 "Parser/parser.cc"
     break;
 
   case 49:
-#line 750 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 752 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_func( yylloc, (yyvsp[-3].en), (yyvsp[-1].en) ) ); }
-#line 8195 "Parser/parser.cc"
+#line 8196 "Parser/parser.cc"
     break;
 
   case 50:
-#line 753 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 755 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, new string( "__builtin_va_arg") ) ),
 											   (ExpressionNode *)((yyvsp[-4].en)->set_last( (ExpressionNode *)((yyvsp[-1].decl) ? (yyvsp[-1].decl)->addType( (yyvsp[-2].decl) ) : (yyvsp[-2].decl)) )) ) ); }
-#line 8202 "Parser/parser.cc"
+#line 8203 "Parser/parser.cc"
     break;
 
   case 51:
-#line 756 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 758 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( (yyvsp[0].tok) ) ) ), (yyvsp[-2].en) ) ); }
-#line 8208 "Parser/parser.cc"
+#line 8209 "Parser/parser.cc"
     break;
 
   case 52:
-#line 758 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 760 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( (yyvsp[0].tok) ) ) ), (yyvsp[-2].en) ) ); }
-#line 8214 "Parser/parser.cc"
+#line 8215 "Parser/parser.cc"
     break;
 
   case 53:
-#line 760 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 762 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( (yyvsp[0].tok) ) ) ), new ExpressionNode( (yyvsp[-2].constant) ) ) ); }
-#line 8220 "Parser/parser.cc"
+#line 8221 "Parser/parser.cc"
     break;
 
   case 54:
-#line 762 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 764 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_fieldSel( yylloc, (yyvsp[-2].en), build_varref( yylloc, (yyvsp[0].tok) ) ) ); }
-#line 8226 "Parser/parser.cc"
+#line 8227 "Parser/parser.cc"
     break;
 
   case 55:
-#line 764 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 766 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_fieldSel( yylloc, (yyvsp[-2].en), build_constantInteger( yylloc, *(yyvsp[0].tok) ) ) ); }
-#line 8232 "Parser/parser.cc"
+#line 8233 "Parser/parser.cc"
     break;
 
   case 56:
-#line 766 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 768 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_fieldSel( yylloc, (yyvsp[-1].en), build_field_name_FLOATING_FRACTIONconstant( yylloc, *(yyvsp[0].tok) ) ) ); }
-#line 8238 "Parser/parser.cc"
+#line 8239 "Parser/parser.cc"
     break;
 
   case 57:
-#line 768 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 770 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_fieldSel( yylloc, (yyvsp[-4].en), build_tuple( yylloc, (yyvsp[-1].en) ) ) ); }
-#line 8244 "Parser/parser.cc"
+#line 8245 "Parser/parser.cc"
     break;
 
   case 58:
-#line 770 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 772 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_keyword_cast( yylloc, (yyvsp[0].aggKey), (yyvsp[-2].en) ) ); }
-#line 8250 "Parser/parser.cc"
+#line 8251 "Parser/parser.cc"
     break;
 
   case 59:
-#line 772 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 774 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_pfieldSel( yylloc, (yyvsp[-2].en), build_varref( yylloc, (yyvsp[0].tok) ) ) ); }
-#line 8256 "Parser/parser.cc"
+#line 8257 "Parser/parser.cc"
     break;
 
   case 60:
-#line 774 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 776 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_pfieldSel( yylloc, (yyvsp[-2].en), build_constantInteger( yylloc, *(yyvsp[0].tok) ) ) ); }
-#line 8262 "Parser/parser.cc"
+#line 8263 "Parser/parser.cc"
     break;
 
   case 61:
-#line 776 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 778 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_pfieldSel( yylloc, (yyvsp[-4].en), build_tuple( yylloc, (yyvsp[-1].en) ) ) ); }
-#line 8268 "Parser/parser.cc"
+#line 8269 "Parser/parser.cc"
     break;
 
   case 62:
-#line 778 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 780 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_unary_val( yylloc, OperKinds::IncrPost, (yyvsp[-1].en) ) ); }
-#line 8274 "Parser/parser.cc"
+#line 8275 "Parser/parser.cc"
     break;
 
   case 63:
-#line 780 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 782 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_unary_val( yylloc, OperKinds::DecrPost, (yyvsp[-1].en) ) ); }
-#line 8280 "Parser/parser.cc"
+#line 8281 "Parser/parser.cc"
     break;
 
   case 64:
-#line 782 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 784 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_compoundLiteral( yylloc, (yyvsp[-5].decl), new InitializerNode( (yyvsp[-2].in), true ) ) ); }
-#line 8286 "Parser/parser.cc"
+#line 8287 "Parser/parser.cc"
     break;
 
   case 65:
-#line 784 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 786 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_compoundLiteral( yylloc, (yyvsp[-6].decl), (new InitializerNode( (yyvsp[-2].in), true ))->set_maybeConstructed( false ) ) ); }
-#line 8292 "Parser/parser.cc"
+#line 8293 "Parser/parser.cc"
     break;
 
   case 66:
-#line 786 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 788 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			Token fn;
 			fn.str = new string( "^?{}" );				// location undefined
 			(yyval.en) = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, fn ) ), (ExpressionNode *)( (yyvsp[-3].en) )->set_last( (yyvsp[-1].en) ) ) );
 		}
-#line 8302 "Parser/parser.cc"
+#line 8303 "Parser/parser.cc"
     break;
 
   case 67:
-#line 795 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 797 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 8308 "Parser/parser.cc"
+#line 8309 "Parser/parser.cc"
     break;
 
   case 70:
-#line 802 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 804 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-2].en)->set_last( (yyvsp[0].en) )); }
-#line 8314 "Parser/parser.cc"
+#line 8315 "Parser/parser.cc"
     break;
 
   case 71:
-#line 807 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 809 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Default parameter for argument is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 8320 "Parser/parser.cc"
+#line 8321 "Parser/parser.cc"
     break;
 
   case 74:
-#line 814 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 816 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                         { (yyval.en) = (ExpressionNode *)((yyvsp[-2].en)->set_last( (yyvsp[0].en) )); }
-#line 8326 "Parser/parser.cc"
+#line 8327 "Parser/parser.cc"
     break;
 
   case 76:
-#line 820 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 822 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_fieldSel( yylloc, new ExpressionNode( build_field_name_FLOATING_DECIMALconstant( yylloc, *(yyvsp[-1].tok) ) ), maybeMoveBuild( (yyvsp[0].en) ) ) ); }
-#line 8332 "Parser/parser.cc"
+#line 8333 "Parser/parser.cc"
     break;
 
   case 77:
-#line 822 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 824 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_fieldSel( yylloc, new ExpressionNode( build_field_name_FLOATING_DECIMALconstant( yylloc, *(yyvsp[-3].tok) ) ), build_tuple( yylloc, (yyvsp[-1].en) ) ) ); }
-#line 8338 "Parser/parser.cc"
+#line 8339 "Parser/parser.cc"
     break;
 
   case 78:
-#line 824 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 826 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_fieldSel( yylloc, (yyvsp[-2].en), maybeMoveBuild( (yyvsp[0].en) ) ) ); }
-#line 8344 "Parser/parser.cc"
+#line 8345 "Parser/parser.cc"
     break;
 
   case 79:
-#line 826 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 828 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_fieldSel( yylloc, (yyvsp[-4].en), build_tuple( yylloc, (yyvsp[-1].en) ) ) ); }
-#line 8350 "Parser/parser.cc"
+#line 8351 "Parser/parser.cc"
     break;
 
   case 80:
-#line 828 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 830 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_pfieldSel( yylloc, (yyvsp[-2].en), maybeMoveBuild( (yyvsp[0].en) ) ) ); }
-#line 8356 "Parser/parser.cc"
+#line 8357 "Parser/parser.cc"
     break;
 
   case 81:
-#line 830 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 832 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_pfieldSel( yylloc, (yyvsp[-4].en), build_tuple( yylloc, (yyvsp[-1].en) ) ) ); }
-#line 8362 "Parser/parser.cc"
+#line 8363 "Parser/parser.cc"
     break;
 
   case 82:
-#line 835 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 837 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_field_name_fraction_constants( yylloc, build_constantInteger( yylloc, *(yyvsp[-1].tok) ), (yyvsp[0].en) ) ); }
-#line 8368 "Parser/parser.cc"
+#line 8369 "Parser/parser.cc"
     break;
 
   case 83:
-#line 837 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 839 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_field_name_fraction_constants( yylloc, build_field_name_FLOATINGconstant( yylloc, *(yyvsp[-1].tok) ), (yyvsp[0].en) ) ); }
-#line 8374 "Parser/parser.cc"
+#line 8375 "Parser/parser.cc"
     break;
 
   case 84:
-#line 839 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 841 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.en) = new ExpressionNode( build_field_name_fraction_constants( yylloc, build_varref( yylloc, (yyvsp[-1].tok) ), (yyvsp[0].en) ) );
 		}
-#line 8382 "Parser/parser.cc"
+#line 8383 "Parser/parser.cc"
     break;
 
   case 85:
-#line 846 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 848 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 8388 "Parser/parser.cc"
+#line 8389 "Parser/parser.cc"
     break;
 
   case 86:
-#line 848 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 850 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			ast::Expr * constant = build_field_name_FLOATING_FRACTIONconstant( yylloc, *(yyvsp[0].tok) );
 			(yyval.en) = (yyvsp[-1].en) != nullptr ? new ExpressionNode( build_fieldSel( yylloc, (yyvsp[-1].en), constant ) ) : new ExpressionNode( constant );
 		}
-#line 8397 "Parser/parser.cc"
+#line 8398 "Parser/parser.cc"
     break;
 
   case 89:
-#line 860 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 862 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( (yyvsp[0].constant) ); }
-#line 8403 "Parser/parser.cc"
+#line 8404 "Parser/parser.cc"
     break;
 
   case 90:
-#line 862 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 864 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[0].en)->set_extension( true ); }
-#line 8409 "Parser/parser.cc"
+#line 8410 "Parser/parser.cc"
     break;
 
   case 91:
-#line 867 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 869 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			switch ( (yyvsp[-1].op) ) {
 			case OperKinds::AddressOf:
@@ -8425,284 +8426,284 @@ yyreduce:
 				assert( false );
 			}
 		}
-#line 8429 "Parser/parser.cc"
+#line 8430 "Parser/parser.cc"
     break;
 
   case 92:
-#line 883 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 885 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_unary_val( yylloc, (yyvsp[-1].op), (yyvsp[0].en) ) ); }
-#line 8435 "Parser/parser.cc"
+#line 8436 "Parser/parser.cc"
     break;
 
   case 93:
-#line 885 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 887 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_unary_val( yylloc, OperKinds::Incr, (yyvsp[0].en) ) ); }
-#line 8441 "Parser/parser.cc"
+#line 8442 "Parser/parser.cc"
     break;
 
   case 94:
-#line 887 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 889 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_unary_val( yylloc, OperKinds::Decr, (yyvsp[0].en) ) ); }
-#line 8447 "Parser/parser.cc"
+#line 8448 "Parser/parser.cc"
     break;
 
   case 95:
-#line 889 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 891 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuild( (yyvsp[0].en) ) ) ); }
-#line 8453 "Parser/parser.cc"
+#line 8454 "Parser/parser.cc"
     break;
 
   case 96:
-#line 891 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 893 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuildType( (yyvsp[-1].decl) ) ) ); }
-#line 8459 "Parser/parser.cc"
+#line 8460 "Parser/parser.cc"
     break;
 
   case 97:
-#line 893 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 895 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::AlignofExpr( yylloc, maybeMoveBuild( (yyvsp[0].en) ) ) ); }
-#line 8465 "Parser/parser.cc"
+#line 8466 "Parser/parser.cc"
     break;
 
   case 98:
-#line 895 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 897 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::AlignofExpr( yylloc, maybeMoveBuildType( (yyvsp[-1].decl) ) ) ); }
-#line 8471 "Parser/parser.cc"
+#line 8472 "Parser/parser.cc"
     break;
 
   case 99:
-#line 897 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 899 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_offsetOf( yylloc, (yyvsp[-3].decl), build_varref( yylloc, (yyvsp[-1].tok) ) ) ); }
-#line 8477 "Parser/parser.cc"
+#line 8478 "Parser/parser.cc"
     break;
 
   case 100:
-#line 899 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 901 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, "typeid name is currently unimplemented." ); (yyval.en) = nullptr;
 			// $$ = new ExpressionNode( build_offsetOf( $3, build_varref( $5 ) ) );
 		}
-#line 8486 "Parser/parser.cc"
+#line 8487 "Parser/parser.cc"
     break;
 
   case 101:
-#line 906 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 908 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                                 { (yyval.op) = OperKinds::PointTo; }
-#line 8492 "Parser/parser.cc"
+#line 8493 "Parser/parser.cc"
     break;
 
   case 102:
-#line 907 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 909 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::AddressOf; }
-#line 8498 "Parser/parser.cc"
+#line 8499 "Parser/parser.cc"
     break;
 
   case 103:
-#line 909 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 911 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::And; }
-#line 8504 "Parser/parser.cc"
+#line 8505 "Parser/parser.cc"
     break;
 
   case 104:
-#line 913 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 915 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                                 { (yyval.op) = OperKinds::UnPlus; }
-#line 8510 "Parser/parser.cc"
+#line 8511 "Parser/parser.cc"
     break;
 
   case 105:
-#line 914 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 916 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::UnMinus; }
-#line 8516 "Parser/parser.cc"
+#line 8517 "Parser/parser.cc"
     break;
 
   case 106:
-#line 915 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 917 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::Neg; }
-#line 8522 "Parser/parser.cc"
+#line 8523 "Parser/parser.cc"
     break;
 
   case 107:
-#line 916 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 918 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::BitNeg; }
-#line 8528 "Parser/parser.cc"
+#line 8529 "Parser/parser.cc"
     break;
 
   case 109:
-#line 922 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 924 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_cast( yylloc, (yyvsp[-2].decl), (yyvsp[0].en) ) ); }
-#line 8534 "Parser/parser.cc"
+#line 8535 "Parser/parser.cc"
     break;
 
   case 110:
-#line 924 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 926 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_keyword_cast( yylloc, (yyvsp[-3].aggKey), (yyvsp[0].en) ) ); }
-#line 8540 "Parser/parser.cc"
+#line 8541 "Parser/parser.cc"
     break;
 
   case 111:
-#line 926 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 928 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_keyword_cast( yylloc, (yyvsp[-3].aggKey), (yyvsp[0].en) ) ); }
-#line 8546 "Parser/parser.cc"
+#line 8547 "Parser/parser.cc"
     break;
 
   case 112:
-#line 928 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 930 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::VirtualCastExpr( yylloc, maybeMoveBuild( (yyvsp[0].en) ), maybeMoveBuildType( nullptr ) ) ); }
-#line 8552 "Parser/parser.cc"
+#line 8553 "Parser/parser.cc"
     break;
 
   case 113:
-#line 930 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 932 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::VirtualCastExpr( yylloc, maybeMoveBuild( (yyvsp[0].en) ), maybeMoveBuildType( (yyvsp[-2].decl) ) ) ); }
-#line 8558 "Parser/parser.cc"
+#line 8559 "Parser/parser.cc"
     break;
 
   case 114:
-#line 932 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 934 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Return cast is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 8564 "Parser/parser.cc"
+#line 8565 "Parser/parser.cc"
     break;
 
   case 115:
-#line 934 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 936 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Coerce cast is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 8570 "Parser/parser.cc"
+#line 8571 "Parser/parser.cc"
     break;
 
   case 116:
-#line 936 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 938 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Qualifier cast is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 8576 "Parser/parser.cc"
+#line 8577 "Parser/parser.cc"
     break;
 
   case 124:
-#line 956 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 958 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Exp, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8582 "Parser/parser.cc"
+#line 8583 "Parser/parser.cc"
     break;
 
   case 126:
-#line 962 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 964 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Mul, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8588 "Parser/parser.cc"
+#line 8589 "Parser/parser.cc"
     break;
 
   case 127:
-#line 964 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 966 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Div, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8594 "Parser/parser.cc"
+#line 8595 "Parser/parser.cc"
     break;
 
   case 128:
-#line 966 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 968 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Mod, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8600 "Parser/parser.cc"
+#line 8601 "Parser/parser.cc"
     break;
 
   case 130:
-#line 972 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 974 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Plus, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8606 "Parser/parser.cc"
+#line 8607 "Parser/parser.cc"
     break;
 
   case 131:
-#line 974 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 976 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Minus, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8612 "Parser/parser.cc"
+#line 8613 "Parser/parser.cc"
     break;
 
   case 133:
-#line 980 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 982 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::LShift, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8618 "Parser/parser.cc"
+#line 8619 "Parser/parser.cc"
     break;
 
   case 134:
-#line 982 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 984 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::RShift, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8624 "Parser/parser.cc"
+#line 8625 "Parser/parser.cc"
     break;
 
   case 136:
-#line 988 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 990 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::LThan, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8630 "Parser/parser.cc"
+#line 8631 "Parser/parser.cc"
     break;
 
   case 137:
-#line 990 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 992 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::GThan, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8636 "Parser/parser.cc"
+#line 8637 "Parser/parser.cc"
     break;
 
   case 138:
-#line 992 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 994 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::LEThan, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8642 "Parser/parser.cc"
+#line 8643 "Parser/parser.cc"
     break;
 
   case 139:
-#line 994 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 996 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::GEThan, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8648 "Parser/parser.cc"
+#line 8649 "Parser/parser.cc"
     break;
 
   case 141:
-#line 1000 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1002 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Eq, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8654 "Parser/parser.cc"
+#line 8655 "Parser/parser.cc"
     break;
 
   case 142:
-#line 1002 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1004 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Neq, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8660 "Parser/parser.cc"
+#line 8661 "Parser/parser.cc"
     break;
 
   case 144:
-#line 1008 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1010 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::BitAnd, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8666 "Parser/parser.cc"
+#line 8667 "Parser/parser.cc"
     break;
 
   case 146:
-#line 1014 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1016 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::Xor, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8672 "Parser/parser.cc"
+#line 8673 "Parser/parser.cc"
     break;
 
   case 148:
-#line 1020 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1022 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_binary_val( yylloc, OperKinds::BitOr, (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8678 "Parser/parser.cc"
+#line 8679 "Parser/parser.cc"
     break;
 
   case 150:
-#line 1026 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1028 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_and_or( yylloc, (yyvsp[-2].en), (yyvsp[0].en), ast::AndExpr ) ); }
-#line 8684 "Parser/parser.cc"
+#line 8685 "Parser/parser.cc"
     break;
 
   case 152:
-#line 1032 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1034 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_and_or( yylloc, (yyvsp[-2].en), (yyvsp[0].en), ast::OrExpr ) ); }
-#line 8690 "Parser/parser.cc"
+#line 8691 "Parser/parser.cc"
     break;
 
   case 154:
-#line 1038 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1040 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_cond( yylloc, (yyvsp[-4].en), (yyvsp[-2].en), (yyvsp[0].en) ) ); }
-#line 8696 "Parser/parser.cc"
+#line 8697 "Parser/parser.cc"
     break;
 
   case 155:
-#line 1041 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1043 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_cond( yylloc, (yyvsp[-3].en), (yyvsp[-3].en), (yyvsp[0].en) ) ); }
-#line 8702 "Parser/parser.cc"
+#line 8703 "Parser/parser.cc"
     break;
 
   case 158:
-#line 1052 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1054 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 //			if ( $2 == OperKinds::AtAssn ) {
 //				SemanticError( yylloc, "C @= assignment is currently unimplemented." ); $$ = nullptr;
@@ -8710,246 +8711,246 @@ yyreduce:
 				(yyval.en) = new ExpressionNode( build_binary_val( yylloc, (yyvsp[-1].op), (yyvsp[-2].en), (yyvsp[0].en) ) );
 //			} // if
 		}
-#line 8714 "Parser/parser.cc"
+#line 8715 "Parser/parser.cc"
     break;
 
   case 159:
-#line 1060 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1062 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Initializer assignment is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 8720 "Parser/parser.cc"
+#line 8721 "Parser/parser.cc"
     break;
 
   case 160:
-#line 1065 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1067 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 8726 "Parser/parser.cc"
+#line 8727 "Parser/parser.cc"
     break;
 
   case 164:
-#line 1075 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1077 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                                 { (yyval.op) = OperKinds::Assign; }
-#line 8732 "Parser/parser.cc"
+#line 8733 "Parser/parser.cc"
     break;
 
   case 165:
-#line 1076 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1078 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::AtAssn; }
-#line 8738 "Parser/parser.cc"
+#line 8739 "Parser/parser.cc"
     break;
 
   case 166:
-#line 1080 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1082 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::ExpAssn; }
-#line 8744 "Parser/parser.cc"
+#line 8745 "Parser/parser.cc"
     break;
 
   case 167:
-#line 1081 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1083 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.op) = OperKinds::MulAssn; }
-#line 8750 "Parser/parser.cc"
+#line 8751 "Parser/parser.cc"
     break;
 
   case 168:
-#line 1082 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1084 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::DivAssn; }
-#line 8756 "Parser/parser.cc"
+#line 8757 "Parser/parser.cc"
     break;
 
   case 169:
-#line 1083 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1085 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::ModAssn; }
-#line 8762 "Parser/parser.cc"
+#line 8763 "Parser/parser.cc"
     break;
 
   case 170:
-#line 1084 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1086 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.op) = OperKinds::PlusAssn; }
-#line 8768 "Parser/parser.cc"
+#line 8769 "Parser/parser.cc"
     break;
 
   case 171:
-#line 1085 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1087 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.op) = OperKinds::MinusAssn; }
-#line 8774 "Parser/parser.cc"
+#line 8775 "Parser/parser.cc"
     break;
 
   case 172:
-#line 1086 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1088 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::LSAssn; }
-#line 8780 "Parser/parser.cc"
+#line 8781 "Parser/parser.cc"
     break;
 
   case 173:
-#line 1087 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1089 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::RSAssn; }
-#line 8786 "Parser/parser.cc"
+#line 8787 "Parser/parser.cc"
     break;
 
   case 174:
-#line 1088 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1090 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::AndAssn; }
-#line 8792 "Parser/parser.cc"
+#line 8793 "Parser/parser.cc"
     break;
 
   case 175:
-#line 1089 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1091 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::ERAssn; }
-#line 8798 "Parser/parser.cc"
+#line 8799 "Parser/parser.cc"
     break;
 
   case 176:
-#line 1090 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1092 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.op) = OperKinds::OrAssn; }
-#line 8804 "Parser/parser.cc"
+#line 8805 "Parser/parser.cc"
     break;
 
   case 177:
-#line 1101 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1103 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_tuple( yylloc, (ExpressionNode *)(new ExpressionNode( nullptr ) )->set_last( (yyvsp[-1].en) ) ) ); }
-#line 8810 "Parser/parser.cc"
+#line 8811 "Parser/parser.cc"
     break;
 
   case 178:
-#line 1103 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1105 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_tuple( yylloc, (ExpressionNode *)((yyvsp[-4].en)->set_last( (yyvsp[-1].en) ) ) )); }
-#line 8816 "Parser/parser.cc"
+#line 8817 "Parser/parser.cc"
     break;
 
   case 180:
-#line 1109 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1111 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Eliding tuple element with '@' is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 8822 "Parser/parser.cc"
+#line 8823 "Parser/parser.cc"
     break;
 
   case 181:
-#line 1111 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1113 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-2].en)->set_last( (yyvsp[0].en) )); }
-#line 8828 "Parser/parser.cc"
+#line 8829 "Parser/parser.cc"
     break;
 
   case 182:
-#line 1113 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1115 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Eliding tuple element with '@' is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 8834 "Parser/parser.cc"
+#line 8835 "Parser/parser.cc"
     break;
 
   case 184:
-#line 1119 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1121 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::CommaExpr( yylloc, maybeMoveBuild( (yyvsp[-2].en) ), maybeMoveBuild( (yyvsp[0].en) ) ) ); }
-#line 8840 "Parser/parser.cc"
+#line 8841 "Parser/parser.cc"
     break;
 
   case 185:
-#line 1124 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1126 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 8846 "Parser/parser.cc"
+#line 8847 "Parser/parser.cc"
     break;
 
   case 198:
-#line 1143 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1145 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "enable/disable statement is currently unimplemented." ); (yyval.sn) = nullptr; }
-#line 8852 "Parser/parser.cc"
+#line 8853 "Parser/parser.cc"
     break;
 
   case 200:
-#line 1146 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1148 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_directive( yylloc, (yyvsp[0].tok) ) ); }
-#line 8858 "Parser/parser.cc"
+#line 8859 "Parser/parser.cc"
     break;
 
   case 201:
-#line 1152 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1154 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = (yyvsp[0].sn)->add_label( yylloc, (yyvsp[-3].tok), (yyvsp[-1].decl) ); }
-#line 8864 "Parser/parser.cc"
+#line 8865 "Parser/parser.cc"
     break;
 
   case 202:
-#line 1154 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1156 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, ::toString( "Label \"", *(yyvsp[-3].tok).str, "\" must be associated with a statement, "
 											   "where a declaration, case, or default is not a statement. "
 											   "Move the label or terminate with a semi-colon." ) );
 			(yyval.sn) = nullptr;
 		}
-#line 8875 "Parser/parser.cc"
+#line 8876 "Parser/parser.cc"
     break;
 
   case 203:
-#line 1164 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1166 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_compound( yylloc, (StatementNode *)0 ) ); }
-#line 8881 "Parser/parser.cc"
+#line 8882 "Parser/parser.cc"
     break;
 
   case 204:
-#line 1169 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1171 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_compound( yylloc, (yyvsp[-2].sn) ) ); }
-#line 8887 "Parser/parser.cc"
+#line 8888 "Parser/parser.cc"
     break;
 
   case 206:
-#line 1175 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1177 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { assert( (yyvsp[-1].sn) ); (yyvsp[-1].sn)->set_last( (yyvsp[0].sn) ); (yyval.sn) = (yyvsp[-1].sn); }
-#line 8893 "Parser/parser.cc"
+#line 8894 "Parser/parser.cc"
     break;
 
   case 207:
-#line 1180 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1182 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( (yyvsp[0].decl) ); }
-#line 8899 "Parser/parser.cc"
+#line 8900 "Parser/parser.cc"
     break;
 
   case 208:
-#line 1182 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1184 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { distExt( (yyvsp[0].decl) ); (yyval.sn) = new StatementNode( (yyvsp[0].decl) ); }
-#line 8905 "Parser/parser.cc"
+#line 8906 "Parser/parser.cc"
     break;
 
   case 209:
-#line 1184 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1186 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( (yyvsp[0].decl) ); }
-#line 8911 "Parser/parser.cc"
+#line 8912 "Parser/parser.cc"
     break;
 
   case 210:
-#line 1186 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1188 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { distExt( (yyvsp[0].decl) ); (yyval.sn) = new StatementNode( (yyvsp[0].decl) ); }
-#line 8917 "Parser/parser.cc"
+#line 8918 "Parser/parser.cc"
     break;
 
   case 213:
-#line 1193 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1195 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { assert( (yyvsp[-1].sn) ); (yyvsp[-1].sn)->set_last( (yyvsp[0].sn) ); (yyval.sn) = (yyvsp[-1].sn); }
-#line 8923 "Parser/parser.cc"
+#line 8924 "Parser/parser.cc"
     break;
 
   case 214:
-#line 1195 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1197 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Declarations only allowed at the start of the switch body, i.e., after the '{'." ); (yyval.sn) = nullptr; }
-#line 8929 "Parser/parser.cc"
+#line 8930 "Parser/parser.cc"
     break;
 
   case 215:
-#line 1200 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1202 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_expr( yylloc, (yyvsp[-1].en) ) ); }
-#line 8935 "Parser/parser.cc"
+#line 8936 "Parser/parser.cc"
     break;
 
   case 216:
-#line 1207 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1209 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = (yyvsp[-1].sn); }
-#line 8941 "Parser/parser.cc"
+#line 8942 "Parser/parser.cc"
     break;
 
   case 217:
-#line 1209 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = new StatementNode( build_switch( yylloc, true, (yyvsp[-2].en), (yyvsp[0].sn) ) ); }
-#line 8947 "Parser/parser.cc"
+#line 1211 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.sn) = new StatementNode( build_switch( yylloc, true, (yyvsp[-2].en), (yyvsp[0].clause) ) ); }
+#line 8948 "Parser/parser.cc"
     break;
 
   case 218:
-#line 1211 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1213 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
-			StatementNode *sw = new StatementNode( build_switch( yylloc, true, (yyvsp[-7].en), (yyvsp[-2].sn) ) );
+			StatementNode *sw = new StatementNode( build_switch( yylloc, true, (yyvsp[-7].en), (yyvsp[-2].clause) ) );
 			// The semantics of the declaration list is changed to include associated initialization, which is performed
 			// *before* the transfer to the appropriate case clause by hoisting the declarations into a compound
 			// statement around the switch.  Statements after the initial declaration list can never be executed, and
@@ -8957,239 +8958,239 @@ yyreduce:
 			// statement.
 			(yyval.sn) = (yyvsp[-3].decl) ? new StatementNode( build_compound( yylloc, (StatementNode *)((new StatementNode( (yyvsp[-3].decl) ))->set_last( sw )) ) ) : sw;
 		}
-#line 8961 "Parser/parser.cc"
+#line 8962 "Parser/parser.cc"
     break;
 
   case 219:
-#line 1221 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1223 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Only declarations can appear before the list of case clauses." ); (yyval.sn) = nullptr; }
-#line 8967 "Parser/parser.cc"
+#line 8968 "Parser/parser.cc"
     break;
 
   case 220:
-#line 1223 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = new StatementNode( build_switch( yylloc, false, (yyvsp[-2].en), (yyvsp[0].sn) ) ); }
-#line 8973 "Parser/parser.cc"
+#line 1225 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.sn) = new StatementNode( build_switch( yylloc, false, (yyvsp[-2].en), (yyvsp[0].clause) ) ); }
+#line 8974 "Parser/parser.cc"
     break;
 
   case 221:
-#line 1225 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1227 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
-			StatementNode *sw = new StatementNode( build_switch( yylloc, false, (yyvsp[-7].en), (yyvsp[-2].sn) ) );
+			StatementNode *sw = new StatementNode( build_switch( yylloc, false, (yyvsp[-7].en), (yyvsp[-2].clause) ) );
 			(yyval.sn) = (yyvsp[-3].decl) ? new StatementNode( build_compound( yylloc, (StatementNode *)((new StatementNode( (yyvsp[-3].decl) ))->set_last( sw )) ) ) : sw;
 		}
-#line 8982 "Parser/parser.cc"
+#line 8983 "Parser/parser.cc"
     break;
 
   case 222:
-#line 1230 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1232 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Only declarations can appear before the list of case clauses." ); (yyval.sn) = nullptr; }
-#line 8988 "Parser/parser.cc"
+#line 8989 "Parser/parser.cc"
     break;
 
   case 223:
-#line 1236 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1238 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_if( yylloc, (yyvsp[-2].ifctl), maybe_build_compound( yylloc, (yyvsp[0].sn) ), nullptr ) ); }
-#line 8994 "Parser/parser.cc"
+#line 8995 "Parser/parser.cc"
     break;
 
   case 224:
-#line 1238 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1240 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_if( yylloc, (yyvsp[-4].ifctl), maybe_build_compound( yylloc, (yyvsp[-2].sn) ), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ) ); }
-#line 9000 "Parser/parser.cc"
+#line 9001 "Parser/parser.cc"
     break;
 
   case 225:
-#line 1243 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1245 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.ifctl) = new CondCtl( nullptr, (yyvsp[0].en) ); }
-#line 9006 "Parser/parser.cc"
+#line 9007 "Parser/parser.cc"
     break;
 
   case 226:
-#line 1245 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1247 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.ifctl) = new CondCtl( (yyvsp[0].decl), nullptr ); }
-#line 9012 "Parser/parser.cc"
+#line 9013 "Parser/parser.cc"
     break;
 
   case 227:
-#line 1247 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1249 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.ifctl) = new CondCtl( (yyvsp[0].decl), nullptr ); }
-#line 9018 "Parser/parser.cc"
+#line 9019 "Parser/parser.cc"
     break;
 
   case 228:
-#line 1249 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1251 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.ifctl) = new CondCtl( (yyvsp[-1].decl), (yyvsp[0].en) ); }
-#line 9024 "Parser/parser.cc"
+#line 9025 "Parser/parser.cc"
     break;
 
   case 229:
-#line 1256 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1258 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.en) = (yyvsp[0].en); }
-#line 9030 "Parser/parser.cc"
+#line 9031 "Parser/parser.cc"
     break;
 
   case 230:
-#line 1258 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1260 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::RangeExpr( yylloc, maybeMoveBuild( (yyvsp[-2].en) ), maybeMoveBuild( (yyvsp[0].en) ) ) ); }
-#line 9036 "Parser/parser.cc"
+#line 9037 "Parser/parser.cc"
     break;
 
   case 232:
-#line 1263 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                                                                                        { (yyval.sn) = new StatementNode( build_case( (yyvsp[0].en) ) ); }
-#line 9042 "Parser/parser.cc"
+#line 1265 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                                                                                        { (yyval.clause) = new ClauseNode( build_case( yylloc, (yyvsp[0].en) ) ); }
+#line 9043 "Parser/parser.cc"
     break;
 
   case 233:
-#line 1265 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                                                                { (yyval.sn) = (StatementNode *)((yyvsp[-2].sn)->set_last( new StatementNode( build_case( (yyvsp[0].en) ) ) ) ); }
-#line 9048 "Parser/parser.cc"
+#line 1267 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                                                                { (yyval.clause) = (yyvsp[-2].clause)->set_last( new ClauseNode( build_case( yylloc, (yyvsp[0].en) ) ) ); }
+#line 9049 "Parser/parser.cc"
     break;
 
   case 234:
-#line 1270 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "Missing case list after case." ); (yyval.sn) = nullptr; }
-#line 9054 "Parser/parser.cc"
+#line 1272 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { SemanticError( yylloc, "Missing case list after case." ); (yyval.clause) = nullptr; }
+#line 9055 "Parser/parser.cc"
     break;
 
   case 235:
-#line 1271 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                                                                        { (yyval.sn) = (yyvsp[-1].sn); }
-#line 9060 "Parser/parser.cc"
+#line 1273 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                                                                        { (yyval.clause) = (yyvsp[-1].clause); }
+#line 9061 "Parser/parser.cc"
     break;
 
   case 236:
-#line 1273 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "Missing colon after case list." ); (yyval.sn) = nullptr; }
-#line 9066 "Parser/parser.cc"
+#line 1275 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { SemanticError( yylloc, "Missing colon after case list." ); (yyval.clause) = nullptr; }
+#line 9067 "Parser/parser.cc"
     break;
 
   case 237:
-#line 1274 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                                                                                { (yyval.sn) = new StatementNode( build_default( yylloc ) ); }
-#line 9072 "Parser/parser.cc"
+#line 1276 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                                                                                { (yyval.clause) = new ClauseNode( build_default( yylloc ) ); }
+#line 9073 "Parser/parser.cc"
     break;
 
   case 238:
-#line 1277 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "Missing colon after default." ); (yyval.sn) = nullptr; }
-#line 9078 "Parser/parser.cc"
+#line 1279 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { SemanticError( yylloc, "Missing colon after default." ); (yyval.clause) = nullptr; }
+#line 9079 "Parser/parser.cc"
     break;
 
   case 240:
-#line 1282 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                                                                { (yyval.sn) = (StatementNode *)( (yyvsp[-1].sn)->set_last( (yyvsp[0].sn) )); }
-#line 9084 "Parser/parser.cc"
+#line 1284 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                                                                { (yyval.clause) = (yyvsp[-1].clause)->set_last( (yyvsp[0].clause) ); }
+#line 9085 "Parser/parser.cc"
     break;
 
   case 241:
-#line 1286 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                                                                        { (yyval.sn) = (yyvsp[-1].sn)->append_last_case( maybe_build_compound( yylloc, (yyvsp[0].sn) ) ); }
-#line 9090 "Parser/parser.cc"
+#line 1288 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                                                                        { (yyval.clause) = (yyvsp[-1].clause)->append_last_case( maybe_build_compound( yylloc, (yyvsp[0].sn) ) ); }
+#line 9091 "Parser/parser.cc"
     break;
 
   case 242:
-#line 1291 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = nullptr; }
-#line 9096 "Parser/parser.cc"
+#line 1293 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.clause) = nullptr; }
+#line 9097 "Parser/parser.cc"
     break;
 
   case 244:
-#line 1297 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = (yyvsp[-1].sn)->append_last_case( new StatementNode( build_compound( yylloc, (yyvsp[0].sn) ) ) ); }
-#line 9102 "Parser/parser.cc"
+#line 1299 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.clause) = (yyvsp[-1].clause)->append_last_case( new StatementNode( build_compound( yylloc, (yyvsp[0].sn) ) ) ); }
+#line 9103 "Parser/parser.cc"
     break;
 
   case 245:
-#line 1299 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = (StatementNode *)( (yyvsp[-2].sn)->set_last( (yyvsp[-1].sn)->append_last_case( new StatementNode( build_compound( yylloc, (yyvsp[0].sn) ) ) ) ) ); }
-#line 9108 "Parser/parser.cc"
+#line 1301 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.clause) = (yyvsp[-2].clause)->set_last( (yyvsp[-1].clause)->append_last_case( new StatementNode( build_compound( yylloc, (yyvsp[0].sn) ) ) ) ); }
+#line 9109 "Parser/parser.cc"
     break;
 
   case 246:
-#line 1304 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1306 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_while( yylloc, new CondCtl( nullptr, NEW_ONE ), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ) ); }
-#line 9114 "Parser/parser.cc"
+#line 9115 "Parser/parser.cc"
     break;
 
   case 247:
-#line 1306 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1308 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.sn) = new StatementNode( build_while( yylloc, new CondCtl( nullptr, NEW_ONE ), maybe_build_compound( yylloc, (yyvsp[-2].sn) ) ) );
 			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
-#line 9123 "Parser/parser.cc"
+#line 9124 "Parser/parser.cc"
     break;
 
   case 248:
-#line 1311 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1313 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_while( yylloc, (yyvsp[-2].ifctl), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ) ); }
-#line 9129 "Parser/parser.cc"
+#line 9130 "Parser/parser.cc"
     break;
 
   case 249:
-#line 1313 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1315 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_while( yylloc, (yyvsp[-4].ifctl), maybe_build_compound( yylloc, (yyvsp[-2].sn) ), (yyvsp[0].sn) ) ); }
-#line 9135 "Parser/parser.cc"
+#line 9136 "Parser/parser.cc"
     break;
 
   case 250:
-#line 1315 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1317 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_do_while( yylloc, NEW_ONE, maybe_build_compound( yylloc, (yyvsp[-4].sn) ) ) ); }
-#line 9141 "Parser/parser.cc"
+#line 9142 "Parser/parser.cc"
     break;
 
   case 251:
-#line 1317 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1319 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.sn) = new StatementNode( build_do_while( yylloc, NEW_ONE, maybe_build_compound( yylloc, (yyvsp[-5].sn) ) ) );
 			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
-#line 9150 "Parser/parser.cc"
+#line 9151 "Parser/parser.cc"
     break;
 
   case 252:
-#line 1322 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1324 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_do_while( yylloc, (yyvsp[-2].en), maybe_build_compound( yylloc, (yyvsp[-5].sn) ) ) ); }
-#line 9156 "Parser/parser.cc"
+#line 9157 "Parser/parser.cc"
     break;
 
   case 253:
-#line 1324 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1326 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_do_while( yylloc, (yyvsp[-3].en), maybe_build_compound( yylloc, (yyvsp[-6].sn) ), (yyvsp[0].sn) ) ); }
-#line 9162 "Parser/parser.cc"
+#line 9163 "Parser/parser.cc"
     break;
 
   case 254:
-#line 1326 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1328 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_for( yylloc, new ForCtrl( nullptr, nullptr, nullptr ), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ) ); }
-#line 9168 "Parser/parser.cc"
+#line 9169 "Parser/parser.cc"
     break;
 
   case 255:
-#line 1328 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1330 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.sn) = new StatementNode( build_for( yylloc, new ForCtrl( nullptr, nullptr, nullptr ), maybe_build_compound( yylloc, (yyvsp[-2].sn) ) ) );
 			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
-#line 9177 "Parser/parser.cc"
+#line 9178 "Parser/parser.cc"
     break;
 
   case 256:
-#line 1333 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1335 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_for( yylloc, (yyvsp[-2].fctl), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ) ); }
-#line 9183 "Parser/parser.cc"
+#line 9184 "Parser/parser.cc"
     break;
 
   case 257:
-#line 1335 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1337 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_for( yylloc, (yyvsp[-4].fctl), maybe_build_compound( yylloc, (yyvsp[-2].sn) ), (yyvsp[0].sn) ) ); }
-#line 9189 "Parser/parser.cc"
+#line 9190 "Parser/parser.cc"
     break;
 
   case 259:
-#line 1345 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1347 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyvsp[-2].fctl)->init->set_last( (yyvsp[0].fctl)->init );
 			if ( (yyvsp[-2].fctl)->condition ) {
@@ -9204,1101 +9205,1101 @@ yyreduce:
 			} else (yyvsp[-2].fctl)->change = (yyvsp[0].fctl)->change;
 			(yyval.fctl) = (yyvsp[-2].fctl);
 		}
-#line 9208 "Parser/parser.cc"
+#line 9209 "Parser/parser.cc"
     break;
 
   case 260:
-#line 1363 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1365 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = new ForCtrl( nullptr, (yyvsp[-2].en), (yyvsp[0].en) ); }
-#line 9214 "Parser/parser.cc"
+#line 9215 "Parser/parser.cc"
     break;
 
   case 261:
-#line 1365 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1367 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			StatementNode * init = (yyvsp[-4].en) ? new StatementNode( new ast::ExprStmt( yylloc, maybeMoveBuild( (yyvsp[-4].en) ) ) ) : nullptr;
 			(yyval.fctl) = new ForCtrl( init, (yyvsp[-2].en), (yyvsp[0].en) );
 		}
-#line 9223 "Parser/parser.cc"
+#line 9224 "Parser/parser.cc"
     break;
 
   case 262:
-#line 1370 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1372 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = new ForCtrl( new StatementNode( (yyvsp[-3].decl) ), (yyvsp[-2].en), (yyvsp[0].en) ); }
-#line 9229 "Parser/parser.cc"
+#line 9230 "Parser/parser.cc"
     break;
 
   case 263:
-#line 1373 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1375 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = new ForCtrl( nullptr, (yyvsp[0].en), nullptr ); }
-#line 9235 "Parser/parser.cc"
+#line 9236 "Parser/parser.cc"
     break;
 
   case 264:
-#line 1375 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1377 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = new ForCtrl( nullptr, (yyvsp[-2].en), (yyvsp[0].en) ); }
-#line 9241 "Parser/parser.cc"
+#line 9242 "Parser/parser.cc"
     break;
 
   case 265:
-#line 1378 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1380 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[0].en), new string( DeclarationNode::anonymous.newName() ), NEW_ZERO, OperKinds::LThan, (yyvsp[0].en)->clone(), NEW_ONE ); }
-#line 9247 "Parser/parser.cc"
+#line 9248 "Parser/parser.cc"
     break;
 
   case 266:
-#line 1380 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1382 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[0].en), new string( DeclarationNode::anonymous.newName() ), UPDOWN( (yyvsp[-1].compop), NEW_ZERO, (yyvsp[0].en)->clone() ), (yyvsp[-1].compop), UPDOWN( (yyvsp[-1].compop), (yyvsp[0].en)->clone(), NEW_ZERO ), NEW_ONE ); }
-#line 9253 "Parser/parser.cc"
+#line 9254 "Parser/parser.cc"
     break;
 
   case 267:
-#line 1383 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1385 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-2].en), new string( DeclarationNode::anonymous.newName() ), UPDOWN( (yyvsp[-1].compop), (yyvsp[-2].en)->clone(), (yyvsp[0].en) ), (yyvsp[-1].compop), UPDOWN( (yyvsp[-1].compop), (yyvsp[0].en)->clone(), (yyvsp[-2].en)->clone() ), NEW_ONE ); }
-#line 9259 "Parser/parser.cc"
+#line 9260 "Parser/parser.cc"
     break;
 
   case 268:
-#line 1385 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1387 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-1].compop) == OperKinds::LThan || (yyvsp[-1].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[0].en), new string( DeclarationNode::anonymous.newName() ), (yyvsp[0].en)->clone(), (yyvsp[-1].compop), nullptr, NEW_ONE );
 		}
-#line 9268 "Parser/parser.cc"
+#line 9269 "Parser/parser.cc"
     break;
 
   case 269:
-#line 1390 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1392 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-1].compop) == OperKinds::LThan || (yyvsp[-1].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); (yyval.fctl) = nullptr; }
 			else { SemanticError( yylloc, MISSING_HIGH ); (yyval.fctl) = nullptr; }
 		}
-#line 9277 "Parser/parser.cc"
+#line 9278 "Parser/parser.cc"
     break;
 
   case 270:
-#line 1395 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1397 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-4].en), new string( DeclarationNode::anonymous.newName() ), UPDOWN( (yyvsp[-3].compop), (yyvsp[-4].en)->clone(), (yyvsp[-2].en) ), (yyvsp[-3].compop), UPDOWN( (yyvsp[-3].compop), (yyvsp[-2].en)->clone(), (yyvsp[-4].en)->clone() ), (yyvsp[0].en) ); }
-#line 9283 "Parser/parser.cc"
+#line 9284 "Parser/parser.cc"
     break;
 
   case 271:
-#line 1397 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1399 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::LThan || (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-2].en), new string( DeclarationNode::anonymous.newName() ), (yyvsp[-2].en)->clone(), (yyvsp[-3].compop), nullptr, (yyvsp[0].en) );
 		}
-#line 9292 "Parser/parser.cc"
+#line 9293 "Parser/parser.cc"
     break;
 
   case 272:
-#line 1402 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1404 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::LThan || (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); (yyval.fctl) = nullptr; }
 			else { SemanticError( yylloc, MISSING_HIGH ); (yyval.fctl) = nullptr; }
 		}
-#line 9301 "Parser/parser.cc"
+#line 9302 "Parser/parser.cc"
     break;
 
   case 273:
-#line 1407 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1409 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, MISSING_ANON_FIELD ); (yyval.fctl) = nullptr; }
-#line 9307 "Parser/parser.cc"
+#line 9308 "Parser/parser.cc"
     break;
 
   case 274:
-#line 1409 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1411 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, MISSING_ANON_FIELD ); (yyval.fctl) = nullptr; }
-#line 9313 "Parser/parser.cc"
+#line 9314 "Parser/parser.cc"
     break;
 
   case 275:
-#line 1411 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1413 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, MISSING_ANON_FIELD ); (yyval.fctl) = nullptr; }
-#line 9319 "Parser/parser.cc"
+#line 9320 "Parser/parser.cc"
     break;
 
   case 276:
-#line 1413 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1415 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, MISSING_ANON_FIELD ); (yyval.fctl) = nullptr; }
-#line 9325 "Parser/parser.cc"
+#line 9326 "Parser/parser.cc"
     break;
 
   case 277:
-#line 1415 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1417 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, MISSING_ANON_FIELD ); (yyval.fctl) = nullptr; }
-#line 9331 "Parser/parser.cc"
+#line 9332 "Parser/parser.cc"
     break;
 
   case 278:
-#line 1418 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1420 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[0].en), (yyvsp[-2].en), NEW_ZERO, OperKinds::LThan, (yyvsp[0].en)->clone(), NEW_ONE ); }
-#line 9337 "Parser/parser.cc"
+#line 9338 "Parser/parser.cc"
     break;
 
   case 279:
-#line 1420 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1422 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[0].en), (yyvsp[-3].en), UPDOWN( (yyvsp[-1].compop), NEW_ZERO, (yyvsp[0].en)->clone() ), (yyvsp[-1].compop), UPDOWN( (yyvsp[-1].compop), (yyvsp[0].en)->clone(), NEW_ZERO ), NEW_ONE ); }
-#line 9343 "Parser/parser.cc"
+#line 9344 "Parser/parser.cc"
     break;
 
   case 280:
-#line 1423 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1425 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-2].en), (yyvsp[-4].en), UPDOWN( (yyvsp[-1].compop), (yyvsp[-2].en)->clone(), (yyvsp[0].en) ), (yyvsp[-1].compop), UPDOWN( (yyvsp[-1].compop), (yyvsp[0].en)->clone(), (yyvsp[-2].en)->clone() ), NEW_ONE ); }
-#line 9349 "Parser/parser.cc"
+#line 9350 "Parser/parser.cc"
     break;
 
   case 281:
-#line 1425 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1427 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-1].compop) == OperKinds::LThan || (yyvsp[-1].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[0].en), (yyvsp[-4].en), (yyvsp[0].en)->clone(), (yyvsp[-1].compop), nullptr, NEW_ONE );
 		}
-#line 9358 "Parser/parser.cc"
+#line 9359 "Parser/parser.cc"
     break;
 
   case 282:
-#line 1430 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1432 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-1].compop) == OperKinds::GThan || (yyvsp[-1].compop) == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); (yyval.fctl) = nullptr; }
 			else if ( (yyvsp[-1].compop) == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-2].en), (yyvsp[-4].en), (yyvsp[-2].en)->clone(), (yyvsp[-1].compop), nullptr, NEW_ONE );
 		}
-#line 9368 "Parser/parser.cc"
+#line 9369 "Parser/parser.cc"
     break;
 
   case 283:
-#line 1436 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1438 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Missing low/high value for up/down-to range so index is uninitialized." ); (yyval.fctl) = nullptr; }
-#line 9374 "Parser/parser.cc"
+#line 9375 "Parser/parser.cc"
     break;
 
   case 284:
-#line 1439 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1441 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-4].en), (yyvsp[-6].en), UPDOWN( (yyvsp[-3].compop), (yyvsp[-4].en)->clone(), (yyvsp[-2].en) ), (yyvsp[-3].compop), UPDOWN( (yyvsp[-3].compop), (yyvsp[-2].en)->clone(), (yyvsp[-4].en)->clone() ), (yyvsp[0].en) ); }
-#line 9380 "Parser/parser.cc"
+#line 9381 "Parser/parser.cc"
     break;
 
   case 285:
-#line 1441 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1443 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::LThan || (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-2].en), (yyvsp[-6].en), (yyvsp[-2].en)->clone(), (yyvsp[-3].compop), nullptr, (yyvsp[0].en) );
 		}
-#line 9389 "Parser/parser.cc"
+#line 9390 "Parser/parser.cc"
     break;
 
   case 286:
-#line 1446 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1448 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::GThan || (yyvsp[-3].compop) == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); (yyval.fctl) = nullptr; }
 			else if ( (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-4].en), (yyvsp[-6].en), (yyvsp[-4].en)->clone(), (yyvsp[-3].compop), nullptr, (yyvsp[0].en) );
 		}
-#line 9399 "Parser/parser.cc"
+#line 9400 "Parser/parser.cc"
     break;
 
   case 287:
-#line 1452 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1454 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-4].en), (yyvsp[-6].en), UPDOWN( (yyvsp[-3].compop), (yyvsp[-4].en)->clone(), (yyvsp[-2].en) ), (yyvsp[-3].compop), UPDOWN( (yyvsp[-3].compop), (yyvsp[-2].en)->clone(), (yyvsp[-4].en)->clone() ), nullptr ); }
-#line 9405 "Parser/parser.cc"
+#line 9406 "Parser/parser.cc"
     break;
 
   case 288:
-#line 1454 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1456 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::LThan || (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-2].en), (yyvsp[-6].en), (yyvsp[-2].en)->clone(), (yyvsp[-3].compop), nullptr, nullptr );
 		}
-#line 9414 "Parser/parser.cc"
+#line 9415 "Parser/parser.cc"
     break;
 
   case 289:
-#line 1459 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1461 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::GThan || (yyvsp[-3].compop) == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); (yyval.fctl) = nullptr; }
 			else if ( (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-4].en), (yyvsp[-6].en), (yyvsp[-4].en)->clone(), (yyvsp[-3].compop), nullptr, nullptr );
 		}
-#line 9424 "Parser/parser.cc"
+#line 9425 "Parser/parser.cc"
     break;
 
   case 290:
-#line 1465 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1467 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Missing low/high value for up/down-to range so index is uninitialized." ); (yyval.fctl) = nullptr; }
-#line 9430 "Parser/parser.cc"
+#line 9431 "Parser/parser.cc"
     break;
 
   case 291:
-#line 1468 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1470 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-1].decl), NEW_ZERO, OperKinds::LThan, (yyvsp[0].en), NEW_ONE ); }
-#line 9436 "Parser/parser.cc"
+#line 9437 "Parser/parser.cc"
     break;
 
   case 292:
-#line 1470 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1472 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-2].decl), UPDOWN( (yyvsp[-1].compop), NEW_ZERO, (yyvsp[0].en) ), (yyvsp[-1].compop), UPDOWN( (yyvsp[-1].compop), (yyvsp[0].en)->clone(), NEW_ZERO ), NEW_ONE ); }
-#line 9442 "Parser/parser.cc"
+#line 9443 "Parser/parser.cc"
     break;
 
   case 293:
-#line 1473 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1475 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-3].decl), UPDOWN( (yyvsp[-1].compop), (yyvsp[-2].en)->clone(), (yyvsp[0].en) ), (yyvsp[-1].compop), UPDOWN( (yyvsp[-1].compop), (yyvsp[0].en)->clone(), (yyvsp[-2].en)->clone() ), NEW_ONE ); }
-#line 9448 "Parser/parser.cc"
+#line 9449 "Parser/parser.cc"
     break;
 
   case 294:
-#line 1475 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1477 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-1].compop) == OperKinds::LThan || (yyvsp[-1].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-3].decl), (yyvsp[0].en), (yyvsp[-1].compop), nullptr, NEW_ONE );
 		}
-#line 9457 "Parser/parser.cc"
+#line 9458 "Parser/parser.cc"
     break;
 
   case 295:
-#line 1480 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1482 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-1].compop) == OperKinds::GThan || (yyvsp[-1].compop) == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); (yyval.fctl) = nullptr; }
 			else if ( (yyvsp[-1].compop) == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-3].decl), (yyvsp[-2].en), (yyvsp[-1].compop), nullptr, NEW_ONE );
 		}
-#line 9467 "Parser/parser.cc"
+#line 9468 "Parser/parser.cc"
     break;
 
   case 296:
-#line 1487 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1489 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-5].decl), UPDOWN( (yyvsp[-3].compop), (yyvsp[-4].en), (yyvsp[-2].en) ), (yyvsp[-3].compop), UPDOWN( (yyvsp[-3].compop), (yyvsp[-2].en)->clone(), (yyvsp[-4].en)->clone() ), (yyvsp[0].en) ); }
-#line 9473 "Parser/parser.cc"
+#line 9474 "Parser/parser.cc"
     break;
 
   case 297:
-#line 1489 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1491 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::LThan || (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-5].decl), (yyvsp[-2].en), (yyvsp[-3].compop), nullptr, (yyvsp[0].en) );
 		}
-#line 9482 "Parser/parser.cc"
+#line 9483 "Parser/parser.cc"
     break;
 
   case 298:
-#line 1494 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1496 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::GThan || (yyvsp[-3].compop) == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); (yyval.fctl) = nullptr; }
 			else if ( (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-5].decl), (yyvsp[-4].en), (yyvsp[-3].compop), nullptr, (yyvsp[0].en) );
 		}
-#line 9492 "Parser/parser.cc"
+#line 9493 "Parser/parser.cc"
     break;
 
   case 299:
-#line 1500 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1502 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.fctl) = forCtrl( yylloc, (yyvsp[-5].decl), UPDOWN( (yyvsp[-3].compop), (yyvsp[-4].en), (yyvsp[-2].en) ), (yyvsp[-3].compop), UPDOWN( (yyvsp[-3].compop), (yyvsp[-2].en)->clone(), (yyvsp[-4].en)->clone() ), nullptr ); }
-#line 9498 "Parser/parser.cc"
+#line 9499 "Parser/parser.cc"
     break;
 
   case 300:
-#line 1502 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1504 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::LThan || (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-5].decl), (yyvsp[-2].en), (yyvsp[-3].compop), nullptr, nullptr );
 		}
-#line 9507 "Parser/parser.cc"
+#line 9508 "Parser/parser.cc"
     break;
 
   case 301:
-#line 1507 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1509 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-3].compop) == OperKinds::GThan || (yyvsp[-3].compop) == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); (yyval.fctl) = nullptr; }
 			else if ( (yyvsp[-3].compop) == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); (yyval.fctl) = nullptr; }
 			else (yyval.fctl) = forCtrl( yylloc, (yyvsp[-5].decl), (yyvsp[-4].en), (yyvsp[-3].compop), nullptr, nullptr );
 		}
-#line 9517 "Parser/parser.cc"
+#line 9518 "Parser/parser.cc"
     break;
 
   case 302:
-#line 1513 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1515 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Missing low/high value for up/down-to range so index is uninitialized." ); (yyval.fctl) = nullptr; }
-#line 9523 "Parser/parser.cc"
+#line 9524 "Parser/parser.cc"
     break;
 
   case 303:
-#line 1516 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1518 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, "Type iterator is currently unimplemented." ); (yyval.fctl) = nullptr;
 			//$$ = forCtrl( new ExpressionNode( build_varref( $3 ) ), $1, nullptr, OperKinds::Range, nullptr, nullptr );
 		}
-#line 9532 "Parser/parser.cc"
+#line 9533 "Parser/parser.cc"
     break;
 
   case 304:
-#line 1521 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1523 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-1].compop) == OperKinds::LEThan || (yyvsp[-1].compop) == OperKinds::GEThan ) { SemanticError( yylloc, "All enumation ranges are equal (all values). Remove \"=~\"." ); (yyval.fctl) = nullptr; }
 			SemanticError( yylloc, "Type iterator is currently unimplemented." ); (yyval.fctl) = nullptr;
 		}
-#line 9541 "Parser/parser.cc"
+#line 9542 "Parser/parser.cc"
     break;
 
   case 305:
-#line 1529 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1531 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::GThan; }
-#line 9547 "Parser/parser.cc"
+#line 9548 "Parser/parser.cc"
     break;
 
   case 306:
-#line 1531 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1533 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::LEThan; }
-#line 9553 "Parser/parser.cc"
+#line 9554 "Parser/parser.cc"
     break;
 
   case 307:
-#line 1533 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1535 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::GEThan; }
-#line 9559 "Parser/parser.cc"
+#line 9560 "Parser/parser.cc"
     break;
 
   case 308:
-#line 1538 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1540 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::LThan; }
-#line 9565 "Parser/parser.cc"
+#line 9566 "Parser/parser.cc"
     break;
 
   case 309:
-#line 1540 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1542 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::GThan; }
-#line 9571 "Parser/parser.cc"
+#line 9572 "Parser/parser.cc"
     break;
 
   case 311:
-#line 1546 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1548 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::LEThan; }
-#line 9577 "Parser/parser.cc"
+#line 9578 "Parser/parser.cc"
     break;
 
   case 312:
-#line 1548 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1550 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::GEThan; }
-#line 9583 "Parser/parser.cc"
+#line 9584 "Parser/parser.cc"
     break;
 
   case 313:
-#line 1553 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1555 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_branch( yylloc, (yyvsp[-1].tok), ast::BranchStmt::Goto ) ); }
-#line 9589 "Parser/parser.cc"
+#line 9590 "Parser/parser.cc"
     break;
 
   case 314:
-#line 1557 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1559 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_computedgoto( (yyvsp[-1].en) ) ); }
-#line 9595 "Parser/parser.cc"
+#line 9596 "Parser/parser.cc"
     break;
 
   case 315:
-#line 1560 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1562 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_branch( yylloc, ast::BranchStmt::FallThrough ) ); }
-#line 9601 "Parser/parser.cc"
+#line 9602 "Parser/parser.cc"
     break;
 
   case 316:
-#line 1562 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1564 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_branch( yylloc, (yyvsp[-1].tok), ast::BranchStmt::FallThrough ) ); }
-#line 9607 "Parser/parser.cc"
+#line 9608 "Parser/parser.cc"
     break;
 
   case 317:
-#line 1564 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1566 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_branch( yylloc, ast::BranchStmt::FallThroughDefault ) ); }
-#line 9613 "Parser/parser.cc"
+#line 9614 "Parser/parser.cc"
     break;
 
   case 318:
-#line 1567 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1569 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_branch( yylloc, ast::BranchStmt::Continue ) ); }
-#line 9619 "Parser/parser.cc"
+#line 9620 "Parser/parser.cc"
     break;
 
   case 319:
-#line 1571 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1573 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_branch( yylloc, (yyvsp[-1].tok), ast::BranchStmt::Continue ) ); }
-#line 9625 "Parser/parser.cc"
+#line 9626 "Parser/parser.cc"
     break;
 
   case 320:
-#line 1574 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1576 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_branch( yylloc, ast::BranchStmt::Break ) ); }
-#line 9631 "Parser/parser.cc"
+#line 9632 "Parser/parser.cc"
     break;
 
   case 321:
-#line 1578 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1580 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_branch( yylloc, (yyvsp[-1].tok), ast::BranchStmt::Break ) ); }
-#line 9637 "Parser/parser.cc"
+#line 9638 "Parser/parser.cc"
     break;
 
   case 322:
-#line 1580 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1582 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_return( yylloc, (yyvsp[-1].en) ) ); }
-#line 9643 "Parser/parser.cc"
+#line 9644 "Parser/parser.cc"
     break;
 
   case 323:
-#line 1582 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1584 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Initializer return is currently unimplemented." ); (yyval.sn) = nullptr; }
-#line 9649 "Parser/parser.cc"
+#line 9650 "Parser/parser.cc"
     break;
 
   case 324:
-#line 1584 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1586 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_suspend( yylloc, nullptr, ast::SuspendStmt::None ) ); }
-#line 9655 "Parser/parser.cc"
+#line 9656 "Parser/parser.cc"
     break;
 
   case 325:
-#line 1586 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1588 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_suspend( yylloc, (yyvsp[0].sn), ast::SuspendStmt::None ) ); }
-#line 9661 "Parser/parser.cc"
+#line 9662 "Parser/parser.cc"
     break;
 
   case 326:
-#line 1588 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1590 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_suspend( yylloc, nullptr, ast::SuspendStmt::Coroutine ) ); }
-#line 9667 "Parser/parser.cc"
+#line 9668 "Parser/parser.cc"
     break;
 
   case 327:
-#line 1590 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1592 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_suspend( yylloc, (yyvsp[0].sn), ast::SuspendStmt::Coroutine ) ); }
-#line 9673 "Parser/parser.cc"
+#line 9674 "Parser/parser.cc"
     break;
 
   case 328:
-#line 1592 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1594 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_suspend( yylloc, nullptr, ast::SuspendStmt::Generator ) ); }
-#line 9679 "Parser/parser.cc"
+#line 9680 "Parser/parser.cc"
     break;
 
   case 329:
-#line 1594 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1596 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_suspend( yylloc, (yyvsp[0].sn), ast::SuspendStmt::Generator ) ); }
-#line 9685 "Parser/parser.cc"
+#line 9686 "Parser/parser.cc"
     break;
 
   case 330:
-#line 1596 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1598 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_throw( yylloc, (yyvsp[-1].en) ) ); }
-#line 9691 "Parser/parser.cc"
+#line 9692 "Parser/parser.cc"
     break;
 
   case 331:
-#line 1598 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1600 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_resume( yylloc, (yyvsp[-1].en) ) ); }
-#line 9697 "Parser/parser.cc"
+#line 9698 "Parser/parser.cc"
     break;
 
   case 332:
-#line 1600 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1602 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_resume_at( (yyvsp[-3].en), (yyvsp[-1].en) ) ); }
-#line 9703 "Parser/parser.cc"
+#line 9704 "Parser/parser.cc"
     break;
 
   case 335:
-#line 1610 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1612 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_with( yylloc, (yyvsp[-2].en), (yyvsp[0].sn) ) ); }
-#line 9709 "Parser/parser.cc"
+#line 9710 "Parser/parser.cc"
     break;
 
   case 336:
-#line 1616 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1618 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( ! (yyvsp[-2].en) ) { SemanticError( yylloc, "mutex argument list cannot be empty." ); (yyval.sn) = nullptr; }
 			(yyval.sn) = new StatementNode( build_mutex( yylloc, (yyvsp[-2].en), (yyvsp[0].sn) ) );
 		}
-#line 9718 "Parser/parser.cc"
+#line 9719 "Parser/parser.cc"
     break;
 
   case 337:
-#line 1623 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1625 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                 { (yyval.en) = (yyvsp[-1].en); }
-#line 9724 "Parser/parser.cc"
+#line 9725 "Parser/parser.cc"
     break;
 
   case 338:
-#line 1628 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1630 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 9730 "Parser/parser.cc"
+#line 9731 "Parser/parser.cc"
     break;
 
   case 341:
-#line 1636 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1638 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "List of mutex member is currently unimplemented." ); (yyval.en) = nullptr; }
-#line 9736 "Parser/parser.cc"
+#line 9737 "Parser/parser.cc"
     break;
 
   case 342:
-#line 1640 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1642 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                 { (yyval.en) = (yyvsp[-1].en); }
-#line 9742 "Parser/parser.cc"
+#line 9743 "Parser/parser.cc"
     break;
 
   case 345:
-#line 1649 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1651 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[-1].en); }
-#line 9748 "Parser/parser.cc"
+#line 9749 "Parser/parser.cc"
     break;
 
   case 346:
-#line 1651 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1653 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-3].en)->set_last( (yyvsp[-1].en) )); }
-#line 9754 "Parser/parser.cc"
+#line 9755 "Parser/parser.cc"
     break;
 
   case 347:
-#line 1657 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1659 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.wfs) = build_waitfor( yylloc, new ast::WaitForStmt( yylloc ), (yyvsp[-2].en), (yyvsp[-1].en), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ); }
-#line 9760 "Parser/parser.cc"
+#line 9761 "Parser/parser.cc"
     break;
 
   case 348:
-#line 1659 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1661 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.wfs) = build_waitfor( yylloc, (yyvsp[-4].wfs), (yyvsp[-2].en), (yyvsp[-1].en), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ); }
-#line 9766 "Parser/parser.cc"
+#line 9767 "Parser/parser.cc"
     break;
 
   case 349:
-#line 1661 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1663 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.wfs) = build_waitfor_else( yylloc, (yyvsp[-4].wfs), (yyvsp[-2].en), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ); }
-#line 9772 "Parser/parser.cc"
+#line 9773 "Parser/parser.cc"
     break;
 
   case 350:
-#line 1663 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1665 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.wfs) = build_waitfor_timeout( yylloc, (yyvsp[-4].wfs), (yyvsp[-2].en), (yyvsp[-1].en), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ); }
-#line 9778 "Parser/parser.cc"
+#line 9779 "Parser/parser.cc"
     break;
 
   case 351:
-#line 1666 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1668 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "else clause must be conditional after timeout or timeout never triggered." ); (yyval.wfs) = nullptr; }
-#line 9784 "Parser/parser.cc"
+#line 9785 "Parser/parser.cc"
     break;
 
   case 352:
-#line 1668 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1670 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.wfs) = build_waitfor_else( yylloc, build_waitfor_timeout( yylloc, (yyvsp[-8].wfs), (yyvsp[-6].en), (yyvsp[-5].en), maybe_build_compound( yylloc, (yyvsp[-4].sn) ) ), (yyvsp[-2].en), maybe_build_compound( yylloc, (yyvsp[0].sn) ) ); }
-#line 9790 "Parser/parser.cc"
+#line 9791 "Parser/parser.cc"
     break;
 
   case 353:
-#line 1673 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1675 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( (yyvsp[0].wfs) ); }
-#line 9796 "Parser/parser.cc"
+#line 9797 "Parser/parser.cc"
     break;
 
   case 356:
-#line 1683 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1685 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[-1].en); }
-#line 9802 "Parser/parser.cc"
+#line 9803 "Parser/parser.cc"
     break;
 
   case 357:
-#line 1688 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1690 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "waituntil_clause 1\n" ); (yyval.wfs) = nullptr; }
-#line 9808 "Parser/parser.cc"
+#line 9809 "Parser/parser.cc"
     break;
 
   case 358:
-#line 1690 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1692 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "waituntil_clause 2\n" ); (yyval.wfs) = nullptr; }
-#line 9814 "Parser/parser.cc"
+#line 9815 "Parser/parser.cc"
     break;
 
   case 359:
-#line 1695 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1697 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "wand_waituntil_clause 1\n" ); (yyval.wfs) = nullptr; }
-#line 9820 "Parser/parser.cc"
+#line 9821 "Parser/parser.cc"
     break;
 
   case 360:
-#line 1697 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1699 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "wand_waituntil_clause 2\n" ); (yyval.wfs) = nullptr; }
-#line 9826 "Parser/parser.cc"
+#line 9827 "Parser/parser.cc"
     break;
 
   case 361:
-#line 1702 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1704 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "wor_waituntil_clause 1\n" ); (yyval.wfs) = nullptr; }
-#line 9832 "Parser/parser.cc"
+#line 9833 "Parser/parser.cc"
     break;
 
   case 362:
-#line 1704 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1706 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "wor_waituntil_clause 2\n" ); (yyval.wfs) = nullptr; }
-#line 9838 "Parser/parser.cc"
+#line 9839 "Parser/parser.cc"
     break;
 
   case 363:
-#line 1706 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1708 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "wor_waituntil_clause 3\n" ); (yyval.wfs) = nullptr; }
-#line 9844 "Parser/parser.cc"
+#line 9845 "Parser/parser.cc"
     break;
 
   case 364:
-#line 1708 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1710 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "wor_waituntil_clause 4\n" ); (yyval.wfs) = nullptr; }
-#line 9850 "Parser/parser.cc"
+#line 9851 "Parser/parser.cc"
     break;
 
   case 365:
-#line 1711 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1713 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "else clause must be conditional after timeout or timeout never triggered." ); (yyval.wfs) = nullptr; }
-#line 9856 "Parser/parser.cc"
+#line 9857 "Parser/parser.cc"
     break;
 
   case 366:
-#line 1713 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1715 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { printf( "wor_waituntil_clause 6\n" ); (yyval.wfs) = nullptr; }
-#line 9862 "Parser/parser.cc"
+#line 9863 "Parser/parser.cc"
     break;
 
   case 367:
-#line 1719 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1721 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_compound( yylloc, nullptr ) ); }
-#line 9868 "Parser/parser.cc"
+#line 9869 "Parser/parser.cc"
     break;
 
   case 368:
-#line 1724 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = new StatementNode( build_try( yylloc, (yyvsp[-1].sn), (yyvsp[0].sn), nullptr ) ); }
-#line 9874 "Parser/parser.cc"
+#line 1726 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.sn) = new StatementNode( build_try( yylloc, (yyvsp[-1].sn), (yyvsp[0].clause), nullptr ) ); }
+#line 9875 "Parser/parser.cc"
     break;
 
   case 369:
-#line 1726 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = new StatementNode( build_try( yylloc, (yyvsp[-1].sn), nullptr, (yyvsp[0].sn) ) ); }
-#line 9880 "Parser/parser.cc"
+#line 1728 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.sn) = new StatementNode( build_try( yylloc, (yyvsp[-1].sn), nullptr, (yyvsp[0].clause) ) ); }
+#line 9881 "Parser/parser.cc"
     break;
 
   case 370:
-#line 1728 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = new StatementNode( build_try( yylloc, (yyvsp[-2].sn), (yyvsp[-1].sn), (yyvsp[0].sn) ) ); }
-#line 9886 "Parser/parser.cc"
+#line 1730 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.sn) = new StatementNode( build_try( yylloc, (yyvsp[-2].sn), (yyvsp[-1].clause), (yyvsp[0].clause) ) ); }
+#line 9887 "Parser/parser.cc"
     break;
 
   case 371:
-#line 1733 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = new StatementNode( build_catch( yylloc, (yyvsp[-7].catch_kind), (yyvsp[-4].decl), (yyvsp[-2].en), (yyvsp[0].sn) ) ); }
-#line 9892 "Parser/parser.cc"
+#line 1735 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.clause) = new ClauseNode( build_catch( yylloc, (yyvsp[-7].catch_kind), (yyvsp[-4].decl), (yyvsp[-2].en), (yyvsp[0].sn) ) ); }
+#line 9893 "Parser/parser.cc"
     break;
 
   case 372:
-#line 1735 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.sn) = (StatementNode *)(yyvsp[-8].sn)->set_last( new StatementNode( build_catch( yylloc, (yyvsp[-7].catch_kind), (yyvsp[-4].decl), (yyvsp[-2].en), (yyvsp[0].sn) ) ) ); }
-#line 9898 "Parser/parser.cc"
+#line 1737 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                { (yyval.clause) = (yyvsp[-8].clause)->set_last( new ClauseNode( build_catch( yylloc, (yyvsp[-7].catch_kind), (yyvsp[-4].decl), (yyvsp[-2].en), (yyvsp[0].sn) ) ) ); }
+#line 9899 "Parser/parser.cc"
     break;
 
   case 373:
-#line 1740 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1742 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 9904 "Parser/parser.cc"
+#line 9905 "Parser/parser.cc"
     break;
 
   case 374:
-#line 1741 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1743 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                 { (yyval.en) = (yyvsp[0].en); }
-#line 9910 "Parser/parser.cc"
+#line 9911 "Parser/parser.cc"
     break;
 
   case 375:
-#line 1745 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1747 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.catch_kind) = ast::Terminate; }
-#line 9916 "Parser/parser.cc"
+#line 9917 "Parser/parser.cc"
     break;
 
   case 376:
-#line 1746 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1748 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.catch_kind) = ast::Terminate; }
-#line 9922 "Parser/parser.cc"
+#line 9923 "Parser/parser.cc"
     break;
 
   case 377:
-#line 1747 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1749 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                 { (yyval.catch_kind) = ast::Resume; }
-#line 9928 "Parser/parser.cc"
+#line 9929 "Parser/parser.cc"
     break;
 
   case 378:
-#line 1748 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1750 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.catch_kind) = ast::Resume; }
-#line 9934 "Parser/parser.cc"
+#line 9935 "Parser/parser.cc"
     break;
 
   case 379:
-#line 1752 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                                                                        { (yyval.sn) = new StatementNode( build_finally( yylloc, (yyvsp[0].sn) ) ); }
-#line 9940 "Parser/parser.cc"
+#line 1754 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+                                                                        { (yyval.clause) = new ClauseNode( build_finally( yylloc, (yyvsp[0].sn) ) ); }
+#line 9941 "Parser/parser.cc"
     break;
 
   case 381:
-#line 1759 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1761 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addType( (yyvsp[-1].decl) ); }
-#line 9946 "Parser/parser.cc"
+#line 9947 "Parser/parser.cc"
     break;
 
   case 382:
-#line 1761 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1763 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addType( (yyvsp[-1].decl) ); }
-#line 9952 "Parser/parser.cc"
+#line 9953 "Parser/parser.cc"
     break;
 
   case 383:
-#line 1763 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1765 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addName( (yyvsp[0].tok) ); }
-#line 9958 "Parser/parser.cc"
+#line 9959 "Parser/parser.cc"
     break;
 
   case 388:
-#line 1778 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1780 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_asm( yylloc, (yyvsp[-4].flag), (yyvsp[-2].constant), nullptr ) ); }
-#line 9964 "Parser/parser.cc"
+#line 9965 "Parser/parser.cc"
     break;
 
   case 389:
-#line 1780 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1782 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_asm( yylloc, (yyvsp[-6].flag), (yyvsp[-4].constant), (yyvsp[-2].en) ) ); }
-#line 9970 "Parser/parser.cc"
+#line 9971 "Parser/parser.cc"
     break;
 
   case 390:
-#line 1782 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1784 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_asm( yylloc, (yyvsp[-8].flag), (yyvsp[-6].constant), (yyvsp[-4].en), (yyvsp[-2].en) ) ); }
-#line 9976 "Parser/parser.cc"
+#line 9977 "Parser/parser.cc"
     break;
 
   case 391:
-#line 1784 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1786 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_asm( yylloc, (yyvsp[-10].flag), (yyvsp[-8].constant), (yyvsp[-6].en), (yyvsp[-4].en), (yyvsp[-2].en) ) ); }
-#line 9982 "Parser/parser.cc"
+#line 9983 "Parser/parser.cc"
     break;
 
   case 392:
-#line 1786 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1788 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.sn) = new StatementNode( build_asm( yylloc, (yyvsp[-12].flag), (yyvsp[-9].constant), nullptr, (yyvsp[-6].en), (yyvsp[-4].en), (yyvsp[-2].label) ) ); }
-#line 9988 "Parser/parser.cc"
+#line 9989 "Parser/parser.cc"
     break;
 
   case 393:
-#line 1791 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1793 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.flag) = false; }
-#line 9994 "Parser/parser.cc"
+#line 9995 "Parser/parser.cc"
     break;
 
   case 394:
-#line 1793 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1795 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.flag) = true; }
-#line 10000 "Parser/parser.cc"
+#line 10001 "Parser/parser.cc"
     break;
 
   case 395:
-#line 1798 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1800 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 10006 "Parser/parser.cc"
+#line 10007 "Parser/parser.cc"
     break;
 
   case 398:
-#line 1805 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1807 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-2].en)->set_last( (yyvsp[0].en) )); }
-#line 10012 "Parser/parser.cc"
+#line 10013 "Parser/parser.cc"
     break;
 
   case 399:
-#line 1810 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1812 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::AsmExpr( yylloc, "", (yyvsp[-3].constant), maybeMoveBuild( (yyvsp[-1].en) ) ) ); }
-#line 10018 "Parser/parser.cc"
+#line 10019 "Parser/parser.cc"
     break;
 
   case 400:
-#line 1812 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1814 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.en) = new ExpressionNode( new ast::AsmExpr( yylloc, *(yyvsp[-5].tok).str, (yyvsp[-3].constant), maybeMoveBuild( (yyvsp[-1].en) ) ) );
 			delete (yyvsp[-5].tok).str;
 		}
-#line 10027 "Parser/parser.cc"
+#line 10028 "Parser/parser.cc"
     break;
 
   case 401:
-#line 1820 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1822 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 10033 "Parser/parser.cc"
+#line 10034 "Parser/parser.cc"
     break;
 
   case 402:
-#line 1822 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1824 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( (yyvsp[0].constant) ); }
-#line 10039 "Parser/parser.cc"
+#line 10040 "Parser/parser.cc"
     break;
 
   case 403:
-#line 1824 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1826 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-2].en)->set_last( new ExpressionNode( (yyvsp[0].constant) ) )); }
-#line 10045 "Parser/parser.cc"
+#line 10046 "Parser/parser.cc"
     break;
 
   case 404:
-#line 1829 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1831 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.label) = new LabelNode(); (yyval.label)->labels.emplace_back( yylloc, *(yyvsp[0].tok) );
 			delete (yyvsp[0].tok);									// allocated by lexer
 		}
-#line 10054 "Parser/parser.cc"
+#line 10055 "Parser/parser.cc"
     break;
 
   case 405:
-#line 1834 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1836 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.label) = (yyvsp[-2].label); (yyvsp[-2].label)->labels.emplace_back( yylloc, *(yyvsp[0].tok) );
 			delete (yyvsp[0].tok);									// allocated by lexer
 		}
-#line 10063 "Parser/parser.cc"
+#line 10064 "Parser/parser.cc"
     break;
 
   case 406:
-#line 1844 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1846 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 10069 "Parser/parser.cc"
+#line 10070 "Parser/parser.cc"
     break;
 
   case 409:
-#line 1851 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1853 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->appendList( (yyvsp[0].decl) ); }
-#line 10075 "Parser/parser.cc"
+#line 10076 "Parser/parser.cc"
     break;
 
   case 410:
-#line 1856 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1858 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 10081 "Parser/parser.cc"
+#line 10082 "Parser/parser.cc"
     break;
 
   case 412:
-#line 1862 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1864 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl); }
-#line 10087 "Parser/parser.cc"
+#line 10088 "Parser/parser.cc"
     break;
 
   case 413:
-#line 1864 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1866 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[-2].decl) ); }
-#line 10093 "Parser/parser.cc"
+#line 10094 "Parser/parser.cc"
     break;
 
   case 420:
-#line 1884 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1886 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// printf( "C_DECLARATION1 %p %s\n", $$, $$->name ? $$->name->c_str() : "(nil)" );
 			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
-#line 10104 "Parser/parser.cc"
+#line 10105 "Parser/parser.cc"
     break;
 
   case 423:
-#line 1896 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1898 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newStaticAssert( (yyvsp[-4].en), (yyvsp[-2].constant) ); }
-#line 10110 "Parser/parser.cc"
+#line 10111 "Parser/parser.cc"
     break;
 
   case 424:
-#line 1898 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1900 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newStaticAssert( (yyvsp[-2].en), build_constantStr( yylloc, *new string( "\"\"" ) ) ); }
-#line 10116 "Parser/parser.cc"
+#line 10117 "Parser/parser.cc"
     break;
 
   case 428:
-#line 1916 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1918 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "otype declaration is currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 10122 "Parser/parser.cc"
+#line 10123 "Parser/parser.cc"
     break;
 
   case 430:
-#line 1922 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1924 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addInitializer( (yyvsp[0].in) ); }
-#line 10128 "Parser/parser.cc"
+#line 10129 "Parser/parser.cc"
     break;
 
   case 431:
-#line 1926 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1928 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) )->addInitializer( (yyvsp[0].in) ); }
-#line 10134 "Parser/parser.cc"
+#line 10135 "Parser/parser.cc"
     break;
 
   case 432:
-#line 1928 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1930 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-5].decl)->appendList( (yyvsp[-5].decl)->cloneType( (yyvsp[-1].tok) )->addInitializer( (yyvsp[0].in) ) ); }
-#line 10140 "Parser/parser.cc"
+#line 10141 "Parser/parser.cc"
     break;
 
   case 433:
-#line 1935 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1937 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addName( (yyvsp[-1].tok) )->addAsmName( (yyvsp[0].decl) ); }
-#line 10146 "Parser/parser.cc"
+#line 10147 "Parser/parser.cc"
     break;
 
   case 434:
-#line 1937 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1939 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addName( (yyvsp[-1].tok) )->addAsmName( (yyvsp[0].decl) ); }
-#line 10152 "Parser/parser.cc"
+#line 10153 "Parser/parser.cc"
     break;
 
   case 435:
-#line 1939 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1941 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addName( (yyvsp[-1].tok) )->addAsmName( (yyvsp[0].decl) ); }
-#line 10158 "Parser/parser.cc"
+#line 10159 "Parser/parser.cc"
     break;
 
   case 437:
-#line 1945 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1947 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10164 "Parser/parser.cc"
+#line 10165 "Parser/parser.cc"
     break;
 
   case 438:
-#line 1947 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1949 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10170 "Parser/parser.cc"
+#line 10171 "Parser/parser.cc"
     break;
 
   case 439:
-#line 1949 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1951 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-2].decl) )->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10176 "Parser/parser.cc"
+#line 10177 "Parser/parser.cc"
     break;
 
   case 440:
-#line 1951 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1953 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// Append the return type at the start (left-hand-side) to each identifier in the list.
 			DeclarationNode * ret = new DeclarationNode;
 			ret->type = maybeClone( (yyvsp[-7].decl)->type->base );
 			(yyval.decl) = (yyvsp[-7].decl)->appendList( DeclarationNode::newFunction( (yyvsp[-5].tok), ret, (yyvsp[-2].decl), nullptr ) );
 		}
-#line 10187 "Parser/parser.cc"
+#line 10188 "Parser/parser.cc"
     break;
 
   case 441:
-#line 1984 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1986 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFunction( (yyvsp[-6].tok), (yyvsp[-7].decl), (yyvsp[-3].decl), nullptr )->addQualifiers( (yyvsp[0].decl) ); }
-#line 10193 "Parser/parser.cc"
+#line 10194 "Parser/parser.cc"
     break;
 
   case 442:
-#line 1986 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1988 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFunction( (yyvsp[-6].tok), (yyvsp[-7].decl), (yyvsp[-3].decl), nullptr )->addQualifiers( (yyvsp[0].decl) ); }
-#line 10199 "Parser/parser.cc"
+#line 10200 "Parser/parser.cc"
     break;
 
   case 443:
-#line 1991 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1993 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTuple( (yyvsp[-2].decl) ); }
-#line 10205 "Parser/parser.cc"
+#line 10206 "Parser/parser.cc"
     break;
 
   case 444:
-#line 1994 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 1996 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTuple( (yyvsp[-6].decl)->appendList( (yyvsp[-2].decl) ) ); }
-#line 10211 "Parser/parser.cc"
+#line 10212 "Parser/parser.cc"
     break;
 
   case 445:
-#line 1999 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2001 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToEnclosingScope( *(yyvsp[0].decl)->name, TYPEDEFname, "1" );
 			(yyval.decl) = (yyvsp[0].decl)->addTypedef();
 		}
-#line 10220 "Parser/parser.cc"
+#line 10221 "Parser/parser.cc"
     break;
 
   case 446:
-#line 2004 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2006 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToEnclosingScope( *(yyvsp[0].decl)->name, TYPEDEFname, "2" );
 			(yyval.decl) = (yyvsp[0].decl)->addTypedef();
 		}
-#line 10229 "Parser/parser.cc"
+#line 10230 "Parser/parser.cc"
     break;
 
   case 447:
-#line 2009 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2011 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToEnclosingScope( *(yyvsp[0].tok), TYPEDEFname, "3" );
 			(yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[-4].decl)->cloneType( (yyvsp[0].tok) ) );
 		}
-#line 10238 "Parser/parser.cc"
+#line 10239 "Parser/parser.cc"
     break;
 
   case 448:
-#line 2020 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2022 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToEnclosingScope( *(yyvsp[0].decl)->name, TYPEDEFname, "4" );
 			if ( (yyvsp[-1].decl)->type->forall || ((yyvsp[-1].decl)->type->kind == TypeData::Aggregate && (yyvsp[-1].decl)->type->aggregate.params) ) {
 				SemanticError( yylloc, "forall qualifier in typedef is currently unimplemented." ); (yyval.decl) = nullptr;
 			} else (yyval.decl) = (yyvsp[0].decl)->addType( (yyvsp[-1].decl) )->addTypedef(); // watchout frees $2 and $3
 		}
-#line 10249 "Parser/parser.cc"
+#line 10250 "Parser/parser.cc"
     break;
 
   case 449:
-#line 2027 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2029 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToEnclosingScope( *(yyvsp[0].decl)->name, TYPEDEFname, "5" );
 			(yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[-4].decl)->cloneBaseType( (yyvsp[0].decl) )->addTypedef() );
 		}
-#line 10258 "Parser/parser.cc"
+#line 10259 "Parser/parser.cc"
     break;
 
   case 450:
-#line 2032 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2034 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); (yyval.decl) = nullptr; }
-#line 10264 "Parser/parser.cc"
+#line 10265 "Parser/parser.cc"
     break;
 
   case 451:
-#line 2034 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2036 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); (yyval.decl) = nullptr; }
-#line 10270 "Parser/parser.cc"
+#line 10271 "Parser/parser.cc"
     break;
 
   case 452:
-#line 2036 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2038 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); (yyval.decl) = nullptr; }
-#line 10276 "Parser/parser.cc"
+#line 10277 "Parser/parser.cc"
     break;
 
   case 453:
-#line 2042 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2044 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); (yyval.decl) = nullptr;
 		}
-#line 10284 "Parser/parser.cc"
+#line 10285 "Parser/parser.cc"
     break;
 
   case 454:
-#line 2046 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2048 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); (yyval.decl) = nullptr;
 		}
-#line 10292 "Parser/parser.cc"
+#line 10293 "Parser/parser.cc"
     break;
 
   case 455:
-#line 2053 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2055 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = distAttr( (yyvsp[-1].decl), (yyvsp[0].decl) ); }
-#line 10298 "Parser/parser.cc"
+#line 10299 "Parser/parser.cc"
     break;
 
   case 458:
-#line 2057 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2059 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			assert( (yyvsp[0].decl)->type );
 			if ( (yyvsp[0].decl)->type->qualifiers.any() ) {			// CV qualifiers ?
@@ -10309,709 +10310,709 @@ yyreduce:
 				SemanticError( yylloc, "Useless storage qualifier(s) in empty aggregate declaration." ); (yyval.decl) = nullptr;
 			}
 		}
-#line 10313 "Parser/parser.cc"
+#line 10314 "Parser/parser.cc"
     break;
 
   case 459:
-#line 2073 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2075 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addAsmName( (yyvsp[-1].decl) )->addInitializer( (yyvsp[0].in) ); }
-#line 10319 "Parser/parser.cc"
+#line 10320 "Parser/parser.cc"
     break;
 
   case 460:
-#line 2075 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2077 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addAsmName( (yyvsp[-1].decl) )->addInitializer( (yyvsp[0].in) ); }
-#line 10325 "Parser/parser.cc"
+#line 10326 "Parser/parser.cc"
     break;
 
   case 461:
-#line 2078 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2080 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addAsmName( (yyvsp[0].decl) )->addInitializer( nullptr ); }
-#line 10331 "Parser/parser.cc"
+#line 10332 "Parser/parser.cc"
     break;
 
   case 462:
-#line 2080 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2082 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->addAsmName( (yyvsp[-2].decl) )->addInitializer( new InitializerNode( true ) ); }
-#line 10337 "Parser/parser.cc"
+#line 10338 "Parser/parser.cc"
     break;
 
   case 463:
-#line 2083 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2085 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-5].decl)->appendList( (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addAsmName( (yyvsp[-1].decl) )->addInitializer( (yyvsp[0].in) ) ); }
-#line 10343 "Parser/parser.cc"
+#line 10344 "Parser/parser.cc"
     break;
 
   case 469:
-#line 2096 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2098 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, ::toString( "Missing ';' after end of ",
 				(yyvsp[-1].decl)->type->enumeration.name ? "enum" : ast::AggregateDecl::aggrString( (yyvsp[-1].decl)->type->aggregate.kind ),
 				" declaration" ) );
 			(yyval.decl) = nullptr;
 		}
-#line 10354 "Parser/parser.cc"
+#line 10355 "Parser/parser.cc"
     break;
 
   case 482:
-#line 2140 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2142 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 10360 "Parser/parser.cc"
+#line 10361 "Parser/parser.cc"
     break;
 
   case 485:
-#line 2152 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2154 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10366 "Parser/parser.cc"
+#line 10367 "Parser/parser.cc"
     break;
 
   case 488:
-#line 2162 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2164 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeQualifier( Type::Const ); }
-#line 10372 "Parser/parser.cc"
+#line 10373 "Parser/parser.cc"
     break;
 
   case 489:
-#line 2164 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2166 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeQualifier( Type::Restrict ); }
-#line 10378 "Parser/parser.cc"
+#line 10379 "Parser/parser.cc"
     break;
 
   case 490:
-#line 2166 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2168 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeQualifier( Type::Volatile ); }
-#line 10384 "Parser/parser.cc"
+#line 10385 "Parser/parser.cc"
     break;
 
   case 491:
-#line 2168 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2170 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeQualifier( Type::Atomic ); }
-#line 10390 "Parser/parser.cc"
+#line 10391 "Parser/parser.cc"
     break;
 
   case 492:
-#line 2170 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2172 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newForall( (yyvsp[0].decl) ); }
-#line 10396 "Parser/parser.cc"
+#line 10397 "Parser/parser.cc"
     break;
 
   case 493:
-#line 2175 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2177 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 10402 "Parser/parser.cc"
+#line 10403 "Parser/parser.cc"
     break;
 
   case 495:
-#line 2181 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2183 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10408 "Parser/parser.cc"
+#line 10409 "Parser/parser.cc"
     break;
 
   case 496:
-#line 2183 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2185 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-1].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 10414 "Parser/parser.cc"
+#line 10415 "Parser/parser.cc"
     break;
 
   case 498:
-#line 2194 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2196 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10420 "Parser/parser.cc"
+#line 10421 "Parser/parser.cc"
     break;
 
   case 499:
-#line 2199 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2201 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newStorageClass( Type::Extern ); }
-#line 10426 "Parser/parser.cc"
+#line 10427 "Parser/parser.cc"
     break;
 
   case 500:
-#line 2201 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2203 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newStorageClass( Type::Static ); }
-#line 10432 "Parser/parser.cc"
+#line 10433 "Parser/parser.cc"
     break;
 
   case 501:
-#line 2203 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2205 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newStorageClass( Type::Auto ); }
-#line 10438 "Parser/parser.cc"
+#line 10439 "Parser/parser.cc"
     break;
 
   case 502:
-#line 2205 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2207 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newStorageClass( Type::Register ); }
-#line 10444 "Parser/parser.cc"
+#line 10445 "Parser/parser.cc"
     break;
 
   case 503:
-#line 2207 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2209 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newStorageClass( Type::ThreadlocalGcc ); }
-#line 10450 "Parser/parser.cc"
+#line 10451 "Parser/parser.cc"
     break;
 
   case 504:
-#line 2209 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2211 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newStorageClass( Type::ThreadlocalC11 ); }
-#line 10456 "Parser/parser.cc"
+#line 10457 "Parser/parser.cc"
     break;
 
   case 505:
-#line 2212 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2214 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFuncSpecifier( Type::Inline ); }
-#line 10462 "Parser/parser.cc"
+#line 10463 "Parser/parser.cc"
     break;
 
   case 506:
-#line 2214 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2216 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFuncSpecifier( Type::Fortran ); }
-#line 10468 "Parser/parser.cc"
+#line 10469 "Parser/parser.cc"
     break;
 
   case 507:
-#line 2216 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2218 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFuncSpecifier( Type::Noreturn ); }
-#line 10474 "Parser/parser.cc"
+#line 10475 "Parser/parser.cc"
     break;
 
   case 508:
-#line 2221 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2223 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Void ); }
-#line 10480 "Parser/parser.cc"
+#line 10481 "Parser/parser.cc"
     break;
 
   case 509:
-#line 2223 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2225 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Bool ); }
-#line 10486 "Parser/parser.cc"
+#line 10487 "Parser/parser.cc"
     break;
 
   case 510:
-#line 2225 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2227 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Char ); }
-#line 10492 "Parser/parser.cc"
+#line 10493 "Parser/parser.cc"
     break;
 
   case 511:
-#line 2227 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2229 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Int ); }
-#line 10498 "Parser/parser.cc"
+#line 10499 "Parser/parser.cc"
     break;
 
   case 512:
-#line 2229 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2231 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Int128 ); }
-#line 10504 "Parser/parser.cc"
+#line 10505 "Parser/parser.cc"
     break;
 
   case 513:
-#line 2231 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2233 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Int128 )->addType( DeclarationNode::newSignedNess( DeclarationNode::Unsigned ) ); }
-#line 10510 "Parser/parser.cc"
+#line 10511 "Parser/parser.cc"
     break;
 
   case 514:
-#line 2233 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2235 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Float ); }
-#line 10516 "Parser/parser.cc"
+#line 10517 "Parser/parser.cc"
     break;
 
   case 515:
-#line 2235 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2237 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Double ); }
-#line 10522 "Parser/parser.cc"
+#line 10523 "Parser/parser.cc"
     break;
 
   case 516:
-#line 2237 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2239 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::uuFloat80 ); }
-#line 10528 "Parser/parser.cc"
+#line 10529 "Parser/parser.cc"
     break;
 
   case 517:
-#line 2239 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2241 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::uuFloat128 ); }
-#line 10534 "Parser/parser.cc"
+#line 10535 "Parser/parser.cc"
     break;
 
   case 518:
-#line 2241 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2243 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::uFloat16 ); }
-#line 10540 "Parser/parser.cc"
+#line 10541 "Parser/parser.cc"
     break;
 
   case 519:
-#line 2243 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2245 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::uFloat32 ); }
-#line 10546 "Parser/parser.cc"
+#line 10547 "Parser/parser.cc"
     break;
 
   case 520:
-#line 2245 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2247 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::uFloat32x ); }
-#line 10552 "Parser/parser.cc"
+#line 10553 "Parser/parser.cc"
     break;
 
   case 521:
-#line 2247 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2249 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::uFloat64 ); }
-#line 10558 "Parser/parser.cc"
+#line 10559 "Parser/parser.cc"
     break;
 
   case 522:
-#line 2249 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2251 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::uFloat64x ); }
-#line 10564 "Parser/parser.cc"
+#line 10565 "Parser/parser.cc"
     break;
 
   case 523:
-#line 2251 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2253 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::uFloat128 ); }
-#line 10570 "Parser/parser.cc"
+#line 10571 "Parser/parser.cc"
     break;
 
   case 524:
-#line 2253 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2255 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "_Decimal32 is currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 10576 "Parser/parser.cc"
+#line 10577 "Parser/parser.cc"
     break;
 
   case 525:
-#line 2255 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2257 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "_Decimal64 is currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 10582 "Parser/parser.cc"
+#line 10583 "Parser/parser.cc"
     break;
 
   case 526:
-#line 2257 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2259 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "_Decimal128 is currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 10588 "Parser/parser.cc"
+#line 10589 "Parser/parser.cc"
     break;
 
   case 527:
-#line 2259 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2261 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newComplexType( DeclarationNode::Complex ); }
-#line 10594 "Parser/parser.cc"
+#line 10595 "Parser/parser.cc"
     break;
 
   case 528:
-#line 2261 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2263 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newComplexType( DeclarationNode::Imaginary ); }
-#line 10600 "Parser/parser.cc"
+#line 10601 "Parser/parser.cc"
     break;
 
   case 529:
-#line 2263 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2265 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newSignedNess( DeclarationNode::Signed ); }
-#line 10606 "Parser/parser.cc"
+#line 10607 "Parser/parser.cc"
     break;
 
   case 530:
-#line 2265 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2267 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newSignedNess( DeclarationNode::Unsigned ); }
-#line 10612 "Parser/parser.cc"
+#line 10613 "Parser/parser.cc"
     break;
 
   case 531:
-#line 2267 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2269 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newLength( DeclarationNode::Short ); }
-#line 10618 "Parser/parser.cc"
+#line 10619 "Parser/parser.cc"
     break;
 
   case 532:
-#line 2269 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2271 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newLength( DeclarationNode::Long ); }
-#line 10624 "Parser/parser.cc"
+#line 10625 "Parser/parser.cc"
     break;
 
   case 533:
-#line 2271 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2273 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBuiltinType( DeclarationNode::Valist ); }
-#line 10630 "Parser/parser.cc"
+#line 10631 "Parser/parser.cc"
     break;
 
   case 534:
-#line 2273 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2275 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBuiltinType( DeclarationNode::AutoType ); }
-#line 10636 "Parser/parser.cc"
+#line 10637 "Parser/parser.cc"
     break;
 
   case 536:
-#line 2279 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2281 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 10642 "Parser/parser.cc"
+#line 10643 "Parser/parser.cc"
     break;
 
   case 538:
-#line 2285 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2287 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newVtableType( (yyvsp[-2].decl) ); }
-#line 10648 "Parser/parser.cc"
+#line 10649 "Parser/parser.cc"
     break;
 
   case 539:
-#line 2291 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2293 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 10654 "Parser/parser.cc"
+#line 10655 "Parser/parser.cc"
     break;
 
   case 540:
-#line 2293 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2295 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "vtable default is currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 10660 "Parser/parser.cc"
+#line 10661 "Parser/parser.cc"
     break;
 
   case 542:
-#line 2300 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2302 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10666 "Parser/parser.cc"
+#line 10667 "Parser/parser.cc"
     break;
 
   case 543:
-#line 2302 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2304 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10672 "Parser/parser.cc"
+#line 10673 "Parser/parser.cc"
     break;
 
   case 544:
-#line 2304 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2306 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-1].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 10678 "Parser/parser.cc"
+#line 10679 "Parser/parser.cc"
     break;
 
   case 545:
-#line 2306 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2308 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) )->addType( (yyvsp[-2].decl) ); }
-#line 10684 "Parser/parser.cc"
+#line 10685 "Parser/parser.cc"
     break;
 
   case 547:
-#line 2313 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2315 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 10690 "Parser/parser.cc"
+#line 10691 "Parser/parser.cc"
     break;
 
   case 549:
-#line 2319 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2321 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10696 "Parser/parser.cc"
+#line 10697 "Parser/parser.cc"
     break;
 
   case 550:
-#line 2321 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2323 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10702 "Parser/parser.cc"
+#line 10703 "Parser/parser.cc"
     break;
 
   case 551:
-#line 2323 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2325 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addType( (yyvsp[0].decl) ); }
-#line 10708 "Parser/parser.cc"
+#line 10709 "Parser/parser.cc"
     break;
 
   case 552:
-#line 2328 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2330 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 10714 "Parser/parser.cc"
+#line 10715 "Parser/parser.cc"
     break;
 
   case 553:
-#line 2330 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2332 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeof( (yyvsp[-1].en) ); }
-#line 10720 "Parser/parser.cc"
+#line 10721 "Parser/parser.cc"
     break;
 
   case 554:
-#line 2332 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2334 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeof( new ExpressionNode( new ast::TypeExpr( yylloc, maybeMoveBuildType( (yyvsp[-1].decl) ) ) ), true ); }
-#line 10726 "Parser/parser.cc"
+#line 10727 "Parser/parser.cc"
     break;
 
   case 555:
-#line 2334 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2336 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeof( (yyvsp[-1].en), true ); }
-#line 10732 "Parser/parser.cc"
+#line 10733 "Parser/parser.cc"
     break;
 
   case 556:
-#line 2336 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2338 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBuiltinType( DeclarationNode::Zero ); }
-#line 10738 "Parser/parser.cc"
+#line 10739 "Parser/parser.cc"
     break;
 
   case 557:
-#line 2338 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2340 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBuiltinType( DeclarationNode::One ); }
-#line 10744 "Parser/parser.cc"
+#line 10745 "Parser/parser.cc"
     break;
 
   case 558:
-#line 2343 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2345 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// printf( "sue_declaration_specifier %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
 			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
-#line 10755 "Parser/parser.cc"
+#line 10756 "Parser/parser.cc"
     break;
 
   case 559:
-#line 2350 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2352 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10761 "Parser/parser.cc"
+#line 10762 "Parser/parser.cc"
     break;
 
   case 560:
-#line 2352 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2354 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10767 "Parser/parser.cc"
+#line 10768 "Parser/parser.cc"
     break;
 
   case 561:
-#line 2354 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2356 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-1].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 10773 "Parser/parser.cc"
+#line 10774 "Parser/parser.cc"
     break;
 
   case 562:
-#line 2359 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2361 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// printf( "sue_type_specifier %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
 			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
-#line 10784 "Parser/parser.cc"
+#line 10785 "Parser/parser.cc"
     break;
 
   case 563:
-#line 2366 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2368 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { if ( (yyvsp[0].decl)->type != nullptr && (yyvsp[0].decl)->type->forall ) forall = true; }
-#line 10790 "Parser/parser.cc"
+#line 10791 "Parser/parser.cc"
     break;
 
   case 564:
-#line 2368 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2370 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 10796 "Parser/parser.cc"
+#line 10797 "Parser/parser.cc"
     break;
 
   case 565:
-#line 2370 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2372 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[0].decl)->type != nullptr && (yyvsp[0].decl)->type->forall ) forall = true; // remember generic type
 			(yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) );
 		}
-#line 10805 "Parser/parser.cc"
+#line 10806 "Parser/parser.cc"
     break;
 
   case 567:
-#line 2379 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2381 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10811 "Parser/parser.cc"
+#line 10812 "Parser/parser.cc"
     break;
 
   case 568:
-#line 2381 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2383 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10817 "Parser/parser.cc"
+#line 10818 "Parser/parser.cc"
     break;
 
   case 569:
-#line 2383 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2385 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-1].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 10823 "Parser/parser.cc"
+#line 10824 "Parser/parser.cc"
     break;
 
   case 571:
-#line 2389 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2391 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10829 "Parser/parser.cc"
+#line 10830 "Parser/parser.cc"
     break;
 
   case 572:
-#line 2391 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2393 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10835 "Parser/parser.cc"
+#line 10836 "Parser/parser.cc"
     break;
 
   case 574:
-#line 2397 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2399 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10841 "Parser/parser.cc"
+#line 10842 "Parser/parser.cc"
     break;
 
   case 575:
-#line 2399 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2401 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10847 "Parser/parser.cc"
+#line 10848 "Parser/parser.cc"
     break;
 
   case 576:
-#line 2401 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2403 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-1].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 10853 "Parser/parser.cc"
+#line 10854 "Parser/parser.cc"
     break;
 
   case 578:
-#line 2407 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2409 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 10859 "Parser/parser.cc"
+#line 10860 "Parser/parser.cc"
     break;
 
   case 579:
-#line 2409 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2411 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 10865 "Parser/parser.cc"
+#line 10866 "Parser/parser.cc"
     break;
 
   case 580:
-#line 2414 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2416 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFromTypedef( (yyvsp[0].tok) ); }
-#line 10871 "Parser/parser.cc"
+#line 10872 "Parser/parser.cc"
     break;
 
   case 581:
-#line 2416 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2418 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newQualifiedType( DeclarationNode::newFromGlobalScope(), DeclarationNode::newFromTypedef( (yyvsp[0].tok) ) ); }
-#line 10877 "Parser/parser.cc"
+#line 10878 "Parser/parser.cc"
     break;
 
   case 582:
-#line 2418 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2420 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newQualifiedType( (yyvsp[-2].decl), DeclarationNode::newFromTypedef( (yyvsp[0].tok) ) ); }
-#line 10883 "Parser/parser.cc"
+#line 10884 "Parser/parser.cc"
     break;
 
   case 584:
-#line 2421 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2423 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newQualifiedType( DeclarationNode::newFromGlobalScope(), (yyvsp[0].decl) ); }
-#line 10889 "Parser/parser.cc"
+#line 10890 "Parser/parser.cc"
     break;
 
   case 585:
-#line 2423 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2425 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newQualifiedType( (yyvsp[-2].decl), (yyvsp[0].decl) ); }
-#line 10895 "Parser/parser.cc"
+#line 10896 "Parser/parser.cc"
     break;
 
   case 586:
-#line 2428 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2430 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFromTypeGen( (yyvsp[0].tok), nullptr ); }
-#line 10901 "Parser/parser.cc"
+#line 10902 "Parser/parser.cc"
     break;
 
   case 587:
-#line 2430 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2432 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFromTypeGen( (yyvsp[-2].tok), nullptr ); }
-#line 10907 "Parser/parser.cc"
+#line 10908 "Parser/parser.cc"
     break;
 
   case 588:
-#line 2432 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2434 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFromTypeGen( (yyvsp[-3].tok), (yyvsp[-1].en) ); }
-#line 10913 "Parser/parser.cc"
+#line 10914 "Parser/parser.cc"
     break;
 
   case 589:
-#line 2437 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2439 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// printf( "elaborated_type %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
 			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
-#line 10924 "Parser/parser.cc"
+#line 10925 "Parser/parser.cc"
     break;
 
   case 593:
-#line 2453 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2455 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { forall = false; }
-#line 10930 "Parser/parser.cc"
+#line 10931 "Parser/parser.cc"
     break;
 
   case 594:
-#line 2455 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2457 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newAggregate( (yyvsp[-6].aggKey), nullptr, (yyvsp[0].en), (yyvsp[-2].decl), true )->addQualifiers( (yyvsp[-5].decl) ); }
-#line 10936 "Parser/parser.cc"
+#line 10937 "Parser/parser.cc"
     break;
 
   case 595:
-#line 2457 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2459 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.makeTypedef( *(yyvsp[0].tok), forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname ); // create typedef
 			forall = false;								// reset
 		}
-#line 10945 "Parser/parser.cc"
+#line 10946 "Parser/parser.cc"
     break;
 
   case 596:
-#line 2462 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2464 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.decl) = DeclarationNode::newAggregate( (yyvsp[-7].aggKey), (yyvsp[-5].tok), (yyvsp[0].en), (yyvsp[-2].decl), true )->addQualifiers( (yyvsp[-6].decl) );
 		}
-#line 10953 "Parser/parser.cc"
+#line 10954 "Parser/parser.cc"
     break;
 
   case 597:
-#line 2466 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2468 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.makeTypedef( *(yyvsp[0].tok), forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname ); // create typedef
 			forall = false;								// reset
 		}
-#line 10962 "Parser/parser.cc"
+#line 10963 "Parser/parser.cc"
     break;
 
   case 598:
-#line 2471 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2473 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			DeclarationNode::newFromTypedef( (yyvsp[-5].tok) );
 			(yyval.decl) = DeclarationNode::newAggregate( (yyvsp[-7].aggKey), (yyvsp[-5].tok), (yyvsp[0].en), (yyvsp[-2].decl), true )->addQualifiers( (yyvsp[-6].decl) );
 		}
-#line 10971 "Parser/parser.cc"
+#line 10972 "Parser/parser.cc"
     break;
 
   case 599:
-#line 2476 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2478 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.makeTypedef( *(yyvsp[0].tok), forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname ); // create typedef
 			forall = false;								// reset
 		}
-#line 10980 "Parser/parser.cc"
+#line 10981 "Parser/parser.cc"
     break;
 
   case 600:
-#line 2481 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2483 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			DeclarationNode::newFromTypeGen( (yyvsp[-5].tok), nullptr );
 			(yyval.decl) = DeclarationNode::newAggregate( (yyvsp[-7].aggKey), (yyvsp[-5].tok), (yyvsp[0].en), (yyvsp[-2].decl), true )->addQualifiers( (yyvsp[-6].decl) );
 		}
-#line 10989 "Parser/parser.cc"
+#line 10990 "Parser/parser.cc"
     break;
 
   case 602:
-#line 2490 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2492 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 10995 "Parser/parser.cc"
+#line 10996 "Parser/parser.cc"
     break;
 
   case 603:
-#line 2492 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2494 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[-1].en); }
-#line 11001 "Parser/parser.cc"
+#line 11002 "Parser/parser.cc"
     break;
 
   case 604:
-#line 2497 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2499 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.makeTypedef( *(yyvsp[0].tok), forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname );
 			forall = false;								// reset
 			(yyval.decl) = DeclarationNode::newAggregate( (yyvsp[-2].aggKey), (yyvsp[0].tok), nullptr, nullptr, false )->addQualifiers( (yyvsp[-1].decl) );
 		}
-#line 11011 "Parser/parser.cc"
+#line 11012 "Parser/parser.cc"
     break;
 
   case 605:
-#line 2503 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2505 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			forall = false;								// reset
 			// Create new generic declaration with same name as previous forward declaration, where the IDENTIFIER is
@@ -11026,98 +11027,98 @@ yyreduce:
 				delete (yyvsp[0].decl);
 			}
 		}
-#line 11030 "Parser/parser.cc"
+#line 11031 "Parser/parser.cc"
     break;
 
   case 608:
-#line 2526 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2528 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.aggKey) = ast::AggregateDecl::Struct; }
-#line 11036 "Parser/parser.cc"
+#line 11037 "Parser/parser.cc"
     break;
 
   case 609:
-#line 2528 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2530 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.aggKey) = ast::AggregateDecl::Union; }
-#line 11042 "Parser/parser.cc"
+#line 11043 "Parser/parser.cc"
     break;
 
   case 610:
-#line 2530 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2532 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.aggKey) = ast::AggregateDecl::Exception; }
-#line 11048 "Parser/parser.cc"
+#line 11049 "Parser/parser.cc"
     break;
 
   case 611:
-#line 2536 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2538 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.aggKey) = ast::AggregateDecl::Monitor; }
-#line 11054 "Parser/parser.cc"
+#line 11055 "Parser/parser.cc"
     break;
 
   case 612:
-#line 2538 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2540 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.aggKey) = ast::AggregateDecl::Monitor; }
-#line 11060 "Parser/parser.cc"
+#line 11061 "Parser/parser.cc"
     break;
 
   case 613:
-#line 2540 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2542 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.aggKey) = ast::AggregateDecl::Generator; }
-#line 11066 "Parser/parser.cc"
+#line 11067 "Parser/parser.cc"
     break;
 
   case 614:
-#line 2542 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2544 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, "monitor generator is currently unimplemented." );
 			(yyval.aggKey) = ast::AggregateDecl::NoAggregate;
 		}
-#line 11075 "Parser/parser.cc"
+#line 11076 "Parser/parser.cc"
     break;
 
   case 615:
-#line 2547 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2549 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.aggKey) = ast::AggregateDecl::Coroutine; }
-#line 11081 "Parser/parser.cc"
+#line 11082 "Parser/parser.cc"
     break;
 
   case 616:
-#line 2549 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2551 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, "monitor coroutine is currently unimplemented." );
 			(yyval.aggKey) = ast::AggregateDecl::NoAggregate;
 		}
-#line 11090 "Parser/parser.cc"
+#line 11091 "Parser/parser.cc"
     break;
 
   case 617:
-#line 2554 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2556 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.aggKey) = ast::AggregateDecl::Thread; }
-#line 11096 "Parser/parser.cc"
+#line 11097 "Parser/parser.cc"
     break;
 
   case 618:
-#line 2556 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2558 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticError( yylloc, "monitor thread is currently unimplemented." );
 			(yyval.aggKey) = ast::AggregateDecl::NoAggregate;
 		}
-#line 11105 "Parser/parser.cc"
+#line 11106 "Parser/parser.cc"
     break;
 
   case 619:
-#line 2564 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2566 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11111 "Parser/parser.cc"
+#line 11112 "Parser/parser.cc"
     break;
 
   case 620:
-#line 2566 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2568 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl) ? (yyvsp[-1].decl)->appendList( (yyvsp[0].decl) ) : (yyvsp[0].decl); }
-#line 11117 "Parser/parser.cc"
+#line 11118 "Parser/parser.cc"
     break;
 
   case 621:
-#line 2571 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2573 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// printf( "type_specifier1 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
 			(yyval.decl) = fieldDecl( (yyvsp[-2].decl), (yyvsp[-1].decl) );
@@ -11126,23 +11127,23 @@ yyreduce:
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
-#line 11130 "Parser/parser.cc"
+#line 11131 "Parser/parser.cc"
     break;
 
   case 622:
-#line 2580 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2582 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = fieldDecl( (yyvsp[-2].decl), (yyvsp[-1].decl) ); distExt( (yyval.decl) ); }
-#line 11136 "Parser/parser.cc"
+#line 11137 "Parser/parser.cc"
     break;
 
   case 623:
-#line 2582 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2584 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "STATIC aggregate field qualifier currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 11142 "Parser/parser.cc"
+#line 11143 "Parser/parser.cc"
     break;
 
   case 624:
-#line 2584 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2586 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( ! (yyvsp[-1].decl) ) {								// field declarator ?
 				(yyvsp[-1].decl) = DeclarationNode::newName( nullptr );
@@ -11151,811 +11152,811 @@ yyreduce:
 			(yyval.decl) = distAttr( (yyvsp[-2].decl), (yyvsp[-1].decl) );					// mark all fields in list
 			distInl( (yyvsp[-1].decl) );
 		}
-#line 11155 "Parser/parser.cc"
+#line 11156 "Parser/parser.cc"
     break;
 
   case 625:
-#line 2593 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2595 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "INLINE aggregate control currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 11161 "Parser/parser.cc"
+#line 11162 "Parser/parser.cc"
     break;
 
   case 628:
-#line 2597 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2599 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { distExt( (yyvsp[-1].decl) ); (yyval.decl) = (yyvsp[-1].decl); }
-#line 11167 "Parser/parser.cc"
+#line 11168 "Parser/parser.cc"
     break;
 
   case 629:
-#line 2599 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2601 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 11173 "Parser/parser.cc"
+#line 11174 "Parser/parser.cc"
     break;
 
   case 632:
-#line 2606 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2608 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11179 "Parser/parser.cc"
+#line 11180 "Parser/parser.cc"
     break;
 
   case 634:
-#line 2609 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2611 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->appendList( (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ) ); }
-#line 11185 "Parser/parser.cc"
+#line 11186 "Parser/parser.cc"
     break;
 
   case 635:
-#line 2614 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2616 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBitfield( (yyvsp[0].en) ); }
-#line 11191 "Parser/parser.cc"
+#line 11192 "Parser/parser.cc"
     break;
 
   case 636:
-#line 2617 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2619 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addBitfield( (yyvsp[0].en) ); }
-#line 11197 "Parser/parser.cc"
+#line 11198 "Parser/parser.cc"
     break;
 
   case 637:
-#line 2620 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2622 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addBitfield( (yyvsp[0].en) ); }
-#line 11203 "Parser/parser.cc"
+#line 11204 "Parser/parser.cc"
     break;
 
   case 638:
-#line 2623 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2625 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addBitfield( (yyvsp[0].en) ); }
-#line 11209 "Parser/parser.cc"
+#line 11210 "Parser/parser.cc"
     break;
 
   case 639:
-#line 2628 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2630 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11215 "Parser/parser.cc"
+#line 11216 "Parser/parser.cc"
     break;
 
   case 641:
-#line 2631 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2633 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->appendList( (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ) ); }
-#line 11221 "Parser/parser.cc"
+#line 11222 "Parser/parser.cc"
     break;
 
   case 643:
-#line 2642 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2644 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addName( (yyvsp[0].tok) ); }
-#line 11227 "Parser/parser.cc"
+#line 11228 "Parser/parser.cc"
     break;
 
   case 644:
-#line 2644 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2646 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->appendList( (yyvsp[-2].decl)->cloneType( (yyvsp[0].tok) ) ); }
-#line 11233 "Parser/parser.cc"
+#line 11234 "Parser/parser.cc"
     break;
 
   case 646:
-#line 2651 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2653 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->appendList( (yyvsp[-1].decl)->cloneType( 0 ) ); }
-#line 11239 "Parser/parser.cc"
+#line 11240 "Parser/parser.cc"
     break;
 
   case 647:
-#line 2656 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2658 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 11245 "Parser/parser.cc"
+#line 11246 "Parser/parser.cc"
     break;
 
   case 649:
-#line 2662 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2664 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[0].en); }
-#line 11251 "Parser/parser.cc"
+#line 11252 "Parser/parser.cc"
     break;
 
   case 650:
-#line 2667 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2669 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newEnum( nullptr, (yyvsp[-2].decl), true, false )->addQualifiers( (yyvsp[-4].decl) ); }
-#line 11257 "Parser/parser.cc"
+#line 11258 "Parser/parser.cc"
     break;
 
   case 651:
-#line 2669 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2671 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { typedefTable.makeTypedef( *(yyvsp[0].tok) ); }
-#line 11263 "Parser/parser.cc"
+#line 11264 "Parser/parser.cc"
     break;
 
   case 652:
-#line 2671 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2673 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newEnum( (yyvsp[-6].tok), (yyvsp[-2].decl), true, false, nullptr, (yyvsp[-4].hide) )->addQualifiers( (yyvsp[-7].decl) ); }
-#line 11269 "Parser/parser.cc"
+#line 11270 "Parser/parser.cc"
     break;
 
   case 653:
-#line 2674 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2676 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newEnum( (yyvsp[-5].decl)->name, (yyvsp[-2].decl), true, false, nullptr, (yyvsp[-4].hide) )->addQualifiers( (yyvsp[-6].decl) ); }
-#line 11275 "Parser/parser.cc"
+#line 11276 "Parser/parser.cc"
     break;
 
   case 654:
-#line 2676 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2678 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-6].decl)->storageClasses.val != 0 || (yyvsp[-6].decl)->type->qualifiers.any() )
 			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 
 			(yyval.decl) = DeclarationNode::newEnum( nullptr, (yyvsp[-2].decl), true, true, (yyvsp[-6].decl) )->addQualifiers( (yyvsp[-4].decl) );
 		}
-#line 11286 "Parser/parser.cc"
+#line 11287 "Parser/parser.cc"
     break;
 
   case 655:
-#line 2683 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2685 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.decl) = DeclarationNode::newEnum( nullptr, (yyvsp[-2].decl), true, true )->addQualifiers( (yyvsp[-4].decl) );
 		}
-#line 11294 "Parser/parser.cc"
+#line 11295 "Parser/parser.cc"
     break;
 
   case 656:
-#line 2687 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2689 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-4].decl)->storageClasses.any() || (yyvsp[-4].decl)->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
 			typedefTable.makeTypedef( *(yyvsp[-1].tok) );
 		}
-#line 11303 "Parser/parser.cc"
+#line 11304 "Parser/parser.cc"
     break;
 
   case 657:
-#line 2692 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2694 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.decl) = DeclarationNode::newEnum( (yyvsp[-7].tok), (yyvsp[-2].decl), true, true, (yyvsp[-10].decl), (yyvsp[-4].hide) )->addQualifiers( (yyvsp[-8].decl) )->addQualifiers( (yyvsp[-6].decl) );
 		}
-#line 11311 "Parser/parser.cc"
+#line 11312 "Parser/parser.cc"
     break;
 
   case 658:
-#line 2697 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2699 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.decl) = DeclarationNode::newEnum( (yyvsp[-6].tok), (yyvsp[-2].decl), true, true, nullptr, (yyvsp[-4].hide) )->addQualifiers( (yyvsp[-7].decl) )->addQualifiers( (yyvsp[-5].decl) );
 		}
-#line 11319 "Parser/parser.cc"
+#line 11320 "Parser/parser.cc"
     break;
 
   case 659:
-#line 2702 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2704 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.decl) = DeclarationNode::newEnum( (yyvsp[-6].decl)->name, (yyvsp[-2].decl), true, true, (yyvsp[-9].decl), (yyvsp[-4].hide) )->addQualifiers( (yyvsp[-7].decl) )->addQualifiers( (yyvsp[-5].decl) );
 		}
-#line 11327 "Parser/parser.cc"
+#line 11328 "Parser/parser.cc"
     break;
 
   case 660:
-#line 2707 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2709 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.decl) = DeclarationNode::newEnum( (yyvsp[-6].decl)->name, (yyvsp[-2].decl), true, true, nullptr, (yyvsp[-4].hide) )->addQualifiers( (yyvsp[-7].decl) )->addQualifiers( (yyvsp[-5].decl) );
 		}
-#line 11335 "Parser/parser.cc"
+#line 11336 "Parser/parser.cc"
     break;
 
   case 662:
-#line 2715 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2717 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.hide) = EnumHiding::Visible; }
-#line 11341 "Parser/parser.cc"
+#line 11342 "Parser/parser.cc"
     break;
 
   case 663:
-#line 2717 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2719 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.hide) = EnumHiding::Hide; }
-#line 11347 "Parser/parser.cc"
+#line 11348 "Parser/parser.cc"
     break;
 
   case 664:
-#line 2722 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2724 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { typedefTable.makeTypedef( *(yyvsp[0].tok) ); (yyval.decl) = DeclarationNode::newEnum( (yyvsp[0].tok), nullptr, false, false )->addQualifiers( (yyvsp[-1].decl) ); }
-#line 11353 "Parser/parser.cc"
+#line 11354 "Parser/parser.cc"
     break;
 
   case 665:
-#line 2724 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2726 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { typedefTable.makeTypedef( *(yyvsp[0].decl)->type->symbolic.name );	(yyval.decl) = DeclarationNode::newEnum( (yyvsp[0].decl)->type->symbolic.name, nullptr, false, false )->addQualifiers( (yyvsp[-1].decl) ); }
-#line 11359 "Parser/parser.cc"
+#line 11360 "Parser/parser.cc"
     break;
 
   case 666:
-#line 2729 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2731 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newEnumValueGeneric( (yyvsp[-1].tok), (yyvsp[0].in) ); }
-#line 11365 "Parser/parser.cc"
+#line 11366 "Parser/parser.cc"
     break;
 
   case 667:
-#line 2731 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2733 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newEnumInLine( *(yyvsp[0].decl)->type->symbolic.name ); }
-#line 11371 "Parser/parser.cc"
+#line 11372 "Parser/parser.cc"
     break;
 
   case 668:
-#line 2733 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2735 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( DeclarationNode::newEnumValueGeneric( (yyvsp[-1].tok), (yyvsp[0].in) ) ); }
-#line 11377 "Parser/parser.cc"
+#line 11378 "Parser/parser.cc"
     break;
 
   case 669:
-#line 2735 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2737 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ) ); }
-#line 11383 "Parser/parser.cc"
+#line 11384 "Parser/parser.cc"
     break;
 
   case 671:
-#line 2741 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2743 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.hide) = EnumHiding::Visible; }
-#line 11389 "Parser/parser.cc"
+#line 11390 "Parser/parser.cc"
     break;
 
   case 672:
-#line 2746 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2748 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.in) = nullptr; }
-#line 11395 "Parser/parser.cc"
+#line 11396 "Parser/parser.cc"
     break;
 
   case 673:
-#line 2747 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2749 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                         { (yyval.in) = new InitializerNode( (yyvsp[0].en) ); }
-#line 11401 "Parser/parser.cc"
+#line 11402 "Parser/parser.cc"
     break;
 
   case 674:
-#line 2748 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2750 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                      { (yyval.in) = new InitializerNode( (yyvsp[-2].in), true ); }
-#line 11407 "Parser/parser.cc"
+#line 11408 "Parser/parser.cc"
     break;
 
   case 675:
-#line 2755 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2757 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newBasicType( DeclarationNode::Void ); }
-#line 11413 "Parser/parser.cc"
+#line 11414 "Parser/parser.cc"
     break;
 
   case 676:
-#line 2757 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2759 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11419 "Parser/parser.cc"
+#line 11420 "Parser/parser.cc"
     break;
 
   case 679:
-#line 2761 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2763 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11425 "Parser/parser.cc"
+#line 11426 "Parser/parser.cc"
     break;
 
   case 680:
-#line 2763 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2765 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->addVarArgs(); }
-#line 11431 "Parser/parser.cc"
+#line 11432 "Parser/parser.cc"
     break;
 
   case 681:
-#line 2765 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2767 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->addVarArgs(); }
-#line 11437 "Parser/parser.cc"
+#line 11438 "Parser/parser.cc"
     break;
 
   case 683:
-#line 2773 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2775 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11443 "Parser/parser.cc"
+#line 11444 "Parser/parser.cc"
     break;
 
   case 684:
-#line 2775 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2777 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11449 "Parser/parser.cc"
+#line 11450 "Parser/parser.cc"
     break;
 
   case 685:
-#line 2777 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2779 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-8].decl)->appendList( (yyvsp[-4].decl) )->appendList( (yyvsp[0].decl) ); }
-#line 11455 "Parser/parser.cc"
+#line 11456 "Parser/parser.cc"
     break;
 
   case 687:
-#line 2783 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2785 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11461 "Parser/parser.cc"
+#line 11462 "Parser/parser.cc"
     break;
 
   case 688:
-#line 2788 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2790 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11467 "Parser/parser.cc"
+#line 11468 "Parser/parser.cc"
     break;
 
   case 689:
-#line 2790 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2792 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11473 "Parser/parser.cc"
+#line 11474 "Parser/parser.cc"
     break;
 
   case 691:
-#line 2793 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2795 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->addVarArgs(); }
-#line 11479 "Parser/parser.cc"
+#line 11480 "Parser/parser.cc"
     break;
 
   case 694:
-#line 2800 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2802 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11485 "Parser/parser.cc"
+#line 11486 "Parser/parser.cc"
     break;
 
   case 695:
-#line 2802 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2804 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11491 "Parser/parser.cc"
+#line 11492 "Parser/parser.cc"
     break;
 
   case 697:
-#line 2811 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2813 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addName( (yyvsp[-1].tok) ); }
-#line 11497 "Parser/parser.cc"
+#line 11498 "Parser/parser.cc"
     break;
 
   case 698:
-#line 2814 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2816 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addName( (yyvsp[-1].tok) ); }
-#line 11503 "Parser/parser.cc"
+#line 11504 "Parser/parser.cc"
     break;
 
   case 699:
-#line 2816 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2818 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addName( (yyvsp[-1].tok) )->addQualifiers( (yyvsp[-3].decl) ); }
-#line 11509 "Parser/parser.cc"
+#line 11510 "Parser/parser.cc"
     break;
 
   case 704:
-#line 2826 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2828 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 11515 "Parser/parser.cc"
+#line 11516 "Parser/parser.cc"
     break;
 
   case 706:
-#line 2833 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2835 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addType( (yyvsp[-2].decl) )->addInitializer( (yyvsp[0].en) ? new InitializerNode( (yyvsp[0].en) ) : nullptr ); }
-#line 11521 "Parser/parser.cc"
+#line 11522 "Parser/parser.cc"
     break;
 
   case 707:
-#line 2835 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2837 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addType( (yyvsp[-2].decl) )->addInitializer( (yyvsp[0].en) ? new InitializerNode( (yyvsp[0].en) ) : nullptr ); }
-#line 11527 "Parser/parser.cc"
+#line 11528 "Parser/parser.cc"
     break;
 
   case 708:
-#line 2840 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2842 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addInitializer( (yyvsp[0].en) ? new InitializerNode( (yyvsp[0].en) ) : nullptr ); }
-#line 11533 "Parser/parser.cc"
+#line 11534 "Parser/parser.cc"
     break;
 
   case 709:
-#line 2842 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2844 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addType( (yyvsp[-2].decl) )->addInitializer( (yyvsp[0].en) ? new InitializerNode( (yyvsp[0].en) ) : nullptr ); }
-#line 11539 "Parser/parser.cc"
+#line 11540 "Parser/parser.cc"
     break;
 
   case 710:
-#line 2851 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2853 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newName( (yyvsp[0].tok) ); }
-#line 11545 "Parser/parser.cc"
+#line 11546 "Parser/parser.cc"
     break;
 
   case 711:
-#line 2853 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2855 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->appendList( DeclarationNode::newName( (yyvsp[0].tok) ) ); }
-#line 11551 "Parser/parser.cc"
+#line 11552 "Parser/parser.cc"
     break;
 
   case 717:
-#line 2866 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2868 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addType( (yyvsp[-1].decl) ); }
-#line 11557 "Parser/parser.cc"
+#line 11558 "Parser/parser.cc"
     break;
 
   case 720:
-#line 2876 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2878 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.in) = nullptr; }
-#line 11563 "Parser/parser.cc"
+#line 11564 "Parser/parser.cc"
     break;
 
   case 721:
-#line 2877 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2879 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                         { (yyval.in) = (yyvsp[-1].op) == OperKinds::Assign ? (yyvsp[0].in) : (yyvsp[0].in)->set_maybeConstructed( false ); }
-#line 11569 "Parser/parser.cc"
+#line 11570 "Parser/parser.cc"
     break;
 
   case 722:
-#line 2878 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2880 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                                         { (yyval.in) = new InitializerNode( true ); }
-#line 11575 "Parser/parser.cc"
+#line 11576 "Parser/parser.cc"
     break;
 
   case 723:
-#line 2879 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2881 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                         { (yyval.in) = new InitializerNode( (yyvsp[-2].in), true ); }
-#line 11581 "Parser/parser.cc"
+#line 11582 "Parser/parser.cc"
     break;
 
   case 724:
-#line 2883 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2885 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                         { (yyval.in) = new InitializerNode( (yyvsp[0].en) ); }
-#line 11587 "Parser/parser.cc"
+#line 11588 "Parser/parser.cc"
     break;
 
   case 725:
-#line 2884 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2886 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                         { (yyval.in) = new InitializerNode( (yyvsp[-2].in), true ); }
-#line 11593 "Parser/parser.cc"
+#line 11594 "Parser/parser.cc"
     break;
 
   case 726:
-#line 2889 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2891 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.in) = nullptr; }
-#line 11599 "Parser/parser.cc"
+#line 11600 "Parser/parser.cc"
     break;
 
   case 728:
-#line 2891 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2893 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                                         { (yyval.in) = (yyvsp[0].in)->set_designators( (yyvsp[-1].en) ); }
-#line 11605 "Parser/parser.cc"
+#line 11606 "Parser/parser.cc"
     break;
 
   case 729:
-#line 2892 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2894 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                         { (yyval.in) = (InitializerNode *)( (yyvsp[-2].in)->set_last( (yyvsp[0].in) ) ); }
-#line 11611 "Parser/parser.cc"
+#line 11612 "Parser/parser.cc"
     break;
 
   case 730:
-#line 2893 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2895 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                                                            { (yyval.in) = (InitializerNode *)((yyvsp[-3].in)->set_last( (yyvsp[0].in)->set_designators( (yyvsp[-1].en) ) )); }
-#line 11617 "Parser/parser.cc"
+#line 11618 "Parser/parser.cc"
     break;
 
   case 732:
-#line 2909 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2911 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_varref( yylloc, (yyvsp[-1].tok) ) ); }
-#line 11623 "Parser/parser.cc"
+#line 11624 "Parser/parser.cc"
     break;
 
   case 734:
-#line 2915 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2917 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-1].en)->set_last( (yyvsp[0].en) )); }
-#line 11629 "Parser/parser.cc"
+#line 11630 "Parser/parser.cc"
     break;
 
   case 735:
-#line 2921 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2923 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( build_varref( yylloc, (yyvsp[0].tok) ) ); }
-#line 11635 "Parser/parser.cc"
+#line 11636 "Parser/parser.cc"
     break;
 
   case 736:
-#line 2924 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2926 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[-2].en); }
-#line 11641 "Parser/parser.cc"
+#line 11642 "Parser/parser.cc"
     break;
 
   case 737:
-#line 2926 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2928 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[-2].en); }
-#line 11647 "Parser/parser.cc"
+#line 11648 "Parser/parser.cc"
     break;
 
   case 738:
-#line 2928 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2930 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::RangeExpr( yylloc, maybeMoveBuild( (yyvsp[-4].en) ), maybeMoveBuild( (yyvsp[-2].en) ) ) ); }
-#line 11653 "Parser/parser.cc"
+#line 11654 "Parser/parser.cc"
     break;
 
   case 739:
-#line 2930 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2932 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[-2].en); }
-#line 11659 "Parser/parser.cc"
+#line 11660 "Parser/parser.cc"
     break;
 
   case 741:
-#line 2954 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2956 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11665 "Parser/parser.cc"
+#line 11666 "Parser/parser.cc"
     break;
 
   case 742:
-#line 2959 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2961 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11671 "Parser/parser.cc"
+#line 11672 "Parser/parser.cc"
     break;
 
   case 743:
-#line 2961 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2963 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl); }
-#line 11677 "Parser/parser.cc"
+#line 11678 "Parser/parser.cc"
     break;
 
   case 744:
-#line 2966 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2968 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToScope( *(yyvsp[0].tok), TYPEDEFname, "9" );
 			if ( (yyvsp[-1].tclass) == ast::TypeDecl::Otype ) { SemanticError( yylloc, "otype keyword is deprecated, use T " ); }
 			if ( (yyvsp[-1].tclass) == ast::TypeDecl::Dtype ) { SemanticError( yylloc, "dtype keyword is deprecated, use T &" ); }
 			if ( (yyvsp[-1].tclass) == ast::TypeDecl::Ttype ) { SemanticError( yylloc, "ttype keyword is deprecated, use T ..." ); }
 		}
-#line 11688 "Parser/parser.cc"
+#line 11689 "Parser/parser.cc"
     break;
 
   case 745:
-#line 2973 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2975 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeParam( (yyvsp[-4].tclass), (yyvsp[-3].tok) )->addTypeInitializer( (yyvsp[-1].decl) )->addAssertions( (yyvsp[0].decl) ); }
-#line 11694 "Parser/parser.cc"
+#line 11695 "Parser/parser.cc"
     break;
 
   case 746:
-#line 2975 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2977 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { typedefTable.addToScope( *(yyvsp[-1].tok), TYPEDEFname, "9" ); }
-#line 11700 "Parser/parser.cc"
+#line 11701 "Parser/parser.cc"
     break;
 
   case 747:
-#line 2977 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2979 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeParam( (yyvsp[-3].tclass), (yyvsp[-4].tok) )->addTypeInitializer( (yyvsp[-1].decl) )->addAssertions( (yyvsp[0].decl) ); }
-#line 11706 "Parser/parser.cc"
+#line 11707 "Parser/parser.cc"
     break;
 
   case 748:
-#line 2979 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2981 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToScope( *(yyvsp[-1].tok), TYPEDIMname, "9" );
 			(yyval.decl) = DeclarationNode::newTypeParam( ast::TypeDecl::Dimension, (yyvsp[-1].tok) );
 		}
-#line 11715 "Parser/parser.cc"
+#line 11716 "Parser/parser.cc"
     break;
 
   case 749:
-#line 2985 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2987 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTypeParam( ast::TypeDecl::Dtype, new string( DeclarationNode::anonymous.newName() ) )->addAssertions( (yyvsp[0].decl) ); }
-#line 11721 "Parser/parser.cc"
+#line 11722 "Parser/parser.cc"
     break;
 
   case 750:
-#line 2990 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2992 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tclass) = ast::TypeDecl::Otype; }
-#line 11727 "Parser/parser.cc"
+#line 11728 "Parser/parser.cc"
     break;
 
   case 751:
-#line 2992 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2994 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tclass) = ast::TypeDecl::Dtype; }
-#line 11733 "Parser/parser.cc"
+#line 11734 "Parser/parser.cc"
     break;
 
   case 752:
-#line 2994 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 2996 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tclass) = ast::TypeDecl::DStype; }
-#line 11739 "Parser/parser.cc"
+#line 11740 "Parser/parser.cc"
     break;
 
   case 753:
-#line 2998 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3000 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tclass) = ast::TypeDecl::Ttype; }
-#line 11745 "Parser/parser.cc"
+#line 11746 "Parser/parser.cc"
     break;
 
   case 754:
-#line 3003 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3005 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tclass) = ast::TypeDecl::Otype; }
-#line 11751 "Parser/parser.cc"
+#line 11752 "Parser/parser.cc"
     break;
 
   case 755:
-#line 3005 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3007 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tclass) = ast::TypeDecl::Dtype; }
-#line 11757 "Parser/parser.cc"
+#line 11758 "Parser/parser.cc"
     break;
 
   case 756:
-#line 3007 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3009 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tclass) = ast::TypeDecl::Ftype; }
-#line 11763 "Parser/parser.cc"
+#line 11764 "Parser/parser.cc"
     break;
 
   case 757:
-#line 3009 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3011 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tclass) = ast::TypeDecl::Ttype; }
-#line 11769 "Parser/parser.cc"
+#line 11770 "Parser/parser.cc"
     break;
 
   case 758:
-#line 3014 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3016 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11775 "Parser/parser.cc"
+#line 11776 "Parser/parser.cc"
     break;
 
   case 761:
-#line 3021 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3023 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11781 "Parser/parser.cc"
+#line 11782 "Parser/parser.cc"
     break;
 
   case 762:
-#line 3026 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3028 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTraitUse( (yyvsp[-3].tok), (yyvsp[-1].en) ); }
-#line 11787 "Parser/parser.cc"
+#line 11788 "Parser/parser.cc"
     break;
 
   case 763:
-#line 3028 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3030 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl); }
-#line 11793 "Parser/parser.cc"
+#line 11794 "Parser/parser.cc"
     break;
 
   case 764:
-#line 3035 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3037 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::TypeExpr( yylloc, maybeMoveBuildType( (yyvsp[0].decl) ) ) ); }
-#line 11799 "Parser/parser.cc"
+#line 11800 "Parser/parser.cc"
     break;
 
   case 766:
-#line 3038 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3040 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-2].en)->set_last( new ExpressionNode( new ast::TypeExpr( yylloc, maybeMoveBuildType( (yyvsp[0].decl) ) ) ) )); }
-#line 11805 "Parser/parser.cc"
+#line 11806 "Parser/parser.cc"
     break;
 
   case 767:
-#line 3040 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3042 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)( (yyvsp[-2].en)->set_last( (yyvsp[0].en) )); }
-#line 11811 "Parser/parser.cc"
+#line 11812 "Parser/parser.cc"
     break;
 
   case 768:
-#line 3045 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3047 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl); }
-#line 11817 "Parser/parser.cc"
+#line 11818 "Parser/parser.cc"
     break;
 
   case 769:
-#line 3047 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3049 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 11823 "Parser/parser.cc"
+#line 11824 "Parser/parser.cc"
     break;
 
   case 770:
-#line 3049 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3051 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->appendList( (yyvsp[0].decl)->copySpecifiers( (yyvsp[-2].decl) ) ); }
-#line 11829 "Parser/parser.cc"
+#line 11830 "Parser/parser.cc"
     break;
 
   case 771:
-#line 3054 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3056 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addAssertions( (yyvsp[0].decl) ); }
-#line 11835 "Parser/parser.cc"
+#line 11836 "Parser/parser.cc"
     break;
 
   case 772:
-#line 3056 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3058 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->addAssertions( (yyvsp[-2].decl) )->addType( (yyvsp[0].decl) ); }
-#line 11841 "Parser/parser.cc"
+#line 11842 "Parser/parser.cc"
     break;
 
   case 773:
-#line 3061 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3063 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToEnclosingScope( *(yyvsp[0].tok), TYPEDEFname, "10" );
 			(yyval.decl) = DeclarationNode::newTypeDecl( (yyvsp[0].tok), nullptr );
 		}
-#line 11850 "Parser/parser.cc"
+#line 11851 "Parser/parser.cc"
     break;
 
   case 774:
-#line 3066 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3068 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			typedefTable.addToEnclosingScope( *(yyvsp[-3].tok), TYPEGENname, "11" );
 			(yyval.decl) = DeclarationNode::newTypeDecl( (yyvsp[-3].tok), (yyvsp[-1].decl) );
 		}
-#line 11859 "Parser/parser.cc"
+#line 11860 "Parser/parser.cc"
     break;
 
   case 775:
-#line 3074 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3076 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticWarning( yylloc, Warning::DeprecTraitSyntax );
 			(yyval.decl) = DeclarationNode::newTrait( (yyvsp[-5].tok), (yyvsp[-3].decl), nullptr );
 		}
-#line 11868 "Parser/parser.cc"
+#line 11869 "Parser/parser.cc"
     break;
 
   case 776:
-#line 3079 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3081 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTrait( (yyvsp[-2].tok), (yyvsp[-4].decl), nullptr ); }
-#line 11874 "Parser/parser.cc"
+#line 11875 "Parser/parser.cc"
     break;
 
   case 777:
-#line 3081 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3083 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			SemanticWarning( yylloc, Warning::DeprecTraitSyntax );
 			(yyval.decl) = DeclarationNode::newTrait( (yyvsp[-8].tok), (yyvsp[-6].decl), (yyvsp[-2].decl) );
 		}
-#line 11883 "Parser/parser.cc"
+#line 11884 "Parser/parser.cc"
     break;
 
   case 778:
-#line 3086 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3088 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTrait( (yyvsp[-5].tok), (yyvsp[-7].decl), (yyvsp[-2].decl) ); }
-#line 11889 "Parser/parser.cc"
+#line 11890 "Parser/parser.cc"
     break;
 
   case 780:
-#line 3092 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3094 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->appendList( (yyvsp[0].decl) ); }
-#line 11895 "Parser/parser.cc"
+#line 11896 "Parser/parser.cc"
     break;
 
   case 785:
-#line 3104 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3106 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[-4].decl)->cloneType( (yyvsp[0].tok) ) ); }
-#line 11901 "Parser/parser.cc"
+#line 11902 "Parser/parser.cc"
     break;
 
   case 786:
-#line 3109 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3111 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addType( (yyvsp[-1].decl) ); }
-#line 11907 "Parser/parser.cc"
+#line 11908 "Parser/parser.cc"
     break;
 
   case 787:
-#line 3111 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3113 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-4].decl)->appendList( (yyvsp[-4].decl)->cloneBaseType( (yyvsp[0].decl) ) ); }
-#line 11913 "Parser/parser.cc"
+#line 11914 "Parser/parser.cc"
     break;
 
   case 789:
-#line 3119 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3121 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { parseTree = parseTree ? parseTree->appendList( (yyvsp[0].decl) ) : (yyvsp[0].decl);	}
-#line 11919 "Parser/parser.cc"
+#line 11920 "Parser/parser.cc"
     break;
 
   case 790:
-#line 3124 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3126 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 11925 "Parser/parser.cc"
+#line 11926 "Parser/parser.cc"
     break;
 
   case 791:
-#line 3126 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3128 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl) ? (yyvsp[-3].decl)->appendList( (yyvsp[-1].decl) ) : (yyvsp[-1].decl); }
-#line 11931 "Parser/parser.cc"
+#line 11932 "Parser/parser.cc"
     break;
 
   case 792:
-#line 3131 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3133 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 11937 "Parser/parser.cc"
+#line 11938 "Parser/parser.cc"
     break;
 
   case 794:
-#line 3136 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3138 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { typedefTable.up( forall ); forall = false; }
-#line 11943 "Parser/parser.cc"
+#line 11944 "Parser/parser.cc"
     break;
 
   case 795:
-#line 3140 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3142 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { typedefTable.down(); }
-#line 11949 "Parser/parser.cc"
+#line 11950 "Parser/parser.cc"
     break;
 
   case 796:
-#line 3145 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3147 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newDirectiveStmt( new StatementNode( build_directive( yylloc, (yyvsp[0].tok) ) ) ); }
-#line 11955 "Parser/parser.cc"
+#line 11956 "Parser/parser.cc"
     break;
 
   case 797:
-#line 3147 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3149 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// Variable declarations of anonymous types requires creating a unique type-name across multiple translation
 			// unit, which is a dubious task, especially because C uses name rather than structural typing; hence it is
@@ -11968,175 +11969,175 @@ yyreduce:
 				}
 			}
 		}
-#line 11972 "Parser/parser.cc"
+#line 11973 "Parser/parser.cc"
     break;
 
   case 798:
-#line 3160 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3162 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeIdentifier( *(yyvsp[-1].tok).str, *(yyvsp[0].tok).str, " declaration" ); (yyval.decl) = nullptr; }
-#line 11978 "Parser/parser.cc"
+#line 11979 "Parser/parser.cc"
     break;
 
   case 799:
-#line 3162 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3164 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "type qualifier" ); (yyval.decl) = nullptr; }
-#line 11984 "Parser/parser.cc"
+#line 11985 "Parser/parser.cc"
     break;
 
   case 800:
-#line 3164 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3166 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "storage class" ); (yyval.decl) = nullptr; }
-#line 11990 "Parser/parser.cc"
+#line 11991 "Parser/parser.cc"
     break;
 
   case 801:
-#line 3166 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3168 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "type" ); (yyval.decl) = nullptr; }
-#line 11996 "Parser/parser.cc"
+#line 11997 "Parser/parser.cc"
     break;
 
   case 802:
-#line 3168 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3170 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "type" ); (yyval.decl) = nullptr; }
-#line 12002 "Parser/parser.cc"
+#line 12003 "Parser/parser.cc"
     break;
 
   case 803:
-#line 3170 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3172 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { IdentifierBeforeType( *(yyvsp[-1].tok).str, "type" ); (yyval.decl) = nullptr; }
-#line 12008 "Parser/parser.cc"
+#line 12009 "Parser/parser.cc"
     break;
 
   case 805:
-#line 3173 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3175 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			distExt( (yyvsp[0].decl) );								// mark all fields in list
 			(yyval.decl) = (yyvsp[0].decl);
 		}
-#line 12017 "Parser/parser.cc"
+#line 12018 "Parser/parser.cc"
     break;
 
   case 806:
-#line 3178 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3180 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newAsmStmt( new StatementNode( build_asm( yylloc, false, (yyvsp[-2].constant), nullptr ) ) ); }
-#line 12023 "Parser/parser.cc"
+#line 12024 "Parser/parser.cc"
     break;
 
   case 807:
-#line 3180 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3182 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			linkageStack.push( linkage );				// handle nested extern "C"/"Cforall"
 			linkage = ast::Linkage::update( yylloc, linkage, (yyvsp[0].tok) );
 		}
-#line 12032 "Parser/parser.cc"
+#line 12033 "Parser/parser.cc"
     break;
 
   case 808:
-#line 3185 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3187 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			linkage = linkageStack.top();
 			linkageStack.pop();
 			(yyval.decl) = (yyvsp[-1].decl);
 		}
-#line 12042 "Parser/parser.cc"
+#line 12043 "Parser/parser.cc"
     break;
 
   case 809:
-#line 3191 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3193 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			linkageStack.push( linkage );				// handle nested extern "C"/"Cforall"
 			linkage = ast::Linkage::update( yylloc, linkage, (yyvsp[0].tok) );
 		}
-#line 12051 "Parser/parser.cc"
+#line 12052 "Parser/parser.cc"
     break;
 
   case 810:
-#line 3196 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3198 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			linkage = linkageStack.top();
 			linkageStack.pop();
 			(yyval.decl) = (yyvsp[-2].decl);
 		}
-#line 12061 "Parser/parser.cc"
+#line 12062 "Parser/parser.cc"
     break;
 
   case 811:
-#line 3203 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3205 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[0].decl)->type->qualifiers.any() ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
 			if ( (yyvsp[0].decl)->type->forall ) forall = true;		// remember generic type
 		}
-#line 12070 "Parser/parser.cc"
+#line 12071 "Parser/parser.cc"
     break;
 
   case 812:
-#line 3208 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3210 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			distQual( (yyvsp[-2].decl), (yyvsp[-6].decl) );
 			forall = false;
 			(yyval.decl) = (yyvsp[-2].decl);
 		}
-#line 12080 "Parser/parser.cc"
+#line 12081 "Parser/parser.cc"
     break;
 
   case 813:
-#line 3214 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3216 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[0].decl)->type && (yyvsp[0].decl)->type->qualifiers.any() ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
 			if ( (yyvsp[0].decl)->type && (yyvsp[0].decl)->type->forall ) forall = true; // remember generic type
 		}
-#line 12089 "Parser/parser.cc"
+#line 12090 "Parser/parser.cc"
     break;
 
   case 814:
-#line 3219 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3221 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			distQual( (yyvsp[-2].decl), (yyvsp[-6].decl) );
 			forall = false;
 			(yyval.decl) = (yyvsp[-2].decl);
 		}
-#line 12099 "Parser/parser.cc"
+#line 12100 "Parser/parser.cc"
     break;
 
   case 815:
-#line 3225 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3227 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( ((yyvsp[-1].decl)->type && (yyvsp[-1].decl)->type->qualifiers.any()) || ((yyvsp[0].decl)->type && (yyvsp[0].decl)->type->qualifiers.any()) ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
 			if ( ((yyvsp[-1].decl)->type && (yyvsp[-1].decl)->type->forall) || ((yyvsp[0].decl)->type && (yyvsp[0].decl)->type->forall) ) forall = true; // remember generic type
 		}
-#line 12108 "Parser/parser.cc"
+#line 12109 "Parser/parser.cc"
     break;
 
   case 816:
-#line 3230 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3232 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			distQual( (yyvsp[-2].decl), (yyvsp[-7].decl)->addQualifiers( (yyvsp[-6].decl) ) );
 			forall = false;
 			(yyval.decl) = (yyvsp[-2].decl);
 		}
-#line 12118 "Parser/parser.cc"
+#line 12119 "Parser/parser.cc"
     break;
 
   case 818:
-#line 3245 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3247 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addFunctionBody( (yyvsp[0].sn) ); }
-#line 12124 "Parser/parser.cc"
+#line 12125 "Parser/parser.cc"
     break;
 
   case 819:
-#line 3247 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3249 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addOldDeclList( (yyvsp[-1].decl) )->addFunctionBody( (yyvsp[0].sn) ); }
-#line 12130 "Parser/parser.cc"
+#line 12131 "Parser/parser.cc"
     break;
 
   case 820:
-#line 3252 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3254 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; forall = false; }
-#line 12136 "Parser/parser.cc"
+#line 12137 "Parser/parser.cc"
     break;
 
   case 821:
-#line 3254 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3256 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			(yyval.en) = (yyvsp[-2].en); forall = false;
 			if ( (yyvsp[0].decl) ) {
@@ -12144,1472 +12145,1472 @@ yyreduce:
 				(yyval.en) = nullptr;
 			} // if
 		}
-#line 12148 "Parser/parser.cc"
+#line 12149 "Parser/parser.cc"
     break;
 
   case 822:
-#line 3265 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3267 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// Add the function body to the last identifier in the function definition list, i.e., foo3:
 			//   [const double] foo1(), foo2( int ), foo3( double ) { return 3.0; }
 			(yyvsp[-2].decl)->get_last()->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) );
 			(yyval.decl) = (yyvsp[-2].decl);
 		}
-#line 12159 "Parser/parser.cc"
+#line 12160 "Parser/parser.cc"
     break;
 
   case 823:
-#line 3272 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3274 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			rebindForall( (yyvsp[-3].decl), (yyvsp[-2].decl) );
 			(yyval.decl) = (yyvsp[-2].decl)->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addType( (yyvsp[-3].decl) );
 		}
-#line 12168 "Parser/parser.cc"
+#line 12169 "Parser/parser.cc"
     break;
 
   case 824:
-#line 3277 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3279 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			rebindForall( (yyvsp[-3].decl), (yyvsp[-2].decl) );
 			(yyval.decl) = (yyvsp[-2].decl)->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addType( (yyvsp[-3].decl) );
 		}
-#line 12177 "Parser/parser.cc"
+#line 12178 "Parser/parser.cc"
     break;
 
   case 825:
-#line 3283 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3285 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addQualifiers( (yyvsp[-3].decl) ); }
-#line 12183 "Parser/parser.cc"
+#line 12184 "Parser/parser.cc"
     break;
 
   case 826:
-#line 3286 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3288 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addQualifiers( (yyvsp[-3].decl) ); }
-#line 12189 "Parser/parser.cc"
+#line 12190 "Parser/parser.cc"
     break;
 
   case 827:
-#line 3289 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3291 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addQualifiers( (yyvsp[-3].decl) )->addQualifiers( (yyvsp[-4].decl) ); }
-#line 12195 "Parser/parser.cc"
+#line 12196 "Parser/parser.cc"
     break;
 
   case 828:
-#line 3293 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3295 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			rebindForall( (yyvsp[-4].decl), (yyvsp[-3].decl) );
 			(yyval.decl) = (yyvsp[-3].decl)->addOldDeclList( (yyvsp[-2].decl) )->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addType( (yyvsp[-4].decl) );
 		}
-#line 12204 "Parser/parser.cc"
+#line 12205 "Parser/parser.cc"
     break;
 
   case 829:
-#line 3299 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3301 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->addOldDeclList( (yyvsp[-2].decl) )->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addQualifiers( (yyvsp[-4].decl) ); }
-#line 12210 "Parser/parser.cc"
+#line 12211 "Parser/parser.cc"
     break;
 
   case 830:
-#line 3302 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3304 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->addOldDeclList( (yyvsp[-2].decl) )->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addQualifiers( (yyvsp[-4].decl) ); }
-#line 12216 "Parser/parser.cc"
+#line 12217 "Parser/parser.cc"
     break;
 
   case 831:
-#line 3305 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3307 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->addOldDeclList( (yyvsp[-2].decl) )->addFunctionBody( (yyvsp[0].sn), (yyvsp[-1].en) )->addQualifiers( (yyvsp[-4].decl) )->addQualifiers( (yyvsp[-5].decl) ); }
-#line 12222 "Parser/parser.cc"
+#line 12223 "Parser/parser.cc"
     break;
 
   case 836:
-#line 3317 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3319 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::RangeExpr( yylloc, maybeMoveBuild( (yyvsp[-2].en) ), maybeMoveBuild( (yyvsp[0].en) ) ) ); }
-#line 12228 "Parser/parser.cc"
+#line 12229 "Parser/parser.cc"
     break;
 
   case 837:
-#line 3322 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3324 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 12234 "Parser/parser.cc"
+#line 12235 "Parser/parser.cc"
     break;
 
   case 838:
-#line 3324 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3326 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			DeclarationNode * name = new DeclarationNode();
 			name->asmName = (yyvsp[-2].constant);
 			(yyval.decl) = name->addQualifiers( (yyvsp[0].decl) );
 		}
-#line 12244 "Parser/parser.cc"
+#line 12245 "Parser/parser.cc"
     break;
 
   case 839:
-#line 3333 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3335 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 12250 "Parser/parser.cc"
+#line 12251 "Parser/parser.cc"
     break;
 
   case 842:
-#line 3340 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3342 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 12256 "Parser/parser.cc"
+#line 12257 "Parser/parser.cc"
     break;
 
   case 843:
-#line 3345 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3347 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl); }
-#line 12262 "Parser/parser.cc"
+#line 12263 "Parser/parser.cc"
     break;
 
   case 845:
-#line 3351 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3353 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12268 "Parser/parser.cc"
+#line 12269 "Parser/parser.cc"
     break;
 
   case 846:
-#line 3356 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3358 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 12274 "Parser/parser.cc"
+#line 12275 "Parser/parser.cc"
     break;
 
   case 847:
-#line 3358 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3360 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newAttribute( (yyvsp[0].tok) ); }
-#line 12280 "Parser/parser.cc"
+#line 12281 "Parser/parser.cc"
     break;
 
   case 848:
-#line 3360 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3362 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newAttribute( (yyvsp[-3].tok), (yyvsp[-1].en) ); }
-#line 12286 "Parser/parser.cc"
+#line 12287 "Parser/parser.cc"
     break;
 
   case 853:
-#line 3369 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3371 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tok) = Token{ new string( "fallthrough" ), { nullptr, -1 } }; }
-#line 12292 "Parser/parser.cc"
+#line 12293 "Parser/parser.cc"
     break;
 
   case 854:
-#line 3371 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3373 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.tok) = Token{ new string( "__const__" ), { nullptr, -1 } }; }
-#line 12298 "Parser/parser.cc"
+#line 12299 "Parser/parser.cc"
     break;
 
   case 855:
-#line 3406 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3408 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newName( (yyvsp[0].tok) ); }
-#line 12304 "Parser/parser.cc"
+#line 12305 "Parser/parser.cc"
     break;
 
   case 856:
-#line 3408 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3410 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12310 "Parser/parser.cc"
+#line 12311 "Parser/parser.cc"
     break;
 
   case 857:
-#line 3413 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3415 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12316 "Parser/parser.cc"
+#line 12317 "Parser/parser.cc"
     break;
 
   case 859:
-#line 3416 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3418 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12322 "Parser/parser.cc"
+#line 12323 "Parser/parser.cc"
     break;
 
   case 860:
-#line 3418 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3420 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12328 "Parser/parser.cc"
+#line 12329 "Parser/parser.cc"
     break;
 
   case 861:
-#line 3423 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3425 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 12334 "Parser/parser.cc"
+#line 12335 "Parser/parser.cc"
     break;
 
   case 862:
-#line 3425 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3427 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 12340 "Parser/parser.cc"
+#line 12341 "Parser/parser.cc"
     break;
 
   case 863:
-#line 3427 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3429 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12346 "Parser/parser.cc"
+#line 12347 "Parser/parser.cc"
     break;
 
   case 864:
-#line 3429 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3431 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 12352 "Parser/parser.cc"
+#line 12353 "Parser/parser.cc"
     break;
 
   case 865:
-#line 3434 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3436 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12358 "Parser/parser.cc"
+#line 12359 "Parser/parser.cc"
     break;
 
   case 866:
-#line 3436 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3438 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12364 "Parser/parser.cc"
+#line 12365 "Parser/parser.cc"
     break;
 
   case 867:
-#line 3438 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3440 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12370 "Parser/parser.cc"
+#line 12371 "Parser/parser.cc"
     break;
 
   case 868:
-#line 3440 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3442 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12376 "Parser/parser.cc"
+#line 12377 "Parser/parser.cc"
     break;
 
   case 869:
-#line 3442 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3444 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12382 "Parser/parser.cc"
+#line 12383 "Parser/parser.cc"
     break;
 
   case 870:
-#line 3444 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3446 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12388 "Parser/parser.cc"
+#line 12389 "Parser/parser.cc"
     break;
 
   case 871:
-#line 3446 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3448 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12394 "Parser/parser.cc"
+#line 12395 "Parser/parser.cc"
     break;
 
   case 872:
-#line 3451 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3453 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12400 "Parser/parser.cc"
+#line 12401 "Parser/parser.cc"
     break;
 
   case 873:
-#line 3453 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3455 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addQualifiers( (yyvsp[-7].decl) )->addParamList( (yyvsp[-2].decl) ); }
-#line 12406 "Parser/parser.cc"
+#line 12407 "Parser/parser.cc"
     break;
 
   case 874:
-#line 3455 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3457 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12412 "Parser/parser.cc"
+#line 12413 "Parser/parser.cc"
     break;
 
   case 875:
-#line 3457 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3459 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12418 "Parser/parser.cc"
+#line 12419 "Parser/parser.cc"
     break;
 
   case 876:
-#line 3466 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3468 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12424 "Parser/parser.cc"
+#line 12425 "Parser/parser.cc"
     break;
 
   case 878:
-#line 3469 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3471 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12430 "Parser/parser.cc"
+#line 12431 "Parser/parser.cc"
     break;
 
   case 879:
-#line 3474 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3476 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-5].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12436 "Parser/parser.cc"
+#line 12437 "Parser/parser.cc"
     break;
 
   case 880:
-#line 3476 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3478 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12442 "Parser/parser.cc"
+#line 12443 "Parser/parser.cc"
     break;
 
   case 881:
-#line 3478 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3480 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addQualifiers( (yyvsp[-7].decl) )->addParamList( (yyvsp[-2].decl) ); }
-#line 12448 "Parser/parser.cc"
+#line 12449 "Parser/parser.cc"
     break;
 
   case 882:
-#line 3480 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3482 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12454 "Parser/parser.cc"
+#line 12455 "Parser/parser.cc"
     break;
 
   case 883:
-#line 3482 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3484 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12460 "Parser/parser.cc"
+#line 12461 "Parser/parser.cc"
     break;
 
   case 884:
-#line 3487 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3489 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 12466 "Parser/parser.cc"
+#line 12467 "Parser/parser.cc"
     break;
 
   case 885:
-#line 3489 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3491 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 12472 "Parser/parser.cc"
+#line 12473 "Parser/parser.cc"
     break;
 
   case 886:
-#line 3491 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3493 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12478 "Parser/parser.cc"
+#line 12479 "Parser/parser.cc"
     break;
 
   case 887:
-#line 3493 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3495 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 12484 "Parser/parser.cc"
+#line 12485 "Parser/parser.cc"
     break;
 
   case 888:
-#line 3498 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3500 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12490 "Parser/parser.cc"
+#line 12491 "Parser/parser.cc"
     break;
 
   case 889:
-#line 3500 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3502 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12496 "Parser/parser.cc"
+#line 12497 "Parser/parser.cc"
     break;
 
   case 890:
-#line 3502 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3504 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12502 "Parser/parser.cc"
+#line 12503 "Parser/parser.cc"
     break;
 
   case 891:
-#line 3504 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3506 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12508 "Parser/parser.cc"
+#line 12509 "Parser/parser.cc"
     break;
 
   case 892:
-#line 3506 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3508 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12514 "Parser/parser.cc"
+#line 12515 "Parser/parser.cc"
     break;
 
   case 893:
-#line 3508 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3510 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12520 "Parser/parser.cc"
+#line 12521 "Parser/parser.cc"
     break;
 
   case 897:
-#line 3526 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3528 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-3].decl)->addIdList( (yyvsp[-1].decl) ); }
-#line 12526 "Parser/parser.cc"
+#line 12527 "Parser/parser.cc"
     break;
 
   case 898:
-#line 3528 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3530 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12532 "Parser/parser.cc"
+#line 12533 "Parser/parser.cc"
     break;
 
   case 899:
-#line 3530 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3532 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addQualifiers( (yyvsp[-7].decl) )->addParamList( (yyvsp[-2].decl) ); }
-#line 12538 "Parser/parser.cc"
+#line 12539 "Parser/parser.cc"
     break;
 
   case 900:
-#line 3532 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3534 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12544 "Parser/parser.cc"
+#line 12545 "Parser/parser.cc"
     break;
 
   case 901:
-#line 3534 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3536 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12550 "Parser/parser.cc"
+#line 12551 "Parser/parser.cc"
     break;
 
   case 902:
-#line 3539 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3541 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 12556 "Parser/parser.cc"
+#line 12557 "Parser/parser.cc"
     break;
 
   case 903:
-#line 3541 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3543 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 12562 "Parser/parser.cc"
+#line 12563 "Parser/parser.cc"
     break;
 
   case 904:
-#line 3543 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3545 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12568 "Parser/parser.cc"
+#line 12569 "Parser/parser.cc"
     break;
 
   case 905:
-#line 3545 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3547 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12574 "Parser/parser.cc"
+#line 12575 "Parser/parser.cc"
     break;
 
   case 906:
-#line 3550 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3552 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12580 "Parser/parser.cc"
+#line 12581 "Parser/parser.cc"
     break;
 
   case 907:
-#line 3552 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3554 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12586 "Parser/parser.cc"
+#line 12587 "Parser/parser.cc"
     break;
 
   case 908:
-#line 3554 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3556 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12592 "Parser/parser.cc"
+#line 12593 "Parser/parser.cc"
     break;
 
   case 909:
-#line 3556 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3558 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12598 "Parser/parser.cc"
+#line 12599 "Parser/parser.cc"
     break;
 
   case 910:
-#line 3558 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3560 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12604 "Parser/parser.cc"
+#line 12605 "Parser/parser.cc"
     break;
 
   case 911:
-#line 3560 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3562 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12610 "Parser/parser.cc"
+#line 12611 "Parser/parser.cc"
     break;
 
   case 912:
-#line 3572 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3574 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			// hide type name in enclosing scope by variable name
 			typedefTable.addToEnclosingScope( *(yyvsp[0].decl)->name, IDENTIFIER, "ID" );
 		}
-#line 12619 "Parser/parser.cc"
+#line 12620 "Parser/parser.cc"
     break;
 
   case 913:
-#line 3577 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3579 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12625 "Parser/parser.cc"
+#line 12626 "Parser/parser.cc"
     break;
 
   case 914:
-#line 3582 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3584 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12631 "Parser/parser.cc"
+#line 12632 "Parser/parser.cc"
     break;
 
   case 916:
-#line 3585 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3587 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12637 "Parser/parser.cc"
+#line 12638 "Parser/parser.cc"
     break;
 
   case 917:
-#line 3587 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3589 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12643 "Parser/parser.cc"
+#line 12644 "Parser/parser.cc"
     break;
 
   case 918:
-#line 3592 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3594 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 12649 "Parser/parser.cc"
+#line 12650 "Parser/parser.cc"
     break;
 
   case 919:
-#line 3594 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3596 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 12655 "Parser/parser.cc"
+#line 12656 "Parser/parser.cc"
     break;
 
   case 920:
-#line 3596 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3598 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12661 "Parser/parser.cc"
+#line 12662 "Parser/parser.cc"
     break;
 
   case 921:
-#line 3598 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3600 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 12667 "Parser/parser.cc"
+#line 12668 "Parser/parser.cc"
     break;
 
   case 922:
-#line 3603 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3605 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12673 "Parser/parser.cc"
+#line 12674 "Parser/parser.cc"
     break;
 
   case 923:
-#line 3605 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3607 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12679 "Parser/parser.cc"
+#line 12680 "Parser/parser.cc"
     break;
 
   case 924:
-#line 3607 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3609 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12685 "Parser/parser.cc"
+#line 12686 "Parser/parser.cc"
     break;
 
   case 925:
-#line 3609 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3611 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12691 "Parser/parser.cc"
+#line 12692 "Parser/parser.cc"
     break;
 
   case 926:
-#line 3611 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3613 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12697 "Parser/parser.cc"
+#line 12698 "Parser/parser.cc"
     break;
 
   case 927:
-#line 3613 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3615 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12703 "Parser/parser.cc"
+#line 12704 "Parser/parser.cc"
     break;
 
   case 928:
-#line 3615 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3617 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12709 "Parser/parser.cc"
+#line 12710 "Parser/parser.cc"
     break;
 
   case 929:
-#line 3620 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3622 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12715 "Parser/parser.cc"
+#line 12716 "Parser/parser.cc"
     break;
 
   case 930:
-#line 3622 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3624 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addQualifiers( (yyvsp[-7].decl) )->addParamList( (yyvsp[-2].decl) ); }
-#line 12721 "Parser/parser.cc"
+#line 12722 "Parser/parser.cc"
     break;
 
   case 931:
-#line 3624 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3626 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12727 "Parser/parser.cc"
+#line 12728 "Parser/parser.cc"
     break;
 
   case 932:
-#line 3626 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3628 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12733 "Parser/parser.cc"
+#line 12734 "Parser/parser.cc"
     break;
 
   case 933:
-#line 3635 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3637 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12739 "Parser/parser.cc"
+#line 12740 "Parser/parser.cc"
     break;
 
   case 935:
-#line 3638 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3640 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12745 "Parser/parser.cc"
+#line 12746 "Parser/parser.cc"
     break;
 
   case 936:
-#line 3643 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3645 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-5].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12751 "Parser/parser.cc"
+#line 12752 "Parser/parser.cc"
     break;
 
   case 937:
-#line 3645 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3647 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12757 "Parser/parser.cc"
+#line 12758 "Parser/parser.cc"
     break;
 
   case 938:
-#line 3647 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3649 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addQualifiers( (yyvsp[-7].decl) )->addParamList( (yyvsp[-2].decl) ); }
-#line 12763 "Parser/parser.cc"
+#line 12764 "Parser/parser.cc"
     break;
 
   case 939:
-#line 3649 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3651 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12769 "Parser/parser.cc"
+#line 12770 "Parser/parser.cc"
     break;
 
   case 940:
-#line 3651 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3653 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12775 "Parser/parser.cc"
+#line 12776 "Parser/parser.cc"
     break;
 
   case 941:
-#line 3656 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3658 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 12781 "Parser/parser.cc"
+#line 12782 "Parser/parser.cc"
     break;
 
   case 942:
-#line 3658 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3660 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 12787 "Parser/parser.cc"
+#line 12788 "Parser/parser.cc"
     break;
 
   case 943:
-#line 3660 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3662 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12793 "Parser/parser.cc"
+#line 12794 "Parser/parser.cc"
     break;
 
   case 944:
-#line 3662 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3664 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 12799 "Parser/parser.cc"
+#line 12800 "Parser/parser.cc"
     break;
 
   case 945:
-#line 3667 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3669 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12805 "Parser/parser.cc"
+#line 12806 "Parser/parser.cc"
     break;
 
   case 946:
-#line 3669 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3671 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12811 "Parser/parser.cc"
+#line 12812 "Parser/parser.cc"
     break;
 
   case 947:
-#line 3671 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3673 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12817 "Parser/parser.cc"
+#line 12818 "Parser/parser.cc"
     break;
 
   case 948:
-#line 3673 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3675 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[-3].decl) )->addArray( (yyvsp[0].decl) ); }
-#line 12823 "Parser/parser.cc"
+#line 12824 "Parser/parser.cc"
     break;
 
   case 949:
-#line 3675 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3677 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12829 "Parser/parser.cc"
+#line 12830 "Parser/parser.cc"
     break;
 
   case 950:
-#line 3677 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3679 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[-2].decl) ); }
-#line 12835 "Parser/parser.cc"
+#line 12836 "Parser/parser.cc"
     break;
 
   case 951:
-#line 3687 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3689 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12841 "Parser/parser.cc"
+#line 12842 "Parser/parser.cc"
     break;
 
   case 952:
-#line 3689 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3691 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( Type::Mutex ), OperKinds::AddressOf ) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 12847 "Parser/parser.cc"
+#line 12848 "Parser/parser.cc"
     break;
 
   case 954:
-#line 3692 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3694 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12853 "Parser/parser.cc"
+#line 12854 "Parser/parser.cc"
     break;
 
   case 955:
-#line 3694 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3696 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12859 "Parser/parser.cc"
+#line 12860 "Parser/parser.cc"
     break;
 
   case 956:
-#line 3699 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3701 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 12865 "Parser/parser.cc"
+#line 12866 "Parser/parser.cc"
     break;
 
   case 957:
-#line 3701 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3703 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 12871 "Parser/parser.cc"
+#line 12872 "Parser/parser.cc"
     break;
 
   case 958:
-#line 3703 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3705 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12877 "Parser/parser.cc"
+#line 12878 "Parser/parser.cc"
     break;
 
   case 959:
-#line 3708 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3710 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12883 "Parser/parser.cc"
+#line 12884 "Parser/parser.cc"
     break;
 
   case 960:
-#line 3710 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3712 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12889 "Parser/parser.cc"
+#line 12890 "Parser/parser.cc"
     break;
 
   case 961:
-#line 3712 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3714 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12895 "Parser/parser.cc"
+#line 12896 "Parser/parser.cc"
     break;
 
   case 962:
-#line 3714 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3716 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12901 "Parser/parser.cc"
+#line 12902 "Parser/parser.cc"
     break;
 
   case 963:
-#line 3719 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3721 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-5].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12907 "Parser/parser.cc"
+#line 12908 "Parser/parser.cc"
     break;
 
   case 964:
-#line 3721 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3723 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12913 "Parser/parser.cc"
+#line 12914 "Parser/parser.cc"
     break;
 
   case 965:
-#line 3723 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3725 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 12919 "Parser/parser.cc"
+#line 12920 "Parser/parser.cc"
     break;
 
   case 966:
-#line 3737 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3739 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12925 "Parser/parser.cc"
+#line 12926 "Parser/parser.cc"
     break;
 
   case 967:
-#line 3739 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3741 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( Type::Mutex ), OperKinds::AddressOf ) )->addQualifiers( (yyvsp[0].decl) ); }
-#line 12931 "Parser/parser.cc"
+#line 12932 "Parser/parser.cc"
     break;
 
   case 969:
-#line 3742 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3744 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12937 "Parser/parser.cc"
+#line 12938 "Parser/parser.cc"
     break;
 
   case 970:
-#line 3744 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3746 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12943 "Parser/parser.cc"
+#line 12944 "Parser/parser.cc"
     break;
 
   case 971:
-#line 3749 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3751 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newName( (yyvsp[0].tok) ); }
-#line 12949 "Parser/parser.cc"
+#line 12950 "Parser/parser.cc"
     break;
 
   case 972:
-#line 3751 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3753 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newName( (yyvsp[0].tok) ); }
-#line 12955 "Parser/parser.cc"
+#line 12956 "Parser/parser.cc"
     break;
 
   case 973:
-#line 3756 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3758 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 12961 "Parser/parser.cc"
+#line 12962 "Parser/parser.cc"
     break;
 
   case 974:
-#line 3758 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3760 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 12967 "Parser/parser.cc"
+#line 12968 "Parser/parser.cc"
     break;
 
   case 975:
-#line 3760 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3762 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 12973 "Parser/parser.cc"
+#line 12974 "Parser/parser.cc"
     break;
 
   case 976:
-#line 3765 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3767 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12979 "Parser/parser.cc"
+#line 12980 "Parser/parser.cc"
     break;
 
   case 977:
-#line 3767 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3769 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 12985 "Parser/parser.cc"
+#line 12986 "Parser/parser.cc"
     break;
 
   case 978:
-#line 3772 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3774 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-5].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12991 "Parser/parser.cc"
+#line 12992 "Parser/parser.cc"
     break;
 
   case 979:
-#line 3774 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3776 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 12997 "Parser/parser.cc"
+#line 12998 "Parser/parser.cc"
     break;
 
   case 981:
-#line 3792 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3794 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13003 "Parser/parser.cc"
+#line 13004 "Parser/parser.cc"
     break;
 
   case 982:
-#line 3794 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3796 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13009 "Parser/parser.cc"
+#line 13010 "Parser/parser.cc"
     break;
 
   case 983:
-#line 3799 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3801 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newPointer( nullptr, (yyvsp[0].op) ); }
-#line 13015 "Parser/parser.cc"
+#line 13016 "Parser/parser.cc"
     break;
 
   case 984:
-#line 3801 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3803 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newPointer( (yyvsp[0].decl), (yyvsp[-1].op) ); }
-#line 13021 "Parser/parser.cc"
+#line 13022 "Parser/parser.cc"
     break;
 
   case 985:
-#line 3803 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3805 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13027 "Parser/parser.cc"
+#line 13028 "Parser/parser.cc"
     break;
 
   case 986:
-#line 3805 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3807 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 13033 "Parser/parser.cc"
+#line 13034 "Parser/parser.cc"
     break;
 
   case 987:
-#line 3807 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3809 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13039 "Parser/parser.cc"
+#line 13040 "Parser/parser.cc"
     break;
 
   case 989:
-#line 3813 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3815 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 13045 "Parser/parser.cc"
+#line 13046 "Parser/parser.cc"
     break;
 
   case 990:
-#line 3815 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3817 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 13051 "Parser/parser.cc"
+#line 13052 "Parser/parser.cc"
     break;
 
   case 991:
-#line 3817 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3819 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 13057 "Parser/parser.cc"
+#line 13058 "Parser/parser.cc"
     break;
 
   case 992:
-#line 3822 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3824 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFunction( nullptr, nullptr, (yyvsp[-2].decl), nullptr ); }
-#line 13063 "Parser/parser.cc"
+#line 13064 "Parser/parser.cc"
     break;
 
   case 993:
-#line 3824 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3826 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 13069 "Parser/parser.cc"
+#line 13070 "Parser/parser.cc"
     break;
 
   case 994:
-#line 3826 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3828 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 13075 "Parser/parser.cc"
+#line 13076 "Parser/parser.cc"
     break;
 
   case 995:
-#line 3832 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3834 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( nullptr, nullptr, false ); }
-#line 13081 "Parser/parser.cc"
+#line 13082 "Parser/parser.cc"
     break;
 
   case 996:
-#line 3834 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3836 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( nullptr, nullptr, false )->addArray( (yyvsp[0].decl) ); }
-#line 13087 "Parser/parser.cc"
+#line 13088 "Parser/parser.cc"
     break;
 
   case 997:
-#line 3837 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3839 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( (yyvsp[-4].en), nullptr, false )->addArray( DeclarationNode::newArray( (yyvsp[-1].en), nullptr, false ) ); }
-#line 13093 "Parser/parser.cc"
+#line 13094 "Parser/parser.cc"
     break;
 
   case 998:
-#line 3840 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3842 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Type array dimension is currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 13099 "Parser/parser.cc"
+#line 13100 "Parser/parser.cc"
     break;
 
   case 1000:
-#line 3846 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3848 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::TypeExpr( yylloc, maybeMoveBuildType( (yyvsp[0].decl) ) ) ); }
-#line 13105 "Parser/parser.cc"
+#line 13106 "Parser/parser.cc"
     break;
 
   case 1001:
-#line 3848 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3850 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = new ExpressionNode( new ast::TypeExpr( yylloc, maybeMoveBuildType( (yyvsp[0].decl) ) ) ); }
-#line 13111 "Parser/parser.cc"
+#line 13112 "Parser/parser.cc"
     break;
 
   case 1003:
-#line 3851 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3853 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-2].en)->set_last( new ExpressionNode( new ast::TypeExpr( yylloc, maybeMoveBuildType( (yyvsp[0].decl) ) ) ) )); }
-#line 13117 "Parser/parser.cc"
+#line 13118 "Parser/parser.cc"
     break;
 
   case 1004:
-#line 3853 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3855 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (ExpressionNode *)((yyvsp[-2].en)->set_last( new ExpressionNode( new ast::TypeExpr( yylloc, maybeMoveBuildType( (yyvsp[0].decl) ) ) ) )); }
-#line 13123 "Parser/parser.cc"
+#line 13124 "Parser/parser.cc"
     break;
 
   case 1006:
-#line 3859 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3861 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::LThan; }
-#line 13129 "Parser/parser.cc"
+#line 13130 "Parser/parser.cc"
     break;
 
   case 1007:
-#line 3861 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3863 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.compop) = OperKinds::LEThan; }
-#line 13135 "Parser/parser.cc"
+#line 13136 "Parser/parser.cc"
     break;
 
   case 1008:
-#line 3866 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3868 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( (yyvsp[-2].en), nullptr, false ); }
-#line 13141 "Parser/parser.cc"
+#line 13142 "Parser/parser.cc"
     break;
 
   case 1009:
-#line 3868 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3870 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newVarArray( 0 ); }
-#line 13147 "Parser/parser.cc"
+#line 13148 "Parser/parser.cc"
     break;
 
   case 1010:
-#line 3870 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3872 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-5].decl)->addArray( DeclarationNode::newArray( (yyvsp[-2].en), nullptr, false ) ); }
-#line 13153 "Parser/parser.cc"
+#line 13154 "Parser/parser.cc"
     break;
 
   case 1011:
-#line 3872 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3874 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-5].decl)->addArray( DeclarationNode::newVarArray( 0 ) ); }
-#line 13159 "Parser/parser.cc"
+#line 13160 "Parser/parser.cc"
     break;
 
   case 1012:
-#line 3906 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3908 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = nullptr; }
-#line 13165 "Parser/parser.cc"
+#line 13166 "Parser/parser.cc"
     break;
 
   case 1015:
-#line 3913 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3915 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( Type::Mutex ), OperKinds::AddressOf )->addQualifiers( (yyvsp[0].decl) ); }
-#line 13171 "Parser/parser.cc"
+#line 13172 "Parser/parser.cc"
     break;
 
   case 1016:
-#line 3915 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3917 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13177 "Parser/parser.cc"
+#line 13178 "Parser/parser.cc"
     break;
 
   case 1017:
-#line 3917 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3919 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13183 "Parser/parser.cc"
+#line 13184 "Parser/parser.cc"
     break;
 
   case 1018:
-#line 3922 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3924 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newPointer( nullptr, (yyvsp[0].op) ); }
-#line 13189 "Parser/parser.cc"
+#line 13190 "Parser/parser.cc"
     break;
 
   case 1019:
-#line 3924 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3926 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newPointer( (yyvsp[0].decl), (yyvsp[-1].op) ); }
-#line 13195 "Parser/parser.cc"
+#line 13196 "Parser/parser.cc"
     break;
 
   case 1020:
-#line 3926 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3928 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13201 "Parser/parser.cc"
+#line 13202 "Parser/parser.cc"
     break;
 
   case 1021:
-#line 3928 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3930 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 13207 "Parser/parser.cc"
+#line 13208 "Parser/parser.cc"
     break;
 
   case 1022:
-#line 3930 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3932 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13213 "Parser/parser.cc"
+#line 13214 "Parser/parser.cc"
     break;
 
   case 1024:
-#line 3936 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3938 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 13219 "Parser/parser.cc"
+#line 13220 "Parser/parser.cc"
     break;
 
   case 1025:
-#line 3938 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3940 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 13225 "Parser/parser.cc"
+#line 13226 "Parser/parser.cc"
     break;
 
   case 1026:
-#line 3940 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3942 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 13231 "Parser/parser.cc"
+#line 13232 "Parser/parser.cc"
     break;
 
   case 1027:
-#line 3945 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3947 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFunction( nullptr, nullptr, (yyvsp[-2].decl), nullptr ); }
-#line 13237 "Parser/parser.cc"
+#line 13238 "Parser/parser.cc"
     break;
 
   case 1028:
-#line 3947 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3949 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 13243 "Parser/parser.cc"
+#line 13244 "Parser/parser.cc"
     break;
 
   case 1029:
-#line 3949 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3951 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 13249 "Parser/parser.cc"
+#line 13250 "Parser/parser.cc"
     break;
 
   case 1031:
-#line 3956 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3958 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addArray( (yyvsp[0].decl) ); }
-#line 13255 "Parser/parser.cc"
+#line 13256 "Parser/parser.cc"
     break;
 
   case 1033:
-#line 3967 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3969 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( nullptr, nullptr, false ); }
-#line 13261 "Parser/parser.cc"
+#line 13262 "Parser/parser.cc"
     break;
 
   case 1034:
-#line 3970 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3972 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newVarArray( (yyvsp[-3].decl) ); }
-#line 13267 "Parser/parser.cc"
+#line 13268 "Parser/parser.cc"
     break;
 
   case 1035:
-#line 3972 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3974 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( nullptr, (yyvsp[-2].decl), false ); }
-#line 13273 "Parser/parser.cc"
+#line 13274 "Parser/parser.cc"
     break;
 
   case 1036:
-#line 3975 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3977 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( (yyvsp[-2].en), (yyvsp[-3].decl), false ); }
-#line 13279 "Parser/parser.cc"
+#line 13280 "Parser/parser.cc"
     break;
 
   case 1037:
-#line 3977 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3979 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( (yyvsp[-2].en), (yyvsp[-3].decl), true ); }
-#line 13285 "Parser/parser.cc"
+#line 13286 "Parser/parser.cc"
     break;
 
   case 1038:
-#line 3979 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3981 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( (yyvsp[-2].en), (yyvsp[-4].decl), true ); }
-#line 13291 "Parser/parser.cc"
+#line 13292 "Parser/parser.cc"
     break;
 
   case 1040:
-#line 3994 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3996 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13297 "Parser/parser.cc"
+#line 13298 "Parser/parser.cc"
     break;
 
   case 1041:
-#line 3996 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 3998 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13303 "Parser/parser.cc"
+#line 13304 "Parser/parser.cc"
     break;
 
   case 1042:
-#line 4001 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4003 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newPointer( nullptr, (yyvsp[0].op) ); }
-#line 13309 "Parser/parser.cc"
+#line 13310 "Parser/parser.cc"
     break;
 
   case 1043:
-#line 4003 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4005 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newPointer( (yyvsp[0].decl), (yyvsp[-1].op) ); }
-#line 13315 "Parser/parser.cc"
+#line 13316 "Parser/parser.cc"
     break;
 
   case 1044:
-#line 4005 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4007 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13321 "Parser/parser.cc"
+#line 13322 "Parser/parser.cc"
     break;
 
   case 1045:
-#line 4007 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4009 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addPointer( DeclarationNode::newPointer( (yyvsp[-1].decl), (yyvsp[-2].op) ) ); }
-#line 13327 "Parser/parser.cc"
+#line 13328 "Parser/parser.cc"
     break;
 
   case 1046:
-#line 4009 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4011 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addQualifiers( (yyvsp[0].decl) ); }
-#line 13333 "Parser/parser.cc"
+#line 13334 "Parser/parser.cc"
     break;
 
   case 1048:
-#line 4015 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4017 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 13339 "Parser/parser.cc"
+#line 13340 "Parser/parser.cc"
     break;
 
   case 1049:
-#line 4017 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4019 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-2].decl)->addArray( (yyvsp[0].decl) ); }
-#line 13345 "Parser/parser.cc"
+#line 13346 "Parser/parser.cc"
     break;
 
   case 1050:
-#line 4019 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4021 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 13351 "Parser/parser.cc"
+#line 13352 "Parser/parser.cc"
     break;
 
   case 1051:
-#line 4024 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4026 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-6].decl)->addParamList( (yyvsp[-2].decl) ); }
-#line 13357 "Parser/parser.cc"
+#line 13358 "Parser/parser.cc"
     break;
 
   case 1052:
-#line 4026 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4028 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[-1].decl); }
-#line 13363 "Parser/parser.cc"
+#line 13364 "Parser/parser.cc"
     break;
 
   case 1055:
-#line 4036 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4038 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 13369 "Parser/parser.cc"
+#line 13370 "Parser/parser.cc"
     break;
 
   case 1058:
-#line 4047 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4049 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13375 "Parser/parser.cc"
+#line 13376 "Parser/parser.cc"
     break;
 
   case 1059:
-#line 4049 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4051 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( (yyvsp[-2].decl), (yyvsp[-1].op) ) ); }
-#line 13381 "Parser/parser.cc"
+#line 13382 "Parser/parser.cc"
     break;
 
   case 1060:
-#line 4051 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4053 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13387 "Parser/parser.cc"
+#line 13388 "Parser/parser.cc"
     break;
 
   case 1061:
-#line 4053 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4055 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( (yyvsp[-2].decl), (yyvsp[-1].op) ) ); }
-#line 13393 "Parser/parser.cc"
+#line 13394 "Parser/parser.cc"
     break;
 
   case 1062:
-#line 4055 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4057 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13399 "Parser/parser.cc"
+#line 13400 "Parser/parser.cc"
     break;
 
   case 1063:
-#line 4057 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4059 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( (yyvsp[-2].decl), (yyvsp[-1].op) ) ); }
-#line 13405 "Parser/parser.cc"
+#line 13406 "Parser/parser.cc"
     break;
 
   case 1064:
-#line 4064 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4066 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
-#line 13411 "Parser/parser.cc"
+#line 13412 "Parser/parser.cc"
     break;
 
   case 1065:
-#line 4066 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4068 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) ); }
-#line 13417 "Parser/parser.cc"
+#line 13418 "Parser/parser.cc"
     break;
 
   case 1066:
-#line 4068 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4070 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) )->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
-#line 13423 "Parser/parser.cc"
+#line 13424 "Parser/parser.cc"
     break;
 
   case 1067:
-#line 4070 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4072 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) )->addNewArray( (yyvsp[-2].decl) ); }
-#line 13429 "Parser/parser.cc"
+#line 13430 "Parser/parser.cc"
     break;
 
   case 1068:
-#line 4072 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4074 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) ); }
-#line 13435 "Parser/parser.cc"
+#line 13436 "Parser/parser.cc"
     break;
 
   case 1069:
-#line 4075 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4077 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
-#line 13441 "Parser/parser.cc"
+#line 13442 "Parser/parser.cc"
     break;
 
   case 1070:
-#line 4077 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4079 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) ); }
-#line 13447 "Parser/parser.cc"
+#line 13448 "Parser/parser.cc"
     break;
 
   case 1071:
-#line 4079 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4081 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) )->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
-#line 13453 "Parser/parser.cc"
+#line 13454 "Parser/parser.cc"
     break;
 
   case 1072:
-#line 4081 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4083 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) )->addNewArray( (yyvsp[-2].decl) ); }
-#line 13459 "Parser/parser.cc"
+#line 13460 "Parser/parser.cc"
     break;
 
   case 1073:
-#line 4083 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4085 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) ); }
-#line 13465 "Parser/parser.cc"
+#line 13466 "Parser/parser.cc"
     break;
 
   case 1074:
-#line 4088 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4090 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newVarArray( (yyvsp[-3].decl) ); }
-#line 13471 "Parser/parser.cc"
+#line 13472 "Parser/parser.cc"
     break;
 
   case 1075:
-#line 4090 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4092 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( (yyvsp[-2].en), (yyvsp[-3].decl), false ); }
-#line 13477 "Parser/parser.cc"
+#line 13478 "Parser/parser.cc"
     break;
 
   case 1076:
-#line 4095 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4097 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( (yyvsp[-2].en), (yyvsp[-3].decl), true ); }
-#line 13483 "Parser/parser.cc"
+#line 13484 "Parser/parser.cc"
     break;
 
   case 1077:
-#line 4097 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4099 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newArray( (yyvsp[-2].en), (yyvsp[-3].decl)->addQualifiers( (yyvsp[-4].decl) ), true ); }
-#line 13489 "Parser/parser.cc"
+#line 13490 "Parser/parser.cc"
     break;
 
   case 1079:
-#line 4124 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4126 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addQualifiers( (yyvsp[-1].decl) ); }
-#line 13495 "Parser/parser.cc"
+#line 13496 "Parser/parser.cc"
     break;
 
   case 1083:
-#line 4135 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4137 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13501 "Parser/parser.cc"
+#line 13502 "Parser/parser.cc"
     break;
 
   case 1084:
-#line 4137 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4139 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( (yyvsp[-2].decl), (yyvsp[-1].op) ) ); }
-#line 13507 "Parser/parser.cc"
+#line 13508 "Parser/parser.cc"
     break;
 
   case 1085:
-#line 4139 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4141 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13513 "Parser/parser.cc"
+#line 13514 "Parser/parser.cc"
     break;
 
   case 1086:
-#line 4141 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4143 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( (yyvsp[-2].decl), (yyvsp[-1].op) ) ); }
-#line 13519 "Parser/parser.cc"
+#line 13520 "Parser/parser.cc"
     break;
 
   case 1087:
-#line 4143 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4145 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( nullptr, (yyvsp[-1].op) ) ); }
-#line 13525 "Parser/parser.cc"
+#line 13526 "Parser/parser.cc"
     break;
 
   case 1088:
-#line 4145 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4147 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewPointer( DeclarationNode::newPointer( (yyvsp[-2].decl), (yyvsp[-1].op) ) ); }
-#line 13531 "Parser/parser.cc"
+#line 13532 "Parser/parser.cc"
     break;
 
   case 1089:
-#line 4152 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4154 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
-#line 13537 "Parser/parser.cc"
+#line 13538 "Parser/parser.cc"
     break;
 
   case 1090:
-#line 4154 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4156 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) )->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
-#line 13543 "Parser/parser.cc"
+#line 13544 "Parser/parser.cc"
     break;
 
   case 1091:
-#line 4156 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4158 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) ); }
-#line 13549 "Parser/parser.cc"
+#line 13550 "Parser/parser.cc"
     break;
 
   case 1092:
-#line 4158 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4160 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
-#line 13555 "Parser/parser.cc"
+#line 13556 "Parser/parser.cc"
     break;
 
   case 1093:
-#line 4160 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4162 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) )->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
-#line 13561 "Parser/parser.cc"
+#line 13562 "Parser/parser.cc"
     break;
 
   case 1094:
-#line 4162 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4164 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = (yyvsp[0].decl)->addNewArray( (yyvsp[-1].decl) ); }
-#line 13567 "Parser/parser.cc"
+#line 13568 "Parser/parser.cc"
     break;
 
   case 1095:
-#line 4167 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4169 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newTuple( (yyvsp[-2].decl) ); }
-#line 13573 "Parser/parser.cc"
+#line 13574 "Parser/parser.cc"
     break;
 
   case 1096:
-#line 4169 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4171 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Tuple array currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 13579 "Parser/parser.cc"
+#line 13580 "Parser/parser.cc"
     break;
 
   case 1097:
-#line 4171 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4173 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { SemanticError( yylloc, "Tuple array currently unimplemented." ); (yyval.decl) = nullptr; }
-#line 13585 "Parser/parser.cc"
+#line 13586 "Parser/parser.cc"
     break;
 
   case 1098:
-#line 4178 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4180 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFunction( nullptr, (yyvsp[-5].decl), (yyvsp[-2].decl), nullptr ); }
-#line 13591 "Parser/parser.cc"
+#line 13592 "Parser/parser.cc"
     break;
 
   case 1099:
-#line 4180 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4182 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.decl) = DeclarationNode::newFunction( nullptr, (yyvsp[-5].decl), (yyvsp[-2].decl), nullptr ); }
-#line 13597 "Parser/parser.cc"
+#line 13598 "Parser/parser.cc"
     break;
 
   case 1102:
-#line 4204 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4206 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = nullptr; }
-#line 13603 "Parser/parser.cc"
+#line 13604 "Parser/parser.cc"
     break;
 
   case 1103:
-#line 4206 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4208 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 { (yyval.en) = (yyvsp[0].en); }
-#line 13609 "Parser/parser.cc"
+#line 13610 "Parser/parser.cc"
     break;
 
 
-#line 13613 "Parser/parser.cc"
+#line 13614 "Parser/parser.cc"
 
       default: break;
     }
@@ -13847,7 +13848,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 4209 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 4211 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
 
 
 // ----end of grammar----

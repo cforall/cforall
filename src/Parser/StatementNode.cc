@@ -10,8 +10,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Apr  4 11:40:00 2023
-// Update Count     : 427
+// Last Modified On : Tue Apr 11 10:16:00 2023
+// Update Count     : 428
 //
 
 #include "StatementNode.h"
@@ -31,6 +31,21 @@
 class Declaration;
 
 using namespace std;
+
+// Some helpers for cases that really want a single node but check for lists.
+static const ast::Stmt * buildMoveSingle( StatementNode * node ) {
+	std::vector<ast::ptr<ast::Stmt>> list;
+	buildMoveList( node, list );
+	assertf( list.size() == 1, "CFA Internal Error: Extra/Missing Nodes" );
+	return list.front().release();
+}
+
+static const ast::Stmt * buildMoveOptional( StatementNode * node ) {
+	std::vector<ast::ptr<ast::Stmt>> list;
+	buildMoveList( node, list );
+	assertf( list.size() <= 1, "CFA Internal Error: Extra Nodes" );
+	return list.empty() ? nullptr : list.front().release();
+}
 
 StatementNode::StatementNode( DeclarationNode * decl ) {
 	assert( decl );
@@ -68,17 +83,16 @@ StatementNode * StatementNode::add_label(
 	return this;
 }
 
-StatementNode * StatementNode::append_last_case( StatementNode * stmt ) {
-	StatementNode * prev = this;
+ClauseNode * ClauseNode::append_last_case( StatementNode * stmt ) {
+	ClauseNode * prev = this;
 	// find end of list and maintain previous pointer
-	for ( StatementNode * curr = prev; curr != nullptr; curr = (StatementNode *)curr->get_next() ) {
-		StatementNode * node = strict_dynamic_cast< StatementNode * >(curr);
-		assert( nullptr == node->stmt.get() );
+	for ( ClauseNode * curr = prev; curr != nullptr; curr = (ClauseNode *)curr->get_next() ) {
+		ClauseNode * node = strict_dynamic_cast< ClauseNode * >(curr);
 		assert( dynamic_cast<ast::CaseClause *>( node->clause.get() ) );
 		prev = curr;
 	} // for
+	ClauseNode * node = dynamic_cast< ClauseNode * >(prev);
 	// convert from StatementNode list to Statement list
-	StatementNode * node = dynamic_cast< StatementNode * >(prev);
 	std::vector<ast::ptr<ast::Stmt>> stmts;
 	buildMoveList( stmt, stmts );
 	// splice any new Statements to end of current Statements
@@ -88,7 +102,7 @@ StatementNode * StatementNode::append_last_case( StatementNode * stmt ) {
 	}
 	stmts.clear();
 	return this;
-} // StatementNode::append_last_case
+} // ClauseNode::append_last_case
 
 ast::Stmt * build_expr( CodeLocation const & location, ExpressionNode * ctl ) {
 	if ( ast::Expr * e = maybeMoveBuild( ctl ) ) {
@@ -112,9 +126,7 @@ static ast::Expr * build_if_control( CondCtl * ctl,
 	} else {
 		for ( ast::ptr<ast::Stmt> & stmt : inits ) {
 			// build the && of all of the declared variables compared against 0
-			//auto declStmt = strict_dynamic_cast<ast::DeclStmt *>( stmt );
 			auto declStmt = stmt.strict_as<ast::DeclStmt>();
-			//ast::DeclWithType * dwt = strict_dynamic_cast<ast::DeclWithType *>( declStmt->decl );
 			auto dwt = declStmt->decl.strict_as<ast::DeclWithType>();
 			ast::Expr * nze = notZeroExpr( new ast::VariableExpr( dwt->location, dwt ) );
 			cond = cond ? new ast::LogicalExpr( dwt->location, cond, nze, ast::AndExpr ) : nze;
@@ -128,62 +140,17 @@ ast::Stmt * build_if( const CodeLocation & location, CondCtl * ctl, StatementNod
 	std::vector<ast::ptr<ast::Stmt>> astinit;						// maybe empty
 	ast::Expr * astcond = build_if_control( ctl, astinit ); // ctl deleted, cond/init set
 
-	std::vector<ast::ptr<ast::Stmt>> aststmt;
-	buildMoveList( then, aststmt );
-	assert( aststmt.size() == 1 );
-	ast::Stmt const * astthen = aststmt.front().release();
-
-	ast::Stmt const * astelse = nullptr;
-	if ( else_ ) {
-		std::vector<ast::ptr<ast::Stmt>> aststmt;
-		buildMoveList( else_, aststmt );
-		assert( aststmt.size() == 1 );
-		astelse = aststmt.front().release();
-	} // if
+	ast::Stmt const * astthen = buildMoveSingle( then );
+	ast::Stmt const * astelse = buildMoveOptional( else_ );
 
 	return new ast::IfStmt( location, astcond, astthen, astelse,
 		std::move( astinit )
 	);
 } // build_if
 
-// Temporary work around. Split StmtClause off from StatementNode.
-template<typename clause_t>
-static void buildMoveClauseList( StatementNode * firstNode,
-		std::vector<ast::ptr<clause_t>> & output ) {
-	SemanticErrorException errors;
-	std::back_insert_iterator<std::vector<ast::ptr<clause_t>>>
-		out( output );
-	StatementNode * cur = firstNode;
-
-	while ( cur ) {
-		try {
-			auto clause = cur->clause.release();
-			if ( auto result = dynamic_cast<clause_t *>( clause ) ) {
-				*out++ = result;
-			} else {
-				assertf(false, __PRETTY_FUNCTION__ );
-				SemanticError( cur->location, "type specifier declaration in forall clause is currently unimplemented." );
-			} // if
-		} catch( SemanticErrorException & e ) {
-			errors.append( e );
-		} // try
-		ParseNode * temp = cur->get_next();
-		// Should not return nullptr, then it is non-homogeneous:
-		cur = dynamic_cast<StatementNode *>( temp );
-		if ( !cur && temp ) {
-			SemanticError( temp->location, "internal error, non-homogeneous nodes founds in buildList processing." );
-		} // if
-	} // while
-	if ( ! errors.isEmpty() ) {
-		throw errors;
-	} // if
-	// Usually in the wrapper.
-	delete firstNode;
-}
-
-ast::Stmt * build_switch( const CodeLocation & location, bool isSwitch, ExpressionNode * ctl, StatementNode * stmt ) {
+ast::Stmt * build_switch( const CodeLocation & location, bool isSwitch, ExpressionNode * ctl, ClauseNode * stmt ) {
 	std::vector<ast::ptr<ast::CaseClause>> aststmt;
-	buildMoveClauseList( stmt, aststmt );
+	buildMoveList( stmt, aststmt );
 	// If it is not a switch it is a choose statement.
 	if ( ! isSwitch ) {
 		for ( ast::ptr<ast::CaseClause> & stmt : aststmt ) {
@@ -205,10 +172,10 @@ ast::Stmt * build_switch( const CodeLocation & location, bool isSwitch, Expressi
 		maybeMoveBuild( ctl ), std::move( aststmt ) );
 } // build_switch
 
-ast::CaseClause * build_case( ExpressionNode * ctl ) {
+ast::CaseClause * build_case( const CodeLocation & location, ExpressionNode * ctl ) {
 	// stmt starts empty and then added to
 	auto expr = maybeMoveBuild( ctl );
-	return new ast::CaseClause( expr->location, expr, {} );
+	return new ast::CaseClause( location, expr, {} );
 } // build_case
 
 ast::CaseClause * build_default( const CodeLocation & location ) {
@@ -220,37 +187,21 @@ ast::Stmt * build_while( const CodeLocation & location, CondCtl * ctl, Statement
 	std::vector<ast::ptr<ast::Stmt>> astinit;						// maybe empty
 	ast::Expr * astcond = build_if_control( ctl, astinit ); // ctl deleted, cond/init set
 
-	std::vector<ast::ptr<ast::Stmt>> aststmt;						// loop body, compound created if empty
-	buildMoveList( stmt, aststmt );
-	assert( aststmt.size() == 1 );
-
-	std::vector<ast::ptr<ast::Stmt>> astelse;						// else clause, maybe empty
-	buildMoveList( else_, astelse );
-	assert( astelse.size() <= 1 );
-
 	return new ast::WhileDoStmt( location,
 		astcond,
-		aststmt.front(),
-		astelse.empty() ? nullptr : astelse.front().release(),
+		buildMoveSingle( stmt ),
+		buildMoveOptional( else_ ),
 		std::move( astinit ),
 		ast::While
 	);
 } // build_while
 
 ast::Stmt * build_do_while( const CodeLocation & location, ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ ) {
-	std::vector<ast::ptr<ast::Stmt>> aststmt;						// loop body, compound created if empty
-	buildMoveList( stmt, aststmt );
-	assert( aststmt.size() == 1 );						// compound created if empty
-
-	std::vector<ast::ptr<ast::Stmt>> astelse;						// else clause, maybe empty
-	buildMoveList( else_, astelse );
-	assert( astelse.size() <= 1 );
-
 	// do-while cannot have declarations in the contitional, so init is always empty
 	return new ast::WhileDoStmt( location,
 		notZeroExpr( maybeMoveBuild( ctl ) ),
-		aststmt.front(),
-		astelse.empty() ? nullptr : astelse.front().release(),
+		buildMoveSingle( stmt ),
+		buildMoveOptional( else_ ),
 		{},
 		ast::DoWhile
 	);
@@ -267,20 +218,12 @@ ast::Stmt * build_for( const CodeLocation & location, ForCtrl * forctl, Statemen
 	astincr = maybeMoveBuild( forctl->change );
 	delete forctl;
 
-	std::vector<ast::ptr<ast::Stmt>> aststmt;						// loop body, compound created if empty
-	buildMoveList( stmt, aststmt );
-	assert( aststmt.size() == 1 );
-
-	std::vector<ast::ptr<ast::Stmt>> astelse;						// else clause, maybe empty
-	buildMoveList( else_, astelse );
-	assert( astelse.size() <= 1 );
-
 	return new ast::ForStmt( location,
 		std::move( astinit ),
 		astcond,
 		astincr,
-		aststmt.front(),
-		astelse.empty() ? nullptr : astelse.front().release()
+		buildMoveSingle( stmt ),
+		buildMoveOptional( else_ )
 	);
 } // build_for
 
@@ -341,9 +284,9 @@ ast::Stmt * build_resume_at( ExpressionNode * ctl, ExpressionNode * target ) {
 	assertf( false, "resume at (non-local throw) is not yet supported," );
 } // build_resume_at
 
-ast::Stmt * build_try( const CodeLocation & location, StatementNode * try_, StatementNode * catch_, StatementNode * finally_ ) {
+ast::Stmt * build_try( const CodeLocation & location, StatementNode * try_, ClauseNode * catch_, ClauseNode * finally_ ) {
 	std::vector<ast::ptr<ast::CatchClause>> aststmt;
-	buildMoveClauseList( catch_, aststmt );
+	buildMoveList( catch_, aststmt );
 	ast::CompoundStmt * tryBlock = strict_dynamic_cast<ast::CompoundStmt *>( maybeMoveBuild( try_ ) );
 	ast::FinallyClause * finallyBlock = nullptr;
 	if ( finally_ ) {
@@ -357,35 +300,29 @@ ast::Stmt * build_try( const CodeLocation & location, StatementNode * try_, Stat
 } // build_try
 
 ast::CatchClause * build_catch( const CodeLocation & location, ast::ExceptionKind kind, DeclarationNode * decl, ExpressionNode * cond, StatementNode * body ) {
-	std::vector<ast::ptr<ast::Stmt>> aststmt;
-	buildMoveList( body, aststmt );
-	assert( aststmt.size() == 1 );
 	return new ast::CatchClause( location,
 		kind,
 		maybeMoveBuild( decl ),
 		maybeMoveBuild( cond ),
-		aststmt.front().release()
+		buildMoveSingle( body )
 	);
 } // build_catch
 
 ast::FinallyClause * build_finally( const CodeLocation & location, StatementNode * stmt ) {
-	std::vector<ast::ptr<ast::Stmt>> aststmt;
-	buildMoveList( stmt, aststmt );
-	assert( aststmt.size() == 1 );
 	return new ast::FinallyClause( location,
-		aststmt.front().strict_as<ast::CompoundStmt>()
+		strict_dynamic_cast<const ast::CompoundStmt *>(
+			buildMoveSingle( stmt )
+		)
 	);
 } // build_finally
 
 ast::SuspendStmt * build_suspend( const CodeLocation & location, StatementNode * then, ast::SuspendStmt::Kind kind ) {
-	std::vector<ast::ptr<ast::Stmt>> stmts;
-	buildMoveList( then, stmts );
-	ast::CompoundStmt const * then2 = nullptr;
-	if(!stmts.empty()) {
-		assert( stmts.size() == 1 );
-		then2 = stmts.front().strict_as<ast::CompoundStmt>();
-	}
-	return new ast::SuspendStmt( location, then2, kind );
+	return new ast::SuspendStmt( location,
+		strict_dynamic_cast<const ast::CompoundStmt *, nullptr>(
+			buildMoveOptional( then )
+		),
+		kind
+	);
 } // build_suspend
 
 ast::WaitForStmt * build_waitfor( const CodeLocation & location, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt ) {

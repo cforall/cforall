@@ -23,12 +23,12 @@ namespace ast {
 ast::Expr * notZeroExpr( ast::Expr *orig );
 
 template< typename T >
-static inline auto maybeBuild( const T *orig ) -> decltype(orig->build()) {
+static inline auto maybeBuild( T * orig ) -> decltype(orig->build()) {
 	return (orig) ? orig->build() : nullptr;
 }
 
 template< typename T >
-static inline auto maybeMoveBuild( const T *orig ) -> decltype(orig->build()) {
+static inline auto maybeMoveBuild( T * orig ) -> decltype(orig->build()) {
 	auto ret = maybeBuild<T>(orig);
 	delete orig;
 	return ret;

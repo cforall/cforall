@@ -253,12 +253,13 @@ private:
 	MUTATE_FRIEND
 };
 
+/// A name qualified by a namespace or type.
 class QualifiedNameExpr final : public Expr {
 public:
 	ptr<Decl> type_decl;
 	std::string name;
 
-	QualifiedNameExpr( const CodeLocation & loc, const Decl * d, const std::string & n ) 
+	QualifiedNameExpr( const CodeLocation & loc, const Decl * d, const std::string & n )
 	: Expr( loc ), type_decl( d ), name( n ) {}
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
@@ -620,6 +621,7 @@ private:
 	MUTATE_FRIEND
 };
 
+/// A name that refers to a generic dimension parameter.
 class DimensionExpr final : public Expr {
 public:
 	std::string name;
@@ -908,7 +910,6 @@ private:
 	GenericExpr * clone() const override { return new GenericExpr{ *this }; }
 	MUTATE_FRIEND
 };
-
 
 }
 

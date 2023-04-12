@@ -305,6 +305,7 @@ if ( N ) {																		\
 	ast::AggregateDecl::Aggregate aggKey;
 	ast::TypeDecl::Kind tclass;
 	StatementNode * sn;
+	ClauseNode * clause;
 	ast::WaitForStmt * wfs;
 	ast::Expr * constant;
 	CondCtl * ifctl;
@@ -415,14 +416,15 @@ if ( N ) {																		\
 %type<sn> statement						labeled_statement			compound_statement
 %type<sn> statement_decl				statement_decl_list			statement_list_nodecl
 %type<sn> selection_statement			if_statement
-%type<sn> switch_clause_list_opt		switch_clause_list
+%type<clause> switch_clause_list_opt		switch_clause_list
 %type<en> case_value
-%type<sn> case_clause					case_value_list				case_label					case_label_list
+%type<clause> case_clause				case_value_list				case_label					case_label_list
 %type<sn> iteration_statement			jump_statement
 %type<sn> expression_statement			asm_statement
 %type<sn> with_statement
 %type<en> with_clause_opt
-%type<sn> exception_statement			handler_clause				finally_clause
+%type<sn> exception_statement
+%type<clause> handler_clause			finally_clause
 %type<catch_kind> handler_key
 %type<sn> mutex_statement
 %type<en> when_clause					when_clause_opt				waitfor		waituntil		timeout
@@ -1260,9 +1262,9 @@ case_value:												// CFA
 	;
 
 case_value_list:										// CFA
-	case_value									{ $$ = new StatementNode( build_case( $1 ) ); }
+	case_value									{ $$ = new ClauseNode( build_case( yylloc, $1 ) ); }
 		// convert case list, e.g., "case 1, 3, 5:" into "case 1: case 3: case 5"
-	| case_value_list ',' case_value			{ $$ = (StatementNode *)($1->set_last( new StatementNode( build_case( $3 ) ) ) ); }
+	| case_value_list ',' case_value			{ $$ = $1->set_last( new ClauseNode( build_case( yylloc, $3 ) ) ); }
 	;
 
 case_label:												// CFA
@@ -1271,7 +1273,7 @@ case_label:												// CFA
 	| CASE case_value_list ':'					{ $$ = $2; }
 	| CASE case_value_list error						// syntax error
 		{ SemanticError( yylloc, "Missing colon after case list." ); $$ = nullptr; }
-	| DEFAULT ':'								{ $$ = new StatementNode( build_default( yylloc ) ); }
+	| DEFAULT ':'								{ $$ = new ClauseNode( build_default( yylloc ) ); }
 		// A semantic check is required to ensure only one default clause per switch/choose statement.
 	| DEFAULT error										//  syntax error
 		{ SemanticError( yylloc, "Missing colon after default." ); $$ = nullptr; }
@@ -1279,7 +1281,7 @@ case_label:												// CFA
 
 case_label_list:										// CFA
 	case_label
-	| case_label_list case_label				{ $$ = (StatementNode *)( $1->set_last( $2 )); }
+	| case_label_list case_label				{ $$ = $1->set_last( $2 ); }
 	;
 
 case_clause:											// CFA
@@ -1296,7 +1298,7 @@ switch_clause_list:										// CFA
 	case_label_list statement_list_nodecl
 		{ $$ = $1->append_last_case( new StatementNode( build_compound( yylloc, $2 ) ) ); }
 	| switch_clause_list case_label_list statement_list_nodecl
-		{ $$ = (StatementNode *)( $1->set_last( $2->append_last_case( new StatementNode( build_compound( yylloc, $3 ) ) ) ) ); }
+		{ $$ = $1->set_last( $2->append_last_case( new StatementNode( build_compound( yylloc, $3 ) ) ) ); }
 	;
 
 iteration_statement:
@@ -1730,9 +1732,9 @@ exception_statement:
 
 handler_clause:
 	handler_key '(' push exception_declaration pop handler_predicate_opt ')' compound_statement
-		{ $$ = new StatementNode( build_catch( yylloc, $1, $4, $6, $8 ) ); }
+		{ $$ = new ClauseNode( build_catch( yylloc, $1, $4, $6, $8 ) ); }
 	| handler_clause handler_key '(' push exception_declaration pop handler_predicate_opt ')' compound_statement
-		{ $$ = (StatementNode *)$1->set_last( new StatementNode( build_catch( yylloc, $2, $5, $7, $9 ) ) ); }
+		{ $$ = $1->set_last( new ClauseNode( build_catch( yylloc, $2, $5, $7, $9 ) ) ); }
 	;
 
 handler_predicate_opt:
@@ -1749,7 +1751,7 @@ handler_key:
 	;
 
 finally_clause:
-	FINALLY compound_statement					{ $$ = new StatementNode( build_finally( yylloc, $2 ) ); }
+	FINALLY compound_statement					{ $$ = new ClauseNode( build_finally( yylloc, $2 ) ); }
 	;
 
 exception_declaration:

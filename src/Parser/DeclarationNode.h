@@ -179,11 +179,11 @@ static inline ast::Type * maybeMoveBuildType( const DeclarationNode * orig ) {
 // This generic buildList is here along side its overloads.
 template<typename AstType, typename NodeType,
     template<typename, typename...> class Container, typename... Args>
-void buildList( const NodeType * firstNode,
+void buildList( NodeType * firstNode,
         Container<ast::ptr<AstType>, Args...> & output ) {
     SemanticErrorException errors;
     std::back_insert_iterator<Container<ast::ptr<AstType>, Args...>> out( output );
-    const NodeType * cur = firstNode;
+    NodeType * cur = firstNode;
 
     while ( cur ) {
         try {
@@ -196,9 +196,9 @@ void buildList( const NodeType * firstNode,
         } catch( SemanticErrorException & e ) {
             errors.append( e );
         } // try
-        const ParseNode * temp = cur->get_next();
+        ParseNode * temp = cur->get_next();
         // Should not return nullptr, then it is non-homogeneous:
-        cur = dynamic_cast<const NodeType *>( temp );
+        cur = dynamic_cast<NodeType *>( temp );
         if ( !cur && temp ) {
             SemanticError( temp->location, "internal error, non-homogeneous nodes founds in buildList processing." );
         } // if
@@ -208,14 +208,14 @@ void buildList( const NodeType * firstNode,
     } // if
 }
 
-void buildList( const DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & outputList );
-void buildList( const DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithType>> & outputList );
+void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & outputList );
+void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithType>> & outputList );
 void buildTypeList( const DeclarationNode * firstNode, std::vector<ast::ptr<ast::Type>> & outputList );
 
 template<typename AstType, typename NodeType,
 template<typename, typename...> class Container, typename... Args>
-void buildMoveList( const NodeType * firstNode,
-Container<ast::ptr<AstType>, Args...> & output ) {
-buildList<AstType, NodeType, Container, Args...>( firstNode, output );
-delete firstNode;
+void buildMoveList( NodeType * firstNode,
+		Container<ast::ptr<AstType>, Args...> & output ) {
+	buildList<AstType, NodeType, Container, Args...>( firstNode, output );
+	delete firstNode;
 }

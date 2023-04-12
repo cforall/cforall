@@ -40,8 +40,8 @@ public:
 	template<typename T>
 	bool isExpressionType() const {  return nullptr != dynamic_cast<T>(expr.get()); }
 
-	ast::Expr * build() const {
-		ast::Expr * node = const_cast<ExpressionNode *>(this)->expr.release();
+	ast::Expr * build() {
+		ast::Expr * node = expr.release();
 		node->set_extension( this->get_extension() );
 		node->location = this->location;
 		return node;
@@ -52,26 +52,6 @@ public:
 private:
 	bool extension = false;
 }; // ExpressionNode
-
-/*
-// Must harmonize with OperName.
-enum class OperKinds {
-    // diadic
-    SizeOf, AlignOf, OffsetOf, Plus, Minus, Exp, Mul, Div, Mod, Or, And,
-    BitOr, BitAnd, Xor, Cast, LShift, RShift, LThan, GThan, LEThan, GEThan, Eq, Neq,
-    Assign, AtAssn, ExpAssn, MulAssn, DivAssn, ModAssn, PlusAssn, MinusAssn, LSAssn, RSAssn, AndAssn, ERAssn, OrAssn,
-    Index, Range,
-    // monadic
-    UnPlus, UnMinus, AddressOf, PointTo, Neg, BitNeg, Incr, IncrPost, Decr, DecrPost,
-    Ctor, Dtor,
-}; // OperKinds
-
-enum class EnumHiding { Visible, Hide };
-
-struct LabelNode {
-    std::vector<ast::Label> labels;
-};
-*/
 
 // These 4 routines modify the string:
 ast::Expr * build_constantInteger( const CodeLocation &, std::string & );
@@ -98,7 +78,6 @@ ast::Expr * build_and( const CodeLocation &, ExpressionNode * expr_node1, Expres
 ast::Expr * build_and_or( const CodeLocation &, ExpressionNode * expr_node1, ExpressionNode * expr_node2, ast::LogicalFlag flag );
 ast::Expr * build_unary_val( const CodeLocation &, OperKinds op, ExpressionNode * expr_node );
 ast::Expr * build_binary_val( const CodeLocation &, OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
-ast::Expr * build_binary_ptr( const CodeLocation &, OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 );
 ast::Expr * build_cond( const CodeLocation &, ExpressionNode * expr_node1, ExpressionNode * expr_node2, ExpressionNode * expr_node3 );
 ast::Expr * build_tuple( const CodeLocation &, ExpressionNode * expr_node = nullptr );
 ast::Expr * build_func( const CodeLocation &, ExpressionNode * function, ExpressionNode * expr_node );

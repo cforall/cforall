@@ -396,6 +396,7 @@ class WaitForStmt final : public Stmt {
 	MUTATE_FRIEND
 };
 
+// Clause in a waitfor statement: waitfor (..., ...) ...
 class WaitForClause final : public StmtClause {
   public:
 	ptr<Expr> target_func;
@@ -456,6 +457,7 @@ class MutexStmt final : public Stmt {
 	MutexStmt * clone() const override { return new MutexStmt{ *this }; }
 	MUTATE_FRIEND
 };
+
 } // namespace ast
 
 #undef MUTATE_FRIEND

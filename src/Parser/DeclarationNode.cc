@@ -1002,7 +1002,7 @@ DeclarationNode * DeclarationNode::extractAggregate() const {
 	return nullptr;
 }
 
-void buildList( const DeclarationNode * firstNode,
+void buildList( DeclarationNode * firstNode,
 		std::vector<ast::ptr<ast::Decl>> & outputList ) {
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::Decl>>> out( outputList );
@@ -1135,7 +1135,7 @@ void buildList( const DeclarationNode * firstNode,
 } // buildList
 
 // currently only builds assertions, function parameters, and return values
-void buildList( const DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithType>> & outputList ) {
+void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithType>> & outputList ) {
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::DeclWithType>>> out( outputList );
 

@@ -701,13 +701,6 @@ ast::Expr * build_binary_val( const CodeLocation & location,
 	);
 } // build_binary_val
 
-ast::Expr * build_binary_ptr( const CodeLocation & location,
-		OperKinds op,
-		ExpressionNode * expr_node1,
-		ExpressionNode * expr_node2 ) {
-	return build_binary_val( location, op, expr_node1, expr_node2 );
-} // build_binary_ptr
-
 ast::Expr * build_cond( const CodeLocation & location,
 		ExpressionNode * expr_node1,
 		ExpressionNode * expr_node2,

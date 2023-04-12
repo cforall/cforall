@@ -116,7 +116,7 @@ public:
 	/// appropriate constructor definition is not found by the resolver.
 	ptr<Init> init;
 
-	ConstructorInit( 
+	ConstructorInit(
 		const CodeLocation & loc, const Stmt * ctor, const Stmt * dtor, const Init * init )
 	: Init( loc, MaybeConstruct ), ctor( ctor ), dtor( dtor ), init( init ) {}
 

@@ -315,7 +315,7 @@ private:
 class EnumDecl final : public AggregateDecl {
 public:
 	bool isTyped; // isTyped indicated if the enum has a declaration like:
-	// enum (type_optional) Name {...} 
+	// enum (type_optional) Name {...}
 	ptr<Type> base; // if isTyped == true && base.get() == nullptr, it is a "void" type enum
 	enum class EnumHiding { Visible, Hide } hide;
 
@@ -373,6 +373,7 @@ private:
 	MUTATE_FRIEND
 };
 
+/// Assembly declaration: `asm ... ( "..." : ... )`
 class AsmDecl : public Decl {
 public:
 	ptr<AsmStmt> stmt;
