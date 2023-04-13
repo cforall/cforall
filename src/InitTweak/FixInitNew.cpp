@@ -1311,9 +1311,7 @@ namespace {
 	const ast::Expr * GenStructMemberCalls::postvisit( const ast::UntypedExpr * untypedExpr ) {
 		// xxx - functions returning ast::ptr seems wrong...
 		auto res = ResolvExpr::findVoidExpression( untypedExpr, { symtab, transUnit().global } );
-		// Fix CodeLocation (at least until resolver is fixed).
-		auto fix = localFillCodeLocations( untypedExpr->location, res.release() );
-		return strict_dynamic_cast<const ast::Expr *>( fix );
+		return res.release();
 	}
 
 	void InsertImplicitCalls::previsit(const ast::UniqueExpr * unqExpr) {

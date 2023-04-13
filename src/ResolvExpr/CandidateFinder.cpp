@@ -54,43 +54,8 @@
 
 namespace ResolvExpr {
 
-const ast::Expr * referenceToRvalueConversion( const ast::Expr * expr, Cost & cost ) {
-	if ( expr->result.as< ast::ReferenceType >() ) {
-		// cast away reference from expr
-		cost.incReference();
-		return new ast::CastExpr{ expr, expr->result->stripReferences() };
-	}
-
-	return expr;
-}
-
 /// Unique identifier for matching expression resolutions to their requesting expression
 UniqueId globalResnSlot = 0;
-
-Cost computeConversionCost(
-	const ast::Type * argType, const ast::Type * paramType, bool argIsLvalue,
-	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
-) {
-	PRINT(
-		std::cerr << std::endl << "converting ";
-		ast::print( std::cerr, argType, 2 );
-		std::cerr << std::endl << " to ";
-		ast::print( std::cerr, paramType, 2 );
-		std::cerr << std::endl << "environment is: ";
-		ast::print( std::cerr, env, 2 );
-		std::cerr << std::endl;
-	)
-	Cost convCost = conversionCost( argType, paramType, argIsLvalue, symtab, env );
-	PRINT(
-		std::cerr << std::endl << "cost is " << convCost << std::endl;
-	)
-	if ( convCost == Cost::infinity ) return convCost;
-	convCost.incPoly( polyCost( paramType, symtab, env ) + polyCost( argType, symtab, env ) );
-	PRINT(
-		std::cerr << "cost with polycost is " << convCost << std::endl;
-	)
-	return convCost;
-}
 
 namespace {
 	/// First index is which argument, second is which alternative, third is which exploded element
@@ -313,6 +278,7 @@ namespace {
 
 	/// Instantiates an argument to match a parameter, returns false if no matching results left
 	bool instantiateArgument(
+		const CodeLocation & location,
 		const ast::Type * paramType, const ast::Init * init, const ExplodedArgs_new & args,
 		std::vector< ArgPack > & results, std::size_t & genStart, const ast::SymbolTable & symtab,
 		unsigned nTuples = 0
@@ -323,7 +289,7 @@ namespace {
 			for ( const ast::Type * type : *tupleType ) {
 				// xxx - dropping initializer changes behaviour from previous, but seems correct
 				// ^^^ need to handle the case where a tuple has a default argument
-				if ( ! instantiateArgument(
+				if ( ! instantiateArgument( location,
 					type, nullptr, args, results, genStart, symtab, nTuples ) ) return false;
 				nTuples = 0;
 			}
@@ -375,7 +341,7 @@ namespace {
 							// first iteration or no expression to clone,
 							// push empty tuple expression
 							newResult.parent = i;
-							newResult.expr = new ast::TupleExpr{ CodeLocation{}, {} };
+							newResult.expr = new ast::TupleExpr( location, {} );
 							argType = newResult.expr->result;
 						} else {
 							// clone result to collect tuple
@@ -639,1018 +605,68 @@ namespace {
 		}
 
 		/// Set up candidate assertions for inference
-		void inferParameters( CandidateRef & newCand, CandidateList & out ) {
-			// Set need bindings for any unbound assertions
-			UniqueId crntResnSlot = 0; // matching ID for this expression's assertions
-			for ( auto & assn : newCand->need ) {
-				// skip already-matched assertions
-				if ( assn.second.resnSlot != 0 ) continue;
-				// assign slot for expression if needed
-				if ( crntResnSlot == 0 ) { crntResnSlot = ++globalResnSlot; }
-				// fix slot to assertion
-				assn.second.resnSlot = crntResnSlot;
-			}
-			// pair slot to expression
-			if ( crntResnSlot != 0 ) {
-				newCand->expr.get_and_mutate()->inferred.resnSlots().emplace_back( crntResnSlot );
-			}
-
-			// add to output list; assertion satisfaction will occur later
-			out.emplace_back( newCand );
-		}
+		void inferParameters( CandidateRef & newCand, CandidateList & out );
 
 		/// Completes a function candidate with arguments located
 		void validateFunctionCandidate(
 			const CandidateRef & func, ArgPack & result, const std::vector< ArgPack > & results,
-			CandidateList & out
-		) {
-			ast::ApplicationExpr * appExpr =
-				new ast::ApplicationExpr{ func->expr->location, func->expr };
-			// sum cost and accumulate arguments
-			std::deque< const ast::Expr * > args;
-			Cost cost = func->cost;
-			const ArgPack * pack = &result;
-			while ( pack->expr ) {
-				args.emplace_front( pack->expr );
-				cost += pack->cost;
-				pack = &results[pack->parent];
-			}
-			std::vector< ast::ptr< ast::Expr > > vargs( args.begin(), args.end() );
-			appExpr->args = std::move( vargs );
-			// build and validate new candidate
-			auto newCand =
-				std::make_shared<Candidate>( appExpr, result.env, result.open, result.need, cost );
-			PRINT(
-				std::cerr << "instantiate function success: " << appExpr << std::endl;
-				std::cerr << "need assertions:" << std::endl;
-				ast::print( std::cerr, result.need, 2 );
-			)
-			inferParameters( newCand, out );
-		}
+			CandidateList & out );
 
 		/// Builds a list of candidates for a function, storing them in out
 		void makeFunctionCandidates(
+			const CodeLocation & location,
 			const CandidateRef & func, const ast::FunctionType * funcType,
-			const ExplodedArgs_new & args, CandidateList & out
-		) {
-			ast::OpenVarSet funcOpen;
-			ast::AssertionSet funcNeed, funcHave;
-			ast::TypeEnvironment funcEnv{ func->env };
-			makeUnifiableVars( funcType, funcOpen, funcNeed );
-			// add all type variables as open variables now so that those not used in the
-			// parameter list are still considered open
-			funcEnv.add( funcType->forall );
-
-			if ( targetType && ! targetType->isVoid() && ! funcType->returns.empty() ) {
-				// attempt to narrow based on expected target type
-				const ast::Type * returnType = funcType->returns.front();
-				if ( ! unify(
-					returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen, symtab )
-				) {
-					// unification failed, do not pursue this candidate
-					return;
-				}
-			}
-
-			// iteratively build matches, one parameter at a time
-			std::vector< ArgPack > results;
-			results.emplace_back( funcEnv, funcNeed, funcHave, funcOpen );
-			std::size_t genStart = 0;
-
-			// xxx - how to handle default arg after change to ftype representation?
-			if (const ast::VariableExpr * varExpr = func->expr.as<ast::VariableExpr>()) {
-				if (const ast::FunctionDecl * funcDecl = varExpr->var.as<ast::FunctionDecl>()) {
-					// function may have default args only if directly calling by name
-					// must use types on candidate however, due to RenameVars substitution
-					auto nParams = funcType->params.size();
-
-					for (size_t i=0; i<nParams; ++i) {
-						auto obj = funcDecl->params[i].strict_as<ast::ObjectDecl>();
-						if (!instantiateArgument(
-							funcType->params[i], obj->init, args, results, genStart, symtab)) return;
-					}
-					goto endMatch;
-				}
-			}
-			for ( const auto & param : funcType->params ) {
-				// Try adding the arguments corresponding to the current parameter to the existing
-				// matches
-				// no default args for indirect calls
-				if ( ! instantiateArgument(
-					param, nullptr, args, results, genStart, symtab ) ) return;
-			}
-
-			endMatch:
-			if ( funcType->isVarArgs ) {
-				// append any unused arguments to vararg pack
-				std::size_t genEnd;
-				do {
-					genEnd = results.size();
-
-					// iterate results
-					for ( std::size_t i = genStart; i < genEnd; ++i ) {
-						unsigned nextArg = results[i].nextArg;
-
-						// use remainder of exploded tuple if present
-						if ( results[i].hasExpl() ) {
-							const ExplodedArg & expl = results[i].getExpl( args );
-
-							unsigned nextExpl = results[i].nextExpl + 1;
-							if ( nextExpl == expl.exprs.size() ) { nextExpl = 0; }
-
-							results.emplace_back(
-								i, expl.exprs[ results[i].nextExpl ], copy( results[i].env ),
-								copy( results[i].need ), copy( results[i].have ),
-								copy( results[i].open ), nextArg, 0, Cost::zero, nextExpl,
-								results[i].explAlt );
-
-							continue;
-						}
-
-						// finish result when out of arguments
-						if ( nextArg >= args.size() ) {
-							validateFunctionCandidate( func, results[i], results, out );
-
-							continue;
-						}
-
-						// add each possible next argument
-						for ( std::size_t j = 0; j < args[nextArg].size(); ++j ) {
-							const ExplodedArg & expl = args[nextArg][j];
-
-							// fresh copies of parent parameters for this iteration
-							ast::TypeEnvironment env = results[i].env;
-							ast::OpenVarSet open = results[i].open;
-
-							env.addActual( expl.env, open );
-
-							// skip empty tuple arguments by (nearly) cloning parent into next gen
-							if ( expl.exprs.empty() ) {
-								results.emplace_back(
-									results[i], std::move( env ), copy( results[i].need ),
-									copy( results[i].have ), std::move( open ), nextArg + 1,
-									expl.cost );
-
-								continue;
-							}
-
-							// add new result
-							results.emplace_back(
-								i, expl.exprs.front(), std::move( env ), copy( results[i].need ),
-								copy( results[i].have ), std::move( open ), nextArg + 1, 0, expl.cost,
-								expl.exprs.size() == 1 ? 0 : 1, j );
-						}
-					}
-
-					genStart = genEnd;
-				} while( genEnd != results.size() );
-			} else {
-				// filter out the results that don't use all the arguments
-				for ( std::size_t i = genStart; i < results.size(); ++i ) {
-					ArgPack & result = results[i];
-					if ( ! result.hasExpl() && result.nextArg >= args.size() ) {
-						validateFunctionCandidate( func, result, results, out );
-					}
-				}
-			}
-		}
+			const ExplodedArgs_new & args, CandidateList & out );
 
 		/// Adds implicit struct-conversions to the alternative list
-		void addAnonConversions( const CandidateRef & cand ) {
-			// adds anonymous member interpretations whenever an aggregate value type is seen.
-			// it's okay for the aggregate expression to have reference type -- cast it to the
-			// base type to treat the aggregate as the referenced value
-			ast::ptr< ast::Expr > aggrExpr( cand->expr );
-			ast::ptr< ast::Type > & aggrType = aggrExpr.get_and_mutate()->result;
-			cand->env.apply( aggrType );
-
-			if ( aggrType.as< ast::ReferenceType >() ) {
-				aggrExpr = new ast::CastExpr{ aggrExpr, aggrType->stripReferences() };
-			}
-
-			if ( auto structInst = aggrExpr->result.as< ast::StructInstType >() ) {
-				addAggMembers( structInst, aggrExpr, *cand, Cost::safe, "" );
-			} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
-				addAggMembers( unionInst, aggrExpr, *cand, Cost::safe, "" );
-			}
-		}
+		void addAnonConversions( const CandidateRef & cand );
 
 		/// Adds aggregate member interpretations
 		void addAggMembers(
 			const ast::BaseInstType * aggrInst, const ast::Expr * expr,
 			const Candidate & cand, const Cost & addedCost, const std::string & name
-		) {
-			for ( const ast::Decl * decl : aggrInst->lookup( name ) ) {
-				auto dwt = strict_dynamic_cast< const ast::DeclWithType * >( decl );
-				CandidateRef newCand = std::make_shared<Candidate>(
-					cand, new ast::MemberExpr{ expr->location, dwt, expr }, addedCost );
-				// add anonymous member interpretations whenever an aggregate value type is seen
-				// as a member expression
-				addAnonConversions( newCand );
-				candidates.emplace_back( std::move( newCand ) );
-			}
-		}
+		);
 
 		/// Adds tuple member interpretations
 		void addTupleMembers(
 			const ast::TupleType * tupleType, const ast::Expr * expr, const Candidate & cand,
 			const Cost & addedCost, const ast::Expr * member
-		) {
-			if ( auto constantExpr = dynamic_cast< const ast::ConstantExpr * >( member ) ) {
-				// get the value of the constant expression as an int, must be between 0 and the
-				// length of the tuple to have meaning
-				long long val = constantExpr->intValue();
-				if ( val >= 0 && (unsigned long long)val < tupleType->size() ) {
-					addCandidate(
-						cand, new ast::TupleIndexExpr{ expr->location, expr, (unsigned)val },
-						addedCost );
-				}
-			}
-		}
-
-		void postvisit( const ast::UntypedExpr * untypedExpr ) {
-			std::vector< CandidateFinder > argCandidates =
-				selfFinder.findSubExprs( untypedExpr->args );
-
-			// take care of possible tuple assignments
-			// if not tuple assignment, handled as normal function call
-			Tuples::handleTupleAssignment( selfFinder, untypedExpr, argCandidates );
-
-			CandidateFinder funcFinder( context, tenv );
-			if (auto nameExpr = untypedExpr->func.as<ast::NameExpr>()) {
-				auto kind = ast::SymbolTable::getSpecialFunctionKind(nameExpr->name);
-				if (kind != ast::SymbolTable::SpecialFunctionKind::NUMBER_OF_KINDS) {
-					assertf(!argCandidates.empty(), "special function call without argument");
-					for (auto & firstArgCand: argCandidates[0]) {
-						ast::ptr<ast::Type> argType = firstArgCand->expr->result;
-						firstArgCand->env.apply(argType);
-						// strip references
-						// xxx - is this correct?
-						while (argType.as<ast::ReferenceType>()) argType = argType.as<ast::ReferenceType>()->base;
-
-						// convert 1-tuple to plain type
-						if (auto tuple = argType.as<ast::TupleType>()) {
-							if (tuple->size() == 1) {
-								argType = tuple->types[0];
-							}
-						}
-
-						// if argType is an unbound type parameter, all special functions need to be searched.
-						if (isUnboundType(argType)) {
-							funcFinder.otypeKeys.clear();
-							break;
-						}
-
-						if (argType.as<ast::PointerType>()) funcFinder.otypeKeys.insert(Mangle::Encoding::pointer);						
-						// else if (const ast::EnumInstType * enumInst = argType.as<ast::EnumInstType>()) {
-						// 	const ast::EnumDecl * enumDecl = enumInst->base; // Here
-						// 	if ( const ast::Type* enumType = enumDecl->base ) {
-						// 		// instance of enum (T) is a instance of type (T) 
-						// 		funcFinder.otypeKeys.insert(Mangle::mangle(enumType, Mangle::NoGenericParams | Mangle::Type));
-						// 	} else {
-						// 		// instance of an untyped enum is techically int
-						// 		funcFinder.otypeKeys.insert(Mangle::mangle(enumDecl, Mangle::NoGenericParams | Mangle::Type));
-						// 	}
-						// }
-						else funcFinder.otypeKeys.insert(Mangle::mangle(argType, Mangle::NoGenericParams | Mangle::Type));
-					}
-				}
-			}
-			// if candidates are already produced, do not fail
-			// xxx - is it possible that handleTupleAssignment and main finder both produce candidates?
-			// this means there exists ctor/assign functions with a tuple as first parameter.
-			ResolvMode mode = {
-				true, // adjust
-				!untypedExpr->func.as<ast::NameExpr>(), // prune if not calling by name
-				selfFinder.candidates.empty() // failfast if other options are not found
-			};
-			funcFinder.find( untypedExpr->func, mode );
-			// short-circuit if no candidates
-			// if ( funcFinder.candidates.empty() ) return;
-
-			reason.code = NoMatch;
-
-			// find function operators
-			ast::ptr< ast::Expr > opExpr = new ast::NameExpr{ untypedExpr->location, "?()" }; // ??? why not ?{}
-			CandidateFinder opFinder( context, tenv );
-			// okay if there aren't any function operations
-			opFinder.find( opExpr, ResolvMode::withoutFailFast() );
-			PRINT(
-				std::cerr << "known function ops:" << std::endl;
-				print( std::cerr, opFinder.candidates, 1 );
-			)
-
-			// pre-explode arguments
-			ExplodedArgs_new argExpansions;
-			for ( const CandidateFinder & args : argCandidates ) {
-				argExpansions.emplace_back();
-				auto & argE = argExpansions.back();
-				for ( const CandidateRef & arg : args ) { argE.emplace_back( *arg, symtab ); }
-			}
-
-			// Find function matches
-			CandidateList found;
-			SemanticErrorException errors;
-			for ( CandidateRef & func : funcFinder ) {
-				try {
-					PRINT(
-						std::cerr << "working on alternative:" << std::endl;
-						print( std::cerr, *func, 2 );
-					)
-
-					// check if the type is a pointer to function
-					const ast::Type * funcResult = func->expr->result->stripReferences();
-					if ( auto pointer = dynamic_cast< const ast::PointerType * >( funcResult ) ) {
-						if ( auto function = pointer->base.as< ast::FunctionType >() ) {
-							CandidateRef newFunc{ new Candidate{ *func } };
-							newFunc->expr =
-								referenceToRvalueConversion( newFunc->expr, newFunc->cost );
-							makeFunctionCandidates( newFunc, function, argExpansions, found );
-						}
-					} else if (
-						auto inst = dynamic_cast< const ast::TypeInstType * >( funcResult )
-					) {
-						if ( const ast::EqvClass * clz = func->env.lookup( *inst ) ) {
-							if ( auto function = clz->bound.as< ast::FunctionType >() ) {
-								CandidateRef newFunc{ new Candidate{ *func } };
-								newFunc->expr =
-									referenceToRvalueConversion( newFunc->expr, newFunc->cost );
-								makeFunctionCandidates( newFunc, function, argExpansions, found );
-							}
-						}
-					}
-				} catch ( SemanticErrorException & e ) { errors.append( e ); }
-			}
-
-			// Find matches on function operators `?()`
-			if ( ! opFinder.candidates.empty() ) {
-				// add exploded function alternatives to front of argument list
-				std::vector< ExplodedArg > funcE;
-				funcE.reserve( funcFinder.candidates.size() );
-				for ( const CandidateRef & func : funcFinder ) {
-					funcE.emplace_back( *func, symtab );
-				}
-				argExpansions.emplace_front( std::move( funcE ) );
-
-				for ( const CandidateRef & op : opFinder ) {
-					try {
-						// check if type is pointer-to-function
-						const ast::Type * opResult = op->expr->result->stripReferences();
-						if ( auto pointer = dynamic_cast< const ast::PointerType * >( opResult ) ) {
-							if ( auto function = pointer->base.as< ast::FunctionType >() ) {
-								CandidateRef newOp{ new Candidate{ *op} };
-								newOp->expr =
-									referenceToRvalueConversion( newOp->expr, newOp->cost );
-								makeFunctionCandidates( newOp, function, argExpansions, found );
-							}
-						}
-					} catch ( SemanticErrorException & e ) { errors.append( e ); }
-				}
-			}
-
-			// Implement SFINAE; resolution errors are only errors if there aren't any non-error
-			// candidates
-			if ( found.empty() && ! errors.isEmpty() ) { throw errors; }
-
-			// Compute conversion costs
-			for ( CandidateRef & withFunc : found ) {
-				Cost cvtCost = computeApplicationConversionCost( withFunc, symtab );
-
-				PRINT(
-					auto appExpr = withFunc->expr.strict_as< ast::ApplicationExpr >();
-					auto pointer = appExpr->func->result.strict_as< ast::PointerType >();
-					auto function = pointer->base.strict_as< ast::FunctionType >();
-
-					std::cerr << "Case +++++++++++++ " << appExpr->func << std::endl;
-					std::cerr << "parameters are:" << std::endl;
-					ast::printAll( std::cerr, function->params, 2 );
-					std::cerr << "arguments are:" << std::endl;
-					ast::printAll( std::cerr, appExpr->args, 2 );
-					std::cerr << "bindings are:" << std::endl;
-					ast::print( std::cerr, withFunc->env, 2 );
-					std::cerr << "cost is: " << withFunc->cost << std::endl;
-					std::cerr << "cost of conversion is:" << cvtCost << std::endl;
-				)
-
-				if ( cvtCost != Cost::infinity ) {
-					withFunc->cvtCost = cvtCost;
-					candidates.emplace_back( std::move( withFunc ) );
-				}
-			}
-			found = std::move( candidates );
-
-			// use a new list so that candidates are not examined by addAnonConversions twice
-			CandidateList winners = findMinCost( found );
-			promoteCvtCost( winners );
-
-			// function may return a struct/union value, in which case we need to add candidates
-			// for implicit conversions to each of the anonymous members, which must happen after
-			// `findMinCost`, since anon conversions are never the cheapest
-			for ( const CandidateRef & c : winners ) {
-				addAnonConversions( c );
-			}
-			spliceBegin( candidates, winners );
-
-			if ( candidates.empty() && targetType && ! targetType->isVoid() ) {
-				// If resolution is unsuccessful with a target type, try again without, since it
-				// will sometimes succeed when it wouldn't with a target type binding.
-				// For example:
-				//   forall( otype T ) T & ?[]( T *, ptrdiff_t );
-				//   const char * x = "hello world";
-				//   unsigned char ch = x[0];
-				// Fails with simple return type binding (xxx -- check this!) as follows:
-				// * T is bound to unsigned char
-				// * (x: const char *) is unified with unsigned char *, which fails
-				// xxx -- fix this better
-				targetType = nullptr;
-				postvisit( untypedExpr );
-			}
-		}
+		);
 
 		/// true if expression is an lvalue
 		static bool isLvalue( const ast::Expr * x ) {
 			return x->result && ( x->get_lvalue() || x->result.as< ast::ReferenceType >() );
 		}
 
-		void postvisit( const ast::AddressExpr * addressExpr ) {
-			CandidateFinder finder( context, tenv );
-			finder.find( addressExpr->arg );
-
-			if( finder.candidates.empty() ) return;
-
-			reason.code = NoMatch;
-
-			for ( CandidateRef & r : finder.candidates ) {
-				if ( ! isLvalue( r->expr ) ) continue;
-				addCandidate( *r, new ast::AddressExpr{ addressExpr->location, r->expr } );
-			}
-		}
-
-		void postvisit( const ast::LabelAddressExpr * labelExpr ) {
-			addCandidate( labelExpr, tenv );
-		}
-
-		void postvisit( const ast::CastExpr * castExpr ) {
-			ast::ptr< ast::Type > toType = castExpr->result;
-			assert( toType );
-			toType = resolveTypeof( toType, context );
-			toType = adjustExprType( toType, tenv, symtab );
-
-			CandidateFinder finder( context, tenv, toType );
-			finder.find( castExpr->arg, ResolvMode::withAdjustment() );
-
-			if( !finder.candidates.empty() ) reason.code = NoMatch;
-
-			CandidateList matches;
-			for ( CandidateRef & cand : finder.candidates ) {
-				ast::AssertionSet need( cand->need.begin(), cand->need.end() ), have;
-				ast::OpenVarSet open( cand->open );
-
-				cand->env.extractOpenVars( open );
-
-				// It is possible that a cast can throw away some values in a multiply-valued
-				// expression, e.g. cast-to-void, one value to zero. Figure out the prefix of the
-				// subexpression results that are cast directly. The candidate is invalid if it
-				// has fewer results than there are types to cast to.
-				int discardedValues = cand->expr->result->size() - toType->size();
-				if ( discardedValues < 0 ) continue;
-
-				// unification run for side-effects
-				unify( toType, cand->expr->result, cand->env, need, have, open, symtab );
-				Cost thisCost =
-					(castExpr->isGenerated == ast::GeneratedFlag::GeneratedCast)
- 	                    ? conversionCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env )
- 	                    : castCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env );
-
-				PRINT(
-					std::cerr << "working on cast with result: " << toType << std::endl;
-					std::cerr << "and expr type: " << cand->expr->result << std::endl;
-					std::cerr << "env: " << cand->env << std::endl;
-				)
-				if ( thisCost != Cost::infinity ) {
-					PRINT(
-						std::cerr << "has finite cost." << std::endl;
-					)
-					// count one safe conversion for each value that is thrown away
-					thisCost.incSafe( discardedValues );
-					CandidateRef newCand = std::make_shared<Candidate>(
-						restructureCast( cand->expr, toType, castExpr->isGenerated ),
-						copy( cand->env ), std::move( open ), std::move( need ), cand->cost,
-						cand->cost + thisCost );
-					inferParameters( newCand, matches );
-				}
-			}
-
-			// select first on argument cost, then conversion cost
-			CandidateList minArgCost = findMinCost( matches );
-			promoteCvtCost( minArgCost );
-			candidates = findMinCost( minArgCost );
-		}
-
-		void postvisit( const ast::VirtualCastExpr * castExpr ) {
-			assertf( castExpr->result, "Implicit virtual cast targets not yet supported." );
-			CandidateFinder finder( context, tenv );
-			// don't prune here, all alternatives guaranteed to have same type
-			finder.find( castExpr->arg, ResolvMode::withoutPrune() );
-			for ( CandidateRef & r : finder.candidates ) {
-				addCandidate(
-					*r,
-					new ast::VirtualCastExpr{ castExpr->location, r->expr, castExpr->result } );
-			}
-		}
-
-		void postvisit( const ast::KeywordCastExpr * castExpr ) {
-			const auto & loc = castExpr->location;
-			assertf( castExpr->result, "Cast target should have been set in Validate." );
-			auto ref = castExpr->result.strict_as<ast::ReferenceType>();
-			auto inst = ref->base.strict_as<ast::StructInstType>();
-			auto target = inst->base.get();
-
-			CandidateFinder finder( context, tenv );
-
-			auto pick_alternatives = [target, this](CandidateList & found, bool expect_ref) {
-				for(auto & cand : found) {
-					const ast::Type * expr = cand->expr->result.get();
-					if(expect_ref) {
-						auto res = dynamic_cast<const ast::ReferenceType*>(expr);
-						if(!res) { continue; }
-						expr = res->base.get();
-					}
-
-					if(auto insttype = dynamic_cast<const ast::TypeInstType*>(expr)) {
-						auto td = cand->env.lookup(*insttype);
-						if(!td) { continue; }
-						expr = td->bound.get();
-					}
-
-					if(auto base = dynamic_cast<const ast::StructInstType*>(expr)) {
-						if(base->base == target) {
-							candidates.push_back( std::move(cand) );
-							reason.code = NoReason;
-						}
-					}
-				}
-			};
-
-			try {
-				// Attempt 1 : turn (thread&)X into (thread$&)X.__thrd
-				// Clone is purely for memory management
-				std::unique_ptr<const ast::Expr> tech1 { new ast::UntypedMemberExpr(loc, new ast::NameExpr(loc, castExpr->concrete_target.field), castExpr->arg) };
-
-				// don't prune here, since it's guaranteed all alternatives will have the same type
-				finder.find( tech1.get(), ResolvMode::withoutPrune() );
-				pick_alternatives(finder.candidates, false);
-
-				return;
-			} catch(SemanticErrorException & ) {}
-
-			// Fallback : turn (thread&)X into (thread$&)get_thread(X)
-			std::unique_ptr<const ast::Expr> fallback { ast::UntypedExpr::createDeref(loc,  new ast::UntypedExpr(loc, new ast::NameExpr(loc, castExpr->concrete_target.getter), { castExpr->arg })) };
-			// don't prune here, since it's guaranteed all alternatives will have the same type
-			finder.find( fallback.get(), ResolvMode::withoutPrune() );
-
-			pick_alternatives(finder.candidates, true);
-
-			// Whatever happens here, we have no more fallbacks
-		}
-
-		void postvisit( const ast::UntypedMemberExpr * memberExpr ) {
-			CandidateFinder aggFinder( context, tenv );
-			aggFinder.find( memberExpr->aggregate, ResolvMode::withAdjustment() );
-			for ( CandidateRef & agg : aggFinder.candidates ) {
-				// it's okay for the aggregate expression to have reference type -- cast it to the
-				// base type to treat the aggregate as the referenced value
-				Cost addedCost = Cost::zero;
-				agg->expr = referenceToRvalueConversion( agg->expr, addedCost );
-
-				// find member of the given type
-				if ( auto structInst = agg->expr->result.as< ast::StructInstType >() ) {
-					addAggMembers(
-						structInst, agg->expr, *agg, addedCost, getMemberName( memberExpr ) );
-				} else if ( auto unionInst = agg->expr->result.as< ast::UnionInstType >() ) {
-					addAggMembers(
-						unionInst, agg->expr, *agg, addedCost, getMemberName( memberExpr ) );
-				} else if ( auto tupleType = agg->expr->result.as< ast::TupleType >() ) {
-					addTupleMembers( tupleType, agg->expr, *agg, addedCost, memberExpr->member );
-				}
-			}
-		}
-
-		void postvisit( const ast::MemberExpr * memberExpr ) {
-			addCandidate( memberExpr, tenv );
-		}
-
-		void postvisit( const ast::NameExpr * nameExpr ) {
-			std::vector< ast::SymbolTable::IdData > declList;
-			if (!selfFinder.otypeKeys.empty()) {
-				auto kind = ast::SymbolTable::getSpecialFunctionKind(nameExpr->name);
-				assertf(kind != ast::SymbolTable::SpecialFunctionKind::NUMBER_OF_KINDS, "special lookup with non-special target: %s", nameExpr->name.c_str());
-
-				for (auto & otypeKey: selfFinder.otypeKeys) {
-					auto result = symtab.specialLookupId(kind, otypeKey);
-					declList.insert(declList.end(), std::make_move_iterator(result.begin()), std::make_move_iterator(result.end()));
-				}
-			}
-			else {
-				declList = symtab.lookupId( nameExpr->name );
-			}
-			PRINT( std::cerr << "nameExpr is " << nameExpr->name << std::endl; )
-
-			if( declList.empty() ) return;
-
-			reason.code = NoMatch;
-
-			for ( auto & data : declList ) {
-				Cost cost = Cost::zero;
-				ast::Expr * newExpr = data.combine( nameExpr->location, cost );
-
-				CandidateRef newCand = std::make_shared<Candidate>(
-					newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, Cost::zero,
-					cost );
-
-				if (newCand->expr->env) {
-					newCand->env.add(*newCand->expr->env);
-					auto mutExpr = newCand->expr.get_and_mutate();
-					mutExpr->env  = nullptr;
-					newCand->expr = mutExpr;
-				}
-
-				PRINT(
-					std::cerr << "decl is ";
-					ast::print( std::cerr, data.id );
-					std::cerr << std::endl;
-					std::cerr << "newExpr is ";
-					ast::print( std::cerr, newExpr );
-					std::cerr << std::endl;
-				)
-				newCand->expr = ast::mutate_field(
-					newCand->expr.get(), &ast::Expr::result,
-					renameTyVars( newCand->expr->result ) );
-				// add anonymous member interpretations whenever an aggregate value type is seen
-				// as a name expression
-				addAnonConversions( newCand );
-				candidates.emplace_back( std::move( newCand ) );
-			}
-		}
-
-		void postvisit( const ast::VariableExpr * variableExpr ) {
-			// not sufficient to just pass `variableExpr` here, type might have changed since
-			// creation
-			addCandidate(
-				new ast::VariableExpr{ variableExpr->location, variableExpr->var }, tenv );
-		}
-
-		void postvisit( const ast::ConstantExpr * constantExpr ) {
-			addCandidate( constantExpr, tenv );
-		}
-
-		void postvisit( const ast::SizeofExpr * sizeofExpr ) {
-			if ( sizeofExpr->type ) {
-				addCandidate(
-					new ast::SizeofExpr{
-						sizeofExpr->location, resolveTypeof( sizeofExpr->type, context ) },
-					tenv );
-			} else {
-				// find all candidates for the argument to sizeof
-				CandidateFinder finder( context, tenv );
-				finder.find( sizeofExpr->expr );
-				// find the lowest-cost candidate, otherwise ambiguous
-				CandidateList winners = findMinCost( finder.candidates );
-				if ( winners.size() != 1 ) {
-					SemanticError(
-						sizeofExpr->expr.get(), "Ambiguous expression in sizeof operand: " );
-				}
-				// return the lowest-cost candidate
-				CandidateRef & choice = winners.front();
-				choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
-				choice->cost = Cost::zero;
-				addCandidate( *choice, new ast::SizeofExpr{ sizeofExpr->location, choice->expr } );
-			}
-		}
-
-		void postvisit( const ast::AlignofExpr * alignofExpr ) {
-			if ( alignofExpr->type ) {
-				addCandidate(
-					new ast::AlignofExpr{
-						alignofExpr->location, resolveTypeof( alignofExpr->type, context ) },
-					tenv );
-			} else {
-				// find all candidates for the argument to alignof
-				CandidateFinder finder( context, tenv );
-				finder.find( alignofExpr->expr );
-				// find the lowest-cost candidate, otherwise ambiguous
-				CandidateList winners = findMinCost( finder.candidates );
-				if ( winners.size() != 1 ) {
-					SemanticError(
-						alignofExpr->expr.get(), "Ambiguous expression in alignof operand: " );
-				}
-				// return the lowest-cost candidate
-				CandidateRef & choice = winners.front();
-				choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
-				choice->cost = Cost::zero;
-				addCandidate(
-					*choice, new ast::AlignofExpr{ alignofExpr->location, choice->expr } );
-			}
-		}
-
-		void postvisit( const ast::UntypedOffsetofExpr * offsetofExpr ) {
-			const ast::BaseInstType * aggInst;
-			if (( aggInst = offsetofExpr->type.as< ast::StructInstType >() )) ;
-			else if (( aggInst = offsetofExpr->type.as< ast::UnionInstType >() )) ;
-			else return;
-
-			for ( const ast::Decl * member : aggInst->lookup( offsetofExpr->member ) ) {
-				auto dwt = strict_dynamic_cast< const ast::DeclWithType * >( member );
-				addCandidate(
-					new ast::OffsetofExpr{ offsetofExpr->location, aggInst, dwt }, tenv );
-			}
-		}
-
-		void postvisit( const ast::OffsetofExpr * offsetofExpr ) {
-			addCandidate( offsetofExpr, tenv );
-		}
-
-		void postvisit( const ast::OffsetPackExpr * offsetPackExpr ) {
-			addCandidate( offsetPackExpr, tenv );
-		}
-
-		void postvisit( const ast::LogicalExpr * logicalExpr ) {
-			CandidateFinder finder1( context, tenv );
-			finder1.find( logicalExpr->arg1, ResolvMode::withAdjustment() );
-			if ( finder1.candidates.empty() ) return;
-
-			CandidateFinder finder2( context, tenv );
-			finder2.find( logicalExpr->arg2, ResolvMode::withAdjustment() );
-			if ( finder2.candidates.empty() ) return;
-
-			reason.code = NoMatch;
-
-			for ( const CandidateRef & r1 : finder1.candidates ) {
-				for ( const CandidateRef & r2 : finder2.candidates ) {
-					ast::TypeEnvironment env{ r1->env };
-					env.simpleCombine( r2->env );
-					ast::OpenVarSet open{ r1->open };
-					mergeOpenVars( open, r2->open );
-					ast::AssertionSet need;
-					mergeAssertionSet( need, r1->need );
-					mergeAssertionSet( need, r2->need );
-
-					addCandidate(
-						new ast::LogicalExpr{
-							logicalExpr->location, r1->expr, r2->expr, logicalExpr->isAnd },
-						std::move( env ), std::move( open ), std::move( need ), r1->cost + r2->cost );
-				}
-			}
-		}
-
-		void postvisit( const ast::ConditionalExpr * conditionalExpr ) {
-			// candidates for condition
-			CandidateFinder finder1( context, tenv );
-			finder1.find( conditionalExpr->arg1, ResolvMode::withAdjustment() );
-			if ( finder1.candidates.empty() ) return;
-
-			// candidates for true result
-			CandidateFinder finder2( context, tenv );
-			finder2.find( conditionalExpr->arg2, ResolvMode::withAdjustment() );
-			if ( finder2.candidates.empty() ) return;
-
-			// candidates for false result
-			CandidateFinder finder3( context, tenv );
-			finder3.find( conditionalExpr->arg3, ResolvMode::withAdjustment() );
-			if ( finder3.candidates.empty() ) return;
-
-			reason.code = NoMatch;
-
-			for ( const CandidateRef & r1 : finder1.candidates ) {
-				for ( const CandidateRef & r2 : finder2.candidates ) {
-					for ( const CandidateRef & r3 : finder3.candidates ) {
-						ast::TypeEnvironment env{ r1->env };
-						env.simpleCombine( r2->env );
-						env.simpleCombine( r3->env );
-						ast::OpenVarSet open{ r1->open };
-						mergeOpenVars( open, r2->open );
-						mergeOpenVars( open, r3->open );
-						ast::AssertionSet need;
-						mergeAssertionSet( need, r1->need );
-						mergeAssertionSet( need, r2->need );
-						mergeAssertionSet( need, r3->need );
-						ast::AssertionSet have;
-
-						// unify true and false results, then infer parameters to produce new
-						// candidates
-						ast::ptr< ast::Type > common;
-						if (
-							unify(
-								r2->expr->result, r3->expr->result, env, need, have, open, symtab,
-								common )
-						) {
-							// generate typed expression
-							ast::ConditionalExpr * newExpr = new ast::ConditionalExpr{
-								conditionalExpr->location, r1->expr, r2->expr, r3->expr };
-							newExpr->result = common ? common : r2->expr->result;
-							// convert both options to result type
-							Cost cost = r1->cost + r2->cost + r3->cost;
-							newExpr->arg2 = computeExpressionConversionCost(
-								newExpr->arg2, newExpr->result, symtab, env, cost );
-							newExpr->arg3 = computeExpressionConversionCost(
-								newExpr->arg3, newExpr->result, symtab, env, cost );
-							// output candidate
-							CandidateRef newCand = std::make_shared<Candidate>(
-								newExpr, std::move( env ), std::move( open ), std::move( need ), cost );
-							inferParameters( newCand, candidates );
-						}
-					}
-				}
-			}
-		}
-
-		void postvisit( const ast::CommaExpr * commaExpr ) {
-			ast::TypeEnvironment env{ tenv };
-			ast::ptr< ast::Expr > arg1 = resolveInVoidContext( commaExpr->arg1, context, env );
-
-			CandidateFinder finder2( context, env );
-			finder2.find( commaExpr->arg2, ResolvMode::withAdjustment() );
-
-			for ( const CandidateRef & r2 : finder2.candidates ) {
-				addCandidate( *r2, new ast::CommaExpr{ commaExpr->location, arg1, r2->expr } );
-			}
-		}
-
-		void postvisit( const ast::ImplicitCopyCtorExpr * ctorExpr ) {
-			addCandidate( ctorExpr, tenv );
-		}
-
-		void postvisit( const ast::ConstructorExpr * ctorExpr ) {
-			CandidateFinder finder( context, tenv );
-			finder.find( ctorExpr->callExpr, ResolvMode::withoutPrune() );
-			for ( CandidateRef & r : finder.candidates ) {
-				addCandidate( *r, new ast::ConstructorExpr{ ctorExpr->location, r->expr } );
-			}
-		}
-
-		void postvisit( const ast::RangeExpr * rangeExpr ) {
-			// resolve low and high, accept candidates where low and high types unify
-			CandidateFinder finder1( context, tenv );
-			finder1.find( rangeExpr->low, ResolvMode::withAdjustment() );
-			if ( finder1.candidates.empty() ) return;
-
-			CandidateFinder finder2( context, tenv );
-			finder2.find( rangeExpr->high, ResolvMode::withAdjustment() );
-			if ( finder2.candidates.empty() ) return;
-
-			reason.code = NoMatch;
-
-			for ( const CandidateRef & r1 : finder1.candidates ) {
-				for ( const CandidateRef & r2 : finder2.candidates ) {
-					ast::TypeEnvironment env{ r1->env };
-					env.simpleCombine( r2->env );
-					ast::OpenVarSet open{ r1->open };
-					mergeOpenVars( open, r2->open );
-					ast::AssertionSet need;
-					mergeAssertionSet( need, r1->need );
-					mergeAssertionSet( need, r2->need );
-					ast::AssertionSet have;
-
-					ast::ptr< ast::Type > common;
-					if (
-						unify(
-							r1->expr->result, r2->expr->result, env, need, have, open, symtab,
-							common )
-					) {
-						// generate new expression
-						ast::RangeExpr * newExpr =
-							new ast::RangeExpr{ rangeExpr->location, r1->expr, r2->expr };
-						newExpr->result = common ? common : r1->expr->result;
-						// add candidate
-						CandidateRef newCand = std::make_shared<Candidate>(
-							newExpr, std::move( env ), std::move( open ), std::move( need ),
-							r1->cost + r2->cost );
-						inferParameters( newCand, candidates );
-					}
-				}
-			}
-		}
-
-		void postvisit( const ast::UntypedTupleExpr * tupleExpr ) {
-			std::vector< CandidateFinder > subCandidates =
-				selfFinder.findSubExprs( tupleExpr->exprs );
-			std::vector< CandidateList > possibilities;
-			combos( subCandidates.begin(), subCandidates.end(), back_inserter( possibilities ) );
-
-			for ( const CandidateList & subs : possibilities ) {
-				std::vector< ast::ptr< ast::Expr > > exprs;
-				exprs.reserve( subs.size() );
-				for ( const CandidateRef & sub : subs ) { exprs.emplace_back( sub->expr ); }
-
-				ast::TypeEnvironment env;
-				ast::OpenVarSet open;
-				ast::AssertionSet need;
-				for ( const CandidateRef & sub : subs ) {
-					env.simpleCombine( sub->env );
-					mergeOpenVars( open, sub->open );
-					mergeAssertionSet( need, sub->need );
-				}
-
-				addCandidate(
-					new ast::TupleExpr{ tupleExpr->location, std::move( exprs ) },
-					std::move( env ), std::move( open ), std::move( need ), sumCost( subs ) );
-			}
-		}
-
-		void postvisit( const ast::TupleExpr * tupleExpr ) {
-			addCandidate( tupleExpr, tenv );
-		}
-
-		void postvisit( const ast::TupleIndexExpr * tupleExpr ) {
-			addCandidate( tupleExpr, tenv );
-		}
-
-		void postvisit( const ast::TupleAssignExpr * tupleExpr ) {
-			addCandidate( tupleExpr, tenv );
-		}
-
-		void postvisit( const ast::UniqueExpr * unqExpr ) {
-			CandidateFinder finder( context, tenv );
-			finder.find( unqExpr->expr, ResolvMode::withAdjustment() );
-			for ( CandidateRef & r : finder.candidates ) {
-				// ensure that the the id is passed on so that the expressions are "linked"
-				addCandidate( *r, new ast::UniqueExpr{ unqExpr->location, r->expr, unqExpr->id } );
-			}
-		}
-
-		void postvisit( const ast::StmtExpr * stmtExpr ) {
-			addCandidate( resolveStmtExpr( stmtExpr, context ), tenv );
-		}
-
-		void postvisit( const ast::UntypedInitExpr * initExpr ) {
-			// handle each option like a cast
-			CandidateList matches;
-			PRINT(
-				std::cerr << "untyped init expr: " << initExpr << std::endl;
-			)
-			// O(n^2) checks of d-types with e-types
-			for ( const ast::InitAlternative & initAlt : initExpr->initAlts ) {
-				// calculate target type
-				const ast::Type * toType = resolveTypeof( initAlt.type, context );
-				toType = adjustExprType( toType, tenv, symtab );
-				// The call to find must occur inside this loop, otherwise polymorphic return
-				// types are not bound to the initialization type, since return type variables are
-				// only open for the duration of resolving the UntypedExpr.
-				CandidateFinder finder( context, tenv, toType );
-				finder.find( initExpr->expr, ResolvMode::withAdjustment() );
-				for ( CandidateRef & cand : finder.candidates ) {
-					if(reason.code == NotFound) reason.code = NoMatch;
-
-					ast::TypeEnvironment env{ cand->env };
-					ast::AssertionSet need( cand->need.begin(), cand->need.end() ), have;
-					ast::OpenVarSet open{ cand->open };
-
-					PRINT(
-						std::cerr << "  @ " << toType << " " << initAlt.designation << std::endl;
-					)
-
-					// It is possible that a cast can throw away some values in a multiply-valued
-					// expression, e.g. cast-to-void, one value to zero. Figure out the prefix of
-					// the subexpression results that are cast directly. The candidate is invalid
-					// if it has fewer results than there are types to cast to.
-					int discardedValues = cand->expr->result->size() - toType->size();
-					if ( discardedValues < 0 ) continue;
-
-					// unification run for side-effects
-					bool canUnify = unify( toType, cand->expr->result, env, need, have, open, symtab );
-					(void) canUnify;
-					Cost thisCost = computeConversionCost( cand->expr->result, toType, cand->expr->get_lvalue(),
-						symtab, env );
-					PRINT(
-						Cost legacyCost = castCost( cand->expr->result, toType, cand->expr->get_lvalue(),
-							symtab, env );
-						std::cerr << "Considering initialization:";
-						std::cerr << std::endl << "  FROM: " << cand->expr->result << std::endl;
-						std::cerr << std::endl << "  TO: "   << toType             << std::endl;
-						std::cerr << std::endl << "  Unification " << (canUnify ? "succeeded" : "failed");
-						std::cerr << std::endl << "  Legacy cost " << legacyCost;
-						std::cerr << std::endl << "  New cost " << thisCost;
-						std::cerr << std::endl;
-					)
-					if ( thisCost != Cost::infinity ) {
-						// count one safe conversion for each value that is thrown away
-						thisCost.incSafe( discardedValues );
-						CandidateRef newCand = std::make_shared<Candidate>(
-							new ast::InitExpr{
-								initExpr->location, restructureCast( cand->expr, toType ),
-								initAlt.designation },
-							std::move(env), std::move( open ), std::move( need ), cand->cost, thisCost );
-						inferParameters( newCand, matches );
-					}
-				}
-
-			}
-
-			// select first on argument cost, then conversion cost
-			CandidateList minArgCost = findMinCost( matches );
-			promoteCvtCost( minArgCost );
-			candidates = findMinCost( minArgCost );
-		}
+		void postvisit( const ast::UntypedExpr * untypedExpr );
+		void postvisit( const ast::VariableExpr * variableExpr );
+		void postvisit( const ast::ConstantExpr * constantExpr );
+		void postvisit( const ast::SizeofExpr * sizeofExpr );
+		void postvisit( const ast::AlignofExpr * alignofExpr );
+		void postvisit( const ast::AddressExpr * addressExpr );
+		void postvisit( const ast::LabelAddressExpr * labelExpr );
+		void postvisit( const ast::CastExpr * castExpr );
+		void postvisit( const ast::VirtualCastExpr * castExpr );
+		void postvisit( const ast::KeywordCastExpr * castExpr );
+		void postvisit( const ast::UntypedMemberExpr * memberExpr );
+		void postvisit( const ast::MemberExpr * memberExpr );
+		void postvisit( const ast::NameExpr * nameExpr );
+		void postvisit( const ast::UntypedOffsetofExpr * offsetofExpr );
+		void postvisit( const ast::OffsetofExpr * offsetofExpr );
+		void postvisit( const ast::OffsetPackExpr * offsetPackExpr );
+		void postvisit( const ast::LogicalExpr * logicalExpr );
+		void postvisit( const ast::ConditionalExpr * conditionalExpr );
+		void postvisit( const ast::CommaExpr * commaExpr );
+		void postvisit( const ast::ImplicitCopyCtorExpr * ctorExpr );
+		void postvisit( const ast::ConstructorExpr * ctorExpr );
+		void postvisit( const ast::RangeExpr * rangeExpr );
+		void postvisit( const ast::UntypedTupleExpr * tupleExpr );
+		void postvisit( const ast::TupleExpr * tupleExpr );
+		void postvisit( const ast::TupleIndexExpr * tupleExpr );
+		void postvisit( const ast::TupleAssignExpr * tupleExpr );
+		void postvisit( const ast::UniqueExpr * unqExpr );
+		void postvisit( const ast::StmtExpr * stmtExpr );
+		void postvisit( const ast::UntypedInitExpr * initExpr );
 
 		void postvisit( const ast::InitExpr * ) {
 			assertf( false, "CandidateFinder should never see a resolved InitExpr." );
@@ -1664,6 +680,1017 @@ namespace {
 			assertf( false, "_Generic is not yet supported." );
 		}
 	};
+
+	/// Set up candidate assertions for inference
+	void Finder::inferParameters( CandidateRef & newCand, CandidateList & out ) {
+		// Set need bindings for any unbound assertions
+		UniqueId crntResnSlot = 0; // matching ID for this expression's assertions
+		for ( auto & assn : newCand->need ) {
+			// skip already-matched assertions
+			if ( assn.second.resnSlot != 0 ) continue;
+			// assign slot for expression if needed
+			if ( crntResnSlot == 0 ) { crntResnSlot = ++globalResnSlot; }
+			// fix slot to assertion
+			assn.second.resnSlot = crntResnSlot;
+		}
+		// pair slot to expression
+		if ( crntResnSlot != 0 ) {
+			newCand->expr.get_and_mutate()->inferred.resnSlots().emplace_back( crntResnSlot );
+		}
+
+		// add to output list; assertion satisfaction will occur later
+		out.emplace_back( newCand );
+	}
+
+	/// Completes a function candidate with arguments located
+	void Finder::validateFunctionCandidate(
+		const CandidateRef & func, ArgPack & result, const std::vector< ArgPack > & results,
+		CandidateList & out
+	) {
+		ast::ApplicationExpr * appExpr =
+			new ast::ApplicationExpr{ func->expr->location, func->expr };
+		// sum cost and accumulate arguments
+		std::deque< const ast::Expr * > args;
+		Cost cost = func->cost;
+		const ArgPack * pack = &result;
+		while ( pack->expr ) {
+			args.emplace_front( pack->expr );
+			cost += pack->cost;
+			pack = &results[pack->parent];
+		}
+		std::vector< ast::ptr< ast::Expr > > vargs( args.begin(), args.end() );
+		appExpr->args = std::move( vargs );
+		// build and validate new candidate
+		auto newCand =
+			std::make_shared<Candidate>( appExpr, result.env, result.open, result.need, cost );
+		PRINT(
+			std::cerr << "instantiate function success: " << appExpr << std::endl;
+			std::cerr << "need assertions:" << std::endl;
+			ast::print( std::cerr, result.need, 2 );
+		)
+		inferParameters( newCand, out );
+	}
+
+	/// Builds a list of candidates for a function, storing them in out
+	void Finder::makeFunctionCandidates(
+		const CodeLocation & location,
+		const CandidateRef & func, const ast::FunctionType * funcType,
+		const ExplodedArgs_new & args, CandidateList & out
+	) {
+		ast::OpenVarSet funcOpen;
+		ast::AssertionSet funcNeed, funcHave;
+		ast::TypeEnvironment funcEnv{ func->env };
+		makeUnifiableVars( funcType, funcOpen, funcNeed );
+		// add all type variables as open variables now so that those not used in the
+		// parameter list are still considered open
+		funcEnv.add( funcType->forall );
+
+		if ( targetType && ! targetType->isVoid() && ! funcType->returns.empty() ) {
+			// attempt to narrow based on expected target type
+			const ast::Type * returnType = funcType->returns.front();
+			if ( ! unify(
+				returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen, symtab )
+			) {
+				// unification failed, do not pursue this candidate
+				return;
+			}
+		}
+
+		// iteratively build matches, one parameter at a time
+		std::vector< ArgPack > results;
+		results.emplace_back( funcEnv, funcNeed, funcHave, funcOpen );
+		std::size_t genStart = 0;
+
+		// xxx - how to handle default arg after change to ftype representation?
+		if (const ast::VariableExpr * varExpr = func->expr.as<ast::VariableExpr>()) {
+			if (const ast::FunctionDecl * funcDecl = varExpr->var.as<ast::FunctionDecl>()) {
+				// function may have default args only if directly calling by name
+				// must use types on candidate however, due to RenameVars substitution
+				auto nParams = funcType->params.size();
+
+				for (size_t i=0; i<nParams; ++i) {
+					auto obj = funcDecl->params[i].strict_as<ast::ObjectDecl>();
+					if (!instantiateArgument( location,
+						funcType->params[i], obj->init, args, results, genStart, symtab)) return;
+				}
+				goto endMatch;
+			}
+		}
+		for ( const auto & param : funcType->params ) {
+			// Try adding the arguments corresponding to the current parameter to the existing
+			// matches
+			// no default args for indirect calls
+			if ( ! instantiateArgument( location,
+				param, nullptr, args, results, genStart, symtab ) ) return;
+		}
+
+		endMatch:
+		if ( funcType->isVarArgs ) {
+			// append any unused arguments to vararg pack
+			std::size_t genEnd;
+			do {
+				genEnd = results.size();
+
+				// iterate results
+				for ( std::size_t i = genStart; i < genEnd; ++i ) {
+					unsigned nextArg = results[i].nextArg;
+
+					// use remainder of exploded tuple if present
+					if ( results[i].hasExpl() ) {
+						const ExplodedArg & expl = results[i].getExpl( args );
+
+						unsigned nextExpl = results[i].nextExpl + 1;
+						if ( nextExpl == expl.exprs.size() ) { nextExpl = 0; }
+
+						results.emplace_back(
+							i, expl.exprs[ results[i].nextExpl ], copy( results[i].env ),
+							copy( results[i].need ), copy( results[i].have ),
+							copy( results[i].open ), nextArg, 0, Cost::zero, nextExpl,
+							results[i].explAlt );
+
+						continue;
+					}
+
+					// finish result when out of arguments
+					if ( nextArg >= args.size() ) {
+						validateFunctionCandidate( func, results[i], results, out );
+
+						continue;
+					}
+
+					// add each possible next argument
+					for ( std::size_t j = 0; j < args[nextArg].size(); ++j ) {
+						const ExplodedArg & expl = args[nextArg][j];
+
+						// fresh copies of parent parameters for this iteration
+						ast::TypeEnvironment env = results[i].env;
+						ast::OpenVarSet open = results[i].open;
+
+						env.addActual( expl.env, open );
+
+						// skip empty tuple arguments by (nearly) cloning parent into next gen
+						if ( expl.exprs.empty() ) {
+							results.emplace_back(
+								results[i], std::move( env ), copy( results[i].need ),
+								copy( results[i].have ), std::move( open ), nextArg + 1,
+								expl.cost );
+
+							continue;
+						}
+
+						// add new result
+						results.emplace_back(
+							i, expl.exprs.front(), std::move( env ), copy( results[i].need ),
+							copy( results[i].have ), std::move( open ), nextArg + 1, 0, expl.cost,
+							expl.exprs.size() == 1 ? 0 : 1, j );
+					}
+				}
+
+				genStart = genEnd;
+			} while( genEnd != results.size() );
+		} else {
+			// filter out the results that don't use all the arguments
+			for ( std::size_t i = genStart; i < results.size(); ++i ) {
+				ArgPack & result = results[i];
+				if ( ! result.hasExpl() && result.nextArg >= args.size() ) {
+					validateFunctionCandidate( func, result, results, out );
+				}
+			}
+		}
+	}
+
+	/// Adds implicit struct-conversions to the alternative list
+	void Finder::addAnonConversions( const CandidateRef & cand ) {
+		// adds anonymous member interpretations whenever an aggregate value type is seen.
+		// it's okay for the aggregate expression to have reference type -- cast it to the
+		// base type to treat the aggregate as the referenced value
+		ast::ptr< ast::Expr > aggrExpr( cand->expr );
+		ast::ptr< ast::Type > & aggrType = aggrExpr.get_and_mutate()->result;
+		cand->env.apply( aggrType );
+
+		if ( aggrType.as< ast::ReferenceType >() ) {
+			aggrExpr = new ast::CastExpr{ aggrExpr, aggrType->stripReferences() };
+		}
+
+		if ( auto structInst = aggrExpr->result.as< ast::StructInstType >() ) {
+			addAggMembers( structInst, aggrExpr, *cand, Cost::safe, "" );
+		} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
+			addAggMembers( unionInst, aggrExpr, *cand, Cost::safe, "" );
+		}
+	}
+
+	/// Adds aggregate member interpretations
+	void Finder::addAggMembers(
+		const ast::BaseInstType * aggrInst, const ast::Expr * expr,
+		const Candidate & cand, const Cost & addedCost, const std::string & name
+	) {
+		for ( const ast::Decl * decl : aggrInst->lookup( name ) ) {
+			auto dwt = strict_dynamic_cast< const ast::DeclWithType * >( decl );
+			CandidateRef newCand = std::make_shared<Candidate>(
+				cand, new ast::MemberExpr{ expr->location, dwt, expr }, addedCost );
+			// add anonymous member interpretations whenever an aggregate value type is seen
+			// as a member expression
+			addAnonConversions( newCand );
+			candidates.emplace_back( std::move( newCand ) );
+		}
+	}
+
+	/// Adds tuple member interpretations
+	void Finder::addTupleMembers(
+		const ast::TupleType * tupleType, const ast::Expr * expr, const Candidate & cand,
+		const Cost & addedCost, const ast::Expr * member
+	) {
+		if ( auto constantExpr = dynamic_cast< const ast::ConstantExpr * >( member ) ) {
+			// get the value of the constant expression as an int, must be between 0 and the
+			// length of the tuple to have meaning
+			long long val = constantExpr->intValue();
+			if ( val >= 0 && (unsigned long long)val < tupleType->size() ) {
+				addCandidate(
+					cand, new ast::TupleIndexExpr{ expr->location, expr, (unsigned)val },
+					addedCost );
+			}
+		}
+	}
+
+	void Finder::postvisit( const ast::UntypedExpr * untypedExpr ) {
+		std::vector< CandidateFinder > argCandidates =
+			selfFinder.findSubExprs( untypedExpr->args );
+
+		// take care of possible tuple assignments
+		// if not tuple assignment, handled as normal function call
+		Tuples::handleTupleAssignment( selfFinder, untypedExpr, argCandidates );
+
+		CandidateFinder funcFinder( context, tenv );
+		if (auto nameExpr = untypedExpr->func.as<ast::NameExpr>()) {
+			auto kind = ast::SymbolTable::getSpecialFunctionKind(nameExpr->name);
+			if (kind != ast::SymbolTable::SpecialFunctionKind::NUMBER_OF_KINDS) {
+				assertf(!argCandidates.empty(), "special function call without argument");
+				for (auto & firstArgCand: argCandidates[0]) {
+					ast::ptr<ast::Type> argType = firstArgCand->expr->result;
+					firstArgCand->env.apply(argType);
+					// strip references
+					// xxx - is this correct?
+					while (argType.as<ast::ReferenceType>()) argType = argType.as<ast::ReferenceType>()->base;
+
+					// convert 1-tuple to plain type
+					if (auto tuple = argType.as<ast::TupleType>()) {
+						if (tuple->size() == 1) {
+							argType = tuple->types[0];
+						}
+					}
+
+					// if argType is an unbound type parameter, all special functions need to be searched.
+					if (isUnboundType(argType)) {
+						funcFinder.otypeKeys.clear();
+						break;
+					}
+
+					if (argType.as<ast::PointerType>()) funcFinder.otypeKeys.insert(Mangle::Encoding::pointer);						
+					// else if (const ast::EnumInstType * enumInst = argType.as<ast::EnumInstType>()) {
+					// 	const ast::EnumDecl * enumDecl = enumInst->base; // Here
+					// 	if ( const ast::Type* enumType = enumDecl->base ) {
+					// 		// instance of enum (T) is a instance of type (T)
+					// 		funcFinder.otypeKeys.insert(Mangle::mangle(enumType, Mangle::NoGenericParams | Mangle::Type));
+					// 	} else {
+					// 		// instance of an untyped enum is techically int
+					// 		funcFinder.otypeKeys.insert(Mangle::mangle(enumDecl, Mangle::NoGenericParams | Mangle::Type));
+					// 	}
+					// }
+					else funcFinder.otypeKeys.insert(Mangle::mangle(argType, Mangle::NoGenericParams | Mangle::Type));
+				}
+			}
+		}
+		// if candidates are already produced, do not fail
+		// xxx - is it possible that handleTupleAssignment and main finder both produce candidates?
+		// this means there exists ctor/assign functions with a tuple as first parameter.
+		ResolvMode mode = {
+			true, // adjust
+			!untypedExpr->func.as<ast::NameExpr>(), // prune if not calling by name
+			selfFinder.candidates.empty() // failfast if other options are not found
+		};
+		funcFinder.find( untypedExpr->func, mode );
+		// short-circuit if no candidates
+		// if ( funcFinder.candidates.empty() ) return;
+
+		reason.code = NoMatch;
+
+		// find function operators
+		ast::ptr< ast::Expr > opExpr = new ast::NameExpr{ untypedExpr->location, "?()" }; // ??? why not ?{}
+		CandidateFinder opFinder( context, tenv );
+		// okay if there aren't any function operations
+		opFinder.find( opExpr, ResolvMode::withoutFailFast() );
+		PRINT(
+			std::cerr << "known function ops:" << std::endl;
+			print( std::cerr, opFinder.candidates, 1 );
+		)
+
+		// pre-explode arguments
+		ExplodedArgs_new argExpansions;
+		for ( const CandidateFinder & args : argCandidates ) {
+			argExpansions.emplace_back();
+			auto & argE = argExpansions.back();
+			for ( const CandidateRef & arg : args ) { argE.emplace_back( *arg, symtab ); }
+		}
+
+		// Find function matches
+		CandidateList found;
+		SemanticErrorException errors;
+		for ( CandidateRef & func : funcFinder ) {
+			try {
+				PRINT(
+					std::cerr << "working on alternative:" << std::endl;
+					print( std::cerr, *func, 2 );
+				)
+
+				// check if the type is a pointer to function
+				const ast::Type * funcResult = func->expr->result->stripReferences();
+				if ( auto pointer = dynamic_cast< const ast::PointerType * >( funcResult ) ) {
+					if ( auto function = pointer->base.as< ast::FunctionType >() ) {
+						CandidateRef newFunc{ new Candidate{ *func } };
+						newFunc->expr =
+							referenceToRvalueConversion( newFunc->expr, newFunc->cost );
+						makeFunctionCandidates( untypedExpr->location,
+							newFunc, function, argExpansions, found );
+					}
+				} else if (
+					auto inst = dynamic_cast< const ast::TypeInstType * >( funcResult )
+				) {
+					if ( const ast::EqvClass * clz = func->env.lookup( *inst ) ) {
+						if ( auto function = clz->bound.as< ast::FunctionType >() ) {
+							CandidateRef newFunc{ new Candidate{ *func } };
+							newFunc->expr =
+								referenceToRvalueConversion( newFunc->expr, newFunc->cost );
+							makeFunctionCandidates( untypedExpr->location,
+								newFunc, function, argExpansions, found );
+						}
+					}
+				}
+			} catch ( SemanticErrorException & e ) { errors.append( e ); }
+		}
+
+		// Find matches on function operators `?()`
+		if ( ! opFinder.candidates.empty() ) {
+			// add exploded function alternatives to front of argument list
+			std::vector< ExplodedArg > funcE;
+			funcE.reserve( funcFinder.candidates.size() );
+			for ( const CandidateRef & func : funcFinder ) {
+				funcE.emplace_back( *func, symtab );
+			}
+			argExpansions.emplace_front( std::move( funcE ) );
+
+			for ( const CandidateRef & op : opFinder ) {
+				try {
+					// check if type is pointer-to-function
+					const ast::Type * opResult = op->expr->result->stripReferences();
+					if ( auto pointer = dynamic_cast< const ast::PointerType * >( opResult ) ) {
+						if ( auto function = pointer->base.as< ast::FunctionType >() ) {
+							CandidateRef newOp{ new Candidate{ *op} };
+							newOp->expr =
+								referenceToRvalueConversion( newOp->expr, newOp->cost );
+							makeFunctionCandidates( untypedExpr->location,
+								newOp, function, argExpansions, found );
+						}
+					}
+				} catch ( SemanticErrorException & e ) { errors.append( e ); }
+			}
+		}
+
+		// Implement SFINAE; resolution errors are only errors if there aren't any non-error
+		// candidates
+		if ( found.empty() && ! errors.isEmpty() ) { throw errors; }
+
+		// Compute conversion costs
+		for ( CandidateRef & withFunc : found ) {
+			Cost cvtCost = computeApplicationConversionCost( withFunc, symtab );
+
+			PRINT(
+				auto appExpr = withFunc->expr.strict_as< ast::ApplicationExpr >();
+				auto pointer = appExpr->func->result.strict_as< ast::PointerType >();
+				auto function = pointer->base.strict_as< ast::FunctionType >();
+
+				std::cerr << "Case +++++++++++++ " << appExpr->func << std::endl;
+				std::cerr << "parameters are:" << std::endl;
+				ast::printAll( std::cerr, function->params, 2 );
+				std::cerr << "arguments are:" << std::endl;
+				ast::printAll( std::cerr, appExpr->args, 2 );
+				std::cerr << "bindings are:" << std::endl;
+				ast::print( std::cerr, withFunc->env, 2 );
+				std::cerr << "cost is: " << withFunc->cost << std::endl;
+				std::cerr << "cost of conversion is:" << cvtCost << std::endl;
+			)
+
+			if ( cvtCost != Cost::infinity ) {
+				withFunc->cvtCost = cvtCost;
+				candidates.emplace_back( std::move( withFunc ) );
+			}
+		}
+		found = std::move( candidates );
+
+		// use a new list so that candidates are not examined by addAnonConversions twice
+		CandidateList winners = findMinCost( found );
+		promoteCvtCost( winners );
+
+		// function may return a struct/union value, in which case we need to add candidates
+		// for implicit conversions to each of the anonymous members, which must happen after
+		// `findMinCost`, since anon conversions are never the cheapest
+		for ( const CandidateRef & c : winners ) {
+			addAnonConversions( c );
+		}
+		spliceBegin( candidates, winners );
+
+		if ( candidates.empty() && targetType && ! targetType->isVoid() ) {
+			// If resolution is unsuccessful with a target type, try again without, since it
+			// will sometimes succeed when it wouldn't with a target type binding.
+			// For example:
+			//   forall( otype T ) T & ?[]( T *, ptrdiff_t );
+			//   const char * x = "hello world";
+			//   unsigned char ch = x[0];
+			// Fails with simple return type binding (xxx -- check this!) as follows:
+			// * T is bound to unsigned char
+			// * (x: const char *) is unified with unsigned char *, which fails
+			// xxx -- fix this better
+			targetType = nullptr;
+			postvisit( untypedExpr );
+		}
+	}
+
+	void Finder::postvisit( const ast::AddressExpr * addressExpr ) {
+		CandidateFinder finder( context, tenv );
+		finder.find( addressExpr->arg );
+
+		if ( finder.candidates.empty() ) return;
+
+		reason.code = NoMatch;
+
+		for ( CandidateRef & r : finder.candidates ) {
+			if ( ! isLvalue( r->expr ) ) continue;
+			addCandidate( *r, new ast::AddressExpr{ addressExpr->location, r->expr } );
+		}
+	}
+
+	void Finder::postvisit( const ast::LabelAddressExpr * labelExpr ) {
+		addCandidate( labelExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::CastExpr * castExpr ) {
+		ast::ptr< ast::Type > toType = castExpr->result;
+		assert( toType );
+		toType = resolveTypeof( toType, context );
+		toType = adjustExprType( toType, tenv, symtab );
+
+		CandidateFinder finder( context, tenv, toType );
+		finder.find( castExpr->arg, ResolvMode::withAdjustment() );
+
+		if ( !finder.candidates.empty() ) reason.code = NoMatch;
+
+		CandidateList matches;
+		for ( CandidateRef & cand : finder.candidates ) {
+			ast::AssertionSet need( cand->need.begin(), cand->need.end() ), have;
+			ast::OpenVarSet open( cand->open );
+
+			cand->env.extractOpenVars( open );
+
+			// It is possible that a cast can throw away some values in a multiply-valued
+			// expression, e.g. cast-to-void, one value to zero. Figure out the prefix of the
+			// subexpression results that are cast directly. The candidate is invalid if it
+			// has fewer results than there are types to cast to.
+			int discardedValues = cand->expr->result->size() - toType->size();
+			if ( discardedValues < 0 ) continue;
+
+			// unification run for side-effects
+			unify( toType, cand->expr->result, cand->env, need, have, open, symtab );
+			Cost thisCost =
+				(castExpr->isGenerated == ast::GeneratedFlag::GeneratedCast)
+					? conversionCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env )
+					: castCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env );
+
+			PRINT(
+				std::cerr << "working on cast with result: " << toType << std::endl;
+				std::cerr << "and expr type: " << cand->expr->result << std::endl;
+				std::cerr << "env: " << cand->env << std::endl;
+			)
+			if ( thisCost != Cost::infinity ) {
+				PRINT(
+					std::cerr << "has finite cost." << std::endl;
+				)
+				// count one safe conversion for each value that is thrown away
+				thisCost.incSafe( discardedValues );
+				CandidateRef newCand = std::make_shared<Candidate>(
+					restructureCast( cand->expr, toType, castExpr->isGenerated ),
+					copy( cand->env ), std::move( open ), std::move( need ), cand->cost,
+					cand->cost + thisCost );
+				inferParameters( newCand, matches );
+			}
+		}
+
+		// select first on argument cost, then conversion cost
+		CandidateList minArgCost = findMinCost( matches );
+		promoteCvtCost( minArgCost );
+		candidates = findMinCost( minArgCost );
+	}
+
+	void Finder::postvisit( const ast::VirtualCastExpr * castExpr ) {
+		assertf( castExpr->result, "Implicit virtual cast targets not yet supported." );
+		CandidateFinder finder( context, tenv );
+		// don't prune here, all alternatives guaranteed to have same type
+		finder.find( castExpr->arg, ResolvMode::withoutPrune() );
+		for ( CandidateRef & r : finder.candidates ) {
+			addCandidate(
+				*r,
+				new ast::VirtualCastExpr{ castExpr->location, r->expr, castExpr->result } );
+		}
+	}
+
+	void Finder::postvisit( const ast::KeywordCastExpr * castExpr ) {
+		const auto & loc = castExpr->location;
+		assertf( castExpr->result, "Cast target should have been set in Validate." );
+		auto ref = castExpr->result.strict_as<ast::ReferenceType>();
+		auto inst = ref->base.strict_as<ast::StructInstType>();
+		auto target = inst->base.get();
+
+		CandidateFinder finder( context, tenv );
+
+		auto pick_alternatives = [target, this](CandidateList & found, bool expect_ref) {
+			for (auto & cand : found) {
+				const ast::Type * expr = cand->expr->result.get();
+				if (expect_ref) {
+					auto res = dynamic_cast<const ast::ReferenceType*>(expr);
+					if (!res) { continue; }
+					expr = res->base.get();
+				}
+
+				if (auto insttype = dynamic_cast<const ast::TypeInstType*>(expr)) {
+					auto td = cand->env.lookup(*insttype);
+					if (!td) { continue; }
+					expr = td->bound.get();
+				}
+
+				if (auto base = dynamic_cast<const ast::StructInstType*>(expr)) {
+					if (base->base == target) {
+						candidates.push_back( std::move(cand) );
+						reason.code = NoReason;
+					}
+				}
+			}
+		};
+
+		try {
+			// Attempt 1 : turn (thread&)X into (thread$&)X.__thrd
+			// Clone is purely for memory management
+			std::unique_ptr<const ast::Expr> tech1 { new ast::UntypedMemberExpr(loc, new ast::NameExpr(loc, castExpr->concrete_target.field), castExpr->arg) };
+
+			// don't prune here, since it's guaranteed all alternatives will have the same type
+			finder.find( tech1.get(), ResolvMode::withoutPrune() );
+			pick_alternatives(finder.candidates, false);
+
+			return;
+		} catch(SemanticErrorException & ) {}
+
+		// Fallback : turn (thread&)X into (thread$&)get_thread(X)
+		std::unique_ptr<const ast::Expr> fallback { ast::UntypedExpr::createDeref(loc,  new ast::UntypedExpr(loc, new ast::NameExpr(loc, castExpr->concrete_target.getter), { castExpr->arg })) };
+		// don't prune here, since it's guaranteed all alternatives will have the same type
+		finder.find( fallback.get(), ResolvMode::withoutPrune() );
+
+		pick_alternatives(finder.candidates, true);
+
+		// Whatever happens here, we have no more fallbacks
+	}
+
+	void Finder::postvisit( const ast::UntypedMemberExpr * memberExpr ) {
+		CandidateFinder aggFinder( context, tenv );
+		aggFinder.find( memberExpr->aggregate, ResolvMode::withAdjustment() );
+		for ( CandidateRef & agg : aggFinder.candidates ) {
+			// it's okay for the aggregate expression to have reference type -- cast it to the
+			// base type to treat the aggregate as the referenced value
+			Cost addedCost = Cost::zero;
+			agg->expr = referenceToRvalueConversion( agg->expr, addedCost );
+
+			// find member of the given type
+			if ( auto structInst = agg->expr->result.as< ast::StructInstType >() ) {
+				addAggMembers(
+					structInst, agg->expr, *agg, addedCost, getMemberName( memberExpr ) );
+			} else if ( auto unionInst = agg->expr->result.as< ast::UnionInstType >() ) {
+				addAggMembers(
+					unionInst, agg->expr, *agg, addedCost, getMemberName( memberExpr ) );
+			} else if ( auto tupleType = agg->expr->result.as< ast::TupleType >() ) {
+				addTupleMembers( tupleType, agg->expr, *agg, addedCost, memberExpr->member );
+			}
+		}
+	}
+
+	void Finder::postvisit( const ast::MemberExpr * memberExpr ) {
+		addCandidate( memberExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::NameExpr * nameExpr ) {
+		std::vector< ast::SymbolTable::IdData > declList;
+		if (!selfFinder.otypeKeys.empty()) {
+			auto kind = ast::SymbolTable::getSpecialFunctionKind(nameExpr->name);
+			assertf(kind != ast::SymbolTable::SpecialFunctionKind::NUMBER_OF_KINDS, "special lookup with non-special target: %s", nameExpr->name.c_str());
+
+			for (auto & otypeKey: selfFinder.otypeKeys) {
+				auto result = symtab.specialLookupId(kind, otypeKey);
+				declList.insert(declList.end(), std::make_move_iterator(result.begin()), std::make_move_iterator(result.end()));
+			}
+		} else {
+			declList = symtab.lookupId( nameExpr->name );
+		}
+		PRINT( std::cerr << "nameExpr is " << nameExpr->name << std::endl; )
+
+		if ( declList.empty() ) return;
+
+		reason.code = NoMatch;
+
+		for ( auto & data : declList ) {
+			Cost cost = Cost::zero;
+			ast::Expr * newExpr = data.combine( nameExpr->location, cost );
+
+			CandidateRef newCand = std::make_shared<Candidate>(
+				newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, Cost::zero,
+				cost );
+
+			if (newCand->expr->env) {
+				newCand->env.add(*newCand->expr->env);
+				auto mutExpr = newCand->expr.get_and_mutate();
+				mutExpr->env  = nullptr;
+				newCand->expr = mutExpr;
+			}
+
+			PRINT(
+				std::cerr << "decl is ";
+				ast::print( std::cerr, data.id );
+				std::cerr << std::endl;
+				std::cerr << "newExpr is ";
+				ast::print( std::cerr, newExpr );
+				std::cerr << std::endl;
+			)
+			newCand->expr = ast::mutate_field(
+				newCand->expr.get(), &ast::Expr::result,
+				renameTyVars( newCand->expr->result ) );
+			// add anonymous member interpretations whenever an aggregate value type is seen
+			// as a name expression
+			addAnonConversions( newCand );
+			candidates.emplace_back( std::move( newCand ) );
+		}
+	}
+
+	void Finder::postvisit( const ast::VariableExpr * variableExpr ) {
+		// not sufficient to just pass `variableExpr` here, type might have changed since
+		// creation
+		addCandidate(
+			new ast::VariableExpr{ variableExpr->location, variableExpr->var }, tenv );
+	}
+
+	void Finder::postvisit( const ast::ConstantExpr * constantExpr ) {
+		addCandidate( constantExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::SizeofExpr * sizeofExpr ) {
+		if ( sizeofExpr->type ) {
+			addCandidate(
+				new ast::SizeofExpr{
+					sizeofExpr->location, resolveTypeof( sizeofExpr->type, context ) },
+				tenv );
+		} else {
+			// find all candidates for the argument to sizeof
+			CandidateFinder finder( context, tenv );
+			finder.find( sizeofExpr->expr );
+			// find the lowest-cost candidate, otherwise ambiguous
+			CandidateList winners = findMinCost( finder.candidates );
+			if ( winners.size() != 1 ) {
+				SemanticError(
+					sizeofExpr->expr.get(), "Ambiguous expression in sizeof operand: " );
+			}
+			// return the lowest-cost candidate
+			CandidateRef & choice = winners.front();
+			choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
+			choice->cost = Cost::zero;
+			addCandidate( *choice, new ast::SizeofExpr{ sizeofExpr->location, choice->expr } );
+		}
+	}
+
+	void Finder::postvisit( const ast::AlignofExpr * alignofExpr ) {
+		if ( alignofExpr->type ) {
+			addCandidate(
+				new ast::AlignofExpr{
+					alignofExpr->location, resolveTypeof( alignofExpr->type, context ) },
+				tenv );
+		} else {
+			// find all candidates for the argument to alignof
+			CandidateFinder finder( context, tenv );
+			finder.find( alignofExpr->expr );
+			// find the lowest-cost candidate, otherwise ambiguous
+			CandidateList winners = findMinCost( finder.candidates );
+			if ( winners.size() != 1 ) {
+				SemanticError(
+					alignofExpr->expr.get(), "Ambiguous expression in alignof operand: " );
+			}
+			// return the lowest-cost candidate
+			CandidateRef & choice = winners.front();
+			choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
+			choice->cost = Cost::zero;
+			addCandidate(
+				*choice, new ast::AlignofExpr{ alignofExpr->location, choice->expr } );
+		}
+	}
+
+	void Finder::postvisit( const ast::UntypedOffsetofExpr * offsetofExpr ) {
+		const ast::BaseInstType * aggInst;
+		if (( aggInst = offsetofExpr->type.as< ast::StructInstType >() )) ;
+		else if (( aggInst = offsetofExpr->type.as< ast::UnionInstType >() )) ;
+		else return;
+
+		for ( const ast::Decl * member : aggInst->lookup( offsetofExpr->member ) ) {
+			auto dwt = strict_dynamic_cast< const ast::DeclWithType * >( member );
+			addCandidate(
+				new ast::OffsetofExpr{ offsetofExpr->location, aggInst, dwt }, tenv );
+		}
+	}
+
+	void Finder::postvisit( const ast::OffsetofExpr * offsetofExpr ) {
+		addCandidate( offsetofExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::OffsetPackExpr * offsetPackExpr ) {
+		addCandidate( offsetPackExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::LogicalExpr * logicalExpr ) {
+		CandidateFinder finder1( context, tenv );
+		finder1.find( logicalExpr->arg1, ResolvMode::withAdjustment() );
+		if ( finder1.candidates.empty() ) return;
+
+		CandidateFinder finder2( context, tenv );
+		finder2.find( logicalExpr->arg2, ResolvMode::withAdjustment() );
+		if ( finder2.candidates.empty() ) return;
+
+		reason.code = NoMatch;
+
+		for ( const CandidateRef & r1 : finder1.candidates ) {
+			for ( const CandidateRef & r2 : finder2.candidates ) {
+				ast::TypeEnvironment env{ r1->env };
+				env.simpleCombine( r2->env );
+				ast::OpenVarSet open{ r1->open };
+				mergeOpenVars( open, r2->open );
+				ast::AssertionSet need;
+				mergeAssertionSet( need, r1->need );
+				mergeAssertionSet( need, r2->need );
+
+				addCandidate(
+					new ast::LogicalExpr{
+						logicalExpr->location, r1->expr, r2->expr, logicalExpr->isAnd },
+					std::move( env ), std::move( open ), std::move( need ), r1->cost + r2->cost );
+			}
+		}
+	}
+
+	void Finder::postvisit( const ast::ConditionalExpr * conditionalExpr ) {
+		// candidates for condition
+		CandidateFinder finder1( context, tenv );
+		finder1.find( conditionalExpr->arg1, ResolvMode::withAdjustment() );
+		if ( finder1.candidates.empty() ) return;
+
+		// candidates for true result
+		CandidateFinder finder2( context, tenv );
+		finder2.find( conditionalExpr->arg2, ResolvMode::withAdjustment() );
+		if ( finder2.candidates.empty() ) return;
+
+		// candidates for false result
+		CandidateFinder finder3( context, tenv );
+		finder3.find( conditionalExpr->arg3, ResolvMode::withAdjustment() );
+		if ( finder3.candidates.empty() ) return;
+
+		reason.code = NoMatch;
+
+		for ( const CandidateRef & r1 : finder1.candidates ) {
+			for ( const CandidateRef & r2 : finder2.candidates ) {
+				for ( const CandidateRef & r3 : finder3.candidates ) {
+					ast::TypeEnvironment env{ r1->env };
+					env.simpleCombine( r2->env );
+					env.simpleCombine( r3->env );
+					ast::OpenVarSet open{ r1->open };
+					mergeOpenVars( open, r2->open );
+					mergeOpenVars( open, r3->open );
+					ast::AssertionSet need;
+					mergeAssertionSet( need, r1->need );
+					mergeAssertionSet( need, r2->need );
+					mergeAssertionSet( need, r3->need );
+					ast::AssertionSet have;
+
+					// unify true and false results, then infer parameters to produce new
+					// candidates
+					ast::ptr< ast::Type > common;
+					if (
+						unify(
+							r2->expr->result, r3->expr->result, env, need, have, open, symtab,
+							common )
+					) {
+						// generate typed expression
+						ast::ConditionalExpr * newExpr = new ast::ConditionalExpr{
+							conditionalExpr->location, r1->expr, r2->expr, r3->expr };
+						newExpr->result = common ? common : r2->expr->result;
+						// convert both options to result type
+						Cost cost = r1->cost + r2->cost + r3->cost;
+						newExpr->arg2 = computeExpressionConversionCost(
+							newExpr->arg2, newExpr->result, symtab, env, cost );
+						newExpr->arg3 = computeExpressionConversionCost(
+							newExpr->arg3, newExpr->result, symtab, env, cost );
+						// output candidate
+						CandidateRef newCand = std::make_shared<Candidate>(
+							newExpr, std::move( env ), std::move( open ), std::move( need ), cost );
+						inferParameters( newCand, candidates );
+					}
+				}
+			}
+		}
+	}
+
+	void Finder::postvisit( const ast::CommaExpr * commaExpr ) {
+		ast::TypeEnvironment env{ tenv };
+		ast::ptr< ast::Expr > arg1 = resolveInVoidContext( commaExpr->arg1, context, env );
+
+		CandidateFinder finder2( context, env );
+		finder2.find( commaExpr->arg2, ResolvMode::withAdjustment() );
+
+		for ( const CandidateRef & r2 : finder2.candidates ) {
+			addCandidate( *r2, new ast::CommaExpr{ commaExpr->location, arg1, r2->expr } );
+		}
+	}
+
+	void Finder::postvisit( const ast::ImplicitCopyCtorExpr * ctorExpr ) {
+		addCandidate( ctorExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::ConstructorExpr * ctorExpr ) {
+		CandidateFinder finder( context, tenv );
+		finder.find( ctorExpr->callExpr, ResolvMode::withoutPrune() );
+		for ( CandidateRef & r : finder.candidates ) {
+			addCandidate( *r, new ast::ConstructorExpr{ ctorExpr->location, r->expr } );
+		}
+	}
+
+	void Finder::postvisit( const ast::RangeExpr * rangeExpr ) {
+		// resolve low and high, accept candidates where low and high types unify
+		CandidateFinder finder1( context, tenv );
+		finder1.find( rangeExpr->low, ResolvMode::withAdjustment() );
+		if ( finder1.candidates.empty() ) return;
+
+		CandidateFinder finder2( context, tenv );
+		finder2.find( rangeExpr->high, ResolvMode::withAdjustment() );
+		if ( finder2.candidates.empty() ) return;
+
+		reason.code = NoMatch;
+
+		for ( const CandidateRef & r1 : finder1.candidates ) {
+			for ( const CandidateRef & r2 : finder2.candidates ) {
+				ast::TypeEnvironment env{ r1->env };
+				env.simpleCombine( r2->env );
+				ast::OpenVarSet open{ r1->open };
+				mergeOpenVars( open, r2->open );
+				ast::AssertionSet need;
+				mergeAssertionSet( need, r1->need );
+				mergeAssertionSet( need, r2->need );
+				ast::AssertionSet have;
+
+				ast::ptr< ast::Type > common;
+				if (
+					unify(
+						r1->expr->result, r2->expr->result, env, need, have, open, symtab,
+						common )
+				) {
+					// generate new expression
+					ast::RangeExpr * newExpr =
+						new ast::RangeExpr{ rangeExpr->location, r1->expr, r2->expr };
+					newExpr->result = common ? common : r1->expr->result;
+					// add candidate
+					CandidateRef newCand = std::make_shared<Candidate>(
+						newExpr, std::move( env ), std::move( open ), std::move( need ),
+						r1->cost + r2->cost );
+					inferParameters( newCand, candidates );
+				}
+			}
+		}
+	}
+
+	void Finder::postvisit( const ast::UntypedTupleExpr * tupleExpr ) {
+		std::vector< CandidateFinder > subCandidates =
+			selfFinder.findSubExprs( tupleExpr->exprs );
+		std::vector< CandidateList > possibilities;
+		combos( subCandidates.begin(), subCandidates.end(), back_inserter( possibilities ) );
+
+		for ( const CandidateList & subs : possibilities ) {
+			std::vector< ast::ptr< ast::Expr > > exprs;
+			exprs.reserve( subs.size() );
+			for ( const CandidateRef & sub : subs ) { exprs.emplace_back( sub->expr ); }
+
+			ast::TypeEnvironment env;
+			ast::OpenVarSet open;
+			ast::AssertionSet need;
+			for ( const CandidateRef & sub : subs ) {
+				env.simpleCombine( sub->env );
+				mergeOpenVars( open, sub->open );
+				mergeAssertionSet( need, sub->need );
+			}
+
+			addCandidate(
+				new ast::TupleExpr{ tupleExpr->location, std::move( exprs ) },
+				std::move( env ), std::move( open ), std::move( need ), sumCost( subs ) );
+		}
+	}
+
+	void Finder::postvisit( const ast::TupleExpr * tupleExpr ) {
+		addCandidate( tupleExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::TupleIndexExpr * tupleExpr ) {
+		addCandidate( tupleExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::TupleAssignExpr * tupleExpr ) {
+		addCandidate( tupleExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::UniqueExpr * unqExpr ) {
+		CandidateFinder finder( context, tenv );
+		finder.find( unqExpr->expr, ResolvMode::withAdjustment() );
+		for ( CandidateRef & r : finder.candidates ) {
+			// ensure that the the id is passed on so that the expressions are "linked"
+			addCandidate( *r, new ast::UniqueExpr{ unqExpr->location, r->expr, unqExpr->id } );
+		}
+	}
+
+	void Finder::postvisit( const ast::StmtExpr * stmtExpr ) {
+		addCandidate( resolveStmtExpr( stmtExpr, context ), tenv );
+	}
+
+	void Finder::postvisit( const ast::UntypedInitExpr * initExpr ) {
+		// handle each option like a cast
+		CandidateList matches;
+		PRINT(
+			std::cerr << "untyped init expr: " << initExpr << std::endl;
+		)
+		// O(n^2) checks of d-types with e-types
+		for ( const ast::InitAlternative & initAlt : initExpr->initAlts ) {
+			// calculate target type
+			const ast::Type * toType = resolveTypeof( initAlt.type, context );
+			toType = adjustExprType( toType, tenv, symtab );
+			// The call to find must occur inside this loop, otherwise polymorphic return
+			// types are not bound to the initialization type, since return type variables are
+			// only open for the duration of resolving the UntypedExpr.
+			CandidateFinder finder( context, tenv, toType );
+			finder.find( initExpr->expr, ResolvMode::withAdjustment() );
+			for ( CandidateRef & cand : finder.candidates ) {
+				if (reason.code == NotFound) reason.code = NoMatch;
+
+				ast::TypeEnvironment env{ cand->env };
+				ast::AssertionSet need( cand->need.begin(), cand->need.end() ), have;
+				ast::OpenVarSet open{ cand->open };
+
+				PRINT(
+					std::cerr << "  @ " << toType << " " << initAlt.designation << std::endl;
+				)
+
+				// It is possible that a cast can throw away some values in a multiply-valued
+				// expression, e.g. cast-to-void, one value to zero. Figure out the prefix of
+				// the subexpression results that are cast directly. The candidate is invalid
+				// if it has fewer results than there are types to cast to.
+				int discardedValues = cand->expr->result->size() - toType->size();
+				if ( discardedValues < 0 ) continue;
+
+				// unification run for side-effects
+				bool canUnify = unify( toType, cand->expr->result, env, need, have, open, symtab );
+				(void) canUnify;
+				Cost thisCost = computeConversionCost( cand->expr->result, toType, cand->expr->get_lvalue(),
+					symtab, env );
+				PRINT(
+					Cost legacyCost = castCost( cand->expr->result, toType, cand->expr->get_lvalue(),
+						symtab, env );
+					std::cerr << "Considering initialization:";
+					std::cerr << std::endl << "  FROM: " << cand->expr->result << std::endl;
+					std::cerr << std::endl << "  TO: "   << toType             << std::endl;
+					std::cerr << std::endl << "  Unification " << (canUnify ? "succeeded" : "failed");
+					std::cerr << std::endl << "  Legacy cost " << legacyCost;
+					std::cerr << std::endl << "  New cost " << thisCost;
+					std::cerr << std::endl;
+				)
+				if ( thisCost != Cost::infinity ) {
+					// count one safe conversion for each value that is thrown away
+					thisCost.incSafe( discardedValues );
+					CandidateRef newCand = std::make_shared<Candidate>(
+						new ast::InitExpr{
+							initExpr->location, restructureCast( cand->expr, toType ),
+							initAlt.designation },
+						std::move(env), std::move( open ), std::move( need ), cand->cost, thisCost );
+					inferParameters( newCand, matches );
+				}
+			}
+		}
+
+		// select first on argument cost, then conversion cost
+		CandidateList minArgCost = findMinCost( matches );
+		promoteCvtCost( minArgCost );
+		candidates = findMinCost( minArgCost );
+	}
 
 	// size_t Finder::traceId = Stats::Heap::new_stacktrace_id("Finder");
 	/// Prunes a list of candidates down to those that have the minimum conversion cost for a given
@@ -1903,6 +1930,41 @@ std::vector< CandidateFinder > CandidateFinder::findSubExprs(
 	}
 
 	return out;
+}
+
+const ast::Expr * referenceToRvalueConversion( const ast::Expr * expr, Cost & cost ) {
+	if ( expr->result.as< ast::ReferenceType >() ) {
+		// cast away reference from expr
+		cost.incReference();
+		return new ast::CastExpr{ expr, expr->result->stripReferences() };
+	}
+
+	return expr;
+}
+
+Cost computeConversionCost(
+	const ast::Type * argType, const ast::Type * paramType, bool argIsLvalue,
+	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
+) {
+	PRINT(
+		std::cerr << std::endl << "converting ";
+		ast::print( std::cerr, argType, 2 );
+		std::cerr << std::endl << " to ";
+		ast::print( std::cerr, paramType, 2 );
+		std::cerr << std::endl << "environment is: ";
+		ast::print( std::cerr, env, 2 );
+		std::cerr << std::endl;
+	)
+	Cost convCost = conversionCost( argType, paramType, argIsLvalue, symtab, env );
+	PRINT(
+		std::cerr << std::endl << "cost is " << convCost << std::endl;
+	)
+	if ( convCost == Cost::infinity ) return convCost;
+	convCost.incPoly( polyCost( paramType, symtab, env ) + polyCost( argType, symtab, env ) );
+	PRINT(
+		std::cerr << "cost with polycost is " << convCost << std::endl;
+	)
+	return convCost;
 }
 
 } // namespace ResolvExpr

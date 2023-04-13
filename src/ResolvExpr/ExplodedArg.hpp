@@ -34,7 +34,7 @@ struct ExplodedArg {
 
 	ExplodedArg() : env(), cost( Cost::zero ), exprs() {}
 	ExplodedArg( const Candidate & arg, const ast::SymbolTable & symtab );
-	
+
 	ExplodedArg( ExplodedArg && ) = default;
 	ExplodedArg & operator= ( ExplodedArg && ) = default;
 };
