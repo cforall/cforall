@@ -19,7 +19,7 @@
 #include <functional>
 #include <iterator>
 
-// it's nice to actually be able to increment iterators by an arbitrary amount
+// Returns an iterator that is it advanced n times.
 template< class InputIt, class Distance >
 InputIt operator+( InputIt it, Distance n ) {
 	advance(it, n);
@@ -49,6 +49,10 @@ reverse_iterate_t< T > reverseIterate( T & ref ) {
 }
 
 // -----------------------------------------------------------------------------
+// Helper struct and function to support
+// for ( val_and_index : enumerate( container ) ) {}
+// which iterates through the container and tracks the index as well.
+
 template< typename T >
 struct enumerate_t {
 	template<typename val_t>
@@ -108,6 +112,8 @@ const enumerate_t< const T > enumerate( const T & ref ) {
 }
 
 // -----------------------------------------------------------------------------
+// Helper function to transform one iterable container into another.
+
 template< typename OutType, typename Range, typename Functor >
 OutType map_range( const Range& range, Functor&& functor ) {
 	OutType out;
@@ -205,7 +211,9 @@ group_iterate_t<Args...> unsafe_group_iterate( Args &&... args ) {
 // -----------------------------------------------------------------------------
 // Helper struct and function to support
 // for ( val : lazy_map( container1, f ) ) {}
-// syntax to have a for each that iterates a container, mapping each element by applying f
+// syntax to have a for each that iterates a container,
+// mapping each element by applying f.
+
 template< typename T, typename Func >
 struct lambda_iterate_t {
 	const T & ref;

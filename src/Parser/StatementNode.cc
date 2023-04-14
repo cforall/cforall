@@ -386,7 +386,7 @@ StatementNode * maybe_build_compound( const CodeLocation & location, StatementNo
 } // maybe_build_compound
 
 // Question
-ast::Stmt * build_asm( const CodeLocation & location, bool voltile, ast::Expr * instruction, ExpressionNode * output, ExpressionNode * input, ExpressionNode * clobber, LabelNode * gotolabels ) {
+ast::Stmt * build_asm( const CodeLocation & location, bool is_volatile, ExpressionNode * instruction, ExpressionNode * output, ExpressionNode * input, ExpressionNode * clobber, LabelNode * gotolabels ) {
 	std::vector<ast::ptr<ast::Expr>> out, in;
 	std::vector<ast::ptr<ast::ConstantExpr>> clob;
 
@@ -394,8 +394,8 @@ ast::Stmt * build_asm( const CodeLocation & location, bool voltile, ast::Expr * 
 	buildMoveList( input, in );
 	buildMoveList( clobber, clob );
 	return new ast::AsmStmt( location,
-		voltile,
-		instruction,
+		is_volatile,
+		maybeMoveBuild( instruction ),
 		std::move( out ),
 		std::move( in ),
 		std::move( clob ),

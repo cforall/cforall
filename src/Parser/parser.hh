@@ -356,28 +356,25 @@ union YYSTYPE
 #line 300 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
 
 	Token tok;
-	ParseNode * pn;
-	ExpressionNode * en;
+	ExpressionNode * expr;
 	DeclarationNode * decl;
 	ast::AggregateDecl::Aggregate aggKey;
 	ast::TypeDecl::Kind tclass;
-	StatementNode * sn;
+	StatementNode * stmt;
 	ClauseNode * clause;
 	ast::WaitForStmt * wfs;
-	ast::Expr * constant;
 	CondCtl * ifctl;
-	ForCtrl * fctl;
-	OperKinds compop;
-	LabelNode * label;
-	InitializerNode * in;
-	OperKinds op;
+	ForCtrl * forctl;
+	LabelNode * labels;
+	InitializerNode * init;
+	OperKinds oper;
 	std::string * str;
-	bool flag;
-	EnumHiding hide;
-	ast::ExceptionKind catch_kind;
+	bool is_volatile;
+	EnumHiding enum_hiding;
+	ast::ExceptionKind except_kind;
 	ast::GenericExpr * genexpr;
 
-#line 381 "Parser/parser.hh"
+#line 378 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

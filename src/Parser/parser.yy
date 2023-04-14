@@ -299,25 +299,22 @@ if ( N ) {																		\
 
 %union {
 	Token tok;
-	ParseNode * pn;
-	ExpressionNode * en;
+	ExpressionNode * expr;
 	DeclarationNode * decl;
 	ast::AggregateDecl::Aggregate aggKey;
 	ast::TypeDecl::Kind tclass;
-	StatementNode * sn;
+	StatementNode * stmt;
 	ClauseNode * clause;
 	ast::WaitForStmt * wfs;
-	ast::Expr * constant;
 	CondCtl * ifctl;
-	ForCtrl * fctl;
-	OperKinds compop;
-	LabelNode * label;
-	InitializerNode * in;
-	OperKinds op;
+	ForCtrl * forctl;
+	LabelNode * labels;
+	InitializerNode * init;
+	OperKinds oper;
 	std::string * str;
-	bool flag;
-	EnumHiding hide;
-	ast::ExceptionKind catch_kind;
+	bool is_volatile;
+	EnumHiding enum_hiding;
+	ast::ExceptionKind except_kind;
 	ast::GenericExpr * genexpr;
 }
 
@@ -383,52 +380,52 @@ if ( N ) {																		\
 
 %type<tok> identifier					identifier_at				identifier_or_type_name		attr_name
 %type<tok> quasi_keyword
-%type<constant> string_literal
+%type<expr> string_literal
 %type<str> string_literal_list
 
-%type<hide> hide_opt					visible_hide_opt
+%type<enum_hiding> hide_opt					visible_hide_opt
 
 // expressions
-%type<en> constant
-%type<en> tuple							tuple_expression_list
-%type<op> ptrref_operator				unary_operator				assignment_operator			simple_assignment_operator	compound_assignment_operator
-%type<en> primary_expression			postfix_expression			unary_expression
-%type<en> cast_expression_list			cast_expression				exponential_expression		multiplicative_expression	additive_expression
-%type<en> shift_expression				relational_expression		equality_expression
-%type<en> AND_expression				exclusive_OR_expression		inclusive_OR_expression
-%type<en> logical_AND_expression		logical_OR_expression
-%type<en> conditional_expression		constant_expression			assignment_expression		assignment_expression_opt
-%type<en> comma_expression				comma_expression_opt
-%type<en> argument_expression_list_opt	argument_expression_list	argument_expression			default_initializer_opt
+%type<expr> constant
+%type<expr> tuple							tuple_expression_list
+%type<oper> ptrref_operator				unary_operator				assignment_operator			simple_assignment_operator	compound_assignment_operator
+%type<expr> primary_expression			postfix_expression			unary_expression
+%type<expr> cast_expression_list			cast_expression				exponential_expression		multiplicative_expression	additive_expression
+%type<expr> shift_expression				relational_expression		equality_expression
+%type<expr> AND_expression				exclusive_OR_expression		inclusive_OR_expression
+%type<expr> logical_AND_expression		logical_OR_expression
+%type<expr> conditional_expression		constant_expression			assignment_expression		assignment_expression_opt
+%type<expr> comma_expression				comma_expression_opt
+%type<expr> argument_expression_list_opt	argument_expression_list	argument_expression			default_initializer_opt
 %type<ifctl> conditional_declaration
-%type<fctl> for_control_expression		for_control_expression_list
-%type<compop> upupeq updown updowneq downupdowneq
-%type<en> subrange
+%type<forctl> for_control_expression		for_control_expression_list
+%type<oper> upupeq updown updowneq downupdowneq
+%type<expr> subrange
 %type<decl> asm_name_opt
-%type<en> asm_operands_opt				asm_operands_list			asm_operand
-%type<label> label_list
-%type<en> asm_clobbers_list_opt
-%type<flag> asm_volatile_opt
-%type<en> handler_predicate_opt
+%type<expr> asm_operands_opt				asm_operands_list			asm_operand
+%type<labels> label_list
+%type<expr> asm_clobbers_list_opt
+%type<is_volatile> asm_volatile_opt
+%type<expr> handler_predicate_opt
 %type<genexpr> generic_association		generic_assoc_list
 
 // statements
-%type<sn> statement						labeled_statement			compound_statement
-%type<sn> statement_decl				statement_decl_list			statement_list_nodecl
-%type<sn> selection_statement			if_statement
+%type<stmt> statement						labeled_statement			compound_statement
+%type<stmt> statement_decl				statement_decl_list			statement_list_nodecl
+%type<stmt> selection_statement			if_statement
 %type<clause> switch_clause_list_opt		switch_clause_list
-%type<en> case_value
+%type<expr> case_value
 %type<clause> case_clause				case_value_list				case_label					case_label_list
-%type<sn> iteration_statement			jump_statement
-%type<sn> expression_statement			asm_statement
-%type<sn> with_statement
-%type<en> with_clause_opt
-%type<sn> exception_statement
+%type<stmt> iteration_statement			jump_statement
+%type<stmt> expression_statement			asm_statement
+%type<stmt> with_statement
+%type<expr> with_clause_opt
+%type<stmt> exception_statement
 %type<clause> handler_clause			finally_clause
-%type<catch_kind> handler_key
-%type<sn> mutex_statement
-%type<en> when_clause					when_clause_opt				waitfor		waituntil		timeout
-%type<sn> waitfor_statement				waituntil_statement
+%type<except_kind> handler_key
+%type<stmt> mutex_statement
+%type<expr> when_clause					when_clause_opt				waitfor		waituntil		timeout
+%type<stmt> waitfor_statement				waituntil_statement
 %type<wfs> wor_waitfor_clause			waituntil_clause			wand_waituntil_clause	wor_waituntil_clause
 
 // declarations
@@ -441,7 +438,7 @@ if ( N ) {																		\
 
 %type<decl> assertion assertion_list assertion_list_opt
 
-%type<en> bit_subrange_size_opt bit_subrange_size
+%type<expr> bit_subrange_size_opt bit_subrange_size
 
 %type<decl> basic_declaration_specifier basic_type_name basic_type_specifier direct_type indirect_type
 %type<decl> vtable vtable_opt default_opt
@@ -454,14 +451,14 @@ if ( N ) {																		\
 %type<decl> elaborated_type elaborated_type_nobody
 
 %type<decl> enumerator_list enum_type enum_type_nobody
-%type<in> enumerator_value_opt
+%type<init> enumerator_value_opt
 
 %type<decl> external_definition external_definition_list external_definition_list_opt
 
 %type<decl> exception_declaration
 
 %type<decl> field_declaration_list_opt field_declaration field_declaring_list_opt field_declarator field_abstract_list_opt field_abstract
-%type<en> field field_name_list field_name fraction_constants_opt
+%type<expr> field field_name_list field_name fraction_constants_opt
 
 %type<decl> external_function_definition function_definition function_array function_declarator function_no_ptr function_ptr
 
@@ -510,7 +507,7 @@ if ( N ) {																		\
 %type<decl> type type_no_function
 %type<decl> type_parameter type_parameter_list type_initializer_opt
 
-%type<en> type_parameters_opt type_list array_type_list
+%type<expr> type_parameters_opt type_list array_type_list
 
 %type<decl> type_qualifier type_qualifier_name forall type_qualifier_list_opt type_qualifier_list
 %type<decl> type_specifier type_specifier_nobody
@@ -521,10 +518,10 @@ if ( N ) {																		\
 %type<decl> attribute_list_opt attribute_list attribute attribute_name_list attribute_name
 
 // initializers
-%type<in>  initializer initializer_list_opt initializer_opt
+%type<init>  initializer initializer_list_opt initializer_opt
 
 // designators
-%type<en>  designator designator_list designation
+%type<expr>  designator designator_list designation
 
 
 // Handle shift/reduce conflict for dangling else by shifting the ELSE token. For example, this string is ambiguous:
@@ -646,7 +643,7 @@ identifier_at:
 	;
 
 string_literal:
-	string_literal_list							{ $$ = build_constantStr( yylloc, *$1 ); }
+	string_literal_list							{ $$ = new ExpressionNode( build_constantStr( yylloc, *$1 ) ); }
 	;
 
 string_literal_list:									// juxtaposed strings are concatenated
@@ -741,7 +738,7 @@ postfix_expression:
 	| constant '[' assignment_expression ']'			// 3[a], 'a'[a], 3.5[a]
 		{ $$ = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, $1, $3 ) ); }
 	| string_literal '[' assignment_expression ']'		// "abc"[3], 3["abc"]
-		{ $$ = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, new ExpressionNode( $1 ), $3 ) ); }
+		{ $$ = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, $1, $3 ) ); }
 	| postfix_expression '{' argument_expression_list_opt '}' // CFA, constructor call
 		{
 			Token fn;
@@ -759,7 +756,7 @@ postfix_expression:
 	| constant '`' identifier							// CFA, postfix call
 		{ $$ = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( $3 ) ) ), $1 ) ); }
 	| string_literal '`' identifier						// CFA, postfix call
-		{ $$ = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( $3 ) ) ), new ExpressionNode( $1 ) ) ); }
+		{ $$ = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( $3 ) ) ), $1 ) ); }
 	| postfix_expression '.' identifier
 		{ $$ = new ExpressionNode( build_fieldSel( yylloc, $1, build_varref( yylloc, $3 ) ) ); }
 	| postfix_expression '.' INTEGERconstant			// CFA, tuple index
@@ -859,7 +856,7 @@ unary_expression:
 		// semantics checks, e.g., ++3, 3--, *3, &&3
 	| constant
 	| string_literal
-		{ $$ = new ExpressionNode( $1 ); }
+		{ $$ = $1; }
 	| EXTENSION cast_expression							// GCC
 		{ $$ = $2->set_extension( true ); }
 		// '*' ('&') is separated from unary_operator because of shift/reduce conflict in:
@@ -1809,10 +1806,10 @@ asm_operands_list:										// GCC
 
 asm_operand:											// GCC
 	string_literal '(' constant_expression ')'
-		{ $$ = new ExpressionNode( new ast::AsmExpr( yylloc, "", $1, maybeMoveBuild( $3 ) ) ); }
+		{ $$ = new ExpressionNode( new ast::AsmExpr( yylloc, "", maybeMoveBuild( $1 ), maybeMoveBuild( $3 ) ) ); }
 	| '[' IDENTIFIER ']' string_literal '(' constant_expression ')'
 		{
-			$$ = new ExpressionNode( new ast::AsmExpr( yylloc, *$2.str, $4, maybeMoveBuild( $6 ) ) );
+			$$ = new ExpressionNode( new ast::AsmExpr( yylloc, *$2.str, maybeMoveBuild( $4 ), maybeMoveBuild( $6 ) ) );
 			delete $2.str;
 		}
 	;
@@ -1821,9 +1818,9 @@ asm_clobbers_list_opt:									// GCC
 	// empty
 		{ $$ = nullptr; }								// use default argument
 	| string_literal
-		{ $$ = new ExpressionNode( $1 ); }
+		{ $$ = $1; }
 	| asm_clobbers_list_opt ',' string_literal
-		{ $$ = (ExpressionNode *)($1->set_last( new ExpressionNode( $3 ) )); }
+		{ $$ = (ExpressionNode *)( $1->set_last( $3 ) ); }
 	;
 
 label_list:
@@ -1895,7 +1892,7 @@ declaration:											// old & new style declarations
 
 static_assert:
 	STATICASSERT '(' constant_expression ',' string_literal ')' ';' // C11
-		{ $$ = DeclarationNode::newStaticAssert( $3, $5 ); }
+		{ $$ = DeclarationNode::newStaticAssert( $3, maybeMoveBuild( $5 ) ); }
 	| STATICASSERT '(' constant_expression ')' ';'		// CFA
 		{ $$ = DeclarationNode::newStaticAssert( $3, build_constantStr( yylloc, *new string( "\"\"" ) ) ); }
 
@@ -3325,7 +3322,7 @@ asm_name_opt:											// GCC
 	| ASM '(' string_literal ')' attribute_list_opt
 		{
 			DeclarationNode * name = new DeclarationNode();
-			name->asmName = $3;
+			name->asmName = maybeMoveBuild( $3 );
 			$$ = name->addQualifiers( $5 );
 		}
 	;

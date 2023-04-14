@@ -93,7 +93,7 @@ ast::CatchClause * build_catch( const CodeLocation &, ast::ExceptionKind kind, D
 ast::FinallyClause * build_finally( const CodeLocation &, StatementNode * stmt );
 ast::Stmt * build_compound( const CodeLocation &, StatementNode * first );
 StatementNode * maybe_build_compound( const CodeLocation &, StatementNode * first );
-ast::Stmt * build_asm( const CodeLocation &, bool voltile, ast::Expr * instruction, ExpressionNode * output = nullptr, ExpressionNode * input = nullptr, ExpressionNode * clobber = nullptr, LabelNode * gotolabels = nullptr );
+ast::Stmt * build_asm( const CodeLocation &, bool is_volatile, ExpressionNode * instruction, ExpressionNode * output = nullptr, ExpressionNode * input = nullptr, ExpressionNode * clobber = nullptr, LabelNode * gotolabels = nullptr );
 ast::Stmt * build_directive( const CodeLocation &, std::string * directive );
 ast::SuspendStmt * build_suspend( const CodeLocation &, StatementNode *, ast::SuspendStmt::Kind );
 ast::WaitForStmt * build_waitfor( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt );
