@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Fri Jun 24 13:16:31 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Thr Sep 22 13:44:00 2022
-// Update Count     : 2
+// Last Modified On : Fri Apr 14 15:09:00 2023
+// Update Count     : 3
 //
 
 #include "AST/Fwd.hpp"
@@ -36,5 +36,8 @@ bool structHasFlexibleArray( const StructDecl * );
 /// If the expression is an application whose target function is an
 /// intrinsic, then returns a pointer to that application.
 const ApplicationExpr * isIntrinsicCallExpr( const Expr * expr );
+
+/// Returns true if obj's name is the empty string and it has a bitfield width.
+bool isUnnamedBitfield( const ObjectDecl * obj );
 
 }

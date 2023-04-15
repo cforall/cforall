@@ -19,6 +19,8 @@ SRC_SYMTAB = \
 	SymTab/Autogen.h \
 	SymTab/FixFunction.cc \
 	SymTab/FixFunction.h \
+	SymTab/GenImplicitCall.cpp \
+	SymTab/GenImplicitCall.hpp \
 	SymTab/Indexer.cc \
 	SymTab/Indexer.h \
 	SymTab/Mangler.cc \

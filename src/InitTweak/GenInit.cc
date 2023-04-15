@@ -38,6 +38,7 @@
 #include "InitTweak.h"                 // for isConstExpr, InitExpander, checkIn...
 #include "ResolvExpr/Resolver.h"
 #include "SymTab/Autogen.h"            // for genImplicitCall
+#include "SymTab/GenImplicitCall.hpp"  // for genImplicitCall
 #include "SymTab/Mangler.h"            // for Mangler
 #include "SynTree/LinkageSpec.h"       // for isOverridable, C
 #include "SynTree/Declaration.h"       // for ObjectDecl, DeclarationWithType

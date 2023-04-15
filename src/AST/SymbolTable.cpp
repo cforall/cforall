@@ -259,12 +259,12 @@ const EnumDecl * SymbolTable::globalLookupEnum( const std::string &id ) const {
 
 void SymbolTable::addId( const DeclWithType * decl, const Expr * baseExpr ) {
 	// default handling of conflicts is to raise an error
-	addId( decl, OnConflict::error(), baseExpr, decl->isDeleted ? decl : nullptr );
+	addIdCommon( decl, OnConflict::error(), baseExpr, decl->isDeleted ? decl : nullptr );
 }
 
 void SymbolTable::addDeletedId( const DeclWithType * decl, const Decl * deleter ) {
 	// default handling of conflicts is to raise an error
-	addId( decl, OnConflict::error(), nullptr, deleter );
+	addIdCommon( decl, OnConflict::error(), nullptr, deleter );
 }
 
 namespace {
@@ -676,12 +676,12 @@ bool SymbolTable::addedIdConflicts(
 	return true;
 }
 
-void SymbolTable::addId(
-		const DeclWithType * decl, SymbolTable::OnConflict handleConflicts, const Expr * baseExpr,
-		const Decl * deleter ) {
+void SymbolTable::addIdCommon(
+		const DeclWithType * decl, SymbolTable::OnConflict handleConflicts,
+		const Expr * baseExpr, const Decl * deleter ) {
 	SpecialFunctionKind kind = getSpecialFunctionKind(decl->name);
 	if (kind == NUMBER_OF_KINDS) { // not a special decl
-		addId(decl, decl->name, idTable, handleConflicts, baseExpr, deleter);
+		addIdToTable(decl, decl->name, idTable, handleConflicts, baseExpr, deleter);
 	}
 	else {
 		std::string key;
@@ -694,13 +694,14 @@ void SymbolTable::addId(
 		else {
 			assertf(false, "special decl with non-function type");
 		}
-		addId(decl, key, specialFunctionTable[kind], handleConflicts, baseExpr, deleter);
+		addIdToTable(decl, key, specialFunctionTable[kind], handleConflicts, baseExpr, deleter);
 	}
 }
 
-void SymbolTable::addId(
-		const DeclWithType * decl, const std::string & lookupKey, IdTable::Ptr & table, SymbolTable::OnConflict handleConflicts, const Expr * baseExpr,
-		const Decl * deleter ) {
+void SymbolTable::addIdToTable(
+		const DeclWithType * decl, const std::string & lookupKey,
+		IdTable::Ptr & table, SymbolTable::OnConflict handleConflicts,
+		const Expr * baseExpr, const Decl * deleter ) {
 	++*stats().add_calls;
 	const std::string &name = decl->name;
 	if ( name == "" ) return;
@@ -777,24 +778,24 @@ void SymbolTable::addId(
 
 void SymbolTable::addMembers(
 		const AggregateDecl * aggr, const Expr * expr, SymbolTable::OnConflict handleConflicts ) {
-	for ( const Decl * decl : aggr->members ) {
-		if ( auto dwt = dynamic_cast< const DeclWithType * >( decl ) ) {
-			addId( dwt, handleConflicts, expr );
-			if ( dwt->name == "" ) {
-				const Type * t = dwt->get_type()->stripReferences();
-				if ( auto rty = dynamic_cast<const BaseInstType *>( t ) ) {
-					if ( ! dynamic_cast<const StructInstType *>(rty)
-						&& ! dynamic_cast<const UnionInstType *>(rty) ) continue;
-					ResolvExpr::Cost cost = ResolvExpr::Cost::zero;
-					ast::ptr<ast::TypeSubstitution> tmp = expr->env;
-					expr = mutate_field(expr, &Expr::env, nullptr);
-					const Expr * base = ResolvExpr::referenceToRvalueConversion( expr, cost );
-					base = mutate_field(base, &Expr::env, tmp);
+	for ( const ptr<Decl> & decl : aggr->members ) {
+		auto dwt = decl.as<DeclWithType>();
+		if ( nullptr == dwt ) continue;
+		addIdCommon( dwt, handleConflicts, expr );
+		// Inline through unnamed struct/union members.
+		if ( "" != dwt->name ) continue;
+		const Type * t = dwt->get_type()->stripReferences();
+		if ( auto rty = dynamic_cast<const BaseInstType *>( t ) ) {
+			if ( ! dynamic_cast<const StructInstType *>(rty)
+				&& ! dynamic_cast<const UnionInstType *>(rty) ) continue;
+			ResolvExpr::Cost cost = ResolvExpr::Cost::zero;
+			ast::ptr<ast::TypeSubstitution> tmp = expr->env;
+			expr = mutate_field(expr, &Expr::env, nullptr);
+			const Expr * base = ResolvExpr::referenceToRvalueConversion( expr, cost );
+			base = mutate_field(base, &Expr::env, tmp);
 
-					addMembers(
-						rty->aggr(), new MemberExpr{ base->location, dwt, base }, handleConflicts );
-				}
-			}
+			addMembers(
+				rty->aggr(), new MemberExpr{ base->location, dwt, base }, handleConflicts );
 		}
 	}
 }

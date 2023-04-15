@@ -13,10 +13,16 @@
 #include <unordered_set>               // for unordered_set
 #include <utility>                     // for pair
 
+#include "AST/DeclReplacer.hpp"
+#include "AST/Expr.hpp"
 #include "AST/Inspect.hpp"             // for getFunction, getPointerBase, g...
+#include "AST/Node.hpp"
+#include "AST/Pass.hpp"
+#include "AST/Print.hpp"
+#include "AST/SymbolTable.hpp"
+#include "AST/Type.hpp"
 #include "CodeGen/GenType.h"           // for genPrettyType
 #include "CodeGen/OperatorTable.h"
-#include "Common/CodeLocationTools.hpp"
 #include "Common/PassVisitor.h"        // for PassVisitor, WithStmtsToAdd
 #include "Common/SemanticError.h"      // for SemanticError
 #include "Common/ToString.hpp"         // for toCString
@@ -27,6 +33,7 @@
 #include "ResolvExpr/Resolver.h"       // for findVoidExpression
 #include "ResolvExpr/Unify.h"          // for typesCompatible
 #include "SymTab/Autogen.h"            // for genImplicitCall
+#include "SymTab/GenImplicitCall.hpp"  // for genImplicitCall
 #include "SymTab/Indexer.h"            // for Indexer
 #include "SymTab/Mangler.h"            // for Mangler
 #include "SynTree/LinkageSpec.h"       // for C, Spec, Cforall, isBuiltin
@@ -44,14 +51,6 @@
 #include "SynTree/Visitor.h"           // for acceptAll, maybeAccept
 #include "Validate/FindSpecialDecls.h" // for dtorStmt, dtorStructDestroy
 
-#include "AST/Expr.hpp"
-#include "AST/Node.hpp"
-#include "AST/Pass.hpp"
-#include "AST/Print.hpp"
-#include "AST/SymbolTable.hpp"
-#include "AST/Type.hpp"
-#include "AST/DeclReplacer.hpp"
-
 extern bool ctordtorp; // print all debug
 extern bool ctorp; // print ctor debug
 extern bool cpctorp; // print copy ctor debug
@@ -62,6 +61,44 @@ extern bool dtorp; // print dtor debug
 
 namespace InitTweak {
 namespace {
+
+	// Shallow copy the pointer list for return.
+	std::vector<ast::ptr<ast::TypeDecl>> getGenericParams( const ast::Type * t ) {
+		if ( auto inst = dynamic_cast<const ast::StructInstType *>( t ) ) {
+			return inst->base->params;
+		}
+		if ( auto inst = dynamic_cast<const ast::UnionInstType *>( t ) ) {
+			return inst->base->params;
+		}
+		return {};
+	}
+
+	/// Given type T, generate type of default ctor/dtor, i.e. function type void (*) (T &).
+	ast::FunctionDecl * genDefaultFunc(
+			const CodeLocation loc,
+			const std::string fname,
+			const ast::Type * paramType,
+			bool maybePolymorphic = true) {
+		std::vector<ast::ptr<ast::TypeDecl>> typeParams;
+		if ( maybePolymorphic ) typeParams = getGenericParams( paramType );
+		auto dstParam = new ast::ObjectDecl( loc,
+			"_dst",
+			new ast::ReferenceType( paramType ),
+			nullptr,
+			{},
+			ast::Linkage::Cforall
+		);
+		return new ast::FunctionDecl( loc,
+			fname,
+			std::move(typeParams),
+			{dstParam},
+			{},
+			new ast::CompoundStmt(loc),
+			{},
+			ast::Linkage::Cforall
+		);
+	}
+
 	struct SelfAssignChecker {
 		void previsit( const ast::ApplicationExpr * appExpr );
 	};
@@ -120,7 +157,7 @@ namespace {
 		// don't go into other functions
 		void previsit( const ast::FunctionDecl * ) { visit_children = false; }
 
-	  protected:
+	protected:
 		ObjectSet curVars;
 	};
 
@@ -201,7 +238,7 @@ namespace {
 		const ast::Expr * postvisit( const ast::UntypedExpr * expr );
 
 		SemanticErrorException errors;
-	  private:
+	private:
 		template< typename... Params >
 		void emit( CodeLocation, const Params &... params );
 
@@ -287,7 +324,7 @@ namespace {
 		// wraps the more complicated code.
 		static UniqueName dtorNamer( "__cleanup_dtor" );
 		std::string name = dtorNamer.newName();
-		ast::FunctionDecl * dtorFunc = SymTab::genDefaultFunc( loc, name, objDecl->type->stripReferences(), false );
+		ast::FunctionDecl * dtorFunc = genDefaultFunc( loc, name, objDecl->type->stripReferences(), false );
 		stmtsToAdd.push_back( new ast::DeclStmt(loc, dtorFunc ) );
 
 		// the original code contains uses of objDecl - replace them with the newly generated 'this' parameter.
@@ -1079,14 +1116,14 @@ namespace {
 
 	void InsertDtors::previsit( const ast::BranchStmt * stmt ) {
 		switch( stmt->kind ) {
-		  case ast::BranchStmt::Continue:
-		  case ast::BranchStmt::Break:
+		case ast::BranchStmt::Continue:
+		case ast::BranchStmt::Break:
 			// could optimize the break/continue case, because the S_L-S_G check is unnecessary (this set should
 			// always be empty), but it serves as a small sanity check.
-		  case ast::BranchStmt::Goto:
+		case ast::BranchStmt::Goto:
 			handleGoto( stmt );
 			break;
-		  default:
+		default:
 			assert( false );
 		} // switch
 	}

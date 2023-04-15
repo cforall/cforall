@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Thu Mar 03 15:45:56 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 27 14:39:06 2018
-// Update Count     : 63
+// Last Modified On : Fri Apr 14 15:03:00 2023
+// Update Count     : 64
 //
 
 #include "Autogen.h"
@@ -210,10 +210,6 @@ namespace SymTab {
 		return obj != nullptr && obj->name == "" && obj->bitfieldWidth != nullptr;
 	}
 
-	bool isUnnamedBitfield( const ast::ObjectDecl * obj ) {
-		return obj && obj->name.empty() && obj->bitfieldWidth;
-	}
-
 	/// inserts a forward declaration for functionDecl into declsToAdd
 	void addForwardDecl( FunctionDecl * functionDecl, std::list< Declaration * > & declsToAdd ) {
 		FunctionDecl * decl = functionDecl->clone();
@@ -233,17 +229,6 @@ namespace SymTab {
 		return ret ? *ret : std::list< TypeDecl * >();
 	}
 
-	// shallow copy the pointer list for return
-	std::vector<ast::ptr<ast::TypeDecl>> getGenericParams (const ast::Type * t) {
-		if (auto structInst = dynamic_cast<const ast::StructInstType*>(t)) {
-			return structInst->base->params;
-		}
-		if (auto unionInst = dynamic_cast<const ast::UnionInstType*>(t)) {
-			return unionInst->base->params;
-		}
-		return {};
-	}
-
 	/// given type T, generate type of default ctor/dtor, i.e. function type void (*) (T *)
 	FunctionType * genDefaultType( Type * paramType, bool maybePolymorphic ) {
 		FunctionType *ftype = new FunctionType( Type::Qualifiers(), false );
@@ -255,14 +240,6 @@ namespace SymTab {
 		ObjectDecl *dstParam = new ObjectDecl( "_dst", Type::StorageClasses(), LinkageSpec::Cforall, nullptr, new ReferenceType( Type::Qualifiers(), paramType->clone() ), nullptr );
 		ftype->parameters.push_back( dstParam );
 		return ftype;
-	}
-
-	/// Given type T, generate type of default ctor/dtor, i.e. function type void (*) (T &).
-	ast::FunctionDecl * genDefaultFunc(const CodeLocation loc, const std::string fname, const ast::Type * paramType, bool maybePolymorphic) {
-		std::vector<ast::ptr<ast::TypeDecl>> typeParams;
-		if (maybePolymorphic) typeParams = getGenericParams(paramType);
-		auto dstParam = new ast::ObjectDecl(loc, "_dst", new ast::ReferenceType(paramType), nullptr, {}, ast::Linkage::Cforall);
-		return new ast::FunctionDecl(loc, fname, std::move(typeParams), {dstParam}, {}, new ast::CompoundStmt(loc), {}, ast::Linkage::Cforall);
 	}
 
 	/// given type T, generate type of copy ctor, i.e. function type void (*) (T *, T)

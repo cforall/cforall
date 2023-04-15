@@ -191,15 +191,16 @@ private:
 		const Decl * deleter );
 
 	/// common code for addId, addDeletedId, etc.
-	void addId(
-		const DeclWithType * decl, OnConflict handleConflicts, const Expr * baseExpr = nullptr,
-		const Decl * deleter = nullptr );
+	void addIdCommon(
+		const DeclWithType * decl, OnConflict handleConflicts,
+		const Expr * baseExpr = nullptr, const Decl * deleter = nullptr );
 
 	/// common code for addId when special decls are placed into separate tables
-	void addId(
-		const DeclWithType * decl, const std::string & lookupKey, IdTable::Ptr & idTable, OnConflict handleConflicts, 
+	void addIdToTable(
+		const DeclWithType * decl, const std::string & lookupKey,
+		IdTable::Ptr & idTable, OnConflict handleConflicts,
 		const Expr * baseExpr = nullptr, const Decl * deleter = nullptr);
-	
+
 	/// adds all of the members of the Aggregate (addWith helper)
 	void addMembers( const AggregateDecl * aggr, const Expr * expr, OnConflict handleConflicts );
 

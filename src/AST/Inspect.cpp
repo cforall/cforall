@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Fri Jun 24 13:16:31 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Oct  3 11:04:00 2022
-// Update Count     : 3
+// Last Modified On : Fri Apr 14 15:09:00 2023
+// Update Count     : 4
 //
 
 #include "Inspect.hpp"
@@ -165,6 +165,10 @@ const ApplicationExpr * isIntrinsicCallExpr( const Expr * expr ) {
 		toString( appExpr->func ).c_str() );
 
 	return func->linkage == Linkage::Intrinsic ? appExpr : nullptr;
+}
+
+bool isUnnamedBitfield( const ast::ObjectDecl * obj ) {
+	return obj && obj->name.empty() && obj->bitfieldWidth;
 }
 
 } // namespace ast

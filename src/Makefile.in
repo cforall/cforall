@@ -210,8 +210,9 @@ am__objects_6 = ResolvExpr/AdjustExprType.$(OBJEXT) \
 	ResolvExpr/TypeEnvironment.$(OBJEXT) \
 	ResolvExpr/Unify.$(OBJEXT)
 am__objects_7 = SymTab/Autogen.$(OBJEXT) SymTab/FixFunction.$(OBJEXT) \
-	SymTab/Indexer.$(OBJEXT) SymTab/Mangler.$(OBJEXT) \
-	SymTab/ManglerCommon.$(OBJEXT) SymTab/ValidateType.$(OBJEXT)
+	SymTab/GenImplicitCall.$(OBJEXT) SymTab/Indexer.$(OBJEXT) \
+	SymTab/Mangler.$(OBJEXT) SymTab/ManglerCommon.$(OBJEXT) \
+	SymTab/ValidateType.$(OBJEXT)
 am__objects_8 = SynTree/AddressExpr.$(OBJEXT) \
 	SynTree/AggregateDecl.$(OBJEXT) \
 	SynTree/ApplicationExpr.$(OBJEXT) SynTree/ArrayType.$(OBJEXT) \
@@ -433,6 +434,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	ResolvExpr/$(DEPDIR)/TypeEnvironment.Po \
 	ResolvExpr/$(DEPDIR)/Unify.Po SymTab/$(DEPDIR)/Autogen.Po \
 	SymTab/$(DEPDIR)/Demangle.Po SymTab/$(DEPDIR)/FixFunction.Po \
+	SymTab/$(DEPDIR)/GenImplicitCall.Po \
 	SymTab/$(DEPDIR)/Indexer.Po SymTab/$(DEPDIR)/Mangler.Po \
 	SymTab/$(DEPDIR)/ManglerCommon.Po SymTab/$(DEPDIR)/Validate.Po \
 	SymTab/$(DEPDIR)/ValidateType.Po SymTab/$(DEPDIR)/demangler.Po \
@@ -1003,6 +1005,8 @@ SRC_SYMTAB = \
 	SymTab/Autogen.h \
 	SymTab/FixFunction.cc \
 	SymTab/FixFunction.h \
+	SymTab/GenImplicitCall.cpp \
+	SymTab/GenImplicitCall.hpp \
 	SymTab/Indexer.cc \
 	SymTab/Indexer.h \
 	SymTab/Mangler.cc \
@@ -1350,6 +1354,8 @@ SymTab/$(DEPDIR)/$(am__dirstamp):
 SymTab/Autogen.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
 SymTab/FixFunction.$(OBJEXT): SymTab/$(am__dirstamp) \
+	SymTab/$(DEPDIR)/$(am__dirstamp)
+SymTab/GenImplicitCall.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
 SymTab/Indexer.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
@@ -1818,6 +1824,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Autogen.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Demangle.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/FixFunction.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/GenImplicitCall.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Indexer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Mangler.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/ManglerCommon.Po@am__quote@ # am--include-marker
@@ -2250,6 +2257,7 @@ distclean: distclean-am
 	-rm -f SymTab/$(DEPDIR)/Autogen.Po
 	-rm -f SymTab/$(DEPDIR)/Demangle.Po
 	-rm -f SymTab/$(DEPDIR)/FixFunction.Po
+	-rm -f SymTab/$(DEPDIR)/GenImplicitCall.Po
 	-rm -f SymTab/$(DEPDIR)/Indexer.Po
 	-rm -f SymTab/$(DEPDIR)/Mangler.Po
 	-rm -f SymTab/$(DEPDIR)/ManglerCommon.Po
@@ -2490,6 +2498,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f SymTab/$(DEPDIR)/Autogen.Po
 	-rm -f SymTab/$(DEPDIR)/Demangle.Po
 	-rm -f SymTab/$(DEPDIR)/FixFunction.Po
+	-rm -f SymTab/$(DEPDIR)/GenImplicitCall.Po
 	-rm -f SymTab/$(DEPDIR)/Indexer.Po
 	-rm -f SymTab/$(DEPDIR)/Mangler.Po
 	-rm -f SymTab/$(DEPDIR)/ManglerCommon.Po

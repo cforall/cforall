@@ -38,6 +38,7 @@
 #include "GenPoly/ScopedSet.h"     // for ScopedSet, ScopedSet<>::iterator
 #include "InitTweak/GenInit.h"     // for fixReturnStatements
 #include "InitTweak/InitTweak.h"   // for isAssignment, isCopyConstructor
+#include "SymTab/GenImplicitCall.hpp"  // for genImplicitCall
 #include "SymTab/Mangler.h"        // for Mangler
 #include "CompilationState.h"
 
@@ -422,7 +423,7 @@ ast::FunctionDecl * FuncGenerator::genFieldCtorProto(
 	std::vector<ast::ptr<ast::DeclWithType>> params = { dstParam() };
 	for ( unsigned int index = 0 ; index < fields ; ++index ) {
 		auto member = aggr->members[index].strict_as<ast::DeclWithType>();
-		if ( SymTab::isUnnamedBitfield(
+		if ( ast::isUnnamedBitfield(
 				dynamic_cast<const ast::ObjectDecl *>( member ) ) ) {
 			if ( index == fields - 1 ) {
 				return nullptr;
@@ -598,7 +599,7 @@ void StructFuncGenerator::makeFieldCtorBody( Iterator current, Iterator end,
 		auto field = member.as<ast::ObjectDecl>();
 		// Not sure why it could be null.
 		// Don't make a function for a parameter that is an unnamed bitfield.
-		if ( nullptr == field || SymTab::isUnnamedBitfield( field ) ) {
+		if ( nullptr == field || ast::isUnnamedBitfield( field ) ) {
 			continue;
 		// Matching Parameter: Initialize the field by copy.
 		} else if ( params.end() != param ) {
