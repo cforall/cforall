@@ -1,4 +1,6 @@
 
+CFA xoshiro128pp
+
                     PRNG()     PRNG(5)   PRNG(0,5)
                 2884683541           0           0
                 3465286746           2           4
@@ -55,13 +57,13 @@ trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
 seed 1009
 
 Sequential
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
+trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
 
 Concurrent
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
+trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
+trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
+trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
+trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
 
                    prng(t)   prng(t,5) prng(t,0,5)
                 2884683541           0           0

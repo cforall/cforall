@@ -7,25 +7,30 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 20:39:59 2022
-// Update Count     : 406
+// Last Modified On : Sat Apr 15 16:44:31 2023
+// Update Count     : 419
 // 
 
 #include <fstream.hfa>									// sout
 #include <stdlib.hfa>									// PRNG
 #include <clock.hfa>
-#include <thread.hfa>
 #include <limits.hfa>									// MAX
 #include <math.hfa>										// sqrt
 #include <malloc.h>										// malloc_stats
 #include <locale.h>										// setlocale
+#include <thread.hfa>
 #include <mutex_stmt.hfa>
 
-#ifdef __x86_64__										// 64-bit architecture
+#define xstr(s) str(s)
+#define str(s) #s
+
+#if defined( __x86_64__ ) || defined( __aarch64__ )		// 64-bit architecture
 #define PRNG PRNG64
 #else													// 32-bit architecture
 #define PRNG PRNG32
 #endif // __x86_64__
+
+//#define TIME
 
 #ifdef TIME												// use -O2 -nodebug
 #define STARTTIME start = timeHiRes()
@@ -37,8 +42,8 @@ enum { BUCKETS = 100_000, TRIALS = 1_000_000_000 };
 enum { BUCKETS = 100_000, TRIALS = 100_000_000 };
 #endif // TIME
 
-void avgstd( unsigned int buckets[] ) {
-	unsigned int min = MAX, max = 0;
+static void avgstd( size_t trials, size_t buckets[] ) {
+	size_t min = MAX, max = 0;
 	double sum = 0.0, diff;
 	for ( i; BUCKETS ) {
 		if ( buckets[i] < min ) min = buckets[i];
@@ -53,7 +58,7 @@ void avgstd( unsigned int buckets[] ) {
 		sum += diff * diff;
 	} // for
 	double std = sqrt( sum / BUCKETS );
-	mutex( sout ) sout | "trials"  | TRIALS | "buckets" | BUCKETS
+	mutex( sout ) sout | "trials"  | trials | "buckets" | BUCKETS
 		| "min" | min | "max" | max
 		| "avg" | wd(0,1, avg) | "std" | wd(0,1, std) | "rstd" | wd(0,1, (avg == 0 ? 0.0 : std / avg * 100)) | "%";
 } // avgstd
@@ -63,11 +68,11 @@ size_t seed = 1009;
 
 thread T1 {};
 void main( T1 & ) {
-	unsigned int * buckets = calloc( BUCKETS );			// too big for task stack
-	for ( TRIALS / 100 ) {
+	size_t * buckets = calloc( BUCKETS );				// too big for task stack
+	for ( TRIALS / 50 ) {
 		buckets[rand() % BUCKETS] += 1;					// concurrent
 	} // for
-	avgstd( buckets );
+	avgstd( TRIALS / 50, buckets );
 	free( buckets );
 } // main
 
@@ -75,31 +80,31 @@ thread T2 {};
 void main( T2 & ) {
 	PRNG prng;
 	if ( seed != 0 ) set_seed( prng, seed );
-	unsigned int * buckets = calloc( BUCKETS );			// too big for task stack
+	size_t * buckets = calloc( BUCKETS );				// too big for task stack
 	for ( TRIALS ) {
 		buckets[prng( prng ) % BUCKETS] += 1;			// concurrent
 	} // for
-	avgstd( buckets );
+	avgstd( TRIALS, buckets );
 	free( buckets );
 } // main
 
 thread T3 {};
 void main( T3 & th ) {
-	unsigned int * buckets = calloc( BUCKETS );			// too big for task stack
-	for ( TRIALS ) {
+	size_t * buckets = calloc( BUCKETS );				// too big for task stack
+	for ( TRIALS / 5 ) {
 		buckets[prng() % BUCKETS] += 1;					// concurrent
 	} // for
-	avgstd( buckets );
+	avgstd( TRIALS / 5, buckets );
 	free( buckets );
 } // main
 
 thread T4 {};
 void main( T4 & th ) {
-	unsigned int * buckets = calloc( BUCKETS );			// too big for task stack
+	size_t * buckets = calloc( BUCKETS );				// too big for task stack
 	for ( TRIALS ) {
-		buckets[prng( th ) % BUCKETS] += 1;	// concurrent
+		buckets[prng( th ) % BUCKETS] += 1;				// concurrent
 	} // for
-	avgstd( buckets );
+	avgstd( TRIALS, buckets );
 	free( buckets );
 } // main
 
@@ -107,11 +112,11 @@ void main( T4 & th ) {
 // and continually reloads it from memory, which doubles the cost.
 static void dummy( thread$ & th ) __attribute__(( noinline ));
 static void dummy( thread$ & th ) {
-	unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-	for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
+	size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+	for ( size_t i = 0; i < TRIALS; i += 1 ) {
 		buckets[prng( th ) % BUCKETS] += 1;				// sequential
 	} // for
-	avgstd( buckets );
+	avgstd( TRIALS, buckets );
 	free( buckets );
 } // dummy
 
@@ -125,15 +130,18 @@ int main() {
 
 	enum { TASKS = 4 };
 	Time start;
+
 #ifdef TIME												// too slow for test and generates non-repeatable results
 #if 1
-	unsigned int rseed;
+	sout | "glib rand" | nl | nl;
+
+	size_t rseed;
 	if ( seed != 0 ) rseed = seed;
 	else rseed = rdtscl();
 	srand( rseed );
 
 	sout | sepDisable;
-	sout | wd(26, "rand()" ) | wd(12, "rand(5)") | wd(12, "rand(0,5)" );
+	sout | nl | wd(26, "rand()" ) | wd(12, "rand(5)") | wd(12, "rand(0,5)" );
 	for ( 20 ) {
 		sout | wd(26, rand()) | nonl;
 		sout | wd(12, rand() % 5) | nonl;
@@ -145,14 +153,14 @@ int main() {
 	sout | nl | "Sequential";
 	STARTTIME;
 	{
-		unsigned int * buckets = calloc( BUCKETS );		// too big for task stack
-		for ( i; TRIALS / 10 ) {
+		size_t * buckets = calloc( BUCKETS );			// too big for task stack
+		for ( i; TRIALS / 5 ) {
 			buckets[rand() % BUCKETS] += 1;				// sequential
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS / 5, buckets );
 		free( buckets );
 	}
-	ENDTIME( " x 10 " );
+	ENDTIME( " x 5 " );
 
 	sout | nl | "Concurrent";
 	STARTTIME;
@@ -162,9 +170,12 @@ int main() {
 			T1 t[TASKS];
 		} // wait for threads to complete
 	}
-	ENDTIME( " x 100 " );
+	ENDTIME( " x 50 " );
 #endif // 0
 #endif // TIME
+
+	sout | nl | "CFA " xstr(PRNG_NAME);
+
 #if 1
 	PRNG prng;
 
@@ -183,11 +194,11 @@ int main() {
 	sout | nl | "Sequential";
 	STARTTIME;
 	{
-		unsigned int * buckets = calloc( BUCKETS );		// too big for task stack
+		size_t * buckets = calloc( BUCKETS );			// too big for task stack
 		for ( TRIALS ) {
 			buckets[prng( prng ) % BUCKETS] += 1;		// sequential
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS, buckets );
 		free( buckets );
 	}
 	ENDTIME();
@@ -218,14 +229,14 @@ int main() {
 	sout | nl | "Sequential";
 	STARTTIME;
 	{
-		unsigned int * buckets = calloc( BUCKETS );		// too big for task stack
-		for ( TRIALS ) {
+		size_t * buckets = calloc( BUCKETS );			// too big for task stack
+		for ( TRIALS / 5 ) {
 			buckets[prng() % BUCKETS] += 1;
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS / 5, buckets );
 		free( buckets );
 	}
-	ENDTIME();
+	ENDTIME( " x 5 " );
 
 	sout | nl | "Concurrent";
 	STARTTIME;
@@ -235,7 +246,7 @@ int main() {
 			T3 t[TASKS];
 		} // wait for threads to complete
 	}
-	ENDTIME();
+	ENDTIME( " x 5 " );
 #endif // 0
 #if 1
 	if ( seed != 0 ) set_seed( seed );
