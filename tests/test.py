@@ -113,6 +113,7 @@ def parse_args():
 	parser.add_argument('--debug', help='Run all tests in debug or release', type=comma_separated(yes_no), default='yes')
 	parser.add_argument('--install', help='Run all tests based on installed binaries or tree binaries', type=comma_separated(yes_no), default='no')
 	parser.add_argument('--continue', help='When multiple specifications are passed (debug/install/arch), sets whether or not to continue if the last specification failed', type=yes_no, default='yes', dest='continue_')
+	parser.add_argument('--invariant', help='Tell the compiler to check invariants while running.', action='store_true')
 	parser.add_argument('--timeout', help='Maximum duration in seconds after a single test is considered to have timed out', type=int, default=180)
 	parser.add_argument('--global-timeout', help='Maximum cumulative duration in seconds after the ALL tests are considered to have timed out', type=int, default=7200)
 	parser.add_argument('--timeout-with-gdb', help='Instead of killing the command when it times out, orphan it and print process id to allow gdb to attach', type=yes_no, default="no")
@@ -171,12 +172,15 @@ def run_single_test(test):
 	# prepare the proper directories
 	test.prepare()
 
+	# extra flags for cfa to pass through make.
+	cfa_flags = 'CFAFLAGS=--invariant' if settings.invariant else None
+
 	# ----------
 	# MAKE
 	# ----------
 	# build, skipping to next test on error
 	with Timed() as comp_dur:
-		make_ret, _, _ = make( test.target(), output_file=subprocess.DEVNULL, error=out_file, error_file = err_file )
+		make_ret, _, _ = make(test.target(), flags=cfa_flags, output_file=subprocess.DEVNULL, error=out_file, error_file=err_file)
 
 	# ----------
 	# RUN

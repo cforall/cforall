@@ -43,6 +43,10 @@ static void Putenv( char * argv[], string arg ) {
 	// environment variables must have unique names
 	static int flags = 0;
 
+    // This allocation 'leaks' memory from the program to the execution
+    // environment, as putenv does not manage the storage of the string used
+    // as an environment variable. This leak is necessary to ensure the
+    // underlying C string is allocated long enough.
 	if ( putenv( (char *)( *new string( string( __CFA_FLAGPREFIX__ + to_string( flags++ ) + "__=" ) + arg ) ).c_str() ) ) {
 		cerr << argv[0] << " error, cannot set environment variable." << endl;
 		exit( EXIT_FAILURE );

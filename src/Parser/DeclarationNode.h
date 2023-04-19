@@ -176,6 +176,14 @@ static inline ast::Type * maybeMoveBuildType( const DeclarationNode * orig ) {
 	return ret;
 }
 
+template<typename NodeType>
+NodeType * strict_next( NodeType * node ) {
+	ParseNode * next = node->get_next();
+	if ( nullptr == next ) return nullptr;
+	if ( NodeType * ret = dynamic_cast<NodeType *>( next ) ) return ret;
+	SemanticError( next->location, "internal error, non-homogeneous nodes founds in buildList processing." );
+}
+
 // This generic buildList is here along side its overloads.
 template<typename AstType, typename NodeType,
 		template<typename, typename...> class Container, typename... Args>
@@ -183,26 +191,16 @@ void buildList( NodeType * firstNode,
 		Container<ast::ptr<AstType>, Args...> & output ) {
 	SemanticErrorException errors;
 	std::back_insert_iterator<Container<ast::ptr<AstType>, Args...>> out( output );
-	NodeType * cur = firstNode;
 
-	while ( cur ) {
+	for ( NodeType * cur = firstNode ; cur ; cur = strict_next( cur ) ) {
 		try {
-			if ( auto result = dynamic_cast<AstType *>( maybeBuild( cur ) ) ) {
-				*out++ = result;
-			} else {
-				assertf(false, __PRETTY_FUNCTION__ );
-				SemanticError( cur->location, "type specifier declaration in forall clause is currently unimplemented." );
-			} // if
-		} catch( SemanticErrorException & e ) {
+			AstType * node = dynamic_cast<AstType *>( maybeBuild( cur ) );
+			assertf( node, "buildList: Did not build node of correct type." );
+			*out++ = node;
+		} catch ( SemanticErrorException & e ) {
 			errors.append( e );
 		} // try
-		ParseNode * temp = cur->get_next();
-		// Should not return nullptr, then it is non-homogeneous:
-		cur = dynamic_cast<NodeType *>( temp );
-		if ( !cur && temp ) {
-			SemanticError( temp->location, "internal error, non-homogeneous nodes founds in buildList processing." );
-		} // if
-	} // while
+	} // for
 	if ( ! errors.isEmpty() ) {
 		throw errors;
 	} // if

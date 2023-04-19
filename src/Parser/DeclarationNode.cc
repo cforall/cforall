@@ -1052,7 +1052,6 @@ void buildList( DeclarationNode * firstNode,
 					// Remember the declaration if it is a union aggregate ?
 					unionDecl = dynamic_cast<ast::UnionDecl *>( decl );
 
-					decl->location = cur->location;
 					*out++ = decl;
 
 					// need to remember the cases where a declaration contains an anonymous aggregate definition
@@ -1120,7 +1119,6 @@ void buildList( DeclarationNode * firstNode,
 							} // if
 						} // if
 					} // if
-					decl->location = cur->location;
 					*out++ = decl;
 				} // if
 			} // if
