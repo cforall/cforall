@@ -670,32 +670,17 @@ namespace ast {
 		}
 	};
 
-	/// Iterates array types
-	class ArrayIterator final : public MemberIterator {
+	/// Iterates over an indexed type:
+	class IndexIterator : public MemberIterator {
+	protected:
 		CodeLocation location;
-		const ArrayType * array = nullptr;
-		const Type * base = nullptr;
 		size_t index = 0;
 		size_t size = 0;
-		std::unique_ptr< MemberIterator > memberIter;
-
-		void setSize( const Expr * expr ) {
-			auto res = eval( expr );
-			if ( ! res.second ) {
-				SemanticError( location, toString( "Array designator must be a constant expression: ", expr ) );
-			}
-			size = res.first;
-		}
-
+		std::unique_ptr<MemberIterator> memberIter;
 	public:
-		ArrayIterator( const CodeLocation & loc, const ArrayType * at ) : location( loc ), array( at ), base( at->base ) {
-			PRINT( std::cerr << "Creating array iterator: " << at << std::endl; )
-			memberIter.reset( createMemberIterator( loc, base ) );
-			if ( at->isVarLen ) {
-				SemanticError( location, at, "VLA initialization does not support @=: " );
-			}
-			setSize( at->dimension );
-		}
+		IndexIterator( const CodeLocation & loc, size_t size ) :
+			location( loc ), size( size )
+		{}
 
 		void setPosition( const Expr * expr ) {
 			// need to permit integer-constant-expressions, including: integer constants,
@@ -704,7 +689,6 @@ namespace ast {
 
 			auto arg = eval( expr );
 			index = arg.first;
-			return;
 
 			// if ( auto constExpr = dynamic_cast< const ConstantExpr * >( expr ) ) {
 			// 	try {
@@ -734,6 +718,31 @@ namespace ast {
 		std::deque< InitAlternative > operator* () const override { return first(); }
 
 		operator bool() const override { return index < size; }
+	};
+
+	/// Iterates over the members of array types:
+	class ArrayIterator final : public IndexIterator {
+		const ArrayType * array = nullptr;
+		const Type * base = nullptr;
+
+		size_t getSize( const Expr * expr ) {
+			auto res = eval( expr );
+			if ( !res.second ) {
+				SemanticError( location, toString( "Array designator must be a constant expression: ", expr ) );
+			}
+			return res.first;
+		}
+
+	public:
+		ArrayIterator( const CodeLocation & loc, const ArrayType * at ) :
+				IndexIterator( loc, getSize( at->dimension) ),
+				array( at ), base( at->base ) {
+			PRINT( std::cerr << "Creating array iterator: " << at << std::endl; )
+			memberIter.reset( createMemberIterator( loc, base ) );
+			if ( at->isVarLen ) {
+				SemanticError( location, at, "VLA initialization does not support @=: " );
+			}
+		}
 
 		ArrayIterator & bigStep() override {
 			PRINT( std::cerr << "bigStep in ArrayIterator (" << index << "/" << size << ")" << std::endl; )
@@ -872,7 +881,8 @@ namespace ast {
 		const Type * getType() final { return inst; }
 
 		const Type * getNext() final {
-			return ( memberIter && *memberIter ) ? memberIter->getType() : nullptr;
+			bool hasMember = memberIter && *memberIter;
+			return hasMember ? memberIter->getType() : nullptr;
 		}
 
 		std::deque< InitAlternative > first() const final {
@@ -937,12 +947,8 @@ namespace ast {
 	};
 
 	/// Iterates across the positions in a tuple:
-	class TupleIterator final : public MemberIterator {
-		CodeLocation location;
+	class TupleIterator final : public IndexIterator {
 		ast::TupleType const * const tuple;
-		size_t index = 0;
-		size_t size = 0;
-		std::unique_ptr<MemberIterator> sub_iter;
 
 		const ast::Type * typeAtIndex() const {
 			assert( index < size );
@@ -951,45 +957,23 @@ namespace ast {
 
 	public:
 		TupleIterator( const CodeLocation & loc, const TupleType * type )
-		: location( loc ), tuple( type ), size( type->size() ) {
+		: IndexIterator( loc, type->size() ), tuple( type ) {
 			PRINT( std::cerr << "Creating tuple iterator: " << type << std::endl; )
-			sub_iter.reset( createMemberIterator( loc, typeAtIndex() ) );
-		}
-
-		void setPosition( const ast::Expr * expr ) {
-			auto arg = eval( expr );
-			index = arg.first;
-		}
-
-		void setPosition(
-				std::deque< ptr< Expr > >::const_iterator begin,
-				std::deque< ptr< Expr > >::const_iterator end ) {
-			if ( begin == end ) return;
-
-			setPosition( *begin );
-			sub_iter->setPosition( ++begin, end );
-		}
-
-		std::deque< InitAlternative > operator*() const override {
-			return first();
-		}
-
-		operator bool() const override {
-			return index < size;
+			memberIter.reset( createMemberIterator( loc, typeAtIndex() ) );
 		}
 
 		TupleIterator & bigStep() override {
 			++index;
-			sub_iter.reset( index < size ?
+			memberIter.reset( index < size ?
 				createMemberIterator( location, typeAtIndex() ) : nullptr );
 			return *this;
 		}
 
 		TupleIterator & smallStep() override {
-			if ( sub_iter ) {
-				PRINT( std::cerr << "has member iter: " << *sub_iter << std::endl; )
-				sub_iter->smallStep();
-				if ( !sub_iter ) {
+			if ( memberIter ) {
+				PRINT( std::cerr << "has member iter: " << *memberIter << std::endl; )
+				memberIter->smallStep();
+				if ( !memberIter ) {
 					PRINT( std::cerr << "has valid member iter" << std::endl; )
 					return *this;
 				}
@@ -1002,13 +986,14 @@ namespace ast {
 		}
 
 		const ast::Type * getNext() override {
-			return ( sub_iter && *sub_iter ) ? sub_iter->getType() : nullptr;
+			bool hasMember = memberIter && *memberIter;
+			return hasMember ? memberIter->getType() : nullptr;
 		}
 
 		std::deque< InitAlternative > first() const override {
 			PRINT( std::cerr << "first in TupleIterator (" << index << "/" << size << ")" << std::endl; )
-			if ( sub_iter && *sub_iter ) {
-				std::deque< InitAlternative > ret = sub_iter->first();
+			if ( memberIter && *memberIter ) {
+				std::deque< InitAlternative > ret = memberIter->first();
 				for ( InitAlternative & alt : ret ) {
 					alt.designation.get_and_mutate()->designators.emplace_front(
 						ConstantExpr::from_ulong( location, index ) );

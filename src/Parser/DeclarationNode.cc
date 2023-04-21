@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Apr  4 10:28:00 2023
-// Update Count     : 1392
+// Last Modified On : Thr Apr 20 11:46:00 2023
+// Update Count     : 1393
 //
 
 #include "DeclarationNode.h"
@@ -1002,127 +1002,147 @@ DeclarationNode * DeclarationNode::extractAggregate() const {
 	return nullptr;
 }
 
+// If a typedef wraps an anonymous declaration, name the inner declaration
+// so it has a consistent name across translation units.
+static void nameTypedefedDecl(
+		DeclarationNode * innerDecl,
+		const DeclarationNode * outerDecl ) {
+	TypeData * outer = outerDecl->type;
+	assert( outer );
+	// First make sure this is a typedef:
+	if ( outer->kind != TypeData::Symbolic || !outer->symbolic.isTypedef ) {
+		return;
+	}
+	TypeData * inner = innerDecl->type;
+	assert( inner );
+	// Always clear any CVs associated with the aggregate:
+	inner->qualifiers.reset();
+	// Handle anonymous aggregates: typedef struct { int i; } foo
+	if ( inner->kind == TypeData::Aggregate && inner->aggregate.anon ) {
+		delete inner->aggregate.name;
+		inner->aggregate.name = new string( "__anonymous_" + *outerDecl->name );
+		inner->aggregate.anon = false;
+		assert( outer->base );
+		delete outer->base->aggInst.aggregate->aggregate.name;
+		outer->base->aggInst.aggregate->aggregate.name = new string( "__anonymous_" + *outerDecl->name );
+		outer->base->aggInst.aggregate->aggregate.anon = false;
+		outer->base->aggInst.aggregate->qualifiers.reset();
+	// Handle anonymous enumeration: typedef enum { A, B, C } foo
+	} else if ( inner->kind == TypeData::Enum && inner->enumeration.anon ) {
+		delete inner->enumeration.name;
+		inner->enumeration.name = new string( "__anonymous_" + *outerDecl->name );
+		inner->enumeration.anon = false;
+		assert( outer->base );
+		delete outer->base->aggInst.aggregate->enumeration.name;
+		outer->base->aggInst.aggregate->enumeration.name = new string( "__anonymous_" + *outerDecl->name );
+		outer->base->aggInst.aggregate->enumeration.anon = false;
+		// No qualifiers.reset() here.
+	}
+}
+
+// This code handles a special issue with the attribute transparent_union.
+//
+//    typedef union U { int i; } typedef_name __attribute__(( aligned(16) )) __attribute__(( transparent_union ))
+//
+// Here the attribute aligned goes with the typedef_name, so variables declared of this type are
+// aligned.  However, the attribute transparent_union must be moved from the typedef_name to
+// alias union U.  Currently, this is the only know attribute that must be moved from typedef to
+// alias.
+static void moveUnionAttribute( ast::Decl * decl, ast::UnionDecl * unionDecl ) {
+	if ( auto typedefDecl = dynamic_cast<ast::TypedefDecl *>( decl ) ) {
+		// Is the typedef alias a union aggregate?
+		if ( nullptr == unionDecl ) return;
+
+		// If typedef is an alias for a union, then its alias type was hoisted above and remembered.
+		if ( auto unionInstType = typedefDecl->base.as<ast::UnionInstType>() ) {
+			auto instType = ast::mutate( unionInstType );
+			// Remove all transparent_union attributes from typedef and move to alias union.
+			for ( auto attr = instType->attributes.begin() ; attr != instType->attributes.end() ; ) {
+				assert( *attr );
+				if ( (*attr)->name == "transparent_union" || (*attr)->name == "__transparent_union__" ) {
+					unionDecl->attributes.emplace_back( attr->release() );
+					attr = instType->attributes.erase( attr );
+				} else {
+					attr++;
+				}
+			}
+			typedefDecl->base = instType;
+		}
+	}
+}
+
+// Get the non-anonymous name of the instance type of the declaration,
+// if one exists.
+static const std::string * getInstTypeOfName( ast::Decl * decl ) {
+	if ( auto dwt = dynamic_cast<ast::DeclWithType *>( decl ) ) {
+		if ( auto aggr = dynamic_cast<ast::BaseInstType const *>( dwt->get_type() ) ) {
+			if ( aggr->name.find("anonymous") == std::string::npos ) {
+				return &aggr->name;
+			}
+		}
+	}
+	return nullptr;
+}
+
 void buildList( DeclarationNode * firstNode,
 		std::vector<ast::ptr<ast::Decl>> & outputList ) {
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::Decl>>> out( outputList );
 
-	for ( const DeclarationNode * cur = firstNode; cur; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ) ) {
+	for ( const DeclarationNode * cur = firstNode ; cur ; cur = strict_next( cur ) ) {
 		try {
-			bool extracted = false, anon = false;
-			ast::AggregateDecl * unionDecl = nullptr;
+			bool extracted_named = false;
+			ast::UnionDecl * unionDecl = nullptr;
 
 			if ( DeclarationNode * extr = cur->extractAggregate() ) {
-				// Handle the case where a SUE declaration is contained within an object or type declaration.
-
 				assert( cur->type );
-				// Replace anonymous SUE name with typedef name to prevent anonymous naming problems across translation units.
-				if ( cur->type->kind == TypeData::Symbolic && cur->type->symbolic.isTypedef ) {
-					assert( extr->type );
-					// Handle anonymous aggregates: typedef struct { int i; } foo
-					extr->type->qualifiers.reset();		// clear any CVs associated with the aggregate
-					if ( extr->type->kind == TypeData::Aggregate && extr->type->aggregate.anon ) {
-						delete extr->type->aggregate.name;
-						extr->type->aggregate.name = new string( "__anonymous_" + *cur->name );
-						extr->type->aggregate.anon = false;
-						assert( cur->type->base );
-						if ( cur->type->base ) {
-							delete cur->type->base->aggInst.aggregate->aggregate.name;
-							cur->type->base->aggInst.aggregate->aggregate.name = new string( "__anonymous_" + *cur->name );
-							cur->type->base->aggInst.aggregate->aggregate.anon = false;
-							cur->type->base->aggInst.aggregate->qualifiers.reset();
-						} // if
-					} // if
-					// Handle anonymous enumeration: typedef enum { A, B, C } foo
-					if ( extr->type->kind == TypeData::Enum && extr->type->enumeration.anon ) {
-						delete extr->type->enumeration.name;
-						extr->type->enumeration.name = new string( "__anonymous_" + *cur->name );
-						extr->type->enumeration.anon = false;
-						assert( cur->type->base );
-						if ( cur->type->base ) {
-							delete cur->type->base->aggInst.aggregate->enumeration.name;
-							cur->type->base->aggInst.aggregate->enumeration.name = new string( "__anonymous_" + *cur->name );
-							cur->type->base->aggInst.aggregate->enumeration.anon = false;
-						} // if
-					} // if
-				} // if
+				nameTypedefedDecl( extr, cur );
 
-				ast::Decl * decl = extr->build();
-				if ( decl ) {
+				if ( ast::Decl * decl = extr->build() ) {
 					// Remember the declaration if it is a union aggregate ?
 					unionDecl = dynamic_cast<ast::UnionDecl *>( decl );
 
 					*out++ = decl;
 
 					// need to remember the cases where a declaration contains an anonymous aggregate definition
-					extracted = true;
 					assert( extr->type );
 					if ( extr->type->kind == TypeData::Aggregate ) {
 						// typedef struct { int A } B is the only case?
-						anon = extr->type->aggregate.anon;
+						extracted_named = !extr->type->aggregate.anon;
 					} else if ( extr->type->kind == TypeData::Enum ) {
 						// typedef enum { A } B is the only case?
-						anon = extr->type->enumeration.anon;
+						extracted_named = !extr->type->enumeration.anon;
+					} else {
+						extracted_named = true;
 					}
 				} // if
 				delete extr;
 			} // if
 
-			ast::Decl * decl = cur->build();
-			if ( decl ) {
-				if ( auto typedefDecl = dynamic_cast<ast::TypedefDecl *>( decl ) ) {
-					if ( unionDecl ) {					// is the typedef alias a union aggregate ?
-						// This code handles a special issue with the attribute transparent_union.
-						//
-						//    typedef union U { int i; } typedef_name __attribute__(( aligned(16) )) __attribute__(( transparent_union ))
-						//
-						// Here the attribute aligned goes with the typedef_name, so variables declared of this type are
-						// aligned.  However, the attribute transparent_union must be moved from the typedef_name to
-						// alias union U.  Currently, this is the only know attribute that must be moved from typedef to
-						// alias.
+			if ( ast::Decl * decl = cur->build() ) {
+				moveUnionAttribute( decl, unionDecl );
 
-						// If typedef is an alias for a union, then its alias type was hoisted above and remembered.
-						if ( auto unionInstType = typedefDecl->base.as<ast::UnionInstType>() ) {
-							auto instType = ast::mutate( unionInstType );
-							// Remove all transparent_union attributes from typedef and move to alias union.
-							for ( auto attr = instType->attributes.begin() ; attr != instType->attributes.end() ; ) { // forward order
-								assert( *attr );
-								if ( (*attr)->name == "transparent_union" || (*attr)->name == "__transparent_union__" ) {
-									unionDecl->attributes.emplace_back( attr->release() );
-									attr = instType->attributes.erase( attr );
-								} else {
-									attr++;
-								} // if
-							} // for
-							typedefDecl->base = instType;
-						} // if
-					} // if
-				} // if
+				if ( "" == decl->name && !cur->get_inLine() ) {
+					// Don't include anonymous declaration for named aggregates,
+					// but do include them for anonymous aggregates, e.g.:
+					// struct S {
+					//   struct T { int x; }; // no anonymous member
+					//   struct { int y; };   // anonymous member
+					//   struct T;            // anonymous member
+					// };
+					if ( extracted_named ) {
+						continue;
+					}
 
-				// don't include anonymous declaration for named aggregates, but do include them for anonymous aggregates, e.g.:
-				// struct S {
-				//   struct T { int x; }; // no anonymous member
-				//   struct { int y; };   // anonymous member
-				//   struct T;            // anonymous member
-				// };
-				if ( ! (extracted && decl->name == "" && ! anon && ! cur->get_inLine()) ) {
-					if ( decl->name == "" ) {
-						if ( auto dwt = dynamic_cast<ast::DeclWithType *>( decl ) ) {
-							if ( auto aggr = dynamic_cast<ast::BaseInstType const *>( dwt->get_type() ) ) {
-								if ( aggr->name.find("anonymous") == std::string::npos ) {
-									if ( ! cur->get_inLine() ) {
-										// temporary: warn about anonymous member declarations of named types, since
-										// this conflicts with the syntax for the forward declaration of an anonymous type
-										SemanticWarning( cur->location, Warning::AggrForwardDecl, aggr->name.c_str() );
-									} // if
-								} // if
-							} // if
-						} // if
-					} // if
-					*out++ = decl;
+					if ( auto name = getInstTypeOfName( decl ) ) {
+						// Temporary: warn about anonymous member declarations of named types, since
+						// this conflicts with the syntax for the forward declaration of an anonymous type.
+						SemanticWarning( cur->location, Warning::AggrForwardDecl, name->c_str() );
+					}
 				} // if
+				*out++ = decl;
 			} // if
-		} catch( SemanticErrorException & e ) {
+		} catch ( SemanticErrorException & e ) {
 			errors.append( e );
 		} // try
 	} // for
@@ -1137,10 +1157,10 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithT
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::DeclWithType>>> out( outputList );
 
-	for ( const DeclarationNode * cur = firstNode; cur; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ) ) {
+	for ( const DeclarationNode * cur = firstNode; cur; cur = strict_next( cur ) ) {
 		try {
 			ast::Decl * decl = cur->build();
-			assert( decl );
+			assertf( decl, "buildList: build for ast::DeclWithType." );
 			if ( ast::DeclWithType * dwt = dynamic_cast<ast::DeclWithType *>( decl ) ) {
 				dwt->location = cur->location;
 				*out++ = dwt;
@@ -1169,8 +1189,10 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithT
 					linkage
 				);
 				*out++ = obj;
+			} else {
+				assertf( false, "buildList: Could not convert to ast::DeclWithType." );
 			} // if
-		} catch( SemanticErrorException & e ) {
+		} catch ( SemanticErrorException & e ) {
 			errors.append( e );
 		} // try
 	} // for
@@ -1184,16 +1206,14 @@ void buildTypeList( const DeclarationNode * firstNode,
 		std::vector<ast::ptr<ast::Type>> & outputList ) {
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::Type>>> out( outputList );
-	const DeclarationNode * cur = firstNode;
 
-	while ( cur ) {
+	for ( const DeclarationNode * cur = firstNode ; cur ; cur = strict_next( cur ) ) {
 		try {
 			* out++ = cur->buildType();
-		} catch( SemanticErrorException & e ) {
+		} catch ( SemanticErrorException & e ) {
 			errors.append( e );
 		} // try
-		cur = dynamic_cast< DeclarationNode * >( cur->get_next() );
-	} // while
+	} // for
 
 	if ( ! errors.isEmpty() ) {
 		throw errors;
