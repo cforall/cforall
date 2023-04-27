@@ -8,9 +8,9 @@
 //
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Apr  4 14:02:00 2023
-// Update Count     : 6329
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Apr 26 16:45:37 2023
+// Update Count     : 6330
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1678,7 +1678,7 @@ wand:
 	;
 
 waituntil:
-	WAITUNTIL '(' cast_expression ')'
+	WAITUNTIL '(' comma_expression ')'
 		{ $$ = $3; }
 	;
 

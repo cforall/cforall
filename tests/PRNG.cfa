@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr 15 16:44:31 2023
-// Update Count     : 419
+// Last Modified On : Sun Apr 23 22:02:09 2023
+// Update Count     : 420
 // 
 
 #include <fstream.hfa>									// sout
@@ -122,8 +122,9 @@ static void dummy( thread$ & th ) {
 
 
 int main() {
-	// causes leaked storage message
-	// setlocale( LC_NUMERIC, getenv( "LANG" ) );			// print digit separator
+	// setlocale( LC_NUMERIC, getenv( "LANG" ) );		// causes leaked storage message
+
+	// only works on the current pthread thread
 	// locale_t loc = newlocale( LC_NUMERIC_MASK, getenv( "LANG" ), (locale_t)0p );
 	// if ( loc == (locale_t)0p ) abort( "newlocale" );
 	// uselocale( loc );
