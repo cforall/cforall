@@ -161,8 +161,10 @@ public:
 	const ast::CatchClause *      visit( const ast::CatchClause          * ) override final;
 	const ast::FinallyClause *    visit( const ast::FinallyClause        * ) override final;
 	const ast::Stmt *             visit( const ast::SuspendStmt          * ) override final;
+    const ast::WhenClause *       visit( const ast::WhenClause           * ) override final;
 	const ast::Stmt *             visit( const ast::WaitForStmt          * ) override final;
 	const ast::WaitForClause *    visit( const ast::WaitForClause        * ) override final;
+    const ast::Stmt *             visit( const ast::WaitUntilStmt        * ) override final;
 	const ast::Decl *             visit( const ast::WithStmt             * ) override final;
 	const ast::NullStmt *         visit( const ast::NullStmt             * ) override final;
 	const ast::Stmt *             visit( const ast::DeclStmt             * ) override final;

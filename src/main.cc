@@ -47,6 +47,7 @@ using namespace std;
 #include "Concurrency/Actors.hpp"           // for implementActors
 #include "Concurrency/Keywords.h"           // for implementMutex, implement...
 #include "Concurrency/Waitfor.h"            // for generateWaitfor
+#include "Concurrency/Waituntil.hpp"        // for generateWaitUntil
 #include "ControlStruct/ExceptDecl.h"       // for translateExcept
 #include "ControlStruct/ExceptTranslate.h"  // for translateThrows, translat...
 #include "ControlStruct/FixLabels.hpp"      // for fixLabels
@@ -339,6 +340,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Fix Return Statements", InitTweak::fixReturnStatements, transUnit );
 		PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords, transUnit );
 		PASS( "Forall Pointer Decay", Validate::decayForallPointers, transUnit );
+        PASS( "Implement Waituntil", Concurrency::generateWaitUntil, transUnit  );
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls, transUnit );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines, transUnit );

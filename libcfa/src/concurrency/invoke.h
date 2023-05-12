@@ -216,10 +216,11 @@ extern "C" {
 		// default link fields for dlist
 		struct __thread_user_link cltr_link;
 
-		// used to point to this thd's current clh node
-		volatile bool * clh_node;
-
 		struct processor * last_proc;
+
+        // ptr used during handover between blocking lists to allow for stack allocation of intrusive nodes
+        // main use case is wait-morphing to allow a different node to be used to block on condvar vs lock
+        void * link_node;
 
 		PRNG_STATE_T random_state;						// fast random numbers
 

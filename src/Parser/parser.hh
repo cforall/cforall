@@ -363,6 +363,7 @@ union YYSTYPE
 	StatementNode * stmt;
 	ClauseNode * clause;
 	ast::WaitForStmt * wfs;
+    ast::WaitUntilStmt::ClauseNode * wucn;
 	CondCtl * ifctl;
 	ForCtrl * forctl;
 	LabelNode * labels;
@@ -374,7 +375,7 @@ union YYSTYPE
 	ast::ExceptionKind except_kind;
 	ast::GenericExpr * genexpr;
 
-#line 378 "Parser/parser.hh"
+#line 379 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

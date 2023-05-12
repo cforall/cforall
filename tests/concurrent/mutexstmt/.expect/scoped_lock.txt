@@ -1,4 +1,0 @@
-Start Test: single scoped lock mutual exclusion
-End Test: single scoped lock mutual exclusion
-Start Test: multi scoped lock deadlock/mutual exclusion
-End Test: multi scoped lock deadlock/mutual exclusion

@@ -1,0 +1,56 @@
+#include <select.hfa>
+#include <thread.hfa>
+#include <channel.hfa>
+
+channel(long long int) C;
+
+volatile bool done = false;
+long long int globalTotal = 0;
+
+thread Server1 {};
+void main( Server1 & this ) {
+    long long int c, i = 0, myTotal = 0;
+    for( ;;i++ ) {
+        waituntil( c << C ) { if ( c == -1 ) break; myTotal += c; }
+    }
+    __atomic_fetch_add( &globalTotal, myTotal, __ATOMIC_SEQ_CST );
+}
+
+size_t numtimes = 100000;
+size_t numServers = 1;
+int main( int argc, char * argv[] ) {
+    if ( argc == 2 )
+        numtimes = atoi( argv[1] );
+
+    processor p[numServers];
+    C{5};
+
+    long long int total = 0;
+    printf("start\n");
+    volatile size_t LINE_COUNTER = 1;
+    {
+        Server1 s[numServers];
+        for( long long int j = 0; j < numtimes; j++ ) {
+            waituntil( j >> C ) { total += j; }
+        }
+        LINE_COUNTER = 2;
+        printf("waiting for empty channels\n");
+        LINE_COUNTER = 3;
+        size_t C_count = get_count( C );
+        LINE_COUNTER = 5;
+        while( C_count > 0 ) { 
+            C_count = get_count( C );
+        }
+        LINE_COUNTER = 7;
+        printf("sending sentinels\n");
+        LINE_COUNTER = 11;
+        for ( i; numServers ) insert( C, -1 );
+        LINE_COUNTER = 13;
+        printf("joining servers\n");
+        LINE_COUNTER = 17;
+    }
+    LINE_COUNTER = 19;
+    if ( total != globalTotal ) 
+        printf("CHECKSUM MISMATCH!! Main thread got %lld, server sum is %lld\n", total, globalTotal);
+    printf("done\n");
+}

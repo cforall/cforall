@@ -1729,12 +1729,12 @@ namespace ResolvExpr {
 			CandidateFinder funcFinder( context, env );
 
 			// Find all candidates for a function in canonical form
-			funcFinder.find( clause.target_func, ResolvMode::withAdjustment() );
+			funcFinder.find( clause.target, ResolvMode::withAdjustment() );
 
 			if ( funcFinder.candidates.empty() ) {
 				stringstream ss;
 				ss << "Use of undeclared indentifier '";
-				ss << clause.target_func.strict_as< ast::NameExpr >()->name;
+				ss << clause.target.strict_as< ast::NameExpr >()->name;
 				ss << "' in call to waitfor";
 				SemanticError( stmt->location, ss.str() );
 			}
@@ -1921,7 +1921,7 @@ namespace ResolvExpr {
 			// build new clause
 			auto clause2 = new ast::WaitForClause( clause.location );
 
-			clause2->target_func = funcCandidates.front()->expr;
+			clause2->target = funcCandidates.front()->expr;
 
 			clause2->target_args.reserve( clause.target_args.size() );
 			const ast::StructDecl * decl_monitor = symtab.lookupStruct( "monitor$" );
@@ -1944,7 +1944,7 @@ namespace ResolvExpr {
 			}
 
 			// Resolve the conditions as if it were an IfStmt, statements normally
-			clause2->cond = findSingleExpression( clause.cond, context );
+			clause2->when_cond = findSingleExpression( clause.when_cond, context );
 			clause2->stmt = clause.stmt->accept( *visitor );
 
 			// set results into stmt

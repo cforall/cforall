@@ -3,39 +3,23 @@
 #include <locks.hfa>
 #include <list.hfa>
 #include <mutex_stmt.hfa>
-
-// link field used for threads waiting on channel
-struct wait_link {
-    // used to put wait_link on a dl queue
-    inline dlink(wait_link);
-
-    // waiting thread
-    struct thread$ * t;
-
-    // shadow field
-    void * elem;
-};
-P9_EMBEDDED( wait_link, dlink(wait_link) )
-
-static inline void ?{}( wait_link & this, thread$ * t, void * elem ) {
-    this.t = t;
-    this.elem = elem;
-}
-
-// wake one thread from the list
-static inline void wake_one( dlist( wait_link ) & queue ) {
-    wait_link & popped = try_pop_front( queue );
-    unpark( popped.t );
-}
+#include "select.hfa"
 
 // returns true if woken due to shutdown
 // blocks thread on list and releases passed lock
-static inline bool block( dlist( wait_link ) & queue, void * elem_ptr, go_mutex & lock ) {
-    wait_link w{ active_thread(), elem_ptr };
-    insert_last( queue, w );
+static inline bool block( dlist( select_node ) & queue, void * elem_ptr, go_mutex & lock ) {
+    select_node sn{ active_thread(), elem_ptr };
+    insert_last( queue, sn );
     unlock( lock );
     park();
-    return w.elem == 0p;
+    return sn.extra == 0p;
+}
+
+// Waituntil support (un)register_select helper routine
+// Sets select node avail if not special OR case and then unlocks
+static inline void __set_avail_then_unlock( select_node & node, go_mutex & mutex_lock ) {
+    if ( node.park_counter ) __make_select_node_available( node );
+    unlock( mutex_lock );
 }
 
 // void * used for some fields since exceptions don't work with parametric polymorphism currently
@@ -58,7 +42,7 @@ forall( T ) {
 struct __attribute__((aligned(128))) channel {
     size_t size, front, back, count;
     T * buffer;
-    dlist( wait_link ) prods, cons; // lists of blocked threads
+    dlist( select_node ) prods, cons; // lists of blocked threads
     go_mutex mutex_lock;            // MX lock
     bool closed;                    // indicates channel close/open
     #ifdef CHAN_STATS
@@ -69,7 +53,7 @@ struct __attribute__((aligned(128))) channel {
 static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
     size = _size;
     front = back = count = 0;
-    buffer = aalloc( size );
+    if ( size != 0 ) buffer = aalloc( size );
     prods{};
     cons{};
     mutex_lock{};
@@ -86,9 +70,9 @@ static inline void ^?{}( channel(T) &c ) with(c) {
     printf("Channel %p Blocks: %lu, Operations: %lu, %.2f%% of ops blocked\n", &c, blocks, operations, ((double)blocks)/operations * 100);
     #endif
     verifyf( cons`isEmpty && prods`isEmpty, "Attempted to delete channel with waiting threads (Deadlock).\n" );
-    delete( buffer );
+    if ( size != 0 ) delete( buffer );
 }
-static inline size_t get_count( channel(T) & chan ) with(chan) { return count; }
+static inline size_t get_count( channel(T) & chan ) with(chan) { return __atomic_load_n( &count, __ATOMIC_SEQ_CST); }
 static inline size_t get_size( channel(T) & chan ) with(chan) { return size; }
 static inline bool has_waiters( channel(T) & chan ) with(chan) { return !cons`isEmpty || !prods`isEmpty; }
 static inline bool has_waiting_consumers( channel(T) & chan ) with(chan) { return !cons`isEmpty; }
@@ -101,11 +85,15 @@ static inline void close( channel(T) & chan ) with(chan) {
 
     // flush waiting consumers and producers
     while ( has_waiting_consumers( chan ) ) {
-        cons`first.elem = 0p;
+        if( !__handle_waituntil_OR( cons ) ) // ensure we only signal special OR case threads when they win the race
+            break;  // if __handle_waituntil_OR returns false cons is empty so break
+        cons`first.extra = 0p;
         wake_one( cons );
     }
     while ( has_waiting_producers( chan ) ) {
-        prods`first.elem = 0p;
+        if( !__handle_waituntil_OR( prods ) ) // ensure we only signal special OR case threads when they win the race
+            break;  // if __handle_waituntil_OR returns false prods is empty so break
+        prods`first.extra = 0p;
         wake_one( prods );
     }
     unlock(mutex_lock);
@@ -113,29 +101,32 @@ static inline void close( channel(T) & chan ) with(chan) {
 
 static inline void is_closed( channel(T) & chan ) with(chan) { return closed; }
 
+// used to hand an element to a blocked consumer and signal it
+static inline void __cons_handoff( channel(T) & chan, T & elem ) with(chan) {
+    memcpy( cons`first.extra, (void *)&elem, sizeof(T) ); // do waiting consumer work
+    wake_one( cons );
+}
+
+// used to hand an element to a blocked producer and signal it
+static inline void __prods_handoff( channel(T) & chan, T & retval ) with(chan) {
+    memcpy( (void *)&retval, prods`first.extra, sizeof(T) );
+    wake_one( prods );
+}
+
 static inline void flush( channel(T) & chan, T elem ) with(chan) {
     lock( mutex_lock );
     while ( count == 0 && !cons`isEmpty ) {
-        memcpy(cons`first.elem, (void *)&elem, sizeof(T)); // do waiting consumer work
-        wake_one( cons );
+        __cons_handoff( chan, elem );
     }
     unlock( mutex_lock );
 }
 
 // handles buffer insert
 static inline void __buf_insert( channel(T) & chan, T & elem ) with(chan) {
-    memcpy((void *)&buffer[back], (void *)&elem, sizeof(T));
+    memcpy( (void *)&buffer[back], (void *)&elem, sizeof(T) );
     count += 1;
     back++;
     if ( back == size ) back = 0;
-}
-
-// does the buffer insert or hands elem directly to consumer if one is waiting
-static inline void __do_insert( channel(T) & chan, T & elem ) with(chan) {
-    if ( count == 0 && !cons`isEmpty ) {
-        memcpy(cons`first.elem, (void *)&elem, sizeof(T)); // do waiting consumer work
-        wake_one( cons );
-    } else __buf_insert( chan, elem );
 }
 
 // needed to avoid an extra copy in closed case
@@ -144,8 +135,17 @@ static inline bool __internal_try_insert( channel(T) & chan, T & elem ) with(cha
     #ifdef CHAN_STATS
     operations++;
     #endif
+
+    ConsEmpty: if ( !cons`isEmpty ) {
+        if ( !__handle_waituntil_OR( cons ) ) break ConsEmpty;
+        __cons_handoff( chan, elem );
+        unlock( mutex_lock );
+        return true;
+    }
+
     if ( count == size ) { unlock( mutex_lock ); return false; }
-    __do_insert( chan, elem );
+
+    __buf_insert( chan, elem );
     unlock( mutex_lock );
     return true;
 }
@@ -156,7 +156,7 @@ static inline bool try_insert( channel(T) & chan, T elem ) { return __internal_t
 
 // handles closed case of insert routine
 static inline void __closed_insert( channel(T) & chan, T & elem ) with(chan) {
-    channel_closed except{&channel_closed_vt, &elem, &chan };
+    channel_closed except{ &channel_closed_vt, &elem, &chan };
     throwResume except; // throw closed resumption
     if ( !__internal_try_insert( chan, elem ) ) throw except; // if try to insert fails (would block), throw termination
 }
@@ -181,12 +181,12 @@ static inline void insert( channel(T) & chan, T elem ) with(chan) {
         return;
     }
 
-    // have to check for the zero size channel case
-    if ( size == 0 && !cons`isEmpty ) {
-        memcpy(cons`first.elem, (void *)&elem, sizeof(T));
-        wake_one( cons );
+    // buffer count must be zero if cons are blocked (also handles zero-size case)
+    ConsEmpty: if ( !cons`isEmpty ) {
+        if ( !__handle_waituntil_OR( cons ) ) break ConsEmpty;
+        __cons_handoff( chan, elem );
         unlock( mutex_lock );
-        return true;
+        return;
     }
 
     // wait if buffer is full, work will be completed by someone else
@@ -201,27 +201,18 @@ static inline void insert( channel(T) & chan, T elem ) with(chan) {
         return;
     } // if
 
-    if ( count == 0 && !cons`isEmpty ) {
-        memcpy(cons`first.elem, (void *)&elem, sizeof(T)); // do waiting consumer work
-        wake_one( cons );
-    } else __buf_insert( chan, elem );
-    
+    __buf_insert( chan, elem );
     unlock( mutex_lock );
-    return;
-}
-
-// handles buffer remove
-static inline void __buf_remove( channel(T) & chan, T & retval ) with(chan) {
-    memcpy((void *)&retval, (void *)&buffer[front], sizeof(T));
-    count -= 1;
-    front = (front + 1) % size;
 }
 
 // does the buffer remove and potentially does waiting producer work
 static inline void __do_remove( channel(T) & chan, T & retval ) with(chan) {
-    __buf_remove( chan, retval );
+    memcpy( (void *)&retval, (void *)&buffer[front], sizeof(T) );
+    count -= 1;
+    front = (front + 1) % size;
     if (count == size - 1 && !prods`isEmpty ) {
-        __buf_insert( chan, *(T *)prods`first.elem );  // do waiting producer work
+        if ( !__handle_waituntil_OR( prods ) ) return;
+        __buf_insert( chan, *(T *)prods`first.extra );  // do waiting producer work
         wake_one( prods );
     }
 }
@@ -232,7 +223,16 @@ static inline bool __internal_try_remove( channel(T) & chan, T & retval ) with(c
     #ifdef CHAN_STATS
     operations++;
     #endif
+
+    ZeroSize: if ( size == 0 && !prods`isEmpty ) {
+        if ( !__handle_waituntil_OR( prods ) ) break ZeroSize;
+        __prods_handoff( chan, retval );
+        unlock( mutex_lock );
+        return true;
+    }
+
     if ( count == 0 ) { unlock( mutex_lock ); return false; }
+
     __do_remove( chan, retval );
     unlock( mutex_lock );
     return true;
@@ -243,10 +243,11 @@ static inline bool __internal_try_remove( channel(T) & chan, T & retval ) with(c
 // returns [T, false] if insert was successful (T uninit)
 static inline [T, bool] try_remove( channel(T) & chan ) {
     T retval;
-    return [ retval, __internal_try_remove( chan, retval ) ];
+    bool success = __internal_try_remove( chan, retval );
+    return [ retval, success ];
 }
 
-static inline T try_remove( channel(T) & chan, T elem ) {
+static inline T try_remove( channel(T) & chan ) {
     T retval;
     __internal_try_remove( chan, retval );
     return retval;
@@ -254,7 +255,7 @@ static inline T try_remove( channel(T) & chan, T elem ) {
 
 // handles closed case of insert routine
 static inline void __closed_remove( channel(T) & chan, T & retval ) with(chan) {
-    channel_closed except{&channel_closed_vt, 0p, &chan };
+    channel_closed except{ &channel_closed_vt, 0p, &chan };
     throwResume except; // throw resumption
     if ( !__internal_try_remove( chan, retval ) ) throw except; // if try to remove fails (would block), throw termination
 }
@@ -278,15 +279,15 @@ static inline T remove( channel(T) & chan ) with(chan) {
     } 
 
     // have to check for the zero size channel case
-    if ( size == 0 && !prods`isEmpty ) {
-        memcpy((void *)&retval, (void *)prods`first.elem, sizeof(T));
-        wake_one( prods );
+    ZeroSize: if ( size == 0 && !prods`isEmpty ) {
+        if ( !__handle_waituntil_OR( prods ) ) break ZeroSize;
+        __prods_handoff( chan, retval );
         unlock( mutex_lock );
         return retval;
     }
 
     // wait if buffer is empty, work will be completed by someone else
-    if (count == 0) {
+    if ( count == 0 ) {
         #ifdef CHAN_STATS
         blocks++;
         #endif
@@ -298,8 +299,212 @@ static inline T remove( channel(T) & chan ) with(chan) {
 
     // Remove from buffer
     __do_remove( chan, retval );
-
     unlock( mutex_lock );
     return retval;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// The following is support for waituntil (select) statements
+///////////////////////////////////////////////////////////////////////////////////////////
+static inline bool unregister_chan( channel(T) & chan, select_node & node ) with(chan) {
+    // if ( !node`isListed && !node.park_counter ) return false; // handle special OR case
+    lock( mutex_lock );
+    if ( node`isListed ) { // op wasn't performed
+        #ifdef CHAN_STATS
+        operations--;
+        #endif
+        remove( node );
+        unlock( mutex_lock );
+        return false;
+    }
+    unlock( mutex_lock );
+
+    // only return true when not special OR case, not exceptional calse and status is SAT
+    return ( node.extra == 0p || !node.park_counter ) ? false : *node.clause_status == __SELECT_SAT;
+}
+
+// type used by select statement to capture a chan read as the selected operation
+struct chan_read {
+    T & ret;
+    channel(T) & chan;
+};
+
+static inline void ?{}( chan_read(T) & cr, channel(T) & chan, T & ret ) {
+    &cr.chan = &chan;
+    &cr.ret = &ret;
+}
+static inline chan_read(T) ?<<?( T & ret, channel(T) & chan ) { chan_read(T) cr{ chan, ret }; return cr; }
+
+static inline void __handle_select_closed_read( chan_read(T) & this, select_node & node ) with(this.chan, this) {
+    __closed_remove( chan, ret );
+    // if we get here then the insert succeeded
+    __make_select_node_available( node );
+}
+
+static inline bool register_select( chan_read(T) & this, select_node & node ) with(this.chan, this) {
+    lock( mutex_lock );
+    node.extra = &ret; // set .extra so that if it == 0p later in on_selected it is due to channel close
+
+    #ifdef CHAN_STATS
+    if ( !closed ) operations++;
+    #endif
+
+    if ( !node.park_counter ) {
+        // are we special case OR and front of cons is also special case OR
+        if ( !unlikely(closed) && !prods`isEmpty && prods`first.clause_status && !prods`first.park_counter ) {
+            if ( !__make_select_node_pending( node ) ) {
+                unlock( mutex_lock );
+                return false;
+            }
+            
+            if ( __handle_waituntil_OR( prods ) ) {
+                __prods_handoff( chan, ret );
+                unlock( mutex_lock );
+                return true;
+            }
+            __make_select_node_unsat( node );
+        }
+        // check if we can complete operation. If so race to establish winner in special OR case
+        if ( count != 0 || !prods`isEmpty || unlikely(closed) ) {
+            if ( !__make_select_node_available( node ) ) { // we didn't win the race so give up on registering
+                unlock( mutex_lock );
+                return false;
+            }
+        }
+    }
+
+    if ( unlikely(closed) ) {
+        unlock( mutex_lock );
+        __handle_select_closed_read( this, node );
+        return true;
+    }
+
+    // have to check for the zero size channel case
+    ZeroSize: if ( size == 0 && !prods`isEmpty ) {
+        if ( !__handle_waituntil_OR( prods ) ) break ZeroSize;
+        __prods_handoff( chan, ret );
+        __set_avail_then_unlock( node, mutex_lock );
+        return true;
+    }
+
+    // wait if buffer is empty, work will be completed by someone else
+    if ( count == 0 ) {
+        #ifdef CHAN_STATS
+        blocks++;
+        #endif
+        
+        insert_last( cons, node );
+        unlock( mutex_lock );
+        return false;
+    }
+
+    // Remove from buffer
+    __do_remove( chan, ret );
+    __set_avail_then_unlock( node, mutex_lock );
+    return true;
+}
+static inline bool unregister_select( chan_read(T) & this, select_node & node ) { return unregister_chan( this.chan, node ); }
+static inline bool on_selected( chan_read(T) & this, select_node & node ) with(this) {
+    if ( node.extra == 0p ) // check if woken up due to closed channel
+        __closed_remove( chan, ret );
+    // This is only reachable if not closed or closed exception was handled
+    return true;
+}
+
+// type used by select statement to capture a chan write as the selected operation
+struct chan_write {
+    T elem;
+    channel(T) & chan;
+};
+
+static inline void ?{}( chan_write(T) & cw, channel(T) & chan, T elem ) {
+    &cw.chan = &chan;
+    memcpy( (void *)&cw.elem, (void *)&elem, sizeof(T) );
+}
+static inline chan_write(T) ?>>?( T elem, channel(T) & chan ) { chan_write(T) cw{ chan, elem }; return cw; }
+
+static inline void __handle_select_closed_write( chan_write(T) & this, select_node & node ) with(this.chan, this) {
+    __closed_insert( chan, elem );
+    // if we get here then the insert succeeded
+    __make_select_node_available( node );
+}
+
+static inline bool register_select( chan_write(T) & this, select_node & node ) with(this.chan, this) {
+    lock( mutex_lock );
+    node.extra = &elem; // set .extra so that if it == 0p later in on_selected it is due to channel close
+
+    #ifdef CHAN_STATS
+    if ( !closed ) operations++;
+    #endif
+
+    // special OR case handling
+    if ( !node.park_counter ) {
+        // are we special case OR and front of cons is also special case OR
+        if ( !unlikely(closed) && !cons`isEmpty && cons`first.clause_status && !cons`first.park_counter ) {
+            if ( !__make_select_node_pending( node ) ) {
+                unlock( mutex_lock );
+                return false;
+            }
+            
+            if ( __handle_waituntil_OR( cons ) ) {
+                __cons_handoff( chan, elem );
+                unlock( mutex_lock );
+                return true;
+            }
+            __make_select_node_unsat( node );
+        }
+        // check if we can complete operation. If so race to establish winner in special OR case
+        if ( count != size || !cons`isEmpty || unlikely(closed) ) {
+            if ( !__make_select_node_available( node ) ) { // we didn't win the race so give up on registering
+                unlock( mutex_lock );
+                return false;
+            }
+        }
+    }
+
+    // if closed handle
+    if ( unlikely(closed) ) {
+        unlock( mutex_lock );
+        __handle_select_closed_write( this, node );
+        return true;
+    }
+
+    // handle blocked consumer case via handoff (buffer is implicitly empty)
+    ConsEmpty: if ( !cons`isEmpty ) {
+        if ( !__handle_waituntil_OR( cons ) ) break ConsEmpty;
+        __cons_handoff( chan, elem );
+        __set_avail_then_unlock( node, mutex_lock );
+        return true;
+    }
+
+    // insert node in list if buffer is full, work will be completed by someone else
+    if ( count == size ) {
+        #ifdef CHAN_STATS
+        blocks++;
+        #endif
+
+        insert_last( prods, node );
+        unlock( mutex_lock );
+        return false;
+    } // if
+
+    // otherwise carry out write either via normal insert
+    __buf_insert( chan, elem );
+    __set_avail_then_unlock( node, mutex_lock );
+    return true;
+}
+static inline bool unregister_select( chan_write(T) & this, select_node & node ) { return unregister_chan( this.chan, node ); }
+
+static inline bool on_selected( chan_write(T) & this, select_node & node ) with(this) { 
+    if ( node.extra == 0p ) // check if woken up due to closed channel
+        __closed_insert( chan, elem );
+
+    // This is only reachable if not closed or closed exception was handled
+    return true;
+}
+
+
 } // forall( T )
+
+
+

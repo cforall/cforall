@@ -16,6 +16,7 @@
 #pragma once
 // IWYU pragma: private, include "Pass.hpp"
 
+#include "Common/Iterate.hpp"
 #include "Common/Stats/Heap.h"
 namespace ast {
 	template<typename core_t> class Pass;
@@ -23,6 +24,14 @@ namespace ast {
 	struct PureVisitor;
 	template<typename node_t> node_t * deepCopy( const node_t * );
 }
+
+#ifdef PEDANTIC_PASS_ASSERT
+#define __pedantic_pass_assert(...) assert (__VA_ARGS__)
+#define __pedantic_pass_assertf(...) assertf(__VA_ARGS__)
+#else
+#define __pedantic_pass_assert(...)
+#define __pedantic_pass_assertf(...)
+#endif
 
 namespace ast::__pass {
 
@@ -129,7 +138,9 @@ struct result1 {
 	const node_t * value = nullptr;
 
 	template< typename object_t, typename super_t, typename field_t >
-	void apply( object_t *, field_t super_t::* field );
+	void apply( object_t * object, field_t super_t::* field ) {
+		object->*field = value;
+	}
 };
 
 /// The result is a container of statements.
@@ -149,13 +160,50 @@ struct resultNstmt {
 	container_t< delta > values;
 
 	template< typename object_t, typename super_t, typename field_t >
-	void apply( object_t *, field_t super_t::* field );
+	void apply( object_t * object, field_t super_t::* field ) {
+		field_t & container = object->*field;
+		__pedantic_pass_assert( container.size() <= values.size() );
+
+		auto cit = enumerate(container).begin();
+
+		container_t<ptr<Stmt>> nvals;
+		for ( delta & d : values ) {
+			if ( d.is_old ) {
+				__pedantic_pass_assert( cit.idx <= d.old_idx );
+				std::advance( cit, d.old_idx - cit.idx );
+				nvals.push_back( std::move( (*cit).val ) );
+			} else {
+				nvals.push_back( std::move( d.new_val ) );
+			}
+		}
+
+		container = std::move(nvals);
+	}
 
 	template< template<class...> class incontainer_t >
-	void take_all( incontainer_t<ptr<Stmt>> * stmts );
+	void take_all( incontainer_t<ptr<Stmt>> * stmts ) {
+		if ( !stmts || stmts->empty() ) return;
+
+		std::transform( stmts->begin(), stmts->end(), std::back_inserter( values ),
+			[](ast::ptr<ast::Stmt>& stmt) -> delta {
+				return delta( stmt.release(), -1, false );
+			});
+		stmts->clear();
+		differs = true;
+	}
 
 	template< template<class...> class incontainer_t >
-	void take_all( incontainer_t<ptr<Decl>> * decls );
+	void take_all( incontainer_t<ptr<Decl>> * decls ) {
+		if ( !decls || decls->empty() ) return;
+
+		std::transform( decls->begin(), decls->end(), std::back_inserter( values ),
+			[](ast::ptr<ast::Decl>& decl) -> delta {
+				ast::Decl const * d = decl.release();
+				return delta( new DeclStmt( d->location, d ), -1, false );
+			});
+		decls->clear();
+		differs = true;
+	}
 };
 
 /// The result is a container of nodes.
@@ -165,7 +213,18 @@ struct resultN {
 	container_t<ptr<node_t>> values;
 
 	template< typename object_t, typename super_t, typename field_t >
-	void apply( object_t *, field_t super_t::* field );
+	void apply( object_t * object, field_t super_t::* field ) {
+		field_t & container = object->*field;
+		__pedantic_pass_assert( container.size() == values.size() );
+
+		for ( size_t i = 0; i < container.size(); ++i ) {
+			// Take all the elements that are different in 'values'
+			// and swap them into 'container'
+			if ( values[i] != nullptr ) swap(container[i], values[i]);
+		}
+		// Now the original containers should still have the unchanged values
+		// but also contain the new values.
+	}
 };
 
 /// Used by previsit implementation
@@ -516,3 +575,6 @@ namespace result {
 }
 
 } // namespace ast::__pass
+
+#undef __pedantic_pass_assertf
+#undef __pedantic_pass_assert

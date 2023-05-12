@@ -49,8 +49,10 @@ public:
     virtual const ast::CatchClause *      visit( const ast::CatchClause          * ) = 0;
     virtual const ast::FinallyClause *    visit( const ast::FinallyClause        * ) = 0;
     virtual const ast::Stmt *             visit( const ast::SuspendStmt          * ) = 0;
+    virtual const ast::WhenClause *       visit( const ast::WhenClause           * ) = 0;
     virtual const ast::Stmt *             visit( const ast::WaitForStmt          * ) = 0;
     virtual const ast::WaitForClause *    visit( const ast::WaitForClause        * ) = 0;
+    virtual const ast::Stmt *             visit( const ast::WaitUntilStmt        * ) = 0;
     virtual const ast::Decl *             visit( const ast::WithStmt             * ) = 0;
     virtual const ast::NullStmt *         visit( const ast::NullStmt             * ) = 0;
     virtual const ast::Stmt *             visit( const ast::DeclStmt             * ) = 0;

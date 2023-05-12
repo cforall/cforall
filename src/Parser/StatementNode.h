@@ -99,5 +99,9 @@ ast::SuspendStmt * build_suspend( const CodeLocation &, StatementNode *, ast::Su
 ast::WaitForStmt * build_waitfor( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt );
 ast::WaitForStmt * build_waitfor_else( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, StatementNode * stmt );
 ast::WaitForStmt * build_waitfor_timeout( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt );
+ast::WaitUntilStmt::ClauseNode * build_waituntil_clause( const CodeLocation &, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt );
+ast::WaitUntilStmt::ClauseNode * build_waituntil_else( const CodeLocation &, ExpressionNode * when, StatementNode * stmt );
+ast::WaitUntilStmt::ClauseNode * build_waituntil_timeout( const CodeLocation &, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt );
+ast::WaitUntilStmt * build_waituntil_stmt( const CodeLocation &, ast::WaitUntilStmt::ClauseNode * root );
 ast::Stmt * build_with( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
 ast::Stmt * build_mutex( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );

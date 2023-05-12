@@ -1,8 +1,0 @@
-#include <locks.hfa>
-
-#define LOCK clh_lock
-#include "mutex_test.hfa"
-
-int main() {
-    test();
-}

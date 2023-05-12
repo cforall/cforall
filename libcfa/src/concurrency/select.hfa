@@ -1,63 +1,162 @@
 #pragma once
 
 #include "containers/list.hfa"
-#include <stdint.h>
-#include <kernel.hfa>
-#include <locks.hfa>
+// #include "alarm.hfa"
+#include "stdint.h"
+#include "kernel.hfa"
+#include "time.hfa"
 
+struct select_node;
+
+// node status
+static const unsigned long int __SELECT_UNSAT = 0;
+static const unsigned long int __SELECT_PENDING = 1; // used only by special OR case
+static const unsigned long int __SELECT_SAT = 2;
+static const unsigned long int __SELECT_RUN = 3;
+
+
+// these are used inside the compiler to aid in code generation
+static inline bool __CFA_has_clause_run( unsigned long int status ) { return status == __SELECT_RUN; }
+static inline void __CFA_maybe_park( int * park_counter ) {
+    if ( __atomic_sub_fetch( park_counter, 1, __ATOMIC_SEQ_CST) < 0 )
+        park();
+}
+
+// node used for coordinating waituntil synchronization
 struct select_node {
+    int * park_counter;                 // If this is 0p then the node is in a special OR case waituntil
+    unsigned long int * clause_status;  // needs to point at ptr sized location, if this is 0p then node is not part of a waituntil
+
+    void * extra;                       // used to store arbitrary data needed by some primitives
+
     thread$ * blocked_thread;
-    void ** race_flag;
     inline dlink(select_node);
 };
 P9_EMBEDDED( select_node, dlink(select_node) )
 
-void ?{}( select_node & this ) {
-    this.blocked_thread = 0p;
-    this.race_flag = 0p;
+static inline void ?{}( select_node & this ) {
+    this.blocked_thread = active_thread();
+    this.clause_status = 0p;
+    this.park_counter = 0p;
+    this.extra = 0p;
 }
 
-void ?{}( select_node & this, thread$ * blocked_thread ) {
+static inline void ?{}( select_node & this, thread$ * blocked_thread ) {
     this.blocked_thread = blocked_thread;
-    this.race_flag = 0p;
+    this.clause_status = 0p;
+    this.park_counter = 0p;
+    this.extra = 0p;
 }
 
-void ?{}( select_node & this, thread$ * blocked_thread, void ** race_flag ) {
+static inline void ?{}( select_node & this, thread$ * blocked_thread, void * extra ) {
     this.blocked_thread = blocked_thread;
-    this.race_flag = race_flag;
+    this.clause_status = 0p;
+    this.park_counter = 0p;
+    this.extra = extra;
 }
+static inline void ^?{}( select_node & this ) {}
 
-void ^?{}( select_node & this ) {}
+// this is used inside the compiler to aid in code generation
+static inline unsigned long int * __get_clause_status( select_node & s ) { return s.clause_status; }
 
+// this is used inside the compiler to attempt to establish an else clause as a winner in the OR special case race
+static inline bool __select_node_else_race( select_node & this ) with( this ) {
+    unsigned long int cmp_status = __SELECT_UNSAT;
+    return *clause_status == 0 
+            && __atomic_compare_exchange_n( clause_status, &cmp_status, __SELECT_SAT, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+}
 
 //-----------------------------------------------------------------------------
 // is_selectable
-trait is_selectable(T & | sized(T)) {
-    // For registering a select on a selectable concurrency primitive
-    // return 0p if primitive not accessible yet
-    // return 1p if primitive gets acquired
-    // return 2p if primitive is accessible but some other primitive won the race
-    // C_TODO: add enum for return values
-    void * register_select( T &, select_node & );
+forall(T & | sized(T))
+trait is_selectable {
+    // For registering a select stmt on a selectable concurrency primitive
+    // Returns bool that indicates if operation is already SAT
+    bool register_select( T &, select_node & );
 
-    void unregister_select( T &, select_node &  );
+    // For unregistering a select stmt on a selectable concurrency primitive
+    // If true is returned then the corresponding code block is run (only in non-special OR case and only if node status is not RUN)
+    bool unregister_select( T &, select_node &  );
+
+    // This routine is run on the selecting thread prior to executing the statement corresponding to the select_node
+    //    passed as an arg to this routine
+    // If on_selected returns false, the statement is not run, if it returns true it is run.
+    bool on_selected( T &, select_node & );
 };
 
-static inline bool install_select_winner( select_node & this, void * primitive_ptr ) with(this) {
-    // temporary needed for atomic instruction
-    void * cmp_flag = 0p;
-    
-    // if we dont win the selector race we need to potentially 
-    //   ignore this node and move to the next one so we return accordingly
-    if ( *race_flag != 0p || 
-        !__atomic_compare_exchange_n(
-            race_flag, 
-            &cmp_flag, 
-            primitive_ptr, 
-            false,
-            __ATOMIC_SEQ_CST,
-            __ATOMIC_SEQ_CST
-        )
-    ) return false; // lost race and some other node triggered select
-    return true; // won race so this node is what the select proceeds with
+//=============================================================================================
+// Waituntil Helpers
+//=============================================================================================
+
+// used for the 2-stage avail needed by the special OR case
+static inline bool __mark_select_node( select_node & this, unsigned long int val ) with( this ) {
+    /* paranoid */ verify( park_counter == 0p );
+    /* paranoid */ verify( clause_status != 0p );
+
+    unsigned long int cmp_status = __SELECT_UNSAT;
+    while( !__atomic_compare_exchange_n( clause_status, &cmp_status, val, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) {
+        if ( cmp_status != __SELECT_PENDING ) return false;
+        cmp_status = __SELECT_UNSAT;
+    }
+    return true;
 }
+
+static inline void __make_select_node_unsat( select_node & this ) with( this ) {
+    __atomic_store_n( clause_status, __SELECT_UNSAT, __ATOMIC_SEQ_CST );
+}
+
+static inline bool __make_select_node_pending( select_node & this ) with( this ) {
+    return __mark_select_node( this, __SELECT_PENDING );
+}
+
+// when a primitive becomes available it calls the following routine on it's node to update the select state:
+// return true if we want to unpark the thd
+static inline bool __make_select_node_available( select_node & this ) with( this ) {
+    /* paranoid */ verify( clause_status != 0p );
+    if( !park_counter )
+        return __mark_select_node( this, (unsigned long int)&this );
+    // return *clause_status == 0 
+    //     && __atomic_compare_exchange_n( clause_status, &cmp_status, (unsigned long int)&this, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ); // OR specific case where race was won
+
+    unsigned long int cmp_status = __SELECT_UNSAT;
+
+    return *clause_status == 0 // C_TODO might not need a cmp_xchg in non special OR case
+        && __atomic_compare_exchange_n( clause_status, &cmp_status, __SELECT_SAT, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) // can maybe just use atomic write
+        && !__atomic_add_fetch( park_counter, 1, __ATOMIC_SEQ_CST);
+}
+
+// Handles the special OR case of the waituntil statement
+// Since only one select node can win in the OR case, we need to race to set the node available BEFORE
+//    performing the operation since if we lose the race the operation should not be performed as it will be lost
+// Returns true if execution can continue normally and false if the queue has now been drained
+static inline bool __handle_waituntil_OR( dlist( select_node ) & queue ) {
+    if ( queue`isEmpty ) return false;
+    if ( queue`first.clause_status && !queue`first.park_counter ) {
+        while ( !queue`isEmpty ) {
+            // if node not a special OR case or if we win the special OR case race break
+            if ( !queue`first.clause_status || queue`first.park_counter || __make_select_node_available( queue`first ) ) { return true; }
+            // otherwise we lost the special OR race so discard node
+            try_pop_front( queue );
+        }
+        return false;
+    }
+    return true;
+}
+
+// wake one thread from the list
+static inline void wake_one( dlist( select_node ) & queue, select_node & popped ) {
+    if ( !popped.clause_status                              // normal case, node is not a select node
+        || ( popped.clause_status && !popped.park_counter ) // If popped link is special case OR selecting unpark but don't call __make_select_node_available
+        || __make_select_node_available( popped ) )         // check if popped link belongs to a selecting thread
+        unpark( popped.blocked_thread );
+}
+
+static inline void wake_one( dlist( select_node ) & queue ) { wake_one( queue, try_pop_front( queue ) ); }
+
+static inline void setup_clause( select_node & this, unsigned long int * clause_status, int * park_counter ) {
+    this.blocked_thread = active_thread();
+    this.clause_status = clause_status;
+    this.park_counter = park_counter;
+}
+
+

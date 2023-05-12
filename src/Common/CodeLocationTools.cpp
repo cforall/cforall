@@ -127,8 +127,10 @@ public:
     macro(CatchClause, CatchClause) \
     macro(FinallyClause, FinallyClause) \
     macro(SuspendStmt, Stmt) \
+    macro(WhenClause, WhenClause) \
     macro(WaitForStmt, Stmt) \
     macro(WaitForClause, WaitForClause) \
+    macro(WaitUntilStmt, Stmt) \
     macro(WithStmt, Decl) \
     macro(NullStmt, NullStmt) \
     macro(DeclStmt, Stmt) \

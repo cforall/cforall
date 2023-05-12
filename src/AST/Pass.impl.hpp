@@ -21,7 +21,6 @@
 
 #include "AST/TranslationUnit.hpp"
 #include "AST/TypeSubstitution.hpp"
-#include "Common/Iterate.hpp"
 
 #define VISIT_START( node ) \
 	using namespace ast; \
@@ -124,12 +123,6 @@ namespace ast {
 		bool differs( const container_t<ast::ptr< node_t >> &, const container_t<ast::ptr< node_t >> & new_val ) {
 			return !new_val.empty();
 		}
-	}
-
-	template< typename node_t >
-	template< typename object_t, typename super_t, typename field_t >
-	void __pass::result1< node_t >::apply( object_t * object, field_t super_t::* field ) {
-		object->*field = value;
 	}
 
 	template< typename core_t >
@@ -235,56 +228,6 @@ namespace ast {
 		return {true, compound};
 	}
 
-	template< template <class...> class container_t >
-	template< typename object_t, typename super_t, typename field_t >
-	void __pass::resultNstmt<container_t>::apply(object_t * object, field_t super_t::* field) {
-		auto & container = object->*field;
-		__pedantic_pass_assert( container.size() <= values.size() );
-
-		auto cit = enumerate(container).begin();
-
-		container_t<ptr<Stmt>> nvals;
-		for (delta & d : values) {
-			if ( d.is_old ) {
-				__pedantic_pass_assert( cit.idx <= d.old_idx );
-				std::advance( cit, d.old_idx - cit.idx );
-				nvals.push_back( std::move( (*cit).val) );
-			} else {
-				nvals.push_back( std::move(d.new_val) );
-			}
-		}
-
-		container = std::move(nvals);
-	}
-
-	template< template <class...> class container_t >
-	template< template <class...> class incontainer_t >
-	void __pass::resultNstmt< container_t >::take_all( incontainer_t<ptr<Stmt>> * stmts ) {
-		if (!stmts || stmts->empty()) return;
-
-		std::transform(stmts->begin(), stmts->end(), std::back_inserter( values ),
-			[](ast::ptr<ast::Stmt>& stmt) -> delta {
-				return delta( stmt.release(), -1, false );
-			});
-		stmts->clear();
-		differs = true;
-	}
-
-	template< template<class...> class container_t >
-	template< template<class...> class incontainer_t >
-	void __pass::resultNstmt< container_t >::take_all( incontainer_t<ptr<Decl>> * decls ) {
-		if (!decls || decls->empty()) return;
-
-		std::transform(decls->begin(), decls->end(), std::back_inserter( values ),
-			[](ast::ptr<ast::Decl>& decl) -> delta {
-				auto loc = decl->location;
-				auto stmt = new DeclStmt( loc, decl.release() );
-				return delta( stmt, -1, false );
-			});
-		decls->clear();
-		differs = true;
-	}
-
 	template< typename core_t >
 	template< template <class...> class container_t >
 	__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept( const container_t< ptr<Stmt> > & statements ) {
@@ -352,22 +295,6 @@ namespace ast {
 		if ( !errors.isEmpty() ) { throw errors; }
 
 		return new_kids;
-	}
-
-	template< template <class...> class container_t, typename node_t >
-	template< typename object_t, typename super_t, typename field_t >
-	void __pass::resultN<container_t, node_t>::apply(object_t * object, field_t super_t::* field) {
-		auto & container = object->*field;
-		__pedantic_pass_assert( container.size() == values.size() );
-
-		for(size_t i = 0; i < container.size(); i++) {
-			// Take all the elements that are different in 'values'
-			// and swap them into 'container'
-			if( values[i] != nullptr ) swap(container[i], values[i]);
-		}
-
-		// Now the original containers should still have the unchanged values
-		// but also contain the new values
 	}
 
 	template< typename core_t >
@@ -1065,6 +992,21 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::SuspendStmt * node ) {
 }
 
 //--------------------------------------------------------------------------
+// WhenClause
+template< typename core_t >
+const ast::WhenClause * ast::Pass< core_t >::visit( const ast::WhenClause * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		maybe_accept( node, &WhenClause::target );
+		maybe_accept( node, &WhenClause::stmt );
+		maybe_accept( node, &WhenClause::when_cond );
+	}
+
+	VISIT_END( WhenClause, node );
+}
+
+//--------------------------------------------------------------------------
 // WaitForStmt
 template< typename core_t >
 const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitForStmt * node ) {
@@ -1089,13 +1031,31 @@ const ast::WaitForClause * ast::Pass< core_t >::visit( const ast::WaitForClause 
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		maybe_accept( node, &WaitForClause::target_func );
+		maybe_accept( node, &WaitForClause::target );
 		maybe_accept( node, &WaitForClause::target_args );
 		maybe_accept( node, &WaitForClause::stmt );
-		maybe_accept( node, &WaitForClause::cond );
+		maybe_accept( node, &WaitForClause::when_cond );
 	}
 
 	VISIT_END( WaitForClause, node );
+}
+
+//--------------------------------------------------------------------------
+// WaitUntilStmt
+template< typename core_t >
+const ast::Stmt * ast::Pass< core_t >::visit( const ast::WaitUntilStmt * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		maybe_accept( node, &WaitUntilStmt::clauses );
+		maybe_accept( node, &WaitUntilStmt::timeout_time );
+		maybe_accept( node, &WaitUntilStmt::timeout_stmt );
+		maybe_accept( node, &WaitUntilStmt::timeout_cond );
+		maybe_accept( node, &WaitUntilStmt::else_stmt );
+		maybe_accept( node, &WaitUntilStmt::else_cond );
+	}
+
+	VISIT_END( Stmt, node );
 }
 
 //--------------------------------------------------------------------------
@@ -2202,5 +2162,7 @@ const ast::TypeSubstitution * ast::Pass< core_t >::visit( const ast::TypeSubstit
 	VISIT_END( TypeSubstitution, node );
 }
 
+#undef __pedantic_pass_assertf
+#undef __pedantic_pass_assert
 #undef VISIT_START
 #undef VISIT_END

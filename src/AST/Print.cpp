@@ -207,6 +207,33 @@ private:
 		os << endl;
 	}
 
+    void print( const ast::WaitStmt * node ) {
+		if ( node->timeout_time ) {
+			os << indent-1 << "timeout of:" << endl;
+			node->timeout_time->accept( *this );
+
+			if ( node->timeout_stmt ) {
+				os << indent-1 << "... with statment:" << endl;
+				node->timeout_stmt->accept( *this );
+			}
+
+			if ( node->timeout_cond ) {
+				os << indent-1 << "... with condition:" << endl;
+				node->timeout_cond->accept( *this );
+			}
+		}
+
+		if ( node->else_stmt ) {
+			os << indent-1 << "else:" << endl;
+			node->else_stmt->accept( *this );
+
+			if ( node->else_cond ) {
+				os << indent-1 << "... with condition:" << endl;
+				node->else_cond->accept( *this );
+			}
+		}
+	}
+
 	void preprint( const ast::NamedTypeDecl * node ) {
 		if ( ! node->name.empty() ) {
 			os << node->name << ": ";
@@ -755,6 +782,23 @@ public:
 		return node;
 	}
 
+	virtual const ast::WhenClause * visit( const ast::WhenClause * node ) override final {
+		os << indent-1 << "target: ";
+		safe_print( node->target );
+
+		if ( node->stmt ) {
+			os << indent-1 << "... with statment:" << endl;
+			node->stmt->accept( *this );
+		}
+
+		if ( node->when_cond ) {
+			os << indent-1 << "... with when condition:" << endl;
+			node->when_cond->accept( *this );
+		}
+
+		return node;
+	}
+
 	virtual const ast::Stmt * visit( const ast::WaitForStmt * node ) override final {
 		os << "Waitfor Statement" << endl;
 		indent += 2;
@@ -792,7 +836,7 @@ public:
 
 	virtual const ast::WaitForClause * visit( const ast::WaitForClause * node ) override final {
 		os << indent-1 << "target function: ";
-		safe_print( node->target_func );
+		safe_print( node->target );
 
 		if ( !node->target_args.empty() ) {
 			os << endl << indent-1 << "... with arguments:" << endl;
@@ -806,11 +850,21 @@ public:
 			node->stmt->accept( *this );
 		}
 
-		if ( node->cond ) {
+		if ( node->when_cond ) {
 			os << indent-1 << "... with condition:" << endl;
-			node->cond->accept( *this );
+			node->when_cond->accept( *this );
 		}
 
+		return node;
+	}
+
+    virtual const ast::Stmt * visit( const ast::WaitUntilStmt * node ) override final {
+		os << "Waituntil Statement" << endl;
+		indent += 2;
+		for( const auto & clause : node->clauses ) {
+			clause->accept( *this );
+		}
+        print(node);    // calls print( const ast::WaitStmt * node )
 		return node;
 	}
 

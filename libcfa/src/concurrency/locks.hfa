@@ -29,6 +29,8 @@
 #include "time_t.hfa"
 #include "time.hfa"
 
+#include "select.hfa"
+
 #include <fstream.hfa>
 
 // futex headers
@@ -40,6 +42,29 @@
 // - appropriate separation of interface and impl
 // - clean up unused/unneeded locks
 // - change messy big blocking lock from inheritance to composition to remove need for flags
+
+typedef void (*__cfa_pre_park)( void * );
+
+static inline void pre_park_noop( void * ) {}
+
+//-----------------------------------------------------------------------------
+// is_blocking_lock
+forall( L & | sized(L) )
+trait is_blocking_lock {
+	// For synchronization locks to use when acquiring
+	void on_notify( L &, struct thread$ * );
+
+	// For synchronization locks to use when releasing
+	size_t on_wait( L &, __cfa_pre_park pp_fn, void * pp_datum );
+
+	// to set recursion count after getting signalled;
+	void on_wakeup( L &, size_t recursion );
+};
+
+static inline void pre_park_then_park( __cfa_pre_park pp_fn, void * pp_datum ) {
+    pp_fn( pp_datum );
+    park();
+}
 
 //-----------------------------------------------------------------------------
 // Semaphore
@@ -66,9 +91,12 @@ static inline void ^?{}( single_acquisition_lock & this ) {}
 static inline void   lock     ( single_acquisition_lock & this ) { lock    ( (blocking_lock &)this ); }
 static inline bool   try_lock ( single_acquisition_lock & this ) { return try_lock( (blocking_lock &)this ); }
 static inline void   unlock   ( single_acquisition_lock & this ) { unlock  ( (blocking_lock &)this ); }
-static inline size_t on_wait  ( single_acquisition_lock & this ) { return on_wait ( (blocking_lock &)this ); }
+static inline size_t on_wait  ( single_acquisition_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { return on_wait ( (blocking_lock &)this, pp_fn, pp_datum ); }
 static inline void   on_wakeup( single_acquisition_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
 static inline void   on_notify( single_acquisition_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
+static inline bool   register_select( single_acquisition_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
+static inline bool   unregister_select( single_acquisition_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
+static inline bool   on_selected( single_acquisition_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
 
 //----------
 struct owner_lock {
@@ -80,9 +108,12 @@ static inline void ^?{}( owner_lock & this ) {}
 static inline void   lock     ( owner_lock & this ) { lock    ( (blocking_lock &)this ); }
 static inline bool   try_lock ( owner_lock & this ) { return try_lock( (blocking_lock &)this ); }
 static inline void   unlock   ( owner_lock & this ) { unlock  ( (blocking_lock &)this ); }
-static inline size_t on_wait  ( owner_lock & this ) { return on_wait ( (blocking_lock &)this ); }
+static inline size_t on_wait  ( owner_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { return on_wait ( (blocking_lock &)this, pp_fn, pp_datum ); }
 static inline void   on_wakeup( owner_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
 static inline void   on_notify( owner_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
+static inline bool   register_select( owner_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
+static inline bool   unregister_select( owner_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
+static inline bool   on_selected( owner_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
 
 //-----------------------------------------------------------------------------
 // MCS Lock
@@ -179,7 +210,7 @@ static inline int internal_exchange(futex_mutex & this) with(this) {
 }
 
 // if this is called recursively IT WILL DEADLOCK!!!!!
-static inline void lock(futex_mutex & this) with(this) {
+static inline void lock( futex_mutex & this ) with(this) {
 	int state;
 
 	for( int spin = 4; spin < 1024; spin += spin) {
@@ -189,9 +220,6 @@ static inline void lock(futex_mutex & this) with(this) {
 		if (2 == state) break;
 		for (int i = 0; i < spin; i++) Pause();
 	}
-
-	// // no contention try to acquire
-	// if (internal_try_lock(this, state)) return;
 	
 	// if not in contended state, set to be in contended state
 	if (state != 2) state = internal_exchange(this);
@@ -212,7 +240,11 @@ static inline void unlock(futex_mutex & this) with(this) {
 }
 
 static inline void on_notify( futex_mutex & f, thread$ * t){ unpark(t); }
-static inline size_t on_wait( futex_mutex & f ) {unlock(f); return 0;}
+static inline size_t on_wait( futex_mutex & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
+    unlock( this );
+    pre_park_then_park( pp_fn, pp_datum );
+    return 0;
+}
 
 // to set recursion count after getting signalled;
 static inline void on_wakeup( futex_mutex & f, size_t recursion ) {}
@@ -243,7 +275,7 @@ static inline int internal_exchange(go_mutex & this, int swap ) with(this) {
 }
 
 // if this is called recursively IT WILL DEADLOCK!!!!!
-static inline void lock(go_mutex & this) with(this) {
+static inline void lock( go_mutex & this ) with( this ) {
 	int state, init_state;
 
     // speculative grab
@@ -254,66 +286,40 @@ static inline void lock(go_mutex & this) with(this) {
         for( int i = 0; i < 4; i++ ) {
             while( !val ) { // lock unlocked
                 state = 0;
-                if (internal_try_lock(this, state, init_state)) return;
+                if ( internal_try_lock( this, state, init_state ) ) return;
             }
             for (int i = 0; i < 30; i++) Pause();
         }
 
         while( !val ) { // lock unlocked
             state = 0;
-            if (internal_try_lock(this, state, init_state)) return;
+            if ( internal_try_lock( this, state, init_state ) ) return;
         }
         sched_yield();
         
         // if not in contended state, set to be in contended state
-        state = internal_exchange(this, 2);
+        state = internal_exchange( this, 2 );
         if ( !state ) return; // state == 0
         init_state = 2;
-        futex((int*)&val, FUTEX_WAIT, 2); // if val is not 2 this returns with EWOULDBLOCK
+        futex( (int*)&val, FUTEX_WAIT, 2 ); // if val is not 2 this returns with EWOULDBLOCK
     }
 }
 
 static inline void unlock( go_mutex & this ) with(this) {
 	// if uncontended do atomic unlock and then return
-    if (__atomic_exchange_n(&val, 0, __ATOMIC_RELEASE) == 1) return;
+    if ( __atomic_exchange_n(&val, 0, __ATOMIC_RELEASE) == 1 ) return;
 	
 	// otherwise threads are blocked so we must wake one
-	futex((int *)&val, FUTEX_WAKE, 1);
+	futex( (int *)&val, FUTEX_WAKE, 1 );
 }
 
-static inline void on_notify( go_mutex & f, thread$ * t){ unpark(t); }
-static inline size_t on_wait( go_mutex & f ) {unlock(f); return 0;}
+static inline void on_notify( go_mutex & f, thread$ * t){ unpark( t ); }
+static inline size_t on_wait( go_mutex & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
+    unlock( this );
+    pre_park_then_park( pp_fn, pp_datum );
+    return 0;
+}
 static inline void on_wakeup( go_mutex & f, size_t recursion ) {}
-
-//-----------------------------------------------------------------------------
-// CLH Spinlock
-// - No recursive acquisition
-// - Needs to be released by owner
-
-struct clh_lock {
-	volatile bool * volatile tail;
-    volatile bool * volatile head;
-};
-
-static inline void  ?{}( clh_lock & this ) { this.tail = malloc(); *this.tail = true; }
-static inline void ^?{}( clh_lock & this ) { free(this.tail); }
-
-static inline void lock(clh_lock & l) {
-	thread$ * curr_thd = active_thread();
-	*(curr_thd->clh_node) = false;
-	volatile bool * prev = __atomic_exchange_n((bool **)(&l.tail), (bool *)(curr_thd->clh_node), __ATOMIC_SEQ_CST);
-	while(!__atomic_load_n(prev, __ATOMIC_SEQ_CST)) Pause();
-    __atomic_store_n((bool **)(&l.head), (bool *)curr_thd->clh_node, __ATOMIC_SEQ_CST);
-    curr_thd->clh_node = prev;
-}
-
-static inline void unlock(clh_lock & l) {
-	__atomic_store_n((bool *)(l.head), true, __ATOMIC_SEQ_CST);
-}
-
-static inline void on_notify(clh_lock & this, struct thread$ * t ) { unpark(t); }
-static inline size_t on_wait(clh_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(clh_lock & this, size_t recursion ) { lock(this); }
 
 //-----------------------------------------------------------------------------
 // Exponential backoff then block lock
@@ -336,17 +342,17 @@ static inline void  ?{}( exp_backoff_then_block_lock & this ) {
 
 static inline void  ^?{}( exp_backoff_then_block_lock & this ){}
 
-static inline bool internal_try_lock(exp_backoff_then_block_lock & this, size_t & compare_val) with(this) {
+static inline bool internal_try_lock( exp_backoff_then_block_lock & this, size_t & compare_val ) with(this) {
 	return __atomic_compare_exchange_n(&lock_value, &compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED);
 }
 
-static inline bool try_lock(exp_backoff_then_block_lock & this) { size_t compare_val = 0; return internal_try_lock(this, compare_val); }
+static inline bool try_lock( exp_backoff_then_block_lock & this ) { size_t compare_val = 0; return internal_try_lock( this, compare_val ); }
 
-static inline bool try_lock_contention(exp_backoff_then_block_lock & this) with(this) {
-	return !__atomic_exchange_n(&lock_value, 2, __ATOMIC_ACQUIRE);
+static inline bool try_lock_contention( exp_backoff_then_block_lock & this ) with(this) {
+	return !__atomic_exchange_n( &lock_value, 2, __ATOMIC_ACQUIRE );
 }
 
-static inline bool block(exp_backoff_then_block_lock & this) with(this) {
+static inline bool block( exp_backoff_then_block_lock & this ) with(this) {
     lock( spinlock __cfaabi_dbg_ctx2 );
     if (__atomic_load_n( &lock_value, __ATOMIC_SEQ_CST) != 2) {
         unlock( spinlock );
@@ -358,7 +364,7 @@ static inline bool block(exp_backoff_then_block_lock & this) with(this) {
 	return true;
 }
 
-static inline void lock(exp_backoff_then_block_lock & this) with(this) {
+static inline void lock( exp_backoff_then_block_lock & this ) with(this) {
 	size_t compare_val = 0;
 	int spin = 4;
 
@@ -377,7 +383,7 @@ static inline void lock(exp_backoff_then_block_lock & this) with(this) {
 	while (block(this)) if(try_lock_contention(this)) return;
 }
 
-static inline void unlock(exp_backoff_then_block_lock & this) with(this) {
+static inline void unlock( exp_backoff_then_block_lock & this ) with(this) {
     if (__atomic_exchange_n(&lock_value, 0, __ATOMIC_RELEASE) == 1) return;
     lock( spinlock __cfaabi_dbg_ctx2 );
     thread$ * t = &try_pop_front( blocked_threads );
@@ -385,9 +391,13 @@ static inline void unlock(exp_backoff_then_block_lock & this) with(this) {
     unpark( t );
 }
 
-static inline void on_notify(exp_backoff_then_block_lock & this, struct thread$ * t ) { unpark(t); }
-static inline size_t on_wait(exp_backoff_then_block_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(exp_backoff_then_block_lock & this, size_t recursion ) { lock(this); }
+static inline void on_notify( exp_backoff_then_block_lock & this, struct thread$ * t ) { unpark( t ); }
+static inline size_t on_wait( exp_backoff_then_block_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
+    unlock( this );
+    pre_park_then_park( pp_fn, pp_datum );
+    return 0;
+}
+static inline void on_wakeup( exp_backoff_then_block_lock & this, size_t recursion ) { lock( this ); }
 
 //-----------------------------------------------------------------------------
 // Fast Block Lock
@@ -417,7 +427,7 @@ static inline void ?{}( fast_block_lock & this, fast_block_lock this2 ) = void;
 static inline void ?=?( fast_block_lock & this, fast_block_lock this2 ) = void;
 
 // if this is called recursively IT WILL DEADLOCK!!!!!
-static inline void lock(fast_block_lock & this) with(this) {
+static inline void lock( fast_block_lock & this ) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	if ( held ) {
 		insert_last( blocked_threads, *active_thread() );
@@ -429,7 +439,7 @@ static inline void lock(fast_block_lock & this) with(this) {
 	unlock( lock );
 }
 
-static inline void unlock(fast_block_lock & this) with(this) {
+static inline void unlock( fast_block_lock & this ) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	/* paranoid */ verifyf( held != false, "Attempt to release lock %p that isn't held", &this );
 	thread$ * t = &try_pop_front( blocked_threads );
@@ -438,13 +448,17 @@ static inline void unlock(fast_block_lock & this) with(this) {
 	unlock( lock );
 }
 
-static inline void on_notify(fast_block_lock & this, struct thread$ * t ) with(this) {
+static inline void on_notify( fast_block_lock & this, struct thread$ * t ) with(this) {
     lock( lock __cfaabi_dbg_ctx2 );
     insert_last( blocked_threads, *t );
     unlock( lock );
 }
-static inline size_t on_wait(fast_block_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(fast_block_lock & this, size_t recursion ) { }
+static inline size_t on_wait( fast_block_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
+    unlock( this );
+    pre_park_then_park( pp_fn, pp_datum );
+    return 0;
+}
+static inline void on_wakeup( fast_block_lock & this, size_t recursion ) { }
 
 //-----------------------------------------------------------------------------
 // simple_owner_lock
@@ -455,7 +469,7 @@ static inline void on_wakeup(fast_block_lock & this, size_t recursion ) { }
 // - ownership
 struct simple_owner_lock {
 	// List of blocked threads
-	dlist( thread$ ) blocked_threads;
+	dlist( select_node ) blocked_threads;
 
 	// Spin lock used for mutual exclusion
 	__spinlock_t lock;
@@ -476,15 +490,16 @@ static inline void ^?{}( simple_owner_lock & this ) {}
 static inline void ?{}( simple_owner_lock & this, simple_owner_lock this2 ) = void;
 static inline void ?=?( simple_owner_lock & this, simple_owner_lock this2 ) = void;
 
-static inline void lock(simple_owner_lock & this) with(this) {
-	if (owner == active_thread()) {
+static inline void lock( simple_owner_lock & this ) with(this) {
+	if ( owner == active_thread() ) {
 		recursion_count++;
 		return;
 	}
 	lock( lock __cfaabi_dbg_ctx2 );
 
-	if (owner != 0p) {
-		insert_last( blocked_threads, *active_thread() );
+	if ( owner != 0p ) {
+        select_node node;
+		insert_last( blocked_threads, node );
 		unlock( lock );
 		park( );
 		return;
@@ -494,35 +509,37 @@ static inline void lock(simple_owner_lock & this) with(this) {
 	unlock( lock );
 }
 
-// TODO: fix duplicate def issue and bring this back
-// void pop_and_set_new_owner( simple_owner_lock & this ) with( this ) {
-	// thread$ * t = &try_pop_front( blocked_threads );
-	// owner = t;
-	// recursion_count = ( t ? 1 : 0 );
-	// unpark( t );
-// }
+static inline void pop_node( simple_owner_lock & this ) with(this) {
+    __handle_waituntil_OR( blocked_threads );
+    select_node * node = &try_pop_front( blocked_threads );
+    if ( node ) {
+        owner = node->blocked_thread;
+        recursion_count = 1;
+        // if ( !node->clause_status || __make_select_node_available( *node ) ) unpark( node->blocked_thread );
+        wake_one( blocked_threads, *node );
+    } else {
+        owner = 0p;
+        recursion_count = 0;
+    }
+}
 
-static inline void unlock(simple_owner_lock & this) with(this) {
+static inline void unlock( simple_owner_lock & this ) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	/* paranoid */ verifyf( owner != 0p, "Attempt to release lock %p that isn't held", &this );
 	/* paranoid */ verifyf( owner == active_thread(), "Thread %p other than the owner %p attempted to release owner lock %p", owner, active_thread(), &this );
 	// if recursion count is zero release lock and set new owner if one is waiting
 	recursion_count--;
 	if ( recursion_count == 0 ) {
-		// pop_and_set_new_owner( this );
-		thread$ * t = &try_pop_front( blocked_threads );
-		owner = t;
-		recursion_count = ( t ? 1 : 0 );
-		unpark( t );
+		pop_node( this );
 	}
 	unlock( lock );
 }
 
-static inline void on_notify(simple_owner_lock & this, struct thread$ * t ) with(this) {
+static inline void on_notify( simple_owner_lock & this, thread$ * t ) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	// lock held
 	if ( owner != 0p ) {
-		insert_last( blocked_threads, *t );
+		insert_last( blocked_threads, *(select_node *)t->link_node );
 	}
 	// lock not held
 	else {
@@ -533,25 +550,79 @@ static inline void on_notify(simple_owner_lock & this, struct thread$ * t ) with
 	unlock( lock );
 }
 
-static inline size_t on_wait(simple_owner_lock & this) with(this) {
+static inline size_t on_wait( simple_owner_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	/* paranoid */ verifyf( owner != 0p, "Attempt to release lock %p that isn't held", &this );
 	/* paranoid */ verifyf( owner == active_thread(), "Thread %p other than the owner %p attempted to release owner lock %p", owner, active_thread(), &this );
 
 	size_t ret = recursion_count;
 
-	// pop_and_set_new_owner( this );
+	pop_node( this );
 
-	thread$ * t = &try_pop_front( blocked_threads );
-	owner = t;
-	recursion_count = ( t ? 1 : 0 );
-	unpark( t );
-
+    select_node node;
+    active_thread()->link_node = (void *)&node;
 	unlock( lock );
+
+    pre_park_then_park( pp_fn, pp_datum );
+
 	return ret;
 }
 
-static inline void on_wakeup(simple_owner_lock & this, size_t recursion ) with(this) { recursion_count = recursion; }
+static inline void on_wakeup( simple_owner_lock & this, size_t recursion ) with(this) { recursion_count = recursion; }
+
+// waituntil() support
+static inline bool register_select( simple_owner_lock & this, select_node & node ) with(this) {
+    lock( lock __cfaabi_dbg_ctx2 );
+
+    // check if we can complete operation. If so race to establish winner in special OR case
+    if ( !node.park_counter && ( owner == active_thread() || owner == 0p ) ) {
+        if ( !__make_select_node_available( node ) ) { // we didn't win the race so give up on registering
+           unlock( lock );
+           return false;
+        }
+    }
+
+    if ( owner == active_thread() ) {
+		recursion_count++;
+        if ( node.park_counter ) __make_select_node_available( node );
+        unlock( lock );
+		return true;
+	}
+
+    if ( owner != 0p ) {
+		insert_last( blocked_threads, node );
+		unlock( lock );
+		return false;
+	}
+    
+	owner = active_thread();
+	recursion_count = 1;
+
+    if ( node.park_counter ) __make_select_node_available( node );
+    unlock( lock );
+    return true;
+}
+
+static inline bool unregister_select( simple_owner_lock & this, select_node & node ) with(this) {
+    lock( lock __cfaabi_dbg_ctx2 );
+    if ( node`isListed ) {
+        remove( node );
+        unlock( lock );
+        return false;
+    }
+
+    if ( owner == active_thread() ) {
+        recursion_count--;
+        if ( recursion_count == 0 ) {
+            pop_node( this );
+        }
+    }
+    unlock( lock );
+    return false;
+}
+
+static inline bool on_selected( simple_owner_lock & this, select_node & node ) { return true; }
+
 
 //-----------------------------------------------------------------------------
 // Spin Queue Lock
@@ -577,7 +648,7 @@ static inline void ?{}( spin_queue_lock & this, spin_queue_lock this2 ) = void;
 static inline void ?=?( spin_queue_lock & this, spin_queue_lock this2 ) = void;
 
 // if this is called recursively IT WILL DEADLOCK!
-static inline void lock(spin_queue_lock & this) with(this) {
+static inline void lock( spin_queue_lock & this ) with(this) {
 	mcs_spin_node node;
 	lock( lock, node );
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
@@ -585,15 +656,19 @@ static inline void lock(spin_queue_lock & this) with(this) {
 	unlock( lock, node );
 }
 
-static inline void unlock(spin_queue_lock & this) with(this) {
+static inline void unlock( spin_queue_lock & this ) with(this) {
 	__atomic_store_n(&held, false, __ATOMIC_RELEASE);
 }
 
-static inline void on_notify(spin_queue_lock & this, struct thread$ * t ) {
+static inline void on_notify( spin_queue_lock & this, struct thread$ * t ) {
 	unpark(t);
 }
-static inline size_t on_wait(spin_queue_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(spin_queue_lock & this, size_t recursion ) { lock(this); }
+static inline size_t on_wait( spin_queue_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
+    unlock( this );
+    pre_park_then_park( pp_fn, pp_datum );
+    return 0;
+}
+static inline void on_wakeup( spin_queue_lock & this, size_t recursion ) { lock( this ); }
 
 
 //-----------------------------------------------------------------------------
@@ -620,7 +695,7 @@ static inline void ?{}( mcs_block_spin_lock & this, mcs_block_spin_lock this2 ) 
 static inline void ?=?( mcs_block_spin_lock & this, mcs_block_spin_lock this2 ) = void;
 
 // if this is called recursively IT WILL DEADLOCK!!!!!
-static inline void lock(mcs_block_spin_lock & this) with(this) {
+static inline void lock( mcs_block_spin_lock & this ) with(this) {
 	mcs_node node;
 	lock( lock, node );
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
@@ -632,9 +707,13 @@ static inline void unlock(mcs_block_spin_lock & this) with(this) {
 	__atomic_store_n(&held, false, __ATOMIC_SEQ_CST);
 }
 
-static inline void on_notify(mcs_block_spin_lock & this, struct thread$ * t ) { unpark(t); }
-static inline size_t on_wait(mcs_block_spin_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(mcs_block_spin_lock & this, size_t recursion ) {lock(this); }
+static inline void on_notify( mcs_block_spin_lock & this, struct thread$ * t ) { unpark( t ); }
+static inline size_t on_wait( mcs_block_spin_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
+    unlock( this );
+    pre_park_then_park( pp_fn, pp_datum );
+    return 0;
+}
+static inline void on_wakeup( mcs_block_spin_lock & this, size_t recursion ) {lock( this ); }
 
 //-----------------------------------------------------------------------------
 // Block Spin Lock
@@ -660,18 +739,18 @@ static inline void ?{}( block_spin_lock & this, block_spin_lock this2 ) = void;
 static inline void ?=?( block_spin_lock & this, block_spin_lock this2 ) = void;
 
 // if this is called recursively IT WILL DEADLOCK!!!!!
-static inline void lock(block_spin_lock & this) with(this) {
+static inline void lock( block_spin_lock & this ) with(this) {
 	lock( lock );
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
 	__atomic_store_n(&held, true, __ATOMIC_RELEASE);
 	unlock( lock );
 }
 
-static inline void unlock(block_spin_lock & this) with(this) {
+static inline void unlock( block_spin_lock & this ) with(this) {
 	__atomic_store_n(&held, false, __ATOMIC_RELEASE);
 }
 
-static inline void on_notify(block_spin_lock & this, struct thread$ * t ) with(this.lock) {
+static inline void on_notify( block_spin_lock & this, struct thread$ * t ) with(this.lock) {
 	// first we acquire internal fast_block_lock
 	lock( lock __cfaabi_dbg_ctx2 );
 	if ( held ) { // if internal fast_block_lock is held
@@ -685,8 +764,12 @@ static inline void on_notify(block_spin_lock & this, struct thread$ * t ) with(t
 
 	unpark(t);
 }
-static inline size_t on_wait(block_spin_lock & this) { unlock(this); return 0; }
-static inline void on_wakeup(block_spin_lock & this, size_t recursion ) with(this) {
+static inline size_t on_wait( block_spin_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
+    unlock( this );
+    pre_park_then_park( pp_fn, pp_datum );
+    return 0;
+}
+static inline void on_wakeup( block_spin_lock & this, size_t recursion ) with(this) {
 	// now we acquire the entire block_spin_lock upon waking up
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();
 	__atomic_store_n(&held, true, __ATOMIC_RELEASE);
@@ -694,29 +777,11 @@ static inline void on_wakeup(block_spin_lock & this, size_t recursion ) with(thi
 }
 
 //-----------------------------------------------------------------------------
-// is_blocking_lock
-forall( L & | sized(L) )
-trait is_blocking_lock {
-	// For synchronization locks to use when acquiring
-	void on_notify( L &, struct thread$ * );
-
-	// For synchronization locks to use when releasing
-	size_t on_wait( L & );
-
-	// to set recursion count after getting signalled;
-	void on_wakeup( L &, size_t recursion );
-};
-
-//-----------------------------------------------------------------------------
 // // info_thread
 // // the info thread is a wrapper around a thread used
 // // to store extra data for use in the condition variable
 forall(L & | is_blocking_lock(L)) {
 	struct info_thread;
-
-	// // for use by sequence
-	// info_thread(L) *& Back( info_thread(L) * this );
-	// info_thread(L) *& Next( info_thread(L) * this );
 }
 
 //-----------------------------------------------------------------------------

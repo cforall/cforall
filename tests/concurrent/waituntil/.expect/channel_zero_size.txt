@@ -1,0 +1,4 @@
+start
+sending sentinels
+joining servers
+done

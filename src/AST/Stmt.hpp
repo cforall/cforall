@@ -377,18 +377,48 @@ class SuspendStmt final : public Stmt {
 	MUTATE_FRIEND
 };
 
-// Waitfor statement: when (...) waitfor (... , ...) ... timeout(...) ... else ...
-class WaitForStmt final : public Stmt {
+// Base class of WaitFor/WaitUntil statements
+// form: KEYWORD(...) ... timeout(...) ... else ...
+class WaitStmt : public Stmt { 
   public:
-	std::vector<ptr<WaitForClause>> clauses;
-	ptr<Expr> timeout_time;
+    ptr<Expr> timeout_time;
 	ptr<Stmt> timeout_stmt;
 	ptr<Expr> timeout_cond;
 	ptr<Stmt> else_stmt;
 	ptr<Expr> else_cond;
 
-	WaitForStmt( const CodeLocation & loc, const std::vector<Label> && labels = {} )
+    WaitStmt( const CodeLocation & loc, const std::vector<Label> && labels = {} )
 		: Stmt(loc, std::move(labels)) {}
+
+  private:
+    WaitStmt * clone() const override = 0;
+	MUTATE_FRIEND
+};
+
+// Base class for WaitFor/WaitUntil clauses
+// form: when( when_cond ) KEYWORD( target ) stmt
+class WhenClause : public StmtClause {
+  public:
+	ptr<Expr> target;
+	ptr<Stmt> stmt;
+	ptr<Expr> when_cond;
+
+	WhenClause( const CodeLocation & loc )
+		: StmtClause( loc ) {}
+
+	const WhenClause * accept( Visitor & v ) const override { return v.visit( this ); }
+  private:
+	WhenClause * clone() const override { return new WhenClause{ *this }; }
+	MUTATE_FRIEND
+};
+
+// Waitfor statement: when (...) waitfor (... , ...) ... timeout(...) ... else ...
+class WaitForStmt final : public WaitStmt {
+  public:
+	std::vector<ptr<WaitForClause>> clauses;
+
+	WaitForStmt( const CodeLocation & loc, const std::vector<Label> && labels = {} )
+		: WaitStmt(loc, std::move(labels)) {}
 
 	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
@@ -397,19 +427,62 @@ class WaitForStmt final : public Stmt {
 };
 
 // Clause in a waitfor statement: waitfor (..., ...) ...
-class WaitForClause final : public StmtClause {
+class WaitForClause final : public WhenClause {
   public:
-	ptr<Expr> target_func;
 	std::vector<ptr<Expr>> target_args;
-	ptr<Stmt> stmt;
-	ptr<Expr> cond;
 
 	WaitForClause( const CodeLocation & loc )
-		: StmtClause( loc ) {}
+		: WhenClause( loc ) {}
 
 	const WaitForClause * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
 	WaitForClause * clone() const override { return new WaitForClause{ *this }; }
+	MUTATE_FRIEND
+};
+
+// waituntil statement: when (...) waituntil (...) ... timeout(...) ... else ...
+class WaitUntilStmt final : public WaitStmt {
+  public:
+    // Non-ast node used during compilation to store data needed to generate predicates
+    //    and set initial status values for clauses
+    // Used to create a tree corresponding to the structure of the clauses in a WaitUntil
+    struct ClauseNode { 
+        enum Op { AND, OR, LEFT_OR, LEAF, ELSE, TIMEOUT } op; // operation/type tag
+        // LEFT_OR used with TIMEOUT/ELSE to indicate that we ignore right hand side after parsing
+
+        ClauseNode * left;
+        ClauseNode * right;
+        WhenClause * leaf;  // only set if this node is a leaf (points into vector of clauses)
+
+        bool ambiguousWhen; // used to paint nodes of predicate tree based on when() clauses
+        bool whenState;     // used to track if when_cond is toggled on or off for generating init values
+        bool childOfAnd;      // true on leaf nodes that are children of AND, false otherwise
+
+        ClauseNode( Op op, ClauseNode * left, ClauseNode * right )
+            : op(op), left(left), right(right), leaf(nullptr), 
+            ambiguousWhen(false), whenState(true), childOfAnd(false) {}
+        ClauseNode( Op op, WhenClause * leaf )
+            : op(op), left(nullptr), right(nullptr), leaf(leaf),
+            ambiguousWhen(false), whenState(true), childOfAnd(false) {}
+        ClauseNode( WhenClause * leaf ) : ClauseNode(LEAF, leaf) {}
+        
+        ~ClauseNode() {
+            if ( left ) delete left;
+            if ( right ) delete right;
+        }
+    };
+
+	std::vector<ptr<WhenClause>> clauses;
+    ClauseNode * predicateTree;
+
+	WaitUntilStmt( const CodeLocation & loc, const std::vector<Label> && labels = {} )
+		: WaitStmt(loc, std::move(labels)) {}
+
+    ~WaitUntilStmt() { delete predicateTree; }
+
+	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
+  private:
+	WaitUntilStmt * clone() const override { return new WaitUntilStmt{ *this }; }
 	MUTATE_FRIEND
 };
 

@@ -566,17 +566,23 @@ private:
 		return stmtPostamble( stmt, node );
 	}
 
+    const ast::WhenClause * visit( const ast::WhenClause * node ) override final {
+		// There is no old-AST WhenClause, so this should never be called.
+		assert( !node );
+		return nullptr;
+	}
+
 	const ast::Stmt * visit( const ast::WaitForStmt * node ) override final {
 		if ( inCache( node ) ) return nullptr;
 		auto stmt = new WaitForStmt;
 		stmt->clauses.reserve( node->clauses.size() );
 		for ( auto clause : node->clauses ) {
 			stmt->clauses.push_back({{
-					get<Expression>().accept1( clause->target_func ),
+					get<Expression>().accept1( clause->target ),
 					get<Expression>().acceptL( clause->target_args ),
 				},
 				get<Statement>().accept1( clause->stmt ),
-				get<Expression>().accept1( clause->cond ),
+				get<Expression>().accept1( clause->when_cond ),
 			});
 		}
 		stmt->timeout = {
@@ -593,6 +599,12 @@ private:
 
 	const ast::WaitForClause * visit( const ast::WaitForClause * node ) override final {
 		// There is no old-AST WaitForClause, so this should never be called.
+		assert( !node );
+		return nullptr;
+	}
+
+    const ast::Stmt * visit( const ast::WaitUntilStmt * node ) override final {
+        // There is no old-AST WaitUntilStmt, so this should never be called.
 		assert( !node );
 		return nullptr;
 	}
@@ -2157,10 +2169,10 @@ private:
 		for (size_t i = 0 ; i < old->clauses.size() ; ++i) {
 			auto clause = new ast::WaitForClause( old->location );
 
-			clause->target_func = GET_ACCEPT_1(clauses[i].target.function, Expr);
+			clause->target = GET_ACCEPT_1(clauses[i].target.function, Expr);
 			clause->target_args = GET_ACCEPT_V(clauses[i].target.arguments, Expr);
 			clause->stmt = GET_ACCEPT_1(clauses[i].statement, Stmt);
-			clause->cond = GET_ACCEPT_1(clauses[i].condition, Expr);
+			clause->when_cond = GET_ACCEPT_1(clauses[i].condition, Expr);
 
 			stmt->clauses.push_back( clause );
 		}

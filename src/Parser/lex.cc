@@ -519,7 +519,7 @@ static const flex_int16_t yy_accept[1336] =
        68,   65,   67,  145,   92,  145,  145,   12,  145,  145,
       145,   33,   37,  145,  145,   59,  145,  145,   88,  145,
       145,  145,  145,  145,    0,    0,    0,    0,  145,  145,
-       39,   52,  145,   74,  145,  140,    0,    0,    0,    0,
+       39,   51,  145,   74,  145,  140,    0,    0,    0,    0,
       154,    0,    0,    0,    0,  145,   40,   41,   69,   78,
       145,  145,  145,  145,  145,  145,  145,  145,   61,   83,
        87,  101,  107,  126,  145,  136,    0,    0,    0,   23,
@@ -528,7 +528,7 @@ static const flex_int16_t yy_accept[1336] =
       129,  145,    0,    0,    0,    0,   28,   54,  118,    0,
 
         0,    0,  145,  145,  145,  145,  145,  145,  102,  137,
-        0,    0,    0,    0,  145,  116,   20,  145,  145,   51,
+        0,    0,    0,    0,  145,  116,   20,  145,  145,   52,
         0,  110,  145,  145,  145,  145,  145,  145,  145,  131,
       145,  145,  132,   93,    0
     } ;
@@ -1884,8 +1884,8 @@ char *yytext;
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Sat Mar 25 08:09:03 2023
- * Update Count     : 768
+ * Last Modified On : Tue May  2 08:45:21 2023
+ * Update Count     : 769
  */
 #line 21 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 // The lexer assumes the program has been preprocessed by cpp. Hence, all user level preprocessor directive have been
@@ -2554,12 +2554,12 @@ YY_RULE_SETUP
 case 51:
 YY_RULE_SETUP
 #line 261 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
-{ KEYWORD_RETURN(EXTENSION); }			// GCC
+{ KEYWORD_RETURN(EXCEPTION); }			// CFA
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
 #line 262 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
-{ KEYWORD_RETURN(EXCEPTION); }			// CFA
+{ KEYWORD_RETURN(EXTENSION); }			// GCC
 	YY_BREAK
 case 53:
 YY_RULE_SETUP

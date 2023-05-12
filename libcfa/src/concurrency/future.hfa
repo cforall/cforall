@@ -18,6 +18,7 @@
 #include "bits/locks.hfa"
 #include "monitor.hfa"
 #include "select.hfa"
+#include "locks.hfa"
 
 //----------------------------------------------------------------------------
 // future
@@ -25,7 +26,7 @@
 //  since it supports multiple consumers
 //  future_t is lockfree and uses atomics which aren't needed given we use locks here
 forall( T ) {
-    // enum(int) { FUTURE_EMPTY = 0, FUTURE_FULFILLED = 1 }; // Enums seem to be broken so feel free to add this back afterwards
+    // enum { FUTURE_EMPTY = 0, FUTURE_FULFILLED = 1 }; // Enums seem to be broken so feel free to add this back afterwards
 
     // temporary enum replacement
     const int FUTURE_EMPTY = 0;
@@ -42,8 +43,6 @@ forall( T ) {
         inline select_node;
         T * my_result;
     };
-
-    // C_TODO: perhaps allow exceptions to be inserted like uC++?
 
 	static inline {
 
@@ -81,13 +80,14 @@ forall( T ) {
         // internal helper to signal waiters off of the future
         void _internal_flush( future(T) & this ) with(this) {
             while( ! waiters`isEmpty ) {
+                if ( !__handle_waituntil_OR( waiters ) ) // handle special waituntil OR case
+                    break; // if handle_OR returns false then waiters is empty so break
                 select_node &s = try_pop_front( waiters );
 
-                if ( s.race_flag == 0p )
+                if ( s.clause_status == 0p )
                     // poke in result so that woken threads do not need to reacquire any locks
-                    // *(((future_node(T) &)s).my_result) = result;
                     copy_T( result, *(((future_node(T) &)s).my_result) );
-                else if ( !install_select_winner( s, &this ) ) continue;
+                else if ( !__make_select_node_available( s ) ) continue;
                 
                 // only unpark if future is not selected
                 // or if it is selected we only unpark if we win the race
@@ -96,7 +96,7 @@ forall( T ) {
         }
 
 		// Fulfil the future, returns whether or not someone was unblocked
-		bool fulfil( future(T) & this, T & val ) with(this) {
+		bool fulfil( future(T) & this, T val ) with(this) {
             lock( lock );
             if( state != FUTURE_EMPTY )
                 abort("Attempting to fulfil a future that has already been fulfilled");
@@ -152,40 +152,45 @@ forall( T ) {
             return [ret_val, false];
         }
 
-        void * register_select( future(T) & this, select_node & s ) with(this) {
+        bool register_select( future(T) & this, select_node & s ) with(this) {
             lock( lock );
 
-            // future not ready -> insert select node and return 0p
+            // check if we can complete operation. If so race to establish winner in special OR case
+            if ( !s.park_counter && state != FUTURE_EMPTY ) { 
+                if ( !__make_select_node_available( s ) ) { // we didn't win the race so give up on registering
+                    unlock( lock );
+                    return false;
+                }
+            }
+
+            // future not ready -> insert select node and return
             if( state == FUTURE_EMPTY ) {
                 insert_last( waiters, s );
                 unlock( lock );
-                return 0p;
+                return false;
             }
 
-            // future ready and we won race to install it as the select winner return 1p
-            if ( install_select_winner( s, &this ) ) {
-                unlock( lock );
-                return 1p;
-            }
-
+            __make_select_node_available( s );
             unlock( lock );
-            // future ready and we lost race to install it as the select winner
-            return 2p;
+            return true;
         }
 
-        void unregister_select( future(T) & this, select_node & s ) with(this) {
+        bool unregister_select( future(T) & this, select_node & s ) with(this) {
+            if ( ! s`isListed ) return false;
             lock( lock );
             if ( s`isListed ) remove( s );
             unlock( lock );
+            return false;
         }
 		
+        bool on_selected( future(T) & this, select_node & node ) { return true; }
 	}
 }
 
 //--------------------------------------------------------------------------------------------------------
 // These futures below do not support select statements so they may not be as useful as 'future'
 //  however the 'single_future' is cheap and cheerful and is most likely more performant than 'future'
-//  since it uses raw atomics and no locks afaik
+//  since it uses raw atomics and no locks
 //
 // As far as 'multi_future' goes I can't see many use cases as it will be less performant than 'future'
 //  since it is monitor based and also is not compatible with select statements

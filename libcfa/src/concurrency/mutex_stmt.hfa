@@ -14,7 +14,6 @@ trait is_lock {
 	void unlock( L & );
 };
 
-
 struct __mutex_stmt_lock_guard {
     void ** lockarr;
     __lock_size_t count;
@@ -29,25 +28,7 @@ static inline void ?{}( __mutex_stmt_lock_guard & this, void * lockarr [], __loc
 }
 
 forall(L & | is_lock(L)) {
-
-    struct scoped_lock {
-        L * internal_lock;
-    };
-
-    static inline void ?{}( scoped_lock(L) & this, L & internal_lock ) {
-        this.internal_lock = &internal_lock;
-        lock(internal_lock);
-    }
-    
-    static inline void ^?{}( scoped_lock(L) & this ) with(this) {
-        unlock(*internal_lock);
-    }
-
-    static inline void * __get_mutexstmt_lock_ptr( L & this ) {
-        return &this;
-    }
-
-    static inline L __get_mutexstmt_lock_type( L & this );
-
-    static inline L __get_mutexstmt_lock_type( L * this );
+    static inline void * __get_mutexstmt_lock_ptr( L & this ) { return &this; }
+    static inline L __get_mutexstmt_lock_type( L & this ) {}
+    static inline L __get_mutexstmt_lock_type( L * this ) {}
 }

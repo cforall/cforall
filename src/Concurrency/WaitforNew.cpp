@@ -304,12 +304,12 @@ void GenerateWaitForCore::init_clause(
 			new ast::FunctionType( ast::VariableArgs ) );
 
 	const ast::VariableExpr * variableExpr =
-		clause->target_func.as<ast::VariableExpr>();
+		clause->target.as<ast::VariableExpr>();
 	ast::Expr * castExpr = new ast::CastExpr(
 		location,
 		new ast::CastExpr(
 			location,
-			clause->target_func,
+			clause->target,
 			ast::deepCopy( variableExpr->result.get() ),
 			ast::GeneratedCast ),
 		fptr_t,
@@ -324,9 +324,9 @@ void GenerateWaitForCore::init_clause(
 	out->push_back( new ast::DeclStmt( location, funcDecl ) );
 
 	ResolveContext context{ symtab, transUnit().global };
-	out->push_back( maybeCond( location, clause->cond.get(), {
+	out->push_back( maybeCond( location, clause->when_cond.get(), {
 		makeAccStmt( location, acceptables, index, "is_dtor",
-			detectIsDtor( location, clause->target_func ), context ),
+			detectIsDtor( location, clause->target ), context ),
 		makeAccStmt( location, acceptables, index, "func",
 			funcExpr, context ),
 		makeAccStmt( location, acceptables, index, "data",

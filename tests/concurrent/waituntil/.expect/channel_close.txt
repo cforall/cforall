@@ -1,0 +1,10 @@
+start OR
+done sleep
+closing A
+closing B
+done
+start AND
+done sleep
+closing A
+closing B
+done

@@ -10,9 +10,15 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 22:14:18 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Sat Feb  2 16:54:42 2019
-## Update Count     : 21
+## Last Modified On : Mon May  1 16:38:04 2023
+## Update Count     : 32
 ###############################################################################
+
+# user targets:
+#  Compile compiler/runtime and run test suite.
+#  $ make check / tests [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]
+#  
+#  $ make installcheck [debug=yes/no] installed=yes [arch=x86/x64/arm]
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
 ACLOCAL_AMFLAGS  = -I automake
@@ -36,12 +42,17 @@ man1_MANS = doc/man/cfa.1
 
 EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libcfa/Makefile.dist.in tools/build/distcc_hash tools/build/push2dist.sh
 
-debug=yes
+debug ?= yes
+installed ?= no
+ARCH = $(if $(arch),"arch=$(arch)")
+
 check:
-	$(MAKE) -C tests all-tests installed=no debug=${debug}
+	$(MAKE) -C tests tests installed=$(installed) debug=$(debug) $(ARCH)
+
+tests: check # synonym
 
 installcheck:
-	$(MAKE) -C tests all-tests installed=yes debug=${debug}
+	$(MAKE) -C tests tests installed=yes debug=$(debug) $(ARCH)
 
 configure-libcfa: @LIBCFA_TARGET_MAKEFILES@
 	@true

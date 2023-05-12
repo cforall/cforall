@@ -1,0 +1,73 @@
+#include <select.hfa>
+#include <thread.hfa>
+#include <locks.hfa>
+#include <mutex_stmt.hfa>
+
+multiple_acquisition_lock A;
+simple_owner_lock B;
+simple_owner_lock C;
+
+volatile bool done = false;
+
+thread Server1 {};
+void main( Server1 & this ) {
+    while( !done ) {
+        lock(A);
+        unlock(A);
+        lock(B);
+        unlock(B);
+        lock(C);
+        unlock(C);
+        mutex(A,B,C) {};
+    }
+    mutex(sout) sout | "DONE";
+}
+
+size_t numtimes = 10000;
+int main() {
+    processor p[3];
+    int a = 0, b = 0, c = 0;
+    printf("start\n");
+    {
+        Server1 s[3];
+        for( j; numtimes ) {
+            for ( int i = 0; i < 8; i++ ) {
+
+                when( i % 2 == 0 ) waituntil( A ) { a++; }
+                or when( i % 4 < 2 ) waituntil( B ) { b++; }
+                and when( i < 4 ) waituntil( C ) { c++; }
+
+                (
+                    when( i % 2 == 0 ) waituntil( A ) { a++; }
+                    or when( i % 4 < 2 ) waituntil( B ) { b++; }
+                )
+                and when( i < 4 ) waituntil( C ) { c++; }
+                
+                when( i % 2 == 0 ) waituntil( A ) { a++; }
+                and when( i % 4 < 2 ) waituntil( B ) { b++; }
+                and when( i < 4 ) waituntil( C ) { c++; }
+
+                when( i % 2 == 0 ) waituntil( A ) { a++; }
+                or when( i % 4 < 2 ) waituntil( B ) { b++; }
+                or when( i < 4 ) waituntil( C ) { c++; }
+            }
+        }
+        done = true;
+    }
+    printf("start recursive acq test\n");
+    {
+        for( j; 10 ) {
+            lock( A );
+            lock( B );
+        }
+        for ( j; 10 ) {
+            waituntil( A ) { a++; } or waituntil( B ) { b++; }
+            waituntil( B ) { b++; } or waituntil( A ) { a++; }
+        }
+        for( j; 10 ) {
+            unlock( A );
+            unlock( B );
+        }
+    }
+    printf("done\n");
+}

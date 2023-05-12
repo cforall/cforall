@@ -1,0 +1,17 @@
+#include <select.hfa>
+#include <future.hfa>
+
+future(int) A, B, C;
+
+int main() {
+    waituntil( A ) { printf("A1\n"); } or else { printf("else1\n"); }
+    fulfil( A, 1 );
+    waituntil( A ) { printf("A2\n"); } or else { printf("else2\n"); }
+    reset( A );
+    waituntil( A ) { printf("A3\n"); } or when(true) else { printf("else3\n"); }
+    fulfil( A, 1 );
+    waituntil( A ) { printf("A4\n"); } or when(false) else { printf("else4\n"); }
+    reset( A );
+    fulfil( A, 1 );
+    waituntil( A ) { printf("A5\n"); }
+}

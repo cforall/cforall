@@ -1,0 +1,61 @@
+#include <select.hfa>
+#include <future.hfa>
+#include <thread.hfa>
+
+future(int) A, B, C;
+
+semaphore s{0};
+
+thread Server1 {};
+void main( Server1 & this ) {
+    fulfil(B, 3);
+    P( s );
+    fulfil(A, 2);
+    fulfil(C, 4);
+}
+
+thread Server2 {};
+void main( Server2 & this ) {
+    fulfil(B, 6);
+    fulfil(A, 5);
+    fulfil(C, 7);
+}
+
+int main() {
+    processor proc[1];
+    printf("start\n"); // currently not working
+    {
+        Server1 s1;
+        waituntil( A ) { get(A); }
+        or waituntil( B ) { get(B); V( s ); }
+        and waituntil( C ) { get(C); }
+    }
+    reset(A);
+    reset(B);
+    reset(C);
+    for ( int i = 0; i < 8; i++ ) {
+        {
+            Server2 s2;
+            when( i % 2 == 0 ) waituntil( A ) { get(A); }
+            or when( i % 4 < 2 ) waituntil( B ) { get(B); }
+            and when( i < 4 ) waituntil( C ) { get(C); }
+        }
+        reset(A);
+        reset(B);
+        reset(C);
+        {
+            Server2 s2;
+            (
+                when( i % 2 == 0 ) waituntil( A ) { get(A); }
+                or when( i % 4 < 2 ) waituntil( B ) { get(B); }
+            )
+            and when( i < 4 ) waituntil( C ) { get(C); }
+        }
+        reset(A);
+        reset(B);
+        reset(C);
+    }
+
+    printf("end\n");
+    return 0;
+}

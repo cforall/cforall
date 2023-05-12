@@ -1,0 +1,94 @@
+#include <select.hfa>
+#include <thread.hfa>
+#include <channel.hfa>
+#include <time.hfa>
+
+channel(long long int) A, B;
+
+volatile long long int inserts = 0;
+volatile long long int removes = 0;
+
+thread Producer {};
+void main( Producer & this ) {
+    try {
+        for( long long int i = 0;;i++ ) {
+            waituntil( (i >> A) ) { inserts++; }
+            and waituntil( (i >> B) ) { inserts++; }
+        }
+    } catch ( channel_closed * e ) {} 
+}
+
+bool useAnd = false;
+thread Consumer {}; // ensures that the changing when states of Server1 don't result in a deadlock
+void main( Consumer & this ) {
+    long long int in, in2, A_removes = 0, B_removes = 0;
+    try {
+        for( ;; ) {
+            if ( useAnd ) {
+                waituntil( (in << A) ) { assert( A_removes == in ); A_removes++; removes++; }
+                and waituntil( (in2 << B) ) { assert( B_removes == in2 ); B_removes++; removes++; }
+                continue;
+            }
+            waituntil( (in << A) ) { assert( A_removes == in ); A_removes++; removes++; }
+            or waituntil( (in2 << B) ) { assert( B_removes == in2 ); B_removes++; removes++; }
+        }
+    } catchResume ( channel_closed * e ) {} // continue to remove until would block
+    catch ( channel_closed * e ) {} 
+    try {
+        for( ;; )
+            waituntil( (in << A) ) { assert( A_removes == in ); A_removes++; removes++; }
+    } catchResume ( channel_closed * e ) {} // continue to remove until would block
+    catch ( channel_closed * e ) {} 
+    try {
+        for( ;; )
+            waituntil( (in << B) ) { assert( B_removes == in ); B_removes++; removes++; }
+    } catchResume ( channel_closed * e ) {} // continue to remove until would block
+    catch ( channel_closed * e ) {} 
+}
+
+
+size_t time = 5;
+int main( int argc, char * argv[] ) {
+    if ( argc == 2 )
+        time = atoi( argv[1] );
+
+    processor p[2];
+    A{5};
+    B{5};
+
+    printf("start OR\n");
+    {
+        Producer p;
+        Consumer c;
+        sleep(time`s);
+        printf("done sleep\n");
+        printf("closing A\n");
+        close(A);
+        printf("closing B\n");
+        close(B);
+    }
+    if ( inserts != removes ) 
+        printf("CHECKSUM MISMATCH!! Producer got: %lld, Consumer got: %lld\n", inserts, removes);
+    printf("done\n");
+    ^A{};
+    ^B{};
+
+    inserts = 0;
+    removes = 0;
+    A{5};
+    B{5};
+    printf("start AND\n");
+    {
+        Producer p;
+        Consumer c;
+        sleep(time`s);
+        printf("done sleep\n");
+        printf("closing A\n");
+        close(A);
+        printf("closing B\n");
+        close(B);
+    }
+    if ( inserts != removes ) 
+        printf("CHECKSUM MISMATCH!! Producer got: %lld, Consumer got: %lld\n", inserts, removes);
+    printf("done\n");
+}
