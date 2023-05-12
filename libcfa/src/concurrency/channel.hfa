@@ -73,7 +73,7 @@ static inline void ^?{}( channel(T) &c ) with(c) {
     if ( size != 0 ) delete( buffer );
 }
 static inline size_t get_count( channel(T) & chan ) with(chan) { return __atomic_load_n( &count, __ATOMIC_SEQ_CST); }
-static inline size_t get_size( channel(T) & chan ) with(chan) { return size; }
+static inline size_t get_size( channel(T) & chan ) with(chan) { return __atomic_load_n( &size, __ATOMIC_SEQ_CST); }
 static inline bool has_waiters( channel(T) & chan ) with(chan) { return !cons`isEmpty || !prods`isEmpty; }
 static inline bool has_waiting_consumers( channel(T) & chan ) with(chan) { return !cons`isEmpty; }
 static inline bool has_waiting_producers( channel(T) & chan ) with(chan) { return !prods`isEmpty; }

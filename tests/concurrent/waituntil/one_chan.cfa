@@ -27,30 +27,17 @@ int main( int argc, char * argv[] ) {
 
     long long int total = 0;
     printf("start\n");
-    volatile size_t LINE_COUNTER = 1;
     {
         Server1 s[numServers];
         for( long long int j = 0; j < numtimes; j++ ) {
             waituntil( j >> C ) { total += j; }
         }
-        LINE_COUNTER = 2;
         printf("waiting for empty channels\n");
-        LINE_COUNTER = 3;
-        // size_t C_count = get_count( C );
-        // LINE_COUNTER = 5;
-        // while( C_count > 0 ) { 
-        //     C_count = get_count( C );
-        // }
-        LINE_COUNTER = 7;
         printf("sending sentinels\n");
-        LINE_COUNTER = 11;
         for ( i; numServers ) insert( C, -1 );
-        LINE_COUNTER = 13;
         printf("joining servers\n");
-        LINE_COUNTER = 17;
     }
     assert(get_count( C ) == 0);
-    LINE_COUNTER = 19;
     if ( total != globalTotal ) 
         printf("CHECKSUM MISMATCH!! Main thread got %lld, server sum is %lld\n", total, globalTotal);
     printf("done\n");

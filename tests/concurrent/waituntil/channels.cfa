@@ -1,0 +1,87 @@
+#include <select.hfa>
+#include <thread.hfa>
+#include <channel.hfa>
+
+channel(long long int) A, B, C;
+
+volatile bool done = false;
+long long int globalTotal = 0;
+
+thread Server1 {};
+void main( Server1 & this ) {
+    long long int a, b, c, i = 0, myTotal = 0;
+    for( ;;i++ ) {
+        when( i % 2 == 0 ) waituntil( a << A ) { myTotal += a; }
+        or when( i % 4 < 2 ) waituntil( b << B ) { myTotal += b; }
+        or waituntil( c << C ) { if ( c == -1 ) break; myTotal += c; }
+        or when( i % 8 < 4 ) else {}
+    }
+    __atomic_fetch_add( &globalTotal, myTotal, __ATOMIC_SEQ_CST );
+}
+
+thread Drainer {}; // ensures that the changing when states of Server1 don't result in a deadlock
+void main( Drainer & this ) {
+    long long int a, b, c, myTotal = 0;
+    for( ;; ) {
+        waituntil( a << A ) { myTotal += a; }
+        or waituntil( b << B ) { myTotal += b; }
+        or waituntil( c << C ) { if ( c == -1 ) break; myTotal += c; }
+        or else {}
+    }
+    __atomic_fetch_add( &globalTotal, myTotal, __ATOMIC_SEQ_CST );
+}
+
+thread Churner {}; // performs non-waituntil try insert/remove operations to add churn/interference
+void main( Churner & this ) {
+    long long int out, myTotal = 0;
+    bool success;
+    while( !done ) {
+        try_insert( A, 0 );
+        try_insert( B, 0 );
+        try_insert( C, 0 );
+        [out, success] = try_remove( A );
+        if ( success ) myTotal += out;
+        [out, success] = try_remove( B );
+        if ( success ) myTotal += out;
+        [out, success] = try_remove( C );
+        if ( success ) myTotal += out;
+    }
+    __atomic_fetch_add( &globalTotal, myTotal, __ATOMIC_SEQ_CST );
+}
+
+size_t numtimes = 100000;
+size_t numServers = 3;
+int main( int argc, char * argv[] ) {
+    if ( argc == 2 )
+        numtimes = atoi( argv[1] );
+
+    processor p[numServers + 2];
+    A{5};
+    B{5};
+    C{5};
+
+    long long int total = 0;
+    printf("start\n");
+    {
+        Server1 s[numServers];
+        Drainer d;
+        {
+            Churner c;
+            for( long long int j = 0; j < numtimes; j++ ) {
+                when( j % 2 == 0 ) waituntil( j >> A ) { total += j; }
+                or when( j % 4 < 2 ) waituntil( j >> B ) { total += j; }
+                and when( j % 8 < 4 ) waituntil( j >> C ) { total += j; }
+            }
+            done = true;
+            printf("terminating churner\n");
+        }
+        printf("waiting for empty channels\n");
+        while( get_count( A ) > 0 || get_count( B ) > 0 || get_count( C ) > 0 ) { }
+        printf("sending sentinels\n");
+        for ( i; numServers + 1 ) insert( C, -1 );
+        printf("joining servers\n");
+    }
+    if ( total != globalTotal ) 
+        printf("CHECKSUM MISMATCH!! Main thread got %lld, server sum is %lld\n", total, globalTotal);
+    printf("done\n");
+}

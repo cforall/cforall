@@ -1,4 +1,5 @@
 start
+terminating churner
 waiting for empty channels
 sending sentinels
 joining servers
