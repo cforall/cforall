@@ -17,12 +17,6 @@
 ######################## -*- Mode: Makefile-Automake -*- ######################
 ###############################################################################
 
-# user targets:
-#  Compile compiler/runtime and run test suite.
-#  $ make check / tests [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]
-#  
-#  $ make installcheck [debug=yes/no] installed=yes [arch=x86/x64/arm]
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -411,7 +405,7 @@ DIST_SUBDIRS = driver src . libcfa tests
 noinst_DATA = @LIBCFA_TARGET_MAKEFILES@
 man1_MANS = doc/man/cfa.1
 EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libcfa/Makefile.dist.in tools/build/distcc_hash tools/build/push2dist.sh
-ARCH = $(if $(arch),"arch=$(arch)")
+ARCH = ${if ${arch},"arch=${arch}"}
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -944,36 +938,46 @@ uninstall-man: uninstall-man1
 .PRECIOUS: Makefile
 
 
-@LIBCFA_TARGET_MAKEFILES@ : Makefile $(srcdir)/libcfa/configure
-	@$(eval config_file = $(dir $@)config.data)
-	@ls $(config_file) || (echo "Missing config.data, re-run configure script again" && false)
-	@$(eval config_data = $(shell cat $(config_file)))
-	@echo "Configuring libcfa ($(abs_top_srcdir)/libcfa/configure) with '$(config_data)' from $(shell pwd) / $(dir $@)"
-	@cd $(dir $@) && $(abs_top_srcdir)/libcfa/configure $(config_data)
+@LIBCFA_TARGET_MAKEFILES@ : Makefile ${srcdir}/libcfa/configure
+	@${eval config_file = ${dir ${@}}config.data}
+	@ls ${config_file} || (echo "Missing config.data, re-run configure script again" && false)
+	@${eval config_data = ${shell cat ${config_file}}}
+	@echo "Configuring libcfa (${abs_top_srcdir}/libcfa/configure) with '${config_data}' from ${shell pwd} / ${dir ${@}}"
+	@cd ${dir ${@}} && ${abs_top_srcdir}/libcfa/configure ${config_data}
 
 debug ?= yes
 installed ?= no
 
-check:
-	$(MAKE) -C tests tests installed=$(installed) debug=$(debug) $(ARCH)
+check :
+	${MAKE} -C tests tests installed=${installed} debug=${debug} ${ARCH}
 
-tests: check # synonym
+tests : check # synonym
 
-installcheck:
-	$(MAKE) -C tests tests installed=yes debug=$(debug) $(ARCH)
+installcheck :
+	${MAKE} -C tests tests installed=yes debug=${debug} ${ARCH}
 
-configure-libcfa: @LIBCFA_TARGET_MAKEFILES@
+installtest : installcheck # synonym
+
+help :
+	@echo "user targets:"
+	@echo "    Compile compiler/runtime and run test suite."
+	@echo "    $$ make check / tests [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]"
+	@echo ""
+	@echo "    Compile compiler/runtime, run test suite, and install."
+	@echo "    $$ make installcheck / installtests [debug=yes/no] installed=yes [arch=x86/x64/arm]"
+
+configure-libcfa : @LIBCFA_TARGET_MAKEFILES@
 	@true
 
-status: @LIBCFA_TARGET_MAKEFILES@
+status : @LIBCFA_TARGET_MAKEFILES@
 	@echo -ne "translator\n\t"
 	@./config.status --config | sed "s/ /\n\t/g; s/\t'/\t/g; s/'\n/\n/g; s/^'//g; s/'$$//g"
 	@find libcfa -name config.status -printf "\n%h\n\t" -exec {} --config \; | sed "s/ /\n\t/g; s/\t'/\t/g; s/'\n/\n/g; s/^'//g; s/'$$//g"
 
-@LIBCFA_TARGET_DIRS@::
-	$(MAKE) -C $@ $(MAKECMDGOALS)
+@LIBCFA_TARGET_DIRS@ ::
+	${MAKE} -C ${@} ${MAKECMDGOALS}
 
-mostlyclean clean distclean maintainer-clean: @LIBCFA_TARGET_DIRS@
+mostlyclean clean distclean maintainer-clean : @LIBCFA_TARGET_DIRS@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
