@@ -1,0 +1,59 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// channel.hfa -- LIBCFATHREAD
+// Runtime locks that used with the runtime thread system.
+//
+// Author           : Colby Alexander Parsons
+// Created On       : Thu Apr 21 19:46:50 2023
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+#define __cforall_thread__
+#include "select.hfa"
+
+#pragma GCC visibility push(default)
+
+// As much code as possible is put in select.hfa to allow for inlining, 
+//    but this .cfa is needed to link with alarm.cfa correctly ( and possibly some other things )
+
+//=============================================================================================
+// Waituntil Timeout support
+//=============================================================================================
+
+void ?{}( select_timeout_node & this, Duration duration, Alarm_Callback callback ) {
+    this.a_node{ callback, duration, 0`s };
+}
+void ^?{}( select_timeout_node & this ) {}
+
+void timeout_handler( select_timeout_node & this ) with( this ) {
+    if ( !__make_select_node_available( *s_node ) ) return;
+    unpark( s_node->blocked_thread );
+}
+void timeout_handler_select_cast( alarm_node_t & node ) { timeout_handler( ((select_timeout_node &) node) ); }
+
+// Selectable trait routines
+bool register_select( select_timeout_node & this, select_node & node ) {
+    this.s_node = &node;
+    node.extra = 0p;
+    register_self( &this.a_node );
+    return false;
+}
+bool unregister_select( select_timeout_node & this, select_node & node ) {
+    unregister_self( &this.a_node );
+    return false;
+}
+bool on_selected( select_timeout_node & this, select_node & node ) { return true; }
+
+// Gateway routine to wait on duration
+select_timeout_node timeout( Duration duration ) {
+	select_timeout_node node{ duration, timeout_handler_select_cast };
+    return node;
+}
+select_timeout_node sleep( Duration duration ) { return timeout( duration ); }
+

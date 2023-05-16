@@ -114,7 +114,6 @@ inst_thread_headers_nosrc = \
 	concurrency/once.hfa \
 	concurrency/kernel/fwd.hfa \
 	concurrency/mutex_stmt.hfa \
-    concurrency/select.hfa \
     concurrency/channel.hfa \
     concurrency/actor.hfa 
 
@@ -127,6 +126,7 @@ inst_thread_headers_src = \
 	concurrency/locks.hfa \
 	concurrency/monitor.hfa \
 	concurrency/mutex.hfa \
+    concurrency/select.hfa \
 	concurrency/thread.hfa
 
 thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} \

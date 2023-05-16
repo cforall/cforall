@@ -184,11 +184,12 @@ am__libcfathread_la_SOURCES_DIST = concurrency/alarm.hfa \
 	concurrency/coroutine.hfa concurrency/exception.hfa \
 	concurrency/kernel.hfa concurrency/kernel/cluster.hfa \
 	concurrency/locks.hfa concurrency/monitor.hfa \
-	concurrency/mutex.hfa concurrency/thread.hfa \
-	concurrency/alarm.cfa concurrency/coroutine.cfa \
-	concurrency/exception.cfa concurrency/kernel.cfa \
-	concurrency/kernel/cluster.cfa concurrency/locks.cfa \
-	concurrency/monitor.cfa concurrency/mutex.cfa \
+	concurrency/mutex.hfa concurrency/select.hfa \
+	concurrency/thread.hfa concurrency/alarm.cfa \
+	concurrency/coroutine.cfa concurrency/exception.cfa \
+	concurrency/kernel.cfa concurrency/kernel/cluster.cfa \
+	concurrency/locks.cfa concurrency/monitor.cfa \
+	concurrency/mutex.cfa concurrency/select.cfa \
 	concurrency/thread.cfa interpose_thread.cfa bits/signal.hfa \
 	concurrency/clib/cfathread.cfa \
 	concurrency/CtxSwitch-@ARCHITECTURE@.S concurrency/invoke.c \
@@ -205,7 +206,8 @@ am__libcfathread_la_SOURCES_DIST = concurrency/alarm.hfa \
 @BUILDLIB_TRUE@	concurrency/exception.lo concurrency/kernel.lo \
 @BUILDLIB_TRUE@	concurrency/kernel/cluster.lo \
 @BUILDLIB_TRUE@	concurrency/locks.lo concurrency/monitor.lo \
-@BUILDLIB_TRUE@	concurrency/mutex.lo concurrency/thread.lo
+@BUILDLIB_TRUE@	concurrency/mutex.lo concurrency/select.lo \
+@BUILDLIB_TRUE@	concurrency/thread.lo
 @BUILDLIB_TRUE@am__objects_5 = $(am__objects_1) $(am__objects_4) \
 @BUILDLIB_TRUE@	interpose_thread.lo \
 @BUILDLIB_TRUE@	concurrency/clib/cfathread.lo \
@@ -300,12 +302,11 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	concurrency/exception.hfa concurrency/kernel.hfa \
 	concurrency/kernel/cluster.hfa concurrency/locks.hfa \
 	concurrency/monitor.hfa concurrency/mutex.hfa \
-	concurrency/thread.hfa bits/random.hfa \
+	concurrency/select.hfa concurrency/thread.hfa bits/random.hfa \
 	concurrency/clib/cfathread.h concurrency/invoke.h \
 	concurrency/future.hfa concurrency/once.hfa \
 	concurrency/kernel/fwd.hfa concurrency/mutex_stmt.hfa \
-	concurrency/select.hfa concurrency/channel.hfa \
-	concurrency/actor.hfa
+	concurrency/channel.hfa concurrency/actor.hfa
 HEADERS = $(nobase_cfa_include_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -611,7 +612,6 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/once.hfa \
 @BUILDLIB_TRUE@	concurrency/kernel/fwd.hfa \
 @BUILDLIB_TRUE@	concurrency/mutex_stmt.hfa \
-@BUILDLIB_TRUE@    concurrency/select.hfa \
 @BUILDLIB_TRUE@    concurrency/channel.hfa \
 @BUILDLIB_TRUE@    concurrency/actor.hfa 
 
@@ -625,6 +625,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/locks.hfa \
 @BUILDLIB_TRUE@	concurrency/monitor.hfa \
 @BUILDLIB_TRUE@	concurrency/mutex.hfa \
+@BUILDLIB_TRUE@    concurrency/select.hfa \
 @BUILDLIB_TRUE@	concurrency/thread.hfa
 
 @BUILDLIB_TRUE@thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} \
@@ -823,6 +824,8 @@ concurrency/locks.lo: concurrency/$(am__dirstamp) \
 concurrency/monitor.lo: concurrency/$(am__dirstamp) \
 	concurrency/$(DEPDIR)/$(am__dirstamp)
 concurrency/mutex.lo: concurrency/$(am__dirstamp) \
+	concurrency/$(DEPDIR)/$(am__dirstamp)
+concurrency/select.lo: concurrency/$(am__dirstamp) \
 	concurrency/$(DEPDIR)/$(am__dirstamp)
 concurrency/thread.lo: concurrency/$(am__dirstamp) \
 	concurrency/$(DEPDIR)/$(am__dirstamp)

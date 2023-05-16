@@ -38,11 +38,6 @@
 #include <sys/syscall.h>      /* Definition of SYS_* constants */
 #include <unistd.h>
 
-// C_TODO: cleanup this and locks.cfa
-// - appropriate separation of interface and impl
-// - clean up unused/unneeded locks
-// - change messy big blocking lock from inheritance to composition to remove need for flags
-
 typedef void (*__cfa_pre_park)( void * );
 
 static inline void pre_park_noop( void * ) {}
@@ -65,6 +60,28 @@ static inline void pre_park_then_park( __cfa_pre_park pp_fn, void * pp_datum ) {
     pp_fn( pp_datum );
     park();
 }
+
+// macros for default routine impls for is_blocking_lock trait that do not wait-morph
+
+#define DEFAULT_ON_NOTIFY( lock_type ) \
+    static inline void on_notify( lock_type & this, thread$ * t ){ unpark(t); }
+
+#define DEFAULT_ON_WAIT( lock_type ) \
+    static inline size_t on_wait( lock_type & this, __cfa_pre_park pp_fn, void * pp_datum ) { \
+        unlock( this ); \
+        pre_park_then_park( pp_fn, pp_datum ); \
+        return 0; \
+    }
+
+// on_wakeup impl if lock should be reacquired after waking up
+#define DEFAULT_ON_WAKEUP_REACQ( lock_type ) \
+    static inline void on_wakeup( lock_type & this, size_t recursion ) { lock( this ); }
+
+// on_wakeup impl if lock will not be reacquired after waking up
+#define DEFAULT_ON_WAKEUP_NO_REACQ( lock_type ) \
+    static inline void on_wakeup( lock_type & this, size_t recursion ) {}
+
+
 
 //-----------------------------------------------------------------------------
 // Semaphore
@@ -186,6 +203,7 @@ static inline void unlock(mcs_spin_lock & l, mcs_spin_node & n) {
 
 // - Kernel thd blocking alternative to the spinlock
 // - No ownership (will deadlock on reacq)
+// - no reacq on wakeup
 struct futex_mutex {
 	// lock state any state other than UNLOCKED is locked
 	// enum LockState { UNLOCKED = 0, UNCONTENDED = 1, CONTENDED = 2 };
@@ -199,13 +217,13 @@ static inline int futex(int *uaddr, int futex_op, int val) {
     return syscall(SYS_futex, uaddr, futex_op, val, NULL, NULL, 0);
 }
 
-static inline void  ?{}( futex_mutex & this ) with(this) { val = 0; }
+static inline void ?{}( futex_mutex & this ) with(this) { val = 0; }
 
-static inline bool internal_try_lock(futex_mutex & this, int & compare_val) with(this) {
+static inline bool internal_try_lock( futex_mutex & this, int & compare_val) with(this) {
 	return __atomic_compare_exchange_n((int*)&val, (int*)&compare_val, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
 }
 
-static inline int internal_exchange(futex_mutex & this) with(this) {
+static inline int internal_exchange( futex_mutex & this ) with(this) {
 	return __atomic_exchange_n((int*)&val, 2, __ATOMIC_ACQUIRE);
 }
 
@@ -239,15 +257,9 @@ static inline void unlock(futex_mutex & this) with(this) {
 	futex((int *)&val, FUTEX_WAKE, 1);
 }
 
-static inline void on_notify( futex_mutex & f, thread$ * t){ unpark(t); }
-static inline size_t on_wait( futex_mutex & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
-    unlock( this );
-    pre_park_then_park( pp_fn, pp_datum );
-    return 0;
-}
-
-// to set recursion count after getting signalled;
-static inline void on_wakeup( futex_mutex & f, size_t recursion ) {}
+DEFAULT_ON_NOTIFY( futex_mutex )
+DEFAULT_ON_WAIT( futex_mutex )
+DEFAULT_ON_WAKEUP_NO_REACQ( futex_mutex )
 
 //-----------------------------------------------------------------------------
 // go_mutex
@@ -263,8 +275,9 @@ struct go_mutex {
 	// stores a lock state
 	int val; 
 };
-
 static inline void  ?{}( go_mutex & this ) with(this) { val = 0; }
+// static inline void ?{}( go_mutex & this, go_mutex this2 ) = void; // these don't compile correctly at the moment so they should be omitted
+// static inline void ?=?( go_mutex & this, go_mutex this2 ) = void;
 
 static inline bool internal_try_lock(go_mutex & this, int & compare_val, int new_val ) with(this) {
 	return __atomic_compare_exchange_n((int*)&val, (int*)&compare_val, new_val, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
@@ -313,13 +326,9 @@ static inline void unlock( go_mutex & this ) with(this) {
 	futex( (int *)&val, FUTEX_WAKE, 1 );
 }
 
-static inline void on_notify( go_mutex & f, thread$ * t){ unpark( t ); }
-static inline size_t on_wait( go_mutex & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
-    unlock( this );
-    pre_park_then_park( pp_fn, pp_datum );
-    return 0;
-}
-static inline void on_wakeup( go_mutex & f, size_t recursion ) {}
+DEFAULT_ON_NOTIFY( go_mutex )
+DEFAULT_ON_WAIT( go_mutex )
+DEFAULT_ON_WAKEUP_NO_REACQ( go_mutex )
 
 //-----------------------------------------------------------------------------
 // Exponential backoff then block lock
@@ -339,6 +348,8 @@ static inline void  ?{}( exp_backoff_then_block_lock & this ) {
 	this.blocked_threads{};
 	this.lock_value = 0;
 }
+static inline void ?{}( exp_backoff_then_block_lock & this, exp_backoff_then_block_lock this2 ) = void;
+static inline void ?=?( exp_backoff_then_block_lock & this, exp_backoff_then_block_lock this2 ) = void;
 
 static inline void  ^?{}( exp_backoff_then_block_lock & this ){}
 
@@ -391,13 +402,9 @@ static inline void unlock( exp_backoff_then_block_lock & this ) with(this) {
     unpark( t );
 }
 
-static inline void on_notify( exp_backoff_then_block_lock & this, struct thread$ * t ) { unpark( t ); }
-static inline size_t on_wait( exp_backoff_then_block_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
-    unlock( this );
-    pre_park_then_park( pp_fn, pp_datum );
-    return 0;
-}
-static inline void on_wakeup( exp_backoff_then_block_lock & this, size_t recursion ) { lock( this ); }
+DEFAULT_ON_NOTIFY( exp_backoff_then_block_lock )
+DEFAULT_ON_WAIT( exp_backoff_then_block_lock )
+DEFAULT_ON_WAKEUP_REACQ( exp_backoff_then_block_lock )
 
 //-----------------------------------------------------------------------------
 // Fast Block Lock
@@ -453,12 +460,8 @@ static inline void on_notify( fast_block_lock & this, struct thread$ * t ) with(
     insert_last( blocked_threads, *t );
     unlock( lock );
 }
-static inline size_t on_wait( fast_block_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
-    unlock( this );
-    pre_park_then_park( pp_fn, pp_datum );
-    return 0;
-}
-static inline void on_wakeup( fast_block_lock & this, size_t recursion ) { }
+DEFAULT_ON_WAIT( fast_block_lock )
+DEFAULT_ON_WAKEUP_NO_REACQ( fast_block_lock )
 
 //-----------------------------------------------------------------------------
 // simple_owner_lock
@@ -660,16 +663,9 @@ static inline void unlock( spin_queue_lock & this ) with(this) {
 	__atomic_store_n(&held, false, __ATOMIC_RELEASE);
 }
 
-static inline void on_notify( spin_queue_lock & this, struct thread$ * t ) {
-	unpark(t);
-}
-static inline size_t on_wait( spin_queue_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
-    unlock( this );
-    pre_park_then_park( pp_fn, pp_datum );
-    return 0;
-}
-static inline void on_wakeup( spin_queue_lock & this, size_t recursion ) { lock( this ); }
-
+DEFAULT_ON_NOTIFY( spin_queue_lock )
+DEFAULT_ON_WAIT( spin_queue_lock )
+DEFAULT_ON_WAKEUP_REACQ( spin_queue_lock )
 
 //-----------------------------------------------------------------------------
 // MCS Block Spin Lock
@@ -707,13 +703,9 @@ static inline void unlock(mcs_block_spin_lock & this) with(this) {
 	__atomic_store_n(&held, false, __ATOMIC_SEQ_CST);
 }
 
-static inline void on_notify( mcs_block_spin_lock & this, struct thread$ * t ) { unpark( t ); }
-static inline size_t on_wait( mcs_block_spin_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
-    unlock( this );
-    pre_park_then_park( pp_fn, pp_datum );
-    return 0;
-}
-static inline void on_wakeup( mcs_block_spin_lock & this, size_t recursion ) {lock( this ); }
+DEFAULT_ON_NOTIFY( mcs_block_spin_lock )
+DEFAULT_ON_WAIT( mcs_block_spin_lock )
+DEFAULT_ON_WAKEUP_REACQ( mcs_block_spin_lock )
 
 //-----------------------------------------------------------------------------
 // Block Spin Lock
@@ -764,11 +756,7 @@ static inline void on_notify( block_spin_lock & this, struct thread$ * t ) with(
 
 	unpark(t);
 }
-static inline size_t on_wait( block_spin_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { 
-    unlock( this );
-    pre_park_then_park( pp_fn, pp_datum );
-    return 0;
-}
+DEFAULT_ON_WAIT( block_spin_lock )
 static inline void on_wakeup( block_spin_lock & this, size_t recursion ) with(this) {
 	// now we acquire the entire block_spin_lock upon waking up
 	while(__atomic_load_n(&held, __ATOMIC_SEQ_CST)) Pause();

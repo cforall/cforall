@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// locks.hfa -- LIBCFATHREAD
+// locks.cfa -- LIBCFATHREAD
 // Runtime locks that used with the runtime thread system.
 //
 // Author           : Colby Alexander Parsons
@@ -112,14 +112,6 @@ bool try_lock( blocking_lock & this ) with( this ) {
 	unlock( lock );
 	return ret;
 }
-
-// static void pop_and_set_new_owner( blocking_lock & this ) with( this ) {
-// 	thread$ * t = &try_pop_front( blocked_threads );
-// 	owner = t;
-// 	recursion_count = ( t ? 1 : 0 );
-// 	if ( t ) wait_count--;
-// 	unpark( t );
-// }
 
 static inline void pop_node( blocking_lock & this ) with( this ) {
     __handle_waituntil_OR( blocked_threads );
@@ -387,20 +379,14 @@ forall(L & | is_blocking_lock(L)) {
 		// add info_thread to waiting queue
 		insert_last( blocked_threads, *i );
 		count++;
-		// size_t recursion_count = 0;
-		// if (i->lock) {
-		// 	// if lock was passed get recursion count to reset to after waking thread
-		// 	recursion_count = on_wait( *i->lock );
-		// }
-		// return recursion_count;
 	}
 
     static size_t block_and_get_recursion( info_thread(L) & i, __cfa_pre_park pp_fn, void * pp_datum ) {
         size_t recursion_count = 0;
-		if ( i.lock ) {
-			// if lock was passed get recursion count to reset to after waking thread
+		if ( i.lock ) // if lock was passed get recursion count to reset to after waking thread
 			recursion_count = on_wait( *i.lock, pp_fn, pp_datum ); // this call blocks
-		} else pre_park_then_park( pp_fn, pp_datum );
+		else
+            pre_park_then_park( pp_fn, pp_datum );
         return recursion_count;
     }
     static size_t block_and_get_recursion( info_thread(L) & i ) { return block_and_get_recursion( i, pre_park_noop, 0p ); }
@@ -409,12 +395,10 @@ forall(L & | is_blocking_lock(L)) {
 	static void queue_info_thread( condition_variable(L) & this, info_thread(L) & i ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
         enqueue_thread( this, &i );
-		// size_t recursion_count = queue_and_get_recursion( this, &i );
 		unlock( lock );
 
 		// blocks here
         size_t recursion_count = block_and_get_recursion( i );
-		// park( );
 
 		// resets recursion count here after waking
 		if ( i.lock ) on_wakeup( *i.lock, recursion_count );
@@ -430,14 +414,10 @@ forall(L & | is_blocking_lock(L)) {
 	static void queue_info_thread_timeout( condition_variable(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
         enqueue_thread( this, &info );
-		// size_t recursion_count = queue_and_get_recursion( this, &info );
 		alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
 		unlock( lock );
 
-		// registers alarm outside cond lock to avoid deadlock
-		// register_self( &node_wrap.alarm_node );
-
-		// blocks here
+		// blocks here and registers alarm node before blocking after releasing locks to avoid deadlock
         size_t recursion_count = block_and_get_recursion( info, cond_alarm_register, (void *)(&node_wrap.alarm_node) );
 		// park();
 
@@ -547,29 +527,16 @@ forall(L & | is_blocking_lock(L)) {
 	uintptr_t front( pthread_cond_var(L) & this ) with(this) { return blocked_threads`isEmpty ? NULL : blocked_threads`first.info; }
 	bool empty ( pthread_cond_var(L) & this ) with(this) { return blocked_threads`isEmpty; }
 
-	// static size_t queue_and_get_recursion( pthread_cond_var(L) & this, info_thread(L) * i ) with(this) {
-	// 	// add info_thread to waiting queue
-	// 	insert_last( blocked_threads, *i );
-	// 	size_t recursion_count = 0;
-	// 	recursion_count = on_wait( *i->lock );
-	// 	return recursion_count;
-	// }
-	
 	static void queue_info_thread_timeout( pthread_cond_var(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
-		// size_t recursion_count = queue_and_get_recursion(this, &info);
         insert_last( blocked_threads, info );
 		pthread_alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
 		unlock( lock );
 
-		// registers alarm outside cond lock to avoid deadlock
-		// register_self( &node_wrap.alarm_node ); // C_TODO: fix race: registers itself and then alarm handler calls on_notify before block_and_get_recursion is run
-
-		// blocks here
+		// blocks here and registers alarm node before blocking after releasing locks to avoid deadlock
         size_t recursion_count = block_and_get_recursion( info, cond_alarm_register, (void *)(&node_wrap.alarm_node) );
-		// park();
 
-		// unregisters alarm so it doesn't go off if this happens first
+		// unregisters alarm so it doesn't go off if signal happens first
 		unregister_self( &node_wrap.alarm_node );
 
 		// resets recursion count here after waking
@@ -584,12 +551,11 @@ forall(L & | is_blocking_lock(L)) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		info_thread( L ) i = { active_thread(), info, &l };
         insert_last( blocked_threads, i );
-		// size_t recursion_count = queue_and_get_recursion( this, &i );
 		unlock( lock );
 
         // blocks here
 		size_t recursion_count = block_and_get_recursion( i );
-		// park();
+
 		on_wakeup( *i.lock, recursion_count );
 	}
 
@@ -678,3 +644,4 @@ bool V(semaphore & this, unsigned diff) with( this ) {
 
 	return thrd != 0p;
 }
+

@@ -1,8 +1,23 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// channel.hfa -- LIBCFATHREAD
+// Runtime locks that used with the runtime thread system.
+//
+// Author           : Colby Alexander Parsons
+// Created On       : Thu Jan 21 19:46:50 2022
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
 #pragma once
 
 #include <locks.hfa>
 #include <list.hfa>
-#include <mutex_stmt.hfa>
 #include "select.hfa"
 
 // returns true if woken due to shutdown
@@ -43,8 +58,8 @@ struct __attribute__((aligned(128))) channel {
     size_t size, front, back, count;
     T * buffer;
     dlist( select_node ) prods, cons; // lists of blocked threads
-    go_mutex mutex_lock;            // MX lock
-    bool closed;                    // indicates channel close/open
+    go_mutex mutex_lock;              // MX lock
+    bool closed;                      // indicates channel close/open
     #ifdef CHAN_STATS
     size_t blocks, operations;      // counts total ops and ops resulting in a blocked thd
     #endif
@@ -307,7 +322,7 @@ static inline T remove( channel(T) & chan ) with(chan) {
 // The following is support for waituntil (select) statements
 ///////////////////////////////////////////////////////////////////////////////////////////
 static inline bool unregister_chan( channel(T) & chan, select_node & node ) with(chan) {
-    // if ( !node`isListed && !node.park_counter ) return false; // handle special OR case
+    // if ( !node`isListed && !node.park_counter ) return false; // handle special OR case C_TODO: try adding this back
     lock( mutex_lock );
     if ( node`isListed ) { // op wasn't performed
         #ifdef CHAN_STATS
@@ -359,6 +374,7 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
             
             if ( __handle_waituntil_OR( prods ) ) {
                 __prods_handoff( chan, ret );
+                __make_select_node_sat( node ); // need to to mark SAT now that we know operation is done or else threads could get stuck in __mark_select_node
                 unlock( mutex_lock );
                 return true;
             }
@@ -448,6 +464,7 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
             
             if ( __handle_waituntil_OR( cons ) ) {
                 __cons_handoff( chan, elem );
+                __make_select_node_sat( node ); // need to to mark SAT now that we know operation is done or else threads could get stuck in __mark_select_node
                 unlock( mutex_lock );
                 return true;
             }
@@ -503,8 +520,6 @@ static inline bool on_selected( chan_write(T) & this, select_node & node ) with(
     return true;
 }
 
-
 } // forall( T )
-
 
 

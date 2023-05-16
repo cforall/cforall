@@ -1,8 +1,23 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// channel.hfa -- LIBCFATHREAD
+// Runtime locks that used with the runtime thread system.
+//
+// Author           : Colby Alexander Parsons
+// Created On       : Thu Jan 21 19:46:50 2023
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
 #pragma once
 
 #include "containers/list.hfa"
-// #include "alarm.hfa"
-#include "stdint.h"
+#include "alarm.hfa"
 #include "kernel.hfa"
 #include "time.hfa"
 
@@ -13,7 +28,6 @@ static const unsigned long int __SELECT_UNSAT = 0;
 static const unsigned long int __SELECT_PENDING = 1; // used only by special OR case
 static const unsigned long int __SELECT_SAT = 2;
 static const unsigned long int __SELECT_RUN = 3;
-
 
 // these are used inside the compiler to aid in code generation
 static inline bool __CFA_has_clause_run( unsigned long int status ) { return status == __SELECT_RUN; }
@@ -104,6 +118,9 @@ static inline bool __mark_select_node( select_node & this, unsigned long int val
 static inline void __make_select_node_unsat( select_node & this ) with( this ) {
     __atomic_store_n( clause_status, __SELECT_UNSAT, __ATOMIC_SEQ_CST );
 }
+static inline void __make_select_node_sat( select_node & this ) with( this ) {
+    __atomic_store_n( clause_status, __SELECT_SAT, __ATOMIC_SEQ_CST );
+}
 
 static inline bool __make_select_node_pending( select_node & this ) with( this ) {
     return __mark_select_node( this, __SELECT_PENDING );
@@ -115,8 +132,6 @@ static inline bool __make_select_node_available( select_node & this ) with( this
     /* paranoid */ verify( clause_status != 0p );
     if( !park_counter )
         return __mark_select_node( this, (unsigned long int)&this );
-    // return *clause_status == 0 
-    //     && __atomic_compare_exchange_n( clause_status, &cmp_status, (unsigned long int)&this, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ); // OR specific case where race was won
 
     unsigned long int cmp_status = __SELECT_UNSAT;
 
@@ -134,7 +149,8 @@ static inline bool __handle_waituntil_OR( dlist( select_node ) & queue ) {
     if ( queue`first.clause_status && !queue`first.park_counter ) {
         while ( !queue`isEmpty ) {
             // if node not a special OR case or if we win the special OR case race break
-            if ( !queue`first.clause_status || queue`first.park_counter || __make_select_node_available( queue`first ) ) { return true; }
+            if ( !queue`first.clause_status || queue`first.park_counter || __make_select_node_available( queue`first ) )
+                return true;
             // otherwise we lost the special OR race so discard node
             try_pop_front( queue );
         }
@@ -159,4 +175,20 @@ static inline void setup_clause( select_node & this, unsigned long int * clause_
     this.park_counter = park_counter;
 }
 
+// waituntil ( timeout( ... ) ) support
+struct select_timeout_node {
+    alarm_node_t a_node;
+    select_node * s_node;
+};
+void ?{}( select_timeout_node & this, Duration duration, Alarm_Callback callback );
+void ^?{}( select_timeout_node & this );
+void timeout_handler_select_cast( alarm_node_t & node );
 
+// Selectable trait routines
+bool register_select( select_timeout_node & this, select_node & node );
+bool unregister_select( select_timeout_node & this, select_node & node );
+bool on_selected( select_timeout_node & this, select_node & node );
+
+// Gateway routines to waituntil on duration
+select_timeout_node timeout( Duration duration );
+select_timeout_node sleep( Duration duration );

@@ -109,7 +109,7 @@ nodist__dummy_hack_SOURCES = .dummy_hack.c .dummy_hackxx.cpp
 #----------------------------------------------------------------------------------------------------------------
 
 all-local : # This name is important to automake and implies the default build target.
-	@+${TEST_PY} --debug=${debug} --install=${installed} --archive-errors=${archiveerrors} ${concurrent} ${timeouts} ${ARCH} --all # '@' => do not echo command (SILENT), '+' => allows recursive make from within python program
+	@+${TEST_PY} --debug=${debug} --install=${installed} --invariant --archive-errors=${archiveerrors} ${concurrent} ${timeouts} ${ARCH} --all # '@' => do not echo command (SILENT), '+' => allows recursive make from within python program
 
 install : all-local # PAB only
 

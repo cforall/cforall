@@ -116,7 +116,7 @@ static void tick_preemption(void) {
 	while( node = get_expired( alarms, currtime ) ) {
 		__cfadbg_print_buffer_decl( preemption, " KERNEL: preemption tick %lu\n", currtime.tn);
 		Duration period = node->period;
-		if( period == 0) {
+		if( period == 0 ) {
 			node->set = false;                  // Node is one-shot, just mark it as not pending
 		}
 

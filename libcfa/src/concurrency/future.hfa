@@ -51,14 +51,14 @@ forall( T ) {
             this.my_result = my_result;
         }
 
-        void ?{}(future(T) & this) {
+        void ?{}( future(T) & this ) {
 			this.waiters{};
             this.state = FUTURE_EMPTY;
             this.lock{};
 		}
 
 		// Reset future back to original state
-		void reset(future(T) & this) with(this)
+		void reset( future(T) & this ) with(this)
         {
             lock( lock );
             if( ! waiters`isEmpty )
@@ -84,14 +84,10 @@ forall( T ) {
                     break; // if handle_OR returns false then waiters is empty so break
                 select_node &s = try_pop_front( waiters );
 
-                if ( s.clause_status == 0p )
-                    // poke in result so that woken threads do not need to reacquire any locks
+                if ( s.clause_status == 0p ) // poke in result so that woken threads do not need to reacquire any locks
                     copy_T( result, *(((future_node(T) &)s).my_result) );
-                else if ( !__make_select_node_available( s ) ) continue;
                 
-                // only unpark if future is not selected
-                // or if it is selected we only unpark if we win the race
-                unpark( s.blocked_thread );
+                wake_one( waiters, s );
             }
         }
 
