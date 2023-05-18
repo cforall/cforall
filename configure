@@ -3183,7 +3183,7 @@ _ACEOF
 
 
 #==============================================================================
-# HACK to be able to use conditionnals inside makefiles
+# HACK to be able to use conditionals inside makefiles
 DOifskipcompile='ifeq ($(skipcompile),yes)
 else'
 

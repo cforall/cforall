@@ -409,9 +409,10 @@ am__v_JAVAC_0 = @echo "  JAVAC   " $@;
 am__v_JAVAC_1 = 
 DEFAULT_INCLUDES = -I${abs_srcdir}
 ARCH = ${if ${arch},"--arch=${arch}"}
-archiveerrors = 
+arch_support = "x86/x64/arm"
 DEBUG_FLAGS = -debug -g -O0
 quick_test = avl_test operators numericConstants expression enum array typeof cast raii/dtor-early-exit raii/init_once attributes meta/dumpable
+archiveerrors = 
 concurrent = 
 timeouts = 
 TEST_PY = python3 ${builddir}/test.py
@@ -923,13 +924,13 @@ list :
 help :
 	@echo "user targets:"
 	@echo "    Run the complete test suite."
-	@echo "    $$ make (null) / tests [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]"
+	@echo "    $$ make (null) / tests [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
 	@echo ""
 	@echo "    Run the short (quick) test suite."
-	@echo "    $$ make quick [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]"
+	@echo "    $$ make quick [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
 	@echo ""
 	@echo "    Run the concurrent test suite."
-	@echo "    $$ make concurrency [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]"
+	@echo "    $$ make concurrency [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
 	@echo ""
 	@echo "    List all tests in the test suite."
 	@echo "    $$ make list"

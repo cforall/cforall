@@ -46,7 +46,7 @@ AC_DEFINE_UNQUOTED(CFA_VERSION_LONG, ["${ver_major}.${ver_minor}.${ver_patch}"],
 AC_DEFINE_UNQUOTED(CFA_VERSION_FULL, ["${ver_major}.${ver_minor}.${ver_patch}.${ver_build}"], [Major.Minor.Patch.Build])
 
 #==============================================================================
-# HACK to be able to use conditionnals inside makefiles
+# HACK to be able to use conditionals inside makefiles
 DOifskipcompile='ifeq ($(skipcompile),yes)
 else'
 AC_SUBST([DOifskipcompile])

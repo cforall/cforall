@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Fri May 12 18:03:57 2023
-## Update Count     : 176
+## Last Modified On : Tue May 16 09:27:48 2023
+## Update Count     : 178
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -23,13 +23,13 @@ DEFAULT_INCLUDES = -I${abs_srcdir}
 
 debug ?= yes
 installed ?= no
-ARCH=${if ${arch},"--arch=${arch}"}
+ARCH = ${if ${arch},"--arch=${arch}"}
+arch_support = "x86/x64/arm"
+DEBUG_FLAGS = -debug -g -O0
+
+quick_test = avl_test operators numericConstants expression enum array typeof cast raii/dtor-early-exit raii/init_once attributes meta/dumpable
+
 archiveerrors=
-
-DEBUG_FLAGS=-debug -g -O0
-
-quick_test=avl_test operators numericConstants expression enum array typeof cast raii/dtor-early-exit raii/init_once attributes meta/dumpable
-
 concurrent=
 timeouts=
 
@@ -64,7 +64,7 @@ CFACCBIN = @CFACC@
 CFACCLOCAL = ${if ${DISTCC_CFA_PATH},${DISTCC_CFA_PATH} ${ARCH_FLAGS} ,${TARGET_CFA} ${DEBUG_FLAGS} ${ARCH_FLAGS}}
 CFACCLINK = ${CFACCLOCAL} -quiet ${if ${test}, 2> ${test}, } ${${shell echo "${@}_FLAGSLD" | sed 's/-\|\//_/g'}}
 
-PRETTY_PATH=mkdir -p ${dir ${abspath ${@}}} && cd ${srcdir} &&
+PRETTY_PATH = mkdir -p ${dir ${abspath ${@}}} && cd ${srcdir} &&
 
 .PHONY : list .validate .test_makeflags
 .INTERMEDIATE : .validate .validate.cfa .test_makeflags
@@ -127,13 +127,13 @@ list :
 help :
 	@echo "user targets:"
 	@echo "    Run the complete test suite."
-	@echo "    $$ make (null) / tests [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]"
+	@echo "    $$ make (null) / tests [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
 	@echo ""
 	@echo "    Run the short (quick) test suite."
-	@echo "    $$ make quick [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]"
+	@echo "    $$ make quick [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
 	@echo ""
 	@echo "    Run the concurrent test suite."
-	@echo "    $$ make concurrency [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]"
+	@echo "    $$ make concurrency [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
 	@echo ""
 	@echo "    List all tests in the test suite."
 	@echo "    $$ make list"

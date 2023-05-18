@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 22:14:18 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Fri May 12 18:30:01 2023
-## Update Count     : 42
+## Last Modified On : Wed May 17 11:02:34 2023
+## Update Count     : 56
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -39,6 +39,9 @@ EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libc
 debug ?= yes
 installed ?= no
 ARCH = ${if ${arch},"arch=${arch}"}
+arch_support = "x86/x64/arm"
+
+# target "all" created by automake
 
 check :
 	${MAKE} -C tests tests installed=${installed} debug=${debug} ${ARCH}
@@ -50,21 +53,27 @@ installcheck :
 
 installtest : installcheck # synonym
 
-help :
-	@echo "user targets:"
-	@echo "    Compile compiler/runtime and run test suite."
-	@echo "    $$ make check / tests [debug=yes/no] [installed=yes/no] [arch=x86/x64/arm]"
-	@echo ""
-	@echo "    Compile compiler/runtime, run test suite, and install."
-	@echo "    $$ make installcheck / installtests [debug=yes/no] installed=yes [arch=x86/x64/arm]"
-
-configure-libcfa : @LIBCFA_TARGET_MAKEFILES@
-	@true
-
 status : @LIBCFA_TARGET_MAKEFILES@
 	@echo -ne "translator\n\t"
 	@./config.status --config | sed "s/ /\n\t/g; s/\t'/\t/g; s/'\n/\n/g; s/^'//g; s/'$$//g"
 	@find libcfa -name config.status -printf "\n%h\n\t" -exec {} --config \; | sed "s/ /\n\t/g; s/\t'/\t/g; s/'\n/\n/g; s/^'//g; s/'$$//g"
+
+help :
+	@echo "user targets:"
+	@echo "    Compile compiler/runtime."
+	@echo "    $$ make (null) / all"
+	@echo ""
+	@echo "    Compile compiler/runtime and run test suite."
+	@echo "    $$ make check / tests [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
+	@echo ""
+	@echo "    Compile compiler/runtime, install, and run test suite on installed system."
+	@echo "    $$ make installcheck / installtests [debug=yes/no] installed=yes [arch=${arch_support}]"
+	@echo ""
+	@echo "    Print configuration parameters and system build information."
+	@echo "    $$ make status"
+
+configure-libcfa : @LIBCFA_TARGET_MAKEFILES@
+	@true
 
 @LIBCFA_TARGET_DIRS@ ::
 	${MAKE} -C ${@} ${MAKECMDGOALS}
