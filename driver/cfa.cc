@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 10 21:16:00 2023
-// Update Count     : 476
+// Last Modified On : Tue May 23 16:22:47 2023
+// Update Count     : 477
 //
 
 #include <iostream>
@@ -327,6 +327,10 @@ int main( int argc, char * argv[] ) {
 	#ifdef __x86_64__
 	args[nargs++] = "-mcx16";							// allow double-wide CAS
 	#endif // __x86_64__
+
+	#ifdef __ARM_ARCH
+	args[nargs++] = "-mno-outline-atomics";				// use ARM LL/SC instructions for atomics
+	#endif // __ARM_ARCH
 
 	#ifdef __DEBUG_H__
 	cerr << "args:";
