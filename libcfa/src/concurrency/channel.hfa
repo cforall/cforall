@@ -61,7 +61,7 @@ struct __attribute__((aligned(128))) channel {
     go_mutex mutex_lock;              // MX lock
     bool closed;                      // indicates channel close/open
     #ifdef CHAN_STATS
-    size_t blocks, operations;      // counts total ops and ops resulting in a blocked thd
+    size_t p_blocks, p_ops, c_blocks, c_ops;      // counts total ops and ops resulting in a blocked thd
     #endif
 };
 
@@ -74,17 +74,22 @@ static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
     mutex_lock{};
     closed = false;
     #ifdef CHAN_STATS
-    blocks = 0;
-    operations = 0;
+    p_blocks = 0;
+    p_ops = 0;
+    c_blocks = 0;
+    c_ops = 0;
     #endif
 }
 
 static inline void ?{}( channel(T) &c ){ ((channel(T) &)c){ 0 }; }
 static inline void ^?{}( channel(T) &c ) with(c) {
     #ifdef CHAN_STATS
-    printf("Channel %p Blocks: %lu, Operations: %lu, %.2f%% of ops blocked\n", &c, blocks, operations, ((double)blocks)/operations * 100);
+    printf("Channel %p Blocks: %lu,\t\tOperations: %lu,\t%.2f%% of ops blocked\n", &c, p_blocks + c_blocks, p_ops + c_ops, ((double)p_blocks + c_blocks)/(p_ops + c_ops) * 100);
+    printf("Channel %p Consumer Blocks: %lu,\tConsumer Ops: %lu,\t%.2f%% of Consumer ops blocked\n", &c, p_blocks, p_ops, ((double)p_blocks)/p_ops * 100);
+    printf("Channel %p Producer Blocks: %lu,\tProducer Ops: %lu,\t%.2f%% of Producer ops blocked\n", &c, c_blocks, c_ops, ((double)c_blocks)/c_ops * 100);
     #endif
-    verifyf( cons`isEmpty && prods`isEmpty, "Attempted to delete channel with waiting threads (Deadlock).\n" );
+    verifyf( __handle_waituntil_OR( cons ) || __handle_waituntil_OR( prods ) || cons`isEmpty && prods`isEmpty, 
+        "Attempted to delete channel with waiting threads (Deadlock).\n" );
     if ( size != 0 ) delete( buffer );
 }
 static inline size_t get_count( channel(T) & chan ) with(chan) { return __atomic_load_n( &count, __ATOMIC_RELAXED ); }
@@ -148,7 +153,7 @@ static inline void __buf_insert( channel(T) & chan, T & elem ) with(chan) {
 static inline bool __internal_try_insert( channel(T) & chan, T & elem ) with(chan) {
     lock( mutex_lock );
     #ifdef CHAN_STATS
-    operations++;
+    p_ops++;
     #endif
 
     ConsEmpty: if ( !cons`isEmpty ) {
@@ -186,7 +191,7 @@ static inline void insert( channel(T) & chan, T elem ) with(chan) {
     lock( mutex_lock );
 
     #ifdef CHAN_STATS
-    if ( !closed ) operations++;
+    if ( !closed ) p_ops++;
     #endif
 
     // if closed handle
@@ -207,7 +212,7 @@ static inline void insert( channel(T) & chan, T elem ) with(chan) {
     // wait if buffer is full, work will be completed by someone else
     if ( count == size ) {
         #ifdef CHAN_STATS
-        blocks++;
+        p_blocks++;
         #endif
 
         // check for if woken due to close
@@ -236,7 +241,7 @@ static inline void __do_remove( channel(T) & chan, T & retval ) with(chan) {
 static inline bool __internal_try_remove( channel(T) & chan, T & retval ) with(chan) {
     lock( mutex_lock );
     #ifdef CHAN_STATS
-    operations++;
+    c_ops++;
     #endif
 
     ZeroSize: if ( size == 0 && !prods`isEmpty ) {
@@ -284,7 +289,7 @@ static inline T remove( channel(T) & chan ) with(chan) {
     lock( mutex_lock );
 
     #ifdef CHAN_STATS
-    if ( !closed ) operations++;
+    if ( !closed ) c_ops++;
     #endif
 
     if ( unlikely(closed) ) {
@@ -304,7 +309,7 @@ static inline T remove( channel(T) & chan ) with(chan) {
     // wait if buffer is empty, work will be completed by someone else
     if ( count == 0 ) {
         #ifdef CHAN_STATS
-        blocks++;
+        c_blocks++;
         #endif
         // check for if woken due to close
         if ( unlikely( block( cons, &retval, mutex_lock ) ) )
@@ -322,12 +327,9 @@ static inline T remove( channel(T) & chan ) with(chan) {
 // The following is support for waituntil (select) statements
 ///////////////////////////////////////////////////////////////////////////////////////////
 static inline bool unregister_chan( channel(T) & chan, select_node & node ) with(chan) {
-    // if ( !node`isListed && !node.park_counter ) return false; // handle special OR case C_TODO: try adding this back
+    if ( !node`isListed && !node.park_counter ) return false; // handle special OR case
     lock( mutex_lock );
     if ( node`isListed ) { // op wasn't performed
-        #ifdef CHAN_STATS
-        operations--;
-        #endif
         remove( node );
         unlock( mutex_lock );
         return false;
@@ -361,7 +363,7 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
     node.extra = &ret; // set .extra so that if it == 0p later in on_selected it is due to channel close
 
     #ifdef CHAN_STATS
-    if ( !closed ) operations++;
+    if ( !closed ) c_ops++;
     #endif
 
     if ( !node.park_counter ) {
@@ -406,7 +408,7 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
     // wait if buffer is empty, work will be completed by someone else
     if ( count == 0 ) {
         #ifdef CHAN_STATS
-        blocks++;
+        c_blocks++;
         #endif
         
         insert_last( cons, node );
@@ -450,7 +452,7 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
     node.extra = &elem; // set .extra so that if it == 0p later in on_selected it is due to channel close
 
     #ifdef CHAN_STATS
-    if ( !closed ) operations++;
+    if ( !closed ) p_ops++;
     #endif
 
     // special OR case handling
@@ -497,7 +499,7 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
     // insert node in list if buffer is full, work will be completed by someone else
     if ( count == size ) {
         #ifdef CHAN_STATS
-        blocks++;
+        p_blocks++;
         #endif
 
         insert_last( prods, node );
