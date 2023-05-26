@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// concurrent/readyQ/leader_spin.cfa -- validates ready queue fairness
+// leader_spin.cfa -- validates ready queue fairness
 //
 // Author           : Thierry Delisle
 // Created On       : Fri Apr 01 11:39:09 2022

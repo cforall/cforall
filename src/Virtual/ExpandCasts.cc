@@ -19,6 +19,7 @@
 #include <iterator>                // for back_inserter, inserter
 #include <string>                  // for string, allocator, operator==, ope...
 
+#include "AST/Copy.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Expr.hpp"
 #include "AST/Pass.hpp"

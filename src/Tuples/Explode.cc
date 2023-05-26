@@ -16,6 +16,7 @@
 #include "Explode.h"
 #include <list>                  // for list
 
+#include "AST/Pass.hpp"          // for Pass
 #include "SynTree/Mutator.h"     // for Mutator
 #include "Common/PassVisitor.h"  // for PassVisitor
 

@@ -1,0 +1,6 @@
+concurrency/keywordErrors.cfa:1:1 error: thread keyword requires threads to be in scope, add #include <thread.hfa>
+thread A with body
+
+concurrency/keywordErrors.cfa:6:1 error: thread keyword requires threads to be in scope, add #include <thread.hfa>
+thread B with body
+

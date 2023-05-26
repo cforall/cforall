@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Fri Jul 16 16:00:40 2021
-## Update Count     : 255
+## Last Modified On : Thu May 25 15:20:04 2023
+## Update Count     : 259
 ###############################################################################
 
 # create object files in directory with source files
@@ -58,6 +58,7 @@ inst_headers_nosrc = \
 	bits/stack.hfa \
 	bits/queue.hfa \
 	bits/sequence.hfa \
+	concurrency/atomic.hfa \
 	concurrency/iofwd.hfa \
 	concurrency/barrier.hfa \
 	containers/array.hfa \
@@ -114,8 +115,8 @@ inst_thread_headers_nosrc = \
 	concurrency/once.hfa \
 	concurrency/kernel/fwd.hfa \
 	concurrency/mutex_stmt.hfa \
-    concurrency/channel.hfa \
-    concurrency/actor.hfa 
+	concurrency/channel.hfa \
+	concurrency/actor.hfa 
 
 inst_thread_headers_src = \
 	concurrency/alarm.hfa \
@@ -126,7 +127,7 @@ inst_thread_headers_src = \
 	concurrency/locks.hfa \
 	concurrency/monitor.hfa \
 	concurrency/mutex.hfa \
-    concurrency/select.hfa \
+	concurrency/select.hfa \
 	concurrency/thread.hfa
 
 thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} \

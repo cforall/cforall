@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Tue May 16 09:27:48 2023
-## Update Count     : 178
+## Last Modified On : Fri May 26 13:34:12 2023
+## Update Count     : 180
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -78,8 +78,6 @@ EXTRA_DIST = test.py \
 	long_tests.hfa \
 	avltree/avl-private.h \
 	avltree/avl.h \
-	concurrent/clib_tls.c \
-	concurrent/clib.c \
 	configs/.in/parseconfig-all.txt \
 	configs/.in/parseconfig-errors.txt \
 	configs/.in/parseconfig-missing.txt \
@@ -88,8 +86,10 @@ EXTRA_DIST = test.py \
 	io/.in/io.data \
 	io/.in/many_read.data \
 	meta/fork+exec.hfa \
-	concurrent/unified_locking/mutex_test.hfa \
-	concurrent/channels/parallel_harness.hfa
+	concurrency/clib_tls.c \
+	concurrency/clib.c \
+	concurrency/unified_locking/mutex_test.hfa \
+	concurrency/channels/parallel_harness.hfa
 
 dist-hook:
 	echo "Gathering test files"
@@ -203,13 +203,26 @@ ${GENERATED_CODE} : % : %.cfa ${CFACCBIN}
 CFACOMPILE_SYNTAX = ${CFACOMPILETEST} -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o ${abspath ${@}}
 
 SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator \
-	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrent/waitfor/parse
+	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrency/waitfor/parse
 ${SYNTAX_ONLY_CODE} : % : %.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX}
 	${if ${test}, cp ${test} ${abspath ${@}}, }
 
 # expected failures
 # use custom target since they require a custom define *and* have a name that doesn't match the file
+
+array-ERR1 : array.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR1
+	-cp ${test} ${abspath ${@}}
+
+array-ERR2 : array.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR2
+	-cp ${test} ${abspath ${@}}
+
+array-ERR3 : array.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR3
+	-cp ${test} ${abspath ${@}}
+
 alloc-ERROR : alloc.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR1
 	-cp ${test} ${abspath ${@}}

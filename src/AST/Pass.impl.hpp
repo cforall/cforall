@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <unordered_map>
 
+#include "AST/Copy.hpp"
 #include "AST/TranslationUnit.hpp"
 #include "AST/TypeSubstitution.hpp"
 

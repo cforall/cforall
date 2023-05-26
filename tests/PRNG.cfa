@@ -1,14 +1,16 @@
-//                               -*- Mode: C -*- 
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2021 University of Waterloo
-// 
-// PRNG.c -- 
-// 
+//
+// PRNG.c -- high-perforamnce pseudo-random numbers
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 23 22:02:09 2023
-// Update Count     : 420
+// Last Modified On : Thu May 25 15:39:52 2023
+// Update Count     : 422
 // 
 
 #include <fstream.hfa>									// sout

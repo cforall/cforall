@@ -4,8 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// concurrent/barrier/generation.cfa -- simple test that validates barriers by printing
-//                                      alphabetical generations
+// generation.cfa -- simple test that validates barriers by printing alphabetical generations
 //
 // Author           : Thierry Delisle
 // Created On       : Thu Mar 31 16:43:45 2022

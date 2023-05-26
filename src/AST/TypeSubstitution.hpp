@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 30 22:52:47 2019
-// Update Count     : 9
+// Last Modified By : Andrew Beach
+// Last Modified On : Thr May 25 12:31:00 2023
+// Update Count     : 10
 //
 
 #pragma once
@@ -45,28 +45,35 @@ class TypeSubstitution : public Node {
 
 	TypeSubstitution &operator=( const TypeSubstitution &other );
 
-	template< typename SynTreeClass >
+	template< typename node_t >
 	struct ApplyResult {
-		ast::ptr<SynTreeClass> node;
+		ast::ptr<node_t> node;
 		int count;
 	};
 
-	template< typename SynTreeClass > ApplyResult<SynTreeClass> apply( const SynTreeClass * input ) const;
-	template< typename SynTreeClass > ApplyResult<SynTreeClass> applyFree( const SynTreeClass * input ) const;
+	template< typename node_t >
+	ApplyResult<node_t> apply( const node_t * input ) const {
+		ApplyResult<Node> ret = applyBase( input, false );
+		return { ret.node.strict_as<node_t>(), ret.count };
+	}
 
 	template< typename node_t, enum Node::ref_type ref_t >
 	int apply( ptr_base< node_t, ref_t > & input ) const {
-		const node_t * p = input.get();
-		auto ret = apply(p);
-		input = ret.node;
+		ApplyResult<Node> ret = applyBase( input.get(), false );
+		input = ret.node.strict_as<node_t>();
 		return ret.count;
+	}
+
+	template< typename node_t >
+	ApplyResult<node_t> applyFree( const node_t * input ) const {
+		ApplyResult<Node> ret = applyBase( input, true );
+		return { ret.node.strict_as<node_t>(), ret.count };
 	}
 
 	template< typename node_t, enum Node::ref_type ref_t >
 	int applyFree( ptr_base< node_t, ref_t > & input ) const {
-		const node_t * p = input.get();
-		auto ret = applyFree(p);
-		input = ret.node;
+		ApplyResult<Node> ret = applyBase( input.get(), true );
+		input = ret.node.strict_as<node_t>();
 		return ret.count;
 	}
 
@@ -96,6 +103,7 @@ class TypeSubstitution : public Node {
 
 	// Mutator that performs the substitution
 	struct Substituter;
+	ApplyResult<Node> applyBase( const Node * input, bool isFree ) const;
 
 	// TODO: worry about traversing into a forall-qualified function type or type decl with assertions
 
@@ -153,55 +161,6 @@ void TypeSubstitution::addAll( FormalIterator formalBegin, FormalIterator formal
 			// Is this an error?
 		} // if
 	} // for
-}
-
-} // namespace ast
-
-// include needs to happen after TypeSubstitution is defined so that both TypeSubstitution and
-// PassVisitor are defined before PassVisitor implementation accesses TypeSubstitution internals.
-#include "Pass.hpp"
-#include "Copy.hpp"
-
-namespace ast {
-
-// definitition must happen after PassVisitor is included so that WithGuards can be used
-struct TypeSubstitution::Substituter : public WithGuards, public WithVisitorRef<Substituter>, public PureVisitor {
-		static size_t traceId;
-
-		Substituter( const TypeSubstitution & sub, bool freeOnly ) : sub( sub ), freeOnly( freeOnly ) {}
-
-		const Type * postvisit( const TypeInstType * aggregateUseType );
-
-		/// Records type variable bindings from forall-statements
-		void previsit( const FunctionType * type );
-		/// Records type variable bindings from forall-statements and instantiations of generic types
-		// void handleAggregateType( const BaseInstType * type );
-
-		// void previsit( const StructInstType * aggregateUseType );
-		// void previsit( const UnionInstType * aggregateUseType );
-
-		const TypeSubstitution & sub;
-		int subCount = 0;
-		bool freeOnly;
-		typedef std::unordered_set< TypeEnvKey > BoundVarsType;
-		BoundVarsType boundVars;
-
-};
-
-template< typename SynTreeClass >
-TypeSubstitution::ApplyResult<SynTreeClass> TypeSubstitution::apply( const SynTreeClass * input ) const {
-	assert( input );
-	Pass<Substituter> sub( *this, false );
-	input = strict_dynamic_cast< const SynTreeClass * >( input->accept( sub ) );
-	return { input, sub.core.subCount };
-}
-
-template< typename SynTreeClass >
-TypeSubstitution::ApplyResult<SynTreeClass> TypeSubstitution::applyFree( const SynTreeClass * input ) const {
-	assert( input );
-	Pass<Substituter> sub( *this, true );
-	input = strict_dynamic_cast< const SynTreeClass * >( input->accept( sub ) );
-	return { input, sub.core.subCount };
 }
 
 } // namespace ast

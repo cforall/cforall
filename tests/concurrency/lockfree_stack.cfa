@@ -1,0 +1,91 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// lockfree_stack.cfa -- 
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu May 25 15:36:50 2023
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri May 26 08:08:47 2023
+// Update Count     : 4
+// 
+
+#include <thread.hfa>
+#include <atomic.hfa>									// CASV
+#include <fstream.hfa>
+
+struct Node;											// forward declaration
+union Link {
+	struct {											// 64-bit x 2
+		Node * volatile top;							// pointer to stack top
+		uintptr_t count;								// count each push
+	};
+	#if defined( __SIZEOF_INT128__ )
+	__int128 atom;										// gcc, 128-bit integer
+	#else
+	int64_t atom;
+	#endif // __SIZEOF_INT128__
+} __attribute__(( aligned( 16 ) ));
+
+struct Node {
+	// resource data
+	Link next;											// pointer to next node/count (resource)
+};
+struct Stack {
+	Link stack;
+};
+
+void push( Stack & s, Node & n ) with(s) {
+	n.next = stack;										// atomic assignment unnecessary
+	for () {											// busy wait
+		if ( CASV( stack.atom, n.next.atom, ((Link){ &n, n.next.count + 1 }.atom) ) ) break; // attempt to update top node
+	}
+}
+
+Node * pop( Stack & s ) with(s) {
+	Link t = stack;										// atomic assignment unnecessary
+	for () {											// busy wait
+		if ( t.top == NULL ) return NULL;				// empty stack ?
+		if ( CASV( stack.atom, t.atom, ((Link){ t.top->next.top, t.count }.atom) ) ) return t.top; // attempt to update top node
+	}
+}
+void ?{}( Stack & s ) with(s) { stack.atom = 0; }
+
+Stack stack;											// global stack
+
+thread Worker {};
+void main( Worker & w ) {
+	for ( i; 100000 ) {
+		Node & n = *pop( stack );
+		assert( &n != NULL );
+		n.next.top = 0p;								// shrub fields
+		n.next.count = 0;
+		//yield( rand() % 3 );
+		push( stack, n );
+	}
+}
+
+
+int main() {
+	enum { N = 10 };
+	processor p[N - 1];									// kernel threads
+
+	for ( i; N ) {										// push N values on stack
+		// storage must be 16-bytes aligned for cmpxchg16b
+		push( stack, *(Node *)memalign( 16, sizeof( Node ) ) );
+	}
+	{
+		Worker workers[N];								// run test
+	}
+	for ( i; N ) {										// pop N nodes from list
+		free( pop( stack ) );
+	}
+	sout | "done";										// non-empty .expect file
+}
+
+// Local Variables: //
+// compile-command: "cfa -g -O3 lockfree_stack.cfa" //
+// End: //

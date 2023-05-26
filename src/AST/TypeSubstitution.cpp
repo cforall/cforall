@@ -9,17 +9,16 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Jun  3 13:26:00 2017
-// Update Count     : 5
+// Last Modified On : Thr May 25 11:24:00 2023
+// Update Count     : 6
 //
 
-#include "Type.hpp"   // for TypeInstType, Type, StructInstType, UnionInstType
 #include "TypeSubstitution.hpp"
 
+#include "Type.hpp"   // for TypeInstType, Type, StructInstType, UnionInstType
+#include "Pass.hpp"   // for Pass, PureVisitor, WithGuards, WithVisitorRef
+
 namespace ast {
-
-
-// size_t TypeSubstitution::Substituter::traceId = Stats::Heap::new_stacktrace_id("TypeSubstitution");
 
 TypeSubstitution::TypeSubstitution() {
 }
@@ -118,6 +117,31 @@ TypeSubstitution * TypeSubstitution::newFromExpr( const Expr * expr, const TypeS
 	return nullptr;
 }
 
+// definitition must happen after PassVisitor is included so that WithGuards can be used
+struct TypeSubstitution::Substituter : public WithGuards, public WithVisitorRef<Substituter>, public PureVisitor {
+	//static size_t traceId;
+
+	Substituter( const TypeSubstitution & sub, bool freeOnly ) : sub( sub ), freeOnly( freeOnly ) {}
+
+	const Type * postvisit( const TypeInstType * aggregateUseType );
+
+	/// Records type variable bindings from forall-statements
+	void previsit( const FunctionType * type );
+	/// Records type variable bindings from forall-statements and instantiations of generic types
+	// void handleAggregateType( const BaseInstType * type );
+
+	// void previsit( const StructInstType * aggregateUseType );
+	// void previsit( const UnionInstType * aggregateUseType );
+
+	const TypeSubstitution & sub;
+	int subCount = 0;
+	bool freeOnly;
+	typedef std::unordered_set< TypeEnvKey > BoundVarsType;
+	BoundVarsType boundVars;
+};
+
+// size_t TypeSubstitution::Substituter::traceId = Stats::Heap::new_stacktrace_id("TypeSubstitution");
+
 void TypeSubstitution::normalize() {
 	Pass<Substituter> sub( *this, true );
 	do {
@@ -127,6 +151,14 @@ void TypeSubstitution::normalize() {
 			i->second = i->second->accept( sub );
 		}
 	} while ( sub.core.subCount );
+}
+
+TypeSubstitution::ApplyResult<Node> TypeSubstitution::applyBase(
+		const Node * input, bool isFree ) const {
+	assert( input );
+	Pass<Substituter> sub( *this, isFree );
+	const Node * output = input->accept( sub );
+	return { output, sub.core.subCount };
 }
 
 const Type * TypeSubstitution::Substituter::postvisit( const TypeInstType *inst ) {

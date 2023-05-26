@@ -1,0 +1,2 @@
+array.cfa:105:25: warning: Preprocessor started
+array.cfa:96:32: error: syntax error, unexpected ']' before token "]"

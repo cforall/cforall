@@ -15,6 +15,7 @@
 
 #include "Specialize.h"
 
+#include "AST/Copy.hpp"                  // for deepCopy
 #include "AST/Inspect.hpp"               // for isIntrinsicCallExpr
 #include "AST/Pass.hpp"                  // for Pass
 #include "AST/TypeEnvironment.hpp"       // for OpenVarSet, AssertionSet

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// concurrent/barrier/order.cfa -- validates barriers the return value of
+// order.cfa -- validates barriers the return value of
 //                                 barrier block
 //
 // Author           : Thierry Delisle

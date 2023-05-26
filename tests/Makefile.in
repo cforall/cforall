@@ -451,8 +451,6 @@ EXTRA_DIST = test.py \
 	long_tests.hfa \
 	avltree/avl-private.h \
 	avltree/avl.h \
-	concurrent/clib_tls.c \
-	concurrent/clib.c \
 	configs/.in/parseconfig-all.txt \
 	configs/.in/parseconfig-errors.txt \
 	configs/.in/parseconfig-missing.txt \
@@ -461,8 +459,10 @@ EXTRA_DIST = test.py \
 	io/.in/io.data \
 	io/.in/many_read.data \
 	meta/fork+exec.hfa \
-	concurrent/unified_locking/mutex_test.hfa \
-	concurrent/channels/parallel_harness.hfa
+	concurrency/clib_tls.c \
+	concurrency/clib.c \
+	concurrency/unified_locking/mutex_test.hfa \
+	concurrency/channels/parallel_harness.hfa
 
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
@@ -491,7 +491,7 @@ GENERATED_CODE = declarationSpecifier gccExtensions extension attributes functio
 # tests that just validate syntax and compiler output should be compared to stderr
 CFACOMPILE_SYNTAX = ${CFACOMPILETEST} -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o ${abspath ${@}}
 SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator \
-	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrent/waitfor/parse
+	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrency/waitfor/parse
 
 all: all-am
 
@@ -983,6 +983,19 @@ ${SYNTAX_ONLY_CODE} : % : %.cfa ${CFACCBIN}
 
 # expected failures
 # use custom target since they require a custom define *and* have a name that doesn't match the file
+
+array-ERR1 : array.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR1
+	-cp ${test} ${abspath ${@}}
+
+array-ERR2 : array.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR2
+	-cp ${test} ${abspath ${@}}
+
+array-ERR3 : array.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR3
+	-cp ${test} ${abspath ${@}}
+
 alloc-ERROR : alloc.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR1
 	-cp ${test} ${abspath ${@}}

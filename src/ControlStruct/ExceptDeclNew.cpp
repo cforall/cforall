@@ -17,6 +17,7 @@
 
 #include <sstream>
 
+#include "AST/Copy.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Print.hpp"

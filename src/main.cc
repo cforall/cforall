@@ -31,6 +31,8 @@
 using namespace std;
 
 #include "AST/Convert.hpp"
+#include "AST/Pass.hpp"                     // for pass_visitor_stats
+#include "AST/TranslationUnit.hpp"          // for TranslationUnit
 #include "AST/Util.hpp"                     // for checkInvariants
 #include "CompilationState.h"
 #include "../config.h"                      // for CFA_LIBDIR

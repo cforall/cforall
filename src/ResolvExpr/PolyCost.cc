@@ -14,6 +14,7 @@
 //
 
 #include "AST/SymbolTable.hpp"
+#include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "AST/TypeEnvironment.hpp"
 #include "Common/PassVisitor.h"

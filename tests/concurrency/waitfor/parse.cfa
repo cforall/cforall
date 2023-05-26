@@ -1,0 +1,261 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// waitfor.c -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Aug 30 17:53:29 2017
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Apr 10 22:52:18 2023
+// Update Count     : 64
+// 
+
+#include <monitor.hfa>
+
+monitor M {};
+
+void notcalled( M & mutex m1, M & mutex m2 ) {
+	abort();
+}
+void or( M & mutex m ) {
+	abort();
+}
+void timeout( M & mutex m ) {
+	abort();
+}
+
+void fred( M & mutex m, M & mutex or, M & mutex timeout ) {
+	// test waitfor and when
+
+	waitfor( notcalled : m, m );
+
+	waitfor( notcalled : m, m ) {
+	}
+
+	waitfor( notcalled : m, m ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m );
+
+	when( true ) waitfor( notcalled : m, m ) {
+	}
+
+	waitfor( notcalled : m, m );
+	or waitfor( notcalled : m, m );
+
+	when( true ) waitfor( notcalled : m, m );
+	or when( true ) waitfor( notcalled : m, m );
+
+	waitfor( notcalled : m, m ) {
+	} or waitfor( notcalled : m, m ) {
+	}
+
+	waitfor( notcalled : m, m ) {
+	} or waitfor( notcalled : m, m ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or when( true ) waitfor( notcalled : m, m ) {
+	}
+
+	waitfor( notcalled : m, m );
+	or waitfor( notcalled : m, m ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m );
+	or when( true ) waitfor( notcalled : m, m ) {
+	}
+
+	waitfor( notcalled : m, m ) {
+	} or waitfor( notcalled : m, m );
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or when( true ) waitfor( notcalled : m, m );
+
+	// test when, waitfor and else
+
+	waitfor( notcalled : m, m );
+	or else;
+
+	when( true ) waitfor( notcalled : m, m );
+	or else;
+
+	when( true ) waitfor( notcalled : m, m );
+	or else;
+
+	waitfor( notcalled : m, m ) {
+	} or else {
+	}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or else {
+	}
+
+	waitfor( notcalled : m, m );
+	or else {
+	}
+
+	when( true ) waitfor( notcalled : m, m );
+	or else {
+	}
+
+	when( true ) waitfor( notcalled : m, m );
+	or else {
+	}
+
+	waitfor( notcalled : m, m ) {
+	} or else;
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or else;
+
+	waitfor( notcalled : m, m );
+	or when( true ) else;
+
+	when( true ) waitfor( notcalled : m, m );
+	or when( true ) else;
+
+	when( true ) waitfor( notcalled : m, m );
+	or when( true ) else;
+
+	waitfor( notcalled : m, m ) {
+	} or when( true ) else {
+	}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or when( true ) else {
+	}
+
+	waitfor( notcalled : m, m );
+	or when( true ) else {
+	}
+
+	when( true ) waitfor( notcalled : m, m );
+	or when( true ) else {
+	}
+
+	when( true ) waitfor( notcalled : m, m );
+	or when( true ) else {
+	}
+
+	waitfor( notcalled : m, m ) {
+	} or when( true ) else;
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or when( true ) else;
+
+	// test when, waitfor and timeout
+
+	waitfor( notcalled : m, m );
+	or timeout( 3 );
+
+	waitfor( notcalled : m, m );
+	or timeout( 3 );
+
+	when( true ) waitfor( notcalled : m, m );
+	or timeout( 3 );
+
+	waitfor( notcalled : m, m ) {
+	} or timeout( 3 ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or timeout( 3 ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or timeout( 3 ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or when ( true ) timeout( 3 ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or when ( true ) timeout( 3 ) {
+	}
+
+	waitfor( notcalled : m, m );
+	or timeout( 3 ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m );
+	or timeout( 3 ) {
+	}
+
+	when( true ) waitfor( notcalled : m, m );
+	or when( true ) timeout( 3 ) {
+	}
+
+	waitfor( notcalled : m, m ) {
+	} or timeout( 3 );
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or timeout( 3 );
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or when( true ) timeout( 3 );
+
+	// test when, waitfor, timeout and else
+
+	waitfor( notcalled : m, m ) {
+	} or timeout( 3 ) {
+	} or when( true ) else {}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or timeout( 3 ) {
+	} or when( true ) else {}
+
+	waitfor( notcalled : m, m ) {
+	} or timeout( 3 ) {
+	} or when( true ) else {}
+
+	waitfor( notcalled : m, m ) {
+	} or when( true ) timeout( 3 ) {
+	} or when( true ) else {}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or timeout( 3 ) {
+	} or when( true ) else {}
+
+	waitfor( notcalled : m, m ) {
+	} or when( true ) timeout( 3 ) {
+	} or when( true ) else {}
+
+	when( true ) waitfor( notcalled : m, m ) {
+	} or when( true ) timeout( 3 ) {
+	} or when( true ) else {}
+
+	// test quasi-keywords "or" and "timeout"
+
+	int or = 0, timeout = 0;
+	waitfor( timeout : timeout ) timeout += 1; or timeout( timeout );
+	waitfor( notcalled : or, or ) or += 1; or timeout( or ) 3;
+	when( or ) waitfor( or : m ) { 4; } or timeout( or ) or += 1;
+	when( timeout ) waitfor( notcalled : timeout, timeout ) or += 1; or else timeout += 1;
+	when( or + timeout ) waitfor( or : m ) 4; or when( or ) timeout( or ) 4; or when( or ) else timeout += 1;
+	when( 3 ) waitfor( or : or ) 3; or when( or ) waitfor( notcalled : or, or ) 4; or else 4;
+	when( timeout ) waitfor( or : timeout ) 3; or waitfor( notcalled : timeout, or ) 4; or when( or ) timeout( timeout ) 4;
+	when( 3 ) waitfor( or : timeout ) or += 1;
+	or waitfor( or : or ) timeout += 1;
+	or timeout( timeout ) or += 1;
+	or when( 3 ) else or += 1;
+
+	// test else selection
+
+	if ( or > timeout ) waitfor( or : or ) 3;
+	else waitfor( timeout : timeout ) 4;
+}
+
+//Dummy main
+int main( int argc, char const * argv[] ) {
+    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa waitfor.cfa" //
+// End: //

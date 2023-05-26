@@ -15,6 +15,7 @@
 
 #include "GenericParameter.hpp"
 
+#include "AST/Copy.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Expr.hpp"
 #include "AST/ParseNode.hpp"

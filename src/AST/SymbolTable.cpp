@@ -17,6 +17,7 @@
 
 #include <cassert>
 
+#include "Copy.hpp"
 #include "Decl.hpp"
 #include "Expr.hpp"
 #include "Inspect.hpp"

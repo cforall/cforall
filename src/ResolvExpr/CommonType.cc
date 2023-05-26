@@ -20,6 +20,7 @@
 #include <utility>                       // for pair
 
 #include "AST/Decl.hpp"
+#include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "Common/PassVisitor.h"
 #include "ResolvExpr/TypeEnvironment.h"  // for OpenVarSet, AssertionSet

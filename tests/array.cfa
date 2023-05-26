@@ -14,42 +14,95 @@
 // Update Count     : 5
 //
 
-int a1[0];
-//int a2[*];
-//double a4[3.0];
+// Tests syntax.  Comments explain semantics.  Test does not show semantics.
+// Mostly illustrates facts about C (with which CFA is being tested to agree).
+// Is a test oracle under `gcc -x c`.
 
-int m1[0][3];
-//int m2[*][*];
-int m4[3][3];
+#ifdef ERR1
+#define E1(...) __VA_ARGS__
+#else
+#define E1(...)
+#endif
 
-typedef int T;
+#ifdef ERR2
+#define E2(...) __VA_ARGS__
+#else
+#define E2(...)
+#endif
 
-int fred() {
-//	int a1[];
-//	int a2[*];
-	int a4[3];
-	int T[3];
-}
+#ifdef ERR3
+#define E3(...) __VA_ARGS__
+#else
+#define E3(...)
+#endif
 
-int mary( int T[3],
-		  int p1[const 3],
-		  int p2[static 3],
-		  int p3[static const 3]
-	) {
-}
+    int a1[0];
+E1( int a2[*];       )
+                                                        #ifndef __cforall
+E1( double a4[3.0];  )                                  // BUG 275: CFA accepts but should reject
+                                                        #endif
 
-int (*tom())[3] {
-}
+    int m1[0][3];
+E1( int m2[*][*];    )
+    int m4[3][3];
 
-int (*(jane)())( int T[3],
-				 int p1[const 3],
-				 int p2[static 3],
-				 int p3[static const 3]
-	) {
-}
+    typedef int T;
+
+    int fred(int n) {
+E1(     int a1[];    )
+E1(     int a2[*];   )
+        int a4[3];
+        int T[3];
+        int a5[n];
+    }
+
+    int mary( int T[3],                                 // same as: int *T
+              int p1[const 3],                          // same as: int const *p1
+              int p2[static 3],                         // same as T, but length >=3 checked
+              int p3[static const 3]                    // both above: 3 is static, p3 is const
+        ) {
+    }
+
+    // function taking (), returning pointer to array of ints
+    int (*tom())[3] {
+    }
+
+    // function taking (), returning pointer to function of same type as mary
+    int (*(jane)())( int T[3],
+                     int p1[const 3],
+                     int p2[static 3],
+                     int p3[static const 3]
+        ) {
+    }
+
+    // functions returning same exotic pointers, in CFA's non-onion syntax
+    #ifdef __cforall
+    [ * [3] int ] toms_twin(...) {
+    }
+    [ * [int]( [3] int T,
+            [const 3] int p1,
+            [static 3] int p2,
+            [static const 3] int p3
+            )
+    ] janes_twin(...) {
+    }
+    #endif
+
+
+//  int fm1( int, int, int[][*] );                      // TODO: investigate gcc-11 warning 
+//  int fm1( int r, int c, int m[][c] ) {}
+    int fm2( int r, int c, int (*m)[c] ) {}             // same as fm1
+E2( int fm3( int r, int c, int m[][static c] ) {}  )    // that's not static
+E3( int fm4( int r, int c, int m[][] );            )    // m's immediate element type is incomplete
+    int fm5( int, int, int[*][*] );                     // same as fm1 decl
+                                                        #ifndef __cforall
+    int fm5( int r, int c, int m[r][c] ) {}             // BUG 276: CFA chokes but should accept
+                                                        // C: same as fm1 defn
+                                                        #endif
+
 
 int main() {
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+    #pragma GCC warning "Preprocessor started"          // force non-empty .expect file, NO TABS!!!
 }
 
 // Local Variables: //

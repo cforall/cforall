@@ -15,6 +15,7 @@
 
 #include "Validate/FixQualifiedTypes.hpp"
 
+#include "AST/Copy.hpp"
 #include "AST/LinkageSpec.hpp"             // for Linkage
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"

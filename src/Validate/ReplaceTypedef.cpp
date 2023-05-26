@@ -15,6 +15,7 @@
 
 #include "ReplaceTypedef.hpp"
 
+#include "AST/Copy.hpp"
 #include "AST/Pass.hpp"
 #include "Common/ScopedMap.h"
 #include "Common/UniqueName.h"

@@ -15,14 +15,15 @@
 
 #include "Print.hpp"
 
+#include "Attribute.hpp"
 #include "Decl.hpp"
 #include "Expr.hpp"
+#include "Init.hpp"
 #include "Stmt.hpp"
 #include "Type.hpp"
 #include "TypeSubstitution.hpp"
 #include "CompilationState.h"
-
-#include "Common/utility.h" // for group_iterate
+#include "Common/Iterate.hpp"
 
 using namespace std;
 

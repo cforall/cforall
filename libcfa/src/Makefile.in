@@ -293,12 +293,12 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	time_t.hfa virtual_dtor.hfa bits/algorithm.hfa bits/align.hfa \
 	bits/containers.hfa bits/debug.hfa bits/defs.hfa \
 	bits/locks.hfa bits/collection.hfa bits/stack.hfa \
-	bits/queue.hfa bits/sequence.hfa concurrency/iofwd.hfa \
-	concurrency/barrier.hfa containers/array.hfa \
-	containers/list.hfa containers/lockfree.hfa \
-	containers/string_sharectx.hfa containers/vector2.hfa \
-	vec/vec.hfa vec/vec2.hfa vec/vec3.hfa vec/vec4.hfa \
-	concurrency/alarm.hfa concurrency/coroutine.hfa \
+	bits/queue.hfa bits/sequence.hfa concurrency/atomic.hfa \
+	concurrency/iofwd.hfa concurrency/barrier.hfa \
+	containers/array.hfa containers/list.hfa \
+	containers/lockfree.hfa containers/string_sharectx.hfa \
+	containers/vector2.hfa vec/vec.hfa vec/vec2.hfa vec/vec3.hfa \
+	vec/vec4.hfa concurrency/alarm.hfa concurrency/coroutine.hfa \
 	concurrency/exception.hfa concurrency/kernel.hfa \
 	concurrency/kernel/cluster.hfa concurrency/locks.hfa \
 	concurrency/monitor.hfa concurrency/mutex.hfa \
@@ -552,6 +552,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	bits/stack.hfa \
 @BUILDLIB_TRUE@	bits/queue.hfa \
 @BUILDLIB_TRUE@	bits/sequence.hfa \
+@BUILDLIB_TRUE@	concurrency/atomic.hfa \
 @BUILDLIB_TRUE@	concurrency/iofwd.hfa \
 @BUILDLIB_TRUE@	concurrency/barrier.hfa \
 @BUILDLIB_TRUE@	containers/array.hfa \
@@ -612,8 +613,8 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/once.hfa \
 @BUILDLIB_TRUE@	concurrency/kernel/fwd.hfa \
 @BUILDLIB_TRUE@	concurrency/mutex_stmt.hfa \
-@BUILDLIB_TRUE@    concurrency/channel.hfa \
-@BUILDLIB_TRUE@    concurrency/actor.hfa 
+@BUILDLIB_TRUE@	concurrency/channel.hfa \
+@BUILDLIB_TRUE@	concurrency/actor.hfa 
 
 @BUILDLIB_FALSE@inst_thread_headers_src = 
 @BUILDLIB_TRUE@inst_thread_headers_src = \
@@ -625,7 +626,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	concurrency/locks.hfa \
 @BUILDLIB_TRUE@	concurrency/monitor.hfa \
 @BUILDLIB_TRUE@	concurrency/mutex.hfa \
-@BUILDLIB_TRUE@    concurrency/select.hfa \
+@BUILDLIB_TRUE@	concurrency/select.hfa \
 @BUILDLIB_TRUE@	concurrency/thread.hfa
 
 @BUILDLIB_TRUE@thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} \

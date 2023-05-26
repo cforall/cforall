@@ -24,6 +24,7 @@
 #include <vector>                  // for vector
 
 #include "AST/Attribute.hpp"
+#include "AST/Copy.hpp"
 #include "AST/Create.hpp"
 #include "AST/Decl.hpp"
 #include "AST/DeclReplacer.hpp"
