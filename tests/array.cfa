@@ -80,23 +80,37 @@ E1(     int a2[*];   )
     [ * [3] int ] toms_twin(...) {
     }
     [ * [int]( [3] int T,
-            [const 3] int p1,
-            [static 3] int p2,
-            [static const 3] int p3
-            )
+               [const 3] int p1,
+               [static 3] int p2,
+               [static const 3] int p3
+             )
     ] janes_twin(...) {
     }
     #endif
 
+    // GCC 11+ gives a false warning (-Wvla-parameter) on the valid (C11 ARM p134-135) combination:
+    // declare with type int[*], define with type int[n].
+    // https://gcc.gnu.org/bugzilla//show_bug.cgi?id=100420 suggests the internal representation of
+    // of a[*] is the same as a[0].
+    // https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wno-vla-parameter explains
+    // the purpose of -Wvla-parameter is to report conflicts between int[] and int[n], which would
+    // understandably also include those between int[42] and int[n].
+    // https://stackoverflow.com/questions/17371645/why-use-an-asterisk-instead-of-an-integer-for-a-vla-array-parameter-of-a-f
+    // explains the declare-*, define-n pattern.
 
-//  int fm1( int, int, int[][*] );                      // TODO: investigate gcc-11 warning 
-//  int fm1( int r, int c, int m[][c] ) {}
+    // To work around the false warning, and keep to this test's purpose of exercising CFA's
+    // handling of exotic C array syntax, what would ideally be demonstrated as a declaration of
+    // fm1, followed by its definition, is instead split into fm1x and fm1y.  And similarly for
+    // fm5.
+
+    int fm1x( int, int, int[][*] );
+    int fm1y( int r, int c, int m[][c] ) {}
     int fm2( int r, int c, int (*m)[c] ) {}             // same as fm1
 E2( int fm3( int r, int c, int m[][static c] ) {}  )    // that's not static
 E3( int fm4( int r, int c, int m[][] );            )    // m's immediate element type is incomplete
-    int fm5( int, int, int[*][*] );                     // same as fm1 decl
+    int fm5x( int, int, int[*][*] );                    // same as fm1 decl
                                                         #ifndef __cforall
-    int fm5( int r, int c, int m[r][c] ) {}             // BUG 276: CFA chokes but should accept
+    int fm5y( int r, int c, int m[r][c] ) {}            // BUG 276: CFA chokes but should accept
                                                         // C: same as fm1 defn
                                                         #endif
 

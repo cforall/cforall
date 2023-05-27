@@ -1,2 +1,2 @@
-array.cfa:105:25: warning: Preprocessor started
-array.cfa:95:32: error: syntax error, unexpected STATIC before token "static"
+array.cfa:119:25: warning: Preprocessor started
+array.cfa:109:32: error: syntax error, unexpected STATIC before token "static"
