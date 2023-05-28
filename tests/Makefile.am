@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Sat May 27 18:27:08 2023
-## Update Count     : 190
+## Last Modified On : Sun May 28 08:15:43 2023
+## Update Count     : 196
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -26,11 +26,12 @@ installed ?= no
 ARCH = ${if ${arch},"--arch=${arch}"}
 arch_support = "x86/x64/arm"
 TIMEOUT = ${if ${timeout},"--timeout=${timeout}"}
+GLOBAL_TIMEOUT = ${if ${global-timeout},"--global-timeout=${global-timeout}"}
+ARCHIVE_ERRORS = ${if ${archive-errors},"--archive-errors=${archive-errors}"}
+
 DEBUG_FLAGS = -debug -g -O0
 
 quick_test = avl_test operators numericConstants expression enum array typeof cast raii/dtor-early-exit raii/init_once attributes meta/dumpable
-
-archiveerrors=
 
 TEST_PY = python3 ${builddir}/test.py
 
@@ -107,18 +108,19 @@ nodist__dummy_hack_SOURCES = .dummy_hack.c .dummy_hackxx.cpp
 
 #----------------------------------------------------------------------------------------------------------------
 
+# '@' => do not echo command (SILENT), '+' => allows recursive make from within python program
 all-local : # This name is important to automake and implies the default build target.
-	@+${TEST_PY} --debug=${debug} --install=${installed} --invariant --archive-errors=${archiveerrors} ${TIMEOUT} ${ARCH} --all # '@' => do not echo command (SILENT), '+' => allows recursive make from within python program
+	@+${TEST_PY} --debug=${debug} --install=${installed} --invariant ${ARCHIVE_ERRORS} ${TIMEOUT} ${GLOBAL_TIMEOUT} ${ARCH} --all
 
-install : all-local # PAB only
+tests : all-local # synonym
 
-tests : all-local
+install : all-local  # synonym, PAB only
 
 quick :
-	@+${TEST_PY} --debug=${debug} --install=${installed} --archive-errors=${archiveerrors} ${ARCH} ${quick_test}
+	@+${TEST_PY} --debug=${debug} --install=${installed} ${ARCHIVE_ERRORS} ${ARCH} ${quick_test}
 
 concurrency :
-	@+${TEST_PY} --debug=${debug} --install=${installed} ${TIMEOUT} ${ARCH} -Iconcurrency
+	@+${TEST_PY} --debug=${debug} --install=${installed} ${ARCHIVE_ERRORS} ${TIMEOUT} ${GLOBAL_TIMEOUT} ${ARCH} -Iconcurrency
 
 list :
 	@+${TEST_PY} --list
@@ -126,13 +128,13 @@ list :
 help :
 	@echo "user targets:"
 	@echo "    Run the complete test suite."
-	@echo "    $$ make (null) / tests [debug=yes/no] [installed=yes/no] [timeout=integer-seconds] [arch=${arch_support}]"
+	@echo "    $$ make (null) / tests [debug=yes/no] [installed=yes/no] [archive-errors=dump-dir] [timeout=seconds] [global-timeout=seconds] [arch=${arch_support}]"
 	@echo ""
 	@echo "    Run the short (quick) test suite."
-	@echo "    $$ make quick [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
+	@echo "    $$ make quick [debug=yes/no] [installed=yes/no] [archive-errors=dump-dir] [arch=${arch_support}]"
 	@echo ""
 	@echo "    Run the concurrency test suite."
-	@echo "    $$ make concurrency [debug=yes/no] [installed=yes/no] [timeout=integer-seconds] [arch=${arch_support}]"
+	@echo "    $$ make concurrency [debug=yes/no] [installed=yes/no] [archive-errors=dump-dir] [timeout=seconds] [global-timeout=seconds] [arch=${arch_support}]"
 	@echo ""
 	@echo "    List all tests in the test suite."
 	@echo "    $$ make list"
