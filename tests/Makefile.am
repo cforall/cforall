@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Fri May 26 13:34:12 2023
-## Update Count     : 180
+## Last Modified On : Sat May 27 18:27:08 2023
+## Update Count     : 190
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -25,13 +25,12 @@ debug ?= yes
 installed ?= no
 ARCH = ${if ${arch},"--arch=${arch}"}
 arch_support = "x86/x64/arm"
+TIMEOUT = ${if ${timeout},"--timeout=${timeout}"}
 DEBUG_FLAGS = -debug -g -O0
 
 quick_test = avl_test operators numericConstants expression enum array typeof cast raii/dtor-early-exit raii/init_once attributes meta/dumpable
 
 archiveerrors=
-concurrent=
-timeouts=
 
 TEST_PY = python3 ${builddir}/test.py
 
@@ -66,7 +65,7 @@ CFACCLINK = ${CFACCLOCAL} -quiet ${if ${test}, 2> ${test}, } ${${shell echo "${@
 
 PRETTY_PATH = mkdir -p ${dir ${abspath ${@}}} && cd ${srcdir} &&
 
-.PHONY : list .validate .test_makeflags
+.PHONY : concurrency list .validate .test_makeflags
 .INTERMEDIATE : .validate .validate.cfa .test_makeflags
 EXTRA_PROGRAMS = avl_test linkonce linking/mangling/anon .dummy_hack # build but do not install
 EXTRA_DIST = test.py \
@@ -109,31 +108,31 @@ nodist__dummy_hack_SOURCES = .dummy_hack.c .dummy_hackxx.cpp
 #----------------------------------------------------------------------------------------------------------------
 
 all-local : # This name is important to automake and implies the default build target.
-	@+${TEST_PY} --debug=${debug} --install=${installed} --invariant --archive-errors=${archiveerrors} ${concurrent} ${timeouts} ${ARCH} --all # '@' => do not echo command (SILENT), '+' => allows recursive make from within python program
+	@+${TEST_PY} --debug=${debug} --install=${installed} --invariant --archive-errors=${archiveerrors} ${TIMEOUT} ${ARCH} --all # '@' => do not echo command (SILENT), '+' => allows recursive make from within python program
 
 install : all-local # PAB only
 
 tests : all-local
 
 quick :
-	@+${TEST_PY} --debug=${debug} --install=${installed} --archive-errors=${archiveerrors} ${concurrent} ${timeouts} ${ARCH} ${quick_test}
+	@+${TEST_PY} --debug=${debug} --install=${installed} --archive-errors=${archiveerrors} ${ARCH} ${quick_test}
 
 concurrency :
-	@+${TEST_PY} --debug=${debug} --install=${installed} ${ARCH} -Iconcurrent
+	@+${TEST_PY} --debug=${debug} --install=${installed} ${TIMEOUT} ${ARCH} -Iconcurrency
 
 list :
-	@+${TEST_PY} --list ${concurrent}
+	@+${TEST_PY} --list
 
 help :
 	@echo "user targets:"
 	@echo "    Run the complete test suite."
-	@echo "    $$ make (null) / tests [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
+	@echo "    $$ make (null) / tests [debug=yes/no] [installed=yes/no] [timeout=integer-seconds] [arch=${arch_support}]"
 	@echo ""
 	@echo "    Run the short (quick) test suite."
 	@echo "    $$ make quick [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
 	@echo ""
-	@echo "    Run the concurrent test suite."
-	@echo "    $$ make concurrency [debug=yes/no] [installed=yes/no] [arch=${arch_support}]"
+	@echo "    Run the concurrency test suite."
+	@echo "    $$ make concurrency [debug=yes/no] [installed=yes/no] [timeout=integer-seconds] [arch=${arch_support}]"
 	@echo ""
 	@echo "    List all tests in the test suite."
 	@echo "    $$ make list"
