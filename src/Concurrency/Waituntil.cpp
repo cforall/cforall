@@ -939,39 +939,10 @@ Stmt * GenerateWaitUntilCore::buildOrCaseSwitch( const WaitUntilStmt * stmt, str
 		lastIf = currIf;
 	}
 
-    // C_TODO: will remove this commented code later. Currently it isn't needed but may switch to a modified version of this later if it has better performance
-    // std::vector<ptr<CaseClause>> switchCases;
-
-    // int idx = 0;
-    // for ( const auto & clause: stmt->clauses ) {
-    //     const CodeLocation & cLoc = clause->location;
-    //     switchCases.push_back(
-    //         new CaseClause( cLoc,
-    //             new CastExpr( cLoc, 
-    //                 new AddressExpr( cLoc, new NameExpr( cLoc, data.at(idx)->targetName ) ),
-    //                 new BasicType( BasicType::Kind::LongUnsignedInt ), GeneratedFlag::ExplicitCast 
-    //             ),
-    //             {
-    //                 new CompoundStmt( cLoc,
-    //                     {
-    //                         ast::deepCopy( clause->stmt ),
-    //                         new BranchStmt( cLoc, BranchStmt::Kind::Break, Label( cLoc ) )
-    //                     }
-    //                 )
-    //             }
-    //         )
-    //     );
-    //     idx++;
-    // }
-
     return new CompoundStmt( loc,
         {
             new ExprStmt( loc, new UntypedExpr( loc, new NameExpr( loc, "park" ) ) ),
             outerIf
-            // new SwitchStmt( loc,
-            //     new NameExpr( loc, statusName ),
-            //     std::move( switchCases )
-            // )
         }
     );
 }
@@ -1014,6 +985,7 @@ Stmt * GenerateWaitUntilCore::recursiveOrIfGen( const WaitUntilStmt * stmt, vect
     }
     const CodeLocation & cLoc = stmt->clauses.at(idx)->location;
 
+    Expr * baseCond = genSelectTraitCall( stmt->clauses.at(idx), data.at(idx), "register_select" );
     Expr * ifCond;
 
     // If we have a when_cond make the register call conditional on it
@@ -1024,12 +996,12 @@ Stmt * GenerateWaitUntilCore::recursiveOrIfGen( const WaitUntilStmt * stmt, vect
                 new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
             ),
             new CastExpr( cLoc,
-                genSelectTraitCall( stmt->clauses.at(idx), data.at(idx), "register_select" ),
+                baseCond,
                 new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
             ),
             LogicalFlag::AndExpr
         );
-    } else ifCond = genSelectTraitCall( stmt->clauses.at(idx), data.at(idx), "register_select" );
+    } else ifCond = baseCond;
 
     return new CompoundStmt( cLoc,
         {   // gens: setup_clause( clause1, &status, 0p );

@@ -45,7 +45,7 @@
 	return __return;
 
 #ifdef PEDANTIC_PASS_ASSERT
-#define __pedantic_pass_assert(...) assert (__VA_ARGS__)
+#define __pedantic_pass_assert(...) assert(__VA_ARGS__)
 #define __pedantic_pass_assertf(...) assertf(__VA_ARGS__)
 #else
 #define __pedantic_pass_assert(...)
