@@ -15,11 +15,18 @@
 
 #include "GenImplicitCall.hpp"
 
+#include "AST/Decl.hpp"                  // for ObjectDecl
+#include "AST/Expr.hpp"                  // for ConstantExpr, UntypedExpr,...
+#include "AST/Init.hpp"                  // for SingleInit
 #include "AST/Inspect.hpp"               // for isUnnamedBitfield
+#include "AST/Stmt.hpp"                  // for ExprStmt
+#include "AST/Type.hpp"                  // for ArrayType, BasicType, ...
 #include "CodeGen/OperatorTable.h"       // for isCtorDtor
 #include "Common/UniqueName.h"           // for UniqueName
 
 namespace SymTab {
+
+namespace {
 
 template< typename OutIter >
 ast::ptr< ast::Stmt > genCall(
@@ -171,6 +178,8 @@ ast::ptr< ast::Stmt > genCall(
 			srcParam, dstParam, loc, fname, std::forward< OutIter >( out ), type, addCast );
 	}
 }
+
+} // namespace
 
 ast::ptr< ast::Stmt > genImplicitCall(
 	InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,

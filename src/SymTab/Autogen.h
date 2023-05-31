@@ -19,12 +19,6 @@
 #include <iterator>               // for back_inserter
 #include <string>                 // for string
 
-#include "AST/Decl.hpp"
-#include "AST/Expr.hpp"
-#include "AST/Init.hpp"
-#include "AST/Node.hpp"
-#include "AST/Stmt.hpp"
-#include "AST/Type.hpp"
 #include "CodeGen/OperatorTable.h"
 #include "Common/UniqueName.h"    // for UniqueName
 #include "Common/utility.h"       // for splice
@@ -56,9 +50,6 @@ namespace SymTab {
 	/// generate the type of a copy constructor for paramType.
 	/// maybePolymorphic is true if the resulting FunctionType is allowed to be polymorphic
 	FunctionType * genCopyType( Type * paramType, bool maybePolymorphic = true );
-
-	/// Enum for loop direction
-	enum LoopDirection { LoopBackward, LoopForward };
 
 	/// inserts into out a generated call expression to function fname with arguments dstParam and srcParam. Intended to be used with generated ?=?, ?{}, and ^?{} calls.
 	template< typename OutputIterator >

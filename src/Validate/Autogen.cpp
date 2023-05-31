@@ -43,9 +43,6 @@
 #include "SymTab/Mangler.h"        // for Mangler
 #include "CompilationState.h"
 
-// TODO: The other new ast function should be moved over to this file.
-#include "SymTab/Autogen.h"
-
 namespace Validate {
 
 namespace {
@@ -95,7 +92,7 @@ protected:
 	void produceForwardDecl( const ast::FunctionDecl * decl );
 
 	const CodeLocation& getLocation() const { return getDecl()->location; }
-	ast::FunctionDecl * genProto( const std::string& name,
+	ast::FunctionDecl * genProto( std::string&& name,
 		std::vector<ast::ptr<ast::DeclWithType>>&& params,
 		std::vector<ast::ptr<ast::DeclWithType>>&& returns ) const;
 
@@ -336,31 +333,39 @@ void FuncGenerator::produceForwardDecl( const ast::FunctionDecl * decl ) {
 	forwards.push_back( fwd );
 }
 
+void replaceAll( std::vector<ast::ptr<ast::DeclWithType>> & dwts,
+		const ast::DeclReplacer::TypeMap & map ) {
+	for ( auto & dwt : dwts ) {
+		dwt = strict_dynamic_cast<const ast::DeclWithType *>(
+				ast::DeclReplacer::replace( dwt, map ) );
+	}
+}
+
 /// Generates a basic prototype function declaration.
-ast::FunctionDecl * FuncGenerator::genProto( const std::string& name,
+ast::FunctionDecl * FuncGenerator::genProto( std::string&& name,
 		std::vector<ast::ptr<ast::DeclWithType>>&& params,
 		std::vector<ast::ptr<ast::DeclWithType>>&& returns ) const {
 
 	// Handle generic prameters and assertions, if any.
 	auto const & old_type_params = getGenericParams( type );
+	ast::DeclReplacer::TypeMap oldToNew;
 	std::vector<ast::ptr<ast::TypeDecl>> type_params;
 	std::vector<ast::ptr<ast::DeclWithType>> assertions;
 	for ( auto & old_param : old_type_params ) {
 		ast::TypeDecl * decl = ast::deepCopy( old_param );
-		for ( auto assertion : decl->assertions ) {
-			assertions.push_back( assertion );
-		}
-		decl->assertions.clear();
+		decl->init = nullptr;
+		splice( assertions, decl->assertions );
+		oldToNew.emplace( std::make_pair( old_param, decl ) );
 		type_params.push_back( decl );
 	}
-	// TODO: The values in params and returns still may point at the old
-	// generic params, that does not appear to be an issue but perhaps it
-	// should be addressed.
+	replaceAll( params, oldToNew );
+	replaceAll( returns, oldToNew );
+	replaceAll( assertions, oldToNew );
 
 	ast::FunctionDecl * decl = new ast::FunctionDecl(
 		// Auto-generated routines use the type declaration's location.
 		getLocation(),
-		name,
+		std::move( name ),
 		std::move( type_params ),
 		std::move( assertions ),
 		std::move( params ),

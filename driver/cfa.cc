@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 23 16:22:47 2023
-// Update Count     : 477
+// Last Modified On : Tue May 30 10:47:52 2023
+// Update Count     : 478
 //
 
 #include <iostream>
@@ -328,6 +328,9 @@ int main( int argc, char * argv[] ) {
 	args[nargs++] = "-mcx16";							// allow double-wide CAS
 	#endif // __x86_64__
 
+	// ARM -mno-outline-atomics => use LL/SC instead of calls to atomic routines: __aarch64_swp_acq_rel, __aarch64_cas8_acq_rel
+	// ARM -march=armv8.2-a+lse => generate Arm LSE extension instructions SWAP and CAS
+	// https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/making-the-most-of-the-arm-architecture-in-gcc-10
 	#ifdef __ARM_ARCH
 	args[nargs++] = "-mno-outline-atomics";				// use ARM LL/SC instructions for atomics
 	#endif // __ARM_ARCH
