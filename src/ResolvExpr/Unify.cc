@@ -127,7 +127,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 	bool unifyExact(
 		const ast::Type * type1, const ast::Type * type2, ast::TypeEnvironment & env,
 		ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
-		WidenMode widen, const ast::SymbolTable & symtab );
+		WidenMode widen );
 
 	bool typesCompatible( const Type * first, const Type * second, const SymTab::Indexer & indexer, const TypeEnvironment & env ) {
 		TypeEnvironment newEnv;
@@ -149,7 +149,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 	}
 
 	bool typesCompatible(
-			const ast::Type * first, const ast::Type * second, const ast::SymbolTable & symtab,
+			const ast::Type * first, const ast::Type * second,
 			const ast::TypeEnvironment & env ) {
 		ast::TypeEnvironment newEnv;
 		ast::OpenVarSet open, closed;
@@ -162,7 +162,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		findOpenVars( newFirst, open, closed, need, have, FirstClosed );
 		findOpenVars( newSecond, open, closed, need, have, FirstOpen );
 
-		return unifyExact(newFirst, newSecond, newEnv, need, have, open, noWiden(), symtab );
+		return unifyExact(newFirst, newSecond, newEnv, need, have, open, noWiden() );
 	}
 
 	bool typesCompatibleIgnoreQualifiers( const Type * first, const Type * second, const SymTab::Indexer &indexer, const TypeEnvironment &env ) {
@@ -182,7 +182,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 	}
 
 	bool typesCompatibleIgnoreQualifiers(
-			const ast::Type * first, const ast::Type * second, const ast::SymbolTable & symtab,
+			const ast::Type * first, const ast::Type * second,
 			const ast::TypeEnvironment & env ) {
 		ast::TypeEnvironment newEnv;
 		ast::OpenVarSet open;
@@ -215,7 +215,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		return unifyExact(
 			subFirst,
 			subSecond,
-			newEnv, need, have, open, noWiden(), symtab );
+			newEnv, need, have, open, noWiden() );
 	}
 
 	bool unify( Type *type1, Type *type2, TypeEnvironment &env, AssertionSet &needAssertions, AssertionSet &haveAssertions, OpenVarSet &openVars, const SymTab::Indexer &indexer ) {
@@ -785,17 +785,15 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		ast::AssertionSet & have;
 		const ast::OpenVarSet & open;
 		WidenMode widen;
-		const ast::SymbolTable & symtab;
 	public:
 		static size_t traceId;
 		bool result;
 
 		Unify_new(
 			const ast::Type * type2, ast::TypeEnvironment & env, ast::AssertionSet & need,
-			ast::AssertionSet & have, const ast::OpenVarSet & open, WidenMode widen,
-			const ast::SymbolTable & symtab )
+			ast::AssertionSet & have, const ast::OpenVarSet & open, WidenMode widen )
 		: type2(type2), tenv(env), need(need), have(have), open(open), widen(widen),
-		  symtab(symtab), result(false) {}
+		result(false) {}
 
 		void previsit( const ast::Node * ) { visit_children = false; }
 
@@ -813,7 +811,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 			if ( auto pointer2 = dynamic_cast< const ast::PointerType * >( type2 ) ) {
 				result = unifyExact(
 					pointer->base, pointer2->base, tenv, need, have, open,
-					noWiden(), symtab );
+					noWiden());
 			}
 		}
 
@@ -836,15 +834,13 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 			}
 
 			result = unifyExact(
-				array->base, array2->base, tenv, need, have, open, noWiden(),
-				symtab );
+				array->base, array2->base, tenv, need, have, open, noWiden());
 		}
 
 		void postvisit( const ast::ReferenceType * ref ) {
 			if ( auto ref2 = dynamic_cast< const ast::ReferenceType * >( type2 ) ) {
 				result = unifyExact(
-					ref->base, ref2->base, tenv, need, have, open, noWiden(),
-					symtab );
+					ref->base, ref2->base, tenv, need, have, open, noWiden());
 			}
 		}
 
@@ -853,8 +849,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		template< typename Iter >
 		static bool unifyTypeList(
 			Iter crnt1, Iter end1, Iter crnt2, Iter end2, ast::TypeEnvironment & env,
-			ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
-			const ast::SymbolTable & symtab
+			ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open
 		) {
 			while ( crnt1 != end1 && crnt2 != end2 ) {
 				const ast::Type * t1 = *crnt1;
@@ -867,16 +862,16 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 					// combine remainder of list2, then unify
 					return unifyExact(
 						t1, tupleFromTypes( crnt2, end2 ), env, need, have, open,
-						noWiden(), symtab );
+						noWiden() );
 				} else if ( ! isTuple1 && isTuple2 ) {
 					// combine remainder of list1, then unify
 					return unifyExact(
 						tupleFromTypes( crnt1, end1 ), t2, env, need, have, open,
-						noWiden(), symtab );
+						noWiden() );
 				}
 
 				if ( ! unifyExact(
-					t1, t2, env, need, have, open, noWiden(), symtab )
+					t1, t2, env, need, have, open, noWiden() )
 				) return false;
 
 				++crnt1; ++crnt2;
@@ -890,14 +885,14 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 				if ( ! Tuples::isTtype( t1 ) ) return false;
 				return unifyExact(
 					t1, tupleFromTypes( crnt2, end2 ), env, need, have, open,
-					noWiden(), symtab );
+					noWiden() );
 			} else if ( crnt2 != end2 ) {
 				// try unifying empty tuple with ttype
 				const ast::Type * t2 = *crnt2;
 				if ( ! Tuples::isTtype( t2 ) ) return false;
 				return unifyExact(
 					tupleFromTypes( crnt1, end1 ), t2, env, need, have, open,
-					noWiden(), symtab );
+					noWiden() );
 			}
 
 			return true;
@@ -907,11 +902,10 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 			const std::vector< ast::ptr< ast::Type > > & list1,
 			const std::vector< ast::ptr< ast::Type > > & list2,
 			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-			const ast::OpenVarSet & open, const ast::SymbolTable & symtab
+			const ast::OpenVarSet & open
 		) {
 			return unifyTypeList(
-				list1.begin(), list1.end(), list2.begin(), list2.end(), env, need, have, open,
-				symtab );
+				list1.begin(), list1.end(), list2.begin(), list2.end(), env, need, have, open);
 		}
 
 		static void markAssertionSet( ast::AssertionSet & assns, const ast::VariableExpr * assn ) {
@@ -952,9 +946,9 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 				&& ! func2->isTtype()
 			) return;
 
-			if ( ! unifyTypeList( params, params2, tenv, need, have, open, symtab ) ) return;
+			if ( ! unifyTypeList( params, params2, tenv, need, have, open ) ) return;
 			if ( ! unifyTypeList(
-				func->returns, func2->returns, tenv, need, have, open, symtab ) ) return;
+				func->returns, func2->returns, tenv, need, have, open ) ) return;
 
 			markAssertions( have, need, func );
 			markAssertions( have, need, func2 );
@@ -1025,7 +1019,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 				}
 
 				if ( ! unifyExact(
-						pty, pty2, tenv, need, have, open, noWiden(), symtab ) ) {
+						pty, pty2, tenv, need, have, open, noWiden() ) ) {
 					result = false;
 					return;
 				}
@@ -1064,8 +1058,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		static bool unifyList(
 			const std::vector< ast::ptr< ast::Type > > & list1,
 			const std::vector< ast::ptr< ast::Type > > & list2, ast::TypeEnvironment & env,
-			ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
-			const ast::SymbolTable & symtab
+			ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open
 		) {
 			auto crnt1 = list1.begin();
 			auto crnt2 = list2.begin();
@@ -1080,16 +1073,16 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 					// combine entirety of list2, then unify
 					return unifyExact(
 						t1, tupleFromTypes( list2 ), env, need, have, open,
-						noWiden(), symtab );
+						noWiden() );
 				} else if ( ! isTuple1 && isTuple2 ) {
 					// combine entirety of list1, then unify
 					return unifyExact(
 						tupleFromTypes( list1 ), t2, env, need, have, open,
-						noWiden(), symtab );
+						noWiden() );
 				}
 
 				if ( ! unifyExact(
-					t1, t2, env, need, have, open, noWiden(), symtab )
+					t1, t2, env, need, have, open, noWiden() )
 				) return false;
 
 				++crnt1; ++crnt2;
@@ -1103,7 +1096,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 				// from Rob's code
 				return unifyExact(
 						t1, tupleFromTypes( list2 ), env, need, have, open,
-						noWiden(), symtab );
+						noWiden() );
 			} else if ( crnt2 != list2.end() ) {
 				// try unifying empty tuple with ttype
 				const ast::Type * t2 = *crnt2;
@@ -1112,7 +1105,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 				// from Rob's code
 				return unifyExact(
 						tupleFromTypes( list1 ), t2, env, need, have, open,
-						noWiden(), symtab );
+						noWiden() );
 			}
 
 			return true;
@@ -1131,7 +1124,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 			auto types = flatten( flat );
 			auto types2 = flatten( flat2 );
 
-			result = unifyList( types, types2, tenv, need, have, open, symtab );
+			result = unifyList( types, types2, tenv, need, have, open );
 		}
 
 		void postvisit( const ast::VarArgsType * ) {
@@ -1155,28 +1148,28 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 	bool unify(
 			const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
 			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-			ast::OpenVarSet & open, const ast::SymbolTable & symtab
+			ast::OpenVarSet & open
 	) {
 		ast::ptr<ast::Type> common;
-		return unify( type1, type2, env, need, have, open, symtab, common );
+		return unify( type1, type2, env, need, have, open, common );
 	}
 
 	bool unify(
 			const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
 			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-			ast::OpenVarSet & open, const ast::SymbolTable & symtab, ast::ptr<ast::Type> & common
+			ast::OpenVarSet & open, ast::ptr<ast::Type> & common
 	) {
 		ast::OpenVarSet closed;
 		findOpenVars( type1, open, closed, need, have, FirstClosed );
 		findOpenVars( type2, open, closed, need, have, FirstOpen );
 		return unifyInexact(
-			type1, type2, env, need, have, open, WidenMode{ true, true }, symtab, common );
+			type1, type2, env, need, have, open, WidenMode{ true, true }, common );
 	}
 
 	bool unifyExact(
 			const ast::Type * type1, const ast::Type * type2, ast::TypeEnvironment & env,
 			ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
-			WidenMode widen, const ast::SymbolTable & symtab
+			WidenMode widen
 	) {
 		if ( type1->qualifiers != type2->qualifiers ) return false;
 
@@ -1192,21 +1185,21 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 			if ( entry1->second.kind != entry2->second.kind ) return false;
 			return env.bindVarToVar(
 				var1, var2, ast::TypeData{ entry1->second, entry2->second }, need, have,
-				open, widen, symtab );
+				open, widen );
 		} else if ( isopen1 ) {
-			return env.bindVar( var1, type2, entry1->second, need, have, open, widen, symtab );
+			return env.bindVar( var1, type2, entry1->second, need, have, open, widen );
 		} else if ( isopen2 ) {
-			return env.bindVar( var2, type1, entry2->second, need, have, open, widen, symtab );
+			return env.bindVar( var2, type1, entry2->second, need, have, open, widen );
 		} else {
 			return ast::Pass<Unify_new>::read(
-				type1, type2, env, need, have, open, widen, symtab );
+				type1, type2, env, need, have, open, widen );
 		}
 	}
 
 	bool unifyInexact(
 			const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
 			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-			const ast::OpenVarSet & open, WidenMode widen, const ast::SymbolTable & symtab,
+			const ast::OpenVarSet & open, WidenMode widen,
 			ast::ptr<ast::Type> & common
 	) {
 		ast::CV::Qualifiers q1 = type1->qualifiers, q2 = type2->qualifiers;
@@ -1220,7 +1213,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		ast::ptr< ast::Type > t1_(t1);
 		ast::ptr< ast::Type > t2_(t2);
 
-		if ( unifyExact( t1, t2, env, need, have, open, widen, symtab ) ) {
+		if ( unifyExact( t1, t2, env, need, have, open, widen ) ) {
 			// if exact unification on unqualified types, try to merge qualifiers
 			if ( q1 == q2 || ( ( q1 > q2 || widen.first ) && ( q2 > q1 || widen.second ) ) ) {
 				t1->qualifiers = q1 | q2;
@@ -1230,7 +1223,7 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 				return false;
 			}
 
-		} else if (( common = commonType( t1, t2, env, need, have, open, widen, symtab ))) {
+		} else if (( common = commonType( t1, t2, env, need, have, open, widen ))) {
 			// no exact unification, but common type
 			auto c = shallowCopy(common.get());
 			c->qualifiers = q1 | q2;

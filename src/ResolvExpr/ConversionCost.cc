@@ -531,7 +531,7 @@ Cost conversionCost(
 			}
 		}
 	}
-	if ( typesCompatibleIgnoreQualifiers( src, dst, symtab, env ) ) {
+	if ( typesCompatibleIgnoreQualifiers( src, dst, env ) ) {
 		return Cost::zero;
 	} else if ( dynamic_cast< const ast::VoidType * >( dst ) ) {
 		return Cost::safe;
@@ -565,7 +565,7 @@ static Cost convertToReferenceCost( const ast::Type * src, const ast::Type * dst
 			ast::CV::Qualifiers tq1 = srcAsRef->base->qualifiers;
 			ast::CV::Qualifiers tq2 = dstAsRef->base->qualifiers;
 			if ( tq1 <= tq2 && typesCompatibleIgnoreQualifiers(
-					srcAsRef->base, dstAsRef->base, symtab, env ) ) {
+					srcAsRef->base, dstAsRef->base, env ) ) {
 				if ( tq1 == tq2 ) {
 					return Cost::zero;
 				} else {
@@ -586,7 +586,7 @@ static Cost convertToReferenceCost( const ast::Type * src, const ast::Type * dst
 		assert( -1 == diff );
 		const ast::ReferenceType * dstAsRef = dynamic_cast< const ast::ReferenceType * >( dst );
 		assert( dstAsRef );
-		if ( typesCompatibleIgnoreQualifiers( src, dstAsRef->base, symtab, env ) ) {
+		if ( typesCompatibleIgnoreQualifiers( src, dstAsRef->base, env ) ) {
 			if ( srcIsLvalue ) {
 				if ( src->qualifiers == dstAsRef->base->qualifiers ) {
 					return Cost::reference;
@@ -652,7 +652,7 @@ void ConversionCost_new::postvisit( const ast::PointerType * pointerType ) {
 		ast::CV::Qualifiers tq1 = pointerType->base->qualifiers;
 		ast::CV::Qualifiers tq2 = dstAsPtr->base->qualifiers;
 		if ( tq1 <= tq2 && typesCompatibleIgnoreQualifiers(
-				pointerType->base, dstAsPtr->base, symtab, env ) ) {
+				pointerType->base, dstAsPtr->base, env ) ) {
 			if ( tq1 == tq2 ) {
 				cost = Cost::zero;
 			} else {

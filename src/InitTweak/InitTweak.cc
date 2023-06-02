@@ -1065,7 +1065,7 @@ bool isCopyFunction( const ast::FunctionDecl * decl ) {
 	if ( ! t1 ) return false;
 	const ast::Type * t2 = ftype->params.back();
 
-	return ResolvExpr::typesCompatibleIgnoreQualifiers( t1, t2, ast::SymbolTable() );
+	return ResolvExpr::typesCompatibleIgnoreQualifiers( t1, t2 );
 }
 
 

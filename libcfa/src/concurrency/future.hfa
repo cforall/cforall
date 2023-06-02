@@ -69,7 +69,7 @@ forall( T ) {
 
 		// check if the future is available
         // currently no mutual exclusion because I can't see when you need this call to be synchronous or protected
-		bool available( future(T) & this ) { return this.state; }
+		bool available( future(T) & this ) { return __atomic_load_n( &this.state, __ATOMIC_RELAXED ); }
 
 
         // memcpy wrapper to help copy values
@@ -179,12 +179,12 @@ forall( T ) {
             return false;
         }
 		
-        bool on_selected( future(T) & this, select_node & node ) { return true; }
+        void on_selected( future(T) & this, select_node & node ) {}
 	}
 }
 
 //--------------------------------------------------------------------------------------------------------
-// These futures below do not support select statements so they may not be as useful as 'future'
+// These futures below do not support select statements so they may not have as many features as 'future'
 //  however the 'single_future' is cheap and cheerful and is most likely more performant than 'future'
 //  since it uses raw atomics and no locks
 //

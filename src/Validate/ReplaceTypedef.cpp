@@ -149,7 +149,7 @@ ast::Decl const * ReplaceTypedefCore::postvisit(
 		// with arrays whose dimension is an enumerator or a cast of a
 		// constant/enumerator. The effort required to fix this corner case
 		// likely outweighs the utility of allowing it.
-		if ( !ResolvExpr::typesCompatible( t0, t1, ast::SymbolTable() )
+		if ( !ResolvExpr::typesCompatible( t0, t1 )
 				|| ast::Pass<VarLenChecker>::read( t0 )
 				|| ast::Pass<VarLenChecker>::read( t1 ) ) {
 			SemanticError( decl->location, "Cannot redefine typedef: " + decl->name );

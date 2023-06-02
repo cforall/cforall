@@ -372,7 +372,7 @@ namespace {
 						if (
 							unify(
 								ttype, argType, newResult.env, newResult.need, newResult.have,
-								newResult.open, symtab )
+								newResult.open )
 						) {
 							finalResults.emplace_back( std::move( newResult ) );
 						}
@@ -443,7 +443,7 @@ namespace {
 					std::cerr << std::endl;
 				)
 
-				if ( unify( paramType, argType, env, need, have, open, symtab ) ) {
+				if ( unify( paramType, argType, env, need, have, open ) ) {
 					unsigned nextExpl = results[i].nextExpl + 1;
 					if ( nextExpl == expl.exprs.size() ) { nextExpl = 0; }
 
@@ -462,7 +462,7 @@ namespace {
 					ast::AssertionSet need = results[i].need, have = results[i].have;
 					ast::OpenVarSet open = results[i].open;
 
-					if ( unify( paramType, cnst->result, env, need, have, open, symtab ) ) {
+					if ( unify( paramType, cnst->result, env, need, have, open ) ) {
 						results.emplace_back(
 							i, new ast::DefaultArgExpr{ cnst->location, cnst }, std::move( env ),
 							std::move( need ), std::move( have ), std::move( open ), nextArg, nTuples );
@@ -505,7 +505,7 @@ namespace {
 				)
 
 				// attempt to unify types
-				if ( unify( paramType, argType, env, need, have, open, symtab ) ) {
+				if ( unify( paramType, argType, env, need, have, open ) ) {
 					// add new result
 					results.emplace_back(
 						i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
@@ -749,7 +749,7 @@ namespace {
 			// attempt to narrow based on expected target type
 			const ast::Type * returnType = funcType->returns.front();
 			if ( ! unify(
-				returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen, symtab )
+				returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen )
 			) {
 				// unification failed, do not pursue this candidate
 				return;
@@ -1158,7 +1158,7 @@ namespace {
 			if ( discardedValues < 0 ) continue;
 
 			// unification run for side-effects
-			unify( toType, cand->expr->result, cand->env, need, have, open, symtab );
+			unify( toType, cand->expr->result, cand->env, need, have, open );
 			Cost thisCost =
 				(castExpr->isGenerated == ast::GeneratedFlag::GeneratedCast)
 					? conversionCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env )
@@ -1482,7 +1482,7 @@ namespace {
 					ast::ptr< ast::Type > common;
 					if (
 						unify(
-							r2->expr->result, r3->expr->result, env, need, have, open, symtab,
+							r2->expr->result, r3->expr->result, env, need, have, open,
 							common )
 					) {
 						// generate typed expression
@@ -1555,7 +1555,7 @@ namespace {
 				ast::ptr< ast::Type > common;
 				if (
 					unify(
-						r1->expr->result, r2->expr->result, env, need, have, open, symtab,
+						r1->expr->result, r2->expr->result, env, need, have, open,
 						common )
 				) {
 					// generate new expression
@@ -1658,7 +1658,7 @@ namespace {
 				if ( discardedValues < 0 ) continue;
 
 				// unification run for side-effects
-				bool canUnify = unify( toType, cand->expr->result, env, need, have, open, symtab );
+				bool canUnify = unify( toType, cand->expr->result, env, need, have, open );
 				(void) canUnify;
 				Cost thisCost = computeConversionCost( cand->expr->result, toType, cand->expr->get_lvalue(),
 					symtab, env );

@@ -358,8 +358,7 @@ ast::Expr const * ReferenceConversions::postvisit(
 		if ( expr->arg->get_lvalue() &&
 				!ResolvExpr::typesCompatible(
 					srcType,
-					strict_dynamic_cast<ast::ReferenceType const *>( dstType )->base,
-					ast::SymbolTable() ) ) {
+					strict_dynamic_cast<ast::ReferenceType const *>( dstType )->base ) ) {
 			// Must keep cast if cast-to type is different from the actual type.
 			return ast::mutate_field( expr, &ast::CastExpr::arg, ret );
 		}
@@ -376,8 +375,7 @@ ast::Expr const * ReferenceConversions::postvisit(
 		// Must keep cast if types are different.
 		if ( !ResolvExpr::typesCompatibleIgnoreQualifiers(
 				dstType->stripReferences(),
-				srcType->stripReferences(),
-				ast::SymbolTable() ) ) {
+				srcType->stripReferences() ) ) {
 			return ast::mutate_field( expr, &ast::CastExpr::arg, ret );
 		}
 		ret->env = expr->env;
@@ -392,7 +390,7 @@ ast::Expr const * ReferenceConversions::postvisit(
 		if ( expr->isGenerated &&
 				ResolvExpr::typesCompatible(
 					expr->result,
-					expr->arg->result, ast::SymbolTable() ) ) {
+					expr->arg->result ) ) {
 			PRINT(
 				std::cerr << "types are compatible, removing cast: " << expr << '\n';
 				std::cerr << "-- " << expr->result << '\n';
@@ -589,8 +587,7 @@ ast::Expr const * GeneralizedLvalue::applyTransformation(
 		ast::AssertionSet needAssertions, haveAssertions;
 		ast::OpenVarSet openVars;
 		ResolvExpr::unify( ret->arg2->result, ret->arg3->result, newEnv,
-			needAssertions, haveAssertions, openVars,
-			ast::SymbolTable(), common );
+			needAssertions, haveAssertions, openVars, common );
 		ret->result = common ? common : ast::deepCopy( ret->arg2->result );
 		return ret;
 	}

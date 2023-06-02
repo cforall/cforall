@@ -177,7 +177,7 @@ namespace {
 }
 
 bool TypeEnvironment::combine(
-		const TypeEnvironment & o, OpenVarSet & open, const SymbolTable & symtab ) {
+		const TypeEnvironment & o, OpenVarSet & open ) {
 	// short-circuit easy cases
 	if ( o.empty() ) return true;
 	if ( empty() ) {
@@ -200,7 +200,7 @@ bool TypeEnvironment::combine(
 		if ( rt != env.end() ) {  // c needs to be merged into *rt
 			EqvClass & r = *rt;
 			// merge bindings
-			if ( ! mergeBound( r, c, open, symtab ) ) return false;
+			if ( ! mergeBound( r, c, open ) ) return false;
 			// merge previous unbound variables into this class, checking occurs if needed
 			if ( r.bound ) for ( const auto & u : c.vars ) {
 				if ( occurs( r.bound, u, *this ) ) return false;
@@ -215,7 +215,7 @@ bool TypeEnvironment::combine(
 					r.vars.emplace( *vt );
 				} else if ( st != rt ) {
 					// bound, but not to the same class
-					if ( ! mergeClasses( rt, st, open, symtab ) ) return false;
+					if ( ! mergeClasses( rt, st, open ) ) return false;
 				}	// ignore bound into the same class
 			}
 		} else {  // no variables in c bound; just copy up
@@ -279,8 +279,7 @@ namespace {
 
 bool TypeEnvironment::bindVar(
 		const TypeInstType * typeInst, const Type * bindTo, const TypeData & data,
-		AssertionSet & need, AssertionSet & have, const OpenVarSet & open, WidenMode widen,
-		const SymbolTable & symtab
+		AssertionSet & need, AssertionSet & have, const OpenVarSet & open, WidenMode widen
 ) {
 	// remove references from bound type, so that type variables can only bind to value types
 	ptr<Type> target = bindTo->stripReferences();
@@ -299,7 +298,7 @@ bool TypeEnvironment::bindVar(
 			reset_qualifiers( newType, typeInst->qualifiers );
 			if ( unifyInexact(
 					newType, target, *this, need, have, open,
-					widen & WidenMode{ it->allowWidening, true }, symtab, common ) ) {
+					widen & WidenMode{ it->allowWidening, true }, common ) ) {
 				if ( common ) {
 					it->bound = std::move(common);
 					reset_qualifiers( it->bound );
@@ -320,7 +319,7 @@ bool TypeEnvironment::bindVar(
 bool TypeEnvironment::bindVarToVar(
 		const TypeInstType * var1, const TypeInstType * var2, TypeData && data,
 		AssertionSet & need, AssertionSet & have, const OpenVarSet & open,
-		WidenMode widen, const SymbolTable & symtab
+		WidenMode widen
 ) {
 	auto c1 = internal_lookup( *var1 );
 	auto c2 = internal_lookup( *var2 );
@@ -357,7 +356,7 @@ bool TypeEnvironment::bindVarToVar(
 		ptr<Type> common;
 
 		if ( unifyInexact(
-				newType1, newType2, *this, need, have, open, newWidenMode, symtab, common ) ) {
+				newType1, newType2, *this, need, have, open, newWidenMode, common ) ) {
 			c1->vars.insert( c2->vars.begin(), c2->vars.end() );
 			c1->allowWidening = widen1 && widen2;
 			if ( common ) {
@@ -408,7 +407,7 @@ void TypeEnvironment::add( EqvClass && eqvClass ) {
 }
 
 bool TypeEnvironment::mergeBound(
-		EqvClass & to, const EqvClass & from, OpenVarSet & open, const SymbolTable & symtab ) {
+		EqvClass & to, const EqvClass & from, OpenVarSet & open ) {
 	if ( from.bound ) {
 		if ( to.bound ) {
 			// attempt to unify bound types
@@ -418,7 +417,7 @@ bool TypeEnvironment::mergeBound(
 			AssertionSet need, have;
 
 			if ( unifyInexact(
-					toType, fromType, *this, need, have, open, widen, symtab, common ) ) {
+					toType, fromType, *this, need, have, open, widen, common ) ) {
 				// unifies, set common type if necessary
 				if ( common ) {
 					to.bound = std::move(common);
@@ -436,12 +435,12 @@ bool TypeEnvironment::mergeBound(
 }
 
 bool TypeEnvironment::mergeClasses(
-	ClassList::iterator to, ClassList::iterator from, OpenVarSet & open, const SymbolTable & symtab
+	ClassList::iterator to, ClassList::iterator from, OpenVarSet & open
 ) {
 	EqvClass & r = *to, & s = *from;
 
 	// ensure bounds match
-	if ( ! mergeBound( r, s, open, symtab ) ) return false;
+	if ( ! mergeBound( r, s, open ) ) return false;
 
 	// check safely bindable
 	if ( r.bound ) {

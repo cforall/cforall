@@ -214,7 +214,7 @@ namespace {
 			findOpenVars( toType, newOpen, closed, newNeed, have, FirstClosed );
 			findOpenVars( adjType, newOpen, closed, newNeed, have, FirstOpen );
 			if ( allowConversion ) {
-				if ( auto c = commonType( toType, adjType, newEnv, newNeed, have, newOpen, WidenMode {true, true}, sat.symtab ) ) {
+				if ( auto c = commonType( toType, adjType, newEnv, newNeed, have, newOpen, WidenMode {true, true} ) ) {
 					// set up binding slot for recursive assertions
 					ast::UniqueId crntResnSlot = 0;
 					if ( ! newNeed.empty() ) {
@@ -228,7 +228,7 @@ namespace {
 				}
 			}
 			else {
-				if ( unifyExact( toType, adjType, newEnv, newNeed, have, newOpen, WidenMode {true, true}, sat.symtab ) ) {
+				if ( unifyExact( toType, adjType, newEnv, newNeed, have, newOpen, WidenMode {true, true} ) ) {
 					// set up binding slot for recursive assertions
 					ast::UniqueId crntResnSlot = 0;
 					if ( ! newNeed.empty() ) {
@@ -391,7 +391,7 @@ namespace {
 			ast::OpenVarSet open = opens.back();
 			mergeOpenVars( open, i.match.open );
 
-			if ( ! env.combine( i.match.env, open, symtab ) ) return false;
+			if ( ! env.combine( i.match.env, open ) ) return false;
 
 			crnt.emplace_back( i );
 			envs.emplace_back( std::move( env ) );

@@ -238,7 +238,7 @@ bool unregister_select( blocking_lock & this, select_node & node ) with(this) {
     return false;
 }
 
-bool on_selected( blocking_lock & this, select_node & node ) { return true; }
+void on_selected( blocking_lock & this, select_node & node ) {}
 
 //-----------------------------------------------------------------------------
 // alarm node wrapper

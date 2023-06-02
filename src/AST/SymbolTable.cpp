@@ -277,7 +277,7 @@ namespace {
 			return true;
 		} else {
 			// typedef redeclarations are errors only if types are different
-			if ( ! ResolvExpr::typesCompatible( existing->base, added->base, SymbolTable{} ) ) {
+			if ( ! ResolvExpr::typesCompatible( existing->base, added->base ) ) {
 				SemanticError( added->location, "redeclaration of " + added->name );
 			}
 		}
@@ -642,7 +642,7 @@ bool SymbolTable::addedIdConflicts(
 		return false;
 	} else if ( existing.id->linkage.is_mangled
 			|| ResolvExpr::typesCompatible(
-				added->get_type(), existing.id->get_type(), SymbolTable{} ) ) {
+				added->get_type(), existing.id->get_type() ) ) {
 
 		// it is a conflict if one declaration is deleted and the other is not
 		if ( deleter && ! existing.deleter ) {

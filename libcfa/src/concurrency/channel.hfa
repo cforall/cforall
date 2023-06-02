@@ -50,6 +50,9 @@ exception channel_closed {
 };
 vtable(channel_closed) channel_closed_vt;
 
+static inline bool is_insert( channel_closed & e ) { return e.elem != 0p; }
+static inline bool is_remove( channel_closed & e ) { return e.elem == 0p; }
+
 // #define CHAN_STATS // define this to get channel stats printed in dtor
 
 forall( T ) {
@@ -340,6 +343,23 @@ static inline bool unregister_chan( channel(T) & chan, select_node & node ) with
     return ( node.extra == 0p || !node.park_counter ) ? false : *node.clause_status == __SELECT_SAT;
 }
 
+// special case of __handle_waituntil_OR, that does some work to avoid starvation/deadlock case
+static inline bool __handle_pending( dlist( select_node ) & queue, select_node & mine ) {
+    while ( !queue`isEmpty ) {
+        // if node not a special OR case or if we win the special OR case race break
+        if ( !queue`first.clause_status || queue`first.park_counter || __pending_set_other( queue`first, mine, ((unsigned long int)(&(queue`first))) ) )
+            return true;
+        
+        // our node lost the race when toggling in __pending_set_other
+        if ( *mine.clause_status != __SELECT_PENDING ) 
+            return false;
+
+        // otherwise we lost the special OR race so discard node
+        try_pop_front( queue );
+    }
+    return false;
+}
+
 // type used by select statement to capture a chan read as the selected operation
 struct chan_read {
     T & ret;
@@ -373,14 +393,15 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
                 unlock( mutex_lock );
                 return false;
             }
-            
-            if ( __handle_waituntil_OR( prods ) ) {
+
+            if ( __handle_pending( prods, node ) ) {
                 __prods_handoff( chan, ret );
                 __make_select_node_sat( node ); // need to to mark SAT now that we know operation is done or else threads could get stuck in __mark_select_node
                 unlock( mutex_lock );
                 return true;
             }
-            __make_select_node_unsat( node );
+            if ( *node.clause_status == __SELECT_PENDING )
+                __make_select_node_unsat( node );
         }
         // check if we can complete operation. If so race to establish winner in special OR case
         if ( count != 0 || !prods`isEmpty || unlikely(closed) ) {
@@ -422,11 +443,10 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
     return true;
 }
 static inline bool unregister_select( chan_read(T) & this, select_node & node ) { return unregister_chan( this.chan, node ); }
-static inline bool on_selected( chan_read(T) & this, select_node & node ) with(this) {
+static inline void on_selected( chan_read(T) & this, select_node & node ) with(this) {
     if ( node.extra == 0p ) // check if woken up due to closed channel
         __closed_remove( chan, ret );
     // This is only reachable if not closed or closed exception was handled
-    return true;
 }
 
 // type used by select statement to capture a chan write as the selected operation
@@ -463,14 +483,15 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
                 unlock( mutex_lock );
                 return false;
             }
-            
-            if ( __handle_waituntil_OR( cons ) ) {
+
+            if ( __handle_pending( cons, node ) ) {
                 __cons_handoff( chan, elem );
                 __make_select_node_sat( node ); // need to to mark SAT now that we know operation is done or else threads could get stuck in __mark_select_node
                 unlock( mutex_lock );
                 return true;
             }
-            __make_select_node_unsat( node );
+            if ( *node.clause_status == __SELECT_PENDING )
+                __make_select_node_unsat( node );
         }
         // check if we can complete operation. If so race to establish winner in special OR case
         if ( count != size || !cons`isEmpty || unlikely(closed) ) {
@@ -514,12 +535,11 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
 }
 static inline bool unregister_select( chan_write(T) & this, select_node & node ) { return unregister_chan( this.chan, node ); }
 
-static inline bool on_selected( chan_write(T) & this, select_node & node ) with(this) { 
+static inline void on_selected( chan_write(T) & this, select_node & node ) with(this) { 
     if ( node.extra == 0p ) // check if woken up due to closed channel
         __closed_insert( chan, elem );
 
     // This is only reachable if not closed or closed exception was handled
-    return true;
 }
 
 } // forall( T )

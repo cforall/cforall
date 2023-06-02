@@ -1107,7 +1107,7 @@ namespace ResolvExpr {
 		/// Removes cast to type of argument (unlike StripCasts, also handles non-generated casts)
 		void removeExtraneousCast( ast::ptr<ast::Expr> & expr, const ast::SymbolTable & symtab ) {
 			if ( const ast::CastExpr * castExpr = expr.as< ast::CastExpr >() ) {
-				if ( typesCompatible( castExpr->arg->result, castExpr->result, symtab ) ) {
+				if ( typesCompatible( castExpr->arg->result, castExpr->result ) ) {
 					// cast is to the same type as its argument, remove it
 					swap_and_save_env( expr, castExpr->arg );
 				}
@@ -1833,8 +1833,7 @@ namespace ResolvExpr {
 								// ast::ptr< ast::Type > paramType = (*param)->get_type();
 								if (
 									! unify(
-										arg->expr->result, *param, resultEnv, need, have, open,
-										symtab )
+										arg->expr->result, *param, resultEnv, need, have, open )
 								) {
 									// Type doesn't match
 									stringstream ss;

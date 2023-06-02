@@ -58,30 +58,30 @@ inline bool typesCompatibleIgnoreQualifiers( const Type * t1, const Type * t2, c
 bool unify(
 	const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
 	ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-	ast::OpenVarSet & open, const ast::SymbolTable & symtab );
+	ast::OpenVarSet & open );
 
 bool unify(
 	const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
 	ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-	ast::OpenVarSet & open, const ast::SymbolTable & symtab, ast::ptr<ast::Type> & common );
+	ast::OpenVarSet & open, ast::ptr<ast::Type> & common );
 
 bool unifyExact(
 	const ast::Type * type1, const ast::Type * type2, ast::TypeEnvironment & env,
 	ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
-	WidenMode widen, const ast::SymbolTable & symtab );
+	WidenMode widen );
 
 bool unifyInexact(
 	const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
 	ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-	const ast::OpenVarSet & open, WidenMode widen, const ast::SymbolTable & symtab,
+	const ast::OpenVarSet & open, WidenMode widen, 
 	ast::ptr<ast::Type> & common );
 
 bool typesCompatible(
-	const ast::Type *, const ast::Type *, const ast::SymbolTable & symtab = {},
+	const ast::Type *, const ast::Type *, 
 	const ast::TypeEnvironment & env = {} );
 
 bool typesCompatibleIgnoreQualifiers(
-	const ast::Type *, const ast::Type *, const ast::SymbolTable & symtab = {},
+	const ast::Type *, const ast::Type *,
 	const ast::TypeEnvironment & env = {} );
 
 /// Creates the type represented by the list of returnVals in a FunctionType.

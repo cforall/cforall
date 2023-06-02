@@ -90,17 +90,24 @@ trait is_selectable {
 
     // For unregistering a select stmt on a selectable concurrency primitive
     // If true is returned then the corresponding code block is run (only in non-special OR case and only if node status is not RUN)
-    bool unregister_select( T &, select_node &  );
+    bool unregister_select( T &, select_node & );
 
     // This routine is run on the selecting thread prior to executing the statement corresponding to the select_node
     //    passed as an arg to this routine
     // If on_selected returns false, the statement is not run, if it returns true it is run.
-    bool on_selected( T &, select_node & );
+    void on_selected( T &, select_node & );
 };
 
 //=============================================================================================
 // Waituntil Helpers
 //=============================================================================================
+
+static inline void __make_select_node_unsat( select_node & this ) with( this ) {
+    __atomic_store_n( clause_status, __SELECT_UNSAT, __ATOMIC_SEQ_CST );
+}
+static inline void __make_select_node_sat( select_node & this ) with( this ) {
+    __atomic_store_n( clause_status, __SELECT_SAT, __ATOMIC_SEQ_CST );
+}
 
 // used for the 2-stage avail needed by the special OR case
 static inline bool __mark_select_node( select_node & this, unsigned long int val ) with( this ) {
@@ -115,11 +122,24 @@ static inline bool __mark_select_node( select_node & this, unsigned long int val
     return true;
 }
 
-static inline void __make_select_node_unsat( select_node & this ) with( this ) {
-    __atomic_store_n( clause_status, __SELECT_UNSAT, __ATOMIC_SEQ_CST );
-}
-static inline void __make_select_node_sat( select_node & this ) with( this ) {
-    __atomic_store_n( clause_status, __SELECT_SAT, __ATOMIC_SEQ_CST );
+// used for the 2-stage avail by the thread who owns a pending node
+static inline bool __pending_set_other( select_node & other, select_node & mine, unsigned long int val ) with( other ) {
+    /* paranoid */ verify( park_counter == 0p );
+    /* paranoid */ verify( clause_status != 0p );
+
+    unsigned long int cmp_status = __SELECT_UNSAT;
+    while( !__atomic_compare_exchange_n( clause_status, &cmp_status, val, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) {
+        if ( cmp_status != __SELECT_PENDING )
+            return false;
+
+        // toggle current status flag to avoid starvation/deadlock
+        __make_select_node_unsat( mine );
+        cmp_status = __SELECT_UNSAT;
+        if ( !__atomic_compare_exchange_n( mine.clause_status, &cmp_status, __SELECT_PENDING, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) )
+            return false;
+        cmp_status = __SELECT_UNSAT;
+    }
+    return true;
 }
 
 static inline bool __make_select_node_pending( select_node & this ) with( this ) {
@@ -187,7 +207,7 @@ void timeout_handler_select_cast( alarm_node_t & node );
 // Selectable trait routines
 bool register_select( select_timeout_node & this, select_node & node );
 bool unregister_select( select_timeout_node & this, select_node & node );
-bool on_selected( select_timeout_node & this, select_node & node );
+void on_selected( select_timeout_node & this, select_node & node );
 
 // Gateway routines to waituntil on duration
 select_timeout_node timeout( Duration duration );

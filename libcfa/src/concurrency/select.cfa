@@ -48,7 +48,7 @@ bool unregister_select( select_timeout_node & this, select_node & node ) {
     unregister_self( &this.a_node );
     return false;
 }
-bool on_selected( select_timeout_node & this, select_node & node ) { return true; }
+void on_selected( select_timeout_node & this, select_node & node ) {}
 
 // Gateway routine to wait on duration
 select_timeout_node timeout( Duration duration ) {

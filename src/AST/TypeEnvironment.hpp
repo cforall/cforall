@@ -168,7 +168,7 @@ public:
 
 	/// Merge environment with this one, checking compatibility.
 	/// Returns false if fails, but does NOT roll back partial changes.
-	bool combine( const TypeEnvironment & o, OpenVarSet & openVars, const SymbolTable & symtab );
+	bool combine( const TypeEnvironment & o, OpenVarSet & openVars );
 
 	/// Add all type variables in environment to open var list
 	void extractOpenVars( OpenVarSet & openVars ) const;
@@ -182,14 +182,14 @@ public:
 	bool bindVar(
 		const TypeInstType * typeInst, const Type * bindTo, const TypeData & data,
 		AssertionSet & need, AssertionSet & have, const OpenVarSet & openVars,
-		ResolvExpr::WidenMode widen, const SymbolTable & symtab );
+		ResolvExpr::WidenMode widen );
 
 	/// Binds the type classes represented by `var1` and `var2` together; will add one or both
 	/// classes if needed. Returns false on failure.
 	bool bindVarToVar(
 		const TypeInstType * var1, const TypeInstType * var2, TypeData && data,
 		AssertionSet & need, AssertionSet & have, const OpenVarSet & openVars,
-		ResolvExpr::WidenMode widen, const SymbolTable & symtab );
+		ResolvExpr::WidenMode widen );
 
 	/// Disallows widening for all bindings in the environment
 	void forbidWidening();
@@ -204,12 +204,11 @@ private:
 
 	/// Unifies the type bound of `to` with the type bound of `from`, returning false if fails
 	bool mergeBound(
-		EqvClass & to, const EqvClass & from, OpenVarSet & openVars, const SymbolTable & symtab );
+		EqvClass & to, const EqvClass & from, OpenVarSet & openVars );
 
 	/// Merges two type classes from local environment, returning false if fails
 	bool mergeClasses(
-		ClassList::iterator to, ClassList::iterator from, OpenVarSet & openVars,
-		const SymbolTable & symtab );
+		ClassList::iterator to, ClassList::iterator from, OpenVarSet & openVars);
 
 	/// Private lookup API; returns array index of string, or env.size() for not found
 	ClassList::iterator internal_lookup( const TypeEnvKey & );

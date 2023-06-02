@@ -675,7 +675,6 @@ namespace ResolvExpr {
 	class CommonType_new final : public ast::WithShortCircuiting {
 		const ast::Type * type2;
 		WidenMode widen;
-		const ast::SymbolTable & symtab;
 		ast::TypeEnvironment & tenv;
 		const ast::OpenVarSet & open;
 		ast::AssertionSet & need;
@@ -685,10 +684,10 @@ namespace ResolvExpr {
 		ast::ptr< ast::Type > result;
 
 		CommonType_new(
-			const ast::Type * t2, WidenMode w, const ast::SymbolTable & st,
+			const ast::Type * t2, WidenMode w,
 			ast::TypeEnvironment & env, const ast::OpenVarSet & o,
 			ast::AssertionSet & need, ast::AssertionSet & have )
-		: type2( t2 ), widen( w ), symtab( st ), tenv( env ), open( o ), need (need), have (have) ,result() {}
+		: type2( t2 ), widen( w ), tenv( env ), open( o ), need (need), have (have) ,result() {}
 
 		void previsit( const ast::Node * ) { visit_children = false; }
 
@@ -748,7 +747,7 @@ namespace ResolvExpr {
 				if ( entry != open.end() ) {
 					ast::AssertionSet need, have;
 					if ( ! tenv.bindVar(
-						var, voidPtr->base, entry->second, need, have, open, widen, symtab )
+						var, voidPtr->base, entry->second, need, have, open, widen )
 					) return;
 				}
 			}
@@ -761,7 +760,7 @@ namespace ResolvExpr {
 			if (auto enumInst = dynamic_cast<const ast::EnumInstType *> (type2) ) {
 				ast::OpenVarSet newOpen{ open };
 				if (enumInst->base->base 
-				&& unifyExact(type1, enumInst->base->base, tenv, need, have, newOpen, widen, symtab)) {
+				&& unifyExact(type1, enumInst->base->base, tenv, need, have, newOpen, widen)) {
 					result = type1;
 					return true;
 				}
@@ -798,7 +797,7 @@ namespace ResolvExpr {
 					reset_qualifiers( t2 );
 
 					ast::OpenVarSet newOpen{ open };
-					if ( unifyExact( t1, t2, tenv, have, need, newOpen, noWiden(), symtab ) ) {
+					if ( unifyExact( t1, t2, tenv, have, need, newOpen, noWiden() ) ) {
 						result = pointer;
 						if ( q1.val != q2.val ) {
 							// reset result->base->qualifiers to be union of two base qualifiers
@@ -841,7 +840,7 @@ namespace ResolvExpr {
 								// combine remainder of list2, then unify
 								if (unifyExact(
 									arg1, tupleFromTypes( crnt2, end2 ), tenv, need, have, open,
-									noWiden(), symtab )) {
+									noWiden() )) {
 										break;
 
 								}
@@ -850,7 +849,7 @@ namespace ResolvExpr {
 								// combine remainder of list1, then unify
 								if (unifyExact(
 									tupleFromTypes( crnt1, end1 ), arg2, tenv, need, have, open,
-									noWiden(), symtab )) {
+									noWiden() )) {
 										break;
 
 								}
@@ -874,7 +873,7 @@ namespace ResolvExpr {
 										reset_qualifiers(base2);
 
 										if ( ! unifyExact(
-											base1, base2, tenv, need, have, open, noWiden(), symtab )
+											base1, base2, tenv, need, have, open, noWiden() )
 										) return;
 									}	
 								}
@@ -894,7 +893,7 @@ namespace ResolvExpr {
 										reset_qualifiers(base2);
 
 										if ( ! unifyExact(
-											base1, base2, tenv, need, have, open, noWiden(), symtab )
+											base1, base2, tenv, need, have, open, noWiden() )
 										) return;
 									}	
 								}
@@ -902,7 +901,7 @@ namespace ResolvExpr {
 
 							}
 							else if (! unifyExact(
-								arg1, arg2, tenv, need, have, open, noWiden(), symtab )) return;
+								arg1, arg2, tenv, need, have, open, noWiden() )) return;
 
 							++crnt1; ++crnt2;
 						}
@@ -912,17 +911,17 @@ namespace ResolvExpr {
 							if (! Tuples::isTtype( t1 ) ) return;
 							if (! unifyExact(
 								t1, tupleFromTypes( crnt2, end2 ), tenv, need, have, open,
-								noWiden(), symtab )) return;
+								noWiden() )) return;
 						} else if ( crnt2 != end2 ) {
 							// try unifying empty tuple with ttype
 							const ast::Type * t2 = *crnt2;
 							if (! Tuples::isTtype( t2 ) ) return;
 							if (! unifyExact(
 								tupleFromTypes( crnt1, end1 ), t2, tenv, need, have, open,
-								noWiden(), symtab )) return;
+								noWiden() )) return;
 						}
 						if ((f1->returns.size() == 0 && f2->returns.size() == 0)
-						  || (f1->returns.size() == 1 && f2->returns.size() == 1 && unifyExact(f1->returns[0], f2->returns[0], tenv, need, have, open, noWiden(), symtab))) {
+						  || (f1->returns.size() == 1 && f2->returns.size() == 1 && unifyExact(f1->returns[0], f2->returns[0], tenv, need, have, open, noWiden()))) {
 							result = pointer;
 
 							for (auto & assn : f1->assertions) {
@@ -979,7 +978,7 @@ namespace ResolvExpr {
 					reset_qualifiers( t2 );
 
 					ast::OpenVarSet newOpen{ open };
-					if ( unifyExact( t1, t2, tenv, have, need, newOpen, noWiden(), symtab ) ) {
+					if ( unifyExact( t1, t2, tenv, have, need, newOpen, noWiden() ) ) {
 						result = ref;
 						if ( q1.val != q2.val ) {
 							// reset result->base->qualifiers to be union of two base qualifiers
@@ -994,7 +993,7 @@ namespace ResolvExpr {
 				add_qualifiers( result, type2->qualifiers );
 			} else {
 				if (!dynamic_cast<const ast::EnumInstType *>(type2))
-					result = commonType( type2, ref, tenv, need, have, open, widen, symtab );
+					result = commonType( type2, ref, tenv, need, have, open, widen );
 			}
 		}
 
@@ -1012,34 +1011,12 @@ namespace ResolvExpr {
 
 		void postvisit( const ast::EnumInstType * enumInst ) {
 			if (!dynamic_cast<const ast::EnumInstType *>(type2))
-				result = commonType( type2, enumInst, tenv, need, have, open, widen, symtab);
+				result = commonType( type2, enumInst, tenv, need, have, open, widen);
 		}
 
 		void postvisit( const ast::TraitInstType * ) {}
 
-		void postvisit( const ast::TypeInstType * inst ) {
-			if ( ! widen.first ) return;
-			if ( const ast::NamedTypeDecl * nt = symtab.lookupType( inst->name ) ) {
-				if ( const ast::Type * base =
-						strict_dynamic_cast< const ast::TypeDecl * >( nt )->base
-				) {
-					ast::CV::Qualifiers q1 = inst->qualifiers, q2 = type2->qualifiers;
-
-					// force t{1,2} to be cloned if their qualifiers must be mutated
-					ast::ptr< ast::Type > t1{ base }, t2{ type2 };
-					reset_qualifiers( t1, q1 );
-					reset_qualifiers( t2 );
-
-					ast::OpenVarSet newOpen{ open };
-					if ( unifyExact( t1, t2, tenv, have, need, newOpen, noWiden(), symtab ) ) {
-						result = type2;
-						reset_qualifiers( result, q1 | q2 );
-					} else {
-						tryResolveWithTypedEnum( t1 );
-					}
-				}
-			}
-		}
+		void postvisit( const ast::TypeInstType * inst ) {}
 
 		void postvisit( const ast::TupleType * tuple) {
 			tryResolveWithTypedEnum( tuple );
@@ -1102,7 +1079,7 @@ namespace ResolvExpr {
 	namespace {
 		ast::ptr< ast::Type > handleReference(
 			const ast::ptr< ast::Type > & t1, const ast::ptr< ast::Type > & t2, WidenMode widen,
-			const ast::SymbolTable & symtab, ast::TypeEnvironment & env,
+			ast::TypeEnvironment & env,
 			const ast::OpenVarSet & open
 		) {
 			ast::ptr<ast::Type> common;
@@ -1110,7 +1087,7 @@ namespace ResolvExpr {
 			ast::OpenVarSet newOpen{ open };
 
 			// need unify to bind type variables
-			if ( unify( t1, t2, env, have, need, newOpen, symtab, common ) ) {
+			if ( unify( t1, t2, env, have, need, newOpen, common ) ) {
 				ast::CV::Qualifiers q1 = t1->qualifiers, q2 = t2->qualifiers;
 				PRINT(
 					std::cerr << "unify success: " << widenFirst << " " << widenSecond << std::endl;
@@ -1134,7 +1111,7 @@ namespace ResolvExpr {
 	ast::ptr< ast::Type > commonType(
 			const ast::ptr< ast::Type > & type1, const ast::ptr< ast::Type > & type2,
 			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-			const ast::OpenVarSet & open, WidenMode widen, const ast::SymbolTable & symtab
+			const ast::OpenVarSet & open, WidenMode widen
 	) {
 		unsigned depth1 = type1->referenceDepth();
 		unsigned depth2 = type2->referenceDepth();
@@ -1149,10 +1126,10 @@ namespace ResolvExpr {
 
 			if ( depth1 > depth2 ) {
 				assert( ref1 );
-				result = handleReference( ref1->base, type2, widen, symtab, env, open );
+				result = handleReference( ref1->base, type2, widen, env, open );
 			} else {  // implies depth1 < depth2
 				assert( ref2 );
-				result = handleReference( type1, ref2->base, widen, symtab, env, open );
+				result = handleReference( type1, ref2->base, widen, env, open );
 			}
 
 			if ( result && ref1 ) {
@@ -1170,36 +1147,11 @@ namespace ResolvExpr {
 			return result;
 		}
 		// otherwise both are reference types of the same depth and this is handled by the visitor
-		ast::Pass<CommonType_new> visitor{ type2, widen, symtab, env, open, need, have };
+		ast::Pass<CommonType_new> visitor{ type2, widen, env, open, need, have };
 		type1->accept( visitor );
-		ast::ptr< ast::Type > result = visitor.core.result;
+		// ast::ptr< ast::Type > result = visitor.core.result;
 
-		// handling for opaque type declarations (?)
-		if ( ! result && widen.second ) {
-			if ( const ast::TypeInstType * inst = type2.as< ast::TypeInstType >() ) {
-				if ( const ast::NamedTypeDecl * nt = symtab.lookupType( inst->name ) ) {
-					auto type = strict_dynamic_cast< const ast::TypeDecl * >( nt );
-					if ( type->base ) {
-						ast::CV::Qualifiers q1 = type1->qualifiers, q2 = type2->qualifiers;
-						ast::OpenVarSet newOpen{ open };
-
-						// force t{1,2} to be cloned if its qualifiers must be stripped, so that
-						// type1 and type->base are left unchanged; calling convention forces
-						// {type1,type->base}->strong_ref >= 1
-						ast::ptr<ast::Type> t1{ type1 }, t2{ type->base };
-						reset_qualifiers( t1 );
-						reset_qualifiers( t2, q1 );
-
-						if ( unifyExact( t1, t2, env, have, need, newOpen, noWiden(), symtab ) ) {
-							result = t1;
-							reset_qualifiers( result, q1 | q2 );
-						}
-					}
-				}
-			}
-		}
-
-		return result;
+		return visitor.core.result;
 	}
 
 } // namespace ResolvExpr

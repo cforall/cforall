@@ -94,7 +94,7 @@ Replaces the waituntil statement above with the following code:
                     switch (i) {
                         case 0:
                             try {
-                                if (on_selected( A, clause1 ))
+                                    on_selected( A, clause1 );
                                     doA();
                             }
                             finally { clause_statuses[i] = __SELECT_RUN; unregister_select(A, clause1); }
@@ -121,7 +121,8 @@ Replaces the waituntil statement above with the following code:
     } finally {
         // the unregister and on_selected calls are needed to support primitives where the acquire has side effects
         // so the corresponding block MUST be run for those primitives to not lose state (example is channels)
-        if ( ! has_run(clause_statuses[0]) && whenA && unregister_select(A, clause1) && on_selected( A, clause1 ) )
+        if ( !has_run(clause_statuses[0]) && whenA && unregister_select(A, clause1) )
+            on_selected( A, clause1 )
             doA(); 
         ... repeat if above for B and C ...
     }
@@ -618,20 +619,16 @@ Expr * GenerateWaitUntilCore::genSelectTraitCall( const WhenClause * clause, con
 }
 
 // Generates:
-/* if ( on_selected( target_1, node_1 )) ... corresponding body of target_1 ... 
+/* on_selected( target_1, node_1 ); ... corresponding body of target_1 ... 
 */
 CompoundStmt * GenerateWaitUntilCore::genStmtBlock( const WhenClause * clause, const ClauseData * data ) {
     const CodeLocation & cLoc = clause->location;
     return new CompoundStmt( cLoc,
         {
-            new IfStmt( cLoc,
-                genSelectTraitCall( clause, data, "on_selected" ),
-                new CompoundStmt( cLoc,
-                    {
-                        ast::deepCopy( clause->stmt )
-                    }
-                )
-            )
+            new ExprStmt( cLoc,
+                genSelectTraitCall( clause, data, "on_selected" )
+            ),
+            ast::deepCopy( clause->stmt )
         }
     );
 }
@@ -643,8 +640,8 @@ CompoundStmt * GenerateWaitUntilCore::genStmtBlock( const WhenClause * clause, c
         switch (i) {
             case 0:
                 try {
-                    if (on_selected( target1, clause1 ))
-                        dotarget1stmt();
+                    on_selected( target1, clause1 );
+                    dotarget1stmt();
                 }
                 finally { clause_statuses[i] = __SELECT_RUN; unregister_select(target1, clause1); }
                 break;
@@ -663,8 +660,8 @@ ForStmt * GenerateWaitUntilCore::genStatusCheckFor( const WaitUntilStmt * stmt, 
     switch (i) {
         case 0:
             try {
-                if (on_selected( target1, clause1 ))
-                    dotarget1stmt();
+                on_selected( target1, clause1 );
+                dotarget1stmt();
             }
             finally { clause_statuses[i] = __SELECT_RUN; unregister_select(target1, clause1); }
             break;
@@ -1019,7 +1016,6 @@ Stmt * GenerateWaitUntilCore::recursiveOrIfGen( const WaitUntilStmt * stmt, vect
             new IfStmt( cLoc,
                 ifCond,
                 genStmtBlock( stmt->clauses.at(idx), data.at(idx) ),
-                // ast::deepCopy( stmt->clauses.at(idx)->stmt ),
                 recursiveOrIfGen( stmt, data, idx + 1, elseWhenName )
             )
         }

@@ -361,7 +361,7 @@ ast::Expr const * FixDtypeStatic::fixMemberExpr(
 	if ( !isDtypeStatic( baseParams ) ||
 			ResolvExpr::typesCompatible(
 				memberExpr->result,
-				memberExpr->member->get_type(), ast::SymbolTable() ) ) {
+				memberExpr->member->get_type() ) ) {
 		return memberExpr;
 	}
 

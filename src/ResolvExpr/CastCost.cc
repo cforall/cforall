@@ -164,7 +164,7 @@ namespace {
 			if ( auto ptr = dynamic_cast< const ast::PointerType * >( dst ) ) {
 				if (
 					pointerType->qualifiers <= ptr->qualifiers
-					&& typesCompatibleIgnoreQualifiers( pointerType->base, ptr->base, symtab, env )
+					&& typesCompatibleIgnoreQualifiers( pointerType->base, ptr->base, env )
 				) {
 					cost = Cost::safe;
 				} else {
@@ -231,7 +231,7 @@ Cost castCost(
 		ast::print( std::cerr, env, 2 );
 	)
 
-	if ( typesCompatibleIgnoreQualifiers( src, dst, symtab, env ) ) {
+	if ( typesCompatibleIgnoreQualifiers( src, dst, env ) ) {
 		PRINT( std::cerr << "compatible!" << std::endl; )
 		return Cost::zero;
 	} else if ( dynamic_cast< const ast::VoidType * >( dst ) ) {

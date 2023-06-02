@@ -35,8 +35,7 @@ ast::ptr< ast::Type > commonType(
 	const ast::ptr< ast::Type > & type1, const ast::ptr< ast::Type > & type2,
 	ast::TypeEnvironment & env,
 	ast::AssertionSet & need, ast::AssertionSet & have,
-	const ast::OpenVarSet & open, WidenMode widen,
-	const ast::SymbolTable & symtab );
+	const ast::OpenVarSet & open, WidenMode widen);
 
 }
 
