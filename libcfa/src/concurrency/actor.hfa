@@ -457,6 +457,7 @@ static inline void set_allocation( message & this, Allocation state ) {
 }
 
 static inline void deliver_request( request & this ) {
+    verifyf( this.receiver->ticket != (unsigned long int)MAX, "Attempted to send message to deleted/dead actor\n" );
     this.receiver->allocation_ = this.fn( *this.receiver, *this.msg );
     check_message( *this.msg );
     check_actor( *this.receiver );
@@ -679,11 +680,11 @@ static inline void stop_actor_system() {
 // Default messages to send to any actor to change status
 // assigned at creation to __base_msg_finished to avoid unused message warning
 message __base_msg_finished @= { .allocation_ : Finished };
-struct __DeleteMsg { inline message; } DeleteMsg = __base_msg_finished;
-struct __DestroyMsg { inline message; } DestroyMsg = __base_msg_finished;
-struct __FinishedMsg { inline message; } FinishedMsg = __base_msg_finished;
+struct __delete_msg_t { inline message; } delete_msg = __base_msg_finished;
+struct __destroy_msg_t { inline message; } destroy_msg = __base_msg_finished;
+struct __finished_msg_t { inline message; } finished_msg = __base_msg_finished;
 
-Allocation receive( actor & this, __DeleteMsg & msg ) { return Delete; }
-Allocation receive( actor & this, __DestroyMsg & msg ) { return Destroy; }
-Allocation receive( actor & this, __FinishedMsg & msg ) { return Finished; }
+Allocation receive( actor & this, __delete_msg_t & msg ) { return Delete; }
+Allocation receive( actor & this, __destroy_msg_t & msg ) { return Destroy; }
+Allocation receive( actor & this, __finished_msg_t & msg ) { return Finished; }
 
