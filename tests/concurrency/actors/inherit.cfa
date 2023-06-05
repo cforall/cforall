@@ -14,14 +14,14 @@ void ^?{}( Server2 & this ) { mutex(sout) sout | 'A'; }
 void ?{}( D_msg & this ) { set_allocation( this, Delete ); }
 void ^?{}( D_msg & this ) { mutex(sout) sout | 'A'; }
 
-Allocation handle() {
+allocation handle() {
     return Finished;
 }
 
-Allocation receive( Server & receiver, D_msg & msg ) { return handle(); }
-Allocation receive( Server & receiver, D_msg2 & msg ) { return handle(); }
-Allocation receive( Server2 & receiver, D_msg & msg ) { return Delete; }
-Allocation receive( Server2 & receiver, D_msg2 & msg ) { return Delete; }
+allocation receive( Server & receiver, D_msg & msg ) { return handle(); }
+allocation receive( Server & receiver, D_msg2 & msg ) { return handle(); }
+allocation receive( Server2 & receiver, D_msg & msg ) { return Delete; }
+allocation receive( Server2 & receiver, D_msg2 & msg ) { return Delete; }
 
 int main() {
     sout | "Start";

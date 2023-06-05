@@ -23,7 +23,7 @@ void ?{}( derived_msg & this, int * Z, int * X, int ** Y ) {
     this.Y = Y;
 }
 
-Allocation receive( derived_actor & receiver, derived_msg & msg ) {
+allocation receive( derived_actor & receiver, derived_msg & msg ) {
     for ( unsigned int i = 0; i < yc; i += 1 ) { // multiply X_row by Y_col and sum products
         msg.Z[i] = 0;
         for ( unsigned int j = 0; j < xc; j += 1 ) {

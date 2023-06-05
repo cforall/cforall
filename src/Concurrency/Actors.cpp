@@ -37,9 +37,9 @@ struct CollectactorStructDecls : public ast::WithGuards {
     bool insideStruct = false;
     bool namedDecl = false;
 
-    // finds and sets a ptr to the Allocation enum, which is needed in the next pass
+    // finds and sets a ptr to the allocation enum, which is needed in the next pass
     void previsit( const EnumDecl * decl ) {
-        if( decl->name == "Allocation" ) *allocationDecl = decl;
+        if( decl->name == "allocation" ) *allocationDecl = decl;
     }
 
     // finds and sets a ptr to the actor, message, and request structs, which are needed in the next pass
@@ -226,7 +226,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
             /*
                 static inline derived_actor & ?|?( derived_actor & receiver, derived_msg & msg ) {
                     request new_req;
-                    Allocation (*my_work_fn)( derived_actor &, derived_msg & ) = receive;
+                    allocation (*my_work_fn)( derived_actor &, derived_msg & ) = receive;
                     __receive_fn fn = (__receive_fn)my_work_fn;
                     new_req{ &receiver, &msg, fn };
                     send( receiver, new_req );
@@ -245,13 +245,13 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
                 )
             ));
             
-            // Function type is: Allocation (*)( derived_actor &, derived_msg & )
+            // Function type is: allocation (*)( derived_actor &, derived_msg & )
             FunctionType * derivedReceive = new FunctionType();
             derivedReceive->params.push_back( ast::deepCopy( derivedActorRef ) );
             derivedReceive->params.push_back( ast::deepCopy( derivedMsgRef ) );
             derivedReceive->returns.push_back( new EnumInstType( *allocationDecl ) );
 
-            // Generates: Allocation (*my_work_fn)( derived_actor &, derived_msg & ) = receive;
+            // Generates: allocation (*my_work_fn)( derived_actor &, derived_msg & ) = receive;
             sendBody->push_back( new DeclStmt(
                 decl->location,
                 new ObjectDecl(
@@ -262,15 +262,15 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
                 )
             ));
 
-            // Function type is: Allocation (*)( actor &, message & )
+            // Function type is: allocation (*)( actor &, message & )
             FunctionType * genericReceive = new FunctionType();
             genericReceive->params.push_back( new ReferenceType( new StructInstType( *actorDecl ) ) );
             genericReceive->params.push_back( new ReferenceType( new StructInstType( *msgDecl ) ) );
             genericReceive->returns.push_back( new EnumInstType( *allocationDecl ) );
 
-            // Generates: Allocation (*fn)( actor &, message & ) = (Allocation (*)( actor &, message & ))my_work_fn;
+            // Generates: allocation (*fn)( actor &, message & ) = (allocation (*)( actor &, message & ))my_work_fn;
             // More readable synonymous code: 
-            //     typedef Allocation (*__receive_fn)(actor &, message &);
+            //     typedef allocation (*__receive_fn)(actor &, message &);
             //     __receive_fn fn = (__receive_fn)my_work_fn;
             sendBody->push_back( new DeclStmt(
                 decl->location,
@@ -421,7 +421,7 @@ void implementActors( TranslationUnit & translationUnit ) {
     const StructDecl ** actorDecl = &actorDeclPtr;
     const StructDecl ** msgDecl = &msgDeclPtr;
 
-    // first pass collects ptrs to Allocation enum, request type, and generic receive fn typedef
+    // first pass collects ptrs to allocation enum, request type, and generic receive fn typedef
     // also populates maps of all derived actors and messages
     Pass<CollectactorStructDecls>::run( translationUnit, actorStructDecls, messageStructDecls, requestDecl, 
         allocationDecl, actorDecl, msgDecl );

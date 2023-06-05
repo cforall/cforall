@@ -18,21 +18,21 @@ ping * pi;
 pong * po;
 size_t times = 100000;
 
-Allocation receive( ping & receiver, p_msg & msg ) {
+allocation receive( ping & receiver, p_msg & msg ) {
     msg.count++;
     if ( msg.count > times ) return Finished;
 
-    Allocation retval = Nodelete;
+    allocation retval = Nodelete;
     if ( msg.count == times ) retval = Finished;
     *po << msg;
     return retval;
 }
 
-Allocation receive( pong & receiver, p_msg & msg ) {
+allocation receive( pong & receiver, p_msg & msg ) {
     msg.count++;
     if ( msg.count > times ) return Finished;
     
-    Allocation retval = Nodelete;
+    allocation retval = Nodelete;
     if ( msg.count == times ) retval = Finished;
     *pi << msg;
     return retval;

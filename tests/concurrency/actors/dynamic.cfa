@@ -18,7 +18,7 @@ void ?{}( derived_msg & this, int cnt ) {
 }
 void ?{}( derived_msg & this ) { ((derived_msg &)this){ 0 }; }
 
-Allocation receive( derived_actor & receiver, derived_msg & msg ) {
+allocation receive( derived_actor & receiver, derived_msg & msg ) {
     if ( msg.cnt >= Times ) {
         sout | "Done";
         return Delete;

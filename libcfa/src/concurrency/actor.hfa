@@ -12,6 +12,8 @@
 #define CFA_DEBUG( stmt )
 #endif // CFA_DEBUG
 
+#define DEBUG_ABORT( cond, string ) CFA_DEBUG( if ( cond ) abort( string ) )
+
 // Define the default number of processors created in the executor. Must be greater than 0.
 #define __DEFAULT_EXECUTOR_PROCESSORS__ 2
 
@@ -41,9 +43,9 @@ struct actor;
 struct message;
 struct executor;
 
-enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
+enum allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
 
-typedef Allocation (*__receive_fn)(actor &, message &);
+typedef allocation (*__receive_fn)(actor &, message &);
 struct request {
     actor * receiver;
     message * msg;
@@ -392,14 +394,14 @@ static size_t __num_actors_ = 0;				        // number of actor objects in system
 static struct thread$ * __actor_executor_thd = 0p;		// used to wake executor after actors finish
 struct actor {
     size_t ticket;	                                    // executor-queue handle
-    Allocation allocation_;			                    // allocation action
+    allocation allocation_;			                    // allocation action
     inline virtual_dtor;
 };
 
 static inline void ?{}( actor & this ) with(this) {
     // Once an actor is allocated it must be sent a message or the actor system cannot stop. Hence, its receive
     // member must be called to end it
-    verifyf( __actor_executor_, "Creating actor before calling start_actor_system() can cause undefined behaviour.\n" ); 
+    DEBUG_ABORT( __actor_executor_ == 0p, "Creating actor before calling start_actor_system() can cause undefined behaviour.\n" );
     allocation_ = Nodelete;
     ticket = __get_next_ticket( *__actor_executor_ );
     __atomic_fetch_add( &__num_actors_, 1, __ATOMIC_RELAXED );
@@ -429,16 +431,16 @@ static inline void check_actor( actor & this ) {
 }
 
 struct message {
-    Allocation allocation_;			// allocation action
+    allocation allocation_;			// allocation action
     inline virtual_dtor;
 };
 
 static inline void ?{}( message & this ) {
     this.allocation_ = Nodelete;
 }
-static inline void ?{}( message & this, Allocation allocation ) {
-    memcpy( &this.allocation_, &allocation, sizeof(allocation) ); // optimization to elide ctor
-    verifyf( this.allocation_ != Finished, "The Finished Allocation status is not supported for message types.\n");
+static inline void ?{}( message & this, allocation alloc ) {
+    memcpy( &this.allocation_, &alloc, sizeof(allocation) ); // optimization to elide ctor
+    DEBUG_ABORT( this.allocation_ == Finished, "The Finished allocation status is not supported for message types.\n" );
 }
 static inline void ^?{}( message & this ) with(this) {
     CFA_DEBUG( if ( allocation_ == Nodelete ) printf("A message at location %p was allocated but never sent.\n", &this); )
@@ -452,12 +454,12 @@ static inline void check_message( message & this ) {
         case Finished: break;
     } // switch
 }
-static inline void set_allocation( message & this, Allocation state ) {
+static inline void set_allocation( message & this, allocation state ) {
     this.allocation_ = state;
 }
 
 static inline void deliver_request( request & this ) {
-    verifyf( this.receiver->ticket != (unsigned long int)MAX, "Attempted to send message to deleted/dead actor\n" );
+    DEBUG_ABORT( this.receiver->ticket == (unsigned long int)MAX, "Attempted to send message to deleted/dead actor\n" );
     this.receiver->allocation_ = this.fn( *this.receiver, *this.msg );
     check_message( *this.msg );
     check_actor( *this.receiver );
@@ -631,7 +633,7 @@ static inline void send( executor & this, request & req, unsigned long int ticke
 }
 
 static inline void send( actor & this, request & req ) {
-    verifyf( this.ticket != (unsigned long int)MAX, "Attempted to send message to deleted/dead actor\n" );
+    DEBUG_ABORT( this.ticket == (unsigned long int)MAX, "Attempted to send message to deleted/dead actor\n" );
     send( *__actor_executor_, req, this.ticket );
 }
 
@@ -684,7 +686,7 @@ struct __delete_msg_t { inline message; } delete_msg = __base_msg_finished;
 struct __destroy_msg_t { inline message; } destroy_msg = __base_msg_finished;
 struct __finished_msg_t { inline message; } finished_msg = __base_msg_finished;
 
-Allocation receive( actor & this, __delete_msg_t & msg ) { return Delete; }
-Allocation receive( actor & this, __destroy_msg_t & msg ) { return Destroy; }
-Allocation receive( actor & this, __finished_msg_t & msg ) { return Finished; }
+allocation receive( actor & this, __delete_msg_t & msg ) { return Delete; }
+allocation receive( actor & this, __destroy_msg_t & msg ) { return Destroy; }
+allocation receive( actor & this, __finished_msg_t & msg ) { return Finished; }
 

@@ -23,7 +23,7 @@ void ?{}( d_actor & this ) with(this) {
 
 struct d_msg { inline message; } shared_msg;
 
-Allocation receive( d_actor & this, d_msg & msg ) with( this ) {
+allocation receive( d_actor & this, d_msg & msg ) with( this ) {
     if ( recs == rounds ) return Finished;
     if ( recs % Batch == 0 ) {
         for ( i; Batch ) {

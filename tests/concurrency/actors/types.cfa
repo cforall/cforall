@@ -19,14 +19,14 @@ struct d_msg {
 };
 
 // this isn't a valid receive routine since int is not a message type
-Allocation receive( derived_actor & receiver, int i ) with( receiver ) {
+allocation receive( derived_actor & receiver, int i ) with( receiver ) {
     mutex(sout) sout | i;
     counter++;
     if ( counter == 2 ) return Finished;
     return Nodelete; 
 }
 
-Allocation receive( derived_actor & receiver, d_msg & msg ) {
+allocation receive( derived_actor & receiver, d_msg & msg ) {
     return receive( receiver, msg.num );
 }
 
@@ -35,7 +35,7 @@ struct derived_actor2 {
     inline actor;
 };
 
-Allocation receive( derived_actor2 & receiver, d_msg & msg ) {
+allocation receive( derived_actor2 & receiver, d_msg & msg ) {
     mutex(sout) sout | msg.num;
     return Finished;
 }
@@ -47,13 +47,13 @@ struct d_msg2 {
     int num;
 };
 
-Allocation receive( derived_actor3 & receiver, d_msg & msg ) {
+allocation receive( derived_actor3 & receiver, d_msg & msg ) {
     mutex(sout) sout | msg.num;
     if ( msg.num == -1 ) return Nodelete;
     return Finished;
 }
 
-Allocation receive( derived_actor3 & receiver, d_msg2 & msg ) {
+allocation receive( derived_actor3 & receiver, d_msg2 & msg ) {
     mutex(sout) sout | msg.num;
     return Finished;
 }
