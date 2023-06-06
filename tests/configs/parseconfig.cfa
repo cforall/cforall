@@ -65,10 +65,10 @@ int main() {
 	sout | nl;
 
 
-	sout | "Open_Failure thrown when config file does not exist";
+	sout | "open_failure thrown when config file does not exist";
 	try {
 		parse_config( xstr(IN_DIR) "doesnt-exist.txt", entries, NUM_ENTRIES, parse_tabular_config_format );
-	} catch( Open_Failure * ex ) {
+	} catch( open_failure * ex ) {
 		sout | "Failed to open the config file";
 	}
 	sout | nl;

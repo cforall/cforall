@@ -87,11 +87,19 @@ Expr * SymbolTable::IdData::combine( const CodeLocation & loc, ResolvExpr::Cost 
 	return ret;
 }
 
-SymbolTable::SymbolTable()
+SymbolTable::SymbolTable( ErrorDetection errorMode )
 : idTable(), typeTable(), structTable(), enumTable(), unionTable(), traitTable(),
-  prevScope(), scope( 0 ), repScope( 0 ) { ++*stats().count; }
+  prevScope(), scope( 0 ), repScope( 0 ), errorMode(errorMode) { ++*stats().count; }
 
 SymbolTable::~SymbolTable() { stats().size->push( idTable ? idTable->size() : 0 ); }
+
+void SymbolTable::OnFindError( CodeLocation location, std::string error ) const {
+	assertf( errorMode != AssertClean, "Name collision/redefinition, found during a compilation phase where none should be possible.  Detail: %s", error.c_str() );
+	if (errorMode == ValidateOnAdd) {
+		SemanticError(location, error);
+	}
+	assertf( errorMode == IgnoreErrors, "Unrecognized symbol-table error mode %d", errorMode );
+}
 
 void SymbolTable::enterScope() {
 	++scope;
@@ -268,33 +276,31 @@ void SymbolTable::addDeletedId( const DeclWithType * decl, const Decl * deleter 
 	addIdCommon( decl, OnConflict::error(), nullptr, deleter );
 }
 
-namespace {
-	/// true if redeclaration conflict between two types
-	bool addedTypeConflicts( const NamedTypeDecl * existing, const NamedTypeDecl * added ) {
-		if ( existing->base == nullptr ) {
-			return false;
-		} else if ( added->base == nullptr ) {
-			return true;
-		} else {
-			// typedef redeclarations are errors only if types are different
-			if ( ! ResolvExpr::typesCompatible( existing->base, added->base ) ) {
-				SemanticError( added->location, "redeclaration of " + added->name );
-			}
-		}
-		// does not need to be added to the table if both existing and added have a base that are
-		// the same
+bool SymbolTable::addedTypeConflicts(
+		const NamedTypeDecl * existing, const NamedTypeDecl * added ) const {
+	if ( existing->base == nullptr ) {
+		return false;
+	} else if ( added->base == nullptr ) {
 		return true;
+	} else {
+		// typedef redeclarations are errors only if types are different
+		if ( ! ResolvExpr::typesCompatible( existing->base, added->base ) ) {
+			OnFindError( added->location, "redeclaration of " + added->name );
+		}
 	}
+	// does not need to be added to the table if both existing and added have a base that are
+	// the same
+	return true;
+}
 
-	/// true if redeclaration conflict between two aggregate declarations
-	bool addedDeclConflicts( const AggregateDecl * existing, const AggregateDecl * added ) {
-		if ( ! existing->body ) {
-			return false;
-		} else if ( added->body ) {
-			SemanticError( added, "redeclaration of " );
-		}
-		return true;
+bool SymbolTable::addedDeclConflicts( 
+		const AggregateDecl * existing, const AggregateDecl * added ) const {
+	if ( ! existing->body ) {
+		return false;
+	} else if ( added->body ) {
+		OnFindError( added, "redeclaration of " );
 	}
+	return true;
 }
 
 void SymbolTable::addType( const NamedTypeDecl * decl ) {
@@ -647,12 +653,12 @@ bool SymbolTable::addedIdConflicts(
 		// it is a conflict if one declaration is deleted and the other is not
 		if ( deleter && ! existing.deleter ) {
 			if ( handleConflicts.mode == OnConflict::Error ) {
-				SemanticError( added, "deletion of defined identifier " );
+				OnFindError( added, "deletion of defined identifier " );
 			}
 			return true;
 		} else if ( ! deleter && existing.deleter ) {
 			if ( handleConflicts.mode == OnConflict::Error ) {
-				SemanticError( added, "definition of deleted identifier " );
+				OnFindError( added, "definition of deleted identifier " );
 			}
 			return true;
 		}
@@ -660,7 +666,7 @@ bool SymbolTable::addedIdConflicts(
 		// it is a conflict if both declarations are definitions
 		if ( isDefinition( added ) && isDefinition( existing.id ) ) {
 			if ( handleConflicts.mode == OnConflict::Error ) {
-				SemanticError( added,
+				OnFindError( added,
 					isFunction( added ) ?
 						"duplicate function definition for " :
 						"duplicate object definition for " );
@@ -669,7 +675,7 @@ bool SymbolTable::addedIdConflicts(
 		}
 	} else {
 		if ( handleConflicts.mode == OnConflict::Error ) {
-			SemanticError( added, "duplicate definition for " );
+			OnFindError( added, "duplicate definition for " );
 		}
 		return true;
 	}
@@ -721,13 +727,13 @@ void SymbolTable::addIdToTable(
 	if ( decl->linkage.is_mangled ) {
 		// Check that a Cforall declaration doesn't override any C declaration
 		if ( hasCompatibleCDecl( name, mangleName ) ) {
-			SemanticError( decl, "Cforall declaration hides C function " );
+			OnFindError( decl, "Cforall declaration hides C function " );
 		}
 	} else {
 		// NOTE: only correct if name mangling is completely isomorphic to C
 		// type-compatibility, which it may not be.
 		if ( hasIncompatibleCDecl( name, mangleName ) ) {
-			SemanticError( decl, "conflicting overload of C function " );
+			OnFindError( decl, "conflicting overload of C function " );
 		}
 	}
 

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr  9 14:55:54 2022
-// Update Count     : 515
+// Last Modified On : Mon Jun  5 22:00:23 2023
+// Update Count     : 518
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -116,7 +116,7 @@ void open( ofstream & os, const char name[], const char mode[] ) {
 	  if ( cnt == 9 ) abort( "ofstream open EINTR spinning exceeded" );
     } // for
 	if ( file == 0p ) {
-		throw (Open_Failure){ os };
+		throw (open_failure){ os };
 		// abort | IO_MSG "open output file \"" | name | "\"" | nl | strerror( errno );
 	} // if
 	(os){ file };										// initialize
@@ -136,7 +136,7 @@ void close( ofstream & os ) with( os ) {
 	  if ( cnt == 9 ) abort( "ofstream open EINTR spinning exceeded" );
     } // for
 	if ( ret == EOF ) {
-		throw (Close_Failure){ os };
+		throw (close_failure){ os };
 		// abort | IO_MSG "close output" | nl | strerror( errno );
 	} // if
 	file$ = 0p;											// safety after close
@@ -144,12 +144,12 @@ void close( ofstream & os ) with( os ) {
 
 ofstream & write( ofstream & os, const char data[], size_t size ) {
 	if ( fail( os ) ) {
-		throw (Write_Failure){ os };
+		throw (write_failure){ os };
 		// abort | IO_MSG "attempt write I/O on failed stream";
 	} // if
 
 	if ( fwrite( data, 1, size, (FILE *)(os.file$) ) != size ) {
-		throw (Write_Failure){ os };
+		throw (write_failure){ os };
 		// abort | IO_MSG "write" | nl | strerror( errno );
 	} // if
 	return os;
@@ -239,7 +239,7 @@ void open( ifstream & is, const char name[], const char mode[] ) {
 	  if ( cnt == 9 ) abort( "ifstream open EINTR spinning exceeded" );
     } // for
 	if ( file == 0p ) {
-		throw (Open_Failure){ is };
+		throw (open_failure){ is };
 		// abort | IO_MSG "open input file \"" | name | "\"" | nl | strerror( errno );
 	} // if
 	(is){ file };										// initialize
@@ -259,7 +259,7 @@ void close( ifstream & is ) with( is ) {
 	  if ( cnt == 9 ) abort( "ifstream close EINTR spinning exceeded" );
     } // for
 	if ( ret == EOF ) {
-		throw (Close_Failure){ is };
+		throw (close_failure){ is };
 		// abort | IO_MSG "close input" | nl | strerror( errno );
 	} // if
 	file$ = 0p;											// safety after close
@@ -267,12 +267,12 @@ void close( ifstream & is ) with( is ) {
 
 ifstream & read( ifstream & is, char data[], size_t size ) {
 	if ( fail( is ) ) {
-		throw (Read_Failure){ is };
+		throw (read_failure){ is };
 		// abort | IO_MSG "attempt read I/O on failed stream";
 	} // if
 
 	if ( fread( data, size, 1, (FILE *)(is.file$) ) == 0 ) {
-		throw (Read_Failure){ is };
+		throw (read_failure){ is };
 		// abort | IO_MSG "read" | nl | strerror( errno );
 	} // if
 	return is;
@@ -317,75 +317,75 @@ ifstream & sin = sinFile, & stdin = sinFile;
 // *********************************** exceptions ***********************************
 
 
-static vtable(Open_Failure) Open_Failure_vt;
+static vtable(open_failure) open_failure_vt;
 
 // exception I/O constructors
-void ?{}( Open_Failure & ex, ofstream & ostream ) with(ex) {
-	virtual_table = &Open_Failure_vt;
+void ?{}( open_failure & ex, ofstream & ostream ) with(ex) {
+	virtual_table = &open_failure_vt;
 	ostream = &ostream;
 	tag = 1;
 } // ?{}
 
-void ?{}( Open_Failure & ex, ifstream & istream ) with(ex) {
-	virtual_table = &Open_Failure_vt;
+void ?{}( open_failure & ex, ifstream & istream ) with(ex) {
+	virtual_table = &open_failure_vt;
 	istream = &istream;
 	tag = 0;
 } // ?{}
 
 
-static vtable(Close_Failure) Close_Failure_vt;
+static vtable(close_failure) close_failure_vt;
 
 // exception I/O constructors
-void ?{}( Close_Failure & ex, ofstream & ostream ) with(ex) {
-	virtual_table = &Close_Failure_vt;
+void ?{}( close_failure & ex, ofstream & ostream ) with(ex) {
+	virtual_table = &close_failure_vt;
 	ostream = &ostream;
 	tag = 1;
 } // ?{}
 
-void ?{}( Close_Failure & ex, ifstream & istream ) with(ex) {
-	virtual_table = &Close_Failure_vt;
+void ?{}( close_failure & ex, ifstream & istream ) with(ex) {
+	virtual_table = &close_failure_vt;
 	istream = &istream;
 	tag = 0;
 } // ?{}
 
 
-static vtable(Write_Failure) Write_Failure_vt;
+static vtable(write_failure) write_failure_vt;
 
 // exception I/O constructors
-void ?{}( Write_Failure & ex, ofstream & ostream ) with(ex) {
-	virtual_table = &Write_Failure_vt;
+void ?{}( write_failure & ex, ofstream & ostream ) with(ex) {
+	virtual_table = &write_failure_vt;
 	ostream = &ostream;
 	tag = 1;
 } // ?{}
 
-void ?{}( Write_Failure & ex, ifstream & istream ) with(ex) {
-	virtual_table = &Write_Failure_vt;
+void ?{}( write_failure & ex, ifstream & istream ) with(ex) {
+	virtual_table = &write_failure_vt;
 	istream = &istream;
 	tag = 0;
 } // ?{}
 
 
-static vtable(Read_Failure) Read_Failure_vt;
+static vtable(read_failure) read_failure_vt;
 
 // exception I/O constructors
-void ?{}( Read_Failure & ex, ofstream & ostream ) with(ex) {
-	virtual_table = &Read_Failure_vt;
+void ?{}( read_failure & ex, ofstream & ostream ) with(ex) {
+	virtual_table = &read_failure_vt;
 	ostream = &ostream;
 	tag = 1;
 } // ?{}
 
-void ?{}( Read_Failure & ex, ifstream & istream ) with(ex) {
-	virtual_table = &Read_Failure_vt;
+void ?{}( read_failure & ex, ifstream & istream ) with(ex) {
+	virtual_table = &read_failure_vt;
 	istream = &istream;
 	tag = 0;
 } // ?{}
 
-// void throwOpen_Failure( ofstream & ostream ) {
-// 	Open_Failure exc = { ostream };
+// void throwopen_failure( ofstream & ostream ) {
+// 	open_failure exc = { ostream };
 // }
 
-// void throwOpen_Failure( ifstream & istream ) {
-// 	Open_Failure exc = { istream };
+// void throwopen_failure( ifstream & istream ) {
+// 	open_failure exc = { istream };
 // }
 
 // Local Variables: //

@@ -11,7 +11,7 @@ Number of couriers: 1
 Maximum student delay: 10
 Maximum student trips: 3
 
-Open_Failure thrown when config file does not exist
+open_failure thrown when config file does not exist
 Failed to open the config file
 
 Missing_Config_Entries thrown when config file is missing entries we want

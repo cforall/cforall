@@ -1260,6 +1260,7 @@ namespace ResolvExpr {
 	public:
 		static size_t traceId;
 		Resolver_new( const ast::TranslationGlobal & global ) :
+			ast::WithSymbolTable(ast::SymbolTable::ErrorDetection::ValidateOnAdd),
 			context{ symtab, global } {}
 		Resolver_new( const ResolveContext & context ) :
 			ast::WithSymbolTable{ context.symtab },

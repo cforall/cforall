@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 10 09:37:32 2021
-// Update Count     : 243
+// Last Modified On : Mon Jun  5 22:00:20 2023
+// Update Count     : 246
 //
 
 #pragma once
@@ -136,7 +136,7 @@ extern ifstream & sin, & stdin;							// aliases
 // *********************************** exceptions ***********************************
 
 
-exception Open_Failure {
+exception open_failure {
 	union {
 		ofstream * ostream;
 		ifstream * istream;
@@ -145,10 +145,10 @@ exception Open_Failure {
 	int tag;											// 1 => ostream; 0 => istream
 };
 
-void ?{}( Open_Failure & this, ofstream & );
-void ?{}( Open_Failure & this, ifstream & );
+void ?{}( open_failure & this, ofstream & );
+void ?{}( open_failure & this, ifstream & );
 
-exception Close_Failure {
+exception close_failure {
 	union {
 		ofstream * ostream;
 		ifstream * istream;
@@ -157,10 +157,10 @@ exception Close_Failure {
 	int tag;											// 1 => ostream; 0 => istream
 };
 
-void ?{}( Close_Failure & this, ofstream & );
-void ?{}( Close_Failure & this, ifstream & );
+void ?{}( close_failure & this, ofstream & );
+void ?{}( close_failure & this, ifstream & );
 
-exception Write_Failure {
+exception write_failure {
 	union {
 		ofstream * ostream;
 		ifstream * istream;
@@ -169,10 +169,10 @@ exception Write_Failure {
 	int tag;											// 1 => ostream; 0 => istream
 };
 
-void ?{}( Write_Failure & this, ofstream & );
-void ?{}( Write_Failure & this, ifstream & );
+void ?{}( write_failure & this, ofstream & );
+void ?{}( write_failure & this, ifstream & );
 
-exception Read_Failure {
+exception read_failure {
 	union {
 		ofstream * ostream;
 		ifstream * istream;
@@ -181,8 +181,8 @@ exception Read_Failure {
 	int tag;											// 1 => ostream; 0 => istream
 };
 
-void ?{}( Read_Failure & this, ofstream & );
-void ?{}( Read_Failure & this, ifstream & );
+void ?{}( read_failure & this, ofstream & );
+void ?{}( read_failure & this, ifstream & );
 
 // Local Variables: //
 // mode: c //

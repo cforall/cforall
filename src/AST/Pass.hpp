@@ -413,9 +413,24 @@ struct WithVisitorRef {
 	}
 };
 
-/// Use when the templated visitor should update the symbol table
+/// Use when the templated visitor should update the symbol table,
+/// that is, when your pass core needs to query the symbol table.
+/// Expected setups:
+/// - For master passes that kick off at the compilation unit
+///   - before resolver: extend WithSymbolTableX<IgnoreErrors>
+///   - after resolver: extend WithSymbolTable and use defaults
+///   - (FYI, for completeness, the resolver's main pass uses ValidateOnAdd when it kicks off)
+/// - For helper passes that kick off at arbitrary points in the AST:
+///   - take an existing symbol table as a parameter, extend WithSymbolTable,
+///     and construct with WithSymbolTable(const SymbolTable &)
 struct WithSymbolTable {
-	SymbolTable symtab;
+	WithSymbolTable(const ast::SymbolTable & from) : symtab(from) {}
+	WithSymbolTable(ast::SymbolTable::ErrorDetection errorMode = ast::SymbolTable::ErrorDetection::AssertClean) : symtab(errorMode) {}
+	ast::SymbolTable symtab;
+};
+template <ast::SymbolTable::ErrorDetection errorMode>
+struct WithSymbolTableX : WithSymbolTable {
+	WithSymbolTableX() : WithSymbolTable(errorMode) {}
 };
 
 /// Used to get a pointer to the wrapping TranslationUnit.
