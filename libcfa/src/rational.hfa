@@ -11,86 +11,86 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:56:25 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 20 17:45:29 2021
-// Update Count     : 118
+// Last Modified On : Mon Jun  5 22:49:05 2023
+// Update Count     : 119
 //
 
 #pragma once
 
 #include "iostream.hfa"
-#include "math.trait.hfa"								// Arithmetic
+#include "math.trait.hfa"								// arithmetic
 
 // implementation
 
-forall( T | Arithmetic( T ) ) {
-	struct Rational {
+forall( T | arithmetic( T ) ) {
+	struct rational {
 		T numerator, denominator;						// invariant: denominator > 0
-	}; // Rational
+	}; // rational
 
 	// constructors
 
-	void ?{}( Rational(T) & r );
-	void ?{}( Rational(T) & r, zero_t );
-	void ?{}( Rational(T) & r, one_t );
-	void ?{}( Rational(T) & r, T n );
-	void ?{}( Rational(T) & r, T n, T d );
+	void ?{}( rational(T) & r );
+	void ?{}( rational(T) & r, zero_t );
+	void ?{}( rational(T) & r, one_t );
+	void ?{}( rational(T) & r, T n );
+	void ?{}( rational(T) & r, T n, T d );
 
 	// numerator/denominator getter
 
-	T numerator( Rational(T) r );
-	T denominator( Rational(T) r );
-	[ T, T ] ?=?( & [ T, T ] dest, Rational(T) src );
+	T numerator( rational(T) r );
+	T denominator( rational(T) r );
+	[ T, T ] ?=?( & [ T, T ] dest, rational(T) src );
 
 	// numerator/denominator setter
 
-	T numerator( Rational(T) r, T n );
-	T denominator( Rational(T) r, T d );
+	T numerator( rational(T) r, T n );
+	T denominator( rational(T) r, T d );
 
 	// comparison
 
-	int ?==?( Rational(T) l, Rational(T) r );
-	int ?!=?( Rational(T) l, Rational(T) r );
-	int ?!=?( Rational(T) l, zero_t );					// => !
-	int ?<?( Rational(T) l, Rational(T) r );
-	int ?<=?( Rational(T) l, Rational(T) r );
-	int ?>?( Rational(T) l, Rational(T) r );
-	int ?>=?( Rational(T) l, Rational(T) r );
+	int ?==?( rational(T) l, rational(T) r );
+	int ?!=?( rational(T) l, rational(T) r );
+	int ?!=?( rational(T) l, zero_t );					// => !
+	int ?<?( rational(T) l, rational(T) r );
+	int ?<=?( rational(T) l, rational(T) r );
+	int ?>?( rational(T) l, rational(T) r );
+	int ?>=?( rational(T) l, rational(T) r );
 
 	// arithmetic
 
-	Rational(T) +?( Rational(T) r );
-	Rational(T) -?( Rational(T) r );
-	Rational(T) ?+?( Rational(T) l, Rational(T) r );
-	Rational(T) ?+=?( Rational(T) & l, Rational(T) r );
-	Rational(T) ?+=?( Rational(T) & l, one_t );			// => ++?, ?++
-	Rational(T) ?-?( Rational(T) l, Rational(T) r );
-	Rational(T) ?-=?( Rational(T) & l, Rational(T) r );
-	Rational(T) ?-=?( Rational(T) & l, one_t );			// => --?, ?--
-	Rational(T) ?*?( Rational(T) l, Rational(T) r );
-	Rational(T) ?*=?( Rational(T) & l, Rational(T) r );
-	Rational(T) ?/?( Rational(T) l, Rational(T) r );
-	Rational(T) ?/=?( Rational(T) & l, Rational(T) r );
+	rational(T) +?( rational(T) r );
+	rational(T) -?( rational(T) r );
+	rational(T) ?+?( rational(T) l, rational(T) r );
+	rational(T) ?+=?( rational(T) & l, rational(T) r );
+	rational(T) ?+=?( rational(T) & l, one_t );			// => ++?, ?++
+	rational(T) ?-?( rational(T) l, rational(T) r );
+	rational(T) ?-=?( rational(T) & l, rational(T) r );
+	rational(T) ?-=?( rational(T) & l, one_t );			// => --?, ?--
+	rational(T) ?*?( rational(T) l, rational(T) r );
+	rational(T) ?*=?( rational(T) & l, rational(T) r );
+	rational(T) ?/?( rational(T) l, rational(T) r );
+	rational(T) ?/=?( rational(T) & l, rational(T) r );
 
 	// I/O
 	forall( istype & | istream( istype ) | { istype & ?|?( istype &, T & ); } )
-	istype & ?|?( istype &, Rational(T) & );
+	istype & ?|?( istype &, rational(T) & );
 
 	forall( ostype & | ostream( ostype ) | { ostype & ?|?( ostype &, T ); } ) {
-		ostype & ?|?( ostype &, Rational(T) );
-		void ?|?( ostype &, Rational(T) );
+		ostype & ?|?( ostype &, rational(T) );
+		void ?|?( ostype &, rational(T) );
 	} // distribution
 } // distribution
 
-forall( T | Arithmetic( T ) | { T ?\?( T, unsigned long ); } ) {
-	Rational(T) ?\?( Rational(T) x, long int y );
-	Rational(T) ?\=?( Rational(T) & x, long int y );
+forall( T | arithmetic( T ) | { T ?\?( T, unsigned long ); } ) {
+	rational(T) ?\?( rational(T) x, long int y );
+	rational(T) ?\=?( rational(T) & x, long int y );
 } // distribution
 
 // conversion
-forall( T | Arithmetic( T ) | { double convert( T ); } )
-double widen( Rational(T) r );
-forall( T | Arithmetic( T ) | { double convert( T );  T convert( double );} )
-Rational(T) narrow( double f, T md );
+forall( T | arithmetic( T ) | { double convert( T ); } )
+double widen( rational(T) r );
+forall( T | arithmetic( T ) | { double convert( T );  T convert( double );} )
+rational(T) narrow( double f, T md );
 
 // Local Variables: //
 // mode: c //

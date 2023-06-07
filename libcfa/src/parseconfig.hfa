@@ -106,16 +106,16 @@ bool parse( const char *, double & );
 // *********************************** validation ***********************************
 
 
-forall(T | Relational( T ))
+forall(T | relational( T ))
 [ bool ] is_nonnegative( & T );
 
-forall(T | Relational( T ))
+forall(T | relational( T ))
 [ bool ] is_positive( & T );
 
-forall(T | Relational( T ))
+forall(T | relational( T ))
 [ bool ] is_nonpositive( & T );
 
-forall(T | Relational( T ))
+forall(T | relational( T ))
 [ bool ] is_negative( & T );
 
 

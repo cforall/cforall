@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:54:28 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 25 18:09:58 2022
-// Update Count     : 194
+// Last Modified On : Mon Jun  5 22:49:06 2023
+// Update Count     : 196
 //
 
 #include "rational.hfa"
@@ -19,7 +19,7 @@
 
 #pragma GCC visibility push(default)
 
-forall( T | Arithmetic( T ) ) {
+forall( T | arithmetic( T ) ) {
 	// helper routines
 
 	// Calculate greatest common denominator of two numbers, the first of which may be negative. Used to reduce
@@ -38,162 +38,162 @@ forall( T | Arithmetic( T ) ) {
 		if ( d == (T){0} ) {
 			abort | "Invalid rational number construction: denominator cannot be equal to 0.";
 		} // exit
-		if ( d < (T){0} ) { d = -d; n = -n; } // move sign to numerator
+		if ( d < (T){0} ) { d = -d; n = -n; }			// move sign to numerator
 		return gcd( abs( n ), d );						// simplify
-	} // Rationalnumber::simplify
+	} // simplify
 
 	// constructors
 
-	void ?{}( Rational(T) & r, zero_t ) {
+	void ?{}( rational(T) & r, zero_t ) {
 		r{ (T){0}, (T){1} };
 	} // rational
 
-	void ?{}( Rational(T) & r, one_t ) {
+	void ?{}( rational(T) & r, one_t ) {
 		r{ (T){1}, (T){1} };
 	} // rational
 
-	void ?{}( Rational(T) & r ) {
+	void ?{}( rational(T) & r ) {
 		r{ (T){0}, (T){1} };
 	} // rational
 
-	void ?{}( Rational(T) & r, T n ) {
+	void ?{}( rational(T) & r, T n ) {
 		r{ n, (T){1} };
 	} // rational
 
-	void ?{}( Rational(T) & r, T n, T d ) {
-		T t = simplify( n, d );				// simplify
+	void ?{}( rational(T) & r, T n, T d ) {
+		T t = simplify( n, d );							// simplify
 		r.[numerator, denominator] = [n / t, d / t];
 	} // rational
 
 	// getter for numerator/denominator
 
-	T numerator( Rational(T) r ) {
+	T numerator( rational(T) r ) {
 		return r.numerator;
 	} // numerator
 
-	T denominator( Rational(T) r ) {
+	T denominator( rational(T) r ) {
 		return r.denominator;
 	} // denominator
 
-	[ T, T ] ?=?( & [ T, T ] dest, Rational(T) src ) {
+	[ T, T ] ?=?( & [ T, T ] dest, rational(T) src ) {
 		return dest = src.[ numerator, denominator ];
 	} // ?=?
 
 	// setter for numerator/denominator
 
-	T numerator( Rational(T) r, T n ) {
+	T numerator( rational(T) r, T n ) {
 		T prev = r.numerator;
-		T t = gcd( abs( n ), r.denominator ); // simplify
+		T t = gcd( abs( n ), r.denominator );			// simplify
 		r.[numerator, denominator] = [n / t, r.denominator / t];
 		return prev;
 	} // numerator
 
-	T denominator( Rational(T) r, T d ) {
+	T denominator( rational(T) r, T d ) {
 		T prev = r.denominator;
-		T t = simplify( r.numerator, d );	// simplify
+		T t = simplify( r.numerator, d );				// simplify
 		r.[numerator, denominator] = [r.numerator / t, d / t];
 		return prev;
 	} // denominator
 
 	// comparison
 
-	int ?==?( Rational(T) l, Rational(T) r ) {
+	int ?==?( rational(T) l, rational(T) r ) {
 		return l.numerator * r.denominator == l.denominator * r.numerator;
 	} // ?==?
 
-	int ?!=?( Rational(T) l, Rational(T) r ) {
+	int ?!=?( rational(T) l, rational(T) r ) {
 		return ! ( l == r );
 	} // ?!=?
 
-	int ?!=?( Rational(T) l, zero_t ) {
-		return ! ( l == (Rational(T)){ 0 } );
+	int ?!=?( rational(T) l, zero_t ) {
+		return ! ( l == (rational(T)){ 0 } );
 	} // ?!=?
 
-	int ?<?( Rational(T) l, Rational(T) r ) {
+	int ?<?( rational(T) l, rational(T) r ) {
 		return l.numerator * r.denominator < l.denominator * r.numerator;
 	} // ?<?
 
-	int ?<=?( Rational(T) l, Rational(T) r ) {
+	int ?<=?( rational(T) l, rational(T) r ) {
 		return l.numerator * r.denominator <= l.denominator * r.numerator;
 	} // ?<=?
 
-	int ?>?( Rational(T) l, Rational(T) r ) {
+	int ?>?( rational(T) l, rational(T) r ) {
 		return ! ( l <= r );
 	} // ?>?
 
-	int ?>=?( Rational(T) l, Rational(T) r ) {
+	int ?>=?( rational(T) l, rational(T) r ) {
 		return ! ( l < r );
 	} // ?>=?
 
 	// arithmetic
 
-	Rational(T) +?( Rational(T) r ) {
-		return (Rational(T)){ r.numerator, r.denominator };
+	rational(T) +?( rational(T) r ) {
+		return (rational(T)){ r.numerator, r.denominator };
 	} // +?
 
-	Rational(T) -?( Rational(T) r ) {
-		return (Rational(T)){ -r.numerator, r.denominator };
+	rational(T) -?( rational(T) r ) {
+		return (rational(T)){ -r.numerator, r.denominator };
 	} // -?
 
-	Rational(T) ?+?( Rational(T) l, Rational(T) r ) {
+	rational(T) ?+?( rational(T) l, rational(T) r ) {
 		if ( l.denominator == r.denominator ) {			// special case
-			return (Rational(T)){ l.numerator + r.numerator, l.denominator };
+			return (rational(T)){ l.numerator + r.numerator, l.denominator };
 		} else {
-			return (Rational(T)){ l.numerator * r.denominator + l.denominator * r.numerator, l.denominator * r.denominator };
+			return (rational(T)){ l.numerator * r.denominator + l.denominator * r.numerator, l.denominator * r.denominator };
 		} // if
 	} // ?+?
 
-	Rational(T) ?+=?( Rational(T) & l, Rational(T) r ) {
+	rational(T) ?+=?( rational(T) & l, rational(T) r ) {
 		l = l + r;
 		return l;
 	} // ?+?
 
-	Rational(T) ?+=?( Rational(T) & l, one_t ) {
-		l = l + (Rational(T)){ 1 };
+	rational(T) ?+=?( rational(T) & l, one_t ) {
+		l = l + (rational(T)){ 1 };
 		return l;
 	} // ?+?
 
-	Rational(T) ?-?( Rational(T) l, Rational(T) r ) {
+	rational(T) ?-?( rational(T) l, rational(T) r ) {
 		if ( l.denominator == r.denominator ) {			// special case
-			return (Rational(T)){ l.numerator - r.numerator, l.denominator };
+			return (rational(T)){ l.numerator - r.numerator, l.denominator };
 		} else {
-			return (Rational(T)){ l.numerator * r.denominator - l.denominator * r.numerator, l.denominator * r.denominator };
+			return (rational(T)){ l.numerator * r.denominator - l.denominator * r.numerator, l.denominator * r.denominator };
 		} // if
 	} // ?-?
 
-	Rational(T) ?-=?( Rational(T) & l, Rational(T) r ) {
+	rational(T) ?-=?( rational(T) & l, rational(T) r ) {
 		l = l - r;
 		return l;
 	} // ?-?
 
-	Rational(T) ?-=?( Rational(T) & l, one_t ) {
-		l = l - (Rational(T)){ 1 };
+	rational(T) ?-=?( rational(T) & l, one_t ) {
+		l = l - (rational(T)){ 1 };
 		return l;
 	} // ?-?
 
-	Rational(T) ?*?( Rational(T) l, Rational(T) r ) {
-		return (Rational(T)){ l.numerator * r.numerator, l.denominator * r.denominator };
+	rational(T) ?*?( rational(T) l, rational(T) r ) {
+		return (rational(T)){ l.numerator * r.numerator, l.denominator * r.denominator };
 	} // ?*?
 
-	Rational(T) ?*=?( Rational(T) & l, Rational(T) r ) {
+	rational(T) ?*=?( rational(T) & l, rational(T) r ) {
 		return l = l * r;
 	} // ?*?
 
-	Rational(T) ?/?( Rational(T) l, Rational(T) r ) {
+	rational(T) ?/?( rational(T) l, rational(T) r ) {
 		if ( r.numerator < (T){0} ) {
 			r.[numerator, denominator] = [-r.numerator, -r.denominator];
 		} // if
-		return (Rational(T)){ l.numerator * r.denominator, l.denominator * r.numerator };
+		return (rational(T)){ l.numerator * r.denominator, l.denominator * r.numerator };
 	} // ?/?
 
-	Rational(T) ?/=?( Rational(T) & l, Rational(T) r ) {
+	rational(T) ?/=?( rational(T) & l, rational(T) r ) {
 		return l = l / r;
 	} // ?/?
 
 	// I/O
 
 	forall( istype & | istream( istype ) | { istype & ?|?( istype &, T & ); } )
-	istype & ?|?( istype & is, Rational(T) & r ) {
+	istype & ?|?( istype & is, rational(T) & r ) {
 		is | r.numerator | r.denominator;
 		T t = simplify( r.numerator, r.denominator );
 		r.numerator /= t;
@@ -202,42 +202,42 @@ forall( T | Arithmetic( T ) ) {
 	} // ?|?
 
 	forall( ostype & | ostream( ostype ) | { ostype & ?|?( ostype &, T ); } ) {
-		ostype & ?|?( ostype & os, Rational(T) r ) {
+		ostype & ?|?( ostype & os, rational(T) r ) {
 			return os | r.numerator | '/' | r.denominator;
 		} // ?|?
 
-		void ?|?( ostype & os, Rational(T) r ) {
+		void ?|?( ostype & os, rational(T) r ) {
 			(ostype &)(os | r); ends( os );
 		} // ?|?
 	} // distribution
 } // distribution
 
-forall( T | Arithmetic( T ) | { T ?\?( T, unsigned long ); } ) {
-	Rational(T) ?\?( Rational(T) x, long int y ) {
+forall( T | arithmetic( T ) | { T ?\?( T, unsigned long ); } ) {
+	rational(T) ?\?( rational(T) x, long int y ) {
 		if ( y < 0 ) {
-			return (Rational(T)){ x.denominator \ -y, x.numerator \ -y };
+			return (rational(T)){ x.denominator \ -y, x.numerator \ -y };
 		} else {
-			return (Rational(T)){ x.numerator \ y, x.denominator \ y };
+			return (rational(T)){ x.numerator \ y, x.denominator \ y };
 		} // if
 	} // ?\?
 
-	Rational(T) ?\=?( Rational(T) & x, long int y ) {
+	rational(T) ?\=?( rational(T) & x, long int y ) {
 		return x = x \ y;
 	} // ?\?
 } // distribution
 
 // conversion
 
-forall( T | Arithmetic( T ) | { double convert( T ); } )
-double widen( Rational(T) r ) {
+forall( T | arithmetic( T ) | { double convert( T ); } )
+double widen( rational(T) r ) {
  	return convert( r.numerator ) / convert( r.denominator );
 } // widen
 
-forall( T | Arithmetic( T ) | { double convert( T ); T convert( double ); } )
-Rational(T) narrow( double f, T md ) {
+forall( T | arithmetic( T ) | { double convert( T ); T convert( double ); } )
+rational(T) narrow( double f, T md ) {
 	// http://www.ics.uci.edu/~eppstein/numth/frap.c
-	if ( md <= (T){1} ) {					// maximum fractional digits too small?
-		return (Rational(T)){ convert( f ), (T){1}}; // truncate fraction
+	if ( md <= (T){1} ) {								// maximum fractional digits too small?
+		return (rational(T)){ convert( f ), (T){1}};	// truncate fraction
 	} // if
 
 	// continued fraction coefficients
@@ -259,7 +259,7 @@ Rational(T) narrow( double f, T md ) {
 		f = 1 / (f - temp);
 	  if ( f > (double)0x7FFFFFFF ) break;				// representation failure
 	} // for
-	return (Rational(T)){ m00, m10 };
+	return (rational(T)){ m00, m10 };
 } // narrow
 
 // Local Variables: //

@@ -9,67 +9,67 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 16 15:40:52 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:36:56 2023
-// Update Count     : 20
+// Last Modified On : Tue Jun  6 07:59:17 2023
+// Update Count     : 24
 // 
 
 #pragma once
 
 forall( U )
-trait Not {
+trait not {
 	void ?{}( U &, zero_t );
 	int !?( U );
-}; // Not
+}; // not
 
-forall( T | Not( T ) )
-trait Equality {
+forall( T | not( T ) )
+trait equality {
 	int ?==?( T, T );
 	int ?!=?( T, T );
-}; // Equality
+}; // equality
 
-forall( U | Equality( U ) )
-trait Relational {
+forall( U | equality( U ) )
+trait relational {
 	int ?<?( U, U );
 	int ?<=?( U, U );
 	int ?>?( U, U );
 	int ?>=?( U, U );
-}; // Relational
+}; // relational
 
 forall ( T )
-trait Signed {
+trait Signed {	// must be capitalized, conflict with keyword signed
 	T +?( T );
 	T -?( T );
 	T abs( T );
 }; // Signed
 
 forall( U | Signed( U ) )
-trait Additive {
+trait additive {
 	U ?+?( U, U );
 	U ?-?( U, U );
 	U ?+=?( U &, U );
 	U ?-=?( U &, U );
-}; // Additive
+}; // additive
 
-forall( T | Additive( T ) )
-trait Incdec {
+forall( T | additive( T ) )
+trait inc_dec {
 	void ?{}( T &, one_t );
 	// T ?++( T & );
 	// T ++?( T & );
 	// T ?--( T & );
 	// T --?( T & );
-}; // Incdec
+}; // inc_dec
 
-forall( U | Incdec( U ) )
-trait Multiplicative {
+forall( U | inc_dec( U ) )
+trait multiplicative {
 	U ?*?( U, U );
 	U ?/?( U, U );
 	U ?%?( U, U );
 	U ?/=?( U &, U );
-}; // Multiplicative
+}; // multiplicative
 
-forall( T | Relational( T ) | Multiplicative( T ) )
-trait Arithmetic {
-}; // Arithmetic
+forall( T | relational( T ) | multiplicative( T ) )
+trait arithmetic {
+}; // arithmetic
 
 // Local Variables: //
 // mode: c //

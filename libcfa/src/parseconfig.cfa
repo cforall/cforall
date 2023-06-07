@@ -202,25 +202,25 @@ static [ bool ] comments( & ifstream in, [] char name ) {
 // *********************************** validation ***********************************
 
 
-forall(T | Relational( T ))
+forall(T | relational( T ))
 [ bool ] is_nonnegative( & T value ) {
 	T zero_val = 0;
 	return value >= zero_val;
 }
 
-forall(T | Relational( T ))
+forall(T | relational( T ))
 [ bool ] is_positive( & T value ) {
 	T zero_val = 0;
 	return value > zero_val;
 }
 
-forall(T | Relational( T ))
+forall(T | relational( T ))
 [ bool ] is_nonpositive( & T value ) {
 	T zero_val = 0;
 	return value <= zero_val;
 }
 
-forall(T | Relational( T ))
+forall(T | relational( T ))
 [ bool ] is_negative( & T value ) {
 	T zero_val = 0;
 	return value < zero_val;
