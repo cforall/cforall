@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 26 16:45:37 2023
-// Update Count     : 6330
+// Last Modified On : Tue Jun  6 22:37:59 2023
+// Update Count     : 6340
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -107,11 +107,11 @@ DeclarationNode * distAttr( DeclarationNode * typeSpec, DeclarationNode * declLi
 	// distribute declaration_specifier across all declared variables, e.g., static, const, but not __attribute__.
 	assert( declList );
 	// printf( "distAttr1 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout );
-	DeclarationNode * cur = declList, * cl = (new DeclarationNode)->addType( typeSpec );
+	DeclarationNode * cl = (new DeclarationNode)->addType( typeSpec );
 	// printf( "distAttr2 cl %p\n", cl ); cl->type->print( std::cout );
 	// cl->type->aggregate.name = cl->type->aggInst.aggregate->aggregate.name;
 
-	for ( cur = dynamic_cast<DeclarationNode *>( cur->get_next() ); cur != nullptr; cur = dynamic_cast<DeclarationNode *>( cur->get_next() ) ) {
+	for ( DeclarationNode * cur = dynamic_cast<DeclarationNode *>( declList->get_next() ); cur != nullptr; cur = dynamic_cast<DeclarationNode *>( cur->get_next() ) ) {
 		cl->cloneBaseType( cur );
 	} // for
 	declList->addType( cl );
@@ -205,9 +205,9 @@ DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * field
 #define NEW_ZERO new ExpressionNode( build_constantInteger( yylloc, *new string( "0" ) ) )
 #define NEW_ONE  new ExpressionNode( build_constantInteger( yylloc, *new string( "1" ) ) )
 #define UPDOWN( compop, left, right ) (compop == OperKinds::LThan || compop == OperKinds::LEThan ? left : right)
-#define MISSING_ANON_FIELD "Missing loop fields with an anonymous loop index is meaningless as loop index is unavailable in loop body."
-#define MISSING_LOW "Missing low value for up-to range so index is uninitialized."
-#define MISSING_HIGH "Missing high value for down-to range so index is uninitialized."
+#define MISSING_ANON_FIELD "syntax error, missing loop fields with an anonymous loop index is meaningless as loop index is unavailable in loop body."
+#define MISSING_LOW "syntax error, missing low value for up-to range so index is uninitialized."
+#define MISSING_HIGH "syntax error, missing high value for down-to range so index is uninitialized."
 
 static ForCtrl * makeForCtrl(
 		const CodeLocation & location,
@@ -231,10 +231,10 @@ static ForCtrl * makeForCtrl(
 
 ForCtrl * forCtrl( const CodeLocation & location, DeclarationNode * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	if ( index->initializer ) {
-		SemanticError( yylloc, "Direct initialization disallowed. Use instead: type var; initialization ~ comparison ~ increment." );
+		SemanticError( yylloc, "syntax error, direct initialization disallowed. Use instead: type var; initialization ~ comparison ~ increment." );
 	} // if
 	if ( index->next ) {
-		SemanticError( yylloc, "Multiple loop indexes disallowed in for-loop declaration." );
+		SemanticError( yylloc, "syntax error, multiple loop indexes disallowed in for-loop declaration." );
 	} // if
 	DeclarationNode * initDecl = index->addInitializer( new InitializerNode( start ) );
 	return makeForCtrl( location, initDecl, compop, comp, inc );
@@ -259,20 +259,20 @@ ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, Express
 		if ( auto identifier = commaExpr->arg1.as<ast::NameExpr>() ) {
 			return forCtrl( location, type, new string( identifier->name ), start, compop, comp, inc );
 		} else {
-			SemanticError( yylloc, "Expression disallowed. Only loop-index name allowed." ); return nullptr;
+			SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed." ); return nullptr;
 		} // if
 	} else {
-		SemanticError( yylloc, "Expression disallowed. Only loop-index name allowed." ); return nullptr;
+		SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed. ." ); return nullptr;
 	} // if
 } // forCtrl
 
 static void IdentifierBeforeIdentifier( string & identifier1, string & identifier2, const char * kind ) {
-	SemanticError( yylloc, ::toString( "Adjacent identifiers \"", identifier1, "\" and \"", identifier2, "\" are not meaningful in a", kind, ".\n"
+	SemanticError( yylloc, ::toString( "syntax error, adjacent identifiers \"", identifier1, "\" and \"", identifier2, "\" are not meaningful in a", kind, ".\n"
 				   "Possible cause is misspelled type name or missing generic parameter." ) );
 } // IdentifierBeforeIdentifier
 
 static void IdentifierBeforeType( string & identifier, const char * kind ) {
-	SemanticError( yylloc, ::toString( "Identifier \"", identifier, "\" cannot appear before a ", kind, ".\n"
+	SemanticError( yylloc, ::toString( "syntax error, identifier \"", identifier, "\" cannot appear before a ", kind, ".\n"
 				   "Possible cause is misspelled storage/CV qualifier, misspelled typename, or missing generic parameter." ) );
 } // IdentifierBeforeType
 
@@ -1153,7 +1153,7 @@ labeled_statement:
 		{ $$ = $4->add_label( yylloc, $1, $3 ); }
 	| identifier_or_type_name ':' attribute_list_opt error // syntax error
 		{
-			SemanticError( yylloc, ::toString( "Label \"", *$1.str, "\" must be associated with a statement, "
+			SemanticError( yylloc, ::toString( "syntx error, label \"", *$1.str, "\" must be associated with a statement, "
 											   "where a declaration, case, or default is not a statement. "
 											   "Move the label or terminate with a semi-colon." ) );
 			$$ = nullptr;
@@ -1193,7 +1193,7 @@ statement_list_nodecl:
 	| statement_list_nodecl statement
 		{ assert( $1 ); $1->set_last( $2 ); $$ = $1; }
 	| statement_list_nodecl error						// syntax error
-		{ SemanticError( yylloc, "Declarations only allowed at the start of the switch body, i.e., after the '{'." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, declarations only allowed at the start of the switch body, i.e., after the '{'." ); $$ = nullptr; }
 	;
 
 expression_statement:
@@ -1219,7 +1219,7 @@ selection_statement:
 			$$ = $7 ? new StatementNode( build_compound( yylloc, (StatementNode *)((new StatementNode( $7 ))->set_last( sw )) ) ) : sw;
 		}
 	| SWITCH '(' comma_expression ')' '{' error '}'		// CFA, syntax error
-		{ SemanticError( yylloc, "Only declarations can appear before the list of case clauses." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "synatx error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
 	| CHOOSE '(' comma_expression ')' case_clause		// CFA
 		{ $$ = new StatementNode( build_switch( yylloc, false, $3, $5 ) ); }
 	| CHOOSE '(' comma_expression ')' '{' push declaration_list_opt switch_clause_list_opt pop '}' // CFA
@@ -1228,7 +1228,7 @@ selection_statement:
 			$$ = $7 ? new StatementNode( build_compound( yylloc, (StatementNode *)((new StatementNode( $7 ))->set_last( sw )) ) ) : sw;
 		}
 	| CHOOSE '(' comma_expression ')' '{' error '}'		// CFA, syntax error
-		{ SemanticError( yylloc, "Only declarations can appear before the list of case clauses." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
 	;
 
 if_statement:
@@ -1268,14 +1268,14 @@ case_value_list:										// CFA
 
 case_label:												// CFA
 	CASE error											// syntax error
-		{ SemanticError( yylloc, "Missing case list after case." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, case list missing after case." ); $$ = nullptr; }
 	| CASE case_value_list ':'					{ $$ = $2; }
 	| CASE case_value_list error						// syntax error
-		{ SemanticError( yylloc, "Missing colon after case list." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, colon missing after case list." ); $$ = nullptr; }
 	| DEFAULT ':'								{ $$ = new ClauseNode( build_default( yylloc ) ); }
 		// A semantic check is required to ensure only one default clause per switch/choose statement.
 	| DEFAULT error										//  syntax error
-		{ SemanticError( yylloc, "Missing colon after default." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, colon missing after default." ); $$ = nullptr; }
 	;
 
 case_label_list:										// CFA
@@ -1430,11 +1430,11 @@ for_control_expression:
 	| comma_expression ';' comma_expression updowneq '@' // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, NEW_ONE );
 		}
 	| comma_expression ';' '@' updowneq '@'				// CFA, error
-		{ SemanticError( yylloc, "Missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
 	| comma_expression ';' comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), $7 ); }
@@ -1446,7 +1446,7 @@ for_control_expression:
 	| comma_expression ';' comma_expression updowneq '@' '~' comma_expression // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, $7 );
 		}
 	| comma_expression ';' comma_expression updowneq comma_expression '~' '@' // CFA
@@ -1459,11 +1459,11 @@ for_control_expression:
 	| comma_expression ';' comma_expression updowneq '@' '~' '@' // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, nullptr );
 		}
 	| comma_expression ';' '@' updowneq '@' '~' '@' // CFA
-		{ SemanticError( yylloc, "Missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
 	| declaration comma_expression						// CFA
 		{ $$ = forCtrl( yylloc, $1, NEW_ZERO, OperKinds::LThan, $2, NEW_ONE ); }
@@ -1480,7 +1480,7 @@ for_control_expression:
 	| declaration comma_expression updowneq '@'			// CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, NEW_ONE );
 		}
 
@@ -1494,7 +1494,7 @@ for_control_expression:
 	| declaration comma_expression updowneq '@' '~' comma_expression // CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, $6 );
 		}
 	| declaration comma_expression updowneq comma_expression '~' '@' // CFA
@@ -1507,11 +1507,11 @@ for_control_expression:
 	| declaration comma_expression updowneq '@' '~' '@'	// CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "Equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, nullptr );
 		}
 	| declaration '@' updowneq '@' '~' '@'				// CFA, error
-		{ SemanticError( yylloc, "Missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
 	| comma_expression ';' TYPEDEFname					// CFA, array type
 		{
@@ -1520,7 +1520,9 @@ for_control_expression:
 		}
 	| comma_expression ';' downupdowneq TYPEDEFname		// CFA, array type
 		{
-			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, "All enumation ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr; }
+			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) {
+				SemanticError( yylloc, "All enumeration ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr;
+			}
 			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
 		}
 	;
@@ -1615,7 +1617,7 @@ with_statement:
 mutex_statement:
 	MUTEX '(' argument_expression_list_opt ')' statement
 		{
-			if ( ! $3 ) { SemanticError( yylloc, "mutex argument list cannot be empty." ); $$ = nullptr; }
+			if ( ! $3 ) { SemanticError( yylloc, "syntax error, mutex argument list cannot be empty." ); $$ = nullptr; }
 			$$ = new StatementNode( build_mutex( yylloc, $3, $5 ) );
 		}
 	;
@@ -1664,7 +1666,7 @@ wor_waitfor_clause:
 		{ $$ = build_waitfor_timeout( yylloc, $1, $3, $4, maybe_build_compound( yylloc, $5 ) ); }
 	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
 	| wor_waitfor_clause wor when_clause_opt timeout statement wor ELSE statement // syntax error
-		{ SemanticError( yylloc, "else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
 	| wor_waitfor_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
 		{ $$ = build_waitfor_else( yylloc, build_waitfor_timeout( yylloc, $1, $3, $4, maybe_build_compound( yylloc, $5 ) ), $7, maybe_build_compound( yylloc, $9 ) ); }
 	;
@@ -1709,7 +1711,7 @@ wor_waituntil_clause:
 		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::LEFT_OR, $1, build_waituntil_timeout( yylloc, $3, $4, maybe_build_compound( yylloc, $5 ) ) ); }
 	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
 	| wor_waituntil_clause wor when_clause_opt timeout statement wor ELSE statement // syntax error
-		{ SemanticError( yylloc, "else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
 	| wor_waituntil_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
 		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::LEFT_OR, $1,
                 new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::OR, 
@@ -2064,11 +2066,11 @@ c_declaration:
 		{
 			assert( $1->type );
 			if ( $1->type->qualifiers.any() ) {			// CV qualifiers ?
-				SemanticError( yylloc, "Useless type qualifier(s) in empty declaration." ); $$ = nullptr;
+				SemanticError( yylloc, "syntax error, useless type qualifier(s) in empty declaration." ); $$ = nullptr;
 			}
 			// enums are never empty declarations because there must have at least one enumeration.
 			if ( $1->type->kind == TypeData::AggregateInst && $1->storageClasses.any() ) { // storage class ?
-				SemanticError( yylloc, "Useless storage qualifier(s) in empty aggregate declaration." ); $$ = nullptr;
+				SemanticError( yylloc, "syntax error, useless storage qualifier(s) in empty aggregate declaration." ); $$ = nullptr;
 			}
 		}
 	;
@@ -2101,9 +2103,9 @@ declaration_specifier:									// type specifier + storage class
 	| sue_declaration_specifier
 	| sue_declaration_specifier invalid_types
 		{
-			SemanticError( yylloc, ::toString( "Missing ';' after end of ",
+			SemanticError( yylloc, ::toString( "syntax error, expecting ';' at end of ",
 				$1->type->enumeration.name ? "enum" : ast::AggregateDecl::aggrString( $1->type->aggregate.kind ),
-				" declaration" ) );
+				" declaration." ) );
 			$$ = nullptr;
 		}
 	;
@@ -2583,6 +2585,11 @@ field_declaration:
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
+	| type_specifier field_declaring_list_opt '}'
+		{
+			SemanticError( yylloc, ::toString( "syntax error, expecting ';' at end of previous declaration." ) );
+			$$ = nullptr;
+		}
 	| EXTENSION type_specifier field_declaring_list_opt ';'	// GCC
 		{ $$ = fieldDecl( $2, $3 ); distExt( $$ ); }
 	| STATIC type_specifier field_declaring_list_opt ';' // CFA
@@ -2681,9 +2688,9 @@ enum_type:
 		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false, nullptr, $4 )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
-			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.any() )
-			{ SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
-
+			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.any() ) {
+				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
+			}
 			$$ = DeclarationNode::newEnum( nullptr, $7, true, true, $3 )->addQualifiers( $5 );
 		}
 	| ENUM '(' ')' attribute_list_opt '{' enumerator_list comma_opt '}'
@@ -2692,7 +2699,9 @@ enum_type:
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
-			if ( $3->storageClasses.any() || $3->type->qualifiers.val != 0 ) { SemanticError( yylloc, "storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." ); }
+			if ( $3->storageClasses.any() || $3->type->qualifiers.val != 0 ) {
+				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
+			}
 			typedefTable.makeTypedef( *$6 );
 		}
 	  hide_opt '{' enumerator_list comma_opt '}'
@@ -3208,7 +3217,9 @@ external_definition:
 	// global distribution
 	| type_qualifier_list
 		{
-			if ( $1->type->qualifiers.any() ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
+			if ( $1->type->qualifiers.any() ) {
+				SemanticError( yylloc, "syntax error, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
+			}
 			if ( $1->type->forall ) forall = true;		// remember generic type
 		}
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
@@ -3219,7 +3230,9 @@ external_definition:
 		}
 	| declaration_qualifier_list
 		{
-			if ( $1->type && $1->type->qualifiers.any() ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
+			if ( $1->type && $1->type->qualifiers.any() ) {
+				SemanticError( yylloc, "syntax error, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
+			}
 			if ( $1->type && $1->type->forall ) forall = true; // remember generic type
 		}
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
@@ -3230,7 +3243,9 @@ external_definition:
 		}
 	| declaration_qualifier_list type_qualifier_list
 		{
-			if ( ($1->type && $1->type->qualifiers.any()) || ($2->type && $2->type->qualifiers.any()) ) { SemanticError( yylloc, "CV qualifiers cannot be distributed; only storage-class and forall qualifiers." ); }
+			if ( ($1->type && $1->type->qualifiers.any()) || ($2->type && $2->type->qualifiers.any()) ) {
+				SemanticError( yylloc, "syntax error, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
+			}
 			if ( ($1->type && $1->type->forall) || ($2->type && $2->type->forall) ) forall = true; // remember generic type
 		}
 	  '{' up external_definition_list_opt down '}'		// CFA, namespace
@@ -3261,7 +3276,7 @@ with_clause_opt:
 		{
 			$$ = $3; forall = false;
 			if ( $5 ) {
-				SemanticError( yylloc, "Attributes cannot be associated with function body. Move attribute(s) before \"with\" clause." );
+				SemanticError( yylloc, "syntax error, attributes cannot be associated with function body. Move attribute(s) before \"with\" clause." );
 				$$ = nullptr;
 			} // if
 		}
