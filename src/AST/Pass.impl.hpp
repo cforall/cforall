@@ -760,20 +760,18 @@ const ast::CompoundStmt * ast::Pass< core_t >::visit( const ast::CompoundStmt * 
 	VISIT_START( node );
 
 	if ( __visit_children() ) {
-		// Do not enter (or leave) a new scope if atFunctionTop. Remember to save the result.
-		auto guard1 = makeFuncGuard( [this, enterScope = !this->atFunctionTop]() {
-			if ( enterScope ) {
-				__pass::symtab::enter(core, 0);
-			}
-		}, [this, leaveScope = !this->atFunctionTop]() {
-			if ( leaveScope ) {
-				__pass::symtab::leave(core, 0);
-			}
-		});
-		ValueGuard< bool > guard2( atFunctionTop );
-		atFunctionTop = false;
-		guard_scope guard3 { *this };
-		maybe_accept( node, &CompoundStmt::kids );
+		// Do not enter (or leave) a new symbol table scope if atFunctionTop.
+		// But always enter (and leave) a new general scope.
+		if ( atFunctionTop ) {
+			ValueGuard< bool > guard1( atFunctionTop );
+			atFunctionTop = false;
+			guard_scope guard2( *this );
+			maybe_accept( node, &CompoundStmt::kids );
+		} else {
+			guard_symtab guard1( *this );
+			guard_scope guard2( *this );
+			maybe_accept( node, &CompoundStmt::kids );
+		}
 	}
 
 	VISIT_END( CompoundStmt, node );

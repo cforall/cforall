@@ -1016,9 +1016,9 @@ namespace ResolvExpr {
 
 		void postvisit( const ast::TraitInstType * ) {}
 
-		void postvisit( const ast::TypeInstType * inst ) {}
+		void postvisit( const ast::TypeInstType * ) {}
 
-		void postvisit( const ast::TupleType * tuple) {
+		void postvisit( const ast::TupleType * tuple ) {
 			tryResolveWithTypedEnum( tuple );
 		}
 

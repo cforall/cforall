@@ -1105,7 +1105,7 @@ namespace ResolvExpr {
 		}
 
 		/// Removes cast to type of argument (unlike StripCasts, also handles non-generated casts)
-		void removeExtraneousCast( ast::ptr<ast::Expr> & expr, const ast::SymbolTable & symtab ) {
+		void removeExtraneousCast( ast::ptr<ast::Expr> & expr ) {
 			if ( const ast::CastExpr * castExpr = expr.as< ast::CastExpr >() ) {
 				if ( typesCompatible( castExpr->arg->result, castExpr->result ) ) {
 					// cast is to the same type as its argument, remove it
@@ -1195,7 +1195,7 @@ namespace ResolvExpr {
 		assert( untyped && type );
 		ast::ptr< ast::Expr > castExpr = new ast::CastExpr{ untyped, type };
 		ast::ptr< ast::Expr > newExpr = findSingleExpression( castExpr, context );
-		removeExtraneousCast( newExpr, context.symtab );
+		removeExtraneousCast( newExpr );
 		return newExpr;
 	}
 
@@ -2040,7 +2040,7 @@ namespace ResolvExpr {
 		// due to conversions)
 		const ast::Type * initContext = currentObject.getCurrentType();
 
-		removeExtraneousCast( newExpr, symtab );
+		removeExtraneousCast( newExpr );
 
 		// check if actual object's type is char[]
 		if ( auto at = dynamic_cast< const ast::ArrayType * >( initContext ) ) {
