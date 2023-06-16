@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun  6 22:37:59 2023
-// Update Count     : 6340
+// Last Modified On : Wed Jun  7 14:32:28 2023
+// Update Count     : 6341
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -688,17 +688,17 @@ primary_expression:
 	//   	{ SemanticError( yylloc, "Resume expression is currently unimplemented." ); $$ = nullptr; }
 	// | RESUME '(' comma_expression ')' compound_statement
 	//   	{ SemanticError( yylloc, "Resume expression is currently unimplemented." ); $$ = nullptr; }
-	| IDENTIFIER IDENTIFIER								// syntax error
+	| IDENTIFIER IDENTIFIER								// invalid syntax rules
 		{ IdentifierBeforeIdentifier( *$1.str, *$2.str, "n expression" ); $$ = nullptr; }
-	| IDENTIFIER type_qualifier							// syntax error
+	| IDENTIFIER type_qualifier							// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "type qualifier" ); $$ = nullptr; }
-	| IDENTIFIER storage_class							// syntax error
+	| IDENTIFIER storage_class							// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "storage class" ); $$ = nullptr; }
-	| IDENTIFIER basic_type_name						// syntax error
+	| IDENTIFIER basic_type_name						// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
-	| IDENTIFIER TYPEDEFname							// syntax error
+	| IDENTIFIER TYPEDEFname							// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
-	| IDENTIFIER TYPEGENname							// syntax error
+	| IDENTIFIER TYPEGENname							// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
 	;
 
@@ -1151,7 +1151,7 @@ labeled_statement:
 		// labels cannot be identifiers 0 or 1
 	identifier_or_type_name ':' attribute_list_opt statement
 		{ $$ = $4->add_label( yylloc, $1, $3 ); }
-	| identifier_or_type_name ':' attribute_list_opt error // syntax error
+	| identifier_or_type_name ':' attribute_list_opt error // invalid syntax rule
 		{
 			SemanticError( yylloc, ::toString( "syntx error, label \"", *$1.str, "\" must be associated with a statement, "
 											   "where a declaration, case, or default is not a statement. "
@@ -1192,7 +1192,7 @@ statement_list_nodecl:
 	statement
 	| statement_list_nodecl statement
 		{ assert( $1 ); $1->set_last( $2 ); $$ = $1; }
-	| statement_list_nodecl error						// syntax error
+	| statement_list_nodecl error						// invalid syntax rule
 		{ SemanticError( yylloc, "syntax error, declarations only allowed at the start of the switch body, i.e., after the '{'." ); $$ = nullptr; }
 	;
 
@@ -1218,7 +1218,7 @@ selection_statement:
 			// statement.
 			$$ = $7 ? new StatementNode( build_compound( yylloc, (StatementNode *)((new StatementNode( $7 ))->set_last( sw )) ) ) : sw;
 		}
-	| SWITCH '(' comma_expression ')' '{' error '}'		// CFA, syntax error
+	| SWITCH '(' comma_expression ')' '{' error '}'		// CFA, invalid syntax rule error
 		{ SemanticError( yylloc, "synatx error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
 	| CHOOSE '(' comma_expression ')' case_clause		// CFA
 		{ $$ = new StatementNode( build_switch( yylloc, false, $3, $5 ) ); }
@@ -1227,7 +1227,7 @@ selection_statement:
 			StatementNode *sw = new StatementNode( build_switch( yylloc, false, $3, $8 ) );
 			$$ = $7 ? new StatementNode( build_compound( yylloc, (StatementNode *)((new StatementNode( $7 ))->set_last( sw )) ) ) : sw;
 		}
-	| CHOOSE '(' comma_expression ')' '{' error '}'		// CFA, syntax error
+	| CHOOSE '(' comma_expression ')' '{' error '}'		// CFA, invalid syntax rule
 		{ SemanticError( yylloc, "syntax error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
 	;
 
@@ -1267,14 +1267,14 @@ case_value_list:										// CFA
 	;
 
 case_label:												// CFA
-	CASE error											// syntax error
+	CASE error											// invalid syntax rule
 		{ SemanticError( yylloc, "syntax error, case list missing after case." ); $$ = nullptr; }
 	| CASE case_value_list ':'					{ $$ = $2; }
-	| CASE case_value_list error						// syntax error
+	| CASE case_value_list error						// invalid syntax rule
 		{ SemanticError( yylloc, "syntax error, colon missing after case list." ); $$ = nullptr; }
 	| DEFAULT ':'								{ $$ = new ClauseNode( build_default( yylloc ) ); }
 		// A semantic check is required to ensure only one default clause per switch/choose statement.
-	| DEFAULT error										//  syntax error
+	| DEFAULT error										//  invalid syntax rules
 		{ SemanticError( yylloc, "syntax error, colon missing after default." ); $$ = nullptr; }
 	;
 
@@ -1404,15 +1404,15 @@ for_control_expression:
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
 			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 		}
-	| comma_expression updowneq comma_expression '~' '@' // CFA, error
+	| comma_expression updowneq comma_expression '~' '@' // CFA, invalid syntax rules
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-	| '@' updowneq '@'									// CFA, error
+	| '@' updowneq '@'									// CFA, invalid syntax rules
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-	| '@' updowneq comma_expression '~' '@'				// CFA, error
+	| '@' updowneq comma_expression '~' '@'				// CFA, invalid syntax rules
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-	| comma_expression updowneq '@' '~' '@'				// CFA, error
+	| comma_expression updowneq '@' '~' '@'				// CFA, invalid syntax rules
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-	| '@' updowneq '@' '~' '@'							// CFA, error
+	| '@' updowneq '@' '~' '@'							// CFA, invalid syntax rules
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
 
 	| comma_expression ';' comma_expression				// CFA
@@ -1433,12 +1433,12 @@ for_control_expression:
 			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, NEW_ONE );
 		}
-	| comma_expression ';' '@' updowneq '@'				// CFA, error
+	| comma_expression ';' '@' updowneq '@'				// CFA, invalid syntax rules
 		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
 	| comma_expression ';' comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), $7 ); }
-	| comma_expression ';' '@' updowneq comma_expression '~' comma_expression // CFA, error
+	| comma_expression ';' '@' updowneq comma_expression '~' comma_expression // CFA, invalid syntax rules
 		{
 			if ( $4 == OperKinds::LThan || $4 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $5, $1, $5->clone(), $4, nullptr, $7 );
@@ -1451,7 +1451,7 @@ for_control_expression:
 		}
 	| comma_expression ';' comma_expression updowneq comma_expression '~' '@' // CFA
 		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), nullptr ); }
-	| comma_expression ';' '@' updowneq comma_expression '~' '@' // CFA, error
+	| comma_expression ';' '@' updowneq comma_expression '~' '@' // CFA, invalid syntax rules
 		{
 			if ( $4 == OperKinds::LThan || $4 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $5, $1, $5->clone(), $4, nullptr, nullptr );
@@ -1510,7 +1510,7 @@ for_control_expression:
 			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, nullptr );
 		}
-	| declaration '@' updowneq '@' '~' '@'				// CFA, error
+	| declaration '@' updowneq '@' '~' '@'				// CFA, invalid syntax rules
 		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
 	| comma_expression ';' TYPEDEFname					// CFA, array type
@@ -1521,7 +1521,7 @@ for_control_expression:
 	| comma_expression ';' downupdowneq TYPEDEFname		// CFA, array type
 		{
 			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) {
-				SemanticError( yylloc, "All enumeration ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr;
+				SemanticError( yylloc, "syntax error, all enumeration ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr;
 			}
 			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
 		}
@@ -1665,7 +1665,7 @@ wor_waitfor_clause:
 	| wor_waitfor_clause wor when_clause_opt timeout statement	%prec THEN
 		{ $$ = build_waitfor_timeout( yylloc, $1, $3, $4, maybe_build_compound( yylloc, $5 ) ); }
 	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
-	| wor_waitfor_clause wor when_clause_opt timeout statement wor ELSE statement // syntax error
+	| wor_waitfor_clause wor when_clause_opt timeout statement wor ELSE statement // invalid syntax rules
 		{ SemanticError( yylloc, "syntax error, else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
 	| wor_waitfor_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
 		{ $$ = build_waitfor_else( yylloc, build_waitfor_timeout( yylloc, $1, $3, $4, maybe_build_compound( yylloc, $5 ) ), $7, maybe_build_compound( yylloc, $9 ) ); }
@@ -1710,7 +1710,7 @@ wor_waituntil_clause:
 	| wor_waituntil_clause wor when_clause_opt timeout statement	%prec THEN
 		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::LEFT_OR, $1, build_waituntil_timeout( yylloc, $3, $4, maybe_build_compound( yylloc, $5 ) ) ); }
 	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
-	| wor_waituntil_clause wor when_clause_opt timeout statement wor ELSE statement // syntax error
+	| wor_waituntil_clause wor when_clause_opt timeout statement wor ELSE statement // invalid syntax rules
 		{ SemanticError( yylloc, "syntax error, else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
 	| wor_waituntil_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
 		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::LEFT_OR, $1,
@@ -2101,7 +2101,7 @@ declaration_specifier:									// type specifier + storage class
 	basic_declaration_specifier
 	| type_declaration_specifier
 	| sue_declaration_specifier
-	| sue_declaration_specifier invalid_types
+	| sue_declaration_specifier invalid_types			// invalid syntax rule
 		{
 			SemanticError( yylloc, ::toString( "syntax error, expecting ';' at end of ",
 				$1->type->enumeration.name ? "enum" : ast::AggregateDecl::aggrString( $1->type->aggregate.kind ),
@@ -2585,7 +2585,7 @@ field_declaration:
 			//   printf( "\tattr %s\n", attr->name.c_str() );
 			// } // for
 		}
-	| type_specifier field_declaring_list_opt '}'
+	| type_specifier field_declaring_list_opt '}'		// invalid syntax rule
 		{
 			SemanticError( yylloc, ::toString( "syntax error, expecting ';' at end of previous declaration." ) );
 			$$ = nullptr;
@@ -3174,15 +3174,15 @@ external_definition:
 		}
 	| IDENTIFIER IDENTIFIER
 		{ IdentifierBeforeIdentifier( *$1.str, *$2.str, " declaration" ); $$ = nullptr; }
-	| IDENTIFIER type_qualifier							// syntax error
+	| IDENTIFIER type_qualifier							// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "type qualifier" ); $$ = nullptr; }
-	| IDENTIFIER storage_class							// syntax error
+	| IDENTIFIER storage_class							// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "storage class" ); $$ = nullptr; }
-	| IDENTIFIER basic_type_name						// syntax error
+	| IDENTIFIER basic_type_name						// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
-	| IDENTIFIER TYPEDEFname							// syntax error
+	| IDENTIFIER TYPEDEFname							// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
-	| IDENTIFIER TYPEGENname							// syntax error
+	| IDENTIFIER TYPEGENname							// invalid syntax rules
 		{ IdentifierBeforeType( *$1.str, "type" ); $$ = nullptr; }
 	| external_function_definition
 	| EXTENSION external_definition						// GCC, multiple __extension__ allowed, meaning unknown

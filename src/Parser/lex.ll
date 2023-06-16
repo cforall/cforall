@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Tue May  2 08:45:21 2023
- * Update Count     : 769
+ * Last Modified On : Fri Jun  9 10:04:00 2023
+ * Update Count     : 770
  */
 
 %option yylineno
@@ -318,6 +318,7 @@ __signed__		{ KEYWORD_RETURN(SIGNED); }				// GCC
 sizeof			{ KEYWORD_RETURN(SIZEOF); }
 static			{ KEYWORD_RETURN(STATIC); }
 _Static_assert	{ KEYWORD_RETURN(STATICASSERT); }		// C11
+_static_assert	{ KEYWORD_RETURN(STATICASSERT); }		// C23
 struct			{ KEYWORD_RETURN(STRUCT); }
 suspend			{ KEYWORD_RETURN(SUSPEND); }			// CFA
 switch			{ KEYWORD_RETURN(SWITCH); }

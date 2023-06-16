@@ -17,23 +17,28 @@
 
 #include <unordered_map>
 
-#include "Node.hpp"
-
 namespace ast {
 	class DeclWithType;
-	class TypeDecl;
 	class Expr;
+	class Node;
+	class TypeDecl;
+}
 
-	namespace DeclReplacer {
-		using DeclMap = std::unordered_map< const DeclWithType *, const DeclWithType * >;
-		using TypeMap = std::unordered_map< const TypeDecl *, const TypeDecl * >;
-		using ExprMap = std::unordered_map< const DeclWithType *, const Expr * >;
+namespace ast {
 
-		const Node * replace( const Node * node, const DeclMap & declMap, bool debug = false );
-		const Node * replace( const Node * node, const TypeMap & typeMap, bool debug = false );
-		const Node * replace( const Node * node, const DeclMap & declMap, const TypeMap & typeMap, bool debug = false );
-		const Node * replace( const Node * node, const ExprMap & exprMap);
-	}
+namespace DeclReplacer {
+
+using DeclMap = std::unordered_map< const DeclWithType *, const DeclWithType * >;
+using TypeMap = std::unordered_map< const TypeDecl *, const TypeDecl * >;
+using ExprMap = std::unordered_map< const DeclWithType *, const Expr * >;
+
+const Node * replace( const Node * node, const DeclMap & declMap, bool debug = false );
+const Node * replace( const Node * node, const TypeMap & typeMap, bool debug = false );
+const Node * replace( const Node * node, const DeclMap & declMap, const TypeMap & typeMap, bool debug = false );
+const Node * replace( const Node * node, const ExprMap & exprMap);
+
+}
+
 }
 
 // Local Variables: //

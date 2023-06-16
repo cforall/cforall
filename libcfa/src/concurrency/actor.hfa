@@ -29,7 +29,7 @@
 
 #define __DEFAULT_EXECUTOR_BUFSIZE__ 10
 
-#define __STEAL 0 // workstealing toggle. Disjoint from toggles above
+#define __STEAL 1 // workstealing toggle. Disjoint from toggles above
 
 // workstealing heuristic selection (only set one to be 1)
 // #define RAND 0
@@ -47,24 +47,33 @@ enum allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
 
 typedef allocation (*__receive_fn)(actor &, message &);
 struct request {
+    actor * base_receiver;
     actor * receiver;
+    message * base_msg;
     message * msg;
     __receive_fn fn;
-    bool stop;
+    // bool stop; // commented from change to termination flag from sentinels C_TODO: remove after confirming no performance degradation
 };
 
-static inline void ?{}( request & this ) { this.stop = true; } // default ctor makes a sentinel
-static inline void ?{}( request & this, actor * receiver, message * msg, __receive_fn fn ) {
+struct a_msg {
+    int m;
+};
+static inline void ?{}( request & this ) { 
+    // this.stop = true; // default ctor makes a sentinel
+}
+static inline void ?{}( request & this, actor * base_receiver, actor * receiver, message * base_msg, message * msg, __receive_fn fn ) {
+    this.base_receiver = base_receiver;
     this.receiver = receiver;
+    this.base_msg = base_msg;
     this.msg = msg;
     this.fn = fn;
-    this.stop = false;
+    // this.stop = false;
 }
 static inline void ?{}( request & this, request & copy ) {
     this.receiver = copy.receiver;
     this.msg = copy.msg;
     this.fn = copy.fn;
-    this.stop = copy.stop;
+    // this.stop = copy.stop;
 }
 
 // Vector-like data structure that supports O(1) queue operations with no bound on size
@@ -82,9 +91,12 @@ static inline void ?{}( copy_queue & this, size_t buf_size ) with(this) {
     index = 0;
     last_size = 0;
 }
-static inline void ^?{}( copy_queue & this ) with(this) { adelete(buffer); }
+static inline void ^?{}( copy_queue & this ) with(this) {
+    DEBUG_ABORT( count != 0, "Actor system terminated with messages sent but not received\n" );
+    adelete(buffer);
+}
 
-static inline void insert( copy_queue & this, request & elem ) with(this) {
+static inline void insert( copy_queue & this, request & elem ) with(this) { // C_TODO: remove redundant send/insert once decision is made on emplace/copy
     if ( count >= buffer_size ) { // increase arr size
         last_size = buffer_size;
         buffer_size = 2 * buffer_size;
@@ -116,7 +128,7 @@ static inline void reclaim( copy_queue & this ) with(this) {
     buffer = realloc( buffer, sizeof( request ) * buffer_size ); // try to reclaim some memory
 }
 
-static inline bool isEmpty( copy_queue & this ) with(this) { return count == 0; }
+static inline bool is_empty( copy_queue & this ) with(this) { return count == 0; }
 
 struct work_queue {
     __spinlock_t mutex_lock;
@@ -177,7 +189,7 @@ static inline void transfer( work_queue & this, copy_queue ** transfer_to ) with
 struct worker_info {
     volatile unsigned long long stamp;
     #ifdef ACTOR_STATS
-    size_t stolen_from, try_steal, stolen, failed_swaps, msgs_stolen;
+    size_t stolen_from, try_steal, stolen, empty_stolen, failed_swaps, msgs_stolen;
     unsigned long long processed;
     size_t gulps;
     #endif
@@ -190,6 +202,7 @@ static inline void ?{}( worker_info & this ) {
     this.processed = 0;                             // requests processed
     this.gulps = 0;                                 // number of gulps
     this.failed_swaps = 0;                          // steal swap failures
+    this.empty_stolen = 0;                          // queues empty after steal
     this.msgs_stolen = 0;                           // number of messages stolen
     #endif
     this.stamp = rdtscl();
@@ -209,7 +222,7 @@ thread worker {
 
 #ifdef ACTOR_STATS
 // aggregate counters for statistics
-size_t __total_tries = 0, __total_stolen = 0, __total_workers, __all_gulps = 0,
+size_t __total_tries = 0, __total_stolen = 0, __total_workers, __all_gulps = 0, __total_empty_stolen = 0,
     __total_failed_swaps = 0, __all_processed = 0, __num_actors_stats = 0, __all_msgs_stolen = 0;
 #endif
 static inline void ?{}( worker & this, cluster & clu, work_queue ** request_queues, copy_queue * current_queue, executor * executor_,
@@ -234,6 +247,7 @@ struct executor {
     worker_info * w_infos;                          // array of info about each worker 
 	unsigned int nprocessors, nworkers, nrqueues;	// number of processors/threads/request queues
 	bool seperate_clus;								// use same or separate cluster for executor
+    volatile bool is_shutdown;                      // flag to communicate shutdown to worker threads
 }; // executor
 
 // #ifdef ACTOR_STATS
@@ -247,6 +261,7 @@ static inline void ^?{}( worker & mutex this ) with(this) {
     __atomic_add_fetch(&__total_tries, executor_->w_infos[id].try_steal, __ATOMIC_SEQ_CST);
     __atomic_add_fetch(&__total_stolen, executor_->w_infos[id].stolen, __ATOMIC_SEQ_CST);
     __atomic_add_fetch(&__total_failed_swaps, executor_->w_infos[id].failed_swaps, __ATOMIC_SEQ_CST);
+    __atomic_add_fetch(&__total_empty_stolen, executor_->w_infos[id].empty_stolen, __ATOMIC_SEQ_CST);
 
     // per worker steal stats (uncomment alongside the lock above this routine to print)
     // lock( out_lock __cfaabi_dbg_ctx2 );
@@ -273,6 +288,7 @@ static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int 
     this.nworkers = nworkers;
     this.nrqueues = nrqueues;
     this.seperate_clus = seperate_clus;
+    this.is_shutdown = false;
 
     if ( nworkers == nrqueues )
         no_steal = true;
@@ -321,19 +337,20 @@ static inline void ?{}( executor & this, unsigned int nprocessors ) { this{ npro
 static inline void ?{}( executor & this ) { this{ __DEFAULT_EXECUTOR_PROCESSORS__ }; }
 
 static inline void ^?{}( executor & this ) with(this) {
-    #ifdef __STEAL
-    request sentinels[nrqueues];
-    for ( unsigned int i = 0; i < nrqueues; i++ ) {
-        insert( request_queues[i], sentinels[i] );		// force eventually termination
-    } // for
-    #else
-    request sentinels[nworkers];
-    unsigned int reqPerWorker = nrqueues / nworkers, extras = nrqueues % nworkers;
-    for ( unsigned int i = 0, step = 0, range; i < nworkers; i += 1, step += range ) {
-        range = reqPerWorker + ( i < extras ? 1 : 0 );
-        insert( request_queues[step], sentinels[i] );		// force eventually termination
-    } // for
-    #endif
+    // #ifdef __STEAL // commented from change to termination flag from sentinels C_TODO: remove after confirming no performance degradation
+    // request sentinels[nrqueues];
+    // for ( unsigned int i = 0; i < nrqueues; i++ ) {
+    //     insert( request_queues[i], sentinels[i] );		// force eventually termination
+    // } // for
+    // #else
+    // request sentinels[nworkers];
+    // unsigned int reqPerWorker = nrqueues / nworkers, extras = nrqueues % nworkers;
+    // for ( unsigned int i = 0, step = 0, range; i < nworkers; i += 1, step += range ) {
+    //     range = reqPerWorker + ( i < extras ? 1 : 0 );
+    //     insert( request_queues[step], sentinels[i] );		// force eventually termination
+    // } // for
+    // #endif
+    is_shutdown = true;
 
     for ( i; nworkers )
         delete( workers[i] );
@@ -364,8 +381,8 @@ static inline void ^?{}( executor & this ) with(this) {
     printf("\tActors Created:\t\t\t\t%lu\n\tMessages Sent:\t\t\t\t%lu\n", __num_actors_stats, __all_processed);
     size_t avg_gulps = __all_gulps == 0 ? 0 : __all_processed / __all_gulps;
     printf("\tGulps:\t\t\t\t\t%lu\n\tAverage Gulp Size:\t\t\t%lu\n\tMissed gulps:\t\t\t\t%lu\n", __all_gulps, avg_gulps, misses);
-    printf("\tSteal attempts:\t\t\t\t%lu\n\tSteals:\t\t\t\t\t%lu\n\tSteal failures (no candidates):\t\t%lu\n\tSteal failures (failed swaps):\t\t%lu\n", 
-        __total_tries, __total_stolen, __total_tries - __total_stolen - __total_failed_swaps, __total_failed_swaps);
+    printf("\tSteal attempts:\t\t\t\t%lu\n\tSteals:\t\t\t\t\t%lu\n\tSteal failures (no candidates):\t\t%lu\n\tSteal failures (failed swaps):\t\t%lu\t Empty steals:\t\t%lu\n", 
+        __total_tries, __total_stolen, __total_tries - __total_stolen - __total_failed_swaps, __total_failed_swaps, __total_empty_stolen);
     size_t avg_steal = __total_stolen == 0 ? 0 : __all_msgs_stolen / __total_stolen;
     printf("\tMessages stolen:\t\t\t%lu\n\tAverage steal size:\t\t\t%lu\n", __all_msgs_stolen, avg_steal);
     #endif
@@ -448,9 +465,9 @@ static inline void ^?{}( message & this ) with(this) {
 
 static inline void check_message( message & this ) {
     switch ( this.allocation_ ) {						// analyze message status
-        case Nodelete: CFA_DEBUG(this.allocation_ = Finished); break;
+        case Nodelete: CFA_DEBUG( this.allocation_ = Finished ); break;
         case Delete: delete( &this ); break;
-        case Destroy: ^?{}(this); break;
+        case Destroy: ^?{}( this ); break;
         case Finished: break;
     } // switch
 }
@@ -460,9 +477,9 @@ static inline void set_allocation( message & this, allocation state ) {
 
 static inline void deliver_request( request & this ) {
     DEBUG_ABORT( this.receiver->ticket == (unsigned long int)MAX, "Attempted to send message to deleted/dead actor\n" );
-    this.receiver->allocation_ = this.fn( *this.receiver, *this.msg );
-    check_message( *this.msg );
-    check_actor( *this.receiver );
+    this.base_receiver->allocation_ = this.fn( *this.receiver, *this.msg );
+    check_message( *this.base_msg );
+    check_actor( *this.base_receiver );
 }
 
 // tries to atomically swap two queues and returns 0p if the swap failed
@@ -512,7 +529,7 @@ static inline void choose_queue( worker & this, unsigned int victim_id, unsigned
         tries++;
         curr_steal_queue = request_queues[ i + vic_start ];
         // avoid empty queues and queues that are being operated on
-        if ( curr_steal_queue == 0p || curr_steal_queue->being_processed || isEmpty( *curr_steal_queue->c_queue ) )
+        if ( curr_steal_queue == 0p || curr_steal_queue->being_processed || is_empty( *curr_steal_queue->c_queue ) )
             continue;
 
         #ifdef ACTOR_STATS
@@ -520,6 +537,7 @@ static inline void choose_queue( worker & this, unsigned int victim_id, unsigned
         if ( curr_steal_queue ) {
             executor_->w_infos[id].msgs_stolen += curr_steal_queue->c_queue->count;
             executor_->w_infos[id].stolen++;
+            if ( is_empty( *curr_steal_queue->c_queue ) ) executor_->w_infos[id].empty_stolen++;
             // __atomic_add_fetch(&executor_->w_infos[victim_id].stolen_from, 1, __ATOMIC_RELAXED);
             // replaced_queue[swap_idx]++;
             // __atomic_add_fetch(&stolen_arr[ i + vic_start ], 1, __ATOMIC_RELAXED);
@@ -559,6 +577,7 @@ static inline void steal_work( worker & this, unsigned int swap_idx ) with(this)
     #endif
 }
 
+#define CHECK_TERMINATION if ( unlikely( executor_->is_shutdown ) ) break Exit
 void main( worker & this ) with(this) {
     // #ifdef ACTOR_STATS
     // for ( i; executor_->nrqueues ) {
@@ -580,7 +599,7 @@ void main( worker & this ) with(this) {
         curr_work_queue = request_queues[i + start];
         
         // check if queue is empty before trying to gulp it
-        if ( isEmpty( *curr_work_queue->c_queue ) ) {
+        if ( is_empty( *curr_work_queue->c_queue ) ) {
             #ifdef __STEAL
             empty_count++;
             if ( empty_count < steal_threshold ) continue;
@@ -593,11 +612,13 @@ void main( worker & this ) with(this) {
         executor_->w_infos[id].gulps++;
         #endif // ACTOR_STATS
         #ifdef __STEAL
-        if ( isEmpty( *current_queue ) ) {
-            if ( unlikely( no_steal ) ) continue;
+        if ( is_empty( *current_queue ) ) {
+            if ( unlikely( no_steal ) ) { CHECK_TERMINATION; continue; } // C_TODO: if this impacts static/dynamic perf refactor check
             empty_count++;
             if ( empty_count < steal_threshold ) continue;
             empty_count = 0;
+
+            CHECK_TERMINATION; // check for termination
 
             __atomic_store_n( &executor_->w_infos[id].stamp, rdtscl(), __ATOMIC_RELAXED );
             
@@ -609,13 +630,13 @@ void main( worker & this ) with(this) {
             continue;
         }
         #endif // __STEAL
-        while ( ! isEmpty( *current_queue ) ) {
+        while ( ! is_empty( *current_queue ) ) {
             #ifdef ACTOR_STATS
             executor_->w_infos[id].processed++;
             #endif
             &req = &remove( *current_queue );
             if ( !&req ) continue;
-            if ( req.stop ) break Exit;
+            // if ( req.stop ) break Exit;
             deliver_request( req );
         }
         #ifdef __STEAL
@@ -643,6 +664,7 @@ static inline void __reset_stats() {
     __total_stolen = 0;
     __all_gulps = 0;
     __total_failed_swaps = 0;
+    __total_empty_stolen = 0;
     __all_processed = 0;
     __num_actors_stats = 0;
     __all_msgs_stolen = 0;

@@ -141,23 +141,24 @@ const char * AggregateDecl::aggrString( AggregateDecl::Aggregate aggr ) {
 
 bool EnumDecl::valueOf( const Decl * enumerator, long long& value ) const {
 	if ( enumValues.empty() ) {
-		long long crntVal = 0;
+		Evaluation crntVal = {0, true, true};  // until expression is given, we know to start counting from 0
 		for ( const Decl * member : members ) {
 			const ObjectDecl* field = strict_dynamic_cast< const ObjectDecl* >( member );
 			if ( field->init ) {
 				const SingleInit * init = strict_dynamic_cast< const SingleInit* >( field->init.get() );
-				auto result = eval( init->value );
-				if ( ! result.second ) {
+				crntVal = eval( init->value );
+				if ( ! crntVal.isEvaluableInGCC ) {
 					SemanticError( init->location, ::toString( "Non-constexpr in initialization of "
 						"enumerator: ", field ) );
 				}
-				crntVal = result.first;
 			}
 			if ( enumValues.count( field->name ) != 0 ) {
 				SemanticError( location, ::toString( "Enum ", name, " has multiple members with the " 	"name ", field->name ) );
 			}
-			enumValues[ field->name ] = crntVal;
-			++crntVal;
+			if (crntVal.hasKnownValue) {
+				enumValues[ field->name ] = crntVal.knownValue;
+			}
+			++crntVal.knownValue;
 		}
 	}
 

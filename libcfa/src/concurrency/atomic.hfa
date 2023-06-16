@@ -9,23 +9,43 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu May 25 15:22:46 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 25 15:24:45 2023
-// Update Count     : 1
+// Last Modified On : Fri Jun  9 13:36:47 2023
+// Update Count     : 46
 // 
 
-#define LOAD( lock ) (__atomic_load_n( &(lock), __ATOMIC_SEQ_CST ))
-#define LOADM( lock, memorder ) (__atomic_load_n( &(lock), memorder ))
-#define STORE( lock, assn ) (__atomic_store_n( &(lock), assn, __ATOMIC_SEQ_CST ))
-#define STOREM( lock, assn, memorder ) (__atomic_store_n( &(lock), assn, memorder ))
-#define CLR( lock ) (__atomic_clear( &(lock), __ATOMIC_RELEASE ))
-#define CLRM( lock, memorder ) (__atomic_clear( &(lock), memorder ))
-#define TAS( lock ) (__atomic_test_and_set( &(lock), __ATOMIC_ACQUIRE ))
-#define TASM( lock, memorder ) (__atomic_test_and_set( &(lock), memorder ))
-#define CAS( change, comp, assn ) ({typeof(comp) __temp = (comp); __atomic_compare_exchange_n( &(change), &(__temp), (assn), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ); })
-#define CASM( change, comp, assn, memorder... ) ({typeof(comp) * __temp = &(comp); __atomic_compare_exchange_n( &(change), &(__temp), (assn), false, memorder, memorder ); })
-#define CASV( change, comp, assn ) (__atomic_compare_exchange_n( &(change), &(comp), (assn), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ))
-#define CASVM( change, comp, assn, memorder... ) (__atomic_compare_exchange_n( &(change), &(comp), (assn), false, memorder, memorder ))
-#define FAS( change, assn ) (__atomic_exchange_n( &(change), (assn), __ATOMIC_SEQ_CST ))
-#define FASM( change, assn, memorder ) (__atomic_exchange_n( &(change), (assn), memorder ))
-#define FAI( change, Inc ) (__atomic_fetch_add( &(change), (Inc), __ATOMIC_SEQ_CST ))
-#define FAIM( change, Inc, memorder ) (__atomic_fetch_add( &(change), (Inc), memorder ))
+#define LOAD( val ) (LOADM( val, __ATOMIC_SEQ_CST))
+#define LOADM( val, memorder ) (__atomic_load_n( &(val), memorder))
+
+#define STORE( val, assn ) (STOREM( val, assn, __ATOMIC_SEQ_CST))
+#define STOREM( val, assn, memorder ) (__atomic_store_n( &(val), assn, memorder))
+
+#define TAS( lock ) (TASM( lock, __ATOMIC_ACQUIRE))
+#define TASM( lock, memorder ) (__atomic_test_and_set( &(lock), memorder))
+
+#define TASCLR( lock ) (TASCLRM( lock, __ATOMIC_RELEASE))
+#define TASCLRM( lock, memorder ) (__atomic_clear( &(lock), memorder))
+
+#define FAS( assn, replace ) (FASM(assn, replace, __ATOMIC_SEQ_CST))
+#define FASM( assn, replace, memorder ) (__atomic_exchange_n( &(assn), (replace), memorder))
+
+#define FAI( assn, Inc ) (__atomic_fetch_add( &(assn), (Inc), __ATOMIC_SEQ_CST))
+#define FAIM( assn, Inc, memorder ) (__atomic_fetch_add( &(assn), (Inc), memorder))
+
+// Use __sync because __atomic with 128-bit CAA can result in calls to pthread_mutex_lock.
+
+// #define CAS( assn, comp, replace ) (CASM( assn, comp, replace, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST))
+// #define CASM( assn, comp, replace, memorder... ) ({ \
+//  	typeof(comp) __temp = (comp); \
+//  	__atomic_compare_exchange_n( &(assn), &(__temp), (replace), false, memorder ); \
+// })
+#define CAS( assn, comp, replace ) (__sync_bool_compare_and_swap( &assn, comp, replace))
+#define CASM( assn, comp, replace, memorder... ) _Static_assert( false, "memory order unsupported for CAS macro" );
+
+// #define CASV( assn, comp, replace ) (__atomic_compare_exchange_n( &(assn), &(comp), (replace), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ))
+// #define CASVM( assn, comp, replace, memorder... ) (__atomic_compare_exchange_n( &(assn), &(comp), (replace), false, memorder, memorder ))
+#define CASV( assn, comp, replace ) ({ \
+	typeof(comp) temp = comp; \
+	typeof(comp) old = __sync_val_compare_and_swap( &(assn), (comp), (replace) ); \
+	old == temp ? true : (comp = old, false); \
+})
+#define CASVM( assn, comp, replace, memorder... ) _Static_assert( false, "memory order unsupported for CASV macro" );

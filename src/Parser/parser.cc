@@ -9474,7 +9474,7 @@ yyreduce:
 #line 1522 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
                 {
 			if ( (yyvsp[-1].oper) == OperKinds::LEThan || (yyvsp[-1].oper) == OperKinds::GEThan ) {
-				SemanticError( yylloc, "All enumeration ranges are equal (all values). Remove \"=~\"." ); (yyval.forctl) = nullptr;
+				SemanticError( yylloc, "syntax error, all enumeration ranges are equal (all values). Remove \"=~\"." ); (yyval.forctl) = nullptr;
 			}
 			SemanticError( yylloc, "Type iterator is currently unimplemented." ); (yyval.forctl) = nullptr;
 		}

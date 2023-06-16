@@ -82,6 +82,25 @@ void functionDeclMatchesType( const FunctionDecl * decl ) {
 	assert( type->returns.size() == decl->returns.size() );
 }
 
+/// Check that the MemberExpr has an aggregate type and matching member.
+void memberMatchesAggregate( const MemberExpr * expr ) {
+	const Type * aggrType = expr->aggregate->result->stripReferences();
+	const AggregateDecl * decl = nullptr;
+	if ( auto inst = dynamic_cast<const StructInstType *>( aggrType ) ) {
+		decl = inst->base;
+	} else if ( auto inst = dynamic_cast<const UnionInstType *>( aggrType ) ) {
+		decl = inst->base;
+	}
+	assertf( decl, "Aggregate of member not correct type." );
+
+	for ( auto aggrMember : decl->members ) {
+		if ( expr->member == aggrMember ) {
+			return;
+		}
+	}
+	assertf( false, "Member not found." );
+}
+
 struct InvariantCore {
 	// To save on the number of visits: this is a kind of composed core.
 	// None of the passes should make changes so ordering doesn't matter.
@@ -105,6 +124,11 @@ struct InvariantCore {
 	void previsit( const Stmt * node ) {
 		previsit( (const ParseNode *)node );
 		areLabelLocationsSet( node );
+	}
+
+	void previsit( const MemberExpr * node ) {
+		previsit( (const ParseNode *)node );
+		memberMatchesAggregate( node );
 	}
 
 	void postvisit( const Node * node ) {

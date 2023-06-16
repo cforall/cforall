@@ -145,18 +145,20 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
             torDecls.addDtor( structIter->first, mutate( decl ) );
 
             CompoundStmt * dtorBody = mutate( decl->stmts.get() );
-            // Adds the following to the end of any actor/message dtor:
+            // Adds the following to the start of any actor/message dtor:
             //  __CFA_dtor_shutdown( this );
-            dtorBody->push_front( new ExprStmt(
-                decl->location,
-				new UntypedExpr (
-                    decl->location,
-					new NameExpr( decl->location, "__CFA_dtor_shutdown" ),
-					{
-                        new NameExpr( decl->location, decl->params.at(0)->name )
-					}
-				)
-			));
+            dtorBody->push_front( 
+                new IfStmt( decl->location,
+                    new UntypedExpr (
+                        decl->location,
+                        new NameExpr( decl->location, "__CFA_dtor_shutdown" ),
+                        {
+                            new NameExpr( decl->location, decl->params.at(0)->name )
+                        }
+                    ),
+                    new ReturnStmt( decl->location, nullptr )
+                )
+            );
             return;
         }
 

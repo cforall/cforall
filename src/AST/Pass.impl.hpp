@@ -71,28 +71,28 @@ namespace ast {
 		//------------------------------
 		template<typename it_t, template <class...> class container_t>
 		static inline void take_all( it_t it, container_t<ast::ptr<ast::Decl>> * decls, bool * mutated = nullptr ) {
-			if(empty(decls)) return;
+			if ( empty( decls ) ) return;
 
 			std::transform(decls->begin(), decls->end(), it, [](const ast::Decl * decl) -> auto {
 					return new DeclStmt( decl->location, decl );
 				});
 			decls->clear();
-			if(mutated) *mutated = true;
+			if ( mutated ) *mutated = true;
 		}
 
 		template<typename it_t, template <class...> class container_t>
 		static inline void take_all( it_t it, container_t<ast::ptr<ast::Stmt>> * stmts, bool * mutated = nullptr ) {
-			if(empty(stmts)) return;
+			if ( empty( stmts ) ) return;
 
 			std::move(stmts->begin(), stmts->end(), it);
 			stmts->clear();
-			if(mutated) *mutated = true;
+			if ( mutated ) *mutated = true;
 		}
 
 		//------------------------------
 		/// Check if should be skipped, different for pointers and containers
 		template<typename node_t>
-		bool skip( const ast::ptr<node_t> & val) {
+		bool skip( const ast::ptr<node_t> & val ) {
 			return !val;
 		}
 
@@ -109,7 +109,7 @@ namespace ast {
 		}
 
 		template<typename node_t>
-		const node_t & get( const node_t & val, long) {
+		const node_t & get( const node_t & val, long ) {
 			return val;
 		}
 
@@ -125,288 +125,284 @@ namespace ast {
 			return !new_val.empty();
 		}
 	}
+}
 
-	template< typename core_t >
-	template< typename node_t >
-	auto ast::Pass< core_t >::call_accept( const node_t * node )
-		-> typename ast::Pass< core_t >::template generic_call_accept_result<node_t>::type
-	{
-		__pedantic_pass_assert( __visit_children() );
-		__pedantic_pass_assert( node );
+template< typename core_t >
+template< typename node_t >
+auto ast::Pass< core_t >::call_accept( const node_t * node ) ->
+	typename ast::Pass< core_t >::template generic_call_accept_result<node_t>::type
+{
+	__pedantic_pass_assert( __visit_children() );
+	__pedantic_pass_assert( node );
 
-		static_assert( !std::is_base_of<ast::Expr, node_t>::value, "ERROR");
-		static_assert( !std::is_base_of<ast::Stmt, node_t>::value, "ERROR");
+	static_assert( !std::is_base_of<ast::Expr, node_t>::value, "ERROR" );
+	static_assert( !std::is_base_of<ast::Stmt, node_t>::value, "ERROR" );
 
-		auto nval = node->accept( *this );
-		__pass::result1<
-			typename std::remove_pointer< decltype( node->accept(*this) ) >::type
-		> res;
-		res.differs = nval != node;
-		res.value = nval;
-		return res;
+	auto nval = node->accept( *this );
+	__pass::result1<
+		typename std::remove_pointer< decltype( node->accept(*this) ) >::type
+	> res;
+	res.differs = nval != node;
+	res.value = nval;
+	return res;
+}
+
+template< typename core_t >
+ast::__pass::template result1<ast::Expr> ast::Pass< core_t >::call_accept( const ast::Expr * expr ) {
+	__pedantic_pass_assert( __visit_children() );
+	__pedantic_pass_assert( expr );
+
+	auto nval = expr->accept( *this );
+	return { nval != expr, nval };
+}
+
+template< typename core_t >
+ast::__pass::template result1<ast::Stmt> ast::Pass< core_t >::call_accept( const ast::Stmt * stmt ) {
+	__pedantic_pass_assert( __visit_children() );
+	__pedantic_pass_assert( stmt );
+
+	const ast::Stmt * nval = stmt->accept( *this );
+	return { nval != stmt, nval };
+}
+
+template< typename core_t >
+ast::__pass::template result1<ast::Expr> ast::Pass< core_t >::call_accept_top( const ast::Expr * expr ) {
+	__pedantic_pass_assert( __visit_children() );
+	__pedantic_pass_assert( expr );
+
+	const ast::TypeSubstitution ** typeSubs_ptr = __pass::typeSubs( core, 0 );
+	if ( typeSubs_ptr && expr->env ) {
+		*typeSubs_ptr = expr->env;
 	}
 
-	template< typename core_t >
-	__pass::template result1<ast::Expr> ast::Pass< core_t >::call_accept( const ast::Expr * expr ) {
-		__pedantic_pass_assert( __visit_children() );
-		__pedantic_pass_assert( expr );
+	auto nval = expr->accept( *this );
+	return { nval != expr, nval };
+}
 
-		auto nval = expr->accept( *this );
-		return { nval != expr, nval };
+template< typename core_t >
+ast::__pass::template result1<ast::Stmt> ast::Pass< core_t >::call_accept_as_compound( const ast::Stmt * stmt ) {
+	__pedantic_pass_assert( __visit_children() );
+	__pedantic_pass_assert( stmt );
+
+	// add a few useful symbols to the scope
+	using __pass::empty;
+
+	// get the stmts/decls that will need to be spliced in
+	auto stmts_before = __pass::stmtsToAddBefore( core, 0 );
+	auto stmts_after  = __pass::stmtsToAddAfter ( core, 0 );
+	auto decls_before = __pass::declsToAddBefore( core, 0 );
+	auto decls_after  = __pass::declsToAddAfter ( core, 0 );
+
+	// These may be modified by subnode but most be restored once we exit this statemnet.
+	ValueGuardPtr< const ast::TypeSubstitution * > __old_env         ( __pass::typeSubs( core, 0 ) );
+	ValueGuardPtr< typename std::remove_pointer< decltype(stmts_before) >::type > __old_decls_before( stmts_before );
+	ValueGuardPtr< typename std::remove_pointer< decltype(stmts_after ) >::type > __old_decls_after ( stmts_after  );
+	ValueGuardPtr< typename std::remove_pointer< decltype(decls_before) >::type > __old_stmts_before( decls_before );
+	ValueGuardPtr< typename std::remove_pointer< decltype(decls_after ) >::type > __old_stmts_after ( decls_after  );
+
+	// Now is the time to actually visit the node
+	const ast::Stmt * nstmt = stmt->accept( *this );
+
+	// If the pass doesn't want to add anything then we are done
+	if ( empty(stmts_before) && empty(stmts_after) && empty(decls_before) && empty(decls_after) ) {
+		return { nstmt != stmt, nstmt };
 	}
 
-	template< typename core_t >
-	__pass::template result1<ast::Stmt> ast::Pass< core_t >::call_accept( const ast::Stmt * stmt ) {
-		__pedantic_pass_assert( __visit_children() );
-		__pedantic_pass_assert( stmt );
+	// Make sure that it is either adding statements or declartions but not both
+	// this is because otherwise the order would be awkward to predict
+	assert(( empty( stmts_before ) && empty( stmts_after ))
+	    || ( empty( decls_before ) && empty( decls_after )) );
 
-		const ast::Stmt * nval = stmt->accept( *this );
-		return { nval != stmt, nval };
-	}
+	// Create a new Compound Statement to hold the new decls/stmts
+	ast::CompoundStmt * compound = new ast::CompoundStmt( stmt->location );
 
-	template< typename core_t >
-	__pass::template result1<ast::Expr> ast::Pass< core_t >::call_accept_top( const ast::Expr * expr ) {
-		__pedantic_pass_assert( __visit_children() );
-		__pedantic_pass_assert( expr );
+	// Take all the declarations that go before
+	__pass::take_all( std::back_inserter( compound->kids ), decls_before );
+	__pass::take_all( std::back_inserter( compound->kids ), stmts_before );
 
-		const ast::TypeSubstitution ** typeSubs_ptr = __pass::typeSubs( core, 0 );
-		if ( typeSubs_ptr && expr->env ) {
-			*typeSubs_ptr = expr->env;
-		}
+	// Insert the original declaration
+	compound->kids.emplace_back( nstmt );
 
-		auto nval = expr->accept( *this );
-		return { nval != expr, nval };
-	}
+	// Insert all the declarations that go before
+	__pass::take_all( std::back_inserter( compound->kids ), decls_after );
+	__pass::take_all( std::back_inserter( compound->kids ), stmts_after );
 
-	template< typename core_t >
-	__pass::template result1<ast::Stmt> ast::Pass< core_t >::call_accept_as_compound( const ast::Stmt * stmt ) {
-		__pedantic_pass_assert( __visit_children() );
-		__pedantic_pass_assert( stmt );
+	return { true, compound };
+}
 
-		// add a few useful symbols to the scope
-		using __pass::empty;
+template< typename core_t >
+template< template <class...> class container_t >
+ast::__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept( const container_t< ptr<Stmt> > & statements ) {
+	__pedantic_pass_assert( __visit_children() );
+	if ( statements.empty() ) return {};
 
-		// get the stmts/decls that will need to be spliced in
-		auto stmts_before = __pass::stmtsToAddBefore( core, 0 );
-		auto stmts_after  = __pass::stmtsToAddAfter ( core, 0 );
-		auto decls_before = __pass::declsToAddBefore( core, 0 );
-		auto decls_after  = __pass::declsToAddAfter ( core, 0 );
+	// We are going to aggregate errors for all these statements
+	SemanticErrorException errors;
 
-		// These may be modified by subnode but most be restored once we exit this statemnet.
-		ValueGuardPtr< const ast::TypeSubstitution * > __old_env         ( __pass::typeSubs( core, 0 ) );
-		ValueGuardPtr< typename std::remove_pointer< decltype(stmts_before) >::type > __old_decls_before( stmts_before );
-		ValueGuardPtr< typename std::remove_pointer< decltype(stmts_after ) >::type > __old_decls_after ( stmts_after  );
-		ValueGuardPtr< typename std::remove_pointer< decltype(decls_before) >::type > __old_stmts_before( decls_before );
-		ValueGuardPtr< typename std::remove_pointer< decltype(decls_after ) >::type > __old_stmts_after ( decls_after  );
+	// add a few useful symbols to the scope
+	using __pass::empty;
 
-		// Now is the time to actually visit the node
-		const ast::Stmt * nstmt = stmt->accept( *this );
+	// get the stmts/decls that will need to be spliced in
+	auto stmts_before = __pass::stmtsToAddBefore( core, 0 );
+	auto stmts_after  = __pass::stmtsToAddAfter ( core, 0 );
+	auto decls_before = __pass::declsToAddBefore( core, 0 );
+	auto decls_after  = __pass::declsToAddAfter ( core, 0 );
 
-		// If the pass doesn't want to add anything then we are done
-		if( empty(stmts_before) && empty(stmts_after) && empty(decls_before) && empty(decls_after) ) {
-			return { nstmt != stmt, nstmt };
-		}
+	// These may be modified by subnode but most be restored once we exit this statemnet.
+	ValueGuardPtr< typename std::remove_pointer< decltype(stmts_before) >::type > __old_decls_before( stmts_before );
+	ValueGuardPtr< typename std::remove_pointer< decltype(stmts_after ) >::type > __old_decls_after ( stmts_after  );
+	ValueGuardPtr< typename std::remove_pointer< decltype(decls_before) >::type > __old_stmts_before( decls_before );
+	ValueGuardPtr< typename std::remove_pointer< decltype(decls_after ) >::type > __old_stmts_after ( decls_after  );
 
-		// Make sure that it is either adding statements or declartions but not both
-		// this is because otherwise the order would be awkward to predict
-		assert(( empty( stmts_before ) && empty( stmts_after ))
-		    || ( empty( decls_before ) && empty( decls_after )) );
+	// update pass statitistics
+	pass_visitor_stats.depth++;
+	pass_visitor_stats.max->push(pass_visitor_stats.depth);
+	pass_visitor_stats.avg->push(pass_visitor_stats.depth);
 
-		// Create a new Compound Statement to hold the new decls/stmts
-		ast::CompoundStmt * compound = new ast::CompoundStmt( stmt->location );
+	__pass::resultNstmt<container_t> new_kids;
+	for ( auto value : enumerate( statements ) ) {
+		try {
+			size_t i = value.idx;
+			const Stmt * stmt = value.val;
+			__pedantic_pass_assert( stmt );
+			const ast::Stmt * new_stmt = stmt->accept( *this );
+			assert( new_stmt );
+			if ( new_stmt != stmt ) { new_kids.differs = true; }
 
-		// Take all the declarations that go before
-		__pass::take_all( std::back_inserter( compound->kids ), decls_before );
-		__pass::take_all( std::back_inserter( compound->kids ), stmts_before );
+			// Make sure that it is either adding statements or declartions but not both
+			// this is because otherwise the order would be awkward to predict
+			assert(( empty( stmts_before ) && empty( stmts_after ))
+			    || ( empty( decls_before ) && empty( decls_after )) );
 
-		// Insert the original declaration
-		compound->kids.emplace_back( nstmt );
+			// Take all the statements which should have gone after, N/A for first iteration
+			new_kids.take_all( decls_before );
+			new_kids.take_all( stmts_before );
 
-		// Insert all the declarations that go before
-		__pass::take_all( std::back_inserter( compound->kids ), decls_after );
-		__pass::take_all( std::back_inserter( compound->kids ), stmts_after );
-
-		return {true, compound};
-	}
-
-	template< typename core_t >
-	template< template <class...> class container_t >
-	__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept( const container_t< ptr<Stmt> > & statements ) {
-		__pedantic_pass_assert( __visit_children() );
-		if( statements.empty() ) return {};
-
-		// We are going to aggregate errors for all these statements
-		SemanticErrorException errors;
-
-		// add a few useful symbols to the scope
-		using __pass::empty;
-
-		// get the stmts/decls that will need to be spliced in
-		auto stmts_before = __pass::stmtsToAddBefore( core, 0 );
-		auto stmts_after  = __pass::stmtsToAddAfter ( core, 0 );
-		auto decls_before = __pass::declsToAddBefore( core, 0 );
-		auto decls_after  = __pass::declsToAddAfter ( core, 0 );
-
-		// These may be modified by subnode but most be restored once we exit this statemnet.
-		ValueGuardPtr< typename std::remove_pointer< decltype(stmts_before) >::type > __old_decls_before( stmts_before );
-		ValueGuardPtr< typename std::remove_pointer< decltype(stmts_after ) >::type > __old_decls_after ( stmts_after  );
-		ValueGuardPtr< typename std::remove_pointer< decltype(decls_before) >::type > __old_stmts_before( decls_before );
-		ValueGuardPtr< typename std::remove_pointer< decltype(decls_after ) >::type > __old_stmts_after ( decls_after  );
-
-		// update pass statitistics
-		pass_visitor_stats.depth++;
-		pass_visitor_stats.max->push(pass_visitor_stats.depth);
-		pass_visitor_stats.avg->push(pass_visitor_stats.depth);
-
-		__pass::resultNstmt<container_t> new_kids;
-		for( auto value : enumerate( statements ) ) {
-			try {
-				size_t i = value.idx;
-				const Stmt * stmt = value.val;
-				__pedantic_pass_assert( stmt );
-				const ast::Stmt * new_stmt = stmt->accept( *this );
-				assert( new_stmt );
-				if(new_stmt != stmt ) { new_kids.differs = true; }
-
-				// Make sure that it is either adding statements or declartions but not both
-				// this is because otherwise the order would be awkward to predict
-				assert(( empty( stmts_before ) && empty( stmts_after ))
-				    || ( empty( decls_before ) && empty( decls_after )) );
-
-				// Take all the statements which should have gone after, N/A for first iteration
-				new_kids.take_all( decls_before );
-				new_kids.take_all( stmts_before );
-
-				// Now add the statement if there is one
-				if(new_stmt != stmt) {
-					new_kids.values.emplace_back( new_stmt, i, false );
-				} else {
-					new_kids.values.emplace_back( nullptr, i, true );
-				}
-
-				// Take all the declarations that go before
-				new_kids.take_all( decls_after );
-				new_kids.take_all( stmts_after );
+			// Now add the statement if there is one
+			if ( new_stmt != stmt ) {
+				new_kids.values.emplace_back( new_stmt, i, false );
+			} else {
+				new_kids.values.emplace_back( nullptr, i, true );
 			}
-			catch ( SemanticErrorException &e ) {
-				errors.append( e );
+
+			// Take all the declarations that go before
+			new_kids.take_all( decls_after );
+			new_kids.take_all( stmts_after );
+		} catch ( SemanticErrorException &e ) {
+			errors.append( e );
+		}
+	}
+	pass_visitor_stats.depth--;
+	if ( !errors.isEmpty() ) { throw errors; }
+
+	return new_kids;
+}
+
+template< typename core_t >
+template< template <class...> class container_t, typename node_t >
+ast::__pass::template resultN<container_t, node_t> ast::Pass< core_t >::call_accept( const container_t< ast::ptr<node_t> > & container ) {
+	__pedantic_pass_assert( __visit_children() );
+	if ( container.empty() ) return {};
+	SemanticErrorException errors;
+
+	pass_visitor_stats.depth++;
+	pass_visitor_stats.max->push(pass_visitor_stats.depth);
+	pass_visitor_stats.avg->push(pass_visitor_stats.depth);
+
+	bool mutated = false;
+	container_t<ptr<node_t>> new_kids;
+	for ( const node_t * node : container ) {
+		try {
+			__pedantic_pass_assert( node );
+			const node_t * new_stmt = strict_dynamic_cast< const node_t * >( node->accept( *this ) );
+			if ( new_stmt != node ) {
+				mutated = true;
+				new_kids.emplace_back( new_stmt );
+			} else {
+				new_kids.emplace_back( nullptr );
 			}
-		}
-		pass_visitor_stats.depth--;
-		if ( !errors.isEmpty() ) { throw errors; }
-
-		return new_kids;
-	}
-
-	template< typename core_t >
-	template< template <class...> class container_t, typename node_t >
-	__pass::template resultN<container_t, node_t> ast::Pass< core_t >::call_accept( const container_t< ast::ptr<node_t> > & container ) {
-		__pedantic_pass_assert( __visit_children() );
-		if( container.empty() ) return {};
-		SemanticErrorException errors;
-
-		pass_visitor_stats.depth++;
-		pass_visitor_stats.max->push(pass_visitor_stats.depth);
-		pass_visitor_stats.avg->push(pass_visitor_stats.depth);
-
-		bool mutated = false;
-		container_t<ptr<node_t>> new_kids;
-		for ( const node_t * node : container ) {
-			try {
-				__pedantic_pass_assert( node );
-				const node_t * new_stmt = strict_dynamic_cast< const node_t * >( node->accept( *this ) );
-				if(new_stmt != node ) {
-					mutated = true;
-					new_kids.emplace_back( new_stmt );
-				} else {
-					new_kids.emplace_back( nullptr );
-				}
-
-			}
-			catch( SemanticErrorException &e ) {
-				errors.append( e );
-			}
-		}
-
-		__pedantic_pass_assert( new_kids.size() == container.size() );
-		pass_visitor_stats.depth--;
-		if ( ! errors.isEmpty() ) { throw errors; }
-
-		return ast::__pass::resultN<container_t, node_t>{ mutated, new_kids };
-	}
-
-	template< typename core_t >
-	template<typename node_t, typename super_t, typename field_t>
-	void ast::Pass< core_t >::maybe_accept(
-		const node_t * & parent,
-		field_t super_t::*field
-	) {
-		static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
-
-		if(__pass::skip(parent->*field)) return;
-		const auto & old_val = __pass::get(parent->*field, 0);
-
-		static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR");
-
-		auto new_val = call_accept( old_val );
-
-		static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR");
-
-		if( new_val.differs ) {
-			auto new_parent = __pass::mutate<core_t>(parent);
-			new_val.apply(new_parent, field);
-			parent = new_parent;
+		} catch ( SemanticErrorException &e ) {
+			errors.append( e );
 		}
 	}
 
-	template< typename core_t >
-	template<typename node_t, typename super_t, typename field_t>
-	void ast::Pass< core_t >::maybe_accept_top(
-		const node_t * & parent,
-		field_t super_t::*field
-	) {
-		static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
+	__pedantic_pass_assert( new_kids.size() == container.size() );
+	pass_visitor_stats.depth--;
+	if ( !errors.isEmpty() ) { throw errors; }
 
-		if(__pass::skip(parent->*field)) return;
-		const auto & old_val = __pass::get(parent->*field, 0);
+	return ast::__pass::resultN<container_t, node_t>{ mutated, new_kids };
+}
 
-		static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR");
+template< typename core_t >
+template<typename node_t, typename super_t, typename field_t>
+void ast::Pass< core_t >::maybe_accept(
+	const node_t * & parent,
+	field_t super_t::*field
+) {
+	static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
 
-		auto new_val = call_accept_top( old_val );
+	if ( __pass::skip( parent->*field ) ) return;
+	const auto & old_val = __pass::get(parent->*field, 0);
 
-		static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR");
+	static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR" );
 
-		if( new_val.differs ) {
-			auto new_parent = __pass::mutate<core_t>(parent);
-			new_val.apply(new_parent, field);
-			parent = new_parent;
-		}
+	auto new_val = call_accept( old_val );
+
+	static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR" );
+
+	if ( new_val.differs ) {
+		auto new_parent = __pass::mutate<core_t>(parent);
+		new_val.apply(new_parent, field);
+		parent = new_parent;
 	}
+}
 
-	template< typename core_t >
-	template<typename node_t, typename super_t, typename field_t>
-	void ast::Pass< core_t >::maybe_accept_as_compound(
-		const node_t * & parent,
-		field_t super_t::*child
-	) {
-		static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
+template< typename core_t >
+template<typename node_t, typename super_t, typename field_t>
+void ast::Pass< core_t >::maybe_accept_top(
+	const node_t * & parent,
+	field_t super_t::*field
+) {
+	static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
 
-		if(__pass::skip(parent->*child)) return;
-		const auto & old_val = __pass::get(parent->*child, 0);
+	if ( __pass::skip( parent->*field ) ) return;
+	const auto & old_val = __pass::get(parent->*field, 0);
 
-		static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR");
+	static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR" );
 
-		auto new_val = call_accept_as_compound( old_val );
+	auto new_val = call_accept_top( old_val );
 
-		static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value || std::is_same<int, decltype(old_val)>::value, "ERROR");
+	static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR" );
 
-		if( new_val.differs ) {
-			auto new_parent = __pass::mutate<core_t>(parent);
-			new_val.apply( new_parent, child );
-			parent = new_parent;
-		}
+	if ( new_val.differs ) {
+		auto new_parent = __pass::mutate<core_t>(parent);
+		new_val.apply(new_parent, field);
+		parent = new_parent;
 	}
+}
 
+template< typename core_t >
+template<typename node_t, typename super_t, typename field_t>
+void ast::Pass< core_t >::maybe_accept_as_compound(
+	const node_t * & parent,
+	field_t super_t::*child
+) {
+	static_assert( std::is_base_of<super_t, node_t>::value, "Error deducing member object" );
+
+	if ( __pass::skip( parent->*child ) ) return;
+	const auto & old_val = __pass::get(parent->*child, 0);
+
+	static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR" );
+
+	auto new_val = call_accept_as_compound( old_val );
+
+	static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value || std::is_same<int, decltype(old_val)>::value, "ERROR" );
+
+	if ( new_val.differs ) {
+		auto new_parent = __pass::mutate<core_t>(parent);
+		new_val.apply( new_parent, child );
+		parent = new_parent;
+	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -284,7 +284,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
                 )
             ));
 
-            // Generates: new_req{ &receiver, &msg, fn };
+            // Generates: new_req{ &receiver, (actor *)&receiver, &msg, (message *)&msg, fn };
             sendBody->push_back( new ExprStmt(
                 decl->location,
 				new UntypedExpr (
@@ -293,7 +293,9 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
 					{
 						new NameExpr( decl->location, "new_req" ),
                         new AddressExpr( new NameExpr( decl->location, "receiver" ) ),
+                        new CastExpr( decl->location, new AddressExpr( new NameExpr( decl->location, "receiver" ) ), new PointerType( new StructInstType( *actorDecl ) ), ExplicitCast ),
                         new AddressExpr( new NameExpr( decl->location, "msg" ) ),
+                        new CastExpr( decl->location, new AddressExpr( new NameExpr( decl->location, "msg" ) ), new PointerType( new StructInstType( *msgDecl ) ), ExplicitCast ),
                         new NameExpr( decl->location, "fn" )
 					}
 				)

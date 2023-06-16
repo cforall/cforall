@@ -95,157 +95,174 @@ struct EvalOld : public WithShortCircuiting {
 //-------------------------------------------------------------
 // New AST
 struct EvalNew : public ast::WithShortCircuiting {
-	long long int value = 0;							// compose the result of the constant expression
-	bool valid = true;									// true => constant expression and value is the result
-														// false => not constant expression, e.g., ++i
-	bool cfavalid = true;								// true => constant expression and value computable
-														// false => constant expression but value not computable, e.g., sizeof(int)
+	Evaluation result = { 0, true, true };
 
 	void previsit( const ast::Node * ) { visit_children = false; }
-	void postvisit( const ast::Node * ) { cfavalid = valid = false; }
+	void postvisit( const ast::Node * ) { result.isEvaluableInGCC = result.hasKnownValue = false; }
 
 	void postvisit( const ast::UntypedExpr * ) {
 		assertf( false, "UntypedExpr in constant expression evaluation" ); // FIX ME, resolve variable
 	}
 
 	void postvisit( const ast::ConstantExpr * expr ) {	// only handle int constants
-		value = expr->intValue();
+		result.knownValue = expr->intValue();
+		result.hasKnownValue = true;
+		result.isEvaluableInGCC = true;
 	}
 
 	void postvisit( const ast::SizeofExpr * ) {
-		// do not change valid or value => let C figure it out
-		cfavalid = false;
+		result.hasKnownValue = false;
+		result.isEvaluableInGCC = true;
 	}
 
 	void postvisit( const ast::AlignofExpr * ) {
-		// do not change valid or value => let C figure it out
-		cfavalid = false;
+		result.hasKnownValue = false;
+		result.isEvaluableInGCC = true;
 	}
 
 	void postvisit( const ast::OffsetofExpr * ) {
-		// do not change valid or value => let C figure it out
-		cfavalid = false;
+		result.hasKnownValue = false;
+		result.isEvaluableInGCC = true;
 	}
 
 	void postvisit( const ast::LogicalExpr * expr ) {
-		std::pair<long long int, bool> arg1, arg2;
+		Evaluation arg1, arg2;
 		arg1 = eval( expr->arg1 );
-		valid &= arg1.second;
-		if ( ! valid ) return;
+		result.isEvaluableInGCC &= arg1.isEvaluableInGCC;
+		if ( ! result.isEvaluableInGCC ) return;
 		arg2 = eval( expr->arg2 );
-		valid &= arg2.second;
-		if ( ! valid ) return;
+		result.isEvaluableInGCC &= arg2.isEvaluableInGCC;
+		if ( ! result.isEvaluableInGCC ) return;
+
+		result.hasKnownValue &= arg1.hasKnownValue;
+		result.hasKnownValue &= arg2.hasKnownValue;
+		if ( ! result.hasKnownValue ) return;
 
 		if ( expr->isAnd ) {
-			value = arg1.first && arg2.first;
+			result.knownValue = arg1.knownValue && arg2.knownValue;
 		} else {
-			value = arg1.first || arg2.first;
+			result.knownValue = arg1.knownValue || arg2.knownValue;
 		} // if
 	}
 
 	void postvisit( const ast::ConditionalExpr * expr ) {
-		std::pair<long long int, bool> arg1, arg2, arg3;
+		Evaluation arg1, arg2, arg3;
 		arg1 = eval( expr->arg1 );
-		valid &= arg1.second;
-		if ( ! valid ) return;
+		result.isEvaluableInGCC &= arg1.isEvaluableInGCC;
+		if ( ! result.isEvaluableInGCC ) return;
 		arg2 = eval( expr->arg2 );
-		valid &= arg2.second;
-		if ( ! valid ) return;
+		result.isEvaluableInGCC &= arg2.isEvaluableInGCC;
+		if ( ! result.isEvaluableInGCC ) return;
 		arg3 = eval( expr->arg3 );
-		valid &= arg3.second;
-		if ( ! valid ) return;
+		result.isEvaluableInGCC &= arg3.isEvaluableInGCC;
+		if ( ! result.isEvaluableInGCC ) return;
 
-		value = arg1.first ? arg2.first : arg3.first;
+		result.hasKnownValue &= arg1.hasKnownValue;
+		result.hasKnownValue &= arg2.hasKnownValue;
+		result.hasKnownValue &= arg3.hasKnownValue;
+		if ( ! result.hasKnownValue ) return;
+
+		result.knownValue = arg1.knownValue ? arg2.knownValue : arg3.knownValue;
 	}
 
 	void postvisit( const ast::CastExpr * expr ) {		
-		// cfa-cc generates a cast before every constant and many other places, e.g., (int)3, so the cast argument must
-		// be evaluated to get the constant value.
-		auto arg = eval(expr->arg);
-		valid = arg.second;
-		value = arg.first;
-		cfavalid = false;
+		// cfa-cc generates a cast before every constant and many other places, e.g., (int)3, 
+		// so we must use the value from the cast argument, even though we lack any basis for evaluating wraparound effects, etc
+		result = eval(expr->arg);
 	}
 
 	void postvisit( const ast::VariableExpr * expr ) {
+		result.hasKnownValue = false;
+		result.isEvaluableInGCC = false;
 		if ( const ast::EnumInstType * inst = dynamic_cast<const ast::EnumInstType *>(expr->result.get()) ) {
 			if ( const ast::EnumDecl * decl = inst->base ) {
-				if ( decl->valueOf( expr->var, value ) ) { // value filled by valueOf
-					return;
-				}
+				result.isEvaluableInGCC = true;
+				result.hasKnownValue = decl->valueOf( expr->var, result.knownValue ); // result.knownValue filled by valueOf
 			}
 		}
-		valid = false;
 	}
 
 	void postvisit( const ast::ApplicationExpr * expr ) {
 		const ast::DeclWithType * function = ast::getFunction(expr);
-		if ( ! function || function->linkage != ast::Linkage::Intrinsic ) { valid = false; return; }
+		if ( ! function || function->linkage != ast::Linkage::Intrinsic ) { 
+			result.isEvaluableInGCC = false;
+			result.hasKnownValue = false;
+			return;
+		}
 		const std::string & fname = function->name;
 		assertf( expr->args.size() == 1 || expr->args.size() == 2, "Intrinsic function with %zd arguments: %s", expr->args.size(), fname.c_str() );
 
 		if ( expr->args.size() == 1 ) {
 			// pre/postfix operators ++ and -- => assignment, which is not constant
-			std::pair<long long int, bool> arg1;
+			Evaluation arg1;
 			arg1 = eval(expr->args.front());
-			valid &= arg1.second;
-			if ( ! valid ) return;
+			result.isEvaluableInGCC &= arg1.isEvaluableInGCC;
+			if ( ! result.isEvaluableInGCC ) return;
+
+			result.hasKnownValue &= arg1.hasKnownValue;
+			if ( ! result.hasKnownValue ) return;
 
 			if (fname == "+?") {
-				value = arg1.first;
+				result.knownValue = arg1.knownValue;
 			} else if (fname == "-?") {
-				value = -arg1.first;
+				result.knownValue = -arg1.knownValue;
 			} else if (fname == "~?") {
-				value = ~arg1.first;
+				result.knownValue = ~arg1.knownValue;
 			} else if (fname == "!?") {
-				value = ! arg1.first;
+				result.knownValue = ! arg1.knownValue;
 			} else {
-				valid = false;
+				result.isEvaluableInGCC = false;
+				result.hasKnownValue = false;
 			} // if
 		} else { // => expr->args.size() == 2
 			// infix assignment operators => assignment, which is not constant
-			std::pair<long long int, bool> arg1, arg2;
+			Evaluation arg1, arg2;
 			arg1 = eval(expr->args.front());
-			valid &= arg1.second;
-			if ( ! valid ) return;
+			result.isEvaluableInGCC &= arg1.isEvaluableInGCC;
+			if ( ! result.isEvaluableInGCC ) return;
 			arg2 = eval(expr->args.back());
-			valid &= arg2.second;
-			if ( ! valid ) return;
+			result.isEvaluableInGCC &= arg2.isEvaluableInGCC;
+			if ( ! result.isEvaluableInGCC ) return;
+
+			result.hasKnownValue &= arg1.hasKnownValue;
+			result.hasKnownValue &= arg2.hasKnownValue;
+			if ( ! result.hasKnownValue ) return;
 
 			if (fname == "?+?") {
-				value = arg1.first + arg2.first;
+				result.knownValue = arg1.knownValue + arg2.knownValue;
 			} else if (fname == "?-?") {
-				value = arg1.first - arg2.first;
+				result.knownValue = arg1.knownValue - arg2.knownValue;
 			} else if (fname == "?*?") {
-				value = arg1.first * arg2.first;
+				result.knownValue = arg1.knownValue * arg2.knownValue;
 			} else if (fname == "?/?") {
-				if ( arg2.first ) value = arg1.first / arg2.first;
+				if ( arg2.knownValue ) result.knownValue = arg1.knownValue / arg2.knownValue;
 			} else if (fname == "?%?") {
-				if ( arg2.first ) value = arg1.first % arg2.first;
+				if ( arg2.knownValue ) result.knownValue = arg1.knownValue % arg2.knownValue;
 			} else if (fname == "?<<?") {
-				value = arg1.first << arg2.first;
+				result.knownValue = arg1.knownValue << arg2.knownValue;
 			} else if (fname == "?>>?") {
-				value = arg1.first >> arg2.first;
+				result.knownValue = arg1.knownValue >> arg2.knownValue;
 			} else if (fname == "?<?") {
-				value = arg1.first < arg2.first;
+				result.knownValue = arg1.knownValue < arg2.knownValue;
 			} else if (fname == "?>?") {
-				value = arg1.first > arg2.first;
+				result.knownValue = arg1.knownValue > arg2.knownValue;
 			} else if (fname == "?<=?") {
-				value = arg1.first <= arg2.first;
+				result.knownValue = arg1.knownValue <= arg2.knownValue;
 			} else if (fname == "?>=?") {
-				value = arg1.first >= arg2.first;
+				result.knownValue = arg1.knownValue >= arg2.knownValue;
 			} else if (fname == "?==?") {
-				value = arg1.first == arg2.first;
+				result.knownValue = arg1.knownValue == arg2.knownValue;
 			} else if (fname == "?!=?") {
-				value = arg1.first != arg2.first;
+				result.knownValue = arg1.knownValue != arg2.knownValue;
 			} else if (fname == "?&?") {
-				value = arg1.first & arg2.first;
+				result.knownValue = arg1.knownValue & arg2.knownValue;
 			} else if (fname == "?^?") {
-				value = arg1.first ^ arg2.first;
+				result.knownValue = arg1.knownValue ^ arg2.knownValue;
 			} else if (fname == "?|?") {
-				value = arg1.first | arg2.first;
+				result.knownValue = arg1.knownValue | arg2.knownValue;
 			} else {
-				valid = false;
+				result.isEvaluableInGCC = false;
+				result.hasKnownValue = false;
 			}
 		} // if
 		// TODO: implement other intrinsic functions
@@ -262,13 +279,16 @@ std::pair<long long int, bool> eval( const Expression * expr ) {
 	}
 }
 
-std::pair<long long int, bool> eval( const ast::Expr * expr ) {
-	ast::Pass<EvalNew> ev;
+Evaluation eval( const ast::Expr * expr ) {
 	if ( expr ) {
-		expr->accept( ev );
-		return std::make_pair( ev.core.value, ev.core.valid );
+
+		return ast::Pass<EvalNew>::read(expr);
+		// Evaluation ret = ast::Pass<EvalNew>::read(expr);
+		// ret.knownValue = 777;
+		// return ret;
+
 	} else {
-		return std::make_pair( 0, false );
+		return { 0, false, false };
 	}
 }
 

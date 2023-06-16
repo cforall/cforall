@@ -50,7 +50,7 @@ trait basic_ostream {
 	void ends( ostype & );								// end of output statement
 	int fmt( ostype &, const char format[], ... ) __attribute__(( format(printf, 2, 3) ));
 }; // basic_ostream
-	
+
 forall( ostype & | basic_ostream( ostype ) )
 trait ostream {
 	bool fail( ostype & );								// operation failed?
@@ -160,6 +160,16 @@ forall( ostype &, elt_type | writeable( elt_type, ostype ), iterator_type | iter
 
 // *********************************** manipulators ***********************************
 
+struct _Ostream_Flags {
+	unsigned char eng:1;						// engineering notation
+	unsigned char neg:1;						// val is negative
+	unsigned char pc:1;							// precision specified
+	unsigned char left:1;						// left justify
+	unsigned char nobsdp:1;						// base prefix / decimal point
+	unsigned char sign:1;						// plus / minus sign
+	unsigned char pad0:1;						// zero pad
+};
+
 forall( T )
 struct _Ostream_Manip {
 	T val;												// polymorphic base-type
@@ -167,15 +177,7 @@ struct _Ostream_Manip {
 	char base;											// numeric base / floating-point style
 	union {
 		unsigned char all;
-		struct {
-			unsigned char eng:1;						// engineering notation
-			unsigned char neg:1;						// val is negative
-			unsigned char pc:1;							// precision specified
-			unsigned char left:1;						// left justify
-			unsigned char nobsdp:1;						// base prefix / decimal point
-			unsigned char sign:1;						// plus / minus sign
-			unsigned char pad0:1;						// zero pad
-		} flags;
+		_Ostream_Flags flags;
 	};
 }; // _Ostream_Manip
 

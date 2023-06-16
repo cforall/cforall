@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu May 25 15:36:50 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 30 19:02:32 2023
-// Update Count     : 18
+// Last Modified On : Fri Jun  9 14:01:07 2023
+// Update Count     : 68
 // 
 
 #include <thread.hfa>
@@ -28,7 +28,7 @@ union Link {
 	#else
 	int64_t atom;
 	#endif // __SIZEOF_INT128__
-} __attribute__(( aligned( 16 ) ));
+};
 
 struct Node {
 	// resource data
@@ -41,7 +41,8 @@ struct Stack {
 void push( Stack & s, Node & n ) with(s) {
 	n.next = stack;										// atomic assignment unnecessary
 	for () {											// busy wait
-		if ( CASV( stack.atom, n.next.atom, ((Link){ &n, n.next.count + 1 }.atom) ) ) break; // attempt to update top node
+		Link temp{ &n, n.next.count + 1 };
+		if ( CASV( s.stack.atom, n.next.atom, temp.atom ) ) break; // attempt to update top node
 	}
 }
 
@@ -49,20 +50,15 @@ Node * pop( Stack & s ) with(s) {
 	Link t = stack;										// atomic assignment unnecessary
 	for () {											// busy wait
 		if ( t.top == NULL ) return NULL;				// empty stack ?
-		if ( CASV( stack.atom, t.atom, ((Link){ t.top->next.top, t.count }.atom) ) ) return t.top; // attempt to update top node
+		Link temp{ t.top->next.top, t.count };
+		if ( CASV( stack.atom, t.atom, temp.atom ) ) return t.top; // attempt to update top node
 	}
 }
 void ?{}( Stack & s ) with(s) { stack.atom = 0; }
 
 Stack stack;											// global stack
 
-enum { Times =
-	#if defined( __ARM_ARCH )							// ARM CASV is very slow
-	10_000
-	#else
-	1_000_000
-	#endif // __arm_64__
-};
+enum { Times = 2_000_000 };
 
 thread Worker {};
 void main( Worker & w ) {
@@ -81,8 +77,7 @@ int main() {
 	processor p[N - 1];									// add kernel threads
 
 	for ( i; N ) {										// push N values on stack
-		// storage must be 16-bytes aligned for cmpxchg16b
-		push( stack, *(Node *)memalign( 16, sizeof( Node ) ) );
+		push( stack, *(Node *)new() );					// must be 16-byte aligned
 	}
 	{
 		Worker workers[N];								// run test

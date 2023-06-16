@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 26 14:23:51 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb 17 18:04:23 2022
-// Update Count     : 422
+// Last Modified On : Fri Jun  9 11:36:44 2023
+// Update Count     : 423
 //
 
 #include <iostream>
@@ -384,7 +384,8 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 				// strip inappropriate flags with an argument
 
-			} else if ( arg == "-auxbase" || arg == "-auxbase-strip" || arg == "-dumpbase" || arg == "-dumpdir" ) {
+			} else if ( arg == "-auxbase" || arg == "-auxbase-strip" ||
+						arg == "-dumpbase" || arg == "-dumpbase-ext" || arg == "-dumpdir" ) {
 				i += 1;
 				#ifdef __DEBUG_H__
 				cerr << "arg:\"" << argv[i] << "\"" << endl;

@@ -1,0 +1,47 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// eval.cfa -- tests of static expression evaluation inside cfacc
+//
+// Author           : Michael Brooks
+// Created On       : Tue Jun 13 15:00:00 2023
+// Last Modified By : Michael Brooks
+// Last Modified On : Tue Jun 13 15:00:00 2023
+// Update Count     : 1
+//
+
+// Tests that target specific cases of `eval`, of Common/Eval.h.
+// So logically unit tests, but driven inderctly though the usual rig.
+
+#ifndef __cforall
+int printf(const char *, ...);
+#endif
+
+// A bug found and fixed with eval of sizeof.
+// Driving it through the black-box rig was a matter of reverse engineering.
+// Seen failing on rev 576aad.
+// White-box relevance:
+// - Initializer of `a`, which is `{1, 2, 3}` checks its element expressions
+//   (e.g. `2`) against the type being initialized (`int[bar]`) to see if a
+//   `2` makes sense here.
+// - Understanding this type evaluates the index expression `bar`, whose
+//   value comes from a sizeof expression.  General sizeof expressions are
+//   unknown to cfacc, because C's implementation-specific rules affect
+//   struct layout.
+// - When the bug was observed, this evaluation was returning "known to be 0".
+//   If the array's size were zero, the intializer would be invalid.  So a
+//   buggy cfacc rejects this program.
+// GCC accepts this program.
+void test_sizeof_1() {
+    struct foo { int x; };
+    enum { bar = sizeof(struct foo) };
+    int a[bar] = {1, 2, 3};
+}
+
+int main() {
+    test_sizeof_1();
+    printf("Done\n");
+}

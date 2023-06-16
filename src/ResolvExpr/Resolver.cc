@@ -1340,12 +1340,12 @@ namespace ResolvExpr {
 
 					auto mutAttr = mutate(attr);
 					mutAttr->params.front() = resolved;
-					if (! result.second) {
+					if (! result.hasKnownValue) {
 						SemanticWarning(loc, Warning::GccAttributes,
 							toCString( name, " priorities must be integers from 0 to 65535 inclusive: ", arg ) );
 					}
 					else {
-						auto priority = result.first;
+						auto priority = result.knownValue;
 						if (priority < 101) {
 							SemanticWarning(loc, Warning::GccAttributes,
 								toCString( name, " priorities from 0 to 100 are reserved for the implementation" ) );

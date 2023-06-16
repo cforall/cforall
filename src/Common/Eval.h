@@ -22,10 +22,16 @@ namespace ast {
 	class Expr;
 }
 
+struct Evaluation {
+	long long int knownValue;
+	bool hasKnownValue;
+	bool isEvaluableInGCC;
+};
+
 /// Evaluates expr as a long long int.
 /// If second is false, expr could not be evaluated.
 std::pair<long long int, bool> eval(const Expression * expr);
-std::pair<long long int, bool> eval(const ast::Expr * expr);
+Evaluation eval(const ast::Expr * expr);
 
 // Local Variables: //
 // tab-width: 4 //

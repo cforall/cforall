@@ -198,11 +198,14 @@ forall( T &) {
 }
 
 forall( T & )
+struct LinkData {
+	T * volatile top;								// pointer to stack top
+	uintptr_t count;								// count each push
+};
+
+forall( T & )
 union Link {
-	struct {											// 32/64-bit x 2
-		T * volatile top;								// pointer to stack top
-		uintptr_t count;								// count each push
-	};
+	LinkData(T) data;
 	#if __SIZEOF_INT128__ == 16
 	__int128											// gcc, 128-bit integer
 	#else
@@ -219,32 +222,35 @@ forall( T | sized(T) | { Link(T) * ?`next( T * ); } ) {
 	static inline {
 		void ?{}( StackLF(T) & this ) with(this) { stack.atom = 0; }
 
-		T * top( StackLF(T) & this ) with(this) { return stack.top; }
+		T * top( StackLF(T) & this ) with(this) { return stack.data.top; }
 
 		void push( StackLF(T) & this, T & n ) with(this) {
 			*( &n )`next = stack;						// atomic assignment unnecessary, or use CAA
 			for () {									// busy wait
-			  if ( __atomic_compare_exchange_n( &stack.atom, &( &n )`next->atom, (Link(T))@{ {&n, ( &n )`next->count + 1} }.atom, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) break; // attempt to update top node
+				if ( __atomic_compare_exchange_n( &stack.atom, &( &n )`next->atom, (Link(T))@{ (LinkData(T))@{ &n, ( &n )`next->data.count + 1} }.atom, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) break; // attempt to update top node
 			} // for
 		} // push
 
 		T * pop( StackLF(T) & this ) with(this) {
 			Link(T) t @= stack;							// atomic assignment unnecessary, or use CAA
 			for () {									// busy wait
-			  if ( t.top == 0p ) return 0p;				// empty stack ?
-			  if ( __atomic_compare_exchange_n( &stack.atom, &t.atom, (Link(T))@{ {( t.top )`next->top, t.count} }.atom, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) return t.top; // attempt to update top node
+				if ( t.data.top == 0p ) return 0p;				// empty stack ?
+				Link(T) * next = ( t.data.top )`next;
+				if ( __atomic_compare_exchange_n( &stack.atom, &t.atom, (Link(T))@{ (LinkData(T))@{ next->data.top, t.data.count } }.atom, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) return t.data.top; // attempt to update top node
 			} // for
 		} // pop
 
 		bool unsafe_remove( StackLF(T) & this, T * node ) with(this) {
 			Link(T) * link = &stack;
-			for() {
-				T * next = link->top;
-				if( next == node ) {
-					link->top = ( node )`next->top;
+			for () {
+				// TODO: Avoiding some problems with double fields access.
+				LinkData(T) * data = &link->data;
+				T * next = (T *)&(*data).top;
+				if ( next == node ) {
+					data->top = ( node )`next->data.top;
 					return true;
 				}
-				if( next == 0p ) return false;
+				if ( next == 0p ) return false;
 				link = ( next )`next;
 			}
 		}

@@ -17,8 +17,10 @@
 
 #include <sstream>
 
+#include "AST/DeclReplacer.hpp"
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
+#include "AST/Vector.hpp"
 
 namespace Validate {
 
@@ -50,6 +52,8 @@ private:
 	AggrDecl const * preAggregate( AggrDecl const * );
 	template<typename AggrDecl>
 	AggrDecl const * postAggregate( AggrDecl const * );
+	template<typename InstType>
+	InstType const * preCollectionInstType( InstType const * type );
 
 	ast::AggregateDecl const * parent = nullptr;
 };
@@ -67,17 +71,35 @@ std::string qualifiedName( ast::AggregateDecl const * decl ) {
 	return ss.str();
 }
 
+void extendParams( ast::vector<ast::TypeDecl> & dstParams,
+		ast::vector<ast::TypeDecl> const & srcParams ) {
+	if ( srcParams.empty() ) return;
+
+	ast::DeclReplacer::TypeMap newToOld;
+	ast::vector<ast::TypeDecl> params;
+	for ( ast::ptr<ast::TypeDecl> const & srcParam : srcParams ) {
+		ast::TypeDecl * dstParam = ast::deepCopy( srcParam.get() );
+		dstParam->init = nullptr;
+		newToOld.emplace( srcParam, dstParam );
+		for ( auto assertion : dstParam->assertions ) {
+			assertion = ast::DeclReplacer::replace( assertion, newToOld );
+		}
+		params.emplace_back( dstParam );
+	}
+	spliceBegin( dstParams, params );
+}
+
 template<typename AggrDecl>
 AggrDecl const * HoistStructCore::preAggregate( AggrDecl const * decl ) {
 	if ( parent ) {
 		auto mut = ast::mutate( decl );
 		mut->parent = parent;
 		mut->name = qualifiedName( mut );
-		return mut;
-	} else {
-		GuardValue( parent ) = decl;
-		return decl;
+		extendParams( mut->params, parent->params );
+		decl = mut;
 	}
+	GuardValue( parent ) = decl;
+	return decl;
 }
 
 template<typename AggrDecl>
@@ -111,6 +133,38 @@ ast::UnionDecl const * HoistStructCore::postvisit( ast::UnionDecl const * decl )
 	return postAggregate( decl );
 }
 
+ast::AggregateDecl const * commonParent(
+		ast::AggregateDecl const * lhs, ast::AggregateDecl const * rhs ) {
+	for ( auto outer = lhs ; outer ; outer = outer->parent ) {
+		for ( auto inner = rhs ; inner ; inner = inner->parent ) {
+			if ( outer == inner ) {
+				return outer;
+			}
+		}
+	}
+	return nullptr;
+}
+
+template<typename InstType>
+InstType const * HoistStructCore::preCollectionInstType( InstType const * type ) {
+    if ( !type->base->parent ) return type;
+    if ( type->base->params.empty() ) return type;
+
+    InstType * mut = ast::mutate( type );
+    ast::AggregateDecl const * parent =
+        commonParent( this->parent, mut->base->parent );
+    assert( parent );
+
+    std::vector<ast::ptr<ast::Expr>> args;
+    for ( const ast::ptr<ast::TypeDecl> & param : parent->params ) {
+        args.emplace_back( new ast::TypeExpr( param->location,
+            new ast::TypeInstType( param )
+        ) );
+    }
+    spliceBegin( mut->params, args );
+    return mut;
+}
+
 template<typename InstType>
 InstType const * preInstType( InstType const * type ) {
 	assert( type->base );
@@ -120,11 +174,11 @@ InstType const * preInstType( InstType const * type ) {
 }
 
 ast::StructInstType const * HoistStructCore::previsit( ast::StructInstType const * type ) {
-	return preInstType( type );
+	return preInstType( preCollectionInstType( type ) );
 }
 
 ast::UnionInstType const * HoistStructCore::previsit( ast::UnionInstType const * type ) {
-	return preInstType( type );
+	return preInstType( preCollectionInstType( type ) );
 }
 
 ast::EnumInstType const * HoistStructCore::previsit( ast::EnumInstType const * type ) {

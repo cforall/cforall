@@ -1,6 +1,7 @@
 #include <select.hfa>
 #include <thread.hfa>
 #include <locks.hfa>
+#include <fstream.hfa>
 #include <mutex_stmt.hfa>
 
 multiple_acquisition_lock A;

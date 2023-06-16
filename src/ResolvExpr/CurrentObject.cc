@@ -688,7 +688,8 @@ namespace ast {
 			// cast expressions
 
 			auto arg = eval( expr );
-			index = arg.first;
+			assertf( arg.hasKnownValue, "Non-evaluable expression made it to IndexIterator" );
+			index = arg.knownValue;
 
 			// if ( auto constExpr = dynamic_cast< const ConstantExpr * >( expr ) ) {
 			// 	try {
@@ -727,10 +728,10 @@ namespace ast {
 
 		size_t getSize( const Expr * expr ) {
 			auto res = eval( expr );
-			if ( !res.second ) {
+			if ( !res.hasKnownValue ) {
 				SemanticError( location, toString( "Array designator must be a constant expression: ", expr ) );
 			}
-			return res.first;
+			return res.knownValue;
 		}
 
 	public:
