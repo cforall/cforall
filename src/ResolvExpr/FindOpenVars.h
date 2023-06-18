@@ -32,7 +32,7 @@ namespace ResolvExpr {
 	// Updates open and closed variables and their associated assertions
 	void findOpenVars( 
 		const ast::Type * type, ast::OpenVarSet & open, ast::OpenVarSet & closed, 
-		ast::AssertionSet & need, ast::AssertionSet & have, FirstMode firstIsOpen );
+		ast::AssertionSet & need, ast::AssertionSet & have, ast::TypeEnvironment & env, FirstMode firstIsOpen );
 } // namespace ResolvExpr
 
 // Local Variables: //

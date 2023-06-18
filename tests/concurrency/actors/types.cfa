@@ -71,7 +71,7 @@ int main( int argc, char * argv[] ) {
     d_msg b, c;
     b.num = 1;
     c.num = 2;
-    a << b << c;
+    a | b | c;
     stop_actor_system();
 
     printf("same message and different actors test\n");
@@ -79,8 +79,8 @@ int main( int argc, char * argv[] ) {
     derived_actor2 d_ac2_0, d_ac2_1;
     d_msg d_ac2_msg;
     d_ac2_msg.num = 3;
-    d_ac2_0 << d_ac2_msg;
-    d_ac2_1 << d_ac2_msg;
+    d_ac2_0 | d_ac2_msg;
+    d_ac2_1 | d_ac2_msg;
     stop_actor_system();
 
     
@@ -92,8 +92,8 @@ int main( int argc, char * argv[] ) {
         derived_actor3 d_ac3_0;
         d_msg d_ac23_msg;
         d_ac23_msg.num = 4;
-        d_ac3_0 << d_ac23_msg;
-        d_ac2_2 << d_ac23_msg;
+        d_ac3_0 | d_ac23_msg;
+        d_ac2_2 | d_ac23_msg;
         stop_actor_system();
     } // RAII to clean up executor
 
@@ -106,7 +106,7 @@ int main( int argc, char * argv[] ) {
         d_msg2 c2;
         b1.num = -1;
         c2.num = 5;
-        a3 << b1 << c2;
+        a3 | b1 | c2;
         stop_actor_system();
     } // RAII to clean up executor
 
@@ -119,7 +119,7 @@ int main( int argc, char * argv[] ) {
         d_msg2 c2;
         b1.num = -1;
         c2.num = 5;
-        a4 << b1 << c2;
+        a4 | b1 | c2;
         stop_actor_system();
     } // RAII to clean up executor
 

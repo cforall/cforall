@@ -15,6 +15,7 @@
 
 #include "SatisfyAssertions.hpp"
 
+#include <iostream>
 #include <algorithm>
 #include <cassert>
 #include <sstream>
@@ -44,6 +45,8 @@
 #include "GenPoly/GenPoly.h"
 #include "SymTab/Mangler.h"
 
+
+
 namespace ResolvExpr {
 
 // in CandidateFinder.cpp; unique ID for assertion satisfaction
@@ -64,7 +67,11 @@ namespace {
 			const ast::SymbolTable::IdData c, const ast::Type * at, ast::TypeEnvironment && e,
 			ast::AssertionSet && h, ast::AssertionSet && n, ast::OpenVarSet && o, ast::UniqueId rs )
 		: cdata( c ), adjType( at ), env( std::move( e ) ), have( std::move( h ) ),
-		  need( std::move( n ) ), open( std::move( o ) ), resnSlot( rs ) {}
+		  need( std::move( n ) ), open( std::move( o ) ), resnSlot( rs ) {
+			if (!have.empty()) {
+				// std::cerr << c.id->location << ':' << c.id->name << std::endl; // I think this was debugging code so I commented it
+			}
+		  }
 	};
 
 	/// List of assertion satisfaction candidates
@@ -138,12 +145,7 @@ namespace {
 		  { costs.emplace_back( Cost::zero ); }
 	};
 
-	/// Adds a captured assertion to the symbol table
-	void addToSymbolTable( const ast::AssertionSet & have, ast::SymbolTable & symtab ) {
-		for ( auto & i : have ) {
-			if ( i.second.isUsed ) { symtab.addId( i.first->var ); }
-		}
-	}
+	enum AssertionResult {Fail, Skip, Success} ;
 
 	/// Binds a single assertion, updating satisfaction state
 	void bindAssertion(
@@ -154,7 +156,7 @@ namespace {
 		assertf( candidate->uniqueId,
 			"Assertion candidate does not have a unique ID: %s", toString( candidate ).c_str() );
 
-		ast::Expr * varExpr = match.cdata.combine( cand->expr->location, cand->cvtCost );
+		ast::Expr * varExpr = match.cdata.combine( cand->expr->location, cand->cost );
 		varExpr->result = match.adjType;
 		if ( match.resnSlot ) { varExpr->inferred.resnSlots().emplace_back( match.resnSlot ); }
 
@@ -164,12 +166,15 @@ namespace {
 	}
 
 	/// Satisfy a single assertion
-	bool satisfyAssertion( ast::AssertionList::value_type & assn, SatState & sat, bool allowConversion = false, bool skipUnbound = false) {
+	AssertionResult satisfyAssertion( ast::AssertionList::value_type & assn, SatState & sat, bool skipUnbound = false) {
 		// skip unused assertions
-		if ( ! assn.second.isUsed ) return true;
+		// static unsigned int cnt = 0; // I think this was debugging code so I commented it
+		if ( ! assn.second.isUsed ) return AssertionResult::Success;
+
+		// if (assn.first->var->name[1] == '|') std::cerr << ++cnt << std::endl; // I think this was debugging code so I commented it
 
 		// find candidates that unify with the desired type
-		AssnCandidateList matches;
+		AssnCandidateList matches, inexactMatches;
 
 		std::vector<ast::SymbolTable::IdData> candidates;
 		auto kind = ast::SymbolTable::getSpecialFunctionKind(assn.first->var->name);
@@ -178,12 +183,17 @@ namespace {
 			ast::ptr<ast::Type> thisArgType = assn.first->result.strict_as<ast::PointerType>()->base
 				.strict_as<ast::FunctionType>()->params[0]
 				.strict_as<ast::ReferenceType>()->base;
-			sat.cand->env.apply(thisArgType);
+			// sat.cand->env.apply(thisArgType);
+
+			if (auto inst = thisArgType.as<ast::TypeInstType>()) {
+				auto cls = sat.cand->env.lookup(*inst);
+				if (cls && cls->bound) thisArgType = cls->bound;
+			}
 
 			std::string otypeKey = "";
 			if (thisArgType.as<ast::PointerType>()) otypeKey = Mangle::Encoding::pointer;
 			else if (!isUnboundType(thisArgType)) otypeKey = Mangle::mangle(thisArgType, Mangle::Type | Mangle::NoGenericParams);
-			else if (skipUnbound) return false;
+			else if (skipUnbound) return AssertionResult::Skip;
 
 			candidates = sat.symtab.specialLookupId(kind, otypeKey);
 		}
@@ -211,9 +221,26 @@ namespace {
 			// only keep candidates which unify
 
 			ast::OpenVarSet closed;
-			findOpenVars( toType, newOpen, closed, newNeed, have, FirstClosed );
-			findOpenVars( adjType, newOpen, closed, newNeed, have, FirstOpen );
-			if ( allowConversion ) {
+			// findOpenVars( toType, newOpen, closed, newNeed, have, FirstClosed );
+			findOpenVars( adjType, newOpen, closed, newNeed, have, newEnv, FirstOpen );
+			ast::TypeEnvironment tempNewEnv {newEnv};
+
+			if ( unifyExact( toType, adjType, tempNewEnv, newNeed, have, newOpen, WidenMode {true, true} ) ) {
+				// set up binding slot for recursive assertions
+				ast::UniqueId crntResnSlot = 0;
+				if ( ! newNeed.empty() ) {
+					crntResnSlot = ++globalResnSlot;
+					for ( auto & a : newNeed ) { a.second.resnSlot = crntResnSlot; }
+				}
+
+				matches.emplace_back(
+					cdata, adjType, std::move( tempNewEnv ), std::move( have ), std::move( newNeed ),
+					std::move( newOpen ), crntResnSlot );
+			}
+			else if ( matches.empty() ) {
+				// restore invalidated env
+				// newEnv = sat.cand->env;
+				// newNeed.clear();
 				if ( auto c = commonType( toType, adjType, newEnv, newNeed, have, newOpen, WidenMode {true, true} ) ) {
 					// set up binding slot for recursive assertions
 					ast::UniqueId crntResnSlot = 0;
@@ -222,21 +249,7 @@ namespace {
 						for ( auto & a : newNeed ) { a.second.resnSlot = crntResnSlot; }
 					}
 
-					matches.emplace_back(
-						cdata, adjType, std::move( newEnv ), std::move( have ), std::move( newNeed ),
-						std::move( newOpen ), crntResnSlot );
-				}
-			}
-			else {
-				if ( unifyExact( toType, adjType, newEnv, newNeed, have, newOpen, WidenMode {true, true} ) ) {
-					// set up binding slot for recursive assertions
-					ast::UniqueId crntResnSlot = 0;
-					if ( ! newNeed.empty() ) {
-						crntResnSlot = ++globalResnSlot;
-						for ( auto & a : newNeed ) { a.second.resnSlot = crntResnSlot; }
-					}
-
-					matches.emplace_back(
+					inexactMatches.emplace_back(
 						cdata, adjType, std::move( newEnv ), std::move( have ), std::move( newNeed ),
 						std::move( newOpen ), crntResnSlot );
 				}
@@ -244,23 +257,24 @@ namespace {
 		}
 
 		// break if no satisfying match
-		if ( matches.empty() ) return false;
+		if ( matches.empty() ) matches = std::move(inexactMatches);
+		if ( matches.empty() ) return AssertionResult::Fail;
 
 		// defer if too many satisfying matches
 		if ( matches.size() > 1 ) {
 			sat.deferred.emplace_back( assn.first, assn.second, std::move( matches ) );
-			return true;
+			return AssertionResult::Success;
 		}
 
 		// otherwise bind unique match in ongoing scope
 		AssnCandidate & match = matches.front();
-		addToSymbolTable( match.have, sat.symtab );
+		// addToSymbolTable( match.have, sat.symtab );
 		sat.newNeed.insert( match.need.begin(), match.need.end() );
 		sat.cand->env = std::move( match.env );
 		sat.cand->open = std::move( match.open );
 
 		bindAssertion( assn.first, assn.second, sat.cand, match, sat.inferred );
-		return true;
+		return AssertionResult::Success;
 	}
 
 	/// Map of candidate return types to recursive assertion satisfaction costs
@@ -437,7 +451,6 @@ void satisfyAssertions(
 	for ( unsigned level = 0; level < recursionLimit; ++level ) {
 		// for each current mutually-compatible set of assertions
 		for ( SatState & sat : sats ) {
-			bool allowConversion = false;
 			// stop this branch if a better option is already found
 			auto it = thresholds.find( pruneKey( *sat.cand ) );
 			if ( it != thresholds.end() && it->second < sat.costs ) goto nextSat;
@@ -446,37 +459,30 @@ void satisfyAssertions(
 
 			for (unsigned resetCount = 0; ; ++resetCount) {
 				ast::AssertionList next;
-				resetTyVarRenaming();
 				// make initial pass at matching assertions
 				for ( auto & assn : sat.need ) {
+					resetTyVarRenaming();
 					// fail early if any assertion is not satisfiable
-					if ( ! satisfyAssertion( assn, sat, allowConversion, !next.empty() ) ) {
+					auto result = satisfyAssertion( assn, sat, !next.empty() );
+					if ( result == AssertionResult::Fail ) {
+						Indenter tabs{ 3 };
+						std::ostringstream ss;
+						ss << tabs << "Unsatisfiable alternative:\n";
+						print( ss, *sat.cand, ++tabs );
+						ss << (tabs-1) << "Could not satisfy assertion:\n";
+						ast::print( ss, assn.first, tabs );
+
+						errors.emplace_back( ss.str() );
+						goto nextSat;
+					}
+					else if ( result == AssertionResult::Skip ) {
 						next.emplace_back(assn);
 						// goto nextSat;
 					}
 				}
 				// success
 				if (next.empty()) break;
-				// fail if nothing resolves
-				else if (next.size() == sat.need.size()) {
-					if (allowConversion) {
-						Indenter tabs{ 3 };
-						std::ostringstream ss;
-						ss << tabs << "Unsatisfiable alternative:\n";
-						print( ss, *sat.cand, ++tabs );
-						ss << (tabs-1) << "Could not satisfy assertion:\n";
-						ast::print( ss, next[0].first, tabs );
 
-						errors.emplace_back( ss.str() );
-						goto nextSat;
-					}
-
-					else {
-						allowConversion = true;
-						continue;
-					}
-				}
-				allowConversion = false;
 				sat.need = std::move(next);
 			}
 
@@ -530,7 +536,7 @@ void satisfyAssertions(
 					CandidateRef nextCand = std::make_shared<Candidate>(
 						sat.cand->expr, std::move( compat.env ), std::move( compat.open ),
 						ast::AssertionSet{} /* need moved into satisfaction state */,
-						sat.cand->cost, sat.cand->cvtCost );
+						sat.cand->cost );
 
 					ast::AssertionSet nextNewNeed{ sat.newNeed };
 					InferCache nextInferred{ sat.inferred };
@@ -543,7 +549,7 @@ void satisfyAssertions(
 					// add compatible assertions to new satisfaction state
 					for ( DeferRef r : compat.assns ) {
 						AssnCandidate match = r.match;
-						addToSymbolTable( match.have, nextSymtab );
+						// addToSymbolTable( match.have, nextSymtab );
 						nextNewNeed.insert( match.need.begin(), match.need.end() );
 
 						bindAssertion( r.expr, r.info, nextCand, match, nextInferred );

@@ -696,6 +696,8 @@ namespace ResolvExpr {
 		void postvisit( const ast::BasicType * basic ) {
 			if ( auto basic2 = dynamic_cast< const ast::BasicType * >( type2 ) ) {
 				#warning remove casts when `commonTypes` moved to new AST
+				
+				/*
 				ast::BasicType::Kind kind = (ast::BasicType::Kind)(int)commonTypes[ (BasicType::Kind)(int)basic->kind ][ (BasicType::Kind)(int)basic2->kind ];
 				if (
 					( ( kind == basic->kind && basic->qualifiers >= basic2->qualifiers )
@@ -705,19 +707,34 @@ namespace ResolvExpr {
 				) {
 					result = new ast::BasicType{ kind, basic->qualifiers | basic2->qualifiers };
 				}
+				*/
+				ast::BasicType::Kind kind;
+				if (basic->kind != basic2->kind && !widen.first && !widen.second) return;
+				else if (!widen.first) kind = basic->kind; // widen.second
+				else if (!widen.second) kind = basic2->kind;
+				else kind = (ast::BasicType::Kind)(int)commonTypes[ (BasicType::Kind)(int)basic->kind ][ (BasicType::Kind)(int)basic2->kind ];
+				// xxx - what does qualifiers even do here??
+				if ( (basic->qualifiers >= basic2->qualifiers || widen.first)
+					&& (basic->qualifiers <= basic2->qualifiers || widen.second) ) {
+					result = new ast::BasicType{ kind, basic->qualifiers | basic2->qualifiers };
+				}
+				
 			} else if (
 				dynamic_cast< const ast::ZeroType * >( type2 )
 				|| dynamic_cast< const ast::OneType * >( type2 )
 			) {
 				#warning remove casts when `commonTypes` moved to new AST
 				ast::BasicType::Kind kind = (ast::BasicType::Kind)(int)commonTypes[ (BasicType::Kind)(int)basic->kind ][ (BasicType::Kind)(int)ast::BasicType::SignedInt ];
-				if (
-					( ( kind == basic->kind && basic->qualifiers >= type2->qualifiers )
+				/*
+				if ( // xxx - what does qualifier even do here??
+					( ( basic->qualifiers >= type2->qualifiers )
 						|| widen.first )
-					&& ( ( kind != basic->kind && basic->qualifiers <= type2->qualifiers )
+					 && ( ( /* kind != basic->kind && basic->qualifiers <= type2->qualifiers )
 						|| widen.second )
-				) {
-					result = new ast::BasicType{ kind, basic->qualifiers | type2->qualifiers };
+				) 
+				*/
+				if (widen.second) {
+					result = new ast::BasicType{ basic->kind, basic->qualifiers | type2->qualifiers };
 				}
 			} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( type2 ) ) {
 				#warning remove casts when `commonTypes` moved to new AST
@@ -745,6 +762,7 @@ namespace ResolvExpr {
 			if ( auto var = dynamic_cast< const ast::TypeInstType * >( base ) ) {
 				auto entry = open.find( *var );
 				if ( entry != open.end() ) {
+				// if (tenv.lookup(*var)) {
 					ast::AssertionSet need, have;
 					if ( ! tenv.bindVar(
 						var, voidPtr->base, entry->second, need, have, open, widen )

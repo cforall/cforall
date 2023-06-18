@@ -366,13 +366,13 @@ static inline {
 	unsigned long int random( unsigned long int l, unsigned long int u ) { if ( u < l ) [u, l] = [l, u]; return lrand48() % (u - l + 1) + l; } // [l,u]
 
 	char random( void ) { return (unsigned long int)random(); }
-	char random( char u ) { return random( (unsigned long int)u ); } // [0,u)
+	char random( char u ) { return (unsigned long int)random( (unsigned long int)u ); } // [0,u)
 	char random( char l, char u ) { return random( (unsigned long int)l, (unsigned long int)u ); } // [l,u)
 	int random( void ) { return (long int)random(); }
-	int random( int u ) { return random( (long int)u ); } // [0,u]
+	int random( int u ) { return (long int)random( (long int)u ); } // [0,u]
 	int random( int l, int u ) { return random( (long int)l, (long int)u ); } // [l,u)
 	unsigned int random( void ) { return (unsigned long int)random(); }
-	unsigned int random( unsigned int u ) { return random( (unsigned long int)u ); } // [0,u]
+	unsigned int random( unsigned int u ) { return (unsigned long int)random( (unsigned long int)u ); } // [0,u]
 	unsigned int random( unsigned int l, unsigned int u ) { return random( (unsigned long int)l, (unsigned long int)u ); } // [l,u)
 } // distribution
 

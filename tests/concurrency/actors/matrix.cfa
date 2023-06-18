@@ -104,7 +104,7 @@ int main( int argc, char * argv[] ) {
 	} // for
 
 	for ( unsigned int r = 0; r < xr; r += 1 ) {
-		actors[r] << messages[r];
+		actors[r] | messages[r];
 	} // for
 
     printf("stopping\n");

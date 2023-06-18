@@ -40,7 +40,7 @@ int main() {
         d_actor da;
         d_msg * dm = alloc();
         (*dm){ 42, 2423 };
-        da << *dm;
+        da | *dm;
         stop_actor_system();                                // waits until actors finish
     }
     {
@@ -51,7 +51,7 @@ int main() {
         msg_wrapper * mw = &dm;
         message * mg = &dm;
         virtual_dtor * v = &dm;
-        da << dm;
+        da | dm;
         stop_actor_system();                                // waits until actors finish
     }
 }

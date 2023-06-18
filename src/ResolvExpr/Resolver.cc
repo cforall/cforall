@@ -1010,6 +1010,7 @@ namespace ResolvExpr {
 			++recursion_level;
 			ast::TypeEnvironment env;
 			CandidateFinder finder( context, env );
+			finder.allowVoid = true;
 			finder.find( untyped, recursion_level == 1 ? mode.atTopLevel() : mode );
 			--recursion_level;
 
@@ -1053,7 +1054,7 @@ namespace ResolvExpr {
 			}
 
 			// promote candidate.cvtCost to .cost
-			promoteCvtCost( winners );
+			// promoteCvtCost( winners );
 
 			// produce ambiguous errors, if applicable
 			if ( winners.size() != 1 ) {

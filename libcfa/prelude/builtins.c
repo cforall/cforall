@@ -148,11 +148,11 @@ static inline {
 	return x * op
 
 static inline {
-	long int ?\?( int x, unsigned int y ) { __CFA_EXP__(); }
+	int ?\?( int x, unsigned int y ) { __CFA_EXP__(); }
 	long int ?\?( long int x, unsigned long int y ) { __CFA_EXP__(); }
 	long long int ?\?( long long int x, unsigned long long int y ) { __CFA_EXP__(); }
 	// unsigned computation may be faster and larger
-	unsigned long int ?\?( unsigned int x, unsigned int y ) { __CFA_EXP__(); }
+	unsigned int ?\?( unsigned int x, unsigned int y ) { __CFA_EXP__(); }
 	unsigned long int ?\?( unsigned long int x, unsigned long int y ) { __CFA_EXP__(); }
 	unsigned long long int ?\?( unsigned long long int x, unsigned long long int y ) { __CFA_EXP__(); }
 } // distribution
@@ -175,10 +175,10 @@ static inline forall( OT | { void ?{}( OT & this, one_t ); OT ?*?( OT, OT ); } )
 #undef __CFA_EXP_OVERFLOW__
 
 static inline {
-	long int ?\=?( int & x, unsigned int y ) { x = x \ y; return x; }
+	int ?\=?( int & x, unsigned int y ) { x = x \ y; return x; }
 	long int ?\=?( long int & x, unsigned long int y ) { x = x \ y; return x; }
 	long long int ?\=?( long long int & x, unsigned long long int y ) { x = x \ y; return x; }
-	unsigned long int ?\=?( unsigned int & x, unsigned int y ) { x = x \ y; return x; }
+	unsigned int ?\=?( unsigned int & x, unsigned int y ) { x = x \ y; return x; }
 	unsigned long int ?\=?( unsigned long int & x, unsigned long int y ) { x = x \ y; return x; }
 	unsigned long long int ?\=?( unsigned long long int & x, unsigned long long int y ) { x = x \ y; return x; }
 } // distribution

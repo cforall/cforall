@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:25:39 2023
-// Update Count     : 410
+// Last Modified On : Thu Jun 15 22:34:31 2023
+// Update Count     : 411
 //
 
 #pragma once
@@ -67,7 +67,7 @@ trait ostream {
 // }; // writeable
 
 forall( T, ostype & | ostream( ostype ) )
-	trait writeable {
+trait writeable {
 	ostype & ?|?( ostype &, T );
 }; // writeable
 
@@ -161,13 +161,13 @@ forall( ostype &, elt_type | writeable( elt_type, ostype ), iterator_type | iter
 // *********************************** manipulators ***********************************
 
 struct _Ostream_Flags {
-	unsigned char eng:1;						// engineering notation
-	unsigned char neg:1;						// val is negative
-	unsigned char pc:1;							// precision specified
-	unsigned char left:1;						// left justify
-	unsigned char nobsdp:1;						// base prefix / decimal point
-	unsigned char sign:1;						// plus / minus sign
-	unsigned char pad0:1;						// zero pad
+	unsigned char eng:1;								// engineering notation
+	unsigned char neg:1;								// val is negative
+	unsigned char pc:1;									// precision specified
+	unsigned char left:1;								// left justify
+	unsigned char nobsdp:1;								// base prefix / decimal point
+	unsigned char sign:1;								// plus / minus sign
+	unsigned char pad0:1;								// zero pad
 };
 
 forall( T )

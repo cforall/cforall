@@ -142,7 +142,7 @@ void stayValidTests() {
     // that made it bigger
     assert( v`capacity >  5 && v`length == 5 );
 
-    v[2] = -0.1;  // v is [0.0, 98.6, -0.1, 0.2, 0.3]; iter at -0.1, where only the new memory had that change
+    v[2] = -0.1f;  // v is [0.0, 98.6, -0.1, 0.2, 0.3]; iter at -0.1, where only the new memory had that change
 
     float val3 = iter`val;
     printf("after, physical: %f\n", val3);

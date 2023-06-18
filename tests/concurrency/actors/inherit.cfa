@@ -37,8 +37,8 @@ int main() {
         (*s){};
         Server2 * s2 = alloc();
         (*s2){};
-        *s << *dm;
-        *s2 << *dm2;
+        *s | *dm;
+        *s2 | *dm2;
         stop_actor_system();
     }
     {
@@ -48,8 +48,8 @@ int main() {
         (*dm){};
         D_msg2 * dm2 = alloc();
         (*dm2){};
-        s[0] << *dm;
-        s[1] << *dm2;
+        s[0] | *dm;
+        s[1] | *dm2;
         stop_actor_system();
     }
     sout | "Finished";

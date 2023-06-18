@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Thr Apr 20 11:46:00 2023
-// Update Count     : 1393
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Jun 17 14:41:48 2023
+// Update Count     : 1405
 //
 
 #include "DeclarationNode.h"
@@ -458,8 +458,7 @@ DeclarationNode * DeclarationNode::newAttribute( const string * name, Expression
 	newnode->type = nullptr;
 	std::vector<ast::ptr<ast::Expr>> exprs;
 	buildList( expr, exprs );
-	newnode->attributes.push_back(
-		new ast::Attribute( *name, std::move( exprs ) ) );
+	newnode->attributes.push_back( new ast::Attribute( *name, std::move( exprs ) ) );
 	delete name;
 	return newnode;
 }
@@ -632,24 +631,28 @@ static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 				if ( dst->basictype == DeclarationNode::NoBasicType ) {
 					dst->basictype = src->basictype;
 				} else if ( src->basictype != DeclarationNode::NoBasicType )
-					SemanticError( yylloc, src, string( "conflicting type specifier " ) + DeclarationNode::basicTypeNames[ src->basictype ] + " in type: " );
+					SemanticError( yylloc, string( "multiple declaration types \"" ) + DeclarationNode::basicTypeNames[ dst->basictype ] +
+								   "\" and \"" + DeclarationNode::basicTypeNames[ src->basictype ] + "\"." );
 
 				if ( dst->complextype == DeclarationNode::NoComplexType ) {
 					dst->complextype = src->complextype;
 				} else if ( src->complextype != DeclarationNode::NoComplexType )
-					SemanticError( yylloc, src, string( "conflicting type specifier " ) + DeclarationNode::complexTypeNames[ src->complextype ] + " in type: " );
+					SemanticError( yylloc, string( "multiple declaration types \"" ) + DeclarationNode::complexTypeNames[ src->complextype ] +
+								   "\" and \"" + DeclarationNode::complexTypeNames[ src->complextype ] + "\"." );
 
 				if ( dst->signedness == DeclarationNode::NoSignedness ) {
 					dst->signedness = src->signedness;
 				} else if ( src->signedness != DeclarationNode::NoSignedness )
-					SemanticError( yylloc, src, string( "conflicting type specifier " ) + DeclarationNode::signednessNames[ src->signedness ] + " in type: " );
+					SemanticError( yylloc, string( "conflicting type specifier \"" ) + DeclarationNode::signednessNames[ dst->signedness ] +
+								   "\" and \"" + DeclarationNode::signednessNames[ src->signedness ] + "\"." );
 
 				if ( dst->length == DeclarationNode::NoLength ) {
 					dst->length = src->length;
 				} else if ( dst->length == DeclarationNode::Long && src->length == DeclarationNode::Long ) {
 					dst->length = DeclarationNode::LongLong;
 				} else if ( src->length != DeclarationNode::NoLength )
-					SemanticError( yylloc, src, string( "conflicting type specifier " ) + DeclarationNode::lengthNames[ src->length ] + " in type: " );
+					SemanticError( yylloc, string( "conflicting type specifier \"" ) + DeclarationNode::lengthNames[ dst->length ] +
+								   "\" and \"" + DeclarationNode::lengthNames[ src->length ] + "\"." );
 			} // if
 			break;
 		default:
@@ -717,9 +720,9 @@ DeclarationNode * DeclarationNode::addType( DeclarationNode * o ) {
 }
 
 DeclarationNode * DeclarationNode::addEnumBase( DeclarationNode * o ) {
-	if ( o && o -> type)  {
+	if ( o && o->type)  {
 		type->base= o->type;
-	}
+	} // if
 	delete o;
 	return this;
 }
@@ -1002,8 +1005,8 @@ DeclarationNode * DeclarationNode::extractAggregate() const {
 	return nullptr;
 }
 
-// If a typedef wraps an anonymous declaration, name the inner declaration
-// so it has a consistent name across translation units.
+// If a typedef wraps an anonymous declaration, name the inner declaration so it has a consistent name across
+// translation units.
 static void nameTypedefedDecl(
 		DeclarationNode * innerDecl,
 		const DeclarationNode * outerDecl ) {
@@ -1084,8 +1087,7 @@ static const std::string * getInstTypeOfName( ast::Decl * decl ) {
 	return nullptr;
 }
 
-void buildList( DeclarationNode * firstNode,
-		std::vector<ast::ptr<ast::Decl>> & outputList ) {
+void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & outputList ) {
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::Decl>>> out( outputList );
 

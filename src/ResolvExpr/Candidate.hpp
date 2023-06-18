@@ -90,11 +90,13 @@ static inline Cost sumCost( const CandidateList & candidates ) {
 }
 
 /// Holdover behaviour from old `findMinCost` -- xxx -- can maybe be eliminated?
+/*
 static inline void promoteCvtCost( CandidateList & candidates ) {
 	for ( CandidateRef & r : candidates ) {
 		r->cost = r->cvtCost;
 	}
 }
+*/
 
 void print( std::ostream & os, const Candidate & cand, Indenter indent = {} );
 

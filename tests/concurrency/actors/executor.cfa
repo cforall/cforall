@@ -27,7 +27,7 @@ allocation receive( d_actor & this, d_msg & msg ) with( this ) {
     if ( recs == rounds ) return Finished;
     if ( recs % Batch == 0 ) {
         for ( i; Batch ) {
-            gstart[sends % Set] << shared_msg;
+            gstart[sends % Set] | shared_msg;
             sends += 1;
         }
     }
@@ -93,7 +93,7 @@ int main( int argc, char * argv[] ) {
     d_actor actors[ Actors ];
 
 	for ( i; Actors ) {
-		actors[i] << shared_msg;
+		actors[i] | shared_msg;
 	} // for
 
     printf("stopping\n");

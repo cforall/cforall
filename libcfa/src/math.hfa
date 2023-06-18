@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Apr 18 23:37:04 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  8 08:40:42 2022
-// Update Count     : 136
+// Last Modified On : Sat Jun 17 18:42:45 2023
+// Update Count     : 198
 //
 
 #pragma once
@@ -235,7 +235,7 @@ static inline unsigned long long log2_u32_32( unsigned long long val ) {
 	sum = y0 + sum;
 
 	return (i << 32) + (sum);
-}
+} // log2_u32_32
 
 //---------------------- Trigonometric ----------------------
 
@@ -395,23 +395,51 @@ inline __attribute__((always_inline)) static {
 	long long int ceiling_div( long long int n, long long int align ) { return (n + (align - 1)) / align; }
 	unsigned long long int ceiling_div( unsigned long long int n, unsigned long long int align ) { return (n + (align - 1)) / align; }
 
-	// forall( T | { T ?+?( T, T ); T ?-?( T, T ); T ?%?( T, T ); } )
-	// T ceiling_div( T n, T align ) { verify( is_pow2( align ) );return (n + (align - 1)) / align; }
-
-	// gcc notices the div/mod pair and saves both so only one div.
-	signed char ceiling( signed char n, signed char align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-	unsigned char ceiling( unsigned char n, unsigned char align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-	short int ceiling( short int n, short int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-	unsigned short int ceiling( unsigned short int n, unsigned short int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-	int ceiling( int n, int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-	unsigned int ceiling( unsigned int n, unsigned int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-	long int ceiling( long int n, long int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-	unsigned long int ceiling( unsigned long int n, unsigned long int align ) { return floor( n + (n % align != 0 ? align - 1 : 0) , align); }
-	long long int ceiling( long long int n, long long int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-	unsigned long long int ceiling( unsigned long long int n, unsigned long long int align ) { return floor( n + (n % align != 0 ? align - 1 : 0), align ); }
-
-	// forall( T | { void ?{}( T &, one_t ); T ?+?( T, T ); T ?-?( T, T ); T ?/?( T, T ); } )
-	// T ceiling( T n, T align ) { return return floor( n + (n % align != 0 ? align - 1 : 0), align ); *}
+	signed char ceiling( signed char n, char align ) {
+		align = align < 0 ? -align : align;				// align must be signed
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	unsigned char ceiling( unsigned char n, unsigned char align ) {
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	short int ceiling( short int n, short int align ) {
+		align = align < 0 ? -align : align;				// align must be signed
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	unsigned short int ceiling( unsigned short int n, unsigned short int align ) {
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	int ceiling( int n, int align ) {
+		align = align < 0 ? -align : align;				// align must be signed
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	unsigned int ceiling( unsigned int n, unsigned int align ) {
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	long int ceiling( long int n, long int align ) {
+		align = align < 0 ? -align : align;				// align must be signed
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	unsigned long int ceiling( unsigned long int n, unsigned long int align ) {
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	long long int ceiling( long long int n, signed long long int align ) {
+		align = align < 0 ? -align : align;				// align must be signed
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
+	unsigned long long int ceiling( unsigned long long int n, unsigned long long int align ) {
+		typeof(n) trunc = floor( n, align );
+		return n >= 0 ? trunc + (trunc != n ? align : 0) : trunc;
+	}
 
 	float floor( float x ) { return floorf( x ); }
 	// extern "C" { double floor( double ); }

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Jun  8 17:58:54 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 15 15:56:03 2020
-// Update Count     : 47
+// Last Modified On : Sat Jun 17 07:56:02 2023
+// Update Count     : 48
 // 
 
 #include <fstream.hfa>
@@ -151,7 +151,7 @@ int main() {
 		sin | ignore( ldc );					sout | ldc;
 		sin | ignore( wdi( 8, ldc ) );			sout | ldc;
 	}
-#if defined( __SIZEOF_INT128__ )
+	#if defined( __SIZEOF_INT128__ )
 	{
 		int128 val;
 		for ( 15 ) {
@@ -159,7 +159,7 @@ int main() {
 			sout | val;
 		}
 	}
-#endif // __SIZEOF_INT128__
+	#endif // __SIZEOF_INT128__
 } // main
 
 // Local Variables: //

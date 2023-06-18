@@ -678,6 +678,7 @@ namespace {
 				)
 
 				ResolvExpr::CandidateFinder finder( crntFinder.context, matcher->env );
+				finder.allowVoid = true;
 
 				try {
 					finder.find( expr, ResolvExpr::ResolvMode::withAdjustment() );

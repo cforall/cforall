@@ -54,6 +54,8 @@ struct ParamEntry {
 		UniqueId id, const Decl * declptr, const Type * actual, const Type * formal,
 		const Expr * e )
 	: decl( id ), declptr( declptr ), actualType( actual ), formalType( formal ), expr( e ) {}
+
+	operator bool() {return declptr;}
 };
 
 /// Pre-resolution list of parameters to infer
@@ -334,10 +336,18 @@ public:
 	ptr<Expr> arg;
 	GeneratedFlag isGenerated;
 
+	enum CastKind {
+		Default, // C
+		Coerce, // reinterpret cast
+		Return  // overload selection
+	};
+
+	CastKind kind = Default;
+
 	CastExpr( const CodeLocation & loc, const Expr * a, const Type * to,
-		GeneratedFlag g = GeneratedCast ) : Expr( loc, to ), arg( a ), isGenerated( g ) {}
+		GeneratedFlag g = GeneratedCast, CastKind kind = Default ) : Expr( loc, to ), arg( a ), isGenerated( g ), kind( kind ) {}
 	/// Cast-to-void
-	CastExpr( const CodeLocation & loc, const Expr * a, GeneratedFlag g = GeneratedCast );
+	CastExpr( const CodeLocation & loc, const Expr * a, GeneratedFlag g = GeneratedCast, CastKind kind = Default );
 
 	/// Wrap a cast expression around an existing expression (always generated)
 	CastExpr( const Expr * a, const Type * to ) : CastExpr( a->location, a, to, GeneratedCast ) {}

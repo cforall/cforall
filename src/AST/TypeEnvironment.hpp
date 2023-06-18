@@ -62,7 +62,7 @@ struct AssertCompare {
 		else if (kind1 < kind2) return false;
 
 		int cmp = d1->var->name.compare( d2->var->name );
-		return cmp < 0 || ( cmp == 0 && d1->result < d2->result );
+		return cmp > 0 || ( cmp == 0 && d1->result < d2->result );
 	}
 };
 

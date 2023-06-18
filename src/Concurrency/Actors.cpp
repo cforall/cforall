@@ -322,7 +322,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
             // put it all together into the complete function decl from above
             FunctionDecl * sendOperatorFunction = new FunctionDecl(
                 decl->location,
-                "?<<?",
+                "?|?",
                 {},                     // forall
                 {
                     new ObjectDecl(

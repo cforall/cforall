@@ -27,7 +27,7 @@ allocation receive( derived_actor & receiver, derived_msg & msg ) {
     (*d_msg){ msg.cnt + 1 };
     derived_actor * d_actor = alloc();
     (*d_actor){};
-    *d_actor << *d_msg;
+    *d_actor | *d_msg;
     return Delete;
 }
 
@@ -57,7 +57,7 @@ int main( int argc, char * argv[] ) {
     (*d_msg){};
     derived_actor * d_actor = alloc();
     (*d_actor){};
-    *d_actor << *d_msg;
+    *d_actor | *d_msg;
 
     printf("stopping\n");
 

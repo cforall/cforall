@@ -600,18 +600,19 @@ static const char * OperName[] = {						// must harmonize with OperKinds
 
 ast::Expr * build_cast( const CodeLocation & location,
 		DeclarationNode * decl_node,
-		ExpressionNode * expr_node ) {
+		ExpressionNode * expr_node,
+		ast::CastExpr::CastKind kind ) {
 	ast::Type * targetType = maybeMoveBuildType( decl_node );
 	if ( dynamic_cast<ast::VoidType *>( targetType ) ) {
 		delete targetType;
 		return new ast::CastExpr( location,
 			maybeMoveBuild( expr_node ),
-			ast::ExplicitCast );
+			ast::ExplicitCast, kind );
 	} else {
 		return new ast::CastExpr( location,
 			maybeMoveBuild( expr_node ),
 			targetType,
-			ast::ExplicitCast );
+			ast::ExplicitCast, kind );
 	} // if
 } // build_cast
 

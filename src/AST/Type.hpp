@@ -450,7 +450,9 @@ struct TypeEnvKey {
 	std::string typeString() const;
 	bool operator==(const TypeEnvKey & other) const;
 	bool operator<(const TypeEnvKey & other) const;
+	operator bool() {return base;}
 };
+
 
 /// tuple type e.g. `[int, char]`
 class TupleType final : public Type {

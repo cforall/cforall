@@ -8498,7 +8498,7 @@ yyreduce:
 
   case 114:
 #line 933 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "Return cast is currently unimplemented." ); (yyval.expr) = nullptr; }
+                { (yyval.expr) = new ExpressionNode( build_cast( yylloc, (yyvsp[-2].decl), (yyvsp[0].expr), ast::CastExpr::Return ) ); }
 #line 8503 "Parser/parser.cc"
     break;
 
@@ -8636,7 +8636,7 @@ yyreduce:
 
   case 155:
 #line 1042 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.expr) = new ExpressionNode( build_cond( yylloc, (yyvsp[-3].expr), (yyvsp[-3].expr), (yyvsp[0].expr) ) ); }
+                { (yyval.expr) = new ExpressionNode( build_cond( yylloc, (yyvsp[-3].expr), (yyvsp[-3].expr)->clone(), (yyvsp[0].expr) ) ); }
 #line 8641 "Parser/parser.cc"
     break;
 

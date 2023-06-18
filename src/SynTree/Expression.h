@@ -270,8 +270,16 @@ class CastExpr : public Expression {
 	// subject cast not isGenerated means someone in charge wants it that way
 	bool isGenerated = true;
 
-	CastExpr( Expression * arg, bool isGenerated = true );
-	CastExpr( Expression * arg, Type * toType, bool isGenerated = true );
+	enum CastKind {
+		Default, // C
+		Coerce, // reinterpret cast
+		Return  // overload selection
+	};
+
+	CastKind kind = Default;
+
+	CastExpr( Expression * arg, bool isGenerated = true, CastKind kind = Default );
+	CastExpr( Expression * arg, Type * toType, bool isGenerated = true, CastKind kind = Default );
 	CastExpr( Expression * arg, void * ) = delete; // prevent accidentally passing pointers for isGenerated in the first constructor
 	CastExpr( const CastExpr & other );
 	virtual ~CastExpr();

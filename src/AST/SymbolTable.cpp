@@ -18,6 +18,9 @@
 #include <cassert>
 
 #include "Copy.hpp"
+#include <iostream>
+#include <algorithm>
+
 #include "Decl.hpp"
 #include "Expr.hpp"
 #include "Inspect.hpp"
@@ -202,6 +205,8 @@ std::vector<SymbolTable::IdData> SymbolTable::specialLookupId( SymbolTable::Spec
 		for (auto decl : *(decls->second)) {
 			out.push_back(decl.second);
 		}
+
+		// std::cerr << otypeKey << ' ' << out.size() << std::endl;
 	}
 
 	++*stat_counts[kind];

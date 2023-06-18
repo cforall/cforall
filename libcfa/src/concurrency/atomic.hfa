@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu May 25 15:22:46 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun  9 13:36:47 2023
-// Update Count     : 46
+// Last Modified On : Wed Jun 14 07:48:57 2023
+// Update Count     : 52
 // 
 
 #define LOAD( val ) (LOADM( val, __ATOMIC_SEQ_CST))
@@ -34,10 +34,7 @@
 // Use __sync because __atomic with 128-bit CAA can result in calls to pthread_mutex_lock.
 
 // #define CAS( assn, comp, replace ) (CASM( assn, comp, replace, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST))
-// #define CASM( assn, comp, replace, memorder... ) ({ \
-//  	typeof(comp) __temp = (comp); \
-//  	__atomic_compare_exchange_n( &(assn), &(__temp), (replace), false, memorder ); \
-// })
+// #define CASM( assn, comp, replace, memorder... ) ({ typeof(comp) __temp = (comp); __atomic_compare_exchange_n( &(assn), &(__temp), (replace), false, memorder ); })
 #define CAS( assn, comp, replace ) (__sync_bool_compare_and_swap( &assn, comp, replace))
 #define CASM( assn, comp, replace, memorder... ) _Static_assert( false, "memory order unsupported for CAS macro" );
 

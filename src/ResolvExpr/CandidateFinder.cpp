@@ -37,6 +37,7 @@
 #include "SpecCost.hpp"
 #include "typeops.h"              // for combos
 #include "Unify.h"
+#include "WidenMode.h"
 #include "AST/Expr.hpp"
 #include "AST/Node.hpp"
 #include "AST/Pass.hpp"
@@ -748,11 +749,21 @@ namespace {
 		if ( targetType && ! targetType->isVoid() && ! funcType->returns.empty() ) {
 			// attempt to narrow based on expected target type
 			const ast::Type * returnType = funcType->returns.front();
-			if ( ! unify(
-				returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen )
-			) {
-				// unification failed, do not pursue this candidate
-				return;
+			if ( selfFinder.strictMode ) {
+				if ( ! unifyExact(
+					returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen, noWiden() ) // xxx - is no widening correct?
+				) {
+					// unification failed, do not pursue this candidate
+					return;
+				}
+			}
+			else {
+				if ( ! unify(
+					returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen )
+				) {
+					// unification failed, do not pursue this candidate
+					return;
+				}
 			}
 		}
 
@@ -770,7 +781,7 @@ namespace {
 
 				for (size_t i=0; i<nParams; ++i) {
 					auto obj = funcDecl->params[i].strict_as<ast::ObjectDecl>();
-					if (!instantiateArgument( location,
+					if ( !instantiateArgument( location,
 						funcType->params[i], obj->init, args, results, genStart, symtab)) return;
 				}
 				goto endMatch;
@@ -780,7 +791,7 @@ namespace {
 			// Try adding the arguments corresponding to the current parameter to the existing
 			// matches
 			// no default args for indirect calls
-			if ( ! instantiateArgument( location,
+			if ( !instantiateArgument( location,
 				param, nullptr, args, results, genStart, symtab ) ) return;
 		}
 
@@ -873,9 +884,9 @@ namespace {
 		}
 
 		if ( auto structInst = aggrExpr->result.as< ast::StructInstType >() ) {
-			addAggMembers( structInst, aggrExpr, *cand, Cost::safe, "" );
+			addAggMembers( structInst, aggrExpr, *cand, Cost::unsafe, "" );
 		} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
-			addAggMembers( unionInst, aggrExpr, *cand, Cost::safe, "" );
+			addAggMembers( unionInst, aggrExpr, *cand, Cost::unsafe, "" );
 		}
 	}
 
@@ -1006,6 +1017,7 @@ namespace {
 				const ast::Type * funcResult = func->expr->result->stripReferences();
 				if ( auto pointer = dynamic_cast< const ast::PointerType * >( funcResult ) ) {
 					if ( auto function = pointer->base.as< ast::FunctionType >() ) {
+						// if (!selfFinder.allowVoid && function->returns.empty()) continue;
 						CandidateRef newFunc{ new Candidate{ *func } };
 						newFunc->expr =
 							referenceToRvalueConversion( newFunc->expr, newFunc->cost );
@@ -1017,7 +1029,7 @@ namespace {
 				) {
 					if ( const ast::EqvClass * clz = func->env.lookup( *inst ) ) {
 						if ( auto function = clz->bound.as< ast::FunctionType >() ) {
-							CandidateRef newFunc{ new Candidate{ *func } };
+							CandidateRef newFunc( new Candidate( *func ) );
 							newFunc->expr =
 								referenceToRvalueConversion( newFunc->expr, newFunc->cost );
 							makeFunctionCandidates( untypedExpr->location,
@@ -1059,6 +1071,11 @@ namespace {
 		// candidates
 		if ( found.empty() && ! errors.isEmpty() ) { throw errors; }
 
+		// only keep the best matching intrinsic result to match C semantics (no unexpected narrowing/widening)
+		// TODO: keep one for each set of argument candidates?
+		Cost intrinsicCost = Cost::infinity;
+		CandidateList intrinsicResult;
+
 		// Compute conversion costs
 		for ( CandidateRef & withFunc : found ) {
 			Cost cvtCost = computeApplicationConversionCost( withFunc, symtab );
@@ -1081,24 +1098,39 @@ namespace {
 
 			if ( cvtCost != Cost::infinity ) {
 				withFunc->cvtCost = cvtCost;
-				candidates.emplace_back( std::move( withFunc ) );
+				withFunc->cost += cvtCost;
+				auto func = withFunc->expr.strict_as<ast::ApplicationExpr>()->func.as<ast::VariableExpr>();
+				if (func && func->var->linkage == ast::Linkage::Intrinsic) {
+					if (withFunc->cost < intrinsicCost) {
+						intrinsicResult.clear();
+						intrinsicCost = withFunc->cost;
+					}
+					if (withFunc->cost == intrinsicCost) {
+						intrinsicResult.emplace_back(std::move(withFunc));
+					}
+				}
+				else {
+					candidates.emplace_back( std::move( withFunc ) );
+				}
 			}
 		}
+		spliceBegin( candidates, intrinsicResult );
 		found = std::move( candidates );
 
 		// use a new list so that candidates are not examined by addAnonConversions twice
-		CandidateList winners = findMinCost( found );
-		promoteCvtCost( winners );
+		// CandidateList winners = findMinCost( found );
+		// promoteCvtCost( winners );
 
 		// function may return a struct/union value, in which case we need to add candidates
 		// for implicit conversions to each of the anonymous members, which must happen after
 		// `findMinCost`, since anon conversions are never the cheapest
-		for ( const CandidateRef & c : winners ) {
+		for ( const CandidateRef & c : found ) {
 			addAnonConversions( c );
 		}
-		spliceBegin( candidates, winners );
+		// would this be too slow when we don't check cost anymore?
+		spliceBegin( candidates, found );
 
-		if ( candidates.empty() && targetType && ! targetType->isVoid() ) {
+		if ( candidates.empty() && targetType && ! targetType->isVoid() && !selfFinder.strictMode ) {
 			// If resolution is unsuccessful with a target type, try again without, since it
 			// will sometimes succeed when it wouldn't with a target type binding.
 			// For example:
@@ -1139,11 +1171,23 @@ namespace {
 		toType = adjustExprType( toType, tenv, symtab );
 
 		CandidateFinder finder( context, tenv, toType );
+		if (toType->isVoid()) {
+			finder.allowVoid = true;
+		}
+		if ( castExpr->kind == ast::CastExpr::Return ) {
+			finder.strictMode = true;
+			finder.find( castExpr->arg, ResolvMode::withAdjustment() );
+
+			// return casts are eliminated (merely selecting an overload, no actual operation)
+			candidates = std::move(finder.candidates);
+		}
 		finder.find( castExpr->arg, ResolvMode::withAdjustment() );
 
 		if ( !finder.candidates.empty() ) reason.code = NoMatch;
 
 		CandidateList matches;
+		Cost minExprCost = Cost::infinity;
+		Cost minCastCost = Cost::infinity;
 		for ( CandidateRef & cand : finder.candidates ) {
 			ast::AssertionSet need( cand->need.begin(), cand->need.end() ), have;
 			ast::OpenVarSet open( cand->open );
@@ -1175,18 +1219,33 @@ namespace {
 				)
 				// count one safe conversion for each value that is thrown away
 				thisCost.incSafe( discardedValues );
-				CandidateRef newCand = std::make_shared<Candidate>(
-					restructureCast( cand->expr, toType, castExpr->isGenerated ),
-					copy( cand->env ), std::move( open ), std::move( need ), cand->cost,
-					cand->cost + thisCost );
-				inferParameters( newCand, matches );
+				// select first on argument cost, then conversion cost
+				if ( cand->cost < minExprCost || ( cand->cost == minExprCost && thisCost < minCastCost ) ) {
+					minExprCost = cand->cost;
+					minCastCost = thisCost;
+					matches.clear();
+
+
+				}
+				// ambiguous case, still output candidates to print in error message
+				if ( cand->cost == minExprCost && thisCost == minCastCost ) {
+					CandidateRef newCand = std::make_shared<Candidate>(
+						restructureCast( cand->expr, toType, castExpr->isGenerated ),
+						copy( cand->env ), std::move( open ), std::move( need ), cand->cost + thisCost);
+					// currently assertions are always resolved immediately so this should have no effect. 
+					// if this somehow changes in the future (e.g. delayed by indeterminate return type)
+					// we may need to revisit the logic.
+					inferParameters( newCand, matches );
+				}
+				// else skip, better alternatives found
+
 			}
 		}
+		candidates = std::move(matches);
 
-		// select first on argument cost, then conversion cost
-		CandidateList minArgCost = findMinCost( matches );
-		promoteCvtCost( minArgCost );
-		candidates = findMinCost( minArgCost );
+		//CandidateList minArgCost = findMinCost( matches );
+		//promoteCvtCost( minArgCost );
+		//candidates = findMinCost( minArgCost );
 	}
 
 	void Finder::postvisit( const ast::VirtualCastExpr * castExpr ) {
@@ -1452,11 +1511,13 @@ namespace {
 
 		// candidates for true result
 		CandidateFinder finder2( context, tenv );
+		finder2.allowVoid = true;
 		finder2.find( conditionalExpr->arg2, ResolvMode::withAdjustment() );
 		if ( finder2.candidates.empty() ) return;
 
 		// candidates for false result
 		CandidateFinder finder3( context, tenv );
+		finder3.allowVoid = true;
 		finder3.find( conditionalExpr->arg3, ResolvMode::withAdjustment() );
 		if ( finder3.candidates.empty() ) return;
 
@@ -1523,6 +1584,7 @@ namespace {
 
 	void Finder::postvisit( const ast::ConstructorExpr * ctorExpr ) {
 		CandidateFinder finder( context, tenv );
+		finder.allowVoid = true;
 		finder.find( ctorExpr->callExpr, ResolvMode::withoutPrune() );
 		for ( CandidateRef & r : finder.candidates ) {
 			addCandidate( *r, new ast::ConstructorExpr{ ctorExpr->location, r->expr } );
@@ -1639,6 +1701,9 @@ namespace {
 			// only open for the duration of resolving the UntypedExpr.
 			CandidateFinder finder( context, tenv, toType );
 			finder.find( initExpr->expr, ResolvMode::withAdjustment() );
+
+			Cost minExprCost = Cost::infinity;
+			Cost minCastCost = Cost::infinity;
 			for ( CandidateRef & cand : finder.candidates ) {
 				if (reason.code == NotFound) reason.code = NoMatch;
 
@@ -1676,20 +1741,33 @@ namespace {
 				if ( thisCost != Cost::infinity ) {
 					// count one safe conversion for each value that is thrown away
 					thisCost.incSafe( discardedValues );
-					CandidateRef newCand = std::make_shared<Candidate>(
-						new ast::InitExpr{
-							initExpr->location, restructureCast( cand->expr, toType ),
-							initAlt.designation },
-						std::move(env), std::move( open ), std::move( need ), cand->cost, thisCost );
-					inferParameters( newCand, matches );
+					if ( cand->cost < minExprCost || ( cand->cost == minExprCost && thisCost < minCastCost ) ) {
+						minExprCost = cand->cost;
+						minCastCost = thisCost;
+						matches.clear();
+					}
+					// ambiguous case, still output candidates to print in error message
+					if ( cand->cost == minExprCost && thisCost == minCastCost ) {
+						CandidateRef newCand = std::make_shared<Candidate>(
+							new ast::InitExpr{
+								initExpr->location,
+								restructureCast( cand->expr, toType ),
+								initAlt.designation },
+							std::move(env), std::move( open ), std::move( need ), cand->cost + thisCost );
+						// currently assertions are always resolved immediately so this should have no effect.
+						// if this somehow changes in the future (e.g. delayed by indeterminate return type)
+						// we may need to revisit the logic.
+						inferParameters( newCand, matches );
+					}
 				}
 			}
 		}
 
 		// select first on argument cost, then conversion cost
-		CandidateList minArgCost = findMinCost( matches );
-		promoteCvtCost( minArgCost );
-		candidates = findMinCost( minArgCost );
+		// CandidateList minArgCost = findMinCost( matches );
+		// promoteCvtCost( minArgCost );
+		// candidates = findMinCost( minArgCost );
+		candidates = std::move(matches);
 	}
 
 	// size_t Finder::traceId = Stats::Heap::new_stacktrace_id("Finder");
@@ -1755,14 +1833,19 @@ bool CandidateFinder::pruneCandidates( CandidateList & candidates, CandidateList
 			}
 			auto found = selected.find( mangleName );
 			if ( found != selected.end() ) {
-				if ( newCand->cost < found->second.candidate->cost ) {
+				// tiebreaking by picking the lower cost on CURRENT expression
+				// NOTE: this behavior is different from C semantics.
+				// Specific remediations are performed for C operators at postvisit(UntypedExpr).
+				// Further investigations may take place.
+				if ( newCand->cost < found->second.candidate->cost
+					|| (newCand->cost == found->second.candidate->cost && newCand->cvtCost < found->second.candidate->cvtCost) ) {
 					PRINT(
 						std::cerr << "cost " << newCand->cost << " beats "
 							<< found->second.candidate->cost << std::endl;
 					)
 
 					found->second = PruneStruct{ newCand };
-				} else if ( newCand->cost == found->second.candidate->cost ) {
+				} else if ( newCand->cost == found->second.candidate->cost && newCand->cvtCost == found->second.candidate->cvtCost ) {
 					// if one of the candidates contains a deleted identifier, can pick the other,
 					// since deleted expressions should not be ambiguous if there is another option
 					// that is at least as good
@@ -1853,7 +1936,8 @@ void CandidateFinder::find( const ast::Expr * expr, ResolvMode mode ) {
 	}
 	*/
 
-	if ( mode.prune ) {
+	// optimization: don't prune for NameExpr since it never has cost
+	if ( mode.prune && !dynamic_cast<const ast::NameExpr *>(expr) ) {
 		// trim candidates to single best one
 		PRINT(
 			std::cerr << "alternatives before prune:" << std::endl;

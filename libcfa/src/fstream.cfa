@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun  5 22:00:23 2023
-// Update Count     : 518
+// Last Modified On : Sat Jun 17 08:51:12 2023
+// Update Count     : 528
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -168,10 +168,8 @@ int fmt( ofstream & os, const char format[], ... ) {
 	  if ( len != EOF || errno != EINTR ) break;		// timer interrupt ?
 	  if ( cnt == 9 ) abort( "ofstream fmt EINTR spinning exceeded" );
     } // for
-	if ( len == EOF ) {
-		if ( ferror( (FILE *)(os.file$) ) ) {
-			abort | IO_MSG "invalid write";
-		} // if
+	if ( len == EOF ) {									// error writing ?
+		abort | IO_MSG "invalid write";
 	} // if
 	va_end( args );
 
@@ -301,8 +299,8 @@ int fmt( ifstream & is, const char format[], ... ) {
 		enable_interrupts();
 	  if ( len != EOF || errno != EINTR ) break;		// timer interrupt ?
     } // for
-	if ( len == EOF ) {
-		if ( ferror( (FILE *)(is.file$) ) ) {
+	if ( len == EOF ) {									// EOF or matching failure ?
+		if ( ! feof( (FILE *)(is.file$) ) && ferror( (FILE *)(is.file$) ) ) {
 			abort | IO_MSG "invalid read";
 		} // if
 	} // if

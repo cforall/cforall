@@ -24,7 +24,7 @@ allocation receive( derived_actor & receiver, derived_msg & msg ) {
         return Finished;
     }
     msg.cnt++;
-    receiver << msg;
+    receiver | msg;
     return Nodelete;
 }
 
@@ -54,7 +54,7 @@ int main( int argc, char * argv[] ) {
 
     derived_actor actor;
 
-    actor << msg;
+    actor | msg;
 
     printf("stopping\n");
 

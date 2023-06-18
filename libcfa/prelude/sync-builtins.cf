@@ -205,6 +205,7 @@ _Bool __sync_bool_compare_and_swap(volatile unsigned long long int *, unsigned l
 _Bool __sync_bool_compare_and_swap(volatile signed __int128 *, signed __int128, signed __int128,...);
 _Bool __sync_bool_compare_and_swap(volatile unsigned __int128 *, unsigned __int128, unsigned __int128,...);
 #endif
+// for all pointer types
 forall(T &) _Bool __sync_bool_compare_and_swap(T * volatile *, T *, T*, ...);
 
 char __sync_val_compare_and_swap(volatile char *, char, char,...);
@@ -222,6 +223,7 @@ unsigned long long int __sync_val_compare_and_swap(volatile unsigned long long i
 signed __int128 __sync_val_compare_and_swap(volatile signed __int128 *, signed __int128, signed __int128,...);
 unsigned __int128 __sync_val_compare_and_swap(volatile unsigned __int128 *, unsigned __int128, unsigned __int128,...);
 #endif
+// for all pointer types
 forall(T &) T * __sync_val_compare_and_swap(T * volatile *, T *, T*,...);
 
 char __sync_lock_test_and_set(volatile char *, char,...);
@@ -325,6 +327,7 @@ void __atomic_exchange(volatile signed __int128 *, signed __int128 *, signed __i
 unsigned __int128 __atomic_exchange_n(volatile unsigned __int128 *, unsigned __int128, int);
 void __atomic_exchange(volatile unsigned __int128 *, unsigned __int128 *, unsigned __int128 *, int);
 #endif
+// for all pointer types
 forall(T &) T * __atomic_exchange_n(T * volatile *, T *, int);
 forall(T &) void __atomic_exchange(T * volatile *, T **, T **, int);
 
@@ -358,6 +361,7 @@ void __atomic_load(const volatile signed __int128 *, signed __int128 *, int);
 unsigned __int128 __atomic_load_n(const volatile unsigned __int128 *, int);
 void __atomic_load(const volatile unsigned __int128 *, unsigned __int128 *, int);
 #endif
+// for all pointer types
 forall(T &) T * __atomic_load_n(T * const volatile *, int);
 forall(T &) void __atomic_load(T * const volatile *, T **, int);
 
@@ -389,6 +393,7 @@ _Bool __atomic_compare_exchange   (volatile signed __int128 *, signed __int128 *
 _Bool __atomic_compare_exchange_n (volatile unsigned __int128 *, unsigned __int128 *, unsigned __int128, _Bool, int, int);
 _Bool __atomic_compare_exchange   (volatile unsigned __int128 *, unsigned __int128 *, unsigned __int128 *, _Bool, int, int);
 #endif
+// for all pointer types
 forall(T &) _Bool __atomic_compare_exchange_n (T * volatile *, T **, T*, _Bool, int, int);
 forall(T &) _Bool __atomic_compare_exchange   (T * volatile *, T **, T**, _Bool, int, int);
 
@@ -422,6 +427,7 @@ void __atomic_store(volatile signed __int128 *, signed __int128 *, int);
 void __atomic_store_n(volatile unsigned __int128 *, unsigned __int128, int);
 void __atomic_store(volatile unsigned __int128 *, unsigned __int128 *, int);
 #endif
+// for all pointer types
 forall(T &) void __atomic_store_n(T * volatile *, T *, int);
 forall(T &) void __atomic_store(T * volatile *, T **, int);
 

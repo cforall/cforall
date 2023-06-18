@@ -24,7 +24,7 @@ allocation receive( ping & receiver, p_msg & msg ) {
 
     allocation retval = Nodelete;
     if ( msg.count == times ) retval = Finished;
-    *po << msg;
+    *po | msg;
     return retval;
 }
 
@@ -34,7 +34,7 @@ allocation receive( pong & receiver, p_msg & msg ) {
     
     allocation retval = Nodelete;
     if ( msg.count == times ) retval = Finished;
-    *pi << msg;
+    *pi | msg;
     return retval;
 }
 
@@ -52,7 +52,7 @@ int main( int argc, char * argv[] ) {
     po = &po_actor;
     pi = &pi_actor;
     p_msg m;
-    pi_actor << m;
+    pi_actor | m;
     stop_actor_system();
 
     printf("end\n");

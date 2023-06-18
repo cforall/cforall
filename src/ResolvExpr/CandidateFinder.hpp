@@ -32,6 +32,8 @@ struct CandidateFinder {
 	const ResolveContext & context;  ///< Information about where the canditates are being found.
 	const ast::TypeEnvironment & env;  ///< Substitutions performed in this resolution
 	ast::ptr< ast::Type > targetType;  ///< Target type for resolution
+	bool strictMode = false;           ///< If set to true, requires targetType to be exact match (inside return cast)
+	bool allowVoid = false;            ///< If set to true, allow void-returning function calls (only top level, cast to void and first in comma)
 	std::set< std::string > otypeKeys;  /// different type may map to same key
 
 	CandidateFinder(

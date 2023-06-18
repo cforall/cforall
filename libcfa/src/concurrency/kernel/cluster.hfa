@@ -39,7 +39,7 @@ static inline __readyQ_avg_t __to_readyQ_avg(unsigned long long intsc) { return 
 #elif defined(READYQ_USE_LOGDBL_AVG)
 
 // convert to log2 scale but using double
-static inline __readyQ_avg_t __to_readyQ_avg(unsigned long long intsc) { if(unlikely(0 == intsc)) return 0.0; else return log2(intsc); }
+static inline __readyQ_avg_t __to_readyQ_avg(unsigned long long intsc) { if(unlikely(0 == intsc)) return 0.0; else return log2((__readyQ_avg_t)intsc); }
 
 #define warn_large_before warnf( !strict || old_avg < 35.0, "Suspiciously large previous average: %'lf, %'" PRId64 "ms \n", old_avg, program()`ms )
 #define warn_large_after warnf( !strict || ret < 35.3, "Suspiciously large new average after %'" PRId64 "ms cputime: %'lf from %'llu-%'llu (%'llu, %'llu) and %'lf\n", program()`ms, ret, currtsc, intsc, new_val, new_val / 1000000, old_avg ); \

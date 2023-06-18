@@ -233,6 +233,9 @@ Cost castCost(
 
 	if ( typesCompatibleIgnoreQualifiers( src, dst, env ) ) {
 		PRINT( std::cerr << "compatible!" << std::endl; )
+		if (dynamic_cast<const ast::ZeroType *>(dst) || dynamic_cast<const ast::OneType *>(dst)) {
+			return Cost::spec;
+		}
 		return Cost::zero;
 	} else if ( dynamic_cast< const ast::VoidType * >( dst ) ) {
 		return Cost::safe;

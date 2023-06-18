@@ -701,6 +701,9 @@ void ConversionCost_new::postvisit( const ast::ReferenceType * refType ) {
 	assert( nullptr == dynamic_cast< const ast::ReferenceType * >( dst ) );
 
 	cost = costCalc( refType->base, dst, srcIsLvalue, symtab, env );
+
+	// xxx - should qualifiers be considered in pass-by-value?
+	/*
 	if ( refType->base->qualifiers == dst->qualifiers ) {
 		cost.incReference();
 	} else if ( refType->base->qualifiers < dst->qualifiers ) {
@@ -708,6 +711,8 @@ void ConversionCost_new::postvisit( const ast::ReferenceType * refType ) {
 	} else {
 		cost.incUnsafe();
 	}
+	*/
+	cost.incReference();
 }
 
 void ConversionCost_new::postvisit( const ast::FunctionType * functionType ) {
@@ -791,10 +796,16 @@ void ConversionCost_new::postvisit( const ast::ZeroType * zeroType ) {
 			cost.incSafe( tableResult + 1 );
 			cost.incSign( signMatrix[ ast::BasicType::SignedInt ][ dstAsBasic->kind ] );
 		}
+		// this has the effect of letting any expr such as x+0, x+1 to be typed
+		// the same as x, instead of at least int. are we willing to sacrifice this little
+		// bit of coherence with C?
+		// TODO: currently this does not work when no zero/one overloads exist. Find a fix for it.
+		// cost = Cost::zero;
 	} else if ( dynamic_cast< const ast::PointerType * >( dst ) ) {
 		cost = Cost::zero;
 		// +1 for zero_t ->, +1 for disambiguation
 		cost.incSafe( maxIntCost + 2 );
+		// assuming 0p is supposed to be used for pointers?
 	}
 }
 
@@ -803,7 +814,7 @@ void ConversionCost_new::postvisit( const ast::OneType * oneType ) {
 	if ( dynamic_cast< const ast::OneType * >( dst ) ) {
 		cost = Cost::zero;
 	} else if ( const ast::BasicType * dstAsBasic =
-			dynamic_cast< const ast::BasicType * >( dst ) ) {
+			dynamic_cast< const ast::BasicType * >( dst ) ) {		
 		int tableResult = costMatrix[ ast::BasicType::SignedInt ][ dstAsBasic->kind ];
 		if ( -1 == tableResult ) {
 			cost = Cost::unsafe;
@@ -812,6 +823,8 @@ void ConversionCost_new::postvisit( const ast::OneType * oneType ) {
 			cost.incSafe( tableResult + 1 );
 			cost.incSign( signMatrix[ ast::BasicType::SignedInt ][ dstAsBasic->kind ] );
 		}
+		
+		// cost = Cost::zero;
 	}
 }
 // size_t ConversionCost_new::traceId = Stats::Heap::new_stacktrace_id("ConversionCost");

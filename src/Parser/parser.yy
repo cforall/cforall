@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun  7 14:32:28 2023
-// Update Count     : 6341
+// Last Modified On : Sat Jun 17 18:53:24 2023
+// Update Count     : 6347
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -930,7 +930,7 @@ cast_expression:
 	| '(' VIRTUAL type_no_function ')' cast_expression	// CFA
 		{ $$ = new ExpressionNode( new ast::VirtualCastExpr( yylloc, maybeMoveBuild( $5 ), maybeMoveBuildType( $3 ) ) ); }
 	| '(' RETURN type_no_function ')' cast_expression	// CFA
-		{ SemanticError( yylloc, "Return cast is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new ExpressionNode( build_cast( yylloc, $3, $5, ast::CastExpr::Return ) ); }
 	| '(' COERCE type_no_function ')' cast_expression	// CFA
 		{ SemanticError( yylloc, "Coerce cast is currently unimplemented." ); $$ = nullptr; }
 	| '(' qualifier_cast_list ')' cast_expression		// CFA
@@ -1039,7 +1039,7 @@ conditional_expression:
 		{ $$ = new ExpressionNode( build_cond( yylloc, $1, $3, $5 ) ); }
 		// FIX ME: computes $1 twice
 	| logical_OR_expression '?' /* empty */ ':' conditional_expression // GCC, omitted first operand
-		{ $$ = new ExpressionNode( build_cond( yylloc, $1, $1, $4 ) ); }
+		{ $$ = new ExpressionNode( build_cond( yylloc, $1, $1->clone(), $4 ) ); }
 	;
 
 constant_expression:

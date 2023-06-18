@@ -20,9 +20,12 @@
 
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
+#include "AST/TypeEnvironment.hpp"
 #include "Common/PassVisitor.h"
 #include "SynTree/Declaration.h"  // for TypeDecl, DeclarationWithType (ptr ...
 #include "SynTree/Type.h"         // for Type, Type::ForallList, ArrayType
+
+#include <iostream>
 
 namespace ResolvExpr {
 	struct FindOpenVars_old : public WithGuards {
@@ -101,16 +104,23 @@ namespace ResolvExpr {
 			ast::OpenVarSet & closed;
 			ast::AssertionSet & need;
 			ast::AssertionSet & have;
+			ast::TypeEnvironment & env;
 			bool nextIsOpen;
 
 			FindOpenVars_new(
 				ast::OpenVarSet & o, ast::OpenVarSet & c, ast::AssertionSet & n,
-				ast::AssertionSet & h, FirstMode firstIsOpen )
-			: open( o ), closed( c ), need( n ), have( h ), nextIsOpen( firstIsOpen ) {}
+				ast::AssertionSet & h, ast::TypeEnvironment & env, FirstMode firstIsOpen )
+			: open( o ), closed( c ), need( n ), have( h ), env (env), nextIsOpen( firstIsOpen ) {}
 
 			void previsit( const ast::FunctionType * type ) {
 				// mark open/closed variables
 				if ( nextIsOpen ) {
+					// trying to remove this from resolver.
+					// occasionally used in other parts so not deleting right now.
+
+					// insert open variables unbound to environment.
+					env.add(type->forall);
+
 					for ( auto & decl : type->forall ) {
 						open[ *decl ] = ast::TypeData{ decl->base };
 					}
@@ -136,9 +146,17 @@ namespace ResolvExpr {
 
 	void findOpenVars(
 			const ast::Type * type, ast::OpenVarSet & open, ast::OpenVarSet & closed,
-			ast::AssertionSet & need, ast::AssertionSet & have, FirstMode firstIsOpen ) {
-		ast::Pass< FindOpenVars_new > finder{ open, closed, need, have, firstIsOpen };
+			ast::AssertionSet & need, ast::AssertionSet & have, ast::TypeEnvironment & env, FirstMode firstIsOpen ) {
+		ast::Pass< FindOpenVars_new > finder{ open, closed, need, have, env, firstIsOpen };
 		type->accept( finder );
+
+		if (!closed.empty()) {
+			std::cerr << "closed: ";
+			for (auto& i : closed) {
+				std::cerr << i.first.base->location << ":" << i.first.base->name << ' ';
+			}
+			std::cerr << std::endl;
+		}
 	}
 } // namespace ResolvExpr
 

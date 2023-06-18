@@ -159,8 +159,8 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		env.apply( newFirst );
 		env.apply( newSecond );
 
-		findOpenVars( newFirst, open, closed, need, have, FirstClosed );
-		findOpenVars( newSecond, open, closed, need, have, FirstOpen );
+		// findOpenVars( newFirst, open, closed, need, have, FirstClosed );
+		findOpenVars( newSecond, open, closed, need, have, newEnv, FirstOpen );
 
 		return unifyExact(newFirst, newSecond, newEnv, need, have, open, noWiden() );
 	}
@@ -963,7 +963,8 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		const XInstType * handleRefType( const XInstType * inst, const ast::Type * other ) {
 			// check that the other type is compatible and named the same
 			auto otherInst = dynamic_cast< const XInstType * >( other );
-			if (otherInst && inst->name == otherInst->name) this->result = otherInst;
+			if (otherInst && inst->name == otherInst->name) 
+				this->result = otherInst;
 			return otherInst;
 		}
 
@@ -1048,8 +1049,11 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		}
 
 		void postvisit( const ast::TypeInstType * typeInst ) {
-			assert( open.find( *typeInst ) == open.end() );
-			handleRefType( typeInst, type2 );
+			// assert( open.find( *typeInst ) == open.end() );
+			auto otherInst = dynamic_cast< const ast::TypeInstType * >( type2 );
+			if (otherInst && typeInst->name == otherInst->name) 
+				this->result = otherInst;
+			// return otherInst;
 		}
 
 	private:
@@ -1160,8 +1164,8 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 			ast::OpenVarSet & open, ast::ptr<ast::Type> & common
 	) {
 		ast::OpenVarSet closed;
-		findOpenVars( type1, open, closed, need, have, FirstClosed );
-		findOpenVars( type2, open, closed, need, have, FirstOpen );
+		// findOpenVars( type1, open, closed, need, have, FirstClosed );
+		findOpenVars( type2, open, closed, need, have, env, FirstOpen );
 		return unifyInexact(
 			type1, type2, env, need, have, open, WidenMode{ true, true }, common );
 	}
@@ -1178,9 +1182,12 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		ast::OpenVarSet::const_iterator
 			entry1 = var1 ? open.find( *var1 ) : open.end(),
 			entry2 = var2 ? open.find( *var2 ) : open.end();
-		bool isopen1 = entry1 != open.end();
-		bool isopen2 = entry2 != open.end();
+		// bool isopen1 = entry1 != open.end();
+		// bool isopen2 = entry2 != open.end();
+		bool isopen1 = var1 && env.lookup(*var1);
+		bool isopen2 = var2 && env.lookup(*var2);
 
+		/*
 		if ( isopen1 && isopen2 ) {
 			if ( entry1->second.kind != entry2->second.kind ) return false;
 			return env.bindVarToVar(
@@ -1189,11 +1196,22 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		} else if ( isopen1 ) {
 			return env.bindVar( var1, type2, entry1->second, need, have, open, widen );
 		} else if ( isopen2 ) {
-			return env.bindVar( var2, type1, entry2->second, need, have, open, widen );
-		} else {
+			return env.bindVar( var2, type1, entry2->second, need, have, open, widen, symtab );
+		} */
+		if ( isopen1 && isopen2 ) {
+			if ( var1->base->kind != var2->base->kind ) return false;
+			return env.bindVarToVar(
+				var1, var2, ast::TypeData{ var1->base->kind, var1->base->sized||var2->base->sized }, need, have,
+				open, widen );
+		} else if ( isopen1 ) {
+			return env.bindVar( var1, type2, ast::TypeData{var1->base}, need, have, open, widen );
+		} else if ( isopen2 ) {
+			return env.bindVar( var2, type1, ast::TypeData{var2->base}, need, have, open, widen );
+		}else {
 			return ast::Pass<Unify_new>::read(
 				type1, type2, env, need, have, open, widen );
 		}
+		
 	}
 
 	bool unifyInexact(

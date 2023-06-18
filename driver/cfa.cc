@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 30 10:47:52 2023
-// Update Count     : 478
+// Last Modified On : Fri Jun  9 14:36:41 2023
+// Update Count     : 479
 //
 
 #include <iostream>
@@ -333,6 +333,7 @@ int main( int argc, char * argv[] ) {
 	// https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/making-the-most-of-the-arm-architecture-in-gcc-10
 	#ifdef __ARM_ARCH
 	args[nargs++] = "-mno-outline-atomics";				// use ARM LL/SC instructions for atomics
+	// args[nargs++] = "-march=armv8.2-a+lse";				// use atomic instructions
 	#endif // __ARM_ARCH
 
 	#ifdef __DEBUG_H__

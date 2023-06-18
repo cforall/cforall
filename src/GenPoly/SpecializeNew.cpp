@@ -112,9 +112,10 @@ bool needsPolySpecialization(
 
 	using namespace ResolvExpr;
 	ast::OpenVarSet openVars, closedVars;
-	ast::AssertionSet need, have;
-	findOpenVars( formalType, openVars, closedVars, need, have, FirstClosed );
-	findOpenVars( actualType, openVars, closedVars, need, have, FirstOpen );
+	ast::AssertionSet need, have; // unused
+	ast::TypeEnvironment env; // unused
+	// findOpenVars( formalType, openVars, closedVars, need, have, FirstClosed );
+	findOpenVars( actualType, openVars, closedVars, need, have, env, FirstOpen );
 	for ( const ast::OpenVarSet::value_type & openVar : openVars ) {
 		const ast::Type * boundType = subs->lookup( openVar.first );
 		// If the variable is not bound, move onto the next variable.
@@ -124,6 +125,9 @@ bool needsPolySpecialization(
 		if ( auto inst = dynamic_cast<const ast::TypeInstType *>( boundType ) ) {
 			if ( closedVars.find( *inst ) == closedVars.end() ) {
 				return true;
+			}
+			else {
+				assertf(false, "closed: %s", inst->name.c_str());
 			}
 		// Otherwise, the variable is bound to a concrete type.
 		} else {

@@ -266,15 +266,15 @@ void OffsetPackExpr::print( std::ostream & os, Indenter indent ) const {
 	Expression::print( os, indent );
 }
 
-CastExpr::CastExpr( Expression * arg, Type * toType, bool isGenerated ) : arg(arg), isGenerated( isGenerated ) {
+CastExpr::CastExpr( Expression * arg, Type * toType, bool isGenerated, CastKind kind ) : arg(arg), isGenerated( isGenerated ), kind( kind ) {
 	set_result(toType);
 }
 
-CastExpr::CastExpr( Expression * arg, bool isGenerated ) : arg(arg), isGenerated( isGenerated ) {
+CastExpr::CastExpr( Expression * arg, bool isGenerated, CastKind kind ) : arg(arg), isGenerated( isGenerated ), kind( kind ) {
 	set_result( new VoidType( Type::Qualifiers() ) );
 }
 
-CastExpr::CastExpr( const CastExpr & other ) : Expression( other ), arg( maybeClone( other.arg ) ), isGenerated( other.isGenerated ) {
+CastExpr::CastExpr( const CastExpr & other ) : Expression( other ), arg( maybeClone( other.arg ) ), isGenerated( other.isGenerated ), kind( other.kind ) {
 }
 
 CastExpr::~CastExpr() {

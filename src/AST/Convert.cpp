@@ -2342,7 +2342,8 @@ private:
 			new ast::CastExpr(
 				old->location,
 				GET_ACCEPT_1(arg, Expr),
-				old->isGenerated ? ast::GeneratedCast : ast::ExplicitCast
+				old->isGenerated ? ast::GeneratedCast : ast::ExplicitCast,
+				(ast::CastExpr::CastKind) old->kind
 			)
 		);
 	}

@@ -320,6 +320,7 @@ void FuncGenerator::generateAndAppendFunctions(
 
 void FuncGenerator::produceDecl( const ast::FunctionDecl * decl ) {
 	assert( nullptr != decl->stmts );
+	assert( decl->type_params.size() == getGenericParams( type ).size() );
 
 	definitions.push_back( decl );
 }
@@ -355,7 +356,7 @@ ast::FunctionDecl * FuncGenerator::genProto( std::string&& name,
 		ast::TypeDecl * decl = ast::deepCopy( old_param );
 		decl->init = nullptr;
 		splice( assertions, decl->assertions );
-		oldToNew.emplace( std::make_pair( old_param, decl ) );
+		oldToNew.emplace( old_param, decl );
 		type_params.push_back( decl );
 	}
 	replaceAll( params, oldToNew );
@@ -521,7 +522,7 @@ ast::ptr<ast::Stmt> StructFuncGenerator::makeMemberOp(
 		ast::FunctionDecl * func, SymTab::LoopDirection direction ) {
 	InitTweak::InitExpander_new srcParam( src );
 	// Assign to destination.
-	ast::Expr * dstSelect = new ast::MemberExpr(
+	ast::MemberExpr * dstSelect = new ast::MemberExpr(
 		location,
 		field,
 		new ast::CastExpr(
@@ -573,7 +574,7 @@ void StructFuncGenerator::makeFunctionBody( Iterator current, Iterator end,
 			srcParam = func->params.back().strict_as<ast::ObjectDecl>();
 		}
 
-		ast::Expr * srcSelect = (srcParam) ? new ast::MemberExpr(
+		ast::MemberExpr * srcSelect = (srcParam) ? new ast::MemberExpr(
 			location, field, new ast::VariableExpr( location, srcParam )
 		) : nullptr;
 		ast::ptr<ast::Stmt> stmt =

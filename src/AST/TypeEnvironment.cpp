@@ -134,7 +134,7 @@ void TypeEnvironment::writeToSubstitution( TypeSubstitution & sub ) const {
 			}
 		}
 	}
-	sub.normalize();
+	// sub.normalize();
 }
 
 void TypeEnvironment::simpleCombine( const TypeEnvironment & o ) {

@@ -17,7 +17,7 @@ int main() {
         start_actor_system();
         Server s[10];
         for ( i; 10 ) {
-            s[i] << finished_msg;
+            s[i] | finished_msg;
         }
         stop_actor_system();
     }
@@ -28,7 +28,7 @@ int main() {
         for ( i; 10 ) {
             Server * s = alloc();
             (*s){};
-            (*s) << delete_msg;
+            (*s) | delete_msg;
         }
         stop_actor_system();
     }
@@ -38,7 +38,7 @@ int main() {
         start_actor_system();
         Server s[10];
         for ( i; 10 )
-            s[i] << destroy_msg;
+            s[i] | destroy_msg;
         stop_actor_system();
         for ( i; 10 )
             if (s[i].val != 777)

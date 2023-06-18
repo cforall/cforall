@@ -31,7 +31,7 @@ extern "C" {
 	long long int llabs( long long int );
 } // extern "C"
 static inline __attribute__((always_inline)) {
-	unsigned char abs( signed char v ) { return abs( (int)v ); }
+	unsigned char abs( signed char v ) { return (int)abs( (int)v ); }
 	// use default C routine for int
 	unsigned long int abs( long int v ) { return labs( v ); }
 	unsigned long long int abs( long long int v ) { return llabs( v ); }
@@ -69,9 +69,9 @@ static inline __attribute__((always_inline)) {
 	int min( int v1, int v2 ) { return v1 < v2 ? v1 : v2; }
 	unsigned int min( unsigned int v1, unsigned int v2 ) { return v1 < v2 ? v1 : v2; }
 	long int min( long int v1, long int v2 ) { return v1 < v2 ? v1 : v2; }
-	unsigned long int min( unsigned long int v1, unsigned int v2 ) { return v1 < v2 ? v1 : v2; }
+	unsigned long int min( unsigned long int v1, unsigned long int v2 ) { return v1 < v2 ? v1 : v2; }
 	long long int min( long long int v1, long long int v2 ) { return v1 < v2 ? v1 : v2; }
-	unsigned long long int min( unsigned long long int v1, unsigned int v2 ) { return v1 < v2 ? v1 : v2; }
+	unsigned long long int min( unsigned long long int v1, unsigned long long int v2 ) { return v1 < v2 ? v1 : v2; }
 	forall( T | { int ?<?( T, T ); } )					// generic
 	T min( T v1, T v2 ) { return v1 < v2 ? v1 : v2; }
 

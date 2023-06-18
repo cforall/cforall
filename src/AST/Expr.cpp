@@ -185,8 +185,8 @@ LabelAddressExpr::LabelAddressExpr( const CodeLocation & loc, Label && a )
 
 // --- CastExpr
 
-CastExpr::CastExpr( const CodeLocation & loc, const Expr * a, GeneratedFlag g )
-: Expr( loc, new VoidType{} ), arg( a ), isGenerated( g ) {}
+CastExpr::CastExpr( const CodeLocation & loc, const Expr * a, GeneratedFlag g, CastKind kind )
+: Expr( loc, new VoidType{} ), arg( a ), isGenerated( g ), kind( kind ) {}
 
 bool CastExpr::get_lvalue() const {
 	// This is actually wrong by C, but it works with our current set-up.
