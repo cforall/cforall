@@ -1,0 +1,248 @@
+array-container/dimexpr-match-c.cfa:30:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:30:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:30:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:30:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:30:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:30:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:30:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:30:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:38:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
+    Constant Expression (7: signed int)
+    ... with resolved type:
+      signed int
+  ... to:
+    unsigned long int
+  ... with resolved type:
+    unsigned long int
+array-container/dimexpr-match-c.cfa:38:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
+    Constant Expression (7: signed int)
+    ... with resolved type:
+      signed int
+  ... to:
+    unsigned long int
+  ... with resolved type:
+    unsigned long int
+array-container/dimexpr-match-c.cfa:38:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
+    Variable Expression: enu7: const instance of enum __anonymous0 with body
+    ... with resolved type:
+      const instance of enum __anonymous0 with body
+  ... to:
+    unsigned long int
+  ... with resolved type:
+    unsigned long int
+array-container/dimexpr-match-c.cfa:38:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
+    Variable Expression: enu7: const instance of enum __anonymous0 with body
+    ... with resolved type:
+      const instance of enum __anonymous0 with body
+  ... to:
+    unsigned long int
+  ... with resolved type:
+    unsigned long int
+array-container/dimexpr-match-c.cfa:38:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to variable length array of float with dimension of Generated Cast of:
+    Variable Expression: cpr7: const signed int
+    ... with resolved type:
+      const signed int
+  ... to:
+    unsigned long int
+  ... with resolved type:
+    unsigned long int
+array-container/dimexpr-match-c.cfa:38:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to variable length array of float with dimension of Generated Cast of:
+    Variable Expression: cpr7: const signed int
+    ... with resolved type:
+      const signed int
+  ... to:
+    unsigned long int
+  ... with resolved type:
+    unsigned long int
+array-container/dimexpr-match-c.cfa:38:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to variable length array of float with dimension of Generated Cast of:
+    Variable Expression: mut7: signed int
+    ... with resolved type:
+      signed int
+  ... to:
+    unsigned long int
+  ... with resolved type:
+    unsigned long int
+array-container/dimexpr-match-c.cfa:38:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to variable length array of float with dimension of Generated Cast of:
+    Variable Expression: mut7: signed int
+    ... with resolved type:
+      signed int
+  ... to:
+    unsigned long int
+  ... with resolved type:
+    unsigned long int
+array-container/dimexpr-match-c.cfa:47:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:47:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:47:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:47:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:47:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:47:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:47:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:47:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:77:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:77:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:77:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:77:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:77:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:77:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:77:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-c.cfa:77:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+

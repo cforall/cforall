@@ -1,0 +1,118 @@
+// These "-cfa" test cases run the dimexpr-match framework (see the hfa) on the CFA "new array."
+// The test is not runnable in gcc.
+// Essentially parallels dimexpr-match.cfa, but uses array(float, 17), of array.hfa, in place of `float[17]`.
+
+#ifndef __cforall
+#error This test is CFA-only
+#endif
+
+#ifdef INCLUDE_MINIMAL
+#define POUNDINCLUDE #include
+POUNDINCLUDE <containers/array.hfa>
+#else
+#include <containers/array.hfa>                           // part of SUT
+#endif
+
+#include "dimexpr-match.hfa"                              // test framework
+
+// CFA "classic" behaviour is inconsistent between "C array" and "new array."
+// The impelementation of "non classic" rules makes C arrays and new arrays work the same.
+#ifdef CFA_IS_CLASSIC
+
+    // CFA "classic" allows mismatched static lengths on "new arrays," which is a bug.
+    // For cfacc-classic compiling C arrays, the (expected) rejection of mismatched static lenghts happens in gcc, not cfa-cpp.
+    // When the CFA input is a C array, the cfa-cc handling is passthrough, so GCC sees the error.
+    // When the CFA input is a new array, the cfa-cpp handling is nontrivial; this rewriting hides the error from GCC, causing the case to be accepted.
+    // This issue is fixed in the implementation of the "non classic" rules.
+    #undef  RULE_CF_NE_STA_STA
+    #define RULE_CF_NE_STA_STA  ACC
+
+    // CFA "classic" rejects mismatched `[N]`s on "new arrays," which is the original signature featere of "new arrays."
+    // But it is unable to do the same with `n`s.  So CFA "classic" treats `n` and `[N]` differently.
+    // The impelementation of "non classic" rules extends this safety to `n`s, and to C arrays.
+    #undef  GRP_K_DIM                 // reclassify dim7/dim42 as group XXX, instead of group DYN
+    #define GRP_K_DIM  XXX
+    #define RULE_CF_EQ_XXX_XXX  ACC   // these rules correspond with non-"classic" DYN
+    #define RULE_CF_NE_XXX_XXX  REJ
+    #define RULE_CF_NE_XXX_STA  REJ
+    #define RULE_CF_NE_STA_XXX  REJ
+    #define RULE_CF_NE_XXX_DYN  REJ
+    #define RULE_CF_NE_DYN_XXX  REJ
+    #define RULE_CF_NE_XXX_UNS  REJ
+    #define RULE_CF_NE_UNS_XXX  REJ
+
+#endif
+
+
+DECLN_runTests {
+
+    enum { enu7 = 7, enu42 = 42 };
+    int mut7 = 7, mut42 = 42;
+
+    
+    #define TRY_COMPAT( LV, RV )            \
+    {                                       \
+        void f( array(float, LV) * x ) {}   \
+        array(float, RV) a;                 \
+        f( & a );                           \
+    }
+    ARRANGEMENT( PTRPARM_CALL )
+    #undef TRY_COMPAT
+
+    #define TRY_COMPAT( LV, RV )            \
+    {                                       \
+        array(float, RV) a;                 \
+        array(float, LV) * b = & a;         \
+    }
+    ARRANGEMENT( PTRVAR_INIT )
+    #undef TRY_COMPAT
+
+    #define TRY_COMPAT( LV, RV )            \
+    {                                       \
+        array(float, RV) a;                 \
+        array(float, LV) * b = NULL;        \
+        b = & a;                            \
+    }
+    ARRANGEMENT( PTRVAR_ASGN )
+    #undef TRY_COMPAT
+
+    #define TRY_COMPAT( LV, RV )            \
+    {                                       \
+        void f( array(float, LV) & x ) {}   \
+        array(float, RV) a;                 \
+        f( a );                             \
+    }
+    ARRANGEMENT( REFPARM_CALL )
+    #undef TRY_COMPAT
+
+    #define TRY_COMPAT( LV, RV )            \
+    {                                       \
+        array(float, RV) a;                 \
+        array(float, LV) & b = a;           \
+    }
+    ARRANGEMENT( REFVAR_INIT )
+    #undef TRY_COMPAT
+
+    #define TRY_COMPAT( LV, RV )            \
+    {                                       \
+        array(float, RV) a;                 \
+        array(float, LV) & b = *0p;         \
+        & b = & a;                          \
+    }
+    ARRANGEMENT( REFVAR_ASGN )
+    #undef TRY_COMPAT
+
+
+    forall( [N] )
+    void zip( array(float, N) & a, array(float, N) & b ) {}
+
+    #define TRY_COMPAT( LV, RV )            \
+    {                                       \
+        array(float, LV) a;                 \
+        array(float, RV) b;                 \
+        zip( a, b );                        \
+    }
+    ARRANGEMENT( CALLZIP )
+    #undef TRY_COMPAT
+
+}

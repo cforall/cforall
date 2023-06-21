@@ -195,6 +195,10 @@ struct __cluster_proc_list {
 	// Total number of processors
 	unsigned total;
 
+    // Number of processors constructed
+    //  incremented at construction time, total is incremented once the processor asyncronously registers
+	unsigned constructed;
+
 	// Total number of idle processors
 	unsigned idle;
 
@@ -295,6 +299,9 @@ static inline [cluster *&, cluster *& ] __get( cluster & this ) __attribute__((c
 
 static inline struct processor * active_processor() { return publicTLS_get( this_processor ); } // UNSAFE
 static inline struct cluster   * active_cluster  () { return publicTLS_get( this_processor )->cltr; }
+
+// gets the number of constructed processors on the cluster
+static inline unsigned get_proc_count( cluster & this ) { return this.procs.constructed; }
 
 // set the number of internal processors
 // these processors are in addition to any explicitly declared processors

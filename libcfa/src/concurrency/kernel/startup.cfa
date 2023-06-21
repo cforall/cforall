@@ -527,6 +527,7 @@ static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * 
 static void init(processor & this, const char name[], cluster & _cltr, thread$ * initT) with( this ) {
 	this.name = name;
 	this.cltr = &_cltr;
+    __atomic_add_fetch( &_cltr.procs.constructed, 1u, __ATOMIC_RELAXED );
 	this.rdq.its = 0;
 	this.rdq.itr = 0;
 	this.rdq.id  = 0;
@@ -594,6 +595,8 @@ void ^?{}(processor & this) libcfa_public with( this ) {
 	/* paranoid */ verify( !__atomic_load_n(&do_terminate, __ATOMIC_ACQUIRE) );
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p signaling termination\n", &this);
 
+    __atomic_sub_fetch( &this.cltr->procs.constructed, 1u, __ATOMIC_RELAXED );
+
 	__atomic_store_n(&do_terminate, true, __ATOMIC_RELAXED);
 	__disable_interrupts_checked();
 		__wake_proc( &this );
@@ -614,6 +617,7 @@ void ^?{}(processor & this) libcfa_public with( this ) {
 static void ?{}(__cluster_proc_list & this) {
 	this.fdw   = 0p;
 	this.idle  = 0;
+    this.constructed = 0;
 	this.total = 0;
 }
 

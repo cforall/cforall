@@ -1,0 +1,6 @@
+polybits.cfa:4:1 error: Cannot have bitfields inside a sized polymorphic structure.bitfield: signed int with bitfield width Constant Expression (7: signed int)
+... with resolved type:
+  signed int
+polybits.cfa:10:1 error: Cannot have bitfields inside a sized polymorphic structure.bitfield: signed int with bitfield width Constant Expression (7: signed int)
+... with resolved type:
+  signed int

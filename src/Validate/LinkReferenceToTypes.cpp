@@ -83,7 +83,7 @@ ast::EnumInstType const * LinkTypesCore::postvisit( ast::EnumInstType const * ty
 	if ( decl ) {
 		// Just linking in the node.
 		auto mut = ast::mutate( type );
-		mut->base = const_cast<ast::EnumDecl *>( decl );
+		mut->base = decl;
 		type = mut;
 	}
 	if ( !decl || !decl->body ) {
@@ -100,7 +100,7 @@ ast::StructInstType const * LinkTypesCore::postvisit( ast::StructInstType const 
 	if ( decl ) {
 		// Just linking in the node.
 		auto mut = ast::mutate( type );
-		mut->base = const_cast<ast::StructDecl *>( decl );
+		mut->base = decl;
 		type = mut;
 	}
 	if ( !decl || !decl->body ) {
@@ -117,7 +117,7 @@ ast::UnionInstType const * LinkTypesCore::postvisit( ast::UnionInstType const * 
 	if ( decl ) {
 		// Just linking in the node.
 		auto mut = ast::mutate( type );
-		mut->base = const_cast<ast::UnionDecl *>( decl );
+		mut->base = decl;
 		type = mut;
 	}
 	if ( !decl || !decl->body ) {
@@ -140,7 +140,7 @@ ast::TraitInstType const * LinkTypesCore::postvisit( ast::TraitInstType const * 
 	auto mut = ast::mutate( type );
 
 	// Just linking in the node.
-	mut->base = const_cast<ast::TraitDecl *>( decl );
+	mut->base = decl;
 
 	// Need to carry over the 'sized' status of each decl in the instance.
 	for ( auto p : group_iterate( decl->params, type->params ) ) {
@@ -201,8 +201,6 @@ ast::EnumDecl const * LinkTypesCore::postvisit( ast::EnumDecl const * decl ) {
 	if ( !decl->body ) {
 		return decl;
 	}
-
-	// The following section 
 
 	ForwardEnumsType::iterator fwds = forwardEnums.find( decl->name );
 	if ( fwds != forwardEnums.end() ) {

@@ -222,6 +222,88 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
         auto messageIter = messageStructDecls.find( arg2InstType->aggr() );
         if ( actorIter != actorStructDecls.end() && messageIter != messageStructDecls.end() ) {
             //////////////////////////////////////////////////////////////////////
+            // The following generates this wrapper for all receive(derived_actor &, derived_msg &) functions
+            /* base_actor and base_msg are output params
+            static inline allocation __CFA_receive_wrap( derived_actor & receiver, derived_msg & msg, actor ** base_actor, message ** base_msg ) {
+                base_actor = &receiver;
+                base_msg = &msg;
+                return receive( receiver, msg );
+            }
+            */
+            CompoundStmt * wrapBody = new CompoundStmt( decl->location );
+
+            // generates: base_actor = &receiver;
+            wrapBody->push_back( new ExprStmt( decl->location,
+                UntypedExpr::createAssign( decl->location, 
+                    UntypedExpr::createDeref( decl->location, new NameExpr( decl->location, "base_actor" ) ),
+                    new AddressExpr( decl->location, new NameExpr( decl->location, "receiver" ) )
+                )
+            ));
+
+            // generates: base_msg = &msg;
+            wrapBody->push_back( new ExprStmt( decl->location,
+                UntypedExpr::createAssign( decl->location, 
+                    UntypedExpr::createDeref( decl->location, new NameExpr( decl->location, "base_msg" ) ),
+                    new AddressExpr( decl->location, new NameExpr( decl->location, "msg" ) )
+                )
+            ));
+
+            // generates: return receive( receiver, msg );
+            wrapBody->push_back( new ReturnStmt( decl->location,
+                new UntypedExpr ( decl->location,
+                    new NameExpr( decl->location, "receive" ),
+                    {
+                        new NameExpr( decl->location, "receiver" ),
+                        new NameExpr( decl->location, "msg" )
+                    }
+                )
+            ));
+
+            // create receive wrapper to extract base message and actor pointer
+            // put it all together into the complete function decl from above
+            FunctionDecl * receiveWrapper = new FunctionDecl(
+                decl->location,
+                "__CFA_receive_wrap",
+                {},                     // forall
+                {
+                    new ObjectDecl(
+                        decl->location,
+                        "receiver",
+                        ast::deepCopy( derivedActorRef )
+                    ),
+                    new ObjectDecl(
+                        decl->location,
+                        "msg",
+                        ast::deepCopy( derivedMsgRef )
+                    ),
+                    new ObjectDecl(
+                        decl->location,
+                        "base_actor",
+                        new PointerType( new PointerType( new StructInstType( *actorDecl ) ) )
+                    ),
+                    new ObjectDecl(
+                        decl->location,
+                        "base_msg",
+                        new PointerType( new PointerType( new StructInstType( *msgDecl ) ) )
+                    )
+                },                      // params
+                { 
+                    new ObjectDecl(
+                        decl->location,
+                        "__CFA_receive_wrap_ret",
+                        new EnumInstType( *allocationDecl )
+                    )
+                },
+                wrapBody,               // body
+                { Storage::Static },    // storage
+                Linkage::Cforall,       // linkage
+                {},                     // attributes
+                { Function::Inline }
+            );
+
+            declsToAddAfter.push_back( receiveWrapper );
+
+            //////////////////////////////////////////////////////////////////////
             // The following generates this send message operator routine for all receive(derived_actor &, derived_msg &) functions
             /*
                 static inline derived_actor & ?|?( derived_actor & receiver, derived_msg & msg ) {
@@ -245,20 +327,22 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
                 )
             ));
             
-            // Function type is: allocation (*)( derived_actor &, derived_msg & )
+            // Function type is: allocation (*)( derived_actor &, derived_msg &, actor **, message ** )
             FunctionType * derivedReceive = new FunctionType();
             derivedReceive->params.push_back( ast::deepCopy( derivedActorRef ) );
             derivedReceive->params.push_back( ast::deepCopy( derivedMsgRef ) );
+            derivedReceive->params.push_back( new PointerType( new PointerType( new StructInstType( *actorDecl ) ) ) );
+            derivedReceive->params.push_back( new PointerType( new PointerType( new StructInstType( *msgDecl ) ) ) );
             derivedReceive->returns.push_back( new EnumInstType( *allocationDecl ) );
 
-            // Generates: allocation (*my_work_fn)( derived_actor &, derived_msg & ) = receive;
+            // Generates: allocation (*my_work_fn)( derived_actor &, derived_msg &, actor **, message ** ) = receive;
             sendBody->push_back( new DeclStmt(
                 decl->location,
                 new ObjectDecl(
                     decl->location,
                     "my_work_fn",
                     new PointerType( derivedReceive ),
-                    new SingleInit( decl->location, new NameExpr( decl->location, "receive" ) )
+                    new SingleInit( decl->location, new NameExpr( decl->location, "__CFA_receive_wrap" ) )
                 )
             ));
 
@@ -266,6 +350,8 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
             FunctionType * genericReceive = new FunctionType();
             genericReceive->params.push_back( new ReferenceType( new StructInstType( *actorDecl ) ) );
             genericReceive->params.push_back( new ReferenceType( new StructInstType( *msgDecl ) ) );
+            genericReceive->params.push_back( new PointerType( new PointerType( new StructInstType( *actorDecl ) ) ) );
+            genericReceive->params.push_back( new PointerType( new PointerType( new StructInstType( *msgDecl ) ) ) );
             genericReceive->returns.push_back( new EnumInstType( *allocationDecl ) );
 
             // Generates: allocation (*fn)( actor &, message & ) = (allocation (*)( actor &, message & ))my_work_fn;
@@ -284,7 +370,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
                 )
             ));
 
-            // Generates: new_req{ &receiver, (actor *)&receiver, &msg, (message *)&msg, fn };
+            // Generates: new_req{ (actor *)&receiver, (message *)&msg, fn };
             sendBody->push_back( new ExprStmt(
                 decl->location,
 				new UntypedExpr (
@@ -292,9 +378,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
 					new NameExpr( decl->location, "?{}" ),
 					{
 						new NameExpr( decl->location, "new_req" ),
-                        new AddressExpr( new NameExpr( decl->location, "receiver" ) ),
                         new CastExpr( decl->location, new AddressExpr( new NameExpr( decl->location, "receiver" ) ), new PointerType( new StructInstType( *actorDecl ) ), ExplicitCast ),
-                        new AddressExpr( new NameExpr( decl->location, "msg" ) ),
                         new CastExpr( decl->location, new AddressExpr( new NameExpr( decl->location, "msg" ) ), new PointerType( new StructInstType( *msgDecl ) ), ExplicitCast ),
                         new NameExpr( decl->location, "fn" )
 					}

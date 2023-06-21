@@ -89,7 +89,9 @@ EXTRA_DIST = test.py \
 	concurrency/clib_tls.c \
 	concurrency/clib.c \
 	concurrency/unified_locking/mutex_test.hfa \
-	concurrency/channels/parallel_harness.hfa
+	concurrency/channels/parallel_harness.hfa \
+	array-container/dimexpr-match.hfa \
+	array-container/dimexpr-match-detail.sh
 
 dist-hook:
 	echo "Gathering test files"
@@ -222,6 +224,14 @@ array-ERR2 : array.cfa ${CFACCBIN}
 
 array-ERR3 : array.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR3
+	-cp ${test} ${abspath ${@}}
+
+array-container/dimexpr-match-c-ERRS : array-container/dimexpr-match-c.cfa
+	${CFACOMPILE_SYNTAX} -DERRS
+	-cp ${test} ${abspath ${@}}
+
+array-container/dimexpr-match-cfa-ERRS : array-container/dimexpr-match-cfa.cfa
+	${CFACOMPILE_SYNTAX} -DERRS
 	-cp ${test} ${abspath ${@}}
 
 alloc-ERROR : alloc.cfa ${CFACCBIN}

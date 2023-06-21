@@ -28,8 +28,6 @@
 #include <list>                             // for list
 #include <string>                           // for char_traits, operator<<
 
-using namespace std;
-
 #include "AST/Convert.hpp"
 #include "AST/Pass.hpp"                     // for pass_visitor_stats
 #include "AST/TranslationUnit.hpp"          // for TranslationUnit
@@ -86,6 +84,8 @@ using namespace std;
 #include "Validate/VerifyCtorDtorAssign.hpp" // for verifyCtorDtorAssign
 #include "Virtual/ExpandCasts.h"            // for expandCasts
 #include "Virtual/VirtualDtor.hpp"           // for implementVirtDtors
+
+using namespace std;
 
 static void NewPass( const char * const name ) {
 	Stats::Heap::newPass( name );
@@ -334,8 +334,8 @@ int main( int argc, char * argv[] ) {
 		PASS( "Link Reference To Types", Validate::linkReferenceToTypes, transUnit );
 
 		PASS( "Fix Qualified Types", Validate::fixQualifiedTypes, transUnit );
-		PASS( "Hoist Struct", Validate::hoistStruct, transUnit );
 		PASS( "Eliminate Typedef", Validate::eliminateTypedef, transUnit );
+		PASS( "Hoist Struct", Validate::hoistStruct, transUnit );
 		PASS( "Validate Generic Parameters", Validate::fillGenericParameters, transUnit );
 		PASS( "Translate Dimensions", Validate::translateDimensionParameters, transUnit );
 		PASS( "Check Function Returns", Validate::checkReturnStatements, transUnit );

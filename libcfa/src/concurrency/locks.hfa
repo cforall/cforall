@@ -34,7 +34,7 @@
 // futex headers
 #include <linux/futex.h>      /* Definition of FUTEX_* constants */
 #include <sys/syscall.h>      /* Definition of SYS_* constants */
-#include <unistd.h>
+#include <unistd.h>           /* Definition of syscall routine */
 
 typedef void (*__cfa_pre_park)( void * );
 

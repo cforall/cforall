@@ -119,7 +119,16 @@ const InstType * validateGeneric(
 	return result.node.release();
 }
 
-struct ValidateGenericParamsCore : public ast::WithCodeLocation {
+bool isSizedPolymorphic( const ast::AggregateDecl * decl ) {
+	for ( const auto & param : decl->params ) {
+		if ( param->sized ) return true;
+	}
+	return false;
+}
+
+struct ValidateGenericParamsCore :
+		public ast::WithCodeLocation, public ast::WithGuards {
+	// Generic parameter filling and checks:
 	const ast::StructInstType * previsit( const ast::StructInstType * type ) {
 		assert( location );
 		return validateGeneric( *location, type );
@@ -128,6 +137,27 @@ struct ValidateGenericParamsCore : public ast::WithCodeLocation {
 	const ast::UnionInstType * previsit( const ast::UnionInstType * type ) {
 		assert( location );
 		return validateGeneric( *location, type );
+	}
+
+	// Check parameter and bitfield combinations:
+	bool insideSized = false;
+	void previsit( const ast::StructDecl * decl ) {
+		if ( isSizedPolymorphic( decl ) && !insideSized ) {
+			GuardValue( insideSized ) = true;
+		}
+	}
+
+	void previsit( const ast::UnionDecl * decl ) {
+		if ( isSizedPolymorphic( decl ) && !insideSized ) {
+			GuardValue( insideSized ) = true;
+		}
+	}
+
+	void previsit( const ast::ObjectDecl * decl ) {
+		if ( insideSized && decl->bitfieldWidth ) {
+			SemanticError( decl->location, decl,
+				"Cannot have bitfields inside a sized polymorphic structure." );
+		}
 	}
 };
 

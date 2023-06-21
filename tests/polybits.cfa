@@ -1,0 +1,11 @@
+forall( T )
+struct ExampleS {
+	T polyfield;
+	int bitfield :7;
+};
+
+forall( T )
+union ExampleU {
+	T polyfield;
+	int bitfield :7;
+};

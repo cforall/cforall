@@ -1,0 +1,391 @@
+
+
+//  Framework for the dimexpr-match tests.
+//
+//  These tests show whether an expression of type like `float (*)[25]`
+//  can be used in a context expecting a type like `float (*)[rand()]`.
+//
+//  A test includes this header and defines the function `runTests`.
+//  The `runTests` body is made with macros defined here.
+//
+//  Normally, drive a test either from test.py or ./dimexpr-match-detail.sh.
+//  Direct usage is for making small repro cases, while troubleshooting a problem.
+//
+//  Direct usage is:
+//
+//      compiler=gcc -x c           # pick one
+//      compiler=$fa
+//
+//      test=dimexpr-match-c.cfa    # pick one
+//      test=dimexpr-match-cfa.cfa
+//
+//      $compiler $test
+//      ./a.out
+//      ./a.out -cmd4skip | sed -E -n 's/skip.*\| *//p'
+//
+//  Expect the above compiler invocation to report success.
+//  Expect the first a.out invocation to print a mix of "done" and "skipped" messages.
+//  Assume the second a.out invocation (through sed) prints several compiler CLI invocations.  For each...
+//  Expect that running the current compiler invocation reports an error.
+//  So far, this is what dimexpr-match-detail.sh does.
+//
+//  The macro logic in here is hard to read.
+//  A specific test's TRY_COMPAT definition is easy to read.
+//
+//  An error message from an unexpected rejection is hard to read, because the message blames a macro.
+//  To diagnose one, first obtain the failing case's coordinates by ruuning:
+//      $compiler $test -E -P -DEMIT_COORDS > temp.cfa  # just preprocessor
+//      $compiler temp.cfa                              # will fail, want message
+//  Open temp.cfa and chase an error detail's line number, to find the failing code.
+//  Look at the pragma-message above the failing line, and read off the failure's -D coordinates.
+//  Isolate this case by running:                              ... copied from pragma message ...............................................................................................
+//      $compiler $test -E -P -DEMIT_MINIMAL -DINCLUDE_MINIMAL -DARRANGEMENT__OPTIN -DARRANGEMENT_PTRPARM_---- -DCASE_MANUAL -DCASE_FORMATION_L=--- -DCASE_FORMATION_R=--- -DCASE_EQUALITY=-- > mycase.cfa  # template
+//      $compiler $test -E -P -DEMIT_MINIMAL -DINCLUDE_MINIMAL -DARRANGEMENT__OPTIN -DARRANGEMENT_PTRPARM_CALL -DCASE_MANUAL -DCASE_FORMATION_L=LIT -DCASE_FORMATION_R=LIT -DCASE_EQUALITY=NE > mycase.cfa  # example
+//      $compiler mycase.cfa
+//  The content of mycase.cfa is easy to read.
+
+#ifdef __cforall
+    extern "C" {
+        int strcmp (const char* str1, const char* str2);
+    }
+    #define NULL 0p
+#else
+    #include <stdio.h>
+    #include <string.h>
+#endif
+
+#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
+#define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
+
+#define DO_PRAGMA(x) _Pragma (#x)
+#define DO_MESSAGE(x) DO_PRAGMA(message #x)
+
+#ifdef EMIT_COORDS
+#define MAYPRINT(...)
+#define MAYDELIMIT( LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME ) \
+    DO_MESSAGE(-DARRANGEMENT__OPTIN -DARRANGEMENT_ ## ARR_NAME -DCASE_MANUAL -DCASE_FORMATION_L=KL -DCASE_FORMATION_R=KR -DCASE_EQUALITY=ISEQ)
+#else
+#define MAYPRINT(...) printf(__VA_ARGS__);
+#define MAYDELIMIT( LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME )
+#endif
+
+#ifdef EMIT_MINIMAL
+#undef MAYPRINT
+#define MAYPRINT(...)
+#endif
+
+#define GRP_K_LIT STA
+#define GRP_K_ENU STA
+#define GRP_K_CPR DYN
+#define GRP_K_DIM DYN
+#define GRP_K_MUT UNS
+#define GRP_K( K ) GRP_K_ ## K
+
+#define MKV7_LIT 7
+#define MKV7_ENU enu7
+#define MKV7_CPR cpr7
+#define MKV7_DIM dim7
+#define MKV7_MUT mut7
+#define MKV7( K ) MKV7_ ## K
+
+#define MKV42_LIT 42
+#define MKV42_ENU enu42
+#define MKV42_CPR cpr42
+#define MKV42_DIM dim42
+#define MKV42_MUT mut42
+#define MKV42( K ) MKV42_ ## K
+
+#define MKLV( LK ) MKV7( LK )
+
+#define MKRV_EQ( KR ) MKV7(KR)
+#define MKRV_NE( KR ) MKV42(KR)
+#define MKRV( KR, ISEQ ) MKRV_ ## ISEQ( KR )
+
+#ifdef __cforall
+#define RULE_PFX RULE_CF_
+#else
+#define RULE_PFX RULE_C_
+#endif
+
+#define X_CASE_2( KL, KR, ISEQ, FL, FR, ARR_NAME ) \
+    MAY_TRY_COMPAT( \
+        CAT(CAT(CAT(CAT(CAT(RULE_PFX, ISEQ), _), FL), _), FR), \
+        MKLV( KL ), \
+        MKRV( KR, ISEQ ), \
+        KL, KR, FL, FR, ISEQ, ARR_NAME \
+    )
+
+#define X_CASE( KL, KR, ISEQ, ARR_NAME ) X_CASE_2( KL, KR, ISEQ, GRP_K(KL), GRP_K(KR), ARR_NAME )
+
+#ifdef ERRS
+#define MAY_TRY_COMPAT_REJ( LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME ) \
+    _Pragma("message \"Expect fail\"") \
+    MAY_TRY_COMPAT_ACC( LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME )
+#else
+#define MAY_TRY_COMPAT_REJ( LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME ) \
+    MAYPRINT("skip %s %s %s, L=%s, R=%s",  #FL, #ISEQ, #FR, #LV, #RV ) \
+    if (cmd4skip) { \
+        MAYPRINT(" | -DERRS -Werror %s -DARRANGEMENT__OPTIN -DARRANGEMENT_%s -DCASE_MANUAL -DCASE_FORMATION_L=%s -DCASE_FORMATION_R=%s -DCASE_EQUALITY=%s",  __FILE__, #ARR_NAME, #KL, #KR, #ISEQ ) \
+    } \
+    MAYPRINT("\n")
+#endif
+
+#define MAY_TRY_COMPAT_ACC( LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME ) \
+    MAYDELIMIT( LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME ) \
+    TRY_COMPAT(LV, RV) \
+    MAYPRINT("done %s %s %s, L=%s, R=%s\n",  #FL, #ISEQ, #FR, #LV, #RV )
+
+#define MAY_TRY_COMPAT(EXPECT, LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME) \
+    CAT(MAY_TRY_COMPAT_, EXPECT( LV, RV, KL, KR, FL, FR, ISEQ, ARR_NAME ))
+
+#define TCXXX(Q) Q
+#define TCXX(Q) #Q
+
+#define QUOTE(str) #str
+#define EXPAND_AND_QUOTE(str) QUOTE(str)
+#define TRY_COMPAT_E EXPAND_AND_QUOTE(TRY_COMPAT(__L__,__R__))
+
+// Temporary: CFA is classic by default
+#if defined CFA_IS_PREVIEW && defined CFA_IS_CLASSIC
+#error Must not define both CFA_IS_CLASSIC, CFA_IS_PREVIEW
+#endif
+#if ! defined CFA_IS_PREVIEW && ! defined CFA_IS_CLASSIC
+#define CFA_IS_CLASSIC
+#endif
+
+#if ! defined __cforall
+#define SUPPRESS_FORALL_N
+#endif
+
+#if defined SUPPRESS_FORALL_N_ON_CLASSIC && defined CFA_IS_CLASSIC
+#define SUPPRESS_FORALL_N
+#endif
+
+/*
+
+RULE macros define the expected outcome:
+Given a compiler's functionality level and a  test case, do we expect the compiler to accept or reject the case?
+
+Group STA: Statically stable
+    - literal
+    - enumeration
+
+Group DYN: Dynamically stable
+    - parameter that is a constant
+    - static constant global
+
+Group UNS: potentially Unstable
+    - variable
+    - parameter that is a constant reference to constant
+    - function return
+    - extern constant (safe and annoying here; must be here if you can link it to something that changes)
+
+C rules
+    - Reject a pair from group STA if it has two different values
+    - otherwise, accept
+
+CFA "classic" rules (what CFA actually does, before Mike brings in CFA rules)
+    - same as C, except
+    - reject STA/non-STA crossing
+
+CFA rules ("preview" only)
+    - accept a pair from group STA if it has the same value
+    - accept a pair from group DYN if it is written out the same (e.g. refers to same variable)
+    - otherwise, reject
+        (notably, reject all group UNS)
+        (notably, reject any group crossing)
+
+The RULE_* definitions below encode the summary above into the test harness's format.
+This format is: tabled function to {ACC,REJ} from {STA,DYN,UNS}^2 x {EQ,NE}
+
+*/
+
+#define RULE_C_EQ_STA_STA  ACC
+#define RULE_C_EQ_STA_DYN  ACC
+#define RULE_C_EQ_STA_UNS  ACC
+#define RULE_C_EQ_DYN_STA  ACC
+#define RULE_C_EQ_DYN_DYN  ACC
+#define RULE_C_EQ_DYN_UNS  ACC
+#define RULE_C_EQ_UNS_STA  ACC
+#define RULE_C_EQ_UNS_DYN  ACC
+#define RULE_C_EQ_UNS_UNS  ACC
+
+#define RULE_C_NE_STA_STA  REJ
+#define RULE_C_NE_STA_DYN  ACC
+#define RULE_C_NE_STA_UNS  ACC
+#define RULE_C_NE_DYN_STA  ACC
+#define RULE_C_NE_DYN_DYN  ACC
+#define RULE_C_NE_DYN_UNS  ACC
+#define RULE_C_NE_UNS_STA  ACC
+#define RULE_C_NE_UNS_DYN  ACC
+#define RULE_C_NE_UNS_UNS  ACC
+
+#ifdef CFA_IS_CLASSIC
+
+#define RULE_CF_EQ_STA_STA  ACC
+#define RULE_CF_EQ_STA_DYN  REJ
+#define RULE_CF_EQ_STA_UNS  REJ
+#define RULE_CF_EQ_DYN_STA  REJ
+#define RULE_CF_EQ_DYN_DYN  ACC
+#define RULE_CF_EQ_DYN_UNS  ACC
+#define RULE_CF_EQ_UNS_STA  REJ
+#define RULE_CF_EQ_UNS_DYN  ACC
+#define RULE_CF_EQ_UNS_UNS  ACC
+
+#define RULE_CF_NE_STA_STA  REJ
+#define RULE_CF_NE_STA_DYN  REJ
+#define RULE_CF_NE_STA_UNS  REJ
+#define RULE_CF_NE_DYN_STA  REJ
+#define RULE_CF_NE_DYN_DYN  ACC
+#define RULE_CF_NE_DYN_UNS  ACC
+#define RULE_CF_NE_UNS_STA  REJ
+#define RULE_CF_NE_UNS_DYN  ACC
+#define RULE_CF_NE_UNS_UNS  ACC
+
+#else
+
+#define RULE_CF_EQ_STA_STA  ACC
+#define RULE_CF_EQ_STA_DYN  REJ
+#define RULE_CF_EQ_STA_UNS  REJ
+#define RULE_CF_EQ_DYN_STA  REJ
+#define RULE_CF_EQ_DYN_DYN  ACC
+#define RULE_CF_EQ_DYN_UNS  REJ
+#define RULE_CF_EQ_UNS_STA  REJ
+#define RULE_CF_EQ_UNS_DYN  REJ
+#define RULE_CF_EQ_UNS_UNS  REJ
+
+#define RULE_CF_NE_STA_STA  REJ
+#define RULE_CF_NE_STA_DYN  REJ
+#define RULE_CF_NE_STA_UNS  REJ
+#define RULE_CF_NE_DYN_STA  REJ
+#define RULE_CF_NE_DYN_DYN  REJ
+#define RULE_CF_NE_DYN_UNS  REJ
+#define RULE_CF_NE_UNS_STA  REJ
+#define RULE_CF_NE_UNS_DYN  REJ
+#define RULE_CF_NE_UNS_UNS  REJ
+
+#endif
+
+#ifndef ARRANGEMENT__OPTIN
+#define ARRANGEMENT_PTRVAR_INIT 1
+#define ARRANGEMENT_PTRPARM_CALL 1
+#define ARRANGEMENT_PTRVAR_ASGN 1
+#define ARRANGEMENT_REFVAR_INIT 1
+#define ARRANGEMENT_REFPARM_CALL 1
+#define ARRANGEMENT_REFVAR_ASGN 1
+#define ARRANGEMENT_CALLZIP 1
+#endif
+
+#define EMIT_SKIP( ARR_NAME ) \
+    MAYPRINT( "---- " #ARR_NAME " skipped\n" )
+
+#define MAY_EMIT_ARRANGEMENT_PTRVAR_INIT( ARR_NAME ) EMIT_SKIP( ARR_NAME )
+#define MAY_EMIT_ARRANGEMENT_PTRPARM_CALL( ARR_NAME ) EMIT_SKIP( ARR_NAME )
+#define MAY_EMIT_ARRANGEMENT_PTRVAR_ASGN( ARR_NAME ) EMIT_SKIP( ARR_NAME )
+#define MAY_EMIT_ARRANGEMENT_REFVAR_INIT( ARR_NAME ) EMIT_SKIP( ARR_NAME )
+#define MAY_EMIT_ARRANGEMENT_REFPARM_CALL( ARR_NAME ) EMIT_SKIP( ARR_NAME )
+#define MAY_EMIT_ARRANGEMENT_REFVAR_ASGN( ARR_NAME ) EMIT_SKIP( ARR_NAME )
+#define MAY_EMIT_ARRANGEMENT_CALLZIP( ARR_NAME ) EMIT_SKIP( ARR_NAME )
+
+#define MAY_EMIT_1( ARR_NAME ) \
+    MAYPRINT( "---- " #ARR_NAME ":   " TRY_COMPAT_E "\n" ) \
+    RUNCASES( ARR_NAME )
+
+#ifndef CASE_MANUAL
+  #define RUNCASES( ARR_NAME ) \
+    X_CASE( LIT, LIT, EQ, ARR_NAME ) \
+    X_CASE( LIT, LIT, NE, ARR_NAME ) \
+    X_CASE( LIT, ENU, EQ, ARR_NAME ) \
+    X_CASE( LIT, ENU, NE, ARR_NAME ) \
+    X_CASE( LIT, CPR, NE, ARR_NAME ) \
+    X_CASE( LIT, MUT, NE, ARR_NAME ) \
+    X_CASE( ENU, ENU, EQ, ARR_NAME ) \
+    X_CASE( ENU, ENU, NE, ARR_NAME ) \
+    X_CASE( ENU, LIT, EQ, ARR_NAME ) \
+    X_CASE( ENU, LIT, NE, ARR_NAME ) \
+    X_CASE( ENU, CPR, NE, ARR_NAME ) \
+    X_CASE( ENU, MUT, NE, ARR_NAME ) \
+    X_CASE( CPR, CPR, EQ, ARR_NAME ) \
+    X_CASE( CPR, CPR, NE, ARR_NAME ) \
+    X_CASE( CPR, LIT, NE, ARR_NAME ) \
+    X_CASE( CPR, ENU, NE, ARR_NAME ) \
+    X_CASE( CPR, MUT, NE, ARR_NAME ) \
+    X_CASE( MUT, MUT, EQ, ARR_NAME ) \
+    X_CASE( MUT, MUT, NE, ARR_NAME ) \
+    X_CASE( MUT, LIT, NE, ARR_NAME ) \
+    X_CASE( MUT, ENU, NE, ARR_NAME ) \
+    X_CASE( MUT, CPR, NE, ARR_NAME ) \
+    RUNCASES_FORALL_N( ARR_NAME )
+
+  #ifndef SUPPRESS_FORALL_N
+  #define RUNCASES_FORALL_N( ARR_NAME ) \
+    X_CASE( LIT, DIM, NE, ARR_NAME ) \
+    X_CASE( ENU, DIM, NE, ARR_NAME ) \
+    X_CASE( CPR, DIM, NE, ARR_NAME ) \
+    X_CASE( DIM, DIM, EQ, ARR_NAME ) \
+    X_CASE( DIM, DIM, NE, ARR_NAME ) \
+    X_CASE( DIM, LIT, NE, ARR_NAME ) \
+    X_CASE( DIM, ENU, NE, ARR_NAME ) \
+    X_CASE( DIM, CPR, NE, ARR_NAME ) \
+    X_CASE( DIM, MUT, NE, ARR_NAME ) \
+    X_CASE( MUT, DIM, NE, ARR_NAME ) 
+  #else
+  #define RUNCASES_FORALL_N( ARR_NAME )
+  #endif
+
+#else
+    #ifndef CASE_FORMATION_L
+    #error CASE_FORMATION_L not specified along with CASE_MANUAL
+    #endif
+    #ifndef CASE_FORMATION_R
+    #error CASE_FORMATION_R not specified along with CASE_MANUAL
+    #endif
+    #ifndef CASE_EQUALITY
+    #error CASE_EQUALITY not specified along with CASE_MANUAL
+    #endif
+    #define RUNCASES( ARR_NAME ) X_CASE( CASE_FORMATION_L, CASE_FORMATION_R, CASE_EQUALITY, ARR_NAME )
+#endif 
+
+#define ARRANGEMENT( ARR_NAME ) CAT(MAY_EMIT_, CAT(ARRANGEMENT_, ARR_NAME)) ( ARR_NAME )
+
+
+#if defined SUPPRESS_FORALL_N
+
+    #define DECLN_runTests                   \
+        void runTests(                       \
+            const int cpr7, const int cpr42, \
+            int cmd4skip                     \
+        )
+#else
+
+    forall( [N] ) struct quicktag {};
+
+    #define DECLN_runTests                   \
+        forall( [dim7], [dim42] )            \
+        void runTests(                       \
+            const int cpr7, const int cpr42, \
+            quicktag(dim7), quicktag(dim42), \
+            int cmd4skip                     \
+        )
+#endif
+
+DECLN_runTests;
+
+int main(int argc, const char *argv[]) {
+
+    int cmd4skip = 0;
+
+    if (argc > 1 && strcmp("-cmd4skip", argv[1]) == 0) {
+        cmd4skip = 1;
+    }
+
+  #if defined SUPPRESS_FORALL_N
+    runTests(7, 42, cmd4skip);
+  #else
+    quicktag(7) tag7;
+    quicktag(42) tag42;
+    runTests(7, 42, tag7, tag42, cmd4skip);
+  #endif
+
+    return 0;
+}

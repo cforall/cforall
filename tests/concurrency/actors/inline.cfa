@@ -35,6 +35,7 @@ allocation receive( d_actor &, d_msg2 & msg ) {
 }
 
 int main() {
+    processor p;
     {
         start_actor_system();                                // sets up executor
         d_actor da;

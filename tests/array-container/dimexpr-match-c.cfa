@@ -1,0 +1,98 @@
+// These "-c" test cases run the dimexpr-match framework (see the hfa) on the C array.
+// The test is runnable in plain gcc and cfacc.
+// When run in cfacc, it shows the support/compatibility of C arrays in CFA.
+
+// These tests don't use collections/array.hfa (see the -cfa version for that).
+// But `forall( [N] ) ...` is a laguage feature that does not depend on the new-array library.
+// In CFA, such an `N` is a fine value expression, and can be used as the dimension of a "C" array.
+// This file's cases include `N` expressions when the compiler is non-Classic CFA.
+// They are omitted from consideration
+//  - under gcc, for obvious reasons
+//  - or under classic CFA, beacuase its bahaviour on this C/CFA hybrid was complex, and there is no value in modeling an expctation of it
+//  - whereas these are not really "C compatibility" cases
+
+#define SUPPRESS_FORALL_N_ON_CLASSIC
+
+#include "dimexpr-match.hfa"     // test framework
+
+DECLN_runTests {
+
+    enum { enu7 = 7, enu42 = 42 };
+    int mut7 = 7, mut42 = 42;
+
+    
+    #define TRY_COMPAT( LV, RV )        \
+    {                                   \
+        void f( float (*x)[LV] ) {}     \
+        float a[RV];                    \
+        f( & a );                       \
+    }
+    ARRANGEMENT( PTRPARM_CALL )
+    #undef TRY_COMPAT
+
+    #define TRY_COMPAT( LV, RV )        \
+    {                                   \
+        float a[RV];                    \
+        float (*b)[LV] = & a;           \
+    }
+    ARRANGEMENT( PTRVAR_INIT )
+    #undef TRY_COMPAT
+
+    #define TRY_COMPAT( LV, RV )        \
+    {                                   \
+        float a[RV];                    \
+        float (*b)[LV] = NULL;          \
+        b = & a;                        \
+    }
+    ARRANGEMENT( PTRVAR_ASGN )
+    #undef TRY_COMPAT
+
+  #ifdef __cforall
+
+  #ifdef TRY_BUG_1
+    #define TRY_COMPAT( LV, RV )        \
+    {                                   \
+        void f( float (&x)[LV] ) {}     \
+        float a[RV];                    \
+        f( a );                         \
+    }
+    ARRANGEMENT( REFPARM_CALL )
+    #undef TRY_COMPAT
+
+    #define TRY_COMPAT( LV, RV )        \
+    {                                   \
+        float a[RV];                    \
+        float (&b)[LV] = a;             \
+    }
+    ARRANGEMENT( REFVAR_INIT )
+    #undef TRY_COMPAT
+  #endif
+
+    #define TRY_COMPAT( LV, RV )        \
+    {                                   \
+        float a[RV];                    \
+        float (&b)[LV] = *0p;           \
+        & b = & a;                      \
+    }
+    ARRANGEMENT( REFVAR_ASGN )
+    #undef TRY_COMPAT
+
+  #ifdef TRY_WISH_1 // "unification as-if"
+    forall( [N] )
+    void zip( float (*a)[N], float (*b)[N] ) {}
+
+    #define TRY_COMPAT( LV, RV )        \
+    {                                   \
+        float a[LV];                    \
+        float b[RV];                    \
+        zip( &a, &b );                  \
+    }
+    ARRANGEMENT( CALLZIP )
+    #undef TRY_COMPAT
+  #endif
+
+  #endif
+
+
+
+}

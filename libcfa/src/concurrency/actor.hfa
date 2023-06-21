@@ -45,35 +45,26 @@ struct executor;
 
 enum allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
 
-typedef allocation (*__receive_fn)(actor &, message &);
+typedef allocation (*__receive_fn)(actor &, message &, actor **, message **);
 struct request {
-    actor * base_receiver;
     actor * receiver;
-    message * base_msg;
     message * msg;
     __receive_fn fn;
-    // bool stop; // commented from change to termination flag from sentinels C_TODO: remove after confirming no performance degradation
 };
 
 struct a_msg {
     int m;
 };
-static inline void ?{}( request & this ) { 
-    // this.stop = true; // default ctor makes a sentinel
-}
-static inline void ?{}( request & this, actor * base_receiver, actor * receiver, message * base_msg, message * msg, __receive_fn fn ) {
-    this.base_receiver = base_receiver;
+static inline void ?{}( request & this ) {}
+static inline void ?{}( request & this, actor * receiver, message * msg, __receive_fn fn ) {
     this.receiver = receiver;
-    this.base_msg = base_msg;
     this.msg = msg;
     this.fn = fn;
-    // this.stop = false;
 }
 static inline void ?{}( request & this, request & copy ) {
     this.receiver = copy.receiver;
     this.msg = copy.msg;
     this.fn = copy.fn;
-    // this.stop = copy.stop;
 }
 
 // Vector-like data structure that supports O(1) queue operations with no bound on size
@@ -96,7 +87,7 @@ static inline void ^?{}( copy_queue & this ) with(this) {
     adelete(buffer);
 }
 
-static inline void insert( copy_queue & this, request & elem ) with(this) { // C_TODO: remove redundant send/insert once decision is made on emplace/copy
+static inline void insert( copy_queue & this, request & elem ) with(this) {
     if ( count >= buffer_size ) { // increase arr size
         last_size = buffer_size;
         buffer_size = 2 * buffer_size;
@@ -337,19 +328,6 @@ static inline void ?{}( executor & this, unsigned int nprocessors ) { this{ npro
 static inline void ?{}( executor & this ) { this{ __DEFAULT_EXECUTOR_PROCESSORS__ }; }
 
 static inline void ^?{}( executor & this ) with(this) {
-    // #ifdef __STEAL // commented from change to termination flag from sentinels C_TODO: remove after confirming no performance degradation
-    // request sentinels[nrqueues];
-    // for ( unsigned int i = 0; i < nrqueues; i++ ) {
-    //     insert( request_queues[i], sentinels[i] );		// force eventually termination
-    // } // for
-    // #else
-    // request sentinels[nworkers];
-    // unsigned int reqPerWorker = nrqueues / nworkers, extras = nrqueues % nworkers;
-    // for ( unsigned int i = 0, step = 0, range; i < nworkers; i += 1, step += range ) {
-    //     range = reqPerWorker + ( i < extras ? 1 : 0 );
-    //     insert( request_queues[step], sentinels[i] );		// force eventually termination
-    // } // for
-    // #endif
     is_shutdown = true;
 
     for ( i; nworkers )
@@ -477,9 +455,12 @@ static inline void set_allocation( message & this, allocation state ) {
 
 static inline void deliver_request( request & this ) {
     DEBUG_ABORT( this.receiver->ticket == (unsigned long int)MAX, "Attempted to send message to deleted/dead actor\n" );
-    this.base_receiver->allocation_ = this.fn( *this.receiver, *this.msg );
-    check_message( *this.base_msg );
-    check_actor( *this.base_receiver );
+    actor * base_actor;
+    message * base_msg;
+    allocation temp = this.fn( *this.receiver, *this.msg, &base_actor, &base_msg );
+    base_actor->allocation_ = temp;
+    check_message( *base_msg );
+    check_actor( *base_actor );
 }
 
 // tries to atomically swap two queues and returns 0p if the swap failed
@@ -613,7 +594,7 @@ void main( worker & this ) with(this) {
         #endif // ACTOR_STATS
         #ifdef __STEAL
         if ( is_empty( *current_queue ) ) {
-            if ( unlikely( no_steal ) ) { CHECK_TERMINATION; continue; } // C_TODO: if this impacts static/dynamic perf refactor check
+            if ( unlikely( no_steal ) ) { CHECK_TERMINATION; continue; }
             empty_count++;
             if ( empty_count < steal_threshold ) continue;
             empty_count = 0;
@@ -636,13 +617,14 @@ void main( worker & this ) with(this) {
             #endif
             &req = &remove( *current_queue );
             if ( !&req ) continue;
-            // if ( req.stop ) break Exit;
             deliver_request( req );
         }
         #ifdef __STEAL
         curr_work_queue->being_processed = false; // set done processing
         empty_count = 0; // we found work so reset empty counter
         #endif
+
+        CHECK_TERMINATION;
         
         // potentially reclaim some of the current queue's vector space if it is unused
         reclaim( *current_queue );
@@ -678,11 +660,7 @@ static inline void start_actor_system( size_t num_thds ) {
     (*__actor_executor_){ 0, num_thds, num_thds == 1 ? 1 : num_thds * 16 };
 }
 
-// TODO: potentially revisit getting number of processors
-//  ( currently the value stored in active_cluster()->procs.total is often stale 
-//  and doesn't reflect how many procs are allocated )
-// static inline void start_actor_system() { start_actor_system( active_cluster()->procs.total ); }
-static inline void start_actor_system() { start_actor_system( 1 ); }
+static inline void start_actor_system() { start_actor_system( get_proc_count( *active_cluster() ) ); }
 
 static inline void start_actor_system( executor & this ) {
     __reset_stats();
@@ -692,7 +670,7 @@ static inline void start_actor_system( executor & this ) {
 }
 
 static inline void stop_actor_system() {
-    park( ); // will receive signal when actor system is finished
+    park( ); // will be unparked when actor system is finished
 
     if ( !__actor_executor_passed ) delete( __actor_executor_ );
     __actor_executor_ = 0p;
