@@ -8,10 +8,9 @@
  * + Trait references/pointers that do the virtual_table lookup.
  */
 
+#include <fstream.hfa>
 #include <stdlib.hfa>
 #include <assert.h>
-
-
 
 // Hand defined alpha virtual type:
 struct __cfatid_struct_alpha {
@@ -105,5 +104,5 @@ int main (int argc, char * argv[]) {
 
 	free(tri);
 	free(top);
-	printf( "done\n" );				// non-empty .expect file
+	sout | "done";										// non-empty .expect file
 }

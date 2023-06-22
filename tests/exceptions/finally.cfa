@@ -1,5 +1,6 @@
 // Finally Clause Tests
 
+#include <fstream.hfa>
 #include "except-io.hfa"
 
 exception myth {};
@@ -11,50 +12,50 @@ int main(int argc, char * argv[]) {
 
 	try {
 		try {
-			printf("termination throw\n");
+			sout | "termination throw";
 			throw exc;
 		} finally {
 			loud_exit a = "termination inner finally";
-			printf("finally during unwind\n");
+			sout | "finally during unwind";
 		}
 	} catch (myth * error) {
-		printf("termination catch\n");
+		sout | "termination catch";
 	} finally {
 		loud_exit a = "termination outer finally";
-		printf("finally after catch\n");
+		sout | "finally after catch";
 	}
-	printf("\n");
+	sout | nl;
 
 	try {
 		try {
-			printf("resumption throw\n");
+			sout | "resumption throw";
 			throwResume exc;
 		} finally {
 			loud_exit a = "resumption inner finally";
-			printf("finally after resume\n");
+			sout | "finally after resume";
 		}
 	} catchResume (myth * error) {
-		printf("resumption catch\n");
+		sout | "resumption catch";
 	} finally {
 		loud_exit a = "resumption outer finally";
-		printf("finally after catch\n");
+		sout | "finally after catch";
 	}
-	printf("\n");
+	sout | "";
 
 	try {
-		printf("walking out of try\n");
+		sout | "walking out of try";
 	} finally {
 		loud_exit a = "walking finally";
-		printf("walking through finally\n");
+		sout | "walking through finally";
 	}
-	printf("\n");
+	sout | "";
 
 	try {
-		printf("jumping out of try\n");
+		sout | "jumping out of try";
 		goto endoffunction;
 	} finally {
 		loud_exit a = "jumping finally";
-		printf("jumping through finally\n");
+		sout | "jumping through finally";
 	}
 	endoffunction:
 	;

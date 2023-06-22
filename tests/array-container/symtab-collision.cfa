@@ -1,0 +1,30 @@
+// A white-box case.
+
+// Array dimension hoisting (gen-init, just before resolver) is the earliest pass that uses a
+// with-identifiers symbol table, so early that it's premature to have the symbol table report
+// on name collisions/inconsistencies, and so the symbol table runs in a mode that ignores them.
+
+// This test exercises a dimention-hoisting symbol-table query that retrieves an inconsistently
+// defined identifier.  This fact can be verified manually in gdb by observing a call to
+// SymbolTable.cpp's OnFindError (during an addId call with key `collide_me`) that returns
+// without throwing an exception, followed by a lookupId call with key `collide_me`.
+
+// The (black-box obvious) expected outcome is that cfa-cc rejects the input program on account
+// of the inconsistent identifier.
+
+// The (white-box) relevance of achieving this outcome is the demonstration that an early ignorred
+// name collision leaves the compiler in a valid-enough state to reach the later collision
+// detection, without implementation shotcuts like, "Which, if either, declaration gets
+// ignorred?" becoming relevant.
+
+// This test is unrelated to _why_ the dimension-hoising pass needs to disable symbol-table
+// validation; linking/manging/anon is such a case.
+
+extern "C" {
+    const long long unsigned collide_me = 42;
+    const long      unsigned collide_me = 17;
+}
+
+int main() {
+    float a[collide_me];
+}

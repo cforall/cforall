@@ -229,12 +229,12 @@ static void printopt(FILE * out, int width, int max, char sn, const char * ln, c
 	fprintf(out, "\n");
 }
 
-void print_args_usage(cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
+void print_args_usage(cfa_option options[], const size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
 	const array( cfa_option, opt_count ) & arr = (const array( cfa_option, opt_count ) &) *options;
 	usage(cfa_args_argv[0], arr, usage, error ? stderr : stdout);
 }
 
-void print_args_usage(int , char * argv[], cfa_option options[], size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
+void print_args_usage(int , char * argv[], cfa_option options[], const size_t opt_count, const char * usage, bool error)  __attribute__ ((noreturn)) {
 	const array( cfa_option, opt_count ) & arr = (const array( cfa_option, opt_count ) &) *options;
 	usage(argv[0], arr, usage, error ? stderr : stdout);
 }

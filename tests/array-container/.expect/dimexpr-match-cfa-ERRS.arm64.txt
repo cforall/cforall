@@ -100,6 +100,92 @@ array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existin
   Address of:
     Name: a
 
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:59:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    array of char with dimension of Generated Cast of:
+      Constant Expression (7: signed int)
+      ... with resolved type:
+        signed int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    array of char with dimension of Generated Cast of:
+      Constant Expression (7: signed int)
+      ... with resolved type:
+        signed int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
 array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
   Address of:
     Name: a  InitAlternative: pointer to instance of struct arpk with body
@@ -200,7 +286,30 @@ array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existin
   Address of:
     Name: a  InitAlternative: pointer to instance of struct arpk with body
   ... with parameters
-    instance of type dim7 (not function type)
+    array of char with dimension of Generated Cast of:
+      Variable Expression: enu7: const instance of enum __anonymous0 with body
+      ... with resolved type:
+        const instance of enum __anonymous0 with body
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    array of char with dimension of Generated Cast of:
+      Variable Expression: enu7: const instance of enum __anonymous0 with body
+      ... with resolved type:
+        const instance of enum __anonymous0 with body
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
     float
     float
     float
@@ -237,6 +346,111 @@ array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existin
     Name: a  InitAlternative: pointer to instance of struct arpk with body
   ... with parameters
     instance of type dim7 (not function type)
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    instance of type dim7 (not function type)
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim16: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim18: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim19: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim20: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim21: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim23: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
     float
     float
     float
@@ -294,9 +508,9 @@ array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existin
     Name: a  InitAlternative: pointer to instance of struct arpk with body
   ... with parameters
     variable length array of char with dimension of Generated Cast of:
-      Variable Expression: mut7: signed int
+      Variable Expression: cpr7: const signed int
       ... with resolved type:
-        signed int
+        const signed int
     ... to:
       unsigned long int
     ... with resolved type:
@@ -310,25 +524,9 @@ array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existin
     Name: a  InitAlternative: pointer to instance of struct arpk with body
   ... with parameters
     variable length array of char with dimension of Generated Cast of:
-      Variable Expression: mut7: signed int
+      Variable Expression: cpr7: const signed int
       ... with resolved type:
-        signed int
-    ... to:
-      unsigned long int
-    ... with resolved type:
-      unsigned long int
-    float
-    float
-    float
-
-array-container/dimexpr-match-cfa.cfa:67:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
-  Address of:
-    Name: a  InitAlternative: pointer to instance of struct arpk with body
-  ... with parameters
-    variable length array of char with dimension of Generated Cast of:
-      Variable Expression: mut7: signed int
-      ... with resolved type:
-        signed int
+        const signed int
     ... to:
       unsigned long int
     ... with resolved type:
@@ -455,6 +653,114 @@ array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existin
   Name: b
   Address of:
     Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:76:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+
+array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
 
 array-container/dimexpr-match-cfa.cfa:85:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
   Name: f
@@ -590,6 +896,51 @@ array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existin
   Name: a  InitAlternative: reference to instance of struct arpk with body
   ... with parameters
     array of char with dimension of Generated Cast of:
+      Constant Expression (7: signed int)
+      ... with resolved type:
+        signed int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    array of char with dimension of Generated Cast of:
+      Constant Expression (7: signed int)
+      ... with resolved type:
+        signed int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    array of char with dimension of Generated Cast of:
+      Variable Expression: enu7: const instance of enum __anonymous0 with body
+      ... with resolved type:
+        const instance of enum __anonymous0 with body
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    array of char with dimension of Generated Cast of:
       Variable Expression: enu7: const instance of enum __anonymous0 with body
       ... with resolved type:
         const instance of enum __anonymous0 with body
@@ -634,7 +985,14 @@ array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existin
 array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
   Name: a  InitAlternative: reference to instance of struct arpk with body
   ... with parameters
-    instance of type dim7 (not function type)
+    array of char with dimension of Generated Cast of:
+      Variable Expression: enu7: const instance of enum __anonymous0 with body
+      ... with resolved type:
+        const instance of enum __anonymous0 with body
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
     float
     float
     float
@@ -667,6 +1025,104 @@ array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existin
   Name: a  InitAlternative: reference to instance of struct arpk with body
   ... with parameters
     instance of type dim7 (not function type)
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    instance of type dim7 (not function type)
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim52: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim54: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim55: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim56: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim57: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
+    float
+    float
+    float
+
+array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Name: a  InitAlternative: reference to instance of struct arpk with body
+  ... with parameters
+    variable length array of char with dimension of Generated Cast of:
+      Variable Expression: _array_dim59: const unsigned long int
+      ... with resolved type:
+        const unsigned long int
+    ... to:
+      unsigned long int
+    ... with resolved type:
+      unsigned long int
     float
     float
     float
@@ -720,9 +1176,9 @@ array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existin
   Name: a  InitAlternative: reference to instance of struct arpk with body
   ... with parameters
     variable length array of char with dimension of Generated Cast of:
-      Variable Expression: mut7: signed int
+      Variable Expression: cpr7: const signed int
       ... with resolved type:
-        signed int
+        const signed int
     ... to:
       unsigned long int
     ... with resolved type:
@@ -735,24 +1191,9 @@ array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existin
   Name: a  InitAlternative: reference to instance of struct arpk with body
   ... with parameters
     variable length array of char with dimension of Generated Cast of:
-      Variable Expression: mut7: signed int
+      Variable Expression: cpr7: const signed int
       ... with resolved type:
-        signed int
-    ... to:
-      unsigned long int
-    ... with resolved type:
-      unsigned long int
-    float
-    float
-    float
-
-array-container/dimexpr-match-cfa.cfa:93:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
-  Name: a  InitAlternative: reference to instance of struct arpk with body
-  ... with parameters
-    variable length array of char with dimension of Generated Cast of:
-      Variable Expression: mut7: signed int
-      ... with resolved type:
-        signed int
+        const signed int
     ... to:
       unsigned long int
     ... with resolved type:
@@ -896,6 +1337,132 @@ array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existi
     Name: b
   Address of:
     Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:102:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Address of:
+    Name: b
+  Address of:
+    Name: a
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
+
+array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: zip
+...to:
+  Name: a
+  Name: b
 
 array-container/dimexpr-match-cfa.cfa:115:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
   Name: zip

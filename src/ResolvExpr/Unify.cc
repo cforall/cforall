@@ -31,6 +31,7 @@
 #include "AST/Print.hpp"
 #include "AST/Type.hpp"
 #include "AST/TypeEnvironment.hpp"
+#include "Common/Eval.h"            // for eval
 #include "Common/PassVisitor.h"     // for PassVisitor
 #include "CommonType.hpp"           // for commonType
 #include "FindOpenVars.h"           // for findOpenVars
@@ -778,6 +779,127 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 		return dst;
 	}
 
+	// Unification of Expressions
+	//
+	// Boolean outcome (obvious):  Are they basically spelled the same?
+	// Side effect of binding variables (subtle):  if `sizeof(int)` ===_expr `sizeof(T)` then `int` ===_ty `T`
+	//
+	// Context:  if `float[VAREXPR1]` ===_ty `float[VAREXPR2]` then `VAREXPR1` ===_expr `VAREXPR2`
+	// where the VAREXPR are meant as notational metavariables representing the fact that unification always
+	// sees distinct ast::VariableExpr objects at these positions
+
+	static bool unify( const ast::Expr * e1, const ast::Expr * e2, ast::TypeEnvironment & env,
+		ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
+		WidenMode widen );
+
+	class UnifyExpr final : public ast::WithShortCircuiting {
+		const ast::Expr * e2;
+		ast::TypeEnvironment & tenv;
+		ast::AssertionSet & need;
+		ast::AssertionSet & have;
+		const ast::OpenVarSet & open;
+		WidenMode widen;
+	public:
+		bool result;
+
+	private:
+
+		void tryMatchOnStaticValue( const ast::Expr * e1 ) {
+			Evaluation r1 = eval(e1);
+			Evaluation r2 = eval(e2);
+
+			if ( ! r1.hasKnownValue ) return;
+			if ( ! r2.hasKnownValue ) return;
+
+			if (r1.knownValue != r2.knownValue) return;
+
+			visit_children = false;
+			result = true;
+		}
+
+	public:
+
+		void previsit( const ast::Node * ) { assert(false); }
+
+		void previsit( const ast::Expr * e1 ) {
+			tryMatchOnStaticValue( e1 );
+			visit_children = false;
+		}
+
+		void previsit( const ast::CastExpr * e1 ) {
+			tryMatchOnStaticValue( e1 );
+
+			if (result) {
+				assert (visit_children == false);
+			} else {
+				assert (visit_children == true);
+				visit_children = false;
+
+				auto e2c = dynamic_cast< const ast::CastExpr * >( e2 );
+				if ( ! e2c ) return;
+
+				// inspect casts' target types
+				if ( ! unifyExact(
+					e1->result, e2c->result, tenv, need, have, open, widen ) ) return;
+
+				// inspect casts' inner expressions
+				result = unify( e1->arg, e2c->arg, tenv, need, have, open, widen );
+			}
+		}
+
+		void previsit( const ast::VariableExpr * e1 ) {
+			tryMatchOnStaticValue( e1 );
+
+			if (result) {
+				assert (visit_children == false);
+			} else {
+				assert (visit_children == true);
+				visit_children = false;
+
+				auto e2v = dynamic_cast< const ast::VariableExpr * >( e2 );
+				if ( ! e2v ) return;
+
+				assert(e1->var);
+				assert(e2v->var);
+
+				// conservative: variable exprs match if their declarations are represented by the same C++ AST object
+				result = (e1->var == e2v->var);
+			}
+		}
+
+		void previsit( const ast::SizeofExpr * e1 ) {
+			tryMatchOnStaticValue( e1 );
+
+			if (result) {
+				assert (visit_children == false);
+			} else {
+				assert (visit_children == true);
+				visit_children = false;
+
+				auto e2so = dynamic_cast< const ast::SizeofExpr * >( e2 );
+				if ( ! e2so ) return;
+
+				assert((e1->type != nullptr) ^ (e1->expr != nullptr));
+				assert((e2so->type != nullptr) ^ (e2so->expr != nullptr));
+				if ( ! (e1->type && e2so->type) )  return;
+
+				// expression unification calls type unification (mutual recursion)
+				result = unifyExact( e1->type, e2so->type, tenv, need, have, open, widen );
+			}
+		}
+
+		UnifyExpr( const ast::Expr * e2, ast::TypeEnvironment & env, ast::AssertionSet & need,
+			ast::AssertionSet & have, const ast::OpenVarSet & open, WidenMode widen )
+		: e2( e2 ), tenv(env), need(need), have(have), open(open), widen(widen), result(false) {}
+	};
+
+	static bool unify( const ast::Expr * e1, const ast::Expr * e2, ast::TypeEnvironment & env,
+		ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
+		WidenMode widen ) {
+		assert( e1 && e2 );
+		return ast::Pass<UnifyExpr>::read( e1, e2, env, need, have, open, widen );
+	}
+
 	class Unify_new final : public ast::WithShortCircuiting {
 		const ast::Type * type2;
 		ast::TypeEnvironment & tenv;
@@ -819,18 +941,14 @@ bool unifyList( Iterator1 list1Begin, Iterator1 list1End, Iterator2 list2Begin, 
 			auto array2 = dynamic_cast< const ast::ArrayType * >( type2 );
 			if ( ! array2 ) return;
 
-			// to unify, array types must both be VLA or both not VLA and both must have a
-			// dimension expression or not have a dimension
 			if ( array->isVarLen != array2->isVarLen ) return;
-			if ( ! array->isVarLen && ! array2->isVarLen
-					&& array->dimension && array2->dimension ) {
-				auto ce1 = array->dimension.as< ast::ConstantExpr >();
-				auto ce2 = array2->dimension.as< ast::ConstantExpr >();
+			if ( (array->dimension != nullptr) != (array2->dimension != nullptr) ) return;
 
-				// see C11 Reference Manual 6.7.6.2.6
-				// two array types with size specifiers that are integer constant expressions are
-				// compatible if both size specifiers have the same constant value
-				if ( ce1 && ce2 && ce1->intValue() != ce2->intValue() ) return;
+			if ( array->dimension ) {
+				assert( array2->dimension );
+				// type unification calls expression unification (mutual recursion)
+				if ( ! unify(array->dimension, array2->dimension,
+				    tenv, need, have, open, widen) ) return;
 			}
 
 			result = unifyExact(

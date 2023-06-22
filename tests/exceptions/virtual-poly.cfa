@@ -5,6 +5,7 @@
  * supported. That is also why the tests under the exception directory.
  */
 
+#include <fstream.hfa>
 #include <assert.h>
 
 
@@ -104,5 +105,5 @@ void poly_poly_test() {
 int main(void) {
 	mono_poly_test();
 	poly_poly_test();
-	printf( "done\n" );
+	sout | "done";
 }

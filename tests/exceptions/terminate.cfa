@@ -1,5 +1,6 @@
 // Termination Exception Tests
 
+#include <fstream.hfa>
 #include "except-io.hfa"
 
 exception yin {};
@@ -20,90 +21,90 @@ int main(int argc, char * argv[]) {
 	// The simple throw catch test.
 	try {
 		loud_exit a = "simple try clause";
-		printf("simple throw\n");
+		sout | "simple throw";
 		throw a_zen;
-		printf("end of try clause\n");
+		sout | "end of try clause";
 	} catch (zen * error) {
 		loud_exit a = "simple catch clause";
-		printf("simple catch\n");
+		sout | "simple catch";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Throw catch-all test.
 	try {
 		throw a_zen;
 	} catch (exception_t * error) {
-		printf("catch-all\n");
+		sout | "catch-all";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Don't catch if handler does not match exception.
 	try {
 		try {
 			throw a_yin;
 		} catch (zen *) {
-			printf("caught yin as zen\n");
+			sout | "caught yin as zen";
 		}
 	} catch (yang *) {
-		printf("caught yin as yang\n");
+		sout | "caught yin as yang";
 	} catch (yin *) {
-		printf("caught yin as yin\n");
+		sout | "caught yin as yin";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Test rethrowing an exception.
 	try {
 		try {
 			loud_exit a = "rethrow inner try";
-			printf("rethrow inner try\n");
+			sout | "rethrow inner try";
 			throw a_zen;
 		} catch (zen *) {
 			loud_exit a = "rethrowing catch clause";
-			printf("caught throw, will rethrow\n");
+			sout | "caught throw, will rethrow";
 			throw;
 		}
 	} catch (zen *) {
 		loud_exit a = "rethrow catch clause";
-		printf("caught rethrow\n");
+		sout | "caught rethrow";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Throw a different exception in a catch.
 	try {
 		try {
 			throw a_yin;
 		} catch (yin *) {
-			printf("caught yin, will throw yang\n");
+			sout | "caught yin, will throw yang";
 			throw a_yang;
 		} catch (yang *) {
-			printf("caught exception from same try\n");
+			sout | "caught exception from same try";
 		}
 	} catch (yang *) {
-		printf("caught yang\n");
+		sout | "caught yang";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Another throw in the catch does not interfere.
 	try {
 		try {
-			printf("throwing first exception\n");
+			sout | "throwing first exception";
 			throw a_yin;
 		} catch (yin *) {
-			printf("caught first exception\n");
+			sout | "caught first exception";
 			try {
-				printf("throwing second exception\n");
+				sout | "throwing second exception";
 				throw a_yang;
 			} catch (yang *) {
-				printf("caught second exception\n");
+				sout | "caught second exception";
 			}
 			throw;
 		}
 	} catch (yin *) {
-		printf("recaught first exception\n");
+		sout | "recaught first exception";
 	} catch (yang *) {
-		printf("caught second exception (bad location)\n");
+		sout | "caught second exception (bad location)";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Check successive operations.
 	try {
@@ -111,13 +112,13 @@ int main(int argc, char * argv[]) {
 			throw a_zen;
 			throw a_zen;
 		} catch (zen *) {
-			printf("inner catch\n");
+			sout | "inner catch";
 		}
 		throw a_zen;
 	} catch (zen *) {
-		printf("outer catch\n");
+		sout | "outer catch";
 	}
-	printf("\n");
+	sout | nl;
 
 	in_void();
 }
@@ -127,13 +128,13 @@ void in_void(void) {
 	zen a_zen = {&zen_vt};
 	try {
 		try {
-			printf("throw\n");
+			sout | "throw";
 			throw a_zen;
 		} catch (zen *) {
-			printf("rethrow\n");
+			sout | "rethrow";
 			throw;
 		}
 	} catch (zen *) {
-		printf("handle\n");
+		sout | "handle";
 	}
 }

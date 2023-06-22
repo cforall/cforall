@@ -1,5 +1,6 @@
 // Testing Interactions Between Termination and Resumption
 
+#include <fstream.hfa>
 #include "except-io.hfa"
 
 exception star {};
@@ -13,47 +14,47 @@ int main(int argc, char * argv[]) {
 	try {
 		throwResume (star){&star_vt};
 	} catch (star *) {
-		printf("caught as termination\n");
+		sout | "caught as termination";
 	}
 	// Variant of the above to check timing.
 	try {
 		loud_region a = "try block with resume throw";
 		throwResume (star){&star_vt};
 	} catch (star *) {
-		printf("caught as termination\n");
+		sout | "caught as termination";
 	} catchResume (star *) {
-		printf("intermediate rethrow\n");
+		sout | "intermediate rethrow";
 		throwResume;
 	}
-	printf("\n");
+	sout | nl;
 
 	// Resume does not catch terminate.
 	try {
 		try {
 			throw (star){&star_vt};
 		} catchResume (star *) {
-			printf("resume catch on terminate\n");
+			sout | "resume catch on terminate";
 		}
 	} catchResume (star *) {
-		printf("resume catch on terminate\n");
+		sout | "resume catch on terminate";
 	} catch (star *) {
-		printf("terminate catch on terminate\n");
+		sout | "terminate catch on terminate";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Terminate does not catch resume.
 	try {
 		try {
 			throwResume (star){&star_vt};
 		} catch (star *) {
-			printf("terminate catch on resume\n");
+			sout | "terminate catch on resume";
 		}
 	} catch (star *) {
-		printf("terminate catch on resume\n");
+		sout | "terminate catch on resume";
 	} catchResume (star *) {
-		printf("resume catch on resume\n");
+		sout | "resume catch on resume";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Resume a termination exception.
 	try {
@@ -61,16 +62,16 @@ int main(int argc, char * argv[]) {
 			try {
 				throw (star){&star_vt};
 			} catchResume (star *) {
-				printf("inner resume catch (error)\n");
+				sout | "inner resume catch (error)";
 			}
 		} catch (star * error) {
-			printf("termination catch, will resume\n");
+			sout | "termination catch, will resume";
 			throwResume *error;
 		}
 	} catchResume (star *) {
-		printf("outer resume catch\n");
+		sout | "outer resume catch";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Terminate a resumption exception.
 	try {
@@ -78,37 +79,37 @@ int main(int argc, char * argv[]) {
 			try {
 				throwResume (star){&star_vt};
 			} catch (star *) {
-				printf("inner termination catch\n");
+				sout | "inner termination catch";
 			}
 		} catchResume (star * error) {
-			printf("resumption catch, will terminate\n");
+			sout | "resumption catch, will terminate";
 			throw *error;
 		}
 	} catch (star *) {
-		printf("outer terminate catch (error)\n");
+		sout | "outer terminate catch (error)";
 	}
-	printf("\n");
+	sout | nl;
 
 	// Unwinding a resumption catch does not break the system.
 	try {
 		try {
 			try {
 				try {
-					printf("throwing resume moon\n");
+					sout | "throwing resume moon";
 					throwResume (moon){&moon_vt};
 				} catch (star *) {
-					printf("termination catch\n");
+					sout | "termination catch";
 				}
-				printf("throwing resume star\n");
+				sout | "throwing resume star";
 				throwResume (star){&star_vt};
 			} catchResume (star *) {
-				printf("resumption star catch\n");
+				sout | "resumption star catch";
 			}
 		} catchResume (moon *) {
-			printf("resumption moon catch, will terminate\n");
+			sout | "resumption moon catch, will terminate";
 			throw (star){&star_vt};
 		}
 	} catchResume (star *) {
-		printf("outermost catch (error)\n");
+		sout | "outermost catch (error)";
 	}
 }

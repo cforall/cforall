@@ -15,7 +15,6 @@
 
 #include "GenericParameter.hpp"
 
-#include "AST/Copy.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Expr.hpp"
 #include "AST/ParseNode.hpp"
@@ -164,7 +163,8 @@ struct ValidateGenericParamsCore :
 // --------------------------------------------------------------------------
 
 struct TranslateDimensionCore :
-		public WithNoIdSymbolTable, public ast::WithGuards {
+		public WithNoIdSymbolTable, public ast::WithGuards,
+		public ast::WithVisitorRef<TranslateDimensionCore> {
 
 	// SUIT: Struct- or Union- InstType
 	// Situational awareness:
@@ -189,11 +189,15 @@ struct TranslateDimensionCore :
 	}
 
 	const ast::TypeDecl * postvisit( const ast::TypeDecl * decl );
+	const ast::Type * postvisit( const ast::FunctionType * type );
+	const ast::Type * postvisit( const ast::TypeInstType * type );
+
 	const ast::Expr * postvisit( const ast::DimensionExpr * expr );
 	const ast::Expr * postvisit( const ast::Expr * expr );
 	const ast::Expr * postvisit( const ast::TypeExpr * expr );
 };
 
+// Declaration of type variable: forall( [N] )  ->  forall( N & | sized( N ) )
 const ast::TypeDecl * TranslateDimensionCore::postvisit(
 		const ast::TypeDecl * decl ) {
 	if ( decl->kind == ast::TypeDecl::Dimension ) {
@@ -205,6 +209,26 @@ const ast::TypeDecl * TranslateDimensionCore::postvisit(
 		return mutDecl;
 	}
 	return decl;
+}
+
+// Makes postvisit( TypeInstType ) get called on the entries of the function declaration's type's forall list.
+// Pass.impl.hpp's visit( FunctionType ) does not consider the forall entries to be child nodes.
+// Workaround is: during the current TranslateDimension pass, manually visit down there.
+const ast::Type * TranslateDimensionCore::postvisit(
+		const ast::FunctionType * type ) {
+	visitor->maybe_accept( type, &ast::FunctionType::forall );
+	return type;
+}
+
+// Use of type variable, assuming `forall( [N] )` in scope:  void (*)( foo( /*dimension*/ N ) & )  ->  void (*)( foo( /*dtype*/ N ) & )
+const ast::Type * TranslateDimensionCore::postvisit(
+		const ast::TypeInstType * type ) {
+	if ( type->kind == ast::TypeDecl::Dimension ) {
+		auto mutType = ast::mutate( type );
+		mutType->kind = ast::TypeDecl::Dtype;
+		return mutType;
+	}
+	return type;
 }
 
 // Passing values as dimension arguments:  array( float,     7 )  -> array( float, char[             7 ] )

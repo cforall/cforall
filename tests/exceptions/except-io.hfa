@@ -1,6 +1,9 @@
 // Common tools for the exception tests.
 
 // Echo when a destructor is run and an area/block is left.
+
+#include <fstream.hfa>
+
 struct loud_exit {
     const char * area;
 };
@@ -10,7 +13,7 @@ inline void ?{}(loud_exit & this, const char * area) {
 }
 
 inline void ^?{}(loud_exit & this) {
-    printf("Exiting: %s\n", this.area);
+    sout | "Exiting: " | this.area;
 }
 
 struct loud_region {
@@ -19,9 +22,9 @@ struct loud_region {
 
 inline void ?{}(loud_region & this, const char * region) {
 	this.region = region;
-	printf("Entering: %s\n", region);
+	sout | "Entering: " | region;
 }
 
 inline void ^?{}(loud_region & this) {
-	printf("Exiting: %s\n", this.region);
+	sout | "Exiting: " | this.region;
 }

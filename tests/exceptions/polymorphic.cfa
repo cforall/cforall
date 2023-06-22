@@ -1,5 +1,7 @@
 // Testing polymophic exception types.
 
+#include <fstream.hfa>
+
 forall(T &) exception proxy {};
 
 vtable(proxy(int)) proxy_int;
@@ -12,21 +14,21 @@ void proxy_test(void) {
     try {
 		throw an_int;
 	} catch (proxy(int) *) {
-		printf("terminate catch\n");
+		sout | "terminate catch";
 	}
 
 	try {
 		throwResume a_char;
 	} catchResume (proxy(char) *) {
-		printf("resume catch\n");
+		sout | "resume catch";
 	}
 
 	try {
 		throw a_char;
 	} catch (proxy(int) *) {
-		printf("caught proxy(int)\n");
+		sout | "caught proxy(int)";
 	} catch (proxy(char) *) {
-		printf("caught proxy(char)\n");
+		sout | "caught proxy(char)";
 	}
 }
 
@@ -43,21 +45,21 @@ void cell_test(void) {
 		cell(int) except = {&int_cell, -7};
 		throw except;
 	} catch (cell(int) * error) {
-		printf("%d\n", error->data);
+		sout | error->data;
 	}
 
 	try {
 		cell(bool) ball = {&bool_cell, false};
 		throwResume ball;
-		printf("%i\n", ball.data);
+		sout | ball.data;
 	} catchResume (cell(bool) * error) {
-		printf("%i\n", error->data);
+		sout | error->data;
 		error->data = true;
 	}
 }
 
 int main(int argc, char * argv[]) {
 	proxy_test();
-	printf("\n");
+	sout | nl;
 	cell_test();
 }

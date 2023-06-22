@@ -145,14 +145,6 @@
 #define EXPAND_AND_QUOTE(str) QUOTE(str)
 #define TRY_COMPAT_E EXPAND_AND_QUOTE(TRY_COMPAT(__L__,__R__))
 
-// Temporary: CFA is classic by default
-#if defined CFA_IS_PREVIEW && defined CFA_IS_CLASSIC
-#error Must not define both CFA_IS_CLASSIC, CFA_IS_PREVIEW
-#endif
-#if ! defined CFA_IS_PREVIEW && ! defined CFA_IS_CLASSIC
-#define CFA_IS_CLASSIC
-#endif
-
 #if ! defined __cforall
 #define SUPPRESS_FORALL_N
 #endif

@@ -1,5 +1,6 @@
 // Try cancelling a thread.
 
+#include <fstream.hfa>
 #include <thread.hfa>
 
 exception internal_error {};
@@ -12,45 +13,46 @@ const char * msg(ThreadCancelled(WillCancel) * this) {
 }
 
 void main(WillCancel &) {
-	printf("1");
+	sout | '1';
 	cancel_stack((internal_error){&internal_vt});
-	printf("!");
+	sout | '!';
 }
 
 void explicit() {
 	try {
-		printf("0");
+		sout | '0';
 		WillCancel cancel;
-		printf("1");
+		sout | '1';
 		join(cancel);
-		printf("4");
+		sout | '4';
 	} catchResume (ThreadCancelled(WillCancel) * error) {
-		printf("2");
+		sout | '2';
 		if ((virtual internal_error *)error->the_exception) {
-			printf("3");
+			sout | '3';
 		}
 	}
-	printf("5\n");
+	sout | '5' | nl;
 }
 
 void implicit() {
 	try {
 		{
-			printf("0");
+			sout | '0';
 			WillCancel cancel;
-			printf("1");
+			sout | '1';
 		}
-		printf("4");
+		sout | '4';
 	} catchResume (ThreadCancelled(WillCancel) * error) {
-		printf("2");
+		sout | '2';
 		if ((virtual internal_error *)error->the_exception) {
-			printf("3");
+			sout | '3';
 		}
 	}
-	printf("5\n");
+	sout | '5' | nl;
 }
 
 int main(int argc, char * argv[]) {
+	sout | nlOff;
 	explicit();
 	implicit();
 }

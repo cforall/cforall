@@ -3,6 +3,8 @@
 // I may fold this back into terminate.cfa and resume.cfa once setting
 // up the non-trivial exception is reasonable to do.
 
+#include <fstream.hfa>
+
 exception num_error {
 	int num;
 };
@@ -10,7 +12,7 @@ exception num_error {
 vtable(num_error) num_error_vt;
 
 void caught_num_error(int expect, num_error * actual) {
-	printf("Caught num_error: expected=%d actual=%d.\n", expect, actual->num);
+	sout | "Caught num_error: expected=" | expect | "actual=" | actual->num | '.';
 }
 
 int main(int argc, char * argv[]) {

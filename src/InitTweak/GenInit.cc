@@ -299,74 +299,169 @@ namespace InitTweak {
 namespace {
 
 #	warning Remove the _New suffix after the conversion is complete.
+
+	// Outer pass finds declarations, for their type could wrap a type that needs hoisting
 	struct HoistArrayDimension_NoResolve_New final :
 			public ast::WithDeclsToAdd<>, public ast::WithShortCircuiting,
 			public ast::WithGuards, public ast::WithConstTranslationUnit,
-			public ast::WithVisitorRef<HoistArrayDimension_NoResolve_New> {
-		void previsit( const ast::ObjectDecl * decl );
-		const ast::DeclWithType * postvisit( const ast::ObjectDecl * decl );
-		// Do not look for objects inside there declarations (and type).
-		void previsit( const ast::AggregateDecl * ) { visit_children = false; }
-		void previsit( const ast::NamedTypeDecl * ) { visit_children = false; }
-		void previsit( const ast::FunctionType * ) { visit_children = false; }
+			public ast::WithVisitorRef<HoistArrayDimension_NoResolve_New>,
+			public ast::WithSymbolTableX<ast::SymbolTable::ErrorDetection::IgnoreErrors> {
 
-		const ast::Type * hoist( const ast::Type * type );
+		// Inner pass looks within a type, for a part that depends on an expression
+		struct HoistDimsFromTypes final :
+				public ast::WithShortCircuiting, public ast::WithGuards {
+
+			HoistArrayDimension_NoResolve_New * outer;
+			HoistDimsFromTypes( HoistArrayDimension_NoResolve_New * outer ) : outer(outer) {}
+
+			// Only intended for visiting through types.
+			// Tolerate, and short-circuit at, the dimension expression of an array type.
+			//    (We'll operate on the dimension expression of an array type directly
+			//    from the parent type, not by visiting through it)
+			// Look inside type exprs.
+			void previsit( const ast::Node * ) {
+				assert( false && "unsupported node type" );
+			};
+			const ast::Expr * allowedExpr = nullptr;
+			void previsit( const ast::Type * ) {
+				GuardValue( allowedExpr ) = nullptr;
+			}
+			void previsit( const ast::ArrayType * t ) {
+				GuardValue( allowedExpr ) = t->dimension.get();
+			}
+			void previsit( const ast::PointerType * t ) {
+				GuardValue( allowedExpr ) = t->dimension.get();
+			}
+			void previsit( const ast::TypeofType * t ) {
+				GuardValue( allowedExpr ) = t->expr.get();
+			}
+			void previsit( const ast::Expr * e ) {
+				assert( e == allowedExpr &&
+				    "only expecting to visit exprs that are dimension exprs or typeof(-) inner exprs" );
+
+				// Skip the tolerated expressions
+				visit_children = false;
+			}
+			void previsit( const ast::TypeExpr * ) {}
+
+			const ast::Type * postvisit(
+					const ast::ArrayType * arrayType ) {
+				static UniqueName dimensionName( "_array_dim" );
+
+				if ( nullptr == arrayType->dimension ) {  // if no dimension is given, don't presume to invent one
+					return arrayType;
+				}
+
+				// find size_t; use it as the type for a dim expr
+				ast::ptr<ast::Type> dimType = outer->transUnit().global.sizeType;
+				assert( dimType );
+				add_qualifiers( dimType, ast::CV::Qualifiers( ast::CV::Const ) );
+
+				// Special-case handling: leave the user's dimension expression alone
+				// - requires the user to have followed a careful convention
+				// - may apply to extremely simple applications, but only as windfall
+				// - users of advanced applications will be following the convention on purpose
+				// - CFA maintainers must protect the criteria against leaving too much alone
+
+				// Actual leave-alone cases following are conservative approximations of "cannot vary"
+
+				// Leave alone: literals and enum constants
+				if ( dynamic_cast< const ast::ConstantExpr * >( arrayType->dimension.get() ) ) {
+					return arrayType;
+				}
+
+				// Leave alone: direct use of an object declared to be const
+				const ast::NameExpr * dimn = dynamic_cast< const ast::NameExpr * >( arrayType->dimension.get() );
+				if ( dimn ) {
+					std::vector<ast::SymbolTable::IdData> dimnDefs = outer->symtab.lookupId( dimn->name );
+					if ( dimnDefs.size() == 1 ) {
+						const ast::DeclWithType * dimnDef = dimnDefs[0].id.get();
+						assert( dimnDef && "symbol table binds a name to nothing" );
+						const ast::ObjectDecl * dimOb = dynamic_cast< const ast::ObjectDecl * >( dimnDef );
+						if( dimOb ) {
+							const ast::Type * dimTy = dimOb->type.get();
+							assert( dimTy && "object declaration bearing no type" );
+							// must not hoist some: size_t
+							// must hoist all: pointers and references
+							// the analysis is conservative; BasicType is a simple approximation
+							if ( dynamic_cast< const ast::BasicType * >( dimTy ) ||
+							     dynamic_cast< const ast::SueInstType<ast::EnumDecl> * >( dimTy ) ) {
+								if ( dimTy->is_const() ) {
+									// The dimension is certainly re-evaluable, giving the same answer each time.
+									// Our user might be hoping to write the array type in multiple places, having them unify.
+									// Leave the type alone.
+
+									// We believe the new criterion leaves less alone than the old criterion.
+									// Thus, the old criterion should have left the current case alone.
+									// Catch cases that weren't thought through.
+									assert( !Tuples::maybeImpure( arrayType->dimension ) );
+
+									return arrayType;
+								}
+							};
+						}
+					}
+				}
+
+				// Leave alone: any sizeof expression (answer cannot vary during current lexical scope)
+				const ast::SizeofExpr * sz = dynamic_cast< const ast::SizeofExpr * >( arrayType->dimension.get() );
+				if ( sz ) {
+					return arrayType;
+				}
+
+				// General-case handling: change the array-type's dim expr (hoist the user-given content out of the type)
+				// - always safe
+				// - user-unnoticeable in common applications (benign noise in -CFA output)
+				// - may annoy a responsible user of advanced applications (but they can work around)
+				// - protects against misusing advanced features
+				//
+				// The hoist, by example, is:
+				// FROM USER:  float a[ rand() ];
+				// TO GCC:     const size_t __len_of_a = rand(); float a[ __len_of_a ];
+
+				ast::ObjectDecl * arrayDimension = new ast::ObjectDecl(
+					arrayType->dimension->location,
+					dimensionName.newName(),
+					dimType,
+					new ast::SingleInit(
+						arrayType->dimension->location,
+						arrayType->dimension
+					)
+				);
+
+				ast::ArrayType * mutType = ast::mutate( arrayType );
+				mutType->dimension = new ast::VariableExpr(
+						arrayDimension->location, arrayDimension );
+				outer->declsToAddBefore.push_back( arrayDimension );
+
+				return mutType;
+			}  // postvisit( const ast::ArrayType * )
+		}; // struct HoistDimsFromTypes
 
 		ast::Storage::Classes storageClasses;
+		void previsit(
+				const ast::ObjectDecl * decl ) {
+			GuardValue( storageClasses ) = decl->storage;
+		}
+
+		const ast::DeclWithType * postvisit(
+				const ast::ObjectDecl * objectDecl ) {
+
+			if ( !isInFunction() || storageClasses.is_static ) {
+				return objectDecl;
+			}
+
+			const ast::Type * mid = objectDecl->type;
+
+			ast::Pass<HoistDimsFromTypes> hoist{this};
+			const ast::Type * result = mid->accept( hoist );
+
+			return mutate_field( objectDecl, &ast::ObjectDecl::type, result );
+		}
 	};
 
-	void HoistArrayDimension_NoResolve_New::previsit(
-			const ast::ObjectDecl * decl ) {
-		GuardValue( storageClasses ) = decl->storage;
-	}
 
-	const ast::DeclWithType * HoistArrayDimension_NoResolve_New::postvisit(
-			const ast::ObjectDecl * objectDecl ) {
-		return mutate_field( objectDecl, &ast::ObjectDecl::type,
-				hoist( objectDecl->type ) );
-	}
 
-	const ast::Type * HoistArrayDimension_NoResolve_New::hoist(
-			const ast::Type * type ) {
-		static UniqueName dimensionName( "_array_dim" );
-
-		if ( !isInFunction() || storageClasses.is_static ) {
-			return type;
-		}
-
-		if ( auto arrayType = dynamic_cast< const ast::ArrayType * >( type ) ) {
-			if ( nullptr == arrayType->dimension ) {
-				return type;
-			}
-
-			if ( !Tuples::maybeImpure( arrayType->dimension ) ) {
-				return type;
-			}
-
-			ast::ptr<ast::Type> dimType = transUnit().global.sizeType;
-			assert( dimType );
-			add_qualifiers( dimType, ast::CV::Qualifiers( ast::CV::Const ) );
-
-			ast::ObjectDecl * arrayDimension = new ast::ObjectDecl(
-				arrayType->dimension->location,
-				dimensionName.newName(),
-				dimType,
-				new ast::SingleInit(
-					arrayType->dimension->location,
-					arrayType->dimension
-				)
-			);
-
-			ast::ArrayType * mutType = ast::mutate( arrayType );
-			mutType->dimension = new ast::VariableExpr(
-					arrayDimension->location, arrayDimension );
-			declsToAddBefore.push_back( arrayDimension );
-
-			mutType->base = hoist( mutType->base );
-			return mutType;
-		}
-		return type;
-	}
 
 	struct ReturnFixer_New final :
 			public ast::WithStmtsToAdd<>, ast::WithGuards, ast::WithShortCircuiting {

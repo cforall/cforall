@@ -1,5 +1,6 @@
 // Tests for providing new default operations.
 
+#include <fstream.hfa>
 #include <string.h>
 
 exception log_message {
@@ -34,7 +35,7 @@ void log_test(void) {
 	try {
 		throwResume (log_message){&log_vt, "Should be printed.\n"};
 	} catchResume (log_message * this) {
-		printf("%s", this->virtual_table->msg(this));
+		sout | this->virtual_table->msg(this) | nonl;
 	}
 	// But we don't have to:
 	throwResume (log_message){&log_vt, "Should not be printed.\n"};
@@ -43,7 +44,7 @@ void log_test(void) {
 // I don't have a good use case for doing the same with termination.
 exception jump {};
 void defaultTerminationHandler(jump &) {
-	printf("jump default handler.\n");
+	sout | "jump default handler.";
 }
 
 vtable(jump) jump_vt;
@@ -52,7 +53,7 @@ void jump_test(void) {
 	try {
 		throw (jump){&jump_vt};
 	} catch (jump * this) {
-		printf("jump catch handler.\n");
+		sout | "jump catch handler.";
 	}
 	throw (jump){&jump_vt};
 }
@@ -74,7 +75,7 @@ void unhandled_test(void) {
 	try {
 		throw (first){&first_vt};
 	} catch (unhandled_exception * t) {
-		printf("Catch unhandled_exception.\n");
+		sout | "Catch unhandled_exception.";
 	}
 }
 
@@ -83,24 +84,24 @@ vtable(second) second_vt;
 
 void cross_test(void) {
 	void defaultTerminationHandler(first &) {
-		printf("cross terminate default\n");
+		sout | "cross terminate default";
 		throw (second){&second_vt};
 	}
 	void defaultResumptionHandler(first &) {
-		printf("cross resume default\n");
+		sout | "cross resume default";
 		throwResume (second){&second_vt};
 	}
 	try {
-		printf("cross terminate throw\n");
+		sout | "cross terminate throw";
 		throw (first){&first_vt};
 	} catch (second *) {
-		printf("cross terminate catch\n");
+		sout | "cross terminate catch";
 	}
 	try {
-		printf("cross resume throw\n");
+		sout | "cross resume throw";
 		throwResume (first){&first_vt};
 	} catchResume (second *) {
-		printf("cross resume catch\n");
+		sout | "cross resume catch";
 	}
 }
 

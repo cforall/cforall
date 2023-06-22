@@ -1,5 +1,7 @@
 // Make sure throw-catch during unwind does not trash internal data.
 
+#include <fstream.hfa>
+
 exception yin {};
 exception yang {};
 
@@ -14,14 +16,14 @@ int main(int argc, char * argv[]) {
 			try {
 				throw (yang){&yang_vt};
 			} catch (yin *) {
-				printf("inner yin\n");
+				sout | "inner yin";
 			} catch (yang *) {
-				printf("inner yang\n");
+				sout | "inner yang";
 			}
 		}
 	} catch (yin *) {
-		printf("outer yin\n");
+		sout | "outer yin";
 	} catch (yang *) {
-		printf("outer yang\n");
+		sout | "outer yang";
 	}
 }

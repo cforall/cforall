@@ -1,0 +1,17 @@
+// A simple, isolated, example of what the dimexpr-match cases are all about.
+
+#include <containers/array.hfa>
+
+// context excerpted from doc/theses/mike_brooks_MMath/programs/hello-array.cfa
+forall( [N] )
+array(bool, N) & f( array(float, N) & a, array(float, N) & b ) {}
+
+int main() {
+    // adapted from Peter's "why doesn't this one work" email
+    array(float, 10) a;
+    array(float, 20) b;
+    f( a, a );          // these calls ok (no error here; actual success is shown in dimexpr-match)
+    f( b, b );
+
+    f( a, b );          // reject with mismatch
+}

@@ -1,5 +1,7 @@
 // Test exceptions that add data but no functionality.
 
+#include <fstream.hfa>
+
 exception paired {
 	int first;
 	int second;
@@ -17,18 +19,18 @@ int main(int argc, char * argv[]) {
 	try {
 		throw except;
 	} catch (paired * exc) {
-		printf("%s(%d, %d)\n", virtual_msg(exc), exc->first, exc->second);
+		sout | virtual_msg(exc) | '(' | exc->first | ", " | exc->second | ')';
 		++exc->first;
 	}
 
-	printf("%s(%d, %d)\n", virtual_msg(&except), except.first, except.second);
+	sout | virtual_msg(&except) | '(' | except.first | ", " | except.second | ')';
 
 	try {
 		throwResume except;
 	} catchResume (paired * exc) {
-		printf("%s(%d, %d)\n", virtual_msg(exc), exc->first, exc->second);
+		sout | virtual_msg(exc) | '(' | exc->first | ", " | exc->second | ')';
 		++exc->first;
 	}
 
-	printf("%s(%d, %d)\n", virtual_msg(&except), except.first, except.second);
+	sout | virtual_msg(&except) | '(' | except.first | ", " | except.second | ')';
 }
