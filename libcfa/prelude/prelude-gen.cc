@@ -158,7 +158,7 @@ constexpr auto make_array(T&&... values) ->
 
 int main() {
 	cout << "# 2 \"prelude.cfa\"  // needed for error messages from this file" << endl;
-	cout << "forall( T & ) trait sized {};" << endl;
+	cout << "forall( T * ) trait sized {};" << endl;
 
 	cout << "//////////////////////////" << endl;
 	cout << "// Arithmetic Operators //" << endl;

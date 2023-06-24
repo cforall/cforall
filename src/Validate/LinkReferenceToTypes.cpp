@@ -263,17 +263,10 @@ void LinkTypesCore::postvisit( ast::UnionDecl const * decl ) {
 }
 
 ast::TraitDecl const * LinkTypesCore::postvisit( ast::TraitDecl const * decl ) {
-	auto mut = ast::mutate( decl );
-	if ( mut->name == "sized" ) {
-		// "sized" is a special trait - flick the sized status on for the type variable.
-		assertf( mut->params.size() == 1, "Built-in trait 'sized' has incorrect number of parameters: %zd", decl->params.size() );
-		ast::TypeDecl * td = mut->params.front().get_and_mutate();
-		td->sized = true;
-	}
-
 	// There is some overlap with code from decayForallPointers,
 	// perhaps reorganization or shared helper functions are called for.
 	// Move assertions from type parameters into the body of the trait.
+	auto mut = ast::mutate( decl );
 	for ( ast::ptr<ast::TypeDecl> const & td : decl->params ) {
 		auto expanded = expandAssertions( td->assertions );
 		for ( auto declWithType : expanded ) {

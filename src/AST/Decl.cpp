@@ -114,7 +114,8 @@ const char * TypeDecl::typeString() const {
 	static const char * kindNames[] = { "sized data type", "sized data type", "sized object type", "sized function type", "sized tuple type", "sized length value" };
 	static_assert( sizeof(kindNames) / sizeof(kindNames[0]) == TypeDecl::NUMBER_OF_KINDS, "typeString: kindNames is out of sync." );
 	assertf( kind < TypeDecl::NUMBER_OF_KINDS, "TypeDecl kind is out of bounds." );
-	return sized ? kindNames[ kind ] : &kindNames[ kind ][ sizeof("sized") ]; // sizeof includes '\0'
+	// sizeof("sized") includes '\0' and gives the offset to remove "sized ".
+	return sized ? kindNames[ kind ] : &kindNames[ kind ][ sizeof("sized") ];
 }
 
 const char * TypeDecl::genTypeString() const {
