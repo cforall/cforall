@@ -389,7 +389,7 @@ static size_t __num_actors_ = 0;				        // number of actor objects in system
 static struct thread$ * __actor_executor_thd = 0p;		// used to wake executor after actors finish
 struct actor {
     size_t ticket;	                                    // executor-queue handle
-    allocation allocation_;			                    // allocation action
+    allocation alloc;			                    // allocation action
     inline virtual_dtor;
 };
 
@@ -397,7 +397,7 @@ static inline void ?{}( actor & this ) with(this) {
     // Once an actor is allocated it must be sent a message or the actor system cannot stop. Hence, its receive
     // member must be called to end it
     DEBUG_ABORT( __actor_executor_ == 0p, "Creating actor before calling start_actor_system() can cause undefined behaviour.\n" );
-    allocation_ = Nodelete;
+    alloc = Nodelete;
     ticket = __get_next_ticket( *__actor_executor_ );
     __atomic_fetch_add( &__num_actors_, 1, __ATOMIC_RELAXED );
     #ifdef ACTOR_STATS
@@ -406,8 +406,8 @@ static inline void ?{}( actor & this ) with(this) {
 }
 
 static inline void check_actor( actor & this ) {
-    if ( this.allocation_ != Nodelete ) {
-        switch( this.allocation_ ) {
+    if ( this.alloc != Nodelete ) {
+        switch( this.alloc ) {
             case Delete: delete( &this ); break;
             case Destroy:
                 CFA_DEBUG( this.ticket = MAX; );	// mark as terminated
@@ -426,31 +426,37 @@ static inline void check_actor( actor & this ) {
 }
 
 struct message {
-    allocation allocation_;			// allocation action
+    allocation alloc;			// allocation action
     inline virtual_dtor;
 };
 
 static inline void ?{}( message & this ) {
-    this.allocation_ = Nodelete;
+    this.alloc = Nodelete;
 }
 static inline void ?{}( message & this, allocation alloc ) {
-    memcpy( &this.allocation_, &alloc, sizeof(allocation) ); // optimization to elide ctor
-    DEBUG_ABORT( this.allocation_ == Finished, "The Finished allocation status is not supported for message types.\n" );
+    memcpy( &this.alloc, &alloc, sizeof(allocation) ); // optimization to elide ctor
+    CFA_DEBUG( if( this.alloc == Finished ) this.alloc = Nodelete; )
 }
 static inline void ^?{}( message & this ) with(this) {
-    CFA_DEBUG( if ( allocation_ == Nodelete ) printf("A message at location %p was allocated but never sent.\n", &this); )
+    CFA_DEBUG(
+		if ( alloc == Nodelete ) {
+			printf( "CFA warning (UNIX pid:%ld) : program terminating with message %p allocated but never sent.\n",
+					(long int)getpid(), &this );
+		}
+	)
 }
 
 static inline void check_message( message & this ) {
-    switch ( this.allocation_ ) {						// analyze message status
-        case Nodelete: CFA_DEBUG( this.allocation_ = Finished ); break;
+    switch ( this.alloc ) {						// analyze message status
+        case Nodelete: CFA_DEBUG( this.alloc = Finished ); break;
         case Delete: delete( &this ); break;
         case Destroy: ^?{}( this ); break;
         case Finished: break;
     } // switch
 }
 static inline void set_allocation( message & this, allocation state ) {
-    this.allocation_ = state;
+    CFA_DEBUG( if ( state == Nodelete ) state = Finished; )
+    this.alloc = state;
 }
 
 static inline void deliver_request( request & this ) {
@@ -458,7 +464,7 @@ static inline void deliver_request( request & this ) {
     actor * base_actor;
     message * base_msg;
     allocation temp = this.fn( *this.receiver, *this.msg, &base_actor, &base_msg );
-    base_actor->allocation_ = temp;
+    memcpy( &base_actor->alloc, &temp, sizeof(allocation) ); // optimization to elide ctor
     check_message( *base_msg );
     check_actor( *base_actor );
 }
@@ -670,7 +676,7 @@ static inline void start_actor_system( executor & this ) {
 }
 
 static inline void stop_actor_system() {
-    park( ); // will be unparked when actor system is finished
+    park( ); // unparked when actor system is finished
 
     if ( !__actor_executor_passed ) delete( __actor_executor_ );
     __actor_executor_ = 0p;
@@ -681,12 +687,12 @@ static inline void stop_actor_system() {
 
 // Default messages to send to any actor to change status
 // assigned at creation to __base_msg_finished to avoid unused message warning
-message __base_msg_finished @= { .allocation_ : Finished };
-struct __delete_msg_t { inline message; } delete_msg = __base_msg_finished;
-struct __destroy_msg_t { inline message; } destroy_msg = __base_msg_finished;
-struct __finished_msg_t { inline message; } finished_msg = __base_msg_finished;
+message __base_msg_finished @= { .alloc : Finished };
+struct delete_message_t { inline message; } delete_msg = __base_msg_finished;
+struct destroy_msg_t { inline message; } destroy_msg = __base_msg_finished;
+struct finished_msg_t { inline message; } finished_msg = __base_msg_finished;
 
-allocation receive( actor & this, __delete_msg_t & msg ) { return Delete; }
-allocation receive( actor & this, __destroy_msg_t & msg ) { return Destroy; }
-allocation receive( actor & this, __finished_msg_t & msg ) { return Finished; }
+allocation receive( actor & this, delete_message_t & msg ) { return Delete; }
+allocation receive( actor & this, destroy_msg_t & msg ) { return Destroy; }
+allocation receive( actor & this, finished_msg_t & msg ) { return Finished; }
 
