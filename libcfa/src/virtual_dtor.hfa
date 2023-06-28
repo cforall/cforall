@@ -1,4 +1,6 @@
-// inline this structure to have a virtual dtor.
+#pragma once
+
+// inline virtual_dtor to have a virtual dtor.
 // when using this, delete() is also virtual and will be called on the right address
 // using free() directly on polymorphic types may result in unaligned memory deallocation
 //     in multi-inheritance or in single inheritance if the inline isn't the first field
@@ -7,7 +9,6 @@
 // however it does not support multiple inheritance of the virtual_dtor. e.g.:
 //     given struct A { inline virtual_dtor; } and struct B { inline virtual_dtor; }
 //     struct C { inline A; inline B; } will result in undefined behaviour
-
 struct virtual_dtor {
     void (*__virtual_dtor_ptr)(virtual_dtor &);
     void * __virtual_obj_start;
