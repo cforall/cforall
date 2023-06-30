@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 25 15:39:52 2023
-// Update Count     : 422
+// Last Modified On : Thu Jun 29 10:18:35 2023
+// Update Count     : 424
 // 
 
 #include <fstream.hfa>									// sout
@@ -143,14 +143,14 @@ int main() {
 	else rseed = rdtscl();
 	srand( rseed );
 
-	sout | sepDisable;
+	sout | sepOff;
 	sout | nl | wd(26, "rand()" ) | wd(12, "rand(5)") | wd(12, "rand(0,5)" );
 	for ( 20 ) {
 		sout | wd(26, rand()) | nonl;
 		sout | wd(12, rand() % 5) | nonl;
 		sout | wd(12, rand() % (5 - 0 + 1) + 0);
 	} // for
-	sout | sepEnable;
+	sout | sepOn;
 	sout | "seed" | rseed;
 
 	sout | nl | "Sequential";
@@ -184,14 +184,14 @@ int main() {
 
 	if ( seed != 0 ) set_seed( prng, seed );
 
-	sout | sepDisable;
+	sout | sepOff;
 	sout | nl | wd(26, "PRNG()" ) | wd(12, "PRNG(5)") | wd(12, "PRNG(0,5)" );
 	for ( 20 ) {
 		sout | wd(26, prng( prng )) | nonl;				// cascading => side-effect functions called in arbitary order
 		sout | wd(12, prng( prng, 5 )) | nonl;
 		sout | wd(12, prng( prng, 0, 5 ));
 	} // for
-	sout | sepEnable;
+	sout | sepOn;
 	sout | "seed" | get_seed( prng );
 
 	sout | nl | "Sequential";
@@ -219,14 +219,14 @@ int main() {
 #if 1
 	if ( seed != 0 ) set_seed( seed );
 
-	sout | sepDisable;
+	sout | sepOff;
 	sout | nl | wd(26, "prng()" ) | wd(12, "prng(5)") | wd(12, "prng(0,5)" );
 	for ( 20 ) {
 		sout | wd(26, prng()) | nonl;					// cascading => side-effect functions called in arbitary order
 		sout | wd(12, prng( 5 )) | nonl;
 		sout | wd(12, prng( 0, 5 ));
 	} // for
-	sout | sepEnable;
+	sout | sepOn;
 	sout | "seed" | get_seed( prng );
 
 	sout | nl | "Sequential";
@@ -255,14 +255,14 @@ int main() {
 	if ( seed != 0 ) set_seed( seed );
 	thread$ & th = *active_thread();
 
-	sout | sepDisable;
+	sout | sepOff;
 	sout | nl | wd(26, "prng(t)" ) | wd(12, "prng(t,5)") | wd(12, "prng(t,0,5)" );
 	for ( 20 ) {
 		sout | wd(26, prng( th )) | nonl;				// cascading => side-effect functions called in arbitary order
 		sout | wd(12, prng( th, 5 )) | nonl;
 		sout | wd(12, prng( th, 0, 5 ));
 	} // for
-	sout | sepEnable;
+	sout | sepOn;
 	sout | "seed" | get_seed( prng );
 
 	sout | nl | "Sequential";

@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Wed Aug 17 08:26:25 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 21 08:45:19 2018
-// Update Count     : 10
+// Last Modified On : Thu Jun 29 11:15:56 2023
+// Update Count     : 11
 //
 
 #include <fstream.hfa>
@@ -243,7 +243,7 @@ foo: ;
 }
 
 int main() {
-	sepDisable(sout);
+	sepOff(sout);
 	for (int i = 0; i < 4; i++) {
 		f(i);
 	}

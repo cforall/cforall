@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:24:35 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 10 16:13:20 2021
-// Update Count     : 101
+// Last Modified On : Thu Jun 29 10:59:00 2023
+// Update Count     : 105
 //
 
 #include "strstream.hfa"
@@ -31,18 +31,21 @@
 #define IO_MSG "I/O error: "
 
 // private
+inline bool getNL$( ostrstream & os ) { return os.sawNL$; }
+inline void setNL$( ostrstream & os, bool state ) { os.sawNL$ = state; }
+inline bool getANL$( ostrstream & os ) { return os.nlOnOff$; }
 inline bool sepPrt$( ostrstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
 inline void sepReset$( ostrstream & os ) { os.sepOnOff$ = os.sepDefault$; }
 inline void sepReset$( ostrstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
 inline const char * sepGetCur$( ostrstream & os ) { return os.sepCur$; }
 inline void sepSetCur$( ostrstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
-inline bool getNL$( ostrstream & os ) { return os.sawNL$; }
-inline void setNL$( ostrstream & os, bool state ) { os.sawNL$ = state; }
-inline bool getANL$( ostrstream & os ) { return os.nlOnOff$; }
 inline bool getPrt$( ostrstream & os ) { return os.prt$; }
 inline void setPrt$( ostrstream & os, bool state ) { os.prt$ = state; }
 
 // public
+void nlOn( ostrstream & os ) { os.nlOnOff$ = true; }
+void nlOff( ostrstream & os ) { os.nlOnOff$ = false; }
+
 void ?{}( ostrstream & os, char buf[], size_t size ) {
 	os.buf$ = buf;
 	os.size$ = size;
@@ -57,25 +60,22 @@ void ?{}( ostrstream & os, char buf[], size_t size ) {
 	sepSetTuple( os, ", " );
 } // ?{}
 
-void sepOn( ostrstream & os ) { os.sepOnOff$ = ! getNL$( os ); }
-void sepOff( ostrstream & os ) { os.sepOnOff$ = false; }
+void sep( ostrstream & os ) { os.sepOnOff$ = ! getNL$( os ); }
+void nosep( ostrstream & os ) { os.sepOnOff$ = false; }
 
-bool sepDisable( ostrstream & os ) {
-	bool temp = os.sepDefault$;
-	os.sepDefault$ = false;
-	sepReset$( os );
-	return temp;
-} // sepDisable
-
-bool sepEnable( ostrstream & os ) {
+bool sepOn( ostrstream & os ) {
 	bool temp = os.sepDefault$;
 	os.sepDefault$ = true;
 	if ( os.sepOnOff$ ) sepReset$( os );				// start of line ?
 	return temp;
-} // sepEnable
+} // sepOn
 
-void nlOn( ostrstream & os ) { os.nlOnOff$ = true; }
-void nlOff( ostrstream & os ) { os.nlOnOff$ = false; }
+bool sepOff( ostrstream & os ) {
+	bool temp = os.sepDefault$;
+	os.sepDefault$ = false;
+	sepReset$( os );
+	return temp;
+} // sepOff
 
 const char * sepGet( ostrstream & os ) { return os.separator$; }
 void sepSet( ostrstream & os, const char s[] ) {

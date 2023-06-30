@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:20:59 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 10 10:14:22 2021
-// Update Count     : 47
+// Last Modified On : Thu Jun 29 10:58:58 2023
+// Update Count     : 51
 // 
 
 #pragma once
@@ -52,13 +52,13 @@ bool getPrt$( ostrstream & );
 void setPrt$( ostrstream &, bool );
 
 // public
-void sepOn( ostrstream & );
-void sepOff( ostrstream & );
-bool sepDisable( ostrstream & );
-bool sepEnable( ostrstream & );
 void nlOn( ostrstream & );
 void nlOff( ostrstream & );
 
+void sep( ostrstream & );
+void nosep( ostrstream & );
+bool sepOn( ostrstream & );
+bool sepOff( ostrstream & );
 const char * sepGet( ostrstream & );
 void sepSet( ostrstream &, const char [] );
 const char * sepGetTuple( ostrstream & );

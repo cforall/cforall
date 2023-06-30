@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun  5 22:00:20 2023
-// Update Count     : 246
+// Last Modified On : Thu Jun 29 11:08:31 2023
+// Update Count     : 251
 //
 
 #pragma once
@@ -39,14 +39,16 @@ struct ofstream {
 // Satisfies ostream
 
 // private
+bool getNL$( ofstream & );
+void setNL$( ofstream &, bool );
+bool getANL$( ofstream & );
+
 bool sepPrt$( ofstream & );
 void sepReset$( ofstream & );
 void sepReset$( ofstream &, bool );
 const char * sepGetCur$( ofstream & );
 void sepSetCur$( ofstream &, const char [] );
-bool getNL$( ofstream & );
-void setNL$( ofstream &, bool );
-bool getANL$( ofstream & );
+
 bool getPrt$( ofstream & );
 void setPrt$( ofstream &, bool );
 
@@ -54,13 +56,13 @@ void lock( ofstream & );
 void unlock( ofstream & );
 
 // public
-void sepOn( ofstream & );
-void sepOff( ofstream & );
-bool sepDisable( ofstream & );
-bool sepEnable( ofstream & );
 void nlOn( ofstream & );
 void nlOff( ofstream & );
 
+void sep( ofstream & );
+void nosep( ofstream & );
+bool sepOn( ofstream & );
+bool sepOff( ofstream & );
 const char * sepGet( ofstream & );
 void sepSet( ofstream &, const char [] );
 const char * sepGetTuple( ofstream & );

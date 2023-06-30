@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 15 22:34:31 2023
-// Update Count     : 411
+// Last Modified On : Thu Jun 29 11:07:25 2023
+// Update Count     : 427
 //
 
 #pragma once
@@ -35,13 +35,13 @@ trait basic_ostream {
 	bool getPrt$( ostype & );							// get fmt called in output cascade
 	void setPrt$( ostype &, bool );						// set fmt called in output cascade
 	// public
-	void sepOn( ostype & );								// turn separator state on
-	void sepOff( ostype & );							// turn separator state off
-	bool sepDisable( ostype & );						// set default state to off, and return previous state
-	bool sepEnable( ostype & );							// set default state to on, and return previous state
 	void nlOn( ostype & );								// turn auto-newline state on
 	void nlOff( ostype & );								// turn auto-newline state off
 
+	void sep( ostype & );								// turn separator state on
+	void nosep( ostype & );								// turn separator state off
+	bool sepOn( ostype & );								// set default state to on, and return previous state
+	bool sepOff( ostype & );							// set default state to off, and return previous state
 	const char * sepGet( ostype & );					// get separator string
 	void sepSet( ostype &, const char [] );				// set separator to string (15 character maximum)
 	const char * sepGetTuple( ostype & );				// get tuple separator string
@@ -134,16 +134,18 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	// manipulators
 	ostype & ?|?( ostype &, ostype & (*)( ostype & ) );
 	void ?|?( ostype &, ostype & (*)( ostype & ) );
+
 	ostype & nl( ostype & );
 	ostype & nonl( ostype & );
-	ostype & sep( ostype & );
-	ostype & sepTuple( ostype & );
-	ostype & sepOn( ostype & );
-	ostype & sepOff( ostype & );
-	ostype & sepDisable( ostype & );
-	ostype & sepEnable( ostype & );
 	ostype & nlOn( ostype & );
 	ostype & nlOff( ostype & );
+
+	ostype & sepVal( ostype & );
+	ostype & sepTupleVal( ostype & );
+	ostype & sep( ostype & );
+	ostype & nosep( ostype & );
+	ostype & sepOn( ostype & );
+	ostype & sepOff( ostype & );
 } // distribution
 
 // tuples

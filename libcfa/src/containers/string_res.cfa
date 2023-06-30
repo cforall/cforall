@@ -8,9 +8,9 @@
 //
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
-// Last Modified By : Michael L. Brooks
-// Last Modified On : Fri Sep 03 11:00:00 2021
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jun 29 09:29:06 2023
+// Update Count     : 2
 //
 
 #include "string_res.hfa"
@@ -203,7 +203,7 @@ ofstream & ?|?(ofstream &out, const string_res &s) {
     for (size_t i = 0; i < s.Handle.lnth; i++) {
         out | s[i];
     }
-    out | sep;
+    out | sepVal;
     // Re-apply newlines after done, for chaining version
     if (anl) nlOn(out);
     return out;

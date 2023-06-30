@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  9 09:27:58 2023
-// Update Count     : 1361
+// Last Modified On : Thu Jun 29 10:12:39 2023
+// Update Count     : 1380
 //
 
 #include "iostream.hfa"
@@ -49,7 +49,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, char c ) {
 		fmt( os, "%c", c );
 		if ( c == '\n' ) setNL$( os, true );
-		return sepOff( os );
+		return nosep( os );
 	} // ?|?
 	void ?|?( ostype & os, char c ) {
 		(ostype &)(os | c); ends( os );
@@ -283,7 +283,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		}; // mask
 
 	  if ( s == 0p ) { fmt( os, "%s", "0p" ); return os; } // null pointer
-	  if ( s[0] == '\0' ) { sepOff( os ); return os; } // null string => no separator
+	  if ( s[0] == '\0' ) { nosep( os ); return os; }	// null string => no leading/trailing separator
 
 		// first character IS NOT spacing or closing punctuation => add left separator
 		unsigned char ch = s[0];						// must make unsigned
@@ -299,9 +299,9 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		ch = s[len - 1];								// must make unsigned
 		fmt( os, "%s", s );								// fmt resets seperator, but reset it again
 		if ( sepPrt$( os ) && mask[ ch ] != Open && mask[ ch ] != OpenClose ) {
-			sepOn( os );
+			sep( os );
 		} else {
-			sepOff( os );
+			nosep( os );
 		} // if
 		if ( ch == '\n' ) setNL$( os, true );			// check *AFTER* sepPrt$ call above as it resets NL flag
 		return os;
@@ -350,45 +350,17 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		setPrt$( os, false );							// turn off
 	} // ?|?
 
-	ostype & sep( ostype & os ) {
-		return (ostype &)(os | sepGet( os ));
-	} // sep
-
-	ostype & sepTuple( ostype & os ) {
-		return os | sepGetTuple( os );
-	} // sepTuple
-
 	ostype & nl( ostype & os ) {
 		(ostype &)(os | '\n');
 		setPrt$( os, false );							// turn off
 		setNL$( os, true );
-		return sepOff( os );							// prepare for next line
+		return nosep( os );								// prepare for next line
 	} // nl
 
 	ostype & nonl( ostype & os ) {
 		setPrt$( os, false );							// turn off
 		return os;
 	} // nonl
-
-	ostype & sepOn( ostype & os ) {
-		sepOn( os );									// call void returning
-		return os;
-	} // sepOn
-
-	ostype & sepOff( ostype & os ) {
-		sepOff( os );									// call void returning
-		return os;
-	} // sepOff
-
-	ostype & sepEnable( ostype & os ) {
-		sepEnable( os );								// call void returning
-		return os;
-	} // sepEnable
-
-	ostype & sepDisable( ostype & os ) {
-		sepDisable( os );								// call void returning
-		return os;
-	} // sepDisable
 
 	ostype & nlOn( ostype & os ) {
 		nlOn( os );										// call void returning
@@ -399,6 +371,34 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		nlOff( os );									// call void returning
 		return os;
 	} // nlOff
+
+	ostype & sepVal( ostype & os ) {
+		return (ostype &)(os | sepGet( os ));
+	} // sepVal
+
+	ostype & sepTupleVal( ostype & os ) {
+		return os | sepGetTuple( os );
+	} // sepTupleVal
+
+	ostype & sep( ostype & os ) {
+		sep( os );										// call void returning
+		return os;
+	} // sep
+
+	ostype & nosep( ostype & os ) {
+		nosep( os );									// call void returning
+		return os;
+	} // nosep
+
+	ostype & sepOn( ostype & os ) {
+		sepOn( os );									// call void returning
+		return os;
+	} // sepOn
+
+	ostype & sepOff( ostype & os ) {
+		sepOff( os );									// call void returning
+		return os;
+	} // sepOff
 } // distribution
 
 // tuples
@@ -549,7 +549,7 @@ static inline void base_128( ostype & os, unsigned int128 val, unsigned int128 p
 		(ostype &)(os | f);
 		if ( cnt == 1 ) {
 			if ( f.flags.left ) { wd -= maxdig; f.wd = wd < 0 ? 1 : wd; } // update and restore f.wd for printing end chunk
-			sepOff( os );								// no seperator between chunks
+			nosep( os );								// no seperator between chunks
 		} // if
 	} else {											// print start chunk
 		f.val = val;
@@ -594,7 +594,7 @@ static inline void base_128( ostype & os, unsigned int128 val, unsigned int128 p
 		if ( ! f.flags.left ) { f.flags.pad0 = true; f.flags.pc = false; } // left pad with 0s
 		else { f.pc = maxdig; f.flags.pc = true; }		// left pad with precision
 
-		if ( cnt != 0 ) sepOff( os );					// no seperator between chunks
+		if ( cnt != 0 ) nosep( os );					// no seperator between chunks
 		f.wd = wd;										// reset f.wd for next chunk
 		f.flags.sign = false;							// no leading +/- sign
 		f.flags.nobsdp = true;							// no leading base prefix
@@ -772,7 +772,8 @@ forall( ostype & | basic_ostream( ostype ) ) {
 			return os;
 		} // if
 
-		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+		if ( f.val[0] != '\0' &&						// null string => no leading separator
+			 sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 
 		#define SFMTNP "% * "
 		#define SFMTP "% *.* "
@@ -794,6 +795,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 			// printf( "%d %d %s\n", f.wd, f.pc, &fmtstr[star] );
 			fmt( os, &fmtstr[star], f.wd, f.pc, f.val );
 		} // if
+		if ( f.val[0] == '\0' ) { nosep( os ); }		// null string => no trailing separator
 		return os;
 	} // ?|?
 

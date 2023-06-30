@@ -54,7 +54,7 @@ from ", $" to " "
 abc xyz
 1, 2, 3 4, 5, 6
 
-check sepOn/sepOff
+check sep/nosep
 1 2 3
 12 3
 1 2 3

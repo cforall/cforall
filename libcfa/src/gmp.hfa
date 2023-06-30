@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr 19 08:43:43 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 20 20:59:21 2021
-// Update Count     : 32
+// Last Modified On : Thu Jun 29 09:43:30 2023
+// Update Count     : 33
 //
 
 // https://gmplib.org/gmp-man-6.1.1.pdf
@@ -264,7 +264,7 @@ static inline {
 		ostype & ?|?( ostype & os, Int mp ) {
 			if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 			gmp_printf( "%Zd", mp.mpz );
-			sepOn( os );
+			sep( os );
 			return os;
 		} // ?|?
 

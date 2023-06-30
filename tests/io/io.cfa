@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Mar  2 16:56:02 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 21 10:56:33 2021
-// Update Count     : 121
+// Last Modified On : Thu Jun 29 10:19:31 2023
+// Update Count     : 126
 //
 
 #include <fstream.hfa>
@@ -121,56 +121,56 @@ int main() {
 
 	sout | "toggle separator";
 	sout | f | "" | d | "" | ld;						// floating point without separator
-	sout | sepDisable | fc | dc | ldc;					// complex without separator
-	sout | fc | sepOn | dc | ldc;						// local separator add
-	sout | sepEnable | fc | dc | ldc;					// complex with separator
-	sout | fc | sepOff | dc | ldc;						// local separator removal
-	sout | s1 | sepOff | s2;							// local separator removal
+	sout | sepOff | fc | dc | ldc;						// complex without separator
+	sout | fc | sep | dc | ldc;							// local separator add
+	sout | sepOn | fc | dc | ldc;						// complex with separator
+	sout | fc | nosep | dc | ldc;						// local separator removal
+	sout | s1 | nosep | s2;								// local separator removal
 	sout | s1 | "" | s2;								// local separator removal
 	sout | nl;
 
 	sout | "change separator";
-	sout | "from \"" | sep | "\"" | nonl;
+	sout | "from \"" | sepVal | "\"" | nonl;
 	sepSet( sout, ", $" );								// change separator, maximum of 15 characters
-	sout | " to \"" | sep | "\"";
+	sout | " to \"" | sepVal | "\"";
 	sout | f | d | ld;
 	sout | fc | dc | ldc;
 	sout | s1 | s2;
 	sout | t1 | t2;										// print tuple
 	sout | nl;
-	sout | "from \"" | sep | "\" " | nonl;
+	sout | "from \"" | sepVal | "\" " | nonl;
 	sepSet( sout, " " );								// restore separator
-	sout | "to \"" | sep | "\"";
+	sout | "to \"" | sepVal | "\"";
 	sout | f | d | ld;
 	sout | fc | dc | ldc;
 	sout | s1 | s2;
 	sout | t1 | t2;										// print tuple
 	sout | nl;
 
-	sout | "check sepOn/sepOff";
-	sout | sepOn | 1 | 2 | 3 | sepOn;					// no separator at start/end of line
-	sout | 1 | sepOff | 2 | 3;							// locally turn off implicit separator
-	sout | sepOn | sepOn | 1 | 2 | 3 | sepOn | sepOff | sepOn | '\n' | nonl; // no separator at start/end of line
-	sout | 1 | 2 | 3 | "\n\n" | sepOn | nonl;			// no separator at start of next line
+	sout | "check sep/nosep";
+	sout | sep | 1 | 2 | 3 | sep;						// no separator at start/end of line
+	sout | 1 | nosep | 2 | 3;							// locally turn off implicit separator
+	sout | sep | sep | 1 | 2 | 3 | sep | nosep | sep | '\n' | nonl; // no separator at start/end of line
+	sout | 1 | 2 | 3 | "\n\n" | sep | nonl;				// no separator at start of next line
 	sout | 1 | 2 | 3;
 	sout | nl;
 
 	sout | "check enable/disable";
-	sout | sepDisable | 1 | 2 | 3;						// globally turn off implicit separation
-	sout | 1 | sepOn | 2 | 3;							// locally turn on implicit separator
-	sout | sepEnable | 1 | 2 | 3 | sepDisable;			// globally turn on/off implicit separation
-	sout | 1 | 2 | 3 | sepEnable;						// globally turn on implicit separation
-	sout | 1 | 2 | 3 | sepOn | sepDisable;				// ignore seperate at end of line
-	sout | 1 | 2 | 3 | sepOn | sepEnable;				// separator at end of line
+	sout | sepOff | 1 | 2 | 3;							// globally turn off implicit separation
+	sout | 1 | sep | 2 | 3;								// locally turn on implicit separator
+	sout | sepOn | 1 | 2 | 3 | sepOff;					// globally turn on/off implicit separation
+	sout | 1 | 2 | 3 | sepOn;							// globally turn on implicit separation
+	sout | 1 | 2 | 3 | sep | sepOff;					// ignore seperate at end of line
+	sout | 1 | 2 | 3 | sep | sepOn;						// separator at end of line
 	sout | 1 | 2 | 3;
 	sout | nl;
 
 //	sout | fmt( d, "%8.3f" );
 
 	sepSetTuple( sout, " " );							// set tuple separator from ", " to " "
-	sout | t1 | t2 | " \"" | sep | "\"";
+	sout | t1 | t2 | " \"" | sepVal | "\"";
 	sepSetTuple( sout, ", " );							// reset tuple separator to ", "
-	sout | t1 | t2 | " \"" | sep | "\"";
+	sout | t1 | t2 | " \"" | sepVal | "\"";
 	sout | t1 | t2;										// print tuple
 	sout | nl;
 
@@ -179,7 +179,7 @@ int main() {
 	sout | t3;
 	sepSetTuple( sout, " " );
 	sout | t3;
-	sout | sepOn | t3 | sepDisable | t3 | sepEnable | t3;
+	sout | sep | t3 | sepOff | t3 | sepOn | t3;
 	sepSet( sout, "^" );
 	sepSetTuple( sout, "-" );
 	sout | t3 | 3 | 4 | t3;

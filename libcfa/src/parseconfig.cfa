@@ -28,7 +28,7 @@ vtable(Missing_Config_Entries) Missing_Config_Entries_vt;
 
 // TODO: use string interface when it's ready (and implement exception msg protocol)
 [ void ] msg( * Missing_Config_Entries ex ) {
-	serr | "The config file is missing " | ex->num_missing | "entr" | sepOff | (ex->num_missing == 1 ? "y." : "ies.");
+	serr | "The config file is missing " | ex->num_missing | "entr" | nosep | (ex->num_missing == 1 ? "y." : "ies.");
 } // msg
 
 

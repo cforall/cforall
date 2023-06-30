@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun 17 08:51:12 2023
-// Update Count     : 528
+// Last Modified On : Thu Jun 29 11:09:52 2023
+// Update Count     : 533
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -42,14 +42,16 @@ void ?{}( ofstream & os, void * file ) with( os ) {
 	sepSetTuple( os, ", " );
 } // ?{}
 
+inline bool getNL$( ofstream & os ) { return os.sawNL$; }
+inline void setNL$( ofstream & os, bool state ) { os.sawNL$ = state; }
+inline bool getANL$( ofstream & os ) { return os.nlOnOff$; }
+
 inline bool sepPrt$( ofstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
 inline void sepReset$( ofstream & os ) { os.sepOnOff$ = os.sepDefault$; }
 inline void sepReset$( ofstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
 inline const char * sepGetCur$( ofstream & os ) { return os.sepCur$; }
 inline void sepSetCur$( ofstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
-inline bool getNL$( ofstream & os ) { return os.sawNL$; }
-inline void setNL$( ofstream & os, bool state ) { os.sawNL$ = state; }
-inline bool getANL$( ofstream & os ) { return os.nlOnOff$; }
+
 inline bool getPrt$( ofstream & os ) { return os.prt$; }
 inline void setPrt$( ofstream & os, bool state ) { os.prt$ = state; }
 
@@ -62,25 +64,25 @@ void ?{}( ofstream & os, const char name[], const char mode[] ) { open( os, name
 void ?{}( ofstream & os, const char name[] ) { open( os, name, "w" ); }
 void ^?{}( ofstream & os ) { close( os ); }
 
-void sepOn( ofstream & os ) { os.sepOnOff$ = ! getNL$( os ); }
-void sepOff( ofstream & os ) { os.sepOnOff$ = false; }
+void nlOn( ofstream & os ) { os.nlOnOff$ = true; }
+void nlOff( ofstream & os ) { os.nlOnOff$ = false; }
 
-bool sepDisable( ofstream & os ) {
-	bool temp = os.sepDefault$;
-	os.sepDefault$ = false;
-	sepReset$( os );
-	return temp;
-} // sepDisable
+void sep( ofstream & os ) { os.sepOnOff$ = ! getNL$( os ); }
+void nosep( ofstream & os ) { os.sepOnOff$ = false; }
 
-bool sepEnable( ofstream & os ) {
+bool sepOn( ofstream & os ) {
 	bool temp = os.sepDefault$;
 	os.sepDefault$ = true;
 	if ( os.sepOnOff$ ) sepReset$( os );				// start of line ?
 	return temp;
-} // sepEnable
+} // sepOn
 
-void nlOn( ofstream & os ) { os.nlOnOff$ = true; }
-void nlOff( ofstream & os ) { os.nlOnOff$ = false; }
+bool sepOff( ofstream & os ) {
+	bool temp = os.sepDefault$;
+	os.sepDefault$ = false;
+	sepReset$( os );
+	return temp;
+} // sepOff
 
 const char * sepGet( ofstream & os ) { return os.separator$; }
 void sepSet( ofstream & os, const char s[] ) {
