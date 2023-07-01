@@ -141,6 +141,10 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
         auto structIter = structDecls.find( instType->aggr() );
         if ( structIter == structDecls.end() ) return;
 
+        // If first param not named we need to name it to use it
+        if ( decl->params.at(0)->name == "" )
+            mutate( decl->params.at(0).get() )->name = "__CFA_Virt_Dtor_param";
+
         if ( decl->name == "^?{}") {
             torDecls.addDtor( structIter->first, mutate( decl ) );
 

@@ -1235,6 +1235,14 @@ ast::IfStmt * MutexKeyword::genTypeDiscrimLockUnlock( const std::string & fnName
 	return outerLockIf;
 }
 
+void flattenTuple( const ast::UntypedTupleExpr * tuple, std::vector<ast::ptr<ast::Expr>> & output ) {
+    for ( auto & expr : tuple->exprs ) {
+        const ast::UntypedTupleExpr * innerTuple = dynamic_cast<const ast::UntypedTupleExpr *>(expr.get());
+        if ( innerTuple ) flattenTuple( innerTuple, output );
+        else output.emplace_back( ast::deepCopy( expr ));
+    }
+}
+
 ast::CompoundStmt * MutexKeyword::addStatements(
 		const ast::CompoundStmt * body,
 		const std::vector<ast::ptr<ast::Expr>> & args ) {
@@ -1248,6 +1256,14 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 	// std::string lockFnName = mutex_func_namer.newName();
 	// std::string unlockFnName = mutex_func_namer.newName();
 
+    // If any arguments to the mutex stmt are tuples, flatten them
+    std::vector<ast::ptr<ast::Expr>> flattenedArgs;
+    for ( auto & arg : args ) {
+        const ast::UntypedTupleExpr * tuple = dynamic_cast<const ast::UntypedTupleExpr *>(args.at(0).get());
+        if ( tuple ) flattenTuple( tuple, flattenedArgs );
+        else flattenedArgs.emplace_back( ast::deepCopy( arg ));
+    }
+
 	// Make pointer to the monitors.
 	ast::ObjectDecl * monitors = new ast::ObjectDecl(
 		location,
@@ -1256,14 +1272,14 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 			new ast::PointerType(
 				new ast::VoidType()
 			),
-			ast::ConstantExpr::from_ulong( location, args.size() ),
+			ast::ConstantExpr::from_ulong( location, flattenedArgs.size() ),
 			ast::FixedLen,
 			ast::DynamicDim
 		),
 		new ast::ListInit(
 			location,
 			map_range<std::vector<ast::ptr<ast::Init>>>(
-				args, [](const ast::Expr * expr) {
+				flattenedArgs, [](const ast::Expr * expr) {
 					return new ast::SingleInit(
 						expr->location,
 						new ast::UntypedExpr(
@@ -1286,7 +1302,7 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 	ast::CompoundStmt * lastBody = nullptr;
 
 	// adds a nested try stmt for each lock we are locking
-	for ( long unsigned int i = 0; i < args.size(); i++ ) {
+	for ( long unsigned int i = 0; i < flattenedArgs.size(); i++ ) {
 		ast::UntypedExpr * innerAccess = new ast::UntypedExpr( 
 			location,
 			new ast::NameExpr( location,"?[?]" ), {
@@ -1297,12 +1313,12 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 
 		// make the try body
 		ast::CompoundStmt * currTryBody = new ast::CompoundStmt( location );
-		ast::IfStmt * lockCall = genTypeDiscrimLockUnlock( "lock", args, location, innerAccess );
+		ast::IfStmt * lockCall = genTypeDiscrimLockUnlock( "lock", flattenedArgs, location, innerAccess );
 		currTryBody->push_back( lockCall );
 
 		// make the finally stmt
 		ast::CompoundStmt * currFinallyBody = new ast::CompoundStmt( location );
-		ast::IfStmt * unlockCall = genTypeDiscrimLockUnlock( "unlock", args, location, innerAccess );
+		ast::IfStmt * unlockCall = genTypeDiscrimLockUnlock( "unlock", flattenedArgs, location, innerAccess );
 		currFinallyBody->push_back( unlockCall );
 
 		// construct the current try
@@ -1342,7 +1358,7 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 							new ast::VariableExpr( location, monitors ) ),
 						new ast::SingleInit(
 							location,
-							ast::ConstantExpr::from_ulong( location, args.size() ) ),
+							ast::ConstantExpr::from_ulong( location, flattenedArgs.size() ) ),
 					},
 					{},
 					ast::MaybeConstruct

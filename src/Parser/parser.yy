@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 20 22:10:31 2023
-// Update Count     : 6348
+// Last Modified On : Fri Jun 30 12:32:36 2023
+// Update Count     : 6364
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -2679,12 +2679,13 @@ bit_subrange_size:
 enum_type:
 	ENUM attribute_list_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( nullptr, $4, true, false )->addQualifiers( $2 ); }
+	| ENUM attribute_list_opt '!' '{' enumerator_list comma_opt '}'	// invalid syntax rule
+		{ SemanticError( yylloc, "syntax error, hiding '!' the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3 ); }
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( $3, $7, true, false, nullptr, $5 )->addQualifiers( $2 ); }
-	| ENUM attribute_list_opt typedef_name				// unqualified type name
-	  hide_opt '{' enumerator_list comma_opt '}'
+	| ENUM attribute_list_opt typedef_name hide_opt '{' enumerator_list comma_opt '}' // unqualified type name
 		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false, nullptr, $4 )->addQualifiers( $2 ); }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
@@ -2693,10 +2694,14 @@ enum_type:
 			}
 			$$ = DeclarationNode::newEnum( nullptr, $7, true, true, $3 )->addQualifiers( $5 );
 		}
+	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '!' '{' enumerator_list comma_opt '}' // unqualified type name
+		{ SemanticError( yylloc, "syntax error, hiding '!' the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM '(' ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
 			$$ = DeclarationNode::newEnum( nullptr, $6, true, true )->addQualifiers( $4 );
 		}
+	| ENUM '(' ')' attribute_list_opt '!' '{' enumerator_list comma_opt '}'	// invalid syntax rule
+		{ SemanticError( yylloc, "syntax error, hiding '!' the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
 			if ( $3->storageClasses.any() || $3->type->qualifiers.val != 0 ) {
@@ -2708,18 +2713,15 @@ enum_type:
 		{
 			$$ = DeclarationNode::newEnum( $6, $11, true, true, $3, $9 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
-	| ENUM '(' ')' attribute_list_opt identifier attribute_list_opt
-	  hide_opt '{' enumerator_list comma_opt '}'
+	| ENUM '(' ')' attribute_list_opt identifier attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
 		{
 			$$ = DeclarationNode::newEnum( $5, $9, true, true, nullptr, $7 )->addQualifiers( $4 )->addQualifiers( $6 );
 		}
-	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt
-	  hide_opt '{' enumerator_list comma_opt '}'
+	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
 		{
 			$$ = DeclarationNode::newEnum( $6->name, $10, true, true, $3, $8 )->addQualifiers( $5 )->addQualifiers( $7 );
 		}
-	| ENUM '(' ')' attribute_list_opt typedef_name attribute_list_opt
-	  hide_opt '{' enumerator_list comma_opt '}'
+	| ENUM '(' ')' attribute_list_opt typedef_name attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
 		{
 			$$ = DeclarationNode::newEnum( $5->name, $9, true, true, nullptr, $7 )->addQualifiers( $4 )->addQualifiers( $6 );
 		}

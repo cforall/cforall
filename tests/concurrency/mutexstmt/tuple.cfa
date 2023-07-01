@@ -1,0 +1,15 @@
+#include <fstream.hfa>
+#include <mutex_stmt.hfa>
+#include <locks.hfa>
+
+ofstream & f() {
+        return sout;
+}
+
+single_acquisition_lock APPLE, BANANA, c, d;
+
+int main() {
+        mutex( sout ) sout | 3 | 4 | 5;
+        mutex( [ f(), [ APPLE, [ c, d ], BANANA ] ] ) sout | 7 | 8 | 9;
+        mutex( [ [ APPLE, BANANA ], [ c, d ]] ) sout | 0 | 1 | 2;
+}

@@ -1,115 +1,117 @@
+#include <fstream.hfa>
+
 struct WrappedInt {
-  int x;
-  int id;
+	int x;
+	int id;
 };
 int intID = 0;
 
-void ?{}(WrappedInt & this) {
-  this.id = intID++;
-  printf("constructing int id: %d\n", this.id);
-  this.x = 0;
+void ?{}( WrappedInt & this ) {
+	this.id = intID++;
+	sout | "constructing int id: " | this.id;
+	this.x = 0;
 }
 
-void ?{}(WrappedInt & this, WrappedInt other) {
-  this.id = intID++;
-  printf("copy constructing int: %d id: %d\n", other.x, this.id);
-  this.x = other.x;
+void ?{}( WrappedInt & this, WrappedInt other ) {
+	this.id = intID++;
+	sout | "copy constructing int: " | other.x | "id: " | this.id;
+	this.x = other.x;
 }
 
-void ?{}(WrappedInt & this, int x) {
-  this.id = intID++;
-  printf("constructing int: %d id: %d\n", x, this.id);
-  this.x = x;
+void ?{}( WrappedInt & this, int x ) {
+	this.id = intID++;
+	sout | "constructing int: " | x | "id: " | this.id;
+	this.x = x;
 }
 
-void ^?{}(WrappedInt & this) {
-  printf("destructing int: %d id: %d\n", this.x, this.id);
+void ^?{}( WrappedInt & this ) {
+	sout | "destructing int: " | this.x | "id: " | this.id;
 }
 
-/* WrappedInt */ void ?=?(WrappedInt & this, int x) {
-  printf("assigning int: %d %d id: %d\n", this.x, x, this.id);
-  this.x = x;
-  // return this;
+/* WrappedInt */ void ?=?( WrappedInt & this, int x ) {
+	sout | "assigning int: " | this.x | x | "id: " | this.id;
+	this.x = x;
+	// return this;
 }
 
-// WrappedInt ?=?(WrappedInt & this, WrappedInt other) {
-//   printf("assigning int: %d %d\n", this.x, other.x);
+// WrappedInt ?=?( WrappedInt & this, WrappedInt other ) {
+//   sout | "assigning int: " | this.x | other.x;
 //   this.x = other.x;
 //   return this;
 // }
 
 struct A {
-  WrappedInt x, y, z;
-  int id;
+	WrappedInt x, y, z;
+	int id;
 };
 int AID = 0;
 
-void ?{}(A & a) {
-  // currently must define default ctor, since there's no "= default" syntax
-  a.id = AID++;
-  printf("default construct A %d\n", a.id);
+void ?{}( A & a ) {
+	// currently must define default ctor, since there's no "= default" syntax
+	a.id = AID++;
+	sout | "default construct A" | a.id;
 }
 
-void ?{}(A & a, int x) {
-  a.id = AID++;
-  printf("begin construct A id: %d\n", a.id);
-  printf("construct a.x\n");
-  (a.x){ x+999 };
-  printf("assign a.y\n");
-  a.y = 0; // not a constructor - default constructor will be inserted
-  printf("end construct A\n");
+void ?{}( A & a, int x ) {
+	a.id = AID++;
+	sout | "begin construct A id: " | a.id;
+	sout | "construct a.x";
+	(a.x){ x+999 };
+	sout | "assign a.y";
+	a.y = 0; // not a constructor - default constructor will be inserted
+	sout | "end construct A";
 } // z never constructed - will be automatically default constructed
 
-void ?{}(A & this, A other) {
-  this.id = AID++;
-  printf("begin copy construct A id: %d\n", this.id);
-  printf("copy construct this.x\n");
-  (this.x){ other.x };
-  printf("assign this.y\n");
-  this.y = other.y; // not a constructor - copy constructor will be inserted
-  printf("end copy construct A\n");
+void ?{}( A & this, A other ) {
+	this.id = AID++;
+	sout | "begin copy construct A id: " | this.id;
+	sout | "copy construct this.x";
+	(this.x){ other.x };
+	sout | "assign this.y";
+	this.y = other.y; // not a constructor - copy constructor will be inserted
+	sout | "end copy construct A";
 } // z never constructed - will be automatically copy constructed
 
-A ?=?(A & this, A other) {
-  printf("begin ?=? A id: %d\n", this.id);
-  this.x = other.x;
-  this.y = other.y;
-  this.z = other.z;
-  printf("end ?=? A\n");
-  return this;
+A ?=?( A & this, A other ) {
+	sout | "begin ?=? A id: " | this.id;
+	this.x = other.x;
+	this.y = other.y;
+	this.z = other.z;
+	sout | "end ?=? A";
+	return this;
 }
 
 struct B {
-  A a1, a2, a3;
-  int id;
+	A a1, a2, a3;
+	int id;
 };
 int BID = 0;
 
-void ?{}(B & b) {
-  b.id = BID++;
-  printf("begin construct B id: %d\n", b.id);
-  printf("assign b.a2\n");
-  b.a2 = (A) { 2 };
-  printf("construct b.a1\n");
-  (b.a1){ 1 };
+void ?{}( B & b ) {
+	b.id = BID++;
+	sout | "begin construct B id: " | b.id;
+	sout | "assign b.a2";
+	b.a2 = (A){ 2 };
+	sout | "construct b.a1";
+	(b.a1){ 1 };
 #ifdef ERR1
-  (b.a2){ b.a3 }; // error, b->a2 was used previously but is explicitly constructed
+	(b.a2){ b.a3 }; // error, b->a2 was used previously but is explicitly constructed
 #endif
-  printf("end construct B\n");
+	sout | "end construct B";
 } // a2, a3 never constructed - will be automatically default constructed
 
-void ^?{}(B & b) {
-  b.id = BID++;
-  printf("begin destruct B id: %d\n", b.id);
-  b.a2 = (A) { 0 };
-  ^(b.a1){};
-  printf("end destruct B\n");
+void ^?{}( B & b ) {
+	b.id = BID++;
+	sout | "begin destruct B id: " | b.id;
+	b.a2 = (A) { 0 };
+	^(b.a1){};
+	sout | "end destruct B";
 } // a2, a3 never destructed - will be automatically destructed
 
 int main() {
-  printf("Before declaration of b1\n");
-  B b1;  // b1 = { { 1000, 0, 0 }, { 1001, 0, 0 }, { 0, 0, 0 } }
-  printf("Before declaration of b2\n");
-  B b2 = b1;
-  printf("End of main\n");
+	sout | "Before declaration of b1";
+	B b1;  // b1 = { { 1000, 0, 0 }, { 1001, 0, 0 }, { 0, 0, 0 } }
+	sout | "Before declaration of b2";
+	B b2 = b1;
+	sout | "End of main";
 }
