@@ -339,8 +339,8 @@ static inline bool unregister_chan( channel(T) & chan, select_node & node ) with
     }
     unlock( mutex_lock );
 
-    // only return true when not special OR case, not exceptional calse and status is SAT
-    return ( node.extra == 0p || !node.park_counter ) ? false : *node.clause_status == __SELECT_SAT;
+    // only return true when not special OR case and status is SAT
+    return !node.park_counter ? false : *node.clause_status == __SELECT_SAT;
 }
 
 // special case of __handle_waituntil_OR, that does some work to avoid starvation/deadlock case
