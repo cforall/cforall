@@ -46,8 +46,7 @@ public:
 
 	/// Starts a new scope
 	void beginScope() {
-		Scope scope;
-		scopes.push_back(scope);
+		scopes.emplace_back();
 	}
 
 	/// Ends a scope; invalidates any iterators pointing to elements of that scope
@@ -84,7 +83,7 @@ public:
 	/// Finds the given key in the outermost scope inside the given scope where it occurs
 	iterator findNext( const_iterator &it, const Value &key ) {
 		if ( it.i == 0 ) return end();
-			for ( size_type i = it.i - 1; ; --i ) {
+		for ( size_type i = it.i - 1; ; --i ) {
 			typename Scope::iterator val = scopes[i].find( key );
 			if ( val != scopes[i].end() ) return iterator( scopes, val, i );
 			if ( i == 0 ) break;
@@ -111,9 +110,8 @@ class ScopedSet<Value>::iterator :
 		public std::iterator< std::bidirectional_iterator_tag, value_type > {
 	friend class ScopedSet;
 	friend class const_iterator;
-	typedef typename std::set< Value >::iterator wrapped_iterator;
-	typedef typename std::vector< std::set< Value > > scope_list;
-	typedef typename scope_list::size_type size_type;
+	typedef typename Scope::iterator wrapped_iterator;
+	typedef typename ScopeList::size_type size_type;
 
 	/// Checks if this iterator points to a valid item
 	bool is_valid() const {
@@ -132,7 +130,7 @@ class ScopedSet<Value>::iterator :
 		return *this;
 	}
 
-	iterator(scope_list const &_scopes, const wrapped_iterator &_it, size_type _i)
+	iterator(ScopeList const &_scopes, const wrapped_iterator &_it, size_type _i)
 		: scopes(&_scopes), it(_it), i(_i) {}
 public:
 	iterator(const iterator &that) : scopes(that.scopes), it(that.it), i(that.i) {}
@@ -175,7 +173,7 @@ public:
 	size_type get_level() const { return i; }
 
 private:
-	scope_list const *scopes;
+	ScopeList const *scopes;
 	wrapped_iterator it;
 	size_type i;
 };
@@ -184,10 +182,9 @@ template<typename Value>
 class ScopedSet<Value>::const_iterator :
 		public std::iterator< std::bidirectional_iterator_tag, value_type > {
 	friend class ScopedSet;
-	typedef typename std::set< Value >::iterator wrapped_iterator;
-	typedef typename std::set< Value >::const_iterator wrapped_const_iterator;
-	typedef typename std::vector< std::set< Value > > scope_list;
-	typedef typename scope_list::size_type size_type;
+	typedef typename Scope::iterator wrapped_iterator;
+	typedef typename Scope::const_iterator wrapped_const_iterator;
+	typedef typename ScopeList::size_type size_type;
 
 	/// Checks if this iterator points to a valid item
 	bool is_valid() const {
@@ -206,7 +203,7 @@ class ScopedSet<Value>::const_iterator :
 		return *this;
 	}
 
-	const_iterator(scope_list const &_scopes, const wrapped_const_iterator &_it, size_type _i)
+	const_iterator(ScopeList const &_scopes, const wrapped_const_iterator &_it, size_type _i)
 		: scopes(&_scopes), it(_it), i(_i) {}
 public:
 	const_iterator(const iterator &that) : scopes(that.scopes), it(that.it), i(that.i) {}
@@ -254,7 +251,7 @@ public:
 	size_type get_level() const { return i; }
 
 private:
-	scope_list const *scopes;
+	ScopeList const *scopes;
 	wrapped_const_iterator it;
 	size_type i;
 };

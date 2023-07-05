@@ -533,10 +533,13 @@ ConcurrentSueKeyword::StructAndField ConcurrentSueKeyword::addField(
 
 void ConcurrentSueKeyword::addGetRoutines(
 		const ast::ObjectDecl * field, const ast::FunctionDecl * forward ) {
-	// Say it is generated at the "same" places as the forward declaration.
-	const CodeLocation & location = forward->location;
+	// Clone the signature and then build the body.
+	ast::FunctionDecl * decl = ast::deepCopy( forward );
 
-	const ast::DeclWithType * param = forward->params.front();
+	// Say it is generated at the "same" places as the forward declaration.
+	const CodeLocation & location = decl->location;
+
+	const ast::DeclWithType * param = decl->params.front();
 	ast::Stmt * stmt = new ast::ReturnStmt( location,
 		new ast::AddressExpr( location,
 			new ast::MemberExpr( location,
@@ -550,7 +553,6 @@ void ConcurrentSueKeyword::addGetRoutines(
 		)
 	);
 
-	ast::FunctionDecl * decl = ast::deepCopy( forward );
 	decl->stmts = new ast::CompoundStmt( location, { stmt } );
 	declsToAddAfter.push_back( decl );
 }

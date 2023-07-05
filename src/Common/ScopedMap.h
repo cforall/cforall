@@ -198,9 +198,8 @@ class ScopedMap<Key, Value, Note>::iterator :
 		public std::iterator< std::bidirectional_iterator_tag, value_type > {
 	friend class ScopedMap;
 	friend class const_iterator;
-	typedef typename ScopedMap::MapType::iterator wrapped_iterator;
-	typedef typename ScopedMap::ScopeList scope_list;
-	typedef typename scope_list::size_type size_type;
+	typedef typename MapType::iterator wrapped_iterator;
+	typedef typename ScopeList::size_type size_type;
 
 	/// Checks if this iterator points to a valid item
 	bool is_valid() const {
@@ -219,7 +218,7 @@ class ScopedMap<Key, Value, Note>::iterator :
 		return *this;
 	}
 
-	iterator(scope_list & _scopes, const wrapped_iterator & _it, size_type inLevel)
+	iterator(ScopeList & _scopes, const wrapped_iterator & _it, size_type inLevel)
 		: scopes(&_scopes), it(_it), level(inLevel) {}
 public:
 	iterator(const iterator & that) : scopes(that.scopes), it(that.it), level(that.level) {}
@@ -265,7 +264,7 @@ public:
 	const Note & get_note() const { return (*scopes)[level].note; }
 
 private:
-	scope_list *scopes;
+	ScopeList *scopes;
 	wrapped_iterator it;
 	size_type level;
 };

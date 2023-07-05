@@ -108,16 +108,18 @@ namespace {
 		void previsit( const ast::FunctionDecl * ) { visit_children = false; }
 
 		const ast::DeclWithType * postvisit( const ast::FunctionDecl * func ) {
-			return new ast::ObjectDecl{ 
-				func->location, func->name, new ast::PointerType{ func->type }, nullptr, 
+			// Cannot handle cases with asserions.
+			assert( func->assertions.empty() );
+			return new ast::ObjectDecl{
+				func->location, func->name, new ast::PointerType( func->type ), nullptr,
 				func->storage, func->linkage, nullptr, copy( func->attributes ) };
 		}
 
 		void previsit( const ast::ArrayType * ) { visit_children = false; }
 
 		const ast::Type * postvisit( const ast::ArrayType * array ) {
-			return new ast::PointerType{ 
-				array->base, array->dimension, array->isVarLen, array->isStatic, 
+			return new ast::PointerType{
+				array->base, array->dimension, array->isVarLen, array->isStatic,
 				array->qualifiers };
 		}
 

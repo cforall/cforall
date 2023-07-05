@@ -56,8 +56,7 @@ public:
 
 	/// Starts a new scope
 	void beginScope() {
-		Scope scope;
-		scopes.push_back(scope);
+		scopes.emplace_back();
 	}
 
 	/// Ends a scope; invalidates any iterators pointing to elements of that scope
@@ -144,9 +143,8 @@ template<typename Key, typename Value>
 class ErasableScopedMap<Key, Value>::iterator :
 		public std::iterator< std::bidirectional_iterator_tag, value_type > {
 	friend class ErasableScopedMap;
-	typedef typename std::map< Key, Value >::iterator wrapped_iterator;
-	typedef typename std::vector< std::map< Key, Value > > scope_list;
-	typedef typename scope_list::size_type size_type;
+	typedef typename Scope::iterator wrapped_iterator;
+	typedef typename ScopeList::size_type size_type;
 
 	/// Checks if this iterator points to a valid item
 	bool is_valid() const {
