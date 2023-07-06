@@ -38,6 +38,11 @@
 // show stats
 // #define ACTOR_STATS
 
+// used to run and only track missed queue gulps
+#ifdef ACTOR_STATS
+#define ACTOR_STATS_QUEUE_MISSED
+#endif
+
 // forward decls
 struct actor;
 struct message;
@@ -128,6 +133,8 @@ struct work_queue {
 	volatile bool being_processed;						// flag to prevent concurrent processing
 	#ifdef ACTOR_STATS
 	unsigned int id;
+    #endif
+    #ifdef ACTOR_STATS_QUEUE_MISSED
 	size_t missed;										// transfers skipped due to being_processed flag being up
 	#endif
 }; // work_queue
@@ -337,7 +344,7 @@ static inline void ^?{}( executor & this ) with(this) {
 		delete( processors[i] );
 	} // for
 
-	#ifdef ACTOR_STATS
+	#ifdef ACTOR_STATS_QUEUE_MISSED
 	size_t misses = 0;
 	for ( i; nrqueues ) {
 		misses += worker_req_queues[i]->missed;
@@ -364,6 +371,12 @@ static inline void ^?{}( executor & this ) with(this) {
 	size_t avg_steal = __total_stolen == 0 ? 0 : __all_msgs_stolen / __total_stolen;
 	printf("\tMessages stolen:\t\t\t%lu\n\tAverage steal size:\t\t\t%lu\n", __all_msgs_stolen, avg_steal);
 	#endif
+
+    #ifndef ACTOR_STATS
+    #ifdef ACTOR_STATS_QUEUE_MISSED
+    printf("\t%lu", misses);
+    #endif
+    #endif
 		
 }
 
