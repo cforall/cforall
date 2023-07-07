@@ -20,6 +20,21 @@
 #include "../exception.hfa"
 
 //-----------------------------------------------------------------------------
+// Type used to store and queue nonlocal exceptions on coroutines
+struct nonlocal_exception {
+    exception_t * the_exception;
+    nonlocal_exception * next;
+};
+static inline void ?{} ( nonlocal_exception & this, exception_t * ex ) with(this) {
+    the_exception = ex;
+    next = 0p;
+}
+
+static inline nonlocal_exception *& get_next( nonlocal_exception & this ) __attribute__((const)) {
+    return this.next;
+}
+
+//-----------------------------------------------------------------------------
 // Exception thrown from resume when a coroutine stack is cancelled.
 forall(coroutine_t &)
 exception CoroutineCancelled {
@@ -201,6 +216,21 @@ static inline void resume( coroutine$ * dst ) __attribute__((nonnull (1))) {
 	// always done for performance testing
 	$ctx_switch( src, dst );
 }
+
+// non local ehm routines
+forall(T & | is_coroutine(T)) {
+    void enable_ehm( T & cor );
+    void disable_ehm( T & cor );
+    bool poll( T & cor );
+    bool checked_poll( T & cor );
+}
+
+// trait for exceptions able to be resumed at another coroutine
+forall(exceptT &, T & | is_coroutine(T))
+trait ehm_resume_at { void $throwResume(exceptT &); };
+
+forall(exceptT &, T & | ehm_resume_at( exceptT, T ))
+void resumeAt( T & receiver, exceptT & ex );
 
 // Local Variables: //
 // mode: c //

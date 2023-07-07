@@ -103,7 +103,7 @@ size_t functionParameterSize( const ast::FunctionType * type ) {
 }
 
 bool needsPolySpecialization(
-		const ast::Type * formalType,
+		const ast::Type * /*formalType*/,
 		const ast::Type * actualType,
 		const ast::TypeSubstitution * subs ) {
 	if ( !subs ) {
@@ -125,8 +125,7 @@ bool needsPolySpecialization(
 		if ( auto inst = dynamic_cast<const ast::TypeInstType *>( boundType ) ) {
 			if ( closedVars.find( *inst ) == closedVars.end() ) {
 				return true;
-			}
-			else {
+			} else {
 				assertf(false, "closed: %s", inst->name.c_str());
 			}
 		// Otherwise, the variable is bound to a concrete type.

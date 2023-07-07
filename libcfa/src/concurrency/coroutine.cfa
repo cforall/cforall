@@ -120,6 +120,9 @@ void ?{}( coroutine$ & this, const char name[], void * storage, size_t storageSi
 	starter = 0p;
 	last = 0p;
 	cancellation = 0p;
+    ehm_state.ehm_buffer{};
+    ehm_state.buffer_lock{};
+    ehm_state.ehm_enabled = false;
 }
 
 void ^?{}(coroutine$& this) libcfa_public {
@@ -280,6 +283,58 @@ extern "C" {
 
 		return cor;
 	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// non local ehm routines
+
+// helper for popping from coroutine's ehm buffer
+inline nonlocal_exception * pop_ehm_head( coroutine$ * this ) {
+    lock( this->ehm_state.buffer_lock __cfaabi_dbg_ctx2 );
+    nonlocal_exception * nl_ex = pop_head( this->ehm_state.ehm_buffer );
+    unlock( this->ehm_state.buffer_lock );
+    return nl_ex;
+}
+
+// user facing ehm operations
+forall(T & | is_coroutine(T)) {
+    // enable/disable non-local exceptions
+    void enable_ehm( T & cor ) libcfa_public { get_coroutine( cor )->ehm_state.ehm_enabled = true; }
+    void disable_ehm( T & cor ) libcfa_public { get_coroutine( cor )->ehm_state.ehm_enabled = false; }
+
+    // poll for non-local exceptions
+    bool poll( T & cor ) libcfa_public {
+        coroutine$ * base_cor = get_coroutine( cor );
+        nonlocal_exception * nl_ex = pop_ehm_head( base_cor );
+
+        // if no exceptions return false
+        if ( nl_ex == 0p ) return false;
+        
+        // otherwise loop and throwResume all pending exceptions
+        while ( nl_ex != 0p ){
+            exception_t * ex = nl_ex->the_exception;
+            free( nl_ex );
+            throwResume *ex;
+            nl_ex = pop_ehm_head( base_cor );
+        }
+        
+        return true;
+    }
+
+    // poll iff nonlocal ehm is enabled
+    bool checked_poll( T & cor ) libcfa_public { return get_coroutine( cor )->ehm_state.ehm_enabled ? poll( cor ) : false; }
+}
+
+// resume non local exception at receiver (i.e. enqueue in ehm buffer)
+forall(exceptT &, T & | ehm_resume_at( exceptT, T ))
+void resumeAt( T & receiver, exceptT & ex )  libcfa_public {
+    coroutine$ * cor = get_coroutine( receiver );
+    nonlocal_exception * nl_ex = alloc();
+    (*nl_ex){ (exception_t *)&ex };
+    lock( cor->ehm_state.buffer_lock __cfaabi_dbg_ctx2 );
+    append( cor->ehm_state.ehm_buffer, nl_ex ); 
+    unlock( cor->ehm_state.buffer_lock );
 }
 
 // Local Variables: //

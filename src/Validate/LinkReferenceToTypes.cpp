@@ -79,53 +79,44 @@ ast::TypeInstType const * LinkTypesCore::postvisit( ast::TypeInstType const * ty
 
 ast::EnumInstType const * LinkTypesCore::postvisit( ast::EnumInstType const * type ) {
 	ast::EnumDecl const * decl = symtab.lookupEnum( type->name );
+	ast::EnumInstType * mut = ast::mutate( type );
 	// It's not a semantic error if the enum is not found, just an implicit forward declaration.
 	if ( decl ) {
 		// Just linking in the node.
-		auto mut = ast::mutate( type );
 		mut->base = decl;
-		type = mut;
 	}
 	if ( !decl || !decl->body ) {
-		auto mut = ast::mutate( type );
 		forwardEnums[ mut->name ].push_back( mut );
-		type = mut;
 	}
-	return type;
+	return mut;
 }
 
 ast::StructInstType const * LinkTypesCore::postvisit( ast::StructInstType const * type ) {
 	ast::StructDecl const * decl = symtab.lookupStruct( type->name );
+	ast::StructInstType * mut = ast::mutate( type );
 	// It's not a semantic error if the struct is not found, just an implicit forward declaration.
 	if ( decl ) {
 		// Just linking in the node.
-		auto mut = ast::mutate( type );
 		mut->base = decl;
-		type = mut;
 	}
 	if ( !decl || !decl->body ) {
-		auto mut = ast::mutate( type );
 		forwardStructs[ mut->name ].push_back( mut );
-		type = mut;
 	}
-	return type;
+	return mut;
 }
 
 ast::UnionInstType const * LinkTypesCore::postvisit( ast::UnionInstType const * type ) {
 	ast::UnionDecl const * decl = symtab.lookupUnion( type->name );
+	ast::UnionInstType * mut = ast::mutate( type );
 	// It's not a semantic error if the union is not found, just an implicit forward declaration.
 	if ( decl ) {
 		// Just linking in the node.
-		auto mut = ast::mutate( type );
 		mut->base = decl;
-		type = mut;
 	}
 	if ( !decl || !decl->body ) {
-		auto mut = ast::mutate( type );
 		forwardUnions[ mut->name ].push_back( mut );
-		type = mut;
 	}
-	return type;
+	return mut;
 }
 
 ast::TraitInstType const * LinkTypesCore::postvisit( ast::TraitInstType const * type ) {

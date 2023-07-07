@@ -73,6 +73,17 @@ extern "C" {
 		struct __stack_t * storage;
 	};
 
+    struct nonlocal_ehm {
+        // list of pending nonlocal exceptions
+        __queue_t(struct nonlocal_exception) ehm_buffer;
+
+        // lock to protect the buffer
+        struct __spinlock_t buffer_lock;
+
+        // enable/disabled flag
+        bool ehm_enabled;
+    };
+
 	enum __Coroutine_State { Halted, Start, Primed, Blocked, Ready, Active, Cancelled, Halting };
 
 	struct coroutine$ {
@@ -97,6 +108,8 @@ extern "C" {
 		// If non-null stack must be unwound with this exception
 		struct _Unwind_Exception * cancellation;
 
+        // Non-local exception handling information
+        struct nonlocal_ehm ehm_state;
 	};
 	// Wrapper for gdb
 	struct cfathread_coroutine_t { struct coroutine$ debug; };
