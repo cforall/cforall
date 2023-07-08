@@ -21,9 +21,7 @@
 #include "AST/Print.hpp"
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
-#include "CodeGen/GenType.h"           // for genPrettyType
-#include "CodeGen/OperatorTable.h"
-#include "Common/PassVisitor.h"        // for PassVisitor, WithStmtsToAdd
+#include "CodeGen/OperatorTable.h"     // for isConstructor, isCtorDtor, isD...
 #include "Common/SemanticError.h"      // for SemanticError
 #include "Common/ToString.hpp"         // for toCString
 #include "Common/UniqueName.h"         // for UniqueName
@@ -32,24 +30,7 @@
 #include "GenPoly/GenPoly.h"           // for getFunctionType
 #include "ResolvExpr/Resolver.h"       // for findVoidExpression
 #include "ResolvExpr/Unify.h"          // for typesCompatible
-#include "SymTab/Autogen.h"            // for genImplicitCall
 #include "SymTab/GenImplicitCall.hpp"  // for genImplicitCall
-#include "SymTab/Indexer.h"            // for Indexer
-#include "SymTab/Mangler.h"            // for Mangler
-#include "SynTree/LinkageSpec.h"       // for C, Spec, Cforall, isBuiltin
-#include "SynTree/Attribute.h"         // for Attribute
-#include "SynTree/Constant.h"          // for Constant
-#include "SynTree/Declaration.h"       // for ObjectDecl, FunctionDecl, Decl...
-#include "SynTree/Expression.h"        // for UniqueExpr, VariableExpr, Unty...
-#include "SynTree/Initializer.h"       // for ConstructorInit, SingleInit
-#include "SynTree/Label.h"             // for Label, operator<
-#include "SynTree/Mutator.h"           // for mutateAll, Mutator, maybeMutate
-#include "SynTree/Statement.h"         // for ExprStmt, CompoundStmt, Branch...
-#include "SynTree/Type.h"              // for Type, Type::StorageClasses
-#include "SynTree/TypeSubstitution.h"  // for TypeSubstitution, operator<<
-#include "SynTree/DeclReplacer.h"      // for DeclReplacer
-#include "SynTree/Visitor.h"           // for acceptAll, maybeAccept
-#include "Validate/FindSpecialDecls.h" // for dtorStmt, dtorStructDestroy
 
 extern bool ctordtorp; // print all debug
 extern bool ctorp; // print ctor debug

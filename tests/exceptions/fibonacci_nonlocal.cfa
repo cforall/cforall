@@ -8,70 +8,53 @@
 //
 // Author           : Colby Parsons
 // Created On       : Thu July  6 07:29:37 2023
-// Last Modified By : Colby Parsons
-// Last Modified On : Thu July  6 07:29:37 2023
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jul  6 21:49:04 2023
+// Update Count     : 18
 //
 
 #include <fstream.hfa>
 #include <coroutine.hfa>
 #include <stdlib.hfa>
 
-exception fib_num {
-    int num;
-};
+exception fib_num {};
 vtable(fib_num) fib_num_vt;
-
-exception fib_2_num {
-    int num1, num2;
-};
-vtable(fib_2_num) fib_2_num_vt;
+fib_num except{ &fib_num_vt };
 
 coroutine Fibonacci { int fn; };						// used for communication
 
 void main( Fibonacci & fib ) with( fib ) {				// called on first resume
-    int fn1, fn2;										// retained between resumes
-    try{
-        fn = 0;  fn1 = fn;									// 1st case
-        poll( fib );
-        suspend;											// restart last resume
-        fn = 1;  fn2 = fn1;  fn1 = fn;						// 2nd case
-        poll( fib );
-        suspend;											// restart last resume
-        for () {
-            fn = fn1 + fn2;  fn2 = fn1;  fn1 = fn;			// general case
-            poll( fib );
-            suspend;										// restart last resume
-        } // for
-    } catchResume ( fib_num * e ) {
-        fn1 = e->num;
-        fn2 = e->num;
-        fn = fn1 + fn2;
-    }  catchResume ( fib_2_num * e ) {
-        fn1 = e->num1;
-        fn2 = e->num1;
-        fn = fn1 + fn2;
-    }
+	int fn1, fn2;										// retained between resumes
+	try {
+		poll( fib );
+		suspend;										// restart last resume
+	} catchResume ( fib_num * e ) {
+		fn = 0;  fn1 = fn;								// 1st case
+	}
+	try {
+		poll( fib );
+		suspend;										// restart last resume
+	} catchResume ( fib_num * e ) {
+		fn = 1;  fn2 = fn1;  fn1 = fn;					// 2nd case
+	}
+	try {
+		for () {
+			poll( fib );
+			suspend;									// restart last resume
+		} // for
+	} catchResume ( fib_num * e ) {
+		fn = fn1 + fn2;  fn2 = fn1;  fn1 = fn;			// general case
+	}
 }
 
 int main() {
 	Fibonacci f1, f2;
-	for ( 3 ) {										// print N Fibonacci values
-		sout | resume( f1 ).fn;
-	} // for
-    for ( i; 3 ) {
-        fib_num except{ &fib_num_vt, i };
-        resumeAt( f1, except );
-        sout | resume( f1 ).fn;
-    }
-    {
-        fib_2_num except{ &fib_2_num_vt, 10, 12 };
-        resumeAt( f1, except );
-    }
-    sout | resume( f1 ).fn;
+	for ( i; 8 ) {
+		resumeAt( f1, except );  resumeAt( f2, except );
+		sout | wd( 5, resume( f1 ).fn ) | wd( 5, resume( f2 ).fn );
+	}
 }
 
 // Local Variables: //
-// tab-width: 4 //
-// compile-command: "cfa fibonacci.cfa" //
+// compile-command: "cfa fibonacci_nonlocal.cfa" //
 // End: //
