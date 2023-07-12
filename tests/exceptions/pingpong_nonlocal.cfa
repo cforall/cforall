@@ -1,66 +1,56 @@
 #include <fstream.hfa>
 #include <thread.hfa>
-#include <coroutine.hfa>
-#include <stdlib.hfa>
 #include <fstream.hfa>
+#include <mutex_stmt.hfa>
 
-exception num_pings { int num; };
-vtable(num_pings) num_pings_vt;
+exception num_ping_pongs { int num; };
+vtable(num_ping_pongs) num_ping_pongs_vt;
 
-exception num_pongs { int num; };
-vtable(num_pongs) num_pongs_vt;
+thread Ping_Pong {
+	char * name;
+	int cnt;
+	num_ping_pongs except;
+	Ping_Pong & partner;
+};
 
-thread Ping;
-thread Pong { Ping & p; int cnt; };
-thread Ping { Pong & p; int cnt; };
-
-int numtimes = 100000;
-
-void main( Pong & this ) with(this) {
-    try {
-        for ( ;; ) {
-            while( !poll( this ) ) {}
-            num_pongs except{ &num_pongs_vt, cnt + 1 };
-            resumeAt( p, except );
-        }
-    } catchResume ( num_pings * e; e->num < numtimes ) {
-        cnt = e->num;
-    } catch( num_pings * e ) {
-        if ( e->num == numtimes ){
-            num_pongs except{ &num_pongs_vt, e->num + 1 };
-            resumeAt( p, except );
-        }
-    }
+void ?{}( Ping_Pong & this, char * name ) with( this ) {
+	this.name = name;
+	cnt = 0;
+	?{}( except, &num_ping_pongs_vt, 0 );
 }
 
-void main( Ping & this ) with(this) {
-    try {
-        for ( ;; ) {
-            while( !poll( this ) ) {}
-            num_pings except{ &num_pings_vt, cnt + 1 };
-            resumeAt( p, except );
-        }
-    } catchResume ( num_pongs * e; e->num < numtimes ) {
-        cnt = e->num;
-    } catch( num_pongs * e ) {
-        if ( e->num == numtimes ){
-            num_pings except{ &num_pings_vt, e->num + 1 };
-            resumeAt( p, except );
-        }
-    }
+void main( Ping_Pong & this ) with( this ) {
+	enum { numtimes = 100 };
+
+	void inc_resume_at( int value ) {
+		except.num = value + 1;
+		resumeAt( partner, except );
+	}
+	try {
+		for () {
+			while( ! poll( this ) ) { yield(); }
+            inc_resume_at( cnt );
+		}
+	} catchResume( num_ping_pongs * e; e->num < numtimes ) {
+		mutex( sout ) sout | name | "catchResume" | cnt | e->num;
+		cnt = e->num;
+	} catch( num_ping_pongs * e ) {
+		mutex( sout ) sout | name | "catch" | cnt | e->num;
+		if ( e->num == numtimes ) {
+            inc_resume_at( e->num );
+		}
+	}
 }
 
 int main() {
-    processor p;
-    sout | "start";
-    {
-        Ping ping;
-        Pong pong;
-        &ping.p = &pong;
-        &pong.p = &ping;
-        num_pings except{ &num_pings_vt, 0 };
-        resumeAt( pong, except );
-    }
-    sout | "done";
+	processor p;
+	sout | "main start";
+	{
+		Ping_Pong ping { "ping" }, pong{ "pong" };
+		&ping.partner = &pong;							// create cycle
+		&pong.partner = &ping;
+		num_ping_pongs except{ &num_ping_pongs_vt, 0 };
+		resumeAt( pong, except );
+	}
+	sout | "main end";
 }
-

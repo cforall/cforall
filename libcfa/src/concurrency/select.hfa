@@ -94,8 +94,10 @@ trait is_selectable {
 
     // This routine is run on the selecting thread prior to executing the statement corresponding to the select_node
     //    passed as an arg to this routine
-    // If on_selected returns false, the statement is not run, if it returns true it is run.
-    void on_selected( T &, select_node & );
+    // If on_selected returns false, the statement is not run if the on_selected call occured as 
+    //    part of a statement block that only ran due to an unregister_select that returned true
+    //    In all other executions the return value is ignored.
+    bool on_selected( T &, select_node & );
 };
 
 //=============================================================================================
@@ -207,7 +209,7 @@ void timeout_handler_select_cast( alarm_node_t & node );
 // Selectable trait routines
 bool register_select( select_timeout_node & this, select_node & node );
 bool unregister_select( select_timeout_node & this, select_node & node );
-void on_selected( select_timeout_node & this, select_node & node );
+bool on_selected( select_timeout_node & this, select_node & node );
 
 // Gateway routines to waituntil on duration
 select_timeout_node timeout( Duration duration );

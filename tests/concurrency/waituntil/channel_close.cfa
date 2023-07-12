@@ -30,7 +30,7 @@ void main( Consumer & this ) {
                 continue;
             }
             waituntil( (in << A) ) { assert( A_removes == in ); A_removes++; removes++; }
-            or waituntil( (in2 << B) ) { assert( B_removes == in2 ); B_removes++; removes++; }
+            or waituntil( (in << B) ) { assert( B_removes == in ); B_removes++; removes++; }
         }
     } catchResume ( channel_closed * e ) {} // continue to remove until would block
     catch ( channel_closed * e ) {} 
@@ -72,6 +72,8 @@ int main( int argc, char * argv[] ) {
     printf("done\n");
     ^A{};
     ^B{};
+
+    useAnd = true;
 
     inserts = 0;
     removes = 0;

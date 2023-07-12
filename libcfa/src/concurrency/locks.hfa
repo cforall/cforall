@@ -111,7 +111,7 @@ static inline void   on_wakeup( single_acquisition_lock & this, size_t v ) { on_
 static inline void   on_notify( single_acquisition_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
 static inline bool   register_select( single_acquisition_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
 static inline bool   unregister_select( single_acquisition_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
-static inline void   on_selected( single_acquisition_lock & this, select_node & node ) { on_selected( (blocking_lock &)this, node ); }
+static inline bool   on_selected( single_acquisition_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
 
 //----------
 struct owner_lock {
@@ -128,7 +128,7 @@ static inline void   on_wakeup( owner_lock & this, size_t v ) { on_wakeup ( (blo
 static inline void   on_notify( owner_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
 static inline bool   register_select( owner_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
 static inline bool   unregister_select( owner_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
-static inline void   on_selected( owner_lock & this, select_node & node ) { on_selected( (blocking_lock &)this, node ); }
+static inline bool   on_selected( owner_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
 
 //-----------------------------------------------------------------------------
 // MCS Lock
@@ -618,7 +618,7 @@ static inline bool unregister_select( simple_owner_lock & this, select_node & no
     return false;
 }
 
-static inline void on_selected( simple_owner_lock & this, select_node & node ) {}
+static inline bool on_selected( simple_owner_lock & this, select_node & node ) { return true; }
 
 
 //-----------------------------------------------------------------------------

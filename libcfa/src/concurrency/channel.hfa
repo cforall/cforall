@@ -443,10 +443,13 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
     return true;
 }
 static inline bool unregister_select( chan_read(T) & this, select_node & node ) { return unregister_chan( this.chan, node ); }
-static inline void on_selected( chan_read(T) & this, select_node & node ) with(this) {
-    if ( node.extra == 0p ) // check if woken up due to closed channel
-        __closed_remove( chan, ret );
+static inline bool on_selected( chan_read(T) & this, select_node & node ) with(this) {
+    if ( unlikely(node.extra == 0p) ) {
+        if ( !exception_in_flight() ) __closed_remove( chan, ret ); // check if woken up due to closed channel
+        else return false;
+    }
     // This is only reachable if not closed or closed exception was handled
+    return true;
 }
 
 // type used by select statement to capture a chan write as the selected operation
@@ -535,11 +538,13 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
 }
 static inline bool unregister_select( chan_write(T) & this, select_node & node ) { return unregister_chan( this.chan, node ); }
 
-static inline void on_selected( chan_write(T) & this, select_node & node ) with(this) { 
-    if ( node.extra == 0p ) // check if woken up due to closed channel
-        __closed_insert( chan, elem );
-
+static inline bool on_selected( chan_write(T) & this, select_node & node ) with(this) { 
+    if ( unlikely(node.extra == 0p) ) {
+        if ( !exception_in_flight() ) __closed_insert( chan, elem ); // check if woken up due to closed channel
+        else return false;
+    }
     // This is only reachable if not closed or closed exception was handled
+    return true;
 }
 
 } // forall( T )

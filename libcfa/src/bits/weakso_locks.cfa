@@ -29,5 +29,5 @@ void on_wakeup( blocking_lock &, size_t ) {}
 size_t wait_count( blocking_lock & ) { return 0; }
 bool register_select( blocking_lock & this, select_node & node ) { return false; }
 bool unregister_select( blocking_lock & this, select_node & node ) { return false; }
-void on_selected( blocking_lock & this, select_node & node ) {}
+bool on_selected( blocking_lock & this, select_node & node ) { return true; }
 

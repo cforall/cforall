@@ -179,7 +179,7 @@ forall( T ) {
             return false;
         }
 		
-        void on_selected( future(T) & this, select_node & node ) {}
+        bool on_selected( future(T) & this, select_node & node ) { return true; }
 	}
 }
 

@@ -883,16 +883,6 @@ void GenerateWaitUntilCore::genClauseInits( const WaitUntilStmt * stmt, vector<C
                     )
                 )
             );
-        else // we reuse the when_cond bools later during unregister so init to false if initially unused
-            body->push_back(
-                new DeclStmt( cLoc,
-                    new ObjectDecl( cLoc,
-                        currClause->whenName,
-                        new BasicType( BasicType::Kind::Bool ),
-                        new SingleInit( cLoc, ConstantExpr::from_bool( cLoc, false ) )
-                    )
-                )
-            );
         
         // select_node clause1;
         body->push_back(
@@ -1299,21 +1289,12 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
 
     // Collection of unregister calls on resources to be put in finally clause
     // for each clause: 
-    // when_cond_i = (!__CFA_has_clause_run( clause_statuses[i] )) && unregister_select( ... , clausei );
+    // if ( !__CFA_has_clause_run( clause_statuses[i] )) && unregister_select( ... , clausei ) ) { ... clausei stmt ... }
     // OR if when( ... ) defined on resource
-    // if ( when_cond_i ) 
-    //   when_cond_i =  (!__CFA_has_clause_run( clause_statuses[i] )) && unregister_select( ... , clausei );
+    // if ( when_cond_i && (!__CFA_has_clause_run( clause_statuses[i] )) && unregister_select( ... , clausei ) ) { ... clausei stmt ... }
     CompoundStmt * unregisters = new CompoundStmt( loc );
 
-    // Collection of optional statement executions following finally clause
-    // for each clause:
-    // if ( when_cond_i ) clausei->stmt;
-    // when_cond_i is repurposed in the finally to store if any statements need to be run after unregisters
-    // the statements need to be run outside a finally clause since they may contain non-local transfers
-    CompoundStmt * unregisterStmts = new CompoundStmt( loc );
-
-    UntypedExpr * statusExpr; // !__CFA_has_clause_run( clause_statuses[i] )
-    ExprStmt * assignStmt; // when_cond_i = (!__CFA_has_clause_run( clause_statuses[i] )) && unregister_select( ... , clausei );
+    Expr * statusExpr; // !__CFA_has_clause_run( clause_statuses[i] )
     for ( int i = 0; i < numClauses; i++ ) {
         const CodeLocation & cLoc = stmt->clauses.at(i)->location;
 
@@ -1331,40 +1312,58 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
         );
         
         // Generates:
-        // when_cond_i = (!__CFA_has_clause_run( clause_statuses[i] )) && unregister_select( ... , clausei );
-        assignStmt = new ExprStmt( cLoc, 
-            UntypedExpr::createAssign( cLoc,
-                new NameExpr( cLoc, clauseData.at(i)->whenName ),
-                new LogicalExpr( cLoc,
-                    new CastExpr( cLoc,
-                        statusExpr, 
-                        new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
-                    ),
-                    new CastExpr( cLoc,
-                        genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "unregister_select" ),
-                        new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
-                    ),
-                    LogicalFlag::AndExpr
-                )
-            )
+        // (!__CFA_has_clause_run( clause_statuses[i] )) && unregister_select( ... , clausei );
+        statusExpr = new LogicalExpr( cLoc,
+            new CastExpr( cLoc,
+                statusExpr, 
+                new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+            ),
+            new CastExpr( cLoc,
+                genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "unregister_select" ),
+                new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+            ),
+            LogicalFlag::AndExpr
         );
-
-        if ( stmt->clauses.at(i)->when_cond ) // if ( when_cond_i ) assignStmt
-            unregisters->push_back( 
-                new IfStmt( cLoc,
-                    new NameExpr( cLoc, clauseData.at(i)->whenName ),
-                    new CompoundStmt( cLoc, { assignStmt } )
-                )
+        
+        // if when cond defined generates:
+        // when_cond_i && (!__CFA_has_clause_run( clause_statuses[i] )) && unregister_select( ... , clausei );
+        if ( stmt->clauses.at(i)->when_cond )
+            statusExpr = new LogicalExpr( cLoc,
+                new CastExpr( cLoc,
+                    new NameExpr( cLoc, clauseData.at(i)->whenName ), 
+                    new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                ),
+                new CastExpr( cLoc,
+                    statusExpr,
+                    new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                ),
+                LogicalFlag::AndExpr
             );
-        else
-            unregisters->push_back( assignStmt );
 
-        unregisterStmts->push_back(
+        // generates:
+        // if ( statusExpr ) { ... clausei stmt ... }
+        unregisters->push_back( 
             new IfStmt( cLoc,
-                new NameExpr( cLoc, clauseData.at(i)->whenName ),
-                genStmtBlock( stmt->clauses.at(i), clauseData.at(i) )
+                statusExpr,
+                new CompoundStmt( cLoc,
+                    {
+                        new IfStmt( cLoc,
+                            genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "on_selected" ),
+                            ast::deepCopy( stmt->clauses.at(i)->stmt )
+                        )
+                    }
+                )
             )
         );
+
+        // // generates:
+        // // if ( statusExpr ) { ... clausei stmt ... }
+        // unregisters->push_back( 
+        //     new IfStmt( cLoc,
+        //         statusExpr,
+        //         genStmtBlock( stmt->clauses.at(i), clauseData.at(i) )
+        //     )
+        // );
     }
 
     body->push_back( 
@@ -1375,9 +1374,6 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
             new ast::FinallyClause( loc, unregisters )
         )
     );
-
-    body->push_back( unregisterStmts );
-    
 
     for ( ClauseData * datum : clauseData )
         delete datum;

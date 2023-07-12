@@ -254,6 +254,10 @@ extern "C" {
 
 	#ifdef __cforall
 	extern "Cforall" {
+        static inline bool exception_in_flight() {
+            return __get_stack( &active_thread()->self_cor )->exception_context.current_exception != 0p;
+        }
+
 		static inline thread$ * volatile & ?`next ( thread$ * this ) {
 			return this->user_link.next;
 		}

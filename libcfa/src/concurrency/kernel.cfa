@@ -568,7 +568,6 @@ void park( void ) libcfa_public {
 		/* paranoid */ verify( kernelTLS().this_thread->preempted == __NO_PREEMPTION );
 		returnToKernel();
 	__enable_interrupts_checked();
-
 }
 
 extern "C" {
