@@ -149,13 +149,13 @@ public:
 	/// Adds a type to the symbol table
 	void addType( const NamedTypeDecl * decl );
 	/// Adds a struct declaration to the symbol table by name
-	void addStruct( const std::string & id );
+	void addStructId( const std::string & id );
 	/// Adds a struct declaration to the symbol table
 	void addStruct( const StructDecl * decl );
 	/// Adds an enum declaration to the symbol table
 	void addEnum( const EnumDecl * decl );
 	/// Adds a union declaration to the symbol table by name
-	void addUnion( const std::string & id );
+	void addUnionId( const std::string & id );
 	/// Adds a union declaration to the symbol table
 	void addUnion( const UnionDecl * decl );
 	/// Adds a trait declaration to the symbol table

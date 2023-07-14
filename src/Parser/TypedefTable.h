@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:24:36 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 15 08:06:37 2020
-// Update Count     : 117
+// Last Modified On : Wed Jul 12 06:09:37 2023
+// Update Count     : 118
 //
 
 #pragma once
@@ -20,7 +20,10 @@
 #include "Common/ScopedMap.h"							// for ScopedMap
 
 class TypedefTable {
-	struct Note { size_t level; bool forall; };
+	struct Note {
+		size_t level;
+		bool forall;
+	};
 	typedef ScopedMap< std::string, int, Note > KindTable;
 	KindTable kindTable;
 	unsigned int level = 0;
@@ -30,8 +33,8 @@ class TypedefTable {
 	bool exists( const std::string & identifier ) const;
 	bool existsCurr( const std::string & identifier ) const;
 	int isKind( const std::string & identifier ) const;
-	void makeTypedef( const std::string & name, int kind );
-	void makeTypedef( const std::string & name );
+	void makeTypedef( const std::string & name, int kind, const char * );
+	void makeTypedef( const std::string & name, const char * );
 	void addToScope( const std::string & identifier, int kind, const char * );
 	void addToEnclosingScope( const std::string & identifier, int kind, const char * );
 	bool getEnclForall() { return kindTable.getNote( kindTable.currentScope() -  1 ).forall; }

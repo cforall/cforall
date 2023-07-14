@@ -52,78 +52,73 @@
 #define __pedantic_pass_assertf(...)
 #endif
 
-namespace ast {
+namespace ast::__pass {
+	// Check if this is either a null pointer or a pointer to an empty container
+	template<typename T>
+	static inline bool empty( T * ptr ) {
+		return !ptr || ptr->empty();
+	}
+
+	template< typename core_t, typename node_t >
+	static inline node_t* mutate(const node_t *node) {
+		return std::is_base_of<PureVisitor, core_t>::value ? ::ast::shallowCopy(node) : ::ast::mutate(node);
+	}
+
+	//------------------------------
+	template<typename it_t, template <class...> class container_t>
+	static inline void take_all( it_t it, container_t<ast::ptr<ast::Decl>> * decls, bool * mutated = nullptr ) {
+		if ( empty( decls ) ) return;
+
+		std::transform(decls->begin(), decls->end(), it, [](const ast::Decl * decl) -> auto {
+				return new DeclStmt( decl->location, decl );
+			});
+		decls->clear();
+		if ( mutated ) *mutated = true;
+	}
+
+	template<typename it_t, template <class...> class container_t>
+	static inline void take_all( it_t it, container_t<ast::ptr<ast::Stmt>> * stmts, bool * mutated = nullptr ) {
+		if ( empty( stmts ) ) return;
+
+		std::move(stmts->begin(), stmts->end(), it);
+		stmts->clear();
+		if ( mutated ) *mutated = true;
+	}
+
+	//------------------------------
+	/// Check if should be skipped, different for pointers and containers
 	template<typename node_t>
-	node_t * shallowCopy( const node_t * node );
+	bool skip( const ast::ptr<node_t> & val ) {
+		return !val;
+	}
 
-	namespace __pass {
-		// Check if this is either a null pointer or a pointer to an empty container
-		template<typename T>
-		static inline bool empty( T * ptr ) {
-			return !ptr || ptr->empty();
-		}
+	template< template <class...> class container_t, typename node_t >
+	bool skip( const container_t<ast::ptr< node_t >> & val ) {
+		return val.empty();
+	}
 
-		template< typename core_t, typename node_t >
-		static inline node_t* mutate(const node_t *node) {
-			return std::is_base_of<PureVisitor, core_t>::value ? ::ast::shallowCopy(node) : ::ast::mutate(node);
-		}
+	//------------------------------
+	/// Get the value to visit, different for pointers and containers
+	template<typename node_t>
+	auto get( const ast::ptr<node_t> & val, int ) -> decltype(val.get()) {
+		return val.get();
+	}
 
-		//------------------------------
-		template<typename it_t, template <class...> class container_t>
-		static inline void take_all( it_t it, container_t<ast::ptr<ast::Decl>> * decls, bool * mutated = nullptr ) {
-			if ( empty( decls ) ) return;
+	template<typename node_t>
+	const node_t & get( const node_t & val, long ) {
+		return val;
+	}
 
-			std::transform(decls->begin(), decls->end(), it, [](const ast::Decl * decl) -> auto {
-					return new DeclStmt( decl->location, decl );
-				});
-			decls->clear();
-			if ( mutated ) *mutated = true;
-		}
+	//------------------------------
+	/// Check if value was mutated, different for pointers and containers
+	template<typename lhs_t, typename rhs_t>
+	bool differs( const lhs_t * old_val, const rhs_t * new_val ) {
+		return old_val != new_val;
+	}
 
-		template<typename it_t, template <class...> class container_t>
-		static inline void take_all( it_t it, container_t<ast::ptr<ast::Stmt>> * stmts, bool * mutated = nullptr ) {
-			if ( empty( stmts ) ) return;
-
-			std::move(stmts->begin(), stmts->end(), it);
-			stmts->clear();
-			if ( mutated ) *mutated = true;
-		}
-
-		//------------------------------
-		/// Check if should be skipped, different for pointers and containers
-		template<typename node_t>
-		bool skip( const ast::ptr<node_t> & val ) {
-			return !val;
-		}
-
-		template< template <class...> class container_t, typename node_t >
-		bool skip( const container_t<ast::ptr< node_t >> & val ) {
-			return val.empty();
-		}
-
-		//------------------------------
-		/// Get the value to visit, different for pointers and containers
-		template<typename node_t>
-		auto get( const ast::ptr<node_t> & val, int ) -> decltype(val.get()) {
-			return val.get();
-		}
-
-		template<typename node_t>
-		const node_t & get( const node_t & val, long ) {
-			return val;
-		}
-
-		//------------------------------
-		/// Check if value was mutated, different for pointers and containers
-		template<typename lhs_t, typename rhs_t>
-		bool differs( const lhs_t * old_val, const rhs_t * new_val ) {
-			return old_val != new_val;
-		}
-
-		template< template <class...> class container_t, typename node_t >
-		bool differs( const container_t<ast::ptr< node_t >> &, const container_t<ast::ptr< node_t >> & new_val ) {
-			return !new_val.empty();
-		}
+	template< template <class...> class container_t, typename node_t >
+	bool differs( const container_t<ast::ptr< node_t >> &, const container_t<ast::ptr< node_t >> & new_val ) {
+		return !new_val.empty();
 	}
 }
 
@@ -1919,7 +1914,7 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::StructInstType * node ) {
 	VISIT_START( node );
 
-	__pass::symtab::addStruct( core, 0, node->name );
+	__pass::symtab::addStructId( core, 0, node->name );
 
 	if ( __visit_children() ) {
 		guard_symtab guard { *this };
@@ -1935,7 +1930,7 @@ template< typename core_t >
 const ast::Type * ast::Pass< core_t >::visit( const ast::UnionInstType * node ) {
 	VISIT_START( node );
 
-	__pass::symtab::addUnion( core, 0, node->name );
+	__pass::symtab::addUnionId( core, 0, node->name );
 
 	if ( __visit_children() ) {
 		guard_symtab guard { *this };

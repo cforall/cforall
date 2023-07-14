@@ -322,7 +322,7 @@ void SymbolTable::addType( const NamedTypeDecl * decl ) {
 	typeTable = typeTable->set( id, scoped<NamedTypeDecl>{ decl, scope } );
 }
 
-void SymbolTable::addStruct( const std::string &id ) {
+void SymbolTable::addStructId( const std::string &id ) {
 	addStruct( new StructDecl( CodeLocation(), id ) );
 }
 
@@ -364,7 +364,7 @@ void SymbolTable::addEnum( const EnumDecl *decl ) {
 	enumTable = enumTable->set( id, scoped<EnumDecl>{ decl, scope } );
 }
 
-void SymbolTable::addUnion( const std::string &id ) {
+void SymbolTable::addUnionId( const std::string &id ) {
 	addUnion( new UnionDecl( CodeLocation(), id ) );
 }
 

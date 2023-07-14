@@ -9,22 +9,22 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:20:13 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 15 08:27:24 2022
-// Update Count     : 275
+// Last Modified On : Wed Jul 12 06:11:28 2023
+// Update Count     : 276
 //
 
 
 #include "TypedefTable.h"
 
-#include <cassert>                                // for assert
-#include <string>                                 // for string
-#include <iostream>                               // for iostream
+#include <cassert>										// for assert
+#include <string>										// for string
+#include <iostream>										// for iostream
 
-#include "ExpressionNode.h"                       // for LabelNode
-#include "ParserTypes.h"                          // for Token
-#include "StatementNode.h"                        // for CondCtl, ForCtrl
+#include "ExpressionNode.h"								// for LabelNode
+#include "ParserTypes.h"								// for Token
+#include "StatementNode.h"								// for CondCtl, ForCtrl
 // This (generated) header must come late as it is missing includes.
-#include "parser.hh"              // for IDENTIFIER, TYPEDEFname, TYPEGENname
+#include "parser.hh"									// for IDENTIFIER, TYPEDEFname, TYPEGENname
 
 using namespace std;
 
@@ -71,7 +71,7 @@ int TypedefTable::isKind( const string & identifier ) const {
 // SKULLDUGGERY: Generate a typedef for the aggregate name so the aggregate does not have to be qualified by
 // "struct". Only generate the typedef, if the name is not in use. The typedef is implicitly (silently) removed if the
 // name is explicitly used.
-void TypedefTable::makeTypedef( const string & name, int kind ) {
+void TypedefTable::makeTypedef( const string & name, int kind, const char * locn __attribute__((unused)) ) {
 //    Check for existence is necessary to handle:
 //        struct Fred {};
 //        void Fred();
@@ -79,25 +79,27 @@ void TypedefTable::makeTypedef( const string & name, int kind ) {
 //           struct Fred act; // do not add as type in this scope
 //           Fred();
 //        }
+	debugPrint( cerr << "Make typedef at " << locn << " \"" << name << "\" as " << kindName( kind ) << " scope " << kindTable.currentScope() << endl );
 	if ( ! typedefTable.exists( name ) ) {
 		typedefTable.addToEnclosingScope( name, kind, "MTD" );
 	} // if
 } // TypedefTable::makeTypedef
 
-void TypedefTable::makeTypedef( const string & name ) {
-	return makeTypedef( name, TYPEDEFname );
+void TypedefTable::makeTypedef( const string & name, const char * locn __attribute__((unused)) ) {
+	debugPrint( cerr << "Make typedef at " << locn << " \"" << name << " scope " << kindTable.currentScope() << endl );
+	return makeTypedef( name, TYPEDEFname, "makeTypede" );
 } // TypedefTable::makeTypedef
 
 void TypedefTable::addToScope( const string & identifier, int kind, const char * locn __attribute__((unused)) ) {
 	KindTable::size_type scope = kindTable.currentScope();
-	debugPrint( cerr << "Adding current at " << locn << " " << identifier << " as " << kindName( kind ) << " scope " << scope << endl );
+	debugPrint( cerr << "Adding current at " << locn << " \"" << identifier << "\" as " << kindName( kind ) << " scope " << scope << endl );
 	kindTable.insertAt( scope, identifier, kind );
 } // TypedefTable::addToScope
 
 void TypedefTable::addToEnclosingScope( const string & identifier, int kind, const char * locn __attribute__((unused)) ) {
 	KindTable::size_type scope = kindTable.currentScope() - 1 - kindTable.getNote( kindTable.currentScope() - 1 ).level;
 //	size_type scope = level - kindTable.getNote( kindTable.currentScope() - 1 ).level;
-	debugPrint( cerr << "Adding enclosing at " << locn << " " << identifier << " as " << kindName( kind ) << " scope " << scope << " level " << level << " note " << kindTable.getNote( kindTable.currentScope() - 1 ).level << endl );
+	debugPrint( cerr << "Adding enclosing at " << locn << " \"" << identifier << "\" as " << kindName( kind ) << " scope " << scope << " level " << level << " note " << kindTable.getNote( kindTable.currentScope() - 1 ).level << endl );
 	pair< KindTable::iterator, bool > ret = kindTable.insertAt( scope, identifier, kind );
 	if ( ! ret.second ) ret.first->second = kind;		// exists => update
 } // TypedefTable::addToEnclosingScope

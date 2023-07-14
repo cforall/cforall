@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun 30 12:32:36 2023
-// Update Count     : 6364
+// Last Modified On : Wed Jul 12 23:06:44 2023
+// Update Count     : 6389
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -384,26 +384,26 @@ if ( N ) {																		\
 %type<expr> string_literal
 %type<str> string_literal_list
 
-%type<enum_hiding> hide_opt					visible_hide_opt
+%type<enum_hiding> hide_opt				visible_hide_opt
 
 // expressions
 %type<expr> constant
-%type<expr> tuple							tuple_expression_list
+%type<expr> tuple						tuple_expression_list
 %type<oper> ptrref_operator				unary_operator				assignment_operator			simple_assignment_operator	compound_assignment_operator
 %type<expr> primary_expression			postfix_expression			unary_expression
-%type<expr> cast_expression_list			cast_expression				exponential_expression		multiplicative_expression	additive_expression
-%type<expr> shift_expression				relational_expression		equality_expression
+%type<expr> cast_expression_list		cast_expression				exponential_expression		multiplicative_expression	additive_expression
+%type<expr> shift_expression			relational_expression		equality_expression
 %type<expr> AND_expression				exclusive_OR_expression		inclusive_OR_expression
 %type<expr> logical_AND_expression		logical_OR_expression
 %type<expr> conditional_expression		constant_expression			assignment_expression		assignment_expression_opt
-%type<expr> comma_expression				comma_expression_opt
-%type<expr> argument_expression_list_opt	argument_expression_list	argument_expression			default_initializer_opt
+%type<expr> comma_expression			comma_expression_opt
+%type<expr> argument_expression_list_opt argument_expression_list	argument_expression			default_initializer_opt
 %type<ifctl> conditional_declaration
-%type<forctl> for_control_expression		for_control_expression_list
+%type<forctl> for_control_expression	for_control_expression_list
 %type<oper> upupeq updown updowneq downupdowneq
 %type<expr> subrange
 %type<decl> asm_name_opt
-%type<expr> asm_operands_opt				asm_operands_list			asm_operand
+%type<expr> asm_operands_opt			asm_operands_list			asm_operand
 %type<labels> label_list
 %type<expr> asm_clobbers_list_opt
 %type<is_volatile> asm_volatile_opt
@@ -411,14 +411,14 @@ if ( N ) {																		\
 %type<genexpr> generic_association		generic_assoc_list
 
 // statements
-%type<stmt> statement						labeled_statement			compound_statement
+%type<stmt> statement					labeled_statement			compound_statement
 %type<stmt> statement_decl				statement_decl_list			statement_list_nodecl
 %type<stmt> selection_statement			if_statement
-%type<clause> switch_clause_list_opt		switch_clause_list
+%type<clause> switch_clause_list_opt	switch_clause_list
 %type<expr> case_value
-%type<clause> case_clause				case_value_list				case_label					case_label_list
+%type<clause> case_clause				case_value_list				case_label	case_label_list
 %type<stmt> iteration_statement			jump_statement
-%type<stmt> expression_statement			asm_statement
+%type<stmt> expression_statement		asm_statement
 %type<stmt> with_statement
 %type<expr> with_clause_opt
 %type<stmt> exception_statement
@@ -426,7 +426,7 @@ if ( N ) {																		\
 %type<except_kind> handler_key
 %type<stmt> mutex_statement
 %type<expr> when_clause					when_clause_opt				waitfor		waituntil		timeout
-%type<stmt> waitfor_statement				waituntil_statement
+%type<stmt> waitfor_statement			waituntil_statement
 %type<wfs> wor_waitfor_clause
 %type<wucn> waituntil_clause			wand_waituntil_clause       wor_waituntil_clause
 
@@ -600,7 +600,7 @@ if ( N ) {																		\
 // the production rule. There are multiple lists of declarations, where each declaration is a named scope, so pop/push
 // around the list separator.
 //
-//  int f( forall(T) T (*f1) T , forall( S ) S (*f2)( S ) );
+//  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 //      push               pop   push                   pop
 
 push:
@@ -1714,18 +1714,18 @@ wor_waituntil_clause:
 		{ SemanticError( yylloc, "syntax error, else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
 	| wor_waituntil_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
 		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::LEFT_OR, $1,
-                new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::OR, 
-                    build_waituntil_timeout( yylloc, $3, $4, maybe_build_compound( yylloc, $5 ) ), 
-                    build_waituntil_else( yylloc, $7, maybe_build_compound( yylloc, $9 ) ) ) ); }
+				new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::OR, 
+					build_waituntil_timeout( yylloc, $3, $4, maybe_build_compound( yylloc, $5 ) ), 
+					build_waituntil_else( yylloc, $7, maybe_build_compound( yylloc, $9 ) ) ) ); }
 	;
 
 waituntil_statement:
 	wor_waituntil_clause								%prec THEN
 		// SKULLDUGGERY: create an empty compound statement to test parsing of waituntil statement.
 		{
-            $$ = new StatementNode( build_waituntil_stmt( yylloc, $1 ) );
-            // $$ = new StatementNode( build_compound( yylloc, nullptr ) );
-        }
+			$$ = new StatementNode( build_waituntil_stmt( yylloc, $1 ) );
+			// $$ = new StatementNode( build_compound( yylloc, nullptr ) );
+		}
 	;
 
 exception_statement:
@@ -1867,10 +1867,10 @@ KR_parameter_list_opt:									// used to declare parameter types in K&R style f
 	;
 
 KR_parameter_list:
-	push c_declaration pop ';'
-		{ $$ = $2; }
-	| KR_parameter_list push c_declaration pop ';'
-		{ $$ = $1->appendList( $3 ); }
+	c_declaration ';'
+		{ $$ = $1; }
+	| KR_parameter_list c_declaration ';'
+		{ $$ = $1->appendList( $2 ); }
 	;
 
 local_label_declaration_opt:							// GCC, local label
@@ -2006,17 +2006,17 @@ cfa_function_return:									// CFA
 cfa_typedef_declaration:								// CFA
 	TYPEDEF cfa_variable_specifier
 		{
-			typedefTable.addToEnclosingScope( *$2->name, TYPEDEFname, "1" );
+			typedefTable.addToEnclosingScope( *$2->name, TYPEDEFname, "cfa_typedef_declaration 1" );
 			$$ = $2->addTypedef();
 		}
 	| TYPEDEF cfa_function_specifier
 		{
-			typedefTable.addToEnclosingScope( *$2->name, TYPEDEFname, "2" );
+			typedefTable.addToEnclosingScope( *$2->name, TYPEDEFname, "cfa_typedef_declaration 2" );
 			$$ = $2->addTypedef();
 		}
 	| cfa_typedef_declaration pop ',' push identifier
 		{
-			typedefTable.addToEnclosingScope( *$5, TYPEDEFname, "3" );
+			typedefTable.addToEnclosingScope( *$5, TYPEDEFname, "cfa_typedef_declaration 3" );
 			$$ = $1->appendList( $1->cloneType( $5 ) );
 		}
 	;
@@ -2027,15 +2027,15 @@ cfa_typedef_declaration:								// CFA
 typedef_declaration:
 	TYPEDEF type_specifier declarator
 		{
-			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "4" );
+			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "typedef_declaration 1" );
 			if ( $2->type->forall || ($2->type->kind == TypeData::Aggregate && $2->type->aggregate.params) ) {
 				SemanticError( yylloc, "forall qualifier in typedef is currently unimplemented." ); $$ = nullptr;
 			} else $$ = $3->addType( $2 )->addTypedef(); // watchout frees $2 and $3
 		}
-	| typedef_declaration pop ',' push declarator
+	| typedef_declaration ',' declarator
 		{
-			typedefTable.addToEnclosingScope( *$5->name, TYPEDEFname, "5" );
-			$$ = $1->appendList( $1->cloneBaseType( $5 )->addTypedef() );
+			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "typedef_declaration 2" );
+			$$ = $1->appendList( $1->cloneBaseType( $3 )->addTypedef() );
 		}
 	| type_qualifier_list TYPEDEF type_specifier declarator // remaining OBSOLESCENT (see 2 )
 		{ SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); $$ = nullptr; }
@@ -2051,7 +2051,7 @@ typedef_expression:
 		{
 			SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); $$ = nullptr;
 		}
-	| typedef_expression pop ',' push identifier '=' assignment_expression
+	| typedef_expression ',' identifier '=' assignment_expression
 		{
 			SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); $$ = nullptr;
 		}
@@ -2464,7 +2464,7 @@ aggregate_type:											// struct, union
 		{ $$ = DeclarationNode::newAggregate( $1, nullptr, $7, $5, true )->addQualifiers( $2 ); }
 	| aggregate_key attribute_list_opt identifier
 		{
-			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname ); // create typedef
+			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname, "aggregate_type: 1" );
 			forall = false;								// reset
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
@@ -2473,7 +2473,7 @@ aggregate_type:											// struct, union
 		}
 	| aggregate_key attribute_list_opt TYPEDEFname		// unqualified type name
 		{
-			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname ); // create typedef
+			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname, "aggregate_type: 2" );
 			forall = false;								// reset
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
@@ -2483,7 +2483,7 @@ aggregate_type:											// struct, union
 		}
 	| aggregate_key attribute_list_opt TYPEGENname		// unqualified type name
 		{
-			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname ); // create typedef
+			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname, "aggregate_type: 3" );
 			forall = false;								// reset
 		}
 	  '{' field_declaration_list_opt '}' type_parameters_opt
@@ -2504,7 +2504,7 @@ type_parameters_opt:
 aggregate_type_nobody:									// struct, union - {...}
 	aggregate_key attribute_list_opt identifier
 		{
-			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname );
+			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname, "aggregate_type_nobody" );
 			forall = false;								// reset
 			$$ = DeclarationNode::newAggregate( $1, $3, nullptr, nullptr, false )->addQualifiers( $2 );
 		}
@@ -2682,7 +2682,7 @@ enum_type:
 	| ENUM attribute_list_opt '!' '{' enumerator_list comma_opt '}'	// invalid syntax rule
 		{ SemanticError( yylloc, "syntax error, hiding '!' the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM attribute_list_opt identifier
-		{ typedefTable.makeTypedef( *$3 ); }
+		{ typedefTable.makeTypedef( *$3, "enum_type 1" ); }
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( $3, $7, true, false, nullptr, $5 )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt typedef_name hide_opt '{' enumerator_list comma_opt '}' // unqualified type name
@@ -2707,7 +2707,7 @@ enum_type:
 			if ( $3->storageClasses.any() || $3->type->qualifiers.val != 0 ) {
 				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
 			}
-			typedefTable.makeTypedef( *$6 );
+			typedefTable.makeTypedef( *$6, "enum_type 2" );
 		}
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{
@@ -2737,9 +2737,15 @@ hide_opt:
 
 enum_type_nobody:										// enum - {...}
 	ENUM attribute_list_opt identifier
-		{ typedefTable.makeTypedef( *$3 ); $$ = DeclarationNode::newEnum( $3, nullptr, false, false )->addQualifiers( $2 ); }
+		{
+			typedefTable.makeTypedef( *$3, "enum_type_nobody 1" );
+			$$ = DeclarationNode::newEnum( $3, nullptr, false, false )->addQualifiers( $2 );
+		}
 	| ENUM attribute_list_opt type_name
-		{ typedefTable.makeTypedef( *$3->type->symbolic.name );	$$ = DeclarationNode::newEnum( $3->type->symbolic.name, nullptr, false, false )->addQualifiers( $2 ); }
+		{
+			typedefTable.makeTypedef( *$3->type->symbolic.name, "enum_type_nobody 2" );
+			$$ = DeclarationNode::newEnum( $3->type->symbolic.name, nullptr, false, false )->addQualifiers( $2 );
+		}
 	;
 
 enumerator_list:
@@ -2807,17 +2813,17 @@ parameter_type_list_opt:
 	| ELLIPSIS
 		{ $$ = nullptr; }
 	| parameter_list
-	| parameter_list pop ',' push ELLIPSIS
+	| parameter_list ',' ELLIPSIS
 		{ $$ = $1->addVarArgs(); }
 	;
 
 parameter_list:											// abstract + real
 	abstract_parameter_declaration
 	| parameter_declaration
-	| parameter_list pop ',' push abstract_parameter_declaration
-		{ $$ = $1->appendList( $5 ); }
-	| parameter_list pop ',' push parameter_declaration
-		{ $$ = $1->appendList( $5 ); }
+	| parameter_list ',' abstract_parameter_declaration
+		{ $$ = $1->appendList( $3 ); }
+	| parameter_list ',' parameter_declaration
+		{ $$ = $1->appendList( $3 ); }
 	;
 
 // Provides optional identifier names (abstract_declarator/variable_declarator), no initialization, different semantics
@@ -2982,7 +2988,7 @@ type_initializer_opt:									// CFA
 type_parameter:											// CFA
 	type_class identifier_or_type_name
 		{
-			typedefTable.addToScope( *$2, TYPEDEFname, "9" );
+			typedefTable.addToScope( *$2, TYPEDEFname, "type_parameter 1" );
 			if ( $1 == ast::TypeDecl::Otype ) { SemanticError( yylloc, "otype keyword is deprecated, use T " ); }
 			if ( $1 == ast::TypeDecl::Dtype ) { SemanticError( yylloc, "dtype keyword is deprecated, use T &" ); }
 			if ( $1 == ast::TypeDecl::Ttype ) { SemanticError( yylloc, "ttype keyword is deprecated, use T ..." ); }
@@ -2990,12 +2996,12 @@ type_parameter:											// CFA
 	  type_initializer_opt assertion_list_opt
 		{ $$ = DeclarationNode::newTypeParam( $1, $2 )->addTypeInitializer( $4 )->addAssertions( $5 ); }
 	| identifier_or_type_name new_type_class
-		{ typedefTable.addToScope( *$1, TYPEDEFname, "9" ); }
+		{ typedefTable.addToScope( *$1, TYPEDEFname, "type_parameter 2" ); }
 	  type_initializer_opt assertion_list_opt
 		{ $$ = DeclarationNode::newTypeParam( $2, $1 )->addTypeInitializer( $4 )->addAssertions( $5 ); }
 	| '[' identifier_or_type_name ']'
 		{
-			typedefTable.addToScope( *$2, TYPEDIMname, "9" );
+			typedefTable.addToScope( *$2, TYPEDIMname, "type_parameter 3" );
 			$$ = DeclarationNode::newTypeParam( ast::TypeDecl::Dimension, $2 );
 		}
 	// | type_specifier identifier_parameter_declarator
@@ -3077,12 +3083,12 @@ type_declarator:										// CFA
 type_declarator_name:									// CFA
 	identifier_or_type_name
 		{
-			typedefTable.addToEnclosingScope( *$1, TYPEDEFname, "10" );
+			typedefTable.addToEnclosingScope( *$1, TYPEDEFname, "type_declarator_name 1" );
 			$$ = DeclarationNode::newTypeDecl( $1, nullptr );
 		}
 	| identifier_or_type_name '(' type_parameter_list ')'
 		{
-			typedefTable.addToEnclosingScope( *$1, TYPEGENname, "11" );
+			typedefTable.addToEnclosingScope( *$1, TYPEGENname, "type_declarator_name 2" );
 			$$ = DeclarationNode::newTypeDecl( $1, $3 );
 		}
 	;
@@ -3471,10 +3477,10 @@ variable_array:
 	;
 
 variable_function:
-	'(' variable_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $2->addParamList( $6 ); }
-	| '(' attribute_list variable_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $3->addQualifiers( $2 )->addParamList( $7 ); }
+	'(' variable_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $2->addParamList( $5 ); }
+	| '(' attribute_list variable_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' variable_function ')'							// redundant parenthesis
 		{ $$ = $2; }
 	| '(' attribute_list variable_function ')'			// redundant parenthesis
@@ -3494,12 +3500,12 @@ function_declarator:
 	;
 
 function_no_ptr:
-	paren_identifier '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $1->addParamList( $4 ); }
-	| '(' function_ptr ')' '(' push parameter_type_list_opt pop ')'
-		{ $$ = $2->addParamList( $6 ); }
-	| '(' attribute_list function_ptr ')' '(' push parameter_type_list_opt pop ')'
-		{ $$ = $3->addQualifiers( $2 )->addParamList( $7 ); }
+	paren_identifier '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $1->addParamList( $3 ); }
+	| '(' function_ptr ')' '(' parameter_type_list_opt ')'
+		{ $$ = $2->addParamList( $5 ); }
+	| '(' attribute_list function_ptr ')' '(' parameter_type_list_opt ')'
+		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' function_no_ptr ')'							// redundant parenthesis
 		{ $$ = $2; }
 	| '(' attribute_list function_no_ptr ')'			// redundant parenthesis
@@ -3548,10 +3554,10 @@ KR_function_declarator:
 KR_function_no_ptr:
 	paren_identifier '(' identifier_list ')'			// function_declarator handles empty parameter
 		{ $$ = $1->addIdList( $3 ); }
-	| '(' KR_function_ptr ')' '(' push parameter_type_list_opt pop ')'
-		{ $$ = $2->addParamList( $6 ); }
-	| '(' attribute_list KR_function_ptr ')' '(' push parameter_type_list_opt pop ')'
-		{ $$ = $3->addQualifiers( $2 )->addParamList( $7 ); }
+	| '(' KR_function_ptr ')' '(' parameter_type_list_opt ')'
+		{ $$ = $2->addParamList( $5 ); }
+	| '(' attribute_list KR_function_ptr ')' '(' parameter_type_list_opt ')'
+		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' KR_function_no_ptr ')'						// redundant parenthesis
 		{ $$ = $2; }
 	| '(' attribute_list KR_function_no_ptr ')'			// redundant parenthesis
@@ -3595,7 +3601,7 @@ paren_type:
 	typedef_name
 		{
 			// hide type name in enclosing scope by variable name
-			typedefTable.addToEnclosingScope( *$1->name, IDENTIFIER, "ID" );
+			typedefTable.addToEnclosingScope( *$1->name, IDENTIFIER, "paren_type" );
 		}
 	| '(' paren_type ')'
 		{ $$ = $2; }
@@ -3640,10 +3646,10 @@ variable_type_array:
 	;
 
 variable_type_function:
-	'(' variable_type_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $2->addParamList( $6 ); }
-	| '(' attribute_list variable_type_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $3->addQualifiers( $2 )->addParamList( $7 ); }
+	'(' variable_type_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $2->addParamList( $5 ); }
+	| '(' attribute_list variable_type_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' variable_type_function ')'					// redundant parenthesis
 		{ $$ = $2; }
 	| '(' attribute_list variable_type_function ')'		// redundant parenthesis
@@ -3663,12 +3669,12 @@ function_type_redeclarator:
 	;
 
 function_type_no_ptr:
-	paren_type '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $1->addParamList( $4 ); }
-	| '(' function_type_ptr ')' '(' push parameter_type_list_opt pop ')'
-		{ $$ = $2->addParamList( $6 ); }
-	| '(' attribute_list function_type_ptr ')' '(' push parameter_type_list_opt pop ')'
-		{ $$ = $3->addQualifiers( $2 )->addParamList( $7 ); }
+	paren_type '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $1->addParamList( $3 ); }
+	| '(' function_type_ptr ')' '(' parameter_type_list_opt ')'
+		{ $$ = $2->addParamList( $5 ); }
+	| '(' attribute_list function_type_ptr ')' '(' parameter_type_list_opt ')'
+		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' function_type_no_ptr ')'						// redundant parenthesis
 		{ $$ = $2; }
 	| '(' attribute_list function_type_no_ptr ')'		// redundant parenthesis
@@ -3739,10 +3745,10 @@ identifier_parameter_array:
 	;
 
 identifier_parameter_function:
-	paren_identifier '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $1->addParamList( $4 ); }
-	| '(' identifier_parameter_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $2->addParamList( $6 ); }
+	paren_identifier '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $1->addParamList( $3 ); }
+	| '(' identifier_parameter_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $2->addParamList( $5 ); }
 	| '(' identifier_parameter_function ')'				// redundant parenthesis
 		{ $$ = $2; }
 	;
@@ -3792,10 +3798,10 @@ type_parameter_array:
 	;
 
 type_parameter_function:
-	typedef_name '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $1->addParamList( $4 ); }
-	| '(' type_parameter_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $2->addParamList( $6 ); }
+	typedef_name '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $1->addParamList( $3 ); }
+	| '(' type_parameter_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $2->addParamList( $5 ); }
 	;
 
 // This pattern parses a declaration of an abstract variable or function prototype, i.e., there is no identifier to
@@ -3842,10 +3848,10 @@ abstract_array:
 	;
 
 abstract_function:
-	'(' push parameter_type_list_opt pop ')'			// empty parameter list OBSOLESCENT (see 3)
-		{ $$ = DeclarationNode::newFunction( nullptr, nullptr, $3, nullptr ); }
-	| '(' abstract_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $2->addParamList( $6 ); }
+	'(' parameter_type_list_opt ')'			// empty parameter list OBSOLESCENT (see 3)
+		{ $$ = DeclarationNode::newFunction( nullptr, nullptr, $2, nullptr ); }
+	| '(' abstract_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $2->addParamList( $5 ); }
 	| '(' abstract_function ')'							// redundant parenthesis
 		{ $$ = $2; }
 	;
@@ -3965,10 +3971,10 @@ abstract_parameter_array:
 	;
 
 abstract_parameter_function:
-	'(' push parameter_type_list_opt pop ')'			// empty parameter list OBSOLESCENT (see 3)
-		{ $$ = DeclarationNode::newFunction( nullptr, nullptr, $3, nullptr ); }
-	| '(' abstract_parameter_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $2->addParamList( $6 ); }
+	'(' parameter_type_list_opt ')'			// empty parameter list OBSOLESCENT (see 3)
+		{ $$ = DeclarationNode::newFunction( nullptr, nullptr, $2, nullptr ); }
+	| '(' abstract_parameter_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $2->addParamList( $5 ); }
 	| '(' abstract_parameter_function ')'				// redundant parenthesis
 		{ $$ = $2; }
 	;
@@ -4005,12 +4011,12 @@ array_parameter_1st_dimension:
 
 // This pattern parses a declaration of an abstract variable, but does not allow "int ()" for a function pointer.
 //
-//		struct S {
-//          int;
-//          int *;
-//          int [10];
-//          int (*)();
-//      };
+//   struct S {
+//       int;
+//       int *;
+//       int [10];
+//       int (*)();
+//   };
 
 variable_abstract_declarator:
 	variable_abstract_ptr
@@ -4044,8 +4050,8 @@ variable_abstract_array:
 	;
 
 variable_abstract_function:
-	'(' variable_abstract_ptr ')' '(' push parameter_type_list_opt pop ')' // empty parameter list OBSOLESCENT (see 3)
-		{ $$ = $2->addParamList( $6 ); }
+	'(' variable_abstract_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+		{ $$ = $2->addParamList( $5 ); }
 	| '(' variable_abstract_function ')'				// redundant parenthesis
 		{ $$ = $2; }
 	;

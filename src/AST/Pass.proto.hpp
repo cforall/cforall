@@ -487,24 +487,24 @@ namespace symtab {
 	static inline void addUnionFwd( core_t &, long, const ast::UnionDecl * ) {}
 
 	template<typename core_t>
-	static inline auto addStruct( core_t & core, int, const std::string & str ) -> decltype( core.symtab.addStruct( str ), void() ) {
+	static inline auto addStructId( core_t & core, int, const std::string & str ) -> decltype( core.symtab.addStructId( str ), void() ) {
 		if ( ! core.symtab.lookupStruct( str ) ) {
-			core.symtab.addStruct( str );
+			core.symtab.addStructId( str );
 		}
 	}
 
 	template<typename core_t>
-	static inline void addStruct( core_t &, long, const std::string & ) {}
+	static inline void addStructId( core_t &, long, const std::string & ) {}
 
 	template<typename core_t>
-	static inline auto addUnion( core_t & core, int, const std::string & str ) -> decltype( core.symtab.addUnion( str ), void() ) {
+	static inline auto addUnionId( core_t & core, int, const std::string & str ) -> decltype( core.symtab.addUnionId( str ), void() ) {
 		if ( ! core.symtab.lookupUnion( str ) ) {
-			core.symtab.addUnion( str );
+			core.symtab.addUnionId( str );
 		}
 	}
 
 	template<typename core_t>
-	static inline void addUnion( core_t &, long, const std::string & ) {}
+	static inline void addUnionId( core_t &, long, const std::string & ) {}
 
 	#undef SYMTAB_FUNC1
 	#undef SYMTAB_FUNC2

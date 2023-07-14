@@ -45,9 +45,9 @@ public:
 	FORWARD_1( addEnum  , const ast::EnumDecl *      )
 	FORWARD_1( addUnion , const ast::UnionDecl *     )
 	FORWARD_1( addTrait , const ast::TraitDecl *     )
-	FORWARD_1( addStruct, const std::string &        )
-	FORWARD_1( addUnion , const std::string &        )
 	FORWARD_2( addWith  , const std::vector< ast::ptr<ast::Expr> > &, const ast::Decl * )
+	FORWARD_1( addStructId, const std::string & )
+	FORWARD_1( addUnionId , const std::string & )
 
 	FORWARD_1( globalLookupType, const std::string & )
 
