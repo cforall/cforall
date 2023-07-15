@@ -22,9 +22,8 @@
 #include "CodeGen/OperatorTable.h"
 #include "Common/CodeLocation.h"
 #include "Common/ToString.hpp"
+#include "Common/utility.h"
 #include "SymTab/FixFunction.h"
-
-#include "AST/Print.hpp"
 
 namespace Validate {
 
@@ -50,13 +49,16 @@ ast::FunctionType * makeFuncType( const ast::FunctionDecl * decl ) {
 	return type;
 }
 
-template<typename T>
-void append( std::vector<T> & dst, std::vector<T> & src ) {
-	dst.reserve( dst.size() + src.size() );
-	for ( auto el : src ) {
-		dst.emplace_back( std::move( el ) );
+ast::FunctionDecl * updateAssertions( ast::FunctionDecl * decl ) {
+	auto type = ast::mutate( decl->type.get() );
+	type->assertions.clear();
+	type->assertions.reserve( decl->assertions.size() );
+	for ( auto & assertion : decl->assertions ) {
+		type->assertions.emplace_back(
+			new ast::VariableExpr( decl->location, assertion ) );
 	}
-	src.clear();
+	decl->type = type;
+	return decl;
 }
 
 // Component Passes:
@@ -95,7 +97,7 @@ struct TraitExpander final {
 			if ( auto traitInst = dynamic_cast<const ast::TraitInstType *>(
 					decl->get_type() ) ) {
 				auto moreAsserts = expandTrait( traitInst );
-				append( assertions, moreAsserts );
+				splice( assertions, moreAsserts );
 			} else {
 				assertions.push_back( decl );
 			}
@@ -107,6 +109,7 @@ struct TraitExpander final {
 
 	static TypeDeclVec expandTypeDecls( const TypeDeclVec & old ) {
 		TypeDeclVec typeDecls;
+		typeDecls.reserve( old.size() );
 		for ( const ast::TypeDecl * typeDecl : old ) {
 			typeDecls.push_back( ast::mutate_field( typeDecl,
 				&ast::TypeDecl::assertions,
@@ -122,14 +125,7 @@ struct TraitExpander final {
 		auto mut = ast::mutate( decl );
 		mut->assertions = expandAssertions( decl->assertions );
 		// Update the assertion list on the type as well.
-		auto mutType = ast::mutate( mut->type.get() );
-		mutType->assertions.clear();
-		for ( auto & assertion : mut->assertions ) {
-			mutType->assertions.emplace_back(
-				new ast::VariableExpr( mut->location, assertion ) );
-		}
-		mut->type = mutType;
-		return mut;
+		return updateAssertions( mut );
 	}
 
 	const ast::StructDecl * previsit( const ast::StructDecl * decl ) {
@@ -153,6 +149,7 @@ std::vector<ast::ptr<ast::DeclWithType>> fixAssertionList(
 		const ast::ParseNode * node,
 		const std::vector<ast::ptr<ast::DeclWithType>> & assertions ) {
 	std::vector<ast::ptr<ast::DeclWithType>> ret;
+	ret.reserve( assertions.size() );
 	for ( const auto & assn : assertions ) {
 		bool isVoid = false;
 		ret.push_back( SymTab::fixFunction( assn, isVoid ) );
@@ -186,6 +183,13 @@ struct AssertionFunctionFixer final {
 			fixAssertionList( decl, decl->assertions ) );
 	}
 
+	const ast::FunctionDecl * postvisit( const ast::FunctionDecl * decl ) {
+		if ( decl->assertions.empty() ) {
+			return decl;
+		}
+		return updateAssertions( mutate( decl ) );
+	}
+
 	const ast::StructDecl * previsit( const ast::StructDecl * decl ) {
 		if ( decl->params.empty() ) {
 			return decl;
@@ -203,16 +207,14 @@ struct AssertionFunctionFixer final {
 	}
 };
 
-struct OberatorChecker final {
+struct OperatorChecker final {
 	void previsit( const ast::ObjectDecl * obj ) {
-		if ( CodeGen::isOperator( obj->name ) ) {
-			auto type = obj->type->stripDeclarator();
-			if ( ! dynamic_cast< const ast::FunctionType * >( type ) ) {
-				SemanticError( obj->location,
-					toCString( "operator ", obj->name.c_str(), " is not "
-					"a function or function pointer." ) );
-			}
-		}
+		if ( !CodeGen::isOperator( obj->name ) ) return;
+		auto type = obj->type->stripDeclarator();
+		if ( dynamic_cast< const ast::FunctionType * >( type ) ) return;
+		SemanticError( obj->location,
+			toCString( "operator ", obj->name.c_str(), " is not "
+			"a function or function pointer." ) );
 	}
 };
 
@@ -233,7 +235,7 @@ struct UniqueFixCore final {
 void decayForallPointers( ast::TranslationUnit & transUnit ) {
 	ast::Pass<TraitExpander>::run( transUnit );
 	ast::Pass<AssertionFunctionFixer>::run( transUnit );
-	ast::Pass<OberatorChecker>::run( transUnit );
+	ast::Pass<OperatorChecker>::run( transUnit );
 	ast::Pass<UniqueFixCore>::run( transUnit );
 }
 

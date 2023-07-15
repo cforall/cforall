@@ -101,6 +101,17 @@ void memberMatchesAggregate( const MemberExpr * expr ) {
 	assertf( false, "Member not found." );
 }
 
+/// Check for Floating Nodes:
+/// Every node should be reachable from a root (the TranslationUnit) via a
+/// chain of structural references (tracked with ptr). This cannot check all
+/// of that, it just checks if a given node's field has a strong reference.
+template<typename node_t, typename field_t>
+void noFloatingNode( const node_t * node, field_t node_t::*field_ptr ) {
+	const field_t & field = node->*field_ptr;
+	if ( nullptr == field ) return;
+	assertf( field->isManaged(), "Floating node found." );
+}
+
 struct InvariantCore {
 	// To save on the number of visits: this is a kind of composed core.
 	// None of the passes should make changes so ordering doesn't matter.
@@ -126,9 +137,34 @@ struct InvariantCore {
 		areLabelLocationsSet( node );
 	}
 
+	void previsit( const VariableExpr * node ) {
+		previsit( (const ParseNode *)node );
+		noFloatingNode( node, &VariableExpr::var );
+	}
+
 	void previsit( const MemberExpr * node ) {
 		previsit( (const ParseNode *)node );
 		memberMatchesAggregate( node );
+	}
+
+	void previsit( const StructInstType * node ) {
+		previsit( (const Node *)node );
+		noFloatingNode( node, &StructInstType::base );
+	}
+
+	void previsit( const UnionInstType * node ) {
+		previsit( (const Node *)node );
+		noFloatingNode( node, &UnionInstType::base );
+	}
+
+	void previsit( const EnumInstType * node ) {
+		previsit( (const Node *)node );
+		noFloatingNode( node, &EnumInstType::base );
+	}
+
+	void previsit( const TypeInstType * node ) {
+		previsit( (const Node *)node );
+		noFloatingNode( node, &TypeInstType::base );
 	}
 
 	void postvisit( const Node * node ) {

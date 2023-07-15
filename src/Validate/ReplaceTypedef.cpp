@@ -19,7 +19,6 @@
 #include "AST/Pass.hpp"
 #include "Common/ScopedMap.h"
 #include "Common/UniqueName.h"
-#include "Common/utility.h"
 #include "ResolvExpr/Unify.h"
 
 namespace Validate {
@@ -293,7 +292,7 @@ void ReplaceTypedefCore::addImplicitTypedef( AggrDecl * aggrDecl ) {
 	TypedefDeclPtr typeDecl = new ast::TypedefDecl( aggrDecl->location,
 		aggrDecl->name, ast::Storage::Classes(), type, aggrDecl->linkage );
 	// Add the implicit typedef to the AST.
-	declsToAddBefore.push_back( ast::deepCopy( typeDecl.get() ) );
+	declsToAddAfter.push_back( ast::deepCopy( typeDecl.get() ) );
 	// Shore the name in the map of names.
 	typedefNames[ aggrDecl->name ] =
 		std::make_pair( std::move( typeDecl ), scopeLevel );
@@ -315,10 +314,11 @@ AggrDecl const * ReplaceTypedefCore::handleAggregate( AggrDecl const * decl ) {
 
 	auto mut = ast::mutate( decl );
 
-	std::vector<ast::ptr<ast::Decl>> members;
+	std::list<ast::ptr<ast::Decl>> members;
 	// Unroll accept_all for decl->members so that implicit typedefs for
 	// nested types are added to the aggregate body.
 	for ( ast::ptr<ast::Decl> const & member : mut->members ) {
+		assert( declsToAddBefore.empty() );
 		assert( declsToAddAfter.empty() );
 		ast::Decl const * newMember = nullptr;
 		try {
@@ -327,13 +327,14 @@ AggrDecl const * ReplaceTypedefCore::handleAggregate( AggrDecl const * decl ) {
 			errors.append( e );
 		}
 		if ( !declsToAddBefore.empty() ) {
-			for ( auto declToAdd : declsToAddBefore ) {
-				members.push_back( declToAdd );
-			}
-			declsToAddBefore.clear();
+			members.splice( members.end(), declsToAddBefore );
 		}
 		members.push_back( newMember );
+		if ( !declsToAddAfter.empty() ) {
+			members.splice( members.end(), declsToAddAfter );
+		}
 	}
+	assert( declsToAddBefore.empty() );
 	assert( declsToAddAfter.empty() );
 	if ( !errors.isEmpty() ) { throw errors; }
 

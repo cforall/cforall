@@ -881,7 +881,7 @@ bool InitExpander_new::addReference() {
 		static ast::ptr<ast::FunctionDecl> assign = nullptr;
 		if (!assign) {
 			auto td = new ast::TypeDecl(CodeLocation(), "T", {}, nullptr, ast::TypeDecl::Dtype, true);
-			assign = new ast::FunctionDecl(CodeLocation(), "?=?", {},
+			assign = new ast::FunctionDecl(CodeLocation(), "?=?", {td},
 			{ new ast::ObjectDecl(CodeLocation(), "_dst", new ast::ReferenceType(new ast::TypeInstType("T", td))),
 			  new ast::ObjectDecl(CodeLocation(), "_src", new ast::TypeInstType("T", td))},
 			{ new ast::ObjectDecl(CodeLocation(), "_ret", new ast::TypeInstType("T", td))}, nullptr, {}, ast::Linkage::Intrinsic);

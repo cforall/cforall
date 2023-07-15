@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thr Apr 21 11:41:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Tue Sep 20 16:17:00 2022
-// Update Count     : 2
+// Last Modified On : Fri Jul 14  9:19:00 2023
+// Update Count     : 3
 //
 
 #include "Validate/LinkReferenceToTypes.hpp"
@@ -26,6 +26,7 @@ namespace {
 
 struct LinkTypesCore : public WithNoIdSymbolTable,
 		public ast::WithCodeLocation,
+		public ast::WithDeclsToAdd<>,
 		public ast::WithGuards,
 		public ast::WithShortCircuiting,
 		public ast::WithVisitorRef<LinkTypesCore> {
@@ -62,7 +63,34 @@ private:
 
 	template<typename AggrDecl>
 	AggrDecl const * renameGenericParams( AggrDecl const * decl );
+
+	// This cluster is used to add declarations (before) but outside of
+	// any "namespaces" which would qualify the names.
+	bool inNamespace = false;
+	std::list<ast::ptr<ast::Decl>> declsToAddOutside;
+	/// The "leaveNamespace" is handled by guard.
+	void enterNamespace();
+	/// Puts the decl on the back of declsToAddAfter once traversal is
+	/// outside of any namespaces.
+	void addDeclAfterOutside( ast::Decl const * );
 };
+
+void LinkTypesCore::enterNamespace() {
+	if ( inNamespace ) return;
+	inNamespace = true;
+	GuardAction( [this](){
+		inNamespace = false;
+		declsToAddAfter.splice( declsToAddAfter.begin(), declsToAddOutside );
+	} );
+}
+
+void LinkTypesCore::addDeclAfterOutside( ast::Decl const * decl ) {
+	if ( inNamespace ) {
+		declsToAddOutside.emplace_back( decl );
+	} else {
+		declsToAddAfter.emplace_back( decl );
+	}
+}
 
 ast::TypeInstType const * LinkTypesCore::postvisit( ast::TypeInstType const * type ) {
 	auto mut = ast::mutate( type );
@@ -79,13 +107,24 @@ ast::TypeInstType const * LinkTypesCore::postvisit( ast::TypeInstType const * ty
 
 ast::EnumInstType const * LinkTypesCore::postvisit( ast::EnumInstType const * type ) {
 	ast::EnumDecl const * decl = symtab.lookupEnum( type->name );
-	ast::EnumInstType * mut = ast::mutate( type );
 	// It's not a semantic error if the enum is not found, just an implicit forward declaration.
-	if ( decl ) {
-		// Just linking in the node.
-		mut->base = decl;
+	// The unset code location is used to detect imaginary declarations.
+	// (They may never be used for enumerations.)
+	if ( !decl || decl->location.isUnset() ) {
+		assert( location );
+		ast::EnumDecl * mut = new ast::EnumDecl( *location, type->name );
+		mut->linkage = ast::Linkage::Compiler;
+		decl = mut;
+		symtab.addEnum( decl );
+		addDeclAfterOutside( decl );
 	}
-	if ( !decl || !decl->body ) {
+
+	ast::EnumInstType * mut = ast::mutate( type );
+
+	// Just linking in the node.
+	mut->base = decl;
+
+	if ( !decl->body ) {
 		forwardEnums[ mut->name ].push_back( mut );
 	}
 	return mut;
@@ -93,13 +132,23 @@ ast::EnumInstType const * LinkTypesCore::postvisit( ast::EnumInstType const * ty
 
 ast::StructInstType const * LinkTypesCore::postvisit( ast::StructInstType const * type ) {
 	ast::StructDecl const * decl = symtab.lookupStruct( type->name );
-	ast::StructInstType * mut = ast::mutate( type );
 	// It's not a semantic error if the struct is not found, just an implicit forward declaration.
-	if ( decl ) {
-		// Just linking in the node.
-		mut->base = decl;
+	// The unset code location is used to detect imaginary declarations.
+	if ( !decl || decl->location.isUnset() ) {
+		assert( location );
+		ast::StructDecl * mut = new ast::StructDecl( *location, type->name );
+		mut->linkage = ast::Linkage::Compiler;
+		decl = mut;
+		symtab.addStruct( decl );
+		addDeclAfterOutside( decl );
 	}
-	if ( !decl || !decl->body ) {
+
+	ast::StructInstType * mut = ast::mutate( type );
+
+	// Just linking in the node.
+	mut->base = decl;
+
+	if ( !decl->body ) {
 		forwardStructs[ mut->name ].push_back( mut );
 	}
 	return mut;
@@ -107,13 +156,23 @@ ast::StructInstType const * LinkTypesCore::postvisit( ast::StructInstType const 
 
 ast::UnionInstType const * LinkTypesCore::postvisit( ast::UnionInstType const * type ) {
 	ast::UnionDecl const * decl = symtab.lookupUnion( type->name );
-	ast::UnionInstType * mut = ast::mutate( type );
 	// It's not a semantic error if the union is not found, just an implicit forward declaration.
-	if ( decl ) {
-		// Just linking in the node.
-		mut->base = decl;
+	// The unset code location is used to detect imaginary declarations.
+	if ( !decl || decl->location.isUnset() ) {
+		assert( location );
+		ast::UnionDecl * mut = new ast::UnionDecl( *location, type->name );
+		mut->linkage = ast::Linkage::Compiler;
+		decl = mut;
+		symtab.addUnion( decl );
+		addDeclAfterOutside( decl );
 	}
-	if ( !decl || !decl->body ) {
+
+	ast::UnionInstType * mut = ast::mutate( type );
+
+	// Just linking in the node.
+	mut->base = decl;
+
+	if ( !decl->body ) {
 		forwardUnions[ mut->name ].push_back( mut );
 	}
 	return mut;
@@ -218,6 +277,7 @@ AggrDecl const * LinkTypesCore::renameGenericParams( AggrDecl const * decl ) {
 }
 
 ast::StructDecl const * LinkTypesCore::previsit( ast::StructDecl const * decl ) {
+	enterNamespace();
 	return renameGenericParams( decl );
 }
 
@@ -236,6 +296,7 @@ void LinkTypesCore::postvisit( ast::StructDecl const * decl ) {
 }
 
 ast::UnionDecl const * LinkTypesCore::previsit( ast::UnionDecl const * decl ) {
+	enterNamespace();
 	return renameGenericParams( decl );
 }
 
