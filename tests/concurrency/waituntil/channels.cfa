@@ -68,9 +68,9 @@ int main( int argc, char * argv[] ) {
         {
             Churner c;
             for( long long int j = 0; j < numtimes; j++ ) {
-                when( j % 2 == 0 ) waituntil( j >> A ) { total += j; }
-                or when( j % 4 < 2 ) waituntil( j >> B ) { total += j; }
-                and when( j % 8 < 4 ) waituntil( j >> C ) { total += j; }
+                when( j % 2 == 0 ) waituntil( A << j ) { total += j; }
+                or when( j % 4 < 2 ) waituntil( B << j ) { total += j; }
+                and when( j % 8 < 4 ) waituntil( C << j ) { total += j; }
             }
             done = true;
             printf("terminating churner\n");

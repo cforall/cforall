@@ -112,6 +112,7 @@ static inline void   on_notify( single_acquisition_lock & this, struct thread$ *
 static inline bool   register_select( single_acquisition_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
 static inline bool   unregister_select( single_acquisition_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
 static inline bool   on_selected( single_acquisition_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
+__CFA_SELECT_GET_TYPE( single_acquisition_lock );
 
 //----------
 struct owner_lock {
@@ -129,6 +130,7 @@ static inline void   on_notify( owner_lock & this, struct thread$ * t ) { on_not
 static inline bool   register_select( owner_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
 static inline bool   unregister_select( owner_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
 static inline bool   on_selected( owner_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
+__CFA_SELECT_GET_TYPE( owner_lock );
 
 //-----------------------------------------------------------------------------
 // MCS Lock
@@ -619,7 +621,7 @@ static inline bool unregister_select( simple_owner_lock & this, select_node & no
 }
 
 static inline bool on_selected( simple_owner_lock & this, select_node & node ) { return true; }
-
+__CFA_SELECT_GET_TYPE( simple_owner_lock );
 
 //-----------------------------------------------------------------------------
 // Spin Queue Lock

@@ -14,29 +14,34 @@ void main( Producer & this ) {
     long long int A_i = 0, B_i = 0, C_i = 0, D_i = 0, E_i = 0, F_i = 0;
     try {
         for( long long int i = 0;;i++ ) {
-            waituntil( (i >> A) ) { A_i++; }
-            and waituntil( (i >> B) ) { B_i++; }
-            and waituntil( (i >> C) ) { C_i++; }
-            and waituntil( (i >> D) ) { D_i++; }
-            and waituntil( (i >> E) ) { E_i++; }
-            and waituntil( (i >> F) ) { F_i++; }
+            waituntil( A << i ) { A_i++; }
+            and waituntil( B << i ) { B_i++; }
+            and waituntil( C << i ) { C_i++; }
+            and waituntil( D << i ) { D_i++; }
+            and waituntil( E << i ) { E_i++; }
+            and waituntil( F << i ) { F_i++; }
         }
     } catch ( channel_closed * e ) {} 
     __atomic_fetch_add( &inserts, A_i + B_i + C_i + D_i + E_i + F_i, __ATOMIC_SEQ_CST );
 }
 
-
-thread Consumer {}; 
+thread Consumer {};
 void main( Consumer & this ) {
     long long int in, A_removes = 0, B_removes = 0, C_removes = 0, D_removes = 0, E_removes = 0, F_removes = 0;
     try {
         for( ;; ) {
-            waituntil( (in << F) ) { F_removes++; }
-            or waituntil( (in << E) ) { E_removes++; }
-            or waituntil( (in << D) ) { D_removes++; }
-            or waituntil( (in << C) ) { C_removes++; }
-            or waituntil( (in << B) ) { B_removes++; }
-            or waituntil( (in << A) ) { A_removes++; }
+            // waituntil( remove(F) ) { F_removes++; }
+            // or waituntil( remove(E) ) { E_removes++; }
+            // or waituntil( remove(D) ) { D_removes++; }
+            // or waituntil( remove(C) ) { C_removes++; }
+            // or waituntil( remove(B) ) { B_removes++; }
+            // or waituntil( remove(A) ) { A_removes++; }
+            waituntil( in << F ) { F_removes++; }
+            or waituntil( in << E ) { E_removes++; }
+            or waituntil( in << D ) { D_removes++; }
+            or waituntil( in << C ) { C_removes++; }
+            or waituntil( in << B ) { B_removes++; }
+            or waituntil( in << A ) { A_removes++; }
         }
     } catchResume ( channel_closed * e ) { } // continue to remove until would block
     catch ( channel_closed * e ) {}
@@ -92,7 +97,7 @@ int main( int argc, char * argv[] ) {
         F{chan_size};
         {
             Producer p[ num_thds / 2 ];
-            Consumer c[ 1 ];
+            Consumer c[ num_thds / 2 ];
             sleep(time`s);
             close(A);
             close(B);

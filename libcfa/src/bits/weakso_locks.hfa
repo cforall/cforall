@@ -62,6 +62,7 @@ size_t wait_count( blocking_lock & this ) OPTIONAL_THREAD;
 bool register_select( blocking_lock & this, select_node & node ) OPTIONAL_THREAD;
 bool unregister_select( blocking_lock & this, select_node & node ) OPTIONAL_THREAD;
 bool on_selected( blocking_lock & this, select_node & node ) OPTIONAL_THREAD;
+blocking_lock __CFA_select_get_type( blocking_lock this ) OPTIONAL_THREAD;
 
 //----------
 struct multiple_acquisition_lock {
@@ -80,3 +81,4 @@ static inline void   on_notify( multiple_acquisition_lock & this, struct thread$
 static inline bool   register_select( multiple_acquisition_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
 static inline bool   unregister_select( multiple_acquisition_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
 static inline bool   on_selected( multiple_acquisition_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
+multiple_acquisition_lock __CFA_select_get_type( multiple_acquisition_lock this );

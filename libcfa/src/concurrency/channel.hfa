@@ -325,6 +325,15 @@ static inline T remove( channel(T) & chan ) with(chan) {
     unlock( mutex_lock );
     return retval;
 }
+static inline void remove( channel(T) & chan ) { T elem = (T)remove( chan ); }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// The following is Go-style operator support for channels
+///////////////////////////////////////////////////////////////////////////////////////////
+
+static inline void ?<<?( channel(T) & chan, T elem ) { insert( chan, elem ); }
+static inline void ?<<?( T & ret, channel(T) & chan ) { ret = remove( chan ); }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // The following is support for waituntil (select) statements
@@ -365,6 +374,7 @@ struct chan_read {
     T & ret;
     channel(T) & chan;
 };
+__CFA_SELECT_GET_TYPE( chan_read(T) );
 
 static inline void ?{}( chan_read(T) & cr, channel(T) & chan, T & ret ) {
     &cr.chan = &chan;
@@ -452,17 +462,34 @@ static inline bool on_selected( chan_read(T) & this, select_node & node ) with(t
     return true;
 }
 
+// type used by select statement to capture a chan read as the selected operation that doesn't have a param to read to
+struct chan_read_no_ret {
+    T ret;
+    chan_read( T ) cr;
+};
+__CFA_SELECT_GET_TYPE( chan_read_no_ret(T) );
+
+static inline void ?{}( chan_read_no_ret(T) & this, channel(T) & chan ) {
+    this.cr{ chan, this.ret };
+}
+static inline chan_read_no_ret(T) remove( channel(T) & chan ) { chan_read_no_ret(T) cr{ chan }; return cr; }
+static inline bool register_select( chan_read_no_ret(T) & this, select_node & node ) { return register_select( this.cr, node ); }
+static inline bool unregister_select( chan_read_no_ret(T) & this, select_node & node ) { return unregister_select( this.cr, node ); }
+static inline bool on_selected( chan_read_no_ret(T) & this, select_node & node ) { return on_selected( this.cr, node ); }
+
 // type used by select statement to capture a chan write as the selected operation
 struct chan_write {
     T elem;
     channel(T) & chan;
 };
+__CFA_SELECT_GET_TYPE( chan_write(T) );
 
 static inline void ?{}( chan_write(T) & cw, channel(T) & chan, T elem ) {
     &cw.chan = &chan;
     memcpy( (void *)&cw.elem, (void *)&elem, sizeof(T) );
 }
-static inline chan_write(T) ?>>?( T elem, channel(T) & chan ) { chan_write(T) cw{ chan, elem }; return cw; }
+static inline chan_write(T) ?<<?( channel(T) & chan, T elem ) { chan_write(T) cw{ chan, elem }; return cw; }
+static inline chan_write(T) insert( T elem, channel(T) & chan) { chan_write(T) cw{ chan, elem }; return cw; }
 
 static inline void __handle_select_closed_write( chan_write(T) & this, select_node & node ) with(this.chan, this) {
     __closed_insert( chan, elem );

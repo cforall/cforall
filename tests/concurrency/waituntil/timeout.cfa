@@ -14,5 +14,6 @@ int main() {
         waituntil( timeout( 1`ns ) ) { count++; } or else { count++; }
 
     assert( count == 1000 );
+    sleep( 1`ms );
     printf("done\n");
 }

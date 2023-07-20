@@ -36,9 +36,9 @@ int main( int argc, char * argv[] ) {
         Server1 s[numServers];
         for( long long int j = 0; j < numtimes; j++ ) {
             // printf("loop\n");
-            waituntil( j >> A ) { total += j; }
-            or waituntil( j >> B ) { total += j; }
-            or waituntil( j >> C ) { total += j; }
+            waituntil( A << j ) { total += j; }
+            or waituntil( B << j ) { total += j; }
+            or waituntil( C << j ) { total += j; }
         }
         printf("sending sentinels\n");
         for ( i; numServers ) insert( C, -1 );

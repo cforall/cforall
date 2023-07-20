@@ -38,6 +38,7 @@ forall( T ) {
 		dlist( select_node ) waiters;
         futex_mutex lock;
 	};
+    __CFA_SELECT_GET_TYPE( future(T) );
 
     struct future_node {
         inline select_node;

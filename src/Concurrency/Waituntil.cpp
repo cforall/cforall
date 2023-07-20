@@ -177,7 +177,7 @@ class GenerateWaitUntilCore final {
     Expr * genSelectTraitCall( const WhenClause * clause, const ClauseData * data, string fnName );
     CompoundStmt * genStmtBlock( const WhenClause * clause, const ClauseData * data );
     Stmt * genElseClauseBranch( const WaitUntilStmt * stmt, string & runName, string & arrName, vector<ClauseData *> & clauseData );
-    Stmt * genNoElseClauseBranch( const WaitUntilStmt * stmt, string & satName, string & runName, string & arrName, string & pCountName, vector<ClauseData *> & clauseData );
+    Stmt * genNoElseClauseBranch( const WaitUntilStmt * stmt, string & runName, string & arrName, string & pCountName, vector<ClauseData *> & clauseData );
     void genClauseInits( const WaitUntilStmt * stmt, vector<ClauseData *> & clauseData, CompoundStmt * body, string & statusName, string & elseWhenName );
     Stmt * recursiveOrIfGen( const WaitUntilStmt * stmt, vector<ClauseData *> & data, vector<ClauseData*>::size_type idx, string & elseWhenName );
     Stmt * buildOrCaseSwitch( const WaitUntilStmt * stmt, string & statusName, vector<ClauseData *> & data );
@@ -626,10 +626,10 @@ CompoundStmt * GenerateWaitUntilCore::genStmtBlock( const WhenClause * clause, c
     const CodeLocation & cLoc = clause->location;
     return new CompoundStmt( cLoc,
         {
-            new ExprStmt( cLoc,
-                genSelectTraitCall( clause, data, "on_selected" )
-            ),
-            ast::deepCopy( clause->stmt )
+            new IfStmt( cLoc,
+                genSelectTraitCall( clause, data, "on_selected" ),
+                ast::deepCopy( clause->stmt )
+            )
         }
     );
 }
@@ -819,7 +819,7 @@ Stmt * GenerateWaitUntilCore::genElseClauseBranch( const WaitUntilStmt * stmt, s
     );
 }
 
-Stmt * GenerateWaitUntilCore::genNoElseClauseBranch( const WaitUntilStmt * stmt, string & satName, string & runName, string & arrName, string & pCountName, vector<ClauseData *> & clauseData ) {
+Stmt * GenerateWaitUntilCore::genNoElseClauseBranch( const WaitUntilStmt * stmt, string & runName, string & arrName, string & pCountName, vector<ClauseData *> & clauseData ) {
     CompoundStmt * whileBody = new CompoundStmt( stmt->location );
     const CodeLocation & loc = stmt->location;
 
@@ -833,16 +833,15 @@ Stmt * GenerateWaitUntilCore::genNoElseClauseBranch( const WaitUntilStmt * stmt,
         )
     );
 
-    whileBody->push_back( genStatusCheckFor( stmt, clauseData, satName ) );
+    whileBody->push_back( genStatusCheckFor( stmt, clauseData, runName ) );
 
     return new CompoundStmt( loc,
         {
             new WhileDoStmt( loc,
-                genNotSatExpr( stmt, satName, arrName ),
+                genNotSatExpr( stmt, runName, arrName ),
                 whileBody,  // body
                 {}          // no inits
-            ),
-            genStatusCheckFor( stmt, clauseData, runName )
+            )
         }
     );
 }
@@ -866,7 +865,12 @@ void GenerateWaitUntilCore::genClauseInits( const WaitUntilStmt * stmt, vector<C
             new DeclStmt( cLoc,
                 new ObjectDecl( cLoc,
                     currClause->targetName,
-                    new ReferenceType( new TypeofType( ast::deepCopy( stmt->clauses.at(i)->target ) ) ),
+                    new ReferenceType( 
+                        new TypeofType( new UntypedExpr( cLoc,
+                            new NameExpr( cLoc, "__CFA_select_get_type" ),
+                            { ast::deepCopy( stmt->clauses.at(i)->target ) }
+                        ))
+                    ),
                     new SingleInit( cLoc, ast::deepCopy( stmt->clauses.at(i)->target ) )
                 )
             )
@@ -1278,11 +1282,11 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
             new IfStmt( stmt->else_cond->location,
                 new NameExpr( stmt->else_cond->location, elseWhenName ),
                 genElseClauseBranch( stmt, runName, statusArrName, clauseData ),
-                genNoElseClauseBranch( stmt, satName, runName, statusArrName, pCountName, clauseData )
+                genNoElseClauseBranch( stmt, runName, statusArrName, pCountName, clauseData )
             )
         );
     } else if ( !stmt->else_stmt ) { // normal gen
-        tryBody->push_back( genNoElseClauseBranch( stmt, satName, runName, statusArrName, pCountName, clauseData ) );
+        tryBody->push_back( genNoElseClauseBranch( stmt, runName, statusArrName, pCountName, clauseData ) );
     } else { // generate just else
         tryBody->push_back( genElseClauseBranch( stmt, runName, statusArrName, clauseData ) );
     }

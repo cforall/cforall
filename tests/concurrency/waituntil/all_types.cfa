@@ -95,9 +95,9 @@ int main( int argc, char * argv[] ) {
         {
             Churner c;
             for( long long int j = 0; j < numtimes; j++ ) {
-                when( j % 2 == 0 ) waituntil( j >> A ) { total += j; }
+                when( j % 2 == 0 ) waituntil( A << j ) { total += j; }
                 or when( j % 4 < 2 ) waituntil( B ) { produce_b_val( total ); }
-                and when( j % 8 < 4 ) waituntil( j >> C ) { total += j; }
+                and when( j % 8 < 4 ) waituntil( C << j ) { total += j; }
                 and waituntil( timeout( 1`ns ) ) {}
                 if ( j == numtimes / 2 )
                     fulfil( F, val_to_deliver );

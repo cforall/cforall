@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:54:28 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun  5 22:49:06 2023
-// Update Count     : 196
+// Last Modified On : Tue Jul 18 11:07:10 2023
+// Update Count     : 197
 //
 
 #include "rational.hfa"
@@ -205,10 +205,7 @@ forall( T | arithmetic( T ) ) {
 		ostype & ?|?( ostype & os, rational(T) r ) {
 			return os | r.numerator | '/' | r.denominator;
 		} // ?|?
-
-		void ?|?( ostype & os, rational(T) r ) {
-			(ostype &)(os | r); ends( os );
-		} // ?|?
+		OSTYPE_VOID_IMPL( rational(T) )
 	} // distribution
 } // distribution
 

@@ -131,21 +131,20 @@ static inline {
 	long double _Complex ?\?( long double _Complex x, _Complex long double y ) { return cpowl( x, y ); }
 } // distribution
 
-#define __CFA_BASE_COMP_1__() if ( x == 1 ) return 1
-#define __CFA_BASE_COMP_2__() if ( x == 2 ) return x << (y - 1)
-#define __CFA_EXP_OVERFLOW__() if ( y >= sizeof(y) * CHAR_BIT ) return 0
-
 #define __CFA_EXP__() \
 	if ( y == 0 ) return 1;								/* convention */ \
-	__CFA_BASE_COMP_1__();								/* base case */ \
-	__CFA_BASE_COMP_2__();								/* special case, positive shifting for integral types */ \
-	__CFA_EXP_OVERFLOW__();								/* immediate overflow, negative exponent > 2^size-1 */ \
+	__CFA_EXP_INT__(									/* special cases for integral types */ \
+		if ( x == 1 ) return 1;							/* base case */ \
+		if ( x == 2 ) return x << (y - 1);				/* positive shifting */ \
+		if ( y >= sizeof(y) * CHAR_BIT ) return 0;		/* immediate overflow, negative exponent > 2^size-1 */ \
+	) \
 	typeof(x) op = 1;									/* accumulate odd product */ \
 	for ( ; y > 1; y >>= 1 ) {							/* squaring exponentiation, O(log2 y) */ \
 		if ( (y & 1) == 1 ) op = op * x;				/* odd ? */ \
 		x = x * x; \
 	} \
 	return x * op
+#define __CFA_EXP_INT__(...) __VA_ARGS__
 
 static inline {
 	int ?\?( int x, unsigned int y ) { __CFA_EXP__(); }
@@ -157,12 +156,8 @@ static inline {
 	unsigned long long int ?\?( unsigned long long int x, unsigned long long int y ) { __CFA_EXP__(); }
 } // distribution
 
-#undef __CFA_BASE_COMP_1__
-#undef __CFA_BASE_COMP_2__
-#undef __CFA_EXP_OVERFLOW__
-#define __CFA_BASE_COMP_1__()
-#define __CFA_BASE_COMP_2__()
-#define __CFA_EXP_OVERFLOW__()
+#undef __CFA_EXP_INT__
+#define __CFA_EXP_INT__(...)
 
 static inline forall( OT | { void ?{}( OT & this, one_t ); OT ?*?( OT, OT ); } ) {
 	OT ?\?( OT x, unsigned int y ) { __CFA_EXP__(); }
@@ -170,9 +165,8 @@ static inline forall( OT | { void ?{}( OT & this, one_t ); OT ?*?( OT, OT ); } )
 	OT ?\?( OT x, unsigned long long int y ) { __CFA_EXP__(); }
 } // distribution
 
-#undef __CFA_BASE_COMP_1__
-#undef __CFA_BASE_COMP_2__
-#undef __CFA_EXP_OVERFLOW__
+#undef __CFA_EXP_INT__
+#undef __CFA_EXP__
 
 static inline {
 	int ?\=?( int & x, unsigned int y ) { x = x \ y; return x; }

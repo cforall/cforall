@@ -11,8 +11,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:56:25 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun  5 22:49:05 2023
-// Update Count     : 119
+// Last Modified On : Tue Jul 18 11:08:24 2023
+// Update Count     : 121
 //
 
 #pragma once
@@ -77,7 +77,7 @@ forall( T | arithmetic( T ) ) {
 
 	forall( ostype & | ostream( ostype ) | { ostype & ?|?( ostype &, T ); } ) {
 		ostype & ?|?( ostype &, rational(T) );
-		void ?|?( ostype &, rational(T) );
+		OSTYPE_VOID( rational(T) );
 	} // distribution
 } // distribution
 

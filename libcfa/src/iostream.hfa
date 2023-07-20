@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 29 11:07:25 2023
-// Update Count     : 427
+// Last Modified On : Tue Jul 18 15:57:21 2023
+// Update Count     : 462
 //
 
 #pragma once
@@ -73,67 +73,76 @@ trait writeable {
 
 // implement writable for intrinsic types
 
+#define OSTYPE_VOID( T ) void ?|?( ostype &, T )
+#define OSTYPE_VOID_IMPL( T ) \
+	void ?|?( ostype & os, T t ) { \
+		(ostype &)(os | t); ends( os ); \
+	} // ?|?
+
 forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype &, bool );
-	void ?|?( ostype &, bool );
+	OSTYPE_VOID( bool );
 
 	ostype & ?|?( ostype &, char );
-	void ?|?( ostype &, char );
+	OSTYPE_VOID( char );
 	ostype & ?|?( ostype &, signed char );
-	void ?|?( ostype &, signed char );
+	OSTYPE_VOID( signed char );
 	ostype & ?|?( ostype &, unsigned char );
-	void ?|?( ostype &, unsigned char );
+	OSTYPE_VOID( unsigned char );
 
 	ostype & ?|?( ostype &, short int );
-	void ?|?( ostype &, short int );
+	OSTYPE_VOID( short int );
 	ostype & ?|?( ostype &, unsigned short int );
-	void ?|?( ostype &, unsigned short int );
+	OSTYPE_VOID( unsigned short int );
 	ostype & ?|?( ostype &, int );
-	void ?|?( ostype &, int );
+	OSTYPE_VOID( int );
 	ostype & ?|?( ostype &, unsigned int );
-	void ?|?( ostype &, unsigned int );
+	OSTYPE_VOID( unsigned int );
 	ostype & ?|?( ostype &, long int );
-	void ?|?( ostype &, long int );
+	OSTYPE_VOID( long int );
 	ostype & ?|?( ostype &, long long int );
-	void ?|?( ostype &, long long int );
+	OSTYPE_VOID( long long int );
 	ostype & ?|?( ostype &, unsigned long int );
-	void ?|?( ostype &, unsigned long int );
+	OSTYPE_VOID( unsigned long int );
 	ostype & ?|?( ostype &, unsigned long long int );
-	void ?|?( ostype &, unsigned long long int );
+	OSTYPE_VOID( unsigned long long int );
 	#if defined( __SIZEOF_INT128__ )
 	ostype & ?|?( ostype &, int128 );
-	void ?|?( ostype &, int128 );
+	OSTYPE_VOID( int128 );
 	ostype & ?|?( ostype &, unsigned int128 );
-	void ?|?( ostype &, unsigned int128 );
+	OSTYPE_VOID( unsigned int128 );
 	#endif // __SIZEOF_INT128__
 
 	ostype & ?|?( ostype &, float );
-	void ?|?( ostype &, float );
+	OSTYPE_VOID( float );
 	ostype & ?|?( ostype &, double );
-	void ?|?( ostype &, double );
+	OSTYPE_VOID( double );
 	ostype & ?|?( ostype &, long double );
-	void ?|?( ostype &, long double );
+	OSTYPE_VOID( long double );
 
 	ostype & ?|?( ostype &, float _Complex );
-	void ?|?( ostype &, float _Complex );
+	OSTYPE_VOID( float _Complex );
 	ostype & ?|?( ostype &, double _Complex );
-	void ?|?( ostype &, double _Complex );
+	OSTYPE_VOID( double _Complex );
 	ostype & ?|?( ostype &, long double _Complex );
-	void ?|?( ostype &, long double _Complex );
+	OSTYPE_VOID( long double _Complex );
 
 	ostype & ?|?( ostype &, const char [] );
-	void ?|?( ostype &, const char [] );
+	OSTYPE_VOID( const char [] );
 	// ostype & ?|?( ostype &, const char16_t * );
 	#if ! ( __ARM_ARCH_ISA_ARM == 1 && __ARM_32BIT_STATE == 1 ) // char32_t == wchar_t => ambiguous
 	// ostype & ?|?( ostype &, const char32_t * );
 	#endif // ! ( __ARM_ARCH_ISA_ARM == 1 && __ARM_32BIT_STATE == 1 )
 	// ostype & ?|?( ostype &, const wchar_t * );
 	ostype & ?|?( ostype &, const void * );
-	void ?|?( ostype &, const void * );
+	OSTYPE_VOID( const void * );
+
+	// forall( T | { ostype & ?|?( ostype &, T ); } )
+	// void ?|?( ostype & os, T );
 
 	// manipulators
 	ostype & ?|?( ostype &, ostype & (*)( ostype & ) );
-	void ?|?( ostype &, ostype & (*)( ostype & ) );
+	OSTYPE_VOID( ostype & (*)( ostype & ) );
 
 	ostype & nl( ostype & );
 	ostype & nonl( ostype & );
@@ -189,7 +198,7 @@ struct _Ostream_Manip {
 // subobject overriding any previously listed initializer for the same subobject; ***all subobjects that are not
 // initialized explicitly shall be initialized implicitly the same as objects that have static storage duration.***
 
-#define IntegralFMTDecl( T, CODE ) \
+#define INTEGRAL_FMT_DECL( T, CODE ) \
 static inline { \
 	_Ostream_Manip(T) bin( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'b', { .all : 0 } }; } \
 	_Ostream_Manip(T) oct( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'o', { .all : 0 } }; } \
@@ -207,28 +216,28 @@ static inline { \
 } /* distribution */ \
 forall( ostype & | basic_ostream( ostype ) ) { \
 	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ); \
-	void ?|?( ostype & os, _Ostream_Manip(T) f ); \
+	OSTYPE_VOID( _Ostream_Manip(T) ); \
 } // ?|?
 
-IntegralFMTDecl( signed char, 'd' )
-IntegralFMTDecl( unsigned char, 'u' )
-IntegralFMTDecl( signed short int, 'd' )
-IntegralFMTDecl( unsigned short int, 'u' )
-IntegralFMTDecl( signed int, 'd' )
-IntegralFMTDecl( unsigned int, 'u' )
-IntegralFMTDecl( signed long int, 'd' )
-IntegralFMTDecl( unsigned long int, 'u' )
-IntegralFMTDecl( signed long long int, 'd' )
-IntegralFMTDecl( unsigned long long int, 'u' )
+INTEGRAL_FMT_DECL( signed char, 'd' )
+INTEGRAL_FMT_DECL( unsigned char, 'u' )
+INTEGRAL_FMT_DECL( signed short int, 'd' )
+INTEGRAL_FMT_DECL( unsigned short int, 'u' )
+INTEGRAL_FMT_DECL( signed int, 'd' )
+INTEGRAL_FMT_DECL( unsigned int, 'u' )
+INTEGRAL_FMT_DECL( signed long int, 'd' )
+INTEGRAL_FMT_DECL( unsigned long int, 'u' )
+INTEGRAL_FMT_DECL( signed long long int, 'd' )
+INTEGRAL_FMT_DECL( unsigned long long int, 'u' )
 #if defined( __SIZEOF_INT128__ )
-IntegralFMTDecl( int128, 'd' )
-IntegralFMTDecl( unsigned int128, 'u' )
+INTEGRAL_FMT_DECL( int128, 'd' )
+INTEGRAL_FMT_DECL( unsigned int128, 'u' )
 #endif // __SIZEOF_INT128__
 
 // *********************************** floating point ***********************************
 
 // Default suffix for values with no fraction is "."
-#define FloatingPointFMTDecl( T ) \
+#define FLOATING_POINT_FMT_DECL( T ) \
 static inline { \
 	_Ostream_Manip(T) hex( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'a', { .all : 0 } }; } \
 	_Ostream_Manip(T) sci( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'e', { .all : 0 } }; } \
@@ -252,11 +261,11 @@ static inline { \
 } /* distribution */ \
 forall( ostype & | basic_ostream( ostype ) ) { \
 	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ); \
-	void ?|?( ostype & os, _Ostream_Manip(T) f ); \
+	OSTYPE_VOID( _Ostream_Manip(T) ); \
 } // ?|?
 
-FloatingPointFMTDecl( double )
-FloatingPointFMTDecl( long double )
+FLOATING_POINT_FMT_DECL( double )
+FLOATING_POINT_FMT_DECL( long double )
 
 // *********************************** character ***********************************
 
@@ -272,7 +281,7 @@ static inline {
 } // distribution
 forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, _Ostream_Manip(char) f );
-	void ?|?( ostype & os, _Ostream_Manip(char) f );
+	OSTYPE_VOID( _Ostream_Manip(char) ); \
 } // ?|?
 
 // *********************************** C string ***********************************
@@ -290,12 +299,18 @@ static inline {
 } // distribution
 forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, _Ostream_Manip(const char *) f );
-	void ?|?( ostype & os, _Ostream_Manip(const char *) f );
+	OSTYPE_VOID( _Ostream_Manip(const char *) ); \
 } // ?|?
 
 
 // *********************************** istream ***********************************
 
+
+#define ISTYPE_VOID( T ) void ?|?( istype &, T )
+#define ISTYPE_VOID_IMPL( T ) \
+	void ?|?( istype & is, T t ) { \
+		(istype &)(is | t); ends( is ); \
+	} // ?|?
 
 forall( istype & )
 trait basic_istream {
@@ -326,59 +341,59 @@ trait readable {
 
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype &, bool & );
-	void ?|?( istype &, bool & );
+	ISTYPE_VOID( bool & );
 
 	istype & ?|?( istype &, char & );
-	void ?|?( istype &, char & );
+	ISTYPE_VOID( char & );
 	istype & ?|?( istype &, signed char & );
-	void ?|?( istype &, signed char & );
+	ISTYPE_VOID( signed char & );
 	istype & ?|?( istype &, unsigned char & );
-	void ?|?( istype &, unsigned char & );
+	ISTYPE_VOID( unsigned char & );
 
 	istype & ?|?( istype &, short int & );
-	void ?|?( istype &, short int & );
+	ISTYPE_VOID( short int & );
 	istype & ?|?( istype &, unsigned short int & );
-	void ?|?( istype &, unsigned short int & );
+	ISTYPE_VOID( unsigned short int & );
 	istype & ?|?( istype &, int & );
-	void ?|?( istype &, int & );
+	ISTYPE_VOID( int & );
 	istype & ?|?( istype &, unsigned int & );
-	void ?|?( istype &, unsigned int & );
+	ISTYPE_VOID( unsigned int & );
 	istype & ?|?( istype &, long int & );
-	void ?|?( istype &, long int & );
+	ISTYPE_VOID( long int & );
 	istype & ?|?( istype &, unsigned long int & );
-	void ?|?( istype &, unsigned long int & );
+	ISTYPE_VOID( unsigned long int & );
 	istype & ?|?( istype &, long long int & );
-	void ?|?( istype &, long long int & );
+	ISTYPE_VOID( long long int & );
 	istype & ?|?( istype &, unsigned long long int & );
-	void ?|?( istype &, unsigned long long int & );
+	ISTYPE_VOID( unsigned long long int & );
 	#if defined( __SIZEOF_INT128__ )
 	istype & ?|?( istype &, int128 & );
-	void ?|?( istype &, int128 & );
+	ISTYPE_VOID( int128 & );
 	istype & ?|?( istype &, unsigned int128 & );
-	void ?|?( istype &, unsigned int128 & );
+	ISTYPE_VOID( unsigned int128 & );
 	#endif // __SIZEOF_INT128__
 
 	istype & ?|?( istype &, float & );
-	void ?|?( istype &, float & );
+	ISTYPE_VOID( float & );
 	istype & ?|?( istype &, double & );
-	void ?|?( istype &, double & );
+	ISTYPE_VOID( double & );
 	istype & ?|?( istype &, long double & );
-	void ?|?( istype &, long double & );
+	ISTYPE_VOID( long double & );
 
 	istype & ?|?( istype &, float _Complex & );
-	void ?|?( istype &, float _Complex & );
+	ISTYPE_VOID( float _Complex & );
 	istype & ?|?( istype &, double _Complex & );
-	void ?|?( istype &, double _Complex & );
+	ISTYPE_VOID( double _Complex & );
 	istype & ?|?( istype &, long double _Complex & );
-	void ?|?( istype &, long double _Complex & );
+	ISTYPE_VOID( long double _Complex & );
 
 //	istype & ?|?( istype &, const char [] );
 	istype & ?|?( istype &, char [] );
-	void ?|?( istype &, char [] );
+	ISTYPE_VOID( char * );
 
 	// manipulators
 	istype & ?|?( istype &, istype & (*)( istype & ) );
-	void ?|?( istype &, istype & (*)( istype & ) );
+	ISTYPE_VOID( istype & (*)( istype & ) );
 	istype & nl( istype & is );
 	istype & nlOn( istype & );
 	istype & nlOff( istype & );
@@ -413,7 +428,7 @@ static inline {
 } // distribution
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cstr f );
-	void ?|?( istype & is, _Istream_Cstr f );
+	ISTYPE_VOID( _Istream_Cstr );
 }
 
 struct _Istream_Char {
@@ -426,7 +441,7 @@ static inline {
 } // distribution
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Char f );
-	void ?|?( istype & is, _Istream_Char f );
+	ISTYPE_VOID( _Istream_Char );
 }
 
 forall( T & | sized( T ) )
@@ -436,7 +451,7 @@ struct _Istream_Manip {
 	bool ignore;										// do not change input argument
 }; // _Istream_Manip
 
-#define InputFMTDecl( T ) \
+#define INPUT_FMT_DECL( T ) \
 static inline { \
 	_Istream_Manip(T) ignore( const T & val ) { return (_Istream_Manip(T))@{ (T &)val, -1, true }; } \
 	_Istream_Manip(T) & ignore( _Istream_Manip(T) & fmt ) { fmt.ignore = true; return fmt; } \
@@ -445,27 +460,27 @@ static inline { \
 } /* distribution */ \
 forall( istype & | basic_istream( istype ) ) { \
 	istype & ?|?( istype & is, _Istream_Manip(T) f ); \
-	void ?|?( istype & is, _Istream_Manip(T) f ); \
+	ISTYPE_VOID( _Istream_Manip(T) ); \
 } // ?|?
 
-InputFMTDecl( signed char )
-InputFMTDecl( unsigned char )
-InputFMTDecl( signed short int )
-InputFMTDecl( unsigned short int )
-InputFMTDecl( signed int )
-InputFMTDecl( unsigned int )
-InputFMTDecl( signed long int )
-InputFMTDecl( unsigned long int )
-InputFMTDecl( signed long long int )
-InputFMTDecl( unsigned long long int )
+INPUT_FMT_DECL( signed char )
+INPUT_FMT_DECL( unsigned char )
+INPUT_FMT_DECL( signed short int )
+INPUT_FMT_DECL( unsigned short int )
+INPUT_FMT_DECL( signed int )
+INPUT_FMT_DECL( unsigned int )
+INPUT_FMT_DECL( signed long int )
+INPUT_FMT_DECL( unsigned long int )
+INPUT_FMT_DECL( signed long long int )
+INPUT_FMT_DECL( unsigned long long int )
 
-InputFMTDecl( float )
-InputFMTDecl( double )
-InputFMTDecl( long double )
+INPUT_FMT_DECL( float )
+INPUT_FMT_DECL( double )
+INPUT_FMT_DECL( long double )
 
-InputFMTDecl( float _Complex )
-InputFMTDecl( double _Complex )
-InputFMTDecl( long double _Complex )
+INPUT_FMT_DECL( float _Complex )
+INPUT_FMT_DECL( double _Complex )
+INPUT_FMT_DECL( long double _Complex )
 
 
 // *********************************** time ***********************************
@@ -475,9 +490,9 @@ InputFMTDecl( long double _Complex )
 
 forall( ostype & | ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, Duration dur );
-	void ?|?( ostype & os, Duration dur );
+	OSTYPE_VOID( Duration );
 	ostype & ?|?( ostype & os, Time time );
-	void ?|?( ostype & os, Time time );
+	OSTYPE_VOID( Time );
 } // distribution
 
 // Local Variables: //

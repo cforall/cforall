@@ -30,7 +30,7 @@ int main( int argc, char * argv[] ) {
     {
         Server1 s[numServers];
         for( long long int j = 0; j < numtimes; j++ ) {
-            waituntil( j >> C ) { total += j; }
+            waituntil( C << j ) { total += j; }
         }
         printf("waiting for empty channels\n");
         printf("sending sentinels\n");

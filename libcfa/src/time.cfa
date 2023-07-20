@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 27 13:33:14 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  4 08:24:18 2020
-// Update Count     : 70
+// Last Modified On : Tue Jul 18 10:55:01 2023
+// Update Count     : 71
 //
 
 #include "time.hfa"
@@ -42,10 +42,7 @@ forall( ostype & | ostream( ostype ) ) {
 		} // if
 		return os;
 	} // ?|?
-
-	void ?|?( ostype & os, Duration dur ) with( dur ) {
-		(ostype &)(os | dur); ends( os );
-	} // ?|?
+	OSTYPE_VOID_IMPL( Duration )
 } // distribution
 
 
@@ -154,10 +151,7 @@ forall( ostype & | ostream( ostype ) ) {
 		} // if
 		return os;
 	} // ?|?
-
-	void ?|?( ostype & os, Time time ) with( time ) {
-		(ostype &)(os | time); ends( os );
-	} // ?|?
+	OSTYPE_VOID_IMPL( Time )
 } // distribution
 
 // Local Variables: //

@@ -18,10 +18,11 @@ Channel * chain;
 thread Task {};
 void main(Task & this) {
     size_t runs = 0;
+    int token = 0;
     try{
         for ( ;; ) {
-            remove( *chain );
-            insert( *chain, 0 );
+            token << *chain;
+            *chain << token;
             runs++;
         }
     } catch ( channel_closed * e ) {}
@@ -58,7 +59,7 @@ int main( int argc, char * argv[] ) {
     sout | "start";
     Channel chainChan{ 1 };
 
-    insert( chainChan, 0 );
+    chainChan << ((int)0);
 
     chain = &chainChan;    
     {

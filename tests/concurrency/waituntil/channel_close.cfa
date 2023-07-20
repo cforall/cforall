@@ -12,8 +12,8 @@ thread Producer {};
 void main( Producer & this ) {
     try {
         for( long long int i = 0;;i++ ) {
-            waituntil( (i >> A) ) { inserts++; }
-            and waituntil( (i >> B) ) { inserts++; }
+            waituntil( A << i ) { inserts++; }
+            and waituntil( B << i ) { inserts++; }
         }
     } catch ( channel_closed * e ) {} 
 }

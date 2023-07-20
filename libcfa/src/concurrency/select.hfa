@@ -93,12 +93,13 @@ trait is_selectable {
     bool unregister_select( T &, select_node & );
 
     // This routine is run on the selecting thread prior to executing the statement corresponding to the select_node
-    //    passed as an arg to this routine
-    // If on_selected returns false, the statement is not run if the on_selected call occured as 
-    //    part of a statement block that only ran due to an unregister_select that returned true
-    //    In all other executions the return value is ignored.
+    //    passed as an arg to this routine. If true is returned proceed as normal, if false is returned the statement is skipped
     bool on_selected( T &, select_node & );
 };
+// Used inside the compiler to allow for overloading on return type for operations such as '?<<?' for channels
+// YOU MUST USE THIS MACRO OR INCLUDE AN EQUIVALENT DECL FOR YOUR TYPE TO SUPPORT WAITUNTIL
+#define __CFA_SELECT_GET_TYPE( typename ) typename __CFA_select_get_type( typename __CFA_t )
+
 
 //=============================================================================================
 // Waituntil Helpers
@@ -210,7 +211,9 @@ void timeout_handler_select_cast( alarm_node_t & node );
 bool register_select( select_timeout_node & this, select_node & node );
 bool unregister_select( select_timeout_node & this, select_node & node );
 bool on_selected( select_timeout_node & this, select_node & node );
+select_timeout_node __CFA_select_get_type( select_timeout_node this );
 
 // Gateway routines to waituntil on duration
 select_timeout_node timeout( Duration duration );
 select_timeout_node sleep( Duration duration );
+
