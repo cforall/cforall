@@ -139,7 +139,7 @@ struct mcs_node {
 	single_sem sem;
 };
 
-static inline void ?{}(mcs_node & this) { this.next = 0p; }
+static inline void ?{}( mcs_node & this ) { this.next = 0p; }
 
 static inline mcs_node * volatile & ?`next ( mcs_node * node ) {
 	return node->next;
@@ -149,7 +149,7 @@ struct mcs_lock {
 	mcs_queue(mcs_node) queue;
 };
 
-static inline void lock(mcs_lock & l, mcs_node & n) {
+static inline void lock( mcs_lock & l, mcs_node & n ) {
 	if(push(l.queue, &n))
 		wait(n.sem);
 }
@@ -173,13 +173,13 @@ struct mcs_spin_queue {
 	mcs_spin_node * volatile tail;
 };
 
-static inline void ?{}(mcs_spin_node & this) { this.next = 0p; this.locked = true; }
+static inline void ?{}( mcs_spin_node & this ) { this.next = 0p; this.locked = true; }
 
 struct mcs_spin_lock {
 	mcs_spin_queue queue;
 };
 
-static inline void lock(mcs_spin_lock & l, mcs_spin_node & n) {
+static inline void lock( mcs_spin_lock & l, mcs_spin_node & n ) {
     n.locked = true;
 	mcs_spin_node * prev = __atomic_exchange_n(&l.queue.tail, &n, __ATOMIC_SEQ_CST);
 	if( prev == 0p ) return;
@@ -272,8 +272,8 @@ struct go_mutex {
 	int val; 
 };
 static inline void  ?{}( go_mutex & this ) with(this) { val = 0; }
-// static inline void ?{}( go_mutex & this, go_mutex this2 ) = void; // these don't compile correctly at the moment so they should be omitted
-// static inline void ?=?( go_mutex & this, go_mutex this2 ) = void;
+static inline void ?{}( go_mutex & this, go_mutex this2 ) = void;
+static inline void ?=?( go_mutex & this, go_mutex this2 ) = void;
 
 static inline bool internal_try_lock(go_mutex & this, int & compare_val, int new_val ) with(this) {
 	return __atomic_compare_exchange_n((int*)&val, (int*)&compare_val, new_val, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);

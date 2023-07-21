@@ -67,6 +67,8 @@ struct __attribute__((aligned(128))) channel {
     size_t p_blocks, p_ops, c_blocks, c_ops;      // counts total ops and ops resulting in a blocked thd
     #endif
 };
+static inline void ?{}( channel(T) & this, channel(T) this2 ) = void;
+static inline void ?=?( channel(T) & this, channel(T) this2 ) = void;
 
 static inline void ?{}( channel(T) &c, size_t _size ) with(c) {
     size = _size;
@@ -371,26 +373,26 @@ static inline bool __handle_pending( dlist( select_node ) & queue, select_node &
 
 // type used by select statement to capture a chan read as the selected operation
 struct chan_read {
-    T & ret;
-    channel(T) & chan;
+    T * ret;
+    channel(T) * chan;
 };
 __CFA_SELECT_GET_TYPE( chan_read(T) );
 
-static inline void ?{}( chan_read(T) & cr, channel(T) & chan, T & ret ) {
-    &cr.chan = &chan;
-    &cr.ret = &ret;
+static inline void ?{}( chan_read(T) & cr, channel(T) * chan, T * ret ) {
+    cr.chan = chan;
+    cr.ret = ret;
 }
-static inline chan_read(T) ?<<?( T & ret, channel(T) & chan ) { chan_read(T) cr{ chan, ret }; return cr; }
+static inline chan_read(T) ?<<?( T & ret, channel(T) & chan ) { chan_read(T) cr{ &chan, &ret }; return cr; }
 
-static inline void __handle_select_closed_read( chan_read(T) & this, select_node & node ) with(this.chan, this) {
-    __closed_remove( chan, ret );
+static inline void __handle_select_closed_read( chan_read(T) & this, select_node & node ) with(*this.chan, this) {
+    __closed_remove( *chan, *ret );
     // if we get here then the insert succeeded
     __make_select_node_available( node );
 }
 
-static inline bool register_select( chan_read(T) & this, select_node & node ) with(this.chan, this) {
+static inline bool register_select( chan_read(T) & this, select_node & node ) with(*this.chan, this) {
     lock( mutex_lock );
-    node.extra = &ret; // set .extra so that if it == 0p later in on_selected it is due to channel close
+    node.extra = ret; // set .extra so that if it == 0p later in on_selected it is due to channel close
 
     #ifdef CHAN_STATS
     if ( !closed ) c_ops++;
@@ -405,7 +407,7 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
             }
 
             if ( __handle_pending( prods, node ) ) {
-                __prods_handoff( chan, ret );
+                __prods_handoff( *chan, *ret );
                 __make_select_node_sat( node ); // need to to mark SAT now that we know operation is done or else threads could get stuck in __mark_select_node
                 unlock( mutex_lock );
                 return true;
@@ -431,7 +433,7 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
     // have to check for the zero size channel case
     ZeroSize: if ( size == 0 && !prods`isEmpty ) {
         if ( !__handle_waituntil_OR( prods ) ) break ZeroSize;
-        __prods_handoff( chan, ret );
+        __prods_handoff( *chan, *ret );
         __set_avail_then_unlock( node, mutex_lock );
         return true;
     }
@@ -448,14 +450,14 @@ static inline bool register_select( chan_read(T) & this, select_node & node ) wi
     }
 
     // Remove from buffer
-    __do_remove( chan, ret );
+    __do_remove( *chan, *ret );
     __set_avail_then_unlock( node, mutex_lock );
     return true;
 }
-static inline bool unregister_select( chan_read(T) & this, select_node & node ) { return unregister_chan( this.chan, node ); }
+static inline bool unregister_select( chan_read(T) & this, select_node & node ) { return unregister_chan( *this.chan, node ); }
 static inline bool on_selected( chan_read(T) & this, select_node & node ) with(this) {
     if ( unlikely(node.extra == 0p) ) {
-        if ( !exception_in_flight() ) __closed_remove( chan, ret ); // check if woken up due to closed channel
+        if ( !exception_in_flight() ) __closed_remove( *chan, *ret ); // check if woken up due to closed channel
         else return false;
     }
     // This is only reachable if not closed or closed exception was handled
@@ -464,40 +466,44 @@ static inline bool on_selected( chan_read(T) & this, select_node & node ) with(t
 
 // type used by select statement to capture a chan read as the selected operation that doesn't have a param to read to
 struct chan_read_no_ret {
-    T ret;
-    chan_read( T ) cr;
+    T retval;
+    chan_read( T ) c_read;
 };
 __CFA_SELECT_GET_TYPE( chan_read_no_ret(T) );
 
 static inline void ?{}( chan_read_no_ret(T) & this, channel(T) & chan ) {
-    this.cr{ chan, this.ret };
+    this.c_read{ &chan, &this.retval };
 }
-static inline chan_read_no_ret(T) remove( channel(T) & chan ) { chan_read_no_ret(T) cr{ chan }; return cr; }
-static inline bool register_select( chan_read_no_ret(T) & this, select_node & node ) { return register_select( this.cr, node ); }
-static inline bool unregister_select( chan_read_no_ret(T) & this, select_node & node ) { return unregister_select( this.cr, node ); }
-static inline bool on_selected( chan_read_no_ret(T) & this, select_node & node ) { return on_selected( this.cr, node ); }
+
+static inline chan_read_no_ret(T) remove( channel(T) & chan ) { chan_read_no_ret(T) c_read{ chan }; return c_read; }
+static inline bool register_select( chan_read_no_ret(T) & this, select_node & node ) { 
+    this.c_read.ret = &this.retval;
+    return register_select( this.c_read, node );
+}
+static inline bool unregister_select( chan_read_no_ret(T) & this, select_node & node ) { return unregister_select( this.c_read, node ); }
+static inline bool on_selected( chan_read_no_ret(T) & this, select_node & node ) { return on_selected( this.c_read, node ); }
 
 // type used by select statement to capture a chan write as the selected operation
 struct chan_write {
     T elem;
-    channel(T) & chan;
+    channel(T) * chan;
 };
 __CFA_SELECT_GET_TYPE( chan_write(T) );
 
-static inline void ?{}( chan_write(T) & cw, channel(T) & chan, T elem ) {
-    &cw.chan = &chan;
+static inline void ?{}( chan_write(T) & cw, channel(T) * chan, T elem ) {
+    cw.chan = chan;
     memcpy( (void *)&cw.elem, (void *)&elem, sizeof(T) );
 }
-static inline chan_write(T) ?<<?( channel(T) & chan, T elem ) { chan_write(T) cw{ chan, elem }; return cw; }
-static inline chan_write(T) insert( T elem, channel(T) & chan) { chan_write(T) cw{ chan, elem }; return cw; }
+static inline chan_write(T) ?<<?( channel(T) & chan, T elem ) { chan_write(T) cw{ &chan, elem }; return cw; }
+static inline chan_write(T) insert( T elem, channel(T) & chan) { chan_write(T) cw{ &chan, elem }; return cw; }
 
-static inline void __handle_select_closed_write( chan_write(T) & this, select_node & node ) with(this.chan, this) {
-    __closed_insert( chan, elem );
+static inline void __handle_select_closed_write( chan_write(T) & this, select_node & node ) with(*this.chan, this) {
+    __closed_insert( *chan, elem );
     // if we get here then the insert succeeded
     __make_select_node_available( node );
 }
 
-static inline bool register_select( chan_write(T) & this, select_node & node ) with(this.chan, this) {
+static inline bool register_select( chan_write(T) & this, select_node & node ) with(*this.chan, this) {
     lock( mutex_lock );
     node.extra = &elem; // set .extra so that if it == 0p later in on_selected it is due to channel close
 
@@ -515,7 +521,7 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
             }
 
             if ( __handle_pending( cons, node ) ) {
-                __cons_handoff( chan, elem );
+                __cons_handoff( *chan, elem );
                 __make_select_node_sat( node ); // need to to mark SAT now that we know operation is done or else threads could get stuck in __mark_select_node
                 unlock( mutex_lock );
                 return true;
@@ -542,7 +548,7 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
     // handle blocked consumer case via handoff (buffer is implicitly empty)
     ConsEmpty: if ( !cons`isEmpty ) {
         if ( !__handle_waituntil_OR( cons ) ) break ConsEmpty;
-        __cons_handoff( chan, elem );
+        __cons_handoff( *chan, elem );
         __set_avail_then_unlock( node, mutex_lock );
         return true;
     }
@@ -559,15 +565,15 @@ static inline bool register_select( chan_write(T) & this, select_node & node ) w
     } // if
 
     // otherwise carry out write either via normal insert
-    __buf_insert( chan, elem );
+    __buf_insert( *chan, elem );
     __set_avail_then_unlock( node, mutex_lock );
     return true;
 }
-static inline bool unregister_select( chan_write(T) & this, select_node & node ) { return unregister_chan( this.chan, node ); }
+static inline bool unregister_select( chan_write(T) & this, select_node & node ) { return unregister_chan( *this.chan, node ); }
 
 static inline bool on_selected( chan_write(T) & this, select_node & node ) with(this) { 
     if ( unlikely(node.extra == 0p) ) {
-        if ( !exception_in_flight() ) __closed_insert( chan, elem ); // check if woken up due to closed channel
+        if ( !exception_in_flight() ) __closed_insert( *chan, elem ); // check if woken up due to closed channel
         else return false;
     }
     // This is only reachable if not closed or closed exception was handled
