@@ -9,14 +9,15 @@
 // Author           : Thierry Delisle
 // Created On       : Thu Apr 23 17:31:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 13 23:54:57 2023
-// Update Count     : 1
+// Last Modified On : Fri Jul 21 21:36:01 2023
+// Update Count     : 3
 //
 
 #pragma once
 
 #include <unistd.h>
 #include <sys/socket.h>
+#include <string.h>										// memset
 
 extern "C" {
 	#include <asm/types.h>
@@ -150,19 +151,6 @@ bool has_user_level_blocking( fptr_t func );
 
 #if CFA_HAVE_LINUX_IO_URING_H
 	static inline void zero_sqe(struct io_uring_sqe * sqe) {
-		sqe->flags = 0;
-		sqe->ioprio = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
-		sqe->fsync_flags = 0;
-		sqe->__pad2[0] = 0;
-		sqe->__pad2[1] = 0;
-		sqe->__pad2[2] = 0;
-		sqe->fd = 0;
-		sqe->off = 0;
-		sqe->addr = 0;
-		sqe->len = 0;
+		memset( sqe, 0, sizeof( struct io_uring_sqe ) );
 	}
 #endif

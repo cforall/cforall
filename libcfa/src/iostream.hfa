@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 18 15:57:21 2023
-// Update Count     : 462
+// Last Modified On : Wed Jul 19 14:25:52 2023
+// Update Count     : 463
 //
 
 #pragma once
@@ -137,6 +137,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype &, const void * );
 	OSTYPE_VOID( const void * );
 
+	// FIX-ME: does not work so using macros
 	// forall( T | { ostype & ?|?( ostype &, T ); } )
 	// void ?|?( ostype & os, T );
 
