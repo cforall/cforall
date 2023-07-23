@@ -8,22 +8,22 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Mon Oct 30 13:37:34 2017
-// Last Modified By : --
-// Last Modified On : --
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Jul 22 08:25:29 2023
+// Update Count     : 3
 //
 
 #pragma once
 
 #ifdef SAFE_SORT
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort2( T * arr );
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort3( T * arr );
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort4( T * arr );
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort5( T * arr );
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort6( T * arr );
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sortN( T * arr, size_t dim );
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort2( T * arr );
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort3( T * arr );
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort4( T * arr );
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort5( T * arr );
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sort6( T * arr );
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } ) static inline void __libcfa_small_sortN( T * arr, size_t dim );
 
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } )
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } )
 static inline void __libcfa_small_sort( T * arr, size_t dim ) {
 	switch( dim ) {
 		case 1 : return;
@@ -40,19 +40,19 @@ static inline void __libcfa_small_sort( T * arr, size_t dim ) {
 #define max(x, y) (y > x ? y : x)
 #define SWAP(x,y) { T a = min(arr[x], arr[y]); T b = max(arr[x], arr[y]); arr[x] = a; arr[y] = b;}
 
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } )
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } )
 static inline void __libcfa_small_sort2( T * arr ) {
 	SWAP(0, 1);
 }
 
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } )
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } )
 static inline void __libcfa_small_sort3( T * arr ) {
 	SWAP(1, 2);
 	SWAP(0, 2);
 	SWAP(0, 1);
 }
 
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } )
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } )
 static inline void __libcfa_small_sort4( T * arr ) {
 	SWAP(0, 1);
 	SWAP(2, 3);
@@ -61,7 +61,7 @@ static inline void __libcfa_small_sort4( T * arr ) {
 	SWAP(1, 2);
 }
 
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } )
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } )
 static inline void __libcfa_small_sort5( T * arr ) {
 	SWAP(0, 1);
 	SWAP(3, 4);
@@ -74,7 +74,7 @@ static inline void __libcfa_small_sort5( T * arr ) {
 	SWAP(1, 2);
 }
 
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } )
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } )
 static inline void __libcfa_small_sort6( T * arr ) {
 	SWAP(1, 2);
 	SWAP(4, 5);
@@ -90,12 +90,12 @@ static inline void __libcfa_small_sort6( T * arr ) {
 	SWAP(2, 3);
 }
 
-forall( T | {  int ?<?( T, T ); int ?>?( T, T ); } )
+forall( T | { int ?<?( T, T ); int ?>?( T, T ); } )
 static inline void __libcfa_small_sortN( T * arr, size_t dim ) {
-	int i, j;
-	for (i = 1; i < dim; i++) {
+	for ( i; 1 ~ dim ) {
 		T tmp = arr[i];
-		for (j = i; j >= 1 && tmp < arr[j-1]; j--) {
+		int j;
+		for ( j = i; j >= 1 && tmp < arr[j-1]; j--) {
 			arr[j] = arr[j-1];
 		}
 		arr[j] = tmp;
@@ -174,9 +174,9 @@ static inline void __libcfa_small_sort6( void* * arr ) {
 }
 
 static inline void __libcfa_small_sortN( void* * arr, size_t dim ) {
-	int i, j;
-	for (i = 1; i < dim; i++) {
-		void* tmp = arr[i];
+	for ( i; 1 ~ dim ) {
+		void * tmp = arr[i];
+		int j;
 		for (j = i; j >= 1 && tmp < arr[j-1]; j--) {
 			arr[j] = arr[j-1];
 		}

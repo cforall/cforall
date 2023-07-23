@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thu Mar 30 12:30:01 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 22 18:20:26 2022
-// Update Count     : 13
+// Last Modified On : Sat Jul 22 08:17:27 2023
+// Update Count     : 14
 //
 
 #include <stdio.h>
@@ -32,7 +32,7 @@ extern "C" {
 		for ( int count = 0, retcode; count < len; count += retcode ) {
 			in_buffer += count;
 
-			for ( ;; ) {
+			for () {
 				retcode = write( fd, in_buffer, len - count );
 
 				// not a timer interrupt ?

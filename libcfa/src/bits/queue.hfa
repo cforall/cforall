@@ -90,7 +90,7 @@ forall( T & | { T *& Next ( T * ); } ) {
 			#endif // __CFA_DEBUG__
 			T * prev = 0p;
 			T * curr = (T *)root;
-			for ( ;; ) {
+			for () {
 				if ( &n == curr ) {						// found => remove
 					if ( (T *)root == &n ) {
 						dropHead( q );

@@ -10,61 +10,10 @@
 
 #if !defined(__CFA_NO_STATISTICS__)
 	void __init_stats( struct __stats_t * stats ) {
-		stats->ready.push.local.attempt = 0;
-		stats->ready.push.local.success = 0;
-		stats->ready.push.share.attempt = 0;
-		stats->ready.push.share.success = 0;
-		stats->ready.push.extrn.attempt = 0;
-		stats->ready.push.extrn.success = 0;
-		stats->ready.pop.local .attempt = 0;
-		stats->ready.pop.local .success = 0;
-		stats->ready.pop.help  .attempt = 0;
-		stats->ready.pop.help  .success = 0;
-		stats->ready.pop.steal .attempt = 0;
-		stats->ready.pop.steal .success = 0;
-		stats->ready.pop.search.attempt = 0;
-		stats->ready.pop.search.success = 0;
-		stats->ready.threads.migration = 0;
-		stats->ready.threads.extunpark = 0;
-		stats->ready.threads.threads   = 0;
-		stats->ready.threads.cthreads  = 0;
-		stats->ready.threads.preempt.yield  = 0;
-		stats->ready.threads.preempt.rllfwd = 0;
-		stats->ready.sleep.halts   = 0;
-		stats->ready.sleep.cancels = 0;
-		stats->ready.sleep.early   = 0;
-		stats->ready.sleep.wakes   = 0;
-		stats->ready.sleep.seen    = 0;
-		stats->ready.sleep.exits   = 0;
+		memset( &stats->ready, 0, sizeof( stats->ready ) );
 
 		#if defined(CFA_HAVE_LINUX_IO_URING_H)
-			stats->io.alloc.fast        = 0;
-			stats->io.alloc.slow        = 0;
-			stats->io.alloc.fail        = 0;
-			stats->io.alloc.revoke      = 0;
-			stats->io.alloc.block       = 0;
-			stats->io.submit.fast       = 0;
-			stats->io.submit.slow       = 0;
-			stats->io.submit.eagr       = 0;
-			stats->io.submit.nblk       = 0;
-			stats->io.submit.extr       = 0;
-			stats->io.flush.external    = 0;
-			stats->io.flush.signal      = 0;
-			stats->io.flush.dirty       = 0;
-			stats->io.flush.full        = 0;
-			stats->io.flush.idle        = 0;
-			stats->io.flush.eager       = 0;
-			stats->io.calls.flush       = 0;
-			stats->io.calls.submitted   = 0;
-			stats->io.calls.drain       = 0;
-			stats->io.calls.completed   = 0;
-			stats->io.calls.locked      = 0;
-			stats->io.calls.helped      = 0;
-			stats->io.calls.errors.busy = 0;
-			stats->io.ops.sockread      = 0;
-			stats->io.ops.epllread      = 0;
-			stats->io.ops.sockwrite     = 0;
-			stats->io.ops.epllwrite     = 0;
+			memset( &stats->io, 0, sizeof( stats->io ) );
 		#endif
 
 		#if defined(CFA_STATS_ARRAY)
