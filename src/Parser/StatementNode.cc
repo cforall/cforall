@@ -360,92 +360,92 @@ ast::WaitForStmt * build_waitfor_timeout( const CodeLocation & location, ast::Wa
 } // build_waitfor_timeout
 
 ast::WaitUntilStmt::ClauseNode * build_waituntil_clause( const CodeLocation & loc, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt ) {
-    ast::WhenClause * clause = new ast::WhenClause( loc );
-    clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
-    clause->stmt = maybeMoveBuild( stmt );
-    clause->target = maybeMoveBuild( targetExpr );
-    return new ast::WaitUntilStmt::ClauseNode( clause );
+	ast::WhenClause * clause = new ast::WhenClause( loc );
+	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
+	clause->stmt = maybeMoveBuild( stmt );
+	clause->target = maybeMoveBuild( targetExpr );
+	return new ast::WaitUntilStmt::ClauseNode( clause );
 }
 ast::WaitUntilStmt::ClauseNode * build_waituntil_else( const CodeLocation & loc, ExpressionNode * when, StatementNode * stmt ) {
-    ast::WhenClause * clause = new ast::WhenClause( loc );
-    clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
-    clause->stmt = maybeMoveBuild( stmt );
-    return new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::ELSE, clause );
+	ast::WhenClause * clause = new ast::WhenClause( loc );
+	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
+	clause->stmt = maybeMoveBuild( stmt );
+	return new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::ELSE, clause );
 }
+
 ast::WaitUntilStmt::ClauseNode * build_waituntil_timeout( const CodeLocation & loc, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt ) {
-    ast::WhenClause * clause = new ast::WhenClause( loc );
-    clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
-    clause->stmt = maybeMoveBuild( stmt );
-    clause->target = maybeMoveBuild( timeout );
-    return new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::TIMEOUT, clause );
+	ast::WhenClause * clause = new ast::WhenClause( loc );
+	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
+	clause->stmt = maybeMoveBuild( stmt );
+	clause->target = maybeMoveBuild( timeout );
+	return new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::TIMEOUT, clause );
 }
 
 ast::WaitUntilStmt * build_waituntil_stmt( const CodeLocation & loc, ast::WaitUntilStmt::ClauseNode * root ) {
-    ast::WaitUntilStmt * retStmt = new ast::WaitUntilStmt( loc );
-    retStmt->predicateTree = root;
-    
-    // iterative tree traversal
-    std::vector<ast::WaitUntilStmt::ClauseNode *> nodeStack; // stack needed for iterative traversal
-    ast::WaitUntilStmt::ClauseNode * currNode = nullptr;
-    ast::WaitUntilStmt::ClauseNode * lastInternalNode = nullptr;
-    ast::WaitUntilStmt::ClauseNode * cleanup = nullptr; // used to cleanup removed else/timeout
-    nodeStack.push_back(root);
+	ast::WaitUntilStmt * retStmt = new ast::WaitUntilStmt( loc );
+	retStmt->predicateTree = root;
 
-    do {
-        currNode = nodeStack.back();
-        nodeStack.pop_back(); // remove node since it will be processed
+	// iterative tree traversal
+	std::vector<ast::WaitUntilStmt::ClauseNode *> nodeStack; // stack needed for iterative traversal
+	ast::WaitUntilStmt::ClauseNode * currNode = nullptr;
+	ast::WaitUntilStmt::ClauseNode * lastInternalNode = nullptr;
+	ast::WaitUntilStmt::ClauseNode * cleanup = nullptr; // used to cleanup removed else/timeout
+	nodeStack.push_back(root);
 
-        switch (currNode->op) {
-            case ast::WaitUntilStmt::ClauseNode::LEAF:
-                retStmt->clauses.push_back(currNode->leaf);
-                break;
-            case ast::WaitUntilStmt::ClauseNode::ELSE:
-                retStmt->else_stmt = currNode->leaf->stmt 
-                    ? ast::deepCopy( currNode->leaf->stmt )
-                    : nullptr;
-                
-                retStmt->else_cond = currNode->leaf->when_cond
-                    ? ast::deepCopy( currNode->leaf->when_cond )
-                    : nullptr;
+	do {
+		currNode = nodeStack.back();
+		nodeStack.pop_back(); // remove node since it will be processed
 
-                delete currNode->leaf;
-                break;
-            case ast::WaitUntilStmt::ClauseNode::TIMEOUT:
-                retStmt->timeout_time = currNode->leaf->target 
-                    ? ast::deepCopy( currNode->leaf->target )
-                    : nullptr;
-                retStmt->timeout_stmt = currNode->leaf->stmt
-                    ? ast::deepCopy( currNode->leaf->stmt )
-                    : nullptr;
-                retStmt->timeout_cond = currNode->leaf->when_cond
-                    ? ast::deepCopy( currNode->leaf->when_cond )
-                    : nullptr;
+		switch (currNode->op) {
+		case ast::WaitUntilStmt::ClauseNode::LEAF:
+			retStmt->clauses.push_back(currNode->leaf);
+			break;
+		case ast::WaitUntilStmt::ClauseNode::ELSE:
+			retStmt->else_stmt = currNode->leaf->stmt
+				? ast::deepCopy( currNode->leaf->stmt )
+				: nullptr;
+			retStmt->else_cond = currNode->leaf->when_cond
+				? ast::deepCopy( currNode->leaf->when_cond )
+				: nullptr;
 
-                delete currNode->leaf;
-                break;
-            default:
-                nodeStack.push_back( currNode->right ); // process right after left
-                nodeStack.push_back( currNode->left );
+			delete currNode->leaf;
+			break;
+		case ast::WaitUntilStmt::ClauseNode::TIMEOUT:
+			retStmt->timeout_time = currNode->leaf->target
+				? ast::deepCopy( currNode->leaf->target )
+				: nullptr;
+			retStmt->timeout_stmt = currNode->leaf->stmt
+				? ast::deepCopy( currNode->leaf->stmt )
+				: nullptr;
+			retStmt->timeout_cond = currNode->leaf->when_cond
+				? ast::deepCopy( currNode->leaf->when_cond )
+				: nullptr;
 
-                // Cut else/timeout out of the tree
-                if ( currNode->op == ast::WaitUntilStmt::ClauseNode::LEFT_OR ) {
-                    if ( lastInternalNode )
-                        lastInternalNode->right = currNode->left;
-                    else    // if not set then root is LEFT_OR 
-                        retStmt->predicateTree = currNode->left;
-    
-                    currNode->left = nullptr;
-                    cleanup = currNode;
-                }
-                
-                lastInternalNode = currNode;
-                break;
-        }
-    } while ( !nodeStack.empty() );
+			delete currNode->leaf;
+			break;
+		default:
+			nodeStack.push_back( currNode->right ); // process right after left
+			nodeStack.push_back( currNode->left );
 
-    if ( cleanup ) delete cleanup;
+			// Cut else/timeout out of the tree
+			if ( currNode->op == ast::WaitUntilStmt::ClauseNode::LEFT_OR ) {
+				if ( lastInternalNode )
+					lastInternalNode->right = currNode->left;
+				else // if not set then root is LEFT_OR
+					retStmt->predicateTree = currNode->left;
 
-    return retStmt;
+				currNode->left = nullptr;
+				cleanup = currNode;
+			}
+
+			lastInternalNode = currNode;
+			break;
+		}
+	} while ( !nodeStack.empty() );
+
+	if ( cleanup ) delete cleanup;
+
+	return retStmt;
 }
 
 ast::Stmt * build_with( const CodeLocation & location, ExpressionNode * exprs, StatementNode * stmt ) {
