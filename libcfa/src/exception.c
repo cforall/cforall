@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jun 26 15:13:00 2017
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Feb 24 13:40:00 2021
-// Update Count     : 36
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jul 27 09:45:57 2023
+// Update Count     : 37
 //
 
 // Normally we would get this from the CFA prelude.
@@ -567,8 +567,6 @@ asm (
 	// Add a hidden symbol which points at the function.
 	"	.hidden	CFA.ref.__gcfa_personality_v0\n"
 	"	.weak	CFA.ref.__gcfa_personality_v0\n"
-	// No clue what this does specifically
-	"	.section	.data.rel.local.CFA.ref.__gcfa_personality_v0,\"awG\",@progbits,CFA.ref.__gcfa_personality_v0,comdat\n"
 #if defined( __x86_64 ) || defined( __i386 )
 	"	.align 8\n"
 #else // defined( __ARM_ARCH )

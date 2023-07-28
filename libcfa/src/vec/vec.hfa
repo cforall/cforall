@@ -78,7 +78,8 @@ void ?{}(long double& a, int b) { a = b; }
 long double ?=?(long double& n, zero_t) { return n = 0L; }
 }
 
-trait dottable(V, T) {
+forall(V, T)
+trait dottable {
     T dot(V, V);
 };
 

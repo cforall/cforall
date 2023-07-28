@@ -246,7 +246,8 @@ static inline result & ?[?]( arpk(N, S, Te, Tbase) & this, all_t ) {
 //
 
 // desired:
-// trait ar(A &, Tv &, [N]) {
+// forall(A &, Tv &, [N])
+// trait ar {
 //     Tv& ?[?]( A&, zero_t );
 //     Tv& ?[?]( A&, one_t  );
 //     Tv& ?[?]( A&, int    );
