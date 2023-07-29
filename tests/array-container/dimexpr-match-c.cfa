@@ -15,12 +15,16 @@
 
 #include "dimexpr-match.hfa"     // test framework
 
+#ifdef TRY_WISH_1 // "unification as-if"
+forall( [N] )
+void zip( float (*a)[N], float (*b)[N] ) {}
+#endif
+
 DECLN_runTests {
 
     enum { enu7 = 7, enu42 = 42 };
     int mut7 = 7, mut42 = 42;
 
-    
     #define TRY_COMPAT( LV, RV )        \
     {                                   \
         void f( float (*x)[LV] ) {}     \
@@ -78,9 +82,6 @@ DECLN_runTests {
     #undef TRY_COMPAT
 
   #ifdef TRY_WISH_1 // "unification as-if"
-    forall( [N] )
-    void zip( float (*a)[N], float (*b)[N] ) {}
-
     #define TRY_COMPAT( LV, RV )        \
     {                                   \
         float a[LV];                    \
@@ -92,7 +93,4 @@ DECLN_runTests {
   #endif
 
   #endif
-
-
-
 }

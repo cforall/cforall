@@ -43,13 +43,14 @@ POUNDINCLUDE <containers/array.hfa>
 
 #endif
 
+forall( [N] )
+void zip( array(float, N) & a, array(float, N) & b ) {}
 
 DECLN_runTests {
 
     enum { enu7 = 7, enu42 = 42 };
     int mut7 = 7, mut42 = 42;
 
-    
     #define TRY_COMPAT( LV, RV )            \
     {                                       \
         void f( array(float, LV) * x ) {}   \
@@ -101,10 +102,6 @@ DECLN_runTests {
     }
     ARRANGEMENT( REFVAR_ASGN )
     #undef TRY_COMPAT
-
-
-    forall( [N] )
-    void zip( array(float, N) & a, array(float, N) & b ) {}
 
     #define TRY_COMPAT( LV, RV )            \
     {                                       \
