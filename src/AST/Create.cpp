@@ -41,19 +41,13 @@ FunctionDecl * asForward( FunctionDecl const * decl ) {
 	if ( nullptr == decl->stmts ) {
 		return nullptr;
 	}
-	return new ast::FunctionDecl( decl->location,
-		decl->name,
-		vectorCopy( decl->type_params ),
-		vectorCopy( decl->assertions ),
-		vectorCopy( decl->params ),
-		vectorCopy( decl->returns ),
-		nullptr,
-		decl->storage,
-		decl->linkage,
-		vectorCopy( decl->attributes ),
-		decl->funcSpec,
-		decl->type->isVarArgs
-	);
+	// The cast and changing the original should be safe as long as the
+	// change is reverted before anything else sees it. It's also faster.
+	FunctionDecl * mutDecl = const_cast<FunctionDecl *>( decl );
+	CompoundStmt const * stmts = mutDecl->stmts.release();
+	FunctionDecl * copy = deepCopy( mutDecl );
+	mutDecl->stmts = stmts;
+	return copy;
 }
 
 StructDecl * asForward( StructDecl const * decl ) {

@@ -890,8 +890,7 @@ bool InitExpander_new::addReference() {
 			for (int depth = dst->result->referenceDepth(); depth > 0; depth--) {
 				dst = new ast::AddressExpr(dst);
 			}
-		}
-		else {
+		} else {
 			dst = new ast::CastExpr(dst, new ast::ReferenceType(dst->result, {}));
 		}
 		if (src->result.as<ast::ReferenceType>()) {
@@ -899,7 +898,11 @@ bool InitExpander_new::addReference() {
 				src = new ast::AddressExpr(src);
 			}
 		}
-		return new ast::ApplicationExpr(dst->location, ast::VariableExpr::functionPointer(dst->location, assign), {dst, src});
+		auto var = ast::VariableExpr::functionPointer(dst->location, assign);
+		auto app = new ast::ApplicationExpr(dst->location, var, {dst, src});
+		// Skip the resolver, just set the result to the correct type.
+		app->result = ast::deepCopy( src->result );
+		return app;
 	}
 
 	struct ConstExprChecker : public WithShortCircuiting {

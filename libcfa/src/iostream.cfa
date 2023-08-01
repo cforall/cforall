@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 18 13:56:01 2023
-// Update Count     : 1403
+// Last Modified On : Sun Jul 30 23:01:00 2023
+// Update Count     : 1406
 //
 
 #include "iostream.hfa"
@@ -229,7 +229,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, const char s[] ) {
 		enum { Open = 1, Close, OpenClose };
-		static const unsigned char mask[256] @= {
+		static const unsigned char mask[256] @= {		// 256 covers all Latin-1 characters
 			// opening delimiters, no space after
 			['('] : Open, ['['] : Open, ['{'] : Open,
 			['='] : Open, ['$'] : Open, [(unsigned char)'£'] : Open, [(unsigned char)'¥'] : Open,

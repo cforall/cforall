@@ -26,12 +26,15 @@ namespace ast {
 namespace Validate {
 
 /// Cleans up assertion lists and expands traits.
-/// Also checks that operator names are used properly on functions and
-/// assigns unique IDs. This is a "legacy" pass.
-/// Must be after implement concurrent keywords; because uniqueIds must be
-/// set on declaration before resolution.
+/// Also checks that operator names are used properly on functions.
+/// This is a "legacy" pass.
 /// Must happen before auto-gen routines are added.
 void decayForallPointers( ast::TranslationUnit & transUnit );
+
+/// Sets uniqueIds on any declarations that do not have one set.
+/// Must be after implement concurrent keywords; because uniqueIds must be
+/// set on declaration before resolution.
+void fixUniqueIds( ast::TranslationUnit & transUnit );
 
 /// Expand all traits in an assertion list.
 std::vector<ast::ptr<ast::DeclWithType>> expandAssertions(

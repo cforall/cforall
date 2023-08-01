@@ -531,10 +531,22 @@ ast::ptr<ast::Stmt> StructFuncGenerator::makeMemberOp(
 			dstParam->type.strict_as<ast::ReferenceType>()->base
 		)
 	);
-	return genImplicitCall(
+	auto stmt = genImplicitCall(
 		srcParam, dstSelect, location, func->name,
 		field, direction
 	);
+	// This could return the above directly, except the generated code is
+	// built using the structure's members and that means all the scoped
+	// names (the forall parameters) are incorrect. This corrects them.
+	if ( stmt && !decl->params.empty() ) {
+		ast::DeclReplacer::TypeMap oldToNew;
+		for ( auto pair : group_iterate( decl->params, func->type_params ) ) {
+			oldToNew.emplace( std::get<0>(pair), std::get<1>(pair) );
+		}
+		auto node = ast::DeclReplacer::replace( stmt, oldToNew );
+		stmt = strict_dynamic_cast<const ast::Stmt *>( node );
+	}
+	return stmt;
 }
 
 template<typename Iterator>

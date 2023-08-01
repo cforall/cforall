@@ -213,8 +213,8 @@ struct OperatorChecker final {
 		auto type = obj->type->stripDeclarator();
 		if ( dynamic_cast< const ast::FunctionType * >( type ) ) return;
 		SemanticError( obj->location,
-			toCString( "operator ", obj->name.c_str(), " is not "
-			"a function or function pointer." ) );
+			toCString( "operator ", obj->name.c_str(),
+			" is not a function or function pointer." ) );
 	}
 };
 
@@ -236,6 +236,9 @@ void decayForallPointers( ast::TranslationUnit & transUnit ) {
 	ast::Pass<TraitExpander>::run( transUnit );
 	ast::Pass<AssertionFunctionFixer>::run( transUnit );
 	ast::Pass<OperatorChecker>::run( transUnit );
+}
+
+void fixUniqueIds( ast::TranslationUnit & transUnit ) {
 	ast::Pass<UniqueFixCore>::run( transUnit );
 }
 

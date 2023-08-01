@@ -88,28 +88,27 @@ struct FixQualifiedTypesCore :
 		}
 	}
 
-	ast::Expr const * postvisit( ast::QualifiedNameExpr const * t) {
+	ast::Expr const * postvisit( ast::QualifiedNameExpr const * t ) {
 		assert( location );
-		if ( t->type_decl ) {
-        	auto enumName = t->type_decl->name;
-        	const ast::EnumDecl * enumDecl = symtab.lookupEnum( enumName );
-			for ( ast::ptr<ast::Decl> const & member : enumDecl->members ) {
-				if ( auto memberAsObj = member.as<ast::ObjectDecl>() ) {
-					if ( memberAsObj->name == t->name ) {
-						return new ast::VariableExpr( t->location, memberAsObj );
-					}
-				} else {
-					assertf( false, "unhandled qualified child type");
+		if ( !t->type_decl ) return t;
+
+		auto enumName = t->type_decl->name;
+		const ast::EnumDecl * enumDecl = symtab.lookupEnum( enumName );
+		for ( ast::ptr<ast::Decl> const & member : enumDecl->members ) {
+			if ( auto memberAsObj = member.as<ast::ObjectDecl>() ) {
+				if ( memberAsObj->name == t->name ) {
+					return new ast::VariableExpr( t->location, memberAsObj );
 				}
+			} else {
+				assertf( false, "unhandled qualified child type" );
 			}
+		}
 
-        	auto var = new ast::ObjectDecl( t->location, t->name,
-			new ast::EnumInstType(enumDecl, ast::CV::Const), nullptr, {}, ast::Linkage::Cforall );
-			var->mangleName = Mangle::mangle( var );
-			return new ast::VariableExpr( t->location, var );
-        }
-
-		return t;
+		auto var = new ast::ObjectDecl( t->location, t->name,
+			new ast::EnumInstType( enumDecl, ast::CV::Const ),
+			nullptr, {}, ast::Linkage::Cforall );
+		var->mangleName = Mangle::mangle( var );
+		return new ast::VariableExpr( t->location, var );
 	}
 
 };

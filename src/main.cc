@@ -333,6 +333,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Link Reference To Types", Validate::linkReferenceToTypes, transUnit );
 
+		PASS( "Forall Pointer Decay", Validate::decayForallPointers, transUnit );
 		PASS( "Fix Qualified Types", Validate::fixQualifiedTypes, transUnit );
 		PASS( "Eliminate Typedef", Validate::eliminateTypedef, transUnit );
 		PASS( "Hoist Struct", Validate::hoistStruct, transUnit );
@@ -341,7 +342,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Check Function Returns", Validate::checkReturnStatements, transUnit );
 		PASS( "Fix Return Statements", InitTweak::fixReturnStatements, transUnit );
 		PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords, transUnit );
-		PASS( "Forall Pointer Decay", Validate::decayForallPointers, transUnit );
+		PASS( "Fix Unique Ids", Validate::fixUniqueIds, transUnit );
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls, transUnit );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines, transUnit );
@@ -368,7 +369,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Translate Throws", ControlStruct::translateThrows, transUnit );
 		PASS( "Fix Labels", ControlStruct::fixLabels, transUnit );
-        PASS( "Implement Waituntil", Concurrency::generateWaitUntil, transUnit  );
+		PASS( "Implement Waituntil", Concurrency::generateWaitUntil, transUnit  );
 		PASS( "Fix Names", CodeGen::fixNames, transUnit );
 		PASS( "Gen Init", InitTweak::genInit, transUnit );
 		PASS( "Expand Member Tuples" , Tuples::expandMemberTuples, transUnit );

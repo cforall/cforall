@@ -19,8 +19,12 @@
 #include "ParseNode.hpp"
 #include "Pass.hpp"
 #include "TranslationUnit.hpp"
+#include "Common/utility.h"
+#include "GenPoly/ScopedSet.h"
 
 #include <vector>
+
+using GenPoly::ScopedSet;
 
 namespace ast {
 
@@ -172,10 +176,197 @@ struct InvariantCore {
 	}
 };
 
+/// Checks that referred to nodes are in scope.
+/// This checks many readonly pointers to see if the declaration they are
+/// referring to is in scope by the structural rules of code.
+// Any escapes marked with a bug should be removed once the bug is fixed.
+struct InScopeCore : public ast::WithShortCircuiting {
+	ScopedSet<DeclWithType const *> typedDecls;
+	ScopedSet<TypeDecl const *> typeDecls;
+	// These 3 are really hard to check, because uses that originally ref. at
+	// a forward declaration can be rewired to point a later full definition.
+	ScopedSet<StructDecl const *> structDecls;
+	ScopedSet<UnionDecl const *> unionDecls;
+	ScopedSet<EnumDecl const *> enumDecls;
+	ScopedSet<TraitDecl const *> traitDecls;
+
+	bool isInGlobal = false;
+
+	void beginScope() {
+		typedDecls.beginScope();
+		typeDecls.beginScope();
+		structDecls.beginScope();
+		unionDecls.beginScope();
+		enumDecls.beginScope();
+		traitDecls.beginScope();
+	}
+
+	void endScope() {
+		typedDecls.endScope();
+		typeDecls.endScope();
+		structDecls.endScope();
+		unionDecls.endScope();
+		enumDecls.endScope();
+		traitDecls.endScope();
+	}
+
+	void previsit( ApplicationExpr const * expr ) {
+		// All isInGlobal manipulation is just to isolate this check.
+		// The invalid compound literals lead to bad ctor/dtors. [#280]
+		VariableExpr const * func = nullptr;
+		CastExpr const * cast = nullptr;
+		VariableExpr const * arg = nullptr;
+		if ( isInGlobal
+				&& 1 == expr->args.size()
+				&& ( func = expr->func.as<VariableExpr>() )
+				&& ( "?{}" == func->var->name || "^?{}" == func->var->name )
+				&& ( cast = expr->args[0].as<CastExpr>() )
+				&& ( arg = cast->arg.as<VariableExpr>() )
+				&& isPrefix( arg->var->name, "_compLit" ) ) {
+			visit_children = false;
+		}
+	}
+
+	void previsit( VariableExpr const * expr ) {
+		if ( !expr->var ) return;
+		// bitwise assignment escape [#281]
+		if ( expr->var->location.isUnset() ) return;
+		assert( typedDecls.contains( expr->var ) );
+	}
+
+	void previsit( FunctionType const * type ) {
+		// This is to avoid checking the assertions, which can point at the
+		// function's declaration and not the enclosing function.
+		for ( auto type_param : type->forall ) {
+			if ( type_param->formal_usage ) {
+				visit_children = false;
+				// We could check non-assertion fields here.
+			}
+		}
+	}
+
+	void previsit( TypeInstType const * type ) {
+		if ( !type->base ) return;
+		assertf( type->base->isManaged(), "Floating Node" );
+
+		// bitwise assignment escape [#281]
+		if ( type->base->location.isUnset() ) return;
+		// Formal types can actually look at out of scope variables.
+		if ( type->formal_usage ) return;
+		assert( typeDecls.contains( type->base ) );
+	}
+
+	void previsit( TraitInstType const * type ) {
+		if ( !type->base ) return;
+		assert( traitDecls.contains( type->base ) );
+	}
+
+	void previsit( ObjectDecl const * decl ) {
+		typedDecls.insert( decl );
+		// There are some ill-formed compound literals. [#280]
+		// The only known problem cases are at the top level.
+		if ( isPrefix( decl->name, "_compLit" ) ) {
+			visit_children = false;
+		}
+	}
+
+	void previsit( FunctionDecl const * decl ) {
+		typedDecls.insert( decl );
+		beginScope();
+		for ( auto & type_param : decl->type_params ) {
+			typeDecls.insert( type_param );
+		}
+		for ( auto & assertion : decl->assertions ) {
+			typedDecls.insert( assertion );
+		}
+		for ( auto & param : decl->params ) {
+			typedDecls.insert( param );
+		}
+		for ( auto & ret : decl->returns ) {
+			typedDecls.insert( ret );
+		}
+		// No special handling of withExprs.
+
+		// Part of the compound literal escape. [#280]
+		if ( "__global_init__" == decl->name
+				|| "__global_destroy__" == decl->name ) {
+			assert( !isInGlobal );
+			isInGlobal = true;
+		}
+	}
+
+	void postvisit( FunctionDecl const * decl ) {
+		endScope();
+		// Part of the compound literal escape. [#280]
+		if ( isInGlobal && ( "__global_init__" == decl->name
+				|| "__global_destroy__" == decl->name ) ) {
+			isInGlobal = false;
+		}
+	}
+
+	void previsit( StructDecl const * decl ) {
+		structDecls.insert( decl );
+		beginScope();
+		for ( auto & type_param : decl->params ) {
+			typeDecls.insert( type_param );
+		}
+	}
+
+	void postvisit( StructDecl const * ) {
+		endScope();
+	}
+
+	void previsit( UnionDecl const * decl ) {
+		unionDecls.insert( decl );
+		beginScope();
+		for ( auto & type_param : decl->params ) {
+			typeDecls.insert( type_param );
+		}
+	}
+
+	void postvisit( UnionDecl const * ) {
+		endScope();
+	}
+
+	void previsit( EnumDecl const * decl ) {
+		enumDecls.insert( decl );
+		if ( ast::EnumDecl::EnumHiding::Visible == decl->hide ) {
+			for ( auto & member : decl->members ) {
+				typedDecls.insert( member.strict_as<ast::DeclWithType>() );
+			}
+		}
+		beginScope();
+		for ( auto & type_param : decl->params ) {
+			typeDecls.insert( type_param );
+		}
+	}
+
+	void postvisit( EnumDecl const * ) {
+		endScope();
+	}
+
+	void previsit( TraitDecl const * decl ) {
+		traitDecls.insert( decl );
+		beginScope();
+		for ( auto & type_param : decl->params ) {
+			typeDecls.insert( type_param );
+		}
+	}
+
+	void postvisit( TraitDecl const * ) {
+		endScope();
+	}
+
+	void previsit( Designation const * ) {
+		visit_children = false;
+	}
+};
+
 } // namespace
 
 void checkInvariants( TranslationUnit & transUnit ) {
-	ast::Pass<InvariantCore>::run( transUnit );
+	Pass<InvariantCore>::run( transUnit );
+	Pass<InScopeCore>::run( transUnit );
 }
 
 } // namespace ast

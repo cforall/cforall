@@ -15,6 +15,7 @@
 
 #include "GenImplicitCall.hpp"
 
+#include "AST/Copy.hpp"                  // for deepCopy
 #include "AST/Decl.hpp"                  // for ObjectDecl
 #include "AST/Expr.hpp"                  // for ConstantExpr, UntypedExpr,...
 #include "AST/Init.hpp"                  // for SingleInit
@@ -114,16 +115,17 @@ void genArrayCall(
 	ast::ptr< ast::Expr > begin, end;
 	std::string cmp, update;
 
+	const ast::Expr * dimension = deepCopy( array->dimension );
 	if ( forward ) {
 		// generate: for ( int i = 0; i < N; ++i )
 		begin = ast::ConstantExpr::from_int( loc, 0 );
-		end = array->dimension;
+		end = dimension;
 		cmp = "?<?";
 		update = "++?";
 	} else {
 		// generate: for ( int i = N-1; i >= 0; --i )
 		begin = ast::UntypedExpr::createCall( loc, "?-?",
-			{ array->dimension, ast::ConstantExpr::from_int( loc, 1 ) } );
+			{ dimension, ast::ConstantExpr::from_int( loc, 1 ) } );
 		end = ast::ConstantExpr::from_int( loc, 0 );
 		cmp = "?>=?";
 		update = "--?";

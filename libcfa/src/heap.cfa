@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 30 08:37:37 2022
-// Update Count     : 1605
+// Last Modified On : Fri Jul 28 18:27:53 2023
+// Update Count     : 1612
 //
 
 #include <stdio.h>
@@ -368,6 +368,7 @@ libcfa_public int __map_prot;							// common mmap/mprotect protection
 // Thread-local storage is allocated lazily when the storage is accessed.
 static __thread size_t PAD1 CALIGN TLSMODEL __attribute__(( unused )); // protect false sharing
 static __thread Heap * heapManager CALIGN TLSMODEL;
+static  __thread bool heapManagerBootFlag CALIGN TLSMODEL = false;
 static __thread size_t PAD2 CALIGN TLSMODEL __attribute__(( unused )); // protect further false sharing
 
 
@@ -487,6 +488,7 @@ Heap * getHeap() with( heapMaster ) {
 			#ifdef __CFA_DEBUG__
 			allocUnfreed = 0;
 			#endif // __CFA_DEBUG__
+			heapManagerBootFlag = true;
 		} // with
 	} // if
 
@@ -498,6 +500,8 @@ void heapManagerCtor() libcfa_public {
 	if ( unlikely( ! heapMasterBootFlag ) ) heapMasterCtor();
 
 	lock( heapMaster.mgrLock );							// protect heapMaster counters
+
+	assert( ! heapManagerBootFlag );
 
 	// get storage for heap manager
 
@@ -513,6 +517,8 @@ void heapManagerCtor() libcfa_public {
 
 
 void heapManagerDtor() libcfa_public {
+  if ( unlikely( ! heapManagerBootFlag ) ) return;		// thread never used ?
+
 	lock( heapMaster.mgrLock );
 
 	// place heap on list of free heaps for reusability
@@ -525,6 +531,7 @@ void heapManagerDtor() libcfa_public {
 
 	// Do not set heapManager to NULL because it is used after Cforall is shutdown but before the program shuts down.
 
+	heapManagerBootFlag = false;
 	unlock( heapMaster.mgrLock );
 } // heapManagerDtor
 
@@ -534,7 +541,7 @@ void heapManagerDtor() libcfa_public {
 
 extern int cfa_main_returned;							// from interpose.cfa
 extern "C" {
-	void memory_startup( void ) {
+	void memory_startup( void ) {						// singleton => called once at start of program
 		if ( ! heapMasterBootFlag ) heapManagerCtor();	// sanity check
 	} // memory_startup
 
@@ -894,9 +901,18 @@ static void * manager_extend( size_t size ) with( *heapManager ) {
 #define STAT_0_CNT( counter )
 #endif // __STATISTICS__
 
+// Uncomment to get allocation addresses for a 0-sized allocation rather than a null pointer.
+//#define __NONNULL_0_ALLOC__
+#if ! defined( __NONNULL_0_ALLOC__ )
+#define __NULL_0_ALLOC__ unlikely( size == 0 ) ||		/* 0 BYTE ALLOCATION RETURNS NULL POINTER */
+#else
+#define __NULL_0_ALLOC__
+#endif // __NONNULL_0_ALLOC__
+
 #define PROLOG( counter, ... ) \
 	BOOT_HEAP_MANAGER; \
-	if ( unlikely( size == 0 ) ||						/* 0 BYTE ALLOCATION RETURNS NULL POINTER */ \
+	if ( \
+		__NULL_0_ALLOC__ \
 		unlikely( size > ULONG_MAX - sizeof(Heap.Storage) ) ) { /* error check */ \
 		STAT_0_CNT( counter ); \
 		__VA_ARGS__; \
