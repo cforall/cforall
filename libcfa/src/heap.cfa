@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 28 18:27:53 2023
-// Update Count     : 1612
+// Last Modified On : Wed Aug  2 18:48:30 2023
+// Update Count     : 1614
 //
 
 #include <stdio.h>
@@ -526,6 +526,7 @@ void heapManagerDtor() libcfa_public {
 	heapMaster.freeHeapManagersList = heapManager;
 
 	#ifdef __STATISTICS__
+	heapMaster.stats += heapManager->stats;				// retain this heap's statistics
 	heapMaster.threads_exited += 1;
 	#endif // __STATISTICS__
 
@@ -563,6 +564,12 @@ extern "C" {
 	void heapAppStop() {								// called by __cfaabi_appready_startdown
 		fclose( stdin ); fclose( stdout );				// free buffer storage
 	  if ( ! cfa_main_returned ) return;				// do not check unfreed storage if exit called
+
+		#ifdef __STATISTICS__
+		if ( getenv( "CFA_MALLOC_STATS" ) ) {			// check for external printing
+			malloc_stats();
+		} // if
+		#endif // __STATISTICS__
 
 		#ifdef __CFA_DEBUG__
 		// allocUnfreed is set to 0 when a heap is created and it accumulates any unfreed storage during its multiple thread

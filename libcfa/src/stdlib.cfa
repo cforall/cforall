@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb 16 16:31:34 2023
-// Update Count     : 633
+// Last Modified On : Sat Aug  5 11:53:43 2023
+// Update Count     : 637
 //
 
 #include "stdlib.hfa"
@@ -64,7 +64,21 @@ void adelete( T arr[], TT rest ) {
 
 //---------------------------------------
 
-float _Complex strto( const char sptr[], char ** eptr ) {
+static vtable(out_of_range) out_of_range_vt;
+static vtable(invalid_argument) invalid_argument_vt;
+
+forall( T | { T strto( const char sptr[], char * eptr[], int ); } )
+T convert( const char sptr[] ) {
+	char * eptr;
+	errno = 0;											// reset
+	T val = strto( sptr, &eptr, 10 );					// attempt conversion
+	if ( errno == ERANGE ) Throw( out_of_range );
+	if ( eptr == sptr ||								// conversion failed, no characters generated
+		 *eptr != '\0' ) Throw( invalid_argument );		// not at end of str ?
+	return val;
+} // convert
+
+float _Complex strto( const char sptr[], char * eptr[] ) {
 	float re, im;
 	char * eeptr;
 	re = strtof( sptr, &eeptr );
@@ -75,7 +89,7 @@ float _Complex strto( const char sptr[], char ** eptr ) {
 	return re + im * _Complex_I;
 } // strto
 
-double _Complex strto( const char sptr[], char ** eptr ) {
+double _Complex strto( const char sptr[], char * eptr[] ) {
 	double re, im;
 	char * eeptr;
 	re = strtod( sptr, &eeptr );
@@ -86,7 +100,7 @@ double _Complex strto( const char sptr[], char ** eptr ) {
 	return re + im * _Complex_I;
 } // strto
 
-long double _Complex strto( const char sptr[], char ** eptr ) {
+long double _Complex strto( const char sptr[], char * eptr[] ) {
 	long double re, im;
 	char * eeptr;
 	re = strtold( sptr, &eeptr );

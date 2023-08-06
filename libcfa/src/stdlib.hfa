@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:30:04 2023
-// Update Count     : 766
+// Last Modified On : Sat Aug  5 11:53:42 2023
+// Update Count     : 774
 //
 
 #pragma once
@@ -21,7 +21,7 @@
 
 #include <stdlib.h>										// *alloc, strto*, ato*
 #include <heap.hfa>
-
+#include <errno.h>
 
 // Reduce includes by explicitly defining these routines.
 extern "C" {
@@ -293,21 +293,27 @@ forall( T & | sized(T) | { void ^?{}( T & ); }, TT... | { void adelete( TT ); } 
 //---------------------------------------
 
 static inline {
-	int strto( const char sptr[], char ** eptr, int base ) { return (int)strtol( sptr, eptr, base ); }
-	unsigned int strto( const char sptr[], char ** eptr, int base ) { return (unsigned int)strtoul( sptr, eptr, base ); }
-	long int strto( const char sptr[], char ** eptr, int base ) { return strtol( sptr, eptr, base ); }
-	unsigned long int strto( const char sptr[], char ** eptr, int base ) { return strtoul( sptr, eptr, base ); }
-	long long int strto( const char sptr[], char ** eptr, int base ) { return strtoll( sptr, eptr, base ); }
-	unsigned long long int strto( const char sptr[], char ** eptr, int base ) { return strtoull( sptr, eptr, base ); }
+	int strto( const char sptr[], char * eptr[], int base ) { return (int)strtol( sptr, eptr, base ); }
+	unsigned int strto( const char sptr[], char * eptr[], int base ) { return (unsigned int)strtoul( sptr, eptr, base ); }
+	long int strto( const char sptr[], char * eptr[], int base ) { return strtol( sptr, eptr, base ); }
+	unsigned long int strto( const char sptr[], char * eptr[], int base ) { return strtoul( sptr, eptr, base ); }
+	long long int strto( const char sptr[], char * eptr[], int base ) { return strtoll( sptr, eptr, base ); }
+	unsigned long long int strto( const char sptr[], char * eptr[], int base ) { return strtoull( sptr, eptr, base ); }
 
-	float strto( const char sptr[], char ** eptr ) { return strtof( sptr, eptr ); }
-	double strto( const char sptr[], char ** eptr ) { return strtod( sptr, eptr ); }
-	long double strto( const char sptr[], char ** eptr ) { return strtold( sptr, eptr ); }
+	float strto( const char sptr[], char * eptr[] ) { return strtof( sptr, eptr ); }
+	double strto( const char sptr[], char * eptr[] ) { return strtod( sptr, eptr ); }
+	long double strto( const char sptr[], char * eptr[] ) { return strtold( sptr, eptr ); }
 } // distribution
 
-float _Complex strto( const char sptr[], char ** eptr );
-double _Complex strto( const char sptr[], char ** eptr );
-long double _Complex strto( const char sptr[], char ** eptr );
+float _Complex strto( const char sptr[], char * eptr[] );
+double _Complex strto( const char sptr[], char * eptr[] );
+long double _Complex strto( const char sptr[], char * eptr[] );
+
+exception out_of_range {};
+exception invalid_argument {};
+
+forall( T | { T strto( const char sptr[], char * eptr[], int ); } )
+T convert( const char sptr[] );
 
 static inline {
 	int ato( const char sptr[] ) { return (int)strtol( sptr, 0p, 10 ); }

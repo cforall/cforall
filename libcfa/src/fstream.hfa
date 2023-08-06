@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 29 11:08:31 2023
-// Update Count     : 251
+// Last Modified On : Sat Aug  5 11:42:40 2023
+// Update Count     : 254
 //
 
 #pragma once
@@ -33,7 +33,7 @@ struct ofstream {
 	const char * sepCur$;
 	char separator$[ofstream_sepSize];
 	char tupleSeparator$[ofstream_sepSize];
-	multiple_acquisition_lock lock$;
+	multiple_acquisition_lock lock$;					// used by trait is_lock for mutex statement
 }; // ofstream
 
 // Satisfies ostream
@@ -100,7 +100,7 @@ extern ofstream & exit, & abort;
 struct ifstream {
 	void * file$;
 	bool nlOnOff$;
-	multiple_acquisition_lock lock$;
+	multiple_acquisition_lock lock$;					// used by trait is_lock for mutex statement
 }; // ifstream
 
 // Satisfies istream
