@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 30 23:01:00 2023
-// Update Count     : 1406
+// Last Modified On : Mon Aug  7 08:59:29 2023
+// Update Count     : 1407
 //
 
 #include "iostream.hfa"
@@ -926,6 +926,7 @@ forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, istype & (* manip)( istype & ) ) {
 		return manip( is );
 	} // ?|?
+
 	void ?|?( istype & is, istype & (* manip)( istype & ) ) {
 		manip( is ); ends( is );
 	} // ?|?

@@ -1,14 +1,14 @@
-extern "C" { static inline int invoke_main(int argc, char* argv[], char* envp[]); }
+extern "C" { static inline int invoke_main( int argc, char * argv[], char * envp[]); }
 int cfa_args_argc;
 char ** cfa_args_argv;
 char ** cfa_args_envp;
 __attribute__((weak)) extern int cfa_main_returned;
 
-int main(int argc, char* argv[], char* envp[]) {
+int main( int argc, char * argv[], char * envp[] ) {
 	cfa_args_argc = argc;
 	cfa_args_argv = argv;
 	cfa_args_envp = envp;
 	int ret = invoke_main(argc, argv, envp);
-	if(&cfa_main_returned) cfa_main_returned = 1;
+	if( &cfa_main_returned ) cfa_main_returned = 1;
 	return ret;
 }

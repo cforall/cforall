@@ -8,9 +8,9 @@
 //
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
-// Last Modified By : Michael L. Brooks
-// Last Modified On : Fri Sep 03 11:00:00 2021
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Aug  7 10:07:26 2023
+// Update Count     : 2
 //
 
 #include "string.hfa"
@@ -114,6 +114,11 @@ void ?|?( ofstream & fs, const string & this ) {
 
 string ?()( string & this, size_t start, size_t end ) {
     string ret = { *this.inner, start, end };
+    return ret`shareEdits;
+}
+
+string ?()( string & this, size_t start ) {
+    string ret = { *this.inner, start, size( this ) };
     return ret`shareEdits;
 }
 

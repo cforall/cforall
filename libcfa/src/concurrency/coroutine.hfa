@@ -217,20 +217,29 @@ static inline void resume( coroutine$ * dst ) __attribute__((nonnull (1))) {
 	$ctx_switch( src, dst );
 }
 
-// non local ehm routines
+// non local ehm and coroutine utility routines
+bool poll( coroutine$ * cor );
+bool poll();
+
 forall(T & | is_coroutine(T)) {
     void enable_ehm( T & cor );
     void disable_ehm( T & cor );
     bool poll( T & cor );
     bool checked_poll( T & cor );
+    coroutine$ * resumer( T & cor );
 }
 
 // trait for exceptions able to be resumed at another coroutine
 forall(exceptT &, T & | is_coroutine(T))
 trait ehm_resume_at { void $throwResume(exceptT &); };
 
+// general resumeAt
 forall(exceptT &, T & | ehm_resume_at( exceptT, T ))
 void resumeAt( T & receiver, exceptT & ex );
+
+// resumeAt for underlying coroutine$ type
+forall(exceptT & | { void $throwResume(exceptT &); })
+void resumeAt( coroutine$ * receiver, exceptT & ex );
 
 // Local Variables: //
 // mode: c //

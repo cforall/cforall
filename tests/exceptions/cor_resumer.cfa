@@ -1,0 +1,48 @@
+#include <fstream.hfa>
+#include <thread.hfa>
+
+int num_links = 10;
+
+exception unwind { int num; };
+vtable(unwind) unwind_vt;
+
+
+coroutine Node { int cnt;  unwind except; };
+void ?{}( Node & this, int cnt ) { this.cnt = cnt; }
+
+// builds a list of Node coroutines linked by their last resumer field
+// the (num_links + 1)th node then triggers unwinding of the list by throwing resumtions at the last resumer
+void main( Node & this ) with( this ) {
+    sout | cnt;
+    if ( cnt == 0 ) {
+        except{ &unwind_vt, cnt };
+        resumeAt( resumer( this ), except );
+        return;
+    }
+    Node next{ cnt - 1 };
+    resume( next );
+    try {
+        poll();
+    } catch( unwind * e ) {
+        e->num++;
+        if ( e->num != cnt ) {
+            sout | "exception count and thread count should be consistent!";
+            abort();
+        }
+        sout | e->num;
+        except{ &unwind_vt, e->num };
+        resumeAt( resumer( this ), except );
+    }
+
+}
+
+int main() {
+	sout | "main start";
+    Node n{ num_links };
+    try {
+        resume( n );
+        poll();
+    } catch( unwind * e ) {}
+    
+	sout | "main end";
+}

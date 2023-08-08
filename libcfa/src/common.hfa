@@ -9,15 +9,18 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 11 17:54:36 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug  5 13:05:27 2023
-// Update Count     : 32
+// Last Modified On : Mon Aug  7 10:16:35 2023
+// Update Count     : 34
 //
 
 #pragma once
 
 // TEMPORARY
-#define Exception( name ) exception name{}; vtable( name ) name ## _vt
-#define Throw( name ) throw (name){ &name ## _vt }
+#define Exception( name, fields... ) exception name{ fields }; static vtable( name ) name ## _vt
+#define ExceptionDecl( name, fields... ) exception name{ fields }
+#define ExceptionDefn( name, fields... ) static vtable( name ) name ## _vt
+#define ExceptionValue( name, values... ) (name){ &name ## _vt, values }
+#define Throw( name, values... ) throw (name){ values }
 
 //---------------------------------------
 

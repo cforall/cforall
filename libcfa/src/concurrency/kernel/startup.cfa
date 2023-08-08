@@ -486,6 +486,9 @@ static void ?{}( coroutine$ & this, current_stack_info_t * info) with( this ) {
 	starter = 0p;
 	last = 0p;
 	cancellation = 0p;
+    ehm_state.ehm_buffer{};
+    ehm_state.buffer_lock{};
+    ehm_state.ehm_enabled = false;
 }
 
 static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
