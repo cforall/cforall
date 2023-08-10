@@ -27,6 +27,7 @@
 
 #include "kernel/private.hfa"
 #include "exception.hfa"
+#include "exception.h"
 #include "math.hfa"
 
 #define CFA_COROUTINE_USE_MMAP 0
@@ -297,6 +298,12 @@ inline nonlocal_exception * pop_ehm_head( coroutine$ * this ) {
     return nl_ex;
 }
 
+void defaultResumeAtHandler( exception_t * except ) {
+    __cfaehm_allocate_exception( except );
+    free( except );
+    __cfaehm_begin_unwind( (void(*)(exception_t *))defaultTerminationHandler );
+}
+
 bool poll( coroutine$ * cor ) libcfa_public {
     nonlocal_exception * nl_ex = pop_ehm_head( cor );
 
@@ -307,7 +314,10 @@ bool poll( coroutine$ * cor ) libcfa_public {
     while ( nl_ex != 0p ){
         exception_t * ex = nl_ex->the_exception;
         free( nl_ex );
-        throwResume *ex;
+        __cfaehm_throw_resume( ex, defaultResumeAtHandler );
+        
+        // only reached if resumption handled. other dealloc handled in defaultResumeAtHandler
+        free( ex );
         nl_ex = pop_ehm_head( cor );
     }
     
@@ -315,6 +325,7 @@ bool poll( coroutine$ * cor ) libcfa_public {
 }
 
 bool poll() libcfa_public { return poll( active_coroutine() ); }
+coroutine$ * resumer() libcfa_public { return active_coroutine()->last; }
 
 // user facing ehm operations
 forall(T & | is_coroutine(T)) {
@@ -332,20 +343,24 @@ forall(T & | is_coroutine(T)) {
 }
 
 // resume non local exception at receiver (i.e. enqueue in ehm buffer)
-forall(exceptT &, T & | ehm_resume_at( exceptT, T ))
+forall(exceptT *, T & | ehm_resume_at( exceptT, T ))
 void resumeAt( T & receiver, exceptT & ex )  libcfa_public {
     coroutine$ * cor = get_coroutine( receiver );
     nonlocal_exception * nl_ex = alloc();
-    (*nl_ex){ (exception_t *)&ex };
+    exceptT * ex_copy = alloc();
+    memcpy( ex_copy, &ex, sizeof(exceptT) );
+    (*nl_ex){ (exception_t *)ex_copy };
     lock( cor->ehm_state.buffer_lock __cfaabi_dbg_ctx2 );
     append( cor->ehm_state.ehm_buffer, nl_ex ); 
     unlock( cor->ehm_state.buffer_lock );
 }
 
-forall(exceptT & | { void $throwResume(exceptT &); })
+forall(exceptT * | { void $throwResume(exceptT &); })
 void resumeAt( coroutine$ * receiver, exceptT & ex ) libcfa_public {
     nonlocal_exception * nl_ex = alloc();
-    (*nl_ex){ (exception_t *)&ex };
+    exceptT * ex_copy = alloc();
+    memcpy( ex_copy, &ex, sizeof(exceptT) );
+    (*nl_ex){ (exception_t *)ex_copy };
     lock( receiver->ehm_state.buffer_lock __cfaabi_dbg_ctx2 );
     append( receiver->ehm_state.ehm_buffer, nl_ex ); 
     unlock( receiver->ehm_state.buffer_lock );

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Jun  8 17:58:54 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun 17 07:56:02 2023
-// Update Count     : 48
+// Last Modified On : Wed Aug  9 17:23:21 2023
+// Update Count     : 59
 // 
 
 #include <fstream.hfa>
@@ -18,138 +18,138 @@ int main() {
 		char s[] = "yyyyyyyyyyyyyyyyyyyy";
 		const char sk[] = "abc";
 		scanf( "abc " ); scanf( sk ); for ( 5 ) scanf( "%*c" );	printf( "1 %s\n", s );
-		scanf( "%s", s );						printf( "2 %s\n", s );
-		scanf( "%*s" );							printf( "3 %s\n", s );
-		scanf( "%8s", s );						printf( "4 %s\n", s );
-		scanf( "%*8s" );						printf( "5 %s\n", s );
+		scanf( "%s", s );							printf( "2 %s\n", s );
+		scanf( "%*s" );								printf( "3 %s\n", s );
+		scanf( "%8s", s );							printf( "4 %s\n", s );
+		scanf( "%*8s" );							printf( "5 %s\n", s );
 
-		scanf( "%[abc]", s );					printf( "6 %s\n", s );
-		scanf( "%[^abc]", s );					printf( "7 %s\n", s );
-		scanf( "%*[abc]" );						printf( "8 %s\n", s );
-		scanf( "%*[^abc]" );					printf( "9 %s\n", s );
-		scanf( "%8[abc]", s );					printf( "10 %s\n", s );
-		scanf( "%8[^abc]", s );					printf( "11 %s\n", s );
-		scanf( "%*8[abc]" );					printf( "12 %s\n", s );
-		scanf( "%*8[^abc]" );					printf( "13 %s\n", s );
+		scanf( "%[abc]", s );						printf( "6 %s\n", s );
+		scanf( "%[^abc]", s );						printf( "7 %s\n", s );
+		scanf( "%*[abc]" );							printf( "8 %s\n", s );
+		scanf( "%*[^abc]" );						printf( "9 %s\n", s );
+		scanf( "%8[abc]", s );						printf( "10 %s\n", s );
+		scanf( "%8[^abc]", s );						printf( "11 %s\n", s );
+		scanf( "%*8[abc]" );						printf( "12 %s\n", s );
+		scanf( "%*8[^abc]" );						printf( "13 %s\n", s );
 	}
 	{
 		char s[] = "yyyyyyyyyyyyyyyyyyyy";
 		char sk[] = "abc";
 		sin /*| "abc "*/ | skip( sk ) | skip( 5 );	sout | "1" | s;
-		sin | s;								sout | "2" | s;
-		sin | ignore( s );						sout | "3" | s;
- 		sin | wdi( 8, s );						sout | "4" | s;
-		sin | ignore( wdi( 8, s ) );			sout | "5" | s;
+		sin | wdi( sizeof(s), s );					sout | "2" | s;
+		sin | ignore( s );							sout | "3" | s;
+ 		sin | wdi( 8, s );							sout | "4" | s;
+		sin | ignore( wdi( 8, s ) );				sout | "5" | s;
 
-		sin | incl( "abc", s );					sout | "6" | s;
-		sin | excl( "abc", s );					sout | "7" | s;
-		sin | ignore( incl( "abc", s ) );		sout | "8" | s;
-		sin | ignore( excl( "abc", s ) );		sout | "9" | s;
-		sin | wdi( 8, incl( "abc", s ) );		sout | "10" | s;
-		sin | wdi( 8, excl( "abc", s ) );		sout | "11" | s;
-		sin | ignore( wdi( 8, incl( "abc", s ) ) );	sout | "12" | s;
-		sin | ignore( wdi( 8, excl( "abc", s ) ) );	sout | "13" | s;
+		sin | incl( "abc", wdi( sizeof(s), s ) );	sout | "6" | s;
+		sin | excl( "abc", wdi( sizeof(s), s ) );	sout | "7" | s;
+		sin | ignore( incl( "abc", wdi( sizeof(s), s ) ) ); sout | "8" | s;
+		sin | ignore( excl( "abc", wdi( sizeof(s), s ) ) ); sout | "9" | s;
+		sin | incl( "abc", wdi( 8, s ) );			sout | "10" | s;
+		sin | excl( "abc", wdi( 8, s ) );			sout | "11" | s;
+		sin | ignore( incl( "abc", wdi( 8, s ) ) );	sout | "12" | s;
+		sin | ignore( excl( "abc", wdi( 8, s ) ) );	sout | "13" | s;
 	}
 	{
 		char c;
-		sin | c;								sout | c;
-		sin | ignore( c );						sout | c;
+		sin | c;									sout | c;
+		sin | ignore( c );							sout | c;
 
 		signed char sc;
-		sin | sc;								sout | sc;
-		sin | wdi( 3, sc );						sout | sc;
-		sin | ignore( sc );						sout | sc;
-		sin | ignore( wdi( 3, sc ) );			sout | sc;
+		sin | sc;									sout | sc;
+		sin | wdi( 3, sc );							sout | sc;
+		sin | ignore( sc );							sout | sc;
+		sin | ignore( wdi( 3, sc ) );				sout | sc;
 
 		unsigned char usc;
-		sin | usc;								sout | usc;
-		sin | wdi( 3, usc );					sout | usc;
-		sin | ignore( usc );					sout | usc;
-		sin | ignore( wdi( 3, usc ) );			sout | usc;
+		sin | usc;									sout | usc;
+		sin | wdi( 3, usc );						sout | usc;
+		sin | ignore( usc );						sout | usc;
+		sin | ignore( wdi( 3, usc ) );				sout | usc;
 
 		signed short int ssi;
-		sin | ssi;								sout | ssi;
-		sin | wdi( 3, ssi );					sout | ssi;
-		sin | ignore( ssi );					sout | ssi;
-		sin | ignore( wdi( 3, ssi ) );			sout | ssi;
+		sin | ssi;									sout | ssi;
+		sin | wdi( 3, ssi );						sout | ssi;
+		sin | ignore( ssi );						sout | ssi;
+		sin | ignore( wdi( 3, ssi ) );				sout | ssi;
 
 		unsigned short int usi;
-		sin | usi;								sout | usi;
-		sin | wdi( 3, usi );					sout | usi;
-		sin | ignore( usi );					sout | usi;
-		sin | ignore( wdi( 3, usi ) );			sout | usi;
+		sin | usi;									sout | usi;
+		sin | wdi( 3, usi );						sout | usi;
+		sin | ignore( usi );						sout | usi;
+		sin | ignore( wdi( 3, usi ) );				sout | usi;
 
 		signed int si;
-		sin | si;								sout | si;
-		sin | wdi( 3, si );						sout | si;
-		sin | ignore( si );						sout | si;
-		sin | ignore( wdi( 3, si ) );			sout | si;
+		sin | si;									sout | si;
+		sin | wdi( 3, si );							sout | si;
+		sin | ignore( si );							sout | si;
+		sin | ignore( wdi( 3, si ) );				sout | si;
 
 		unsigned int ui;
-		sin | ui;								sout | ui;
-		sin | wdi( 3, ui );						sout | ui;
-		sin | ignore( ui );						sout | ui;
-		sin | ignore( wdi( 3, ui ) );			sout | ui;
+		sin | ui;									sout | ui;
+		sin | wdi( 3, ui );							sout | ui;
+		sin | ignore( ui );							sout | ui;
+		sin | ignore( wdi( 3, ui ) );				sout | ui;
 
 		signed long int sli;
-		sin | sli;								sout | sli;
-		sin | wdi( 3, sli );					sout | sli;
-		sin | ignore( sli );					sout | sli;
-		sin | ignore( wdi( 3, sli ) );			sout | sli;
+		sin | sli;									sout | sli;
+		sin | wdi( 3, sli );						sout | sli;
+		sin | ignore( sli );						sout | sli;
+		sin | ignore( wdi( 3, sli ) );				sout | sli;
 
 		unsigned long int uli;
-		sin | uli;								sout | uli;
-		sin | wdi( 3, uli );					sout | uli;
-		sin | ignore( uli );					sout | uli;
-		sin | ignore( wdi( 3, uli ) );			sout | uli;
+		sin | uli;									sout | uli;
+		sin | wdi( 3, uli );						sout | uli;
+		sin | ignore( uli );						sout | uli;
+		sin | ignore( wdi( 3, uli ) );				sout | uli;
 
 		signed long long int slli;
-		sin | slli;								sout | slli;
-		sin | wdi( 3, slli );					sout | slli;
-		sin | ignore( slli );					sout | slli;
-		sin | ignore( wdi( 3, slli ) );			sout | slli;
+		sin | slli;									sout | slli;
+		sin | wdi( 3, slli );						sout | slli;
+		sin | ignore( slli );						sout | slli;
+		sin | ignore( wdi( 3, slli ) );				sout | slli;
 
 		unsigned long long int ulli;
-		sin | ulli;								sout | ulli;
-		sin | wdi( 3, ulli );					sout | ulli;
-		sin | ignore( ulli );					sout | ulli;
-		sin | ignore( wdi( 3, ulli ) );			sout | ulli;
+		sin | ulli;									sout | ulli;
+		sin | wdi( 3, ulli );						sout | ulli;
+		sin | ignore( ulli );						sout | ulli;
+		sin | ignore( wdi( 3, ulli ) );				sout | ulli;
 
 		float f;
-		sin | f;								sout | f;
-		sin | wdi( 8, f );						sout | f;
-		sin | ignore( f );						sout | f;
-		sin | ignore( wdi( 8, f ) );			sout | f;
+		sin | f;									sout | f;
+		sin | wdi( 8, f );							sout | f;
+		sin | ignore( f );							sout | f;
+		sin | ignore( wdi( 8, f ) );				sout | f;
 
 		double d;
-		sin | d;								sout | d;
-		sin | wdi( 8, d );						sout | d;
-		sin | ignore( d );						sout | d;
-		sin | ignore( wdi( 8, d ) );			sout | d;
+		sin | d;									sout | d;
+		sin | wdi( 8, d );							sout | d;
+		sin | ignore( d );							sout | d;
+		sin | ignore( wdi( 8, d ) );				sout | d;
 
 		long double ld;
-		sin | ld;								sout | ld;
-		sin | wdi( 8, ld );						sout | ld;
-		sin | ignore( ld );						sout | ld;
-		sin | ignore( wdi( 8, ld ) );			sout | ld;
+		sin | ld;									sout | ld;
+		sin | wdi( 8, ld );							sout | ld;
+		sin | ignore( ld );							sout | ld;
+		sin | ignore( wdi( 8, ld ) );				sout | ld;
 
 		float _Complex fc;
-		sin | fc;								sout | fc;
-		sin | wdi( 8, fc );						sout | fc;
-		sin | ignore( fc );						sout | fc;
-		sin | ignore( wdi( 8, fc ) );			sout | fc;
+		sin | fc;									sout | fc;
+		sin | wdi( 8, fc );							sout | fc;
+		sin | ignore( fc );							sout | fc;
+		sin | ignore( wdi( 8, fc ) );				sout | fc;
 
 		double _Complex dc;
-		sin | dc;								sout | dc;
-		sin | wdi( 8, dc );						sout | dc;
-		sin | ignore( dc );						sout | dc;
-		sin | ignore( wdi( 8, dc ) );			sout | dc;
+		sin | dc;									sout | dc;
+		sin | wdi( 8, dc );							sout | dc;
+		sin | ignore( dc );							sout | dc;
+		sin | ignore( wdi( 8, dc ) );				sout | dc;
 
 		long double _Complex ldc;
-		sin | ldc;								sout | ldc;
-		sin | wdi( 8, ldc );					sout | ldc;
-		sin | ignore( ldc );					sout | ldc;
-		sin | ignore( wdi( 8, ldc ) );			sout | ldc;
+		sin | ldc;									sout | ldc;
+		sin | wdi( 8, ldc );						sout | ldc;
+		sin | ignore( ldc );						sout | ldc;
+		sin | ignore( wdi( 8, ldc ) );				sout | ldc;
 	}
 	#if defined( __SIZEOF_INT128__ )
 	{

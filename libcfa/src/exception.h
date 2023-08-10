@@ -50,6 +50,11 @@ void __cfaehm_throw_terminate(exception_t * except, void (*)(exception_t *));
 void __cfaehm_rethrow_terminate() __attribute__((noreturn));
 void __cfaehm_throw_resume(exception_t * except, void (*)(exception_t *));
 
+// Used in non-local ehm (see coroutine.cfa)
+void __cfaehm_allocate_exception( exception_t * except );
+void __cfaehm_begin_unwind(void(*defaultHandler)(exception_t *));
+
+
 // Function catches termination exceptions.
 void __cfaehm_try_terminate(
 	void (*try_block)(),

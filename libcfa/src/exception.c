@@ -122,7 +122,7 @@ static void __cfaehm_exception_cleanup(
 }
 
 // Creates a copy of the indicated exception and sets current_exception to it.
-static void __cfaehm_allocate_exception( exception_t * except ) {
+void __cfaehm_allocate_exception( exception_t * except ) {
 	struct exception_context_t * context = this_exception_context();
 
 	// Allocate memory for the exception.
@@ -238,7 +238,7 @@ static void __cfaehm_cleanup_default( exception_t ** except ) {
 }
 
 // The exception that is being thrown must already be stored.
-static void __cfaehm_begin_unwind(void(*defaultHandler)(exception_t *)) {
+void __cfaehm_begin_unwind(void(*defaultHandler)(exception_t *)) {
 	struct exception_context_t * context = this_exception_context();
 	if ( NULL == context->current_exception ) {
 		printf("UNWIND ERROR missing exception in begin unwind\n");

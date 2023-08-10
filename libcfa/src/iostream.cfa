@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug  7 08:59:29 2023
-// Update Count     : 1407
+// Last Modified On : Wed Aug  9 10:10:56 2023
+// Update Count     : 1432
 //
 
 #include "iostream.hfa"
@@ -270,21 +270,21 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	} // ?|?
 	OSTYPE_VOID_IMPL( const char * )
 
-// 	ostype & ?|?( ostype & os, const char16_t * s ) {
+// 	ostype & ?|?( ostype & os, const char16_t s[] ) {
 // 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 // 		fmt( os, "%ls", s );
 // 		return os;
 // 	} // ?|?
 
 // #if ! ( __ARM_ARCH_ISA_ARM == 1 && __ARM_32BIT_STATE == 1 ) // char32_t == wchar_t => ambiguous
-// 	ostype & ?|?( ostype & os, const char32_t * s ) {
+// 	ostype & ?|?( ostype & os, const char32_t s[] ) {
 // 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 // 		fmt( os, "%ls", s );
 // 		return os;
 // 	} // ?|?
 // #endif // ! ( __ARM_ARCH_ISA_ARM == 1 && __ARM_32BIT_STATE == 1 )
 
-// 	ostype & ?|?( ostype & os, const wchar_t * s ) {
+// 	ostype & ?|?( ostype & os, const wchar_t s[] ) {
 // 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 // 		fmt( os, "%ls", s );
 // 		return os;
@@ -916,11 +916,11 @@ forall( istype & | basic_istream( istype ) ) {
 	// 	return is;
 	// } // ?|?
 
-	istype & ?|?( istype & is, char s[] ) {
-		fmt( is, "%s", s );
-		return is;
-	} // ?|?
-	ISTYPE_VOID_IMPL( char * )
+	// istype & ?|?( istype & is, char s[] ) {
+	// 	fmt( is, "%s", s );
+	// 	return is;
+	// } // ?|?
+	// ISTYPE_VOID_IMPL( char * )
 
 	// manipulators
 	istype & ?|?( istype & is, istype & (* manip)( istype & ) ) {
@@ -933,6 +933,7 @@ forall( istype & | basic_istream( istype ) ) {
 
 	istype & nl( istype & is ) {
 		fmt( is, "%*[^\n]" );							// ignore characters to newline
+		if ( ! eof( is ) && getANL$( is ) ) fmt( is, "%*c" ); // read newline
 		return is;
 	} // nl
 
@@ -951,13 +952,24 @@ forall( istype & | basic_istream( istype ) ) {
 
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cstr f ) {
-		// skip xxx
+		// skip
 		if ( ! f.s ) {
 			// printf( "skip %s %d\n", f.scanset, f.wd );
-			if ( f.wd == -1 ) fmt( is, f.scanset, "" );		// no input arguments
+			if ( f.wd == -1 ) fmt( is, f.scanset, "" );	// no input arguments
 			else for ( f.wd ) fmt( is, "%*c" );
 			return is;
 		} // if
+
+		// getline
+		if ( f.flags.delimit ) {
+			char fmtstr[] = "%[^ ]s";					// delimit inserted into space
+			fmtstr[3] = f.delimit;
+			fmt( is, fmtstr, f.s );						// read upto delimiter
+			fmt( is, "%*c" );							// ignore delimiter
+			return is;
+		} // if
+
+		// incl/excl
 		size_t len = 0;
 		if ( f.scanset ) len = strlen( f.scanset );
 		char fmtstr[len + 16];
@@ -976,7 +988,7 @@ forall( istype & | basic_istream( istype ) ) {
 		// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
 		fmtstr[start] = '['; start += 1;
 		if ( f.flags.inex ) { fmtstr[start] = '^'; start += 1; }
-		strcpy( &fmtstr[start], f.scanset );				// copy includes '\0'
+		strcpy( &fmtstr[start], f.scanset );			// copy includes '\0'
 		len += start;
 		fmtstr[len] = ']'; fmtstr[len + 1] = '\0';
 		// printf( "incl/excl %s\n", fmtstr );
@@ -986,7 +998,7 @@ forall( istype & | basic_istream( istype ) ) {
 	ISTYPE_VOID_IMPL( _Istream_Cstr )
 
 	istype & ?|?( istype & is, _Istream_Char f ) {
-		fmt( is, "%*c" );									// argument variable unused
+		fmt( is, "%*c" );								// argument variable unused
 		return is;
 	} // ?|?
 	ISTYPE_VOID_IMPL( _Istream_Char )

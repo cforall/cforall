@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Mar  2 16:56:02 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 29 10:19:31 2023
-// Update Count     : 126
+// Last Modified On : Tue Aug  8 23:18:32 2023
+// Update Count     : 128
 //
 
 #include <fstream.hfa>
@@ -103,7 +103,7 @@ int main() {
 	in	 | si | usi | i | ui | li | uli | lli | ulli;	// integral
 	in	 | f | d | ld;									// floating point
 	in	 | fc | dc | ldc;								// floating-point complex
-	in	 | s1 | wdi( size, s2 );						// C string, length unchecked and checked
+	in	 | wdi(size, s1) | wdi( size, s2 );				// C string, length unchecked and checked
 	sout | nl;
 
 	sout | "output basic types";

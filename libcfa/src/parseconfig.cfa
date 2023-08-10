@@ -111,9 +111,9 @@ vtable(Validation_Failure) Validation_Failure_vt;
 } // add_kv_pair
 
 
-static [ bool ] comments( & ifstream in, [] char name ) {
+static [ bool ] comments( & ifstream in, size_t size, [] char name ) {
 	while () {
-		in | name;
+		in | wdi( size, name );
 	  if ( eof( in ) ) return true;
 	  if ( name[0] != '#' ) return false;
 		in | nl;									// ignore remainder of line
@@ -135,8 +135,8 @@ static [ bool ] comments( & ifstream in, [] char name ) {
 		while () {									// parameter names can appear in any order
 		  	// NOTE: Must add check to see if already read in value for this key,
 			// once we switch to using hash table as intermediate storage
-		  if ( comments( in, key ) ) break;			// eof ?
-			in | value;
+			if ( comments( in, 64, key ) ) break;	// eof ?
+			in | wdi( 256, value );
 
 			add_kv_pair( *kv_pairs, key, value );
 
