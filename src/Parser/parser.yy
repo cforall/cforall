@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 12 23:06:44 2023
-// Update Count     : 6389
+// Last Modified On : Tue Jul 18 22:51:30 2023
+// Update Count     : 6391
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1707,25 +1707,11 @@ wor_waituntil_clause:
 		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::OR, $1, $3 ); }
 	| wor_waituntil_clause wor when_clause_opt ELSE statement
 		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::LEFT_OR, $1, build_waituntil_else( yylloc, $3, maybe_build_compound( yylloc, $5 ) ) ); }
-	| wor_waituntil_clause wor when_clause_opt timeout statement	%prec THEN
-		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::LEFT_OR, $1, build_waituntil_timeout( yylloc, $3, $4, maybe_build_compound( yylloc, $5 ) ) ); }
-	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
-	| wor_waituntil_clause wor when_clause_opt timeout statement wor ELSE statement // invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
-	| wor_waituntil_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
-		{ $$ = new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::LEFT_OR, $1,
-				new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::OR, 
-					build_waituntil_timeout( yylloc, $3, $4, maybe_build_compound( yylloc, $5 ) ), 
-					build_waituntil_else( yylloc, $7, maybe_build_compound( yylloc, $9 ) ) ) ); }
 	;
 
 waituntil_statement:
 	wor_waituntil_clause								%prec THEN
-		// SKULLDUGGERY: create an empty compound statement to test parsing of waituntil statement.
-		{
-			$$ = new StatementNode( build_waituntil_stmt( yylloc, $1 ) );
-			// $$ = new StatementNode( build_compound( yylloc, nullptr ) );
-		}
+		{ $$ = new StatementNode( build_waituntil_stmt( yylloc, $1 ) );	}
 	;
 
 exception_statement:

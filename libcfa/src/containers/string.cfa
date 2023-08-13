@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug  7 10:07:26 2023
-// Update Count     : 2
+// Last Modified On : Sat Aug 12 15:24:18 2023
+// Update Count     : 6
 //
 
 #include "string.hfa"
@@ -99,15 +99,20 @@ string & ?=?(string & this, string & other) { //// <---- straw man change
 
 
 ////////////////////////////////////////////////////////
-// Output
+// Input-Output
 
-ofstream & ?|?( ofstream & fs, const string & this ) {
-    return fs | (*this.inner);
+ofstream & ?|?( ofstream & out, const string & this ) {
+    return out | (*this.inner); // print internal string_res
 }
 
-void ?|?( ofstream & fs, const string & this ) {
-    fs | (*this.inner);
+void ?|?( ofstream & out, const string & this ) {
+    (ofstream &)(out | (*this.inner)); ends( out );
 }
+
+ifstream & ?|?(ifstream &in, string &this) {
+    return in | (*this.inner); // read to internal string_res
+}
+
 
 ////////////////////////////////////////////////////////
 // Slicing

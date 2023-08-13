@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Jun 26 15:13:00 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 27 09:45:57 2023
-// Update Count     : 37
+// Last Modified On : Thu Aug 10 16:45:22 2023
+// Update Count     : 69
 //
 
 // Normally we would get this from the CFA prelude.
@@ -26,6 +26,8 @@
 #include "concurrency/invoke.h"
 #include "stdhdr/assert.h"
 #include "virtual.h"
+
+extern void __cabi_abort( const char fmt[], ... );
 
 #pragma GCC visibility push(default)
 
@@ -191,7 +193,13 @@ static _Unwind_Reason_Code _Stop_Fn(
 	verify(!(actions & _UA_HANDLER_FRAME));
 
 	if ( actions & _UA_END_OF_STACK ) {
-		abort();
+		__cabi_abort(
+			"Propagation failed to find a matching handler.\n"
+			"Possible cause is a missing try block with appropriate catch clause for specified exception type.\n"
+			"Last exception name or message: %s.\n",
+			NODE_TO_EXCEPT( UNWIND_TO_NODE( unwind_exception ) )->
+				virtual_table->msg( NODE_TO_EXCEPT( UNWIND_TO_NODE( unwind_exception ) ) )
+		);
 	} else {
 		return _URC_NO_REASON;
 	}
@@ -208,15 +216,6 @@ void __cfaehm_cancel_stack( exception_t * exception ) {
 
 	struct exception_context_t * context = this_exception_context();
 	struct __cfaehm_node * node = EXCEPT_TO_NODE(context->current_exception);
-
-	// Preform clean-up of any extra active exceptions.
-	while ( node->next ) {
-		struct __cfaehm_node * to_free = node->next;
-		node->next = to_free->next;
-		exception_t * except = NODE_TO_EXCEPT( to_free );
-		except->virtual_table->free( except );
-	    free( to_free );
-	}
 
 	_Unwind_Reason_Code ret;
 	ret = __cfaehm_cancellation_unwind( &node->unwind_exception );

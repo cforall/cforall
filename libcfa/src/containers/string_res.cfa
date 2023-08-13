@@ -9,13 +9,14 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 29 09:29:06 2023
-// Update Count     : 2
+// Last Modified On : Sat Aug 12 15:37:47 2023
+// Update Count     : 10
 //
 
 #include "string_res.hfa"
 #include "string_sharectx.hfa"
 #include "stdlib.hfa"
+#include <ctype.h>
 
 // Workaround for observed performance penalty from calling CFA's alloc.
 // Workaround is:  EndVbyte = TEMP_ALLOC(char, CurrSize)
@@ -133,7 +134,7 @@ static void ^?{}( HandleNode & this ) with(this) {
     {
 	serr | nlOff;
 	serr | " lnth:" | lnth | " s:" | (void *)s | ",\"";
-	for ( int i = 0; i < lnth; i += 1 ) {
+	for ( i; lnth ) {
 	    serr | s[i];
 	} // for
 	serr | "\" flink:" | flink | " blink:" | blink | nl;
@@ -197,32 +198,54 @@ size_t size(const string_res &s) with(s) {
 
 // Output operator
 ofstream & ?|?(ofstream &out, const string_res &s) {
-    // Store auto-newline state so it can be restored
-    bool anl = getANL$(out);
-    nlOff(out);
-    for (size_t i = 0; i < s.Handle.lnth; i++) {
-        out | s[i];
-    }
-    out | sepVal;
-    // Re-apply newlines after done, for chaining version
-    if (anl) nlOn(out);
+	// CFA string is NOT null terminated, so print exactly lnth characters in a minimum width of 0.
+	out | wd( 0, s.Handle.lnth, s.Handle.s ) | nonl;
     return out;
 }
 
 void ?|?(ofstream &out, const string_res &s) {
-    // Store auto-newline state so it can be restored
-    bool anl = getANL$(out);
-    if( s.Handle.lnth == 0 ) {
-        sout | "";
-    } else {
-        nlOff(out);
-        for (size_t i = 0; i < s.Handle.lnth; i++) {
-            // Need to re-apply on the last output operator, for whole-statement version
-            if (anl && i == s.Handle.lnth-1) nlOn(out);
-            out | s[i];
-        }
-    }
+	(ofstream &)(out | s); ends( out );
 }
+
+// Input operator
+ifstream & ?|?(ifstream &in, string_res &s) {
+
+    // Reading into a temp before assigning to s is near zero overhead in typical cases because of sharing.
+    // If s is a substring of something larger, simple assignment takes care of that case correctly.
+    // But directly reading a variable amount of text into the middle of a larger context is not practical.
+    string_res temp;
+
+    // Read in chunks.  Often, one chunk is enough.  Keep the string that accumulates chunks last in the heap,
+    // so available room is rest of heap.  When a chunk fills the heap, force growth then take the next chunk.
+    for (;;) {
+        // Append dummy content to temp, forcing expansion when applicable (occurs always on subsequent loops)
+        // length 2 ensures room for at least one real char, plus scanf/pipe-cstr's null terminator
+        temp += "--";
+        assert( temp.Handle.ulink->EndVbyte == temp.Handle.s + temp.Handle.lnth );    // last in heap
+
+        // reset, to overwrite the appended "--"
+        temp.Handle.lnth -= 2;
+        temp.Handle.ulink->EndVbyte -= 2;
+
+        // rest of heap, less 1 byte for null terminator, is available to read into
+        int lenReadable = (char*)temp.Handle.ulink->ExtVbyte - temp.Handle.ulink->EndVbyte - 1;
+        assert (lenReadable >= 1);
+
+        // get bytes
+        in | wdi( lenReadable, temp.Handle.ulink->EndVbyte );
+        int lenWasRead = strlen(temp.Handle.ulink->EndVbyte);
+
+        // update metadata
+        temp.Handle.lnth += lenWasRead;
+        temp.Handle.ulink->EndVbyte += lenWasRead;
+
+      if (lenWasRead < lenReadable) break;
+    }
+
+    s = temp;
+    return in;
+}
+
 
 // Empty constructor
 void ?{}(string_res &s) with(s) {
@@ -337,7 +360,7 @@ static void assignEditSet(string_res & this, string_res * shareEditSetStartPeer,
 
     // adjust all substring string and handle locations, and check if any substring strings are outside the new base string
     char *limit = resultSesStart + resultSesLnth;
-    for (string_res * p = this.shareEditSet_next; p != &this; p = p->shareEditSet_next) {
+    for ( string_res * p = this.shareEditSet_next; p != &this; p = p->shareEditSet_next ) {
         verify (p->Handle.s >= beforeBegin);
         if ( p->Handle.s >= afterBegin ) {
             verify ( p->Handle.s <= afterBegin + afterLen );
@@ -390,11 +413,10 @@ static void assignEditSet(string_res & this, string_res * shareEditSetStartPeer,
     }
 }
 
-static string_res & assign_(string_res &this, const char* buffer, size_t bsize, const string_res & valSrc) {
-
-    // traverse the incumbent share-edit set (SES) to recover the range of a base string to which `this` belongs
-    string_res * shareEditSetStartPeer = & this;
-    string_res * shareEditSetEndPeer = & this;
+// traverse the share-edit set (SES) to recover the range of a base string to which `this` belongs
+static void locateInShareEditSet( string_res &this, string_res *&shareEditSetStartPeer, string_res *&shareEditSetEndPeer ) {
+    shareEditSetStartPeer = & this;
+    shareEditSetEndPeer = & this;
     for (string_res * editPeer = this.shareEditSet_next; editPeer != &this; editPeer = editPeer->shareEditSet_next) {
         if ( editPeer->Handle.s < shareEditSetStartPeer->Handle.s ) {
             shareEditSetStartPeer = editPeer;
@@ -403,6 +425,13 @@ static string_res & assign_(string_res &this, const char* buffer, size_t bsize, 
             shareEditSetEndPeer = editPeer;
         }
     }
+}
+
+static string_res & assign_(string_res &this, const char* buffer, size_t bsize, const string_res & valSrc) {
+
+    string_res * shareEditSetStartPeer;
+    string_res * shareEditSetEndPeer;
+    locateInShareEditSet( this, shareEditSetStartPeer, shareEditSetEndPeer );
 
     verify( shareEditSetEndPeer->Handle.s >= shareEditSetStartPeer->Handle.s );
     size_t origEditSetLength = shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth - shareEditSetStartPeer->Handle.s;
@@ -588,7 +617,7 @@ bool ?!=?(const string_res &s, const char* other) {
 // Search
 
 bool contains(const string_res &s, char ch) {
-    for (i; size(s)) {
+    for ( i; size(s) ) {
         if (s[i] == ch) return true;
     }
     return false;
@@ -642,7 +671,7 @@ int findFrom(const string_res &s, size_t fromPos, const char* search, size_t sea
         return 0;
     }
 
-    for (size_t i = fromPos; i < s.Handle.lnth; i++) {
+    for ( i; fromPos ~ s.Handle.lnth ) {
         size_t remaining = s.Handle.lnth - i;
         // Never going to find the search string if the remaining string is
         // smaller than search
@@ -651,7 +680,7 @@ int findFrom(const string_res &s, size_t fromPos, const char* search, size_t sea
         }
 
         bool matched = true;
-        for (size_t j = 0; j < searchsize; j++) {
+        for ( j; searchsize ) {
             if (search[j] != s.Handle.s[i + j]) {
                 matched = false;
                 break;
@@ -739,14 +768,14 @@ static bool test( const charclass_res & mask, char c ) {
 }
 
 int exclude(const string_res &s, const charclass_res &mask) {
-    for (int i = 0; i < size(s); i++) {
+    for ( i; size(s) ) {
         if ( test(mask, s[i]) ) return i;
     }
     return size(s);
 }
 
 int include(const string_res &s, const charclass_res &mask) {
-    for (int i = 0; i < size(s); i++) {
+    for ( i; size(s) ) {
         if ( ! test(mask, s[i]) ) return i;
     }
     return size(s);
@@ -774,7 +803,7 @@ static void AddThisAfter( HandleNode & this, HandleNode & n ) with(this) {
 		serr | nlOff;
 		for ( HandleNode *ni = HeaderPtr->flink; ni != HeaderPtr; ni = ni->flink ) {
 			serr | "\tnode:" | ni | " lnth:" | ni->lnth | " s:" | (void *)ni->s | ",\"";
-			for ( int i = 0; i < ni->lnth; i += 1 ) {
+			for ( i; ni->lnth ) {
 				serr | ni->s[i];
 			} // for
 			serr | "\" flink:" | ni->flink | " blink:" | ni->blink | nl;
@@ -880,8 +909,8 @@ static void MoveThisAfter( HandleNode & this, const HandleNode  & h ) with(this)
 	serr | nlOff;
 	for ( HandleNode *n = HeaderPtr->flink; n != HeaderPtr; n = n->flink ) {
 	    serr | "\tnode:" | n | " lnth:" | n->lnth | " s:" | (void *)n->s | ",\"";
-	    for ( int i = 0; i < n->lnth; i += 1 ) {
-		serr | n->s[i];
+	    for ( i; n->lnth ) {
+			serr | n->s[i];
 	    } // for
 	    serr | "\" flink:" | n->flink | " blink:" | n->blink | nl;
 	} // for
@@ -959,7 +988,7 @@ void compaction(VbyteHeap & this) with(this) {
     NoOfCompactions += 1;
     EndVbyte = StartVbyte;
     h = Header.flink;					// ignore header node
-    for (;;) {
+    for () {
 		memmove( EndVbyte, h->s, h->lnth );
 		obase = h->s;
 		h->s = EndVbyte;
@@ -970,7 +999,7 @@ void compaction(VbyteHeap & this) with(this) {
 		
 		// check if any substrings are allocated within a string
 		
-		for (;;) {
+		for () {
 			if ( h == &Header ) break;			// end of header list ?
 			if ( h->s >= limit ) break;			// outside of current string ?
 			h->s = nbase + (( uintptr_t )h->s - ( uintptr_t )obase );
@@ -1000,7 +1029,7 @@ void garbage(VbyteHeap & this, int minreq ) with(this) {
 		for ( HandleNode *n = Header.flink; n != &Header; n = n->flink ) {
 			serr | nlOff;
 			serr | "\tnode:" | n | " lnth:" | n->lnth | " s:" | (void *)n->s | ",\"";
-			for ( int i = 0; i < n->lnth; i += 1 ) {
+			for ( i; n->lnth ) {
 				serr | n->s[i];
 			} // for
 			serr | nlOn;
@@ -1035,7 +1064,7 @@ void garbage(VbyteHeap & this, int minreq ) with(this) {
 		for ( HandleNode *n = Header.flink; n != &Header; n = n->flink ) {
 			serr | nlOff;
 			serr | "\tnode:" | n | " lnth:" | n->lnth | " s:" | (void *)n->s | ",\"";
-			for ( int i = 0; i < n->lnth; i += 1 ) {
+			for ( i; n->lnth ) {
 				serr | n->s[i];
 			} // for
 			serr | nlOn;

@@ -1,0 +1,61 @@
+#include <iostream.hfa>
+#include <containers/string.hfa>
+#include <containers/string_res.hfa>
+
+
+void istream_cstr(void) {
+    char s1[999], s2[999], s3[999], si[999];
+    sin | wdi(999,s1) | wdi(999,s2) | wdi(999,s3);
+    sout | s1;
+    sout | s2;
+    sout | s3;
+    for(;;) {
+        sin | wdi(999,si);
+      if (si[0] == '=') break;
+        sout | si;
+    }
+}
+
+string accumulator;
+
+void reset_otherStringAction(void) {
+    accumulator = "";
+}
+void step_otherStringAction(void) {
+    string localAction = "--";
+    accumulator += localAction(0,1);
+    sout | accumulator;
+}
+
+void istream_string_res(void) {
+    string_res s1, s2, s3, si;
+    sin | s1 | s2 | s3;
+    sout | s1;        step_otherStringAction();
+    sout | s2;        step_otherStringAction();
+    sout | s3;        step_otherStringAction();
+    for(;;) {
+        sin | si;
+      if (size(si) > 0 && si[0] == '=') break;
+        sout | si;    step_otherStringAction();
+    }
+}
+
+void istream_string(void) {
+    string s1, s2, s3, si;
+    sin | s1 | s2 | s3;
+    sout | s1;        step_otherStringAction();
+    sout | s2;        step_otherStringAction();
+    sout | s3;        step_otherStringAction();
+    for(;;) {
+        sin | si;
+      if (size(si) > 0 && si[0] == '=') break;
+        sout | si;    step_otherStringAction();
+    }
+}
+
+
+int main() {
+    istream_cstr();         sout | "=";
+    istream_string_res();   sout | "=";  reset_otherStringAction();
+    istream_string();
+}

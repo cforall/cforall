@@ -54,6 +54,7 @@ void ?{}( string & this, string_WithSharedEdits src );
 // IO Operator
 ofstream & ?|?(ofstream &out, const string &s);
 void ?|?(ofstream &out, const string &s);
+ifstream & ?|?(ifstream &in, string &s);
 
 // Concatenation
 void ?+=?(string &s, char other); // append a character

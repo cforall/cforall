@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Wed Apr  5 11:42:00 2023
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Apr 11  9:43:00 2023
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Aug 11 11:44:07 2023
+// Update Count     : 2
 //
 
 #pragma once
@@ -101,7 +101,6 @@ ast::WaitForStmt * build_waitfor_else( const CodeLocation &, ast::WaitForStmt * 
 ast::WaitForStmt * build_waitfor_timeout( const CodeLocation &, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt );
 ast::WaitUntilStmt::ClauseNode * build_waituntil_clause( const CodeLocation &, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt );
 ast::WaitUntilStmt::ClauseNode * build_waituntil_else( const CodeLocation &, ExpressionNode * when, StatementNode * stmt );
-ast::WaitUntilStmt::ClauseNode * build_waituntil_timeout( const CodeLocation &, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt );
 ast::WaitUntilStmt * build_waituntil_stmt( const CodeLocation &, ast::WaitUntilStmt::ClauseNode * root );
 ast::Stmt * build_with( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
 ast::Stmt * build_mutex( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );

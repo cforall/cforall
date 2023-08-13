@@ -9,9 +9,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Apr 11 10:16:00 2023
-// Update Count     : 428
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Aug 11 11:44:15 2023
+// Update Count     : 429
 //
 
 #include "StatementNode.h"
@@ -371,14 +371,6 @@ ast::WaitUntilStmt::ClauseNode * build_waituntil_else( const CodeLocation & loc,
 	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
 	clause->stmt = maybeMoveBuild( stmt );
 	return new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::ELSE, clause );
-}
-
-ast::WaitUntilStmt::ClauseNode * build_waituntil_timeout( const CodeLocation & loc, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt ) {
-	ast::WhenClause * clause = new ast::WhenClause( loc );
-	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
-	clause->stmt = maybeMoveBuild( stmt );
-	clause->target = maybeMoveBuild( timeout );
-	return new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::TIMEOUT, clause );
 }
 
 ast::WaitUntilStmt * build_waituntil_stmt( const CodeLocation & loc, ast::WaitUntilStmt::ClauseNode * root ) {

@@ -79,6 +79,14 @@ void __cfaehm_cancelled_coroutine(
 	desc->cancellation = 0p;
 }
 
+// helper for popping from coroutine's ehm buffer
+inline nonlocal_exception * pop_ehm_head( coroutine$ * this ) {
+    lock( this->ehm_state.buffer_lock __cfaabi_dbg_ctx2 );
+    nonlocal_exception * nl_ex = pop_head( this->ehm_state.ehm_buffer );
+    unlock( this->ehm_state.buffer_lock );
+    return nl_ex;
+}
+
 //-----------------------------------------------------------------------------
 // Global state variables
 
@@ -127,6 +135,23 @@ void ?{}( coroutine$ & this, const char name[], void * storage, size_t storageSi
 }
 
 void ^?{}(coroutine$& this) libcfa_public {
+    // handle any leftover pending non-local exceptions
+    nonlocal_exception * nl_ex = pop_ehm_head( &this );
+    unsigned unhandled_ex = 0;
+    
+    // if any leftover exceptions handle 
+    while ( nl_ex != 0p ){
+        unhandled_ex++;
+        free( nl_ex->the_exception );
+        free( nl_ex );
+        nl_ex = pop_ehm_head( &this );
+    }
+
+    #ifdef __CFA_DEBUG__
+    if ( unhandled_ex > 0 )
+        printf( "Warning: Coroutine %p exited with %u pending nonlocal exceptions.\n", &this, unhandled_ex );
+    #endif
+
 	if(this.state != Halted && this.state != Start && this.state != Primed) {
 		coroutine$ * src = active_coroutine();
 		coroutine$ * dst = &this;
@@ -289,14 +314,6 @@ extern "C" {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // non local ehm routines
-
-// helper for popping from coroutine's ehm buffer
-inline nonlocal_exception * pop_ehm_head( coroutine$ * this ) {
-    lock( this->ehm_state.buffer_lock __cfaabi_dbg_ctx2 );
-    nonlocal_exception * nl_ex = pop_head( this->ehm_state.ehm_buffer );
-    unlock( this->ehm_state.buffer_lock );
-    return nl_ex;
-}
 
 void defaultResumeAtHandler( exception_t * except ) {
     __cfaehm_allocate_exception( except );

@@ -241,7 +241,7 @@ ast::ObjectDecl const * createExternTypeId(
 	);
 }
 
-ast::ObjectDecl const * createExternVTable(
+ast::ObjectDecl * createExternVTable(
 		CodeLocation const & location,
 		std::string const & exceptionName,
 		std::vector<ast::ptr<ast::Expr>> const & params,
@@ -355,7 +355,7 @@ ast::FunctionDecl const * createMsg(
 	);
 }
 
-ast::ObjectDecl const * createVirtualTable(
+ast::ObjectDecl * createVirtualTable(
 		CodeLocation const & location,
 		std::string const & exceptionName,
 		std::vector<ast::ptr<ast::Expr>> const & params,
@@ -450,13 +450,14 @@ ast::ObjectDecl const * ExceptDeclCore::transformVTable(
 	std::vector<ast::ptr<ast::Expr>> const & params = base->params;
 	std::string const & tableName = decl->name;
 
+	ast::ObjectDecl * retDecl;
 	if ( decl->storage.is_extern ) {
 		// Unique type-ids are only needed for polymorphic instances.
 		if ( !params.empty() ) {
 			declsToAddBefore.push_back(
 				createExternTypeId( location, exceptionName, params ) );
 		}
-		return createExternVTable( location, exceptionName, params, tableName );
+		retDecl = createExternVTable( location, exceptionName, params, tableName );
 	} else {
 		// Unique type-ids are only needed for polymorphic instances.
 		if ( !params.empty() ) {
@@ -467,9 +468,15 @@ ast::ObjectDecl const * ExceptDeclCore::transformVTable(
 			createCopy( location, exceptionName, params ) );
 		declsToAddBefore.push_back(
 			createMsg( location, exceptionName, params ) );
-		return createVirtualTable(
+		retDecl = createVirtualTable(
 			location, exceptionName, params, tableName );
 	}
+
+	for ( ast::ptr<ast::Attribute> const & attr : decl->attributes ) {
+		retDecl->attributes.push_back( attr );
+	}
+
+	return retDecl;
 }
 
 struct VTableCore {
@@ -477,6 +484,7 @@ struct VTableCore {
 		auto inst = type->base.as<ast::BaseInstType>();
 
 		std::string vtableName = Virtual::vtableTypeName( inst->name );
+
 		auto newType = new ast::StructInstType( vtableName );
 		for ( ast::ptr<ast::Expr> const & param : inst->params ) {
 			newType->params.push_back( param );

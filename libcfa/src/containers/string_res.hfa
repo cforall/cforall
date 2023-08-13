@@ -8,9 +8,9 @@
 //
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
-// Last Modified By : Michael L. Brooks
-// Last Modified On : Fri Sep 03 11:00:00 2021
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Aug 12 15:45:47 2023
+// Update Count     : 2
 //
 
 #pragma once
@@ -29,7 +29,7 @@ struct HandleNode {
     HandleNode *blink;					// backward link
     VbyteHeap *ulink;                   // upward link
 
-    char *s;						// pointer to byte string
+    char *s;							// pointer to byte string
     unsigned int lnth;					// length of byte string
 }; // HandleNode
 
@@ -100,6 +100,7 @@ void ^?{}(string_res &s);
 // IO Operator
 ofstream & ?|?(ofstream &out, const string_res &s);
 void ?|?(ofstream &out, const string_res &s);
+ifstream & ?|?(ifstream &in, string_res &s);
 
 // Concatenation
 void append(string_res &s, const char* buffer, size_t bsize);
