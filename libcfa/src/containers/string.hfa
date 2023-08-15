@@ -8,9 +8,9 @@
 //
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
-// Last Modified By : Michael L. Brooks
-// Last Modified On : Fri Sep 03 11:00:00 2021
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Aug 13 22:46:46 2023
+// Update Count     : 4
 //
 
 #pragma once
@@ -27,22 +27,22 @@ struct string {
 };
 
 // Getters
-size_t size(const string &s);
+size_t size(const string & s);
 
 // RAII, assignment
-void ?{}( string & this ); // empty string
-void ?{}(string &s, const char* initial); // copy from string literal (NULL-terminated)
-void ?{}(string &s, const char* buffer, size_t bsize); // copy specific length from buffer
+void ?{}(string & this); // empty string
+void ?{}(string & s, const char * initial); // copy from string literal (NULL-terminated)
+void ?{}(string & s, const char * buffer, size_t bsize); // copy specific length from buffer
 
-void ?{}(string &s, const string & s2);
-void ?{}(string &s, string & s2);
+void ?{}(string & s, const string & s2);
+void ?{}(string & s, string & s2);
 
-void ?=?(string &s, const char* other); // copy assignment from literal
-void ?=?(string &s, const string &other);
-void ?=?(string &s, char other);
-string & ?=?(string &s, string &other);  // surprising ret seems to help avoid calls to autogen
+void ?=?(string & s, const char * other); // copy assignment from literal
+void ?=?(string & s, const string & other);
+void ?=?(string & s, char other);
+string & ?=?(string & s, string & other);  // surprising ret seems to help avoid calls to autogen
 //string ?=?( string &, string ) = void;
-void ^?{}(string &s);
+void ^?{}(string & s);
 
 // Alternate construction: request shared edits
 struct string_WithSharedEdits {
@@ -52,69 +52,70 @@ string_WithSharedEdits ?`shareEdits( string & this );
 void ?{}( string & this, string_WithSharedEdits src );
 
 // IO Operator
-ofstream & ?|?(ofstream &out, const string &s);
-void ?|?(ofstream &out, const string &s);
-ifstream & ?|?(ifstream &in, string &s);
+ofstream & ?|?(ofstream & out, const string & s);
+void ?|?(ofstream & out, const string & s);
+ifstream & ?|?(ifstream & in, string & s);
+void ?|?( ifstream & in, string & this );
 
 // Concatenation
-void ?+=?(string &s, char other); // append a character
-void ?+=?(string &s, const string &s2); // append-concatenate to first string
-void ?+=?(string &s, const char* other); // append-concatenate to first string
-string ?+?(const string &s, char other); // add a character to a copy of the string
-string ?+?(const string &s, const string &s2); // copy and concatenate both strings
-string ?+?(const char* s1, const char* s2); // concatenate both strings
-string ?+?(const string &s, const char* other); // copy and concatenate with NULL-terminated string
+void ?+=?(string & s, char other); // append a character
+void ?+=?(string & s, const string & s2); // append-concatenate to first string
+void ?+=?(string & s, const char * other); // append-concatenate to first string
+string ?+?(const string & s, char other); // add a character to a copy of the string
+string ?+?(const string & s, const string & s2); // copy and concatenate both strings
+string ?+?(const char * s1, const char * s2); // concatenate both strings
+string ?+?(const string & s, const char * other); // copy and concatenate with NULL-terminated string
 
 // Repetition
-string ?*?(const string &s, size_t factor);
+string ?*?(const string & s, size_t factor);
 string ?*?(char c, size_t size);
 string ?*?(const char *s, size_t size);
 
 // Character access
-char ?[?](const string &s, size_t index);
-string ?[?](string &s, size_t index);  // mutable length-1 slice of original
-//char codePointAt(const string &s, size_t index);  // to revisit under Unicode
+char ?[?](const string & s, size_t index);
+string ?[?](string & s, size_t index);  // mutable length-1 slice of original
+//char codePointAt(const string & s, size_t index);  // to revisit under Unicode
 
 // Comparisons
-bool ?==?(const string &s, const string &other);
-bool ?!=?(const string &s, const string &other);
-bool ?==?(const string &s, const char* other);
-bool ?!=?(const string &s, const char* other);
+bool ?==?(const string & s, const string & other);
+bool ?!=?(const string & s, const string & other);
+bool ?==?(const string & s, const char * other);
+bool ?!=?(const string & s, const char * other);
 
 // Slicing
 string ?()( string & this, size_t start, size_t end );  // TODO const?
 string ?()( string & this, size_t start);
 
 // String search
-bool contains(const string &s, char ch); // single character
+bool contains(const string & s, char ch); // single character
 
-int find(const string &s, char search);
-int find(const string &s, const string &search);
-int find(const string &s, const char* search);
-int find(const string &s, const char* search, size_t searchsize);
+int find(const string & s, char search);
+int find(const string & s, const string & search);
+int find(const string & s, const char * search);
+int find(const string & s, const char * search, size_t searchsize);
 
-int findFrom(const string &s, size_t fromPos, char search);
-int findFrom(const string &s, size_t fromPos, const string &search);
-int findFrom(const string &s, size_t fromPos, const char* search);
-int findFrom(const string &s, size_t fromPos, const char* search, size_t searchsize);
+int findFrom(const string & s, size_t fromPos, char search);
+int findFrom(const string & s, size_t fromPos, const string & search);
+int findFrom(const string & s, size_t fromPos, const char * search);
+int findFrom(const string & s, size_t fromPos, const char * search, size_t searchsize);
 
-bool includes(const string &s, const string &search);
-bool includes(const string &s, const char* search);
-bool includes(const string &s, const char* search, size_t searchsize);
+bool includes(const string & s, const string & search);
+bool includes(const string & s, const char * search);
+bool includes(const string & s, const char * search, size_t searchsize);
 
-bool startsWith(const string &s, const string &prefix);
-bool startsWith(const string &s, const char* prefix);
-bool startsWith(const string &s, const char* prefix, size_t prefixsize);
+bool startsWith(const string & s, const string & prefix);
+bool startsWith(const string & s, const char * prefix);
+bool startsWith(const string & s, const char * prefix, size_t prefixsize);
 
-bool endsWith(const string &s, const string &suffix);
-bool endsWith(const string &s, const char* suffix);
-bool endsWith(const string &s, const char* suffix, size_t suffixsize);
+bool endsWith(const string & s, const string & suffix);
+bool endsWith(const string & s, const char * suffix);
+bool endsWith(const string & s, const char * suffix, size_t suffixsize);
 
 // Modifiers
-void padStart(string &s, size_t n);
-void padStart(string &s, size_t n, char padding);
-void padEnd(string &s, size_t n);
-void padEnd(string &s, size_t n, char padding);
+void padStart(string & s, size_t n);
+void padStart(string & s, size_t n, char padding);
+void padEnd(string & s, size_t n);
+void padEnd(string & s, size_t n, char padding);
 
 
 
@@ -131,14 +132,12 @@ void ?{}( charclass &, const char * chars );
 void ?{}( charclass &, const char * chars, size_t charssize );
 void ^?{}( charclass & );
 
-int include(const string &s, const charclass &mask);
+int include(const string & s, const charclass & mask);
 
-int exclude(const string &s, const charclass &mask);
+int exclude(const string & s, const charclass & mask);
 
 /*
 What to do with?
-StrRet include(string &s, const charclass &mask);
-StrRet exclude(string &s, const charclass &mask);
+StrRet include(string & s, const charclass & mask);
+StrRet exclude(string & s, const charclass & mask);
 */
-
-

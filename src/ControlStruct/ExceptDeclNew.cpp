@@ -297,8 +297,9 @@ ast::FunctionDecl const * createCopy(
 				)
 			),
 		} ),
-		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+        ast::Storage::Classes(),
+		ast::Linkage::Cforall,
+        { new ast::Attribute( "cfa_linkonce" ) }
 	);
 }
 
@@ -351,7 +352,8 @@ ast::FunctionDecl const * createMsg(
 			),
 		} ),
 		ast::Storage::Classes(),
-		ast::Linkage::Cforall
+		ast::Linkage::Cforall,
+        { new ast::Attribute( "cfa_linkonce" ) }
 	);
 }
 

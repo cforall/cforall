@@ -288,17 +288,18 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	bits/weakso_locks.hfa algorithms/range_iterator.hfa \
 	containers/maybe.hfa containers/pair.hfa containers/result.hfa \
 	containers/string.hfa containers/string_res.hfa \
-	containers/vector.hfa device/cpu.hfa bitmanip.hfa clock.hfa \
-	exception.hfa exception.h gmp.hfa math.trait.hfa math.hfa \
-	time_t.hfa virtual_dtor.hfa bits/algorithm.hfa bits/align.hfa \
-	bits/containers.hfa bits/debug.hfa bits/defs.hfa \
-	bits/locks.hfa bits/collection.hfa bits/stack.hfa \
-	bits/queue.hfa bits/sequence.hfa concurrency/atomic.hfa \
-	concurrency/iofwd.hfa concurrency/barrier.hfa \
-	containers/array.hfa containers/list.hfa \
-	containers/lockfree.hfa containers/string_sharectx.hfa \
-	containers/vector2.hfa vec/vec.hfa vec/vec2.hfa vec/vec3.hfa \
-	vec/vec4.hfa concurrency/alarm.hfa concurrency/coroutine.hfa \
+	containers/vector.hfa device/cpu.hfa Exception.hfa \
+	bitmanip.hfa clock.hfa exception.hfa exception.h gmp.hfa \
+	math.trait.hfa math.hfa time_t.hfa virtual_dtor.hfa \
+	bits/algorithm.hfa bits/align.hfa bits/containers.hfa \
+	bits/debug.hfa bits/defs.hfa bits/locks.hfa \
+	bits/collection.hfa bits/stack.hfa bits/queue.hfa \
+	bits/sequence.hfa concurrency/atomic.hfa concurrency/iofwd.hfa \
+	concurrency/barrier.hfa containers/array.hfa \
+	containers/list.hfa containers/lockfree.hfa \
+	containers/string_sharectx.hfa containers/vector2.hfa \
+	vec/vec.hfa vec/vec2.hfa vec/vec3.hfa vec/vec4.hfa \
+	concurrency/alarm.hfa concurrency/coroutine.hfa \
 	concurrency/exception.hfa concurrency/kernel.hfa \
 	concurrency/kernel/cluster.hfa concurrency/locks.hfa \
 	concurrency/monitor.hfa concurrency/mutex.hfa \
@@ -533,6 +534,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 
 #----------------------------------------------------------------------------------------------------------------
 @BUILDLIB_TRUE@inst_headers_nosrc = \
+@BUILDLIB_TRUE@	Exception.hfa \
 @BUILDLIB_TRUE@	bitmanip.hfa \
 @BUILDLIB_TRUE@	clock.hfa \
 @BUILDLIB_TRUE@	exception.hfa \

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug  5 11:53:43 2023
-// Update Count     : 637
+// Last Modified On : Mon Aug 14 18:22:36 2023
+// Update Count     : 642
 //
 
 #include "stdlib.hfa"
@@ -64,17 +64,14 @@ void adelete( T arr[], TT rest ) {
 
 //---------------------------------------
 
-static vtable(out_of_range) out_of_range_vt;
-static vtable(invalid_argument) invalid_argument_vt;
-
 forall( T | { T strto( const char sptr[], char * eptr[], int ); } )
 T convert( const char sptr[] ) {
 	char * eptr;
 	errno = 0;											// reset
 	T val = strto( sptr, &eptr, 10 );					// attempt conversion
-	if ( errno == ERANGE ) Throw( out_of_range );
+	if ( errno == ERANGE ) throw ExceptionInst( out_of_range );
 	if ( eptr == sptr ||								// conversion failed, no characters generated
-		 *eptr != '\0' ) Throw( invalid_argument );		// not at end of str ?
+		 *eptr != '\0' ) throw ExceptionInst( invalid_argument ); // not at end of str ?
 	return val;
 } // convert
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math.trait.hfa>
+#include <Exception.hfa>
 
 
 // *********************************** initial declarations ***********************************
@@ -61,23 +62,23 @@ struct KVPairs {
 // *********************************** exceptions ***********************************
 
 
-exception Missing_Config_Entries {
+ExceptionDecl( Missing_Config_Entries,
 	unsigned int num_missing;
-};
+);
 
 [ void ] msg( * Missing_Config_Entries ex );
 
-exception Parse_Failure {
+ExceptionDecl( Parse_Failure,
 	* char failed_key;
 	* char failed_value;
-};
+);
 
 [ void ] msg( * Parse_Failure ex );
 
-exception Validation_Failure {
+ExceptionDecl( Validation_Failure,
 	* char failed_key;
 	* char failed_value;
-};
+);
 
 [ void ] msg( * Validation_Failure ex );
 

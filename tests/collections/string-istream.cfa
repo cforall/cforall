@@ -4,13 +4,14 @@
 
 
 void istream_cstr(void) {
-    char s1[999], s2[999], s3[999], si[999];
-    sin | wdi(999,s1) | wdi(999,s2) | wdi(999,s3);
+	enum { size = 999, rsize = size - 1 }; // string size, read size
+    char s1[size], s2[size], s3[size], si[size];
+    sin | wdi(size,rsize,s1) | wdi(size,rsize,s2) | wdi(size,rsize,s3);
     sout | s1;
     sout | s2;
     sout | s3;
     for(;;) {
-        sin | wdi(999,si);
+        sin | wdi(size,rsize,si);
       if (si[0] == '=') break;
         sout | si;
     }

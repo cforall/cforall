@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 10 18:15:44 2023
-// Update Count     : 1442
+// Last Modified On : Mon Aug 14 18:37:02 2023
+// Update Count     : 1460
 //
 
 #include "iostream.hfa"
@@ -971,14 +971,18 @@ forall( istype & | basic_istream( istype ) ) {
 
 		// getline
 		if ( f.flags.delimit ) {
-			char fmtstr[] = "%[^ ]s";					// delimit inserted into space
-			fmtstr[3] = f.delimit;
-			fmt( is, fmtstr, f.s );						// read upto delimiter
-			fmt( is, "%*c" );							// ignore delimiter
+			enum { size = 16 };
+			char fmtstr[size];
+			snprintf( fmtstr, size, "%%%d[^%c]s", f.wd, f.delimit );
+			f.s[f.wd - 1] = '\0';						// insert sentinel
+			int len = fmt( is, fmtstr, f.s );			// read upto delimiter
+			if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
+			if ( f.s[f.wd - 1] != '\0' )				// sentinel overwritten ?
+				throw (cstring_length){ &cstring_length_vt };
+			if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
 			return is;
 		} // if
 
-		// incl/excl
 		size_t len = 0;
 		if ( f.scanset ) len = strlen( f.scanset );
 		char fmtstr[len + 16];
@@ -986,22 +990,28 @@ forall( istype & | basic_istream( istype ) ) {
 		fmtstr[0] = '%';
 		if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
 		if ( f.wd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.wd ); }
-		// cstr %s, %*s, %ws, %*ws
+
 		if ( ! f.scanset ) {
+			// %s, %*s, %ws, %*ws
 			fmtstr[start] = 's'; fmtstr[start + 1] = '\0';
 			// printf( "cstr %s\n", fmtstr );
-			fmt( is, fmtstr, f.s );
-			return is;
+		} else {
+			// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
+			// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
+			fmtstr[start] = '['; start += 1;
+			if ( f.flags.inex ) { fmtstr[start] = '^'; start += 1; }
+			strcpy( &fmtstr[start], f.scanset );		// copy includes '\0'
+			len += start;
+			fmtstr[len] = ']'; fmtstr[len + 1] = '\0';
+			// printf( "incl/excl %s\n", fmtstr );
 		} // if
-		// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
-		// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
-		fmtstr[start] = '['; start += 1;
-		if ( f.flags.inex ) { fmtstr[start] = '^'; start += 1; }
-		strcpy( &fmtstr[start], f.scanset );			// copy includes '\0'
-		len += start;
-		fmtstr[len] = ']'; fmtstr[len + 1] = '\0';
-		// printf( "incl/excl %s\n", fmtstr );
+
+		int check = f.wd - 1;
+		if ( f.flags.rwd ) check += 1;					// provide place for sentinel
+		f.s[check] = '\0';								// insert sentinel
 		fmt( is, fmtstr, f.s );
+		if ( f.s[check] != '\0' )						// sentinel overwritten ?
+			throw (cstring_length){ &cstring_length_vt };
 		return is;
 	} // ?|?
 	ISTYPE_VOID_IMPL( _Istream_Cstr )
@@ -1079,6 +1089,7 @@ forall( istype & | basic_istream( istype ) ) {
 	} // ?|?
 	ISTYPE_VOID_IMPL( _Istream_Manip(long double _Complex) )
 } // distribution
+
 
 // Local Variables: //
 // tab-width: 4 //

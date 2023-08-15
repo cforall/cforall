@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug  5 11:53:42 2023
-// Update Count     : 774
+// Last Modified On : Mon Aug 14 18:19:12 2023
+// Update Count     : 777
 //
 
 #pragma once
@@ -18,9 +18,10 @@
 #include "bits/defs.hfa"								// OPTIONAL_THREAD
 #include "bits/align.hfa"								// libAlign
 #include "bits/random.hfa"								// prng
+#include <Exception.hfa>
+#include <heap.hfa>
 
 #include <stdlib.h>										// *alloc, strto*, ato*
-#include <heap.hfa>
 #include <errno.h>
 
 // Reduce includes by explicitly defining these routines.
@@ -309,8 +310,8 @@ float _Complex strto( const char sptr[], char * eptr[] );
 double _Complex strto( const char sptr[], char * eptr[] );
 long double _Complex strto( const char sptr[], char * eptr[] );
 
-exception out_of_range {};
-exception invalid_argument {};
+ExceptionDecl( out_of_range );
+ExceptionDecl( invalid_argument );
 
 forall( T | { T strto( const char sptr[], char * eptr[], int ); } )
 T convert( const char sptr[] );
@@ -458,6 +459,13 @@ static inline {
 	void ?{}( PRNG64 & prng ) with( prng ) { callcnt = 0; set_seed( prng, rdtscl() ); } // random seed
 	void ?{}( PRNG64 & prng, uint64_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
 } // distribution
+
+// Set default random-generator size.
+#if defined( __x86_64__ ) || defined( __aarch64__ )		// 64-bit architecture
+#define PRNG PRNG64
+#else													// 32-bit architecture
+#define PRNG PRNG32
+#endif // __x86_64__
 
 // Concurrent Pseudo Random-Number Generator : generate repeatable sequence of values that appear random.
 //

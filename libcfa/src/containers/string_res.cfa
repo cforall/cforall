@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 12 15:37:47 2023
-// Update Count     : 10
+// Last Modified On : Mon Aug 14 18:06:01 2023
+// Update Count     : 12
 //
 
 #include "string_res.hfa"
@@ -232,7 +232,7 @@ ifstream & ?|?(ifstream &in, string_res &s) {
         assert (lenReadable >= 1);
 
         // get bytes
-        in | wdi( lenReadable, temp.Handle.ulink->EndVbyte );
+        in | wdi( lenReadable + 1, lenReadable, temp.Handle.ulink->EndVbyte );
         int lenWasRead = strlen(temp.Handle.ulink->EndVbyte);
 
         // update metadata

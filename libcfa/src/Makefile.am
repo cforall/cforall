@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Thu May 25 15:20:04 2023
-## Update Count     : 259
+## Last Modified On : Mon Aug 14 17:10:51 2023
+## Update Count     : 262
 ###############################################################################
 
 # create object files in directory with source files
@@ -39,6 +39,7 @@ CFACC = @CFACC@
 #----------------------------------------------------------------------------------------------------------------
 if BUILDLIB
 inst_headers_nosrc = \
+	Exception.hfa \
 	bitmanip.hfa \
 	clock.hfa \
 	exception.hfa \

@@ -9,13 +9,14 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Aug  9 16:47:05 2023
-// Update Count     : 500
+// Last Modified On : Mon Aug 14 17:35:40 2023
+// Update Count     : 508
 //
 
 #pragma once
 
 #include "iterator.hfa"
+#include "Exception.hfa"
 
 
 // *********************************** ostream ***********************************
@@ -400,6 +401,13 @@ forall( istype & | basic_istream( istype ) ) {
 	istype & nlOff( istype & );
 } // distribution
 
+
+// *********************************** exceptions ***********************************
+
+
+ExceptionDecl( cstring_length );
+
+
 // *********************************** manipulators ***********************************
 
 struct _Istream_Cstr {
@@ -415,6 +423,7 @@ struct _Istream_Cstr {
 			unsigned char ignore:1;						// do not change input argument
 			unsigned char inex:1;						// include/exclude characters in scanset
 			unsigned char delimit:1;					// delimit character
+			unsigned char rwd:1;						// read width
 		} flags;
 	};
 }; // _Istream_Cstr
@@ -433,6 +442,10 @@ static inline {
 	_Istream_Cstr ignore( char s[] ) { return (_Istream_Cstr)@{ s, {0p}, -1, {.flags.ignore : true} }; }
 	_Istream_Cstr & ignore( _Istream_Cstr & fmt ) { fmt.flags.ignore = true; return fmt; }
 	_Istream_Cstr wdi( unsigned int wd, char s[] ) { return (_Istream_Cstr)@{ s, {0p}, wd, {.all : 0} }; }
+	_Istream_Cstr wdi( unsigned int wd, unsigned int rwd, char s[] ) {
+		if ( wd <= rwd ) throw (cstring_length){ &cstring_length_vt };
+		return (_Istream_Cstr)@{ s, {0p}, rwd, {.flags.rwd : true} };
+	}
 //	_Istream_Cstr & wdi( unsigned int wd, _Istream_Cstr & fmt ) { fmt.wd = wd; return fmt; }
 } // distribution
 forall( istype & | basic_istream( istype ) ) {

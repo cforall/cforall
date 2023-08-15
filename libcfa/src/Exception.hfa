@@ -1,0 +1,5 @@
+#pragma once
+
+// TEMPORARY
+#define ExceptionDecl( name, fields... ) exception name{ fields }; __attribute__(( cfa_linkonce )) vtable( name ) name ## _vt
+#define ExceptionInst( name, values... ) (name){ &name ## _vt, values }

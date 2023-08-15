@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 29 10:18:35 2023
-// Update Count     : 424
+// Last Modified On : Mon Aug 14 08:49:53 2023
+// Update Count     : 425
 // 
 
 #include <fstream.hfa>									// sout
@@ -25,12 +25,6 @@
 
 #define xstr(s) str(s)
 #define str(s) #s
-
-#if defined( __x86_64__ ) || defined( __aarch64__ )		// 64-bit architecture
-#define PRNG PRNG64
-#else													// 32-bit architecture
-#define PRNG PRNG32
-#endif // __x86_64__
 
 //#define TIME
 

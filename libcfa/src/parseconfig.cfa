@@ -15,11 +15,9 @@
 
 #pragma GCC visibility push(default)
 
+
 // *********************************** exceptions ***********************************
 
-
-// TODO: Add names of missing config entries to exception (see further below)
-vtable(Missing_Config_Entries) Missing_Config_Entries_vt;
 
 [ void ] ?{}( & Missing_Config_Entries this, unsigned int num_missing ) {
 	this.virtual_table = &Missing_Config_Entries_vt;
@@ -31,8 +29,6 @@ vtable(Missing_Config_Entries) Missing_Config_Entries_vt;
 	serr | "The config file is missing " | ex->num_missing | "entr" | nosep | (ex->num_missing == 1 ? "y." : "ies.");
 } // msg
 
-
-vtable(Parse_Failure) Parse_Failure_vt;
 
 [ void ] ?{}( & Parse_Failure this, [] char failed_key, [] char failed_value ) {
 	this.virtual_table = &Parse_Failure_vt;
@@ -53,8 +49,6 @@ vtable(Parse_Failure) Parse_Failure_vt;
 	serr | "Config entry " | ex->failed_key | " could not be parsed. It has value " | ex->failed_value | ".";
 }
 
-
-vtable(Validation_Failure) Validation_Failure_vt;
 
 [ void ] ?{}( & Validation_Failure this, [] char failed_key, [] char failed_value ) {
 	this.virtual_table = &Validation_Failure_vt;
