@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 18:37:02 2023
-// Update Count     : 1460
+// Last Modified On : Mon Aug 14 23:07:20 2023
+// Update Count     : 1466
 //
 
 #include "iostream.hfa"
@@ -601,9 +601,9 @@ static const char *suffixes[] = {
 	{ \
 		if ( ! f.flags.eng ) { \
 			len = snprintf( buf, size, format, ##__VA_ARGS__ ); \
-			if ( isfinite( f.val ) && ( f.pc != 0 || ! f.flags.nobsdp ) ) { /* if number, print decimal point when no fraction or exponent */ \
+			if ( isfinite( f.val ) && ! f.flags.nobsdp ) { /* if number, print decimal point when no fraction or exponent */ \
 				for ( i = 0; i < len && buf[i] != '.' && buf[i] != 'e' && buf[i] != 'E' && \
-								 buf[i] != 'p' && buf[i] != 'P'; i += 1 ); /* decimal point or scientific ? */ \
+							 buf[i] != 'p' && buf[i] != 'P'; i += 1 ); /* decimal point or scientific ? */ \
 				if ( i == len ) { \
 					if ( ! f.flags.left ) { \
 						buf[i] = '.'; buf[i + 1] = '\0'; \
