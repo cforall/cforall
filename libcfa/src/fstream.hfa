@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug  5 11:42:40 2023
-// Update Count     : 254
+// Last Modified On : Fri Aug 18 10:41:15 2023
+// Update Count     : 258
 //
 
 #pragma once
@@ -40,8 +40,9 @@ struct ofstream {
 
 // private
 bool getNL$( ofstream & );
-void setNL$( ofstream &, bool );
+bool setNL$( ofstream &, bool );
 bool getANL$( ofstream & );
+bool setANL$( ofstream &, bool );
 
 bool sepPrt$( ofstream & );
 void sepReset$( ofstream & );
@@ -50,7 +51,7 @@ const char * sepGetCur$( ofstream & );
 void sepSetCur$( ofstream &, const char [] );
 
 bool getPrt$( ofstream & );
-void setPrt$( ofstream &, bool );
+bool setPrt$( ofstream &, bool );
 
 void lock( ofstream & );
 void unlock( ofstream & );
@@ -107,6 +108,7 @@ struct ifstream {
 
 // private
 bool getANL$( ifstream & );
+bool setANL$( ifstream &, bool );
 
 void lock( ifstream & );
 void unlock( ifstream & );

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:20:59 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 29 10:58:58 2023
-// Update Count     : 51
+// Last Modified On : Fri Aug 18 10:41:14 2023
+// Update Count     : 55
 // 
 
 #pragma once
@@ -46,10 +46,11 @@ void sepReset$( ostrstream &, bool );
 const char * sepGetCur$( ostrstream & );
 void sepSetCur$( ostrstream &, const char [] );
 bool getNL$( ostrstream & );
-void setNL$( ostrstream &, bool );
+bool setNL$( ostrstream &, bool );
 bool getANL$( ostrstream & );
+bool setANL$( ostrstream &, bool );
 bool getPrt$( ostrstream & );
-void setPrt$( ostrstream &, bool );
+bool setPrt$( ostrstream &, bool );
 
 // public
 void nlOn( ostrstream & );
@@ -86,6 +87,7 @@ struct istrstream {
 
 // private
 bool getANL$( istrstream & );
+bool setANL$( istrstream &, bool );
 
 // public
 void nlOn( istrstream & );

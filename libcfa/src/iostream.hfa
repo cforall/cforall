@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 17:35:40 2023
-// Update Count     : 508
+// Last Modified On : Fri Aug 18 10:44:50 2023
+// Update Count     : 512
 //
 
 #pragma once
@@ -30,11 +30,12 @@ trait basic_ostream {
 	void sepReset$( ostype &, bool );					// set separator and default state
 	const char * sepGetCur$( ostype & );				// get current separator string
 	void sepSetCur$( ostype &, const char [] );			// set current separator string
-	bool getNL$( ostype & );							// check newline
-	void setNL$( ostype &, bool );						// saw newline
+	bool getNL$( ostype & );							// get newline
+	bool setNL$( ostype &, bool );						// set newline
 	bool getANL$( ostype & );							// get auto newline (on/off)
+	bool setANL$( ostype &, bool );						// set auto newline (on/off), and return previous state
 	bool getPrt$( ostype & );							// get fmt called in output cascade
-	void setPrt$( ostype &, bool );						// set fmt called in output cascade
+	bool setPrt$( ostype &, bool );						// set fmt called in output cascade
 	// public
 	void nlOn( ostype & );								// turn auto-newline state on
 	void nlOff( ostype & );								// turn auto-newline state off
@@ -318,6 +319,7 @@ forall( istype & )
 trait basic_istream {
 	// private
 	bool getANL$( istype & );							// get scan newline (on/off)
+	bool setANL$( istype &, bool );						// set scan newline (on/off)
 	// public
 	void nlOn( istype & );								// read newline
 	void nlOff( istype & );								// scan newline

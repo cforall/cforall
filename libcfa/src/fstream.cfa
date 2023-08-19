@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 18:24:21 2023
-// Update Count     : 534
+// Last Modified On : Fri Aug 18 10:41:17 2023
+// Update Count     : 541
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -44,8 +44,9 @@ void ?{}( ofstream & os, void * file ) with( os ) {
 } // ?{}
 
 inline bool getNL$( ofstream & os ) { return os.sawNL$; }
-inline void setNL$( ofstream & os, bool state ) { os.sawNL$ = state; }
+inline bool setNL$( ofstream & os, bool state ) { bool temp = os.sawNL$; os.sawNL$ = state; return temp; }
 inline bool getANL$( ofstream & os ) { return os.nlOnOff$; }
+inline bool setANL$( ofstream & os, bool state ) { bool temp = os.nlOnOff$; os.nlOnOff$ = state; return temp; }
 
 inline bool sepPrt$( ofstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
 inline void sepReset$( ofstream & os ) { os.sepOnOff$ = os.sepDefault$; }
@@ -54,7 +55,7 @@ inline const char * sepGetCur$( ofstream & os ) { return os.sepCur$; }
 inline void sepSetCur$( ofstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
 
 inline bool getPrt$( ofstream & os ) { return os.prt$; }
-inline void setPrt$( ofstream & os, bool state ) { os.prt$ = state; }
+inline bool setPrt$( ofstream & os, bool state ) { bool temp = os.prt$; os.prt$ = state; return temp; }
 
 inline void lock( ofstream & os ) with( os ) { lock( os.lock$ ); }
 inline void unlock( ofstream & os ) { unlock( os.lock$ ); }
@@ -211,6 +212,7 @@ void ?{}( ifstream & is, void * file ) with( is ) {
 } // ?{}
 
 bool getANL$( ifstream & os ) { return os.nlOnOff$; }
+bool setANL$( ifstream & os, bool state ) { bool temp = os.nlOnOff$; os.nlOnOff$ = state; return temp; }
 
 inline void lock( ifstream & os ) with( os ) { lock( os.lock$ ); }
 inline void unlock( ifstream & os ) { unlock( os.lock$ ); }

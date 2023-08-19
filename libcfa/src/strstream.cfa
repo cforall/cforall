@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:24:35 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 29 10:59:00 2023
-// Update Count     : 105
+// Last Modified On : Fri Aug 18 10:42:49 2023
+// Update Count     : 112
 //
 
 #include "strstream.hfa"
@@ -32,15 +32,16 @@
 
 // private
 inline bool getNL$( ostrstream & os ) { return os.sawNL$; }
-inline void setNL$( ostrstream & os, bool state ) { os.sawNL$ = state; }
+inline bool setNL$( ostrstream & os, bool state ) { bool temp = os.sawNL$; os.sawNL$ = state; return temp; }
 inline bool getANL$( ostrstream & os ) { return os.nlOnOff$; }
+inline bool setANL$( ostrstream & os, bool state ) { bool temp = os.nlOnOff$; os.nlOnOff$ = state; return temp; }
 inline bool sepPrt$( ostrstream & os ) { setNL$( os, false ); return os.sepOnOff$; }
 inline void sepReset$( ostrstream & os ) { os.sepOnOff$ = os.sepDefault$; }
 inline void sepReset$( ostrstream & os, bool reset ) { os.sepDefault$ = reset; os.sepOnOff$ = os.sepDefault$; }
 inline const char * sepGetCur$( ostrstream & os ) { return os.sepCur$; }
 inline void sepSetCur$( ostrstream & os, const char sepCur[] ) { os.sepCur$ = sepCur; }
 inline bool getPrt$( ostrstream & os ) { return os.prt$; }
-inline void setPrt$( ostrstream & os, bool state ) { os.prt$ = state; }
+inline bool setPrt$( ostrstream & os, bool state ) { bool temp = os.prt$; os.prt$ = state; return temp; }
 
 // public
 void nlOn( ostrstream & os ) { os.nlOnOff$ = true; }
@@ -131,6 +132,7 @@ ostrstream & write( ostrstream & os ) {
 
 // private
 bool getANL$( istrstream & is ) { return is.nlOnOff$; }
+bool setANL$( istrstream & is, bool state ) { bool temp = is.nlOnOff$; is.nlOnOff$ = state; return temp;  }
 
 // public
 void ?{}( istrstream & is, char buf[] ) {
