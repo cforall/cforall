@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 23:07:20 2023
-// Update Count     : 1466
+// Last Modified On : Thu Aug 24 10:25:20 2023
+// Update Count     : 1516
 //
 
 #include "iostream.hfa"
@@ -969,16 +969,19 @@ forall( istype & | basic_istream( istype ) ) {
 			return is;
 		} // if
 
+		int check = f.wd - 1;
+
 		// getline
 		if ( f.flags.delimit ) {
-			enum { size = 16 };
+			enum { size = 32 };
 			char fmtstr[size];
 			snprintf( fmtstr, size, "%%%d[^%c]s", f.wd, f.delimit );
-			f.s[f.wd - 1] = '\0';						// insert sentinel
+			if ( ! f.flags.rwd ) f.s[check] = '\0';		// insert sentinel
 			int len = fmt( is, fmtstr, f.s );			// read upto delimiter
-			if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
-			if ( f.s[f.wd - 1] != '\0' )				// sentinel overwritten ?
+			if ( ! f.flags.rwd && f.s[check] != '\0' )	// sentinel overwritten ?
 				throw (cstring_length){ &cstring_length_vt };
+			if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
+//			fprintf( stderr, "getline %s %s %d %d %d '%c'\n", fmtstr, f.s, len, f.wd, check, f.s[check] );
 			if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
 			return is;
 		} // if
@@ -1006,11 +1009,10 @@ forall( istype & | basic_istream( istype ) ) {
 			// printf( "incl/excl %s\n", fmtstr );
 		} // if
 
-		int check = f.wd - 1;
-		if ( f.flags.rwd ) check += 1;					// provide place for sentinel
-		f.s[check] = '\0';								// insert sentinel
+		if ( ! f.flags.rwd ) f.s[check] = '\0';			// insert sentinel
 		fmt( is, fmtstr, f.s );
-		if ( f.s[check] != '\0' )						// sentinel overwritten ?
+//		fprintf( stderr, "KK %s %d %c\n", fmtstr, check, f.s[check] );
+		if ( ! f.flags.rwd && f.s[check] != '\0' )		// sentinel overwritten ?
 			throw (cstring_length){ &cstring_length_vt };
 		return is;
 	} // ?|?

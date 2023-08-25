@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 13 22:50:08 2023
-// Update Count     : 7
+// Last Modified On : Thu Aug 24 11:27:57 2023
+// Update Count     : 89
 //
 
 #include "string.hfa"
@@ -115,6 +115,36 @@ ifstream & ?|?(ifstream & in, string & this) {
 
 void ?|?( ifstream & in, string & this ) {
     (ifstream &)(in | this); ends( in );
+}
+
+void getline( ifstream & in, string & str, const char delimit = '\n' ) {
+	// .---------------,
+	// | | | | |...|0|0| check and guard
+	// `---------------'
+	enum { gwd = 256 + 2, wd = gwd - 1 };				// guarded and unguarded width
+	char cstr[gwd];										// read in chunks
+	bool cont = false;;
+
+	cstr[wd] = '\0';									// guard null terminate string
+	try {
+		in | getline( wdi( wd, cstr ), delimit );		// must have room for string terminator
+		if ( eof( in  ) ) return;						// do not change argument
+	} catch( cstring_length * ) {
+		cont = true;									// continue not allowed
+	} finally {
+		str = cstr;										// ok to initialize string
+	} // try
+	for ( ; cont; )  {									// overflow read ?
+		cont = false;
+		try {
+			in | getline( wdi( wd, cstr ), delimit );	// must have room for string terminator
+			if ( eof( in  ) ) return;
+		} catch( cstring_length * ) {
+			cont = true;								// continue not allowed
+		} finally {
+			str += cstr;								// build string chunk at a time
+		} // try
+	} // for
 }
 
 ////////////////////////////////////////////////////////

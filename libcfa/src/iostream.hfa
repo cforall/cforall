@@ -9,15 +9,14 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 18 10:44:50 2023
-// Update Count     : 512
+// Last Modified On : Thu Aug 24 11:35:02 2023
+// Update Count     : 530
 //
 
 #pragma once
 
 #include "iterator.hfa"
 #include "Exception.hfa"
-
 
 // *********************************** ostream ***********************************
 
@@ -431,24 +430,20 @@ struct _Istream_Cstr {
 }; // _Istream_Cstr
 
 static inline {
-	_Istream_Cstr skip( const char scanset[] ) { return (_Istream_Cstr){ 0p, {scanset}, -1, {.all : 0} }; }
-	_Istream_Cstr skip( unsigned int wd ) { return (_Istream_Cstr){ 0p, {0p}, wd, {.all : 0} }; }
-	_Istream_Cstr & getline( _Istream_Cstr & fmt ) { fmt.delimit = '\n'; fmt.flags.delimit = true; return fmt; }
-	_Istream_Cstr & getline( const char delimit, _Istream_Cstr & fmt ) { fmt.delimit = delimit; fmt.flags.delimit = true; return fmt; }
-//	_Istream_Cstr incl( const char scanset[], char s[] ) { return (_Istream_Cstr){ s, {scanset}, -1, { .flags.inex : false } }; }
-//	_Istream_Cstr incl( const char scanset[], unsigned int wd, char s[] ) { return (_Istream_Cstr){ s, {scanset}, wd, {.flags.inex : false} }; }
-	_Istream_Cstr & incl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
-//	_Istream_Cstr excl( const char scanset[], char s[] ) { return (_Istream_Cstr){ s, {scanset}, -1, { .flags.inex : true } }; }
-//	_Istream_Cstr excl( const char scanset[], unsigned int wd, char s[] ) { return (_Istream_Cstr){ s, {scanset}, wd, {.flags.inex : true} }; }
-	_Istream_Cstr & excl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = true; return fmt; }
-	_Istream_Cstr ignore( char s[] ) { return (_Istream_Cstr)@{ s, {0p}, -1, {.flags.ignore : true} }; }
-	_Istream_Cstr & ignore( _Istream_Cstr & fmt ) { fmt.flags.ignore = true; return fmt; }
+	// width must include room for null terminator
 	_Istream_Cstr wdi( unsigned int wd, char s[] ) { return (_Istream_Cstr)@{ s, {0p}, wd, {.all : 0} }; }
+	// read width does not include null terminator
 	_Istream_Cstr wdi( unsigned int wd, unsigned int rwd, char s[] ) {
 		if ( wd <= rwd ) throw (cstring_length){ &cstring_length_vt };
 		return (_Istream_Cstr)@{ s, {0p}, rwd, {.flags.rwd : true} };
 	}
-//	_Istream_Cstr & wdi( unsigned int wd, _Istream_Cstr & fmt ) { fmt.wd = wd; return fmt; }
+	_Istream_Cstr skip( const char scanset[] ) { return (_Istream_Cstr){ 0p, {scanset}, -1, {.all : 0} }; }
+	_Istream_Cstr skip( unsigned int wd ) { return (_Istream_Cstr){ 0p, {0p}, wd, {.all : 0} }; }
+	_Istream_Cstr & getline( _Istream_Cstr & fmt, const char delimit = '\n' ) { fmt.delimit = delimit; fmt.flags.delimit = true; return fmt; }
+	_Istream_Cstr & incl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
+	_Istream_Cstr & excl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = true; return fmt; }
+	_Istream_Cstr ignore( char s[] ) { return (_Istream_Cstr)@{ s, {0p}, -1, {.flags.ignore : true} }; }
+	_Istream_Cstr & ignore( _Istream_Cstr & fmt ) { fmt.flags.ignore = true; return fmt; }
 } // distribution
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cstr f );
