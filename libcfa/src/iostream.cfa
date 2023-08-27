@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 24 10:25:20 2023
-// Update Count     : 1516
+// Last Modified On : Fri Aug 25 12:04:27 2023
+// Update Count     : 1526
 //
 
 #include "iostream.hfa"
@@ -20,7 +20,8 @@
 #include <stdint.h>										// UINT64_MAX
 #include <float.h>										// DBL_DIG, LDBL_DIG
 #include <complex.h>									// creal, cimag
-//#include <string.h>									// strlen, strcmp, memcpy
+//#include <stdio.h>
+
 extern "C" {
 extern size_t strlen (const char *__s) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
 extern int strcmp (const char *__s1, const char *__s2) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
@@ -970,31 +971,33 @@ forall( istype & | basic_istream( istype ) ) {
 		} // if
 
 		int check = f.wd - 1;
+		const char * scanset = f.scanset;;
+		if ( f.flags.delimit ) scanset = f.delimit;		// getline ?
 
 		// getline
-		if ( f.flags.delimit ) {
-			enum { size = 32 };
-			char fmtstr[size];
-			snprintf( fmtstr, size, "%%%d[^%c]s", f.wd, f.delimit );
-			if ( ! f.flags.rwd ) f.s[check] = '\0';		// insert sentinel
-			int len = fmt( is, fmtstr, f.s );			// read upto delimiter
-			if ( ! f.flags.rwd && f.s[check] != '\0' )	// sentinel overwritten ?
-				throw (cstring_length){ &cstring_length_vt };
-			if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
-//			fprintf( stderr, "getline %s %s %d %d %d '%c'\n", fmtstr, f.s, len, f.wd, check, f.s[check] );
-			if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
-			return is;
-		} // if
+		// if ( f.flags.delimit ) {
+		// 	enum { size = 32 };
+		// 	char fmtstr[size];
+		// 	snprintf( fmtstr, size, "%%%d[^%c]s", f.wd, f.delimit );
+		// 	if ( ! f.flags.rwd ) f.s[check] = '\0';		// insert sentinel
+		// 	int len = fmt( is, fmtstr, f.s );			// read upto delimiter
+		// 	if ( ! f.flags.rwd && f.s[check] != '\0' )	// sentinel overwritten ?
+		// 		throw (cstring_length){ &cstring_length_vt };
+		// 	if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
+		// 	// fprintf( stderr, "getline %s %s %d %d %d '%c'\n", fmtstr, f.s, len, f.wd, check, f.s[check] );
+		// 	if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
+		// 	return is;
+		// } // if
 
 		size_t len = 0;
-		if ( f.scanset ) len = strlen( f.scanset );
+		if ( scanset ) len = strlen( scanset );
 		char fmtstr[len + 16];
 		int start = 1;
 		fmtstr[0] = '%';
 		if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
 		if ( f.wd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.wd ); }
 
-		if ( ! f.scanset ) {
+		if ( ! scanset ) {
 			// %s, %*s, %ws, %*ws
 			fmtstr[start] = 's'; fmtstr[start + 1] = '\0';
 			// printf( "cstr %s\n", fmtstr );
@@ -1003,17 +1006,22 @@ forall( istype & | basic_istream( istype ) ) {
 			// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
 			fmtstr[start] = '['; start += 1;
 			if ( f.flags.inex ) { fmtstr[start] = '^'; start += 1; }
-			strcpy( &fmtstr[start], f.scanset );		// copy includes '\0'
+			strcpy( &fmtstr[start], scanset );			// copy includes '\0'
 			len += start;
 			fmtstr[len] = ']'; fmtstr[len + 1] = '\0';
 			// printf( "incl/excl %s\n", fmtstr );
 		} // if
 
 		if ( ! f.flags.rwd ) f.s[check] = '\0';			// insert sentinel
-		fmt( is, fmtstr, f.s );
-//		fprintf( stderr, "KK %s %d %c\n", fmtstr, check, f.s[check] );
+		len = fmt( is, fmtstr, f.s );
+		//fprintf( stderr, "KK %s %zd %d %c\n", fmtstr, len, check, f.s[check] );
 		if ( ! f.flags.rwd && f.s[check] != '\0' )		// sentinel overwritten ?
 			throw (cstring_length){ &cstring_length_vt };
+
+		if ( f.flags.delimit ) {						// getline ?
+		 	if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
+		 	if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
+		} //if
 		return is;
 	} // ?|?
 	ISTYPE_VOID_IMPL( _Istream_Cstr )

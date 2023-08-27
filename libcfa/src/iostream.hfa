@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 24 11:35:02 2023
-// Update Count     : 530
+// Last Modified On : Fri Aug 25 11:55:46 2023
+// Update Count     : 533
 //
 
 #pragma once
@@ -19,7 +19,6 @@
 #include "Exception.hfa"
 
 // *********************************** ostream ***********************************
-
 
 forall( ostype & )
 trait basic_ostream {
@@ -304,9 +303,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	OSTYPE_VOID( _Ostream_Manip(const char *) ); \
 } // ?|?
 
-
 // *********************************** istream ***********************************
-
 
 #define ISTYPE_VOID( T ) void ?|?( istype &, T )
 #define ISTYPE_VOID_IMPL( T ) \
@@ -402,12 +399,9 @@ forall( istype & | basic_istream( istype ) ) {
 	istype & nlOff( istype & );
 } // distribution
 
-
 // *********************************** exceptions ***********************************
 
-
 ExceptionDecl( cstring_length );
-
 
 // *********************************** manipulators ***********************************
 
@@ -415,7 +409,7 @@ struct _Istream_Cstr {
 	char * s;
 	union {
 		const char * scanset;
-		char delimit;
+		char delimit[2];
 	};
 	int wd;												// width
 	union {
@@ -439,7 +433,8 @@ static inline {
 	}
 	_Istream_Cstr skip( const char scanset[] ) { return (_Istream_Cstr){ 0p, {scanset}, -1, {.all : 0} }; }
 	_Istream_Cstr skip( unsigned int wd ) { return (_Istream_Cstr){ 0p, {0p}, wd, {.all : 0} }; }
-	_Istream_Cstr & getline( _Istream_Cstr & fmt, const char delimit = '\n' ) { fmt.delimit = delimit; fmt.flags.delimit = true; return fmt; }
+	_Istream_Cstr & getline( _Istream_Cstr & fmt, const char delimit = '\n' ) {
+		fmt.delimit[0] = delimit; fmt.delimit[1] = '\0'; fmt.flags.delimit = true; fmt.flags.inex = true; return fmt; }
 	_Istream_Cstr & incl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
 	_Istream_Cstr & excl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = true; return fmt; }
 	_Istream_Cstr ignore( char s[] ) { return (_Istream_Cstr)@{ s, {0p}, -1, {.flags.ignore : true} }; }
@@ -501,9 +496,7 @@ INPUT_FMT_DECL( float _Complex )
 INPUT_FMT_DECL( double _Complex )
 INPUT_FMT_DECL( long double _Complex )
 
-
 // *********************************** time ***********************************
-
 
 #include <time_t.hfa>									// Duration (constructors) / Time (constructors)
 
