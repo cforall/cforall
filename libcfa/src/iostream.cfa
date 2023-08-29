@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 25 12:04:27 2023
-// Update Count     : 1526
+// Last Modified On : Mon Aug 28 13:36:16 2023
+// Update Count     : 1527
 //
 
 #include "iostream.hfa"
@@ -1014,7 +1014,7 @@ forall( istype & | basic_istream( istype ) ) {
 
 		if ( ! f.flags.rwd ) f.s[check] = '\0';			// insert sentinel
 		len = fmt( is, fmtstr, f.s );
-		//fprintf( stderr, "KK %s %zd %d %c\n", fmtstr, len, check, f.s[check] );
+		//fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, f.s[check], f.s );
 		if ( ! f.flags.rwd && f.s[check] != '\0' )		// sentinel overwritten ?
 			throw (cstring_length){ &cstring_length_vt };
 

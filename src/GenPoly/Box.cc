@@ -1537,35 +1537,34 @@ namespace GenPoly {
 			}
 		}
 
+		/// Checks if memberDecl matches the decl from an aggregate.
+		bool isMember( DeclarationWithType *memberDecl, Declaration * decl ) {
+			if ( memberDecl->get_name() != decl->get_name() )
+				return false;
+
+			if ( memberDecl->get_name().empty() ) {
+				// Plan-9 Field: match on unique_id.
+				return ( memberDecl->get_uniqueId() == decl->get_uniqueId() );
+			}
+
+			DeclarationWithType *declWithType = strict_dynamic_cast< DeclarationWithType* >( decl );
+
+			if ( memberDecl->get_mangleName().empty() || declWithType->get_mangleName().empty() ) {
+				// Tuple-Element Field: expect neither had mangled name; accept match on simple name (like field_2) only.
+				assert( memberDecl->get_mangleName().empty() && declWithType->get_mangleName().empty() );
+				return true;
+			}
+
+			// Ordinary Field: Use full name to accommodate overloading.
+			return ( memberDecl->get_mangleName() == declWithType->get_mangleName() );
+		}
+
 		/// Finds the member in the base list that matches the given declaration; returns its index, or -1 if not present
 		long findMember( DeclarationWithType *memberDecl, std::list< Declaration* > &baseDecls ) {
 			for ( auto pair : enumerate( baseDecls ) ) {
-				Declaration * decl = pair.val;
-				size_t i = pair.idx;
-				if ( memberDecl->get_name() != decl->get_name() )
-					continue;
-
-				if ( memberDecl->get_name().empty() ) {
-					// plan-9 field: match on unique_id
-					if ( memberDecl->get_uniqueId() == decl->get_uniqueId() )
-						return i;
-					else
-						continue;
+				if ( isMember( memberDecl, pair.val ) ) {
+					return pair.idx;
 				}
-
-				DeclarationWithType *declWithType = strict_dynamic_cast< DeclarationWithType* >( decl );
-
-				if ( memberDecl->get_mangleName().empty() || declWithType->get_mangleName().empty() ) {
-					// tuple-element field: expect neither had mangled name; accept match on simple name (like field_2) only
-					assert( memberDecl->get_mangleName().empty() && declWithType->get_mangleName().empty() );
-					return i;
-				}
-
-				// ordinary field: use full name to accommodate overloading
-				if ( memberDecl->get_mangleName() == declWithType->get_mangleName() )
-					return i;
-				else
-					continue;
 			}
 			return -1;
 		}

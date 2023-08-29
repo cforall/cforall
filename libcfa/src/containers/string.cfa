@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 24 11:27:57 2023
-// Update Count     : 89
+// Last Modified On : Mon Aug 28 19:00:45 2023
+// Update Count     : 146
 //
 
 #include "string.hfa"
@@ -117,35 +117,116 @@ void ?|?( ifstream & in, string & this ) {
     (ifstream &)(in | this); ends( in );
 }
 
-void getline( ifstream & in, string & str, const char delimit = '\n' ) {
-	// .---------------,
-	// | | | | |...|0|0| check and guard
-	// `---------------'
-	enum { gwd = 256 + 2, wd = gwd - 1 };				// guarded and unguarded width
+static void readstr( ifstream & is, _Istream_str f, char fmtstr[], char cstr[] ) {
+	int check = f.rwd - 1;
+
+	if ( ! f.flags.rwd ) cstr[check] = '\0';			// insert sentinel
+	int len = fmt( is, fmtstr, cstr );
+	// fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, cstr[check], cstr );
+
+	if ( ! f.flags.rwd && cstr[check] != '\0' )			// sentinel overwritten ?
+		throw (cstring_length){ &cstring_length_vt };
+
+	if ( f.flags.delimit ) {							// getline ?
+		if ( len == 0 ) cstr[0] = '\0';					// empty read => argument unchanged => set empty
+		if ( ! eof( is ) ) fmt( is, "%*c" );			// ignore delimiter
+	} //if
+} // readstr
+
+ifstream & ?|?( ifstream & is, _Istream_str f ) {
+	// skip, same as for char *
+	if ( ! &f.s ) {
+		// fprintf( stderr,  "skip %s %d\n", f.scanset, f.wd );
+		if ( f.rwd == -1 ) fmt( is, f.scanset, "" ); // no input arguments
+		else for ( f.rwd ) fmt( is, "%*c" );
+		return is;
+	} // if
+
+	enum { gwd = 16 + 2, wd = gwd - 1 };				// guarded and unguarded width
 	char cstr[gwd];										// read in chunks
 	bool cont = false;;
 
+	if ( f.rwd == -1 ) f.rwd = wd;
+	const char * scanset = f.scanset;;
+	if ( f.flags.delimit ) scanset = f.delimit;			// getline ?
+
+	size_t len = 0;
+	if ( scanset ) len = strlen( scanset );
+	char fmtstr[len + 16];
+	int start = 1;
+	fmtstr[0] = '%';
+	if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
+	if ( f.rwd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.rwd ); }
+
+	if ( ! scanset ) {
+		// %s, %*s, %ws, %*ws
+		fmtstr[start] = 's'; fmtstr[start + 1] = '\0';
+		// printf( "cstr %s\n", fmtstr );
+	} else {
+		// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
+		// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
+		fmtstr[start] = '['; start += 1;
+		if ( f.flags.inex ) { fmtstr[start] = '^'; start += 1; }
+		strcpy( &fmtstr[start], scanset );				// copy includes '\0'
+		len += start;
+		fmtstr[len] = ']'; fmtstr[len + 1] = '\0';
+		// printf( "incl/excl %s\n", fmtstr );
+	} // if
+
 	cstr[wd] = '\0';									// guard null terminate string
 	try {
-		in | getline( wdi( wd, cstr ), delimit );		// must have room for string terminator
-		if ( eof( in  ) ) return;						// do not change argument
+		readstr( is, f, fmtstr, cstr );
 	} catch( cstring_length * ) {
-		cont = true;									// continue not allowed
+		cont = true;
 	} finally {
-		str = cstr;										// ok to initialize string
+		f.s = cstr;										// ok to initialize string
 	} // try
 	for ( ; cont; )  {									// overflow read ?
 		cont = false;
 		try {
-			in | getline( wdi( wd, cstr ), delimit );	// must have room for string terminator
-			if ( eof( in  ) ) return;
+			readstr( is, f, fmtstr, cstr );
 		} catch( cstring_length * ) {
 			cont = true;								// continue not allowed
 		} finally {
-			str += cstr;								// build string chunk at a time
+			f.s += cstr;								// build string chunk at a time
 		} // try
 	} // for
+	return is;
+} // ?|?
+
+void ?|?( ifstream & in, _Istream_str f ) {
+    (ifstream &)(in | f); ends( in );
 }
+
+// void getline( ifstream & in, string & str, const char delimit = '\n' ) {
+// 	// .---------------,
+// 	// | | | | |...|0|0| check and guard
+// 	// `---------------'
+// 	enum { gwd = 128 + 2, wd = gwd - 1 };				// guarded and unguarded width
+// 	char cstr[gwd];										// read in chunks
+// 	bool cont = false;;
+
+// 	cstr[wd] = '\0';									// guard null terminate string
+// 	try {
+// 		in | getline( wdi( wd, cstr ), delimit );		// must have room for string terminator
+// 		if ( eof( in  ) ) return;						// do not change argument
+// 	} catch( cstring_length * ) {
+// 		cont = true;
+// 	} finally {
+// 		str = cstr;										// ok to initialize string
+// 	} // try
+// 	for ( ; cont; )  {									// overflow read ?
+// 		cont = false;
+// 		try {
+// 			in | getline( wdi( wd, cstr ), delimit );	// must have room for string terminator
+// 			if ( eof( in  ) ) return;
+// 		} catch( cstring_length * ) {
+// 			cont = true;								// continue not allowed
+// 		} finally {
+// 			str += cstr;								// build string chunk at a time
+// 		} // try
+// 	} // for
+// }
 
 ////////////////////////////////////////////////////////
 // Slicing

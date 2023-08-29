@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 25 11:55:46 2023
-// Update Count     : 533
+// Last Modified On : Fri Aug 25 14:55:06 2023
+// Update Count     : 535
 //
 
 #pragma once
@@ -431,8 +431,8 @@ static inline {
 		if ( wd <= rwd ) throw (cstring_length){ &cstring_length_vt };
 		return (_Istream_Cstr)@{ s, {0p}, rwd, {.flags.rwd : true} };
 	}
-	_Istream_Cstr skip( const char scanset[] ) { return (_Istream_Cstr){ 0p, {scanset}, -1, {.all : 0} }; }
-	_Istream_Cstr skip( unsigned int wd ) { return (_Istream_Cstr){ 0p, {0p}, wd, {.all : 0} }; }
+	_Istream_Cstr skip( const char scanset[] ) { return (_Istream_Cstr)@{ 0p, {scanset}, -1, {.all : 0} }; }
+	_Istream_Cstr skip( unsigned int wd ) { return (_Istream_Cstr)@{ 0p, {0p}, wd, {.all : 0} }; }
 	_Istream_Cstr & getline( _Istream_Cstr & fmt, const char delimit = '\n' ) {
 		fmt.delimit[0] = delimit; fmt.delimit[1] = '\0'; fmt.flags.delimit = true; fmt.flags.inex = true; return fmt; }
 	_Istream_Cstr & incl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
