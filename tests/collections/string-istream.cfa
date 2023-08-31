@@ -1,6 +1,6 @@
 #include <iostream.hfa>
-#include <containers/string.hfa>
-#include <containers/string_res.hfa>
+#include <collections/string.hfa>
+#include <collections/string_res.hfa>
 
 
 void istream_cstr(void) {

@@ -20,8 +20,8 @@
 #include <stdio.h>
 
 #include "bits/weakso_locks.hfa"
-#include "containers/lockfree.hfa"
-#include "containers/list.hfa"
+#include "collections/lockfree.hfa"
+#include "collections/list.hfa"
 
 #include "limits.hfa"
 #include "thread.hfa"

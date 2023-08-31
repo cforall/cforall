@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun  9 14:36:41 2023
-// Update Count     : 479
+// Last Modified On : Wed Aug 30 21:48:48 2023
+// Update Count     : 480
 //
 
 #include <iostream>
@@ -360,7 +360,7 @@ int main( int argc, char * argv[] ) {
 			args[nargs++] = "-I" CFA_INCDIR "stdhdr";
 		} // if
 		args[nargs++] = "-I" CFA_INCDIR "concurrency";
-		args[nargs++] = "-I" CFA_INCDIR "containers";
+		args[nargs++] = "-I" CFA_INCDIR "collections";
 		libbase = CFA_LIBDIR;
 		break;
 	  case BuildTree:
@@ -371,7 +371,7 @@ int main( int argc, char * argv[] ) {
 			args[nargs++] = "-I" TOP_SRCDIR "libcfa/src" "/stdhdr";
 		} // if
 		args[nargs++] = "-I" TOP_SRCDIR "libcfa/src" "/concurrency";
-		args[nargs++] = "-I" TOP_SRCDIR "libcfa/src" "/containers";
+		args[nargs++] = "-I" TOP_SRCDIR "libcfa/src" "/collections";
 
 		libbase = TOP_BUILDDIR "libcfa/";
 

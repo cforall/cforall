@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "containers/lockfree.hfa"
+#include "collections/lockfree.hfa"
 #include "kernel/fwd.hfa"
 
 enum once_state {

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 28 13:36:16 2023
-// Update Count     : 1527
+// Last Modified On : Wed Aug 30 10:56:08 2023
+// Update Count     : 1541
 //
 
 #include "iostream.hfa"
@@ -961,6 +961,22 @@ forall( istype & | basic_istream( istype ) ) {
 // *********************************** manipulators ***********************************
 
 forall( istype & | basic_istream( istype ) ) {
+	void readstr( istype & is, _Istream_str_base f, char fmtstr[], char cstr[] ) {
+		int check = f.wd - 1;
+
+		if ( ! f.flags.rwd ) cstr[check] = '\0';		// insert sentinel
+		int len = fmt( is, fmtstr, cstr );
+		// fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, cstr[check], cstr );
+
+		if ( ! f.flags.rwd && cstr[check] != '\0' )		// sentinel overwritten ?
+			throw (cstring_length){ &cstring_length_vt };
+
+		if ( f.flags.delimit ) {						// getline ?
+			if ( len == 0 ) cstr[0] = '\0';				// empty read => argument unchanged => set empty
+			if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
+		} //if
+	} // readstr
+
 	istype & ?|?( istype & is, _Istream_Cstr f ) {
 		// skip
 		if ( ! f.s ) {
@@ -970,24 +986,8 @@ forall( istype & | basic_istream( istype ) ) {
 			return is;
 		} // if
 
-		int check = f.wd - 1;
-		const char * scanset = f.scanset;;
+		const char * scanset = f.scanset;
 		if ( f.flags.delimit ) scanset = f.delimit;		// getline ?
-
-		// getline
-		// if ( f.flags.delimit ) {
-		// 	enum { size = 32 };
-		// 	char fmtstr[size];
-		// 	snprintf( fmtstr, size, "%%%d[^%c]s", f.wd, f.delimit );
-		// 	if ( ! f.flags.rwd ) f.s[check] = '\0';		// insert sentinel
-		// 	int len = fmt( is, fmtstr, f.s );			// read upto delimiter
-		// 	if ( ! f.flags.rwd && f.s[check] != '\0' )	// sentinel overwritten ?
-		// 		throw (cstring_length){ &cstring_length_vt };
-		// 	if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
-		// 	// fprintf( stderr, "getline %s %s %d %d %d '%c'\n", fmtstr, f.s, len, f.wd, check, f.s[check] );
-		// 	if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
-		// 	return is;
-		// } // if
 
 		size_t len = 0;
 		if ( scanset ) len = strlen( scanset );
@@ -1012,16 +1012,19 @@ forall( istype & | basic_istream( istype ) ) {
 			// printf( "incl/excl %s\n", fmtstr );
 		} // if
 
-		if ( ! f.flags.rwd ) f.s[check] = '\0';			// insert sentinel
-		len = fmt( is, fmtstr, f.s );
-		//fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, f.s[check], f.s );
-		if ( ! f.flags.rwd && f.s[check] != '\0' )		// sentinel overwritten ?
-			throw (cstring_length){ &cstring_length_vt };
+		readstr( is, f, fmtstr, f.s );
+		// int check = f.wd - 1;
 
-		if ( f.flags.delimit ) {						// getline ?
-		 	if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
-		 	if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
-		} //if
+		// if ( ! f.flags.rwd ) f.s[check] = '\0';			// insert sentinel
+		// len = fmt( is, fmtstr, f.s );
+		// //fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, f.s[check], f.s );
+		// if ( ! f.flags.rwd && f.s[check] != '\0' )		// sentinel overwritten ?
+		// 	throw (cstring_length){ &cstring_length_vt };
+
+		// if ( f.flags.delimit ) {						// getline ?
+		//  	if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
+		//  	if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
+		// } //if
 		return is;
 	} // ?|?
 	ISTYPE_VOID_IMPL( _Istream_Cstr )

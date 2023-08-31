@@ -1,4 +1,4 @@
-#include <containers/array.hfa>
+#include <collections/array.hfa>
 
 // Shows support for many required ways a user can index into a new array.
 //

@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// bits/containers.hfa -- Intrusive generic containers.hfa
+// bits/collections.hfa -- Intrusive generic collections
 //
 // Author           : Thierry Delisle
 // Created On       : Tue Oct 31 16:38:50 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:33:08 2023
-// Update Count     : 29
+// Last Modified On : Wed Aug 30 21:26:39 2023
+// Update Count     : 30
 
 #pragma once
 

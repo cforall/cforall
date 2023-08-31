@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Mon Aug 14 17:10:51 2023
-## Update Count     : 262
+## Last Modified On : Wed Aug 30 21:22:45 2023
+## Update Count     : 263
 ###############################################################################
 
 # create object files in directory with source files
@@ -51,7 +51,7 @@ inst_headers_nosrc = \
 	virtual_dtor.hfa \
 	bits/algorithm.hfa \
 	bits/align.hfa \
-	bits/containers.hfa \
+	bits/collections.hfa \
 	bits/debug.hfa \
 	bits/defs.hfa \
 	bits/locks.hfa \
@@ -62,11 +62,11 @@ inst_headers_nosrc = \
 	concurrency/atomic.hfa \
 	concurrency/iofwd.hfa \
 	concurrency/barrier.hfa \
-	containers/array.hfa \
-	containers/list.hfa \
-	containers/lockfree.hfa \
-	containers/string_sharectx.hfa \
-	containers/vector2.hfa \
+	collections/array.hfa \
+	collections/list.hfa \
+	collections/lockfree.hfa \
+	collections/string_sharectx.hfa \
+	collections/vector2.hfa \
 	vec/vec.hfa \
 	vec/vec2.hfa \
 	vec/vec3.hfa \
@@ -88,12 +88,12 @@ inst_headers_src = \
 	time.hfa \
 	bits/weakso_locks.hfa \
 	algorithms/range_iterator.hfa \
-	containers/maybe.hfa \
-	containers/pair.hfa \
-	containers/result.hfa \
-	containers/string.hfa \
-	containers/string_res.hfa \
-	containers/vector.hfa \
+	collections/maybe.hfa \
+	collections/pair.hfa \
+	collections/result.hfa \
+	collections/string.hfa \
+	collections/string_res.hfa \
+	collections/vector.hfa \
 	device/cpu.hfa
 
 libsrc = ${inst_headers_src} ${inst_headers_src:.hfa=.cfa} \

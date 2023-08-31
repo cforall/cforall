@@ -1,4 +1,4 @@
-#include <containers/array.hfa>
+#include <collections/array.hfa>
 
 //
 // Type-theory demo (success is "it compiles")

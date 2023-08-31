@@ -1,6 +1,6 @@
 // A simple, isolated, example of what the dimexpr-match cases are all about.
 
-#include <containers/array.hfa>
+#include <collections/array.hfa>
 
 // context excerpted from doc/theses/mike_brooks_MMath/programs/hello-array.cfa
 forall( [N] )

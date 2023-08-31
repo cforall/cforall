@@ -19,8 +19,8 @@
 
 #include "bits/locks.hfa"
 #include "bits/sequence.hfa"
-#include "bits/containers.hfa"
-#include "containers/list.hfa"
+#include "bits/collections.hfa"
+#include "collections/list.hfa"
 
 struct select_node;
 

@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 28 19:00:45 2023
-// Update Count     : 146
+// Last Modified On : Tue Aug 29 18:32:34 2023
+// Update Count     : 153
 //
 
 #include "string.hfa"
@@ -117,36 +117,20 @@ void ?|?( ifstream & in, string & this ) {
     (ifstream &)(in | this); ends( in );
 }
 
-static void readstr( ifstream & is, _Istream_str f, char fmtstr[], char cstr[] ) {
-	int check = f.rwd - 1;
-
-	if ( ! f.flags.rwd ) cstr[check] = '\0';			// insert sentinel
-	int len = fmt( is, fmtstr, cstr );
-	// fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, cstr[check], cstr );
-
-	if ( ! f.flags.rwd && cstr[check] != '\0' )			// sentinel overwritten ?
-		throw (cstring_length){ &cstring_length_vt };
-
-	if ( f.flags.delimit ) {							// getline ?
-		if ( len == 0 ) cstr[0] = '\0';					// empty read => argument unchanged => set empty
-		if ( ! eof( is ) ) fmt( is, "%*c" );			// ignore delimiter
-	} //if
-} // readstr
-
 ifstream & ?|?( ifstream & is, _Istream_str f ) {
 	// skip, same as for char *
 	if ( ! &f.s ) {
 		// fprintf( stderr,  "skip %s %d\n", f.scanset, f.wd );
-		if ( f.rwd == -1 ) fmt( is, f.scanset, "" ); // no input arguments
-		else for ( f.rwd ) fmt( is, "%*c" );
+		if ( f.wd == -1 ) fmt( is, f.scanset, "" ); // no input arguments
+		else for ( f.wd ) fmt( is, "%*c" );
 		return is;
 	} // if
 
-	enum { gwd = 16 + 2, wd = gwd - 1 };				// guarded and unguarded width
+	enum { gwd = 128 + 2, wd = gwd - 1 };				// guarded and unguarded width
 	char cstr[gwd];										// read in chunks
 	bool cont = false;;
 
-	if ( f.rwd == -1 ) f.rwd = wd;
+	if ( f.wd == -1 ) f.wd = wd;
 	const char * scanset = f.scanset;;
 	if ( f.flags.delimit ) scanset = f.delimit;			// getline ?
 
@@ -156,7 +140,7 @@ ifstream & ?|?( ifstream & is, _Istream_str f ) {
 	int start = 1;
 	fmtstr[0] = '%';
 	if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
-	if ( f.rwd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.rwd ); }
+	if ( f.wd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.wd ); }
 
 	if ( ! scanset ) {
 		// %s, %*s, %ws, %*ws

@@ -8,12 +8,12 @@
 
 #ifdef INCLUDE_MINIMAL
 #define POUNDINCLUDE #include
-POUNDINCLUDE <containers/array.hfa>
+POUNDINCLUDE <collections/array.hfa>
 #else
-#include <containers/array.hfa>                           // part of SUT
+#include <collections/array.hfa>						// part of SUT
 #endif
 
-#include "dimexpr-match.hfa"                              // test framework
+#include "dimexpr-match.hfa"							// test framework
 
 // CFA "classic" behaviour is inconsistent between "C array" and "new array."
 // The impelementation of "non classic" rules makes C arrays and new arrays work the same.

@@ -1,4 +1,4 @@
-#include <containers/string.hfa>
+#include <collections/string.hfa>
 #include <string_sharectx.hfa>
 
 void assertWellFormedHandleList( int maxLen ) { // with(HeapArea)
