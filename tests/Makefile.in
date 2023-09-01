@@ -463,8 +463,8 @@ EXTRA_DIST = test.py \
 	concurrency/clib.c \
 	concurrency/unified_locking/mutex_test.hfa \
 	concurrency/channels/parallel_harness.hfa \
-	array-container/dimexpr-match.hfa \
-	array-container/dimexpr-match-detail.sh
+	array-collections/dimexpr-match.hfa \
+	array-collections/dimexpr-match-detail.sh
 
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
@@ -999,11 +999,11 @@ array-ERR3 : array.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR3
 	-cp ${test} ${abspath ${@}}
 
-array-container/dimexpr-match-c-ERRS : array-container/dimexpr-match-c.cfa
+array-collections/dimexpr-match-c-ERRS : array-collections/dimexpr-match-c.cfa
 	${CFACOMPILE_SYNTAX} -DERRS
 	-cp ${test} ${abspath ${@}}
 
-array-container/dimexpr-match-cfa-ERRS : array-container/dimexpr-match-cfa.cfa
+array-collections/dimexpr-match-cfa-ERRS : array-collections/dimexpr-match-cfa.cfa
 	${CFACOMPILE_SYNTAX} -DERRS
 	-cp ${test} ${abspath ${@}}
 

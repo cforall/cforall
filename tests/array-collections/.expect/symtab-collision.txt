@@ -1,4 +1,4 @@
-array-container/symtab-collision.cfa:25:1 error: conflicting overload of C function collide_me: C const unsigned long int with initializer (maybe constructed)
+array-collections/symtab-collision.cfa:25:1 error: conflicting overload of C function collide_me: C const unsigned long int with initializer (maybe constructed)
   Simple Initializer: Generated Cast of:
     Constant Expression (17: signed int)
     ... with resolved type:

@@ -1,0 +1,6 @@
+array-collections/safety-summary.cfa:16:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: f
+...to:
+  Name: a
+  Name: b
+

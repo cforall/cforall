@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Sun May 28 08:15:43 2023
-## Update Count     : 196
+## Last Modified On : Wed Aug 30 22:31:45 2023
+## Update Count     : 197
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -90,8 +90,8 @@ EXTRA_DIST = test.py \
 	concurrency/clib.c \
 	concurrency/unified_locking/mutex_test.hfa \
 	concurrency/channels/parallel_harness.hfa \
-	array-container/dimexpr-match.hfa \
-	array-container/dimexpr-match-detail.sh
+	array-collections/dimexpr-match.hfa \
+	array-collections/dimexpr-match-detail.sh
 
 dist-hook:
 	echo "Gathering test files"
@@ -226,11 +226,11 @@ array-ERR3 : array.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR3
 	-cp ${test} ${abspath ${@}}
 
-array-container/dimexpr-match-c-ERRS : array-container/dimexpr-match-c.cfa
+array-collections/dimexpr-match-c-ERRS : array-collections/dimexpr-match-c.cfa
 	${CFACOMPILE_SYNTAX} -DERRS
 	-cp ${test} ${abspath ${@}}
 
-array-container/dimexpr-match-cfa-ERRS : array-container/dimexpr-match-cfa.cfa
+array-collections/dimexpr-match-cfa-ERRS : array-collections/dimexpr-match-cfa.cfa
 	${CFACOMPILE_SYNTAX} -DERRS
 	-cp ${test} ${abspath ${@}}
 

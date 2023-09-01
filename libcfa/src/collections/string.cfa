@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 29 18:32:34 2023
-// Update Count     : 153
+// Last Modified On : Thu Aug 31 13:20:41 2023
+// Update Count     : 161
 //
 
 #include "string.hfa"
@@ -126,40 +126,19 @@ ifstream & ?|?( ifstream & is, _Istream_str f ) {
 		return is;
 	} // if
 
+ 	// .---------------,
+ 	// | | | | |...|0|0| check and guard
+ 	// `---------------'
 	enum { gwd = 128 + 2, wd = gwd - 1 };				// guarded and unguarded width
 	char cstr[gwd];										// read in chunks
-	bool cont = false;;
+	bool cont = false;
 
 	if ( f.wd == -1 ) f.wd = wd;
-	const char * scanset = f.scanset;;
-	if ( f.flags.delimit ) scanset = f.delimit;			// getline ?
-
-	size_t len = 0;
-	if ( scanset ) len = strlen( scanset );
-	char fmtstr[len + 16];
-	int start = 1;
-	fmtstr[0] = '%';
-	if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
-	if ( f.wd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.wd ); }
-
-	if ( ! scanset ) {
-		// %s, %*s, %ws, %*ws
-		fmtstr[start] = 's'; fmtstr[start + 1] = '\0';
-		// printf( "cstr %s\n", fmtstr );
-	} else {
-		// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
-		// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
-		fmtstr[start] = '['; start += 1;
-		if ( f.flags.inex ) { fmtstr[start] = '^'; start += 1; }
-		strcpy( &fmtstr[start], scanset );				// copy includes '\0'
-		len += start;
-		fmtstr[len] = ']'; fmtstr[len + 1] = '\0';
-		// printf( "incl/excl %s\n", fmtstr );
-	} // if
+	_Istream_Cstr cfmt = { cstr, (_Istream_str_base)f };
 
 	cstr[wd] = '\0';									// guard null terminate string
 	try {
-		readstr( is, f, fmtstr, cstr );
+		is | cfmt;
 	} catch( cstring_length * ) {
 		cont = true;
 	} finally {
@@ -168,7 +147,7 @@ ifstream & ?|?( ifstream & is, _Istream_str f ) {
 	for ( ; cont; )  {									// overflow read ?
 		cont = false;
 		try {
-			readstr( is, f, fmtstr, cstr );
+			is | cfmt;
 		} catch( cstring_length * ) {
 			cont = true;								// continue not allowed
 		} finally {
@@ -181,36 +160,6 @@ ifstream & ?|?( ifstream & is, _Istream_str f ) {
 void ?|?( ifstream & in, _Istream_str f ) {
     (ifstream &)(in | f); ends( in );
 }
-
-// void getline( ifstream & in, string & str, const char delimit = '\n' ) {
-// 	// .---------------,
-// 	// | | | | |...|0|0| check and guard
-// 	// `---------------'
-// 	enum { gwd = 128 + 2, wd = gwd - 1 };				// guarded and unguarded width
-// 	char cstr[gwd];										// read in chunks
-// 	bool cont = false;;
-
-// 	cstr[wd] = '\0';									// guard null terminate string
-// 	try {
-// 		in | getline( wdi( wd, cstr ), delimit );		// must have room for string terminator
-// 		if ( eof( in  ) ) return;						// do not change argument
-// 	} catch( cstring_length * ) {
-// 		cont = true;
-// 	} finally {
-// 		str = cstr;										// ok to initialize string
-// 	} // try
-// 	for ( ; cont; )  {									// overflow read ?
-// 		cont = false;
-// 		try {
-// 			in | getline( wdi( wd, cstr ), delimit );	// must have room for string terminator
-// 			if ( eof( in  ) ) return;
-// 		} catch( cstring_length * ) {
-// 			cont = true;								// continue not allowed
-// 		} finally {
-// 			str += cstr;								// build string chunk at a time
-// 		} // try
-// 	} // for
-// }
 
 ////////////////////////////////////////////////////////
 // Slicing

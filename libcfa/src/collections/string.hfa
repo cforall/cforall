@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 29 18:28:04 2023
-// Update Count     : 47
+// Last Modified On : Thu Aug 31 11:47:27 2023
+// Update Count     : 49
 //
 
 #pragma once
@@ -82,7 +82,6 @@ static inline {
 } // distribution
 ifstream & ?|?( ifstream & is, _Istream_str f );
 void ?|?( ifstream & is, _Istream_str t );
-void getline( ifstream & in, string & this, const char delimit = '\n' );
 
 // Concatenation
 void ?+=?(string & s, char other); // append a character

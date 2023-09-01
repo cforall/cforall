@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 29 19:15:06 2023
-// Update Count     : 542
+// Last Modified On : Thu Aug 31 10:55:35 2023
+// Update Count     : 544
 //
 
 #pragma once
@@ -445,7 +445,6 @@ static inline {
 	_Istream_Cstr & ignore( _Istream_Cstr & fmt ) { fmt.flags.ignore = true; return fmt; }
 } // distribution
 forall( istype & | basic_istream( istype ) ) {
-	void readstr( istype & is, _Istream_str_base f, char fmtstr[], char cstr[] );
 	istype & ?|?( istype & is, _Istream_Cstr f );
 	ISTYPE_VOID( _Istream_Cstr );
 }
