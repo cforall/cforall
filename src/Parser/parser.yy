@@ -2690,7 +2690,7 @@ enum_type:
 		{ SemanticError( yylloc, "syntax error, hiding '!' the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
-			if ( $3->storageClasses.any() || $3->type->qualifiers.val != 0 ) {
+			if ( $3 && ($3->storageClasses.any() || $3->type->qualifiers.val != 0 )) {
 				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
 			}
 			typedefTable.makeTypedef( *$6, "enum_type 2" );
@@ -2828,7 +2828,9 @@ cfa_parameter_declaration:								// CFA, new & old style parameter declaration
 	;
 
 cfa_abstract_parameter_declaration:						// CFA, new & old style parameter declaration
-	abstract_parameter_declaration
+	// empty
+		{ $$ = nullptr; }
+	| abstract_parameter_declaration
 	| cfa_identifier_parameter_declarator_no_tuple
 	| cfa_abstract_tuple
 		// To obtain LR(1), these rules must be duplicated here (see cfa_abstract_declarator).
@@ -3853,7 +3855,7 @@ array_dimension:
 		{ $$ = DeclarationNode::newArray( $3, nullptr, false )->addArray( DeclarationNode::newArray( $6, nullptr, false ) ); }
 		// { SemanticError( yylloc, "New array dimension is currently unimplemented." ); $$ = nullptr; }
 	| '[' push array_type_list pop ']'					// CFA
-		{ SemanticError( yylloc, "Type array dimension is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = DeclarationNode::newArray( $3, nullptr, false ); }
 	| multi_array_dimension
 	;
 

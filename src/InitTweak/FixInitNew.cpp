@@ -572,7 +572,7 @@ ast::Expr * ResolveCopyCtors::destructRet( const ast::ObjectDecl * ret, const as
 	assertf( global.dtorStruct->members.size() == 2, "__Destructor definition does not have expected fields." );
 	assertf( global.dtorDestroy, "Destructor generation requires __destroy_Destructor." );
 
-	const CodeLocation loc = ret->location;
+	const CodeLocation & loc = ret->location;
 
 	// generate a __Destructor for ret that calls the destructor
 	auto res = makeCtorDtor( "^?{}", ret );

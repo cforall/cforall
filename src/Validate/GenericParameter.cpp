@@ -300,7 +300,10 @@ const ast::Expr * TranslateDimensionCore::postvisit(
 
 const ast::Expr * TranslateDimensionCore::postvisit(
 		const ast::TypeExpr * expr ) {
-	// Does nothing, except prevents matching ast::Expr (above).
+	if ( auto instType = dynamic_cast<const ast::EnumInstType *>( expr->type.get() ) ) {
+		const ast::EnumDecl * baseEnum = instType->base.get();
+		return ast::ConstantExpr::from_int( expr->location, baseEnum->members.size() );
+	}
 	return expr;
 }
 

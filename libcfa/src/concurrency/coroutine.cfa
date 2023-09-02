@@ -343,6 +343,7 @@ bool poll( coroutine$ * cor ) libcfa_public {
 
 bool poll() libcfa_public { return poll( active_coroutine() ); }
 coroutine$ * resumer() libcfa_public { return active_coroutine()->last; }
+coroutine$ * first_resumer() libcfa_public { return active_coroutine()->starter; }
 
 // user facing ehm operations
 forall(T & | is_coroutine(T)) {
@@ -357,6 +358,7 @@ forall(T & | is_coroutine(T)) {
     bool checked_poll( T & cor ) libcfa_public { return get_coroutine( cor )->ehm_state.ehm_enabled ? poll( cor ) : false; }
 
     coroutine$ * resumer( T & cor ) libcfa_public { return get_coroutine( cor )->last; }
+    coroutine$ * first_resumer( T & cor ) libcfa_public { return get_coroutine( cor )->starter; }
 }
 
 // resume non local exception at receiver (i.e. enqueue in ehm buffer)

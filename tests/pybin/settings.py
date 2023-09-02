@@ -140,7 +140,7 @@ def init( options ):
 	all_debug    = [Debug(o)        for o in list(dict.fromkeys(options.debug  ))]
 	all_install  = [Install(o)      for o in list(dict.fromkeys(options.install))]
 	archive      = os.path.abspath(os.path.join(original_path, options.archive_errors)) if options.archive_errors else None
-	invariant    = options.no_invariant
+	invariant    = options.invariant
 	continue_    = options.continue_
 	dry_run      = options.dry_run # must be called before tools.config_hash()
 	generating   = options.regenerate_expected

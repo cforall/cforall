@@ -56,7 +56,7 @@ STOP_AT_END_FUNCTION(thread_cancelstop,
 STOP_AT_END_FUNCTION(coroutine_cancelstop,
 	struct coroutine$ * src = (coroutine$ *)stop_param;
 	struct coroutine$ * dst = src->last;
-
+    dst->cancellation = 1p;
 	$ctx_switch( src, dst );
 	abort();
 )

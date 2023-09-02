@@ -1506,7 +1506,10 @@ namespace ResolvExpr {
 				// this happens on aggregate members and function parameters.
 				if ( InitTweak::tryConstruct( mutDecl ) && ( managedTypes.isManaged( mutDecl ) || ((! isInFunction() || mutDecl->storage.is_static ) && ! InitTweak::isConstExpr( mutDecl->init ) ) ) ) {
 					// constructed objects cannot be designated
-					if ( InitTweak::isDesignated( mutDecl->init ) ) SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object. If this is really what you want, then initialize with @=.\n" );
+					// if ( InitTweak::isDesignated( mutDecl->init ) ) SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object. If this is really what you want, then initialize with @=.\n" );
+					if ( InitTweak::isDesignated( mutDecl->init ) ) {
+						SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object. If this is really what you want, then initialize with @=.\n" );
+					}
 					// constructed objects should not have initializers nested too deeply
 					if ( ! InitTweak::checkInitDepth( mutDecl ) ) SemanticError( mutDecl, "Managed object's initializer is too deep " );
 

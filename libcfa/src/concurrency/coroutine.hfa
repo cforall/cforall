@@ -123,7 +123,7 @@ static inline void $ctx_switch( coroutine$ * src, coroutine$ * dst ) __attribute
 	// set state of new coroutine to active
 	src->state = Active;
 
-	if( unlikely(src->cancellation != 0p) ) {
+	if( unlikely(src->cancellation != 0p && src->cancellation != 1p) ) {
 		__cfactx_coroutine_unwind(src->cancellation, src);
 	}
 }
@@ -168,6 +168,8 @@ static inline T & resume(T & cor) {
 	coroutine$ * src = active_coroutine();
 	coroutine$ * dst = get_coroutine(cor);
 
+    // printf("FROM RES src: %p, dest: %p\n", src, dst);
+
 	if( unlikely(dst->context.SP == 0p) ) {
 		__stack_prepare(&dst->stack, DEFAULT_STACK_SIZE);
 		__cfactx_start(main, dst, cor, __cfactx_invoke_coroutine);
@@ -187,7 +189,10 @@ static inline T & resume(T & cor) {
 
 	// always done for performance testing
 	$ctx_switch( src, dst );
-	if ( unlikely(dst->cancellation) ) {
+
+	if ( unlikely(src->cancellation == 1p) ) {
+        src->cancellation = 0p;
+        // we know dst hasn't been deallocated
 		__cfaehm_cancelled_coroutine( cor, dst, _default_vtable );
 	}
 
@@ -221,6 +226,7 @@ static inline void resume( coroutine$ * dst ) __attribute__((nonnull (1))) {
 bool poll( coroutine$ * cor );
 bool poll();
 coroutine$ * resumer();
+coroutine$ * first_resumer();
 
 forall(T & | is_coroutine(T)) {
     void enable_ehm( T & cor );
@@ -228,6 +234,7 @@ forall(T & | is_coroutine(T)) {
     bool poll( T & cor );
     bool checked_poll( T & cor );
     coroutine$ * resumer( T & cor );
+    coroutine$ * first_resumer( T & cor );
 }
 
 // trait for exceptions able to be resumed at another coroutine

@@ -1044,11 +1044,11 @@ namespace ast {
 		for ( const Expr * expr : designation->designators ) {
 			PRINT( std::cerr << "____untyped: " << expr << std::endl; )
 			auto dit = desigAlts.begin();
-			if ( auto nexpr = dynamic_cast< const NameExpr * >( expr ) ) {
-				for ( const Type * t : curTypes ) {
-					assert( dit != desigAlts.end() );
 
-					DesignatorChain & d = *dit;
+			for ( const Type * t : curTypes ) {
+				assert( dit != desigAlts.end() );
+				DesignatorChain & d = *dit;
+				if ( auto nexpr = dynamic_cast< const NameExpr *>( expr ) ) {
 					PRINT( std::cerr << "____actual: " << t << std::endl; )
 					if ( auto refType = dynamic_cast< const BaseInstType * >( t ) ) {
 						// concatenate identical field names
@@ -1061,15 +1061,26 @@ namespace ast {
 								newTypes.emplace_back( field->type );
 							}
 						}
+					} else if ( auto at = dynamic_cast< const ArrayType * >( t ) ) {
+						auto nexpr = dynamic_cast< const NameExpr *>( expr );
+						auto res = eval( nexpr ); 
+						for ( const Decl * mem : refType->lookup( nexpr->name ) ) {
+							if ( auto field = dynamic_cast< const ObjectDecl * >( mem ) ) {
+								DesignatorChain d2 = d;
+								d2.emplace_back( new VariableExpr{ expr->location, field } );
+								newDesigAlts.emplace_back( std::move( d2 ) );
+								// newTypes.emplace_back( field->type );
+								newTypes.emplace_back( at->base );
+							}
+						}
+
+						// d.emplace_back( expr );
+						// newDesigAlts.emplace_back( d );
+						// newTypes.emplace_back( at->base );
 					}
 
 					++dit;
-				}
-			} else {
-				for ( const Type * t : curTypes ) {
-					assert( dit != desigAlts.end() );
-
-					DesignatorChain & d = *dit;
+				} else {
 					if ( auto at = dynamic_cast< const ArrayType * >( t ) ) {
 						PRINT( std::cerr << "____alt: " << at->get_base() << std::endl; )
 						d.emplace_back( expr );
