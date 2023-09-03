@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 31 13:20:41 2023
-// Update Count     : 161
+// Last Modified On : Sat Sep  2 12:05:57 2023
+// Update Count     : 206
 //
 
 #include "string.hfa"
@@ -109,6 +109,20 @@ void ?|?( ofstream & out, const string & this ) {
     (ofstream &)(out | (*this.inner)); ends( out );
 }
 
+ofstream & ?|?( ofstream & os, _Ostream_Manip(string) f ) {
+	size_t len = size( f.val );
+	char cstr[len + 1];									// room for null terminator
+	for ( i; len ) cstr[i] = f.val[i];					// copy string
+	cstr[len] = '\0';									// terminate
+	_Ostream_Manip(const char *) cf @= { cstr, f.wd, f.pc, f.base, {f.all} };
+	os | cf | nonl;
+	return os;
+} // ?|?
+
+void ?|?( ofstream & os, _Ostream_Manip(string) f ) {
+	(ofstream &)(os | f); ends( os );
+}
+
 ifstream & ?|?(ifstream & in, string & this) {
     return in | (*this.inner); // read to internal string_res
 }
@@ -117,28 +131,20 @@ void ?|?( ifstream & in, string & this ) {
     (ifstream &)(in | this); ends( in );
 }
 
-ifstream & ?|?( ifstream & is, _Istream_str f ) {
-	// skip, same as for char *
-	if ( ! &f.s ) {
-		// fprintf( stderr,  "skip %s %d\n", f.scanset, f.wd );
-		if ( f.wd == -1 ) fmt( is, f.scanset, "" ); // no input arguments
-		else for ( f.wd ) fmt( is, "%*c" );
-		return is;
-	} // if
-
+ifstream & ?|?( ifstream & is, _Istream_Sstr f ) {
  	// .---------------,
- 	// | | | | |...|0|0| check and guard
+ 	// | | | | |...|0|0| null terminator and guard if missing
  	// `---------------'
-	enum { gwd = 128 + 2, wd = gwd - 1 };				// guarded and unguarded width
+	enum { gwd = 128 + 1, wd = gwd - 1 };				// guard and unguard width
 	char cstr[gwd];										// read in chunks
 	bool cont = false;
 
-	if ( f.wd == -1 ) f.wd = wd;
-	_Istream_Cstr cfmt = { cstr, (_Istream_str_base)f };
+	_Istream_Cstr cf = { cstr, (_Istream_str_base)f };
+	if ( ! cf.flags.rwd ) cf.wd = wd;
 
 	cstr[wd] = '\0';									// guard null terminate string
 	try {
-		is | cfmt;
+		is | cf;
 	} catch( cstring_length * ) {
 		cont = true;
 	} finally {
@@ -147,7 +153,7 @@ ifstream & ?|?( ifstream & is, _Istream_str f ) {
 	for ( ; cont; )  {									// overflow read ?
 		cont = false;
 		try {
-			is | cfmt;
+			is | cf;
 		} catch( cstring_length * ) {
 			cont = true;								// continue not allowed
 		} finally {
@@ -157,7 +163,7 @@ ifstream & ?|?( ifstream & is, _Istream_str f ) {
 	return is;
 } // ?|?
 
-void ?|?( ifstream & in, _Istream_str f ) {
+void ?|?( ifstream & in, _Istream_Sstr f ) {
     (ifstream &)(in | f); ends( in );
 }
 

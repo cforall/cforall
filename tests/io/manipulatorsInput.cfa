@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Jun  8 17:58:54 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 17:38:52 2023
-// Update Count     : 63
+// Last Modified On : Sat Sep  2 14:27:46 2023
+// Update Count     : 65
 // 
 
 #include <fstream.hfa>
@@ -35,7 +35,7 @@ int main() {
 	{
 		char s[] = "yyyyyyyyyyyyyyyyyyyy";
 		char sk[] = "abc";
-		sin /*| "abc "*/ | skip( sk ) | skip( 5 );		sout | "1" | s;
+		sin | "abc " | skip( sk ) | skip( 5 );			sout | "1" | s;
 		sin | wdi( sizeof(s), s );						sout | "2" | s;
 		sin | ignore( s );								sout | "3" | s;
  		sin | wdi( sizeof(s), 8, s );					sout | "4" | s;

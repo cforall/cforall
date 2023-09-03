@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 31 11:27:56 2023
-// Update Count     : 1545
+// Last Modified On : Sat Sep  2 14:42:01 2023
+// Update Count     : 1561
 //
 
 #include "iostream.hfa"
@@ -921,16 +921,11 @@ forall( istype & | basic_istream( istype ) ) {
 	} // ?|?
 	ISTYPE_VOID_IMPL( long double _Complex & )
 
-	// istype & ?|?( istype & is, const char fmt[] ) {
-	// 	fmt( is, fmt, "" );
-	// 	return is;
-	// } // ?|?
-
-	// istype & ?|?( istype & is, char s[] ) {
-	// 	fmt( is, "%s", s );
-	// 	return is;
-	// } // ?|?
-	// ISTYPE_VOID_IMPL( char * )
+	istype & ?|?( istype & is, const char fmt[] ) {
+		fmt( is, fmt, "" );
+		return is;
+	} // ?|?
+	ISTYPE_VOID_IMPL( const char * )
 
 	// manipulators
 	istype & ?|?( istype & is, istype & (* manip)( istype & ) ) {
@@ -961,17 +956,17 @@ forall( istype & | basic_istream( istype ) ) {
 // *********************************** manipulators ***********************************
 
 forall( istype & | basic_istream( istype ) ) {
-	istype & ?|?( istype & is, _Istream_Cstr f ) {
-		// skip
-		if ( ! f.s ) {
-			// printf( "skip %s %d\n", f.scanset, f.wd );
-			if ( f.wd == -1 ) fmt( is, f.scanset, "" );	// no input arguments
-			else for ( f.wd ) fmt( is, "%*c" );
-			return is;
-		} // if
+	istype & ?|?( istype & is, _Istream_Cskip f ) {
+		// printf( "skip %s %d\n", f.scanset, f.wd );
+		if ( f.scanset ) fmt( is, f.scanset, "" );		// no input arguments
+		else for ( f.wd ) fmt( is, "%*c" );
+		return is;
+	}
+	ISTYPE_VOID_IMPL( _Istream_Cskip )
 
+	istype & ?|?( istype & is, _Istream_Cstr f ) {
 		const char * scanset = f.scanset;
-		if ( f.flags.delimit ) scanset = f.delimit;		// getline ?
+		if ( f.flags.delimiter ) scanset = f.delimiter;	// getline ?
 
 		size_t len = 0;
 		if ( scanset ) len = strlen( scanset );
@@ -979,6 +974,7 @@ forall( istype & | basic_istream( istype ) ) {
 		int start = 1;
 		fmtstr[0] = '%';
 		if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
+		// no maximum width necessary because text ignored => width is read width
 		if ( f.wd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.wd ); }
 
 		if ( ! scanset ) {
@@ -1004,9 +1000,13 @@ forall( istype & | basic_istream( istype ) ) {
 		if ( ! f.flags.rwd && f.s[check] != '\0' )		// sentinel overwritten ?
 			throw (cstring_length){ &cstring_length_vt };
 
-		if ( f.flags.delimit ) {						// getline ?
+		if ( f.flags.delimiter ) {						// getline ?
 			if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
-			if ( ! eof( is ) ) fmt( is, "%*c" );		// ignore delimiter
+			if ( ! eof( is ) ) {						// ignore delimiter, may not be present because of width
+				char delimiter;
+				fmt( is, "%c", &delimiter );
+				if ( delimiter != f.delimiter[0] ) ungetc( is, delimiter );
+			} // if
 		} //if
 		return is;
 	} // ?|?

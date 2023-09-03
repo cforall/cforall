@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 31 10:55:35 2023
-// Update Count     : 544
+// Last Modified On : Sat Sep  2 14:42:13 2023
+// Update Count     : 567
 //
 
 #pragma once
@@ -387,9 +387,8 @@ forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype &, long double _Complex & );
 	ISTYPE_VOID( long double _Complex & );
 
-//	istype & ?|?( istype &, const char [] );
-//	istype & ?|?( istype &, char [] );
-//	ISTYPE_VOID( char [] );
+	istype & ?|?( istype &, const char [] );
+	ISTYPE_VOID( const char [] );
 
 	// manipulators
 	istype & ?|?( istype &, istype & (*)( istype & ) );
@@ -405,10 +404,24 @@ ExceptionDecl( cstring_length );
 
 // *********************************** manipulators ***********************************
 
+struct _Istream_Cskip {
+	const char * scanset;
+	unsigned wd;										// scan width
+}; // _Istream_Cskip
+
+static inline {
+	_Istream_Cskip skip( const char scanset[] ) { return (_Istream_Cskip)@{ scanset, 0 }; }
+	_Istream_Cskip skip( unsigned int wd ) { return (_Istream_Cskip)@{ 0p, wd }; }
+} // distribution
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype & is, _Istream_Cskip f );
+	ISTYPE_VOID( _Istream_Cskip );
+}
+
 struct _Istream_str_base {
 	union {
 		const char * scanset;
-		char delimit[2];
+		char delimiter[2];
 	};
 	int wd;												// width
 	union {
@@ -416,7 +429,7 @@ struct _Istream_str_base {
 		struct {
 			unsigned char ignore:1;						// do not change input argument
 			unsigned char inex:1;						// include/exclude characters in scanset
-			unsigned char delimit:1;					// delimit character
+			unsigned char delimiter:1;					// delimit character
 			unsigned char rwd:1;						// read width
 		} flags;
 	};
@@ -435,10 +448,8 @@ static inline {
 		if ( wd <= rwd ) throw (cstring_length){ &cstring_length_vt };
 		return (_Istream_Cstr)@{ s, { {0p}, rwd, {.flags.rwd : true} } };
 	}
-	_Istream_Cstr skip( const char scanset[] ) { return (_Istream_Cstr)@{ 0p, { {scanset}, -1, {.all : 0} } }; }
-	_Istream_Cstr skip( unsigned int wd ) { return (_Istream_Cstr)@{ 0p, { {0p}, wd, {.all : 0} } }; }
-	_Istream_Cstr & getline( _Istream_Cstr & fmt, const char delimit = '\n' ) {
-		fmt.delimit[0] = delimit; fmt.delimit[1] = '\0'; fmt.flags.delimit = true; fmt.flags.inex = true; return fmt; }
+	_Istream_Cstr & getline( _Istream_Cstr & fmt, const char delimiter = '\n' ) {
+		fmt.delimiter[0] = delimiter; fmt.delimiter[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt; }
 	_Istream_Cstr & incl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
 	_Istream_Cstr & excl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = true; return fmt; }
 	_Istream_Cstr ignore( char s[] ) { return (_Istream_Cstr)@{ s, { {0p}, -1, {.flags.ignore : true} } }; }
