@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 18 22:51:30 2023
-// Update Count     : 6391
+// Last Modified On : Mon Sep  4 18:28:12 2023
+// Update Count     : 6393
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -2828,9 +2828,7 @@ cfa_parameter_declaration:								// CFA, new & old style parameter declaration
 	;
 
 cfa_abstract_parameter_declaration:						// CFA, new & old style parameter declaration
-	// empty
-		{ $$ = nullptr; }
-	| abstract_parameter_declaration
+	abstract_parameter_declaration
 	| cfa_identifier_parameter_declarator_no_tuple
 	| cfa_abstract_tuple
 		// To obtain LR(1), these rules must be duplicated here (see cfa_abstract_declarator).

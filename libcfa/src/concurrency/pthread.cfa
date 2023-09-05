@@ -8,9 +8,9 @@
 //
 // Author           : Zhenyan Zhu
 // Created On       : Sat Aug 6 16:29:18 2022
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Sep  4 15:37:51 2023
+// Update Count     : 1
 //
 
 #define __cforall_thread__
@@ -20,6 +20,7 @@
 #include <errno.h>
 #include "locks.hfa"
 #include "bits/stack.hfa"
+#include "bits/sequence.hfa"
 
 
 #define check_nonnull(x) asm("": "+rm"(x)); if( x == 0p ) return EINVAL;

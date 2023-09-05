@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  9 08:42:33 2023
-// Update Count     : 103
+// Last Modified On : Sun Sep  3 08:25:21 2023
+// Update Count     : 105
 //
 
 #define __cforall_thread__
@@ -227,6 +227,8 @@ void set_seed( size_t seed ) {
 	__global_random_prime = seed;
 	__global_random_mask = true;
 } // set_seed
+
+size_t get_seed( void ) { return __global_random_seed; }
 
 size_t prng( void ) {									// [0,UINT_MAX]
 	return PRNG_NAME( active_thread()->random_state );

@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:27:59 2023
-// Update Count     : 37
+// Last Modified On : Sun Sep  3 07:34:43 2023
+// Update Count     : 47
 //
 
 #pragma once
@@ -143,6 +143,7 @@ static inline bool migrate( T & mutex thrd, struct cluster & cl ) { return migra
 //----------
 // prng
 void set_seed( size_t seed );
+size_t get_seed( void ) __attribute__(( warn_unused_result ));
 static inline {
 	size_t prng( thread$ & th ) __attribute__(( warn_unused_result )) { return PRNG_NAME( th.random_state ); } // [0,UINT_MAX]
 	size_t prng( thread$ & th, size_t u ) __attribute__(( warn_unused_result )) { return prng( th ) % u; } // [0,u)
