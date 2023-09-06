@@ -78,15 +78,15 @@ struct __small_array {
 // Stack
 //-----------------------------------------------------------------------------
 #ifdef __cforall
-	forall(TYPE &)
-	#define T TYPE
+	forall(T &)
+	#define __elem_t T
 #else
-	#define T void
+	#define __elem_t void
 #endif
 struct __stack {
-	T * top;
+	__elem_t * top;
 };
-#undef T
+#undef __elem_t
 
 #ifdef __cforall
 #define __stack_t(T) __stack(T)
@@ -126,16 +126,16 @@ struct __stack {
 // Queue
 //-----------------------------------------------------------------------------
 #ifdef __cforall
-	forall(TYPE &)
-	#define T TYPE
+	forall(T &)
+	#define __elem_t T
 #else
-	#define T void
+	#define __elem_t void
 #endif
 struct __queue {
-	T * head;
-	T ** tail;
+	__elem_t * head;
+	__elem_t ** tail;
 };
-#undef T
+#undef __elem_t
 
 #ifdef __cforall
 #define __queue_t(T) __queue(T)
@@ -216,19 +216,19 @@ struct __queue {
 // Doubly Linked List
 //-----------------------------------------------------------------------------
 #ifdef __cforall
-	forall(TYPE &)
-	#define T TYPE
-	#define __getter_t * [T * & next, T * & prev] ( T & )
+	forall(T &)
+	#define __elem_t T
+	#define __getter_t * [__elem_t * & next, __elem_t * & prev] ( __elem_t & )
 #else
 	typedef void (*__generit_c_getter_t)();
-	#define T void
+	#define __elem_t void
 	#define __getter_t __generit_c_getter_t
 #endif
 struct __dllist {
-	T * head;
+	__elem_t * head;
 	__getter_t __get;
 };
-#undef T
+#undef __elem_t
 #undef __getter_t
 
 #ifdef __cforall

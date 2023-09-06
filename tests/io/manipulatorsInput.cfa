@@ -50,6 +50,7 @@ int main() {
 		sin | ignore( incl( "abc", wdi( sizeof(s), 8, s ) ) ); sout | "12" | s;
 		sin | ignore( excl( "abc", wdi( sizeof(s), 8, s ) ) ); sout | "13" | s;
 	}
+    /* Keep harmonized with collections/string-istream-manip */
 	{
 		char c;
 		sin | c;										sout | c;

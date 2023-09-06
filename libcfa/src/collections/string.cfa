@@ -148,7 +148,7 @@ ifstream & ?|?( ifstream & is, _Istream_Sstr f ) {
 	} catch( cstring_length * ) {
 		cont = true;
 	} finally {
-		f.s = cstr;										// ok to initialize string
+        if ( ! cf.flags.ignore ) f.s = cstr;			// ok to initialize string
 	} // try
 	for ( ; cont; )  {									// overflow read ?
 		cont = false;
@@ -157,7 +157,7 @@ ifstream & ?|?( ifstream & is, _Istream_Sstr f ) {
 		} catch( cstring_length * ) {
 			cont = true;								// continue not allowed
 		} finally {
-			f.s += cstr;								// build string chunk at a time
+			if ( ! cf.flags.ignore ) f.s += cstr;		// build string chunk at a time
 		} // try
 	} // for
 	return is;

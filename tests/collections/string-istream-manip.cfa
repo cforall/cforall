@@ -1,0 +1,25 @@
+
+#include <fstream.hfa>
+#include <collections/string.hfa>
+
+int main() {
+    /* Keep harmonized with io/manipulatorsInput */
+    {
+        string s = "yyyyyyyyyyyyyyyyyyyy";
+        char sk[] = "abc";
+        sin | "abc " | skip( sk ) | skip( 5 );          sout | "1" | s;
+        sin | s;                                        sout | "2" | s;
+        sin | ignore( s );                              sout | "3" | s;
+         sin | wdi( 8, s );                             sout | "4" | s;
+        sin | ignore( wdi( 8, s ) );                    sout | "5" | s;
+
+        sin | incl( "abc", s );                         sout | "6" | s;
+        sin | excl( "abc", s );                         sout | "7" | s;
+        sin | ignore( incl( "abc", s ) );               sout | "8" | s;
+        sin | ignore( excl( "abc", s ) );               sout | "9" | s;
+        sin | incl( "abc", wdi( 8, s ) );               sout | "10" | s;
+        sin | excl( "abc", wdi( 8, s ) );               sout | "11" | s;
+        sin | ignore( incl( "abc", wdi( 8, s ) ) );     sout | "12" | s;
+        sin | ignore( excl( "abc", wdi( 8, s ) ) );     sout | "13" | s;
+    }
+}
