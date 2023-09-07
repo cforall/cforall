@@ -9,15 +9,14 @@
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 13:48:00 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Mar 28  9:42:00 2022
-// Update Count     : 34
+// Last Modified On : Wed Sep  6 12:00:00 2023
+// Update Count     : 35
 //
 
 #include "MultiLevelExit.hpp"
 
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
-#include "Common/CodeLocationTools.hpp"
 #include "LabelGeneratorNew.hpp"
 
 #include <set>
@@ -25,6 +24,9 @@ using namespace std;
 using namespace ast;
 
 namespace ControlStruct {
+
+namespace {
+
 class Entry {
   public:
 	const Stmt * stmt;
@@ -34,7 +36,7 @@ class Entry {
 		Label label;
 		bool used = false;
 		Target( const Label & label ) : label( label ) {}
-		Target() : label( CodeLocation() ) {}
+		Target() : label( CodeLocation(), "" ) {}
 	};
 	Target firstTarget;
 	Target secondTarget;
@@ -523,19 +525,14 @@ const Stmt * MultiLevelExitCore::mutateLoop(
 
 	// if continue is used insert a continue label into the back of the body of the loop
 	if ( entry.isContUsed() ) {
-		CompoundStmt * new_body = new CompoundStmt( body->location );
-		// {}
-		new_body->kids.push_back( body );
 		// {
 		//  body
+		//  ContinueLabel: ;
 		// }
-		new_body->kids.push_back(
-			labelledNullStmt( body->location, entry.useContExit() ) );
-		// {
-		//  body
-		//  ContinueLabel: {}
-		// }
-		return new_body;
+		return new CompoundStmt( body->location, {
+			body,
+			labelledNullStmt( body->location, entry.useContExit() ),
+		} );
 	}
 
 	return body;
@@ -619,16 +616,15 @@ list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
 	return ret;
 }
 
+} // namespace
+
 const CompoundStmt * multiLevelExitUpdate(
-	const CompoundStmt * stmt,
-	const LabelToStmt & labelTable ) {
+		const CompoundStmt * stmt, const LabelToStmt & labelTable ) {
 	// Must start in the body, so FunctionDecls can be a stopping point.
 	Pass<MultiLevelExitCore> visitor( labelTable );
-	const CompoundStmt * ret = stmt->accept( visitor );
-	// There are some unset code locations slipping in, possibly by Labels.
-	const Node * node = localFillCodeLocations( ret->location, ret );
-	return strict_dynamic_cast<const CompoundStmt *>( node );
+	return stmt->accept( visitor );
 }
+
 } // namespace ControlStruct
 
 // Local Variables: //

@@ -23,12 +23,10 @@ extern "C" {
 }
 
 #include "bits/locks.hfa"
-#include "bits/queue.hfa"
 #include "iofwd.hfa"
 #include "kernel/fwd.hfa"
 
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
-	#include "bits/sequence.hfa"
 	#include "monitor.hfa"
 
 	struct processor;
@@ -119,12 +117,12 @@ extern "C" {
 	// actual operations are expected to inherit from this
 	struct __outstanding_io {
 		// intrusive link fields
-		inline Colable;
+		inline dlink(__outstanding_io);
 
 		// primitive on which to block until the io is processed
 		oneshot waitctx;
 	};
-	static inline __outstanding_io *& Next( __outstanding_io * n ) { return (__outstanding_io *)Next( (Colable *)n ); }
+    P9_EMBEDDED( __outstanding_io, dlink(__outstanding_io) )
 
 	// queue of operations that are outstanding
 	struct __outstanding_io_queue {
@@ -133,7 +131,7 @@ extern "C" {
 		__spinlock_t lock;
 
 		// the actual queue
-		Queue(__outstanding_io) queue;
+		dlist(__outstanding_io) queue;
 
 		// volatile used to avoid the need for taking the lock if it's empty
 		volatile bool empty;

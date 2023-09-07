@@ -19,9 +19,6 @@
 #include <pthread.h>
 #include <errno.h>
 #include "locks.hfa"
-#include "bits/stack.hfa"
-#include "bits/sequence.hfa"
-
 
 #define check_nonnull(x) asm("": "+rm"(x)); if( x == 0p ) return EINVAL;
 
@@ -33,25 +30,16 @@ static simple_owner_lock once_lock,key_lock,magic_mutex_check, concurrency_lock;
 enum { PTHREAD_KEYS_MAX = 1024 };
 
 struct pthread_values{
-	inline Seqable;
+	inline dlink(pthread_values);
 	void * value;
 	bool in_use;
 };
-
-static inline {
-	pthread_values *& Back( pthread_values * n ) {
-		return (pthread_values *)Back( (Seqable *)n );
-	}
-
-	pthread_values *& Next( pthread_values * n ) {
-		return (pthread_values *)Next( (Colable *)n );
-	}
-}
+P9_EMBEDDED( pthread_values, dlink(pthread_values) )
 
 struct pthread_keys {
 	bool in_use;
 	void (* destructor)( void * );
-	Sequence(pthread_values) threads;
+    dlist( pthread_values ) threads;
 };
 
 static void ?{}(pthread_keys& k) {
@@ -77,15 +65,12 @@ static void init_pthread_storage() {
 //######################### Parallelism Helpers #########################
 
 struct Pthread_kernel_threads{
-	inline Colable;
+	inline dlink(Pthread_kernel_threads);
 	processor p;
 };
+P9_EMBEDDED( Pthread_kernel_threads, dlink(Pthread_kernel_threads) )
 
-Pthread_kernel_threads *& Next( Pthread_kernel_threads * n ) {
-	return (Pthread_kernel_threads *)Next( (Colable *)n );
-}
-
-static Stack(Pthread_kernel_threads) cfa_pthreads_kernel_threads;
+static dlist(Pthread_kernel_threads) cfa_pthreads_kernel_threads;
 static bool cfa_pthreads_kernel_threads_zero = false;	// set to zero ?
 static int cfa_pthreads_no_kernel_threads = 1;	// number of kernel threads
 
@@ -230,7 +215,8 @@ static void pthread_deletespecific_( pthread_values * values )  { // see uMachCo
 					value = &values[i];
 					key = &cfa_pthread_keys[i];
 					value->in_use = false;
-					remove(key->threads, *value);
+					remove(*value);
+
 					// if  a  key  value  has  a  non-NULL  destructor pointer,  and  the  thread  has  a  non-NULL  value associated with that key,
 					// the value of the key is set to NULL, and then the function pointed to is called with the previously associated value as its sole argument.
 					if (value->value != NULL && key->destructor != NULL) {
@@ -550,12 +536,17 @@ extern "C"{
 		cfa_pthread_keys[key].destructor = NULL;
 
 		// Remove key from all threads with a value.
-		pthread_values& p;
-		Sequence(pthread_values)& head = cfa_pthread_keys[key].threads;
-		for ( SeqIter(pthread_values) iter = { head }; iter | p; ) {
-			remove(head, p);
-			p.in_use = false;
-		}
+		
+		// Sequence(pthread_values)& head = cfa_pthread_keys[key].threads;
+		// for ( SeqIter(pthread_values) iter = { head }; iter | p; ) {
+		// 	remove(head, p);
+		// 	p.in_use = false;
+		// }
+        pthread_values * p = &try_pop_front( cfa_pthread_keys[key].threads );
+        for ( ; p; ) {            
+            p->in_use = false;
+            p = &try_pop_front( cfa_pthread_keys[key].threads );
+        }
 		unlock(key_lock);
 		return 0;
 	}   // pthread_key_delete
@@ -584,7 +575,7 @@ extern "C"{
 		pthread_values &entry = values[key];
 		if ( ! entry.in_use ) {
 			entry.in_use = true;
-			add(cfa_pthread_keys[key].threads, entry);
+			insert_last(cfa_pthread_keys[key].threads, entry);
 		} // if
 		entry.value = (void *)value;
 		unlock(key_lock);
@@ -611,9 +602,10 @@ extern "C"{
 
 	//######################### Parallelism #########################
 	void pthread_delete_kernel_threads_() __THROW {	// see uMain::~uMain
-		Pthread_kernel_threads& p;
-		for ( StackIter(Pthread_kernel_threads) iter = {cfa_pthreads_kernel_threads}; iter | p; ) {
-			delete(&p);
+		Pthread_kernel_threads * p = &try_pop_front(cfa_pthreads_kernel_threads);
+		for ( ; p; ) {
+            delete(p);
+			p = &try_pop_front(cfa_pthreads_kernel_threads);
 		} // for
 	} // pthread_delete_kernel_threads_
 
@@ -630,10 +622,10 @@ extern "C"{
 		cfa_pthreads_kernel_threads_zero = false;
 		lock( concurrency_lock );
 		for ( ; new_level > cfa_pthreads_no_kernel_threads; cfa_pthreads_no_kernel_threads += 1 ) { // add processors ?
-			push(cfa_pthreads_kernel_threads, *new() );
+			insert_last(cfa_pthreads_kernel_threads, *new() );
 		} // for
 		for ( ; new_level < cfa_pthreads_no_kernel_threads; cfa_pthreads_no_kernel_threads -= 1 ) { // remove processors ?
-			delete(&pop(cfa_pthreads_kernel_threads));
+			delete(&try_pop_front(cfa_pthreads_kernel_threads));
 		} // for
 		unlock( concurrency_lock );
 		return 0;

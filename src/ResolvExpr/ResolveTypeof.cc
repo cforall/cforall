@@ -236,33 +236,31 @@ const ast::ObjectDecl *fixObjectInit(const ast::ObjectDecl *decl,
 
             // The designator I want to replace
             const ast::Expr * designator = des->designators.at(0);
-
+            // Stupid flag variable for development, to be removed
+            bool mutated = false;
             if ( const ast::NameExpr * designatorName = dynamic_cast<const ast::NameExpr *>(designator) ) {
                 auto candidates = context.symtab.lookupId(designatorName->name);
                 // Does not work for the overloading case currently
                 // assert( candidates.size() == 1 );
                 if ( candidates.size() != 1 ) return mutDecl;
                 auto candidate = candidates.at(0);
-                if ( const ast::EnumInstType * enumInst = dynamic_cast<const ast::EnumInstType *>(candidate.id->get_type()) ) {
+                if ( const ast::EnumInstType * enumInst = dynamic_cast<const ast::EnumInstType *>(candidate.id->get_type())) {
                     // determine that is an enumInst, swap it with its const value
                     assert( candidates.size() == 1 );
                     const ast::EnumDecl * baseEnum = enumInst->base;
                     // Need to iterate over all enum value to find the initializer to swap
                     for ( size_t m = 0; m < baseEnum->members.size(); ++m ) {
+                        const ast::ObjectDecl * mem = baseEnum->members.at(m).as<const ast::ObjectDecl>();
                         if ( baseEnum->members.at(m)->name == designatorName->name ) {
-                            const ast::ObjectDecl * mem = baseEnum->members.at(m).as<const ast::ObjectDecl>();
                             assert(mem);
                             if ( mem->init ) {
                                 const ast::SingleInit * memInit = mem->init.as<const ast::SingleInit>();
                                 ast::Expr * initValue = shallowCopy( memInit->value.get() );
                                 newDesination->designators.push_back( initValue );
-                            } else {
-                                SemanticError(des->location, "TODO: Enum Array Designation with no explicit value is not implemented");
+                                mutated = true;
                             }
+                            break;
                         }
-                    }
-                    if ( newDesination->designators.size() == 0 ) {
-                        SemanticError(des->location, "Resolution Error: Resolving array designation as Enum Instance value, but cannot find a desgination value");
                     }
                 } else {
                     newDesination->designators.push_back( des->designators.at(0) );
@@ -270,7 +268,9 @@ const ast::ObjectDecl *fixObjectInit(const ast::ObjectDecl *decl,
             } else {
                 newDesination->designators.push_back( des->designators.at(0) );
             }
-            mutListInit = ast::mutate_field_index(mutListInit, &ast::ListInit::designations, k, newDesination);
+            if ( mutated ) {
+                mutListInit = ast::mutate_field_index(mutListInit, &ast::ListInit::designations, k, newDesination);
+            }
         }
     }
     return mutDecl;

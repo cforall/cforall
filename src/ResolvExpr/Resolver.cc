@@ -987,6 +987,37 @@ namespace ResolvExpr {
 				}
 			}
 		};
+
+		struct ResolveDesignators_new final : public ast::WithShortCircuiting {
+			ResolveContext& context;
+			bool result = false;
+
+			ResolveDesignators_new( ResolveContext& _context ): context{_context} {};
+
+			void previsit( const ast::Node * ) {
+				// short circuit if we already know there are designations
+				if ( result ) visit_children = false;
+			}
+
+			void previsit( const ast::Designation * des ) {
+				if ( result ) visit_children = false;
+				else if ( ! des->designators.empty() ) {
+					if ( (des->designators.size() == 1) ) {
+						const ast::Expr * designator = des->designators.at(0);
+						if ( const ast::NameExpr * designatorName = dynamic_cast<const ast::NameExpr *>(designator) ) {
+							auto candidates = context.symtab.lookupId(designatorName->name);
+							for ( auto candidate : candidates ) {
+								if ( dynamic_cast<const ast::EnumInstType *>(candidate.id->get_type()) ) {
+									result = true;
+									break;
+								}
+							}
+						} 
+					} 
+					visit_children = false;
+				}
+			}
+		};
 	} // anonymous namespace
 	/// Check if this expression is or includes a deleted expression
 	const ast::DeletedExpr * findDeletedExpr( const ast::Expr * expr ) {
@@ -1506,9 +1537,12 @@ namespace ResolvExpr {
 				// this happens on aggregate members and function parameters.
 				if ( InitTweak::tryConstruct( mutDecl ) && ( managedTypes.isManaged( mutDecl ) || ((! isInFunction() || mutDecl->storage.is_static ) && ! InitTweak::isConstExpr( mutDecl->init ) ) ) ) {
 					// constructed objects cannot be designated
-					// if ( InitTweak::isDesignated( mutDecl->init ) ) SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object. If this is really what you want, then initialize with @=.\n" );
 					if ( InitTweak::isDesignated( mutDecl->init ) ) {
-						SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object. If this is really what you want, then initialize with @=.\n" );
+						ast::Pass<ResolveDesignators_new> res( context );
+						maybe_accept( mutDecl->init.get(), res );
+						if ( !res.core.result ) {
+							SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object. If this is really what you want, then initialize with @=.\n" );
+						}
 					}
 					// constructed objects should not have initializers nested too deeply
 					if ( ! InitTweak::checkInitDepth( mutDecl ) ) SemanticError( mutDecl, "Managed object's initializer is too deep " );

@@ -128,39 +128,12 @@ ifstream & ?|?(ifstream & in, string & this) {
 }
 
 void ?|?( ifstream & in, string & this ) {
-    (ifstream &)(in | this); ends( in );
+    in | (*this.inner);
 }
 
 ifstream & ?|?( ifstream & is, _Istream_Sstr f ) {
- 	// .---------------,
- 	// | | | | |...|0|0| null terminator and guard if missing
- 	// `---------------'
-	enum { gwd = 128 + 1, wd = gwd - 1 };				// guard and unguard width
-	char cstr[gwd];										// read in chunks
-	bool cont = false;
-
-	_Istream_Cstr cf = { cstr, (_Istream_str_base)f };
-	if ( ! cf.flags.rwd ) cf.wd = wd;
-
-	cstr[wd] = '\0';									// guard null terminate string
-	try {
-		is | cf;
-	} catch( cstring_length * ) {
-		cont = true;
-	} finally {
-        if ( ! cf.flags.ignore ) f.s = cstr;			// ok to initialize string
-	} // try
-	for ( ; cont; )  {									// overflow read ?
-		cont = false;
-		try {
-			is | cf;
-		} catch( cstring_length * ) {
-			cont = true;								// continue not allowed
-		} finally {
-			if ( ! cf.flags.ignore ) f.s += cstr;		// build string chunk at a time
-		} // try
-	} // for
-	return is;
+ 	_Istream_Rstr f2 = {f.s.inner, (_Istream_str_base)f};
+    return is | f2;
 } // ?|?
 
 void ?|?( ifstream & in, _Istream_Sstr f ) {

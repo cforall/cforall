@@ -593,10 +593,10 @@
 		// Lock the list, it's not thread safe
 		lock( queue.lock __cfaabi_dbg_ctx2 );
 		{
-			was_empty = empty(queue.queue);
+			was_empty = queue.queue`isEmpty;
 
 			// Add our request to the list
-			add( queue.queue, item );
+			insert_last( queue.queue, item );
 
 			// Mark as pending
 			__atomic_store_n( &queue.empty, false, __ATOMIC_SEQ_CST );
@@ -631,7 +631,7 @@
 
 	// notify the arbiter that new allocations are available
 	static void __ioarbiter_notify( io_arbiter$ & this, io_context$ * ctx ) {
-		/* paranoid */ verify( !empty(this.pending.queue) );
+		/* paranoid */ verify( !this.pending.queue`isEmpty );
 		/* paranoid */ verify( __preemption_enabled() );
 
 		// mutual exclusion is needed
@@ -641,16 +641,16 @@
 
 			// as long as there are pending allocations try to satisfy them
 			// for simplicity do it in FIFO order
-			while( !empty(this.pending.queue) ) {
+			while( !this.pending.queue`isEmpty ) {
 				// get first pending allocs
 				__u32 have = ctx->sq.free_ring.tail - ctx->sq.free_ring.head;
-				__pending_alloc & pa = (__pending_alloc&)head( this.pending.queue );
+				__pending_alloc & pa = (__pending_alloc&)(this.pending.queue`first);
 
 				// check if we have enough to satisfy the request
 				if( have > pa.want ) goto DONE;
 
 				// if there are enough allocations it means we can drop the request
-				drop( this.pending.queue );
+				try_pop_front( this.pending.queue );
 
 				/* paranoid */__attribute__((unused)) bool ret =
 
@@ -726,9 +726,9 @@
 		{
 			// pop each operation one at a time.
 			// There is no wait morphing because of the io sq ring
-			while( !empty(ctx.ext_sq.queue) ) {
+			while( !ctx.ext_sq.queue`isEmpty ) {
 				// drop the element from the queue
-				__external_io & ei = (__external_io&)drop( ctx.ext_sq.queue );
+				__external_io & ei = (__external_io&)try_pop_front( ctx.ext_sq.queue );
 
 				// submit it
 				__submit_only(&ctx, ei.idxs, ei.have, true);

@@ -101,6 +101,31 @@ void ^?{}(string_res &s);
 ofstream & ?|?(ofstream &out, const string_res &s);
 void ?|?(ofstream &out, const string_res &s);
 ifstream & ?|?(ifstream &in, string_res &s);
+void ?|?( ifstream & in, string_res & this );
+
+struct _Istream_Rstr {
+	string_res * s;
+	inline _Istream_str_base;
+}; // _Istream_Rstr
+
+static inline {
+	// read width does not include null terminator
+	_Istream_Rstr wdi( unsigned int rwd, string_res & s ) { return (_Istream_Rstr)@{ &s, {{0p}, rwd, {.flags.rwd : true}} }; }
+	_Istream_Rstr getline( string_res & s, const char delimiter = '\n' ) {
+		return (_Istream_Rstr)@{ &s, {{.delimiter : { delimiter, '\0' } }, -1, {.flags.delimiter : true, .flags.inex : true}} };
+	}
+	_Istream_Rstr & getline( _Istream_Rstr & fmt, const char delimiter = '\n' ) {
+		fmt.delimiter[0] = delimiter; fmt.delimiter[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt;
+	}
+	_Istream_Rstr incl( const char scanset[], string_res & s ) { return (_Istream_Rstr)@{ &s, {{scanset}, -1, {.flags.inex : false}} }; }
+	_Istream_Rstr & incl( const char scanset[], _Istream_Rstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
+	_Istream_Rstr excl( const char scanset[], string_res & s ) { return (_Istream_Rstr)@{ &s, {{scanset}, -1, {.flags.inex : true}} }; }
+	_Istream_Rstr & excl( const char scanset[], _Istream_Rstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = true; return fmt; }
+	_Istream_Rstr ignore( string_res & s ) { return (_Istream_Rstr)@{ &s, {{0p}, -1, {.flags.ignore : true}} }; }
+	_Istream_Rstr & ignore( _Istream_Rstr & fmt ) { fmt.flags.ignore = true; return fmt; }
+} // distribution
+ifstream & ?|?( ifstream & is, _Istream_Rstr f );
+void ?|?( ifstream & is, _Istream_Rstr t );
 
 // Concatenation
 void append(string_res &s, const char* buffer, size_t bsize);
