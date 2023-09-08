@@ -115,10 +115,30 @@ string ?[?](string & s, size_t index);  // mutable length-1 slice of original
 //char codePointAt(const string & s, size_t index);  // to revisit under Unicode
 
 // Comparisons
-bool ?==?(const string & s, const string & other);
-bool ?!=?(const string & s, const string & other);
-bool ?==?(const string & s, const char * other);
-bool ?!=?(const string & s, const char * other);
+int  cmp (const string &, const string &);
+bool ?==?(const string &, const string &);
+bool ?!=?(const string &, const string &);
+bool ?>? (const string &, const string &);
+bool ?>=?(const string &, const string &);
+bool ?<=?(const string &, const string &);
+bool ?<? (const string &, const string &);
+
+int  cmp (const string &, const char*);
+bool ?==?(const string &, const char*);
+bool ?!=?(const string &, const char*);
+bool ?>? (const string &, const char*);
+bool ?>=?(const string &, const char*);
+bool ?<=?(const string &, const char*);
+bool ?<? (const string &, const char*);
+
+int  cmp (const char*, const string &);
+bool ?==?(const char*, const string &);
+bool ?!=?(const char*, const string &);
+bool ?>? (const char*, const string &);
+bool ?>=?(const char*, const string &);
+bool ?<=?(const char*, const string &);
+bool ?<? (const char*, const string &);
+
 
 // Slicing
 string ?()( string & this, size_t start, size_t end );  // TODO const?

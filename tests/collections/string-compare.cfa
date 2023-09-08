@@ -1,0 +1,76 @@
+#define chk(X) \
+    printf( #X " %s\n", ((X)?"ok":"WRONG") );
+
+#define test_eq_(l, r) \
+    chk( (cmp(l, r) == 0) ) \
+    chk(  (l == r) ) \
+    chk( !(l != r) ) \
+    chk( !(l >  r) ) \
+    chk(  (l >= r) ) \
+    chk(  (l <= r) ) \
+    chk( !(l <  r) )
+
+#define test_eq(l, r) \
+    test_eq_(s_ ## l, s_ ## r) \
+    test_eq_(    # l, s_ ## r) \
+    test_eq_(s_ ## l,     # r)
+
+#define test_lt_(l, r) \
+    chk( (cmp(l, r) < 0) ) \
+    chk( !(l == r) ) \
+    chk(  (l != r) ) \
+    chk( !(l >  r) ) \
+    chk( !(l >= r) ) \
+    chk(  (l <= r) ) \
+    chk(  (l <  r) )
+
+#define test_gt_(l, r) \
+    chk( (cmp(l, r) > 0) ) \
+    chk( !(l == r) ) \
+    chk(  (l != r) ) \
+    chk(  (l >  r) ) \
+    chk(  (l >= r) ) \
+    chk( !(l <= r) ) \
+    chk( !(l <  r) )
+
+#define test_lt(l, r) \
+    test_lt_(s_ ## l, s_ ## r) \
+    test_lt_(    # l, s_ ## r) \
+    test_lt_(s_ ## l,     # r) \
+    test_gt_(s_ ## r, s_ ## l) \
+    test_gt_(    # r, s_ ## l) \
+    test_gt_(s_ ## r,     # l)
+
+#define define_run(STR_T) \
+    void run_ ## STR_T (void) {    \
+        printf("------- %s -------\n", #STR_T); \
+        STR_T s_   = ""  ;        \
+        STR_T s_a  = "a" ;        \
+        STR_T s_aa = "aa";        \
+        STR_T s_ab = "ab";        \
+        STR_T s_b  = "b" ;        \
+        STR_T s_ba = "ba";        \
+        STR_T s_bb = "bb";        \
+        test_eq(,)                \
+        test_lt(,a)               \
+        test_lt(,aa)              \
+        test_lt(a,aa)             \
+        test_eq(a,a)              \
+        test_eq(aa,aa)            \
+        test_lt(a,b)              \
+        test_lt(a,ba)             \
+        test_lt(aa,ab)            \
+        test_lt(ba,bb)            \
+        test_lt(aa,b)             \
+    }
+
+#include <collections/string.hfa>
+define_run(string)
+
+#include <collections/string_res.hfa>
+define_run(string_res)
+
+int main() {
+    run_string();
+    run_string_res();
+}

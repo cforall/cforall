@@ -636,21 +636,44 @@ void ?+=?(string_res &s, char other) {
 //////////////////////////////////////////////////////////
 // Comparisons
 
-
-bool ?==?(const string_res &s1, const string_res &s2) {
-    return ByteCmp( s1.Handle.s, 0, s1.Handle.lnth, s2.Handle.s, 0, s2.Handle.lnth) == 0;
+int cmp(const string_res &s1, const string_res &s2) {
+    // return 0;
+    int ans1 = memcmp(s1.Handle.s, s2.Handle.s, min(s1.Handle.lnth, s2.Handle.lnth));
+    if (ans1 != 0) return ans1;
+    return s1.Handle.lnth - s2.Handle.lnth;
 }
 
-bool ?!=?(const string_res &s1, const string_res &s2) {
-    return !(s1 == s2);
+bool ?==?(const string_res &s1, const string_res &s2) { return cmp(s1, s2) == 0; }
+bool ?!=?(const string_res &s1, const string_res &s2) { return cmp(s1, s2) != 0; }
+bool ?>? (const string_res &s1, const string_res &s2) { return cmp(s1, s2) >  0; }
+bool ?>=?(const string_res &s1, const string_res &s2) { return cmp(s1, s2) >= 0; }
+bool ?<=?(const string_res &s1, const string_res &s2) { return cmp(s1, s2) <= 0; }
+bool ?<? (const string_res &s1, const string_res &s2) { return cmp(s1, s2) <  0; }
+
+int cmp (const string_res &s1, const char* s2) {
+    string_res s2x = s2;
+    return cmp(s1, s2x);
 }
-bool ?==?(const string_res &s, const char* other) {
-    string_res sother = other;
-    return s == sother;
+
+bool ?==?(const string_res &s1, const char* s2) { return cmp(s1, s2) == 0; }
+bool ?!=?(const string_res &s1, const char* s2) { return cmp(s1, s2) != 0; }
+bool ?>? (const string_res &s1, const char* s2) { return cmp(s1, s2) >  0; }
+bool ?>=?(const string_res &s1, const char* s2) { return cmp(s1, s2) >= 0; }
+bool ?<=?(const string_res &s1, const char* s2) { return cmp(s1, s2) <= 0; }
+bool ?<? (const string_res &s1, const char* s2) { return cmp(s1, s2) <  0; }
+
+int cmp (const char* s1, const string_res & s2) {
+    string_res s1x = s1;
+    return cmp(s1x, s2);
 }
-bool ?!=?(const string_res &s, const char* other) {
-    return !(s == other);
-}
+
+bool ?==?(const char* s1, const string_res &s2) { return cmp(s1, s2) == 0; }
+bool ?!=?(const char* s1, const string_res &s2) { return cmp(s1, s2) != 0; }
+bool ?>? (const char* s1, const string_res &s2) { return cmp(s1, s2) >  0; }
+bool ?>=?(const char* s1, const string_res &s2) { return cmp(s1, s2) >= 0; }
+bool ?<=?(const char* s1, const string_res &s2) { return cmp(s1, s2) <= 0; }
+bool ?<? (const char* s1, const string_res &s2) { return cmp(s1, s2) <  0; }
+
 
 
 //////////////////////////////////////////////////////////

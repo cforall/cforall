@@ -156,21 +156,30 @@ string ?()( string & this, size_t start ) {
 ////////////////////////////////////////////////////////
 // Comparison
 
-bool ?==?(const string & s, const string & other) {
-    return *s.inner == *other.inner;
-}
+int  cmp (const string &s1, const string &s2) { return cmp(*s1.inner ,  *s2.inner); }
+bool ?==?(const string &s1, const string &s2) { return     *s1.inner == *s2.inner ; }
+bool ?!=?(const string &s1, const string &s2) { return     *s1.inner != *s2.inner ; }
+bool ?>? (const string &s1, const string &s2) { return     *s1.inner >  *s2.inner ; }
+bool ?>=?(const string &s1, const string &s2) { return     *s1.inner >= *s2.inner ; }
+bool ?<=?(const string &s1, const string &s2) { return     *s1.inner <= *s2.inner ; }
+bool ?<? (const string &s1, const string &s2) { return     *s1.inner <  *s2.inner ; }
 
-bool ?!=?(const string & s, const string & other) {
-    return *s.inner != *other.inner;
-}
+int  cmp (const string &s1, const char*   s2) { return cmp(*s1.inner ,   s2      ); }
+bool ?==?(const string &s1, const char*   s2) { return     *s1.inner ==  s2       ; }
+bool ?!=?(const string &s1, const char*   s2) { return     *s1.inner !=  s2       ; }
+bool ?>? (const string &s1, const char*   s2) { return     *s1.inner >   s2       ; }
+bool ?>=?(const string &s1, const char*   s2) { return     *s1.inner >=  s2       ; }
+bool ?<=?(const string &s1, const char*   s2) { return     *s1.inner <=  s2       ; }
+bool ?<? (const string &s1, const char*   s2) { return     *s1.inner <   s2       ; }
 
-bool ?==?(const string & s, const char * other) {
-    return *s.inner == other;
-}
+int  cmp (const char*   s1, const string &s2) { return cmp( s1       ,  *s2.inner); }
+bool ?==?(const char*   s1, const string &s2) { return      s1       == *s2.inner ; }
+bool ?!=?(const char*   s1, const string &s2) { return      s1       != *s2.inner ; }
+bool ?>? (const char*   s1, const string &s2) { return      s1       >  *s2.inner ; }
+bool ?>=?(const char*   s1, const string &s2) { return      s1       >= *s2.inner ; }
+bool ?<=?(const char*   s1, const string &s2) { return      s1       <= *s2.inner ; }
+bool ?<? (const char*   s1, const string &s2) { return      s1       <  *s2.inner ; }
 
-bool ?!=?(const string & s, const char * other) {
-    return *s.inner != other;
-}
 
 ////////////////////////////////////////////////////////
 // Getter

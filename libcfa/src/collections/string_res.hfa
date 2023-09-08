@@ -141,10 +141,29 @@ char ?[?](const string_res &s, size_t index); // Mike changed to ret by val from
 //char codePointAt(const string_res &s, size_t index); // revisit under Unicode
 
 // Comparisons
-bool ?==?(const string_res &s, const string_res &other);
-bool ?!=?(const string_res &s, const string_res &other);
-bool ?==?(const string_res &s, const char* other);
-bool ?!=?(const string_res &s, const char* other);
+int  cmp (const string_res &, const string_res &);
+bool ?==?(const string_res &, const string_res &);
+bool ?!=?(const string_res &, const string_res &);
+bool ?>? (const string_res &, const string_res &);
+bool ?>=?(const string_res &, const string_res &);
+bool ?<=?(const string_res &, const string_res &);
+bool ?<? (const string_res &, const string_res &);
+
+int  cmp (const string_res &, const char*);
+bool ?==?(const string_res &, const char*);
+bool ?!=?(const string_res &, const char*);
+bool ?>? (const string_res &, const char*);
+bool ?>=?(const string_res &, const char*);
+bool ?<=?(const string_res &, const char*);
+bool ?<? (const string_res &, const char*);
+
+int  cmp (const char*, const string_res &);
+bool ?==?(const char*, const string_res &);
+bool ?!=?(const char*, const string_res &);
+bool ?>? (const char*, const string_res &);
+bool ?>=?(const char*, const string_res &);
+bool ?<=?(const char*, const string_res &);
+bool ?<? (const char*, const string_res &);
 
 // String search
 bool contains(const string_res &s, char ch); // single character
