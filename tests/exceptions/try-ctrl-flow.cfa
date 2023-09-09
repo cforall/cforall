@@ -1,5 +1,5 @@
-// All of these should be caught as long as the check remains in the same
-// pass. (Although not even all of the checks are in place yet.)
+// Check all the local control flow structures that are "sealed" by some the
+// try statement clauses; where structured programming is stricter.
 
 void break_in_finally() {
 	while (true) {
@@ -147,6 +147,52 @@ void break_in_function() {
 		void inner() {
 			break;
 		}
+	}
+}
+
+// Now just use return to test the other try control flow interactions.
+
+exception nil_exception {};
+
+void return_in_try_with_catch() {
+	try {
+		return;
+	} catch (nil_exception *) {
+		;
+	}
+}
+
+// Allowed.
+void return_in_try_with_catchReturn() {
+	try {
+		return;
+	} catchResume (nil_exception *) {
+		;
+	}
+}
+
+// Allowed.
+void return_in_try_with_finally() {
+	try {
+		return;
+	} finally {
+		;
+	}
+}
+
+void return_in_catch() {
+	try {
+		;
+	} catch (nil_exception *) {
+		return;
+	}
+}
+
+void return_in_catchResume() {
+	try {
+		;
+	} catchResume (nil_exception *) {
+		return;
 	}
 }
 

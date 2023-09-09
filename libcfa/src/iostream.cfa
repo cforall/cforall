@@ -1,3 +1,4 @@
+
 //
 // Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
 //
@@ -975,7 +976,12 @@ forall( istype & | basic_istream( istype ) ) {
 		fmtstr[0] = '%';
 		if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
 		// no maximum width necessary because text ignored => width is read width
-		if ( f.wd != -1 ) { start += sprintf( &fmtstr[start], "%d", f.wd ); }
+		if ( f.wd != -1 ) {
+			// wd is buffer bytes available (for input chars + null terminator)
+			// rwd is count of input chars
+			int rwd = f.flags.rwd ? f.wd : (f.wd - 1);
+			start += sprintf( &fmtstr[start], "%d", rwd );
+		}
 
 		if ( ! scanset ) {
 			// %s, %*s, %ws, %*ws
@@ -992,7 +998,7 @@ forall( istype & | basic_istream( istype ) ) {
 			// printf( "incl/excl %s\n", fmtstr );
 		} // if
 
-		int check = f.wd - 1;
+		int check = f.wd - 2;
 		if ( ! f.flags.rwd ) f.s[check] = '\0';			// insert sentinel
 		len = fmt( is, fmtstr, f.s );
 		//fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, f.s[check], f.s );

@@ -15,6 +15,41 @@
 
 int main() {
 	{
+		// Upfront checks to ensure buffer safety.  Once these pass, the simpler `wdi(sizeof(s),s)`
+		// usage, as in the scanf alignment cases below, is justified.
+		struct {
+			char buf[8];
+			char canary;
+		} data;
+		static_assert( sizeof(data.buf) == 8 );
+		static_assert( &data.buf[8] == &data.canary );  // canary comes right after buf
+
+		void rep(const char* casename) {
+			data.canary = 42;
+			bool caught = false;
+			try {
+				sin | wdi( sizeof(data.buf), data.buf );
+			} catch (cstring_length*) {
+				caught = true;
+			}
+			printf( "%s \"%s\"", casename, data.buf );
+			if ( caught ) {
+				printf(", exception occurred");
+			}
+			if ( data.canary == 42 ) {
+				printf(", canary ok");
+			} else {
+				printf(", canary overwritten to %d", data.canary);
+			}
+			printf("\n");
+		}
+
+		rep("pre1");
+		rep("pre2a");
+		rep("pre2b");
+		scanf("\n");  // next test does not start with %s so does not tolerate leading whitespace
+	}
+	{
 		char s[] = "yyyyyyyyyyyyyyyyyyyy";
 		const char sk[] = "abc";
 		scanf( "abc " ); scanf( sk ); for ( 5 ) scanf( "%*c" );	printf( "1 %s\n", s );

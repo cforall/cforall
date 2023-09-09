@@ -1,3 +1,6 @@
+pre1 "123456", canary ok
+pre2a "1234567", exception occurred, canary ok
+pre2b "89", canary ok
 1 yyyyyyyyyyyyyyyyyyyy
 2 abcxxx
 3 abcxxx

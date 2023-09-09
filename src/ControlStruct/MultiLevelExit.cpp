@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 13:48:00 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Sep  6 12:00:00 2023
-// Update Count     : 35
+// Last Modified On : Fri Sep  8 17:04:00 2023
+// Update Count     : 36
 //
 
 #include "MultiLevelExit.hpp"
@@ -26,6 +26,16 @@ using namespace ast;
 namespace ControlStruct {
 
 namespace {
+
+/// The return context is used to remember if returns are allowed and if
+/// not, why not. It is the nearest local control flow blocking construct.
+enum ReturnContext {
+	MayReturn,
+	InTryWithHandler,
+	InResumeHandler,
+	InTerminateHandler,
+	InFinally,
+};
 
 class Entry {
   public:
@@ -125,6 +135,7 @@ struct MultiLevelExitCore final :
 	void previsit( const ReturnStmt * );
 	void previsit( const TryStmt * );
 	void postvisit( const TryStmt * );
+	void previsit( const CatchClause * );
 	void previsit( const FinallyClause * );
 
 	const Stmt * mutateLoop( const Stmt * body, Entry& );
@@ -133,7 +144,7 @@ struct MultiLevelExitCore final :
 	set<Label> fallthrough_labels;
 	vector<Entry> enclosing_control_structures;
 	Label break_label;
-	bool inFinally;
+	ReturnContext ret_context;
 
 	template<typename LoopNode>
 	void prehandleLoopStmt( const LoopNode * loopStmt );
@@ -142,6 +153,8 @@ struct MultiLevelExitCore final :
 
 	list<ptr<Stmt>> fixBlock(
 		const list<ptr<Stmt>> & kids, bool caseClause );
+
+	void enterSealedContext( ReturnContext );
 
 	template<typename UnaryPredicate>
 	auto findEnclosingControlStructure( UnaryPredicate pred ) {
@@ -156,7 +169,7 @@ NullStmt * labelledNullStmt( const CodeLocation & cl, const Label & label ) {
 
 MultiLevelExitCore::MultiLevelExitCore( const LabelToStmt & lt ) :
 	target_table( lt ), break_label( CodeLocation(), "" ),
-	inFinally( false )
+	ret_context( ReturnContext::MayReturn )
 {}
 
 void MultiLevelExitCore::previsit( const FunctionDecl * ) {
@@ -487,9 +500,26 @@ const SwitchStmt * MultiLevelExitCore::postvisit( const SwitchStmt * stmt ) {
 }
 
 void MultiLevelExitCore::previsit( const ReturnStmt * stmt ) {
-	if ( inFinally ) {
-		SemanticError( stmt->location, "'return' may not appear in a finally clause" );
+	char const * context;
+	switch ( ret_context ) {
+	case ReturnContext::MayReturn:
+		return;
+	case ReturnContext::InTryWithHandler:
+		context = "try statement with a catch clause";
+		break;
+	case ReturnContext::InResumeHandler:
+		context = "catchResume clause";
+		break;
+	case ReturnContext::InTerminateHandler:
+		context = "catch clause";
+		break;
+	case ReturnContext::InFinally:
+		context = "finally clause";
+		break;
+	default:
+		assert(0);
 	}
+	SemanticError( stmt->location, toString( "'return' may not appear in a ", context ) );
 }
 
 void MultiLevelExitCore::previsit( const TryStmt * stmt ) {
@@ -498,6 +528,13 @@ void MultiLevelExitCore::previsit( const TryStmt * stmt ) {
 		Label breakLabel = newLabel( "blockBreak", stmt );
 		enclosing_control_structures.emplace_back( stmt, breakLabel );
 		GuardAction([this](){ enclosing_control_structures.pop_back(); } );
+	}
+
+	// Try statements/try blocks are only sealed with a termination handler.
+	for ( auto clause : stmt->handlers ) {
+		if ( ast::Terminate == clause->kind ) {
+			return enterSealedContext( ReturnContext::InTryWithHandler );
+		}
 	}
 }
 
@@ -511,10 +548,14 @@ void MultiLevelExitCore::postvisit( const TryStmt * stmt ) {
 	}
 }
 
+void MultiLevelExitCore::previsit( const CatchClause * clause ) {
+	ReturnContext context = ( ast::Terminate == clause->kind )
+		? ReturnContext::InTerminateHandler : ReturnContext::InResumeHandler;
+	enterSealedContext( context );
+}
+
 void MultiLevelExitCore::previsit( const FinallyClause * ) {
-	GuardAction([this, old = std::move( enclosing_control_structures)](){ enclosing_control_structures = std::move(old); });
-	enclosing_control_structures = vector<Entry>();
-	GuardValue( inFinally ) = true;
+	enterSealedContext( ReturnContext::InFinally );
 }
 
 const Stmt * MultiLevelExitCore::mutateLoop(
@@ -614,6 +655,12 @@ list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
 		throw errors;
 	}
 	return ret;
+}
+
+void MultiLevelExitCore::enterSealedContext( ReturnContext enter_context ) {
+	GuardAction([this, old = std::move(enclosing_control_structures)](){ enclosing_control_structures = std::move(old); });
+	enclosing_control_structures = vector<Entry>();
+	GuardValue( ret_context ) = enter_context;
 }
 
 } // namespace
