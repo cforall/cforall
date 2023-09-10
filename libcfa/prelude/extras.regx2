@@ -1,6 +1,10 @@
 extern void \*malloc[^;]*;
 extern void free[^;]*;
+extern char \*getenv[^;]*;
 extern void exit[^;]*;
 extern int atexit[^;]*;
 extern void abort[^;]*;
 extern int printf[^;]*;
+int strcmp[^;]*;
+int strncmp[^;]*;
+size_t strlen[^;]*;

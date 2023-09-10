@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 12 14:36:06 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 18 08:12:16 2021
-// Update Count     : 28
+// Last Modified On : Sat Sep  9 14:07:17 2023
+// Update Count     : 30
 //
 
 #pragma once
@@ -90,20 +90,20 @@ static inline {
 	// CFA processor CPU-time watch that ticks when the processor (kernel thread) is running. This watch is affected by
 	// discontinuous jumps when the OS is not running the kernal thread. A duration is returned because the value is
 	// relative and cannot be converted to real-time (wall-clock) time.
-	Duration processor() {								// non-monotonic duration of kernel thread
+	Duration processor_cpu() {							// non-monotonic duration of kernel thread
 		timespec ts;
 		clock_gettime( CLOCK_THREAD_CPUTIME_ID, &ts );
 		return (Duration){ ts };
-	} // processor
+	} // processor_cpu
 
 	// Program CPU-time watch measures CPU time consumed by all processors (kernel threads) in the UNIX process.  This
 	// watch is affected by discontinuous jumps when the OS is not running the kernel threads. A duration is returned
 	// because the value is relative and cannot be converted to real-time (wall-clock) time.
-	Duration program() {								// non-monotonic duration of program CPU
+	Duration program_cpu() {							// non-monotonic duration of program CPU
 		timespec ts;
 		clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts );
 		return (Duration){ ts };
-	} // program
+	} // program_cpu
 
 	// Monotonic duration from machine boot and including system suspension. This watch is unaffected by discontinuous
 	// jumps resulting from manual changes of the clock, and incremental adjustments performed by adjtime(3) and NTP
