@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May 26 11:23:55 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct  4 19:08:55 2022
-// Update Count     : 23
+// Last Modified On : Mon Sep 11 11:18:18 2023
+// Update Count     : 24
 // 
 
 #pragma once
@@ -42,6 +42,7 @@ extern "C" {
 	size_t malloc_expansion();							// heap expansion size (bytes)
 	size_t malloc_mmap_start();							// crossover allocation size from sbrk to mmap
 	size_t malloc_unfreed();							// heap unfreed size (bytes)
+	void malloc_stats_clear();							// clear heap statistics
 } // extern "C"
 
 void * resize( void * oaddr, size_t alignment, size_t size );

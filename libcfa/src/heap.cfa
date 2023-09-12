@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Aug  2 18:48:30 2023
-// Update Count     : 1614
+// Last Modified On : Mon Sep 11 11:21:10 2023
+// Update Count     : 1615
 //
 
 #include <stdio.h>
@@ -690,6 +690,18 @@ static HeapStatistics & collectStats( HeapStatistics & stats ) with( heapMaster 
 	unlock( mgrLock );
 	return stats;
 } // collectStats
+
+static inline void clearStats() {
+	lock( mgrLock );
+
+	// Zero the heap master and all active thread heaps.
+	HeapStatisticsCtor( heapMaster.stats );
+	for ( Heap * heap = heapMaster.heapManagersList; heap; heap = heap->nextHeapManager ) {
+		HeapStatisticsCtor( heap->stats );
+	} // for
+
+	unlock( mgrLock );
+} // clearStats
 #endif // __STATISTICS__
 
 
@@ -1553,6 +1565,19 @@ extern "C" {
 			abort( "**** Error **** write failed in malloc_stats" );
 		} // if
 	} // malloc_stats
+
+
+	// Zero the heap master and all active thread heaps.
+	void malloc_stats_clear() {
+		#ifdef __STATISTICS__
+		clearStats();
+		#else
+		#define MALLOC_STATS_MSG "malloc_stats statistics disabled.\n"
+		if ( write( STDERR_FILENO, MALLOC_STATS_MSG, sizeof( MALLOC_STATS_MSG ) - 1 /* size includes '\0' */ ) == -1 ) {
+			abort( "**** Error **** write failed in malloc_stats" );
+		} // if
+		#endif // __STATISTICS__
+	} // malloc_stats_clear
 
 
 	// Changes the file descriptor where malloc_stats() writes statistics.
