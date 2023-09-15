@@ -1,0 +1,16 @@
+#include <cofor.hfa>
+
+long total = 0;
+void inner_loop( long i ) { __atomic_fetch_add( &total, i, __ATOMIC_SEQ_CST ); }
+void add_num( void * arg ) { __atomic_fetch_add( &total, (long)arg, __ATOMIC_SEQ_CST ); }
+
+int main() {
+    printf("start\n");
+    processor p[4];
+    cofor( 0, 10, inner_loop );
+    parallel_stmt_t stmts[5] = { add_num, add_num, add_num, add_num, add_num };
+    void * nums[5] = { (void *)11, (void *)12, (void *)13, (void *)14, (void *)15 };
+    parallel( stmts, nums, 5 );
+    printf("total: %ld\n", total);
+    printf("done\n");
+}

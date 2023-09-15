@@ -68,14 +68,14 @@ static inline __attribute__((always_inline)) {
 	forall( T | { int ?<?( T, T ); } )
 	T min( T v1, T v2 ) { return v1 < v2 ? v1 : v2; }
 
-	forall( T, Ts... | { T min( T, T ); T min( T, Ts ); } )
-	T min( T v1, T v2, Ts vs ) { return min( min( v1, v2 ), vs ); }
+	forall( T, Ts... | { T min( T, T ); T min( T, T, Ts ); } )
+	T min( T v1, T v2, T v3, Ts vs ) { return min( min( v1, v2 ), v3, vs ); }
 
 	forall( T | { int ?>?( T, T ); } )
 	T max( T v1, T v2 ) { return v1 > v2 ? v1 : v2; }
 
-	forall( T, Ts... | { T max( T, T ); T max( T, Ts ); } )
-	T max( T v1, T v2, Ts vs ) { return max( max( v1, v2 ), vs ); }
+	forall( T, Ts... | { T max( T, T ); T max( T, T, Ts ); } )
+	T max( T v1, T v2, T v3, Ts vs ) { return max( max( v1, v2 ), v3, vs ); }
 
 	forall( T | { T min( T, T ); T max( T, T ); } )
 	T clamp( T value, T min_val, T max_val ) { return max( min_val, min( value, max_val ) ); }

@@ -19,3 +19,11 @@ unsigned long long int	4 3	max 4
 float			4. 3.1	max 4.
 double			4. 3.1	max 4.
 long double		4. 3.1	max 4.
+
+3 arguments
+2 3 4	min 2	max 4
+4 2 3	min 2	max 4
+3 4 2	min 2	max 4
+4 arguments
+3 2 5 4	min 2	max 5
+5 3 4 2	min 2	max 5

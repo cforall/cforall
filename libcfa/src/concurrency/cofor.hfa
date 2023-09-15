@@ -1,0 +1,69 @@
+#include <thread.hfa>
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// cofor ( uC++ COFOR )
+typedef void (*cofor_body_t)( long );
+thread co_runner {
+    long lo, hi;
+    cofor_body_t loop_body;
+};
+
+void ?{}( co_runner & this, long lo, long hi, cofor_body_t loop_body ) {
+    this.lo = lo;
+    this.hi = hi;
+    this.loop_body = loop_body;
+}
+
+void main( co_runner & this ) with( this ) {
+    for ( long i = lo; i < hi; i++ )
+        loop_body(i);
+}
+
+void cofor( long lo, long hi, cofor_body_t loop_body ) {
+    long range = hi - lo;
+    if ( range <= 0 ) return;
+    long nprocs = get_proc_count( *active_cluster() );
+    if ( nprocs == 0 ) return;
+    long threads = range < nprocs ? range : nprocs;
+    long stride = range / threads + 1, extras = range % threads;
+    long i = 0;
+    long stride_iter = lo;
+    co_runner * runners[ threads ];
+    for ( i; threads ) {
+        runners[i] = alloc();
+    }
+    for ( i = 0; i < extras; i += 1, stride_iter += stride ) {
+        (*runners[i]){ stride_iter, stride_iter + stride, loop_body };
+    }
+    stride -= 1;
+    for ( ; i < threads; i += 1, stride_iter += stride ) {
+        (*runners[i]){ stride_iter, stride_iter + stride, loop_body };
+    }
+    for ( i; threads ) {
+        delete( runners[i] );
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// parallel (COBEGIN/COEND)
+typedef void (*parallel_stmt_t)( void * );
+thread para_runner {
+    parallel_stmt_t body;
+    void * arg;
+};
+
+void ?{}( para_runner & this, parallel_stmt_t body, void * arg ) { 
+    this.body = body;
+    this.arg = arg;
+}
+
+void main( para_runner & this ) with( this ) { body( arg ); }
+
+void parallel( parallel_stmt_t * stmts, void ** args, size_t num ) {
+    para_runner * runners[ num ];
+    for ( i; num )
+        (*(runners[i] = malloc())){ stmts[i], args[i] };
+    for ( i; num )
+        delete( runners[i] );
+}
+

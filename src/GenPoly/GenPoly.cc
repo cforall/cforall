@@ -47,10 +47,11 @@ namespace GenPoly {
 			return false;
 		}
 
-		bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const ast::TypeSubstitution * env) {
-			for (auto &param : params) {
-				auto paramType = param.strict_as<ast::TypeExpr>();
-				if (isPolyType(paramType->type, env)) return true;
+		bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const ast::TypeSubstitution * env ) {
+			for ( auto &param : params ) {
+				auto paramType = param.as<ast::TypeExpr>();
+				assertf( paramType, "Aggregate parameters should be type expressions" );
+				if ( isPolyType( paramType->type, env ) ) return true;
 			}
 			return false;
 		}
@@ -61,6 +62,15 @@ namespace GenPoly {
 				TypeExpr *paramType = dynamic_cast< TypeExpr* >( *param );
 				assertf(paramType, "Aggregate parameters should be type expressions");
 				if ( isPolyType( paramType->get_type(), tyVars, env ) ) return true;
+			}
+			return false;
+		}
+
+		bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const TypeVarMap & typeVars, const ast::TypeSubstitution * env ) {
+			for ( auto & param : params ) {
+				auto paramType = param.as<ast::TypeExpr>();
+				assertf( paramType, "Aggregate parameters should be type expressions" );
+				if ( isPolyType( paramType->type, typeVars, env ) ) return true;
 			}
 			return false;
 		}
@@ -184,21 +194,6 @@ namespace GenPoly {
 		return 0;
 	}
 
-	const ast::Type * isPolyType(const ast::Type * type, const TyVarMap & tyVars, const ast::TypeSubstitution * env) {
-		type = replaceTypeInst( type, env );
-
-		if ( auto typeInst = dynamic_cast< const ast::TypeInstType * >( type ) ) {
-			if ( tyVars.contains( typeInst->typeString() ) ) return type;
-		} else if ( auto arrayType = dynamic_cast< const ast::ArrayType * >( type ) ) {
-			return isPolyType( arrayType->base, env );
-		} else if ( auto structType = dynamic_cast< const ast::StructInstType* >( type ) ) {
-			if ( hasPolyParams( structType->params, env ) ) return type;
-		} else if ( auto unionType = dynamic_cast< const ast::UnionInstType* >( type ) ) {
-			if ( hasPolyParams( unionType->params, env ) ) return type;
-		}
-		return nullptr;
-	}
-
 const ast::Type * isPolyType( const ast::Type * type,
 		const TypeVarMap & typeVars, const ast::TypeSubstitution * subst ) {
 	type = replaceTypeInst( type, subst );
@@ -206,11 +201,11 @@ const ast::Type * isPolyType( const ast::Type * type,
 	if ( auto inst = dynamic_cast< const ast::TypeInstType * >( type ) ) {
 		if ( typeVars.contains( *inst ) ) return type;
 	} else if ( auto array = dynamic_cast< const ast::ArrayType * >( type ) ) {
-		return isPolyType( array->base, subst );
+		return isPolyType( array->base, typeVars, subst );
 	} else if ( auto sue = dynamic_cast< const ast::StructInstType * >( type ) ) {
-		if ( hasPolyParams( sue->params, subst ) ) return type;
+		if ( hasPolyParams( sue->params, typeVars, subst ) ) return type;
 	} else if ( auto sue = dynamic_cast< const ast::UnionInstType * >( type ) ) {
-		if ( hasPolyParams( sue->params, subst ) ) return type;
+		if ( hasPolyParams( sue->params, typeVars, subst ) ) return type;
 	}
 	return nullptr;
 }

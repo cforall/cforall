@@ -44,6 +44,17 @@ int main( void ) {
 	sout | "float\t\t\t" 				| 4.0f | 3.1f | "\tmax" | max( 4.0f, 3.1f );
 	sout | "double\t\t\t"				| 4.0 | 3.1 | "\tmax" | max( 4.0, 3.1 );
 	sout | "long double\t\t"			| 4.0l | 3.1l | "\tmax" | max( 4.0l, 3.1l );
+
+	sout | nl;
+
+	sout | "3 arguments";
+	sout | 2 | 3 | 4 | "\tmin" | min(2, 3, 4) | "\tmax" | max(2, 3, 4);
+	sout | 4 | 2 | 3 | "\tmin" | min(4, 2, 3) | "\tmax" | max(4, 2, 3);
+	sout | 3 | 4 | 2 | "\tmin" | min(3, 4, 2) | "\tmax" | max(3, 4, 2);
+
+	sout | "4 arguments";
+	sout | 3 | 2 | 5 | 4 | "\tmin" | min(3, 2, 5, 4) | "\tmax" | max(3, 2, 5, 4);
+	sout | 5 | 3 | 4 | 2 | "\tmin" | min(5, 3, 4, 2) | "\tmax" | max(5, 3, 4, 2);
 } // main
 
 // Local Variables: //

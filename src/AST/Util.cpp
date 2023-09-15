@@ -105,6 +105,15 @@ void memberMatchesAggregate( const MemberExpr * expr ) {
 	assertf( false, "Member not found." );
 }
 
+template<typename node_t>
+void oneOfExprOrType( const node_t * node ) {
+	if ( node->expr ) {
+		assertf( node->expr && !node->type, "Exactly one of expr or type should be set." );
+	} else {
+		assertf( !node->expr && node->type, "Exactly one of expr or type should be set." );
+	}
+}
+
 /// Check for Floating Nodes:
 /// Every node should be reachable from a root (the TranslationUnit) via a
 /// chain of structural references (tracked with ptr). This cannot check all
@@ -151,6 +160,16 @@ struct InvariantCore {
 		memberMatchesAggregate( node );
 	}
 
+	void previsit( const SizeofExpr * node ) {
+		previsit( (const ParseNode *)node );
+		oneOfExprOrType( node );
+	}
+
+	void previsit( const AlignofExpr * node ) {
+		previsit( (const ParseNode *)node );
+		oneOfExprOrType( node );
+	}
+
 	void previsit( const StructInstType * node ) {
 		previsit( (const Node *)node );
 		noFloatingNode( node, &StructInstType::base );
@@ -180,6 +199,8 @@ struct InvariantCore {
 /// This checks many readonly pointers to see if the declaration they are
 /// referring to is in scope by the structural rules of code.
 // Any escapes marked with a bug should be removed once the bug is fixed.
+// This is a separate pass because of it changes the visit pattern and
+// must always be run on the entire translation unit.
 struct InScopeCore : public ast::WithShortCircuiting {
 	ScopedSet<DeclWithType const *> typedDecls;
 	ScopedSet<TypeDecl const *> typeDecls;
