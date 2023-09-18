@@ -126,22 +126,22 @@ int main( int argc, char * argv[] ) {
     switch ( argc ) {
 	  case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
-			ChannelSize = atoi( argv[2] );
+			ChannelSize = ato( argv[2] );
+			if ( ChannelSize < 1 ) fallthru default;
 		} // if
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
-			Processors = atoi( argv[1] );
-			if ( Processors < 1 ) goto Usage;
+			Processors = ato( argv[1] );
+			if ( Processors < 1 ) fallthru default;
 		} // if
 	  case 1:											// use defaults
 		break;
 	  default:
-	  Usage:
-		sout | "Usage: " | argv[0]
+		exit | "Usage: " | argv[0]
              | " [ processors (> 0) | 'd' (default " | Processors
 			 | ") ] [ channel size (>= 0) | 'd' (default " | ChannelSize
 			 | ") ]" ;
-		exit( EXIT_FAILURE );
 	} // switch
+
     test(Processors, Channels, Producers, Consumers, ChannelSize);
 }

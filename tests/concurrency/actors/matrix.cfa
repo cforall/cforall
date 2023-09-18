@@ -4,71 +4,69 @@
 #include <string.h>
 #include <stdio.h>
 
-unsigned int xr = 500, xc = 500, yc = 500, Processors = 1; // default values
+int xr = 500, xc = 500, yc = 500, Processors = 1; // default values, must be signed
 
 struct derived_actor { inline actor; };
 
 struct derived_msg {
-    inline message;
-    int * Z;
+	inline message;
+	int * Z;
 	int * X;
-    int ** Y;
+	int ** Y;
 };
 
 void ?{}( derived_msg & this ) {}
 void ?{}( derived_msg & this, int * Z, int * X, int ** Y ) {
-    ((message &) this){ Nodelete };
-    this.Z = Z;
-    this.X = X;
-    this.Y = Y;
+	set_allocation( this, Nodelete );
+	this.Z = Z;
+	this.X = X;
+	this.Y = Y;
 }
 
 allocation receive( derived_actor & receiver, derived_msg & msg ) {
-    for ( unsigned int i = 0; i < yc; i += 1 ) { // multiply X_row by Y_col and sum products
-        msg.Z[i] = 0;
-        for ( unsigned int j = 0; j < xc; j += 1 ) {
-            msg.Z[i] += msg.X[j] * msg.Y[j][i];
-        } // for
-    } // for
-    return Finished;
+	for ( unsigned int i = 0; i < yc; i += 1 ) { // multiply X_row by Y_col and sum products
+		msg.Z[i] = 0;
+		for ( unsigned int j = 0; j < xc; j += 1 ) {
+			msg.Z[i] += msg.X[j] * msg.Y[j][i];
+		} // for
+	} // for
+	return Finished;
 }
 
 int main( int argc, char * argv[] ) {
-    switch ( argc ) {
+	switch ( argc ) {
 	  case 5:
 		if ( strcmp( argv[4], "d" ) != 0 ) {			// default ?
-			Processors = atoi( argv[4] );
-			if ( Processors < 1 ) goto Usage;
+			Processors = ato( argv[4] );
+			if ( Processors < 1 ) fallthru default;
 		} // if
 	  case 4:
 		if ( strcmp( argv[3], "d" ) != 0 ) {			// default ?
-			xr = atoi( argv[3] );
-			if ( xr < 1 ) goto Usage;
+			xr = ato( argv[3] );
+			if ( xr < 1 ) fallthru default;
 		} // if
 	  case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
-			xc = atoi( argv[2] );
-			if ( xc < 1 ) goto Usage;
+			xc = ato( argv[2] );
+			if ( xc < 1 ) fallthru default;
 		} // if
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
-			yc = atoi( argv[1] );
-			if ( yc < 1 ) goto Usage;
+			yc = ato( argv[1] );
+			if ( yc < 1 ) fallthru default;
 		} // if
 	  case 1:											// use defaults
 		break;
 	  default:
-	  Usage:
-		sout | "Usage: " | argv[0]
+		exit | "Usage: " | argv[0]
 			 | " [ yc (> 0) | 'd' (default " | yc
 			 | ") ] [ xc (> 0) | 'd' (default " | xc
 			 | ") ] [ xr (> 0) | 'd' (default " | xr
 			 | ") ] [ processors (> 0) | 'd' (default " | Processors
 			 | ") ]" ;
-		exit( EXIT_FAILURE );
 	} // switch
 
-    unsigned int r, c;
+	unsigned int r, c;
 	int * Z[xr], * X[xr], * Y[xc];
 
 	for ( r = 0; r < xr; r += 1 ) {						// create/initialize X matrix
@@ -87,17 +85,17 @@ int main( int argc, char * argv[] ) {
 		Z[r] = aalloc( yc );
 	} // for
 
-    executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 16, true };
+	executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 16, true };
 
-    printf("starting\n");
+	sout | "starting";
 
-    start_actor_system( e );
+	start_actor_system( e );
 
-    printf("started\n");
+	sout | "started";
 
-    derived_msg messages[xr];
+	derived_msg messages[xr];
 
-    derived_actor actors[xr];
+	derived_actor actors[xr];
 
 	for ( unsigned int r = 0; r < xr; r += 1 ) {
 		messages[r]{ Z[r], X[r], Y };
@@ -107,19 +105,17 @@ int main( int argc, char * argv[] ) {
 		actors[r] | messages[r];
 	} // for
 
-    printf("stopping\n");
+	sout | "stopping";
 
-    stop_actor_system();
+	stop_actor_system();
 
-    printf("stopped\n");
+	sout | "stopped";
 
-    for ( r = 0; r < xr; r += 1 ) {						// deallocate X and Z matrices
+	for ( r = 0; r < xr; r += 1 ) {						// deallocate X and Z matrices
 		free( X[r] );
-        free( Z[r] );
+		free( Z[r] );
 	} // for
 	for ( r = 0; r < xc; r += 1 ) {						// deallocate Y matrix
-        free( Y[r] );
+		free( Y[r] );
 	} // for
-
-    return 0;
 }

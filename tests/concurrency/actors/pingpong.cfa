@@ -9,52 +9,51 @@ struct ping { inline actor; };
 struct pong { inline actor; };
 
 struct p_msg {
-    inline message;
-    size_t count;
+	inline message;
+	size_t count;
 };
-static inline void ?{}( p_msg & this ) { ((message &)this){}; this.count = 0; }
+//static inline void ?{}( p_msg & this ) { ((message &)this){}; this.count = 0; }
+static inline void ?{}( p_msg & this ) { this.count = 0; }
 
 ping * pi;
 pong * po;
 size_t times = 100000;
 
 allocation receive( ping & receiver, p_msg & msg ) {
-    msg.count++;
-    if ( msg.count > times ) return Finished;
+	msg.count++;
+	if ( msg.count > times ) return Finished;
 
-    allocation retval = Nodelete;
-    if ( msg.count == times ) retval = Finished;
-    *po | msg;
-    return retval;
+	allocation retval = Nodelete;
+	if ( msg.count == times ) retval = Finished;
+	*po | msg;
+	return retval;
 }
 
 allocation receive( pong & receiver, p_msg & msg ) {
-    msg.count++;
-    if ( msg.count > times ) return Finished;
-    
-    allocation retval = Nodelete;
-    if ( msg.count == times ) retval = Finished;
-    *pi | msg;
-    return retval;
+	msg.count++;
+	if ( msg.count > times ) return Finished;
+	
+	allocation retval = Nodelete;
+	if ( msg.count == times ) retval = Finished;
+	*pi | msg;
+	return retval;
 }
 
 size_t Processors = 2;
 
 int main( int argc, char * argv[] ) {
-    printf("start\n");
+	sout | "start";
 
-    processor p[Processors - 1];
+	processor p[Processors - 1];
 
-    start_actor_system( Processors ); // test passing number of processors
+	start_actor_system( Processors ); // test passing number of processors
+	ping pi_actor;
+	pong po_actor;
+	po = &po_actor;
+	pi = &pi_actor;
+	p_msg m;
+	pi_actor | m;
+	stop_actor_system();
 
-    ping pi_actor;
-    pong po_actor;
-    po = &po_actor;
-    pi = &pi_actor;
-    p_msg m;
-    pi_actor | m;
-    stop_actor_system();
-
-    printf("end\n");
-    return 0;
+	sout | "end";
 }

@@ -6,7 +6,7 @@
 #include <thread.hfa>
 #include <time.hfa>
 
-size_t Processors = 1, Channels = 4, Producers = 2, Consumers = 2, ChannelSize = 128;
+ssize_t Processors = 1, Channels = 4, Producers = 2, Consumers = 2, ChannelSize = 128;
 
 owner_lock o;
 
@@ -89,29 +89,27 @@ int main( int argc, char *argv[] ) {
     switch( argc ) {
       case 4:
 		if ( strcmp( argv[3], "d" ) != 0 ) {			// default ?
-			if ( atoi( argv[3] ) < 1 ) goto Usage;
-			ChannelSize = atoi( argv[3] );
+			ChannelSize = ato( argv[3] );
+			if ( ChannelSize < 1 ) fallthru default;
 		} // if
       case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
-			if ( atoi( argv[2] ) < 1 ) goto Usage;
-			Channels = atoi( argv[2] );
+			Channels = ato( argv[2] );
+			if ( Channels < 1 ) fallthru default;
 		} // if
       case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
-			if ( atoi( argv[1] ) < 1 ) goto Usage;
-			Processors = atoi( argv[1] );
+			Processors = ato( argv[1] );
+			if ( Processors < 1 ) fallthru default;
 		} // if
 	  case 1:											// use defaults
 		break;
 	  default:
-	  Usage:
-		sout | "Usage: " | argv[0]
+		exit | "Usage: " | argv[0]
              | " [ processors > 0 | d ]"
              | " [ producers > 0 | d ]"
              | " [ consumers > 0 | d ]"
              | " [ channels > 0 | d ]";
-		exit( EXIT_FAILURE );
     }
     processor p[Processors - 1];
     channels = aalloc( Channels );

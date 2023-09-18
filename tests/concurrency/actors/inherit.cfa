@@ -17,7 +17,7 @@ void ^?{}( D_msg & ) { mutex(sout) sout | 'A'; }
 struct D_msg2 { inline D_msg; };
 
 allocation handle() {
-    return Finished;
+	return Finished;
 }
 
 allocation receive( Server & receiver, D_msg & msg ) { return handle(); }
@@ -26,31 +26,31 @@ allocation receive( Server2 & receiver, D_msg & msg ) { return Delete; }
 allocation receive( Server2 & receiver, D_msg2 & msg ) { return Delete; }
 
 int main() {
-    sout | "Start";
-    {
-        start_actor_system();
-        D_msg * dm = alloc();
-        (*dm){};
-        D_msg2 * dm2 = alloc();
-        (*dm2){};
-        Server2 * s = alloc();
-        (*s){};
-        Server2 * s2 = alloc();
-        (*s2){};
-        *s | *dm;
-        *s2 | *dm2;
-        stop_actor_system();
-    }
-    {
-        start_actor_system();
-        Server s[2];
-        D_msg * dm = alloc();
-        (*dm){};
-        D_msg2 * dm2 = alloc();
-        (*dm2){};
-        s[0] | *dm;
-        s[1] | *dm2;
-        stop_actor_system();
-    }
-    sout | "Finished";
+	sout | "Start";
+	{
+		start_actor_system();
+		D_msg * dm = alloc();
+		(*dm){};
+		D_msg2 * dm2 = alloc();
+		(*dm2){};
+		Server2 * s = alloc();
+		(*s){};
+		Server2 * s2 = alloc();
+		(*s2){};
+		*s | *dm;
+		*s2 | *dm2;
+		stop_actor_system();
+	}
+	{
+		start_actor_system();
+		Server s[2];
+		D_msg * dm = alloc();
+		(*dm){};
+		D_msg2 * dm2 = alloc();
+		(*dm2){};
+		s[0] | *dm;
+		s[1] | *dm2;
+		stop_actor_system();
+	}
+	sout | "Finished";
 }

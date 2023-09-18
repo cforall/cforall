@@ -8,62 +8,58 @@ int Times = 1000000;								// default values
 
 struct derived_actor { inline actor; };
 struct derived_msg {
-    inline message;
-    int cnt;
+	inline message;
+	int cnt;
 };
 
 void ?{}( derived_msg & this, int cnt ) {
-    ((message &) this){ Delete };
-    this.cnt = cnt;
+	set_allocation( this, Delete );
+	this.cnt = cnt;
 }
 void ?{}( derived_msg & this ) { ((derived_msg &)this){ 0 }; }
 
 allocation receive( derived_actor & receiver, derived_msg & msg ) {
-    if ( msg.cnt >= Times ) {
-        sout | "Done";
-        return Delete;
-    }
-    derived_msg * d_msg = alloc();
-    (*d_msg){ msg.cnt + 1 };
-    derived_actor * d_actor = alloc();
-    (*d_actor){};
-    *d_actor | *d_msg;
-    return Delete;
+	if ( msg.cnt >= Times ) {
+		sout | "Done";
+		return Delete;
+	}
+	derived_msg * d_msg = alloc();
+	(*d_msg){ msg.cnt + 1 };
+	derived_actor * d_actor = alloc();
+	(*d_actor){};
+	*d_actor | *d_msg;
+	return Delete;
 }
 
 int main( int argc, char * argv[] ) {
-    switch ( argc ) {
+	switch ( argc ) {
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
-			Times = atoi( argv[1] );
-			if ( Times < 1 ) goto Usage;
+			Times = ato( argv[1] );
+			if ( Times < 1 ) fallthru default;
 		} // if
 	  case 1:											// use defaults
 		break;
 	  default:
-	  Usage:
-		sout | "Usage: " | argv[0] | " [ times (> 0) ]";
-		exit( EXIT_FAILURE );
+		exit | "Usage: " | argv[0] | " [ times (> 0) ]";
 	} // switch
 
-    printf("starting\n");
+	sout | "starting";
 
-    executor e{ 0, 1, 1, false };
-    start_actor_system( e );
+	executor e{ 0, 1, 1, false };
+	start_actor_system( e );
 
-    printf("started\n");
+	sout | "started";
 
-    derived_msg * d_msg = alloc();
-    (*d_msg){};
-    derived_actor * d_actor = alloc();
-    (*d_actor){};
-    *d_actor | *d_msg;
+	derived_msg * d_msg = alloc();
+	(*d_msg){};
+	derived_actor * d_actor = alloc();
+	(*d_actor){};
+	*d_actor | *d_msg;
 
-    printf("stopping\n");
+	sout | "stopping";
 
-    stop_actor_system();
+	stop_actor_system();
 
-    printf("stopped\n");
-
-    return 0;
+	sout | "stopped";
 }

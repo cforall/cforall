@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "locks.hfa"
+#include <locks.hfa>
 #include <stdlib.hfa>
 #include <thread.hfa>
 #include <time.h>

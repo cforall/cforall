@@ -7,7 +7,7 @@
 #include <string.h>
 
 size_t total_operations = 0;
-size_t Processors = 1, Tasks = 4;
+ssize_t Processors = 1, Tasks = 4;						// must be signed
 
 owner_lock o;
 
@@ -36,23 +36,21 @@ int main( int argc, char * argv[] ) {
     switch ( argc ) {
 	  case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
-			Tasks = atoi( argv[2] );
-            if ( Tasks < 1 ) goto Usage;
+			Tasks = ato( argv[2] );
+            if ( Tasks < 1 ) fallthru default;
 		} // if
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
-			Processors = atoi( argv[1] );
-			if ( Processors < 1 ) goto Usage;
+			Processors = ato( argv[1] );
+			if ( Processors < 1 ) fallthru default;
 		} // if
 	  case 1:											// use defaults
 		break;
 	  default:
-	  Usage:
-		sout | "Usage: " | argv[0]
+		exit | "Usage: " | argv[0]
              | " [ processors (> 0) | 'd' (default " | Processors
 			 | ") ] [ channel size (>= 0) | 'd' (default " | Tasks
 			 | ") ]" ;
-		exit( EXIT_FAILURE );
 	} // switch
     processor proc[Processors - 1];
 
@@ -70,6 +68,4 @@ int main( int argc, char * argv[] ) {
     
     // sout | total_operations;
     sout | "done";
-
-    return 0;
 }

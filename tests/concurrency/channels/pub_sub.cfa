@@ -86,23 +86,21 @@ int main( int argc, char * argv[] ) {
     switch ( argc ) {
 	  case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
-			Tasks = atoi( argv[2] );
-            if ( Tasks < 1 ) goto Usage;
+			Tasks = ato( argv[2] );
+            if ( Tasks < 1 ) fallthru default;
 		} // if
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
-			Processors = atoi( argv[1] );
-			if ( Processors < 1 ) goto Usage;
+			Processors = ato( argv[1] );
+			if ( Processors < 1 ) fallthru default;
 		} // if
 	  case 1:											// use defaults
 		break;
 	  default:
-	  Usage:
-		sout | "Usage: " | argv[0]
+		exit | "Usage: " | argv[0]
              | " [ processors (> 0) | 'd' (default " | Processors
 			 | ") ] [ Tasks (> 0) | 'd' (default " | Tasks
 			 | ") ]" ;
-		exit( EXIT_FAILURE );
 	} // switch
     BarrierSize = Tasks;
 

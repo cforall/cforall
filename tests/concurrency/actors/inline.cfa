@@ -2,57 +2,57 @@
 #include <fstream.hfa>
 
 struct d_actor {
-    inline actor;
+	inline actor;
 };
 struct msg_wrapper {
-    int b;
-    inline message;
+	int b;
+	inline message;
 };
 void ^?{}( msg_wrapper & this ) { sout | "msg_wrapper dtor"; }
 
 struct d_msg {
-    int m;
-    inline msg_wrapper;
+	int m;
+	inline msg_wrapper;
 };
 void ?{}( d_msg & this, int m, int b ) { this.m = m; this.b = b; set_allocation( this, Delete ); }
 void ^?{}( d_msg & this ) { sout | "d_msg dtor"; }
 
 allocation receive( d_actor &, d_msg & msg ) {
-    sout | msg.m;
-    sout | msg.b;
-    return Finished;
+	sout | msg.m;
+	sout | msg.b;
+	return Finished;
 }
 
 struct d_msg2 {
-    int m;
-    inline msg_wrapper;
+	int m;
+	inline msg_wrapper;
 };
 void ^?{}( d_msg2 & this ) { sout | "d_msg2 dtor";}
 
 allocation receive( d_actor &, d_msg2 & msg ) {
-    sout | msg.m;
-    return Finished;
+	sout | msg.m;
+	return Finished;
 }
 
 int main() {
-    processor p;
-    {
-        start_actor_system();                                // sets up executor
-        d_actor da;
-        d_msg * dm = alloc();
-        (*dm){ 42, 2423 };
-        da | *dm;
-        stop_actor_system();                                // waits until actors finish
-    }
-    {
-        start_actor_system();                                // sets up executor
-        d_actor da;
-        d_msg2 dm{ 29079 };
-        set_allocation( dm, Nodelete );
-        msg_wrapper * mw = &dm;
-        message * mg = &dm;
-        virtual_dtor * v = &dm;
-        da | dm;
-        stop_actor_system();                                // waits until actors finish
-    }
+	processor p;
+	{
+		start_actor_system();								// sets up executor
+		d_actor da;
+		d_msg * dm = alloc();
+		(*dm){ 42, 2423 };
+		da | *dm;
+		stop_actor_system();								// waits until actors finish
+	}
+	{
+		start_actor_system();								// sets up executor
+		d_actor da;
+		d_msg2 dm{ 29079 };
+		set_allocation( dm, Nodelete );
+		msg_wrapper * mw = &dm;
+		message * mg = &dm;
+		virtual_dtor * v = &dm;
+		da | dm;
+		stop_actor_system();								// waits until actors finish
+	}
 }
