@@ -44,6 +44,14 @@ void cofor( long lo, long hi, cofor_body_t loop_body ) {
     }
 }
 
+#define COFOR( lidname, low, high, body ) \
+    { \
+        void loopBody( long lidname ) { \
+            body \
+        } \
+        cofor( low, high, loopBody ); \
+    }
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // parallel (COBEGIN/COEND)
 typedef void (*parallel_stmt_t)( void * );
