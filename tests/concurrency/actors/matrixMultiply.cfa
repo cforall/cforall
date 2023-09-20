@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-int xr = 500, xc = 500, yc = 500, Processors = 1; // default values, must be signed
+ssize_t xr = 500, xc = 500, yc = 500, Processors = 1; // default values, must be signed
 
 struct derived_actor { inline actor; };
 
@@ -24,9 +24,9 @@ void ?{}( derived_msg & this, int * Z, int * X, int ** Y ) {
 }
 
 allocation receive( derived_actor & receiver, derived_msg & msg ) {
-	for ( unsigned int i = 0; i < yc; i += 1 ) { // multiply X_row by Y_col and sum products
+	for ( i; yc ) {										// multiply X_row by Y_col and sum products
 		msg.Z[i] = 0;
-		for ( unsigned int j = 0; j < xc; j += 1 ) {
+		for ( j; xc ) {
 			msg.Z[i] += msg.X[j] * msg.Y[j][i];
 		} // for
 	} // for
@@ -66,22 +66,21 @@ int main( int argc, char * argv[] ) {
 			 | ") ]" ;
 	} // switch
 
-	unsigned int r, c;
 	int * Z[xr], * X[xr], * Y[xc];
 
-	for ( r = 0; r < xr; r += 1 ) {						// create/initialize X matrix
+	for ( r; xr ) {										// create/initialize X matrix
 		X[r] = aalloc( xc );
-		for ( c = 0; c < xc; c += 1 ) {
+		for ( c; xc ) {
 			X[r][c] = r * c % 37;						// for timing
 		} // for
 	} // for
-	for ( r = 0; r < xc; r += 1 ) {						// create/initialize Y matrix
+	for ( r; xc ) {										// create/initialize Y matrix
 		Y[r] = aalloc( yc );
-		for ( c = 0; c < yc; c += 1 ) {
+		for ( c; yc ) {
 			Y[r][c] = r * c % 37;						// for timing
 		} // for
 	} // for
-	for ( r = 0; r < xr; r += 1 ) {						// create Z matrix
+	for ( r; xr ) {										// create Z matrix
 		Z[r] = aalloc( yc );
 	} // for
 
@@ -97,11 +96,11 @@ int main( int argc, char * argv[] ) {
 
 	derived_actor actors[xr];
 
-	for ( unsigned int r = 0; r < xr; r += 1 ) {
+	for ( r; xr ) {
 		messages[r]{ Z[r], X[r], Y };
 	} // for
 
-	for ( unsigned int r = 0; r < xr; r += 1 ) {
+	for ( r; xr ) {
 		actors[r] | messages[r];
 	} // for
 
@@ -111,11 +110,11 @@ int main( int argc, char * argv[] ) {
 
 	sout | "stopped";
 
-	for ( r = 0; r < xr; r += 1 ) {						// deallocate X and Z matrices
+	for ( r; xr ) {										// deallocate X and Z matrices
 		free( X[r] );
 		free( Z[r] );
 	} // for
-	for ( r = 0; r < xc; r += 1 ) {						// deallocate Y matrix
+	for ( r; xc ) {										// deallocate Y matrix
 		free( Y[r] );
 	} // for
 }

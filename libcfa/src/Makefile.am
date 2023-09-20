@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Wed Aug 30 21:22:45 2023
-## Update Count     : 263
+## Last Modified On : Mon Sep 18 17:06:56 2023
+## Update Count     : 264
 ###############################################################################
 
 # create object files in directory with source files
@@ -117,8 +117,7 @@ inst_thread_headers_nosrc = \
 	concurrency/kernel/fwd.hfa \
 	concurrency/mutex_stmt.hfa \
 	concurrency/channel.hfa \
-	concurrency/actor.hfa \
-    concurrency/cofor.hfa
+	concurrency/actor.hfa
 
 inst_thread_headers_src = \
 	concurrency/alarm.hfa \
@@ -130,7 +129,8 @@ inst_thread_headers_src = \
 	concurrency/monitor.hfa \
 	concurrency/mutex.hfa \
 	concurrency/select.hfa \
-	concurrency/thread.hfa
+	concurrency/thread.hfa \
+	concurrency/cofor.hfa
 
 thread_libsrc = ${inst_thread_headers_src} ${inst_thread_headers_src:.hfa=.cfa} \
 	interpose_thread.cfa \
