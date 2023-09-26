@@ -231,46 +231,42 @@ const ast::ObjectDecl *fixObjectInit(const ast::ObjectDecl *decl,
             const ast::Designation *des = mutListInit->designations[k].get();
             // Desination here
             ast::Designation * newDesination = new ast::Designation(des->location);
+            std::deque<ast::ptr<ast::Expr>> newDesignators;
 
-            if (des->designators.size() == 0) continue;
-
-            // The designator I want to replace
-            const ast::Expr * designator = des->designators.at(0);
-            // Stupid flag variable for development, to be removed
-            bool mutated = false;
-            if ( const ast::NameExpr * designatorName = dynamic_cast<const ast::NameExpr *>(designator) ) {
-                auto candidates = context.symtab.lookupId(designatorName->name);
-                // Does not work for the overloading case currently
-                // assert( candidates.size() == 1 );
-                if ( candidates.size() != 1 ) return mutDecl;
-                auto candidate = candidates.at(0);
-                if ( const ast::EnumInstType * enumInst = dynamic_cast<const ast::EnumInstType *>(candidate.id->get_type())) {
-                    // determine that is an enumInst, swap it with its const value
-                    assert( candidates.size() == 1 );
-                    const ast::EnumDecl * baseEnum = enumInst->base;
-                    // Need to iterate over all enum value to find the initializer to swap
-                    for ( size_t m = 0; m < baseEnum->members.size(); ++m ) {
-                        const ast::ObjectDecl * mem = baseEnum->members.at(m).as<const ast::ObjectDecl>();
-                        if ( baseEnum->members.at(m)->name == designatorName->name ) {
-                            assert(mem);
-                            if ( mem->init ) {
-                                const ast::SingleInit * memInit = mem->init.as<const ast::SingleInit>();
-                                ast::Expr * initValue = shallowCopy( memInit->value.get() );
-                                newDesination->designators.push_back( initValue );
-                                mutated = true;
+            for ( ast::ptr<ast::Expr> designator : des->designators ) {
+                // Stupid flag variable for development, to be removed
+                // bool mutated = false;
+                if ( const ast::NameExpr * designatorName = designator.as<ast::NameExpr>() ) {
+                    auto candidates = context.symtab.lookupId(designatorName->name);
+                    // Does not work for the overloading case currently
+                    // assert( candidates.size() == 1 );
+                    if ( candidates.size() != 1 ) return mutDecl;
+                    auto candidate = candidates.at(0);
+                    if ( const ast::EnumInstType * enumInst = dynamic_cast<const ast::EnumInstType *>(candidate.id->get_type())) {
+                        // determine that is an enumInst, swap it with its const value
+                        assert( candidates.size() == 1 );
+                        const ast::EnumDecl * baseEnum = enumInst->base;
+                        // Need to iterate over all enum value to find the initializer to swap
+                        for ( size_t m = 0; m < baseEnum->members.size(); ++m ) {
+                            const ast::ObjectDecl * mem = baseEnum->members.at(m).as<const ast::ObjectDecl>();
+                            if ( baseEnum->members.at(m)->name == designatorName->name ) {
+                                assert(mem);
+                                newDesignators.push_back( ast::ConstantExpr::from_int(designator->location, m) );
+                                // mutated = true;
+                                break;
                             }
-                            break;
                         }
+                    } else {
+                        newDesignators.push_back( des->designators.at(0) );
                     }
                 } else {
-                    newDesination->designators.push_back( des->designators.at(0) );
+                    newDesignators.push_back( des->designators.at(0) );
                 }
-            } else {
-                newDesination->designators.push_back( des->designators.at(0) );
-            }
-            if ( mutated ) {
-                mutListInit = ast::mutate_field_index(mutListInit, &ast::ListInit::designations, k, newDesination);
-            }
+            }            
+            
+            newDesination->designators = newDesignators;
+            mutListInit = ast::mutate_field_index(mutListInit, &ast::ListInit::designations, k, newDesination);
+            
         }
     }
     return mutDecl;
