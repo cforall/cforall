@@ -9,18 +9,16 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 26 14:23:51 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun  9 11:36:44 2023
-// Update Count     : 423
+// Last Modified On : Mon Sep 25 11:07:22 2023
+// Update Count     : 427
 //
 
 #include <iostream>
-using std::cerr;
-using std::endl;
 #include <string>
-using std::string;
 #include <algorithm>									// find
 #include <cstdio>										// stderr, stdout, perror, fprintf
 #include <cstdlib>										// getenv, exit, mkstemp
+using namespace std;
 #include <unistd.h>										// execvp, fork, unlink
 #include <sys/wait.h>									// wait
 #include <fcntl.h>										// creat
@@ -51,7 +49,7 @@ static void suffix( const string & arg, const char * args[], int & nargs ) {
 	size_t dot = arg.find_last_of( "." );
 	if ( dot == string::npos ) return;
 	const string * end = suffixes + NumSuffixes;
-	if ( std::find( suffixes, end, arg.substr( dot + 1 ) ) != end ) {
+	if ( find( suffixes, end, arg.substr( dot + 1 ) ) != end ) {
 		args[nargs++] = "-x";
 		args[nargs++] = "c";
 	} // if
@@ -152,13 +150,15 @@ static void Stage1( const int argc, const char * const argv[] ) {
 	int nargs = 1;										// number of arguments in args list; 0 => command name
 
 	#ifdef __DEBUG_H__
-	cerr << "Stage1" << endl;
+	cerr << "#########" << endl << "Stage1 " << string( 100, '#' ) << endl << "#########" << endl;
 	#endif // __DEBUG_H__
 	checkEnv1();										// arguments passed via environment variables
 	#ifdef __DEBUG_H__
+	cerr << string( 100, '*' ) << endl;
 	for ( int i = 1; i < argc; i += 1 ) {
 		cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
 	} // for
+	cerr << string( 100, '*' ) << endl;
 	#endif // __DEBUG_H__
 
 	// process all the arguments
@@ -259,7 +259,7 @@ static void Stage1( const int argc, const char * const argv[] ) {
 			suffix( cpp_in, args, nargs );				// check suffix
 		} else {
 			args[nargs++] = "-x";
-			args[nargs++] = ( *new string( lang.c_str() ) ).c_str();
+			args[nargs++] = ( *new string( lang ) ).c_str();
 		} // if
 		args[nargs++] = cpp_in;
 		if ( o_flag ) {									// location for output
@@ -274,6 +274,7 @@ static void Stage1( const int argc, const char * const argv[] ) {
 			cerr << args[i] << " ";
 		} // for
 		cerr << endl;
+		cerr << string( 100, '*' ) << endl;
 		#endif // __DEBUG_H__
 
 		execvp( args[0], (char * const *)args );		// should not return
@@ -297,7 +298,7 @@ static void Stage1( const int argc, const char * const argv[] ) {
 			suffix( cpp_in, args, nargs );				// check suffix
 		} else {
 			args[nargs++] = "-x";
-			args[nargs++] = ( *new string( lang.c_str() ) ).c_str();
+			args[nargs++] = ( *new string( lang ) ).c_str();
 		} // if
 		args[nargs++] = cpp_in;							// input to cpp
 		args[nargs] = nullptr;							// terminate argument list
@@ -345,13 +346,15 @@ static void Stage2( const int argc, const char * const * argv ) {
 	int ncargs = 1;										// 0 => command name
 
 	#ifdef __DEBUG_H__
-	cerr << "Stage2" << endl;
+	cerr << "#########" << endl << "Stage2 " << string( 100, '#' ) << endl << "#########" << endl;
 	#endif // __DEBUG_H__
 	checkEnv2( cargs, ncargs );							// arguments passed via environment variables
 	#ifdef __DEBUG_H__
+	cerr << string( 100, '*' ) << endl;
 	for ( int i = 1; i < argc; i += 1 ) {
 		cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
 	} // for
+	cerr << string( 100, '*' ) << endl;
 	#endif // __DEBUG_H__
 
 	enum {
@@ -472,7 +475,7 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 		if ( CFA_flag ) {								// run cfa-cpp ?
 			if ( o_file.size() != 0 ) {					// location for output
-				cargs[ncargs++] = ( *new string( o_file.c_str() ) ).c_str();
+				cargs[ncargs++] = ( *new string( o_file ) ).c_str();
 			} // if
 		} else {
 			cargs[ncargs++] = cfa_cpp_out.c_str();
@@ -570,9 +573,7 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 int main( const int argc, const char * const argv[], __attribute__((unused)) const char * const env[] ) {
 	#ifdef __DEBUG_H__
-	for ( int i = 0; env[i] != nullptr; i += 1 ) {
-		cerr << env[i] << endl;
-	} // for
+	cerr << "#########" << endl << "main cc1 " << string( 100, '#' ) << endl << "#########" << endl;
 	#endif // __DEBUG_H__
 
 	signal( SIGINT,  sigTermHandler );
