@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Aug 30 21:48:48 2023
-// Update Count     : 480
+// Last Modified On : Thu Sep 28 21:53:54 2023
+// Update Count     : 484
 //
 
 #include <iostream>
@@ -19,6 +19,7 @@
 #include <climits>										// PATH_MAX
 #include <string>										// STL version
 #include <algorithm>									// find
+using namespace std;
 
 #include <unistd.h>										// execvp
 #include <sys/types.h>
@@ -26,11 +27,6 @@
 
 #include "Common/SemanticError.h"
 #include "config.h"										// configure info
-
-using std::cerr;
-using std::endl;
-using std::string;
-using std::to_string;
 
 //#define __DEBUG_H__
 

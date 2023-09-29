@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 10 21:12:17 2023
-// Update Count     : 682
+// Last Modified On : Thu Sep 28 22:28:45 2023
+// Update Count     : 687
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -539,24 +539,24 @@ static struct Printopts {
 } printopts[] = {
 	{ "ascodegen", codegenp, true, "print AST as codegen rather than AST" },
 	{ "asterr", errorp, true, "print AST on error" },
-	{ "declstats", declstatsp, true, "code property statistics" },
-	{ "parse", yydebug, true, "yacc (parsing) debug information" },
+	{ "declstats", declstatsp, true, "print code property statistics" },
+	{ "parse", yydebug, true, "print yacc (parsing) debug information" },
 	{ "pretty", prettycodegenp, true, "prettyprint for ascodegen flag" },
 	{ "rproto", resolvprotop, true, "resolver-proto instance" },
 	{ "rsteps", resolvep, true, "print resolver steps" },
-	// code dumps
+	// AST dumps
 	{ "ast", astp, true, "print AST after parsing" },
-	{ "exdecl", exdeclp, true, "print AST after translating exception decls" },
+	{ "excpdecl", exdeclp, true, "print AST after translating exception decls" },
 	{ "symevt", symtabp, true, "print AST after symbol table events" },
-	{ "altexpr", expraltp, true, "print alternatives for expressions" },
-	{ "astdecl", validp, true, "print AST after declaration validation pass" },
-	{ "resolver", bresolvep, true, "print AST before resolver step" },
-	{ "astexpr", exprp, true, "print AST after expression analysis" },
+	{ "expralt", expraltp, true, "print AST after expressions alternatives" },
+	{ "valdecl", validp, true, "print AST after declaration validation pass" },
+	{ "bresolver", bresolvep, true, "print AST before resolver step" },
+	{ "expranly", exprp, true, "print AST after expression analysis" },
 	{ "ctordtor", ctorinitp, true, "print AST after ctor/dtor are replaced" },
 	{ "tuple", tuplep, true, "print AST after tuple expansion" },
-	{ "astgen", genericsp, true, "print AST after instantiate generics" },
-	{ "box", bboxp, true, "print AST before box step" },
-	{ "codegen", bcodegenp, true, "print AST before code generation" },
+	{ "instgen", genericsp, true, "print AST after instantiate generics" },
+	{ "bbox", bboxp, true, "print AST before box pass" },
+	{ "bcodegen", bcodegenp, true, "print AST before code generation" },
 };
 enum { printoptsSize = sizeof( printopts ) / sizeof( printopts[0] ) };
 
