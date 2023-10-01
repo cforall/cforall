@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 11 11:21:10 2023
-// Update Count     : 1615
+// Last Modified On : Sat Sep 30 17:31:15 2023
+// Update Count     : 1617
 //
 
 #include <stdio.h>
@@ -52,7 +52,7 @@ extern "C" {
 
 #define TLSMODEL __attribute__(( tls_model("initial-exec") ))
 
-//#define __STATISTICS__
+#define __STATISTICS__
 
 enum {
 	// The default extension heap amount in units of bytes. When the current heap reaches the brk address, the brk
@@ -680,19 +680,19 @@ static int printStatsXML( HeapStatistics & stats, FILE * stream ) with( heapMast
 } // printStatsXML
 
 static HeapStatistics & collectStats( HeapStatistics & stats ) with( heapMaster ) {
-	lock( mgrLock );
+	lock( heapMaster.mgrLock );
 
 	stats += heapMaster.stats;
 	for ( Heap * heap = heapManagersList; heap; heap = heap->nextHeapManager ) {
 		stats += heap->stats;
 	} // for
 
-	unlock( mgrLock );
+	unlock( heapMaster.mgrLock );
 	return stats;
 } // collectStats
 
 static inline void clearStats() {
-	lock( mgrLock );
+	lock( heapMaster.mgrLock );
 
 	// Zero the heap master and all active thread heaps.
 	HeapStatisticsCtor( heapMaster.stats );
@@ -700,7 +700,7 @@ static inline void clearStats() {
 		HeapStatisticsCtor( heap->stats );
 	} // for
 
-	unlock( mgrLock );
+	unlock( heapMaster.mgrLock );
 } // clearStats
 #endif // __STATISTICS__
 
