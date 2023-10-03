@@ -1,0 +1,153 @@
+5 0 42
+2 players in the game
+  POTATO goes off after 5 ticks
+U 0 -> 1 -> 0 -> 1 -> 0 is eliminated
+election
+ -> 1 : umpire 1
+  POTATO goes off after 2 ticks
+U 1 wins the Match!
+
+
+9 players in the game
+  POTATO goes off after 8 ticks
+U 0 -> 5 -> 0 -> 5 -> 4 -> 5 -> 4 -> 3 is eliminated
+  POTATO goes off after 2 ticks
+U 0 -> 5 is eliminated
+  POTATO goes off after 1 tick
+U 0 is eliminated
+election
+ -> 7 election
+ -> 8 election
+ -> 6 election
+ -> 1 election
+ -> 2 election
+ -> 4 : umpire 8
+  POTATO goes off after 8 ticks
+U 8 -> 7 -> 4 -> 2 -> 4 -> 2 -> 4 -> 2 is eliminated
+  POTATO goes off after 3 ticks
+U 8 -> 7 -> 4 is eliminated
+  POTATO goes off after 7 ticks
+U 8 -> 7 -> 1 -> 6 -> 8 -> 6 -> 8 is eliminated
+election
+ -> 6 election
+ -> 1 election
+ -> 7 : umpire 7
+  POTATO goes off after 6 ticks
+U 7 -> 1 -> 6 -> 1 -> 6 -> 7 is eliminated
+election
+ -> 6 election
+ -> 1 : umpire 6
+  POTATO goes off after 3 ticks
+U 6 -> 1 -> 6 is eliminated
+election
+ -> 1 : umpire 1
+  POTATO goes off after 1 tick
+U 1 wins the Match!
+
+
+3 players in the game
+  POTATO goes off after 9 ticks
+U 0 -> 1 -> 0 -> 2 -> 1 -> 0 -> 1 -> 2 -> 0 is eliminated
+election
+ -> 2 election
+ -> 1 : umpire 2
+  POTATO goes off after 9 ticks
+U 2 -> 1 -> 2 -> 1 -> 2 -> 1 -> 2 -> 1 -> 2 is eliminated
+election
+ -> 1 : umpire 1
+  POTATO goes off after 9 ticks
+U 1 wins the Match!
+
+
+8 players in the game
+  POTATO goes off after 5 ticks
+U 0 -> 7 -> 6 -> 7 -> 0 is eliminated
+election
+ -> 7 election
+ -> 6 election
+ -> 1 election
+ -> 2 election
+ -> 3 election
+ -> 4 election
+ -> 5 : umpire 7
+  POTATO goes off after 10 ticks
+U 7 -> 5 -> 4 -> 3 -> 4 -> 5 -> 4 -> 5 -> 4 -> 5 is eliminated
+  POTATO goes off after 3 ticks
+U 7 -> 4 -> 7 is eliminated
+election
+ -> 6 election
+ -> 1 election
+ -> 2 election
+ -> 3 election
+ -> 4 : umpire 6
+  POTATO goes off after 10 ticks
+U 6 -> 4 -> 3 -> 4 -> 3 -> 2 -> 3 -> 2 -> 1 -> 2 is eliminated
+  POTATO goes off after 1 tick
+U 6 is eliminated
+election
+ -> 1 election
+ -> 3 election
+ -> 4 : umpire 4
+  POTATO goes off after 5 ticks
+U 4 -> 1 -> 3 -> 1 -> 4 is eliminated
+election
+ -> 1 election
+ -> 3 : umpire 3
+  POTATO goes off after 7 ticks
+U 3 -> 1 -> 3 -> 1 -> 3 -> 1 -> 3 is eliminated
+election
+ -> 1 : umpire 1
+  POTATO goes off after 5 ticks
+U 1 wins the Match!
+
+
+10 players in the game
+  POTATO goes off after 7 ticks
+U 0 -> 5 -> 4 -> 5 -> 4 -> 5 -> 0 is eliminated
+election
+ -> 7 election
+ -> 8 election
+ -> 9 election
+ -> 6 election
+ -> 1 election
+ -> 2 election
+ -> 3 election
+ -> 4 election
+ -> 5 : umpire 9
+  POTATO goes off after 5 ticks
+U 9 -> 6 -> 1 -> 2 -> 3 is eliminated
+  POTATO goes off after 3 ticks
+U 9 -> 6 -> 9 is eliminated
+election
+ -> 6 election
+ -> 1 election
+ -> 2 election
+ -> 4 election
+ -> 5 election
+ -> 7 election
+ -> 8 : umpire 8
+  POTATO goes off after 2 ticks
+U 8 -> 7 is eliminated
+  POTATO goes off after 9 ticks
+U 8 -> 6 -> 8 -> 5 -> 4 -> 5 -> 4 -> 2 -> 1 is eliminated
+  POTATO goes off after 1 tick
+U 8 is eliminated
+election
+ -> 6 election
+ -> 2 election
+ -> 4 election
+ -> 5 : umpire 6
+  POTATO goes off after 3 ticks
+U 6 -> 2 -> 6 is eliminated
+election
+ -> 2 election
+ -> 4 election
+ -> 5 : umpire 5
+  POTATO goes off after 2 ticks
+U 5 -> 2 is eliminated
+  POTATO goes off after 5 ticks
+U 5 -> 4 -> 5 -> 4 -> 5 is eliminated
+election
+ -> 4 : umpire 4
+  POTATO goes off after 1 tick
+U 4 wins the Match!

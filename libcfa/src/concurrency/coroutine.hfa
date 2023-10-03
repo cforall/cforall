@@ -223,16 +223,19 @@ static inline void resume( coroutine$ * dst ) __attribute__((nonnull (1))) {
 }
 
 // non local ehm and coroutine utility routines
+void enable_ehm();
+void disable_ehm();
 bool poll( coroutine$ * cor );
 bool poll();
+bool checked_poll();
 coroutine$ * resumer();
 coroutine$ * first_resumer();
 
 forall(T & | is_coroutine(T)) {
-    void enable_ehm( T & cor );
-    void disable_ehm( T & cor );
+    void enable_ehm( T & cor );         // enable checking non-local exceptions for cor via checked_poll
+    void disable_ehm( T & cor );        // disable checking non-local exceptions for cor via checked_poll
     bool poll( T & cor );
-    bool checked_poll( T & cor );
+    bool checked_poll( T & cor );       // check for non-local exceptions while respecting enable/disable
     coroutine$ * resumer( T & cor );
     coroutine$ * first_resumer( T & cor );
 }

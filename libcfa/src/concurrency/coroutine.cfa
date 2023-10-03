@@ -342,6 +342,9 @@ bool poll( coroutine$ * cor ) libcfa_public {
 }
 
 bool poll() libcfa_public { return poll( active_coroutine() ); }
+void enable_ehm() libcfa_public { active_coroutine()->ehm_state.ehm_enabled = true; }
+void disable_ehm() libcfa_public { active_coroutine()->ehm_state.ehm_enabled = false; }
+bool checked_poll() libcfa_public { return active_coroutine()->ehm_state.ehm_enabled ? poll( active_coroutine() ) : false; }
 coroutine$ * resumer() libcfa_public { return active_coroutine()->last; }
 coroutine$ * first_resumer() libcfa_public { return active_coroutine()->starter; }
 

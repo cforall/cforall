@@ -1,0 +1,200 @@
+#include <fstream.hfa>									// sin/sout
+#include <stdlib.hfa>									// convert
+#include <string.h>
+#include <coroutine.hfa>
+
+struct Potato {
+        PRNG & prng;
+        unsigned int deadline;                                                          // when timer goes off
+        unsigned int timer;                                                                     // up counter to deadline
+}; // Potato
+
+void reset( Potato & potato, unsigned int maxTicks = 10 );
+void ?{}( Potato & potato, PRNG & prng, unsigned int maxTicks = 10 );
+
+void ?{}( Potato & potato, PRNG & prng, unsigned int maxTicks ) with(potato) {
+	&potato.prng = &prng;
+	reset( potato, maxTicks );
+} // Potato
+
+coroutine Player {
+        PRNG & prng;
+        int id;                                                                                         // player identity
+        Potato & potato;                                                                        // potato being tossed
+        Player * partner[2];                                                            // left and right player
+}; // Player
+
+void ?{}( Player & player, PRNG & prng, unsigned int id, Potato & potato ) {
+	&player.prng = &prng;
+	player.id = id;
+	&player.potato = &potato;
+} // Player
+
+Player & umpire;
+
+ExceptionDecl( Explode );
+ExceptionDecl( Terminate, Player * victim; );
+ExceptionDecl( Election );
+ExceptionDecl( cmd_error ); // convert(...) throws out_of_range or invalid_argument
+
+void reset( Potato & potato, unsigned int maxTicks ) with(potato) {
+  if ( maxTicks < 2 ) abort( "Hot Potato initialized with less than 2 ticks" ); // optional
+	deadline = prng( prng, 1, maxTicks );
+	timer = 0;
+	sout | "  POTATO goes off after " | deadline | " tick" | nosep | (deadline > 1 ? "s" : "");
+} // reset
+
+void countdown( Potato & potato ) with(potato) {
+	timer += 1;
+	if ( timer == deadline ) throwResume ExceptionInst( Explode );
+} // countdown
+
+static unsigned int rightOf( unsigned int me, unsigned int total ) {
+	return ( me + 1 ) % total;
+} // rightOf
+
+static unsigned int leftOf( unsigned int me, unsigned int total ) {
+	return ( me + total - 1) % total;
+} // leftOf
+
+enum { LEFT = 0, RIGHT = 1 };
+
+static void vote( Player & player, Election & election ) {					// cause partner to vote
+    resumeAt( player, election );
+	resume( player );
+} // vote
+
+void init( Player & player, Player & lp, Player & rp ) with(player) { // supply partners
+	partner[LEFT] = &lp;
+	partner[RIGHT] = &rp;
+	resume( player );									// establish main as starter for termination
+} // init
+
+int getId( Player & player ) {							// player id
+	return player.id;
+} // getId
+
+void main( Player & player ) with(player) {
+    suspend;									// return immediately after establishing starter
+	try {
+        for ( ;; ) {
+            poll();                                     // check for non-local exceptions before proceeding
+
+            if ( partner[LEFT] == &player ) {			// stop when only one player
+                sout | id | " wins the Match!";
+                return;
+            } // exit
+            
+            countdown( potato );				// player is eliminated if countdown() returned true
+            
+            size_t side = prng( prng, 2 );
+            sout | id | " -> " | nonl;
+            resume( *partner[ side ] );			// random toss left/right
+        } // for
+	} catchResume( Terminate * v ) {
+		v->victim->partner[LEFT]->partner[RIGHT] = v->victim->partner[RIGHT]; // unlink node
+		v->victim->partner[RIGHT]->partner[LEFT] = v->victim->partner[LEFT];
+        delete( v->victim );
+		reset( potato );
+		sout | "U " | nonl;								// start new game
+		flush( sout );
+	} catchResume( Election * election ) {
+		sout | "election";
+		sout | " -> " | id | nonl;
+		if ( id > getId( umpire ) ) &umpire = &player; // set umpire to highest id so far
+		vote( *partner[RIGHT], *election );
+	} catchResume ( Explode * ) {
+        sout | id | " is eliminated";
+        if ( &player == &umpire ) {
+            id = -1;					// remove from election
+            vote( *partner[RIGHT], ExceptionInst( Election ) );		// start election
+            try { poll(); } catchResume( Election * election ) {} // handle end of election
+            sout | " : umpire " | getId( umpire );
+        } // if
+        resumeAt( umpire, ExceptionInst( Terminate, &player ) );
+        resume( umpire );                   // resume umpire to terminate this player
+        assert( false );					// no return
+    } // try
+} // main
+
+
+int main( int argc, char * argv[] ) {
+	enum {
+		MinNoPlayers = 2,								// minimum players in the game
+		MaxNoPlayers = 10,								// maximum players in the game
+		DefaultGames = 5,								// default games to play
+	};
+	intmax_t numGames = DefaultGames;					// games to play
+	intmax_t numPlayers = 0;							// players for a particular game
+	intmax_t seed = 42;									// random-number seed
+	bool playersSet = false;
+	char * nosummary = getenv( "NOSUMMARY" );			// print extra output
+
+	try {
+		choose ( argc ) {
+		  case 4:
+			if ( strcmp( argv[3], "d" ) != 0 ) {		// default ?
+				seed = convert( argv[3] ); if ( seed < 1 ) throw ExceptionInst( cmd_error ); // invalid ?
+			} // if
+			fallthrough;
+		  case 3:
+			if ( strcmp( argv[2], "d" ) != 0 ) {		// default ?
+				numPlayers = convert( argv[2] ); if ( numPlayers < 2 ) throw ExceptionInst( cmd_error ); // invalid ?
+				playersSet = true;
+			} // if
+			fallthrough;
+		  case 2:
+			if ( strcmp( argv[1], "d" ) != 0 ) {		// default ?
+				numGames = convert( argv[1] ); if ( numGames < 0 ) throw ExceptionInst( cmd_error ); // invalid ?
+			} // if
+			fallthrough;
+		  case 1: ;										// defaults
+		  default:										// too many arguments
+			throw ExceptionInst( cmd_error );
+		} // choose
+	} catch( exception_t * ) {							// catch any
+		exit | "Usage: " | argv[0]
+			 | " [ games (>=0) | 'd' (default " | DefaultGames
+			 | ") [ players (>=2) | 'd' (random " | MinNoPlayers | "-" | MaxNoPlayers
+			 | ") [ seed (>0) | 'd' (random) ] ] ]";
+	} // try
+	sout | numGames | numPlayers | seed;
+
+	PRNG mprng, hprng, pprng;
+	if ( seed != 0 ) {									// specified on command line ?
+		set_seed( mprng, seed );  set_seed( hprng, seed );  set_seed( pprng, seed );
+	} // if
+
+	for ( game; 1 ~= numGames ) {
+		if ( ! playersSet ) numPlayers = prng( mprng, MinNoPlayers, MaxNoPlayers ); 
+		sout | numPlayers | " players in the game";
+		{
+			Potato potato{ hprng };						// hot potato to be tossed
+			Player * players[numPlayers];
+
+			for ( unsigned int i = 0; i < (unsigned int)numPlayers; i += 1 ) { // start the players
+				players[i] = malloc();
+				?{}( *players[i], pprng, i, potato );
+			} // for
+		
+			// Do not swap player[0] with itself.
+			unsigned int rposn = prng( mprng, 1, numPlayers - 1 ); // swap random position with 0
+			swap( players[0], players[rposn] );
+
+			// Tell each player its partner.
+			for ( unsigned int i = 0; i < (unsigned int)numPlayers; i += 1 ) {
+				init( *players[i], *players[leftOf(i, numPlayers)], *players[rightOf(i, numPlayers)] );
+			} // for
+
+			&umpire = players[rposn];					// designate umpire and start game
+			sout | "U " | nonl;
+			resume( *players[rposn] );
+			delete( &umpire );
+		}
+		if ( game < (unsigned int)numGames ) sout | nl | nl; // whitespace between games
+	} // for
+} // main
+
+// Local Variables: //
+// compile-command: "make hotpotato" //
+// End: //

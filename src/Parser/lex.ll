@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Fri Jun  9 10:04:00 2023
- * Update Count     : 770
+ * Last Modified On : Mon Oct  2 17:15:11 2023
+ * Update Count     : 772
  */
 
 %option yylineno
@@ -216,7 +216,9 @@ op_binary_over {op_unary_binary}|{op_binary_only}
 ({h_white}|{v_tab}|{c_return}|{form_feed})*"\n" { NEWLINE_RETURN(); }
 
 				/* keywords */
+alignas			{ KEYWORD_RETURN(ALIGNAS); }			// CFA
 _Alignas		{ KEYWORD_RETURN(ALIGNAS); }			// C11
+alignof			{ KEYWORD_RETURN(ALIGNOF); }			// CFA
 _Alignof		{ KEYWORD_RETURN(ALIGNOF); }			// C11
 __alignof		{ KEYWORD_RETURN(ALIGNOF); }			// GCC
 __alignof__		{ KEYWORD_RETURN(ALIGNOF); }			// GCC
@@ -318,13 +320,14 @@ __signed__		{ KEYWORD_RETURN(SIGNED); }				// GCC
 sizeof			{ KEYWORD_RETURN(SIZEOF); }
 static			{ KEYWORD_RETURN(STATIC); }
 _Static_assert	{ KEYWORD_RETURN(STATICASSERT); }		// C11
-_static_assert	{ KEYWORD_RETURN(STATICASSERT); }		// C23
+static_assert	{ KEYWORD_RETURN(STATICASSERT); }		// C23
 struct			{ KEYWORD_RETURN(STRUCT); }
 suspend			{ KEYWORD_RETURN(SUSPEND); }			// CFA
 switch			{ KEYWORD_RETURN(SWITCH); }
 thread			{ KEYWORD_RETURN(THREAD); }				// C11
 __thread		{ KEYWORD_RETURN(THREADLOCALGCC); }		// GCC
 _Thread_local	{ KEYWORD_RETURN(THREADLOCALC11); }		// C11
+thread_local	{ KEYWORD_RETURN(THREADLOCALC11); }		// C23
 throw			{ KEYWORD_RETURN(THROW); }				// CFA
 throwResume		{ KEYWORD_RETURN(THROWRESUME); }		// CFA
 timeout			{ QKEYWORD_RETURN(TIMEOUT); }			// CFA
