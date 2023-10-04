@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  4 18:28:12 2023
-// Update Count     : 6393
+// Last Modified On : Tue Oct  3 17:14:12 2023
+// Update Count     : 6396
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -349,6 +349,7 @@ if ( N ) {																		\
 %token ATTRIBUTE EXTENSION								// GCC
 %token IF ELSE SWITCH CASE DEFAULT DO WHILE FOR BREAK CONTINUE GOTO RETURN
 %token CHOOSE FALLTHRU FALLTHROUGH WITH WHEN WAITFOR WAITUNTIL // CFA
+%token CORUN COFOR
 %token DISABLE ENABLE TRY THROW THROWRESUME AT			// CFA
 %token ASM												// C99, extension ISO/IEC 9899:1999 Section J.5.10(1)
 %token ALIGNAS ALIGNOF GENERIC STATICASSERT				// C11
@@ -421,6 +422,7 @@ if ( N ) {																		\
 %type<stmt> expression_statement		asm_statement
 %type<stmt> with_statement
 %type<expr> with_clause_opt
+%type<stmt> corun_statement				cofor_statement
 %type<stmt> exception_statement
 %type<clause> handler_clause			finally_clause
 %type<except_kind> handler_key
@@ -1139,6 +1141,8 @@ statement:
 	| mutex_statement
 	| waitfor_statement
 	| waituntil_statement
+	| corun_statement
+	| cofor_statement
 	| exception_statement
 	| enable_disable_statement
 		{ SemanticError( yylloc, "enable/disable statement is currently unimplemented." ); $$ = nullptr; }
@@ -1712,6 +1716,16 @@ wor_waituntil_clause:
 waituntil_statement:
 	wor_waituntil_clause								%prec THEN
 		{ $$ = new StatementNode( build_waituntil_stmt( yylloc, $1 ) );	}
+	;
+
+corun_statement:
+	CORUN statement
+		{ SemanticError( yylloc, "corun statement is currently unimplemented." ); $$ = nullptr; }
+	;
+
+cofor_statement:
+	COFOR '(' for_control_expression_list ')' statement
+		{ SemanticError( yylloc, "cofor statement is currently unimplemented." ); $$ = nullptr; }
 	;
 
 exception_statement:

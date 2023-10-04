@@ -4,14 +4,14 @@
 // cofor ( uC++ COFOR )
 typedef void (*__cofor_body_t)( ssize_t );
 
-void cofor( ssize_t low, ssize_t high, __cofor_body_t loop_body );
+void __Cofor__( ssize_t low, ssize_t high, __cofor_body_t loop_body );
 
 #define COFOR( lidname, low, high, loopbody ) \
 	{ \
 		void __CFA_loopLambda__( ssize_t lidname ) { \
 			loopbody \
 		} \
-		cofor( low, high, __CFA_loopLambda__ ); \
+		__Cofor__( low, high, __CFA_loopLambda__ ); \
 	}
 
 //////////////////////////////////////////////////////////////////////////////////////////

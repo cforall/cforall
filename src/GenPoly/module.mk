@@ -21,6 +21,7 @@ SRC_GENPOLY = \
 	GenPoly/Lvalue.h
 
 SRC += $(SRC_GENPOLY) \
+	GenPoly/BoxNew.cpp \
 	GenPoly/Box.cc \
 	GenPoly/Box.h \
 	GenPoly/ErasableScopedMap.h \

@@ -19,7 +19,7 @@ void main( co_runner & this ) with( this ) {
 		loop_body(i);
 }
 
-void cofor( ssize_t low, ssize_t high, __cofor_body_t loop_body ) libcfa_public {
+void __Cofor__( ssize_t low, ssize_t high, __cofor_body_t loop_body ) libcfa_public {
 	ssize_t range = high - low;
   if ( range <= 0 ) return;
 	ssize_t nprocs = get_proc_count( *active_cluster() );

@@ -334,12 +334,10 @@ void FixDtypeStatic::previsit( ast::AddressExpr const * ) {
 
 ast::Expr const * FixDtypeStatic::postvisit( ast::MemberExpr const * expr ) {
 	ast::ptr<ast::Type> const & type = expr->aggregate->result;
-	if ( !isGenericType( type ) ) {
-		return expr;
-	} else if ( auto inst = type.as<ast::StructInstType>() ) {
-		return fixMemberExpr( inst, expr );
+	if ( auto inst = type.as<ast::StructInstType>() ) {
+		if ( !inst->params.empty() ) return fixMemberExpr( inst, expr );
 	} else if ( auto inst = type.as<ast::UnionInstType>() ) {
-		return fixMemberExpr( inst, expr );
+		if ( !inst->params.empty() ) return fixMemberExpr( inst, expr );
 	}
 	return expr;
 }
@@ -450,8 +448,11 @@ struct GenericInstantiator final :
 	void previsit( ast::MemberExpr const * expr );
 	ast::Expr const * postvisit( ast::MemberExpr const * expr );
 	ast::Expr const * postvisit( ast::Expr const * expr );
-	void previsit( ast::ParseNode const * node );
+	ast::Designation const * postvisit( ast::Designation const * );
 
+	void previsit( ast::ParseNode const * node ) {
+		GuardValue( location ) = &node->location;
+	}
 	void previsit( ast::FunctionType const * ) {
 		GuardValue( inFunctionType ) = true;
 	}
@@ -627,8 +628,31 @@ ast::Expr const * GenericInstantiator::postvisit( ast::Expr const * expr ) {
 	return expr;
 }
 
-void GenericInstantiator::previsit( ast::ParseNode const * node ) {
-	GuardValue( location ) = &node->location;
+// This attempts to figure out what the final name of the field will be.
+// Pretty printing can cause this to become incorrect.
+std::string getPrintName( ast::DeclWithType const * decl ) {
+	return ( decl->linkage.is_mangled )
+		? decl->scopedMangleName() : decl->name;
+}
+
+ast::Designation const * GenericInstantiator::postvisit(
+		ast::Designation const * designation ) {
+	// Disconnect designator names from their fields.
+	// It is now incorrect to point at the generic definition where the used
+	// type now is replaced with a concrete instance. Ideally, new variable
+	// expressions would point at fields in the concrete instances, but that
+	// is work and that information should not be needed this late in
+	// compilation.
+
+	// Modify all designations, even if not needed.
+	auto mutNode = mutate( designation );
+	for ( ast::ptr<ast::Expr> & designator : mutNode->designators ) {
+		if ( auto var = designator.as<ast::VariableExpr>() ) {
+			designator = new ast::NameExpr(
+				var->location, getPrintName( var->var ) );
+		}
+	}
+	return mutNode;
 }
 
 ast::StructDecl const * GenericInstantiator::lookup(

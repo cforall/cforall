@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Box.h -- 
+// Box.h -- Implement polymorphic function calls and types.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 22 09:23:52 2017
-// Update Count     : 6
+// Last Modified By : Andrew Beach
+// Last Modified On : Thr Oct  6 13:37:00 2022
+// Update Count     : 7
 //
 
 #pragma once
@@ -18,10 +18,14 @@
 #include <list>  // for list
 
 class Declaration;
+namespace ast {
+	class TranslationUnit;
+}
 
 namespace GenPoly {
 	/// boxes polymorphic function calls
 	void box( std::list< Declaration* >& translationUnit );
+void box( ast::TranslationUnit & translationUnit );
 } // namespace GenPoly
 
 // Local Variables: //

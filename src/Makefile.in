@@ -273,7 +273,8 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	ControlStruct/MLEMutator.$(OBJEXT) \
 	ControlStruct/MultiLevelExit.$(OBJEXT) \
 	ControlStruct/Mutate.$(OBJEXT) $(am__objects_4) \
-	GenPoly/Box.$(OBJEXT) GenPoly/FindFunction.$(OBJEXT) \
+	GenPoly/BoxNew.$(OBJEXT) GenPoly/Box.$(OBJEXT) \
+	GenPoly/FindFunction.$(OBJEXT) \
 	GenPoly/InstantiateGenericNew.$(OBJEXT) \
 	GenPoly/InstantiateGeneric.$(OBJEXT) \
 	GenPoly/LvalueNew.$(OBJEXT) GenPoly/Lvalue.$(OBJEXT) \
@@ -389,7 +390,8 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	ControlStruct/$(DEPDIR)/MLEMutator.Po \
 	ControlStruct/$(DEPDIR)/MultiLevelExit.Po \
 	ControlStruct/$(DEPDIR)/Mutate.Po GenPoly/$(DEPDIR)/Box.Po \
-	GenPoly/$(DEPDIR)/FindFunction.Po GenPoly/$(DEPDIR)/GenPoly.Po \
+	GenPoly/$(DEPDIR)/BoxNew.Po GenPoly/$(DEPDIR)/FindFunction.Po \
+	GenPoly/$(DEPDIR)/GenPoly.Po \
 	GenPoly/$(DEPDIR)/InstantiateGeneric.Po \
 	GenPoly/$(DEPDIR)/InstantiateGenericNew.Po \
 	GenPoly/$(DEPDIR)/Lvalue.Po GenPoly/$(DEPDIR)/Lvalue2.Po \
@@ -773,8 +775,8 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	ControlStruct/MLEMutator.cc ControlStruct/MLEMutator.h \
 	ControlStruct/MultiLevelExit.cpp \
 	ControlStruct/MultiLevelExit.hpp ControlStruct/Mutate.cc \
-	ControlStruct/Mutate.h $(SRC_GENPOLY) GenPoly/Box.cc \
-	GenPoly/Box.h GenPoly/ErasableScopedMap.h \
+	ControlStruct/Mutate.h $(SRC_GENPOLY) GenPoly/BoxNew.cpp \
+	GenPoly/Box.cc GenPoly/Box.h GenPoly/ErasableScopedMap.h \
 	GenPoly/FindFunction.cc GenPoly/FindFunction.h \
 	GenPoly/InstantiateGenericNew.cpp \
 	GenPoly/InstantiateGeneric.cc GenPoly/InstantiateGeneric.h \
@@ -1560,6 +1562,8 @@ ControlStruct/MultiLevelExit.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/Mutate.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
+GenPoly/BoxNew.$(OBJEXT): GenPoly/$(am__dirstamp) \
+	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/Box.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/FindFunction.$(OBJEXT): GenPoly/$(am__dirstamp) \
@@ -1776,6 +1780,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/MultiLevelExit.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/Mutate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Box.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/BoxNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/FindFunction.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/GenPoly.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/InstantiateGeneric.Po@am__quote@ # am--include-marker
@@ -2210,6 +2215,7 @@ distclean: distclean-am
 	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
 	-rm -f ControlStruct/$(DEPDIR)/Mutate.Po
 	-rm -f GenPoly/$(DEPDIR)/Box.Po
+	-rm -f GenPoly/$(DEPDIR)/BoxNew.Po
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
 	-rm -f GenPoly/$(DEPDIR)/GenPoly.Po
 	-rm -f GenPoly/$(DEPDIR)/InstantiateGeneric.Po
@@ -2452,6 +2458,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
 	-rm -f ControlStruct/$(DEPDIR)/Mutate.Po
 	-rm -f GenPoly/$(DEPDIR)/Box.Po
+	-rm -f GenPoly/$(DEPDIR)/BoxNew.Po
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
 	-rm -f GenPoly/$(DEPDIR)/GenPoly.Po
 	-rm -f GenPoly/$(DEPDIR)/InstantiateGeneric.Po

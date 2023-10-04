@@ -418,11 +418,10 @@ int main( int argc, char * argv[] ) {
 		DUMP( genericsp, std::move( transUnit ) );
 
 		PASS( "Convert L-Value", GenPoly::convertLvalue, transUnit );
+		DUMP( bboxp, std::move( transUnit ) );
+		PASS( "Box", GenPoly::box, transUnit );
 
 		translationUnit = convert( std::move( transUnit ) );
-
-		DUMP( bboxp, translationUnit );
-		PASS( "Box", GenPoly::box, translationUnit );
 
 		PASS( "Link-Once", CodeGen::translateLinkOnce, translationUnit );
 
