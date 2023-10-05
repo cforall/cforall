@@ -76,7 +76,6 @@ struct LayoutFunctionBuilder final :
 	void previsit( ast::UnionDecl const * decl );
 };
 
-// Formally takeOtypeOnly
 /// Get all sized type declarations; those that affect a layout function.
 ast::vector<ast::TypeDecl> takeSizedParams(
 		ast::vector<ast::TypeDecl> const & decls ) {
@@ -509,11 +508,6 @@ ast::Type const * replaceWithConcrete(
 std::string makePolyMonoSuffix(
 		ast::FunctionType const * function,
 		TypeVarMap const & typeVars ) {
-	// TODO
-	// NOTE: This function previously used isPolyObj, which failed to produce
-	// the correct thing in some situations. It's not clear to [Rob Schluntz]
-	// why this wasn't working.
-
 	// If the return type or a parameter type involved polymorphic types,
 	// then the adapter will need to take those polymorphic types as pointers.
 	// Therefore, there can be two different functions with the same mangled
@@ -586,7 +580,6 @@ ast::FunctionDecl const * CallAdapter::previsit( ast::FunctionDecl const * decl 
 	retval = nullptr;
 	ast::FunctionType const * type = decl->type;
 	if ( isDynRet( type ) && decl->linkage != ast::Linkage::C ) {
-		//retval = type->returns.front();
 		retval = decl->returns.front();
 
 		// Give names to unnamed return values.
@@ -747,11 +740,6 @@ bool isPolyDeref( ast::UntypedExpr const * expr,
 
 ast::Expr const * CallAdapter::postvisit( ast::UntypedExpr const * expr ) {
 	if ( isPolyDeref( expr, scopeTypeVars, typeSubs ) ) {
-		// TODO Pretty sure this is just a memory management change.
-		// Also, I don't understand what this is doing.
-		//ast::Expr const * ret = expr->args.front();
-		//expr->args.clear();
-		//return ret;
 		return expr->args.front();
 	}
 	return expr;
@@ -1062,10 +1050,6 @@ void CallAdapter::boxParam( ast::ptr<ast::Expr> & arg,
 		// Use type computed in unification to declare boxed variables.
 		ast::ptr<ast::Type> newType = ast::deepCopy( param );
 		if ( typeSubs ) typeSubs->apply( newType );
-		// TODO: Is this right? (Why wouldn't it be?)
-		// I think this is to make sure we can write to the temporary.
-		//newType.get_and_mutate()->qt = ast::CV::Qualifiers();
-		//reset_qualifiers( newType );
 		ast::ObjectDecl * newObj = makeTemporary( location, newType );
 		auto assign = ast::UntypedExpr::createCall( location, "?=?", {
 			new ast::VariableExpr( location, newObj ),
@@ -1244,17 +1228,14 @@ ast::FunctionDecl * CallAdapter::makeAdapter(
 				return new ast::ObjectDecl( location, "_adaptee", param );
 			}
 			return new ast::ObjectDecl( location, pNamer.newName(), param );
-		} ), // params
+		} ),
 		map_range<ast::vector<ast::DeclWithType>>( adapterType->returns,
 				[&rNamer, &location]( ast::ptr<ast::Type> const & retval ) {
 			return new ast::ObjectDecl( location, rNamer.newName(), retval );
-		} ), // returns
+		} ),
 		nullptr, // stmts
-		ast::Storage::Classes(), // storage
-		ast::Linkage::C // linkage
-		// attrs
-		// fs
-		// isVarArgs
+		{}, // storage
+		ast::Linkage::C
 	);
 
 	ast::DeclWithType * adapteeDecl =
@@ -1313,15 +1294,6 @@ ast::FunctionDecl * CallAdapter::makeAdapter(
 		bodyStmt = new ast::ExprStmt( location, adapteeApp );
 	// Returns a polymorphic type.
 	} else if ( isDynType( adaptee->returns.front(), typeVars ) ) {
-		if ( "" == (*paramDecl)->name ) {
-			// TODO: Is it easier to make sure it has a name in the first
-			// place? - I believe this is done, however, I could remove the
-			// condition and just rename for clarity.
-			assertf( false, "Wasn't expecting to get here." );
-			auto mutParam = paramDecl->get_and_mutate();
-			mutParam->name = "_ret";
-			mutParam->linkage = ast::Linkage::C;
-		}
 		ast::UntypedExpr * assign = new ast::UntypedExpr( location,
 			new ast::NameExpr( location, "?=?" ) );
 		ast::UntypedExpr * deref = ast::UntypedExpr::createDeref( location,
@@ -1545,7 +1517,7 @@ ast::ObjectDecl * CallAdapter::makeTemporary(
 }
 
 // --------------------------------------------------------------------------
-/// Creates the adapter functions. TODO
+/// Modifies declarations to accept implicit parameters.
 /// * Move polymorphic returns in function types to pointer-type parameters.
 /// * Adds type size and assertion parameters to parameter lists.
 struct DeclAdapter final :
@@ -1558,9 +1530,8 @@ struct DeclAdapter final :
 	void previsit( ast::TraitDecl const * decl );
 	void previsit( ast::TypeDecl const * decl );
 	void previsit( ast::PointerType const * type );
-	void previsit( ast::FunctionType const * type );
 	ast::FunctionDecl const * previsit( ast::FunctionDecl const * decl );
-	ast::DeclWithType const * postvisit( ast::FunctionDecl const * decl );
+	ast::FunctionDecl const * postvisit( ast::FunctionDecl const * decl );
 	void previsit( ast::CompoundStmt const * stmt );
 private:
 	ast::FunctionDecl * addAdapters( ast::FunctionDecl * decl );
@@ -1615,10 +1586,20 @@ void DeclAdapter::previsit( ast::PointerType const * type ) {
 	makeTypeVarMap( type, scopeTypeVars );
 }
 
-// TODO: I think this code is redundent.
-void DeclAdapter::previsit( ast::FunctionType const * type ) {
-	GuardScope( scopeTypeVars );
-	makeTypeVarMap( type, scopeTypeVars );
+// size/align/offset parameters may not be used, so add the unused attribute.
+ast::ObjectDecl * makeObj(
+		CodeLocation const & location, std::string const & name ) {
+	return new ast::ObjectDecl( location, name,
+		makeSizeAlignType(),
+		nullptr, ast::Storage::Classes(), ast::Linkage::C, nullptr,
+		{ new ast::Attribute( "unused" ) } );
+}
+
+ast::ObjectDecl * makePtr(
+		CodeLocation const & location, std::string const & name ) {
+	return new ast::ObjectDecl( location, name,
+		new ast::PointerType( makeSizeAlignType() ),
+		nullptr, ast::Storage::Classes(), ast::Linkage::C, nullptr );
 }
 
 ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl ) {
@@ -1638,36 +1619,20 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 	}
 
 	// Add size/align and assertions for type parameters to parameter list.
-	std::vector<ast::ptr<ast::DeclWithType>>::iterator last = mutDecl->params.begin();
-	std::vector<ast::ptr<ast::DeclWithType>> inferredParams;
-	// size/align/offset parameters may not be used in body, pass along with unused attribute.
-	// TODO: These should be created with proper location and name.
-	// TODO: makeSizeAlign[Out]Type are the same as these types, but they may
-	// be logically different.
-	ast::ObjectDecl newObj( mutDecl->location, "",
-		new ast::BasicType( ast::BasicType::LongUnsignedInt ),
-		nullptr, ast::Storage::Classes(), ast::Linkage::C, nullptr,
-		{ new ast::Attribute( "unused" ) } );
-	ast::ObjectDecl newPtr( mutDecl->location, "",
-		new ast::PointerType( new ast::BasicType( ast::BasicType::LongUnsignedInt ) ),
-		nullptr, ast::Storage::Classes(), ast::Linkage::C, nullptr );
+	ast::vector<ast::DeclWithType>::iterator last = mutDecl->params.begin();
+	ast::vector<ast::DeclWithType> inferredParams;
 	for ( ast::ptr<ast::TypeDecl> & typeParam : mutDecl->type_params ) {
 		auto mutParam = mutate( typeParam.get() );
 		// Add all size and alignment parameters to parameter list.
 		if ( mutParam->isComplete() ) {
-			//ast::TypeInstType paramType( typeParam->name, typeParam );
 			ast::TypeInstType paramType( mutParam );
 			std::string paramName = Mangle::mangleType( &paramType );
 
-			ast::ObjectDecl * sizeParam = ast::deepCopy( &newObj );
-			sizeParam->location = typeParam->location;
-			sizeParam->name = sizeofName( paramName );
+			auto sizeParam = makeObj( typeParam->location, sizeofName( paramName ) );
 			last = mutDecl->params.insert( last, sizeParam );
 			++last;
 
-			ast::ObjectDecl * alignParam = ast::deepCopy( &newObj );
-			alignParam->location = typeParam->location;
-			alignParam->name = alignofName( paramName );
+			auto alignParam = makeObj( typeParam->location, alignofName( paramName ) );
 			last = mutDecl->params.insert( last, alignParam );
 			++last;
 		}
@@ -1695,7 +1660,7 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 
 	// Add size/align for generic parameter types to parameter list.
 	std::set<std::string> seenTypes;
-	std::vector<ast::ptr<ast::DeclWithType>> otypeParams;
+	ast::vector<ast::DeclWithType> otypeParams;
 	for ( ast::ptr<ast::DeclWithType> & funcParam : mutDecl->params ) {
 		ast::Type const * polyType = isPolyType( funcParam->get_type(), scopeTypeVars );
 		if ( !polyType || dynamic_cast<ast::TypeInstType const *>( polyType ) ) {
@@ -1704,14 +1669,10 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 		std::string typeName = Mangle::mangleType( polyType );
 		if ( seenTypes.count( typeName ) ) continue;
 
-		ast::ObjectDecl * sizeParam = ast::deepCopy( &newObj );
-		sizeParam->location = funcParam->location;
-		sizeParam->name = sizeofName( typeName );
+		auto sizeParam = makeObj( funcParam->location, sizeofName( typeName ) );
 		otypeParams.emplace_back( sizeParam );
 
-		ast::ObjectDecl * alignParam = ast::deepCopy( &newObj );
-		alignParam->location = funcParam->location;
-		alignParam->name = alignofName( typeName );
+		auto alignParam = makeObj( funcParam->location, alignofName( typeName ) );
 		otypeParams.emplace_back( alignParam );
 
 		if ( auto * polyStruct =
@@ -1719,9 +1680,7 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 			// Zero-length arrays are illegal in C, so empty structs have no
 			// offset array.
 			if ( !polyStruct->base->members.empty() ) {
-				ast::ObjectDecl * offsetParam = ast::deepCopy( &newPtr );
-				offsetParam->location = funcParam->location;
-				offsetParam->name = offsetofName( typeName );
+				auto offsetParam = makePtr( funcParam->location, offsetofName( typeName ) );
 				otypeParams.emplace_back( offsetParam );
 			}
 		}
@@ -1738,7 +1697,7 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 	return mutDecl;
 }
 
-ast::DeclWithType const * DeclAdapter::postvisit(
+ast::FunctionDecl const * DeclAdapter::postvisit(
 		ast::FunctionDecl const * decl ) {
 	ast::FunctionDecl * mutDecl = mutate( decl );
 	if ( !mutDecl->returns.empty() && mutDecl->stmts
@@ -1787,7 +1746,7 @@ void DeclAdapter::previsit( ast::CompoundStmt const * ) {
 
 // It actually does mutate in-place, but does the return for consistency.
 ast::FunctionDecl * DeclAdapter::addAdapters( ast::FunctionDecl * mutDecl ) {
-	std::vector<ast::ptr<ast::FunctionType>> functions;
+	ast::vector<ast::FunctionType> functions;
 	for ( ast::ptr<ast::DeclWithType> & arg : mutDecl->params ) {
 		ast::Type const * type = arg->get_type();
 		type = findAndReplaceFunction( type, functions, scopeTypeVars, needsAdapter );
@@ -1925,8 +1884,8 @@ private:
 	ScopedSet<std::string> knownOffsets;
 	/// Namer for VLA (variable length array) buffers.
 	UniqueName bufNamer;
-	/// AddressExpr argument is MemberExpr? (TODO: What?)
-	ast::Expr const * addrMember = nullptr;
+	/// If the argument of an AddressExpr is MemberExpr, it is stored here.
+	ast::MemberExpr const * addrMember = nullptr;
 	/// Used to avoid recursing too deep in type declarations.
 	bool expect_func_type = false;
 };
@@ -1958,11 +1917,7 @@ void PolyGenericCalculator::previsit( ast::FunctionDecl const * decl ) {
 	beginGenericScope();
 	beginTypeScope( decl->type );
 
-	// - Tried inserting this code.
-	// Make sure that any type information passed into the function is
-	// accounted for.
-	// TODO: For some reason going through decl->params/->get_type() does
-	// not work. Possibly something is not getting updated.
+	// TODO: Going though dec->params does not work for some reason.
 	for ( ast::ptr<ast::Type> const & funcParam : decl->type->params ) {
 		// Condition here duplicates that in `DeclAdapter::previsit( FunctionDecl const * )`
 		ast::Type const * polyType = isPolyType( funcParam, scopeTypeVars );
@@ -2018,7 +1973,6 @@ ast::Decl const * PolyGenericCalculator::postvisit(
 
 ast::StructDecl const * PolyGenericCalculator::previsit(
 		ast::StructDecl const * decl ) {
-	//return strict_dynamic_cast<ast::StructDecl *>( mutateMembers( decl ) );
 	auto mutDecl = mutate( decl );
 	mutateMembers( mutDecl );
 	return mutDecl;
@@ -2026,7 +1980,6 @@ ast::StructDecl const * PolyGenericCalculator::previsit(
 
 ast::UnionDecl const * PolyGenericCalculator::previsit(
 		ast::UnionDecl const * decl ) {
-	//return strict_dynamic_cast<ast::UnionDecl *>( mutateMembers( decl ) );
 	auto mutDecl = mutate( decl );
 	mutateMembers( mutDecl );
 	return mutDecl;
@@ -2087,9 +2040,7 @@ ast::DeclStmt const * PolyGenericCalculator::previsit( ast::DeclStmt const * stm
 
 	auto mutDecl = mutate( decl );
 
-	//mutDecl->attributes.remove_if( matchAndMove );
-	// TODO: This common helper might work, but does not officially support
-	// side effects.
+	// Forally, side effects are not safe in this function. But it works.
 	erase_if( mutDecl->attributes, matchAndMove );
 
 	mutDecl->init = new ast::SingleInit( decl->location,
@@ -2197,10 +2148,10 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 	// substitution, so it doesn't seem like it should be necessary to apply
 	// the substitution manually. For some reason this is not currently the
 	// case. This requires more investigation.
-	ast::Type const * memberType = deepCopy( expr->member->get_type() );
+	ast::ptr<ast::Type> memberType = deepCopy( expr->member->get_type() );
 	ast::TypeSubstitution sub = genericSubstitution( objectType );
-	auto result = sub.apply( memberType );
-	memberType = result.node.get(); // .release();
+	sub.apply( memberType );
+
 	// Not all members of a polymorphic type are themselves of a polymorphic
 	// type; in this cas the member expression should be wrapped and
 	// dereferenced to form an lvalue.
@@ -2216,7 +2167,6 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 }
 
 void PolyGenericCalculator::previsit( ast::AddressExpr const * expr ) {
-	// Is the argument a MemberExpr before mutating?
 	GuardValue( addrMember ) = expr->arg.as<ast::MemberExpr>();
 }
 
@@ -2232,10 +2182,8 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 	}
 	// MemberExpr was converted to pointer + offset; and it is not valid C to
 	// take the address of an addition, so stript the address-of.
-	// TODO: should expr->arg->result be changed to expr->result?
-	ast::Expr * ret = mutate( expr->arg.get() );
-	ret->env = expr->env;
-	return ret;
+	// It also preserves the env value.
+	return ast::mutate_field( expr->arg.get(), &ast::Expr::env, expr->env );
 }
 
 ast::Expr const * PolyGenericCalculator::postvisit(
@@ -2571,8 +2519,10 @@ void PolyGenericCalculator::beginGenericScope() {
 struct Eraser final :
 		public BoxPass,
 		public ast::WithGuards {
-	template<typename decl_t>
-	decl_t const * handleDecl( decl_t const * decl, ast::Type const * type );
+	void guardTypeVarMap( ast::Type const * type ) {
+		GuardScope( scopeTypeVars );
+		makeTypeVarMap( type, scopeTypeVars );
+	}
 
 	ast::ObjectDecl const * previsit( ast::ObjectDecl const * decl );
 	ast::FunctionDecl const * previsit( ast::FunctionDecl const * decl );
@@ -2584,35 +2534,28 @@ struct Eraser final :
 	void previsit( ast::FunctionType const * type );
 };
 
-template<typename decl_t>
-decl_t const * Eraser::handleDecl(
-		decl_t const * decl, ast::Type const * type ) {
-	GuardScope( scopeTypeVars );
-	makeTypeVarMap( type, scopeTypeVars );
+ast::ObjectDecl const * Eraser::previsit( ast::ObjectDecl const * decl ) {
+	guardTypeVarMap( decl->type );
 	return scrubAllTypeVars( decl );
 }
 
-ast::ObjectDecl const * Eraser::previsit( ast::ObjectDecl const * decl ) {
-	return handleDecl( decl, decl->type );
-}
-
 ast::FunctionDecl const * Eraser::previsit( ast::FunctionDecl const * decl ) {
-	return handleDecl( decl, decl->type );
+	guardTypeVarMap( decl->type );
+	return scrubAllTypeVars( decl );
 }
 
 ast::TypedefDecl const * Eraser::previsit( ast::TypedefDecl const * decl ) {
-	return handleDecl( decl, decl->base );
+	guardTypeVarMap( decl->base );
+	return scrubAllTypeVars( decl );
 }
 
 /// Strips the members from a generic aggregate.
 template<typename node_t>
 node_t const * stripGenericMembers( node_t const * decl ) {
-	if ( !decl->params.empty() ) {
-		auto mutDecl = ast::mutate( decl );
-		mutDecl->members.clear();
-		return mutDecl;
-	}
-	return decl;
+	if ( decl->params.empty() ) return decl;
+	auto mutDecl = ast::mutate( decl );
+	mutDecl->members.clear();
+	return mutDecl;
 }
 
 ast::StructDecl const * Eraser::previsit( ast::StructDecl const * decl ) {
@@ -2628,13 +2571,11 @@ void Eraser::previsit( ast::TypeDecl const * decl ) {
 }
 
 void Eraser::previsit( ast::PointerType const * type ) {
-	GuardScope( scopeTypeVars );
-	makeTypeVarMap( type, scopeTypeVars );
+	guardTypeVarMap( type );
 }
 
 void Eraser::previsit( ast::FunctionType const * type ) {
-	GuardScope( scopeTypeVars );
-	makeTypeVarMap( type, scopeTypeVars );
+	guardTypeVarMap( type );
 }
 
 } // namespace

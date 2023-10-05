@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thur May 13 10:06:00 2021
 // Last Modified By : Andrew Beach
-// Last Modified On : Thur May 13 14:38:00 2021
-// Update Count     : 0
+// Last Modified On : Wed Oct  4 10:52:00 2023
+// Update Count     : 1
 //
 
 #pragma once
@@ -22,10 +22,14 @@
 #include <list>  // for list
 
 class Declaration;
+namespace ast {
+	class TranslationUnit;
+}
 
 namespace CodeGen {
 
 void translateLinkOnce( std::list< Declaration *> & translationUnit );
+void translateLinkOnce( ast::TranslationUnit & translationUnit );
 /* Convert the cfa_linkonce attribute on top level declaration into
  * a special section declaration (.gnu.linkonce) so that it may be defined
  * multiple times (same name and same type, must have the same value).

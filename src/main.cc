@@ -420,10 +420,9 @@ int main( int argc, char * argv[] ) {
 		PASS( "Convert L-Value", GenPoly::convertLvalue, transUnit );
 		DUMP( bboxp, std::move( transUnit ) );
 		PASS( "Box", GenPoly::box, transUnit );
+		PASS( "Link-Once", CodeGen::translateLinkOnce, transUnit );
 
 		translationUnit = convert( std::move( transUnit ) );
-
-		PASS( "Link-Once", CodeGen::translateLinkOnce, translationUnit );
 
 		// Code has been lowered to C, now we can start generation.
 
