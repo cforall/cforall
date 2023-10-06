@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// InstantiateGeneric.h --
+// InstantiateGeneric.h -- Create concrete instances of generic types.
 //
 // Author           : Aaron B. Moss
 // Created On       : Thu Aug 04 18:33:00 2016
@@ -23,12 +23,14 @@ namespace ast {
 }
 
 namespace GenPoly {
-/// Replaces all generic types that have static layout with concrete
-/// instantiations. Types with concrete values for otype parameters will be
-/// template-expanded, while dtype and ftype parameters will be replaced by
-/// the appropriate void type.
+
 void instantiateGeneric( std::list< Declaration* > &translationUnit );
 void instantiateGeneric( ast::TranslationUnit & translationUnit );
+/// Replaces all generic types that have static layout with concrete
+/// instantiations. Sized types are replaced with the concrete argument types
+/// while unsized types are erased to a void type.
+/// This pass can cause designators to ignore the pretty print option.
+
 } // namespace GenPoly
 
 // Local Variables: //

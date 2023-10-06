@@ -2,8 +2,141 @@
 #include <fstream.hfa>
 #include <collections/string.hfa>
 #include <collections/string_res.hfa>
+#include <stdio.h>
+
+// No-op manipulators.
+// Temporary hack while there are two code paths in the string implementation.
+// (One for reading plain strings, the other for reading via a manipulator.)
+// The test cases that use plainjane(-) are exercising the via-manipulator code path,
+// just with trivial manipulation.
+static _Istream_Sstr plainjane( string     & s )  { return (_Istream_Sstr)@{  s, {{0p}, -1, {.flags.rwd : false}} }; }
+static _Istream_Rstr plainjane( string_res & s )  { return (_Istream_Rstr)@{ &s, {{0p}, -1, {.flags.rwd : false}} }; }
+
+static void forceStringHeapFreeSpaceTo(int desiredSize) {
+    for (1_000_000) {
+        string x = "a";
+        (void)x;
+      if (desiredSize == DEBUG_string_bytes_avail_until_gc(DEBUG_string_heap())) return;
+    }
+    sout | "Unable to force size" | desiredSize | "in 1,000,000 tries";
+}
 
 int main() {
+    // These "pre" cases deal with issues analogous to the "pre" cases of io/manipulatorsInput.
+    // The acceptance criterion is simpler but driving the cases is harder.
+    // The tests just read strings and echo what they read; acceptance of simple echoing assures
+    // no spurious splitting merging.
+    // The lengths of the strings are chosen to match white-box knowledge of when the string layer
+    // has tor drive the cstring layer through a second iteration:
+    //  - for no-manip, lengths are near the room at end of string heap
+    //    (chosen target size of 9 showed the original bug on preS2, aligned with the other cases)
+    //  - for manip, lengths are near the auxiliary buffer size of 128
+    // Only first case repeats for string_res; rest run only from the passthru string layer.
+    // Similarly, the manipulator breadth isn't checked at the cstring layer either.
+    {
+        // S: string, no manipulator
+        void echoTillX(const char * casename) {
+            string s;
+            do {
+                forceStringHeapFreeSpaceTo(9);
+                sin | s;
+                sout | casename | s;
+            } while ( size(s) > 0 && s[size(s)-1] != 'x' );
+        }
+        echoTillX("preS1");
+        echoTillX("preS2");
+        echoTillX("preS3");
+        echoTillX("preS4");
+    }
+    {
+        // SMN: string, manipulator for no-op
+        void echoTillX(const char * casename) {
+            string s;
+            do {
+                sin | plainjane( s );
+                sout | casename | s;
+            } while ( size(s) > 0 && s[size(s)-1] != 'x' );
+        }
+        echoTillX("preSMN1");
+        echoTillX("preSMN2");
+        echoTillX("preSMN3");
+        echoTillX("preSMN4");
+    }
+    {
+        // RMN: string_res, manipulator for no-op
+        void echoTillX(const char * casename) {
+            string_res s;
+            do {
+                sin | plainjane( s );
+                sout | casename | s;
+            } while ( size(s) > 0 && s[size(s)-1] != 'x' );
+        }
+        echoTillX("preRMN1");
+        echoTillX("preRMN2");
+        echoTillX("preRMN3");
+        echoTillX("preRMN4");
+    }
+    {
+        // SMI: string, manipulator `incl`
+        void echoTillX(const char * casename) {
+            string s;
+            do {
+                sin | skip("-\n");
+                sin | incl( ".:|# x", s );
+                sout | casename | " \"" | s | "\"";
+            } while ( size(s) > 0 && s[size(s)-1] != 'x' );
+        }
+        echoTillX("preSMI1");
+        echoTillX("preSMI2");
+        echoTillX("preSMI3");
+        echoTillX("preSMI4");
+    }
+    {
+        // SME: string, manipulator `excl`
+        void echoTillX(const char * casename) {
+            string s;
+            do {
+                sin | skip("-\n");
+                sin | excl( "-\n", s );
+                sout | casename | " \"" | s | "\"";
+            } while ( size(s) > 0 && s[size(s)-1] != 'x' );
+        }
+        echoTillX("preSME1");
+        echoTillX("preSME2");
+        echoTillX("preSME3");
+        echoTillX("preSME4");
+    }
+    sin | skip("-\n");
+    {
+        // SMG: string, manipulator `getline`
+        void echoTillX(const char * casename) {
+            string s;
+            do {
+                sin | getline( s );
+                sout | casename | s;
+            } while ( size(s) > 0 && s[size(s)-1] != 'x' );
+        }
+        echoTillX("preSMG1");
+        echoTillX("preSMG2");
+        echoTillX("preSMG3");
+        echoTillX("preSMG4");
+    }
+    {
+        // SMD: string, manipulator (`getline` with custom) delimiter
+        void echoTillX(const char * casename) {
+            string s;
+            do {
+                sin | getline( s, '@' );
+                sout | casename | s;
+            } while ( size(s) > 0 && s[size(s)-1] != 'x' );
+            sin | skip(" \n");
+        }
+        echoTillX("preSMD1");
+        echoTillX("preSMD2");
+        echoTillX("preSMD3");
+        echoTillX("preSMD4");
+    }
+
     /* Keep harmonized with io/manipulatorsInput */
     {
         string s = "yyyyyyyyyyyyyyyyyyyy";
@@ -22,7 +155,15 @@ int main() {
         sin | excl( "abc", wdi( 8, s ) );               sout | "11" | s;
         sin | ignore( incl( "abc", wdi( 8, s ) ) );     sout | "12" | s;
         sin | ignore( excl( "abc", wdi( 8, s ) ) );     sout | "13" | s;
-    }
+
+		s = "q";
+		sin | incl( "abc", s );                         sout | "14" | s;
+		s = "q";
+		sin | excl( "u", s );                           sout | "15" | s;
+		sin | skip( "u" );
+		sin | "\n";
+	}
+    // Full repeat on string_res layer assures the full manipulator vocabulary is supported there.
     {
         string_res s = "yyyyyyyyyyyyyyyyyyyy";
         char sk[] = "abc";
@@ -40,5 +181,12 @@ int main() {
         sin | excl( "abc", wdi( 8, s ) );               sout | "11" | s;
         sin | ignore( incl( "abc", wdi( 8, s ) ) );     sout | "12" | s;
         sin | ignore( excl( "abc", wdi( 8, s ) ) );     sout | "13" | s;
+
+		s = "q";
+		sin | incl( "abc", s );                         sout | "14" | s;
+		s = "q";
+		sin | excl( "u", s );                           sout | "15" | s;
+		sin | skip( "u" );
+		sin | "\n";
     }
 }

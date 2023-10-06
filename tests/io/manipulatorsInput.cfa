@@ -44,15 +44,19 @@ int main() {
 			printf("\n");
 		}
 
-		rep("pre1");
-		rep("pre2a");
-		rep("pre2b");
+		rep("pre1");	// 123456     |  123456
+		rep("pre2");	// 1234567    |  1234567
+		rep("pre3a");	// 12345678   |  1234567
+		rep("pre3b");	//            |  8
+		rep("pre4a");	// 123456789  |  1234567
+		rep("pre4b");   //            |  89
+
 		scanf("\n");  // next test does not start with %s so does not tolerate leading whitespace
 	}
 	{
 		char s[] = "yyyyyyyyyyyyyyyyyyyy";
-		const char sk[] = "abc";
-		scanf( "abc " ); scanf( sk ); for ( 5 ) scanf( "%*c" );	printf( "1 %s\n", s );
+		const char sk_fmt[] = "%*[abc]";
+		scanf( "abc " ); scanf( sk_fmt ); for ( 5 ) scanf( "%*c" ); printf( "1 %s\n", s );
 		scanf( "%s", s );								printf( "2 %s\n", s );
 		scanf( "%*s" );									printf( "3 %s\n", s );
 		scanf( "%8s", s );								printf( "4 %s\n", s );
@@ -66,6 +70,14 @@ int main() {
 		scanf( "%8[^abc]", s );							printf( "11 %s\n", s );
 		scanf( "%*8[abc]" );							printf( "12 %s\n", s );
 		scanf( "%*8[^abc]" );							printf( "13 %s\n", s );
+
+		int rc;
+		s[0] = 'q'; s[1] = '\0'; rc = 99;
+		rc = scanf( "%[abc]", s );						printf( "14 rc=%d, %s\n", rc, s );
+		s[0] = 'q'; s[1] = '\0'; rc = 99;
+		rc = scanf( "%[^u]", s );						printf( "15 rc=%d, %s\n", rc, s );
+		scanf( "%*[u]" );
+		scanf("\n");
 	}
 	{
 		char s[] = "yyyyyyyyyyyyyyyyyyyy";
@@ -84,6 +96,13 @@ int main() {
 		sin | excl( "abc", wdi( sizeof(s), 8, s ) );	sout | "11" | s;
 		sin | ignore( incl( "abc", wdi( sizeof(s), 8, s ) ) ); sout | "12" | s;
 		sin | ignore( excl( "abc", wdi( sizeof(s), 8, s ) ) ); sout | "13" | s;
+
+		s[0] = 'q'; s[1] = '\0';
+		sin | incl( "abc", wdi( sizeof(s), s ) );		sout | "14" | s;
+		s[0] = 'q'; s[1] = '\0';
+		sin | excl( "u", wdi( sizeof(s), s ) );			sout | "15" | s;
+		sin | skip( "u" );
+		sin | "\n";
 	}
     /* Keep harmonized with collections/string-istream-manip */
 	{

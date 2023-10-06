@@ -217,7 +217,9 @@ ifstream & ?|?(ifstream &in, string_res &s) {
 
     // Read in chunks.  Often, one chunk is enough.  Keep the string that accumulates chunks last in the heap,
     // so available room is rest of heap.  When a chunk fills the heap, force growth then take the next chunk.
-    for (;;) {
+    for (bool cont = true; cont; ) {
+        cont = false;
+
         // Append dummy content to temp, forcing expansion when applicable (occurs always on subsequent loops)
         // length 2 ensures room for at least one real char, plus scanf/pipe-cstr's null terminator
         temp += "--";
@@ -227,19 +229,21 @@ ifstream & ?|?(ifstream &in, string_res &s) {
         temp.Handle.lnth -= 2;
         temp.Handle.ulink->EndVbyte -= 2;
 
-        // rest of heap, less 1 byte for null terminator, is available to read into
-        int lenReadable = (char*)temp.Handle.ulink->ExtVbyte - temp.Handle.ulink->EndVbyte - 1;
-        assert (lenReadable >= 1);
+        // rest of heap is available to read into
+        int lenReadable = (char*)temp.Handle.ulink->ExtVbyte - temp.Handle.ulink->EndVbyte;
+        assert (lenReadable >= 2);
 
         // get bytes
-        in | wdi( lenReadable + 1, lenReadable, temp.Handle.ulink->EndVbyte );
+        try {
+            in | wdi( lenReadable, temp.Handle.ulink->EndVbyte );
+        } catch (cstring_length*) {
+            cont = true;
+        }
         int lenWasRead = strlen(temp.Handle.ulink->EndVbyte);
 
         // update metadata
         temp.Handle.lnth += lenWasRead;
         temp.Handle.ulink->EndVbyte += lenWasRead;
-
-      if (lenWasRead < lenReadable) break;
     }
 
     s = temp;

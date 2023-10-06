@@ -1520,71 +1520,12 @@ ast::ObjectDecl * CallAdapter::makeTemporary(
 /// Modifies declarations to accept implicit parameters.
 /// * Move polymorphic returns in function types to pointer-type parameters.
 /// * Adds type size and assertion parameters to parameter lists.
-struct DeclAdapter final :
-		public BoxPass,
-		public ast::WithGuards {
-	void handleAggrDecl();
-
-	void previsit( ast::StructDecl const * decl );
-	void previsit( ast::UnionDecl const * decl );
-	void previsit( ast::TraitDecl const * decl );
-	void previsit( ast::TypeDecl const * decl );
-	void previsit( ast::PointerType const * type );
+struct DeclAdapter final {
 	ast::FunctionDecl const * previsit( ast::FunctionDecl const * decl );
 	ast::FunctionDecl const * postvisit( ast::FunctionDecl const * decl );
-	void previsit( ast::CompoundStmt const * stmt );
 private:
-	ast::FunctionDecl * addAdapters( ast::FunctionDecl * decl );
-
-	std::map<UniqueId, std::string> adapterName;
+	void addAdapters( ast::FunctionDecl * decl, TypeVarMap & localTypeVars );
 };
-
-// at must point within [dst.begin(), dst.end()].
-template< typename T >
-void spliceAt( std::vector< T > & dst, typename std::vector< T >::iterator at,
-		std::vector< T > & src ) {
-	std::vector< T > tmp;
-	tmp.reserve( dst.size() + src.size() );
-	typename std::vector< T >::iterator it = dst.begin();
-	while ( it != at ) {
-		assert( it != dst.end() );
-		tmp.emplace_back( std::move( *it ) );
-		++it;
-	}
-	for ( T & x : src ) { tmp.emplace_back( std::move( x ) ); }
-	while ( it != dst.end() ) {
-		tmp.emplace_back( std::move( *it ) );
-		++it;
-	}
-
-	dst.clear();
-	src.clear();
-	tmp.swap( dst );
-}
-
-void DeclAdapter::previsit( ast::StructDecl const * ) {
-	// Prevent type vars from leaking into the containing scope.
-	GuardScope( scopeTypeVars );
-}
-
-void DeclAdapter::previsit( ast::UnionDecl const * ) {
-	// Prevent type vars from leaking into the containing scope.
-	GuardScope( scopeTypeVars );
-}
-
-void DeclAdapter::previsit( ast::TraitDecl const * ) {
-	// Prevent type vars from leaking into the containing scope.
-	GuardScope( scopeTypeVars );
-}
-
-void DeclAdapter::previsit( ast::TypeDecl const * decl ) {
-	addToTypeVarMap( decl, scopeTypeVars );
-}
-
-void DeclAdapter::previsit( ast::PointerType const * type ) {
-	GuardScope( scopeTypeVars );
-	makeTypeVarMap( type, scopeTypeVars );
-}
 
 // size/align/offset parameters may not be used, so add the unused attribute.
 ast::ObjectDecl * makeObj(
@@ -1603,8 +1544,8 @@ ast::ObjectDecl * makePtr(
 }
 
 ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl ) {
-	GuardScope( scopeTypeVars );
-	makeTypeVarMap( decl, scopeTypeVars );
+	TypeVarMap localTypeVars = { ast::TypeData() };
+	makeTypeVarMap( decl, localTypeVars );
 
 	auto mutDecl = mutate( decl );
 
@@ -1619,8 +1560,8 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 	}
 
 	// Add size/align and assertions for type parameters to parameter list.
-	ast::vector<ast::DeclWithType>::iterator last = mutDecl->params.begin();
 	ast::vector<ast::DeclWithType> inferredParams;
+	ast::vector<ast::DeclWithType> layoutParams;
 	for ( ast::ptr<ast::TypeDecl> & typeParam : mutDecl->type_params ) {
 		auto mutParam = mutate( typeParam.get() );
 		// Add all size and alignment parameters to parameter list.
@@ -1629,12 +1570,10 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 			std::string paramName = Mangle::mangleType( &paramType );
 
 			auto sizeParam = makeObj( typeParam->location, sizeofName( paramName ) );
-			last = mutDecl->params.insert( last, sizeParam );
-			++last;
+			layoutParams.emplace_back( sizeParam );
 
 			auto alignParam = makeObj( typeParam->location, alignofName( paramName ) );
-			last = mutDecl->params.insert( last, alignParam );
-			++last;
+			layoutParams.emplace_back( alignParam );
 		}
 		// TODO: These should possibly all be gone.
 		// More all assertions into parameter list.
@@ -1662,12 +1601,13 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 	std::set<std::string> seenTypes;
 	ast::vector<ast::DeclWithType> otypeParams;
 	for ( ast::ptr<ast::DeclWithType> & funcParam : mutDecl->params ) {
-		ast::Type const * polyType = isPolyType( funcParam->get_type(), scopeTypeVars );
+		ast::Type const * polyType = isPolyType( funcParam->get_type(), localTypeVars );
 		if ( !polyType || dynamic_cast<ast::TypeInstType const *>( polyType ) ) {
 			continue;
 		}
 		std::string typeName = Mangle::mangleType( polyType );
 		if ( seenTypes.count( typeName ) ) continue;
+		seenTypes.insert( typeName );
 
 		auto sizeParam = makeObj( funcParam->location, sizeofName( typeName ) );
 		otypeParams.emplace_back( sizeParam );
@@ -1675,24 +1615,22 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 		auto alignParam = makeObj( funcParam->location, alignofName( typeName ) );
 		otypeParams.emplace_back( alignParam );
 
+		// Zero-length arrays are illegal in C, so empty structs have no
+		// offset array.
 		if ( auto * polyStruct =
-				dynamic_cast<ast::StructInstType const *>( polyType ) ) {
-			// Zero-length arrays are illegal in C, so empty structs have no
-			// offset array.
-			if ( !polyStruct->base->members.empty() ) {
-				auto offsetParam = makePtr( funcParam->location, offsetofName( typeName ) );
-				otypeParams.emplace_back( offsetParam );
-			}
+				dynamic_cast<ast::StructInstType const *>( polyType ) ;
+				polyStruct && !polyStruct->base->members.empty() ) {
+			auto offsetParam = makePtr( funcParam->location, offsetofName( typeName ) );
+			otypeParams.emplace_back( offsetParam );
 		}
-		seenTypes.insert( typeName );
 	}
 
-	// TODO: A unified way of putting these together might be nice.
-	// Put the list together: adapters (in helper) otype parameters,
-	// inferred params., layout params. (done) and finally explicit params.
-	spliceBegin( inferredParams, otypeParams );
-	spliceAt( mutDecl->params, last, inferredParams );
-	mutDecl = addAdapters( mutDecl );
+	// Prepend each argument group. From last group to first. addAdapters
+	// does do the same, it just does it itself and see all other parameters.
+	spliceBegin( mutDecl->params, inferredParams );
+	spliceBegin( mutDecl->params, otypeParams );
+	spliceBegin( mutDecl->params, layoutParams );
+	addAdapters( mutDecl, localTypeVars );
 
 	return mutDecl;
 }
@@ -1731,30 +1669,17 @@ ast::FunctionDecl const * DeclAdapter::postvisit(
 	return mutDecl;
 }
 
-void DeclAdapter::previsit( ast::CompoundStmt const * ) {
-	GuardScope( scopeTypeVars );
-	// TODO: It is entirely possible the scope doesn't need to spread
-	// across multiple functions. Otherwise, find a better clear.
-	std::set<TypeVarMap::key_type> keys;
-	for ( auto pair : const_cast<TypeVarMap const &>( scopeTypeVars ) ) {
-		keys.insert( pair.first );
-	}
-	for ( auto key : keys ) {
-		scopeTypeVars.erase( key );
-	}
-}
-
-// It actually does mutate in-place, but does the return for consistency.
-ast::FunctionDecl * DeclAdapter::addAdapters( ast::FunctionDecl * mutDecl ) {
+void DeclAdapter::addAdapters(
+		ast::FunctionDecl * mutDecl, TypeVarMap & localTypeVars ) {
 	ast::vector<ast::FunctionType> functions;
 	for ( ast::ptr<ast::DeclWithType> & arg : mutDecl->params ) {
 		ast::Type const * type = arg->get_type();
-		type = findAndReplaceFunction( type, functions, scopeTypeVars, needsAdapter );
+		type = findAndReplaceFunction( type, functions, localTypeVars, needsAdapter );
 		arg.get_and_mutate()->set_type( type );
 	}
 	std::set<std::string> adaptersDone;
 	for ( ast::ptr<ast::FunctionType> const & func : functions ) {
-		std::string mangleName = mangleAdapterName( func, scopeTypeVars );
+		std::string mangleName = mangleAdapterName( func, localTypeVars );
 		if ( adaptersDone.find( mangleName ) != adaptersDone.end() ) {
 			continue;
 		}
@@ -1762,12 +1687,11 @@ ast::FunctionDecl * DeclAdapter::addAdapters( ast::FunctionDecl * mutDecl ) {
 		// The adapter may not actually be used, so make sure it has unused.
 		mutDecl->params.insert( mutDecl->params.begin(), new ast::ObjectDecl(
 			mutDecl->location, adapterName,
-			new ast::PointerType( makeAdapterType( func, scopeTypeVars ) ),
+			new ast::PointerType( makeAdapterType( func, localTypeVars ) ),
 			nullptr, {}, {}, nullptr,
 			{ new ast::Attribute( "unused" ) } ) );
 		adaptersDone.insert( adaptersDone.begin(), mangleName );
 	}
-	return mutDecl;
 }
 
 // --------------------------------------------------------------------------

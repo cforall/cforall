@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// InstantiateGenericNew.cpp --
+// InstantiateGenericNew.cpp -- Create concrete instances of generic types.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Aug 16 10:51:00 2022

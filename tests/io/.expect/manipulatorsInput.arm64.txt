@@ -1,6 +1,9 @@
 pre1 "123456", canary ok
-pre2a "1234567", exception occurred, canary ok
-pre2b "89", canary ok
+pre2 "1234567", canary ok
+pre3a "1234567", exception occurred, canary ok
+pre3b "8", canary ok
+pre4a "1234567", exception occurred, canary ok
+pre4b "89", canary ok
 1 yyyyyyyyyyyyyyyyyyyy
 2 abcxxx
 3 abcxxx
@@ -14,6 +17,8 @@ pre2b "89", canary ok
 11 wwwwwwww
 12 wwwwwwww
 13 wwwwwwww
+14 rc=1, cccc
+15 rc=0, q
 1 yyyyyyyyyyyyyyyyyyyy
 2 abcxxx
 3 abcxxx
@@ -27,6 +32,8 @@ pre2b "89", canary ok
 11 wwwwwwww
 12 wwwwwwww
 13 wwwwwwww
+14 cccc
+15
 a
 a
 -1

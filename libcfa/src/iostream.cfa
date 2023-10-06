@@ -21,6 +21,7 @@
 #include <stdint.h>										// UINT64_MAX
 #include <float.h>										// DBL_DIG, LDBL_DIG
 #include <complex.h>									// creal, cimag
+#include <ctype.h>										// isspace
 //#include <stdio.h>
 
 extern "C" {
@@ -28,6 +29,7 @@ extern size_t strlen (const char *__s) __attribute__ ((__nothrow__ , __leaf__)) 
 extern int strcmp (const char *__s1, const char *__s2) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
 extern char *strcpy (char *__restrict __dest, const char *__restrict __src) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
 extern void *memcpy (void *__restrict __dest, const void *__restrict __src, size_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern char *strchr(const char *str, int ch);
 } // extern "C"
 
 #include "math.hfa"										// isfinite, floor, ceiling_div
@@ -959,7 +961,18 @@ forall( istype & | basic_istream( istype ) ) {
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cskip f ) {
 		// printf( "skip %s %d\n", f.scanset, f.wd );
-		if ( f.scanset ) fmt( is, f.scanset, "" );		// no input arguments
+		if ( f.scanset ) {
+			int nscanset = strlen(f.scanset);
+			char fmtstr[ sizeof("%*[]") + nscanset ];
+			int pos = 0;
+			fmtstr[pos] = '%';                  pos += 1;
+			fmtstr[pos] = '*';                  pos += 1;
+			fmtstr[pos] = '[';                  pos += 1;
+			strcpy( &fmtstr[pos], f.scanset );  pos += nscanset;
+			fmtstr[pos] = ']';                  pos += 1;
+			fmtstr[pos] = '\0';
+			fmt( is, fmtstr, (void*)0 );  // last arg is dummy: suppress gcc warning
+		}
 		else for ( f.wd ) fmt( is, "%*c" );
 		return is;
 	}
@@ -979,7 +992,14 @@ forall( istype & | basic_istream( istype ) ) {
 		if ( f.wd != -1 ) {
 			// wd is buffer bytes available (for input chars + null terminator)
 			// rwd is count of input chars
-			int rwd = f.flags.rwd ? f.wd : (f.wd - 1);
+			int rwd;
+			if (f.flags.rwd) {
+				verify (f.wd >= 0);
+				rwd = f.wd;
+			} else {
+				verify (f.wd >= 1);
+				rwd = f.wd - 1;
+			} // if
 			start += sprintf( &fmtstr[start], "%d", rwd );
 		}
 
@@ -999,12 +1019,31 @@ forall( istype & | basic_istream( istype ) ) {
 		} // if
 
 		int check = f.wd - 2;
-		if ( ! f.flags.rwd ) f.s[check] = '\0';			// insert sentinel
+		if (! f.flags.ignore ) {
+			f.s[0] = '\0';
+			if ( ! f.flags.rwd ) f.s[check] = '\0';		// insert sentinel
+		}
 		len = fmt( is, fmtstr, f.s );
 		//fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, f.s[check], f.s );
 
-		if ( ! f.flags.rwd && f.s[check] != '\0' )		// sentinel overwritten ?
-			throw (cstring_length){ &cstring_length_vt };
+		if ( ! f.flags.ignore && ! f.flags.rwd && f.s[check] != '\0' ) { // sentinel overwritten ?
+			// buffer filled, but would we have kept going?
+			if ( ! eof( is ) ) {
+				char peek;
+				fmt( is, "%c", &peek );
+				ungetc( is, peek );
+				bool hasMore;
+				if (f.flags.delimiter) { // getline
+					hasMore = (peek != f.delimiter[0]);
+				} else if (f.scanset) { // incl/excl
+					bool peekMatch = strchr(f.scanset, peek) != 0p;
+					hasMore = f.flags.inex ? (!peekMatch) : (peekMatch);
+				} else { // %s
+					hasMore = !isspace(peek);
+				}
+				if (hasMore) throw (cstring_length){ &cstring_length_vt };
+			} // if
+		} // if
 
 		if ( f.flags.delimiter ) {						// getline ?
 			if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
