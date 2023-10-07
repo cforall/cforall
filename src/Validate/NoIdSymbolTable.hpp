@@ -19,12 +19,21 @@
 
 namespace Validate {
 
-// A SymbolTable that only has the operations used in the Translate Dimension
-// pass. More importantly, it doesn't have some methods that should no be
+// A SymbolTable that only tracks names relevant to Validate passes.
+// It tracks type names but not identifier names.
+// Some of the canonicalization that occurs before the resolver
+// affects how identifier name errors get reported to the user.
+// The Validate phase needs to chase type names,
+// but it is too early to try tracking identifier names.
+// Identifier skipping is acheived by omitting methods that should not be
 // called by the Pass template (lookupId and addId).
 class NoIdSymbolTable {
 	ast::SymbolTable base;
 public:
+	// All names that are tracked (now) are eligible for collision validation (now).
+	// (Names that are only tracked later get their collision validation then.)
+	NoIdSymbolTable() : base(ast::SymbolTable::ValidateOnAdd) {}
+
 #	define FORWARD_X( func, types_and_names, just_names ) \
 	inline auto func types_and_names -> decltype( base.func just_names ) { \
 		return base.func just_names ; \

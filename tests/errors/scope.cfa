@@ -1,24 +1,36 @@
-int thisIsAnError;
-int thisIsAnError;
+// Keep harmonized with errors/scope.
 
-int thisIsNotAnError;
-float thisIsNotAnError;
+#ifdef OMIT_DRIVING_REJECTIONS
+// For manual sanity checking:
+// Leave out the offensive declarations and verify that what's left is accepted.
+#define EXPREJ(...)
+#else 
+#define EXPREJ(...) __VA_ARGS__
+#endif
 
-int thisIsAlsoNotAnError() {
-  int thisIsNotAnError;
-}
 
-int thisIsAlsoNotAnError( double x ) {
-}
+        int thisIsAnError;
+EXPREJ( int thisIsAnError; )
 
-double thisIsStillNotAnError( double );
-double thisIsStillNotAnError( double );
+        int thisIsNotAnError;
+        float thisIsNotAnError;
 
-double butThisIsAnError( double ) {
-}
+        int thisIsAlsoNotAnError() {
+          int thisIsNotAnError;
+        }
 
-double butThisIsAnError( double ) {
-}
+        int thisIsAlsoNotAnError( double x ) {
+        }
+
+        double thisIsStillNotAnError( double );
+        double thisIsStillNotAnError( double );
+
+        double butThisIsAnError( double ) {
+        }
+EXPREJ(
+        double butThisIsAnError( double ) {
+        }
+)
 
 // Local Variables: //
 // tab-width: 4 //

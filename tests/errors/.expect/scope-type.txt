@@ -1,0 +1,14 @@
+errors/scope-type.cfa:13:1 error: redeclaration of struct thisIsAnError with body
+
+errors/scope-type.cfa:48:1 error: redeclaration of union thisIsAnError_u with body
+
+errors/scope-type.cfa:62:1 error: redeclaration of enum thisIsAnError_e with body
+... with members
+  E0: const instance of enum thisIsAnError_e with body
+
+
+errors/scope-type.cfa:76:1 error: redeclaration of struct thisIsAnError_p with body
+... with parameters
+  Tx: data type
+
+

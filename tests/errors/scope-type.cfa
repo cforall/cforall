@@ -1,0 +1,92 @@
+// The type-level analog of errors/scope.
+// Keep harmonized with errors/scope.
+
+#ifdef OMIT_DRIVING_REJECTIONS
+// For manual sanity checking:
+// Leave out the offensive declarations and verify that what's left is accepted.
+#define EXPREJ(...)
+#else 
+#define EXPREJ(...) __VA_ARGS__
+#endif
+
+        struct thisIsAnError {};
+EXPREJ( struct thisIsAnError {}; )
+
+        struct thisIsNotAnError {};
+
+        // There's no type-level analog to overloading at one level:
+        //x    float thisIsNotAnError;
+
+        int thisIsAlsoNotAnError() {
+          struct thisIsNotAnError { int xxx; };
+        }
+
+        // There's no type-level analog to overloading at one level, again:
+        //x    int thisIsAlsoNotAnError( double x ) {
+        //x    }
+
+        struct thisIsStillNotAnError;
+        struct thisIsStillNotAnError;
+
+        // Has analog at type level but would be a repeat (no analog of function vs variable):
+        //x
+        //x    double butThisIsAnError( double ) {
+        //x    }
+        //x
+        //x    double butThisIsAnError( double ) {
+        //x    }
+
+
+
+        //
+        // Repeat the validly harmonized cases, across various type forms
+        //
+
+        // union
+
+        union thisIsAnError_u {};
+EXPREJ( union thisIsAnError_u {}; )
+
+        union thisIsNotAnError_u {};
+
+        int thisIsAlsoNotAnError_u() {
+          union thisIsNotAnError_u { int xxx; };
+        }
+
+        union thisIsStillNotAnError_u;
+        union thisIsStillNotAnError_u;
+
+        // enum
+
+        enum thisIsAnError_e { E0 };
+EXPREJ( enum thisIsAnError_e { E0 }; )
+
+        enum thisIsNotAnError_e { E1 };
+
+        int thisIsAlsoNotAnError_e() {
+          enum thisIsNotAnError_e { E1_xxx };
+        }
+
+        enum thisIsStillNotAnError_e;
+        enum thisIsStillNotAnError_e;
+
+        // polymorphic
+
+        forall(T&)  struct thisIsAnError_p {};
+EXPREJ( forall(Tx&) struct thisIsAnError_p {}; )
+
+        forall(T&)  struct thisIsNotAnError_p {};
+
+        int thisIsAlsoNotAnError_p() {
+          forall(Tx&) struct thisIsNotAnError_p { int xxx; };
+        }
+
+        forall(Tx&) 
+        int thisIsAlsoNotAnError_p2() {
+          struct thisIsNotAnError_p { Tx * xxx; };
+        }
+
+        forall(T&)  struct thisIsStillNotAnError_p;
+      #ifdef SHOW_TRAC_284
+        forall(Tx&) struct thisIsStillNotAnError_p;  // should be accepted, but blocked
+      #endif
