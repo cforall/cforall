@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 18:06:01 2023
-// Update Count     : 12
+// Last Modified On : Wed Oct 18 21:54:54 2023
+// Update Count     : 15
 //
 
 #include "string_res.hfa"
@@ -235,6 +235,7 @@ ifstream & ?|?(ifstream &in, string_res &s) {
 
         // get bytes
         try {
+			*(temp.Handle.ulink->EndVbyte) = '\0';   // pre-assign empty cstring
             in | wdi( lenReadable, temp.Handle.ulink->EndVbyte );
         } catch (cstring_length*) {
             cont = true;
@@ -246,12 +247,12 @@ ifstream & ?|?(ifstream &in, string_res &s) {
         temp.Handle.ulink->EndVbyte += lenWasRead;
     }
 
-    s = temp;
+	if ( temp.Handle.lnth > 0 ) s = temp;
     return in;
 }
 
 void ?|?( ifstream & in, string_res & this ) {
-    (ifstream &)(in | this); ends( in );
+    (ifstream &)(in | this);
 }
 
 ifstream & ?|?( ifstream & is, _Istream_Rstr f ) {
@@ -267,27 +268,35 @@ ifstream & ?|?( ifstream & is, _Istream_Rstr f ) {
 
 	cstr[wd] = '\0';									// guard null terminate string
 	try {
+		cstr[0] = '\0';									// pre-assign as empty cstring
 		is | cf;
 	} catch( cstring_length * ) {
 		cont = true;
 	} finally {
-        if ( ! cf.flags.ignore ) *(f.s) = cstr;			// ok to initialize string
+		if ( ! cf.flags.ignore &&						// ok to initialize string
+				cstr[0] != '\0' ) {						// something was read
+			*(f.s) = cstr;
+		}
 	} // try
 	for ( ; cont; )  {									// overflow read ?
 		cont = false;
 		try {
+			cstr[0] = '\0';								// pre-assign as empty cstring
 			is | cf;
 		} catch( cstring_length * ) {
 			cont = true;								// continue not allowed
 		} finally {
-			if ( ! cf.flags.ignore ) *(f.s) += cstr;	// build string chunk at a time
+			if ( ! cf.flags.ignore &&
+					cstr[0] != '\0' ) {					// something was read
+				*(f.s) += cstr;							// build string chunk at a time
+			}
 		} // try
 	} // for
 	return is;
 } // ?|?
 
 void ?|?( ifstream & in, _Istream_Rstr f ) {
-    (ifstream &)(in | f); ends( in );
+    (ifstream &)(in | f);
 }
 
 

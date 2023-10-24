@@ -39,33 +39,6 @@ namespace GenPoly {
 
 namespace {
 
-/// Common field of several sub-passes of box.
-struct BoxPass {
-	TypeVarMap scopeTypeVars;
-	BoxPass() : scopeTypeVars( ast::TypeData() ) {}
-};
-
-// TODO: Could this be a common helper somewhere?
-ast::FunctionType * makeFunctionType( ast::FunctionDecl const * decl ) {
-	ast::FunctionType * type = new ast::FunctionType(
-		decl->type->isVarArgs, decl->type->qualifiers
-	);
-	for ( auto type_param : decl->type_params ) {
-		type->forall.emplace_back( new ast::TypeInstType( type_param ) );
-	}
-	for ( auto assertion : decl->assertions ) {
-		type->assertions.emplace_back( new ast::VariableExpr(
-			assertion->location, assertion ) );
-	}
-	for ( auto param : decl->params ) {
-		type->params.emplace_back( param->get_type() );
-	}
-	for ( auto retval : decl->returns ) {
-		type->returns.emplace_back( retval->get_type() );
-	}
-	return type;
-}
-
 // --------------------------------------------------------------------------
 /// Adds layout-generation functions to polymorphic types.
 struct LayoutFunctionBuilder final :
@@ -93,28 +66,23 @@ ast::BasicType * makeSizeAlignType() {
 }
 
 /// Adds parameters for otype size and alignment to a function type.
-void addOTypeParams(
-		ast::FunctionDecl * decl,
+void addSTypeParams(
+		ast::vector<ast::DeclWithType> & params,
 		ast::vector<ast::TypeDecl> const & sizedParams ) {
-	// TODO: Can we fold this into buildLayoutFunction to avoid rebuilding?
-	ast::FunctionType * type = ast::mutate( decl->type.get() );
 	for ( ast::ptr<ast::TypeDecl> const & sizedParam : sizedParams ) {
 		ast::TypeInstType inst( sizedParam );
 		std::string paramName = Mangle::mangleType( &inst );
-		decl->params.emplace_back( new ast::ObjectDecl(
+		params.emplace_back( new ast::ObjectDecl(
 			sizedParam->location,
 			sizeofName( paramName ),
 			makeSizeAlignType()
 		) );
-		type->params.emplace_back( makeSizeAlignType() );
-		decl->params.emplace_back( new ast::ObjectDecl(
+		params.emplace_back( new ast::ObjectDecl(
 			sizedParam->location,
 			alignofName( paramName ),
 			makeSizeAlignType()
 		) );
-		type->params.emplace_back( makeSizeAlignType() );
 	}
-	decl->type = type;
 }
 
 ast::Type * makeSizeAlignOutType() {
@@ -128,9 +96,9 @@ struct LayoutData {
 	ast::ObjectDecl * offsetofParam;
 };
 
-// TODO: Is there a better way to handle the different besides a flag?
 LayoutData buildLayoutFunction(
 		CodeLocation const & location, ast::AggregateDecl const * aggr,
+		ast::vector<ast::TypeDecl> const & sizedParams,
 		bool isInFunction, bool isStruct ) {
 	ast::ObjectDecl * sizeParam = new ast::ObjectDecl(
 		location,
@@ -152,6 +120,7 @@ LayoutData buildLayoutFunction(
 		);
 		params.push_back( offsetParam );
 	}
+	addSTypeParams( params, sizedParams );
 
 	// Routines at global scope marked "static" to prevent multiple
 	// definitions is separate translation units because each unit generates
@@ -237,15 +206,14 @@ void LayoutFunctionBuilder::previsit( ast::StructDecl const * decl ) {
 	CodeLocation const & location = decl->location;
 
 	// Build layout function signature.
-	LayoutData layout =
-		buildLayoutFunction( location, decl, isInFunction(), true );
+	LayoutData layout = buildLayoutFunction(
+		location, decl, sizedParams, isInFunction(), true );
 	ast::FunctionDecl * layoutDecl = layout.function;
 	// Also return these or extract them from the parameter list?
 	ast::ObjectDecl const * sizeofParam = layout.sizeofParam;
 	ast::ObjectDecl const * alignofParam = layout.alignofParam;
 	ast::ObjectDecl const * offsetofParam = layout.offsetofParam;
 	assert( nullptr != layout.offsetofParam );
-	addOTypeParams( layoutDecl, sizedParams );
 
 	// Calculate structure layout in function body.
 	// Initialize size and alignment to 0 and 1
@@ -312,14 +280,13 @@ void LayoutFunctionBuilder::previsit( ast::UnionDecl const * decl ) {
 	CodeLocation const & location = decl->location;
 
 	// Build layout function signature.
-	LayoutData layout =
-		buildLayoutFunction( location, decl, isInFunction(), false );
+	LayoutData layout = buildLayoutFunction(
+		location, decl, sizedParams, isInFunction(), false );
 	ast::FunctionDecl * layoutDecl = layout.function;
 	// Also return these or extract them from the parameter list?
 	ast::ObjectDecl const * sizeofParam = layout.sizeofParam;
 	ast::ObjectDecl const * alignofParam = layout.alignofParam;
 	assert( nullptr == layout.offsetofParam );
-	addOTypeParams( layoutDecl, sizedParams );
 
 	// Calculate union layout in function body.
 	// Both are simply the maximum for union (actually align is always the
@@ -364,7 +331,6 @@ void LayoutFunctionBuilder::previsit( ast::UnionDecl const * decl ) {
 ///   dynamic arguments and return values.
 /// * Adds appropriate type variables to the function calls.
 struct CallAdapter final :
-		public BoxPass,
 		public ast::WithConstTypeSubstitution,
 		public ast::WithGuards,
 		public ast::WithShortCircuiting,
@@ -381,8 +347,6 @@ struct CallAdapter final :
 	void previsit( ast::AddressExpr const * expr );
 	ast::Expr const * postvisit( ast::AddressExpr const * expr );
 	ast::ReturnStmt const * previsit( ast::ReturnStmt const * stmt );
-	void previsit( ast::PointerType const * type );
-	void previsit( ast::FunctionType const * type );
 
 	void beginScope();
 	void endScope();
@@ -391,18 +355,10 @@ private:
 	// instead of using the return value, to save on mutates and free up the
 	// return value.
 
-	/// Pass the extra type parameters from polymorphic generic arguments or
-	/// return types into a function application.
-	ast::vector<ast::Expr>::iterator passArgTypeVars(
-		ast::ApplicationExpr * expr, ast::Type const * parmType,
-		ast::Type const * argBaseType, ast::vector<ast::Expr>::iterator arg,
-		const TypeVarMap & exprTyVars, std::set<std::string> & seenTypes );
-	/// Passes extra type parameters into a polymorphic function application.
+	/// Passes extra layout arguments for sized polymorphic type parameters.
 	ast::vector<ast::Expr>::iterator passTypeVars(
 		ast::ApplicationExpr * expr,
-		ast::Type const * polyRetType,
-		ast::FunctionType const * funcType,
-		const TypeVarMap & exprTyVars );
+		ast::FunctionType const * funcType );
 	/// Wraps a function application with a new temporary for the
 	/// out-parameter return value.
 	ast::Expr const * addRetParam(
@@ -453,7 +409,7 @@ private:
 	ast::ObjectDecl * makeTemporary(
 		CodeLocation const & location, ast::Type const * type );
 
-	/// Set of adapter functions in the current scope.
+	TypeVarMap scopeTypeVars;
 	ScopedMap< std::string, ast::DeclWithType const * > adapters;
 	std::map< ast::ApplicationExpr const *, ast::Expr const * > retVals;
 	ast::DeclWithType const * retval;
@@ -566,14 +522,13 @@ void CallAdapter::previsit( ast::Decl const * ) {
 }
 
 ast::FunctionDecl const * CallAdapter::previsit( ast::FunctionDecl const * decl ) {
+	// Prevent type declaration information from leaking out.
+	GuardScope( scopeTypeVars );
+
 	if ( nullptr == decl->stmts ) {
-		// This may keep TypeDecls we don't ever want from sneaking in.
-		// Not visiting child nodes might just be faster.
-		GuardScope( scopeTypeVars );
 		return decl;
 	}
 
-	GuardScope( scopeTypeVars );
 	GuardValue( retval );
 
 	// Process polymorphic return value.
@@ -640,10 +595,8 @@ void CallAdapter::previsit( ast::CommaExpr const * expr ) {
 	// copy constructor passes to use an explicit return variable, so that
 	// the variable can be reused as a parameter to the call rather than
 	// creating a new temporary variable. Previously this step was an
-	// optimization, but
-	// ...
-	// with the introduction of tuples and UniqueExprs, it is necessary to
-	// ensure that they use the same variable.
+	// optimization, but with the introduction of tuples and UniqueExprs,
+	// it is necessary to ensure that they use the same variable.
 	// Essentially, looking for pattern:
 	// (x=f(...), x)
 	// To compound the issue, the right side can be *x, etc.
@@ -677,7 +630,7 @@ ast::Expr const * CallAdapter::postvisit( ast::ApplicationExpr const * expr ) {
 	// pushing to the front/middle of a vector.
 	ptrdiff_t initArgCount = mutExpr->args.size();
 
-	TypeVarMap exprTypeVars = { ast::TypeData() };
+	TypeVarMap exprTypeVars;
 	// TODO: Should this take into account the variables already bound in
 	// scopeTypeVars ([ex] remove them from exprTypeVars)?
 	makeTypeVarMap( function, exprTypeVars );
@@ -688,7 +641,6 @@ ast::Expr const * CallAdapter::postvisit( ast::ApplicationExpr const * expr ) {
 	// `expr` `passTypeVars` needs to know the program-text return type ([ex]
 	// the distinction between _conc_T30 and T3(int)) concRetType may not be
 	// a good name in one or both of these places.
-	// TODO A more appropriate name change is welcome.
 	if ( dynRetType ) {
 		ast::Type const * result = mutExpr->result;
 		ast::Type const * concRetType = result->isVoid() ? nullptr : result;
@@ -697,23 +649,14 @@ ast::Expr const * CallAdapter::postvisit( ast::ApplicationExpr const * expr ) {
 		ret = addDynRetParam( mutExpr, concRetType );
 	} else if ( needsAdapter( function, scopeTypeVars )
 			&& !needsAdapter( function, exprTypeVars ) ) {
-		// TODO:
-		// The !needsAdapter check may be incorrect. It seems there is some
-		// situation where an adapter is applied where it shouldn't be,
-		// and this fixes it for some case. More investigation is needed.
-
 		// Change the application so it calls the adapter rather than the
 		// passed function.
 		ret = applyAdapter( mutExpr, function );
 	}
 
 	assert( typeSubs );
-	ast::Type const * concRetType = replaceWithConcrete( dynRetType, *typeSubs );
-	// Used to use dynRetType instead of concRetType; this changed so that
-	// the correct type parameters are passed for return types (it should be
-	// the concrete type's parameters, not the formal type's).
 	ast::vector<ast::Expr>::iterator argIt =
-		passTypeVars( mutExpr, concRetType, function, exprTypeVars );
+		passTypeVars( mutExpr, function );
 	addInferredParams( mutExpr, argIt, function, exprTypeVars );
 
 	argIt = mutExpr->args.begin();
@@ -791,16 +734,6 @@ ast::ReturnStmt const * CallAdapter::previsit( ast::ReturnStmt const * stmt ) {
 	return stmt;
 }
 
-void CallAdapter::previsit( ast::PointerType const * type ) {
-	GuardScope( scopeTypeVars );
-	makeTypeVarMap( type, scopeTypeVars );
-}
-
-void CallAdapter::previsit( ast::FunctionType const * type ) {
-	GuardScope( scopeTypeVars );
-	makeTypeVarMap( type, scopeTypeVars );
-}
-
 void CallAdapter::beginScope() {
 	adapters.beginScope();
 }
@@ -825,56 +758,9 @@ bool hasPolymorphism( ast::Type const * type, TypeVarMap const & typeVars ) {
 	return ast::Pass<PolyFinder>::read( type, typeVars );
 }
 
-// arg is an in/out parameter that matches the return value.
-ast::vector<ast::Expr>::iterator CallAdapter::passArgTypeVars(
-		ast::ApplicationExpr * expr, ast::Type const * paramType,
-		ast::Type const * argBaseType, ast::vector<ast::Expr>::iterator arg,
-		const TypeVarMap & exprTypeVars, std::set<std::string> & seenTypes ) {
-	ast::Type const * polyType = isPolyType( paramType, exprTypeVars );
-	if ( !polyType || dynamic_cast<ast::TypeInstType const *>( polyType ) ) {
-		return arg;
-	}
-
-	std::string typeName = Mangle::mangleType( polyType );
-	if ( seenTypes.count( typeName ) ) return arg;
-
-	arg = expr->args.insert( arg,
-		new ast::SizeofExpr( expr->location, ast::deepCopy( argBaseType ) )
-	);
-	arg++;
-	arg = expr->args.insert( arg,
-		new ast::AlignofExpr( expr->location, ast::deepCopy( argBaseType ) )
-	);
-	arg++;
-	if ( dynamic_cast<ast::StructInstType const *>( polyType ) ) {
-		auto argBaseStructType =
-				dynamic_cast<ast::StructInstType const *>( argBaseType );
-		if ( nullptr == argBaseStructType ) {
-			SemanticError( expr,
-				"Cannot pass non-structure type for generic struct: " );
-		}
-
-		// Zero-length arrays are forbidden by C, so don't pass
-		// offset for empty structure.
-		if ( !argBaseStructType->base->members.empty() ) {
-			arg = expr->args.insert( arg,
-				new ast::OffsetPackExpr(
-					expr->location,
-					ast::deepCopy( argBaseStructType ) )
-			);
-			arg++;
-		}
-	}
-
-	seenTypes.insert( typeName );
-	return arg;
-}
-
 ast::vector<ast::Expr>::iterator CallAdapter::passTypeVars(
 		ast::ApplicationExpr * expr,
-		ast::Type const * polyRetType,
-		ast::FunctionType const * function,
-		const TypeVarMap & exprTypeVars ) {
+		ast::FunctionType const * function ) {
 	assert( typeSubs );
 	ast::vector<ast::Expr>::iterator arg = expr->args.begin();
 	// Pass size/align for type variables.
@@ -893,48 +779,6 @@ ast::vector<ast::Expr>::iterator CallAdapter::passTypeVars(
 		arg = expr->args.insert( arg,
 			new ast::AlignofExpr( expr->location, ast::deepCopy( concrete ) ) );
 		arg++;
-	}
-
-	// Add size/align for generic types to parameter list.
-	if ( !expr->func->result ) return arg;
-	ast::FunctionType const * funcType = getFunctionType( expr->func->result );
-	assert( funcType );
-
-	// This iterator points at first original argument.
-	ast::vector<ast::Expr>::const_iterator funcArg;
-	// Names for generic types we've seen.
-	std::set<std::string> seenTypes;
-
-	// A polymorphic return type may need to be added to the argument list.
-	if ( polyRetType ) {
-		assert( typeSubs );
-		auto concRetType = replaceWithConcrete( polyRetType, *typeSubs );
-		// TODO: This write-back may not be correct.
-		arg = passArgTypeVars( expr, polyRetType, concRetType,
-				arg, exprTypeVars, seenTypes );
-		// Skip the return parameter in the argument list.
-		funcArg = arg + 1;
-	} else {
-		funcArg = arg;
-	}
-
-	// TODO:
-	// I believe this is (starts as) the number of original arguments to the
-	// function with the args before funcArg all being inserted.
-	ptrdiff_t argsToPass = std::distance( funcArg, expr->args.cend() );
-
-	// Add type information args for presently unseen types in parameter list.
-	ast::vector<ast::Type>::const_iterator funcParam = funcType->params.begin();
-	// assert( funcType->params.size() == argsToPass );
-	for ( ; funcParam != funcType->params.end() && 0 < argsToPass
-			; ++funcParam, --argsToPass ) {
-		assert( 0 < argsToPass );
-		assert( argsToPass <= (ptrdiff_t)expr->args.size() );
-		ptrdiff_t index = expr->args.size() - argsToPass;
-		ast::Type const * argType = expr->args[index]->result;
-		if ( nullptr == argType ) continue;
-		arg = passArgTypeVars( expr, *funcParam, argType,
-				arg, exprTypeVars, seenTypes );
 	}
 	return arg;
 }
@@ -1536,15 +1380,8 @@ ast::ObjectDecl * makeObj(
 		{ new ast::Attribute( "unused" ) } );
 }
 
-ast::ObjectDecl * makePtr(
-		CodeLocation const & location, std::string const & name ) {
-	return new ast::ObjectDecl( location, name,
-		new ast::PointerType( makeSizeAlignType() ),
-		nullptr, ast::Storage::Classes(), ast::Linkage::C, nullptr );
-}
-
 ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl ) {
-	TypeVarMap localTypeVars = { ast::TypeData() };
+	TypeVarMap localTypeVars;
 	makeTypeVarMap( decl, localTypeVars );
 
 	auto mutDecl = mutate( decl );
@@ -1575,19 +1412,10 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 			auto alignParam = makeObj( typeParam->location, alignofName( paramName ) );
 			layoutParams.emplace_back( alignParam );
 		}
-		// TODO: These should possibly all be gone.
-		// More all assertions into parameter list.
-		for ( ast::ptr<ast::DeclWithType> & assert : mutParam->assertions ) {
-			// Assertion parameters may not be used in body,
-			// pass along with unused attribute.
-			assert.get_and_mutate()->attributes.push_back(
-				new ast::Attribute( "unused" ) );
-			inferredParams.push_back( assert );
-		}
-		mutParam->assertions.clear();
+		// Assertions should be stored in the main list.
+		assert( mutParam->assertions.empty() );
 		typeParam = mutParam;
 	}
-	// TODO: New version of inner loop.
 	for ( ast::ptr<ast::DeclWithType> & assert : mutDecl->assertions ) {
 		// Assertion parameters may not be used in body,
 		// pass along with unused attribute.
@@ -1597,40 +1425,25 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 	}
 	mutDecl->assertions.clear();
 
-	// Add size/align for generic parameter types to parameter list.
-	std::set<std::string> seenTypes;
-	ast::vector<ast::DeclWithType> otypeParams;
-	for ( ast::ptr<ast::DeclWithType> & funcParam : mutDecl->params ) {
-		ast::Type const * polyType = isPolyType( funcParam->get_type(), localTypeVars );
-		if ( !polyType || dynamic_cast<ast::TypeInstType const *>( polyType ) ) {
-			continue;
-		}
-		std::string typeName = Mangle::mangleType( polyType );
-		if ( seenTypes.count( typeName ) ) continue;
-		seenTypes.insert( typeName );
-
-		auto sizeParam = makeObj( funcParam->location, sizeofName( typeName ) );
-		otypeParams.emplace_back( sizeParam );
-
-		auto alignParam = makeObj( funcParam->location, alignofName( typeName ) );
-		otypeParams.emplace_back( alignParam );
-
-		// Zero-length arrays are illegal in C, so empty structs have no
-		// offset array.
-		if ( auto * polyStruct =
-				dynamic_cast<ast::StructInstType const *>( polyType ) ;
-				polyStruct && !polyStruct->base->members.empty() ) {
-			auto offsetParam = makePtr( funcParam->location, offsetofName( typeName ) );
-			otypeParams.emplace_back( offsetParam );
-		}
-	}
-
 	// Prepend each argument group. From last group to first. addAdapters
 	// does do the same, it just does it itself and see all other parameters.
 	spliceBegin( mutDecl->params, inferredParams );
-	spliceBegin( mutDecl->params, otypeParams );
 	spliceBegin( mutDecl->params, layoutParams );
 	addAdapters( mutDecl, localTypeVars );
+
+	// Now have to update the type to match the declaration.
+	ast::FunctionType * type = new ast::FunctionType(
+		mutDecl->type->isVarArgs, mutDecl->type->qualifiers );
+	for ( auto type_param : mutDecl->type_params ) {
+		type->forall.emplace_back( new ast::TypeInstType( type_param ) );
+	}
+	for ( auto param : mutDecl->params ) {
+		type->params.emplace_back( param->get_type() );
+	}
+	for ( auto retval : mutDecl->returns ) {
+		type->returns.emplace_back( retval->get_type() );
+	}
+	mutDecl->type = type;
 
 	return mutDecl;
 }
@@ -1664,8 +1477,6 @@ ast::FunctionDecl const * DeclAdapter::postvisit(
 			param = ast::mutate_field( obj, &ast::ObjectDecl::init, nullptr );
 		}
 	}
-	// TODO: Can this be updated as we go along?
-	mutDecl->type = makeFunctionType( mutDecl );
 	return mutDecl;
 }
 
@@ -1721,20 +1532,7 @@ ast::VariableExpr const * RewireAdapters::previsit(
 	auto it = adapters.find( expr->var->name );
 	assertf( it != adapters.end(), "Could not correct floating node." );
 	return ast::mutate_field( expr, &ast::VariableExpr::var, it->second );
-
 }
-
-// --------------------------------------------------------------------------
-// TODO: This is kind of a blind test. I believe all withExprs are handled
-// in the resolver and we could clear them out after that.
-struct RemoveWithExprs final {
-	ast::FunctionDecl const * postvisit( ast::FunctionDecl const * decl ) {
-		if ( decl->withExprs.empty() ) return decl;
-		auto mutDecl = mutate( decl );
-		mutDecl->withExprs.clear();
-		return mutDecl;
-	}
-};
 
 // --------------------------------------------------------------------------
 /// Inserts code to access polymorphic layout inforation.
@@ -1745,7 +1543,6 @@ struct RemoveWithExprs final {
 /// * Calculates polymorphic offsetof expressions from offset array.
 /// * Inserts dynamic calculation of polymorphic type layouts where needed.
 struct PolyGenericCalculator final :
-		public BoxPass,
 		public ast::WithConstTypeSubstitution,
 		public ast::WithDeclsToAdd<>,
 		public ast::WithGuards,
@@ -1753,15 +1550,12 @@ struct PolyGenericCalculator final :
 		public ast::WithVisitorRef<PolyGenericCalculator> {
 	PolyGenericCalculator();
 
-	void previsit( ast::ObjectDecl const * decl );
 	void previsit( ast::FunctionDecl const * decl );
 	void previsit( ast::TypedefDecl const * decl );
 	void previsit( ast::TypeDecl const * decl );
 	ast::Decl const * postvisit( ast::TypeDecl const * decl );
 	ast::StructDecl const * previsit( ast::StructDecl const * decl );
 	ast::UnionDecl const * previsit( ast::UnionDecl const * decl );
-	void previsit( ast::PointerType const * type );
-	void previsit( ast::FunctionType const * type );
 	ast::DeclStmt const * previsit( ast::DeclStmt const * stmt );
 	ast::Expr const * postvisit( ast::MemberExpr const * expr );
 	void previsit( ast::AddressExpr const * expr );
@@ -1785,7 +1579,7 @@ private:
 	bool findGeneric( CodeLocation const & location, ast::Type const * );
 	/// Adds type parameters to the layout call; will generate the
 	/// appropriate parameters if needed.
-	void addOTypeParamsToLayoutCall(
+	void addSTypeParamsToLayoutCall(
 		ast::UntypedExpr * layoutCall,
 		const ast::vector<ast::Type> & otypeParams );
 	/// Change the type of generic aggregate members to char[].
@@ -1793,13 +1587,12 @@ private:
 	/// Returns the calculated sizeof expression for type, or nullptr for use
 	/// C sizeof().
 	ast::Expr const * genSizeof( CodeLocation const &, ast::Type const * );
-
 	/// Enters a new scope for type-variables,
 	/// adding the type variables from the provided type.
 	void beginTypeScope( ast::Type const * );
-	/// Enters a new scope for known layouts and offsets, and queues exit calls.
-	void beginGenericScope();
 
+	/// The type variables and polymorphic parameters currently in scope.
+	TypeVarMap scopeTypeVars;
 	/// Set of generic type layouts known in the current scope,
 	/// indexed by sizeofName.
 	ScopedSet<std::string> knownLayouts;
@@ -1810,8 +1603,6 @@ private:
 	UniqueName bufNamer;
 	/// If the argument of an AddressExpr is MemberExpr, it is stored here.
 	ast::MemberExpr const * addrMember = nullptr;
-	/// Used to avoid recursing too deep in type declarations.
-	bool expect_func_type = false;
 };
 
 PolyGenericCalculator::PolyGenericCalculator() :
@@ -1833,22 +1624,9 @@ ast::Type * polyToMonoType( CodeLocation const & location,
 	return ret;
 }
 
-void PolyGenericCalculator::previsit( ast::ObjectDecl const * decl ) {
-	beginTypeScope( decl->type );
-}
-
 void PolyGenericCalculator::previsit( ast::FunctionDecl const * decl ) {
-	beginGenericScope();
+	GuardScope( *this );
 	beginTypeScope( decl->type );
-
-	// TODO: Going though dec->params does not work for some reason.
-	for ( ast::ptr<ast::Type> const & funcParam : decl->type->params ) {
-		// Condition here duplicates that in `DeclAdapter::previsit( FunctionDecl const * )`
-		ast::Type const * polyType = isPolyType( funcParam, scopeTypeVars );
-		if ( polyType && !dynamic_cast<ast::TypeInstType const *>( polyType ) ) {
-			knownLayouts.insert( Mangle::mangleType( polyType ) );
-		}
-	}
 }
 
 void PolyGenericCalculator::previsit( ast::TypedefDecl const * decl ) {
@@ -1863,7 +1641,7 @@ void PolyGenericCalculator::previsit( ast::TypeDecl const * decl ) {
 ast::Decl const * PolyGenericCalculator::postvisit(
 		ast::TypeDecl const * decl ) {
 	ast::Type const * base = decl->base;
-	if ( nullptr == base) return decl;
+	if ( nullptr == base ) return decl;
 
 	// Add size/align variables for opaque type declarations.
 	ast::TypeInstType inst( decl->name, decl );
@@ -1888,10 +1666,9 @@ ast::Decl const * PolyGenericCalculator::postvisit(
 	sizeDecl->accept( *visitor );
 	alignDecl->accept( *visitor );
 
-	// Can't use [makeVar], because it inserts into stmtsToAdd and TypeDecls
-	// can occur at global scope.
+	// A little trick to replace this with two declarations.
+	// Adding after makes sure that there is no conflict with adding stmts.
 	declsToAddAfter.push_back( alignDecl );
-	// replace with sizeDecl.
 	return sizeDecl;
 }
 
@@ -1909,33 +1686,6 @@ ast::UnionDecl const * PolyGenericCalculator::previsit(
 	return mutDecl;
 }
 
-void PolyGenericCalculator::previsit( ast::PointerType const * type ) {
-	beginTypeScope( type );
-}
-
-void PolyGenericCalculator::previsit( ast::FunctionType const * type ) {
-	beginTypeScope( type );
-
-	GuardValue( expect_func_type );
-	GuardScope( *this );
-
-	// The other functions type we will see in this scope are probably
-	// function parameters they don't help us with the layout and offsets so
-	// don't mark them as known in this scope.
-	expect_func_type = false;
-
-	// Make sure that any type information passed into the function is
-	// accounted for.
-	for ( ast::ptr<ast::Type> const & funcParam : type->params ) {
-		// Condition here duplicates that in `DeclAdapter::previsit( FunctionDecl const * )`
-		ast::Type const * polyType = isPolyType( funcParam, scopeTypeVars );
-		if ( polyType && !dynamic_cast<ast::TypeInstType const *>( polyType ) ) {
-			knownLayouts.insert( Mangle::mangleType( polyType ) );
-		}
-	}
-}
-
-//void PolyGenericCalculator::previsit( ast::DeclStmt const * stmt ) {
 ast::DeclStmt const * PolyGenericCalculator::previsit( ast::DeclStmt const * stmt ) {
 	ast::ObjectDecl const * decl = stmt->decl.as<ast::ObjectDecl>();
 	if ( !decl || !findGeneric( decl->location, decl->type ) ) {
@@ -1943,8 +1693,7 @@ ast::DeclStmt const * PolyGenericCalculator::previsit( ast::DeclStmt const * stm
 	}
 
 	// Change initialization of a polymorphic value object to allocate via a
-	// variable-length-array (alloca was previouly used, but it cannot be
-	// safely used in loops).
+	// variable-length-array (alloca cannot be safely used in loops).
 	ast::ObjectDecl * newBuf = new ast::ObjectDecl( decl->location,
 		bufNamer.newName(),
 		polyToMonoType( decl->location, decl->type ),
@@ -2025,9 +1774,8 @@ ast::Expr * makeOffsetIndex( CodeLocation const & location,
 ast::Expr const * PolyGenericCalculator::postvisit(
 		ast::MemberExpr const * expr ) {
 	// Only mutate member expressions for polymorphic types.
-	int typeDepth;
 	ast::Type const * objectType = hasPolyBase(
-		expr->aggregate->result, scopeTypeVars, &typeDepth
+		expr->aggregate->result, scopeTypeVars
 	);
 	if ( !objectType ) return expr;
 	// Ensure layout for this type is available.
@@ -2105,7 +1853,7 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 		return expr;
 	}
 	// MemberExpr was converted to pointer + offset; and it is not valid C to
-	// take the address of an addition, so stript the address-of.
+	// take the address of an addition, so strip away the address-of.
 	// It also preserves the env value.
 	return ast::mutate_field( expr->arg.get(), &ast::Expr::env, expr->env );
 }
@@ -2306,7 +2054,7 @@ bool PolyGenericCalculator::findGeneric(
 					new ast::VariableExpr( location, offsetofVar ),
 				} );
 
-			addOTypeParamsToLayoutCall( layoutCall, sizedParams );
+			addSTypeParamsToLayoutCall( layoutCall, sizedParams );
 
 			stmtsToAddBefore.emplace_back(
 				new ast::ExprStmt( location, layoutCall ) );
@@ -2347,7 +2095,7 @@ bool PolyGenericCalculator::findGeneric(
 					new ast::VariableExpr( location, alignofVar ) ),
 			} );
 
-		addOTypeParamsToLayoutCall( layoutCall, sizedParams );
+		addSTypeParamsToLayoutCall( layoutCall, sizedParams );
 
 		stmtsToAddBefore.emplace_back(
 			new ast::ExprStmt( location, layoutCall ) );
@@ -2357,7 +2105,7 @@ bool PolyGenericCalculator::findGeneric(
 	return false;
 }
 
-void PolyGenericCalculator::addOTypeParamsToLayoutCall(
+void PolyGenericCalculator::addSTypeParamsToLayoutCall(
 		ast::UntypedExpr * layoutCall,
 		const ast::vector<ast::Type> & otypeParams ) {
 	CodeLocation const & location = layoutCall->location;
@@ -2426,22 +2174,13 @@ void PolyGenericCalculator::beginTypeScope( ast::Type const * type ) {
 	makeTypeVarMap( type, scopeTypeVars );
 }
 
-void PolyGenericCalculator::beginGenericScope() {
-	GuardScope( *this );
-	// We expect the first function type see to be the type relating to this
-	// scope but any further type is probably some unrelated function pointer
-	// keep track of whrich is the first.
-	GuardValue( expect_func_type ) = true;
-}
-
 // --------------------------------------------------------------------------
-/// No common theme found.
+/// Removes unneeded or incorrect type information.
 /// * Replaces initialization of polymorphic values with alloca.
 /// * Replaces declaration of dtype/ftype with appropriate void expression.
 /// * Replaces sizeof expressions of polymorphic types with a variable.
 /// * Strips fields from generic structure declarations.
 struct Eraser final :
-		public BoxPass,
 		public ast::WithGuards {
 	void guardTypeVarMap( ast::Type const * type ) {
 		GuardScope( scopeTypeVars );
@@ -2456,6 +2195,8 @@ struct Eraser final :
 	void previsit( ast::TypeDecl const * decl );
 	void previsit( ast::PointerType const * type );
 	void previsit( ast::FunctionType const * type );
+public:
+	TypeVarMap scopeTypeVars;
 };
 
 ast::ObjectDecl const * Eraser::previsit( ast::ObjectDecl const * decl ) {
@@ -2510,7 +2251,6 @@ void box( ast::TranslationUnit & translationUnit ) {
 	ast::Pass<CallAdapter>::run( translationUnit );
 	ast::Pass<DeclAdapter>::run( translationUnit );
 	ast::Pass<RewireAdapters>::run( translationUnit );
-	ast::Pass<RemoveWithExprs>::run( translationUnit );
 	ast::Pass<PolyGenericCalculator>::run( translationUnit );
 	ast::Pass<Eraser>::run( translationUnit );
 }

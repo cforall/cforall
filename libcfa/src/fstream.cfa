@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 18 10:41:17 2023
-// Update Count     : 541
+// Last Modified On : Wed Oct 18 22:05:54 2023
+// Update Count     : 549
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -229,8 +229,6 @@ void clear( ifstream & is ) { clearerr( (FILE *)(is.file$) ); }
 void nlOn( ifstream & os ) { os.nlOnOff$ = true; }
 void nlOff( ifstream & os ) { os.nlOnOff$ = false; }
 
-void ends( ifstream & is ) {}
-
 bool eof( ifstream & is ) { return feof( (FILE *)(is.file$) ) != 0; }
 
 void open( ifstream & is, const char name[], const char mode[] ) {
@@ -310,6 +308,7 @@ int fmt( ifstream & is, const char format[], ... ) {
 		} // if
 	} // if
 	va_end( args );
+//	if ( len == 0 ) throw ExceptionInst( missing_data );
 	return len;
 } // fmt
 

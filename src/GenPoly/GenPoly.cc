@@ -272,7 +272,7 @@ const ast::BaseInstType *isDynRet(
 const ast::BaseInstType *isDynRet( const ast::FunctionType * func ) {
 	if ( func->returns.empty() ) return nullptr;
 
-	TypeVarMap forallTypes = { ast::TypeData() };
+	TypeVarMap forallTypes;
 	makeTypeVarMap( func, forallTypes );
 	return isDynType( func->returns.front(), forallTypes );
 }
@@ -800,7 +800,7 @@ bool needsBoxing(
 		const ast::TypeSubstitution * subst ) {
 	const ast::FunctionType * function = getFunctionType( expr->func->result );
 	assertf( function, "ApplicationExpr has non-function type: %s", toString( expr->func->result ).c_str() );
-	TypeVarMap exprTyVars = { ast::TypeData() };
+	TypeVarMap exprTyVars;
 	makeTypeVarMap( function, exprTyVars );
 	return needsBoxing( param, arg, exprTyVars, subst );
 }

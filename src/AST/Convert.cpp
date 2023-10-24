@@ -268,7 +268,7 @@ private:
 			node->name,
 			node->location,
 			Type::StorageClasses( node->storage.val ),
-            get<Type>().accept1( node->base ),
+			get<Type>().accept1( node->base ),
 			LinkageSpec::Spec( node->linkage.val )
 		);
 		return namedTypePostamble( decl, node );
@@ -566,7 +566,7 @@ private:
 		return stmtPostamble( stmt, node );
 	}
 
-    const ast::WhenClause * visit( const ast::WhenClause * node ) override final {
+	const ast::WhenClause * visit( const ast::WhenClause * node ) override final {
 		// There is no old-AST WhenClause, so this should never be called.
 		assert( !node );
 		return nullptr;
@@ -603,8 +603,8 @@ private:
 		return nullptr;
 	}
 
-    const ast::Stmt * visit( const ast::WaitUntilStmt * node ) override final {
-        // There is no old-AST WaitUntilStmt, so this should never be called.
+	const ast::Stmt * visit( const ast::WaitUntilStmt * node ) override final {
+		// There is no old-AST WaitUntilStmt, so this should never be called.
 		assert( !node );
 		return nullptr;
 	}
@@ -647,6 +647,12 @@ private:
 		 	get<Expression>().acceptL( node->mutexObjs )
 		);
 		return stmtPostamble( stmt, node );
+	}
+
+	const ast::Stmt * visit( const ast::CorunStmt * node ) override final {
+		// There is no old-AST CorunStmt, so this should never be called.
+		assert( !node );
+		return nullptr;
 	}
 
 	TypeSubstitution * convertTypeSubstitution(const ast::TypeSubstitution * src) {
@@ -852,13 +858,13 @@ private:
 		// Old world:   two types: rslt->constant.type, rslt->result
 		// New workd:   one public type: node->result, plus node->underlyer only to support roundtrip conversion
 		//              preserving underlyer because the correct type for string literals is complicated to construct,
-	    //              and distinguishing a string from other literals using the type is hard to do accurately
+		//              and distinguishing a string from other literals using the type is hard to do accurately
 		// Both worlds: the outer, expression-level type can change during resolution
 		//              for a string, that's char[k] before-resolve and char * after
 		// Old world:   the inner Constant type stays what it was built with
 		//              for a string, that's char[k] always
 		// Both worlds: the "rep" field of a constant is the C source file fragment that compiles to the desired value
-        //              for a string, that includes outer quotes, backslashes, et al cases from the Literals test
+		//              for a string, that includes outer quotes, backslashes, et al cases from the Literals test
 		ConstantExpr *rslt = new ConstantExpr(Constant(
 			get<Type>().accept1(node->underlyer),
 			node->rep,
@@ -1517,7 +1523,7 @@ public:
 	ast::Decl * decl() {
 		return strict_dynamic_cast< ast::Decl * >( node );
 	}
-	
+
 	ConverterOldToNew() = default;
 	ConverterOldToNew(const ConverterOldToNew &) = delete;
 	ConverterOldToNew(ConverterOldToNew &&) = delete;
@@ -1580,7 +1586,7 @@ private:
 
 	ast::Label make_label(const Label* old) {
 		CodeLocation const & location =
-		    ( old->labelled ) ? old->labelled->location : CodeLocation();
+			( old->labelled ) ? old->labelled->location : CodeLocation();
 		return ast::Label(
 			location,
 			old->name,
@@ -2239,7 +2245,6 @@ private:
 
 	// TypeSubstitution shouldn't exist yet in old.
 	ast::TypeSubstitution * convertTypeSubstitution(const TypeSubstitution * old) {
-		
 		if (!old) return nullptr;
 		if (old->empty()) return nullptr;
 		assert(false);
@@ -2284,7 +2289,7 @@ private:
 
 	ast::Expr * visitBaseExpr_SkipResultType( const Expression * old, ast::Expr * nw) {
 
-		nw->env    = convertTypeSubstitution(old->env);
+		nw->env = convertTypeSubstitution(old->env);
 
 		nw->extension = old->extension;
 		convertInferUnion(nw->inferred, old->inferParams, old->resnSlots);
@@ -2855,7 +2860,7 @@ private:
 	}
 
 	virtual void visit( const EnumInstType * old ) override final {
-		ast::EnumInstType * ty; 
+		ast::EnumInstType * ty;
 		if ( old->baseEnum ) {
 			ty = new ast::EnumInstType{
 				GET_ACCEPT_1( baseEnum, EnumDecl ),

@@ -124,7 +124,7 @@ def parse_args():
 	parser.add_argument('--regenerate-expected', help='Regenerate the .expect by running the specified tets, can be used with --all option', action='store_true')
 	parser.add_argument('--archive-errors', help='If called with a valid path, on test crashes the test script will copy the core dump and the executable to the specified path.', type=str, default='')
 	parser.add_argument('-j', '--jobs', help='Number of tests to run simultaneously, 0 (default) for unlimited', nargs='?', const=0, type=int)
-	parser.add_argument('--list-comp', help='List all valide arguments', action='store_true')
+	parser.add_argument('--list-comp', help='List all valid arguments', action='store_true')
 	parser.add_argument('--list-dist', help='List all tests for distribution', action='store_true')
 	parser.add_argument('-I','--include', help='Directory of test to include, can be used multiple time, All  if omitted', action='append')
 	parser.add_argument('-E','--exclude', help='Directory of test to exclude, can be used multiple time, None if omitted', action='append')

@@ -15,7 +15,30 @@ void __Cofor__( ssize_t low, ssize_t high, __cofor_body_t loop_body );
 	}
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// parallel (COBEGIN/COEND)
-typedef void (*parallel_stmt_t)( void * );
+// corun
 
-void parallel( parallel_stmt_t * stmts, void ** args, size_t num );
+// 
+typedef void (*__CFA_corun_lambda_t)( void );
+
+// used to run a corun statement in parallel
+thread co_runner {
+	__CFA_corun_lambda_t body;
+};
+
+// wraps a co_runner to provide RAII deallocation
+struct runner_block {
+    co_runner * runner;
+};
+static inline void ?{}( co_runner & this, __CFA_corun_lambda_t body ) { this.body = body; }
+
+void main( co_runner & this ) with( this ) { body(); }
+
+static inline void ?{}( runner_block & this ) {}
+static inline void ?{}( runner_block & this, __CFA_corun_lambda_t body ) {
+    (*(this.runner = malloc())){ body };
+}
+
+static inline void ^?{}( runner_block & this ) {
+    delete( this.runner );
+}
+

@@ -32,7 +32,9 @@ namespace ast {
 namespace GenPoly {
 
 	typedef ErasableScopedMap< std::string, TypeDecl::Data > TyVarMap;
-	using TypeVarMap = ErasableScopedMap< ast::TypeEnvKey, ast::TypeData >;
+	struct TypeVarMap : public ErasableScopedMap<ast::TypeEnvKey, ast::TypeData> {
+		TypeVarMap() : ErasableScopedMap( ast::TypeData() ) {}
+	};
 
 	/// Replaces a TypeInstType by its referrent in the environment, if applicable
 	Type* replaceTypeInst( Type* type, const TypeSubstitution* env );

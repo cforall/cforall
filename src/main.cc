@@ -45,6 +45,7 @@
 #include "Common/Stats.h"                   // for Stats
 #include "Common/utility.h"                 // for deleteAll, filter, printAll
 #include "Concurrency/Actors.hpp"           // for implementActors
+#include "Concurrency/Corun.hpp"            // for implementCorun
 #include "Concurrency/Keywords.h"           // for implementMutex, implement...
 #include "Concurrency/Waitfor.h"            // for generateWaitfor
 #include "Concurrency/Waituntil.hpp"        // for generateWaitUntil
@@ -61,6 +62,7 @@
 #include "MakeLibCfa.h"                     // for makeLibCfa
 #include "Parser/RunParser.hpp"             // for buildList, dumpParseTree,...
 #include "ResolvExpr/CandidatePrinter.hpp"  // for printCandidates
+#include "ResolvExpr/EraseWith.hpp"         // for eraseWith
 #include "ResolvExpr/Resolver.h"            // for resolve
 #include "SynTree/LinkageSpec.h"            // for Spec, Cforall, Intrinsic
 #include "SynTree/Declaration.h"            // for Declaration
@@ -343,6 +345,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Fix Return Statements", InitTweak::fixReturnStatements, transUnit );
 		PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords, transUnit );
 		PASS( "Fix Unique Ids", Validate::fixUniqueIds, transUnit );
+		PASS( "Implement Corun", Concurrency::implementCorun, transUnit );
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls, transUnit );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines, transUnit );
@@ -395,6 +398,7 @@ int main( int argc, char * argv[] ) {
 		DUMP( exprp, std::move( transUnit ) );
 
 		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() );
+		PASS( "Erase With", ResolvExpr::eraseWith, transUnit );
 
 		// fix ObjectDecl - replaces ConstructorInit nodes
 		DUMP( ctorinitp, std::move( transUnit ) );

@@ -1720,7 +1720,7 @@ waituntil_statement:
 
 corun_statement:
 	CORUN statement
-		{ SemanticError( yylloc, "corun statement is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new StatementNode( build_corun( yylloc, $2 ) ); }
 	;
 
 cofor_statement:

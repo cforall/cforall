@@ -497,6 +497,11 @@ ast::Stmt * build_mutex( const CodeLocation & location, ExpressionNode * exprs, 
 	return new ast::MutexStmt( location, body, std::move( expList ) );
 } // build_mutex
 
+ast::Stmt * build_corun( const CodeLocation & location, StatementNode * stmt ) {
+	ast::Stmt * body = maybeMoveBuild( stmt );
+	return new ast::CorunStmt( location, body );
+} // build_corun
+
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

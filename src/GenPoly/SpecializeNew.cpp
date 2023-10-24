@@ -80,26 +80,22 @@ bool isTupleStructureMatching( const ast::Type * t0, const ast::Type * t1 ) {
 	return (!tt0 && !tt1);
 }
 
-// The number of elements in a type if it is a flattened tuple.
-size_t flatTupleSize( const ast::Type * type ) {
-	if ( auto tuple = dynamic_cast<const ast::TupleType *>( type ) ) {
-		size_t sum = 0;
-		for ( auto t : *tuple ) {
-			sum += flatTupleSize( t );
+// The number of elements in a list, if all tuples had been flattened.
+size_t flatTypeListSize( const std::vector<ast::ptr<ast::Type>> & types ) {
+	size_t sum = 0;
+	for ( const ast::ptr<ast::Type> & type : types ) {
+		if ( const ast::TupleType * tuple = type.as<ast::TupleType>() ) {
+			sum += flatTypeListSize( tuple->types );
+		} else {
+			sum += 1;
 		}
-		return sum;
-	} else {
-		return 1;
 	}
+	return sum;
 }
 
 // Find the total number of components in a parameter list.
 size_t functionParameterSize( const ast::FunctionType * type ) {
-	size_t sum = 0;
-	for ( auto param : type->params ) {
-		sum += flatTupleSize( param );
-	}
-	return sum;
+	return flatTypeListSize( type->params );
 }
 
 bool needsPolySpecialization(

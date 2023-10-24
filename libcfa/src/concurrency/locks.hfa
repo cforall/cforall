@@ -181,16 +181,39 @@ struct mcs_spin_lock {
 
 static inline void lock( mcs_spin_lock & l, mcs_spin_node & n ) {
     n.locked = true;
+
+	#if defined(__ARM_ARCH)
+	__asm__ __volatile__ ( "DMB ISH" ::: );
+	#endif
+
 	mcs_spin_node * prev = __atomic_exchange_n(&l.queue.tail, &n, __ATOMIC_SEQ_CST);
 	if( prev == 0p ) return;
 	prev->next = &n;
+	
+	#if defined(__ARM_ARCH)
+	__asm__ __volatile__ ( "DMB ISH" ::: );
+	#endif
+
 	while( __atomic_load_n(&n.locked, __ATOMIC_RELAXED) ) Pause();
+
+	#if defined(__ARM_ARCH)
+	__asm__ __volatile__ ( "DMB ISH" ::: );
+	#endif
 }
 
 static inline void unlock(mcs_spin_lock & l, mcs_spin_node & n) {
+	#if defined(__ARM_ARCH)
+	__asm__ __volatile__ ( "DMB ISH" ::: );
+	#endif
+
 	mcs_spin_node * n_ptr = &n;
 	if (__atomic_compare_exchange_n(&l.queue.tail, &n_ptr, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) return;
 	while (__atomic_load_n(&n.next, __ATOMIC_RELAXED) == 0p) Pause();
+
+	#if defined(__ARM_ARCH)
+	__asm__ __volatile__ ( "DMB ISH" ::: );
+	#endif
+
 	n.next->locked = false;
 }
 

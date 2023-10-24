@@ -27,6 +27,9 @@ static inline bool block( dlist( select_node ) & queue, void * elem_ptr, go_mute
     insert_last( queue, sn );
     unlock( lock );
     park();
+    #if defined(__ARM_ARCH)
+    __atomic_thread_fence( __ATOMIC_SEQ_CST );
+    #endif
     return sn.extra == 0p;
 }
 
@@ -129,12 +132,18 @@ static inline void is_closed( channel(T) & chan ) with(chan) { return closed; }
 // used to hand an element to a blocked consumer and signal it
 static inline void __cons_handoff( channel(T) & chan, T & elem ) with(chan) {
     memcpy( cons`first.extra, (void *)&elem, sizeof(T) ); // do waiting consumer work
+    #if defined(__ARM_ARCH)
+    __atomic_thread_fence( __ATOMIC_SEQ_CST );
+    #endif
     wake_one( cons );
 }
 
 // used to hand an element to a blocked producer and signal it
 static inline void __prods_handoff( channel(T) & chan, T & retval ) with(chan) {
     memcpy( (void *)&retval, prods`first.extra, sizeof(T) );
+    #if defined(__ARM_ARCH)
+    __atomic_thread_fence( __ATOMIC_SEQ_CST );
+    #endif
     wake_one( prods );
 }
 

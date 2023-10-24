@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  2 14:42:13 2023
-// Update Count     : 567
+// Last Modified On : Wed Oct 18 21:21:20 2023
+// Update Count     : 583
 //
 
 #pragma once
@@ -242,7 +242,7 @@ INTEGRAL_FMT_DECL( unsigned int128, 'u' )
 static inline { \
 	_Ostream_Manip(T) hex( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'a', { .all : 0 } }; } \
 	_Ostream_Manip(T) sci( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'e', { .all : 0 } }; } \
-	_Ostream_Manip(T) eng( T val ) { return (_Ostream_Manip(T))@{ val, 1, 0, 'g', { .flags.eng : true } }; } \
+	_Ostream_Manip(T) eng( T val ) { return (_Ostream_Manip(T))@{ val, 1, -1, 'g', { .flags.eng : true } }; } \
 	_Ostream_Manip(T) wd( unsigned int w, T val ) { return (_Ostream_Manip(T))@{ val, w, 0, 'g', { .all : 0 } }; } \
 	_Ostream_Manip(T) wd( unsigned int w, unsigned int pc, T val ) { return (_Ostream_Manip(T))@{ val, w, pc, 'f', { .flags.pc : true } }; } \
 	_Ostream_Manip(T) ws( unsigned int w, unsigned int pc, T val ) { return (_Ostream_Manip(T))@{ val, w, pc, 'g', { .flags.pc : true } }; } \
@@ -305,12 +305,6 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 // *********************************** istream ***********************************
 
-#define ISTYPE_VOID( T ) void ?|?( istype &, T )
-#define ISTYPE_VOID_IMPL( T ) \
-	void ?|?( istype & is, T t ) { \
-		(istype &)(is | t); ends( is ); \
-	} // ?|?
-
 forall( istype & )
 trait basic_istream {
 	// private
@@ -319,16 +313,16 @@ trait basic_istream {
 	// public
 	void nlOn( istype & );								// read newline
 	void nlOff( istype & );								// scan newline
-	void ends( istype & os );							// end of output statement
 	int fmt( istype &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
 	istype & ungetc( istype &, char );
 	bool eof( istype & );
+	void clear( istype & );
 }; // basic_istream
 
 forall( istype & | basic_istream( istype ) )
 trait istream {
 	bool fail( istype & );
-	void clear( istype & );
+	void open( istype & is, const char name[], const char mode[] );
 	void open( istype & is, const char name[] );
 	void close( istype & is );
 	istype & read( istype &, char [], size_t );
@@ -341,58 +335,36 @@ trait readable {
 
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype &, bool & );
-	ISTYPE_VOID( bool & );
 
 	istype & ?|?( istype &, char & );
-	ISTYPE_VOID( char & );
 	istype & ?|?( istype &, signed char & );
-	ISTYPE_VOID( signed char & );
 	istype & ?|?( istype &, unsigned char & );
-	ISTYPE_VOID( unsigned char & );
 
 	istype & ?|?( istype &, short int & );
-	ISTYPE_VOID( short int & );
 	istype & ?|?( istype &, unsigned short int & );
-	ISTYPE_VOID( unsigned short int & );
 	istype & ?|?( istype &, int & );
-	ISTYPE_VOID( int & );
 	istype & ?|?( istype &, unsigned int & );
-	ISTYPE_VOID( unsigned int & );
 	istype & ?|?( istype &, long int & );
-	ISTYPE_VOID( long int & );
 	istype & ?|?( istype &, unsigned long int & );
-	ISTYPE_VOID( unsigned long int & );
 	istype & ?|?( istype &, long long int & );
-	ISTYPE_VOID( long long int & );
 	istype & ?|?( istype &, unsigned long long int & );
-	ISTYPE_VOID( unsigned long long int & );
 	#if defined( __SIZEOF_INT128__ )
 	istype & ?|?( istype &, int128 & );
-	ISTYPE_VOID( int128 & );
 	istype & ?|?( istype &, unsigned int128 & );
-	ISTYPE_VOID( unsigned int128 & );
 	#endif // __SIZEOF_INT128__
 
 	istype & ?|?( istype &, float & );
-	ISTYPE_VOID( float & );
 	istype & ?|?( istype &, double & );
-	ISTYPE_VOID( double & );
 	istype & ?|?( istype &, long double & );
-	ISTYPE_VOID( long double & );
 
 	istype & ?|?( istype &, float _Complex & );
-	ISTYPE_VOID( float _Complex & );
 	istype & ?|?( istype &, double _Complex & );
-	ISTYPE_VOID( double _Complex & );
 	istype & ?|?( istype &, long double _Complex & );
-	ISTYPE_VOID( long double _Complex & );
 
 	istype & ?|?( istype &, const char [] );
-	ISTYPE_VOID( const char [] );
 
 	// manipulators
 	istype & ?|?( istype &, istype & (*)( istype & ) );
-	ISTYPE_VOID( istype & (*)( istype & ) );
 	istype & nl( istype & is );
 	istype & nlOn( istype & );
 	istype & nlOff( istype & );
@@ -401,9 +373,11 @@ forall( istype & | basic_istream( istype ) ) {
 // *********************************** exceptions ***********************************
 
 ExceptionDecl( cstring_length );
+ExceptionDecl( missing_data );
 
 // *********************************** manipulators ***********************************
 
+// skip does not compose with other C string manipulators.
 struct _Istream_Cskip {
 	const char * scanset;
 	unsigned wd;										// scan width
@@ -415,7 +389,6 @@ static inline {
 } // distribution
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cskip f );
-	ISTYPE_VOID( _Istream_Cskip );
 }
 
 struct _Istream_str_base {
@@ -457,7 +430,6 @@ static inline {
 } // distribution
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cstr f );
-	ISTYPE_VOID( _Istream_Cstr );
 }
 
 struct _Istream_Char {
@@ -470,7 +442,6 @@ static inline {
 } // distribution
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Char f );
-	ISTYPE_VOID( _Istream_Char );
 }
 
 forall( T & | sized( T ) )
@@ -489,7 +460,6 @@ static inline { \
 } /* distribution */ \
 forall( istype & | basic_istream( istype ) ) { \
 	istype & ?|?( istype & is, _Istream_Manip(T) f ); \
-	ISTYPE_VOID( _Istream_Manip(T) ); \
 } // ?|?
 
 INPUT_FMT_DECL( signed char )

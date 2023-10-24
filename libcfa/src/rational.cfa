@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:54:28 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 18 11:07:10 2023
-// Update Count     : 197
+// Last Modified On : Fri Oct  6 07:52:13 2023
+// Update Count     : 198
 //
 
 #include "rational.hfa"
@@ -75,8 +75,8 @@ forall( T | arithmetic( T ) ) {
 		return r.denominator;
 	} // denominator
 
-	[ T, T ] ?=?( & [ T, T ] dest, rational(T) src ) {
-		return dest = src.[ numerator, denominator ];
+	[ T, T ] ?=?( & [ T, T ] dst, rational(T) src ) {
+		return dst = src.[ numerator, denominator ];
 	} // ?=?
 
 	// setter for numerator/denominator

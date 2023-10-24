@@ -1156,11 +1156,11 @@ namespace CodeGen {
 	}
 
 	void CodeGenerator::postvisit( WithStmt * with ) {
-		if ( ! options.genC ) {
-			output << "with ( ";
-			genCommaList( with->exprs.begin(), with->exprs.end() );
-			output << " ) ";
-		}
+		assertf( ! options.genC, "WithStmts should not reach code generation." );
+
+		output << "with ( ";
+		genCommaList( with->exprs.begin(), with->exprs.end() );
+		output << " ) ";
 		with->stmt->accept( *visitor );
 	}
 

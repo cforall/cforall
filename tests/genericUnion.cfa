@@ -9,39 +9,41 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 25 14:42:46 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 25 14:46:33 2018
-// Update Count     : 2
+// Last Modified On : Fri Oct 20 09:13:26 2023
+// Update Count     : 15
 // 
 
+#include <fstream.hfa>
 #include <limits.hfa>
 
-forall(T)
+forall( T )
 union ByteView {
 	T val;
 	char bytes[(sizeof(int))];							// want to change to sizeof(T)
 };
 
 forall(T)
-void print(ByteView(T) x) {
-	for (int i = 0; i < sizeof(int); i++) {				// want to change to sizeof(T)
-		printf("%02x", x.bytes[i] & 0xff);
+void print( ByteView(T) x ) {
+	for ( i; sizeof(int) ) {							// want to change to sizeof(T)
+		sout | nobase( pad0( wd( 2, hex( x.bytes[i] & 0xff ) ) ) ) | nosep;
 	}
 }
 
 forall(T)
-void f(ByteView(T) x, T val) {
-	print(x);
-	printf(" ");
+void f( ByteView(T) x, T val ) {
+	print( x );
+	sout | " ";
 	x.val = val;
-	print(x);
-	printf("\n");
+	print( x );
+	sout | nl;
 }
 
 int main() {
+	sout | nlOff;
 	ByteView(unsigned) u = { 0 };
 	ByteView(int) i = { 0 };
-	f(u, MAX);
-	f(i, -1);
+	f( u, MAX );
+	f( i, -1 );
 }
 
 // Local Variables: //

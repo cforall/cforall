@@ -9818,7 +9818,7 @@ yyreduce:
 
   case 367:
 #line 1723 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "corun statement is currently unimplemented." ); (yyval.stmt) = nullptr; }
+                { (yyval.stmt) = new StatementNode( build_corun( yylloc, (yyvsp[0].stmt) ) ); }
 #line 9823 "Parser/parser.cc"
     break;
 

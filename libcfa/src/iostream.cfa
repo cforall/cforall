@@ -1,4 +1,3 @@
-
 //
 // Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
 //
@@ -10,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  2 14:42:01 2023
-// Update Count     : 1561
+// Last Modified On : Thu Oct 19 21:10:10 2023
+// Update Count     : 1801
 //
 
 #include "iostream.hfa"
@@ -650,7 +649,7 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 		if ( exp10 < 0 ) exp10 -= 2; \
 		exp10 = floor( exp10, 3 ); \
 		value *= pow( 10.0, -exp10 ); \
-		if ( pc <= 3 ) pc = 3; \
+		if ( pc < 0 ) pc = 3; \
 	} /* eng */ \
 \
 	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ) { \
@@ -784,7 +783,6 @@ forall( istype & | basic_istream( istype ) ) {
 		} // if
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( bool & )
 
 	istype & ?|?( istype & is, char & c ) {
 		char temp;
@@ -796,73 +794,61 @@ forall( istype & | basic_istream( istype ) ) {
 		} // for
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( char & )
 
 	istype & ?|?( istype & is, signed char & sc ) {
 		fmt( is, "%hhi", &sc );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( signed char & )
 
 	istype & ?|?( istype & is, unsigned char & usc ) {
 		fmt( is, "%hhi", &usc );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( unsigned char & )
 
 	istype & ?|?( istype & is, short int & si ) {
 		fmt( is, "%hi", &si );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( short int & )
 
 	istype & ?|?( istype & is, unsigned short int & usi ) {
 		fmt( is, "%hi", &usi );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( unsigned short int & )
 
 	istype & ?|?( istype & is, int & i ) {
 		fmt( is, "%i", &i );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( int & )
 
 	istype & ?|?( istype & is, unsigned int & ui ) {
 		fmt( is, "%i", &ui );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( unsigned int & )
 
 	istype & ?|?( istype & is, long int & li ) {
 		fmt( is, "%li", &li );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( long int & )
 
 	istype & ?|?( istype & is, unsigned long int & ulli ) {
 		fmt( is, "%li", &ulli );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( unsigned long int & )
 
 	istype & ?|?( istype & is, long long int & lli ) {
 		fmt( is, "%lli", &lli );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( long long int & )
 
 	istype & ?|?( istype & is, unsigned long long int & ulli ) {
 		fmt( is, "%lli", &ulli );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( unsigned long long int & )
 
 	#if defined( __SIZEOF_INT128__ )
 	istype & ?|?( istype & is, int128 & llli ) {
 		return (istype &)(is | (unsigned int128 &)llli);
 	} // ?|?
-	ISTYPE_VOID_IMPL( int128 & )
 
 	istype & ?|?( istype & is, unsigned int128 & ullli ) {
 		char s[40];
@@ -879,26 +865,22 @@ forall( istype & | basic_istream( istype ) ) {
 		} else if ( sign ) ungetc( is, '-' );			// return minus when no digits
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( unsigned int128 & )
 	#endif // __SIZEOF_INT128__
 
 	istype & ?|?( istype & is, float & f ) {
 		fmt( is, "%f", &f );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( float & )
 
 	istype & ?|?( istype & is, double & d ) {
 		fmt( is, "%lf", &d );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( double & )
 
 	istype & ?|?( istype & is, long double & ld ) {
 		fmt( is, "%Lf", &ld );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( long double & )
 
 	istype & ?|?( istype & is, float _Complex & fc ) {
 		float re, im;
@@ -906,7 +888,6 @@ forall( istype & | basic_istream( istype ) ) {
 		fc = re + im * _Complex_I;
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( float _Complex & )
 
 	istype & ?|?( istype & is, double _Complex & dc ) {
 		double re, im;
@@ -914,7 +895,6 @@ forall( istype & | basic_istream( istype ) ) {
 		dc = re + im * _Complex_I;
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( double _Complex & )
 
 	istype & ?|?( istype & is, long double _Complex & ldc ) {
 		long double re, im;
@@ -922,13 +902,11 @@ forall( istype & | basic_istream( istype ) ) {
 		ldc = re + im * _Complex_I;
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( long double _Complex & )
 
 	istype & ?|?( istype & is, const char fmt[] ) {
 		fmt( is, fmt, "" );
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( const char * )
 
 	// manipulators
 	istype & ?|?( istype & is, istype & (* manip)( istype & ) ) {
@@ -936,7 +914,7 @@ forall( istype & | basic_istream( istype ) ) {
 	} // ?|?
 
 	void ?|?( istype & is, istype & (* manip)( istype & ) ) {
-		manip( is ); ends( is );
+		manip( is );
 	} // ?|?
 
 	istype & nl( istype & is ) {
@@ -965,103 +943,115 @@ forall( istype & | basic_istream( istype ) ) {
 			int nscanset = strlen(f.scanset);
 			char fmtstr[ sizeof("%*[]") + nscanset ];
 			int pos = 0;
-			fmtstr[pos] = '%';                  pos += 1;
-			fmtstr[pos] = '*';                  pos += 1;
-			fmtstr[pos] = '[';                  pos += 1;
+			strcpy( &fmtstr[pos], "%*[" );  pos += 3;
 			strcpy( &fmtstr[pos], f.scanset );  pos += nscanset;
-			fmtstr[pos] = ']';                  pos += 1;
-			fmtstr[pos] = '\0';
-			fmt( is, fmtstr, (void*)0 );  // last arg is dummy: suppress gcc warning
-		}
-		else for ( f.wd ) fmt( is, "%*c" );
+			strcpy( &fmtstr[pos], "]" );
+			fmt( is, fmtstr, "" );						// skip scanset
+		} else {
+			char ch;
+//			fprintf( stderr, "skip " );
+			for ( f.wd ) {								// skip N characters
+			  if ( eof( is ) ) break;
+				fmt( is, "%c", &ch );
+//				fprintf( stderr, "`%c' ", ch );
+			} // for
+		} // if
 		return is;
 	}
-	ISTYPE_VOID_IMPL( _Istream_Cskip )
 
 	istype & ?|?( istype & is, _Istream_Cstr f ) {
-		const char * scanset = f.scanset;
+		const char * scanset;
+		size_t nscanset = 0;
 		if ( f.flags.delimiter ) scanset = f.delimiter;	// getline ?
+		else scanset = f.scanset;
+		if ( scanset ) nscanset = strlen( scanset );
 
-		size_t len = 0;
-		if ( scanset ) len = strlen( scanset );
-		char fmtstr[len + 16];
-		int start = 1;
+		char fmtstr[nscanset + 32];						// storage for scanset and format codes
 		fmtstr[0] = '%';
-		if ( f.flags.ignore ) { fmtstr[1] = '*'; start += 1; }
-		// no maximum width necessary because text ignored => width is read width
-		if ( f.wd != -1 ) {
+
+		int pos = 1;
+		int args;
+		bool check = true;
+
+		if ( f.flags.ignore ) { check = false; fmtstr[1] = '*'; pos += 1; }
+		int rwd = f.wd;
+		if ( f.wd != -1 ) {								// => just ignore versus ignore with width
 			// wd is buffer bytes available (for input chars + null terminator)
 			// rwd is count of input chars
-			int rwd;
-			if (f.flags.rwd) {
-				verify (f.wd >= 0);
-				rwd = f.wd;
-			} else {
-				verify (f.wd >= 1);
-				rwd = f.wd - 1;
-			} // if
-			start += sprintf( &fmtstr[start], "%d", rwd );
-		}
-
-		if ( ! scanset ) {
-			// %s, %*s, %ws, %*ws
-			fmtstr[start] = 's'; fmtstr[start + 1] = '\0';
-			// printf( "cstr %s\n", fmtstr );
-		} else {
-			// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
-			// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
-			fmtstr[start] = '['; start += 1;
-			if ( f.flags.inex ) { fmtstr[start] = '^'; start += 1; }
-			strcpy( &fmtstr[start], scanset );			// copy includes '\0'
-			len += start;
-			fmtstr[len] = ']'; fmtstr[len + 1] = '\0';
-			// printf( "incl/excl %s\n", fmtstr );
+			// no maximum width necessary because text ignored => width is read width
+			if ( f.flags.rwd ) check = false;
+			else rwd = f.wd - 1;
+			pos += sprintf( &fmtstr[pos], "%d", rwd );
 		} // if
 
-		int check = f.wd - 2;
-		if (! f.flags.ignore ) {
-			f.s[0] = '\0';
-			if ( ! f.flags.rwd ) f.s[check] = '\0';		// insert sentinel
-		}
-		len = fmt( is, fmtstr, f.s );
-		//fprintf( stderr, "KK %s %zd %d %c %s\n", fmtstr, len, check, f.s[check], f.s );
-
-		if ( ! f.flags.ignore && ! f.flags.rwd && f.s[check] != '\0' ) { // sentinel overwritten ?
-			// buffer filled, but would we have kept going?
-			if ( ! eof( is ) ) {
+		if ( ! scanset ) {								// %s, %*s, %ws, %*ws
+//			fprintf( stderr, "cstr %s\n", f.s );
+			strcpy( &fmtstr[pos], "s%n" );
+			int len = 0;								// may not be set in fmt
+			if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
+			else args = fmt( is, fmtstr, f.s, &len );
+//			fprintf( stderr, "cstr %s %d %d %d %s\n", fmtstr, args, len, f.wd, f.s );
+			if ( check && len >= rwd && ! eof( is ) ) {	// might not fit
 				char peek;
-				fmt( is, "%c", &peek );
-				ungetc( is, peek );
-				bool hasMore;
-				if (f.flags.delimiter) { // getline
-					hasMore = (peek != f.delimiter[0]);
-				} else if (f.scanset) { // incl/excl
-					bool peekMatch = strchr(f.scanset, peek) != 0p;
-					hasMore = f.flags.inex ? (!peekMatch) : (peekMatch);
-				} else { // %s
-					hasMore = !isspace(peek);
-				}
-				if (hasMore) throw (cstring_length){ &cstring_length_vt };
+				fmt( is, "%c", &peek );					// check for whitespace terminator
+//				fprintf( stderr, "peek %d '%c'\n", args, peek );
+				if ( ! eof( is ) ) {
+					ungetc( is, peek );
+					if ( ! isspace( peek ) ) throw ExceptionInst( cstring_length );
+				} // if
+			} // if
+		} else {
+			if ( f.flags.delimiter ) {					// getline
+//				fprintf( stderr, "getline\n" );
+				sprintf( &fmtstr[pos], "[%s%s]%%n", f.flags.inex ? "^" : "", scanset );
+//				fprintf( stderr, "getline %s %d\n", fmtstr, f.wd );
+				int len = 0;							// may not be set in fmt
+				if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
+				else args = fmt( is, fmtstr, f.s, &len );
+//				fprintf( stderr, "getline %s %d %d %d\n", fmtstr, args, f.wd, eof( is ) );
+				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
+					char peek;
+					fmt( is, "%c", &peek );				// check for delimiter
+//					fprintf( stderr, "peek %d '%c'\n", args, peek );
+					if ( ! eof( is ) ) {
+						if ( peek != f.delimiter[0] ) {
+							ungetc( is, peek );
+							throw ExceptionInst( cstring_length );
+						} // if
+					} // if
+				} else fmt( is, "%*c" );				//  remove delimiter
+			} else {
+				// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
+				// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
+				sprintf( &fmtstr[pos], "[%s%s]%%n", f.flags.inex ? "^" : "", scanset );
+//				fprintf( stderr, "incl/excl %s %d\n", fmtstr, f.wd );
+				int len = 0;							// may not be set in fmt
+				if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
+				else args = fmt( is, fmtstr, f.s, &len );
+//				fprintf( stderr, "incl/excl %s \"%s\" %d %d %d %d %d %c\n", fmtstr, f.s, args, f.wd, len, eof( is ), check, f.s[f.wd] );
+				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
+//					fprintf( stderr, "overflow\n" );
+					char peek;
+					fmt( is, "%c", &peek );				// check for whitespace terminator
+//					fprintf( stderr, "peek %d '%c'\n", args, peek );
+					if ( ! eof( is ) ) {
+						ungetc( is, peek );
+						if ( f.flags.inex ^ strchr( f.scanset, peek ) != 0p ) throw ExceptionInst( cstring_length );
+					} // if
+				} // if
 			} // if
 		} // if
-
-		if ( f.flags.delimiter ) {						// getline ?
-			if ( len == 0 ) f.s[0] = '\0';				// empty read => argument unchanged => set empty
-			if ( ! eof( is ) ) {						// ignore delimiter, may not be present because of width
-				char delimiter;
-				fmt( is, "%c", &delimiter );
-				if ( delimiter != f.delimiter[0] ) ungetc( is, delimiter );
-			} // if
-		} //if
+		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
+//			fprintf( stderr, "clear\n" );
+			clear( is );								// => reset EOF => detect again on next read
+		} // if
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( _Istream_Cstr )
 
 	istype & ?|?( istype & is, _Istream_Char f ) {
 		fmt( is, "%*c" );								// argument variable unused
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( _Istream_Char )
 } // distribution
 
 #define INPUT_FMT_IMPL( T, CODE ) \
@@ -1078,7 +1068,6 @@ forall( istype & | basic_istream( istype ) ) { \
 		fmt( is, fmtstr, &f.val ); \
 		return is; \
 	} /* ?|? */ \
-	ISTYPE_VOID_IMPL( _Istream_Manip(T) ) \
 } // distribution
 
 INPUT_FMT_IMPL( signed char, "hhi" )
@@ -1106,7 +1095,6 @@ forall( istype & | basic_istream( istype ) ) {
 		if ( ! fc.ignore ) fc.val = re + im * _Complex_I; // re/im are uninitialized for ignore
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( _Istream_Manip(float _Complex) )
 
 	istype & ?|?( istype & is, _Istream_Manip(double _Complex) dc ) {
 		double re, im;
@@ -1117,7 +1105,6 @@ forall( istype & | basic_istream( istype ) ) {
 		if ( ! dc.ignore ) dc.val = re + im * _Complex_I; // re/im are uninitialized for ignore
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( _Istream_Manip(double _Complex) )
 
 	istype & ?|?( istype & is, _Istream_Manip(long double _Complex) ldc ) {
 		long double re, im;
@@ -1128,7 +1115,6 @@ forall( istype & | basic_istream( istype ) ) {
 		if ( ! ldc.ignore ) ldc.val = re + im * _Complex_I;	// re/im are uninitialized for ignore
 		return is;
 	} // ?|?
-	ISTYPE_VOID_IMPL( _Istream_Manip(long double _Complex) )
 } // distribution
 
 

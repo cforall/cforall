@@ -117,7 +117,7 @@ extern "C" {
 
 		// Yield: yield N times
 		static inline void yield( size_t times ) {
-			for( times ) {
+			for ( times ) {
 				yield();
 			}
 		}
@@ -135,16 +135,16 @@ extern "C" {
 			void ^?{}(single_sem &) {}
 
 			bool wait(single_sem & this) {
-				for() {
+				for () {
 					struct thread$ * expected = this.ptr;
-					if(expected == 1p) {
-						if(__atomic_compare_exchange_n(&this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+					if (expected == 1p) {
+						if (__atomic_compare_exchange_n(&this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 							return false;
 						}
 					}
 					else {
 						/* paranoid */ verify( expected == 0p );
-						if(__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+						if (__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 							park();
 							return true;
 						}
@@ -154,16 +154,16 @@ extern "C" {
 			}
 
 			bool post(single_sem & this) {
-				for() {
+				for () {
 					struct thread$ * expected = this.ptr;
-					if(expected == 1p) return false;
-					if(expected == 0p) {
-						if(__atomic_compare_exchange_n(&this.ptr, &expected, 1p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+					if (expected == 1p) return false;
+					if (expected == 0p) {
+						if (__atomic_compare_exchange_n(&this.ptr, &expected, 1p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 							return false;
 						}
 					}
 					else {
-						if(__atomic_compare_exchange_n(&this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+						if (__atomic_compare_exchange_n(&this.ptr, &expected, 0p, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 							unpark( expected );
 							return true;
 						}
@@ -194,10 +194,10 @@ extern "C" {
 			// Wait for the post, return immidiately if it already happened.
 			// return true if the thread was parked
 			bool wait(oneshot & this) {
-				for() {
+				for () {
 					struct thread$ * expected = this.ptr;
-					if(expected == oneshot_FULFILLED) return false;
-					if(__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+					if (expected == oneshot_FULFILLED) return false;
+					if (__atomic_compare_exchange_n(&this.ptr, &expected, active_thread(), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 						park();
 						/* paranoid */ verify( this.ptr == oneshot_FULFILLED );
 						return true;
@@ -209,8 +209,8 @@ extern "C" {
 			// return true if a thread was unparked
 			thread$ * post(oneshot & this, bool do_unpark = true) {
 				struct thread$ * got = __atomic_exchange_n( &this.ptr, oneshot_FULFILLED, __ATOMIC_SEQ_CST);
-				if( got == oneshot_ARMED || got == oneshot_FULFILLED ) return 0p;
-				if(do_unpark) unpark( got );
+				if ( got == oneshot_ARMED || got == oneshot_FULFILLED ) return 0p;
+				if (do_unpark) unpark( got );
 				return got;
 			}
 		}
@@ -254,13 +254,13 @@ extern "C" {
 			bool setup( future_t & this, oneshot & wait_ctx ) {
 				/* paranoid */ verify( wait_ctx.ptr == oneshot_ARMED || wait_ctx.ptr == oneshot_FULFILLED );
 				// The future needs to set the wait context
-				for() {
+				for () {
 					struct oneshot * expected = this.ptr;
 					// Is the future already fulfilled?
-					if(expected == future_FULFILLED) return false; // Yes, just return false (didn't block)
+					if (expected == future_FULFILLED) return false; // Yes, just return false (didn't block)
 
 					// The future is not fulfilled, try to setup the wait context
-					if(__atomic_compare_exchange_n(&this.ptr, &expected, &wait_ctx, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+					if (__atomic_compare_exchange_n(&this.ptr, &expected, &wait_ctx, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 						return true;
 					}
 				}
@@ -275,22 +275,22 @@ extern "C" {
 				struct oneshot * expected = &wait_ctx;
 
 				// attempt to remove the context so it doesn't get consumed.
-				if(__atomic_compare_exchange_n( &this.ptr, &expected, future_ARMED, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+				if (__atomic_compare_exchange_n( &this.ptr, &expected, future_ARMED, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
 					// we still have the original context, then no one else saw it
 					return false;
 				}
 
 				// expected == ARMED: future was never actually setup, just return
-				if( expected == future_ARMED ) return false;
+				if ( expected == future_ARMED ) return false;
 
 				// expected == FULFILLED: the future is ready and the context was fully consumed
 				// the server won't use the pointer again
 				// It is safe to delete (which could happen after the return)
-				if( expected == future_FULFILLED ) return true;
+				if ( expected == future_FULFILLED ) return true;
 
 				// expected == PROGRESS: the future is ready but the context hasn't fully been consumed
 				// spin until it is safe to move on
-				if( expected == future_PROGRESS ) {
+				if ( expected == future_PROGRESS ) {
 					while( this.ptr != future_FULFILLED ) Pause();
 					/* paranoid */ verify( this.ptr == future_FULFILLED );
 					return true;
@@ -309,11 +309,11 @@ extern "C" {
 				struct oneshot * got = __atomic_exchange_n( &this.ptr, future_ABANDONED, __ATOMIC_SEQ_CST);
 
 				// If the future isn't already fulfilled, let the server delete it
-				if( got == future_ARMED ) return false;
+				if ( got == future_ARMED ) return false;
 
 				// got == PROGRESS: the future is ready but the context hasn't fully been consumed
 				// spin until it is safe to move on
-				if( got == future_PROGRESS ) {
+				if ( got == future_PROGRESS ) {
 					while( this.ptr != future_FULFILLED ) Pause();
 					got = future_FULFILLED;
 				}
@@ -326,17 +326,21 @@ extern "C" {
 
 			// from the server side, mark the future as fulfilled
 			// delete it if needed
+
 			thread$ * fulfil( future_t & this, bool do_unpark = true  ) {
-				for() {
+				for () {
 					struct oneshot * expected = this.ptr;
-					// was this abandoned?
+
 					#if defined(__GNUC__) && __GNUC__ >= 7
-						#pragma GCC diagnostic push
-						#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+					// SKULLDUGGERY: gcc bug does not handle push/pop for -Wfree-nonheap-object
+					//#pragma GCC diagnostic push
+					#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
 					#endif
-						if( expected == future_ABANDONED ) { free( &this ); return 0p; }
+
+					if ( expected == future_ABANDONED ) { free( &this ); return 0p; }
+
 					#if defined(__GNUC__) && __GNUC__ >= 7
-						#pragma GCC diagnostic pop
+					//#pragma GCC diagnostic pop
 					#endif
 
 					/* paranoid */ verify( expected != future_FULFILLED ); // Future is already fulfilled, should not happen
@@ -345,8 +349,8 @@ extern "C" {
 					// If there is a wait context, we need to consume it and mark it as consumed after
 					// If there is no context then we can skip the in progress phase
 					struct oneshot * want = expected == future_ARMED ? future_FULFILLED : future_PROGRESS;
-					if(__atomic_compare_exchange_n(&this.ptr, &expected, want, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
-						if( expected == future_ARMED ) { return 0p; }
+					if (__atomic_compare_exchange_n(&this.ptr, &expected, want, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+						if ( expected == future_ARMED ) { return 0p; }
 						thread$ * ret = post( *expected, do_unpark );
 						__atomic_store_n( &this.ptr, future_FULFILLED, __ATOMIC_SEQ_CST);
 						return ret;
@@ -358,7 +362,7 @@ extern "C" {
 			// Wait for the future to be fulfilled
 			bool wait( future_t & this ) {
 				oneshot temp;
-				if( !setup(this, temp) ) return false;
+				if ( !setup(this, temp) ) return false;
 
 				// Wait context is setup, just wait on it
 				bool ret = wait( temp );
@@ -386,7 +390,7 @@ extern "C" {
 				// setup all futures
 				// if any are already satisfied return
 				for ( i; num_futures ) {
-					if( !setup(futures[i], temp) ) return futures[i];
+					if ( !setup(futures[i], temp) ) return futures[i];
 				}
 
 				// Wait context is setup, just wait on it
@@ -412,19 +416,19 @@ extern "C" {
 			}
 
 			#define __STATS__(in_kernel, ...) { \
-				if( !(in_kernel) ) disable_interrupts(); \
-				with( *__tls_stats() ) { \
+				if ( !(in_kernel) ) disable_interrupts(); \
+				with ( *__tls_stats() ) { \
 					__VA_ARGS__ \
 				} \
-				if( !(in_kernel) ) enable_interrupts(); \
+				if ( !(in_kernel) ) enable_interrupts(); \
 			}
 			#if defined(CFA_HAVE_LINUX_IO_URING_H)
 				#define __IO_STATS__(in_kernel, ...) { \
-					if( !(in_kernel) ) disable_interrupts(); \
-					with( *__tls_stats() ) { \
+					if ( !(in_kernel) ) disable_interrupts(); \
+					with ( *__tls_stats() ) { \
 						__VA_ARGS__ \
 					} \
-					if( !(in_kernel) ) enable_interrupts(); \
+					if ( !(in_kernel) ) enable_interrupts(); \
 				}
 			#else
 				#define __IO_STATS__(in_kernel, ...)
@@ -435,4 +439,4 @@ extern "C" {
 		#endif
 	}
 }
-#endif
+#endif // #endif

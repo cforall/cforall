@@ -25,23 +25,23 @@ void main( Consumer & this ) {
     try {
         for( ;; ) {
             if ( useAnd ) {
-                waituntil( (in << A) ) { assert( A_removes == in ); A_removes++; removes++; }
-                and waituntil( (in2 << B) ) { assert( B_removes == in2 ); B_removes++; removes++; }
+                waituntil( (in << A) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( A_removes == in ); A_removes++; removes++; }
+                and waituntil( (in2 << B) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( B_removes == in2 ); B_removes++; removes++; }
                 continue;
             }
-            waituntil( (in << A) ) { assert( A_removes == in ); A_removes++; removes++; }
-            or waituntil( (in << B) ) { assert( B_removes == in ); B_removes++; removes++; }
+            waituntil( (in << A) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( A_removes == in ); A_removes++; removes++; }
+            or waituntil( (in << B) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); ( B_removes == in ); B_removes++; removes++; }
         }
     } catchResume ( channel_closed * e ) {} // continue to remove until would block
     catch ( channel_closed * e ) {} 
     try {
         for( ;; )
-            waituntil( (in << A) ) { assert( A_removes == in ); A_removes++; removes++; }
+            waituntil( (in << A) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( A_removes == in ); A_removes++; removes++; }
     } catchResume ( channel_closed * e ) {} // continue to remove until would block
     catch ( channel_closed * e ) {} 
     try {
         for( ;; )
-            waituntil( (in << B) ) { assert( B_removes == in ); B_removes++; removes++; }
+            waituntil( (in << B) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( B_removes == in ); B_removes++; removes++; }
     } catchResume ( channel_closed * e ) {} // continue to remove until would block
     catch ( channel_closed * e ) {} 
 }

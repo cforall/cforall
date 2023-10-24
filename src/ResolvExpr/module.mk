@@ -71,6 +71,8 @@ SRC += $(SRC_RESOLVEXPR) \
 	ResolvExpr/AlternativePrinter.cc \
 	ResolvExpr/AlternativePrinter.h \
 	ResolvExpr/CandidatePrinter.cpp \
-	ResolvExpr/CandidatePrinter.hpp
+	ResolvExpr/CandidatePrinter.hpp \
+	ResolvExpr/EraseWith.cpp \
+	ResolvExpr/EraseWith.hpp
 
 SRCDEMANGLE += $(SRC_RESOLVEXPR)

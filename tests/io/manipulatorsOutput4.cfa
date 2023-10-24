@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr 13 17:55:02 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 13 18:00:33 2021
-// Update Count     : 4
+// Last Modified On : Tue Oct 17 08:37:42 2023
+// Update Count     : 5
 // 
 
 #include <fstream.hfa>
@@ -40,6 +40,11 @@ int main() {
 	for ( double w = -1e-27; w > -1e30; w *= 42 ) {
 		sout | w | eng(w) | sign(eng(w)) | ws(12,5, eng(w) ) | sign(ws(12,5, eng(w) )) | wd(12,5, eng(w) ) | sign(wd(12,5, eng(w) )) | pad0(ws(12,5, eng(w) )) | pad0(sign(ws(12,5, eng(w) ))) | pad0(wd(12,5, eng(w) )) | pad0(sign(wd(12,5, eng(w) )))
 			 | left(ws(12,5, eng(w) )) | left(sign(ws(12,5, eng(w) ))) | left(wd(12,5, eng(w) )) | left(sign(wd(12,5, eng(w) ))) | left(pad0(ws(12,5, eng(w) ))) | left(pad0(sign(ws(12,5, eng(w) )))) | left(pad0(wd(12,5, eng(w) ))) | left(pad0(sign(wd(12,5, eng(w) ))));
+	} // for
+
+	for ( exp; sizeof(int) * 8 ) {
+		size_t pow2 = 1z << exp;
+		sout | exp | pow2 | unit(eng(pow2)) | wd(0,1, unit(eng( pow2 ))) | wd(0,0, unit(eng(pow2)));
 	} // for
 } // main
 

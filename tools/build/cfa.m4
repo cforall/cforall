@@ -66,7 +66,7 @@ AC_DEFUN([M4CFA_CANNON_CPU], [
 		"x86-64"     ) cannon_arch_name="x64";;
 		"x86_64"     ) cannon_arch_name="x64";;
 		"aarch64"    ) cannon_arch_name="arm64";;
-		"arm4"       ) cannon_arch_name="arm64";;
+		"arm64"      ) cannon_arch_name="arm64";;
 		"ARM64"      ) cannon_arch_name="arm64";;
 		"x86"        ) cannon_arch_name="x86";;
 		"i386"       ) cannon_arch_name="x86";;

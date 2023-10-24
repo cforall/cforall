@@ -17,6 +17,8 @@
 SRC += \
 	Concurrency/Actors.cpp \
 	Concurrency/Actors.hpp \
+	Concurrency/Corun.cpp \
+	Concurrency/Corun.hpp \
 	Concurrency/KeywordsNew.cpp \
 	Concurrency/Keywords.cc \
 	Concurrency/Keywords.h \

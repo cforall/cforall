@@ -37,7 +37,10 @@ int main() {
         // S: string, no manipulator
         void echoTillX(const char * casename) {
             string s;
+            // loop assumes behaviour not tested until main-case #15:
+            // on reading nothing, the prior string value is left alone
             do {
+                s = "";
                 forceStringHeapFreeSpaceTo(9);
                 sin | s;
                 sout | casename | s;
@@ -53,6 +56,7 @@ int main() {
         void echoTillX(const char * casename) {
             string s;
             do {
+                s = "";
                 sin | plainjane( s );
                 sout | casename | s;
             } while ( size(s) > 0 && s[size(s)-1] != 'x' );
@@ -67,6 +71,7 @@ int main() {
         void echoTillX(const char * casename) {
             string_res s;
             do {
+                s = "";
                 sin | plainjane( s );
                 sout | casename | s;
             } while ( size(s) > 0 && s[size(s)-1] != 'x' );
@@ -81,6 +86,7 @@ int main() {
         void echoTillX(const char * casename) {
             string s;
             do {
+                s = "";
                 sin | skip("-\n");
                 sin | incl( ".:|# x", s );
                 sout | casename | " \"" | s | "\"";
@@ -96,6 +102,7 @@ int main() {
         void echoTillX(const char * casename) {
             string s;
             do {
+                s = "";
                 sin | skip("-\n");
                 sin | excl( "-\n", s );
                 sout | casename | " \"" | s | "\"";
@@ -112,6 +119,7 @@ int main() {
         void echoTillX(const char * casename) {
             string s;
             do {
+                s = "";
                 sin | getline( s );
                 sout | casename | s;
             } while ( size(s) > 0 && s[size(s)-1] != 'x' );
@@ -126,6 +134,7 @@ int main() {
         void echoTillX(const char * casename) {
             string s;
             do {
+                s = "";
                 sin | getline( s, '@' );
                 sout | casename | s;
             } while ( size(s) > 0 && s[size(s)-1] != 'x' );

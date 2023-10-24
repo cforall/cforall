@@ -230,7 +230,7 @@ const ast::ObjectDecl *fixObjectInit(const ast::ObjectDecl *decl,
         for ( size_t k = 0; k < mutListInit->designations.size(); k++ ) {
             const ast::Designation *des = mutListInit->designations[k].get();
             // Desination here
-            ast::Designation * newDesination = new ast::Designation(des->location);
+            ast::Designation * newDesignation = new ast::Designation(des->location);
             std::deque<ast::ptr<ast::Expr>> newDesignators;
 
             for ( ast::ptr<ast::Expr> designator : des->designators ) {
@@ -264,8 +264,8 @@ const ast::ObjectDecl *fixObjectInit(const ast::ObjectDecl *decl,
                 }
             }            
             
-            newDesination->designators = newDesignators;
-            mutListInit = ast::mutate_field_index(mutListInit, &ast::ListInit::designations, k, newDesination);
+            newDesignation->designators = newDesignators;
+            mutListInit = ast::mutate_field_index(mutListInit, &ast::ListInit::designations, k, newDesignation);
             
         }
     }

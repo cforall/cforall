@@ -1120,6 +1120,19 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::MutexStmt * node ) {
 }
 
 //--------------------------------------------------------------------------
+// CorunStmt
+template< typename core_t >
+const ast::Stmt * ast::Pass< core_t >::visit( const ast::CorunStmt * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		maybe_accept( node, &CorunStmt::stmt );
+	}
+
+	VISIT_END( Stmt, node );
+}
+
+//--------------------------------------------------------------------------
 // ApplicationExpr
 template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::ApplicationExpr * node ) {

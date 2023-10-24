@@ -24,7 +24,6 @@
 
 #include "Common/PassVisitor.h"
 #include "Common/VectorMap.h"      // for VectorMap
-#include "GenPoly/GenPoly.h"       // for hasPolyBase
 #include "SynTree/LinkageSpec.h"   // for ::NoOfSpecs, Spec
 #include "SynTree/Declaration.h"   // for FunctionDecl, TypeDecl, Declaration
 #include "SynTree/Expression.h"    // for UntypedExpr, Expression

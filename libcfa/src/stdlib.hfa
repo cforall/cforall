@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  2 18:29:35 2023
-// Update Count     : 780
+// Last Modified On : Sun Oct  8 09:18:28 2023
+// Update Count     : 789
 //
 
 #pragma once
@@ -430,7 +430,7 @@ struct PRNG32 {
 	uint32_t callcnt;									// call count
 	uint32_t seed;										// current seed
 	PRNG_STATE_32_T state;								// random state
-}; // PRNG
+}; // PRNG32
 
 static inline {
 	void set_seed( PRNG32 & prng, uint32_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_32( state, seed ); }
@@ -441,13 +441,16 @@ static inline {
 	uint32_t prng( PRNG32 & prng, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint32_t prng( PRNG32 & prng, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
 	uint32_t calls( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
+	void copy( PRNG32 & dst, PRNG32 & src ) { dst = src; } // checkpoint PRNG state, use autogen assignment
 } // distribution
+void ?{}( PRNG32 &, PRNG32 & ) = void;					// no copy, remove autogen copy constructor
+PRNG32 & ?=?( PRNG32 &, const PRNG32 ) = void;			// no assignment, remove autogen assignment
 
 struct PRNG64 {
 	uint64_t callcnt;									// call count
 	uint64_t seed;										// current seed
 	PRNG_STATE_64_T state;								// random state
-}; // PRNG
+}; // PRNG64
 
 static inline {
 	void set_seed( PRNG64 & prng, uint64_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_64( state, seed ); }
@@ -458,7 +461,10 @@ static inline {
 	uint64_t prng( PRNG64 & prng, uint64_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint64_t prng( PRNG64 & prng, uint64_t l, uint64_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
 	uint64_t calls( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return callcnt; }
+	void copy( PRNG64 & dst, PRNG64 & src ) { dst = src; } // checkpoint PRNG state, use autogen assignment
 } // distribution
+void ?{}( PRNG64 &, PRNG64 & ) = void;					// no copy, remove autogen copy constructor
+PRNG64 & ?=?( PRNG64 &, const PRNG64 ) = void;			// no assignment, remove autogen assignment
 
 // Set default random-generator size.
 #if defined( __x86_64__ ) || defined( __aarch64__ )		// 64-bit architecture

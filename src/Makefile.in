@@ -255,7 +255,7 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	CodeGen/LinkOnce.$(OBJEXT) CodeTools/DeclStats.$(OBJEXT) \
 	CodeTools/ResolvProtoDump.$(OBJEXT) \
 	CodeTools/TrackLoc.$(OBJEXT) Concurrency/Actors.$(OBJEXT) \
-	Concurrency/KeywordsNew.$(OBJEXT) \
+	Concurrency/Corun.$(OBJEXT) Concurrency/KeywordsNew.$(OBJEXT) \
 	Concurrency/Keywords.$(OBJEXT) \
 	Concurrency/WaitforNew.$(OBJEXT) Concurrency/Waitfor.$(OBJEXT) \
 	Concurrency/Waituntil.$(OBJEXT) $(am__objects_3) \
@@ -290,7 +290,8 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Parser/StatementNode.$(OBJEXT) Parser/TypeData.$(OBJEXT) \
 	Parser/TypedefTable.$(OBJEXT) $(am__objects_6) \
 	ResolvExpr/AlternativePrinter.$(OBJEXT) \
-	ResolvExpr/CandidatePrinter.$(OBJEXT) $(am__objects_7) \
+	ResolvExpr/CandidatePrinter.$(OBJEXT) \
+	ResolvExpr/EraseWith.$(OBJEXT) $(am__objects_7) \
 	SymTab/Validate.$(OBJEXT) $(am__objects_8) $(am__objects_9) \
 	$(am__objects_10) Validate/Autogen.$(OBJEXT) \
 	Validate/CompoundLiteral.$(OBJEXT) \
@@ -371,7 +372,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Common/Stats/$(DEPDIR)/Heap.Po \
 	Common/Stats/$(DEPDIR)/ResolveTime.Po \
 	Common/Stats/$(DEPDIR)/Stats.Po Common/Stats/$(DEPDIR)/Time.Po \
-	Concurrency/$(DEPDIR)/Actors.Po \
+	Concurrency/$(DEPDIR)/Actors.Po Concurrency/$(DEPDIR)/Corun.Po \
 	Concurrency/$(DEPDIR)/Keywords.Po \
 	Concurrency/$(DEPDIR)/KeywordsNew.Po \
 	Concurrency/$(DEPDIR)/Waitfor.Po \
@@ -422,6 +423,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	ResolvExpr/$(DEPDIR)/CommonType.Po \
 	ResolvExpr/$(DEPDIR)/ConversionCost.Po \
 	ResolvExpr/$(DEPDIR)/CurrentObject.Po \
+	ResolvExpr/$(DEPDIR)/EraseWith.Po \
 	ResolvExpr/$(DEPDIR)/ExplodedActual.Po \
 	ResolvExpr/$(DEPDIR)/ExplodedArg.Po \
 	ResolvExpr/$(DEPDIR)/FindOpenVars.Po \
@@ -754,6 +756,7 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	CodeTools/ResolvProtoDump.cc CodeTools/ResolvProtoDump.h \
 	CodeTools/TrackLoc.cc CodeTools/TrackLoc.h \
 	Concurrency/Actors.cpp Concurrency/Actors.hpp \
+	Concurrency/Corun.cpp Concurrency/Corun.hpp \
 	Concurrency/KeywordsNew.cpp Concurrency/Keywords.cc \
 	Concurrency/Keywords.h Concurrency/WaitforNew.cpp \
 	Concurrency/Waitfor.cc Concurrency/Waitfor.h \
@@ -799,12 +802,13 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	ResolvExpr/AlternativePrinter.cc \
 	ResolvExpr/AlternativePrinter.h \
 	ResolvExpr/CandidatePrinter.cpp \
-	ResolvExpr/CandidatePrinter.hpp $(SRC_SYMTAB) \
-	SymTab/Validate.cc SymTab/Validate.h $(SRC_SYNTREE) \
-	$(SRC_TUPLES) $(SRC_VALIDATE) Validate/Autogen.cpp \
-	Validate/Autogen.hpp Validate/CompoundLiteral.cpp \
-	Validate/CompoundLiteral.hpp Validate/EliminateTypedef.cpp \
-	Validate/EliminateTypedef.hpp Validate/EnumAndPointerDecay.cpp \
+	ResolvExpr/CandidatePrinter.hpp ResolvExpr/EraseWith.cpp \
+	ResolvExpr/EraseWith.hpp $(SRC_SYMTAB) SymTab/Validate.cc \
+	SymTab/Validate.h $(SRC_SYNTREE) $(SRC_TUPLES) $(SRC_VALIDATE) \
+	Validate/Autogen.cpp Validate/Autogen.hpp \
+	Validate/CompoundLiteral.cpp Validate/CompoundLiteral.hpp \
+	Validate/EliminateTypedef.cpp Validate/EliminateTypedef.hpp \
+	Validate/EnumAndPointerDecay.cpp \
 	Validate/EnumAndPointerDecay.hpp \
 	Validate/FindSpecialDeclsNew.cpp \
 	Validate/FixQualifiedTypes.cpp Validate/FixQualifiedTypes.hpp \
@@ -1514,6 +1518,8 @@ Concurrency/$(DEPDIR)/$(am__dirstamp):
 	@: > Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/Actors.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
+Concurrency/Corun.$(OBJEXT): Concurrency/$(am__dirstamp) \
+	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/KeywordsNew.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/Keywords.$(OBJEXT): Concurrency/$(am__dirstamp) \
@@ -1622,6 +1628,8 @@ Parser/TypedefTable.$(OBJEXT): Parser/$(am__dirstamp) \
 ResolvExpr/AlternativePrinter.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/CandidatePrinter.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
+	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
+ResolvExpr/EraseWith.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 SymTab/Validate.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
@@ -1761,6 +1769,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Stats.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Time.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Actors.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Corun.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Keywords.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/KeywordsNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Waitfor.Po@am__quote@ # am--include-marker
@@ -1818,6 +1827,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CommonType.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ConversionCost.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CurrentObject.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/EraseWith.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ExplodedActual.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ExplodedArg.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/FindOpenVars.Po@am__quote@ # am--include-marker
@@ -2196,6 +2206,7 @@ distclean: distclean-am
 	-rm -f Common/Stats/$(DEPDIR)/Stats.Po
 	-rm -f Common/Stats/$(DEPDIR)/Time.Po
 	-rm -f Concurrency/$(DEPDIR)/Actors.Po
+	-rm -f Concurrency/$(DEPDIR)/Corun.Po
 	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
 	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
@@ -2253,6 +2264,7 @@ distclean: distclean-am
 	-rm -f ResolvExpr/$(DEPDIR)/CommonType.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ConversionCost.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CurrentObject.Po
+	-rm -f ResolvExpr/$(DEPDIR)/EraseWith.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ExplodedActual.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ExplodedArg.Po
 	-rm -f ResolvExpr/$(DEPDIR)/FindOpenVars.Po
@@ -2439,6 +2451,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Common/Stats/$(DEPDIR)/Stats.Po
 	-rm -f Common/Stats/$(DEPDIR)/Time.Po
 	-rm -f Concurrency/$(DEPDIR)/Actors.Po
+	-rm -f Concurrency/$(DEPDIR)/Corun.Po
 	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
 	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
@@ -2496,6 +2509,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ResolvExpr/$(DEPDIR)/CommonType.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ConversionCost.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CurrentObject.Po
+	-rm -f ResolvExpr/$(DEPDIR)/EraseWith.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ExplodedActual.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ExplodedArg.Po
 	-rm -f ResolvExpr/$(DEPDIR)/FindOpenVars.Po

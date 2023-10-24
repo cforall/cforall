@@ -11,8 +11,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:56:25 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 18 11:08:24 2023
-// Update Count     : 121
+// Last Modified On : Fri Oct  6 07:52:20 2023
+// Update Count     : 122
 //
 
 #pragma once
@@ -39,7 +39,7 @@ forall( T | arithmetic( T ) ) {
 
 	T numerator( rational(T) r );
 	T denominator( rational(T) r );
-	[ T, T ] ?=?( & [ T, T ] dest, rational(T) src );
+	[ T, T ] ?=?( & [ T, T ] dst, rational(T) src );
 
 	// numerator/denominator setter
 

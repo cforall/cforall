@@ -3,18 +3,18 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 // cofor ( uC++ COFOR )
 
-thread co_runner {
+thread cofor_runner {
 	ssize_t low, high;
 	__cofor_body_t loop_body;
 };
 
-static void ?{}( co_runner & this, ssize_t low, ssize_t high, __cofor_body_t loop_body ) {
+static void ?{}( cofor_runner & this, ssize_t low, ssize_t high, __cofor_body_t loop_body ) {
 	this.low = low;
 	this.high = high;
 	this.loop_body = loop_body;
 }
 
-void main( co_runner & this ) with( this ) {
+void main( cofor_runner & this ) with( this ) {
 	for ( ssize_t i = low; i < high; i++ )
 		loop_body(i);
 }
@@ -28,7 +28,7 @@ void __Cofor__( ssize_t low, ssize_t high, __cofor_body_t loop_body ) libcfa_pub
 	ssize_t stride = range / threads + 1, extras = range % threads;
 	ssize_t i = 0;
 	ssize_t stride_iter = low;
-	co_runner * runners[ threads ];
+	cofor_runner * runners[ threads ];
 	for ( i; threads ) {
 		runners[i] = alloc();
 	}
@@ -44,26 +44,4 @@ void __Cofor__( ssize_t low, ssize_t high, __cofor_body_t loop_body ) libcfa_pub
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// parallel (COBEGIN/COEND)
-
-thread para_runner {
-	parallel_stmt_t body;
-	void * arg;
-};
-
-static void ?{}( para_runner & this, parallel_stmt_t body, void * arg ) { 
-	this.body = body;
-	this.arg = arg;
-}
-
-void main( para_runner & this ) with( this ) { body( arg ); }
-
-void parallel( parallel_stmt_t * stmts, void ** args, size_t num ) libcfa_public {
-	para_runner * runners[ num ];
-	for ( i; num )
-		(*(runners[i] = malloc())){ stmts[i], args[i] };
-	for ( i; num )
-		delete( runners[i] );
-}
 

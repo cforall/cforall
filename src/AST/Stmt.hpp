@@ -531,6 +531,20 @@ class MutexStmt final : public Stmt {
 	MUTATE_FRIEND
 };
 
+// Corun Statement
+class CorunStmt final : public Stmt {
+  public:
+	ptr<Stmt> stmt;
+
+	CorunStmt( const CodeLocation & loc, const Stmt * stmt, const std::vector<Label> && labels = {} )
+		: Stmt(loc, std::move(labels)), stmt(stmt) {}
+
+	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
+  private:
+	CorunStmt * clone() const override { return new CorunStmt{ *this }; }
+	MUTATE_FRIEND
+};
+
 } // namespace ast
 
 #undef MUTATE_FRIEND

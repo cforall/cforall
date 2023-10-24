@@ -208,7 +208,7 @@ private:
 		os << endl;
 	}
 
-    void print( const ast::WaitStmt * node ) {
+	void print( const ast::WaitStmt * node ) {
 		if ( node->timeout_time ) {
 			os << indent-1 << "timeout of:" << endl;
 			node->timeout_time->accept( *this );
@@ -859,13 +859,14 @@ public:
 		return node;
 	}
 
-    virtual const ast::Stmt * visit( const ast::WaitUntilStmt * node ) override final {
+	virtual const ast::Stmt * visit( const ast::WaitUntilStmt * node ) override final {
 		os << "Waituntil Statement" << endl;
 		indent += 2;
 		for( const auto & clause : node->clauses ) {
 			clause->accept( *this );
 		}
-        print(node);    // calls print( const ast::WaitStmt * node )
+		// calls print( const ast::WaitStmt * node )
+		print(node);
 		return node;
 	}
 
@@ -912,6 +913,17 @@ public:
 		++indent;
 		printAll( node->mutexObjs );
 		--indent;
+		os << indent << "... with Statement: ";
+		++indent;
+		safe_print( node->stmt );
+		--indent;
+		os << endl;
+
+		return node;
+	}
+
+	virtual const ast::Stmt * visit( const ast::CorunStmt * node ) override final {
+		os << "Corun Statement" << endl;
 		os << indent << "... with Statement: ";
 		++indent;
 		safe_print( node->stmt );

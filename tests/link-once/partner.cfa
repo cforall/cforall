@@ -1,6 +1,6 @@
 // Side file for the link-once test.
 
-__attribute__(( cfa_linkonce )) signed int example = -7;
+__attribute__(( cfa_linkonce )) signed int example = 7;
 __attribute__(( cfa_linkonce )) unsigned int example = 12;
 
 __attribute__(( cfa_linkonce ))

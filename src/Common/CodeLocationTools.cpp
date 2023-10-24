@@ -136,6 +136,7 @@ public:
     macro(DeclStmt, Stmt) \
     macro(ImplicitCtorDtorStmt, Stmt) \
     macro(MutexStmt, Stmt) \
+    macro(CorunStmt, Stmt) \
     macro(ApplicationExpr, Expr) \
     macro(UntypedExpr, Expr) \
     macro(NameExpr, Expr) \

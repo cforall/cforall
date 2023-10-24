@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  2 12:05:57 2023
-// Update Count     : 206
+// Last Modified On : Wed Oct 18 21:52:09 2023
+// Update Count     : 208
 //
 
 #include "string.hfa"
@@ -137,7 +137,7 @@ ifstream & ?|?( ifstream & is, _Istream_Sstr f ) {
 } // ?|?
 
 void ?|?( ifstream & in, _Istream_Sstr f ) {
-    (ifstream &)(in | f); ends( in );
+    (ifstream &)(in | f);
 }
 
 ////////////////////////////////////////////////////////

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 18 10:41:15 2023
-// Update Count     : 258
+// Last Modified On : Wed Oct 18 20:30:12 2023
+// Update Count     : 261
 //
 
 #pragma once
@@ -116,18 +116,16 @@ void unlock( ifstream & );
 // public
 void nlOn( ifstream & );
 void nlOff( ifstream & );
-void ends( ifstream & );
 int fmt( ifstream &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
+ifstream & ungetc( ifstream & is, char c );
+bool eof( ifstream & is );
 
 bool fail( ifstream & is );
 void clear( ifstream & );
-bool eof( ifstream & is );
 void open( ifstream & is, const char name[], const char mode[] ); // FIX ME: use default = "r"
 void open( ifstream & is, const char name[] );
 void close( ifstream & is );
-
 ifstream & read( ifstream & is, char data[], size_t size );
-ifstream & ungetc( ifstream & is, char c );
 
 void ?{}( ifstream & is );
 void ?{}( ifstream & is, const char name[], const char mode[] ); // FIX ME: use default = "r"

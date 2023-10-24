@@ -104,3 +104,4 @@ ast::WaitUntilStmt::ClauseNode * build_waituntil_else( const CodeLocation &, Exp
 ast::WaitUntilStmt * build_waituntil_stmt( const CodeLocation &, ast::WaitUntilStmt::ClauseNode * root );
 ast::Stmt * build_with( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
 ast::Stmt * build_mutex( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
+ast::Stmt * build_corun( const CodeLocation &, StatementNode * stmt );
