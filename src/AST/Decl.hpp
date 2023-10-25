@@ -124,7 +124,7 @@ private:
 enum ArgumentFlag { FixedArgs, VariableArgs };
 
 /// Object declaration `int foo()`
-class FunctionDecl : public DeclWithType {
+class FunctionDecl final : public DeclWithType {
 public:
 	std::vector<ptr<TypeDecl>> type_params;
 	std::vector<ptr<DeclWithType>> assertions;
@@ -313,9 +313,11 @@ private:
 /// enum declaration `enum Foo { ... };`
 class EnumDecl final : public AggregateDecl {
 public:
-	bool isTyped; // isTyped indicated if the enum has a declaration like:
+	// isTyped indicated if the enum has a declaration like:
 	// enum (type_optional) Name {...}
-	ptr<Type> base; // if isTyped == true && base.get() == nullptr, it is a "void" type enum
+	bool isTyped;
+	// if isTyped == true && base.get() == nullptr, it is a "void" type enum
+	ptr<Type> base;
 	enum class EnumHiding { Visible, Hide } hide;
 
 	EnumDecl( const CodeLocation& loc, const std::string& name, bool isTyped = false,
@@ -373,12 +375,12 @@ private:
 };
 
 /// Assembly declaration: `asm ... ( "..." : ... )`
-class AsmDecl : public Decl {
+class AsmDecl final : public Decl {
 public:
 	ptr<AsmStmt> stmt;
 
 	AsmDecl( const CodeLocation & loc, AsmStmt * stmt )
-	: Decl( loc, "", {}, {} ), stmt(stmt) {}
+	: Decl( loc, "", {}, Linkage::C ), stmt(stmt) {}
 
 	const AsmDecl * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
@@ -387,12 +389,12 @@ private:
 };
 
 /// C-preprocessor directive `#...`
-class DirectiveDecl : public Decl {
+class DirectiveDecl final : public Decl {
 public:
 	ptr<DirectiveStmt> stmt;
 
 	DirectiveDecl( const CodeLocation & loc, DirectiveStmt * stmt )
-	: Decl( loc, "", {}, {} ), stmt(stmt) {}
+	: Decl( loc, "", {}, Linkage::C ), stmt(stmt) {}
 
 	const DirectiveDecl * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
@@ -401,13 +403,13 @@ private:
 };
 
 /// Static Assertion `_Static_assert( ... , ... );`
-class StaticAssertDecl : public Decl {
+class StaticAssertDecl final : public Decl {
 public:
 	ptr<Expr> cond;
 	ptr<ConstantExpr> msg;   // string literal
 
 	StaticAssertDecl( const CodeLocation & loc, const Expr * condition, const ConstantExpr * msg )
-	: Decl( loc, "", {}, {} ), cond( condition ), msg( msg ) {}
+	: Decl( loc, "", {}, Linkage::C ), cond( condition ), msg( msg ) {}
 
 	const StaticAssertDecl * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
