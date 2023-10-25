@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug  1 10:49:42 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 24 18:40:33 2023
-// Update Count     : 158
+// Last Modified On : Tue Oct 24 20:45:06 2023
+// Update Count     : 159
 //
 
 #include <cstdio>										// perror
@@ -44,13 +44,13 @@ int main( const int argc, const char * argv[] ) {
 
 		char * dcursor;
 		if ( (dcursor = strstr( start, ".Ldebug_info0:" ) ) ) { // debug information ?
-//			fprintf( stderr, "found .Ldebug_info0:\n" );
+			// fprintf( stderr, "found .Ldebug_info0:\n" );
 #if defined( __i386 ) || defined( __x86_64 )
 			if ( char * cursor = strstr( dcursor, ".long\t.LASF" ) ) { // language code ?
-//				fprintf( stderr, ".long\t.LASF\n" );
+				// fprintf( stderr, ".long\t.LASF\n" );
 #elif defined( __aarch64__ )
 			if ( char * cursor = strstr( dcursor, ".4byte\t.LASF" ) ) { // language code ?
-//				fprintf( stderr, ".4byte\t.LASF\n" );
+				// fprintf( stderr, ".4byte\t.LASF\n" );
 #else
 	#error unsupported architecture
 #endif
@@ -62,12 +62,12 @@ int main( const int argc, const char * argv[] ) {
 				// DW_LANG_C89 = 0x1, DW_LANG_C = 0x2, DW_LANG_C99 = 0xc, DW_LANG_C11 = 0x1d
 				if ( *(cursor - 2) == '0' && *(cursor - 1) == 'x' &&
 					 (*cursor == 'c' || *cursor == '1' || *cursor == '2') ) { // C99/C89/C
-//					fprintf( stderr, "language code C99/C89/C %c\n", *cursor );
+					// fprintf( stderr, "language code C99/C89/C %c\n", *cursor );
 					// Expand file by one byte to hold 2 character Cforall language code.
 					if ( ftruncate( fd, size + 1 ) ) { perror( "ftruncate" ); exit( EXIT_FAILURE ); };
 					memmove( cursor + 2, cursor + 1, start + size - cursor - 1 ); // move remaining text 1 character right
 				} else if ( *(cursor - 3) == '0' && *(cursor - 2) == 'x' && *(cursor - 1) == '1' && *cursor == 'd' ) { // C11
-//					fprintf( stderr, "language code C11 %c\n", *cursor );
+					// fprintf( stderr, "language code C11 %c\n", *cursor );
 				} else {
 					for ( int i = 0; i < 6; i += 1 ) {	// move N (magic) lines forward
 						cursor = strstr( cursor, "\n" ) + 1;
