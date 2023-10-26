@@ -23,6 +23,8 @@ SRC_CODEGEN = \
 SRC += $(SRC_CODEGEN) \
 	CodeGen/CodeGenerator.cc \
 	CodeGen/CodeGenerator.h \
+	CodeGen/CodeGeneratorNew.cpp \
+	CodeGen/CodeGeneratorNew.hpp \
 	CodeGen/Generate.cc \
 	CodeGen/Generate.h \
 	CodeGen/FixMain.cc \

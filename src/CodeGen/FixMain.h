@@ -19,6 +19,7 @@
 #include <memory>
 #include <list>
 
+#include "AST/LinkageSpec.hpp"
 #include "SynTree/LinkageSpec.h"
 
 class Declaration;
@@ -33,6 +34,9 @@ class FixMain {
 public :
 	static inline LinkageSpec::Spec mainLinkage() {
 		return replace_main ? LinkageSpec::Cforall : LinkageSpec::C;
+	}
+	static inline ast::Linkage::Spec getMainLinkage() {
+		return replace_main ? ast::Linkage::Cforall : ast::Linkage::C;
 	}
 
 	static inline void setReplaceMain(bool val) {

@@ -426,18 +426,17 @@ int main( int argc, char * argv[] ) {
 		PASS( "Box", GenPoly::box, transUnit );
 		PASS( "Link-Once", CodeGen::translateLinkOnce, transUnit );
 
-		translationUnit = convert( std::move( transUnit ) );
-
 		// Code has been lowered to C, now we can start generation.
 
-		DUMP( bcodegenp, translationUnit );
+		DUMP( bcodegenp, std::move( transUnit ) );
 
 		if ( optind < argc ) {							// any commands after the flags and input file ? => output file name
 			output = new ofstream( argv[ optind ] );
 		} // if
 
-		CodeTools::fillLocations( translationUnit );
-		PASS( "Code Gen", CodeGen::generate, translationUnit, *output, ! genproto, prettycodegenp, true, linemarks );
+		PASS( "Code Gen", CodeGen::generate, transUnit, *output, !genproto, prettycodegenp, true, linemarks, false );
+
+		translationUnit = convert( std::move( transUnit ) );
 
 		CodeGen::FixMain::fix( translationUnit, *output,
 				(PreludeDirector + "/bootloader.c").c_str() );

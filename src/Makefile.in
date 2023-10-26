@@ -250,9 +250,10 @@ libdemangle_a_OBJECTS = $(am_libdemangle_a_OBJECTS)
 am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	MakeLibCfa.$(OBJEXT) MakeLibCfaNew.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2) CodeGen/CodeGenerator.$(OBJEXT) \
-	CodeGen/Generate.$(OBJEXT) CodeGen/FixMain.$(OBJEXT) \
-	CodeGen/FixNames.$(OBJEXT) CodeGen/GenType.$(OBJEXT) \
-	CodeGen/LinkOnce.$(OBJEXT) CodeTools/DeclStats.$(OBJEXT) \
+	CodeGen/CodeGeneratorNew.$(OBJEXT) CodeGen/Generate.$(OBJEXT) \
+	CodeGen/FixMain.$(OBJEXT) CodeGen/FixNames.$(OBJEXT) \
+	CodeGen/GenType.$(OBJEXT) CodeGen/LinkOnce.$(OBJEXT) \
+	CodeTools/DeclStats.$(OBJEXT) \
 	CodeTools/ResolvProtoDump.$(OBJEXT) \
 	CodeTools/TrackLoc.$(OBJEXT) Concurrency/Actors.$(OBJEXT) \
 	Concurrency/Corun.$(OBJEXT) Concurrency/KeywordsNew.$(OBJEXT) \
@@ -354,6 +355,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	AST/$(DEPDIR)/TypeEnvironment.Po \
 	AST/$(DEPDIR)/TypeSubstitution.Po AST/$(DEPDIR)/Util.Po \
 	CodeGen/$(DEPDIR)/CodeGenerator.Po \
+	CodeGen/$(DEPDIR)/CodeGeneratorNew.Po \
 	CodeGen/$(DEPDIR)/FixMain.Po CodeGen/$(DEPDIR)/FixMain2.Po \
 	CodeGen/$(DEPDIR)/FixNames.Po CodeGen/$(DEPDIR)/GenType.Po \
 	CodeGen/$(DEPDIR)/Generate.Po CodeGen/$(DEPDIR)/LinkOnce.Po \
@@ -749,6 +751,7 @@ ACLOCAL_AMFLAGS = -I automake
 SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	MakeLibCfaNew.cpp MakeLibCfa.h $(SRC_AST) $(SRC_CODEGEN) \
 	CodeGen/CodeGenerator.cc CodeGen/CodeGenerator.h \
+	CodeGen/CodeGeneratorNew.cpp CodeGen/CodeGeneratorNew.hpp \
 	CodeGen/Generate.cc CodeGen/Generate.h CodeGen/FixMain.cc \
 	CodeGen/FixNames.cc CodeGen/FixNames.h CodeGen/GenType.cc \
 	CodeGen/GenType.h CodeGen/LinkOnce.cc CodeGen/LinkOnce.h \
@@ -1488,6 +1491,8 @@ libdemangle.a: $(libdemangle_a_OBJECTS) $(libdemangle_a_DEPENDENCIES) $(EXTRA_li
 	$(AM_V_at)$(RANLIB) libdemangle.a
 CodeGen/CodeGenerator.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
+CodeGen/CodeGeneratorNew.$(OBJEXT): CodeGen/$(am__dirstamp) \
+	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/Generate.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/FixMain.$(OBJEXT): CodeGen/$(am__dirstamp) \
@@ -1742,6 +1747,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/TypeSubstitution.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Util.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/CodeGenerator.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/CodeGeneratorNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixMain.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixMain2.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixNames.Po@am__quote@ # am--include-marker
@@ -2179,6 +2185,7 @@ distclean: distclean-am
 	-rm -f AST/$(DEPDIR)/TypeSubstitution.Po
 	-rm -f AST/$(DEPDIR)/Util.Po
 	-rm -f CodeGen/$(DEPDIR)/CodeGenerator.Po
+	-rm -f CodeGen/$(DEPDIR)/CodeGeneratorNew.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain2.Po
 	-rm -f CodeGen/$(DEPDIR)/FixNames.Po
@@ -2424,6 +2431,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f AST/$(DEPDIR)/TypeSubstitution.Po
 	-rm -f AST/$(DEPDIR)/Util.Po
 	-rm -f CodeGen/$(DEPDIR)/CodeGenerator.Po
+	-rm -f CodeGen/$(DEPDIR)/CodeGeneratorNew.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain2.Po
 	-rm -f CodeGen/$(DEPDIR)/FixNames.Po

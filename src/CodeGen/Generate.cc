@@ -18,6 +18,7 @@
 #include <list>                      // for list
 #include <string>                    // for operator<<
 
+#include "CodeGeneratorNew.hpp"      // for CodeGenerator_new, doSemicolon, ...
 #include "CodeGenerator.h"           // for CodeGenerator, doSemicolon, oper...
 #include "GenType.h"                 // for genPrettyType
 #include "Common/PassVisitor.h"      // for PassVisitor
@@ -92,6 +93,48 @@ namespace CodeGen {
 			return dynamic_cast< TraitDecl * >( decl );
 		}
 	} // namespace
+
+namespace {
+	bool shouldClean( ast::Decl const * decl ) {
+		return dynamic_cast<ast::TraitDecl const *>( decl );
+	}
+
+	/// Removes various nodes that should not exist in CodeGen.
+	struct TreeCleaner_new {
+		ast::CompoundStmt const * previsit( ast::CompoundStmt const * stmt ) {
+			auto mutStmt = ast::mutate( stmt );
+			erase_if( mutStmt->kids, []( ast::Stmt const * stmt ){
+				auto declStmt = dynamic_cast<ast::DeclStmt const *>( stmt );
+				return ( declStmt ) ? shouldClean( declStmt->decl ) : false;
+			} );
+			return mutStmt;
+		}
+
+		ast::Stmt const * postvisit( ast::ImplicitCtorDtorStmt const * stmt ) {
+			return stmt->callStmt;
+		}
+	};
+} // namespace
+
+void generate( ast::TranslationUnit & translationUnit, std::ostream & os, bool doIntrinsics,
+		bool pretty, bool generateC, bool lineMarks, bool printExprTypes ) {
+	erase_if( translationUnit.decls, shouldClean );
+	ast::Pass<TreeCleaner_new>::run( translationUnit );
+
+	ast::Pass<CodeGenerator_new> cgv( os,
+			Options( pretty, generateC, lineMarks, printExprTypes ) );
+	for ( auto & decl : translationUnit.decls ) {
+		if ( decl->linkage.is_generatable && (doIntrinsics || !decl->linkage.is_builtin ) ) {
+			cgv.core.updateLocation( decl );
+			decl->accept( cgv );
+			if ( doSemicolon( decl ) ) {
+				os << ";";
+			}
+			os << cgv.core.endl;
+		}
+	}
+}
+
 } // namespace CodeGen
 
 // Local Variables: //
