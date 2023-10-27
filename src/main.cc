@@ -436,9 +436,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Code Gen", CodeGen::generate, transUnit, *output, !genproto, prettycodegenp, true, linemarks, false );
 
-		translationUnit = convert( std::move( transUnit ) );
-
-		CodeGen::FixMain::fix( translationUnit, *output,
+		CodeGen::FixMain::fix( transUnit, *output,
 				(PreludeDirector + "/bootloader.c").c_str() );
 		if ( output != &cout ) {
 			delete output;

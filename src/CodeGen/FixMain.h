@@ -26,6 +26,7 @@ class Declaration;
 class FunctionDecl;
 namespace ast {
 	class FunctionDecl;
+	class TranslationUnit;
 }
 
 namespace CodeGen {
@@ -48,6 +49,8 @@ public :
 
 	static void fix( std::list< Declaration * > & decls,
 			std::ostream &os, const char* bootloader_filename );
+	static void fix( ast::TranslationUnit & translationUnit,
+			std::ostream &os, const char * bootloader_filename );
 
 private:
 	static bool replace_main;
