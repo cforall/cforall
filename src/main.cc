@@ -30,6 +30,7 @@
 
 #include "AST/Convert.hpp"
 #include "AST/Pass.hpp"                     // for pass_visitor_stats
+#include "AST/Print.hpp"                    // for printAll
 #include "AST/TranslationUnit.hpp"          // for TranslationUnit
 #include "AST/Util.hpp"                     // for checkInvariants
 #include "CompilationState.h"
@@ -93,11 +94,11 @@ static void NewPass( const char * const name ) {
 	Stats::Heap::newPass( name );
 	using namespace Stats::Counters;
 	{
-		static auto group = build<CounterGroup>( "Pass Visitor" );
+		static auto group = build<CounterGroup>( "Pass Visitor Template" );
 		auto pass = build<CounterGroup>( name, group );
-		pass_visitor_stats.depth = 0;
-		pass_visitor_stats.avg = build<AverageCounter<double>>( "Average Depth", pass );
-		pass_visitor_stats.max = build<MaxCounter<double>>( "Max Depth", pass );
+		ast::pass_visitor_stats.depth = 0;
+		ast::pass_visitor_stats.avg = build<AverageCounter<double>>( "Average Depth", pass );
+		ast::pass_visitor_stats.max = build<MaxCounter<double>>( "Max Depth", pass );
 	}
 	{
 		static auto group = build<CounterGroup>( "Syntax Node" );
@@ -131,7 +132,6 @@ static bool waiting_for_gdb = false;					// flag to set cfa-cpp to wait for gdb 
 static string PreludeDirector = "";
 
 static void parse_cmdline( int argc, char * argv[] );
-static void dump( list< Declaration * > & translationUnit, ostream & out = cout );
 static void dump( ast::TranslationUnit && transUnit, ostream & out = cout );
 
 static void backtrace( int start ) {					// skip first N stack frames
@@ -245,7 +245,6 @@ static void sigAbortHandler( SIGPARMS ) {
 int main( int argc, char * argv[] ) {
 	FILE * input;										// use FILE rather than istream because yyin is FILE
 	ostream * output = & cout;
-	list< Declaration * > translationUnit;
 	ast::TranslationUnit transUnit;
 
 	Signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO );
@@ -318,11 +317,6 @@ int main( int argc, char * argv[] ) {
 		DUMP( astp, std::move( transUnit ) );
 
 		Stats::Time::StopBlock();
-
-		if (Stats::Counters::enabled) {
-			ast::pass_visitor_stats.avg = Stats::Counters::build<Stats::Counters::AverageCounter<double>>("Average Depth - New");
-			ast::pass_visitor_stats.max = Stats::Counters::build<Stats::Counters::MaxCounter<double>>("Max depth - New");
-		}
 
 		PASS( "Hoist Type Decls", Validate::hoistTypeDecls, transUnit );
 
@@ -444,13 +438,7 @@ int main( int argc, char * argv[] ) {
 	} catch ( SemanticErrorException & e ) {
 		if ( errorp ) {
 			cerr << "---AST at error:---" << endl;
-			// We check which section the errors came from without looking at
-			// transUnit because std::move means it could look like anything.
-			if ( !translationUnit.empty() ) {
-				dump( translationUnit, cerr );
-			} else {
-				dump( std::move( transUnit ), cerr );
-			}
+			dump( std::move( transUnit ), cerr );
 			cerr << endl << "---End of AST, begin error message:---\n" << endl;
 		} // if
 		e.print();
@@ -476,7 +464,6 @@ int main( int argc, char * argv[] ) {
 		return EXIT_FAILURE;
 	} // try
 
-	deleteAll( translationUnit );
 	Stats::print();
 	return EXIT_SUCCESS;
 } // main
@@ -706,31 +693,25 @@ static void parse_cmdline( int argc, char * argv[] ) {
 	// } // for
 } // parse_cmdline
 
-static bool notPrelude( Declaration * decl ) {
-	return ! LinkageSpec::isBuiltin( decl->get_linkage() );
-} // notPrelude
+static bool notPrelude( ast::ptr<ast::Decl> & decl ) {
+	return !decl->linkage.is_builtin;
+}
 
-static void dump( list< Declaration * > & translationUnit, ostream & out ) {
-	list< Declaration * > decls;
-
+static void dump( ast::TranslationUnit && unit, std::ostream & out ) {
+	// May filter out all prelude declarations.
 	if ( genproto ) {
-		filter( translationUnit.begin(), translationUnit.end(), back_inserter( decls ), notPrelude );
-	} else {
-		decls = translationUnit;
-	} // if
+		std::list<ast::ptr<ast::Decl>> decls;
+		std::copy_if( unit.decls.begin(), unit.decls.end(),
+			std::back_inserter( decls ), notPrelude );
+		decls.swap( unit.decls );
+	}
 
-	// depending on commandline options, either generate code or dump the AST
+	// May print as full dump or as code generation.
 	if ( codegenp ) {
-		CodeGen::generate( decls, out, ! genproto, prettycodegenp );
+		CodeGen::generate( unit, out, !genproto, prettycodegenp, false, false, false );
 	} else {
-		printAll( decls, out );
-	} // if
-	deleteAll( translationUnit );
-} // dump
-
-static void dump( ast::TranslationUnit && transUnit, ostream & out ) {
-	std::list< Declaration * > translationUnit = convert( std::move( transUnit ) );
-	dump( translationUnit, out );
+		ast::printAll( out, unit.decls );
+	}
 }
 
 // Local Variables: //

@@ -18,6 +18,8 @@
 namespace ast {
 
 PassVisitorStats pass_visitor_stats;
+// TODO: There was a counter for every syntax node created.
+//   This has not been translated to the new ast.
 // Stats::Counters::SimpleCounter * BaseSyntaxNode::new_nodes = nullptr;
 
 };
