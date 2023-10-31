@@ -47,7 +47,6 @@
 #include <stack>
 using namespace std;
 
-#include "SynTree/Type.h"                               // for Type
 #include "DeclarationNode.h"                            // for DeclarationNode, ...
 #include "ExpressionNode.h"                             // for ExpressionNode, ...
 #include "InitializerNode.h"                            // for InitializerNode, ...
@@ -2168,13 +2167,13 @@ type_qualifier:
 
 type_qualifier_name:
 	CONST
-		{ $$ = DeclarationNode::newTypeQualifier( Type::Const ); }
+		{ $$ = DeclarationNode::newTypeQualifier( ast::CV::Const ); }
 	| RESTRICT
-		{ $$ = DeclarationNode::newTypeQualifier( Type::Restrict ); }
+		{ $$ = DeclarationNode::newTypeQualifier( ast::CV::Restrict ); }
 	| VOLATILE
-		{ $$ = DeclarationNode::newTypeQualifier( Type::Volatile ); }
+		{ $$ = DeclarationNode::newTypeQualifier( ast::CV::Volatile ); }
 	| ATOMIC
-		{ $$ = DeclarationNode::newTypeQualifier( Type::Atomic ); }
+		{ $$ = DeclarationNode::newTypeQualifier( ast::CV::Atomic ); }
 	| forall
 		{ $$ = DeclarationNode::newForall( $1 ); }
 	;
@@ -2205,24 +2204,24 @@ storage_class_list:
 
 storage_class:
 	EXTERN
-		{ $$ = DeclarationNode::newStorageClass( Type::Extern ); }
+		{ $$ = DeclarationNode::newStorageClass( ast::Storage::Extern ); }
 	| STATIC
-		{ $$ = DeclarationNode::newStorageClass( Type::Static ); }
+		{ $$ = DeclarationNode::newStorageClass( ast::Storage::Static ); }
 	| AUTO
-		{ $$ = DeclarationNode::newStorageClass( Type::Auto ); }
+		{ $$ = DeclarationNode::newStorageClass( ast::Storage::Auto ); }
 	| REGISTER
-		{ $$ = DeclarationNode::newStorageClass( Type::Register ); }
+		{ $$ = DeclarationNode::newStorageClass( ast::Storage::Register ); }
 	| THREADLOCALGCC										// GCC
-		{ $$ = DeclarationNode::newStorageClass( Type::ThreadlocalGcc ); }
+		{ $$ = DeclarationNode::newStorageClass( ast::Storage::ThreadLocalGcc ); }
 	| THREADLOCALC11										// C11
-		{ $$ = DeclarationNode::newStorageClass( Type::ThreadlocalC11 ); }
+		{ $$ = DeclarationNode::newStorageClass( ast::Storage::ThreadLocalC11 ); }
 		// Put function specifiers here to simplify parsing rules, but separate them semantically.
 	| INLINE											// C99
-		{ $$ = DeclarationNode::newFuncSpecifier( Type::Inline ); }
+		{ $$ = DeclarationNode::newFuncSpecifier( ast::Function::Inline ); }
 	| FORTRAN											// C99
-		{ $$ = DeclarationNode::newFuncSpecifier( Type::Fortran ); }
+		{ $$ = DeclarationNode::newFuncSpecifier( ast::Function::Fortran ); }
 	| NORETURN											// C11
-		{ $$ = DeclarationNode::newFuncSpecifier( Type::Noreturn ); }
+		{ $$ = DeclarationNode::newFuncSpecifier( ast::Function::Noreturn ); }
 	;
 
 basic_type_name:
@@ -3716,7 +3715,7 @@ identifier_parameter_declarator:
 	paren_identifier attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
 	| '&' MUTEX paren_identifier attribute_list_opt
-		{ $$ = $3->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( Type::Mutex ), OperKinds::AddressOf ) )->addQualifiers( $4 ); }
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( ast::CV::Mutex ), OperKinds::AddressOf ) )->addQualifiers( $4 ); }
 	| identifier_parameter_ptr
 	| identifier_parameter_array attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
@@ -3766,7 +3765,7 @@ type_parameter_redeclarator:
 	typedef_name attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
 	| '&' MUTEX typedef_name attribute_list_opt
-		{ $$ = $3->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( Type::Mutex ), OperKinds::AddressOf ) )->addQualifiers( $4 ); }
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( ast::CV::Mutex ), OperKinds::AddressOf ) )->addQualifiers( $4 ); }
 	| type_parameter_ptr
 	| type_parameter_array attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
@@ -3940,7 +3939,7 @@ abstract_parameter_declarator_opt:
 abstract_parameter_declarator:
 	abstract_parameter_ptr
 	| '&' MUTEX attribute_list_opt
-		{ $$ = DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( Type::Mutex ), OperKinds::AddressOf )->addQualifiers( $3 ); }
+		{ $$ = DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( ast::CV::Mutex ), OperKinds::AddressOf )->addQualifiers( $3 ); }
 	| abstract_parameter_array attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
 	| abstract_parameter_function attribute_list_opt

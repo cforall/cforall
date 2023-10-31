@@ -1063,20 +1063,14 @@ namespace ast {
 						}
 					} else if ( auto at = dynamic_cast< const ArrayType * >( t ) ) {
 						auto nexpr = dynamic_cast< const NameExpr *>( expr );
-						auto res = eval( nexpr ); 
 						for ( const Decl * mem : refType->lookup( nexpr->name ) ) {
 							if ( auto field = dynamic_cast< const ObjectDecl * >( mem ) ) {
 								DesignatorChain d2 = d;
 								d2.emplace_back( new VariableExpr{ expr->location, field } );
 								newDesigAlts.emplace_back( std::move( d2 ) );
-								// newTypes.emplace_back( field->type );
 								newTypes.emplace_back( at->base );
 							}
 						}
-
-						// d.emplace_back( expr );
-						// newDesigAlts.emplace_back( d );
-						// newTypes.emplace_back( at->base );
 					}
 
 					++dit;

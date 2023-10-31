@@ -116,7 +116,7 @@ struct Node {
 	{ LongDoubleComplex, "LongDoubleComplex", "LDC", "long double _Complex", "Ce", Floating, uFloat128xComplex, -1, -1, 17 },
 	// { LongDoubleImaginary, "LongDoubleImaginary", "LDI", "long double _Imaginary", "Ie", false, LongDoubleComplex, -1, -1, 17 },
 
-	{ uFloat128x, "uFloat128x", "_FBX", "_Float128x", "DF128x_", Floating, uFloat128xComplex, -1, -1, 18 },	
+	{ uFloat128x, "uFloat128x", "_FBX", "_Float128x", "DF128x_", Floating, uFloat128xComplex, -1, -1, 18 },
 	{ uFloat128xComplex, "uFloat128xComplex", "_FLDXC", "_Float128x _Complex", "CDF128x_", Floating, -1, -1, -1, 18 }
 }; // graph
 
@@ -126,14 +126,14 @@ static Kind commonTypeMatrix[NUMBER_OF_BASIC_TYPES][NUMBER_OF_BASIC_TYPES];
 
 void generateCosts( int row ) {
 	bool seen[NUMBER_OF_BASIC_TYPES] = { false /*, ... */ };
-	
+
 	struct el_cost {
 		int i;
 		int path;
 		int sign;
-		
+
 		el_cost( int i = 0, int p = 0, int s = 0 ) : i(i), path(p), sign(s) {}
-		
+
 		// reverse the sense for use in largest-on-top priority queue
 		bool operator< (const el_cost& o) const {
 			return path > o.path || (path == o.path && sign > o.sign);
@@ -194,7 +194,7 @@ void generateCommonType( int row, int col ) {			// row <= col
 			commonTypeMatrix[row][col] = commonTypeMatrix[col][row] = graph[i].basicType;
 			return;
 		} // if
-		
+
 		i = graph[col].middle;
 		if ( i == -1 ) assert("invalid ancestor assumption");
 		if ( costMatrix[row][i] >= 0 ) {
@@ -283,7 +283,7 @@ int main() {
 	code << "\tenum Kind {" << endl;
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) {
 		code << "\t\t" << graph[r].name << "," << endl;
-	} // for	
+	} // for
 	code << "\t\tNUMBER_OF_BASIC_TYPES" << endl;
 	code << "\t} kind;" << endl;
 	code << "\t";										// indentation for end marker
@@ -306,7 +306,7 @@ int main() {
 	code << "const char * BasicType::typeNames[] = {" << endl;
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) {
 		code << "\t\"" << graph[r].type << "\"," << endl;
-	} // for	
+	} // for
 	code << "};" << endl;
 
 	if ( (start = str.find( ENDMK, start + 1 )) == string::npos ) Abort( "end", TypeC );
@@ -328,7 +328,7 @@ int main() {
 	code << "\tenum Kind {" << endl;
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) {
 		code << "\t\t" << graph[r].name << "," << endl;
-	} // for	
+	} // for
 	code << "\t\tNUMBER_OF_BASIC_TYPES" << endl;
 	code << "\t} kind;" << endl;
 	code << "\t";										// indentation for end marker
@@ -351,7 +351,7 @@ int main() {
 	code << "const char * BasicType::typeNames[] = {" << endl;
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) {
 		code << "\t\"" << graph[r].type << "\"," << endl;
-	} // for	
+	} // for
 	code << "};" << endl;
 
 	if ( (start = str.find( ENDMK, start + 1 )) == string::npos ) Abort( "end", TypeC_AST );
@@ -390,9 +390,9 @@ int main() {
 	if ( (end = str.find( STARTMK, start + 1 )) == string::npos ) Abort( "start", ConversionCost );
 	end += sizeof( STARTMK );
 	code << str.substr( start, end - start );
-	
+
 	code << "\t" << BYMK << endl;
-	code << "\tstatic const int costMatrix[BasicType::NUMBER_OF_BASIC_TYPES][BasicType::NUMBER_OF_BASIC_TYPES] = { // path length from root to node" << endl
+	code << "\tstatic const int costMatrix[ast::BasicType::NUMBER_OF_BASIC_TYPES][ast::BasicType::NUMBER_OF_BASIC_TYPES] = { // path length from root to node" << endl
 		 << "\t\t/*           ";
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) { // titles
 		code << setw(5) << graph[r].abbrev;
@@ -410,14 +410,14 @@ int main() {
 	// maximum conversion cost from int
 	code << "\tstatic const int maxIntCost = " << *max_element(costMatrix[SignedInt], costMatrix[SignedInt] + NUMBER_OF_BASIC_TYPES) << ";" << endl;
 	code << "\t";										// indentation for end marker
-	
+
 	if ( (start = str.find( ENDMK, start + 1 )) == string::npos ) Abort( "end", ConversionCost );
 	if ( (end = str.find( STARTMK, start + 1 )) == string::npos ) Abort( "start", ConversionCost );
 	end += sizeof( STARTMK );
 	code << str.substr( start, end - start );
 
 	code << "\t" << BYMK << endl;
-	code << "\tstatic const int signMatrix[BasicType::NUMBER_OF_BASIC_TYPES][BasicType::NUMBER_OF_BASIC_TYPES] = { // number of sign changes in safe conversion" << endl
+	code << "\tstatic const int signMatrix[ast::BasicType::NUMBER_OF_BASIC_TYPES][ast::BasicType::NUMBER_OF_BASIC_TYPES] = { // number of sign changes in safe conversion" << endl
 		 << "\t\t/*           ";
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) { // titles
 		code << setw(5) << graph[r].abbrev;
@@ -449,8 +449,8 @@ int main() {
 
 	enum { PER_ROW = 6 };
 	code << "\t" << BYMK << endl;
-	code << "\t#define BT BasicType::" << endl;
-	code << "\tstatic const BasicType::Kind commonTypes[BasicType::NUMBER_OF_BASIC_TYPES][BasicType::NUMBER_OF_BASIC_TYPES] = { // nearest common ancestor" << endl
+	code << "\t#define BT ast::BasicType::" << endl;
+	code << "\tstatic const BT Kind commonTypes[BT NUMBER_OF_BASIC_TYPES][BT NUMBER_OF_BASIC_TYPES] = { // nearest common ancestor" << endl
 	     << "\t\t/*\t\t ";
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) { // titles
 		code << setw(24) << graph[r].abbrev;
@@ -504,11 +504,11 @@ int main() {
 		"\t\t\t//   - \"DF\"N\"_\" ISO/IEC TS 18661 N-bit binary floating point (_FloatN)\n"
 		"\t\t\t//   - \"Di\" char32_t\n"
 		"\t\t\t//   - \"Ds\" char16_t\n";
-		
-	code << "\t\t\tconst std::string basicTypes[BasicType::NUMBER_OF_BASIC_TYPES] = {" << endl;
+
+	code << "\t\t\tconst std::string basicTypes[ast::BasicType::NUMBER_OF_BASIC_TYPES] = {" << endl;
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) {
 		code << "\t\t\t\t\"" << graph[r].mangled << "\"," << setw(9 - strlen(graph[r].mangled)) << ' ' << "// " << graph[r].type << endl;
-	} // for	
+	} // for
 	code << "\t\t\t}; // basicTypes" << endl;
 	code << "\t\t\t";									// indentation for end marker
 

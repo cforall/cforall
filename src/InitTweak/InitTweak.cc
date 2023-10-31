@@ -106,7 +106,7 @@ namespace InitTweak {
 			}
 		};
 
-		struct InitDepthChecker_new : public ast::WithGuards {
+		struct InitDepthChecker_new {
 			bool result = true;
 			const ast::Type * type;
 			int curDepth = 0, maxDepth = 0;
@@ -118,10 +118,12 @@ namespace InitTweak {
 				}
 				maxDepth++;
 			}
-			void previsit( ListInit * ) {
+			void previsit( ast::ListInit const * ) {
 				curDepth++;
-				GuardAction( [this]() { curDepth--; } );
 				if ( curDepth > maxDepth ) result = false;
+			}
+			void postvisit( ast::ListInit const * ) {
+				curDepth--;
 			}
 		};
 
