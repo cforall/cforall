@@ -1246,14 +1246,6 @@ namespace CodeGen {
 		} // if
 	}
 
-std::string genName( ast::DeclWithType const * decl ) {
-	if ( const OperatorInfo * opInfo = operatorLookup( decl->name ) ) {
-		return opInfo->outputName;
-	} else {
-		return decl->name;
-	}
-}
-
 } // namespace CodeGen
 
 // Local Variables: //

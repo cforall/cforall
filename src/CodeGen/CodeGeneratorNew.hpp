@@ -187,4 +187,7 @@ inline bool doSemicolon( ast::Decl const * decl ) {
 	return true;
 }
 
+/// Returns the C-compatible name of the declaration.
+std::string genName( ast::DeclWithType const * decl );
+
 } // namespace CodeGen

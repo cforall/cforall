@@ -1246,6 +1246,12 @@ void CodeGenerator_new::postvisit( ast::MutexStmt const * stmt ) {
 	stmt->stmt->accept( *visitor );
 }
 
-//std::string genName( ast::DeclWithType const * decl ) {}
+std::string genName( ast::DeclWithType const * decl ) {
+	if ( const OperatorInfo * opInfo = operatorLookup( decl->name ) ) {
+		return opInfo->outputName;
+	} else {
+		return decl->name;
+	}
+}
 
 } // namespace CodeGen

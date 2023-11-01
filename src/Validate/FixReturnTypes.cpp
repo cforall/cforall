@@ -18,7 +18,7 @@
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
-#include "CodeGen/CodeGenerator.h"
+#include "CodeGen/CodeGeneratorNew.hpp"
 #include "ResolvExpr/Unify.h"
 
 namespace ast {

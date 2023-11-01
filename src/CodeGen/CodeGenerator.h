@@ -185,7 +185,6 @@ namespace CodeGen {
 
 	/// returns C-compatible name of declaration
 	std::string genName( DeclarationWithType * decl );
-	std::string genName( ast::DeclWithType const * decl );
 
 	inline std::ostream & operator<<( std::ostream & os, const CodeGenerator::LineEnder & endl ) {
 		return endl( os );
