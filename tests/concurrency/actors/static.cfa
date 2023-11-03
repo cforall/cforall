@@ -54,8 +54,6 @@ int main( int argc, char * argv[] ) {
 
 	actor | msg;
 
-	sout | "stopping";
-
 	stop_actor_system();
 
 	sout | "stopped";

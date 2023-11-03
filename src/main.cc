@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep 28 22:28:45 2023
-// Update Count     : 687
+// Last Modified On : Wed Nov  1 21:12:58 2023
+// Update Count     : 690
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -288,12 +288,12 @@ int main( int argc, char * argv[] ) {
 			assertf( !PreludeDirector.empty(), "Can't find prelude without option --prelude-dir must be used." );
 
 			// Read to gcc builtins, if not generating the cfa library
-			FILE * gcc_builtins = fopen( (PreludeDirector + "/gcc-builtins.cf").c_str(), "r" );
+			FILE * gcc_builtins = fopen( (PreludeDirector + "/gcc-builtins.cfa").c_str(), "r" );
 			assertf( gcc_builtins, "cannot open gcc-builtins.cf\n" );
 			parse( gcc_builtins, ast::Linkage::Compiler );
 
 			// read the extra prelude in, if not generating the cfa library
-			FILE * extras = fopen( (PreludeDirector + "/extras.cf").c_str(), "r" );
+			FILE * extras = fopen( (PreludeDirector + "/extras.cfa").c_str(), "r" );
 			assertf( extras, "cannot open extras.cf\n" );
 			parse( extras, ast::Linkage::BuiltinC );
 
@@ -304,7 +304,7 @@ int main( int argc, char * argv[] ) {
 				parse( prelude, ast::Linkage::Intrinsic );
 
 				// Read to cfa builtins, if not generating the cfa library
-				FILE * builtins = fopen( (PreludeDirector + "/builtins.cf").c_str(), "r" );
+				FILE * builtins = fopen( (PreludeDirector + "/builtins.cfa").c_str(), "r" );
 				assertf( builtins, "cannot open builtins.cf\n" );
 				parse( builtins, ast::Linkage::BuiltinCFA );
 			} // if
@@ -430,8 +430,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Code Gen", CodeGen::generate, transUnit, *output, !genproto, prettycodegenp, true, linemarks, false );
 
-		CodeGen::FixMain::fix( transUnit, *output,
-				(PreludeDirector + "/bootloader.c").c_str() );
+		CodeGen::FixMain::fix( transUnit, *output, (PreludeDirector + "/bootloader.c").c_str() );
 		if ( output != &cout ) {
 			delete output;
 		} // if

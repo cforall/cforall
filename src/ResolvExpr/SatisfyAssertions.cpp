@@ -50,7 +50,7 @@
 namespace ResolvExpr {
 
 // in CandidateFinder.cpp; unique ID for assertion satisfaction
-extern UniqueId globalResnSlot;
+extern ast::UniqueId globalResnSlot;
 
 namespace {
 	/// Post-unification assertion satisfaction candidate
@@ -297,10 +297,10 @@ namespace {
 			// Skip if no slots to find
 			if ( !expr->inferred.hasSlots() ) return expr;
 			// if ( expr->inferred.mode != ast::Expr::InferUnion::Slots ) return expr;
-			std::vector<UniqueId> missingSlots;
+			std::vector<ast::UniqueId> missingSlots;
 			// find inferred parameters for resolution slots
 			ast::InferredParams * newInferred = new ast::InferredParams();
-			for ( UniqueId slot : expr->inferred.resnSlots() ) {
+			for ( ast::UniqueId slot : expr->inferred.resnSlots() ) {
 				// fail if no matching assertions found
 				auto it = inferred.find( slot );
 				if ( it == inferred.end() ) {

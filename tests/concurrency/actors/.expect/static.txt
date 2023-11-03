@@ -1,5 +1,4 @@
 starting
 started
-stopping
 Done
 stopped

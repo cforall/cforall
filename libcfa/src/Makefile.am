@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Mon Sep 18 17:06:56 2023
-## Update Count     : 264
+## Last Modified On : Wed Nov  1 19:03:42 2023
+## Update Count     : 266
 ###############################################################################
 
 # create object files in directory with source files
@@ -194,17 +194,17 @@ thread_libdeps = $(join \
 
 if ENABLE_DISTCC
 
-../prelude/distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ ../prelude/defines.hfa ../prelude/gcc-builtins.cf ../prelude/builtins.cf ../prelude/extras.cf ../prelude/prelude.cfa ../prelude/bootloader.c $(srcdir)/../../tools/build/push2dist.sh
+../prelude/distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ ../prelude/defines.hfa ../prelude/gcc-builtins.cfa ../prelude/builtins.cfa ../prelude/extras.cfa ../prelude/prelude.cfa ../prelude/bootloader.c $(srcdir)/../../tools/build/push2dist.sh
 	@+make -C ../prelude distribution
 
 prelude.o prelude.lo $(libobjs) $(thread_libobjs) : ../prelude/distribution
 
 endif ENABLE_DISTCC
 
-prelude.o : prelude.cfa extras.cf gcc-builtins.cf builtins.cf @LOCAL_CFACC@ @CFACPP@
+prelude.o : prelude.cfa extras.cfa gcc-builtins.cfa builtins.cfa @LOCAL_CFACC@ @CFACPP@
 	${AM_V_GEN}$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -fvisibility=default -o ${@}
 
-prelude.lo: prelude.cfa extras.cf gcc-builtins.cf builtins.cf @LOCAL_CFACC@ @CFACPP@
+prelude.lo: prelude.cfa extras.cfa gcc-builtins.cfa builtins.cfa @LOCAL_CFACC@ @CFACPP@
 	${AM_V_GEN}$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile \
 	$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -fvisibility=default -o ${@}
 

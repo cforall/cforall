@@ -9,8 +9,8 @@
 # Author           : Peter A. Buhr
 # Created On       : Sat May 16 07:57:37 2015
 # Last Modified By : Peter A. Buhr
-# Last Modified On : Sat Feb  8 09:46:58 2020
-# Update Count     : 36
+# Last Modified On : Wed Nov  1 20:44:04 2023
+# Update Count     : 37
 #
 
 # http://llvm.org/svn/llvm-project/cfe/trunk/include/clang/Basic/Builtins.def
@@ -149,7 +149,7 @@ END {
 
 	# extras
 	printf( "\n#include \"builtins.def\"\n\n" );
-	printf( "\n#include \"sync-builtins.cf\"\n\n" );
+	printf( "\n#include \"sync-builtins.cfa\"\n\n" );
 	printf( "extern const char *__PRETTY_FUNCTION__;\n" );
 	printf( "float _Complex __builtin_complex( float, float );\n" );
 	printf( "double _Complex __builtin_complex( double, double );\n" );

@@ -1,0 +1,19 @@
+// Although we are testing the attribute priority checks, we also have a
+// resolver error to force the expect to compare against the compiler output.
+
+int * store = 0p;
+
+__attribute__(( constructor(150) ))
+void ctor_store(void) {
+	store = malloc();
+}
+
+__attribute__(( destructor(150) ))
+void dtor_store(void) {
+	free(store);
+	store = 0;
+}
+
+int main(void) {
+	return 0;
+}

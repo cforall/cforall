@@ -57,10 +57,10 @@
 #include "SynTree/Visitor.h"           // for acceptAll, maybeAccept
 #include "Validate/FindSpecialDecls.h" // for dtorStmt, dtorStructDestroy
 
-bool ctordtorp = false; // print all debug
-bool ctorp = false; // print ctor debug
-bool cpctorp = false; // print copy ctor debug
-bool dtorp = false; // print dtor debug
+extern bool ctordtorp; // print all debug
+extern bool ctorp; // print ctor debug
+extern bool cpctorp; // print copy ctor debug
+extern bool dtorp; // print dtor debug
 #define PRINT( text ) if ( ctordtorp ) { text }
 #define CP_CTOR_PRINT( text ) if ( ctordtorp || cpctorp ) { text }
 #define DTOR_PRINT( text ) if ( ctordtorp || dtorp ) { text }

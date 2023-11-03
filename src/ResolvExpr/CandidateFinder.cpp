@@ -56,7 +56,7 @@
 namespace ResolvExpr {
 
 /// Unique identifier for matching expression resolutions to their requesting expression
-UniqueId globalResnSlot = 0;
+ast::UniqueId globalResnSlot = 0;
 
 namespace {
 	/// First index is which argument, second is which alternative, third is which exploded element
@@ -685,7 +685,7 @@ namespace {
 	/// Set up candidate assertions for inference
 	void Finder::inferParameters( CandidateRef & newCand, CandidateList & out ) {
 		// Set need bindings for any unbound assertions
-		UniqueId crntResnSlot = 0; // matching ID for this expression's assertions
+		ast::UniqueId crntResnSlot = 0; // matching ID for this expression's assertions
 		for ( auto & assn : newCand->need ) {
 			// skip already-matched assertions
 			if ( assn.second.resnSlot != 0 ) continue;

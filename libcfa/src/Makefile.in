@@ -1250,15 +1250,15 @@ $(thread_libobjs) : @LOCAL_CFACC@ @CFACPP@ prelude.cfa
 
 -include $(thread_libdeps)
 
-@ENABLE_DISTCC_TRUE@../prelude/distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ ../prelude/defines.hfa ../prelude/gcc-builtins.cf ../prelude/builtins.cf ../prelude/extras.cf ../prelude/prelude.cfa ../prelude/bootloader.c $(srcdir)/../../tools/build/push2dist.sh
+@ENABLE_DISTCC_TRUE@../prelude/distribution: @LOCAL_CFACC@ @LOCAL_CC1@ @CFACPP@ ../prelude/defines.hfa ../prelude/gcc-builtins.cfa ../prelude/builtins.cfa ../prelude/extras.cfa ../prelude/prelude.cfa ../prelude/bootloader.c $(srcdir)/../../tools/build/push2dist.sh
 @ENABLE_DISTCC_TRUE@	@+make -C ../prelude distribution
 
 @ENABLE_DISTCC_TRUE@prelude.o prelude.lo $(libobjs) $(thread_libobjs) : ../prelude/distribution
 
-prelude.o : prelude.cfa extras.cf gcc-builtins.cf builtins.cf @LOCAL_CFACC@ @CFACPP@
+prelude.o : prelude.cfa extras.cfa gcc-builtins.cfa builtins.cfa @LOCAL_CFACC@ @CFACPP@
 	${AM_V_GEN}$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -fvisibility=default -o ${@}
 
-prelude.lo: prelude.cfa extras.cf gcc-builtins.cf builtins.cf @LOCAL_CFACC@ @CFACPP@
+prelude.lo: prelude.cfa extras.cfa gcc-builtins.cfa builtins.cfa @LOCAL_CFACC@ @CFACPP@
 	${AM_V_GEN}$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile \
 	$(CFACOMPILE) -quiet -XCFA,-l ${<} -c -fvisibility=default -o ${@}
 
