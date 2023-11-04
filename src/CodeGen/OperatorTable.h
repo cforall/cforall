@@ -8,60 +8,64 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 16 08:13:34 2020
-// Update Count     : 26
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Nov  3 14:53:00 2023
+// Update Count     : 27
 //
 
 #pragma once
 
 #include <string>
-#include <map>
 
 namespace CodeGen {
-	enum OperatorType {
-		OT_CTOR,
-		OT_DTOR,
-		OT_CONSTRUCTOR = OT_DTOR,
-		OT_PREFIXASSIGN,
-		OT_POSTFIXASSIGN,
-		OT_INFIXASSIGN,
-		OT_ASSIGNMENT = OT_INFIXASSIGN,
-		OT_CALL,
-		OT_PREFIX,
-		OT_INFIX,
-		OT_POSTFIX,
-		OT_INDEX,
-		OT_LABELADDRESS,
-		OT_CONSTANT
-	};
 
-	struct OperatorInfo {
-		std::string inputName;
-		std::string symbol;
-		std::string outputName;
-		std::string friendlyName;
-		OperatorType type;
-	};
+enum OperatorType {
+	OT_CTOR,
+	OT_DTOR,
+	OT_CONSTRUCTOR = OT_DTOR,
+	OT_PREFIXASSIGN,
+	OT_POSTFIXASSIGN,
+	OT_INFIXASSIGN,
+	OT_ASSIGNMENT = OT_INFIXASSIGN,
+	OT_CALL,
+	OT_PREFIX,
+	OT_INFIX,
+	OT_POSTFIX,
+	OT_INDEX,
+	OT_LABELADDRESS,
+	OT_CONSTANT
+};
 
-	class CodeGen {
-		friend const OperatorInfo * operatorLookup( const std::string & funcName );
+struct OperatorInfo {
+	// The Cforall special function name.
+	std::string inputName;
+	// The string used when the operator is used as an operator.
+	std::string symbol;
+	// The base name used in the mangled name.
+	std::string outputName;
+	// Human-readable name of the operator.
+	std::string friendlyName;
+	// The type of operator shows how it is used as an operator.
+	OperatorType type;
+};
 
-		static const OperatorInfo tableValues[];
-		static std::map< std::string, OperatorInfo > table;
-	  public:
-		CodeGen();
-	}; // CodeGen
+// Look up the operator (by inputName), return nullptr if no such operator.
+const OperatorInfo * operatorLookup( const std::string & inputName );
+// Is there an operator with this name?
+bool isOperator( const std::string & inputName );
+// Get the friendlyName of the operator with the inputName
+std::string operatorFriendlyName( const std::string & inputName );
+// Get the OperatorInfo with the given outputName, if one exists.
+const OperatorInfo * operatorLookupByOutput( const std::string & outputName );
 
-	bool isOperator( const std::string & funcName );
-	const OperatorInfo * operatorLookup( const std::string & funcName );
-	std::string operatorFriendlyName( const std::string & funcName );
+// Is the operator a constructor, destructor or any form of assignment.
+// (Last two are "or" combinations of the first three.)
+bool isConstructor( const std::string & );
+bool isDestructor( const std::string & );
+bool isAssignment( const std::string & );
+bool isCtorDtor( const std::string & );
+bool isCtorDtorAssign( const std::string & );
 
-	bool isConstructor( const std::string & );
-	bool isDestructor( const std::string & );
-	bool isAssignment( const std::string & );
-	bool isCtorDtor( const std::string & );
-	bool isCtorDtorAssign( const std::string & );
 } // namespace CodeGen
 
 // Local Variables: //
