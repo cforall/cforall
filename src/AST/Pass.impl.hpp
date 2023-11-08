@@ -1133,6 +1133,24 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::CorunStmt * node ) {
 }
 
 //--------------------------------------------------------------------------
+// CoforStmt
+template< typename core_t >
+const ast::Stmt * ast::Pass< core_t >::visit( const ast::CoforStmt * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		// for statements introduce a level of scope (for the initialization)
+		guard_symtab guard { *this };
+		maybe_accept( node, &CoforStmt::inits );
+		maybe_accept_top( node, &CoforStmt::cond  );
+		maybe_accept_top( node, &CoforStmt::inc   );
+		maybe_accept_as_compound( node, &CoforStmt::body  );
+	}
+
+	VISIT_END( Stmt, node );
+}
+
+//--------------------------------------------------------------------------
 // ApplicationExpr
 template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::ApplicationExpr * node ) {

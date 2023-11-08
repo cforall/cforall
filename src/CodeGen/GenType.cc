@@ -22,6 +22,7 @@
 #include "AST/Vector.hpp"         // for vector
 #include "CodeGenerator.h"        // for CodeGenerator
 #include "CodeGeneratorNew.hpp"   // for CodeGenerator_new
+#include "Common/UniqueName.h"    // for UniqueName
 #include "SynTree/Declaration.h"  // for DeclarationWithType
 #include "SynTree/Expression.h"   // for Expression
 #include "SynTree/Type.h"         // for PointerType, Type, FunctionType
@@ -661,8 +662,9 @@ std::string GenType_new::genParamList( const ast::vector<ast::Type> & range ) {
 	auto end = range.end();
 	if ( cur == end ) return "";
 	std::ostringstream oss;
-	for ( unsigned int i = 0 ; ; ++i ) {
-		oss << genType( *cur++, "__param_" + std::to_string(i), options );
+	UniqueName param( "__param_" );
+	while ( true ) {
+		oss << genType( *cur++, options.genC ? param.newName() : "", options );
 		if ( cur == end ) break;
 		oss << ", ";
 	}

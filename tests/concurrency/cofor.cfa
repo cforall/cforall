@@ -1,13 +1,14 @@
 #include <cofor.hfa>
 
-
 void add_num( long * total, long val ) { __atomic_fetch_add( total, (long)val, __ATOMIC_SEQ_CST ); }
 
 int main() {
     printf("start\n");
     processor p[4];
     long total = 0;
-    COFOR( i, 0, 10, __atomic_fetch_add( &total, i, __ATOMIC_SEQ_CST ); );
+    cofor( i; 10 ) {
+        __atomic_fetch_add( &total, i, __ATOMIC_SEQ_CST );
+    }
     {
         corun;      // does nothing
         corun{};    // does nothing

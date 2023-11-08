@@ -302,6 +302,7 @@ static inline struct cluster   * active_cluster  () { return publicTLS_get( this
 
 // gets the number of constructed processors on the cluster
 static inline unsigned get_proc_count( cluster & this ) { return this.procs.constructed; }
+static inline unsigned get_proc_count() { return publicTLS_get( this_processor )->cltr->procs.constructed; }
 
 // set the number of internal processors
 // these processors are in addition to any explicitly declared processors

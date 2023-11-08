@@ -655,6 +655,12 @@ private:
 		return nullptr;
 	}
 
+	const ast::Stmt * visit( const ast::CoforStmt * node ) override final {
+		// There is no old-AST CoforStmt, so this should never be called.
+		assert( !node );
+		return nullptr;
+	}
+
 	TypeSubstitution * convertTypeSubstitution(const ast::TypeSubstitution * src) {
 
 		if (!src) return nullptr;

@@ -1724,7 +1724,7 @@ corun_statement:
 
 cofor_statement:
 	COFOR '(' for_control_expression_list ')' statement
-		{ SemanticError( yylloc, "cofor statement is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new StatementNode( build_cofor( yylloc, $3, maybe_build_compound( yylloc, $5 ) ) ); }
 	;
 
 exception_statement:

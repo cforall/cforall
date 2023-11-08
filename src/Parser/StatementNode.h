@@ -105,3 +105,4 @@ ast::WaitUntilStmt * build_waituntil_stmt( const CodeLocation &, ast::WaitUntilS
 ast::Stmt * build_with( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
 ast::Stmt * build_mutex( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
 ast::Stmt * build_corun( const CodeLocation &, StatementNode * stmt );
+ast::Stmt * build_cofor( const CodeLocation & location, ForCtrl * forctl, StatementNode * stmt );

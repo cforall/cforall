@@ -173,8 +173,9 @@ am__objects_1 = AST/Attribute.$(OBJEXT) AST/Convert.$(OBJEXT) \
 	AST/Stmt.$(OBJEXT) AST/SymbolTable.$(OBJEXT) \
 	AST/Type.$(OBJEXT) AST/TypeEnvironment.$(OBJEXT) \
 	AST/TypeSubstitution.$(OBJEXT) AST/Util.$(OBJEXT)
-am__objects_2 = CodeGen/FixMain2.$(OBJEXT) \
-	CodeGen/OperatorTable.$(OBJEXT)
+am__objects_2 = CodeGen/CodeGenerator.$(OBJEXT) \
+	CodeGen/CodeGeneratorNew.$(OBJEXT) CodeGen/FixMain2.$(OBJEXT) \
+	CodeGen/GenType.$(OBJEXT) CodeGen/OperatorTable.$(OBJEXT)
 am__objects_3 = Common/Assert.$(OBJEXT) \
 	Common/CodeLocationTools.$(OBJEXT) Common/DeclStats.$(OBJEXT) \
 	Common/Eval.$(OBJEXT) Common/Examine.$(OBJEXT) \
@@ -249,11 +250,9 @@ am_libdemangle_a_OBJECTS = $(am__objects_11)
 libdemangle_a_OBJECTS = $(am_libdemangle_a_OBJECTS)
 am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	MakeLibCfa.$(OBJEXT) MakeLibCfaNew.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2) CodeGen/CodeGenerator.$(OBJEXT) \
-	CodeGen/CodeGeneratorNew.$(OBJEXT) CodeGen/Generate.$(OBJEXT) \
+	$(am__objects_2) CodeGen/Generate.$(OBJEXT) \
 	CodeGen/FixMain.$(OBJEXT) CodeGen/FixNames.$(OBJEXT) \
-	CodeGen/GenType.$(OBJEXT) CodeGen/LinkOnce.$(OBJEXT) \
-	CodeTools/DeclStats.$(OBJEXT) \
+	CodeGen/LinkOnce.$(OBJEXT) CodeTools/DeclStats.$(OBJEXT) \
 	CodeTools/ResolvProtoDump.$(OBJEXT) \
 	CodeTools/TrackLoc.$(OBJEXT) Concurrency/Actors.$(OBJEXT) \
 	Concurrency/Corun.$(OBJEXT) Concurrency/KeywordsNew.$(OBJEXT) \
@@ -750,21 +749,18 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I automake
 SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	MakeLibCfaNew.cpp MakeLibCfa.h $(SRC_AST) $(SRC_CODEGEN) \
-	CodeGen/CodeGenerator.cc CodeGen/CodeGenerator.h \
-	CodeGen/CodeGeneratorNew.cpp CodeGen/CodeGeneratorNew.hpp \
 	CodeGen/Generate.cc CodeGen/Generate.h CodeGen/FixMain.cc \
-	CodeGen/FixNames.cc CodeGen/FixNames.h CodeGen/GenType.cc \
-	CodeGen/GenType.h CodeGen/LinkOnce.cc CodeGen/LinkOnce.h \
-	CodeGen/Options.h CodeTools/DeclStats.cc CodeTools/DeclStats.h \
-	CodeTools/ResolvProtoDump.cc CodeTools/ResolvProtoDump.h \
-	CodeTools/TrackLoc.cc CodeTools/TrackLoc.h \
-	Concurrency/Actors.cpp Concurrency/Actors.hpp \
-	Concurrency/Corun.cpp Concurrency/Corun.hpp \
-	Concurrency/KeywordsNew.cpp Concurrency/Keywords.cc \
-	Concurrency/Keywords.h Concurrency/WaitforNew.cpp \
-	Concurrency/Waitfor.cc Concurrency/Waitfor.h \
-	Concurrency/Waituntil.cpp Concurrency/Waituntil.hpp \
-	$(SRC_COMMON) Common/DebugMalloc.cc \
+	CodeGen/FixNames.cc CodeGen/FixNames.h CodeGen/LinkOnce.cc \
+	CodeGen/LinkOnce.h CodeGen/Options.h CodeTools/DeclStats.cc \
+	CodeTools/DeclStats.h CodeTools/ResolvProtoDump.cc \
+	CodeTools/ResolvProtoDump.h CodeTools/TrackLoc.cc \
+	CodeTools/TrackLoc.h Concurrency/Actors.cpp \
+	Concurrency/Actors.hpp Concurrency/Corun.cpp \
+	Concurrency/Corun.hpp Concurrency/KeywordsNew.cpp \
+	Concurrency/Keywords.cc Concurrency/Keywords.h \
+	Concurrency/WaitforNew.cpp Concurrency/Waitfor.cc \
+	Concurrency/Waitfor.h Concurrency/Waituntil.cpp \
+	Concurrency/Waituntil.hpp $(SRC_COMMON) Common/DebugMalloc.cc \
 	ControlStruct/ExceptDecl.cc ControlStruct/ExceptDeclNew.cpp \
 	ControlStruct/ExceptDecl.h \
 	ControlStruct/ExceptTranslateNew.cpp \
@@ -898,8 +894,14 @@ SRC_AST = \
 	AST/Visitor.hpp
 
 SRC_CODEGEN = \
+	CodeGen/CodeGenerator.cc \
+	CodeGen/CodeGenerator.h \
+	CodeGen/CodeGeneratorNew.cpp \
+	CodeGen/CodeGeneratorNew.hpp \
 	CodeGen/FixMain2.cc \
 	CodeGen/FixMain.h \
+	CodeGen/GenType.cc \
+	CodeGen/GenType.h \
 	CodeGen/OperatorTable.cc \
 	CodeGen/OperatorTable.h
 
@@ -1238,7 +1240,13 @@ CodeGen/$(am__dirstamp):
 CodeGen/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) CodeGen/$(DEPDIR)
 	@: > CodeGen/$(DEPDIR)/$(am__dirstamp)
+CodeGen/CodeGenerator.$(OBJEXT): CodeGen/$(am__dirstamp) \
+	CodeGen/$(DEPDIR)/$(am__dirstamp)
+CodeGen/CodeGeneratorNew.$(OBJEXT): CodeGen/$(am__dirstamp) \
+	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/FixMain2.$(OBJEXT): CodeGen/$(am__dirstamp) \
+	CodeGen/$(DEPDIR)/$(am__dirstamp)
+CodeGen/GenType.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/OperatorTable.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
@@ -1489,17 +1497,11 @@ libdemangle.a: $(libdemangle_a_OBJECTS) $(libdemangle_a_DEPENDENCIES) $(EXTRA_li
 	$(AM_V_at)-rm -f libdemangle.a
 	$(AM_V_AR)$(libdemangle_a_AR) libdemangle.a $(libdemangle_a_OBJECTS) $(libdemangle_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libdemangle.a
-CodeGen/CodeGenerator.$(OBJEXT): CodeGen/$(am__dirstamp) \
-	CodeGen/$(DEPDIR)/$(am__dirstamp)
-CodeGen/CodeGeneratorNew.$(OBJEXT): CodeGen/$(am__dirstamp) \
-	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/Generate.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/FixMain.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/FixNames.$(OBJEXT): CodeGen/$(am__dirstamp) \
-	CodeGen/$(DEPDIR)/$(am__dirstamp)
-CodeGen/GenType.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/LinkOnce.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)

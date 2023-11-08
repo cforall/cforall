@@ -9,13 +9,15 @@
 // Author           : Andrew Beach
 // Created On       : Fri May 13 10:11:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri May 13 10:30:00 2022
-// Update Count     : 0
+// Last Modified On : Mon Nov  6 15:48:00 2023
+// Update Count     : 1
 //
 
 #pragma once
 
 extern "C" {
+	/// Main interface to the demangler as a utility.
+	/// Caller must free the returned string.
 	char * cforall_demangle(const char *, int);
 }
 

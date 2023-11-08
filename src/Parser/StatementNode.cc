@@ -502,6 +502,25 @@ ast::Stmt * build_corun( const CodeLocation & location, StatementNode * stmt ) {
 	return new ast::CorunStmt( location, body );
 } // build_corun
 
+ast::Stmt * build_cofor( const CodeLocation & location, ForCtrl * forctl, StatementNode * stmt ) {
+	std::vector<ast::ptr<ast::Stmt>> astinit;						// maybe empty
+	buildMoveList( forctl->init, astinit );
+
+	ast::Expr * astcond = nullptr;						// maybe empty
+	astcond = notZeroExpr( maybeMoveBuild( forctl->condition ) );
+
+	ast::Expr * astincr = nullptr;						// maybe empty
+	astincr = maybeMoveBuild( forctl->change );
+	delete forctl;
+
+	return new ast::CoforStmt( location,
+		std::move( astinit ),
+		astcond,
+		astincr,
+		buildMoveSingle( stmt )
+	);
+} // build_cofor
+
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

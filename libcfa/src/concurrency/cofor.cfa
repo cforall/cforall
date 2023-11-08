@@ -3,18 +3,18 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 // cofor ( uC++ COFOR )
 
-thread cofor_runner {
+thread cofor_task {
 	ssize_t low, high;
 	__cofor_body_t loop_body;
 };
 
-static void ?{}( cofor_runner & this, ssize_t low, ssize_t high, __cofor_body_t loop_body ) {
+static void ?{}( cofor_task & this, ssize_t low, ssize_t high, __cofor_body_t loop_body ) {
 	this.low = low;
 	this.high = high;
 	this.loop_body = loop_body;
 }
 
-void main( cofor_runner & this ) with( this ) {
+void main( cofor_task & this ) with( this ) {
 	for ( ssize_t i = low; i < high; i++ )
 		loop_body(i);
 }
@@ -28,7 +28,7 @@ void __Cofor__( ssize_t low, ssize_t high, __cofor_body_t loop_body ) libcfa_pub
 	ssize_t stride = range / threads + 1, extras = range % threads;
 	ssize_t i = 0;
 	ssize_t stride_iter = low;
-	cofor_runner * runners[ threads ];
+	cofor_task * runners[ threads ];
 	for ( i; threads ) {
 		runners[i] = alloc();
 	}

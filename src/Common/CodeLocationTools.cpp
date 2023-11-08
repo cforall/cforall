@@ -137,6 +137,7 @@ public:
     macro(ImplicitCtorDtorStmt, Stmt) \
     macro(MutexStmt, Stmt) \
     macro(CorunStmt, Stmt) \
+	macro(CoforStmt, Stmt) \
     macro(ApplicationExpr, Expr) \
     macro(UntypedExpr, Expr) \
     macro(NameExpr, Expr) \

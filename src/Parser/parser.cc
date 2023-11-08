@@ -9823,7 +9823,7 @@ yyreduce:
 
   case 368:
 #line 1727 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "cofor statement is currently unimplemented." ); (yyval.stmt) = nullptr; }
+                { (yyval.stmt) = new StatementNode( build_cofor( yylloc, (yyvsp[-2].forctl), maybe_build_compound( yylloc, (yyvsp[0].stmt) ) ) ); }
 #line 9828 "Parser/parser.cc"
     break;
 

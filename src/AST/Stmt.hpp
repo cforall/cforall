@@ -545,6 +545,24 @@ class CorunStmt final : public Stmt {
 	MUTATE_FRIEND
 };
 
+// Corun Statement
+class CoforStmt final : public Stmt {
+  public:
+	std::vector<ptr<Stmt>> inits;
+	ptr<Expr> cond;
+	ptr<Expr> inc;
+	ptr<Stmt> body;
+
+	CoforStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * cond,
+			 const Expr * inc, const Stmt * body, const std::vector<Label> && label = {} )
+		: Stmt(loc, std::move(label)), inits(std::move(inits)), cond(cond), inc(inc), body(body) {}
+
+	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
+  private:
+	CoforStmt * clone() const override { return new CoforStmt{ *this }; }
+	MUTATE_FRIEND
+};
+
 } // namespace ast
 
 #undef MUTATE_FRIEND

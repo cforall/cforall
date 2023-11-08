@@ -1,4 +1,6 @@
 #include <thread.hfa>
+#include <locks.hfa>
+#include <list.hfa>
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // cofor ( uC++ COFOR )
@@ -13,6 +15,54 @@ void __Cofor__( ssize_t low, ssize_t high, __cofor_body_t loop_body );
 		} \
 		__Cofor__( low, high, __CFA_loopLambda__ ); \
 	}
+
+struct runner_node {
+    void * value;
+    inline dlink(runner_node);
+};
+P9_EMBEDDED( runner_node, dlink(runner_node) )
+
+thread cofor_runner {
+	go_mutex mutex_lock;              // MX lock
+    dlist( runner_node ) items;
+    void (*func)(void *);
+    volatile bool done;
+};
+
+void ?{}( cofor_runner & this ) { this.done = false; }
+
+void main( cofor_runner & this ) with(this) {
+    while ( !done || !items`isEmpty ) {
+		lock( mutex_lock );
+        runner_node * node = &try_pop_front( items );
+		unlock( mutex_lock );
+        func( node->value );
+        free( node->value );
+        free( node );
+    }
+}
+
+void start_runners( cofor_runner * thds, unsigned nprocs, void (*func)(void *) ) {
+	for ( i; nprocs ) {
+		thds[i].func = func;
+	}
+}
+
+void end_runners( cofor_runner * thds, unsigned nprocs ) {
+	for ( i; nprocs ) {
+		thds[i].done = true;
+	}
+}
+
+void send_work( cofor_runner * thds, unsigned nprocs, unsigned & curr_proc, void * value ) {
+	runner_node * node = malloc();
+	(*node){};
+	node->value = value;
+	lock( thds[curr_proc].mutex_lock );
+	insert_last( thds[curr_proc].items, *node );
+	unlock( thds[curr_proc].mutex_lock );
+	curr_proc = ( curr_proc + 1 ) % nprocs;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // corun
@@ -41,4 +91,3 @@ static inline void ?{}( runner_block & this, __CFA_corun_lambda_t body ) {
 static inline void ^?{}( runner_block & this ) {
     delete( this.runner );
 }
-

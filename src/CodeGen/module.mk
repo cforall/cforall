@@ -15,23 +15,23 @@
 ###############################################################################
 
 SRC_CODEGEN = \
-	CodeGen/FixMain2.cc \
-	CodeGen/FixMain.h \
-	CodeGen/OperatorTable.cc \
-	CodeGen/OperatorTable.h
-
-SRC += $(SRC_CODEGEN) \
 	CodeGen/CodeGenerator.cc \
 	CodeGen/CodeGenerator.h \
 	CodeGen/CodeGeneratorNew.cpp \
 	CodeGen/CodeGeneratorNew.hpp \
+	CodeGen/FixMain2.cc \
+	CodeGen/FixMain.h \
+	CodeGen/GenType.cc \
+	CodeGen/GenType.h \
+	CodeGen/OperatorTable.cc \
+	CodeGen/OperatorTable.h
+
+SRC += $(SRC_CODEGEN) \
 	CodeGen/Generate.cc \
 	CodeGen/Generate.h \
 	CodeGen/FixMain.cc \
 	CodeGen/FixNames.cc \
 	CodeGen/FixNames.h \
-	CodeGen/GenType.cc \
-	CodeGen/GenType.h \
 	CodeGen/LinkOnce.cc \
 	CodeGen/LinkOnce.h \
 	CodeGen/Options.h

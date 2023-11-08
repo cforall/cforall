@@ -59,6 +59,7 @@ public:
     virtual const ast::Stmt *             visit( const ast::ImplicitCtorDtorStmt * ) = 0;
     virtual const ast::Stmt *             visit( const ast::MutexStmt            * ) = 0;
     virtual const ast::Stmt *             visit( const ast::CorunStmt            * ) = 0;
+    virtual const ast::Stmt *             visit( const ast::CoforStmt            * ) = 0;
     virtual const ast::Expr *             visit( const ast::ApplicationExpr      * ) = 0;
     virtual const ast::Expr *             visit( const ast::UntypedExpr          * ) = 0;
     virtual const ast::Expr *             visit( const ast::NameExpr             * ) = 0;

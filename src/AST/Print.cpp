@@ -933,6 +933,48 @@ public:
 		return node;
 	}
 
+	virtual const ast::Stmt * visit( const ast::CoforStmt * node ) override final {
+		os << "Cofor Statement" << endl;
+
+		if ( ! node->inits.empty() ) {
+			os << indent << "... initialization:" << endl;
+			++indent;
+			for ( const ast::Stmt * stmt : node->inits ) {
+				os << indent+1;
+				safe_print( stmt );
+			}
+			--indent;
+		}
+
+		if ( node->cond ) {
+			os << indent << "... condition:" << endl;
+			++indent;
+			os << indent;
+			node->cond->accept( *this );
+			--indent;
+		}
+
+		if ( node->inc ) {
+			os << indent << "... increment:" << endl;
+			++indent;
+			os << indent;
+			node->inc->accept( *this );
+			--indent;
+		}
+
+		if ( node->body ) {
+			os << indent << "... with body:" << endl;
+			++indent;
+			os << indent;
+			node->body->accept( *this );
+			--indent;
+		}
+		os << endl;
+		print( node->labels );
+
+		return node;
+	}
+
 	virtual const ast::Expr * visit( const ast::ApplicationExpr * node ) override final {
 		++indent;
 		os << "Application of" << endl << indent;
