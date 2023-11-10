@@ -24,29 +24,13 @@
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "AST/Vector.hpp"
-#include "Common/PassVisitor.h"
 #include "Common/SemanticError.h"  // for SemanticError
 #include "CodeGen/GenType.h"       // for GenType
-#include "SynTree/Declaration.h"   // for FunctionDecl, operator<<
-#include "SynTree/Type.h"          // for FunctionType
 #include "SymTab/Mangler.h"
 
 namespace CodeGen {
 
 namespace {
-
-struct FindMainCore {
-	FunctionDecl * main_signature = nullptr;
-
-	void previsit( FunctionDecl * decl ) {
-		if ( FixMain::isMain( decl ) ) {
-			if ( main_signature ) {
-				SemanticError( decl, "Multiple definition of main routine\n" );
-			}
-			main_signature = decl;
-		}
-	}
-};
 
 struct FindMainCore_new {
 	ast::FunctionDecl const * main_declaration = nullptr;
@@ -64,41 +48,6 @@ struct FindMainCore_new {
 std::string genTypeAt( const ast::vector<ast::Type> & types, size_t at ) {
 	return genType( types[at], "", Options( false, false, false, false ) );
 }
-
-}
-
-	template<typename container>
-	std::string genTypeAt(const container& p, size_t idx) {
-		return genType((*std::next(p.begin(), idx))->get_type(), "");
-	}
-
-	void FixMain::fix( std::list< Declaration * > & translationUnit,
-			std::ostream &os, const char* bootloader_filename ) {
-		PassVisitor< FindMainCore > main_finder;
-		acceptAll( translationUnit, main_finder );
-		FunctionDecl * main_signature = main_finder.pass.main_signature;
-
-		if( main_signature ) {
-			os << "static inline int invoke_main(int argc, char* argv[], char* envp[]) { (void)argc; (void)argv; (void)envp; return ";
-			main_signature->mangleName = SymTab::Mangler::mangle(main_signature);
-
-			os << main_signature->get_scopedMangleName() << "(";
-			const auto& params = main_signature->get_functionType()->get_parameters();
-			switch(params.size()) {
-				case 3: os << "(" << genTypeAt(params, 0) << ")argc, (" << genTypeAt(params, 1) << ")argv, (" << genTypeAt(params, 2) << ")envp"; break;
-				case 2: os << "(" << genTypeAt(params, 0) << ")argc, (" << genTypeAt(params, 1) << ")argv"; break;
-				case 0: break;
-				default : assert(false);
-			}
-			os << "); }\n";
-
-			std::ifstream bootloader(bootloader_filename, std::ios::in);
-			assertf( bootloader.is_open(), "cannot open bootloader.c\n" );
-			os << bootloader.rdbuf();
-		}
-	}
-
-namespace {
 
 ast::ObjectDecl * makeIntObj(){
 	return new ast::ObjectDecl( CodeLocation(), "",
@@ -157,13 +106,6 @@ bool is_main( const std::string & mangled_name ) {
 }
 
 } // namespace
-
-bool FixMain::isMain( FunctionDecl * decl ) {
-	if ( std::string("main") != decl->name ) {
-		return false;
-	}
-	return is_main( SymTab::Mangler::mangle( decl, true, true ) );
-}
 
 bool FixMain::isMain( const ast::FunctionDecl * decl ) {
 	if ( std::string("main") != decl->name ) {

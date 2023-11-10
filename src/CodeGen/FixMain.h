@@ -20,10 +20,7 @@
 #include <list>
 
 #include "AST/LinkageSpec.hpp"
-#include "SynTree/LinkageSpec.h"
 
-class Declaration;
-class FunctionDecl;
 namespace ast {
 	class FunctionDecl;
 	class TranslationUnit;
@@ -33,9 +30,6 @@ namespace CodeGen {
 
 class FixMain {
 public :
-	static inline LinkageSpec::Spec mainLinkage() {
-		return replace_main ? LinkageSpec::Cforall : LinkageSpec::C;
-	}
 	static inline ast::Linkage::Spec getMainLinkage() {
 		return replace_main ? ast::Linkage::Cforall : ast::Linkage::C;
 	}
@@ -44,11 +38,8 @@ public :
 		replace_main = val;
 	}
 
-	static bool isMain(FunctionDecl* decl);
 	static bool isMain(const ast::FunctionDecl * decl);
 
-	static void fix( std::list< Declaration * > & decls,
-			std::ostream &os, const char* bootloader_filename );
 	static void fix( ast::TranslationUnit & translationUnit,
 			std::ostream &os, const char * bootloader_filename );
 

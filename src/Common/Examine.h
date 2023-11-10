@@ -14,15 +14,12 @@
 //
 
 #include "AST/Decl.hpp"
-#include "SynTree/Declaration.h"
 
 /// Check if this is a main function for a type of an aggregate kind.
-DeclarationWithType * isMainFor( FunctionDecl * func, AggregateDecl::Aggregate kind );
 const ast::DeclWithType * isMainFor(
 	const ast::FunctionDecl * func, ast::AggregateDecl::Aggregate kind );
 // Returns a pointer to the parameter if true, nullptr otherwise.
 
 /// Check if this function is a destructor for the given structure.
-bool isDestructorFor( FunctionDecl * func, StructDecl * type_decl );
 bool isDestructorFor(
 	const ast::FunctionDecl * func, const ast::StructDecl * type );

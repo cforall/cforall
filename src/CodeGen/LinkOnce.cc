@@ -21,52 +21,10 @@
 #include "AST/Decl.hpp"
 #include "AST/Expr.hpp"
 #include "AST/Pass.hpp"
-#include "Common/PassVisitor.h"       // for PassVisitor, WithShortCircuiting
 
 namespace CodeGen {
 
 namespace {
-
-bool is_cfa_linkonce_old( Attribute const * attr ) {
-	return std::string("cfa_linkonce") == attr->name;
-}
-
-bool is_section_attribute_old( Attribute const * attr ) {
-	return std::string("section") == attr->name;
-}
-
-class LinkOnceVisitorCore : public WithShortCircuiting {
-public:
-	void previsit( Declaration * ) {
-		visit_children = false;
-	}
-
-	void previsit( DeclarationWithType * decl ) {
-		std::list< Attribute * > & attributes = decl->attributes;
-		// See if we can find the element:
-		auto found = std::find_if(attributes.begin(), attributes.end(), is_cfa_linkonce_old );
-		if ( attributes.end() != found ) {
-			// Remove any other sections:
-			attributes.remove_if( is_section_attribute_old );
-			// Iterator to the cfa_linkonce attribute should still be valid.
-			Attribute * attribute = *found;
-			assert( attribute->parameters.empty() );
-			assert( !decl->mangleName.empty() );
-			// Overwrite the attribute in place.
-			const std::string section_name = ".gnu.linkonce." + decl->mangleName;
-			attribute->name = "section";
-			attribute->parameters.push_back(
-				new ConstantExpr( Constant::from_string( section_name ) )
-			);
-
-			// Unconditionnaly add "visibility(default)" to anything with gnu.linkonce
-			// visibility is a mess otherwise
-			attributes.push_back(new Attribute("visibility", {new ConstantExpr( Constant::from_string( "default" ) )}));
-
-		}
-		visit_children = false;
-	}
-};
 
 bool is_cfa_linkonce( ast::Attribute const * attr ) {
 	return "cfa_linkonce" == attr->name;
@@ -120,11 +78,6 @@ struct LinkOnceCore : public ast::WithShortCircuiting {
 };
 
 } // namespace
-
-void translateLinkOnce( std::list< Declaration *> & translationUnit ) {
-	PassVisitor<LinkOnceVisitorCore> translator;
-	acceptAll( translationUnit, translator );
-}
 
 void translateLinkOnce( ast::TranslationUnit & translationUnit ) {
 	ast::Pass<LinkOnceCore>::run( translationUnit );

@@ -15,9 +15,7 @@
 
 #include "RunParser.hpp"
 
-#include "AST/Convert.hpp"                  // for convert
 #include "AST/TranslationUnit.hpp"          // for TranslationUnit
-#include "CodeTools/TrackLoc.h"             // for fillLocations
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
 #include "Parser/DeclarationNode.h"         // for DeclarationNode, buildList
 #include "Parser/TypedefTable.h"            // for TypedefTable

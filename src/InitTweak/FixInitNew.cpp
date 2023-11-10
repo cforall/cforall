@@ -177,9 +177,6 @@ struct LabelFinder final : public ObjDeclCollector {
 /// insert destructor calls at the appropriate places.  must happen before CtorInit nodes are removed
 /// (currently by FixInit)
 struct InsertDtors final : public ObjDeclCollector, public ast::WithStmtsToAdd<> {
-	typedef std::list< ObjectDecl * > OrderedDecls;
-	typedef std::list< OrderedDecls > OrderedDeclsStack;
-
 	InsertDtors( ast::Pass<LabelFinder> & finder ) : finder( finder ), labelVars( finder.core.vars ) {}
 
 	typedef ObjDeclCollector Parent;
@@ -193,7 +190,6 @@ private:
 
 	ast::Pass<LabelFinder> & finder;
 	LabelFinder::LabelMap & labelVars;
-	OrderedDeclsStack reverseDeclOrder;
 };
 
 /// expand each object declaration to use its constructor after it is declared.

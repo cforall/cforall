@@ -23,7 +23,6 @@ namespace ast {
 }
 
 namespace LibCfa {
-	void makeLibCfa( std::list< Declaration* > &prelude );
 	void makeLibCfa( ast::TranslationUnit & translationUnit );
 } // namespace LibCfa
 

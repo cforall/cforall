@@ -57,8 +57,6 @@ using namespace std;
 #include "Common/SemanticError.h"						// error_str
 #include "Common/utility.h"								// for maybeMoveBuild, maybeBuild, CodeLo...
 
-#include "SynTree/Attribute.h"							// for Attribute
-
 // lex uses __null in a boolean context, it's fine.
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wparentheses-equality"

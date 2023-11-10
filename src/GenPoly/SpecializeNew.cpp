@@ -22,7 +22,6 @@
 #include "Common/UniqueName.h"           // for UniqueName
 #include "GenPoly/GenPoly.h"             // for getFunctionType
 #include "ResolvExpr/FindOpenVars.h"     // for findOpenVars
-#include "ResolvExpr/TypeEnvironment.h"  // for FirstOpen, FirstClosed
 
 namespace GenPoly {
 

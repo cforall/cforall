@@ -15,7 +15,6 @@
 ###############################################################################
 
 SRC_VALIDATE = \
-	Validate/FindSpecialDecls.cc \
 	Validate/FindSpecialDecls.h
 
 SRC += $(SRC_VALIDATE) \
@@ -36,8 +35,6 @@ SRC += $(SRC_VALIDATE) \
 	Validate/ForallPointerDecay.hpp \
 	Validate/GenericParameter.cpp \
 	Validate/GenericParameter.hpp \
-	Validate/HandleAttributes.cc \
-	Validate/HandleAttributes.h \
 	Validate/HoistStruct.cpp \
 	Validate/HoistStruct.hpp \
 	Validate/HoistTypeDecls.cpp \

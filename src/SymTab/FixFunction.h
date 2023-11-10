@@ -15,19 +15,12 @@
 
 #pragma once
 
-#include "Common/PassVisitor.h" // for PassVisitor
-#include "SynTree/SynTree.h"    // for Types
-
 namespace ast {
 	class DeclWithType;
 	class Type;
 }
 
 namespace SymTab {
-	/// Replaces function and array types by equivalent pointer types. Returns true if type is 
-	/// void
-	bool fixFunction( DeclarationWithType *& );
-
 	/// Returns declaration with function and array types replaced by equivalent pointer types.
 	/// Sets isVoid to true if type is void
 	const ast::DeclWithType * fixFunction( const ast::DeclWithType * dwt, bool & isVoid );

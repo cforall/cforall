@@ -45,8 +45,6 @@
 #include "GenPoly/GenPoly.h"
 #include "SymTab/Mangler.h"
 
-
-
 namespace ResolvExpr {
 
 // in CandidateFinder.cpp; unique ID for assertion satisfaction

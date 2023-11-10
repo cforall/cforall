@@ -19,8 +19,6 @@ SRC_AST = \
 	AST/Attribute.hpp \
 	AST/Bitfield.hpp \
 	AST/Chain.hpp \
-	AST/Convert.cpp \
-	AST/Convert.hpp \
 	AST/Copy.cpp \
 	AST/Copy.hpp \
 	AST/Create.cpp \

@@ -15,32 +15,11 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
-class FunctionDecl;
-class StructDecl;
-class Type;
-
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace Validate {
-	/// size_t type - set when size_t typedef is seen. Useful in a few places,
-	/// such as in determining array dimension type
-	extern Type * SizeType;
-
-	/// intrinsic dereference operator for unqualified types - set when *? function is seen in FindSpecialDeclarations.
-	/// Useful for creating dereference ApplicationExprs without a full resolver pass.
-	extern FunctionDecl * dereferenceOperator;
-
-	/// special built-in functions and data structures necessary for destructor generation
-	extern StructDecl * dtorStruct;
-	extern FunctionDecl * dtorStructDestroy;
-
-	/// find and remember some of the special declarations that are useful for generating code, so that they do not have to be discovered multiple times.
-	void findSpecialDecls( std::list< Declaration * > & translationUnit );
 
 /// Find and remember some of the special declarations that are useful for
 /// generating code, so that they do not have to be discovered multiple times.

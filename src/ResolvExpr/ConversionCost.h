@@ -21,9 +21,6 @@
 
 #include "AST/Fwd.hpp"
 #include "AST/Pass.hpp"       // for WithShortCircuiting
-#include "Common/PassVisitor.h"
-#include "SynTree/Visitor.h"  // for Visitor
-#include "SynTree/SynTree.h"  // for Visitor Nodes
 
 namespace SymTab {
 	class Indexer;
@@ -31,51 +28,6 @@ namespace SymTab {
 
 namespace ResolvExpr {
 	class TypeEnvironment;
-
-	Cost conversionCost(
-		const Type * src, const Type * dest, bool srcIsLvalue,
-		const SymTab::Indexer & indexer, const TypeEnvironment & env );
-
-	typedef std::function<Cost(const Type *, const Type *, bool,
-		const SymTab::Indexer &, const TypeEnvironment &)> CostFunction;
-
-	struct ConversionCost : public WithShortCircuiting {
-	  public:
-		ConversionCost( const Type * dest, bool srcIsLvalue,
-			const SymTab::Indexer &indexer, const TypeEnvironment &env, CostFunction );
-
-		Cost get_cost() const { return cost; }
-
-		void previsit( const BaseSyntaxNode * ) { visit_children = false; }
-
-		void postvisit( const VoidType * voidType );
-		void postvisit( const BasicType * basicType );
-		void postvisit( const PointerType * pointerType );
-		void postvisit( const ArrayType * arrayType );
-		void postvisit( const ReferenceType * refType );
-		void postvisit( const FunctionType * functionType );
-		void postvisit( const EnumInstType * aggregateUseType );
-		void postvisit( const TraitInstType * aggregateUseType );
-		void postvisit( const TypeInstType * aggregateUseType );
-		void postvisit( const TupleType * tupleType );
-		void postvisit( const VarArgsType * varArgsType );
-		void postvisit( const ZeroType * zeroType );
-		void postvisit( const OneType * oneType );
-	  protected:
-		const Type * dest;
-		bool srcIsLvalue;
-		const SymTab::Indexer &indexer;
-		Cost cost;
-		const TypeEnvironment &env;
-		CostFunction costFunc;
-	  private:
-	  	// refactor for code resue
-	  	void conversionCostFromBasicToBasic( const BasicType * src, const BasicType* dest );
-	};
-
-	typedef std::function<int(const Type *, const Type *, const SymTab::Indexer &, const TypeEnvironment &)> PtrsFunction;
-	Cost convertToReferenceCost( const Type * src, const ReferenceType * dest, bool srcIsLvalue,
-		const SymTab::Indexer & indexer, const TypeEnvironment & env, PtrsFunction func );
 
 // Some function pointer types, differ in return type.
 using CostCalculation = std::function<Cost(const ast::Type *, const ast::Type *, bool,

@@ -19,23 +19,6 @@
 #include "CodeGen/OperatorTable.h"
 #include "InitTweak/InitTweak.h"
 
-DeclarationWithType * isMainFor( FunctionDecl * func, AggregateDecl::Aggregate kind ) {
-	if (func->name != "main") return nullptr;
-	if (func->type->parameters.size() != 1) return nullptr;
-
-	auto param = func->type->parameters.front();
-
-	auto type = dynamic_cast<ReferenceType * >(param->get_type());
-	if (!type) return nullptr;
-
-	auto obj = dynamic_cast<StructInstType *>(type->base);
-	if (!obj) return nullptr;
-
-	if (kind != obj->baseStruct->kind) return nullptr;
-
-	return param;
-}
-
 namespace {
 
 // getTypeofThis but does some extra checks used in this module.
@@ -68,18 +51,6 @@ const ast::DeclWithType * isMainFor(
 }
 
 namespace {
-	Type * getDestructorParam( FunctionDecl * func ) {
-		if ( !CodeGen::isDestructor( func->name ) ) return nullptr;
-
-		auto params = func->type->parameters;
-		if ( 1 != params.size() ) return nullptr;
-
-		auto ref = dynamic_cast<ReferenceType *>( params.front()->get_type() );
-		if ( ref ) {
-			return ref->base;
-		}
-		return nullptr;
-	}
 
 const ast::Type * getDestructorParam( const ast::FunctionDecl * func ) {
 	if ( !CodeGen::isDestructor( func->name ) ) return nullptr;
@@ -87,14 +58,6 @@ const ast::Type * getDestructorParam( const ast::FunctionDecl * func ) {
 	return getTypeofThisSolo( func );
 }
 
-}
-
-bool isDestructorFor( FunctionDecl * func, StructDecl * type_decl ) {
-	if ( Type * type = getDestructorParam( func ) ) {
-		auto stype = dynamic_cast<StructInstType *>( type );
-		return stype && stype->baseStruct == type_decl;
-	}
-	return false;
 }
 
 bool isDestructorFor(

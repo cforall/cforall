@@ -56,12 +56,6 @@
 ######################### -*- Mode: Makefile-Gmake -*- ########################
 ###############################################################################
 
-######################### -*- Mode: Makefile-Gmake -*- ########################
-###############################################################################
-
-######################### -*- Mode: Makefile-Gmake -*- ########################
-###############################################################################
-
 
 VPATH = @srcdir@
 am__is_gnu_make = { \
@@ -164,8 +158,8 @@ am__v_AR_1 =
 libdemangle_a_AR = $(AR) $(ARFLAGS)
 libdemangle_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am__objects_1 = AST/Attribute.$(OBJEXT) AST/Convert.$(OBJEXT) \
-	AST/Copy.$(OBJEXT) AST/Create.$(OBJEXT) AST/Decl.$(OBJEXT) \
+am__objects_1 = AST/Attribute.$(OBJEXT) AST/Copy.$(OBJEXT) \
+	AST/Create.$(OBJEXT) AST/Decl.$(OBJEXT) \
 	AST/DeclReplacer.$(OBJEXT) AST/Expr.$(OBJEXT) \
 	AST/GenericSubstitution.$(OBJEXT) AST/Init.$(OBJEXT) \
 	AST/Inspect.$(OBJEXT) AST/LinkageSpec.$(OBJEXT) \
@@ -173,14 +167,13 @@ am__objects_1 = AST/Attribute.$(OBJEXT) AST/Convert.$(OBJEXT) \
 	AST/Stmt.$(OBJEXT) AST/SymbolTable.$(OBJEXT) \
 	AST/Type.$(OBJEXT) AST/TypeEnvironment.$(OBJEXT) \
 	AST/TypeSubstitution.$(OBJEXT) AST/Util.$(OBJEXT)
-am__objects_2 = CodeGen/CodeGenerator.$(OBJEXT) \
-	CodeGen/CodeGeneratorNew.$(OBJEXT) CodeGen/FixMain2.$(OBJEXT) \
-	CodeGen/GenType.$(OBJEXT) CodeGen/OperatorTable.$(OBJEXT)
+am__objects_2 = CodeGen/CodeGeneratorNew.$(OBJEXT) \
+	CodeGen/FixMain2.$(OBJEXT) CodeGen/GenType.$(OBJEXT) \
+	CodeGen/OperatorTable.$(OBJEXT)
 am__objects_3 = Common/Assert.$(OBJEXT) \
 	Common/CodeLocationTools.$(OBJEXT) Common/DeclStats.$(OBJEXT) \
 	Common/Eval.$(OBJEXT) Common/Examine.$(OBJEXT) \
-	Common/Indenter.$(OBJEXT) Common/PassVisitor.$(OBJEXT) \
-	Common/ResolvProtoDump.$(OBJEXT) \
+	Common/Indenter.$(OBJEXT) Common/ResolvProtoDump.$(OBJEXT) \
 	Common/SemanticError.$(OBJEXT) Common/Stats/Counter.$(OBJEXT) \
 	Common/Stats/Heap.$(OBJEXT) Common/Stats/ResolveTime.$(OBJEXT) \
 	Common/Stats/Stats.$(OBJEXT) Common/Stats/Time.$(OBJEXT) \
@@ -189,98 +182,54 @@ am__objects_4 = GenPoly/GenPoly.$(OBJEXT) GenPoly/Lvalue2.$(OBJEXT)
 am__objects_5 = InitTweak/GenInit.$(OBJEXT) \
 	InitTweak/InitTweak.$(OBJEXT)
 am__objects_6 = ResolvExpr/AdjustExprType.$(OBJEXT) \
-	ResolvExpr/Alternative.$(OBJEXT) \
-	ResolvExpr/AlternativeFinder.$(OBJEXT) \
 	ResolvExpr/Candidate.$(OBJEXT) \
 	ResolvExpr/CandidateFinder.$(OBJEXT) \
 	ResolvExpr/CastCost.$(OBJEXT) ResolvExpr/CommonType.$(OBJEXT) \
 	ResolvExpr/ConversionCost.$(OBJEXT) \
 	ResolvExpr/CurrentObject.$(OBJEXT) \
-	ResolvExpr/ExplodedActual.$(OBJEXT) \
 	ResolvExpr/ExplodedArg.$(OBJEXT) \
-	ResolvExpr/FindOpenVars.$(OBJEXT) ResolvExpr/Occurs.$(OBJEXT) \
+	ResolvExpr/FindOpenVars.$(OBJEXT) \
 	ResolvExpr/PolyCost.$(OBJEXT) \
 	ResolvExpr/PtrsAssignable.$(OBJEXT) \
 	ResolvExpr/PtrsCastable.$(OBJEXT) \
-	ResolvExpr/RenameVars.$(OBJEXT) \
-	ResolvExpr/ResolveAssertions.$(OBJEXT) \
-	ResolvExpr/Resolver.$(OBJEXT) \
+	ResolvExpr/RenameVars.$(OBJEXT) ResolvExpr/Resolver.$(OBJEXT) \
 	ResolvExpr/ResolveTypeof.$(OBJEXT) \
 	ResolvExpr/SatisfyAssertions.$(OBJEXT) \
-	ResolvExpr/SpecCost.$(OBJEXT) \
-	ResolvExpr/TypeEnvironment.$(OBJEXT) \
-	ResolvExpr/Unify.$(OBJEXT)
-am__objects_7 = SymTab/Autogen.$(OBJEXT) SymTab/FixFunction.$(OBJEXT) \
-	SymTab/GenImplicitCall.$(OBJEXT) SymTab/Indexer.$(OBJEXT) \
-	SymTab/Mangler.$(OBJEXT) SymTab/ManglerCommon.$(OBJEXT) \
-	SymTab/ValidateType.$(OBJEXT)
-am__objects_8 = SynTree/AddressExpr.$(OBJEXT) \
-	SynTree/AggregateDecl.$(OBJEXT) \
-	SynTree/ApplicationExpr.$(OBJEXT) SynTree/ArrayType.$(OBJEXT) \
-	SynTree/Attribute.$(OBJEXT) SynTree/AttrType.$(OBJEXT) \
-	SynTree/BaseSyntaxNode.$(OBJEXT) SynTree/BasicType.$(OBJEXT) \
-	SynTree/CommaExpr.$(OBJEXT) SynTree/CompoundStmt.$(OBJEXT) \
-	SynTree/Constant.$(OBJEXT) SynTree/Declaration.$(OBJEXT) \
-	SynTree/DeclarationWithType.$(OBJEXT) \
-	SynTree/DeclReplacer.$(OBJEXT) SynTree/DeclStmt.$(OBJEXT) \
-	SynTree/Expression.$(OBJEXT) SynTree/FunctionDecl.$(OBJEXT) \
-	SynTree/FunctionType.$(OBJEXT) SynTree/Initializer.$(OBJEXT) \
-	SynTree/InlineMemberDecl.$(OBJEXT) \
-	SynTree/LinkageSpec.$(OBJEXT) SynTree/NamedTypeDecl.$(OBJEXT) \
-	SynTree/ObjectDecl.$(OBJEXT) SynTree/PointerType.$(OBJEXT) \
-	SynTree/ReferenceToType.$(OBJEXT) \
-	SynTree/ReferenceType.$(OBJEXT) SynTree/Statement.$(OBJEXT) \
-	SynTree/TupleExpr.$(OBJEXT) SynTree/TupleType.$(OBJEXT) \
-	SynTree/Type.$(OBJEXT) SynTree/TypeDecl.$(OBJEXT) \
-	SynTree/TypeExpr.$(OBJEXT) SynTree/TypeofType.$(OBJEXT) \
-	SynTree/TypeSubstitution.$(OBJEXT) \
-	SynTree/VarArgsType.$(OBJEXT) SynTree/VoidType.$(OBJEXT) \
-	SynTree/ZeroOneType.$(OBJEXT)
-am__objects_9 = Tuples/Explode.$(OBJEXT) \
+	ResolvExpr/SpecCost.$(OBJEXT) ResolvExpr/Unify.$(OBJEXT)
+am__objects_7 = SymTab/FixFunction.$(OBJEXT) \
+	SymTab/GenImplicitCall.$(OBJEXT) SymTab/Mangler.$(OBJEXT) \
+	SymTab/ManglerCommon.$(OBJEXT)
+am__objects_8 = Tuples/Explode.$(OBJEXT) \
 	Tuples/TupleAssignment.$(OBJEXT) \
 	Tuples/TupleExpansion.$(OBJEXT) \
 	Tuples/TupleExpansionNew.$(OBJEXT) Tuples/Tuples.$(OBJEXT)
-am__objects_10 = Validate/FindSpecialDecls.$(OBJEXT)
-am__objects_11 = CompilationState.$(OBJEXT) $(am__objects_1) \
+am__objects_9 =
+am__objects_10 = CompilationState.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
 	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
-	SymTab/Demangle.$(OBJEXT) $(am__objects_8) $(am__objects_9) \
-	$(am__objects_10)
-am_libdemangle_a_OBJECTS = $(am__objects_11)
+	SymTab/Demangle.$(OBJEXT) $(am__objects_8) $(am__objects_9)
+am_libdemangle_a_OBJECTS = $(am__objects_10)
 libdemangle_a_OBJECTS = $(am_libdemangle_a_OBJECTS)
-am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
-	MakeLibCfa.$(OBJEXT) MakeLibCfaNew.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2) CodeGen/Generate.$(OBJEXT) \
-	CodeGen/FixMain.$(OBJEXT) CodeGen/FixNames.$(OBJEXT) \
-	CodeGen/LinkOnce.$(OBJEXT) CodeTools/DeclStats.$(OBJEXT) \
-	CodeTools/ResolvProtoDump.$(OBJEXT) \
-	CodeTools/TrackLoc.$(OBJEXT) Concurrency/Actors.$(OBJEXT) \
-	Concurrency/Corun.$(OBJEXT) Concurrency/KeywordsNew.$(OBJEXT) \
-	Concurrency/Keywords.$(OBJEXT) \
-	Concurrency/WaitforNew.$(OBJEXT) Concurrency/Waitfor.$(OBJEXT) \
+am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
+	MakeLibCfaNew.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
+	CodeGen/Generate.$(OBJEXT) CodeGen/FixMain.$(OBJEXT) \
+	CodeGen/FixNames.$(OBJEXT) CodeGen/LinkOnce.$(OBJEXT) \
+	Concurrency/Actors.$(OBJEXT) Concurrency/Corun.$(OBJEXT) \
+	Concurrency/KeywordsNew.$(OBJEXT) \
+	Concurrency/WaitforNew.$(OBJEXT) \
 	Concurrency/Waituntil.$(OBJEXT) $(am__objects_3) \
 	Common/DebugMalloc.$(OBJEXT) \
-	ControlStruct/ExceptDecl.$(OBJEXT) \
 	ControlStruct/ExceptDeclNew.$(OBJEXT) \
 	ControlStruct/ExceptTranslateNew.$(OBJEXT) \
-	ControlStruct/ExceptTranslate.$(OBJEXT) \
 	ControlStruct/FixLabels.$(OBJEXT) \
-	ControlStruct/ForExprMutator.$(OBJEXT) \
 	ControlStruct/HoistControlDecls.$(OBJEXT) \
-	ControlStruct/LabelFixer.$(OBJEXT) \
-	ControlStruct/LabelGenerator.$(OBJEXT) \
 	ControlStruct/LabelGeneratorNew.$(OBJEXT) \
-	ControlStruct/MLEMutator.$(OBJEXT) \
-	ControlStruct/MultiLevelExit.$(OBJEXT) \
-	ControlStruct/Mutate.$(OBJEXT) $(am__objects_4) \
-	GenPoly/BoxNew.$(OBJEXT) GenPoly/Box.$(OBJEXT) \
-	GenPoly/FindFunction.$(OBJEXT) \
+	ControlStruct/MultiLevelExit.$(OBJEXT) $(am__objects_4) \
+	GenPoly/BoxNew.$(OBJEXT) GenPoly/FindFunction.$(OBJEXT) \
 	GenPoly/InstantiateGenericNew.$(OBJEXT) \
-	GenPoly/InstantiateGeneric.$(OBJEXT) \
-	GenPoly/LvalueNew.$(OBJEXT) GenPoly/Lvalue.$(OBJEXT) \
-	GenPoly/ScrubTyVars.$(OBJEXT) GenPoly/Specialize.$(OBJEXT) \
+	GenPoly/LvalueNew.$(OBJEXT) GenPoly/ScrubTyVars.$(OBJEXT) \
 	GenPoly/SpecializeNew.$(OBJEXT) $(am__objects_5) \
-	InitTweak/FixGlobalInit.$(OBJEXT) InitTweak/FixInit.$(OBJEXT) \
+	InitTweak/FixGlobalInit.$(OBJEXT) \
 	InitTweak/FixInitNew.$(OBJEXT) \
 	Parser/DeclarationNode.$(OBJEXT) \
 	Parser/ExpressionNode.$(OBJEXT) \
@@ -289,11 +238,9 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Parser/parserutility.$(OBJEXT) Parser/RunParser.$(OBJEXT) \
 	Parser/StatementNode.$(OBJEXT) Parser/TypeData.$(OBJEXT) \
 	Parser/TypedefTable.$(OBJEXT) $(am__objects_6) \
-	ResolvExpr/AlternativePrinter.$(OBJEXT) \
 	ResolvExpr/CandidatePrinter.$(OBJEXT) \
 	ResolvExpr/EraseWith.$(OBJEXT) $(am__objects_7) \
-	SymTab/Validate.$(OBJEXT) $(am__objects_8) $(am__objects_9) \
-	$(am__objects_10) Validate/Autogen.$(OBJEXT) \
+	$(am__objects_8) $(am__objects_9) Validate/Autogen.$(OBJEXT) \
 	Validate/CompoundLiteral.$(OBJEXT) \
 	Validate/EliminateTypedef.$(OBJEXT) \
 	Validate/EnumAndPointerDecay.$(OBJEXT) \
@@ -302,7 +249,6 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Validate/FixReturnTypes.$(OBJEXT) \
 	Validate/ForallPointerDecay.$(OBJEXT) \
 	Validate/GenericParameter.$(OBJEXT) \
-	Validate/HandleAttributes.$(OBJEXT) \
 	Validate/HoistStruct.$(OBJEXT) \
 	Validate/HoistTypeDecls.$(OBJEXT) \
 	Validate/InitializerLength.$(OBJEXT) \
@@ -313,7 +259,7 @@ am__objects_12 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Validate/VerifyCtorDtorAssign.$(OBJEXT) \
 	Virtual/ExpandCasts.$(OBJEXT) Virtual/Tables.$(OBJEXT) \
 	Virtual/VirtualDtor.$(OBJEXT)
-am____driver_cfa_cpp_OBJECTS = $(am__objects_12)
+am____driver_cfa_cpp_OBJECTS = $(am__objects_11)
 ___driver_cfa_cpp_OBJECTS = $(am____driver_cfa_cpp_OBJECTS)
 am__DEPENDENCIES_1 =
 ___driver_cfa_cpp_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -341,9 +287,8 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/automake/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
-	./$(DEPDIR)/MakeLibCfa.Po ./$(DEPDIR)/MakeLibCfaNew.Po \
-	./$(DEPDIR)/main.Po AST/$(DEPDIR)/Attribute.Po \
-	AST/$(DEPDIR)/Convert.Po AST/$(DEPDIR)/Copy.Po \
+	./$(DEPDIR)/MakeLibCfaNew.Po ./$(DEPDIR)/main.Po \
+	AST/$(DEPDIR)/Attribute.Po AST/$(DEPDIR)/Copy.Po \
 	AST/$(DEPDIR)/Create.Po AST/$(DEPDIR)/Decl.Po \
 	AST/$(DEPDIR)/DeclReplacer.Po AST/$(DEPDIR)/Expr.Po \
 	AST/$(DEPDIR)/GenericSubstitution.Po AST/$(DEPDIR)/Init.Po \
@@ -353,19 +298,15 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	AST/$(DEPDIR)/SymbolTable.Po AST/$(DEPDIR)/Type.Po \
 	AST/$(DEPDIR)/TypeEnvironment.Po \
 	AST/$(DEPDIR)/TypeSubstitution.Po AST/$(DEPDIR)/Util.Po \
-	CodeGen/$(DEPDIR)/CodeGenerator.Po \
 	CodeGen/$(DEPDIR)/CodeGeneratorNew.Po \
 	CodeGen/$(DEPDIR)/FixMain.Po CodeGen/$(DEPDIR)/FixMain2.Po \
 	CodeGen/$(DEPDIR)/FixNames.Po CodeGen/$(DEPDIR)/GenType.Po \
 	CodeGen/$(DEPDIR)/Generate.Po CodeGen/$(DEPDIR)/LinkOnce.Po \
-	CodeGen/$(DEPDIR)/OperatorTable.Po \
-	CodeTools/$(DEPDIR)/DeclStats.Po \
-	CodeTools/$(DEPDIR)/ResolvProtoDump.Po \
-	CodeTools/$(DEPDIR)/TrackLoc.Po Common/$(DEPDIR)/Assert.Po \
+	CodeGen/$(DEPDIR)/OperatorTable.Po Common/$(DEPDIR)/Assert.Po \
 	Common/$(DEPDIR)/CodeLocationTools.Po \
 	Common/$(DEPDIR)/DebugMalloc.Po Common/$(DEPDIR)/DeclStats.Po \
 	Common/$(DEPDIR)/Eval.Po Common/$(DEPDIR)/Examine.Po \
-	Common/$(DEPDIR)/Indenter.Po Common/$(DEPDIR)/PassVisitor.Po \
+	Common/$(DEPDIR)/Indenter.Po \
 	Common/$(DEPDIR)/ResolvProtoDump.Po \
 	Common/$(DEPDIR)/SemanticError.Po \
 	Common/$(DEPDIR)/UniqueName.Po \
@@ -374,35 +315,22 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Common/Stats/$(DEPDIR)/ResolveTime.Po \
 	Common/Stats/$(DEPDIR)/Stats.Po Common/Stats/$(DEPDIR)/Time.Po \
 	Concurrency/$(DEPDIR)/Actors.Po Concurrency/$(DEPDIR)/Corun.Po \
-	Concurrency/$(DEPDIR)/Keywords.Po \
 	Concurrency/$(DEPDIR)/KeywordsNew.Po \
-	Concurrency/$(DEPDIR)/Waitfor.Po \
 	Concurrency/$(DEPDIR)/WaitforNew.Po \
 	Concurrency/$(DEPDIR)/Waituntil.Po \
-	ControlStruct/$(DEPDIR)/ExceptDecl.Po \
 	ControlStruct/$(DEPDIR)/ExceptDeclNew.Po \
-	ControlStruct/$(DEPDIR)/ExceptTranslate.Po \
 	ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po \
 	ControlStruct/$(DEPDIR)/FixLabels.Po \
-	ControlStruct/$(DEPDIR)/ForExprMutator.Po \
 	ControlStruct/$(DEPDIR)/HoistControlDecls.Po \
-	ControlStruct/$(DEPDIR)/LabelFixer.Po \
-	ControlStruct/$(DEPDIR)/LabelGenerator.Po \
 	ControlStruct/$(DEPDIR)/LabelGeneratorNew.Po \
-	ControlStruct/$(DEPDIR)/MLEMutator.Po \
 	ControlStruct/$(DEPDIR)/MultiLevelExit.Po \
-	ControlStruct/$(DEPDIR)/Mutate.Po GenPoly/$(DEPDIR)/Box.Po \
 	GenPoly/$(DEPDIR)/BoxNew.Po GenPoly/$(DEPDIR)/FindFunction.Po \
 	GenPoly/$(DEPDIR)/GenPoly.Po \
-	GenPoly/$(DEPDIR)/InstantiateGeneric.Po \
 	GenPoly/$(DEPDIR)/InstantiateGenericNew.Po \
-	GenPoly/$(DEPDIR)/Lvalue.Po GenPoly/$(DEPDIR)/Lvalue2.Po \
-	GenPoly/$(DEPDIR)/LvalueNew.Po \
+	GenPoly/$(DEPDIR)/Lvalue2.Po GenPoly/$(DEPDIR)/LvalueNew.Po \
 	GenPoly/$(DEPDIR)/ScrubTyVars.Po \
-	GenPoly/$(DEPDIR)/Specialize.Po \
 	GenPoly/$(DEPDIR)/SpecializeNew.Po \
 	InitTweak/$(DEPDIR)/FixGlobalInit.Po \
-	InitTweak/$(DEPDIR)/FixInit.Po \
 	InitTweak/$(DEPDIR)/FixInitNew.Po \
 	InitTweak/$(DEPDIR)/GenInit.Po \
 	InitTweak/$(DEPDIR)/InitTweak.Po \
@@ -414,9 +342,6 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Parser/$(DEPDIR)/TypedefTable.Po Parser/$(DEPDIR)/lex.Po \
 	Parser/$(DEPDIR)/parser.Po Parser/$(DEPDIR)/parserutility.Po \
 	ResolvExpr/$(DEPDIR)/AdjustExprType.Po \
-	ResolvExpr/$(DEPDIR)/Alternative.Po \
-	ResolvExpr/$(DEPDIR)/AlternativeFinder.Po \
-	ResolvExpr/$(DEPDIR)/AlternativePrinter.Po \
 	ResolvExpr/$(DEPDIR)/Candidate.Po \
 	ResolvExpr/$(DEPDIR)/CandidateFinder.Po \
 	ResolvExpr/$(DEPDIR)/CandidatePrinter.Po \
@@ -425,56 +350,20 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	ResolvExpr/$(DEPDIR)/ConversionCost.Po \
 	ResolvExpr/$(DEPDIR)/CurrentObject.Po \
 	ResolvExpr/$(DEPDIR)/EraseWith.Po \
-	ResolvExpr/$(DEPDIR)/ExplodedActual.Po \
 	ResolvExpr/$(DEPDIR)/ExplodedArg.Po \
 	ResolvExpr/$(DEPDIR)/FindOpenVars.Po \
-	ResolvExpr/$(DEPDIR)/Occurs.Po \
 	ResolvExpr/$(DEPDIR)/PolyCost.Po \
 	ResolvExpr/$(DEPDIR)/PtrsAssignable.Po \
 	ResolvExpr/$(DEPDIR)/PtrsCastable.Po \
 	ResolvExpr/$(DEPDIR)/RenameVars.Po \
-	ResolvExpr/$(DEPDIR)/ResolveAssertions.Po \
 	ResolvExpr/$(DEPDIR)/ResolveTypeof.Po \
 	ResolvExpr/$(DEPDIR)/Resolver.Po \
 	ResolvExpr/$(DEPDIR)/SatisfyAssertions.Po \
-	ResolvExpr/$(DEPDIR)/SpecCost.Po \
-	ResolvExpr/$(DEPDIR)/TypeEnvironment.Po \
-	ResolvExpr/$(DEPDIR)/Unify.Po SymTab/$(DEPDIR)/Autogen.Po \
+	ResolvExpr/$(DEPDIR)/SpecCost.Po ResolvExpr/$(DEPDIR)/Unify.Po \
 	SymTab/$(DEPDIR)/Demangle.Po SymTab/$(DEPDIR)/FixFunction.Po \
 	SymTab/$(DEPDIR)/GenImplicitCall.Po \
-	SymTab/$(DEPDIR)/Indexer.Po SymTab/$(DEPDIR)/Mangler.Po \
-	SymTab/$(DEPDIR)/ManglerCommon.Po SymTab/$(DEPDIR)/Validate.Po \
-	SymTab/$(DEPDIR)/ValidateType.Po SymTab/$(DEPDIR)/demangler.Po \
-	SynTree/$(DEPDIR)/AddressExpr.Po \
-	SynTree/$(DEPDIR)/AggregateDecl.Po \
-	SynTree/$(DEPDIR)/ApplicationExpr.Po \
-	SynTree/$(DEPDIR)/ArrayType.Po SynTree/$(DEPDIR)/AttrType.Po \
-	SynTree/$(DEPDIR)/Attribute.Po \
-	SynTree/$(DEPDIR)/BaseSyntaxNode.Po \
-	SynTree/$(DEPDIR)/BasicType.Po SynTree/$(DEPDIR)/CommaExpr.Po \
-	SynTree/$(DEPDIR)/CompoundStmt.Po \
-	SynTree/$(DEPDIR)/Constant.Po \
-	SynTree/$(DEPDIR)/DeclReplacer.Po \
-	SynTree/$(DEPDIR)/DeclStmt.Po SynTree/$(DEPDIR)/Declaration.Po \
-	SynTree/$(DEPDIR)/DeclarationWithType.Po \
-	SynTree/$(DEPDIR)/Expression.Po \
-	SynTree/$(DEPDIR)/FunctionDecl.Po \
-	SynTree/$(DEPDIR)/FunctionType.Po \
-	SynTree/$(DEPDIR)/Initializer.Po \
-	SynTree/$(DEPDIR)/InlineMemberDecl.Po \
-	SynTree/$(DEPDIR)/LinkageSpec.Po \
-	SynTree/$(DEPDIR)/NamedTypeDecl.Po \
-	SynTree/$(DEPDIR)/ObjectDecl.Po \
-	SynTree/$(DEPDIR)/PointerType.Po \
-	SynTree/$(DEPDIR)/ReferenceToType.Po \
-	SynTree/$(DEPDIR)/ReferenceType.Po \
-	SynTree/$(DEPDIR)/Statement.Po SynTree/$(DEPDIR)/TupleExpr.Po \
-	SynTree/$(DEPDIR)/TupleType.Po SynTree/$(DEPDIR)/Type.Po \
-	SynTree/$(DEPDIR)/TypeDecl.Po SynTree/$(DEPDIR)/TypeExpr.Po \
-	SynTree/$(DEPDIR)/TypeSubstitution.Po \
-	SynTree/$(DEPDIR)/TypeofType.Po \
-	SynTree/$(DEPDIR)/VarArgsType.Po SynTree/$(DEPDIR)/VoidType.Po \
-	SynTree/$(DEPDIR)/ZeroOneType.Po Tuples/$(DEPDIR)/Explode.Po \
+	SymTab/$(DEPDIR)/Mangler.Po SymTab/$(DEPDIR)/ManglerCommon.Po \
+	SymTab/$(DEPDIR)/demangler.Po Tuples/$(DEPDIR)/Explode.Po \
 	Tuples/$(DEPDIR)/TupleAssignment.Po \
 	Tuples/$(DEPDIR)/TupleExpansion.Po \
 	Tuples/$(DEPDIR)/TupleExpansionNew.Po \
@@ -482,13 +371,11 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Validate/$(DEPDIR)/CompoundLiteral.Po \
 	Validate/$(DEPDIR)/EliminateTypedef.Po \
 	Validate/$(DEPDIR)/EnumAndPointerDecay.Po \
-	Validate/$(DEPDIR)/FindSpecialDecls.Po \
 	Validate/$(DEPDIR)/FindSpecialDeclsNew.Po \
 	Validate/$(DEPDIR)/FixQualifiedTypes.Po \
 	Validate/$(DEPDIR)/FixReturnTypes.Po \
 	Validate/$(DEPDIR)/ForallPointerDecay.Po \
 	Validate/$(DEPDIR)/GenericParameter.Po \
-	Validate/$(DEPDIR)/HandleAttributes.Po \
 	Validate/$(DEPDIR)/HoistStruct.Po \
 	Validate/$(DEPDIR)/HoistTypeDecls.Po \
 	Validate/$(DEPDIR)/InitializerLength.Po \
@@ -583,16 +470,14 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/AST/module.mk $(srcdir)/CodeGen/module.mk \
-	$(srcdir)/CodeTools/module.mk $(srcdir)/Common/module.mk \
-	$(srcdir)/Concurrency/module.mk \
+	$(srcdir)/Common/module.mk $(srcdir)/Concurrency/module.mk \
 	$(srcdir)/ControlStruct/module.mk $(srcdir)/GenPoly/module.mk \
 	$(srcdir)/InitTweak/module.mk $(srcdir)/Makefile.in \
 	$(srcdir)/Parser/module.mk $(srcdir)/ResolvExpr/module.mk \
-	$(srcdir)/SymTab/module.mk $(srcdir)/SynTree/module.mk \
-	$(srcdir)/Tuples/module.mk $(srcdir)/Validate/module.mk \
-	$(srcdir)/Virtual/module.mk $(top_srcdir)/automake/depcomp \
-	$(top_srcdir)/automake/ylwrap Parser/lex.cc Parser/parser.cc \
-	Parser/parser.hh
+	$(srcdir)/SymTab/module.mk $(srcdir)/Tuples/module.mk \
+	$(srcdir)/Validate/module.mk $(srcdir)/Virtual/module.mk \
+	$(top_srcdir)/automake/depcomp $(top_srcdir)/automake/ylwrap \
+	Parser/lex.cc Parser/parser.cc Parser/parser.hh
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -747,47 +632,34 @@ top_srcdir = @top_srcdir@
 # create object files in directory with source files
 AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I automake
-SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
-	MakeLibCfaNew.cpp MakeLibCfa.h $(SRC_AST) $(SRC_CODEGEN) \
-	CodeGen/Generate.cc CodeGen/Generate.h CodeGen/FixMain.cc \
-	CodeGen/FixNames.cc CodeGen/FixNames.h CodeGen/LinkOnce.cc \
-	CodeGen/LinkOnce.h CodeGen/Options.h CodeTools/DeclStats.cc \
-	CodeTools/DeclStats.h CodeTools/ResolvProtoDump.cc \
-	CodeTools/ResolvProtoDump.h CodeTools/TrackLoc.cc \
-	CodeTools/TrackLoc.h Concurrency/Actors.cpp \
+SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfaNew.cpp \
+	MakeLibCfa.h $(SRC_AST) $(SRC_CODEGEN) CodeGen/Generate.cc \
+	CodeGen/Generate.h CodeGen/FixMain.cc CodeGen/FixNames.cc \
+	CodeGen/FixNames.h CodeGen/LinkOnce.cc CodeGen/LinkOnce.h \
+	CodeGen/Options.h Concurrency/Actors.cpp \
 	Concurrency/Actors.hpp Concurrency/Corun.cpp \
 	Concurrency/Corun.hpp Concurrency/KeywordsNew.cpp \
-	Concurrency/Keywords.cc Concurrency/Keywords.h \
-	Concurrency/WaitforNew.cpp Concurrency/Waitfor.cc \
+	Concurrency/Keywords.h Concurrency/WaitforNew.cpp \
 	Concurrency/Waitfor.h Concurrency/Waituntil.cpp \
 	Concurrency/Waituntil.hpp $(SRC_COMMON) Common/DebugMalloc.cc \
-	ControlStruct/ExceptDecl.cc ControlStruct/ExceptDeclNew.cpp \
-	ControlStruct/ExceptDecl.h \
+	ControlStruct/ExceptDeclNew.cpp ControlStruct/ExceptDecl.h \
 	ControlStruct/ExceptTranslateNew.cpp \
-	ControlStruct/ExceptTranslate.cc \
 	ControlStruct/ExceptTranslate.h ControlStruct/FixLabels.cpp \
-	ControlStruct/FixLabels.hpp ControlStruct/ForExprMutator.cc \
-	ControlStruct/ForExprMutator.h \
+	ControlStruct/FixLabels.hpp \
 	ControlStruct/HoistControlDecls.cpp \
 	ControlStruct/HoistControlDecls.hpp \
-	ControlStruct/LabelFixer.cc ControlStruct/LabelFixer.h \
-	ControlStruct/LabelGenerator.cc ControlStruct/LabelGenerator.h \
 	ControlStruct/LabelGeneratorNew.cpp \
 	ControlStruct/LabelGeneratorNew.hpp \
-	ControlStruct/MLEMutator.cc ControlStruct/MLEMutator.h \
 	ControlStruct/MultiLevelExit.cpp \
-	ControlStruct/MultiLevelExit.hpp ControlStruct/Mutate.cc \
-	ControlStruct/Mutate.h $(SRC_GENPOLY) GenPoly/BoxNew.cpp \
-	GenPoly/Box.cc GenPoly/Box.h GenPoly/ErasableScopedMap.h \
+	ControlStruct/MultiLevelExit.hpp $(SRC_GENPOLY) \
+	GenPoly/BoxNew.cpp GenPoly/Box.h GenPoly/ErasableScopedMap.h \
 	GenPoly/FindFunction.cc GenPoly/FindFunction.h \
-	GenPoly/InstantiateGenericNew.cpp \
-	GenPoly/InstantiateGeneric.cc GenPoly/InstantiateGeneric.h \
-	GenPoly/LvalueNew.cpp GenPoly/Lvalue.cc GenPoly/ScopedSet.h \
+	GenPoly/InstantiateGenericNew.cpp GenPoly/InstantiateGeneric.h \
+	GenPoly/LvalueNew.cpp GenPoly/ScopedSet.h \
 	GenPoly/ScrubTyVars.cc GenPoly/ScrubTyVars.h \
-	GenPoly/Specialize.cc GenPoly/SpecializeNew.cpp \
-	GenPoly/Specialize.h $(SRC_INITTWEAK) \
-	InitTweak/FixGlobalInit.cc InitTweak/FixGlobalInit.h \
-	InitTweak/FixInit.cc InitTweak/FixInit.h \
+	GenPoly/SpecializeNew.cpp GenPoly/Specialize.h \
+	$(SRC_INITTWEAK) InitTweak/FixGlobalInit.cc \
+	InitTweak/FixGlobalInit.h InitTweak/FixInit.h \
 	InitTweak/FixInitNew.cpp Parser/DeclarationNode.cc \
 	Parser/DeclarationNode.h Parser/ExpressionNode.cc \
 	Parser/ExpressionNode.h Parser/InitializerNode.cc \
@@ -798,13 +670,10 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	Parser/StatementNode.cc Parser/StatementNode.h \
 	Parser/TypeData.cc Parser/TypeData.h Parser/TypedefTable.cc \
 	Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
-	ResolvExpr/AlternativePrinter.cc \
-	ResolvExpr/AlternativePrinter.h \
 	ResolvExpr/CandidatePrinter.cpp \
 	ResolvExpr/CandidatePrinter.hpp ResolvExpr/EraseWith.cpp \
-	ResolvExpr/EraseWith.hpp $(SRC_SYMTAB) SymTab/Validate.cc \
-	SymTab/Validate.h $(SRC_SYNTREE) $(SRC_TUPLES) $(SRC_VALIDATE) \
-	Validate/Autogen.cpp Validate/Autogen.hpp \
+	ResolvExpr/EraseWith.hpp $(SRC_SYMTAB) $(SRC_TUPLES) \
+	$(SRC_VALIDATE) Validate/Autogen.cpp Validate/Autogen.hpp \
 	Validate/CompoundLiteral.cpp Validate/CompoundLiteral.hpp \
 	Validate/EliminateTypedef.cpp Validate/EliminateTypedef.hpp \
 	Validate/EnumAndPointerDecay.cpp \
@@ -814,8 +683,7 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 	Validate/FixReturnTypes.cpp Validate/FixReturnTypes.hpp \
 	Validate/ForallPointerDecay.cpp \
 	Validate/ForallPointerDecay.hpp Validate/GenericParameter.cpp \
-	Validate/GenericParameter.hpp Validate/HandleAttributes.cc \
-	Validate/HandleAttributes.h Validate/HoistStruct.cpp \
+	Validate/GenericParameter.hpp Validate/HoistStruct.cpp \
 	Validate/HoistStruct.hpp Validate/HoistTypeDecls.cpp \
 	Validate/HoistTypeDecls.hpp Validate/InitializerLength.cpp \
 	Validate/InitializerLength.hpp Validate/LabelAddressFixer.cpp \
@@ -831,7 +699,7 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cc \
 SRCDEMANGLE = CompilationState.cc $(SRC_AST) $(SRC_CODEGEN) \
 	$(SRC_COMMON) $(SRC_GENPOLY) $(SRC_INITTWEAK) \
 	$(SRC_RESOLVEXPR) $(SRC_SYMTAB) SymTab/Demangle.cc \
-	SymTab/Demangle.h $(SRC_SYNTREE) $(SRC_TUPLES) $(SRC_VALIDATE)
+	SymTab/Demangle.h $(SRC_TUPLES) $(SRC_VALIDATE)
 MAINTAINERCLEANFILES = ${libdir}/${notdir ${cfa_cpplib_PROGRAMS}}
 MOSTLYCLEANFILES = Parser/lex.cc Parser/parser.cc Parser/parser.hh \
 	Parser/parser.output
@@ -843,8 +711,6 @@ SRC_AST = \
 	AST/Attribute.hpp \
 	AST/Bitfield.hpp \
 	AST/Chain.hpp \
-	AST/Convert.cpp \
-	AST/Convert.hpp \
 	AST/Copy.cpp \
 	AST/Copy.hpp \
 	AST/Create.cpp \
@@ -894,8 +760,6 @@ SRC_AST = \
 	AST/Visitor.hpp
 
 SRC_CODEGEN = \
-	CodeGen/CodeGenerator.cc \
-	CodeGen/CodeGenerator.h \
 	CodeGen/CodeGeneratorNew.cpp \
 	CodeGen/CodeGeneratorNew.hpp \
 	CodeGen/FixMain2.cc \
@@ -921,10 +785,6 @@ SRC_COMMON = \
 	Common/Indenter.h \
 	Common/Indenter.cc \
 	Common/Iterate.hpp \
-	Common/PassVisitor.cc \
-	Common/PassVisitor.h \
-	Common/PassVisitor.impl.h \
-	Common/PassVisitor.proto.h \
 	Common/PersistentMap.h \
 	Common/ResolvProtoDump.hpp \
 	Common/ResolvProtoDump.cpp \
@@ -965,10 +825,6 @@ AM_YFLAGS = -d -t -v -Wno-yacc
 SRC_RESOLVEXPR = \
       ResolvExpr/AdjustExprType.cc \
       ResolvExpr/AdjustExprType.hpp \
-      ResolvExpr/Alternative.cc \
-      ResolvExpr/AlternativeFinder.cc \
-      ResolvExpr/AlternativeFinder.h \
-      ResolvExpr/Alternative.h \
       ResolvExpr/Candidate.cpp \
       ResolvExpr/CandidateFinder.cpp \
       ResolvExpr/CandidateFinder.hpp \
@@ -982,13 +838,10 @@ SRC_RESOLVEXPR = \
       ResolvExpr/Cost.h \
       ResolvExpr/CurrentObject.cc \
       ResolvExpr/CurrentObject.h \
-      ResolvExpr/ExplodedActual.cc \
-      ResolvExpr/ExplodedActual.h \
       ResolvExpr/ExplodedArg.cpp \
       ResolvExpr/ExplodedArg.hpp \
       ResolvExpr/FindOpenVars.cc \
       ResolvExpr/FindOpenVars.h \
-      ResolvExpr/Occurs.cc \
       ResolvExpr/PolyCost.cc \
       ResolvExpr/PolyCost.hpp \
       ResolvExpr/PtrsAssignable.cc \
@@ -997,8 +850,6 @@ SRC_RESOLVEXPR = \
       ResolvExpr/PtrsCastable.hpp \
       ResolvExpr/RenameVars.cc \
       ResolvExpr/RenameVars.h \
-      ResolvExpr/ResolveAssertions.cc \
-      ResolvExpr/ResolveAssertions.h \
       ResolvExpr/Resolver.cc \
       ResolvExpr/Resolver.h \
       ResolvExpr/ResolveTypeof.cc \
@@ -1008,81 +859,19 @@ SRC_RESOLVEXPR = \
       ResolvExpr/SatisfyAssertions.hpp \
       ResolvExpr/SpecCost.cc \
       ResolvExpr/SpecCost.hpp \
-      ResolvExpr/TypeEnvironment.cc \
-      ResolvExpr/TypeEnvironment.h \
       ResolvExpr/typeops.h \
       ResolvExpr/Unify.cc \
       ResolvExpr/Unify.h \
       ResolvExpr/WidenMode.h
 
 SRC_SYMTAB = \
-	SymTab/Autogen.cc \
-	SymTab/Autogen.h \
 	SymTab/FixFunction.cc \
 	SymTab/FixFunction.h \
 	SymTab/GenImplicitCall.cpp \
 	SymTab/GenImplicitCall.hpp \
-	SymTab/Indexer.cc \
-	SymTab/Indexer.h \
 	SymTab/Mangler.cc \
 	SymTab/ManglerCommon.cc \
-	SymTab/Mangler.h \
-	SymTab/ValidateType.cc \
-	SymTab/ValidateType.h
-
-SRC_SYNTREE = \
-      SynTree/AddressExpr.cc \
-      SynTree/AggregateDecl.cc \
-      SynTree/ApplicationExpr.cc \
-      SynTree/ArrayType.cc \
-      SynTree/Attribute.cc \
-      SynTree/Attribute.h \
-      SynTree/AttrType.cc \
-      SynTree/BaseSyntaxNode.h \
-      SynTree/BaseSyntaxNode.cc \
-      SynTree/BasicType.cc \
-      SynTree/CommaExpr.cc \
-      SynTree/CompoundStmt.cc \
-      SynTree/Constant.cc \
-      SynTree/Constant.h \
-      SynTree/Declaration.cc \
-      SynTree/Declaration.h \
-      SynTree/DeclarationWithType.cc \
-      SynTree/DeclReplacer.cc \
-      SynTree/DeclReplacer.h \
-      SynTree/DeclStmt.cc \
-      SynTree/Expression.cc \
-      SynTree/Expression.h \
-      SynTree/FunctionDecl.cc \
-      SynTree/FunctionType.cc \
-      SynTree/Initializer.cc \
-      SynTree/Initializer.h \
-      SynTree/InlineMemberDecl.cc \
-      SynTree/Label.h \
-      SynTree/LinkageSpec.cc \
-      SynTree/LinkageSpec.h \
-      SynTree/Mutator.h \
-      SynTree/NamedTypeDecl.cc \
-      SynTree/ObjectDecl.cc \
-      SynTree/PointerType.cc \
-      SynTree/ReferenceToType.cc \
-      SynTree/ReferenceType.cc \
-      SynTree/Statement.cc \
-      SynTree/Statement.h \
-      SynTree/SynTree.h \
-      SynTree/TupleExpr.cc \
-      SynTree/TupleType.cc \
-      SynTree/Type.cc \
-      SynTree/TypeDecl.cc \
-      SynTree/TypeExpr.cc \
-      SynTree/Type.h \
-      SynTree/TypeofType.cc \
-      SynTree/TypeSubstitution.cc \
-      SynTree/TypeSubstitution.h \
-      SynTree/VarArgsType.cc \
-      SynTree/Visitor.h \
-      SynTree/VoidType.cc \
-      SynTree/ZeroOneType.cc
+	SymTab/Mangler.h
 
 SRC_TUPLES = \
 	Tuples/Explode.cc \
@@ -1094,7 +883,6 @@ SRC_TUPLES = \
 	Tuples/Tuples.h
 
 SRC_VALIDATE = \
-	Validate/FindSpecialDecls.cc \
 	Validate/FindSpecialDecls.h
 
 
@@ -1116,7 +904,7 @@ all: $(BUILT_SOURCES)
 
 .SUFFIXES:
 .SUFFIXES: .cc .cpp .ll .lo .o .obj .yy
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/AST/module.mk $(srcdir)/CodeGen/module.mk $(srcdir)/CodeTools/module.mk $(srcdir)/Concurrency/module.mk $(srcdir)/Common/module.mk $(srcdir)/ControlStruct/module.mk $(srcdir)/GenPoly/module.mk $(srcdir)/InitTweak/module.mk $(srcdir)/Parser/module.mk $(srcdir)/ResolvExpr/module.mk $(srcdir)/SymTab/module.mk $(srcdir)/SynTree/module.mk $(srcdir)/Tuples/module.mk $(srcdir)/Validate/module.mk $(srcdir)/Virtual/module.mk $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/AST/module.mk $(srcdir)/CodeGen/module.mk $(srcdir)/Concurrency/module.mk $(srcdir)/Common/module.mk $(srcdir)/ControlStruct/module.mk $(srcdir)/GenPoly/module.mk $(srcdir)/InitTweak/module.mk $(srcdir)/Parser/module.mk $(srcdir)/ResolvExpr/module.mk $(srcdir)/SymTab/module.mk $(srcdir)/Tuples/module.mk $(srcdir)/Validate/module.mk $(srcdir)/Virtual/module.mk $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -1136,7 +924,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__maybe_remake_depfiles)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__maybe_remake_depfiles);; \
 	esac;
-$(srcdir)/AST/module.mk $(srcdir)/CodeGen/module.mk $(srcdir)/CodeTools/module.mk $(srcdir)/Concurrency/module.mk $(srcdir)/Common/module.mk $(srcdir)/ControlStruct/module.mk $(srcdir)/GenPoly/module.mk $(srcdir)/InitTweak/module.mk $(srcdir)/Parser/module.mk $(srcdir)/ResolvExpr/module.mk $(srcdir)/SymTab/module.mk $(srcdir)/SynTree/module.mk $(srcdir)/Tuples/module.mk $(srcdir)/Validate/module.mk $(srcdir)/Virtual/module.mk $(am__empty):
+$(srcdir)/AST/module.mk $(srcdir)/CodeGen/module.mk $(srcdir)/Concurrency/module.mk $(srcdir)/Common/module.mk $(srcdir)/ControlStruct/module.mk $(srcdir)/GenPoly/module.mk $(srcdir)/InitTweak/module.mk $(srcdir)/Parser/module.mk $(srcdir)/ResolvExpr/module.mk $(srcdir)/SymTab/module.mk $(srcdir)/Tuples/module.mk $(srcdir)/Validate/module.mk $(srcdir)/Virtual/module.mk $(am__empty):
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
@@ -1206,8 +994,6 @@ AST/$(DEPDIR)/$(am__dirstamp):
 	@: > AST/$(DEPDIR)/$(am__dirstamp)
 AST/Attribute.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
-AST/Convert.$(OBJEXT): AST/$(am__dirstamp) \
-	AST/$(DEPDIR)/$(am__dirstamp)
 AST/Copy.$(OBJEXT): AST/$(am__dirstamp) AST/$(DEPDIR)/$(am__dirstamp)
 AST/Create.$(OBJEXT): AST/$(am__dirstamp) \
 	AST/$(DEPDIR)/$(am__dirstamp)
@@ -1240,8 +1026,6 @@ CodeGen/$(am__dirstamp):
 CodeGen/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) CodeGen/$(DEPDIR)
 	@: > CodeGen/$(DEPDIR)/$(am__dirstamp)
-CodeGen/CodeGenerator.$(OBJEXT): CodeGen/$(am__dirstamp) \
-	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/CodeGeneratorNew.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/FixMain2.$(OBJEXT): CodeGen/$(am__dirstamp) \
@@ -1267,8 +1051,6 @@ Common/Eval.$(OBJEXT): Common/$(am__dirstamp) \
 Common/Examine.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
 Common/Indenter.$(OBJEXT): Common/$(am__dirstamp) \
-	Common/$(DEPDIR)/$(am__dirstamp)
-Common/PassVisitor.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
 Common/ResolvProtoDump.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
@@ -1320,10 +1102,6 @@ ResolvExpr/$(DEPDIR)/$(am__dirstamp):
 	@: > ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/AdjustExprType.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
-ResolvExpr/Alternative.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
-	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
-ResolvExpr/AlternativeFinder.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
-	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/Candidate.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/CandidateFinder.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
@@ -1336,13 +1114,9 @@ ResolvExpr/ConversionCost.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/CurrentObject.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
-ResolvExpr/ExplodedActual.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
-	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/ExplodedArg.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/FindOpenVars.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
-	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
-ResolvExpr/Occurs.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/PolyCost.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
@@ -1352,8 +1126,6 @@ ResolvExpr/PtrsCastable.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/RenameVars.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
-ResolvExpr/ResolveAssertions.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
-	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/Resolver.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/ResolveTypeof.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
@@ -1361,8 +1133,6 @@ ResolvExpr/ResolveTypeof.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 ResolvExpr/SatisfyAssertions.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/SpecCost.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
-	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
-ResolvExpr/TypeEnvironment.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/Unify.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
@@ -1372,102 +1142,16 @@ SymTab/$(am__dirstamp):
 SymTab/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) SymTab/$(DEPDIR)
 	@: > SymTab/$(DEPDIR)/$(am__dirstamp)
-SymTab/Autogen.$(OBJEXT): SymTab/$(am__dirstamp) \
-	SymTab/$(DEPDIR)/$(am__dirstamp)
 SymTab/FixFunction.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
 SymTab/GenImplicitCall.$(OBJEXT): SymTab/$(am__dirstamp) \
-	SymTab/$(DEPDIR)/$(am__dirstamp)
-SymTab/Indexer.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
 SymTab/Mangler.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
 SymTab/ManglerCommon.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
-SymTab/ValidateType.$(OBJEXT): SymTab/$(am__dirstamp) \
-	SymTab/$(DEPDIR)/$(am__dirstamp)
 SymTab/Demangle.$(OBJEXT): SymTab/$(am__dirstamp) \
 	SymTab/$(DEPDIR)/$(am__dirstamp)
-SynTree/$(am__dirstamp):
-	@$(MKDIR_P) SynTree
-	@: > SynTree/$(am__dirstamp)
-SynTree/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) SynTree/$(DEPDIR)
-	@: > SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/AddressExpr.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/AggregateDecl.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/ApplicationExpr.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/ArrayType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/Attribute.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/AttrType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/BaseSyntaxNode.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/BasicType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/CommaExpr.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/CompoundStmt.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/Constant.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/Declaration.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/DeclarationWithType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/DeclReplacer.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/DeclStmt.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/Expression.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/FunctionDecl.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/FunctionType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/Initializer.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/InlineMemberDecl.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/LinkageSpec.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/NamedTypeDecl.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/ObjectDecl.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/PointerType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/ReferenceToType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/ReferenceType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/Statement.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/TupleExpr.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/TupleType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/Type.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/TypeDecl.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/TypeExpr.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/TypeofType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/TypeSubstitution.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/VarArgsType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/VoidType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
-SynTree/ZeroOneType.$(OBJEXT): SynTree/$(am__dirstamp) \
-	SynTree/$(DEPDIR)/$(am__dirstamp)
 Tuples/$(am__dirstamp):
 	@$(MKDIR_P) Tuples
 	@: > Tuples/$(am__dirstamp)
@@ -1484,14 +1168,6 @@ Tuples/TupleExpansionNew.$(OBJEXT): Tuples/$(am__dirstamp) \
 	Tuples/$(DEPDIR)/$(am__dirstamp)
 Tuples/Tuples.$(OBJEXT): Tuples/$(am__dirstamp) \
 	Tuples/$(DEPDIR)/$(am__dirstamp)
-Validate/$(am__dirstamp):
-	@$(MKDIR_P) Validate
-	@: > Validate/$(am__dirstamp)
-Validate/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) Validate/$(DEPDIR)
-	@: > Validate/$(DEPDIR)/$(am__dirstamp)
-Validate/FindSpecialDecls.$(OBJEXT): Validate/$(am__dirstamp) \
-	Validate/$(DEPDIR)/$(am__dirstamp)
 
 libdemangle.a: $(libdemangle_a_OBJECTS) $(libdemangle_a_DEPENDENCIES) $(EXTRA_libdemangle_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libdemangle.a
@@ -1505,18 +1181,6 @@ CodeGen/FixNames.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/LinkOnce.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
-CodeTools/$(am__dirstamp):
-	@$(MKDIR_P) CodeTools
-	@: > CodeTools/$(am__dirstamp)
-CodeTools/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) CodeTools/$(DEPDIR)
-	@: > CodeTools/$(DEPDIR)/$(am__dirstamp)
-CodeTools/DeclStats.$(OBJEXT): CodeTools/$(am__dirstamp) \
-	CodeTools/$(DEPDIR)/$(am__dirstamp)
-CodeTools/ResolvProtoDump.$(OBJEXT): CodeTools/$(am__dirstamp) \
-	CodeTools/$(DEPDIR)/$(am__dirstamp)
-CodeTools/TrackLoc.$(OBJEXT): CodeTools/$(am__dirstamp) \
-	CodeTools/$(DEPDIR)/$(am__dirstamp)
 Concurrency/$(am__dirstamp):
 	@$(MKDIR_P) Concurrency
 	@: > Concurrency/$(am__dirstamp)
@@ -1529,11 +1193,7 @@ Concurrency/Corun.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/KeywordsNew.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
-Concurrency/Keywords.$(OBJEXT): Concurrency/$(am__dirstamp) \
-	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/WaitforNew.$(OBJEXT): Concurrency/$(am__dirstamp) \
-	Concurrency/$(DEPDIR)/$(am__dirstamp)
-Concurrency/Waitfor.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
 Concurrency/Waituntil.$(OBJEXT): Concurrency/$(am__dirstamp) \
 	Concurrency/$(DEPDIR)/$(am__dirstamp)
@@ -1545,59 +1205,34 @@ ControlStruct/$(am__dirstamp):
 ControlStruct/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) ControlStruct/$(DEPDIR)
 	@: > ControlStruct/$(DEPDIR)/$(am__dirstamp)
-ControlStruct/ExceptDecl.$(OBJEXT): ControlStruct/$(am__dirstamp) \
-	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/ExceptDeclNew.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/ExceptTranslateNew.$(OBJEXT):  \
 	ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
-ControlStruct/ExceptTranslate.$(OBJEXT):  \
-	ControlStruct/$(am__dirstamp) \
-	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/FixLabels.$(OBJEXT): ControlStruct/$(am__dirstamp) \
-	ControlStruct/$(DEPDIR)/$(am__dirstamp)
-ControlStruct/ForExprMutator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/HoistControlDecls.$(OBJEXT):  \
 	ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
-ControlStruct/LabelFixer.$(OBJEXT): ControlStruct/$(am__dirstamp) \
-	ControlStruct/$(DEPDIR)/$(am__dirstamp)
-ControlStruct/LabelGenerator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
-	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/LabelGeneratorNew.$(OBJEXT):  \
 	ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
-ControlStruct/MLEMutator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
-	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/MultiLevelExit.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
-ControlStruct/Mutate.$(OBJEXT): ControlStruct/$(am__dirstamp) \
-	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 GenPoly/BoxNew.$(OBJEXT): GenPoly/$(am__dirstamp) \
-	GenPoly/$(DEPDIR)/$(am__dirstamp)
-GenPoly/Box.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/FindFunction.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/InstantiateGenericNew.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
-GenPoly/InstantiateGeneric.$(OBJEXT): GenPoly/$(am__dirstamp) \
-	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/LvalueNew.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
-GenPoly/Lvalue.$(OBJEXT): GenPoly/$(am__dirstamp) \
-	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/ScrubTyVars.$(OBJEXT): GenPoly/$(am__dirstamp) \
-	GenPoly/$(DEPDIR)/$(am__dirstamp)
-GenPoly/Specialize.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/SpecializeNew.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 InitTweak/FixGlobalInit.$(OBJEXT): InitTweak/$(am__dirstamp) \
-	InitTweak/$(DEPDIR)/$(am__dirstamp)
-InitTweak/FixInit.$(OBJEXT): InitTweak/$(am__dirstamp) \
 	InitTweak/$(DEPDIR)/$(am__dirstamp)
 InitTweak/FixInitNew.$(OBJEXT): InitTweak/$(am__dirstamp) \
 	InitTweak/$(DEPDIR)/$(am__dirstamp)
@@ -1632,14 +1267,16 @@ Parser/TypeData.$(OBJEXT): Parser/$(am__dirstamp) \
 	Parser/$(DEPDIR)/$(am__dirstamp)
 Parser/TypedefTable.$(OBJEXT): Parser/$(am__dirstamp) \
 	Parser/$(DEPDIR)/$(am__dirstamp)
-ResolvExpr/AlternativePrinter.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
-	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/CandidatePrinter.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
 ResolvExpr/EraseWith.$(OBJEXT): ResolvExpr/$(am__dirstamp) \
 	ResolvExpr/$(DEPDIR)/$(am__dirstamp)
-SymTab/Validate.$(OBJEXT): SymTab/$(am__dirstamp) \
-	SymTab/$(DEPDIR)/$(am__dirstamp)
+Validate/$(am__dirstamp):
+	@$(MKDIR_P) Validate
+	@: > Validate/$(am__dirstamp)
+Validate/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) Validate/$(DEPDIR)
+	@: > Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/Autogen.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/CompoundLiteral.$(OBJEXT): Validate/$(am__dirstamp) \
@@ -1657,8 +1294,6 @@ Validate/FixReturnTypes.$(OBJEXT): Validate/$(am__dirstamp) \
 Validate/ForallPointerDecay.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/GenericParameter.$(OBJEXT): Validate/$(am__dirstamp) \
-	Validate/$(DEPDIR)/$(am__dirstamp)
-Validate/HandleAttributes.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/HoistStruct.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
@@ -1706,7 +1341,6 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f AST/*.$(OBJEXT)
 	-rm -f CodeGen/*.$(OBJEXT)
-	-rm -f CodeTools/*.$(OBJEXT)
 	-rm -f Common/*.$(OBJEXT)
 	-rm -f Common/Stats/*.$(OBJEXT)
 	-rm -f Concurrency/*.$(OBJEXT)
@@ -1716,7 +1350,6 @@ mostlyclean-compile:
 	-rm -f Parser/*.$(OBJEXT)
 	-rm -f ResolvExpr/*.$(OBJEXT)
 	-rm -f SymTab/*.$(OBJEXT)
-	-rm -f SynTree/*.$(OBJEXT)
 	-rm -f Tuples/*.$(OBJEXT)
 	-rm -f Validate/*.$(OBJEXT)
 	-rm -f Virtual/*.$(OBJEXT)
@@ -1725,11 +1358,9 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CompilationState.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MakeLibCfa.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MakeLibCfaNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Attribute.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Convert.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Copy.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Create.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Decl.Po@am__quote@ # am--include-marker
@@ -1748,7 +1379,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/TypeEnvironment.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/TypeSubstitution.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Util.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/CodeGenerator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/CodeGeneratorNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixMain.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixMain2.Po@am__quote@ # am--include-marker
@@ -1757,9 +1387,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/Generate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/LinkOnce.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/OperatorTable.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@CodeTools/$(DEPDIR)/DeclStats.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@CodeTools/$(DEPDIR)/ResolvProtoDump.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@CodeTools/$(DEPDIR)/TrackLoc.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Assert.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/CodeLocationTools.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/DebugMalloc.Po@am__quote@ # am--include-marker
@@ -1767,7 +1394,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Eval.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Examine.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Indenter.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/PassVisitor.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/ResolvProtoDump.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/SemanticError.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/UniqueName.Po@am__quote@ # am--include-marker
@@ -1778,38 +1404,24 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Time.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Actors.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Corun.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Keywords.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/KeywordsNew.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Waitfor.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/WaitforNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Concurrency/$(DEPDIR)/Waituntil.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptDecl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptDeclNew.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptTranslate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/FixLabels.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/ForExprMutator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/HoistControlDecls.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelFixer.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelGenerator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelGeneratorNew.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/MLEMutator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/MultiLevelExit.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/Mutate.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Box.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/BoxNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/FindFunction.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/GenPoly.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/InstantiateGeneric.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/InstantiateGenericNew.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Lvalue.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Lvalue2.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/LvalueNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/ScrubTyVars.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Specialize.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/SpecializeNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@InitTweak/$(DEPDIR)/FixGlobalInit.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@InitTweak/$(DEPDIR)/FixInit.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@InitTweak/$(DEPDIR)/FixInitNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@InitTweak/$(DEPDIR)/GenInit.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@InitTweak/$(DEPDIR)/InitTweak.Po@am__quote@ # am--include-marker
@@ -1825,9 +1437,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/parser.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/parserutility.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/AdjustExprType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/Alternative.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/AlternativeFinder.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/AlternativePrinter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/Candidate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CandidateFinder.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CandidatePrinter.Po@am__quote@ # am--include-marker
@@ -1836,68 +1445,23 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ConversionCost.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CurrentObject.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/EraseWith.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ExplodedActual.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ExplodedArg.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/FindOpenVars.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/Occurs.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/PolyCost.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/PtrsAssignable.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/PtrsCastable.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/RenameVars.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ResolveAssertions.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/ResolveTypeof.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/Resolver.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/SatisfyAssertions.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/SpecCost.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/TypeEnvironment.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/Unify.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Autogen.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Demangle.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/FixFunction.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/GenImplicitCall.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Indexer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Mangler.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/ManglerCommon.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/Validate.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/ValidateType.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@SymTab/$(DEPDIR)/demangler.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/AddressExpr.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/AggregateDecl.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/ApplicationExpr.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/ArrayType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/AttrType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/Attribute.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/BaseSyntaxNode.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/BasicType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/CommaExpr.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/CompoundStmt.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/Constant.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/DeclReplacer.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/DeclStmt.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/Declaration.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/DeclarationWithType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/Expression.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/FunctionDecl.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/FunctionType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/Initializer.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/InlineMemberDecl.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/LinkageSpec.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/NamedTypeDecl.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/ObjectDecl.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/PointerType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/ReferenceToType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/ReferenceType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/Statement.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/TupleExpr.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/TupleType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/Type.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/TypeDecl.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/TypeExpr.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/TypeSubstitution.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/TypeofType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/VarArgsType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/VoidType.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@SynTree/$(DEPDIR)/ZeroOneType.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/Explode.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleAssignment.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleExpansion.Po@am__quote@ # am--include-marker
@@ -1907,13 +1471,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/CompoundLiteral.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/EliminateTypedef.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/EnumAndPointerDecay.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FindSpecialDeclsNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FixQualifiedTypes.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/FixReturnTypes.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ForallPointerDecay.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/GenericParameter.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HandleAttributes.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HoistStruct.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HoistTypeDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/InitializerLength.Po@am__quote@ # am--include-marker
@@ -2119,8 +1681,6 @@ distclean-generic:
 	-rm -f AST/$(am__dirstamp)
 	-rm -f CodeGen/$(DEPDIR)/$(am__dirstamp)
 	-rm -f CodeGen/$(am__dirstamp)
-	-rm -f CodeTools/$(DEPDIR)/$(am__dirstamp)
-	-rm -f CodeTools/$(am__dirstamp)
 	-rm -f Common/$(DEPDIR)/$(am__dirstamp)
 	-rm -f Common/$(am__dirstamp)
 	-rm -f Common/Stats/$(DEPDIR)/$(am__dirstamp)
@@ -2139,8 +1699,6 @@ distclean-generic:
 	-rm -f ResolvExpr/$(am__dirstamp)
 	-rm -f SymTab/$(DEPDIR)/$(am__dirstamp)
 	-rm -f SymTab/$(am__dirstamp)
-	-rm -f SynTree/$(DEPDIR)/$(am__dirstamp)
-	-rm -f SynTree/$(am__dirstamp)
 	-rm -f Tuples/$(DEPDIR)/$(am__dirstamp)
 	-rm -f Tuples/$(am__dirstamp)
 	-rm -f Validate/$(DEPDIR)/$(am__dirstamp)
@@ -2163,11 +1721,9 @@ clean-am: clean-cfa_cpplibPROGRAMS clean-generic clean-libtool \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/CompilationState.Po
-	-rm -f ./$(DEPDIR)/MakeLibCfa.Po
 	-rm -f ./$(DEPDIR)/MakeLibCfaNew.Po
 	-rm -f ./$(DEPDIR)/main.Po
 	-rm -f AST/$(DEPDIR)/Attribute.Po
-	-rm -f AST/$(DEPDIR)/Convert.Po
 	-rm -f AST/$(DEPDIR)/Copy.Po
 	-rm -f AST/$(DEPDIR)/Create.Po
 	-rm -f AST/$(DEPDIR)/Decl.Po
@@ -2186,7 +1742,6 @@ distclean: distclean-am
 	-rm -f AST/$(DEPDIR)/TypeEnvironment.Po
 	-rm -f AST/$(DEPDIR)/TypeSubstitution.Po
 	-rm -f AST/$(DEPDIR)/Util.Po
-	-rm -f CodeGen/$(DEPDIR)/CodeGenerator.Po
 	-rm -f CodeGen/$(DEPDIR)/CodeGeneratorNew.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain2.Po
@@ -2195,9 +1750,6 @@ distclean: distclean-am
 	-rm -f CodeGen/$(DEPDIR)/Generate.Po
 	-rm -f CodeGen/$(DEPDIR)/LinkOnce.Po
 	-rm -f CodeGen/$(DEPDIR)/OperatorTable.Po
-	-rm -f CodeTools/$(DEPDIR)/DeclStats.Po
-	-rm -f CodeTools/$(DEPDIR)/ResolvProtoDump.Po
-	-rm -f CodeTools/$(DEPDIR)/TrackLoc.Po
 	-rm -f Common/$(DEPDIR)/Assert.Po
 	-rm -f Common/$(DEPDIR)/CodeLocationTools.Po
 	-rm -f Common/$(DEPDIR)/DebugMalloc.Po
@@ -2205,7 +1757,6 @@ distclean: distclean-am
 	-rm -f Common/$(DEPDIR)/Eval.Po
 	-rm -f Common/$(DEPDIR)/Examine.Po
 	-rm -f Common/$(DEPDIR)/Indenter.Po
-	-rm -f Common/$(DEPDIR)/PassVisitor.Po
 	-rm -f Common/$(DEPDIR)/ResolvProtoDump.Po
 	-rm -f Common/$(DEPDIR)/SemanticError.Po
 	-rm -f Common/$(DEPDIR)/UniqueName.Po
@@ -2216,38 +1767,24 @@ distclean: distclean-am
 	-rm -f Common/Stats/$(DEPDIR)/Time.Po
 	-rm -f Concurrency/$(DEPDIR)/Actors.Po
 	-rm -f Concurrency/$(DEPDIR)/Corun.Po
-	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
 	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
-	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
 	-rm -f Concurrency/$(DEPDIR)/WaitforNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waituntil.Po
-	-rm -f ControlStruct/$(DEPDIR)/ExceptDecl.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptDeclNew.Po
-	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslate.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po
 	-rm -f ControlStruct/$(DEPDIR)/FixLabels.Po
-	-rm -f ControlStruct/$(DEPDIR)/ForExprMutator.Po
 	-rm -f ControlStruct/$(DEPDIR)/HoistControlDecls.Po
-	-rm -f ControlStruct/$(DEPDIR)/LabelFixer.Po
-	-rm -f ControlStruct/$(DEPDIR)/LabelGenerator.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelGeneratorNew.Po
-	-rm -f ControlStruct/$(DEPDIR)/MLEMutator.Po
 	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
-	-rm -f ControlStruct/$(DEPDIR)/Mutate.Po
-	-rm -f GenPoly/$(DEPDIR)/Box.Po
 	-rm -f GenPoly/$(DEPDIR)/BoxNew.Po
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
 	-rm -f GenPoly/$(DEPDIR)/GenPoly.Po
-	-rm -f GenPoly/$(DEPDIR)/InstantiateGeneric.Po
 	-rm -f GenPoly/$(DEPDIR)/InstantiateGenericNew.Po
-	-rm -f GenPoly/$(DEPDIR)/Lvalue.Po
 	-rm -f GenPoly/$(DEPDIR)/Lvalue2.Po
 	-rm -f GenPoly/$(DEPDIR)/LvalueNew.Po
 	-rm -f GenPoly/$(DEPDIR)/ScrubTyVars.Po
-	-rm -f GenPoly/$(DEPDIR)/Specialize.Po
 	-rm -f GenPoly/$(DEPDIR)/SpecializeNew.Po
 	-rm -f InitTweak/$(DEPDIR)/FixGlobalInit.Po
-	-rm -f InitTweak/$(DEPDIR)/FixInit.Po
 	-rm -f InitTweak/$(DEPDIR)/FixInitNew.Po
 	-rm -f InitTweak/$(DEPDIR)/GenInit.Po
 	-rm -f InitTweak/$(DEPDIR)/InitTweak.Po
@@ -2263,9 +1800,6 @@ distclean: distclean-am
 	-rm -f Parser/$(DEPDIR)/parser.Po
 	-rm -f Parser/$(DEPDIR)/parserutility.Po
 	-rm -f ResolvExpr/$(DEPDIR)/AdjustExprType.Po
-	-rm -f ResolvExpr/$(DEPDIR)/Alternative.Po
-	-rm -f ResolvExpr/$(DEPDIR)/AlternativeFinder.Po
-	-rm -f ResolvExpr/$(DEPDIR)/AlternativePrinter.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Candidate.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CandidateFinder.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CandidatePrinter.Po
@@ -2274,68 +1808,23 @@ distclean: distclean-am
 	-rm -f ResolvExpr/$(DEPDIR)/ConversionCost.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CurrentObject.Po
 	-rm -f ResolvExpr/$(DEPDIR)/EraseWith.Po
-	-rm -f ResolvExpr/$(DEPDIR)/ExplodedActual.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ExplodedArg.Po
 	-rm -f ResolvExpr/$(DEPDIR)/FindOpenVars.Po
-	-rm -f ResolvExpr/$(DEPDIR)/Occurs.Po
 	-rm -f ResolvExpr/$(DEPDIR)/PolyCost.Po
 	-rm -f ResolvExpr/$(DEPDIR)/PtrsAssignable.Po
 	-rm -f ResolvExpr/$(DEPDIR)/PtrsCastable.Po
 	-rm -f ResolvExpr/$(DEPDIR)/RenameVars.Po
-	-rm -f ResolvExpr/$(DEPDIR)/ResolveAssertions.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ResolveTypeof.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Resolver.Po
 	-rm -f ResolvExpr/$(DEPDIR)/SatisfyAssertions.Po
 	-rm -f ResolvExpr/$(DEPDIR)/SpecCost.Po
-	-rm -f ResolvExpr/$(DEPDIR)/TypeEnvironment.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Unify.Po
-	-rm -f SymTab/$(DEPDIR)/Autogen.Po
 	-rm -f SymTab/$(DEPDIR)/Demangle.Po
 	-rm -f SymTab/$(DEPDIR)/FixFunction.Po
 	-rm -f SymTab/$(DEPDIR)/GenImplicitCall.Po
-	-rm -f SymTab/$(DEPDIR)/Indexer.Po
 	-rm -f SymTab/$(DEPDIR)/Mangler.Po
 	-rm -f SymTab/$(DEPDIR)/ManglerCommon.Po
-	-rm -f SymTab/$(DEPDIR)/Validate.Po
-	-rm -f SymTab/$(DEPDIR)/ValidateType.Po
 	-rm -f SymTab/$(DEPDIR)/demangler.Po
-	-rm -f SynTree/$(DEPDIR)/AddressExpr.Po
-	-rm -f SynTree/$(DEPDIR)/AggregateDecl.Po
-	-rm -f SynTree/$(DEPDIR)/ApplicationExpr.Po
-	-rm -f SynTree/$(DEPDIR)/ArrayType.Po
-	-rm -f SynTree/$(DEPDIR)/AttrType.Po
-	-rm -f SynTree/$(DEPDIR)/Attribute.Po
-	-rm -f SynTree/$(DEPDIR)/BaseSyntaxNode.Po
-	-rm -f SynTree/$(DEPDIR)/BasicType.Po
-	-rm -f SynTree/$(DEPDIR)/CommaExpr.Po
-	-rm -f SynTree/$(DEPDIR)/CompoundStmt.Po
-	-rm -f SynTree/$(DEPDIR)/Constant.Po
-	-rm -f SynTree/$(DEPDIR)/DeclReplacer.Po
-	-rm -f SynTree/$(DEPDIR)/DeclStmt.Po
-	-rm -f SynTree/$(DEPDIR)/Declaration.Po
-	-rm -f SynTree/$(DEPDIR)/DeclarationWithType.Po
-	-rm -f SynTree/$(DEPDIR)/Expression.Po
-	-rm -f SynTree/$(DEPDIR)/FunctionDecl.Po
-	-rm -f SynTree/$(DEPDIR)/FunctionType.Po
-	-rm -f SynTree/$(DEPDIR)/Initializer.Po
-	-rm -f SynTree/$(DEPDIR)/InlineMemberDecl.Po
-	-rm -f SynTree/$(DEPDIR)/LinkageSpec.Po
-	-rm -f SynTree/$(DEPDIR)/NamedTypeDecl.Po
-	-rm -f SynTree/$(DEPDIR)/ObjectDecl.Po
-	-rm -f SynTree/$(DEPDIR)/PointerType.Po
-	-rm -f SynTree/$(DEPDIR)/ReferenceToType.Po
-	-rm -f SynTree/$(DEPDIR)/ReferenceType.Po
-	-rm -f SynTree/$(DEPDIR)/Statement.Po
-	-rm -f SynTree/$(DEPDIR)/TupleExpr.Po
-	-rm -f SynTree/$(DEPDIR)/TupleType.Po
-	-rm -f SynTree/$(DEPDIR)/Type.Po
-	-rm -f SynTree/$(DEPDIR)/TypeDecl.Po
-	-rm -f SynTree/$(DEPDIR)/TypeExpr.Po
-	-rm -f SynTree/$(DEPDIR)/TypeSubstitution.Po
-	-rm -f SynTree/$(DEPDIR)/TypeofType.Po
-	-rm -f SynTree/$(DEPDIR)/VarArgsType.Po
-	-rm -f SynTree/$(DEPDIR)/VoidType.Po
-	-rm -f SynTree/$(DEPDIR)/ZeroOneType.Po
 	-rm -f Tuples/$(DEPDIR)/Explode.Po
 	-rm -f Tuples/$(DEPDIR)/TupleAssignment.Po
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
@@ -2345,13 +1834,11 @@ distclean: distclean-am
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/EliminateTypedef.Po
 	-rm -f Validate/$(DEPDIR)/EnumAndPointerDecay.Po
-	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
 	-rm -f Validate/$(DEPDIR)/FixQualifiedTypes.Po
 	-rm -f Validate/$(DEPDIR)/FixReturnTypes.Po
 	-rm -f Validate/$(DEPDIR)/ForallPointerDecay.Po
 	-rm -f Validate/$(DEPDIR)/GenericParameter.Po
-	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
 	-rm -f Validate/$(DEPDIR)/HoistStruct.Po
 	-rm -f Validate/$(DEPDIR)/HoistTypeDecls.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
@@ -2409,11 +1896,9 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/CompilationState.Po
-	-rm -f ./$(DEPDIR)/MakeLibCfa.Po
 	-rm -f ./$(DEPDIR)/MakeLibCfaNew.Po
 	-rm -f ./$(DEPDIR)/main.Po
 	-rm -f AST/$(DEPDIR)/Attribute.Po
-	-rm -f AST/$(DEPDIR)/Convert.Po
 	-rm -f AST/$(DEPDIR)/Copy.Po
 	-rm -f AST/$(DEPDIR)/Create.Po
 	-rm -f AST/$(DEPDIR)/Decl.Po
@@ -2432,7 +1917,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f AST/$(DEPDIR)/TypeEnvironment.Po
 	-rm -f AST/$(DEPDIR)/TypeSubstitution.Po
 	-rm -f AST/$(DEPDIR)/Util.Po
-	-rm -f CodeGen/$(DEPDIR)/CodeGenerator.Po
 	-rm -f CodeGen/$(DEPDIR)/CodeGeneratorNew.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain2.Po
@@ -2441,9 +1925,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f CodeGen/$(DEPDIR)/Generate.Po
 	-rm -f CodeGen/$(DEPDIR)/LinkOnce.Po
 	-rm -f CodeGen/$(DEPDIR)/OperatorTable.Po
-	-rm -f CodeTools/$(DEPDIR)/DeclStats.Po
-	-rm -f CodeTools/$(DEPDIR)/ResolvProtoDump.Po
-	-rm -f CodeTools/$(DEPDIR)/TrackLoc.Po
 	-rm -f Common/$(DEPDIR)/Assert.Po
 	-rm -f Common/$(DEPDIR)/CodeLocationTools.Po
 	-rm -f Common/$(DEPDIR)/DebugMalloc.Po
@@ -2451,7 +1932,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Common/$(DEPDIR)/Eval.Po
 	-rm -f Common/$(DEPDIR)/Examine.Po
 	-rm -f Common/$(DEPDIR)/Indenter.Po
-	-rm -f Common/$(DEPDIR)/PassVisitor.Po
 	-rm -f Common/$(DEPDIR)/ResolvProtoDump.Po
 	-rm -f Common/$(DEPDIR)/SemanticError.Po
 	-rm -f Common/$(DEPDIR)/UniqueName.Po
@@ -2462,38 +1942,24 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Common/Stats/$(DEPDIR)/Time.Po
 	-rm -f Concurrency/$(DEPDIR)/Actors.Po
 	-rm -f Concurrency/$(DEPDIR)/Corun.Po
-	-rm -f Concurrency/$(DEPDIR)/Keywords.Po
 	-rm -f Concurrency/$(DEPDIR)/KeywordsNew.Po
-	-rm -f Concurrency/$(DEPDIR)/Waitfor.Po
 	-rm -f Concurrency/$(DEPDIR)/WaitforNew.Po
 	-rm -f Concurrency/$(DEPDIR)/Waituntil.Po
-	-rm -f ControlStruct/$(DEPDIR)/ExceptDecl.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptDeclNew.Po
-	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslate.Po
 	-rm -f ControlStruct/$(DEPDIR)/ExceptTranslateNew.Po
 	-rm -f ControlStruct/$(DEPDIR)/FixLabels.Po
-	-rm -f ControlStruct/$(DEPDIR)/ForExprMutator.Po
 	-rm -f ControlStruct/$(DEPDIR)/HoistControlDecls.Po
-	-rm -f ControlStruct/$(DEPDIR)/LabelFixer.Po
-	-rm -f ControlStruct/$(DEPDIR)/LabelGenerator.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelGeneratorNew.Po
-	-rm -f ControlStruct/$(DEPDIR)/MLEMutator.Po
 	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
-	-rm -f ControlStruct/$(DEPDIR)/Mutate.Po
-	-rm -f GenPoly/$(DEPDIR)/Box.Po
 	-rm -f GenPoly/$(DEPDIR)/BoxNew.Po
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
 	-rm -f GenPoly/$(DEPDIR)/GenPoly.Po
-	-rm -f GenPoly/$(DEPDIR)/InstantiateGeneric.Po
 	-rm -f GenPoly/$(DEPDIR)/InstantiateGenericNew.Po
-	-rm -f GenPoly/$(DEPDIR)/Lvalue.Po
 	-rm -f GenPoly/$(DEPDIR)/Lvalue2.Po
 	-rm -f GenPoly/$(DEPDIR)/LvalueNew.Po
 	-rm -f GenPoly/$(DEPDIR)/ScrubTyVars.Po
-	-rm -f GenPoly/$(DEPDIR)/Specialize.Po
 	-rm -f GenPoly/$(DEPDIR)/SpecializeNew.Po
 	-rm -f InitTweak/$(DEPDIR)/FixGlobalInit.Po
-	-rm -f InitTweak/$(DEPDIR)/FixInit.Po
 	-rm -f InitTweak/$(DEPDIR)/FixInitNew.Po
 	-rm -f InitTweak/$(DEPDIR)/GenInit.Po
 	-rm -f InitTweak/$(DEPDIR)/InitTweak.Po
@@ -2509,9 +1975,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Parser/$(DEPDIR)/parser.Po
 	-rm -f Parser/$(DEPDIR)/parserutility.Po
 	-rm -f ResolvExpr/$(DEPDIR)/AdjustExprType.Po
-	-rm -f ResolvExpr/$(DEPDIR)/Alternative.Po
-	-rm -f ResolvExpr/$(DEPDIR)/AlternativeFinder.Po
-	-rm -f ResolvExpr/$(DEPDIR)/AlternativePrinter.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Candidate.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CandidateFinder.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CandidatePrinter.Po
@@ -2520,68 +1983,23 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ResolvExpr/$(DEPDIR)/ConversionCost.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CurrentObject.Po
 	-rm -f ResolvExpr/$(DEPDIR)/EraseWith.Po
-	-rm -f ResolvExpr/$(DEPDIR)/ExplodedActual.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ExplodedArg.Po
 	-rm -f ResolvExpr/$(DEPDIR)/FindOpenVars.Po
-	-rm -f ResolvExpr/$(DEPDIR)/Occurs.Po
 	-rm -f ResolvExpr/$(DEPDIR)/PolyCost.Po
 	-rm -f ResolvExpr/$(DEPDIR)/PtrsAssignable.Po
 	-rm -f ResolvExpr/$(DEPDIR)/PtrsCastable.Po
 	-rm -f ResolvExpr/$(DEPDIR)/RenameVars.Po
-	-rm -f ResolvExpr/$(DEPDIR)/ResolveAssertions.Po
 	-rm -f ResolvExpr/$(DEPDIR)/ResolveTypeof.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Resolver.Po
 	-rm -f ResolvExpr/$(DEPDIR)/SatisfyAssertions.Po
 	-rm -f ResolvExpr/$(DEPDIR)/SpecCost.Po
-	-rm -f ResolvExpr/$(DEPDIR)/TypeEnvironment.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Unify.Po
-	-rm -f SymTab/$(DEPDIR)/Autogen.Po
 	-rm -f SymTab/$(DEPDIR)/Demangle.Po
 	-rm -f SymTab/$(DEPDIR)/FixFunction.Po
 	-rm -f SymTab/$(DEPDIR)/GenImplicitCall.Po
-	-rm -f SymTab/$(DEPDIR)/Indexer.Po
 	-rm -f SymTab/$(DEPDIR)/Mangler.Po
 	-rm -f SymTab/$(DEPDIR)/ManglerCommon.Po
-	-rm -f SymTab/$(DEPDIR)/Validate.Po
-	-rm -f SymTab/$(DEPDIR)/ValidateType.Po
 	-rm -f SymTab/$(DEPDIR)/demangler.Po
-	-rm -f SynTree/$(DEPDIR)/AddressExpr.Po
-	-rm -f SynTree/$(DEPDIR)/AggregateDecl.Po
-	-rm -f SynTree/$(DEPDIR)/ApplicationExpr.Po
-	-rm -f SynTree/$(DEPDIR)/ArrayType.Po
-	-rm -f SynTree/$(DEPDIR)/AttrType.Po
-	-rm -f SynTree/$(DEPDIR)/Attribute.Po
-	-rm -f SynTree/$(DEPDIR)/BaseSyntaxNode.Po
-	-rm -f SynTree/$(DEPDIR)/BasicType.Po
-	-rm -f SynTree/$(DEPDIR)/CommaExpr.Po
-	-rm -f SynTree/$(DEPDIR)/CompoundStmt.Po
-	-rm -f SynTree/$(DEPDIR)/Constant.Po
-	-rm -f SynTree/$(DEPDIR)/DeclReplacer.Po
-	-rm -f SynTree/$(DEPDIR)/DeclStmt.Po
-	-rm -f SynTree/$(DEPDIR)/Declaration.Po
-	-rm -f SynTree/$(DEPDIR)/DeclarationWithType.Po
-	-rm -f SynTree/$(DEPDIR)/Expression.Po
-	-rm -f SynTree/$(DEPDIR)/FunctionDecl.Po
-	-rm -f SynTree/$(DEPDIR)/FunctionType.Po
-	-rm -f SynTree/$(DEPDIR)/Initializer.Po
-	-rm -f SynTree/$(DEPDIR)/InlineMemberDecl.Po
-	-rm -f SynTree/$(DEPDIR)/LinkageSpec.Po
-	-rm -f SynTree/$(DEPDIR)/NamedTypeDecl.Po
-	-rm -f SynTree/$(DEPDIR)/ObjectDecl.Po
-	-rm -f SynTree/$(DEPDIR)/PointerType.Po
-	-rm -f SynTree/$(DEPDIR)/ReferenceToType.Po
-	-rm -f SynTree/$(DEPDIR)/ReferenceType.Po
-	-rm -f SynTree/$(DEPDIR)/Statement.Po
-	-rm -f SynTree/$(DEPDIR)/TupleExpr.Po
-	-rm -f SynTree/$(DEPDIR)/TupleType.Po
-	-rm -f SynTree/$(DEPDIR)/Type.Po
-	-rm -f SynTree/$(DEPDIR)/TypeDecl.Po
-	-rm -f SynTree/$(DEPDIR)/TypeExpr.Po
-	-rm -f SynTree/$(DEPDIR)/TypeSubstitution.Po
-	-rm -f SynTree/$(DEPDIR)/TypeofType.Po
-	-rm -f SynTree/$(DEPDIR)/VarArgsType.Po
-	-rm -f SynTree/$(DEPDIR)/VoidType.Po
-	-rm -f SynTree/$(DEPDIR)/ZeroOneType.Po
 	-rm -f Tuples/$(DEPDIR)/Explode.Po
 	-rm -f Tuples/$(DEPDIR)/TupleAssignment.Po
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
@@ -2591,13 +2009,11 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/EliminateTypedef.Po
 	-rm -f Validate/$(DEPDIR)/EnumAndPointerDecay.Po
-	-rm -f Validate/$(DEPDIR)/FindSpecialDecls.Po
 	-rm -f Validate/$(DEPDIR)/FindSpecialDeclsNew.Po
 	-rm -f Validate/$(DEPDIR)/FixQualifiedTypes.Po
 	-rm -f Validate/$(DEPDIR)/FixReturnTypes.Po
 	-rm -f Validate/$(DEPDIR)/ForallPointerDecay.Po
 	-rm -f Validate/$(DEPDIR)/GenericParameter.Po
-	-rm -f Validate/$(DEPDIR)/HandleAttributes.Po
 	-rm -f Validate/$(DEPDIR)/HoistStruct.Po
 	-rm -f Validate/$(DEPDIR)/HoistTypeDecls.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
@@ -2648,7 +2064,7 @@ uninstall-am: uninstall-cfa_cpplibPROGRAMS
 .PRECIOUS: Makefile
 
 
-$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/SynTree/Type.h
+$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/Type.hpp
 
 $(srcdir)/AST/Type.hpp : BasicTypes-gen.cc
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type

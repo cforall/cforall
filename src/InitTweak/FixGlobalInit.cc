@@ -19,42 +19,13 @@
 #include <stddef.h>                // for NULL
 #include <algorithm>               // for replace_if
 
-#include "Common/PassVisitor.h"
-#include "Common/UniqueName.h"     // for UniqueName
-#include "InitTweak.h"             // for isIntrinsicSingleArgCallStmt
-#include "SynTree/LinkageSpec.h"   // for C
-#include "SynTree/Attribute.h"     // for Attribute
-#include "SynTree/Constant.h"      // for Constant
-#include "SynTree/Declaration.h"   // for FunctionDecl, ObjectDecl, Declaration
-#include "SynTree/Expression.h"    // for ConstantExpr, Expression (ptr only)
-#include "SynTree/Initializer.h"   // for ConstructorInit, Initializer
-#include "SynTree/Label.h"         // for Label
-#include "SynTree/Statement.h"     // for CompoundStmt, Statement (ptr only)
-#include "SynTree/Type.h"          // for Type, Type::StorageClasses, Functi...
-#include "SynTree/Visitor.h"       // for acceptAll, Visitor
-
 #include "AST/Expr.hpp"
 #include "AST/Node.hpp"
 #include "AST/Pass.hpp"
+#include "Common/UniqueName.h"     // for UniqueName
+#include "InitTweak.h"             // for isIntrinsicSingleArgCallStmt
 
 namespace InitTweak {
-	class GlobalFixer : public WithShortCircuiting {
-	  public:
-		GlobalFixer( bool inLibrary );
-
-		void previsit( ObjectDecl *objDecl );
-		void previsit( FunctionDecl *functionDecl );
-		void previsit( StructDecl *aggregateDecl );
-		void previsit( UnionDecl *aggregateDecl );
-		void previsit( EnumDecl *aggregateDecl );
-		void previsit( TraitDecl *aggregateDecl );
-		void previsit( TypeDecl *typeDecl );
-
-		UniqueName tempNamer;
-		FunctionDecl * initFunction;
-		FunctionDecl * destroyFunction;
-	};
-
 	class GlobalFixer_new : public ast::WithShortCircuiting {
 	public:
 		void previsit (const ast::ObjectDecl *);
@@ -68,45 +39,6 @@ namespace InitTweak {
 		std::list< ast::ptr<ast::Stmt> > initStmts;
 		std::list< ast::ptr<ast::Stmt> > destroyStmts;
 	};
-
-	void fixGlobalInit( std::list< Declaration * > & translationUnit, bool inLibrary ) {
-		PassVisitor<GlobalFixer> visitor( inLibrary );
-		acceptAll( translationUnit, visitor );
-		GlobalFixer & fixer = visitor.pass;
-		// don't need to include function if it's empty
-		if ( fixer.initFunction->get_statements()->get_kids().empty() ) {
-			delete fixer.initFunction;
-		} else {
-			translationUnit.push_back( fixer.initFunction );
-		} // if
-
-		if ( fixer.destroyFunction->get_statements()->get_kids().empty() ) {
-			delete fixer.destroyFunction;
-		} else {
-			translationUnit.push_back( fixer.destroyFunction );
-		} // if
-	}
-
-	GlobalFixer::GlobalFixer( bool inLibrary ) : tempNamer( "_global_init" ) {
-		std::list< Expression * > ctorParameters;
-		std::list< Expression * > dtorParameters;
-		if ( inLibrary ) {
-			// Constructor/destructor attributes take a single parameter which
-			// is the priority, with lower numbers meaning higher priority.
-			// Functions specified with priority are guaranteed to run before
-			// functions without a priority. To ensure that constructors and destructors
-			// for library code are run before constructors and destructors for user code,
-			// specify a priority when building the library. Priorities 0-100 are reserved by gcc.
-			// Priorities 101-200 are reserved by cfa, so use priority 200 for CFA library globals,
-			// allowing room for overriding with a higher priority.
-			ctorParameters.push_back( new ConstantExpr( Constant::from_int( 200 ) ) );
-			dtorParameters.push_back( new ConstantExpr( Constant::from_int( 200 ) ) );
-		}
-		initFunction = new FunctionDecl( "__global_init__", Type::StorageClasses( Type::Static ), LinkageSpec::C, new FunctionType( Type::Qualifiers(), false ), new CompoundStmt() );
-		initFunction->get_attributes().push_back( new Attribute( "constructor", ctorParameters ) );
-		destroyFunction = new FunctionDecl( "__global_destroy__", Type::StorageClasses( Type::Static ), LinkageSpec::C, new FunctionType( Type::Qualifiers(), false ), new CompoundStmt() );
-		destroyFunction->get_attributes().push_back( new Attribute( "destructor", dtorParameters ) );
-	}
 
 	void fixGlobalInit(ast::TranslationUnit & translationUnit, bool inLibrary) {
 		ast::Pass<GlobalFixer_new> fixer;
@@ -140,42 +72,6 @@ namespace InitTweak {
 		} // if
 	}
 
-	void GlobalFixer::previsit( ObjectDecl *objDecl ) {
-		std::list< Statement * > & initStatements = initFunction->get_statements()->get_kids();
-		std::list< Statement * > & destroyStatements = destroyFunction->get_statements()->get_kids();
-
-		// C allows you to initialize objects with constant expressions
-		// xxx - this is an optimization. Need to first resolve constructors before we decide
-		// to keep C-style initializer.
-		// if ( isConstExpr( objDecl->get_init() ) ) return;
-
-		if ( ConstructorInit * ctorInit = dynamic_cast< ConstructorInit * >( objDecl->get_init() ) ) {
-			// a decision should have been made by the resolver, so ctor and init are not both non-NULL
-			assert( ! ctorInit->ctor || ! ctorInit->init );
-
-			Statement * dtor = ctorInit->dtor;
-			if ( dtor && ! isIntrinsicSingleArgCallStmt( dtor ) ) {
-				// don't need to call intrinsic dtor, because it does nothing, but
-				// non-intrinsic dtors must be called
-				destroyStatements.push_front( dtor );
-				ctorInit->dtor = nullptr;
-			} // if
-			if ( Statement * ctor = ctorInit->ctor ) {
-				addDataSectionAttribute( objDecl );
-				initStatements.push_back( ctor );
-				objDecl->init = nullptr;
-				ctorInit->ctor = nullptr;
-			} else if ( Initializer * init = ctorInit->init ) {
-				objDecl->init = init;
-				ctorInit->init = nullptr;
-			} else {
-				// no constructor and no initializer, which is okay
-				objDecl->init = nullptr;
-			} // if
-			delete ctorInit;
-		} // if
-	}
-
 	void GlobalFixer_new::previsit(const ast::ObjectDecl * objDecl) {
 		auto mutDecl = mutate(objDecl);
 		assertf(mutDecl == objDecl, "Global object decl must be unique");
@@ -205,14 +101,6 @@ namespace InitTweak {
 			// delete ctorInit;
 		} // if
 	}
-
-	// only modify global variables
-	void GlobalFixer::previsit( FunctionDecl * ) { visit_children = false; }
-	void GlobalFixer::previsit( StructDecl * ) { visit_children = false; }
-	void GlobalFixer::previsit( UnionDecl * ) { visit_children = false; }
-	void GlobalFixer::previsit( EnumDecl * ) { visit_children = false; }
-	void GlobalFixer::previsit( TraitDecl * ) { visit_children = false; }
-	void GlobalFixer::previsit( TypeDecl * ) { visit_children = false; }
 
 } // namespace InitTweak
 

@@ -29,8 +29,6 @@ struct Evaluation {
 };
 
 /// Evaluates expr as a long long int.
-/// If second is false, expr could not be evaluated.
-std::pair<long long int, bool> eval(const Expression * expr);
 Evaluation eval(const ast::Expr * expr);
 
 // Local Variables: //

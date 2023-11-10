@@ -15,88 +15,13 @@
 
 #include "FindOpenVars.h"
 
-#include <list>                   // for _List_const_iterator, list<>::const...
-#include <map>                    // for map<>::mapped_type
-
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "AST/TypeEnvironment.hpp"
-#include "Common/PassVisitor.h"
-#include "SynTree/Declaration.h"  // for TypeDecl, DeclarationWithType (ptr ...
-#include "SynTree/Type.h"         // for Type, Type::ForallList, ArrayType
 
 #include <iostream>
 
 namespace ResolvExpr {
-	struct FindOpenVars_old : public WithGuards {
-		FindOpenVars_old( OpenVarSet &openVars, OpenVarSet &closedVars, AssertionSet &needAssertions, AssertionSet &haveAssertions, bool firstIsOpen );
-
-		void previsit( const PointerType * pointerType );
-		void previsit( const ArrayType * arrayType );
-		void previsit( const FunctionType * functionType );
-		void previsit( const TupleType * tupleType );
-
-		void common_action( const Type *type );
-
-		OpenVarSet &openVars, &closedVars;
-		AssertionSet &needAssertions, &haveAssertions;
-		bool nextIsOpen;
-	};
-
-	void findOpenVars( const Type *type, OpenVarSet &openVars, OpenVarSet &closedVars, AssertionSet &needAssertions, AssertionSet &haveAssertions, bool firstIsOpen ) {
-		PassVisitor<FindOpenVars_old> finder( openVars, closedVars, needAssertions, haveAssertions, firstIsOpen );
-		type->accept( finder );
-	}
-
-	FindOpenVars_old::FindOpenVars_old( OpenVarSet &openVars, OpenVarSet &closedVars, AssertionSet &needAssertions, AssertionSet &haveAssertions, bool firstIsOpen )
-		: openVars( openVars ), closedVars( closedVars ), needAssertions( needAssertions ), haveAssertions( haveAssertions ), nextIsOpen( firstIsOpen )	{
-	}
-
-	void FindOpenVars_old::common_action( const Type * type ) {
-		if ( nextIsOpen ) {
-			for ( Type::ForallList::const_iterator i = type->forall.begin(); i != type->forall.end(); ++i ) {
-				openVars[ (*i)->get_name() ] = TypeDecl::Data{ (*i) };
-				for ( std::list< DeclarationWithType* >::const_iterator assert = (*i)->get_assertions().begin(); assert != (*i)->get_assertions().end(); ++assert ) {
-					needAssertions[ *assert ].isUsed = false;
-				}
-///       cloneAll( (*i)->get_assertions(), needAssertions );
-///       needAssertions.insert( needAssertions.end(), (*i)->get_assertions().begin(), (*i)->get_assertions().end() );
-			}
-		} else {
-			for ( Type::ForallList::const_iterator i = type->forall.begin(); i != type->forall.end(); ++i ) {
-				closedVars[ (*i)->get_name() ] = TypeDecl::Data{ (*i) };
-				for ( std::list< DeclarationWithType* >::const_iterator assert = (*i)->get_assertions().begin(); assert != (*i)->get_assertions().end(); ++assert ) {
-					haveAssertions[ *assert ].isUsed = false;
-				}
-///       cloneAll( (*i)->get_assertions(), haveAssertions );
-///       haveAssertions.insert( haveAssertions.end(), (*i)->get_assertions().begin(), (*i)->get_assertions().end() );
-			} // for
-		} // if
-///   std::cerr << "type is ";
-///   type->print( std::cerr );
-///   std::cerr << std::endl << "need is" << std::endl;
-///   printAssertionSet( needAssertions, std::cerr );
-///   std::cerr << std::endl << "have is" << std::endl;
-///   printAssertionSet( haveAssertions, std::cerr );
-	}
-
-	void FindOpenVars_old::previsit(const PointerType * pointerType) {
-		common_action( pointerType );
-	}
-
-	void FindOpenVars_old::previsit(const ArrayType * arrayType) {
-		common_action( arrayType );
-	}
-
-	void FindOpenVars_old::previsit(const FunctionType * functionType) {
-		common_action( functionType );
-		nextIsOpen = ! nextIsOpen;
-		GuardAction( [this](){ nextIsOpen = ! nextIsOpen; } );
-	}
-
-	void FindOpenVars_old::previsit(const TupleType * tupleType) {
-		common_action( tupleType );
-	}
 
 	namespace {
 		struct FindOpenVars_new final : public ast::WithGuards {

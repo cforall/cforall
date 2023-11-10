@@ -15,8 +15,6 @@
 ###############################################################################
 
 SRC_CODEGEN = \
-	CodeGen/CodeGenerator.cc \
-	CodeGen/CodeGenerator.h \
 	CodeGen/CodeGeneratorNew.cpp \
 	CodeGen/CodeGeneratorNew.hpp \
 	CodeGen/FixMain2.cc \

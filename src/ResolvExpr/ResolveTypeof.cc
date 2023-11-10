@@ -23,99 +23,13 @@
 #include "AST/TranslationUnit.hpp"
 #include "AST/Type.hpp"
 #include "AST/TypeEnvironment.hpp"
-#include "Common/PassVisitor.h"   // for PassVisitor
 #include "Common/utility.h"       // for copy
 #include "InitTweak/InitTweak.h"  // for isConstExpr
 #include "RenameVars.h"
 #include "Resolver.h"  // for resolveInVoidContext
 #include "SymTab/Mangler.h"
-#include "SynTree/Expression.h"  // for Expression
-#include "SynTree/Mutator.h"     // for Mutator
-#include "SynTree/Type.h"        // for TypeofType, Type
-
-namespace SymTab {
-class Indexer;
-}  // namespace SymTab
 
 namespace ResolvExpr {
-namespace {
-#if 0
-		void
-		printAlts( const AltList &list, std::ostream &os, int indent = 0 )
-		{
-			for ( AltList::const_iterator i = list.begin(); i != list.end(); ++i ) {
-				i->print( os, indent );
-				os << std::endl;
-			}
-		}
-#endif
-	}
-
-class ResolveTypeof_old : public WithShortCircuiting {
-   public:
-		ResolveTypeof_old( const SymTab::Indexer &indexer ) : indexer( indexer ) {}
-		void premutate( TypeofType *typeofType );
-		Type * postmutate( TypeofType *typeofType );
-
-   private:
-    const SymTab::Indexer &indexer;
-};
-
-	Type * resolveTypeof( Type *type, const SymTab::Indexer &indexer ) {
-		PassVisitor<ResolveTypeof_old> mutator( indexer );
-		return type->acceptMutator( mutator );
-	}
-
-	void ResolveTypeof_old::premutate( TypeofType * ) {
-		visit_children = false;
-	}
-
-    Type * ResolveTypeof_old::postmutate( TypeofType *typeofType ) {
-#if 0
-		std::cerr << "resolving typeof: ";
-		typeofType->print( std::cerr );
-		std::cerr << std::endl;
-#endif
-    // pass on null expression
-		if ( ! typeofType->expr ) return typeofType;
-
-    bool isBasetypeof = typeofType->is_basetypeof;
-    auto oldQuals = typeofType->get_qualifiers().val;
-
-    Type* newType;
-		if ( TypeExpr* tyExpr = dynamic_cast<TypeExpr*>(typeofType->expr) ) {
-        // typeof wrapping type
-        newType = tyExpr->type;
-        tyExpr->type = nullptr;
-        delete tyExpr;
-    } else {
-        // typeof wrapping expression
-			Expression * newExpr = resolveInVoidContext( typeofType->expr, indexer );
-			assert( newExpr->result && ! newExpr->result->isVoid() );
-        newType = newExpr->result;
-        newExpr->result = nullptr;
-        delete typeofType;
-        delete newExpr;
-    }
-
-    // clear qualifiers for base, combine with typeoftype quals in any case
-    if ( isBasetypeof ) {
-			// replace basetypeof(<enum>) by int
-			if ( dynamic_cast<EnumInstType*>(newType) ) {
-				Type* newerType =
-					new BasicType{ newType->get_qualifiers(), BasicType::SignedInt,
-					newType->attributes };
-				delete newType;
-				newType = newerType;
-			}
-			newType->get_qualifiers().val
-				= ( newType->get_qualifiers().val & ~Type::Qualifiers::Mask ) | oldQuals;
-		} else {
-        newType->get_qualifiers().val |= oldQuals;
-    }
-
-    return newType;
-}
 
 namespace {
 struct ResolveTypeof_new : public ast::WithShortCircuiting {

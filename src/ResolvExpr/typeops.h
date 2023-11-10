@@ -18,7 +18,6 @@
 #include <vector>
 
 #include "AST/Type.hpp"
-#include "SynTree/Type.h"
 
 namespace SymTab {
 	class Indexer;
@@ -51,31 +50,6 @@ namespace ResolvExpr {
 			*inserter++ = j;
 			std::copy( i.begin(), i.end(), inserter );
 			*out++ = result;
-		}
-	}
-
-	// in Occurs.cc
-	bool occurs( const Type * type, const std::string & varName, const TypeEnvironment & env );
-	// new AST version in TypeEnvironment.cpp (only place it was used in old AST)
-
-	template<typename Iter>
-	bool occursIn( Type* ty, Iter begin, Iter end, const TypeEnvironment & env ) {
-		while ( begin != end ) {
-			if ( occurs( ty, *begin, env ) ) return true;
-			++begin;
-		}
-		return false;
-	}
-
-	/// flatten tuple type into list of types
-	template< typename OutputIterator >
-	void flatten( Type * type, OutputIterator out ) {
-		if ( TupleType * tupleType = dynamic_cast< TupleType * >( type ) ) {
-			for ( Type * t : tupleType->get_types() ) {
-				flatten( t, out );
-			}
-		} else {
-			*out++ = type->clone();
 		}
 	}
 
@@ -119,9 +93,6 @@ namespace ResolvExpr {
 	) {
 		return tupleFromTypes( tys.begin(), tys.end() );
 	}
-
-	// in TypeEnvironment.cc
-	bool isFtype( const Type * type );
 } // namespace ResolvExpr
 
 namespace ast {

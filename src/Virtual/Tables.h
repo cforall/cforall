@@ -17,14 +17,6 @@
 
 #include <string>
 #include "AST/Fwd.hpp"
-class Declaration;
-class Expression;
-class FunctionDecl;
-class Initializer;
-class ObjectDecl;
-class StructDecl;
-class StructInstType;
-class Type;
 
 namespace Virtual {
 
@@ -36,8 +28,6 @@ std::string vtableInstanceName( std::string const & type_name );
 std::string concurrentDefaultVTableName();
 bool isVTableInstanceName( std::string const & name );
 
-ObjectDecl * makeVtableForward(
-	std::string const & name, StructInstType * vtableType );
 /* Create a forward declaration of a vtable of the given type.
  * vtableType node is consumed.
  */
@@ -45,10 +35,6 @@ ast::ObjectDecl * makeVtableForward(
 	CodeLocation const & location, std::string const & name,
 	ast::StructInstType const * vtableType );
 
-ObjectDecl * makeVtableInstance(
-	std::string const & name,
-	StructInstType * vtableType, Type * objectType,
-	Initializer * init = nullptr );
 /* Create an initialized definition of a vtable.
  * vtableType and init (if provided) nodes are consumed.
  */
@@ -60,7 +46,7 @@ ast::ObjectDecl * makeVtableInstance(
 	ast::Init const * init = nullptr );
 
 // Some special code for how exceptions interact with virtual tables.
-FunctionDecl * makeGetExceptionForward( Type * vtableType, Type * exceptType );
+
 /* Create a forward declaration of the exception virtual function
  * linking the vtableType to the exceptType. Both nodes are consumed.
  */
@@ -69,8 +55,6 @@ ast::FunctionDecl * makeGetExceptionForward(
 	ast::Type const * vtableType,
 	ast::Type const * exceptType );
 
-FunctionDecl * makeGetExceptionFunction(
-	ObjectDecl * vtableInstance, Type * exceptType );
 /* Create the definition of the exception virtual function.
  * exceptType node is consumed.
  */
@@ -78,7 +62,6 @@ ast::FunctionDecl * makeGetExceptionFunction(
 	CodeLocation const & location,
 	ast::ObjectDecl const * vtableInstance, ast::Type const * exceptType );
 
-ObjectDecl * makeTypeIdInstance( StructInstType const * typeIdType );
 /* Build an instance of the type-id from the type of the type-id.
  * TODO: Should take the parent type. Currently locked to the exception_t.
  */

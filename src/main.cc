@@ -28,7 +28,6 @@
 #include <list>                             // for list
 #include <string>                           // for char_traits, operator<<
 
-#include "AST/Convert.hpp"
 #include "AST/Pass.hpp"                     // for pass_visitor_stats
 #include "AST/Print.hpp"                    // for printAll
 #include "AST/TranslationUnit.hpp"          // for TranslationUnit
@@ -39,7 +38,6 @@
 #include "CodeGen/FixNames.h"               // for fixNames
 #include "CodeGen/Generate.h"               // for generate
 #include "CodeGen/LinkOnce.h"               // for translateLinkOnce
-#include "CodeTools/TrackLoc.h"             // for fillLocations
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
 #include "Common/DeclStats.hpp"             // for printDeclStats
 #include "Common/ResolvProtoDump.hpp"       // for dumpAsResolverProto
@@ -65,8 +63,6 @@
 #include "ResolvExpr/CandidatePrinter.hpp"  // for printCandidates
 #include "ResolvExpr/EraseWith.hpp"         // for eraseWith
 #include "ResolvExpr/Resolver.h"            // for resolve
-#include "SynTree/LinkageSpec.h"            // for Spec, Cforall, Intrinsic
-#include "SynTree/Declaration.h"            // for Declaration
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
@@ -99,11 +95,6 @@ static void NewPass( const char * const name ) {
 		ast::pass_visitor_stats.depth = 0;
 		ast::pass_visitor_stats.avg = build<AverageCounter<double>>( "Average Depth", pass );
 		ast::pass_visitor_stats.max = build<MaxCounter<double>>( "Max Depth", pass );
-	}
-	{
-		static auto group = build<CounterGroup>( "Syntax Node" );
-		auto pass = build<CounterGroup>( name, group );
-		BaseSyntaxNode::new_nodes = build<SimpleCounter>( "Allocs", pass );
 	}
 }
 

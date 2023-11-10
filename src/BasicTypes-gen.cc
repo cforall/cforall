@@ -271,52 +271,6 @@ int main() {
 	string str;
 	size_t start, end;
 
-
-	#define TypeH TOP_SRCDIR "src/SynTree/Type.h"
-	resetInput( file, TypeH, buffer, code, str );
-
-	if ( (start = str.find( STARTMK )) == string::npos ) Abort( "start", TypeH );
-	start += sizeof( STARTMK );							// includes newline
-	code << str.substr( 0, start );
-
-	code << "\t" << BYMK << endl;
-	code << "\tenum Kind {" << endl;
-	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) {
-		code << "\t\t" << graph[r].name << "," << endl;
-	} // for
-	code << "\t\tNUMBER_OF_BASIC_TYPES" << endl;
-	code << "\t} kind;" << endl;
-	code << "\t";										// indentation for end marker
-
-	if ( (start = str.find( ENDMK, start + 1 )) == string::npos ) Abort( "end", TypeH );
-	code << str.substr( start );
-
-	output( file, TypeH, code );
-	// cout << code.str();
-
-
-	#define TypeC TOP_SRCDIR "src/SynTree/Type.cc"
-	resetInput( file, TypeC, buffer, code, str );
-
-	if ( (start = str.find( STARTMK )) == string::npos ) Abort( "start", TypeC );
-	start += sizeof( STARTMK );							// includes newline
-	code << str.substr( 0, start );
-
-	code << BYMK << endl;
-	code << "const char * BasicType::typeNames[] = {" << endl;
-	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) {
-		code << "\t\"" << graph[r].type << "\"," << endl;
-	} // for
-	code << "};" << endl;
-
-	if ( (start = str.find( ENDMK, start + 1 )) == string::npos ) Abort( "end", TypeC );
-	code << str.substr( start );
-
-	output( file, TypeC, code );
-	// cout << code.str();
-
-
-	// TEMPORARY DURING CHANGE OVER
 	#define TypeH_AST TOP_SRCDIR "src/AST/Type.hpp"
 	resetInput( file, TypeH_AST, buffer, code, str );
 

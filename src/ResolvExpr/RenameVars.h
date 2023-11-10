@@ -15,21 +15,11 @@
 
 #pragma once
 
-#include <list>               // for list
-#include <map>                // for map
-#include <string>             // for string
-
-#include "SynTree/SynTree.h"  // for Visitor Nodes
-#include "SynTree/Visitor.h"  // for Visitor
-
 namespace ast {
 	class Type;
 }
 
 namespace ResolvExpr {
-	/// Provides a consistent renaming of forall type names in a hierarchy by prefixing them with a unique "level" ID
-	void renameTyVars( Type * );
-
 	enum RenameMode {
 		GEN_USAGE, // for type in VariableExpr
 		GEN_EXPR_ID // for type in decl

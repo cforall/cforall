@@ -19,16 +19,13 @@
 // Cforall to C lowering. It could also be part of attribute handling but
 // for now its almost the only attribute we handle.
 
-#include <list>  // for list
 
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace CodeGen {
 
-void translateLinkOnce( std::list< Declaration *> & translationUnit );
 void translateLinkOnce( ast::TranslationUnit & translationUnit );
 /* Convert the cfa_linkonce attribute on top level declaration into
  * a special section declaration (.gnu.linkonce) so that it may be defined

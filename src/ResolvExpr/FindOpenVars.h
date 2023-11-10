@@ -16,17 +16,12 @@
 #pragma once
 
 #include "AST/TypeEnvironment.hpp"  // for AssertionSet, OpenVarSet
-#include "ResolvExpr/TypeEnvironment.h"  // for AssertionSet, OpenVarSet
 
-class Type;
 namespace ast {
 	class Type;
 }
 
 namespace ResolvExpr {
-	// Updates open and closed variables and their associated assertions
-	void findOpenVars( const Type *type, OpenVarSet &openVars, OpenVarSet &closedVars, AssertionSet &needAssertions, AssertionSet &haveAssertions, bool firstIsOpen );
-
 	enum FirstMode { FirstClosed, FirstOpen };
 
 	// Updates open and closed variables and their associated assertions

@@ -26,11 +26,6 @@ namespace ast {
 }
 
 namespace CodeGen {
-	/// Generates code. doIntrinsics determines if intrinsic functions are printed, pretty formats output nicely (e.g., uses unmangled names, etc.), generateC is true when the output must consist only of C code (allows some assertions, etc.)
-	void generate( std::list< Declaration* > translationUnit, std::ostream &os, bool doIntrinsics, bool pretty, bool generateC = false , bool lineMarks = false, bool printTypeExpr = false );
-
-	/// Generate code for a single node -- helpful for debugging in gdb
-	void generate( BaseSyntaxNode * node, std::ostream & os );
 
 /// Generates all code in transUnit and writing it to the os.
 /// doIntrinsics: Should intrinsic functions be printed?

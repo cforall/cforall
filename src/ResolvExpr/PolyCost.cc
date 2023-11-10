@@ -17,45 +17,8 @@
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "AST/TypeEnvironment.hpp"
-#include "Common/PassVisitor.h"
-#include "SymTab/Indexer.h"   // for Indexer
-#include "SynTree/Type.h"     // for TypeInstType, Type
-#include "TypeEnvironment.h"  // for EqvClass, TypeEnvironment
 
 namespace ResolvExpr {
-	struct PolyCost {
-		PolyCost( const TypeEnvironment &env, const SymTab::Indexer &indexer );
-
-		void previsit( TypeInstType * aggregateUseType );
-		int result;
-		const TypeEnvironment &tenv;
-		const SymTab::Indexer &indexer;
-	};
-
-	int polyCost( Type *type, const TypeEnvironment & env, const SymTab::Indexer &indexer ) {
-		PassVisitor<PolyCost> coster( env, indexer );
-		type->accept( coster );
-		return (coster.pass.result > 0) ? 1 : 0;
-	}
-
-	PolyCost::PolyCost( const TypeEnvironment & env, const SymTab::Indexer & indexer ) : result( 0 ), tenv( env ), indexer( indexer ) {
-	}
-
-	void PolyCost::previsit(TypeInstType * typeInst) {
-		if ( const EqvClass *eqvClass = tenv.lookup( typeInst->name ) ) {
-			if ( eqvClass->type ) {
-				if ( TypeInstType * otherTypeInst = dynamic_cast< TypeInstType* >( eqvClass->type ) ) {
-					if ( indexer.lookupType( otherTypeInst->name ) ) {
-						// bound to opaque type
-						result += 1;
-					} // if
-				} else {
-					// bound to concrete type
-					result += 1;
-				} // if
-			} // if
-		} // if
-	}
 
 // TODO: When the old PolyCost is torn out get rid of the _new suffix.
 class PolyCost_new {

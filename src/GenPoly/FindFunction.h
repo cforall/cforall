@@ -15,20 +15,9 @@
 
 #pragma once
 
-#include <list>       // for list
-
 #include "GenPoly.h"  // for TyVarMap
 
-class FunctionType;
-class Type;
-
 namespace GenPoly {
-	typedef bool (*FindFunctionPredicate)( FunctionType*, const TyVarMap& );
-
-	/// recursively walk `type`, placing all functions that match `predicate` under `tyVars` into `functions`
-	void findFunction( Type *type, std::list< FunctionType const * > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate );
-	/// like `findFunction`, but also replaces the function type with void ()(void)
-	void findAndReplaceFunction( Type *&type, std::list< FunctionType const * > &functions, const TyVarMap &tyVars, FindFunctionPredicate predicate );
 
 typedef bool (*FindFunctionPred)( const ast::FunctionType *, const TypeVarMap & );
 

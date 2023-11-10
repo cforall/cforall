@@ -19,123 +19,15 @@
 #include <utility>                      // for forward
 
 #include "AST/Expr.hpp"
-#include "ResolvExpr/Alternative.h"     // for Alternative, AltList
 #include "ResolvExpr/Candidate.hpp"     // for Candidate, CandidateList
-#include "ResolvExpr/ExplodedActual.h"  // for ExplodedActual
 #include "ResolvExpr/ExplodedArg.hpp"   // for ExplodedArg
-#include "SynTree/Expression.h"         // for Expression, UniqueExpr, AddressExpr
-#include "SynTree/Type.h"               // for TupleType, Type
 #include "Tuples.h"                     // for maybeImpure
 
 namespace ast {
 	class SymbolTable;
 }
 
-namespace SymTab {
-class Indexer;
-}  // namespace SymTab
-
 namespace Tuples {
-	Expression * distributeReference( Expression * );
-
-	static inline CastExpr * isReferenceCast( Expression * expr ) {
-		if ( CastExpr * castExpr = dynamic_cast< CastExpr * >( expr ) ) {
-			if ( dynamic_cast< ReferenceType * >( castExpr->result ) ) {
-				return castExpr;
-			}
-		}
-		return nullptr;
-	}
-
-	/// Append alternative to an OutputIterator of Alternatives
-	template<typename OutputIterator>
-	void append( OutputIterator out, Expression* expr, const ResolvExpr::TypeEnvironment& env,
-			const ResolvExpr::OpenVarSet& openVars, const ResolvExpr::AssertionList& need,
-			const ResolvExpr::Cost& cost, const ResolvExpr::Cost& cvtCost ) {
-		*out++ = ResolvExpr::Alternative{ expr, env, openVars, need, cost, cvtCost };
-	}
-
-	/// Append alternative to an ExplodedActual
-	static inline void append( ResolvExpr::ExplodedActual& ea, Expression* expr,
-			const ResolvExpr::TypeEnvironment&, const ResolvExpr::OpenVarSet&,
-			const ResolvExpr::AssertionList&, const ResolvExpr::Cost&, const ResolvExpr::Cost& ) {
-		ea.exprs.emplace_back( expr );
-		/// xxx -- merge environment, openVars, need, cost?
-	}
-
-	/// helper function used by explode
-	template< typename Output >
-	void explodeUnique( Expression * expr, const ResolvExpr::Alternative & alt,
-			const SymTab::Indexer & indexer, Output&& out, bool isTupleAssign ) {
-		if ( isTupleAssign ) {
-			// tuple assignment needs CastExprs to be recursively exploded to easily get at all of the components
-			if ( CastExpr * castExpr = isReferenceCast( expr ) ) {
-				ResolvExpr::AltList alts;
-				explodeUnique(
-					castExpr->get_arg(), alt, indexer, back_inserter( alts ), isTupleAssign );
-				for ( ResolvExpr::Alternative & alt : alts ) {
-					// distribute reference cast over all components
-					append( std::forward<Output>(out), distributeReference( alt.release_expr() ),
-						alt.env, alt.openVars, alt.need, alt.cost, alt.cvtCost );
-				}
-				// in tuple assignment, still need to handle the other cases, but only if not already handled here (don't want to output too many alternatives)
-				return;
-			}
-		}
-		Type * res = expr->get_result()->stripReferences();
-		if ( TupleType * tupleType = dynamic_cast< TupleType * > ( res ) ) {
-			if ( TupleExpr * tupleExpr = dynamic_cast< TupleExpr * >( expr ) ) {
-				// can open tuple expr and dump its exploded components
-				for ( Expression * expr : tupleExpr->get_exprs() ) {
-					explodeUnique( expr, alt, indexer, std::forward<Output>(out), isTupleAssign );
-				}
-			} else {
-				// tuple type, but not tuple expr - recursively index into its components.
-				// if expr type is reference, convert to value type
-				Expression * arg = expr->clone();
-				if ( Tuples::maybeImpureIgnoreUnique( arg ) ) {
-					// expressions which may contain side effects require a single unique instance of the expression.
-					arg = new UniqueExpr( arg );
-				}
-				// cast reference to value type to facilitate further explosion
-				if ( dynamic_cast<ReferenceType *>( arg->get_result() ) ) {
-					arg = new CastExpr( arg, tupleType->clone() );
-				}
-				for ( unsigned int i = 0; i < tupleType->size(); i++ ) {
-					TupleIndexExpr * idx = new TupleIndexExpr( arg->clone(), i );
-					explodeUnique( idx, alt, indexer, std::forward<Output>(out), isTupleAssign );
-					delete idx;
-				}
-				delete arg;
-			}
-		} else {
-			// atomic (non-tuple) type - output a clone of the expression in a new alternative
-			append( std::forward<Output>(out), expr->clone(), alt.env, alt.openVars, alt.need,
-				alt.cost, alt.cvtCost );
-		}
-	}
-
-	/// expands a tuple-valued alternative into multiple alternatives, each with a non-tuple-type
-	template< typename Output >
-	void explode( const ResolvExpr::Alternative &alt, const SymTab::Indexer & indexer,
-			Output&& out, bool isTupleAssign = false ) {
-		explodeUnique( alt.expr, alt, indexer, std::forward<Output>(out), isTupleAssign );
-	}
-
-	// explode list of alternatives
-	template< typename AltIterator, typename Output >
-	void explode( AltIterator altBegin, AltIterator altEnd, const SymTab::Indexer & indexer,
-			Output&& out, bool isTupleAssign = false ) {
-		for ( ; altBegin != altEnd; ++altBegin ) {
-			explode( *altBegin, indexer, std::forward<Output>(out), isTupleAssign );
-		}
-	}
-
-	template< typename Output >
-	void explode( const ResolvExpr::AltList & alts, const SymTab::Indexer & indexer, Output&& out,
-			bool isTupleAssign = false ) {
-		explode( alts.begin(), alts.end(), indexer, std::forward<Output>(out), isTupleAssign );
-	}
 
 const ast::Expr * distributeReference( const ast::Expr * );
 

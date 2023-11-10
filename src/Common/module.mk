@@ -30,10 +30,6 @@ SRC_COMMON = \
 	Common/Indenter.h \
 	Common/Indenter.cc \
 	Common/Iterate.hpp \
-	Common/PassVisitor.cc \
-	Common/PassVisitor.h \
-	Common/PassVisitor.impl.h \
-	Common/PassVisitor.proto.h \
 	Common/PersistentMap.h \
 	Common/ResolvProtoDump.hpp \
 	Common/ResolvProtoDump.cpp \

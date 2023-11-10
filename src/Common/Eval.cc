@@ -18,82 +18,10 @@
 #include <utility> // for pair
 
 #include "AST/Inspect.hpp"
-#include "Common/PassVisitor.h"
 #include "CodeGen/OperatorTable.h"						// access: OperatorInfo
 #include "AST/Pass.hpp"
 #include "InitTweak/InitTweak.h"
-#include "SynTree/Expression.h"
 
-//-------------------------------------------------------------
-// Old AST
-struct EvalOld : public WithShortCircuiting {
-	long long int value = 0;							// compose the result of the constant expression
-	bool valid = true;									// true => constant expression and value is the result
-														// false => not constant expression, e.g., ++i
-	bool cfavalid = true;								// true => constant expression and value computable
-														// false => constant expression but value not computable, e.g., sizeof(int)
-
-	void previsit( const BaseSyntaxNode * ) { visit_children = false; }
-	void postvisit( const BaseSyntaxNode * ) { valid = false; }
-
-	void postvisit( const SizeofExpr * ) {
-	}
-
-	void postvisit( const ConstantExpr * expr ) {
-		value = expr->intValue();
-	}
-
-	void postvisit( const CastExpr * expr ) {
-		auto arg = eval(expr->arg);
-		valid = arg.second;
-		value = arg.first;
-		// TODO: perform type conversion on value if valid
-	}
-
-	void postvisit( const VariableExpr * const expr ) {
-		if ( EnumInstType * inst = dynamic_cast<EnumInstType *>(expr->result) ) {
-			if ( EnumDecl * decl = inst->baseEnum ) {
-				if ( decl->valueOf( expr->var, value ) ) { // value filled by valueOf
-					return;
-				}
-			}
-		}
-		valid = false;
-	}
-
-	void postvisit( const ApplicationExpr * expr ) {
-		DeclarationWithType * function = InitTweak::getFunction(const_cast<ApplicationExpr *>(expr));
-		if ( ! function || function->linkage != LinkageSpec::Intrinsic ) { valid = false; return; }
-		const std::string & fname = function->name;
-		assertf( expr->args.size() == 1 || expr->args.size() == 2, "Intrinsic function with %zd arguments: %s", expr->args.size(), fname.c_str() );
-		std::pair<long long int, bool> arg1, arg2;
-		arg1 = eval(expr->args.front());
-		valid = valid && arg1.second;
-		if ( ! valid ) return;
-		if ( expr->args.size() == 2 ) {
-			arg2 = eval(expr->args.back());
-			valid = valid && arg2.second;
-			if ( ! valid ) return;
-		}
-		if (fname == "?+?") {
-			value = arg1.first + arg2.first;
-		} else if (fname == "?-?") {
-			value = arg1.first - arg2.first;
-		} else if (fname == "?*?") {
-			value = arg1.first * arg2.first;
-		} else if (fname == "?/?") {
-			value = arg1.first / arg2.first;
-		} else if (fname == "?%?") {
-			value = arg1.first % arg2.first;
-		} else {
-			valid = false;
-		}
-		// TODO: implement other intrinsic functions
-	}
-};
-
-//-------------------------------------------------------------
-// New AST
 struct EvalNew : public ast::WithShortCircuiting {
 	Evaluation result = { 0, true, true };
 
@@ -268,16 +196,6 @@ struct EvalNew : public ast::WithShortCircuiting {
 		// TODO: implement other intrinsic functions
 	}
 };
-
-std::pair<long long int, bool> eval( const Expression * expr ) {
-	PassVisitor<EvalOld> ev;
-	if ( expr ) {
-		expr->accept( ev );
-		return std::make_pair( ev.pass.value, ev.pass.valid );
-	} else {
-		return std::make_pair( 0, false );
-	}
-}
 
 Evaluation eval( const ast::Expr * expr ) {
 	if ( expr ) {

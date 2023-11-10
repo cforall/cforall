@@ -22,20 +22,16 @@ SRC_GENPOLY = \
 
 SRC += $(SRC_GENPOLY) \
 	GenPoly/BoxNew.cpp \
-	GenPoly/Box.cc \
 	GenPoly/Box.h \
 	GenPoly/ErasableScopedMap.h \
 	GenPoly/FindFunction.cc \
 	GenPoly/FindFunction.h \
 	GenPoly/InstantiateGenericNew.cpp \
-	GenPoly/InstantiateGeneric.cc \
 	GenPoly/InstantiateGeneric.h \
 	GenPoly/LvalueNew.cpp \
-	GenPoly/Lvalue.cc \
 	GenPoly/ScopedSet.h \
 	GenPoly/ScrubTyVars.cc \
 	GenPoly/ScrubTyVars.h \
-	GenPoly/Specialize.cc \
 	GenPoly/SpecializeNew.cpp \
 	GenPoly/Specialize.h
 

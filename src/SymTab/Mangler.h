@@ -21,8 +21,6 @@
 #include <utility>            // for pair
 
 #include "AST/Bitfield.hpp"
-#include "SynTree/SynTree.h"  // for Types
-#include "SynTree/Visitor.h"  // for Visitor, maybeAccept
 
 // https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling
 // The CFA name mangling scheme is based closely on the itanium C++ name mangling scheme, with the following key differences:
@@ -34,20 +32,9 @@
 namespace ast {
 	class Node;
 }
-namespace ResolvExpr {
-	class TypeEnvironment;
-}
 
 namespace SymTab {
 	namespace Mangler {
-		/// Mangle syntax tree object; primary interface to clients
-		std::string mangle( const BaseSyntaxNode * decl, bool mangleOverridable = true, bool typeMode = false, bool mangleGenericParams = true );
-
-		/// Mangle a type name; secondary interface
-		std::string mangleType( const Type * ty );
-		/// Mangle ignoring generic type parameters
-		std::string mangleConcrete( const Type * ty );
-
 		namespace Encoding {
 			extern const std::string manglePrefix;
 			extern const std::string basicTypes[];

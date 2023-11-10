@@ -21,7 +21,6 @@ ACLOCAL_AMFLAGS  = -I automake
 SRC = main.cc \
       CompilationState.cc \
       CompilationState.h \
-      MakeLibCfa.cc \
 	  MakeLibCfaNew.cpp \
 	MakeLibCfa.h
 
@@ -41,7 +40,6 @@ endif
 
 include AST/module.mk
 include CodeGen/module.mk
-include CodeTools/module.mk
 include Concurrency/module.mk
 include Common/module.mk
 include ControlStruct/module.mk
@@ -50,12 +48,11 @@ include InitTweak/module.mk
 include Parser/module.mk
 include ResolvExpr/module.mk
 include SymTab/module.mk
-include SynTree/module.mk
 include Tuples/module.mk
 include Validate/module.mk
 include Virtual/module.mk
 
-$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/SynTree/Type.h
+$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/Type.hpp
 
 $(srcdir)/AST/Type.hpp : BasicTypes-gen.cc
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type

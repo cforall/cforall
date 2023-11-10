@@ -20,14 +20,9 @@
 
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
-#include "Common/PassVisitor.h"
 #include "Common/ScopedMap.h"
 #include "Common/SemanticError.h"  // for SemanticError
 #include "RenameVars.h"
-#include "SynTree/Declaration.h"   // for DeclarationWithType, TypeDecl, Dec...
-#include "SynTree/Expression.h"    // for Expression
-#include "SynTree/Type.h"          // for Type, TypeInstType, TraitInstType
-#include "SynTree/Visitor.h"       // for acceptAll, maybeAccept
 
 #include "AST/Copy.hpp"
 
@@ -48,37 +43,8 @@ namespace {
 			++resetCount;
 		}
 
-		void rename( TypeInstType * type ) {
-			auto it = nameMap.find( type->name );
-			if ( it != nameMap.end() ) {
-				type->name = it->second;
-			}
-		}
-
 		void nextUsage() {
 			++next_usage_id;
-		}
-
-		void openLevel( Type * type ) {
-			if ( ! type->forall.empty() ) {
-				nameMap.beginScope();
-				// renames all "forall" type names to `_${level}_${name}'
-				for ( auto td : type->forall ) {
-					std::ostringstream output;
-					output << "_" << resetCount << "_" << level << "_" << td->name;
-					std::string newname( output.str() );
-					nameMap[ td->get_name() ] = newname;
-					td->name = newname;
-					// ditto for assertion names, the next level in
-					level++;
-				}
-			}
-		}
-
-		void closeLevel( Type * type ) {
-			if ( !type->forall.empty() ) {
-				nameMap.endScope();
-			}
 		}
 
 		const ast::TypeInstType * rename( const ast::TypeInstType * type ) {
@@ -134,19 +100,6 @@ namespace {
 	// Global State:
 	RenamingData renaming;
 
-	struct RenameVars_old {
-		void previsit( TypeInstType * instType ) {
-			renaming.openLevel( (Type*)instType );
-			renaming.rename( instType );
-		}
-		void previsit( Type * type ) {
-			renaming.openLevel( type );
-		}
-		void postvisit( Type * type ) {
-			renaming.closeLevel( type );
-		}
-	};
-
 	struct RenameVars_new : public ast::PureVisitor /*: public ast::WithForallSubstitutor*/ {
 		RenameMode mode;
 
@@ -176,11 +129,6 @@ namespace {
 	};
 
 } // namespace
-
-void renameTyVars( Type * t ) {
-	PassVisitor<RenameVars_old> renamer;
-	t->accept( renamer );
-}
 
 const ast::Type * renameTyVars( const ast::Type * t, RenameMode mode, bool reset ) {
 	ast::Pass<RenameVars_new> renamer;
