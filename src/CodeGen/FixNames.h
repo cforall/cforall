@@ -15,18 +15,15 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace CodeGen {
-	/// mangles object and function names
-	void fixNames( std::list< Declaration* > & translationUnit );
+
 /// Sets scope levels and fills in main's default return.
 void fixNames( ast::TranslationUnit & translationUnit );
+
 } // namespace CodeGen
 
 // Local Variables: //

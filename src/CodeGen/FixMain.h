@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixMain.h -- 
+// FixMain.h -- Tools to change a Cforall main into a C main.
 //
 // Author           : Thierry Delisle
 // Created On       : Thr Jan 12 14:11:09 2017
@@ -16,10 +16,6 @@
 #pragma once
 
 #include <iosfwd>
-#include <memory>
-#include <list>
-
-#include "AST/LinkageSpec.hpp"
 
 namespace ast {
 	class FunctionDecl;
@@ -28,23 +24,14 @@ namespace ast {
 
 namespace CodeGen {
 
-class FixMain {
-public :
-	static inline ast::Linkage::Spec getMainLinkage() {
-		return replace_main ? ast::Linkage::Cforall : ast::Linkage::C;
-	}
+/// Is this function a program main function?
+bool isMain( const ast::FunctionDecl * decl );
 
-	static inline void setReplaceMain(bool val) {
-		replace_main = val;
-	}
+/// Adjust the linkage of main functions.
+void fixMainLinkage( ast::TranslationUnit & transUnit, bool replaceMain );
 
-	static bool isMain(const ast::FunctionDecl * decl);
-
-	static void fix( ast::TranslationUnit & translationUnit,
-			std::ostream &os, const char * bootloader_filename );
-
-private:
-	static bool replace_main;
-};
+/// Add a wrapper around to run the Cforall main.
+void fixMainInvoke( ast::TranslationUnit & transUnit,
+		std::ostream & os, const char * bootloaderFilename );
 
 } // namespace CodeGen

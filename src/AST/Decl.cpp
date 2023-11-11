@@ -19,7 +19,6 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "CodeGen/FixMain.h"   // for FixMain
 #include "Common/Eval.h"       // for eval
 
 #include "Fwd.hpp"             // for UniqueId
@@ -75,12 +74,6 @@ FunctionDecl::FunctionDecl( const CodeLocation & loc, const std::string & name,
 		}
 	}
 	this->type = ftype;
-	// Hack forcing the function "main" to have Cforall linkage to replace
-	// main even if it is inside an extern "C", and also makes sure the
-	// replacing function is always a C function.
-	if ( name == "main" ) {
-		this->linkage = CodeGen::FixMain::getMainLinkage();
-	}
 }
 
 FunctionDecl::FunctionDecl( const CodeLocation & location, const std::string & name,
@@ -107,10 +100,6 @@ FunctionDecl::FunctionDecl( const CodeLocation & location, const std::string & n
 			new VariableExpr( assertion->location, assertion ) );
 	}
 	this->type = type;
-	// See note above about this hack.
-	if ( name == "main" ) {
-		this->linkage = CodeGen::FixMain::getMainLinkage();
-	}
 }
 
 

@@ -249,7 +249,6 @@ int main( int argc, char * argv[] ) {
 	// } // for
 
 	parse_cmdline( argc, argv );						// process command-line arguments
-	CodeGen::FixMain::setReplaceMain( !nomainp );
 
 	if ( waiting_for_gdb ) {
 		cerr << "Waiting for gdb" << endl;
@@ -393,6 +392,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Translate Tries", ControlStruct::translateTries, transUnit );
 		PASS( "Gen Waitfor", Concurrency::generateWaitFor, transUnit );
+		PASS( "Fix Main Linkage", CodeGen::fixMainLinkage, transUnit, !nomainp );
 
 		// Needs to happen before tuple types are expanded.
 		PASS( "Convert Specializations",  GenPoly::convertSpecializations, transUnit );
@@ -420,8 +420,8 @@ int main( int argc, char * argv[] ) {
 		} // if
 
 		PASS( "Code Gen", CodeGen::generate, transUnit, *output, !genproto, prettycodegenp, true, linemarks, false );
+		CodeGen::fixMainInvoke( transUnit, *output, (PreludeDirector + "/bootloader.c").c_str() );
 
-		CodeGen::FixMain::fix( transUnit, *output, (PreludeDirector + "/bootloader.c").c_str() );
 		if ( output != &cout ) {
 			delete output;
 		} // if

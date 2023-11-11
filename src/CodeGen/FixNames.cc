@@ -27,8 +27,11 @@
 #include "CompilationState.h"
 
 namespace CodeGen {
+
+namespace {
+
 /// Does work with the main function and scopeLevels.
-class FixNames_new final {
+class FixNames final {
 	int scopeLevel = 1;
 
 	bool shouldSetScopeLevel( const ast::DeclWithType * dwt ) {
@@ -44,7 +47,7 @@ public:
 	}
 
 	const ast::FunctionDecl *postvisit( const ast::FunctionDecl *functionDecl ) {
-		if ( FixMain::isMain( functionDecl ) ) {
+		if ( isMain( functionDecl ) ) {
 			auto mutDecl = ast::mutate( functionDecl );
 
 			if ( shouldSetScopeLevel( mutDecl ) ) {
@@ -79,8 +82,10 @@ public:
 	}
 };
 
+} // namespace
+
 void fixNames( ast::TranslationUnit & translationUnit ) {
-	ast::Pass<FixNames_new>::run( translationUnit );
+	ast::Pass<FixNames>::run( translationUnit );
 }
 
 } // namespace CodeGen

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FixMain.cc --
+// FixMain.cc -- Tools to change a Cforall main into a C main.
 //
 // Author           : Thierry Delisle
 // Created On       : Thr Jan 12 14:11:09 2017
@@ -32,11 +32,11 @@ namespace CodeGen {
 
 namespace {
 
-struct FindMainCore_new {
+struct FindMainCore final {
 	ast::FunctionDecl const * main_declaration = nullptr;
 
 	void previsit( ast::FunctionDecl const * decl ) {
-		if ( FixMain::isMain( decl ) ) {
+		if ( isMain( decl ) ) {
 			if ( main_declaration ) {
 				SemanticError( decl, "Multiple definition of main routine\n" );
 			}
@@ -105,19 +105,36 @@ bool is_main( const std::string & mangled_name ) {
 	return false;
 }
 
+struct FixLinkageCore final {
+	ast::Linkage::Spec const spec;
+	FixLinkageCore( ast::Linkage::Spec spec ) : spec( spec ) {}
+
+	ast::FunctionDecl const * previsit( ast::FunctionDecl const * decl ) {
+		if ( decl->name != "main" ) return decl;
+		return ast::mutate_field( decl, &ast::FunctionDecl::linkage, spec );
+	}
+};
+
 } // namespace
 
-bool FixMain::isMain( const ast::FunctionDecl * decl ) {
+bool isMain( const ast::FunctionDecl * decl ) {
 	if ( std::string("main") != decl->name ) {
 		return false;
 	}
 	return is_main( Mangle::mangle( decl, Mangle::Type ) );
 }
 
-void FixMain::fix( ast::TranslationUnit & translationUnit,
+void fixMainLinkage( ast::TranslationUnit & translationUnit,
+		bool replace_main ) {
+	ast::Linkage::Spec const spec =
+		( replace_main ) ? ast::Linkage::Cforall : ast::Linkage::C;
+	ast::Pass<FixLinkageCore>::run( translationUnit, spec );
+}
+
+void fixMainInvoke( ast::TranslationUnit & translationUnit,
 		std::ostream &os, const char * bootloader_filename ) {
 
-	ast::Pass<FindMainCore_new> main_finder;
+	ast::Pass<FindMainCore> main_finder;
 	ast::accept_all( translationUnit, main_finder );
 	if ( nullptr == main_finder.core.main_declaration ) return;
 

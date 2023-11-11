@@ -17,8 +17,6 @@
 SRC_CODEGEN = \
 	CodeGen/CodeGeneratorNew.cpp \
 	CodeGen/CodeGeneratorNew.hpp \
-	CodeGen/FixMain2.cc \
-	CodeGen/FixMain.h \
 	CodeGen/GenType.cc \
 	CodeGen/GenType.h \
 	CodeGen/OperatorTable.cc \
@@ -28,6 +26,7 @@ SRC += $(SRC_CODEGEN) \
 	CodeGen/Generate.cc \
 	CodeGen/Generate.h \
 	CodeGen/FixMain.cc \
+	CodeGen/FixMain.h \
 	CodeGen/FixNames.cc \
 	CodeGen/FixNames.h \
 	CodeGen/LinkOnce.cc \

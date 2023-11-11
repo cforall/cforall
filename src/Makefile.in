@@ -168,8 +168,7 @@ am__objects_1 = AST/Attribute.$(OBJEXT) AST/Copy.$(OBJEXT) \
 	AST/Type.$(OBJEXT) AST/TypeEnvironment.$(OBJEXT) \
 	AST/TypeSubstitution.$(OBJEXT) AST/Util.$(OBJEXT)
 am__objects_2 = CodeGen/CodeGeneratorNew.$(OBJEXT) \
-	CodeGen/FixMain2.$(OBJEXT) CodeGen/GenType.$(OBJEXT) \
-	CodeGen/OperatorTable.$(OBJEXT)
+	CodeGen/GenType.$(OBJEXT) CodeGen/OperatorTable.$(OBJEXT)
 am__objects_3 = Common/Assert.$(OBJEXT) \
 	Common/CodeLocationTools.$(OBJEXT) Common/DeclStats.$(OBJEXT) \
 	Common/Eval.$(OBJEXT) Common/Examine.$(OBJEXT) \
@@ -299,9 +298,9 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	AST/$(DEPDIR)/TypeEnvironment.Po \
 	AST/$(DEPDIR)/TypeSubstitution.Po AST/$(DEPDIR)/Util.Po \
 	CodeGen/$(DEPDIR)/CodeGeneratorNew.Po \
-	CodeGen/$(DEPDIR)/FixMain.Po CodeGen/$(DEPDIR)/FixMain2.Po \
-	CodeGen/$(DEPDIR)/FixNames.Po CodeGen/$(DEPDIR)/GenType.Po \
-	CodeGen/$(DEPDIR)/Generate.Po CodeGen/$(DEPDIR)/LinkOnce.Po \
+	CodeGen/$(DEPDIR)/FixMain.Po CodeGen/$(DEPDIR)/FixNames.Po \
+	CodeGen/$(DEPDIR)/GenType.Po CodeGen/$(DEPDIR)/Generate.Po \
+	CodeGen/$(DEPDIR)/LinkOnce.Po \
 	CodeGen/$(DEPDIR)/OperatorTable.Po Common/$(DEPDIR)/Assert.Po \
 	Common/$(DEPDIR)/CodeLocationTools.Po \
 	Common/$(DEPDIR)/DebugMalloc.Po Common/$(DEPDIR)/DeclStats.Po \
@@ -634,9 +633,9 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I automake
 SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfaNew.cpp \
 	MakeLibCfa.h $(SRC_AST) $(SRC_CODEGEN) CodeGen/Generate.cc \
-	CodeGen/Generate.h CodeGen/FixMain.cc CodeGen/FixNames.cc \
-	CodeGen/FixNames.h CodeGen/LinkOnce.cc CodeGen/LinkOnce.h \
-	CodeGen/Options.h Concurrency/Actors.cpp \
+	CodeGen/Generate.h CodeGen/FixMain.cc CodeGen/FixMain.h \
+	CodeGen/FixNames.cc CodeGen/FixNames.h CodeGen/LinkOnce.cc \
+	CodeGen/LinkOnce.h CodeGen/Options.h Concurrency/Actors.cpp \
 	Concurrency/Actors.hpp Concurrency/Corun.cpp \
 	Concurrency/Corun.hpp Concurrency/KeywordsNew.cpp \
 	Concurrency/Keywords.h Concurrency/WaitforNew.cpp \
@@ -762,8 +761,6 @@ SRC_AST = \
 SRC_CODEGEN = \
 	CodeGen/CodeGeneratorNew.cpp \
 	CodeGen/CodeGeneratorNew.hpp \
-	CodeGen/FixMain2.cc \
-	CodeGen/FixMain.h \
 	CodeGen/GenType.cc \
 	CodeGen/GenType.h \
 	CodeGen/OperatorTable.cc \
@@ -1027,8 +1024,6 @@ CodeGen/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) CodeGen/$(DEPDIR)
 	@: > CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/CodeGeneratorNew.$(OBJEXT): CodeGen/$(am__dirstamp) \
-	CodeGen/$(DEPDIR)/$(am__dirstamp)
-CodeGen/FixMain2.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/GenType.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
@@ -1381,7 +1376,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@AST/$(DEPDIR)/Util.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/CodeGeneratorNew.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixMain.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixMain2.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/FixNames.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/GenType.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@CodeGen/$(DEPDIR)/Generate.Po@am__quote@ # am--include-marker
@@ -1744,7 +1738,6 @@ distclean: distclean-am
 	-rm -f AST/$(DEPDIR)/Util.Po
 	-rm -f CodeGen/$(DEPDIR)/CodeGeneratorNew.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain.Po
-	-rm -f CodeGen/$(DEPDIR)/FixMain2.Po
 	-rm -f CodeGen/$(DEPDIR)/FixNames.Po
 	-rm -f CodeGen/$(DEPDIR)/GenType.Po
 	-rm -f CodeGen/$(DEPDIR)/Generate.Po
@@ -1919,7 +1912,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f AST/$(DEPDIR)/Util.Po
 	-rm -f CodeGen/$(DEPDIR)/CodeGeneratorNew.Po
 	-rm -f CodeGen/$(DEPDIR)/FixMain.Po
-	-rm -f CodeGen/$(DEPDIR)/FixMain2.Po
 	-rm -f CodeGen/$(DEPDIR)/FixNames.Po
 	-rm -f CodeGen/$(DEPDIR)/GenType.Po
 	-rm -f CodeGen/$(DEPDIR)/Generate.Po
