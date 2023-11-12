@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Oct 19 21:10:10 2023
-// Update Count     : 1801
+// Last Modified On : Sat Nov 11 07:06:27 2023
+// Update Count     : 1803
 //
 
 #include "iostream.hfa"
@@ -1000,6 +1000,8 @@ forall( istype & | basic_istream( istype ) ) {
 					if ( ! isspace( peek ) ) throw ExceptionInst( cstring_length );
 				} // if
 			} // if
+			// FIX ME: CFA strings need to be modified to NOT change the argument for this case, then this can be removed.
+			if ( rwd > 0 && args == 0 ) f.s[0]= '\0';	// read failed => no pattern match => set string to null
 		} else {
 			if ( f.flags.delimiter ) {					// getline
 //				fprintf( stderr, "getline\n" );
@@ -1040,6 +1042,7 @@ forall( istype & | basic_istream( istype ) ) {
 					} // if
 				} // if
 			} // if
+			if ( rwd > 0 && args == 0 ) f.s[0]= '\0';	// read failed => no pattern match => set string to null
 		} // if
 		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
 //			fprintf( stderr, "clear\n" );
