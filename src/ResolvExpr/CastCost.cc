@@ -25,7 +25,6 @@
 #include "Cost.h"                        // for Cost, Cost::infinity
 #include "ResolvExpr/ConversionCost.h"   // for conversionCost
 #include "ResolvExpr/PtrsCastable.hpp"   // for ptrsCastable
-#include "ResolvExpr/typeops.h"          // for ptrsCastable
 #include "ResolvExpr/Unify.h"            // for typesCompatibleIgnoreQualifiers
 
 #if 0
@@ -37,14 +36,14 @@
 namespace ResolvExpr {
 
 namespace {
-	struct CastCost_new : public ConversionCost_new {
-		using ConversionCost_new::previsit;
-		using ConversionCost_new::postvisit;
+	struct CastCost : public ConversionCost {
+		using ConversionCost::previsit;
+		using ConversionCost::postvisit;
 
-		CastCost_new(
+		CastCost(
 			const ast::Type * dst, bool srcIsLvalue, const ast::SymbolTable & symtab,
 			const ast::TypeEnvironment & env, CostCalculation costFunc )
-		: ConversionCost_new( dst, srcIsLvalue, symtab, env, costFunc ) {}
+		: ConversionCost( dst, srcIsLvalue, symtab, env, costFunc ) {}
 
 		void postvisit( const ast::BasicType * basicType ) {
 			auto ptr = dynamic_cast< const ast::PointerType * >( dst );
@@ -84,15 +83,6 @@ namespace {
 		}
 	};
 
-	#warning For overload resolution between the two versions.
-	int localPtrsCastable(const ast::Type * t1, const ast::Type * t2,
-			const ast::SymbolTable & symtab, const ast::TypeEnvironment & env ) {
-		return ptrsCastable( t1, t2, symtab, env );
-	}
-	Cost localCastCost(
-		const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
-		const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
-	) { return castCost( src, dst, srcIsLvalue, symtab, env ); }
 } // anonymous namespace
 
 Cost castCost(
@@ -135,13 +125,11 @@ Cost castCost(
 		return Cost::safe;
 	} else if ( auto refType = dynamic_cast< const ast::ReferenceType * >( dst ) ) {
 		PRINT( std::cerr << "conversionCost: dest is reference" << std::endl; )
-		#warning cast on ptrsCastable artifact of having two functions, remove when port done
 		return convertToReferenceCost(
-			src, refType, srcIsLvalue, symtab, env, localPtrsCastable );
+			src, refType, srcIsLvalue, symtab, env, ptrsCastable );
 	} else {
-		#warning cast on castCost artifact of having two functions, remove when port done
-		ast::Pass< CastCost_new > converter(
-			dst, srcIsLvalue, symtab, env, localCastCost );
+		ast::Pass< CastCost > converter(
+			dst, srcIsLvalue, symtab, env, castCost );
 		src->accept( converter );
 		return converter.core.cost;
 	}

@@ -29,9 +29,9 @@
 namespace Mangle {
 	namespace {
 		/// Mangles names to a unique C identifier
-		struct Mangler_new : public ast::WithShortCircuiting, public ast::WithVisitorRef<Mangler_new>, public ast::WithGuards {
-			Mangler_new( Mangle::Mode mode );
-			Mangler_new( const Mangler_new & ) = delete;
+		struct Mangler : public ast::WithShortCircuiting, public ast::WithVisitorRef<Mangler>, public ast::WithGuards {
+			Mangler( Mangle::Mode mode );
+			Mangler( const Mangler & ) = delete;
 
 			void previsit( const ast::Node * ) { visit_children = false; }
 
@@ -71,36 +71,36 @@ namespace Mangle {
 			bool inQualifiedType = false;   ///< Add start/end delimiters around qualified type
 
 		  private:
-			Mangler_new( bool mangleOverridable, bool typeMode, bool mangleGenericParams,
+			Mangler( bool mangleOverridable, bool typeMode, bool mangleGenericParams,
 				int nextVarNum, const VarMapType& varNums );
-			friend class ast::Pass<Mangler_new>;
+			friend class ast::Pass<Mangler>;
 
 		  private:
 			void mangleDecl( const ast::DeclWithType *declaration );
 			void mangleRef( const ast::BaseInstType *refType, const std::string & prefix );
 
 			void printQualifiers( const ast::Type *type );
-		}; // Mangler_new
+		}; // Mangler
 	} // namespace
 
 	std::string mangle( const ast::Node * decl, Mangle::Mode mode ) {
-		return ast::Pass<Mangler_new>::read( decl, mode );
+		return ast::Pass<Mangler>::read( decl, mode );
 	}
 
 	namespace {
-		Mangler_new::Mangler_new( Mangle::Mode mode )
+		Mangler::Mangler( Mangle::Mode mode )
 			: nextVarNum( 0 ), isTopLevel( true ),
 			mangleOverridable  ( ! mode.no_overrideable   ),
 			typeMode           (   mode.type              ),
 			mangleGenericParams( ! mode.no_generic_params ) {}
 
-		Mangler_new::Mangler_new( bool mangleOverridable, bool typeMode, bool mangleGenericParams,
+		Mangler::Mangler( bool mangleOverridable, bool typeMode, bool mangleGenericParams,
 			int nextVarNum, const VarMapType& varNums )
 			: varNums( varNums ), nextVarNum( nextVarNum ), isTopLevel( false ),
 			mangleOverridable( mangleOverridable ), typeMode( typeMode ),
 			mangleGenericParams( mangleGenericParams ) {}
 
-		void Mangler_new::mangleDecl( const ast::DeclWithType * decl ) {
+		void Mangler::mangleDecl( const ast::DeclWithType * decl ) {
 			bool wasTopLevel = isTopLevel;
 			if ( isTopLevel ) {
 				varNums.clear();
@@ -130,40 +130,40 @@ namespace Mangle {
 			isTopLevel = wasTopLevel;
 		}
 
-		void Mangler_new::postvisit( const ast::ObjectDecl * decl ) {
+		void Mangler::postvisit( const ast::ObjectDecl * decl ) {
 			mangleDecl( decl );
 		}
 
-		void Mangler_new::postvisit( const ast::FunctionDecl * decl ) {
+		void Mangler::postvisit( const ast::FunctionDecl * decl ) {
 			mangleDecl( decl );
 		}
 
-		void Mangler_new::postvisit( const ast::VoidType * voidType ) {
+		void Mangler::postvisit( const ast::VoidType * voidType ) {
 			printQualifiers( voidType );
 			mangleName += Encoding::void_t;
 		}
 
-		void Mangler_new::postvisit( const ast::BasicType * basicType ) {
+		void Mangler::postvisit( const ast::BasicType * basicType ) {
 			printQualifiers( basicType );
 			assertf( basicType->kind < ast::BasicType::NUMBER_OF_BASIC_TYPES, "Unhandled basic type: %d", basicType->kind );
 			mangleName += Encoding::basicTypes[ basicType->kind ];
 		}
 
-		void Mangler_new::postvisit( const ast::PointerType * pointerType ) {
+		void Mangler::postvisit( const ast::PointerType * pointerType ) {
 			printQualifiers( pointerType );
 			// mangle void (*f)() and void f() to the same name to prevent overloading on functions and function pointers
 			if ( ! pointerType->base.as<ast::FunctionType>() ) mangleName += Encoding::pointer;
 			maybe_accept( pointerType->base.get(), *visitor );
 		}
 
-		void Mangler_new::postvisit( const ast::ArrayType * arrayType ) {
+		void Mangler::postvisit( const ast::ArrayType * arrayType ) {
 			// TODO: encode dimension
 			printQualifiers( arrayType );
 			mangleName += Encoding::array + "0";
 			arrayType->base->accept( *visitor );
 		}
 
-		void Mangler_new::postvisit( const ast::ReferenceType * refType ) {
+		void Mangler::postvisit( const ast::ReferenceType * refType ) {
 			// don't print prefix (e.g. 'R') for reference types so that references and non-references do not overload.
 			// Further, do not print the qualifiers for a reference type (but do run printQualifers because of TypeDecls, etc.),
 			// by pretending every reference type is a function parameter.
@@ -173,7 +173,7 @@ namespace Mangle {
 			refType->base->accept( *visitor );
 		}
 
-		void Mangler_new::postvisit( const ast::FunctionType * functionType ) {
+		void Mangler::postvisit( const ast::FunctionType * functionType ) {
 			printQualifiers( functionType );
 			mangleName += Encoding::function;
 			// turn on inFunctionType so that printQualifiers does not print most qualifiers for function parameters,
@@ -188,7 +188,7 @@ namespace Mangle {
 			mangleName += "_";
 		}
 
-		void Mangler_new::mangleRef(
+		void Mangler::mangleRef(
 				const ast::BaseInstType * refType, const std::string & prefix ) {
 			printQualifiers( refType );
 
@@ -205,19 +205,19 @@ namespace Mangle {
 			}
 		}
 
-		void Mangler_new::postvisit( const ast::StructInstType * aggregateUseType ) {
+		void Mangler::postvisit( const ast::StructInstType * aggregateUseType ) {
 			mangleRef( aggregateUseType, Encoding::struct_t );
 		}
 
-		void Mangler_new::postvisit( const ast::UnionInstType * aggregateUseType ) {
+		void Mangler::postvisit( const ast::UnionInstType * aggregateUseType ) {
 			mangleRef( aggregateUseType, Encoding::union_t );
 		}
 
-		void Mangler_new::postvisit( const ast::EnumInstType * aggregateUseType ) {
+		void Mangler::postvisit( const ast::EnumInstType * aggregateUseType ) {
 			mangleRef( aggregateUseType, Encoding::enum_t );
 		}
 
-		void Mangler_new::postvisit( const ast::TypeInstType * typeInst ) {
+		void Mangler::postvisit( const ast::TypeInstType * typeInst ) {
 			VarMapType::iterator varNum = varNums.find( typeInst->name );
 			if ( varNum == varNums.end() ) {
 				mangleRef( typeInst, Encoding::type );
@@ -233,32 +233,32 @@ namespace Mangle {
 			} // if
 		}
 
-		void Mangler_new::postvisit( const ast::TraitInstType * inst ) {
+		void Mangler::postvisit( const ast::TraitInstType * inst ) {
 			printQualifiers( inst );
 			mangleName += std::to_string( inst->name.size() ) + inst->name;
 		}
 
-		void Mangler_new::postvisit( const ast::TupleType * tupleType ) {
+		void Mangler::postvisit( const ast::TupleType * tupleType ) {
 			printQualifiers( tupleType );
 			mangleName += Encoding::tuple + std::to_string( tupleType->types.size() );
 			accept_each( tupleType->types, *visitor );
 		}
 
-		void Mangler_new::postvisit( const ast::VarArgsType * varArgsType ) {
+		void Mangler::postvisit( const ast::VarArgsType * varArgsType ) {
 			printQualifiers( varArgsType );
 			static const std::string vargs = "__builtin_va_list";
 			mangleName += Encoding::type + std::to_string( vargs.size() ) + vargs;
 		}
 
-		void Mangler_new::postvisit( const ast::ZeroType * ) {
+		void Mangler::postvisit( const ast::ZeroType * ) {
 			mangleName += Encoding::zero;
 		}
 
-		void Mangler_new::postvisit( const ast::OneType * ) {
+		void Mangler::postvisit( const ast::OneType * ) {
 			mangleName += Encoding::one;
 		}
 
-		void Mangler_new::postvisit( const ast::QualifiedType * qualType ) {
+		void Mangler::postvisit( const ast::QualifiedType * qualType ) {
 			bool inqual = inQualifiedType;
 			if ( !inqual ) {
 				// N marks the start of a qualified type
@@ -274,13 +274,13 @@ namespace Mangle {
 			}
 		}
 
-		void Mangler_new::postvisit( const ast::TypeDecl * decl ) {
+		void Mangler::postvisit( const ast::TypeDecl * decl ) {
 			// TODO: is there any case where mangling a TypeDecl makes sense? If so, this code needs to be
 			// fixed to ensure that two TypeDecls mangle to the same name when they are the same type and vice versa.
 			// Note: The current scheme may already work correctly for this case, I have not thought about this deeply
 			// and the case has not yet come up in practice. Alternatively, if not then this code can be removed
 			// aside from the assert false.
-			assertf(false, "Mangler_new should not visit typedecl: %s", toCString(decl));
+			assertf(false, "Mangler should not visit typedecl: %s", toCString(decl));
 			assertf( decl->kind < ast::TypeDecl::Kind::NUMBER_OF_KINDS, "Unhandled type variable kind: %d", decl->kind );
 			mangleName += Encoding::typeVariables[ decl->kind ] + std::to_string( decl->name.length() ) + decl->name;
 		}
@@ -292,7 +292,7 @@ namespace Mangle {
 			} // for
 		}
 
-		void Mangler_new::printQualifiers( const ast::Type * type ) {
+		void Mangler::printQualifiers( const ast::Type * type ) {
 			// skip if not including qualifiers
 			if ( typeMode ) return;
 			auto funcType = dynamic_cast<const ast::FunctionType *>( type );
@@ -317,7 +317,7 @@ namespace Mangle {
 					varNums[ decl->name ] = std::make_pair( nextVarNum, (int)decl->kind );
 				} // for
 				for ( auto & assert : funcType->assertions ) {
-					assertionNames.push_back( ast::Pass<Mangler_new>::read(
+					assertionNames.push_back( ast::Pass<Mangler>::read(
 						assert->var.get(),
 						mangleOverridable, typeMode, mangleGenericParams, nextVarNum, varNums ) );
 					acount++;

@@ -24,12 +24,11 @@
 
 namespace CodeGen {
 
-#warning Remove the _new when old version is removed.
-struct CodeGenerator_new :
+struct CodeGenerator final :
 		public ast::WithGuards,
 		public ast::WithShortCircuiting,
-		public ast::WithVisitorRef<CodeGenerator_new> {
-	CodeGenerator_new( std::ostream & out, Options const & options );
+		public ast::WithVisitorRef<CodeGenerator> {
+	CodeGenerator( std::ostream & out, Options const & options );
 
 	// Turn off visit_children for all nodes.
 	void previsit( ast::Node const * );
@@ -118,8 +117,8 @@ struct CodeGenerator_new :
 private:
 	/// Custom local implementation of endl that updates print location.
 	struct LineEnder {
-		CodeGenerator_new & cg;
-		LineEnder( CodeGenerator_new & cg ) : cg( cg ) {}
+		CodeGenerator & cg;
+		LineEnder( CodeGenerator & cg ) : cg( cg ) {}
 		std::ostream & operator()( std::ostream & ) const;
 	};
 	friend std::ostream & operator<<( std::ostream & os, const LineEnder & e ) {
@@ -128,10 +127,10 @@ private:
 
 	/// Wrapper class to help print vectors of Labels.
 	struct LabelPrinter {
-		LabelPrinter( CodeGenerator_new & cg ) : cg( cg ), labels( nullptr ) {}
+		LabelPrinter( CodeGenerator & cg ) : cg( cg ), labels( nullptr ) {}
 		LabelPrinter & operator()( std::vector<ast::Label> const & l );
 		std::ostream & operator()( std::ostream & ) const;
-		CodeGenerator_new & cg;
+		CodeGenerator & cg;
 		std::vector<ast::Label> const * labels;
 	};
 	friend std::ostream & operator<<( std::ostream & os, const LabelPrinter & p ) {

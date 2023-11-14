@@ -15,19 +15,7 @@
 
 #pragma once
 
-#include <list>          // for list
-
 #include "AST/Node.hpp"  // for ptr
-
-class ConstructorInit;
-class Declaration;
-class Expression;
-class DeletedExpr;
-class StmtExpr;
-class Type;
-namespace SymTab {
-	class Indexer;
-} // namespace SymTab
 
 namespace ast {
 	class ConstructorInit;
@@ -44,19 +32,6 @@ namespace ast {
 } // namespace ast
 
 namespace ResolvExpr {
-	/// Checks types and binds syntactic constructs to typed representations
-	void resolve( std::list< Declaration * > translationUnit );
-	void resolveDecl( Declaration *, const SymTab::Indexer & indexer );
-	Expression *resolveInVoidContext( Expression * expr, const SymTab::Indexer & indexer );
-	void findVoidExpression( Expression *& untyped, const SymTab::Indexer & indexer );
-	void findSingleExpression( Expression *& untyped, const SymTab::Indexer & indexer );
-	void findSingleExpression( Expression *& untyped, Type * type, const SymTab::Indexer & indexer );
-	void resolveCtorInit( ConstructorInit * ctorInit, const SymTab::Indexer & indexer );
-	void resolveStmtExpr( StmtExpr * stmtExpr, const SymTab::Indexer & indexer );
-	/// Searches expr and returns the first DeletedExpr found, otherwise nullptr
-	DeletedExpr * findDeletedExpr( Expression * expr );
-	/// Resolves with-stmts and with-clauses on functions
-	void resolveWithExprs( std::list< Declaration * > & translationUnit );
 
 	/// Helper Type: Passes around information between various sub-calls.
 	struct ResolveContext {

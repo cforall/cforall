@@ -21,16 +21,15 @@
 
 namespace ResolvExpr {
 
-// TODO: Get rid of the `_new` suffix when the old version is removed.
-struct PtrsAssignable_new : public ast::WithShortCircuiting {
+struct PtrsAssignable : public ast::WithShortCircuiting {
 	const ast::Type * dst;
 	const ast::TypeEnvironment & typeEnv;
 	int result;
 
-	PtrsAssignable_new( const ast::Type * dst, const ast::TypeEnvironment & env ) :
+	PtrsAssignable( const ast::Type * dst, const ast::TypeEnvironment & env ) :
 		dst( dst ), typeEnv( env ), result( 0 ) {}
 
-	void previsit( Type * ) { visit_children = false; }
+	void previsit( ast::Type * ) { visit_children = false; }
 
 	void postvisit( const ast::EnumInstType * ) {
 		if ( dynamic_cast< const ast::BasicType * >( dst ) ) {
@@ -62,7 +61,7 @@ int ptrsAssignable( const ast::Type * src, const ast::Type * dst,
 	if ( dynamic_cast< const ast::VoidType * >( dst ) ) {
 		return -1;
 	} else {
-		ast::Pass<PtrsAssignable_new> visitor( dst, env );
+		ast::Pass<PtrsAssignable> visitor( dst, env );
 		src->accept( visitor );
 		return visitor.core.result;
 	}

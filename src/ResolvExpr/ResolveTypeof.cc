@@ -32,10 +32,10 @@
 namespace ResolvExpr {
 
 namespace {
-struct ResolveTypeof_new : public ast::WithShortCircuiting {
+struct ResolveTypeof : public ast::WithShortCircuiting {
     const ResolveContext & context;
 
-		ResolveTypeof_new( const ResolveContext & context ) :
+		ResolveTypeof( const ResolveContext & context ) :
 			context( context ) {}
 
 		void previsit( const ast::TypeofType * ) { visit_children = false; }
@@ -77,7 +77,7 @@ struct ResolveTypeof_new : public ast::WithShortCircuiting {
 } // anonymous namespace
 
 const ast::Type * resolveTypeof( const ast::Type * type , const ResolveContext & context ) {
-	ast::Pass< ResolveTypeof_new > mutator( context );
+	ast::Pass< ResolveTypeof > mutator( context );
 	return type->accept( mutator );
 }
 

@@ -38,7 +38,7 @@ namespace ast {
 namespace {
 	static inline auto stats() {
 		using namespace Stats::Counters;
-		static auto group   = build<CounterGroup>("Indexers");
+		static auto group   = build<CounterGroup>("Symbol Tables");
 		static struct {
 			SimpleCounter * count;
 			AverageCounter<double> * size;

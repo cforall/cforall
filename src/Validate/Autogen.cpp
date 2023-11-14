@@ -48,7 +48,7 @@ namespace Validate {
 namespace {
 
 // --------------------------------------------------------------------------
-struct AutogenerateRoutines_new final :
+struct AutogenerateRoutines final :
 		public ast::WithDeclsToAdd<>,
 		public ast::WithShortCircuiting {
 	void previsit( const ast::EnumDecl * enumDecl );
@@ -231,7 +231,7 @@ void addUnusedAttribute( ast::ptr<ast::DeclWithType> & declPtr ) {
 }
 
 // --------------------------------------------------------------------------
-void AutogenerateRoutines_new::previsit( const ast::EnumDecl * enumDecl ) {
+void AutogenerateRoutines::previsit( const ast::EnumDecl * enumDecl ) {
 	// Must visit children (enum constants) to add them to the symbol table.
 	if ( !enumDecl->body ) return;
 
@@ -248,7 +248,7 @@ void AutogenerateRoutines_new::previsit( const ast::EnumDecl * enumDecl ) {
 	gen.generateAndAppendFunctions( declsToAddAfter );
 }
 
-void AutogenerateRoutines_new::previsit( const ast::StructDecl * structDecl ) {
+void AutogenerateRoutines::previsit( const ast::StructDecl * structDecl ) {
 	visit_children = false;
 	if ( !structDecl->body ) return;
 
@@ -264,7 +264,7 @@ void AutogenerateRoutines_new::previsit( const ast::StructDecl * structDecl ) {
 	gen.generateAndAppendFunctions( declsToAddAfter );
 }
 
-void AutogenerateRoutines_new::previsit( const ast::UnionDecl * unionDecl ) {
+void AutogenerateRoutines::previsit( const ast::UnionDecl * unionDecl ) {
 	visit_children = false;
 	if ( !unionDecl->body ) return;
 
@@ -281,7 +281,7 @@ void AutogenerateRoutines_new::previsit( const ast::UnionDecl * unionDecl ) {
 }
 
 /// Generate ctor/dtors/assign for typedecls, e.g., otype T = int *;
-void AutogenerateRoutines_new::previsit( const ast::TypeDecl * typeDecl ) {
+void AutogenerateRoutines::previsit( const ast::TypeDecl * typeDecl ) {
 	if ( !typeDecl->base ) return;
 
 	ast::TypeInstType refType( typeDecl->name, typeDecl );
@@ -289,19 +289,19 @@ void AutogenerateRoutines_new::previsit( const ast::TypeDecl * typeDecl ) {
 	gen.generateAndAppendFunctions( declsToAddAfter );
 }
 
-void AutogenerateRoutines_new::previsit( const ast::TraitDecl * ) {
+void AutogenerateRoutines::previsit( const ast::TraitDecl * ) {
 	// Ensure that we don't add assignment ops for types defined as part of the trait
 	visit_children = false;
 }
 
-void AutogenerateRoutines_new::previsit( const ast::FunctionDecl * ) {
+void AutogenerateRoutines::previsit( const ast::FunctionDecl * ) {
 	// Track whether we're currently in a function.
 	// Can ignore function type idiosyncrasies, because function type can never
 	// declare a new type.
 	functionNesting += 1;
 }
 
-void AutogenerateRoutines_new::postvisit( const ast::FunctionDecl * ) {
+void AutogenerateRoutines::postvisit( const ast::FunctionDecl * ) {
 	functionNesting -= 1;
 }
 
@@ -520,7 +520,7 @@ ast::ptr<ast::Stmt> StructFuncGenerator::makeMemberOp(
 		const CodeLocation& location, const ast::ObjectDecl * dstParam,
 		const ast::Expr * src, const ast::ObjectDecl * field,
 		ast::FunctionDecl * func, SymTab::LoopDirection direction ) {
-	InitTweak::InitExpander_new srcParam( src );
+	InitTweak::InitExpander srcParam( src );
 	// Assign to destination.
 	ast::MemberExpr * dstSelect = new ast::MemberExpr(
 		location,
@@ -794,7 +794,7 @@ void TypeFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 } // namespace
 
 void autogenerateRoutines( ast::TranslationUnit & translationUnit ) {
-	ast::Pass<AutogenerateRoutines_new>::run( translationUnit );
+	ast::Pass<AutogenerateRoutines>::run( translationUnit );
 }
 
 } // Validate

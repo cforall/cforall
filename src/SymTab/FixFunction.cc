@@ -25,7 +25,7 @@
 namespace SymTab {
 
 namespace {
-	struct FixFunction_new final : public ast::WithShortCircuiting {
+	struct FixFunction final : public ast::WithShortCircuiting {
 		bool isVoid = false;
 
 		void previsit( const ast::FunctionDecl * ) { visit_children = false; }
@@ -69,14 +69,14 @@ namespace {
 } // anonymous namespace
 
 const ast::DeclWithType * fixFunction( const ast::DeclWithType * dwt, bool & isVoid ) {
-	ast::Pass< FixFunction_new > fixer;
+	ast::Pass< FixFunction > fixer;
 	dwt = dwt->accept( fixer );
 	isVoid |= fixer.core.isVoid;
 	return dwt;
 }
 
 const ast::Type * fixFunction( const ast::Type * type, bool & isVoid ) {
-	ast::Pass< FixFunction_new > fixer;
+	ast::Pass< FixFunction > fixer;
 	type = type->accept( fixer );
 	isVoid |= fixer.core.isVoid;
 	return type;

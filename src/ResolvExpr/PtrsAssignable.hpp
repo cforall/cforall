@@ -15,7 +15,6 @@
 
 #pragma once
 
-class Type;
 namespace ast {
 	class Type;
 	class TypeEnvironment;
@@ -23,10 +22,6 @@ namespace ast {
 
 namespace ResolvExpr {
 
-class TypeEnvironment;
-
-int ptrsAssignable( const Type * src, const Type * dest,
-	const TypeEnvironment & env );
 int ptrsAssignable( const ast::Type * src, const ast::Type * dst,
 	const ast::TypeEnvironment & env );
 

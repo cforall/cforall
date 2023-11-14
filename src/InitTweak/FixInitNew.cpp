@@ -916,7 +916,7 @@ const ast::DeclWithType * FixInit::postvisit( const ast::ObjectDecl *_objDecl ) 
 					// at global scope and there could be multiple function-scoped
 					// static variables with the same name in different functions.
 					// Note: it isn't sufficient to modify only the mangleName, because
-					// then subsequent Indexer passes can choke on seeing the object's name
+					// then subsequent SymbolTable passes can choke on seeing the object's name
 					// if another object has the same name and type. An unfortunate side-effect
 					// of renaming the object is that subsequent NameExprs may fail to resolve,
 					// but there shouldn't be any remaining past this point.
@@ -1168,7 +1168,7 @@ const ast::DeclWithType * GenStructMemberCalls::postvisit( const ast::FunctionDe
 				assert( function->params.size() == 2 );
 				arg2 = new ast::MemberExpr(funcDecl->location, field, new ast::VariableExpr(funcDecl->location, function->params.back() ) );
 			}
-			InitExpander_new srcParam( arg2 );
+			InitExpander srcParam( arg2 );
 			// cast away reference type and construct field.
 			ast::Expr * thisExpr = new ast::CastExpr(funcDecl->location, new ast::VariableExpr(funcDecl->location, thisParam ), thisParam->get_type()->stripReferences());
 			ast::Expr * memberDest = new ast::MemberExpr(funcDecl->location, field, thisExpr );

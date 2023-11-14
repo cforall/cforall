@@ -15,7 +15,6 @@
 
 #include <cassert>
 #include <limits>
-#include <list>
 #include <type_traits>
 
 #include "AST/Pass.hpp"
@@ -24,6 +23,15 @@
 namespace ResolvExpr {
 
 namespace {
+
+const ast::Type * expr_result( const ast::ptr< ast::Expr > & expr ) {
+	return expr->result.get();
+}
+
+const ast::Type * type_deref( const ast::ptr< ast::Type > & type ) {
+	return type.get();
+}
+
 	/// The specialization counter inner class.
 	class SpecCounter : public ast::WithShortCircuiting, public ast::WithVisitorRef<SpecCounter> {
 		int count = -1;  ///< specialization count (-1 for none)
@@ -37,20 +45,17 @@ namespace {
 		template<typename T> using MapperT =
 			typename std::add_pointer<ast::Type const *(typename T::value_type const &)>::type;
 
-		#warning Should use a standard maybe_accept
-		void maybe_accept( ast::Type const * type ) {
-			if ( type ) {
-				auto node = type->accept( *visitor );
-				assert( node == nullptr || node == type );
-			}
-		}
-
 		// Update the minimum to the new lowest non-none value.
 		template<typename T>
 		void updateMinimumPresent( int & minimum, const T & list, MapperT<T> mapper ) {
 			for ( const auto & node : list ) {
 				count = -1;
-				maybe_accept( mapper( node ) );
+
+				if ( ast::Type const * type = mapper( node ) ) {
+					ast::Type const * newType = type->accept( *visitor );
+					assert( newType == nullptr || newType == type );
+				}
+
 				if ( count != -1 && count < minimum ) minimum = count;
 			}
 		}
@@ -63,19 +68,8 @@ namespace {
 			return toNoneOrInc( minCount );
 		}
 
-		// The three mappers:
-		static const ast::Type * decl_type( const ast::ptr< ast::DeclWithType > & decl ) {
-			return decl->get_type();
-		}
-		static const ast::Type * expr_result( const ast::ptr< ast::Expr > & expr ) {
-			return expr->result;
-		}
-		static const ast::Type * type_deref( const ast::ptr< ast::Type > & type ) {
-			return type.get();
-		}
-
 	public:
-		int get_count() const { return 0 <= count ? count : 0; }
+		int result() const { return 0 <= count ? count : 0; }
 
 		// Mark specialization of base type.
 		void postvisit( const ast::PointerType * ) { if ( count >= 0 ) ++count; }
@@ -121,12 +115,7 @@ namespace {
 } // namespace
 
 int specCost( const ast::Type * type ) {
-	if ( nullptr == type ) {
-		return 0;
-	}
-	ast::Pass<SpecCounter> counter;
-	type->accept( counter );
-	return counter.core.get_count();
+	return ( nullptr == type ) ? 0 : ast::Pass<SpecCounter>::read( type );
 }
 
 } // namespace ResolvExpr

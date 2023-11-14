@@ -38,7 +38,7 @@
 
 namespace InitTweak {
 	namespace {
-		struct HasDesignations_new : public ast::WithShortCircuiting {
+		struct HasDesignations : public ast::WithShortCircuiting {
 			bool result = false;
 
 			void previsit( const ast::Node * ) {
@@ -56,11 +56,11 @@ namespace InitTweak {
 			}
 		};
 
-		struct InitDepthChecker_new {
+		struct InitDepthChecker {
 			bool result = true;
 			const ast::Type * type;
 			int curDepth = 0, maxDepth = 0;
-			InitDepthChecker_new( const ast::Type * type ) : type( type ) {
+			InitDepthChecker( const ast::Type * type ) : type( type ) {
 				const ast::Type * t = type;
 				while ( auto at = dynamic_cast< const ast::ArrayType * >( t ) ) {
 					maxDepth++;
@@ -77,7 +77,7 @@ namespace InitTweak {
 			}
 		};
 
-		struct InitFlattener_new : public ast::WithShortCircuiting {
+		struct InitFlattener : public ast::WithShortCircuiting {
 			std::vector< ast::ptr< ast::Expr > > argList;
 
 			void previsit( const ast::SingleInit * singleInit ) {
@@ -89,24 +89,24 @@ namespace InitTweak {
 	} // anonymous namespace
 
 	bool isDesignated( const ast::Init * init ) {
-		ast::Pass<HasDesignations_new> finder;
+		ast::Pass<HasDesignations> finder;
 		maybe_accept( init, finder );
 		return finder.core.result;
 	}
 
 	bool checkInitDepth( const ast::ObjectDecl * objDecl ) {
-		ast::Pass<InitDepthChecker_new> checker( objDecl->type );
+		ast::Pass<InitDepthChecker> checker( objDecl->type );
 		maybe_accept( objDecl->init.get(), checker );
 		return checker.core.result;
 	}
 
 std::vector< ast::ptr< ast::Expr > > makeInitList( const ast::Init * init ) {
-	ast::Pass< InitFlattener_new > flattener;
+	ast::Pass< InitFlattener > flattener;
 	maybe_accept( init, flattener );
 	return std::move( flattener.core.argList );
 }
 
-class InitExpander_new::ExpanderImpl {
+class InitExpander::ExpanderImpl {
 public:
 	virtual ~ExpanderImpl() = default;
 	virtual std::vector< ast::ptr< ast::Expr > > next( IndexList & indices ) = 0;
@@ -136,7 +136,7 @@ namespace {
 
 	template< typename Out >
 	void build(
-		ast::UntypedExpr * callExpr, const InitExpander_new::IndexList & indices,
+		ast::UntypedExpr * callExpr, const InitExpander::IndexList & indices,
 		const ast::Init * init, Out & out
 	) {
 		if ( indices.empty() ) return;
@@ -182,17 +182,17 @@ namespace {
 		}
 	}
 
-	class InitImpl_new final : public InitExpander_new::ExpanderImpl {
+	class InitImpl final : public InitExpander::ExpanderImpl {
 		ast::ptr< ast::Init > init;
 	public:
-		InitImpl_new( const ast::Init * i ) : init( i ) {}
+		InitImpl( const ast::Init * i ) : init( i ) {}
 
-		std::vector< ast::ptr< ast::Expr > > next( InitExpander_new::IndexList & ) override {
+		std::vector< ast::ptr< ast::Expr > > next( InitExpander::IndexList & ) override {
 			return makeInitList( init );
 		}
 
 		ast::ptr< ast::Stmt > buildListInit(
-			ast::UntypedExpr * callExpr, InitExpander_new::IndexList & indices
+			ast::UntypedExpr * callExpr, InitExpander::IndexList & indices
 		) override {
 			// If array came with an initializer list, initialize each element. We may have more
 			// initializers than elements of the array; need to check at each index that we have
@@ -214,13 +214,13 @@ namespace {
 		}
 	};
 
-	class ExprImpl_new final : public InitExpander_new::ExpanderImpl {
+	class ExprImpl final : public InitExpander::ExpanderImpl {
 		ast::ptr< ast::Expr > arg;
 	public:
-		ExprImpl_new( const ast::Expr * a ) : arg( a ) {}
+		ExprImpl( const ast::Expr * a ) : arg( a ) {}
 
 		std::vector< ast::ptr< ast::Expr > > next(
-			InitExpander_new::IndexList & indices
+			InitExpander::IndexList & indices
 		) override {
 			if ( ! arg ) return {};
 
@@ -236,40 +236,40 @@ namespace {
 		}
 
 		ast::ptr< ast::Stmt > buildListInit(
-			ast::UntypedExpr *, InitExpander_new::IndexList &
+			ast::UntypedExpr *, InitExpander::IndexList &
 		) override {
 			return {};
 		}
 	};
 } // anonymous namespace
 
-InitExpander_new::InitExpander_new( const ast::Init * init )
-: expander( new InitImpl_new{ init } ), crnt(), indices() {}
+InitExpander::InitExpander( const ast::Init * init )
+: expander( new InitImpl{ init } ), crnt(), indices() {}
 
-InitExpander_new::InitExpander_new( const ast::Expr * expr )
-: expander( new ExprImpl_new{ expr } ), crnt(), indices() {}
+InitExpander::InitExpander( const ast::Expr * expr )
+: expander( new ExprImpl{ expr } ), crnt(), indices() {}
 
-std::vector< ast::ptr< ast::Expr > > InitExpander_new::operator* () { return crnt; }
+std::vector< ast::ptr< ast::Expr > > InitExpander::operator* () { return crnt; }
 
-InitExpander_new & InitExpander_new::operator++ () {
+InitExpander & InitExpander::operator++ () {
 	crnt = expander->next( indices );
 	return *this;
 }
 
 /// builds statement which has the same semantics as a C-style list initializer (for array
 /// initializers) using callExpr as the base expression to perform initialization
-ast::ptr< ast::Stmt > InitExpander_new::buildListInit( ast::UntypedExpr * callExpr ) {
+ast::ptr< ast::Stmt > InitExpander::buildListInit( ast::UntypedExpr * callExpr ) {
 	return expander->buildListInit( callExpr, indices );
 }
 
-void InitExpander_new::addArrayIndex( const ast::Expr * index, const ast::Expr * dimension ) {
+void InitExpander::addArrayIndex( const ast::Expr * index, const ast::Expr * dimension ) {
 	indices.emplace_back( index );
 	indices.emplace_back( dimension );
 }
 
-void InitExpander_new::clearArrayIndices() { indices.clear(); }
+void InitExpander::clearArrayIndices() { indices.clear(); }
 
-bool InitExpander_new::addReference() {
+bool InitExpander::addReference() {
 	for ( ast::ptr< ast::Expr > & expr : crnt ) {
 		expr = new ast::AddressExpr{ expr };
 	}
@@ -307,11 +307,11 @@ bool InitExpander_new::addReference() {
 		&& ! dynamic_cast< const ast::FunctionType * >( type ) && ! Tuples::isTtype( type );
 	}
 
-	struct CallFinder_new final {
+	struct CallFinder final {
 		std::vector< const ast::Expr * > matches;
 		const std::vector< std::string > names;
 
-		CallFinder_new( std::vector< std::string > && ns ) : matches(), names( std::move(ns) ) {}
+		CallFinder( std::vector< std::string > && ns ) : matches(), names( std::move(ns) ) {}
 
 		void handleCallExpr( const ast::Expr * expr ) {
 			std::string fname = getFunctionName( expr );
@@ -325,7 +325,7 @@ bool InitExpander_new::addReference() {
 	};
 
 	std::vector< const ast::Expr * > collectCtorDtorCalls( const ast::Stmt * stmt ) {
-		ast::Pass< CallFinder_new > finder{ std::vector< std::string >{ "?{}", "^?{}" } };
+		ast::Pass< CallFinder > finder{ std::vector< std::string >{ "?{}", "^?{}" } };
 		maybe_accept( stmt, finder );
 		return std::move( finder.core.matches );
 	}
@@ -380,7 +380,7 @@ bool InitExpander_new::addReference() {
 		return app;
 	}
 
-	struct ConstExprChecker_new : public ast::WithShortCircuiting {
+	struct ConstExprChecker : public ast::WithShortCircuiting {
 		// most expressions are not const expr
 		void previsit( const ast::Expr * ) { result = false; visit_children = false; }
 
@@ -425,7 +425,7 @@ bool InitExpander_new::addReference() {
 
 	bool isConstExpr( const ast::Expr * expr ) {
 		if ( expr ) {
-			ast::Pass<ConstExprChecker_new> checker;
+			ast::Pass<ConstExprChecker> checker;
 			expr->accept( checker );
 			return checker.core.result;
 		}
@@ -434,7 +434,7 @@ bool InitExpander_new::addReference() {
 
 	bool isConstExpr( const ast::Init * init ) {
 		if ( init ) {
-			ast::Pass<ConstExprChecker_new> checker;
+			ast::Pass<ConstExprChecker> checker;
 			init->accept( checker );
 			return checker.core.result;
 		} // if
@@ -485,4 +485,4 @@ bool isCopyFunction( const ast::FunctionDecl * decl ) {
 		}));
 	}
 
-}
+} // namespace InitTweak

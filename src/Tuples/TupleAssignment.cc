@@ -64,11 +64,11 @@ namespace {
 	}
 
 	/// Dispatcher for tuple (multiple and mass) assignment operations
-	class TupleAssignSpotter_new final {
+	class TupleAssignSpotter final {
 		/// Actually finds tuple assignment operations, by subclass
 		struct Matcher {
 			ResolvExpr::CandidateList lhs, rhs;
-			TupleAssignSpotter_new & spotter;
+			TupleAssignSpotter & spotter;
 			CodeLocation location;
 			ResolvExpr::Cost baseCost;
 			std::vector< ast::ptr< ast::ObjectDecl > > tmpDecls;
@@ -83,7 +83,7 @@ namespace {
 			}
 
 			Matcher(
-				TupleAssignSpotter_new & s, const CodeLocation & loc,
+				TupleAssignSpotter & s, const CodeLocation & loc,
 				const ResolvExpr::CandidateList & l, const ResolvExpr::CandidateList & r )
 			: lhs( l ), rhs( r ), spotter( s ), location( loc ),
 			  baseCost( ResolvExpr::sumCost( lhs ) + ResolvExpr::sumCost( rhs ) ), tmpDecls(),
@@ -160,7 +160,7 @@ namespace {
 		/// Finds mass-assignment operations
 		struct MassAssignMatcher final : public Matcher {
 			MassAssignMatcher(
-				TupleAssignSpotter_new & s, const CodeLocation & loc,
+				TupleAssignSpotter & s, const CodeLocation & loc,
 				const ResolvExpr::CandidateList & l, const ResolvExpr::CandidateList & r )
 			: Matcher( s, loc, l, r ) {}
 
@@ -190,7 +190,7 @@ namespace {
 		/// Finds multiple-assignment operations
 		struct MultipleAssignMatcher final : public Matcher {
 			MultipleAssignMatcher(
-				TupleAssignSpotter_new & s, const CodeLocation & loc,
+				TupleAssignSpotter & s, const CodeLocation & loc,
 				const ResolvExpr::CandidateList & l, const ResolvExpr::CandidateList & r )
 			: Matcher( s, loc, l, r ) {}
 
@@ -239,7 +239,7 @@ namespace {
 		std::unique_ptr< Matcher > matcher;
 
 	public:
-		TupleAssignSpotter_new( ResolvExpr::CandidateFinder & f )
+		TupleAssignSpotter( ResolvExpr::CandidateFinder & f )
 		: crntFinder( f ), fname(), matcher() {}
 
 		// find left- and right-hand-sides for mass or multiple assignment
@@ -376,7 +376,7 @@ void handleTupleAssignment(
 	ResolvExpr::CandidateFinder & finder, const ast::UntypedExpr * assign,
 	std::vector< ResolvExpr::CandidateFinder > & args
 ) {
-	TupleAssignSpotter_new spotter{ finder };
+	TupleAssignSpotter spotter{ finder };
 	spotter.spot( assign, args );
 }
 

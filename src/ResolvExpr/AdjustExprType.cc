@@ -22,12 +22,12 @@
 namespace ResolvExpr {
 
 namespace {
-	class AdjustExprType_new final : public ast::WithShortCircuiting {
+	class AdjustExprType final : public ast::WithShortCircuiting {
 		const ast::SymbolTable & symtab;
 	public:
 		const ast::TypeEnvironment & tenv;
 
-		AdjustExprType_new( const ast::TypeEnvironment & e, const ast::SymbolTable & syms )
+		AdjustExprType( const ast::TypeEnvironment & e, const ast::SymbolTable & syms )
 		: symtab( syms ), tenv( e ) {}
 
 		void previsit( const ast::VoidType * ) { visit_children = false; }
@@ -74,7 +74,7 @@ namespace {
 const ast::Type * adjustExprType(
 	const ast::Type * type, const ast::TypeEnvironment & env, const ast::SymbolTable & symtab
 ) {
-	ast::Pass<AdjustExprType_new> adjuster{ env, symtab };
+	ast::Pass<AdjustExprType> adjuster{ env, symtab };
 	return type->accept( adjuster );
 }
 

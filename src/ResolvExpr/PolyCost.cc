@@ -20,14 +20,13 @@
 
 namespace ResolvExpr {
 
-// TODO: When the old PolyCost is torn out get rid of the _new suffix.
-class PolyCost_new {
+class PolyCost {
 	const ast::SymbolTable &symtab;
 public:
 	int result;
 	const ast::TypeEnvironment &env_;
 
-	PolyCost_new( const ast::SymbolTable & symtab, const ast::TypeEnvironment & env ) 
+	PolyCost( const ast::SymbolTable & symtab, const ast::TypeEnvironment & env ) 
 	: symtab( symtab ), result( 0 ), env_( env ) {}
 
 	void previsit( const ast::TypeInstType * type ) {
@@ -48,7 +47,7 @@ public:
 int polyCost(
 	const ast::Type * type, const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
 ) {
-	ast::Pass<PolyCost_new> costing( symtab, env );
+	ast::Pass<PolyCost> costing( symtab, env );
 	type->accept( costing );
 	return (costing.core.result > 0) ? 1 : 0;
 }

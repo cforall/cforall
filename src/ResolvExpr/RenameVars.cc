@@ -100,7 +100,7 @@ namespace {
 	// Global State:
 	RenamingData renaming;
 
-	struct RenameVars_new : public ast::PureVisitor /*: public ast::WithForallSubstitutor*/ {
+	struct RenameVars final : public ast::PureVisitor /*: public ast::WithForallSubstitutor*/ {
 		RenameMode mode;
 
 		const ast::FunctionType * previsit( const ast::FunctionType * type ) {
@@ -131,7 +131,7 @@ namespace {
 } // namespace
 
 const ast::Type * renameTyVars( const ast::Type * t, RenameMode mode, bool reset ) {
-	ast::Pass<RenameVars_new> renamer;
+	ast::Pass<RenameVars> renamer;
 	renamer.core.mode = mode;
 	if (mode == GEN_USAGE && reset) {
 		renaming.nextUsage();

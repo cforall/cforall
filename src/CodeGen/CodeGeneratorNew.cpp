@@ -23,7 +23,7 @@
 
 namespace CodeGen {
 
-int CodeGenerator_new::tabsize = 4;
+int CodeGenerator::tabsize = 4;
 
 // The kinds of statements that should be followed by whitespace.
 static bool wantSpacing( ast::Stmt const * stmt ) {
@@ -34,27 +34,27 @@ static bool wantSpacing( ast::Stmt const * stmt ) {
 		|| dynamic_cast<ast::SwitchStmt const *>( stmt );
 }
 
-void CodeGenerator_new::extension( ast::Expr const * expr ) {
+void CodeGenerator::extension( ast::Expr const * expr ) {
 	if ( expr->extension ) output << "__extension__ ";
 }
 
-void CodeGenerator_new::extension( ast::Decl const * decl ) {
+void CodeGenerator::extension( ast::Decl const * decl ) {
 	if ( decl->extension ) output << "__extension__ ";
 }
 
-void CodeGenerator_new::asmName( ast::DeclWithType const * decl ) {
+void CodeGenerator::asmName( ast::DeclWithType const * decl ) {
 	if ( auto asmName = decl->asmName.as<ast::ConstantExpr>() ) {
 		output << " asm ( " << asmName->rep << " )";
 	}
 }
 
-CodeGenerator_new::LabelPrinter & CodeGenerator_new::LabelPrinter::operator()(
+CodeGenerator::LabelPrinter & CodeGenerator::LabelPrinter::operator()(
 		std::vector<ast::Label> const & l ) {
 	labels = &l;
 	return *this;
 }
 
-std::ostream & CodeGenerator_new::LabelPrinter::operator()( std::ostream & output ) const {
+std::ostream & CodeGenerator::LabelPrinter::operator()( std::ostream & output ) const {
 	const std::vector<ast::Label> & labels = *this->labels;
 	for ( const ast::Label & label : labels ) {
 		output << label.name + ": ";
@@ -65,7 +65,7 @@ std::ostream & CodeGenerator_new::LabelPrinter::operator()( std::ostream & outpu
 
 // Using updateLocation at the beginning of a node and endl within a node
 // should become the method of formating.
-void CodeGenerator_new::updateLocation( CodeLocation const & to ) {
+void CodeGenerator::updateLocation( CodeLocation const & to ) {
 	// Skip if linemarks shouldn't appear or if location is unset.
 	if ( !options.lineMarks || to.isUnset() ) return;
 
@@ -85,22 +85,22 @@ void CodeGenerator_new::updateLocation( CodeLocation const & to ) {
 	output << std::flush;
 }
 
-void CodeGenerator_new::updateLocation( ast::ParseNode const * to ) {
+void CodeGenerator::updateLocation( ast::ParseNode const * to ) {
 	updateLocation( to->location );
 }
 
-std::ostream & CodeGenerator_new::LineEnder::operator()( std::ostream & os ) const {
+std::ostream & CodeGenerator::LineEnder::operator()( std::ostream & os ) const {
 	os << "\n" << std::flush;
 	cg.currentLocation.first_line++;
 	return os;
 }
 
-CodeGenerator_new::CodeGenerator_new( std::ostream & os, const Options & options ) :
-		indent( 0, CodeGenerator_new::tabsize ), output( os ),
+CodeGenerator::CodeGenerator( std::ostream & os, const Options & options ) :
+		indent( 0, CodeGenerator::tabsize ), output( os ),
 		options( options ), printLabels( *this ), endl( *this )
 {}
 
-std::string CodeGenerator_new::mangleName( ast::DeclWithType const * decl ) {
+std::string CodeGenerator::mangleName( ast::DeclWithType const * decl ) {
 	// GCC builtins should always be printed unmangled.
 	if ( options.pretty || decl->linkage.is_gcc_builtin ) {
 		return decl->name;
@@ -111,7 +111,7 @@ std::string CodeGenerator_new::mangleName( ast::DeclWithType const * decl ) {
 	}
 }
 
-void CodeGenerator_new::genAttributes(
+void CodeGenerator::genAttributes(
 		const std::vector<ast::ptr<ast::Attribute>> & attributes ) {
 	if ( attributes.empty() ) return;
 	output << "__attribute__ ((";
@@ -128,24 +128,24 @@ void CodeGenerator_new::genAttributes(
 	output << ")) ";
 }
 
-void CodeGenerator_new::previsit( ast::Node const * ) {
+void CodeGenerator::previsit( ast::Node const * ) {
 	// All traversal is manual.
 	// TODO: Which means the ast::Pass is just providing a default no visit?
 	visit_children = false;
 }
 
-void CodeGenerator_new::previsit( ast::ParseNode const * node ) {
+void CodeGenerator::previsit( ast::ParseNode const * node ) {
 	previsit( (ast::Node const *)node );
 	updateLocation( node );
 }
 
-void CodeGenerator_new::postvisit( ast::Node const * node ) {
+void CodeGenerator::postvisit( ast::Node const * node ) {
 	std::stringstream ss;
 	ast::print( ss, node );
 	assertf( false, "Unhandled node reached in CodeGenerator: %s", ss.str().c_str() );
 }
 
-void CodeGenerator_new::previsit( ast::Expr const * expr ) {
+void CodeGenerator::previsit( ast::Expr const * expr ) {
 	previsit( (ast::ParseNode const *)expr );
 	GuardAction( [this, expr](){
 		if ( options.printExprTypes && expr->result ) {
@@ -154,7 +154,7 @@ void CodeGenerator_new::previsit( ast::Expr const * expr ) {
 	} );
 }
 
-void CodeGenerator_new::postvisit( ast::FunctionDecl const * decl ) {
+void CodeGenerator::postvisit( ast::FunctionDecl const * decl ) {
 	// Deleted decls should never be used, so don't print them in C.
 	if ( decl->isDeleted && options.genC ) return;
 	extension( decl );
@@ -167,7 +167,7 @@ void CodeGenerator_new::postvisit( ast::FunctionDecl const * decl ) {
 	subOptions.anonymousUnused = decl->stmts;
 
 	std::ostringstream acc;
-	ast::Pass<CodeGenerator_new> subCG( acc, subOptions );
+	ast::Pass<CodeGenerator> subCG( acc, subOptions );
 	// Add the forall clause.
 	// TODO: These probably should be removed by now and the assert used.
 	if ( !decl->type_params.empty() && !options.genC ) {
@@ -212,8 +212,7 @@ void CodeGenerator_new::postvisit( ast::FunctionDecl const * decl ) {
 	}
 }
 
-//void CodeGenerator_new::postvisit( ast::ObjectDecl const * decl_ ) {
-ast::ObjectDecl const * CodeGenerator_new::postvisit(
+ast::ObjectDecl const * CodeGenerator::postvisit(
 		ast::ObjectDecl const * decl ) {
 	// Deleted decls should never be used, so don't print them in C.
 	if ( decl->isDeleted && options.genC ) return decl;
@@ -261,13 +260,13 @@ ast::ObjectDecl const * CodeGenerator_new::postvisit(
 	return decl;
 }
 
-void CodeGenerator_new::handleStorageClass( ast::DeclWithType const * decl ) {
+void CodeGenerator::handleStorageClass( ast::DeclWithType const * decl ) {
 	if ( decl->storage.any() ) {
 		ast::print( output, decl->storage );
 	}
 }
 
-void CodeGenerator_new::handleAggregate(
+void CodeGenerator::handleAggregate(
 		ast::AggregateDecl const * decl, std::string const & kind ) {
 	if ( !decl->params.empty() && !options.genC ) {
 		output << "forall(";
@@ -295,12 +294,12 @@ void CodeGenerator_new::handleAggregate(
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::StructDecl const * decl ) {
+void CodeGenerator::postvisit( ast::StructDecl const * decl ) {
 	extension( decl );
 	handleAggregate( decl, "struct " );
 }
 
-void CodeGenerator_new::postvisit( ast::UnionDecl const * decl ) {
+void CodeGenerator::postvisit( ast::UnionDecl const * decl ) {
 	extension( decl );
 	handleAggregate( decl, "union " );
 }
@@ -331,7 +330,7 @@ inline void genEnumInitializer( ast::Pass<pass_type> * visitor,
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::EnumDecl const * decl ) {
+void CodeGenerator::postvisit( ast::EnumDecl const * decl ) {
 	extension( decl );
 	auto members = decl->members;
 	if ( decl->base && !members.empty() ) {
@@ -369,18 +368,18 @@ void CodeGenerator_new::postvisit( ast::EnumDecl const * decl ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::TraitDecl const * decl ) {
+void CodeGenerator::postvisit( ast::TraitDecl const * decl ) {
 	assertf( !options.genC, "TraitDecls should not reach code generation." );
 	extension( decl );
 	handleAggregate( decl, "trait " );
 }
 
-void CodeGenerator_new::postvisit( ast::TypedefDecl const * decl ) {
+void CodeGenerator::postvisit( ast::TypedefDecl const * decl ) {
 	assertf( !options.genC, "Typedefs should not reach code generation." );
 	output << "typedef " << genType( decl->base, decl->name, options ) << endl;
 }
 
-void CodeGenerator_new::postvisit( ast::TypeDecl const * decl ) {
+void CodeGenerator::postvisit( ast::TypeDecl const * decl ) {
 	assertf( !options.genC, "TypeDecls should not reach code generation." );
 	output << decl->genTypeString() << " " << decl->name;
 	if ( decl->sized ) {
@@ -396,7 +395,7 @@ void CodeGenerator_new::postvisit( ast::TypeDecl const * decl ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::StaticAssertDecl const * decl ) {
+void CodeGenerator::postvisit( ast::StaticAssertDecl const * decl ) {
 	output << "_Static_assert(";
 	decl->cond->accept( *visitor );
 	output << ", ";
@@ -404,7 +403,7 @@ void CodeGenerator_new::postvisit( ast::StaticAssertDecl const * decl ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::Designation const * designation ) {
+void CodeGenerator::postvisit( ast::Designation const * designation ) {
 	auto designators = designation->designators;
 	if ( 0 == designators.size() ) return;
 	for ( ast::ptr<ast::Expr> const & des : designators ) {
@@ -422,11 +421,11 @@ void CodeGenerator_new::postvisit( ast::Designation const * designation ) {
 	output << " = ";
 }
 
-void CodeGenerator_new::postvisit( ast::SingleInit const * init ) {
+void CodeGenerator::postvisit( ast::SingleInit const * init ) {
 	init->value->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::ListInit const * init ) {
+void CodeGenerator::postvisit( ast::ListInit const * init ) {
 	auto initBegin = init->initializers.begin();
 	auto initEnd = init->initializers.end();
 	auto desigBegin = init->designations.begin();
@@ -445,7 +444,7 @@ void CodeGenerator_new::postvisit( ast::ListInit const * init ) {
 		"Initializers and designators not the same length. %s", toCString( init ) );
 }
 
-void CodeGenerator_new::postvisit( ast::ConstructorInit const * init ) {
+void CodeGenerator::postvisit( ast::ConstructorInit const * init ) {
 	assertf( !options.genC, "ConstructorInit nodes should not reach code generation." );
 	// This isn't actual code, but labels the constructor/destructor pairs.
 	output << "<ctorinit>{" << endl << ++indent << "ctor: ";
@@ -455,7 +454,7 @@ void CodeGenerator_new::postvisit( ast::ConstructorInit const * init ) {
 	output << endl << --indent << "}";
 }
 
-void CodeGenerator_new::postvisit( ast::ApplicationExpr const * expr ) {
+void CodeGenerator::postvisit( ast::ApplicationExpr const * expr ) {
 	extension( expr );
 	if ( auto var = expr->func.as<ast::VariableExpr>() ) {
 		const OperatorInfo * opInfo;
@@ -549,7 +548,7 @@ void CodeGenerator_new::postvisit( ast::ApplicationExpr const * expr ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::UntypedExpr const * expr ) {
+void CodeGenerator::postvisit( ast::UntypedExpr const * expr ) {
 	extension( expr );
 	if ( auto name = expr->func.as<ast::NameExpr>() ) {
 		if ( const OperatorInfo * opInfo = operatorLookup( name->name ) ) {
@@ -637,13 +636,13 @@ void CodeGenerator_new::postvisit( ast::UntypedExpr const * expr ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::RangeExpr const * expr ) {
+void CodeGenerator::postvisit( ast::RangeExpr const * expr ) {
 	expr->low->accept( *visitor );
 	output << " ... ";
 	expr->high->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::NameExpr const * expr ) {
+void CodeGenerator::postvisit( ast::NameExpr const * expr ) {
 	extension( expr );
 	if ( const OperatorInfo * opInfo = operatorLookup( expr->name ) ) {
 		if ( OT_CONSTANT == opInfo->type ) {
@@ -656,24 +655,24 @@ void CodeGenerator_new::postvisit( ast::NameExpr const * expr ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::DimensionExpr const * expr ) {
+void CodeGenerator::postvisit( ast::DimensionExpr const * expr ) {
 	extension( expr );
 	output << "/*non-type*/" << expr->name;
 }
 
-void CodeGenerator_new::postvisit( ast::AddressExpr const * expr ) {
+void CodeGenerator::postvisit( ast::AddressExpr const * expr ) {
 	extension( expr );
 	output << "(&";
 	expr->arg->accept( *visitor );
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::LabelAddressExpr const * expr ) {
+void CodeGenerator::postvisit( ast::LabelAddressExpr const * expr ) {
 	extension( expr );
 	output << "(&&" << expr->arg << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::CastExpr const * expr ) {
+void CodeGenerator::postvisit( ast::CastExpr const * expr ) {
 	extension( expr );
 	output << "(";
 	if ( expr->result->isVoid() ) {
@@ -687,7 +686,7 @@ void CodeGenerator_new::postvisit( ast::CastExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::KeywordCastExpr const * expr ) {
+void CodeGenerator::postvisit( ast::KeywordCastExpr const * expr ) {
 	assertf( !options.genC, "KeywordCastExpr should not reach code generation." );
 	extension( expr );
 	output << "((" << expr->targetString() << " &)";
@@ -695,7 +694,7 @@ void CodeGenerator_new::postvisit( ast::KeywordCastExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::VirtualCastExpr const * expr ) {
+void CodeGenerator::postvisit( ast::VirtualCastExpr const * expr ) {
 	assertf( !options.genC, "VirtualCastExpr should not reach code generation." );
 	extension( expr );
 	// TODO: Is this busted?
@@ -704,7 +703,7 @@ void CodeGenerator_new::postvisit( ast::VirtualCastExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::UntypedMemberExpr const * expr ) {
+void CodeGenerator::postvisit( ast::UntypedMemberExpr const * expr ) {
 	assertf( !options.genC, "UntypedMemberExpr should not reach code generation." );
 	extension( expr );
 	expr->aggregate->accept( *visitor );
@@ -712,13 +711,13 @@ void CodeGenerator_new::postvisit( ast::UntypedMemberExpr const * expr ) {
 	expr->member->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::MemberExpr const * expr ) {
+void CodeGenerator::postvisit( ast::MemberExpr const * expr ) {
 	extension( expr );
 	expr->aggregate->accept( *visitor );
 	output << "." << mangleName( expr->member );
 }
 
-void CodeGenerator_new::postvisit( ast::VariableExpr const * expr ) {
+void CodeGenerator::postvisit( ast::VariableExpr const * expr ) {
 	extension( expr );
 	const OperatorInfo * opInfo;
 	if ( dynamic_cast<ast::ZeroType const *>( expr->var->get_type() ) ) {
@@ -732,12 +731,12 @@ void CodeGenerator_new::postvisit( ast::VariableExpr const * expr ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::ConstantExpr const * expr ) {
+void CodeGenerator::postvisit( ast::ConstantExpr const * expr ) {
 	extension( expr );
 	output << expr->rep;
 }
 
-void CodeGenerator_new::postvisit( ast::SizeofExpr const * expr ) {
+void CodeGenerator::postvisit( ast::SizeofExpr const * expr ) {
 	extension( expr );
 	output << "sizeof(";
 	if ( expr->type ) {
@@ -748,7 +747,7 @@ void CodeGenerator_new::postvisit( ast::SizeofExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::AlignofExpr const * expr ) {
+void CodeGenerator::postvisit( ast::AlignofExpr const * expr ) {
 	// Using the GCC extension to avoid changing the std to C11.
 	extension( expr );
 	output << "__alignof__(";
@@ -760,7 +759,7 @@ void CodeGenerator_new::postvisit( ast::AlignofExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::UntypedOffsetofExpr const * expr ) {
+void CodeGenerator::postvisit( ast::UntypedOffsetofExpr const * expr ) {
 	assertf( !options.genC, "UntypedOffsetofExpr should not reach code generation." );
 	output << "offsetof(";
 	output << genType( expr->type, "", options );
@@ -768,7 +767,7 @@ void CodeGenerator_new::postvisit( ast::UntypedOffsetofExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::OffsetofExpr const * expr ) {
+void CodeGenerator::postvisit( ast::OffsetofExpr const * expr ) {
 	// Use GCC builtin
 	output << "__builtin_offsetof(";
 	output << genType( expr->type, "", options );
@@ -776,12 +775,12 @@ void CodeGenerator_new::postvisit( ast::OffsetofExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::OffsetPackExpr const * expr ) {
+void CodeGenerator::postvisit( ast::OffsetPackExpr const * expr ) {
 	assertf( !options.genC, "OffsetPackExpr should not reach code generation." );
 	output << "__CFA_offsetpack(" << genType( expr->type, "", options ) << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::LogicalExpr const * expr ) {
+void CodeGenerator::postvisit( ast::LogicalExpr const * expr ) {
 	extension( expr );
 	output << "(";
 	expr->arg1->accept( *visitor );
@@ -790,7 +789,7 @@ void CodeGenerator_new::postvisit( ast::LogicalExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::ConditionalExpr const * expr ) {
+void CodeGenerator::postvisit( ast::ConditionalExpr const * expr ) {
 	extension( expr );
 	output << "(";
 	expr->arg1->accept( *visitor );
@@ -801,7 +800,7 @@ void CodeGenerator_new::postvisit( ast::ConditionalExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::CommaExpr const * expr ) {
+void CodeGenerator::postvisit( ast::CommaExpr const * expr ) {
 	extension( expr );
 	output << "(";
 	if ( options.genC ) {
@@ -817,12 +816,12 @@ void CodeGenerator_new::postvisit( ast::CommaExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::TupleAssignExpr const * expr ) {
+void CodeGenerator::postvisit( ast::TupleAssignExpr const * expr ) {
 	assertf( !options.genC, "TupleAssignExpr should not reach code generation." );
 	expr->stmtExpr->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::UntypedTupleExpr const * expr ) {
+void CodeGenerator::postvisit( ast::UntypedTupleExpr const * expr ) {
 	assertf( !options.genC, "UntypedTupleExpr should not reach code generation." );
 	extension( expr );
 	output << "[";
@@ -830,7 +829,7 @@ void CodeGenerator_new::postvisit( ast::UntypedTupleExpr const * expr ) {
 	output << "]";
 }
 
-void CodeGenerator_new::postvisit( ast::TupleExpr const * expr ) {
+void CodeGenerator::postvisit( ast::TupleExpr const * expr ) {
 	assertf( !options.genC, "TupleExpr should not reach code generation." );
 	extension( expr );
 	output << "[";
@@ -838,21 +837,21 @@ void CodeGenerator_new::postvisit( ast::TupleExpr const * expr ) {
 	output << "]";
 }
 
-void CodeGenerator_new::postvisit( ast::TupleIndexExpr const * expr ) {
+void CodeGenerator::postvisit( ast::TupleIndexExpr const * expr ) {
 	assertf( !options.genC, "TupleIndexExpr should not reach code generation." );
 	extension( expr );
 	expr->tuple->accept( *visitor );
 	output << "." << expr->index;
 }
 
-void CodeGenerator_new::postvisit( ast::TypeExpr const * expr ) {
+void CodeGenerator::postvisit( ast::TypeExpr const * expr ) {
 	// TODO: Should there be an assertion there?
 	if ( !options.genC ) {
 		output << genType( expr->type, "", options );
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::AsmExpr const * expr ) {
+void CodeGenerator::postvisit( ast::AsmExpr const * expr ) {
 	if ( !expr->inout.empty() ) {
 		output << "[ " << expr->inout << " ] ";
 	}
@@ -862,21 +861,21 @@ void CodeGenerator_new::postvisit( ast::AsmExpr const * expr ) {
 	output << " )";
 }
 
-void CodeGenerator_new::postvisit( ast::CompoundLiteralExpr const * expr ) {
+void CodeGenerator::postvisit( ast::CompoundLiteralExpr const * expr ) {
 	//assert( expr->result && dynamic_cast<ast::ListInit const *>( expr->init ) );
 	assert( expr->result && expr->init.as<ast::ListInit>() );
 	output << "(" << genType( expr->result, "", options ) << ")";
 	expr->init->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::UniqueExpr const * expr ) {
+void CodeGenerator::postvisit( ast::UniqueExpr const * expr ) {
 	assertf( !options.genC, "UniqueExpr should not reach code generation." );
 	output << "unq<" << expr->id << ">{ ";
 	expr->expr->accept( *visitor );
 	output << " }";
 }
 
-void CodeGenerator_new::postvisit( ast::StmtExpr const * expr ) {
+void CodeGenerator::postvisit( ast::StmtExpr const * expr ) {
 	auto stmts = expr->stmts->kids;
 	output << "({" << endl;
 	++indent;
@@ -904,22 +903,22 @@ void CodeGenerator_new::postvisit( ast::StmtExpr const * expr ) {
 	output << indent << "})";
 }
 
-void CodeGenerator_new::postvisit( ast::ConstructorExpr const * expr ) {
+void CodeGenerator::postvisit( ast::ConstructorExpr const * expr ) {
 	assertf( !options.genC, "ConstructorExpr should not reach code generation." );
 	expr->callExpr->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::DeletedExpr const * expr ) {
+void CodeGenerator::postvisit( ast::DeletedExpr const * expr ) {
 	assertf( !options.genC, "DeletedExpr should not reach code generation." );
 	expr->expr->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::DefaultArgExpr const * expr ) {
+void CodeGenerator::postvisit( ast::DefaultArgExpr const * expr ) {
 	assertf( !options.genC, "DefaultArgExpr should not reach code generation." );
 	expr->expr->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::GenericExpr const * expr ) {
+void CodeGenerator::postvisit( ast::GenericExpr const * expr ) {
 	assertf( !options.genC, "GenericExpr should not reach code generation." );
 	output << "_Generic(";
 	expr->control->accept( *visitor );
@@ -939,7 +938,7 @@ void CodeGenerator_new::postvisit( ast::GenericExpr const * expr ) {
 	output << ")";
 }
 
-void CodeGenerator_new::postvisit( ast::CompoundStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::CompoundStmt const * stmt ) {
 	output << "{" << endl;
 
 	++indent;
@@ -954,7 +953,7 @@ void CodeGenerator_new::postvisit( ast::CompoundStmt const * stmt ) {
 	output << indent << "}";
 }
 
-void CodeGenerator_new::postvisit( ast::ExprStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::ExprStmt const * stmt ) {
 	assert( stmt );
 	// Cast the top-level expression to void to reduce gcc warnings.
 	if ( options.genC ) {
@@ -966,7 +965,7 @@ void CodeGenerator_new::postvisit( ast::ExprStmt const * stmt ) {
 	output << ";";
 }
 
-void CodeGenerator_new::postvisit( ast::AsmStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::AsmStmt const * stmt ) {
 	output << "asm ";
 	if ( stmt->isVolatile ) output << "volatile ";
 	if ( !stmt->gotoLabels.empty() ) output << "goto ";
@@ -990,7 +989,7 @@ void CodeGenerator_new::postvisit( ast::AsmStmt const * stmt ) {
 	output << " );";
 }
 
-void CodeGenerator_new::postvisit( ast::AsmDecl const * decl ) {
+void CodeGenerator::postvisit( ast::AsmDecl const * decl ) {
 	output << "asm ";
 	ast::AsmStmt const * stmt = decl->stmt;
 	output << "( ";
@@ -998,17 +997,17 @@ void CodeGenerator_new::postvisit( ast::AsmDecl const * decl ) {
 	output << " )";
 }
 
-void CodeGenerator_new::postvisit( ast::DirectiveDecl const * decl ) {
+void CodeGenerator::postvisit( ast::DirectiveDecl const * decl ) {
 	// endl prevents spaces before the directive.
 	output << endl << decl->stmt->directive;
 }
 
-void CodeGenerator_new::postvisit( ast::DirectiveStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::DirectiveStmt const * stmt ) {
 	// endl prevents spaces before the directive.
 	output << endl << stmt->directive;
 }
 
-void CodeGenerator_new::postvisit( ast::IfStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::IfStmt const * stmt ) {
 	output << "if ( ";
 	stmt->cond->accept( *visitor );
 	output << " ) ";
@@ -1021,7 +1020,7 @@ void CodeGenerator_new::postvisit( ast::IfStmt const * stmt ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::SwitchStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::SwitchStmt const * stmt ) {
 	output << "switch ( ";
 	stmt->cond->accept( *visitor );
 	output << " ) ";
@@ -1035,7 +1034,7 @@ void CodeGenerator_new::postvisit( ast::SwitchStmt const * stmt ) {
 	output << indent << "}";
 }
 
-void CodeGenerator_new::postvisit( ast::CaseClause const * clause ) {
+void CodeGenerator::postvisit( ast::CaseClause const * clause ) {
 	updateLocation( clause );
 	output << indent;
 	if ( clause->isDefault() ) {
@@ -1055,7 +1054,7 @@ void CodeGenerator_new::postvisit( ast::CaseClause const * clause ) {
 	--indent;
 }
 
-void CodeGenerator_new::postvisit( ast::BranchStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::BranchStmt const * stmt ) {
 	switch ( stmt->kind ) {
 	case ast::BranchStmt::Goto:
 		if ( !stmt->target.empty() ) {
@@ -1090,13 +1089,13 @@ void CodeGenerator_new::postvisit( ast::BranchStmt const * stmt ) {
 	output << ";";
 }
 
-void CodeGenerator_new::postvisit( ast::ReturnStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::ReturnStmt const * stmt ) {
 	output << "return ";
 	if ( stmt->expr ) stmt->expr->accept( *visitor );
 	output << ";";
 }
 
-void CodeGenerator_new::postvisit( ast::ThrowStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::ThrowStmt const * stmt ) {
 	assertf( !options.genC, "ThrowStmt should not reach code generation." );
 
 	output << ((stmt->kind == ast::Terminate) ? "throw" : "throwResume");
@@ -1111,7 +1110,7 @@ void CodeGenerator_new::postvisit( ast::ThrowStmt const * stmt ) {
 	output << ";";
 }
 
-void CodeGenerator_new::postvisit( ast::CatchClause const * stmt ) {
+void CodeGenerator::postvisit( ast::CatchClause const * stmt ) {
 	assertf( !options.genC, "CatchClause should not reach code generation." );
 
 	output << ((stmt->kind == ast::Terminate) ? "catch" : "catchResume");
@@ -1125,7 +1124,7 @@ void CodeGenerator_new::postvisit( ast::CatchClause const * stmt ) {
 	stmt->body->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::WaitForStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::WaitForStmt const * stmt ) {
 	assertf( !options.genC, "WaitforStmt should not reach code generation." );
 
 	bool first = true;
@@ -1171,7 +1170,7 @@ void CodeGenerator_new::postvisit( ast::WaitForStmt const * stmt ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::WithStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::WithStmt const * stmt ) {
 	assertf( !options.genC, "WithStmt should not reach code generation." );
 
 	output << "with ( ";
@@ -1180,7 +1179,7 @@ void CodeGenerator_new::postvisit( ast::WithStmt const * stmt ) {
 	stmt->stmt->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::WhileDoStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::WhileDoStmt const * stmt ) {
 	if ( stmt->isDoWhile ) {
 		output << "do";
 	} else {
@@ -1190,7 +1189,7 @@ void CodeGenerator_new::postvisit( ast::WhileDoStmt const * stmt ) {
 	}
 	output << " ";
 
-	output << CodeGenerator_new::printLabels( stmt->body->labels );
+	output << CodeGenerator::printLabels( stmt->body->labels );
 	stmt->body->accept( *visitor );
 
 	output << indent;
@@ -1202,7 +1201,7 @@ void CodeGenerator_new::postvisit( ast::WhileDoStmt const * stmt ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::ForStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::ForStmt const * stmt ) {
 	// Initializer is always hoised so don't generate it.
 	// TODO: Do an assertion check?
 	output << "for (;";
@@ -1225,22 +1224,22 @@ void CodeGenerator_new::postvisit( ast::ForStmt const * stmt ) {
 	}
 }
 
-void CodeGenerator_new::postvisit( ast::NullStmt const * ) {
+void CodeGenerator::postvisit( ast::NullStmt const * ) {
 	output << "/* null statement */ ;";
 }
 
-void CodeGenerator_new::postvisit( ast::DeclStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::DeclStmt const * stmt ) {
 	stmt->decl->accept( *visitor );
 
 	if ( doSemicolon( stmt->decl ) ) output << ";";
 }
 
-void CodeGenerator_new::postvisit( ast::ImplicitCtorDtorStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::ImplicitCtorDtorStmt const * stmt ) {
 	assertf( !options.genC, "ImplicitCtorCtorStmt should not reach code generation." );
 	stmt->callStmt->accept( *visitor );
 }
 
-void CodeGenerator_new::postvisit( ast::MutexStmt const * stmt ) {
+void CodeGenerator::postvisit( ast::MutexStmt const * stmt ) {
 	assertf( !options.genC, "MutexStmt should not reach code generation." );
 	// TODO: But this isn't what a mutex statement looks like.
 	stmt->stmt->accept( *visitor );

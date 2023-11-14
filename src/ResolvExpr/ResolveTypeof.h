@@ -15,10 +15,6 @@
 
 #pragma once
 
-class Type;
-namespace SymTab {
-class Indexer;
-}  // namespace SymTab
 namespace ast {
 	class Type;
 	class ObjectDecl;
@@ -27,11 +23,10 @@ namespace ast {
 namespace ResolvExpr {
 	struct ResolveContext;
 
-	Type *resolveTypeof( Type*, const SymTab::Indexer &indexer );
 	const ast::Type * resolveTypeof( const ast::Type *, const ResolveContext & );
 	const ast::Type * fixArrayType( const ast::Type *, const ResolveContext & );
 	const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ResolveContext & );
-	const ast::ObjectDecl * fixObjectInit( const ast::ObjectDecl * decl , const ResolveContext &);
+	const ast::ObjectDecl * fixObjectInit( const ast::ObjectDecl * decl , const ResolveContext & );
 } // namespace ResolvExpr
 
 // Local Variables: //

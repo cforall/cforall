@@ -16,10 +16,6 @@
 #pragma once
 
 #include <iostream>  // for ostream
-#include <list>      // for list
-
-class BaseSyntaxNode;
-class Declaration;
 
 namespace ast {
 	class TranslationUnit;

@@ -25,7 +25,7 @@ enum LoopDirection { LoopBackward, LoopForward };
 /// Returns a generated call expression to function fname with srcParam and
 /// dstParam. Intended to be used with generated ?=?, ?{}, and ^?{} calls.
 ast::ptr<ast::Stmt> genImplicitCall(
-	InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
 	const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * obj,
 	LoopDirection forward = LoopForward
 );

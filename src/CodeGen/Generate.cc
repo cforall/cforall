@@ -18,7 +18,7 @@
 #include <list>                      // for list
 #include <string>                    // for operator<<
 
-#include "CodeGeneratorNew.hpp"      // for CodeGenerator_new, doSemicolon, ...
+#include "CodeGeneratorNew.hpp"      // for CodeGenerator, doSemicolon, ...
 #include "GenType.h"                 // for genPrettyType
 
 using namespace std;
@@ -31,7 +31,7 @@ namespace {
 	}
 
 	/// Removes various nodes that should not exist in CodeGen.
-	struct TreeCleaner_new {
+	struct TreeCleaner final {
 		ast::CompoundStmt const * previsit( ast::CompoundStmt const * stmt ) {
 			auto mutStmt = ast::mutate( stmt );
 			erase_if( mutStmt->kids, []( ast::Stmt const * stmt ){
@@ -50,9 +50,9 @@ namespace {
 void generate( ast::TranslationUnit & translationUnit, std::ostream & os, bool doIntrinsics,
 		bool pretty, bool generateC, bool lineMarks, bool printExprTypes ) {
 	erase_if( translationUnit.decls, shouldClean );
-	ast::Pass<TreeCleaner_new>::run( translationUnit );
+	ast::Pass<TreeCleaner>::run( translationUnit );
 
-	ast::Pass<CodeGenerator_new> cgv( os,
+	ast::Pass<CodeGenerator> cgv( os,
 			Options( pretty, generateC, lineMarks, printExprTypes ) );
 	for ( auto & decl : translationUnit.decls ) {
 		if ( decl->linkage.is_generatable && (doIntrinsics || !decl->linkage.is_builtin ) ) {

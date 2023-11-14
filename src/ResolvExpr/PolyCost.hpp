@@ -15,10 +15,6 @@
 
 #pragma once
 
-class Type;
-namespace SymTab {
-    class Indexer;
-}
 namespace ast {
     class SymbolTable;
     class Type;
@@ -27,10 +23,6 @@ namespace ast {
 
 namespace ResolvExpr {
 
-class TypeEnvironment;
-
-int polyCost( Type * type,
-	const TypeEnvironment & env, const SymTab::Indexer & indexer );
 int polyCost( const ast::Type * type,
 	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );
 

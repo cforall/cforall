@@ -19,10 +19,6 @@
 
 #include "AST/Type.hpp"
 
-namespace SymTab {
-	class Indexer;
-}
-
 namespace ResolvExpr {
 	class TypeEnvironment;
 

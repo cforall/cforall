@@ -104,10 +104,10 @@ namespace ResolvExpr {
 				/// Replaces ttype variables with their bound types.
 		/// If this isn't done when satifying ttype assertions, then argument lists can have
 		/// different size and structure when they should be compatible.
-		struct TtypeExpander_new : public ast::WithShortCircuiting, public ast::PureVisitor {
+		struct TtypeExpander : public ast::WithShortCircuiting, public ast::PureVisitor {
 			ast::TypeEnvironment & tenv;
 
-			TtypeExpander_new( ast::TypeEnvironment & env ) : tenv( env ) {}
+			TtypeExpander( ast::TypeEnvironment & env ) : tenv( env ) {}
 
 			const ast::Type * postvisit( const ast::TypeInstType * typeInst ) {
 				if ( const ast::EqvClass * clz = tenv.lookup( *typeInst ) ) {
@@ -127,7 +127,7 @@ namespace ResolvExpr {
 		std::vector< ast::ptr< ast::Type > > dst;
 		dst.reserve( src.size() );
 		for ( const auto & d : src ) {
-			ast::Pass<TtypeExpander_new> expander{ env };
+			ast::Pass<TtypeExpander> expander{ env };
 			// TtypeExpander pass is impure (may mutate nodes in place)
 			// need to make nodes shared to prevent accidental mutation
 			ast::ptr<ast::Type> dc = d->accept(expander);
@@ -267,7 +267,7 @@ namespace ResolvExpr {
 		return ast::Pass<UnifyExpr>::read( e1, e2, env, need, have, open, widen );
 	}
 
-	class Unify_new final : public ast::WithShortCircuiting {
+	class Unify final : public ast::WithShortCircuiting {
 		const ast::Type * type2;
 		ast::TypeEnvironment & tenv;
 		ast::AssertionSet & need;
@@ -278,7 +278,7 @@ namespace ResolvExpr {
 		static size_t traceId;
 		bool result;
 
-		Unify_new(
+		Unify(
 			const ast::Type * type2, ast::TypeEnvironment & env, ast::AssertionSet & need,
 			ast::AssertionSet & have, const ast::OpenVarSet & open, WidenMode widen )
 		: type2(type2), tenv(env), need(need), have(have), open(open), widen(widen),
@@ -605,7 +605,7 @@ namespace ResolvExpr {
 			auto tuple2 = dynamic_cast< const ast::TupleType * >( type2 );
 			if ( ! tuple2 ) return;
 
-			ast::Pass<TtypeExpander_new> expander{ tenv };
+			ast::Pass<TtypeExpander> expander{ tenv };
 
 			const ast::Type * flat = tuple->accept( expander );
 			const ast::Type * flat2 = tuple2->accept( expander );
@@ -633,7 +633,8 @@ namespace ResolvExpr {
 		template< typename RefType > void handleGenericRefType( RefType *inst, Type *other );
 	};
 
-	// size_t Unify_new::traceId = Stats::Heap::new_stacktrace_id("Unify_new");
+	// size_t Unify::traceId = Stats::Heap::new_stacktrace_id("Unify");
+
 	bool unify(
 			const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
 			ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
@@ -677,7 +678,7 @@ namespace ResolvExpr {
 		} else if ( isopen2 ) {
 			return env.bindVar( var2, type1, ast::TypeData{var2->base}, need, have, open, widen );
 		} else {
-			return ast::Pass<Unify_new>::read(
+			return ast::Pass<Unify>::read(
 				type1, type2, env, need, have, open, widen );
 		}
 	}

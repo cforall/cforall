@@ -22,12 +22,7 @@
 #include "AST/Fwd.hpp"
 #include "AST/Pass.hpp"       // for WithShortCircuiting
 
-namespace SymTab {
-	class Indexer;
-}  // namespace SymTab
-
 namespace ResolvExpr {
-	class TypeEnvironment;
 
 // Some function pointer types, differ in return type.
 using CostCalculation = std::function<Cost(const ast::Type *, const ast::Type *, bool,
@@ -43,8 +38,7 @@ Cost convertToReferenceCost( const ast::Type * src, const ast::ReferenceType * d
 	bool srcIsLvalue, const ast::SymbolTable & indexer, const ast::TypeEnvironment & env,
 	PtrsCalculation func );
 
-#warning when the old ConversionCost is removed, get ride of the _new suffix.
-class ConversionCost_new : public ast::WithShortCircuiting {
+class ConversionCost : public ast::WithShortCircuiting {
 protected:
 	const ast::Type * dst;
 	bool srcIsLvalue;
@@ -56,7 +50,7 @@ public:
 	Cost cost;
 	Cost result() { return cost; }
 
-	ConversionCost_new( const ast::Type * dst, bool srcIsLvalue, const ast::SymbolTable & symtab,
+	ConversionCost( const ast::Type * dst, bool srcIsLvalue, const ast::SymbolTable & symtab,
 			const ast::TypeEnvironment & env, CostCalculation costCalc ) :
 		dst( dst ), srcIsLvalue( srcIsLvalue ), symtab( symtab ), env( env ),
 		costCalc( costCalc ), cost( Cost::infinity )

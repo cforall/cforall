@@ -45,21 +45,19 @@ namespace InitTweak {
 
 namespace {
 
-#	warning Remove the _New suffix after the conversion is complete.
-
 	// Outer pass finds declarations, for their type could wrap a type that needs hoisting
-	struct HoistArrayDimension_NoResolve_New final :
+	struct HoistArrayDimension_NoResolve final :
 			public ast::WithDeclsToAdd<>, public ast::WithShortCircuiting,
 			public ast::WithGuards, public ast::WithConstTranslationUnit,
-			public ast::WithVisitorRef<HoistArrayDimension_NoResolve_New>,
+			public ast::WithVisitorRef<HoistArrayDimension_NoResolve>,
 			public ast::WithSymbolTableX<ast::SymbolTable::ErrorDetection::IgnoreErrors> {
 
 		// Inner pass looks within a type, for a part that depends on an expression
 		struct HoistDimsFromTypes final :
 				public ast::WithShortCircuiting, public ast::WithGuards {
 
-			HoistArrayDimension_NoResolve_New * outer;
-			HoistDimsFromTypes( HoistArrayDimension_NoResolve_New * outer ) : outer(outer) {}
+			HoistArrayDimension_NoResolve * outer;
+			HoistDimsFromTypes( HoistArrayDimension_NoResolve * outer ) : outer(outer) {}
 
 			// Only intended for visiting through types.
 			// Tolerate, and short-circuit at, the dimension expression of an array type.
@@ -210,7 +208,7 @@ namespace {
 
 
 
-	struct ReturnFixer_New final :
+	struct ReturnFixer final :
 			public ast::WithStmtsToAdd<>, ast::WithGuards, ast::WithShortCircuiting {
 		void previsit( const ast::FunctionDecl * decl );
 		const ast::ReturnStmt * previsit( const ast::ReturnStmt * stmt );
@@ -218,12 +216,12 @@ namespace {
 		const ast::FunctionDecl * funcDecl = nullptr;
 	};
 
-	void ReturnFixer_New::previsit( const ast::FunctionDecl * decl ) {
+	void ReturnFixer::previsit( const ast::FunctionDecl * decl ) {
 		if (decl->linkage == ast::Linkage::Intrinsic) visit_children = false;
 		GuardValue( funcDecl ) = decl;
 	}
 
-	const ast::ReturnStmt * ReturnFixer_New::previsit(
+	const ast::ReturnStmt * ReturnFixer::previsit(
 			const ast::ReturnStmt * stmt ) {
 		auto & returns = funcDecl->returns;
 		assert( returns.size() < 2 );
@@ -264,15 +262,15 @@ namespace {
 } // namespace
 
 	void genInit( ast::TranslationUnit & transUnit ) {
-		ast::Pass<HoistArrayDimension_NoResolve_New>::run( transUnit );
-		ast::Pass<ReturnFixer_New>::run( transUnit );
+		ast::Pass<HoistArrayDimension_NoResolve>::run( transUnit );
+		ast::Pass<ReturnFixer>::run( transUnit );
 	}
 
 	void fixReturnStatements( ast::TranslationUnit & transUnit ) {
-		ast::Pass<ReturnFixer_New>::run( transUnit );
+		ast::Pass<ReturnFixer>::run( transUnit );
 	}
 
-	bool ManagedTypes_new::isManaged( const ast::Type * type ) const {
+	bool ManagedTypes::isManaged( const ast::Type * type ) const {
 		// references are never constructed
 		if ( dynamic_cast< const ast::ReferenceType * >( type ) ) return false;
 		if ( auto tupleType = dynamic_cast< const ast::TupleType * > ( type ) ) {
@@ -291,7 +289,7 @@ namespace {
 		return managedTypes.find( Mangle::mangle( tmp, {Mangle::NoOverrideable | Mangle::NoGenericParams | Mangle::Type} ) ) != managedTypes.end() || GenPoly::isPolyType( tmp );
 	}
 
-	bool ManagedTypes_new::isManaged( const ast::ObjectDecl * objDecl ) const {
+	bool ManagedTypes::isManaged( const ast::ObjectDecl * objDecl ) const {
 		const ast::Type * type = objDecl->type;
 		while ( auto at = dynamic_cast< const ast::ArrayType * >( type ) ) {
 			// must always construct VLAs with an initializer, since this is an error in C
@@ -301,7 +299,7 @@ namespace {
 		return isManaged( type );
 	}
 
-	void ManagedTypes_new::handleDWT( const ast::DeclWithType * dwt ) {
+	void ManagedTypes::handleDWT( const ast::DeclWithType * dwt ) {
 		// if this function is a user-defined constructor or destructor, mark down the type as "managed"
 		if ( ! dwt->linkage.is_overrideable && CodeGen::isCtorDtor( dwt->name ) ) {
 			auto & params = GenPoly::getFunctionType( dwt->get_type())->params;
@@ -312,7 +310,7 @@ namespace {
 		}
 	}
 
-	void ManagedTypes_new::handleStruct( const ast::StructDecl * aggregateDecl ) {
+	void ManagedTypes::handleStruct( const ast::StructDecl * aggregateDecl ) {
 		// don't construct members, but need to take note if there is a managed member,
 		// because that means that this type is also managed
 		for ( auto & member : aggregateDecl->members ) {
@@ -328,19 +326,19 @@ namespace {
 		}
 	}
 
-	void ManagedTypes_new::beginScope() { managedTypes.beginScope(); }
-	void ManagedTypes_new::endScope() { managedTypes.endScope(); }
+	void ManagedTypes::beginScope() { managedTypes.beginScope(); }
+	void ManagedTypes::endScope() { managedTypes.endScope(); }
 
 	ast::ptr<ast::Stmt> genCtorDtor (const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg) {
 		assertf(objDecl, "genCtorDtor passed null objDecl");
-		InitExpander_new srcParam(arg);
+		InitExpander srcParam(arg);
 		return SymTab::genImplicitCall(srcParam, new ast::VariableExpr(loc, objDecl), loc, fname, objDecl);
 	}
 
 ast::ConstructorInit * genCtorInit( const CodeLocation & loc, const ast::ObjectDecl * objDecl ) {
 	// call into genImplicitCall from Autogen.h to generate calls to ctor/dtor for each
 	// constructable object
-	InitExpander_new srcParam{ objDecl->init }, nullParam{ (const ast::Init *)nullptr };
+	InitExpander srcParam{ objDecl->init }, nullParam{ (const ast::Init *)nullptr };
 	ast::ptr< ast::Expr > dstParam = new ast::VariableExpr(loc, objDecl);
 
 	ast::ptr< ast::Stmt > ctor = SymTab::genImplicitCall(

@@ -17,10 +17,6 @@
 
 #include "ResolvExpr/Cost.h"     // for Cost
 
-class Type;
-namespace SymTab {
-	class Indexer;
-}
 namespace ast {
 	class SymbolTable;
 	class Type;
@@ -29,11 +25,6 @@ namespace ast {
 
 namespace ResolvExpr {
 
-class TypeEnvironment;
-
-Cost castCost(
-	const Type * src, const Type * dest, bool srcIsLvalue,
-	const SymTab::Indexer & indexer, const TypeEnvironment & env );
 Cost castCost(
 	const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
 	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );

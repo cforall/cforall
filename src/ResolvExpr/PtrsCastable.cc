@@ -54,14 +54,14 @@ namespace {
 		return -1 * objectCast( src, env, symtab );
 	}
 
-	class PtrsCastable_new : public ast::WithShortCircuiting {
+	class PtrsCastable : public ast::WithShortCircuiting {
 		const ast::Type * dst;
 		const ast::TypeEnvironment & env;
 		const ast::SymbolTable & symtab;
 	public:
 		int result;
 
-		PtrsCastable_new(
+		PtrsCastable(
 			const ast::Type * d, const ast::TypeEnvironment & e, const ast::SymbolTable & syms )
 		: dst( d ), env( e ), symtab( syms ), result( 0 ) {}
 
@@ -148,7 +148,7 @@ int ptrsCastable(
 	if ( dynamic_cast< const ast::VoidType * >( dst ) ) {
 		return objectCast( src, env, symtab );
 	} else {
-		return ast::Pass<PtrsCastable_new>::read( src, dst, env, symtab );
+		return ast::Pass<PtrsCastable>::read( src, dst, env, symtab );
 	}
 }
 

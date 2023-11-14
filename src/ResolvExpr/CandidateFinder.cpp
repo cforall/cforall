@@ -60,7 +60,7 @@ ast::UniqueId globalResnSlot = 0;
 
 namespace {
 	/// First index is which argument, second is which alternative, third is which exploded element
-	using ExplodedArgs_new = std::deque< std::vector< ExplodedArg > >;
+	using ExplodedArgs = std::deque< std::vector< ExplodedArg > >;
 
 	/// Returns a list of alternatives with the minimum cost in the given list
 	CandidateList findMinCost( const CandidateList & candidates ) {
@@ -254,7 +254,7 @@ namespace {
 		bool hasExpl() const { return nextExpl > 0; }
 
 		/// Gets the list of exploded candidates for this pack
-		const ExplodedArg & getExpl( const ExplodedArgs_new & args ) const {
+		const ExplodedArg & getExpl( const ExplodedArgs & args ) const {
 			return args[ nextArg-1 ][ explAlt ];
 		}
 
@@ -280,7 +280,7 @@ namespace {
 	/// Instantiates an argument to match a parameter, returns false if no matching results left
 	bool instantiateArgument(
 		const CodeLocation & location,
-		const ast::Type * paramType, const ast::Init * init, const ExplodedArgs_new & args,
+		const ast::Type * paramType, const ast::Init * init, const ExplodedArgs & args,
 		std::vector< ArgPack > & results, std::size_t & genStart, const ast::SymbolTable & symtab,
 		unsigned nTuples = 0
 	) {
@@ -617,7 +617,7 @@ namespace {
 		void makeFunctionCandidates(
 			const CodeLocation & location,
 			const CandidateRef & func, const ast::FunctionType * funcType,
-			const ExplodedArgs_new & args, CandidateList & out );
+			const ExplodedArgs & args, CandidateList & out );
 
 		/// Adds implicit struct-conversions to the alternative list
 		void addAnonConversions( const CandidateRef & cand );
@@ -736,7 +736,7 @@ namespace {
 	void Finder::makeFunctionCandidates(
 		const CodeLocation & location,
 		const CandidateRef & func, const ast::FunctionType * funcType,
-		const ExplodedArgs_new & args, CandidateList & out
+		const ExplodedArgs & args, CandidateList & out
 	) {
 		ast::OpenVarSet funcOpen;
 		ast::AssertionSet funcNeed, funcHave;
@@ -996,7 +996,7 @@ namespace {
 		)
 
 		// pre-explode arguments
-		ExplodedArgs_new argExpansions;
+		ExplodedArgs argExpansions;
 		for ( const CandidateFinder & args : argCandidates ) {
 			argExpansions.emplace_back();
 			auto & argE = argExpansions.back();

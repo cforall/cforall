@@ -78,7 +78,7 @@ namespace InitTweak {
 	/// to avoid assembler warning "ignoring changed section attributes for .data"
 	void addDataSectionAttribute( ast::ObjectDecl * objDecl );
 
-	class InitExpander_new {
+	class InitExpander final {
 	public:
 		using IndexList = std::vector< ast::ptr< ast::Expr > >;
 		class ExpanderImpl;
@@ -91,13 +91,13 @@ namespace InitTweak {
 
 	public:
 		/// Expand by stepping through init to get each list of arguments
-		InitExpander_new( const ast::Init * init );
+		InitExpander( const ast::Init * init );
 
 		/// Always expand to expression
-		InitExpander_new( const ast::Expr * expr );
+		InitExpander( const ast::Expr * expr );
 
 		std::vector< ast::ptr< ast::Expr > > operator* ();
-		InitExpander_new & operator++ ();
+		InitExpander & operator++ ();
 
 		/// builds statement which has the same semantics as a C-style list initializer (for array
 		/// initializers) using callExpr as the base expression to perform initialization.
@@ -110,7 +110,7 @@ namespace InitTweak {
 
 		bool addReference();
 	};
-} // namespace
+} // namespace InitTweak
 
 // Local Variables: //
 // tab-width: 4 //

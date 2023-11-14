@@ -342,7 +342,7 @@ namespace ResolvExpr {
 		"Each basic type kind should have a corresponding row in the combined type matrix"
 	);
 
-	class CommonType_new final : public ast::WithShortCircuiting {
+	class CommonType final : public ast::WithShortCircuiting {
 		const ast::Type * type2;
 		WidenMode widen;
 		ast::TypeEnvironment & tenv;
@@ -353,7 +353,7 @@ namespace ResolvExpr {
 		static size_t traceId;
 		ast::ptr< ast::Type > result;
 
-		CommonType_new(
+		CommonType(
 			const ast::Type * t2, WidenMode w,
 			ast::TypeEnvironment & env, const ast::OpenVarSet & o,
 			ast::AssertionSet & need, ast::AssertionSet & have )
@@ -387,7 +387,6 @@ namespace ResolvExpr {
 				if ( enumDecl->base ) {
 					result = enumDecl->base.get();
 				} else {
-					#warning remove casts when `commonTypes` moved to new AST
 					ast::BasicType::Kind kind = commonTypes[ basic->kind ][ ast::BasicType::SignedInt ];
 					if (
 						( ( kind == basic->kind && basic->qualifiers >= type2->qualifiers )
@@ -738,7 +737,7 @@ namespace ResolvExpr {
 
 	};
 
-	// size_t CommonType_new::traceId = Stats::Heap::new_stacktrace_id("CommonType_new");
+	// size_t CommonType::traceId = Stats::Heap::new_stacktrace_id("CommonType");
 	namespace {
 		ast::ptr< ast::Type > handleReference(
 			const ast::ptr< ast::Type > & t1, const ast::ptr< ast::Type > & t2, WidenMode widen,
@@ -810,7 +809,7 @@ namespace ResolvExpr {
 			return result;
 		}
 		// otherwise both are reference types of the same depth and this is handled by the visitor
-		ast::Pass<CommonType_new> visitor{ type2, widen, env, open, need, have };
+		ast::Pass<CommonType> visitor{ type2, widen, env, open, need, have };
 		type1->accept( visitor );
 		// ast::ptr< ast::Type > result = visitor.core.result;
 

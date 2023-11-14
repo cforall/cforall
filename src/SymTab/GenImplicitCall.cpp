@@ -31,7 +31,7 @@ namespace {
 
 template< typename OutIter >
 ast::ptr< ast::Stmt > genCall(
-	InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
 	const CodeLocation & loc, const std::string & fname, OutIter && out,
 	const ast::Type * type, const ast::Type * addCast, LoopDirection forward = LoopForward );
 
@@ -41,7 +41,7 @@ ast::ptr< ast::Stmt > genCall(
 /// there is one
 template< typename OutIter >
 ast::ptr< ast::Stmt > genScalarCall(
-	InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
 	const CodeLocation & loc, std::string fname, OutIter && out, const ast::Type * type,
 	const ast::Type * addCast = nullptr
 ) {
@@ -97,7 +97,7 @@ ast::ptr< ast::Stmt > genScalarCall(
 /// dstParam as arguments. If forward is true, loop goes from 0 to N-1, else N-1 to 0
 template< typename OutIter >
 void genArrayCall(
-	InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
 	const CodeLocation & loc, const std::string & fname, OutIter && out,
 	const ast::ArrayType * array, const ast::Type * addCast = nullptr,
 	LoopDirection forward = LoopForward
@@ -166,7 +166,7 @@ void genArrayCall(
 
 template< typename OutIter >
 ast::ptr< ast::Stmt > genCall(
-	InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
 	const CodeLocation & loc, const std::string & fname, OutIter && out,
 	const ast::Type * type, const ast::Type * addCast, LoopDirection forward
 ) {
@@ -184,7 +184,7 @@ ast::ptr< ast::Stmt > genCall(
 } // namespace
 
 ast::ptr< ast::Stmt > genImplicitCall(
-	InitTweak::InitExpander_new & srcParam, const ast::Expr * dstParam,
+	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
 	const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * obj,
 	LoopDirection forward
 ) {

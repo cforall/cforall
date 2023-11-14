@@ -61,7 +61,7 @@ namespace ResolvExpr {
 
 	namespace {
 		/// Finds deleted expressions in an expression tree
-		struct DeleteFinder_new final : public ast::WithShortCircuiting, public ast::WithVisitorRef<DeleteFinder_new> {
+		struct DeleteFinder final : public ast::WithShortCircuiting, public ast::WithVisitorRef<DeleteFinder> {
 			const ast::DeletedExpr * result = nullptr;
 
 			void previsit( const ast::DeletedExpr * expr ) {
@@ -79,11 +79,11 @@ namespace ResolvExpr {
 			}
 		};
 
-		struct ResolveDesignators_new final : public ast::WithShortCircuiting {
+		struct ResolveDesignators final : public ast::WithShortCircuiting {
 			ResolveContext& context;
 			bool result = false;
 
-			ResolveDesignators_new( ResolveContext& _context ): context{_context} {};
+			ResolveDesignators( ResolveContext& _context ): context{_context} {};
 
 			void previsit( const ast::Node * ) {
 				// short circuit if we already know there are designations
@@ -112,7 +112,7 @@ namespace ResolvExpr {
 	} // anonymous namespace
 	/// Check if this expression is or includes a deleted expression
 	const ast::DeletedExpr * findDeletedExpr( const ast::Expr * expr ) {
-		return ast::Pass<DeleteFinder_new>::read( expr );
+		return ast::Pass<DeleteFinder>::read( expr );
 	}
 
 	namespace {
@@ -202,7 +202,7 @@ namespace ResolvExpr {
 		}
 
 		/// Strips extraneous casts out of an expression
-		struct StripCasts_new final {
+		struct StripCasts final {
 			const ast::Expr * postvisit( const ast::CastExpr * castExpr ) {
 				if (
 					castExpr->isGenerated == ast::GeneratedCast
@@ -216,7 +216,7 @@ namespace ResolvExpr {
 			}
 
 			static void strip( ast::ptr< ast::Expr > & expr ) {
-				ast::Pass< StripCasts_new > stripper;
+				ast::Pass< StripCasts > stripper;
 				expr = expr->accept( stripper );
 			}
 		};
@@ -250,7 +250,7 @@ namespace ResolvExpr {
 			env.writeToSubstitution( *newenv.get_and_mutate() );
 			expr.get_and_mutate()->env = std::move( newenv );
 			// remove unncecessary casts
-			StripCasts_new::strip( expr );
+			StripCasts::strip( expr );
 		}
 
 	ast::ptr< ast::Expr > resolveInVoidContext(
@@ -367,25 +367,25 @@ namespace ResolvExpr {
 		}
 	}
 
-	class Resolver_new final
+	class Resolver final
 	: public ast::WithSymbolTable, public ast::WithGuards,
-	  public ast::WithVisitorRef<Resolver_new>, public ast::WithShortCircuiting,
+	  public ast::WithVisitorRef<Resolver>, public ast::WithShortCircuiting,
 	  public ast::WithStmtsToAdd<> {
 
 		ast::ptr< ast::Type > functionReturn = nullptr;
 		ast::CurrentObject currentObject;
 		// for work previously in GenInit
-		static InitTweak::ManagedTypes_new managedTypes;
+		static InitTweak::ManagedTypes managedTypes;
 		ResolveContext context;
 
 		bool inEnumDecl = false;
 
 	public:
 		static size_t traceId;
-		Resolver_new( const ast::TranslationGlobal & global ) :
+		Resolver( const ast::TranslationGlobal & global ) :
 			ast::WithSymbolTable(ast::SymbolTable::ErrorDetection::ValidateOnAdd),
 			context{ symtab, global } {}
-		Resolver_new( const ResolveContext & context ) :
+		Resolver( const ResolveContext & context ) :
 			ast::WithSymbolTable{ context.symtab },
 			context{ symtab, context.global } {}
 
@@ -426,19 +426,19 @@ namespace ResolvExpr {
 		void endScope() { managedTypes.endScope(); }
 		bool on_error(ast::ptr<ast::Decl> & decl);
 	};
-	// size_t Resolver_new::traceId = Stats::Heap::new_stacktrace_id("Resolver");
+	// size_t Resolver::traceId = Stats::Heap::new_stacktrace_id("Resolver");
 
-	InitTweak::ManagedTypes_new Resolver_new::managedTypes;
+	InitTweak::ManagedTypes Resolver::managedTypes;
 
 	void resolve( ast::TranslationUnit& translationUnit ) {
-		ast::Pass< Resolver_new >::run( translationUnit, translationUnit.global );
+		ast::Pass< Resolver >::run( translationUnit, translationUnit.global );
 	}
 
 	ast::ptr< ast::Init > resolveCtorInit(
 		const ast::ConstructorInit * ctorInit, const ResolveContext & context
 	) {
 		assert( ctorInit );
-		ast::Pass< Resolver_new > resolver( context );
+		ast::Pass< Resolver > resolver( context );
 		return ctorInit->accept( resolver );
 	}
 
@@ -446,7 +446,7 @@ namespace ResolvExpr {
 		const ast::StmtExpr * stmtExpr, const ResolveContext & context
 	) {
 		assert( stmtExpr );
-		ast::Pass< Resolver_new > resolver( context );
+		ast::Pass< Resolver > resolver( context );
 		auto ret = mutate(stmtExpr->accept(resolver));
 		strict_dynamic_cast< ast::StmtExpr * >( ret )->computeResult();
 		return ret;
@@ -488,7 +488,7 @@ namespace ResolvExpr {
 		}
 	}
 
-	const ast::FunctionDecl * Resolver_new::previsit( const ast::FunctionDecl * functionDecl ) {
+	const ast::FunctionDecl * Resolver::previsit( const ast::FunctionDecl * functionDecl ) {
 		GuardValue( functionReturn );
 
 		assert (functionDecl->unique());
@@ -562,7 +562,7 @@ namespace ResolvExpr {
 		return functionDecl;
 	}
 
-	const ast::FunctionDecl * Resolver_new::postvisit( const ast::FunctionDecl * functionDecl ) {
+	const ast::FunctionDecl * Resolver::postvisit( const ast::FunctionDecl * functionDecl ) {
 		// default value expressions have an environment which shouldn't be there and trips up
 		// later passes.
 		assert( functionDecl->unique() );
@@ -590,7 +590,7 @@ namespace ResolvExpr {
 		return functionDecl;
 	}
 
-	const ast::ObjectDecl * Resolver_new::previsit( const ast::ObjectDecl * objectDecl ) {
+	const ast::ObjectDecl * Resolver::previsit( const ast::ObjectDecl * objectDecl ) {
 		// To handle initialization of routine pointers [e.g. int (*fp)(int) = foo()],
 		// class-variable `initContext` is changed multiple times because the LHS is analyzed
 		// twice. The second analysis changes `initContext` because a function type can contain
@@ -629,7 +629,7 @@ namespace ResolvExpr {
 				if ( InitTweak::tryConstruct( mutDecl ) && ( managedTypes.isManaged( mutDecl ) || ((! isInFunction() || mutDecl->storage.is_static ) && ! InitTweak::isConstExpr( mutDecl->init ) ) ) ) {
 					// constructed objects cannot be designated
 					if ( InitTweak::isDesignated( mutDecl->init ) ) {
-						ast::Pass<ResolveDesignators_new> res( context );
+						ast::Pass<ResolveDesignators> res( context );
 						maybe_accept( mutDecl->init.get(), res );
 						if ( !res.core.result ) {
 							SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object. If this is really what you want, then initialize with @=.\n" );
@@ -649,7 +649,7 @@ namespace ResolvExpr {
 		return objectDecl;
 	}
 
-	void Resolver_new::previsit( const ast::AggregateDecl * _aggDecl ) {
+	void Resolver::previsit( const ast::AggregateDecl * _aggDecl ) {
 		auto aggDecl = mutate(_aggDecl);
 		assertf(aggDecl == _aggDecl, "type declarations must be unique");
 
@@ -661,19 +661,19 @@ namespace ResolvExpr {
 		}
 	}
 
-	void Resolver_new::previsit( const ast::StructDecl * structDecl ) {
+	void Resolver::previsit( const ast::StructDecl * structDecl ) {
 		previsit(static_cast<const ast::AggregateDecl *>(structDecl));
 		managedTypes.handleStruct(structDecl);
 	}
 
-	void Resolver_new::previsit( const ast::EnumDecl * ) {
+	void Resolver::previsit( const ast::EnumDecl * ) {
 		// in case we decide to allow nested enums
 		GuardValue( inEnumDecl );
 		inEnumDecl = true;
 		// don't need to fix types for enum fields
 	}
 
-	const ast::StaticAssertDecl * Resolver_new::previsit(
+	const ast::StaticAssertDecl * Resolver::previsit(
 		const ast::StaticAssertDecl * assertDecl
 	) {
 		return ast::mutate_field(
@@ -693,15 +693,15 @@ namespace ResolvExpr {
 		return type;
 	}
 
-	const ast::ArrayType * Resolver_new::previsit( const ast::ArrayType * at ) {
+	const ast::ArrayType * Resolver::previsit( const ast::ArrayType * at ) {
 		return handlePtrType( at, context );
 	}
 
-	const ast::PointerType * Resolver_new::previsit( const ast::PointerType * pt ) {
+	const ast::PointerType * Resolver::previsit( const ast::PointerType * pt ) {
 		return handlePtrType( pt, context );
 	}
 
-	const ast::ExprStmt * Resolver_new::previsit( const ast::ExprStmt * exprStmt ) {
+	const ast::ExprStmt * Resolver::previsit( const ast::ExprStmt * exprStmt ) {
 		visit_children = false;
 		assertf( exprStmt->expr, "ExprStmt has null expression in resolver" );
 
@@ -709,7 +709,7 @@ namespace ResolvExpr {
 			exprStmt, &ast::ExprStmt::expr, findVoidExpression( exprStmt->expr, context ) );
 	}
 
-	const ast::AsmExpr * Resolver_new::previsit( const ast::AsmExpr * asmExpr ) {
+	const ast::AsmExpr * Resolver::previsit( const ast::AsmExpr * asmExpr ) {
 		visit_children = false;
 
 		asmExpr = ast::mutate_field(
@@ -718,24 +718,24 @@ namespace ResolvExpr {
 		return asmExpr;
 	}
 
-	const ast::AsmStmt * Resolver_new::previsit( const ast::AsmStmt * asmStmt ) {
+	const ast::AsmStmt * Resolver::previsit( const ast::AsmStmt * asmStmt ) {
 		visitor->maybe_accept( asmStmt, &ast::AsmStmt::input );
 		visitor->maybe_accept( asmStmt, &ast::AsmStmt::output );
 		visit_children = false;
 		return asmStmt;
 	}
 
-	const ast::IfStmt * Resolver_new::previsit( const ast::IfStmt * ifStmt ) {
+	const ast::IfStmt * Resolver::previsit( const ast::IfStmt * ifStmt ) {
 		return ast::mutate_field(
 			ifStmt, &ast::IfStmt::cond, findIntegralExpression( ifStmt->cond, context ) );
 	}
 
-	const ast::WhileDoStmt * Resolver_new::previsit( const ast::WhileDoStmt * whileDoStmt ) {
+	const ast::WhileDoStmt * Resolver::previsit( const ast::WhileDoStmt * whileDoStmt ) {
 		return ast::mutate_field(
 			whileDoStmt, &ast::WhileDoStmt::cond, findIntegralExpression( whileDoStmt->cond, context ) );
 	}
 
-	const ast::ForStmt * Resolver_new::previsit( const ast::ForStmt * forStmt ) {
+	const ast::ForStmt * Resolver::previsit( const ast::ForStmt * forStmt ) {
 		if ( forStmt->cond ) {
 			forStmt = ast::mutate_field(
 				forStmt, &ast::ForStmt::cond, findIntegralExpression( forStmt->cond, context ) );
@@ -749,7 +749,7 @@ namespace ResolvExpr {
 		return forStmt;
 	}
 
-	const ast::SwitchStmt * Resolver_new::previsit( const ast::SwitchStmt * switchStmt ) {
+	const ast::SwitchStmt * Resolver::previsit( const ast::SwitchStmt * switchStmt ) {
 		GuardValue( currentObject );
 		switchStmt = ast::mutate_field(
 			switchStmt, &ast::SwitchStmt::cond,
@@ -758,7 +758,7 @@ namespace ResolvExpr {
 		return switchStmt;
 	}
 
-	const ast::CaseClause * Resolver_new::previsit( const ast::CaseClause * caseStmt ) {
+	const ast::CaseClause * Resolver::previsit( const ast::CaseClause * caseStmt ) {
 		if ( caseStmt->cond ) {
 			std::deque< ast::InitAlternative > initAlts = currentObject.getOptions();
 			assertf( initAlts.size() == 1, "SwitchStmt did not correctly resolve an integral "
@@ -779,7 +779,7 @@ namespace ResolvExpr {
 		return caseStmt;
 	}
 
-	const ast::BranchStmt * Resolver_new::previsit( const ast::BranchStmt * branchStmt ) {
+	const ast::BranchStmt * Resolver::previsit( const ast::BranchStmt * branchStmt ) {
 		visit_children = false;
 		// must resolve the argument of a computed goto
 		if ( branchStmt->kind == ast::BranchStmt::Goto && branchStmt->computedTarget ) {
@@ -792,7 +792,7 @@ namespace ResolvExpr {
 		return branchStmt;
 	}
 
-	const ast::ReturnStmt * Resolver_new::previsit( const ast::ReturnStmt * returnStmt ) {
+	const ast::ReturnStmt * Resolver::previsit( const ast::ReturnStmt * returnStmt ) {
 		visit_children = false;
 		if ( returnStmt->expr ) {
 			returnStmt = ast::mutate_field(
@@ -802,7 +802,7 @@ namespace ResolvExpr {
 		return returnStmt;
 	}
 
-	const ast::ThrowStmt * Resolver_new::previsit( const ast::ThrowStmt * throwStmt ) {
+	const ast::ThrowStmt * Resolver::previsit( const ast::ThrowStmt * throwStmt ) {
 		visit_children = false;
 		if ( throwStmt->expr ) {
 			const ast::StructDecl * exceptionDecl =
@@ -817,7 +817,7 @@ namespace ResolvExpr {
 		return throwStmt;
 	}
 
-	const ast::CatchClause * Resolver_new::previsit( const ast::CatchClause * catchClause ) {
+	const ast::CatchClause * Resolver::previsit( const ast::CatchClause * catchClause ) {
 		// Until we are very sure this invarent (ifs that move between passes have then)
 		// holds, check it. This allows a check for when to decode the mangling.
 		if ( auto ifStmt = catchClause->body.as<ast::IfStmt>() ) {
@@ -833,7 +833,7 @@ namespace ResolvExpr {
 		return catchClause;
 	}
 
-	const ast::CatchClause * Resolver_new::postvisit( const ast::CatchClause * catchClause ) {
+	const ast::CatchClause * Resolver::postvisit( const ast::CatchClause * catchClause ) {
 		// Decode the catchStmt so everything is stored properly.
 		const ast::IfStmt * ifStmt = catchClause->body.as<ast::IfStmt>();
 		if ( nullptr != ifStmt && nullptr == ifStmt->then ) {
@@ -848,7 +848,7 @@ namespace ResolvExpr {
 		return catchClause;
 	}
 
-	const ast::WaitForStmt * Resolver_new::previsit( const ast::WaitForStmt * stmt ) {
+	const ast::WaitForStmt * Resolver::previsit( const ast::WaitForStmt * stmt ) {
 		visit_children = false;
 
 		// Resolve all clauses first
@@ -1113,13 +1113,13 @@ namespace ResolvExpr {
 		return stmt;
 	}
 
-	const ast::WithStmt * Resolver_new::previsit( const ast::WithStmt * withStmt ) {
+	const ast::WithStmt * Resolver::previsit( const ast::WithStmt * withStmt ) {
 		auto mutStmt = mutate(withStmt);
 		resolveWithExprs(mutStmt->exprs, stmtsToAddBefore);
 		return mutStmt;
 	}
 
-	void Resolver_new::resolveWithExprs(std::vector<ast::ptr<ast::Expr>> & exprs, std::list<ast::ptr<ast::Stmt>> & stmtsToAdd) {
+	void Resolver::resolveWithExprs(std::vector<ast::ptr<ast::Expr>> & exprs, std::list<ast::ptr<ast::Stmt>> & stmtsToAdd) {
 		for (auto & expr : exprs) {
 			// only struct- and union-typed expressions are viable candidates
 			expr = findKindExpression( expr, context, structOrUnion, "with expression" );
@@ -1145,7 +1145,7 @@ namespace ResolvExpr {
 	}
 
 
-	const ast::SingleInit * Resolver_new::previsit( const ast::SingleInit * singleInit ) {
+	const ast::SingleInit * Resolver::previsit( const ast::SingleInit * singleInit ) {
 		visit_children = false;
 		// resolve initialization using the possibilities as determined by the `currentObject`
 		// cursor.
@@ -1194,7 +1194,7 @@ namespace ResolvExpr {
 		return ast::mutate_field( singleInit, &ast::SingleInit::value, std::move(newExpr) );
 	}
 
-	const ast::ListInit * Resolver_new::previsit( const ast::ListInit * listInit ) {
+	const ast::ListInit * Resolver::previsit( const ast::ListInit * listInit ) {
 		// move cursor into brace-enclosed initializer-list
 		currentObject.enterListInit( listInit->location );
 
@@ -1217,7 +1217,7 @@ namespace ResolvExpr {
 		return listInit;
 	}
 
-	const ast::ConstructorInit * Resolver_new::previsit( const ast::ConstructorInit * ctorInit ) {
+	const ast::ConstructorInit * Resolver::previsit( const ast::ConstructorInit * ctorInit ) {
 		visitor->maybe_accept( ctorInit, &ast::ConstructorInit::ctor );
 		visitor->maybe_accept( ctorInit, &ast::ConstructorInit::dtor );
 
@@ -1239,7 +1239,7 @@ namespace ResolvExpr {
 	}
 
 	// suppress error on autogen functions and mark invalid autogen as deleted.
-	bool Resolver_new::on_error(ast::ptr<ast::Decl> & decl) {
+	bool Resolver::on_error(ast::ptr<ast::Decl> & decl) {
 		if (auto functionDecl = decl.as<ast::FunctionDecl>()) {
 			// xxx - can intrinsic gen ever fail?
 			if (functionDecl->linkage == ast::Linkage::AutoGen) {

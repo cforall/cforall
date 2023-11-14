@@ -15,10 +15,6 @@
 
 #pragma once
 
-class Type;
-namespace SymTab {
-    class Indexer;
-}
 namespace ast {
     class SymbolTable;
     class Type;
@@ -27,11 +23,6 @@ namespace ast {
 
 namespace ResolvExpr {
 
-class TypeEnvironment;
-
-int ptrsCastable(
-	const Type * src, const Type * dst,
-	const TypeEnvironment & env, const SymTab::Indexer & indexer );
 int ptrsCastable(
 	const ast::Type * src, const ast::Type * dst,
 	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env );

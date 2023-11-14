@@ -20,19 +20,18 @@
 
 #include "AST/Print.hpp"          // for print
 #include "AST/Vector.hpp"         // for vector
-#include "CodeGeneratorNew.hpp"   // for CodeGenerator_new
+#include "CodeGeneratorNew.hpp"   // for CodeGenerator
 #include "Common/UniqueName.h"    // for UniqueName
 
 namespace CodeGen {
 
 namespace {
 
-#warning Remove the _new when old version is removed.
-struct GenType_new :
+struct GenType final :
 		public ast::WithShortCircuiting,
-		public ast::WithVisitorRef<GenType_new> {
+		public ast::WithVisitorRef<GenType> {
 	std::string result;
-	GenType_new( const std::string &typeString, const Options &options );
+	GenType( const std::string &typeString, const Options &options );
 
 	void previsit( ast::Node const * );
 	void postvisit( ast::Node const * );
@@ -66,33 +65,33 @@ private:
 	Options options;
 };
 
-GenType_new::GenType_new( const std::string &typeString, const Options &options ) : result( typeString ), options( options ) {}
+GenType::GenType( const std::string &typeString, const Options &options ) : result( typeString ), options( options ) {}
 
-void GenType_new::previsit( ast::Node const * ) {
+void GenType::previsit( ast::Node const * ) {
 	// Turn off automatic recursion for all nodes, to allow each visitor to
 	// precisely control the order in which its children are visited.
 	visit_children = false;
 }
 
-void GenType_new::postvisit( ast::Node const * node ) {
+void GenType::postvisit( ast::Node const * node ) {
 	std::stringstream ss;
 	ast::print( ss, node );
 	assertf( false, "Unhandled node reached in GenType: %s", ss.str().c_str() );
 }
 
-void GenType_new::postvisit( ast::VoidType const * type ) {
+void GenType::postvisit( ast::VoidType const * type ) {
 	result = "void " + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::BasicType const * type ) {
+void GenType::postvisit( ast::BasicType const * type ) {
 	ast::BasicType::Kind kind = type->kind;
 	assert( 0 <= kind && kind < ast::BasicType::NUMBER_OF_BASIC_TYPES );
 	result = std::string( ast::BasicType::typeNames[kind] ) + " " + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::genArray( const ast::CV::Qualifiers & qualifiers, ast::Type const * base, ast::Expr const *dimension, bool isVarLen, bool isStatic ) {
+void GenType::genArray( const ast::CV::Qualifiers & qualifiers, ast::Type const * base, ast::Expr const *dimension, bool isVarLen, bool isStatic ) {
 	std::ostringstream os;
 	if ( result != "" ) {
 		if ( result[ 0 ] == '*' ) {
@@ -118,7 +117,7 @@ void GenType_new::genArray( const ast::CV::Qualifiers & qualifiers, ast::Type co
 		os << "_Atomic ";
 	}
 	if ( dimension != 0 ) {
-		ast::Pass<CodeGenerator_new>::read( dimension, os, options );
+		ast::Pass<CodeGenerator>::read( dimension, os, options );
 	} else if ( isVarLen ) {
 		// no dimension expression on a VLA means it came in with the * token
 		os << "*";
@@ -130,7 +129,7 @@ void GenType_new::genArray( const ast::CV::Qualifiers & qualifiers, ast::Type co
 	base->accept( *visitor );
 }
 
-void GenType_new::postvisit( ast::PointerType const * type ) {
+void GenType::postvisit( ast::PointerType const * type ) {
 	if ( type->isStatic || type->isVarLen || type->dimension ) {
 		genArray( type->qualifiers, type->base, type->dimension, type->isVarLen, type->isStatic );
 	} else {
@@ -144,18 +143,18 @@ void GenType_new::postvisit( ast::PointerType const * type ) {
 	}
 }
 
-void GenType_new::postvisit( ast::ArrayType const * type ) {
+void GenType::postvisit( ast::ArrayType const * type ) {
 	genArray( type->qualifiers, type->base, type->dimension, type->isVarLen, type->isStatic );
 }
 
-void GenType_new::postvisit( ast::ReferenceType const * type ) {
+void GenType::postvisit( ast::ReferenceType const * type ) {
 	assertf( !options.genC, "Reference types should not reach code generation." );
 	handleQualifiers( type );
 	result = "&" + result;
 	type->base->accept( *visitor );
 }
 
-void GenType_new::postvisit( ast::FunctionType const * type ) {
+void GenType::postvisit( ast::FunctionType const * type ) {
 	std::ostringstream os;
 
 	if ( result != "" ) {
@@ -195,7 +194,7 @@ void GenType_new::postvisit( ast::FunctionType const * type ) {
 	if( !type->forall.empty() && !options.genC ) {
 		//assertf( !options.genC, "FunctionDecl type parameters should not reach code generation." );
 		std::ostringstream os;
-		ast::Pass<CodeGenerator_new> cg( os, options );
+		ast::Pass<CodeGenerator> cg( os, options );
 		os << "forall(";
 		cg.core.genCommaList( type->forall );
 		os << ")" << std::endl;
@@ -203,10 +202,10 @@ void GenType_new::postvisit( ast::FunctionType const * type ) {
 	}
 }
 
-std::string GenType_new::handleGeneric( ast::BaseInstType const * type ) {
+std::string GenType::handleGeneric( ast::BaseInstType const * type ) {
 	if ( !type->params.empty() ) {
 		std::ostringstream os;
-		ast::Pass<CodeGenerator_new> cg( os, options );
+		ast::Pass<CodeGenerator> cg( os, options );
 		os << "(";
 		cg.core.genCommaList( type->params );
 		os << ") ";
@@ -215,19 +214,19 @@ std::string GenType_new::handleGeneric( ast::BaseInstType const * type ) {
 	return "";
 }
 
-void GenType_new::postvisit( ast::StructInstType const * type )  {
+void GenType::postvisit( ast::StructInstType const * type )  {
 	result = type->name + handleGeneric( type ) + " " + result;
 	if ( options.genC ) result = "struct " + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::UnionInstType const * type ) {
+void GenType::postvisit( ast::UnionInstType const * type ) {
 	result = type->name + handleGeneric( type ) + " " + result;
 	if ( options.genC ) result = "union " + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::EnumInstType const * type ) {
+void GenType::postvisit( ast::EnumInstType const * type ) {
 	if ( type->base && type->base->base ) {
 		result = genType( type->base->base, result, options );
 	} else {
@@ -239,13 +238,13 @@ void GenType_new::postvisit( ast::EnumInstType const * type ) {
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::TypeInstType const * type ) {
+void GenType::postvisit( ast::TypeInstType const * type ) {
 	assertf( !options.genC, "TypeInstType should not reach code generation." );
 	result = type->name + " " + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::TupleType const * type ) {
+void GenType::postvisit( ast::TupleType const * type ) {
 	assertf( !options.genC, "TupleType should not reach code generation." );
 	unsigned int i = 0;
 	std::ostringstream os;
@@ -258,44 +257,44 @@ void GenType_new::postvisit( ast::TupleType const * type ) {
 	result = os.str() + result;
 }
 
-void GenType_new::postvisit( ast::VarArgsType const * type ) {
+void GenType::postvisit( ast::VarArgsType const * type ) {
 	result = "__builtin_va_list " + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::ZeroType const * type ) {
+void GenType::postvisit( ast::ZeroType const * type ) {
 	// Ideally these wouldn't hit codegen at all, but should be safe to make them ints.
 	result = (options.pretty ? "zero_t " : "long int ") + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::OneType const * type ) {
+void GenType::postvisit( ast::OneType const * type ) {
 	// Ideally these wouldn't hit codegen at all, but should be safe to make them ints.
 	result = (options.pretty ? "one_t " : "long int ") + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::GlobalScopeType const * type ) {
+void GenType::postvisit( ast::GlobalScopeType const * type ) {
 	assertf( !options.genC, "GlobalScopeType should not reach code generation." );
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::TraitInstType const * type ) {
+void GenType::postvisit( ast::TraitInstType const * type ) {
 	assertf( !options.genC, "TraitInstType should not reach code generation." );
 	result = type->name + " " + result;
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::TypeofType const * type ) {
+void GenType::postvisit( ast::TypeofType const * type ) {
 	std::ostringstream os;
 	os << "typeof(";
-	ast::Pass<CodeGenerator_new>::read( type, os, options );
+	ast::Pass<CodeGenerator>::read( type, os, options );
 	os << ") " << result;
 	result = os.str();
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::VTableType const * type ) {
+void GenType::postvisit( ast::VTableType const * type ) {
 	assertf( !options.genC, "Virtual table types should not reach code generation." );
 	std::ostringstream os;
 	os << "vtable(" << genType( type->base, "", options ) << ") " << result;
@@ -303,7 +302,7 @@ void GenType_new::postvisit( ast::VTableType const * type ) {
 	handleQualifiers( type );
 }
 
-void GenType_new::postvisit( ast::QualifiedType const * type ) {
+void GenType::postvisit( ast::QualifiedType const * type ) {
 	assertf( !options.genC, "QualifiedType should not reach code generation." );
 	std::ostringstream os;
 	os << genType( type->parent, "", options ) << "." << genType( type->child, "", options ) << result;
@@ -311,7 +310,7 @@ void GenType_new::postvisit( ast::QualifiedType const * type ) {
 	handleQualifiers( type );
 }
 
-void GenType_new::handleQualifiers( ast::Type const * type ) {
+void GenType::handleQualifiers( ast::Type const * type ) {
 	if ( type->is_const() ) {
 		result = "const " + result;
 	}
@@ -326,7 +325,7 @@ void GenType_new::handleQualifiers( ast::Type const * type ) {
 	}
 }
 
-std::string GenType_new::genParamList( const ast::vector<ast::Type> & range ) {
+std::string GenType::genParamList( const ast::vector<ast::Type> & range ) {
 	auto cur = range.begin();
 	auto end = range.end();
 	if ( cur == end ) return "";
@@ -345,15 +344,15 @@ std::string GenType_new::genParamList( const ast::vector<ast::Type> & range ) {
 std::string genType( ast::Type const * type, const std::string & base, const Options & options ) {
 	std::ostringstream os;
 	if ( !type->attributes.empty() ) {
-		ast::Pass<CodeGenerator_new> cg( os, options );
+		ast::Pass<CodeGenerator> cg( os, options );
 		cg.core.genAttributes( type->attributes );
 	}
 
-	return os.str() + ast::Pass<GenType_new>::read( type, base, options );
+	return os.str() + ast::Pass<GenType>::read( type, base, options );
 }
 
 std::string genTypeNoAttr( ast::Type const * type, const std::string & base, const Options & options ) {
-	return ast::Pass<GenType_new>::read( type, base, options );
+	return ast::Pass<GenType>::read( type, base, options );
 }
 
 } // namespace CodeGen

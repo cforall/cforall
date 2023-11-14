@@ -24,7 +24,7 @@
 namespace ResolvExpr {
 
 	namespace {
-		struct FindOpenVars_new final : public ast::WithGuards {
+		struct FindOpenVars final : public ast::WithGuards {
 			ast::OpenVarSet & open;
 			ast::OpenVarSet & closed;
 			ast::AssertionSet & need;
@@ -32,7 +32,7 @@ namespace ResolvExpr {
 			ast::TypeEnvironment & env;
 			bool nextIsOpen;
 
-			FindOpenVars_new(
+			FindOpenVars(
 				ast::OpenVarSet & o, ast::OpenVarSet & c, ast::AssertionSet & n,
 				ast::AssertionSet & h, ast::TypeEnvironment & env, FirstMode firstIsOpen )
 			: open( o ), closed( c ), need( n ), have( h ), env (env), nextIsOpen( firstIsOpen ) {}
@@ -72,7 +72,7 @@ namespace ResolvExpr {
 	void findOpenVars(
 			const ast::Type * type, ast::OpenVarSet & open, ast::OpenVarSet & closed,
 			ast::AssertionSet & need, ast::AssertionSet & have, ast::TypeEnvironment & env, FirstMode firstIsOpen ) {
-		ast::Pass< FindOpenVars_new > finder{ open, closed, need, have, env, firstIsOpen };
+		ast::Pass< FindOpenVars > finder{ open, closed, need, have, env, firstIsOpen };
 		type->accept( finder );
 
 		if (!closed.empty()) {

@@ -152,15 +152,10 @@ namespace ResolvExpr {
 	);
 
 namespace {
-	# warning For overload resolution between the two versions.
 	int localPtrsAssignable(const ast::Type * t1, const ast::Type * t2,
 			const ast::SymbolTable &, const ast::TypeEnvironment & env ) {
 		return ptrsAssignable( t1, t2, env );
 	}
-	Cost localConversionCost(
-		const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
-		const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
-	) { return conversionCost( src, dst, srcIsLvalue, symtab, env ); }
 }
 
 Cost conversionCost(
@@ -190,7 +185,7 @@ Cost conversionCost(
 			 dynamic_cast< const ast::ReferenceType * >( dst ) ) {
 		return convertToReferenceCost( src, refType, srcIsLvalue, symtab, env, localPtrsAssignable );
 	} else {
-		return ast::Pass<ConversionCost_new>::read( src, dst, srcIsLvalue, symtab, env, localConversionCost );
+		return ast::Pass<ConversionCost>::read( src, dst, srcIsLvalue, symtab, env, conversionCost );
 	}
 }
 
@@ -231,7 +226,7 @@ static Cost convertToReferenceCost( const ast::Type * src, const ast::Type * dst
 				}
 			}
 		} else {
-			return ast::Pass<ConversionCost_new>::read( src, dst, srcIsLvalue, symtab, env, localConversionCost );
+			return ast::Pass<ConversionCost>::read( src, dst, srcIsLvalue, symtab, env, conversionCost );
 		}
 	} else {
 		assert( -1 == diff );
@@ -263,12 +258,12 @@ Cost convertToReferenceCost( const ast::Type * src, const ast::ReferenceType * d
 	return convertToReferenceCost( src, dst, srcIsLvalue, sdepth - ddepth, symtab, env, func );
 }
 
-void ConversionCost_new::postvisit( const ast::VoidType * voidType ) {
+void ConversionCost::postvisit( const ast::VoidType * voidType ) {
 	(void)voidType;
 	cost = Cost::infinity;
 }
 
-void ConversionCost_new::conversionCostFromBasicToBasic( const ast::BasicType * src, const ast::BasicType* dest ) {
+void ConversionCost::conversionCostFromBasicToBasic( const ast::BasicType * src, const ast::BasicType* dest ) {
 	int tableResult = costMatrix[ src->kind ][ dest->kind ];
 	if ( tableResult == -1 ) {
 		cost = Cost::unsafe;
@@ -279,13 +274,13 @@ void ConversionCost_new::conversionCostFromBasicToBasic( const ast::BasicType * 
 	}
 }
 
-void ConversionCost_new::postvisit( const ast::BasicType * basicType ) {
+void ConversionCost::postvisit( const ast::BasicType * basicType ) {
 	if ( const ast::BasicType * dstAsBasic = dynamic_cast< const ast::BasicType * >( dst ) ) {
 		conversionCostFromBasicToBasic( basicType, dstAsBasic );
 	} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 		const ast::EnumDecl * enumDecl = enumInst->base.get();
 		if ( enumDecl->isTyped && !enumDecl->base.get() ) {
-			cost = Cost::infinity; 
+			cost = Cost::infinity;
 		} else if ( const ast::Type * enumType = enumDecl->base.get() ) {
 			if ( const ast::BasicType * enumTypeAsBasic = dynamic_cast<const ast::BasicType *>(enumType) ) {
 				conversionCostFromBasicToBasic( basicType, enumTypeAsBasic );
@@ -298,7 +293,7 @@ void ConversionCost_new::postvisit( const ast::BasicType * basicType ) {
 	}
 }
 
-void ConversionCost_new::postvisit( const ast::PointerType * pointerType ) {
+void ConversionCost::postvisit( const ast::PointerType * pointerType ) {
 	if ( const ast::PointerType * dstAsPtr = dynamic_cast< const ast::PointerType * >( dst ) ) {
 		ast::CV::Qualifiers tq1 = pointerType->base->qualifiers;
 		ast::CV::Qualifiers tq2 = dstAsPtr->base->qualifiers;
@@ -344,11 +339,11 @@ void ConversionCost_new::postvisit( const ast::PointerType * pointerType ) {
 	}
 }
 
-void ConversionCost_new::postvisit( const ast::ArrayType * arrayType ) {
+void ConversionCost::postvisit( const ast::ArrayType * arrayType ) {
 	(void)arrayType;
 }
 
-void ConversionCost_new::postvisit( const ast::ReferenceType * refType ) {
+void ConversionCost::postvisit( const ast::ReferenceType * refType ) {
 	assert( nullptr == dynamic_cast< const ast::ReferenceType * >( dst ) );
 
 	cost = costCalc( refType->base, dst, srcIsLvalue, symtab, env );
@@ -366,11 +361,11 @@ void ConversionCost_new::postvisit( const ast::ReferenceType * refType ) {
 	cost.incReference();
 }
 
-void ConversionCost_new::postvisit( const ast::FunctionType * functionType ) {
+void ConversionCost::postvisit( const ast::FunctionType * functionType ) {
 	(void)functionType;
 }
 
-void ConversionCost_new::postvisit( const ast::EnumInstType * enumInstType ) {
+void ConversionCost::postvisit( const ast::EnumInstType * enumInstType ) {
 	const ast::EnumDecl * baseEnum = enumInstType->base;
 	if ( const ast::Type * baseType = baseEnum->base ) {
 		costCalc( baseType, dst, srcIsLvalue, symtab, env );
@@ -383,11 +378,11 @@ void ConversionCost_new::postvisit( const ast::EnumInstType * enumInstType ) {
 	}
 }
 
-void ConversionCost_new::postvisit( const ast::TraitInstType * traitInstType ) {
+void ConversionCost::postvisit( const ast::TraitInstType * traitInstType ) {
 	(void)traitInstType;
 }
 
-void ConversionCost_new::postvisit( const ast::TypeInstType * typeInstType ) {
+void ConversionCost::postvisit( const ast::TypeInstType * typeInstType ) {
 	if ( const ast::EqvClass * eqv = env.lookup( *typeInstType ) ) {
 		cost = costCalc( eqv->bound, dst, srcIsLvalue, symtab, env );
 	} else if ( const ast::TypeInstType * dstAsInst =
@@ -404,7 +399,7 @@ void ConversionCost_new::postvisit( const ast::TypeInstType * typeInstType ) {
 	}
 }
 
-void ConversionCost_new::postvisit( const ast::TupleType * tupleType ) {
+void ConversionCost::postvisit( const ast::TupleType * tupleType ) {
 	Cost c = Cost::zero;
 	if ( const ast::TupleType * dstAsTuple = dynamic_cast< const ast::TupleType * >( dst ) ) {
 		auto srcIt = tupleType->types.begin();
@@ -426,14 +421,14 @@ void ConversionCost_new::postvisit( const ast::TupleType * tupleType ) {
 	}
 }
 
-void ConversionCost_new::postvisit( const ast::VarArgsType * varArgsType ) {
+void ConversionCost::postvisit( const ast::VarArgsType * varArgsType ) {
 	(void)varArgsType;
 	if ( dynamic_cast< const ast::VarArgsType * >( dst ) ) {
 		cost = Cost::zero;
 	}
 }
 
-void ConversionCost_new::postvisit( const ast::ZeroType * zeroType ) {
+void ConversionCost::postvisit( const ast::ZeroType * zeroType ) {
 	(void)zeroType;
 	if ( dynamic_cast< const ast::ZeroType * >( dst ) ) {
 		cost = Cost::zero;
@@ -460,12 +455,12 @@ void ConversionCost_new::postvisit( const ast::ZeroType * zeroType ) {
 	}
 }
 
-void ConversionCost_new::postvisit( const ast::OneType * oneType ) {
+void ConversionCost::postvisit( const ast::OneType * oneType ) {
 	(void)oneType;
 	if ( dynamic_cast< const ast::OneType * >( dst ) ) {
 		cost = Cost::zero;
 	} else if ( const ast::BasicType * dstAsBasic =
-			dynamic_cast< const ast::BasicType * >( dst ) ) {		
+			dynamic_cast< const ast::BasicType * >( dst ) ) {
 		int tableResult = costMatrix[ ast::BasicType::SignedInt ][ dstAsBasic->kind ];
 		if ( -1 == tableResult ) {
 			cost = Cost::unsafe;
@@ -474,11 +469,10 @@ void ConversionCost_new::postvisit( const ast::OneType * oneType ) {
 			cost.incSafe( tableResult + 1 );
 			cost.incSign( signMatrix[ ast::BasicType::SignedInt ][ dstAsBasic->kind ] );
 		}
-		
-		// cost = Cost::zero;
 	}
 }
-// size_t ConversionCost_new::traceId = Stats::Heap::new_stacktrace_id("ConversionCost");
+
+// size_t ConversionCost::traceId = Stats::Heap::new_stacktrace_id("ConversionCost");
 
 } // namespace ResolvExpr
 

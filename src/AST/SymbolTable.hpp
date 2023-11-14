@@ -87,7 +87,7 @@ private:
 
 	using Ptr = std::shared_ptr<const SymbolTable>;
 
-	Ptr prevScope;                 ///< Indexer for parent scope
+	Ptr prevScope;                 ///< Symbol Table for parent scope
 	unsigned long scope;           ///< Scope index of this indexer
 	unsigned long repScope;        ///< Scope index of currently represented scope
 

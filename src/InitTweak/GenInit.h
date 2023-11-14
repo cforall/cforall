@@ -36,7 +36,7 @@ namespace InitTweak {
 	/// creates an appropriate ConstructorInit node which contains a constructor, destructor, and C-initializer
 	ast::ConstructorInit * genCtorInit( const CodeLocation & loc, const ast::ObjectDecl * objDecl );
 
-	class ManagedTypes_new {
+	class ManagedTypes final {
 	public:
 		bool isManaged( const ast::ObjectDecl * objDecl ) const ; // determine if object is managed
 		bool isManaged( const ast::Type * type ) const; // determine if type is managed

@@ -26,7 +26,7 @@
 #include "InitTweak.h"             // for isIntrinsicSingleArgCallStmt
 
 namespace InitTweak {
-	class GlobalFixer_new : public ast::WithShortCircuiting {
+	class GlobalFixer : public ast::WithShortCircuiting {
 	public:
 		void previsit (const ast::ObjectDecl *);
 		void previsit (const ast::FunctionDecl *) { visit_children = false; }
@@ -41,7 +41,7 @@ namespace InitTweak {
 	};
 
 	void fixGlobalInit(ast::TranslationUnit & translationUnit, bool inLibrary) {
-		ast::Pass<GlobalFixer_new> fixer;
+		ast::Pass<GlobalFixer> fixer;
 		accept_all(translationUnit, fixer);
 
 		// Say these magic declarations come at the end of the file.
@@ -72,7 +72,7 @@ namespace InitTweak {
 		} // if
 	}
 
-	void GlobalFixer_new::previsit(const ast::ObjectDecl * objDecl) {
+	void GlobalFixer::previsit(const ast::ObjectDecl * objDecl) {
 		auto mutDecl = mutate(objDecl);
 		assertf(mutDecl == objDecl, "Global object decl must be unique");
 		if ( auto ctorInit = objDecl->init.as<ast::ConstructorInit>() ) {
