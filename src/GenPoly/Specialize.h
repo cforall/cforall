@@ -15,18 +15,14 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace GenPoly {
-	/// generates thunks where needed
-	void convertSpecializations( std::list< Declaration* >& translationUnit );
 
-	void convertSpecializations( ast::TranslationUnit & translationUnit );
+void convertSpecializations( ast::TranslationUnit & translationUnit );
+
 } // namespace GenPoly
 
 // Local Variables: //

@@ -1,0 +1,187 @@
+#include <fstream.hfa>									// sin/sout
+#include <stdlib.hfa>									// convert
+#include <string.h>
+#include <coroutine.hfa>
+
+ExceptionDecl( Schmilblick );
+
+enum { DEATH_DECK_DIVISOR = 7 };
+
+coroutine Player {
+	PRNG & prng;
+	unsigned int id;									// identity of the player
+	Player * partner[2];								// task on the left and right
+	unsigned int deck;									// size of the deck currently in play
+}; // Player
+
+void players( unsigned int num );
+void ?{}( Player & player, PRNG & prng, unsigned int id );
+void start( Player & player, Player & lp, Player & rp ); // supply partners
+void play( Player & player,  unsigned int deck );
+void drink( Player & player );
+
+enum { RIGHT = 0, LEFT = 1 };
+
+enum {
+	MinCardsTaken = 1,									// minimum number of cards allowed to draw
+	MaxCardsTaken = 8									// maximum number of cards allowed to draw
+};
+
+static unsigned int NumPlayersRemaining;				// number of players currently in the game
+static unsigned int rounds;								// count rounds during Schmilblick
+
+static unsigned int MakePlay( Player & player, unsigned int RemainingCards ) with( player ) {
+	unsigned int took = min( RemainingCards, (typeof(RemainingCards))prng( prng, MinCardsTaken, MaxCardsTaken ) ); // cards drawn
+	unsigned int passing = RemainingCards - took;		// remaining cards in the deck to be passed
+	return passing;
+} // Player::MakePlay
+
+void main( Player & player ) with( player ) {
+	try {
+		suspend;										// return immediately after establishing starter
+		poll();
+
+		for ( ;; ) {
+		  if ( partner[LEFT] == &player ) {				// stop when only one player
+		  		sout | id;
+				break;
+			} // exit
+
+			bool die = (deck % DEATH_DECK_DIVISOR) == 0; // check before making a play
+			deck = MakePlay( player, deck );			// make a play
+		  if ( deck == 0 ) break;						// stop when no cards left
+
+			if ( die ) {
+				partner[LEFT]->partner[RIGHT] = partner[RIGHT]; // unlink node
+				partner[RIGHT]->partner[LEFT] = partner[LEFT];
+				NumPlayersRemaining -= 1;
+			} else if ( prng( prng, 10 ) == 0 ) {
+				try {
+					drink( *partner[RIGHT] );			// have a drink
+					poll();
+				} catchResume( Schmilblick * ) {		// stop cycle
+				} // try
+			} // if
+			play( *partner[deck & 1], deck );			// odd goes left, even goes right
+		} // for
+	} catchResume( Schmilblick * ) {
+		drink( *partner[RIGHT] );						// have a drink
+	} // try
+} // Player::main
+
+void ?{}( Player & player, PRNG & prng, unsigned int id ) with( player ) {
+	&player.prng = &prng;  player.id = id;
+} // Player::Player
+
+void start( Player & player, Player & lp, Player & rp ) with( player ) { // obtain the partner identifier
+	partner[LEFT] = &lp;
+	partner[RIGHT] = &rp;
+	resume( player );									// establish main as starter for termination
+} // Player::start
+
+void players( unsigned int num ) {
+	NumPlayersRemaining = num;
+} // Player::players
+
+void play( Player & player, unsigned int deck ) with( player ) { // send the deck to the partner
+	player.deck = deck;
+	resume( player );
+	poll();
+} // Player::play
+
+void drink( Player & player ) with( player ) {			// cause partner to drink
+	resumeAt( player, ExceptionInst( Schmilblick ) );
+	resume( player );
+} // Player::drink
+
+static unsigned int rightOf( unsigned int me, unsigned int total ) {
+	return ( me + 1 ) % total;
+} // rightOf
+
+static unsigned int leftOf( unsigned int me, unsigned int total ) {
+	return ( me != 0 ) ? me - 1 : total - 1;
+} // leftOf
+
+// convert(...) throws out_of_range or invalid_argument
+ExceptionDecl( cmd_error );
+
+int main( int argc, char * argv[] ) {
+	enum {
+		MinNoPlayers = 2,								// minimum players in the game
+		MaxNoPlayers = 10,								// maximum players in the game
+		MinNoCards = 10,								// minimum cards in the deck
+		MaxNoCards = 200,								// maximum cards in the deck
+		DefaultGames = 50,								// default games to play
+	};
+	intmax_t numGames = DefaultGames;					// games to play
+	intmax_t numPlayers = 0; bool playersSet = false;	// players for a particular game
+	intmax_t numCards = 0; bool cardsSet = false;		// cards in the deck for a game
+	intmax_t seed = 2423;									// random-number seed
+
+	try {
+		switch ( argc ) {
+		  case 5:
+			if ( strcmp( argv[4], "d" ) != 0 ) {		// default ?
+				seed = convert( argv[4] ); if ( seed < 1 ) throw ExceptionInst( cmd_error ); // invalid ?
+			} // if
+			// FALL THROUGH
+		  case 4:
+			if ( strcmp( argv[3], "d" ) != 0 ) {		// default ?
+				numCards = convert( argv[3] ); if ( numCards < 1 ) throw ExceptionInst( cmd_error ); // invalid ?
+				cardsSet = true;
+			} // if
+			// FALL THROUGH
+		  case 3:
+			if ( strcmp( argv[2], "d" ) != 0 ) {		// default ?
+				numPlayers = convert( argv[2] ); if ( numPlayers < 2 ) throw ExceptionInst( cmd_error ); // invalid ?
+				playersSet = true;
+			} // if
+			// FALL THROUGH
+		  case 2:
+			if ( strcmp( argv[1], "d" ) != 0 ) {		// default ?
+				numGames = convert( argv[1] ); if ( numGames < 0 ) throw ExceptionInst( cmd_error ); // invalid ?
+			} // if
+			// FALL THROUGH
+		  case 1:										// defaults
+			break;
+		  default:										// wrong number of options
+			throw ExceptionInst( cmd_error );
+		} // switch
+	} catch( exception_t * ) {							// catch any
+		exit | "Usage: " | argv[0]
+			 | " [ games (>=0) | 'd' (default " | DefaultGames
+			 | ") [ players (>=2) | 'd' (random " | MinNoPlayers | "-" | MaxNoPlayers
+			 | ") [ cards (>0) | 'd' (random " | MinNoCards | "-" | MaxNoCards
+			 | ") [ seed (>0) | 'd' (random) ] ] ] ]";
+	} // try
+
+	PRNG mprng, pprng;
+	if ( seed != 0 ) {									// specified on command line ?
+		set_seed( mprng, seed );  set_seed( pprng, seed );
+	} // if
+	sout | "start";
+	for ( unsigned int game = 1; game <= (unsigned int)numGames; game += 1 ) {
+		if ( ! playersSet ) numPlayers = prng( mprng, MinNoPlayers, MaxNoPlayers );
+		if ( ! cardsSet ) numCards = prng( mprng, MinNoCards, MaxNoCards );
+		{
+			Player * players[numPlayers];
+
+			players( numPlayers );						// set number of players in game
+
+			for ( unsigned int i = 0; i < (unsigned int)numPlayers; i += 1 ) { // start the players
+				players[i] = &(*malloc()){ pprng, i };
+			} // for
+
+			// Tell each player who its partner is.
+			for ( unsigned int i = 0; i < (unsigned int)numPlayers; i += 1 ) {
+				start( *players[i], *players[leftOf(i, numPlayers)], *players[rightOf(i, numPlayers)] );
+			} // for
+
+			play( *players[ prng( mprng, numPlayers ) ], numCards ); // dealer starts the game
+			for ( unsigned int i = 0; i < (unsigned int)numPlayers; i += 1 ) { // delete players when the game is over
+				delete( players[i] );
+			} // for
+		}
+	} // for
+	sout | "done";
+} // main

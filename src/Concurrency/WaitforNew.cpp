@@ -449,14 +449,13 @@ ast::Stmt * choose( const ast::WaitForStmt * waitfor, ast::Expr * result ) {
 		std::vector<ast::ptr<ast::CaseClause>>()
 	);
 
-	// For some reason, enumerate doesn't work here because of references.
-	for ( size_t i = 0 ; i < waitfor->clauses.size() ; ++i ) {
+	for ( const auto & [i, clause] : enumerate( waitfor->clauses ) ) {
 		theSwitch->cases.push_back(
 			new ast::CaseClause( location,
 				ast::ConstantExpr::from_ulong( location, i ),
 				{
 					new ast::CompoundStmt( location, {
-						waitfor->clauses[i]->stmt,
+						clause->stmt,
 						new ast::BranchStmt( location,
 							ast::BranchStmt::Break,
 							ast::Label( location )
@@ -537,9 +536,8 @@ ast::Stmt * GenerateWaitForCore::postvisit( const ast::WaitForStmt * stmt ) {
 	ast::ObjectDecl * flag        = declareFlag( comp, location );
 	ast::Stmt       * setter      = makeSetter( location, flag );
 
-	// For some reason, enumerate doesn't work here because of references.
-	for ( size_t i = 0 ; i < stmt->clauses.size() ; ++i ) {
-		init_clause( comp, acceptables, i, stmt->clauses[i], setter );
+	for ( const auto & [i, clause] : enumerate( stmt->clauses ) ) {
+		init_clause( comp, acceptables, i, clause, setter );
 	}
 
 	ast::Expr * timeout = init_timeout(

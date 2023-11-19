@@ -16,31 +16,33 @@
 #pragma once
 
 namespace ResolvExpr {
-	struct WidenMode {
-		WidenMode( bool first, bool second ): first( first ), second( second ) {}
 
-		WidenMode &operator|=( const WidenMode &other ) {
-			first |= other.first; second |= other.second; return *this;
-		}
+struct WidenMode {
+	WidenMode( bool first, bool second ): first( first ), second( second ) {}
 
-		WidenMode &operator&=( const WidenMode &other ) {
-			first &= other.first; second &= other.second; return *this;
-		}
+	WidenMode &operator|=( const WidenMode &other ) {
+		first |= other.first; second |= other.second; return *this;
+	}
 
-		WidenMode operator|( const WidenMode &other ) {
-			WidenMode newWM( *this ); newWM |= other; return newWM;
-		}
+	WidenMode &operator&=( const WidenMode &other ) {
+		first &= other.first; second &= other.second; return *this;
+	}
 
-		WidenMode operator&( const WidenMode &other ) {
-			WidenMode newWM( *this ); newWM &= other; return newWM;
-		}
+	WidenMode operator|( const WidenMode &other ) {
+		WidenMode newWM( *this ); newWM |= other; return newWM;
+	}
 
-		operator bool() { return first && second; }
+	WidenMode operator&( const WidenMode &other ) {
+		WidenMode newWM( *this ); newWM &= other; return newWM;
+	}
 
-		bool first : 1, second : 1;
-	};
+	operator bool() { return first && second; }
 
-	static inline WidenMode noWiden() { return { false, false }; }
+	bool first : 1, second : 1;
+};
+
+static inline WidenMode noWiden() { return { false, false }; }
+
 } // namespace ResolvExpr
 
 // Local Variables: //

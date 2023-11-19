@@ -21,10 +21,12 @@ namespace ast {
 }
 
 namespace SymTab {
-	/// Returns declaration with function and array types replaced by equivalent pointer types.
-	/// Sets isVoid to true if type is void
-	const ast::DeclWithType * fixFunction( const ast::DeclWithType * dwt, bool & isVoid );
-	const ast::Type * fixFunction( const ast::Type * type, bool & isVoid );
+
+/// Returns declaration with function and array types replaced by equivalent pointer types.
+/// Sets isVoid to true if type is void.
+const ast::DeclWithType * fixFunction( const ast::DeclWithType * dwt, bool & isVoid );
+const ast::Type * fixFunction( const ast::Type * type, bool & isVoid );
+
 } // namespace SymTab
 
 // Local Variables: //

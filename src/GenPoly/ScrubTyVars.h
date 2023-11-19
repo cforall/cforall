@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ScrubTyVars.h --
+// ScrubTyVars.h -- Remove polymorphic types.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -18,7 +18,7 @@
 #include <cassert>            // for assert
 
 #include "AST/Fwd.hpp"        // for Node
-#include "GenPoly.h"          // for TyVarMap, isPolyType, isDynType
+#include "GenPoly.h"          // for TypeVarMap, isPolyType, isDynType
 
 namespace GenPoly {
 

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Nov 11 07:06:27 2023
-// Update Count     : 1803
+// Last Modified On : Fri Nov 17 13:33:12 2023
+// Update Count     : 1853
 //
 
 #include "iostream.hfa"
@@ -774,7 +774,8 @@ forall( ostype & | basic_ostream( ostype ) ) {
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, bool & b ) {
 		char val[6];
-		fmt( is, "%5s", val );
+		int args = fmt( is, "%5s", val );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( strcmp( val, "true" ) == 0 ) b = true;
 		else if ( strcmp( val, "false" ) == 0 ) b = false;
 		else {
@@ -787,7 +788,8 @@ forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, char & c ) {
 		char temp;
 		for () {
-			fmt( is, "%c", &temp );						// must pass pointer through varg to fmt
+			int args = fmt( is, "%c", &temp );
+			if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 			// do not overwrite parameter with newline unless appropriate
 			if ( temp != '\n' || getANL$( is ) ) { c = temp; break; }
 			if ( eof( is ) ) break;
@@ -796,52 +798,62 @@ forall( istype & | basic_istream( istype ) ) {
 	} // ?|?
 
 	istype & ?|?( istype & is, signed char & sc ) {
-		fmt( is, "%hhi", &sc );
+		int args = fmt( is, "%hhi", &sc );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned char & usc ) {
-		fmt( is, "%hhi", &usc );
+		int args = fmt( is, "%hhi", &usc );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, short int & si ) {
-		fmt( is, "%hi", &si );
+		int args = fmt( is, "%hi", &si );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned short int & usi ) {
-		fmt( is, "%hi", &usi );
+		int args = fmt( is, "%hi", &usi );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, int & i ) {
-		fmt( is, "%i", &i );
+		int args = fmt( is, "%i", &i );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned int & ui ) {
-		fmt( is, "%i", &ui );
+		int args = fmt( is, "%i", &ui );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, long int & li ) {
-		fmt( is, "%li", &li );
+		int args = fmt( is, "%li", &li );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned long int & ulli ) {
-		fmt( is, "%li", &ulli );
+		int args = fmt( is, "%li", &ulli );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, long long int & lli ) {
-		fmt( is, "%lli", &lli );
+		int args = fmt( is, "%lli", &lli );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned long long int & ulli ) {
-		fmt( is, "%lli", &ulli );
+		int args = fmt( is, "%lli", &ulli );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
@@ -868,43 +880,55 @@ forall( istype & | basic_istream( istype ) ) {
 	#endif // __SIZEOF_INT128__
 
 	istype & ?|?( istype & is, float & f ) {
-		fmt( is, "%f", &f );
+		int args = fmt( is, "%f", &f );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, double & d ) {
-		fmt( is, "%lf", &d );
+		int args = fmt( is, "%lf", &d );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, long double & ld ) {
-		fmt( is, "%Lf", &ld );
+		int args = fmt( is, "%Lf", &ld );
+		if ( args != -1 && args != 1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, float _Complex & fc ) {
 		float re, im;
-		fmt( is, "%f%fi", &re, &im );
+		int args = fmt( is, "%f%fi", &re, &im );
+		if ( args != -1 && args != 2 ) throwResume ExceptionInst( missing_data );
 		fc = re + im * _Complex_I;
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, double _Complex & dc ) {
 		double re, im;
-		fmt( is, "%lf%lfi", &re, &im );
+		int args = fmt( is, "%lf%lfi", &re, &im );
+		if ( args != -1 && args != 2 ) throwResume ExceptionInst( missing_data );
 		dc = re + im * _Complex_I;
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, long double _Complex & ldc ) {
 		long double re, im;
-		fmt( is, "%Lf%Lfi", &re, &im );
+		int args = fmt( is, "%Lf%Lfi", &re, &im );
+		if ( args != -1 && args != 2 ) throwResume ExceptionInst( missing_data );
 		ldc = re + im * _Complex_I;
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, const char fmt[] ) {
-		fmt( is, fmt, "" );
+		size_t len = strlen( fmt );
+		char fmt2[len + 16];
+		strcpy( fmt2, fmt );							// copy format and add %n
+		strcpy( &fmt2[len], "%n" );
+		int len2 = -1;
+		int args = fmt( is, fmt2, &len2 );
+		if ( args != -1 && len2 == -1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 
@@ -949,12 +973,66 @@ forall( istype & | basic_istream( istype ) ) {
 			fmt( is, fmtstr, "" );						// skip scanset
 		} else {
 			char ch;
-//			fprintf( stderr, "skip " );
+			// fprintf( stderr, "skip " );
 			for ( f.wd ) {								// skip N characters
 			  if ( eof( is ) ) break;
 				fmt( is, "%c", &ch );
-//				fprintf( stderr, "`%c' ", ch );
+				// fprintf( stderr, "`%c' ", ch );
 			} // for
+		} // if
+		return is;
+	}
+
+	istype & ?|?( istype & is, _Istream_Cquoted f ) {
+		char fmtstr[32];								// storage scanset and format codes
+		fmtstr[0] = '%';
+
+		int pos = 1;
+		int args;
+		bool check = true;
+
+		if ( f.flags.ignore ) { check = false; fmtstr[1] = '*'; pos += 1; }
+		int rwd = f.wd;
+		if ( f.wd != -1 ) {								// => just ignore versus ignore with width
+			// wd is buffer bytes available (for input chars + null terminator)
+			// rwd is count of input chars
+			// no maximum width necessary because text ignored => width is read width
+			if ( f.flags.rwd ) check = false;
+			else rwd = f.wd - 1;
+			pos += sprintf( &fmtstr[pos], "%d", rwd );
+		} // if
+
+		int len = 0;									// may not be set in fmt
+		if ( ! f.flags.inex ) {							// => quoted getline
+			// fprintf( stderr, "quoted\n" );
+			args = fmt( is, "%*[ \f\n\r\t\v]" );		// remove leading whitespace
+			if ( eof( is ) ) goto Eof;
+//			args = fmt( is, (const char *)f.delimiter ); // remove leading quote
+			args = fmt( is, "'%n", &len ); // remove leading quote
+			fprintf( stderr, "quoted %d %d\n", args, len );
+			if ( len == 0 || eof( is ) ) goto Eof;
+		} // if
+		sprintf( &fmtstr[pos], "[^%c]%%n", f.delimiter[0] );
+		// fprintf( stderr, "getline %s %d\n", fmtstr, f.wd );
+		if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
+		else args = fmt( is, fmtstr, f.s, &len );
+		// fprintf( stderr, "getline %s %d %d %d\n", fmtstr, args, f.wd, eof( is ) );
+		if ( check && len == rwd && ! eof( is ) ) {		// might not fit
+			char peek;
+			fmt( is, "%c", &peek );						// check for delimiter
+			// fprintf( stderr, "peek %d '%c'\n", args, peek );
+			if ( ! eof( is ) ) {
+				if ( peek != f.delimiter[0] ) {
+					ungetc( is, peek );
+					throwResume ExceptionInst( cstring_length );
+				} // if
+			} // if
+		} else fmt( is, "%*c" );						// remove delimiter
+	  Eof: ;
+		if ( rwd > 0 && args == 0 ) f.s[0] = '\0';		// read failed => no pattern match => set string to null
+		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
+			// fprintf( stderr, "clear\n" );
+			clear( is );								// => reset EOF => detect again on next read
 		} // if
 		return is;
 	}
@@ -985,67 +1063,76 @@ forall( istype & | basic_istream( istype ) ) {
 		} // if
 
 		if ( ! scanset ) {								// %s, %*s, %ws, %*ws
-//			fprintf( stderr, "cstr %s\n", f.s );
+			// fprintf( stderr, "cstr %s\n", f.s );
 			strcpy( &fmtstr[pos], "s%n" );
 			int len = 0;								// may not be set in fmt
 			if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 			else args = fmt( is, fmtstr, f.s, &len );
-//			fprintf( stderr, "cstr %s %d %d %d %s\n", fmtstr, args, len, f.wd, f.s );
+			// fprintf( stderr, "cstr %s %d %d %d %s\n", fmtstr, args, len, f.wd, f.s );
 			if ( check && len >= rwd && ! eof( is ) ) {	// might not fit
 				char peek;
 				fmt( is, "%c", &peek );					// check for whitespace terminator
-//				fprintf( stderr, "peek %d '%c'\n", args, peek );
+				// fprintf( stderr, "peek %d '%c'\n", args, peek );
 				if ( ! eof( is ) ) {
 					ungetc( is, peek );
-					if ( ! isspace( peek ) ) throw ExceptionInst( cstring_length );
+					if ( ! isspace( peek ) ) throwResume ExceptionInst( cstring_length );
 				} // if
 			} // if
 			// FIX ME: CFA strings need to be modified to NOT change the argument for this case, then this can be removed.
 			if ( rwd > 0 && args == 0 ) f.s[0]= '\0';	// read failed => no pattern match => set string to null
 		} else {
 			if ( f.flags.delimiter ) {					// getline
-//				fprintf( stderr, "getline\n" );
-				sprintf( &fmtstr[pos], "[%s%s]%%n", f.flags.inex ? "^" : "", scanset );
-//				fprintf( stderr, "getline %s %d\n", fmtstr, f.wd );
 				int len = 0;							// may not be set in fmt
+				if ( ! f.flags.inex ) {					// => quoted getline
+					// fprintf( stderr, "quoted\n" );
+					args = fmt( is, "%*[ \f\n\r\t\v]" ); // remove leading whitespace
+					if ( eof( is ) ) goto X;
+					args = fmt( is, "\"" );				// remove leading quote
+					if ( eof( is ) ) goto X;
+				} // if
+				// fprintf( stderr, "getline\n" );
+				// sprintf( &fmtstr[pos], "[%s%s]%%n", f.flags.inex ? "^" : "", scanset );
+				sprintf( &fmtstr[pos], "[^%s]%%n", scanset );
+				// fprintf( stderr, "getline %s %d\n", fmtstr, f.wd );
 				if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 				else args = fmt( is, fmtstr, f.s, &len );
-//				fprintf( stderr, "getline %s %d %d %d\n", fmtstr, args, f.wd, eof( is ) );
+				// fprintf( stderr, "getline %s %d %d %d\n", fmtstr, args, f.wd, eof( is ) );
 				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
 					char peek;
 					fmt( is, "%c", &peek );				// check for delimiter
-//					fprintf( stderr, "peek %d '%c'\n", args, peek );
+					// fprintf( stderr, "peek %d '%c'\n", args, peek );
 					if ( ! eof( is ) ) {
 						if ( peek != f.delimiter[0] ) {
 							ungetc( is, peek );
-							throw ExceptionInst( cstring_length );
+							throwResume ExceptionInst( cstring_length );
 						} // if
 					} // if
-				} else fmt( is, "%*c" );				//  remove delimiter
+				} else fmt( is, "%*c" );			// remove delimiter
+			  X: ;
 			} else {
 				// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
 				// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]
 				sprintf( &fmtstr[pos], "[%s%s]%%n", f.flags.inex ? "^" : "", scanset );
-//				fprintf( stderr, "incl/excl %s %d\n", fmtstr, f.wd );
+				// fprintf( stderr, "incl/excl %s %d\n", fmtstr, f.wd );
 				int len = 0;							// may not be set in fmt
 				if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 				else args = fmt( is, fmtstr, f.s, &len );
-//				fprintf( stderr, "incl/excl %s \"%s\" %d %d %d %d %d %c\n", fmtstr, f.s, args, f.wd, len, eof( is ), check, f.s[f.wd] );
+				// fprintf( stderr, "incl/excl %s \"%s\" %d %d %d %d %d %c\n", fmtstr, f.s, args, f.wd, len, eof( is ), check, f.s[f.wd] );
 				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
-//					fprintf( stderr, "overflow\n" );
+					// fprintf( stderr, "overflow\n" );
 					char peek;
 					fmt( is, "%c", &peek );				// check for whitespace terminator
-//					fprintf( stderr, "peek %d '%c'\n", args, peek );
+					// fprintf( stderr, "peek %d '%c'\n", args, peek );
 					if ( ! eof( is ) ) {
 						ungetc( is, peek );
-						if ( f.flags.inex ^ strchr( f.scanset, peek ) != 0p ) throw ExceptionInst( cstring_length );
+						if ( f.flags.inex ^ strchr( f.scanset, peek ) != 0p ) throwResume ExceptionInst( cstring_length );
 					} // if
 				} // if
 			} // if
 			if ( rwd > 0 && args == 0 ) f.s[0]= '\0';	// read failed => no pattern match => set string to null
 		} // if
 		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
-//			fprintf( stderr, "clear\n" );
+			// fprintf( stderr, "clear\n" );
 			clear( is );								// => reset EOF => detect again on next read
 		} // if
 		return is;

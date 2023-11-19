@@ -15,14 +15,12 @@
 
 #pragma once
 
-class Type;
 namespace ast {
     class Type;
 }
 
 namespace ResolvExpr {
 
-int specCost( Type * type );
 int specCost( const ast::Type * type );
 
 }

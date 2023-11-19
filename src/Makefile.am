@@ -19,9 +19,9 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS  = -I automake
 
 SRC = main.cc \
-      CompilationState.cc \
-      CompilationState.h \
-	  MakeLibCfaNew.cpp \
+	CompilationState.cc \
+	CompilationState.h \
+	MakeLibCfaNew.cpp \
 	MakeLibCfa.h
 
 SRCDEMANGLE = CompilationState.cc

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FindFunction.cc --
+// FindFunction.cc -- Find function types in a larger type.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -68,8 +68,6 @@ void FindFunctionCore::previsit( ast::FunctionType const * type ) {
 	visit_children = false;
 	GuardScope( typeVars );
 	handleForall( type->forall );
-	//ast::accept_all( type->returns, *visitor );
-	// This might have to become ast::mutate_each with return.
 	ast::accept_each( type->returns, *visitor );
 }
 
@@ -78,7 +76,7 @@ ast::Type const * FindFunctionCore::postvisit( ast::FunctionType const * type ) 
 	if ( predicate( type, typeVars ) ) {
 		functions.push_back( type );
 		if ( replaceMode ) {
-			// replace type parameters in function type with void*
+			// Replace type parameters in function type with void *.
 			ret = scrubTypeVars( ast::deepCopy( type ), typeVars );
 		} // if
 	} // if

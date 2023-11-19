@@ -24,32 +24,33 @@ namespace Tuples {
 
 namespace {
 
-	/// Determines if impurity (read: side-effects) may exist in a piece of code. Currently gives
-	/// a very crude approximation, wherein any function call expression means the code may be
-	/// impure.
-    struct ImpurityDetector : public ast::WithShortCircuiting {
-		bool result = false;
+/// Determines if impurity (read: side-effects) may exist in a piece of code.
+/// Currently gives a very crude approximation, wherein almost any function
+/// call expression means the code may be impure.
+struct ImpurityDetector : public ast::WithShortCircuiting {
+	bool result = false;
 
-		void previsit( ast::ApplicationExpr const * appExpr ) {
-			if ( ast::DeclWithType const * function = ast::getFunction( appExpr ) ) {
-				if ( function->linkage == ast::Linkage::Intrinsic
-						&& ( function->name == "*?" || function->name == "?[?]" ) ) {
-					return;
-				}
+	void previsit( ast::ApplicationExpr const * appExpr ) {
+		if ( ast::DeclWithType const * function = ast::getFunction( appExpr ) ) {
+			if ( function->linkage == ast::Linkage::Intrinsic
+					&& ( function->name == "*?" || function->name == "?[?]" ) ) {
+				return;
 			}
-			result = true; visit_children = false;
 		}
-		void previsit( ast::UntypedExpr const * ) {
-			result = true; visit_children = false;
-		}
-	};
+		result = true; visit_children = false;
+	}
+	void previsit( ast::UntypedExpr const * ) {
+		result = true; visit_children = false;
+	}
+};
 
-	struct ImpurityDetectorIgnoreUnique : public ImpurityDetector {
-		using ImpurityDetector::previsit;
-		void previsit( ast::UniqueExpr const * ) {
-			visit_children = false;
-		}
-	};
+struct ImpurityDetectorIgnoreUnique : public ImpurityDetector {
+	using ImpurityDetector::previsit;
+	void previsit( ast::UniqueExpr const * ) {
+		visit_children = false;
+	}
+};
+
 } // namespace
 
 bool maybeImpure( const ast::Expr * expr ) {

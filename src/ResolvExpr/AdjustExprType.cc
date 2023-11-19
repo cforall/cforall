@@ -22,53 +22,55 @@
 namespace ResolvExpr {
 
 namespace {
-	class AdjustExprType final : public ast::WithShortCircuiting {
-		const ast::SymbolTable & symtab;
-	public:
-		const ast::TypeEnvironment & tenv;
 
-		AdjustExprType( const ast::TypeEnvironment & e, const ast::SymbolTable & syms )
-		: symtab( syms ), tenv( e ) {}
+class AdjustExprType final : public ast::WithShortCircuiting {
+	const ast::SymbolTable & symtab;
+public:
+	const ast::TypeEnvironment & tenv;
 
-		void previsit( const ast::VoidType * ) { visit_children = false; }
-		void previsit( const ast::BasicType * ) { visit_children = false; }
-		void previsit( const ast::PointerType * ) { visit_children = false; }
-		void previsit( const ast::ArrayType * ) { visit_children = false; }
-		void previsit( const ast::FunctionType * ) { visit_children = false; }
-		void previsit( const ast::StructInstType * ) { visit_children = false; }
-		void previsit( const ast::UnionInstType * ) { visit_children = false; }
-		void previsit( const ast::EnumInstType * ) { visit_children = false; }
-		void previsit( const ast::TraitInstType * ) { visit_children = false; }
-		void previsit( const ast::TypeInstType * ) { visit_children = false; }
-		void previsit( const ast::TupleType * ) { visit_children = false; }
-		void previsit( const ast::VarArgsType * ) { visit_children = false; }
-		void previsit( const ast::ZeroType * ) { visit_children = false; }
-		void previsit( const ast::OneType * ) { visit_children = false; }
+	AdjustExprType( const ast::TypeEnvironment & e, const ast::SymbolTable & syms )
+	: symtab( syms ), tenv( e ) {}
 
-		const ast::Type * postvisit( const ast::ArrayType * at ) {
-			return new ast::PointerType{ at->base, at->qualifiers };
-		}
+	void previsit( const ast::VoidType * ) { visit_children = false; }
+	void previsit( const ast::BasicType * ) { visit_children = false; }
+	void previsit( const ast::PointerType * ) { visit_children = false; }
+	void previsit( const ast::ArrayType * ) { visit_children = false; }
+	void previsit( const ast::FunctionType * ) { visit_children = false; }
+	void previsit( const ast::StructInstType * ) { visit_children = false; }
+	void previsit( const ast::UnionInstType * ) { visit_children = false; }
+	void previsit( const ast::EnumInstType * ) { visit_children = false; }
+	void previsit( const ast::TraitInstType * ) { visit_children = false; }
+	void previsit( const ast::TypeInstType * ) { visit_children = false; }
+	void previsit( const ast::TupleType * ) { visit_children = false; }
+	void previsit( const ast::VarArgsType * ) { visit_children = false; }
+	void previsit( const ast::ZeroType * ) { visit_children = false; }
+	void previsit( const ast::OneType * ) { visit_children = false; }
 
-		const ast::Type * postvisit( const ast::FunctionType * ft ) {
-			return new ast::PointerType{ ft };
-		}
+	const ast::Type * postvisit( const ast::ArrayType * at ) {
+		return new ast::PointerType( at->base, at->qualifiers );
+	}
 
-		const ast::Type * postvisit( const ast::TypeInstType * inst ) {
-			// replace known function-type-variables with pointer-to-function
-			if ( const ast::EqvClass * eqvClass = tenv.lookup( *inst ) ) {
-				if ( eqvClass->data.kind == ast::TypeDecl::Ftype ) {
-					return new ast::PointerType{ inst };
-				}
-			} else if ( const ast::NamedTypeDecl * ntDecl = symtab.lookupType( inst->name ) ) {
-				if ( auto tyDecl = dynamic_cast< const ast::TypeDecl * >( ntDecl ) ) {
-					if ( tyDecl->kind == ast::TypeDecl::Ftype ) {
-						return new ast::PointerType{ inst };
-					}
+	const ast::Type * postvisit( const ast::FunctionType * ft ) {
+		return new ast::PointerType( ft );
+	}
+
+	const ast::Type * postvisit( const ast::TypeInstType * inst ) {
+		// replace known function-type-variables with pointer-to-function
+		if ( const ast::EqvClass * eqvClass = tenv.lookup( *inst ) ) {
+			if ( eqvClass->data.kind == ast::TypeDecl::Ftype ) {
+				return new ast::PointerType( inst );
+			}
+		} else if ( const ast::NamedTypeDecl * ntDecl = symtab.lookupType( inst->name ) ) {
+			if ( auto tyDecl = dynamic_cast< const ast::TypeDecl * >( ntDecl ) ) {
+				if ( tyDecl->kind == ast::TypeDecl::Ftype ) {
+					return new ast::PointerType( inst );
 				}
 			}
-			return inst;
 		}
-	};
+		return inst;
+	}
+};
+
 } // anonymous namespace
 
 const ast::Type * adjustExprType(

@@ -32,6 +32,7 @@
 namespace ResolvExpr {
 
 namespace {
+
 struct ResolveTypeof : public ast::WithShortCircuiting {
     const ResolveContext & context;
 
@@ -74,6 +75,7 @@ struct ResolveTypeof : public ast::WithShortCircuiting {
         return newType.release();
     }
 };
+
 } // anonymous namespace
 
 const ast::Type * resolveTypeof( const ast::Type * type , const ResolveContext & context ) {

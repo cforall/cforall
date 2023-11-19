@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct 18 22:05:54 2023
-// Update Count     : 549
+// Last Modified On : Wed Nov 15 10:51:14 2023
+// Update Count     : 552
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -294,22 +294,21 @@ int fmt( ifstream & is, const char format[], ... ) {
 	va_list args;
 	va_start( args, format );
 
-	int len;
+	int nargs;
     for () {											// no check for EINTR limit waiting for keyboard input
 		errno = 0;
 		disable_interrupts();
-		len = vfscanf( (FILE *)(is.file$), format, args );
+		nargs = vfscanf( (FILE *)(is.file$), format, args );
 		enable_interrupts();
-	  if ( len != EOF || errno != EINTR ) break;		// timer interrupt ?
+	  if ( nargs != EOF || errno != EINTR ) break;		// timer interrupt ?
     } // for
-	if ( len == EOF ) {									// EOF or matching failure ?
+	if ( nargs == EOF ) {								// EOF or matching failure ?
 		if ( ! feof( (FILE *)(is.file$) ) && ferror( (FILE *)(is.file$) ) ) {
 			abort | IO_MSG "invalid read";
 		} // if
 	} // if
 	va_end( args );
-//	if ( len == 0 ) throw ExceptionInst( missing_data );
-	return len;
+	return nargs;
 } // fmt
 
 static ifstream sinFile = { (FILE *)stdin };
@@ -322,13 +321,13 @@ ifstream & sin = sinFile, & stdin = sinFile;
 static vtable(open_failure) open_failure_vt;
 
 // exception I/O constructors
-void ?{}( open_failure & ex, ofstream & ostream ) with(ex) {
+void ?{}( open_failure & ex, ofstream & ostream ) with( ex ) {
 	virtual_table = &open_failure_vt;
 	ostream = &ostream;
 	tag = 1;
 } // ?{}
 
-void ?{}( open_failure & ex, ifstream & istream ) with(ex) {
+void ?{}( open_failure & ex, ifstream & istream ) with( ex ) {
 	virtual_table = &open_failure_vt;
 	istream = &istream;
 	tag = 0;
@@ -338,13 +337,13 @@ void ?{}( open_failure & ex, ifstream & istream ) with(ex) {
 static vtable(close_failure) close_failure_vt;
 
 // exception I/O constructors
-void ?{}( close_failure & ex, ofstream & ostream ) with(ex) {
+void ?{}( close_failure & ex, ofstream & ostream ) with( ex ) {
 	virtual_table = &close_failure_vt;
 	ostream = &ostream;
 	tag = 1;
 } // ?{}
 
-void ?{}( close_failure & ex, ifstream & istream ) with(ex) {
+void ?{}( close_failure & ex, ifstream & istream ) with( ex ) {
 	virtual_table = &close_failure_vt;
 	istream = &istream;
 	tag = 0;
@@ -354,13 +353,13 @@ void ?{}( close_failure & ex, ifstream & istream ) with(ex) {
 static vtable(write_failure) write_failure_vt;
 
 // exception I/O constructors
-void ?{}( write_failure & ex, ofstream & ostream ) with(ex) {
+void ?{}( write_failure & ex, ofstream & ostream ) with( ex ) {
 	virtual_table = &write_failure_vt;
 	ostream = &ostream;
 	tag = 1;
 } // ?{}
 
-void ?{}( write_failure & ex, ifstream & istream ) with(ex) {
+void ?{}( write_failure & ex, ifstream & istream ) with( ex ) {
 	virtual_table = &write_failure_vt;
 	istream = &istream;
 	tag = 0;
@@ -370,13 +369,13 @@ void ?{}( write_failure & ex, ifstream & istream ) with(ex) {
 static vtable(read_failure) read_failure_vt;
 
 // exception I/O constructors
-void ?{}( read_failure & ex, ofstream & ostream ) with(ex) {
+void ?{}( read_failure & ex, ofstream & ostream ) with( ex ) {
 	virtual_table = &read_failure_vt;
 	ostream = &ostream;
 	tag = 1;
 } // ?{}
 
-void ?{}( read_failure & ex, ifstream & istream ) with(ex) {
+void ?{}( read_failure & ex, ifstream & istream ) with( ex ) {
 	virtual_table = &read_failure_vt;
 	istream = &istream;
 	tag = 0;

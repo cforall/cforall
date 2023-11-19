@@ -33,73 +33,68 @@ namespace ast {
 	class Node;
 }
 
-namespace SymTab {
-	namespace Mangler {
-		namespace Encoding {
-			extern const std::string manglePrefix;
-			extern const std::string basicTypes[];
-			extern const std::map<int, std::string> qualifiers;
-
-			extern const std::string void_t;
-			extern const std::string zero;
-			extern const std::string one;
-
-			extern const std::string function;
-			extern const std::string tuple;
-			extern const std::string pointer;
-			extern const std::string array;
-			extern const std::string qualifiedTypeStart;
-			extern const std::string qualifiedTypeEnd;
-
-			extern const std::string forall;
-			extern const std::string typeVariables[];
-
-			extern const std::string struct_t;
-			extern const std::string union_t;
-			extern const std::string enum_t;
-			extern const std::string type;
-
-			extern const std::string autogen;
-			extern const std::string intrinsic;
-		};
-	} // Mangler
-} // SymTab
-
 namespace Mangle {
-	/// Bitflags for mangle modes
-	enum {
-		NoOverrideable  = 1 << 0,
-		Type            = 1 << 1,
-		NoGenericParams = 1 << 2
-	};
 
-	/// Bitflag type for mangler modes
-	struct mangle_flags {
-		union {
-			unsigned int val;
-			struct {
-				bool no_overrideable   : 1;
-				bool type              : 1;
-				bool no_generic_params : 1;
-			};
+/// Bitflags for mangle Mode:
+enum {
+	NoOverrideable  = 1 << 0,
+	Type            = 1 << 1,
+	NoGenericParams = 1 << 2
+};
+
+/// Bitflag type for mangle Mode:
+struct mangle_flags {
+	union {
+		unsigned int val;
+		struct {
+			bool no_overrideable   : 1;
+			bool type              : 1;
+			bool no_generic_params : 1;
 		};
-
-		constexpr mangle_flags( unsigned int val ) : val(val) {}
 	};
 
-	using Mode = bitfield<mangle_flags>;
+	constexpr mangle_flags( unsigned int val ) : val(val) {}
+};
 
-	/// Mangle declaration name.
-	std::string mangle( const ast::Node * decl, Mode mode = {} );
+using Mode = bitfield<mangle_flags>;
 
-	/// Most common mangle configuration for types.
-	static inline std::string mangleType( const ast::Node * type ) {
-		return mangle( type, { NoOverrideable | Type } );
-	}
+/// Mangle declaration name.
+std::string mangle( const ast::Node * decl, Mode mode = {} );
 
-	namespace Encoding {
-		using namespace SymTab::Mangler::Encoding;
-	};
+/// Most common mangle configuration for types.
+static inline std::string mangleType( const ast::Node * type ) {
+	return mangle( type, { NoOverrideable | Type } );
+}
+
+/// The substrings used in name mangling and demangling.
+namespace Encoding {
+	extern const std::string manglePrefix;
+	extern const std::string basicTypes[];
+	extern const std::map<int, std::string> qualifiers;
+
+	extern const std::string void_t;
+	extern const std::string zero;
+	extern const std::string one;
+
+	extern const std::string function;
+	extern const std::string tuple;
+	extern const std::string pointer;
+	extern const std::string array;
+	extern const std::string qualifiedTypeStart;
+	extern const std::string qualifiedTypeEnd;
+
+	extern const std::string forall;
+	extern const std::string typeVariables[];
+
+	extern const std::string struct_t;
+	extern const std::string union_t;
+	extern const std::string enum_t;
+	extern const std::string type;
+
+	extern const std::string autogen;
+	extern const std::string intrinsic;
+}
+
 }
 
 // Local Variables: //

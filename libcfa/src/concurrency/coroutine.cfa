@@ -317,9 +317,14 @@ extern "C" {
 
 void defaultResumeAtHandler( exception_t * except ) {
     __cfaehm_allocate_exception( except );
-    free( except );
     __cfaehm_begin_unwind( (void(*)(exception_t *))defaultTerminationHandler );
 }
+
+struct ehm_cleanup {
+	exception_t * ex;
+};
+
+void ^?{}( ehm_cleanup & this ) { free( this.ex ); }
 
 bool poll( coroutine$ * cor ) libcfa_public {
     nonlocal_exception * nl_ex = pop_ehm_head( cor );
@@ -329,12 +334,10 @@ bool poll( coroutine$ * cor ) libcfa_public {
     
     // otherwise loop and throwResume all pending exceptions
     while ( nl_ex != 0p ){
-        exception_t * ex = nl_ex->the_exception;
+		ehm_cleanup ex_holder{ nl_ex->the_exception };
         free( nl_ex );
-        __cfaehm_throw_resume( ex, defaultResumeAtHandler );
+        __cfaehm_throw_resume( ex_holder.ex , defaultResumeAtHandler );
         
-        // only reached if resumption handled. other dealloc handled in defaultResumeAtHandler
-        free( ex );
         nl_ex = pop_ehm_head( cor );
     }
     

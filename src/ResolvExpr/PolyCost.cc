@@ -20,6 +20,8 @@
 
 namespace ResolvExpr {
 
+namespace {
+
 class PolyCost {
 	const ast::SymbolTable &symtab;
 public:
@@ -43,6 +45,8 @@ public:
 		}
 	}
 };
+
+} // namespace
 
 int polyCost(
 	const ast::Type * type, const ast::SymbolTable & symtab, const ast::TypeEnvironment & env

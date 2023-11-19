@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ScopedSet.h --
+// ScopedSet.h -- A set that supports save/restore scoping.
 //
 // Author           : Aaron B. Moss
 // Created On       : Thu Dec 3 11:51:00 2015

@@ -57,8 +57,8 @@ template< typename T >
 struct enumerate_t {
 	template<typename val_t>
 	struct value_t {
-		val_t & val;
 		size_t idx;
+		val_t & val;
 	};
 
 	template< typename iter_t, typename val_t >
@@ -68,7 +68,7 @@ struct enumerate_t {
 
 		iterator_t( iter_t _it, size_t _idx ) : it(_it), idx(_idx) {}
 
-		value_t<val_t> operator*() const { return value_t<val_t>{ *it, idx }; }
+		value_t<val_t> operator*() const { return value_t<val_t>{ idx, *it }; }
 
 		bool operator==(const iterator_t & o) const { return o.it == it; }
 		bool operator!=(const iterator_t & o) const { return o.it != it; }

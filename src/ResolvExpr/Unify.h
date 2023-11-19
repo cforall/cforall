@@ -15,8 +15,6 @@
 
 #pragma once
 
-#include <list>                   // for list
-
 #include "AST/Node.hpp"             // for ptr
 #include "AST/TypeEnvironment.hpp"  // for TypeEnvironment, AssertionSet, OpenVarSet
 #include "WidenMode.h"              // for WidenMode
@@ -46,11 +44,11 @@ bool unifyExact(
 bool unifyInexact(
 	const ast::ptr<ast::Type> & type1, const ast::ptr<ast::Type> & type2,
 	ast::TypeEnvironment & env, ast::AssertionSet & need, ast::AssertionSet & have,
-	const ast::OpenVarSet & open, WidenMode widen, 
+	const ast::OpenVarSet & open, WidenMode widen,
 	ast::ptr<ast::Type> & common );
 
 bool typesCompatible(
-	const ast::Type *, const ast::Type *, 
+	const ast::Type *, const ast::Type *,
 	const ast::TypeEnvironment & env = {} );
 
 bool typesCompatibleIgnoreQualifiers(

@@ -23,66 +23,69 @@
 
 namespace ResolvExpr {
 
-	namespace {
-		struct FindOpenVars final : public ast::WithGuards {
-			ast::OpenVarSet & open;
-			ast::OpenVarSet & closed;
-			ast::AssertionSet & need;
-			ast::AssertionSet & have;
-			ast::TypeEnvironment & env;
-			bool nextIsOpen;
+namespace {
 
-			FindOpenVars(
-				ast::OpenVarSet & o, ast::OpenVarSet & c, ast::AssertionSet & n,
-				ast::AssertionSet & h, ast::TypeEnvironment & env, FirstMode firstIsOpen )
-			: open( o ), closed( c ), need( n ), have( h ), env (env), nextIsOpen( firstIsOpen ) {}
+struct FindOpenVars final : public ast::WithGuards {
+	ast::OpenVarSet & open;
+	ast::OpenVarSet & closed;
+	ast::AssertionSet & need;
+	ast::AssertionSet & have;
+	ast::TypeEnvironment & env;
+	bool nextIsOpen;
 
-			void previsit( const ast::FunctionType * type ) {
-				// mark open/closed variables
-				if ( nextIsOpen ) {
-					// trying to remove this from resolver.
-					// occasionally used in other parts so not deleting right now.
+	FindOpenVars(
+		ast::OpenVarSet & o, ast::OpenVarSet & c, ast::AssertionSet & n,
+		ast::AssertionSet & h, ast::TypeEnvironment & env, FirstMode firstIsOpen )
+	: open( o ), closed( c ), need( n ), have( h ), env (env), nextIsOpen( firstIsOpen ) {}
 
-					// insert open variables unbound to environment.
-					env.add(type->forall);
+	void previsit( const ast::FunctionType * type ) {
+		// mark open/closed variables
+		if ( nextIsOpen ) {
+			// trying to remove this from resolver.
+			// occasionally used in other parts so not deleting right now.
 
-					for ( auto & decl : type->forall ) {
-						open[ *decl ] = ast::TypeData{ decl->base };
-					}
-					for ( auto & assert : type->assertions ) {
-						need[ assert ].isUsed = false;
-					}
-				} else {
-					for ( auto & decl : type->forall ) {
-						closed[ *decl ] = ast::TypeData{ decl->base };
-					}
-					for ( auto & assert : type->assertions ) {
-						have[ assert ].isUsed = false;
-					}
-				}
+			// insert open variables unbound to environment.
+			env.add(type->forall);
 
-				// flip open variables for contained function types
-				nextIsOpen = ! nextIsOpen;
-				GuardAction( [this](){ nextIsOpen = ! nextIsOpen; } );
+			for ( auto & decl : type->forall ) {
+				open[ *decl ] = ast::TypeData{ decl->base };
 			}
-
-		};
-	}
-
-	void findOpenVars(
-			const ast::Type * type, ast::OpenVarSet & open, ast::OpenVarSet & closed,
-			ast::AssertionSet & need, ast::AssertionSet & have, ast::TypeEnvironment & env, FirstMode firstIsOpen ) {
-		ast::Pass< FindOpenVars > finder{ open, closed, need, have, env, firstIsOpen };
-		type->accept( finder );
-
-		if (!closed.empty()) {
-			std::cerr << "closed: ";
-			for (auto& i : closed) {
-				std::cerr << i.first.base->location << ":" << i.first.base->name << ' ';
+			for ( auto & assert : type->assertions ) {
+				need[ assert ].isUsed = false;
 			}
-			std::cerr << std::endl;
+		} else {
+			for ( auto & decl : type->forall ) {
+				closed[ *decl ] = ast::TypeData{ decl->base };
+			}
+			for ( auto & assert : type->assertions ) {
+				have[ assert ].isUsed = false;
+			}
 		}
+
+		// flip open variables for contained function types
+	//	nextIsOpen = ! nextIsOpen;
+	//	GuardAction( [this](){ nextIsOpen = ! nextIsOpen; } );
+		GuardValue( nextIsOpen ) = !nextIsOpen;
 	}
+};
+
+} // namespace
+
+void findOpenVars(
+		const ast::Type * type, ast::OpenVarSet & open, ast::OpenVarSet & closed,
+		ast::AssertionSet & need, ast::AssertionSet & have, ast::TypeEnvironment & env, FirstMode firstIsOpen ) {
+	ast::Pass< FindOpenVars > finder{ open, closed, need, have, env, firstIsOpen };
+	type->accept( finder );
+
+	if (!closed.empty()) {
+		std::cerr << "closed: ";
+		for (auto& i : closed) {
+			std::cerr << i.first.base->location << ":" << i.first.base->name << ' ';
+		}
+		std::cerr << std::endl;
+	}
+}
+
 } // namespace ResolvExpr
 
 // Local Variables: //

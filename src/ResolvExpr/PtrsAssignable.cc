@@ -21,6 +21,8 @@
 
 namespace ResolvExpr {
 
+namespace {
+
 struct PtrsAssignable : public ast::WithShortCircuiting {
 	const ast::Type * dst;
 	const ast::TypeEnvironment & typeEnv;
@@ -50,6 +52,8 @@ struct PtrsAssignable : public ast::WithShortCircuiting {
 		}
 	}
 };
+
+} // namespace
 
 int ptrsAssignable( const ast::Type * src, const ast::Type * dst,
 		const ast::TypeEnvironment & env ) {

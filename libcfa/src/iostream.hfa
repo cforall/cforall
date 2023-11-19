@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct 18 21:21:20 2023
-// Update Count     : 583
+// Last Modified On : Wed Nov 15 17:55:31 2023
+// Update Count     : 596
 //
 
 #pragma once
@@ -387,9 +387,6 @@ static inline {
 	_Istream_Cskip skip( const char scanset[] ) { return (_Istream_Cskip)@{ scanset, 0 }; }
 	_Istream_Cskip skip( unsigned int wd ) { return (_Istream_Cskip)@{ 0p, wd }; }
 } // distribution
-forall( istype & | basic_istream( istype ) ) {
-	istype & ?|?( istype & is, _Istream_Cskip f );
-}
 
 struct _Istream_str_base {
 	union {
@@ -413,6 +410,11 @@ struct _Istream_Cstr {
 	inline _Istream_str_base;
 }; // _Istream_Cstr
 
+struct _Istream_Cquoted {
+	char * s;
+	inline _Istream_str_base;
+}; // _Istream_Cquoted
+
 static inline {
 	// width must include room for null terminator
 	_Istream_Cstr wdi( unsigned int wd, char s[] ) { return (_Istream_Cstr)@{ s, { {0p}, wd, {.all : 0} } }; }
@@ -421,6 +423,10 @@ static inline {
 		if ( wd <= rwd ) throw (cstring_length){ &cstring_length_vt };
 		return (_Istream_Cstr)@{ s, { {0p}, rwd, {.flags.rwd : true} } };
 	}
+	_Istream_Cquoted & quoted( _Istream_Cstr & fmt, const char delimiter = '"' ) {
+		fmt.delimiter[0] = delimiter; fmt.delimiter[1] = '\0';
+		return (_Istream_Cquoted &)fmt;
+	}
 	_Istream_Cstr & getline( _Istream_Cstr & fmt, const char delimiter = '\n' ) {
 		fmt.delimiter[0] = delimiter; fmt.delimiter[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt; }
 	_Istream_Cstr & incl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
@@ -428,9 +434,12 @@ static inline {
 	_Istream_Cstr ignore( char s[] ) { return (_Istream_Cstr)@{ s, { {0p}, -1, {.flags.ignore : true} } }; }
 	_Istream_Cstr & ignore( _Istream_Cstr & fmt ) { fmt.flags.ignore = true; return fmt; }
 } // distribution
+
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cstr f );
-}
+	istype & ?|?( istype & is, _Istream_Cskip f );
+	istype & ?|?( istype & is, _Istream_Cquoted f );
+} // distribution
 
 struct _Istream_Char {
 	bool ignore;										// do not change input argument

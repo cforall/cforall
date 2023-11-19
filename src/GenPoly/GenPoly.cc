@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// GenPoly.cc --
+// GenPoly.cc -- General GenPoly utilities.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -32,66 +32,67 @@
 using namespace std;
 
 namespace GenPoly {
-	namespace {
-		/// Checks a parameter list for polymorphic parameters; will substitute according to env if present
-		bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const ast::TypeSubstitution * env ) {
-			for ( auto &param : params ) {
-				auto paramType = param.as<ast::TypeExpr>();
-				assertf( paramType, "Aggregate parameters should be type expressions" );
-				if ( isPolyType( paramType->type, env ) ) return true;
-			}
-			return false;
-		}
 
-		/// Checks a parameter list for polymorphic parameters from tyVars; will substitute according to env if present
-		bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const TypeVarMap & typeVars, const ast::TypeSubstitution * env ) {
-			for ( auto & param : params ) {
-				auto paramType = param.as<ast::TypeExpr>();
-				assertf( paramType, "Aggregate parameters should be type expressions" );
-				if ( isPolyType( paramType->type, typeVars, env ) ) return true;
-			}
-			return false;
+namespace {
+	/// Checks a parameter list for polymorphic parameters; will substitute according to env if present.
+	bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const ast::TypeSubstitution * env ) {
+		for ( auto & param : params ) {
+			auto paramType = param.as<ast::TypeExpr>();
+			assertf( paramType, "Aggregate parameters should be type expressions" );
+			if ( isPolyType( paramType->type, env ) ) return true;
 		}
-
-		/// Checks a parameter list for dynamic-layout parameters from tyVars; will substitute according to env if present
-		bool hasDynParams(
-				const std::vector<ast::ptr<ast::Expr>> & params,
-				const TypeVarMap & typeVars,
-				const ast::TypeSubstitution * subst ) {
-			for ( ast::ptr<ast::Expr> const & paramExpr : params ) {
-				auto param = paramExpr.as<ast::TypeExpr>();
-				assertf( param, "Aggregate parameters should be type expressions." );
-				if ( isDynType( param->type.get(), typeVars, subst ) ) {
-					return true;
-				}
-			}
-			return false;
-		}
+		return false;
 	}
 
-	const ast::Type * replaceTypeInst(const ast::Type * type, const ast::TypeSubstitution * env) {
-		if (!env) return type;
-		if ( auto typeInst = dynamic_cast<const ast::TypeInstType*>(type) ) {
-			auto newType = env->lookup(typeInst);
-			if (newType) return newType;
+	/// Checks a parameter list for polymorphic parameters from typeVars; will substitute according to env if present.
+	bool hasPolyParams( const std::vector<ast::ptr<ast::Expr>> & params, const TypeVarMap & typeVars, const ast::TypeSubstitution * env ) {
+		for ( auto & param : params ) {
+			auto paramType = param.as<ast::TypeExpr>();
+			assertf( paramType, "Aggregate parameters should be type expressions" );
+			if ( isPolyType( paramType->type, typeVars, env ) ) return true;
 		}
+		return false;
+	}
+
+	/// Checks a parameter list for dynamic-layout parameters from tyVars; will substitute according to env if present.
+	bool hasDynParams(
+			const std::vector<ast::ptr<ast::Expr>> & params,
+			const TypeVarMap & typeVars,
+			const ast::TypeSubstitution * subst ) {
+		for ( ast::ptr<ast::Expr> const & paramExpr : params ) {
+			auto param = paramExpr.as<ast::TypeExpr>();
+			assertf( param, "Aggregate parameters should be type expressions." );
+			if ( isDynType( param->type.get(), typeVars, subst ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+} // namespace
+
+const ast::Type * replaceTypeInst( const ast::Type * type, const ast::TypeSubstitution * env ) {
+	if ( !env ) return type;
+	if ( auto typeInst = dynamic_cast<const ast::TypeInstType*>( type ) ) {
+		if ( auto newType = env->lookup( typeInst ) ) return newType;
+	}
+	return type;
+}
+
+const ast::Type * isPolyType( const ast::Type * type, const ast::TypeSubstitution * subst ) {
+	type = replaceTypeInst( type, subst );
+
+	if ( dynamic_cast< const ast::TypeInstType * >( type ) ) {
+		// This case is where the two variants of isPolyType differ.
 		return type;
+	} else if ( auto arrayType = dynamic_cast< const ast::ArrayType * >( type ) ) {
+		return isPolyType( arrayType->base, subst );
+	} else if ( auto structType = dynamic_cast< const ast::StructInstType* >( type ) ) {
+		if ( hasPolyParams( structType->params, subst ) ) return type;
+	} else if ( auto unionType = dynamic_cast< const ast::UnionInstType* >( type ) ) {
+		if ( hasPolyParams( unionType->params, subst ) ) return type;
 	}
-
-	const ast::Type * isPolyType(const ast::Type * type, const ast::TypeSubstitution * env) {
-		type = replaceTypeInst( type, env );
-
-		if ( dynamic_cast< const ast::TypeInstType * >( type ) ) {
-			return type;
-		} else if ( auto arrayType = dynamic_cast< const ast::ArrayType * >( type ) ) {
-			return isPolyType( arrayType->base, env );
-		} else if ( auto structType = dynamic_cast< const ast::StructInstType* >( type ) ) {
-			if ( hasPolyParams( structType->params, env ) ) return type;
-		} else if ( auto unionType = dynamic_cast< const ast::UnionInstType* >( type ) ) {
-			if ( hasPolyParams( unionType->params, env ) ) return type;
-		}
-		return 0;
-	}
+	return nullptr;
+}
 
 const ast::Type * isPolyType( const ast::Type * type,
 		const TypeVarMap & typeVars, const ast::TypeSubstitution * subst ) {
@@ -120,13 +121,9 @@ const ast::BaseInstType * isDynType(
 			return inst;
 		}
 	} else if ( auto inst = dynamic_cast<ast::StructInstType const *>( type ) ) {
-		if ( hasDynParams( inst->params, typeVars, subst ) ) {
-			return inst;
-		}
+		if ( hasDynParams( inst->params, typeVars, subst ) ) return inst;
 	} else if ( auto inst = dynamic_cast<ast::UnionInstType const *>( type ) ) {
-		if ( hasDynParams( inst->params, typeVars, subst ) ) {
-			return inst;
-		}
+		if ( hasDynParams( inst->params, typeVars, subst ) ) return inst;
 	}
 	return nullptr;
 }
@@ -189,62 +186,61 @@ ast::Type const * hasPolyBase(
 	return isPolyType( type, typeVars, subst );
 }
 
-	const ast::FunctionType * getFunctionType( const ast::Type * ty ) {
-		if ( auto pty = dynamic_cast< const ast::PointerType * >( ty ) ) {
-			return pty->base.as< ast::FunctionType >();
-		} else {
-			return dynamic_cast< const ast::FunctionType * >( ty );
+const ast::FunctionType * getFunctionType( const ast::Type * ty ) {
+	if ( auto pty = dynamic_cast< const ast::PointerType * >( ty ) ) {
+		return pty->base.as< ast::FunctionType >();
+	} else {
+		return dynamic_cast< const ast::FunctionType * >( ty );
+	}
+}
+
+namespace {
+	/// Checks if is a pointer to D
+	template<typename D, typename B>
+	bool is( const B* p ) { return type_index{typeid(D)} == type_index{typeid(*p)}; }
+
+	/// Converts to a pointer to D without checking for safety
+	template<typename D, typename B>
+	inline D* as( B* p ) { return reinterpret_cast<D*>(p); }
+
+	template<typename D, typename B>
+	inline D const * as( B const * p ) {
+		return reinterpret_cast<D const *>( p );
+	}
+
+	/// Flattens a list of types.
+	void flattenList( vector<ast::ptr<ast::Type>> const & src,
+			vector<ast::ptr<ast::Type>> & out ) {
+		for ( auto const & type : src ) {
+			ResolvExpr::flatten( type, out );
 		}
 	}
 
-	namespace {
-		/// Checks if is a pointer to D
-		template<typename D, typename B>
-		bool is( const B* p ) { return type_index{typeid(D)} == type_index{typeid(*p)}; }
-
-		/// Converts to a pointer to D without checking for safety
-		template<typename D, typename B>
-		inline D* as( B* p ) { return reinterpret_cast<D*>(p); }
-
-		template<typename D, typename B>
-		inline D const * as( B const * p ) {
-			return reinterpret_cast<D const *>( p );
+	bool paramListsPolyCompatible(
+			std::vector<ast::ptr<ast::Expr>> const & lparams,
+			std::vector<ast::ptr<ast::Expr>> const & rparams ) {
+		if ( lparams.size() != rparams.size() ) {
+			return false;
 		}
 
-		/// Flattens a list of types.
-		// There is another flattenList in Unify.
-		void flattenList( vector<ast::ptr<ast::Type>> const & src,
-				vector<ast::ptr<ast::Type>> & out ) {
-			for ( auto const & type : src ) {
-				ResolvExpr::flatten( type, out );
-			}
-		}
+		for ( auto lparam = lparams.begin(), rparam = rparams.begin() ;
+				lparam != lparams.end() ; ++lparam, ++rparam ) {
+			ast::TypeExpr const * lexpr = lparam->as<ast::TypeExpr>();
+			assertf( lexpr, "Aggregate parameters should be type expressions" );
+			ast::TypeExpr const * rexpr = rparam->as<ast::TypeExpr>();
+			assertf( rexpr, "Aggregate parameters should be type expressions" );
 
-		bool paramListsPolyCompatible(
-				std::vector<ast::ptr<ast::Expr>> const & lparams,
-				std::vector<ast::ptr<ast::Expr>> const & rparams ) {
-			if ( lparams.size() != rparams.size() ) {
+			// xxx - might need to let VoidType be a wildcard here too; could have some voids
+			// stuffed in for dtype-statics.
+			// if ( is<VoidType>( lexpr->type() ) || is<VoidType>( bparam->get_type() ) ) continue;
+			if ( !typesPolyCompatible( lexpr->type, rexpr->type ) ) {
 				return false;
 			}
-
-			for ( auto lparam = lparams.begin(), rparam = rparams.begin() ;
-					lparam != lparams.end() ; ++lparam, ++rparam ) {
-				ast::TypeExpr const * lexpr = lparam->as<ast::TypeExpr>();
-				assertf( lexpr, "Aggregate parameters should be type expressions" );
-				ast::TypeExpr const * rexpr = rparam->as<ast::TypeExpr>();
-				assertf( rexpr, "Aggregate parameters should be type expressions" );
-
-				// xxx - might need to let VoidType be a wildcard here too; could have some voids
-				// stuffed in for dtype-statics.
-				// if ( is<VoidType>( lexpr->type() ) || is<VoidType>( bparam->get_type() ) ) continue;
-				if ( !typesPolyCompatible( lexpr->type, rexpr->type ) ) {
-					return false;
-				}
-			}
-
-			return true;
 		}
+
+		return true;
 	}
+} // namespace
 
 bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 	type_index const lid = typeid(*lhs);
@@ -377,7 +373,7 @@ bool needsBoxing(
 		const ast::ApplicationExpr * expr,
 		const ast::TypeSubstitution * subst ) {
 	const ast::FunctionType * function = getFunctionType( expr->func->result );
-	assertf( function, "ApplicationExpr has non-function type: %s", toString( expr->func->result ).c_str() );
+	assertf( function, "ApplicationExpr has non-function type: %s", toCString( expr->func->result ) );
 	TypeVarMap exprTyVars;
 	makeTypeVarMap( function, exprTyVars );
 	return needsBoxing( param, arg, exprTyVars, subst );

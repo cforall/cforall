@@ -750,15 +750,14 @@ namespace {
 			// attempt to narrow based on expected target type
 			const ast::Type * returnType = funcType->returns.front();
 			if ( selfFinder.strictMode ) {
-				if ( ! unifyExact(
+				if ( !unifyExact(
 					returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen, noWiden() ) // xxx - is no widening correct?
 				) {
 					// unification failed, do not pursue this candidate
 					return;
 				}
-			}
-			else {
-				if ( ! unify(
+			} else {
+				if ( !unify(
 					returnType, targetType, funcEnv, funcNeed, funcHave, funcOpen )
 				) {
 					// unification failed, do not pursue this candidate
@@ -1108,8 +1107,7 @@ namespace {
 					if (withFunc->cost == intrinsicCost) {
 						intrinsicResult.emplace_back(std::move(withFunc));
 					}
-				}
-				else {
+				} else {
 					candidates.emplace_back( std::move( withFunc ) );
 				}
 			}
@@ -1155,7 +1153,7 @@ namespace {
 		reason.code = NoMatch;
 
 		for ( CandidateRef & r : finder.candidates ) {
-			if ( ! isLvalue( r->expr ) ) continue;
+			if ( !isLvalue( r->expr ) ) continue;
 			addCandidate( *r, new ast::AddressExpr{ addressExpr->location, r->expr } );
 		}
 	}

@@ -491,23 +491,34 @@ Expr * genRunExpr( const CodeLocation & loc, int & index ) {
 // Takes in the ClauseNode tree and recursively generates
 // the predicate expr used inside the predicate functions
 Expr * genPredExpr( const CodeLocation & loc, WaitUntilStmt::ClauseNode * currNode, int & idx, GenLeafExpr genLeaf ) {
+    Expr * leftExpr, * rightExpr;
     switch (currNode->op) {
         case WaitUntilStmt::ClauseNode::AND:
+            leftExpr = genPredExpr( loc, currNode->left, idx, genLeaf );
+            rightExpr = genPredExpr( loc, currNode->right, idx, genLeaf );
             return new LogicalExpr( loc, 
-                new CastExpr( loc, genPredExpr( loc, currNode->left, idx, genLeaf ), new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ),
-                new CastExpr( loc, genPredExpr( loc, currNode->right, idx, genLeaf ), new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ), 
+                new CastExpr( loc, leftExpr, new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ),
+                new CastExpr( loc, rightExpr, new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ), 
                 LogicalFlag::AndExpr 
             );
+            break;
         case WaitUntilStmt::ClauseNode::OR:
+            leftExpr = genPredExpr( loc, currNode->left, idx, genLeaf );
+            rightExpr = genPredExpr( loc, currNode->right, idx, genLeaf );
             return new LogicalExpr( loc,
-                new CastExpr( loc, genPredExpr( loc, currNode->left, idx, genLeaf ), new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ),
-                new CastExpr( loc, genPredExpr( loc, currNode->right, idx, genLeaf ), new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ), 
+                new CastExpr( loc, leftExpr, new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ),
+                new CastExpr( loc, rightExpr, new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ), 
                 LogicalFlag::OrExpr );
+            break;
         case WaitUntilStmt::ClauseNode::LEAF:
             return genLeaf( loc, idx );
+            break;
         default:
-            assertf(false, "Unreachable waituntil clause node type. How did you get here???");
+            assertf(false, "Unreachable waituntil clause node type. How did you get here???");\
+            return nullptr;
+            break;
     }
+    return nullptr;
 }
 
 

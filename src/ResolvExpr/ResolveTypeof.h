@@ -21,12 +21,14 @@ namespace ast {
 }
 
 namespace ResolvExpr {
-	struct ResolveContext;
 
-	const ast::Type * resolveTypeof( const ast::Type *, const ResolveContext & );
-	const ast::Type * fixArrayType( const ast::Type *, const ResolveContext & );
-	const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ResolveContext & );
-	const ast::ObjectDecl * fixObjectInit( const ast::ObjectDecl * decl , const ResolveContext & );
+struct ResolveContext;
+
+const ast::Type * resolveTypeof( const ast::Type *, const ResolveContext & );
+const ast::Type * fixArrayType( const ast::Type *, const ResolveContext & );
+const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ResolveContext & );
+const ast::ObjectDecl * fixObjectInit( const ast::ObjectDecl * decl , const ResolveContext & );
+
 } // namespace ResolvExpr
 
 // Local Variables: //

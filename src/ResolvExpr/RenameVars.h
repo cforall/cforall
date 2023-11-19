@@ -20,14 +20,16 @@ namespace ast {
 }
 
 namespace ResolvExpr {
-	enum RenameMode {
-		GEN_USAGE, // for type in VariableExpr
-		GEN_EXPR_ID // for type in decl
-	};
-	const ast::Type * renameTyVars( const ast::Type *, RenameMode mode = GEN_USAGE, bool reset = true );
 
-	/// resets internal state of renamer to avoid overflow
-	void resetTyVarRenaming();
+enum RenameMode {
+	GEN_USAGE, // for type in VariableExpr
+	GEN_EXPR_ID // for type in decl
+};
+const ast::Type * renameTyVars( const ast::Type *, RenameMode mode = GEN_USAGE, bool reset = true );
+
+/// Resets internal state of renamer to avoid overflow.
+void resetTyVarRenaming();
+
 } // namespace ResolvExpr
 
 // Local Variables: //

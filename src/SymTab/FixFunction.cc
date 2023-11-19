@@ -25,47 +25,49 @@
 namespace SymTab {
 
 namespace {
-	struct FixFunction final : public ast::WithShortCircuiting {
-		bool isVoid = false;
 
-		void previsit( const ast::FunctionDecl * ) { visit_children = false; }
+struct FixFunction final : public ast::WithShortCircuiting {
+	bool isVoid = false;
 
-		const ast::DeclWithType * postvisit( const ast::FunctionDecl * func ) {
-			// Cannot handle cases with asserions.
-			assert( func->assertions.empty() );
-			return new ast::ObjectDecl{
-				func->location, func->name, new ast::PointerType( func->type ), nullptr,
-				func->storage, func->linkage, nullptr, copy( func->attributes ) };
-		}
+	void previsit( const ast::FunctionDecl * ) { visit_children = false; }
 
-		void previsit( const ast::ArrayType * ) { visit_children = false; }
+	const ast::DeclWithType * postvisit( const ast::FunctionDecl * func ) {
+		// Cannot handle cases with asserions.
+		assert( func->assertions.empty() );
+		return new ast::ObjectDecl{
+			func->location, func->name, new ast::PointerType( func->type ), nullptr,
+			func->storage, func->linkage, nullptr, copy( func->attributes ) };
+	}
 
-		const ast::Type * postvisit( const ast::ArrayType * array ) {
-			return new ast::PointerType{
-				array->base, array->dimension, array->isVarLen, array->isStatic,
-				array->qualifiers };
-		}
+	void previsit( const ast::ArrayType * ) { visit_children = false; }
 
-		void previsit( const ast::FunctionType * ) { visit_children = false; }
+	const ast::Type * postvisit( const ast::ArrayType * array ) {
+		return new ast::PointerType{
+			array->base, array->dimension, array->isVarLen, array->isStatic,
+			array->qualifiers };
+	}
 
-		const ast::Type * postvisit( const ast::FunctionType * type ) {
-			return new ast::PointerType( type );
-		}
+	void previsit( const ast::FunctionType * ) { visit_children = false; }
 
-		void previsit( const ast::VoidType * ) { isVoid = true; }
+	const ast::Type * postvisit( const ast::FunctionType * type ) {
+		return new ast::PointerType( type );
+	}
 
-		void previsit( const ast::BasicType * ) { visit_children = false; }
-		void previsit( const ast::PointerType * ) { visit_children = false; }
-		void previsit( const ast::StructInstType * ) { visit_children = false; }
-		void previsit( const ast::UnionInstType * ) { visit_children = false; }
-		void previsit( const ast::EnumInstType * ) { visit_children = false; }
-		void previsit( const ast::TraitInstType * ) { visit_children = false; }
-		void previsit( const ast::TypeInstType * ) { visit_children = false; }
-		void previsit( const ast::TupleType * ) { visit_children = false; }
-		void previsit( const ast::VarArgsType * ) { visit_children = false; }
-		void previsit( const ast::ZeroType * ) { visit_children = false; }
-		void previsit( const ast::OneType * ) { visit_children = false; }
-	};
+	void previsit( const ast::VoidType * ) { isVoid = true; }
+
+	void previsit( const ast::BasicType * ) { visit_children = false; }
+	void previsit( const ast::PointerType * ) { visit_children = false; }
+	void previsit( const ast::StructInstType * ) { visit_children = false; }
+	void previsit( const ast::UnionInstType * ) { visit_children = false; }
+	void previsit( const ast::EnumInstType * ) { visit_children = false; }
+	void previsit( const ast::TraitInstType * ) { visit_children = false; }
+	void previsit( const ast::TypeInstType * ) { visit_children = false; }
+	void previsit( const ast::TupleType * ) { visit_children = false; }
+	void previsit( const ast::VarArgsType * ) { visit_children = false; }
+	void previsit( const ast::ZeroType * ) { visit_children = false; }
+	void previsit( const ast::OneType * ) { visit_children = false; }
+};
+
 } // anonymous namespace
 
 const ast::DeclWithType * fixFunction( const ast::DeclWithType * dwt, bool & isVoid ) {

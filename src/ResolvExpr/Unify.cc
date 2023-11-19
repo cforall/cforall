@@ -536,9 +536,9 @@ namespace ResolvExpr {
 		void postvisit( const ast::TypeInstType * typeInst ) {
 			// assert( open.find( *typeInst ) == open.end() );
 			auto otherInst = dynamic_cast< const ast::TypeInstType * >( type2 );
-			if (otherInst && typeInst->name == otherInst->name) 
+			if ( otherInst && typeInst->name == otherInst->name ) {
 				this->result = otherInst;
-			// return otherInst;
+			}
 		}
 
 	private:
@@ -627,10 +627,6 @@ namespace ResolvExpr {
 		void postvisit( const ast::OneType * ) {
 			result = dynamic_cast< const ast::OneType * >( type2 );
 		}
-
-	  private:
-		template< typename RefType > void handleRefType( RefType *inst, Type *other );
-		template< typename RefType > void handleGenericRefType( RefType *inst, Type *other );
 	};
 
 	// size_t Unify::traceId = Stats::Heap::new_stacktrace_id("Unify");

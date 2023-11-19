@@ -16,80 +16,47 @@
 #pragma once
 
 #include <deque>
-#include <list>   // for list
 #include <memory> // for unique_ptr
-#include <stack>  // for stack
 #include <vector>
 
 #include "AST/Node.hpp"  // for ptr
 #include "Common/CodeLocation.h"
 
+namespace ast {
+
+// AST class types:
 class Designation;
 class Type;
 struct InitAlternative;
 
-namespace ResolvExpr {
-	class MemberIterator;
+/// Iterates members of a type by initializer
+class MemberIterator;
 
-	// TODO: memory management of MemberIterators
-	class CurrentObject {
-	public:
-		CurrentObject();
-		CurrentObject( Type * type );
+/// Builds initializer lists in resolution
+class CurrentObject final {
+	std::vector<std::shared_ptr<MemberIterator>> objStack;
 
-		/// resolves unresolved designation
-		Designation * findNext( Designation * designation );
-		/// sets current position using resolved designation
-		void setNext( Designation * designation );
-		/// steps to next sub-object of current-object
-		void increment();
-		/// sets new current-object for the duration of this brace-enclosed initializer-list
-		void enterListInit();
-		/// restores previous current-object
-		void exitListInit();
-		/// produces a list of alternatives (Type *, Designation *) for the current sub-object's initializer
-		std::list< InitAlternative > getOptions();
-		/// produces the type of the current object but no subobjects
-		Type * getCurrentType();
+public:
+	CurrentObject() = default;
+	CurrentObject( const CodeLocation & loc, const Type * type );
 
-	private:
-		std::stack< MemberIterator * > objStack;
-	};
-} // namespace ResolvExpr
+	/// Resolves unresolved designation.
+	const Designation * findNext( const Designation * designation );
+	/// Sets current position using the resolved designation.
+	void setNext( const Designation * designation );
+	/// Steps to next sub-object of current object.
+	void increment();
+	/// Sets new current object for the duration of this brace-enclosed intializer-list.
+	void enterListInit( const CodeLocation & loc );
+	/// Restores previous current object.
+	void exitListInit();
+	/// Produces a list of alternatives (Type *, Designation *)
+	/// for the current sub-object's initializer.
+	std::deque< InitAlternative > getOptions();
+	/// Produces the type of the current object but no subobjects.
+	const Type * getCurrentType();
+};
 
-namespace ast {
-	// AST class types
-	class Designation;
-	struct InitAlternative;
-	class Type;
-
-	/// Iterates members of a type by initializer
-	class MemberIterator;
-
-	/// Builds initializer lists in resolution
-	class CurrentObject final {
-		std::vector< std::shared_ptr<MemberIterator> > objStack;
-	
-	public:
-		CurrentObject() = default;
-		CurrentObject( const CodeLocation & loc, const Type * type );
-
-		/// resolves unresolved designation
-		const Designation * findNext( const Designation * designation );
-		/// sets current position using the resolved designation
-		void setNext( const ast::Designation * designation );
-		/// steps to next sub-object of current object
-		void increment();
-		/// sets new current object for the duration of this brace-enclosed intializer-list
-		void enterListInit( const CodeLocation & loc );
-		/// restores previous current object
-		void exitListInit();
-		/// produces a list of alternatives (Type *, Designation *) for the current sub-object's 
-		/// initializer.
-		std::deque< InitAlternative > getOptions();
-		/// produces the type of the current object but no subobjects
-		const Type * getCurrentType();
-	};
 } // namespace ast
 
 // Local Variables: //

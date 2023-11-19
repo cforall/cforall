@@ -23,33 +23,35 @@
 #include "ResolvExpr/CandidateFinder.hpp"
 
 namespace Tuples {
-	// TupleAssignment.cc
-	void handleTupleAssignment(
-		ResolvExpr::CandidateFinder & finder, const ast::UntypedExpr * assign,
-		std::vector< ResolvExpr::CandidateFinder > & args );
 
-	// TupleExpansion.cc
-	/// expands z.[a, b.[x, y], c] into [z.a, z.b.x, z.b.y, z.c], inserting UniqueExprs as appropriate
-	void expandMemberTuples( ast::TranslationUnit & translationUnit );
+// TupleAssignment.cc
+void handleTupleAssignment(
+	ResolvExpr::CandidateFinder & finder, const ast::UntypedExpr * assign,
+	std::vector< ResolvExpr::CandidateFinder > & args );
 
-	/// replaces tuple-related elements, such as TupleType, TupleExpr, TupleAssignExpr, etc.
-	void expandTuples( ast::TranslationUnit & translaionUnit );
+// TupleExpansion.cc
+/// Expands z.[a, b.[x, y], c] into [z.a, z.b.x, z.b.y, z.c], inserting UniqueExprs as appropriate.
+void expandMemberTuples( ast::TranslationUnit & translationUnit );
 
-	/// replaces UniqueExprs with a temporary variable and one call
-	void expandUniqueExpr( ast::TranslationUnit & translationUnit );
+/// Replaces tuple-related elements, such as TupleType, TupleExpr, TupleAssignExpr, etc.
+void expandTuples( ast::TranslationUnit & translaionUnit );
 
-	/// returns VoidType if any of the expressions have Voidtype, otherwise TupleType of the Expression result types
-	const ast::Type * makeTupleType( const std::vector<ast::ptr<ast::Expr>> & exprs );
+/// Replaces UniqueExprs with a temporary variable and one call.
+void expandUniqueExpr( ast::TranslationUnit & translationUnit );
 
-	/// returns a TypeInstType if `type` is a ttype, nullptr otherwise
-	const ast::TypeInstType * isTtype( const ast::Type * type );
+/// Returns VoidType if any of the expressions have Voidtype, otherwise TupleType of the Expression result types.
+const ast::Type * makeTupleType( const std::vector<ast::ptr<ast::Expr>> & exprs );
 
-	/// returns true if the expression may contain side-effects.
-	bool maybeImpure( const ast::Expr * expr );
+/// Returns a TypeInstType if `type` is a ttype, nullptr otherwise
+const ast::TypeInstType * isTtype( const ast::Type * type );
 
-	/// Returns true if the expression may contain side-effect,
-	/// ignoring the presence of unique expressions.
-	bool maybeImpureIgnoreUnique( const ast::Expr * expr );
+/// Returns true if the expression may contain side-effects.
+bool maybeImpure( const ast::Expr * expr );
+
+/// Returns true if the expression may contain side-effect,
+/// ignoring the presence of unique expressions.
+bool maybeImpureIgnoreUnique( const ast::Expr * expr );
+
 } // namespace Tuples
 
 // Local Variables: //

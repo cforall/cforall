@@ -472,8 +472,7 @@ void satisfyAssertions(
 
 						errors.emplace_back( ss.str() );
 						goto nextSat;
-					}
-					else if ( result == AssertionResult::Skip ) {
+					} else if ( result == AssertionResult::Skip ) {
 						next.emplace_back(assn);
 						// goto nextSat;
 					}

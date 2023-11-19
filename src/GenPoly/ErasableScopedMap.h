@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ErasableScopedMap.h --
+// ErasableScopedMap.h -- A map that supports scoping and erasing elements.
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed Dec 2 11:37:00 2015

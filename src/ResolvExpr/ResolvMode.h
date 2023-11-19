@@ -16,32 +16,34 @@
 #pragma once
 
 namespace ResolvExpr {
-	/// Flag set for resolution
-	struct ResolvMode {
-		const bool adjust;			 ///< Adjust array and function types to pointer types? [false]
-		const bool prune;            ///< Prune alternatives to min-cost per return type? [true]
-		const bool failFast;         ///< Fail on no resulting alternatives? [true]
 
-		constexpr ResolvMode(bool a, bool p, bool ff) 
-		: adjust(a), prune(p), failFast(ff) {}
+/// Flag set for resolution
+struct ResolvMode {
+	const bool adjust;			 ///< Adjust array and function types to pointer types? [false]
+	const bool prune;            ///< Prune alternatives to min-cost per return type? [true]
+	const bool failFast;         ///< Fail on no resulting alternatives? [true]
 
-		/// Default settings
-		constexpr ResolvMode() : adjust(false), prune(true), failFast(true) {}
-		
-		/// With adjust flag set; turns array and function types into equivalent pointers
-		static constexpr ResolvMode withAdjustment() { return { true, true, true }; }
+	constexpr ResolvMode(bool a, bool p, bool ff)
+	: adjust(a), prune(p), failFast(ff) {}
 
-		/// With adjust flag set but prune unset; pruning ensures there is at least one alternative 
-		/// per result type
-		static constexpr ResolvMode withoutPrune() { return { true, false, true }; }
+	/// Default settings
+	constexpr ResolvMode() : adjust(false), prune(true), failFast(true) {}
 
-		/// With adjust and prune flags set but failFast unset; failFast ensures there is at least 
-		/// one resulting alternative
-		static constexpr ResolvMode withoutFailFast() { return { true, true, false }; }
+	/// With adjust flag set; turns array and function types into equivalent pointers
+	static constexpr ResolvMode withAdjustment() { return { true, true, true }; }
 
-		/// The same mode, but with satisfyAssns turned on; for top-level calls
-		ResolvMode atTopLevel() const { return { adjust, true, failFast }; }
-	};
+	/// With adjust flag set but prune unset; pruning ensures there is at least one alternative
+	/// per result type
+	static constexpr ResolvMode withoutPrune() { return { true, false, true }; }
+
+	/// With adjust and prune flags set but failFast unset; failFast ensures there is at least
+	/// one resulting alternative
+	static constexpr ResolvMode withoutFailFast() { return { true, true, false }; }
+
+	/// The same mode, but with satisfyAssns turned on; for top-level calls
+	ResolvMode atTopLevel() const { return { adjust, true, failFast }; }
+};
+
 } // namespace ResolvExpr
 
 // Local Variables: //

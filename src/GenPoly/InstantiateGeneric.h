@@ -15,16 +15,12 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace GenPoly {
 
-void instantiateGeneric( std::list< Declaration* > &translationUnit );
 void instantiateGeneric( ast::TranslationUnit & translationUnit );
 /// Replaces all generic types that have static layout with concrete
 /// instantiations. Sized types are replaced with the concrete argument types

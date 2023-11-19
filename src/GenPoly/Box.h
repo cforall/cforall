@@ -15,17 +15,14 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace GenPoly {
-	/// boxes polymorphic function calls
-	void box( std::list< Declaration* >& translationUnit );
+
 void box( ast::TranslationUnit & translationUnit );
+
 } // namespace GenPoly
 
 // Local Variables: //

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ScrubTyVars.cc --
+// ScrubTyVars.cc -- Remove polymorphic types.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -26,9 +26,9 @@ namespace GenPoly {
 namespace {
 
 struct ScrubTypeVars :
-	public ast::WithGuards,
-	public ast::WithShortCircuiting,
-	public ast::WithVisitorRef<ScrubTypeVars> {
+		public ast::WithGuards,
+		public ast::WithShortCircuiting,
+		public ast::WithVisitorRef<ScrubTypeVars> {
 
 	ScrubTypeVars( ScrubMode m, TypeVarMap const * tv ) :
 			mode ( m ), typeVars( tv ) {}
