@@ -3463,7 +3463,7 @@ fi
 if test "${enable_demangler+set}" = set; then :
   enableval=$enable_demangler; enable_demangler=$enableval
 else
-  enable_demangler=yes
+  enable_demangler=no
 fi
 
 

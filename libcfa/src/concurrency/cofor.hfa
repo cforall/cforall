@@ -36,6 +36,8 @@ void main( cofor_runner & this ) with(this) {
 		lock( mutex_lock );
         runner_node * node = &try_pop_front( items );
 		unlock( mutex_lock );
+		if ( !node )
+			continue;
         func( node->value );
         free( node->value );
         free( node );

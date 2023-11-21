@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:51:46 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Mon Aug  5 12:57:46 2019
-## Update Count     : 98
+## Last Modified On : Mon Nov 20 11:28:05 2023
+## Update Count     : 109
 ###############################################################################
 
 # create object files in directory with source files
@@ -61,8 +61,7 @@ $(srcdir)/AST/Type.hpp : BasicTypes-gen.cc
 
 # put into lib for now
 cfa_cpplibdir = $(CFA_LIBDIR)
-cfa_cpplib_PROGRAMS = ../driver/cfa-cpp $(DEMANGLER)
-EXTRA_PROGRAMS = demangler
+cfa_cpplib_PROGRAMS = ../driver/cfa-cpp
 ___driver_cfa_cpp_SOURCES = $(SRC)
 ___driver_cfa_cpp_LDADD = -ldl $(LIBPROFILER) $(LIBTCMALLOC)
 EXTRA_DIST = include/cassert include/optional BasicTypes-gen.cc
@@ -71,10 +70,10 @@ AM_CXXFLAGS = @HOST_FLAGS@ -Wno-deprecated -Wall -Wextra -Werror=return-type -DD
 AM_LDFLAGS  = @HOST_FLAGS@ -Xlinker -export-dynamic
 ARFLAGS     = cr
 
+cfa_cpplib_PROGRAMS += $(DEMANGLER)
+EXTRA_PROGRAMS = demangler
 demangler_SOURCES = SymTab/demangler.cc # test driver for the demangler, also useful as a sanity check that libdemangle.a is complete
-
 demangler_LDADD = libdemangle.a -ldl			# yywrap
-
 noinst_LIBRARIES = $(LIBDEMANGLE)
 EXTRA_LIBRARIES = libdemangle.a
 libdemangle_a_SOURCES = $(SRCDEMANGLE)

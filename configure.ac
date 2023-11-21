@@ -164,7 +164,7 @@ AC_ARG_ENABLE(gprofiler,
 
 AC_ARG_ENABLE(demangler,
 	[  --enable-demangler     whether or not to build the demangler (executable and library)],
-	enable_demangler=$enableval, enable_demangler=yes)
+	enable_demangler=$enableval, enable_demangler=no)
 
 AC_SUBST(TARGET_HOSTS, ${target_hosts})
 
