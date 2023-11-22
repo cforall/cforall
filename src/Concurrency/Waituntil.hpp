@@ -15,15 +15,14 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace Concurrency {
-    void generateWaitUntil( ast::TranslationUnit & translationUnit );
+
+void generateWaitUntil( ast::TranslationUnit & translationUnit );
+
 };
 
 // Local Variables: //

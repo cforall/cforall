@@ -55,8 +55,6 @@ public:
 
 	/// Ensures this node has a unique ID
 	void fixUniqueId();
-	/// Get canonical declaration for unique ID
-	static readonly<Decl> fromId( UniqueId id );
 
 	const Decl * accept( Visitor & v ) const override = 0;
 private:
@@ -360,6 +358,7 @@ private:
 };
 
 /// With statement `with (...) ...`
+/// This is a statement lexically, but a Decl is needed for the SymbolTable.
 class WithStmt final : public Decl {
 public:
 	std::vector<ptr<Expr>> exprs;

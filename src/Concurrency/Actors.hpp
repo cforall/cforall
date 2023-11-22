@@ -15,14 +15,14 @@
 
 #pragma once
 
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace Concurrency {
-	void implementActors( ast::TranslationUnit & translationUnit );
+
+void implementActors( ast::TranslationUnit & translationUnit );
+
 };
 
 // Local Variables: //

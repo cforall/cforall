@@ -75,12 +75,10 @@ Expr * SymbolTable::IdData::combine( const CodeLocation & loc, ResolvExpr::Cost 
 			base->env = nullptr;
 			ret = new MemberExpr{loc, id, referenceToRvalueConversion( base, cost )};
 			ret->env = subs;
-		}
-		else {
+		} else {
 			ret = new MemberExpr{ loc, id, referenceToRvalueConversion( baseExpr, cost ) };
 		}
-	}
-	else {
+	} else {
 		ret = new VariableExpr{ loc, id };
 	}
 	if ( deleter ) { ret = new DeletedExpr{ loc, ret, deleter }; }
@@ -192,8 +190,7 @@ std::vector<SymbolTable::IdData> SymbolTable::specialLookupId( SymbolTable::Spec
 				out.push_back(decl.second);
 			}
 		}
-	}
-	else {
+	} else {
 		++*num_lookup_with_key;
 		++*stats().map_lookups;
 		auto decls = specialFunctionTable[kind]->find(otypeKey);
@@ -293,7 +290,7 @@ bool SymbolTable::addedTypeConflicts(
 	return true;
 }
 
-bool SymbolTable::addedDeclConflicts( 
+bool SymbolTable::addedDeclConflicts(
 		const AggregateDecl * existing, const AggregateDecl * added ) const {
 	if ( ! existing->body ) {
 		return false;
@@ -479,9 +476,9 @@ namespace {
 		if (stripParams) {
 			if (dynamic_cast<const PointerType *>(base)) return Mangle::Encoding::pointer;
 			return Mangle::mangle( base, Mangle::Type | Mangle::NoGenericParams );
+		} else {
+			return Mangle::mangle( base );
 		}
-		else
-			return Mangle::mangle( base );	
 	}
 
 	/// gets the declaration for the function acting on a type specified by otype key,
@@ -555,7 +552,7 @@ bool SymbolTable::removeSpecialOverrides(
 		}
 		if ( ! alreadyUserDefinedFunc ) for ( const auto& entry : deleted ) {
 			++*stats().map_mutations;
-			mangleTable = mangleTable->set( entry.first, IdData{ entry.second, function } );
+			mangleTable = mangleTable->set( entry.first, entry.second.withDeleter( function ) );
 		}
 	} else if ( dataIsUserDefinedFunc ) {
 		// this is a user-defined non-copy function
@@ -585,7 +582,7 @@ bool SymbolTable::removeSpecialOverrides(
 		// this needs to be a separate loop because of iterator invalidation
 		for ( const auto& entry : deleted ) {
 			++*stats().map_mutations;
-			mangleTable = mangleTable->set( entry.first, IdData{ entry.second, function } );
+			mangleTable = mangleTable->set( entry.first, entry.second.withDeleter( function ) );
 		}
 	} else if ( function->linkage != Linkage::Intrinsic ) {
 		// this is an overridable generated function
@@ -689,16 +686,13 @@ void SymbolTable::addIdCommon(
 	SpecialFunctionKind kind = getSpecialFunctionKind(decl->name);
 	if (kind == NUMBER_OF_KINDS) { // not a special decl
 		addIdToTable(decl, decl->name, idTable, handleConflicts, baseExpr, deleter);
-	}
-	else {
+	} else {
 		std::string key;
 		if (auto func = dynamic_cast<const FunctionDecl *>(decl)) {
 			key = getOtypeKey(func->type);
-		}
-		else if (auto obj = dynamic_cast<const ObjectDecl *>(decl)) {
+		} else if (auto obj = dynamic_cast<const ObjectDecl *>(decl)) {
 			key = getOtypeKey(obj->type.strict_as<PointerType>()->base.strict_as<FunctionType>());
-		}
-		else {
+		} else {
 			assertf(false, "special decl with non-function type");
 		}
 		addIdToTable(decl, key, specialFunctionTable[kind], handleConflicts, baseExpr, deleter);
@@ -754,20 +748,19 @@ void SymbolTable::addIdToTable(
 			auto existing = mangleTable->find( mangleName );
 			if ( existing != mangleTable->end()
 					&& existing->second.scope == scope
-					&& existing->second.id ) {
-				if ( addedIdConflicts( existing->second, decl, handleConflicts, deleter ) ) {
-					if ( handleConflicts.mode == OnConflict::Delete ) {
-						// set delete expression for conflicting identifier
-						lazyInitScope();
-						*stats().map_mutations += 2;
-						table = table->set(
-							lookupKey,
-							mangleTable->set(
-								mangleName,
-								IdData{ existing->second, handleConflicts.deleter } ) );
-					}
-					return;
+					&& existing->second.id
+					&& addedIdConflicts( existing->second, decl, handleConflicts, deleter ) ) {
+				if ( handleConflicts.mode == OnConflict::Delete ) {
+					// set delete expression for conflicting identifier
+					lazyInitScope();
+					*stats().map_mutations += 2;
+					table = table->set(
+						lookupKey,
+						mangleTable->set(
+							mangleName,
+							existing->second.withDeleter( handleConflicts.deleter ) ) );
 				}
+				return;
 			}
 		}
 	}

@@ -15,19 +15,15 @@
 
 #pragma once
 
-#include <list>    // for list
-#include <string>  // for string
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace InitTweak {
-	/// replace constructor initializers with expression statements and unwrap basic C-style initializers
-	void fix( std::list< Declaration * > & translationUnit, bool inLibrary );
 
-	void fix( ast::TranslationUnit & translationUnit, bool inLibrary);
+/// Replace constructor initializers with expression statements and unwrap basic C-style initializers.
+void fix( ast::TranslationUnit & translationUnit, bool inLibrary);
+
 } // namespace
 
 // Local Variables: //

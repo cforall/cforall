@@ -205,9 +205,6 @@ namespace {
 		}
 	};
 
-
-
-
 	struct ReturnFixer final :
 			public ast::WithStmtsToAdd<>, ast::WithGuards, ast::WithShortCircuiting {
 		void previsit( const ast::FunctionDecl * decl );
@@ -261,79 +258,79 @@ namespace {
 
 } // namespace
 
-	void genInit( ast::TranslationUnit & transUnit ) {
-		ast::Pass<HoistArrayDimension_NoResolve>::run( transUnit );
-		ast::Pass<ReturnFixer>::run( transUnit );
-	}
+void genInit( ast::TranslationUnit & transUnit ) {
+	ast::Pass<HoistArrayDimension_NoResolve>::run( transUnit );
+	ast::Pass<ReturnFixer>::run( transUnit );
+}
 
-	void fixReturnStatements( ast::TranslationUnit & transUnit ) {
-		ast::Pass<ReturnFixer>::run( transUnit );
-	}
+void fixReturnStatements( ast::TranslationUnit & transUnit ) {
+	ast::Pass<ReturnFixer>::run( transUnit );
+}
 
-	bool ManagedTypes::isManaged( const ast::Type * type ) const {
-		// references are never constructed
-		if ( dynamic_cast< const ast::ReferenceType * >( type ) ) return false;
-		if ( auto tupleType = dynamic_cast< const ast::TupleType * > ( type ) ) {
-			// tuple is also managed if any of its components are managed
-			for (auto & component : tupleType->types) {
-				if (isManaged(component)) return true;
+bool ManagedTypes::isManaged( const ast::Type * type ) const {
+	// references are never constructed
+	if ( dynamic_cast< const ast::ReferenceType * >( type ) ) return false;
+	if ( auto tupleType = dynamic_cast< const ast::TupleType * > ( type ) ) {
+		// tuple is also managed if any of its components are managed
+		for (auto & component : tupleType->types) {
+			if (isManaged(component)) return true;
+		}
+	}
+	// need to clear and reset qualifiers when determining if a type is managed
+	// ValueGuard< Type::Qualifiers > qualifiers( type->get_qualifiers() );
+	auto tmp = shallowCopy(type);
+	tmp->qualifiers = {};
+	// delete tmp at return
+	ast::ptr<ast::Type> guard = tmp;
+	// a type is managed if it appears in the map of known managed types, or if it contains any polymorphism (is a type variable or generic type containing a type variable)
+	return managedTypes.find( Mangle::mangle( tmp, {Mangle::NoOverrideable | Mangle::NoGenericParams | Mangle::Type} ) ) != managedTypes.end() || GenPoly::isPolyType( tmp );
+}
+
+bool ManagedTypes::isManaged( const ast::ObjectDecl * objDecl ) const {
+	const ast::Type * type = objDecl->type;
+	while ( auto at = dynamic_cast< const ast::ArrayType * >( type ) ) {
+		// must always construct VLAs with an initializer, since this is an error in C
+		if ( at->isVarLen && objDecl->init ) return true;
+		type = at->base;
+	}
+	return isManaged( type );
+}
+
+void ManagedTypes::handleDWT( const ast::DeclWithType * dwt ) {
+	// if this function is a user-defined constructor or destructor, mark down the type as "managed"
+	if ( ! dwt->linkage.is_overrideable && CodeGen::isCtorDtor( dwt->name ) ) {
+		auto & params = GenPoly::getFunctionType( dwt->get_type())->params;
+		assert( ! params.empty() );
+		// Type * type = InitTweak::getPointerBase( params.front() );
+		// assert( type );
+		managedTypes.insert( Mangle::mangle( params.front(), {Mangle::NoOverrideable | Mangle::NoGenericParams | Mangle::Type} ) );
+	}
+}
+
+void ManagedTypes::handleStruct( const ast::StructDecl * aggregateDecl ) {
+	// don't construct members, but need to take note if there is a managed member,
+	// because that means that this type is also managed
+	for ( auto & member : aggregateDecl->members ) {
+		if ( auto field = member.as<ast::ObjectDecl>() ) {
+			if ( isManaged( field ) ) {
+				// generic parameters should not play a role in determining whether a generic type is constructed - construct all generic types, so that
+				// polymorphic constructors make generic types managed types
+				ast::StructInstType inst( aggregateDecl );
+				managedTypes.insert( Mangle::mangle( &inst, {Mangle::NoOverrideable | Mangle::NoGenericParams | Mangle::Type} ) );
+				break;
 			}
 		}
-		// need to clear and reset qualifiers when determining if a type is managed
-		// ValueGuard< Type::Qualifiers > qualifiers( type->get_qualifiers() );
-		auto tmp = shallowCopy(type);
-		tmp->qualifiers = {};
-		// delete tmp at return
-		ast::ptr<ast::Type> guard = tmp;
-		// a type is managed if it appears in the map of known managed types, or if it contains any polymorphism (is a type variable or generic type containing a type variable)
-		return managedTypes.find( Mangle::mangle( tmp, {Mangle::NoOverrideable | Mangle::NoGenericParams | Mangle::Type} ) ) != managedTypes.end() || GenPoly::isPolyType( tmp );
 	}
+}
 
-	bool ManagedTypes::isManaged( const ast::ObjectDecl * objDecl ) const {
-		const ast::Type * type = objDecl->type;
-		while ( auto at = dynamic_cast< const ast::ArrayType * >( type ) ) {
-			// must always construct VLAs with an initializer, since this is an error in C
-			if ( at->isVarLen && objDecl->init ) return true;
-			type = at->base;
-		}
-		return isManaged( type );
-	}
+void ManagedTypes::beginScope() { managedTypes.beginScope(); }
+void ManagedTypes::endScope() { managedTypes.endScope(); }
 
-	void ManagedTypes::handleDWT( const ast::DeclWithType * dwt ) {
-		// if this function is a user-defined constructor or destructor, mark down the type as "managed"
-		if ( ! dwt->linkage.is_overrideable && CodeGen::isCtorDtor( dwt->name ) ) {
-			auto & params = GenPoly::getFunctionType( dwt->get_type())->params;
-			assert( ! params.empty() );
-			// Type * type = InitTweak::getPointerBase( params.front() );
-			// assert( type );
-			managedTypes.insert( Mangle::mangle( params.front(), {Mangle::NoOverrideable | Mangle::NoGenericParams | Mangle::Type} ) );
-		}
-	}
-
-	void ManagedTypes::handleStruct( const ast::StructDecl * aggregateDecl ) {
-		// don't construct members, but need to take note if there is a managed member,
-		// because that means that this type is also managed
-		for ( auto & member : aggregateDecl->members ) {
-			if ( auto field = member.as<ast::ObjectDecl>() ) {
-				if ( isManaged( field ) ) {
-					// generic parameters should not play a role in determining whether a generic type is constructed - construct all generic types, so that
-					// polymorphic constructors make generic types managed types
-					ast::StructInstType inst( aggregateDecl );
-					managedTypes.insert( Mangle::mangle( &inst, {Mangle::NoOverrideable | Mangle::NoGenericParams | Mangle::Type} ) );
-					break;
-				}
-			}
-		}
-	}
-
-	void ManagedTypes::beginScope() { managedTypes.beginScope(); }
-	void ManagedTypes::endScope() { managedTypes.endScope(); }
-
-	ast::ptr<ast::Stmt> genCtorDtor (const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg) {
-		assertf(objDecl, "genCtorDtor passed null objDecl");
-		InitExpander srcParam(arg);
-		return SymTab::genImplicitCall(srcParam, new ast::VariableExpr(loc, objDecl), loc, fname, objDecl);
-	}
+ast::ptr<ast::Stmt> genCtorDtor (const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg) {
+	assertf(objDecl, "genCtorDtor passed null objDecl");
+	InitExpander srcParam(arg);
+	return SymTab::genImplicitCall(srcParam, new ast::VariableExpr(loc, objDecl), loc, fname, objDecl);
+}
 
 ast::ConstructorInit * genCtorInit( const CodeLocation & loc, const ast::ObjectDecl * objDecl ) {
 	// call into genImplicitCall from Autogen.h to generate calls to ctor/dtor for each

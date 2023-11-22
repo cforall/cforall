@@ -24,92 +24,94 @@
 
 // helper functions for initialization
 namespace InitTweak {
-	bool isAssignment( const ast::FunctionDecl * decl );
-	bool isDestructor( const ast::FunctionDecl * decl );
-	bool isDefaultConstructor( const ast::FunctionDecl * decl );
-	bool isCopyConstructor( const ast::FunctionDecl * decl );
-	bool isCopyFunction( const ast::FunctionDecl * decl );
 
-	/// returns the base type of the first parameter to a constructor/destructor/assignment function
-	const ast::Type * getTypeofThis( const ast::FunctionType * ftype );
+bool isAssignment( const ast::FunctionDecl * decl );
+bool isDestructor( const ast::FunctionDecl * decl );
+bool isDefaultConstructor( const ast::FunctionDecl * decl );
+bool isCopyConstructor( const ast::FunctionDecl * decl );
+bool isCopyFunction( const ast::FunctionDecl * decl );
 
-	/// returns the first parameter of a constructor/destructor/assignment function
-	const ast::ObjectDecl * getParamThis(const ast::FunctionDecl * func);
+/// returns the base type of the first parameter to a constructor/destructor/assignment function
+const ast::Type * getTypeofThis( const ast::FunctionType * ftype );
 
-	/// generate a bitwise assignment operation.
-	ast::Expr * createBitwiseAssignment( const ast::Expr * dst, const ast::Expr * src);
+/// returns the first parameter of a constructor/destructor/assignment function
+const ast::ObjectDecl * getParamThis(const ast::FunctionDecl * func);
 
-	/// transform Initializer into an argument list that can be passed to a call expression
-	std::vector< ast::ptr< ast::Expr > > makeInitList( const ast::Init * init );
+/// generate a bitwise assignment operation.
+ast::Expr * createBitwiseAssignment( const ast::Expr * dst, const ast::Expr * src);
 
-	/// True if the resolver should try to construct dwt
-	bool tryConstruct( const ast::DeclWithType * dwt );
+/// transform Initializer into an argument list that can be passed to a call expression
+std::vector< ast::ptr< ast::Expr > > makeInitList( const ast::Init * init );
 
-	/// True if the type can have a user-defined constructor
-	bool isConstructable( const ast::Type * t );
+/// True if the resolver should try to construct dwt
+bool tryConstruct( const ast::DeclWithType * dwt );
 
-	/// True if the Initializer contains designations
-	bool isDesignated( const ast::Init * init );
+/// True if the type can have a user-defined constructor
+bool isConstructable( const ast::Type * t );
 
-	/// True if the ObjectDecl's Initializer nesting level is not deeper than the depth of its
-	/// type, where the depth of its type is the number of nested ArrayTypes + 1
-	bool checkInitDepth( const ast::ObjectDecl * objDecl );
+/// True if the Initializer contains designations
+bool isDesignated( const ast::Init * init );
 
-	/// True if stmt is a call statement where the function called is intrinsic and takes one parameter.
-	/// Intended to be used for default ctor/dtor calls, but might have use elsewhere.
-	/// Currently has assertions that make it less than fully general.
-	bool isIntrinsicSingleArgCallStmt( const ast::Stmt * stmt );
+/// True if the ObjectDecl's Initializer nesting level is not deeper than the depth of its
+/// type, where the depth of its type is the number of nested ArrayTypes + 1
+bool checkInitDepth( const ast::ObjectDecl * objDecl );
 
-	/// get all Ctor/Dtor call expressions from a Statement
-	std::vector< const ast::Expr * > collectCtorDtorCalls( const ast::Stmt * stmt );
+/// True if stmt is a call statement where the function called is intrinsic and takes one parameter.
+/// Intended to be used for default ctor/dtor calls, but might have use elsewhere.
+/// Currently has assertions that make it less than fully general.
+bool isIntrinsicSingleArgCallStmt( const ast::Stmt * stmt );
 
-	/// returns true if expr is trivially a compile-time constant
-	bool isConstExpr( const ast::Expr * expr );
-	bool isConstExpr( const ast::Init * init );
+/// get all Ctor/Dtor call expressions from a Statement
+std::vector< const ast::Expr * > collectCtorDtorCalls( const ast::Stmt * stmt );
 
-	/// Modifies objDecl to have:
-	///    __attribute__((section (".data#")))
-	/// which makes gcc put the declared variable in the data section,
-	/// which is helpful for global constants on newer gcc versions,
-	/// so that CFA's generated initialization won't segfault when writing it via a const cast.
-	/// The trailing # is an injected assembly comment, to suppress the "a" in
-	///    .section .data,"a"
-	///    .section .data#,"a"
-	/// to avoid assembler warning "ignoring changed section attributes for .data"
-	void addDataSectionAttribute( ast::ObjectDecl * objDecl );
+/// returns true if expr is trivially a compile-time constant
+bool isConstExpr( const ast::Expr * expr );
+bool isConstExpr( const ast::Init * init );
 
-	class InitExpander final {
-	public:
-		using IndexList = std::vector< ast::ptr< ast::Expr > >;
-		class ExpanderImpl;
+/// Modifies objDecl to have:
+///    __attribute__((section (".data#")))
+/// which makes gcc put the declared variable in the data section,
+/// which is helpful for global constants on newer gcc versions,
+/// so that CFA's generated initialization won't segfault when writing it via a const cast.
+/// The trailing # is an injected assembly comment, to suppress the "a" in
+///    .section .data,"a"
+///    .section .data#,"a"
+/// to avoid assembler warning "ignoring changed section attributes for .data"
+void addDataSectionAttribute( ast::ObjectDecl * objDecl );
 
-	private:
-		std::shared_ptr< ExpanderImpl > expander;
-		std::vector< ast::ptr< ast::Expr > > crnt;
-		// invariant: list of size 2N (elements come in pairs [index, dimension])
-		IndexList indices;
+class InitExpander final {
+public:
+	using IndexList = std::vector< ast::ptr< ast::Expr > >;
+	class ExpanderImpl;
 
-	public:
-		/// Expand by stepping through init to get each list of arguments
-		InitExpander( const ast::Init * init );
+private:
+	std::shared_ptr< ExpanderImpl > expander;
+	std::vector< ast::ptr< ast::Expr > > crnt;
+	// invariant: list of size 2N (elements come in pairs [index, dimension])
+	IndexList indices;
 
-		/// Always expand to expression
-		InitExpander( const ast::Expr * expr );
+public:
+	/// Expand by stepping through init to get each list of arguments
+	InitExpander( const ast::Init * init );
 
-		std::vector< ast::ptr< ast::Expr > > operator* ();
-		InitExpander & operator++ ();
+	/// Always expand to expression
+	InitExpander( const ast::Expr * expr );
 
-		/// builds statement which has the same semantics as a C-style list initializer (for array
-		/// initializers) using callExpr as the base expression to perform initialization.
-		/// Mutates callExpr
-		ast::ptr< ast::Stmt > buildListInit( ast::UntypedExpr * callExpr );
+	std::vector< ast::ptr< ast::Expr > > operator* ();
+	InitExpander & operator++ ();
 
-		void addArrayIndex( const ast::Expr * index, const ast::Expr * dimension );
+	/// builds statement which has the same semantics as a C-style list initializer (for array
+	/// initializers) using callExpr as the base expression to perform initialization.
+	/// Mutates callExpr
+	ast::ptr< ast::Stmt > buildListInit( ast::UntypedExpr * callExpr );
 
-		void clearArrayIndices();
+	void addArrayIndex( const ast::Expr * index, const ast::Expr * dimension );
 
-		bool addReference();
-	};
+	void clearArrayIndices();
+
+	bool addReference();
+};
+
 } // namespace InitTweak
 
 // Local Variables: //

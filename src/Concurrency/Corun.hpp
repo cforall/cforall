@@ -20,7 +20,9 @@ namespace ast {
 }
 
 namespace Concurrency {
-	void implementCorun( ast::TranslationUnit & translationUnit );
+
+void implementCorun( ast::TranslationUnit & translationUnit );
+
 };
 
 // Local Variables: //

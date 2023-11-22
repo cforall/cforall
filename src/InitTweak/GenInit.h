@@ -23,32 +23,34 @@
 #include "GenPoly/ScopedSet.h" // for ScopedSet
 
 namespace InitTweak {
-	/// Adds return value temporaries and wraps Initializers in ConstructorInit nodes
-	void genInit( ast::TranslationUnit & translationUnit );
 
-	/// Converts return statements into copy constructor calls on the hidden return variable.
-	/// This pass must happen before auto-gen.
-	void fixReturnStatements( ast::TranslationUnit & translationUnit );
+/// Adds return value temporaries and wraps Initializers in ConstructorInit nodes
+void genInit( ast::TranslationUnit & translationUnit );
 
-	/// generates a single ctor/dtor statement using objDecl as the 'this' parameter and arg as the optional argument
-	ast::ptr<ast::Stmt> genCtorDtor (const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg = nullptr);
+/// Converts return statements into copy constructor calls on the hidden return variable.
+/// This pass must happen before auto-gen.
+void fixReturnStatements( ast::TranslationUnit & translationUnit );
 
-	/// creates an appropriate ConstructorInit node which contains a constructor, destructor, and C-initializer
-	ast::ConstructorInit * genCtorInit( const CodeLocation & loc, const ast::ObjectDecl * objDecl );
+/// generates a single ctor/dtor statement using objDecl as the 'this' parameter and arg as the optional argument
+ast::ptr<ast::Stmt> genCtorDtor (const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg = nullptr);
 
-	class ManagedTypes final {
-	public:
-		bool isManaged( const ast::ObjectDecl * objDecl ) const ; // determine if object is managed
-		bool isManaged( const ast::Type * type ) const; // determine if type is managed
+/// creates an appropriate ConstructorInit node which contains a constructor, destructor, and C-initializer
+ast::ConstructorInit * genCtorInit( const CodeLocation & loc, const ast::ObjectDecl * objDecl );
 
-		void handleDWT( const ast::DeclWithType * dwt ); // add type to managed if ctor/dtor
-		void handleStruct( const ast::StructDecl * aggregateDecl ); // add type to managed if child is managed
+class ManagedTypes final {
+public:
+	bool isManaged( const ast::ObjectDecl * objDecl ) const ; // determine if object is managed
+	bool isManaged( const ast::Type * type ) const; // determine if type is managed
 
-		void beginScope();
-		void endScope();
-	private:
-		GenPoly::ScopedSet< std::string > managedTypes;
-	};
+	void handleDWT( const ast::DeclWithType * dwt ); // add type to managed if ctor/dtor
+	void handleStruct( const ast::StructDecl * aggregateDecl ); // add type to managed if child is managed
+
+	void beginScope();
+	void endScope();
+private:
+	GenPoly::ScopedSet< std::string > managedTypes;
+};
+
 } // namespace
 
 // Local Variables: //

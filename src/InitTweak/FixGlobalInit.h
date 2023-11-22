@@ -15,20 +15,17 @@
 
 #pragma once
 
-#include <list>    // for list
-#include <string>  // for string
-
-#include <AST/Fwd.hpp>
-
-
-class Declaration;
+namespace ast {
+	class TranslationUnit;
+}
 
 namespace InitTweak {
-	/// Moves global initialization into an _init function that is unique to the translation unit.
-	/// Sets the priority of the initialization function depending on whether the initialization
-	/// function is for library code.
-	void fixGlobalInit( std::list< Declaration * > & translationUnit, bool inLibrary );
-	void fixGlobalInit( ast::TranslationUnit & translationUnit, bool inLibrary );
+
+/// Moves global initialization into an _init function that is unique to the translation unit.
+/// Sets the priority of the initialization function depending on whether the initialization
+/// function is for library code.
+void fixGlobalInit( ast::TranslationUnit & translationUnit, bool inLibrary );
+
 } // namespace
 
 // Local Variables: //

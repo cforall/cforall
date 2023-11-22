@@ -1,0 +1,52 @@
+withconflict.cfa:16:1 error: Unique best alternative includes deleted identifier in Generated Cast of:
+  Application of
+    Variable Expression: result: function
+    ... with parameters
+      signed int
+      float
+    ... returning nothing
+
+    ... with resolved type:
+      pointer to function
+      ... with parameters
+        signed int
+        float
+      ... returning nothing
+
+    ... to arguments
+    Deleted Expression
+      Member Expression, with field:
+        value: signed int
+      ... from aggregate:
+        Variable Expression: cell: instance of struct Cell with body
+        ... with resolved type:
+          instance of struct Cell with body
+      ... with resolved type:
+        signed int
+      ... deleted by: With statement
+      ... with expressions:
+        Variable Expression: cell: instance of struct Cell with body
+        ... with resolved type:
+          instance of struct Cell with body
+        Variable Expression: cell: instance of struct Cell with body
+        ... with resolved type:
+          instance of struct Cell with body
+      ... with statement:
+        Compound Statement:
+          Expression Statement:
+            Applying untyped:
+              Name: result
+            ...to:
+              Name: value
+              Name: value
+
+
+    Variable Expression: value: float
+    ... with resolved type:
+      float
+
+  ... with resolved type:
+    void
+... to: nothing
+... with resolved type:
+  void

@@ -47,9 +47,10 @@ public:
 		IdData( const DeclWithType * i, const Expr * base, const Decl * del, unsigned long s )
 		: id( i ), baseExpr( base ), deleter( del ), scope( s ) {}
 
-		/// Modify an existing node with a new deleter
-		IdData( const IdData & o, const Decl * del )
-		: id( o.id ), baseExpr( o.baseExpr ), deleter( del ), scope( o.scope ) {}
+		/// Create a new IdData, updating the deleter value.
+		IdData withDeleter( const Decl * decl ) const {
+			return IdData( id, baseExpr, decl, scope );
+		}
 
 		/// Constructs an expression referring to this identifier.
 		/// Increments `cost` by cost of reference conversion

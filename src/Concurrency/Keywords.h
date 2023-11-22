@@ -15,17 +15,11 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace Concurrency {
-	void applyKeywords( std::list< Declaration * > & translationUnit );
-	void implementMutexFuncs( std::list< Declaration * > & translationUnit );
-	void implementThreadStarter( std::list< Declaration * > & translationUnit );
 
 /// Implement the sue-like keywords and the suspend keyword. Pre-Autogen
 void implementKeywords( ast::TranslationUnit & translationUnit );
@@ -33,6 +27,7 @@ void implementKeywords( ast::TranslationUnit & translationUnit );
 void implementMutex( ast::TranslationUnit & translationUnit );
 /// Add the thread starter code to constructors. Post-Autogen
 void implementThreadStarter( ast::TranslationUnit & translationUnit );
+
 };
 
 // Local Variables: //

@@ -340,7 +340,7 @@ void Mangler::printQualifiers( const ast::Type * type ) {
 	}
 }
 
-}	// namespace
+} // namespace
 
 std::string mangle( const ast::Node * decl, Mangle::Mode mode ) {
 	return ast::Pass<Mangler>::read( decl, mode );

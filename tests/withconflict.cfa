@@ -1,0 +1,18 @@
+// No printing required, test is an error on second with statement.
+void result(int i, float f) {}
+
+struct Cell {
+	int value;
+};
+
+int main(void) {
+	int value = 0;
+	float value = 1;
+	Cell cell = { 2 };
+	with ( cell ) {
+		result(value, value);
+	}
+	with ( cell, cell ) {
+		result(value, value);
+	}
+}
