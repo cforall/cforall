@@ -170,8 +170,8 @@ void CodeGenerator::postvisit( ast::FunctionDecl const * decl ) {
 	ast::Pass<CodeGenerator> subCG( acc, subOptions );
 	// Add the forall clause.
 	// TODO: These probably should be removed by now and the assert used.
-	if ( !decl->type_params.empty() && !options.genC ) {
-		//assertf( !options.genC, "FunctionDecl::forall should not reach code generation." );
+	if ( !decl->type_params.empty() ) {
+		assertf( !options.genC, "FunctionDecl forall should not reach code generation." );
 		acc << "forall(";
 		subCG.core.genCommaList( decl->type_params );
 		acc << ")" << std::endl;

@@ -1434,9 +1434,7 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 	// Now have to update the type to match the declaration.
 	ast::FunctionType * type = new ast::FunctionType(
 		mutDecl->type->isVarArgs, mutDecl->type->qualifiers );
-	for ( auto type_param : mutDecl->type_params ) {
-		type->forall.emplace_back( new ast::TypeInstType( type_param ) );
-	}
+	// The forall clauses don't match until Eraser. The assertions are empty.
 	for ( auto param : mutDecl->params ) {
 		type->params.emplace_back( param->get_type() );
 	}
@@ -2189,6 +2187,7 @@ struct Eraser final :
 
 	ast::ObjectDecl const * previsit( ast::ObjectDecl const * decl );
 	ast::FunctionDecl const * previsit( ast::FunctionDecl const * decl );
+	ast::FunctionDecl const * postvisit( ast::FunctionDecl const * decl );
 	ast::TypedefDecl const * previsit( ast::TypedefDecl const * decl );
 	ast::StructDecl const * previsit( ast::StructDecl const * decl );
 	ast::UnionDecl const * previsit( ast::UnionDecl const * decl );
@@ -2207,6 +2206,13 @@ ast::ObjectDecl const * Eraser::previsit( ast::ObjectDecl const * decl ) {
 ast::FunctionDecl const * Eraser::previsit( ast::FunctionDecl const * decl ) {
 	guardTypeVarMap( decl->type );
 	return scrubAllTypeVars( decl );
+}
+
+ast::FunctionDecl const * Eraser::postvisit( ast::FunctionDecl const * decl ) {
+	if ( decl->type_params.empty() ) return decl;
+	auto mutDecl = mutate( decl );
+	mutDecl->type_params.clear();
+	return mutDecl;
 }
 
 ast::TypedefDecl const * Eraser::previsit( ast::TypedefDecl const * decl ) {
