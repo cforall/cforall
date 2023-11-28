@@ -497,11 +497,13 @@ const Designation * CurrentObject::findNext( const Designation * designation ) {
 	for ( const Expr * expr : designation->designators ) {
 		PRINT( std::cerr << "____untyped: " << expr << std::endl; )
 		auto dit = desigAlts.begin();
+		auto nexpr = dynamic_cast< const NameExpr * >( expr );
 
 		for ( const Type * t : curTypes ) {
 			assert( dit != desigAlts.end() );
 			DesignatorChain & d = *dit;
-			if ( auto nexpr = dynamic_cast< const NameExpr *>( expr ) ) {
+			// Name Designation:
+			if ( nexpr ) {
 				PRINT( std::cerr << "____actual: " << t << std::endl; )
 				if ( auto refType = dynamic_cast< const BaseInstType * >( t ) ) {
 					// concatenate identical field names
@@ -514,19 +516,10 @@ const Designation * CurrentObject::findNext( const Designation * designation ) {
 							newTypes.emplace_back( field->type );
 						}
 					}
-				} else if ( auto at = dynamic_cast< const ArrayType * >( t ) ) {
-					auto nexpr = dynamic_cast< const NameExpr *>( expr );
-					for ( const Decl * mem : refType->lookup( nexpr->name ) ) {
-						if ( auto field = dynamic_cast< const ObjectDecl * >( mem ) ) {
-							DesignatorChain d2 = d;
-							d2.emplace_back( new VariableExpr{ expr->location, field } );
-							newDesigAlts.emplace_back( std::move( d2 ) );
-							newTypes.emplace_back( at->base );
-						}
-					}
 				}
 
 				++dit;
+			// Index Designation:
 			} else {
 				if ( auto at = dynamic_cast< const ArrayType * >( t ) ) {
 					PRINT( std::cerr << "____alt: " << at->get_base() << std::endl; )
