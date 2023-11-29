@@ -16862,7 +16862,7 @@ fi
 # conditionnally build the demangler
 if test "x$enable_demangler" == xyes; then
 	LIBDEMANGLE="libdemangle.a"
-	DEMANGLER="demangler"
+	DEMANGLER="../driver/demangler"
 else
 	LIBDEMANGLE=""
 	DEMANGLER=""

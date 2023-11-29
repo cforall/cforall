@@ -252,7 +252,6 @@ ast::FunctionDecl * TryMutatorCore::make_try_function(
 	return new ast::FunctionDecl(
 		location,
 		"try",
-		{}, //forall
 		{}, //no param
 		{}, //no return
 		nullptr,
@@ -266,7 +265,6 @@ ast::FunctionDecl * TryMutatorCore::make_catch_function(
 	return new ast::FunctionDecl(
 		location,
 		"catch",
-		{}, //forall
 		{ make_index_object( location ), make_exception_object( location ) },
 		{}, //return void
 		nullptr,
@@ -280,7 +278,6 @@ ast::FunctionDecl * TryMutatorCore::make_match_function(
 	return new ast::FunctionDecl(
 		location,
 		"match",
-		{}, //forall
 		{ make_exception_object( location ) },
 		{ make_unused_index_object( location ) },
 		nullptr,
@@ -294,7 +291,6 @@ ast::FunctionDecl * TryMutatorCore::make_handle_function(
 	return new ast::FunctionDecl(
 		location,
 		"handle",
-		{}, //forall
 		{ make_exception_object( location ) },
 		{ make_bool_object( location ) },
 		nullptr,
@@ -308,7 +304,6 @@ ast::FunctionDecl * TryMutatorCore::make_finally_function(
 	return new ast::FunctionDecl(
 		location,
 		"finally",
-		{}, //forall
 		{ make_voidptr_object( location ) },
 		{}, //return void
 		nullptr,

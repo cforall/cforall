@@ -73,6 +73,7 @@ ast::FunctionDecl * genDefaultFunc(
 	return new ast::FunctionDecl( loc,
 		fname,
 		std::move(typeParams),
+		{},
 		{dstParam},
 		{},
 		new ast::CompoundStmt(loc),
@@ -898,7 +899,7 @@ const ast::DeclWithType * FixInit::postvisit( const ast::ObjectDecl *_objDecl ) 
 					// Statement * dtorStmt = dtor->clone();
 
 					// void __objName_dtor_atexitN(...) {...}
-					ast::FunctionDecl * dtorCaller = new ast::FunctionDecl(loc, objDecl->mangleName + dtorCallerNamer.newName(), {}, {}, {}, new ast::CompoundStmt(loc, {dtor}), ast::Storage::Static, ast::Linkage::C );
+					ast::FunctionDecl * dtorCaller = new ast::FunctionDecl(loc, objDecl->mangleName + dtorCallerNamer.newName(), {}, {}, {}, {}, new ast::CompoundStmt(loc, {dtor}), ast::Storage::Static, ast::Linkage::C );
 					dtorCaller->fixUniqueId();
 					// dtorCaller->stmts->push_back( dtor );
 

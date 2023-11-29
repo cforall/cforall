@@ -112,7 +112,6 @@ struct CorunKeyword : public WithDeclsToAdd<>, public WithStmtsToAdd<> {
         Stmt * coforLambda = new DeclStmt( loc,
             new FunctionDecl( loc,
                 fnName,                                             // name
-                {},                                                 // forall
                 {
                     new ObjectDecl( loc,
                         coforArgName,
@@ -260,7 +259,6 @@ struct CorunKeyword : public WithDeclsToAdd<>, public WithStmtsToAdd<> {
         Stmt * runnerLambda = new DeclStmt( loc,
             new FunctionDecl( loc,
                 fnName,                                             // name
-                {},                                                 // forall
                 {},                                                 // params
                 {},                                                 // return
                 new CompoundStmt( loc, { deepCopy(stmt->stmt) } )   // body

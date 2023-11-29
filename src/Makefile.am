@@ -71,9 +71,9 @@ AM_LDFLAGS  = @HOST_FLAGS@ -Xlinker -export-dynamic
 ARFLAGS     = cr
 
 cfa_cpplib_PROGRAMS += $(DEMANGLER)
-EXTRA_PROGRAMS = demangler
-demangler_SOURCES = SymTab/demangler.cc # test driver for the demangler, also useful as a sanity check that libdemangle.a is complete
-demangler_LDADD = libdemangle.a -ldl			# yywrap
+EXTRA_PROGRAMS = ../driver/demangler
+___driver_demangler_SOURCES = SymTab/demangler.cc # test driver for the demangler, also useful as a sanity check that libdemangle.a is complete
+___driver_demangler_LDADD = libdemangle.a -ldl			# yywrap
 noinst_LIBRARIES = $(LIBDEMANGLE)
 EXTRA_LIBRARIES = libdemangle.a
 libdemangle_a_SOURCES = $(SRCDEMANGLE)

@@ -243,7 +243,7 @@ AM_CONDITIONAL([WITH_LIBTCMALLOC], [test "x$enable_gprofiler" = "xyes" -a "$HAVE
 # conditionnally build the demangler
 if test "x$enable_demangler" == xyes; then
 	LIBDEMANGLE="libdemangle.a"
-	DEMANGLER="demangler"
+	DEMANGLER="../driver/demangler"
 else
 	LIBDEMANGLE=""
 	DEMANGLER=""
@@ -272,7 +272,7 @@ AC_CONFIG_FILES([
 	src/Makefile
 	libcfa/Makefile:libcfa/Makefile.dist.in
 	tests/Makefile
-	])
+])
 
 # Some of our makefile don't need to be distributed
 AM_CONDITIONAL([CFORALL_DISTRIBUTE], [test -e $TOP_SRCDIR/autogen.sh])

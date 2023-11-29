@@ -164,7 +164,6 @@ ast::FunctionDecl * makeGetExceptionForward(
 	return new ast::FunctionDecl(
 		location,
 		functionName,
-		{ /* forall */ },
 		{ new ast::ObjectDecl(
 			location,
 			"__unused",

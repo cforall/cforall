@@ -134,17 +134,13 @@ public:
 	ptr<CompoundStmt> stmts;
 	std::vector< ptr<Expr> > withExprs;
 
-	// The difference between the two constructors is in how they handle
-	// assertions. The first constructor uses the assertions from the type
-	// parameters, in the style of the old ast, and puts them on the type.
-	// The second takes an explicite list of assertions and builds a list of
-	// references to them on the type.
-
-	FunctionDecl( const CodeLocation & loc, const std::string & name, std::vector<ptr<TypeDecl>>&& forall,
+	/// Monomorphic Function Constructor:
+	FunctionDecl( const CodeLocation & locaction, const std::string & name,
 		std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
 		CompoundStmt * stmts, Storage::Classes storage = {}, Linkage::Spec linkage = Linkage::Cforall,
 		std::vector<ptr<Attribute>>&& attrs = {}, Function::Specs fs = {}, ArgumentFlag isVarArgs = FixedArgs );
 
+	/// Polymorphic Function Constructor:
 	FunctionDecl( const CodeLocation & location, const std::string & name,
 		std::vector<ptr<TypeDecl>>&& forall, std::vector<ptr<DeclWithType>>&& assertions,
 		std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,

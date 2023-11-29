@@ -247,7 +247,6 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
         FunctionDecl * setDtorFunction = new FunctionDecl(
             decl->location,
             "__CFA_set_dtor",
-            {},                     // forall
             {
                 new ObjectDecl(
                     decl->location,
@@ -319,7 +318,6 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
         FunctionDecl * deleteFn = new FunctionDecl(
             decl->location,
             "delete",
-            {},                     // forall
             {
                 new ObjectDecl(
                     decl->location,

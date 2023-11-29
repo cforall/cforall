@@ -264,7 +264,6 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
             FunctionDecl * receiveWrapper = new FunctionDecl(
                 decl->location,
                 "__CFA_receive_wrap",
-                {},                     // forall
                 {
                     new ObjectDecl(
                         decl->location,
@@ -287,7 +286,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
                         new PointerType( new PointerType( new StructInstType( *msgDecl ) ) )
                     )
                 },                      // params
-                { 
+                {
                     new ObjectDecl(
                         decl->location,
                         "__CFA_receive_wrap_ret",
@@ -399,7 +398,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
 					}
 				)
 			));
-            
+
             // Generates: return receiver;
             sendBody->push_back( new ReturnStmt( decl->location, new NameExpr( decl->location, "receiver" ) ) );
 
@@ -407,7 +406,6 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
             FunctionDecl * sendOperatorFunction = new FunctionDecl(
                 decl->location,
                 "?|?",
-                {},                     // forall
                 {
                     new ObjectDecl(
                         decl->location,
@@ -420,7 +418,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
                         ast::deepCopy( derivedMsgRef )
                     )
                 },                      // params
-                { 
+                {
                     new ObjectDecl(
                         decl->location,
                         "receiver_ret",
@@ -433,7 +431,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
                 {},                     // attributes
                 { Function::Inline }
             );
-            
+
             // forward decls to resolve use before decl problem for '|' routines
             forwardDecls.insertDecl( *actorIter, *messageIter , ast::deepCopy( sendOperatorFunction ) );
 

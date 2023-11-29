@@ -481,7 +481,6 @@ const ast::FunctionDecl * ConcurrentSueKeyword::forwardDeclare(
 	ast::FunctionDecl * get_decl = new ast::FunctionDecl(
 		location,
 		getter_name,
-		{}, // forall
 		{ this_decl }, // params
 		{ ret_decl }, // returns
 		nullptr, // stmts
@@ -498,7 +497,6 @@ const ast::FunctionDecl * ConcurrentSueKeyword::forwardDeclare(
 		main_decl = new ast::FunctionDecl(
 			location,
 			"main",
-			{},
 			{ ast::deepCopy( this_decl ) },
 			{},
 			nullptr,
@@ -574,7 +572,6 @@ void ConcurrentSueKeyword::addLockUnlockRoutines(
 	ast::FunctionDecl * lock_decl = new ast::FunctionDecl(
 		location,
 		"lock",
-		{ /* forall */ },
 		{
 			// Copy the declaration of this.
 			ast::deepCopy( this_decl ),
@@ -606,7 +603,6 @@ void ConcurrentSueKeyword::addLockUnlockRoutines(
 	ast::FunctionDecl * unlock_decl = new ast::FunctionDecl(
 		location,
 		"unlock",
-		{ /* forall */ },
 		{
 			// Last use, consume the declaration of this.
 			this_decl,

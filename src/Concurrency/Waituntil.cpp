@@ -552,14 +552,13 @@ FunctionDecl * buildPredicate( const WaitUntilStmt * stmt, GenLeafExpr genLeaf, 
 
     return new FunctionDecl( loc,
         predName,
-        {},                     // forall
         {
             new ObjectDecl( loc,
                 "clause_statuses",
                 new PointerType( new BasicType( BasicType::Kind::LongUnsignedInt ) )
             )
         },
-        { 
+        {
             new ObjectDecl( loc,
                 "sat_ret",
                 new BasicType( BasicType::Kind::Bool )

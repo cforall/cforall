@@ -40,27 +40,11 @@ void Decl::fixUniqueId() {
 // --- FunctionDecl
 
 FunctionDecl::FunctionDecl( const CodeLocation & loc, const std::string & name,
-	std::vector<ptr<TypeDecl>>&& forall,
 	std::vector<ptr<DeclWithType>>&& params, std::vector<ptr<DeclWithType>>&& returns,
 	CompoundStmt * stmts, Storage::Classes storage, Linkage::Spec linkage,
 	std::vector<ptr<Attribute>>&& attrs, Function::Specs fs, ArgumentFlag isVarArgs )
-: DeclWithType( loc, name, storage, linkage, std::move(attrs), fs ),
-	type_params(std::move(forall)), assertions(),
-	params(std::move(params)), returns(std::move(returns)), stmts( stmts ) {
-	FunctionType * ftype = new FunctionType( isVarArgs );
-	for (auto & param : this->params) {
-		ftype->params.emplace_back(param->get_type());
-	}
-	for (auto & ret : this->returns) {
-		ftype->returns.emplace_back(ret->get_type());
-	}
-	for (auto & tp : this->type_params) {
-		ftype->forall.emplace_back(new TypeInstType(tp));
-		for (auto & ap: tp->assertions) {
-			ftype->assertions.emplace_back(new VariableExpr(loc, ap));
-		}
-	}
-	this->type = ftype;
+: FunctionDecl( loc, name, {}, {}, std::move(params), std::move(returns),
+		stmts, storage, linkage, std::move(attrs), fs, isVarArgs ) {
 }
 
 FunctionDecl::FunctionDecl( const CodeLocation & location, const std::string & name,
