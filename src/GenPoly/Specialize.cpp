@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// SpecializeNew.cpp -- Generate thunks to specialize polymorphic functions.
+// Specialize.cpp -- Generate thunks to specialize polymorphic functions.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun  7 13:37:00 2022

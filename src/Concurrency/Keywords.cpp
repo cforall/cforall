@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// KeywordsNew.cpp -- Implement concurrency constructs from their keywords.
+// Keywords.cpp -- Implement concurrency constructs from their keywords.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Nov 16  9:53:00 2021
@@ -13,9 +13,9 @@
 // Update Count     : 2
 //
 
-#include <iostream>
-
 #include "Concurrency/Keywords.h"
+
+#include <iostream>
 
 #include "AST/Copy.hpp"
 #include "AST/Decl.hpp"
@@ -29,7 +29,7 @@
 #include "Common/Examine.h"
 #include "Common/utility.h"
 #include "Common/UniqueName.h"
-#include "ControlStruct/LabelGeneratorNew.hpp"
+#include "ControlStruct/LabelGenerator.hpp"
 #include "InitTweak/InitTweak.h"
 #include "Virtual/Tables.h"
 

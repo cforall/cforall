@@ -19,9 +19,9 @@ SRC += \
 	Concurrency/Actors.hpp \
 	Concurrency/Corun.cpp \
 	Concurrency/Corun.hpp \
-	Concurrency/KeywordsNew.cpp \
+	Concurrency/Keywords.cpp \
 	Concurrency/Keywords.h \
-	Concurrency/WaitforNew.cpp \
+	Concurrency/Waitfor.cpp \
 	Concurrency/Waitfor.h \
 	Concurrency/Waituntil.cpp \
 	Concurrency/Waituntil.hpp

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// FindSpecialDeclsNew.cpp -- Find special declarations used in the compiler.
+// FindSpecialDecls.cpp -- Find special declarations used in the compiler.
 //
 // Author           : Andrew Beach
 // Created On       : Wed Nov 10 13:51:00 2021

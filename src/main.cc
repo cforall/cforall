@@ -77,12 +77,12 @@
 #include "Validate/HoistTypeDecls.hpp"      // for hoistTypeDecls
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
-#include "Validate/LinkReferenceToTypes.hpp" // for linkReferenceToTypes
+#include "Validate/LinkInstanceTypes.hpp"   // for linkInstanceTypes
 #include "Validate/ReplaceTypedef.hpp"      // for replaceTypedef
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
 #include "Validate/VerifyCtorDtorAssign.hpp" // for verifyCtorDtorAssign
 #include "Virtual/ExpandCasts.h"            // for expandCasts
-#include "Virtual/VirtualDtor.hpp"           // for implementVirtDtors
+#include "Virtual/VirtualDtor.hpp"          // for implementVirtDtors
 
 using namespace std;
 
@@ -317,7 +317,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Fix Return Types", Validate::fixReturnTypes, transUnit );
 		PASS( "Enum and Pointer Decay", Validate::decayEnumsAndPointers, transUnit );
 
-		PASS( "Link Reference To Types", Validate::linkReferenceToTypes, transUnit );
+		PASS( "Link Instance Types", Validate::linkInstanceTypes, transUnit );
 
 		PASS( "Forall Pointer Decay", Validate::decayForallPointers, transUnit );
 		PASS( "Fix Qualified Types", Validate::fixQualifiedTypes, transUnit );

@@ -23,7 +23,7 @@ SRC_INITTWEAK = \
 SRC += $(SRC_INITTWEAK) \
 	InitTweak/FixGlobalInit.cc \
 	InitTweak/FixGlobalInit.h \
-	InitTweak/FixInit.h \
-	InitTweak/FixInitNew.cpp
+	InitTweak/FixInit.cpp \
+	InitTweak/FixInit.h
 
 SRCDEMANGLE += $(SRC_INITTWEAK)

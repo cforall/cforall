@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// LvalueNew.cpp -- Clean up lvalues and remove references.
+// Lvalue.cpp -- Clean up lvalues and remove references.
 //
 // Author           : Andrew Beach
 // Created On       : Thu Sep 15 14:08:00 2022

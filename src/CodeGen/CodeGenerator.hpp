@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// CodeGeneratorNew.hpp --
+// CodeGenerator.hpp --
 //
 // Author           : Andrew Beach
 // Created On       : Tue Oct 17 15:54:00 2023

@@ -26,7 +26,7 @@ SRC += $(SRC_VALIDATE) \
 	Validate/EliminateTypedef.hpp \
 	Validate/EnumAndPointerDecay.cpp \
 	Validate/EnumAndPointerDecay.hpp \
-	Validate/FindSpecialDeclsNew.cpp \
+	Validate/FindSpecialDecls.cpp \
 	Validate/FixQualifiedTypes.cpp \
 	Validate/FixQualifiedTypes.hpp \
 	Validate/FixReturnTypes.cpp \
@@ -43,8 +43,8 @@ SRC += $(SRC_VALIDATE) \
 	Validate/InitializerLength.hpp \
 	Validate/LabelAddressFixer.cpp \
 	Validate/LabelAddressFixer.hpp \
-	Validate/LinkReferenceToTypes.cpp \
-	Validate/LinkReferenceToTypes.hpp \
+	Validate/LinkInstanceTypes.cpp \
+	Validate/LinkInstanceTypes.hpp \
 	Validate/NoIdSymbolTable.hpp \
 	Validate/ReplaceTypedef.cpp \
 	Validate/ReplaceTypedef.hpp \

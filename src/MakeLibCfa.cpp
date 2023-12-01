@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// MakeLibCfaNew.cpp --
+// MakeLibCfa.cpp --
 //
 // Author           : Henry Xue
 // Created On       : Fri Aug 27 15:50:14 2021

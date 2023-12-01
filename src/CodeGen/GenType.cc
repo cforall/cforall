@@ -20,7 +20,7 @@
 
 #include "AST/Print.hpp"          // for print
 #include "AST/Vector.hpp"         // for vector
-#include "CodeGeneratorNew.hpp"   // for CodeGenerator
+#include "CodeGenerator.hpp"      // for CodeGenerator
 #include "Common/UniqueName.h"    // for UniqueName
 
 namespace CodeGen {

@@ -21,7 +21,7 @@
 #include "AST/Type.hpp"
 #include "GenPoly/ErasableScopedMap.h"  // for ErasableScopedMap<>::iterator
 #include "GenPoly/GenPoly.h"            // for TyVarMap
-#include "ScrubTyVars.h"                // for ScrubTyVars
+#include "ScrubTypeVars.hpp"            // for scrubTypeVars
 
 namespace GenPoly {
 

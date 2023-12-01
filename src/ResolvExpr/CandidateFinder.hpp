@@ -16,7 +16,7 @@
 #pragma once
 
 #include "Candidate.hpp"
-#include "ResolvMode.h"
+#include "ResolveMode.hpp"
 #include "AST/Fwd.hpp"
 #include "AST/Node.hpp"
 #include "AST/SymbolTable.hpp"
@@ -42,7 +42,7 @@ struct CandidateFinder {
 	: candidates(), context( context ), env( env ), targetType( tt ) {}
 
 	/// Fill candidates with feasible resolutions for `expr`
-	void find( const ast::Expr * expr, ResolvMode mode = {} );
+	void find( const ast::Expr * expr, ResolveMode mode = {} );
 	bool pruneCandidates( CandidateList & candidates, CandidateList & out, std::vector<std::string> & errors );
 
 	/// Runs new candidate finder on each element in xs, returning the list of finders

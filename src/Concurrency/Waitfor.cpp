@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// WaitforNew.cpp -- Expand waitfor clauses into code.
+// Waitfor.cpp -- Expand waitfor clauses into code.
 //
 // Author           : Andrew Beach
 // Created On       : Fri May 27 10:31:00 2022

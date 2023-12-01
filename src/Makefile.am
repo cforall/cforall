@@ -21,7 +21,7 @@ ACLOCAL_AMFLAGS  = -I automake
 SRC = main.cc \
 	CompilationState.cc \
 	CompilationState.h \
-	MakeLibCfaNew.cpp \
+	MakeLibCfa.cpp \
 	MakeLibCfa.h
 
 SRCDEMANGLE = CompilationState.cc

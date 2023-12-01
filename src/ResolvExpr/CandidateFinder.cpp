@@ -104,7 +104,7 @@ namespace {
 			// commontype(zero_t, DT*) is DT*, rather than nothing
 
 			// CandidateFinder finder{ symtab, env };
-			// finder.find( arg, ResolvMode::withAdjustment() );
+			// finder.find( arg, ResolveMode::withAdjustment() );
 			// assertf( finder.candidates.size() > 0,
 			// 	"Somehow castable expression failed to find alternatives." );
 			// assertf( finder.candidates.size() == 1,
@@ -973,7 +973,7 @@ namespace {
 		// if candidates are already produced, do not fail
 		// xxx - is it possible that handleTupleAssignment and main finder both produce candidates?
 		// this means there exists ctor/assign functions with a tuple as first parameter.
-		ResolvMode mode = {
+		ResolveMode mode = {
 			true, // adjust
 			!untypedExpr->func.as<ast::NameExpr>(), // prune if not calling by name
 			selfFinder.candidates.empty() // failfast if other options are not found
@@ -988,7 +988,7 @@ namespace {
 		ast::ptr< ast::Expr > opExpr = new ast::NameExpr{ untypedExpr->location, "?()" }; // ??? why not ?{}
 		CandidateFinder opFinder( context, tenv );
 		// okay if there aren't any function operations
-		opFinder.find( opExpr, ResolvMode::withoutFailFast() );
+		opFinder.find( opExpr, ResolveMode::withoutFailFast() );
 		PRINT(
 			std::cerr << "known function ops:" << std::endl;
 			print( std::cerr, opFinder.candidates, 1 );
@@ -1174,12 +1174,12 @@ namespace {
 		}
 		if ( castExpr->kind == ast::CastExpr::Return ) {
 			finder.strictMode = true;
-			finder.find( castExpr->arg, ResolvMode::withAdjustment() );
+			finder.find( castExpr->arg, ResolveMode::withAdjustment() );
 
 			// return casts are eliminated (merely selecting an overload, no actual operation)
 			candidates = std::move(finder.candidates);
 		}
-		finder.find( castExpr->arg, ResolvMode::withAdjustment() );
+		finder.find( castExpr->arg, ResolveMode::withAdjustment() );
 
 		if ( !finder.candidates.empty() ) reason.code = NoMatch;
 
@@ -1250,7 +1250,7 @@ namespace {
 		assertf( castExpr->result, "Implicit virtual cast targets not yet supported." );
 		CandidateFinder finder( context, tenv );
 		// don't prune here, all alternatives guaranteed to have same type
-		finder.find( castExpr->arg, ResolvMode::withoutPrune() );
+		finder.find( castExpr->arg, ResolveMode::withoutPrune() );
 		for ( CandidateRef & r : finder.candidates ) {
 			addCandidate(
 				*r,
@@ -1297,7 +1297,7 @@ namespace {
 			std::unique_ptr<const ast::Expr> tech1 { new ast::UntypedMemberExpr(loc, new ast::NameExpr(loc, castExpr->concrete_target.field), castExpr->arg) };
 
 			// don't prune here, since it's guaranteed all alternatives will have the same type
-			finder.find( tech1.get(), ResolvMode::withoutPrune() );
+			finder.find( tech1.get(), ResolveMode::withoutPrune() );
 			pick_alternatives(finder.candidates, false);
 
 			return;
@@ -1306,7 +1306,7 @@ namespace {
 		// Fallback : turn (thread&)X into (thread$&)get_thread(X)
 		std::unique_ptr<const ast::Expr> fallback { ast::UntypedExpr::createDeref(loc,  new ast::UntypedExpr(loc, new ast::NameExpr(loc, castExpr->concrete_target.getter), { castExpr->arg })) };
 		// don't prune here, since it's guaranteed all alternatives will have the same type
-		finder.find( fallback.get(), ResolvMode::withoutPrune() );
+		finder.find( fallback.get(), ResolveMode::withoutPrune() );
 
 		pick_alternatives(finder.candidates, true);
 
@@ -1315,7 +1315,7 @@ namespace {
 
 	void Finder::postvisit( const ast::UntypedMemberExpr * memberExpr ) {
 		CandidateFinder aggFinder( context, tenv );
-		aggFinder.find( memberExpr->aggregate, ResolvMode::withAdjustment() );
+		aggFinder.find( memberExpr->aggregate, ResolveMode::withAdjustment() );
 		for ( CandidateRef & agg : aggFinder.candidates ) {
 			// it's okay for the aggregate expression to have reference type -- cast it to the
 			// base type to treat the aggregate as the referenced value
@@ -1474,11 +1474,11 @@ namespace {
 
 	void Finder::postvisit( const ast::LogicalExpr * logicalExpr ) {
 		CandidateFinder finder1( context, tenv );
-		finder1.find( logicalExpr->arg1, ResolvMode::withAdjustment() );
+		finder1.find( logicalExpr->arg1, ResolveMode::withAdjustment() );
 		if ( finder1.candidates.empty() ) return;
 
 		CandidateFinder finder2( context, tenv );
-		finder2.find( logicalExpr->arg2, ResolvMode::withAdjustment() );
+		finder2.find( logicalExpr->arg2, ResolveMode::withAdjustment() );
 		if ( finder2.candidates.empty() ) return;
 
 		reason.code = NoMatch;
@@ -1504,19 +1504,19 @@ namespace {
 	void Finder::postvisit( const ast::ConditionalExpr * conditionalExpr ) {
 		// candidates for condition
 		CandidateFinder finder1( context, tenv );
-		finder1.find( conditionalExpr->arg1, ResolvMode::withAdjustment() );
+		finder1.find( conditionalExpr->arg1, ResolveMode::withAdjustment() );
 		if ( finder1.candidates.empty() ) return;
 
 		// candidates for true result
 		CandidateFinder finder2( context, tenv );
 		finder2.allowVoid = true;
-		finder2.find( conditionalExpr->arg2, ResolvMode::withAdjustment() );
+		finder2.find( conditionalExpr->arg2, ResolveMode::withAdjustment() );
 		if ( finder2.candidates.empty() ) return;
 
 		// candidates for false result
 		CandidateFinder finder3( context, tenv );
 		finder3.allowVoid = true;
-		finder3.find( conditionalExpr->arg3, ResolvMode::withAdjustment() );
+		finder3.find( conditionalExpr->arg3, ResolveMode::withAdjustment() );
 		if ( finder3.candidates.empty() ) return;
 
 		reason.code = NoMatch;
@@ -1569,7 +1569,7 @@ namespace {
 		ast::ptr< ast::Expr > arg1 = resolveInVoidContext( commaExpr->arg1, context, env );
 
 		CandidateFinder finder2( context, env );
-		finder2.find( commaExpr->arg2, ResolvMode::withAdjustment() );
+		finder2.find( commaExpr->arg2, ResolveMode::withAdjustment() );
 
 		for ( const CandidateRef & r2 : finder2.candidates ) {
 			addCandidate( *r2, new ast::CommaExpr{ commaExpr->location, arg1, r2->expr } );
@@ -1583,7 +1583,7 @@ namespace {
 	void Finder::postvisit( const ast::ConstructorExpr * ctorExpr ) {
 		CandidateFinder finder( context, tenv );
 		finder.allowVoid = true;
-		finder.find( ctorExpr->callExpr, ResolvMode::withoutPrune() );
+		finder.find( ctorExpr->callExpr, ResolveMode::withoutPrune() );
 		for ( CandidateRef & r : finder.candidates ) {
 			addCandidate( *r, new ast::ConstructorExpr{ ctorExpr->location, r->expr } );
 		}
@@ -1592,11 +1592,11 @@ namespace {
 	void Finder::postvisit( const ast::RangeExpr * rangeExpr ) {
 		// resolve low and high, accept candidates where low and high types unify
 		CandidateFinder finder1( context, tenv );
-		finder1.find( rangeExpr->low, ResolvMode::withAdjustment() );
+		finder1.find( rangeExpr->low, ResolveMode::withAdjustment() );
 		if ( finder1.candidates.empty() ) return;
 
 		CandidateFinder finder2( context, tenv );
-		finder2.find( rangeExpr->high, ResolvMode::withAdjustment() );
+		finder2.find( rangeExpr->high, ResolveMode::withAdjustment() );
 		if ( finder2.candidates.empty() ) return;
 
 		reason.code = NoMatch;
@@ -1672,7 +1672,7 @@ namespace {
 
 	void Finder::postvisit( const ast::UniqueExpr * unqExpr ) {
 		CandidateFinder finder( context, tenv );
-		finder.find( unqExpr->expr, ResolvMode::withAdjustment() );
+		finder.find( unqExpr->expr, ResolveMode::withAdjustment() );
 		for ( CandidateRef & r : finder.candidates ) {
 			// ensure that the the id is passed on so that the expressions are "linked"
 			addCandidate( *r, new ast::UniqueExpr{ unqExpr->location, r->expr, unqExpr->id } );
@@ -1698,7 +1698,7 @@ namespace {
 			// types are not bound to the initialization type, since return type variables are
 			// only open for the duration of resolving the UntypedExpr.
 			CandidateFinder finder( context, tenv, toType );
-			finder.find( initExpr->expr, ResolvMode::withAdjustment() );
+			finder.find( initExpr->expr, ResolveMode::withAdjustment() );
 
 			Cost minExprCost = Cost::infinity;
 			Cost minCastCost = Cost::infinity;
@@ -1888,7 +1888,7 @@ bool CandidateFinder::pruneCandidates( CandidateList & candidates, CandidateList
 	return !selected.empty();
 }
 
-void CandidateFinder::find( const ast::Expr * expr, ResolvMode mode ) {
+void CandidateFinder::find( const ast::Expr * expr, ResolveMode mode ) {
 	// Find alternatives for expression
 	ast::Pass<Finder> finder{ *this };
 	expr->accept( finder );
@@ -2003,7 +2003,7 @@ std::vector< CandidateFinder > CandidateFinder::findSubExprs(
 
 	for ( const auto & x : xs ) {
 		out.emplace_back( context, env );
-		out.back().find( x, ResolvMode::withAdjustment() );
+		out.back().find( x, ResolveMode::withAdjustment() );
 
 		PRINT(
 			std::cerr << "findSubExprs" << std::endl;

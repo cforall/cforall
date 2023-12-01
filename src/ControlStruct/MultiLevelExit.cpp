@@ -15,11 +15,12 @@
 
 #include "MultiLevelExit.hpp"
 
+#include <set>
+
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
-#include "LabelGeneratorNew.hpp"
+#include "LabelGenerator.hpp"
 
-#include <set>
 using namespace std;
 using namespace ast;
 

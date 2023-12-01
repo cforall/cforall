@@ -34,10 +34,6 @@
     template<typename node_t> friend node_t * mutate(const node_t * node); \
 	template<typename node_t> friend node_t * shallowCopy(const node_t * node);
 
-
-class ConverterOldToNew;
-class ConverterNewToOld;
-
 namespace ast {
 
 /// Contains the ID of a declaration and a type that is derived from that declaration,
@@ -438,13 +434,6 @@ public:
 private:
 	MemberExpr * clone() const override { return new MemberExpr{ *this }; }
 	MUTATE_FRIEND
-
-	// Custructor overload meant only for AST conversion
-	enum NoOpConstruction { NoOpConstructionChosen };
-	MemberExpr( const CodeLocation & loc, const DeclWithType * mem, const Expr * agg,
-	    NoOpConstruction overloadSelector );
-	friend class ::ConverterOldToNew;
-	friend class ::ConverterNewToOld;
 };
 
 /// A compile-time constant.
@@ -457,8 +446,8 @@ public:
 
 	ConstantExpr(
 		const CodeLocation & loc, const Type * ty, const std::string & r,
-			std::optional<unsigned long long> i )
-	: Expr( loc, ty ), rep( r ), ival( i ), underlyer(ty) {}
+			const std::optional<unsigned long long> & i )
+	: Expr( loc, ty ), rep( r ), ival( i ) {}
 
 	/// Gets the integer value of this constant, if one is appropriate to its type.
 	/// Throws a SemanticError if the type is not appropriate for value-as-integer.
@@ -482,13 +471,6 @@ private:
 	MUTATE_FRIEND
 
 	std::optional<unsigned long long> ival;
-
-	// Intended only for legacy support of roundtripping the old AST.
-	// Captures the very-locally inferred type, before the resolver modifies the type of this ConstantExpression.
-	// In the old AST it's constExpr->constant.type
-	ptr<Type> underlyer;
-	friend class ::ConverterOldToNew;
-	friend class ::ConverterNewToOld;
 };
 
 /// sizeof expression, e.g. `sizeof(int)`, `sizeof 3+4`
@@ -778,12 +760,8 @@ public:
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 
-	friend class ::ConverterOldToNew;
-
 private:
 	TupleAssignExpr * clone() const override { return new TupleAssignExpr{ *this }; }
-    TupleAssignExpr( const CodeLocation & loc, const Type * result, const StmtExpr * s );
-
 	MUTATE_FRIEND
 };
 

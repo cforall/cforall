@@ -46,7 +46,7 @@ SRC_RESOLVEXPR = \
       ResolvExpr/Resolver.h \
       ResolvExpr/ResolveTypeof.cc \
       ResolvExpr/ResolveTypeof.h \
-      ResolvExpr/ResolvMode.h \
+      ResolvExpr/ResolveMode.hpp \
       ResolvExpr/SatisfyAssertions.cpp \
       ResolvExpr/SatisfyAssertions.hpp \
       ResolvExpr/SpecCost.cc \

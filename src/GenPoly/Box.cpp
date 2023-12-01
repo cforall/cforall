@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// BoxNew.cpp -- Implement polymorphic function calls and types.
+// Box.cpp -- Implement polymorphic function calls and types.
 //
 // Author           : Andrew Beach
 // Created On       : Thr Oct  6 13:39:00 2022
@@ -31,7 +31,7 @@
 #include "GenPoly/GenPoly.h"           // for getFunctionType, ...
 #include "GenPoly/Lvalue.h"            // for generalizedLvalue
 #include "GenPoly/ScopedSet.h"         // for ScopedSet
-#include "GenPoly/ScrubTyVars.h"       // for scrubTypeVars, scrubAllTypeVars
+#include "GenPoly/ScrubTypeVars.hpp"   // for scrubTypeVars, scrubAllTypeVars
 #include "ResolvExpr/Unify.h"          // for typesCompatible
 #include "SymTab/Mangler.h"            // for mangle, mangleType
 

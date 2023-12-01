@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// InstantiateGenericNew.cpp -- Create concrete instances of generic types.
+// InstantiateGeneric.cpp -- Create concrete instances of generic types.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Aug 16 10:51:00 2022
@@ -30,7 +30,7 @@
 #include "Common/ScopedMap.h"          // for ScopedMap
 #include "Common/UniqueName.h"         // for UniqueName
 #include "GenPoly/GenPoly.h"           // for isPolyType, typesPolyCompatible
-#include "GenPoly/ScrubTyVars.h"       // for scrubAll
+#include "GenPoly/ScrubTypeVars.hpp"   // for scrubAllTypeVars
 #include "ResolvExpr/AdjustExprType.hpp"  // for adjustExprType
 #include "ResolvExpr/Unify.h"          // for typesCompatible
 

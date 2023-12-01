@@ -221,15 +221,6 @@ MemberExpr::MemberExpr( const CodeLocation & loc, const DeclWithType * mem, cons
 	add_qualifiers( result, aggregate->result->qualifiers );
 }
 
-MemberExpr::MemberExpr( const CodeLocation & loc, const DeclWithType * mem, const Expr * agg,
-    MemberExpr::NoOpConstruction overloadSelector )
-: Expr( loc ), member( mem ), aggregate( agg ) {
-	assert( member );
-	assert( aggregate );
-	assert( aggregate->result );
-	(void) overloadSelector;
-}
-
 bool MemberExpr::get_lvalue() const {
 	// This is actually wrong by C, but it works with our current set-up.
 	return true;
@@ -387,12 +378,6 @@ TupleAssignExpr::TupleAssignExpr(
 	assert( tupleExpr->result );
 	stmts.emplace_back( new ExprStmt{ loc, tupleExpr } );
 	stmtExpr = new StmtExpr{ loc, new CompoundStmt{ loc, std::move(stmts) } };
-}
-
-TupleAssignExpr::TupleAssignExpr(
-	const CodeLocation & loc, const Type * result, const StmtExpr * s )
-: Expr( loc, result ), stmtExpr() {
-	stmtExpr = s;
 }
 
 // --- StmtExpr

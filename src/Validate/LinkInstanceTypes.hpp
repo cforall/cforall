@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// LinkReferenceToTypes.hpp -- Connect instance types to declarations.
+// LinkInstanceTypes.hpp -- Connect instance types to declarations.
 //
 // Author           : Andrew Beach
 // Created On       : Thr Apr 21 11:41:00 2022
@@ -24,7 +24,7 @@ namespace Validate {
 /// Fills in the base value of various instance types, and some related
 /// adjustments, such as setting the sized flag.
 /// Because of the sized flag, it must happen before auto-gen.
-void linkReferenceToTypes( ast::TranslationUnit & translationUnit );
+void linkInstanceTypes( ast::TranslationUnit & translationUnit );
 
 }
 

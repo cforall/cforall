@@ -15,16 +15,16 @@
 ###############################################################################
 
 SRC += \
-	ControlStruct/ExceptDeclNew.cpp \
+	ControlStruct/ExceptDecl.cpp \
 	ControlStruct/ExceptDecl.h \
-	ControlStruct/ExceptTranslateNew.cpp \
+	ControlStruct/ExceptTranslate.cpp \
 	ControlStruct/ExceptTranslate.h \
 	ControlStruct/FixLabels.cpp \
 	ControlStruct/FixLabels.hpp \
 	ControlStruct/HoistControlDecls.cpp \
 	ControlStruct/HoistControlDecls.hpp \
-	ControlStruct/LabelGeneratorNew.cpp \
-	ControlStruct/LabelGeneratorNew.hpp \
+	ControlStruct/LabelGenerator.cpp \
+	ControlStruct/LabelGenerator.hpp \
 	ControlStruct/MultiLevelExit.cpp \
 	ControlStruct/MultiLevelExit.hpp
 

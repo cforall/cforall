@@ -18,7 +18,7 @@
 #include <list>                      // for list
 #include <string>                    // for operator<<
 
-#include "CodeGeneratorNew.hpp"      // for CodeGenerator, doSemicolon, ...
+#include "CodeGenerator.hpp"         // for CodeGenerator, doSemicolon, ...
 #include "GenType.h"                 // for genPrettyType
 
 using namespace std;

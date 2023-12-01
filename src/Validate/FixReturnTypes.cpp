@@ -18,12 +18,8 @@
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
-#include "CodeGen/CodeGeneratorNew.hpp"
+#include "CodeGen/CodeGenerator.hpp"
 #include "ResolvExpr/Unify.h"
-
-namespace ast {
-    class TranslationUnit;
-}
 
 namespace Validate {
 

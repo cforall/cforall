@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ScrubTyVars.h -- Remove polymorphic types.
+// ScrubTypeVars.hpp -- Remove polymorphic types.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015

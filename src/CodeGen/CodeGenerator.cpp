@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// CodeGeneratorNew.cpp --
+// CodeGenerator.cpp --
 //
 // Author           : Andrew Beach
 // Created On       : Tue Oct 17 15:54:00 2023
@@ -13,7 +13,7 @@
 // Update Count     : 0
 //
 
-#include "CodeGeneratorNew.hpp"
+#include "CodeGenerator.hpp"
 
 #include "AST/Print.hpp"
 #include "OperatorTable.h"           // for OperatorInfo, operatorLookup

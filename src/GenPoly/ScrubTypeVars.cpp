@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ScrubTyVars.cc -- Remove polymorphic types.
+// ScrubTypeVars.cpp -- Remove polymorphic types.
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -13,12 +13,13 @@
 // Update Count     : 6
 //
 
+#include "ScrubTypeVars.hpp"
+
 #include <utility>                      // for pair
 
 #include "AST/Pass.hpp"
 #include "GenPoly.h"                    // for mangleType, TyVarMap, alignof...
 #include "GenPoly/ErasableScopedMap.h"  // for ErasableScopedMap<>::const_it...
-#include "ScrubTyVars.h"
 #include "SymTab/Mangler.h"             // for mangleType
 
 namespace GenPoly {

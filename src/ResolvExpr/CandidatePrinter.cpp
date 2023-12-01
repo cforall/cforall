@@ -15,6 +15,8 @@
 
 #include "CandidatePrinter.hpp"
 
+#include <iostream>
+
 #include "AST/Expr.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Print.hpp"
@@ -22,8 +24,6 @@
 #include "AST/TranslationUnit.hpp"
 #include "ResolvExpr/CandidateFinder.hpp"
 #include "ResolvExpr/Resolver.h"
-
-#include <iostream>
 
 namespace ResolvExpr {
 
@@ -38,7 +38,7 @@ public:
 	void postvisit( const ast::ExprStmt * stmt ) {
 		ast::TypeEnvironment env;
 		CandidateFinder finder( { symtab, transUnit().global }, env );
-		finder.find( stmt->expr, ResolvMode::withAdjustment() );
+		finder.find( stmt->expr, ResolveMode::withAdjustment() );
 		int count = 1;
 		os << "There are " << finder.candidates.size() << " candidates\n";
 		for ( const std::shared_ptr<Candidate> & cand : finder ) {

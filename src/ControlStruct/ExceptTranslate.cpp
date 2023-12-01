@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ExceptTranslateNew.cpp -- Conversion of exception control flow structures.
+// ExceptTranslate.cpp -- Conversion of exception control flow structures.
 //
 // Author           : Andrew Beach
 // Created On       : Mon Nov  8 11:53:00 2021

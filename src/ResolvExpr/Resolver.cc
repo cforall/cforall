@@ -24,7 +24,7 @@
 #include "RenameVars.h"                  // for RenameVars, global_renamer
 #include "Resolver.h"
 #include "ResolveTypeof.h"
-#include "ResolvMode.h"                  // for ResolvMode
+#include "ResolveMode.hpp"               // for ResolveMode
 #include "typeops.h"                     // for extractResultType
 #include "Unify.h"                       // for unify
 #include "CompilationState.h"
@@ -122,7 +122,7 @@ namespace ResolvExpr {
 		/// Calls the CandidateFinder and finds the single best candidate
 		CandidateRef findUnfinishedKindExpression(
 			const ast::Expr * untyped, const ResolveContext & context, const std::string & kind,
-			std::function<bool(const Candidate &)> pred = anyCandidate, ResolvMode mode = {}
+			std::function<bool(const Candidate &)> pred = anyCandidate, ResolveMode mode = {}
 		) {
 			if ( ! untyped ) return nullptr;
 
@@ -262,7 +262,7 @@ namespace ResolvExpr {
 		// set up and resolve expression cast to void
 		ast::ptr< ast::CastExpr > untyped = new ast::CastExpr{ expr };
 		CandidateRef choice = findUnfinishedKindExpression(
-			untyped, context, "", anyCandidate, ResolvMode::withAdjustment() );
+			untyped, context, "", anyCandidate, ResolveMode::withAdjustment() );
 
 		// a cast expression has either 0 or 1 interpretations (by language rules);
 		// if 0, an exception has already been thrown, and this code will not run
@@ -291,7 +291,7 @@ namespace ResolvExpr {
 		ast::ptr< ast::Expr > findKindExpression(
 			const ast::Expr * untyped, const ResolveContext & context,
 			std::function<bool(const Candidate &)> pred = anyCandidate,
-			const std::string & kind = "", ResolvMode mode = {}
+			const std::string & kind = "", ResolveMode mode = {}
 		) {
 			if ( ! untyped ) return {};
 			CandidateRef choice =
@@ -859,7 +859,7 @@ namespace ResolvExpr {
 			CandidateFinder funcFinder( context, env );
 
 			// Find all candidates for a function in canonical form
-			funcFinder.find( clause.target, ResolvMode::withAdjustment() );
+			funcFinder.find( clause.target, ResolveMode::withAdjustment() );
 
 			if ( funcFinder.candidates.empty() ) {
 				stringstream ss;

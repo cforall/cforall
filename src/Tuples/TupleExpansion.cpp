@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// TupleExpansionNew.cpp --
+// TupleExpansion.cpp --
 //
 // Author           : Henry Xue
 // Created On       : Mon Aug 23 15:36:09 2021
@@ -293,4 +293,37 @@ void expandTuples( ast::TranslationUnit & translationUnit ) {
 	ast::Pass<TupleExprExpander>::run( translationUnit );
 }
 
+const ast::Type * makeTupleType( const std::vector<ast::ptr<ast::Expr>> & exprs ) {
+	// If there are no expressions, the answer is set, otherwise go through a loop.
+	if ( exprs.empty() ) return new ast::TupleType( {} );
+
+	std::vector<ast::ptr<ast::Type>> types;
+	ast::CV::Qualifiers quals(
+		ast::CV::Const | ast::CV::Volatile | ast::CV::Restrict |
+		ast::CV::Atomic | ast::CV::Mutex );
+
+	for ( const ast::Expr * expr : exprs ) {
+		assert( expr->result );
+		// If the type of any expr is void, the type of the entire tuple is void.
+		if ( expr->result->isVoid() ) return new ast::VoidType();
+
+		// Qualifiers on the tuple type are the qualifiers that exist on all components.
+		quals &= expr->result->qualifiers;
+
+		types.emplace_back( expr->result );
+	}
+
+	return new ast::TupleType( std::move( types ), quals );
+}
+
+const ast::TypeInstType * isTtype( const ast::Type * type ) {
+	if ( const ast::TypeInstType * inst = dynamic_cast< const ast::TypeInstType * >( type ) ) {
+		if ( inst->base && inst->base->kind == ast::TypeDecl::Ttype ) {
+			return inst;
+		}
+	}
+	return nullptr;
+}
+
 } // namespace Tuples
+

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// LabelGeneratorNew.cpp --
+// LabelGenerator.cpp --
 //
 // Author           : Peter A. Buhr
 // Created On       : Mon May 18 07:44:20 2015
@@ -13,7 +13,7 @@
 // Update Count     : 73
 //
 
-#include "LabelGeneratorNew.hpp"
+#include "LabelGenerator.hpp"
 
 #include "AST/Attribute.hpp"
 #include "AST/Label.hpp"

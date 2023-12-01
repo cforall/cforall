@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// LabelGenerator.h --
+// LabelGenerator.hpp --
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Mon May 18 07:44:20 2015
@@ -25,8 +25,10 @@ namespace ast {
 } // namespace ast
 
 namespace ControlStruct {
-	ast::Label newLabel( const std::string &, const ast::Stmt * );
-	ast::Label newLabel( const std::string &, const CodeLocation & );
+
+ast::Label newLabel( const std::string &, const ast::Stmt * );
+ast::Label newLabel( const std::string &, const CodeLocation & );
+
 } // namespace ControlStruct
 
 // Local Variables: //

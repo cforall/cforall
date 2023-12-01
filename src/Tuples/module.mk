@@ -18,8 +18,7 @@ SRC_TUPLES = \
 	Tuples/Explode.cc \
 	Tuples/Explode.h \
 	Tuples/TupleAssignment.cc \
-	Tuples/TupleExpansion.cc \
-	Tuples/TupleExpansionNew.cpp \
+	Tuples/TupleExpansion.cpp \
 	Tuples/Tuples.cc \
 	Tuples/Tuples.h
 

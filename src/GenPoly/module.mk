@@ -21,18 +21,18 @@ SRC_GENPOLY = \
 	GenPoly/Lvalue.h
 
 SRC += $(SRC_GENPOLY) \
-	GenPoly/BoxNew.cpp \
+	GenPoly/Box.cpp \
 	GenPoly/Box.h \
 	GenPoly/ErasableScopedMap.h \
 	GenPoly/FindFunction.cc \
 	GenPoly/FindFunction.h \
-	GenPoly/InstantiateGenericNew.cpp \
+	GenPoly/InstantiateGeneric.cpp \
 	GenPoly/InstantiateGeneric.h \
-	GenPoly/LvalueNew.cpp \
+	GenPoly/Lvalue.cpp \
 	GenPoly/ScopedSet.h \
-	GenPoly/ScrubTyVars.cc \
-	GenPoly/ScrubTyVars.h \
-	GenPoly/SpecializeNew.cpp \
+	GenPoly/ScrubTypeVars.cpp \
+	GenPoly/ScrubTypeVars.hpp \
+	GenPoly/Specialize.cpp \
 	GenPoly/Specialize.h
 
 SRCDEMANGLE += $(SRC_GENPOLY)

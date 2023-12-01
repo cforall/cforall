@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ExceptDeclNew.cpp --
+// ExceptDecl.cpp --
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jul 12 15:50:00 2022

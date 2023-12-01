@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// LinkReferenceToTypes.cpp -- Connect instance types to declarations.
+// LinkInstanceTypes.cpp -- Connect instance types to declarations.
 //
 // Author           : Andrew Beach
 // Created On       : Thr Apr 21 11:41:00 2022
@@ -13,7 +13,7 @@
 // Update Count     : 3
 //
 
-#include "Validate/LinkReferenceToTypes.hpp"
+#include "Validate/LinkInstanceTypes.hpp"
 
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
@@ -330,7 +330,7 @@ ast::TraitDecl const * LinkTypesCore::postvisit( ast::TraitDecl const * decl ) {
 
 } // namespace
 
-void linkReferenceToTypes( ast::TranslationUnit & translationUnit ) {
+void linkInstanceTypes( ast::TranslationUnit & translationUnit ) {
 	ast::Pass<LinkTypesCore>::run( translationUnit );
 }
 

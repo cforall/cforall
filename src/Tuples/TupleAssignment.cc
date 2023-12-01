@@ -13,6 +13,8 @@
 // Update Count     : 10
 //
 
+#include "Tuples.h"
+
 #include <algorithm>                       // for transform
 #include <cassert>                         // for assert
 #include <iterator>                        // for back_insert_iterator, back...
@@ -223,7 +225,7 @@ class TupleAssignSpotter final {
 				// Resolve the cast expression so that rhsCand return type is bound
 				// by the cast type as needed, and transfer the resulting environment.
 				ResolvExpr::CandidateFinder finder( spotter.crntFinder.context, env );
-				finder.find( rhsCand->expr, ResolvExpr::ResolvMode::withAdjustment() );
+				finder.find( rhsCand->expr, ResolvExpr::ResolveMode::withAdjustment() );
 				assert( 1 == finder.candidates.size() );
 				env = std::move( finder.candidates.front()->env );
 			}
@@ -344,7 +346,7 @@ public:
 			finder.allowVoid = true;
 
 			try {
-				finder.find( expr, ResolvExpr::ResolvMode::withAdjustment() );
+				finder.find( expr, ResolvExpr::ResolveMode::withAdjustment() );
 			} catch (...) {
 				// No match is not failure, just that this tuple assignment is invalid.
 				return;

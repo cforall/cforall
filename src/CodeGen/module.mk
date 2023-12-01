@@ -15,8 +15,8 @@
 ###############################################################################
 
 SRC_CODEGEN = \
-	CodeGen/CodeGeneratorNew.cpp \
-	CodeGen/CodeGeneratorNew.hpp \
+	CodeGen/CodeGenerator.cpp \
+	CodeGen/CodeGenerator.hpp \
 	CodeGen/GenType.cc \
 	CodeGen/GenType.h \
 	CodeGen/OperatorTable.cc \
