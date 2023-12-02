@@ -39,6 +39,17 @@ namespace GenPoly {
 
 namespace {
 
+/// The layout type is used to represent sizes, alignments and offsets.
+ast::BasicType * makeLayoutType() {
+	return new ast::BasicType( ast::BasicType::LongUnsignedInt );
+}
+
+/// Fixed version of layout type (just adding a 'C' in C++ style).
+ast::BasicType * makeLayoutCType() {
+	return new ast::BasicType( ast::BasicType::LongUnsignedInt,
+		ast::CV::Qualifiers( ast::CV::Const ) );
+}
+
 // --------------------------------------------------------------------------
 /// Adds layout-generation functions to polymorphic types.
 struct LayoutFunctionBuilder final :
@@ -61,10 +72,6 @@ ast::vector<ast::TypeDecl> takeSizedParams(
 	return sizedParams;
 }
 
-ast::BasicType * makeSizeAlignType() {
-	return new ast::BasicType( ast::BasicType::LongUnsignedInt );
-}
-
 /// Adds parameters for otype size and alignment to a function type.
 void addSTypeParams(
 		ast::vector<ast::DeclWithType> & params,
@@ -75,18 +82,18 @@ void addSTypeParams(
 		params.emplace_back( new ast::ObjectDecl(
 			sizedParam->location,
 			sizeofName( paramName ),
-			makeSizeAlignType()
+			makeLayoutCType()
 		) );
 		params.emplace_back( new ast::ObjectDecl(
 			sizedParam->location,
 			alignofName( paramName ),
-			makeSizeAlignType()
+			makeLayoutCType()
 		) );
 	}
 }
 
-ast::Type * makeSizeAlignOutType() {
-	return new ast::PointerType( makeSizeAlignType() );
+ast::Type * makeLayoutOutType() {
+	return new ast::PointerType( makeLayoutType() );
 }
 
 struct LayoutData {
@@ -103,12 +110,12 @@ LayoutData buildLayoutFunction(
 	ast::ObjectDecl * sizeParam = new ast::ObjectDecl(
 		location,
 		sizeofName( aggr->name ),
-		makeSizeAlignOutType()
+		makeLayoutOutType()
 	);
 	ast::ObjectDecl * alignParam = new ast::ObjectDecl(
 		location,
 		alignofName( aggr->name ),
-		makeSizeAlignOutType()
+		makeLayoutOutType()
 	);
 	ast::ObjectDecl * offsetParam = nullptr;
 	ast::vector<ast::DeclWithType> params = { sizeParam, alignParam };
@@ -116,7 +123,7 @@ LayoutData buildLayoutFunction(
 		offsetParam = new ast::ObjectDecl(
 			location,
 			offsetofName( aggr->name ),
-			makeSizeAlignOutType()
+			makeLayoutOutType()
 		);
 		params.push_back( offsetParam );
 	}
@@ -1371,13 +1378,22 @@ private:
 	void addAdapters( ast::FunctionDecl * decl, TypeVarMap & localTypeVars );
 };
 
-// size/align/offset parameters may not be used, so add the unused attribute.
 ast::ObjectDecl * makeObj(
 		CodeLocation const & location, std::string const & name ) {
+	// The size/align parameters may be unused, so add the unused attribute.
 	return new ast::ObjectDecl( location, name,
-		makeSizeAlignType(),
+		makeLayoutCType(),
 		nullptr, ast::Storage::Classes(), ast::Linkage::C, nullptr,
 		{ new ast::Attribute( "unused" ) } );
+}
+
+/// A modified and specialized version of ast::add_qualifiers.
+ast::Type const * addConst( ast::Type const * type ) {
+	ast::CV::Qualifiers cvq = { ast::CV::Const };
+	if ( ( type->qualifiers & cvq ) != 0 ) return type;
+	auto mutType = ast::mutate( type );
+	mutType->qualifiers |= cvq;
+	return mutType;
 }
 
 ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl ) {
@@ -1417,11 +1433,12 @@ ast::FunctionDecl const * DeclAdapter::previsit( ast::FunctionDecl const * decl 
 		typeParam = mutParam;
 	}
 	for ( ast::ptr<ast::DeclWithType> & assert : mutDecl->assertions ) {
+		ast::DeclWithType * mutAssert = ast::mutate( assert.get() );
 		// Assertion parameters may not be used in body,
 		// pass along with unused attribute.
-		assert.get_and_mutate()->attributes.push_back(
-			new ast::Attribute( "unused" ) );
-		inferredParams.push_back( assert );
+		mutAssert->attributes.push_back( new ast::Attribute( "unused" ) );
+		mutAssert->set_type( addConst( mutAssert->get_type() ) );
+		inferredParams.emplace_back( mutAssert );
 	}
 	mutDecl->assertions.clear();
 
@@ -1608,17 +1625,16 @@ PolyGenericCalculator::PolyGenericCalculator() :
 {}
 
 /// Converts polymorphic type into a suitable monomorphic representation.
-/// Currently: __attribute__((aligned(8) )) char[size_T];
+/// Currently: __attribute__(( aligned(8) )) char[size_T];
 ast::Type * polyToMonoType( CodeLocation const & location,
 		ast::Type const * declType ) {
 	auto charType = new ast::BasicType( ast::BasicType::Char );
 	auto size = new ast::NameExpr( location,
 		sizeofName( Mangle::mangleType( declType ) ) );
-	auto aligned = new ast::Attribute( "aligned",
-		{ ast::ConstantExpr::from_int( location, 8 ) } );
 	auto ret = new ast::ArrayType( charType, size,
 		ast::VariableLen, ast::DynamicDim, ast::CV::Qualifiers() );
-	ret->attributes.push_back( aligned );
+	ret->attributes.emplace_back( new ast::Attribute( "aligned",
+		{ ast::ConstantExpr::from_int( location, 8 ) } ) );
 	return ret;
 }
 
@@ -1644,17 +1660,15 @@ ast::Decl const * PolyGenericCalculator::postvisit(
 	// Add size/align variables for opaque type declarations.
 	ast::TypeInstType inst( decl->name, decl );
 	std::string typeName = Mangle::mangleType( &inst );
-	ast::Type * layoutType = new ast::BasicType(
-		ast::BasicType::LongUnsignedInt );
 
 	ast::ObjectDecl * sizeDecl = new ast::ObjectDecl( decl->location,
-		sizeofName( typeName ), layoutType,
+		sizeofName( typeName ), makeLayoutCType(),
 		new ast::SingleInit( decl->location,
 			new ast::SizeofExpr( decl->location, deepCopy( base ) )
 		)
 	);
 	ast::ObjectDecl * alignDecl = new ast::ObjectDecl( decl->location,
-		alignofName( typeName ), layoutType,
+		alignofName( typeName ), makeLayoutCType(),
 		new ast::SingleInit( decl->location,
 			new ast::AlignofExpr( decl->location, deepCopy( base ) )
 		)
@@ -1751,9 +1765,9 @@ bool isMember( ast::DeclWithType const * memberDecl, ast::Decl const * decl ) {
 /// returns its index, or -1 if not present.
 long findMember( ast::DeclWithType const * memberDecl,
 		const ast::vector<ast::Decl> & baseDecls ) {
-	for ( auto pair : enumerate( baseDecls ) ) {
-		if ( isMember( memberDecl, pair.val.get() ) ) {
-			return pair.idx;
+	for ( auto const & [index, value] : enumerate( baseDecls ) ) {
+		if ( isMember( memberDecl, value.get() ) ) {
+			return index;
 		}
 	}
 	return -1;
@@ -1911,13 +1925,9 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 
 	knownOffsets.insert( offsetName );
 
-	auto baseMembers = type->base->members;
-	ast::Type const * offsetType = new ast::BasicType(
-		ast::BasicType::LongUnsignedInt );
-
 	// Build initializer list for offset array.
 	ast::vector<ast::Init> inits;
-	for ( ast::ptr<ast::Decl> & member : baseMembers ) {
+	for ( ast::ptr<ast::Decl> const & member : type->base->members ) {
 		auto memberDecl = member.as<ast::DeclWithType>();
 		assertf( memberDecl, "Requesting offset of non-DWT member: %s",
 			toCString( member ) );
@@ -1931,8 +1941,8 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 
 	auto offsetArray = makeVar( expr->location, offsetName,
 		new ast::ArrayType(
-			offsetType,
-			ast::ConstantExpr::from_ulong( expr->location, baseMembers.size() ),
+			makeLayoutType(),
+			ast::ConstantExpr::from_ulong( expr->location, inits.size() ),
 			ast::FixedLen,
 			ast::DynamicDim
 		),
@@ -2011,29 +2021,28 @@ bool PolyGenericCalculator::findGeneric(
 		// Done early so as not to interfere with the later addition of
 		// parameters to the layout call.
 		knownLayouts.insert( typeName );
-		ast::Type const * layoutType = makeSizeAlignType();
 
 		int memberCount = inst->base->members.size();
 		if ( 0 == memberCount ) {
 			// All empty structures have the same layout (size 1, align 1).
 			makeVar( location,
-				sizeofName( typeName ), layoutType,
+				sizeofName( typeName ), makeLayoutType(),
 				new ast::SingleInit( location,
 						ast::ConstantExpr::from_ulong( location, 1 ) ) );
 			makeVar( location,
-				alignofName( typeName ), ast::deepCopy( layoutType ),
+				alignofName( typeName ), makeLayoutType(),
 				new ast::SingleInit( location,
 						ast::ConstantExpr::from_ulong( location, 1 ) ) );
 			// Since 0-length arrays are forbidden in C, skip the offset array.
 		} else {
 			ast::ObjectDecl const * sizeofVar = makeVar( location,
-				sizeofName( typeName ), deepCopy( layoutType ), nullptr );
+				sizeofName( typeName ), makeLayoutType(), nullptr );
 			ast::ObjectDecl const * alignofVar = makeVar( location,
-				alignofName( typeName ), deepCopy( layoutType ), nullptr );
+				alignofName( typeName ), makeLayoutType(), nullptr );
 			ast::ObjectDecl const * offsetofVar = makeVar( location,
 				offsetofName( typeName ),
 				new ast::ArrayType(
-					layoutType,
+					makeLayoutType(),
 					ast::ConstantExpr::from_int( location, memberCount ),
 					ast::FixedLen,
 					ast::DynamicDim
@@ -2077,12 +2086,11 @@ bool PolyGenericCalculator::findGeneric(
 		// Done early so as not to interfere with the later addition of
 		// parameters to the layout call.
 		knownLayouts.insert( typeName );
-		ast::Type const * layoutType = makeSizeAlignType();
 
 		ast::ObjectDecl * sizeofVar = makeVar( location,
-			sizeofName( typeName ), layoutType );
+			sizeofName( typeName ), makeLayoutType() );
 		ast::ObjectDecl * alignofVar = makeVar( location,
-			alignofName( typeName ), ast::deepCopy( layoutType ) );
+			alignofName( typeName ), makeLayoutType() );
 
 		ast::UntypedExpr * layoutCall = new ast::UntypedExpr( location,
 			new ast::NameExpr( location, layoutofName( inst->base ) ),
