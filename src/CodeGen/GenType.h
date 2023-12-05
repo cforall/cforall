@@ -19,15 +19,11 @@
 
 #include "CodeGen/Options.h" // for Options
 
-class Type;
 namespace ast {
 	class Type;
 }
 
 namespace CodeGen {
-	std::string genType( Type *type, const std::string &baseString, const Options &options );
-	std::string genType( Type *type, const std::string &baseString, bool pretty = false, bool genC = false, bool lineMarks = false );
-	std::string genPrettyType( Type * type, const std::string & baseString );
 
 std::string genType( ast::Type const * type, const std::string & base, const Options & options );
 std::string genTypeNoAttr( ast::Type const * type, const std::string & base, const Options & options );

@@ -29,7 +29,6 @@
 #include "StorageClasses.hpp"
 #include "Visitor.hpp"
 #include "Common/utility.h"
-#include "Common/SemanticError.h"						// error_str
 
 // Must be included in *all* AST classes; should be #undef'd at the end of the file
 #define MUTATE_FRIEND \

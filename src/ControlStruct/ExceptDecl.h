@@ -15,17 +15,14 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
-
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace ControlStruct {
+
 /// Unfold exception declarations into raw structure declarations.
 /// Also builds vtable declarations and converts vtable types.
-void translateExcept( std::list< Declaration *> & translationUnit );
 void translateExcept( ast::TranslationUnit & translationUnit );
+
 }

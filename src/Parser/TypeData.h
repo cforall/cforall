@@ -132,7 +132,6 @@ ast::Decl * buildDecl(
 	ast::Function::Specs funcSpec, ast::Linkage::Spec, ast::Expr * asmName,
 	ast::Init * init = nullptr, std::vector<ast::ptr<ast::Attribute>> && attributes = std::vector<ast::ptr<ast::Attribute>>() );
 ast::FunctionType * buildFunctionType( const TypeData * );
-ast::Decl * addEnumBase( Declaration *, const TypeData * );
 void buildKRFunction( const TypeData::Function_t & function );
 
 // Local Variables: //

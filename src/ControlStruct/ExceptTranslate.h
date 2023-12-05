@@ -15,26 +15,23 @@
 
 #pragma once
 
-#include <list>  // for list
-
-class Declaration;
 namespace ast {
 	class TranslationUnit;
 }
 
 namespace ControlStruct {
-	void translateThrows( std::list< Declaration *> & translationUnit );
-	void translateThrows( ast::TranslationUnit & transUnit );
-	/* Replaces all throw & throwResume statements with function calls.
-	 * These still need to be resolved, so call this before the reslover.
-	 */
 
-	void translateTries( std::list< Declaration *> & translationUnit );
-	void translateTries( ast::TranslationUnit & transUnit );
-	/* Replaces all try blocks (and their many clauses) with function definitions and calls.
-	 * This uses the exception built-ins to produce typed output and should take place after
-	 * the resolver. It also produces virtual casts and should happen before they are expanded.
-	 */
+void translateThrows( ast::TranslationUnit & transUnit );
+/* Replaces all throw & throwResume statements with function calls.
+ * These still need to be resolved, so call this before the reslover.
+ */
+
+void translateTries( ast::TranslationUnit & transUnit );
+/* Replaces all try blocks (and their many clauses) with function definitions and calls.
+ * This uses the exception built-ins to produce typed output and should take place after
+ * the resolver. It also produces virtual casts and should happen before they are expanded.
+ */
+
 }
 
 // Local Variables: //

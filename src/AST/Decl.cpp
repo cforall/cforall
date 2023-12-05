@@ -20,6 +20,7 @@
 #include <unordered_map>
 
 #include "Common/Eval.h"       // for eval
+#include "Common/SemanticError.h"
 
 #include "Fwd.hpp"             // for UniqueId
 #include "Init.hpp"

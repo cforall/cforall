@@ -32,11 +32,7 @@
 #include "Common/utility.h"        // for maybeClone
 #include "Parser/parserutility.h"  // for maybeBuild, maybeCopy
 
-class Attribute;
-class Declaration;
 struct DeclarationNode;
-class DeclarationWithType;
-class Initializer;
 class InitializerNode;
 class ExpressionNode;
 struct StatementNode;

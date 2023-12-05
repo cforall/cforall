@@ -25,11 +25,11 @@ namespace ControlStruct {
 
 namespace {
 
-	typedef std::list<ast::CatchClause*> CatchList;
+typedef std::list<ast::CatchClause*> CatchList;
 
-	void appendDeclStmt( ast::CompoundStmt * block, ast::DeclWithType * item ) {
-		block->push_back(new ast::DeclStmt(block->location, item));
-	}
+void appendDeclStmt( ast::CompoundStmt * block, ast::DeclWithType * item ) {
+	block->push_back( new ast::DeclStmt( block->location, item ) );
+}
 
 class TranslateThrowsCore final : public ast::WithGuards {
 	const ast::ObjectDecl * terminateHandlerExcept;
