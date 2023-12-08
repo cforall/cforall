@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 29 09:38:12 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 08:49:53 2023
-// Update Count     : 425
+// Last Modified On : Tue Dec  5 08:14:57 2023
+// Update Count     : 428
 // 
 
 #include <fstream.hfa>									// sout
@@ -31,11 +31,11 @@
 #ifdef TIME												// use -O2 -nodebug
 #define STARTTIME start = timeHiRes()
 #define ENDTIME( extra ) sout | wd(0,1, (timeHiRes() - start)`ms / 1000.) | extra "seconds"
-enum { BUCKETS = 100_000, TRIALS = 1_000_000_000 };
+enum { BUCKETS = 100_000, TRIALS = 100_000_000 };
 #else
 #define STARTTIME
 #define ENDTIME( extra )
-enum { BUCKETS = 100_000, TRIALS = 100_000_000 };
+enum { BUCKETS = 100_000, TRIALS = 10_000_000 };
 #endif // TIME
 
 static void avgstd( size_t trials, size_t buckets[] ) {

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Aug 18 13:26:59 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 19 17:07:08 2016
-// Update Count     : 10
+// Last Modified On : Mon Nov 20 22:57:18 2023
+// Update Count     : 11
 //
 
 #include <cstdarg>  // for va_end, va_list, va_start
@@ -38,8 +38,8 @@ void __assert_fail_f( const char *assertion, const char *file, unsigned int line
 	abort();
 }
 
-void abort(const char *fmt, ...	) noexcept __attribute__((noreturn, format(printf, 1, 2)));
-void abort(const char *fmt, ...	) noexcept {
+void abort(const char *fmt, ... ) noexcept __attribute__((noreturn, format(printf, 1, 2)));
+void abort(const char *fmt, ... ) noexcept {
 	va_list args;
 	va_start( args, fmt );
 	vfprintf( stderr, fmt, args );

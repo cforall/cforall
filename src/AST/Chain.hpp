@@ -32,16 +32,13 @@ struct _chain_mutator<ptr_base<node_t, ref_t>> {
 
 	template<typename actual_node_t, typename child_t>
 	auto operator()( child_t actual_node_t::*child ) {
-		auto n = mutate(base.get());
+		node_t * n = base.get_and_mutate();
 		actual_node_t * node = strict_dynamic_cast<actual_node_t *>(n);
-		base = node;
 		return _chain_mutator< typename std::remove_reference< decltype(node->*child) >::type >{node->*child};
 	}
 
 	node_t * operator->() {
-		auto n = mutate(base.get());
-		base = n;
-		return n;
+		return base.get_and_mutate();
 	}
 };
 

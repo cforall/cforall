@@ -28,7 +28,6 @@
 #include "typeops.h"                     // for extractResultType
 #include "Unify.h"                       // for unify
 #include "CompilationState.h"
-#include "AST/Chain.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Init.hpp"
 #include "AST/Pass.hpp"
@@ -103,8 +102,8 @@ namespace ResolvExpr {
 									break;
 								}
 							}
-						} 
-					} 
+						}
+					}
 					visit_children = false;
 				}
 			}
@@ -606,8 +605,8 @@ namespace ResolvExpr {
 			if ( auto enumBase = dynamic_cast< const ast::EnumInstType * >
 				( objectDecl->get_type() )->base->base ) {
 				objectDecl = fixObjectType( objectDecl, context );
-				currentObject = ast::CurrentObject{ 
-					objectDecl->location, 
+				currentObject = ast::CurrentObject{
+					objectDecl->location,
 					enumBase
 				};
 			} else {

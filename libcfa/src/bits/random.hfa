@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jan 14 07:18:11 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  2 18:04:12 2023
-// Update Count     : 187
+// Last Modified On : Tue Dec  5 08:58:52 2023
+// Update Count     : 190
 // 
 
 #pragma once
@@ -21,7 +21,7 @@
 #define GLUE( x, y ) GLUE2( x, y )
 
 // Set default PRNG for architecture size.
-#if defined( __x86_64__ ) || defined( __arm_64__ )		// 64-bit architecture
+#if defined( __x86_64__ ) || defined( __aarch64__ )		// 64-bit architecture
 	// 64-bit generators
 	//#define LEHMER64
 	//#define XORSHIFT_12_25_27
@@ -111,7 +111,7 @@ typedef struct { uint32_t a, b, c, d, counter; } PRNG_STATE_32_T;
 
 
 // Default PRNG used by runtime.
-#if defined( __x86_64__ ) || defined( __arm_64__ )		// 64-bit architecture
+#if defined( __x86_64__ ) || defined( __aarch64__ )		// 64-bit architecture
 #define PRNG_NAME PRNG_NAME_64
 #define PRNG_STATE_T PRNG_STATE_64_T
 #else													// 32-bit architecture

@@ -25,13 +25,13 @@ CFA xoshiro128pp
 seed 1009
 
 Sequential
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
 
 Concurrent
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
 
                     prng()     prng(5)   prng(0,5)
                 2884683541           0           0
@@ -57,13 +57,13 @@ trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
 seed 1009
 
 Sequential
-trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
+trials 2000000 buckets 100000 min 3 max 42 avg 20.0 std 4.5 rstd 22.4%
 
 Concurrent
-trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
-trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
-trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
-trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
+trials 2000000 buckets 100000 min 3 max 42 avg 20.0 std 4.5 rstd 22.4%
+trials 2000000 buckets 100000 min 3 max 42 avg 20.0 std 4.5 rstd 22.4%
+trials 2000000 buckets 100000 min 3 max 42 avg 20.0 std 4.5 rstd 22.4%
+trials 2000000 buckets 100000 min 3 max 42 avg 20.0 std 4.5 rstd 22.4%
 
                    prng(t)   prng(t,5) prng(t,0,5)
                 2884683541           0           0
@@ -89,10 +89,10 @@ trials 20000000 buckets 100000 min 144 max 270 avg 200.0 std 14.1 rstd 7.1%
 seed 1009
 
 Sequential
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
 
 Concurrent
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
-trials 100000000 buckets 100000 min 858 max 1147 avg 1000.0 std 31.5 rstd 3.2%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
+trials 10000000 buckets 100000 min 62 max 144 avg 100.0 std 10.0 rstd 10.0%
