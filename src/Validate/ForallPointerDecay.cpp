@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Tue Dec  7 16:15:00 2021
-// Last Modified By : Andrew Beach
-// Last Modified On : Sat Apr 23 13:10:00 2022
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Nov 26 18:49:57 2023
+// Update Count     : 2
 //
 
 #include "ForallPointerDecay.hpp"
@@ -212,9 +212,7 @@ struct OperatorChecker final {
 		if ( !CodeGen::isOperator( obj->name ) ) return;
 		auto type = obj->type->stripDeclarator();
 		if ( dynamic_cast< const ast::FunctionType * >( type ) ) return;
-		SemanticError( obj->location,
-			toCString( "operator ", obj->name.c_str(),
-			" is not a function or function pointer." ) );
+		SemanticError( obj->location, "operator %s is not a function or function pointer.", obj->name.c_str() );
 	}
 };
 

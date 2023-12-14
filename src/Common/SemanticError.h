@@ -9,14 +9,15 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 25 12:01:31 2023
-// Update Count     : 37
+// Last Modified On : Mon Dec 11 21:54:22 2023
+// Update Count     : 54
 //
 
 #pragma once
 
 #include "ErrorObjects.h"
 #include "AST/Node.hpp"
+#include "AST/ParseNode.hpp"
 #include <cstring>
 
 //-----------------------------------------------------------------------------
@@ -24,15 +25,15 @@
 
 extern bool SemanticErrorThrow;
 
+__attribute__((noreturn, format(printf, 2, 3))) void SemanticError( CodeLocation location, const char fmt[], ... );
+
 __attribute__((noreturn)) void SemanticError( CodeLocation location, std::string error );
 
-template< typename T >
-__attribute__((noreturn)) static inline void SemanticError( const T * obj, const std::string & error ) {
+__attribute__((noreturn)) static inline void SemanticError( const ast::ParseNode * obj, const std::string & error ) {
 	SemanticError( obj->location, toString( error, obj ) );
 }
 
-template< typename T >
-__attribute__((noreturn)) static inline void SemanticError( CodeLocation location, const T * obj, const std::string & error ) {
+__attribute__((noreturn)) static inline void SemanticError( CodeLocation location, const ast::Node * obj, const std::string & error ) {
 	SemanticError( location, toString( error, obj ) );
 }
 
@@ -53,15 +54,15 @@ struct WarningData {
 };
 
 constexpr WarningData WarningFormats[] = {
-	{"self-assign"              , Severity::Warn    , "self assignment of expression: %s"                          },
-	{"reference-conversion"     , Severity::Warn    , "rvalue to reference conversion of rvalue: %s"               },
-	{"qualifiers-zero_t-one_t"  , Severity::Warn    , "questionable use of type qualifier(s) with %s"              },
-	{"aggregate-forward-decl"   , Severity::Warn    , "forward declaration of nested aggregate: %s"                },
-	{"superfluous-decl"         , Severity::Warn    , "declaration does not allocate storage: %s"                  },
-	{"superfluous-else"         , Severity::Warn    , "else clause never executed for empty loop conditional"      },
-	{"gcc-attributes"           , Severity::Warn    , "invalid attribute: %s"                                      },
-	{"c++-like-copy"            , Severity::Warn    , "Constructor from reference is not a valid copy constructor" },
-	{"depreciated-trait-syntax" , Severity::Warn    , "trait type-parameters are now specified using the forall clause" },
+	{"self-assign"              , Severity::Warn, "self assignment of expression: %s"                          },
+	{"reference-conversion"     , Severity::Warn, "rvalue to reference conversion of rvalue: %s"               },
+	{"qualifiers-zero_t-one_t"  , Severity::Warn, "questionable use of type qualifier(s) with %s"              },
+	{"aggregate-forward-decl"   , Severity::Warn, "forward declaration of nested aggregate: %s"                },
+	{"superfluous-decl"         , Severity::Warn, "declaration does not allocate storage: %s"                  },
+	{"superfluous-else"         , Severity::Warn, "else clause never executed for empty loop conditional"      },
+	{"gcc-attributes"           , Severity::Warn, "invalid attribute: %s"                                      },
+	{"c++-like-copy"            , Severity::Warn, "Constructor from reference is not a valid copy constructor" },
+	{"depreciated-trait-syntax" , Severity::Warn, "trait type-parameters are now specified using the forall clause" },
 };
 
 enum class Warning {
@@ -74,7 +75,7 @@ enum class Warning {
 	GccAttributes,
 	CppCopy,
 	DeprecTraitSyntax,
-	NUMBER_OF_WARNINGS, // This MUST be the last warning
+	NUMBER_OF_WARNINGS, // MUST be the last warning
 };
 
 static_assert(

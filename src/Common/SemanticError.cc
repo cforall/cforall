@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun  7 08:05:26 2018
-// Update Count     : 10
+// Last Modified On : Mon Dec 11 15:59:09 2023
+// Update Count     : 14
 //
 
 #include <cstdarg>
@@ -69,6 +69,7 @@ void SemanticWarning_Set(const char * const name, Severity s) {
 
 //-----------------------------------------------------------------------------
 // Semantic Error
+
 bool SemanticErrorThrow = false;
 
 SemanticErrorException::SemanticErrorException( CodeLocation location, std::string error ) {
@@ -100,6 +101,17 @@ void SemanticErrorException::print() {
 	for( auto err : errors ) {
 		std::cerr << ErrorHelpers::bold() << err.location << ErrorHelpers::error_str() << ErrorHelpers::reset_font() << err.description << std::endl;
 	}
+}
+
+void SemanticError( CodeLocation location, const char * fmt, ... ) {
+	char msg[2048];										// worst-case error-message buffer
+	va_list args;
+	va_start( args, fmt );
+	vsnprintf( msg, sizeof(msg), fmt, args );			// always null terminated, but may be truncated
+	va_end( args );
+
+	SemanticErrorThrow = true;
+	throw SemanticErrorException( location, msg );		// convert msg to string
 }
 
 void SemanticError( CodeLocation location, std::string error ) {

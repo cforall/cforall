@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
-// Last Modified By : Aaron B. Moss
-// Last Modified On : Thu May 9 10:00:00 2019
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Dec 11 16:08:58 2023
+// Update Count     : 2
 //
 
 #include "LinkageSpec.hpp"
@@ -36,7 +36,7 @@ Spec update( CodeLocation loc, Spec spec, const std::string * cmd ) {
 		spec.is_mangled = false;
 		return spec;
 	} else {
-		SemanticError( loc, "Invalid linkage specifier " + *cmd );
+		SemanticError( loc, "Invalid linkage specifier %s", cmd->c_str() );
 	}
 }
 

@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:12:51 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Apr  4 13:39:00 2023
-// Update Count     : 680
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Nov 26 15:51:05 2023
+// Update Count     : 681
 //
 
 #include "TypeData.h"
@@ -863,7 +863,7 @@ ast::CV::Qualifiers buildQualifiers( const TypeData * td ) {
 
 
 static string genTSError( string msg, DeclarationNode::BasicType basictype ) {
-	SemanticError( yylloc, string( "invalid type specifier \"" ) + msg + "\" for type \"" + DeclarationNode::basicTypeNames[basictype] + "\"." );
+	SemanticError( yylloc, "invalid type specifier \"%s\" for type \"%s\".", msg.c_str(), DeclarationNode::basicTypeNames[basictype] );
 } // genTSError
 
 ast::Type * buildBasicType( const TypeData * td ) {
@@ -1506,7 +1506,7 @@ void buildKRFunction( const TypeData::Function_t & function ) {
 			} // if
 		} // for
 		// declaration type still set => type not moved to a matching parameter so there is a missing parameter name
-		if ( decl->type ) SemanticError( decl->location, string( "missing name in parameter list " ) + *decl->name );
+		if ( decl->type ) SemanticError( decl->location, "missing name in parameter list %s", decl->name->c_str() );
 	} // for
 
 	// Parameter names without a declaration default to type int:

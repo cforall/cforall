@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Mon Apr  3 17:55:00 2023
-// Update Count     : 942
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Dec  9 17:39:34 2023
+// Update Count     : 945
 //
 
 #pragma once
@@ -36,6 +36,7 @@ struct DeclarationNode;
 class InitializerNode;
 class ExpressionNode;
 struct StatementNode;
+
 
 //##############################################################################
 
@@ -95,6 +96,10 @@ struct LabelNode {
 };
 
 std::ostream & operator<<( std::ostream & out, const ParseNode * node );
+
+__attribute__((noreturn)) static inline void SemanticError( const ParseNode * obj, const std::string & error ) {
+	SemanticError( obj->location, toString( error, obj ) );
+}
 
 // Local Variables: //
 // tab-width: 4 //

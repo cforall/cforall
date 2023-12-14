@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jun 29 14:59:00 2022
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Sep 20 17:00:00 2022
-// Update Count     : 2
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Nov 27 08:55:06 2023
+// Update Count     : 3
 //
 
 #include "ReplaceTypedef.hpp"
@@ -110,7 +110,7 @@ ast::Type const * ReplaceTypedefCore::postvisit(
 			auto rtt = dynamic_cast<ast::BaseInstType *>( ret );
 			if ( !rtt ) {
 				assert( location );
-				SemanticError( *location, "Cannot apply type parameters to base type of " + type->name );
+				SemanticError( *location, "Cannot apply type parameters to base type of %s.", type->name.c_str() );
 			}
 			rtt->params.clear();
 			for ( auto it : type->params ) {
@@ -124,7 +124,7 @@ ast::Type const * ReplaceTypedefCore::postvisit(
 		TypeDeclMap::const_iterator base = typedeclNames.find( type->name );
 		if ( base == typedeclNames.end() ) {
 			assert( location );
-			SemanticError( *location, toString( "Use of undefined type ", type->name ) );
+			SemanticError( *location, "Use of undefined type %s.", type->name.c_str() );
 		}
 		return ast::mutate_field( type, &ast::TypeInstType::base, base->second );
 	}

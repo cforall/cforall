@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 13:48:00 2021
-// Last Modified By : Andrew Beach
-// Last Modified On : Fri Sep  8 17:04:00 2023
-// Update Count     : 36
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Dec 11 13:44:45 2023
+// Update Count     : 38
 //
 
 #include "MultiLevelExit.hpp"
@@ -520,7 +520,7 @@ void MultiLevelExitCore::previsit( const ReturnStmt * stmt ) {
 	default:
 		assert(0);
 	}
-	SemanticError( stmt->location, toString( "'return' may not appear in a ", context ) );
+	SemanticError( stmt->location, "'return' may not appear in a %s", context );
 }
 
 void MultiLevelExitCore::previsit( const TryStmt * stmt ) {

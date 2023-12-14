@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed May 15 17:00:00 2019
-// Last Modified By : Andrew Beach
+// Last Modified By : Peter A. Buhr
 // Created On       : Wed May 18 13:56:00 2022
-// Update Count     : 8
+// Update Count     : 12
 //
 
 #include "Expr.hpp"
@@ -167,8 +167,8 @@ namespace {
 		} else if ( auto refType = arg->result.as< ReferenceType >() ) {
 			return addrType( refType->base );
 		} else {
-			SemanticError( loc, arg->result.get(),
-				"Attempt to take address of non-lvalue expression: " );
+			SemanticError( loc, "Attempt to take address of non-lvalue expression %s",
+						   toString( arg->result.get() ).c_str() );
 		}
 	}
 }
@@ -239,7 +239,8 @@ long long int ConstantExpr::intValue() const {
 	} else if ( result.as< OneType >() ) {
 		return 1;
 	}
-	SemanticError( this, "Constant expression of non-integral type " );
+	SemanticError( this->location, "Constant expression of non-integral type %s",
+				   toString( this ).c_str() );
 }
 
 ConstantExpr * ConstantExpr::from_bool( const CodeLocation & loc, bool b ) {

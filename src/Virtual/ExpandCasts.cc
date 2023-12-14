@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jul 24 13:59:00 2017
-// Last Modified By : Andrew Beach
-// Last Modified On : Thu Aug 11 12:06:00 2022
-// Update Count     : 5
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Nov 27 09:28:20 2023
+// Update Count     : 10
 //
 
 #include "ExpandCasts.h"
@@ -159,11 +159,9 @@ ast::StructInstType const * followHeadPointerType(
 	assert( oldDecl );
 
 	// Helper function for throwing semantic errors.
-	auto throwError = [&fieldName, &errorLocation, &oldDecl](
-			std::string const & message ) {
-		std::string const & context = "While following head pointer of " +
-			oldDecl->name + " named '" + fieldName + "': ";
-		SemanticError( errorLocation, context + message );
+	auto throwError = [&fieldName, &errorLocation, &oldDecl]( std::string const & message ) {
+		SemanticError( errorLocation, "While following head pointer of %s named \"%s\": %s",
+					   oldDecl->name.c_str(), fieldName.c_str(), message.c_str() );
 	};
 
 	if ( oldDecl->members.empty() ) {

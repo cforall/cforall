@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Thr May 25 12:31:00 2023
-// Update Count     : 10
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Dec 11 16:07:30 2023
+// Update Count     : 15
 //
 
 #pragma once
@@ -155,7 +155,8 @@ void TypeSubstitution::addAll( FormalIterator formalBegin, FormalIterator formal
 					typeMap[ formal ] = actual->type;
 				} // if
 			} else {
-				SemanticError( formal, toString( "Attempt to provide non-type parameter: ", toString( *actualIt ).c_str(), " for type parameter " ) );
+				SemanticError( formal->location, "Attempt to provide non-type parameter %s for type parameter %s",
+							   toString( *actualIt ).c_str(), formal->name.c_str() );
 			} // if
 		} else {
 			// Is this an error?

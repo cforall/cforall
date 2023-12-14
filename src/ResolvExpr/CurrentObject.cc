@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Tue Jun 13 15:28:32 2017
-// Last Modified By : Andrew Beach
-// Last Modified On : Mon Apr 10  9:40:00 2023
-// Update Count     : 18
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Dec  9 17:49:51 2023
+// Update Count     : 20
 //
 
 #include <stddef.h>                    // for size_t
@@ -180,7 +180,7 @@ class ArrayIterator final : public IndexIterator {
 	size_t getSize( const Expr * expr ) {
 		auto res = eval( expr );
 		if ( !res.hasKnownValue ) {
-			SemanticError( location, toString( "Array designator must be a constant expression: ", expr ) );
+			SemanticError( location, "Array designator must be a constant expression %s", toString( expr ).c_str() );
 		}
 		return res.knownValue;
 	}

@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Sun May 17 12:17:01 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr 20 10:41:00 2022
-// Update Count     : 248
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Dec  9 17:45:57 2023
+// Update Count     : 249
 //
 
 #include <cassert>                       // for strict_dynamic_cast, assert
@@ -957,9 +957,9 @@ namespace ResolvExpr {
 
 								++n_mutex_param;
 
-								// Check if the argument matches the parameter type in the current
-								// scope
+								// Check if the argument matches the parameter type in the current scope.
 								// ast::ptr< ast::Type > paramType = (*param)->get_type();
+
 								if (
 									! unify(
 										arg->expr->result, *param, resultEnv, need, have, open )

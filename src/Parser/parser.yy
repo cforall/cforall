@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct  3 17:14:12 2023
-// Update Count     : 6396
+// Last Modified On : Sun Nov 26 13:18:06 2023
+// Update Count     : 6398
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -259,18 +259,20 @@ ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, Express
 			SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed." ); return nullptr;
 		} // if
 	} else {
-		SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed. ." ); return nullptr;
+		SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed." ); return nullptr;
 	} // if
 } // forCtrl
 
 static void IdentifierBeforeIdentifier( string & identifier1, string & identifier2, const char * kind ) {
-	SemanticError( yylloc, ::toString( "syntax error, adjacent identifiers \"", identifier1, "\" and \"", identifier2, "\" are not meaningful in a", kind, ".\n"
-				   "Possible cause is misspelled type name or missing generic parameter." ) );
+	SemanticError( yylloc, "syntax error, adjacent identifiers \"%s\" and \"%s\" are not meaningful in an %s.\n"
+				   "Possible cause is misspelled type name or missing generic parameter.",
+				   identifier1.c_str(), identifier2.c_str(), kind );
 } // IdentifierBeforeIdentifier
 
 static void IdentifierBeforeType( string & identifier, const char * kind ) {
-	SemanticError( yylloc, ::toString( "syntax error, identifier \"", identifier, "\" cannot appear before a ", kind, ".\n"
-				   "Possible cause is misspelled storage/CV qualifier, misspelled typename, or missing generic parameter." ) );
+	SemanticError( yylloc, "syntax error, identifier \"%s\" cannot appear before a %s.\n"
+				   "Possible cause is misspelled storage/CV qualifier, misspelled typename, or missing generic parameter.",
+				   identifier.c_str(), kind );
 } // IdentifierBeforeType
 
 bool forall = false;									// aggregate have one or more forall qualifiers ?
@@ -688,7 +690,7 @@ primary_expression:
 	// | RESUME '(' comma_expression ')' compound_statement
 	//   	{ SemanticError( yylloc, "Resume expression is currently unimplemented." ); $$ = nullptr; }
 	| IDENTIFIER IDENTIFIER								// invalid syntax rule
-		{ IdentifierBeforeIdentifier( *$1.str, *$2.str, "n expression" ); $$ = nullptr; }
+		{ IdentifierBeforeIdentifier( *$1.str, *$2.str, "expression" ); $$ = nullptr; }
 	| IDENTIFIER type_qualifier							// invalid syntax rule
 		{ IdentifierBeforeType( *$1.str, "type qualifier" ); $$ = nullptr; }
 	| IDENTIFIER storage_class							// invalid syntax rule
@@ -1154,9 +1156,9 @@ labeled_statement:
 		{ $$ = $4->add_label( yylloc, $1, $3 ); }
 	| identifier_or_type_name ':' attribute_list_opt error // invalid syntax rule
 		{
-			SemanticError( yylloc, ::toString( "syntx error, label \"", *$1.str, "\" must be associated with a statement, "
-											   "where a declaration, case, or default is not a statement. "
-											   "Move the label or terminate with a semi-colon." ) );
+			SemanticError( yylloc, "syntx error, label \"%s\" must be associated with a statement, "
+						   "where a declaration, case, or default is not a statement.\n"
+						   "Move the label or terminate with a semicolon.", $1.str->c_str() );
 			$$ = nullptr;
 		}
 	;
@@ -2100,9 +2102,8 @@ declaration_specifier:									// type specifier + storage class
 	| sue_declaration_specifier
 	| sue_declaration_specifier invalid_types			// invalid syntax rule
 		{
-			SemanticError( yylloc, ::toString( "syntax error, expecting ';' at end of ",
-				$1->type->enumeration.name ? "enum" : ast::AggregateDecl::aggrString( $1->type->aggregate.kind ),
-				" declaration." ) );
+			SemanticError( yylloc, "syntax error, expecting ';' at end of \"%s\" declaration.",
+						   $1->type->enumeration.name ? "enum" : ast::AggregateDecl::aggrString( $1->type->aggregate.kind ) );
 			$$ = nullptr;
 		}
 	;
@@ -2160,7 +2161,7 @@ type_qualifier_list:
 
 type_qualifier:
 	type_qualifier_name
-	| attribute											// trick handles most atrribute locations
+	| attribute											// trick handles most attribute locations
 	;
 
 type_qualifier_name:
@@ -2584,7 +2585,7 @@ field_declaration:
 		}
 	| type_specifier field_declaring_list_opt '}'		// invalid syntax rule
 		{
-			SemanticError( yylloc, ::toString( "syntax error, expecting ';' at end of previous declaration." ) );
+			SemanticError( yylloc, "syntax error, expecting ';' at end of previous declaration." );
 			$$ = nullptr;
 		}
 	| EXTENSION type_specifier field_declaring_list_opt ';'	// GCC

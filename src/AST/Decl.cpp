@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
-// Last Modified By : Andrew Beach
-// Last Modified On : Thu May  5 12:10:00 2022
-// Update Count     : 24
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Dec  9 16:28:51 2023
+// Update Count     : 31
 //
 
 #include "Decl.hpp"
@@ -112,21 +112,20 @@ const char * AggregateDecl::aggrString( AggregateDecl::Aggregate aggr ) {
 
 // --- EnumDecl
 
-bool EnumDecl::valueOf( const Decl * enumerator, long long& value ) const {
+bool EnumDecl::valueOf( const Decl * enumerator, long long & value ) const {
 	if ( enumValues.empty() ) {
 		Evaluation crntVal = {0, true, true};  // until expression is given, we know to start counting from 0
 		for ( const Decl * member : members ) {
-			const ObjectDecl* field = strict_dynamic_cast< const ObjectDecl* >( member );
+			const ObjectDecl * field = strict_dynamic_cast< const ObjectDecl * >( member );
 			if ( field->init ) {
-				const SingleInit * init = strict_dynamic_cast< const SingleInit* >( field->init.get() );
+				const SingleInit * init = strict_dynamic_cast< const SingleInit * >( field->init.get() );
 				crntVal = eval( init->value );
 				if ( ! crntVal.isEvaluableInGCC ) {
-					SemanticError( init->location, ::toString( "Non-constexpr in initialization of "
-						"enumerator: ", field ) );
+					SemanticError( init->location, "Non-constexpr in initialization of enumerator %s", field->name.c_str() );
 				}
 			}
 			if ( enumValues.count( field->name ) != 0 ) {
-				SemanticError( location, ::toString( "Enum ", name, " has multiple members with the " 	"name ", field->name ) );
+				SemanticError( location, "Enum %s has multiple members with %s", name.c_str(), field->name.c_str() );
 			}
 			if (crntVal.hasKnownValue) {
 				enumValues[ field->name ] = crntVal.knownValue;

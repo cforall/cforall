@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 09:39:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 31 22:19:17 2022
-// Update Count     : 9
+// Last Modified On : Sun Nov 26 15:06:51 2023
+// Update Count     : 10
 //
 
 #include "FixLabels.hpp"
@@ -46,8 +46,7 @@ const FunctionDecl * FixLabelsCore::postvisit(
 	if ( nullptr == decl->stmts ) return decl;
 	for ( auto kvp : labelTable ) {
 		if ( nullptr == kvp.second ) {
-			SemanticError( kvp.first.location,
-						   "Use of undefined label: " + kvp.first.name );
+			SemanticError( kvp.first.location, "Use of undefined label %s.", kvp.first.name.c_str() );
 		}
 	}
 	return mutate_field( decl, &FunctionDecl::stmts,

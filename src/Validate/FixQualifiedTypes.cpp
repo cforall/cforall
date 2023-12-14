@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Thr Apr 21 11:13:00 2022
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Sep 20 16:15:00 2022
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Dec 13 09:00:25 2023
+// Update Count     : 6
 //
 
 #include "Validate/FixQualifiedTypes.hpp"
@@ -40,7 +40,7 @@ struct FixQualifiedTypesCore :
 			if ( auto inst = child.as<ast::TypeInstType>() ) {
 				auto td = symtab.globalLookupType( inst->name );
 				if ( !td ) {
-					SemanticError( *location, toString("Use of undefined global type ", inst->name) );
+					SemanticError( *location, "Use of undefined global type %s.", inst->name.c_str() );
 				}
 				auto base = td->base;
 				assert( base );
@@ -49,7 +49,7 @@ struct FixQualifiedTypesCore :
 				return ret;
 			} else {
 				// .T => T is not a type name.
-				assertf( false, "unhandled global qualified child type: %s", toCString(child) );
+				assertf( false, "unhandled global qualified child type: %s", toCString( child ) );
 			}
 		} else {
 			// S.T => S must be an aggregate type, find the declaration for T in S.
@@ -62,7 +62,7 @@ struct FixQualifiedTypesCore :
 				aggr = inst->base;
 				instp = inst;
 			} else {
-				SemanticError( *location, toString("Qualified type requires an aggregate on the left, but has: ", parent) );
+				SemanticError( *location, "Qualified type requires an aggregate on the left, but has %s.", toCString( parent ) );
 			}
 			// TODO: Need to handle forward declarations.
 			assert( aggr );
@@ -80,11 +80,11 @@ struct FixQualifiedTypesCore :
 					}
 				} else {
 					// S.T - S is not an aggregate => error.
-					assertf( false, "unhandled qualified child type: %s", toCString(type) );
+					assertf( false, "unhandled qualified child type %s.", toCString( type ) );
 				}
 			}
 			// failed to find a satisfying definition of type
-			SemanticError( *location, toString("Undefined type in qualified type: ", type) );
+			SemanticError( *location, "Undefined type in qualified type %s", toCString( type ) );
 		}
 	}
 
