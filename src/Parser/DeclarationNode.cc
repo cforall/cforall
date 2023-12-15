@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun 17 14:41:48 2023
-// Update Count     : 1405
+// Last Modified On : Thu Dec 14 19:05:17 2023
+// Update Count     : 1407
 //
 
 #include "DeclarationNode.h"
@@ -631,28 +631,29 @@ static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 				if ( dst->basictype == DeclarationNode::NoBasicType ) {
 					dst->basictype = src->basictype;
 				} else if ( src->basictype != DeclarationNode::NoBasicType )
-					SemanticError( yylloc, string( "multiple declaration types \"" ) + DeclarationNode::basicTypeNames[ dst->basictype ] +
-								   "\" and \"" + DeclarationNode::basicTypeNames[ src->basictype ] + "\"." );
-
+					SemanticError( yylloc, "multiple declaration types \"%s\" and \"%s\".",
+								   DeclarationNode::basicTypeNames[ dst->basictype ],
+								   DeclarationNode::basicTypeNames[ src->basictype ] );
 				if ( dst->complextype == DeclarationNode::NoComplexType ) {
 					dst->complextype = src->complextype;
 				} else if ( src->complextype != DeclarationNode::NoComplexType )
-					SemanticError( yylloc, string( "multiple declaration types \"" ) + DeclarationNode::complexTypeNames[ src->complextype ] +
-								   "\" and \"" + DeclarationNode::complexTypeNames[ src->complextype ] + "\"." );
-
+					SemanticError( yylloc, "multiple declaration types \"%s\" and \"%s\".",
+								   DeclarationNode::complexTypeNames[ src->complextype ],
+								   DeclarationNode::complexTypeNames[ src->complextype ] );
 				if ( dst->signedness == DeclarationNode::NoSignedness ) {
 					dst->signedness = src->signedness;
 				} else if ( src->signedness != DeclarationNode::NoSignedness )
-					SemanticError( yylloc, string( "conflicting type specifier \"" ) + DeclarationNode::signednessNames[ dst->signedness ] +
-								   "\" and \"" + DeclarationNode::signednessNames[ src->signedness ] + "\"." );
-
+					SemanticError( yylloc, "conflicting type specifier \"%s\" and \"%s\".",
+								   DeclarationNode::signednessNames[ dst->signedness ],
+								   DeclarationNode::signednessNames[ src->signedness ] );
 				if ( dst->length == DeclarationNode::NoLength ) {
 					dst->length = src->length;
 				} else if ( dst->length == DeclarationNode::Long && src->length == DeclarationNode::Long ) {
 					dst->length = DeclarationNode::LongLong;
 				} else if ( src->length != DeclarationNode::NoLength )
-					SemanticError( yylloc, string( "conflicting type specifier \"" ) + DeclarationNode::lengthNames[ dst->length ] +
-								   "\" and \"" + DeclarationNode::lengthNames[ src->length ] + "\"." );
+					SemanticError( yylloc, "conflicting type specifier \"%s\" and \"%s\".",
+								   DeclarationNode::lengthNames[ dst->length ],
+								   DeclarationNode::lengthNames[ src->length ] );
 			} // if
 			break;
 		default:

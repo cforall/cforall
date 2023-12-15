@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Thr Oct  6 13:39:00 2022
-// Last Modified By : Andrew Beach
-// Last Modified On : Mon Oct  2 17:00:00 2023
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Dec 14 17:42:17 2023
+// Update Count     : 7
 //
 
 #include "Box.h"
@@ -776,9 +776,8 @@ ast::vector<ast::Expr>::iterator CallAdapter::passTypeVars(
 		ast::Type const * concrete = typeSubs->lookup( typeVar );
 		if ( !concrete ) {
 			// Should this be an assertion?
-			SemanticError( expr, toString( typeSubs,
-				"\nunbound type variable: ", typeVar->typeString(),
-				" in application " ) );
+			SemanticError( expr->location, "\nunbound type variable %s in application %s",
+						   toString( typeSubs ).c_str(), typeVar->typeString().c_str() );
 		}
 		arg = expr->args.insert( arg,
 			new ast::SizeofExpr( expr->location, ast::deepCopy( concrete ) ) );

@@ -45,15 +45,3 @@ class SemanticErrorException : public std::exception {
   private:
 	std::list< error > errors;
 };
-
-void SemanticWarningImpl( CodeLocation location, std::string error );
-
-template< typename T >
-static inline void SemanticWarningImpl( const T * obj, const std::string & error ) {
-	SemanticWarning( obj->location, toString( error, obj ) );
-}
-
-template< typename T >
-static inline void SemanticWarningImpl( CodeLocation location, const T * obj, const std::string & error ) {
-	SemanticWarningImpl( location, toString( error, obj ) );
-}

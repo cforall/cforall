@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 11 21:54:22 2023
-// Update Count     : 54
+// Last Modified On : Thu Dec 14 13:48:07 2023
+// Update Count     : 72
 //
 
 #pragma once
@@ -27,7 +27,10 @@ extern bool SemanticErrorThrow;
 
 __attribute__((noreturn, format(printf, 2, 3))) void SemanticError( CodeLocation location, const char fmt[], ... );
 
-__attribute__((noreturn)) void SemanticError( CodeLocation location, std::string error );
+__attribute__((noreturn)) static inline void SemanticError( CodeLocation location, std::string error ) {
+	SemanticErrorThrow = true;
+	throw SemanticErrorException( location, error );
+}
 
 __attribute__((noreturn)) static inline void SemanticError( const ast::ParseNode * obj, const std::string & error ) {
 	SemanticError( obj->location, toString( error, obj ) );
@@ -75,7 +78,7 @@ enum class Warning {
 	GccAttributes,
 	CppCopy,
 	DeprecTraitSyntax,
-	NUMBER_OF_WARNINGS, // MUST be the last warning
+	NUMBER_OF_WARNINGS, // MUST be last warning
 };
 
 static_assert(
@@ -83,14 +86,12 @@ static_assert(
 	"Each warning format should have a corresponding warning enum value"
 );
 
-#define SemanticWarning(loc, id, ...) SemanticWarningImpl(loc, id, WarningFormats[(int)id].message, ##__VA_ARGS__)
+void SemanticWarning( CodeLocation loc, Warning warn, ... );
 
-void SemanticWarningImpl (CodeLocation loc, Warning warn, const char * const fmt, ...) __attribute__((format(printf, 3, 4)));
-
-void SemanticWarning_SuppressAll   ();
-void SemanticWarning_EnableAll     ();
+void SemanticWarning_SuppressAll();
+void SemanticWarning_EnableAll();
 void SemanticWarning_WarningAsError();
-void SemanticWarning_Set           (const char * const name, Severity s);
+void SemanticWarning_Set(const char * const name, Severity s);
 
 // SKULLDUGGERY: cfa.cc is built before SemanticError.cc but needs this routine.
 static inline bool SemanticWarning_Exist(const char * const name) {

@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Tue Nov 16  9:53:00 2021
-// Last Modified By : Andrew Beach
-// Last Modified On : Fri Mar 11 10:40:00 2022
-// Update Count     : 2
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Dec 14 18:02:25 2023
+// Update Count     : 6
 //
 
 #include "Concurrency/Keywords.h"
@@ -681,7 +681,7 @@ void SuspendKeyword::previsit( const ast::FunctionDecl * decl ) {
 	if ( !param ) return;
 
 	if ( 0 != decl->returns.size() ) {
-		SemanticError( decl->location, "Generator main must return void" );
+		SemanticError( decl->location, "Generator main must return void." );
 	}
 
 	in_generator = param;
@@ -788,7 +788,7 @@ const ast::Stmt * SuspendKeyword::postvisit( const ast::SuspendStmt * stmt ) {
 		return make_coroutine_suspend( stmt );
 	case ast::SuspendStmt::Generator:
 		// Generator suspends must be directly in a generator.
-		if ( !in_generator ) SemanticError( stmt->location, "'suspend generator' must be used inside main of generator type." );
+		if ( !in_generator ) SemanticError( stmt->location, "\"suspend generator\" must be used inside main of generator type." );
 		return make_generator_suspend( stmt );
 	}
 	assert( false );
@@ -846,7 +846,7 @@ const ast::Stmt * SuspendKeyword::make_coroutine_suspend(
 	const CodeLocation & location = stmt->location;
 
 	if ( !decl_suspend ) {
-		SemanticError( location, "suspend keyword applied to coroutines requires coroutines to be in scope, add #include <coroutine.hfa>\n" );
+		SemanticError( location, "suspend keyword applied to coroutines requires coroutines to be in scope, add #include <coroutine.hfa>." );
 	}
 	if ( stmt->then ) {
 		SemanticError( location, "Compound statement following coroutines is not implemented." );
@@ -917,7 +917,7 @@ const ast::FunctionDecl * MutexKeyword::postvisit(
 
 			// If it is a monitor, then it is a monitor.
 			if( baseStruct->base->is_monitor() || baseStruct->base->is_thread() ) {
-				SemanticError( decl, "destructors for structures declared as \"monitor\" must use mutex parameters\n" );
+				SemanticError( decl, "destructors for structures declared as \"monitor\" must use mutex parameters " );
 			}
 		}
 		return decl;
@@ -925,12 +925,12 @@ const ast::FunctionDecl * MutexKeyword::postvisit(
 
 	// Monitors can't be constructed with mutual exclusion.
 	if ( CodeGen::isConstructor( decl->name ) && is_first_argument_mutex ) {
-		SemanticError( decl, "constructors cannot have mutex parameters\n" );
+		SemanticError( decl, "constructors cannot have mutex parameters " );
 	}
 
 	// It makes no sense to have multiple mutex parameters for the destructor.
 	if ( isDtor && mutexArgs.size() != 1 ) {
-		SemanticError( decl, "destructors can only have 1 mutex argument\n" );
+		SemanticError( decl, "destructors can only have 1 mutex argument " );
 	}
 
 	// Make sure all the mutex arguments are monitors.
@@ -944,14 +944,14 @@ const ast::FunctionDecl * MutexKeyword::postvisit(
 
 	// Check to if the required headers have been seen.
 	if ( !monitor_decl || !guard_decl || !dtor_guard_decl ) {
-		SemanticError( decl, "mutex keyword requires monitors to be in scope, add #include <monitor.hfa>\n" );
+		SemanticError( decl, "mutex keyword requires monitors to be in scope, add #include <monitor.hfa>." );
 	}
 
 	// Instrument the body.
 	ast::CompoundStmt * newBody = nullptr;
 	if ( isDtor && isThread( mutexArgs.front() ) ) {
 		if ( !thread_guard_decl ) {
-			SemanticError( decl, "thread destructor requires threads to be in scope, add #include <thread.hfa>\n" );
+			SemanticError( decl, "thread destructor requires threads to be in scope, add #include <thread.hfa>." );
 		}
 		newBody = addThreadDtorStatements( decl, body, mutexArgs );
 	} else if ( isDtor ) {
@@ -986,7 +986,7 @@ void MutexKeyword::postvisit( const ast::StructDecl * decl ) {
 
 const ast::Stmt * MutexKeyword::postvisit( const ast::MutexStmt * stmt ) {
 	if ( !lock_guard_decl ) {
-		SemanticError( stmt->location, "mutex stmt requires a header, add #include <mutex_stmt.hfa>\n" );
+		SemanticError( stmt->location, "mutex stmt requires a header, add #include <mutex_stmt.hfa>." );
 	}
 	ast::CompoundStmt * body =
 			new ast::CompoundStmt( stmt->location, { stmt->stmt } );
@@ -1546,7 +1546,7 @@ const ast::FunctionDecl * ThreadStarter::postvisit( const ast::FunctionDecl * de
 	if ( nullptr == type ) return decl;
 	if ( !type->base->is_thread() ) return decl;
 	if ( !thread_decl || !thread_ctor_seen ) {
-		SemanticError( type->base->location, "thread keyword requires threads to be in scope, add #include <thread.hfa>" );
+		SemanticError( type->base->location, "thread keyword requires threads to be in scope, add #include <thread.hfa>." );
 	}
 	const ast::CompoundStmt * stmt = decl->stmts;
 	if ( nullptr == stmt ) return decl;

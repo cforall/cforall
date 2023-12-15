@@ -8,9 +8,9 @@
 //
 // Author           : Colby Parsons
 // Created On       : Monday October 9 15:16:42 2023
-// Last Modified By : Colby Parsons
-// Last Modified On : Monday October 9 15:16:42 2023
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Dec 14 17:32:17 2023
+// Update Count     : 1
 //
 
 #include "AST/Decl.hpp"
@@ -56,10 +56,10 @@ struct CorunKeyword : public WithDeclsToAdd<>, public WithStmtsToAdd<> {
     // codegen for cofor statements
     Stmt * postvisit( const CoforStmt * stmt ) {
         if ( !runnerBlockDecl || !coforRunnerDecl )
-            SemanticError( stmt->location, "To use cofor statements add #include <cofor.hfa>\n" );
+            SemanticError( stmt->location, "To use cofor statements add #include <cofor.hfa>" );
 
         if ( stmt->inits.size() != 1 )
-            SemanticError( stmt->location, "Cofor statements must have a single initializer in the loop control\n" );
+            SemanticError( stmt->location, "Cofor statements must have a single initializer in the loop control" );
 
         if ( !stmt->body )
             return nullptr;
@@ -76,11 +76,11 @@ struct CorunKeyword : public WithDeclsToAdd<>, public WithStmtsToAdd<> {
 
         const DeclStmt * declStmtPtr = dynamic_cast<const DeclStmt *>(stmt->inits.at(0).get());
         if ( ! declStmtPtr )
-            SemanticError( stmt->location, "Cofor statement initializer is somehow not a decl statement?\n" );
+            SemanticError( stmt->location, "Cofor statement initializer is somehow not a decl statement?" );
 
         const Decl * declPtr = dynamic_cast<const Decl *>(declStmtPtr->decl.get());
         if ( ! declPtr )
-            SemanticError( stmt->location, "Cofor statement initializer is somehow not a decl?\n" );
+            SemanticError( stmt->location, "Cofor statement initializer is somehow not a decl?" );
 
         Type * initType = new TypeofType( new NameExpr( loc, declPtr->name ) );
 
@@ -245,7 +245,7 @@ struct CorunKeyword : public WithDeclsToAdd<>, public WithStmtsToAdd<> {
     // codegen for corun statements
     Stmt * postvisit( const CorunStmt * stmt ) {
         if ( !runnerBlockDecl || !coforRunnerDecl )
-            SemanticError( stmt->location, "To use corun statements add #include <cofor.hfa>\n" );
+            SemanticError( stmt->location, "To use corun statements add #include <cofor.hfa>" );
 
         if ( !stmt->stmt )
             return nullptr;

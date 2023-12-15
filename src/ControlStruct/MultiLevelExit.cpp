@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 13:48:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 11 13:44:45 2023
-// Update Count     : 38
+// Last Modified On : Thu Dec 14 17:34:12 2023
+// Update Count     : 39
 //
 
 #include "MultiLevelExit.hpp"
@@ -253,7 +253,7 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 			} else {
 				if ( enclosing_control_structures.empty() ) {
 					  SemanticError( stmt->location,
-									 "'break' outside a loop, 'switch', or labelled block" );
+									 "\"break\" outside a loop, \"switch\", or labelled block" );
 				}
 				targetEntry = findEnclosingControlStructure( isBreakTarget );
 			}
@@ -267,7 +267,7 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 		}
 		// Ensure that selected target is valid.
 		if ( targetEntry == enclosing_control_structures.rend() || ( isContinue && ! isContinueTarget( *targetEntry ) ) ) {
-			SemanticError( stmt->location, toString( (isContinue ? "'continue'" : "'break'"),
+			SemanticError( stmt->location, toString( (isContinue ? "\"continue\"" : "\"break\""),
 							" target must be an enclosing ", (isContinue ? "loop: " : "control structure: "),
 							stmt->originalTarget ) );
 		}
@@ -278,12 +278,12 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 		targetEntry = findEnclosingControlStructure( isFallthroughTarget );
 		// Check that target is valid.
 		if ( targetEntry == enclosing_control_structures.rend() ) {
-			SemanticError( stmt->location, "'fallthrough' must be enclosed in a 'switch' or 'choose'" );
+			SemanticError( stmt->location, "\"fallthrough\" must be enclosed in a \"switch\" or \"choose\"" );
 		}
 		if ( ! stmt->target.empty() ) {
 			// Labelled fallthrough: target must be a valid fallthough label.
 			if ( ! fallthrough_labels.count( stmt->target ) ) {
-				SemanticError( stmt->location, toString( "'fallthrough' target must be a later case statement: ",
+				SemanticError( stmt->location, toString( "\"fallthrough\" target must be a later case statement: ",
 														   stmt->originalTarget ) );
 			}
 			return new BranchStmt( stmt->location, BranchStmt::Goto, stmt->originalTarget );
@@ -295,7 +295,7 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 
 		// Check if in switch or choose statement.
 		if ( targetEntry == enclosing_control_structures.rend() ) {
-			SemanticError( stmt->location, "'fallthrough' must be enclosed in a 'switch' or 'choose'" );
+			SemanticError( stmt->location, "\"fallthrough\" must be enclosed in a \"switch\" or \"choose\"" );
 		}
 
 		// Check if switch or choose has default clause.
@@ -308,8 +308,8 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 			}
 		}
 		if ( ! foundDefault ) {
-			SemanticError( stmt->location, "'fallthrough default' must be enclosed in a 'switch' or 'choose'"
-						   "control structure with a 'default' clause" );
+			SemanticError( stmt->location, "\"fallthrough default\" must be enclosed in a \"switch\" or \"choose\""
+						   "control structure with a \"default\" clause" );
 		}
 		break;
 	}
@@ -337,7 +337,7 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 		exitLabel = targetEntry->useFallDefaultExit();
 		// Check that fallthrough default comes before the default clause.
 		if ( ! targetEntry->isFallDefaultValid() ) {
-			SemanticError( stmt->location, "'fallthrough default' must precede the 'default' clause" );
+			SemanticError( stmt->location, "\"fallthrough default\" must precede the \"default\" clause" );
 		}
 		break;
 	default:
@@ -520,7 +520,7 @@ void MultiLevelExitCore::previsit( const ReturnStmt * stmt ) {
 	default:
 		assert(0);
 	}
-	SemanticError( stmt->location, "'return' may not appear in a %s", context );
+	SemanticError( stmt->location, "\"return\" may not appear in a %s", context );
 }
 
 void MultiLevelExitCore::previsit( const TryStmt * stmt ) {

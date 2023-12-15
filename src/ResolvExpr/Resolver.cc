@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Sun May 17 12:17:01 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec  9 17:45:57 2023
-// Update Count     : 249
+// Last Modified On : Thu Dec 14 18:44:43 2023
+// Update Count     : 251
 //
 
 #include <cassert>                       // for strict_dynamic_cast, assert
@@ -631,7 +631,8 @@ namespace ResolvExpr {
 						ast::Pass<ResolveDesignators> res( context );
 						maybe_accept( mutDecl->init.get(), res );
 						if ( !res.core.result ) {
-							SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object. If this is really what you want, then initialize with @=.\n" );
+							SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object.\n"
+										   "If this is really what you want, initialize with @=." );
 						}
 					}
 					// constructed objects should not have initializers nested too deeply

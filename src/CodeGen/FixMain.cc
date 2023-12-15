@@ -10,7 +10,7 @@
 // Created On       : Thr Jan 12 14:11:09 2017
 // Last Modified By :
 // Last Modified On :
-// Update Count     : 0
+// Update Count     : 1
 //
 
 #include "FixMain.h"
@@ -38,7 +38,7 @@ struct FindMainCore final {
 	void previsit( ast::FunctionDecl const * decl ) {
 		if ( isMain( decl ) ) {
 			if ( main_declaration ) {
-				SemanticError( decl, "Multiple definition of main routine\n" );
+				SemanticError( decl, "Multiple definition of main routine" );
 			}
 			main_declaration = decl;
 		}

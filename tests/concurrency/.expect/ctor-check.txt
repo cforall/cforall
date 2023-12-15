@@ -1,5 +1,4 @@
-concurrency/ctor-check.cfa:11:1 error: constructors cannot have mutex parameters
-?{}: function
+concurrency/ctor-check.cfa:11:1 error: constructors cannot have mutex parameters ?{}: function
 ... with parameters
   this: mutex reference to instance of struct Empty with body
 ... returning nothing

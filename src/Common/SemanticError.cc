@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 11 15:59:09 2023
-// Update Count     : 14
+// Last Modified On : Thu Dec 14 13:45:28 2023
+// Update Count     : 34
 //
 
 #include <cstdarg>
@@ -22,13 +22,15 @@
 #include <string>										// for string, operator<<, operator+, to_string
 #include <vector>
 
+using namespace std;
+
 #include "Common/utility.h"								// for to_string, CodeLocation (ptr only)
 #include "SemanticError.h"
 
 //-----------------------------------------------------------------------------
 // Severity Handling
-std::vector<Severity> & get_severities() {
-	static std::vector<Severity> severities;
+vector<Severity> & get_severities() {
+	static vector<Severity> severities;
 	if(severities.empty()) {
 		severities.reserve((size_t)Warning::NUMBER_OF_WARNINGS);
 		for ( const auto w : WarningFormats ) {
@@ -59,7 +61,7 @@ void SemanticWarning_WarningAsError() {
 void SemanticWarning_Set(const char * const name, Severity s) {
 	size_t idx = 0;
 	for ( const auto & w : WarningFormats ) {
-		if ( std::strcmp( name, w.name ) == 0 ) {
+		if ( strcmp( name, w.name ) == 0 ) {
 			get_severities()[idx] = s;
 			break;
 		}
@@ -72,7 +74,7 @@ void SemanticWarning_Set(const char * const name, Severity s) {
 
 bool SemanticErrorThrow = false;
 
-SemanticErrorException::SemanticErrorException( CodeLocation location, std::string error ) {
+SemanticErrorException::SemanticErrorException( CodeLocation location, string error ) {
 	append( location, error );
 }
 
@@ -80,7 +82,7 @@ void SemanticErrorException::append( SemanticErrorException &other ) {
 	errors.splice( errors.end(), other.errors );
 }
 
-void SemanticErrorException::append( CodeLocation location, const std::string & msg ) {
+void SemanticErrorException::append( CodeLocation location, const string & msg ) {
 	errors.emplace_back( location, msg );
 }
 
@@ -89,7 +91,7 @@ bool SemanticErrorException::isEmpty() const {
 }
 
 void SemanticErrorException::print() {
-	using std::to_string;
+//	using to_string;
 
 	errors.sort([](const error & lhs, const error & rhs) -> bool {
 		if(lhs.location.startsBefore(rhs.location)) return true;
@@ -99,7 +101,7 @@ void SemanticErrorException::print() {
 	});
 
 	for( auto err : errors ) {
-		std::cerr << ErrorHelpers::bold() << err.location << ErrorHelpers::error_str() << ErrorHelpers::reset_font() << err.description << std::endl;
+		cerr << ErrorHelpers::bold() << err.location << ErrorHelpers::error_str() << ErrorHelpers::reset_font() << err.description << endl;
 	}
 }
 
@@ -114,49 +116,26 @@ void SemanticError( CodeLocation location, const char * fmt, ... ) {
 	throw SemanticErrorException( location, msg );		// convert msg to string
 }
 
-void SemanticError( CodeLocation location, std::string error ) {
-	SemanticErrorThrow = true;
-	throw SemanticErrorException( location, error );
-}
-
-namespace {
-	// convert format string and arguments into a single string
-	std::string fmtToString(const char * fmt, va_list ap) {
-		int size = 128;
-		while ( true ) {
-			char buf[size];
-			va_list args;
-			va_copy( args, ap );
-			int n = vsnprintf(&buf[0], size, fmt, args);
-			va_end( args );
-			if ( n < size && n >= 0 ) return buf;
-			size *= 2;
-		}
-		assert( false );
-	}
-}
-
-void SemanticWarningImpl( CodeLocation location, Warning warning, const char * const fmt, ... ) {
+void SemanticWarning( CodeLocation location, Warning warning, ... ) {
 	Severity severity = get_severities()[(int)warning];
-	switch(severity) {
+
+	switch ( severity ) {
 	case Severity::Suppress :
 		break;
 	case Severity::Warn :
-		{
-			va_list args;
-			va_start(args, fmt);
-			std::string msg = fmtToString( fmt, args );
-			va_end(args);
-			std::cerr << ErrorHelpers::bold() << location << ErrorHelpers::warning_str() << ErrorHelpers::reset_font() << msg << std::endl;
-		}
-		break;
 	case Severity::Error :
 		{
+			char msg[2048];								// worst-case error-message buffer
 			va_list args;
-			va_start(args, fmt);
-			std::string msg = fmtToString( fmt, args );
-			va_end(args);
-			SemanticError(location, msg);
+			va_start( args, warning );
+			vsnprintf( msg, sizeof(msg), WarningFormats[(int)warning].message, args ); // always null terminated, but may be truncated
+			va_end( args );
+
+			if ( severity == Severity::Warn ) {
+				cerr << ErrorHelpers::bold() << location << ErrorHelpers::warning_str() << ErrorHelpers::reset_font() << msg << endl;
+			} else {
+				SemanticError( location, string( msg ) );
+			}
 		}
 		break;
 	case Severity::Critical :
@@ -174,36 +153,36 @@ namespace ErrorHelpers {
 		return colors == Colors::Auto ? isatty( STDERR_FILENO ) : bool(colors);
 	}
 
-	const std::string & error_str() {
-		static std::string str = with_colors() ? "\e[31merror:\e[39m " : "error: ";
+	const string & error_str() {
+		static string str = with_colors() ? "\e[31merror:\e[39m " : "error: ";
 		return str;
 	}
 
-	const std::string & warning_str() {
-		static std::string str = with_colors() ? "\e[95mwarning:\e[39m " : "warning: ";
+	const string & warning_str() {
+		static string str = with_colors() ? "\e[95mwarning:\e[39m " : "warning: ";
 		return str;
 	}
 
-	const std::string & bold_ttycode() {
-		static std::string str = with_colors() ? "\e[1m" : "";
+	const string & bold_ttycode() {
+		static string str = with_colors() ? "\e[1m" : "";
 		return str;
 	}
 
-	const std::string & reset_font_ttycode() {
-		static std::string str = with_colors() ? "\e[0m" : "";
+	const string & reset_font_ttycode() {
+		static string str = with_colors() ? "\e[0m" : "";
 		return str;
 	}
 
-	std::string make_bold( const std::string & str ) {
+	string make_bold( const string & str ) {
 		return bold_ttycode() + str + reset_font_ttycode();
 	}
 
-	std::ostream & operator<<(std::ostream & os, bold) {
+	ostream & operator<<(ostream & os, bold) {
 		os << bold_ttycode();
 		return os;
 	}
 
-	std::ostream & operator<<(std::ostream & os, reset_font) {
+	ostream & operator<<(ostream & os, reset_font) {
 		os << reset_font_ttycode();
 		return os;
 	}

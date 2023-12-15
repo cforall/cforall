@@ -8,9 +8,9 @@
 //
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Apr  4 11:07:00 2023
-// Update Count     : 1083
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Dec 14 18:57:07 2023
+// Update Count     : 1087
 //
 
 #include "ExpressionNode.h"
@@ -192,7 +192,7 @@ ast::Expr * build_constantInteger(
 	// Cannot be just "0"/"1"; sscanf stops at the suffix, if any; value goes over the wall => always generate
 
 #if ! defined(__SIZEOF_INT128__)
-	if ( type == 5 ) SemanticError( yylloc, "int128 constant is not supported on this target " + str );
+	if ( type == 5 ) SemanticError( yylloc, "int128 constant is not supported on this target \"%s\"", str.c_str() );
 #endif // ! __SIZEOF_INT128__
 
 	if ( str[0] == '0' ) {								// radix character ?
@@ -203,7 +203,7 @@ ast::Expr * build_constantInteger(
 #if defined(__SIZEOF_INT128__)
 			} else {									// hex int128 constant
 				unsigned int len = str.length();
-				if ( len > (2 + 16 + 16) ) SemanticError( yylloc, "128-bit hexadecimal constant to large " + str );
+				if ( len > (2 + 16 + 16) ) SemanticError( yylloc, "128-bit hexadecimal constant to large \"%s\"", str.c_str() );
 				// hex digits < 2^64
 				if ( len > (2 + 16) ) {
 					str2 = "0x" + str.substr( len - 16 );
@@ -218,7 +218,7 @@ ast::Expr * build_constantInteger(
 #if defined(__SIZEOF_INT128__)
 			unsigned int len = str.length();
 			if ( type == 5 && len > 2 + 64 ) {
-				if ( len > 2 + 64 + 64 ) SemanticError( yylloc, "128-bit binary constant to large " + str );
+				if ( len > 2 + 64 + 64 ) SemanticError( yylloc, "128-bit binary constant to large \"%s\".", str.c_str() );
 				str2 = "0b" + str.substr( len - 64 );
 				str = str.substr( 0, len - 64 );
 				scanbin( str2, v2 );
@@ -232,7 +232,7 @@ ast::Expr * build_constantInteger(
 #if defined(__SIZEOF_INT128__)
 			} else {									// octal int128 constant
 				unsigned int len = str.length();
-				if ( len > 1 + 43 || (len == 1 + 43 && str[0] > '3') ) SemanticError( yylloc, "128-bit octal constant to large " + str );
+				if ( len > 1 + 43 || (len == 1 + 43 && str[0] > '3') ) SemanticError( yylloc, "128-bit octal constant to large \"%s\"", str.c_str() );
 				char buf[32];
 				if ( len <= 1 + 21 ) {					// value < 21 octal digitis
 					sscanf( (char *)str.c_str(), "%llo", &v );
@@ -265,7 +265,7 @@ ast::Expr * build_constantInteger(
 			#define P10_UINT64 10'000'000'000'000'000'000ULL // 19 zeroes
 			unsigned int len = str.length();
 			if ( str.length() == 39 && str > (Unsigned ? "340282366920938463463374607431768211455" : "170141183460469231731687303715884105727") )
-				SemanticError( yylloc, "128-bit decimal constant to large " + str );
+				SemanticError( yylloc, "128-bit decimal constant to large \"%s\".", str.c_str() );
 			char buf[32];
 			if ( len <= 19 ) {							// value < 19 decimal digitis
 				sscanf( (char *)str.c_str(), "%llu", &v );
@@ -501,7 +501,7 @@ ast::Expr * build_constantStr(
 
 ast::Expr * build_field_name_FLOATING_FRACTIONconstant(
 		const CodeLocation & location, const string & str ) {
-	if ( str.find_first_not_of( "0123456789", 1 ) != string::npos ) SemanticError( yylloc, "invalid tuple index " + str );
+	if ( str.find_first_not_of( "0123456789", 1 ) != string::npos ) SemanticError( yylloc, "invalid tuple index \"%s\".", str.c_str() );
 	ast::Expr * ret = build_constantInteger( location,
 		*new string( str.substr(1) ) );
 	delete &str;
@@ -510,7 +510,7 @@ ast::Expr * build_field_name_FLOATING_FRACTIONconstant(
 
 ast::Expr * build_field_name_FLOATING_DECIMALconstant(
 		const CodeLocation & location, const string & str ) {
-	if ( str[str.size() - 1] != '.' ) SemanticError( yylloc, "invalid tuple index " + str );
+	if ( str[str.size() - 1] != '.' ) SemanticError( yylloc, "invalid tuple index \"%s\".", str.c_str() );
 	ast::Expr * ret = build_constantInteger(
 		location, *new string( str.substr( 0, str.size()-1 ) ) );
 	delete &str;

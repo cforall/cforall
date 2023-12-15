@@ -1056,7 +1056,8 @@ void InsertDtors::handleGoto( const ast::BranchStmt * stmt ) {
 		std::cerr << "S_L-S_G = " << printSet( diff ) << std::endl;
 	)
 	if ( ! diff.empty() ) {
-		SemanticError( stmt, std::string("jump to label '") + stmt->target.name + "' crosses initialization of " + (*diff.begin())->name + " " );
+		SemanticError( stmt->location, "jump to label \"%s\" crosses initialization of \"%s\".",
+					   stmt->target.name.c_str(), (*diff.begin())->name.c_str() );
 	} // if
 }
 
@@ -1075,8 +1076,7 @@ void InsertDtors::previsit( const ast::BranchStmt * stmt ) {
 }
 
 bool checkWarnings( const ast::FunctionDecl * funcDecl ) {
-	// only check for warnings if the current function is a user-defined
-	// constructor or destructor
+	// only check for warnings if the current function is a user-defined constructor or destructor
 	if ( ! funcDecl ) return false;
 	if ( ! funcDecl->stmts ) return false;
 	return CodeGen::isCtorDtor( funcDecl->name ) && ! funcDecl->linkage.is_overrideable;

@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Jun 29 14:59:00 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 27 08:55:06 2023
-// Update Count     : 3
+// Last Modified On : Thu Dec 14 16:11:51 2023
+// Update Count     : 4
 //
 
 #include "ReplaceTypedef.hpp"
@@ -151,7 +151,7 @@ ast::Decl const * ReplaceTypedefCore::postvisit(
 		if ( !ResolvExpr::typesCompatible( t0, t1 )
 				|| ast::Pass<VarLenChecker>::read( t0 )
 				|| ast::Pass<VarLenChecker>::read( t1 ) ) {
-			SemanticError( decl->location, "Cannot redefine typedef: " + decl->name );
+			SemanticError( decl->location, "Cannot redefine typedef %s", decl->name.c_str() );
 		}
 	} else {
 		typedefNames[ decl->name ] =

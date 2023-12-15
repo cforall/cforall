@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:12:51 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 26 15:51:05 2023
-// Update Count     : 681
+// Last Modified On : Thu Dec 14 18:59:12 2023
+// Update Count     : 684
 //
 
 #include "TypeData.h"
@@ -1495,10 +1495,10 @@ void buildKRFunction( const TypeData::Function_t & function ) {
 			if ( *decl->name == *param->name ) {
 				// type set => parameter name already transformed by a declaration names so there is a duplicate
 				// declaration name attempting a second transformation
-				if ( param->type ) SemanticError( param->location, string( "duplicate declaration name " ) + *param->name );
+				if ( param->type ) SemanticError( param->location, "duplicate declaration name \"%s\".", param->name->c_str() );
 				// declaration type reset => declaration already transformed by a parameter name so there is a duplicate
 				// parameter name attempting a second transformation
-				if ( ! decl->type ) SemanticError( param->location, string( "duplicate parameter name " ) + *param->name );
+				if ( ! decl->type ) SemanticError( param->location, "duplicate parameter name \"%s\".", param->name->c_str() );
 				param->type = decl->type;				// set copy declaration type to parameter type
 				decl->type = nullptr;					// reset declaration type
 				// Copy and reset attributes from declaration to parameter:

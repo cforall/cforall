@@ -1,4 +1,1 @@
-raii/dtor-early-exit.cfa:214:1 error: jump to label 'L2' crosses initialization of y Branch (Goto)
-  with target: L2
-  with original target: L2
-
+raii/dtor-early-exit.cfa:214:1 error: jump to label "L2" crosses initialization of "y".

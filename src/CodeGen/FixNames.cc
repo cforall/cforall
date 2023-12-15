@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Jul 20 11:49:00 2022
-// Update Count     : 24
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Dec 14 16:16:51 2023
+// Update Count     : 25
 //
 
 #include "FixNames.h"
@@ -56,7 +56,7 @@ public:
 
 			int nargs = mutDecl->params.size();
 			if ( 0 != nargs && 2 != nargs && 3 != nargs ) {
-				SemanticError( functionDecl, "Main expected to have 0, 2 or 3 arguments\n" );
+				SemanticError( functionDecl, "Main expected to have 0, 2 or 3 arguments" );
 			}
 			ast::chain_mutate( mutDecl->stmts )->kids.push_back(
 				new ast::ReturnStmt(
