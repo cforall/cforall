@@ -1025,7 +1025,7 @@ void CodeGenerator::postvisit( ast::SwitchStmt const * stmt ) {
 	stmt->cond->accept( *visitor );
 	output << " ) ";
 
-	output << "{";
+	output << "{" << endl;
 	++indent;
 	for ( auto node : stmt->cases ) {
 		node->accept( *visitor );
