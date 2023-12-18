@@ -43,6 +43,9 @@ struct __cfaehm_base_exception_t {
 extern struct __cfavir_type_info __cfatid_exception_t;
 
 
+struct __cfaehm_base_exception_t * __cfaehm_get_current_termination(void);
+
+
 void __cfaehm_cancel_stack(exception_t * except) __attribute__((noreturn));
 
 // Used in throw statement translation.
@@ -56,9 +59,8 @@ void __cfaehm_begin_unwind(void(*defaultHandler)(exception_t *));
 
 
 // Function catches termination exceptions.
-void __cfaehm_try_terminate(
+int __cfaehm_try_terminate(
 	void (*try_block)(),
-	void (*catch_block)(int index, exception_t * except),
 	int (*match_block)(exception_t * except));
 
 // Clean-up the exception in catch blocks.

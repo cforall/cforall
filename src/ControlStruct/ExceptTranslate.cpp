@@ -481,17 +481,43 @@ ast::CompoundStmt * TryMutatorCore::create_terminate_caller(
 		ast::FunctionDecl * try_wrapper,
 		ast::FunctionDecl * terminate_catch,
 		ast::FunctionDecl * terminate_match ) {
-	// { __cfaehm_try_terminate(`try`, `catch`, `match`); }
+	// {
+	//     int __handler_index = __cfaehm_try_terminate(`try`, `match`);
+	//     if ( __handler_index ) {
+	//         `catch`( __handler_index, __cfaehm_get_current_termination() );
+	//     }
+	// }
 
-	ast::UntypedExpr * caller = new ast::UntypedExpr(loc, new ast::NameExpr(loc,
-		"__cfaehm_try_terminate" ) );
-	caller->args.push_back( new ast::VariableExpr(loc, try_wrapper ) );
-	caller->args.push_back( new ast::VariableExpr(loc, terminate_catch ) );
-	caller->args.push_back( new ast::VariableExpr(loc, terminate_match ) );
+	ast::ObjectDecl * index = new ast::ObjectDecl( loc, "__handler_index",
+		new ast::BasicType( ast::BasicType::SignedInt ),
+		new ast::SingleInit( loc,
+			new ast::UntypedExpr( loc,
+				new ast::NameExpr( loc, "__cfaehm_try_terminate" ),
+				{
+					new ast::VariableExpr( loc, try_wrapper ),
+					new ast::VariableExpr( loc, terminate_match ),
+				}
+			)
+		)
+	);
 
-	ast::CompoundStmt * callStmt = new ast::CompoundStmt(loc);
-	callStmt->push_back( new ast::ExprStmt( loc, caller ) );
-	return callStmt;
+	return new ast::CompoundStmt( loc, {
+		new ast::DeclStmt( loc, index ),
+		new ast::IfStmt( loc,
+			new ast::VariableExpr( loc, index ),
+			new ast::ExprStmt( loc,
+				new ast::UntypedExpr( loc,
+					new ast::VariableExpr( loc, terminate_catch ),
+					{
+						new ast::VariableExpr( loc, index ),
+						new ast::UntypedExpr( loc,
+							new ast::NameExpr( loc, "__cfaehm_get_current_termination" )
+						),
+					}
+				)
+			)
+		),
+	} );
 }
 
 ast::FunctionDecl * TryMutatorCore::create_resume_handler(

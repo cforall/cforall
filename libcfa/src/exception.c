@@ -54,6 +54,10 @@ __attribute__((weak)) struct exception_context_t * this_exception_context() {
 	return &shared_stack;
 }
 
+struct __cfaehm_base_exception_t * __cfaehm_get_current_termination(void) {
+	return this_exception_context()->current_exception;
+}
+
 
 // RESUMPTION ================================================================
 
@@ -308,7 +312,7 @@ _Unwind_Reason_Code __gcfa_personality_v0(
 		struct _Unwind_Exception * unwind_exception,
 		struct _Unwind_Context * unwind_context)
 {
-	//! __cfadbg_print_safe(exception, "CFA: 0x%lx\n", _Unwind_GetCFA(unwind_context));
+	__cfadbg_print_safe(exception, "CFA: 0x%p\n", (void*)_Unwind_GetCFA(unwind_context));
 	__cfadbg_print_safe(exception, "Personality function (%d, %x, %llu, %p, %p):",
 			version, actions, exception_class, unwind_exception, unwind_context);
 
@@ -410,12 +414,14 @@ _Unwind_Reason_Code __gcfa_personality_v0(
 
 				_Unwind_Word match_pos =
 #				if defined( __x86_64 )
-				    _Unwind_GetCFA(unwind_context) + 8;
+					_Unwind_GetCFA(unwind_context);
 #				elif defined( __i386 )
-				    _Unwind_GetCFA(unwind_context) + 24;
+					_Unwind_GetCFA(unwind_context) + 20;
 #				elif defined( __ARM_ARCH )
-				    _Unwind_GetCFA(unwind_context) + 40;
+					_Unwind_GetCFA(unwind_context) + 16;
 #				endif
+				//! printf("match_pos: %p\n", (void*)match_pos);
+				//! fflush(stdout);
 				int (*matcher)(exception_t *) = *(int(**)(exception_t *))match_pos;
 
 				int index = matcher(context->current_exception);
@@ -478,11 +484,11 @@ _Unwind_Reason_Code __gcfa_personality_v0(
 // Try statements are hoisted out see comments for details. While this could probably be unique
 // and simply linked from libcfa but there is one problem left, see the exception table for details
 __attribute__((noinline))
-void __cfaehm_try_terminate(void (*try_block)(),
-		void (*catch_block)(int index, exception_t * except),
+int __cfaehm_try_terminate(void (*try_block)(),
 		__attribute__((unused)) int (*match_block)(exception_t * except)) {
 	//! volatile int xy = 0;
-	//! printf("%p %p %p %p\n", &try_block, &catch_block, &match_block, &xy);
+	//! printf("%p %p %p\n", &try_block, &match_block, &xy);
+	//! fflush(stdout);
 
 	// Setup the personality routine and exception table.
 	// Unforturnately these clobber gcc cancellation support which means we can't get access to
@@ -506,7 +512,7 @@ void __cfaehm_try_terminate(void (*try_block)(),
 	asm volatile goto ("" : : : : CATCH );
 
 	// Normal return for when there is no throw.
-	return;
+	return 0;
 
 	// Exceptionnal path
 	CATCH : __attribute__(( unused ));
@@ -517,10 +523,7 @@ void __cfaehm_try_terminate(void (*try_block)(),
 	// done by the generated code, not the exception runtime.
 	asm volatile (".CATCH:");
 
-	// Exception handler
-	// Note: Saving the exception context on the stack breaks termination exceptions.
-	catch_block( EXCEPT_TO_NODE( this_exception_context()->current_exception )->handler_index,
-	             this_exception_context()->current_exception );
+	return EXCEPT_TO_NODE( this_exception_context()->current_exception )->handler_index;
 }
 
 // Exception table data we need to generate. While this is almost generic, the custom data refers
