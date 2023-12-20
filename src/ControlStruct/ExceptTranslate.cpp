@@ -144,6 +144,8 @@ class TryMutatorCore final {
 	// The many helper functions for code/syntree generation.
 	ast::CompoundStmt * take_try_block( ast::TryStmt * tryStmt );
 	ast::FunctionDecl * create_try_wrapper( const ast::CompoundStmt * body );
+	ast::CaseClause * create_terminate_catch_case(
+		const ast::DeclWithType * except_obj, int index, ast::CatchClause * clause );
 	ast::FunctionDecl * create_terminate_catch( CatchList &handlers );
 	ast::CompoundStmt * create_single_matcher(
 		const ast::DeclWithType * except_obj, ast::CatchClause * modded_handler );
@@ -163,16 +165,6 @@ class TryMutatorCore final {
 	ast::ObjectDecl * make_bool_object( CodeLocation const & ) const;
 	ast::ObjectDecl * make_voidptr_object( CodeLocation const & ) const;
 	ast::ObjectDecl * make_unused_index_object( CodeLocation const & ) const;
-	// void (*function)();
-	ast::FunctionDecl * make_try_function( CodeLocation const & ) const;
-	// void (*function)(int, exception);
-	ast::FunctionDecl * make_catch_function( CodeLocation const & ) const;
-	// int (*function)(exception);
-	ast::FunctionDecl * make_match_function( CodeLocation const & ) const;
-	// bool (*function)(exception);
-	ast::FunctionDecl * make_handle_function( CodeLocation const & ) const;
-	// void (*function)(__attribute__((unused)) void *);
-	ast::FunctionDecl * make_finally_function( CodeLocation const & ) const;
 
 public:
 	TryMutatorCore() :
@@ -247,152 +239,102 @@ ast::ObjectDecl * TryMutatorCore::make_unused_index_object(
 	);
 }
 
-ast::FunctionDecl * TryMutatorCore::make_try_function(
-		CodeLocation const & location ) const {
-	return new ast::FunctionDecl(
-		location,
-		"try",
-		{}, //no param
-		{}, //no return
-		nullptr,
-		ast::Storage::Classes{},
-		ast::Linkage::Cforall
-	);
-}
-
-ast::FunctionDecl * TryMutatorCore::make_catch_function(
-		CodeLocation const & location ) const {
-	return new ast::FunctionDecl(
-		location,
-		"catch",
-		{ make_index_object( location ), make_exception_object( location ) },
-		{}, //return void
-		nullptr,
-		ast::Storage::Classes{},
-		ast::Linkage::Cforall
-	);
-}
-
-ast::FunctionDecl * TryMutatorCore::make_match_function(
-		CodeLocation const & location ) const {
-	return new ast::FunctionDecl(
-		location,
-		"match",
-		{ make_exception_object( location ) },
-		{ make_unused_index_object( location ) },
-		nullptr,
-		ast::Storage::Classes{},
-		ast::Linkage::Cforall
-	);
-}
-
-ast::FunctionDecl * TryMutatorCore::make_handle_function(
-		CodeLocation const & location ) const {
-	return new ast::FunctionDecl(
-		location,
-		"handle",
-		{ make_exception_object( location ) },
-		{ make_bool_object( location ) },
-		nullptr,
-		ast::Storage::Classes{},
-		ast::Linkage::Cforall
-	);
-}
-
-ast::FunctionDecl * TryMutatorCore::make_finally_function(
-		CodeLocation const & location ) const {
-	return new ast::FunctionDecl(
-		location,
-		"finally",
-		{ make_voidptr_object( location ) },
-		{}, //return void
-		nullptr,
-		ast::Storage::Classes{},
-		ast::Linkage::Cforall,
-		{},
-		{ ast::Function::Inline }
-	);
-}
-
 // TryStmt Mutation Helpers
 
 ast::FunctionDecl * TryMutatorCore::create_try_wrapper(
 		const ast::CompoundStmt *body ) {
+	// void (*try)(void) `body`
+	return new ast::FunctionDecl(
+		body->location,
+		"try",
+		{}, //no param
+		{}, //no return
+		ast::mutate( body ),
+		ast::Storage::Classes{},
+		ast::Linkage::Cforall
+	);
+}
 
-	ast::FunctionDecl * ret = make_try_function( body->location );
-	ret->stmts = body;
-	return ret;
+ast::CaseClause * TryMutatorCore::create_terminate_catch_case(
+		const ast::DeclWithType * except_obj, int index, ast::CatchClause * clause ) {
+	// case `index`:
+	// {
+	//     __attribute__((cleanup(__cfaehm_cleanup_terminate)))
+	//     `handler.decl` = { (virtual `decl.type`)`except` };
+	//     `handler.body`;
+	// }
+	// return;
+	const CodeLocation & location = clause->location;
+
+	auto clause_except = clause->decl.strict_as<ast::ObjectDecl>();
+	auto local_except = ast::deepCopy( clause_except );
+	local_except->attributes.push_back( new ast::Attribute(
+		"cleanup",
+		{ new ast::NameExpr( location, "__cfaehm_cleanup_terminate" ) }
+	) );
+
+	local_except->init = new ast::ListInit(	location, {
+		new ast::SingleInit( location,
+			new ast::VirtualCastExpr( location,
+				new ast::VariableExpr( location, except_obj ),
+				ast::deepCopy( local_except->get_type() )
+			)
+		)
+	} );
+
+	ast::DeclReplacer::DeclMap mapping;
+	mapping[clause_except] = local_except;
+	const ast::Stmt * body = strict_dynamic_cast<const ast::Stmt *>(
+		ast::DeclReplacer::replace(clause->body, mapping));
+
+	return new ast::CaseClause( location,
+		ast::ConstantExpr::from_int( location, index ),
+		{
+			new ast::CompoundStmt( location, {
+				new ast::DeclStmt( location, local_except ),
+				body,
+			} ),
+			new ast::ReturnStmt( location, nullptr ),
+		}
+	);
 }
 
 ast::FunctionDecl * TryMutatorCore::create_terminate_catch(
 		CatchList &handlers ) {
+	// void catch(int index, exception * except) {
+	//     switch (index) { CATCH_CASE... }
+	// }
+
+	assert( !handlers.empty() );
 	std::vector<ast::ptr<ast::CaseClause>> handler_wrappers;
+	const CodeLocation & location = handlers.front()->location;
 
-	assert (!handlers.empty());
-	const CodeLocation loc = handlers.front()->location;
-
-	ast::FunctionDecl * func_t = make_catch_function( loc );
-	const ast::DeclWithType * index_obj = func_t->params.front();
-	const ast::DeclWithType * except_obj = func_t->params.back();
+	const ast::DeclWithType * index_obj = make_index_object( location );
+	const ast::DeclWithType * except_obj = make_exception_object( location );
 
 	// Index 1..{number of handlers}
-	int index = 0;
-	CatchList::iterator it = handlers.begin();
-	for ( ; it != handlers.end() ; ++it ) {
-		++index;
-		ast::CatchClause * handler = *it;
-		const CodeLocation loc = handler->location;
-
-		// case `index`:
-		// {
-		//     `handler.decl` = { (virtual `decl.type`)`except` };
-		//     `handler.body`;
-		// }
-		// return;
-		ast::CompoundStmt * block = new ast::CompoundStmt(loc);
-
-		// Just copy the exception value. (Post Validation)
-		const ast::ObjectDecl * handler_decl =
-			handler->decl.strict_as<ast::ObjectDecl>();
-		ast::ObjectDecl * local_except = ast::deepCopy(handler_decl);
-		ast::VirtualCastExpr * vcex = new ast::VirtualCastExpr(loc,
-			new ast::VariableExpr( loc, except_obj ),
-			local_except->get_type()
-			);
-		vcex->location = handler->location;
-		local_except->init = new ast::ListInit(loc, { new ast::SingleInit( loc, vcex ) });
-		block->push_back( new ast::DeclStmt( loc, local_except ) );
-
-		// Add the cleanup attribute.
-		local_except->attributes.push_back( new ast::Attribute(
-			"cleanup",
-			{ new ast::NameExpr( loc, "__cfaehm_cleanup_terminate" ) }
-			) );
-
-		ast::DeclReplacer::DeclMap mapping;
-		mapping[handler_decl] = local_except;
-		const ast::Stmt * mutBody = strict_dynamic_cast<const ast::Stmt *>(
-			ast::DeclReplacer::replace(handler->body, mapping));
-
-
-		block->push_back( mutBody );
-		// handler->body = nullptr;
-
-		handler_wrappers.push_back( new ast::CaseClause(loc,
-			ast::ConstantExpr::from_int(loc, index) ,
-			{ block, new ast::ReturnStmt( loc, nullptr ) }
-			));
+	for ( const auto & [index, handler] : enumerate( handlers ) ) {
+		handler_wrappers.push_back(
+			create_terminate_catch_case( except_obj, index + 1, handler ) );
 	}
 	// TODO: Some sort of meaningful error on default perhaps?
 
-	ast::SwitchStmt * handler_lookup = new ast::SwitchStmt( loc,
-		new ast::VariableExpr( loc, index_obj ),
+	ast::SwitchStmt * handler_lookup = new ast::SwitchStmt( location,
+		new ast::VariableExpr( location, index_obj ),
 		std::move(handler_wrappers)
 		);
-	ast::CompoundStmt * body = new ast::CompoundStmt( loc, {handler_lookup} );
+	ast::CompoundStmt * body = new ast::CompoundStmt( location, {handler_lookup} );
 
-	func_t->stmts = body;
-	return func_t;
+	// void (*catch)(int, exception_t *) `body`
+	return new ast::FunctionDecl(
+		location,
+		"catch",
+		{ index_obj, except_obj },
+		{}, //return void
+		body,
+		ast::Storage::Classes{},
+		ast::Linkage::Cforall
+	);
 }
 
 // Create a single check from a moddified handler.
@@ -440,13 +382,11 @@ ast::FunctionDecl * TryMutatorCore::create_terminate_match(
 	//     HANDLER WRAPPERS { return `index`; }
 	// }
 
-	assert (!handlers.empty());
-	const CodeLocation loc = handlers.front()->location;
+	assert( !handlers.empty() );
+	const CodeLocation & location = handlers.front()->location;
 
-	ast::CompoundStmt * body = new ast::CompoundStmt(loc);
-
-	ast::FunctionDecl * func_t = make_match_function( loc );
-	const ast::DeclWithType * except_obj = func_t->params.back();
+	ast::CompoundStmt * body = new ast::CompoundStmt( location );
+	const ast::DeclWithType * except_obj = make_exception_object( location );
 
 	// Index 1..{number of handlers}
 	int index = 0;
@@ -468,12 +408,19 @@ ast::FunctionDecl * TryMutatorCore::create_terminate_match(
 		*it = nullptr;
 	}
 
-	body->push_back( new ast::ReturnStmt(loc,
-		ast::ConstantExpr::from_int( loc, 0 ) ));
+	body->push_back( new ast::ReturnStmt( location,
+		ast::ConstantExpr::from_int( location, 0 ) ));
 
-	func_t->stmts = body;
-
-	return func_t;
+	// void (*match)(exception_t *) `body`
+	return new ast::FunctionDecl(
+		location,
+		"match",
+		{ except_obj },
+		{ make_unused_index_object( location ) },
+		body,
+		ast::Storage::Classes{},
+		ast::Linkage::Cforall
+	);
 }
 
 ast::CompoundStmt * TryMutatorCore::create_terminate_caller(
@@ -488,16 +435,14 @@ ast::CompoundStmt * TryMutatorCore::create_terminate_caller(
 	//     }
 	// }
 
-	ast::ObjectDecl * index = new ast::ObjectDecl( loc, "__handler_index",
-		new ast::BasicType( ast::BasicType::SignedInt ),
-		new ast::SingleInit( loc,
-			new ast::UntypedExpr( loc,
-				new ast::NameExpr( loc, "__cfaehm_try_terminate" ),
-				{
-					new ast::VariableExpr( loc, try_wrapper ),
-					new ast::VariableExpr( loc, terminate_match ),
-				}
-			)
+	ast::ObjectDecl * index = make_index_object( loc );
+	index->init = new ast::SingleInit( loc,
+		new ast::UntypedExpr( loc,
+			new ast::NameExpr( loc, "__cfaehm_try_terminate" ),
+			{
+				new ast::VariableExpr( loc, try_wrapper ),
+				new ast::VariableExpr( loc, terminate_match ),
+			}
 		)
 	);
 
@@ -525,12 +470,12 @@ ast::FunctionDecl * TryMutatorCore::create_resume_handler(
 	// bool handle(exception * except) {
 	//     HANDLER WRAPPERS { `hander->body`; return true; }
 	// }
-	assert (!handlers.empty());
-	const CodeLocation loc = handlers.front()->location;
-	ast::CompoundStmt * body = new ast::CompoundStmt(loc);
 
-	ast::FunctionDecl * func_t = make_handle_function( loc );
-	const ast::DeclWithType * except_obj = func_t->params.back();
+	assert( !handlers.empty() );
+	const CodeLocation & location = handlers.front()->location;
+
+	ast::CompoundStmt * body = new ast::CompoundStmt( location );
+	const ast::DeclWithType * except_obj = make_exception_object( location );
 
 	CatchList::iterator it;
 	for ( it = handlers.begin() ; it != handlers.end() ; ++it ) {
@@ -554,11 +499,19 @@ ast::FunctionDecl * TryMutatorCore::create_resume_handler(
 		*it = nullptr;
 	}
 
-	body->push_back( new ast::ReturnStmt(loc,
-		ast::ConstantExpr::from_bool(loc, false ) ) );
-	func_t->stmts = body;
+	body->push_back( new ast::ReturnStmt( location,
+		ast::ConstantExpr::from_bool( location, false ) ) );
 
-	return func_t;
+	// bool (*handle)(exception_t *) `body`
+	return new ast::FunctionDecl(
+		location,
+		"handle",
+		{ except_obj },
+		{ make_bool_object( location ) },
+		body,
+		ast::Storage::Classes{},
+		ast::Linkage::Cforall
+	);
 }
 
 ast::CompoundStmt * TryMutatorCore::create_resume_wrapper(
@@ -600,16 +553,19 @@ ast::CompoundStmt * TryMutatorCore::create_resume_wrapper(
 
 ast::FunctionDecl * TryMutatorCore::create_finally_wrapper(
 		ast::TryStmt * tryStmt ) {
-	// void finally() { `finally->block` }
+	// void finally(__attribute__((unused)) void *) `finally->body`
 	const ast::FinallyClause * finally = tryStmt->finally;
-	const ast::CompoundStmt * body = finally->body;
-
-	ast::FunctionDecl * func_t = make_finally_function( tryStmt->location );
-	func_t->stmts = body;
-
-	tryStmt->finally = nullptr;
-
-	return func_t;
+	return new ast::FunctionDecl(
+		tryStmt->location,
+		"finally",
+		{ make_voidptr_object( tryStmt->location ) },
+		{}, //return void
+		ast::mutate( finally->body.get() ),
+		ast::Storage::Classes{},
+		ast::Linkage::Cforall,
+		{},
+		{ ast::Function::Inline }
+	);
 }
 
 ast::ObjectDecl * TryMutatorCore::create_finally_hook(
@@ -617,9 +573,9 @@ ast::ObjectDecl * TryMutatorCore::create_finally_hook(
 	// struct __cfaehm_cleanup_hook __finally_hook
 	//   	__attribute__((cleanup( `finally_wrapper` )));
 
-	const CodeLocation loc = finally_wrapper->location;
+	const CodeLocation & location = finally_wrapper->location;
 	return new ast::ObjectDecl(
-		loc,
+		location,
 		"__finally_hook",
 		new ast::StructInstType(
 			hook_decl
@@ -628,7 +584,7 @@ ast::ObjectDecl * TryMutatorCore::create_finally_hook(
 		ast::Storage::Classes{},
 		ast::Linkage::Cforall,
 		nullptr,
-		{new ast::Attribute("cleanup", {new ast::VariableExpr{loc, finally_wrapper}})}
+		{new ast::Attribute("cleanup", {new ast::VariableExpr(location, finally_wrapper)})}
 		);
 }
 
