@@ -34,7 +34,6 @@ enum ReturnContext {
 	MayReturn,
 	InTryWithHandler,
 	InResumeHandler,
-	InTerminateHandler,
 	InFinally,
 };
 
@@ -511,9 +510,6 @@ void MultiLevelExitCore::previsit( const ReturnStmt * stmt ) {
 	case ReturnContext::InResumeHandler:
 		context = "catchResume clause";
 		break;
-	case ReturnContext::InTerminateHandler:
-		context = "catch clause";
-		break;
 	case ReturnContext::InFinally:
 		context = "finally clause";
 		break;
@@ -523,7 +519,16 @@ void MultiLevelExitCore::previsit( const ReturnStmt * stmt ) {
 	SemanticError( stmt->location, "\"return\" may not appear in a %s", context );
 }
 
+bool hasTerminate( const TryStmt * stmt ) {
+	for ( auto clause : stmt->handlers ) {
+		if ( ast::Terminate == clause->kind ) return true;
+	}
+	return false;
+}
+
 void MultiLevelExitCore::previsit( const TryStmt * stmt ) {
+	visit_children = false;
+
 	bool isLabeled = ! stmt->labels.empty();
 	if ( isLabeled ) {
 		Label breakLabel = newLabel( "blockBreak", stmt );
@@ -532,11 +537,20 @@ void MultiLevelExitCore::previsit( const TryStmt * stmt ) {
 	}
 
 	// Try statements/try blocks are only sealed with a termination handler.
-	for ( auto clause : stmt->handlers ) {
-		if ( ast::Terminate == clause->kind ) {
-			return enterSealedContext( ReturnContext::InTryWithHandler );
-		}
+	if ( hasTerminate( stmt ) ) {
+		// This is just enterSealedContext except scoped to the block.
+		// And that is because the state must change for a single field.
+		ValueGuard< ReturnContext > guard0( ret_context );
+		ret_context = ReturnContext::InTryWithHandler;
+		auto guard = makeFuncGuard( [](){}, [this, old = std::move(enclosing_control_structures)](){ enclosing_control_structures = std::move(old); });
+		enclosing_control_structures = vector<Entry>();
+		visitor->maybe_accept( stmt, &TryStmt::body );
+	} else {
+		visitor->maybe_accept( stmt, &TryStmt::body );
 	}
+
+	visitor->maybe_accept( stmt, &TryStmt::handlers );
+	visitor->maybe_accept( stmt, &TryStmt::finally );
 }
 
 void MultiLevelExitCore::postvisit( const TryStmt * stmt ) {
@@ -550,9 +564,9 @@ void MultiLevelExitCore::postvisit( const TryStmt * stmt ) {
 }
 
 void MultiLevelExitCore::previsit( const CatchClause * clause ) {
-	ReturnContext context = ( ast::Terminate == clause->kind )
-		? ReturnContext::InTerminateHandler : ReturnContext::InResumeHandler;
-	enterSealedContext( context );
+	if ( ast::Resume == clause->kind ) {
+		enterSealedContext( ReturnContext::InResumeHandler );
+	}
 }
 
 void MultiLevelExitCore::previsit( const FinallyClause * ) {

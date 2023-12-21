@@ -180,14 +180,6 @@ void return_in_try_with_finally() {
 	}
 }
 
-void return_in_catch() {
-	try {
-		;
-	} catch (nil_exception *) {
-		return;
-	}
-}
-
 void return_in_catchResume() {
 	try {
 		;

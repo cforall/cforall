@@ -1,0 +1,59 @@
+// Control Flow out of Termination Handler Clauses
+
+exception zen {};
+
+vtable(zen) zen_vt;
+
+void test_loop() {
+	do {
+		try {
+			throw (zen){&zen_vt};
+		} catch (zen *) {
+			printf("Continue\n");
+			continue;
+		}
+		printf("Reached end of loop.\n.");
+	} while (false);
+	printf("After Loop\n");
+
+	while (true) {
+		try {
+			throw (zen){&zen_vt};
+		} catch (zen *) {
+			printf("Break\n");
+			break;
+		}
+		printf("Reached end of loop.\n.");
+	}
+	printf("After Loop\n");
+}
+
+void test_switch() {
+	switch (0) {
+	case 0:
+		try {
+			throw (zen){&zen_vt};
+		} catch (zen *) {
+			printf("Break\n");
+			break;
+		}
+	default:
+		printf("Reached default.\n");
+	}
+	printf("After Switch\n");
+}
+
+int test_return() {
+	try {
+		throw (zen){&zen_vt};
+	} catch (zen *) {
+		return 1;
+	}
+	return 0;
+}
+
+int main(int argc, char * argv[]) {
+	test_loop();
+	test_switch();
+	printf("Result of test_return: %d\n", test_return());
+}

@@ -1,0 +1,7 @@
+Continue
+After Loop
+Break
+After Loop
+Break
+After Switch
+Result of test_return: 1

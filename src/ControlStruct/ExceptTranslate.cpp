@@ -146,12 +146,12 @@ class TryMutatorCore final {
 	ast::FunctionDecl * create_try_wrapper( const ast::CompoundStmt * body );
 	ast::CaseClause * create_terminate_catch_case(
 		const ast::DeclWithType * except_obj, int index, ast::CatchClause * clause );
-	ast::FunctionDecl * create_terminate_catch( CatchList &handlers );
 	ast::CompoundStmt * create_single_matcher(
 		const ast::DeclWithType * except_obj, ast::CatchClause * modded_handler );
 	ast::FunctionDecl * create_terminate_match( CatchList &handlers );
-	ast::CompoundStmt * create_terminate_caller( CodeLocation loc, ast::FunctionDecl * try_wrapper,
-		ast::FunctionDecl * terminate_catch, ast::FunctionDecl * terminate_match );
+	ast::CompoundStmt * create_terminate_caller( const CodeLocation & location,
+		ast::FunctionDecl * try_wrapper, ast::FunctionDecl * terminate_match,
+		CatchList & terminate_handlers );
 	ast::FunctionDecl * create_resume_handler( CatchList &handlers );
 	ast::CompoundStmt * create_resume_wrapper(
 		const ast::Stmt * wraps, const ast::FunctionDecl * resume_handler );
@@ -263,7 +263,7 @@ ast::CaseClause * TryMutatorCore::create_terminate_catch_case(
 	//     `handler.decl` = { (virtual `decl.type`)`except` };
 	//     `handler.body`;
 	// }
-	// return;
+	// break;
 	const CodeLocation & location = clause->location;
 
 	auto clause_except = clause->decl.strict_as<ast::ObjectDecl>();
@@ -294,46 +294,9 @@ ast::CaseClause * TryMutatorCore::create_terminate_catch_case(
 				new ast::DeclStmt( location, local_except ),
 				body,
 			} ),
-			new ast::ReturnStmt( location, nullptr ),
+			new ast::BranchStmt( location, ast::BranchStmt::Break,
+				ast::Label( location ) ),
 		}
-	);
-}
-
-ast::FunctionDecl * TryMutatorCore::create_terminate_catch(
-		CatchList &handlers ) {
-	// void catch(int index, exception * except) {
-	//     switch (index) { CATCH_CASE... }
-	// }
-
-	assert( !handlers.empty() );
-	std::vector<ast::ptr<ast::CaseClause>> handler_wrappers;
-	const CodeLocation & location = handlers.front()->location;
-
-	const ast::DeclWithType * index_obj = make_index_object( location );
-	const ast::DeclWithType * except_obj = make_exception_object( location );
-
-	// Index 1..{number of handlers}
-	for ( const auto & [index, handler] : enumerate( handlers ) ) {
-		handler_wrappers.push_back(
-			create_terminate_catch_case( except_obj, index + 1, handler ) );
-	}
-	// TODO: Some sort of meaningful error on default perhaps?
-
-	ast::SwitchStmt * handler_lookup = new ast::SwitchStmt( location,
-		new ast::VariableExpr( location, index_obj ),
-		std::move(handler_wrappers)
-		);
-	ast::CompoundStmt * body = new ast::CompoundStmt( location, {handler_lookup} );
-
-	// void (*catch)(int, exception_t *) `body`
-	return new ast::FunctionDecl(
-		location,
-		"catch",
-		{ index_obj, except_obj },
-		{}, //return void
-		body,
-		ast::Storage::Classes{},
-		ast::Linkage::Cforall
 	);
 }
 
@@ -390,22 +353,16 @@ ast::FunctionDecl * TryMutatorCore::create_terminate_match(
 
 	// Index 1..{number of handlers}
 	int index = 0;
-	CatchList::iterator it;
-	for ( it = handlers.begin() ; it != handlers.end() ; ++it ) {
+	for ( ast::CatchClause * handler : handlers ) {
 		++index;
-		ast::CatchClause * handler = *it;
 
-		// Body should have been taken by create_terminate_catch.
-		// xxx - just ignore it?
-		// assert( nullptr == handler->get_body() );
-
-		// Create new body.
-		handler->body = new ast::ReturnStmt( handler->location,
+		ast::ptr<ast::Stmt> other_body = new ast::ReturnStmt( handler->location,
 			ast::ConstantExpr::from_int( handler->location, index ) );
+		handler->body.swap( other_body );
 
-		// Create the handler.
 		body->push_back( create_single_matcher( except_obj, handler ) );
-		*it = nullptr;
+
+		handler->body.swap( other_body );
 	}
 
 	body->push_back( new ast::ReturnStmt( location,
@@ -424,10 +381,10 @@ ast::FunctionDecl * TryMutatorCore::create_terminate_match(
 }
 
 ast::CompoundStmt * TryMutatorCore::create_terminate_caller(
-		CodeLocation loc,
+		const CodeLocation & loc,
 		ast::FunctionDecl * try_wrapper,
-		ast::FunctionDecl * terminate_catch,
-		ast::FunctionDecl * terminate_match ) {
+		ast::FunctionDecl * terminate_match,
+		CatchList & terminate_handlers ) {
 	// {
 	//     int __handler_index = __cfaehm_try_terminate(`try`, `match`);
 	//     if ( __handler_index ) {
@@ -446,21 +403,29 @@ ast::CompoundStmt * TryMutatorCore::create_terminate_caller(
 		)
 	);
 
+	ast::ObjectDecl * except = make_exception_object( loc );
+	except->init = new ast::SingleInit( loc,
+		new ast::UntypedExpr( loc,
+			new ast::NameExpr( loc, "__cfaehm_get_current_termination" )
+		)
+	);
+
+	std::vector<ast::ptr<ast::CaseClause>> cases;
+	for ( auto const & [index, handler] : enumerate( terminate_handlers ) ) {
+		cases.emplace_back(
+			create_terminate_catch_case( except, index + 1, handler ) );
+	}
+	auto switch_stmt = new ast::SwitchStmt( loc,
+		new ast::VariableExpr( loc, index ), std::move( cases ) );
+
 	return new ast::CompoundStmt( loc, {
 		new ast::DeclStmt( loc, index ),
 		new ast::IfStmt( loc,
 			new ast::VariableExpr( loc, index ),
-			new ast::ExprStmt( loc,
-				new ast::UntypedExpr( loc,
-					new ast::VariableExpr( loc, terminate_catch ),
-					{
-						new ast::VariableExpr( loc, index ),
-						new ast::UntypedExpr( loc,
-							new ast::NameExpr( loc, "__cfaehm_get_current_termination" )
-						),
-					}
-				)
-			)
+			new ast::CompoundStmt( loc, {
+				new ast::DeclStmt( loc, except ),
+				switch_stmt,
+			} )
 		),
 	} );
 }
@@ -662,18 +627,15 @@ ast::Stmt * TryMutatorCore::postvisit( const ast::TryStmt *tryStmt ) {
 	}
 
 	if ( termination_handlers.size() ) {
-		// Define the three helper functions.
+		// Define the two helper functions.
 		ast::FunctionDecl * try_wrapper = create_try_wrapper( inner );
 		appendDeclStmt( block, try_wrapper );
-		ast::FunctionDecl * terminate_catch =
-			create_terminate_catch( termination_handlers );
-		appendDeclStmt( block, terminate_catch );
 		ast::FunctionDecl * terminate_match =
 			create_terminate_match( termination_handlers );
 		appendDeclStmt( block, terminate_match );
 		// Build the call to the try wrapper.
 		inner = create_terminate_caller(inner->location,
-			try_wrapper, terminate_catch, terminate_match );
+			try_wrapper, terminate_match, termination_handlers );
 	}
 
 	// Embed the try block.

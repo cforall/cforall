@@ -14,5 +14,4 @@ exceptions/try-ctrl-flow.cfa:133:1 error: "return" may not appear in a finally c
 exceptions/try-ctrl-flow.cfa:139:1 error: "return" may not appear in a finally clause
 exceptions/try-ctrl-flow.cfa:148:1 error: "break" outside a loop, "switch", or labelled block
 exceptions/try-ctrl-flow.cfa:159:1 error: "return" may not appear in a try statement with a catch clause
-exceptions/try-ctrl-flow.cfa:187:1 error: "return" may not appear in a catch clause
-exceptions/try-ctrl-flow.cfa:195:1 error: "return" may not appear in a catchResume clause
+exceptions/try-ctrl-flow.cfa:187:1 error: "return" may not appear in a catchResume clause
