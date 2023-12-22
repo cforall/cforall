@@ -26,18 +26,17 @@ namespace ast {
 
 namespace Linkage {
 
-Spec update( CodeLocation loc, Spec spec, const std::string * cmd ) {
+Spec update( const CodeLocation & loc, Spec spec, const std::string * cmd ) {
 	assert( cmd );
 	std::unique_ptr<const std::string> guard( cmd ); // allocated by lexer
 	if ( *cmd == "\"Cforall\"" ) {
-		spec.is_mangled = true;
-		return spec;
+		spec.is_mangled = spec.is_overloadable = true;
 	} else if ( *cmd == "\"C\"" ) {
-		spec.is_mangled = false;
-		return spec;
+		spec.is_mangled = spec.is_overloadable = false;
 	} else {
 		SemanticError( loc, "Invalid linkage specifier %s", cmd->c_str() );
 	}
+	return spec;
 }
 
 std::string name( Spec spec ) {

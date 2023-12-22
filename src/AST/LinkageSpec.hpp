@@ -30,7 +30,7 @@ enum {
 	Generate     = 1 << 1,
 	Overrideable = 1 << 2,
 	Builtin      = 1 << 3,
-	GccBuiltin   = 1 << 4
+	Overloadable = 1 << 4,
 };
 
 /// Bitflag type for storage classes
@@ -42,7 +42,7 @@ struct spec_flags {
 			bool is_generatable  : 1;
 			bool is_overrideable : 1;
 			bool is_builtin      : 1;
-			bool is_gcc_builtin  : 1;
+			bool is_overloadable : 1;
 		};
 	};
 
@@ -51,9 +51,8 @@ struct spec_flags {
 
 using Spec = bitfield<spec_flags>;
 
-/// If `cmd` = "C" returns `spec` with `is_mangled = false`.
-/// If `cmd` = "Cforall" returns `spec` with `is_mangled = true`.
-Spec update( CodeLocation loc, Spec spec, const std::string * cmd );
+/// Updates `spec` based on `cmd` (should be "C" or "Cforall").
+Spec update( const CodeLocation & loc, Spec spec, const std::string * cmd );
 
 /// A human-readable name for this spec
 std::string name( Spec spec );
@@ -61,17 +60,17 @@ std::string name( Spec spec );
 // Pre-defined flag combinations
 
 /// C built-in defined in prelude
-constexpr Spec Intrinsic  = { Mangle | Generate | Overrideable | Builtin };
+constexpr Spec Intrinsic  = { Mangle | Generate | Overrideable | Builtin | Overloadable };
 /// Ordinary Cforall
-constexpr Spec Cforall    = { Mangle | Generate };
+constexpr Spec Cforall    = { Mangle | Generate | Overloadable };
 /// C code: not overloadable, not mangled
 constexpr Spec C          = { Generate };
 /// Built by translator (e.g. struct assignment)
-constexpr Spec AutoGen    = { Mangle | Generate | Overrideable };
+constexpr Spec AutoGen    = { Mangle | Generate | Overrideable | Overloadable };
 /// GCC internal
-constexpr Spec Compiler   = { Mangle | Builtin | GccBuiltin };
+constexpr Spec Compiler   = { Builtin | Overloadable };
 /// Mangled builtins
-constexpr Spec BuiltinCFA = { Mangle | Generate | Builtin };
+constexpr Spec BuiltinCFA = { Mangle | Generate | Builtin | Overloadable };
 /// Non-mangled builtins
 constexpr Spec BuiltinC   = { Generate | Builtin };
 

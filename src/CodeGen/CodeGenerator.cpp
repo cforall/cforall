@@ -101,10 +101,7 @@ CodeGenerator::CodeGenerator( std::ostream & os, const Options & options ) :
 {}
 
 std::string CodeGenerator::mangleName( ast::DeclWithType const * decl ) {
-	// GCC builtins should always be printed unmangled.
-	if ( options.pretty || decl->linkage.is_gcc_builtin ) {
-		return decl->name;
-	} else if ( decl->linkage.is_mangled && decl->mangleName != "" ) {
+	if ( !options.pretty && decl->linkage.is_mangled && decl->mangleName != "" ) {
 		return decl->scopedMangleName();
 	} else {
 		return decl->name;

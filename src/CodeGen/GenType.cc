@@ -288,7 +288,7 @@ void GenType::postvisit( ast::TraitInstType const * type ) {
 void GenType::postvisit( ast::TypeofType const * type ) {
 	std::ostringstream os;
 	os << "typeof(";
-	ast::Pass<CodeGenerator>::read( type, os, options );
+	ast::Pass<CodeGenerator>::read( type->expr.get(), os, options );
 	os << ") " << result;
 	result = os.str();
 	handleQualifiers( type );
