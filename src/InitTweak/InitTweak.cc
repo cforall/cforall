@@ -188,6 +188,8 @@ namespace {
 			build( callExpr, indices, init, stmts );
 			if ( stmts.empty() ) {
 				return {};
+			} else if ( 1 == stmts.size() ) {
+				return std::move( stmts.front() );
 			} else {
 				auto block = new ast::CompoundStmt{ init->location, std::move( stmts ) };
 				init = nullptr;  // consumed in creating the list init
@@ -386,17 +388,12 @@ bool isConstructable( const ast::Type * type ) {
 }
 
 bool isDesignated( const ast::Init * init ) {
-//	return ( init ) ? ast::Pass<HasDesignations>::read( init ) : false;
-	ast::Pass<HasDesignations> finder;
-	maybe_accept( init, finder );
-	return finder.core.result;
+	return ( init ) ? ast::Pass<HasDesignations>::read( init ) : false;
 }
 
 bool checkInitDepth( const ast::ObjectDecl * objDecl ) {
-//	return ( objDecl->init ) ? ast::Pass<InitDepthChecker::read( objDecl->init, objDecl->type ) : true;
-	ast::Pass<InitDepthChecker> checker( objDecl->type );
-	maybe_accept( objDecl->init.get(), checker );
-	return checker.core.result;
+	return ( objDecl->init ) ? ast::Pass<InitDepthChecker>::read(
+		objDecl->init.get(), objDecl->type.get() ) : true;
 }
 
 bool isIntrinsicSingleArgCallStmt( const ast::Stmt * stmt ) {
