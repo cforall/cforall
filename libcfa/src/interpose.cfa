@@ -9,19 +9,23 @@
 // Author           : Thierry Delisle
 // Created On       : Wed Mar 29 16:10:31 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 27 21:09:03 2023
-// Update Count     : 196
+// Last Modified On : Thu Jan  4 11:04:06 2024
+// Update Count     : 215
 //
 
 #include <stdio.h>
 #include <unistd.h>										// _exit, getpid
 extern "C" {
 #include <dlfcn.h>										// dlopen, dlsym
+//#include <link.h>										// dl_iterate_phdr
+struct dl_phdr_info;
+int dl_iterate_phdr( int (*)( struct dl_phdr_info *, size_t, void * ), void * );
 #include <execinfo.h>									// backtrace, messages
 }
 
 #include "bits/defs.hfa"
 #include "bits/signal.hfa"								// sigHandler_?
+#include "concurrency/kernel/fwd.hfa"					// disable_interrupts, enable_interrupts
 #include "startup.hfa"									// STARTUP_PRIORITY_CORE
 #include <assert.h>
 
@@ -86,6 +90,7 @@ static void sigHandler_term( __CFA_SIGPARMS__ );
 static struct {
 	void (* exit)( int ) __attribute__(( __noreturn__ ));
 	void (* abort)( void ) __attribute__(( __noreturn__ ));
+	int (* dl_iterate_phdr)( int (*)( struct dl_phdr_info *, size_t, void * ), void * );
 } __cabi_libc;
 
 libcfa_public int cfa_main_returned;
@@ -101,7 +106,8 @@ extern "C" {
 		#pragma GCC diagnostic push
 		#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
 		INTERPOSE_LIBC( abort, version );
-		INTERPOSE_LIBC( exit , version );
+		INTERPOSE_LIBC( exit, version );
+		INTERPOSE_LIBC( dl_iterate_phdr, version );
 		#pragma GCC diagnostic pop
 
 		if(__cfathreadabi_interpose_startup) __cfathreadabi_interpose_startup( do_interpose_symbol );
@@ -149,6 +155,14 @@ extern "C" {
 		__cfaabi_sigaction( SIGABRT, sigHandler_term, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Abort signal from abort(3) (default: Core)
 	}
 }
+
+extern "C" int dl_iterate_phdr( int (* callback)( struct dl_phdr_info *, size_t, void * ), void * data ) {
+	// assert( RealRtn::dl_iterate_phdr != nullptr );
+	disable_interrupts();
+	int ret = __cabi_libc.dl_iterate_phdr( callback, data );
+	enable_interrupts( false );
+	return ret;
+} // dl_iterate_phdr
 
 //=============================================================================================
 // Terminating Signals logic

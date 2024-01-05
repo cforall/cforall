@@ -1,397 +1,397 @@
 ------- string -------
-(cmp(s_, s_) == 0) ok
+(strcmp(s_, s_) == 0) ok
 (s_ == s_) ok
 !(s_ != s_) ok
 !(s_ > s_) ok
 (s_ >= s_) ok
 (s_ <= s_) ok
 !(s_ < s_) ok
-(cmp("", s_) == 0) ok
+(strcmp("", s_) == 0) ok
 ("" == s_) ok
 !("" != s_) ok
 !("" > s_) ok
 ("" >= s_) ok
 ("" <= s_) ok
 !("" < s_) ok
-(cmp(s_, "") == 0) ok
+(strcmp(s_, "") == 0) ok
 (s_ == "") ok
 !(s_ != "") ok
 !(s_ > "") ok
 (s_ >= "") ok
 (s_ <= "") ok
 !(s_ < "") ok
-(cmp(s_, s_a) < 0) ok
+(strcmp(s_, s_a) < 0) ok
 !(s_ == s_a) ok
 (s_ != s_a) ok
 !(s_ > s_a) ok
 !(s_ >= s_a) ok
 (s_ <= s_a) ok
 (s_ < s_a) ok
-(cmp("", s_a) < 0) ok
+(strcmp("", s_a) < 0) ok
 !("" == s_a) ok
 ("" != s_a) ok
 !("" > s_a) ok
 !("" >= s_a) ok
 ("" <= s_a) ok
 ("" < s_a) ok
-(cmp(s_, "a") < 0) ok
+(strcmp(s_, "a") < 0) ok
 !(s_ == "a") ok
 (s_ != "a") ok
 !(s_ > "a") ok
 !(s_ >= "a") ok
 (s_ <= "a") ok
 (s_ < "a") ok
-(cmp(s_a, s_) > 0) ok
+(strcmp(s_a, s_) > 0) ok
 !(s_a == s_) ok
 (s_a != s_) ok
 (s_a > s_) ok
 (s_a >= s_) ok
 !(s_a <= s_) ok
 !(s_a < s_) ok
-(cmp("a", s_) > 0) ok
+(strcmp("a", s_) > 0) ok
 !("a" == s_) ok
 ("a" != s_) ok
 ("a" > s_) ok
 ("a" >= s_) ok
 !("a" <= s_) ok
 !("a" < s_) ok
-(cmp(s_a, "") > 0) ok
+(strcmp(s_a, "") > 0) ok
 !(s_a == "") ok
 (s_a != "") ok
 (s_a > "") ok
 (s_a >= "") ok
 !(s_a <= "") ok
 !(s_a < "") ok
-(cmp(s_, s_aa) < 0) ok
+(strcmp(s_, s_aa) < 0) ok
 !(s_ == s_aa) ok
 (s_ != s_aa) ok
 !(s_ > s_aa) ok
 !(s_ >= s_aa) ok
 (s_ <= s_aa) ok
 (s_ < s_aa) ok
-(cmp("", s_aa) < 0) ok
+(strcmp("", s_aa) < 0) ok
 !("" == s_aa) ok
 ("" != s_aa) ok
 !("" > s_aa) ok
 !("" >= s_aa) ok
 ("" <= s_aa) ok
 ("" < s_aa) ok
-(cmp(s_, "aa") < 0) ok
+(strcmp(s_, "aa") < 0) ok
 !(s_ == "aa") ok
 (s_ != "aa") ok
 !(s_ > "aa") ok
 !(s_ >= "aa") ok
 (s_ <= "aa") ok
 (s_ < "aa") ok
-(cmp(s_aa, s_) > 0) ok
+(strcmp(s_aa, s_) > 0) ok
 !(s_aa == s_) ok
 (s_aa != s_) ok
 (s_aa > s_) ok
 (s_aa >= s_) ok
 !(s_aa <= s_) ok
 !(s_aa < s_) ok
-(cmp("aa", s_) > 0) ok
+(strcmp("aa", s_) > 0) ok
 !("aa" == s_) ok
 ("aa" != s_) ok
 ("aa" > s_) ok
 ("aa" >= s_) ok
 !("aa" <= s_) ok
 !("aa" < s_) ok
-(cmp(s_aa, "") > 0) ok
+(strcmp(s_aa, "") > 0) ok
 !(s_aa == "") ok
 (s_aa != "") ok
 (s_aa > "") ok
 (s_aa >= "") ok
 !(s_aa <= "") ok
 !(s_aa < "") ok
-(cmp(s_a, s_aa) < 0) ok
+(strcmp(s_a, s_aa) < 0) ok
 !(s_a == s_aa) ok
 (s_a != s_aa) ok
 !(s_a > s_aa) ok
 !(s_a >= s_aa) ok
 (s_a <= s_aa) ok
 (s_a < s_aa) ok
-(cmp("a", s_aa) < 0) ok
+(strcmp("a", s_aa) < 0) ok
 !("a" == s_aa) ok
 ("a" != s_aa) ok
 !("a" > s_aa) ok
 !("a" >= s_aa) ok
 ("a" <= s_aa) ok
 ("a" < s_aa) ok
-(cmp(s_a, "aa") < 0) ok
+(strcmp(s_a, "aa") < 0) ok
 !(s_a == "aa") ok
 (s_a != "aa") ok
 !(s_a > "aa") ok
 !(s_a >= "aa") ok
 (s_a <= "aa") ok
 (s_a < "aa") ok
-(cmp(s_aa, s_a) > 0) ok
+(strcmp(s_aa, s_a) > 0) ok
 !(s_aa == s_a) ok
 (s_aa != s_a) ok
 (s_aa > s_a) ok
 (s_aa >= s_a) ok
 !(s_aa <= s_a) ok
 !(s_aa < s_a) ok
-(cmp("aa", s_a) > 0) ok
+(strcmp("aa", s_a) > 0) ok
 !("aa" == s_a) ok
 ("aa" != s_a) ok
 ("aa" > s_a) ok
 ("aa" >= s_a) ok
 !("aa" <= s_a) ok
 !("aa" < s_a) ok
-(cmp(s_aa, "a") > 0) ok
+(strcmp(s_aa, "a") > 0) ok
 !(s_aa == "a") ok
 (s_aa != "a") ok
 (s_aa > "a") ok
 (s_aa >= "a") ok
 !(s_aa <= "a") ok
 !(s_aa < "a") ok
-(cmp(s_a, s_a) == 0) ok
+(strcmp(s_a, s_a) == 0) ok
 (s_a == s_a) ok
 !(s_a != s_a) ok
 !(s_a > s_a) ok
 (s_a >= s_a) ok
 (s_a <= s_a) ok
 !(s_a < s_a) ok
-(cmp("a", s_a) == 0) ok
+(strcmp("a", s_a) == 0) ok
 ("a" == s_a) ok
 !("a" != s_a) ok
 !("a" > s_a) ok
 ("a" >= s_a) ok
 ("a" <= s_a) ok
 !("a" < s_a) ok
-(cmp(s_a, "a") == 0) ok
+(strcmp(s_a, "a") == 0) ok
 (s_a == "a") ok
 !(s_a != "a") ok
 !(s_a > "a") ok
 (s_a >= "a") ok
 (s_a <= "a") ok
 !(s_a < "a") ok
-(cmp(s_aa, s_aa) == 0) ok
+(strcmp(s_aa, s_aa) == 0) ok
 (s_aa == s_aa) ok
 !(s_aa != s_aa) ok
 !(s_aa > s_aa) ok
 (s_aa >= s_aa) ok
 (s_aa <= s_aa) ok
 !(s_aa < s_aa) ok
-(cmp("aa", s_aa) == 0) ok
+(strcmp("aa", s_aa) == 0) ok
 ("aa" == s_aa) ok
 !("aa" != s_aa) ok
 !("aa" > s_aa) ok
 ("aa" >= s_aa) ok
 ("aa" <= s_aa) ok
 !("aa" < s_aa) ok
-(cmp(s_aa, "aa") == 0) ok
+(strcmp(s_aa, "aa") == 0) ok
 (s_aa == "aa") ok
 !(s_aa != "aa") ok
 !(s_aa > "aa") ok
 (s_aa >= "aa") ok
 (s_aa <= "aa") ok
 !(s_aa < "aa") ok
-(cmp(s_a, s_b) < 0) ok
+(strcmp(s_a, s_b) < 0) ok
 !(s_a == s_b) ok
 (s_a != s_b) ok
 !(s_a > s_b) ok
 !(s_a >= s_b) ok
 (s_a <= s_b) ok
 (s_a < s_b) ok
-(cmp("a", s_b) < 0) ok
+(strcmp("a", s_b) < 0) ok
 !("a" == s_b) ok
 ("a" != s_b) ok
 !("a" > s_b) ok
 !("a" >= s_b) ok
 ("a" <= s_b) ok
 ("a" < s_b) ok
-(cmp(s_a, "b") < 0) ok
+(strcmp(s_a, "b") < 0) ok
 !(s_a == "b") ok
 (s_a != "b") ok
 !(s_a > "b") ok
 !(s_a >= "b") ok
 (s_a <= "b") ok
 (s_a < "b") ok
-(cmp(s_b, s_a) > 0) ok
+(strcmp(s_b, s_a) > 0) ok
 !(s_b == s_a) ok
 (s_b != s_a) ok
 (s_b > s_a) ok
 (s_b >= s_a) ok
 !(s_b <= s_a) ok
 !(s_b < s_a) ok
-(cmp("b", s_a) > 0) ok
+(strcmp("b", s_a) > 0) ok
 !("b" == s_a) ok
 ("b" != s_a) ok
 ("b" > s_a) ok
 ("b" >= s_a) ok
 !("b" <= s_a) ok
 !("b" < s_a) ok
-(cmp(s_b, "a") > 0) ok
+(strcmp(s_b, "a") > 0) ok
 !(s_b == "a") ok
 (s_b != "a") ok
 (s_b > "a") ok
 (s_b >= "a") ok
 !(s_b <= "a") ok
 !(s_b < "a") ok
-(cmp(s_a, s_ba) < 0) ok
+(strcmp(s_a, s_ba) < 0) ok
 !(s_a == s_ba) ok
 (s_a != s_ba) ok
 !(s_a > s_ba) ok
 !(s_a >= s_ba) ok
 (s_a <= s_ba) ok
 (s_a < s_ba) ok
-(cmp("a", s_ba) < 0) ok
+(strcmp("a", s_ba) < 0) ok
 !("a" == s_ba) ok
 ("a" != s_ba) ok
 !("a" > s_ba) ok
 !("a" >= s_ba) ok
 ("a" <= s_ba) ok
 ("a" < s_ba) ok
-(cmp(s_a, "ba") < 0) ok
+(strcmp(s_a, "ba") < 0) ok
 !(s_a == "ba") ok
 (s_a != "ba") ok
 !(s_a > "ba") ok
 !(s_a >= "ba") ok
 (s_a <= "ba") ok
 (s_a < "ba") ok
-(cmp(s_ba, s_a) > 0) ok
+(strcmp(s_ba, s_a) > 0) ok
 !(s_ba == s_a) ok
 (s_ba != s_a) ok
 (s_ba > s_a) ok
 (s_ba >= s_a) ok
 !(s_ba <= s_a) ok
 !(s_ba < s_a) ok
-(cmp("ba", s_a) > 0) ok
+(strcmp("ba", s_a) > 0) ok
 !("ba" == s_a) ok
 ("ba" != s_a) ok
 ("ba" > s_a) ok
 ("ba" >= s_a) ok
 !("ba" <= s_a) ok
 !("ba" < s_a) ok
-(cmp(s_ba, "a") > 0) ok
+(strcmp(s_ba, "a") > 0) ok
 !(s_ba == "a") ok
 (s_ba != "a") ok
 (s_ba > "a") ok
 (s_ba >= "a") ok
 !(s_ba <= "a") ok
 !(s_ba < "a") ok
-(cmp(s_aa, s_ab) < 0) ok
+(strcmp(s_aa, s_ab) < 0) ok
 !(s_aa == s_ab) ok
 (s_aa != s_ab) ok
 !(s_aa > s_ab) ok
 !(s_aa >= s_ab) ok
 (s_aa <= s_ab) ok
 (s_aa < s_ab) ok
-(cmp("aa", s_ab) < 0) ok
+(strcmp("aa", s_ab) < 0) ok
 !("aa" == s_ab) ok
 ("aa" != s_ab) ok
 !("aa" > s_ab) ok
 !("aa" >= s_ab) ok
 ("aa" <= s_ab) ok
 ("aa" < s_ab) ok
-(cmp(s_aa, "ab") < 0) ok
+(strcmp(s_aa, "ab") < 0) ok
 !(s_aa == "ab") ok
 (s_aa != "ab") ok
 !(s_aa > "ab") ok
 !(s_aa >= "ab") ok
 (s_aa <= "ab") ok
 (s_aa < "ab") ok
-(cmp(s_ab, s_aa) > 0) ok
+(strcmp(s_ab, s_aa) > 0) ok
 !(s_ab == s_aa) ok
 (s_ab != s_aa) ok
 (s_ab > s_aa) ok
 (s_ab >= s_aa) ok
 !(s_ab <= s_aa) ok
 !(s_ab < s_aa) ok
-(cmp("ab", s_aa) > 0) ok
+(strcmp("ab", s_aa) > 0) ok
 !("ab" == s_aa) ok
 ("ab" != s_aa) ok
 ("ab" > s_aa) ok
 ("ab" >= s_aa) ok
 !("ab" <= s_aa) ok
 !("ab" < s_aa) ok
-(cmp(s_ab, "aa") > 0) ok
+(strcmp(s_ab, "aa") > 0) ok
 !(s_ab == "aa") ok
 (s_ab != "aa") ok
 (s_ab > "aa") ok
 (s_ab >= "aa") ok
 !(s_ab <= "aa") ok
 !(s_ab < "aa") ok
-(cmp(s_ba, s_bb) < 0) ok
+(strcmp(s_ba, s_bb) < 0) ok
 !(s_ba == s_bb) ok
 (s_ba != s_bb) ok
 !(s_ba > s_bb) ok
 !(s_ba >= s_bb) ok
 (s_ba <= s_bb) ok
 (s_ba < s_bb) ok
-(cmp("ba", s_bb) < 0) ok
+(strcmp("ba", s_bb) < 0) ok
 !("ba" == s_bb) ok
 ("ba" != s_bb) ok
 !("ba" > s_bb) ok
 !("ba" >= s_bb) ok
 ("ba" <= s_bb) ok
 ("ba" < s_bb) ok
-(cmp(s_ba, "bb") < 0) ok
+(strcmp(s_ba, "bb") < 0) ok
 !(s_ba == "bb") ok
 (s_ba != "bb") ok
 !(s_ba > "bb") ok
 !(s_ba >= "bb") ok
 (s_ba <= "bb") ok
 (s_ba < "bb") ok
-(cmp(s_bb, s_ba) > 0) ok
+(strcmp(s_bb, s_ba) > 0) ok
 !(s_bb == s_ba) ok
 (s_bb != s_ba) ok
 (s_bb > s_ba) ok
 (s_bb >= s_ba) ok
 !(s_bb <= s_ba) ok
 !(s_bb < s_ba) ok
-(cmp("bb", s_ba) > 0) ok
+(strcmp("bb", s_ba) > 0) ok
 !("bb" == s_ba) ok
 ("bb" != s_ba) ok
 ("bb" > s_ba) ok
 ("bb" >= s_ba) ok
 !("bb" <= s_ba) ok
 !("bb" < s_ba) ok
-(cmp(s_bb, "ba") > 0) ok
+(strcmp(s_bb, "ba") > 0) ok
 !(s_bb == "ba") ok
 (s_bb != "ba") ok
 (s_bb > "ba") ok
 (s_bb >= "ba") ok
 !(s_bb <= "ba") ok
 !(s_bb < "ba") ok
-(cmp(s_aa, s_b) < 0) ok
+(strcmp(s_aa, s_b) < 0) ok
 !(s_aa == s_b) ok
 (s_aa != s_b) ok
 !(s_aa > s_b) ok
 !(s_aa >= s_b) ok
 (s_aa <= s_b) ok
 (s_aa < s_b) ok
-(cmp("aa", s_b) < 0) ok
+(strcmp("aa", s_b) < 0) ok
 !("aa" == s_b) ok
 ("aa" != s_b) ok
 !("aa" > s_b) ok
 !("aa" >= s_b) ok
 ("aa" <= s_b) ok
 ("aa" < s_b) ok
-(cmp(s_aa, "b") < 0) ok
+(strcmp(s_aa, "b") < 0) ok
 !(s_aa == "b") ok
 (s_aa != "b") ok
 !(s_aa > "b") ok
 !(s_aa >= "b") ok
 (s_aa <= "b") ok
 (s_aa < "b") ok
-(cmp(s_b, s_aa) > 0) ok
+(strcmp(s_b, s_aa) > 0) ok
 !(s_b == s_aa) ok
 (s_b != s_aa) ok
 (s_b > s_aa) ok
 (s_b >= s_aa) ok
 !(s_b <= s_aa) ok
 !(s_b < s_aa) ok
-(cmp("b", s_aa) > 0) ok
+(strcmp("b", s_aa) > 0) ok
 !("b" == s_aa) ok
 ("b" != s_aa) ok
 ("b" > s_aa) ok
 ("b" >= s_aa) ok
 !("b" <= s_aa) ok
 !("b" < s_aa) ok
-(cmp(s_b, "aa") > 0) ok
+(strcmp(s_b, "aa") > 0) ok
 !(s_b == "aa") ok
 (s_b != "aa") ok
 (s_b > "aa") ok
@@ -399,399 +399,399 @@
 !(s_b <= "aa") ok
 !(s_b < "aa") ok
 ------- string_res -------
-(cmp(s_, s_) == 0) ok
+(strcmp(s_, s_) == 0) ok
 (s_ == s_) ok
 !(s_ != s_) ok
 !(s_ > s_) ok
 (s_ >= s_) ok
 (s_ <= s_) ok
 !(s_ < s_) ok
-(cmp("", s_) == 0) ok
+(strcmp("", s_) == 0) ok
 ("" == s_) ok
 !("" != s_) ok
 !("" > s_) ok
 ("" >= s_) ok
 ("" <= s_) ok
 !("" < s_) ok
-(cmp(s_, "") == 0) ok
+(strcmp(s_, "") == 0) ok
 (s_ == "") ok
 !(s_ != "") ok
 !(s_ > "") ok
 (s_ >= "") ok
 (s_ <= "") ok
 !(s_ < "") ok
-(cmp(s_, s_a) < 0) ok
+(strcmp(s_, s_a) < 0) ok
 !(s_ == s_a) ok
 (s_ != s_a) ok
 !(s_ > s_a) ok
 !(s_ >= s_a) ok
 (s_ <= s_a) ok
 (s_ < s_a) ok
-(cmp("", s_a) < 0) ok
+(strcmp("", s_a) < 0) ok
 !("" == s_a) ok
 ("" != s_a) ok
 !("" > s_a) ok
 !("" >= s_a) ok
 ("" <= s_a) ok
 ("" < s_a) ok
-(cmp(s_, "a") < 0) ok
+(strcmp(s_, "a") < 0) ok
 !(s_ == "a") ok
 (s_ != "a") ok
 !(s_ > "a") ok
 !(s_ >= "a") ok
 (s_ <= "a") ok
 (s_ < "a") ok
-(cmp(s_a, s_) > 0) ok
+(strcmp(s_a, s_) > 0) ok
 !(s_a == s_) ok
 (s_a != s_) ok
 (s_a > s_) ok
 (s_a >= s_) ok
 !(s_a <= s_) ok
 !(s_a < s_) ok
-(cmp("a", s_) > 0) ok
+(strcmp("a", s_) > 0) ok
 !("a" == s_) ok
 ("a" != s_) ok
 ("a" > s_) ok
 ("a" >= s_) ok
 !("a" <= s_) ok
 !("a" < s_) ok
-(cmp(s_a, "") > 0) ok
+(strcmp(s_a, "") > 0) ok
 !(s_a == "") ok
 (s_a != "") ok
 (s_a > "") ok
 (s_a >= "") ok
 !(s_a <= "") ok
 !(s_a < "") ok
-(cmp(s_, s_aa) < 0) ok
+(strcmp(s_, s_aa) < 0) ok
 !(s_ == s_aa) ok
 (s_ != s_aa) ok
 !(s_ > s_aa) ok
 !(s_ >= s_aa) ok
 (s_ <= s_aa) ok
 (s_ < s_aa) ok
-(cmp("", s_aa) < 0) ok
+(strcmp("", s_aa) < 0) ok
 !("" == s_aa) ok
 ("" != s_aa) ok
 !("" > s_aa) ok
 !("" >= s_aa) ok
 ("" <= s_aa) ok
 ("" < s_aa) ok
-(cmp(s_, "aa") < 0) ok
+(strcmp(s_, "aa") < 0) ok
 !(s_ == "aa") ok
 (s_ != "aa") ok
 !(s_ > "aa") ok
 !(s_ >= "aa") ok
 (s_ <= "aa") ok
 (s_ < "aa") ok
-(cmp(s_aa, s_) > 0) ok
+(strcmp(s_aa, s_) > 0) ok
 !(s_aa == s_) ok
 (s_aa != s_) ok
 (s_aa > s_) ok
 (s_aa >= s_) ok
 !(s_aa <= s_) ok
 !(s_aa < s_) ok
-(cmp("aa", s_) > 0) ok
+(strcmp("aa", s_) > 0) ok
 !("aa" == s_) ok
 ("aa" != s_) ok
 ("aa" > s_) ok
 ("aa" >= s_) ok
 !("aa" <= s_) ok
 !("aa" < s_) ok
-(cmp(s_aa, "") > 0) ok
+(strcmp(s_aa, "") > 0) ok
 !(s_aa == "") ok
 (s_aa != "") ok
 (s_aa > "") ok
 (s_aa >= "") ok
 !(s_aa <= "") ok
 !(s_aa < "") ok
-(cmp(s_a, s_aa) < 0) ok
+(strcmp(s_a, s_aa) < 0) ok
 !(s_a == s_aa) ok
 (s_a != s_aa) ok
 !(s_a > s_aa) ok
 !(s_a >= s_aa) ok
 (s_a <= s_aa) ok
 (s_a < s_aa) ok
-(cmp("a", s_aa) < 0) ok
+(strcmp("a", s_aa) < 0) ok
 !("a" == s_aa) ok
 ("a" != s_aa) ok
 !("a" > s_aa) ok
 !("a" >= s_aa) ok
 ("a" <= s_aa) ok
 ("a" < s_aa) ok
-(cmp(s_a, "aa") < 0) ok
+(strcmp(s_a, "aa") < 0) ok
 !(s_a == "aa") ok
 (s_a != "aa") ok
 !(s_a > "aa") ok
 !(s_a >= "aa") ok
 (s_a <= "aa") ok
 (s_a < "aa") ok
-(cmp(s_aa, s_a) > 0) ok
+(strcmp(s_aa, s_a) > 0) ok
 !(s_aa == s_a) ok
 (s_aa != s_a) ok
 (s_aa > s_a) ok
 (s_aa >= s_a) ok
 !(s_aa <= s_a) ok
 !(s_aa < s_a) ok
-(cmp("aa", s_a) > 0) ok
+(strcmp("aa", s_a) > 0) ok
 !("aa" == s_a) ok
 ("aa" != s_a) ok
 ("aa" > s_a) ok
 ("aa" >= s_a) ok
 !("aa" <= s_a) ok
 !("aa" < s_a) ok
-(cmp(s_aa, "a") > 0) ok
+(strcmp(s_aa, "a") > 0) ok
 !(s_aa == "a") ok
 (s_aa != "a") ok
 (s_aa > "a") ok
 (s_aa >= "a") ok
 !(s_aa <= "a") ok
 !(s_aa < "a") ok
-(cmp(s_a, s_a) == 0) ok
+(strcmp(s_a, s_a) == 0) ok
 (s_a == s_a) ok
 !(s_a != s_a) ok
 !(s_a > s_a) ok
 (s_a >= s_a) ok
 (s_a <= s_a) ok
 !(s_a < s_a) ok
-(cmp("a", s_a) == 0) ok
+(strcmp("a", s_a) == 0) ok
 ("a" == s_a) ok
 !("a" != s_a) ok
 !("a" > s_a) ok
 ("a" >= s_a) ok
 ("a" <= s_a) ok
 !("a" < s_a) ok
-(cmp(s_a, "a") == 0) ok
+(strcmp(s_a, "a") == 0) ok
 (s_a == "a") ok
 !(s_a != "a") ok
 !(s_a > "a") ok
 (s_a >= "a") ok
 (s_a <= "a") ok
 !(s_a < "a") ok
-(cmp(s_aa, s_aa) == 0) ok
+(strcmp(s_aa, s_aa) == 0) ok
 (s_aa == s_aa) ok
 !(s_aa != s_aa) ok
 !(s_aa > s_aa) ok
 (s_aa >= s_aa) ok
 (s_aa <= s_aa) ok
 !(s_aa < s_aa) ok
-(cmp("aa", s_aa) == 0) ok
+(strcmp("aa", s_aa) == 0) ok
 ("aa" == s_aa) ok
 !("aa" != s_aa) ok
 !("aa" > s_aa) ok
 ("aa" >= s_aa) ok
 ("aa" <= s_aa) ok
 !("aa" < s_aa) ok
-(cmp(s_aa, "aa") == 0) ok
+(strcmp(s_aa, "aa") == 0) ok
 (s_aa == "aa") ok
 !(s_aa != "aa") ok
 !(s_aa > "aa") ok
 (s_aa >= "aa") ok
 (s_aa <= "aa") ok
 !(s_aa < "aa") ok
-(cmp(s_a, s_b) < 0) ok
+(strcmp(s_a, s_b) < 0) ok
 !(s_a == s_b) ok
 (s_a != s_b) ok
 !(s_a > s_b) ok
 !(s_a >= s_b) ok
 (s_a <= s_b) ok
 (s_a < s_b) ok
-(cmp("a", s_b) < 0) ok
+(strcmp("a", s_b) < 0) ok
 !("a" == s_b) ok
 ("a" != s_b) ok
 !("a" > s_b) ok
 !("a" >= s_b) ok
 ("a" <= s_b) ok
 ("a" < s_b) ok
-(cmp(s_a, "b") < 0) ok
+(strcmp(s_a, "b") < 0) ok
 !(s_a == "b") ok
 (s_a != "b") ok
 !(s_a > "b") ok
 !(s_a >= "b") ok
 (s_a <= "b") ok
 (s_a < "b") ok
-(cmp(s_b, s_a) > 0) ok
+(strcmp(s_b, s_a) > 0) ok
 !(s_b == s_a) ok
 (s_b != s_a) ok
 (s_b > s_a) ok
 (s_b >= s_a) ok
 !(s_b <= s_a) ok
 !(s_b < s_a) ok
-(cmp("b", s_a) > 0) ok
+(strcmp("b", s_a) > 0) ok
 !("b" == s_a) ok
 ("b" != s_a) ok
 ("b" > s_a) ok
 ("b" >= s_a) ok
 !("b" <= s_a) ok
 !("b" < s_a) ok
-(cmp(s_b, "a") > 0) ok
+(strcmp(s_b, "a") > 0) ok
 !(s_b == "a") ok
 (s_b != "a") ok
 (s_b > "a") ok
 (s_b >= "a") ok
 !(s_b <= "a") ok
 !(s_b < "a") ok
-(cmp(s_a, s_ba) < 0) ok
+(strcmp(s_a, s_ba) < 0) ok
 !(s_a == s_ba) ok
 (s_a != s_ba) ok
 !(s_a > s_ba) ok
 !(s_a >= s_ba) ok
 (s_a <= s_ba) ok
 (s_a < s_ba) ok
-(cmp("a", s_ba) < 0) ok
+(strcmp("a", s_ba) < 0) ok
 !("a" == s_ba) ok
 ("a" != s_ba) ok
 !("a" > s_ba) ok
 !("a" >= s_ba) ok
 ("a" <= s_ba) ok
 ("a" < s_ba) ok
-(cmp(s_a, "ba") < 0) ok
+(strcmp(s_a, "ba") < 0) ok
 !(s_a == "ba") ok
 (s_a != "ba") ok
 !(s_a > "ba") ok
 !(s_a >= "ba") ok
 (s_a <= "ba") ok
 (s_a < "ba") ok
-(cmp(s_ba, s_a) > 0) ok
+(strcmp(s_ba, s_a) > 0) ok
 !(s_ba == s_a) ok
 (s_ba != s_a) ok
 (s_ba > s_a) ok
 (s_ba >= s_a) ok
 !(s_ba <= s_a) ok
 !(s_ba < s_a) ok
-(cmp("ba", s_a) > 0) ok
+(strcmp("ba", s_a) > 0) ok
 !("ba" == s_a) ok
 ("ba" != s_a) ok
 ("ba" > s_a) ok
 ("ba" >= s_a) ok
 !("ba" <= s_a) ok
 !("ba" < s_a) ok
-(cmp(s_ba, "a") > 0) ok
+(strcmp(s_ba, "a") > 0) ok
 !(s_ba == "a") ok
 (s_ba != "a") ok
 (s_ba > "a") ok
 (s_ba >= "a") ok
 !(s_ba <= "a") ok
 !(s_ba < "a") ok
-(cmp(s_aa, s_ab) < 0) ok
+(strcmp(s_aa, s_ab) < 0) ok
 !(s_aa == s_ab) ok
 (s_aa != s_ab) ok
 !(s_aa > s_ab) ok
 !(s_aa >= s_ab) ok
 (s_aa <= s_ab) ok
 (s_aa < s_ab) ok
-(cmp("aa", s_ab) < 0) ok
+(strcmp("aa", s_ab) < 0) ok
 !("aa" == s_ab) ok
 ("aa" != s_ab) ok
 !("aa" > s_ab) ok
 !("aa" >= s_ab) ok
 ("aa" <= s_ab) ok
 ("aa" < s_ab) ok
-(cmp(s_aa, "ab") < 0) ok
+(strcmp(s_aa, "ab") < 0) ok
 !(s_aa == "ab") ok
 (s_aa != "ab") ok
 !(s_aa > "ab") ok
 !(s_aa >= "ab") ok
 (s_aa <= "ab") ok
 (s_aa < "ab") ok
-(cmp(s_ab, s_aa) > 0) ok
+(strcmp(s_ab, s_aa) > 0) ok
 !(s_ab == s_aa) ok
 (s_ab != s_aa) ok
 (s_ab > s_aa) ok
 (s_ab >= s_aa) ok
 !(s_ab <= s_aa) ok
 !(s_ab < s_aa) ok
-(cmp("ab", s_aa) > 0) ok
+(strcmp("ab", s_aa) > 0) ok
 !("ab" == s_aa) ok
 ("ab" != s_aa) ok
 ("ab" > s_aa) ok
 ("ab" >= s_aa) ok
 !("ab" <= s_aa) ok
 !("ab" < s_aa) ok
-(cmp(s_ab, "aa") > 0) ok
+(strcmp(s_ab, "aa") > 0) ok
 !(s_ab == "aa") ok
 (s_ab != "aa") ok
 (s_ab > "aa") ok
 (s_ab >= "aa") ok
 !(s_ab <= "aa") ok
 !(s_ab < "aa") ok
-(cmp(s_ba, s_bb) < 0) ok
+(strcmp(s_ba, s_bb) < 0) ok
 !(s_ba == s_bb) ok
 (s_ba != s_bb) ok
 !(s_ba > s_bb) ok
 !(s_ba >= s_bb) ok
 (s_ba <= s_bb) ok
 (s_ba < s_bb) ok
-(cmp("ba", s_bb) < 0) ok
+(strcmp("ba", s_bb) < 0) ok
 !("ba" == s_bb) ok
 ("ba" != s_bb) ok
 !("ba" > s_bb) ok
 !("ba" >= s_bb) ok
 ("ba" <= s_bb) ok
 ("ba" < s_bb) ok
-(cmp(s_ba, "bb") < 0) ok
+(strcmp(s_ba, "bb") < 0) ok
 !(s_ba == "bb") ok
 (s_ba != "bb") ok
 !(s_ba > "bb") ok
 !(s_ba >= "bb") ok
 (s_ba <= "bb") ok
 (s_ba < "bb") ok
-(cmp(s_bb, s_ba) > 0) ok
+(strcmp(s_bb, s_ba) > 0) ok
 !(s_bb == s_ba) ok
 (s_bb != s_ba) ok
 (s_bb > s_ba) ok
 (s_bb >= s_ba) ok
 !(s_bb <= s_ba) ok
 !(s_bb < s_ba) ok
-(cmp("bb", s_ba) > 0) ok
+(strcmp("bb", s_ba) > 0) ok
 !("bb" == s_ba) ok
 ("bb" != s_ba) ok
 ("bb" > s_ba) ok
 ("bb" >= s_ba) ok
 !("bb" <= s_ba) ok
 !("bb" < s_ba) ok
-(cmp(s_bb, "ba") > 0) ok
+(strcmp(s_bb, "ba") > 0) ok
 !(s_bb == "ba") ok
 (s_bb != "ba") ok
 (s_bb > "ba") ok
 (s_bb >= "ba") ok
 !(s_bb <= "ba") ok
 !(s_bb < "ba") ok
-(cmp(s_aa, s_b) < 0) ok
+(strcmp(s_aa, s_b) < 0) ok
 !(s_aa == s_b) ok
 (s_aa != s_b) ok
 !(s_aa > s_b) ok
 !(s_aa >= s_b) ok
 (s_aa <= s_b) ok
 (s_aa < s_b) ok
-(cmp("aa", s_b) < 0) ok
+(strcmp("aa", s_b) < 0) ok
 !("aa" == s_b) ok
 ("aa" != s_b) ok
 !("aa" > s_b) ok
 !("aa" >= s_b) ok
 ("aa" <= s_b) ok
 ("aa" < s_b) ok
-(cmp(s_aa, "b") < 0) ok
+(strcmp(s_aa, "b") < 0) ok
 !(s_aa == "b") ok
 (s_aa != "b") ok
 !(s_aa > "b") ok
 !(s_aa >= "b") ok
 (s_aa <= "b") ok
 (s_aa < "b") ok
-(cmp(s_b, s_aa) > 0) ok
+(strcmp(s_b, s_aa) > 0) ok
 !(s_b == s_aa) ok
 (s_b != s_aa) ok
 (s_b > s_aa) ok
 (s_b >= s_aa) ok
 !(s_b <= s_aa) ok
 !(s_b < s_aa) ok
-(cmp("b", s_aa) > 0) ok
+(strcmp("b", s_aa) > 0) ok
 !("b" == s_aa) ok
 ("b" != s_aa) ok
 ("b" > s_aa) ok
 ("b" >= s_aa) ok
 !("b" <= s_aa) ok
 !("b" < s_aa) ok
-(cmp(s_b, "aa") > 0) ok
+(strcmp(s_b, "aa") > 0) ok
 !(s_b == "aa") ok
 (s_b != "aa") ok
 (s_b > "aa") ok

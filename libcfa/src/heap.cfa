@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep 30 17:31:15 2023
-// Update Count     : 1617
+// Last Modified On : Wed Jan  3 21:30:54 2024
+// Update Count     : 1619
 //
 
 #include <stdio.h>
@@ -26,7 +26,7 @@ extern "C" {
 #include "heap.hfa"
 #include "bits/align.hfa"								// libAlign
 #include "bits/defs.hfa"								// likely, unlikely
-#include "concurrency/kernel/fwd.hfa"					// __POLL_PREEMPTION
+#include "concurrency/kernel/fwd.hfa"					// disable_interrupts, enable_interrupts
 #include "startup.hfa"									// STARTUP_PRIORITY_MEMORY
 #include "math.hfa"										// ceiling, min
 #include "bitmanip.hfa"									// is_pow2, ceiling2

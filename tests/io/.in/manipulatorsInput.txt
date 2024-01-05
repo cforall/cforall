@@ -9,6 +9,14 @@ abcxxx
 abcyyy
 aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwww
 uuuuuccccuuuuu
+get this line
+@# this line 1)-{}%
+"abc"
+'abc  '
+{ d d
+
+d }
+X		ZC44%Y
 abc 
 cccccb 
 xx
@@ -16,6 +24,14 @@ abcxxx
 abcyyy
 aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwww
 uuuuuccccuuuuu
+get this line
+@# this line 1)-{}%
+"abc"
+'abc  '
+{ d d
+
+d }
+X		ZC44%Y
 ab
 0xff 017 15-15
 0xff 017 15-15

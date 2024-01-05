@@ -10,14 +10,14 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec  6 12:15:52 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb 12 18:24:47 2020
-// Update Count     : 177
+// Last Modified On : Mon Jan  1 12:07:59 2024
+// Update Count     : 188
 //
 
-#include <fstream.hfa>
-#include <stdlib.hfa>
-#include <kernel.hfa>
+#include <fstream.hfa>									// sin/sout
+#include <stdlib.hfa>									// convert
 #include <thread.hfa>
+#include <math.hfa>										// sqrt
 #include <string.h>										// strcmp
 
 thread Quicksort {
@@ -81,63 +81,74 @@ void main( Quicksort & qs ) {							// thread starts here
 	} // with
 } // main
 
-
-bool convert( int & val, const char * nptr ) {			// convert C string to integer
-	char * eptr;
-	int temp = strto( nptr, &eptr, 10 );				// do not change val on false
-	// true => entire string valid with no extra characters
-	return *nptr != '\0' && *eptr == '\0' ? val = temp, true : false;
-} // convert
-
-void usage( char * argv[] ) {
-	sout | "Usage:" | argv[0] | "( -s unsorted-file [ sorted-file ] | -t size (>= 0) [ depth (>= 0) ] )";
-	exit( EXIT_FAILURE );								// TERMINATE!
-} // usage
-
+// convert(...) throws out_of_range or invalid_argument
+ExceptionDecl( cmd_error );
 
 int main( int argc, char * argv[] ) {
-	ifstream & unsortedfile = sin;
-	ofstream & sortedfile = sout;						// default value
-	int depth = 0, size;
+	ifstream unsortedfile = sin;						// default values
+	ofstream sortedfile = sout;
+	// Must be signed because of the conversion routine.
+	intmax_t depth = 0;
+	intmax_t size = -1;									// -1 means time mode not activated
 
-	if ( argc != 1 ) {									// do not use defaults
-		if ( argc < 2 || argc > 4 ) usage( argv );		// wrong number of options
-		if ( strcmp( argv[1], "-t" ) == 0 ) {			// timing ?
-			&unsortedfile = (ifstream *)0;				// no input
+	try {
+		if ( 1 < argc && strcmp( argv[1], "-t" ) == 0 ) { // time mode ?
 			choose ( argc ) {
 			  case 4:
-				if ( ! convert( depth, argv[3] ) || depth < 0 ) usage( argv );
+				depth = convert( argv[3] );				// invalid integer ?
+				if ( depth < 0 ) throw ExceptionInst( cmd_error );
 				fallthrough;
 			  case 3:
-				if ( ! convert( size, argv[2] ) || size < 0 ) usage( argv );
+				size = convert( argv[2] );				// invalid integer ?
+				if ( size < 0 ) throw ExceptionInst( cmd_error );
+			  default:									// wrong number of options
+				throw ExceptionInst( cmd_error );
 			} // choose
 		} else {										// sort file
 			choose ( argc ) {
-			  case 3:
-				&sortedfile = new( (const char *)argv[2] ); // open the output file
-				if ( fail( sortedfile ) ) {
-					serr | "Error! Could not open sorted output file \"" | argv[2] | "\"";
-					usage( argv );
+			  case 4:
+				depth = convert( argv[3] );				// invalid integer ?
+				if ( depth < 0 ) throw ExceptionInst( cmd_error );
+				fallthrough;
+			  case 3: case 2:
+				if ( strcmp( argv[1], "d" ) != 0 ) {
+					try {								// open input file first as output creates file
+						open( unsortedfile, argv[1] );
+					} catch( open_failure * ) {			// open failed ?
+						serr | "Error! Could not open unsorted input file \"" | argv[1] | "\"";
+						throw ExceptionInst( cmd_error );
+					} // try
+				} // if
+				if ( argc > 2 && strcmp( argv[2], "d" ) != 0 ) {
+					try {
+						open( sortedfile, argv[2] );
+					} catch( open_failure * ) {			// open failed ?
+						serr | "Error! Could not open sorted output file \"" | argv[2] | "\"";
+						throw ExceptionInst( cmd_error );
+					} // try
 				} // if
 				fallthrough;
-			  case 2:
-				&unsortedfile = new( (const char *)argv[1] ); // open the input file
-				if ( fail( unsortedfile ) ) {
-					serr | "Error! Could not open unsorted input file \"" | argv[1] | "\"";
-					usage( argv );
-				} // if
+			  case 1: ;									// defaults
+			  default:									// wrong number of options
+				throw ExceptionInst( cmd_error );
 			} // choose
 		} // if
-	} // if
-	sortedfile | nlOff;									// turn off auto newline
+	} catch( exception_t * ) {							// catch any
+		exit | "Usage: " | argv[0] |					// TERMINATE
+			" ( [ unsorted-file | 'd' [ sorted-file | 'd' [ depth (>= 0) ] ] ]"
+			" | -t size (>= 0) [ depth (>= 0) ] )";
+	} //  try
 
 	enum { ValuesPerLine = 22 };						// number of values printed per line
 
-	if ( &unsortedfile ) {								// generate output ?
+	sortedfile | nlOff;									// turn off auto newline
+
+	if ( size == -1 ) {									// generate output ?
 		for () {
 			unsortedfile | size;						// read number of elements in the list
 		  if ( eof( unsortedfile ) ) break;
-			int * values = alloc( size );				// values to be sorted, too large to put on stack
+
+			int * values = aalloc( size );				// values to be sorted, too large to put on stack
 			for ( counter; size ) {						// read unsorted numbers
 				unsortedfile | values[counter];
 				if ( counter != 0 && counter % ValuesPerLine == 0 ) sortedfile | nl | "  ";
@@ -145,6 +156,7 @@ int main( int argc, char * argv[] ) {
 				if ( counter < size - 1 && (counter + 1) % ValuesPerLine != 0 ) sortedfile | ' ';
 			} // for
 			sortedfile | nl;
+
 			if ( size > 0 ) {							// values to sort ?
 				Quicksort QS = { values, size - 1, 0 }; // sort values
 			} // wait until sort tasks terminate
@@ -157,17 +169,18 @@ int main( int argc, char * argv[] ) {
 
 			delete( values );
 		} // for
-		if ( &unsortedfile != &sin ) delete( &unsortedfile ); // close input/output files
-		if ( &sortedfile != &sout ) delete( &sortedfile );
-	} else {
+	} else {											// timing
+		PRNG prng;										
 		processor processors[ (1 << depth) - 1 ] __attribute__(( unused )); // create 2^depth-1 kernel threads
+		int * values = aalloc( size );					// values to be sorted, too large to put on stack
 
-		int * values = alloc( size );					// values to be sorted, too large to put on stack
 		for ( counter; size ) {							// generate unsorted numbers
 			values[counter] = size - counter;			// descending values
 		} // for
-		for ( i; 200 ) {								// random shuffle a few values
-			swap( values[rand() % size], values[rand() % size] );
+
+		unsigned int times = sqrt( size );
+		for ( unsigned int counter = 0; counter < times; counter += 1 ) {
+			swap( values[0], values[prng(size)] );		// randomize unsorted numbers
 		} // for
 		{
 			Quicksort QS = { values, size - 1, depth }; // sort values

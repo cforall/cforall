@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 15 17:55:31 2023
-// Update Count     : 596
+// Last Modified On : Wed Jan  3 10:53:18 2024
+// Update Count     : 610
 //
 
 #pragma once
@@ -391,7 +391,7 @@ static inline {
 struct _Istream_str_base {
 	union {
 		const char * scanset;
-		char delimiter[2];
+		char delimiters[3];								// [0] => left, [1] => right
 	};
 	int wd;												// width
 	union {
@@ -411,24 +411,23 @@ struct _Istream_Cstr {
 }; // _Istream_Cstr
 
 struct _Istream_Cquoted {
-	char * s;
-	inline _Istream_str_base;
+	_Istream_Cstr cstr;
 }; // _Istream_Cquoted
 
 static inline {
 	// width must include room for null terminator
 	_Istream_Cstr wdi( unsigned int wd, char s[] ) { return (_Istream_Cstr)@{ s, { {0p}, wd, {.all : 0} } }; }
-	// read width does not include null terminator
 	_Istream_Cstr wdi( unsigned int wd, unsigned int rwd, char s[] ) {
 		if ( wd <= rwd ) throw (cstring_length){ &cstring_length_vt };
 		return (_Istream_Cstr)@{ s, { {0p}, rwd, {.flags.rwd : true} } };
 	}
-	_Istream_Cquoted & quoted( _Istream_Cstr & fmt, const char delimiter = '"' ) {
-		fmt.delimiter[0] = delimiter; fmt.delimiter[1] = '\0';
+	_Istream_Cquoted & quoted( _Istream_Cstr & fmt, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
+		fmt.delimiters[0] = Ldelimiter;  fmt.delimiters[1] = Rdelimiter;  fmt.delimiters[2] = '\0';
 		return (_Istream_Cquoted &)fmt;
 	}
 	_Istream_Cstr & getline( _Istream_Cstr & fmt, const char delimiter = '\n' ) {
-		fmt.delimiter[0] = delimiter; fmt.delimiter[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt; }
+		fmt.delimiters[0] = delimiter; fmt.delimiters[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt;
+	}
 	_Istream_Cstr & incl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
 	_Istream_Cstr & excl( const char scanset[], _Istream_Cstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = true; return fmt; }
 	_Istream_Cstr ignore( char s[] ) { return (_Istream_Cstr)@{ s, { {0p}, -1, {.flags.ignore : true} } }; }

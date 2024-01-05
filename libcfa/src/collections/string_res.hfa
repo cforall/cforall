@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 12 15:45:47 2023
-// Update Count     : 2
+// Last Modified On : Thu Jan  4 11:28:06 2024
+// Update Count     : 27
 //
 
 #pragma once
@@ -69,39 +69,39 @@ void ^?{}( charclass_res & );
 //######################### String #########################
 
 // Getters
-size_t size(const string_res &s);
+size_t size(const string_res & s);
 
 // Constructors, Assignment Operators, Destructor
-void ?{}(string_res &s); // empty string
-void ?{}(string_res &s, const char* buffer, size_t bsize); // copy specific length from buffer
-static inline void ?{}(string_res &s, const char* rhs) { // copy from string literal (NULL-terminated)
+void ?{}(string_res & s); // empty string
+void ?{}(string_res & s, const char * buffer, size_t bsize); // copy specific length from buffer
+static inline void ?{}(string_res & s, const char * rhs) { // copy from string literal (NULL-terminated)
     (s){ rhs, strlen(rhs) };
 }
 
-void ?{}(string_res &s, const string_res & s2) = void;
-void ?{}(string_res &s, string_res & s2) = void;
+void ?{}(string_res & s, const string_res & s2) = void;
+void ?{}(string_res & s, string_res & s2) = void;
 
 enum StrResInitMode { COPY_VALUE, SHARE_EDITS };
-void ?{}(string_res &s, const string_res & src, StrResInitMode, size_t start, size_t end );
-static inline void ?{}(string_res &s, const string_res & src, StrResInitMode mode ) {
+void ?{}(string_res & s, const string_res & src, StrResInitMode, size_t start, size_t end );
+static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mode ) {
     ?{}( s, src, mode, 0, size(src));
 }
 
-string_res & assign(string_res &s, const char* buffer, size_t bsize); // copy specific length from buffer
-static inline string_res & ?=?(string_res &s, const char* other) {  // copy from string literal (NULL-terminated)
-    return assign(s, other, strlen(other));
+string_res & assign(string_res & s, const char * buffer, size_t bsize); // copy specific length from buffer
+static inline string_res & ?=?(string_res & s, const char * c) {  // copy from string literal (NULL-terminated)
+    return assign(s, c, strlen(c));
 }
-string_res & ?=?(string_res &s, const string_res &other);
-string_res & ?=?(string_res &s, string_res &other);
-string_res & ?=?(string_res &s, char other);
+string_res & ?=?(string_res & s, const string_res & c);
+string_res & ?=?(string_res & s, string_res & c);
+string_res & ?=?(string_res & s, char c);
 
-void ^?{}(string_res &s);
+void ^?{}(string_res & s);
 
 // IO Operator
-ofstream & ?|?(ofstream &out, const string_res &s);
-void ?|?(ofstream &out, const string_res &s);
-ifstream & ?|?(ifstream &in, string_res &s);
-void ?|?( ifstream & in, string_res & this );
+ofstream & ?|?(ofstream & out, const string_res & s);
+void ?|?(ofstream & out, const string_res & s);
+ifstream & ?|?(ifstream & in, string_res & s);
+void ?|?( ifstream & in, string_res & s );
 
 struct _Istream_Rstr {
 	string_res * s;
@@ -112,10 +112,10 @@ static inline {
 	// read width does not include null terminator
 	_Istream_Rstr wdi( unsigned int rwd, string_res & s ) { return (_Istream_Rstr)@{ &s, {{0p}, rwd, {.flags.rwd : true}} }; }
 	_Istream_Rstr getline( string_res & s, const char delimiter = '\n' ) {
-		return (_Istream_Rstr)@{ &s, {{.delimiter : { delimiter, '\0' } }, -1, {.flags.delimiter : true, .flags.inex : true}} };
+		return (_Istream_Rstr)@{ &s, {{.delimiters : { delimiter, '\0' } }, -1, {.flags.delimiter : true, .flags.inex : true}} };
 	}
 	_Istream_Rstr & getline( _Istream_Rstr & fmt, const char delimiter = '\n' ) {
-		fmt.delimiter[0] = delimiter; fmt.delimiter[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt;
+		fmt.delimiters[0] = delimiter; fmt.delimiters[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt;
 	}
 	_Istream_Rstr incl( const char scanset[], string_res & s ) { return (_Istream_Rstr)@{ &s, {{scanset}, -1, {.flags.inex : false}} }; }
 	_Istream_Rstr & incl( const char scanset[], _Istream_Rstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
@@ -128,20 +128,20 @@ ifstream & ?|?( ifstream & is, _Istream_Rstr f );
 void ?|?( ifstream & is, _Istream_Rstr t );
 
 // Concatenation
-void append(string_res &s, const char* buffer, size_t bsize);
-void ?+=?(string_res &s, char other); // append a character
-void ?+=?(string_res &s, const string_res &s2); // append-concatenate to first string
-static inline void ?+=?(string_res &s, const char* other) {
-    append( s, other, strlen(other) );
+void append(string_res & s, const char * buffer, size_t bsize);
+void ?+=?(string_res & s, char c); // append a character
+void ?+=?(string_res & s, const string_res & s2); // append-concatenate to first string
+static inline void ?+=?(string_res & s, const char * c) {
+    append( s, c, strlen(c) );
 }
 
 // Character access
-void assignAt(const string_res &s, size_t index, char val);
-char ?[?](const string_res &s, size_t index); // Mike changed to ret by val from Sunjay's ref, to match Peter's
-//char codePointAt(const string_res &s, size_t index); // revisit under Unicode
+void assignAt(const string_res & s, size_t index, char val);
+char ?[?](const string_res & s, size_t index); // Mike changed to ret by val from Sunjay's ref, to match Peter's
+//char codePointAt(const string_res & s, size_t index); // revisit under Unicode
 
 // Comparisons
-int  cmp (const string_res &, const string_res &);
+int  strcmp (const string_res &, const string_res &);
 bool ?==?(const string_res &, const string_res &);
 bool ?!=?(const string_res &, const string_res &);
 bool ?>? (const string_res &, const string_res &);
@@ -149,53 +149,53 @@ bool ?>=?(const string_res &, const string_res &);
 bool ?<=?(const string_res &, const string_res &);
 bool ?<? (const string_res &, const string_res &);
 
-int  cmp (const string_res &, const char*);
-bool ?==?(const string_res &, const char*);
-bool ?!=?(const string_res &, const char*);
-bool ?>? (const string_res &, const char*);
-bool ?>=?(const string_res &, const char*);
-bool ?<=?(const string_res &, const char*);
-bool ?<? (const string_res &, const char*);
+int  strcmp(const string_res &, const char *);
+bool ?==?(const string_res &, const char *);
+bool ?!=?(const string_res &, const char *);
+bool ?>? (const string_res &, const char *);
+bool ?>=?(const string_res &, const char *);
+bool ?<=?(const string_res &, const char *);
+bool ?<? (const string_res &, const char *);
 
-int  cmp (const char*, const string_res &);
-bool ?==?(const char*, const string_res &);
-bool ?!=?(const char*, const string_res &);
-bool ?>? (const char*, const string_res &);
-bool ?>=?(const char*, const string_res &);
-bool ?<=?(const char*, const string_res &);
-bool ?<? (const char*, const string_res &);
+int  strcmp(const char *, const string_res &);
+bool ?==?(const char *, const string_res &);
+bool ?!=?(const char *, const string_res &);
+bool ?>? (const char *, const string_res &);
+bool ?>=?(const char *, const string_res &);
+bool ?<=?(const char *, const string_res &);
+bool ?<? (const char *, const string_res &);
 
 // String search
-bool contains(const string_res &s, char ch); // single character
+bool contains(const string_res & s, char ch); // single character
 
-int find(const string_res &s, char search);
-int find(const string_res &s, const string_res &search);
-int find(const string_res &s, const char* search);
-int find(const string_res &s, const char* search, size_t searchsize);
+int find(const string_res & s, char search);
+int find(const string_res & s, const string_res & search);
+int find(const string_res & s, const char * search);
+int find(const string_res & s, const char * search, size_t searchsize);
 
-int findFrom(const string_res &s, size_t fromPos, char search);
-int findFrom(const string_res &s, size_t fromPos, const string_res &search);
-int findFrom(const string_res &s, size_t fromPos, const char* search);
-int findFrom(const string_res &s, size_t fromPos, const char* search, size_t searchsize);
+int findFrom(const string_res & s, size_t fromPos, char search);
+int findFrom(const string_res & s, size_t fromPos, const string_res & search);
+int findFrom(const string_res & s, size_t fromPos, const char * search);
+int findFrom(const string_res & s, size_t fromPos, const char * search, size_t searchsize);
 
-bool includes(const string_res &s, const string_res &search);
-bool includes(const string_res &s, const char* search);
-bool includes(const string_res &s, const char* search, size_t searchsize);
+bool includes(const string_res & s, const string_res & search);
+bool includes(const string_res & s, const char * search);
+bool includes(const string_res & s, const char * search, size_t searchsize);
 
-bool startsWith(const string_res &s, const string_res &prefix);
-bool startsWith(const string_res &s, const char* prefix);
-bool startsWith(const string_res &s, const char* prefix, size_t prefixsize);
+bool startsWith(const string_res & s, const string_res & prefix);
+bool startsWith(const string_res & s, const char * prefix);
+bool startsWith(const string_res & s, const char * prefix, size_t prefixsize);
 
-bool endsWith(const string_res &s, const string_res &suffix);
-bool endsWith(const string_res &s, const char* suffix);
-bool endsWith(const string_res &s, const char* suffix, size_t suffixsize);
+bool endsWith(const string_res & s, const string_res & suffix);
+bool endsWith(const string_res & s, const char * suffix);
+bool endsWith(const string_res & s, const char * suffix, size_t suffixsize);
 
-int include(const string_res &s, const charclass_res &mask);
-int exclude(const string_res &s, const charclass_res &mask);
+int include(const string_res & s, const charclass_res & mask);
+int exclude(const string_res & s, const charclass_res & mask);
 
 // Modifiers
-void padStart(string_res &s, size_t n);
-void padStart(string_res &s, size_t n, char padding);
-void padEnd(string_res &s, size_t n);
+void padStart(string_res & s, size_t n);
+void padStart(string_res & s, size_t n, char padding);
+void padEnd(string_res & s, size_t n);
 void padEnd(string_res &s, size_t n, char padding);
 

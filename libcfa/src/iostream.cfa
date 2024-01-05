@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov 17 13:33:12 2023
-// Update Count     : 1853
+// Last Modified On : Wed Jan  3 10:53:13 2024
+// Update Count     : 1898
 //
 
 #include "iostream.hfa"
@@ -983,7 +983,7 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	}
 
-	istype & ?|?( istype & is, _Istream_Cquoted f ) {
+	istype & ?|?( istype & is, _Istream_Cquoted f ) with( f ) {
 		char fmtstr[32];								// storage scanset and format codes
 		fmtstr[0] = '%';
 
@@ -991,56 +991,52 @@ forall( istype & | basic_istream( istype ) ) {
 		int args;
 		bool check = true;
 
-		if ( f.flags.ignore ) { check = false; fmtstr[1] = '*'; pos += 1; }
-		int rwd = f.wd;
-		if ( f.wd != -1 ) {								// => just ignore versus ignore with width
+		if ( cstr.flags.ignore ) { check = false; fmtstr[1] = '*'; pos += 1; }
+		int rwd = cstr.wd;
+		if ( cstr.wd != -1 ) {						// => just ignore versus ignore with width
 			// wd is buffer bytes available (for input chars + null terminator)
 			// rwd is count of input chars
 			// no maximum width necessary because text ignored => width is read width
-			if ( f.flags.rwd ) check = false;
-			else rwd = f.wd - 1;
+			if ( cstr.flags.rwd ) check = false;
+			else rwd = cstr.wd - 1;
 			pos += sprintf( &fmtstr[pos], "%d", rwd );
 		} // if
 
 		int len = 0;									// may not be set in fmt
-		if ( ! f.flags.inex ) {							// => quoted getline
-			// fprintf( stderr, "quoted\n" );
+		char enddelim;
+		if ( ! cstr.flags.inex ) {						// => quoted getline
 			args = fmt( is, "%*[ \f\n\r\t\v]" );		// remove leading whitespace
 			if ( eof( is ) ) goto Eof;
-//			args = fmt( is, (const char *)f.delimiter ); // remove leading quote
-			args = fmt( is, "'%n", &len ); // remove leading quote
-			fprintf( stderr, "quoted %d %d\n", args, len );
+			char rfmt[4] = { cstr.delimiters[0], '%', 'n', '\0' };
+			args = fmt( is, rfmt, &len );				// remove leading quote
 			if ( len == 0 || eof( is ) ) goto Eof;
 		} // if
-		sprintf( &fmtstr[pos], "[^%c]%%n", f.delimiter[0] );
-		// fprintf( stderr, "getline %s %d\n", fmtstr, f.wd );
-		if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
-		else args = fmt( is, fmtstr, f.s, &len );
-		// fprintf( stderr, "getline %s %d %d %d\n", fmtstr, args, f.wd, eof( is ) );
+		enddelim = cstr.delimiters[1] == '\0' ? cstr.delimiters[0] : cstr.delimiters[1];
+		sprintf( &fmtstr[pos], "[^%c]%%n", enddelim );
+		if ( cstr.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
+		else args = fmt( is, fmtstr, cstr.s, &len );
 		if ( check && len == rwd && ! eof( is ) ) {		// might not fit
 			char peek;
 			fmt( is, "%c", &peek );						// check for delimiter
-			// fprintf( stderr, "peek %d '%c'\n", args, peek );
 			if ( ! eof( is ) ) {
-				if ( peek != f.delimiter[0] ) {
+				if ( peek != enddelim ) {
 					ungetc( is, peek );
 					throwResume ExceptionInst( cstring_length );
 				} // if
 			} // if
 		} else fmt( is, "%*c" );						// remove delimiter
 	  Eof: ;
-		if ( rwd > 0 && args == 0 ) f.s[0] = '\0';		// read failed => no pattern match => set string to null
+		if ( rwd > 0 && args == 0 ) cstr.s[0] = '\0';	// read failed => no pattern match => set string to null
 		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
-			// fprintf( stderr, "clear\n" );
 			clear( is );								// => reset EOF => detect again on next read
 		} // if
 		return is;
 	}
 
-	istype & ?|?( istype & is, _Istream_Cstr f ) {
+	istype & ?|?( istype & is, _Istream_Cstr f ) with( f ) {
 		const char * scanset;
 		size_t nscanset = 0;
-		if ( f.flags.delimiter ) scanset = f.delimiter;	// getline ?
+		if ( flags.delimiter ) scanset = delimiters;	// getline ?
 		else scanset = f.scanset;
 		if ( scanset ) nscanset = strlen( scanset );
 
@@ -1083,32 +1079,20 @@ forall( istype & | basic_istream( istype ) ) {
 		} else {
 			if ( f.flags.delimiter ) {					// getline
 				int len = 0;							// may not be set in fmt
-				if ( ! f.flags.inex ) {					// => quoted getline
-					// fprintf( stderr, "quoted\n" );
-					args = fmt( is, "%*[ \f\n\r\t\v]" ); // remove leading whitespace
-					if ( eof( is ) ) goto X;
-					args = fmt( is, "\"" );				// remove leading quote
-					if ( eof( is ) ) goto X;
-				} // if
-				// fprintf( stderr, "getline\n" );
-				// sprintf( &fmtstr[pos], "[%s%s]%%n", f.flags.inex ? "^" : "", scanset );
-				sprintf( &fmtstr[pos], "[^%s]%%n", scanset );
-				// fprintf( stderr, "getline %s %d\n", fmtstr, f.wd );
+				sprintf( &fmtstr[pos], "[^%c]%%n", f.delimiters[0] );
 				if ( f.flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 				else args = fmt( is, fmtstr, f.s, &len );
-				// fprintf( stderr, "getline %s %d %d %d\n", fmtstr, args, f.wd, eof( is ) );
 				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
-					char peek;
-					fmt( is, "%c", &peek );				// check for delimiter
-					// fprintf( stderr, "peek %d '%c'\n", args, peek );
+					fmtstr[0] = f.delimiters[0]; fmtstr[1] = '%'; fmtstr[2] = 'n'; fmtstr[3] = '\0';
+					fmt( is, fmtstr, &len );			// remove delimiter
 					if ( ! eof( is ) ) {
-						if ( peek != f.delimiter[0] ) {
-							ungetc( is, peek );
+//						if ( peek != f.delimiter[0] ) {
+						if ( len != 1 ) {
+//							ungetc( is, peek );
 							throwResume ExceptionInst( cstring_length );
 						} // if
 					} // if
-				} else fmt( is, "%*c" );			// remove delimiter
-			  X: ;
+				} else fmt( is, "%*c" );				// remove delimiter
 			} else {
 				// incl %[xxx],  %*[xxx],  %w[xxx],  %*w[xxx]
 				// excl %[^xxx], %*[^xxx], %w[^xxx], %*w[^xxx]

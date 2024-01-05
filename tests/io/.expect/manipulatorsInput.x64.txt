@@ -19,6 +19,14 @@ pre4b "89", canary ok
 13 wwwwwwww
 14 rc=1, cccc
 15 rc=0, q
+16 get this line
+17 @# this line 1)-{}
+18 abc
+19 abc  
+20  d d
+
+d 
+21 		ZC44%
 1 yyyyyyyyyyyyyyyyyyyy
 2 abcxxx
 3 abcxxx
@@ -34,6 +42,14 @@ pre4b "89", canary ok
 13
 14 cccc
 15
+16 get this line
+17 @# this line 1)-{}
+18 abc
+19 abc  
+20 d d
+
+d 
+21		ZC44%
 a
 a
 -1

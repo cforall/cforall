@@ -2,7 +2,7 @@
     printf( #X " %s\n", ((X)?"ok":"WRONG") );
 
 #define test_eq_(l, r) \
-    chk( (cmp(l, r) == 0) ) \
+    chk( (strcmp(l, r) == 0) ) \
     chk(  (l == r) ) \
     chk( !(l != r) ) \
     chk( !(l >  r) ) \
@@ -16,7 +16,7 @@
     test_eq_(s_ ## l,     # r)
 
 #define test_lt_(l, r) \
-    chk( (cmp(l, r) < 0) ) \
+    chk( (strcmp(l, r) < 0) ) \
     chk( !(l == r) ) \
     chk(  (l != r) ) \
     chk( !(l >  r) ) \
@@ -25,7 +25,7 @@
     chk(  (l <  r) )
 
 #define test_gt_(l, r) \
-    chk( (cmp(l, r) > 0) ) \
+    chk( (strcmp(l, r) > 0) ) \
     chk( !(l == r) ) \
     chk(  (l != r) ) \
     chk(  (l >  r) ) \

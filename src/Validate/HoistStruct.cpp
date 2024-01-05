@@ -29,6 +29,7 @@ namespace {
 bool shouldHoist( ast::Decl const * decl ) {
 	return dynamic_cast< ast::StructDecl const * >( decl )
 		|| dynamic_cast< ast::UnionDecl const * >( decl )
+		|| dynamic_cast< ast::EnumDecl const * >( decl )
 		|| dynamic_cast< ast::StaticAssertDecl const * >( decl );
 }
 

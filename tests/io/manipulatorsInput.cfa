@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Jun  8 17:58:54 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  2 14:27:46 2023
-// Update Count     : 65
+// Last Modified On : Wed Jan  3 11:15:04 2024
+// Update Count     : 103
 // 
 
 #include <fstream.hfa>
@@ -76,8 +76,19 @@ int main() {
 		rc = scanf( "%[abc]", s );						printf( "14 rc=%d, %s\n", rc, s );
 		s[0] = 'q'; s[1] = '\0'; rc = 99;
 		rc = scanf( "%[^u]", s );						printf( "15 rc=%d, %s\n", rc, s );
-		scanf( "%*[u]" );
-		scanf("\n");
+		scanf( "%*[u]\n" );
+		scanf( "%[^\n]\n", s );							printf( "16 %s\n", s );
+		scanf( "%[^%%]%%\n", s );						printf( "17 %s\n", s );
+
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace
+		scanf( "\"%[^\"]\"", s );						printf( "18 %s\n", s );
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace
+		scanf( "'%[^']'", s );							printf( "19 %s\n", s );
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace
+		scanf( "{%[^}]}", s );							printf( "20 %s\n", s );
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace
+		scanf( "X%[^Y]Y", s );							printf( "21 %s\n", s );
+		scanf( "\n" );									// must start next line
 	}
 	{
 		char s[] = "yyyyyyyyyyyyyyyyyyyy";
@@ -101,10 +112,16 @@ int main() {
 		sin | incl( "abc", wdi( sizeof(s), s ) );		sout | "14" | s;
 		s[0] = 'q'; s[1] = '\0';
 		sin | excl( "u", wdi( sizeof(s), s ) );			sout | "15" | s;
-		sin | skip( "u" );
-		sin | "\n";
+		sin | skip( "u" ) | "\n";
+		sin | getline( wdi( sizeof(s), s ) );			sout | "16" | s;
+		sin | getline( wdi( sizeof(s), s ), '%' ) | "\n"; sout | "17" | s;
+
+		sin | quoted( wdi( sizeof(s), s ) );			sout | "18" | s;
+		sin | quoted( wdi( sizeof(s), s ), '\'' );		sout | "19" | s;
+		sin | quoted( wdi( sizeof(s), s ), '{', '}' );	sout | "20" | s;
+		sin | quoted( wdi( sizeof(s), s ), 'X', 'Y' );	sout | "21" | s;
 	}
-    /* Keep harmonized with collections/string-istream-manip */
+    // Keep harmonized with collections/string-istream-manip
 	{
 		char c;
 		sin | c;										sout | c;

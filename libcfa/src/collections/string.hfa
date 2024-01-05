@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  2 11:26:28 2023
-// Update Count     : 55
+// Last Modified On : Thu Jan  4 11:27:35 2024
+// Update Count     : 75
 //
 
 #pragma once
@@ -28,19 +28,22 @@ struct string {
 
 // Getters
 size_t size(const string & s);
+static inline size_t strlen(const string & s) { return size( s ); }
 
 // RAII, assignment
-void ?{}(string & this); // empty string
+void ?{}(string & s); // empty string
 void ?{}(string & s, const char * initial); // copy from string literal (NULL-terminated)
 void ?{}(string & s, const char * buffer, size_t bsize); // copy specific length from buffer
 
 void ?{}(string & s, const string & s2);
 void ?{}(string & s, string & s2);
 
-void ?=?(string & s, const char * other); // copy assignment from literal
-void ?=?(string & s, const string & other);
-void ?=?(string & s, char other);
-string & ?=?(string & s, string & other);  // surprising ret seems to help avoid calls to autogen
+void ?=?(string & s, const char * c); // copy assignment from literal
+static inline string & strcpy(string & s, const char * c) { s = c; return s; }
+void ?=?(string & s, const string & c);
+static inline string & strcpy(string & s, const string c) { s = c; return s; }
+void ?=?(string & s, char c);
+string & ?=?(string & s, string & c);  // surprising ret seems to help avoid calls to autogen
 //string ?=?( string &, string ) = void;
 void ^?{}(string & s);
 
@@ -48,14 +51,14 @@ void ^?{}(string & s);
 struct string_WithSharedEdits {
     string * s;
 };
-string_WithSharedEdits ?`shareEdits( string & this );
-void ?{}( string & this, string_WithSharedEdits src );
+string_WithSharedEdits ?`shareEdits( string & s );
+void ?{}( string & s, string_WithSharedEdits src );
 
 // IO Operator
 ofstream & ?|?(ofstream & out, const string & s);
 void ?|?(ofstream & out, const string & s);
 ifstream & ?|?(ifstream & in, string & s);
-void ?|?( ifstream & in, string & this );
+void ?|?( ifstream & in, string & s );
 
 static inline {
 	_Ostream_Manip(string) bin( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'b', { .all : 0 } }; }
@@ -80,10 +83,10 @@ static inline {
 	// read width does not include null terminator
 	_Istream_Sstr wdi( unsigned int rwd, string & s ) { return (_Istream_Sstr)@{ s, {{0p}, rwd, {.flags.rwd : true}} }; }
 	_Istream_Sstr getline( string & s, const char delimiter = '\n' ) {
-		return (_Istream_Sstr)@{ s, {{.delimiter : { delimiter, '\0' } }, -1, {.flags.delimiter : true, .flags.inex : true}} };
+		return (_Istream_Sstr)@{ s, {{.delimiters : { delimiter, '\0' } }, -1, {.flags.delimiter : true, .flags.inex : true}} };
 	}
 	_Istream_Sstr & getline( _Istream_Sstr & fmt, const char delimiter = '\n' ) {
-		fmt.delimiter[0] = delimiter; fmt.delimiter[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt;
+		fmt.delimiters[0] = delimiter; fmt.delimiters[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt;
 	}
 	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ s, {{scanset}, -1, {.flags.inex : false}} }; }
 	_Istream_Sstr & incl( const char scanset[], _Istream_Sstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
@@ -96,13 +99,15 @@ ifstream & ?|?( ifstream & is, _Istream_Sstr f );
 void ?|?( ifstream & is, _Istream_Sstr t );
 
 // Concatenation
-void ?+=?(string & s, char other); // append a character
+void ?+=?(string & s, char c); // append a character
 void ?+=?(string & s, const string & s2); // append-concatenate to first string
-void ?+=?(string & s, const char * other); // append-concatenate to first string
-string ?+?(const string & s, char other); // add a character to a copy of the string
+static inline string & strcat(string & s, const string & s2) { s += s2; return s; }
+void ?+=?(string & s, const char * s2); // append-concatenate to first string
+static inline string & strcat(string & s, const char * c) { s += c; return s; }
+string ?+?(const string & s, char c); // add a character to a copy of the string
 string ?+?(const string & s, const string & s2); // copy and concatenate both strings
 string ?+?(const char * s1, const char * s2); // concatenate both strings
-string ?+?(const string & s, const char * other); // copy and concatenate with NULL-terminated string
+string ?+?(const string & s, const char * c); // copy and concatenate with NULL-terminated string
 
 // Repetition
 string ?*?(const string & s, size_t factor);
@@ -115,7 +120,7 @@ string ?[?](string & s, size_t index);  // mutable length-1 slice of original
 //char codePointAt(const string & s, size_t index);  // to revisit under Unicode
 
 // Comparisons
-int  cmp (const string &, const string &);
+int  strcmp (const string &, const string &);
 bool ?==?(const string &, const string &);
 bool ?!=?(const string &, const string &);
 bool ?>? (const string &, const string &);
@@ -123,26 +128,26 @@ bool ?>=?(const string &, const string &);
 bool ?<=?(const string &, const string &);
 bool ?<? (const string &, const string &);
 
-int  cmp (const string &, const char*);
-bool ?==?(const string &, const char*);
-bool ?!=?(const string &, const char*);
-bool ?>? (const string &, const char*);
-bool ?>=?(const string &, const char*);
-bool ?<=?(const string &, const char*);
-bool ?<? (const string &, const char*);
+int  strcmp (const string &, const char *);
+bool ?==?(const string &, const char *);
+bool ?!=?(const string &, const char *);
+bool ?>? (const string &, const char *);
+bool ?>=?(const string &, const char *);
+bool ?<=?(const string &, const char *);
+bool ?<? (const string &, const char *);
 
-int  cmp (const char*, const string &);
-bool ?==?(const char*, const string &);
-bool ?!=?(const char*, const string &);
-bool ?>? (const char*, const string &);
-bool ?>=?(const char*, const string &);
-bool ?<=?(const char*, const string &);
-bool ?<? (const char*, const string &);
+int  strcmp (const char *, const string &);
+bool ?==?(const char *, const string &);
+bool ?!=?(const char *, const string &);
+bool ?>? (const char *, const string &);
+bool ?>=?(const char *, const string &);
+bool ?<=?(const char *, const string &);
+bool ?<? (const char *, const string &);
 
 
 // Slicing
-string ?()( string & this, size_t start, size_t end );  // TODO const?
-string ?()( string & this, size_t start);
+string ?()( string & s, size_t start, size_t end );  // TODO const?
+string ?()( string & s, size_t start);
 
 // String search
 bool contains(const string & s, char ch); // single character
@@ -174,7 +179,6 @@ void padStart(string & s, size_t n);
 void padStart(string & s, size_t n, char padding);
 void padEnd(string & s, size_t n);
 void padEnd(string & s, size_t n, char padding);
-
 
 
 struct charclass {
