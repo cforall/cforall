@@ -28,7 +28,6 @@
 #include "ParseNode.hpp"
 #include "StorageClasses.hpp"
 #include "Visitor.hpp"
-#include "Common/utility.h"
 
 // Must be included in *all* AST classes; should be #undef'd at the end of the file
 #define MUTATE_FRIEND \

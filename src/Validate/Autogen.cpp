@@ -439,7 +439,9 @@ ast::FunctionDecl * FuncGenerator::genFieldCtorProto(
 		}
 
 		auto * paramType = ast::deepCopy( member->get_type() );
-		paramType->attributes.clear();
+		erase_if( paramType->attributes, []( ast::Attribute const * attr ){
+			return !attr->isValidOnFuncParam();
+		} );
 		ast::ObjectDecl * param = new ast::ObjectDecl(
 			getLocation(), member->name, paramType );
 		for ( auto & attr : member->attributes ) {

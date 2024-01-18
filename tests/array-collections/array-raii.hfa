@@ -1,0 +1,174 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// array-raii.hfa -- combined test implementation for both -c and -cfa versions
+//
+// Author           : Mike Brooks
+// Created On       : Fri Sep 22 15:00:00 2023
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+
+#include <raii.hfa>
+
+// To keep C- vs CFA-array compatibility simple. these tests
+// - use only single-place subscripting, like `m[1][2]`, while deferring 
+//   equivalence of m[1][2] vs m[1,2] to array-md-sbscr-cases
+// - declare arrays via test-specific ADECL macros
+
+
+
+volatile bool checkme = false;
+char junkref[] = "junk";
+extern "C" {
+    char* strcpy(char* destination, const char* source);
+}
+
+// Array of built-in type does not get zeroed
+//   (Surprised?)
+//   Because it has nothing to do with arrays.
+//   Built-in types have no-op ctors.
+//   (Still surprised?  Me too.)
+// If pigs flew and built-ins zeroed themselves, then
+//   Array of built-in type gets zeroed
+//   Array of user-defined type with autogen ctors gets wrapped builtins zeroed (intended purpose of case2 when originally written)
+//   Expected outcome becomes "all zero" twice
+// As is
+//   case1 pretty much just shows the summary statement above and
+//   verifying the case2-wrapper behaviour is just silly, so
+//   the quality of respecting autogens is checked (for real this time) under test_custom
+void test_builtins() {
+    void writeJunkOnStack(int depth) {
+        if (depth == 0) return;
+        char junk[5];
+        strcpy(junk, junkref);
+        writeJunkOnStack(depth-1);
+        if (checkme) printf("%s\n", junk);
+    }
+    void checkzero(float f0, float f1, float f2, float f3, float f4) {
+        if (f0 == 0.f && f1 == 0.f && f2 == 0.f && f3 == 0.f && f4 == 0.f) {
+            printf("all zero\n");
+        } else {
+            printf("some nonzero\n");
+          //printf("%f %f %f %f %f\n", f0, f1, f2, f3, f4);
+        }
+    }
+    void case1() {
+        ADECL1(x, float, 5)
+        checkzero(x[0], x[1], x[2], x[3], x[4]);
+    }
+    struct ffloat { float f; };
+    void case2() {
+        ADECL1(x, ffloat, 5)
+        checkzero(x[0].f, x[1].f, x[2].f, x[3].f, x[4].f);
+    }
+
+    writeJunkOnStack(5);
+    case1();
+    printf("silly: ");
+    writeJunkOnStack(5);
+    case2();
+}
+
+// Array of type with custom raii sees cdtors called
+// Array of user-defined type with autogen cdtors gets wrapped cdtors called
+void test_custom() {
+    int nctorcalls;
+    struct thing { int mem; };
+    void ?{}( thing & this ) {
+        (this.mem){ nctorcalls++ };
+        printf("ctor %d\n", this.mem);
+    }
+    void ^?{}( thing & this ) {
+        printf("dtor %d\n", this.mem);
+    }
+    struct wrapper1 { thing inner; };
+    forall( T ) struct wrapper2 { T inner; };
+    printf(" [1]\n");
+    {
+        nctorcalls = 0;
+        ADECL1(a, thing, 5)
+        for(i; 5) printf("func %d\n", a[i].mem);
+    }
+    printf(" [2]\n");
+    {
+        // White-box note: For the CFA array, the array cdtor is satisfying
+        // its own assertion, in a two-level recursive setup.
+        nctorcalls = 0;
+        ADECL2(a, thing, 2, 3)
+        for(i; 2) for(j; 3) printf("func %d at (%d, %d)\n", a[i][j].mem, i, j);
+    }
+    printf(" [3]\n");
+    {
+        nctorcalls = 0;
+        ADECL1(a, wrapper1, 5)
+        for(i; 5) printf("func %d\n", a[i].inner.mem);
+    }
+    printf(" [4]\n");
+    {
+        nctorcalls = 0;
+        ADECL1(a, wrapper2(thing), 5)
+        for(i; 5) printf("func %d\n", a[i].inner.mem);
+    }
+}
+
+// Array of uninits sees explicit ctor calls (only), and implied dtor calls
+void test_uninit() {
+    struct thing { int mem; };
+    void ?{}( thing & this, int i ) {
+        (this.mem){ i };
+        printf("ctor %d\n", this.mem);
+    }
+    void ?{}( thing & this ) {
+        (this){ 999 };
+    }
+    void ^?{}( thing & this ) {
+        printf("dtor %d\n", this.mem);
+    }
+    printf(" [1]\n");
+    {
+        ADECL1(a, uninit(thing), 5)
+        printf("before ctors\n");
+        for(i; 5) {
+            if (i == 1)
+                emplace(a[i]);
+            else if (i == 2)
+                emplace(a[i], 888);
+            else
+                (a[i]){i};
+        }
+        for(i; 5) printf("func %d\n", a[i].mem);
+    }
+    printf(" [2]\n");
+    {
+        ADECL2(a, uninit(thing), 2, 3)
+        printf("before ctors\n");
+        for(i; 2) for(j; 3) {
+            if (i == 1 && j == 1)
+                emplace(a[i][j]);
+            else if (i == 1 && j == 2)
+                emplace(a[i][j], 888);
+            else
+                (a[i][j]){100 + 10 * i + j};
+        }
+        for(i; 2) for(j; 3) {
+            printf("func %d at (%d, %d)\n", a[i][j].mem, i, j);
+        }
+    }
+}
+
+int main() {
+    printf("=== builtins\n");
+    test_builtins();
+
+    printf("=== custom\n");
+    test_custom();
+
+    printf("=== uninit\n");
+    test_uninit();
+}

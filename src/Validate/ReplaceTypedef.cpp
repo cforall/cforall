@@ -25,18 +25,6 @@ namespace Validate {
 
 namespace {
 
-bool isNonParameterAttribute( ast::Attribute const * attr ) {
-	static const std::vector<std::string> bad_names = {
-		"aligned", "__aligned__",
-	};
-	for ( auto name : bad_names ) {
-		if ( name == attr->name ) {
-			return true;
-		}
-	}
-	return false;
-}
-
 struct ReplaceTypedefCore final :
 		public ast::WithCodeLocation,
 		public ast::WithDeclsToAdd<>,
@@ -100,7 +88,9 @@ ast::Type const * ReplaceTypedefCore::postvisit(
 		// We ignore certain attributes on function parameters if they arrive
 		// by typedef. GCC appears to do the same thing.
 		if ( isAtFunctionTop ) {
-			erase_if( ret->attributes, isNonParameterAttribute );
+			erase_if( ret->attributes, []( ast::Attribute const * attr ){
+				return !attr->isValidOnFuncParam();
+			} );
 		}
 		for ( const auto & attribute : type->attributes ) {
 			ret->attributes.push_back( attribute );

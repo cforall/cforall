@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Wed Mar 29 16:10:31 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  4 11:04:06 2024
-// Update Count     : 215
+// Last Modified On : Thu Jan 11 18:45:31 2024
+// Update Count     : 218
 //
 
 #include <stdio.h>
@@ -157,9 +157,8 @@ extern "C" {
 }
 
 extern "C" int dl_iterate_phdr( int (* callback)( struct dl_phdr_info *, size_t, void * ), void * data ) {
-	// assert( RealRtn::dl_iterate_phdr != nullptr );
 	disable_interrupts();
-	int ret = __cabi_libc.dl_iterate_phdr( callback, data );
+	int ret = __cabi_libc.dl_iterate_phdr( callback, data ); // call real routine
 	enable_interrupts( false );
 	return ret;
 } // dl_iterate_phdr

@@ -91,7 +91,8 @@ EXTRA_DIST = test.py \
 	concurrency/unified_locking/mutex_test.hfa \
 	concurrency/channels/parallel_harness.hfa \
 	array-collections/dimexpr-match.hfa \
-	array-collections/dimexpr-match-detail.sh
+	array-collections/dimexpr-match-detail.sh \
+	array-collections/array-raii.hfa
 
 dist-hook:
 	echo "Gathering test files"

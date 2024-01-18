@@ -1,0 +1,109 @@
+=== builtins
+some nonzero
+silly: some nonzero
+=== custom
+ [1]
+ctor 0
+ctor 1
+ctor 2
+ctor 3
+ctor 4
+func 0
+func 1
+func 2
+func 3
+func 4
+dtor 4
+dtor 3
+dtor 2
+dtor 1
+dtor 0
+ [2]
+ctor 0
+ctor 1
+ctor 2
+ctor 3
+ctor 4
+ctor 5
+func 0 at (0, 0)
+func 1 at (0, 1)
+func 2 at (0, 2)
+func 3 at (1, 0)
+func 4 at (1, 1)
+func 5 at (1, 2)
+dtor 5
+dtor 4
+dtor 3
+dtor 2
+dtor 1
+dtor 0
+ [3]
+ctor 0
+ctor 1
+ctor 2
+ctor 3
+ctor 4
+func 0
+func 1
+func 2
+func 3
+func 4
+dtor 4
+dtor 3
+dtor 2
+dtor 1
+dtor 0
+ [4]
+ctor 0
+ctor 1
+ctor 2
+ctor 3
+ctor 4
+func 0
+func 1
+func 2
+func 3
+func 4
+dtor 4
+dtor 3
+dtor 2
+dtor 1
+dtor 0
+=== uninit
+ [1]
+before ctors
+ctor 0
+ctor 999
+ctor 888
+ctor 3
+ctor 4
+func 0
+func 999
+func 888
+func 3
+func 4
+dtor 4
+dtor 3
+dtor 888
+dtor 999
+dtor 0
+ [2]
+before ctors
+ctor 100
+ctor 101
+ctor 102
+ctor 110
+ctor 999
+ctor 888
+func 100 at (0, 0)
+func 101 at (0, 1)
+func 102 at (0, 2)
+func 110 at (1, 0)
+func 999 at (1, 1)
+func 888 at (1, 2)
+dtor 888
+dtor 999
+dtor 110
+dtor 102
+dtor 101
+dtor 100

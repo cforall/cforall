@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  4 11:27:37 2024
-// Update Count     : 233
+// Last Modified On : Sun Jan 14 12:03:47 2024
+// Update Count     : 240
 //
 
 #include "string.hfa"
@@ -28,16 +28,15 @@ semantics and some const-hell handling.
 ////////////////////////////////////////////////////////
 // string RAII
 
-
-void ?{}( string & s ) {
-    (s.inner) { malloc() };
-    ?{}( *s.inner );
-}
-
 // private (not in header)
 static void ?{}( string & s, string_res & src, size_t start, size_t end ) {
     (s.inner) { malloc() };
     ?{}( *s.inner, src, SHARE_EDITS, start, end );
+}
+
+void ?{}( string & s ) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner );
 }
 
 void ?{}( string & s, const string & c ) {
@@ -45,18 +44,29 @@ void ?{}( string & s, const string & c ) {
     ?{}( *s.inner, *c.inner, COPY_VALUE );
 }
 
+void ?{}( string & s, const string & s2, size_t maxlen) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner, *s2.inner, COPY_VALUE, maxlen );
+}
+
+
 void ?{}( string & s, string & c ) {
     ?{}( s, (const string &) c );
 }
 
-void ?{}( string & s, const char * val ) {
+void ?{}( string & s, const char c ) {
     (s.inner) { malloc() };
-    ?{}( *s.inner, val );
+    ?{}( *s.inner, c );
 }
 
-void ?{}( string & s, const char * buffer, size_t bsize) {
+void ?{}( string & s, const char * c ) {
     (s.inner) { malloc() };
-    ?{}( *s.inner, buffer, bsize );
+    ?{}( *s.inner, c );
+}
+
+void ?{}( string & s, const char * c, size_t size) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner, c, size );
 }
 
 void ^?{}( string & s ) {
@@ -95,6 +105,13 @@ void ?=?( string & s, char val ) {
 string & ?=?(string & s, string & c) { //// <---- straw man change
     (*s.inner) = (*c.inner);
     return s;
+}
+
+void assign(string & s, const string & c, size_t n) {
+    assign(*s.inner, *c.inner, n);
+}
+void assign(string & s, const char * c, size_t n) {
+    assign(*s.inner, c, n);
 }
 
 
@@ -199,8 +216,16 @@ void ?+=?(string & s, const string & s2) {
     (*s.inner) += (*s2.inner);
 }
 
+void append(string & s, const string & s2, size_t maxlen) {
+    append( (*s.inner), (*s2.inner), maxlen );
+}
+
 void ?+=?(string & s, const char * c) {
     (*s.inner) += c;
+}
+
+void append(string & s, const char * buffer, size_t bsize) {
+    append( (*s.inner), buffer, bsize );
 }
 
 string ?+?(const string & s, char c) {
@@ -230,21 +255,26 @@ string ?+?(const string & s, const char * c) {
 ////////////////////////////////////////////////////////
 // Repetition
 
+void ?*=?(string & s, size_t factor) {
+    (*s.inner) *= factor;
+}
+
 string ?*?(const string & s, size_t factor) {
-    string ret = "";
-    for (factor) ret += s;
+    string ret = s;
+    ret *= factor;
     return ret;
 }
 
-string ?*?(char c, size_t size) {
-    string ret = "";
-    for ((size_t)size) ret += c;
+string ?*?(char c, size_t factor) {
+    string ret = c;
+    ret *= factor;
     return ret;
 }
 
-string ?*?(const char *s, size_t factor) {
-    string ss = s;
-    return ss * factor;
+string ?*?(const char * s, size_t factor) {
+    string ret = s;
+    ret *= factor;
+    return ret;
 }
 
 ////////////////////////////////////////////////////////

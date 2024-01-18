@@ -293,15 +293,16 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	collections/string_res.hfa collections/vector.hfa \
 	device/cpu.hfa Exception.hfa bitmanip.hfa clock.hfa \
 	exception.hfa exception.h gmp.hfa math.trait.hfa math.hfa \
-	time_t.hfa virtual_dtor.hfa bits/algorithm.hfa bits/align.hfa \
-	bits/collections.hfa bits/debug.hfa bits/defs.hfa \
-	bits/locks.hfa bits/collection.hfa bits/stack.hfa \
-	bits/queue.hfa bits/sequence.hfa concurrency/atomic.hfa \
-	concurrency/iofwd.hfa concurrency/barrier.hfa \
-	collections/array.hfa collections/list.hfa \
-	collections/lockfree.hfa collections/string_sharectx.hfa \
-	collections/vector2.hfa vec/vec.hfa vec/vec2.hfa vec/vec3.hfa \
-	vec/vec4.hfa concurrency/alarm.hfa concurrency/coroutine.hfa \
+	raii.hfa time_t.hfa virtual_dtor.hfa bits/algorithm.hfa \
+	bits/align.hfa bits/collections.hfa bits/debug.hfa \
+	bits/defs.hfa bits/locks.hfa bits/collection.hfa \
+	bits/stack.hfa bits/queue.hfa bits/sequence.hfa \
+	concurrency/atomic.hfa concurrency/iofwd.hfa \
+	concurrency/barrier.hfa collections/array.hfa \
+	collections/list.hfa collections/lockfree.hfa \
+	collections/string_sharectx.hfa collections/vector2.hfa \
+	vec/vec.hfa vec/vec2.hfa vec/vec3.hfa vec/vec4.hfa \
+	concurrency/alarm.hfa concurrency/coroutine.hfa \
 	concurrency/exception.hfa concurrency/kernel.hfa \
 	concurrency/kernel/cluster.hfa concurrency/locks.hfa \
 	concurrency/monitor.hfa concurrency/mutex.hfa \
@@ -545,6 +546,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	gmp.hfa \
 @BUILDLIB_TRUE@	math.trait.hfa \
 @BUILDLIB_TRUE@	math.hfa \
+@BUILDLIB_TRUE@	raii.hfa \
 @BUILDLIB_TRUE@	time_t.hfa \
 @BUILDLIB_TRUE@	virtual_dtor.hfa \
 @BUILDLIB_TRUE@	bits/algorithm.hfa \

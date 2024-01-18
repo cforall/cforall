@@ -464,7 +464,8 @@ EXTRA_DIST = test.py \
 	concurrency/unified_locking/mutex_test.hfa \
 	concurrency/channels/parallel_harness.hfa \
 	array-collections/dimexpr-match.hfa \
-	array-collections/dimexpr-match-detail.sh
+	array-collections/dimexpr-match-detail.sh \
+	array-collections/array-raii.hfa
 
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa

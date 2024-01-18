@@ -34,14 +34,12 @@
 #include "Common/Iterate.hpp"      // for reverseIterate
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/UniqueName.h"     // for UniqueName
-#include "Common/utility.h"        // for maybeClone
+#include "Common/utility.h"        // for copy, spliceBegin
 #include "Parser/ExpressionNode.h" // for ExpressionNode
 #include "Parser/InitializerNode.h"// for InitializerNode
 #include "Parser/StatementNode.h"  // for StatementNode
 #include "TypeData.h"              // for TypeData, TypeData::Aggregate_t
 #include "TypedefTable.h"          // for TypedefTable
-
-class Initializer;
 
 extern TypedefTable typedefTable;
 
@@ -100,31 +98,31 @@ DeclarationNode::~DeclarationNode() {
 
 DeclarationNode * DeclarationNode::clone() const {
 	DeclarationNode * newnode = new DeclarationNode;
-	newnode->set_next( maybeClone( get_next() ) );
+	newnode->set_next( maybeCopy( get_next() ) );
 	newnode->name = name ? new string( *name ) : nullptr;
 
 	newnode->builtin = NoBuiltinType;
-	newnode->type = maybeClone( type );
+	newnode->type = maybeCopy( type );
 	newnode->inLine = inLine;
 	newnode->storageClasses = storageClasses;
 	newnode->funcSpecs = funcSpecs;
-	newnode->bitfieldWidth = maybeClone( bitfieldWidth );
-	newnode->enumeratorValue.reset( maybeClone( enumeratorValue.get() ) );
+	newnode->bitfieldWidth = maybeCopy( bitfieldWidth );
+	newnode->enumeratorValue.reset( maybeCopy( enumeratorValue.get() ) );
 	newnode->hasEllipsis = hasEllipsis;
 	newnode->linkage = linkage;
 	newnode->asmName = maybeCopy( asmName );
 	newnode->attributes = attributes;
-	newnode->initializer = maybeClone( initializer );
+	newnode->initializer = maybeCopy( initializer );
 	newnode->extension = extension;
-	newnode->asmStmt = maybeClone( asmStmt );
+	newnode->asmStmt = maybeCopy( asmStmt );
 	newnode->error = error;
 
 //	newnode->variable.name = variable.name ? new string( *variable.name ) : nullptr;
 	newnode->variable.tyClass = variable.tyClass;
-	newnode->variable.assertions = maybeClone( variable.assertions );
-	newnode->variable.initializer = maybeClone( variable.initializer );
+	newnode->variable.assertions = maybeCopy( variable.assertions );
+	newnode->variable.initializer = maybeCopy( variable.initializer );
 
-	newnode->assert.condition = maybeClone( assert.condition );
+	newnode->assert.condition = maybeCopy( assert.condition );
 	newnode->assert.message = maybeCopy( assert.message );
 	return newnode;
 } // DeclarationNode::clone
@@ -663,7 +661,7 @@ static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 				dst->base = new TypeData( TypeData::AggregateInst );
 				dst->base->aggInst.aggregate = src;
 				if ( src->kind == TypeData::Aggregate ) {
-					dst->base->aggInst.params = maybeClone( src->aggregate.actuals );
+					dst->base->aggInst.params = maybeCopy( src->aggregate.actuals );
 				} // if
 				dst->base->qualifiers |= src->qualifiers;
 				src = nullptr;
@@ -693,7 +691,7 @@ DeclarationNode * DeclarationNode::addType( DeclarationNode * o ) {
 					type->aggInst.aggregate = o->type;
 					if ( o->type->kind == TypeData::Aggregate ) {
 						type->aggInst.hoistType = o->type->aggregate.body;
-						type->aggInst.params = maybeClone( o->type->aggregate.actuals );
+						type->aggInst.params = maybeCopy( o->type->aggregate.actuals );
 					} else {
 						type->aggInst.hoistType = o->type->enumeration.body;
 					} // if
@@ -859,7 +857,7 @@ DeclarationNode * DeclarationNode::addNewPointer( DeclarationNode * p ) {
 				p->type->base = new TypeData( TypeData::AggregateInst );
 				p->type->base->aggInst.aggregate = type;
 				if ( type->kind == TypeData::Aggregate ) {
-					p->type->base->aggInst.params = maybeClone( type->aggregate.actuals );
+					p->type->base->aggInst.params = maybeCopy( type->aggregate.actuals );
 				} // if
 				p->type->base->qualifiers |= type->qualifiers;
 				break;
@@ -896,7 +894,7 @@ DeclarationNode * DeclarationNode::addNewArray( DeclarationNode * a ) {
 			lastArray->base = new TypeData( TypeData::AggregateInst );
 			lastArray->base->aggInst.aggregate = type;
 			if ( type->kind == TypeData::Aggregate ) {
-				lastArray->base->aggInst.params = maybeClone( type->aggregate.actuals );
+				lastArray->base->aggInst.params = maybeCopy( type->aggregate.actuals );
 			} // if
 			lastArray->base->qualifiers |= type->qualifiers;
 			break;
@@ -949,7 +947,7 @@ DeclarationNode * DeclarationNode::addTypeInitializer( DeclarationNode * init ) 
 
 DeclarationNode * DeclarationNode::cloneType( string * name ) {
 	DeclarationNode * newnode = newName( name );
-	newnode->type = maybeClone( type );
+	newnode->type = maybeCopy( type );
 	newnode->copySpecifiers( this );
 	return newnode;
 }
@@ -983,7 +981,7 @@ DeclarationNode * DeclarationNode::cloneBaseType( DeclarationNode * o ) {
 			newType->aggInst.hoistType = false;
 		} // if
 
-		newType->forall = maybeClone( type->forall );
+		newType->forall = maybeCopy( type->forall );
 		if ( ! o->type ) {
 			o->type = newType;
 		} else {

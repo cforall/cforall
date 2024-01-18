@@ -1,0 +1,109 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// raii.hfa -- PUBLIC
+// Utilities for advanced RAII (constructor/destructor) patterns
+//
+// Author           : Mike Brooks
+// Created On       : Fri Sep 22 15:00:00 2023
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+#pragma once
+
+// Provides access to unititialized storage.
+// Intended to make cheap delayed intialization possible.
+// Similar to uC++ uNoCtor.
+// Regardless of what constructors T offers, the declaration
+//   uninit(T) x;
+// makes x:
+//   - assignable to T,
+//   - be, at first, uninitialized, and
+//   - receive a T-destructor call when x goes out of scope.
+// This sitation means the user becomes responsible for making a placement constructor call
+// on x before its first use, even if this first use is the implicit destructor call.
+// This sitation contrasts with that of
+//   T y @= {};
+// in that y does not receive an implied destructor call when it goes out of scope.
+// This sitation contrasts with that of
+//   optional(T) z;
+// in that z receives a T-destructor call conditionally upon the runtime-tracked state,
+// and that z's assignability to T is guarded by the runtime-tracked state.
+//
+// Implementation note: the uninit RAII that follows is a parade of cfa-cpp quirk exploitations.
+//
+forall( T* )
+struct uninit {
+    inline T;
+};
+
+// Parameterless ctor: leaves bits within uninitialized.
+forall( T* )
+void  ?{}( uninit(T) & this ) { 
+
+    // Implementation takes advantage of CFA-available unsoundness.
+    // It could be called a bug; if it's fixed, then uninit needs an escape hatch,
+    // or to find a different loophole.
+
+    // Fundamental unsoundness: Here is a constructor for a T, whatever T is.
+    // Sound compiler reaction: We don't know what fields T has,
+    // so the programmer is surely failing to initialize all of T's fields,
+    // for some choice of T.
+    // Current compiler reaction: Ok, it initializes all the fields we know about.
+    void ?{}( T & ) {}
+
+    // Now for some ado about nothing.
+    // We need to call the above constructor on the inline T field.
+    //   Becasue the compiler holds us accountable for intizliing every field of uninit(T).
+    //   We are happy to do so and are not trying to get out of it.
+    // But the compiler doesn't recognize this form as a field initialization
+    //   T & inner = this;
+    //   ( inner ){};
+    // And the compiler doesn't offer this feature
+    //   ( (return T &) this ){};
+    // It does recognize this form...
+
+    ( (T&) this ){};
+
+    // ...though it probably shouldn't.
+    // The problem with this form is that it doesn't actually mean the Plan-9 base field.
+    // It means to reinterpret `this` with type T.
+    // For a plan-9 use in which the base-type field is not first,
+    // this form would send the wrong address to the called ctor.
+    // Fortunately, uninit has the base-type field first.
+    // For an RAII use in which the constructor does something,
+    // getting the wrong address would matter.
+    // Fortunately, ?{}(T&) is a no-op.
+}
+
+// dtor: pass-through
+forall( T* | { void ^?{}( T& ); } )
+void ^?{}( uninit(T) & this) {
+    // an inner dtor call is implied
+
+    // In fact, an autogen'd dtor would have sufficed.
+    // But there is no autogen'd dtor because no T-dtor is asserted on the struct declaration.
+    // Adding assertions to the struct decl would make the intended ctor (implemented above)
+    // a less preferred candidate than the declared, but undefined, (ugh!) autogen ctor.
+}
+
+// Optional explicit inner-ctor invoation helper.
+// Generally optional, because 1 and 2 below are equivalent:
+//   struct Foo;
+//   void ?{}( Foo &, X, Y, Z );
+//   uninit(Foo) uf;
+//   ?( uf ){ x, y, z };      // 1
+//   emplace( uf, x, y, z );  // 2
+// Is necessary for reaching a parameterless constructor 
+//   void ?{}( Foo & );
+//   ?( uf ){};               // calls ?{}( uninit(Foo) & ), which does nothing
+//   emplace( uf );           // calls ?{}( Foo & ), probably what you want
+forall( T*, Args... | { void ?{}( T&, Args ); } )
+void emplace( uninit(T) & this, Args a ) {
+    T & inner = this;
+    ( inner ){ a };
+}

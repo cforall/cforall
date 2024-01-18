@@ -24,6 +24,7 @@
 #include "AST/Type.hpp"                  // for ArrayType, BasicType, ...
 #include "CodeGen/OperatorTable.h"       // for isCtorDtor
 #include "Common/UniqueName.h"           // for UniqueName
+#include "Common/utility.h"              // for splice
 
 namespace SymTab {
 

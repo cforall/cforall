@@ -4,9 +4,9 @@
 #include <coroutine.hfa>
 
 struct Potato {
-        PRNG & prng;
-        unsigned int deadline;                                                          // when timer goes off
-        unsigned int timer;                                                                     // up counter to deadline
+	PRNG & prng;
+	unsigned int deadline;								// when timer goes off
+	unsigned int timer;									// up counter to deadline
 }; // Potato
 
 void reset( Potato & potato, unsigned int maxTicks = 10 );
@@ -15,20 +15,20 @@ void ?{}( Potato & potato, PRNG & prng, unsigned int maxTicks = 10 );
 void ?{}( Potato & potato, PRNG & prng, unsigned int maxTicks ) with(potato) {
 	&potato.prng = &prng;
 	reset( potato, maxTicks );
-} // Potato
+		} // Potato
 
 coroutine Player {
-        PRNG & prng;
-        int id;                                                                                         // player identity
-        Potato & potato;                                                                        // potato being tossed
-        Player * partner[2];                                                            // left and right player
+	PRNG & prng;
+	int id;												// player identity
+	Potato & potato;									// potato being tossed
+	Player * partner[2];								// left and right player
 }; // Player
 
 void ?{}( Player & player, PRNG & prng, unsigned int id, Potato & potato ) {
 	&player.prng = &prng;
 	player.id = id;
 	&player.potato = &potato;
-} // Player
+		} // Player
 
 Player & umpire;
 
@@ -38,7 +38,7 @@ ExceptionDecl( Election );
 ExceptionDecl( cmd_error ); // convert(...) throws out_of_range or invalid_argument
 
 void reset( Potato & potato, unsigned int maxTicks ) with(potato) {
-  if ( maxTicks < 2 ) abort( "Hot Potato initialized with less than 2 ticks" ); // optional
+	if ( maxTicks < 2 ) abort( "Hot Potato initialized with less than 2 ticks" ); // optional
 	deadline = prng( prng, 1, maxTicks );
 	timer = 0;
 	sout | "  POTATO goes off after " | deadline | " tick" | nosep | (deadline > 1 ? "s" : "");
@@ -65,15 +65,15 @@ static void vote( Player & player ) {					// cause partner to vote
 
 static void terminate( Player & player ) {				// resume umpire
 	resume( player ); 
-    checked_poll();
-    sout | "THIS SHOULD NOT BE REACHED";
+	checked_poll();
+	sout | "THIS SHOULD NOT BE REACHED";
 } // terminate
 
 void init( Player & player, Player & lp, Player & rp ) with(player) { // supply partners
 	partner[LEFT] = &lp;
 	partner[RIGHT] = &rp;
 	resume( player );									// establish main as starter for termination
-    checked_poll();
+	checked_poll();
 } // init
 
 int getId( Player & player ) {							// player id
@@ -81,61 +81,61 @@ int getId( Player & player ) {							// player id
 } // getId
 
 void toss( Player & player ) {							// tossed the potato
-    resume( player );
+	resume( player );
 	checked_poll();
 } // toss
 
 void main( Player & player ) with(player) {
 	try {
-        enable_ehm();								// allow delivery of nonlocal exceptions
-        suspend;									// return immediately after establishing starter
-        checked_poll();
+		enable_ehm();									// allow delivery of nonlocal exceptions
+		suspend;										// return immediately after establishing starter
+		checked_poll();
 
-        for ( ;; ) {
-            checked_poll();
-            if ( partner[LEFT] == &player ) {			// stop when only one player
-                sout | id | " wins the Match!";
-                return;
-            } // exit
+		for ( ;; ) {
+			checked_poll();
+			if ( partner[LEFT] == &player ) {			// stop when only one player
+				sout | id | " wins the Match!";
+				return;
+			} // exit
 
-            countdown( potato );				// player is eliminated if countdown() returned true
+			countdown( potato );						// player is eliminated if countdown() returned true
 
-            size_t side = prng( prng, 2 );
-            sout | id | " -> " | nonl;
-            toss( *partner[ side ] );			// random toss left/right
-        } // for
-        disable_ehm();
+			size_t side = prng( prng, 2 );
+			sout | id | " -> " | nonl;
+			toss( *partner[ side ] );					// random toss left/right
+		} // for
+		disable_ehm();
 	} catchResume( Terminate * v ) {
 		v->victim->partner[LEFT]->partner[RIGHT] = v->victim->partner[RIGHT]; // unlink node
 		v->victim->partner[RIGHT]->partner[LEFT] = v->victim->partner[LEFT];
-        delete( v->victim );
+		delete( v->victim );
 		reset( potato );
 		sout | "U " | nonl;								// start new game
 		flush( sout );
 	} catchResume( Election * election ) {
 		sout | "election";
 		sout | " -> " | id | nonl;
-		if ( id > getId( umpire ) ) &umpire = &player; // set umpire to highest id so far
-        resumeAt( *partner[RIGHT], *election );
-        disable_ehm();              // disable ehm since we can't handle execption thrown in vote here and want to poll later
+		if ( id > getId( umpire ) ) &umpire = &player;	// set umpire to highest id so far
+		resumeAt( *partner[RIGHT], *election );
+		disable_ehm();									// disable ehm since we can't handle execption thrown in vote here and want to poll later
 		vote( *partner[RIGHT] );
-        enable_ehm();               // enable after vote
+		enable_ehm();									// enable after vote
 	} catchResume( Explode * ) {
-        sout | id | " is eliminated";
-        if ( &player == &umpire ) {
-            try {
-                id = -1;					// remove from election
-                resumeAt( *partner[RIGHT], ExceptionInst( Election ) );
-                vote( *partner[RIGHT] );		// start election
-                checked_poll(); 
-            } catchResume( Election * election ) {
-                sout | " : umpire " | getId( umpire );
-            } // try
-        } // if
-        resumeAt( umpire, ExceptionInst( Terminate, &player ) );
-        terminate( umpire );
-        assert( false );					// no return
-    } // try
+		sout | id | " is eliminated";
+		if ( &player == &umpire ) {
+			try {
+				id = -1;								// remove from election
+				resumeAt( *partner[RIGHT], ExceptionInst( Election ) );
+				vote( *partner[RIGHT] );				// start election
+				checked_poll(); 
+			} catchResume( Election * election ) {
+				sout | " : umpire " | getId( umpire );
+			} // try
+		} // if
+		resumeAt( umpire, ExceptionInst( Terminate, &player ) );
+		terminate( umpire );
+		assert( false );								// no return
+	} // try
 } // main
 
 
@@ -171,13 +171,13 @@ int main( int argc, char * argv[] ) {
 			fallthrough;
 		  case 1: ;										// defaults
 		  default:										// too many arguments
-			throw ExceptionInst( cmd_error );
+			  throw ExceptionInst( cmd_error );
 		} // choose
 	} catch( exception_t * ) {							// catch any
 		exit | "Usage: " | argv[0]
-			 | " [ games (>=0) | 'd' (default " | DefaultGames
-			 | ") [ players (>=2) | 'd' (random " | MinNoPlayers | "-" | MaxNoPlayers
-			 | ") [ seed (>0) | 'd' (random) ] ] ]";
+			| " [ games (>=0) | 'd' (default " | DefaultGames
+			| ") [ players (>=2) | 'd' (random " | MinNoPlayers | "-" | MaxNoPlayers
+			| ") [ seed (>0) | 'd' (random) ] ] ]";
 	} // try
 	sout | numGames | numPlayers | seed;
 

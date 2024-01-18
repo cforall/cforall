@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan  2 13:20:27 2024
-// Update Count     : 34
+// Last Modified On : Tue Jan 16 22:19:27 2024
+// Update Count     : 35
 //
 
 #include "string_res.hfa"
@@ -179,7 +179,7 @@ VbyteHeap * DEBUG_string_heap() {
 }
 
 size_t DEBUG_string_bytes_avail_until_gc( VbyteHeap * heap ) {
-    return ((char*)heap->ExtVbyte) - heap->EndVbyte;
+    return ((char *)heap->ExtVbyte) - heap->EndVbyte;
 }
 
 size_t DEBUG_string_bytes_in_heap( VbyteHeap * heap ) {
@@ -228,7 +228,7 @@ ifstream & ?|?(ifstream & in, string_res & s) {
         temp.Handle.ulink->EndVbyte -= 2;
 
         // rest of heap is available to read into
-        int lenReadable = (char*)temp.Handle.ulink->ExtVbyte - temp.Handle.ulink->EndVbyte;
+        int lenReadable = (char *)temp.Handle.ulink->ExtVbyte - temp.Handle.ulink->EndVbyte;
         assert (lenReadable >= 2);
 
         // get bytes
@@ -314,7 +314,7 @@ void ?{}(string_res & s) with(s) {
     s.shareEditSet_next = &s;
 }
 
-static void eagerCopyCtorHelper(string_res & s, const char* rhs, size_t rhslnth) with(s) {
+static void eagerCopyCtorHelper(string_res & s, const char * rhs, size_t rhslnth) with(s) {
     if( ambient_string_sharectx->activeHeap ) {
         (Handle){ * ambient_string_sharectx->activeHeap };
         (shareEditSet_owns_ulink){ false };
@@ -330,12 +330,12 @@ static void eagerCopyCtorHelper(string_res & s, const char* rhs, size_t rhslnth)
 }
 
 // Constructor from a raw buffer and size
-void ?{}(string_res & s, const char* rhs, size_t rhslnth) with(s) {
+void ?{}(string_res & s, const char * rhs, size_t rhslnth) with(s) {
     eagerCopyCtorHelper(s, rhs, rhslnth);
 }
 
 // private ctor (not in header): use specified heap (ignore ambient) and copy chars in
-void ?{}( string_res & s, VbyteHeap & heap, const char* rhs, size_t rhslnth ) with(s) {
+void ?{}( string_res & s, VbyteHeap & heap, const char * rhs, size_t rhslnth ) with(s) {
     (Handle){ heap };
     Handle.s = VbyteAlloc(*Handle.ulink, rhslnth);
     Handle.lnth = rhslnth;
@@ -478,7 +478,7 @@ static void locateInShareEditSet( string_res & s, string_res *& shareEditSetStar
     }
 }
 
-static string_res & assign_(string_res & s, const char* buffer, size_t bsize, const string_res & valSrc) {
+static string_res & assign_(string_res & s, const char * buffer, size_t bsize, const string_res & valSrc) {
 
     string_res * shareEditSetStartPeer;
     string_res * shareEditSetEndPeer;
@@ -562,7 +562,11 @@ static string_res & assign_(string_res & s, const char* buffer, size_t bsize, co
     return s;
 }
 
-string_res & assign(string_res & s, const char* buffer, size_t bsize) {
+string_res & assign(string_res & s, const string_res & src, size_t maxlen) {
+    return assign_(s, src.Handle.s, min(src.Handle.lnth, maxlen), *0p);
+}
+
+string_res & assign(string_res & s, const char * buffer, size_t bsize) {
     return assign_(s, buffer, bsize, *0p);
 }
 
@@ -636,10 +640,25 @@ void ?+=?(string_res & str1, const string_res & str2) {
     append( str1, str2.Handle.s, str2.Handle.lnth );
 }
 
+void append(string_res & str1, const string_res & str2, size_t maxlen) {
+    append( str1, str2.Handle.s, min(str2.Handle.lnth, maxlen) );
+}
+
 void ?+=?(string_res & s, char c) {
     append( s, & c, 1 );
 }
+void ?+=?(string_res & s, const char * c) {
+    append( s, c, strlen(c) );
+}
 
+///////////////////////////////////////////////////////////////////
+// Repetition
+
+void ?*=?(string_res & s, size_t factor) {
+    string_res s2 = { s, COPY_VALUE, 0, size(s) };
+    s = "";
+    for (factor) s += s2;
+}
 
 //////////////////////////////////////////////////////////
 // Comparisons
@@ -658,29 +677,29 @@ bool ?>=?(const string_res & s1, const string_res & s2) { return strcmp(s1, s2) 
 bool ?<=?(const string_res & s1, const string_res & s2) { return strcmp(s1, s2) <= 0; }
 bool ?<? (const string_res & s1, const string_res & s2) { return strcmp(s1, s2) <  0; }
 
-int strcmp (const string_res & s1, const char* s2) {
+int strcmp (const string_res & s1, const char * s2) {
     string_res s2x = s2;
     return strcmp(s1, s2x);
 }
 
-bool ?==?(const string_res & s1, const char* s2) { return strcmp(s1, s2) == 0; }
-bool ?!=?(const string_res & s1, const char* s2) { return strcmp(s1, s2) != 0; }
-bool ?>? (const string_res & s1, const char* s2) { return strcmp(s1, s2) >  0; }
-bool ?>=?(const string_res & s1, const char* s2) { return strcmp(s1, s2) >= 0; }
-bool ?<=?(const string_res & s1, const char* s2) { return strcmp(s1, s2) <= 0; }
-bool ?<? (const string_res & s1, const char* s2) { return strcmp(s1, s2) <  0; }
+bool ?==?(const string_res & s1, const char * s2) { return strcmp(s1, s2) == 0; }
+bool ?!=?(const string_res & s1, const char * s2) { return strcmp(s1, s2) != 0; }
+bool ?>? (const string_res & s1, const char * s2) { return strcmp(s1, s2) >  0; }
+bool ?>=?(const string_res & s1, const char * s2) { return strcmp(s1, s2) >= 0; }
+bool ?<=?(const string_res & s1, const char * s2) { return strcmp(s1, s2) <= 0; }
+bool ?<? (const string_res & s1, const char * s2) { return strcmp(s1, s2) <  0; }
 
-int strcmp (const char* s1, const string_res & s2) {
+int strcmp (const char * s1, const string_res & s2) {
     string_res s1x = s1;
     return strcmp(s1x, s2);
 }
 
-bool ?==?(const char* s1, const string_res & s2) { return strcmp(s1, s2) == 0; }
-bool ?!=?(const char* s1, const string_res & s2) { return strcmp(s1, s2) != 0; }
-bool ?>? (const char* s1, const string_res & s2) { return strcmp(s1, s2) >  0; }
-bool ?>=?(const char* s1, const string_res & s2) { return strcmp(s1, s2) >= 0; }
-bool ?<=?(const char* s1, const string_res & s2) { return strcmp(s1, s2) <= 0; }
-bool ?<? (const char* s1, const string_res & s2) { return strcmp(s1, s2) <  0; }
+bool ?==?(const char * s1, const string_res & s2) { return strcmp(s1, s2) == 0; }
+bool ?!=?(const char * s1, const string_res & s2) { return strcmp(s1, s2) != 0; }
+bool ?>? (const char * s1, const string_res & s2) { return strcmp(s1, s2) >  0; }
+bool ?>=?(const char * s1, const string_res & s2) { return strcmp(s1, s2) >= 0; }
+bool ?<=?(const char * s1, const string_res & s2) { return strcmp(s1, s2) <= 0; }
+bool ?<? (const char * s1, const string_res & s2) { return strcmp(s1, s2) <  0; }
 
 
 
@@ -717,18 +736,18 @@ int findFrom(const string_res & s, size_t fromPos, const string_res & search) {
     return findFrom(s, fromPos, search.Handle.s, search.Handle.lnth);
 }
 
-int find(const string_res & s, const char* search) {
+int find(const string_res & s, const char * search) {
     return findFrom(s, 0, search);
 }
-int findFrom(const string_res & s, size_t fromPos, const char* search) {
+int findFrom(const string_res & s, size_t fromPos, const char * search) {
     return findFrom(s, fromPos, search, strlen(search));
 }
 
-int find(const string_res & s, const char* search, size_t searchsize) {
+int find(const string_res & s, const char * search, size_t searchsize) {
     return findFrom(s, 0, search, searchsize);
 }
 
-int findFrom(const string_res & s, size_t fromPos, const char* search, size_t searchsize) {
+int findFrom(const string_res & s, size_t fromPos, const char * search, size_t searchsize) {
 
     /* Remaining implementations essentially ported from Sunjay's work */
 
@@ -769,11 +788,11 @@ bool includes(const string_res & s, const string_res & search) {
     return includes(s, search.Handle.s, search.Handle.lnth);
 }
 
-bool includes(const string_res & s, const char* search) {
+bool includes(const string_res & s, const char * search) {
     return includes(s, search, strlen(search));
 }
 
-bool includes(const string_res & s, const char* search, size_t searchsize) {
+bool includes(const string_res & s, const char * search, size_t searchsize) {
     return find(s, search, searchsize) < s.Handle.lnth;
 }
 
@@ -781,11 +800,11 @@ bool startsWith(const string_res & s, const string_res & prefix) {
     return startsWith(s, prefix.Handle.s, prefix.Handle.lnth);
 }
 
-bool startsWith(const string_res & s, const char* prefix) {
+bool startsWith(const string_res & s, const char * prefix) {
     return startsWith(s, prefix, strlen(prefix));
 }
 
-bool startsWith(const string_res & s, const char* prefix, size_t prefixsize) {
+bool startsWith(const string_res & s, const char * prefix, size_t prefixsize) {
     if (s.Handle.lnth < prefixsize) {
         return false;
     }
@@ -796,11 +815,11 @@ bool endsWith(const string_res & s, const string_res & suffix) {
     return endsWith(s, suffix.Handle.s, suffix.Handle.lnth);
 }
 
-bool endsWith(const string_res & s, const char* suffix) {
+bool endsWith(const string_res & s, const char * suffix) {
     return endsWith(s, suffix, strlen(suffix));
 }
 
-bool endsWith(const string_res & s, const char* suffix, size_t suffixsize) {
+bool endsWith(const string_res & s, const char * suffix, size_t suffixsize) {
     if (s.Handle.lnth < suffixsize) {
         return false;
     }

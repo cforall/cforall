@@ -35,7 +35,7 @@ static inline auto maybeMoveBuild( T * orig ) -> decltype(orig->build()) {
 }
 
 template<typename node_t>
-node_t * maybeCopy( node_t const * node ) {
+static inline node_t * maybeCopy( node_t const * node ) {
 	return node ? ast::shallowCopy( node ) : nullptr;
 }
 

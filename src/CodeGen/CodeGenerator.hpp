@@ -20,6 +20,7 @@
 #include "AST/Fwd.hpp"
 #include "AST/Pass.hpp"          // for WithGuards, WithShortCircuiting, ...
 #include "CodeGen/Options.h"     // for Options
+#include "Common/Indenter.h"     // for Indenter
 
 
 namespace CodeGen {

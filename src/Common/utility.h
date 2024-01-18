@@ -9,123 +9,22 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Andrew Beach
-// Last Modified On : Fri Feb 17 15:25:00 2023
-// Update Count     : 53
+// Last Modified On : Wed Jan 17 14:40:00 2024
+// Update Count     : 54
 //
 
 #pragma once
 
 #include <cassert>
-#include <cctype>
 #include <algorithm>
-#include <iostream>
 #include <list>
-#include <memory>
 #include <string>
 #include <type_traits>
 #include <vector>
-#include <cstring>										// memcmp
-
-#include "Common/Indenter.h"
-
-class Expression;
-
-/// bring std::move into global scope
-using std::move;
 
 /// partner to move that copies any copyable type
 template<typename T>
 T copy( const T & x ) { return x; }
-
-template< typename T >
-static inline T * maybeClone( const T *orig ) {
-	if ( orig ) {
-		return orig->clone();
-	} else {
-		return 0;
-	} // if
-}
-
-template< typename Input_iterator >
-void printEnums( Input_iterator begin, Input_iterator end, const char * const *name_array, std::ostream &os ) {
-	for ( Input_iterator i = begin; i != end; ++i ) {
-		os << name_array[ *i ] << ' ';
-	} // for
-}
-
-template< typename Container >
-void deleteAll( const Container &container ) {
-	for ( const auto &i : container ) {
-		delete i;
-	} // for
-}
-
-template< typename Container >
-void printAll( const Container &container, std::ostream &os, Indenter indent = {} ) {
-	for ( typename Container::const_iterator i = container.begin(); i != container.end(); ++i ) {
-		if ( *i ) {
-			os << indent;
-			(*i)->print( os, indent );
-			// need an endl after each element because it's not easy to know when each individual item should end
-			os << std::endl;
-		} // if
-	} // for
-}
-
-template< typename SrcContainer, typename DestContainer >
-void cloneAll( const SrcContainer &src, DestContainer &dest ) {
-	typename SrcContainer::const_iterator in = src.begin();
-	std::back_insert_iterator< DestContainer > out( dest );
-	while ( in != src.end() ) {
-		*out++ = (*in++)->clone();
-	} // while
-}
-
-template< typename SrcContainer, typename DestContainer, typename Predicate >
-void cloneAll_if( const SrcContainer &src, DestContainer &dest, Predicate pred ) {
-	std::back_insert_iterator< DestContainer > out( dest );
-	for ( auto x : src ) {
-		if ( pred(x) ) {
-			*out++ = x->clone();
-		}
-	} // while
-}
-
-template< typename Container >
-void assertAll( const Container &container ) {
-	int count = 0;
-	for ( typename Container::const_iterator i = container.begin(); i != container.end(); ++i ) {
-		if ( !(*i) ) {
-			std::cerr << count << " is null" << std::endl;
-		} // if
-	} // for
-}
-
-template < typename T >
-std::list<T> tail( std::list<T> l ) {
-	if ( ! l.empty() ) {
-		std::list<T> ret(++(l.begin()), l.end());
-		return ret;
-	} // if
-}
-
-template < typename T >
-std::list<T> flatten( std::list < std::list<T> > l) {
-	typedef std::list <T> Ts;
-
-	Ts ret;
-
-	switch ( l.size() ) {
-	  case 0:
-		return ret;
-	  case 1:
-		return l.front();
-	  default:
-		ret = flatten(tail(l));
-		ret.insert(ret.begin(), l.front().begin(), l.front().end());
-		return ret;
-	} // switch
-}
 
 /// Splice src onto the end of dst, clearing src
 template< typename T >
@@ -142,26 +41,7 @@ void spliceBegin( std::vector< T > & dst, std::vector< T > & src ) {
 	dst.swap( src );
 }
 
-template< typename... Args >
-auto filter(Args&&... args) -> decltype(std::copy_if(std::forward<Args>(args)...)) {
-  return std::copy_if(std::forward<Args>(args)...);
-}
-
-template <typename E, typename UnaryPredicate, template< typename, typename...> class Container, typename... Args >
-void filter( Container< E *, Args... > & container, UnaryPredicate pred, bool doDelete ) {
-	auto i = begin( container );
-	while ( i != end( container ) ) {
-		auto it = next( i );
-		if ( pred( *i ) ) {
-			if ( doDelete ) {
-				delete *i;
-			} // if
-			container.erase( i );
-		} // if
-		i = it;
-	} // while
-}
-
+/// Remove elements that match pred from the container.
 template<typename Container, typename Pred>
 void erase_if( Container & cont, Pred && pred ) {
 	auto keep_end = std::remove_if( cont.begin(), cont.end(), pred );

@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  4 11:27:35 2024
-// Update Count     : 75
+// Last Modified On : Sun Jan 14 12:03:46 2024
+// Update Count     : 81
 //
 
 #pragma once
@@ -32,19 +32,27 @@ static inline size_t strlen(const string & s) { return size( s ); }
 
 // RAII, assignment
 void ?{}(string & s); // empty string
-void ?{}(string & s, const char * initial); // copy from string literal (NULL-terminated)
-void ?{}(string & s, const char * buffer, size_t bsize); // copy specific length from buffer
-
 void ?{}(string & s, const string & s2);
+void ?{}(string & s, const string & s2, size_t maxlen);
 void ?{}(string & s, string & s2);
 
+void ?{}(string & s, char);
+void ?{}(string & s, const char * c); // copy from string literal (NULL-terminated)
+void ?{}(string & s, const char * c, size_t size); // copy specific length from buffer
+
 void ?=?(string & s, const char * c); // copy assignment from literal
-static inline string & strcpy(string & s, const char * c) { s = c; return s; }
 void ?=?(string & s, const string & c);
-static inline string & strcpy(string & s, const string c) { s = c; return s; }
 void ?=?(string & s, char c);
 string & ?=?(string & s, string & c);  // surprising ret seems to help avoid calls to autogen
+void assign(string & s, const string & c, size_t n);
+void assign(string & s, const char * c, size_t n);
 //string ?=?( string &, string ) = void;
+
+static inline string & strcpy(string & s, const char * c) { s = c; return s; }
+static inline string & strncpy(string & s, const char * c, size_t n) { assign( s, c, n); return s; }
+static inline string & strcpy(string & s, const string & c) { s = c; return s; }
+static inline string & strncpy(string & s, const string & c, size_t n) { assign(s, c, n); return s; }
+
 void ^?{}(string & s);
 
 // Alternate construction: request shared edits
@@ -101,18 +109,25 @@ void ?|?( ifstream & is, _Istream_Sstr t );
 // Concatenation
 void ?+=?(string & s, char c); // append a character
 void ?+=?(string & s, const string & s2); // append-concatenate to first string
-static inline string & strcat(string & s, const string & s2) { s += s2; return s; }
-void ?+=?(string & s, const char * s2); // append-concatenate to first string
-static inline string & strcat(string & s, const char * c) { s += c; return s; }
+void append(string & s, const string & s2, size_t maxlen);  // append-concatenate to first string, up to maxlen
+void ?+=?(string & s, const char * s2); // append-concatenate NULL-terminated string to first string
+void append(string & s, const char * buffer, size_t bsize);  // append-concatenate given range to first string
+
 string ?+?(const string & s, char c); // add a character to a copy of the string
 string ?+?(const string & s, const string & s2); // copy and concatenate both strings
-string ?+?(const char * s1, const char * s2); // concatenate both strings
+string ?+?(const char * s1, const char * s2); // copy and concatenate both strings
 string ?+?(const string & s, const char * c); // copy and concatenate with NULL-terminated string
+
+static inline string & strcat(string & s, const string & s2) { s += s2; return s; }
+static inline string & strcat(string & s, const char * c) { s += c; return s; }
+static inline string & strncat(string & s, const string & s2, size_t maxlen) { append(s, s2, maxlen); return s; }
+static inline string & strncat(string & s, const char * buffer, size_t bsize) { append(s, buffer, bsize); return s; }
 
 // Repetition
 string ?*?(const string & s, size_t factor);
-string ?*?(char c, size_t size);
-string ?*?(const char *s, size_t size);
+void ?*=?(string & s, size_t factor);
+string ?*?(char c, size_t factor);
+string ?*?(const char *s, size_t factor);
 
 // Character access
 char ?[?](const string & s, size_t index);

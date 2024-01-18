@@ -47,6 +47,7 @@ inst_headers_nosrc = \
 	gmp.hfa \
 	math.trait.hfa \
 	math.hfa \
+	raii.hfa \
 	time_t.hfa \
 	virtual_dtor.hfa \
 	bits/algorithm.hfa \

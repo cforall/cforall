@@ -1959,7 +1959,7 @@ cfa_function_declaration:								// CFA
 		{
 			// Append the return type at the start (left-hand-side) to each identifier in the list.
 			DeclarationNode * ret = new DeclarationNode;
-			ret->type = maybeClone( $1->type->base );
+			ret->type = maybeCopy( $1->type->base );
 			$$ = $1->appendList( DeclarationNode::newFunction( $3, ret, $6, nullptr ) );
 		}
 	;

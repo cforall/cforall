@@ -166,8 +166,8 @@ TypeData::~TypeData() {
 TypeData * TypeData::clone() const {
 	TypeData * newtype = new TypeData( kind );
 	newtype->qualifiers = qualifiers;
-	newtype->base = maybeClone( base );
-	newtype->forall = maybeClone( forall );
+	newtype->base = maybeCopy( base );
+	newtype->forall = maybeCopy( forall );
 
 	switch ( kind ) {
 	case Unknown:
@@ -184,53 +184,53 @@ TypeData * TypeData::clone() const {
 		newtype->length = length;
 		break;
 	case Array:
-		newtype->array.dimension = maybeClone( array.dimension );
+		newtype->array.dimension = maybeCopy( array.dimension );
 		newtype->array.isVarLen = array.isVarLen;
 		newtype->array.isStatic = array.isStatic;
 		break;
 	case Function:
-		newtype->function.params = maybeClone( function.params );
-		newtype->function.idList = maybeClone( function.idList );
-		newtype->function.oldDeclList = maybeClone( function.oldDeclList );
-		newtype->function.body = maybeClone( function.body );
-		newtype->function.withExprs = maybeClone( function.withExprs );
+		newtype->function.params = maybeCopy( function.params );
+		newtype->function.idList = maybeCopy( function.idList );
+		newtype->function.oldDeclList = maybeCopy( function.oldDeclList );
+		newtype->function.body = maybeCopy( function.body );
+		newtype->function.withExprs = maybeCopy( function.withExprs );
 		break;
 	case Aggregate:
 		newtype->aggregate.kind = aggregate.kind;
 		newtype->aggregate.name = aggregate.name ? new string( *aggregate.name ) : nullptr;
-		newtype->aggregate.params = maybeClone( aggregate.params );
-		newtype->aggregate.actuals = maybeClone( aggregate.actuals );
-		newtype->aggregate.fields = maybeClone( aggregate.fields );
+		newtype->aggregate.params = maybeCopy( aggregate.params );
+		newtype->aggregate.actuals = maybeCopy( aggregate.actuals );
+		newtype->aggregate.fields = maybeCopy( aggregate.fields );
 		newtype->aggregate.body = aggregate.body;
 		newtype->aggregate.anon = aggregate.anon;
 		newtype->aggregate.tagged = aggregate.tagged;
 		newtype->aggregate.parent = aggregate.parent ? new string( *aggregate.parent ) : nullptr;
 		break;
 	case AggregateInst:
-		newtype->aggInst.aggregate = maybeClone( aggInst.aggregate );
-		newtype->aggInst.params = maybeClone( aggInst.params );
+		newtype->aggInst.aggregate = maybeCopy( aggInst.aggregate );
+		newtype->aggInst.params = maybeCopy( aggInst.params );
 		newtype->aggInst.hoistType = aggInst.hoistType;
 		break;
 	case Enum:
 		newtype->enumeration.name = enumeration.name ? new string( *enumeration.name ) : nullptr;
-		newtype->enumeration.constants = maybeClone( enumeration.constants );
+		newtype->enumeration.constants = maybeCopy( enumeration.constants );
 		newtype->enumeration.body = enumeration.body;
 		newtype->enumeration.anon = enumeration.anon;
 		break;
 	case Symbolic:
 	case SymbolicInst:
 		newtype->symbolic.name = symbolic.name ? new string( *symbolic.name ) : nullptr;
-		newtype->symbolic.params = maybeClone( symbolic.params );
-		newtype->symbolic.actuals = maybeClone( symbolic.actuals );
-		newtype->symbolic.assertions = maybeClone( symbolic.assertions );
+		newtype->symbolic.params = maybeCopy( symbolic.params );
+		newtype->symbolic.actuals = maybeCopy( symbolic.actuals );
+		newtype->symbolic.assertions = maybeCopy( symbolic.assertions );
 		newtype->symbolic.isTypedef = symbolic.isTypedef;
 		break;
 	case Tuple:
-		newtype->tuple = maybeClone( tuple );
+		newtype->tuple = maybeCopy( tuple );
 		break;
 	case Typeof:
 	case Basetypeof:
-		newtype->typeexpr = maybeClone( typeexpr );
+		newtype->typeexpr = maybeCopy( typeexpr );
 		break;
 	case Vtable:
 		break;
@@ -239,8 +239,8 @@ TypeData * TypeData::clone() const {
 		newtype->builtintype = builtintype;
 		break;
 	case Qualified:
-		newtype->qualified.parent = maybeClone( qualified.parent );
-		newtype->qualified.child = maybeClone( qualified.child );
+		newtype->qualified.parent = maybeCopy( qualified.parent );
+		newtype->qualified.child = maybeCopy( qualified.child );
 		break;
 	} // switch
 	return newtype;

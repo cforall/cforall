@@ -580,7 +580,9 @@ ast::Expr * ResolveCopyCtors::destructRet( const ast::ObjectDecl * ret, const as
 		return new ast::CommaExpr(loc, arg, new ast::VariableExpr(loc, ret ) );
 	}
 
-	if ( ! dtor->env ) dtor->env = maybeClone( env );
+	if ( nullptr == dtor->env && nullptr != env ) {
+		dtor->env = ast::shallowCopy( env );
+	}
 	auto dtorFunc = getDtorFunc( ret, new ast::ExprStmt(loc, dtor ), stmtsToAddBefore );
 
 	auto dtorStructType = new ast::StructInstType( global.dtorStruct );

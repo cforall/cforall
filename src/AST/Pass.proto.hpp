@@ -18,6 +18,7 @@
 
 #include "Common/Iterate.hpp"
 #include "Common/Stats/Heap.h"
+#include "Common/utility.h"
 namespace ast {
 	template<typename core_t> class Pass;
 	class TranslationUnit;

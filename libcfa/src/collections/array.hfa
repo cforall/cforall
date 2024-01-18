@@ -130,15 +130,29 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
     }
 
     static inline void __taglen( tag(arpk(N, S, Timmed, Tbase)), tag(N) ) {}
+}
 
-    // workaround #226 (and array relevance thereof demonstrated in mike102/otype-slow-ndims.cfa)
-    static inline void ?{}( arpk(N, S, Timmed, Tbase) & this ) {
-        void ?{}( S (&inner)[N] ) {}
-        ?{}(this.strides);
-    }
-    static inline void ^?{}( arpk(N, S, Timmed, Tbase) & this ) {
-        void ^?{}( S (&inner)[N] ) {}
-        ^?{}(this.strides);
+// RAII pattern has workarounds for
+//  - Trac 226:  Simplest handling would be, require immediate element to be otype, let autogen
+//    raii happen.  Performance on even a couple dimensions is unacceptable because of exponential
+//    thunk creation: ?{}() needs all four otype funcs from next level, so does ^?{}(), so do the
+//    other two.  This solution offers ?{}() that needs only ?{}(), and similar for ^?{}.
+
+forall( [N], S & | sized(S), Timmed &, Tbase & | { void ?{}( Timmed & ); } )
+static inline void ?{}( arpk(N, S, Timmed, Tbase) & this ) {    
+    void ?{}( S (&)[N] ) {}
+    ?{}(this.strides);
+
+    for (i; N) ?{}( (Timmed &) this.strides[i] );
+}
+
+forall( [N], S & | sized(S), Timmed &, Tbase & | { void ^?{}( Timmed & ); } )
+static inline void ^?{}( arpk(N, S, Timmed, Tbase) & this ) {
+    void ^?{}( S (&)[N] ) {}
+    ^?{}(this.strides);
+
+    for (i; N ) {
+        ^?{}( (Timmed &) this.strides[N-i-1] );
     }
 }
 
@@ -146,7 +160,7 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
 // Sugar for declaring array structure instances
 //
 
-forall( Te )
+forall( Te * )
 static inline Te mkar_( tag(Te) ) {}
 
 forall( [N], ZTags ... , Trslt &, Tatom & | { Trslt mkar_( tag(Tatom), ZTags ); } )

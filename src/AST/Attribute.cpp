@@ -37,11 +37,11 @@ std::string Attribute::normalizedName() const {
 }
 
 bool Attribute::isValidOnFuncParam() const {
-	// attributes such as aligned, cleanup, etc. produce GCC errors when they appear
-	// on function parameters. Maintain here a whitelist of attribute names that are
-	// allowed to appear on parameters.
+	// Attributes produce GCC errors when they appear on function
+	// parameters. Names on the previous allow-list implementation:
+	// unused, noreturn, __vector_size__
 	std::string norm = normalizedName();
-	return norm == "unused" || norm == "noreturn";
+	return norm != "aligned" && norm != "packed" && norm != "used";
 }
 
 }

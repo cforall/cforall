@@ -29,7 +29,6 @@
 #include "Common/CodeLocation.h"   // for CodeLocation
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/UniqueName.h"     // for UniqueName
-#include "Common/utility.h"        // for maybeClone
 #include "Parser/parserutility.h"  // for maybeBuild, maybeCopy
 
 struct DeclarationNode;

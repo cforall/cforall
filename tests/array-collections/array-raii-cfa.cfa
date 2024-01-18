@@ -1,0 +1,23 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// array-raii-cfa.cfa -- checks RAII on CFA arrays of initialized elements
+//
+// Author           : Mike Brooks
+// Created On       : Fri Sep 22 15:00:00 2023
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// CFA array means like `array(float, 17) x;`
+
+#include <collections/array.hfa>
+
+#define ADECL1(X, El, N)    array(El, N) X;
+#define ADECL2(X, El, M, N) array(El, M, N) X;
+
+#include "array-raii.hfa"

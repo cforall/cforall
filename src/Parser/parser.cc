@@ -10140,7 +10140,7 @@ yyreduce:
                 {
 			// Append the return type at the start (left-hand-side) to each identifier in the list.
 			DeclarationNode * ret = new DeclarationNode;
-			ret->type = maybeClone( (yyvsp[-7].decl)->type->base );
+			ret->type = maybeCopy( (yyvsp[-7].decl)->type->base );
 			(yyval.decl) = (yyvsp[-7].decl)->appendList( DeclarationNode::newFunction( (yyvsp[-5].tok), ret, (yyvsp[-2].decl), nullptr ) );
 		}
 #line 10147 "Parser/parser.cc"

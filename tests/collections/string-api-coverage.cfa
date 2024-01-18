@@ -65,11 +65,17 @@ int main () {
     // breadth Constructors
     //
     {
-        string b1 = { "1234567", 3 };
-        sout | b1; // 123
+        string b1 = "1234567";
+        sout | b1; // 1234567
+
+        string b1x = { "1234567", 3 };
+        sout | b1x; // 123
 
         string b2 = s;
         sout | b2; // hello
+
+        string b2x = { s, 4 };
+        sout | b2x; // hell
 
         // todo: a plain string &
         const string & s_ref = s;
@@ -87,8 +93,57 @@ int main () {
         & s_constref = & s3;
         b4 = s_constref;
         sout | b4;  // world
+
+        string b5 = 'Q';
+        sout | b5; // Q
+
+
     }
                                             assertWellFormedHandleList( 10 );
+    //
+    // Assignments
+    //
+    {
+        string b = "xxx";
+
+        b = "1234567";
+        sout | b; // 1234567
+
+        b = "xxx";
+        b = s;
+        sout | b; // hello
+        
+        b = "xxx";
+        b = 'Q';
+        sout | b; // Q
+        
+        b = "xxx";
+        assign( b, "1234567", 3 );
+        sout | b; // 123
+
+        b = "xxx";
+        assign( b, s, 4 );
+        sout | b; // hell
+
+        b = "xxx";
+        strcpy(b, "1234567");
+        sout | b; // 1234567
+
+        b = "xxx";
+        strcpy(b, s);
+        sout | b; // hello
+        
+        b = "xxx";
+        strncpy( b, "1234567", 3 );
+        sout | b; // 123
+
+        b = "xxx";
+        strncpy( b, s, 4 );
+        sout | b; // hell
+    }
+                                            assertWellFormedHandleList( 10 );
+
+
 
     sout | size(s); // 5
 
@@ -125,9 +180,38 @@ int main () {
     sx = "bye, " + "friend";
     sout | sx; // bye, friend
 
+    sx = "o";
+    strcat( sx, s );
+    sout | sx; // ohello
+
+    sx = "o";
+    append( sx, s, 4 );
+    sout | sx; // ohell
+
+    sx = "o";
+    strncat( sx, s, 4 );
+    sout | sx; // ohell
+
+    sx = "o";
+    strcat( sx, "mydarling" );
+    sout | sx; // omydarling
+
+    sx = "o";
+    append( sx, "mydarling", 2 );
+    sout | sx; // omy
+
+    sx = "o";
+    strncat( sx, "mydarling", 2 );
+    sout | sx; // omy
+
     //
     // repetition
     //
+
+    sx = s;
+    sx *= 4;
+    sout | sx; // hellohellohellohello
+
     sx = s * 3;
     sout | sx; // hellohellohello
 

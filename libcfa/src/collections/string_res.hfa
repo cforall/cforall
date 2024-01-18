@@ -77,7 +77,11 @@ void ?{}(string_res & s, const char * buffer, size_t bsize); // copy specific le
 static inline void ?{}(string_res & s, const char * rhs) { // copy from string literal (NULL-terminated)
     (s){ rhs, strlen(rhs) };
 }
+static inline void ?{}(string_res & s, char c ) {
+    ?{}( s, &c, 1);
+}
 
+// Deleting the copy constructors makes the compiler reject an attempt to call/return by value
 void ?{}(string_res & s, const string_res & s2) = void;
 void ?{}(string_res & s, string_res & s2) = void;
 
@@ -86,7 +90,11 @@ void ?{}(string_res & s, const string_res & src, StrResInitMode, size_t start, s
 static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mode ) {
     ?{}( s, src, mode, 0, size(src));
 }
+static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mode, size_t maxlen ) {
+    ?{}( s, src, mode, 0, (size(src) > maxlen)?maxlen:size(src) );
+}
 
+string_res & assign(string_res & s, const string_res & src, size_t maxlen); // copy specific length from other string
 string_res & assign(string_res & s, const char * buffer, size_t bsize); // copy specific length from buffer
 static inline string_res & ?=?(string_res & s, const char * c) {  // copy from string literal (NULL-terminated)
     return assign(s, c, strlen(c));
@@ -128,12 +136,19 @@ ifstream & ?|?( ifstream & is, _Istream_Rstr f );
 void ?|?( ifstream & is, _Istream_Rstr t );
 
 // Concatenation
+void ?+=?(string_res & s, const string_res & s2);
+void ?+=?(string_res & s, char c);
+void append(string_res & s, const string_res & s2, size_t maxlen);
+void ?+=?(string_res & s, const char * c);
 void append(string_res & s, const char * buffer, size_t bsize);
-void ?+=?(string_res & s, char c); // append a character
-void ?+=?(string_res & s, const string_res & s2); // append-concatenate to first string
-static inline void ?+=?(string_res & s, const char * c) {
-    append( s, c, strlen(c) );
-}
+
+static inline string_res & strcat(string_res & s, const string_res & s2) { s += s2; return s; }
+static inline string_res & strcat(string_res & s, const char * c) { s += c; return s; }
+static inline string_res & strncat(string_res & s, const string_res & s2, size_t maxlen) { append(s, s2, maxlen); return s; }
+static inline string_res & strncat(string_res & s, const char * buffer, size_t bsize) { append(s, buffer, bsize); return s; }
+
+// Repetition
+void ?*=?(string_res & s, size_t factor);
 
 // Character access
 void assignAt(const string_res & s, size_t index, char val);
