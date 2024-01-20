@@ -777,6 +777,11 @@ void CodeGenerator::postvisit( ast::OffsetPackExpr const * expr ) {
 	output << "__CFA_offsetpack(" << genType( expr->type, "", options ) << ")";
 }
 
+void CodeGenerator::postvisit( ast::EnumPosExpr const * expr ) {
+	assertf( !options.genC, "EnumPosExpr should not reach code generation." );
+	output << "__CFA_enumeration_pos(" << genType( expr->type, "", options ) << ")";
+}
+
 void CodeGenerator::postvisit( ast::LogicalExpr const * expr ) {
 	extension( expr );
 	output << "(";

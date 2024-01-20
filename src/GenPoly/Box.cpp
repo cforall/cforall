@@ -1579,6 +1579,8 @@ struct PolyGenericCalculator final :
 	ast::Expr const * postvisit( ast::OffsetofExpr const * expr );
 	ast::Expr const * postvisit( ast::OffsetPackExpr const * expr );
 
+	ast::Expr const * postvisit( ast::EnumPosExpr const * expr );
+
 	void beginScope();
 	void endScope();
 private:
@@ -1949,6 +1951,11 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 	);
 
 	return new ast::VariableExpr( expr->location, offsetArray );
+}
+
+// TODO 
+ast::Expr const * PolyGenericCalculator::postvisit( ast::EnumPosExpr const * expr ) {
+	return expr;
 }
 
 void PolyGenericCalculator::beginScope() {

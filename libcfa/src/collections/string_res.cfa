@@ -24,6 +24,7 @@
 #define TEMP_ALLOC(T, n) (( T * ) malloc( n * sizeof( T ) ))
 
 #include <assert.h>
+#include <complex.h>                           // creal, cimag
 
 //######################### VbyteHeap "header" #########################
 
@@ -334,6 +335,43 @@ void ?{}(string_res & s, const char * rhs, size_t rhslnth) with(s) {
     eagerCopyCtorHelper(s, rhs, rhslnth);
 }
 
+void ?{}( string_res & s, ssize_t rhs ) {
+    char buf[64];
+    int len;
+    snprintf( buf, sizeof(buf)-1, "%zd%n", rhs, &len );
+    ( s ){ buf, len };
+}
+void ?{}( string_res & s, size_t rhs ) {
+    char buf[64];
+    int len;
+    snprintf( buf, sizeof(buf)-1, "%zu%n", rhs, &len );
+    ( s ){ buf, len };
+}
+void ?{}( string_res & s, double rhs ) {
+    char buf[64];
+    int len;
+    snprintf( buf, sizeof(buf)-1, "%g%n", rhs, &len );
+    ( s ){ buf, len };
+}
+void ?{}( string_res & s, long double rhs ) {
+    char buf[64];
+    int len;
+    snprintf( buf, sizeof(buf)-1, "%Lg%n", rhs, &len );
+    ( s ){ buf, len };
+}
+void ?{}( string_res & s, double _Complex rhs ) {
+    char buf[64];
+    int len;
+    snprintf( buf, sizeof(buf)-1, "%g+%gi%n", creal( rhs ), cimag( rhs ), &len );
+    ( s ){ buf, len };
+}
+void ?{}( string_res & s, long double _Complex rhs ) {
+    char buf[64];
+    int len;
+    snprintf( buf, sizeof(buf)-1, "%Lg+%Lgi%n", creall( rhs ), cimagl( rhs ), &len );
+    ( s ){ buf, len };
+}
+
 // private ctor (not in header): use specified heap (ignore ambient) and copy chars in
 void ?{}( string_res & s, VbyteHeap & heap, const char * rhs, size_t rhslnth ) with(s) {
     (Handle){ heap };
@@ -345,9 +383,11 @@ void ?{}( string_res & s, VbyteHeap & heap, const char * rhs, size_t rhslnth ) w
     s.shareEditSet_next = &s;
 }
 
-// General copy constructor
-void ?{}(string_res & s, const string_res & s2, StrResInitMode mode, size_t start, size_t end ) {
 
+// General copy constructor
+void ?{}(string_res & s, const string_res & s2, StrResInitMode mode, size_t start, size_t len ) {
+
+    size_t end = start + len;
     verify( start <= end && end <= s2.Handle.lnth );
 
     if (s2.Handle.ulink != ambient_string_sharectx->activeHeap && mode == COPY_VALUE) {
@@ -574,6 +614,37 @@ string_res & ?=?(string_res & s, char c) {
     return assign(s, &c, 1);
 }
 
+string_res & ?=?( string_res & s, ssize_t rhs ) {
+    string_res rhs2 = rhs;
+    s = rhs2;
+    return s;
+}
+string_res & ?=?( string_res & s, size_t rhs ) {
+    string_res rhs2 = rhs;
+    s = rhs2;
+    return s;
+}
+string_res & ?=?( string_res & s, double rhs ) {
+    string_res rhs2 = rhs;
+    s = rhs2;
+    return s;
+}
+string_res & ?=?( string_res & s, long double rhs ) {
+    string_res rhs2 = rhs;
+    s = rhs2;
+    return s;
+}
+string_res & ?=?( string_res & s, double _Complex rhs ) {
+    string_res rhs2 = rhs;
+    s = rhs2;
+    return s;
+}
+string_res & ?=?( string_res & s, long double _Complex rhs ) {
+    string_res rhs2 = rhs;
+    s = rhs2;
+    return s;
+}
+
 // Copy assignment operator
 string_res & ?=?(string_res & s, const string_res & rhs) with( s ) {
     return assign_(s, rhs.Handle.s, rhs.Handle.lnth, rhs);
@@ -610,7 +681,10 @@ char ?[?](const string_res & s, size_t index) with(s) {
 }
 
 void assignAt(const string_res & s, size_t index, char val) {
-    string_res editZone = { s, SHARE_EDITS, index, index+1 };
+    // caution: not tested (not reachable by string-api-coverage interface)
+    // equivalent form at string level is `s[index] = val`,
+    // which uses the overload that returns a length-1 string
+    string_res editZone = { s, SHARE_EDITS, index, 1 };
     assign(editZone, &val, 1);
 }
 
@@ -655,7 +729,7 @@ void ?+=?(string_res & s, const char * c) {
 // Repetition
 
 void ?*=?(string_res & s, size_t factor) {
-    string_res s2 = { s, COPY_VALUE, 0, size(s) };
+    string_res s2 = { s, COPY_VALUE };
     s = "";
     for (factor) s += s2;
 }

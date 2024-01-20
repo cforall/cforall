@@ -9,17 +9,15 @@
 // Author           : Thierry Delisle
 // Created On       : Wed Mar 29 16:10:31 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 11 18:45:31 2024
-// Update Count     : 218
+// Last Modified On : Fri Jan 19 16:47:35 2024
+// Update Count     : 219
 //
 
 #include <stdio.h>
 #include <unistd.h>										// _exit, getpid
 extern "C" {
 #include <dlfcn.h>										// dlopen, dlsym
-//#include <link.h>										// dl_iterate_phdr
-struct dl_phdr_info;
-int dl_iterate_phdr( int (*)( struct dl_phdr_info *, size_t, void * ), void * );
+#include <link.h>										// dl_iterate_phdr
 #include <execinfo.h>									// backtrace, messages
 }
 

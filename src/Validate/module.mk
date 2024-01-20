@@ -51,6 +51,8 @@ SRC += $(SRC_VALIDATE) \
 	Validate/ReturnCheck.cpp \
 	Validate/ReturnCheck.hpp \
 	Validate/VerifyCtorDtorAssign.cpp \
-	Validate/VerifyCtorDtorAssign.hpp
+	Validate/VerifyCtorDtorAssign.hpp \
+	Validate/ReplacePseudoFunc.cpp \
+	Validate/ReplacePseudoFunc.hpp
 
 SRCDEMANGLE += $(SRC_VALIDATE)

@@ -306,6 +306,20 @@ OffsetPackExpr::OffsetPackExpr( const CodeLocation & loc, const StructInstType *
 	assert( type );
 }
 
+// 
+
+// --- EnumPosExpr
+EnumPosExpr::EnumPosExpr( const CodeLocation & loc, const EnumInstType * ty)
+: Expr( loc, new BasicType{ BasicType::UnsignedInt }), type( ty ) {
+	assert( ty );
+}
+
+EnumPosExpr::EnumPosExpr( const CodeLocation & loc, const Expr * expr )
+: Expr( loc, new BasicType{ BasicType::UnsignedInt }), expr(expr) {
+	assert( expr );
+}
+
+
 // --- LogicalExpr
 
 LogicalExpr::LogicalExpr(

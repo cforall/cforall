@@ -40,18 +40,31 @@ void ?{}(string & s, char);
 void ?{}(string & s, const char * c); // copy from string literal (NULL-terminated)
 void ?{}(string & s, const char * c, size_t size); // copy specific length from buffer
 
-void ?=?(string & s, const char * c); // copy assignment from literal
-void ?=?(string & s, const string & c);
-void ?=?(string & s, char c);
-string & ?=?(string & s, string & c);  // surprising ret seems to help avoid calls to autogen
-void assign(string & s, const string & c, size_t n);
-void assign(string & s, const char * c, size_t n);
-//string ?=?( string &, string ) = void;
+void ?{}( string & s, ssize_t rhs );
+void ?{}( string & s, size_t rhs );
+void ?{}( string & s, double rhs );
+void ?{}( string & s, long double rhs );
+void ?{}( string & s, double _Complex rhs );
+void ?{}( string & s, long double _Complex rhs );
+
+string & ?=?(string & s, const string & c);
+string & ?=?(string & s, string & c);
+string & ?=?(string & s, const char * c); // copy from "literal"
+string & ?=?(string & s, char c);  // copy from 'l'
+string & assign(string & s, const string & c, size_t n);
+string & assign(string & s, const char * c, size_t n);
 
 static inline string & strcpy(string & s, const char * c) { s = c; return s; }
 static inline string & strncpy(string & s, const char * c, size_t n) { assign( s, c, n); return s; }
 static inline string & strcpy(string & s, const string & c) { s = c; return s; }
 static inline string & strncpy(string & s, const string & c, size_t n) { assign(s, c, n); return s; }
+
+string & ?=?( string & s, ssize_t rhs );
+string & ?=?( string & s, size_t rhs );
+string & ?=?( string & s, double rhs );
+string & ?=?( string & s, long double rhs );
+string & ?=?( string & s, double _Complex rhs );
+string & ?=?( string & s, long double _Complex rhs );
 
 void ^?{}(string & s);
 
@@ -161,7 +174,7 @@ bool ?<? (const char *, const string &);
 
 
 // Slicing
-string ?()( string & s, size_t start, size_t end );  // TODO const?
+string ?()( string & s, size_t start, size_t len );  // TODO const?
 string ?()( string & s, size_t start);
 
 // String search

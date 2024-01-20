@@ -270,6 +270,7 @@ namespace {
 		void previsit( const ast::UntypedOffsetofExpr * ) {}
 		void previsit( const ast::OffsetofExpr * ) {}
 		void previsit( const ast::OffsetPackExpr * ) {}
+		void previsit( const ast::EnumPosExpr * ) {}
 		void previsit( const ast::CommaExpr * ) {}
 		void previsit( const ast::LogicalExpr * ) {}
 		void previsit( const ast::ConditionalExpr * ) {}

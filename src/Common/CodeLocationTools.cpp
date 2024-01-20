@@ -157,6 +157,7 @@ public:
     macro(OffsetofExpr, Expr) \
     macro(OffsetPackExpr, Expr) \
     macro(LogicalExpr, Expr) \
+	macro(EnumPosExpr, Expr) \
     macro(ConditionalExpr, Expr) \
     macro(CommaExpr, Expr) \
     macro(TypeExpr, Expr) \

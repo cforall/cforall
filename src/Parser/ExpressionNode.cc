@@ -689,6 +689,11 @@ ast::Expr * build_unary_val( const CodeLocation & location,
 	);
 } // build_unary_val
 
+ast::Expr * build_enum_pos_expr( const CodeLocation & location, ast::Expr * expr_node ) {
+	// return nullptr
+	return new ast::EnumPosExpr( location, std::move( expr_node ) );
+}
+
 ast::Expr * build_binary_val( const CodeLocation & location,
 		OperKinds op,
 		ExpressionNode * expr_node1,

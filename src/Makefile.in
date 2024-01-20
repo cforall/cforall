@@ -252,6 +252,7 @@ am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Validate/ReplaceTypedef.$(OBJEXT) \
 	Validate/ReturnCheck.$(OBJEXT) \
 	Validate/VerifyCtorDtorAssign.$(OBJEXT) \
+	Validate/ReplacePseudoFunc.$(OBJEXT) \
 	Virtual/ExpandCasts.$(OBJEXT) Virtual/Tables.$(OBJEXT) \
 	Virtual/VirtualDtor.$(OBJEXT)
 am____driver_cfa_cpp_OBJECTS = $(am__objects_11)
@@ -374,6 +375,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Validate/$(DEPDIR)/InitializerLength.Po \
 	Validate/$(DEPDIR)/LabelAddressFixer.Po \
 	Validate/$(DEPDIR)/LinkInstanceTypes.Po \
+	Validate/$(DEPDIR)/ReplacePseudoFunc.Po \
 	Validate/$(DEPDIR)/ReplaceTypedef.Po \
 	Validate/$(DEPDIR)/ReturnCheck.Po \
 	Validate/$(DEPDIR)/VerifyCtorDtorAssign.Po \
@@ -683,9 +685,11 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cpp \
 	Validate/ReplaceTypedef.cpp Validate/ReplaceTypedef.hpp \
 	Validate/ReturnCheck.cpp Validate/ReturnCheck.hpp \
 	Validate/VerifyCtorDtorAssign.cpp \
-	Validate/VerifyCtorDtorAssign.hpp Virtual/ExpandCasts.cc \
-	Virtual/ExpandCasts.h Virtual/Tables.cc Virtual/Tables.h \
-	Virtual/VirtualDtor.cpp Virtual/VirtualDtor.hpp
+	Validate/VerifyCtorDtorAssign.hpp \
+	Validate/ReplacePseudoFunc.cpp Validate/ReplacePseudoFunc.hpp \
+	Virtual/ExpandCasts.cc Virtual/ExpandCasts.h Virtual/Tables.cc \
+	Virtual/Tables.h Virtual/VirtualDtor.cpp \
+	Virtual/VirtualDtor.hpp
 SRCDEMANGLE = CompilationState.cc $(SRC_AST) $(SRC_CODEGEN) \
 	$(SRC_COMMON) $(SRC_GENPOLY) $(SRC_INITTWEAK) \
 	$(SRC_RESOLVEXPR) $(SRC_SYMTAB) SymTab/Demangle.cc \
@@ -1293,6 +1297,8 @@ Validate/ReturnCheck.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/VerifyCtorDtorAssign.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/ReplacePseudoFunc.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Virtual/$(am__dirstamp):
 	@$(MKDIR_P) Virtual
 	@: > Virtual/$(am__dirstamp)
@@ -1461,6 +1467,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/InitializerLength.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/LabelAddressFixer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/LinkInstanceTypes.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ReplacePseudoFunc.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ReplaceTypedef.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ReturnCheck.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/VerifyCtorDtorAssign.Po@am__quote@ # am--include-marker
@@ -1822,6 +1829,7 @@ distclean: distclean-am
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
 	-rm -f Validate/$(DEPDIR)/LinkInstanceTypes.Po
+	-rm -f Validate/$(DEPDIR)/ReplacePseudoFunc.Po
 	-rm -f Validate/$(DEPDIR)/ReplaceTypedef.Po
 	-rm -f Validate/$(DEPDIR)/ReturnCheck.Po
 	-rm -f Validate/$(DEPDIR)/VerifyCtorDtorAssign.Po
@@ -1995,6 +2003,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
 	-rm -f Validate/$(DEPDIR)/LinkInstanceTypes.Po
+	-rm -f Validate/$(DEPDIR)/ReplacePseudoFunc.Po
 	-rm -f Validate/$(DEPDIR)/ReplaceTypedef.Po
 	-rm -f Validate/$(DEPDIR)/ReturnCheck.Po
 	-rm -f Validate/$(DEPDIR)/VerifyCtorDtorAssign.Po

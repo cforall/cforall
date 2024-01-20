@@ -51,6 +51,8 @@
 
 #include "Common/Stats/Counter.h"
 
+#include "AST/Inspect.hpp"             // for getFunctionName
+
 #define PRINT( text ) if ( resolvep ) { text }
 
 namespace ResolvExpr {
@@ -655,6 +657,7 @@ namespace {
 		void postvisit( const ast::UntypedOffsetofExpr * offsetofExpr );
 		void postvisit( const ast::OffsetofExpr * offsetofExpr );
 		void postvisit( const ast::OffsetPackExpr * offsetPackExpr );
+		void postvisit( const ast::EnumPosExpr * enumPosExpr );
 		void postvisit( const ast::LogicalExpr * logicalExpr );
 		void postvisit( const ast::ConditionalExpr * conditionalExpr );
 		void postvisit( const ast::CommaExpr * commaExpr );
@@ -1470,6 +1473,30 @@ namespace {
 
 	void Finder::postvisit( const ast::OffsetPackExpr * offsetPackExpr ) {
 		addCandidate( offsetPackExpr, tenv );
+	}
+
+	void Finder::postvisit( const ast::EnumPosExpr * enumPosExpr ) {
+		CandidateFinder finder( context, tenv );
+		finder.find( enumPosExpr->expr );
+		CandidateList winners = findMinCost( finder.candidates );
+		if ( winners.size() != 1 ) SemanticError( enumPosExpr->expr.get(), "Ambiguous expression in position. ");
+		CandidateRef & choice = winners.front();
+		auto refExpr = referenceToRvalueConversion( choice->expr, choice->cost );
+		auto refResult = (refExpr->result).as<ast::EnumInstType>();
+		if ( !refResult ) {
+			SemanticError( refExpr, "Position for Non enum type is not supported" );
+		}
+		// determineEnumPosConstant( enumPosExpr, refResult );
+
+		const ast::NameExpr * const nameExpr = enumPosExpr->expr.strict_as<ast::NameExpr>();
+		const ast::EnumDecl * base = refResult->base;
+		if ( !base ) {
+			SemanticError( enumPosExpr, "Cannot be reference to a defined enumeration type" );
+		}
+		auto it = std::find_if( std::begin( base->members ), std::end( base->members ), 
+			[nameExpr]( ast::ptr<ast::Decl> decl ) { return decl->name == nameExpr->name; } );
+		unsigned position = it - base->members.begin();
+		addCandidate( ast::ConstantExpr::from_int( enumPosExpr->location, position ), tenv );
 	}
 
 	void Finder::postvisit( const ast::LogicalExpr * logicalExpr ) {

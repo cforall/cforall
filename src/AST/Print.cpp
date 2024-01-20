@@ -1182,6 +1182,15 @@ public:
 		return node;
 	}
 
+	virtual const ast::Expr * visit( const ast::EnumPosExpr * node ) override final {
+		os << "Enum Position Expression on: ";
+		++indent;
+		safe_print( node->type );
+		--indent;
+		postprint( node );
+		return node;
+	}
+
 	virtual const ast::Expr * visit( const ast::LogicalExpr * node ) override final {
 		os << "Short-circuited operation (" << (node->isAnd ? "and" : "or") << ") on: ";
 		safe_print( node->arg1 );

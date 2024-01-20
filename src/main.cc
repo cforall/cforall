@@ -81,6 +81,7 @@
 #include "Validate/ReplaceTypedef.hpp"      // for replaceTypedef
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
 #include "Validate/VerifyCtorDtorAssign.hpp" // for verifyCtorDtorAssign
+#include "Validate/ReplacePseudoFunc.hpp"
 #include "Virtual/ExpandCasts.h"            // for expandCasts
 #include "Virtual/VirtualDtor.hpp"          // for implementVirtDtors
 
@@ -286,7 +287,6 @@ int main( int argc, char * argv[] ) {
 			FILE * extras = fopen( (PreludeDirector + "/extras.cfa").c_str(), "r" );
 			assertf( extras, "cannot open extras.cf\n" );
 			parse( extras, ast::Linkage::BuiltinC );
-
 			if ( ! libcfap ) {
 				// read the prelude in, if not generating the cfa library
 				FILE * prelude = fopen( (PreludeDirector + "/prelude.cfa").c_str(), "r" );
@@ -321,6 +321,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Forall Pointer Decay", Validate::decayForallPointers, transUnit );
 		PASS( "Fix Qualified Types", Validate::fixQualifiedTypes, transUnit );
+
 		PASS( "Eliminate Typedef", Validate::eliminateTypedef, transUnit );
 		PASS( "Hoist Struct", Validate::hoistStruct, transUnit );
 		PASS( "Validate Generic Parameters", Validate::fillGenericParameters, transUnit );
@@ -380,6 +381,7 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Resolve", ResolvExpr::resolve, transUnit );
 		DUMP( exprp, std::move( transUnit ) );
+		PASS( "Replace Pseudo Func", Validate::replacePseudoFunc, transUnit );
 
 		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() );
 		PASS( "Erase With", ResolvExpr::eraseWith, transUnit );

@@ -50,14 +50,14 @@ int main () {
     sout | (s != s3) | (s != s2);
     sout | (s == "hello") | (s == "world");
     sout | (s != "world") | (s != "hello");
-    sout | ( frag == s(1,4) ) | ( s3   == s(1,4) );
-    sout | ( s3   != s(1,4) ) | ( frag != s(1,4) );
-    sout | ( s2(1,4) == s(1,4) ) | ( s3(1,4)   == s(1,4) );
-    sout | ( s3(1,4) != s(1,4) ) | ( s2(1,4)   != s(1,4) );
-    sout | ( s(1,4) == frag ) | ( s(1,4) == s3   );
-    sout | ( s(1,4) != s3   ) | ( s(1,4) != frag );
-    sout | ( s(1,4) == "ell"   ) | ( s(1,4) == "world" );
-    sout | ( s(1,4) != "world" ) | ( s(1,4) != "ell"   );
+    sout | ( frag == s(1,3) ) | ( s3   == s(1,3) );
+    sout | ( s3   != s(1,3) ) | ( frag != s(1,3) );
+    sout | ( s2(1,3) == s(1,3) ) | ( s3(1,3)   == s(1,3) );
+    sout | ( s3(1,3) != s(1,3) ) | ( s2(1,3)   != s(1,3) );
+    sout | ( s(1,3) == frag ) | ( s(1,3) == s3   );
+    sout | ( s(1,3) != s3   ) | ( s(1,3) != frag );
+    sout | ( s(1,3) == "ell"   ) | ( s(1,3) == "world" );
+    sout | ( s(1,3) != "world" ) | ( s(1,3) != "ell"   );
 
 
                                             assertWellFormedHandleList( 10 );
@@ -97,7 +97,23 @@ int main () {
         string b5 = 'Q';
         sout | b5; // Q
 
+        string b6 = 42;
+        sout | b6; // 42
 
+        string b7 = -42;
+        sout | b7; // -42
+
+        string b8 = 5.5;
+        sout | b8; // 5.5
+
+        string b9 = 5.5L;
+        sout | b9; // 5.5
+
+        string b10 = 5.5+3.4i;
+        sout | b10; // 5.5+3.4i
+
+        string b11 = 5.5L+3.4Li;
+        sout | b11; // 5.5+3.4i
     }
                                             assertWellFormedHandleList( 10 );
     //
@@ -140,6 +156,24 @@ int main () {
         b = "xxx";
         strncpy( b, s, 4 );
         sout | b; // hell
+
+        b = 42;
+        sout | b; // 42
+
+        b = -42;
+        sout | b; // -42
+
+        b = 5.5;
+        sout | b; // 5.5
+
+        b = 5.5L;
+        sout | b; // 5.5
+
+        b = 5.5+3.4i;
+        sout | b; // 5.5+3.4i
+
+        b = 5.5L+3.4Li;
+        sout | b; // 5.5+3.4i
     }
                                             assertWellFormedHandleList( 10 );
 
@@ -225,7 +259,14 @@ int main () {
     // slicing
     //
 
-    //...
+    // Range cases treated thoroughly in "string-overwrite" test.
+    // Composability with comparison and search are demoed above and below.
+    // Coverage here adds the single-argument ("rest of string") overload.
+
+    sx = s;
+    sout | sx(3); // lo
+    sx(3) = "iocentric";
+    sout | s | sx; // hello heliocentric
 
     //
     // character access
@@ -327,10 +368,10 @@ int main () {
     sout
         | find( alphabet        , "def")  // 3
         | find( alphabet( 0, 26), "def")  // 3
-        | find( alphabet( 2, 26), "def")  // 1
-        | find( alphabet( 3, 26), "def")  // 0
-        | find( alphabet( 4, 26), "def")  // 22, not found
-        | find( alphabet( 4, 26),  "ef")  // 0
+        | find( alphabet( 2, 24), "def")  // 1
+        | find( alphabet( 3, 23), "def")  // 0
+        | find( alphabet( 4, 22), "def")  // 22, not found
+        | find( alphabet( 4, 22),  "ef")  // 0
         | find( alphabet( 0,  6), "def")  // 3
         | find( alphabet( 0,  5), "def")  // 5, not found
         | find( alphabet( 0,  5), "de" ); // 3
@@ -338,10 +379,10 @@ int main () {
     sout
         | includes( alphabet        , "def")  // true
         | includes( alphabet( 0, 26), "def")  // true
-        | includes( alphabet( 2, 26), "def")  // true
-        | includes( alphabet( 3, 26), "def")  // true
-        | includes( alphabet( 4, 26), "def")  // false
-        | includes( alphabet( 4, 26),  "ef")  // true
+        | includes( alphabet( 2, 24), "def")  // true
+        | includes( alphabet( 3, 23), "def")  // true
+        | includes( alphabet( 4, 22), "def")  // false
+        | includes( alphabet( 4, 22),  "ef")  // true
         | includes( alphabet( 0,  6), "def")  // true
         | includes( alphabet( 0,  5), "def")  // false
         | includes( alphabet( 0,  5), "de" ); // true
@@ -349,8 +390,8 @@ int main () {
     sout
         | startsWith( alphabet        , "abc")  // true
         | startsWith( alphabet( 0, 26), "abc")  // true
-        | startsWith( alphabet( 1, 26), "abc")  // false
-        | startsWith( alphabet( 1, 26),  "bc")  // true
+        | startsWith( alphabet( 1, 25), "abc")  // false
+        | startsWith( alphabet( 1, 25),  "bc")  // true
         | startsWith( alphabet( 0, 26), "abc")  // true
         | startsWith( alphabet( 0,  4), "abc")  // true
         | startsWith( alphabet( 0,  3), "abc")  // true
@@ -364,9 +405,9 @@ int main () {
         | endsWith( alphabet( 0, 25), "xyz")  // false
         | endsWith( alphabet( 0, 25), "xy" )  // true
         | endsWith( alphabet( 0, 26), "xyz")  // true
-        | endsWith( alphabet(23, 26), "xyz")  // true
-        | endsWith( alphabet(24, 26), "xyz")  // false
-        | endsWith( alphabet(24, 26),  "yz")  // true
+        | endsWith( alphabet(23,  3), "xyz")  // true
+        | endsWith( alphabet(24,  2), "xyz")  // false
+        | endsWith( alphabet(24,  2),  "yz")  // true
         | endsWith( alphabet        , "abc"); // false
 
     charclass cc_cba = {"cba"};

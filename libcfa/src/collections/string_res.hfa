@@ -86,13 +86,19 @@ void ?{}(string_res & s, const string_res & s2) = void;
 void ?{}(string_res & s, string_res & s2) = void;
 
 enum StrResInitMode { COPY_VALUE, SHARE_EDITS };
-void ?{}(string_res & s, const string_res & src, StrResInitMode, size_t start, size_t end );
+void ?{}(string_res & s, const string_res & src, StrResInitMode, size_t start, size_t len );
 static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mode ) {
     ?{}( s, src, mode, 0, size(src));
 }
 static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mode, size_t maxlen ) {
     ?{}( s, src, mode, 0, (size(src) > maxlen)?maxlen:size(src) );
 }
+void ?{}( string_res & s, ssize_t rhs );
+void ?{}( string_res & s, size_t rhs );
+void ?{}( string_res & s, double rhs );
+void ?{}( string_res & s, long double rhs );
+void ?{}( string_res & s, double _Complex rhs );
+void ?{}( string_res & s, long double _Complex rhs );
 
 string_res & assign(string_res & s, const string_res & src, size_t maxlen); // copy specific length from other string
 string_res & assign(string_res & s, const char * buffer, size_t bsize); // copy specific length from buffer
@@ -102,6 +108,13 @@ static inline string_res & ?=?(string_res & s, const char * c) {  // copy from s
 string_res & ?=?(string_res & s, const string_res & c);
 string_res & ?=?(string_res & s, string_res & c);
 string_res & ?=?(string_res & s, char c);
+
+string_res & ?=?( string_res & s, ssize_t rhs );
+string_res & ?=?( string_res & s, size_t rhs );
+string_res & ?=?( string_res & s, double rhs );
+string_res & ?=?( string_res & s, long double rhs );
+string_res & ?=?( string_res & s, double _Complex rhs );
+string_res & ?=?( string_res & s, long double _Complex rhs );
 
 void ^?{}(string_res & s);
 

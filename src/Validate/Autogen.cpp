@@ -185,9 +185,14 @@ public:
 		// TODO: These functions are somewhere between instrinsic and autogen,
 		// could possibly use a new linkage type. For now we just make the
 		// basic ones intrinsic to code-gen them as C assignments.
-		const auto & real_type = decl->base;
-		const auto & basic = real_type.as<ast::BasicType>();
-		if(!real_type || (basic && basic->isInteger())) proto_linkage = ast::Linkage::Intrinsic;
+		// const auto & real_type = decl->base;
+		// const auto & basic = real_type.as<ast::BasicType>();
+
+		// if(!real_type || (basic && basic->isInteger())) proto_linkage = ast::Linkage::Intrinsic;
+
+		// Turns other enumeration type into Intrinstic as well to temporarily fix the recursive 
+		// construction bug
+		proto_linkage = ast::Linkage::Intrinsic;
 	}
 
 	bool shouldAutogen() const final { return true; }
@@ -743,6 +748,10 @@ void EnumFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 				new ast::VariableExpr( location, srcParam ),
 			}
 		);
+		// auto fname = ast::getFunctionName( callExpr );
+		// if (fname == "posE" ) {
+		// 	std::cerr << "Found posE autogen" << std::endl;
+		// }
 		functionDecl->stmts = new ast::CompoundStmt( location,
 			{ new ast::ExprStmt( location, callExpr ) }
 		);
@@ -793,10 +802,62 @@ void TypeFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 	);
 }
 
+struct PseudoFuncGenerateRoutine final :
+		public ast::WithDeclsToAdd<>,
+		public ast::WithShortCircuiting {
+	void previsit( const ast::EnumDecl * enumDecl );
+};
+
+void PseudoFuncGenerateRoutine::previsit( const ast::EnumDecl * enumDecl ) {
+	const CodeLocation& location = enumDecl->location;
+	if ( enumDecl->members.size() == 0 || !enumDecl->base || enumDecl->name == "" ) return;
+
+	std::vector<ast::ptr<ast::Init>> inits;
+	std::vector<ast::ptr<ast::Init>> labels;
+	for ( const ast::Decl * mem: enumDecl->members ) {
+		auto memAsObjectDecl = dynamic_cast< const ast::ObjectDecl * >( mem );
+		inits.emplace_back( memAsObjectDecl->init );
+		labels.emplace_back( new ast::SingleInit( 
+			location, ast::ConstantExpr::from_string(location, mem->name) ) );
+	}
+	auto init = new ast::ListInit( location, std::move( inits ) );
+	auto label_strings = new ast::ListInit( location, std::move(labels) );
+	auto values = new ast::ObjectDecl( 
+		location,
+		"__enum_values_"+enumDecl->name,
+		new ast::ArrayType(
+			// new ast::PointerType( new ast::BasicType{ ast::BasicType::Char} ),
+			enumDecl->base,
+			ast::ConstantExpr::from_int( location, enumDecl->members.size() ), 
+			ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim
+		)
+		,init
+		,
+		ast::Storage::Static,
+		ast::Linkage::AutoGen
+	);
+	auto label_arr = new ast::ObjectDecl(
+		location,
+		"__enum_labels_"+enumDecl->name,
+		new ast::ArrayType(
+			new ast::PointerType( new ast::BasicType{ ast::BasicType::Char} ),
+			ast::ConstantExpr::from_int( location, enumDecl->members.size() ), 
+			ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim
+		),
+		label_strings,
+		ast::Storage::Static,
+		ast::Linkage::AutoGen
+	);
+
+	declsToAddAfter.push_back( values );
+	declsToAddAfter.push_back( label_arr );
+}
+
 } // namespace
 
 void autogenerateRoutines( ast::TranslationUnit & translationUnit ) {
 	ast::Pass<AutogenerateRoutines>::run( translationUnit );
+	// ast::Pass<PseudoFuncGenerateRoutine>::run( translationUnit );
 }
 
 } // Validate

@@ -78,6 +78,7 @@ public:
     virtual const ast::Expr *             visit( const ast::UntypedOffsetofExpr  * ) = 0;
     virtual const ast::Expr *             visit( const ast::OffsetofExpr         * ) = 0;
     virtual const ast::Expr *             visit( const ast::OffsetPackExpr       * ) = 0;
+    virtual const ast::Expr *             visit( const ast::EnumPosExpr          * ) = 0;
     virtual const ast::Expr *             visit( const ast::LogicalExpr          * ) = 0;
     virtual const ast::Expr *             visit( const ast::ConditionalExpr      * ) = 0;
     virtual const ast::Expr *             visit( const ast::CommaExpr            * ) = 0;

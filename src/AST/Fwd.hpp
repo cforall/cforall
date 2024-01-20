@@ -88,6 +88,7 @@ class AlignofExpr;
 class UntypedOffsetofExpr;
 class OffsetofExpr;
 class OffsetPackExpr;
+class EnumPosExpr;
 class LogicalExpr;
 class ConditionalExpr;
 class CommaExpr;

@@ -190,6 +190,7 @@ public:
 	const ast::Expr *             visit( const ast::UntypedOffsetofExpr  * ) override final;
 	const ast::Expr *             visit( const ast::OffsetofExpr         * ) override final;
 	const ast::Expr *             visit( const ast::OffsetPackExpr       * ) override final;
+	const ast::Expr *             visit( const ast::EnumPosExpr          * ) override final;
 	const ast::Expr *             visit( const ast::LogicalExpr          * ) override final;
 	const ast::Expr *             visit( const ast::ConditionalExpr      * ) override final;
 	const ast::Expr *             visit( const ast::CommaExpr            * ) override final;

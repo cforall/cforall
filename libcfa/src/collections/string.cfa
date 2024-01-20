@@ -29,9 +29,9 @@ semantics and some const-hell handling.
 // string RAII
 
 // private (not in header)
-static void ?{}( string & s, string_res & src, size_t start, size_t end ) {
+static void ?{}( string & s, string_res & src, size_t start, size_t len ) {
     (s.inner) { malloc() };
-    ?{}( *s.inner, src, SHARE_EDITS, start, end );
+    ?{}( *s.inner, src, SHARE_EDITS, start, len );
 }
 
 void ?{}( string & s ) {
@@ -69,6 +69,36 @@ void ?{}( string & s, const char * c, size_t size) {
     ?{}( *s.inner, c, size );
 }
 
+void ?{}( string & s, ssize_t rhs ) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner, rhs );
+}
+
+void ?{}( string & s, size_t rhs ) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner, rhs );
+}
+
+void ?{}( string & s, double rhs ) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner, rhs );
+}
+
+void ?{}( string & s, long double rhs ) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner, rhs );
+}
+
+void ?{}( string & s, double _Complex rhs ) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner, rhs );
+}
+
+void ?{}( string & s, long double _Complex rhs ) {
+    (s.inner) { malloc() };
+    ?{}( *s.inner, rhs );
+}
+
 void ^?{}( string & s ) {
     ^(*s.inner){};
     free( s.inner );
@@ -90,30 +120,65 @@ void ?{}( string & s, string_WithSharedEdits src ) {
 ////////////////////////////////////////////////////////
 // Assignment
 
-void ?=?( string & s, const char * val ) {
-    (*s.inner) = val;
-}
-
-void ?=?(string & s, const string & c) {
-    (*s.inner) = (*c.inner);
-}
-
-void ?=?( string & s, char val ) {
-    (*s.inner) = val;
-}
-
-string & ?=?(string & s, string & c) { //// <---- straw man change
+string & ?=?(string & s, const string & c) {
     (*s.inner) = (*c.inner);
     return s;
 }
 
-void assign(string & s, const string & c, size_t n) {
-    assign(*s.inner, *c.inner, n);
-}
-void assign(string & s, const char * c, size_t n) {
-    assign(*s.inner, c, n);
+string & ?=?(string & s, string & c) {
+    (*s.inner) = (*c.inner);
+    return s;
 }
 
+string & ?=?( string & s, const char * val ) {
+    (*s.inner) = val;
+    return s;
+}
+
+string & ?=?( string & s, char val ) {
+    (*s.inner) = val;
+    return s;
+}
+
+string & assign(string & s, const string & c, size_t n) {
+    assign(*s.inner, *c.inner, n);
+    return s;
+}
+
+string & assign(string & s, const char * c, size_t n) {
+    assign(*s.inner, c, n);
+    return s;
+}
+
+string & ?=?( string & s, ssize_t rhs ) {
+    (*s.inner) = rhs;
+    return s;
+}
+
+string & ?=?( string & s, size_t rhs ) {
+    (*s.inner) = rhs;
+    return s;
+}
+
+string & ?=?( string & s, double rhs ) {
+    (*s.inner) = rhs;
+    return s;
+}
+
+string & ?=?( string & s, long double rhs ) {
+    (*s.inner) = rhs;
+    return s;
+}
+
+string & ?=?( string & s, double _Complex rhs ) {
+    (*s.inner) = rhs;
+    return s;
+}
+
+string & ?=?( string & s, long double _Complex rhs ) {
+    (*s.inner) = rhs;
+    return s;
+}
 
 ////////////////////////////////////////////////////////
 // Input-Output
@@ -160,13 +225,13 @@ void ?|?( ifstream & in, _Istream_Sstr f ) {
 ////////////////////////////////////////////////////////
 // Slicing
 
-string ?()( string & s, size_t start, size_t end ) {
-    string ret = { *s.inner, start, end };
+string ?()( string & s, size_t start, size_t len ) {
+    string ret = { *s.inner, start, len };
     return ret`shareEdits;
 }
 
 string ?()( string & s, size_t start ) {
-    string ret = { *s.inner, start, size( s ) };
+    string ret = { *s.inner, start, size( s ) - start };
     return ret`shareEdits;
 }
 
@@ -285,7 +350,7 @@ char ?[?](const string & s, size_t index) {
 }
 
 string ?[?](string & s, size_t index) {
-    string ret = { *s.inner, index, index + 1 };
+    string ret = { *s.inner, index, 1 };
     return ret`shareEdits;
 }
 

@@ -1451,6 +1451,21 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::OffsetPackExpr * node )
 }
 
 //--------------------------------------------------------------------------
+// EnumPosExpr
+template< typename core_t>
+const ast::Expr * ast::Pass< core_t >::visit( const ast::EnumPosExpr * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		guard_symtab guard { *this };
+		maybe_accept( node, &EnumPosExpr::type );
+		maybe_accept( node, &EnumPosExpr::expr );
+	}
+
+	VISIT_END( Expr, node );
+}
+
+//--------------------------------------------------------------------------
 // LogicalExpr
 template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::LogicalExpr * node ) {
