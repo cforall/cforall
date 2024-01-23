@@ -48,8 +48,7 @@ namespace {
 std::vector<ast::ptr<ast::TypeDecl>> getGenericParams( const ast::Type * t ) {
 	if ( auto inst = dynamic_cast<const ast::StructInstType *>( t ) ) {
 		return inst->base->params;
-	}
-	if ( auto inst = dynamic_cast<const ast::UnionInstType *>( t ) ) {
+	} else if ( auto inst = dynamic_cast<const ast::UnionInstType *>( t ) ) {
 		return inst->base->params;
 	}
 	return {};
@@ -244,25 +243,20 @@ struct SplitExpressions : public ast::WithShortCircuiting {
 /// that wraps the destructor, insert it into `stmtsToAdd` and return the new function declaration
 const ast::DeclWithType * getDtorFunc( const ast::ObjectDecl * objDecl, const ast::Stmt * input, std::list< ast::ptr<ast::Stmt> > & stmtsToAdd ) {
 	const CodeLocation loc = input->location;
-	// unwrap implicit statement wrapper
-	// Statement * dtor = input;
 	assert( input );
-	// std::list< const ast::Expr * > matches;
 	auto matches = collectCtorDtorCalls( input );
 
-	if ( dynamic_cast< const ast::ExprStmt * >( input ) ) {
-		// only one destructor call in the expression
-		if ( matches.size() == 1 ) {
-			auto func = getFunction( matches.front() );
-			assertf( func, "getFunction failed to find function in %s", toString( matches.front() ).c_str() );
+	// The simple case requires a direct call and only one destructor call.
+	if ( dynamic_cast< const ast::ExprStmt * >( input ) && matches.size() == 1 ) {
+		auto func = getFunction( matches.front() );
+		assertf( func, "getFunction failed to find function in %s", toString( matches.front() ).c_str() );
 
-			// cleanup argument must be a function, not an object (including function pointer)
-			if ( auto dtorFunc = dynamic_cast< const ast::FunctionDecl * > ( func ) ) {
-				if ( dtorFunc->type->forall.empty() ) {
-					// simple case where the destructor is a monomorphic function call - can simply
-					// use that function as the cleanup function.
-					return func;
-				}
+		// cleanup argument must be a function, not an object (including function pointer)
+		if ( auto dtorFunc = dynamic_cast< const ast::FunctionDecl * > ( func ) ) {
+			if ( dtorFunc->type->forall.empty() ) {
+				// simple case where the destructor is a monomorphic function call - can simply
+				// use that function as the cleanup function.
+				return func;
 			}
 		}
 	}
@@ -300,7 +294,6 @@ void FixInit::fixInitializers( ast::TranslationUnit & translationUnit ) {
 	SemanticErrorException errors;
 	for ( auto i = translationUnit.decls.begin(); i != translationUnit.decls.end(); ++i ) {
 		try {
-			// maybeAccept( *i, fixer ); translationUnit should never contain null
 			*i = (*i)->accept(fixer);
 			translationUnit.decls.splice( i, fixer.core.staticDtorDecls );
 		} catch( SemanticErrorException &e ) {
@@ -313,24 +306,20 @@ void FixInit::fixInitializers( ast::TranslationUnit & translationUnit ) {
 }
 
 const ast::StmtExpr * StmtExprResult::previsit( const ast::StmtExpr * stmtExpr ) {
-	// we might loose the result expression here so add a pointer to trace back
 	assert( stmtExpr->result );
-	const ast::Type * result = stmtExpr->result;
-	if ( ! result->isVoid() ) {
-		auto mutExpr = mutate(stmtExpr);
-		const ast::CompoundStmt * body = mutExpr->stmts;
-		assert( ! body->kids.empty() );
-		mutExpr->resultExpr = body->kids.back().strict_as<ast::ExprStmt>();
-		return mutExpr;
-	}
-	return stmtExpr;
+	if ( stmtExpr->result->isVoid() ) return stmtExpr;
+
+	auto mutExpr = mutate( stmtExpr );
+	const ast::CompoundStmt * body = mutExpr->stmts;
+	assert( !body->kids.empty() );
+	mutExpr->resultExpr = body->kids.back().strict_as<ast::ExprStmt>();
+	return mutExpr;
 }
 
 ast::Stmt * SplitExpressions::postvisit( const ast::ExprStmt * stmt ) {
 	// wrap each top-level ExprStmt in a block so that destructors for argument and return temporaries are destroyed
 	// in the correct places
-	ast::CompoundStmt * ret = new ast::CompoundStmt( stmt->location, { stmt } );
-	return ret;
+	return new ast::CompoundStmt( stmt->location, { stmt } );
 }
 
 void SplitExpressions::previsit( const ast::TupleAssignExpr * ) {
@@ -555,8 +544,6 @@ ast::ptr<ast::Expr> ResolveCopyCtors::copyConstructArg(
 	stmtsToAddBefore.push_back( new ast::DeclStmt(loc, tmp ) );
 	arg = cpCtor;
 	return destructRet( tmp, arg );
-
-	// impCpCtorExpr->dtors.push_front( makeCtorDtor( "^?{}", tmp ) );
 }
 
 ast::Expr * ResolveCopyCtors::destructRet( const ast::ObjectDecl * ret, const ast::Expr * arg ) {
@@ -607,7 +594,6 @@ ast::Expr * ResolveCopyCtors::destructRet( const ast::ObjectDecl * ret, const as
 		return new ast::CommaExpr(loc, new ast::CommaExpr(loc, arg, assign ), new ast::VariableExpr(loc, ret ) );
 	}
 	return nullptr;
-	// impCpCtorExpr->get_dtors().push_front( makeCtorDtor( "^?{}", ret ) );
 }
 
 const ast::Expr * ResolveCopyCtors::postvisit( const ast::ImplicitCopyCtorExpr *impCpCtorExpr ) {
@@ -624,8 +610,8 @@ const ast::Expr * ResolveCopyCtors::postvisit( const ast::ImplicitCopyCtorExpr *
 	auto iter = params.begin();
 	for ( auto & arg : appExpr->args ) {
 		const ast::Type * formal = nullptr;
-		if ( iter != params.end() ) { // does not copy construct C-style variadic arguments
-			// DeclarationWithType * param = *iter++;
+		// Do not copy construct C-style variadic arguments.
+		if ( iter != params.end() ) {
 			formal = *iter++;
 		}
 
@@ -658,12 +644,8 @@ const ast::Expr * ResolveCopyCtors::postvisit( const ast::ImplicitCopyCtorExpr *
 
 	// deletion of wrapper should be handled by pass template now
 
-	// impCpCtorExpr->callExpr = nullptr;
 	assert (appExpr->env == nullptr);
 	appExpr->env = impCpCtorExpr->env;
-	// std::swap( impCpCtorExpr->env, appExpr->env );
-	// assert( impCpCtorExpr->env == nullptr );
-	// delete impCpCtorExpr;
 
 	if ( returnDecl ) {
 		ast::Expr * assign = createBitwiseAssignment( new ast::VariableExpr(loc, returnDecl ), appExpr );
@@ -675,7 +657,6 @@ const ast::Expr * ResolveCopyCtors::postvisit( const ast::ImplicitCopyCtorExpr *
 			assign = new ast::CommaExpr(loc, assign, new ast::VariableExpr(loc, returnDecl ) );
 		}
 		// move env from appExpr to retExpr
-		// std::swap( assign->env, appExpr->env );
 		assign->env = appExpr->env;
 		// actual env is handled by common routine that replaces WithTypeSubstitution
 		return postvisit((const ast::Expr *)assign);
@@ -715,55 +696,57 @@ const ast::StmtExpr * ResolveCopyCtors::previsit( const ast::StmtExpr * _stmtExp
 	symtab.leaveScope();
 
 	assert( stmtExpr->result );
-	// const ast::Type * result = stmtExpr->result;
-	if ( ! stmtExpr->result->isVoid() ) {
-		static UniqueName retNamer("_tmp_stmtexpr_ret");
+	if ( stmtExpr->result->isVoid() ) {
+		assert( stmtExpr->returnDecls.empty() );
+		assert( stmtExpr->dtors.empty() );
 
-		// result = result->clone();
-		auto result = env->apply( stmtExpr->result.get() ).node;
-		if ( ! InitTweak::isConstructable( result ) ) {
-			// delete result;
-			return stmtExpr;
-		}
-		auto mutResult = result.get_and_mutate();
-		mutResult->set_const(false);
+		return stmtExpr;
+	}
 
-		// create variable that will hold the result of the stmt expr
-		auto ret = new ast::ObjectDecl(loc, retNamer.newName(), mutResult, nullptr );
-		stmtsToAddBefore.push_back( new ast::DeclStmt(loc, ret ) );
+	static UniqueName retNamer("_tmp_stmtexpr_ret");
 
-		assertf(
-			stmtExpr->resultExpr,
-			"Statement-Expression should have a resulting expression at %s:%d",
-			stmtExpr->location.filename.c_str(),
-			stmtExpr->location.first_line
-		);
+	auto result = env->apply( stmtExpr->result.get() ).node;
+	if ( ! InitTweak::isConstructable( result ) ) {
+		return stmtExpr;
+	}
+	auto mutResult = result.get_and_mutate();
+	mutResult->set_const(false);
 
-		const ast::ExprStmt * last = stmtExpr->resultExpr;
-		// xxx - if this is non-unique, need to copy while making resultExpr ref
-		assertf(last->unique(), "attempt to modify weakly shared statement");
-		auto mutLast = mutate(last);
-		// above assertion means in-place mutation is OK
-		try {
-			mutLast->expr = makeCtorDtor( "?{}", ret, mutLast->expr );
-		} catch(...) {
-			std::cerr << "*CFA internal error: ";
-			std::cerr << "can't resolve implicit constructor";
-			std::cerr << " at " << stmtExpr->location.filename;
-			std::cerr << ":" << stmtExpr->location.first_line << std::endl;
+	// create variable that will hold the result of the stmt expr
+	auto ret = new ast::ObjectDecl(loc, retNamer.newName(), mutResult, nullptr );
+	stmtsToAddBefore.push_back( new ast::DeclStmt(loc, ret ) );
 
-			abort();
-		}
+	assertf(
+		stmtExpr->resultExpr,
+		"Statement-Expression should have a resulting expression at %s:%d",
+		stmtExpr->location.filename.c_str(),
+		stmtExpr->location.first_line
+	);
 
-		// add destructors after current statement
-		stmtsToAddAfter.push_back( new ast::ExprStmt(loc, makeCtorDtor( "^?{}", ret ) ) );
+	const ast::ExprStmt * last = stmtExpr->resultExpr;
+	// xxx - if this is non-unique, need to copy while making resultExpr ref
+	assertf(last->unique(), "attempt to modify weakly shared statement");
+	auto mutLast = mutate(last);
+	// above assertion means in-place mutation is OK
+	try {
+		mutLast->expr = makeCtorDtor( "?{}", ret, mutLast->expr );
+	} catch(...) {
+		std::cerr << "*CFA internal error: ";
+		std::cerr << "can't resolve implicit constructor";
+		std::cerr << " at " << stmtExpr->location.filename;
+		std::cerr << ":" << stmtExpr->location.first_line << std::endl;
 
-		// must have a non-empty body, otherwise it wouldn't have a result
-		assert( ! stmts.empty() );
+		abort();
+	}
 
-		// if there is a return decl, add a use as the last statement; will not have return decl on non-constructable returns
-		stmts.push_back( new ast::ExprStmt(loc, new ast::VariableExpr(loc, ret ) ) );
-	} // if
+	// add destructors after current statement
+	stmtsToAddAfter.push_back( new ast::ExprStmt(loc, makeCtorDtor( "^?{}", ret ) ) );
+
+	// must have a non-empty body, otherwise it wouldn't have a result
+	assert( ! stmts.empty() );
+
+	// if there is a return decl, add a use as the last statement; will not have return decl on non-constructable returns
+	stmts.push_back( new ast::ExprStmt(loc, new ast::VariableExpr(loc, ret ) ) );
 
 	assert( stmtExpr->returnDecls.empty() );
 	assert( stmtExpr->dtors.empty() );
@@ -797,11 +780,7 @@ const ast::UniqueExpr * ResolveCopyCtors::previsit( const ast::UniqueExpr * unqE
 	static std::unordered_map< int, const ast::UniqueExpr * > unqMap;
 	auto mutExpr = mutate(unqExpr);
 	if ( ! unqMap.count( unqExpr->id ) ) {
-		// resolve expr and find its
-
 		auto impCpCtorExpr = mutExpr->expr.as<ast::ImplicitCopyCtorExpr>();
-		// PassVisitor<ResolveCopyCtors> fixer;
-
 		mutExpr->expr = mutExpr->expr->accept( *visitor );
 		// it should never be necessary to wrap a void-returning expression in a UniqueExpr - if this assumption changes, this needs to be rethought
 		assert( unqExpr->result );
@@ -819,9 +798,7 @@ const ast::UniqueExpr * ResolveCopyCtors::previsit( const ast::UniqueExpr * unqE
 		unqMap[mutExpr->id] = mutExpr;
 	} else {
 		// take data from other UniqueExpr to ensure consistency
-		// delete unqExpr->get_expr();
 		mutExpr->expr = unqMap[mutExpr->id]->expr;
-		// delete unqExpr->result;
 		mutExpr->result = mutExpr->expr->result;
 	}
 	return mutExpr;
@@ -831,159 +808,144 @@ const ast::DeclWithType * FixInit::postvisit( const ast::ObjectDecl *_objDecl ) 
 	const CodeLocation loc = _objDecl->location;
 
 	// since this removes the init field from objDecl, it must occur after children are mutated (i.e. postvisit)
-	if ( ast::ptr<ast::ConstructorInit> ctorInit = _objDecl->init.as<ast::ConstructorInit>() ) {
-		auto objDecl = mutate(_objDecl);
+	ast::ptr<ast::ConstructorInit> ctorInit = _objDecl->init.as<ast::ConstructorInit>();
 
-		// could this be non-unique?
-		if (objDecl != _objDecl) {
-			std::cerr << "FixInit: non-unique object decl " << objDecl->location << objDecl->name << std::endl;
-		}
-		// a decision should have been made by the resolver, so ctor and init are not both non-NULL
-		assert( ! ctorInit->ctor || ! ctorInit->init );
-		if ( const ast::Stmt * ctor = ctorInit->ctor ) {
-			if ( objDecl->storage.is_static ) {
-				addDataSectionAttribute(objDecl);
-				// originally wanted to take advantage of gcc nested functions, but
-				// we get memory errors with this approach. To remedy this, the static
-				// variable is hoisted when the destructor needs to be called.
-				//
-				// generate:
-				// static T __objName_static_varN;
-				// void __objName_dtor_atexitN() {
-				//   __dtor__...;
-				// }
-				// int f(...) {
-				//   ...
-				//   static bool __objName_uninitialized = true;
-				//   if (__objName_uninitialized) {
-				//     __ctor(__objName);
-				//     __objName_uninitialized = false;
-				//     atexit(__objName_dtor_atexitN);
-				//   }
-				//   ...
-				// }
+	if ( nullptr == ctorInit ) return _objDecl;
 
-				static UniqueName dtorCallerNamer( "_dtor_atexit" );
+	auto objDecl = mutate(_objDecl);
 
-				// static bool __objName_uninitialized = true
-				auto boolType = new ast::BasicType( ast::BasicType::Kind::Bool );
-				auto boolInitExpr = new ast::SingleInit(loc, ast::ConstantExpr::from_int(loc, 1 ) );
-				auto isUninitializedVar = new ast::ObjectDecl(loc, objDecl->mangleName + "_uninitialized", boolType, boolInitExpr, ast::Storage::Static, ast::Linkage::Cforall);
-				isUninitializedVar->fixUniqueId();
+	// could this be non-unique?
+	if (objDecl != _objDecl) {
+		std::cerr << "FixInit: non-unique object decl " << objDecl->location << objDecl->name << std::endl;
+	}
+	// a decision should have been made by the resolver, so ctor and init are not both non-NULL
+	assert( ! ctorInit->ctor || ! ctorInit->init );
+	if ( const ast::Stmt * ctor = ctorInit->ctor ) {
+		if ( objDecl->storage.is_static ) {
+			addDataSectionAttribute(objDecl);
+			// originally wanted to take advantage of gcc nested functions, but
+			// we get memory errors with this approach. To remedy this, the static
+			// variable is hoisted when the destructor needs to be called.
+			//
+			// generate:
+			// static T __objName_static_varN;
+			// void __objName_dtor_atexitN() {
+			//   __dtor__...;
+			// }
+			// int f(...) {
+			//   ...
+			//   static bool __objName_uninitialized = true;
+			//   if (__objName_uninitialized) {
+			//     __ctor(__objName);
+			//     __objName_uninitialized = false;
+			//     atexit(__objName_dtor_atexitN);
+			//   }
+			//   ...
+			// }
 
-				// __objName_uninitialized = false;
-				auto setTrue = new ast::UntypedExpr(loc, new ast::NameExpr(loc, "?=?" ) );
-				setTrue->args.push_back( new ast::VariableExpr(loc, isUninitializedVar ) );
-				setTrue->args.push_back( ast::ConstantExpr::from_int(loc, 0 ) );
+			static UniqueName dtorCallerNamer( "_dtor_atexit" );
 
-				// generate body of if
-				auto initStmts = new ast::CompoundStmt(loc);
-				auto & body = initStmts->kids;
-				body.push_back( ctor );
-				body.push_back( new ast::ExprStmt(loc, setTrue ) );
+			// static bool __objName_uninitialized = true
+			auto boolType = new ast::BasicType( ast::BasicType::Kind::Bool );
+			auto boolInitExpr = new ast::SingleInit(loc, ast::ConstantExpr::from_int(loc, 1 ) );
+			auto isUninitializedVar = new ast::ObjectDecl(loc, objDecl->mangleName + "_uninitialized", boolType, boolInitExpr, ast::Storage::Static, ast::Linkage::Cforall);
+			isUninitializedVar->fixUniqueId();
 
-				// put it all together
-				auto ifStmt = new ast::IfStmt(loc, new ast::VariableExpr(loc, isUninitializedVar ), initStmts, 0 );
-				stmtsToAddAfter.push_back( new ast::DeclStmt(loc, isUninitializedVar ) );
-				stmtsToAddAfter.push_back( ifStmt );
+			// __objName_uninitialized = false;
+			auto setTrue = new ast::UntypedExpr(loc, new ast::NameExpr(loc, "?=?" ) );
+			setTrue->args.push_back( new ast::VariableExpr(loc, isUninitializedVar ) );
+			setTrue->args.push_back( ast::ConstantExpr::from_int(loc, 0 ) );
 
-				const ast::Stmt * dtor = ctorInit->dtor;
+			// generate body of if
+			auto initStmts = new ast::CompoundStmt(loc);
+			auto & body = initStmts->kids;
+			body.push_back( ctor );
+			body.push_back( new ast::ExprStmt(loc, setTrue ) );
 
-				// these should be automatically managed once reassigned
-				// objDecl->set_init( nullptr );
-				// ctorInit->set_ctor( nullptr );
-				// ctorInit->set_dtor( nullptr );
-				if ( dtor ) {
-					// if the object has a non-trivial destructor, have to
-					// hoist it and the object into the global space and
-					// call the destructor function with atexit.
+			// put it all together
+			auto ifStmt = new ast::IfStmt(loc, new ast::VariableExpr(loc, isUninitializedVar ), initStmts, 0 );
+			stmtsToAddAfter.push_back( new ast::DeclStmt(loc, isUninitializedVar ) );
+			stmtsToAddAfter.push_back( ifStmt );
 
-					// Statement * dtorStmt = dtor->clone();
+			const ast::Stmt * dtor = ctorInit->dtor;
+			if ( dtor ) {
+				// if the object has a non-trivial destructor, have to
+				// hoist it and the object into the global space and
+				// call the destructor function with atexit.
 
-					// void __objName_dtor_atexitN(...) {...}
-					ast::FunctionDecl * dtorCaller = new ast::FunctionDecl(loc, objDecl->mangleName + dtorCallerNamer.newName(), {}, {}, {}, {}, new ast::CompoundStmt(loc, {dtor}), ast::Storage::Static, ast::Linkage::C );
-					dtorCaller->fixUniqueId();
-					// dtorCaller->stmts->push_back( dtor );
+				// void __objName_dtor_atexitN(...) {...}
+				ast::FunctionDecl * dtorCaller = new ast::FunctionDecl(loc, objDecl->mangleName + dtorCallerNamer.newName(), {}, {}, {}, {}, new ast::CompoundStmt(loc, {dtor}), ast::Storage::Static, ast::Linkage::C );
+				dtorCaller->fixUniqueId();
 
-					// atexit(dtor_atexit);
-					auto callAtexit = new ast::UntypedExpr(loc, new ast::NameExpr(loc, "atexit" ) );
-					callAtexit->args.push_back( new ast::VariableExpr(loc, dtorCaller ) );
+				// atexit(dtor_atexit);
+				auto callAtexit = new ast::UntypedExpr(loc, new ast::NameExpr(loc, "atexit" ) );
+				callAtexit->args.push_back( new ast::VariableExpr(loc, dtorCaller ) );
 
-					body.push_back( new ast::ExprStmt(loc, callAtexit ) );
+				body.push_back( new ast::ExprStmt(loc, callAtexit ) );
 
-					// hoist variable and dtor caller decls to list of decls that will be added into global scope
-					staticDtorDecls.push_back( objDecl );
-					staticDtorDecls.push_back( dtorCaller );
+				// hoist variable and dtor caller decls to list of decls that will be added into global scope
+				staticDtorDecls.push_back( objDecl );
+				staticDtorDecls.push_back( dtorCaller );
 
-					// need to rename object uniquely since it now appears
-					// at global scope and there could be multiple function-scoped
-					// static variables with the same name in different functions.
-					// Note: it isn't sufficient to modify only the mangleName, because
-					// then subsequent SymbolTable passes can choke on seeing the object's name
-					// if another object has the same name and type. An unfortunate side-effect
-					// of renaming the object is that subsequent NameExprs may fail to resolve,
-					// but there shouldn't be any remaining past this point.
-					static UniqueName staticNamer( "_static_var" );
-					objDecl->name = objDecl->name + staticNamer.newName();
-					objDecl->mangleName = Mangle::mangle( objDecl );
-					objDecl->init = nullptr;
+				// need to rename object uniquely since it now appears
+				// at global scope and there could be multiple function-scoped
+				// static variables with the same name in different functions.
+				// Note: it isn't sufficient to modify only the mangleName, because
+				// then subsequent SymbolTable passes can choke on seeing the object's name
+				// if another object has the same name and type. An unfortunate side-effect
+				// of renaming the object is that subsequent NameExprs may fail to resolve,
+				// but there shouldn't be any remaining past this point.
+				static UniqueName staticNamer( "_static_var" );
+				objDecl->name = objDecl->name + staticNamer.newName();
+				objDecl->mangleName = Mangle::mangle( objDecl );
+				objDecl->init = nullptr;
 
-					// xxx - temporary hack: need to return a declaration, but want to hoist the current object out of this scope
-					// create a new object which is never used
-					static UniqueName dummyNamer( "_dummy" );
-					auto dummy = new ast::ObjectDecl(loc, dummyNamer.newName(), new ast::PointerType(new ast::VoidType()), nullptr, ast::Storage::Static, ast::Linkage::Cforall, 0, { new ast::Attribute("unused") } );
-					// delete ctorInit;
-					return dummy;
-				} else {
-					objDecl->init = nullptr;
-					return objDecl;
-				}
+				// xxx - temporary hack: need to return a declaration, but want to hoist the current object out of this scope
+				// create a new object which is never used
+				static UniqueName dummyNamer( "_dummy" );
+				auto dummy = new ast::ObjectDecl(loc, dummyNamer.newName(), new ast::PointerType(new ast::VoidType()), nullptr, ast::Storage::Static, ast::Linkage::Cforall, 0, { new ast::Attribute("unused") } );
+				return dummy;
 			} else {
-				auto implicit = strict_dynamic_cast< const ast::ImplicitCtorDtorStmt * > ( ctor );
-				auto ctorStmt = implicit->callStmt.as<ast::ExprStmt>();
-				const ast::ApplicationExpr * ctorCall = nullptr;
-				if ( ctorStmt && (ctorCall = isIntrinsicCallExpr( ctorStmt->expr )) && ctorCall->args.size() == 2 ) {
-					// clean up intrinsic copy constructor calls by making them into SingleInits
-					const ast::Expr * ctorArg = ctorCall->args.back();
-					// ctorCall should be gone afterwards
-					auto mutArg = mutate(ctorArg);
-					mutArg->env = ctorCall->env;
-					// std::swap( ctorArg->env, ctorCall->env );
-					objDecl->init = new ast::SingleInit(loc, mutArg );
-
-					// ctorCall->args.pop_back();
-				} else {
-					stmtsToAddAfter.push_back( ctor );
-					objDecl->init = nullptr;
-					// ctorInit->ctor = nullptr;
-				}
-
-				const ast::Stmt * dtor = ctorInit->dtor;
-				if ( dtor ) {
-					auto implicit = strict_dynamic_cast< const ast::ImplicitCtorDtorStmt * >( dtor );
-					const ast::Stmt * dtorStmt = implicit->callStmt;
-
-					// don't need to call intrinsic dtor, because it does nothing, but
-					// non-intrinsic dtors must be called
-					if ( ! isIntrinsicSingleArgCallStmt( dtorStmt ) ) {
-						// set dtor location to the object's location for error messages
-						auto dtorFunc = getDtorFunc( objDecl, dtorStmt, stmtsToAddBefore );
-						objDecl->attributes.push_back( new ast::Attribute( "cleanup", { new ast::VariableExpr(loc, dtorFunc ) } ) );
-						// ctorInit->dtor = nullptr;
-					} // if
-				}
-			} // if
-		} else if ( const ast::Init * init = ctorInit->init ) {
-			objDecl->init = init;
-			// ctorInit->init = nullptr;
+				objDecl->init = nullptr;
+				return objDecl;
+			}
 		} else {
-			// no constructor and no initializer, which is okay
-			objDecl->init = nullptr;
+			auto implicit = strict_dynamic_cast< const ast::ImplicitCtorDtorStmt * > ( ctor );
+			auto ctorStmt = implicit->callStmt.as<ast::ExprStmt>();
+			const ast::ApplicationExpr * ctorCall = nullptr;
+			if ( ctorStmt && (ctorCall = isIntrinsicCallExpr( ctorStmt->expr )) && ctorCall->args.size() == 2 ) {
+				// clean up intrinsic copy constructor calls by making them into SingleInits
+				const ast::Expr * ctorArg = ctorCall->args.back();
+				// ctorCall should be gone afterwards
+				auto mutArg = mutate(ctorArg);
+				mutArg->env = ctorCall->env;
+				objDecl->init = new ast::SingleInit(loc, mutArg );
+			} else {
+				stmtsToAddAfter.push_back( ctor );
+				objDecl->init = nullptr;
+			}
+
+			const ast::Stmt * dtor = ctorInit->dtor;
+			if ( dtor ) {
+				auto implicit = strict_dynamic_cast< const ast::ImplicitCtorDtorStmt * >( dtor );
+				const ast::Stmt * dtorStmt = implicit->callStmt;
+
+				// don't need to call intrinsic dtor, because it does nothing, but
+				// non-intrinsic dtors must be called
+				if ( ! isIntrinsicSingleArgCallStmt( dtorStmt ) ) {
+					// set dtor location to the object's location for error messages
+					auto dtorFunc = getDtorFunc( objDecl, dtorStmt, stmtsToAddBefore );
+					objDecl->attributes.push_back( new ast::Attribute( "cleanup", { new ast::VariableExpr(loc, dtorFunc ) } ) );
+				} // if
+			}
 		} // if
-		// delete ctorInit;
-		return objDecl;
+	} else if ( const ast::Init * init = ctorInit->init ) {
+		objDecl->init = init;
+	} else {
+		// no constructor and no initializer, which is okay
+		objDecl->init = nullptr;
 	} // if
-	return _objDecl;
+	return objDecl;
 }
 
 void ObjDeclCollector::previsit( const ast::CompoundStmt * ) {
@@ -1005,7 +967,7 @@ void LabelFinder::previsit( const ast::Stmt * stmt ) {
 }
 
 void LabelFinder::previsit( const ast::CompoundStmt * stmt ) {
-	previsit( (const ast::Stmt *) stmt );
+	previsit( (const ast::Stmt *)stmt );
 	Parent::previsit( stmt );
 }
 
@@ -1021,8 +983,7 @@ void InsertDtors::previsit( const ast::FunctionDecl * funcDecl ) {
 	// LabelFinder does not recurse into FunctionDecl, so need to visit
 	// its children manually.
 	if (funcDecl->type) funcDecl->type->accept(finder);
-	// maybeAccept( funcDecl->type, finder );
-	if (funcDecl->stmts) funcDecl->stmts->accept(finder) ;
+	if (funcDecl->stmts) funcDecl->stmts->accept(finder);
 
 	// all labels for this function have been collected, insert destructors as appropriate via implicit recursion.
 }
@@ -1077,8 +1038,8 @@ void InsertDtors::previsit( const ast::BranchStmt * stmt ) {
 	} // switch
 }
 
+/// Should we check for warnings? (The function is user-defined constrctor or destructor.)
 bool checkWarnings( const ast::FunctionDecl * funcDecl ) {
-	// only check for warnings if the current function is a user-defined constructor or destructor
 	if ( ! funcDecl ) return false;
 	if ( ! funcDecl->stmts ) return false;
 	return CodeGen::isCtorDtor( funcDecl->name ) && ! funcDecl->linkage.is_overrideable;
@@ -1104,20 +1065,19 @@ void GenStructMemberCalls::previsit( const ast::FunctionDecl * funcDecl ) {
 	}
 
 	isCtor = CodeGen::isConstructor( function->name );
-	if ( checkWarnings( function ) ) {
-		// const ast::FunctionType * type = function->type;
-		// assert( ! type->params.empty() );
-		thisParam = function->params.front().strict_as<ast::ObjectDecl>();
-		auto thisType = getPointerBase( thisParam->get_type() );
-		auto structType = dynamic_cast< const ast::StructInstType * >( thisType );
-		if ( structType ) {
-			structDecl = structType->base;
-			for ( auto & member : structDecl->members ) {
-				if ( auto field = member.as<ast::ObjectDecl>() ) {
-					// record all of the struct type's members that need to be constructed or
-					// destructed by the end of the function
-					unhandled.insert( field );
-				}
+
+	// Remaining code is only for warnings.
+	if ( ! checkWarnings( function ) ) return;
+	thisParam = function->params.front().strict_as<ast::ObjectDecl>();
+	auto thisType = getPointerBase( thisParam->get_type() );
+	auto structType = dynamic_cast< const ast::StructInstType * >( thisType );
+	if ( structType ) {
+		structDecl = structType->base;
+		for ( auto & member : structDecl->members ) {
+			if ( auto field = member.as<ast::ObjectDecl>() ) {
+				// record all of the struct type's members that need to be constructed or
+				// destructed by the end of the function
+				unhandled.insert( field );
 			}
 		}
 	}
@@ -1163,11 +1123,9 @@ const ast::DeclWithType * GenStructMemberCalls::postvisit( const ast::FunctionDe
 			if ( ! unhandled.count( field ) ) continue;
 
 			// insert and resolve default/copy constructor call for each field that's unhandled
-			// std::list< const ast::Stmt * > stmt;
 			ast::Expr * arg2 = nullptr;
 			if ( function->name == "?{}" && isCopyFunction( function ) ) {
 				// if copy ctor, need to pass second-param-of-this-function.field
-				// std::list< DeclarationWithType * > & params = function->get_functionType()->get_parameters();
 				assert( function->params.size() == 2 );
 				arg2 = new ast::MemberExpr(funcDecl->location, field, new ast::VariableExpr(funcDecl->location, function->params.back() ) );
 			}
@@ -1178,15 +1136,11 @@ const ast::DeclWithType * GenStructMemberCalls::postvisit( const ast::FunctionDe
 			ast::ptr<ast::Stmt> callStmt = SymTab::genImplicitCall( srcParam, memberDest, loc, function->name, field, static_cast<SymTab::LoopDirection>(isCtor) );
 
 			if ( callStmt ) {
-				// auto & callStmt = stmt.front();
-
 				try {
 					callStmt = callStmt->accept( *visitor );
 					if ( isCtor ) {
 						mutStmts->push_front( callStmt );
 					} else { // TODO: don't generate destructor function/object for intrinsic calls
-						// destructor statements should be added at the end
-						// function->get_statements()->push_back( callStmt );
 
 						// Optimization: do not need to call intrinsic destructors on members
 						if ( isIntrinsicSingleArgCallStmt( callStmt ) ) continue;
@@ -1255,20 +1209,19 @@ void GenStructMemberCalls::previsit( const ast::ApplicationExpr * appExpr ) {
 	}
 
 	std::string fname = getFunctionName( appExpr );
-	if ( fname == function->name ) {
-		// call to same kind of function
-		const ast::Expr * firstParam = appExpr->args.front();
+	if ( fname != function->name ) return;
 
-		if ( isThisExpression( firstParam, thisParam ) ) {
-			// if calling another constructor on thisParam, assume that function handles
-			// all members - if it doesn't a warning will appear in that function.
-			unhandled.clear();
-		} else if ( auto memberExpr = isThisMemberExpr( firstParam, thisParam ) ) {
-			// if first parameter is a member expression on the this parameter,
-			// then remove the member from unhandled set.
-			if ( isThisExpression( memberExpr->aggregate, thisParam ) ) {
-				unhandled.erase( memberExpr->member );
-			}
+	// call to same kind of function
+	const ast::Expr * firstParam = appExpr->args.front();
+	if ( isThisExpression( firstParam, thisParam ) ) {
+		// if calling another constructor on thisParam, assume that function handles
+		// all members - if it doesn't a warning will appear in that function.
+		unhandled.clear();
+	} else if ( auto memberExpr = isThisMemberExpr( firstParam, thisParam ) ) {
+		// if first parameter is a member expression on the this parameter,
+		// then remove the member from unhandled set.
+		if ( isThisExpression( memberExpr->aggregate, thisParam ) ) {
+			unhandled.erase( memberExpr->member );
 		}
 	}
 }
@@ -1314,8 +1267,6 @@ const ast::Expr * FixCtorExprs::postvisit( const ast::ConstructorExpr * ctorExpr
 	// take possession of expr and env
 	ast::ptr<ast::ApplicationExpr> callExpr = ctorExpr->callExpr.strict_as<ast::ApplicationExpr>();
 	ast::ptr<ast::TypeSubstitution> env = ctorExpr->env;
-	// ctorExpr->set_callExpr( nullptr );
-	// ctorExpr->set_env( nullptr );
 
 	// xxx - ideally we would reuse the temporary generated from the copy constructor passes from within firstArg if it exists and not generate a temporary if it's unnecessary.
 	auto tmp = new ast::ObjectDecl(loc, tempNamer.newName(), callExpr->args.front()->result );
