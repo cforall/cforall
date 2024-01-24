@@ -26,7 +26,7 @@
 // as
 //    if ( (int)(x != 0) ) ...
 
-ast::Expr * notZeroExpr( ast::Expr * orig ) {
+ast::Expr * notZeroExpr( const ast::Expr * orig ) {
 	return ( !orig ) ? nullptr : new ast::CastExpr( orig->location,
 		ast::UntypedExpr::createCall( orig->location,
 			"?!=?",

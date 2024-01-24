@@ -81,7 +81,7 @@
 #include "Validate/ReplaceTypedef.hpp"      // for replaceTypedef
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
 #include "Validate/VerifyCtorDtorAssign.hpp" // for verifyCtorDtorAssign
-#include "Validate/ReplacePseudoFunc.hpp"
+#include "Validate/ReplacePseudoFunc.hpp"   // for replacePseudoFunc
 #include "Virtual/ExpandCasts.h"            // for expandCasts
 #include "Virtual/VirtualDtor.hpp"          // for implementVirtDtors
 

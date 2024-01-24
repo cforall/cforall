@@ -672,8 +672,8 @@ ast::Expr * build_and_or( const CodeLocation & location,
 		ExpressionNode * expr_node2,
 		ast::LogicalFlag flag ) {
 	return new ast::LogicalExpr( location,
-		notZeroExpr( maybeMoveBuild( expr_node1 ) ),
-		notZeroExpr( maybeMoveBuild( expr_node2 ) ),
+		maybeMoveBuild( expr_node1 ),
+		maybeMoveBuild( expr_node2 ),
 		flag
 	);
 } // build_and_or
@@ -712,7 +712,7 @@ ast::Expr * build_cond( const CodeLocation & location,
 		ExpressionNode * expr_node2,
 		ExpressionNode * expr_node3 ) {
 	return new ast::ConditionalExpr( location,
-		notZeroExpr( maybeMoveBuild( expr_node1 ) ),
+		maybeMoveBuild( expr_node1 ),
 		maybeMoveBuild( expr_node2 ),
 		maybeMoveBuild( expr_node3 )
 	);

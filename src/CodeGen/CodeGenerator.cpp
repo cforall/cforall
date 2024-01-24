@@ -1134,7 +1134,7 @@ void CodeGenerator::postvisit( ast::WaitForStmt const * stmt ) {
 		if (first) { output << "or "; first = false; }
 		if ( clause->when_cond ) {
 			output << "when(";
-			stmt->timeout_cond->accept( *visitor );
+			clause->when_cond->accept( *visitor );
 			output << ") ";
 		}
 		output << "waitfor(";

@@ -1175,7 +1175,6 @@ const ast::DeclWithType * GenStructMemberCalls::postvisit( const ast::FunctionDe
 	if (! errors.isEmpty()) {
 		throw errors;
 	}
-	// return funcDecl;
 	return function;
 }
 

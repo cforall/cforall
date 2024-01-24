@@ -45,6 +45,7 @@
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
 #include "Common/utility.h"       // for move, copy
+#include "Parser/parserutility.h" // for notZeroExpr
 #include "SymTab/Mangler.h"
 #include "Tuples/Tuples.h"        // for handleTupleAssignment
 #include "InitTweak/InitTweak.h"  // for getPointerBase
@@ -1501,11 +1502,13 @@ namespace {
 
 	void Finder::postvisit( const ast::LogicalExpr * logicalExpr ) {
 		CandidateFinder finder1( context, tenv );
-		finder1.find( logicalExpr->arg1, ResolveMode::withAdjustment() );
+		ast::ptr<ast::Expr> arg1 = notZeroExpr( logicalExpr->arg1 );
+		finder1.find( arg1, ResolveMode::withAdjustment() );
 		if ( finder1.candidates.empty() ) return;
 
 		CandidateFinder finder2( context, tenv );
-		finder2.find( logicalExpr->arg2, ResolveMode::withAdjustment() );
+		ast::ptr<ast::Expr> arg2 = notZeroExpr( logicalExpr->arg2 );
+		finder2.find( arg2, ResolveMode::withAdjustment() );
 		if ( finder2.candidates.empty() ) return;
 
 		reason.code = NoMatch;
@@ -1531,7 +1534,8 @@ namespace {
 	void Finder::postvisit( const ast::ConditionalExpr * conditionalExpr ) {
 		// candidates for condition
 		CandidateFinder finder1( context, tenv );
-		finder1.find( conditionalExpr->arg1, ResolveMode::withAdjustment() );
+		ast::ptr<ast::Expr> arg1 = notZeroExpr( conditionalExpr->arg1 );
+		finder1.find( arg1, ResolveMode::withAdjustment() );
 		if ( finder1.candidates.empty() ) return;
 
 		// candidates for true result
