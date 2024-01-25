@@ -311,7 +311,6 @@ public:
 	// if isTyped == true && base.get() == nullptr, it is a "void" type enum
 	ptr<Type> base;
 	enum class EnumHiding { Visible, Hide } hide;
-
 	EnumDecl( const CodeLocation& loc, const std::string& name, bool isTyped = false,
 		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall,
 		Type const * base = nullptr, EnumHiding hide = EnumHiding::Hide,

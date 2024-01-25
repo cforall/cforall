@@ -35,12 +35,12 @@ cccccb
 xx
 abcxxx
 abcyyy
-aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwww
-uuuuuccccuuuuu
+aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwwwaaaaaaaawwwwwwww
+uuuuu
 abc 
 cccccb 
 xx
 abcxxx
 abcyyy
-aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwww
-uuuuuccccuuuuu
+aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwwwaaaaaaaawwwwwwww
+uuuuu

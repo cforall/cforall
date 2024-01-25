@@ -7,8 +7,8 @@ cccccb
 xx
 abcxxx
 abcyyy
-aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwww
-uuuuuccccuuuuu
+aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwwwaaaaaaaawwwwwwww
+uuuuu
 get this line
 @# this line 1)-{}%
 "abc"
@@ -22,8 +22,8 @@ cccccb
 xx
 abcxxx
 abcyyy
-aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwww
-uuuuuccccuuuuu
+aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwwwaaaaaaaawwwwwwww
+uuuuu
 get this line
 @# this line 1)-{}%
 "abc"

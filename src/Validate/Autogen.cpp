@@ -802,62 +802,10 @@ void TypeFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 	);
 }
 
-struct PseudoFuncGenerateRoutine final :
-		public ast::WithDeclsToAdd<>,
-		public ast::WithShortCircuiting {
-	void previsit( const ast::EnumDecl * enumDecl );
-};
-
-void PseudoFuncGenerateRoutine::previsit( const ast::EnumDecl * enumDecl ) {
-	const CodeLocation& location = enumDecl->location;
-	if ( enumDecl->members.size() == 0 || !enumDecl->base || enumDecl->name == "" ) return;
-
-	std::vector<ast::ptr<ast::Init>> inits;
-	std::vector<ast::ptr<ast::Init>> labels;
-	for ( const ast::Decl * mem: enumDecl->members ) {
-		auto memAsObjectDecl = dynamic_cast< const ast::ObjectDecl * >( mem );
-		inits.emplace_back( memAsObjectDecl->init );
-		labels.emplace_back( new ast::SingleInit( 
-			location, ast::ConstantExpr::from_string(location, mem->name) ) );
-	}
-	auto init = new ast::ListInit( location, std::move( inits ) );
-	auto label_strings = new ast::ListInit( location, std::move(labels) );
-	auto values = new ast::ObjectDecl( 
-		location,
-		"__enum_values_"+enumDecl->name,
-		new ast::ArrayType(
-			// new ast::PointerType( new ast::BasicType{ ast::BasicType::Char} ),
-			enumDecl->base,
-			ast::ConstantExpr::from_int( location, enumDecl->members.size() ), 
-			ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim
-		)
-		,init
-		,
-		ast::Storage::Static,
-		ast::Linkage::AutoGen
-	);
-	auto label_arr = new ast::ObjectDecl(
-		location,
-		"__enum_labels_"+enumDecl->name,
-		new ast::ArrayType(
-			new ast::PointerType( new ast::BasicType{ ast::BasicType::Char} ),
-			ast::ConstantExpr::from_int( location, enumDecl->members.size() ), 
-			ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim
-		),
-		label_strings,
-		ast::Storage::Static,
-		ast::Linkage::AutoGen
-	);
-
-	declsToAddAfter.push_back( values );
-	declsToAddAfter.push_back( label_arr );
-}
-
 } // namespace
 
 void autogenerateRoutines( ast::TranslationUnit & translationUnit ) {
 	ast::Pass<AutogenerateRoutines>::run( translationUnit );
-	// ast::Pass<PseudoFuncGenerateRoutine>::run( translationUnit );
 }
 
 } // Validate

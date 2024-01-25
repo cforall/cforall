@@ -1075,7 +1075,7 @@ forall( istype & | basic_istream( istype ) ) {
 				} // if
 			} // if
 			// FIX ME: CFA strings need to be modified to NOT change the argument for this case, then this can be removed.
-			if ( rwd > 0 && args == 0 ) f.s[0]= '\0';	// read failed => no pattern match => set string to null
+			if ( ! f.flags.ignore && rwd > 0 && args == 0 ) f.s[0]= '\0';	// read failed => no pattern match => set string to null
 		} else {
 			if ( f.flags.delimiter ) {					// getline
 				int len = 0;							// may not be set in fmt
@@ -1113,7 +1113,7 @@ forall( istype & | basic_istream( istype ) ) {
 					} // if
 				} // if
 			} // if
-			if ( rwd > 0 && args == 0 ) f.s[0]= '\0';	// read failed => no pattern match => set string to null
+			if ( ! f.flags.ignore && rwd > 0 && args == 0 ) f.s[0]= '\0';	// read failed => no pattern match => set string to null
 		} // if
 		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
 			// fprintf( stderr, "clear\n" );

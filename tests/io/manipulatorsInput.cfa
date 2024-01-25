@@ -54,41 +54,42 @@ int main() {
 		scanf("\n");  // next test does not start with %s so does not tolerate leading whitespace
 	}
 	{
-		char s[] = "yyyyyyyyyyyyyyyyyyyy";
+		char s[] = "yyyyyyyyyyyyyyyyyyyy";                                                     // Input characters consumed:
 		const char sk_fmt[] = "%*[abc]";
-		scanf( "abc " ); scanf( sk_fmt ); for ( 5 ) scanf( "%*c" ); printf( "1 %s\n", s );
-		scanf( "%s", s );								printf( "2 %s\n", s );
-		scanf( "%*s" );									printf( "3 %s\n", s );
-		scanf( "%8s", s );								printf( "4 %s\n", s );
-		scanf( "%*8s" );								printf( "5 %s\n", s );
+		scanf( "abc " ); scanf( sk_fmt ); for ( 5 ) scanf( "%*c" ); printf( "1 %s\n", s );     // |abc |\ncccccb| \nxx\n|
+		scanf( "%s", s );								printf( "2 %s\n", s );                 // |abcxxx|
+		scanf( "%*s" );									printf( "3 %s\n", s );                 // |\nabcyyy|
+		scanf( "%8s", s );								printf( "4 %s\n", s );                 // |\naaaaaaaa|
+		scanf( "%*8s" );								printf( "5 %s\n", s );                 // |xxxxxxxx|
 
-		scanf( "%[abc]", s );							printf( "6 %s\n", s );
-		scanf( "%[^abc]", s );							printf( "7 %s\n", s );
-		scanf( "%*[abc]" );								printf( "8 %s\n", s );
-		scanf( "%*[^abc]" );							printf( "9 %s\n", s );
-		scanf( "%8[abc]", s );							printf( "10 %s\n", s );
-		scanf( "%8[^abc]", s );							printf( "11 %s\n", s );
-		scanf( "%*8[abc]" );							printf( "12 %s\n", s );
-		scanf( "%*8[^abc]" );							printf( "13 %s\n", s );
+		scanf( "%[abc]", s );							printf( "6 %s\n", s );                 // |aabbccbb|
+		scanf( "%[^abc]", s );							printf( "7 %s\n", s );                 // |dddwww|
+		scanf( "%*[abc]" );								printf( "8 %s\n", s );                 // |bbbbbbbb|
+		scanf( "%*[^abc]" );							printf( "9 %s\n", s );                 // |wwwwwwww|
+		scanf( "%8[abc]", s );							printf( "10 %s\n", s );                // |aaaaaaaa|
+		scanf( "%8[^abc]", s );							printf( "11 %s\n", s );                // |wwwwwwww|
+		scanf( "%*8[abc]" );							printf( "12 %s\n", s );                // |aaaaaaaa|
+		scanf( "%*8[^abc]" );							printf( "13 %s\n", s );                // |wwwwwwww|
+		scanf( "\n" );									// must start next line                // |\n|
 
 		int rc;
 		s[0] = 'q'; s[1] = '\0'; rc = 99;
-		rc = scanf( "%[abc]", s );						printf( "14 rc=%d, %s\n", rc, s );
+		rc = scanf( "%[abc]", s );						printf( "14 rc=%d, %s\n", rc, s );     // ||
 		s[0] = 'q'; s[1] = '\0'; rc = 99;
-		rc = scanf( "%[^u]", s );						printf( "15 rc=%d, %s\n", rc, s );
-		scanf( "%*[u]\n" );
-		scanf( "%[^\n]\n", s );							printf( "16 %s\n", s );
-		scanf( "%[^%%]%%\n", s );						printf( "17 %s\n", s );
+		rc = scanf( "%[^u]", s );						printf( "15 rc=%d, %s\n", rc, s );     // ||
+		scanf( "%*[u]\n" );                                                                    // |uuuuu\n|
+		scanf( "%[^\n]\n", s );							printf( "16 %s\n", s );                // |get this line\n|
+		scanf( "%[^%%]%%\n", s );						printf( "17 %s\n", s );                // |@# this line 1)-{}%\n|
 
-		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace
-		scanf( "\"%[^\"]\"", s );						printf( "18 %s\n", s );
-		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace
-		scanf( "'%[^']'", s );							printf( "19 %s\n", s );
-		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace
-		scanf( "{%[^}]}", s );							printf( "20 %s\n", s );
-		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace
-		scanf( "X%[^Y]Y", s );							printf( "21 %s\n", s );
-		scanf( "\n" );									// must start next line
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // ||
+		scanf( "\"%[^\"]\"", s );						printf( "18 %s\n", s );                // |"abc"|
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // |\n|
+		scanf( "'%[^']'", s );							printf( "19 %s\n", s );                // |'abc  '|
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // |\n|
+		scanf( "{%[^}]}", s );							printf( "20 %s\n", s );                // |{ d d\n\nd }|
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // |\n|
+		scanf( "X%[^Y]Y", s );							printf( "21 %s\n", s );                // |X		ZC44%Y|
+		scanf( "\n" );									// must start next line                // |\n|
 	}
 	{
 		char s[] = "yyyyyyyyyyyyyyyyyyyy";
@@ -107,6 +108,7 @@ int main() {
 		sin | excl( "abc", wdi( sizeof(s), 8, s ) );	sout | "11" | s;
 		sin | ignore( incl( "abc", wdi( sizeof(s), 8, s ) ) ); sout | "12" | s;
 		sin | ignore( excl( "abc", wdi( sizeof(s), 8, s ) ) ); sout | "13" | s;
+		sin | "\n";
 
 		s[0] = 'q'; s[1] = '\0';
 		sin | incl( "abc", wdi( sizeof(s), s ) );		sout | "14" | s;

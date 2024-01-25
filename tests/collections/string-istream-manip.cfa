@@ -164,6 +164,7 @@ int main() {
         sin | excl( "abc", wdi( 8, s ) );               sout | "11" | s;
         sin | ignore( incl( "abc", wdi( 8, s ) ) );     sout | "12" | s;
         sin | ignore( excl( "abc", wdi( 8, s ) ) );     sout | "13" | s;
+		sin | "\n";
 
 		s = "q";
 		sin | incl( "abc", s );                         sout | "14" | s;
@@ -190,6 +191,7 @@ int main() {
         sin | excl( "abc", wdi( 8, s ) );               sout | "11" | s;
         sin | ignore( incl( "abc", wdi( 8, s ) ) );     sout | "12" | s;
         sin | ignore( excl( "abc", wdi( 8, s ) ) );     sout | "13" | s;
+		sin | "\n";
 
 		s = "q";
 		sin | incl( "abc", s );                         sout | "14" | s;

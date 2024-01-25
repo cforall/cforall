@@ -17,7 +17,7 @@ pre4b "89", canary ok
 11 wwwwwwww
 12 wwwwwwww
 13 wwwwwwww
-14 rc=1, cccc
+14 rc=0, q
 15 rc=0, q
 16 get this line
 17 @# this line 1)-{}
@@ -31,16 +31,16 @@ d
 2 abcxxx
 3 abcxxx
 4 aaaaaaaa
-5
+5 aaaaaaaa
 6 aabbccbb
 7 dddwww
-8
-9
+8 dddwww
+9 dddwww
 10 aaaaaaaa
 11 wwwwwwww
-12
-13
-14 cccc
+12 wwwwwwww
+13 wwwwwwww
+14
 15
 16 get this line
 17 @# this line 1)-{}
