@@ -11,12 +11,14 @@ aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwwwaaaaaaaawwwwwwww
 uuuuu
 get this line
 @# this line 1)-{}%
+@# this line 2)-{}%
 "abc"
 'abc  '
 { d d
 
 d }
 X		ZC44%Y
+X		ZC55%Y
 abc 
 cccccb 
 xx
@@ -26,12 +28,14 @@ aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwwwaaaaaaaawwwwwwww
 uuuuu
 get this line
 @# this line 1)-{}%
+@# this line 2)-{}%
 "abc"
 'abc  '
 { d d
 
 d }
 X		ZC44%Y
+X		ZC55%Y
 ab
 0xff 017 15-15
 0xff 017 15-15

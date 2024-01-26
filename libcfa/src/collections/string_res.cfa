@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan 16 22:19:27 2024
-// Update Count     : 35
+// Last Modified On : Mon Jan 22 23:12:42 2024
+// Update Count     : 43
 //
 
 #include "string_res.hfa"
@@ -262,7 +262,7 @@ ifstream & ?|?( ifstream & is, _Istream_Rstr f ) {
 	char cstr[gwd];										// read in chunks
 	bool cont = false;
 
-	_Istream_Cstr cf = { cstr, (_Istream_str_base)f };
+	_Istream_Cwidth cf = { cstr, (_Istream_str_base)f };
 	if ( ! cf.flags.rwd ) cf.wd = wd;
 
 	cstr[wd] = '\0';									// guard null terminate string

@@ -110,26 +110,6 @@ struct ValueGuardPtr< std::list< T > > {
 	~ValueGuardPtr() { if( ref ) { swap( *ref, old ); } }
 };
 
-// -----------------------------------------------------------------------------
-// O(1) polymorphic integer ilog2, using clz, which returns the number of leading 0-bits, starting at the most
-// significant bit (single instruction on x86)
-
-template<typename T>
-inline
-#if defined(__GNUC__) && __GNUC__ > 4
-constexpr
-#endif
-T ilog2(const T & t) {
-	if(std::is_integral<T>::value) {
-		const constexpr int r = sizeof(t) * __CHAR_BIT__ - 1;
-		if( sizeof(T) == sizeof(unsigned       int) ) return r - __builtin_clz  ( t );
-		if( sizeof(T) == sizeof(unsigned      long) ) return r - __builtin_clzl ( t );
-		if( sizeof(T) == sizeof(unsigned long long) ) return r - __builtin_clzll( t );
-	}
-	assert(false);
-	return -1;
-} // ilog2
-
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //

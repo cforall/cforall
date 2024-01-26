@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Jun  8 17:58:54 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  3 11:15:04 2024
-// Update Count     : 103
+// Last Modified On : Wed Jan 24 18:36:32 2024
+// Update Count     : 104
 // 
 
 #include <fstream.hfa>
@@ -80,15 +80,18 @@ int main() {
 		scanf( "%*[u]\n" );                                                                    // |uuuuu\n|
 		scanf( "%[^\n]\n", s );							printf( "16 %s\n", s );                // |get this line\n|
 		scanf( "%[^%%]%%\n", s );						printf( "17 %s\n", s );                // |@# this line 1)-{}%\n|
+		scanf( "%*[^%%]%%\n", s );						printf( "18 %s\n", s );                // |@# this line 1)-{}%\n|
 
 		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // ||
-		scanf( "\"%[^\"]\"", s );						printf( "18 %s\n", s );                // |"abc"|
+		scanf( "\"%[^\"]\"", s );						printf( "19 %s\n", s );                // |"abc"|
 		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // |\n|
-		scanf( "'%[^']'", s );							printf( "19 %s\n", s );                // |'abc  '|
+		scanf( "'%[^']'", s );							printf( "20 %s\n", s );                // |'abc  '|
 		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // |\n|
-		scanf( "{%[^}]}", s );							printf( "20 %s\n", s );                // |{ d d\n\nd }|
+		scanf( "{%[^}]}", s );							printf( "21 %s\n", s );                // |{ d d\n\nd }|
 		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // |\n|
-		scanf( "X%[^Y]Y", s );							printf( "21 %s\n", s );                // |X		ZC44%Y|
+		scanf( "X%[^Y]Y", s );							printf( "22 %s\n", s );                // |X		ZC44%Y|
+		scanf( "%*[ \f\n\r\t\v]" );						// ignore whitespace                   // |\n|
+		scanf( "X%*[^Y]Y", s );							printf( "23 %s\n", s );                // |X		ZC44%Y|
 		scanf( "\n" );									// must start next line                // |\n|
 	}
 	{
@@ -117,11 +120,13 @@ int main() {
 		sin | skip( "u" ) | "\n";
 		sin | getline( wdi( sizeof(s), s ) );			sout | "16" | s;
 		sin | getline( wdi( sizeof(s), s ), '%' ) | "\n"; sout | "17" | s;
+		sin | ignore( getline( wdi( sizeof(s), s ), '%' ) ) | "\n"; sout | "18" | s;
 
-		sin | quoted( wdi( sizeof(s), s ) );			sout | "18" | s;
-		sin | quoted( wdi( sizeof(s), s ), '\'' );		sout | "19" | s;
-		sin | quoted( wdi( sizeof(s), s ), '{', '}' );	sout | "20" | s;
-		sin | quoted( wdi( sizeof(s), s ), 'X', 'Y' );	sout | "21" | s;
+		sin | quoted( wdi( sizeof(s), s ) );			sout | "19" | s;
+		sin | quoted( wdi( sizeof(s), s ), '\'' );		sout | "20" | s;
+		sin | quoted( wdi( sizeof(s), s ), '{', '}' );	sout | "21" | s;
+		sin | quoted( wdi( sizeof(s), s ), 'X', 'Y' );	sout | "22" | s;
+		sin | ignore( quoted( wdi( sizeof(s), s ), 'X', 'Y' ) ); sout | "23" | s;
 	}
     // Keep harmonized with collections/string-istream-manip
 	{
