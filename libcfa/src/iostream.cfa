@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 25 08:39:31 2024
-// Update Count     : 1901
+// Last Modified On : Sun Jan 28 11:58:54 2024
+// Update Count     : 1917
 //
 
 #include "iostream.hfa"
@@ -943,7 +943,7 @@ forall( istype & | basic_istream( istype ) ) {
 
 	istype & nl( istype & is ) {
 		fmt( is, "%*[^\n]" );							// ignore characters to newline
-		if ( ! eof( is ) && getANL$( is ) ) fmt( is, "%*c" ); // read newline
+		if ( ! eof( is ) ) fmt( is, "%*c" );			// read newline
 		return is;
 	} // nl
 
@@ -1001,7 +1001,8 @@ forall( istype & | basic_istream( istype ) ) {
 			flags.delimiter = true;
 			return is | *(_Istream_Cstr *)&f;
 		} // fini
-		if ( ! flags.ignore && args == 0 ) s[0] = '\0';	// read failed => no pattern match => set string to null
+		// read failed => no pattern match => set string to null
+		if ( ! flags.ignore && s != 0p && args == 0 ) s[0] = '\0';
 		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
 			clear( is );								// => reset EOF => detect again on next read
 		} // if
@@ -1054,7 +1055,11 @@ forall( istype & | basic_istream( istype ) ) {
 		} else {
 			if ( flags.delimiter ) {					// getline
 				int len = 0;							// may not be set in fmt
-				sprintf( &fmtstr[pos], "[^%c]%%n", delimiters[0] );
+				if ( delimiters[2] != '\0' ) {			// read single character ?
+					sprintf( &fmtstr[pos], "c%%n" );
+				} else {
+					sprintf( &fmtstr[pos], "[^%c]%%n", delimiters[0] );
+				} // if
 				if ( flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 				else args = fmt( is, fmtstr, s, &len );
 				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
@@ -1095,16 +1100,6 @@ forall( istype & | basic_istream( istype ) ) {
 		} // if
 		return is;
 	} // ?|?
-
-	istype & ?|?( istype & is, _Istream_Char f ) with(f) {
-		if ( ignore ) {
-			fmt( is, "%*c" );							// argument variable unused
-		} else {
-			int len = -1, args = fmt( is, fmt, &c, &len );
-			if ( args != -1 && len == -1 ) throwResume ExceptionInst( missing_data );
-		} // if
-		return is;
-	} // ?|?
 } // distribution
 
 #define INPUT_FMT_IMPL( T, CODE ) \
@@ -1123,6 +1118,7 @@ forall( istype & | basic_istream( istype ) ) { \
 	} /* ?|? */ \
 } // distribution
 
+INPUT_FMT_IMPL( char, "c" )
 INPUT_FMT_IMPL( signed char, "hhi" )
 INPUT_FMT_IMPL( unsigned char, "hhi" )
 INPUT_FMT_IMPL( signed short int, "hi" )

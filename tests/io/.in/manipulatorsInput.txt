@@ -19,6 +19,11 @@ get this line
 d }
 X		ZC44%Y
 X		ZC55%Y
+'x'
+"x"
+{x}
+XxY
+XyY
 abc 
 cccccb 
 xx
@@ -36,7 +41,13 @@ get this line
 d }
 X		ZC44%Y
 X		ZC55%Y
+'x'
+"x"
+{x}
+XxY
+XyY
 ab
+xxxyyy
 0xff 017 15-15
 0xff 017 15-15
 0xff 017 15-15

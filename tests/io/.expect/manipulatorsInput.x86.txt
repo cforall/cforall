@@ -29,6 +29,11 @@ pre4b "89", canary ok
 d 
 22 		ZC44%
 23 		ZC44%
+24 x
+25 x
+26 x
+27 x
+28 x
 1 yyyyyyyyyyyyyyyyyyyy
 2 abcxxx
 3 abcxxx
@@ -54,8 +59,15 @@ d
 d 
 22		ZC44%
 23		ZC44%
+24 x
+25 x
+26 x
+27 x
+28 x
 a
 a
+xxx
+xxx
 -1
 15
 15

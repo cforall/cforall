@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 15 10:51:14 2023
-// Update Count     : 552
+// Last Modified On : Sun Jan 28 09:56:08 2024
+// Update Count     : 554
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -208,7 +208,7 @@ ofstream & nl( ofstream & os ) {
 // private
 void ?{}( ifstream & is, void * file ) with( is ) {
 	file$ = file;
-	nlOnOff$ = false;
+	nlOnOff$ = false;									// => skip newlines when reading single characters
 } // ?{}
 
 bool getANL$( ifstream & os ) { return os.nlOnOff$; }
