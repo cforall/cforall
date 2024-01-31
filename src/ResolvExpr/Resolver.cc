@@ -49,15 +49,6 @@
 using namespace std;
 
 namespace ResolvExpr {
-	template< typename iterator_t >
-	inline bool advance_to_mutex( iterator_t & it, const iterator_t & end ) {
-		while( it != end && !(*it)->get_type()->get_mutex() ) {
-			it++;
-		}
-
-		return it != end;
-	}
-
 	namespace {
 		/// Finds deleted expressions in an expression tree
 		struct DeleteFinder final : public ast::WithShortCircuiting, public ast::WithVisitorRef<DeleteFinder> {
