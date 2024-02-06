@@ -330,16 +330,16 @@ inline void genEnumInitializer( ast::Pass<pass_type> * visitor,
 void CodeGenerator::postvisit( ast::EnumDecl const * decl ) {
 	extension( decl );
 	auto members = decl->members;
-	if ( decl->base && !members.empty() ) {
-		long long curVal = 0;
-		for ( auto member : members ) {
-			auto obj = member.strict_as<ast::ObjectDecl>();
-			output << "static ";
-			output << genType( decl->base, mangleName( obj ), options );
-			genEnumInitializer( visitor, decl->base, output, obj->init, &curVal, options );
-			output << ";" << endl;
-		}
-	} else {
+	// if ( decl->base && !members.empty() ) {
+	// 	long long curVal = 0;
+	// 	for ( auto member : members ) {
+	// 		auto obj = member.strict_as<ast::ObjectDecl>();
+	// 		output << "static ";
+	// 		output << genType( decl->base, mangleName( obj ), options );
+	// 		genEnumInitializer( visitor, decl->base, output, obj->init, &curVal, options );
+	// 		output << ";" << endl;
+	// 	}
+	// } else {
 		output << "enum ";
 		genAttributes( decl->attributes );
 
@@ -352,7 +352,7 @@ void CodeGenerator::postvisit( ast::EnumDecl const * decl ) {
 			for ( auto member : members ) {
 				auto obj = member.strict_as<ast::ObjectDecl>();
 				output << indent << mangleName( obj );
-				if ( obj->init ) {
+				if ( !decl->base && obj->init ) {
 					output << " = ";
 					obj->init->accept( *visitor );
 				}
@@ -362,7 +362,7 @@ void CodeGenerator::postvisit( ast::EnumDecl const * decl ) {
 
 			output << indent << "}";
 		}
-	}
+	// }
 }
 
 void CodeGenerator::postvisit( ast::TraitDecl const * decl ) {
@@ -775,11 +775,6 @@ void CodeGenerator::postvisit( ast::OffsetofExpr const * expr ) {
 void CodeGenerator::postvisit( ast::OffsetPackExpr const * expr ) {
 	assertf( !options.genC, "OffsetPackExpr should not reach code generation." );
 	output << "__CFA_offsetpack(" << genType( expr->type, "", options ) << ")";
-}
-
-void CodeGenerator::postvisit( ast::EnumPosExpr const * expr ) {
-	assertf( !options.genC, "EnumPosExpr should not reach code generation." );
-	output << "__CFA_enumeration_pos(" << genType( expr->type, "", options ) << ")";
 }
 
 void CodeGenerator::postvisit( ast::LogicalExpr const * expr ) {

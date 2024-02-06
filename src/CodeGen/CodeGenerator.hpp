@@ -76,7 +76,6 @@ struct CodeGenerator final :
 	void postvisit( ast::OffsetofExpr const * );
 	void postvisit( ast::OffsetPackExpr const * );
 	void postvisit( ast::LogicalExpr const * );
-	void postvisit( ast::EnumPosExpr const * );
 	void postvisit( ast::ConditionalExpr const * );
 	void postvisit( ast::CommaExpr const * );
 	void postvisit( ast::CompoundLiteralExpr const * );

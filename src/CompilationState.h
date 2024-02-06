@@ -41,7 +41,8 @@ extern int
 	errorp,
 	codegenp,
 	prettycodegenp,
-	linemarks;
+	linemarks,
+	reppseu;
 
 // is the compiler building prelude or libcfa?
 inline bool buildingLibrary() {

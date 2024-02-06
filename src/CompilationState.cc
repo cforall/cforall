@@ -42,7 +42,8 @@ int
 	errorp = false,
 	codegenp = false,
 	prettycodegenp = false,
-	linemarks = false;
+	linemarks = false,
+	reppseu = false;
 
 // Local Variables: //
 // tab-width: 4 //

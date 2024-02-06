@@ -196,10 +196,15 @@ public:
 	}
 
 	bool shouldAutogen() const final { return true; }
+	void genAttrFuncForward();
 private:
 	void genFuncBody( ast::FunctionDecl * decl ) final;
 	void genFieldCtors() final;
 	const ast::Decl * getDecl() const final { return decl; }
+
+	ast::FunctionDecl * genPosProto() const;
+	ast::FunctionDecl * genLabelProto() const;
+	ast::FunctionDecl * genValueProto() const;
 };
 
 class TypeFuncGenerator final : public FuncGenerator {
@@ -237,19 +242,14 @@ void addUnusedAttribute( ast::ptr<ast::DeclWithType> & declPtr ) {
 
 // --------------------------------------------------------------------------
 void AutogenerateRoutines::previsit( const ast::EnumDecl * enumDecl ) {
-	// Must visit children (enum constants) to add them to the symbol table.
 	if ( !enumDecl->body ) return;
-
-	// if ( auto enumBaseType = enumDecl->base ) {
-	// 	if ( auto enumBaseTypeAsStructInst = dynamic_cast<const ast::StructInstType *>(enumBaseType.get()) ) {
-	// 		const ast::StructDecl * structDecl = enumBaseTypeAsStructInst->base.get();
-	// 		this->previsit( structDecl );
-	// 	}
-	// }
 
 	ast::EnumInstType enumInst( enumDecl->name );
 	enumInst.base = enumDecl;
 	EnumFuncGenerator gen( enumDecl, &enumInst, functionNesting );
+	if ( enumDecl->base ) {
+		gen.genAttrFuncForward();
+	}
 	gen.generateAndAppendFunctions( declsToAddAfter );
 }
 
@@ -745,13 +745,10 @@ void EnumFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 			ast::VariableExpr::functionPointer( location, functionDecl ),
 			{
 				new ast::VariableExpr( location, dstParam ),
-				new ast::VariableExpr( location, srcParam ),
+				new ast::VariableExpr( location, srcParam )
 			}
 		);
-		// auto fname = ast::getFunctionName( callExpr );
-		// if (fname == "posE" ) {
-		// 	std::cerr << "Found posE autogen" << std::endl;
-		// }
+
 		functionDecl->stmts = new ast::CompoundStmt( location,
 			{ new ast::ExprStmt( location, callExpr ) }
 		);
@@ -767,6 +764,39 @@ void EnumFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 		ast::FunctionDecl * fwd = strict_dynamic_cast<ast::FunctionDecl *>(
 			forwards.back().get_and_mutate() );
 		addUnusedAttribute( fwd->params.front() );
+	}
+}
+
+ast::FunctionDecl * EnumFuncGenerator::genPosProto() const {
+	return genProto( "posE", 
+		{ new ast::ObjectDecl( getLocation(), "_i", 
+		new ast::EnumInstType( decl ) )}, 
+		{ new ast::ObjectDecl( getLocation(), "_ret", 
+		new ast::BasicType{ ast::BasicType::UnsignedInt } )} );
+}
+
+ast::FunctionDecl * EnumFuncGenerator::genLabelProto() const {
+	return genProto( "labelE",
+		{ new ast::ObjectDecl( getLocation(), "_i", 
+		new ast::EnumInstType( decl ) ) },
+		{ new ast::ObjectDecl( getLocation(), "_ret", 
+		new ast::PointerType( new ast::BasicType{ ast::BasicType::Char } ) ) } );
+}
+
+ast::FunctionDecl * EnumFuncGenerator::genValueProto() const {
+	return genProto( "valueE", 
+		{ new ast::ObjectDecl( getLocation(), "_i", new ast::EnumInstType( decl ) )},
+		{ new ast::ObjectDecl( getLocation(), "_ret", ast::deepCopy( decl->base ) ) } );
+}
+
+void EnumFuncGenerator::genAttrFuncForward() {	
+	if ( decl->base ) {
+		ast::FunctionDecl *(EnumFuncGenerator::*attrProtos[3])() const = {
+			&EnumFuncGenerator::genPosProto, &EnumFuncGenerator::genLabelProto, 
+			&EnumFuncGenerator::genValueProto };
+		for ( auto & generator : attrProtos ) {
+			produceForwardDecl( (this->*generator)() );
+		}
 	}
 }
 

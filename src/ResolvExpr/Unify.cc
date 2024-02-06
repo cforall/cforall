@@ -72,19 +72,6 @@ namespace ResolvExpr {
 
 		ast::Type * newFirst  = shallowCopy( first  );
 		ast::Type * newSecond = shallowCopy( second );
-		if ( auto temp = dynamic_cast<const ast::EnumInstType *>(first) ) {
-			if ( !dynamic_cast< const ast::EnumInstType * >( second ) ) {
-				const ast::EnumDecl * baseEnum = dynamic_cast<const ast::EnumDecl *>(temp->base.get());
-				if ( auto t = baseEnum->base.get() ) {
-					newFirst = ast::shallowCopy( t );
-				}
-			}
-		} else if ( auto temp = dynamic_cast<const ast::EnumInstType *>(second) ) {
-			const ast::EnumDecl * baseEnum = dynamic_cast<const ast::EnumDecl *>(temp->base.get());
-			if ( auto t = baseEnum->base.get() ) {
-				newSecond = ast::shallowCopy( t );
-			}
-		}
 
 		newFirst ->qualifiers = {};
 		newSecond->qualifiers = {};

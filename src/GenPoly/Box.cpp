@@ -24,9 +24,10 @@
 #include "AST/Vector.hpp"              // for vector
 #include "AST/GenericSubstitution.hpp" // for genericSubstitution
 #include "CodeGen/OperatorTable.h"     // for isAssignment
+#include "Common/Iterate.hpp"          // for group_iterate
 #include "Common/ScopedMap.h"          // for ScopedMap
+#include "Common/ToString.hpp"         // for toCString
 #include "Common/UniqueName.h"         // for UniqueName
-#include "Common/utility.h"            // for toCString, group_iterate
 #include "GenPoly/FindFunction.h"      // for findFunction
 #include "GenPoly/GenPoly.h"           // for getFunctionType, ...
 #include "GenPoly/Lvalue.h"            // for generalizedLvalue
@@ -235,7 +236,7 @@ void LayoutFunctionBuilder::previsit( ast::StructDecl const * decl ) {
 		ast::ConstantExpr::from_ulong( location, 1 )
 	) );
 	// TODO: Polymorphic types will be out of the struct declaration scope.
-	// Should be removed by PolyGenericCalculator.
+	// This breaks invariants until it is corrected later.
 	for ( auto const & member : enumerate( decl->members ) ) {
 		auto dwt = member.val.strict_as<ast::DeclWithType>();
 		ast::Type const * memberType = dwt->get_type();
@@ -308,6 +309,7 @@ void LayoutFunctionBuilder::previsit( ast::UnionDecl const * decl ) {
 		ast::ConstantExpr::from_ulong( location, 1 )
 	) );
 	// TODO: Polymorphic types will be out of the union declaration scope.
+	// This breaks invariants until it is corrected later.
 	for ( auto const & member : decl->members ) {
 		auto dwt = member.strict_as<ast::DeclWithType>();
 		ast::Type const * memberType = dwt->get_type();
@@ -574,8 +576,8 @@ ast::FunctionDecl const * CallAdapter::previsit( ast::FunctionDecl const * decl 
 		std::string mangleName = mangleAdapterName( funcType, scopeTypeVars );
 		if ( adapters.contains( mangleName ) ) continue;
 		std::string adapterName = makeAdapterName( mangleName );
-		// TODO: The forwarding here is problematic because these
-		// declarations are not rooted anywhere in the translation unit.
+		// NODE: This creates floating nodes, breaking invariants.
+		// This is corrected in the RewireAdapters sub-pass.
 		adapters.insert(
 			mangleName,
 			new ast::ObjectDecl(
@@ -638,8 +640,6 @@ ast::Expr const * CallAdapter::postvisit( ast::ApplicationExpr const * expr ) {
 	ptrdiff_t initArgCount = mutExpr->args.size();
 
 	TypeVarMap exprTypeVars;
-	// TODO: Should this take into account the variables already bound in
-	// scopeTypeVars ([ex] remove them from exprTypeVars)?
 	makeTypeVarMap( function, exprTypeVars );
 	auto dynRetType = isDynRet( function, exprTypeVars );
 
@@ -1520,7 +1520,6 @@ void DeclAdapter::addAdapters(
 }
 
 // --------------------------------------------------------------------------
-// TODO: Ideally, there would be no floating nodes at all.
 /// Corrects the floating nodes created in CallAdapter.
 struct RewireAdapters final : public ast::WithGuards {
 	ScopedMap<std::string, ast::ObjectDecl const *> adapters;
@@ -1578,8 +1577,6 @@ struct PolyGenericCalculator final :
 	ast::Expr const * postvisit( ast::AlignofExpr const * expr );
 	ast::Expr const * postvisit( ast::OffsetofExpr const * expr );
 	ast::Expr const * postvisit( ast::OffsetPackExpr const * expr );
-
-	ast::Expr const * postvisit( ast::EnumPosExpr const * expr );
 
 	void beginScope();
 	void endScope();
@@ -1838,7 +1835,7 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 	sub.apply( memberType );
 
 	// Not all members of a polymorphic type are themselves of a polymorphic
-	// type; in this cas the member expression should be wrapped and
+	// type; in this case the member expression should be wrapped and
 	// dereferenced to form an lvalue.
 	if ( !isPolyType( memberType, scopeTypeVars ) ) {
 		auto ptrCastExpr = new ast::CastExpr( expr->location, newMemberExpr,
@@ -1951,11 +1948,6 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 	);
 
 	return new ast::VariableExpr( expr->location, offsetArray );
-}
-
-// TODO 
-ast::Expr const * PolyGenericCalculator::postvisit( ast::EnumPosExpr const * expr ) {
-	return expr;
 }
 
 void PolyGenericCalculator::beginScope() {

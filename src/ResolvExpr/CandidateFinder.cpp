@@ -658,7 +658,6 @@ namespace {
 		void postvisit( const ast::UntypedOffsetofExpr * offsetofExpr );
 		void postvisit( const ast::OffsetofExpr * offsetofExpr );
 		void postvisit( const ast::OffsetPackExpr * offsetPackExpr );
-		void postvisit( const ast::EnumPosExpr * enumPosExpr );
 		void postvisit( const ast::LogicalExpr * logicalExpr );
 		void postvisit( const ast::ConditionalExpr * conditionalExpr );
 		void postvisit( const ast::CommaExpr * commaExpr );
@@ -672,6 +671,7 @@ namespace {
 		void postvisit( const ast::UniqueExpr * unqExpr );
 		void postvisit( const ast::StmtExpr * stmtExpr );
 		void postvisit( const ast::UntypedInitExpr * initExpr );
+		void postvisit( const ast::QualifiedNameExpr * qualifiedExpr );
 
 		void postvisit( const ast::InitExpr * ) {
 			assertf( false, "CandidateFinder should never see a resolved InitExpr." );
@@ -890,6 +890,21 @@ namespace {
 			addAggMembers( structInst, aggrExpr, *cand, Cost::unsafe, "" );
 		} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
 			addAggMembers( unionInst, aggrExpr, *cand, Cost::unsafe, "" );
+		} 
+		else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
+			// The Attribute Arrays are not yet generated, need to proxy them
+			// as attribute function call
+			const CodeLocation & location = cand->expr->location;
+			if ( enumInst->base && enumInst->base->base ) {
+				auto valueName = new ast::NameExpr(location, "valueE");
+				auto untypedValueCall = new ast::UntypedExpr( 
+					location, valueName, { aggrExpr } );
+				auto result = ResolvExpr::findVoidExpression( untypedValueCall, context );
+				assert( result.get() );
+				CandidateRef newCand = std::make_shared<Candidate>(
+					*cand, result, Cost::safe );
+				candidates.emplace_back( std::move( newCand ) );
+			}
 		}
 	}
 
@@ -960,16 +975,6 @@ namespace {
 					}
 
 					if (argType.as<ast::PointerType>()) funcFinder.otypeKeys.insert(Mangle::Encoding::pointer);						
-					// else if (const ast::EnumInstType * enumInst = argType.as<ast::EnumInstType>()) {
-					// 	const ast::EnumDecl * enumDecl = enumInst->base; // Here
-					// 	if ( const ast::Type* enumType = enumDecl->base ) {
-					// 		// instance of enum (T) is a instance of type (T)
-					// 		funcFinder.otypeKeys.insert(Mangle::mangle(enumType, Mangle::NoGenericParams | Mangle::Type));
-					// 	} else {
-					// 		// instance of an untyped enum is techically int
-					// 		funcFinder.otypeKeys.insert(Mangle::mangle(enumDecl, Mangle::NoGenericParams | Mangle::Type));
-					// 	}
-					// }
 					else funcFinder.otypeKeys.insert(Mangle::mangle(argType, Mangle::NoGenericParams | Mangle::Type));
 				}
 			}
@@ -1397,9 +1402,7 @@ namespace {
 
 	void Finder::postvisit( const ast::VariableExpr * variableExpr ) {
 		// not sufficient to just pass `variableExpr` here, type might have changed since
-		// creation
-		addCandidate(
-			new ast::VariableExpr{ variableExpr->location, variableExpr->var }, tenv );
+		addCandidate( variableExpr, tenv );		
 	}
 
 	void Finder::postvisit( const ast::ConstantExpr * constantExpr ) {
@@ -1474,30 +1477,6 @@ namespace {
 
 	void Finder::postvisit( const ast::OffsetPackExpr * offsetPackExpr ) {
 		addCandidate( offsetPackExpr, tenv );
-	}
-
-	void Finder::postvisit( const ast::EnumPosExpr * enumPosExpr ) {
-		CandidateFinder finder( context, tenv );
-		finder.find( enumPosExpr->expr );
-		CandidateList winners = findMinCost( finder.candidates );
-		if ( winners.size() != 1 ) SemanticError( enumPosExpr->expr.get(), "Ambiguous expression in position. ");
-		CandidateRef & choice = winners.front();
-		auto refExpr = referenceToRvalueConversion( choice->expr, choice->cost );
-		auto refResult = (refExpr->result).as<ast::EnumInstType>();
-		if ( !refResult ) {
-			SemanticError( refExpr, "Position for Non enum type is not supported" );
-		}
-		// determineEnumPosConstant( enumPosExpr, refResult );
-
-		const ast::NameExpr * const nameExpr = enumPosExpr->expr.strict_as<ast::NameExpr>();
-		const ast::EnumDecl * base = refResult->base;
-		if ( !base ) {
-			SemanticError( enumPosExpr, "Cannot be reference to a defined enumeration type" );
-		}
-		auto it = std::find_if( std::begin( base->members ), std::end( base->members ), 
-			[nameExpr]( ast::ptr<ast::Decl> decl ) { return decl->name == nameExpr->name; } );
-		unsigned position = it - base->members.begin();
-		addCandidate( ast::ConstantExpr::from_int( enumPosExpr->location, position ), tenv );
 	}
 
 	void Finder::postvisit( const ast::LogicalExpr * logicalExpr ) {
@@ -1799,6 +1778,39 @@ namespace {
 		candidates = std::move(matches);
 	}
 
+	void Finder::postvisit( const ast::QualifiedNameExpr * expr ) {
+		std::vector< ast::SymbolTable::IdData > declList = symtab.lookupId( expr->name );
+		if ( declList.empty() ) return;
+
+		for ( ast::SymbolTable::IdData & data: declList ) {
+			const ast::Type * t = data.id->get_type()->stripReferences();
+			if ( const ast::EnumInstType * enumInstType =
+				dynamic_cast<const ast::EnumInstType *>( t ) ) {
+				if ( enumInstType->base->name == expr->type_decl->name ) {
+					Cost cost = Cost::zero;
+					ast::Expr * newExpr = data.combine( expr->location, cost );
+					CandidateRef newCand =
+						std::make_shared<Candidate>(
+							newExpr, copy( tenv ), ast::OpenVarSet{}, 
+							ast::AssertionSet{}, Cost::zero, cost
+						);
+					
+					if (newCand->expr->env) {
+						newCand->env.add(*newCand->expr->env);
+						auto mutExpr = newCand->expr.get_and_mutate();
+						mutExpr->env  = nullptr;
+						newCand->expr = mutExpr;
+					}
+
+					newCand->expr = ast::mutate_field(
+						newCand->expr.get(), &ast::Expr::result,
+						renameTyVars( newCand->expr->result ) );
+					addAnonConversions( newCand );
+					candidates.emplace_back( std::move( newCand ) );
+				}
+			}
+		}
+	}
 	// size_t Finder::traceId = Stats::Heap::new_stacktrace_id("Finder");
 	/// Prunes a list of candidates down to those that have the minimum conversion cost for a given
 	/// return type. Skips ambiguous candidates.

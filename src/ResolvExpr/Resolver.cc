@@ -410,8 +410,6 @@ namespace ResolvExpr {
 		const ast::ListInit *        previsit( const ast::ListInit * );
 		const ast::ConstructorInit * previsit( const ast::ConstructorInit * );
 
-		const ast::EnumPosExpr *	 previsit( const ast::EnumPosExpr * );
-
 		void resolveWithExprs(std::vector<ast::ptr<ast::Expr>> & exprs, std::list<ast::ptr<ast::Stmt>> & stmtsToAdd);
 
 		void beginScope() { managedTypes.beginScope(); }
@@ -1229,11 +1227,6 @@ namespace ResolvExpr {
 		}
 
 		return ctorInit;
-	}
-
-	const ast::EnumPosExpr * Resolver::previsit( const ast::EnumPosExpr * enumPos ) {
-		visitor->maybe_accept( enumPos, &ast::EnumPosExpr::expr );
-		return enumPos;
 	}
 
 	// suppress error on autogen functions and mark invalid autogen as deleted.

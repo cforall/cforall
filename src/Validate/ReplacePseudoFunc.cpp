@@ -8,7 +8,12 @@
 #include "AST/Stmt.hpp"
 #include "Common/utility.h"
 #include "ResolvExpr/Resolver.h"
-#include "SymTab/Mangler.h"  // for Mangler
+#include "SymTab/Mangler.h"
+
+#include "AST/Print.hpp"
+
+#include "ResolvExpr/CandidateFinder.hpp"
+
 namespace Validate {
 
 namespace {
@@ -16,9 +21,88 @@ namespace {
 std::set<std::string> queryLabels;
 std::set<std::string> queryValues;
 
+// struct AutoInit {
+//     ast::EnumDecl const* postvisit( const ast::EnumDecl* expr );
+// };
+
+struct WrapEnumValueExpr final : public ast::WithShortCircuiting,
+                                 public ast::WithSymbolTable,
+                                 public ast::WithConstTranslationUnit {
+    void previsit(const ast::DeclStmt* expr);
+    void previsit(const ast::ApplicationExpr* expr);
+    void previsit(const ast::CastExpr* expr);
+    void previsit(const ast::VariableExpr* ) { visit_children = false; }
+
+    ast::Expr const* postvisit(const ast::VariableExpr* expr);
+};
+
 struct FindGenEnumArray final : public ast::WithShortCircuiting {
     void previsit(const ast::ApplicationExpr* enumDecl);
 };
+
+struct PseudoFuncGenerateRoutine final : public ast::WithDeclsToAdd<>,
+                                         public ast::WithSymbolTable,
+                                         public ast::WithShortCircuiting,
+                                         public ast::WithConstTranslationUnit {
+    void previsit(const ast::EnumDecl* enumDecl);
+};
+
+struct ReplacePseudoFuncCore : public ast::WithShortCircuiting,
+                               public ast::WithSymbolTable,
+                               public ast::WithConstTranslationUnit {
+    ast::Expr const* postvisit(ast::ApplicationExpr const* decl);
+};
+
+// ast::EnumDecl const * AutoInit::postvisit( const ast::EnumDecl * expr ) {
+//     for ( size_t i = 0; i < expr->members.size(); i++ ) {
+//         auto mem = expr->members[i].as<ast::ObjectDecl>();
+//         assert( mem );
+//         if ( mem->init )
+//     }
+//     return expr;
+// }
+
+void WrapEnumValueExpr::previsit(const ast::ApplicationExpr* expr) {
+    auto varExpr = expr->func.as<ast::VariableExpr>();
+    auto fname = ast::getFunctionName(expr);
+	if ( !varExpr || varExpr->var->linkage == ast::Linkage::Intrinsic ) {
+        if ( fname == "?{}" || fname == "?=?" )
+		    visit_children = false;
+	}
+
+    if (fname == "labelE" || fname == "valueE" || fname == "posE") {
+        visit_children = false;
+    }
+}
+
+void WrapEnumValueExpr::previsit(const ast::DeclStmt*) {
+    visit_children = false;
+}
+
+void WrapEnumValueExpr::previsit(const ast::CastExpr* expr) {
+    if (expr->result && expr->result.as<ast::ReferenceType>()) {
+        visit_children = false;
+    }
+}
+
+ast::Expr const* WrapEnumValueExpr::postvisit(const ast::VariableExpr* expr) {
+    if (!expr->result) {
+        return expr;
+    }
+    if (auto enumInst = expr->result.as<ast::EnumInstType>()) {
+        if (enumInst->base && enumInst->base->base) {
+            auto untyped = new ast::UntypedExpr(
+                expr->location, new ast::NameExpr(expr->location, "valueE"),
+                { std::move( expr ) });
+            ResolvExpr::ResolveContext context{symtab, transUnit().global};
+            auto result = ResolvExpr::findVoidExpression(untyped, context);
+            ast::ptr<ast::ApplicationExpr> ret =
+                    result.strict_as<ast::ApplicationExpr>();
+            return ast::deepCopy( ret );
+        }
+    }
+    return expr;
+}
 
 void FindGenEnumArray::previsit(const ast::ApplicationExpr* expr) {
     auto fname = ast::getFunctionName(expr);
@@ -47,11 +131,31 @@ void FindGenEnumArray::previsit(const ast::ApplicationExpr* expr) {
     }
 }
 
-struct PseudoFuncGenerateRoutine final : public ast::WithDeclsToAdd<>,
-                                         public ast::WithSymbolTable,
-                                         public ast::WithShortCircuiting {
-    void previsit(const ast::EnumDecl* enumDecl);
-};
+const ast::Init * getAutoInit( const CodeLocation & location,
+    const ast::Type * type, ResolvExpr::ResolveContext context, const ast::Init * prev ) {
+    if ( auto prevInit = dynamic_cast< const ast::SingleInit * >( prev ) ) {
+        auto prevInitExpr = prevInit->value;
+        if ( auto constInit = prevInitExpr.as< ast::ConstantExpr >() ) {
+            // Assume no string literal for now
+            return new ast::SingleInit(
+                location,
+                ast::ConstantExpr::from_int(
+                    location, constInit->intValue() + 1 )
+            );
+        } else {
+            auto untypedThisInit = new ast::UntypedExpr(
+                    location,
+                    new ast::NameExpr( location, "?++" ),
+                    { prevInitExpr }
+                );
+            auto typedInit = ResolvExpr::findSingleExpression(untypedThisInit, type,
+                context );
+            return new ast::SingleInit( location, typedInit );
+        }
+    }
+    SemanticError( prev, "Auto Init a List is not implemented" );
+    return prev;
+}
 
 void PseudoFuncGenerateRoutine::previsit(const ast::EnumDecl* enumDecl) {
     visit_children = false;
@@ -60,45 +164,74 @@ void PseudoFuncGenerateRoutine::previsit(const ast::EnumDecl* enumDecl) {
 
     std::vector<ast::ptr<ast::Init>> inits;
     std::vector<ast::ptr<ast::Init>> labels;
-    for (const ast::Decl* mem : enumDecl->members) {
-        auto memAsObjectDecl = dynamic_cast<const ast::ObjectDecl*>(mem);
-        inits.emplace_back(memAsObjectDecl->init);
+    auto type = enumDecl->base;
+
+    for ( size_t i = 0; i < enumDecl->members.size(); i++ ) {
+        ast::ptr<ast::Decl> mem = enumDecl->members.at( i );
+        auto memAsObjectDecl = mem.as< ast::ObjectDecl >();
+        assert( memAsObjectDecl );
+        if ( memAsObjectDecl->init ) {
+            inits.emplace_back( memAsObjectDecl->init );
+        } else {
+            const CodeLocation & location = mem->location;
+            if ( i == 0 ) {
+                inits.emplace_back( new ast::SingleInit( 
+                    location, 
+                    ast::ConstantExpr::from_int( mem->location, 0 )
+                ) );
+            } else {
+                inits.emplace_back( getAutoInit( location, enumDecl->base, 
+                    ResolvExpr::ResolveContext{symtab, transUnit().global}, 
+                    inits.at( i - 1 ).as<ast::SingleInit>()) );
+            }
+        }
         labels.emplace_back(new ast::SingleInit(
-            location, ast::ConstantExpr::from_string(location, mem->name)));
-    }
+        location, ast::ConstantExpr::from_string(location, mem->name)));
+    } 
     if (queryValues.count(enumDecl->name)) {
         auto init = new ast::ListInit(location, std::move(inits));
-        auto values = new ast::ObjectDecl(
-            location, "values_" + enumDecl->name,
-            new ast::ArrayType(
-                enumDecl->base,
-                ast::ConstantExpr::from_int(location, enumDecl->members.size()),
-                ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim),
-            init, ast::Storage::Static, ast::Linkage::AutoGen);
+        const ast::ArrayType* arrT = new ast::ArrayType(
+            enumDecl->base,
+            ast::ConstantExpr::from_int(location, enumDecl->members.size()),
+            ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim);
+        ast::ObjectDecl* values = new ast::ObjectDecl(
+            location, "values_" + enumDecl->name, arrT, init,
+            ast::Storage::Static, ast::Linkage::AutoGen);
         symtab.addId(values);
         values->mangleName = Mangle::mangle(values);
         declsToAddAfter.push_back(values);
     }
     if (queryLabels.count(enumDecl->name)) {
         auto label_strings = new ast::ListInit(location, std::move(labels));
-        auto label_arr = new ast::ObjectDecl(
+        auto labels = new ast::ObjectDecl(
             location, "labels_" + enumDecl->name,
             new ast::ArrayType(
                 new ast::PointerType(new ast::BasicType{ast::BasicType::Char}),
                 ast::ConstantExpr::from_int(location, enumDecl->members.size()),
                 ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim),
             label_strings, ast::Storage::Static, ast::Linkage::AutoGen);
-        symtab.addId(label_arr);
-        label_arr->mangleName = Mangle::mangle(label_arr);
-        declsToAddAfter.push_back(label_arr);
+        symtab.addId(labels);
+        labels->mangleName = Mangle::mangle(labels);
+        declsToAddAfter.push_back(labels);
     }
 }
 
-struct ReplacePseudoFuncCore : public ast::WithShortCircuiting,
-                               public ast::WithSymbolTable,
-                               public ast::WithConstTranslationUnit {
-    ast::Expr const* postvisit(ast::ApplicationExpr const* decl);
-};
+ast::ApplicationExpr const* getPseudoFuncApplication(
+    const CodeLocation location, ResolvExpr::ResolveContext context,
+    const ast::VariableExpr* arg, const ast::EnumDecl* base, const std::string & name) {
+    ast::Expr* toResolve = new ast::NameExpr(location, name + base->name);
+    auto result = ResolvExpr::findVoidExpression(toResolve, context);
+    assert(result.get());
+    auto arrAsVar = result.strict_as<ast::VariableExpr>();
+    auto untyped = new ast::UntypedExpr(
+        location, new ast::NameExpr(location, "?[?]"),
+        { std::move(arrAsVar), std::move(arg) });
+    auto typedResult = ResolvExpr::findVoidExpression(untyped, context);
+
+    ast::ptr<ast::ApplicationExpr> ret =
+        typedResult.strict_as<ast::ApplicationExpr>();
+    return ast::deepCopy(ret);
+}
 
 ast::Expr const* ReplacePseudoFuncCore::postvisit(
     ast::ApplicationExpr const* expr) {
@@ -124,6 +257,8 @@ ast::Expr const* ReplacePseudoFuncCore::postvisit(
                           "enumeration instance");
         }
         const ast::EnumDecl* base = argType->base;
+        ResolvExpr::ResolveContext context{symtab, transUnit().global};
+        // If resolvable as constant
         for (size_t i = 0; i < base->members.size(); i++) {
             if (base->members[i]->name == referredName) {
                 if (fname == "posE")
@@ -131,59 +266,26 @@ ast::Expr const* ReplacePseudoFuncCore::postvisit(
                 else if (fname == "labelE")
                     return ast::ConstantExpr::from_string(expr->location,
                                                           referredName);
-                else
-                    return new ast::TypeExpr(expr->location, argType);
+                else {
+                    return getPseudoFuncApplication(location, context, arg.get(),
+                                               base, "values_");                    
+                }
+
             }
         }
-
-        ResolvExpr::ResolveContext context{symtab, transUnit().global};
 
         if (fname == "labelE") {
-            ast::Expr* toResolve =
-                new ast::NameExpr(expr->location, "labels_" + base->name);
-            auto result = ResolvExpr::findVoidExpression(toResolve, context);
-            if (result.get()) {
-                auto arrAsVar = result.strict_as<ast::VariableExpr>();
-                auto untyped = new ast::UntypedExpr(
-                    location, new ast::NameExpr(location, "?[?]"),
-                    {new ast::VariableExpr(*arrAsVar),
-                     ast::ConstantExpr::from_int(
-                         location,
-                         0)});  /// TODO: dummy value.
-                                /// To make it works need to change the unifier
-
-                auto typedResult =
-                    ResolvExpr::findVoidExpression(untyped, context);
-                if (result.get()) {
-                    ast::ptr<ast::ApplicationExpr> ret =
-                        typedResult.strict_as<ast::ApplicationExpr>();
-                    return new ast::ApplicationExpr(*ret);
-                }
+            if (auto labelExpr =
+                    getPseudoFuncApplication(location, context, arg.get(), base, "labels_")) {
+                return labelExpr;
             }
-        }
-        
-        if (fname == "valueE") {
-            ast::Expr* toResolve =
-                new ast::NameExpr(expr->location, "values_" + base->name);
-            auto result = ResolvExpr::findVoidExpression(toResolve, context);
-            if (result.get()) {
-                auto arrAsVar = result.strict_as<ast::VariableExpr>();
-                auto untyped = new ast::UntypedExpr(
-                    location, new ast::NameExpr(location, "?[?]"),
-                    {new ast::VariableExpr(*arrAsVar),
-                     ast::ConstantExpr::from_int(
-                         location,
-                         0)});  /// TODO: dummy value.
-                                /// To make it works need to change the unifier
-
-                auto typedResult =
-                    ResolvExpr::findVoidExpression(untyped, context);
-                if (result.get()) {
-                    ast::ptr<ast::ApplicationExpr> ret =
-                        typedResult.strict_as<ast::ApplicationExpr>();
-                    return new ast::ApplicationExpr(*ret);
-                }
+        } else if (fname == "valueE") {
+            if (auto valueExpr =
+                    getPseudoFuncApplication(location, context, arg.get(), base, "values_")) {
+                return valueExpr;
             }
+        } else { // it is position; replace itself
+            return std::move( arg.get() );
         }
     }
     return expr;
@@ -192,6 +294,7 @@ ast::Expr const* ReplacePseudoFuncCore::postvisit(
 }  // namespace
 
 void replacePseudoFunc(ast::TranslationUnit& translationUnit) {
+    ast::Pass<WrapEnumValueExpr>::run(translationUnit);
     ast::Pass<FindGenEnumArray>::run(translationUnit);
     ast::Pass<PseudoFuncGenerateRoutine>::run(translationUnit);
     ast::Pass<ReplacePseudoFuncCore>::run(translationUnit);

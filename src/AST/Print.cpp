@@ -174,6 +174,15 @@ private:
 			os << " " << Linkage::name( node->linkage );
 		}
 
+		auto ptrToEnum = dynamic_cast<const ast::EnumDecl *>(node);
+		if ( ! short_mode && ptrToEnum && ptrToEnum->base ) {
+			os << endl << indent << "... with base type" << endl;
+			++indent;
+			os << indent;
+			ptrToEnum->base->accept( *this );
+			--indent;
+		}
+
 		os << " " << (node->body ? "with" : "without") << " body";
 
 		if ( ! node->params.empty() ) {
@@ -197,13 +206,7 @@ private:
 			--indent;
 		}
 
-		auto ptrToEnum = dynamic_cast<const ast::EnumDecl *>(node);
-		if ( ! short_mode && ptrToEnum && ptrToEnum->base ) {
-			os << endl << indent << ".. with (enum) base" << endl;
-			++indent;
-			ptrToEnum->base->accept( *this );
-			--indent;
-		}
+
 
 		os << endl;
 	}
@@ -1179,15 +1182,6 @@ public:
 		--indent;
 		postprint( node );
 
-		return node;
-	}
-
-	virtual const ast::Expr * visit( const ast::EnumPosExpr * node ) override final {
-		os << "Enum Position Expression on: ";
-		++indent;
-		safe_print( node->type );
-		--indent;
-		postprint( node );
 		return node;
 	}
 

@@ -547,19 +547,6 @@ private:
 	MUTATE_FRIEND
 };
 
-class EnumPosExpr final : public Expr {
-public:
-	ptr<EnumInstType> type;
-	ptr<Expr> expr;
-	
-	EnumPosExpr( const CodeLocation & loc, const EnumInstType * ty );
-	EnumPosExpr( const CodeLocation & loc, const Expr * expr );
-	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
-private:
-	EnumPosExpr * clone() const override { return new EnumPosExpr{ *this }; }
-	MUTATE_FRIEND
-};
-
 /// Variants of short-circuiting logical expression
 enum LogicalFlag { OrExpr, AndExpr };
 

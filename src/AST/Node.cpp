@@ -231,8 +231,6 @@ template class ast::ptr_base< ast::OffsetofExpr, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::OffsetofExpr, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::OffsetPackExpr, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::OffsetPackExpr, ast::Node::ref_type::strong >;
-template class ast::ptr_base< ast::EnumPosExpr, ast::Node::ref_type::weak >;
-template class ast::ptr_base< ast::EnumPosExpr, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::LogicalExpr, ast::Node::ref_type::weak >;
 template class ast::ptr_base< ast::LogicalExpr, ast::Node::ref_type::strong >;
 template class ast::ptr_base< ast::ConditionalExpr, ast::Node::ref_type::weak >;

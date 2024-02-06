@@ -227,14 +227,14 @@ void GenType::postvisit( ast::UnionInstType const * type ) {
 }
 
 void GenType::postvisit( ast::EnumInstType const * type ) {
-	if ( type->base && type->base->base ) {
-		result = genType( type->base->base, result, options );
-	} else {
+	// if ( type->base && type->base->base ) {
+	// 	result = genType( type->base->base, result, options );
+	// } else {
 		result = type->name + " " + result;
 		if ( options.genC ) {
 			result = "enum " + result;
 		}
-	}
+	// }
 	handleQualifiers( type );
 }
 
