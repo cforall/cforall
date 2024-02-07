@@ -180,6 +180,7 @@ static void backtrace( int start ) {					// skip first N stack frames
 #define SIGPARMS int sig __attribute__(( unused )), siginfo_t * sfp __attribute__(( unused )), ucontext_t * cxt __attribute__(( unused ))
 
 static void _Signal(struct sigaction & act, int sig, int flags ) {
+	sigemptyset( &act.sa_mask );
 	act.sa_flags = flags;
 
 	if ( sigaction( sig, &act, nullptr ) == -1 ) {

@@ -365,8 +365,9 @@ private:
 	// return value.
 
 	/// Passes extra layout arguments for sized polymorphic type parameters.
-	ast::vector<ast::Expr>::iterator passTypeVars(
+	void passTypeVars(
 		ast::ApplicationExpr * expr,
+		ast::vector<ast::Expr> & extraArgs,
 		ast::FunctionType const * funcType );
 	/// Wraps a function application with a new temporary for the
 	/// out-parameter return value.
@@ -386,15 +387,15 @@ private:
 	/// Box every argument from arg forward, matching the functionType
 	/// parameter list. arg should point into expr's argument list.
 	void boxParams(
-		ast::ApplicationExpr const * expr,
-		ast::vector<ast::Expr>::iterator arg,
+		ast::ApplicationExpr * expr,
+		ast::Type const * polyRetType,
 		ast::FunctionType const * function,
 		const TypeVarMap & typeVars );
 	/// Adds the inferred parameters derived from the assertions of the
 	/// expression to the call.
 	void addInferredParams(
 		ast::ApplicationExpr * expr,
-		ast::vector<ast::Expr>::iterator arg,
+		ast::vector<ast::Expr> & extraArgs,
 		ast::FunctionType const * functionType,
 		const TypeVarMap & typeVars );
 	/// Stores assignment operators from assertion list in
@@ -635,10 +636,6 @@ ast::Expr const * CallAdapter::postvisit( ast::ApplicationExpr const * expr ) {
 	ast::ApplicationExpr * mutExpr = ast::mutate( expr );
 	ast::Expr const * ret = expr;
 
-	// TODO: This entire section should probably be refactored to do less
-	// pushing to the front/middle of a vector.
-	ptrdiff_t initArgCount = mutExpr->args.size();
-
 	TypeVarMap exprTypeVars;
 	makeTypeVarMap( function, exprTypeVars );
 	auto dynRetType = isDynRet( function, exprTypeVars );
@@ -661,15 +658,12 @@ ast::Expr const * CallAdapter::postvisit( ast::ApplicationExpr const * expr ) {
 		ret = applyAdapter( mutExpr, function );
 	}
 
-	assert( typeSubs );
-	ast::vector<ast::Expr>::iterator argIt =
-		passTypeVars( mutExpr, function );
-	addInferredParams( mutExpr, argIt, function, exprTypeVars );
+	ast::vector<ast::Expr> prependArgs;
+	passTypeVars( mutExpr, prependArgs, function );
+	addInferredParams( mutExpr, prependArgs, function, exprTypeVars );
 
-	argIt = mutExpr->args.begin();
-	std::advance( argIt, ( mutExpr->args.size() - initArgCount ) );
-
-	boxParams( mutExpr, argIt, function, exprTypeVars );
+	boxParams( mutExpr, dynRetType, function, exprTypeVars );
+	spliceBegin( mutExpr->args, prependArgs );
 	passAdapters( mutExpr, function, exprTypeVars );
 
 	return ret;
@@ -765,11 +759,11 @@ bool hasPolymorphism( ast::Type const * type, TypeVarMap const & typeVars ) {
 	return ast::Pass<PolyFinder>::read( type, typeVars );
 }
 
-ast::vector<ast::Expr>::iterator CallAdapter::passTypeVars(
+void CallAdapter::passTypeVars(
 		ast::ApplicationExpr * expr,
+		ast::vector<ast::Expr> & extraArgs,
 		ast::FunctionType const * function ) {
 	assert( typeSubs );
-	ast::vector<ast::Expr>::iterator arg = expr->args.begin();
 	// Pass size/align for type variables.
 	for ( ast::ptr<ast::TypeInstType> const & typeVar : function->forall ) {
 		if ( !typeVar->base->isComplete() ) continue;
@@ -779,14 +773,11 @@ ast::vector<ast::Expr>::iterator CallAdapter::passTypeVars(
 			SemanticError( expr->location, "\nunbound type variable %s in application %s",
 						   toString( typeSubs ).c_str(), typeVar->typeString().c_str() );
 		}
-		arg = expr->args.insert( arg,
+		extraArgs.emplace_back(
 			new ast::SizeofExpr( expr->location, ast::deepCopy( concrete ) ) );
-		arg++;
-		arg = expr->args.insert( arg,
+		extraArgs.emplace_back(
 			new ast::AlignofExpr( expr->location, ast::deepCopy( concrete ) ) );
-		arg++;
 	}
-	return arg;
 }
 
 ast::Expr const * CallAdapter::addRetParam(
@@ -912,10 +903,14 @@ void CallAdapter::boxParam( ast::ptr<ast::Expr> & arg,
 }
 
 void CallAdapter::boxParams(
-		ast::ApplicationExpr const * expr,
-		ast::vector<ast::Expr>::iterator arg,
+		ast::ApplicationExpr * expr,
+		ast::Type const * polyRetType,
 		ast::FunctionType const * function,
 		const TypeVarMap & typeVars ) {
+	// Start at the beginning, but the return argument may have been added.
+	auto arg = expr->args.begin();
+	if ( polyRetType ) ++arg;
+
 	for ( auto param : function->params ) {
 		assertf( arg != expr->args.end(),
 			"boxParams: missing argument for param %s to %s in %s",
@@ -927,10 +922,9 @@ void CallAdapter::boxParams(
 
 void CallAdapter::addInferredParams(
 		ast::ApplicationExpr * expr,
-		ast::vector<ast::Expr>::iterator arg,
+		ast::vector<ast::Expr> & extraArgs,
 		ast::FunctionType const * functionType,
 		TypeVarMap const & typeVars ) {
-	ast::vector<ast::Expr>::iterator cur = arg;
 	for ( auto assertion : functionType->assertions ) {
 		auto inferParam = expr->inferred.inferParams().find(
 			assertion->var->uniqueId );
@@ -939,8 +933,7 @@ void CallAdapter::addInferredParams(
 			toCString( assertion ), toCString( expr ) );
 		ast::ptr<ast::Expr> newExpr = ast::deepCopy( inferParam->second.expr );
 		boxParam( newExpr, assertion->result, typeVars );
-		cur = expr->args.insert( cur, newExpr.release() );
-		++cur;
+		extraArgs.emplace_back( newExpr.release() );
 	}
 }
 
