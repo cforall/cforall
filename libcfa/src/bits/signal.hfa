@@ -33,13 +33,13 @@ static void __cfaabi_sigaction( int sig, void (*handler)(__CFA_SIGPARMS__), int 
 
 	act.sa_sigaction = (void (*)(int, siginfo_t *, void *))handler;
 	sigemptyset( &act.sa_mask );
-	sigaddset( &act.sa_mask, SIGALRM );		// disabled during signal handler
+	sigaddset( &act.sa_mask, SIGALRM );					// disabled during signal handler
 	sigaddset( &act.sa_mask, SIGUSR1 );
 	sigaddset( &act.sa_mask, SIGSEGV );
 	sigaddset( &act.sa_mask, SIGBUS );
 	sigaddset( &act.sa_mask, SIGILL );
 	sigaddset( &act.sa_mask, SIGFPE );
-	sigaddset( &act.sa_mask, SIGHUP );		// revert to default on second delivery
+	sigaddset( &act.sa_mask, SIGHUP );					// revert to default on second delivery
 	sigaddset( &act.sa_mask, SIGTERM );
 	sigaddset( &act.sa_mask, SIGINT );
 	act.sa_flags = flags;
