@@ -890,14 +890,13 @@ namespace {
 			addAggMembers( structInst, aggrExpr, *cand, Cost::unsafe, "" );
 		} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
 			addAggMembers( unionInst, aggrExpr, *cand, Cost::unsafe, "" );
-		} 
-		else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
+		} else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
 			// The Attribute Arrays are not yet generated, need to proxy them
 			// as attribute function call
 			const CodeLocation & location = cand->expr->location;
 			if ( enumInst->base && enumInst->base->base ) {
 				auto valueName = new ast::NameExpr(location, "valueE");
-				auto untypedValueCall = new ast::UntypedExpr( 
+				auto untypedValueCall = new ast::UntypedExpr(
 					location, valueName, { aggrExpr } );
 				auto result = ResolvExpr::findVoidExpression( untypedValueCall, context );
 				assert( result.get() );
@@ -974,7 +973,7 @@ namespace {
 						break;
 					}
 
-					if (argType.as<ast::PointerType>()) funcFinder.otypeKeys.insert(Mangle::Encoding::pointer);						
+					if (argType.as<ast::PointerType>()) funcFinder.otypeKeys.insert(Mangle::Encoding::pointer);
 					else funcFinder.otypeKeys.insert(Mangle::mangle(argType, Mangle::NoGenericParams | Mangle::Type));
 				}
 			}
@@ -1239,7 +1238,7 @@ namespace {
 					CandidateRef newCand = std::make_shared<Candidate>(
 						restructureCast( cand->expr, toType, castExpr->isGenerated ),
 						copy( cand->env ), std::move( open ), std::move( need ), cand->cost + thisCost);
-					// currently assertions are always resolved immediately so this should have no effect. 
+					// currently assertions are always resolved immediately so this should have no effect.
 					// if this somehow changes in the future (e.g. delayed by indeterminate return type)
 					// we may need to revisit the logic.
 					inferParameters( newCand, matches );
@@ -1402,7 +1401,7 @@ namespace {
 
 	void Finder::postvisit( const ast::VariableExpr * variableExpr ) {
 		// not sufficient to just pass `variableExpr` here, type might have changed since
-		addCandidate( variableExpr, tenv );		
+		addCandidate( variableExpr, tenv );
 	}
 
 	void Finder::postvisit( const ast::ConstantExpr * constantExpr ) {
@@ -1791,10 +1790,10 @@ namespace {
 					ast::Expr * newExpr = data.combine( expr->location, cost );
 					CandidateRef newCand =
 						std::make_shared<Candidate>(
-							newExpr, copy( tenv ), ast::OpenVarSet{}, 
+							newExpr, copy( tenv ), ast::OpenVarSet{},
 							ast::AssertionSet{}, Cost::zero, cost
 						);
-					
+
 					if (newCand->expr->env) {
 						newCand->env.add(*newCand->expr->env);
 						auto mutExpr = newCand->expr.get_and_mutate();

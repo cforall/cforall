@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 28 09:56:08 2024
-// Update Count     : 554
+// Last Modified On : Thu Feb  1 18:32:15 2024
+// Update Count     : 575
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -120,7 +120,7 @@ void open( ofstream & os, const char name[], const char mode[] ) {
 	  if ( cnt == 9 ) abort( "ofstream open EINTR spinning exceeded" );
     } // for
 	if ( file == 0p ) {
-		throw (open_failure){ os };
+		throwResume (open_failure){ os };
 		// abort | IO_MSG "open output file \"" | name | "\"" | nl | strerror( errno );
 	} // if
 	(os){ file };										// initialize
@@ -240,7 +240,7 @@ void open( ifstream & is, const char name[], const char mode[] ) {
 	  if ( cnt == 9 ) abort( "ifstream open EINTR spinning exceeded" );
     } // for
 	if ( file == 0p ) {
-		throw (open_failure){ is };
+		throwResume (open_failure){ is };
 		// abort | IO_MSG "open input file \"" | name | "\"" | nl | strerror( errno );
 	} // if
 	(is){ file };										// initialize
@@ -294,11 +294,12 @@ int fmt( ifstream & is, const char format[], ... ) {
 	va_list args;
 	va_start( args, format );
 
-	int nargs;
+	int nargs, tmperrno;
     for () {											// no check for EINTR limit waiting for keyboard input
-		errno = 0;
 		disable_interrupts();
+		errno = 0;
 		nargs = vfscanf( (FILE *)(is.file$), format, args );
+		tmperrno = errno;
 		enable_interrupts();
 	  if ( nargs != EOF || errno != EINTR ) break;		// timer interrupt ?
     } // for
@@ -307,6 +308,7 @@ int fmt( ifstream & is, const char format[], ... ) {
 			abort | IO_MSG "invalid read";
 		} // if
 	} // if
+	if ( tmperrno == ERANGE ) throwResume ExceptionInst( data_range );
 	va_end( args );
 	return nargs;
 } // fmt

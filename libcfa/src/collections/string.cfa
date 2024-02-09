@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 14 12:03:47 2024
-// Update Count     : 240
+// Last Modified On : Wed Feb  7 21:17:06 2024
+// Update Count     : 259
 //
 
 #include "string.hfa"
@@ -209,18 +209,16 @@ ifstream & ?|?(ifstream & in, string & s) {
     return in | (*s.inner); // read to internal string_res
 }
 
-void ?|?( ifstream & in, string & s ) {
-    in | (*s.inner);
-}
-
-ifstream & ?|?( ifstream & is, _Istream_Sstr f ) {
- 	_Istream_Rstr f2 = {f.s.inner, (_Istream_str_base)f};
+ifstream & ?|?( ifstream & is, _Istream_Squoted f ) {
+	_Istream_Rquoted f2 = { { f.sstr.s.inner, (_Istream_str_base)f.sstr } };
     return is | f2;
 } // ?|?
 
-void ?|?( ifstream & in, _Istream_Sstr f ) {
-    (ifstream &)(in | f);
-}
+ifstream & ?|?( ifstream & is, _Istream_Sstr f ) {
+// 	_Istream_Rstr f2 = {f.sstr.s.inner, (_Istream_str_base)f.sstr};
+ 	_Istream_Rstr f2 = {f.s.inner, (_Istream_str_base)f};
+    return is | f2;
+} // ?|?
 
 ////////////////////////////////////////////////////////
 // Slicing

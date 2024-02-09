@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 14 12:03:46 2024
-// Update Count     : 81
+// Last Modified On : Tue Feb  6 20:59:18 2024
+// Update Count     : 118
 //
 
 #pragma once
@@ -79,7 +79,6 @@ void ?{}( string & s, string_WithSharedEdits src );
 ofstream & ?|?(ofstream & out, const string & s);
 void ?|?(ofstream & out, const string & s);
 ifstream & ?|?(ifstream & in, string & s);
-void ?|?( ifstream & in, string & s );
 
 static inline {
 	_Ostream_Manip(string) bin( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'b', { .all : 0 } }; }
@@ -95,29 +94,54 @@ static inline {
 ofstream & ?|?( ofstream & os, _Ostream_Manip(string) f );
 void ?|?( ofstream & os, _Ostream_Manip(string) );
 
+struct _Istream_Swidth {
+	string & s;
+	inline _Istream_str_base;
+}; // _Istream_Swidth
+
+struct _Istream_Squoted {
+	_Istream_Swidth sstr;
+}; // _Istream_Squoted
+
 struct _Istream_Sstr {
 	string & s;
 	inline _Istream_str_base;
+//	_Istream_Swidth sstr;
 }; // _Istream_Sstr
 
 static inline {
 	// read width does not include null terminator
-	_Istream_Sstr wdi( unsigned int rwd, string & s ) { return (_Istream_Sstr)@{ s, {{0p}, rwd, {.flags.rwd : true}} }; }
+	_Istream_Swidth wdi( unsigned int rwd, string & s ) { return (_Istream_Swidth)@{ .s : s, { {.scanset : 0p}, .wd : rwd, {.flags.rwd : true} } }; }
 	_Istream_Sstr getline( string & s, const char delimiter = '\n' ) {
-		return (_Istream_Sstr)@{ s, {{.delimiters : { delimiter, '\0' } }, -1, {.flags.delimiter : true, .flags.inex : true}} };
+//		return (_Istream_Sstr)@{ { .s : s, { {.delimiters : { delimiter, '\0' } }, .wd : -1, {.flags.delimiter : true} } } };
+		return (_Istream_Sstr)@{ .s : s, { {.delimiters : { delimiter, '\0' } }, .wd : -1, {.flags.delimiter : true} } };
 	}
-	_Istream_Sstr & getline( _Istream_Sstr & fmt, const char delimiter = '\n' ) {
-		fmt.delimiters[0] = delimiter; fmt.delimiters[1] = '\0'; fmt.flags.delimiter = true; fmt.flags.inex = true; return fmt;
+	_Istream_Sstr & getline( _Istream_Swidth & f, const char delimiter = '\n' ) {
+		f.delimiters[0] = delimiter; f.delimiters[1] = '\0'; f.flags.delimiter = true; return (_Istream_Sstr &)f;
 	}
-	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ s, {{scanset}, -1, {.flags.inex : false}} }; }
-	_Istream_Sstr & incl( const char scanset[], _Istream_Sstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = false; return fmt; }
-	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ s, {{scanset}, -1, {.flags.inex : true}} }; }
-	_Istream_Sstr & excl( const char scanset[], _Istream_Sstr & fmt ) { fmt.scanset = scanset; fmt.flags.inex = true; return fmt; }
-	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ s, {{0p}, -1, {.flags.ignore : true}} }; }
-	_Istream_Sstr & ignore( _Istream_Sstr & fmt ) { fmt.flags.ignore = true; return fmt; }
+	_Istream_Squoted quoted( string & s, const char Ldelimiter = '\"', const char Rdelimiter = '\0' ) {
+		return (_Istream_Squoted)@{ { .s : s, { {.delimiters : { Ldelimiter, Rdelimiter, '\0' }}, .wd : -1, {.flags.rwd : true} } } };
+	}
+	_Istream_Squoted & quoted( _Istream_Swidth & f, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
+		f.delimiters[0] = Ldelimiter;  f.delimiters[1] = Rdelimiter;  f.delimiters[2] = '\0';
+		return (_Istream_Squoted &)f;
+	}
+//	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ { .s : s, { {.scanset : scanset}, .wd : -1, {.flags.inex : false} } } }; }
+	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ .s : s, { {.scanset : scanset}, .wd : -1, {.flags.inex : false} } }; }
+	_Istream_Sstr & incl( const char scanset[], _Istream_Swidth & f ) { f.scanset = scanset; f.flags.inex = false; return (_Istream_Sstr &)f; }
+//	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ { .s : s, { {.scanset : scanset}, .wd : -1, {.flags.inex : true} } } }; }
+	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ .s : s, { {.scanset : scanset}, .wd : -1, {.flags.inex : true} } }; }
+	_Istream_Sstr & excl( const char scanset[], _Istream_Swidth & f ) { f.scanset = scanset; f.flags.inex = true; return (_Istream_Sstr &)f; }
+//	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ { .s : s, { {.scanset : 0p}, .wd : -1, {.flags.ignore : true} } } }; }
+	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ .s : s, { {.scanset : 0p}, .wd : -1, {.flags.ignore : true} } }; }
+	_Istream_Sstr & ignore( _Istream_Swidth & f ) { f.flags.ignore = true; return (_Istream_Sstr &)f; }
+	_Istream_Squoted & ignore( _Istream_Squoted & f ) { f.sstr.flags.ignore = true; return (_Istream_Squoted &)f; }
+//	_Istream_Sstr & ignore( _Istream_Sstr & f ) { f.sstr.flags.ignore = true; return (_Istream_Sstr &)f; }
+	_Istream_Sstr & ignore( _Istream_Sstr & f ) { f.flags.ignore = true; return (_Istream_Sstr &)f; }
 } // distribution
+ifstream & ?|?( ifstream & is, _Istream_Squoted f );
 ifstream & ?|?( ifstream & is, _Istream_Sstr f );
-void ?|?( ifstream & is, _Istream_Sstr t );
+static inline ifstream & ?|?( ifstream & is, _Istream_Swidth f ) { return is | *(_Istream_Sstr *)&f; }
 
 // Concatenation
 void ?+=?(string & s, char c); // append a character

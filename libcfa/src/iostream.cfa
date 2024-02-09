@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 28 11:58:54 2024
-// Update Count     : 1917
+// Last Modified On : Wed Feb  7 22:19:59 2024
+// Update Count     : 1918
 //
 
 #include "iostream.hfa"
@@ -987,11 +987,11 @@ forall( istype & | basic_istream( istype ) ) {
 		int args;
 	  fini: {
 			args = fmt( is, "%*[ \f\n\r\t\v]" );		// remove leading whitespace
-			if ( eof( is ) ) break fini;
+		  if ( eof( is ) ) break fini;
 			char rfmt[4] = { delimiters[0], '%', 'n', '\0' };
 			int len = 0;								// may not be set in fmt
 			args = fmt( is, rfmt, &len );				// remove leading quote
-			if ( len == 0 || eof( is ) ) break fini;
+		  if ( len == 0 || eof( is ) ) break fini;
 
 			// Change the remainder of the read into a getline by reseting the closing delimiter.
 			if ( delimiters[1] != '\0' ) {

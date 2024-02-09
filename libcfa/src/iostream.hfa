@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 28 11:56:29 2024
-// Update Count     : 733
+// Last Modified On : Tue Feb  6 18:35:54 2024
+// Update Count     : 743
 //
 
 #pragma once
@@ -369,8 +369,9 @@ forall( istype & | basic_istream( istype ) ) {
 
 // *********************************** exceptions ***********************************
 
-ExceptionDecl( cstring_length );
-ExceptionDecl( missing_data );
+ExceptionDecl( missing_data );							// read finds no appropriate data
+ExceptionDecl( cstring_length );						// character string size exceeded
+ExceptionDecl( data_range );							// value too large for numerical type
 
 // *********************************** manipulators ***********************************
 
@@ -405,27 +406,30 @@ struct _Istream_str_base {
 struct _Istream_Cwidth {
 	char * s;
 	inline _Istream_str_base;
-}; // _Istream_Cstr
+}; // _Istream_Cwidth
 
 // Restrict nesting of input manipulators to those combinations that make sense.
-
-struct _Istream_Cstr {
-	_Istream_Cwidth cstr;
-}; // _Istream_Cstr
 
 struct _Istream_Cquoted {
 	_Istream_Cwidth cstr;
 }; // _Istream_Cquoted
 
+struct _Istream_Cstr {
+	_Istream_Cwidth cstr;
+}; // _Istream_Cstr
+
 static inline {
 	// width must include room for null terminator, (gcc) scanf does not allow a 0 width => wd > 1 (1 char and null) and rd > 0 (1 char);
 	_Istream_Cwidth wdi( unsigned int wd, char s[] ) {
-		if ( wd <= 1 ) throw (cstring_length){ &cstring_length_vt }; // minimum 1 character and null terminator
+		if ( wd <= 1 ) throwResume ExceptionInst( cstring_length ); // minimum 1 character and null terminator
 		return (_Istream_Cwidth)@{ .s : s, { {.scanset : 0p}, .wd : wd, {.all : 0} } };
 	}
 	_Istream_Cwidth wdi( unsigned int wd, unsigned int rwd, char s[] ) {
-		if ( wd <= 1 || wd <= rwd ) throw (cstring_length){ &cstring_length_vt }; // minimum 1 character, null terminator, plus subset
+		if ( wd <= 1 || wd <= rwd ) throwResume ExceptionInst( cstring_length ); // minimum 1 character, null terminator, plus subset
 		return (_Istream_Cwidth)@{ .s : s, { {.scanset : 0p}, .wd : rwd, {.flags.rwd : true} } };
+	}
+	_Istream_Cstr & getline( _Istream_Cwidth & f, const char delimiter = '\n' ) {
+		f.delimiters[0] = delimiter; f.delimiters[1] = '\0'; f.flags.delimiter = true; return (_Istream_Cstr &)f;
 	}
 	_Istream_Cquoted quoted( char & ch, const char Ldelimiter = '\'', const char Rdelimiter = '\0' ) {
 		return (_Istream_Cquoted)@{ { .s : &ch, { {.delimiters : { Ldelimiter, Rdelimiter, '\1' }}, .wd : 1, {.flags.rwd : true} } } };
@@ -434,12 +438,9 @@ static inline {
 		f.delimiters[0] = Ldelimiter;  f.delimiters[1] = Rdelimiter;  f.delimiters[2] = '\0';
 		return (_Istream_Cquoted &)f;
 	}
-	_Istream_Cstr & getline( _Istream_Cwidth & f, const char delimiter = '\n' ) {
-		f.delimiters[0] = delimiter; f.delimiters[1] = '\0'; f.flags.delimiter = true; return (_Istream_Cstr &)f;
-	}
 	_Istream_Cstr & incl( const char scanset[], _Istream_Cwidth & f ) { f.scanset = scanset; f.flags.inex = false; return (_Istream_Cstr &)f; }
 	_Istream_Cstr & excl( const char scanset[], _Istream_Cwidth & f ) { f.scanset = scanset; f.flags.inex = true; return (_Istream_Cstr &)f; }
-	_Istream_Cstr ignore( const char s[] ) { return (_Istream_Cwidth)@{ .s : (char *)s, { {.scanset : 0p}, .wd : -1, {.flags.ignore : true} } }; }
+	_Istream_Cstr ignore( const char s[] ) { return (_Istream_Cstr)@{ { .s : (char *)s, { {.scanset : 0p}, .wd : -1, {.flags.ignore : true} } } }; }
 	_Istream_Cstr & ignore( _Istream_Cwidth & f ) { f.flags.ignore = true; return (_Istream_Cstr &)f; }
 	_Istream_Cquoted & ignore( _Istream_Cquoted & f ) { f.cstr.flags.ignore = true; return (_Istream_Cquoted &)f; }
 	_Istream_Cstr & ignore( _Istream_Cstr & f ) { f.cstr.flags.ignore = true; return (_Istream_Cstr &)f; }
@@ -449,9 +450,7 @@ forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cskip f );
 	istype & ?|?( istype & is, _Istream_Cquoted f );
 	istype & ?|?( istype & is, _Istream_Cstr f );
-	static inline {
-		istype & ?|?( istype & is, _Istream_Cwidth f ) { return is | *(_Istream_Cstr *)&f; }
-	} // distribution
+	static inline istype & ?|?( istype & is, _Istream_Cwidth f ) { return is | *(_Istream_Cstr *)&f; }
 } // distribution
 
 forall( T & | sized( T ) )
