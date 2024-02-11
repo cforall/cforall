@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  7 22:21:33 2024
-// Update Count     : 81
+// Last Modified On : Sat Feb 10 17:47:22 2024
+// Update Count     : 83
 //
 
 #include "string_res.hfa"
@@ -251,14 +251,13 @@ ifstream & ?|?(ifstream & in, string_res & s) {
 }
 
 ifstream & ?|?( ifstream & is, _Istream_Rquoted f ) with( f.rstr ) {
+	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
 	int args;
   fini: {
-		args = fmt( is, "%*[ \f\n\r\t\v]" );			// remove leading whitespace
-	  if ( eof( is ) ) break fini;
-		char rfmt[4] = { delimiters[0], '%', 'n', '\0' };
-		int len = 0;									// may not be set in fmt
-		args = fmt( is, rfmt, &len );					// remove leading quote
-	  if ( len == 0 || eof( is ) ) break fini;
+		char rfmt[5] = { ' ', delimiters[0], '%', 'n', '\0' };
+		int len = -1;									// may not be set in fmt
+		args = fmt( is, rfmt, &len );					// remove leading whitespace and quote
+	  if ( eof( is ) || len == -1 ) break fini;
 
 		// Change the remainder of the read into a getline by reseting the closing delimiter.
 		if ( delimiters[1] != '\0' ) {
