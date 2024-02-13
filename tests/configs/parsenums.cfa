@@ -31,10 +31,10 @@
 	#error unexpected size of long
 #endif
 
-int true_main(const char * exec);
+int true_main( const char * exec );
 
-int main(int argc, char * argv[]) {
-	check_main(argv[0]);
+int main( int argc, char * argv[]) {
+	check_main( argv[0]);
 
 	int i = -3;
 	unsigned u = 3;
@@ -51,7 +51,7 @@ int main(int argc, char * argv[]) {
 	options[4] = (cfa_option){ 'd', "double",           "test double",             d   };
 
 	char **left;
-	parse_args( options, "[OPTIONS]...\ntesting bool parameters", left);
+	parse_args( options, "[OPTIONS]...\ntesting bool parameters", left );
 
 	sout | "int                :" | i;
 	sout | "unsigned           :" | u;
@@ -60,159 +60,147 @@ int main(int argc, char * argv[]) {
 	sout | "double             :" | d;
 }
 
-int true_main(const char * path, char * env[]) {
-	printf("no arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+int true_main( const char * path, char * env[] ) {
+	printf( "no arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("all 0 arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-i=0", "-u=0", "-l=0", "-L=0", "-d=0", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "all 0 arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-i=0", "-u=0", "-l=0", "-L=0", "-d=0", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("negative vals arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-i=-1", "-d=-1", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "negative vals arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-i=-1", "-d=-1", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("funky notation arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-i=0x10", "-u=0x20", "-l=0x300", "-L=0x4000", "-d=5e6", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "funky notation arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-i=0x10", "-u=0x20", "-l=0x300", "-L=0x4000", "-d=5e6", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("big values arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-i=2147483647", "-u=4294967295", "-l=" BIG_UNSIGNED_LONG, "-L=18446744073709551615", "-d=5e6", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "big values arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-i=2147483647", "-u=4294967295", "-l=" BIG_UNSIGNED_LONG, "-L=18446744073709551615", "-d=5e6", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("too big values arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-i=2147483648", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "too big values arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-i=2147483648", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-u=4294967296", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-u=4294967296", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-l=" TOO_BIG_UNSIGNED_LONG, (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-l=" TOO_BIG_UNSIGNED_LONG, (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-L=18446744073709551616", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-L=18446744073709551616", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("negative errors arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-u=-1", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "negative errors arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-u=-1", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-l=-1", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-l=-1", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsenums", "-L=-1", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsenums", "-L=-1", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("All Done!\n");
+	printf( "All Done!\n" );
 
 	return 0;
 }

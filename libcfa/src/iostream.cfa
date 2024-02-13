@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 10 09:28:32 2024
-// Update Count     : 1946
+// Last Modified On : Mon Feb 12 09:26:05 2024
+// Update Count     : 1966
 //
 
 #include "iostream.hfa"
@@ -994,7 +994,7 @@ forall( istype & | basic_istream( istype ) ) {
 			char ch;
 			for ( f.wd ) {								// skip N characters
 				int args = fmt( is, "%c", &ch );
-				if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+				if ( args != 1 ) throwResume ExceptionInst( missing_data );
 			} // for
 		} // if
 		return is;
@@ -1057,7 +1057,7 @@ forall( istype & | basic_istream( istype ) ) {
 			int len = 0;								// may not be set in fmt
 			if ( flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 			else args = fmt( is, fmtstr, s, &len );
-			// fprintf( stderr, "cstr %s %d %d %d %s\n", fmtstr, args, len, wd, s );
+			// fprintf( stderr, "cstr %s %d %d %d\n", fmtstr, args, len, f.cstr.wd );
 			if ( check && len >= rwd && ! eof( is ) ) {	// might not fit
 				char peek;
 				fmt( is, "%c", &peek );					// check for whitespace terminator
@@ -1068,7 +1068,8 @@ forall( istype & | basic_istream( istype ) ) {
 				} // if
 			} // if
 			// FIX ME: CFA strings need to be modified to NOT change the argument for this case, then this can be removed.
-			if ( ! flags.ignore && args == 0 ) s[0]= '\0'; // read failed => no pattern match => set string to null
+			//fprintf( stderr, "cstr %d %d %d %d '%s'\n", flags.ignore, args, len, eof( is ), s );
+			//if ( ! flags.ignore && args == 0 ) s[0]= '\0'; // read failed => no pattern match => set string to null
 		} else {
 			if ( flags.delimiter ) {					// getline
 				int len = 0;							// may not be set in fmt
@@ -1079,9 +1080,6 @@ forall( istype & | basic_istream( istype ) ) {
 				} // if
 				if ( flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 				else args = fmt( is, fmtstr, s, &len );
-
-				// cannot have empty character constant ''
-				if ( delimiters[2] != '\0' && len != 1 ) throwResume ExceptionInst( missing_data );
 
 				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
 					char peek;

@@ -9,19 +9,18 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Wed Oct 12 15:28:01 2022
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Feb 11 09:26:13 2024
+// Update Count     : 2
 //
 
 #include <fstream.hfa>
-
 #include "../meta/fork+exec.hfa"
 
 // last as a work around to a parse bug
 #include <parseargs.hfa>
 
-int main(int argc, char * argv[]) {
+int main( int argc, char * argv[] ) {
 	check_main(argv[0]);
 
 	bool YN = false;
@@ -40,7 +39,7 @@ int main(int argc, char * argv[]) {
 	options[5] = (cfa_option){'u', "setfalse",  "test set false",  sf, parse_setfalse};
 
 	char **left;
-	parse_args( options, "[OPTIONS]...\ntesting bool parameters", left);
+	parse_args( options, "[OPTIONS]...\ntesting bool parameters", left );
 
 	sout | "yes/no     :" | YN;
 	sout | "Y/N        :" | Yn;
@@ -50,99 +49,92 @@ int main(int argc, char * argv[]) {
 	sout | "set false  :" | sf;
 }
 
-int true_main(const char * path, char * env[]) {
-	printf("no arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsebools", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
+int true_main( const char * path, char * env[] ) {
+	printf( "no arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsebools", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
 		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("all true/set arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsebools", "-e=yes", "-y=Y", "-n=y", "-t=true", "-s", "-u", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "all true/set arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsebools", "-e=yes", "-y=Y", "-n=y", "-t=true", "-s", "-u", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("all false/unset arg:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsebools", "-e=no", "-y=N", "-n=n", "-t=false", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "all false/unset arg:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsebools", "-e=no", "-y=N", "-n=n", "-t=false", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("gibberish arg 1:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsebools", "-y=true", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "gibberish arg 1:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsebools", "-y=true", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("gibberish arg 2:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsebools", "-t=yes", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "gibberish arg 2:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsebools", "-t=yes", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("gibberish arg 3:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsebools", "-s=yes", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "gibberish arg 3:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsebools", "-s=yes", (const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("gibberish arg 4:\n");
-	if(pid_t child = strict_fork(); child == 0) {
-		int ret = execle(path, "parsebools", "-u=yes", (const char*)0p, env);
-		if(ret < 0) {
-			fprintf(stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror(errno));
-			exit(1);
-		}
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+	printf( "gibberish arg 4:\n" );
+	if ( pid_t child = strict_fork(); child == 0 ) {
+		int ret = execle( path, "parsebools", "-u=yes", ( const char*)0p, env );
+		if ( ret < 0 ) {
+			fprintf( stderr, "Execl 2 returned with error: %d '%s'\n", errno, strerror( errno ) );
+			exit( 1 );
+		} // if
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
-	printf("All Done!\n");
+	printf( "All Done!\n" );
 
 	return 0;
 }

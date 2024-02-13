@@ -1,9 +1,9 @@
 #include <fstream.hfa>
 #include <thread.hfa>
 #include <mutex_stmt.hfa>
+#include <Exception.hfa>
 
-exception num_ping_pongs { int num; };
-vtable(num_ping_pongs) num_ping_pongs_vt;
+ExceptionDecl( num_ping_pongs, int num; );
 
 thread Ping_Pong {
 	char * name;
@@ -15,7 +15,7 @@ thread Ping_Pong {
 void ?{}( Ping_Pong & this, char * name ) with( this ) {
 	this.name = name;
 	cnt = 0;
-	?{}( except, &num_ping_pongs_vt, 0 );
+	?{}( except, ExceptionArgs( num_ping_pongs, 0 ) );
 }
 
 void main( Ping_Pong & this ) with( this ) {
@@ -28,7 +28,7 @@ void main( Ping_Pong & this ) with( this ) {
 	try {
 		for () {
 			while( ! poll( this ) ) { yield(); }
-            inc_resume_at( cnt );
+			inc_resume_at( cnt );
 		}
 	} catchResume( num_ping_pongs * e; e->num < numtimes ) {
 		mutex( sout ) sout | name | "catchResume" | cnt | e->num;
@@ -36,7 +36,7 @@ void main( Ping_Pong & this ) with( this ) {
 	} catch( num_ping_pongs * e ) {
 		mutex( sout ) sout | name | "catch" | cnt | e->num;
 		if ( e->num == numtimes ) {
-            inc_resume_at( e->num );
+			inc_resume_at( e->num );
 		}
 	}
 }
@@ -48,8 +48,7 @@ int main() {
 		Ping_Pong ping { "ping" }, pong{ "pong" };
 		&ping.partner = &pong;							// create cycle
 		&pong.partner = &ping;
-		num_ping_pongs except{ &num_ping_pongs_vt, 0 };
-		resumeAt( pong, except );
+		resumeAt( pong, ExceptionInst( num_ping_pongs, 0 ) );
 	}
 	sout | "main end";
 }

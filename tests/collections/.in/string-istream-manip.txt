@@ -37,6 +37,16 @@ abcxxx
 abcyyy
 aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwwwaaaaaaaawwwwwwww
 uuuuu
+get this line
+@# this line 1)-{}%
+@# this line 2)-{}%
+    "abc"
+'abc  '
+{ d d
+
+d }
+X		ZC44%Y
+X		ZC55%Y
 abc 
 cccccb 
 xx
@@ -44,3 +54,13 @@ abcxxx
 abcyyy
 aaaaaaaaxxxxxxxxaabbccbbdddwwwbbbbbbbbwwwwwwwwaaaaaaaawwwwwwwwaaaaaaaawwwwwwww
 uuuuu
+get this line
+@# this line 1)-{}%
+@# this line 2)-{}%
+    "abc"
+'abc  '
+{ d d
+
+d }
+X		ZC44%Y
+X		ZC55%Y

@@ -12,7 +12,7 @@ uuuuu
 get this line
 @# this line 1)-{}%
 @# this line 2)-{}%
-"abc"
+    "abc"
 'abc  '
 { d d
 
@@ -34,7 +34,7 @@ uuuuu
 get this line
 @# this line 1)-{}%
 @# this line 2)-{}%
-"abc"
+    "abc"
 'abc  '
 { d d
 

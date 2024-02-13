@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct 18 20:30:12 2023
-// Update Count     : 261
+// Last Modified On : Sun Feb 11 20:35:00 2024
+// Update Count     : 274
 //
 
 #pragma once
@@ -138,50 +138,50 @@ extern ifstream & sin, & stdin;							// aliases
 // *********************************** exceptions ***********************************
 
 
-exception open_failure {
+ExceptionDecl( open_failure,
 	union {
 		ofstream * ostream;
 		ifstream * istream;
 	};
 	// TEMPORARY: need polymorphic exceptions
 	int tag;											// 1 => ostream; 0 => istream
-};
+);
 
 void ?{}( open_failure & this, ofstream & );
 void ?{}( open_failure & this, ifstream & );
 
-exception close_failure {
+ExceptionDecl( close_failure,
 	union {
 		ofstream * ostream;
 		ifstream * istream;
 	};
 	// TEMPORARY: need polymorphic exceptions
 	int tag;											// 1 => ostream; 0 => istream
-};
+);
 
 void ?{}( close_failure & this, ofstream & );
 void ?{}( close_failure & this, ifstream & );
 
-exception write_failure {
+ExceptionDecl( write_failure,
 	union {
 		ofstream * ostream;
 		ifstream * istream;
 	};
 	// TEMPORARY: need polymorphic exceptions
 	int tag;											// 1 => ostream; 0 => istream
-};
+);
 
 void ?{}( write_failure & this, ofstream & );
 void ?{}( write_failure & this, ifstream & );
 
-exception read_failure {
+ExceptionDecl( read_failure,
 	union {
 		ofstream * ostream;
 		ifstream * istream;
 	};
 	// TEMPORARY: need polymorphic exceptions
 	int tag;											// 1 => ostream; 0 => istream
-};
+);
 
 void ?{}( read_failure & this, ofstream & );
 void ?{}( read_failure & this, ifstream & );

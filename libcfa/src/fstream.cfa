@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  1 18:32:15 2024
-// Update Count     : 575
+// Last Modified On : Sun Feb 11 20:55:45 2024
+// Update Count     : 580
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -320,8 +320,6 @@ ifstream & sin = sinFile, & stdin = sinFile;
 // *********************************** exceptions ***********************************
 
 
-static vtable(open_failure) open_failure_vt;
-
 // exception I/O constructors
 void ?{}( open_failure & ex, ofstream & ostream ) with( ex ) {
 	virtual_table = &open_failure_vt;
@@ -335,8 +333,6 @@ void ?{}( open_failure & ex, ifstream & istream ) with( ex ) {
 	tag = 0;
 } // ?{}
 
-
-static vtable(close_failure) close_failure_vt;
 
 // exception I/O constructors
 void ?{}( close_failure & ex, ofstream & ostream ) with( ex ) {
@@ -352,8 +348,6 @@ void ?{}( close_failure & ex, ifstream & istream ) with( ex ) {
 } // ?{}
 
 
-static vtable(write_failure) write_failure_vt;
-
 // exception I/O constructors
 void ?{}( write_failure & ex, ofstream & ostream ) with( ex ) {
 	virtual_table = &write_failure_vt;
@@ -367,8 +361,6 @@ void ?{}( write_failure & ex, ifstream & istream ) with( ex ) {
 	tag = 0;
 } // ?{}
 
-
-static vtable(read_failure) read_failure_vt;
 
 // exception I/O constructors
 void ?{}( read_failure & ex, ofstream & ostream ) with( ex ) {

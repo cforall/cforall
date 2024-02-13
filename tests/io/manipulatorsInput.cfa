@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Jun  8 17:58:54 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 28 11:59:55 2024
-// Update Count     : 133
+// Last Modified On : Mon Feb  5 21:54:49 2024
+// Update Count     : 134
 // 
 
 #include <fstream.hfa>
@@ -113,7 +113,7 @@ int main() {
 		sin | "abc " | skip( sk ) | skip( 5 );			sout | "1" | s;
 		sin | wdi( sizeof(s), s );						sout | "2" | s;
 		sin | ignore( s );								sout | "3" | s;
- 		sin | wdi( sizeof(s), 8, s );					sout | "4" | s;
+		sin | wdi( sizeof(s), 8, s );					sout | "4" | s;
 		sin | ignore( wdi( sizeof(s), 8, s ) );			sout | "5" | s;
 
 		sin | incl( "abc", wdi( sizeof(s), s ) );		sout | "6" | s;
@@ -130,10 +130,10 @@ int main() {
 		sin | incl( "abc", wdi( sizeof(s), s ) );		sout | "14" | s;
 		s[0] = 'q'; s[1] = '\0';
 		sin | excl( "u", wdi( sizeof(s), s ) );			sout | "15" | s;
-		sin | skip( "u" ) | "\n";
+		sin | skip( "u" ) | nl;
 		sin | getline( wdi( sizeof(s), s ) );			sout | "16" | s;
-		sin | getline( wdi( sizeof(s), s ), '%' ) | "\n"; sout | "17" | s;
-		sin | ignore( getline( wdi( sizeof(s), s ), '%' ) ) | "\n"; sout | "18" | s;
+		sin | getline( wdi( sizeof(s), s ), '%' ) | nl; sout | "17" | s;
+		sin | ignore( getline( wdi( sizeof(s), s ), '%' ) ) | nl; sout | "18" | s;
 
 		sin | quoted( wdi( sizeof(s), s ) );			sout | "19" | s;
 		sin | quoted( wdi( sizeof(s), s ), '\'' );		sout | "20" | s;

@@ -9,9 +9,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Wed Oct 12 15:28:01 2022
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Feb 11 09:29:51 2024
+// Update Count     : 1
 //
 
 #include <fstream.hfa>
@@ -23,95 +23,88 @@ int main() {
 	char * fake_argv[] = { "./usage" };
 
 	sout | "No args, no errors";
-	if(pid_t child = strict_fork(); child == 0) {
+	if ( pid_t child = strict_fork(); child == 0 ) {
 		array( cfa_option, 0 ) opts;
-		print_args_usage(1, fake_argv, opts, "Test usage", false);
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+		print_args_usage(1, fake_argv, opts, "Test usage", false );
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
 	sout | "No args, with errors";
-	if(pid_t child = strict_fork(); child == 0) {
+	if ( pid_t child = strict_fork(); child == 0 ) {
 		array( cfa_option, 0 ) opts;
-		print_args_usage(1, fake_argv, opts, "Test usage", true);
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+		print_args_usage(1, fake_argv, opts, "Test usage", true );
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
 	sout | "Args with short names only:";
-	if(pid_t child = strict_fork(); child == 0) {
+	if ( pid_t child = strict_fork(); child == 0 ) {
 		int a, b, c;
 		array( cfa_option, 3 ) opts;
 		opts[0] = (cfa_option){'a', "", "First arg", a };
 		opts[1] = (cfa_option){'b', "", "Second arg", b };
 		opts[2] = (cfa_option){'c', "", "Third arg", c };
-		print_args_usage(1, fake_argv, opts, "Test usage", false);
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+		print_args_usage(1, fake_argv, opts, "Test usage", false );
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
 	sout | "Args with long names only:";
-	if(pid_t child = strict_fork(); child == 0) {
+	if ( pid_t child = strict_fork(); child == 0 ) {
 		int a, b, c;
 		array( cfa_option, 3 ) opts;
 		opts[0] = (cfa_option){'\0', "AA", "First arg", a };
 		opts[1] = (cfa_option){'\0', "BB", "Second arg", b };
 		opts[2] = (cfa_option){'\0', "CC", "Third arg", c };
-		print_args_usage(1, fake_argv, opts, "Test usage", false);
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+		print_args_usage(1, fake_argv, opts, "Test usage", false );
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
 	sout | "Mix of short and long args:";
-	if(pid_t child = strict_fork(); child == 0) {
+	if ( pid_t child = strict_fork(); child == 0 ) {
 		int a, b, c;
 		array( cfa_option, 3 ) opts;
 		opts[0] = (cfa_option){'a', "", "First arg", a };
 		opts[1] = (cfa_option){'b', "BBBB", "Second arg", b };
 		opts[2] = (cfa_option){'\0', "CC", "Third arg", c };
-		print_args_usage(1, fake_argv, opts, "Test usage", false);
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+		print_args_usage(1, fake_argv, opts, "Test usage", false );
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
 	sout | "Mix of short and long and some missing description:";
-	if(pid_t child = strict_fork(); child == 0) {
+	if ( pid_t child = strict_fork(); child == 0 ) {
 		int a, b, c;
 		array( cfa_option, 3 ) opts;
 		opts[0] = (cfa_option){'a', "", "First arg", a };
 		opts[1] = (cfa_option){'b', "BBBB", "", b };
 		opts[2] = (cfa_option){'\0', "CC", "Third arg", c };
-		print_args_usage(1, fake_argv, opts, "Test usage", false);
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+		print_args_usage(1, fake_argv, opts, "Test usage", false );
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 
 	sout | "Mix of short and long and some long description:";
-	if(pid_t child = strict_fork(); child == 0) {
+	if ( pid_t child = strict_fork(); child == 0 ) {
 		int a, b, c;
 		array( cfa_option, 3 ) opts;
 		opts[0] = (cfa_option){'a', "", "First arg\nThe description has multiple lines,\n...for some reason", a };
 		opts[1] = (cfa_option){'b', "BBBB", "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", b };
 		opts[2] = (cfa_option){'\0', "CC", "Third arg", c };
-		print_args_usage(1, fake_argv, opts, "Test usage", false);
-	}
-	else {
-		int status = do_wait(child);
-		print_status(status);
-	}
+		print_args_usage(1, fake_argv, opts, "Test usage", false );
+	} else {
+		int status = do_wait( child );
+		print_status( status );
+	} // if
 }
 
 // no used
-static int true_main(const char * path, char * env[]) { return 0; }
+static int true_main( const char * path, char * env[]) { return 0; }
