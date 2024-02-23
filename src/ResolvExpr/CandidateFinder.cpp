@@ -1511,15 +1511,18 @@ namespace {
 
 	void Finder::postvisit( const ast::ConditionalExpr * conditionalExpr ) {
 		// candidates for condition
-		CandidateFinder finder1( context, tenv );
 		ast::ptr<ast::Expr> arg1 = notZeroExpr( conditionalExpr->arg1 );
+		CandidateFinder finder1( context, tenv );
 		finder1.find( arg1, ResolveMode::withAdjustment() );
 		if ( finder1.candidates.empty() ) return;
 
 		// candidates for true result
+		// FIX ME: resolves and runs arg1 twice when arg2 is missing.
+		ast::Expr const * arg2 = conditionalExpr->arg2;
+		arg2 = arg2 ? arg2 : conditionalExpr->arg1.get();
 		CandidateFinder finder2( context, tenv );
 		finder2.allowVoid = true;
-		finder2.find( conditionalExpr->arg2, ResolveMode::withAdjustment() );
+		finder2.find( arg2, ResolveMode::withAdjustment() );
 		if ( finder2.candidates.empty() ) return;
 
 		// candidates for false result

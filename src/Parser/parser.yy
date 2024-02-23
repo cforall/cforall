@@ -1038,9 +1038,8 @@ conditional_expression:
 	logical_OR_expression
 	| logical_OR_expression '?' comma_expression ':' conditional_expression
 		{ $$ = new ExpressionNode( build_cond( yylloc, $1, $3, $5 ) ); }
-		// FIX ME: computes $1 twice
 	| logical_OR_expression '?' /* empty */ ':' conditional_expression // GCC, omitted first operand
-		{ $$ = new ExpressionNode( build_cond( yylloc, $1, $1->clone(), $4 ) ); }
+		{ $$ = new ExpressionNode( build_cond( yylloc, $1, nullptr, $4 ) ); }
 	;
 
 constant_expression:
