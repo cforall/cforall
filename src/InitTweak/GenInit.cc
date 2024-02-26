@@ -238,7 +238,7 @@ namespace {
 					// Check if the return statement is already set up.
 					if ( varExpr->var == retVal ) return stmt;
 				}
-				ast::ptr<ast::Stmt> ctorStmt = genCtorDtor(
+				const ast::Stmt * ctorStmt = genCtorDtor(
 					retVal->location, "?{}", retVal, stmt->expr );
 				assertf( ctorStmt,
 					"ReturnFixer: genCtorDtor returned nullptr: %s / %s",
@@ -326,7 +326,7 @@ void ManagedTypes::handleStruct( const ast::StructDecl * aggregateDecl ) {
 void ManagedTypes::beginScope() { managedTypes.beginScope(); }
 void ManagedTypes::endScope() { managedTypes.endScope(); }
 
-ast::ptr<ast::Stmt> genCtorDtor (const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg) {
+const ast::Stmt * genCtorDtor( const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg ) {
 	assertf(objDecl, "genCtorDtor passed null objDecl");
 	InitExpander srcParam(arg);
 	return SymTab::genImplicitCall(srcParam, new ast::VariableExpr(loc, objDecl), loc, fname, objDecl);

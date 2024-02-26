@@ -1133,7 +1133,7 @@ const ast::DeclWithType * GenStructMemberCalls::postvisit( const ast::FunctionDe
 			// cast away reference type and construct field.
 			ast::Expr * thisExpr = new ast::CastExpr(funcDecl->location, new ast::VariableExpr(funcDecl->location, thisParam ), thisParam->get_type()->stripReferences());
 			ast::Expr * memberDest = new ast::MemberExpr(funcDecl->location, field, thisExpr );
-			ast::ptr<ast::Stmt> callStmt = SymTab::genImplicitCall( srcParam, memberDest, loc, function->name, field, static_cast<SymTab::LoopDirection>(isCtor) );
+			const ast::Stmt * callStmt = SymTab::genImplicitCall( srcParam, memberDest, loc, function->name, field, static_cast<SymTab::LoopDirection>(isCtor) );
 
 			if ( callStmt ) {
 				try {

@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Fri May 10 10:30:00 2019
-// Last Modified By : Aaron B. Moss
+// Last Modified By : Peter A. Buhr
 // Created On       : Fri May 10 10:30:00 2019
-// Update Count     : 1
+// Update Count     : 2
 //
 
 #pragma once
@@ -33,7 +33,7 @@ public:
 	std::vector<ptr<Expr>> params;
 
 	Attribute( const std::string & name = "", std::vector<ptr<Expr>> && params = {})
-	: name( name ), params( params ) {}
+		: name( name ), params( params ) {}
 	virtual ~Attribute() = default;
 
 	bool empty() const { return name.empty(); }

@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:12:51 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 14 18:59:12 2023
-// Update Count     : 684
+// Last Modified On : Fri Feb 23 08:58:30 2024
+// Update Count     : 734
 //
 
 #include "TypeData.h"
@@ -19,10 +19,12 @@
 #include <ostream>                 // for operator<<, ostream, basic_ostream
 
 #include "AST/Decl.hpp"            // for AggregateDecl, ObjectDecl, TypeDe...
+#include "AST/Attribute.hpp"       // for Attribute
 #include "AST/Init.hpp"            // for SingleInit, ListInit
 #include "AST/Print.hpp"           // for print
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for splice, spliceBegin
+#include "Common/Iterate.hpp"      // for reverseIterate
 #include "Parser/ExpressionNode.h" // for ExpressionNode
 #include "Parser/StatementNode.h"  // for StatementNode
 
@@ -198,13 +200,14 @@ TypeData * TypeData::clone() const {
 	case Aggregate:
 		newtype->aggregate.kind = aggregate.kind;
 		newtype->aggregate.name = aggregate.name ? new string( *aggregate.name ) : nullptr;
+		newtype->aggregate.parent = aggregate.parent ? new string( *aggregate.parent ) : nullptr;
 		newtype->aggregate.params = maybeCopy( aggregate.params );
 		newtype->aggregate.actuals = maybeCopy( aggregate.actuals );
 		newtype->aggregate.fields = maybeCopy( aggregate.fields );
+		newtype->aggregate.attributes = aggregate.attributes;
 		newtype->aggregate.body = aggregate.body;
 		newtype->aggregate.anon = aggregate.anon;
 		newtype->aggregate.tagged = aggregate.tagged;
-		newtype->aggregate.parent = aggregate.parent ? new string( *aggregate.parent ) : nullptr;
 		break;
 	case AggregateInst:
 		newtype->aggInst.aggregate = maybeCopy( aggInst.aggregate );
@@ -335,7 +338,14 @@ void TypeData::print( ostream &os, int indent ) const {
 			aggregate.fields->printList( os, indent + 4 );
 		} // if
 		if ( aggregate.body ) {
-			os << string( indent + 2, ' ' ) << " with body" << endl;
+			os << string( indent + 2, ' ' ) << "with body" << endl;
+		} // if
+		if ( ! aggregate.attributes.empty() ) {
+			os << string( indent + 2, ' ' ) << "with attributes" << endl;
+			for ( ast::ptr<ast::Attribute> const & attr : reverseIterate( aggregate.attributes ) ) {
+				os << string( indent + 4, ' ' );
+				ast::print( os, attr, indent + 2 );
+			} // for
 		} // if
 		break;
 	case AggregateInst:
@@ -357,7 +367,7 @@ void TypeData::print( ostream &os, int indent ) const {
 			enumeration.constants->printList( os, indent + 2 );
 		} // if
 		if ( enumeration.body ) {
-			os << string( indent + 2, ' ' ) << " with body" << endl;
+			os << string( indent + 2, ' ' ) << "with body" << endl;
 		} // if
 		if ( base ) {
 			os << "for ";
@@ -1087,42 +1097,42 @@ ast::AggregateDecl * buildAggregate( const TypeData * td, std::vector<ast::ptr<a
 
 
 ast::BaseInstType * buildComAggInst(
-		const TypeData * type,
+		const TypeData * td,
 		std::vector<ast::ptr<ast::Attribute>> && attributes,
 		ast::Linkage::Spec linkage ) {
-	switch ( type->kind ) {
+	switch ( td->kind ) {
 	case TypeData::Enum:
-		if ( type->enumeration.body ) {
+		if ( td->enumeration.body ) {
 			ast::EnumDecl * typedecl =
-				buildEnum( type, std::move( attributes ), linkage );
+				buildEnum( td, std::move( attributes ), linkage );
 			return new ast::EnumInstType(
 				typedecl,
-				buildQualifiers( type )
+				buildQualifiers( td )
 			);
 		} else {
 			return new ast::EnumInstType(
-				*type->enumeration.name,
-				buildQualifiers( type )
+				*td->enumeration.name,
+				buildQualifiers( td )
 			);
 		} // if
 		break;
 	case TypeData::Aggregate:
-		if ( type->aggregate.body ) {
+		if ( td->aggregate.body ) {
 			ast::AggregateDecl * typedecl =
-				buildAggregate( type, std::move( attributes ), linkage );
-			switch ( type->aggregate.kind ) {
+				buildAggregate( td, std::move( attributes ), linkage );
+			switch ( td->aggregate.kind ) {
 			case ast::AggregateDecl::Struct:
 			case ast::AggregateDecl::Coroutine:
 			case ast::AggregateDecl::Monitor:
 			case ast::AggregateDecl::Thread:
 				return new ast::StructInstType(
 					strict_dynamic_cast<ast::StructDecl *>( typedecl ),
-					buildQualifiers( type )
+					buildQualifiers( td )
 				);
 			case ast::AggregateDecl::Union:
 				return new ast::UnionInstType(
 					strict_dynamic_cast<ast::UnionDecl *>( typedecl ),
-					buildQualifiers( type )
+					buildQualifiers( td )
 				);
 			case ast::AggregateDecl::Trait:
 				assert( false );
@@ -1131,24 +1141,24 @@ ast::BaseInstType * buildComAggInst(
 				assert( false );
 			} // switch
 		} else {
-			switch ( type->aggregate.kind ) {
+			switch ( td->aggregate.kind ) {
 			case ast::AggregateDecl::Struct:
 			case ast::AggregateDecl::Coroutine:
 			case ast::AggregateDecl::Monitor:
 			case ast::AggregateDecl::Thread:
 				return new ast::StructInstType(
-					*type->aggregate.name,
-					buildQualifiers( type )
+					*td->aggregate.name,
+					buildQualifiers( td )
 				);
 			case ast::AggregateDecl::Union:
 				return new ast::UnionInstType(
-					*type->aggregate.name,
-					buildQualifiers( type )
+					*td->aggregate.name,
+					buildQualifiers( td )
 				);
 			case ast::AggregateDecl::Trait:
 				return new ast::TraitInstType(
-					*type->aggregate.name,
-					buildQualifiers( type )
+					*td->aggregate.name,
+					buildQualifiers( td )
 				);
 			default:
 				assert( false );

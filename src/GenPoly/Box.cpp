@@ -1108,11 +1108,8 @@ ast::FunctionDecl * CallAdapter::makeAdapter(
 		)
 	);
 
-	for ( auto group : group_iterate( realType->assertions,
-			adapterType->assertions, adaptee->assertions ) ) {
-		auto assertArg = std::get<0>( group );
-		auto assertParam = std::get<1>( group );
-		auto assertReal = std::get<2>( group );
+	for ( auto const & [assertArg, assertParam, assertReal] : group_iterate(
+			realType->assertions, adapterType->assertions, adaptee->assertions ) ) {
 		adapteeApp->args.push_back( makeAdapterArg(
 			assertParam->var, assertArg->var->get_type(),
 			assertReal->var->get_type(), typeVars, location
@@ -1969,9 +1966,8 @@ bool findGenericParams(
 		ast::vector<ast::Expr> const & typeParams ) {
 	bool hasDynamicLayout = false;
 
-	for ( auto pair : group_iterate( baseParams, typeParams ) ) {
-		auto baseParam = std::get<0>( pair );
-		auto typeParam = std::get<1>( pair );
+	for ( auto const & [baseParam, typeParam] : group_iterate(
+			baseParams, typeParams ) ) {
 		if ( !baseParam->isComplete() ) continue;
 		ast::TypeExpr const * typeExpr = typeParam.as<ast::TypeExpr>();
 		assertf( typeExpr, "All type parameters should be type expressions." );

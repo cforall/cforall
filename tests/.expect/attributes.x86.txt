@@ -5,7 +5,7 @@ signed int _X2laFi___1(){
     }
 
 }
-struct __anonymous0 {
+struct __attribute__ ((unused)) __anonymous0 {
 };
 static inline void _X12_constructorFv_S12__anonymous0_autogen___1(struct __anonymous0 *_X4_dstS12__anonymous0_1);
 static inline void _X12_constructorFv_S12__anonymous0S12__anonymous0_autogen___1(struct __anonymous0 *_X4_dstS12__anonymous0_1, struct __anonymous0 _X4_srcS12__anonymous0_1);

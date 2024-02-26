@@ -1575,6 +1575,13 @@ public:
 		return node;
 	}
 
+	virtual const ast::Type * visit( const ast::EnumPosType * node ) override final {
+		preprint( node );
+		os << "enum pos with ";
+		(*(node->instance)).accept( *this );
+		return node;
+	}
+
 	virtual const ast::Type * visit( const ast::TraitInstType * node ) override final {
 		preprint( node );
 		os << "instance of trait " << node->name;

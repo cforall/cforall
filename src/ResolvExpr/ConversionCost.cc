@@ -277,11 +277,13 @@ void ConversionCost::conversionCostFromBasicToBasic( const ast::BasicType * src,
 void ConversionCost::postvisit( const ast::BasicType * basicType ) {
 	if ( const ast::BasicType * dstAsBasic = dynamic_cast< const ast::BasicType * >( dst ) ) {
 		conversionCostFromBasicToBasic( basicType, dstAsBasic );
-	} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
+	} 
+	else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 		auto enumDecl = enumInst->base;
-		if ( auto baseType = enumDecl->base.get() ) {
-			cost = costCalc( basicType, baseType, srcIsLvalue, symtab, env );
-			cost.incUnsafe();
+		if ( enumDecl->base.get() ) {
+			// cost = costCalc( basicType, baseType, srcIsLvalue, symtab, env );
+			// cost.incUnsafe();
+			cost = Cost::infinity;
 		} else {
             cost = Cost::unsafe;
 		}
@@ -364,6 +366,14 @@ void ConversionCost::postvisit( const ast::EnumInstType * ) {
 	static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
 	cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
 	// }
+	if ( cost < Cost::unsafe ) {
+		cost.incSafe();
+	}
+}
+
+void ConversionCost::postvisit( const ast::EnumPosType * ) {
+	static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
+	cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
 	if ( cost < Cost::unsafe ) {
 		cost.incSafe();
 	}

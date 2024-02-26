@@ -890,20 +890,64 @@ namespace {
 			addAggMembers( structInst, aggrExpr, *cand, Cost::unsafe, "" );
 		} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
 			addAggMembers( unionInst, aggrExpr, *cand, Cost::unsafe, "" );
-		} else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
-			// The Attribute Arrays are not yet generated, need to proxy them
-			// as attribute function call
-			const CodeLocation & location = cand->expr->location;
-			if ( enumInst->base && enumInst->base->base ) {
-				auto valueName = new ast::NameExpr(location, "valueE");
-				auto untypedValueCall = new ast::UntypedExpr(
-					location, valueName, { aggrExpr } );
-				auto result = ResolvExpr::findVoidExpression( untypedValueCall, context );
-				assert( result.get() );
-				CandidateRef newCand = std::make_shared<Candidate>(
-					*cand, result, Cost::safe );
-				candidates.emplace_back( std::move( newCand ) );
-			}
+		} 
+		else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
+			if (enumInst->base && enumInst->base->base) {
+            const CodeLocation &location = cand->expr->location;
+
+            CandidateFinder funcFinder(context, tenv);
+            auto nameExpr = new ast::NameExpr(location, "valueE");
+            ResolveMode mode = {true, false, selfFinder.candidates.empty()};
+            funcFinder.find( nameExpr, mode );
+
+            // make variableExpr itself the candidate for the value Call
+            ExplodedArgs argExpansions;
+            argExpansions.emplace_back();
+            auto &argE = argExpansions.back();
+
+            argE.emplace_back(*cand, symtab); // Use the typed name expr as param for value
+
+            CandidateList found;
+            SemanticErrorException errors;
+
+            for (CandidateRef &func : funcFinder) {
+                try {
+                    const ast::Type *funcResult =
+                        func->expr->result->stripReferences();
+                    if (auto pointer = dynamic_cast<const ast::PointerType *>(
+                            funcResult)) {
+                        if (auto function =
+                                pointer->base.as<ast::FunctionType>()) {
+                            CandidateRef newFunc{new Candidate{*func}};
+                            newFunc->expr = referenceToRvalueConversion(
+                                newFunc->expr, newFunc->cost);
+                            makeFunctionCandidates( location,
+                                                   newFunc, function,
+                                                   argExpansions, found );
+                        }
+                    }
+                } catch (SemanticErrorException &e) {
+                    std::cerr
+                        << "Resolving value function should cause an error"
+                        << std::endl;
+                    errors.append(e);
+                }
+            }
+
+            if (found.empty()) {
+                std::cerr << "Resolve value function should always success"
+                          << std::endl;
+            }
+
+            for (CandidateRef &withFunc : found) {
+                withFunc->cost.incSafe();
+                Cost cvtCost =
+                    computeApplicationConversionCost(withFunc, symtab);
+                assert(cvtCost != Cost::infinity);
+
+                candidates.emplace_back(std::move(withFunc));
+            }
+        }
 		}
 	}
 
@@ -1399,10 +1443,72 @@ namespace {
 		}
 	}
 
-	void Finder::postvisit( const ast::VariableExpr * variableExpr ) {
-		// not sufficient to just pass `variableExpr` here, type might have changed since
-		addCandidate( variableExpr, tenv );
-	}
+    void Finder::postvisit(const ast::VariableExpr *variableExpr) {
+        // not sufficient to just pass `variableExpr` here, type might have changed
+
+        auto cand = new Candidate(variableExpr, tenv);
+        candidates.emplace_back(cand);
+
+        if (auto enumInst = dynamic_cast<const ast::EnumInstType *>(
+                variableExpr->var->get_type())) {
+            if (enumInst->base && enumInst->base->base) {
+                const CodeLocation &location = cand->expr->location;
+
+                CandidateFinder funcFinder(context, tenv);
+                auto nameExpr = new ast::NameExpr(location, "valueE");
+                ResolveMode mode = {true, false, selfFinder.candidates.empty()};
+                funcFinder.find( nameExpr, mode );
+
+                // make variableExpr itself the candidate for the value Call
+                ExplodedArgs argExpansions;
+                argExpansions.emplace_back();
+                auto &argE = argExpansions.back();
+
+                argE.emplace_back(*cand, symtab);
+
+                CandidateList found;
+                SemanticErrorException errors;
+
+                for (CandidateRef &func : funcFinder) {
+                    try {
+                    const ast::Type *funcResult =
+                        func->expr->result->stripReferences();
+                    if (auto pointer = dynamic_cast<const ast::PointerType *>(
+                            funcResult)) {
+                        if (auto function =
+                                pointer->base.as<ast::FunctionType>()) {
+                            CandidateRef newFunc{new Candidate{*func}};
+                            newFunc->expr = referenceToRvalueConversion(
+                                newFunc->expr, newFunc->cost);
+                            makeFunctionCandidates(variableExpr->location,
+                                                   newFunc, function,
+                                                   argExpansions, found);
+                        }
+                    }
+                    } catch (SemanticErrorException &e) {
+                        std::cerr
+                            << "Resolving value function should cause an error"
+                            << std::endl;
+                        errors.append(e);
+                    }
+                }
+
+                if (found.empty()) {
+                    std::cerr << "Resolve value function should always success"
+                            << std::endl;
+                }
+
+                for (CandidateRef &withFunc : found) {
+                    withFunc->cost.incSafe();
+                    Cost cvtCost =
+                        computeApplicationConversionCost(withFunc, symtab);
+                    assert(cvtCost != Cost::infinity);
+
+                    candidates.emplace_back(std::move(withFunc));
+                }
+            }
+        }
+    }
 
 	void Finder::postvisit( const ast::ConstantExpr * constantExpr ) {
 		addCandidate( constantExpr, tenv );

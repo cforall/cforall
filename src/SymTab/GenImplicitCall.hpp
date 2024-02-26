@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// GenImplicitCall.hpp --
+// GenImplicitCall.hpp -- Generate code for implicit operator calls.
 //
 // Author           : Andrew Beach
 // Created On       : Fri Apr 14 14:29:00 2023
@@ -24,7 +24,7 @@ enum LoopDirection { LoopBackward, LoopForward };
 
 /// Returns a generated call expression to function fname with srcParam and
 /// dstParam. Intended to be used with generated ?=?, ?{}, and ^?{} calls.
-ast::ptr<ast::Stmt> genImplicitCall(
+const ast::Stmt * genImplicitCall(
 	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
 	const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * obj,
 	LoopDirection forward = LoopForward

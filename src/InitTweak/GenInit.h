@@ -32,7 +32,7 @@ void genInit( ast::TranslationUnit & translationUnit );
 void fixReturnStatements( ast::TranslationUnit & translationUnit );
 
 /// generates a single ctor/dtor statement using objDecl as the 'this' parameter and arg as the optional argument
-ast::ptr<ast::Stmt> genCtorDtor (const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg = nullptr);
+const ast::Stmt * genCtorDtor( const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * objDecl, const ast::Expr * arg = nullptr );
 
 /// creates an appropriate ConstructorInit node which contains a constructor, destructor, and C-initializer
 ast::ConstructorInit * genCtorInit( const CodeLocation & loc, const ast::ObjectDecl * objDecl );

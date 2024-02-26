@@ -8,9 +8,9 @@
 //
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:18:36 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Mar  1 10:44:00 2023
-// Update Count     : 206
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Feb 22 16:30:31 2024
+// Update Count     : 210
 //
 
 #pragma once
@@ -29,13 +29,14 @@ struct TypeData {
 	struct Aggregate_t {
 		ast::AggregateDecl::Aggregate kind;
 		const std::string * name = nullptr;
+		const std::string * parent = nullptr;
 		DeclarationNode * params = nullptr;
 		ExpressionNode * actuals = nullptr;				// holds actual parameters later applied to AggInst
 		DeclarationNode * fields = nullptr;
+		std::vector<ast::ptr<ast::Attribute>> attributes;
 		bool body;
 		bool anon;
 		bool tagged;
-		const std::string * parent = nullptr;
 	};
 
 	struct AggInst_t {

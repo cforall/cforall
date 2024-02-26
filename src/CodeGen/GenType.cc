@@ -45,6 +45,7 @@ struct GenType final :
 	void postvisit( ast::StructInstType const * type );
 	void postvisit( ast::UnionInstType const * type );
 	void postvisit( ast::EnumInstType const * type );
+	void postvisit( ast::EnumPosType const * type );
 	void postvisit( ast::TypeInstType const * type );
 	void postvisit( ast::TupleType const * type );
 	void postvisit( ast::VarArgsType const * type );
@@ -236,6 +237,10 @@ void GenType::postvisit( ast::EnumInstType const * type ) {
 		}
 	// }
 	handleQualifiers( type );
+}
+
+void GenType::postvisit( ast::EnumPosType const * type ) {
+	postvisit( type->instance );
 }
 
 void GenType::postvisit( ast::TypeInstType const * type ) {

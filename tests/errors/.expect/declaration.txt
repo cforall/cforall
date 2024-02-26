@@ -7,13 +7,13 @@ errors/declaration.cfa:18:1 error: conflicting extern & auto storage classes, co
 errors/declaration.cfa:19:1 error: duplicate static storage class(es) in declaration of x4: static const volatile instance of const volatile struct __anonymous0
   with members
     i: int 
-   with body
+  with body
 
 
 errors/declaration.cfa:20:1 error: duplicate const qualifier(s), duplicate static storage class(es), duplicate volatile qualifier(s) in declaration of x5: static const volatile instance of const volatile struct __anonymous1
   with members
     i: int 
-   with body
+  with body
 
 
 errors/declaration.cfa:22:1 error: duplicate static storage class(es) in declaration of x6: static const volatile Int

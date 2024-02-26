@@ -132,8 +132,7 @@ private:
 
 	/// Generates a single struct member operation.
 	/// (constructor call, destructor call, assignment call)
-	// This is managed because it uses another helper that returns a ast::ptr.
-	ast::ptr<ast::Stmt> makeMemberOp(
+	const ast::Stmt * makeMemberOp(
 		const CodeLocation& location,
 		const ast::ObjectDecl * dstParam, const ast::Expr * src,
 		const ast::ObjectDecl * field, ast::FunctionDecl * func,
@@ -205,6 +204,7 @@ private:
 	ast::FunctionDecl * genPosProto() const;
 	ast::FunctionDecl * genLabelProto() const;
 	ast::FunctionDecl * genValueProto() const;
+	// ast::FunctionDecl * genValueProto2() const;
 };
 
 class TypeFuncGenerator final : public FuncGenerator {
@@ -523,7 +523,7 @@ void StructFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 	}
 }
 
-ast::ptr<ast::Stmt> StructFuncGenerator::makeMemberOp(
+const ast::Stmt * StructFuncGenerator::makeMemberOp(
 		const CodeLocation& location, const ast::ObjectDecl * dstParam,
 		const ast::Expr * src, const ast::ObjectDecl * field,
 		ast::FunctionDecl * func, SymTab::LoopDirection direction ) {
@@ -538,7 +538,7 @@ ast::ptr<ast::Stmt> StructFuncGenerator::makeMemberOp(
 			dstParam->type.strict_as<ast::ReferenceType>()->base
 		)
 	);
-	auto stmt = genImplicitCall(
+	const ast::Stmt * stmt = genImplicitCall(
 		srcParam, dstSelect, location, func->name,
 		field, direction
 	);
@@ -596,11 +596,11 @@ void StructFuncGenerator::makeFunctionBody( Iterator current, Iterator end,
 		ast::MemberExpr * srcSelect = (srcParam) ? new ast::MemberExpr(
 			location, field, new ast::VariableExpr( location, srcParam )
 		) : nullptr;
-		ast::ptr<ast::Stmt> stmt =
+		const ast::Stmt * stmt =
 			makeMemberOp( location, dstParam, srcSelect, field, func, direction );
 
 		if ( nullptr != stmt ) {
-			stmts->kids.push_back( stmt );
+			stmts->kids.emplace_back( stmt );
 		}
 	}
 
@@ -621,7 +621,7 @@ void StructFuncGenerator::makeFieldCtorBody( Iterator current, Iterator end,
 	// Skip over the 'this' parameter.
 	for ( auto param = params.begin() + 1 ; current != end ; ++current ) {
 		const ast::ptr<ast::Decl> & member = *current;
-		ast::ptr<ast::Stmt> stmt = nullptr;
+		const ast::Stmt * stmt = nullptr;
 		auto field = member.as<ast::ObjectDecl>();
 		// Not sure why it could be null.
 		// Don't make a function for a parameter that is an unnamed bitfield.
@@ -639,7 +639,7 @@ void StructFuncGenerator::makeFieldCtorBody( Iterator current, Iterator end,
 		}
 
 		if ( nullptr != stmt ) {
-			stmts->kids.push_back( stmt );
+			stmts->kids.emplace_back( stmt );
 		}
 	}
 	func->stmts = stmts;
@@ -789,11 +789,19 @@ ast::FunctionDecl * EnumFuncGenerator::genValueProto() const {
 		{ new ast::ObjectDecl( getLocation(), "_ret", ast::deepCopy( decl->base ) ) } );
 }
 
+// ast::FunctionDecl * EnumFuncGenerator::genValueProto2() const {
+// 	return genProto( "valueE", 
+// 		{ new ast::ObjectDecl( getLocation(), "_i", new ast::EnumPosType( new ast::EnumInstType( decl ) ) )},
+// 		{ new ast::ObjectDecl( getLocation(), "_ret", ast::deepCopy( decl->base ) ) } );
+// }
+
 void EnumFuncGenerator::genAttrFuncForward() {	
 	if ( decl->base ) {
 		ast::FunctionDecl *(EnumFuncGenerator::*attrProtos[3])() const = {
 			&EnumFuncGenerator::genPosProto, &EnumFuncGenerator::genLabelProto, 
-			&EnumFuncGenerator::genValueProto };
+			&EnumFuncGenerator::genValueProto
+			// , &EnumFuncGenerator::genValueProto2 
+			};
 		for ( auto & generator : attrProtos ) {
 			produceForwardDecl( (this->*generator)() );
 		}

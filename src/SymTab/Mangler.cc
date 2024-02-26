@@ -58,6 +58,8 @@ struct Mangler : public ast::WithShortCircuiting, public ast::WithVisitorRef<Man
 	void postvisit( const ast::OneType * oneType );
 	void postvisit( const ast::QualifiedType * qualType );
 
+	void postvisit( const ast::EnumPosType * posType );
+
 	/// The result is the current constructed mangled name.
 	std::string result() const { return mangleName; }
 private:
@@ -276,6 +278,11 @@ void Mangler::postvisit( const ast::TypeDecl * decl ) {
 	assertf(false, "Mangler should not visit typedecl: %s", toCString(decl));
 	assertf( decl->kind < ast::TypeDecl::Kind::NUMBER_OF_KINDS, "Unhandled type variable kind: %d", decl->kind );
 	mangleName += Encoding::typeVariables[ decl->kind ] + std::to_string( decl->name.length() ) + decl->name;
+}
+
+void Mangler::postvisit( const ast::EnumPosType * pos ) {
+	postvisit( pos->instance );
+	mangleName += "_pos";
 }
 
 // For debugging:

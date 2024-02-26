@@ -361,6 +361,17 @@ using UnionInstType = SueInstType<UnionDecl>;
 /// An instance of an enum type.
 using EnumInstType = SueInstType<EnumDecl>;
 
+class EnumPosType final : public Type {
+public:
+	readonly<EnumInstType> instance;
+	const Type * accept( Visitor & v ) const override { return v.visit( this ); }
+	EnumPosType( const EnumInstType * instance ): instance(instance) {}
+	
+private:
+	EnumPosType * clone() const override { return new EnumPosType{ *this }; }
+	MUTATE_FRIEND
+};
+
 /// An instance of a trait type.
 class TraitInstType final : public BaseInstType {
 public:

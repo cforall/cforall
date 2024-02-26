@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 26 13:18:06 2023
-// Update Count     : 6398
+// Last Modified On : Fri Feb 23 18:25:46 2024
+// Update Count     : 6484
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -101,18 +101,38 @@ bool appendStr( string & to, string & from ) {
 } // appendStr
 
 DeclarationNode * distAttr( DeclarationNode * typeSpec, DeclarationNode * declList ) {
-	// distribute declaration_specifier across all declared variables, e.g., static, const, but not __attribute__.
+	// Distribute type specifier across all declared variables, e.g., static, const, __attribute__.
 	assert( declList );
-	// printf( "distAttr1 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout );
-	DeclarationNode * cl = (new DeclarationNode)->addType( typeSpec );
-	// printf( "distAttr2 cl %p\n", cl ); cl->type->print( std::cout );
-	// cl->type->aggregate.name = cl->type->aggInst.aggregate->aggregate.name;
 
+	// Do not distribute attributes for aggregates because the attributes surrounding the aggregate belong it not the
+	// variables in the declaration list, e.g.,
+	//
+	//   struct __attribute__(( aligned(128) )) S { ...
+	//   } v1 __attribute__(( aligned(64) )), v2 __attribute__(( aligned(32) )), v3;
+	//   struct S v4;
+	//
+	// v1 => 64, v2 =>32, v3 => 128, v2 => 128
+	//
+	// Anonymous aggregates are a special case because there is no aggregate to bind the attribute to; hence it floats
+	// to the declaration list.
+	//
+	//   struct __attribute__(( aligned(128) )) /*anonymous */ { ... } v1;
+	//
+	// v1 => 128
+
+	bool copyattr = ! (typeSpec->type && typeSpec->type->kind == TypeData::Aggregate && ! typeSpec->type->aggregate.anon );
+
+	// addType copies the type information for the aggregate instances from typeSpec into cl's aggInst.aggregate.
+	DeclarationNode * cl = (new DeclarationNode)->addType( typeSpec ); // typeSpec IS DELETED!!!
+
+	// Start at second variable in declaration list and clone the type specifiers for each variable..
 	for ( DeclarationNode * cur = dynamic_cast<DeclarationNode *>( declList->get_next() ); cur != nullptr; cur = dynamic_cast<DeclarationNode *>( cur->get_next() ) ) {
-		cl->cloneBaseType( cur );
+		cl->cloneBaseType( cur, copyattr );				// cur is modified
 	} // for
-	declList->addType( cl );
-	// printf( "distAttr3 declList %p\n", declList ); declList->print( std::cout, 0 );
+
+	// Add first variable in declaration list with hidden type information in aggInst.aggregate, which is used by
+	// extractType to recover the type for the aggregate instances.
+	declList->addType( cl, copyattr );					// cl IS DELETED!!!
 	return declList;
 } // distAttr
 
@@ -191,10 +211,9 @@ DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * field
 		// printf( "fieldDecl2 typeSpec %p\n", typeSpec ); typeSpec->type->print( std::cout );
 		fieldList = DeclarationNode::newName( nullptr );
 	} // if
-//	return distAttr( typeSpec, fieldList );				// mark all fields in list
 
 	// printf( "fieldDecl3 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout, 0 );
-	DeclarationNode * temp = distAttr( typeSpec, fieldList );				// mark all fields in list
+	DeclarationNode * temp = distAttr( typeSpec, fieldList ); // mark all fields in list
 	// printf( "fieldDecl4 temp %p\n", temp ); temp->print( std::cout, 0 );
 	return temp;
 } // fieldDecl
@@ -760,8 +779,31 @@ postfix_expression:
 		{ $$ = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( $3 ) ) ), $1 ) ); }
 	| string_literal '`' identifier						// CFA, postfix call
 		{ $$ = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( $3 ) ) ), $1 ) ); }
+
+		// SKULLDUGGERY: The typedef table used for parsing does not store fields in structures. To parse a qualified
+		// name, it is assumed all name-tokens after the first are identifiers, regardless of how the lexer identifies
+    	// them. For example:
+		//   
+		//   struct S;
+		//   forall(T) struct T;
+		//   union U;
+		//   enum E { S, T, E };
+		//   struct Z { int S, T, Z, E, U; };
+		//   void fred () {
+		//       Z z;
+		//       z.S;  // lexer returns S is TYPEDEFname
+		//       z.T;  // lexer returns T is TYPEGENname
+		//       z.Z;  // lexer returns Z is TYPEDEFname
+		//       z.U;  // lexer returns U is TYPEDEFname
+		//       z.E;  // lexer returns E is TYPEDEFname
+		//   }
 	| postfix_expression '.' identifier
 		{ $$ = new ExpressionNode( build_fieldSel( yylloc, $1, build_varref( yylloc, $3 ) ) ); }
+	| postfix_expression '.' TYPEDEFname				// CFA, SKULLDUGGERY
+		{ $$ = new ExpressionNode( build_fieldSel( yylloc, $1, build_varref( yylloc, $3 ) ) ); }
+	| postfix_expression '.' TYPEGENname				// CFA, SKULLDUGGERY
+		{ $$ = new ExpressionNode( build_fieldSel( yylloc, $1, build_varref( yylloc, $3 ) ) ); }
+
 	| postfix_expression '.' INTEGERconstant			// CFA, tuple index
 		{ $$ = new ExpressionNode( build_fieldSel( yylloc, $1, build_constantInteger( yylloc, *$3 ) ) ); }
 	| postfix_expression FLOATING_FRACTIONconstant		// CFA, tuple index
@@ -1854,8 +1896,7 @@ declaration_list_opt:									// used at beginning of switch statement
 
 declaration_list:
 	declaration
-	| declaration_list declaration
-		{ $$ = $1->appendList( $2 ); }
+	| declaration_list declaration		{ $$ = $1->appendList( $2 ); }
 	;
 
 KR_parameter_list_opt:									// used to declare parameter types in K&R style functions
@@ -1888,12 +1929,6 @@ local_label_list:										// GCC, local label
 
 declaration:											// old & new style declarations
 	c_declaration ';'
-		{
-			// printf( "C_DECLARATION1 %p %s\n", $$, $$->name ? $$->name->c_str() : "(nil)" );
-			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
-			//   printf( "\tattr %s\n", attr->name.c_str() );
-			// } // for
-		}
 	| cfa_declaration ';'								// CFA
 	| static_assert										// C11
 	;
@@ -2346,12 +2381,6 @@ indirect_type:
 
 sue_declaration_specifier:								// struct, union, enum + storage class + type specifier
 	sue_type_specifier
-		{
-			// printf( "sue_declaration_specifier %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
-			//   printf( "\tattr %s\n", attr->name.c_str() );
-			// } // for
-		}
 	| declaration_qualifier_list sue_type_specifier
 		{ $$ = $2->addQualifiers( $1 ); }
 	| sue_declaration_specifier storage_class			// remaining OBSOLESCENT (see 2)
@@ -2362,12 +2391,6 @@ sue_declaration_specifier:								// struct, union, enum + storage class + type 
 
 sue_type_specifier:										// struct, union, enum + type specifier
 	elaborated_type
-		{
-			// printf( "sue_type_specifier %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
-			//   printf( "\tattr %s\n", attr->name.c_str() );
-			// } // for
-		}
 	| type_qualifier_list
 		{ if ( $1->type != nullptr && $1->type->forall ) forall = true; } // remember generic type
 	  elaborated_type
@@ -2440,12 +2463,6 @@ typegen_name:											// CFA
 
 elaborated_type:										// struct, union, enum
 	aggregate_type
-		{
-			// printf( "elaborated_type %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
-			//   printf( "\tattr %s\n", attr->name.c_str() );
-			// } // for
-		}
 	| enum_type
 	;
 
@@ -2677,7 +2694,7 @@ enum_type:
 	ENUM attribute_list_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( nullptr, $4, true, false )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt '!' '{' enumerator_list comma_opt '}'	// invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, hiding '!' the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3, "enum_type 1" ); }
 	  hide_opt '{' enumerator_list comma_opt '}'
@@ -2692,13 +2709,13 @@ enum_type:
 			$$ = DeclarationNode::newEnum( nullptr, $7, true, true, $3 )->addQualifiers( $5 );
 		}
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '!' '{' enumerator_list comma_opt '}' // unqualified type name
-		{ SemanticError( yylloc, "syntax error, hiding '!' the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM '(' ')' attribute_list_opt '{' enumerator_list comma_opt '}'
 		{
 			$$ = DeclarationNode::newEnum( nullptr, $6, true, true )->addQualifiers( $4 );
 		}
 	| ENUM '(' ')' attribute_list_opt '!' '{' enumerator_list comma_opt '}'	// invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, hiding '!' the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
 			if ( $3 && ($3->storageClasses.any() || $3->type->qualifiers.val != 0 )) {
@@ -3004,6 +3021,12 @@ type_parameter:											// CFA
 	// | type_specifier identifier_parameter_declarator
 	| assertion_list
 		{ $$ = DeclarationNode::newTypeParam( ast::TypeDecl::Dtype, new string( DeclarationNode::anonymous.newName() ) )->addAssertions( $1 ); }
+	| ENUM '(' identifier_or_type_name ')' identifier_or_type_name new_type_class type_initializer_opt assertion_list_opt
+		{	
+			typedefTable.addToScope( *$3, TYPEDIMname, "type_parameter 4" );
+			typedefTable.addToScope( *$5, TYPEDIMname, "type_parameter 5" );
+			$$ = DeclarationNode::newTypeParam( $6, $5 )->addTypeInitializer( $7 )->addAssertions( $8 );
+		}
 	;
 
 new_type_class:											// CFA
@@ -3169,7 +3192,8 @@ external_definition:
 			// Variable declarations of anonymous types requires creating a unique type-name across multiple translation
 			// unit, which is a dubious task, especially because C uses name rather than structural typing; hence it is
 			// disallowed at the moment.
-			if ( $1->linkage == ast::Linkage::Cforall && ! $1->storageClasses.is_static && $1->type && $1->type->kind == TypeData::AggregateInst ) {
+			if ( $1->linkage == ast::Linkage::Cforall && ! $1->storageClasses.is_static &&
+				 $1->type && $1->type->kind == TypeData::AggregateInst ) {
 				if ( $1->type->aggInst.aggregate->kind == TypeData::Enum && $1->type->aggInst.aggregate->enumeration.anon ) {
 					SemanticError( yylloc, "extern anonymous enumeration is currently unimplemented." ); $$ = nullptr;
 				} else if ( $1->type->aggInst.aggregate->aggregate.anon ) { // handles struct or union

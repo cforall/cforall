@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// GenImplicitCall.hpp --
+// GenImplicitCall.cpp -- Generate code for implicit operator calls.
 //
 // Author           : Andrew Beach
 // Created On       : Fri Apr 14 14:38:00 2023
@@ -30,20 +30,20 @@ namespace SymTab {
 
 namespace {
 
-template< typename OutIter >
+using Inserter = std::back_insert_iterator<std::list<ast::ptr<ast::Stmt>>>;
+
 ast::ptr< ast::Stmt > genCall(
 	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
-	const CodeLocation & loc, const std::string & fname, OutIter && out,
+	const CodeLocation & loc, const std::string & fname, Inserter && out,
 	const ast::Type * type, const ast::Type * addCast, LoopDirection forward = LoopForward );
 
 /// inserts into out a generated call expression to function fname with arguments dstParam and
 /// srcParam. Should only be called with non-array types.
 /// optionally returns a statement which must be inserted prior to the containing loop, if
 /// there is one
-template< typename OutIter >
 ast::ptr< ast::Stmt > genScalarCall(
 	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
-	const CodeLocation & loc, std::string fname, OutIter && out, const ast::Type * type,
+	const CodeLocation & loc, std::string fname, Inserter && out, const ast::Type * type,
 	const ast::Type * addCast = nullptr
 ) {
 	bool isReferenceCtorDtor = false;
@@ -96,10 +96,9 @@ ast::ptr< ast::Stmt > genScalarCall(
 
 /// Store in out a loop which calls fname on each element of the array with srcParam and
 /// dstParam as arguments. If forward is true, loop goes from 0 to N-1, else N-1 to 0
-template< typename OutIter >
 void genArrayCall(
 	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
-	const CodeLocation & loc, const std::string & fname, OutIter && out,
+	const CodeLocation & loc, const std::string & fname, Inserter && out,
 	const ast::ArrayType * array, const ast::Type * addCast = nullptr,
 	LoopDirection forward = LoopForward
 ) {
@@ -165,32 +164,31 @@ void genArrayCall(
 	*out++ = block;
 }
 
-template< typename OutIter >
 ast::ptr< ast::Stmt > genCall(
 	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
-	const CodeLocation & loc, const std::string & fname, OutIter && out,
+	const CodeLocation & loc, const std::string & fname, Inserter && out,
 	const ast::Type * type, const ast::Type * addCast, LoopDirection forward
 ) {
 	if ( auto at = dynamic_cast< const ast::ArrayType * >( type ) ) {
 		genArrayCall(
-			srcParam, dstParam, loc, fname, std::forward< OutIter >(out), at, addCast,
+			srcParam, dstParam, loc, fname, std::forward< Inserter&& >( out ), at, addCast,
 			forward );
 		return {};
 	} else {
 		return genScalarCall(
-			srcParam, dstParam, loc, fname, std::forward< OutIter >( out ), type, addCast );
+			srcParam, dstParam, loc, fname, std::forward< Inserter&& >( out ), type, addCast );
 	}
 }
 
 } // namespace
 
-ast::ptr< ast::Stmt > genImplicitCall(
+const ast::Stmt * genImplicitCall(
 	InitTweak::InitExpander & srcParam, const ast::Expr * dstParam,
 	const CodeLocation & loc, const std::string & fname, const ast::ObjectDecl * obj,
 	LoopDirection forward
 ) {
 	// unnamed bit fields are not copied as they cannot be accessed
-	if ( isUnnamedBitfield( obj ) ) return {};
+	if ( isUnnamedBitfield( obj ) ) return nullptr;
 
 	ast::ptr< ast::Type > addCast;
 	if ( (fname == "?{}" || fname == "^?{}") && ( ! obj || ( obj && ! obj->bitfieldWidth ) ) ) {
@@ -198,24 +196,20 @@ ast::ptr< ast::Stmt > genImplicitCall(
 		addCast = dstParam->result;
 	}
 
-	std::vector< ast::ptr< ast::Stmt > > stmts;
+	std::list< ast::ptr< ast::Stmt > > stmts;
 	genCall(
 		srcParam, dstParam, loc, fname, back_inserter( stmts ), obj->type, addCast, forward );
 
-	if ( stmts.empty() ) {
-		return {};
-	} else if ( stmts.size() == 1 ) {
-		const ast::Stmt * callStmt = stmts.front();
-		if ( addCast ) {
-			// implicitly generated ctor/dtor calls should be wrapped so that later passes are
-			// aware they were generated.
-			callStmt = new ast::ImplicitCtorDtorStmt( callStmt->location, callStmt );
-		}
-		return callStmt;
-	} else {
-		assert( false );
-		return {};
+	if ( stmts.empty() ) return nullptr;
+	assert( stmts.size() == 1 );
+
+	const ast::Stmt * callStmt = stmts.front().release();
+	// Implicitly generated ctor/dtor calls should be wrapped so that
+	// later passes are aware they were generated.
+	if ( addCast ) {
+		callStmt = new ast::ImplicitCtorDtorStmt( callStmt->location, callStmt );
 	}
+	return callStmt;
 }
 
 } // namespace SymTab
@@ -225,5 +219,3 @@ ast::ptr< ast::Stmt > genImplicitCall(
 // mode: c++ //
 // compile-command: "make install" //
 // End: //
-
-

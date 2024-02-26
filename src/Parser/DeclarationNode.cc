@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 14 19:05:17 2023
-// Update Count     : 1407
+// Last Modified On : Fri Feb 23 18:25:57 2024
+// Update Count     : 1533
 //
 
 #include "DeclarationNode.h"
@@ -158,9 +158,10 @@ void DeclarationNode::print( std::ostream & os, int indent ) const {
 	} // if
 
 	if ( ! attributes.empty() ) {
-		os << string( indent + 2, ' ' ) << "with attributes " << endl;
+		os << string( indent + 2, ' ' ) << "with attributes" << endl;
 		for ( ast::ptr<ast::Attribute> const & attr : reverseIterate( attributes ) ) {
-			os << string( indent + 4, ' ' ) << attr->name.c_str() << endl;
+			os << string( indent + 4, ' ' );
+			ast::print( os, attr, indent + 2 );
 		} // for
 	} // if
 
@@ -536,16 +537,18 @@ void DeclarationNode::checkSpecifiers( DeclarationNode * src ) {
 	appendError( error, src->error );
 } // DeclarationNode::checkSpecifiers
 
-DeclarationNode * DeclarationNode::copySpecifiers( DeclarationNode * q ) {
+DeclarationNode * DeclarationNode::copySpecifiers( DeclarationNode * q, bool copyattr ) {
 	funcSpecs |= q->funcSpecs;
 	storageClasses |= q->storageClasses;
 
-	std::vector<ast::ptr<ast::Attribute>> tmp;
-	tmp.reserve( q->attributes.size() );
-	for ( auto const & attr : q->attributes ) {
-		tmp.emplace_back( ast::shallowCopy( attr.get() ) );
-	}
-	spliceBegin( attributes, tmp );
+	if ( copyattr ) {
+		std::vector<ast::ptr<ast::Attribute>> tmp;
+		tmp.reserve( q->attributes.size() );
+		for ( auto const & attr : q->attributes ) {
+			tmp.emplace_back( ast::shallowCopy( attr.get() ) );
+		} // for
+		spliceBegin( attributes, tmp );
+	} // if
 
 	return this;
 } // DeclarationNode::copySpecifiers
@@ -680,15 +683,17 @@ static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 	} // if
 }
 
-DeclarationNode * DeclarationNode::addType( DeclarationNode * o ) {
+DeclarationNode * DeclarationNode::addType( DeclarationNode * o, bool copyattr ) {
 	if ( o ) {
 		checkSpecifiers( o );
-		copySpecifiers( o );
+		copySpecifiers( o, copyattr );
 		if ( o->type ) {
 			if ( ! type ) {
 				if ( o->type->kind == TypeData::Aggregate || o->type->kind == TypeData::Enum ) {
+					// Hide type information aggregate instances.
 					type = new TypeData( TypeData::AggregateInst );
-					type->aggInst.aggregate = o->type;
+					type->aggInst.aggregate = o->type;	// change ownership
+					type->aggInst.aggregate->aggregate.attributes.swap( o->attributes ); // change ownership					
 					if ( o->type->kind == TypeData::Aggregate ) {
 						type->aggInst.hoistType = o->type->aggregate.body;
 						type->aggInst.params = maybeCopy( o->type->aggregate.actuals );
@@ -699,7 +704,7 @@ DeclarationNode * DeclarationNode::addType( DeclarationNode * o ) {
 				} else {
 					type = o->type;
 				} // if
-				o->type = nullptr;
+				o->type = nullptr;						// change ownership
 			} else {
 				addTypeToType( o->type, type );
 			} // if
@@ -952,10 +957,10 @@ DeclarationNode * DeclarationNode::cloneType( string * name ) {
 	return newnode;
 }
 
-DeclarationNode * DeclarationNode::cloneBaseType( DeclarationNode * o ) {
+DeclarationNode * DeclarationNode::cloneBaseType( DeclarationNode * o, bool copyattr ) {
 	if ( ! o ) return nullptr;
 
-	o->copySpecifiers( this );
+	o->copySpecifiers( this, copyattr );
 	if ( type ) {
 		TypeData * srcType = type;
 
@@ -998,6 +1003,9 @@ DeclarationNode * DeclarationNode::extractAggregate() const {
 		if ( ret ) {
 			DeclarationNode * newnode = new DeclarationNode;
 			newnode->type = ret;
+			if ( ret->kind == TypeData::Aggregate ) {
+				newnode->attributes.swap( ret->aggregate.attributes );
+			} // if 
 			return newnode;
 		} // if
 	} // if
@@ -1109,10 +1117,10 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & 
 					assert( extr->type );
 					if ( extr->type->kind == TypeData::Aggregate ) {
 						// typedef struct { int A } B is the only case?
-						extracted_named = !extr->type->aggregate.anon;
+						extracted_named = ! extr->type->aggregate.anon;
 					} else if ( extr->type->kind == TypeData::Enum ) {
 						// typedef enum { A } B is the only case?
-						extracted_named = !extr->type->enumeration.anon;
+						extracted_named = ! extr->type->enumeration.anon;
 					} else {
 						extracted_named = true;
 					}

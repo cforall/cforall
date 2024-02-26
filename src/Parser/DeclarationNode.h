@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Wed Apr  5 11:38:00 2023
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr  5 11:55:00 2023
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Feb 17 09:24:12 2024
+// Update Count     : 4
 //
 
 #pragma once
@@ -82,8 +82,8 @@ struct DeclarationNode : public ParseNode {
 	DeclarationNode * addQualifiers( DeclarationNode * );
 	void checkQualifiers( const TypeData *, const TypeData * );
 	void checkSpecifiers( DeclarationNode * );
-	DeclarationNode * copySpecifiers( DeclarationNode * );
-	DeclarationNode * addType( DeclarationNode * );
+	DeclarationNode * copySpecifiers( DeclarationNode *, bool = true );
+	DeclarationNode * addType( DeclarationNode *, bool = true );
 	DeclarationNode * addTypedef();
 	DeclarationNode * addEnumBase( DeclarationNode * );
 	DeclarationNode * addAssertions( DeclarationNode * );
@@ -105,7 +105,7 @@ struct DeclarationNode : public ParseNode {
 	DeclarationNode * addTypeInitializer( DeclarationNode * init );
 
 	DeclarationNode * cloneType( std::string * newName );
-	DeclarationNode * cloneBaseType( DeclarationNode * newdecl );
+	DeclarationNode * cloneBaseType( DeclarationNode * newdecl, bool = true );
 
 	DeclarationNode * appendList( DeclarationNode * node ) {
 		return (DeclarationNode *)set_last( node );
