@@ -397,7 +397,7 @@ public:
 					result = new ast::BasicType{ kind, basic->qualifiers | type2->qualifiers };
 				}
 			}
-		} else if ( const ast::EnumPosType * pos = dynamic_cast< const ast::EnumPosType * >( type2 ) ) {
+		} else if ( dynamic_cast< const ast::EnumPosType * >( type2 ) ) {
 			ast::BasicType::Kind kind = commonTypes[ basic->kind ][ ast::BasicType::SignedInt ];
 			if (
 				( ( kind == basic->kind && basic->qualifiers >= type2->qualifiers )

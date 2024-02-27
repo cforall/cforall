@@ -516,7 +516,7 @@ namespace ResolvExpr {
 			handleRefType( aggrType, type2 );
 		}
 
-		void postvisit( const ast::EnumPosType * posType ) {
+		void postvisit( const ast::EnumPosType * ) {
 			// Does nothing for now. Handled in ReplacePseudoFunc
 			// Might move here in the future
 		}
