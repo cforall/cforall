@@ -1896,7 +1896,7 @@ declaration_list_opt:									// used at beginning of switch statement
 
 declaration_list:
 	declaration
-	| declaration_list declaration		{ $$ = $1->appendList( $2 ); }
+	| declaration_list declaration		{ $$ = $1->set_last( $2 ); }
 	;
 
 KR_parameter_list_opt:									// used to declare parameter types in K&R style functions
@@ -1909,7 +1909,7 @@ KR_parameter_list:
 	c_declaration ';'
 		{ $$ = $1; }
 	| KR_parameter_list c_declaration ';'
-		{ $$ = $1->appendList( $2 ); }
+		{ $$ = $1->set_last( $2 ); }
 	;
 
 local_label_declaration_opt:							// GCC, local label
@@ -1967,7 +1967,7 @@ cfa_variable_declaration:								// CFA
 		// them as a type_qualifier cannot appear in that context.
 		{ $$ = $2->addQualifiers( $1 )->addInitializer( $3 ); }
 	| cfa_variable_declaration pop ',' push identifier_or_type_name initializer_opt
-		{ $$ = $1->appendList( $1->cloneType( $5 )->addInitializer( $6 ) ); }
+		{ $$ = $1->set_last( $1->cloneType( $5 )->addInitializer( $6 ) ); }
 	;
 
 cfa_variable_specifier:									// CFA
@@ -1994,7 +1994,7 @@ cfa_function_declaration:								// CFA
 			// Append the return type at the start (left-hand-side) to each identifier in the list.
 			DeclarationNode * ret = new DeclarationNode;
 			ret->type = maybeCopy( $1->type->base );
-			$$ = $1->appendList( DeclarationNode::newFunction( $3, ret, $6, nullptr ) );
+			$$ = $1->set_last( DeclarationNode::newFunction( $3, ret, $6, nullptr ) );
 		}
 	;
 
@@ -2033,7 +2033,7 @@ cfa_function_return:									// CFA
 		{ $$ = DeclarationNode::newTuple( $3 ); }
 	| '[' push cfa_parameter_list pop ',' push cfa_abstract_parameter_list pop ']'
 		// To obtain LR(1 ), the last cfa_abstract_parameter_list is added into this flattened rule to lookahead to the ']'.
-		{ $$ = DeclarationNode::newTuple( $3->appendList( $7 ) ); }
+		{ $$ = DeclarationNode::newTuple( $3->set_last( $7 ) ); }
 	;
 
 cfa_typedef_declaration:								// CFA
@@ -2050,7 +2050,7 @@ cfa_typedef_declaration:								// CFA
 	| cfa_typedef_declaration pop ',' push identifier
 		{
 			typedefTable.addToEnclosingScope( *$5, TYPEDEFname, "cfa_typedef_declaration 3" );
-			$$ = $1->appendList( $1->cloneType( $5 ) );
+			$$ = $1->set_last( $1->cloneType( $5 ) );
 		}
 	;
 
@@ -2068,7 +2068,7 @@ typedef_declaration:
 	| typedef_declaration ',' declarator
 		{
 			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "typedef_declaration 2" );
-			$$ = $1->appendList( $1->cloneBaseType( $3 )->addTypedef() );
+			$$ = $1->set_last( $1->cloneBaseType( $3 )->addTypedef() );
 		}
 	| type_qualifier_list TYPEDEF type_specifier declarator // remaining OBSOLESCENT (see 2 )
 		{ SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); $$ = nullptr; }
@@ -2122,7 +2122,7 @@ declaring_list:
 		{ $$ = $1->addAsmName( $2 )->addInitializer( new InitializerNode( true ) ); }
 
 	| declaring_list ',' attribute_list_opt declarator asm_name_opt initializer_opt
-		{ $$ = $1->appendList( $4->addQualifiers( $3 )->addAsmName( $5 )->addInitializer( $6 ) ); }
+		{ $$ = $1->set_last( $4->addQualifiers( $3 )->addAsmName( $5 )->addInitializer( $6 ) ); }
 	;
 
 general_function_declarator:
@@ -2586,7 +2586,7 @@ field_declaration_list_opt:
 	// empty
 		{ $$ = nullptr; }
 	| field_declaration_list_opt field_declaration
-		{ $$ = $1 ? $1->appendList( $2 ) : $2; }
+		{ $$ = $1 ? $1->set_last( $2 ) : $2; }
 	;
 
 field_declaration:
@@ -2634,7 +2634,7 @@ field_declaring_list_opt:
 		{ $$ = nullptr; }
 	| field_declarator
 	| field_declaring_list_opt ',' attribute_list_opt field_declarator
-		{ $$ = $1->appendList( $4->addQualifiers( $3 ) ); }
+		{ $$ = $1->set_last( $4->addQualifiers( $3 ) ); }
 	;
 
 field_declarator:
@@ -2656,7 +2656,7 @@ field_abstract_list_opt:
 		{ $$ = nullptr; }
 	| field_abstract
 	| field_abstract_list_opt ',' attribute_list_opt field_abstract
-		{ $$ = $1->appendList( $4->addQualifiers( $3 ) ); }
+		{ $$ = $1->set_last( $4->addQualifiers( $3 ) ); }
 	;
 
 field_abstract:
@@ -2669,14 +2669,14 @@ cfa_field_declaring_list:								// CFA, new style field declaration
 	cfa_abstract_declarator_tuple identifier_or_type_name
 		{ $$ = $1->addName( $2 ); }
 	| cfa_field_declaring_list ',' identifier_or_type_name
-		{ $$ = $1->appendList( $1->cloneType( $3 ) ); }
+		{ $$ = $1->set_last( $1->cloneType( $3 ) ); }
 	;
 
 cfa_field_abstract_list:								// CFA, new style field declaration
 	// bit-fields are handled by C declarations
 	cfa_abstract_declarator_tuple
 	| cfa_field_abstract_list ','
-		{ $$ = $1->appendList( $1->cloneType( 0 ) ); }
+		{ $$ = $1->set_last( $1->cloneType( 0 ) ); }
 	;
 
 bit_subrange_size_opt:
@@ -2768,9 +2768,9 @@ enumerator_list:
 	| INLINE type_name
 		{ $$ = DeclarationNode::newEnumInLine( *$2->type->symbolic.name ); }
 	| enumerator_list ',' visible_hide_opt identifier_or_type_name enumerator_value_opt
-		{ $$ = $1->appendList( DeclarationNode::newEnumValueGeneric( $4, $5 ) ); }
+		{ $$ = $1->set_last( DeclarationNode::newEnumValueGeneric( $4, $5 ) ); }
 	| enumerator_list ',' INLINE type_name enumerator_value_opt
-		{ $$ = $1->appendList( DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ) ); }
+		{ $$ = $1->set_last( DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ) ); }
 	;
 
 visible_hide_opt:
@@ -2796,7 +2796,7 @@ cfa_parameter_ellipsis_list_opt:						// CFA, abstract + real
 	| cfa_abstract_parameter_list
 	| cfa_parameter_list
 	| cfa_parameter_list pop ',' push cfa_abstract_parameter_list
-		{ $$ = $1->appendList( $5 ); }
+		{ $$ = $1->set_last( $5 ); }
 	| cfa_abstract_parameter_list pop ',' push ELLIPSIS
 		{ $$ = $1->addVarArgs(); }
 	| cfa_parameter_list pop ',' push ELLIPSIS
@@ -2808,17 +2808,17 @@ cfa_parameter_list:										// CFA
 		// factored out from cfa_parameter_list, flattening the rules to get lookahead to the ']'.
 	cfa_parameter_declaration
 	| cfa_abstract_parameter_list pop ',' push cfa_parameter_declaration
-		{ $$ = $1->appendList( $5 ); }
+		{ $$ = $1->set_last( $5 ); }
 	| cfa_parameter_list pop ',' push cfa_parameter_declaration
-		{ $$ = $1->appendList( $5 ); }
+		{ $$ = $1->set_last( $5 ); }
 	| cfa_parameter_list pop ',' push cfa_abstract_parameter_list pop ',' push cfa_parameter_declaration
-		{ $$ = $1->appendList( $5 )->appendList( $9 ); }
+		{ $$ = $1->set_last( $5 )->set_last( $9 ); }
 	;
 
 cfa_abstract_parameter_list:							// CFA, new & old style abstract
 	cfa_abstract_parameter_declaration
 	| cfa_abstract_parameter_list pop ',' push cfa_abstract_parameter_declaration
-		{ $$ = $1->appendList( $5 ); }
+		{ $$ = $1->set_last( $5 ); }
 	;
 
 parameter_type_list_opt:
@@ -2835,9 +2835,9 @@ parameter_list:											// abstract + real
 	abstract_parameter_declaration
 	| parameter_declaration
 	| parameter_list ',' abstract_parameter_declaration
-		{ $$ = $1->appendList( $3 ); }
+		{ $$ = $1->set_last( $3 ); }
 	| parameter_list ',' parameter_declaration
-		{ $$ = $1->appendList( $3 ); }
+		{ $$ = $1->set_last( $3 ); }
 	;
 
 // Provides optional identifier names (abstract_declarator/variable_declarator), no initialization, different semantics
@@ -2888,7 +2888,7 @@ identifier_list:										// K&R-style parameter list => no types
 	identifier
 		{ $$ = DeclarationNode::newName( $1 ); }
 	| identifier_list ',' identifier
-		{ $$ = $1->appendList( DeclarationNode::newName( $3 ) ); }
+		{ $$ = $1->set_last( DeclarationNode::newName( $3 ) ); }
 	;
 
 identifier_or_type_name:
@@ -2989,7 +2989,7 @@ designator:
 type_parameter_list:									// CFA
 	type_parameter
 	| type_parameter_list ',' type_parameter
-		{ $$ = $1->appendList( $3 ); }
+		{ $$ = $1->set_last( $3 ); }
 	;
 
 type_initializer_opt:									// CFA
@@ -3062,7 +3062,7 @@ assertion_list_opt:										// CFA
 assertion_list:											// CFA
 	assertion
 	| assertion_list assertion
-		{ $$ = $1->appendList( $2 ); }
+		{ $$ = $1->set_last( $2 ); }
 	;
 
 assertion:												// CFA
@@ -3090,7 +3090,7 @@ type_declaring_list:									// CFA
 	| storage_class_list OTYPE type_declarator
 		{ $$ = $3->addQualifiers( $1 ); }
 	| type_declaring_list ',' type_declarator
-		{ $$ = $1->appendList( $3->copySpecifiers( $1 ) ); }
+		{ $$ = $1->set_last( $3->copySpecifiers( $1 ) ); }
 	;
 
 type_declarator:										// CFA
@@ -3133,7 +3133,7 @@ trait_specifier:										// CFA
 trait_declaration_list:									// CFA
 	trait_declaration
 	| trait_declaration_list pop push trait_declaration
-		{ $$ = $1->appendList( $4 ); }
+		{ $$ = $1->set_last( $4 ); }
 	;
 
 trait_declaration:										// CFA
@@ -3145,14 +3145,14 @@ cfa_trait_declaring_list:								// CFA
 	cfa_variable_specifier
 	| cfa_function_specifier
 	| cfa_trait_declaring_list pop ',' push identifier_or_type_name
-		{ $$ = $1->appendList( $1->cloneType( $5 ) ); }
+		{ $$ = $1->set_last( $1->cloneType( $5 ) ); }
 	;
 
 trait_declaring_list:									// CFA
 	type_specifier declarator
 		{ $$ = $2->addType( $1 ); }
 	| trait_declaring_list pop ',' push declarator
-		{ $$ = $1->appendList( $1->cloneBaseType( $5 ) ); }
+		{ $$ = $1->set_last( $1->cloneBaseType( $5 ) ); }
 	;
 
 // **************************** EXTERNAL DEFINITIONS *****************************
@@ -3160,14 +3160,14 @@ trait_declaring_list:									// CFA
 translation_unit:
 	// empty, input file
 	| external_definition_list
-		{ parseTree = parseTree ? parseTree->appendList( $1 ) : $1;	}
+		{ parseTree = parseTree ? parseTree->set_last( $1 ) : $1;	}
 	;
 
 external_definition_list:
 	push external_definition pop
 		{ $$ = $2; }
 	| external_definition_list push external_definition pop
-		{ $$ = $1 ? $1->appendList( $3 ) : $3; }
+		{ $$ = $1 ? $1->set_last( $3 ) : $3; }
 	;
 
 external_definition_list_opt:

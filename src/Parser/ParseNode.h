@@ -32,8 +32,8 @@
 #include "Parser/parserutility.h"  // for maybeBuild, maybeCopy
 
 struct DeclarationNode;
-class InitializerNode;
-class ExpressionNode;
+struct InitializerNode;
+struct ExpressionNode;
 struct StatementNode;
 
 
@@ -44,37 +44,45 @@ typedef CodeLocation YYLTYPE;
 
 extern YYLTYPE yylloc;
 
-class ParseNode {
-  public:
-	ParseNode() {};
-	virtual ~ParseNode() { delete next; delete name; };
+struct ParseNode {
+	ParseNode() {}
+	virtual ~ParseNode() {}
 	virtual ParseNode * clone() const = 0;
 
-	ParseNode * get_next() const { return next; }
-	ParseNode * set_next( ParseNode * newlink ) { next = newlink; return this; }
+	virtual void print( __attribute__((unused)) std::ostream & os, __attribute__((unused)) int indent = 0 ) const {}
 
-	ParseNode * get_last() {
-		ParseNode * current;
-		for ( current = this; current->get_next() != nullptr; current = current->get_next() );
+	static int indent_by;
+
+	CodeLocation location = yylloc;
+}; // ParseNode
+
+/// Only ever use in the form `struct NAME final : public ParseList<NAME>`!
+template<typename Next>
+struct ParseList : public ParseNode {
+	ParseList() {}
+	virtual ~ParseList() { delete next; };
+	virtual ParseList<Next> * clone() const = 0;
+
+	Next * get_next() const { return next; }
+	void set_next( Next * newlink ) { next = newlink; }
+
+	Next * get_last() {
+		Next * current = static_cast<Next *>( this );
+		while ( current->next != nullptr ) current = current->next;
 		return current;
 	}
-	ParseNode * set_last( ParseNode * newlast ) {
-		if ( newlast != nullptr ) get_last()->set_next( newlast );
-		return this;
+	Next * set_last( Next * newlast ) {
+		if ( newlast != nullptr ) get_last()->next = newlast;
+		return static_cast<Next *>( this );
 	}
 
-	virtual void print( __attribute__((unused)) std::ostream & os, __attribute__((unused)) int indent = 0 ) const {}
 	virtual void printList( std::ostream & os, int indent = 0 ) const {
 		print( os, indent );
 		if ( next ) next->print( os, indent );
 	}
 
-	static int indent_by;
-
-	ParseNode * next = nullptr;
-	const std::string * name = nullptr;
-	CodeLocation location = yylloc;
-}; // ParseNode
+	Next * next = nullptr;
+};
 
 // Must harmonize with OperName.
 enum class OperKinds {

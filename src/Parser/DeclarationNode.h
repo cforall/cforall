@@ -18,9 +18,9 @@
 #include "ParseNode.h"
 
 struct TypeData;
-class InitializerNode;
+struct InitializerNode;
 
-struct DeclarationNode : public ParseNode {
+struct DeclarationNode final : public ParseList<DeclarationNode> {
 	// These enumerations must harmonize with their names in DeclarationNode.cc.
 	enum BasicType {
 		Void, Bool, Char, Int, Int128,
@@ -107,10 +107,6 @@ struct DeclarationNode : public ParseNode {
 	DeclarationNode * cloneType( std::string * newName );
 	DeclarationNode * cloneBaseType( DeclarationNode * newdecl, bool = true );
 
-	DeclarationNode * appendList( DeclarationNode * node ) {
-		return (DeclarationNode *)set_last( node );
-	}
-
 	virtual void print( __attribute__((unused)) std::ostream & os, __attribute__((unused)) int indent = 0 ) const override;
 	virtual void printList( __attribute__((unused)) std::ostream & os, __attribute__((unused)) int indent = 0 ) const override;
 
@@ -128,7 +124,7 @@ struct DeclarationNode : public ParseNode {
 	bool get_inLine() const { return inLine; }
 	DeclarationNode * set_inLine( bool inL ) { inLine = inL; return this; }
 
-	DeclarationNode * get_last() { return (DeclarationNode *)ParseNode::get_last(); }
+	const std::string * name = nullptr;
 
 	struct Variable_t {
 //		const std::string * name;
@@ -176,14 +172,6 @@ static inline ast::Type * maybeMoveBuildType( const DeclarationNode * orig ) {
 	return ret;
 }
 
-template<typename NodeType>
-NodeType * strict_next( NodeType * node ) {
-	ParseNode * next = node->get_next();
-	if ( nullptr == next ) return nullptr;
-	if ( NodeType * ret = dynamic_cast<NodeType *>( next ) ) return ret;
-	SemanticError( next->location, "internal error, non-homogeneous nodes founds in buildList processing." );
-}
-
 // This generic buildList is here along side its overloads.
 template<typename AstType, typename NodeType,
 		template<typename, typename...> class Container, typename... Args>
@@ -192,7 +180,7 @@ void buildList( NodeType * firstNode,
 	SemanticErrorException errors;
 	std::back_insert_iterator<Container<ast::ptr<AstType>, Args...>> out( output );
 
-	for ( NodeType * cur = firstNode ; cur ; cur = strict_next( cur ) ) {
+	for ( NodeType * cur = firstNode ; cur ; cur = cur->next ) {
 		try {
 			AstType * node = dynamic_cast<AstType *>( maybeBuild( cur ) );
 			assertf( node, "buildList: Did not build node of correct type." );

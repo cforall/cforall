@@ -17,8 +17,7 @@
 
 #include "ParseNode.h"
 
-class InitializerNode : public ParseNode {
-public:
+struct InitializerNode final : public ParseList<InitializerNode> {
 	InitializerNode( ExpressionNode *, bool aggrp = false, ExpressionNode * des = nullptr );
 	InitializerNode( InitializerNode *, bool aggrp = false, ExpressionNode * des = nullptr );
 	InitializerNode( bool isDelete );

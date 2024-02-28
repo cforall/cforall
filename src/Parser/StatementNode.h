@@ -17,7 +17,7 @@
 
 #include "ParseNode.h"
 
-struct StatementNode final : public ParseNode {
+struct StatementNode final : public ParseList<StatementNode> {
 	StatementNode() : stmt( nullptr ) {}
 	StatementNode( ast::Stmt * stmt ) : stmt( stmt ) {}
 	StatementNode( DeclarationNode * decl );
@@ -38,14 +38,9 @@ struct StatementNode final : public ParseNode {
 	std::unique_ptr<ast::Stmt> stmt;
 }; // StatementNode
 
-struct ClauseNode final : public ParseNode {
+struct ClauseNode final : public ParseList<ClauseNode> {
 	ClauseNode( ast::StmtClause * clause ) : clause( clause ) {}
 	virtual ~ClauseNode() {}
-
-	ClauseNode * set_last( ParseNode * newlast ) {
-		ParseNode::set_last( newlast );
-        return this;
-    }
 
 	virtual ClauseNode * clone() const final { assert( false ); return nullptr; }
 	ast::StmtClause * build() { return clause.release(); }

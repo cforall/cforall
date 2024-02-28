@@ -17,16 +17,16 @@
 
 #include "ParseNode.h"
 
-class InitializerNode;
+struct InitializerNode;
 
-class ExpressionNode final : public ParseNode {
-public:
+struct ExpressionNode final : public ParseList<ExpressionNode> {
 	ExpressionNode( ast::Expr * expr = nullptr ) : expr( expr ) {}
 	virtual ~ExpressionNode() {}
 	virtual ExpressionNode * clone() const override {
 		if ( nullptr == expr ) return nullptr;
-		return static_cast<ExpressionNode*>(
-			(new ExpressionNode( ast::shallowCopy( expr.get() ) ))->set_next( maybeCopy( get_next() ) ));
+		ExpressionNode * node = new ExpressionNode( ast::shallowCopy( expr.get() ) );
+		node->set_next( maybeCopy( get_next() ) );
+		return node;
 	}
 
 	bool get_extension() const { return extension; }

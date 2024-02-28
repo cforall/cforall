@@ -411,6 +411,7 @@ public:
 	const ast::ConstructorInit * previsit( const ast::ConstructorInit * );
 
 	void resolveWithExprs(std::vector<ast::ptr<ast::Expr>> & exprs, std::list<ast::ptr<ast::Stmt>> & stmtsToAdd);
+	bool shouldGenCtorInit( const ast::ObjectDecl * ) const;
 
 	void beginScope() { managedTypes.beginScope(); }
 	void endScope() { managedTypes.endScope(); }
@@ -580,6 +581,17 @@ const ast::FunctionDecl * Resolver::postvisit( const ast::FunctionDecl * functio
 	return functionDecl;
 }
 
+bool Resolver::shouldGenCtorInit( ast::ObjectDecl const * decl ) const {
+	// If we shouldn't try to construct it, then don't.
+	if ( !InitTweak::tryConstruct( decl ) ) return false;
+	// Otherwise, if it is a managed type, we may construct it.
+	if ( managedTypes.isManaged( decl ) ) return true;
+	// Skip construction if it is trivial at compile-time.
+	if ( InitTweak::isConstExpr( decl->init ) ) return false;
+	// Skip construction for local declarations.
+	return ( !isInFunction() || decl->storage.is_static );
+}
+
 const ast::ObjectDecl * Resolver::previsit( const ast::ObjectDecl * objectDecl ) {
 	// To handle initialization of routine pointers [e.g. int (*fp)(int) = foo()],
 	// class-variable `initContext` is changed multiple times because the LHS is analyzed
@@ -614,7 +626,7 @@ const ast::ObjectDecl * Resolver::previsit( const ast::ObjectDecl * objectDecl )
 			// in certain cases, fixObjectType is called before reaching
 			// this object in visitor pass, thus disabling CtorInit codegen.
 			// this happens on aggregate members and function parameters.
-			if ( InitTweak::tryConstruct( mutDecl ) && ( managedTypes.isManaged( mutDecl ) || ((! isInFunction() || mutDecl->storage.is_static ) && ! InitTweak::isConstExpr( mutDecl->init ) ) ) ) {
+			if ( shouldGenCtorInit( mutDecl ) ) {
 				// constructed objects cannot be designated
 				if ( InitTweak::isDesignated( mutDecl->init ) ) {
 					ast::Pass<ResolveDesignators> res( context );

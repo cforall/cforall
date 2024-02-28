@@ -81,6 +81,8 @@ DeclarationNode::DeclarationNode() :
 }
 
 DeclarationNode::~DeclarationNode() {
+	delete name;
+
 //	delete variable.name;
 	delete variable.assertions;
 	delete variable.initializer;
@@ -169,7 +171,7 @@ void DeclarationNode::print( std::ostream & os, int indent ) const {
 }
 
 void DeclarationNode::printList( std::ostream & os, int indent ) const {
-	ParseNode::printList( os, indent );
+	ParseList::printList( os, indent );
 	if ( hasEllipsis ) {
 		os << string( indent, ' ' )  << "and a variable number of other arguments" << endl;
 	} // if
@@ -581,11 +583,11 @@ DeclarationNode * DeclarationNode::addQualifiers( DeclarationNode * q ) {
 
 	if ( q->type->forall ) {							// forall qualifier ?
 		if ( type->forall ) {							// polymorphic routine ?
-			type->forall->appendList( q->type->forall ); // augment forall qualifier
+			type->forall->set_last( q->type->forall ); // augment forall qualifier
 		} else {
 			if ( type->kind == TypeData::Aggregate ) {	// struct/union ?
 				if ( type->aggregate.params ) {			// polymorphic ?
-					type->aggregate.params->appendList( q->type->forall ); // augment forall qualifier
+					type->aggregate.params->set_last( q->type->forall ); // augment forall qualifier
 				} else {								// not polymorphic
 					type->aggregate.params = q->type->forall; // set forall qualifier
 				} // if
@@ -609,7 +611,7 @@ DeclarationNode * DeclarationNode::addQualifiers( DeclarationNode * q ) {
 static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 	if ( src->forall && dst->kind == TypeData::Function ) {
 		if ( dst->forall ) {
-			dst->forall->appendList( src->forall );
+			dst->forall->set_last( src->forall );
 		} else {
 			dst->forall = src->forall;
 		} // if
@@ -671,7 +673,7 @@ static void addTypeToType( TypeData *& src, TypeData *& dst ) {
 				break;
 			default:
 				if ( dst->forall ) {
-					dst->forall->appendList( src->forall );
+					dst->forall->set_last( src->forall );
 				} else {
 					dst->forall = src->forall;
 				} // if
@@ -744,7 +746,7 @@ DeclarationNode * DeclarationNode::addTypedef() {
 DeclarationNode * DeclarationNode::addAssertions( DeclarationNode * assertions ) {
 	if ( variable.tyClass != ast::TypeDecl::NUMBER_OF_KINDS ) {
 		if ( variable.assertions ) {
-			variable.assertions->appendList( assertions );
+			variable.assertions->set_last( assertions );
 		} else {
 			variable.assertions = assertions;
 		} // if
@@ -755,7 +757,7 @@ DeclarationNode * DeclarationNode::addAssertions( DeclarationNode * assertions )
 	switch ( type->kind ) {
 	case TypeData::Symbolic:
 		if ( type->symbolic.assertions ) {
-			type->symbolic.assertions->appendList( assertions );
+			type->symbolic.assertions->set_last( assertions );
 		} else {
 			type->symbolic.assertions = assertions;
 		} // if
@@ -1098,7 +1100,7 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & 
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::Decl>>> out( outputList );
 
-	for ( const DeclarationNode * cur = firstNode ; cur ; cur = strict_next( cur ) ) {
+	for ( const DeclarationNode * cur = firstNode ; cur ; cur = cur->next ) {
 		try {
 			bool extracted_named = false;
 			ast::UnionDecl * unionDecl = nullptr;
@@ -1166,7 +1168,7 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithT
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::DeclWithType>>> out( outputList );
 
-	for ( const DeclarationNode * cur = firstNode; cur; cur = strict_next( cur ) ) {
+	for ( const DeclarationNode * cur = firstNode; cur; cur = cur->next ) {
 		try {
 			ast::Decl * decl = cur->build();
 			assertf( decl, "buildList: build for ast::DeclWithType." );
@@ -1216,7 +1218,7 @@ void buildTypeList( const DeclarationNode * firstNode,
 	SemanticErrorException errors;
 	std::back_insert_iterator<std::vector<ast::ptr<ast::Type>>> out( outputList );
 
-	for ( const DeclarationNode * cur = firstNode ; cur ; cur = strict_next( cur ) ) {
+	for ( const DeclarationNode * cur = firstNode ; cur ; cur = cur->next ) {
 		try {
 			* out++ = cur->buildType();
 		} catch ( SemanticErrorException & e ) {
