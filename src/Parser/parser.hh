@@ -182,23 +182,24 @@ extern int yydebug;
     NE = 388,
     ANDAND = 389,
     OROR = 390,
-    ELLIPSIS = 391,
-    EXPassign = 392,
-    MULTassign = 393,
-    DIVassign = 394,
-    MODassign = 395,
-    PLUSassign = 396,
-    MINUSassign = 397,
-    LSassign = 398,
-    RSassign = 399,
-    ANDassign = 400,
-    ERassign = 401,
-    ORassign = 402,
-    ErangeUpEq = 403,
-    ErangeDown = 404,
-    ErangeDownEq = 405,
-    ATassign = 406,
-    THEN = 407
+    ATTR = 391,
+    ELLIPSIS = 392,
+    EXPassign = 393,
+    MULTassign = 394,
+    DIVassign = 395,
+    MODassign = 396,
+    PLUSassign = 397,
+    MINUSassign = 398,
+    LSassign = 399,
+    RSassign = 400,
+    ANDassign = 401,
+    ERassign = 402,
+    ORassign = 403,
+    ErangeUpEq = 404,
+    ErangeDown = 405,
+    ErangeDownEq = 406,
+    ATassign = 407,
+    THEN = 408
   };
 #endif
 /* Tokens.  */
@@ -335,23 +336,24 @@ extern int yydebug;
 #define NE 388
 #define ANDAND 389
 #define OROR 390
-#define ELLIPSIS 391
-#define EXPassign 392
-#define MULTassign 393
-#define DIVassign 394
-#define MODassign 395
-#define PLUSassign 396
-#define MINUSassign 397
-#define LSassign 398
-#define RSassign 399
-#define ANDassign 400
-#define ERassign 401
-#define ORassign 402
-#define ErangeUpEq 403
-#define ErangeDown 404
-#define ErangeDownEq 405
-#define ATassign 406
-#define THEN 407
+#define ATTR 391
+#define ELLIPSIS 392
+#define EXPassign 393
+#define MULTassign 394
+#define DIVassign 395
+#define MODassign 396
+#define PLUSassign 397
+#define MINUSassign 398
+#define LSassign 399
+#define RSassign 400
+#define ANDassign 401
+#define ERassign 402
+#define ORassign 403
+#define ErangeUpEq 404
+#define ErangeDown 405
+#define ErangeDownEq 406
+#define ATassign 407
+#define THEN 408
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -379,7 +381,7 @@ union YYSTYPE
 	ast::ExceptionKind except_kind;
 	ast::GenericExpr * genexpr;
 
-#line 383 "Parser/parser.hh"
+#line 385 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

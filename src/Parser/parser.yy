@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 23 18:25:46 2024
-// Update Count     : 6484
+// Last Modified On : Mon Mar  4 08:44:25 2024
+// Update Count     : 6562
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -125,7 +125,7 @@ DeclarationNode * distAttr( DeclarationNode * typeSpec, DeclarationNode * declLi
 	// addType copies the type information for the aggregate instances from typeSpec into cl's aggInst.aggregate.
 	DeclarationNode * cl = (new DeclarationNode)->addType( typeSpec ); // typeSpec IS DELETED!!!
 
-	// Start at second variable in declaration list and clone the type specifiers for each variable..
+	// Start at second variable in declaration list and clone the type specifiers for each variable.
 	for ( DeclarationNode * cur = dynamic_cast<DeclarationNode *>( declList->get_next() ); cur != nullptr; cur = dynamic_cast<DeclarationNode *>( cur->get_next() ) ) {
 		cl->cloneBaseType( cur, copyattr );				// cur is modified
 	} // for
@@ -388,7 +388,7 @@ if ( N ) {																		\
 %token LS RS											// <<	>>
 %token LE GE EQ NE										// <=	>=	==	!=
 %token ANDAND OROR										// &&	||
-%token ELLIPSIS											// ...
+%token ATTR ELLIPSIS									// @@	...
 
 %token EXPassign	MULTassign	DIVassign	MODassign	// \=	*=	/=	%=
 %token PLUSassign	MINUSassign							// +=	-=
@@ -432,7 +432,7 @@ if ( N ) {																		\
 // statements
 %type<stmt> statement					labeled_statement			compound_statement
 %type<stmt> statement_decl				statement_decl_list			statement_list_nodecl
-%type<stmt> selection_statement			if_statement
+%type<stmt> selection_statement
 %type<clause> switch_clause_list_opt	switch_clause_list
 %type<expr> case_value
 %type<clause> case_clause				case_value_list				case_label	case_label_list
@@ -499,7 +499,7 @@ if ( N ) {																		\
 %type<decl> cfa_identifier_parameter_array cfa_identifier_parameter_declarator_no_tuple
 %type<decl> cfa_identifier_parameter_declarator_tuple cfa_identifier_parameter_ptr
 
-%type<decl> cfa_parameter_declaration cfa_parameter_list cfa_parameter_ellipsis_list_opt
+%type<decl> cfa_parameter_declaration cfa_parameter_list cfa_parameter_list_ellipsis_opt
 
 %type<decl> cfa_typedef_declaration cfa_variable_declaration cfa_variable_specifier
 
@@ -507,7 +507,7 @@ if ( N ) {																		\
 %type<decl> KR_function_declarator KR_function_no_ptr KR_function_ptr KR_function_array
 %type<decl> KR_parameter_list KR_parameter_list_opt
 
-%type<decl> parameter_declaration parameter_list parameter_type_list_opt
+%type<decl> parameter_declaration parameter_list parameter_list_ellipsis_opt
 
 %type<decl> paren_identifier paren_type
 
@@ -529,7 +529,7 @@ if ( N ) {																		\
 %type<decl> type type_no_function
 %type<decl> type_parameter type_parameter_list type_initializer_opt
 
-%type<expr> type_parameters_opt type_list array_type_list
+%type<expr> type_parameters_opt type_list array_type_list // array_dimension_list
 
 %type<decl> type_qualifier type_qualifier_name forall type_qualifier_list_opt type_qualifier_list
 %type<decl> type_specifier type_specifier_nobody
@@ -1245,11 +1245,18 @@ expression_statement:
 		{ $$ = new StatementNode( build_expr( yylloc, $1 ) ); }
 	;
 
+// if, switch, and choose require parenthesis around the conditional because it can be followed by a statement.
+// For example, without parenthesis:
+//
+//    if x + y + z; => "if ( x + y ) + z" or "if ( x ) + y + z"
+//    switch ( S ) { ... } => switch ( S ) { compound literal... } ... or 
+
 selection_statement:
-			// pop causes a S/R conflict without separating the IF statement into a non-terminal even after resolving
-			// the inherent S/R conflict with THEN/ELSE.
-	push if_statement pop
-		{ $$ = $2; }
+	IF '(' conditional_declaration ')' statement		%prec THEN
+		// explicitly deal with the shift/reduce conflict on if/else
+		{ $$ = new StatementNode( build_if( yylloc, $3, maybe_build_compound( yylloc, $5 ), nullptr ) ); }
+	| IF '(' conditional_declaration ')' statement ELSE statement
+		{ $$ = new StatementNode( build_if( yylloc, $3, maybe_build_compound( yylloc, $5 ), maybe_build_compound( yylloc, $7 ) ) ); }
 	| SWITCH '(' comma_expression ')' case_clause
 		{ $$ = new StatementNode( build_switch( yylloc, true, $3, $5 ) ); }
 	| SWITCH '(' comma_expression ')' '{' push declaration_list_opt switch_clause_list_opt pop '}' // CFA
@@ -1273,14 +1280,6 @@ selection_statement:
 		}
 	| CHOOSE '(' comma_expression ')' '{' error '}'		// CFA, invalid syntax rule
 		{ SemanticError( yylloc, "syntax error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
-	;
-
-if_statement:
-	IF '(' conditional_declaration ')' statement		%prec THEN
-		// explicitly deal with the shift/reduce conflict on if/else
-		{ $$ = new StatementNode( build_if( yylloc, $3, maybe_build_compound( yylloc, $5 ), nullptr ) ); }
-	| IF '(' conditional_declaration ')' statement ELSE statement
-		{ $$ = new StatementNode( build_if( yylloc, $3, maybe_build_compound( yylloc, $5 ), maybe_build_compound( yylloc, $7 ) ) ); }
 	;
 
 conditional_declaration:
@@ -1896,7 +1895,8 @@ declaration_list_opt:									// used at beginning of switch statement
 
 declaration_list:
 	declaration
-	| declaration_list declaration		{ $$ = $1->set_last( $2 ); }
+	| declaration_list declaration
+		{ $$ = $1->set_last( $2 ); }
 	;
 
 KR_parameter_list_opt:									// used to declare parameter types in K&R style functions
@@ -1989,7 +1989,7 @@ cfa_function_declaration:								// CFA
 		{ $$ = $2->addQualifiers( $1 ); }
 	| declaration_qualifier_list type_qualifier_list cfa_function_specifier
 		{ $$ = $3->addQualifiers( $1 )->addQualifiers( $2 ); }
-	| cfa_function_declaration ',' identifier_or_type_name '(' push cfa_parameter_ellipsis_list_opt pop ')'
+	| cfa_function_declaration ',' identifier_or_type_name '(' push cfa_parameter_list_ellipsis_opt pop ')'
 		{
 			// Append the return type at the start (left-hand-side) to each identifier in the list.
 			DeclarationNode * ret = new DeclarationNode;
@@ -1999,41 +1999,33 @@ cfa_function_declaration:								// CFA
 	;
 
 cfa_function_specifier:									// CFA
-//	'[' ']' identifier_or_type_name '(' push cfa_parameter_ellipsis_list_opt pop ')' // S/R conflict
-//		{
-//			$$ = DeclarationNode::newFunction( $3, DeclarationNode::newTuple( 0 ), $6, nullptr, true );
-//		}
-//	'[' ']' identifier '(' push cfa_parameter_ellipsis_list_opt pop ')'
-//		{
-//			typedefTable.setNextIdentifier( *$5 );
-//			$$ = DeclarationNode::newFunction( $5, DeclarationNode::newTuple( 0 ), $8, nullptr, true );
-//		}
-//	| '[' ']' TYPEDEFname '(' push cfa_parameter_ellipsis_list_opt pop ')'
-//		{
-//			typedefTable.setNextIdentifier( *$5 );
-//			$$ = DeclarationNode::newFunction( $5, DeclarationNode::newTuple( 0 ), $8, nullptr, true );
-//		}
-//	| '[' ']' typegen_name
+	'[' ']' identifier '(' push cfa_parameter_list_ellipsis_opt pop ')' attribute_list_opt
+		{ $$ = DeclarationNode::newFunction( $3,  DeclarationNode::newTuple( nullptr ), $6, nullptr )->addQualifiers( $9 ); }
+	| '[' ']' TYPEDEFname '(' push cfa_parameter_list_ellipsis_opt pop ')' attribute_list_opt
+		{ $$ = DeclarationNode::newFunction( $3,  DeclarationNode::newTuple( nullptr ), $6, nullptr )->addQualifiers( $9 ); }
+	// | '[' ']' TYPEGENname '(' push cfa_parameter_list_ellipsis_opt pop ')' attribute_list_opt
+	// 	{ $$ = DeclarationNode::newFunction( $3,  DeclarationNode::newTuple( nullptr ), $6, nullptr )->addQualifiers( $9 ); }
+
 		// identifier_or_type_name must be broken apart because of the sequence:
 		//
-		//   '[' ']' identifier_or_type_name '(' cfa_parameter_ellipsis_list_opt ')'
+		//   '[' ']' identifier_or_type_name '(' cfa_parameter_list_ellipsis_opt ')'
 		//   '[' ']' type_specifier
 		//
 		// type_specifier can resolve to just TYPEDEFname (e.g., typedef int T; int f( T );). Therefore this must be
 		// flattened to allow lookahead to the '(' without having to reduce identifier_or_type_name.
-	cfa_abstract_tuple identifier_or_type_name '(' push cfa_parameter_ellipsis_list_opt pop ')' attribute_list_opt
+	| cfa_abstract_tuple identifier_or_type_name '(' push cfa_parameter_list_ellipsis_opt pop ')' attribute_list_opt
 		// To obtain LR(1 ), this rule must be factored out from function return type (see cfa_abstract_declarator).
 		{ $$ = DeclarationNode::newFunction( $2, $1, $5, nullptr )->addQualifiers( $8 ); }
-	| cfa_function_return identifier_or_type_name '(' push cfa_parameter_ellipsis_list_opt pop ')' attribute_list_opt
+	| cfa_function_return identifier_or_type_name '(' push cfa_parameter_list_ellipsis_opt pop ')' attribute_list_opt
 		{ $$ = DeclarationNode::newFunction( $2, $1, $5, nullptr )->addQualifiers( $8 ); }
 	;
 
 cfa_function_return:									// CFA
 	'[' push cfa_parameter_list pop ']'
 		{ $$ = DeclarationNode::newTuple( $3 ); }
-	| '[' push cfa_parameter_list pop ',' push cfa_abstract_parameter_list pop ']'
+	| '[' push cfa_parameter_list ',' cfa_abstract_parameter_list pop ']'
 		// To obtain LR(1 ), the last cfa_abstract_parameter_list is added into this flattened rule to lookahead to the ']'.
-		{ $$ = DeclarationNode::newTuple( $3->set_last( $7 ) ); }
+		{ $$ = DeclarationNode::newTuple( $3->set_last( $5 ) ); }
 	;
 
 cfa_typedef_declaration:								// CFA
@@ -2047,10 +2039,10 @@ cfa_typedef_declaration:								// CFA
 			typedefTable.addToEnclosingScope( *$2->name, TYPEDEFname, "cfa_typedef_declaration 2" );
 			$$ = $2->addTypedef();
 		}
-	| cfa_typedef_declaration pop ',' push identifier
+	| cfa_typedef_declaration ',' identifier
 		{
-			typedefTable.addToEnclosingScope( *$5, TYPEDEFname, "cfa_typedef_declaration 3" );
-			$$ = $1->set_last( $1->cloneType( $5 ) );
+			typedefTable.addToEnclosingScope( *$3, TYPEDEFname, "cfa_typedef_declaration 3" );
+			$$ = $1->set_last( $1->cloneType( $3 ) );
 		}
 	;
 
@@ -2690,6 +2682,10 @@ bit_subrange_size:
 		{ $$ = $2; }
 	;
 
+// ***********
+// Enumeration
+// ***********
+
 enum_type:
 	ENUM attribute_list_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( nullptr, $4, true, false )->addQualifiers( $2 ); }
@@ -2718,7 +2714,7 @@ enum_type:
 		{ SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
 	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
 		{
-			if ( $3 && ($3->storageClasses.any() || $3->type->qualifiers.val != 0 )) {
+			if ( $3 && ($3->storageClasses.any() || $3->type->qualifiers.val != 0) ) {
 				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
 			}
 			typedefTable.makeTypedef( *$6, "enum_type 2" );
@@ -2788,40 +2784,11 @@ enumerator_value_opt:
 	// 	{ $$ = $1 == OperKinds::Assign ? $2 : $2->set_maybeConstructed( false ); }
 	;
 
-cfa_parameter_ellipsis_list_opt:						// CFA, abstract + real
-	// empty
-		{ $$ = DeclarationNode::newBasicType( DeclarationNode::Void ); }
-	| ELLIPSIS
-		{ $$ = nullptr; }
-	| cfa_abstract_parameter_list
-	| cfa_parameter_list
-	| cfa_parameter_list pop ',' push cfa_abstract_parameter_list
-		{ $$ = $1->set_last( $5 ); }
-	| cfa_abstract_parameter_list pop ',' push ELLIPSIS
-		{ $$ = $1->addVarArgs(); }
-	| cfa_parameter_list pop ',' push ELLIPSIS
-		{ $$ = $1->addVarArgs(); }
-	;
+// *******************
+// Function parameters
+// *******************
 
-cfa_parameter_list:										// CFA
-		// To obtain LR(1) between cfa_parameter_list and cfa_abstract_tuple, the last cfa_abstract_parameter_list is
-		// factored out from cfa_parameter_list, flattening the rules to get lookahead to the ']'.
-	cfa_parameter_declaration
-	| cfa_abstract_parameter_list pop ',' push cfa_parameter_declaration
-		{ $$ = $1->set_last( $5 ); }
-	| cfa_parameter_list pop ',' push cfa_parameter_declaration
-		{ $$ = $1->set_last( $5 ); }
-	| cfa_parameter_list pop ',' push cfa_abstract_parameter_list pop ',' push cfa_parameter_declaration
-		{ $$ = $1->set_last( $5 )->set_last( $9 ); }
-	;
-
-cfa_abstract_parameter_list:							// CFA, new & old style abstract
-	cfa_abstract_parameter_declaration
-	| cfa_abstract_parameter_list pop ',' push cfa_abstract_parameter_declaration
-		{ $$ = $1->set_last( $5 ); }
-	;
-
-parameter_type_list_opt:
+parameter_list_ellipsis_opt:
 	// empty
 		{ $$ = nullptr; }
 	| ELLIPSIS
@@ -2832,16 +2799,64 @@ parameter_type_list_opt:
 	;
 
 parameter_list:											// abstract + real
-	abstract_parameter_declaration
-	| parameter_declaration
+	parameter_declaration
+	| abstract_parameter_declaration
+	| parameter_list ',' parameter_declaration
+		{ $$ = $1->set_last( $3 ); }
 	| parameter_list ',' abstract_parameter_declaration
 		{ $$ = $1->set_last( $3 ); }
-	| parameter_list ',' parameter_declaration
+	;
+
+cfa_parameter_list_ellipsis_opt:						// CFA, abstract + real
+	// empty
+		{ $$ = DeclarationNode::newBasicType( DeclarationNode::Void ); }
+	| ELLIPSIS
+		{ $$ = nullptr; }
+	| cfa_parameter_list
+	| cfa_abstract_parameter_list
+	| cfa_parameter_list ',' cfa_abstract_parameter_list
+		{ $$ = $1->set_last( $3 ); }
+	| cfa_parameter_list ',' ELLIPSIS
+		{ $$ = $1->addVarArgs(); }
+	| cfa_abstract_parameter_list ',' ELLIPSIS
+		{ $$ = $1->addVarArgs(); }
+	;
+
+cfa_parameter_list:										// CFA
+		// To obtain LR(1) between cfa_parameter_list and cfa_abstract_tuple, the last cfa_abstract_parameter_list is
+		// factored out from cfa_parameter_list, flattening the rules to get lookahead to the ']'.
+	cfa_parameter_declaration
+	| cfa_abstract_parameter_list ',' cfa_parameter_declaration
+		{ $$ = $1->set_last( $3 ); }
+	| cfa_parameter_list ',' cfa_parameter_declaration
+		{ $$ = $1->set_last( $3 ); }
+	| cfa_parameter_list ',' cfa_abstract_parameter_list ',' cfa_parameter_declaration
+		{ $$ = $1->set_last( $3 )->set_last( $5 ); }
+	;
+
+cfa_abstract_parameter_list:							// CFA, new & old style abstract
+	cfa_abstract_parameter_declaration
+	| cfa_abstract_parameter_list ',' cfa_abstract_parameter_declaration
 		{ $$ = $1->set_last( $3 ); }
 	;
 
 // Provides optional identifier names (abstract_declarator/variable_declarator), no initialization, different semantics
 // for typedef name by using type_parameter_redeclarator instead of typedef_redeclarator, and function prototypes.
+
+parameter_declaration:
+		// No SUE declaration in parameter list.
+	declaration_specifier_nobody identifier_parameter_declarator default_initializer_opt
+		{ $$ = $2->addType( $1 )->addInitializer( $3 ? new InitializerNode( $3 ) : nullptr ); }
+	| declaration_specifier_nobody type_parameter_redeclarator default_initializer_opt
+		{ $$ = $2->addType( $1 )->addInitializer( $3 ? new InitializerNode( $3 ) : nullptr ); }
+	;
+
+abstract_parameter_declaration:
+	declaration_specifier_nobody default_initializer_opt
+		{ $$ = $1->addInitializer( $2 ? new InitializerNode( $2 ) : nullptr ); }
+	| declaration_specifier_nobody abstract_parameter_declarator default_initializer_opt
+		{ $$ = $2->addType( $1 )->addInitializer( $3 ? new InitializerNode( $3 ) : nullptr ); }
+	;
 
 cfa_parameter_declaration:								// CFA, new & old style parameter declaration
 	parameter_declaration
@@ -2863,21 +2878,6 @@ cfa_abstract_parameter_declaration:						// CFA, new & old style parameter decla
 	| type_qualifier_list cfa_abstract_tuple
 		{ $$ = $2->addQualifiers( $1 ); }
 	| cfa_abstract_function
-	;
-
-parameter_declaration:
-		// No SUE declaration in parameter list.
-	declaration_specifier_nobody identifier_parameter_declarator default_initializer_opt
-		{ $$ = $2->addType( $1 )->addInitializer( $3 ? new InitializerNode( $3 ) : nullptr ); }
-	| declaration_specifier_nobody type_parameter_redeclarator default_initializer_opt
-		{ $$ = $2->addType( $1 )->addInitializer( $3 ? new InitializerNode( $3 ) : nullptr ); }
-	;
-
-abstract_parameter_declaration:
-	declaration_specifier_nobody default_initializer_opt
-		{ $$ = $1->addInitializer( $2 ? new InitializerNode( $2 ) : nullptr ); }
-	| declaration_specifier_nobody abstract_parameter_declarator default_initializer_opt
-		{ $$ = $2->addType( $1 )->addInitializer( $3 ? new InitializerNode( $3 ) : nullptr ); }
 	;
 
 // ISO/IEC 9899:1999 Section 6.9.1(6) : "An identifier declared as a typedef name shall not be redeclared as a
@@ -3394,6 +3394,10 @@ attribute_list:											// GCC
 attribute:												// GCC
 	ATTRIBUTE '(' '(' attribute_name_list ')' ')'
 		{ $$ = $4; }
+	| ATTRIBUTE '(' attribute_name_list ')'				// CFA
+		{ $$ = $3; }
+	| ATTR '(' attribute_name_list ')'					// CFA
+		{ $$ = $3; }
 	;
 
 attribute_name_list:									// GCC
@@ -3498,9 +3502,9 @@ variable_array:
 	;
 
 variable_function:
-	'(' variable_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	'(' variable_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $2->addParamList( $5 ); }
-	| '(' attribute_list variable_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	| '(' attribute_list variable_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' variable_function ')'							// redundant parenthesis
 		{ $$ = $2; }
@@ -3521,11 +3525,11 @@ function_declarator:
 	;
 
 function_no_ptr:
-	paren_identifier '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	paren_identifier '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $1->addParamList( $3 ); }
-	| '(' function_ptr ')' '(' parameter_type_list_opt ')'
+	| '(' function_ptr ')' '(' parameter_list_ellipsis_opt ')'
 		{ $$ = $2->addParamList( $5 ); }
-	| '(' attribute_list function_ptr ')' '(' parameter_type_list_opt ')'
+	| '(' attribute_list function_ptr ')' '(' parameter_list_ellipsis_opt ')'
 		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' function_no_ptr ')'							// redundant parenthesis
 		{ $$ = $2; }
@@ -3575,9 +3579,9 @@ KR_function_declarator:
 KR_function_no_ptr:
 	paren_identifier '(' identifier_list ')'			// function_declarator handles empty parameter
 		{ $$ = $1->addIdList( $3 ); }
-	| '(' KR_function_ptr ')' '(' parameter_type_list_opt ')'
+	| '(' KR_function_ptr ')' '(' parameter_list_ellipsis_opt ')'
 		{ $$ = $2->addParamList( $5 ); }
-	| '(' attribute_list KR_function_ptr ')' '(' parameter_type_list_opt ')'
+	| '(' attribute_list KR_function_ptr ')' '(' parameter_list_ellipsis_opt ')'
 		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' KR_function_no_ptr ')'						// redundant parenthesis
 		{ $$ = $2; }
@@ -3667,9 +3671,9 @@ variable_type_array:
 	;
 
 variable_type_function:
-	'(' variable_type_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	'(' variable_type_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $2->addParamList( $5 ); }
-	| '(' attribute_list variable_type_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	| '(' attribute_list variable_type_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' variable_type_function ')'					// redundant parenthesis
 		{ $$ = $2; }
@@ -3690,11 +3694,11 @@ function_type_redeclarator:
 	;
 
 function_type_no_ptr:
-	paren_type '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	paren_type '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $1->addParamList( $3 ); }
-	| '(' function_type_ptr ')' '(' parameter_type_list_opt ')'
+	| '(' function_type_ptr ')' '(' parameter_list_ellipsis_opt ')'
 		{ $$ = $2->addParamList( $5 ); }
-	| '(' attribute_list function_type_ptr ')' '(' parameter_type_list_opt ')'
+	| '(' attribute_list function_type_ptr ')' '(' parameter_list_ellipsis_opt ')'
 		{ $$ = $3->addQualifiers( $2 )->addParamList( $6 ); }
 	| '(' function_type_no_ptr ')'						// redundant parenthesis
 		{ $$ = $2; }
@@ -3737,7 +3741,8 @@ identifier_parameter_declarator:
 	paren_identifier attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
 	| '&' MUTEX paren_identifier attribute_list_opt
-		{ $$ = $3->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( ast::CV::Mutex ), OperKinds::AddressOf ) )->addQualifiers( $4 ); }
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( ast::CV::Mutex ),
+															OperKinds::AddressOf ) )->addQualifiers( $4 ); }
 	| identifier_parameter_ptr
 	| identifier_parameter_array attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
@@ -3766,9 +3771,9 @@ identifier_parameter_array:
 	;
 
 identifier_parameter_function:
-	paren_identifier '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	paren_identifier '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $1->addParamList( $3 ); }
-	| '(' identifier_parameter_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	| '(' identifier_parameter_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $2->addParamList( $5 ); }
 	| '(' identifier_parameter_function ')'				// redundant parenthesis
 		{ $$ = $2; }
@@ -3787,7 +3792,8 @@ type_parameter_redeclarator:
 	typedef_name attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
 	| '&' MUTEX typedef_name attribute_list_opt
-		{ $$ = $3->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( ast::CV::Mutex ), OperKinds::AddressOf ) )->addQualifiers( $4 ); }
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( DeclarationNode::newTypeQualifier( ast::CV::Mutex ),
+															OperKinds::AddressOf ) )->addQualifiers( $4 ); }
 	| type_parameter_ptr
 	| type_parameter_array attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
@@ -3819,9 +3825,9 @@ type_parameter_array:
 	;
 
 type_parameter_function:
-	typedef_name '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	typedef_name '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $1->addParamList( $3 ); }
-	| '(' type_parameter_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	| '(' type_parameter_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $2->addParamList( $5 ); }
 	;
 
@@ -3869,9 +3875,9 @@ abstract_array:
 	;
 
 abstract_function:
-	'(' parameter_type_list_opt ')'			// empty parameter list OBSOLESCENT (see 3)
+	'(' parameter_list_ellipsis_opt ')'			// empty parameter list OBSOLESCENT (see 3)
 		{ $$ = DeclarationNode::newFunction( nullptr, nullptr, $2, nullptr ); }
-	| '(' abstract_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	| '(' abstract_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $2->addParamList( $5 ); }
 	| '(' abstract_function ')'							// redundant parenthesis
 		{ $$ = $2; }
@@ -3887,10 +3893,19 @@ array_dimension:
 	| '[' push assignment_expression pop ',' comma_expression ']' // CFA
 		{ $$ = DeclarationNode::newArray( $3, nullptr, false )->addArray( DeclarationNode::newArray( $6, nullptr, false ) ); }
 		// { SemanticError( yylloc, "New array dimension is currently unimplemented." ); $$ = nullptr; }
+
+		// If needed, the following parses and does not use comma_expression, so the array structure can be built.
+	// | '[' push assignment_expression pop ',' push array_dimension_list pop ']' // CFA
+
 	| '[' push array_type_list pop ']'					// CFA
 		{ $$ = DeclarationNode::newArray( $3, nullptr, false ); }
 	| multi_array_dimension
 	;
+
+// array_dimension_list:
+// 	assignment_expression
+// 	| array_dimension_list ',' assignment_expression
+// 	;
 
 array_type_list:
 	basic_type_name
@@ -3992,9 +4007,9 @@ abstract_parameter_array:
 	;
 
 abstract_parameter_function:
-	'(' parameter_type_list_opt ')'			// empty parameter list OBSOLESCENT (see 3)
+	'(' parameter_list_ellipsis_opt ')'			// empty parameter list OBSOLESCENT (see 3)
 		{ $$ = DeclarationNode::newFunction( nullptr, nullptr, $2, nullptr ); }
-	| '(' abstract_parameter_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	| '(' abstract_parameter_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $2->addParamList( $5 ); }
 	| '(' abstract_parameter_function ')'				// redundant parenthesis
 		{ $$ = $2; }
@@ -4071,7 +4086,7 @@ variable_abstract_array:
 	;
 
 variable_abstract_function:
-	'(' variable_abstract_ptr ')' '(' parameter_type_list_opt ')' // empty parameter list OBSOLESCENT (see 3)
+	'(' variable_abstract_ptr ')' '(' parameter_list_ellipsis_opt ')' // empty parameter list OBSOLESCENT (see 3)
 		{ $$ = $2->addParamList( $5 ); }
 	| '(' variable_abstract_function ')'				// redundant parenthesis
 		{ $$ = $2; }
@@ -4157,7 +4172,7 @@ cfa_array_parameter_1st_dimension:
 // These rules need LR(3):
 //
 //		cfa_abstract_tuple identifier_or_type_name
-//		'[' cfa_parameter_list ']' identifier_or_type_name '(' cfa_parameter_ellipsis_list_opt ')'
+//		'[' cfa_parameter_list ']' identifier_or_type_name '(' cfa_parameter_list_ellipsis_opt ')'
 //
 // since a function return type can be syntactically identical to a tuple type:
 //
@@ -4223,11 +4238,11 @@ cfa_abstract_tuple:										// CFA
 	;
 
 cfa_abstract_function:									// CFA
-//	'[' ']' '(' cfa_parameter_ellipsis_list_opt ')'
-//		{ $$ = DeclarationNode::newFunction( nullptr, DeclarationNode::newTuple( nullptr ), $4, nullptr ); }
-	cfa_abstract_tuple '(' push cfa_parameter_ellipsis_list_opt pop ')'
+	'[' ']' '(' cfa_parameter_list_ellipsis_opt ')'
+		{ $$ = DeclarationNode::newFunction( nullptr, DeclarationNode::newTuple( nullptr ), $4, nullptr ); }
+	| cfa_abstract_tuple '(' push cfa_parameter_list_ellipsis_opt pop ')'
 		{ $$ = DeclarationNode::newFunction( nullptr, $1, $4, nullptr ); }
-	| cfa_function_return '(' push cfa_parameter_ellipsis_list_opt pop ')'
+	| cfa_function_return '(' push cfa_parameter_list_ellipsis_opt pop ')'
 		{ $$ = DeclarationNode::newFunction( nullptr, $1, $4, nullptr ); }
 	;
 

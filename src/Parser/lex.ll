@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Tue Oct  3 17:10:57 2023
- * Update Count     : 773
+ * Last Modified On : Sat Feb 24 11:47:24 2024
+ * Update Count     : 777
  */
 
 %option yylineno
@@ -406,6 +406,7 @@ zero_t			{ NUMERIC_RETURN(ZERO_T); }				// CFA
 ":"				{ ASCIIOP_RETURN(); }
 ";"				{ ASCIIOP_RETURN(); }
 "."				{ ASCIIOP_RETURN(); }					// also operator
+"@@"			{ NAMEDOP_RETURN(ATTR); }				// CFA, attribute shorthand
 "..."			{ NAMEDOP_RETURN(ELLIPSIS); }
 
 				/* alternative C99 brackets, "<:" & "<:<:" handled by preprocessor */
