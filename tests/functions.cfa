@@ -9,35 +9,35 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug 17 08:39:58 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov  6 17:54:09 2018
-// Update Count     : 13
+// Last Modified On : Tue Mar  5 11:02:25 2024
+// Update Count     : 34
 //
 
 // ANSI function definitions
 
-void h(void) {}
+void h( void ) {}
 
 int f (
-	int (void),
-	int (int),
-	int ((void)),
-	int ((int)),
-	void g(void)
-	) {
-	(* g)();
+	int ( void ),
+	int ( int ),
+	int (( void )),
+	int (( int )),
+	void g( void )
+) {
+	(*g)();
 	g();
 	g = h;
 }
 
 int f1() {}
 int (f2()) {}
-int (* f3())() {}
+int (*f3())() {}
 int * ((f4())) {}
-int ((* f5()))() {}
+int ((*f5()))() {}
 int * f6() {}
-int * (f7)() {}
+int * ( f7)() {}
 int ** f8() {}
-int * const * (f9)() {}
+int * const * ( f9)() {}
 int (* f10())[] {}
 int (* f11())[][3] {}
 int ((* f12())[])[3] {}
@@ -65,42 +65,54 @@ extern const fO5( i ) int i; {}
 
 // Cforall extensions
 
-// [] f( );
-[int] f( );
-// [] f(int);
-[int] f(int);
-// [] f( ) {}
-[int] f( ) {}
-// [] f(int) {}
-[int] f(int) {}
+[] f();
+[void] f();
+[int] f();
+[] f( int );
+[void] f( int );
+[int] f( int );
+[] f() {}
+[void] fv() {}
+[int] f() {}
+[] f( int ) {}
+[void] fv( int ) {}
+[int] f( int ) {}
 
-[int x] f( );
-// [] f(int x);
-//[int x] f(int x);
-//[int x] f( ) {}
-// [] f(int x) {}
-//[int x] f(int x) {}
+[int x] f();
+[] f( int x );
+[void] fv( int x );
+//[int x] f( int x );
+//[int x] f() {}
+[] f2( int x ) {}
+[void] fv1( int x ) {}
+//[int x] f( int x ) {}
 
-[int, int x] f( );
-// [] f(int, int x);
-[int, int x] f(int, int x);
-[int, int x] f( ) {}
-// [] f(int, int x) {}
-[int, int x] f(int, int x) {}
+[int, int x] f();
+[] f( int, int x );
+[void] fv( int, int x );
+[int, int x] f( int, int x );
+[int, int x] f() {}
+[] f( int, int x ) {}
+[void] fv( int, int x ) {}
+[int, int x] f( int, int x ) {}
 
-[int, int x, int] f( );
-// [] f(int, int x, int);
-[int, int x, int] f(int, int x, int);
-[int, int x, int] f( ) {}
-// [] f(int, int x, int) {}
-[int, int x, int] f(int, int x, int) {}
+[int, int x, int] f();
+[] f( int, int x, int );
+[void] fv( int, int x, int );
+[int, int x, int] f( int, int x, int );
+[int, int x, int] f() {}
+[] f( int, int x, int ) {}
+[void] fv( int, int x, int ) {}
+[int, int x, int] f( int, int x, int ) {}
 
-[int, int x, * int y] f( );
-// [] f(int, int x, * int y);
-[int, int x, * int y] f(int, int x, * int y);
-[int, int x, * int y] f( ) {}
-// [] f(int, int x, * int y) {}
-[int, int x, * int y] f(int, int x, * int y) {}
+[int, int x, * int y] f();
+[] f( int, int x, * int y );
+[void] fv( int, int x, * int y );
+[int, int x, * int y] f( int, int x, * int y );
+[int, int x, * int y] f() {}
+[] f( int, int x, * int y ) {}
+[void] fv( int, int x, * int y ) {}
+[int, int x, * int y] f( int, int x, * int y ) {}
 
 // function prototypes
 
@@ -115,10 +127,10 @@ struct S { int i; };
 [int] f(
 	int ( int, int p ),
 	[int](int)
-	) {
-	int (* (* pc)[][10])[][3];
+) {
+	int (* (* pc )[][10])[][3];
 	* [][10] * [][3] int p;
-	* [] * [int](int) p;
+	* [] * [int]( int ) p;
 }
 
 static const int * f1() {}
@@ -148,7 +160,7 @@ int f(
 	int * const * ([10]),
 	int * const * const ([]),
 	int * const * const ([10])
-	);
+);
 
 int f(
 	int (),
@@ -169,13 +181,12 @@ int f(
 	int * const * ([10]),
 	int * const * const ([]),
 	int * const * const ([10])
-	) {
-}
+) {}
 
 typedef int T;
 
-int f( T (* f), T t ) {
-	T (T);
+int f( T ( *f ), T t ) {
+	T ( T );
 }
 
 // errors

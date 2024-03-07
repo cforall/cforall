@@ -287,6 +287,9 @@ void ConversionCost::postvisit( const ast::BasicType * basicType ) {
 		} else {
             cost = Cost::unsafe;
 		}
+	} else if ( dynamic_cast< const ast::EnumPosType *>(dst) ) {
+		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
+		cost = costCalc( basicType, integer, srcIsLvalue, symtab, env );
 	}
 }
 
@@ -365,18 +368,29 @@ void ConversionCost::postvisit( const ast::FunctionType * functionType ) {
 void ConversionCost::postvisit( const ast::EnumInstType * ) {
 	static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
 	cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
-	// }
 	if ( cost < Cost::unsafe ) {
 		cost.incSafe();
 	}
 }
 
-void ConversionCost::postvisit( const ast::EnumPosType * ) {
-	static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
-	cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
-	if ( cost < Cost::unsafe ) {
-		cost.incSafe();
+void ConversionCost::postvisit( const ast::EnumPosType * src ) {
+	if ( dynamic_cast<const ast::EnumPosType *>( dst ) ) {
+		// cost = costCalc( src->instance, dstBase->instance, srcIsLvalue, symtab, env );
+		// if ( cost < Cost::unsafe ) cost.incSafe();
+		cost = Cost::zero;
+	} 
+	// if ( auto dstBase = dynamic_cast<const ast::EnumInstType *>( dst ) ) {
+	// 	cost = costCalc( src->instance, dstBase, srcIsLvalue, symtab, env );
+	// 	if ( cost < Cost::unsafe ) cost.incSafe();
+	// } 
+	else {
+		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
+		cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
+		if ( cost < Cost::unsafe ) {
+			cost.incSafe();
+		}
 	}
+
 }
 
 void ConversionCost::postvisit( const ast::TraitInstType * traitInstType ) {

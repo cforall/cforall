@@ -20,7 +20,6 @@ std::set<std::string> queryLabels;
 std::set<std::string> queryValues;
 
 struct ReplaceEnumInstWithPos final : public ast::WithShortCircuiting {
-    void previsit(const ast::ObjectDecl*) { visit_children = false; }
     const ast::ObjectDecl* postvisit(const ast::ObjectDecl* decl) {
         auto enumInst = decl->type.strict_as<ast::EnumInstType>();
         auto enumPos = new ast::EnumPosType(enumInst);
@@ -83,7 +82,8 @@ void WrapEnumValueExpr::previsit(const ast::ApplicationExpr* expr) {
         if (fname == "?{}" || fname == "?=?") visit_children = false;
     }
 
-    if (fname == "labelE" || fname == "valueE" || fname == "posE") {
+    if (fname == "labelE" || fname == "valueE" || fname == "posE" ||
+        fname == "pred" || fname == "succ") {
         visit_children = false;
     }
 }
@@ -225,7 +225,7 @@ void PseudoFuncGenerateRoutine::previsit(const ast::EnumDecl* enumDecl) {
     }
 }
 
-ast::ApplicationExpr const* getPseudoFuncApplication(
+ast::ApplicationExpr const* resolveAttributeFunctions(
     const CodeLocation location, ResolvExpr::ResolveContext context,
     const ast::VariableExpr* arg, const ast::EnumDecl* base,
     const std::string& name) {
@@ -240,6 +240,8 @@ ast::ApplicationExpr const* getPseudoFuncApplication(
         ast::Pass<ReplaceEnumInstWithPos> replacer;
         auto rep = argAsDecl->accept(replacer);
         auto mutatedArg = ast::mutate_field(arg, &ast::VariableExpr::var, rep);
+        mutatedArg = ast::mutate_field(mutatedArg, &ast::VariableExpr::result,
+                                       mutatedArg->var->get_type());
         auto untyped =
             new ast::UntypedExpr(location, new ast::NameExpr(location, "?[?]"),
                                  {std::move(arrAsVar), mutatedArg});
@@ -289,19 +291,19 @@ ast::Expr const* ReplacePseudoFuncCore::postvisit(
                         return ast::ConstantExpr::from_string(expr->location,
                                                               referredName);
                     else {
-                        return getPseudoFuncApplication(
+                        return resolveAttributeFunctions(
                             location, context, arg.get(), base, "values_");
                     }
                 }
             }
 
             if (fname == "labelE") {
-                if (auto labelExpr = getPseudoFuncApplication(
+                if (auto labelExpr = resolveAttributeFunctions(
                         location, context, arg.get(), base, "labels_")) {
                     return labelExpr;
                 }
             } else if (fname == "valueE") {
-                if (auto valueExpr = getPseudoFuncApplication(
+                if (auto valueExpr = resolveAttributeFunctions(
                         location, context, arg.get(), base, "values_")) {
                     return valueExpr;
                 }
@@ -313,12 +315,12 @@ ast::Expr const* ReplacePseudoFuncCore::postvisit(
             const ast::EnumDecl* base = argTypeAsPos->instance->base;
             ResolvExpr::ResolveContext context{symtab, transUnit().global};
             if (fname == "labelE") {
-                if (auto labelExpr = getPseudoFuncApplication(
+                if (auto labelExpr = resolveAttributeFunctions(
                         location, context, arg.get(), base, "labels_")) {
                     return labelExpr;
                 }
             } else if (fname == "valueE") {
-                if (auto valueExpr = getPseudoFuncApplication(
+                if (auto valueExpr = resolveAttributeFunctions(
                         location, context, arg.get(), base, "values_")) {
                     return valueExpr;
                 }
@@ -344,38 +346,173 @@ ast::ptr<ast::Expr> reduceCastExpr(ast::ptr<ast::Expr> expr) {
 struct ReplaceEnumInst final {
     const ast::Expr* postvisit(const ast::ApplicationExpr* expr) {
         auto fname = ast::getFunctionName(expr);
-        if (fname != "?[?]") return expr;
-        if (expr->args.size() != 2) return expr;
+        if (fname == "?[?]") {
+            if (expr->args.size() != 2) return expr;
 
-        auto arg1AsVar =
-            reduceCastExpr(expr->args.front()).as<ast::VariableExpr>();
-        auto arg2AsVar =
-            reduceCastExpr(expr->args.back()).as<ast::VariableExpr>();
+            auto arg1AsVar =
+                reduceCastExpr(expr->args.front()).as<ast::VariableExpr>();
+            auto arg2AsVar =
+                reduceCastExpr(expr->args.back()).as<ast::VariableExpr>();
 
-        if (!arg1AsVar || !arg2AsVar) return expr;
+            if (!arg1AsVar || !arg2AsVar) return expr;
 
-        auto arg1Asecl = arg1AsVar->var.as<ast::ObjectDecl>();
-        auto arg2Asecl = arg2AsVar->var.as<ast::ObjectDecl>();
+            auto arg1AsDecl = arg1AsVar->var.as<ast::ObjectDecl>();
+            auto arg2AsDecl = arg2AsVar->var.as<ast::ObjectDecl>();
 
-        if (!arg1Asecl || !arg2Asecl) return expr;
-        auto arrInst = arg1Asecl->type.as<ast::ArrayType>();
-        auto pointerInst = arg1Asecl->type.as<ast::PointerType>();
-        if (!arrInst && !pointerInst) {
-            return expr;
+            if (!arg1AsDecl || !arg2AsDecl) return expr;
+            auto arrInst = arg1AsDecl->type.as<ast::ArrayType>();
+            auto pointerInst = arg1AsDecl->type.as<ast::PointerType>();
+            if (!arrInst && !pointerInst) {
+                return expr;
+            }
+            auto enumInst = arg2AsDecl->type.as<ast::EnumInstType>();
+            if (!enumInst) return expr;
+
+            const std::string arrName = arg1AsDecl->name;
+            if (arrName != getValueArrayName(enumInst->base->name)) return expr;
+            ast::Pass<ReplaceEnumInstWithPos> replacer;
+            auto rep = arg2AsDecl->accept(replacer);
+            if (!rep) return expr;
+            auto mutObj =
+                ast::mutate_field(arg2AsVar, &ast::VariableExpr::var, rep);
+            mutObj = ast::mutate_field(mutObj, &ast::VariableExpr::result,
+                                       mutObj->var->get_type());
+            auto mut = ast::mutate_field_index(
+                expr, &ast::ApplicationExpr::args, 1, mutObj);
+            return mut;
         }
-        auto enumInst = arg2Asecl->type.as<ast::EnumInstType>();
-        if (!enumInst) return expr;
+        // else if (fname == "succ" || fname == "pred") {
+        //     if (expr->args.size() != 1) return expr;
+        //     auto argExpr = expr->args.front();
+        //     auto argAsVar = reduceCastExpr(argExpr).as<ast::VariableExpr>();
 
-        const std::string arrName = arg1Asecl->name;
-        if (arrName != getValueArrayName(enumInst->base->name)) return expr;
-        ast::Pass<ReplaceEnumInstWithPos> replacer;
-        auto rep = arg2Asecl->accept(replacer);
-        if (!rep) return expr;
-        auto mutObj =
-            ast::mutate_field(arg2AsVar, &ast::VariableExpr::var, rep);
-        auto mut = ast::mutate_field_index(expr, &ast::ApplicationExpr::args, 1,
-                                           mutObj);
-        return mut;
+        //     if (auto argAsDecl = argAsVar->var.as<ast::ObjectDecl>()) {
+        //         if (auto enumInst = argAsDecl->type.as<ast::EnumInstType>())
+        //         {
+        //             auto enumPos = new ast::EnumPosType(enumInst);
+        //             auto castExpr =
+        //                 new ast::CastExpr(argExpr->location, argExpr,
+        //                 enumPos);
+        //             auto mut = ast::mutate_field_index(
+        //                 expr, &ast::ApplicationExpr::args, 0, castExpr);
+        //             return mut;
+        //         } else if (auto enumPos =
+        //                        argAsDecl->type.as<ast::EnumPosType>()) {
+        //             //     std::cout << "pos" << std::endl;
+        //             return expr;
+        //         }
+        //     }
+        // }
+        return expr;
+    }
+};
+
+struct ReplaceSuccAndPred final : public ast::WithSymbolTable,
+                                  public ast::WithConstTranslationUnit {
+    const ast::Expr* postvisit(const ast::ApplicationExpr* expr) {
+        auto fname = ast::getFunctionName(expr);
+        if (fname == "succ" || fname == "pred") {
+            const CodeLocation& location = expr->location;
+            if (expr->args.size() != 1) return expr;
+
+            // if (auto argAsVar = reduceCastExpr(expr->args.front())
+            //                         .as<ast::VariableExpr>()) {
+            //     if (auto argAsDecl = argAsVar->var.as<ast::ObjectDecl>()) {
+            //         auto enumPos = argAsDecl->type.as<ast::EnumPosType>();
+            //         if (!enumPos) return expr;
+            //         // ast::Pass<ReplaceEnumInstWithPos> replacer;
+            //         // auto posObj = argAsDecl->accept(replacer);
+            //         // if (!posObj) return expr;
+
+            //         // auto newParam = new ast::VariableExpr( location,
+            //         posObj
+            //         // );
+
+            //         auto untyped = new ast::UntypedExpr(
+            //             location,
+            //             new ast::NameExpr(location, fname == "succ"
+            //                                             ? "_successor_"
+            //                                             : "_predessor_"),
+            //             {argAsVar});
+
+            //         ResolvExpr::ResolveContext context{symtab,
+            //                                            transUnit().global};
+
+            //         auto typedResult =
+            //             ResolvExpr::findVoidExpression(untyped, context);
+
+            //         ast::ptr<ast::ApplicationExpr> ret =
+            //             typedResult.strict_as<ast::ApplicationExpr>();
+
+            //         return ast::deepCopy(ret);
+            //     }
+            // }
+            auto param = expr->args.front();
+            if (auto argAsVar = reduceCastExpr(param).as<ast::VariableExpr>()) {
+                if (auto argAsDecl = argAsVar->var.as<ast::ObjectDecl>()) {
+                    if (auto enumInst =
+                            argAsDecl->type.as<ast::EnumInstType>()) {
+                        auto castTo = new ast::EnumPosType(enumInst);
+                        auto castExpr =
+                            new ast::CastExpr(param->location, param, castTo);
+
+                        auto untyped = new ast::UntypedExpr(
+                            expr->location,
+                            new ast::NameExpr(location, fname == "succ"
+                                                            ? "_successor_"
+                                                            : "_predessor_"),
+                            {castExpr});
+                        ResolvExpr::ResolveContext context{symtab,
+                                                           transUnit().global};
+                        auto typedResult =
+                            ResolvExpr::findVoidExpression(untyped, context);
+                        ast::ptr<ast::ApplicationExpr> ret =
+                            typedResult.strict_as<ast::ApplicationExpr>();
+                        return ast::deepCopy(ret);
+                    } else if (auto posType =
+                                   argAsDecl->type.as<ast::EnumPosType>()) {
+                        // Very nasty fix. Must be revisit
+                        if (auto paramAsVar = param.as<ast::VariableExpr>()) {
+                            if (paramAsVar->result.as<ast::EnumInstType>()) {
+                                auto paramToUse = ast::mutate_field(
+                                    paramAsVar, &ast::VariableExpr::result,
+                                    posType);
+                                auto untyped = new ast::UntypedExpr(
+                                    expr->location,
+                                    new ast::NameExpr(location,
+                                                      fname == "succ"
+                                                          ? "_successor_"
+                                                          : "_predessor_"),
+                                    {paramToUse});
+                                ResolvExpr::ResolveContext context{
+                                    symtab, transUnit().global};
+                                auto typedResult =
+                                    ResolvExpr::findVoidExpression(untyped,
+                                                                   context);
+                                ast::ptr<ast::ApplicationExpr> ret =
+                                    typedResult
+                                        .strict_as<ast::ApplicationExpr>();
+                                return ast::deepCopy(ret);
+                            }
+                        }
+                        auto untyped = new ast::UntypedExpr(
+                            expr->location,
+                            new ast::NameExpr(location, fname == "succ"
+                                                            ? "_successor_"
+                                                            : "_predessor_"),
+                            {param});
+                        ResolvExpr::ResolveContext context{symtab,
+                                                           transUnit().global};
+                        auto typedResult =
+                            ResolvExpr::findVoidExpression(untyped, context);
+                        ast::ptr<ast::ApplicationExpr> ret =
+                            typedResult.strict_as<ast::ApplicationExpr>();
+                        return ast::deepCopy(ret);
+                    }
+                }
+            }
+        }
+        return expr;
     }
 };
 
@@ -384,8 +521,11 @@ struct ReplaceEnumInst final {
 void replacePseudoFunc(ast::TranslationUnit& translationUnit) {
     ast::Pass<WrapEnumValueExpr>::run(translationUnit);
     ast::Pass<FindGenEnumArray>::run(translationUnit);
+
     ast::Pass<PseudoFuncGenerateRoutine>::run(translationUnit);
     ast::Pass<ReplacePseudoFuncCore>::run(translationUnit);
     ast::Pass<ReplaceEnumInst>::run(translationUnit);
+
+    ast::Pass<ReplaceSuccAndPred>::run(translationUnit);
 }
 }  // namespace Validate

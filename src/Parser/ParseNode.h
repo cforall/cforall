@@ -63,9 +63,6 @@ struct ParseList : public ParseNode {
 	virtual ~ParseList() { delete next; };
 	virtual ParseList<Next> * clone() const = 0;
 
-	Next * get_next() const { return next; }
-	void set_next( Next * newlink ) { next = newlink; }
-
 	Next * get_last() {
 		Next * current = static_cast<Next *>( this );
 		while ( current->next != nullptr ) current = current->next;

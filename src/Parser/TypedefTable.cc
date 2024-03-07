@@ -20,6 +20,8 @@
 #include <string>										// for string
 #include <iostream>										// for iostream
 
+struct TypeData;
+
 #include "ExpressionNode.h"								// for LabelNode
 #include "ParserTypes.h"								// for Token
 #include "StatementNode.h"								// for CondCtl, ForCtrl

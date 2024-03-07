@@ -671,9 +671,22 @@ public:
 	}
 
 	void postvisit( const ast::EnumInstType * enumInst ) {
-		if (!dynamic_cast<const ast::EnumInstType *>(type2))
+		// if ( dynamic_cast<const ast::EnumPosType *>(enumInst) ) {
+		// 	result = enumInst;
+		// } else 
+		if (!dynamic_cast<const ast::EnumInstType *>(type2)) {
 			result = commonType( type2, enumInst, tenv, need, have, open, widen);
 		}
+	}
+
+	void postvisit( const ast::EnumPosType * enumPos ) {
+		if ( dynamic_cast<const ast::EnumPosType *>(type2) ) {
+			// result = commonType( type2AsPos->instance, enumPos->instance, tenv, need, have, open, widen );
+			result = enumPos;
+		} else if ( dynamic_cast<const ast::BasicType *>(type2) ) {
+			result = type2;
+		}
+	}
 
 	void postvisit( const ast::TraitInstType * ) {}
 

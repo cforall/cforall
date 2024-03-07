@@ -35,7 +35,7 @@ static ast::ConstructFlag toConstructFlag( bool maybeConstructed ) {
 InitializerNode::InitializerNode( ExpressionNode * _expr, bool aggrp, ExpressionNode * des )
 		: expr( _expr ), aggregate( aggrp ), designator( des ), kids( nullptr ), maybeConstructed( true ), isDelete( false ) {
 	if ( aggrp )
-		kids = dynamic_cast< InitializerNode * >( get_next() );
+		kids = next;
 
 	if ( kids )
 		set_last( nullptr );
@@ -47,10 +47,10 @@ InitializerNode::InitializerNode( InitializerNode * init, bool aggrp, Expression
 		set_last( init );
 
 	if ( aggrp )
-		kids = dynamic_cast< InitializerNode * >( get_next() );
+		kids = next;
 
 	if ( kids )
-		set_next( nullptr );
+		next = nullptr;
 } // InitializerNode::InitializerNode
 
 InitializerNode::InitializerNode( bool isDelete ) : expr( nullptr ), aggregate( false ), designator( nullptr ), kids( nullptr ), maybeConstructed( false ), isDelete( isDelete ) {}
@@ -72,7 +72,7 @@ void InitializerNode::printOneLine( std::ostream &os ) const {
 			ExpressionNode *curdes = designator;
 			while ( curdes != nullptr) {
 				curdes->printOneLine(os);
-				curdes = (ExpressionNode *)(curdes->get_next());
+				curdes = curdes->next;
 				if ( curdes ) os << ", ";
 			} // while
 			os << ")";
@@ -86,7 +86,7 @@ void InitializerNode::printOneLine( std::ostream &os ) const {
 	} // if
 
 	InitializerNode *moreInit;
-	if ( (moreInit = dynamic_cast< InitializerNode * >( get_next() ) ) ) {
+	if ( ( moreInit = next ) ) {
 		moreInit->printOneLine( os );
 	} // if
 } // InitializerNode::printOneLine
@@ -97,7 +97,7 @@ ast::Init * InitializerNode::build() const {
 		// steal designators from children
 		std::vector<ast::ptr<ast::Designation>> designlist;
 		InitializerNode * child = next_init();
-		for ( ; child != nullptr ; child = dynamic_cast< InitializerNode * >( child->get_next() ) ) {
+		for ( ; child != nullptr ; child = child->next ) {
 			std::deque<ast::ptr<ast::Expr>> desList;
 			buildList( child->designator, desList );
 			designlist.push_back(

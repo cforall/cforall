@@ -517,8 +517,9 @@ namespace ResolvExpr {
 		}
 
 		void postvisit( const ast::EnumPosType * ) {
-			// Does nothing for now. Handled in ReplacePseudoFunc
-			// Might move here in the future
+			// Lazy approach for now
+			auto otherPos = dynamic_cast< const ast::EnumPosType *>(type2);
+			if (otherPos) this->result = otherPos;
 		}
 
 		void postvisit( const ast::TraitInstType * aggrType ) {

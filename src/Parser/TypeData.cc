@@ -477,6 +477,282 @@ const std::string * TypeData::leafName() const {
 	assert(false);
 }
 
+TypeData * TypeData::getLastBase() {
+	TypeData * cur = this;
+	while ( cur->base ) cur = cur->base;
+	return cur;
+}
+
+void TypeData::setLastBase( TypeData * newBase ) {
+	getLastBase()->base = newBase;
+}
+
+
+TypeData * build_type_qualifier( ast::CV::Qualifiers tq ) {
+	TypeData * type = new TypeData;
+	type->qualifiers = tq;
+	return type;
+}
+
+TypeData * build_basic_type( DeclarationNode::BasicType basic ) {
+	TypeData * type = new TypeData( TypeData::Basic );
+	type->basictype = basic;
+	return type;
+}
+
+TypeData * build_complex_type( DeclarationNode::ComplexType complex ) {
+	TypeData * type = new TypeData( TypeData::Basic );
+	type->complextype = complex;
+	return type;
+}
+
+TypeData * build_signedness( DeclarationNode::Signedness signedness ) {
+	TypeData * type = new TypeData( TypeData::Basic );
+	type->signedness = signedness;
+	return type;
+}
+
+TypeData * build_builtin_type( DeclarationNode::BuiltinType bit ) {
+	TypeData * type = new TypeData( TypeData::Builtin );
+	type->builtintype = bit;
+	return type;
+}
+
+TypeData * build_length( DeclarationNode::Length length ) {
+	TypeData * type = new TypeData( TypeData::Basic );
+	type->length = length;
+	return type;
+}
+
+TypeData * build_forall( DeclarationNode * forall ) {
+	TypeData * type = new TypeData( TypeData::Unknown );
+	type->forall = forall;
+	return type;
+}
+
+TypeData * build_global_scope() {
+	return new TypeData( TypeData::GlobalScope );
+}
+
+TypeData * build_qualified_type( TypeData * parent, TypeData * child ) {
+	TypeData * type = new TypeData( TypeData::Qualified );
+	type->qualified.parent = parent;
+	type->qualified.child = child;
+	return type;
+}
+
+TypeData * build_typedef( const std::string * name ) {
+	TypeData * type = new TypeData( TypeData::SymbolicInst );
+	type->symbolic.name = name;
+	type->symbolic.isTypedef = true;
+	type->symbolic.actuals = nullptr;
+	return type;
+}
+
+TypeData * build_type_gen( const std::string * name, ExpressionNode * params ) {
+	TypeData * type = new TypeData( TypeData::SymbolicInst );
+	type->symbolic.name = name;
+	type->symbolic.isTypedef = false;
+	type->symbolic.actuals = params;
+	return type;
+}
+
+TypeData * build_vtable_type( TypeData * base ) {
+	TypeData * type = new TypeData( TypeData::Vtable );
+	type->base = base;
+	return type;
+}
+
+// Takes ownership of src.
+static void addQualifiersToType( TypeData * dst, TypeData * src ) {
+	if ( dst->base ) {
+		addQualifiersToType( dst->base, src );
+	} else if ( dst->kind == TypeData::Function ) {
+		dst->base = src;
+		src = nullptr;
+    } else {
+		dst->qualifiers |= src->qualifiers;
+		delete src;
+	} // if
+}
+
+// Takes ownership of all arguments, gives ownership of return value.
+TypeData * addQualifiers( TypeData * ltype, TypeData * rtype ) {
+	if ( ltype->forall ) {
+		if ( rtype->forall ) {
+			rtype->forall->set_last( ltype->forall );
+		} else if ( TypeData::Aggregate != rtype->kind ) {
+			rtype->forall = ltype->forall;
+		} else if ( rtype->aggregate.params ) {
+			rtype->aggregate.params->set_last( ltype->forall );
+		} else {
+			rtype->aggregate.params = ltype->forall;
+		}
+		ltype->forall = nullptr;
+	}
+
+	addQualifiersToType( rtype, ltype );
+	return rtype;
+}
+
+// Helper for addType and cloneBaseType.
+static void addTypeToType( TypeData *& dst, TypeData *& src ) {
+	if ( src->forall && dst->kind == TypeData::Function ) {
+		if ( dst->forall ) {
+			dst->forall->set_last( src->forall );
+		} else {
+			dst->forall = src->forall;
+		} // if
+		src->forall = nullptr;
+	} // if
+	if ( dst->base ) {
+		addTypeToType( dst->base, src );
+		return;
+	}
+	switch ( dst->kind ) {
+	case TypeData::Unknown:
+		src->qualifiers |= dst->qualifiers;
+		// LEAKS dst?
+		dst = src;
+		src = nullptr;
+		break;
+	case TypeData::Basic:
+		dst->qualifiers |= src->qualifiers;
+		if ( src->kind != TypeData::Unknown ) {
+			assert( src->kind == TypeData::Basic );
+
+			if ( dst->basictype == DeclarationNode::NoBasicType ) {
+				dst->basictype = src->basictype;
+			} else if ( src->basictype != DeclarationNode::NoBasicType ) {
+				SemanticError( yylloc, "multiple declaration types \"%s\" and \"%s\".",
+					DeclarationNode::basicTypeNames[ dst->basictype ],
+					DeclarationNode::basicTypeNames[ src->basictype ] );
+			}
+			if ( dst->complextype == DeclarationNode::NoComplexType ) {
+				dst->complextype = src->complextype;
+			} else if ( src->complextype != DeclarationNode::NoComplexType ) {
+				SemanticError( yylloc, "multiple declaration types \"%s\" and \"%s\".",
+					DeclarationNode::complexTypeNames[ src->complextype ],
+					DeclarationNode::complexTypeNames[ src->complextype ] );
+			}
+			if ( dst->signedness == DeclarationNode::NoSignedness ) {
+				dst->signedness = src->signedness;
+			} else if ( src->signedness != DeclarationNode::NoSignedness ) {
+				SemanticError( yylloc, "conflicting type specifier \"%s\" and \"%s\".",
+					DeclarationNode::signednessNames[ dst->signedness ],
+					DeclarationNode::signednessNames[ src->signedness ] );
+			}
+			if ( dst->length == DeclarationNode::NoLength ) {
+				dst->length = src->length;
+			} else if ( dst->length == DeclarationNode::Long && src->length == DeclarationNode::Long ) {
+				dst->length = DeclarationNode::LongLong;
+			} else if ( src->length != DeclarationNode::NoLength ) {
+				SemanticError( yylloc, "conflicting type specifier \"%s\" and \"%s\".",
+					DeclarationNode::lengthNames[ dst->length ],
+					DeclarationNode::lengthNames[ src->length ] );
+			}
+		} // if
+		break;
+	default:
+		switch ( src->kind ) {
+		case TypeData::Aggregate:
+		case TypeData::Enum:
+			dst->base = new TypeData( TypeData::AggregateInst );
+			dst->base->aggInst.aggregate = src;
+			if ( src->kind == TypeData::Aggregate ) {
+				dst->base->aggInst.params = maybeCopy( src->aggregate.actuals );
+			} // if
+			dst->base->qualifiers |= src->qualifiers;
+			src = nullptr;
+			break;
+		default:
+			if ( dst->forall ) {
+				dst->forall->set_last( src->forall );
+			} else {
+				dst->forall = src->forall;
+			} // if
+			src->forall = nullptr;
+			dst->base = src;
+			src = nullptr;
+		} // switch
+	} // switch
+}
+
+// Takes ownership of all arguments, gives ownership of return value.
+TypeData * addType( TypeData * ltype, TypeData * rtype, std::vector<ast::ptr<ast::Attribute>> & attributes ) {
+	if ( rtype ) {
+		addTypeToType( rtype, ltype );
+		return rtype;
+	} else {
+		if ( ltype->kind == TypeData::Aggregate || ltype->kind == TypeData::Enum ) {
+			// Hide type information aggregate instances.
+			rtype = new TypeData( TypeData::AggregateInst );
+			rtype->aggInst.aggregate = ltype;
+			rtype->aggInst.aggregate->aggregate.attributes.swap( attributes ); // change ownership
+			if ( ltype->kind == TypeData::Aggregate ) {
+				rtype->aggInst.hoistType = ltype->aggregate.body;
+				rtype->aggInst.params = maybeCopy( ltype->aggregate.actuals );
+			} else {
+				rtype->aggInst.hoistType = ltype->enumeration.body;
+			} // if
+			rtype->qualifiers |= ltype->qualifiers;
+		} else {
+			rtype = ltype;
+		} // if
+		return rtype;
+	} // if
+}
+
+TypeData * addType( TypeData * ltype, TypeData * rtype ) {
+	std::vector<ast::ptr<ast::Attribute>> attributes;
+	return addType( ltype, rtype, attributes );
+}
+
+// Takes ownership of both arguments, gives ownership of return value.
+TypeData * cloneBaseType( TypeData * type, TypeData * other ) {
+	TypeData * newType = type->getLastBase()->clone();
+	if ( newType->kind == TypeData::AggregateInst ) {
+		// don't duplicate members
+		if ( newType->aggInst.aggregate->kind == TypeData::Enum ) {
+			delete newType->aggInst.aggregate->enumeration.constants;
+			newType->aggInst.aggregate->enumeration.constants = nullptr;
+			newType->aggInst.aggregate->enumeration.body = false;
+		} else {
+			assert( newType->aggInst.aggregate->kind == TypeData::Aggregate );
+			delete newType->aggInst.aggregate->aggregate.fields;
+			newType->aggInst.aggregate->aggregate.fields = nullptr;
+			newType->aggInst.aggregate->aggregate.body = false;
+		} // if
+		// don't hoist twice
+		newType->aggInst.hoistType = false;
+	} // if
+	newType->forall = maybeCopy( type->forall );
+
+	if ( other ) {
+		addTypeToType( other, newType );
+		delete newType;
+		return other;
+	} // if
+	return newType;
+}
+
+TypeData * makeNewBase( TypeData * type ) {
+	switch ( type->kind ) {
+	case TypeData::Aggregate:
+	case TypeData::Enum: {
+		TypeData * out = new TypeData( TypeData::AggregateInst );
+		out->aggInst.aggregate = type;
+		if ( TypeData::Aggregate == type->kind ) {
+			out->aggInst.params = maybeCopy( type->aggregate.actuals );
+		}
+		out->qualifiers |= type->qualifiers;
+		return out;
+	}
+	default:
+		return type;
+	} // switch
+}
+
 
 void buildForall(
 		const DeclarationNode * firstNode,
@@ -493,7 +769,7 @@ void buildForall(
 	auto n = firstNode;
 	for ( auto i = outputList.begin() ;
 			i != outputList.end() ;
-			++i, n = (DeclarationNode*)n->get_next() ) {
+			++i, n = n->next ) {
 		// Only the object type class adds additional assertions.
 		if ( n->variable.tyClass != ast::TypeDecl::Otype ) {
 			continue;
@@ -638,7 +914,7 @@ void buildForall(
 	auto n = firstNode;
 	for ( auto i = outputForall.begin() ;
 			i != outputForall.end() ;
-			++i, n = (DeclarationNode*)n->get_next() ) {
+			++i, n = n->next ) {
 		// Only the object type class adds additional assertions.
 		if ( n->variable.tyClass != ast::TypeDecl::Otype ) {
 			continue;
@@ -1271,7 +1547,7 @@ ast::EnumDecl * buildEnum(
 	buildList( td->enumeration.constants, ret->members );
 	auto members = ret->members.begin();
 	ret->hide = td->enumeration.hiding == EnumHiding::Hide ? ast::EnumDecl::EnumHiding::Hide : ast::EnumDecl::EnumHiding::Visible;
-	for ( const DeclarationNode * cur = td->enumeration.constants; cur != nullptr; cur = dynamic_cast< DeclarationNode * >( cur->get_next() ), ++members ) {
+	for ( const DeclarationNode * cur = td->enumeration.constants; cur != nullptr; cur = cur->next, ++members ) {
 		if ( cur->enumInLine ) {
 			// Do Nothing
 		} else if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
@@ -1499,9 +1775,9 @@ ast::FunctionType * buildFunctionType( const TypeData * td ) {
 void buildKRFunction( const TypeData::Function_t & function ) {
 	assert( ! function.params );
 	// loop over declaration first as it is easier to spot errors
-	for ( DeclarationNode * decl = function.oldDeclList; decl != nullptr; decl = dynamic_cast< DeclarationNode * >( decl->get_next() ) ) {
+	for ( DeclarationNode * decl = function.oldDeclList; decl != nullptr; decl = decl->next ) {
 		// scan ALL parameter names for each declaration name to check for duplicates
-		for ( DeclarationNode * param = function.idList; param != nullptr; param = dynamic_cast< DeclarationNode * >( param->get_next() ) ) {
+		for ( DeclarationNode * param = function.idList; param != nullptr; param = param->next ) {
 			if ( *decl->name == *param->name ) {
 				// type set => parameter name already transformed by a declaration names so there is a duplicate
 				// declaration name attempting a second transformation
@@ -1523,7 +1799,7 @@ void buildKRFunction( const TypeData::Function_t & function ) {
 	//
 	//    rtb( a, b, c ) const char * b; {} => int rtn( int a, const char * b, int c ) {}
 
-	for ( DeclarationNode * param = function.idList; param != nullptr; param = dynamic_cast< DeclarationNode * >( param->get_next() ) ) {
+	for ( DeclarationNode * param = function.idList; param != nullptr; param = param->next ) {
 		if ( ! param->type ) {							// generate type int for empty parameter type
 			param->type = new TypeData( TypeData::Basic );
 			param->type->basictype = DeclarationNode::Int;

@@ -361,27 +361,38 @@ union YYSTYPE
 {
 #line 318 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
 
+	// A raw token can be used.
 	Token tok;
-	ExpressionNode * expr;
+
+	// The general node types hold some generic node or list of nodes.
 	DeclarationNode * decl;
-	ast::AggregateDecl::Aggregate aggKey;
-	ast::TypeDecl::Kind tclass;
+	InitializerNode * init;
+	ExpressionNode * expr;
 	StatementNode * stmt;
 	ClauseNode * clause;
-	ast::WaitForStmt * wfs;
-    ast::WaitUntilStmt::ClauseNode * wucn;
+	TypeData * type;
+
+	// Special "nodes" containing compound information.
 	CondCtl * ifctl;
 	ForCtrl * forctl;
 	LabelNode * labels;
-	InitializerNode * init;
+
+	// Various flags and single values that become fields later.
+	ast::AggregateDecl::Aggregate aggKey;
+	ast::TypeDecl::Kind tclass;
 	OperKinds oper;
-	std::string * str;
 	bool is_volatile;
 	EnumHiding enum_hiding;
 	ast::ExceptionKind except_kind;
+	// String passes ownership with it.
+	std::string * str;
+
+	// Narrower node types are used to avoid constant unwrapping.
+	ast::WaitForStmt * wfs;
+	ast::WaitUntilStmt::ClauseNode * wucn;
 	ast::GenericExpr * genexpr;
 
-#line 385 "Parser/parser.hh"
+#line 396 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

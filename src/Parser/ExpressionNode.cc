@@ -28,6 +28,7 @@
 #include "Common/utility.h"        // for maybeMoveBuild, maybeBuild, CodeLo...
 #include "DeclarationNode.h"       // for DeclarationNode
 #include "InitializerNode.h"       // for InitializerNode
+#include "TypeData.h"              // for addType, build_basic_type, build_c...
 #include "parserutility.h"         // for notZeroExpr
 
 using namespace std;
@@ -315,12 +316,12 @@ ast::Expr * build_constantInteger(
 				str2,
 				v2 );
 			ret = build_compoundLiteral( location,
-				DeclarationNode::newBasicType(
-					DeclarationNode::Int128
-				)->addType(
-					DeclarationNode::newSignedNess( DeclarationNode::Unsigned ) ),
+				DeclarationNode::newFromTypeData(
+					addType(
+						build_basic_type( DeclarationNode::Int128 ),
+						build_signedness( DeclarationNode::Unsigned ) ) ),
 				new InitializerNode(
-					(InitializerNode *)(new InitializerNode( new ExpressionNode( v2 == 0 ? ret2 : ret ) ))->set_last( new InitializerNode( new ExpressionNode( v2 == 0 ? ret : ret2 ) ) ), true )
+					(new InitializerNode( new ExpressionNode( v2 == 0 ? ret2 : ret ) ))->set_last( new InitializerNode( new ExpressionNode( v2 == 0 ? ret : ret2 ) ) ), true )
 			);
 		} else {										// explicit length, (length_type)constant
 			ret = new ast::CastExpr( location,

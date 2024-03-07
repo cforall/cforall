@@ -110,7 +110,31 @@ struct TypeData {
 	TypeData * clone() const;
 
 	const std::string * leafName() const;
+
+	TypeData * getLastBase();
+	void setLastBase( TypeData * );
 };
+
+
+TypeData * build_type_qualifier( ast::CV::Qualifiers );
+TypeData * build_basic_type( DeclarationNode::BasicType );
+TypeData * build_complex_type( DeclarationNode::ComplexType );
+TypeData * build_signedness( DeclarationNode::Signedness );
+TypeData * build_builtin_type( DeclarationNode::BuiltinType );
+TypeData * build_length( DeclarationNode::Length );
+TypeData * build_forall( DeclarationNode * );
+TypeData * build_global_scope();
+TypeData * build_qualified_type( TypeData *, TypeData * );
+TypeData * build_typedef( const std::string * name );
+TypeData * build_type_gen( const std::string * name, ExpressionNode * params );
+TypeData * build_vtable_type( TypeData * );
+
+TypeData * addQualifiers( TypeData * ltype, TypeData * rtype );
+TypeData * addType( TypeData * ltype, TypeData * rtype, std::vector<ast::ptr<ast::Attribute>> & );
+TypeData * addType( TypeData * ltype, TypeData * rtype );
+TypeData * cloneBaseType( TypeData * type, TypeData * other );
+TypeData * makeNewBase( TypeData * type );
+
 
 ast::Type * typebuild( const TypeData * );
 TypeData * typeextractAggregate( const TypeData * td, bool toplevel = true );
@@ -134,6 +158,12 @@ ast::Decl * buildDecl(
 	ast::Init * init = nullptr, std::vector<ast::ptr<ast::Attribute>> && attributes = std::vector<ast::ptr<ast::Attribute>>() );
 ast::FunctionType * buildFunctionType( const TypeData * );
 void buildKRFunction( const TypeData::Function_t & function );
+
+static inline ast::Type * maybeMoveBuildType( TypeData * type ) {
+	ast::Type * ret = type ? typebuild( type ) : nullptr;
+	delete type;
+	return ret;
+}
 
 // Local Variables: //
 // tab-width: 4 //

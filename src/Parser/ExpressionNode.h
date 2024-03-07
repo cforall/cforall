@@ -25,7 +25,7 @@ struct ExpressionNode final : public ParseList<ExpressionNode> {
 	virtual ExpressionNode * clone() const override {
 		if ( nullptr == expr ) return nullptr;
 		ExpressionNode * node = new ExpressionNode( ast::shallowCopy( expr.get() ) );
-		node->set_next( maybeCopy( get_next() ) );
+		node->next = maybeCopy( next );
 		return node;
 	}
 

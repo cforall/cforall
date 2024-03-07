@@ -39,18 +39,9 @@ struct DeclarationNode final : public ParseList<DeclarationNode> {
 	enum BuiltinType { Valist, AutoType, Zero, One, NoBuiltinType };
 	static const char * builtinTypeNames[];
 
+	static DeclarationNode * newFromTypeData( TypeData * );
 	static DeclarationNode * newStorageClass( ast::Storage::Classes );
 	static DeclarationNode * newFuncSpecifier( ast::Function::Specs );
-	static DeclarationNode * newTypeQualifier( ast::CV::Qualifiers );
-	static DeclarationNode * newBasicType( BasicType );
-	static DeclarationNode * newComplexType( ComplexType );
-	static DeclarationNode * newSignedNess( Signedness );
-	static DeclarationNode * newLength( Length );
-	static DeclarationNode * newBuiltinType( BuiltinType );
-	static DeclarationNode * newForall( DeclarationNode * );
-	static DeclarationNode * newFromTypedef( const std::string * );
-	static DeclarationNode * newFromGlobalScope();
-	static DeclarationNode * newQualifiedType( DeclarationNode *, DeclarationNode * );
 	static DeclarationNode * newFunction( const std::string * name, DeclarationNode * ret, DeclarationNode * param, StatementNode * body );
 	static DeclarationNode * newAggregate( ast::AggregateDecl::Aggregate kind, const std::string * name, ExpressionNode * actuals, DeclarationNode * fields, bool body );
 	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base = nullptr, EnumHiding hiding = EnumHiding::Visible );
@@ -58,7 +49,6 @@ struct DeclarationNode final : public ParseList<DeclarationNode> {
 	static DeclarationNode * newEnumValueGeneric( const std::string * name, InitializerNode * init );
 	static DeclarationNode * newEnumInLine( const std::string name );
 	static DeclarationNode * newName( const std::string * );
-	static DeclarationNode * newFromTypeGen( const std::string *, ExpressionNode * params );
 	static DeclarationNode * newTypeParam( ast::TypeDecl::Kind, const std::string * );
 	static DeclarationNode * newTrait( const std::string * name, DeclarationNode * params, DeclarationNode * asserts );
 	static DeclarationNode * newTraitUse( const std::string * name, ExpressionNode * params );
@@ -69,7 +59,6 @@ struct DeclarationNode final : public ParseList<DeclarationNode> {
 	static DeclarationNode * newBitfield( ExpressionNode * size );
 	static DeclarationNode * newTuple( DeclarationNode * members );
 	static DeclarationNode * newTypeof( ExpressionNode * expr, bool basetypeof = false );
-	static DeclarationNode * newVtableType( DeclarationNode * expr );
 	static DeclarationNode * newAttribute( const std::string *, ExpressionNode * expr = nullptr ); // gcc attributes
 	static DeclarationNode * newDirectiveStmt( StatementNode * stmt ); // gcc external directive statement
 	static DeclarationNode * newAsmStmt( StatementNode * stmt ); // gcc external asm statement
@@ -140,8 +129,6 @@ struct DeclarationNode final : public ParseList<DeclarationNode> {
 	};
 	StaticAssert_t assert;
 
-	BuiltinType builtin = NoBuiltinType;
-
 	TypeData * type = nullptr;
 
 	bool inLine = false;
@@ -163,8 +150,6 @@ struct DeclarationNode final : public ParseList<DeclarationNode> {
 
 	static UniqueName anonymous;
 }; // DeclarationNode
-
-ast::Type * buildType( TypeData * type );
 
 static inline ast::Type * maybeMoveBuildType( const DeclarationNode * orig ) {
 	ast::Type * ret = orig ? orig->buildType() : nullptr;

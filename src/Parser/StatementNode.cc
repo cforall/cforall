@@ -53,15 +53,15 @@ StatementNode::StatementNode( DeclarationNode * decl ) {
 	if ( agg ) {
 		StatementNode * nextStmt = new StatementNode(
 			new ast::DeclStmt( decl->location, maybeBuild( decl ) ) );
-		set_next( nextStmt );
-		if ( decl->get_next() ) {
-			get_next()->set_next( new StatementNode( dynamic_cast< DeclarationNode * >(decl->get_next()) ) );
-			decl->set_next( 0 );
+		next = nextStmt;
+		if ( decl->next ) {
+			next->next = new StatementNode( decl->next );
+			decl->next = nullptr;
 		} // if
 	} else {
-		if ( decl->get_next() ) {
-			set_next( new StatementNode( dynamic_cast< DeclarationNode * >( decl->get_next() ) ) );
-			decl->set_next( 0 );
+		if ( decl->next ) {
+			next = new StatementNode( decl->next );
+			decl->next = nullptr;
 		} // if
 		agg = decl;
 	} // if
@@ -86,12 +86,12 @@ StatementNode * StatementNode::add_label(
 ClauseNode * ClauseNode::append_last_case( StatementNode * stmt ) {
 	ClauseNode * prev = this;
 	// find end of list and maintain previous pointer
-	for ( ClauseNode * curr = prev; curr != nullptr; curr = (ClauseNode *)curr->get_next() ) {
-		ClauseNode * node = strict_dynamic_cast< ClauseNode * >(curr);
+	for ( ClauseNode * curr = prev; curr != nullptr; curr = curr->next ) {
+		ClauseNode * node = curr;
 		assert( dynamic_cast<ast::CaseClause *>( node->clause.get() ) );
 		prev = curr;
 	} // for
-	ClauseNode * node = dynamic_cast< ClauseNode * >(prev);
+	ClauseNode * node = prev;
 	// convert from StatementNode list to Statement list
 	std::vector<ast::ptr<ast::Stmt>> stmts;
 	buildMoveList( stmt, stmts );
@@ -331,8 +331,8 @@ ast::WaitForStmt * build_waitfor( const CodeLocation & location, ast::WaitForStm
 	clause->stmt = maybeMoveBuild( stmt );
 	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
 
-	ExpressionNode * next = dynamic_cast<ExpressionNode *>( targetExpr->get_next() );
-	targetExpr->set_next( nullptr );
+	ExpressionNode * next = targetExpr->next;
+	targetExpr->next = nullptr;
 	buildMoveList( next, clause->target_args );
 
 	delete targetExpr;
