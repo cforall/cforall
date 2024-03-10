@@ -516,10 +516,13 @@ namespace ResolvExpr {
 			handleRefType( aggrType, type2 );
 		}
 
-		void postvisit( const ast::EnumPosType * ) {
+		void postvisit( const ast::EnumPosType * posType ) {
 			// Lazy approach for now
 			auto otherPos = dynamic_cast< const ast::EnumPosType *>(type2);
-			if (otherPos) this->result = otherPos;
+			if ( otherPos ) {
+				if ( otherPos->instance->base->name == posType->instance->base->name )
+					result = otherPos;
+			}
 		}
 
 		void postvisit( const ast::TraitInstType * aggrType ) {

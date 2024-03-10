@@ -378,12 +378,10 @@ void ConversionCost::postvisit( const ast::EnumPosType * src ) {
 		// cost = costCalc( src->instance, dstBase->instance, srcIsLvalue, symtab, env );
 		// if ( cost < Cost::unsafe ) cost.incSafe();
 		cost = Cost::zero;
-	} 
-	// if ( auto dstBase = dynamic_cast<const ast::EnumInstType *>( dst ) ) {
-	// 	cost = costCalc( src->instance, dstBase, srcIsLvalue, symtab, env );
-	// 	if ( cost < Cost::unsafe ) cost.incSafe();
-	// } 
-	else {
+	} else if ( auto dstBase = dynamic_cast<const ast::EnumInstType *>( dst ) ) {
+		cost = costCalc( src->instance, dstBase, srcIsLvalue, symtab, env );
+		if ( cost < Cost::unsafe ) cost.incSafe();
+	} else {
 		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicType::SignedInt ) };
 		cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
 		if ( cost < Cost::unsafe ) {

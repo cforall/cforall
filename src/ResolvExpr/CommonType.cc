@@ -680,9 +680,12 @@ public:
 	}
 
 	void postvisit( const ast::EnumPosType * enumPos ) {
-		if ( dynamic_cast<const ast::EnumPosType *>(type2) ) {
+		if ( auto type2AsPos = dynamic_cast<const ast::EnumPosType *>(type2) ) {
 			// result = commonType( type2AsPos->instance, enumPos->instance, tenv, need, have, open, widen );
-			result = enumPos;
+			// result = enumPos;
+			if ( enumPos->instance->base->name == type2AsPos->instance->base->name ) {
+				result = type2;
+			}
 		} else if ( dynamic_cast<const ast::BasicType *>(type2) ) {
 			result = type2;
 		}
