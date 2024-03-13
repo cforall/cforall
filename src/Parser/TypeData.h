@@ -23,6 +23,24 @@
 #include "DeclarationNode.h"                        // for DeclarationNode
 
 struct TypeData {
+	// Type flags used in this type, and there names (harmonize with implementation).
+	enum BasicType {
+		Void, Bool, Char, Int, Int128,
+		Float, Double, LongDouble, uuFloat80, uuFloat128,
+		uFloat16, uFloat32, uFloat32x, uFloat64, uFloat64x, uFloat128, uFloat128x,
+		NoBasicType
+	};
+	static const char * basicTypeNames[];
+	enum ComplexType { Complex, NoComplexType, Imaginary };
+	// Imaginary unsupported => parse, but make invisible and print error message
+	static const char * complexTypeNames[];
+	enum Signedness { Signed, Unsigned, NoSignedness };
+	static const char * signednessNames[];
+	enum Length { Short, Long, LongLong, NoLength };
+	static const char * lengthNames[];
+	enum BuiltinType { Valist, AutoType, Zero, One, NoBuiltinType };
+	static const char * builtinTypeNames[];
+
 	enum Kind { Basic, Pointer, Reference, Array, Function, Aggregate, AggregateInst, Enum, EnumConstant, Symbolic,
 				SymbolicInst, Tuple, Basetypeof, Typeof, Vtable, Builtin, GlobalScope, Qualified, Unknown };
 
@@ -85,11 +103,11 @@ struct TypeData {
 
 	Kind kind;
 	TypeData * base;
-	DeclarationNode::BasicType basictype = DeclarationNode::NoBasicType;
-	DeclarationNode::ComplexType complextype = DeclarationNode::NoComplexType;
-	DeclarationNode::Signedness signedness = DeclarationNode::NoSignedness;
-	DeclarationNode::Length length = DeclarationNode::NoLength;
-	DeclarationNode::BuiltinType builtintype = DeclarationNode::NoBuiltinType;
+	BasicType basictype = NoBasicType;
+	ComplexType complextype = NoComplexType;
+	Signedness signedness = NoSignedness;
+	Length length = NoLength;
+	BuiltinType builtintype = NoBuiltinType;
 
 	ast::CV::Qualifiers qualifiers;
 	DeclarationNode * forall = nullptr;
@@ -117,11 +135,11 @@ struct TypeData {
 
 
 TypeData * build_type_qualifier( ast::CV::Qualifiers );
-TypeData * build_basic_type( DeclarationNode::BasicType );
-TypeData * build_complex_type( DeclarationNode::ComplexType );
-TypeData * build_signedness( DeclarationNode::Signedness );
-TypeData * build_builtin_type( DeclarationNode::BuiltinType );
-TypeData * build_length( DeclarationNode::Length );
+TypeData * build_basic_type( TypeData::BasicType );
+TypeData * build_complex_type( TypeData::ComplexType );
+TypeData * build_signedness( TypeData::Signedness );
+TypeData * build_builtin_type( TypeData::BuiltinType );
+TypeData * build_length( TypeData::Length );
 TypeData * build_forall( DeclarationNode * );
 TypeData * build_global_scope();
 TypeData * build_qualified_type( TypeData *, TypeData * );

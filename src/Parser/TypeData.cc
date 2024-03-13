@@ -32,6 +32,26 @@ class Attribute;
 
 using namespace std;
 
+// These must harmonize with the corresponding enumerations in the header.
+const char * TypeData::basicTypeNames[] = {
+	"void", "_Bool", "char", "int", "int128",
+	"float", "double", "long double", "float80", "float128",
+	"_float16", "_float32", "_float32x", "_float64", "_float64x", "_float128", "_float128x",
+	"NoBasicTypeNames"
+};
+const char * TypeData::complexTypeNames[] = {
+	"_Complex", "NoComplexTypeNames", "_Imaginary"
+}; // Imaginary unsupported => parse, but make invisible and print error message
+const char * TypeData::signednessNames[] = {
+	"signed", "unsigned", "NoSignednessNames"
+};
+const char * TypeData::lengthNames[] = {
+	"short", "long", "long long", "NoLengthNames"
+};
+const char * TypeData::builtinTypeNames[] = {
+	"__builtin_va_list", "__auto_type", "zero_t", "one_t", "NoBuiltinTypeNames"
+};
+
 TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), forall( nullptr ) /*, PTR1( (void*)(0xdeadbeefdeadbeef)), PTR2( (void*)(0xdeadbeefdeadbeef) ) */ {
 	switch ( kind ) {
 	case Unknown:
@@ -238,7 +258,7 @@ TypeData * TypeData::clone() const {
 	case Vtable:
 		break;
 	case Builtin:
-		assert( builtintype == DeclarationNode::Zero || builtintype == DeclarationNode::One );
+		assert( builtintype == Zero || builtintype == One );
 		newtype->builtintype = builtintype;
 		break;
 	case Qualified:
@@ -260,10 +280,10 @@ void TypeData::print( ostream &os, int indent ) const {
 
 	switch ( kind ) {
 	case Basic:
-		if ( signedness != DeclarationNode::NoSignedness ) os << DeclarationNode::signednessNames[ signedness ] << " ";
-		if ( length != DeclarationNode::NoLength ) os << DeclarationNode::lengthNames[ length ] << " ";
-		if ( complextype != DeclarationNode::NoComplexType ) os << DeclarationNode::complexTypeNames[ complextype ] << " ";
-		if ( basictype != DeclarationNode::NoBasicType ) os << DeclarationNode::basicTypeNames[ basictype ] << " ";
+		if ( signedness != NoSignedness ) os << signednessNames[ signedness ] << " ";
+		if ( length != NoLength ) os << lengthNames[ length ] << " ";
+		if ( complextype != NoComplexType ) os << complexTypeNames[ complextype ] << " ";
+		if ( basictype != NoBasicType ) os << basicTypeNames[ basictype ] << " ";
 		break;
 	case Pointer:
 		os << "pointer ";
@@ -428,7 +448,7 @@ void TypeData::print( ostream &os, int indent ) const {
 		os << "vtable";
 		break;
 	case Builtin:
-		os << DeclarationNode::builtinTypeNames[builtintype];
+		os << builtinTypeNames[builtintype];
 		break;
 	case GlobalScope:
 		break;
@@ -494,31 +514,31 @@ TypeData * build_type_qualifier( ast::CV::Qualifiers tq ) {
 	return type;
 }
 
-TypeData * build_basic_type( DeclarationNode::BasicType basic ) {
+TypeData * build_basic_type( TypeData::BasicType basic ) {
 	TypeData * type = new TypeData( TypeData::Basic );
 	type->basictype = basic;
 	return type;
 }
 
-TypeData * build_complex_type( DeclarationNode::ComplexType complex ) {
+TypeData * build_complex_type( TypeData::ComplexType complex ) {
 	TypeData * type = new TypeData( TypeData::Basic );
 	type->complextype = complex;
 	return type;
 }
 
-TypeData * build_signedness( DeclarationNode::Signedness signedness ) {
+TypeData * build_signedness( TypeData::Signedness signedness ) {
 	TypeData * type = new TypeData( TypeData::Basic );
 	type->signedness = signedness;
 	return type;
 }
 
-TypeData * build_builtin_type( DeclarationNode::BuiltinType bit ) {
+TypeData * build_builtin_type( TypeData::BuiltinType bit ) {
 	TypeData * type = new TypeData( TypeData::Builtin );
 	type->builtintype = bit;
 	return type;
 }
 
-TypeData * build_length( DeclarationNode::Length length ) {
+TypeData * build_length( TypeData::Length length ) {
 	TypeData * type = new TypeData( TypeData::Basic );
 	type->length = length;
 	return type;
@@ -621,35 +641,35 @@ static void addTypeToType( TypeData *& dst, TypeData *& src ) {
 		if ( src->kind != TypeData::Unknown ) {
 			assert( src->kind == TypeData::Basic );
 
-			if ( dst->basictype == DeclarationNode::NoBasicType ) {
+			if ( dst->basictype == TypeData::NoBasicType ) {
 				dst->basictype = src->basictype;
-			} else if ( src->basictype != DeclarationNode::NoBasicType ) {
+			} else if ( src->basictype != TypeData::NoBasicType ) {
 				SemanticError( yylloc, "multiple declaration types \"%s\" and \"%s\".",
-					DeclarationNode::basicTypeNames[ dst->basictype ],
-					DeclarationNode::basicTypeNames[ src->basictype ] );
+					TypeData::basicTypeNames[ dst->basictype ],
+					TypeData::basicTypeNames[ src->basictype ] );
 			}
-			if ( dst->complextype == DeclarationNode::NoComplexType ) {
+			if ( dst->complextype == TypeData::NoComplexType ) {
 				dst->complextype = src->complextype;
-			} else if ( src->complextype != DeclarationNode::NoComplexType ) {
+			} else if ( src->complextype != TypeData::NoComplexType ) {
 				SemanticError( yylloc, "multiple declaration types \"%s\" and \"%s\".",
-					DeclarationNode::complexTypeNames[ src->complextype ],
-					DeclarationNode::complexTypeNames[ src->complextype ] );
+					TypeData::complexTypeNames[ src->complextype ],
+					TypeData::complexTypeNames[ src->complextype ] );
 			}
-			if ( dst->signedness == DeclarationNode::NoSignedness ) {
+			if ( dst->signedness == TypeData::NoSignedness ) {
 				dst->signedness = src->signedness;
-			} else if ( src->signedness != DeclarationNode::NoSignedness ) {
+			} else if ( src->signedness != TypeData::NoSignedness ) {
 				SemanticError( yylloc, "conflicting type specifier \"%s\" and \"%s\".",
-					DeclarationNode::signednessNames[ dst->signedness ],
-					DeclarationNode::signednessNames[ src->signedness ] );
+					TypeData::signednessNames[ dst->signedness ],
+					TypeData::signednessNames[ src->signedness ] );
 			}
-			if ( dst->length == DeclarationNode::NoLength ) {
+			if ( dst->length == TypeData::NoLength ) {
 				dst->length = src->length;
-			} else if ( dst->length == DeclarationNode::Long && src->length == DeclarationNode::Long ) {
-				dst->length = DeclarationNode::LongLong;
-			} else if ( src->length != DeclarationNode::NoLength ) {
+			} else if ( dst->length == TypeData::Long && src->length == TypeData::Long ) {
+				dst->length = TypeData::LongLong;
+			} else if ( src->length != TypeData::NoLength ) {
 				SemanticError( yylloc, "conflicting type specifier \"%s\" and \"%s\".",
-					DeclarationNode::lengthNames[ dst->length ],
-					DeclarationNode::lengthNames[ src->length ] );
+					TypeData::lengthNames[ dst->length ],
+					TypeData::lengthNames[ src->length ] );
 			}
 		} // if
 		break;
@@ -1090,9 +1110,9 @@ ast::Type * typebuild( const TypeData * td ) {
 		return buildVtable( td );
 	case TypeData::Builtin:
 		switch ( td->builtintype ) {
-		case DeclarationNode::Zero:
+		case TypeData::Zero:
 			return new ast::ZeroType();
-		case DeclarationNode::One:
+		case TypeData::One:
 			return new ast::OneType();
 		default:
 			return new ast::VarArgsType( buildQualifiers( td ) );
@@ -1148,117 +1168,117 @@ ast::CV::Qualifiers buildQualifiers( const TypeData * td ) {
 } // buildQualifiers
 
 
-static string genTSError( string msg, DeclarationNode::BasicType basictype ) {
-	SemanticError( yylloc, "invalid type specifier \"%s\" for type \"%s\".", msg.c_str(), DeclarationNode::basicTypeNames[basictype] );
+static string genTSError( string msg, TypeData::BasicType basictype ) {
+	SemanticError( yylloc, "invalid type specifier \"%s\" for type \"%s\".", msg.c_str(), TypeData::basicTypeNames[basictype] );
 } // genTSError
 
 ast::Type * buildBasicType( const TypeData * td ) {
 	ast::BasicType::Kind ret;
 
 	switch ( td->basictype ) {
-	case DeclarationNode::Void:
-		if ( td->signedness != DeclarationNode::NoSignedness ) {
-			genTSError( DeclarationNode::signednessNames[ td->signedness ], td->basictype );
+	case TypeData::Void:
+		if ( td->signedness != TypeData::NoSignedness ) {
+			genTSError( TypeData::signednessNames[ td->signedness ], td->basictype );
 		} // if
-		if ( td->length != DeclarationNode::NoLength ) {
-			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
+		if ( td->length != TypeData::NoLength ) {
+			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
 		} // if
 		return new ast::VoidType( buildQualifiers( td ) );
 		break;
 
-	case DeclarationNode::Bool:
-		if ( td->signedness != DeclarationNode::NoSignedness ) {
-			genTSError( DeclarationNode::signednessNames[ td->signedness ], td->basictype );
+	case TypeData::Bool:
+		if ( td->signedness != TypeData::NoSignedness ) {
+			genTSError( TypeData::signednessNames[ td->signedness ], td->basictype );
 		} // if
-		if ( td->length != DeclarationNode::NoLength ) {
-			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
+		if ( td->length != TypeData::NoLength ) {
+			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
 		} // if
 
 		ret = ast::BasicType::Bool;
 		break;
 
-	case DeclarationNode::Char:
+	case TypeData::Char:
 		// C11 Standard 6.2.5.15: The three types char, signed char, and unsigned char are collectively called the
 		// character types. The implementation shall define char to have the same range, representation, and behavior as
 		// either signed char or unsigned char.
 		static ast::BasicType::Kind chartype[] = { ast::BasicType::SignedChar, ast::BasicType::UnsignedChar, ast::BasicType::Char };
 
-		if ( td->length != DeclarationNode::NoLength ) {
-			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
+		if ( td->length != TypeData::NoLength ) {
+			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
 		} // if
 
 		ret = chartype[ td->signedness ];
 		break;
 
-	case DeclarationNode::Int:
+	case TypeData::Int:
 		static ast::BasicType::Kind inttype[2][4] = {
 			{ ast::BasicType::ShortSignedInt, ast::BasicType::LongSignedInt, ast::BasicType::LongLongSignedInt, ast::BasicType::SignedInt },
 			{ ast::BasicType::ShortUnsignedInt, ast::BasicType::LongUnsignedInt, ast::BasicType::LongLongUnsignedInt, ast::BasicType::UnsignedInt },
 		};
 
 	Integral: ;
-		if ( td->signedness == DeclarationNode::NoSignedness ) {
-			const_cast<TypeData *>(td)->signedness = DeclarationNode::Signed;
+		if ( td->signedness == TypeData::NoSignedness ) {
+			const_cast<TypeData *>(td)->signedness = TypeData::Signed;
 		} // if
 		ret = inttype[ td->signedness ][ td->length ];
 		break;
 
-	case DeclarationNode::Int128:
-		ret = td->signedness == DeclarationNode::Unsigned ? ast::BasicType::UnsignedInt128 : ast::BasicType::SignedInt128;
-		if ( td->length != DeclarationNode::NoLength ) {
-			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
+	case TypeData::Int128:
+		ret = td->signedness == TypeData::Unsigned ? ast::BasicType::UnsignedInt128 : ast::BasicType::SignedInt128;
+		if ( td->length != TypeData::NoLength ) {
+			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
 		} // if
 		break;
 
-	case DeclarationNode::Float:
-	case DeclarationNode::Double:
-	case DeclarationNode::LongDouble:					// not set until below
-	case DeclarationNode::uuFloat80:
-	case DeclarationNode::uuFloat128:
-	case DeclarationNode::uFloat16:
-	case DeclarationNode::uFloat32:
-	case DeclarationNode::uFloat32x:
-	case DeclarationNode::uFloat64:
-	case DeclarationNode::uFloat64x:
-	case DeclarationNode::uFloat128:
-	case DeclarationNode::uFloat128x:
+	case TypeData::Float:
+	case TypeData::Double:
+	case TypeData::LongDouble:					// not set until below
+	case TypeData::uuFloat80:
+	case TypeData::uuFloat128:
+	case TypeData::uFloat16:
+	case TypeData::uFloat32:
+	case TypeData::uFloat32x:
+	case TypeData::uFloat64:
+	case TypeData::uFloat64x:
+	case TypeData::uFloat128:
+	case TypeData::uFloat128x:
 		static ast::BasicType::Kind floattype[2][12] = {
 			{ ast::BasicType::FloatComplex, ast::BasicType::DoubleComplex, ast::BasicType::LongDoubleComplex, (ast::BasicType::Kind)-1, (ast::BasicType::Kind)-1, ast::BasicType::uFloat16Complex, ast::BasicType::uFloat32Complex, ast::BasicType::uFloat32xComplex, ast::BasicType::uFloat64Complex, ast::BasicType::uFloat64xComplex, ast::BasicType::uFloat128Complex, ast::BasicType::uFloat128xComplex, },
 			{ ast::BasicType::Float, ast::BasicType::Double, ast::BasicType::LongDouble, ast::BasicType::uuFloat80, ast::BasicType::uuFloat128, ast::BasicType::uFloat16, ast::BasicType::uFloat32, ast::BasicType::uFloat32x, ast::BasicType::uFloat64, ast::BasicType::uFloat64x, ast::BasicType::uFloat128, ast::BasicType::uFloat128x, },
 		};
 
 	FloatingPoint: ;
-		if ( td->signedness != DeclarationNode::NoSignedness ) {
-			genTSError( DeclarationNode::signednessNames[ td->signedness ], td->basictype );
+		if ( td->signedness != TypeData::NoSignedness ) {
+			genTSError( TypeData::signednessNames[ td->signedness ], td->basictype );
 		} // if
-		if ( td->length == DeclarationNode::Short || td->length == DeclarationNode::LongLong ) {
-			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
+		if ( td->length == TypeData::Short || td->length == TypeData::LongLong ) {
+			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
 		} // if
-		if ( td->basictype != DeclarationNode::Double && td->length == DeclarationNode::Long ) {
-			genTSError( DeclarationNode::lengthNames[ td->length ], td->basictype );
+		if ( td->basictype != TypeData::Double && td->length == TypeData::Long ) {
+			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
 		} // if
-		if ( td->complextype == DeclarationNode::Imaginary ) {
-			genTSError( DeclarationNode::complexTypeNames[ td->complextype ], td->basictype );
+		if ( td->complextype == TypeData::Imaginary ) {
+			genTSError( TypeData::complexTypeNames[ td->complextype ], td->basictype );
 		} // if
-		if ( (td->basictype == DeclarationNode::uuFloat80 || td->basictype == DeclarationNode::uuFloat128) && td->complextype == DeclarationNode::Complex ) { // gcc unsupported
-			genTSError( DeclarationNode::complexTypeNames[ td->complextype ], td->basictype );
+		if ( (td->basictype == TypeData::uuFloat80 || td->basictype == TypeData::uuFloat128) && td->complextype == TypeData::Complex ) { // gcc unsupported
+			genTSError( TypeData::complexTypeNames[ td->complextype ], td->basictype );
 		} // if
-		if ( td->length == DeclarationNode::Long ) {
-			const_cast<TypeData *>(td)->basictype = DeclarationNode::LongDouble;
+		if ( td->length == TypeData::Long ) {
+			const_cast<TypeData *>(td)->basictype = TypeData::LongDouble;
 		} // if
 
-		ret = floattype[ td->complextype ][ td->basictype - DeclarationNode::Float ];
-		//printf( "XXXX %d %d %d %d\n", td->complextype, td->basictype, DeclarationNode::Float, ret );
+		ret = floattype[ td->complextype ][ td->basictype - TypeData::Float ];
+		//printf( "XXXX %d %d %d %d\n", td->complextype, td->basictype, TypeData::Float, ret );
 		break;
 
-	case DeclarationNode::NoBasicType:
+	case TypeData::NoBasicType:
 		// No basic type in declaration => default double for Complex/Imaginary and int type for integral types
-		if ( td->complextype == DeclarationNode::Complex || td->complextype == DeclarationNode::Imaginary ) {
-			const_cast<TypeData *>(td)->basictype = DeclarationNode::Double;
+		if ( td->complextype == TypeData::Complex || td->complextype == TypeData::Imaginary ) {
+			const_cast<TypeData *>(td)->basictype = TypeData::Double;
 			goto FloatingPoint;
 		} // if
 
-		const_cast<TypeData *>(td)->basictype = DeclarationNode::Int;
+		const_cast<TypeData *>(td)->basictype = TypeData::Int;
 		goto Integral;
 	default:
 		assertf( false, "unknown basic type" );
@@ -1270,60 +1290,35 @@ ast::Type * buildBasicType( const TypeData * td ) {
 } // buildBasicType
 
 
+static ast::Type * buildDefaultType( const TypeData * td ) {
+	return ( td ) ? typebuild( td ) : new ast::BasicType( ast::BasicType::SignedInt );
+} // buildDefaultType
+
+
 ast::PointerType * buildPointer( const TypeData * td ) {
-	ast::PointerType * pt;
-	if ( td->base ) {
-		pt = new ast::PointerType(
-			typebuild( td->base ),
-			buildQualifiers( td )
-		);
-	} else {
-		pt = new ast::PointerType(
-			new ast::BasicType( ast::BasicType::SignedInt ),
-			buildQualifiers( td )
-		);
-	} // if
-	return pt;
+	return new ast::PointerType(
+		buildDefaultType( td->base ),
+		buildQualifiers( td )
+	);
 } // buildPointer
 
 
 ast::ArrayType * buildArray( const TypeData * td ) {
-	ast::ArrayType * at;
-	if ( td->base ) {
-		at = new ast::ArrayType(
-			typebuild( td->base ),
-			maybeBuild( td->array.dimension ),
-			td->array.isVarLen ? ast::VariableLen : ast::FixedLen,
-			td->array.isStatic ? ast::StaticDim : ast::DynamicDim,
-			buildQualifiers( td )
-		);
-	} else {
-		at = new ast::ArrayType(
-			new ast::BasicType( ast::BasicType::SignedInt ),
-			maybeBuild( td->array.dimension ),
-			td->array.isVarLen ? ast::VariableLen : ast::FixedLen,
-			td->array.isStatic ? ast::StaticDim : ast::DynamicDim,
-			buildQualifiers( td )
-		);
-	} // if
-	return at;
+	return new ast::ArrayType(
+		buildDefaultType( td->base ),
+		maybeBuild( td->array.dimension ),
+		td->array.isVarLen ? ast::VariableLen : ast::FixedLen,
+		td->array.isStatic ? ast::StaticDim : ast::DynamicDim,
+		buildQualifiers( td )
+	);
 } // buildArray
 
 
 ast::ReferenceType * buildReference( const TypeData * td ) {
-	ast::ReferenceType * rt;
-	if ( td->base ) {
-		rt = new ast::ReferenceType(
-			typebuild( td->base ),
-			buildQualifiers( td )
-		);
-	} else {
-		rt = new ast::ReferenceType(
-			new ast::BasicType( ast::BasicType::SignedInt ),
-			buildQualifiers( td )
-		);
-	} // if
-	return rt;
+	return new ast::ReferenceType(
+		buildDefaultType( td->base ),
+		buildQualifiers( td )
+	);
 } // buildReference
 
 
@@ -1802,7 +1797,7 @@ void buildKRFunction( const TypeData::Function_t & function ) {
 	for ( DeclarationNode * param = function.idList; param != nullptr; param = param->next ) {
 		if ( ! param->type ) {							// generate type int for empty parameter type
 			param->type = new TypeData( TypeData::Basic );
-			param->type->basictype = DeclarationNode::Int;
+			param->type->basictype = TypeData::Int;
 		} // if
 	} // for
 

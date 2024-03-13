@@ -21,24 +21,6 @@ struct TypeData;
 struct InitializerNode;
 
 struct DeclarationNode final : public ParseList<DeclarationNode> {
-	// These enumerations must harmonize with their names in DeclarationNode.cc.
-	enum BasicType {
-		Void, Bool, Char, Int, Int128,
-		Float, Double, LongDouble, uuFloat80, uuFloat128,
-		uFloat16, uFloat32, uFloat32x, uFloat64, uFloat64x, uFloat128, uFloat128x,
-		NoBasicType
-	};
-	static const char * basicTypeNames[];
-	enum ComplexType { Complex, NoComplexType, Imaginary };
-	// Imaginary unsupported => parse, but make invisible and print error message
-	static const char * complexTypeNames[];
-	enum Signedness { Signed, Unsigned, NoSignedness };
-	static const char * signednessNames[];
-	enum Length { Short, Long, LongLong, NoLength };
-	static const char * lengthNames[];
-	enum BuiltinType { Valist, AutoType, Zero, One, NoBuiltinType };
-	static const char * builtinTypeNames[];
-
 	static DeclarationNode * newFromTypeData( TypeData * );
 	static DeclarationNode * newStorageClass( ast::Storage::Classes );
 	static DeclarationNode * newFuncSpecifier( ast::Function::Specs );

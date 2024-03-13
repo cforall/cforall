@@ -45,25 +45,6 @@ extern TypedefTable typedefTable;
 
 using namespace std;
 
-// These must harmonize with the corresponding DeclarationNode enumerations.
-const char * DeclarationNode::basicTypeNames[] = {
-	"void", "_Bool", "char", "int", "int128",
-	"float", "double", "long double", "float80", "float128",
-	"_float16", "_float32", "_float32x", "_float64", "_float64x", "_float128", "_float128x", "NoBasicTypeNames"
-};
-const char * DeclarationNode::complexTypeNames[] = {
-	"_Complex", "NoComplexTypeNames", "_Imaginary"
-}; // Imaginary unsupported => parse, but make invisible and print error message
-const char * DeclarationNode::signednessNames[] = {
-	"signed", "unsigned", "NoSignednessNames"
-};
-const char * DeclarationNode::lengthNames[] = {
-	"short", "long", "long long", "NoLengthNames"
-};
-const char * DeclarationNode::builtinTypeNames[] = {
-	"__builtin_va_list", "__auto_type", "zero_t", "one_t", "NoBuiltinTypeNames"
-};
-
 UniqueName DeclarationNode::anonymous( "__anonymous" );
 
 extern ast::Linkage::Spec linkage;						// defined in parser.yy
@@ -314,11 +295,7 @@ DeclarationNode * DeclarationNode::newArray( ExpressionNode * size, DeclarationN
 	newnode->type = new TypeData( TypeData::Array );
 	newnode->type->array.dimension = size;
 	newnode->type->array.isStatic = isStatic;
-	if ( newnode->type->array.dimension == nullptr || newnode->type->array.dimension->isExpressionType<ast::ConstantExpr *>() ) {
-		newnode->type->array.isVarLen = false;
-	} else {
-		newnode->type->array.isVarLen = true;
-	} // if
+	newnode->type->array.isVarLen = size && !size->isExpressionType<ast::ConstantExpr *>();
 	return newnode->addQualifiers( qualifiers );
 } // DeclarationNode::newArray
 
@@ -483,9 +460,9 @@ DeclarationNode * DeclarationNode::addQualifiers( DeclarationNode * q ) {
 	} // if
 
 	checkQualifiers( type, q->type );
-	BuiltinType const builtin = type->builtintype;
-	if ( (builtin == Zero || builtin == One) && q->type->qualifiers.any() && error.length() == 0 ) {
-		SemanticWarning( yylloc, Warning::BadQualifiersZeroOne, builtinTypeNames[builtin] );
+	TypeData::BuiltinType const builtin = type->builtintype;
+	if ( (builtin == TypeData::Zero || builtin == TypeData::One) && q->type->qualifiers.any() && error.length() == 0 ) {
+		SemanticWarning( yylloc, Warning::BadQualifiersZeroOne, TypeData::builtinTypeNames[builtin] );
 	} // if
 	type = ::addQualifiers( q->type, type );
 	q->type = nullptr;

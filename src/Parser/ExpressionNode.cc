@@ -318,8 +318,8 @@ ast::Expr * build_constantInteger(
 			ret = build_compoundLiteral( location,
 				DeclarationNode::newFromTypeData(
 					addType(
-						build_basic_type( DeclarationNode::Int128 ),
-						build_signedness( DeclarationNode::Unsigned ) ) ),
+						build_basic_type( TypeData::Int128 ),
+						build_signedness( TypeData::Unsigned ) ) ),
 				new InitializerNode(
 					(new InitializerNode( new ExpressionNode( v2 == 0 ? ret2 : ret ) ))->set_last( new InitializerNode( new ExpressionNode( v2 == 0 ? ret : ret2 ) ) ), true )
 			);

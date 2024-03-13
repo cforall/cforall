@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Mar  6 10:51:55 2024
-// Update Count     : 6588
+// Last Modified On : Mon Mar 11 18:30:03 2024
+// Update Count     : 6589
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1269,7 +1269,7 @@ expression_statement:
 // "if", "switch", and "choose" require parenthesis around the conditional. See the following ambiguities without
 // parenthesis:
 //
-//   if x + y + z; => "if ( x + y ) + z" or "if ( x ) + y + z"
+//   if x + y + z; => if ( x ) + y + z or if ( x + y ) + z
 //
 //   switch O { }
 // 
@@ -1595,18 +1595,23 @@ for_control_expression:
 	| declaration '@' updowneq '@' '~' '@'				// CFA, invalid syntax rule
 		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
-	| comma_expression ';' TYPEDEFname					// CFA, array type
+	| comma_expression ';' enum_key						// CFA, enum type
 		{
 			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
 			//$$ = forCtrl( new ExpressionNode( build_varref( $3 ) ), $1, nullptr, OperKinds::Range, nullptr, nullptr );
 		}
-	| comma_expression ';' downupdowneq TYPEDEFname		// CFA, array type
+	| comma_expression ';' downupdowneq enum_key		// CFA, enum type, reverse direction
 		{
 			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) {
 				SemanticError( yylloc, "syntax error, all enumeration ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr;
 			}
 			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
 		}
+	;
+
+enum_key:
+	TYPEDEFname
+	| ENUM TYPEDEFname
 	;
 
 downupdowneq:
@@ -2239,7 +2244,7 @@ type_qualifier_name:
 	| ATOMIC
 		{ $$ = build_type_qualifier( ast::CV::Atomic ); }
 
-		// forall must be a CV qualifier because it can appear in places where SC qualifiers are disallowed.
+		// forall is a CV qualifier because it can appear in places where SC qualifiers are disallowed.
 		//
 		//   void foo( forall( T ) T (*)( T ) ); // forward declaration
 		//   void bar( static int ); // static disallowed (gcc/CFA)
@@ -2301,37 +2306,37 @@ basic_type_name:
 // Just an intermediate value for conversion.
 basic_type_name_type:
 	VOID
-		{ $$ = build_basic_type( DeclarationNode::Void ); }
+		{ $$ = build_basic_type( TypeData::Void ); }
 	| BOOL												// C99
-		{ $$ = build_basic_type( DeclarationNode::Bool ); }
+		{ $$ = build_basic_type( TypeData::Bool ); }
 	| CHAR
-		{ $$ = build_basic_type( DeclarationNode::Char ); }
+		{ $$ = build_basic_type( TypeData::Char ); }
 	| INT
-		{ $$ = build_basic_type( DeclarationNode::Int ); }
+		{ $$ = build_basic_type( TypeData::Int ); }
 	| INT128
-		{ $$ = build_basic_type( DeclarationNode::Int128 ); }
+		{ $$ = build_basic_type( TypeData::Int128 ); }
 	| UINT128
-		{ $$ = addType( build_basic_type( DeclarationNode::Int128 ), build_signedness( DeclarationNode::Unsigned ) ); }
+		{ $$ = addType( build_basic_type( TypeData::Int128 ), build_signedness( TypeData::Unsigned ) ); }
 	| FLOAT
-		{ $$ = build_basic_type( DeclarationNode::Float ); }
+		{ $$ = build_basic_type( TypeData::Float ); }
 	| DOUBLE
-		{ $$ = build_basic_type( DeclarationNode::Double ); }
+		{ $$ = build_basic_type( TypeData::Double ); }
 	| uuFLOAT80
-		{ $$ = build_basic_type( DeclarationNode::uuFloat80 ); }
+		{ $$ = build_basic_type( TypeData::uuFloat80 ); }
 	| uuFLOAT128
-		{ $$ = build_basic_type( DeclarationNode::uuFloat128 ); }
+		{ $$ = build_basic_type( TypeData::uuFloat128 ); }
 	| uFLOAT16
-		{ $$ = build_basic_type( DeclarationNode::uFloat16 ); }
+		{ $$ = build_basic_type( TypeData::uFloat16 ); }
 	| uFLOAT32
-		{ $$ = build_basic_type( DeclarationNode::uFloat32 ); }
+		{ $$ = build_basic_type( TypeData::uFloat32 ); }
 	| uFLOAT32X
-		{ $$ = build_basic_type( DeclarationNode::uFloat32x ); }
+		{ $$ = build_basic_type( TypeData::uFloat32x ); }
 	| uFLOAT64
-		{ $$ = build_basic_type( DeclarationNode::uFloat64 ); }
+		{ $$ = build_basic_type( TypeData::uFloat64 ); }
 	| uFLOAT64X
-		{ $$ = build_basic_type( DeclarationNode::uFloat64x ); }
+		{ $$ = build_basic_type( TypeData::uFloat64x ); }
 	| uFLOAT128
-		{ $$ = build_basic_type( DeclarationNode::uFloat128 ); }
+		{ $$ = build_basic_type( TypeData::uFloat128 ); }
 	| DECIMAL32
 		{ SemanticError( yylloc, "_Decimal32 is currently unimplemented." ); $$ = nullptr; }
 	| DECIMAL64
@@ -2339,21 +2344,21 @@ basic_type_name_type:
 	| DECIMAL128
 		{ SemanticError( yylloc, "_Decimal128 is currently unimplemented." ); $$ = nullptr; }
 	| COMPLEX											// C99
-		{ $$ = build_complex_type( DeclarationNode::Complex ); }
+		{ $$ = build_complex_type( TypeData::Complex ); }
 	| IMAGINARY											// C99
-		{ $$ = build_complex_type( DeclarationNode::Imaginary ); }
+		{ $$ = build_complex_type( TypeData::Imaginary ); }
 	| SIGNED
-		{ $$ = build_signedness( DeclarationNode::Signed ); }
+		{ $$ = build_signedness( TypeData::Signed ); }
 	| UNSIGNED
-		{ $$ = build_signedness( DeclarationNode::Unsigned ); }
+		{ $$ = build_signedness( TypeData::Unsigned ); }
 	| SHORT
-		{ $$ = build_length( DeclarationNode::Short ); }
+		{ $$ = build_length( TypeData::Short ); }
 	| LONG
-		{ $$ = build_length( DeclarationNode::Long ); }
+		{ $$ = build_length( TypeData::Long ); }
 	| VA_LIST											// GCC, __builtin_va_list
-		{ $$ = build_builtin_type( DeclarationNode::Valist ); }
+		{ $$ = build_builtin_type( TypeData::Valist ); }
 	| AUTO_TYPE
-		{ $$ = build_builtin_type( DeclarationNode::AutoType ); }
+		{ $$ = build_builtin_type( TypeData::AutoType ); }
 	| vtable
 	;
 
@@ -2415,9 +2420,9 @@ indirect_type:
 	| BASETYPEOF '(' comma_expression ')'				// CFA: basetypeof( a+b ) y;
 		{ $$ = DeclarationNode::newTypeof( $3, true ); }
 	| ZERO_T											// CFA
-		{ $$ = DeclarationNode::newFromTypeData( build_builtin_type( DeclarationNode::Zero ) ); }
+		{ $$ = DeclarationNode::newFromTypeData( build_builtin_type( TypeData::Zero ) ); }
 	| ONE_T												// CFA
-		{ $$ = DeclarationNode::newFromTypeData( build_builtin_type( DeclarationNode::One ) ); }
+		{ $$ = DeclarationNode::newFromTypeData( build_builtin_type( TypeData::One ) ); }
 	;
 
 sue_declaration_specifier:								// struct, union, enum + storage class + type specifier
@@ -2571,6 +2576,7 @@ aggregate_type_nobody:									// struct, union - {...}
 			forall = false;								// reset
 			// Create new generic declaration with same name as previous forward declaration, where the IDENTIFIER is
 			// switched to a TYPEGENname. Link any generic arguments from typegen_name to new generic declaration and
+			// delete newFromTypeGen.
 			if ( $3->kind == TypeData::SymbolicInst && ! $3->symbolic.isTypedef ) {
 				$$ = DeclarationNode::newFromTypeData( $3 )->addQualifiers( $2 );
 			} else {
@@ -2855,7 +2861,7 @@ parameter_list:											// abstract + real
 
 cfa_parameter_list_ellipsis_opt:						// CFA, abstract + real
 	// empty
-		{ $$ = DeclarationNode::newFromTypeData( build_basic_type( DeclarationNode::Void ) ); }
+		{ $$ = DeclarationNode::newFromTypeData( build_basic_type( TypeData::Void ) ); }
 	| ELLIPSIS
 		{ $$ = nullptr; }
 	| cfa_parameter_list
@@ -4026,7 +4032,8 @@ abstract_parameter_declarator_opt:
 abstract_parameter_declarator:
 	abstract_parameter_ptr
 	| '&' MUTEX attribute_list_opt
-		{ $$ = DeclarationNode::newPointer( DeclarationNode::newFromTypeData( build_type_qualifier( ast::CV::Mutex ) ), OperKinds::AddressOf )->addQualifiers( $3 ); }
+		{ $$ = DeclarationNode::newPointer( DeclarationNode::newFromTypeData( build_type_qualifier( ast::CV::Mutex ) ),
+											OperKinds::AddressOf )->addQualifiers( $3 ); }
 	| abstract_parameter_array attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
 	| abstract_parameter_function attribute_list_opt
