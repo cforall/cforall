@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 11 18:30:03 2024
-// Update Count     : 6589
+// Last Modified On : Sat Mar 16 18:19:23 2024
+// Update Count     : 6617
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -484,7 +484,7 @@ if ( N ) {																		\
 
 %type<decl> elaborated_type elaborated_type_nobody
 
-%type<decl> enumerator_list enum_type enum_type_nobody
+%type<decl> enumerator_list enum_type enum_type_nobody enumerator_type
 %type<init> enumerator_value_opt
 
 %type<decl> external_definition external_definition_list external_definition_list_opt
@@ -2741,55 +2741,53 @@ bit_subrange_size:
 // ************************** ENUMERATION *******************************
 
 enum_type:
-	ENUM attribute_list_opt '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( nullptr, $4, true, false )->addQualifiers( $2 ); }
-	| ENUM attribute_list_opt '!' '{' enumerator_list comma_opt '}'	// invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
+		// anonymous, no type name 
+	ENUM attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
+		{
+			if ( $3 == EnumHiding::Hide ) {
+				SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr;
+			} // if
+			$$ = DeclarationNode::newEnum( nullptr, $5, true, false )->addQualifiers( $2 );
+		}
+	| ENUM enumerator_type attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
+		{
+			if ( $2 && ($2->storageClasses.val != 0 || $2->type->qualifiers.any()) ) {
+				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
+			}
+			if ( $4 == EnumHiding::Hide ) {
+				SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr;
+			} // if
+			$$ = DeclarationNode::newEnum( nullptr, $6, true, true, $2 )->addQualifiers( $3 );
+		}
+
+		// named type
 	| ENUM attribute_list_opt identifier
 		{ typedefTable.makeTypedef( *$3, "enum_type 1" ); }
 	  hide_opt '{' enumerator_list comma_opt '}'
 		{ $$ = DeclarationNode::newEnum( $3, $7, true, false, nullptr, $5 )->addQualifiers( $2 ); }
 	| ENUM attribute_list_opt typedef_name hide_opt '{' enumerator_list comma_opt '}' // unqualified type name
 		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false, nullptr, $4 )->addQualifiers( $2 ); }
-	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '{' enumerator_list comma_opt '}'
+	| ENUM enumerator_type attribute_list_opt identifier attribute_list_opt
 		{
-			if ( $3->storageClasses.val != 0 || $3->type->qualifiers.any() ) {
+			if ( $2 && ($2->storageClasses.any() || $2->type->qualifiers.val != 0) ) {
 				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
 			}
-			$$ = DeclarationNode::newEnum( nullptr, $7, true, true, $3 )->addQualifiers( $5 );
-		}
-	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt '!' '{' enumerator_list comma_opt '}' // unqualified type name
-		{ SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
-	| ENUM '(' ')' attribute_list_opt '{' enumerator_list comma_opt '}'
-		{
-			$$ = DeclarationNode::newEnum( nullptr, $6, true, true )->addQualifiers( $4 );
-		}
-	| ENUM '(' ')' attribute_list_opt '!' '{' enumerator_list comma_opt '}'	// invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr; }
-	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt identifier attribute_list_opt
-		{
-			if ( $3 && ($3->storageClasses.any() || $3->type->qualifiers.val != 0) ) {
-				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
-			}
-			typedefTable.makeTypedef( *$6, "enum_type 2" );
+			typedefTable.makeTypedef( *$4, "enum_type 2" );
 		}
 	  hide_opt '{' enumerator_list comma_opt '}'
-		{
-			$$ = DeclarationNode::newEnum( $6, $11, true, true, $3, $9 )->addQualifiers( $5 )->addQualifiers( $7 );
-		}
-	| ENUM '(' ')' attribute_list_opt identifier attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
-		{
-			$$ = DeclarationNode::newEnum( $5, $9, true, true, nullptr, $7 )->addQualifiers( $4 )->addQualifiers( $6 );
-		}
-	| ENUM '(' cfa_abstract_parameter_declaration ')' attribute_list_opt typedef_name attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
-		{
-			$$ = DeclarationNode::newEnum( $6->name, $10, true, true, $3, $8 )->addQualifiers( $5 )->addQualifiers( $7 );
-		}
-	| ENUM '(' ')' attribute_list_opt typedef_name attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
-		{
-			$$ = DeclarationNode::newEnum( $5->name, $9, true, true, nullptr, $7 )->addQualifiers( $4 )->addQualifiers( $6 );
-		}
+		{ $$ = DeclarationNode::newEnum( $4, $9, true, true, $2, $7 )->addQualifiers( $3 )->addQualifiers( $5 ); }
+	| ENUM enumerator_type attribute_list_opt typedef_name attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
+		{ $$ = DeclarationNode::newEnum( $4->name, $8, true, true, $2, $6 )->addQualifiers( $3 )->addQualifiers( $5 ); }
+
+		// forward declaration
 	| enum_type_nobody
+	;
+
+enumerator_type:
+	'(' ')'												// pure enumeration
+		{ $$ = nullptr; }
+	| '(' cfa_abstract_parameter_declaration ')'		// typed enumeration
+		{ $$ = $2; }
 	;
 
 hide_opt:

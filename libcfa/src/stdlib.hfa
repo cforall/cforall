@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct  8 09:18:28 2023
-// Update Count     : 789
+// Last Modified On : Sun Mar 17 08:25:31 2024
+// Update Count     : 796
 //
 
 #pragma once
@@ -290,6 +290,11 @@ void delete( T * ptr, TT rest ) {
 forall( T & | sized(T), TT... | { void ?{}( T &, TT ); } ) T * anew( size_t dim, TT p );
 forall( T & | sized(T) | { void ^?{}( T & ); } ) void adelete( T arr[] );
 forall( T & | sized(T) | { void ^?{}( T & ); }, TT... | { void adelete( TT ); } ) void adelete( T arr[], TT rest );
+//---------------------------------------
+
+// Check if all string characters are a specific kind, e.g., checkif( s, isblank )
+bool checkif( const char s[], int (* kind)( int ) );
+bool checkif( const char s[], int (* kind)( int, locale_t ), locale_t locale );
 
 //---------------------------------------
 
@@ -314,7 +319,9 @@ ExceptionDecl( out_of_range );
 ExceptionDecl( invalid_argument );
 
 forall( T | { T strto( const char sptr[], char * eptr[], int ); } )
-T convert( const char sptr[] );
+T convert( const char sptr[] );							// integrals
+forall( T | { T strto( const char sptr[], char * eptr[] ); } )
+T convert( const char sptr[] );							// floating-point (no base)
 
 static inline {
 	int ato( const char sptr[] ) { return (int)strtol( sptr, 0p, 10 ); }

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 18:22:36 2023
-// Update Count     : 642
+// Last Modified On : Sun Mar 17 08:25:32 2024
+// Update Count     : 699
 //
 
 #include "stdlib.hfa"
@@ -20,9 +20,9 @@
 //---------------------------------------
 
 #include <string.h>										// memcpy, memset
-//#include <math.h>										// fabsf, fabs, fabsl
 #include <complex.h>									// _Complex_I
 #include <assert.h>
+#include <ctype.h>										// isblank
 
 #pragma GCC visibility push(default)
 
@@ -64,49 +64,99 @@ void adelete( T arr[], TT rest ) {
 
 //---------------------------------------
 
-forall( T | { T strto( const char sptr[], char * eptr[], int ); } )
-T convert( const char sptr[] ) {
-	char * eptr;
-	errno = 0;											// reset
-	T val = strto( sptr, &eptr, 10 );					// attempt conversion
-	if ( errno == ERANGE ) throw ExceptionInst( out_of_range );
-	if ( eptr == sptr ||								// conversion failed, no characters generated
-		 *eptr != '\0' ) throw ExceptionInst( invalid_argument ); // not at end of str ?
-	return val;
-} // convert
+// Check if all string characters are a specific kind, e.g., checkif( s, isblank )
+
+bool checkif( const char s[], int (* kind)( int ) ) {
+	for () {
+		if ( *s == '\0' ) return true;
+		if ( ! kind( *s ) ) return false;
+		s += 1;
+	} // for
+} // checkif
+
+bool checkif( const char s[], int (* kind)( int, locale_t ), locale_t locale ) {
+	for () {
+		if ( *s == '\0' ) return true;
+		if ( ! kind( *s, locale ) ) return false;
+		s += 1;
+	} // for
+} // checkif
+
+//---------------------------------------
 
 float _Complex strto( const char sptr[], char * eptr[] ) {
 	float re, im;
 	char * eeptr;
+	errno = 0;											// reset
 	re = strtof( sptr, &eeptr );
-	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0f + 0.0f * _Complex_I; }
-	im = strtof( eeptr, &eeptr );
-	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0f + 0.0f * _Complex_I; }
-	if ( *eeptr != 'i' ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0f + 0.0f * _Complex_I; }
-	return re + im * _Complex_I;
+	if ( sptr != eeptr ) {
+		im = strtof( eeptr, &eeptr );
+		if ( sptr != eeptr ) {
+			if ( *eeptr == 'i' ) {
+				if ( eptr != 0p ) *eptr = eeptr + 1;
+				return re + im * _Complex_I;
+			} // if
+		} // if
+	} // if
+	if ( eptr != 0p ) *eptr = eeptr;					// error case
+	return 0.0f + 0.0f * _Complex_I;
 } // strto
 
 double _Complex strto( const char sptr[], char * eptr[] ) {
 	double re, im;
 	char * eeptr;
 	re = strtod( sptr, &eeptr );
-	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0 + 0.0 * _Complex_I; }
-	im = strtod( eeptr, &eeptr );
-	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0 + 0.0 * _Complex_I; }
-	if ( *eeptr != 'i' ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0 + 0.0 * _Complex_I; }
-	return re + im * _Complex_I;
+	if ( sptr != eeptr ) {
+		im = strtod( eeptr, &eeptr );
+		if ( sptr != eeptr ) {
+			if ( *eeptr == 'i' ) {
+				if ( eptr != 0p ) *eptr = eeptr + 1;
+				return re + im * _Complex_I;
+			} // if
+		} // if
+	} // if
+	if ( eptr != 0p ) *eptr = eeptr;					// error case
+	return 0.0 + 0.0 * _Complex_I;
 } // strto
 
 long double _Complex strto( const char sptr[], char * eptr[] ) {
 	long double re, im;
 	char * eeptr;
 	re = strtold( sptr, &eeptr );
-	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0L + 0.0L * _Complex_I; }
-	im = strtold( eeptr, &eeptr );
-	if ( sptr == eeptr ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0L + 0.0L * _Complex_I; }
-	if ( *eeptr != 'i' ) { if ( eptr != 0 ) *eptr = eeptr; return 0.0L + 0.0L * _Complex_I; }
-	return re + im * _Complex_I;
+	if ( sptr != eeptr ) {
+		im = strtold( eeptr, &eeptr );
+		if ( sptr != eeptr ) {
+			if ( *eeptr == 'i' ) {
+				if ( eptr != 0p ) *eptr = eeptr + 1;
+				return re + im * _Complex_I;
+			} // if
+		} // if
+	} // if
+	if ( eptr != 0p ) *eptr = eeptr;					// error case
+	return 0.0L + 0.0L * _Complex_I;
 } // strto
+
+forall( T | { T strto( const char sptr[], char * eptr[], int ); } )
+T convert( const char sptr[] ) {						// integral
+	char * eptr;
+	errno = 0;											// reset
+	T val = strto( sptr, &eptr, 10 );					// attempt conversion
+	if ( errno == ERANGE ) throw ExceptionInst( out_of_range );
+	if ( eptr == sptr ||								// conversion failed, no characters generated
+		 eptr[0] != '\0' && ! checkif( eptr, isblank ) ) throw ExceptionInst( invalid_argument ); // not at end of blank str ?
+	return val;
+} // convert
+
+forall( T | { T strto( const char sptr[], char * eptr[] ); } )
+T convert( const char sptr[] ) {						// floating-point
+	char * eptr;
+	errno = 0;											// reset
+	T val = strto( sptr, &eptr );						// attempt conversion
+	if ( errno == ERANGE ) throw ExceptionInst( out_of_range );
+	if ( eptr == sptr ||								// conversion failed, no characters generated
+		 eptr[0] != '\0' && ! checkif( eptr, isblank ) ) throw ExceptionInst( invalid_argument ); // not at end of blank str ?
+	return val;
+} // convert
 
 //---------------------------------------
 

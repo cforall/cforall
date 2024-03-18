@@ -9,14 +9,16 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Feb  4 08:10:57 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec  4 21:33:53 2018
-// Update Count     : 92
+// Last Modified On : Fri Mar 15 17:58:35 2024
+// Update Count     : 145
 //
 
 #include <fstream.hfa>
 #include <stdlib.hfa>										// ato, strto
 
 int main( void ) {
+	// ato
+
 	const char * sptr = "-123";
 	int i = ato( sptr );
 	sout | i | sptr;
@@ -31,10 +33,10 @@ int main( void ) {
 	unsigned long int uli = ato( sptr );
 	sout | uli | sptr;
 
-	sptr = "-123";
+	sptr = " -123 ";									// spaces allowed
 	long long int lli = ato( sptr );
 	sout | lli | sptr;
-	sptr = "123";
+	sptr = " 123 ";										// spaces allowed
 	unsigned long long int ulli = ato( sptr );
 	sout | ulli | sptr;
 
@@ -44,7 +46,7 @@ int main( void ) {
 	sptr = "-123.4567890123456";
 	double d = ato( sptr );
 	sout | d | sptr;
-	sptr = "-123.45678901234567890123456789";
+	sptr = " -123.45678901234567890123456789 ";			// spaces allowed
 	long double ld = ato( sptr );
 	sout | ld | sptr;
 
@@ -57,64 +59,135 @@ int main( void ) {
 	sptr = "123.45678901234567890123456789-123.45678901234567890123456789i";
 	long double _Complex ldc = ato( sptr );
 	sout | ldc | sptr;
-	sptr = "123.45678901234-123.4567890i";
+	sptr = " 123.45678901234 -123.4567890i ";			// spaces allowed
 	long double _Complex ldc2 = ato( sptr );
 	sout | ldc2 | sptr;
 
+	// strto
 
 	sptr = "-123";
-	i = strto( sptr, 0, 10 );
+	i = strto( sptr, 0p, 10 );
 	sout | i | sptr;
 	sptr = "123";
-	ui = strto( sptr, 0, 10 );
+	ui = strto( sptr, 0p, 10 );
 	sout | ui | sptr;
 
 	sptr = "-123";
-	li = strto( sptr, 0, 10 );
+	li = strto( sptr, 0p, 10 );
 	sout | li | sptr;
 	sptr = "123";
-	uli = strto( sptr, 0, 10 );
+	uli = strto( sptr, 0p, 10 );
 	sout | uli | sptr;
 
-	sptr = "-123";
-	lli = strto( sptr, 0, 10 );
+	sptr = " -123 ";									// spaces allowed
+	lli = strto( sptr, 0p, 10 );
 	sout | lli | sptr;
-	sptr = "123";
-	ulli = strto( sptr, 0, 10 );
+	sptr = " 123 ";										// spaces allowed
+	ulli = strto( sptr, 0p, 10 );
 	sout | ulli | sptr;
 
 	sptr = "-123.456";
-	f = strto( sptr, 0 );
+	f = strto( sptr, 0p );
 	sout | f | sptr;
 	sptr = "-123.4567890123456";
-	d = strto( sptr, 0 );
+	d = strto( sptr, 0p );
 	sout | d | sptr;
-	sptr = "-123.45678901234567890123456789";
-	ld = strto( sptr, 0 );
+	sptr = " -123.45678901234567890123456789 ";			// spaces allowed
+	ld = strto( sptr, 0p );
 	sout | ld | sptr;
 
 	sptr = "-123.456-123.456i";
-	fc = strto( sptr, 0 );
+	fc = strto( sptr, 0p );
 	sout | fc | sptr;
-
-	char * eptr = 0;
-	// sptr = "2fred";
-	// fc = strto( sptr, &eptr );
-	// sout | fc | sptr | eptr;
-
-	sptr = "2  3";
-	fc = strto( sptr, &eptr );
-	sout | fc | sptr | eptr;
-
 	sptr = "-123.4567890123456+123.4567890123456i";
-	dc = strto( sptr, 0 );
+	dc = strto( sptr, 0p );
 	sout | dc | sptr;
 	sptr = "123.45678901234567890123456789-123.45678901234567890123456789i";
-	ldc = strto( sptr, 0 );
+	ldc = strto( sptr, 0p );
+	sout | ldc | sptr;
+	sptr = " 123.45678901234 -123.4567890i ";			// spaces allowed
+	ldc2 = strto( sptr, 0p );
+	sout | ldc2 | sptr;
+
+	sptr = "2.0fred";
+	char * eptr = 0p;
+	errno = 0;											// reset
+	f = strto( sptr, &eptr );
+	if ( errno == ERANGE ) sout | "out of range";
+	if ( eptr == sptr ||								// conversion failed, no characters generated
+		 *eptr != '\0' ) sout | "invalid argument" | sptr; // not at end of str ?
+	else assert( false );
+
+	sptr = "2  3x";
+	eptr = 0p;
+	errno = 0;											// reset
+	fc = strto( sptr, &eptr );
+	if ( errno == ERANGE ) sout | "out of range";
+	if ( eptr == sptr ||								// conversion failed, no characters generated
+		 *eptr != '\0' ) sout | "invalid argument" | sptr; // not at end of str ?
+	else assert( false );
+
+	// convert
+
+	sptr = "-123";
+	i = convert( sptr );
+	sout | i | sptr;
+	sptr = "123";
+	ui = convert( sptr );
+	sout | ui | sptr;
+
+	sptr = "-123";
+	li = convert( sptr );
+	sout | li | sptr;
+	sptr = "123";
+	uli = convert( sptr );
+	sout | uli | sptr;
+
+	sptr = " -123 ";									// spaces allowed
+	lli = convert( sptr );
+	sout | lli | sptr;
+	sptr = " 123 ";										// spaces allowed
+	ulli = convert( sptr );
+	sout | ulli | sptr;
+
+	sptr = "-123.456";
+	f = convert( sptr );
+	sout | f | sptr;
+	sptr = "-123.4567890123456";
+	d = convert( sptr );
+	sout | d | sptr;
+	sptr = " -123.45678901234567890123456789 ";			// spaces allowed
+	ld = convert( sptr );
+	sout | ld | sptr;
+
+	sptr = "-123.456-123.456i";
+	fc = convert( sptr );
+	sout | fc | sptr;
+	sptr = "-123.4567890123456+123.4567890123456i";
+	dc = convert( sptr );
+	sout | dc | sptr;
+	sptr = "123.45678901234567890123456789-123.45678901234567890123456789i";
+	ldc = convert( sptr );
 	sout | ldc | sptr;
 	sptr = "123.45678901234-123.4567890i";
-	ldc2 = strto( sptr, 0 );
+	ldc2 = convert( sptr );
 	sout | ldc2 | sptr;
+
+	sptr = "2.0fred";
+	try {
+		f = convert( sptr );
+		assert( false );
+	} catch( invalid_argument * ) {
+		sout | "invalid argument" | sptr;
+	} // try
+
+	sptr = "2  3x";
+	try {
+		fc = convert( sptr );
+		assert( false );
+	} catch( invalid_argument * ) {
+		sout | "invalid argument" | sptr;
+	} // try
 } // main
 
 // Local Variables: //

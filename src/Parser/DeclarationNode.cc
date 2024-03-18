@@ -501,14 +501,121 @@ DeclarationNode * DeclarationNode::addEnumBase( DeclarationNode * o ) {
 	return this;
 }
 
+// This code handles a special issue with the attribute transparent_union.
+//
+//    typedef union U { int i; } typedef_name __attribute__(( aligned(16) )) __attribute__(( transparent_union ))
+//
+// Here the attribute aligned goes with the typedef_name, so variables declared of this type are
+// aligned.  However, the attribute transparent_union must be moved from the typedef_name to
+// alias union U.  Currently, this is the only know attribute that must be moved from typedef to
+// alias.
+static void moveUnionAttribute( DeclarationNode * decl, DeclarationNode * unionDecl ) {
+	assert( decl->type->kind == TypeData::Symbolic );
+	assert( decl->type->symbolic.isTypedef );
+	assert( unionDecl->type->kind == TypeData::Aggregate );
+
+	if ( unionDecl->type->aggregate.kind != ast::AggregateDecl::Union ) return;
+
+	// Ignore the Aggregate_t::attributes. Why did we add that before the rework?
+	for ( auto attr = decl->attributes.begin() ; attr != decl->attributes.end() ; ) {
+		if ( (*attr)->name == "transparent_union" || (*attr)->name == "__transparent_union__" ) {
+			unionDecl->attributes.emplace_back( attr->release() );
+			attr = decl->attributes.erase( attr );
+		} else {
+			++attr;
+		}
+	}
+}
+
+// Helper for addTypedef, handles the case where the typedef wraps an
+// aggregate declaration (not a type), returns a chain of nodes.
+static DeclarationNode * addTypedefAggr(
+		DeclarationNode * olddecl, TypeData * newtype ) {
+	TypeData *& oldaggr = olddecl->type->aggInst.aggregate;
+
+	// Handle anonymous aggregates: typedef struct { int i; } foo
+	// Give the typedefed type a consistent name across translation units.
+	if ( oldaggr->aggregate.anon ) {
+		delete oldaggr->aggregate.name;
+		oldaggr->aggregate.name = new string( "__anonymous_" + *olddecl->name );
+		oldaggr->aggregate.anon = false;
+		oldaggr->qualifiers.reset();
+	}
+
+	// Replace the wrapped TypeData with a forward declaration.
+	TypeData * newaggr = new TypeData( TypeData::Aggregate );
+	newaggr->aggregate.kind = oldaggr->aggregate.kind;
+	newaggr->aggregate.name = oldaggr->aggregate.name ? new string( *oldaggr->aggregate.name ) : nullptr;
+	newaggr->aggregate.body = false;
+	newaggr->aggregate.anon = oldaggr->aggregate.anon;
+	newaggr->aggregate.tagged = oldaggr->aggregate.tagged;
+	swap( newaggr, oldaggr );
+
+	newtype->base = olddecl->type;
+	olddecl->type = newtype;
+	DeclarationNode * newdecl = new DeclarationNode;
+	newdecl->type = newaggr;
+	newdecl->next = olddecl;
+
+	moveUnionAttribute( olddecl, newdecl );
+
+	return newdecl;
+}
+
+// Helper for addTypedef, handles the case where the typedef wraps an
+// enumeration declaration (not a type), returns a chain of nodes.
+static DeclarationNode * addTypedefEnum(
+		DeclarationNode * olddecl, TypeData * newtype ) {
+	TypeData *& oldenum = olddecl->type->aggInst.aggregate;
+
+	// Handle anonymous enumeration: typedef enum { A, B, C } foo
+	// Give the typedefed type a consistent name across translation units.
+	if ( oldenum->enumeration.anon ) {
+		delete oldenum->enumeration.name;
+		oldenum->enumeration.name = new string( "__anonymous_" + *olddecl->name );
+		oldenum->enumeration.anon = false;
+		oldenum->qualifiers.reset();
+	}
+
+	// Replace the wrapped TypeData with a forward declaration.
+	TypeData * newenum = new TypeData( TypeData::Enum );
+	newenum->enumeration.name = oldenum->enumeration.name ? new string( *oldenum->enumeration.name ) : nullptr;
+	newenum->enumeration.body = false;
+	newenum->enumeration.anon = oldenum->enumeration.anon;
+	newenum->enumeration.typed = oldenum->enumeration.typed;
+	newenum->enumeration.hiding = oldenum->enumeration.hiding;
+	swap( newenum, oldenum );
+
+	newtype->base = olddecl->type;
+	olddecl->type = newtype;
+	DeclarationNode * newdecl = new DeclarationNode;
+	newdecl->type = newenum;
+	newdecl->next = olddecl;
+
+	return newdecl;
+}
+
 DeclarationNode * DeclarationNode::addTypedef() {
 	TypeData * newtype = new TypeData( TypeData::Symbolic );
 	newtype->symbolic.params = nullptr;
 	newtype->symbolic.isTypedef = true;
 	newtype->symbolic.name = name ? new string( *name ) : nullptr;
-	newtype->base = type;
-	type = newtype;
-	return this;
+	// If this typedef is wrapping an aggregate, separate them out.
+	if ( TypeData::AggregateInst == type->kind
+			&& TypeData::Aggregate == type->aggInst.aggregate->kind
+			&& type->aggInst.aggregate->aggregate.body ) {
+		return addTypedefAggr( this, newtype );
+	// If this typedef is wrapping an enumeration, separate them out.
+	} else if ( TypeData::AggregateInst == type->kind
+			&& TypeData::Enum == type->aggInst.aggregate->kind
+			&& type->aggInst.aggregate->enumeration.body ) {
+		return addTypedefEnum( this, newtype );
+	// There is no internal declaration, just a type.
+	} else {
+		newtype->base = type;
+		type = newtype;
+		return this;
+	}
 }
 
 DeclarationNode * DeclarationNode::addAssertions( DeclarationNode * assertions ) {
@@ -710,75 +817,6 @@ DeclarationNode * DeclarationNode::extractAggregate() const {
 	return nullptr;
 }
 
-// If a typedef wraps an anonymous declaration, name the inner declaration so it has a consistent name across
-// translation units.
-static void nameTypedefedDecl(
-		DeclarationNode * innerDecl,
-		const DeclarationNode * outerDecl ) {
-	TypeData * outer = outerDecl->type;
-	assert( outer );
-	// First make sure this is a typedef:
-	if ( outer->kind != TypeData::Symbolic || !outer->symbolic.isTypedef ) {
-		return;
-	}
-	TypeData * inner = innerDecl->type;
-	assert( inner );
-	// Always clear any CVs associated with the aggregate:
-	inner->qualifiers.reset();
-	// Handle anonymous aggregates: typedef struct { int i; } foo
-	if ( inner->kind == TypeData::Aggregate && inner->aggregate.anon ) {
-		delete inner->aggregate.name;
-		inner->aggregate.name = new string( "__anonymous_" + *outerDecl->name );
-		inner->aggregate.anon = false;
-		assert( outer->base );
-		delete outer->base->aggInst.aggregate->aggregate.name;
-		outer->base->aggInst.aggregate->aggregate.name = new string( "__anonymous_" + *outerDecl->name );
-		outer->base->aggInst.aggregate->aggregate.anon = false;
-		outer->base->aggInst.aggregate->qualifiers.reset();
-	// Handle anonymous enumeration: typedef enum { A, B, C } foo
-	} else if ( inner->kind == TypeData::Enum && inner->enumeration.anon ) {
-		delete inner->enumeration.name;
-		inner->enumeration.name = new string( "__anonymous_" + *outerDecl->name );
-		inner->enumeration.anon = false;
-		assert( outer->base );
-		delete outer->base->aggInst.aggregate->enumeration.name;
-		outer->base->aggInst.aggregate->enumeration.name = new string( "__anonymous_" + *outerDecl->name );
-		outer->base->aggInst.aggregate->enumeration.anon = false;
-		// No qualifiers.reset() here.
-	}
-}
-
-// This code handles a special issue with the attribute transparent_union.
-//
-//    typedef union U { int i; } typedef_name __attribute__(( aligned(16) )) __attribute__(( transparent_union ))
-//
-// Here the attribute aligned goes with the typedef_name, so variables declared of this type are
-// aligned.  However, the attribute transparent_union must be moved from the typedef_name to
-// alias union U.  Currently, this is the only know attribute that must be moved from typedef to
-// alias.
-static void moveUnionAttribute( ast::Decl * decl, ast::UnionDecl * unionDecl ) {
-	if ( auto typedefDecl = dynamic_cast<ast::TypedefDecl *>( decl ) ) {
-		// Is the typedef alias a union aggregate?
-		if ( nullptr == unionDecl ) return;
-
-		// If typedef is an alias for a union, then its alias type was hoisted above and remembered.
-		if ( auto unionInstType = typedefDecl->base.as<ast::UnionInstType>() ) {
-			auto instType = ast::mutate( unionInstType );
-			// Remove all transparent_union attributes from typedef and move to alias union.
-			for ( auto attr = instType->attributes.begin() ; attr != instType->attributes.end() ; ) {
-				assert( *attr );
-				if ( (*attr)->name == "transparent_union" || (*attr)->name == "__transparent_union__" ) {
-					unionDecl->attributes.emplace_back( attr->release() );
-					attr = instType->attributes.erase( attr );
-				} else {
-					attr++;
-				}
-			}
-			typedefDecl->base = instType;
-		}
-	}
-}
-
 // Get the non-anonymous name of the instance type of the declaration,
 // if one exists.
 static const std::string * getInstTypeOfName( ast::Decl * decl ) {
@@ -799,16 +837,11 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & 
 	for ( const DeclarationNode * cur = firstNode ; cur ; cur = cur->next ) {
 		try {
 			bool extracted_named = false;
-			ast::UnionDecl * unionDecl = nullptr;
 
 			if ( DeclarationNode * extr = cur->extractAggregate() ) {
 				assert( cur->type );
-				nameTypedefedDecl( extr, cur );
 
 				if ( ast::Decl * decl = extr->build() ) {
-					// Remember the declaration if it is a union aggregate ?
-					unionDecl = dynamic_cast<ast::UnionDecl *>( decl );
-
 					*out++ = decl;
 
 					// need to remember the cases where a declaration contains an anonymous aggregate definition
@@ -827,8 +860,6 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & 
 			} // if
 
 			if ( ast::Decl * decl = cur->build() ) {
-				moveUnionAttribute( decl, unionDecl );
-
 				if ( "" == decl->name && !cur->get_inLine() ) {
 					// Don't include anonymous declaration for named aggregates,
 					// but do include them for anonymous aggregates, e.g.:
