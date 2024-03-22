@@ -191,12 +191,15 @@ void CodeGenerator::postvisit( ast::FunctionDecl const * decl ) {
 		acc << ")";
 	}
 
-	assert( decl->returns.size() < 2 );
 	if ( 1 == decl->returns.size() ) {
 		ast::ptr<ast::Type> const & type = decl->returns[0]->get_type();
 		output << genTypeNoAttr( type, acc.str(), subOptions );
-	} else {
+	} else if ( 0 == decl->returns.size() ) {
 		output << "void " + acc.str();
+	} else {
+		assertf( !options.genC, "Multi-return should not reach code generation." );
+		ast::ptr<ast::Type> type = new ast::TupleType( copy( decl->type->returns ) );
+		output << genTypeNoAttr( type, acc.str(), subOptions );
 	}
 
 	asmName( decl );

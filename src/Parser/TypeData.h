@@ -54,7 +54,6 @@ struct TypeData {
 		std::vector<ast::ptr<ast::Attribute>> attributes;
 		bool body;
 		bool anon;
-		bool tagged;
 	};
 
 	struct AggInst_t {

@@ -184,7 +184,6 @@ DeclarationNode * DeclarationNode::newAggregate( ast::AggregateDecl::Aggregate k
 	newnode->type->aggregate.actuals = actuals;
 	newnode->type->aggregate.fields = fields;
 	newnode->type->aggregate.body = body;
-	newnode->type->aggregate.tagged = false;
 	newnode->type->aggregate.parent = nullptr;
 	return newnode;
 } // DeclarationNode::newAggregate
@@ -198,8 +197,12 @@ DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode
 	newnode->type->enumeration.body = body;
 	newnode->type->enumeration.typed = typed;
 	newnode->type->enumeration.hiding = hiding;
-	if ( base && base->type )  {
+	if ( base ) {
+		assert( typed );
+		assert( base->type );
 		newnode->type->base = base->type;
+		base->type = nullptr;
+		delete base;
 	} // if
 
 	return newnode;
@@ -219,16 +222,14 @@ DeclarationNode * DeclarationNode::newEnumConstant( const string * name, Express
 } // DeclarationNode::newEnumConstant
 
 DeclarationNode * DeclarationNode::newEnumValueGeneric( const string * name, InitializerNode * init ) {
-	if ( init ) {
-		if ( init->get_expression() ) {
-			return newEnumConstant( name, init->get_expression() );
-		} else {
-			DeclarationNode * newnode = newName( name );
-			newnode->initializer = init;
-			return newnode;
-		} // if
-	} else {
+	if ( nullptr == init ) {
 		return newName( name );
+	} else if ( init->get_expression() ) {
+		return newEnumConstant( name, init->get_expression() );
+	} else {
+		DeclarationNode * newnode = newName( name );
+		newnode->initializer = init;
+		return newnode;
 	} // if
 } // DeclarationNode::newEnumValueGeneric
 
@@ -548,7 +549,6 @@ static DeclarationNode * addTypedefAggr(
 	newaggr->aggregate.name = oldaggr->aggregate.name ? new string( *oldaggr->aggregate.name ) : nullptr;
 	newaggr->aggregate.body = false;
 	newaggr->aggregate.anon = oldaggr->aggregate.anon;
-	newaggr->aggregate.tagged = oldaggr->aggregate.tagged;
 	swap( newaggr, oldaggr );
 
 	newtype->base = olddecl->type;
@@ -595,6 +595,11 @@ static DeclarationNode * addTypedefEnum(
 	return newdecl;
 }
 
+// Wrap the declaration in a typedef. It actually does that by modifying the
+// existing declaration, and may split it into two declarations.
+// This only happens if the wrapped type is actually a declaration of a SUE
+// type. If it does, the DeclarationNode for the SUE declaration is the node
+// returned, make sure later transformations are applied to the right node.
 DeclarationNode * DeclarationNode::addTypedef() {
 	TypeData * newtype = new TypeData( TypeData::Symbolic );
 	newtype->symbolic.params = nullptr;

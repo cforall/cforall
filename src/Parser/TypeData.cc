@@ -87,7 +87,6 @@ TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), f
 		aggregate.actuals = nullptr;
 		aggregate.fields = nullptr;
 		aggregate.body = false;
-		aggregate.tagged = false;
 		aggregate.parent = nullptr;
 		aggregate.anon = false;
 		break;
@@ -227,7 +226,6 @@ TypeData * TypeData::clone() const {
 		newtype->aggregate.attributes = aggregate.attributes;
 		newtype->aggregate.body = aggregate.body;
 		newtype->aggregate.anon = aggregate.anon;
-		newtype->aggregate.tagged = aggregate.tagged;
 		break;
 	case AggregateInst:
 		newtype->aggInst.aggregate = maybeCopy( aggInst.aggregate );

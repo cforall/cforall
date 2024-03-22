@@ -99,10 +99,6 @@ static void NewPass( const char * const name ) {
 	}
 }
 
-// Helpers for checkInvariant:
-void checkInvariants( std::list< Declaration * > & ) {}
-using ast::checkInvariants;
-
 #define PASS( name, pass, unit, ... )       \
 	if ( errorp ) { cerr << name << endl; } \
 	NewPass(name);                          \
@@ -110,7 +106,7 @@ using ast::checkInvariants;
 	pass(unit,##__VA_ARGS__);               \
 	Stats::Time::StopBlock();               \
 	if ( invariant ) {                      \
-		checkInvariants(unit);              \
+		ast::checkInvariants(unit);         \
 	}
 
 #define DUMP( cond, unit )                  \
