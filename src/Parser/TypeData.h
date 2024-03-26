@@ -47,7 +47,6 @@ struct TypeData {
 	struct Aggregate_t {
 		ast::AggregateDecl::Aggregate kind;
 		const std::string * name = nullptr;
-		const std::string * parent = nullptr;
 		DeclarationNode * params = nullptr;
 		ExpressionNode * actuals = nullptr;				// holds actual parameters later applied to AggInst
 		DeclarationNode * fields = nullptr;

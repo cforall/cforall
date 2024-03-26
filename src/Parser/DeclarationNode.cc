@@ -184,7 +184,6 @@ DeclarationNode * DeclarationNode::newAggregate( ast::AggregateDecl::Aggregate k
 	newnode->type->aggregate.actuals = actuals;
 	newnode->type->aggregate.fields = fields;
 	newnode->type->aggregate.body = body;
-	newnode->type->aggregate.parent = nullptr;
 	return newnode;
 } // DeclarationNode::newAggregate
 
