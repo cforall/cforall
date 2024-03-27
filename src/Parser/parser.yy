@@ -201,8 +201,8 @@ string * build_postfix_name( string * name ) {
 } // build_postfix_name
 
 DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * fieldList ) {
-	if ( ! fieldList ) {								// field declarator ?
-		if ( ! ( typeSpec->type && (typeSpec->type->kind == TypeData::Aggregate || typeSpec->type->kind == TypeData::Enum) ) ) {
+	if ( nullptr == fieldList ) {
+		if ( !( typeSpec->type && typeSpec->type->kind == TypeData::Aggregate ) ) {
 			stringstream ss;
 			// printf( "fieldDecl1 typeSpec %p\n", typeSpec ); typeSpec->type->print( std::cout );
 			SemanticWarning( yylloc, Warning::SuperfluousDecl, ss.str().c_str() );
@@ -2172,7 +2172,7 @@ declaration_specifier:									// type specifier + storage class
 	| sue_declaration_specifier invalid_types			// invalid syntax rule
 		{
 			SemanticError( yylloc, "syntax error, expecting ';' at end of \"%s\" declaration.",
-						   $1->type->enumeration.name ? "enum" : ast::AggregateDecl::aggrString( $1->type->aggregate.kind ) );
+						   ast::AggregateDecl::aggrString( $1->type->aggregate.kind ) );
 			$$ = nullptr;
 		}
 	;
@@ -3244,10 +3244,8 @@ external_definition:
 			// disallowed at the moment.
 			if ( $1->linkage == ast::Linkage::Cforall && ! $1->storageClasses.is_static &&
 				 $1->type && $1->type->kind == TypeData::AggregateInst ) {
-				if ( $1->type->aggInst.aggregate->kind == TypeData::Enum && $1->type->aggInst.aggregate->enumeration.anon ) {
-					SemanticError( yylloc, "extern anonymous enumeration is currently unimplemented." ); $$ = nullptr;
-				} else if ( $1->type->aggInst.aggregate->aggregate.anon ) { // handles struct or union
-					SemanticError( yylloc, "extern anonymous struct/union is currently unimplemented." ); $$ = nullptr;
+				if ( $1->type->aggInst.aggregate->aggregate.anon ) {
+					SemanticError( yylloc, "extern anonymous aggregate is currently unimplemented." ); $$ = nullptr;
 				}
 			}
 		}

@@ -41,18 +41,26 @@ struct TypeData {
 	enum BuiltinType { Valist, AutoType, Zero, One, NoBuiltinType };
 	static const char * builtinTypeNames[];
 
-	enum Kind { Basic, Pointer, Reference, Array, Function, Aggregate, AggregateInst, Enum, EnumConstant, Symbolic,
+	enum Kind { Basic, Pointer, Reference, Array, Function, Aggregate, AggregateInst, EnumConstant, Symbolic,
 				SymbolicInst, Tuple, Basetypeof, Typeof, Vtable, Builtin, GlobalScope, Qualified, Unknown };
 
 	struct Aggregate_t {
 		ast::AggregateDecl::Aggregate kind;
 		const std::string * name = nullptr;
+		// Polymorphics parameters. (Polymorphic types only.)
 		DeclarationNode * params = nullptr;
-		ExpressionNode * actuals = nullptr;				// holds actual parameters later applied to AggInst
+		// Arguments later applied to AggInst. (Polymorphic types only.)
+		ExpressionNode * actuals = nullptr;
+		// Only set if body is true. (Constants for enumerations.)
 		DeclarationNode * fields = nullptr;
 		std::vector<ast::ptr<ast::Attribute>> attributes;
+		// Is this a declaration with a body (may have fields)?
 		bool body;
+		// Is this type anonymous? (Name can still be set to generated name.)
 		bool anon;
+		// Is this a typed enumeration? Type may be stored in base.
+		bool typed;
+		EnumHiding hiding;
 	};
 
 	struct AggInst_t {
@@ -65,15 +73,6 @@ struct TypeData {
 		ExpressionNode * dimension = nullptr;
 		bool isVarLen;
 		bool isStatic;
-	};
-
-	struct Enumeration_t {
-		const std::string * name = nullptr;
-		DeclarationNode * constants = nullptr;
-		bool body;
-		bool anon;
-		bool typed;
-		EnumHiding hiding;
 	};
 
 	struct Function_t {
@@ -113,7 +112,6 @@ struct TypeData {
 	Aggregate_t aggregate;
 	AggInst_t aggInst;
 	Array_t array;
-	Enumeration_t enumeration;
 	Function_t function;
 	Symbolic_t symbolic;
 	Qualified_t qualified;

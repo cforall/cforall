@@ -188,14 +188,9 @@ DeclarationNode * DeclarationNode::newAggregate( ast::AggregateDecl::Aggregate k
 } // DeclarationNode::newAggregate
 
 DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base, EnumHiding hiding ) {
-	DeclarationNode * newnode = new DeclarationNode;
-	newnode->type = new TypeData( TypeData::Enum );
-	newnode->type->enumeration.anon = name == nullptr;
-	newnode->type->enumeration.name = newnode->type->enumeration.anon ? new string( DeclarationNode::anonymous.newName() ) : name;
-	newnode->type->enumeration.constants = constants;
-	newnode->type->enumeration.body = body;
-	newnode->type->enumeration.typed = typed;
-	newnode->type->enumeration.hiding = hiding;
+	DeclarationNode * newnode = newAggregate( ast::AggregateDecl::Enum, name, nullptr, constants, body );
+	newnode->type->aggregate.typed = typed;
+	newnode->type->aggregate.hiding = hiding;
 	if ( base ) {
 		assert( typed );
 		assert( base->type );
@@ -548,6 +543,8 @@ static DeclarationNode * addTypedefAggr(
 	newaggr->aggregate.name = oldaggr->aggregate.name ? new string( *oldaggr->aggregate.name ) : nullptr;
 	newaggr->aggregate.body = false;
 	newaggr->aggregate.anon = oldaggr->aggregate.anon;
+	newaggr->aggregate.typed = oldaggr->aggregate.typed;
+	newaggr->aggregate.hiding = oldaggr->aggregate.hiding;
 	swap( newaggr, oldaggr );
 
 	newtype->base = olddecl->type;
@@ -557,39 +554,6 @@ static DeclarationNode * addTypedefAggr(
 	newdecl->next = olddecl;
 
 	moveUnionAttribute( olddecl, newdecl );
-
-	return newdecl;
-}
-
-// Helper for addTypedef, handles the case where the typedef wraps an
-// enumeration declaration (not a type), returns a chain of nodes.
-static DeclarationNode * addTypedefEnum(
-		DeclarationNode * olddecl, TypeData * newtype ) {
-	TypeData *& oldenum = olddecl->type->aggInst.aggregate;
-
-	// Handle anonymous enumeration: typedef enum { A, B, C } foo
-	// Give the typedefed type a consistent name across translation units.
-	if ( oldenum->enumeration.anon ) {
-		delete oldenum->enumeration.name;
-		oldenum->enumeration.name = new string( "__anonymous_" + *olddecl->name );
-		oldenum->enumeration.anon = false;
-		oldenum->qualifiers.reset();
-	}
-
-	// Replace the wrapped TypeData with a forward declaration.
-	TypeData * newenum = new TypeData( TypeData::Enum );
-	newenum->enumeration.name = oldenum->enumeration.name ? new string( *oldenum->enumeration.name ) : nullptr;
-	newenum->enumeration.body = false;
-	newenum->enumeration.anon = oldenum->enumeration.anon;
-	newenum->enumeration.typed = oldenum->enumeration.typed;
-	newenum->enumeration.hiding = oldenum->enumeration.hiding;
-	swap( newenum, oldenum );
-
-	newtype->base = olddecl->type;
-	olddecl->type = newtype;
-	DeclarationNode * newdecl = new DeclarationNode;
-	newdecl->type = newenum;
-	newdecl->next = olddecl;
 
 	return newdecl;
 }
@@ -609,11 +573,6 @@ DeclarationNode * DeclarationNode::addTypedef() {
 			&& TypeData::Aggregate == type->aggInst.aggregate->kind
 			&& type->aggInst.aggregate->aggregate.body ) {
 		return addTypedefAggr( this, newtype );
-	// If this typedef is wrapping an enumeration, separate them out.
-	} else if ( TypeData::AggregateInst == type->kind
-			&& TypeData::Enum == type->aggInst.aggregate->kind
-			&& type->aggInst.aggregate->enumeration.body ) {
-		return addTypedefEnum( this, newtype );
 	// There is no internal declaration, just a type.
 	} else {
 		newtype->base = type;
@@ -853,9 +812,6 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & 
 					if ( extr->type->kind == TypeData::Aggregate ) {
 						// typedef struct { int A } B is the only case?
 						extracted_named = ! extr->type->aggregate.anon;
-					} else if ( extr->type->kind == TypeData::Enum ) {
-						// typedef enum { A } B is the only case?
-						extracted_named = ! extr->type->enumeration.anon;
 					} else {
 						extracted_named = true;
 					}
@@ -1062,7 +1018,6 @@ ast::Type * DeclarationNode::buildType() const {
 	assert( type );
 
 	switch ( type->kind ) {
-	case TypeData::Enum:
 	case TypeData::Aggregate: {
 		ast::BaseInstType * ret =
 			buildComAggInst( type, copy( attributes ), linkage );

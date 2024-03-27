@@ -74,12 +74,6 @@ TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), f
 		function.body = nullptr;
 		function.withExprs = nullptr;
 		break;
-	case Enum:
-		enumeration.name = nullptr;
-		enumeration.constants = nullptr;
-		enumeration.body = false;
-		enumeration.anon = false;
-		break;
 	case Aggregate:
 		aggregate.kind = ast::AggregateDecl::NoAggregate;
 		aggregate.name = nullptr;
@@ -88,6 +82,8 @@ TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), f
 		aggregate.fields = nullptr;
 		aggregate.body = false;
 		aggregate.anon = false;
+		aggregate.typed = false;
+		aggregate.hiding = EnumHiding::Visible;
 		break;
 	case AggregateInst:
 		aggInst.aggregate = nullptr;
@@ -152,10 +148,6 @@ TypeData::~TypeData() {
 	case AggregateInst:
 		delete aggInst.aggregate;
 		delete aggInst.params;
-		break;
-	case Enum:
-		delete enumeration.name;
-		delete enumeration.constants;
 		break;
 	case Symbolic:
 	case SymbolicInst:
@@ -229,12 +221,6 @@ TypeData * TypeData::clone() const {
 		newtype->aggInst.aggregate = maybeCopy( aggInst.aggregate );
 		newtype->aggInst.params = maybeCopy( aggInst.params );
 		newtype->aggInst.hoistType = aggInst.hoistType;
-		break;
-	case Enum:
-		newtype->enumeration.name = enumeration.name ? new string( *enumeration.name ) : nullptr;
-		newtype->enumeration.constants = maybeCopy( enumeration.constants );
-		newtype->enumeration.body = enumeration.body;
-		newtype->enumeration.anon = enumeration.anon;
 		break;
 	case Symbolic:
 	case SymbolicInst:
@@ -376,20 +362,6 @@ void TypeData::print( ostream &os, int indent ) const {
 			aggInst.params->printList( os, indent + 2 );
 		} // if
 		break;
-	case Enum:
-		os << "enumeration " << *enumeration.name << endl;;
-		if ( enumeration.constants ) {
-			os << "with constants" << endl;
-			enumeration.constants->printList( os, indent + 2 );
-		} // if
-		if ( enumeration.body ) {
-			os << string( indent + 2, ' ' ) << "with body" << endl;
-		} // if
-		if ( base ) {
-			os << "for ";
-			base->print( os, indent + 2 );
-		} // if
-		break;
 	case EnumConstant:
 		os << "enumeration constant ";
 		break;
@@ -482,8 +454,6 @@ const std::string * TypeData::leafName() const {
 		break;
 	case Aggregate:
 		return aggregate.name;
-	case Enum:
-		return enumeration.name;
 	case Symbolic:
 	case SymbolicInst:
 		return symbolic.name;
@@ -672,7 +642,6 @@ static void addTypeToType( TypeData *& dst, TypeData *& src ) {
 	default:
 		switch ( src->kind ) {
 		case TypeData::Aggregate:
-		case TypeData::Enum:
 			dst->base = new TypeData( TypeData::AggregateInst );
 			dst->base->aggInst.aggregate = src;
 			if ( src->kind == TypeData::Aggregate ) {
@@ -700,17 +669,13 @@ TypeData * addType( TypeData * ltype, TypeData * rtype, std::vector<ast::ptr<ast
 		addTypeToType( rtype, ltype );
 		return rtype;
 	} else {
-		if ( ltype->kind == TypeData::Aggregate || ltype->kind == TypeData::Enum ) {
+		if ( ltype->kind == TypeData::Aggregate ) {
 			// Hide type information aggregate instances.
 			rtype = new TypeData( TypeData::AggregateInst );
 			rtype->aggInst.aggregate = ltype;
 			rtype->aggInst.aggregate->aggregate.attributes.swap( attributes ); // change ownership
-			if ( ltype->kind == TypeData::Aggregate ) {
-				rtype->aggInst.hoistType = ltype->aggregate.body;
-				rtype->aggInst.params = maybeCopy( ltype->aggregate.actuals );
-			} else {
-				rtype->aggInst.hoistType = ltype->enumeration.body;
-			} // if
+			rtype->aggInst.hoistType = ltype->aggregate.body;
+			rtype->aggInst.params = maybeCopy( ltype->aggregate.actuals );
 			rtype->qualifiers |= ltype->qualifiers;
 		} else {
 			rtype = ltype;
@@ -729,16 +694,10 @@ TypeData * cloneBaseType( TypeData * type, TypeData * other ) {
 	TypeData * newType = type->getLastBase()->clone();
 	if ( newType->kind == TypeData::AggregateInst ) {
 		// don't duplicate members
-		if ( newType->aggInst.aggregate->kind == TypeData::Enum ) {
-			delete newType->aggInst.aggregate->enumeration.constants;
-			newType->aggInst.aggregate->enumeration.constants = nullptr;
-			newType->aggInst.aggregate->enumeration.body = false;
-		} else {
-			assert( newType->aggInst.aggregate->kind == TypeData::Aggregate );
-			delete newType->aggInst.aggregate->aggregate.fields;
-			newType->aggInst.aggregate->aggregate.fields = nullptr;
-			newType->aggInst.aggregate->aggregate.body = false;
-		} // if
+		assert( newType->aggInst.aggregate->kind == TypeData::Aggregate );
+		delete newType->aggInst.aggregate->aggregate.fields;
+		newType->aggInst.aggregate->aggregate.fields = nullptr;
+		newType->aggInst.aggregate->aggregate.body = false;
 		// don't hoist twice
 		newType->aggInst.hoistType = false;
 	} // if
@@ -754,8 +713,7 @@ TypeData * cloneBaseType( TypeData * type, TypeData * other ) {
 
 TypeData * makeNewBase( TypeData * type ) {
 	switch ( type->kind ) {
-	case TypeData::Aggregate:
-	case TypeData::Enum: {
+	case TypeData::Aggregate: {
 		TypeData * out = new TypeData( TypeData::AggregateInst );
 		out->aggInst.aggregate = type;
 		if ( TypeData::Aggregate == type->kind ) {
@@ -1122,7 +1080,6 @@ ast::Type * typebuild( const TypeData * td ) {
 			buildQualifiers( td )
 		);
 	case TypeData::Symbolic:
-	case TypeData::Enum:
 	case TypeData::Aggregate:
 		assert( false );
 	} // switch
@@ -1137,11 +1094,6 @@ TypeData * typeextractAggregate( const TypeData * td, bool toplevel ) {
 	switch ( td->kind ) {
 	case TypeData::Aggregate:
 		if ( ! toplevel && td->aggregate.body ) {
-			ret = td->clone();
-		} // if
-		break;
-	case TypeData::Enum:
-		if ( ! toplevel && td->enumeration.body ) {
 			ret = td->clone();
 		} // if
 		break;
@@ -1344,6 +1296,8 @@ ast::AggregateDecl * buildAggregate( const TypeData * td, std::vector<ast::ptr<a
 		);
 		buildForall( td->aggregate.params, at->params );
 		break;
+	case ast::AggregateDecl::Enum:
+		return buildEnum( td, std::move( attributes ), linkage );
 	case ast::AggregateDecl::Trait:
 		at = new ast::TraitDecl( td->location,
 			*td->aggregate.name,
@@ -1368,21 +1322,6 @@ ast::BaseInstType * buildComAggInst(
 		std::vector<ast::ptr<ast::Attribute>> && attributes,
 		ast::Linkage::Spec linkage ) {
 	switch ( td->kind ) {
-	case TypeData::Enum:
-		if ( td->enumeration.body ) {
-			ast::EnumDecl * typedecl =
-				buildEnum( td, std::move( attributes ), linkage );
-			return new ast::EnumInstType(
-				typedecl,
-				buildQualifiers( td )
-			);
-		} else {
-			return new ast::EnumInstType(
-				*td->enumeration.name,
-				buildQualifiers( td )
-			);
-		} // if
-		break;
 	case TypeData::Aggregate:
 		if ( td->aggregate.body ) {
 			ast::AggregateDecl * typedecl =
@@ -1399,6 +1338,11 @@ ast::BaseInstType * buildComAggInst(
 			case ast::AggregateDecl::Union:
 				return new ast::UnionInstType(
 					strict_dynamic_cast<ast::UnionDecl *>( typedecl ),
+					buildQualifiers( td )
+				);
+			case ast::AggregateDecl::Enum:
+				return new ast::EnumInstType(
+					strict_dynamic_cast<ast::EnumDecl *>( typedecl ),
 					buildQualifiers( td )
 				);
 			case ast::AggregateDecl::Trait:
@@ -1419,6 +1363,11 @@ ast::BaseInstType * buildComAggInst(
 				);
 			case ast::AggregateDecl::Union:
 				return new ast::UnionInstType(
+					*td->aggregate.name,
+					buildQualifiers( td )
+				);
+			case ast::AggregateDecl::Enum:
+				return new ast::EnumInstType(
 					*td->aggregate.name,
 					buildQualifiers( td )
 				);
@@ -1446,11 +1395,6 @@ ast::BaseInstType * buildAggInst( const TypeData * td ) {
 	ast::BaseInstType * ret = nullptr;
 	TypeData * type = td->aggInst.aggregate;
 	switch ( type->kind ) {
-	case TypeData::Enum:
-		return new ast::EnumInstType(
-			*type->enumeration.name,
-			buildQualifiers( type )
-		);
 	case TypeData::Aggregate:
 		switch ( type->aggregate.kind ) {
 		case ast::AggregateDecl::Struct:
@@ -1464,6 +1408,12 @@ ast::BaseInstType * buildAggInst( const TypeData * td ) {
 			break;
 		case ast::AggregateDecl::Union:
 			ret = new ast::UnionInstType(
+				*type->aggregate.name,
+				buildQualifiers( type )
+			);
+			break;
+		case ast::AggregateDecl::Enum:
+			ret = new ast::EnumInstType(
 				*type->aggregate.name,
 				buildQualifiers( type )
 			);
@@ -1525,20 +1475,21 @@ ast::EnumDecl * buildEnum(
 		const TypeData * td,
 		std::vector<ast::ptr<ast::Attribute>> && attributes,
 		ast::Linkage::Spec linkage ) {
-	assert( td->kind == TypeData::Enum );
+	assert( td->kind == TypeData::Aggregate );
+	assert( td->aggregate.kind == ast::AggregateDecl::Enum );
 	ast::Type * baseType = td->base ? typebuild(td->base) : nullptr;
 	ast::EnumDecl * ret = new ast::EnumDecl(
 		td->location,
-		*td->enumeration.name,
-		td->enumeration.typed,
+		*td->aggregate.name,
+		td->aggregate.typed,
 		std::move( attributes ),
 		linkage,
 		baseType
 	);
-	buildList( td->enumeration.constants, ret->members );
+	buildList( td->aggregate.fields, ret->members );
 	auto members = ret->members.begin();
-	ret->hide = td->enumeration.hiding == EnumHiding::Hide ? ast::EnumDecl::EnumHiding::Hide : ast::EnumDecl::EnumHiding::Visible;
-	for ( const DeclarationNode * cur = td->enumeration.constants; cur != nullptr; cur = cur->next, ++members ) {
+	ret->hide = td->aggregate.hiding == EnumHiding::Hide ? ast::EnumDecl::EnumHiding::Hide : ast::EnumDecl::EnumHiding::Visible;
+	for ( const DeclarationNode * cur = td->aggregate.fields ; cur != nullptr ; cur = cur->next, ++members ) {
 		if ( cur->enumInLine ) {
 			// Do Nothing
 		} else if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
@@ -1559,7 +1510,7 @@ ast::EnumDecl * buildEnum(
 		// else cur is a List Initializer and has been set as init in buildList()
 		// if
 	} // for
-	ret->body = td->enumeration.body;
+	ret->body = td->aggregate.body;
 	return ret;
 } // buildEnum
 
@@ -1703,8 +1654,6 @@ ast::Decl * buildDecl(
 			asmName, std::move( attributes ) );
 	} else if ( td->kind == TypeData::Aggregate ) {
 		return buildAggregate( td, std::move( attributes ), linkage );
-	} else if ( td->kind == TypeData::Enum ) {
-		return buildEnum( td, std::move( attributes ), linkage );
 	} else if ( td->kind == TypeData::Symbolic ) {
 		return buildSymbolic( td, std::move( attributes ), name, scs, linkage );
 	} else {

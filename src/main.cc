@@ -65,6 +65,7 @@
 #include "ResolvExpr/Resolver.h"            // for resolve
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
+// #include "Validate/ImplementEnumFunc.hpp"   // for implementEnumFunc
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/EliminateTypedef.hpp"    // for eliminateTypedef
 #include "Validate/EnumAndPointerDecay.hpp" // for decayEnumsAndPointers
@@ -331,6 +332,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls, transUnit );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines, transUnit );
+		// PASS( "Generate Enum Attributes Functions", Validate::implementEnumFunc, transUnit );
 
 		PASS( "Implement Actors", Concurrency::implementActors, transUnit );
 		PASS( "Implement Virtual Destructors", Virtual::implementVirtDtors, transUnit );
