@@ -29,7 +29,7 @@ struct DeclarationNode final : public ParseList<DeclarationNode> {
 	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base = nullptr, EnumHiding hiding = EnumHiding::Visible );
 	static DeclarationNode * newEnumConstant( const std::string * name, ExpressionNode * constant );
 	static DeclarationNode * newEnumValueGeneric( const std::string * name, InitializerNode * init );
-	static DeclarationNode * newEnumInLine( const std::string name );
+	static DeclarationNode * newEnumInLine( const std::string * name );
 	static DeclarationNode * newName( const std::string * );
 	static DeclarationNode * newTypeParam( ast::TypeDecl::Kind, const std::string * );
 	static DeclarationNode * newTrait( const std::string * name, DeclarationNode * params, DeclarationNode * asserts );
@@ -98,7 +98,6 @@ struct DeclarationNode final : public ParseList<DeclarationNode> {
 	const std::string * name = nullptr;
 
 	struct Variable_t {
-//		const std::string * name;
 		ast::TypeDecl::Kind tyClass;
 		DeclarationNode * assertions;
 		DeclarationNode * initializer;

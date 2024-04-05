@@ -2814,7 +2814,11 @@ enumerator_list:
 	visible_hide_opt identifier_or_type_name enumerator_value_opt
 		{ $$ = DeclarationNode::newEnumValueGeneric( $2, $3 ); }
 	| INLINE type_name
-		{ $$ = DeclarationNode::newEnumInLine( *$2->symbolic.name ); }
+		{
+			$$ = DeclarationNode::newEnumInLine( $2->symbolic.name );
+			$2->symbolic.name = nullptr;
+			delete $2;
+		}
 	| enumerator_list ',' visible_hide_opt identifier_or_type_name enumerator_value_opt
 		{ $$ = $1->set_last( DeclarationNode::newEnumValueGeneric( $4, $5 ) ); }
 	| enumerator_list ',' INLINE type_name enumerator_value_opt

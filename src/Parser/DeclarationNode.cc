@@ -52,7 +52,6 @@ extern ast::Linkage::Spec linkage;						// defined in parser.yy
 DeclarationNode::DeclarationNode() :
 	linkage( ::linkage ) {
 
-//	variable.name = nullptr;
 	variable.tyClass = ast::TypeDecl::NUMBER_OF_KINDS;
 	variable.assertions = nullptr;
 	variable.initializer = nullptr;
@@ -64,11 +63,10 @@ DeclarationNode::DeclarationNode() :
 DeclarationNode::~DeclarationNode() {
 	delete name;
 
-//	delete variable.name;
 	delete variable.assertions;
 	delete variable.initializer;
 
-//	delete type;
+	delete type;
 	delete bitfieldWidth;
 
 	delete asmStmt;
@@ -99,7 +97,6 @@ DeclarationNode * DeclarationNode::clone() const {
 	newnode->asmStmt = maybeCopy( asmStmt );
 	newnode->error = error;
 
-//	newnode->variable.name = variable.name ? new string( *variable.name ) : nullptr;
 	newnode->variable.tyClass = variable.tyClass;
 	newnode->variable.assertions = maybeCopy( variable.assertions );
 	newnode->variable.initializer = maybeCopy( variable.initializer );
@@ -227,8 +224,8 @@ DeclarationNode * DeclarationNode::newEnumValueGeneric( const string * name, Ini
 	} // if
 } // DeclarationNode::newEnumValueGeneric
 
-DeclarationNode * DeclarationNode::newEnumInLine( const string name ) {
-	DeclarationNode * newnode = newName( new std::string(name) );
+DeclarationNode * DeclarationNode::newEnumInLine( const std::string * name ) {
+	DeclarationNode * newnode = newName( name );
 	newnode->enumInLine = true;
 	return newnode;
 }
@@ -459,7 +456,7 @@ DeclarationNode * DeclarationNode::addQualifiers( DeclarationNode * q ) {
 	if ( (builtin == TypeData::Zero || builtin == TypeData::One) && q->type->qualifiers.any() && error.length() == 0 ) {
 		SemanticWarning( yylloc, Warning::BadQualifiersZeroOne, TypeData::builtinTypeNames[builtin] );
 	} // if
-	type = ::addQualifiers( q->type, type );
+	type = ::addQualifiers( type, q->type );
 	q->type = nullptr;
 
 	delete q;
@@ -472,7 +469,7 @@ DeclarationNode * DeclarationNode::addType( DeclarationNode * o, bool copyattr )
 	checkSpecifiers( o );
 	copySpecifiers( o, copyattr );
 	if ( o->type ) {
-		type = ::addType( o->type, type, o->attributes );
+		type = ::addType( type, o->type, o->attributes );
 		o->type = nullptr;
 	} // if
 	if ( o->bitfieldWidth ) {
@@ -583,26 +580,13 @@ DeclarationNode * DeclarationNode::addTypedef() {
 
 DeclarationNode * DeclarationNode::addAssertions( DeclarationNode * assertions ) {
 	if ( variable.tyClass != ast::TypeDecl::NUMBER_OF_KINDS ) {
-		if ( variable.assertions ) {
-			variable.assertions->set_last( assertions );
-		} else {
-			variable.assertions = assertions;
-		} // if
+		extend( variable.assertions, assertions );
 		return this;
 	} // if
 
 	assert( type );
-	switch ( type->kind ) {
-	case TypeData::Symbolic:
-		if ( type->symbolic.assertions ) {
-			type->symbolic.assertions->set_last( assertions );
-		} else {
-			type->symbolic.assertions = assertions;
-		} // if
-		break;
-	default:
-		assert( false );
-	} // switch
+	assert( TypeData::Symbolic == type->kind );
+	extend( type->symbolic.assertions, assertions );
 
 	return this;
 }
@@ -687,21 +671,18 @@ DeclarationNode * DeclarationNode::addArray( DeclarationNode * a ) {
 }
 
 DeclarationNode * DeclarationNode::addNewPointer( DeclarationNode * p ) {
-	if ( p ) {
-		assert( p->type->kind == TypeData::Pointer || p->type->kind == TypeData::Reference );
-		if ( type ) {
-			p->type->base = makeNewBase( type );
-			type = nullptr;
-		} // if
-		delete this;
-		return p;
-	} else {
-		return this;
+	if ( !p ) return this;
+	assert( p->type->kind == TypeData::Pointer || p->type->kind == TypeData::Reference );
+	if ( type ) {
+		p->type->base = makeNewBase( type );
+		type = nullptr;
 	} // if
+	delete this;
+	return p;
 }
 
 DeclarationNode * DeclarationNode::addNewArray( DeclarationNode * a ) {
-	if ( ! a ) return this;
+	if ( !a ) return this;
 	assert( a->type->kind == TypeData::Array );
 	if ( type ) {
 		a->type->setLastBase( makeNewBase( type ) );
@@ -773,7 +754,7 @@ DeclarationNode * DeclarationNode::extractAggregate() const {
 			newnode->type = ret;
 			if ( ret->kind == TypeData::Aggregate ) {
 				newnode->attributes.swap( ret->aggregate.attributes );
-			} // if 
+			} // if
 			return newnode;
 		} // if
 	} // if

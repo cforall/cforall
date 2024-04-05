@@ -81,6 +81,15 @@ struct ParseList : public ParseNode {
 	Next * next = nullptr;
 };
 
+template<typename Node>
+void extend( Node *& list, Node * value ) {
+	if ( list ) {
+		extend( list->next, value );
+	} else {
+		list = value;
+	}
+}
+
 // Must harmonize with OperName.
 enum class OperKinds {
 	// diadic

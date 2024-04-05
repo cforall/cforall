@@ -474,6 +474,18 @@ void TypeData::setLastBase( TypeData * newBase ) {
 }
 
 
+// Wrap an aggregate up in an instance. Takes and gives ownership.
+static TypeData * makeInstance( TypeData * type ) {
+	assert( TypeData::Aggregate == type->kind );
+	TypeData * out = new TypeData( TypeData::AggregateInst );
+	out->aggInst.aggregate = type;
+	out->aggInst.params = maybeCopy( type->aggregate.actuals );
+	out->aggInst.hoistType = type->aggregate.body;
+	out->qualifiers |= type->qualifiers;
+	return out;
+}
+
+
 TypeData * build_type_qualifier( ast::CV::Qualifiers tq ) {
 	TypeData * type = new TypeData;
 	type->qualifiers = tq;
@@ -563,32 +575,24 @@ static void addQualifiersToType( TypeData * dst, TypeData * src ) {
 }
 
 // Takes ownership of all arguments, gives ownership of return value.
-TypeData * addQualifiers( TypeData * ltype, TypeData * rtype ) {
-	if ( ltype->forall ) {
-		if ( rtype->forall ) {
-			rtype->forall->set_last( ltype->forall );
-		} else if ( TypeData::Aggregate != rtype->kind ) {
-			rtype->forall = ltype->forall;
-		} else if ( rtype->aggregate.params ) {
-			rtype->aggregate.params->set_last( ltype->forall );
+TypeData * addQualifiers( TypeData * dst, TypeData * src ) {
+	if ( src->forall ) {
+		if ( dst->forall || TypeData::Aggregate != dst->kind ) {
+			extend( dst->forall, src->forall );
 		} else {
-			rtype->aggregate.params = ltype->forall;
+			extend( dst->aggregate.params, src->forall );
 		}
-		ltype->forall = nullptr;
+		src->forall = nullptr;
 	}
 
-	addQualifiersToType( rtype, ltype );
-	return rtype;
+	addQualifiersToType( dst, src );
+	return dst;
 }
 
 // Helper for addType and cloneBaseType.
 static void addTypeToType( TypeData *& dst, TypeData *& src ) {
 	if ( src->forall && dst->kind == TypeData::Function ) {
-		if ( dst->forall ) {
-			dst->forall->set_last( src->forall );
-		} else {
-			dst->forall = src->forall;
-		} // if
+		extend( dst->forall, src->forall );
 		src->forall = nullptr;
 	} // if
 	if ( dst->base ) {
@@ -640,53 +644,34 @@ static void addTypeToType( TypeData *& dst, TypeData *& src ) {
 		} // if
 		break;
 	default:
-		switch ( src->kind ) {
-		case TypeData::Aggregate:
-			dst->base = new TypeData( TypeData::AggregateInst );
-			dst->base->aggInst.aggregate = src;
-			if ( src->kind == TypeData::Aggregate ) {
-				dst->base->aggInst.params = maybeCopy( src->aggregate.actuals );
-			} // if
-			dst->base->qualifiers |= src->qualifiers;
-			src = nullptr;
-			break;
-		default:
-			if ( dst->forall ) {
-				dst->forall->set_last( src->forall );
-			} else {
-				dst->forall = src->forall;
-			} // if
+		if ( TypeData::Aggregate == src->kind ) {
+			dst->base = makeInstance( src );
+		} else {
+			extend( dst->forall, src->forall );
 			src->forall = nullptr;
 			dst->base = src;
-			src = nullptr;
-		} // switch
+		}
+		src = nullptr;
 	} // switch
 }
 
 // Takes ownership of all arguments, gives ownership of return value.
-TypeData * addType( TypeData * ltype, TypeData * rtype, std::vector<ast::ptr<ast::Attribute>> & attributes ) {
-	if ( rtype ) {
-		addTypeToType( rtype, ltype );
-		return rtype;
+TypeData * addType( TypeData * dst, TypeData * src, std::vector<ast::ptr<ast::Attribute>> & attributes ) {
+	if ( dst ) {
+		addTypeToType( dst, src );
+	} else if ( src->kind == TypeData::Aggregate ) {
+		// Hide type information aggregate instances.
+		dst = makeInstance( src );
+		dst->aggInst.aggregate->aggregate.attributes.swap( attributes );
 	} else {
-		if ( ltype->kind == TypeData::Aggregate ) {
-			// Hide type information aggregate instances.
-			rtype = new TypeData( TypeData::AggregateInst );
-			rtype->aggInst.aggregate = ltype;
-			rtype->aggInst.aggregate->aggregate.attributes.swap( attributes ); // change ownership
-			rtype->aggInst.hoistType = ltype->aggregate.body;
-			rtype->aggInst.params = maybeCopy( ltype->aggregate.actuals );
-			rtype->qualifiers |= ltype->qualifiers;
-		} else {
-			rtype = ltype;
-		} // if
-		return rtype;
+		dst = src;
 	} // if
+	return dst;
 }
 
-TypeData * addType( TypeData * ltype, TypeData * rtype ) {
+TypeData * addType( TypeData * dst, TypeData * src ) {
 	std::vector<ast::ptr<ast::Attribute>> attributes;
-	return addType( ltype, rtype, attributes );
+	return addType( dst, src, attributes );
 }
 
 // Takes ownership of both arguments, gives ownership of return value.
@@ -712,19 +697,7 @@ TypeData * cloneBaseType( TypeData * type, TypeData * other ) {
 }
 
 TypeData * makeNewBase( TypeData * type ) {
-	switch ( type->kind ) {
-	case TypeData::Aggregate: {
-		TypeData * out = new TypeData( TypeData::AggregateInst );
-		out->aggInst.aggregate = type;
-		if ( TypeData::Aggregate == type->kind ) {
-			out->aggInst.params = maybeCopy( type->aggregate.actuals );
-		}
-		out->qualifiers |= type->qualifiers;
-		return out;
-	}
-	default:
-		return type;
-	} // switch
+	return ( TypeData::Aggregate == type->kind ) ? makeInstance( type ) : type;
 }
 
 
