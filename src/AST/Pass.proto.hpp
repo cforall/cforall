@@ -228,52 +228,6 @@ struct resultN {
 	}
 };
 
-/// Used by previsit implementation
-/// We need to reassign the result to 'node', unless the function
-/// returns void, then we just leave 'node' unchanged
-template<bool is_void>
-struct __assign;
-
-template<>
-struct __assign<true> {
-	template<typename core_t, typename node_t>
-	static inline void result( core_t & core, const node_t * & node ) {
-		core.previsit( node );
-	}
-};
-
-template<>
-struct __assign<false> {
-	template<typename core_t, typename node_t>
-	static inline void result( core_t & core, const node_t * & node ) {
-		node = core.previsit( node );
-		assertf(node, "Previsit must not return NULL");
-	}
-};
-
-/// Used by postvisit implementation
-/// We need to return the result unless the function
-/// returns void, then we just return the original node
-template<bool is_void>
-struct __return;
-
-template<>
-struct __return<true> {
-	template<typename core_t, typename node_t>
-	static inline const node_t * result( core_t & core, const node_t * & node ) {
-		core.postvisit( node );
-		return node;
-	}
-};
-
-template<>
-struct __return<false> {
-	template<typename core_t, typename node_t>
-	static inline auto result( core_t & core, const node_t * & node ) {
-		return core.postvisit( node );
-	}
-};
-
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Deep magic (a.k.a template meta programming) to make the templated visitor work
 // Basically the goal is to make 2 previsit
@@ -296,11 +250,14 @@ static inline auto previsit( core_t & core, const node_t * & node, int ) -> decl
 		"Previsit may not change the type of the node. It must return its paremeter or void."
 	);
 
-	__assign<
-		std::is_void<
-			decltype( core.previsit( node ) )
-		>::value
-	>::result( core, node );
+	// We need to reassign the result to 'node', unless the function
+	// returns void, then we just leave 'node' unchanged
+	if constexpr ( std::is_void_v<decltype( core.previsit( node ) )> ) {
+		core.previsit( node );
+	} else {
+		node = core.previsit( node );
+		assertf(node, "Previsit must not return NULL");
+	}
 }
 
 template<typename core_t, typename node_t>
@@ -311,11 +268,14 @@ template<typename core_t, typename node_t>
 static inline auto postvisit( core_t & core, const node_t * node, int ) ->
 	decltype( core.postvisit( node ), node->accept( *(Visitor*)nullptr ) )
 {
-	return __return<
-		std::is_void<
-			decltype( core.postvisit( node ) )
-		>::value
-	>::result( core, node );
+	// We need to return the result unless the function
+	// returns void, then we just return the original node
+	if constexpr ( std::is_void_v<decltype( core.postvisit( node ) )> ) {
+		core.postvisit( node );
+		return node;
+	} else {
+		return core.postvisit( node );
+	}
 }
 
 template<typename core_t, typename node_t>
