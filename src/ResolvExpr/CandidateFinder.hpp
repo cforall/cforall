@@ -69,6 +69,9 @@ Cost computeConversionCost(
 const ast::Expr * referenceToRvalueConversion(
 	const ast::Expr * expr, Cost & cost );
 
+/// Wrap an expression to convert the result to a conditional result.
+const ast::Expr * createCondExpr( const ast::Expr * expr );
+
 } // namespace ResolvExpr
 
 // Local Variables: //

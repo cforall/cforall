@@ -45,7 +45,6 @@
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
 #include "Common/utility.h"       // for move, copy
-#include "Parser/parserutility.h" // for notZeroExpr
 #include "SymTab/Mangler.h"
 #include "Tuples/Tuples.h"        // for handleTupleAssignment
 #include "InitTweak/InitTweak.h"  // for getPointerBase
@@ -1586,12 +1585,12 @@ namespace {
 
 	void Finder::postvisit( const ast::LogicalExpr * logicalExpr ) {
 		CandidateFinder finder1( context, tenv );
-		ast::ptr<ast::Expr> arg1 = notZeroExpr( logicalExpr->arg1 );
+		ast::ptr<ast::Expr> arg1 = createCondExpr( logicalExpr->arg1 );
 		finder1.find( arg1, ResolveMode::withAdjustment() );
 		if ( finder1.candidates.empty() ) return;
 
 		CandidateFinder finder2( context, tenv );
-		ast::ptr<ast::Expr> arg2 = notZeroExpr( logicalExpr->arg2 );
+		ast::ptr<ast::Expr> arg2 = createCondExpr( logicalExpr->arg2 );
 		finder2.find( arg2, ResolveMode::withAdjustment() );
 		if ( finder2.candidates.empty() ) return;
 
@@ -1617,7 +1616,7 @@ namespace {
 
 	void Finder::postvisit( const ast::ConditionalExpr * conditionalExpr ) {
 		// candidates for condition
-		ast::ptr<ast::Expr> arg1 = notZeroExpr( conditionalExpr->arg1 );
+		ast::ptr<ast::Expr> arg1 = createCondExpr( conditionalExpr->arg1 );
 		CandidateFinder finder1( context, tenv );
 		finder1.find( arg1, ResolveMode::withAdjustment() );
 		if ( finder1.candidates.empty() ) return;
@@ -2198,6 +2197,22 @@ Cost computeConversionCost(
 		std::cerr << "cost with polycost is " << convCost << std::endl;
 	)
 	return convCost;
+}
+
+const ast::Expr * createCondExpr( const ast::Expr * expr ) {
+	assert( expr );
+	return new ast::CastExpr( expr->location,
+		ast::UntypedExpr::createCall( expr->location,
+			"?!=?",
+			{
+				expr,
+				new ast::ConstantExpr( expr->location,
+					new ast::ZeroType(), "0", std::make_optional( 0ull )
+				),
+			}
+		),
+		new ast::BasicType( ast::BasicType::SignedInt )
+	);
 }
 
 } // namespace ResolvExpr

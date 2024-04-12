@@ -30,7 +30,6 @@ SRC += \
        Parser/ParseNode.h \
        Parser/parser.yy \
        Parser/ParserTypes.h \
-       Parser/parserutility.cc \
        Parser/parserutility.h \
        Parser/RunParser.cpp \
        Parser/RunParser.hpp \

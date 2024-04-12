@@ -230,10 +230,9 @@ am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Parser/ExpressionNode.$(OBJEXT) \
 	Parser/InitializerNode.$(OBJEXT) Parser/lex.$(OBJEXT) \
 	Parser/ParseNode.$(OBJEXT) Parser/parser.$(OBJEXT) \
-	Parser/parserutility.$(OBJEXT) Parser/RunParser.$(OBJEXT) \
-	Parser/StatementNode.$(OBJEXT) Parser/TypeData.$(OBJEXT) \
-	Parser/TypedefTable.$(OBJEXT) $(am__objects_6) \
-	ResolvExpr/CandidatePrinter.$(OBJEXT) \
+	Parser/RunParser.$(OBJEXT) Parser/StatementNode.$(OBJEXT) \
+	Parser/TypeData.$(OBJEXT) Parser/TypedefTable.$(OBJEXT) \
+	$(am__objects_6) ResolvExpr/CandidatePrinter.$(OBJEXT) \
 	ResolvExpr/EraseWith.$(OBJEXT) $(am__objects_7) \
 	$(am__objects_8) $(am__objects_9) Validate/Autogen.$(OBJEXT) \
 	Validate/CompoundLiteral.$(OBJEXT) \
@@ -335,7 +334,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Parser/$(DEPDIR)/ParseNode.Po Parser/$(DEPDIR)/RunParser.Po \
 	Parser/$(DEPDIR)/StatementNode.Po Parser/$(DEPDIR)/TypeData.Po \
 	Parser/$(DEPDIR)/TypedefTable.Po Parser/$(DEPDIR)/lex.Po \
-	Parser/$(DEPDIR)/parser.Po Parser/$(DEPDIR)/parserutility.Po \
+	Parser/$(DEPDIR)/parser.Po \
 	ResolvExpr/$(DEPDIR)/AdjustExprType.Po \
 	ResolvExpr/$(DEPDIR)/Candidate.Po \
 	ResolvExpr/$(DEPDIR)/CandidateFinder.Po \
@@ -659,11 +658,11 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cpp \
 	Parser/ExpressionNode.cc Parser/ExpressionNode.h \
 	Parser/InitializerNode.cc Parser/InitializerNode.h \
 	Parser/lex.ll Parser/ParseNode.cc Parser/ParseNode.h \
-	Parser/parser.yy Parser/ParserTypes.h Parser/parserutility.cc \
-	Parser/parserutility.h Parser/RunParser.cpp \
-	Parser/RunParser.hpp Parser/StatementNode.cc \
-	Parser/StatementNode.h Parser/TypeData.cc Parser/TypeData.h \
-	Parser/TypedefTable.cc Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
+	Parser/parser.yy Parser/ParserTypes.h Parser/parserutility.h \
+	Parser/RunParser.cpp Parser/RunParser.hpp \
+	Parser/StatementNode.cc Parser/StatementNode.h \
+	Parser/TypeData.cc Parser/TypeData.h Parser/TypedefTable.cc \
+	Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
 	ResolvExpr/CandidatePrinter.cpp \
 	ResolvExpr/CandidatePrinter.hpp ResolvExpr/EraseWith.cpp \
 	ResolvExpr/EraseWith.hpp $(SRC_SYMTAB) $(SRC_TUPLES) \
@@ -1243,8 +1242,6 @@ Parser/parser.hh: Parser/parser.cc
 	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) Parser/parser.cc; else :; fi
 Parser/parser.$(OBJEXT): Parser/$(am__dirstamp) \
 	Parser/$(DEPDIR)/$(am__dirstamp)
-Parser/parserutility.$(OBJEXT): Parser/$(am__dirstamp) \
-	Parser/$(DEPDIR)/$(am__dirstamp)
 Parser/RunParser.$(OBJEXT): Parser/$(am__dirstamp) \
 	Parser/$(DEPDIR)/$(am__dirstamp)
 Parser/StatementNode.$(OBJEXT): Parser/$(am__dirstamp) \
@@ -1422,7 +1419,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/TypedefTable.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/lex.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/parser.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@Parser/$(DEPDIR)/parserutility.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/AdjustExprType.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/Candidate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ResolvExpr/$(DEPDIR)/CandidateFinder.Po@am__quote@ # am--include-marker
@@ -1784,7 +1780,6 @@ distclean: distclean-am
 	-rm -f Parser/$(DEPDIR)/TypedefTable.Po
 	-rm -f Parser/$(DEPDIR)/lex.Po
 	-rm -f Parser/$(DEPDIR)/parser.Po
-	-rm -f Parser/$(DEPDIR)/parserutility.Po
 	-rm -f ResolvExpr/$(DEPDIR)/AdjustExprType.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Candidate.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CandidateFinder.Po
@@ -1958,7 +1953,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Parser/$(DEPDIR)/TypedefTable.Po
 	-rm -f Parser/$(DEPDIR)/lex.Po
 	-rm -f Parser/$(DEPDIR)/parser.Po
-	-rm -f Parser/$(DEPDIR)/parserutility.Po
 	-rm -f ResolvExpr/$(DEPDIR)/AdjustExprType.Po
 	-rm -f ResolvExpr/$(DEPDIR)/Candidate.Po
 	-rm -f ResolvExpr/$(DEPDIR)/CandidateFinder.Po

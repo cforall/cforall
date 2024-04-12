@@ -16,11 +16,6 @@
 #pragma once
 
 #include "AST/Copy.hpp"            // for shallowCopy
-namespace ast {
-	class Expr;
-}
-
-ast::Expr * notZeroExpr( const ast::Expr *orig );
 
 template< typename T >
 static inline auto maybeBuild( T * orig ) -> decltype(orig->build()) {

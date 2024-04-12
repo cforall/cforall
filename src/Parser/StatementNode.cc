@@ -121,14 +121,13 @@ static ast::Expr * build_if_control( CondCtl * ctl,
 
 	ast::Expr * cond = nullptr;
 	if ( ctl->condition ) {
-		// compare the provided condition against 0
-		cond = notZeroExpr( maybeMoveBuild( ctl->condition ) );
+		cond = maybeMoveBuild( ctl->condition );
 	} else {
 		for ( ast::ptr<ast::Stmt> & stmt : inits ) {
 			// build the && of all of the declared variables compared against 0
 			auto declStmt = stmt.strict_as<ast::DeclStmt>();
 			auto dwt = declStmt->decl.strict_as<ast::DeclWithType>();
-			ast::Expr * nze = notZeroExpr( new ast::VariableExpr( dwt->location, dwt ) );
+			ast::Expr * nze = new ast::VariableExpr( dwt->location, dwt );
 			cond = cond ? new ast::LogicalExpr( dwt->location, cond, nze, ast::AndExpr ) : nze;
 		}
 	}
@@ -199,7 +198,7 @@ ast::Stmt * build_while( const CodeLocation & location, CondCtl * ctl, Statement
 ast::Stmt * build_do_while( const CodeLocation & location, ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ ) {
 	// do-while cannot have declarations in the contitional, so init is always empty
 	return new ast::WhileDoStmt( location,
-		notZeroExpr( maybeMoveBuild( ctl ) ),
+		maybeMoveBuild( ctl ),
 		buildMoveSingle( stmt ),
 		buildMoveOptional( else_ ),
 		{},
@@ -212,7 +211,7 @@ ast::Stmt * build_for( const CodeLocation & location, ForCtrl * forctl, Statemen
 	buildMoveList( forctl->init, astinit );
 
 	ast::Expr * astcond = nullptr;						// maybe empty
-	astcond = notZeroExpr( maybeMoveBuild( forctl->condition ) );
+	astcond = maybeMoveBuild( forctl->condition );
 
 	ast::Expr * astincr = nullptr;						// maybe empty
 	astincr = maybeMoveBuild( forctl->change );
@@ -329,7 +328,7 @@ ast::WaitForStmt * build_waitfor( const CodeLocation & location, ast::WaitForStm
 	auto clause = new ast::WaitForClause( location );
 	clause->target = maybeBuild( targetExpr );
 	clause->stmt = maybeMoveBuild( stmt );
-	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
+	clause->when_cond = maybeMoveBuild( when );
 
 	ExpressionNode * next = targetExpr->next;
 	targetExpr->next = nullptr;
@@ -344,7 +343,7 @@ ast::WaitForStmt * build_waitfor( const CodeLocation & location, ast::WaitForStm
 
 ast::WaitForStmt * build_waitfor_else( const CodeLocation & location, ast::WaitForStmt * existing, ExpressionNode * when, StatementNode * stmt ) {
 	existing->else_stmt = maybeMoveBuild( stmt );
-	existing->else_cond = notZeroExpr( maybeMoveBuild( when ) );
+	existing->else_cond = maybeMoveBuild( when );
 
 	(void)location;
 	return existing;
@@ -353,7 +352,7 @@ ast::WaitForStmt * build_waitfor_else( const CodeLocation & location, ast::WaitF
 ast::WaitForStmt * build_waitfor_timeout( const CodeLocation & location, ast::WaitForStmt * existing, ExpressionNode * when, ExpressionNode * timeout, StatementNode * stmt ) {
 	existing->timeout_time = maybeMoveBuild( timeout );
 	existing->timeout_stmt = maybeMoveBuild( stmt );
-	existing->timeout_cond = notZeroExpr( maybeMoveBuild( when ) );
+	existing->timeout_cond = maybeMoveBuild( when );
 
 	(void)location;
 	return existing;
@@ -361,14 +360,14 @@ ast::WaitForStmt * build_waitfor_timeout( const CodeLocation & location, ast::Wa
 
 ast::WaitUntilStmt::ClauseNode * build_waituntil_clause( const CodeLocation & loc, ExpressionNode * when, ExpressionNode * targetExpr, StatementNode * stmt ) {
 	ast::WhenClause * clause = new ast::WhenClause( loc );
-	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
+	clause->when_cond = maybeMoveBuild( when );
 	clause->stmt = maybeMoveBuild( stmt );
 	clause->target = maybeMoveBuild( targetExpr );
 	return new ast::WaitUntilStmt::ClauseNode( clause );
 }
 ast::WaitUntilStmt::ClauseNode * build_waituntil_else( const CodeLocation & loc, ExpressionNode * when, StatementNode * stmt ) {
 	ast::WhenClause * clause = new ast::WhenClause( loc );
-	clause->when_cond = notZeroExpr( maybeMoveBuild( when ) );
+	clause->when_cond = maybeMoveBuild( when );
 	clause->stmt = maybeMoveBuild( stmt );
 	return new ast::WaitUntilStmt::ClauseNode( ast::WaitUntilStmt::ClauseNode::Op::ELSE, clause );
 }
@@ -507,7 +506,7 @@ ast::Stmt * build_cofor( const CodeLocation & location, ForCtrl * forctl, Statem
 	buildMoveList( forctl->init, astinit );
 
 	ast::Expr * astcond = nullptr;						// maybe empty
-	astcond = notZeroExpr( maybeMoveBuild( forctl->condition ) );
+	astcond = maybeMoveBuild( forctl->condition );
 
 	ast::Expr * astincr = nullptr;						// maybe empty
 	astincr = maybeMoveBuild( forctl->change );

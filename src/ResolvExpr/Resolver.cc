@@ -339,6 +339,14 @@ namespace {
 		return findKindExpression( untyped, context, hasIntegralType, "condition" );
 	}
 
+	ast::ptr< ast::Expr > findCondExpression(
+		const ast::Expr * untyped, const ResolveContext & context
+	) {
+		if ( nullptr == untyped ) return untyped;
+		ast::ptr<ast::Expr> condExpr = createCondExpr( untyped );
+		return findIntegralExpression( condExpr, context );
+	}
+
 	/// check if a type is a character type
 	bool isCharType( const ast::Type * t ) {
 		if ( auto bt = dynamic_cast< const ast::BasicType * >( t ) ) {
@@ -355,7 +363,7 @@ namespace {
 		while ( it != end && ! (*it)->is_mutex() ) { ++it; }
 		return it != end;
 	}
-}
+} // anonymous namespace
 
 class Resolver final
 : public ast::WithSymbolTable, public ast::WithGuards,
@@ -728,18 +736,18 @@ const ast::AsmStmt * Resolver::previsit( const ast::AsmStmt * asmStmt ) {
 
 const ast::IfStmt * Resolver::previsit( const ast::IfStmt * ifStmt ) {
 	return ast::mutate_field(
-		ifStmt, &ast::IfStmt::cond, findIntegralExpression( ifStmt->cond, context ) );
+		ifStmt, &ast::IfStmt::cond, findCondExpression( ifStmt->cond, context ) );
 }
 
 const ast::WhileDoStmt * Resolver::previsit( const ast::WhileDoStmt * whileDoStmt ) {
 	return ast::mutate_field(
-		whileDoStmt, &ast::WhileDoStmt::cond, findIntegralExpression( whileDoStmt->cond, context ) );
+		whileDoStmt, &ast::WhileDoStmt::cond, findCondExpression( whileDoStmt->cond, context ) );
 }
 
 const ast::ForStmt * Resolver::previsit( const ast::ForStmt * forStmt ) {
 	if ( forStmt->cond ) {
 		forStmt = ast::mutate_field(
-			forStmt, &ast::ForStmt::cond, findIntegralExpression( forStmt->cond, context ) );
+			forStmt, &ast::ForStmt::cond, findCondExpression( forStmt->cond, context ) );
 	}
 
 	if ( forStmt->inc ) {
@@ -1074,7 +1082,7 @@ const ast::WaitForStmt * Resolver::previsit( const ast::WaitForStmt * stmt ) {
 		}
 
 		// Resolve the conditions as if it were an IfStmt, statements normally
-		clause2->when_cond = findSingleExpression( clause.when_cond, context );
+		clause2->when_cond = findCondExpression( clause.when_cond, context );
 		clause2->stmt = clause.stmt->accept( *visitor );
 
 		// set results into stmt
@@ -1088,7 +1096,7 @@ const ast::WaitForStmt * Resolver::previsit( const ast::WaitForStmt * stmt ) {
 		ast::ptr< ast::Type > target =
 			new ast::BasicType{ ast::BasicType::LongLongUnsignedInt };
 		auto timeout_time = findSingleExpression( stmt->timeout_time, target, context );
-		auto timeout_cond = findSingleExpression( stmt->timeout_cond, context );
+		auto timeout_cond = findCondExpression( stmt->timeout_cond, context );
 		auto timeout_stmt = stmt->timeout_stmt->accept( *visitor );
 
 		// set results into stmt
@@ -1101,7 +1109,7 @@ const ast::WaitForStmt * Resolver::previsit( const ast::WaitForStmt * stmt ) {
 
 	if ( stmt->else_stmt ) {
 		// resolve the condition like IfStmt, stmts normally
-		auto else_cond = findSingleExpression( stmt->else_cond, context );
+		auto else_cond = findCondExpression( stmt->else_cond, context );
 		auto else_stmt = stmt->else_stmt->accept( *visitor );
 
 		// set results into stmt
