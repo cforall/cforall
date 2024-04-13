@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  3 21:30:54 2024
-// Update Count     : 1619
+// Last Modified On : Sun Apr  7 21:54:29 2024
+// Update Count     : 1644
 //
 
 #include <stdio.h>
@@ -113,7 +113,7 @@ bool prtFreeOff() {
 //######################### Helpers #########################
 
 
-// generic Bsearchl does not inline, so substitute with hand-coded binary-search.
+// CFA generic Bsearchl does not inline, so substitute with hand-coded binary-search.
 inline __attribute__((always_inline))
 static size_t Bsearchl( unsigned int key, const unsigned int vals[], size_t dim ) {
 	size_t l = 0, m, h = dim;
@@ -189,7 +189,7 @@ union HeapStatistics {
 		unsigned long long int resize_storage_request, resize_storage_alloc;
 		unsigned int realloc_calls, realloc_0_calls;
 		unsigned long long int realloc_storage_request, realloc_storage_alloc;
-		unsigned int free_calls, free_null_calls;
+		unsigned int free_calls, free_null_0_calls;
 		unsigned long long int free_storage_request, free_storage_alloc;
 		unsigned int return_pulls, return_pushes;
 		unsigned long long int return_storage_request, return_storage_alloc;
@@ -231,19 +231,15 @@ struct Heap {
 	struct Storage {
 		struct Header {									// header
 			union Kind {
-				struct RealHeader {
+				struct RealHeader {						// 4-byte word => 8-byte header, 8-byte word => 16-byte header
 					union {
-						struct {						// 4-byte word => 8-byte header, 8-byte word => 16-byte header
-							union {
-								// 2nd low-order bit => zero filled, 3rd low-order bit => mmapped
-								// FreeHeader * home;		// allocated block points back to home locations (must overlay alignment)
-								void * home;			// allocated block points back to home locations (must overlay alignment)
-								size_t blockSize;		// size for munmap (must overlay alignment)
-								Storage * next;			// freed block points to next freed block of same size
-							};
-							size_t size;				// allocation size in bytes
-						};
+						// 2nd low-order bit => zero filled, 3rd low-order bit => mmapped
+						// FreeHeader * home;			// allocated block points back to home locations (must overlay alignment)
+						void * home;					// allocated block points back to home locations (must overlay alignment)
+						size_t blockSize;				// size for munmap (must overlay alignment)
+						Storage * next;					// freed block points to next freed block of same size
 					};
+					size_t size;						// allocation size in bytes
 				} real; // RealHeader
 
 				struct FakeHeader {
@@ -260,7 +256,6 @@ struct Heap {
 	static_assert( libAlign() >= sizeof( Storage ), "minimum alignment < sizeof( Storage )" );
 
 	struct CALIGN FreeHeader {
-		size_t blockSize CALIGN;						// size of allocations on this list
 		#ifdef OWNERSHIP
 		#ifdef RETURNSPIN
 		SpinLock_t returnLock;
@@ -270,6 +265,7 @@ struct Heap {
 
 		Storage * freeList;								// thread free list
 		Heap * homeManager;								// heap owner (free storage to bucket, from bucket to heap)
+		size_t blockSize;								// size of allocations on this list
 	}; // FreeHeader
 
 	FreeHeader freeLists[NoBucketSizes];				// buckets for different allocation sizes
@@ -368,7 +364,7 @@ libcfa_public int __map_prot;							// common mmap/mprotect protection
 // Thread-local storage is allocated lazily when the storage is accessed.
 static __thread size_t PAD1 CALIGN TLSMODEL __attribute__(( unused )); // protect false sharing
 static __thread Heap * heapManager CALIGN TLSMODEL;
-static  __thread bool heapManagerBootFlag CALIGN TLSMODEL = false;
+static __thread bool heapManagerBootFlag CALIGN TLSMODEL = false;
 static __thread size_t PAD2 CALIGN TLSMODEL __attribute__(( unused )); // protect further false sharing
 
 
@@ -594,8 +590,6 @@ extern "C" {
 
 
 #ifdef __STATISTICS__
-static HeapStatistics stats;							// zero filled
-
 #define prtFmt \
 	"\nHeap statistics: (storage request / allocation)\n" \
 	"  malloc    >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n" \
@@ -606,7 +600,7 @@ static HeapStatistics stats;							// zero filled
 	"  cmemalign >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n" \
 	"  resize    >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n" \
 	"  realloc   >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n" \
-	"  free      !null calls %'u; null calls %'u; storage %'llu / %'llu bytes\n" \
+	"  free      !null calls %'u; null/0 calls %'u; storage %'llu / %'llu bytes\n" \
 	"  return    pulls %'u; pushes %'u; storage %'llu / %'llu bytes\n" \
 	"  sbrk      calls %'u; storage %'llu bytes\n" \
 	"  mmap      calls %'u; storage %'llu / %'llu bytes\n" \
@@ -626,7 +620,7 @@ static int printStats( HeapStatistics & stats ) with( heapMaster, stats ) {	// s
 			cmemalign_calls, cmemalign_0_calls, cmemalign_storage_request, cmemalign_storage_alloc,
 			resize_calls, resize_0_calls, resize_storage_request, resize_storage_alloc,
 			realloc_calls, realloc_0_calls, realloc_storage_request, realloc_storage_alloc,
-			free_calls, free_null_calls, free_storage_request, free_storage_alloc,
+			free_calls, free_null_0_calls, free_storage_request, free_storage_alloc,
 			return_pulls, return_pushes, return_storage_request, return_storage_alloc,
 			sbrk_calls, sbrk_storage,
 			mmap_calls, mmap_storage_request, mmap_storage_alloc,
@@ -649,7 +643,7 @@ static int printStats( HeapStatistics & stats ) with( heapMaster, stats ) {	// s
 	"<total type=\"cmemalign\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
 	"<total type=\"resize\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
 	"<total type=\"realloc\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
-	"<total type=\"free\" !null=\"%'u;\" 0 null=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
+	"<total type=\"free\" !null=\"%'u;\" 0 null/0=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
 	"<total type=\"return\" pulls=\"%'u;\" 0 pushes=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n" \
 	"<total type=\"sbrk\" count=\"%'u;\" size=\"%'llu\"/> bytes\n" \
 	"<total type=\"mmap\" count=\"%'u;\" size=\"%'llu / %'llu\" / > bytes\n" \
@@ -669,7 +663,7 @@ static int printStatsXML( HeapStatistics & stats, FILE * stream ) with( heapMast
 			cmemalign_calls, cmemalign_0_calls, cmemalign_storage_request, cmemalign_storage_alloc,
 			resize_calls, resize_0_calls, resize_storage_request, resize_storage_alloc,
 			realloc_calls, realloc_0_calls, realloc_storage_request, realloc_storage_alloc,
-			free_calls, free_null_calls, free_storage_request, free_storage_alloc,
+			free_calls, free_null_0_calls, free_storage_request, free_storage_alloc,
 			return_pulls, return_pushes, return_storage_request, return_storage_alloc,
 			sbrk_calls, sbrk_storage,
 			mmap_calls, mmap_storage_request, mmap_storage_alloc,
@@ -798,9 +792,10 @@ static bool headers( const char name[] __attribute__(( unused )), void * addr, H
 		alignment = libAlign();
 	} else {
 		fakeHeader( header, alignment );
-		if ( unlikely( MmappedBit( header ) ) ) {		// mmapped ?
+		if ( unlikely( MmappedBit( header ) ) ) {		// mmapped storage ?
 			verify( addr < heapBegin || heapEnd < addr );
 			size = ClearStickyBits( header->kind.real.blockSize ); // mmap size
+			freeHead = 0p;								// prevent uninitialized warning
 			return true;
 		} // if
 
@@ -903,16 +898,11 @@ static void * manager_extend( size_t size ) with( *heapManager ) {
 } // manager_extend
 
 
-#define BOOT_HEAP_MANAGER \
-  	if ( unlikely( ! heapMasterBootFlag ) ) { \
-		heapManagerCtor(); /* trigger for first heap */ \
-	} /* if */
-
 #ifdef __STATISTICS__
 #define STAT_NAME __counter
 #define STAT_PARM , unsigned int STAT_NAME
 #define STAT_ARG( name ) , name
-#define STAT_0_CNT( counter ) stats.counters[counter].calls_0 += 1
+#define STAT_0_CNT( counter ) heapManager->stats.counters[counter].calls_0 += 1
 #else
 #define STAT_NAME
 #define STAT_PARM
@@ -920,24 +910,38 @@ static void * manager_extend( size_t size ) with( *heapManager ) {
 #define STAT_0_CNT( counter )
 #endif // __STATISTICS__
 
-// Uncomment to get allocation addresses for a 0-sized allocation rather than a null pointer.
-//#define __NONNULL_0_ALLOC__
-#if ! defined( __NONNULL_0_ALLOC__ )
-#define __NULL_0_ALLOC__ unlikely( size == 0 ) ||		/* 0 BYTE ALLOCATION RETURNS NULL POINTER */
+#define BOOT_HEAP_MANAGER \
+  	if ( unlikely( ! heapMasterBootFlag ) ) { \
+		heapManagerCtor(); /* trigger for first heap */ \
+	} /* if */ \
+	verify( heapManager );
+
+#define __NONNULL_0_ALLOC__ /* Uncomment to return non-null address for malloc( 0 ). */
+#ifndef __NONNULL_0_ALLOC__
+#define __NULL_0_ALLOC__( counter, ... ) /* 0 byte allocation returns null pointer */ \
+	if ( unlikely( size == 0 ) ) { \
+		STAT_0_CNT( counter ); \
+		__VA_ARGS__; /* call routine, if specified */ \
+		return 0p; \
+	} /* if */
 #else
-#define __NULL_0_ALLOC__
+#define __NULL_0_ALLOC__( counter, ... )
 #endif // __NONNULL_0_ALLOC__
+
+#ifdef __DEBUG__
+#define __OVERFLOW_MALLOC__( ... ) \
+	if ( unlikely( size > ULONG_MAX - sizeof(Heap.Storage) ) ) { /* error check */ \
+		__VA_ARGS__; /* call routine, if specified */ \
+		return 0p; \
+	} /* if */
+#else
+#define __OVERFLOW_MALLOC__( ... )
+#endif // __DEBUG__
 
 #define PROLOG( counter, ... ) \
 	BOOT_HEAP_MANAGER; \
-	if ( \
-		__NULL_0_ALLOC__ \
-		unlikely( size > ULONG_MAX - sizeof(Heap.Storage) ) ) { /* error check */ \
-		STAT_0_CNT( counter ); \
-		__VA_ARGS__; \
-		return 0p; \
-	} /* if */
-
+	__NULL_0_ALLOC__( counter, __VA_ARGS__ ) \
+	__OVERFLOW_MALLOC__( __VA_ARGS__ )
 
 #define SCRUB_SIZE 1024lu
 // Do not use '\xfe' for scrubbing because dereferencing an address composed of it causes a SIGSEGV *without* a valid IP
@@ -947,7 +951,6 @@ static void * manager_extend( size_t size ) with( *heapManager ) {
 static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapManager ) {
 	PROLOG( STAT_NAME );
 
-	verify( heapManager );
 	Heap.Storage * block;								// pointer to new block of storage
 
 	// Look up size in the size list.  Make sure the user request includes space for the header that must be allocated
@@ -955,7 +958,12 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 	size_t tsize = size + sizeof(Heap.Storage);
 
 	#ifdef __STATISTICS__
-	stats.counters[STAT_NAME].calls += 1;
+	#ifdef __NONNULL_0_ALLOC__
+	if ( unlikely( size == 0 ) )						// malloc( 0 ) ?
+		stats.counters[STAT_NAME].calls_0 += 1;
+	else
+	#endif // __NONNULL_0_ALLOC__
+		stats.counters[STAT_NAME].calls += 1;
 	stats.counters[STAT_NAME].request += size;
 	#endif // __STATISTICS__
 
@@ -1077,6 +1085,10 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 
 
 static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
+	// char buf[64];
+	// int len = sprintf( buf, "doFree addr %p\n", addr );
+	// write( 2, buf, len );
+
 	verify( addr );
 
 	// detect free after thread-local storage destruction and use global stats in that case
@@ -1090,7 +1102,14 @@ static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
 	size_t rsize = header->kind.real.size;				// optimization
 	#endif // __STATISTICS__ || __CFA_DEBUG__
 
+	// Do not move these down because heap can be null!
 	#ifdef __STATISTICS__
+	#ifdef __NONNULL_0_ALLOC__
+	if ( unlikely( rsize == 0 ) )						// malloc( 0 ) ?
+		stats.free_null_0_calls += 1;
+	else
+	#endif // __NONNULL_0_ALLOC__
+		heapManager->stats.free_calls += 1;				// count free amd implicit frees from resize/realloc
 	stats.free_storage_request += rsize;
 	stats.free_storage_alloc += size;
 	#endif // __STATISTICS__
@@ -1116,6 +1135,7 @@ static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
 				   addr, errno );
 		} // if
 	} else {
+		assert( freeHead );
 		#ifdef __CFA_DEBUG__
 		// memset is NOT always inlined!
 		disable_interrupts();
@@ -1320,7 +1340,7 @@ extern "C" {
 	// not 0p, then the call is equivalent to free(oaddr). Unless oaddr is 0p, it must have been returned by an earlier
 	// call to malloc(), alloc(), calloc() or realloc(). If the area pointed to was moved, a free(oaddr) is done.
 	void * resize( void * oaddr, size_t size ) libcfa_public {
-	  if ( unlikely( oaddr == 0p ) ) {				// => malloc( size )
+	  if ( unlikely( oaddr == 0p ) ) {					// => malloc( size )
 			return doMalloc( size STAT_ARG( RESIZE ) );
 		} // if
 
@@ -1332,7 +1352,7 @@ extern "C" {
 		headers( "resize", oaddr, header, freeHead, bsize, oalign );
 
 		size_t odsize = DataStorage( bsize, oaddr, header ); // data storage available in bucket
-		// same size, DO NOT preserve STICKY PROPERTIES.
+		// same size, DO NOT PRESERVE STICKY PROPERTIES.
 		if ( oalign == libAlign() && size <= odsize && odsize <= size * 2 ) { // allow 50% wasted storage for smaller size
 			ClearZeroFillBit( header );					// no alignment and turn off 0 fill
 			#ifdef __CFA_DEBUG__
@@ -1345,7 +1365,7 @@ extern "C" {
 			return oaddr;
 		} // if
 
-		// change size, DO NOT preserve STICKY PROPERTIES.
+		// change size, DO NOT PRESERVE STICKY PROPERTIES.
 		doFree( oaddr );								// free previous storage
 
 		return doMalloc( size STAT_ARG( RESIZE ) );		// create new area
@@ -1355,6 +1375,9 @@ extern "C" {
 	// Same as resize() but the contents are unchanged in the range from the start of the region up to the minimum of
 	// the old and new sizes.
 	void * realloc( void * oaddr, size_t size ) libcfa_public {
+		// char buf[64];
+		// int len = sprintf( buf, "realloc1 oaddr %p size %d\n", oaddr, size );
+		// write( 2, buf, len );
 	  if ( unlikely( oaddr == 0p ) ) {					// => malloc( size )
 		  return doMalloc( size STAT_ARG( REALLOC ) );
 		} // if
@@ -1497,10 +1520,6 @@ extern "C" {
 			return;
 		} // if
 
-		#ifdef __STATISTICS__
-		incCalls( FREE );
-		#endif // __STATISTICS__
-
 		doFree( addr );									// handles heapManager == nullptr
 	} // free
 
@@ -1578,7 +1597,6 @@ extern "C" {
 		} // if
 		#endif // __STATISTICS__
 	} // malloc_stats_clear
-
 
 	// Changes the file descriptor where malloc_stats() writes statistics.
 	int malloc_stats_fd( int fd __attribute__(( unused )) ) libcfa_public {
@@ -1699,13 +1717,16 @@ void * resize( void * oaddr, size_t nalign, size_t size ) libcfa_public {
 		return resize( oaddr, size );					// duplicate special case checks
 	} // if
 
-	// change size, DO NOT preserve STICKY PROPERTIES.
+	// change size, DO NOT PRESERVE STICKY PROPERTIES.
 	doFree( oaddr );									// free previous storage
 	return memalignNoStats( nalign, size STAT_ARG( RESIZE ) ); // create new aligned area
 } // resize
 
 
 void * realloc( void * oaddr, size_t nalign, size_t size ) libcfa_public {
+	// char buf[64];
+	// int len = sprintf( buf, "realloc2 oaddr %p size %d\n", oaddr, size );
+	// write( 2, buf, len );
   if ( unlikely( oaddr == 0p ) ) {						// => malloc( size )
 		return memalignNoStats( nalign, size STAT_ARG( REALLOC ) );
 	} // if

@@ -153,8 +153,8 @@ struct resultNstmt {
 		ssize_t old_idx;
 		bool is_old;
 
-		delta(const Stmt * s, ssize_t i, bool old) :
-			new_val(s), old_idx(i), is_old(old) {}
+		explicit delta(const Stmt * s) : new_val(s), old_idx(-1), is_old(false) {}
+		explicit delta(ssize_t i) : new_val(nullptr), old_idx(i), is_old(true) {}
 	};
 
 	bool differs = false;
@@ -187,7 +187,7 @@ struct resultNstmt {
 
 		std::transform( stmts->begin(), stmts->end(), std::back_inserter( values ),
 			[](ast::ptr<ast::Stmt>& stmt) -> delta {
-				return delta( stmt.release(), -1, false );
+				return delta( stmt.release() );
 			});
 		stmts->clear();
 		differs = true;
@@ -200,7 +200,7 @@ struct resultNstmt {
 		std::transform( decls->begin(), decls->end(), std::back_inserter( values ),
 			[](ast::ptr<ast::Decl>& decl) -> delta {
 				ast::Decl const * d = decl.release();
-				return delta( new DeclStmt( d->location, d ), -1, false );
+				return delta( new DeclStmt( d->location, d ) );
 			});
 		decls->clear();
 		differs = true;
@@ -256,7 +256,7 @@ static inline auto previsit( core_t & core, const node_t * & node, int ) -> decl
 		core.previsit( node );
 	} else {
 		node = core.previsit( node );
-		assertf(node, "Previsit must not return NULL");
+		assertf( node, "Previsit must not return nullptr." );
 	}
 }
 
@@ -309,6 +309,7 @@ FIELD_PTR( declsToAddAfter , std::list< ast::ptr< ast::Decl > > )
 FIELD_PTR( visit_children, __pass::bool_ref )
 FIELD_PTR( at_cleanup, __pass::at_cleanup_t )
 FIELD_PTR( visitor, ast::Pass<core_t> * const )
+FIELD_PTR( translationUnit, const TranslationUnit * )
 
 // Remove the macro to make sure we don't clash
 #undef FIELD_PTR
@@ -504,20 +505,6 @@ namespace forall {
 	template<typename core_t>
 	static inline auto replace( core_t &, long, const ast::TypeInstType *& ) {}
 } // namespace forall
-
-// For passes that need access to the global context. Searches `translationUnit`
-namespace translation_unit {
-	template<typename core_t>
-	static inline auto get_cptr( core_t & core, int )
-			-> decltype( &core.translationUnit ) {
-		return &core.translationUnit;
-	}
-
-	template<typename core_t>
-	static inline const TranslationUnit ** get_cptr( core_t &, long ) {
-		return nullptr;
-	}
-}
 
 // For passes, usually utility passes, that have a result.
 namespace result {

@@ -251,25 +251,15 @@ private:
 
 private:
 
-	__pass::result1<ast::Stmt> call_accept( const ast::Stmt * );
-	__pass::result1<ast::Expr> call_accept( const ast::Expr * );
-
-	/// This has a `type` member that is the return type for the
-	/// generic call_accept if the generic call_accept is defined.
+	/// The return type of the general call_accept function.
 	template< typename node_t >
-	using generic_call_accept_result =
-		std::enable_if<
-				!std::is_base_of<ast::Expr, node_t>::value &&
-				!std::is_base_of<ast::Stmt, node_t>::value
-			, __pass::result1<
-				typename std::remove_pointer< typename std::result_of<
-					decltype(&node_t::accept)(node_t*, type&) >::type >::type
-			>
+	using call_accept_result_t = __pass::result1<
+		typename std::remove_pointer< typename std::result_of<
+			decltype(&node_t::accept)(node_t*, type&) >::type >::type
 		>;
 
 	template< typename node_t >
-	auto call_accept( const node_t * node )
-		-> typename generic_call_accept_result<node_t>::type;
+	auto call_accept( const node_t * node ) -> call_accept_result_t<node_t>;
 
 	// requests WithStmtsToAdd directly add to this statement, as if it is a compound.
 	__pass::result1<ast::Stmt> call_accept_as_compound(const ast::Stmt *);

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May 26 11:23:55 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 11 11:18:18 2023
-// Update Count     : 24
+// Last Modified On : Mon Apr  1 09:36:20 2024
+// Update Count     : 25
 // 
 
 #pragma once
@@ -45,11 +45,11 @@ extern "C" {
 	void malloc_stats_clear();							// clear heap statistics
 } // extern "C"
 
+// New allocation operations.
 void * resize( void * oaddr, size_t alignment, size_t size );
 void * realloc( void * oaddr, size_t alignment, size_t size );
 void * reallocarray( void * oaddr, size_t nalign, size_t dim, size_t elemSize );
 
 // Local Variables: //
-// mode: c //
 // tab-width: 4 //
 // End: //

@@ -108,56 +108,17 @@ namespace ast::__pass {
 	const node_t & get( const node_t & val, long ) {
 		return val;
 	}
-
-	//------------------------------
-	/// Check if value was mutated, different for pointers and containers
-	template<typename lhs_t, typename rhs_t>
-	bool differs( const lhs_t * old_val, const rhs_t * new_val ) {
-		return old_val != new_val;
-	}
-
-	template< template <class...> class container_t, typename node_t >
-	bool differs( const container_t<ast::ptr< node_t >> &, const container_t<ast::ptr< node_t >> & new_val ) {
-		return !new_val.empty();
-	}
 }
 
 template< typename core_t >
 template< typename node_t >
 auto ast::Pass< core_t >::call_accept( const node_t * node ) ->
-	typename ast::Pass< core_t >::template generic_call_accept_result<node_t>::type
-{
+		ast::Pass< core_t >::call_accept_result_t<node_t> {
 	__pedantic_pass_assert( __visit_children() );
 	__pedantic_pass_assert( node );
 
-	static_assert( !std::is_base_of<ast::Expr, node_t>::value, "ERROR" );
-	static_assert( !std::is_base_of<ast::Stmt, node_t>::value, "ERROR" );
-
 	auto nval = node->accept( *this );
-	__pass::result1<
-		typename std::remove_pointer< decltype( node->accept(*this) ) >::type
-	> res;
-	res.differs = nval != node;
-	res.value = nval;
-	return res;
-}
-
-template< typename core_t >
-ast::__pass::template result1<ast::Expr> ast::Pass< core_t >::call_accept( const ast::Expr * expr ) {
-	__pedantic_pass_assert( __visit_children() );
-	__pedantic_pass_assert( expr );
-
-	auto nval = expr->accept( *this );
-	return { nval != expr, nval };
-}
-
-template< typename core_t >
-ast::__pass::template result1<ast::Stmt> ast::Pass< core_t >::call_accept( const ast::Stmt * stmt ) {
-	__pedantic_pass_assert( __visit_children() );
-	__pedantic_pass_assert( stmt );
-
-	const ast::Stmt * nval = stmt->accept( *this );
-	return { nval != stmt, nval };
+	return { nval != node, nval };
 }
 
 template< typename core_t >
@@ -229,7 +190,7 @@ template< typename core_t >
 template< template <class...> class container_t >
 ast::__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept( const container_t< ptr<Stmt> > & statements ) {
 	__pedantic_pass_assert( __visit_children() );
-	if ( statements.empty() ) return {};
+	__pedantic_pass_assert( !statements.empty() );
 
 	// We are going to aggregate errors for all these statements
 	SemanticErrorException errors;
@@ -262,7 +223,6 @@ ast::__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept(
 			__pedantic_pass_assert( stmt );
 			const ast::Stmt * new_stmt = stmt->accept( *this );
 			assert( new_stmt );
-			if ( new_stmt != stmt ) { new_kids.differs = true; }
 
 			// Make sure that it is either adding statements or declartions but not both
 			// this is because otherwise the order would be awkward to predict
@@ -275,9 +235,10 @@ ast::__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept(
 
 			// Now add the statement if there is one
 			if ( new_stmt != stmt ) {
-				new_kids.values.emplace_back( new_stmt, i, false );
+				new_kids.differs = true;
+				new_kids.values.emplace_back( new_stmt );
 			} else {
-				new_kids.values.emplace_back( nullptr, i, true );
+				new_kids.values.emplace_back( i );
 			}
 
 			// Take all the declarations that go before
@@ -297,7 +258,9 @@ template< typename core_t >
 template< template <class...> class container_t, typename node_t >
 ast::__pass::template resultN<container_t, node_t> ast::Pass< core_t >::call_accept( const container_t< ast::ptr<node_t> > & container ) {
 	__pedantic_pass_assert( __visit_children() );
-	if ( container.empty() ) return {};
+	__pedantic_pass_assert( !container.empty() );
+
+	// Collect errors from processing all these nodes.
 	SemanticErrorException errors;
 
 	pass_visitor_stats.depth++;
@@ -341,13 +304,10 @@ void ast::Pass< core_t >::maybe_accept(
 
 	static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR" );
 
-	auto new_val = call_accept( old_val );
-
-	static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR" );
-
-	if ( new_val.differs ) {
+	auto result = call_accept( old_val );
+	if ( result.differs ) {
 		auto new_parent = __pass::mutate<core_t>(parent);
-		new_val.apply(new_parent, field);
+		result.apply( new_parent, field );
 		parent = new_parent;
 	}
 }
@@ -365,13 +325,10 @@ void ast::Pass< core_t >::maybe_accept_top(
 
 	static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR" );
 
-	auto new_val = call_accept_top( old_val );
-
-	static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value /* || std::is_same<int, decltype(old_val)>::value */, "ERROR" );
-
-	if ( new_val.differs ) {
+	auto result = call_accept_top( old_val );
+	if ( result.differs ) {
 		auto new_parent = __pass::mutate<core_t>(parent);
-		new_val.apply(new_parent, field);
+		result.apply( new_parent, field );
 		parent = new_parent;
 	}
 }
@@ -389,13 +346,10 @@ void ast::Pass< core_t >::maybe_accept_as_compound(
 
 	static_assert( !std::is_same<const ast::Node * &, decltype(old_val)>::value, "ERROR" );
 
-	auto new_val = call_accept_as_compound( old_val );
-
-	static_assert( !std::is_same<const ast::Node *, decltype(new_val)>::value || std::is_same<int, decltype(old_val)>::value, "ERROR" );
-
-	if ( new_val.differs ) {
+	auto result = call_accept_as_compound( old_val );
+	if ( result.differs ) {
 		auto new_parent = __pass::mutate<core_t>(parent);
-		new_val.apply( new_parent, child );
+		result.apply( new_parent, child );
 		parent = new_parent;
 	}
 }
@@ -451,7 +405,7 @@ inline void ast::accept_all( std::list< ast::ptr<ast::Decl> > & decls, ast::Pass
 
 template< typename core_t >
 inline void ast::accept_all( ast::TranslationUnit & unit, ast::Pass< core_t > & visitor ) {
-	if ( auto ptr = __pass::translation_unit::get_cptr( visitor.core, 0 ) ) {
+	if ( auto ptr = __pass::translationUnit( visitor.core, 0 ) ) {
 		ValueGuard<const TranslationUnit *> guard( *ptr );
 		*ptr = &unit;
 		return ast::accept_all( unit.decls, visitor );

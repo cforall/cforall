@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar 17 08:25:31 2024
-// Update Count     : 796
+// Last Modified On : Fri Apr 12 07:39:15 2024
+// Update Count     : 812
 //
 
 #pragma once
@@ -108,15 +108,15 @@ static inline forall( T & | sized(T) ) {
 
 	1. Replace the current forall-block that contains defintions of S_fill and S_realloc with following:
 		forall( T & | sized(T) ) {
-			union  U_fill 		{ char c; T * a; T t; };
-			struct S_fill 		{ char tag; U_fill(T) fill; };
-			struct S_realloc	{ inline T *; };
+			union  U_fill { char c; T * a; T t; };
+			struct S_fill { char tag; U_fill(T) fill; };
+			struct S_realloc { inline T *; };
 		}
 
 	2. Replace all current postfix-fill functions with following for updated S_fill:
-		S_fill(T) ?`fill( char a )					{ S_fill(T) ret = {'c'}; ret.fill.c = a; return ret; }
-		S_fill(T) ?`fill( T    a ) 					{ S_fill(T) ret = {'t'}; memcpy(&ret.fill.t, &a, sizeof(T)); return ret; }
-		S_fill(T) ?`fill( T    a[], size_t nmemb ) 	{ S_fill(T) ret = {'a', nmemb}; ret.fill.a = a; return ret; }
+		S_fill(T) ?`fill( char a ) { S_fill(T) ret = {'c'}; ret.fill.c = a; return ret; }
+		S_fill(T) ?`fill( T a ) { S_fill(T) ret = {'t'}; memcpy(&ret.fill.t, &a, sizeof(T)); return ret; }
+		S_fill(T) ?`fill( T a[], size_t nmemb ) { S_fill(T) ret = {'a', nmemb}; ret.fill.a = a; return ret; }
 
 	3. Replace the alloc_internal$ function which is outside ttype forall-block with following function:
 		T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T) Fill) {
@@ -147,17 +147,18 @@ static inline forall( T & | sized(T) ) {
 		} // alloc_internal$
 */
 
-typedef struct S_align 			{ inline size_t;  } T_align;
-typedef struct S_resize			{ inline void *;  }	T_resize;
+typedef struct S_align { inline size_t;  } T_align;
+typedef struct S_resize { inline void *;  }	T_resize;
 
 forall( T & ) {
-	struct S_fill 		{ char tag; char c; size_t size; T * at; char t[50]; };
-	struct S_realloc	{ inline T *; };
+	struct S_fill { char tag; char c; size_t size; T * at; char t[50]; };
+	struct S_realloc { inline T *; };
 }
 
-static inline T_align 	?`align   ( size_t a ) 	{ return (T_align){a}; }
-static inline T_resize 	?`resize  ( void * a )	{ return (T_resize){a}; }
+static inline T_align ?`align( size_t a ) { return (T_align){a}; }
+static inline T_resize ?`resize( void * a )	{ return (T_resize){a}; }
 
+extern "C" ssize_t write(int fd, const void *buf, size_t count);
 static inline forall( T & | sized(T) ) {
 	S_fill(T) ?`fill ( T t ) {
 		S_fill(T) ret = { 't' };
@@ -168,12 +169,12 @@ static inline forall( T & | sized(T) ) {
 		memcpy( &ret.t, &t, size );
 		return ret;
 	}
-	S_fill(T) 		?`fill ( zero_t ) = void; // FIX ME: remove this once ticket 214 is resolved
-	S_fill(T) 		?`fill ( T * a ) 				{ return (S_fill(T)){ 'T', '0', 0, a }; } // FIX ME: remove this once ticket 214 is resolved
-	S_fill(T) 		?`fill ( char c ) 				{ return (S_fill(T)){ 'c', c };	}
-	S_fill(T) 		?`fill ( T a[], size_t nmemb ) 	{ return (S_fill(T)){ 'a', '0', nmemb * sizeof(T), a }; }
+	S_fill(T) ?`fill ( zero_t ) = void; // FIX ME: remove this once ticket 214 is resolved
+	S_fill(T) ?`fill ( T * a ) { return (S_fill(T)){ 'T', '0', 0, a }; } // FIX ME: remove this once ticket 214 is resolved
+	S_fill(T) ?`fill ( char c ) { return (S_fill(T)){ 'c', c };	}
+	S_fill(T) ?`fill ( T a[], size_t nmemb ) { return (S_fill(T)){ 'a', '0', nmemb * sizeof(T), a }; }
 
-	S_realloc(T) 	?`realloc ( T * a )				{ return (S_realloc(T)){a}; }
+	S_realloc(T) ?`realloc ( T * a ) { return (S_realloc(T)){a}; }
 
 	T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T) Fill ) {
 		T * ptr = NULL;
@@ -181,12 +182,12 @@ static inline forall( T & | sized(T) ) {
 		size_t copy_end = 0;
 
 		if ( Resize ) {
-			ptr = (T*) (void *) resize( (void *)Resize, Align, Dim * size );
+			ptr = (T*)(void *)resize( (void *)Resize, Align, Dim * size );
 		} else if ( Realloc ) {
 			if ( Fill.tag != '0' ) copy_end = min(malloc_size( Realloc ), Dim * size );
-			ptr = (T *) (void *) realloc( (void *)Realloc, Align, Dim * size );
+			ptr = (T *)(void *)realloc( (void *)Realloc, Align, Dim * size );
 		} else {
-			ptr = (T *) (void *) memalign( Align, Dim * size );
+			ptr = (T *)(void *) memalign( Align, Dim * size );
 		}
 
 		if ( Fill.tag == 'c' ) {

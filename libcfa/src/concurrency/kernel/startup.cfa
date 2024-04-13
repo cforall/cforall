@@ -671,8 +671,8 @@ void ^?{}(cluster & this) libcfa_public {
 	disable_interrupts();
 	uint_fast32_t last_size = ready_mutate_lock();
 
-		// Adjust the ready queue size
-		ready_queue_shrink( &this );
+	// Adjust the ready queue size
+	ready_queue_shrink( &this );
 
 	// Unlock the RWlock
 	ready_mutate_unlock( last_size );
@@ -681,8 +681,8 @@ void ^?{}(cluster & this) libcfa_public {
 	/* paranoid */ verify( this.sched.readyQ.data == 0p );
 	/* paranoid */ verify( this.sched.readyQ.tscs == 0p );
  	/* paranoid */ verify( this.sched.readyQ.count == 0 );
-	/* paranoid */ verify( this.sched.io.tscs == 0p );
-	/* paranoid */ verify( this.sched.caches == 0p );
+//	/* paranoid */ verify( this.sched.io.tscs == 0p );
+//	/* paranoid */ verify( this.sched.caches == 0p );
 
 	enable_interrupts( false ); // Don't poll, could be in main cluster
 

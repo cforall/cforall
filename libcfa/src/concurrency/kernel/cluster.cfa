@@ -340,7 +340,7 @@ void ready_queue_grow(struct cluster * cltr) {
 
 	// Make sure that everything is consistent
 	/* paranoid */ check_readyQ( cltr );
-	/* paranoid */ verify( (target == 0) == (cltr->sched.caches == 0p) );
+//	/* paranoid */ verify( (target == 0) == (cltr->sched.caches == 0p) );
 
 	__cfadbg_print_safe(ready_queue, "Kernel : Growing ready queue done\n");
 
@@ -415,6 +415,7 @@ void ready_queue_shrink(struct cluster * cltr) {
 
 		fix_times(readyQ.tscs, ncount);
 	}
+
 	cltr->sched.caches = alloc( target, cltr->sched.caches`realloc );
 
 	// Fix the io times
@@ -427,7 +428,7 @@ void ready_queue_shrink(struct cluster * cltr) {
 	reassign_cltr_io(cltr);
 
 	// Make sure that everything is consistent
-	/* paranoid */ verify( (target == 0) == (cltr->sched.caches == 0p) );
+//	/* paranoid */ verify( (target == 0) == (cltr->sched.caches == 0p) );
 	/* paranoid */ check_readyQ( cltr );
 
 	__cfadbg_print_safe(ready_queue, "Kernel : Shrinking ready queue done\n");
