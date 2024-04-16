@@ -53,6 +53,8 @@ SRC += $(SRC_VALIDATE) \
 	Validate/VerifyCtorDtorAssign.cpp \
 	Validate/VerifyCtorDtorAssign.hpp \
 	Validate/ReplacePseudoFunc.cpp \
-	Validate/ReplacePseudoFunc.hpp
+	Validate/ReplacePseudoFunc.hpp \
+	Validate/ImplementEnumFunc.cpp \
+	Validate/ImplementEnumFunc.hpp
 
 SRCDEMANGLE += $(SRC_VALIDATE)

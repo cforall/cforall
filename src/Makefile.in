@@ -252,6 +252,7 @@ am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Validate/ReturnCheck.$(OBJEXT) \
 	Validate/VerifyCtorDtorAssign.$(OBJEXT) \
 	Validate/ReplacePseudoFunc.$(OBJEXT) \
+	Validate/ImplementEnumFunc.$(OBJEXT) \
 	Virtual/ExpandCasts.$(OBJEXT) Virtual/Tables.$(OBJEXT) \
 	Virtual/VirtualDtor.$(OBJEXT)
 am____driver_cfa_cpp_OBJECTS = $(am__objects_11)
@@ -371,6 +372,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Validate/$(DEPDIR)/GenericParameter.Po \
 	Validate/$(DEPDIR)/HoistStruct.Po \
 	Validate/$(DEPDIR)/HoistTypeDecls.Po \
+	Validate/$(DEPDIR)/ImplementEnumFunc.Po \
 	Validate/$(DEPDIR)/InitializerLength.Po \
 	Validate/$(DEPDIR)/LabelAddressFixer.Po \
 	Validate/$(DEPDIR)/LinkInstanceTypes.Po \
@@ -686,6 +688,7 @@ SRC = main.cc CompilationState.cc CompilationState.h MakeLibCfa.cpp \
 	Validate/VerifyCtorDtorAssign.cpp \
 	Validate/VerifyCtorDtorAssign.hpp \
 	Validate/ReplacePseudoFunc.cpp Validate/ReplacePseudoFunc.hpp \
+	Validate/ImplementEnumFunc.cpp Validate/ImplementEnumFunc.hpp \
 	Virtual/ExpandCasts.cc Virtual/ExpandCasts.h Virtual/Tables.cc \
 	Virtual/Tables.h Virtual/VirtualDtor.cpp \
 	Virtual/VirtualDtor.hpp
@@ -1296,6 +1299,8 @@ Validate/VerifyCtorDtorAssign.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/ReplacePseudoFunc.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/ImplementEnumFunc.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Virtual/$(am__dirstamp):
 	@$(MKDIR_P) Virtual
 	@: > Virtual/$(am__dirstamp)
@@ -1460,6 +1465,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/GenericParameter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HoistStruct.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/HoistTypeDecls.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/ImplementEnumFunc.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/InitializerLength.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/LabelAddressFixer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/LinkInstanceTypes.Po@am__quote@ # am--include-marker
@@ -1821,6 +1827,7 @@ distclean: distclean-am
 	-rm -f Validate/$(DEPDIR)/GenericParameter.Po
 	-rm -f Validate/$(DEPDIR)/HoistStruct.Po
 	-rm -f Validate/$(DEPDIR)/HoistTypeDecls.Po
+	-rm -f Validate/$(DEPDIR)/ImplementEnumFunc.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
 	-rm -f Validate/$(DEPDIR)/LinkInstanceTypes.Po
@@ -1994,6 +2001,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Validate/$(DEPDIR)/GenericParameter.Po
 	-rm -f Validate/$(DEPDIR)/HoistStruct.Po
 	-rm -f Validate/$(DEPDIR)/HoistTypeDecls.Po
+	-rm -f Validate/$(DEPDIR)/ImplementEnumFunc.Po
 	-rm -f Validate/$(DEPDIR)/InitializerLength.Po
 	-rm -f Validate/$(DEPDIR)/LabelAddressFixer.Po
 	-rm -f Validate/$(DEPDIR)/LinkInstanceTypes.Po

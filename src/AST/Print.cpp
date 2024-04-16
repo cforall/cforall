@@ -1575,9 +1575,16 @@ public:
 		return node;
 	}
 
-	virtual const ast::Type * visit( const ast::EnumPosType * node ) override final {
+	virtual const ast::Type * visit( const ast::EnumAttrType * node ) override final {
 		preprint( node );
-		os << "enum pos with ";
+		os << "enum attr ";
+        if ( node->attr == ast::EnumAttribute::Label ) {
+            os << "Label ";
+        } else if ( node->attr == ast::EnumAttribute::Value ) {
+            os << "Value ";
+        } else {
+            os << "Posn ";
+        }
 		(*(node->instance)).accept( *this );
 		return node;
 	}

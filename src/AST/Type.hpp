@@ -361,14 +361,19 @@ using UnionInstType = SueInstType<UnionDecl>;
 /// An instance of an enum type.
 using EnumInstType = SueInstType<EnumDecl>;
 
-class EnumPosType final : public Type {
+class EnumAttrType final : public Type {
 public:
 	readonly<EnumInstType> instance;
+    EnumAttribute attr;
 	const Type * accept( Visitor & v ) const override { return v.visit( this ); }
-	EnumPosType( const EnumInstType * instance ): instance(instance) {}
+	EnumAttrType( const EnumInstType * instance, EnumAttribute attr = EnumAttribute::Posn )
+		: instance(instance), attr(attr) {}
 	
+    bool match( const ast::EnumAttrType * other) const {
+        return instance->base->name == other->instance->base->name && attr == other->attr;
+    }
 private:
-	EnumPosType * clone() const override { return new EnumPosType{ *this }; }
+	EnumAttrType * clone() const override { return new EnumAttrType{ *this }; }
 	MUTATE_FRIEND
 };
 

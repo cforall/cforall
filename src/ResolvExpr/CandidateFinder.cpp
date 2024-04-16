@@ -283,7 +283,7 @@ namespace {
 	bool instantiateArgument(
 		const CodeLocation & location,
 		const ast::Type * paramType, const ast::Init * init, const ExplodedArgs & args,
-		std::vector< ArgPack > & results, std::size_t & genStart, const ast::SymbolTable & symtab,
+		std::vector< ArgPack > & results, std::size_t & genStart, const ResolveContext & context,
 		unsigned nTuples = 0
 	) {
 		if ( auto tupleType = dynamic_cast< const ast::TupleType * >( paramType ) ) {
@@ -293,7 +293,7 @@ namespace {
 				// xxx - dropping initializer changes behaviour from previous, but seems correct
 				// ^^^ need to handle the case where a tuple has a default argument
 				if ( ! instantiateArgument( location,
-					type, nullptr, args, results, genStart, symtab, nTuples ) ) return false;
+					type, nullptr, args, results, genStart, context, nTuples ) ) return false;
 				nTuples = 0;
 			}
 			// re-constitute tuples for final generation
@@ -508,11 +508,32 @@ namespace {
 				)
 
 				// attempt to unify types
-				if ( unify( paramType, argType, env, need, have, open ) ) {
+				ast::ptr<ast::Type> common;
+				if ( unify( paramType, argType, env, need, have, open, common ) ) {
 					// add new result
-					results.emplace_back(
-						i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
-						nextArg + 1, nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
+					assert( common );
+					// auto attrType = common.as<ast::EnumAttrType>();
+					// if ( attrType && ( attrType->attr == ast::EnumAttribute::Value ) ) {
+					// 	auto callExpr = new ast::UntypedExpr(
+					// 		expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );
+					// 	CandidateFinder finder( context, env );
+					// 	finder.find( callExpr );
+					// 	CandidateList winners = findMinCost( finder.candidates );
+					// 	if (winners.size() != 1) {
+					// 		SemanticError( callExpr, "Ambiguous expression in valueE" );
+					// 	}
+					// 	CandidateRef & choice = winners.front();
+					// 	choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
+
+					// 	results.emplace_back(
+					// 		i, choice->expr, 
+					// 		std::move( env ), std::move( need ), std::move( have ), std::move( open ),
+					// 		nextArg + 1, nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
+					// } else {
+						results.emplace_back(
+							i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
+							nextArg + 1, nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
+					//}
 				}
 			}
 		}
@@ -784,7 +805,7 @@ namespace {
 				for (size_t i=0; i<nParams; ++i) {
 					auto obj = funcDecl->params[i].strict_as<ast::ObjectDecl>();
 					if ( !instantiateArgument( location,
-						funcType->params[i], obj->init, args, results, genStart, symtab)) return;
+						funcType->params[i], obj->init, args, results, genStart, context)) return;
 				}
 				goto endMatch;
 			}
@@ -794,7 +815,7 @@ namespace {
 			// matches
 			// no default args for indirect calls
 			if ( !instantiateArgument( location,
-				param, nullptr, args, results, genStart, symtab ) ) return;
+				param, nullptr, args, results, genStart, context ) ) return;
 		}
 
 		endMatch:
@@ -889,64 +910,23 @@ namespace {
 			addAggMembers( structInst, aggrExpr, *cand, Cost::unsafe, "" );
 		} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
 			addAggMembers( unionInst, aggrExpr, *cand, Cost::unsafe, "" );
-		} 
-		else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
-			if (enumInst->base && enumInst->base->base) {
-            const CodeLocation &location = cand->expr->location;
+		} else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
+			if ( enumInst->base->base ) {
+				CandidateFinder finder( context, tenv );
+				auto location = aggrExpr->location;
+				auto callExpr = new ast::UntypedExpr(
+					location, new ast::NameExpr( location, "valueE" ), {aggrExpr}
+				);
+				finder.find( callExpr );
+				CandidateList winners = findMinCost( finder.candidates );
+				if (winners.size() != 1) {
+					SemanticError( callExpr, "Ambiguous expression in valueE" );
+				}
+				CandidateRef & choice = winners.front();
+				// choice->cost.incSafe();
+				candidates.emplace_back( std::move(choice) );
+			}
 
-            CandidateFinder funcFinder(context, tenv);
-            auto nameExpr = new ast::NameExpr(location, "valueE");
-            ResolveMode mode = {true, false, selfFinder.candidates.empty()};
-            funcFinder.find( nameExpr, mode );
-
-            // make variableExpr itself the candidate for the value Call
-            ExplodedArgs argExpansions;
-            argExpansions.emplace_back();
-            auto &argE = argExpansions.back();
-
-            argE.emplace_back(*cand, symtab); // Use the typed name expr as param for value
-
-            CandidateList found;
-            SemanticErrorException errors;
-
-            for (CandidateRef &func : funcFinder) {
-                try {
-                    const ast::Type *funcResult =
-                        func->expr->result->stripReferences();
-                    if (auto pointer = dynamic_cast<const ast::PointerType *>(
-                            funcResult)) {
-                        if (auto function =
-                                pointer->base.as<ast::FunctionType>()) {
-                            CandidateRef newFunc{new Candidate{*func}};
-                            newFunc->expr = referenceToRvalueConversion(
-                                newFunc->expr, newFunc->cost);
-                            makeFunctionCandidates( location,
-                                                   newFunc, function,
-                                                   argExpansions, found );
-                        }
-                    }
-                } catch (SemanticErrorException &e) {
-                    std::cerr
-                        << "Resolving value function should cause an error"
-                        << std::endl;
-                    errors.append(e);
-                }
-            }
-
-            if (found.empty()) {
-                std::cerr << "Resolve value function should always success"
-                          << std::endl;
-            }
-
-            for (CandidateRef &withFunc : found) {
-                withFunc->cost.incSafe();
-                Cost cvtCost =
-                    computeApplicationConversionCost(withFunc, symtab);
-                assert(cvtCost != Cost::infinity);
-
-                candidates.emplace_back(std::move(withFunc));
-            }
-        }
 		}
 	}
 
@@ -1413,8 +1393,15 @@ namespace {
 			Cost cost = Cost::zero;
 			ast::Expr * newExpr = data.combine( nameExpr->location, cost );
 
+			bool bentConversion = false;
+			if ( auto inst = newExpr->result.as<ast::EnumInstType>() ) {
+				if ( inst->base && inst->base->base ) {
+					bentConversion = true;
+				}
+			}
+			
 			CandidateRef newCand = std::make_shared<Candidate>(
-				newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, Cost::zero,
+				newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, bentConversion? Cost::safe: Cost::zero,
 				cost );
 
 			if (newCand->expr->env) {
@@ -1447,66 +1434,6 @@ namespace {
 
         auto cand = new Candidate(variableExpr, tenv);
         candidates.emplace_back(cand);
-
-        if (auto enumInst = dynamic_cast<const ast::EnumInstType *>(
-                variableExpr->var->get_type())) {
-            if (enumInst->base && enumInst->base->base) {
-                const CodeLocation &location = cand->expr->location;
-
-                CandidateFinder funcFinder(context, tenv);
-                auto nameExpr = new ast::NameExpr(location, "valueE");
-                ResolveMode mode = {true, false, selfFinder.candidates.empty()};
-                funcFinder.find( nameExpr, mode );
-
-                // make variableExpr itself the candidate for the value Call
-                ExplodedArgs argExpansions;
-                argExpansions.emplace_back();
-                auto &argE = argExpansions.back();
-
-                argE.emplace_back(*cand, symtab);
-
-                CandidateList found;
-                SemanticErrorException errors;
-
-                for (CandidateRef &func : funcFinder) {
-                    try {
-                    const ast::Type *funcResult =
-                        func->expr->result->stripReferences();
-                    if (auto pointer = dynamic_cast<const ast::PointerType *>(
-                            funcResult)) {
-                        if (auto function =
-                                pointer->base.as<ast::FunctionType>()) {
-                            CandidateRef newFunc{new Candidate{*func}};
-                            newFunc->expr = referenceToRvalueConversion(
-                                newFunc->expr, newFunc->cost);
-                            makeFunctionCandidates(variableExpr->location,
-                                                   newFunc, function,
-                                                   argExpansions, found);
-                        }
-                    }
-                    } catch (SemanticErrorException &e) {
-                        std::cerr
-                            << "Resolving value function should cause an error"
-                            << std::endl;
-                        errors.append(e);
-                    }
-                }
-
-                if (found.empty()) {
-                    std::cerr << "Resolve value function should always success"
-                            << std::endl;
-                }
-
-                for (CandidateRef &withFunc : found) {
-                    withFunc->cost.incSafe();
-                    Cost cvtCost =
-                        computeApplicationConversionCost(withFunc, symtab);
-                    assert(cvtCost != Cost::infinity);
-
-                    candidates.emplace_back(std::move(withFunc));
-                }
-            }
-        }
     }
 
 	void Finder::postvisit( const ast::ConstantExpr * constantExpr ) {
@@ -1838,7 +1765,8 @@ namespace {
 				if ( discardedValues < 0 ) continue;
 
 				// unification run for side-effects
-				bool canUnify = unify( toType, cand->expr->result, env, need, have, open );
+				ast::ptr<ast::Type> common;
+				bool canUnify = unify( toType, cand->expr->result, env, need, have, open, common );
 				(void) canUnify;
 				Cost thisCost = computeConversionCost( cand->expr->result, toType, cand->expr->get_lvalue(),
 					symtab, env );
@@ -1863,18 +1791,41 @@ namespace {
 					}
 					// ambiguous case, still output candidates to print in error message
 					if ( cand->cost == minExprCost && thisCost == minCastCost ) {
-						CandidateRef newCand = std::make_shared<Candidate>(
-							new ast::InitExpr{
-								initExpr->location,
-								restructureCast( cand->expr, toType ),
-								initAlt.designation },
-							std::move(env), std::move( open ), std::move( need ), cand->cost + thisCost );
-						// currently assertions are always resolved immediately so this should have no effect.
-						// if this somehow changes in the future (e.g. delayed by indeterminate return type)
-						// we may need to revisit the logic.
-						inferParameters( newCand, matches );
-					}
-				}
+						auto commonAsEnumAttr = common.as<ast::EnumAttrType>();
+						if ( commonAsEnumAttr && commonAsEnumAttr->attr == ast::EnumAttribute::Value ) {
+							
+							auto callExpr = new ast::UntypedExpr(
+								cand->expr->location, new ast::NameExpr( cand->expr->location, "valueE"), {cand->expr} );
+							CandidateFinder finder( context, env );
+							finder.find( callExpr );
+							CandidateList winners = findMinCost( finder.candidates );
+							if (winners.size() != 1) {
+								SemanticError( callExpr, "Ambiguous expression in valueE" );
+							}
+							CandidateRef & choice = winners.front();
+							// assert( valueCall->result );
+							CandidateRef newCand = std::make_shared<Candidate>(
+								new ast::InitExpr{
+									initExpr->location,
+									// restructureCast( cand->expr, toType ),
+									choice->expr,
+									initAlt.designation },
+								std::move(env), std::move( open ), std::move( need ), cand->cost + thisCost );
+								inferParameters( newCand, matches );
+						} else {
+							CandidateRef newCand = std::make_shared<Candidate>(
+								new ast::InitExpr{
+									initExpr->location,
+									restructureCast( cand->expr, toType ),
+									initAlt.designation },
+								std::move(env), std::move( open ), std::move( need ), cand->cost + thisCost );
+							// currently assertions are always resolved immediately so this should have no effect.
+							// if this somehow changes in the future (e.g. delayed by indeterminate return type)
+							// we may need to revisit the logic.
+							inferParameters( newCand, matches );	
+						}
+					}			
+				}	
 			}
 		}
 
@@ -1899,7 +1850,7 @@ namespace {
 					CandidateRef newCand =
 						std::make_shared<Candidate>(
 							newExpr, copy( tenv ), ast::OpenVarSet{},
-							ast::AssertionSet{}, Cost::zero, cost
+							ast::AssertionSet{}, Cost::safe, cost
 						);
 
 					if (newCand->expr->env) {
@@ -2197,6 +2148,22 @@ Cost computeConversionCost(
 		std::cerr << "cost with polycost is " << convCost << std::endl;
 	)
 	return convCost;
+}
+
+// get the valueE(...) ApplicationExpr that returns the enum value
+const ast::Expr * getValueEnumCall( 
+	const ast::Expr * expr, 
+	const ResolvExpr::ResolveContext & context, const ast::TypeEnvironment & env ) {
+		auto callExpr = new ast::UntypedExpr(
+			expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );
+		CandidateFinder finder( context, env );
+		finder.find( callExpr );
+		CandidateList winners = findMinCost( finder.candidates );
+		if (winners.size() != 1) {
+			SemanticError( callExpr, "Ambiguous expression in valueE" );
+		}
+		CandidateRef & choice = winners.front();
+		return choice->expr;
 }
 
 const ast::Expr * createCondExpr( const ast::Expr * expr ) {

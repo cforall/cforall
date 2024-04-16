@@ -168,6 +168,15 @@ bool EnumDecl::valueOf( const Decl * enumerator, long long & value ) const {
 	return false;
 }
 
+const std::string EnumDecl::getUnmangeldArrayName( const ast::EnumAttribute attr ) const {
+		switch( attr ) {
+			case ast::EnumAttribute::Value: return "values_" + name ;
+			case ast::EnumAttribute::Label: return "labels_" + name;
+			default: /* Posn does not generate array */ 
+				return "";
+		}
+	}
+
 }
 
 // Local Variables: //

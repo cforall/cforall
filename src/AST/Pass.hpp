@@ -221,7 +221,7 @@ public:
 	const ast::Type *             visit( const ast::StructInstType       * ) override final;
 	const ast::Type *             visit( const ast::UnionInstType        * ) override final;
 	const ast::Type *             visit( const ast::EnumInstType         * ) override final;
-	const ast::Type *             visit( const ast::EnumPosType          * ) override final;
+	const ast::Type *             visit( const ast::EnumAttrType         * ) override final;
 	const ast::Type *             visit( const ast::TraitInstType        * ) override final;
 	const ast::Type *             visit( const ast::TypeInstType         * ) override final;
 	const ast::Type *             visit( const ast::TupleType            * ) override final;

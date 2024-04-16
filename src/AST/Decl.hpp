@@ -302,6 +302,7 @@ private:
 	MUTATE_FRIEND
 };
 
+enum class EnumAttribute{ Value, Posn, Label };
 /// enum declaration `enum Foo { ... };`
 class EnumDecl final : public AggregateDecl {
 public:
@@ -325,7 +326,7 @@ public:
 
 	const char * typeString() const override { return aggrString( Enum ); }
 
-
+	const std::string getUnmangeldArrayName( const EnumAttribute attr ) const;
 private:
 	EnumDecl * clone() const override { return new EnumDecl{ *this }; }
 	MUTATE_FRIEND

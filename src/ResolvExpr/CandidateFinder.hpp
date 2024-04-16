@@ -69,6 +69,8 @@ Cost computeConversionCost(
 const ast::Expr * referenceToRvalueConversion(
 	const ast::Expr * expr, Cost & cost );
 
+const ast::Expr * getValueEnumCall(const ast::Expr * expr,
+	const ResolvExpr::ResolveContext & context, const ast::TypeEnvironment & env );
 /// Wrap an expression to convert the result to a conditional result.
 const ast::Expr * createCondExpr( const ast::Expr * expr );
 

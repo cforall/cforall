@@ -273,14 +273,17 @@ namespace ResolvExpr {
 
 		void previsit( const ast::Node * ) { visit_children = false; }
 
-		void postvisit( const ast::VoidType * ) {
-			result = dynamic_cast< const ast::VoidType * >( type2 );
+		void postvisit( const ast::VoidType * vt) {
+			result = dynamic_cast< const ast::VoidType * >( type2 )
+				|| tryToUnifyWithEnumValue(vt, type2, tenv, need, have, open, noWiden());
+			;
 		}
 
 		void postvisit( const ast::BasicType * basic ) {
 			if ( auto basic2 = dynamic_cast< const ast::BasicType * >( type2 ) ) {
 				result = basic->kind == basic2->kind;
 			}
+			result = result || tryToUnifyWithEnumValue(basic, type2, tenv, need, have, open, noWiden());
 		}
 
 		void postvisit( const ast::PointerType * pointer ) {
@@ -289,6 +292,7 @@ namespace ResolvExpr {
 					pointer->base, pointer2->base, tenv, need, have, open,
 					noWiden());
 			}
+			result = result || tryToUnifyWithEnumValue(pointer, type2, tenv, need, have, open, noWiden());
 		}
 
 		void postvisit( const ast::ArrayType * array ) {
@@ -306,7 +310,8 @@ namespace ResolvExpr {
 			}
 
 			result = unifyExact(
-				array->base, array2->base, tenv, need, have, open, noWiden());
+				array->base, array2->base, tenv, need, have, open, noWiden())
+				|| tryToUnifyWithEnumValue(array, type2, tenv, need, have, open, noWiden());
 		}
 
 		void postvisit( const ast::ReferenceType * ref ) {
@@ -396,6 +401,20 @@ namespace ResolvExpr {
 				markAssertionSet( assn1, assert );
 				markAssertionSet( assn2, assert );
 			}
+		}
+
+		bool tryToUnifyWithEnumValue( const ast::Type * type1, const ast::Type * type2, ast::TypeEnvironment & env,
+			ast::AssertionSet & need, ast::AssertionSet & have, const ast::OpenVarSet & open,
+			WidenMode widen) {
+			if ( auto attrType2 = dynamic_cast<const ast::EnumAttrType *>(type2)) {
+				if (attrType2->attr == ast::EnumAttribute::Value) {
+					return unifyExact( type1, attrType2->instance->base->base, env, need, have, open,
+						widen);
+				} else if (attrType2->attr == ast::EnumAttribute::Posn) {
+					return unifyExact( type1, attrType2->instance, env, need, have, open, widen );
+				}
+			}
+			return false;
 		}
 
 	public:
@@ -506,27 +525,31 @@ namespace ResolvExpr {
 	public:
 		void postvisit( const ast::StructInstType * aggrType ) {
 			handleGenericRefType( aggrType, type2 );
+			result = result || tryToUnifyWithEnumValue(aggrType, type2, tenv, need, have, open, noWiden());
 		}
 
 		void postvisit( const ast::UnionInstType * aggrType ) {
 			handleGenericRefType( aggrType, type2 );
+			result = result || tryToUnifyWithEnumValue(aggrType, type2, tenv, need, have, open, noWiden());
 		}
 
 		void postvisit( const ast::EnumInstType * aggrType ) {
 			handleRefType( aggrType, type2 );
+			result = result || tryToUnifyWithEnumValue(aggrType, type2, tenv, need, have, open, noWiden());
 		}
 
-		void postvisit( const ast::EnumPosType * posType ) {
+		void postvisit( const ast::EnumAttrType * enumAttr ) {
 			// Lazy approach for now
-			auto otherPos = dynamic_cast< const ast::EnumPosType *>(type2);
-			if ( otherPos ) {
-				if ( otherPos->instance->base->name == posType->instance->base->name )
-					result = otherPos;
-			}
+			if ( auto otherPos = dynamic_cast< const ast::EnumAttrType *>(type2) ) {
+			    if ( enumAttr->match(otherPos) ) {
+				    result = otherPos;
+			    }
+            }  
 		}
 
 		void postvisit( const ast::TraitInstType * aggrType ) {
 			handleRefType( aggrType, type2 );
+			result = result || tryToUnifyWithEnumValue(aggrType, type2, tenv, need, have, open, noWiden());
 		}
 
 		void postvisit( const ast::TypeInstType * typeInst ) {
@@ -535,6 +558,7 @@ namespace ResolvExpr {
 			if ( otherInst && typeInst->name == otherInst->name ) {
 				this->result = otherInst;
 			}
+			result = result || tryToUnifyWithEnumValue(typeInst, type2, tenv, need, have, open, noWiden());
 		}
 
 	private:
@@ -609,19 +633,23 @@ namespace ResolvExpr {
 			auto types = flatten( flat );
 			auto types2 = flatten( flat2 );
 
-			result = unifyList( types, types2, tenv, need, have, open );
+			result = unifyList( types, types2, tenv, need, have, open )
+				|| tryToUnifyWithEnumValue(tuple, type2, tenv, need, have, open, noWiden());
 		}
 
-		void postvisit( const ast::VarArgsType * ) {
-			result = dynamic_cast< const ast::VarArgsType * >( type2 );
+		void postvisit( const ast::VarArgsType * vat) {
+			result = dynamic_cast< const ast::VarArgsType * >( type2 )
+				|| tryToUnifyWithEnumValue(vat, type2, tenv, need, have, open, noWiden());
 		}
 
-		void postvisit( const ast::ZeroType * ) {
-			result = dynamic_cast< const ast::ZeroType * >( type2 );
+		void postvisit( const ast::ZeroType * zt) {
+			result = dynamic_cast< const ast::ZeroType * >( type2 )
+				|| tryToUnifyWithEnumValue(zt, type2, tenv, need, have, open, noWiden());
 		}
 
-		void postvisit( const ast::OneType * ) {
-			result = dynamic_cast< const ast::OneType * >( type2 );
+		void postvisit( const ast::OneType * ot) {
+			result = dynamic_cast< const ast::OneType * >( type2 )
+				|| tryToUnifyWithEnumValue(ot, type2, tenv, need, have, open, noWiden());
 		}
 	};
 

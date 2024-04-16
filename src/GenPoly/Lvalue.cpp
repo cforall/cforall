@@ -137,20 +137,6 @@ bool isIntrinsicReference( ast::Expr const * expr ) {
 	return false;
 }
 
-bool isGeneratedInstrinct( ast::Expr const * expr ) {
-	if ( auto app = dynamic_cast<ast::ApplicationExpr const *>( expr ) ) {
-		if ( app->args.size() == 2 && ast::getFunction( app )->name == "?[?]" ) {
-			auto param_1 = dynamic_cast<ast::VariableExpr const *>(app->args.front().get());
-			if ( param_1 ) {
-				auto param_1_as_obj = param_1->var.as<ast::ObjectDecl>();
-				return ( param_1_as_obj->name.find( "values_") != std::string::npos
-					||  param_1_as_obj->name.find( "labels_" ) != std::string::npos );
-			}
-		}
-	}
-	return false;
-}
-
 // A maybe typed variant of the createDeref function (only UntypedExpr).
 ast::Expr * mkDeref(
 		ast::TranslationGlobal const & global, ast::Expr const * arg ) {
@@ -175,7 +161,7 @@ ast::Expr * mkDeref(
 ast::Expr const * FixIntrinsicResults::postvisit(
 		ast::ApplicationExpr const * expr ) {
 
-	if ( skip == SkipInProgress || !isIntrinsicReference( expr ) || isGeneratedInstrinct( expr ) ) {
+	if ( skip == SkipInProgress || !isIntrinsicReference( expr ) ) {
 		return expr;
 	}
 	// Eliminate reference types from intrinsic applications

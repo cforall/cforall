@@ -65,7 +65,7 @@
 #include "ResolvExpr/Resolver.h"            // for resolve
 #include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
-// #include "Validate/ImplementEnumFunc.hpp"   // for implementEnumFunc
+#include "Validate/ImplementEnumFunc.hpp"   // for implementEnumFunc
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/EliminateTypedef.hpp"    // for eliminateTypedef
 #include "Validate/EnumAndPointerDecay.hpp" // for decayEnumsAndPointers
@@ -332,7 +332,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls, transUnit );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines, transUnit );
-		// PASS( "Generate Enum Attributes Functions", Validate::implementEnumFunc, transUnit );
+		PASS( "Generate Enum Attributes Functions", Validate::implementEnumFunc, transUnit );
 
 		PASS( "Implement Actors", Concurrency::implementActors, transUnit );
 		PASS( "Implement Virtual Destructors", Virtual::implementVirtDtors, transUnit );
@@ -382,7 +382,7 @@ int main( int argc, char * argv[] ) {
 		DUMP( exprp, std::move( transUnit ) );
 		PASS( "Replace Pseudo Func", Validate::replacePseudoFunc, transUnit );
 		DUMP( reppseu, std::move( transUnit ) );
-		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() );
+		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() ); // Here
 		PASS( "Erase With", ResolvExpr::eraseWith, transUnit );
 
 		// fix ObjectDecl - replaces ConstructorInit nodes

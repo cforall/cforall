@@ -1939,11 +1939,10 @@ const ast::Type * ast::Pass< core_t >::visit( const ast::EnumInstType * node ) {
 }
 
 //--------------------------------------------------------------------------
-// EnumPosType
+// EnumAttrType
 template< typename core_t >
-const ast::Type * ast::Pass< core_t >::visit( const ast::EnumPosType * node ) {
+const ast::Type * ast::Pass< core_t >::visit( const ast::EnumAttrType * node ) {
 	VISIT_START( node );
-
 	VISIT_END( Type, node );
 }
 

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 07:39:15 2024
-// Update Count     : 812
+// Last Modified On : Mon Apr 15 10:51:38 2024
+// Update Count     : 815
 //
 
 #pragma once
@@ -63,14 +63,19 @@ static inline forall( T & | sized(T) ) {
 		else return (T *)cmemalign( _Alignof(T), dim, sizeof(T) );
 	} // calloc
 
-	T * resize( T * ptr, size_t size ) {				// CFA resize, eliminate return-type cast
+	T * resize( T * ptr, size_t size ) {				// CFA resize
 		if ( _Alignof(T) <= libAlign() ) return (T *)resize( (void *)ptr, size ); // CFA resize
 		else return (T *)resize( (void *)ptr, _Alignof(T), size ); // CFA resize
 	} // resize
 
-	T * realloc( T * ptr, size_t size ) {				// CFA realloc, eliminate return-type cast
+	T * realloc( T * ptr, size_t size ) {				// CFA realloc
 		if ( _Alignof(T) <= libAlign() ) return (T *)realloc( (void *)ptr, size ); // C realloc
 		else return (T *)realloc( (void *)ptr, _Alignof(T), size ); // CFA realloc
+	} // realloc
+
+	T * reallocarray( T * ptr, size_t dim ) {			// CFA reallocarray
+		if ( _Alignof(T) <= libAlign() ) return (T *)reallocarray( (void *)ptr, dim, sizeof(T) ); // C reallocarray
+		else return (T *)reallocarray( (void *)ptr, _Alignof(T), dim ); // CFA reallocarray
 	} // realloc
 
 	T * memalign( size_t align ) {

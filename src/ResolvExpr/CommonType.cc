@@ -384,9 +384,7 @@ public:
 			}
 		} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( type2 ) ) {
 			const ast::EnumDecl* enumDecl = enumInst->base;
-			if ( enumDecl->base ) {
-				result = enumDecl->base.get();
-			} else {
+			if ( !enumDecl->base ) {
 				ast::BasicType::Kind kind = commonTypes[ basic->kind ][ ast::BasicType::SignedInt ];
 				if (
 					( ( kind == basic->kind && basic->qualifiers >= type2->qualifiers )
@@ -397,16 +395,18 @@ public:
 					result = new ast::BasicType{ kind, basic->qualifiers | type2->qualifiers };
 				}
 			}
-		} else if ( dynamic_cast< const ast::EnumPosType * >( type2 ) ) {
-			ast::BasicType::Kind kind = commonTypes[ basic->kind ][ ast::BasicType::SignedInt ];
-			if (
-				( ( kind == basic->kind && basic->qualifiers >= type2->qualifiers )
-					|| widen.first )
-				&& ( ( kind != basic->kind && basic->qualifiers <= type2->qualifiers )
-					|| widen.second )
-			) {
-				result = new ast::BasicType{ kind, basic->qualifiers | type2->qualifiers };
-			}
+		} else if ( auto type2AsAttr = dynamic_cast< const ast::EnumAttrType * >( type2 ) ) {
+            if ( type2AsAttr->attr == ast::EnumAttribute::Posn ) {
+			    ast::BasicType::Kind kind = commonTypes[ basic->kind ][ ast::BasicType::SignedInt ];
+			    if (
+				    ( ( kind == basic->kind && basic->qualifiers >= type2->qualifiers )
+					    || widen.first )
+				    && ( ( kind != basic->kind && basic->qualifiers <= type2->qualifiers )
+					    || widen.second )
+			    ) {
+				    result = new ast::BasicType{ kind, basic->qualifiers | type2->qualifiers };
+			    }
+            }
 		}
 	}
 
@@ -425,19 +425,6 @@ private:
 		}
 		result = voidPtr;
 		add_qualifiers( result, oPtr->qualifiers );
-	}
-
-	// For a typed enum, we want to unify type1 with the base type of the enum
-	bool tryResolveWithTypedEnum( const ast::Type * type1 ) {
-		if (auto enumInst = dynamic_cast<const ast::EnumInstType *> (type2) ) {
-			ast::OpenVarSet newOpen{ open };
-			if (enumInst->base->base
-				&& unifyExact(type1, enumInst->base->base, tenv, need, have, newOpen, widen)) {
-					result = type1;
-				return true;
-			}
-		}
-		return false;
 	}
 
 public:
@@ -606,15 +593,10 @@ public:
 		} else if ( widen.second && dynamic_cast< const ast::ZeroType * >( type2 ) ) {
 			result = pointer;
 			add_qualifiers( result, type2->qualifiers );
-		} else {
-			tryResolveWithTypedEnum( pointer );
 		}
 	}
 
-	void postvisit( const ast::ArrayType * arr ) {
-		// xxx - does it make sense?
-		tryResolveWithTypedEnum( arr );
-	}
+	void postvisit( const ast::ArrayType * ) {}
 
 	void postvisit( const ast::ReferenceType * ref ) {
 		if ( auto ref2 = dynamic_cast< const ast::ReferenceType * >( type2 ) ) {
@@ -658,46 +640,26 @@ public:
 		}
 	}
 
-	void postvisit( const ast::FunctionType * func) {
-		tryResolveWithTypedEnum( func );
-	}
+	void postvisit( const ast::FunctionType * ) {}
 
-	void postvisit( const ast::StructInstType * inst ) {
-		tryResolveWithTypedEnum( inst );
-	}
+	void postvisit( const ast::StructInstType * ) {}
 
-	void postvisit( const ast::UnionInstType * inst ) {
-		tryResolveWithTypedEnum( inst );
-	}
+	void postvisit( const ast::UnionInstType * ) {}
 
 	void postvisit( const ast::EnumInstType * enumInst ) {
-		// if ( dynamic_cast<const ast::EnumPosType *>(enumInst) ) {
-		// 	result = enumInst;
-		// } else 
-		if (!dynamic_cast<const ast::EnumInstType *>(type2)) {
-			result = commonType( type2, enumInst, tenv, need, have, open, widen);
+		if ( enumInst->base && !enumInst->base->base ) {
+			auto basicType = new ast::BasicType( ast::BasicType::UnsignedInt );
+			result = commonType( basicType, type2, tenv, need, have, open, widen);
 		}
 	}
 
-	void postvisit( const ast::EnumPosType * enumPos ) {
-		if ( auto type2AsPos = dynamic_cast<const ast::EnumPosType *>(type2) ) {
-			// result = commonType( type2AsPos->instance, enumPos->instance, tenv, need, have, open, widen );
-			// result = enumPos;
-			if ( enumPos->instance->base->name == type2AsPos->instance->base->name ) {
-				result = type2;
-			}
-		} else if ( dynamic_cast<const ast::BasicType *>(type2) ) {
-			result = type2;
-		}
-	}
+	void postvisit( const ast::EnumAttrType * ) {}
 
 	void postvisit( const ast::TraitInstType * ) {}
 
 	void postvisit( const ast::TypeInstType * ) {}
 
-	void postvisit( const ast::TupleType * tuple ) {
-		tryResolveWithTypedEnum( tuple );
-	}
+	void postvisit( const ast::TupleType * ) {}
 
 	void postvisit( const ast::VarArgsType * ) {}
 
@@ -714,10 +676,7 @@ public:
 				ast::BasicType::SignedInt, zero->qualifiers | type2->qualifiers };
 		} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( type2 ) ) {
 			const ast::EnumDecl * enumDecl = enumInst->base;
-			if ( enumDecl->base ) {
-				if ( tryResolveWithTypedEnum( zero ) )
-					add_qualifiers( result, zero->qualifiers );
-			} else {
+			if ( !enumDecl->base ) {
 				if ( widen.second || zero->qualifiers <= type2->qualifiers ) {
 					result = type2;
 					add_qualifiers( result, zero->qualifiers );
@@ -737,11 +696,8 @@ public:
 			result = new ast::BasicType{
 				ast::BasicType::SignedInt, one->qualifiers | type2->qualifiers };
 		} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( type2 ) ) {
-			const ast::EnumDecl * enumBase = enumInst->base;
-			if ( enumBase->base ) {
-				if ( tryResolveWithTypedEnum( one ))
-					add_qualifiers( result, one->qualifiers );
-			} else {
+			const ast::EnumDecl * enumDecl = enumInst->base;
+			if ( !enumDecl->base ) {
 				if ( widen.second || one->qualifiers <= type2->qualifiers ) {
 					result = type2;
 					add_qualifiers( result, one->qualifiers );
