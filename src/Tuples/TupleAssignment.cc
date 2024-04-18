@@ -34,6 +34,7 @@
 #include "Explode.h"                       // for explode
 #include "InitTweak/GenInit.h"             // for genCtorInit
 #include "InitTweak/InitTweak.h"           // for getPointerBase, isAssignment
+#include "ResolvExpr/CandidateFinder.hpp"  // for CandidateFinder
 #include "ResolvExpr/Cost.h"               // for Cost
 #include "ResolvExpr/Resolver.h"           // for resolveCtorInit
 #include "ResolvExpr/typeops.h"            // for combos

@@ -20,7 +20,9 @@
 
 #include "AST/Fwd.hpp"
 #include "AST/Node.hpp"
-#include "ResolvExpr/CandidateFinder.hpp"
+namespace ResolvExpr {
+	class CandidateFinder;
+}
 
 namespace Tuples {
 

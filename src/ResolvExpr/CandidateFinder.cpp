@@ -1399,7 +1399,7 @@ namespace {
 					bentConversion = true;
 				}
 			}
-			
+
 			CandidateRef newCand = std::make_shared<Candidate>(
 				newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, bentConversion? Cost::safe: Cost::zero,
 				cost );
@@ -1793,7 +1793,6 @@ namespace {
 					if ( cand->cost == minExprCost && thisCost == minCastCost ) {
 						auto commonAsEnumAttr = common.as<ast::EnumAttrType>();
 						if ( commonAsEnumAttr && commonAsEnumAttr->attr == ast::EnumAttribute::Value ) {
-							
 							auto callExpr = new ast::UntypedExpr(
 								cand->expr->location, new ast::NameExpr( cand->expr->location, "valueE"), {cand->expr} );
 							CandidateFinder finder( context, env );
@@ -1822,10 +1821,10 @@ namespace {
 							// currently assertions are always resolved immediately so this should have no effect.
 							// if this somehow changes in the future (e.g. delayed by indeterminate return type)
 							// we may need to revisit the logic.
-							inferParameters( newCand, matches );	
+							inferParameters( newCand, matches );
 						}
-					}			
-				}	
+					}
+				}
 			}
 		}
 
@@ -2150,20 +2149,18 @@ Cost computeConversionCost(
 	return convCost;
 }
 
-// get the valueE(...) ApplicationExpr that returns the enum value
-const ast::Expr * getValueEnumCall( 
-	const ast::Expr * expr, 
-	const ResolvExpr::ResolveContext & context, const ast::TypeEnvironment & env ) {
-		auto callExpr = new ast::UntypedExpr(
-			expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );
-		CandidateFinder finder( context, env );
-		finder.find( callExpr );
-		CandidateList winners = findMinCost( finder.candidates );
-		if (winners.size() != 1) {
-			SemanticError( callExpr, "Ambiguous expression in valueE" );
-		}
-		CandidateRef & choice = winners.front();
-		return choice->expr;
+const ast::Expr * getValueEnumCall( const ast::Expr * expr,
+		const ResolveContext & context, const ast::TypeEnvironment & env ) {
+	auto callExpr = new ast::UntypedExpr(
+		expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );
+	CandidateFinder finder( context, env );
+	finder.find( callExpr );
+	CandidateList winners = findMinCost( finder.candidates );
+	if (winners.size() != 1) {
+		SemanticError( callExpr, "Ambiguous expression in valueE" );
+	}
+	CandidateRef & choice = winners.front();
+	return choice->expr;
 }
 
 const ast::Expr * createCondExpr( const ast::Expr * expr ) {

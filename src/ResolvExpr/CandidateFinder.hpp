@@ -29,12 +29,12 @@ struct ResolveContext;
 /// Data to perform expression resolution
 struct CandidateFinder {
 	CandidateList candidates;          ///< List of candidate resolutions
-	const ResolveContext & context;  ///< Information about where the canditates are being found.
+	const ResolveContext & context;    ///< Information about where the canditates are being found.
 	const ast::TypeEnvironment & env;  ///< Substitutions performed in this resolution
 	ast::ptr< ast::Type > targetType;  ///< Target type for resolution
 	bool strictMode = false;           ///< If set to true, requires targetType to be exact match (inside return cast)
 	bool allowVoid = false;            ///< If set to true, allow void-returning function calls (only top level, cast to void and first in comma)
-	std::set< std::string > otypeKeys;  /// different type may map to same key
+	std::set< std::string > otypeKeys; ///< different type may map to same key
 
 	CandidateFinder(
 		const ResolveContext & context, const ast::TypeEnvironment & env,
@@ -69,8 +69,10 @@ Cost computeConversionCost(
 const ast::Expr * referenceToRvalueConversion(
 	const ast::Expr * expr, Cost & cost );
 
-const ast::Expr * getValueEnumCall(const ast::Expr * expr,
-	const ResolvExpr::ResolveContext & context, const ast::TypeEnvironment & env );
+/// Get the valueE application that returns the enum's value.
+const ast::Expr * getValueEnumCall( const ast::Expr * expr,
+	const ResolveContext & context, const ast::TypeEnvironment & env );
+
 /// Wrap an expression to convert the result to a conditional result.
 const ast::Expr * createCondExpr( const ast::Expr * expr );
 
