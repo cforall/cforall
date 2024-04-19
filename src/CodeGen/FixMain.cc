@@ -51,14 +51,14 @@ std::string genTypeAt( const ast::vector<ast::Type> & types, size_t at ) {
 
 ast::ObjectDecl * makeIntObj(){
 	return new ast::ObjectDecl( CodeLocation(), "",
-		new ast::BasicType( ast::BasicType::SignedInt ) );
+		new ast::BasicType( ast::BasicKind::SignedInt ) );
 }
 
 ast::ObjectDecl * makeCharStarStarObj() {
 	return new ast::ObjectDecl( CodeLocation(), "",
 		new ast::PointerType(
 			new ast::PointerType(
-				new ast::BasicType( ast::BasicType::Char ) ) ) );
+				new ast::BasicType( ast::BasicKind::Char ) ) ) );
 }
 
 std::string getMangledNameOfMain(

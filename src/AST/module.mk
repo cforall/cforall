@@ -17,6 +17,7 @@
 SRC_AST = \
 	AST/Attribute.cpp \
 	AST/Attribute.hpp \
+	AST/BasicKind.hpp \
 	AST/Bitfield.hpp \
 	AST/Chain.hpp \
 	AST/Copy.cpp \

@@ -155,11 +155,6 @@ class EnumAttrFuncGenerator {
     const ast::CompoundStmt* genCopyBody(const CodeLocation& location,
                                          const ast::ObjectDecl* dstParam,
                                          const ast::ObjectDecl* srcParam) {
-        // const CodeLocation& location = func->location;
-        // auto& params = func->params;
-        // assert(2 == params.size());
-        // auto dstParam = params.front().strict_as<ast::ObjectDecl>();
-        // auto srcParam = params.back().strict_as<ast::ObjectDecl>();
         return new ast::CompoundStmt(
             location,
             {new ast::ExprStmt(
@@ -300,8 +295,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genPosnProto() const {
         "posE",
         {new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
         {new ast::ObjectDecl(getLocation(), "_ret",
-                             new ast::EnumAttrType(new ast::EnumInstType(decl),
-                                                   ast::EnumAttribute::Posn))});
+            new ast::BasicType(ast::BasicKind::UnsignedInt))});
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
@@ -310,7 +304,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
         {new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
         {new ast::ObjectDecl(
             getLocation(), "_ret",
-            new ast::PointerType(new ast::BasicType{ast::BasicType::Char}))});
+            new ast::PointerType(new ast::BasicType{ast::BasicKind::Char}))});
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
@@ -363,7 +357,7 @@ ast::ObjectDecl* EnumAttrFuncGenerator::genAttrArrayProto(
     ast::ArrayType* arrT = new ast::ArrayType(
         attr == ast::EnumAttribute::Value
             ? decl->base
-            : new ast::PointerType(new ast::BasicType{ast::BasicType::Char}),
+            : new ast::PointerType(new ast::BasicType{ast::BasicKind::Char}),
         ast::ConstantExpr::from_int(decl->location, decl->members.size()),
         ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim);
 
@@ -439,7 +433,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genSuccPredFunc(bool succ) {
     auto retType = ret->type.strict_as<ast::EnumAttrType>();
 
     auto addOneExpr = ast::UntypedExpr::createCall( location,
-        "?+?",
+        succ? "?+?": "?-?",
         {new ast::VariableExpr(location, param),
         ast::ConstantExpr::from_int(location, 1)}
     );

@@ -476,7 +476,7 @@ const ast::DeclWithType * ast::Pass< core_t >::visit( const ast::FunctionDecl * 
 			static ast::ptr< ast::ObjectDecl > func{ new ast::ObjectDecl{
 				CodeLocation{}, "__func__",
 				new ast::ArrayType{
-					new ast::BasicType{ ast::BasicType::Char, ast::CV::Const },
+					new ast::BasicType{ ast::BasicKind::Char, ast::CV::Const },
 					nullptr, VariableLen, DynamicDim
 				},
 				nullptr,

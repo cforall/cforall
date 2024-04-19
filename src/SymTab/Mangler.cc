@@ -141,7 +141,7 @@ void Mangler::postvisit( const ast::VoidType * voidType ) {
 
 void Mangler::postvisit( const ast::BasicType * basicType ) {
 	printQualifiers( basicType );
-	assertf( basicType->kind < ast::BasicType::NUMBER_OF_BASIC_TYPES, "Unhandled basic type: %d", basicType->kind );
+	assertf( basicType->kind < ast::BasicKind::NUMBER_OF_BASIC_TYPES, "Unhandled basic type: %d", basicType->kind );
 	mangleName += Encoding::basicTypes[ basicType->kind ];
 }
 

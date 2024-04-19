@@ -62,7 +62,7 @@ struct ResolveTypeof : public ast::WithShortCircuiting {
 			// replace basetypeof(<enum>) by int
 			if ( newType.as< ast::EnumInstType >() ) {
 				newType = new ast::BasicType(
-					ast::BasicType::SignedInt, newType->qualifiers, copy(newType->attributes) );
+					ast::BasicKind::SignedInt, newType->qualifiers, copy(newType->attributes) );
 			}
 			reset_qualifiers(
 				newType,
@@ -90,7 +90,7 @@ struct FixArrayDimension {
 		if (!arrayType->dimension) return arrayType;
 		auto mutType = mutate(arrayType);
 		auto globalSizeType = context.global.sizeType;
-		ast::ptr<ast::Type> sizetype = globalSizeType ? globalSizeType : new ast::BasicType(ast::BasicType::LongUnsignedInt);
+		ast::ptr<ast::Type> sizetype = globalSizeType ? globalSizeType : new ast::BasicType( ast::BasicKind::LongUnsignedInt );
 		mutType->dimension = findSingleExpression(arrayType->dimension, sizetype, context );
 
 		if (InitTweak::isConstExpr(mutType->dimension)) {

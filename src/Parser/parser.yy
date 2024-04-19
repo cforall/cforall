@@ -54,6 +54,7 @@ using namespace std;
 #include "StatementNode.h"                              // for build_...
 #include "TypedefTable.h"
 #include "TypeData.h"
+#include "AST/Type.hpp"                                 // for BasicType, BasicKind
 #include "Common/SemanticError.h"						// error_str
 #include "Common/utility.h"								// for maybeMoveBuild, maybeBuild, CodeLo...
 
@@ -259,7 +260,7 @@ ForCtrl * forCtrl( const CodeLocation & location, DeclarationNode * index, Expre
 ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, string * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	ast::ConstantExpr * constant = dynamic_cast<ast::ConstantExpr *>(type->expr.get());
 	if ( constant && (constant->rep == "0" || constant->rep == "1") ) {
-		type = new ExpressionNode( new ast::CastExpr( location, maybeMoveBuild(type), new ast::BasicType( ast::BasicType::SignedInt ) ) );
+		type = new ExpressionNode( new ast::CastExpr( location, maybeMoveBuild(type), new ast::BasicType( ast::BasicKind::SignedInt ) ) );
 	} // if
 	DeclarationNode * initDecl = distAttr(
 		DeclarationNode::newTypeof( type, true ),

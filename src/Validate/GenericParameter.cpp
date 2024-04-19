@@ -288,7 +288,7 @@ const ast::Expr * TranslateDimensionCore::postvisit(
 		// DimensionExpr and TypeExpr should not reach here.
 		return new ast::TypeExpr( expr->location,
 			new ast::ArrayType(
-				new ast::BasicType( ast::BasicType::Char ),
+				new ast::BasicType( ast::BasicKind::Char ),
 				expr,
 				ast::VariableLen,
 				ast::DynamicDim

@@ -18,10 +18,11 @@
 #include <cassert>                 // for assert
 #include <ostream>                 // for operator<<, ostream, basic_ostream
 
-#include "AST/Decl.hpp"            // for AggregateDecl, ObjectDecl, TypeDe...
 #include "AST/Attribute.hpp"       // for Attribute
+#include "AST/Decl.hpp"            // for AggregateDecl, ObjectDecl, TypeDe...
 #include "AST/Init.hpp"            // for SingleInit, ListInit
 #include "AST/Print.hpp"           // for print
+#include "AST/Type.hpp"            // for Type
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for splice, spliceBegin
 #include "Common/Iterate.hpp"      // for reverseIterate
@@ -1009,7 +1010,7 @@ ast::Type * typebuild( const TypeData * td ) {
 	case TypeData::Unknown:
 		// fill in implicit int
 		return new ast::BasicType(
-			ast::BasicType::SignedInt,
+			ast::BasicKind::SignedInt,
 			buildQualifiers( td )
 		);
 	case TypeData::Basic:
@@ -1094,7 +1095,7 @@ static string genTSError( string msg, TypeData::BasicType basictype ) {
 } // genTSError
 
 ast::Type * buildBasicType( const TypeData * td ) {
-	ast::BasicType::Kind ret;
+	ast::BasicKind ret;
 
 	switch ( td->basictype ) {
 	case TypeData::Void:
@@ -1115,14 +1116,14 @@ ast::Type * buildBasicType( const TypeData * td ) {
 			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
 		} // if
 
-		ret = ast::BasicType::Bool;
+		ret = ast::BasicKind::Bool;
 		break;
 
 	case TypeData::Char:
 		// C11 Standard 6.2.5.15: The three types char, signed char, and unsigned char are collectively called the
 		// character types. The implementation shall define char to have the same range, representation, and behavior as
 		// either signed char or unsigned char.
-		static ast::BasicType::Kind chartype[] = { ast::BasicType::SignedChar, ast::BasicType::UnsignedChar, ast::BasicType::Char };
+		static ast::BasicKind chartype[] = { ast::BasicKind::SignedChar, ast::BasicKind::UnsignedChar, ast::BasicKind::Char };
 
 		if ( td->length != TypeData::NoLength ) {
 			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
@@ -1132,9 +1133,9 @@ ast::Type * buildBasicType( const TypeData * td ) {
 		break;
 
 	case TypeData::Int:
-		static ast::BasicType::Kind inttype[2][4] = {
-			{ ast::BasicType::ShortSignedInt, ast::BasicType::LongSignedInt, ast::BasicType::LongLongSignedInt, ast::BasicType::SignedInt },
-			{ ast::BasicType::ShortUnsignedInt, ast::BasicType::LongUnsignedInt, ast::BasicType::LongLongUnsignedInt, ast::BasicType::UnsignedInt },
+		static ast::BasicKind inttype[2][4] = {
+			{ ast::BasicKind::ShortSignedInt, ast::BasicKind::LongSignedInt, ast::BasicKind::LongLongSignedInt, ast::BasicKind::SignedInt },
+			{ ast::BasicKind::ShortUnsignedInt, ast::BasicKind::LongUnsignedInt, ast::BasicKind::LongLongUnsignedInt, ast::BasicKind::UnsignedInt },
 		};
 
 	Integral: ;
@@ -1145,7 +1146,7 @@ ast::Type * buildBasicType( const TypeData * td ) {
 		break;
 
 	case TypeData::Int128:
-		ret = td->signedness == TypeData::Unsigned ? ast::BasicType::UnsignedInt128 : ast::BasicType::SignedInt128;
+		ret = td->signedness == TypeData::Unsigned ? ast::BasicKind::UnsignedInt128 : ast::BasicKind::SignedInt128;
 		if ( td->length != TypeData::NoLength ) {
 			genTSError( TypeData::lengthNames[ td->length ], td->basictype );
 		} // if
@@ -1163,9 +1164,9 @@ ast::Type * buildBasicType( const TypeData * td ) {
 	case TypeData::uFloat64x:
 	case TypeData::uFloat128:
 	case TypeData::uFloat128x:
-		static ast::BasicType::Kind floattype[2][12] = {
-			{ ast::BasicType::FloatComplex, ast::BasicType::DoubleComplex, ast::BasicType::LongDoubleComplex, (ast::BasicType::Kind)-1, (ast::BasicType::Kind)-1, ast::BasicType::uFloat16Complex, ast::BasicType::uFloat32Complex, ast::BasicType::uFloat32xComplex, ast::BasicType::uFloat64Complex, ast::BasicType::uFloat64xComplex, ast::BasicType::uFloat128Complex, ast::BasicType::uFloat128xComplex, },
-			{ ast::BasicType::Float, ast::BasicType::Double, ast::BasicType::LongDouble, ast::BasicType::uuFloat80, ast::BasicType::uuFloat128, ast::BasicType::uFloat16, ast::BasicType::uFloat32, ast::BasicType::uFloat32x, ast::BasicType::uFloat64, ast::BasicType::uFloat64x, ast::BasicType::uFloat128, ast::BasicType::uFloat128x, },
+		static ast::BasicKind floattype[2][12] = {
+			{ ast::BasicKind::FloatComplex, ast::BasicKind::DoubleComplex, ast::BasicKind::LongDoubleComplex, (ast::BasicKind)-1, (ast::BasicKind)-1, ast::BasicKind::uFloat16Complex, ast::BasicKind::uFloat32Complex, ast::BasicKind::uFloat32xComplex, ast::BasicKind::uFloat64Complex, ast::BasicKind::uFloat64xComplex, ast::BasicKind::uFloat128Complex, ast::BasicKind::uFloat128xComplex, },
+			{ ast::BasicKind::Float, ast::BasicKind::Double, ast::BasicKind::LongDouble, ast::BasicKind::uuFloat80, ast::BasicKind::uuFloat128, ast::BasicKind::uFloat16, ast::BasicKind::uFloat32, ast::BasicKind::uFloat32x, ast::BasicKind::uFloat64, ast::BasicKind::uFloat64x, ast::BasicKind::uFloat128, ast::BasicKind::uFloat128x, },
 		};
 
 	FloatingPoint: ;
@@ -1212,7 +1213,7 @@ ast::Type * buildBasicType( const TypeData * td ) {
 
 
 static ast::Type * buildDefaultType( const TypeData * td ) {
-	return ( td ) ? typebuild( td ) : new ast::BasicType( ast::BasicType::SignedInt );
+	return ( td ) ? typebuild( td ) : new ast::BasicType( ast::BasicKind::SignedInt );
 } // buildDefaultType
 
 
@@ -1578,7 +1579,7 @@ ast::FunctionDecl * buildFunctionDecl(
 		returns.push_back( new ast::ObjectDecl(
 			td->location,
 			"",
-			new ast::BasicType( ast::BasicType::SignedInt ),
+			new ast::BasicType( ast::BasicKind::SignedInt ),
 			(ast::Init *)nullptr,
 			ast::Storage::Classes(),
 			ast::Linkage::Cforall
@@ -1666,7 +1667,7 @@ ast::FunctionType * buildFunctionType( const TypeData * td ) {
 		} // switch
 	} else {
 		ft->returns.push_back(
-			new ast::BasicType( ast::BasicType::SignedInt ) );
+			new ast::BasicType( ast::BasicKind::SignedInt ) );
 	} // if
 	return ft;
 } // buildFunctionType

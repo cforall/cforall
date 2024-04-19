@@ -52,9 +52,9 @@ include Tuples/module.mk
 include Validate/module.mk
 include Virtual/module.mk
 
-$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/Type.hpp
+$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/BasicKind.hpp
 
-$(srcdir)/AST/Type.hpp : BasicTypes-gen.cc
+$(srcdir)/AST/BasicKind.hpp : BasicTypes-gen.cc
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type
 	@./BasicTypes-gen
 	@rm BasicTypes-gen

@@ -381,7 +381,6 @@ int main( int argc, char * argv[] ) {
 		PASS( "Resolve", ResolvExpr::resolve, transUnit );
 		DUMP( exprp, std::move( transUnit ) );
 		PASS( "Replace Pseudo Func", Validate::replacePseudoFunc, transUnit );
-		DUMP( reppseu, std::move( transUnit ) );
 		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() ); // Here
 		PASS( "Erase With", ResolvExpr::eraseWith, transUnit );
 
@@ -533,8 +532,7 @@ static struct Printopts {
 	{ "tuple", tuplep, true, "print AST after tuple expansion" },
 	{ "instgen", genericsp, true, "print AST after instantiate generics" },
 	{ "bbox", bboxp, true, "print AST before box pass" },
-	{ "bcodegen", bcodegenp, true, "print AST before code generation" },
-	{ "reppseu", reppseu, true, "print AST after replacing pseudo functions" }
+	{ "bcodegen", bcodegenp, true, "print AST before code generation" }
 };
 enum { printoptsSize = sizeof( printopts ) / sizeof( printopts[0] ) };
 

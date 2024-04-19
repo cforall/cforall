@@ -22,8 +22,9 @@
 #include <sstream>                 // for basic_istream::operator>>, basic_i...
 #include <string>                  // for string, operator+, operator==
 
+#include "AST/BasicKind.hpp"       // for BasicKind
 #include "AST/Expr.hpp"            // for NameExpr
-#include "AST/Type.hpp"            // for BaseType, SueInstType
+#include "AST/Type.hpp"            // for Type, LengthFlag, DimentionFlag
 #include "Common/SemanticError.h"  // for SemanticError
 #include "Common/utility.h"        // for maybeMoveBuild, maybeBuild, CodeLo...
 #include "DeclarationNode.h"       // for DeclarationNode
@@ -125,10 +126,10 @@ static void scanbin( string & str, unsigned long long int & v ) {
 
 ast::Expr * build_constantInteger(
 		const CodeLocation & location, string & str ) {
-	static const ast::BasicType::Kind kind[2][6] = {
+	static const ast::BasicKind kind[2][6] = {
 		// short (h) must be before char (hh) because shorter type has the longer suffix
-		{ ast::BasicType::ShortSignedInt, ast::BasicType::SignedChar, ast::BasicType::SignedInt, ast::BasicType::LongSignedInt, ast::BasicType::LongLongSignedInt, /* BasicType::SignedInt128 */ ast::BasicType::LongLongSignedInt, },
-		{ ast::BasicType::ShortUnsignedInt, ast::BasicType::UnsignedChar, ast::BasicType::UnsignedInt, ast::BasicType::LongUnsignedInt, ast::BasicType::LongLongUnsignedInt, /* BasicType::UnsignedInt128 */ ast::BasicType::LongLongUnsignedInt, },
+		{ ast::BasicKind::ShortSignedInt, ast::BasicKind::SignedChar, ast::BasicKind::SignedInt, ast::BasicKind::LongSignedInt, ast::BasicKind::LongLongSignedInt, /* BasicKind::SignedInt128 */ ast::BasicKind::LongLongSignedInt, },
+		{ ast::BasicKind::ShortUnsignedInt, ast::BasicKind::UnsignedChar, ast::BasicKind::UnsignedInt, ast::BasicKind::LongUnsignedInt, ast::BasicKind::LongLongUnsignedInt, /* BasicKind::UnsignedInt128 */ ast::BasicKind::LongLongUnsignedInt, },
 	};
 
 	static const char * lnthsInt[2][6] = {
@@ -312,7 +313,7 @@ ast::Expr * build_constantInteger(
 	} else if ( ltype != -1 ) {							// explicit length ?
 		if ( ltype == 6 ) {								// int128, (int128)constant
 			ret2 = new ast::ConstantExpr( location,
-				new ast::BasicType( ast::BasicType::LongLongSignedInt ),
+				new ast::BasicType( ast::BasicKind::LongLongSignedInt ),
 				str2,
 				v2 );
 			ret = build_compoundLiteral( location,
@@ -378,9 +379,9 @@ static inline void checkFnxFloat( string & str, size_t last, bool & explnth, int
 
 ast::Expr * build_constantFloat(
 		const CodeLocation & location, string & str ) {
-	static const ast::BasicType::Kind kind[2][12] = {
-		{ ast::BasicType::Float, ast::BasicType::Double, ast::BasicType::LongDouble, ast::BasicType::uuFloat80, ast::BasicType::uuFloat128, ast::BasicType::uFloat16, ast::BasicType::uFloat32, ast::BasicType::uFloat32x, ast::BasicType::uFloat64, ast::BasicType::uFloat64x, ast::BasicType::uFloat128, ast::BasicType::uFloat128x },
-		{ ast::BasicType::FloatComplex, ast::BasicType::DoubleComplex, ast::BasicType::LongDoubleComplex, ast::BasicType::NUMBER_OF_BASIC_TYPES, ast::BasicType::NUMBER_OF_BASIC_TYPES, ast::BasicType::uFloat16Complex, ast::BasicType::uFloat32Complex, ast::BasicType::uFloat32xComplex, ast::BasicType::uFloat64Complex, ast::BasicType::uFloat64xComplex, ast::BasicType::uFloat128Complex, ast::BasicType::uFloat128xComplex },
+	static const ast::BasicKind kind[2][12] = {
+		{ ast::BasicKind::Float, ast::BasicKind::Double, ast::BasicKind::LongDouble, ast::BasicKind::uuFloat80, ast::BasicKind::uuFloat128, ast::BasicKind::uFloat16, ast::BasicKind::uFloat32, ast::BasicKind::uFloat32x, ast::BasicKind::uFloat64, ast::BasicKind::uFloat64x, ast::BasicKind::uFloat128, ast::BasicKind::uFloat128x },
+		{ ast::BasicKind::FloatComplex, ast::BasicKind::DoubleComplex, ast::BasicKind::LongDoubleComplex, ast::BasicKind::NUMBER_OF_BASIC_TYPES, ast::BasicKind::NUMBER_OF_BASIC_TYPES, ast::BasicKind::uFloat16Complex, ast::BasicKind::uFloat32Complex, ast::BasicKind::uFloat32xComplex, ast::BasicKind::uFloat64Complex, ast::BasicKind::uFloat64xComplex, ast::BasicKind::uFloat128Complex, ast::BasicKind::uFloat128xComplex },
 	};
 
 	// floating-point constant has minimum of 2 characters 1. or .1
@@ -446,7 +447,7 @@ ast::Expr * build_constantChar( const CodeLocation & location, string & str ) {
 	sepString( str, units, '\'' );						// separate constant from units
 
 	ast::Expr * ret = new ast::ConstantExpr( location,
-		new ast::BasicType( ast::BasicType::Char ),
+		new ast::BasicType( ast::BasicKind::Char ),
 		str,
 		(unsigned long long int)(unsigned char)str[1] );
 	if ( units.length() != 0 ) {
@@ -481,7 +482,7 @@ ast::Expr * build_constantStr(
 		break;
 	Default:											// char default string type
 	default:
-		strtype = new ast::BasicType( ast::BasicType::Char );
+		strtype = new ast::BasicType( ast::BasicKind::Char );
 	} // switch
 	ast::ArrayType * at = new ast::ArrayType(
 		strtype,
@@ -663,7 +664,7 @@ ast::Expr * build_offsetOf( const CodeLocation & location,
 		maybeMoveBuildType( decl_node ),
 		member->name
 	);
-	ret->result = new ast::BasicType( ast::BasicType::LongUnsignedInt );
+	ret->result = new ast::BasicType( ast::BasicKind::LongUnsignedInt );
 	delete member;
 	return ret;
 } // build_offsetOf

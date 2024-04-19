@@ -86,8 +86,8 @@ void GenType::postvisit( ast::VoidType const * type ) {
 }
 
 void GenType::postvisit( ast::BasicType const * type ) {
-	ast::BasicType::Kind kind = type->kind;
-	assert( 0 <= kind && kind < ast::BasicType::NUMBER_OF_BASIC_TYPES );
+	ast::BasicKind kind = type->kind;
+	assert( 0 <= kind && kind < ast::BasicKind::NUMBER_OF_BASIC_TYPES );
 	result = std::string( ast::BasicType::typeNames[kind] ) + " " + result;
 	handleQualifiers( type );
 }

@@ -181,7 +181,7 @@ ast::ObjectDecl * TryMutatorCore::make_index_object(
 	return new ast::ObjectDecl(
 		location,
 		"__handler_index",
-		new ast::BasicType( ast::BasicType::SignedInt )
+		new ast::BasicType( ast::BasicKind::SignedInt )
 		);
 }
 
@@ -200,7 +200,7 @@ ast::ObjectDecl * TryMutatorCore::make_bool_object(
 	return new ast::ObjectDecl(
 		location,
 		"__ret_bool",
-		new ast::BasicType( ast::BasicType::Bool ),
+		new ast::BasicType( ast::BasicKind::Bool ),
 		nullptr, //init
 		ast::Storage::Classes{},
 		ast::Linkage::Cforall,
@@ -230,7 +230,7 @@ ast::ObjectDecl * TryMutatorCore::make_unused_index_object(
 	return new ast::ObjectDecl(
 		location,
 		"__handler_index",
-		new ast::BasicType(ast::BasicType::SignedInt),
+		new ast::BasicType( ast::BasicKind::SignedInt ),
 		nullptr,
 		ast::Storage::Classes{},
 		ast::Linkage::Cforall,

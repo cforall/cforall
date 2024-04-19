@@ -348,7 +348,7 @@ void replaceTypedef( ast::TranslationUnit & translationUnit ) {
 		// Missing the global definition, default to long unsigned int.
 		// Perhaps this should be a warning instead.
 		translationUnit.global.sizeType =
-			new ast::BasicType( ast::BasicType::LongUnsignedInt );
+			new ast::BasicType( ast::BasicKind::LongUnsignedInt );
 	}
 }
 

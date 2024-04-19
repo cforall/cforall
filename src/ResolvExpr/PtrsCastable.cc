@@ -99,7 +99,7 @@ namespace {
 			if ( dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 				result = 1;
 			} else if ( auto bt = dynamic_cast< const ast::BasicType * >( dst ) ) {
-				if ( bt->kind == ast::BasicType::SignedInt ) {
+				if ( bt->kind == ast::BasicKind::SignedInt ) {
 					result = 0;
 				} else {
 					result = 1;

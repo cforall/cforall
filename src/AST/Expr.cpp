@@ -245,22 +245,22 @@ long long int ConstantExpr::intValue() const {
 
 ConstantExpr * ConstantExpr::from_bool( const CodeLocation & loc, bool b ) {
 	return new ConstantExpr{
-		loc, new BasicType{ BasicType::Bool }, b ? "1" : "0", (unsigned long long)b };
+		loc, new BasicType{ BasicKind::Bool }, b ? "1" : "0", (unsigned long long)b };
 }
 
 ConstantExpr * ConstantExpr::from_int( const CodeLocation & loc, int i ) {
 	return new ConstantExpr{
-		loc, new BasicType{ BasicType::SignedInt }, std::to_string( i ), (unsigned long long)i };
+		loc, new BasicType{ BasicKind::SignedInt }, std::to_string( i ), (unsigned long long)i };
 }
 
 ConstantExpr * ConstantExpr::from_ulong( const CodeLocation & loc, unsigned long i ) {
 	return new ConstantExpr{
-		loc, new BasicType{ BasicType::LongUnsignedInt }, std::to_string( i ),
+		loc, new BasicType{ BasicKind::LongUnsignedInt }, std::to_string( i ),
 		(unsigned long long)i };
 }
 
 ConstantExpr * ConstantExpr::from_string( const CodeLocation & loc, const std::string & str ) {
-	const Type * charType = new BasicType( BasicType::Char );
+	const Type * charType = new BasicType( BasicKind::Char );
 	// Adjust the length of the string for the terminator.
 	const Expr * strSize = from_ulong( loc, str.size() + 1 );
 	const Type * strType = new ArrayType( charType, strSize, FixedLen, DynamicDim );
@@ -276,23 +276,23 @@ ConstantExpr * ConstantExpr::null( const CodeLocation & loc, const Type * ptrTyp
 // --- SizeofExpr
 
 SizeofExpr::SizeofExpr( const CodeLocation & loc, const Expr * e )
-: Expr( loc, new BasicType{ BasicType::LongUnsignedInt } ), expr( e ), type( nullptr ) {}
+: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( e ), type( nullptr ) {}
 
 SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, new BasicType{ BasicType::LongUnsignedInt } ), expr( nullptr ), type( t ) {}
+: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( nullptr ), type( t ) {}
 
 // --- AlignofExpr
 
 AlignofExpr::AlignofExpr( const CodeLocation & loc, const Expr * e )
-: Expr( loc, new BasicType{ BasicType::LongUnsignedInt } ), expr( e ), type( nullptr ) {}
+: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( e ), type( nullptr ) {}
 
 AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, new BasicType{ BasicType::LongUnsignedInt } ), expr( nullptr ), type( t ) {}
+: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( nullptr ), type( t ) {}
 
 // --- OffsetofExpr
 
 OffsetofExpr::OffsetofExpr( const CodeLocation & loc, const Type * ty, const DeclWithType * mem )
-: Expr( loc, new BasicType{ BasicType::LongUnsignedInt } ), type( ty ), member( mem ) {
+: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), type( ty ), member( mem ) {
 	assert( type );
 	assert( member );
 }
@@ -301,7 +301,7 @@ OffsetofExpr::OffsetofExpr( const CodeLocation & loc, const Type * ty, const Dec
 
 OffsetPackExpr::OffsetPackExpr( const CodeLocation & loc, const StructInstType * ty )
 : Expr( loc, new ArrayType{
-	new BasicType{ BasicType::LongUnsignedInt }, nullptr, FixedLen, DynamicDim }
+	new BasicType{ BasicKind::LongUnsignedInt }, nullptr, FixedLen, DynamicDim }
 ), type( ty ) {
 	assert( type );
 }
@@ -310,7 +310,7 @@ OffsetPackExpr::OffsetPackExpr( const CodeLocation & loc, const StructInstType *
 
 LogicalExpr::LogicalExpr(
 	const CodeLocation & loc, const Expr * a1, const Expr * a2, LogicalFlag ia )
-: Expr( loc, new BasicType{ BasicType::SignedInt } ), arg1( a1 ), arg2( a2 ), isAnd( ia ) {}
+: Expr( loc, new BasicType{ BasicKind::SignedInt } ), arg1( a1 ), arg2( a2 ), isAnd( ia ) {}
 
 // --- CommaExpr
 bool CommaExpr::get_lvalue() const {

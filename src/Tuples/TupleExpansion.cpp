@@ -105,7 +105,7 @@ const ast::Expr * UniqueExprExpander::postvisit( const ast::UniqueExpr * unqExpr
 			const auto commaExpr = unqExpr->expr.strict_as< ast::CommaExpr >();
 			assignUnq = commaExpr->arg1;
 		}
-		auto finished = new ast::ObjectDecl( loc, toString( "_unq", id, "_finished_" ), new ast::BasicType( ast::BasicType::Kind::Bool ),
+		auto finished = new ast::ObjectDecl( loc, toString( "_unq", id, "_finished_" ), new ast::BasicType( ast::BasicKind::Bool ),
 			new ast::SingleInit( loc, ast::ConstantExpr::from_int( loc, 0 ) ), {}, ast::Linkage::Cforall );
 		declsToAddBefore.push_back( finished );
 		// (finished ? _unq_expr_N : (_unq_expr_N = <unqExpr->get_expr()>, finished = 1, _unq_expr_N))
@@ -174,7 +174,7 @@ ast::StructDecl * createTupleStruct(
 		decl->members.push_back(
 			new ast::ObjectDecl( location,
 				"dummy",
-				new ast::BasicType( ast::BasicType::SignedInt ),
+				new ast::BasicType( ast::BasicKind::SignedInt ),
 				nullptr,
 				ast::Storage::Classes(),
 				// Does this have to be a C linkage?

@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 10 17:47:22 2024
-// Update Count     : 83
+// Last Modified On : Mon Apr 15 21:56:27 2024
+// Update Count     : 85
 //
 
 #include "string_res.hfa"
@@ -199,8 +199,7 @@ size_t size(const string_res & s) with(s) {
 // Output operator
 ofstream & ?|?(ofstream & out, const string_res & s) {
 	// CFA string is NOT null terminated, so print exactly lnth characters in a minimum width of 0.
-	out | wd( 0, s.Handle.lnth, s.Handle.s ) | nonl;
-	return out;
+	return out | wd( 0, s.Handle.lnth, s.Handle.s ) | nonl;
 }
 
 void ?|?(ofstream & out, const string_res & s) {

@@ -846,7 +846,7 @@ const ast::DeclWithType * FixInit::postvisit( const ast::ObjectDecl *_objDecl ) 
 			static UniqueName dtorCallerNamer( "_dtor_atexit" );
 
 			// static bool __objName_uninitialized = true
-			auto boolType = new ast::BasicType( ast::BasicType::Kind::Bool );
+			auto boolType = new ast::BasicType( ast::BasicKind::Bool );
 			auto boolInitExpr = new ast::SingleInit(loc, ast::ConstantExpr::from_int(loc, 1 ) );
 			auto isUninitializedVar = new ast::ObjectDecl(loc, objDecl->mangleName + "_uninitialized", boolType, boolInitExpr, ast::Storage::Static, ast::Linkage::Cforall);
 			isUninitializedVar->fixUniqueId();

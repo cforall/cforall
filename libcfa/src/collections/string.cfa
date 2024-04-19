@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb  7 21:17:06 2024
-// Update Count     : 259
+// Last Modified On : Mon Apr 15 21:56:28 2024
+// Update Count     : 260
 //
 
 #include "string.hfa"
@@ -197,8 +197,7 @@ ofstream & ?|?( ofstream & os, _Ostream_Manip(string) f ) {
 	for ( i; len ) cstr[i] = f.val[i];					// copy string
 	cstr[len] = '\0';									// terminate
 	_Ostream_Manip(const char *) cf @= { cstr, f.wd, f.pc, f.base, {f.all} };
-	os | cf | nonl;
-	return os;
+	return os | cf | nonl;
 } // ?|?
 
 void ?|?( ofstream & os, _Ostream_Manip(string) f ) {

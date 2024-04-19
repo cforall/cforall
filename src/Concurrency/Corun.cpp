@@ -129,7 +129,7 @@ struct CorunKeyword : public WithDeclsToAdd<>, public WithStmtsToAdd<> {
         body->push_back( new DeclStmt( loc,
                 new ObjectDecl( loc,
                     numProcsName,
-                    new BasicType( BasicType::Kind::UnsignedInt ),
+                    new BasicType( BasicKind::UnsignedInt ),
                     new SingleInit( loc, 
                         new UntypedExpr( loc,
                             new NameExpr( loc, "get_proc_count" ),
@@ -145,7 +145,7 @@ struct CorunKeyword : public WithDeclsToAdd<>, public WithStmtsToAdd<> {
         body->push_back( new DeclStmt( loc,
                 new ObjectDecl( loc,
                     currProcsName,
-                    new BasicType( BasicType::Kind::UnsignedInt ),
+                    new BasicType( BasicKind::UnsignedInt ),
                     new SingleInit( loc, ConstantExpr::from_int( loc, 0 ) )
                 )
             )

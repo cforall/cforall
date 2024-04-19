@@ -512,24 +512,6 @@ namespace {
 				if ( unify( paramType, argType, env, need, have, open, common ) ) {
 					// add new result
 					assert( common );
-					// auto attrType = common.as<ast::EnumAttrType>();
-					// if ( attrType && ( attrType->attr == ast::EnumAttribute::Value ) ) {
-					// 	auto callExpr = new ast::UntypedExpr(
-					// 		expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );
-					// 	CandidateFinder finder( context, env );
-					// 	finder.find( callExpr );
-					// 	CandidateList winners = findMinCost( finder.candidates );
-					// 	if (winners.size() != 1) {
-					// 		SemanticError( callExpr, "Ambiguous expression in valueE" );
-					// 	}
-					// 	CandidateRef & choice = winners.front();
-					// 	choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
-
-					// 	results.emplace_back(
-					// 		i, choice->expr, 
-					// 		std::move( env ), std::move( need ), std::move( have ), std::move( open ),
-					// 		nextArg + 1, nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
-					// } else {
 						results.emplace_back(
 							i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
 							nextArg + 1, nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
@@ -920,10 +902,10 @@ namespace {
 				finder.find( callExpr );
 				CandidateList winners = findMinCost( finder.candidates );
 				if (winners.size() != 1) {
-					SemanticError( callExpr, "Ambiguous expression in valueE" );
+					SemanticError( callExpr, "Ambiguous expression in valueE..." );
 				}
 				CandidateRef & choice = winners.front();
-				// choice->cost.incSafe();
+				choice->cost.incVar();
 				candidates.emplace_back( std::move(choice) );
 			}
 
@@ -1799,7 +1781,7 @@ namespace {
 							finder.find( callExpr );
 							CandidateList winners = findMinCost( finder.candidates );
 							if (winners.size() != 1) {
-								SemanticError( callExpr, "Ambiguous expression in valueE" );
+								SemanticError( callExpr, "Ambiguous expression in valueE..." );
 							}
 							CandidateRef & choice = winners.front();
 							// assert( valueCall->result );
@@ -2149,18 +2131,20 @@ Cost computeConversionCost(
 	return convCost;
 }
 
-const ast::Expr * getValueEnumCall( const ast::Expr * expr,
-		const ResolveContext & context, const ast::TypeEnvironment & env ) {
-	auto callExpr = new ast::UntypedExpr(
-		expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );
-	CandidateFinder finder( context, env );
-	finder.find( callExpr );
-	CandidateList winners = findMinCost( finder.candidates );
-	if (winners.size() != 1) {
-		SemanticError( callExpr, "Ambiguous expression in valueE" );
-	}
-	CandidateRef & choice = winners.front();
-	return choice->expr;
+// get the valueE(...) ApplicationExpr that returns the enum value
+const ast::Expr * getValueEnumCall( 
+	const ast::Expr * expr, 
+	const ResolvExpr::ResolveContext & context, const ast::TypeEnvironment & env ) {
+		auto callExpr = new ast::UntypedExpr(
+			expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );
+		CandidateFinder finder( context, env );
+		finder.find( callExpr );
+		CandidateList winners = findMinCost( finder.candidates );
+		if (winners.size() != 1) {
+			SemanticError( callExpr, "Ambiguous expression in valueE..." );
+		}
+		CandidateRef & choice = winners.front();
+		return choice->expr;
 }
 
 const ast::Expr * createCondExpr( const ast::Expr * expr ) {
@@ -2175,7 +2159,7 @@ const ast::Expr * createCondExpr( const ast::Expr * expr ) {
 				),
 			}
 		),
-		new ast::BasicType( ast::BasicType::SignedInt )
+		new ast::BasicType( ast::BasicKind::SignedInt )
 	);
 }
 

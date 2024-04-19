@@ -350,9 +350,9 @@ namespace {
 	/// check if a type is a character type
 	bool isCharType( const ast::Type * t ) {
 		if ( auto bt = dynamic_cast< const ast::BasicType * >( t ) ) {
-			return bt->kind == ast::BasicType::Char
-				|| bt->kind == ast::BasicType::SignedChar
-				|| bt->kind == ast::BasicType::UnsignedChar;
+			return bt->kind == ast::BasicKind::Char
+				|| bt->kind == ast::BasicKind::SignedChar
+				|| bt->kind == ast::BasicKind::UnsignedChar;
 		}
 		return false;
 	}
@@ -457,7 +457,7 @@ namespace {
 		if (name == "constructor" || name == "destructor") {
 			if (attr->params.size() == 1) {
 				auto arg = attr->params.front();
-				auto resolved = ResolvExpr::findSingleExpression( arg, new ast::BasicType( ast::BasicType::LongLongSignedInt ), context );
+				auto resolved = ResolvExpr::findSingleExpression( arg, new ast::BasicType( ast::BasicKind::LongLongSignedInt ), context );
 				auto result = eval(arg);
 
 				auto mutAttr = mutate(attr);
@@ -623,7 +623,7 @@ const ast::ObjectDecl * Resolver::previsit( const ast::ObjectDecl * objectDecl )
 		} else {
 			objectDecl = fixObjectType( objectDecl, context );
 			currentObject = ast::CurrentObject{
-				objectDecl->location, new ast::BasicType{ ast::BasicType::SignedInt } };
+				objectDecl->location, new ast::BasicType{ ast::BasicKind::SignedInt } };
 		}
 	} else {
 		if ( !objectDecl->isTypeFixed ) {
@@ -1094,7 +1094,7 @@ const ast::WaitForStmt * Resolver::previsit( const ast::WaitForStmt * stmt ) {
 	if ( stmt->timeout_stmt ) {
 		// resolve the timeout as a size_t, the conditions like IfStmt, and stmts normally
 		ast::ptr< ast::Type > target =
-			new ast::BasicType{ ast::BasicType::LongLongUnsignedInt };
+			new ast::BasicType{ ast::BasicKind::LongLongUnsignedInt };
 		auto timeout_time = findSingleExpression( stmt->timeout_time, target, context );
 		auto timeout_cond = findCondExpression( stmt->timeout_cond, context );
 		auto timeout_stmt = stmt->timeout_stmt->accept( *visitor );

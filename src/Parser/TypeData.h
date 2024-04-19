@@ -19,7 +19,8 @@
 #include <list>                                     // for list
 #include <string>                                   // for string
 
-#include "AST/Type.hpp"                             // for Type
+#include "AST/CVQualifiers.hpp"                     // for CV
+#include "AST/Fwd.hpp"                              // for Type
 #include "DeclarationNode.h"                        // for DeclarationNode
 
 struct TypeData {

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Mar 14 23:18:57 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  8 09:07:48 2022
-// Update Count     : 668
+// Last Modified On : Thu Apr 18 12:07:21 2024
+// Update Count     : 670
 //
 
 #pragma once
@@ -83,12 +83,12 @@ static inline __attribute__((always_inline)) {
 	Duration ?`s( double sec ) { return (Duration)@{ sec * TIMEGRAN }; }
 	Duration ?`m( int64_t min ) { return (Duration)@{ min * (60LL * TIMEGRAN) }; }
 	Duration ?`m( double min ) { return (Duration)@{ min * (60LL * TIMEGRAN) }; }
-	Duration ?`h( int64_t hours ) { return (Duration)@{ hours * (60LL * 60LL * TIMEGRAN) }; }
-	Duration ?`h( double hours ) { return (Duration)@{ hours * (60LL * 60LL * TIMEGRAN) }; }
-	Duration ?`d( int64_t days ) { return (Duration)@{ days * (24LL * 60LL * 60LL * TIMEGRAN) }; }
-	Duration ?`d( double days ) { return (Duration)@{ days * (24LL * 60LL * 60LL * TIMEGRAN) }; }
-	Duration ?`w( int64_t weeks ) { return (Duration)@{ weeks * (7LL * 24LL * 60LL * 60LL * TIMEGRAN) }; }
-	Duration ?`w( double weeks ) { return (Duration)@{ weeks * (7LL * 24LL * 60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`h( int64_t hour ) { return (Duration)@{ hour * (60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`h( double hour ) { return (Duration)@{ hour * (60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`d( int64_t day ) { return (Duration)@{ day * (24LL * 60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`d( double day ) { return (Duration)@{ day * (24LL * 60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`w( int64_t week ) { return (Duration)@{ week * (7LL * 24LL * 60LL * 60LL * TIMEGRAN) }; }
+	Duration ?`w( double week ) { return (Duration)@{ week * (7LL * 24LL * 60LL * 60LL * TIMEGRAN) }; }
 
 	int64_t ?`ns( Duration dur ) { return dur.tn; }
 	int64_t ?`us( Duration dur ) { return dur.tn / (TIMEGRAN / 1_000_000LL); }

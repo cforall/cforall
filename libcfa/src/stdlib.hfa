@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 15 10:51:38 2024
-// Update Count     : 815
+// Last Modified On : Mon Apr 15 22:11:51 2024
+// Update Count     : 817
 //
 
 #pragma once
@@ -214,7 +214,7 @@ static inline forall( T & | sized(T) ) {
 		return ptr;
 	} // alloc_internal$
 
-	forall( TT... | { T * alloc_internal$( void *, T *, size_t, size_t, S_fill(T), TT ); } ) {
+	forall( TT ... | { T * alloc_internal$( void *, T *, size_t, size_t, S_fill(T), TT ); } ) {
 		T * alloc_internal$( void *, T *, size_t Align, size_t Dim, S_fill(T) Fill, T_resize Resize, TT rest ) {
 	        return alloc_internal$( Resize, (T*)0p, Align, Dim, Fill, rest);
 		}
@@ -266,14 +266,14 @@ static inline forall( T & )							// FIX ME, problems with 0p in list
 void free( T * ptr ) {
 	free( (void *)ptr );								// C free
 } // free
-static inline forall( T &, TT... | { void free( TT ); } )
+static inline forall( T &, TT ... | { void free( TT ); } )
 void free( T * ptr, TT rest ) {
 	free( ptr );
 	free( rest );
 } // free
 
 // CFA allocation/deallocation and constructor/destructor, non-array types
-static inline forall( T & | sized(T), TT... | { void ?{}( T &, TT ); } )
+static inline forall( T & | sized(T), TT ... | { void ?{}( T &, TT ); } )
 T * new( TT p ) {
 	return &(*(T *)malloc()){ p };						// run constructor
 } // new
@@ -286,16 +286,16 @@ void delete( T * ptr ) {
 	} // if
 	free( ptr );										// always call free
 } // delete
-static inline forall( T &, TT... | { void ^?{}( T & ); void delete( TT ); } )
+static inline forall( T &, TT ... | { void ^?{}( T & ); void delete( TT ); } )
 void delete( T * ptr, TT rest ) {
 	delete( ptr );
 	delete( rest );
 } // delete
 
 // CFA allocation/deallocation and constructor/destructor, array types
-forall( T & | sized(T), TT... | { void ?{}( T &, TT ); } ) T * anew( size_t dim, TT p );
+forall( T & | sized(T), TT ... | { void ?{}( T &, TT ); } ) T * anew( size_t dim, TT p );
 forall( T & | sized(T) | { void ^?{}( T & ); } ) void adelete( T arr[] );
-forall( T & | sized(T) | { void ^?{}( T & ); }, TT... | { void adelete( TT ); } ) void adelete( T arr[], TT rest );
+forall( T & | sized(T) | { void ^?{}( T & ); }, TT ... | { void adelete( TT ); } ) void adelete( T arr[], TT rest );
 //---------------------------------------
 
 // Check if all string characters are a specific kind, e.g., checkif( s, isblank )

@@ -497,8 +497,8 @@ Expr * genPredExpr( const CodeLocation & loc, WaitUntilStmt::ClauseNode * currNo
             leftExpr = genPredExpr( loc, currNode->left, idx, genLeaf );
             rightExpr = genPredExpr( loc, currNode->right, idx, genLeaf );
             return new LogicalExpr( loc, 
-                new CastExpr( loc, leftExpr, new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ),
-                new CastExpr( loc, rightExpr, new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ), 
+                new CastExpr( loc, leftExpr, new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast ),
+                new CastExpr( loc, rightExpr, new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast ), 
                 LogicalFlag::AndExpr 
             );
             break;
@@ -506,8 +506,8 @@ Expr * genPredExpr( const CodeLocation & loc, WaitUntilStmt::ClauseNode * currNo
             leftExpr = genPredExpr( loc, currNode->left, idx, genLeaf );
             rightExpr = genPredExpr( loc, currNode->right, idx, genLeaf );
             return new LogicalExpr( loc,
-                new CastExpr( loc, leftExpr, new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ),
-                new CastExpr( loc, rightExpr, new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast ), 
+                new CastExpr( loc, leftExpr, new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast ),
+                new CastExpr( loc, rightExpr, new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast ), 
                 LogicalFlag::OrExpr );
             break;
         case WaitUntilStmt::ClauseNode::LEAF:
@@ -555,13 +555,13 @@ FunctionDecl * buildPredicate( const WaitUntilStmt * stmt, GenLeafExpr genLeaf, 
         {
             new ObjectDecl( loc,
                 "clause_statuses",
-                new PointerType( new BasicType( BasicType::Kind::LongUnsignedInt ) )
+                new PointerType( new BasicType( BasicKind::LongUnsignedInt ) )
             )
         },
         {
             new ObjectDecl( loc,
                 "sat_ret",
-                new BasicType( BasicType::Kind::Bool )
+                new BasicType( BasicKind::Bool )
             )
         },
         body,               // body
@@ -765,7 +765,7 @@ CompoundStmt * GenerateWaitUntilCore::genStatusCheckFor( const WaitUntilStmt * s
             new DeclStmt( loc,
                 new ObjectDecl( loc,
                     idxName,
-                    new BasicType( BasicType::Kind::SignedInt ),
+                    new BasicType( BasicKind::SignedInt ),
                     new SingleInit( loc, ConstantExpr::from_int( loc, 0 ) )
                 )
             ),
@@ -892,7 +892,7 @@ void GenerateWaitUntilCore::genClauseInits( const WaitUntilStmt * stmt, vector<C
                 new DeclStmt( cLoc,
                     new ObjectDecl( cLoc,
                         currClause->whenName,
-                        new BasicType( BasicType::Kind::Bool ),
+                        new BasicType( BasicKind::Bool ),
                         new SingleInit( cLoc, ast::deepCopy( stmt->clauses.at(i)->when_cond ) )
                     )
                 )
@@ -914,7 +914,7 @@ void GenerateWaitUntilCore::genClauseInits( const WaitUntilStmt * stmt, vector<C
             new DeclStmt( stmt->else_cond->location,
                 new ObjectDecl( stmt->else_cond->location,
                     elseWhenName,
-                    new BasicType( BasicType::Kind::Bool ),
+                    new BasicType( BasicKind::Bool ),
                     new SingleInit( stmt->else_cond->location, ast::deepCopy( stmt->else_cond ) )
                 )
             )
@@ -944,7 +944,7 @@ Stmt * GenerateWaitUntilCore::buildOrCaseSwitch( const WaitUntilStmt * stmt, str
                     new NameExpr( cLoc, statusName ),
                     new CastExpr( cLoc, 
                         new AddressExpr( cLoc, new NameExpr( cLoc, data.at(i)->nodeName ) ),
-                        new BasicType( BasicType::Kind::LongUnsignedInt ), GeneratedFlag::ExplicitCast 
+                        new BasicType( BasicKind::LongUnsignedInt ), GeneratedFlag::ExplicitCast 
                     )
                 }
             ),
@@ -985,11 +985,11 @@ Stmt * GenerateWaitUntilCore::recursiveOrIfGen( const WaitUntilStmt * stmt, vect
                 new LogicalExpr( cLoc,
                     new CastExpr( cLoc,
                         new NameExpr( cLoc, elseWhenName ),
-                        new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                        new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
                     ),
                     new CastExpr( cLoc,
                         raceFnCall,
-                        new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                        new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
                     ),
                     LogicalFlag::AndExpr
                 ),
@@ -1015,11 +1015,11 @@ Stmt * GenerateWaitUntilCore::recursiveOrIfGen( const WaitUntilStmt * stmt, vect
         ifCond = new LogicalExpr( cLoc,
             new CastExpr( cLoc,
                 new NameExpr( cLoc, data.at(idx)->whenName ), 
-                new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
             ),
             new CastExpr( cLoc,
                 baseCond,
-                new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
             ),
             LogicalFlag::AndExpr
         );
@@ -1033,7 +1033,7 @@ Stmt * GenerateWaitUntilCore::recursiveOrIfGen( const WaitUntilStmt * stmt, vect
                     {
                         new NameExpr( cLoc, data.at(idx)->nodeName ),
                         new AddressExpr( cLoc, new NameExpr( cLoc, data.at(idx)->statusName ) ),
-                        ConstantExpr::null( cLoc, new PointerType( new BasicType( BasicType::Kind::SignedInt ) ) )
+                        ConstantExpr::null( cLoc, new PointerType( new BasicType( BasicKind::SignedInt ) ) )
                     }
                 )
             ),
@@ -1095,7 +1095,7 @@ Stmt * GenerateWaitUntilCore::genAllOr( const WaitUntilStmt * stmt ) {
     body->push_back( new DeclStmt( loc,
         new ObjectDecl( loc,
             statusName,
-            new BasicType( BasicType::Kind::LongUnsignedInt ),
+            new BasicType( BasicKind::LongUnsignedInt ),
             new SingleInit( loc, ConstantExpr::from_int( loc, 0 ) )
         )
     ));
@@ -1113,7 +1113,7 @@ Stmt * GenerateWaitUntilCore::genAllOr( const WaitUntilStmt * stmt ) {
         UntypedExpr * statusPtrCheck = new UntypedExpr( cLoc, 
             new NameExpr( cLoc, "?!=?" ), 
             {
-                ConstantExpr::null( cLoc, new PointerType( new BasicType( BasicType::Kind::LongUnsignedInt ) ) ),
+                ConstantExpr::null( cLoc, new PointerType( new BasicType( BasicKind::LongUnsignedInt ) ) ),
                 new UntypedExpr( cLoc, 
                     new NameExpr( cLoc, "__get_clause_status" ), 
                     { new NameExpr( cLoc, clauseData.at(i)->nodeName ) } 
@@ -1127,11 +1127,11 @@ Stmt * GenerateWaitUntilCore::genAllOr( const WaitUntilStmt * stmt ) {
             ifCond = new LogicalExpr( cLoc,
                 new CastExpr( cLoc,
                     new NameExpr( cLoc, clauseData.at(i)->whenName ), 
-                    new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                    new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
                 ),
                 new CastExpr( cLoc,
                     statusPtrCheck,
-                    new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                    new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
                 ),
                 LogicalFlag::AndExpr
             );
@@ -1161,11 +1161,11 @@ Stmt * GenerateWaitUntilCore::genAllOr( const WaitUntilStmt * stmt ) {
             outerIfCond = new LogicalExpr( loc,
                 new CastExpr( loc,
                     new NameExpr( loc, clauseData.at( whenIndices.at(i) )->whenName ), 
-                    new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                    new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
                 ),
                 new CastExpr( loc,
                     lastExpr,
-                    new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                    new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
                 ),
                 LogicalFlag::OrExpr
             );
@@ -1219,7 +1219,7 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
     body->push_back( new DeclStmt( loc,
         new ObjectDecl( loc,
             pCountName,
-            new BasicType( BasicType::Kind::SignedInt ),
+            new BasicType( BasicKind::SignedInt ),
             new SingleInit( loc, ConstantExpr::from_int( loc, 0 ) )
         )
     ));
@@ -1228,7 +1228,7 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
     body->push_back( new DeclStmt( loc,
         new ObjectDecl( loc,
             statusArrName,
-            new ArrayType( new BasicType( BasicType::Kind::LongUnsignedInt ), ConstantExpr::from_int( loc, numClauses ), LengthFlag::FixedLen, DimensionFlag::DynamicDim ),
+            new ArrayType( new BasicType( BasicKind::LongUnsignedInt ), ConstantExpr::from_int( loc, numClauses ), LengthFlag::FixedLen, DimensionFlag::DynamicDim ),
             new ListInit( loc,
                 {
                     new SingleInit( loc, ConstantExpr::from_int( loc, 0 ) )
@@ -1330,11 +1330,11 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
         statusExpr = new LogicalExpr( cLoc,
             new CastExpr( cLoc,
                 statusExpr, 
-                new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
             ),
             new CastExpr( cLoc,
                 genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "unregister_select" ),
-                new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
             ),
             LogicalFlag::AndExpr
         );
@@ -1345,11 +1345,11 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
             statusExpr = new LogicalExpr( cLoc,
                 new CastExpr( cLoc,
                     new NameExpr( cLoc, clauseData.at(i)->whenName ), 
-                    new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                    new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
                 ),
                 new CastExpr( cLoc,
                     statusExpr,
-                    new BasicType( BasicType::Kind::Bool ), GeneratedFlag::ExplicitCast 
+                    new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast 
                 ),
                 LogicalFlag::AndExpr
             );

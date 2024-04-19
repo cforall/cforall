@@ -98,7 +98,7 @@ ast::FunctionType const * createMsgFuncType(
 	type->params.push_back( new ast::PointerType(
 		createExceptionInstType( exceptionName, params ) ) );
 	type->returns.push_back( new ast::PointerType(
-		new ast::BasicType( ast::BasicType::Char, ast::CV::Const ) ) );
+		new ast::BasicType( ast::BasicKind::Char, ast::CV::Const ) ) );
 	return type;
 }
 
@@ -343,7 +343,7 @@ ast::FunctionDecl const * createMsg(
 				location,
 				"",
 				new ast::PointerType(
-					new ast::BasicType( ast::BasicType::Char, ast::CV::Const ) )
+					new ast::BasicType( ast::BasicKind::Char, ast::CV::Const ) )
 			),
 		},
 		new ast::CompoundStmt( location, {

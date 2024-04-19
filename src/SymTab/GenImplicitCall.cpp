@@ -132,7 +132,7 @@ void genArrayCall(
 	}
 
 	ast::ptr< ast::DeclWithType > index = new ast::ObjectDecl(
-		loc, indexName.newName(), new ast::BasicType( ast::BasicType::SignedInt ),
+		loc, indexName.newName(), new ast::BasicType( ast::BasicKind::SignedInt ),
 		new ast::SingleInit( loc, begin ) );
 	ast::ptr< ast::Expr > indexVar = new ast::VariableExpr( loc, index );
 

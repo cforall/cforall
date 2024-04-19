@@ -705,6 +705,7 @@ MOSTLYCLEANFILES = Parser/lex.cc Parser/parser.cc Parser/parser.hh \
 SRC_AST = \
 	AST/Attribute.cpp \
 	AST/Attribute.hpp \
+	AST/BasicKind.hpp \
 	AST/Bitfield.hpp \
 	AST/Chain.hpp \
 	AST/Copy.cpp \
@@ -2051,9 +2052,9 @@ uninstall-am: uninstall-cfa_cpplibPROGRAMS
 .PRECIOUS: Makefile
 
 
-$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/Type.hpp
+$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/BasicKind.hpp
 
-$(srcdir)/AST/Type.hpp : BasicTypes-gen.cc
+$(srcdir)/AST/BasicKind.hpp : BasicTypes-gen.cc
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type
 	@./BasicTypes-gen
 	@rm BasicTypes-gen

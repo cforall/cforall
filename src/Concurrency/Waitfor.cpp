@@ -243,7 +243,7 @@ ast::ObjectDecl * GenerateWaitForCore::declareFlag(
 		ast::CompoundStmt * out, const CodeLocation & location ) {
 	ast::ObjectDecl * flag = new ast::ObjectDecl( location,
 		namer_flg.newName(),
-		new ast::BasicType( ast::BasicType::Bool ),
+		new ast::BasicType( ast::BasicKind::Bool ),
 		new ast::SingleInit( location,
 			ast::ConstantExpr::from_ulong( location, 0 )
 		)
@@ -348,7 +348,7 @@ ast::Expr * GenerateWaitForCore::init_timeout(
 		const ast::Stmt * setter ) {
 	ast::ObjectDecl * timeout = new ast::ObjectDecl( topLocation,
 		namer_tim.newName(),
-		new ast::BasicType( ast::BasicType::LongLongUnsignedInt ),
+		new ast::BasicType( ast::BasicKind::LongLongUnsignedInt ),
 		new ast::SingleInit( topLocation,
 			ast::ConstantExpr::from_int( topLocation, -1 )
 		)
@@ -396,7 +396,7 @@ ast::Expr * GenerateWaitForCore::call(
 ) {
 	ast::ObjectDecl * index = new ast::ObjectDecl( location,
 		namer_idx.newName(),
-		new ast::BasicType( ast::BasicType::ShortSignedInt ),
+		new ast::BasicType( ast::BasicKind::ShortSignedInt ),
 		new ast::SingleInit( location,
 			ast::ConstantExpr::from_int( location, -1 )
 		)

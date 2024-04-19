@@ -42,12 +42,12 @@ namespace {
 
 /// The layout type is used to represent sizes, alignments and offsets.
 ast::BasicType * makeLayoutType() {
-	return new ast::BasicType( ast::BasicType::LongUnsignedInt );
+	return new ast::BasicType( ast::BasicKind::LongUnsignedInt );
 }
 
 /// Fixed version of layout type (just adding a 'C' in C++ style).
 ast::BasicType * makeLayoutCType() {
-	return new ast::BasicType( ast::BasicType::LongUnsignedInt,
+	return new ast::BasicType( ast::BasicKind::LongUnsignedInt,
 		ast::CV::Qualifiers( ast::CV::Const ) );
 }
 
@@ -1616,7 +1616,7 @@ PolyGenericCalculator::PolyGenericCalculator() :
 /// Currently: __attribute__(( aligned(8) )) char[size_T];
 ast::Type * polyToMonoType( CodeLocation const & location,
 		ast::Type const * declType ) {
-	auto charType = new ast::BasicType( ast::BasicType::Char );
+	auto charType = new ast::BasicType( ast::BasicKind::Char );
 	auto size = new ast::NameExpr( location,
 		sizeofName( Mangle::mangleType( declType ) ) );
 	auto ret = new ast::ArrayType( charType, size,

@@ -40,7 +40,7 @@ const std::string manglePrefix = "_X";
 //   - "DF"N"_" ISO/IEC TS 18661 N-bit binary floating point (_FloatN)
 //   - "Di" char32_t
 //   - "Ds" char16_t
-const std::string basicTypes[ast::BasicType::NUMBER_OF_BASIC_TYPES] = {
+const std::string basicTypes[ast::BasicKind::NUMBER_OF_BASIC_TYPES] = {
 	"b",        // _Bool
 	"c",        // char
 	"a",        // signed char
@@ -80,7 +80,7 @@ const std::string basicTypes[ast::BasicType::NUMBER_OF_BASIC_TYPES] = {
 }; // basicTypes
 // GENERATED END
 static_assert(
-	sizeof(basicTypes) / sizeof(basicTypes[0]) == ast::BasicType::NUMBER_OF_BASIC_TYPES,
+	sizeof(basicTypes) / sizeof(basicTypes[0]) == ast::BasicKind::NUMBER_OF_BASIC_TYPES,
 	"Each basic type kind should have a corresponding mangler letter"
 );
 

@@ -228,7 +228,7 @@ public:
 
 	void previsit( const ast::EnumInstType * ) {
 		// TODO: Add the meaningful text representation of typed enum
-		ss << (int)ast::BasicType::SignedInt;
+		ss << (int)ast::BasicKind::SignedInt;
 	}
 
 	void previsit( const ast::TypeInstType * type ) {
@@ -254,11 +254,11 @@ public:
 
 	// TODO: Support 0 and 1 with their type names and conversions.
 	void previsit( const ast::ZeroType * ) {
-		ss << (int)ast::BasicType::SignedInt;
+		ss << (int)ast::BasicKind::SignedInt;
 	}
 
 	void previsit( const ast::OneType * ) {
-		ss << (int)ast::BasicType::SignedInt;
+		ss << (int)ast::BasicKind::SignedInt;
 	}
 
 	void previsit( const ast::VoidType * ) {
@@ -365,15 +365,15 @@ struct ExprPrinter : public ast::WithShortCircuiting, ast::WithVisitorRef<ExprPr
 	/// sizeof, alignof, & offsetof are replaced by constant type.
 	// TODO: Extra expression to resolve argument.
 	void previsit( const ast::SizeofExpr * ) {
-		ss << (int)ast::BasicType::LongUnsignedInt;
+		ss << (int)ast::BasicKind::LongUnsignedInt;
 		visit_children = false;
 	}
 	void previsit( const ast::AlignofExpr * ) {
-		ss << (int)ast::BasicType::LongUnsignedInt;
+		ss << (int)ast::BasicKind::LongUnsignedInt;
 		visit_children = false;
 	}
 	void previsit( const ast::UntypedOffsetofExpr * ) {
-		ss << (int)ast::BasicType::LongUnsignedInt;
+		ss << (int)ast::BasicKind::LongUnsignedInt;
 		visit_children = false;
 	}
 
@@ -752,7 +752,7 @@ private:
 	void printGlobal( std::ostream & out ) const {
 		// &? Address of operator.
 		out << "#$ptr<T> $addr T" << std::endl;
-		const int intId = (int)ast::BasicType::SignedInt;
+		const int intId = (int)ast::BasicKind::SignedInt;
 		// ?&&? ?||? ?: Logical operators.
 		out << intId << " $and " << intId << ' ' << intId << std::endl;
 		out << intId << " $or " << intId << ' ' << intId << std::endl;
