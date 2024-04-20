@@ -990,7 +990,7 @@ const ast::Stmt * MutexKeyword::postvisit( const ast::MutexStmt * stmt ) {
 	}
 	ast::CompoundStmt * body =
 			new ast::CompoundStmt( stmt->location, { stmt->stmt } );
-	
+
 	return addStatements( body, stmt->mutexObjs );;
 }
 
@@ -1179,14 +1179,14 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 }
 
 // generates a cast to the void ptr to the appropriate lock type and dereferences it before calling lock or unlock on it
-// used to undo the type erasure done by storing all the lock pointers as void 
+// used to undo the type erasure done by storing all the lock pointers as void
 ast::ExprStmt * MutexKeyword::genVirtLockUnlockExpr( const std::string & fnName, ast::ptr<ast::Expr> expr, const CodeLocation & location, ast::Expr * param ) {
 	return new ast::ExprStmt( location,
 		new ast::UntypedExpr( location,
 			new ast::NameExpr( location, fnName ), {
 				ast::UntypedExpr::createDeref(
 					location,
-					new ast::CastExpr( location, 
+					new ast::CastExpr( location,
 						param,
 						new ast::PointerType( new ast::TypeofType( new ast::UntypedExpr(
 							expr->location,
@@ -1207,7 +1207,7 @@ ast::IfStmt * MutexKeyword::genTypeDiscrimLockUnlock( const std::string & fnName
 
 	//adds an if/elif clause for each lock to assign type from void ptr based on ptr address
 	for ( long unsigned int i = 0; i < args.size(); i++ ) {
-		
+
 		ast::UntypedExpr * ifCond = new ast::UntypedExpr( location,
 			new ast::NameExpr( location, "?==?" ), {
 				ast::deepCopy( thisParam ),
@@ -1215,12 +1215,12 @@ ast::IfStmt * MutexKeyword::genTypeDiscrimLockUnlock( const std::string & fnName
 			}
 		);
 
-		ast::IfStmt * currLockIf = new ast::IfStmt( 
+		ast::IfStmt * currLockIf = new ast::IfStmt(
 			location,
 			ifCond,
 			genVirtLockUnlockExpr( fnName, args.at(i), location, ast::deepCopy( thisParam ) )
 		);
-		
+
 		if ( i == 0 ) {
 			outerLockIf = currLockIf;
 		} else {
@@ -1234,11 +1234,11 @@ ast::IfStmt * MutexKeyword::genTypeDiscrimLockUnlock( const std::string & fnName
 }
 
 void flattenTuple( const ast::UntypedTupleExpr * tuple, std::vector<ast::ptr<ast::Expr>> & output ) {
-    for ( auto & expr : tuple->exprs ) {
-        const ast::UntypedTupleExpr * innerTuple = dynamic_cast<const ast::UntypedTupleExpr *>(expr.get());
-        if ( innerTuple ) flattenTuple( innerTuple, output );
-        else output.emplace_back( ast::deepCopy( expr ));
-    }
+	for ( auto & expr : tuple->exprs ) {
+		const ast::UntypedTupleExpr * innerTuple = dynamic_cast<const ast::UntypedTupleExpr *>(expr.get());
+		if ( innerTuple ) flattenTuple( innerTuple, output );
+		else output.emplace_back( ast::deepCopy( expr ));
+	}
 }
 
 ast::CompoundStmt * MutexKeyword::addStatements(
@@ -1254,13 +1254,13 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 	// std::string lockFnName = mutex_func_namer.newName();
 	// std::string unlockFnName = mutex_func_namer.newName();
 
-    // If any arguments to the mutex stmt are tuples, flatten them
-    std::vector<ast::ptr<ast::Expr>> flattenedArgs;
-    for ( auto & arg : args ) {
-        const ast::UntypedTupleExpr * tuple = dynamic_cast<const ast::UntypedTupleExpr *>(args.at(0).get());
-        if ( tuple ) flattenTuple( tuple, flattenedArgs );
-        else flattenedArgs.emplace_back( ast::deepCopy( arg ));
-    }
+	// If any arguments to the mutex stmt are tuples, flatten them
+	std::vector<ast::ptr<ast::Expr>> flattenedArgs;
+	for ( auto & arg : args ) {
+		const ast::UntypedTupleExpr * tuple = dynamic_cast<const ast::UntypedTupleExpr *>(args.at(0).get());
+		if ( tuple ) flattenTuple( tuple, flattenedArgs );
+		else flattenedArgs.emplace_back( ast::deepCopy( arg ));
+	}
 
 	// Make pointer to the monitors.
 	ast::ObjectDecl * monitors = new ast::ObjectDecl(
@@ -1301,7 +1301,7 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 
 	// adds a nested try stmt for each lock we are locking
 	for ( long unsigned int i = 0; i < flattenedArgs.size(); i++ ) {
-		ast::UntypedExpr * innerAccess = new ast::UntypedExpr( 
+		ast::UntypedExpr * innerAccess = new ast::UntypedExpr(
 			location,
 			new ast::NameExpr( location,"?[?]" ), {
 				new ast::NameExpr( location, "__monitors" ),
@@ -1425,18 +1425,18 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 	// 		}
 	// 	);
 
-	// 	ast::IfStmt * currLockIf = new ast::IfStmt( 
+	// 	ast::IfStmt * currLockIf = new ast::IfStmt(
 	// 		location,
 	// 		ast::deepCopy( ifCond ),
 	// 		genVirtLockUnlockExpr( "lock", args.at(i), location, ast::deepCopy( thisParam ) )
 	// 	);
 
-	// 	ast::IfStmt * currUnlockIf = new ast::IfStmt( 
+	// 	ast::IfStmt * currUnlockIf = new ast::IfStmt(
 	// 		location,
 	// 		ifCond,
 	// 		genVirtLockUnlockExpr( "unlock", args.at(i), location, ast::deepCopy( thisParam ) )
 	// 	);
-		
+
 	// 	if ( i == 0 ) {
 	// 		outerLockIf = currLockIf;
 	// 		outerUnlockIf = currUnlockIf;
@@ -1449,7 +1449,7 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 	// 	lastLockIf = currLockIf;
 	// 	lastUnlockIf = currUnlockIf;
 	// }
-	
+
 	// // add pointer typing if/elifs to body of routines
 	// lock_decl->stmts = new ast::CompoundStmt( location, { outerLockIf } );
 	// unlock_decl->stmts = new ast::CompoundStmt( location, { outerUnlockIf } );

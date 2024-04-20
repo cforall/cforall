@@ -306,7 +306,7 @@ namespace ResolvExpr {
 				assert( array2->dimension );
 				// type unification calls expression unification (mutual recursion)
 				if ( ! unify(array->dimension, array2->dimension,
-				    tenv, need, have, open, widen) ) return;
+					tenv, need, have, open, widen) ) return;
 			}
 
 			result = unifyExact(
@@ -454,7 +454,7 @@ namespace ResolvExpr {
 		const XInstType * handleRefType( const XInstType * inst, const ast::Type * other ) {
 			// check that the other type is compatible and named the same
 			auto otherInst = dynamic_cast< const XInstType * >( other );
-			if (otherInst && inst->name == otherInst->name) 
+			if (otherInst && inst->name == otherInst->name)
 				this->result = otherInst;
 			return otherInst;
 		}
@@ -541,10 +541,10 @@ namespace ResolvExpr {
 		void postvisit( const ast::EnumAttrType * enumAttr ) {
 			// Lazy approach for now
 			if ( auto otherPos = dynamic_cast< const ast::EnumAttrType *>(type2) ) {
-			    if ( enumAttr->match(otherPos) ) {
-				    result = otherPos;
-			    }
-            }  
+				if ( enumAttr->match(otherPos) ) {
+					result = otherPos;
+				}
+			}
 		}
 
 		void postvisit( const ast::TraitInstType * aggrType ) {

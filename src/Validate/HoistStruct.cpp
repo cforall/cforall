@@ -148,22 +148,22 @@ ast::AggregateDecl const * commonParent(
 
 template<typename InstType>
 InstType const * HoistStructCore::preCollectionInstType( InstType const * type ) {
-    if ( !type->base->parent ) return type;
-    if ( type->base->params.empty() ) return type;
+	if ( !type->base->parent ) return type;
+	if ( type->base->params.empty() ) return type;
 
-    InstType * mut = ast::mutate( type );
-    ast::AggregateDecl const * parent =
-        commonParent( this->parent, mut->base->parent );
-    assert( parent );
+	InstType * mut = ast::mutate( type );
+	ast::AggregateDecl const * parent =
+		commonParent( this->parent, mut->base->parent );
+	assert( parent );
 
-    std::vector<ast::ptr<ast::Expr>> args;
-    for ( const ast::ptr<ast::TypeDecl> & param : parent->params ) {
-        args.emplace_back( new ast::TypeExpr( param->location,
-            new ast::TypeInstType( param )
-        ) );
-    }
-    spliceBegin( mut->params, args );
-    return mut;
+	std::vector<ast::ptr<ast::Expr>> args;
+	for ( const ast::ptr<ast::TypeDecl> & param : parent->params ) {
+		args.emplace_back( new ast::TypeExpr( param->location,
+			new ast::TypeInstType( param )
+		) );
+	}
+	spliceBegin( mut->params, args );
+	return mut;
 }
 
 template<typename InstType>

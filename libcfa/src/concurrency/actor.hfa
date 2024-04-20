@@ -298,7 +298,7 @@ static inline void ?{}( executor & this, unsigned int nprocessors, unsigned int 
 	#endif
 
 	if ( seperate_clus ) {
-		cluster = alloc();
+		this.cluster = alloc();
 		(*cluster){};
 	} else cluster = active_cluster();
 
@@ -359,7 +359,7 @@ static inline void ^?{}( executor & this ) with(this) {
 	adelete( request_queues );
 	adelete( worker_req_queues );
 	adelete( processors );
-	if ( seperate_clus ) delete( cluster );
+	if ( seperate_clus ) delete( this.cluster );
 
 	#ifdef ACTOR_STATS // print formatted stats
 	printf("	Actor System Stats:\n");

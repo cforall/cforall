@@ -38,7 +38,7 @@ void fixUniqueIds( ast::TranslationUnit & transUnit );
 
 /// Expand all traits in an assertion list.
 std::vector<ast::ptr<ast::DeclWithType>> expandAssertions(
-        std::vector<ast::ptr<ast::DeclWithType>> const & );
+		std::vector<ast::ptr<ast::DeclWithType>> const & );
 
 }
 

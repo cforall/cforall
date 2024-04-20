@@ -30,7 +30,7 @@
 
 // Must be included in *all* AST classes; should be #undef'd at the end of the file
 #define MUTATE_FRIEND \
-    template<typename node_t> friend node_t * mutate(const node_t * node); \
+	template<typename node_t> friend node_t * mutate(const node_t * node); \
 	template<typename node_t> friend node_t * shallowCopy(const node_t * node);
 
 namespace ast {
@@ -321,14 +321,14 @@ using EnumInstType = SueInstType<EnumDecl>;
 class EnumAttrType final : public Type {
 public:
 	readonly<EnumInstType> instance;
-    EnumAttribute attr;
+	EnumAttribute attr;
 	const Type * accept( Visitor & v ) const override { return v.visit( this ); }
 	EnumAttrType( const EnumInstType * instance, EnumAttribute attr = EnumAttribute::Posn )
 		: instance(instance), attr(attr) {}
-	
-    bool match( const ast::EnumAttrType * other) const {
-        return instance->base->name == other->instance->base->name && attr == other->attr;
-    }
+
+	bool match( const ast::EnumAttrType * other) const {
+		return instance->base->name == other->instance->base->name && attr == other->attr;
+	}
 private:
 	EnumAttrType * clone() const override { return new EnumAttrType{ *this }; }
 	MUTATE_FRIEND

@@ -282,18 +282,18 @@ void Mangler::postvisit( const ast::TypeDecl * decl ) {
 void Mangler::postvisit( const ast::EnumAttrType * enumAttr ) {
 	postvisit( enumAttr->instance );
 	// mangleName += "_pos";
-    switch ( enumAttr->attr )
-    {
-        case ast::EnumAttribute::Label:
-            mangleName += "_label_";
-            break;
-        case ast::EnumAttribute::Posn:
+	switch ( enumAttr->attr )
+	{
+		case ast::EnumAttribute::Label:
+			mangleName += "_label_";
+			break;
+		case ast::EnumAttribute::Posn:
 			mangleName += "_posn_";
-            break;
-        case ast::EnumAttribute::Value:
-            mangleName += "_value_";
-            break;
-    }
+			break;
+		case ast::EnumAttribute::Value:
+			mangleName += "_value_";
+			break;
+	}
 
 }
 

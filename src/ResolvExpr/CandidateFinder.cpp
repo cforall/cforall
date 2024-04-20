@@ -1411,12 +1411,12 @@ namespace {
 		}
 	}
 
-    void Finder::postvisit(const ast::VariableExpr *variableExpr) {
-        // not sufficient to just pass `variableExpr` here, type might have changed
+	void Finder::postvisit(const ast::VariableExpr *variableExpr) {
+		// not sufficient to just pass `variableExpr` here, type might have changed
 
-        auto cand = new Candidate(variableExpr, tenv);
-        candidates.emplace_back(cand);
-    }
+		auto cand = new Candidate(variableExpr, tenv);
+		candidates.emplace_back(cand);
+	}
 
 	void Finder::postvisit( const ast::ConstantExpr * constantExpr ) {
 		addCandidate( constantExpr, tenv );
@@ -2132,8 +2132,8 @@ Cost computeConversionCost(
 }
 
 // get the valueE(...) ApplicationExpr that returns the enum value
-const ast::Expr * getValueEnumCall( 
-	const ast::Expr * expr, 
+const ast::Expr * getValueEnumCall(
+	const ast::Expr * expr,
 	const ResolvExpr::ResolveContext & context, const ast::TypeEnvironment & env ) {
 		auto callExpr = new ast::UntypedExpr(
 			expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );

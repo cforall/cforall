@@ -22,13 +22,13 @@
 #include <unordered_map>  // for unordered_map
 #include <utility>        // for forward, move
 
-/// Wraps a hash table in a persistent data structure, using a technique based 
-/// on the persistent array in Conchon & Filliatre "A Persistent Union-Find 
+/// Wraps a hash table in a persistent data structure, using a technique based
+/// on the persistent array in Conchon & Filliatre "A Persistent Union-Find
 /// Data Structure"
 
 template<typename Key, typename Val,
-         typename Hash = std::hash<Key>, typename Eq = std::equal_to<Key>>
-class PersistentMap 
+		typename Hash = std::hash<Key>, typename Eq = std::equal_to<Key>>
+class PersistentMap
 	: public std::enable_shared_from_this<PersistentMap<Key, Val, Hash, Eq>> {
 public:
 	/// Type of this class
@@ -37,7 +37,7 @@ public:
 	using Ptr = std::shared_ptr<Self>;
 
 	/// Types of version nodes
-	enum Mode { 
+	enum Mode {
 		BASE,  ///< Root node of version tree
 		REM,   ///< Key removal node
 		INS,   ///< Key update node
@@ -62,7 +62,7 @@ private:
 	struct Rem {
 		Ptr base;  ///< Modified map
 		Key key;   ///< Key removed
-		
+
 		template<typename P, typename K>
 		Rem(P&& p, K&& k) : base(std::forward<P>(p)), key(std::forward<K>(k)) {}
 	};
@@ -154,7 +154,7 @@ public:
 				Rem& self = mut_this->as<Rem>();
 				auto it = base_map.find( self.key );
 
-				base->template init<Ins>( 
+				base->template init<Ins>(
 						mut_this->shared_from_this(), std::move(self.key), std::move(it->second) );
 				base->mode = INS;
 
@@ -174,7 +174,7 @@ public:
 				Ins& self = mut_this->as<Ins>();
 				auto it = base_map.find( self.key );
 
-				base->template init<Ins>( 
+				base->template init<Ins>(
 						mut_this->shared_from_this(), std::move(self.key), std::move(it->second) );
 				base->mode = UPD;
 
@@ -266,7 +266,7 @@ public:
 	/// remove value, storing new map in output variable; does nothing if key not in map
 	Ptr erase(const Key& k) {
 		reroot();
-		
+
 		// exit early if key does not exist in map
 		if ( ! as<Base>().count( k ) ) return this->shared_from_this();
 

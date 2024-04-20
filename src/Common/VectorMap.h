@@ -35,15 +35,13 @@ public:
 	typedef const const_value_type& const_reference;
 	typedef const value_type* pointer;
 	typedef const const_value_type* const_pointer;
-	
-	class iterator : public std::iterator< std::random_access_iterator_tag,
-	                                       value_type,
-										   difference_type,
-										   pointer,
-										   reference > {
-	friend class VectorMap;
-	friend class const_iterator;
-	
+
+	class iterator : public std::iterator<
+			std::random_access_iterator_tag,
+			value_type, difference_type, pointer, reference > {
+		friend class VectorMap;
+		friend class const_iterator;
+
 		value_type data;
 
 		iterator(size_type i, std::vector<T>& v) : data(i, v[i]) {}
@@ -98,7 +96,7 @@ public:
 		bool operator== (const iterator& o) const {
 			return data.first == o.data.first && &data.second == &o.data.second;
 		}
-		
+
 		bool operator!= (const iterator& that) const { return !(*this == that); }
 
 		bool operator< (const iterator& o) const { return data.first < o.data.first; }
@@ -110,12 +108,10 @@ public:
 		bool operator>= (const iterator& o) const { return data.first >= o.data.first; }
 	};
 
-	class const_iterator : public std::iterator< std::bidirectional_iterator_tag,
-	                                             const_value_type,
-												  difference_type,
-												  const_pointer,
-												  const_reference  > {
-	friend class VectorMap;
+	class const_iterator : public std::iterator<
+			std::bidirectional_iterator_tag,
+			const_value_type, difference_type, const_pointer, const_reference > {
+		friend class VectorMap;
 		const_value_type data;
 
 		const_iterator(size_type i, const std::vector<T>& v) : data(i, v[i]) {}
@@ -180,7 +176,7 @@ public:
 		bool operator== (const const_iterator& o) const {
 			return data.first == o.data.first && &data.second == &o.data.second;
 		}
-		
+
 		bool operator!= (const const_iterator& that) const { return !(*this == that); }
 
 		bool operator< (const const_iterator& o) const { return data.first < o.data.first; }
@@ -232,14 +228,16 @@ public:
 };
 
 template<typename T>
-typename VectorMap<T>::iterator operator+ (typename VectorMap<T>::difference_type i, 
-                                           const typename VectorMap<T>::iterator& it) {
+typename VectorMap<T>::iterator operator+(
+		typename VectorMap<T>::difference_type i,
+		const typename VectorMap<T>::iterator& it) {
 	return it + i;
 }
 
 template<typename T>
-typename VectorMap<T>::const_iterator operator+ (typename VectorMap<T>::difference_type i, 
-                                                 const typename VectorMap<T>::const_iterator& it) {
+typename VectorMap<T>::const_iterator operator+(
+		typename VectorMap<T>::difference_type i,
+		const typename VectorMap<T>::const_iterator& it) {
 	return it + i;
 }
 

@@ -414,7 +414,7 @@ int main() {
 	enum { PER_ROW = 6 };
 	code << "\t" << BYMK << endl;
 	code << "\t#define BT ast::BasicKind::" << endl;
-	code << "\tstatic const BT Kind commonTypes[BT NUMBER_OF_BASIC_TYPES][BT NUMBER_OF_BASIC_TYPES] = { // nearest common ancestor" << endl
+	code << "\tstatic const ast::BasicKind commonTypes[BT NUMBER_OF_BASIC_TYPES][BT NUMBER_OF_BASIC_TYPES] = { // nearest common ancestor" << endl
 	     << "\t\t/*\t\t ";
 	for ( int r = 0; r < NUMBER_OF_BASIC_TYPES; r += 1 ) { // titles
 		code << setw(24) << graph[r].abbrev;

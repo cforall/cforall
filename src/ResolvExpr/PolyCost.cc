@@ -28,19 +28,19 @@ public:
 	int result;
 	const ast::TypeEnvironment &env_;
 
-	PolyCost( const ast::SymbolTable & symtab, const ast::TypeEnvironment & env ) 
+	PolyCost( const ast::SymbolTable & symtab, const ast::TypeEnvironment & env )
 	: symtab( symtab ), result( 0 ), env_( env ) {}
 
 	void previsit( const ast::TypeInstType * type ) {
-		if ( const ast::EqvClass * eqv = env_.lookup( *type ) ) /* && */ if ( eqv->bound ) {
+		if ( const ast::EqvClass * eqv = env_.lookup( *type ) ; eqv && eqv->bound ) {
 			if ( const ast::TypeInstType * otherType = eqv->bound.as< ast::TypeInstType >() ) {
 				if ( symtab.lookupType( otherType->name ) ) {
 					// Bound to opaque type.
-					result += 1;
+					result = 1;
 				}
 			} else {
 				// Bound to concrete type.
-				result += 1;
+				result = 1;
 			}
 		}
 	}
@@ -51,9 +51,7 @@ public:
 int polyCost(
 	const ast::Type * type, const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
 ) {
-	ast::Pass<PolyCost> costing( symtab, env );
-	type->accept( costing );
-	return (costing.core.result > 0) ? 1 : 0;
+	return ast::Pass<PolyCost>::read( type, symtab, env );
 }
 
 } // namespace ResolvExpr
