@@ -117,21 +117,6 @@ public:
 		return visitor.get_result();
 	}
 
-	// Versions of the above for older compilers.
-	template< typename... Args >
-	static void run( TranslationUnit & decls ) {
-		Pass<core_t> visitor;
-		accept_all( decls, visitor );
-	}
-
-	template< typename node_type, typename... Args >
-	static auto read( node_type const * node ) {
-		Pass<core_t> visitor;
-		auto const * temp = node->accept( visitor );
-		assert( temp == node );
-		return visitor.get_result();
-	}
-
 	/// Visit function declarations
 	const ast::DeclWithType *     visit( const ast::ObjectDecl           * ) override final;
 	const ast::DeclWithType *     visit( const ast::FunctionDecl         * ) override final;
