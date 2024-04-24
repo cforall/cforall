@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 19 09:47:55 2024
-// Update Count     : 826
+// Last Modified On : Tue Apr 23 14:05:21 2024
+// Update Count     : 963
 //
 
 #pragma once
@@ -120,7 +120,8 @@ static inline forall( T & | sized(T) ) {
 } // distribution
 
 /*
-	FIX ME : fix alloc interface after Ticker Number 214 is resolved, define and add union to S_fill. Then, modify postfix-fill functions to support T * with nmemb, char, and T object of any size. Finally, change alloc_internal.
+	FIX ME : fix alloc interface after Ticker Number 214 is resolved, define and add union to S_fill. Then, modify
+	postfix-fill functions to support T * with nmemb, char, and T object of any size. Finally, change alloc_internal.
 	Or, just follow the instructions below for that.
 
 	1. Replace the current forall-block that contains defintions of S_fill and S_realloc with following:
@@ -164,20 +165,37 @@ static inline forall( T & | sized(T) ) {
 		} // alloc_internal$
 */
 
-typedef struct S_align { inline size_t;  } T_align;
-typedef struct S_resize { inline void *;  }	T_resize;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic ignored "-Wuninitialized"
 
-forall( T & ) {
-	struct S_fill { char tag; char c; size_t size; T * at; char t[50]; };
-	struct S_realloc { inline T *; };
+struct T_align { size_t align; };
+struct T_resize { void * addr; };
+struct T_realloc { void * addr; };
+forall( T & ) struct T_fill {
+	// 'N' => no fill, 'c' => fill with character c, 'a' => fill first N array elements from another array,
+	// 'A' => fill all array elements from another array, 'T' => fill using a T value.
+	char tag;
+	size_t nelem;   // number of elements copied from "at" (used with tag 'a')
+//	union {
+		char c;
+		T * at;
+		char t[64]; // T t;
+//	};
+};
+
+#pragma GCC diagnostic pop
+
+static inline {
+	T_align ?`align( size_t a ) { return (T_align){ a }; }
+	T_resize ?`resize( void * a ) { return (T_resize){ a }; }
+	T_realloc ?`realloc( void * a ) { return (T_realloc){ a }; }
 }
 
-static inline T_align ?`align( size_t a ) { return (T_align){a}; }
-static inline T_resize ?`resize( void * a )	{ return (T_resize){a}; }
-
 static inline forall( T & | sized(T) ) {
-	S_fill(T) ?`fill( T t ) {
-		S_fill(T) ret = { 't' };
+	T_fill(T) ?`fill( char c ) { return (T_fill(T)){ 'c', 0, c }; }
+	T_fill(T) ?`fill( T t ) {
+		T_fill(T) ret = { 'T' };
 		size_t size = sizeof(T);
 		if ( size > sizeof(ret.t) ) {
 			abort( "ERROR: const object of size greater than 50 bytes given for dynamic memory fill\n" );
@@ -185,81 +203,85 @@ static inline forall( T & | sized(T) ) {
 		memcpy( &ret.t, &t, size );
 		return ret;
 	}
-	S_fill(T) ?`fill( zero_t ) = void; // FIX ME: remove this once ticket 214 is resolved
-	S_fill(T) ?`fill( T * a ) { return (S_fill(T)){ 'T', '0', 0, a }; } // FIX ME: remove this once ticket 214 is resolved
-	S_fill(T) ?`fill( char c ) { return (S_fill(T)){ 'c', c };	}
-	S_fill(T) ?`fill( T a[], size_t nmemb ) { return (S_fill(T)){ 'a', '0', nmemb * sizeof(T), a }; }
+	T_fill(T) ?`fill( T a[] ) { return (T_fill(T)){ 'A', 0, '\0', a }; } // FIX ME: remove this once ticket 214 is resolved
+	T_fill(T) ?`fill( T a[], size_t nelem ) { return (T_fill(T)){ 'a', nelem * sizeof(T), '\0', a }; }
 
-	S_realloc(T) ?`realloc ( T * a ) { return (S_realloc(T)){a}; }
-
-	T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T) Fill ) {
-		T * ptr = NULL;
-		size_t size = sizeof(T);
+	// private interface
+	T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t Align, T_fill(T) Fill ) {
+		T * ptr;
+		size_t tsize = sizeof(T);
 		size_t copy_end = 0;
 
-		if ( Resize ) {
-			ptr = (T*)(void *)resize( (void *)Resize, Align, Dim * size );
-		} else if ( Realloc ) {
-			if ( Fill.tag != '0' ) copy_end = min(malloc_size( Realloc ), Dim * size );
-			ptr = (T *)(void *)realloc( (void *)Realloc, Align, Dim * size );
+		if ( Resize.addr ) {
+			ptr = (T *)(void *)resize( Resize.addr, Align, Dim * tsize );
+		} else if ( Realloc.addr ) {
+			if ( Fill.tag != 'N' ) copy_end = min(malloc_size( Realloc.addr ), Dim * tsize );
+			ptr = (T *)(void *)realloc( Realloc.addr, Align, Dim * tsize );
 		} else {
-			ptr = (T *)(void *) memalign( Align, Dim * size );
-		}
+			ptr = (T *)(void *)memalign( Align, Dim * tsize );
+		} // if
 
 		if ( Fill.tag == 'c' ) {
-			memset( (char *)ptr + copy_end, (int)Fill.c, Dim * size - copy_end );
-		} else if ( Fill.tag == 't' ) {
-			for ( i; copy_end ~ Dim * size ~ size ) {
-				#pragma GCC diagnostic push
-				#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-				assert( size <= sizeof(Fill.t) );
-				memcpy( (char *)ptr + i, &Fill.t, size );
-				#pragma GCC diagnostic pop
-			}
-		} else if ( Fill.tag == 'a' ) {
-			memcpy( (char *)ptr + copy_end, Fill.at, min(Dim * size - copy_end, Fill.size) );
+			memset( (char *)ptr + copy_end, (int)Fill.c, Dim * tsize - copy_end );
 		} else if ( Fill.tag == 'T' ) {
-			memcpy( (char *)ptr + copy_end, Fill.at, Dim * size );
-		}
-
+			for ( i; copy_end ~ Dim * tsize ~ tsize ) {
+				assert( tsize <= sizeof(Fill.t) );
+				memcpy( (char *)ptr + i, &Fill.t, tsize );
+			} // for
+		} else if ( Fill.tag == 'a' ) {
+			memcpy( (char *)ptr + copy_end, Fill.at, min( Dim * tsize - copy_end, Fill.nelem ) );
+		} else if ( Fill.tag == 'A' ) {
+			memcpy( (char *)ptr + copy_end, Fill.at, Dim * tsize );
+		} // if
 		return ptr;
 	} // alloc_internal$
 
-	forall( List ... | { T * alloc_internal$( void *, T *, size_t, size_t, S_fill(T), List ); } ) {
-		T * alloc_internal$( void *, T *, size_t Align, size_t Dim, S_fill(T) Fill, T_resize Resize, List rest ) {
-	        return alloc_internal$( Resize, (T*)0p, Align, Dim, Fill, rest);
+	// Dim is a fixed (optional first) parameter, and hence is not set using a postfix function. A dummy parameter is
+	// being overwritten by the postfix argument in the ttype.
+	forall( List ... | { T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t Align, T_fill(T) Fill, List ); } ) {
+		// middle interface
+		T * alloc_internal$( size_t Dim, T_resize dummy, T_realloc Realloc, size_t Align, T_fill(T) Fill, T_resize Resize, List rest ) {
+	        return alloc_internal$( Dim, Resize, (T_realloc){0p}, Align, Fill, rest );
 		}
-
-		T * alloc_internal$( void *, T *, size_t Align, size_t Dim, S_fill(T) Fill, S_realloc(T) Realloc, List rest ) {
-	        return alloc_internal$( (void*)0p, Realloc, Align, Dim, Fill, rest);
+		T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc dummy, size_t Align, T_fill(T) Fill, T_realloc Realloc, List rest ) {
+	        return alloc_internal$( Dim, (T_resize){0p}, Realloc, Align, Fill, rest );
 		}
-
-		T * alloc_internal$( void * Resize, T * Realloc, size_t, size_t Dim, S_fill(T) Fill, T_align Align, List rest ) {
-	        return alloc_internal$( Resize, Realloc, Align, Dim, Fill, rest);
+		T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t dummy, T_fill(T) Fill, T_align Align, List rest ) {
+	        return alloc_internal$( Dim, Resize, Realloc, Align.align, Fill, rest );
 		}
-
-		T * alloc_internal$( void * Resize, T * Realloc, size_t Align, size_t Dim, S_fill(T), S_fill(T) Fill, List rest ) {
-	        return alloc_internal$( Resize, Realloc, Align, Dim, Fill, rest );
+		T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t Align, T_fill(T) dummy, T_fill(T) Fill, List rest ) {
+	        return alloc_internal$( Dim, Resize, Realloc, Align, Fill, rest );
 		}
-
-	    T * alloc( List all ) {
-	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), (size_t)1, (S_fill(T)){'0'}, all );
+		// public interface
+	    T * alloc( List rest ) {
+	    	return alloc_internal$( (size_t)1, (T_resize){0p}, (T_realloc){0p}, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), (T_fill(T)){'N'}, rest );
 	    }
-
-	    T * alloc( size_t dim, List all ) {
-	    	return alloc_internal$( (void*)0p, (T*)0p, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), dim, (S_fill(T)){'0'}, all );
+	    T * alloc( size_t Dim, List rest ) {
+	    	return alloc_internal$( Dim, (T_resize){0p}, (T_realloc){0p}, (_Alignof(T) > libAlign() ? _Alignof(T) : libAlign()), (T_fill(T)){'N'}, rest );
 	    }
 	} // distribution List
 } // distribution T
 
 static inline forall( T & | sized(T) ) {
 	// CFA safe initialization/copy, i.e., implicit size specification, non-array types
-	T * memset( T * dest, char fill ) {
-		return (T *)memset( dest, fill, sizeof(T) );
+	T * memset( T * dest, char fill ) {					// all combinations of pointer/reference
+		return (T *)memset( dest, fill, sizeof(T) );	// C memset
+	} // memset
+	T * memset( T & dest, char fill ) {
+		return (T *)memset( &dest, fill, sizeof(T) );	// C memset
 	} // memset
 
-	T * memcpy( T * dest, const T * src ) {
-		return (T *)memcpy( dest, src, sizeof(T) );
+	T * memcpy( T * dest, const T * src ) {				// all combinations of pointer/reference
+		return (T *)memcpy( dest, src, sizeof(T) );		// C memcpy
+	} // memcpy
+	T * memcpy( T & dest, const T & src ) {
+		return (T *)memcpy( &dest, &src, sizeof(T) );	// C memcpy
+	} // memcpy
+	T * memcpy( T * dest, const T & src ) {
+		return (T *)memcpy( dest, &src, sizeof(T) );	// C memcpy
+	} // memcpy
+	T * memcpy( T & dest, const T * src ) {
+		return (T *)memcpy( &dest, src, sizeof(T) );	// C memcpy
 	} // memcpy
 
 	// CFA safe initialization/copy, i.e., implicit size specification, array types

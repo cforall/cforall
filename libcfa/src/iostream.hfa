@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  6 18:35:54 2024
-// Update Count     : 743
+// Last Modified On : Sun Apr 21 07:32:19 2024
+// Update Count     : 744
 //
 
 #pragma once
@@ -159,9 +159,9 @@ forall( ostype & | basic_ostream( ostype ) ) {
 } // distribution
 
 // tuples
-forall( ostype &, T, Params... | writeable( T, ostype ) | { ostype & ?|?( ostype &, Params ); } ) {
-	ostype & ?|?( ostype & os, T arg, Params rest );
-	void ?|?( ostype & os, T arg, Params rest );
+forall( ostype &, T, List ... | writeable( T, ostype ) | { ostype & ?|?( ostype &, List ); } ) {
+	ostype & ?|?( ostype & os, T arg, List rest );
+	void ?|?( ostype & os, T arg, List rest );
 } // distribution
 
 // writes the range [begin, end) to the given stream

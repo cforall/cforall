@@ -238,8 +238,7 @@ static void ^?{}(raw_cache_instance & this) { free(this.range);}
 
 // Returns a 2D array of instances of size [cpu count][cache levels]
 // where cache level doesn't include instruction caches
-raw_cache_instance ** build_raw_cache_table(unsigned cpus_c, idx_range_t cpus, unsigned idxs, unsigned cache_levels)
-{
+raw_cache_instance ** build_raw_cache_table(unsigned cpus_c, idx_range_t cpus, unsigned idxs, unsigned cache_levels) {
 	raw_cache_instance ** raw = alloc(cpus_c, '\0'`fill);
 
 	RangeIter rc = { cpus };

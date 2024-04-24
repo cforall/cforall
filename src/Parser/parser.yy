@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar 16 18:19:23 2024
-// Update Count     : 6617
+// Last Modified On : Tue Apr 23 15:39:29 2024
+// Update Count     : 6620
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -492,7 +492,7 @@ if ( N ) {																		\
 
 %type<decl> exception_declaration
 
-%type<decl> field_declaration_list_opt field_declaration field_declaring_list_opt field_declarator field_abstract_list_opt field_abstract
+%type<decl> field_declaration_list_opt field_declaration field_declaring_list_opt field_declaring_list field_declarator field_abstract_list_opt field_abstract
 %type<expr> field field_name_list field_name fraction_constants_opt
 
 %type<decl> external_function_definition function_definition function_array function_declarator function_no_ptr function_ptr
@@ -2681,8 +2681,12 @@ field_declaration:
 field_declaring_list_opt:
 	// empty
 		{ $$ = nullptr; }
-	| field_declarator
-	| field_declaring_list_opt ',' attribute_list_opt field_declarator
+	| field_declaring_list
+	;
+
+field_declaring_list:
+	field_declarator
+	| field_declaring_list ',' attribute_list_opt field_declarator
 		{ $$ = $1->set_last( $4->addQualifiers( $3 ) ); }
 	;
 

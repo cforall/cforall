@@ -29,104 +29,104 @@
 namespace ResolvExpr {
 
 namespace {
-	class RenamingData {
-		int level = 0;
-		int resetCount = 0;
 
-		int next_expr_id = 1;
-		int next_usage_id = 1;
-		ScopedMap< std::string, std::string > nameMap;
-		ScopedMap< std::string, ast::TypeEnvKey > idMap;
-	public:
-		void reset() {
-			level = 0;
-			++resetCount;
-		}
+class RenamingData {
+	int level = 0;
+	int resetCount = 0;
 
-		void nextUsage() {
-			++next_usage_id;
-		}
+	int next_expr_id = 1;
+	int next_usage_id = 1;
+	ScopedMap< std::string, std::string > nameMap;
+	ScopedMap< std::string, ast::TypeEnvKey > idMap;
+public:
+	void reset() {
+		level = 0;
+		++resetCount;
+	}
 
-		const ast::TypeInstType * rename( const ast::TypeInstType * type ) {
-			auto it = idMap.find( type->name );
-			if ( it == idMap.end() ) return type;
+	void nextUsage() {
+		++next_usage_id;
+	}
 
-			// Unconditionally mutate because map will *always* have different name.
-			ast::TypeInstType * mut = ast::shallowCopy( type );
-			// Reconcile base node since some copies might have been made.
-			mut->base = it->second.base;
-			mut->formal_usage = it->second.formal_usage;
-			mut->expr_id = it->second.expr_id;
-			return mut;
-		}
+	const ast::TypeInstType * rename( const ast::TypeInstType * type ) {
+		auto it = idMap.find( type->name );
+		if ( it == idMap.end() ) return type;
 
-		const ast::FunctionType * openLevel( const ast::FunctionType * type, RenameMode mode ) {
-			if ( type->forall.empty() ) return type;
-			idMap.beginScope();
+		// Unconditionally mutate because map will *always* have different name.
+		ast::TypeInstType * mut = ast::shallowCopy( type );
+		// Reconcile base node since some copies might have been made.
+		mut->base = it->second.base;
+		mut->formal_usage = it->second.formal_usage;
+		mut->expr_id = it->second.expr_id;
+		return mut;
+	}
 
-			// Load new names from this forall clause and perform renaming.
-			auto mutType = ast::shallowCopy( type );
-			// assert( type == mutType && "mutated type must be unique from ForallSubstitutor" );
-			for ( auto & td : mutType->forall ) {
-				auto mut = ast::shallowCopy( td.get() );
-				// assert( td == mutDecl && "mutated decl must be unique from ForallSubstitutor" );
+	const ast::FunctionType * openLevel( const ast::FunctionType * type, RenameMode mode ) {
+		if ( type->forall.empty() ) return type;
+		idMap.beginScope();
 
-				if (mode == GEN_EXPR_ID) {
-					mut->expr_id = next_expr_id;
-					mut->formal_usage = -1;
-					++next_expr_id;
-				}
-				else if (mode == GEN_USAGE) {
-					assertf(mut->expr_id, "unfilled expression id in generating candidate type");
-					mut->formal_usage = next_usage_id;
-				}
-				else {
-					assert(false);
-				}
-				idMap[ td->name ] = ast::TypeEnvKey( *mut );
+		// Load new names from this forall clause and perform renaming.
+		auto mutType = ast::shallowCopy( type );
+		// assert( type == mutType && "mutated type must be unique from ForallSubstitutor" );
+		for ( auto & td : mutType->forall ) {
+			auto mut = ast::shallowCopy( td.get() );
+			// assert( td == mutDecl && "mutated decl must be unique from ForallSubstitutor" );
 
-				td = mut;
+			if ( mode == GEN_EXPR_ID ) {
+				mut->expr_id = next_expr_id;
+				mut->formal_usage = -1;
+				++next_expr_id;
+			} else if ( mode == GEN_USAGE ) {
+				assertf( mut->expr_id, "unfilled expression id in generating candidate type" );
+				mut->formal_usage = next_usage_id;
+			} else {
+				assert(false);
 			}
+			idMap[ td->name ] = ast::TypeEnvKey( *mut );
 
-			return mutType;
-		}
-
-		void closeLevel( const ast::FunctionType * type ) {
-			if ( type->forall.empty() ) return;
-			idMap.endScope();
-		}
-	};
-
-	// Global State:
-	RenamingData renaming;
-
-	struct RenameVars final : public ast::PureVisitor /*: public ast::WithForallSubstitutor*/ {
-		RenameMode mode;
-
-		const ast::FunctionType * previsit( const ast::FunctionType * type ) {
-			return renaming.openLevel( type, mode );
+			td = mut;
 		}
 
-		/*
-		const ast::StructInstType * previsit( const ast::StructInstType * type ) {
-			return renaming.openLevel( type );
-		}
-		const ast::UnionInstType * previsit( const ast::UnionInstType * type ) {
-			return renaming.openLevel( type );
-		}
-		const ast::TraitInstType * previsit( const ast::TraitInstType * type ) {
-			return renaming.openLevel( type );
-		}
-		*/
+		return mutType;
+	}
 
-		const ast::TypeInstType * previsit( const ast::TypeInstType * type ) {
-			if (mode == GEN_USAGE && !type->formal_usage) return type; // do not rename an actual type
-			return renaming.rename( type );
-		}
-		void postvisit( const ast::FunctionType * type ) {
-			renaming.closeLevel( type );
-		}
-	};
+	void closeLevel( const ast::FunctionType * type ) {
+		if ( type->forall.empty() ) return;
+		idMap.endScope();
+	}
+};
+
+// Global State:
+RenamingData renaming;
+
+struct RenameVars final : public ast::PureVisitor /*: public ast::WithForallSubstitutor*/ {
+	RenameMode mode;
+
+	const ast::FunctionType * previsit( const ast::FunctionType * type ) {
+		return renaming.openLevel( type, mode );
+	}
+
+	/*
+	const ast::StructInstType * previsit( const ast::StructInstType * type ) {
+		return renaming.openLevel( type );
+	}
+	const ast::UnionInstType * previsit( const ast::UnionInstType * type ) {
+		return renaming.openLevel( type );
+	}
+	const ast::TraitInstType * previsit( const ast::TraitInstType * type ) {
+		return renaming.openLevel( type );
+	}
+	*/
+
+	const ast::TypeInstType * previsit( const ast::TypeInstType * type ) {
+		// Do not rename an actual type.
+		if ( mode == GEN_USAGE && !type->formal_usage ) return type;
+		return renaming.rename( type );
+	}
+	void postvisit( const ast::FunctionType * type ) {
+		renaming.closeLevel( type );
+	}
+};
 
 } // namespace
 

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb  3 07:56:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct 14 09:31:39 2022
-// Update Count     : 491
+// Last Modified On : Tue Apr 23 14:04:11 2024
+// Update Count     : 492
 //
 
 #include <assert.h>
@@ -239,7 +239,7 @@ int main( void ) {
 	sout | "CFA posix_memalign" | stp->x | stp->y;
 	free( stp );
 
-	posix_memalign( &stp, Alignment );                  // CFA posix_memalign
+	posix_memalign( &stp, Alignment );					// CFA posix_memalign
 	*stp = (Struct){ 42, 42.5 };
 	assert( (uintptr_t)stp % Alignment == 0 );
 	sout | "CFA posix_memalign" | stp->x | stp->y;
@@ -274,7 +274,7 @@ int main( void ) {
 	// alignment, array types
 	sout | nl;
 
-	stp = alloc( dim, Alignment`align );                // CFA array memalign
+	stp = alloc( dim, Alignment`align );				// CFA array memalign
 	assert( (uintptr_t)stp % Alignment == 0 );
 	for ( i; dim ) { stp[i] = (Struct){ 42, 42.5 }; }
 	sout | "CFA array alloc_align";
@@ -315,9 +315,9 @@ int main( void ) {
 	// data, non-array types
 	sout | nl;
 
-	memset( &st, fill );                                // CFA memset, type safe
+	memset( st, fill );									// CFA memset, type safe
 	sout | "CFA memset" | hex(st.x) | hex(st.y);
-	memcpy( &st1, &st );                                // CFA memcpy, type safe
+	memcpy( st1, st );									// CFA memcpy, type safe
 	sout | "CFA memcpy" | hex(st1.x) | hex(st1.y);
 
 

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar 17 08:25:32 2024
-// Update Count     : 699
+// Last Modified On : Sun Apr 21 16:17:22 2024
+// Update Count     : 700
 //
 
 #include "stdlib.hfa"
@@ -30,8 +30,8 @@
 
 // Cforall allocation/deallocation and constructor/destructor, array types
 
-forall( T & | sized(T), TT... | { void ?{}( T &, TT ); } )
-T * anew( size_t dim, TT p ) {
+forall( T & | sized(T), Parms ... | { void ?{}( T &, Parms ); } )
+T * anew( size_t dim, Parms p ) {
 	T * arr = alloc( dim );
 	for ( i; dim ) {
 		(arr[i]){ p };									// run constructor
@@ -50,8 +50,8 @@ void adelete( T arr[] ) {
 	} // if
 } // adelete
 
-forall( T & | sized(T) | { void ^?{}( T & ); }, TT... | { void adelete( TT ); } )
-void adelete( T arr[], TT rest ) {
+forall( T & | sized(T) | { void ^?{}( T & ); }, List ... | { void adelete( List ); } )
+void adelete( T arr[], List rest ) {
 	if ( arr ) {										// ignore null
 		size_t dim = malloc_size( arr ) / sizeof( T );
 		for ( i; 0 -~= dim - 1 ) {						// reverse allocation order, must be unsigned

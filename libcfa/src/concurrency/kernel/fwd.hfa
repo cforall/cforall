@@ -373,7 +373,7 @@ extern "C" {
 				// Should be fulfilled, could be in progress but it's out of date if so
 				// since if that is the case, the oneshot was fulfilled (unparking this thread)
 				// and the oneshot should not be needed any more
-				__attribute__((unused)) struct oneshot * was = this.ptr;
+				struct oneshot * was __attribute__((unused)) = this.ptr; // used in option verify
 				/* paranoid */ verifyf( was == future_FULFILLED, "Expected this.ptr to be 1p, was %p\n", was );
 
 				// Mark the future as fulfilled, to be consistent
