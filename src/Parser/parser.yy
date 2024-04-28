@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 23 15:39:29 2024
-// Update Count     : 6620
+// Last Modified On : Sat Apr 27 16:23:14 2024
+// Update Count     : 6625
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1697,7 +1697,7 @@ fall_through_name:										// CFA
 	;
 
 with_statement:
-	WITH '(' tuple_expression_list ')' statement
+	WITH '(' type_list ')' statement					// support scoped enumeration
 		{ $$ = new StatementNode( build_with( yylloc, $3, $5 ) ); }
 	;
 
@@ -3358,7 +3358,7 @@ external_function_definition:
 with_clause_opt:
 	// empty
 		{ $$ = nullptr; forall = false; }
-	| WITH '(' tuple_expression_list ')' attribute_list_opt
+	| WITH '(' type_list ')' attribute_list_opt			// support scoped enumeration
 		{
 			$$ = $3; forall = false;
 			if ( $5 ) {
