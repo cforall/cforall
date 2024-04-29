@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <fstream.hfa>
 
 enum(int) IntEnum {
     zero,
@@ -11,12 +11,12 @@ enum(int) IntEnum {
 };
 
 int main() {
-    printf("0=%d\n", zero);
-    printf("1=%d\n", one);
-    printf("1000=%d\n", thousand);
-    printf("1001=%d\n", thousand_one);
-    printf("2000=%d\n", two_thousand);
-    printf("2001=%d\n", two_thousand_one);
-    printf("2002=%d\n", two_thousand_two);
+    sout | "0=" | zero;
+    sout | "1=" | one;
+    sout | "1000=" | thousand;
+    sout | "1001=" | thousand_one;
+    sout | "2000=" | two_thousand;
+    sout | "2001=" | two_thousand_one;
+    sout | "2002=" | two_thousand_two;
     return 0;
 }

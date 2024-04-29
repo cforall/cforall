@@ -324,6 +324,9 @@ int main( int argc, char * argv[] ) {
 		PASS( "Hoist Struct", Validate::hoistStruct, transUnit );
 		PASS( "Validate Generic Parameters", Validate::fillGenericParameters, transUnit );
 		PASS( "Translate Dimensions", Validate::translateDimensionParameters, transUnit );
+		// Need to happen before fixing returns because implementEnumFunc has ReturnStmt
+		
+		PASS( "Generate Enum Attributes Functions", Validate::implementEnumFunc, transUnit );
 		PASS( "Check Function Returns", Validate::checkReturnStatements, transUnit );
 		PASS( "Fix Return Statements", InitTweak::fixReturnStatements, transUnit );
 		PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords, transUnit );
@@ -332,8 +335,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls, transUnit );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines, transUnit );
-		PASS( "Generate Enum Attributes Functions", Validate::implementEnumFunc, transUnit );
-
+		
 		PASS( "Implement Actors", Concurrency::implementActors, transUnit );
 		PASS( "Implement Virtual Destructors", Virtual::implementVirtDtors, transUnit );
 		PASS( "Implement Mutex", Concurrency::implementMutex, transUnit );

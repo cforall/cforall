@@ -29,7 +29,7 @@ public:
 
 	void genAttrFunctions();
 	void genSuccPredPosn();
-	void genSuccPredDecl();
+	// void genSuccPredDecl();
 
 	void appendReturnThis(ast::FunctionDecl* decl) {
 		assert(1 <= decl->params.size());
@@ -72,11 +72,30 @@ private:
 
 	const ast::Decl* getDecl() const { return decl; }
 
+	// Implement Bounded trait for enum
+    void genBoundedFunctions();
+	// Implement Serial trait for enum
+	void genSerialTraitFuncs();
+
+	// Bounded trait
+	ast::FunctionDecl* genLowerBoundProto() const;
+	ast::FunctionDecl* genUpperBoundProto() const;
+	void genLowerBoundBody(ast::FunctionDecl* func) const;
+	void genUpperBoundBody(ast::FunctionDecl* func) const;
+
 	ast::FunctionDecl* genPosnProto() const;
 	ast::FunctionDecl* genLabelProto() const;
 	ast::FunctionDecl* genValueProto() const;
+
+	// Serial trait
+	ast::FunctionDecl* genFromIntProto() const;
+	ast::FunctionDecl* genFromInstanceProto() const;
 	ast::FunctionDecl* genSuccProto() const;
 	ast::FunctionDecl* genPredProto() const;
+
+	void genFromIntBody(ast::FunctionDecl *) const; 
+	void genFromInstanceBody(ast::FunctionDecl *) const;
+	////////////////
 
 	ast::FunctionDecl* genSuccPosProto() const;
 	ast::FunctionDecl* genPredPosProto() const;
@@ -288,11 +307,11 @@ void EnumAttrFuncGenerator::produceForwardDecl(const ast::FunctionDecl* decl) {
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genPosnProto() const {
-	return genProto(
-		"posE",
-		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
-		{new ast::ObjectDecl(getLocation(), "_ret",
-			new ast::BasicType(ast::BasicKind::UnsignedInt))});
+    return genProto(
+        "posE",
+        {new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
+        {new ast::ObjectDecl(getLocation(), "_ret",
+            new ast::BasicType(ast::BasicKind::UnsignedInt))});
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
@@ -312,6 +331,65 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
 		                     ast::deepCopy(decl->base))});
 }
 
+ast::FunctionDecl* EnumAttrFuncGenerator::genFromIntProto() const {
+	return genProto(
+		"fromInt",
+		{new ast::ObjectDecl(getLocation(), "_i", new ast::BasicType(ast::BasicKind::UnsignedInt))},
+		{new ast::ObjectDecl(getLocation(), "_ret", new ast::EnumInstType(decl))}
+	);
+}
+
+ast::FunctionDecl* EnumAttrFuncGenerator::genFromInstanceProto() const {
+	return genProto(
+		"fromInstance",
+		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
+		{new ast::ObjectDecl(getLocation(), "_ret", new ast::BasicType(ast::BasicKind::UnsignedInt))}
+	);
+}
+
+void EnumAttrFuncGenerator::genFromIntBody(ast::FunctionDecl* func) const {
+	auto params = func->params;
+	assert( params.size() == 1 );
+	auto param = params.front();
+	auto castExpr = new ast::CastExpr(
+		func->location,
+		new ast::VariableExpr(func->location, param),
+		new ast::EnumInstType(decl),
+		ast::GeneratedFlag::ExplicitCast
+	);
+	func->stmts = new ast::CompoundStmt(
+		func->location, {new ast::ReturnStmt(func->location, castExpr)}
+	);
+}
+
+void EnumAttrFuncGenerator::genFromInstanceBody(ast::FunctionDecl* func) const {
+	auto params = func->params;
+	assert( params.size() == 1 );
+	auto param = params.front();
+	ast::UntypedExpr* untyped = ast::UntypedExpr::createCall(
+		func->location, "posE", { new ast::VariableExpr(func->location, param) });
+	func->stmts = new ast::CompoundStmt(
+		func->location, {new ast::ReturnStmt(func->location, untyped)}
+	);
+}
+
+void EnumAttrFuncGenerator::genSerialTraitFuncs() {
+	auto fromIntProto = genFromIntProto();
+	produceForwardDecl(fromIntProto);
+	genFromIntBody(fromIntProto);
+	produceDecl(fromIntProto);
+
+	auto fromInstanceProto = genFromInstanceProto();
+	produceForwardDecl(fromInstanceProto);
+	genFromInstanceBody(fromInstanceProto);
+	produceDecl(fromInstanceProto);
+
+	auto succProto = genSuccProto();
+	auto predProto = genPredProto();
+	produceForwardDecl(succProto);
+	produceForwardDecl(predProto);
+}
+
 ast::FunctionDecl* EnumAttrFuncGenerator::genSuccProto() const {
 	return genProto(
 		"succ",
@@ -326,6 +404,47 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genPredProto() const {
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(getLocation(), "_ret",
 		                     new ast::EnumInstType(decl))});
+}
+
+ast::FunctionDecl* EnumAttrFuncGenerator::genLowerBoundProto() const {
+    return genProto("lowerBound", {}, {
+        new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))
+    });
+}
+
+ast::FunctionDecl* EnumAttrFuncGenerator::genUpperBoundProto() const {
+    return genProto("upperBound", {}, {
+        new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))
+    });
+}
+
+void EnumAttrFuncGenerator::genLowerBoundBody(ast::FunctionDecl* func) const {
+	const CodeLocation & loc = func->location;
+	auto mem = decl->members.front();
+	// auto expr = new ast::QualifiedNameExpr( loc, decl, mem->name );
+	// expr->result = new ast::EnumInstType( decl );
+	auto expr = new ast::NameExpr( loc, mem->name );
+	func->stmts = new ast::CompoundStmt( loc, {new ast::ReturnStmt(loc, expr)});
+}
+
+void EnumAttrFuncGenerator::genUpperBoundBody(ast::FunctionDecl* func) const {
+	const CodeLocation & loc = func->location;
+	auto mem = decl->members.back();
+	auto expr = new ast::NameExpr( loc, mem->name );
+	// expr->result = new ast::EnumInstType( decl );
+	func->stmts = new ast::CompoundStmt( loc, {new ast::ReturnStmt(loc, expr)});	
+}
+
+void EnumAttrFuncGenerator::genBoundedFunctions() {
+	ast::FunctionDecl * upperDecl = genUpperBoundProto();
+	produceForwardDecl(upperDecl);
+	genUpperBoundBody(upperDecl);
+	produceDecl(upperDecl);
+
+	ast::FunctionDecl * lowerDecl = genLowerBoundProto();
+	produceForwardDecl(lowerDecl);
+	genLowerBoundBody(lowerDecl);
+	produceDecl(lowerDecl);
 }
 
 inline ast::EnumAttrType * getPosnType( const ast::EnumDecl * decl ) {
@@ -372,11 +491,11 @@ void EnumAttrFuncGenerator::genValueOrLabelBody(
 	ast::UntypedExpr* untyped = ast::UntypedExpr::createCall(
 		func->location, "?[?]",
 		{new ast::NameExpr(func->location, arrDecl->name),
-			new ast::CastExpr(
-				func->location,
-				new ast::VariableExpr( func->location, func->params.front() ),
-				new ast::EnumAttrType( new ast::EnumInstType(decl),
-					ast::EnumAttribute::Posn))});
+		new ast::CastExpr(
+			func->location,
+			new ast::VariableExpr( func->location, func->params.front() ),
+			new ast::EnumAttrType( new ast::EnumInstType(decl),
+				ast::EnumAttribute::Posn))});
 	func->stmts = new ast::CompoundStmt(
 		func->location, {new ast::ReturnStmt(func->location, untyped)});
 }
@@ -449,31 +568,25 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genSuccPredFunc(bool succ) {
 }
 
 void EnumAttrFuncGenerator::genAttrFunctions() {
-	if (decl->base) {
-		genAttributesDecls(ast::EnumAttribute::Value);
-		genAttributesDecls(ast::EnumAttribute::Label);
-		genAttributesDecls(ast::EnumAttribute::Posn);
-	}
+	genAttributesDecls(ast::EnumAttribute::Value);
+	genAttributesDecls(ast::EnumAttribute::Label);
+	genAttributesDecls(ast::EnumAttribute::Posn);	
 }
 
-void EnumAttrFuncGenerator::genSuccPredDecl() {
-	if (decl->base) {
-		auto succProto = genSuccProto();
-		auto predProto = genPredProto();
+// void EnumAttrFuncGenerator::genSuccPredDecl() {
+// 	auto succProto = genSuccProto();
+// 	auto predProto = genPredProto();
 
-		produceForwardDecl(succProto);
-		produceForwardDecl(predProto);
-	}
-}
+// 	produceForwardDecl(succProto);
+// 	produceForwardDecl(predProto);
+// }
 
 void EnumAttrFuncGenerator::genSuccPredPosn() {
-	if (decl->base) {
-		ast::FunctionDecl* succ = genSuccPredFunc(true);
-		ast::FunctionDecl* pred = genSuccPredFunc(false);
+	ast::FunctionDecl* succ = genSuccPredFunc(true);
+	ast::FunctionDecl* pred = genSuccPredFunc(false);
 
-		produceDecl(succ);
-		produceDecl(pred);
-	}
+	produceDecl(succ);
+	produceDecl(pred);
 }
 
 void EnumAttrFuncGenerator::generateAndAppendFunctions(
@@ -481,8 +594,10 @@ void EnumAttrFuncGenerator::generateAndAppendFunctions(
 	// Generate the functions (they go into forwards and definitions).
 	genAttrStandardFuncs();
 	genAttrFunctions();
-	genSuccPredDecl();
-	genSuccPredPosn(); // Posn
+	genSerialTraitFuncs();
+	genSuccPredPosn();
+	// problematic
+	genBoundedFunctions();
 	// Now export the lists contents.
 	decls.splice(decls.end(), forwards);
 	decls.splice(decls.end(), definitions);

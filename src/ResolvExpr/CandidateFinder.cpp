@@ -905,7 +905,7 @@ namespace {
 					SemanticError( callExpr, "Ambiguous expression in valueE..." );
 				}
 				CandidateRef & choice = winners.front();
-				choice->cost.incVar();
+				choice->cost.incSafe();
 				candidates.emplace_back( std::move(choice) );
 			}
 
@@ -1375,17 +1375,19 @@ namespace {
 			Cost cost = Cost::zero;
 			ast::Expr * newExpr = data.combine( nameExpr->location, cost );
 
-			bool bentConversion = false;
-			if ( auto inst = newExpr->result.as<ast::EnumInstType>() ) {
-				if ( inst->base && inst->base->base ) {
-					bentConversion = true;
-				}
-			}
+			// bool bentConversion = false;
+			// if ( auto inst = newExpr->result.as<ast::EnumInstType>() ) {
+			// 	if ( inst->base && inst->base->base ) {
+			// 		bentConversion = true;
+			// 	}
+			// }
 
+			// CandidateRef newCand = std::make_shared<Candidate>(
+			// 	newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, bentConversion? Cost::safe: Cost::zero,
+			// 	cost );
 			CandidateRef newCand = std::make_shared<Candidate>(
-				newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, bentConversion? Cost::safe: Cost::zero,
+				newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, Cost::zero,
 				cost );
-
 			if (newCand->expr->env) {
 				newCand->env.add(*newCand->expr->env);
 				auto mutExpr = newCand->expr.get_and_mutate();
@@ -1828,12 +1830,16 @@ namespace {
 				if ( enumInstType->base->name == expr->type_decl->name ) {
 					Cost cost = Cost::zero;
 					ast::Expr * newExpr = data.combine( expr->location, cost );
+					// CandidateRef newCand =
+					// 	std::make_shared<Candidate>(
+					// 		newExpr, copy( tenv ), ast::OpenVarSet{},
+					// 		ast::AssertionSet{}, Cost::safe, cost
+					// 	);
 					CandidateRef newCand =
 						std::make_shared<Candidate>(
 							newExpr, copy( tenv ), ast::OpenVarSet{},
-							ast::AssertionSet{}, Cost::safe, cost
+							ast::AssertionSet{}, Cost::zero, cost
 						);
-
 					if (newCand->expr->env) {
 						newCand->env.add(*newCand->expr->env);
 						auto mutExpr = newCand->expr.get_and_mutate();

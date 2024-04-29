@@ -1,0 +1,7 @@
+Compile Time: blue value: blue, position: 2, label: Blue, default return value: blue
+Runtime: fishy value: green, position: 1, label: Green, default return value: green
+Runtime: C2 value: green, position: 1, label: Green, default return value: green
+ao is red
+ko is green
+0, 1, 10, 
+1 

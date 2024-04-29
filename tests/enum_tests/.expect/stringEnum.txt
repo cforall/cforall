@@ -1,1 +1,2 @@
 zero: zero, one: one
+zero: 0, one: 1

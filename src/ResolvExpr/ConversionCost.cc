@@ -283,8 +283,7 @@ void ConversionCost::postvisit( const ast::BasicType * basicType ) {
 		cost = costCalc( basicType, integer, srcIsLvalue, symtab, env );
 	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 		if ( dstAsEnumInst->base && !dstAsEnumInst->base->base ) {
-			cost = Cost::zero;
-			cost.incUnsafe();
+			cost = Cost::unsafe;
 		}
 	}
 }
@@ -481,8 +480,7 @@ void ConversionCost::postvisit( const ast::ZeroType * zeroType ) {
 		// assuming 0p is supposed to be used for pointers?
 	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 		if ( dstAsEnumInst->base && !dstAsEnumInst->base->base ) {
-			cost = Cost::zero;
-			cost.incUnsafe();
+			cost = Cost::unsafe;
 		}
 	}
 }
@@ -503,8 +501,7 @@ void ConversionCost::postvisit( const ast::OneType * oneType ) {
 		}
 	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 		if ( dstAsEnumInst->base && !dstAsEnumInst->base->base ) {
-			cost = Cost::zero;
-			cost.incUnsafe();
+			cost = Cost::unsafe;
 		}
 	}
 }

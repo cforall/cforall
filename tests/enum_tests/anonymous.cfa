@@ -1,8 +1,8 @@
-#include <stdio.h>
+#include <fstream.hfa>
 enum(unsigned long int ) { nthreads = 17 };
 
 int main() {
-    printf("%lu", nthreads);
+    sout | nthreads;
 }
 
 

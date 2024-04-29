@@ -1,0 +1,15 @@
+#include <stdio.h>
+void my_int_func(int x)
+{
+    printf( "%d\n", x );
+}
+ 
+int main()
+{
+    void (*foo)(int);
+    enum( void (*)(int) ) { FF = &my_int_func }; 
+    /* the ampersand is actually optional */
+    foo = &my_int_func;
+    foo(5);
+    return 0;
+}

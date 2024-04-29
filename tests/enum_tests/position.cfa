@@ -1,0 +1,32 @@
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <stdio.h>
+
+enum(char *) Colour {
+    Red = "red", Green = "green", Blue = "blue"
+};
+
+// enum( signed char ) srgb { Red = -1, Green = 0, Blue = 1 };
+
+enum Plain { A, B, C = 10 };
+
+int main () {
+    Colour fishy;
+    fishy = Colour.Green; 
+    fishy;
+    Colour c2 = fishy;
+
+    sout | "Compile Time: blue value: " | valueE(Colour.Blue) | ", position: " | posE(Colour.Blue) | ", label: " | labelE(Colour.Blue) | ", default return value: " | Colour.Blue;
+    sout | "Runtime: fishy value: " | valueE(fishy) | ", position: " | posE(fishy) | ", label: " | labelE(fishy) | ", default return value: " | fishy;
+    sout | "Runtime: C2 value: " | valueE(c2) | ", position: " | posE(c2) | ", label: " | labelE(c2) | ", default return value: " | c2;
+    Colour.Red;
+    char * ao = Colour.Red;
+    char * ko = fishy;
+    printf( "ao is %s\n", ao );
+    printf( "ko is %s\n", ko );
+
+    printf( "%d, %d, %d, \n", A, B, C );
+    Plain a = B;
+    printf( "%d \n", a );
+    
+}

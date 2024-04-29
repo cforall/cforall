@@ -11,7 +11,7 @@ enum enumB {
 int main() {
     enum enumB val = A;
     sout | "enumB.A is" | val;
-    enum enumB val2= enumB.B;
+    enum enumB val2 = enumB.B;
     sout | "enumB.B is" | val2;
     sout | "enumB.D is" | enumB.D;
     sout | "enumB.E is" | enumB.E;
