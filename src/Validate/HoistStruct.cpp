@@ -26,6 +26,7 @@ namespace Validate {
 
 namespace {
 
+/// Is this a declaration can appear in a struct/union and should be hoisted?
 bool shouldHoist( ast::Decl const * decl ) {
 	return dynamic_cast< ast::StructDecl const * >( decl )
 		|| dynamic_cast< ast::UnionDecl const * >( decl )
@@ -33,10 +34,37 @@ bool shouldHoist( ast::Decl const * decl ) {
 		|| dynamic_cast< ast::StaticAssertDecl const * >( decl );
 }
 
-/* This pass also does some renaming and internal field alteration, but the
- * complex part is the actual hoisting. Hoisted declarations should always
+/// Helper that updates an InstType if the base name could be updated.
+template<typename InstType>
+InstType const * preInstType( InstType const * type ) {
+	assert( type->base );
+	if ( nullptr == type->base->parent ) return type;
+	auto mut = ast::mutate( type );
+	mut->name = mut->base->name;
+	return mut;
+}
+
+/// Update StructInstType and UnionInstType names.
+struct NameUpdater {
+	ast::StructInstType const * previsit( ast::StructInstType const * type ) {
+		return preInstType( type );
+	}
+
+	ast::UnionInstType const * previsit( ast::UnionInstType const * type ) {
+		return preInstType( type );
+	}
+};
+
+ast::Decl const * updateNames( ast::Decl const * decl ) {
+	ast::Pass<NameUpdater> visitor;
+	return decl->accept( visitor );
+}
+
+/* This pass hoists from structs/unions. Hoisted declarations should always
  * appear before the declaration they are hoisted out of and if two types are
  * nested in the same declaration their order should not change.
+ * It also sets up parent relationships, does name mangling of hoisted types
+ * and updates instance types of the hoisted types.
  */
 struct HoistStructCore final :
 		public ast::WithDeclsToAdd<>, public ast::WithGuards {
@@ -95,7 +123,6 @@ AggrDecl const * HoistStructCore::preAggregate( AggrDecl const * decl ) {
 	if ( parent ) {
 		auto mut = ast::mutate( decl );
 		mut->parent = parent;
-		mut->name = qualifiedName( mut );
 		extendParams( mut->params, parent->params );
 		decl = mut;
 	}
@@ -113,6 +140,20 @@ AggrDecl const * HoistStructCore::postAggregate( AggrDecl const * decl ) {
 			it = mut->members.erase( it );
 		} else {
 			++it;
+		}
+	}
+	// Is this a nested type? Then update the name, after the parent's name
+	// has been updated (hence the post visit).
+	if ( mut->parent ) {
+		mut->name = qualifiedName( mut );
+	// Top level type that has hoisted? Then do a second pass subpass to make
+	// sure we update instance type names after the declaration is renamed.
+	} else if ( !declsToAddBefore.empty() ) {
+		for ( ast::ptr<ast::Decl> & member : mut->members ) {
+			member = updateNames( member.get() );
+		}
+		for ( ast::ptr<ast::Decl> & declToAdd : declsToAddBefore ) {
+			declToAdd = updateNames( declToAdd );
 		}
 	}
 	return mut;
@@ -163,14 +204,6 @@ InstType const * HoistStructCore::preCollectionInstType( InstType const * type )
 		) );
 	}
 	spliceBegin( mut->params, args );
-	return mut;
-}
-
-template<typename InstType>
-InstType const * preInstType( InstType const * type ) {
-	assert( type->base );
-	auto mut = ast::mutate( type );
-	mut->name = mut->base->name;
 	return mut;
 }
 
