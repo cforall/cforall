@@ -84,6 +84,7 @@ inst_headers_src = \
 	parseargs.hfa \
 	parseconfig.hfa \
 	rational.hfa \
+	enum.hfa \
 	stdlib.hfa \
 	strstream.hfa \
 	time.hfa \

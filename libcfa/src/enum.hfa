@@ -1,0 +1,30 @@
+#pragma once
+
+forall(E) trait Bounded {
+    E lowerBound();
+    E upperBound();
+};
+
+forall(E | Bounded(E)) trait Serial {
+    unsigned fromInstance(E e);
+    E fromInt(unsigned i);
+    E succ(E e);
+    E pred(E e);
+};
+
+forall(E, T) trait TypedEnum {
+    T valueE(E e);
+    char * labelE(E e);
+    unsigned int posE(E e);
+};
+
+forall(E, T| TypedEnum(E, T)) {
+    // comparison
+    int ?==?(E l, E r);
+    int ?!=?(E l, E r);
+    int ?!=?(E l, zero_t);
+    int ?<?(E l, E r);
+    int ?<=?(E l, E r);
+    int ?>?(E l, E r);
+    int ?>=?(E l, E r);
+}
