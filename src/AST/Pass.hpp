@@ -232,7 +232,7 @@ public:
 
 private:
 
-	bool __visit_children() { __pass::bool_ref * ptr = __pass::visit_children(core, 0); return ptr ? *ptr : true; }
+	bool __visit_children() { bool * ptr = __pass::visit_children(core, 0); return ptr ? *ptr : true; }
 
 private:
 
@@ -341,7 +341,7 @@ struct WithDeclsToAdd {
 /// Use if visitation should stop at certain levels
 /// set visit_children false of all child nodes should be ignored
 struct WithShortCircuiting {
-	__pass::bool_ref visit_children;
+	bool visit_children;
 };
 
 /// Used to restore values/functions/etc. when the Pass finishes visiting this node

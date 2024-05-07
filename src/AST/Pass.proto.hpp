@@ -39,31 +39,8 @@ namespace ast::__pass {
 typedef std::function<void( void * )> cleanup_func_t;
 typedef std::function<void( cleanup_func_t, void * )> at_cleanup_t;
 
-// boolean reference that may be null
-// either refers to a boolean value or is null and returns true
-class bool_ref {
-public:
-	bool_ref() = default;
-	~bool_ref() = default;
-
-	operator bool() { return m_ref ? *m_ref : true; }
-	bool operator=( bool val ) { assert(m_ref); return *m_ref = val; }
-
-private:
-
-	friend class visit_children_guard;
-
-	bool * set( bool * val ) {
-		bool * prev = m_ref;
-		m_ref = val;
-		return prev;
-	}
-
-	bool * m_ref = nullptr;
-};
-
-// Implementation of the guard value
-// Created inside the visit scope
+/// Implementation of the guard value
+/// Created inside the visit scope
 class guard_value {
 public:
 	/// Push onto the cleanup
@@ -102,34 +79,19 @@ private:
 class visit_children_guard {
 public:
 
-	visit_children_guard( bool_ref * ref )
-		: m_val ( true )
-		, m_prev( ref ? ref->set( &m_val ) : nullptr )
-		, m_ref ( ref )
-	{}
-
-	~visit_children_guard() {
-		if( m_ref ) {
-			m_ref->set( m_prev );
-		}
+	visit_children_guard( bool * ref ) :
+		m_ref( ref ), m_val( true )
+	{
+		if ( m_ref ) { m_val = *m_ref; *m_ref = true; }
 	}
 
-	operator bool() { return m_val; }
+	~visit_children_guard() {
+		if ( m_ref ) { *m_ref = m_val; }
+	}
 
 private:
-	bool       m_val;
-	bool     * m_prev;
-	bool_ref * m_ref;
-};
-
-/// "Short hand" to check if this is a valid previsit function
-/// Mostly used to make the static_assert look (and print) prettier
-template<typename core_t, typename node_t>
-struct is_valid_previsit {
-	using ret_t = decltype( std::declval<core_t*>()->previsit( std::declval<const node_t *>() ) );
-
-	static constexpr bool value = std::is_void< ret_t >::value ||
-		std::is_base_of<const node_t, typename std::remove_pointer<ret_t>::type >::value;
+	bool * m_ref;
+	bool   m_val;
 };
 
 /// The result is a single node.
@@ -228,6 +190,16 @@ struct resultN {
 	}
 };
 
+/// "Short hand" to check if this is a valid previsit function
+/// Mostly used to make the static_assert look (and print) prettier
+template<typename core_t, typename node_t>
+struct is_valid_previsit {
+	using ret_t = decltype( std::declval<core_t*>()->previsit( std::declval<const node_t *>() ) );
+
+	static constexpr bool value = std::is_void< ret_t >::value ||
+		std::is_base_of<const node_t, typename std::remove_pointer<ret_t>::type >::value;
+};
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Deep magic (a.k.a template meta programming) to make the templated visitor work
 // Basically the goal is to make 2 previsit
@@ -306,7 +278,7 @@ FIELD_PTR( stmtsToAddBefore, std::list< ast::ptr< ast::Stmt > > )
 FIELD_PTR( stmtsToAddAfter , std::list< ast::ptr< ast::Stmt > > )
 FIELD_PTR( declsToAddBefore, std::list< ast::ptr< ast::Decl > > )
 FIELD_PTR( declsToAddAfter , std::list< ast::ptr< ast::Decl > > )
-FIELD_PTR( visit_children, __pass::bool_ref )
+FIELD_PTR( visit_children, bool )
 FIELD_PTR( at_cleanup, __pass::at_cleanup_t )
 FIELD_PTR( visitor, ast::Pass<core_t> * const )
 FIELD_PTR( translationUnit, const TranslationUnit * )
