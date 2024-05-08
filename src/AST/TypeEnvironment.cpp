@@ -33,7 +33,7 @@
 #include "ResolvExpr/WidenMode.h"
 #include "ResolvExpr/Unify.h"      // for unifyInexact
 #include "Tuples/Tuples.h"         // for isTtype
-#include "CompilationState.h"
+#include "CompilationState.hpp"
 
 using ResolvExpr::WidenMode;
 

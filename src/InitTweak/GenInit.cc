@@ -26,7 +26,7 @@
 #include "AST/Pass.hpp"
 #include "AST/Node.hpp"
 #include "AST/Stmt.hpp"
-#include "CompilationState.h"
+#include "CompilationState.hpp"
 #include "CodeGen/OperatorTable.h"
 #include "Common/SemanticError.h"      // for SemanticError
 #include "Common/ToString.hpp"         // for toCString

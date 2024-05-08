@@ -22,7 +22,7 @@
 #include "Stmt.hpp"
 #include "Type.hpp"
 #include "TypeSubstitution.hpp"
-#include "CompilationState.h"
+#include "CompilationState.hpp"
 #include "Common/Iterate.hpp"
 
 using namespace std;

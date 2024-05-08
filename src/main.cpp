@@ -32,7 +32,7 @@
 #include "AST/Print.hpp"                    // for printAll
 #include "AST/TranslationUnit.hpp"          // for TranslationUnit
 #include "AST/Util.hpp"                     // for checkInvariants
-#include "CompilationState.h"
+#include "CompilationState.hpp"
 #include "../config.h"                      // for CFA_LIBDIR
 #include "CodeGen/FixMain.h"                // for FixMain
 #include "CodeGen/FixNames.h"               // for fixNames
@@ -58,7 +58,7 @@
 #include "GenPoly/Specialize.h"             // for convertSpecializations
 #include "InitTweak/FixInit.h"              // for fix
 #include "InitTweak/GenInit.h"              // for genInit
-#include "MakeLibCfa.h"                     // for makeLibCfa
+#include "MakeLibCfa.hpp"                   // for makeLibCfa
 #include "Parser/RunParser.hpp"             // for buildList, dumpParseTree,...
 #include "ResolvExpr/CandidatePrinter.hpp"  // for printCandidates
 #include "ResolvExpr/EraseWith.hpp"         // for eraseWith
@@ -82,7 +82,6 @@
 #include "Validate/ReplaceTypedef.hpp"      // for replaceTypedef
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
 #include "Validate/VerifyCtorDtorAssign.hpp" // for verifyCtorDtorAssign
-#include "Validate/ReplacePseudoFunc.hpp"   // for replacePseudoFunc
 #include "Virtual/ExpandCasts.h"            // for expandCasts
 #include "Virtual/VirtualDtor.hpp"          // for implementVirtDtors
 
@@ -382,7 +381,6 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Resolve", ResolvExpr::resolve, transUnit );
 		DUMP( exprp, std::move( transUnit ) );
-		PASS( "Replace Pseudo Func", Validate::replacePseudoFunc, transUnit );
 		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() ); // Here
 		PASS( "Erase With", ResolvExpr::eraseWith, transUnit );
 

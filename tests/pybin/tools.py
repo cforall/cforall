@@ -119,7 +119,7 @@ def is_ascii(fname):
 	if code != 0:
 		return (False, "'file EXPECT' failed with code {} '{}'".format(code, err))
 
-	match = re.search(".*: (.*)", out)
+	match = re.search(r".*: (.*)", out)
 
 	if not match:
 		return (False, "Unreadable file type: '{}'".format(out))
@@ -305,7 +305,7 @@ def jobserver_version():
 		print("       test returned : {} '{}'".format(make_ret, err), file=sys.stderr)
 		sys.exit(1)
 
-	re_jobs = re.search("--jobserver-(auth|fds)", out)
+	re_jobs = re.search(r"--jobserver-(auth|fds)", out)
 	if not re_jobs:
 		print("ERROR: cannot find Makefile jobserver version", file=sys.stderr)
 		print("       MAKEFLAGS are : '{}'".format(out), file=sys.stderr)

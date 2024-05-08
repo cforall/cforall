@@ -1,0 +1,17 @@
+#include "enum.hfa"
+#include "fstream.hfa"
+
+#pragma GCC visibility push(default)
+
+forall(T, E| TypedEnum(T, E)) {
+    // constructors
+
+    // comparison
+    int ?==?(E l, E r) { return posE(l) == posE(r); }
+    int ?!=?(E l, E r) { return posE(l) != posE(r); }
+    int ?!=?(E l, zero_t) { return !( posE(l) == 0 ); }
+    int ?<?(E l, E r) { return posE(l) < posE(r); }
+    int ?<=?(E l, E r) { return posE(l) <= posE(r); }
+    int ?>?(E l, E r) { return posE(l) > posE(r); }
+    int ?>=?(E l, E r) {  return posE(l) >= posE(r); }
+}

@@ -53,44 +53,30 @@ namespace {
 			} else {
 				cost = conversionCost( basicType, dst, srcIsLvalue, symtab, env );
 				if ( Cost::unsafe < cost ) {
-					if (auto enumInst =  dynamic_cast<const ast::EnumInstType *>(dst)) {
-						assert(enumInst->base->base);
-						cost = Cost::unsafe;
+					if (auto enumInst = dynamic_cast<const ast::EnumInstType *>(dst)) {
+						// Always explict cast only for typed enum
+						if (enumInst->base->isTyped) cost = Cost::unsafe;
 					}
 				}
 			}
 		}
 
 		void postvisit( const ast::ZeroType * zero ) {
-			// auto ptr = dynamic_cast< const ast::PointerType * >( dst );
-			// if ( ptr && basicType->isInteger() ) {
-			// 	// needed for, e.g. unsigned long => void *
-			// 	cost = Cost::unsafe;
-			// } else {
 			cost = conversionCost( zero, dst, srcIsLvalue, symtab, env );
 			if ( Cost::unsafe < cost ) {
 				if (auto enumInst =  dynamic_cast<const ast::EnumInstType *>(dst)) {
-					assert(enumInst->base->base);
-					cost = Cost::unsafe;
+					if (enumInst->base->isTyped) cost = Cost::unsafe;
 				}
 			}
-			// }
 		}
 
 		void postvisit( const ast::OneType * one ) {
-			// auto ptr = dynamic_cast< const ast::PointerType * >( dst );
-			// if ( ptr && basicType->isInteger() ) {
-			// 	// needed for, e.g. unsigned long => void *
-			// 	cost = Cost::unsafe;
-			// } else {
 			cost = conversionCost( one, dst, srcIsLvalue, symtab, env );
 			if ( Cost::unsafe < cost ) {
-				if (auto enumInst =  dynamic_cast<const ast::EnumInstType *>(dst)) {
-					assert(enumInst->base->base);
-					cost = Cost::unsafe;
+				if (auto enumInst = dynamic_cast<const ast::EnumInstType *>(dst)) {
+					if (enumInst->base->isTyped) cost = Cost::unsafe;
 				}
 			}
-			// }
 		}
 
 		void postvisit( const ast::PointerType * pointerType ) {

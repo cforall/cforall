@@ -52,8 +52,6 @@ SRC += $(SRC_VALIDATE) \
 	Validate/ReturnCheck.hpp \
 	Validate/VerifyCtorDtorAssign.cpp \
 	Validate/VerifyCtorDtorAssign.hpp \
-	Validate/ReplacePseudoFunc.cpp \
-	Validate/ReplacePseudoFunc.hpp \
 	Validate/ImplementEnumFunc.cpp \
 	Validate/ImplementEnumFunc.hpp
 

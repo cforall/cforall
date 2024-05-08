@@ -41,7 +41,7 @@
 #include "InitTweak/InitTweak.h"   // for isAssignment, isCopyConstructor
 #include "SymTab/GenImplicitCall.hpp"  // for genImplicitCall
 #include "SymTab/Mangler.h"        // for Mangler
-#include "CompilationState.h"
+#include "CompilationState.hpp"
 
 namespace Validate {
 

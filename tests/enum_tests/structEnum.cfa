@@ -16,9 +16,9 @@ enum(Point) PointEnum {
      }
 };
 
-// PointEnum foo(PointEnum in) {
-//      return in;
-// }
+PointEnum identity(PointEnum in) {
+     return in;
+}
 
 // The only valid usage
 struct Point apple = first;

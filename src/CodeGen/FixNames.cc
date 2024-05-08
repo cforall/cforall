@@ -24,7 +24,7 @@
 #include "Common/SemanticError.h"  // for SemanticError
 #include "FixMain.h"               // for FixMain
 #include "SymTab/Mangler.h"        // for Mangler
-#include "CompilationState.h"
+#include "CompilationState.hpp"
 
 namespace CodeGen {
 

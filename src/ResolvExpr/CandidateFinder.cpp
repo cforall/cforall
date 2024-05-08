@@ -25,7 +25,7 @@
 #include "AdjustExprType.hpp"
 #include "Candidate.hpp"
 #include "CastCost.hpp"           // for castCost
-#include "CompilationState.h"
+#include "CompilationState.hpp"
 #include "ConversionCost.h"       // for conversionCast
 #include "Cost.h"
 #include "ExplodedArg.hpp"
@@ -2135,22 +2135,6 @@ Cost computeConversionCost(
 		std::cerr << "cost with polycost is " << convCost << std::endl;
 	)
 	return convCost;
-}
-
-// get the valueE(...) ApplicationExpr that returns the enum value
-const ast::Expr * getValueEnumCall(
-	const ast::Expr * expr,
-	const ResolvExpr::ResolveContext & context, const ast::TypeEnvironment & env ) {
-		auto callExpr = new ast::UntypedExpr(
-			expr->location, new ast::NameExpr( expr->location, "valueE"), {expr} );
-		CandidateFinder finder( context, env );
-		finder.find( callExpr );
-		CandidateList winners = findMinCost( finder.candidates );
-		if (winners.size() != 1) {
-			SemanticError( callExpr, "Ambiguous expression in valueE..." );
-		}
-		CandidateRef & choice = winners.front();
-		return choice->expr;
 }
 
 const ast::Expr * createCondExpr( const ast::Expr * expr ) {

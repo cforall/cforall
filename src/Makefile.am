@@ -18,13 +18,13 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS  = -I automake
 
-SRC = main.cc \
-	CompilationState.cc \
-	CompilationState.h \
+SRC = main.cpp \
+	CompilationState.cpp \
+	CompilationState.hpp \
 	MakeLibCfa.cpp \
-	MakeLibCfa.h
+	MakeLibCfa.hpp
 
-SRCDEMANGLE = CompilationState.cc
+SRCDEMANGLE = CompilationState.cpp
 
 MAINTAINERCLEANFILES =
 MOSTLYCLEANFILES =
@@ -54,7 +54,7 @@ include Virtual/module.mk
 
 $(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/BasicKind.hpp
 
-$(srcdir)/AST/BasicKind.hpp : BasicTypes-gen.cc
+$(srcdir)/AST/BasicKind.hpp : BasicTypes-gen.cpp
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type
 	@./BasicTypes-gen
 	@rm BasicTypes-gen
@@ -64,7 +64,7 @@ cfa_cpplibdir = $(CFA_LIBDIR)
 cfa_cpplib_PROGRAMS = ../driver/cfa-cpp
 ___driver_cfa_cpp_SOURCES = $(SRC)
 ___driver_cfa_cpp_LDADD = -ldl $(LIBPROFILER) $(LIBTCMALLOC)
-EXTRA_DIST = include/cassert include/optional BasicTypes-gen.cc
+EXTRA_DIST = include/cassert include/optional BasicTypes-gen.cpp
 
 AM_CXXFLAGS = @HOST_FLAGS@ -Wno-deprecated -Wall -Wextra -Werror=return-type -DDEBUG_ALL -I./Parser -I$(srcdir)/Parser -I$(srcdir)/include -DYY_NO_INPUT -O3 -g -std=c++17 $(TCMALLOCFLAG)
 AM_LDFLAGS  = @HOST_FLAGS@ -Xlinker -export-dynamic

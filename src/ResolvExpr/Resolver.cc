@@ -27,7 +27,7 @@
 #include "ResolveMode.hpp"               // for ResolveMode
 #include "typeops.h"                     // for extractResultType
 #include "Unify.h"                       // for unify
-#include "CompilationState.h"
+#include "CompilationState.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Init.hpp"
 #include "AST/Pass.hpp"

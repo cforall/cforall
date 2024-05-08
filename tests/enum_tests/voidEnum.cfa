@@ -1,5 +1,5 @@
 #include <fstream.hfa>
-
+#include <enum.hfa>
 enum() voidEnum {
     a, b, c
     /*** 
@@ -8,19 +8,26 @@ enum() voidEnum {
     */
 };
 
-// void foo (const enum voidEnum & t){}
+char* a[voidEnum] = {
+    "A",
+    "B",
+    "C"
+};
 
 int main() {
     enum voidEnum v_1 = a;
     enum voidEnum v_2 = b;
-    // foo(b);
-    // enum voidEnum v_3 = 10;
-    // Error as int cannot convert to void enum
+    sout | "Two different Opague Enum Should not be the same:";
     if ( v_1 == v_2 ) {
-        sout | "Equal" | nl;
+        sout | "a and b are Equal" | nl;
     } else {
-        sout | "Not Equal" | nl;
+        sout | "a and b are Not Equal" | nl;
     }
-    sout | a | nl;
-    sout | b | nl;
+    sout | "Default Output:";
+    sout | a;
+    sout | b;
+    
+    sout | labelE(v_1);
+    sout | labelE(v_2);
+
 }

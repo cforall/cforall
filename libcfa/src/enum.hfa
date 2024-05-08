@@ -1,24 +1,31 @@
 #pragma once
 
-forall(E) trait Bounded {
-    E lowerBound();
-    E upperBound();
-};
+forall(T) { // T is the based type of enum(T)
+    forall(E) trait Bounded {
+        E lowerBound();
+        E upperBound();
+    };
 
-forall(E | Bounded(E)) trait Serial {
-    unsigned fromInstance(E e);
-    E fromInt(unsigned i);
-    E succ(E e);
-    E pred(E e);
-};
+    forall(E| Bounded(T, E)) trait Serial {
+        unsigned fromInstance(E e);
+        E fromInt(unsigned i);
+        E succ(E e);
+        E pred(E e);
+    };
 
-forall(E, T) trait TypedEnum {
-    T valueE(E e);
-    char * labelE(E e);
-    unsigned int posE(E e);
-};
+    // Opague Enum + TypedEnum
+    forall(E | Serial(T, E)) trait CfaEnum { 
+        char * labelE(E e);
+        unsigned int posE(E e);
+    };
 
-forall(E, T| TypedEnum(E, T)) {
+    forall(E| CfaEnum(T, E)) trait TypedEnum {
+        T valueE(E e);
+    };
+}
+
+
+forall(T, E | TypedEnum(T, E)) {
     // comparison
     int ?==?(E l, E r);
     int ?!=?(E l, E r);

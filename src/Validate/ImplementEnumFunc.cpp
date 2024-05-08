@@ -27,39 +27,6 @@ public:
 		  functionNesting{functionNesting},
 		  proto_linkage{ast::Linkage::Cforall} {}
 
-	void genAttrFunctions();
-	void genSuccPredPosn();
-	// void genSuccPredDecl();
-
-	void appendReturnThis(ast::FunctionDecl* decl) {
-		assert(1 <= decl->params.size());
-		assert(1 == decl->returns.size());
-		assert(decl->stmts);
-
-		const CodeLocation& location = (decl->stmts->kids.empty())
-		                                   ? decl->stmts->location
-		                                   : decl->stmts->kids.back()->location;
-		const ast::DeclWithType* thisParam = decl->params.front();
-		decl->stmts.get_and_mutate()->push_back(new ast::ReturnStmt(
-			location, new ast::VariableExpr(location, thisParam)));
-	}
-	void genAttrStandardFuncs() {
-		ast::FunctionDecl* (EnumAttrFuncGenerator::*standardProtos[4])()
-			const = {&EnumAttrFuncGenerator::genCtorProto,
-					 &EnumAttrFuncGenerator::genCopyProto,
-					 &EnumAttrFuncGenerator::genDtorProto,
-					 &EnumAttrFuncGenerator::genAssignProto};
-		for (auto& generator : standardProtos) {
-			ast::FunctionDecl* decl = (this->*generator)();
-			produceForwardDecl(decl);
-			genFuncBody(decl);
-			if (CodeGen::isAssignment(decl->name)) {
-				appendReturnThis(decl);
-			}
-			produceDecl(decl);
-		}
-	}
-
 private:
 	const CodeLocation& getLocation() const { return decl->location; }
 
@@ -72,33 +39,31 @@ private:
 
 	const ast::Decl* getDecl() const { return decl; }
 
-	// Implement Bounded trait for enum
-    void genBoundedFunctions();
-	// Implement Serial trait for enum
+	// Implement Bounded trait
+	void genBoundedFunctions();
+	ast::FunctionDecl* genBoundedProto(const char *) const;
+	void genBoundedBody(ast::FunctionDecl* func) const;
+
+	// Implement Serial trait
 	void genSerialTraitFuncs();
+	ast::FunctionDecl* genFromIntProto() const;
+	ast::FunctionDecl* genFromInstanceProto() const;
+	ast::FunctionDecl* genInstToInstFuncProto(const char* func) const;
+	void genFromIntBody(ast::FunctionDecl *) const; 
+	void genFromInstanceBody(ast::FunctionDecl *) const;
+	void genSuccPredBody(ast::FunctionDecl *, const char *) const;
 
-	// Bounded trait
-	ast::FunctionDecl* genLowerBoundProto() const;
-	ast::FunctionDecl* genUpperBoundProto() const;
-	void genLowerBoundBody(ast::FunctionDecl* func) const;
-	void genUpperBoundBody(ast::FunctionDecl* func) const;
-
+	// Implement TypedEnum trait
+	void genTypedEnumFuncs();
+	void genTypedEnumFunction(const ast::EnumAttribute attr);
 	ast::FunctionDecl* genPosnProto() const;
 	ast::FunctionDecl* genLabelProto() const;
 	ast::FunctionDecl* genValueProto() const;
+	void genValueOrLabelBody(
+		ast::FunctionDecl* func, ast::ObjectDecl* arrDecl) const;
+	void genPosnBody(ast::FunctionDecl* func) const;
 
-	// Serial trait
-	ast::FunctionDecl* genFromIntProto() const;
-	ast::FunctionDecl* genFromInstanceProto() const;
-	ast::FunctionDecl* genSuccProto() const;
-	ast::FunctionDecl* genPredProto() const;
-
-	void genFromIntBody(ast::FunctionDecl *) const; 
-	void genFromInstanceBody(ast::FunctionDecl *) const;
 	////////////////
-
-	ast::FunctionDecl* genSuccPosProto() const;
-	ast::FunctionDecl* genPredPosProto() const;
 
 	// ---------------------------------------------------
 	// ast::FunctionDecl* genAttrCtorProto() const;
@@ -120,90 +85,7 @@ private:
 			new ast::EnumAttrType(ast::deepCopy(instType)));
 	}
 
-	/// E = EnumAttrType<T>`
-	/// `void ?{}(E & _dst)`.
-	ast::FunctionDecl* genCtorProto() const {
-		return genProto("?{}", {dstParam()}, {});
-	}
-
-	/// void ?{}(E & _dst, E _src)`.
-	ast::FunctionDecl* genCopyProto() const {
-		return genProto("?{}", {dstParam(), srcParam()}, {});
-	}
-
-	///`void ^?{}(E & _dst)`.
-	ast::FunctionDecl* genDtorProto() const {
-		// The destructor must be mutex on a concurrent type.
-		return genProto("^?{}", {dstParam()}, {});
-	}
-
-	/// `E ?{}(E & _dst, E _src)`.
-	ast::FunctionDecl* genAssignProto() const {
-		// Only the name is different, so just reuse the generation function.
-		auto retval = srcParam();
-		retval->name = "_ret";
-		return genProto("?=?", {dstParam(), srcParam()}, {retval});
-	}
-
-	void genFuncBody(ast::FunctionDecl* func) {
-		const CodeLocation& location = func->location;
-		auto& params = func->params;
-		if (InitTweak::isCopyConstructor(func) ||
-			InitTweak::isAssignment(func)) {
-			assert(2 == params.size());
-			auto dstParam = params.front().strict_as<ast::ObjectDecl>();
-			auto srcParam = params.back().strict_as<ast::ObjectDecl>();
-			func->stmts = genCopyBody(location, dstParam, srcParam);
-		} else {
-			assert(1 == params.size());
-			// Default constructor and destructor is empty.
-			func->stmts = new ast::CompoundStmt(location);
-			// Add unused attribute to parameter to silence warnings.
-			addUnusedAttribute(params.front());
-
-			// Just an extra step to make the forward and declaration match.
-			if (forwards.empty()) return;
-			ast::FunctionDecl* fwd = strict_dynamic_cast<ast::FunctionDecl*>(
-				forwards.back().get_and_mutate());
-			addUnusedAttribute(fwd->params.front());
-		}
-	}
-
-	const ast::CompoundStmt* genCopyBody( const CodeLocation& location,
-			const ast::ObjectDecl* dstParam, const ast::ObjectDecl* srcParam) {
-		return new ast::CompoundStmt(
-			location,
-			{new ast::ExprStmt(
-				location,
-				new ast::UntypedExpr(
-					location, new ast::NameExpr(location, "__builtin_memcpy"),
-					{
-						new ast::AddressExpr( location,
-							new ast::VariableExpr( location, dstParam ) ),
-						new ast::AddressExpr( location,
-							new ast::VariableExpr( location, srcParam ) ),
-						new ast::SizeofExpr( location, srcParam->type ),
-					}))});
-	}
-
-	void genDtorBody(ast::FunctionDecl* func) {
-		const CodeLocation& location = func->location;
-		auto& params = func->params;
-		assert(1 == params.size());
-		func->stmts = new ast::CompoundStmt(location);
-		addUnusedAttribute(params.front());
-
-		// Just an extra step to make the forward and declaration match.
-		if (forwards.empty()) return;
-		ast::FunctionDecl* fwd = strict_dynamic_cast<ast::FunctionDecl*>(
-			forwards.back().get_and_mutate());
-		addUnusedAttribute(fwd->params.front());
-	}
-
-	// ast::FunctionDecl*
 	// ----------------------------------------------------
-
-	ast::FunctionDecl* genSuccPredFunc(bool succ);
 
 	const ast::Init* getAutoInit(const ast::Init* prev) const;
 
@@ -213,10 +95,6 @@ private:
 	ast::ObjectDecl* genAttrArrayProto(
 		const ast::EnumAttribute attr, const CodeLocation& location,
 		std::vector<ast::ptr<ast::Init>>& inits) const;
-	void genValueOrLabelBody(
-		ast::FunctionDecl* func, ast::ObjectDecl* arrDecl) const;
-	void genPosnBody(ast::FunctionDecl* func) const;
-	void genAttributesDecls(const ast::EnumAttribute attr);
 };
 
 std::vector<ast::ptr<ast::Init>> EnumAttrFuncGenerator::genLabelInit() const {
@@ -373,98 +251,85 @@ void EnumAttrFuncGenerator::genFromInstanceBody(ast::FunctionDecl* func) const {
 	);
 }
 
+void EnumAttrFuncGenerator::genSuccPredBody(ast::FunctionDecl * func, const char* opt) const {
+	auto params = func->params;
+	assert( params.size() == 1 );
+	auto param = params.front();
+	auto enumToInt = new ast::CastExpr(
+		func->location,
+		new ast::VariableExpr(func->location, param),
+		new ast::BasicType(ast::BasicKind::UnsignedInt),
+		ast::GeneratedFlag::ExplicitCast
+	);
+	ast::UntypedExpr* addOneExpr = ast::UntypedExpr::createCall( func->location,
+		opt,
+		{enumToInt,
+		ast::ConstantExpr::from_int(func->location, 1)}
+	);
+	auto intToEnum = new ast::CastExpr(
+		func->location,
+		addOneExpr,
+		new ast::EnumInstType( decl ),
+		ast::GeneratedFlag::ExplicitCast
+	);
+	func->stmts = new ast::CompoundStmt(
+		func->location, {
+			new ast::ReturnStmt(
+				func->location,
+				intToEnum
+			)
+		}
+	);
+}
+
+
 void EnumAttrFuncGenerator::genSerialTraitFuncs() {
-	auto fromIntProto = genFromIntProto();
-	produceForwardDecl(fromIntProto);
-	genFromIntBody(fromIntProto);
-	produceDecl(fromIntProto);
-
-	auto fromInstanceProto = genFromInstanceProto();
-	produceForwardDecl(fromInstanceProto);
-	genFromInstanceBody(fromInstanceProto);
-	produceDecl(fromInstanceProto);
-
-	auto succProto = genSuccProto();
-	auto predProto = genPredProto();
-	produceForwardDecl(succProto);
-	produceForwardDecl(predProto);
+	ast::FunctionDecl * protos[4] = {
+		genFromIntProto(),
+		genFromInstanceProto(),
+		genInstToInstFuncProto("succ"),
+		genInstToInstFuncProto("pred")
+	};
+	for (auto& proto: protos) produceForwardDecl(proto);
+	genFromIntBody(protos[0]);
+	genFromInstanceBody(protos[1]);
+	genSuccPredBody(protos[2], "?+?");
+	genSuccPredBody(protos[3], "?-?");
+	for (auto& proto: protos) produceDecl(proto);
 }
 
-ast::FunctionDecl* EnumAttrFuncGenerator::genSuccProto() const {
+ast::FunctionDecl* EnumAttrFuncGenerator::genInstToInstFuncProto(const char * func) const {
 	return genProto(
-		"succ",
+		func,
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(getLocation(), "_ret",
 		                     new ast::EnumInstType(decl))});
 }
 
-ast::FunctionDecl* EnumAttrFuncGenerator::genPredProto() const {
-	return genProto(
-		"pred",
-		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
-		{new ast::ObjectDecl(getLocation(), "_ret",
-		                     new ast::EnumInstType(decl))});
-}
-
-ast::FunctionDecl* EnumAttrFuncGenerator::genLowerBoundProto() const {
-    return genProto("lowerBound", {}, {
+ast::FunctionDecl* EnumAttrFuncGenerator::genBoundedProto(const char * func) const {
+    return genProto(func, {}, {
         new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))
     });
 }
 
-ast::FunctionDecl* EnumAttrFuncGenerator::genUpperBoundProto() const {
-    return genProto("upperBound", {}, {
-        new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))
-    });
-}
-
-void EnumAttrFuncGenerator::genLowerBoundBody(ast::FunctionDecl* func) const {
+void EnumAttrFuncGenerator::genBoundedBody(ast::FunctionDecl* func) const {
 	const CodeLocation & loc = func->location;
-	auto mem = decl->members.front();
-	// auto expr = new ast::QualifiedNameExpr( loc, decl, mem->name );
-	// expr->result = new ast::EnumInstType( decl );
+	auto mem = func->name=="lowerBound"?  decl->members.front() : decl->members.back();
 	auto expr = new ast::NameExpr( loc, mem->name );
 	func->stmts = new ast::CompoundStmt( loc, {new ast::ReturnStmt(loc, expr)});
 }
 
-void EnumAttrFuncGenerator::genUpperBoundBody(ast::FunctionDecl* func) const {
-	const CodeLocation & loc = func->location;
-	auto mem = decl->members.back();
-	auto expr = new ast::NameExpr( loc, mem->name );
-	// expr->result = new ast::EnumInstType( decl );
-	func->stmts = new ast::CompoundStmt( loc, {new ast::ReturnStmt(loc, expr)});	
-}
-
 void EnumAttrFuncGenerator::genBoundedFunctions() {
-	ast::FunctionDecl * upperDecl = genUpperBoundProto();
-	produceForwardDecl(upperDecl);
-	genUpperBoundBody(upperDecl);
-	produceDecl(upperDecl);
-
-	ast::FunctionDecl * lowerDecl = genLowerBoundProto();
-	produceForwardDecl(lowerDecl);
-	genLowerBoundBody(lowerDecl);
-	produceDecl(lowerDecl);
+	ast::FunctionDecl * boundedProtos[2] = {genBoundedProto("upperBound"), genBoundedProto("lowerBound")};
+	for (auto & protos: boundedProtos) {
+		produceForwardDecl(protos);
+		genBoundedBody(protos);
+		produceDecl(protos);
+	}
 }
 
 inline ast::EnumAttrType * getPosnType( const ast::EnumDecl * decl ) {
 	return new ast::EnumAttrType(new ast::EnumInstType(decl), ast::EnumAttribute::Posn);
-}
-
-ast::FunctionDecl* EnumAttrFuncGenerator::genSuccPosProto() const {
-	return genProto(
-		"_successor_",
-		{new ast::ObjectDecl(getLocation(), "_i", getPosnType(decl))},
-		{new ast::ObjectDecl(getLocation(), "_ret", getPosnType(decl))}
-	);
-}
-
-ast::FunctionDecl* EnumAttrFuncGenerator::genPredPosProto() const {
-	return genProto(
-		"_predessor_",
-		{new ast::ObjectDecl(getLocation(), "_i", getPosnType(decl))},
-		{new ast::ObjectDecl(getLocation(), "_ret", getPosnType(decl))}
-	);
 }
 
 ast::ObjectDecl* EnumAttrFuncGenerator::genAttrArrayProto(
@@ -510,9 +375,10 @@ void EnumAttrFuncGenerator::genPosnBody(ast::FunctionDecl* func) const {
 		func->location, {new ast::ReturnStmt(func->location, castExpr)});
 }
 
-void EnumAttrFuncGenerator::genAttributesDecls(const ast::EnumAttribute attr) {
+void EnumAttrFuncGenerator::genTypedEnumFunction(const ast::EnumAttribute attr) {
 	if (attr == ast::EnumAttribute::Value ||
 		attr == ast::EnumAttribute::Label) {
+		// TypedEnum's backing arrays
 		std::vector<ast::ptr<ast::Init>> inits =
 			attr == ast::EnumAttribute::Value ? genValueInit() : genLabelInit();
 		ast::ObjectDecl* arrayProto =
@@ -533,70 +399,17 @@ void EnumAttrFuncGenerator::genAttributesDecls(const ast::EnumAttribute attr) {
 	}
 }
 
-ast::FunctionDecl* EnumAttrFuncGenerator::genSuccPredFunc(bool succ) {
-	ast::FunctionDecl* funcDecl = succ ? genSuccPosProto() : genPredPosProto();
-	produceForwardDecl(funcDecl);
-
-	const CodeLocation& location = getLocation();
-
-	auto& params = funcDecl->params;
-	assert(params.size() == 1);
-	auto param = params.front().strict_as<ast::ObjectDecl>();
-
-
-	auto rets = funcDecl->returns;
-	assert(params.size() == 1);
-	auto ret = rets.front().strict_as<ast::ObjectDecl>();
-	auto retType = ret->type.strict_as<ast::EnumAttrType>();
-
-	auto addOneExpr = ast::UntypedExpr::createCall( location,
-		succ? "?+?": "?-?",
-		{new ast::VariableExpr(location, param),
-		ast::ConstantExpr::from_int(location, 1)}
-	);
-
-	funcDecl->stmts = new ast::CompoundStmt(
-		location, {
-			new ast::ReturnStmt(
-				location,
-				new ast::CastExpr(location, addOneExpr, retType)
-			)
-		}
-	);
-
-	return funcDecl;
-}
-
-void EnumAttrFuncGenerator::genAttrFunctions() {
-	genAttributesDecls(ast::EnumAttribute::Value);
-	genAttributesDecls(ast::EnumAttribute::Label);
-	genAttributesDecls(ast::EnumAttribute::Posn);	
-}
-
-// void EnumAttrFuncGenerator::genSuccPredDecl() {
-// 	auto succProto = genSuccProto();
-// 	auto predProto = genPredProto();
-
-// 	produceForwardDecl(succProto);
-// 	produceForwardDecl(predProto);
-// }
-
-void EnumAttrFuncGenerator::genSuccPredPosn() {
-	ast::FunctionDecl* succ = genSuccPredFunc(true);
-	ast::FunctionDecl* pred = genSuccPredFunc(false);
-
-	produceDecl(succ);
-	produceDecl(pred);
+void EnumAttrFuncGenerator::genTypedEnumFuncs() {
+	if (decl->base) genTypedEnumFunction(ast::EnumAttribute::Value);
+	genTypedEnumFunction(ast::EnumAttribute::Label);
+	genTypedEnumFunction(ast::EnumAttribute::Posn);	
 }
 
 void EnumAttrFuncGenerator::generateAndAppendFunctions(
 	std::list<ast::ptr<ast::Decl>>& decls) {
 	// Generate the functions (they go into forwards and definitions).
-	genAttrStandardFuncs();
-	genAttrFunctions();
+	genTypedEnumFuncs();
 	genSerialTraitFuncs();
-	genSuccPredPosn();
-	// problematic
 	genBoundedFunctions();
 	// Now export the lists contents.
 	decls.splice(decls.end(), forwards);
@@ -617,12 +430,9 @@ private:
 };
 
 void ImplementEnumFunc::previsit(const ast::EnumDecl* enumDecl) {
-	if (!enumDecl->body) return;
-	if (!enumDecl->base) return;
-
+	if (!enumDecl->body || !enumDecl->isTyped) return;
 	ast::EnumInstType enumInst(enumDecl->name);
 	enumInst.base = enumDecl;
-
 	EnumAttrFuncGenerator gen(enumDecl, &enumInst, functionNesting);
 	gen.generateAndAppendFunctions(declsToAddAfter);
 }

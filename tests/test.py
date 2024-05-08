@@ -22,7 +22,7 @@ def find_tests():
 	expected = []
 
 	def match_test(path):
-		match = re.search("^%s\/([\w\/\-_]*).expect\/([\w\-_\+]+)(\.[\w\-_]+)?\.txt$" % settings.SRCDIR, path)
+		match = re.search(r'^%s\/([\w\/\-_]*).expect\/([\w\-_\+]+)(\.[\w\-_]+)?\.txt$' % settings.SRCDIR, path)
 		if match :
 			test = Test()
 			test.name = match.group(2)
@@ -358,7 +358,7 @@ if __name__ == "__main__":
 				print('ERROR: recond failed for test {}: {} \'{}\''.format(t.target(), code, err), file=sys.stderr)
 				sys.exit(1)
 
-			print(' '.join(re.findall('([^\s]+\.cfa)', out)), end=' ')
+			print(' '.join(re.findall(r'([^\s]+\.cfa)', out)), end=' ')
 
 		print('')
 

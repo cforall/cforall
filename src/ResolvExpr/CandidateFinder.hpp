@@ -69,10 +69,6 @@ Cost computeConversionCost(
 const ast::Expr * referenceToRvalueConversion(
 	const ast::Expr * expr, Cost & cost );
 
-/// Get the valueE application that returns the enum's value.
-const ast::Expr * getValueEnumCall( const ast::Expr * expr,
-	const ResolveContext & context, const ast::TypeEnvironment & env );
-
 /// Wrap an expression to convert the result to a conditional result.
 const ast::Expr * createCondExpr( const ast::Expr * expr );
 

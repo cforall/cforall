@@ -485,5 +485,5 @@ int main() {
 // Local Variables: //
 // tab-width: 4 //
 // mode: c++ //
-// compile-command: "g++-8 -Wall -Wextra BasicTypes-gen.cc" //
+// compile-command: "g++-8 -Wall -Wextra BasicTypes-gen.cpp" //
 // End: //

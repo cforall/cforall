@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Aaron Moss
 // Created On       : Sun May 17 09:39:50 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun 21 11:39:13 2019
-// Update Count     : 63
+// Last Modified On : Fri May  3 17:15:41 2024
+// Update Count     : 64
 //
 
 #pragma once
@@ -18,6 +18,7 @@
 #include <iostream>
 #include <cassert>
 #include <climits>
+#include <cstdint>
 
 namespace ResolvExpr {
 
