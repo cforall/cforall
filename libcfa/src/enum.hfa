@@ -22,16 +22,15 @@ forall(T) { // T is the based type of enum(T)
     forall(E| CfaEnum(T, E)) trait TypedEnum {
         T valueE(E e);
     };
-}
 
-
-forall(T, E | TypedEnum(T, E)) {
-    // comparison
-    int ?==?(E l, E r);
-    int ?!=?(E l, E r);
-    int ?!=?(E l, zero_t);
-    int ?<?(E l, E r);
-    int ?<=?(E l, E r);
-    int ?>?(E l, E r);
-    int ?>=?(E l, E r);
+	forall(E | TypedEnum(T, E)) {
+		// comparison
+		int ?==?(E l, E r);
+		int ?!=?(E l, E r);
+		int ?!=?(E l, zero_t);
+		int ?<?(E l, E r);
+		int ?<=?(E l, E r);
+		int ?>?(E l, E r);
+		int ?>=?(E l, E r);
+	}
 }
