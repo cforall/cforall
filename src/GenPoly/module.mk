@@ -15,24 +15,24 @@
 ###############################################################################
 
 SRC_GENPOLY = \
-	GenPoly/GenPoly.cc \
-	GenPoly/GenPoly.h \
-	GenPoly/Lvalue2.cc \
-	GenPoly/Lvalue.h
+	GenPoly/GenPoly.cpp \
+	GenPoly/GenPoly.hpp \
+	GenPoly/Lvalue2.cpp \
+	GenPoly/Lvalue.hpp
 
 SRC += $(SRC_GENPOLY) \
 	GenPoly/Box.cpp \
-	GenPoly/Box.h \
-	GenPoly/ErasableScopedMap.h \
-	GenPoly/FindFunction.cc \
-	GenPoly/FindFunction.h \
+	GenPoly/Box.hpp \
+	GenPoly/ErasableScopedMap.hpp \
+	GenPoly/FindFunction.cpp \
+	GenPoly/FindFunction.hpp \
 	GenPoly/InstantiateGeneric.cpp \
-	GenPoly/InstantiateGeneric.h \
+	GenPoly/InstantiateGeneric.hpp \
 	GenPoly/Lvalue.cpp \
-	GenPoly/ScopedSet.h \
+	GenPoly/ScopedSet.hpp \
 	GenPoly/ScrubTypeVars.cpp \
 	GenPoly/ScrubTypeVars.hpp \
 	GenPoly/Specialize.cpp \
-	GenPoly/Specialize.h
+	GenPoly/Specialize.hpp
 
 SRCDEMANGLE += $(SRC_GENPOLY)

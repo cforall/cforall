@@ -19,7 +19,7 @@
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
 #include "CodeGen/CodeGenerator.hpp"
-#include "ResolvExpr/Unify.h"
+#include "ResolvExpr/Unify.hpp"
 
 namespace Validate {
 

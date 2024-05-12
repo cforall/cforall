@@ -23,7 +23,7 @@
 #include "AST/Stmt.hpp"
 #include "AST/TranslationUnit.hpp"
 #include "ResolvExpr/CandidateFinder.hpp"
-#include "ResolvExpr/Resolver.h"
+#include "ResolvExpr/Resolver.hpp"
 
 namespace ResolvExpr {
 

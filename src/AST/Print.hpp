@@ -18,7 +18,7 @@
 #include <iosfwd>
 
 #include "AST/Fwd.hpp"
-#include "Common/Indenter.h"
+#include "Common/Indenter.hpp"
 
 namespace ast {
 

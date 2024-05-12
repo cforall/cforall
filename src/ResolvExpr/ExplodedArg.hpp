@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "Candidate.hpp"            // for Candidate, CandidateList
-#include "Cost.h"                   // for Cost
+#include "Cost.hpp"                 // for Cost
 #include "AST/Expr.hpp"
 #include "AST/Node.hpp"             // for ptr
 #include "AST/TypeEnvironment.hpp"  // for TypeEnvironment

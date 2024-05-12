@@ -13,14 +13,14 @@
 // Update Count     : 0
 //
 
-#include "Waitfor.h"
+#include "Waitfor.hpp"
 
 #include <string>
 
 #include "AST/Pass.hpp"
-#include "Common/UniqueName.h"
-#include "InitTweak/InitTweak.h"
-#include "ResolvExpr/Resolver.h"
+#include "Common/UniqueName.hpp"
+#include "InitTweak/InitTweak.hpp"
+#include "ResolvExpr/Resolver.hpp"
 
 #include "AST/Print.hpp"
 

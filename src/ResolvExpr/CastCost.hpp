@@ -15,8 +15,6 @@
 
 #pragma once
 
-#include "ResolvExpr/Cost.h"     // for Cost
-
 namespace ast {
 	class SymbolTable;
 	class Type;
@@ -24,6 +22,8 @@ namespace ast {
 }
 
 namespace ResolvExpr {
+
+class Cost;
 
 Cost castCost(
 	const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,

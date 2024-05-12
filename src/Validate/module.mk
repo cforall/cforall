@@ -15,7 +15,7 @@
 ###############################################################################
 
 SRC_VALIDATE = \
-	Validate/FindSpecialDecls.h
+	Validate/FindSpecialDecls.hpp
 
 SRC += $(SRC_VALIDATE) \
 	Validate/Autogen.cpp \
@@ -39,6 +39,8 @@ SRC += $(SRC_VALIDATE) \
 	Validate/HoistStruct.hpp \
 	Validate/HoistTypeDecls.cpp \
 	Validate/HoistTypeDecls.hpp \
+	Validate/ImplementEnumFunc.cpp \
+	Validate/ImplementEnumFunc.hpp \
 	Validate/InitializerLength.cpp \
 	Validate/InitializerLength.hpp \
 	Validate/LabelAddressFixer.cpp \
@@ -51,8 +53,6 @@ SRC += $(SRC_VALIDATE) \
 	Validate/ReturnCheck.cpp \
 	Validate/ReturnCheck.hpp \
 	Validate/VerifyCtorDtorAssign.cpp \
-	Validate/VerifyCtorDtorAssign.hpp \
-	Validate/ImplementEnumFunc.cpp \
-	Validate/ImplementEnumFunc.hpp
+	Validate/VerifyCtorDtorAssign.hpp
 
 SRCDEMANGLE += $(SRC_VALIDATE)

@@ -13,7 +13,7 @@
 // Update Count     : 1
 //
 
-#include "InstantiateGeneric.h"
+#include "InstantiateGeneric.hpp"
 
 #include <cassert>                     // for assertf, assert
 #include <set>                         // for set
@@ -26,13 +26,13 @@
 #include "AST/Pass.hpp"                // for Pass, WithGuard, WithShortCi...
 #include "AST/TranslationUnit.hpp"     // for TranslationUnit
 #include "AST/Vector.hpp"              // for vector
-#include "CodeGen/OperatorTable.h"     // for isAssignment
-#include "Common/ScopedMap.h"          // for ScopedMap
-#include "Common/UniqueName.h"         // for UniqueName
-#include "GenPoly/GenPoly.h"           // for isPolyType, typesPolyCompatible
+#include "CodeGen/OperatorTable.hpp"   // for isAssignment
+#include "Common/ScopedMap.hpp"        // for ScopedMap
+#include "Common/UniqueName.hpp"       // for UniqueName
+#include "GenPoly/GenPoly.hpp"         // for isPolyType, typesPolyCompatible
 #include "GenPoly/ScrubTypeVars.hpp"   // for scrubAllTypeVars
 #include "ResolvExpr/AdjustExprType.hpp"  // for adjustExprType
-#include "ResolvExpr/Unify.h"          // for typesCompatible
+#include "ResolvExpr/Unify.hpp"        // for typesCompatible
 
 namespace GenPoly {
 

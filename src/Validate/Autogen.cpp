@@ -15,13 +15,13 @@
 
 #include "Autogen.hpp"
 
-#include <algorithm>               // for count_if
-#include <cassert>                 // for strict_dynamic_cast, assert, assertf
-#include <iterator>                // for back_insert_iterator, back_inserter
-#include <list>                    // for list, _List_iterator, list<>::iter...
-#include <set>                     // for set, _Rb_tree_const_iterator
-#include <utility>                 // for pair
-#include <vector>                  // for vector
+#include <algorithm>                   // for count_if
+#include <cassert>                     // for strict_dynamic_cast, assert, a...
+#include <iterator>                    // for back_insert_iterator, back_ins...
+#include <list>                        // for list, _List_iterator, list<>::...
+#include <set>                         // for set, _Rb_tree_const_iterator
+#include <utility>                     // for pair
+#include <vector>                      // for vector
 
 #include "AST/Attribute.hpp"
 #include "AST/Copy.hpp"
@@ -33,14 +33,14 @@
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
 #include "AST/SymbolTable.hpp"
-#include "CodeGen/OperatorTable.h" // for isCtorDtor, isCtorDtorAssign
-#include "Common/ScopedMap.h"      // for ScopedMap<>::const_iterator, Scope...
-#include "Common/utility.h"        // for cloneAll, operator+
-#include "GenPoly/ScopedSet.h"     // for ScopedSet, ScopedSet<>::iterator
-#include "InitTweak/GenInit.h"     // for fixReturnStatements
-#include "InitTweak/InitTweak.h"   // for isAssignment, isCopyConstructor
+#include "CodeGen/OperatorTable.hpp"   // for isCtorDtor, isCtorDtorAssign
+#include "Common/ScopedMap.hpp"        // for ScopedMap<>::const_iterator, S...
+#include "Common/Utility.hpp"          // for cloneAll, operator+
+#include "GenPoly/ScopedSet.hpp"       // for ScopedSet, ScopedSet<>::iterator
+#include "InitTweak/GenInit.hpp"       // for fixReturnStatements
+#include "InitTweak/InitTweak.hpp"     // for isAssignment, isCopyConstructor
 #include "SymTab/GenImplicitCall.hpp"  // for genImplicitCall
-#include "SymTab/Mangler.h"        // for Mangler
+#include "SymTab/Mangler.hpp"          // for Mangler
 #include "CompilationState.hpp"
 
 namespace Validate {

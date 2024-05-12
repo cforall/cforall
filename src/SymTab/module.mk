@@ -15,16 +15,16 @@
 ###############################################################################
 
 SRC_SYMTAB = \
-	SymTab/FixFunction.cc \
-	SymTab/FixFunction.h \
+	SymTab/FixFunction.cpp \
+	SymTab/FixFunction.hpp \
 	SymTab/GenImplicitCall.cpp \
 	SymTab/GenImplicitCall.hpp \
-	SymTab/Mangler.cc \
-	SymTab/ManglerCommon.cc \
-	SymTab/Mangler.h
+	SymTab/Mangler.cpp \
+	SymTab/ManglerCommon.cpp \
+	SymTab/Mangler.hpp
 
 SRC += $(SRC_SYMTAB)
 
 SRCDEMANGLE += $(SRC_SYMTAB) \
-	SymTab/Demangle.cc \
-	SymTab/Demangle.h
+	SymTab/Demangle.cpp \
+	SymTab/Demangle.hpp

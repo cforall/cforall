@@ -13,7 +13,7 @@
 // Update Count     : 6
 //
 
-#include "Concurrency/Keywords.h"
+#include "Concurrency/Keywords.hpp"
 
 #include <iostream>
 
@@ -25,13 +25,13 @@
 #include "AST/Stmt.hpp"
 #include "AST/DeclReplacer.hpp"
 #include "AST/TranslationUnit.hpp"
-#include "CodeGen/OperatorTable.h"
-#include "Common/Examine.h"
-#include "Common/utility.h"
-#include "Common/UniqueName.h"
+#include "CodeGen/OperatorTable.hpp"
+#include "Common/Examine.hpp"
+#include "Common/Utility.hpp"
+#include "Common/UniqueName.hpp"
 #include "ControlStruct/LabelGenerator.hpp"
-#include "InitTweak/InitTweak.h"
-#include "Virtual/Tables.h"
+#include "InitTweak/InitTweak.hpp"
+#include "Virtual/Tables.hpp"
 
 namespace Concurrency {
 

@@ -19,10 +19,10 @@
 #include <memory>        // for shared_ptr
 #include <vector>
 
-#include "Cost.h"
+#include "Cost.hpp"
 #include "AST/Node.hpp"
 #include "AST/TypeEnvironment.hpp"
-#include "Common/Indenter.h"
+#include "Common/Indenter.hpp"
 
 namespace ast {
 	class Expr;

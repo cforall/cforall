@@ -52,7 +52,7 @@ include Tuples/module.mk
 include Validate/module.mk
 include Virtual/module.mk
 
-$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/BasicKind.hpp
+$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cpp ResolvExpr/CommonType.cpp SymTab/ManglerCommon.cpp) : $(srcdir)/AST/BasicKind.hpp
 
 $(srcdir)/AST/BasicKind.hpp : BasicTypes-gen.cpp
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type
@@ -72,7 +72,7 @@ ARFLAGS     = cr
 
 cfa_cpplib_PROGRAMS += $(DEMANGLER)
 EXTRA_PROGRAMS = ../driver/demangler
-___driver_demangler_SOURCES = SymTab/demangler.cc # test driver for the demangler, also useful as a sanity check that libdemangle.a is complete
+___driver_demangler_SOURCES = SymTab/demangler.cpp # test driver for the demangler, also useful as a sanity check that libdemangle.a is complete
 ___driver_demangler_LDADD = libdemangle.a -ldl			# yywrap
 noinst_LIBRARIES = $(LIBDEMANGLE)
 EXTRA_LIBRARIES = libdemangle.a

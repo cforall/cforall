@@ -19,7 +19,7 @@
 
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
-#include "Common/CodeLocation.h"
+#include "Common/CodeLocation.hpp"
 
 namespace {
 

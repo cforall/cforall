@@ -26,11 +26,11 @@
 #include "Stmt.hpp"
 #include "Type.hpp"
 #include "TypeSubstitution.hpp"
-#include "Common/utility.h"
-#include "Common/SemanticError.h"
-#include "GenPoly/Lvalue.h"        // for referencesPermissable
-#include "ResolvExpr/Unify.h"      // for extractResultType
-#include "Tuples/Tuples.h"         // for makeTupleType
+#include "Common/Utility.hpp"
+#include "Common/SemanticError.hpp"
+#include "GenPoly/Lvalue.hpp"      // for referencesPermissable
+#include "ResolvExpr/Unify.hpp"    // for extractResultType
+#include "Tuples/Tuples.hpp"       // for makeTupleType
 
 namespace ast {
 

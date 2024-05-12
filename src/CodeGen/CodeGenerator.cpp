@@ -16,10 +16,10 @@
 #include "CodeGenerator.hpp"
 
 #include "AST/Print.hpp"
-#include "OperatorTable.h"           // for OperatorInfo, operatorLookup
-#include "CodeGen/GenType.h"         // for genType
+#include "OperatorTable.hpp"         // for OperatorInfo, operatorLookup
+#include "CodeGen/GenType.hpp"       // for genType
 #include "Common/ToString.hpp"       // for toString
-#include "Common/UniqueName.h"       // for UniqueName
+#include "Common/UniqueName.hpp"     // for UniqueName
 
 namespace CodeGen {
 

@@ -19,7 +19,7 @@
 #include "AST/Expr.hpp"
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
-#include "Common/UniqueName.h"
+#include "Common/UniqueName.hpp"
 
 namespace Validate {
 

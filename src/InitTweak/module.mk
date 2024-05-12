@@ -15,15 +15,15 @@
 ###############################################################################
 
 SRC_INITTWEAK = \
-	InitTweak/GenInit.cc \
-	InitTweak/GenInit.h \
-	InitTweak/InitTweak.cc \
-	InitTweak/InitTweak.h
+	InitTweak/GenInit.cpp \
+	InitTweak/GenInit.hpp \
+	InitTweak/InitTweak.cpp \
+	InitTweak/InitTweak.hpp
 
 SRC += $(SRC_INITTWEAK) \
-	InitTweak/FixGlobalInit.cc \
-	InitTweak/FixGlobalInit.h \
+	InitTweak/FixGlobalInit.cpp \
+	InitTweak/FixGlobalInit.hpp \
 	InitTweak/FixInit.cpp \
-	InitTweak/FixInit.h
+	InitTweak/FixInit.hpp
 
 SRCDEMANGLE += $(SRC_INITTWEAK)

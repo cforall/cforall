@@ -17,20 +17,20 @@
 SRC_CODEGEN = \
 	CodeGen/CodeGenerator.cpp \
 	CodeGen/CodeGenerator.hpp \
-	CodeGen/GenType.cc \
-	CodeGen/GenType.h \
-	CodeGen/OperatorTable.cc \
-	CodeGen/OperatorTable.h
+	CodeGen/GenType.cpp \
+	CodeGen/GenType.hpp \
+	CodeGen/OperatorTable.cpp \
+	CodeGen/OperatorTable.hpp
 
 SRC += $(SRC_CODEGEN) \
-	CodeGen/Generate.cc \
-	CodeGen/Generate.h \
-	CodeGen/FixMain.cc \
-	CodeGen/FixMain.h \
-	CodeGen/FixNames.cc \
-	CodeGen/FixNames.h \
-	CodeGen/LinkOnce.cc \
-	CodeGen/LinkOnce.h \
-	CodeGen/Options.h
+	CodeGen/FixMain.cpp \
+	CodeGen/FixMain.hpp \
+	CodeGen/FixNames.cpp \
+	CodeGen/FixNames.hpp \
+	CodeGen/Generate.cpp \
+	CodeGen/Generate.hpp \
+	CodeGen/LinkOnce.cpp \
+	CodeGen/LinkOnce.hpp \
+	CodeGen/Options.hpp
 
 SRCDEMANGLE += $(SRC_CODEGEN)

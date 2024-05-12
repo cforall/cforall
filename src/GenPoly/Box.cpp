@@ -13,7 +13,7 @@
 // Update Count     : 7
 //
 
-#include "Box.h"
+#include "Box.hpp"
 
 #include "AST/Decl.hpp"                // for Decl, FunctionDecl, ...
 #include "AST/Expr.hpp"                // for AlignofExpr, ConstantExpr, ...
@@ -23,18 +23,18 @@
 #include "AST/Stmt.hpp"                // for CompoundStmt, ExprStmt, ...
 #include "AST/Vector.hpp"              // for vector
 #include "AST/GenericSubstitution.hpp" // for genericSubstitution
-#include "CodeGen/OperatorTable.h"     // for isAssignment
+#include "CodeGen/OperatorTable.hpp"   // for isAssignment
 #include "Common/Iterate.hpp"          // for group_iterate
-#include "Common/ScopedMap.h"          // for ScopedMap
+#include "Common/ScopedMap.hpp"        // for ScopedMap
 #include "Common/ToString.hpp"         // for toCString
-#include "Common/UniqueName.h"         // for UniqueName
-#include "GenPoly/FindFunction.h"      // for findFunction
-#include "GenPoly/GenPoly.h"           // for getFunctionType, ...
-#include "GenPoly/Lvalue.h"            // for generalizedLvalue
-#include "GenPoly/ScopedSet.h"         // for ScopedSet
+#include "Common/UniqueName.hpp"       // for UniqueName
+#include "GenPoly/FindFunction.hpp"    // for findFunction
+#include "GenPoly/GenPoly.hpp"         // for getFunctionType, ...
+#include "GenPoly/Lvalue.hpp"          // for generalizedLvalue
+#include "GenPoly/ScopedSet.hpp"       // for ScopedSet
 #include "GenPoly/ScrubTypeVars.hpp"   // for scrubTypeVars, scrubAllTypeVars
-#include "ResolvExpr/Unify.h"          // for typesCompatible
-#include "SymTab/Mangler.h"            // for mangle, mangleType
+#include "ResolvExpr/Unify.hpp"        // for typesCompatible
+#include "SymTab/Mangler.hpp"          // for mangle, mangleType
 
 namespace GenPoly {
 

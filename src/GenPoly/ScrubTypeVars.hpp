@@ -18,7 +18,7 @@
 #include <cassert>            // for strict_dynamic_cast
 
 #include "AST/Fwd.hpp"        // for Node
-#include "GenPoly.h"          // for TypeVarMap
+#include "GenPoly.hpp"        // for TypeVarMap
 
 namespace GenPoly {
 

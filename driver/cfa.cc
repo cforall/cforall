@@ -25,7 +25,7 @@ using namespace std;
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "Common/SemanticError.h"
+#include "Common/SemanticError.hpp"
 #include "config.h"										// configure info
 
 //#define __DEBUG_H__

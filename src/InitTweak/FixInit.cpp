@@ -1,4 +1,4 @@
-#include "FixInit.h"
+#include "FixInit.hpp"
 
 #include <stddef.h>                    // for NULL
 #include <algorithm>                   // for set_difference, copy_if
@@ -21,15 +21,15 @@
 #include "AST/Print.hpp"
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
-#include "CodeGen/OperatorTable.h"     // for isConstructor, isCtorDtor, isD...
-#include "Common/SemanticError.h"      // for SemanticError
+#include "CodeGen/OperatorTable.hpp"   // for isConstructor, isCtorDtor, isD...
+#include "Common/SemanticError.hpp"    // for SemanticError
 #include "Common/ToString.hpp"         // for toCString
-#include "Common/UniqueName.h"         // for UniqueName
-#include "FixGlobalInit.h"             // for fixGlobalInit
-#include "GenInit.h"                   // for genCtorDtor
-#include "GenPoly/GenPoly.h"           // for getFunctionType
-#include "ResolvExpr/Resolver.h"       // for findVoidExpression
-#include "ResolvExpr/Unify.h"          // for typesCompatible
+#include "Common/UniqueName.hpp"       // for UniqueName
+#include "FixGlobalInit.hpp"           // for fixGlobalInit
+#include "GenInit.hpp"                 // for genCtorDtor
+#include "GenPoly/GenPoly.hpp"         // for getFunctionType
+#include "ResolvExpr/Resolver.hpp"     // for findVoidExpression
+#include "ResolvExpr/Unify.hpp"        // for typesCompatible
 #include "SymTab/GenImplicitCall.hpp"  // for genImplicitCall
 
 bool ctordtorp = false; // print all debug

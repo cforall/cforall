@@ -19,7 +19,7 @@
 #include <cstddef>     // for nullptr_t
 #include <iosfwd>
 
-#include "Common/ErrorObjects.h"  // for SemanticErrorException
+#include "Common/ErrorObjects.hpp"  // for SemanticErrorException
 
 namespace ast {
 

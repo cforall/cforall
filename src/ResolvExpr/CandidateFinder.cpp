@@ -16,7 +16,7 @@
 #include "CandidateFinder.hpp"
 
 #include <deque>
-#include <iterator>               // for back_inserter
+#include <iterator>                 // for back_inserter
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -24,32 +24,32 @@
 
 #include "AdjustExprType.hpp"
 #include "Candidate.hpp"
-#include "CastCost.hpp"           // for castCost
+#include "CastCost.hpp"             // for castCost
 #include "CompilationState.hpp"
-#include "ConversionCost.h"       // for conversionCast
-#include "Cost.h"
+#include "ConversionCost.hpp"       // for conversionCast
+#include "Cost.hpp"
 #include "ExplodedArg.hpp"
 #include "PolyCost.hpp"
-#include "RenameVars.h"           // for renameTyVars
-#include "Resolver.h"
-#include "ResolveTypeof.h"
+#include "RenameVars.hpp"           // for renameTyVars
+#include "Resolver.hpp"
+#include "ResolveTypeof.hpp"
 #include "SatisfyAssertions.hpp"
 #include "SpecCost.hpp"
-#include "typeops.h"              // for combos
-#include "Unify.h"
-#include "WidenMode.h"
+#include "Typeops.hpp"              // for combos
+#include "Unify.hpp"
+#include "WidenMode.hpp"
 #include "AST/Expr.hpp"
 #include "AST/Node.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Print.hpp"
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
-#include "Common/utility.h"       // for move, copy
-#include "SymTab/Mangler.h"
-#include "Tuples/Tuples.h"        // for handleTupleAssignment
-#include "InitTweak/InitTweak.h"  // for getPointerBase
+#include "Common/Utility.hpp"       // for move, copy
+#include "SymTab/Mangler.hpp"
+#include "Tuples/Tuples.hpp"        // for handleTupleAssignment
+#include "InitTweak/InitTweak.hpp"  // for getPointerBase
 
-#include "Common/Stats/Counter.h"
+#include "Common/Stats/Counter.hpp"
 
 #include "AST/Inspect.hpp"             // for getFunctionName
 

@@ -19,11 +19,11 @@
 #include "AST/Decl.hpp"
 #include "AST/DeclReplacer.hpp"
 #include "AST/Pass.hpp"
-#include "CodeGen/OperatorTable.h"
-#include "Common/CodeLocation.h"
+#include "CodeGen/OperatorTable.hpp"
+#include "Common/CodeLocation.hpp"
 #include "Common/ToString.hpp"
-#include "Common/utility.h"
-#include "SymTab/FixFunction.h"
+#include "Common/Utility.hpp"
+#include "SymTab/FixFunction.hpp"
 
 namespace Validate {
 

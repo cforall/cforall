@@ -17,9 +17,9 @@
 
 #include "AST/Copy.hpp"
 #include "AST/Pass.hpp"
-#include "Common/ScopedMap.h"
-#include "Common/UniqueName.h"
-#include "ResolvExpr/Unify.h"
+#include "Common/ScopedMap.hpp"
+#include "Common/UniqueName.hpp"
+#include "ResolvExpr/Unify.hpp"
 
 namespace Validate {
 

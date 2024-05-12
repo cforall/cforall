@@ -25,7 +25,7 @@
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
 #include "AST/Type.hpp"
-#include "CodeGen/OperatorTable.h"
+#include "CodeGen/OperatorTable.hpp"
 
 namespace {
 

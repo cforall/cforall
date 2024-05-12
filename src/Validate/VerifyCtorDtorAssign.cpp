@@ -16,7 +16,7 @@
 #include "VerifyCtorDtorAssign.hpp"
 
 #include "AST/Pass.hpp"
-#include "CodeGen/OperatorTable.h"
+#include "CodeGen/OperatorTable.hpp"
 
 namespace Validate {
 

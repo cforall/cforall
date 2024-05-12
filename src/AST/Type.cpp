@@ -22,8 +22,8 @@
 #include "Decl.hpp"
 #include "Init.hpp"
 #include "Inspect.hpp"
-#include "Common/utility.h"      // for copy, move
-#include "Tuples/Tuples.h"       // for isTtype
+#include "Common/Utility.hpp"    // for copy, move
+#include "Tuples/Tuples.hpp"     // for isTtype
 
 namespace ast {
 

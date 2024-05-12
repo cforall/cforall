@@ -17,7 +17,7 @@
 
 #include "AST/Fwd.hpp"
 #include "AST/TypeEnvironment.hpp"  // for AssertionSet, OpenVarSet
-#include "WidenMode.h"              // for WidenMode
+#include "WidenMode.hpp"            // for WidenMode
 
 namespace ResolvExpr {
 

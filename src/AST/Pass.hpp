@@ -423,7 +423,7 @@ struct WithConstTranslationUnit {
 
 }
 
-#include "Common/Stats.h"
+#include "Common/Stats.hpp"
 
 namespace ast {
 extern struct PassVisitorStats {

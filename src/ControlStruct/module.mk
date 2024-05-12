@@ -16,9 +16,9 @@
 
 SRC += \
 	ControlStruct/ExceptDecl.cpp \
-	ControlStruct/ExceptDecl.h \
+	ControlStruct/ExceptDecl.hpp \
 	ControlStruct/ExceptTranslate.cpp \
-	ControlStruct/ExceptTranslate.h \
+	ControlStruct/ExceptTranslate.hpp \
 	ControlStruct/FixLabels.cpp \
 	ControlStruct/FixLabels.hpp \
 	ControlStruct/HoistControlDecls.cpp \

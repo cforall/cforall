@@ -19,25 +19,29 @@ BUILT_SOURCES = Parser/parser.hh
 AM_YFLAGS = -d -t -v -Wno-yacc
 
 SRC += \
-       Parser/DeclarationNode.cc \
-       Parser/DeclarationNode.h \
-       Parser/ExpressionNode.cc \
-       Parser/ExpressionNode.h \
-       Parser/InitializerNode.cc \
-       Parser/InitializerNode.h \
+       Parser/DeclarationNode.cpp \
+       Parser/DeclarationNode.hpp \
+       Parser/ExpressionNode.cpp \
+       Parser/ExpressionNode.hpp \
+       Parser/InitializerNode.cpp \
+       Parser/InitializerNode.hpp \
        Parser/lex.ll \
-       Parser/ParseNode.cc \
-       Parser/ParseNode.h \
+       Parser/ParseNode.cpp \
+       Parser/ParseNode.hpp \
        Parser/parser.yy \
-       Parser/ParserTypes.h \
-       Parser/parserutility.h \
+       Parser/ParserTypes.hpp \
+       Parser/ParserUtility.hpp \
        Parser/RunParser.cpp \
        Parser/RunParser.hpp \
-       Parser/StatementNode.cc \
-       Parser/StatementNode.h \
-       Parser/TypeData.cc \
-       Parser/TypeData.h \
-       Parser/TypedefTable.cc \
-       Parser/TypedefTable.h
+       Parser/StatementNode.cpp \
+       Parser/StatementNode.hpp \
+       Parser/TypeData.cpp \
+       Parser/TypeData.hpp \
+       Parser/TypedefTable.cpp \
+       Parser/TypedefTable.hpp
 
-MOSTLYCLEANFILES += Parser/lex.cc Parser/parser.cc Parser/parser.hh Parser/parser.output
+MOSTLYCLEANFILES += \
+       Parser/lex.cc \
+       Parser/parser.cc \
+       Parser/parser.hh \
+       Parser/parser.output

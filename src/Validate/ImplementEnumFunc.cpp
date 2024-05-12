@@ -1,8 +1,8 @@
 #include "AST/Create.hpp"
 #include "AST/Pass.hpp"
 #include "AST/TranslationUnit.hpp"
-#include "CodeGen/OperatorTable.h"  // for isCtorDtor, isCtorDtorAssign
-#include "InitTweak/InitTweak.h"    // for isAssignment, isCopyConstructor
+#include "CodeGen/OperatorTable.hpp"  // for isCtorDtor, isCtorDtorAssign
+#include "InitTweak/InitTweak.hpp"    // for isAssignment, isCopyConstructor
 namespace Validate {
 
 namespace {

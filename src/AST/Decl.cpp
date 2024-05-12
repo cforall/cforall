@@ -19,8 +19,8 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "Common/Eval.h"       // for eval
-#include "Common/SemanticError.h"
+#include "Common/Eval.hpp"     // for eval
+#include "Common/SemanticError.hpp"
 
 #include "Fwd.hpp"             // for UniqueId
 #include "Init.hpp"

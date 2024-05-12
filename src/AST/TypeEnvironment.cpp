@@ -28,11 +28,11 @@
 #include "Pass.hpp"
 #include "Print.hpp"
 #include "Type.hpp"
-#include "Common/Indenter.h"
-#include "ResolvExpr/typeops.h"    // for occurs
-#include "ResolvExpr/WidenMode.h"
-#include "ResolvExpr/Unify.h"      // for unifyInexact
-#include "Tuples/Tuples.h"         // for isTtype
+#include "Common/Indenter.hpp"
+#include "ResolvExpr/Typeops.hpp"    // for occurs
+#include "ResolvExpr/WidenMode.hpp"
+#include "ResolvExpr/Unify.hpp"      // for unifyInexact
+#include "Tuples/Tuples.hpp"         // for isTtype
 #include "CompilationState.hpp"
 
 using ResolvExpr::WidenMode;

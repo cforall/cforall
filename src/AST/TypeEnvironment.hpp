@@ -27,8 +27,8 @@
 #include "SymbolTable.hpp"
 #include "Type.hpp"
 #include "TypeSubstitution.hpp"
-#include "Common/Indenter.h"
-#include "ResolvExpr/WidenMode.h"
+#include "Common/Indenter.hpp"
+#include "ResolvExpr/WidenMode.hpp"
 
 namespace ast {
 

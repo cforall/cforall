@@ -13,7 +13,7 @@
 // Update Count     : 0
 //
 
-#include "Lvalue.h"
+#include "Lvalue.hpp"
 
 #include <set>
 #include <iostream>
@@ -23,12 +23,12 @@
 #include "AST/Inspect.hpp"
 #include "AST/LinkageSpec.hpp"         // for Linkage
 #include "AST/Pass.hpp"
-#include "Common/SemanticError.h"      // for SemanticWarning
+#include "Common/SemanticError.hpp"    // for SemanticWarning
 #include "Common/ToString.hpp"         // for toCString
-#include "Common/UniqueName.h"         // for UniqueName
-#include "GenPoly/GenPoly.h"           // for genFunctionType
-#include "ResolvExpr/typeops.h"        // for typesCompatible
-#include "ResolvExpr/Unify.h"          // for unify
+#include "Common/UniqueName.hpp"       // for UniqueName
+#include "GenPoly/GenPoly.hpp"         // for genFunctionType
+#include "ResolvExpr/Typeops.hpp"      // for typesCompatible
+#include "ResolvExpr/Unify.hpp"        // for unify
 
 #if 0
 #define PRINT(x) x

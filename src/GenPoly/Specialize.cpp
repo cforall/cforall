@@ -13,15 +13,15 @@
 // Update Count     : 0
 //
 
-#include "Specialize.h"
+#include "Specialize.hpp"
 
 #include "AST/Copy.hpp"                  // for deepCopy
 #include "AST/Inspect.hpp"               // for isIntrinsicCallExpr
 #include "AST/Pass.hpp"                  // for Pass
 #include "AST/TypeEnvironment.hpp"       // for OpenVarSet, AssertionSet
-#include "Common/UniqueName.h"           // for UniqueName
-#include "GenPoly/GenPoly.h"             // for getFunctionType
-#include "ResolvExpr/FindOpenVars.h"     // for findOpenVars
+#include "Common/UniqueName.hpp"         // for UniqueName
+#include "GenPoly/GenPoly.hpp"           // for getFunctionType
+#include "ResolvExpr/FindOpenVars.hpp"   // for findOpenVars
 
 namespace GenPoly {
 

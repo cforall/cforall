@@ -20,8 +20,8 @@
 
 #include "Fwd.hpp"
 #include "Node.hpp"                // for ptr, readonly
-#include "Common/CodeLocation.h"
-#include "Common/PersistentMap.h"
+#include "Common/CodeLocation.hpp"
+#include "Common/PersistentMap.hpp"
 
 namespace ResolvExpr {
 	class Cost;

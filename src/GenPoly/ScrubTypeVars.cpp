@@ -15,12 +15,12 @@
 
 #include "ScrubTypeVars.hpp"
 
-#include <utility>                      // for pair
+#include <utility>                        // for pair
 
 #include "AST/Pass.hpp"
-#include "GenPoly.h"                    // for mangleType, TyVarMap, alignof...
-#include "GenPoly/ErasableScopedMap.h"  // for ErasableScopedMap<>::const_it...
-#include "SymTab/Mangler.h"             // for mangleType
+#include "GenPoly.hpp"                    // for mangleType, TyVarMap, align...
+#include "GenPoly/ErasableScopedMap.hpp"  // for ErasableScopedMap<>::const_...
+#include "SymTab/Mangler.hpp"             // for mangleType
 
 namespace GenPoly {
 

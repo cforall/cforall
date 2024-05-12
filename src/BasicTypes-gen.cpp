@@ -325,7 +325,7 @@ int main() {
 	// cout << code.str();
 
 
-	#define ConversionCost TOP_SRCDIR "src/ResolvExpr/ConversionCost.cc"
+	#define ConversionCost TOP_SRCDIR "src/ResolvExpr/ConversionCost.cpp"
 	resetInput( file, ConversionCost, buffer, code, str );
 
 	if ( (start = str.find( STARTMK )) == string::npos ) Abort( "start", ConversionCost );
@@ -404,7 +404,7 @@ int main() {
 	// cout << code.str();
 
 
-	#define CommonType TOP_SRCDIR "src/ResolvExpr/CommonType.cc"
+	#define CommonType TOP_SRCDIR "src/ResolvExpr/CommonType.cpp"
 	resetInput( file, CommonType, buffer, code, str );
 
 	if ( (start = str.find( STARTMK )) == string::npos ) Abort( "start", CommonType );
@@ -445,7 +445,7 @@ int main() {
 	// cout << code.str();
 
 
-	#define ManglerCommon TOP_SRCDIR "src/SymTab/ManglerCommon.cc"
+	#define ManglerCommon TOP_SRCDIR "src/SymTab/ManglerCommon.cpp"
 	resetInput( file, ManglerCommon, buffer, code, str );
 
 	if ( (start = str.find( STARTMK )) == string::npos ) Abort( "start", ManglerCommon );

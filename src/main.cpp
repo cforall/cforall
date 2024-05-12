@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// main.cc --
+// main.cpp --
 //
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
@@ -34,55 +34,55 @@
 #include "AST/Util.hpp"                     // for checkInvariants
 #include "CompilationState.hpp"
 #include "../config.h"                      // for CFA_LIBDIR
-#include "CodeGen/FixMain.h"                // for FixMain
-#include "CodeGen/FixNames.h"               // for fixNames
-#include "CodeGen/Generate.h"               // for generate
-#include "CodeGen/LinkOnce.h"               // for translateLinkOnce
+#include "CodeGen/FixMain.hpp"              // for FixMain
+#include "CodeGen/FixNames.hpp"             // for fixNames
+#include "CodeGen/Generate.hpp"             // for generate
+#include "CodeGen/LinkOnce.hpp"             // for translateLinkOnce
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
 #include "Common/DeclStats.hpp"             // for printDeclStats
 #include "Common/ResolvProtoDump.hpp"       // for dumpAsResolverProto
-#include "Common/Stats.h"                   // for Stats
-#include "Common/utility.h"                 // for deleteAll, filter, printAll
+#include "Common/Stats.hpp"                 // for Stats
+#include "Common/Utility.hpp"               // for deleteAll, filter, printAll
 #include "Concurrency/Actors.hpp"           // for implementActors
 #include "Concurrency/Corun.hpp"            // for implementCorun
-#include "Concurrency/Keywords.h"           // for implementMutex, implement...
-#include "Concurrency/Waitfor.h"            // for generateWaitfor
+#include "Concurrency/Keywords.hpp"         // for implementMutex, implement...
+#include "Concurrency/Waitfor.hpp"          // for generateWaitfor
 #include "Concurrency/Waituntil.hpp"        // for generateWaitUntil
-#include "ControlStruct/ExceptDecl.h"       // for translateExcept
-#include "ControlStruct/ExceptTranslate.h"  // for translateThrows, translat...
+#include "ControlStruct/ExceptDecl.hpp"     // for translateExcept
+#include "ControlStruct/ExceptTranslate.hpp"// for translateThrows, translat...
 #include "ControlStruct/FixLabels.hpp"      // for fixLabels
 #include "ControlStruct/HoistControlDecls.hpp" //  hoistControlDecls
-#include "GenPoly/Box.h"                    // for box
-#include "GenPoly/InstantiateGeneric.h"     // for instantiateGeneric
-#include "GenPoly/Lvalue.h"                 // for convertLvalue
-#include "GenPoly/Specialize.h"             // for convertSpecializations
-#include "InitTweak/FixInit.h"              // for fix
-#include "InitTweak/GenInit.h"              // for genInit
+#include "GenPoly/Box.hpp"                  // for box
+#include "GenPoly/InstantiateGeneric.hpp"   // for instantiateGeneric
+#include "GenPoly/Lvalue.hpp"               // for convertLvalue
+#include "GenPoly/Specialize.hpp"           // for convertSpecializations
+#include "InitTweak/FixInit.hpp"            // for fix
+#include "InitTweak/GenInit.hpp"            // for genInit
 #include "MakeLibCfa.hpp"                   // for makeLibCfa
 #include "Parser/RunParser.hpp"             // for buildList, dumpParseTree,...
 #include "ResolvExpr/CandidatePrinter.hpp"  // for printCandidates
 #include "ResolvExpr/EraseWith.hpp"         // for eraseWith
-#include "ResolvExpr/Resolver.h"            // for resolve
-#include "Tuples/Tuples.h"                  // for expandMemberTuples, expan...
+#include "ResolvExpr/Resolver.hpp"          // for resolve
+#include "Tuples/Tuples.hpp"                // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
-#include "Validate/ImplementEnumFunc.hpp"   // for implementEnumFunc
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/EliminateTypedef.hpp"    // for eliminateTypedef
 #include "Validate/EnumAndPointerDecay.hpp" // for decayEnumsAndPointers
-#include "Validate/FindSpecialDecls.h"      // for findGlobalDecls
+#include "Validate/FindSpecialDecls.hpp"    // for findGlobalDecls
 #include "Validate/FixQualifiedTypes.hpp"   // for fixQualifiedTypes
 #include "Validate/FixReturnTypes.hpp"      // for fixReturnTypes
 #include "Validate/ForallPointerDecay.hpp"  // for decayForallPointers
 #include "Validate/GenericParameter.hpp"    // for fillGenericParameters, tr...
 #include "Validate/HoistStruct.hpp"         // for hoistStruct
 #include "Validate/HoistTypeDecls.hpp"      // for hoistTypeDecls
+#include "Validate/ImplementEnumFunc.hpp"   // for implementEnumFunc
 #include "Validate/InitializerLength.hpp"   // for setLengthFromInitializer
 #include "Validate/LabelAddressFixer.hpp"   // for fixLabelAddresses
 #include "Validate/LinkInstanceTypes.hpp"   // for linkInstanceTypes
 #include "Validate/ReplaceTypedef.hpp"      // for replaceTypedef
 #include "Validate/ReturnCheck.hpp"         // for checkReturnStatements
 #include "Validate/VerifyCtorDtorAssign.hpp" // for verifyCtorDtorAssign
-#include "Virtual/ExpandCasts.h"            // for expandCasts
+#include "Virtual/ExpandCasts.hpp"          // for expandCasts
 #include "Virtual/VirtualDtor.hpp"          // for implementVirtDtors
 
 using namespace std;

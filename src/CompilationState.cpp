@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// CompilationState.cc --
+// CompilationState.cpp --
 //
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018

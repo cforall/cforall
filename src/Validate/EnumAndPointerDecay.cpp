@@ -19,7 +19,7 @@
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Type.hpp"
-#include "SymTab/FixFunction.h"
+#include "SymTab/FixFunction.hpp"
 #include "Validate/NoIdSymbolTable.hpp"
 
 namespace Validate {

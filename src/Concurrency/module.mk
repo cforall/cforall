@@ -20,8 +20,8 @@ SRC += \
 	Concurrency/Corun.cpp \
 	Concurrency/Corun.hpp \
 	Concurrency/Keywords.cpp \
-	Concurrency/Keywords.h \
+	Concurrency/Keywords.hpp \
 	Concurrency/Waitfor.cpp \
-	Concurrency/Waitfor.h \
+	Concurrency/Waitfor.hpp \
 	Concurrency/Waituntil.cpp \
 	Concurrency/Waituntil.hpp

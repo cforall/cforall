@@ -13,10 +13,10 @@
 // Update Count     : 5
 //
 
-#include "Tuples.h"
+#include "Tuples.hpp"
 
 #include "AST/Pass.hpp"
-#include "Common/ScopedMap.h"
+#include "Common/ScopedMap.hpp"
 
 namespace Tuples {
 

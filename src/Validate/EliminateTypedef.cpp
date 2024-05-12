@@ -20,7 +20,7 @@
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
-#include "Common/utility.h"
+#include "Common/Utility.hpp"
 
 namespace Validate {
 

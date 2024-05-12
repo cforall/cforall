@@ -19,8 +19,8 @@
 #include <memory>   // for unique_ptr
 #include <string>
 
-#include "Common/CodeLocation.h"
-#include "Common/SemanticError.h"
+#include "Common/CodeLocation.hpp"
+#include "Common/SemanticError.hpp"
 
 namespace ast {
 

@@ -13,7 +13,7 @@
 // Update Count     : 0
 //
 
-#include "ExceptDecl.h"
+#include "ExceptDecl.hpp"
 
 #include <sstream>
 
@@ -22,7 +22,7 @@
 #include "AST/Pass.hpp"
 #include "AST/Print.hpp"
 #include "AST/Type.hpp"
-#include "Virtual/Tables.h"
+#include "Virtual/Tables.hpp"
 
 namespace ControlStruct {
 

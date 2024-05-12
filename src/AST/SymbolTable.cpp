@@ -22,15 +22,15 @@
 #include "Expr.hpp"
 #include "Inspect.hpp"
 #include "Type.hpp"
-#include "CodeGen/OperatorTable.h"         // for isCtorDtorAssign
-#include "Common/SemanticError.h"
-#include "Common/Stats/Counter.h"
-#include "GenPoly/GenPoly.h"
-#include "InitTweak/InitTweak.h"
-#include "ResolvExpr/Cost.h"
+#include "CodeGen/OperatorTable.hpp"       // for isCtorDtorAssign
+#include "Common/SemanticError.hpp"
+#include "Common/Stats/Counter.hpp"
+#include "GenPoly/GenPoly.hpp"
+#include "InitTweak/InitTweak.hpp"
+#include "ResolvExpr/Cost.hpp"
 #include "ResolvExpr/CandidateFinder.hpp"  // for referenceToRvalueConversion
-#include "ResolvExpr/Unify.h"
-#include "SymTab/Mangler.h"
+#include "ResolvExpr/Unify.hpp"
+#include "SymTab/Mangler.hpp"
 
 namespace ast {
 

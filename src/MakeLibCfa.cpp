@@ -18,8 +18,8 @@
 #include "AST/Copy.hpp"
 #include "AST/Fwd.hpp"
 #include "AST/Pass.hpp"
-#include "CodeGen/OperatorTable.h"
-#include "Common/UniqueName.h"
+#include "CodeGen/OperatorTable.hpp"
+#include "Common/UniqueName.hpp"
 
 namespace LibCfa {
 namespace {

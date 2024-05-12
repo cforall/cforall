@@ -13,7 +13,7 @@
 // Update Count     : 0
 //
 
-#include "Validate/FindSpecialDecls.h"
+#include "Validate/FindSpecialDecls.hpp"
 
 #include "AST/Decl.hpp"
 #include "AST/Pass.hpp"

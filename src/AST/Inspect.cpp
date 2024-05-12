@@ -23,7 +23,7 @@
 #include "AST/Print.hpp"
 #include "AST/Stmt.hpp"
 #include "AST/Type.hpp"
-#include "CodeGen/OperatorTable.h"
+#include "CodeGen/OperatorTable.hpp"
 
 namespace ast {
 

@@ -15,46 +15,46 @@
 ###############################################################################
 
 SRC_RESOLVEXPR = \
-      ResolvExpr/AdjustExprType.cc \
+      ResolvExpr/AdjustExprType.cpp \
       ResolvExpr/AdjustExprType.hpp \
       ResolvExpr/Candidate.cpp \
       ResolvExpr/CandidateFinder.cpp \
       ResolvExpr/CandidateFinder.hpp \
       ResolvExpr/Candidate.hpp \
-      ResolvExpr/CastCost.cc \
+      ResolvExpr/CastCost.cpp \
       ResolvExpr/CastCost.hpp \
-      ResolvExpr/CommonType.cc \
+      ResolvExpr/CommonType.cpp \
       ResolvExpr/CommonType.hpp \
-      ResolvExpr/ConversionCost.cc \
-      ResolvExpr/ConversionCost.h \
-      ResolvExpr/Cost.h \
-      ResolvExpr/CurrentObject.cc \
-      ResolvExpr/CurrentObject.h \
+      ResolvExpr/ConversionCost.cpp \
+      ResolvExpr/ConversionCost.hpp \
+      ResolvExpr/Cost.hpp \
+      ResolvExpr/CurrentObject.cpp \
+      ResolvExpr/CurrentObject.hpp \
       ResolvExpr/ExplodedArg.cpp \
       ResolvExpr/ExplodedArg.hpp \
-      ResolvExpr/FindOpenVars.cc \
-      ResolvExpr/FindOpenVars.h \
-      ResolvExpr/PolyCost.cc \
+      ResolvExpr/FindOpenVars.cpp \
+      ResolvExpr/FindOpenVars.hpp \
+      ResolvExpr/PolyCost.cpp \
       ResolvExpr/PolyCost.hpp \
-      ResolvExpr/PtrsAssignable.cc \
+      ResolvExpr/PtrsAssignable.cpp \
       ResolvExpr/PtrsAssignable.hpp \
-      ResolvExpr/PtrsCastable.cc \
+      ResolvExpr/PtrsCastable.cpp \
       ResolvExpr/PtrsCastable.hpp \
-      ResolvExpr/RenameVars.cc \
-      ResolvExpr/RenameVars.h \
-      ResolvExpr/Resolver.cc \
-      ResolvExpr/Resolver.h \
-      ResolvExpr/ResolveTypeof.cc \
-      ResolvExpr/ResolveTypeof.h \
+      ResolvExpr/RenameVars.cpp \
+      ResolvExpr/RenameVars.hpp \
+      ResolvExpr/Resolver.cpp \
+      ResolvExpr/Resolver.hpp \
+      ResolvExpr/ResolveTypeof.cpp \
+      ResolvExpr/ResolveTypeof.hpp \
       ResolvExpr/ResolveMode.hpp \
       ResolvExpr/SatisfyAssertions.cpp \
       ResolvExpr/SatisfyAssertions.hpp \
-      ResolvExpr/SpecCost.cc \
+      ResolvExpr/SpecCost.cpp \
       ResolvExpr/SpecCost.hpp \
-      ResolvExpr/typeops.h \
-      ResolvExpr/Unify.cc \
-      ResolvExpr/Unify.h \
-      ResolvExpr/WidenMode.h
+      ResolvExpr/Typeops.hpp \
+      ResolvExpr/Unify.cpp \
+      ResolvExpr/Unify.hpp \
+      ResolvExpr/WidenMode.hpp
 
 SRC += $(SRC_RESOLVEXPR) \
 	ResolvExpr/CandidatePrinter.cpp \

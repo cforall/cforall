@@ -23,7 +23,7 @@
 #include "Node.hpp"										// for node, ptr
 #include "ParseNode.hpp"
 #include "Visitor.hpp"
-#include "Common/CodeLocation.h"
+#include "Common/CodeLocation.hpp"
 
 // Must be included in *all* AST classes; should be #undef'd at the end of the file
 #define MUTATE_FRIEND													\

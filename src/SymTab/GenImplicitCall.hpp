@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "InitTweak/InitTweak.h"  // for InitExpander
+#include "InitTweak/InitTweak.hpp"  // for InitExpander
 
 namespace SymTab {
 

@@ -22,9 +22,9 @@
 #include "AST/Inspect.hpp"               // for isUnnamedBitfield
 #include "AST/Stmt.hpp"                  // for ExprStmt
 #include "AST/Type.hpp"                  // for ArrayType, BasicType, ...
-#include "CodeGen/OperatorTable.h"       // for isCtorDtor
-#include "Common/UniqueName.h"           // for UniqueName
-#include "Common/utility.h"              // for splice
+#include "CodeGen/OperatorTable.hpp"     // for isCtorDtor
+#include "Common/UniqueName.hpp"         // for UniqueName
+#include "Common/Utility.hpp"            // for splice
 
 namespace SymTab {
 

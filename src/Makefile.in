@@ -210,8 +210,8 @@ am_libdemangle_a_OBJECTS = $(am__objects_10)
 libdemangle_a_OBJECTS = $(am_libdemangle_a_OBJECTS)
 am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	MakeLibCfa.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
-	CodeGen/Generate.$(OBJEXT) CodeGen/FixMain.$(OBJEXT) \
-	CodeGen/FixNames.$(OBJEXT) CodeGen/LinkOnce.$(OBJEXT) \
+	CodeGen/FixMain.$(OBJEXT) CodeGen/FixNames.$(OBJEXT) \
+	CodeGen/Generate.$(OBJEXT) CodeGen/LinkOnce.$(OBJEXT) \
 	Concurrency/Actors.$(OBJEXT) Concurrency/Corun.$(OBJEXT) \
 	Concurrency/Keywords.$(OBJEXT) Concurrency/Waitfor.$(OBJEXT) \
 	Concurrency/Waituntil.$(OBJEXT) $(am__objects_3) \
@@ -245,13 +245,13 @@ am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	Validate/GenericParameter.$(OBJEXT) \
 	Validate/HoistStruct.$(OBJEXT) \
 	Validate/HoistTypeDecls.$(OBJEXT) \
+	Validate/ImplementEnumFunc.$(OBJEXT) \
 	Validate/InitializerLength.$(OBJEXT) \
 	Validate/LabelAddressFixer.$(OBJEXT) \
 	Validate/LinkInstanceTypes.$(OBJEXT) \
 	Validate/ReplaceTypedef.$(OBJEXT) \
 	Validate/ReturnCheck.$(OBJEXT) \
 	Validate/VerifyCtorDtorAssign.$(OBJEXT) \
-	Validate/ImplementEnumFunc.$(OBJEXT) \
 	Virtual/ExpandCasts.$(OBJEXT) Virtual/Tables.$(OBJEXT) \
 	Virtual/VirtualDtor.$(OBJEXT)
 am____driver_cfa_cpp_OBJECTS = $(am__objects_11)
@@ -628,18 +628,18 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I automake
 SRC = main.cpp CompilationState.cpp CompilationState.hpp \
 	MakeLibCfa.cpp MakeLibCfa.hpp $(SRC_AST) $(SRC_CODEGEN) \
-	CodeGen/Generate.cc CodeGen/Generate.h CodeGen/FixMain.cc \
-	CodeGen/FixMain.h CodeGen/FixNames.cc CodeGen/FixNames.h \
-	CodeGen/LinkOnce.cc CodeGen/LinkOnce.h CodeGen/Options.h \
+	CodeGen/FixMain.cpp CodeGen/FixMain.hpp CodeGen/FixNames.cpp \
+	CodeGen/FixNames.hpp CodeGen/Generate.cpp CodeGen/Generate.hpp \
+	CodeGen/LinkOnce.cpp CodeGen/LinkOnce.hpp CodeGen/Options.hpp \
 	Concurrency/Actors.cpp Concurrency/Actors.hpp \
 	Concurrency/Corun.cpp Concurrency/Corun.hpp \
-	Concurrency/Keywords.cpp Concurrency/Keywords.h \
-	Concurrency/Waitfor.cpp Concurrency/Waitfor.h \
+	Concurrency/Keywords.cpp Concurrency/Keywords.hpp \
+	Concurrency/Waitfor.cpp Concurrency/Waitfor.hpp \
 	Concurrency/Waituntil.cpp Concurrency/Waituntil.hpp \
-	$(SRC_COMMON) Common/DebugMalloc.cc \
-	ControlStruct/ExceptDecl.cpp ControlStruct/ExceptDecl.h \
+	$(SRC_COMMON) Common/DebugMalloc.cpp \
+	ControlStruct/ExceptDecl.cpp ControlStruct/ExceptDecl.hpp \
 	ControlStruct/ExceptTranslate.cpp \
-	ControlStruct/ExceptTranslate.h ControlStruct/FixLabels.cpp \
+	ControlStruct/ExceptTranslate.hpp ControlStruct/FixLabels.cpp \
 	ControlStruct/FixLabels.hpp \
 	ControlStruct/HoistControlDecls.cpp \
 	ControlStruct/HoistControlDecls.hpp \
@@ -647,23 +647,24 @@ SRC = main.cpp CompilationState.cpp CompilationState.hpp \
 	ControlStruct/LabelGenerator.hpp \
 	ControlStruct/MultiLevelExit.cpp \
 	ControlStruct/MultiLevelExit.hpp $(SRC_GENPOLY) \
-	GenPoly/Box.cpp GenPoly/Box.h GenPoly/ErasableScopedMap.h \
-	GenPoly/FindFunction.cc GenPoly/FindFunction.h \
-	GenPoly/InstantiateGeneric.cpp GenPoly/InstantiateGeneric.h \
-	GenPoly/Lvalue.cpp GenPoly/ScopedSet.h \
+	GenPoly/Box.cpp GenPoly/Box.hpp GenPoly/ErasableScopedMap.hpp \
+	GenPoly/FindFunction.cpp GenPoly/FindFunction.hpp \
+	GenPoly/InstantiateGeneric.cpp GenPoly/InstantiateGeneric.hpp \
+	GenPoly/Lvalue.cpp GenPoly/ScopedSet.hpp \
 	GenPoly/ScrubTypeVars.cpp GenPoly/ScrubTypeVars.hpp \
-	GenPoly/Specialize.cpp GenPoly/Specialize.h $(SRC_INITTWEAK) \
-	InitTweak/FixGlobalInit.cc InitTweak/FixGlobalInit.h \
-	InitTweak/FixInit.cpp InitTweak/FixInit.h \
-	Parser/DeclarationNode.cc Parser/DeclarationNode.h \
-	Parser/ExpressionNode.cc Parser/ExpressionNode.h \
-	Parser/InitializerNode.cc Parser/InitializerNode.h \
-	Parser/lex.ll Parser/ParseNode.cc Parser/ParseNode.h \
-	Parser/parser.yy Parser/ParserTypes.h Parser/parserutility.h \
-	Parser/RunParser.cpp Parser/RunParser.hpp \
-	Parser/StatementNode.cc Parser/StatementNode.h \
-	Parser/TypeData.cc Parser/TypeData.h Parser/TypedefTable.cc \
-	Parser/TypedefTable.h $(SRC_RESOLVEXPR) \
+	GenPoly/Specialize.cpp GenPoly/Specialize.hpp $(SRC_INITTWEAK) \
+	InitTweak/FixGlobalInit.cpp InitTweak/FixGlobalInit.hpp \
+	InitTweak/FixInit.cpp InitTweak/FixInit.hpp \
+	Parser/DeclarationNode.cpp Parser/DeclarationNode.hpp \
+	Parser/ExpressionNode.cpp Parser/ExpressionNode.hpp \
+	Parser/InitializerNode.cpp Parser/InitializerNode.hpp \
+	Parser/lex.ll Parser/ParseNode.cpp Parser/ParseNode.hpp \
+	Parser/parser.yy Parser/ParserTypes.hpp \
+	Parser/ParserUtility.hpp Parser/RunParser.cpp \
+	Parser/RunParser.hpp Parser/StatementNode.cpp \
+	Parser/StatementNode.hpp Parser/TypeData.cpp \
+	Parser/TypeData.hpp Parser/TypedefTable.cpp \
+	Parser/TypedefTable.hpp $(SRC_RESOLVEXPR) \
 	ResolvExpr/CandidatePrinter.cpp \
 	ResolvExpr/CandidatePrinter.hpp ResolvExpr/EraseWith.cpp \
 	ResolvExpr/EraseWith.hpp $(SRC_SYMTAB) $(SRC_TUPLES) \
@@ -678,22 +679,21 @@ SRC = main.cpp CompilationState.cpp CompilationState.hpp \
 	Validate/ForallPointerDecay.hpp Validate/GenericParameter.cpp \
 	Validate/GenericParameter.hpp Validate/HoistStruct.cpp \
 	Validate/HoistStruct.hpp Validate/HoistTypeDecls.cpp \
-	Validate/HoistTypeDecls.hpp Validate/InitializerLength.cpp \
+	Validate/HoistTypeDecls.hpp Validate/ImplementEnumFunc.cpp \
+	Validate/ImplementEnumFunc.hpp Validate/InitializerLength.cpp \
 	Validate/InitializerLength.hpp Validate/LabelAddressFixer.cpp \
 	Validate/LabelAddressFixer.hpp Validate/LinkInstanceTypes.cpp \
 	Validate/LinkInstanceTypes.hpp Validate/NoIdSymbolTable.hpp \
 	Validate/ReplaceTypedef.cpp Validate/ReplaceTypedef.hpp \
 	Validate/ReturnCheck.cpp Validate/ReturnCheck.hpp \
 	Validate/VerifyCtorDtorAssign.cpp \
-	Validate/VerifyCtorDtorAssign.hpp \
-	Validate/ImplementEnumFunc.cpp Validate/ImplementEnumFunc.hpp \
-	Virtual/ExpandCasts.cc Virtual/ExpandCasts.h Virtual/Tables.cc \
-	Virtual/Tables.h Virtual/VirtualDtor.cpp \
-	Virtual/VirtualDtor.hpp
+	Validate/VerifyCtorDtorAssign.hpp Virtual/ExpandCasts.cpp \
+	Virtual/ExpandCasts.hpp Virtual/Tables.cpp Virtual/Tables.hpp \
+	Virtual/VirtualDtor.cpp Virtual/VirtualDtor.hpp
 SRCDEMANGLE = CompilationState.cpp $(SRC_AST) $(SRC_CODEGEN) \
 	$(SRC_COMMON) $(SRC_GENPOLY) $(SRC_INITTWEAK) \
-	$(SRC_RESOLVEXPR) $(SRC_SYMTAB) SymTab/Demangle.cc \
-	SymTab/Demangle.h $(SRC_TUPLES) $(SRC_VALIDATE)
+	$(SRC_RESOLVEXPR) $(SRC_SYMTAB) SymTab/Demangle.cpp \
+	SymTab/Demangle.hpp $(SRC_TUPLES) $(SRC_VALIDATE)
 MAINTAINERCLEANFILES = ${libdir}/${notdir ${cfa_cpplib_PROGRAMS}}
 MOSTLYCLEANFILES = Parser/lex.cc Parser/parser.cc Parser/parser.hh \
 	Parser/parser.output
@@ -757,125 +757,125 @@ SRC_AST = \
 SRC_CODEGEN = \
 	CodeGen/CodeGenerator.cpp \
 	CodeGen/CodeGenerator.hpp \
-	CodeGen/GenType.cc \
-	CodeGen/GenType.h \
-	CodeGen/OperatorTable.cc \
-	CodeGen/OperatorTable.h
+	CodeGen/GenType.cpp \
+	CodeGen/GenType.hpp \
+	CodeGen/OperatorTable.cpp \
+	CodeGen/OperatorTable.hpp
 
 SRC_COMMON = \
-	Common/Assert.cc \
-	Common/CodeLocation.h \
+	Common/Assert.cpp \
+	Common/CodeLocation.hpp \
 	Common/CodeLocationTools.hpp \
 	Common/CodeLocationTools.cpp \
 	Common/DeclStats.hpp \
 	Common/DeclStats.cpp \
-	Common/ErrorObjects.h \
-	Common/Eval.cc \
-	Common/Eval.h \
-	Common/Examine.cc \
-	Common/Examine.h \
-	Common/FilterCombos.h \
-	Common/Indenter.h \
-	Common/Indenter.cc \
+	Common/ErrorObjects.hpp \
+	Common/Eval.cpp \
+	Common/Eval.hpp \
+	Common/Examine.cpp \
+	Common/Examine.hpp \
+	Common/FilterCombos.hpp \
+	Common/Indenter.hpp \
+	Common/Indenter.cpp \
 	Common/Iterate.hpp \
-	Common/PersistentMap.h \
+	Common/PersistentMap.hpp \
 	Common/ResolvProtoDump.hpp \
 	Common/ResolvProtoDump.cpp \
-	Common/ScopedMap.h \
-	Common/SemanticError.cc \
-	Common/SemanticError.h \
-	Common/Stats.h \
-	Common/Stats/Base.h \
-	Common/Stats/Counter.cc \
-	Common/Stats/Counter.h \
-	Common/Stats/Heap.cc \
-	Common/Stats/Heap.h \
-	Common/Stats/ResolveTime.cc \
-	Common/Stats/ResolveTime.h \
-	Common/Stats/Stats.cc \
-	Common/Stats/Time.cc \
-	Common/Stats/Time.h \
+	Common/ScopedMap.hpp \
+	Common/SemanticError.cpp \
+	Common/SemanticError.hpp \
+	Common/Stats.hpp \
+	Common/Stats/Base.hpp \
+	Common/Stats/Counter.cpp \
+	Common/Stats/Counter.hpp \
+	Common/Stats/Heap.cpp \
+	Common/Stats/Heap.hpp \
+	Common/Stats/ResolveTime.cpp \
+	Common/Stats/ResolveTime.hpp \
+	Common/Stats/Stats.cpp \
+	Common/Stats/Time.cpp \
+	Common/Stats/Time.hpp \
 	Common/ToString.hpp \
-	Common/UniqueName.cc \
-	Common/UniqueName.h \
-	Common/utility.h \
-	Common/VectorMap.h
+	Common/UniqueName.cpp \
+	Common/UniqueName.hpp \
+	Common/Utility.hpp \
+	Common/VectorMap.hpp
 
 SRC_GENPOLY = \
-	GenPoly/GenPoly.cc \
-	GenPoly/GenPoly.h \
-	GenPoly/Lvalue2.cc \
-	GenPoly/Lvalue.h
+	GenPoly/GenPoly.cpp \
+	GenPoly/GenPoly.hpp \
+	GenPoly/Lvalue2.cpp \
+	GenPoly/Lvalue.hpp
 
 SRC_INITTWEAK = \
-	InitTweak/GenInit.cc \
-	InitTweak/GenInit.h \
-	InitTweak/InitTweak.cc \
-	InitTweak/InitTweak.h
+	InitTweak/GenInit.cpp \
+	InitTweak/GenInit.hpp \
+	InitTweak/InitTweak.cpp \
+	InitTweak/InitTweak.hpp
 
 BUILT_SOURCES = Parser/parser.hh
 AM_YFLAGS = -d -t -v -Wno-yacc
 SRC_RESOLVEXPR = \
-      ResolvExpr/AdjustExprType.cc \
+      ResolvExpr/AdjustExprType.cpp \
       ResolvExpr/AdjustExprType.hpp \
       ResolvExpr/Candidate.cpp \
       ResolvExpr/CandidateFinder.cpp \
       ResolvExpr/CandidateFinder.hpp \
       ResolvExpr/Candidate.hpp \
-      ResolvExpr/CastCost.cc \
+      ResolvExpr/CastCost.cpp \
       ResolvExpr/CastCost.hpp \
-      ResolvExpr/CommonType.cc \
+      ResolvExpr/CommonType.cpp \
       ResolvExpr/CommonType.hpp \
-      ResolvExpr/ConversionCost.cc \
-      ResolvExpr/ConversionCost.h \
-      ResolvExpr/Cost.h \
-      ResolvExpr/CurrentObject.cc \
-      ResolvExpr/CurrentObject.h \
+      ResolvExpr/ConversionCost.cpp \
+      ResolvExpr/ConversionCost.hpp \
+      ResolvExpr/Cost.hpp \
+      ResolvExpr/CurrentObject.cpp \
+      ResolvExpr/CurrentObject.hpp \
       ResolvExpr/ExplodedArg.cpp \
       ResolvExpr/ExplodedArg.hpp \
-      ResolvExpr/FindOpenVars.cc \
-      ResolvExpr/FindOpenVars.h \
-      ResolvExpr/PolyCost.cc \
+      ResolvExpr/FindOpenVars.cpp \
+      ResolvExpr/FindOpenVars.hpp \
+      ResolvExpr/PolyCost.cpp \
       ResolvExpr/PolyCost.hpp \
-      ResolvExpr/PtrsAssignable.cc \
+      ResolvExpr/PtrsAssignable.cpp \
       ResolvExpr/PtrsAssignable.hpp \
-      ResolvExpr/PtrsCastable.cc \
+      ResolvExpr/PtrsCastable.cpp \
       ResolvExpr/PtrsCastable.hpp \
-      ResolvExpr/RenameVars.cc \
-      ResolvExpr/RenameVars.h \
-      ResolvExpr/Resolver.cc \
-      ResolvExpr/Resolver.h \
-      ResolvExpr/ResolveTypeof.cc \
-      ResolvExpr/ResolveTypeof.h \
+      ResolvExpr/RenameVars.cpp \
+      ResolvExpr/RenameVars.hpp \
+      ResolvExpr/Resolver.cpp \
+      ResolvExpr/Resolver.hpp \
+      ResolvExpr/ResolveTypeof.cpp \
+      ResolvExpr/ResolveTypeof.hpp \
       ResolvExpr/ResolveMode.hpp \
       ResolvExpr/SatisfyAssertions.cpp \
       ResolvExpr/SatisfyAssertions.hpp \
-      ResolvExpr/SpecCost.cc \
+      ResolvExpr/SpecCost.cpp \
       ResolvExpr/SpecCost.hpp \
-      ResolvExpr/typeops.h \
-      ResolvExpr/Unify.cc \
-      ResolvExpr/Unify.h \
-      ResolvExpr/WidenMode.h
+      ResolvExpr/Typeops.hpp \
+      ResolvExpr/Unify.cpp \
+      ResolvExpr/Unify.hpp \
+      ResolvExpr/WidenMode.hpp
 
 SRC_SYMTAB = \
-	SymTab/FixFunction.cc \
-	SymTab/FixFunction.h \
+	SymTab/FixFunction.cpp \
+	SymTab/FixFunction.hpp \
 	SymTab/GenImplicitCall.cpp \
 	SymTab/GenImplicitCall.hpp \
-	SymTab/Mangler.cc \
-	SymTab/ManglerCommon.cc \
-	SymTab/Mangler.h
+	SymTab/Mangler.cpp \
+	SymTab/ManglerCommon.cpp \
+	SymTab/Mangler.hpp
 
 SRC_TUPLES = \
-	Tuples/Explode.cc \
-	Tuples/Explode.h \
-	Tuples/TupleAssignment.cc \
+	Tuples/Explode.cpp \
+	Tuples/Explode.hpp \
+	Tuples/TupleAssignment.cpp \
 	Tuples/TupleExpansion.cpp \
-	Tuples/Tuples.cc \
-	Tuples/Tuples.h
+	Tuples/Tuples.cpp \
+	Tuples/Tuples.hpp
 
 SRC_VALIDATE = \
-	Validate/FindSpecialDecls.h
+	Validate/FindSpecialDecls.hpp
 
 
 # put into lib for now
@@ -886,7 +886,7 @@ EXTRA_DIST = include/cassert include/optional BasicTypes-gen.cpp
 AM_CXXFLAGS = @HOST_FLAGS@ -Wno-deprecated -Wall -Wextra -Werror=return-type -DDEBUG_ALL -I./Parser -I$(srcdir)/Parser -I$(srcdir)/include -DYY_NO_INPUT -O3 -g -std=c++17 $(TCMALLOCFLAG)
 AM_LDFLAGS = @HOST_FLAGS@ -Xlinker -export-dynamic
 ARFLAGS = cr
-___driver_demangler_SOURCES = SymTab/demangler.cc # test driver for the demangler, also useful as a sanity check that libdemangle.a is complete
+___driver_demangler_SOURCES = SymTab/demangler.cpp # test driver for the demangler, also useful as a sanity check that libdemangle.a is complete
 ___driver_demangler_LDADD = libdemangle.a -ldl			# yywrap
 noinst_LIBRARIES = $(LIBDEMANGLE)
 EXTRA_LIBRARIES = libdemangle.a
@@ -1161,11 +1161,11 @@ libdemangle.a: $(libdemangle_a_OBJECTS) $(libdemangle_a_DEPENDENCIES) $(EXTRA_li
 	$(AM_V_at)-rm -f libdemangle.a
 	$(AM_V_AR)$(libdemangle_a_AR) libdemangle.a $(libdemangle_a_OBJECTS) $(libdemangle_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libdemangle.a
-CodeGen/Generate.$(OBJEXT): CodeGen/$(am__dirstamp) \
-	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/FixMain.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/FixNames.$(OBJEXT): CodeGen/$(am__dirstamp) \
+	CodeGen/$(DEPDIR)/$(am__dirstamp)
+CodeGen/Generate.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
 CodeGen/LinkOnce.$(OBJEXT): CodeGen/$(am__dirstamp) \
 	CodeGen/$(DEPDIR)/$(am__dirstamp)
@@ -1284,6 +1284,8 @@ Validate/HoistStruct.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/HoistTypeDecls.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/ImplementEnumFunc.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/InitializerLength.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/LabelAddressFixer.$(OBJEXT): Validate/$(am__dirstamp) \
@@ -1295,8 +1297,6 @@ Validate/ReplaceTypedef.$(OBJEXT): Validate/$(am__dirstamp) \
 Validate/ReturnCheck.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/VerifyCtorDtorAssign.$(OBJEXT): Validate/$(am__dirstamp) \
-	Validate/$(DEPDIR)/$(am__dirstamp)
-Validate/ImplementEnumFunc.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Virtual/$(am__dirstamp):
 	@$(MKDIR_P) Virtual
@@ -2045,7 +2045,7 @@ uninstall-am: uninstall-cfa_cpplibPROGRAMS
 .PRECIOUS: Makefile
 
 
-$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cc ResolvExpr/CommonType.cc SymTab/ManglerCommon.cc) : $(srcdir)/AST/BasicKind.hpp
+$(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cpp ResolvExpr/CommonType.cpp SymTab/ManglerCommon.cpp) : $(srcdir)/AST/BasicKind.hpp
 
 $(srcdir)/AST/BasicKind.hpp : BasicTypes-gen.cpp
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type

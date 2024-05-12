@@ -15,12 +15,12 @@
 ###############################################################################
 
 SRC_TUPLES = \
-	Tuples/Explode.cc \
-	Tuples/Explode.h \
-	Tuples/TupleAssignment.cc \
+	Tuples/Explode.cpp \
+	Tuples/Explode.hpp \
+	Tuples/TupleAssignment.cpp \
 	Tuples/TupleExpansion.cpp \
-	Tuples/Tuples.cc \
-	Tuples/Tuples.h
+	Tuples/Tuples.cpp \
+	Tuples/Tuples.hpp
 
 SRC += $(SRC_TUPLES)
 

@@ -18,7 +18,7 @@
 #include <string>
 
 #include "Bitfield.hpp"
-#include "Common/CodeLocation.h"
+#include "Common/CodeLocation.hpp"
 
 namespace ast {
 

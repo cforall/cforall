@@ -15,45 +15,45 @@
 ###############################################################################
 
 SRC_COMMON = \
-	Common/Assert.cc \
-	Common/CodeLocation.h \
+	Common/Assert.cpp \
+	Common/CodeLocation.hpp \
 	Common/CodeLocationTools.hpp \
 	Common/CodeLocationTools.cpp \
 	Common/DeclStats.hpp \
 	Common/DeclStats.cpp \
-	Common/ErrorObjects.h \
-	Common/Eval.cc \
-	Common/Eval.h \
-	Common/Examine.cc \
-	Common/Examine.h \
-	Common/FilterCombos.h \
-	Common/Indenter.h \
-	Common/Indenter.cc \
+	Common/ErrorObjects.hpp \
+	Common/Eval.cpp \
+	Common/Eval.hpp \
+	Common/Examine.cpp \
+	Common/Examine.hpp \
+	Common/FilterCombos.hpp \
+	Common/Indenter.hpp \
+	Common/Indenter.cpp \
 	Common/Iterate.hpp \
-	Common/PersistentMap.h \
+	Common/PersistentMap.hpp \
 	Common/ResolvProtoDump.hpp \
 	Common/ResolvProtoDump.cpp \
-	Common/ScopedMap.h \
-	Common/SemanticError.cc \
-	Common/SemanticError.h \
-	Common/Stats.h \
-	Common/Stats/Base.h \
-	Common/Stats/Counter.cc \
-	Common/Stats/Counter.h \
-	Common/Stats/Heap.cc \
-	Common/Stats/Heap.h \
-	Common/Stats/ResolveTime.cc \
-	Common/Stats/ResolveTime.h \
-	Common/Stats/Stats.cc \
-	Common/Stats/Time.cc \
-	Common/Stats/Time.h \
+	Common/ScopedMap.hpp \
+	Common/SemanticError.cpp \
+	Common/SemanticError.hpp \
+	Common/Stats.hpp \
+	Common/Stats/Base.hpp \
+	Common/Stats/Counter.cpp \
+	Common/Stats/Counter.hpp \
+	Common/Stats/Heap.cpp \
+	Common/Stats/Heap.hpp \
+	Common/Stats/ResolveTime.cpp \
+	Common/Stats/ResolveTime.hpp \
+	Common/Stats/Stats.cpp \
+	Common/Stats/Time.cpp \
+	Common/Stats/Time.hpp \
 	Common/ToString.hpp \
-	Common/UniqueName.cc \
-	Common/UniqueName.h \
-	Common/utility.h \
-	Common/VectorMap.h
+	Common/UniqueName.cpp \
+	Common/UniqueName.hpp \
+	Common/Utility.hpp \
+	Common/VectorMap.hpp
 
 SRC += $(SRC_COMMON) \
-	Common/DebugMalloc.cc
+	Common/DebugMalloc.cpp
 
 SRCDEMANGLE += $(SRC_COMMON)

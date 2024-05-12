@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "Node.hpp"
-#include "Common/CodeLocation.h"
+#include "Common/CodeLocation.hpp"
 
 namespace ast {
 

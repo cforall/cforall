@@ -18,7 +18,7 @@
 #include "AST/LinkageSpec.hpp"
 #include "AST/Pass.hpp"
 #include "AST/Print.hpp"
-#include "Common/VectorMap.h"
+#include "Common/VectorMap.hpp"
 
 #include <iostream>
 #include <map>

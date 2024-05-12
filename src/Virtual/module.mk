@@ -15,9 +15,9 @@
 ###############################################################################
 
 SRC += \
-	Virtual/ExpandCasts.cc \
-	Virtual/ExpandCasts.h \
-	Virtual/Tables.cc \
-	Virtual/Tables.h \
+	Virtual/ExpandCasts.cpp \
+	Virtual/ExpandCasts.hpp \
+	Virtual/Tables.cpp \
+	Virtual/Tables.hpp \
 	Virtual/VirtualDtor.cpp \
 	Virtual/VirtualDtor.hpp

@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// TypeSubstitution.h --
+// TypeSubstitution.hpp --
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
@@ -15,17 +15,17 @@
 
 #pragma once
 
-#include <cassert>                 // for assert
-#include <list>                    // for list<>::iterator, _List_iterator
+#include <cassert>                   // for assert
+#include <list>                      // for list<>::iterator, _List_iterator
 #include <unordered_map>
 #include <unordered_set>
-#include <string>                  // for string, operator!=
-#include <utility>                 // for pair
+#include <string>                    // for string, operator!=
+#include <utility>                   // for pair
 
-#include "Fwd.hpp"        // for UniqueId
+#include "Fwd.hpp"                   // for UniqueId
 #include "ParseNode.hpp"
 #include "Type.hpp"
-#include "Common/SemanticError.h"  // for SemanticError
+#include "Common/SemanticError.hpp"  // for SemanticError
 #include "Visitor.hpp"
 #include "Decl.hpp"
 #include "Expr.hpp"

@@ -23,7 +23,7 @@
 #include "AST/Print.hpp"
 #include "AST/Stmt.hpp"
 #include "AST/Type.hpp"
-#include "Common/UniqueName.h"
+#include "Common/UniqueName.hpp"
 
 using namespace ast;
 using namespace std;

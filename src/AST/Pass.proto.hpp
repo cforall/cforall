@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Pass.impl.hpp --
+// Pass.proto.hpp --
 //
 // Author           : Thierry Delisle
 // Created On       : Thu May 09 15::37::05 2019
@@ -17,8 +17,8 @@
 // IWYU pragma: private, include "Pass.hpp"
 
 #include "Common/Iterate.hpp"
-#include "Common/Stats/Heap.h"
-#include "Common/utility.h"
+#include "Common/Stats/Heap.hpp"
+#include "Common/Utility.hpp"
 namespace ast {
 	template<typename core_t> class Pass;
 	class TranslationUnit;

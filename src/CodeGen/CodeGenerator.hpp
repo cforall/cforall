@@ -19,8 +19,8 @@
 
 #include "AST/Fwd.hpp"
 #include "AST/Pass.hpp"          // for WithGuards, WithShortCircuiting, ...
-#include "CodeGen/Options.h"     // for Options
-#include "Common/Indenter.h"     // for Indenter
+#include "CodeGen/Options.hpp"   // for Options
+#include "Common/Indenter.hpp"   // for Indenter
 
 
 namespace CodeGen {

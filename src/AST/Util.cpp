@@ -19,8 +19,8 @@
 #include "ParseNode.hpp"
 #include "Pass.hpp"
 #include "TranslationUnit.hpp"
-#include "Common/utility.h"
-#include "GenPoly/ScopedSet.h"
+#include "Common/Utility.hpp"
+#include "GenPoly/ScopedSet.hpp"
 
 #include <vector>
 

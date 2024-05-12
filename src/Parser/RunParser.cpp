@@ -17,8 +17,8 @@
 
 #include "AST/TranslationUnit.hpp"          // for TranslationUnit
 #include "Common/CodeLocationTools.hpp"     // for forceFillCodeLocations
-#include "Parser/DeclarationNode.h"         // for DeclarationNode, buildList
-#include "Parser/TypedefTable.h"            // for TypedefTable
+#include "Parser/DeclarationNode.hpp"       // for DeclarationNode, buildList
+#include "Parser/TypedefTable.hpp"          // for TypedefTable
 
 // Variables global to the parsing code.
 ast::Linkage::Spec linkage = ast::Linkage::Cforall;

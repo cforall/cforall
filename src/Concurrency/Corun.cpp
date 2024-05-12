@@ -18,7 +18,7 @@
 #include "AST/Pass.hpp"
 #include "AST/Stmt.hpp"
 #include "AST/TranslationUnit.hpp"
-#include "Common/UniqueName.h"
+#include "Common/UniqueName.hpp"
 using namespace ast;
 using namespace std;
 

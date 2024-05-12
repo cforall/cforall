@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// Waitfor.h --
+// Waituntil.hpp --
 //
 // Author           : Thierry Delisle
 // Created On       : Mon Aug 28 11:03:31 2017

@@ -15,7 +15,7 @@
 
 #include "ExplodedArg.hpp"
 
-#include "Tuples/Explode.h"   // for Tuples::explode
+#include "Tuples/Explode.hpp"   // for Tuples::explode
 
 namespace ResolvExpr {
 
