@@ -25,12 +25,12 @@ forall(T) { // T is the based type of enum(T)
 
 	forall(E | TypedEnum(T, E)) {
 		// comparison
-		int ?==?(E l, E r);
-		int ?!=?(E l, E r);
-		int ?!=?(E l, zero_t);
-		int ?<?(E l, E r);
-		int ?<=?(E l, E r);
-		int ?>?(E l, E r);
-		int ?>=?(E l, E r);
+		int ?==?(E l, E r);								// true if l and r are same enumerators
+		int ?!=?(E l, E r);								// true if l and r are different enumerators
+		int ?!=?(E l, zero_t);							// true if l is not the first enumerator
+		int ?<?(E l, E r);								// true if l is an enuemerator before r
+		int ?<=?(E l, E r);								// true if l before or the same as r
+		int ?>?(E l, E r);								// true if l is an enuemrator after r
+		int ?>=?(E l, E r);								// true if l after or the same as r
 	}
 }
