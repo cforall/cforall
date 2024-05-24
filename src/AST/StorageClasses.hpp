@@ -21,40 +21,39 @@ namespace ast {
 
 namespace Storage {
 
-	/// Bitflags for storage classes
-	enum {
-		Extern         = 1 << 0,
-		Static         = 1 << 1,
-		Auto           = 1 << 2,
-		Register       = 1 << 3,
-		ThreadLocalGcc = 1 << 4,
-		ThreadLocalC11 = 1 << 5,
-		NumClasses          = 6
-	};
+/// Bitflags for storage classes
+enum {
+	Extern         = 1 << 0,
+	Static         = 1 << 1,
+	Auto           = 1 << 2,
+	Register       = 1 << 3,
+	ThreadLocalGcc = 1 << 4,
+	ThreadLocalC11 = 1 << 5,
+};
 
-	/// Bitflag type for storage classes
-	struct class_flags {
-		union {
-			unsigned int val;
-			struct {
-				bool is_extern         : 1;
-				bool is_static         : 1;
-				bool is_auto           : 1;
-				bool is_register       : 1;
-				bool is_threadlocalGcc : 1;
-				bool is_threadlocalC11 : 1;
-			};
-
-			// MakeBitfieldPrint( NumClasses )
+/// Bitflag type for storage classes
+struct class_flags {
+	union {
+		unsigned int val;
+		struct {
+			bool is_extern         : 1;
+			bool is_static         : 1;
+			bool is_auto           : 1;
+			bool is_register       : 1;
+			bool is_threadlocalGcc : 1;
+			bool is_threadlocalC11 : 1;
 		};
-
-		constexpr class_flags( unsigned int val = 0 ) : val(val) {}
-
-		bool is_threadlocal_any() { return this->is_threadlocalC11 || this->is_threadlocalGcc; }
 	};
 
-	using Classes = bitfield<class_flags>;
+	constexpr class_flags( unsigned int val = 0 ) : val(val) {}
+
+	bool is_threadlocal_any() { return this->is_threadlocalC11 || this->is_threadlocalGcc; }
+};
+
+using Classes = bitfield<class_flags>;
+
 }
+
 }
 
 // Local Variables: //

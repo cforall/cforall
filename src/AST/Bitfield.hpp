@@ -59,12 +59,12 @@ struct bitfield : public T {
 };
 
 template<typename T>
-inline bool operator== ( const bitfield<T> & a, const bitfield<T> & b ) {
+inline bool operator==( const bitfield<T> & a, const bitfield<T> & b ) {
 	return a.val == b.val;
 }
 
 template<typename T>
-inline bool operator!= ( const bitfield<T> & a, const bitfield<T> & b ) {
+inline bool operator!=( const bitfield<T> & a, const bitfield<T> & b ) {
 	return !(a == b);
 }
 

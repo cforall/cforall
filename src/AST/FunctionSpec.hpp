@@ -21,32 +21,31 @@ namespace ast {
 
 namespace Function {
 
-	/// Bitflags for function specifiers
-	enum {
-		Inline   = 1 << 0,
-		Noreturn = 1 << 1,
-		Fortran  = 1 << 2,
-		NumSpecs      = 3
-	};
+/// Bitflags for function specifiers
+enum {
+	Inline   = 1 << 0,
+	Noreturn = 1 << 1,
+	Fortran  = 1 << 2,
+};
 
-	/// Bitflag type for storage classes
-	struct spec_flags {
-		union {
-			unsigned int val;
-			struct {
-				bool is_inline   : 1;
-				bool is_noreturn : 1;
-				bool is_fortran  : 1;
-			};
-
-			// MakeBitfieldPrint( NumSpecs )
+/// Bitflag type for storage classes
+struct spec_flags {
+	union {
+		unsigned int val;
+		struct {
+			bool is_inline   : 1;
+			bool is_noreturn : 1;
+			bool is_fortran  : 1;
 		};
-
-		constexpr spec_flags( unsigned int val = 0 ) : val(val) {}
 	};
 
-	using Specs = bitfield<spec_flags>;
+	constexpr spec_flags( unsigned int val = 0 ) : val(val) {}
+};
+
+using Specs = bitfield<spec_flags>;
+
 }
+
 }
 
 // Local Variables: //
