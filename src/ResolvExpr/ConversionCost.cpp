@@ -278,10 +278,7 @@ void ConversionCost::conversionCostFromBasicToBasic( const ast::BasicType * src,
 void ConversionCost::postvisit( const ast::BasicType * basicType ) {
 	if ( const ast::BasicType * dstAsBasic = dynamic_cast< const ast::BasicType * >( dst ) ) {
 		conversionCostFromBasicToBasic( basicType, dstAsBasic );
-	} else if ( dynamic_cast< const ast::EnumAttrType *>(dst) ) {
-		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
-		cost = costCalc( basicType, integer, srcIsLvalue, symtab, env );
-	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
+	}	else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
 		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isTyped ) {
 			cost = Cost::unsafe;
 		}
@@ -372,36 +369,13 @@ void ConversionCost::postvisit( const ast::EnumInstType * inst ) {
 	}
 	static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
 	cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
-	if ( cost < Cost::unsafe ) {
-		cost.incSafe();
-	}
-}
-
-void ConversionCost::postvisit( const ast::EnumAttrType * src ) {
-	auto dstAsEnumAttrType = dynamic_cast<const ast::EnumAttrType *>(dst);
-	assert( src->attr != ast::EnumAttribute::Label );
-	if ( src->attr == ast::EnumAttribute::Value ) {
-		if ( dstAsEnumAttrType && dstAsEnumAttrType->attr == ast::EnumAttribute::Value) {
-			cost = costCalc( src->instance, dstAsEnumAttrType->instance, srcIsLvalue, symtab, env );
-		} else {
-			auto baseType = src->instance->base->base;
-			cost = costCalc( baseType, dst, srcIsLvalue, symtab, env );
-			if ( cost < Cost::infinity ) {
-				cost.incUnsafe();
-			}
+	if ( !inst->base->isTyped ) {
+		if ( cost < Cost::unsafe ) {
+			cost.incSafe();
 		}
-	} else { // ast::EnumAttribute::Posn
-		if ( auto dstBase = dynamic_cast<const ast::EnumInstType *>( dst ) ) {
-			cost = costCalc( src->instance, dstBase, srcIsLvalue, symtab, env );
-			if ( cost < Cost::unsafe ) cost.incSafe();
-		} else {
-			static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
-			cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
-			if ( cost < Cost::unsafe ) {
-				cost.incSafe();
-			}
-		}
+		return;
 	}
+	cost.incUnsafe();
 }
 
 void ConversionCost::postvisit( const ast::TraitInstType * traitInstType ) {

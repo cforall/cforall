@@ -73,18 +73,6 @@ private:
 		decl->attributes.push_back(new ast::Attribute("unused"));
 	}
 
-	ast::ObjectDecl* dstParam() const {
-		return new ast::ObjectDecl(getLocation(), "_dst",
-		                           new ast::ReferenceType(new ast::EnumAttrType(
-		                               ast::deepCopy(instType))));
-	}
-
-	ast::ObjectDecl* srcParam() const {
-		return new ast::ObjectDecl(
-			getLocation(), "_src",
-			new ast::EnumAttrType(ast::deepCopy(instType)));
-	}
-
 	// ----------------------------------------------------
 
 	const ast::Init* getAutoInit(const ast::Init* prev) const;
@@ -328,10 +316,6 @@ void EnumAttrFuncGenerator::genBoundedFunctions() {
 	}
 }
 
-inline ast::EnumAttrType * getPosnType( const ast::EnumDecl * decl ) {
-	return new ast::EnumAttrType(new ast::EnumInstType(decl), ast::EnumAttribute::Posn);
-}
-
 ast::ObjectDecl* EnumAttrFuncGenerator::genAttrArrayProto(
 	const ast::EnumAttribute attr, const CodeLocation& location,
 	std::vector<ast::ptr<ast::Init>>& inits) const {
@@ -359,8 +343,9 @@ void EnumAttrFuncGenerator::genValueOrLabelBody(
 		new ast::CastExpr(
 			func->location,
 			new ast::VariableExpr( func->location, func->params.front() ),
-			new ast::EnumAttrType( new ast::EnumInstType(decl),
-				ast::EnumAttribute::Posn))});
+			new ast::BasicType( ast::BasicKind::UnsignedInt ),
+			ast::GeneratedFlag::ExplicitCast
+		)});
 	func->stmts = new ast::CompoundStmt(
 		func->location, {new ast::ReturnStmt(func->location, untyped)});
 }
@@ -369,8 +354,8 @@ void EnumAttrFuncGenerator::genPosnBody(ast::FunctionDecl* func) const {
 	auto castExpr = new ast::CastExpr(
 		func->location,
 		new ast::VariableExpr(func->location, func->params.front()),
-		new ast::EnumAttrType(new ast::EnumInstType(decl),
-							  ast::EnumAttribute::Posn));
+		new ast::BasicType( ast::BasicKind::UnsignedInt ),
+			ast::GeneratedFlag::ExplicitCast);
 	func->stmts = new ast::CompoundStmt(
 		func->location, {new ast::ReturnStmt(func->location, castExpr)});
 }

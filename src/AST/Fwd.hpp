@@ -132,7 +132,6 @@ class VarArgsType;
 class ZeroType;
 class OneType;
 class GlobalScopeType;
-class EnumAttrType;
 
 class Designation;
 class Init;

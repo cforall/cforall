@@ -187,7 +187,6 @@ public:
     macro(StructInstType, Type) \
     macro(UnionInstType, Type) \
     macro(EnumInstType, Type) \
-    macro(EnumAttrType, Type) \
     macro(TraitInstType, Type) \
     macro(TypeInstType, Type) \
     macro(TupleType, Type) \

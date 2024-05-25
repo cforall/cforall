@@ -1,7 +1,0 @@
-Two different Opague Enum Should not be the same:
-a and b are Not Equal
-Default Output:
-0
-1
-a
-b

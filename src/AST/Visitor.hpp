@@ -118,7 +118,6 @@ public:
     virtual const ast::Type *             visit( const ast::ZeroType             * ) = 0;
     virtual const ast::Type *             visit( const ast::OneType              * ) = 0;
     virtual const ast::Type *             visit( const ast::GlobalScopeType      * ) = 0;
-    virtual const ast::Type *             visit( const ast::EnumAttrType         * ) = 0;
     virtual const ast::Designation *      visit( const ast::Designation          * ) = 0;
     virtual const ast::Init *             visit( const ast::SingleInit           * ) = 0;
     virtual const ast::Init *             visit( const ast::ListInit             * ) = 0;

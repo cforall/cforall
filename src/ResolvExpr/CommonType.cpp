@@ -397,18 +397,6 @@ public:
 					result = new ast::BasicType{ kind, basic->qualifiers | type2->qualifiers };
 				}
 			}
-		} else if ( auto type2AsAttr = dynamic_cast< const ast::EnumAttrType * >( type2 ) ) {
-			if ( type2AsAttr->attr == ast::EnumAttribute::Posn ) {
-				ast::BasicKind kind = commonTypes[ basic->kind ][ ast::BasicKind::SignedInt ];
-				if (
-					( ( kind == basic->kind && basic->qualifiers >= type2->qualifiers )
-						|| widen.first )
-					&& ( ( kind != basic->kind && basic->qualifiers <= type2->qualifiers )
-						|| widen.second )
-				) {
-					result = new ast::BasicType{ kind, basic->qualifiers | type2->qualifiers };
-				}
-			}
 		}
 	}
 
@@ -654,8 +642,6 @@ public:
 			result = commonType( basicType, type2, tenv, need, have, open, widen);
 		}
 	}
-
-	void postvisit( const ast::EnumAttrType * ) {}
 
 	void postvisit( const ast::TraitInstType * ) {}
 

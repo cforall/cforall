@@ -905,7 +905,7 @@ namespace {
 					SemanticError( callExpr, "Ambiguous expression in valueE..." );
 				}
 				CandidateRef & choice = winners.front();
-				choice->cost.incSafe();
+				choice->cost = Cost::unsafe;
 				candidates.emplace_back( std::move(choice) );
 			}
 
@@ -954,7 +954,9 @@ namespace {
 		Tuples::handleTupleAssignment( selfFinder, untypedExpr, argCandidates );
 
 		CandidateFinder funcFinder( context, tenv );
+		std::string funcName;
 		if (auto nameExpr = untypedExpr->func.as<ast::NameExpr>()) {
+			funcName = nameExpr->name;
 			auto kind = ast::SymbolTable::getSpecialFunctionKind(nameExpr->name);
 			if (kind != ast::SymbolTable::SpecialFunctionKind::NUMBER_OF_KINDS) {
 				assertf(!argCandidates.empty(), "special function call without argument");
@@ -1018,6 +1020,7 @@ namespace {
 		// Find function matches
 		CandidateList found;
 		SemanticErrorException errors;
+		
 		for ( CandidateRef & func : funcFinder ) {
 			try {
 				PRINT(
@@ -1092,6 +1095,7 @@ namespace {
 		for ( CandidateRef & withFunc : found ) {
 			Cost cvtCost = computeApplicationConversionCost( withFunc, symtab );
 
+			if (funcName == "?|?") {
 			PRINT(
 				auto appExpr = withFunc->expr.strict_as< ast::ApplicationExpr >();
 				auto pointer = appExpr->func->result.strict_as< ast::PointerType >();
@@ -1107,7 +1111,7 @@ namespace {
 				std::cerr << "cost is: " << withFunc->cost << std::endl;
 				std::cerr << "cost of conversion is:" << cvtCost << std::endl;
 			)
-
+			}
 			if ( cvtCost != Cost::infinity ) {
 				withFunc->cvtCost = cvtCost;
 				withFunc->cost += cvtCost;
@@ -1773,41 +1777,16 @@ namespace {
 						minCastCost = thisCost;
 						matches.clear();
 					}
-					// ambiguous case, still output candidates to print in error message
-					if ( cand->cost == minExprCost && thisCost == minCastCost ) {
-						auto commonAsEnumAttr = common.as<ast::EnumAttrType>();
-						if ( commonAsEnumAttr && commonAsEnumAttr->attr == ast::EnumAttribute::Value ) {
-							auto callExpr = new ast::UntypedExpr(
-								cand->expr->location, new ast::NameExpr( cand->expr->location, "valueE"), {cand->expr} );
-							CandidateFinder finder( context, env );
-							finder.find( callExpr );
-							CandidateList winners = findMinCost( finder.candidates );
-							if (winners.size() != 1) {
-								SemanticError( callExpr, "Ambiguous expression in valueE..." );
-							}
-							CandidateRef & choice = winners.front();
-							// assert( valueCall->result );
-							CandidateRef newCand = std::make_shared<Candidate>(
-								new ast::InitExpr{
-									initExpr->location,
-									// restructureCast( cand->expr, toType ),
-									choice->expr,
-									initAlt.designation },
-								std::move(env), std::move( open ), std::move( need ), cand->cost + thisCost );
-								inferParameters( newCand, matches );
-						} else {
-							CandidateRef newCand = std::make_shared<Candidate>(
-								new ast::InitExpr{
-									initExpr->location,
-									restructureCast( cand->expr, toType ),
-									initAlt.designation },
-								std::move(env), std::move( open ), std::move( need ), cand->cost + thisCost );
-							// currently assertions are always resolved immediately so this should have no effect.
-							// if this somehow changes in the future (e.g. delayed by indeterminate return type)
-							// we may need to revisit the logic.
-							inferParameters( newCand, matches );
-						}
-					}
+					CandidateRef newCand = std::make_shared<Candidate>(
+						new ast::InitExpr{
+							initExpr->location,
+							restructureCast( cand->expr, toType ),
+							initAlt.designation },
+						std::move(env), std::move( open ), std::move( need ), cand->cost + thisCost );
+					// currently assertions are always resolved immediately so this should have no effect.
+					// if this somehow changes in the future (e.g. delayed by indeterminate return type)
+					// we may need to revisit the logic.
+					inferParameters( newCand, matches );
 				}
 			}
 		}

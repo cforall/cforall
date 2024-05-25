@@ -71,7 +71,6 @@ public:
 	void postvisit( const ast::VarArgsType * varArgsType );
 	void postvisit( const ast::ZeroType * zeroType );
 	void postvisit( const ast::OneType * oneType );
-	void postvisit( const ast::EnumAttrType * posType );
 private:
 	// refactor for code resue
 	void conversionCostFromBasicToBasic( const ast::BasicType * src, const ast::BasicType* dest );
