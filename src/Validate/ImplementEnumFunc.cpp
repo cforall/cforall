@@ -8,7 +8,6 @@ namespace Validate {
 namespace {
 class EnumAttrFuncGenerator {
 	const ast::EnumDecl* decl;
-	const ast::EnumInstType* instType;
 	unsigned int functionNesting;
 	ast::Linkage::Spec proto_linkage;
 
@@ -20,10 +19,9 @@ public:
 
 	EnumAttrFuncGenerator(
 			const ast::EnumDecl* decl,
-			const ast::EnumInstType* instType,
+			const ast::EnumInstType*,
 			unsigned int functionNesting )
 		: decl(decl),
-		  instType{instType},
 		  functionNesting{functionNesting},
 		  proto_linkage{ast::Linkage::Cforall} {}
 
@@ -49,7 +47,7 @@ private:
 	ast::FunctionDecl* genFromIntProto() const;
 	ast::FunctionDecl* genFromInstanceProto() const;
 	ast::FunctionDecl* genInstToInstFuncProto(const char* func) const;
-	void genFromIntBody(ast::FunctionDecl *) const; 
+	void genFromIntBody(ast::FunctionDecl *) const;
 	void genFromInstanceBody(ast::FunctionDecl *) const;
 	void genSuccPredBody(ast::FunctionDecl *, const char *) const;
 
@@ -387,7 +385,7 @@ void EnumAttrFuncGenerator::genTypedEnumFunction(const ast::EnumAttribute attr) 
 void EnumAttrFuncGenerator::genTypedEnumFuncs() {
 	if (decl->base) genTypedEnumFunction(ast::EnumAttribute::Value);
 	genTypedEnumFunction(ast::EnumAttribute::Label);
-	genTypedEnumFunction(ast::EnumAttribute::Posn);	
+	genTypedEnumFunction(ast::EnumAttribute::Posn);
 }
 
 void EnumAttrFuncGenerator::generateAndAppendFunctions(

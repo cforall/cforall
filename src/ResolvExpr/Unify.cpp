@@ -273,8 +273,8 @@ public:
 
 	void previsit( const ast::Node * ) { visit_children = false; }
 
-	void postvisit( const ast::VoidType * vt) {
-		result = dynamic_cast< const ast::VoidType * >( type2 ); 
+	void postvisit( const ast::VoidType * ) {
+		result = dynamic_cast< const ast::VoidType * >( type2 );
 			// || tryToUnifyWithEnumValue(vt, type2, tenv, need, have, open, noWiden());
 		;
 	}
@@ -609,17 +609,17 @@ public:
 			// || tryToUnifyWithEnumValue(tuple, type2, tenv, need, have, open, noWiden());
 	}
 
-	void postvisit( const ast::VarArgsType * vat) {
+	void postvisit( const ast::VarArgsType * ) {
 		result = dynamic_cast< const ast::VarArgsType * >( type2 );
 			// || tryToUnifyWithEnumValue(vat, type2, tenv, need, have, open, noWiden());
 	}
 
-	void postvisit( const ast::ZeroType * zt) {
+	void postvisit( const ast::ZeroType * ) {
 		result = dynamic_cast< const ast::ZeroType * >( type2 );
 			// || tryToUnifyWithEnumValue(zt, type2, tenv, need, have, open, noWiden());
 	}
 
-	void postvisit( const ast::OneType * ot) {
+	void postvisit( const ast::OneType * ) {
 		result = dynamic_cast< const ast::OneType * >( type2 );
 			// || tryToUnifyWithEnumValue(ot, type2, tenv, need, have, open, noWiden());
 	}

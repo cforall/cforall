@@ -26,11 +26,11 @@
 #define VISIT_START( node ) \
 	using namespace ast; \
 	/* back-up the last known code location */ \
-	__attribute__((unused)) auto loc_guard = ast::__pass::make_location_guard( core, node, 0 ); \
+	__attribute__((unused)) auto guard0 = __pass::make_location_guard( core, node, 0 ); \
 	/* back-up the visit children */ \
-	__attribute__((unused)) ast::__pass::visit_children_guard guard1( ast::__pass::visit_children(core, 0) ); \
+	__attribute__((unused)) auto guard1 = __pass::make_visit_children_guard( core, 0 ); \
 	/* setup the scope for passes that want to run code at exit */ \
-	__attribute__((unused)) ast::__pass::guard_value          guard2( ast::__pass::at_cleanup    (core, 0) ); \
+	__attribute__((unused)) auto guard2 = __pass::make_value_guard( core, 0 ); \
 	/* begin tracing memory allocation if requested by this pass */ \
 	__pass::beginTrace( core, 0 ); \
 	/* call the implementation of the previsit of this pass */ \

@@ -352,7 +352,6 @@ class CommonType final : public ast::WithShortCircuiting {
 	ast::AssertionSet & need;
 	ast::AssertionSet & have;
 public:
-	static size_t traceId;
 	ast::ptr< ast::Type > result;
 
 	CommonType(

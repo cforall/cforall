@@ -102,8 +102,6 @@ private:
 		short_mode = old_short;
 	}
 
-	static const char* Names[];
-
 	void print( const std::vector<ast::Label> & labels ) {
 		if ( labels.empty() ) return;
 		os << indent << "... Labels: {";

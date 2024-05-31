@@ -350,8 +350,9 @@ class WithGuards {
 		abort();
 	};
 
-	template< typename core_t>
-	friend auto __pass::at_cleanup( core_t & core, int ) -> decltype( &core.at_cleanup );
+	template< typename core_t >
+	friend auto __pass::make_value_guard( core_t & core, int )
+		-> decltype( __pass::value_guard( core.at_cleanup ) );
 public:
 
 	/// When this node is finished being visited, restore the value of a variable

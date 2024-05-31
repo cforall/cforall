@@ -21,7 +21,7 @@
 #include "AST/Fwd.hpp"
 #include "AST/Node.hpp"
 namespace ResolvExpr {
-	class CandidateFinder;
+	struct CandidateFinder;
 }
 
 namespace Tuples {

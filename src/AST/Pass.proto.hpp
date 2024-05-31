@@ -39,20 +39,21 @@ namespace ast::__pass {
 typedef std::function<void( void * )> cleanup_func_t;
 typedef std::function<void( cleanup_func_t, void * )> at_cleanup_t;
 
-/// Implementation of the guard value
-/// Created inside the visit scope
-class guard_value {
+/// Replaces guards we don't want to use.
+struct empty_guard {
+};
+
+/// Implementation of the value guard. Created inside the visit scope.
+class value_guard {
 public:
 	/// Push onto the cleanup
-	guard_value( at_cleanup_t * at_cleanup ) {
-		if( at_cleanup ) {
-			*at_cleanup = [this]( cleanup_func_t && func, void* val ) {
-				push( std::move( func ), val );
-			};
-		}
+	value_guard( at_cleanup_t & at_cleanup ) {
+		at_cleanup = [this]( cleanup_func_t && func, void* val ) {
+			push( std::move( func ), val );
+		};
 	}
 
-	~guard_value() {
+	~value_guard() {
 		while( !cleanups.empty() ) {
 			auto& cleanup = cleanups.top();
 			cleanup.func( cleanup.val );
@@ -73,25 +74,6 @@ private:
 	};
 
 	std::stack< cleanup_t, std::vector<cleanup_t> > cleanups;
-};
-
-// Guard structure implementation for whether or not children should be visited
-class visit_children_guard {
-public:
-
-	visit_children_guard( bool * ref ) :
-		m_ref( ref ), m_val( true )
-	{
-		if ( m_ref ) { m_val = *m_ref; *m_ref = true; }
-	}
-
-	~visit_children_guard() {
-		if ( m_ref ) { *m_ref = m_val; }
-	}
-
-private:
-	bool * m_ref;
-	bool   m_val;
 };
 
 /// The result is a single node.
@@ -279,7 +261,6 @@ FIELD_PTR( stmtsToAddAfter , std::list< ast::ptr< ast::Stmt > > )
 FIELD_PTR( declsToAddBefore, std::list< ast::ptr< ast::Decl > > )
 FIELD_PTR( declsToAddAfter , std::list< ast::ptr< ast::Decl > > )
 FIELD_PTR( visit_children, bool )
-FIELD_PTR( at_cleanup, __pass::at_cleanup_t )
 FIELD_PTR( visitor, ast::Pass<core_t> * const )
 FIELD_PTR( translationUnit, const TranslationUnit * )
 
@@ -313,8 +294,11 @@ static auto on_error (core_t & core, ptr<Decl> & decl, int) -> decltype(core.on_
 	return core.on_error(decl);
 }
 
+// These are the guards declared at the beginning of a visit.
+// They are replaced with empty objects when not used.
+
 template< typename core_t, typename node_t >
-static auto make_location_guard( core_t & core, node_t * node, int )
+static inline auto make_location_guard( core_t & core, node_t * node, int )
 		-> decltype( node->location, ValueGuardPtr<const CodeLocation *>( &core.location ) ) {
 	ValueGuardPtr<const CodeLocation *> guard( &core.location );
 	core.location = &node->location;
@@ -322,8 +306,33 @@ static auto make_location_guard( core_t & core, node_t * node, int )
 }
 
 template< typename core_t, typename node_t >
-static auto make_location_guard( core_t &, node_t *, long ) -> int {
-	return 0;
+static inline empty_guard make_location_guard( core_t &, node_t *, long ) {
+	return empty_guard();
+}
+
+template< typename core_t >
+static inline auto make_visit_children_guard( core_t & core, int )
+		-> decltype( ValueGuardPtr<bool>( &core.visit_children ) ) {
+	ValueGuardPtr<bool> guard( &core.visit_children );
+	core.visit_children = true;
+	return guard;
+}
+
+template< typename core_t >
+static inline empty_guard make_visit_children_guard( core_t &, long ) {
+	return empty_guard();
+}
+
+template< typename core_t >
+static inline auto make_value_guard( core_t & core, int )
+		-> decltype( __pass::value_guard( core.at_cleanup ) ) {
+	// Requires guaranteed copy elision:
+	return value_guard( core.at_cleanup );
+}
+
+template< typename core_t >
+static inline empty_guard make_value_guard( core_t &, long ) {
+	return empty_guard();
 }
 
 // Another feature of the templated visitor is that it calls beginScope()/endScope() for compound statement.
