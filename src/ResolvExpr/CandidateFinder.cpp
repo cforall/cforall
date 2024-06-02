@@ -1195,8 +1195,14 @@ namespace {
 
 			// return casts are eliminated (merely selecting an overload, no actual operation)
 			candidates = std::move(finder.candidates);
+			return;
 		}
-		finder.find( castExpr->arg, ResolveMode::withAdjustment() );
+		else if (toType->isVoid()) {
+			finder.find( castExpr->arg ); // no adjust
+		}
+		else {
+			finder.find( castExpr->arg, ResolveMode::withAdjustment() );
+		}
 
 		if ( !finder.candidates.empty() ) reason.code = NoMatch;
 

@@ -254,7 +254,7 @@ ast::ptr< ast::Expr > resolveInVoidContext(
 	// set up and resolve expression cast to void
 	ast::ptr< ast::CastExpr > untyped = new ast::CastExpr{ expr };
 	CandidateRef choice = findUnfinishedKindExpression(
-		untyped, context, "", anyCandidate, ResolveMode::withAdjustment() );
+		untyped, context, "", anyCandidate );
 
 	// a cast expression has either 0 or 1 interpretations (by language rules);
 	// if 0, an exception has already been thrown, and this code will not run
