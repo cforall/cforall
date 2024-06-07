@@ -31,7 +31,6 @@
 #include "Common/SemanticError.hpp"    // for SemanticError
 #include "Common/ToString.hpp"         // for toCString
 #include "Common/UniqueName.hpp"       // for UniqueName
-#include "Common/Utility.hpp"          // for ValueGuard, maybeClone
 #include "GenPoly/GenPoly.hpp"         // for getFunctionType, isPolyType
 #include "GenPoly/ScopedSet.hpp"       // for ScopedSet, ScopedSet<>::const_iter...
 #include "InitTweak.hpp"               // for isConstExpr, InitExpander, checkIn...
@@ -276,7 +275,6 @@ bool ManagedTypes::isManaged( const ast::Type * type ) const {
 		}
 	}
 	// need to clear and reset qualifiers when determining if a type is managed
-	// ValueGuard< Type::Qualifiers > qualifiers( type->get_qualifiers() );
 	auto tmp = shallowCopy(type);
 	tmp->qualifiers = {};
 	// delete tmp at return
