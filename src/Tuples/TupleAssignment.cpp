@@ -240,140 +240,141 @@ class TupleAssignSpotter final {
 
 	ResolvExpr::CandidateFinder & crntFinder;
 	std::string fname;
-	std::unique_ptr< Matcher > matcher;
 
 public:
 	TupleAssignSpotter( ResolvExpr::CandidateFinder & f )
-	: crntFinder( f ), fname(), matcher() {}
+	: crntFinder( f ), fname() {}
 
-	// Find left- and right-hand-sides for mass or multiple assignment.
+	/// Find left- and right-hand-sides for mass or multiple assignment.
 	void spot(
 		const ast::UntypedExpr * expr, std::vector< ResolvExpr::CandidateFinder > & args
-	) {
-		if ( auto op = expr->func.as< ast::NameExpr >() ) {
-			// Skip non-assignment functions.
-			if ( !CodeGen::isCtorDtorAssign( op->name ) ) return;
-			fname = op->name;
-
-			// Handled by CandidateFinder if applicable (both odd cases).
-			if ( args.empty() || ( 1 == args.size() && CodeGen::isAssignment( fname ) ) ) {
-				return;
-			}
-
-			// Look over all possible left-hand-side.
-			for ( ResolvExpr::CandidateRef & lhsCand : args[0] ) {
-				// Skip non-tuple LHS.
-				if ( !refToTuple( lhsCand->expr ) ) continue;
-
-				// Explode is aware of casts - ensure every LHS
-				// is sent into explode with a reference cast.
-				if ( !lhsCand->expr.as< ast::CastExpr >() ) {
-					lhsCand->expr = new ast::CastExpr(
-						lhsCand->expr, new ast::ReferenceType( lhsCand->expr->result ) );
-				}
-
-				// Explode the LHS so that each field of a tuple-valued expr is assigned.
-				ResolvExpr::CandidateList lhs;
-				explode( *lhsCand, crntFinder.context.symtab, back_inserter(lhs), true );
-				for ( ResolvExpr::CandidateRef & cand : lhs ) {
-					// Each LHS value must be a reference - some come in
-					// with a cast, if not just cast to reference here.
-					if ( !cand->expr->result.as< ast::ReferenceType >() ) {
-						cand->expr = new ast::CastExpr(
-							cand->expr, new ast::ReferenceType( cand->expr->result ) );
-					}
-				}
-
-				if ( 1 == args.size() ) {
-					// Mass default-initialization/destruction.
-					ResolvExpr::CandidateList rhs{};
-					matcher.reset( new MassAssignMatcher( *this, expr->location, lhs, rhs ) );
-					match();
-				} else if ( 2 == args.size() ) {
-					for ( const ResolvExpr::CandidateRef & rhsCand : args[1] ) {
-						ResolvExpr::CandidateList rhs;
-						if ( isTuple( rhsCand->expr ) ) {
-							// Multiple assignment:
-							explode( *rhsCand, crntFinder.context.symtab, back_inserter( rhs ), true );
-							matcher.reset(
-								new MultipleAssignMatcher( *this, expr->location, lhs, rhs ) );
-						} else {
-							// Mass assignment:
-							rhs.emplace_back( rhsCand );
-							matcher.reset(
-								new MassAssignMatcher( *this, expr->location, lhs, rhs ) );
-						}
-						match();
-					}
-				} else {
-					// Expand all possible RHS possibilities.
-					std::vector< ResolvExpr::CandidateList > rhsCands;
-					combos(
-						std::next( args.begin(), 1 ), args.end(), back_inserter( rhsCands ) );
-					for ( const ResolvExpr::CandidateList & rhsCand : rhsCands ) {
-						// Multiple assignment:
-						ResolvExpr::CandidateList rhs;
-						explode( rhsCand, crntFinder.context.symtab, back_inserter( rhs ), true );
-						matcher.reset(
-							new MultipleAssignMatcher( *this, expr->location, lhs, rhs ) );
-						match();
-					}
-				}
-			}
-		}
-	}
-
-	void match() {
-		assert( matcher );
-
-		std::vector< ast::ptr< ast::Expr > > newAssigns = matcher->match();
-
-		if ( !( matcher->lhs.empty() && matcher->rhs.empty() ) ) {
-			// If both LHS and RHS are empty than this is the empty tuple
-			// case, wherein it's okay for newAssigns to be empty. Otherwise,
-			// return early so that no new candidates are generated.
-			if ( newAssigns.empty() ) return;
-		}
-
-		ResolvExpr::CandidateList crnt;
-		// Now resolve new assignments.
-		for ( const ast::Expr * expr : newAssigns ) {
-			PRINT(
-				std::cerr << "== resolving tuple assign ==" << std::endl;
-				std::cerr << expr << std::endl;
-			)
-
-			ResolvExpr::CandidateFinder finder( crntFinder.context, matcher->env );
-			finder.allowVoid = true;
-
-			try {
-				finder.find( expr, ResolvExpr::ResolveMode::withAdjustment() );
-			} catch (...) {
-				// No match is not failure, just that this tuple assignment is invalid.
-				return;
-			}
-
-			ResolvExpr::CandidateList & cands = finder.candidates;
-			assert( 1 == cands.size() );
-			assert( cands.front()->expr );
-			crnt.emplace_back( std::move( cands.front() ) );
-		}
-
-		// extract expressions from the assignment candidates to produce a list of assignments
-		// that together form a sigle candidate
-		std::vector< ast::ptr< ast::Expr > > solved;
-		for ( ResolvExpr::CandidateRef & cand : crnt ) {
-			solved.emplace_back( cand->expr );
-			matcher->combineState( *cand );
-		}
-
-		crntFinder.candidates.emplace_back( std::make_shared< ResolvExpr::Candidate >(
-			new ast::TupleAssignExpr(
-				matcher->location, std::move( solved ), std::move( matcher->tmpDecls ) ),
-			std::move( matcher->env ), std::move( matcher->open ), std::move( matcher->need ),
-			ResolvExpr::sumCost( crnt ) + matcher->baseCost ) );
-	}
+	);
+	/// Wrapper around matcher.match.
+	void match( Matcher & matcher );
 };
+
+void TupleAssignSpotter::spot(
+	const ast::UntypedExpr * expr, std::vector< ResolvExpr::CandidateFinder > & args
+) {
+	// Skip non-"assignment" functions.
+	auto op = expr->func.as< ast::NameExpr >();
+	if ( nullptr == op || !CodeGen::isCtorDtorAssign( op->name ) ) return;
+
+	// Handled by CandidateFinder if applicable (both odd cases).
+	if ( args.empty() || ( 1 == args.size() && CodeGen::isAssignment( op->name ) ) ) {
+		return;
+	}
+
+	fname = op->name;
+
+	// Look over all possible left-hand-side.
+	for ( ResolvExpr::CandidateRef & lhsCand : args[0] ) {
+		// Skip non-tuple LHS.
+		if ( !refToTuple( lhsCand->expr ) ) continue;
+
+		// Explode is aware of casts - ensure every LHS
+		// is sent into explode with a reference cast.
+		if ( !lhsCand->expr.as< ast::CastExpr >() ) {
+			lhsCand->expr = new ast::CastExpr(
+				lhsCand->expr, new ast::ReferenceType( lhsCand->expr->result ) );
+		}
+
+		// Explode the LHS so that each field of a tuple-valued expr is assigned.
+		ResolvExpr::CandidateList lhs;
+		explode( *lhsCand, crntFinder.context.symtab, back_inserter(lhs), true );
+		for ( ResolvExpr::CandidateRef & cand : lhs ) {
+			// Each LHS value must be a reference - some come in
+			// with a cast, if not just cast to reference here.
+			if ( !cand->expr->result.as< ast::ReferenceType >() ) {
+				cand->expr = new ast::CastExpr(
+					cand->expr, new ast::ReferenceType( cand->expr->result ) );
+			}
+		}
+
+		if ( 1 == args.size() ) {
+			// Mass default-initialization/destruction.
+			ResolvExpr::CandidateList rhs{};
+			MassAssignMatcher matcher( *this, expr->location, lhs, rhs );
+			match( matcher );
+		} else if ( 2 == args.size() ) {
+			for ( const ResolvExpr::CandidateRef & rhsCand : args[1] ) {
+				ResolvExpr::CandidateList rhs;
+				if ( isTuple( rhsCand->expr ) ) {
+					// Multiple assignment:
+					explode( *rhsCand, crntFinder.context.symtab, back_inserter( rhs ), true );
+					MultipleAssignMatcher matcher( *this, expr->location, lhs, rhs );
+					match( matcher );
+				} else {
+					// Mass assignment:
+					rhs.emplace_back( rhsCand );
+					MassAssignMatcher matcher( *this, expr->location, lhs, rhs );
+					match( matcher );
+				}
+			}
+		} else {
+			// Expand all possible RHS possibilities.
+			std::vector< ResolvExpr::CandidateList > rhsCands;
+			combos(
+				std::next( args.begin(), 1 ), args.end(), back_inserter( rhsCands ) );
+			for ( const ResolvExpr::CandidateList & rhsCand : rhsCands ) {
+				// Multiple assignment:
+				ResolvExpr::CandidateList rhs;
+				explode( rhsCand, crntFinder.context.symtab, back_inserter( rhs ), true );
+				MultipleAssignMatcher matcher( *this, expr->location, lhs, rhs );
+				match( matcher );
+			}
+		}
+	}
+}
+
+void TupleAssignSpotter::match( TupleAssignSpotter::Matcher & matcher ) {
+	std::vector< ast::ptr< ast::Expr > > newAssigns = matcher.match();
+
+	if ( !( matcher.lhs.empty() && matcher.rhs.empty() ) ) {
+		// If both LHS and RHS are empty than this is the empty tuple
+		// case, wherein it's okay for newAssigns to be empty. Otherwise,
+		// return early so that no new candidates are generated.
+		if ( newAssigns.empty() ) return;
+	}
+
+	ResolvExpr::CandidateList crnt;
+	// Now resolve new assignments.
+	for ( const ast::Expr * expr : newAssigns ) {
+		PRINT(
+			std::cerr << "== resolving tuple assign ==" << std::endl;
+			std::cerr << expr << std::endl;
+		)
+
+		ResolvExpr::CandidateFinder finder( crntFinder.context, matcher.env );
+		finder.allowVoid = true;
+
+		try {
+			finder.find( expr, ResolvExpr::ResolveMode::withAdjustment() );
+		} catch (...) {
+			// No match is not failure, just that this tuple assignment is invalid.
+			return;
+		}
+
+		ResolvExpr::CandidateList & cands = finder.candidates;
+		assert( 1 == cands.size() );
+		assert( cands.front()->expr );
+		crnt.emplace_back( std::move( cands.front() ) );
+	}
+
+	// extract expressions from the assignment candidates to produce a list of assignments
+	// that together form a sigle candidate
+	std::vector< ast::ptr< ast::Expr > > solved;
+	for ( ResolvExpr::CandidateRef & cand : crnt ) {
+		solved.emplace_back( cand->expr );
+		matcher.combineState( *cand );
+	}
+
+	crntFinder.candidates.emplace_back( std::make_shared< ResolvExpr::Candidate >(
+		new ast::TupleAssignExpr(
+			matcher.location, std::move( solved ), std::move( matcher.tmpDecls ) ),
+		std::move( matcher.env ), std::move( matcher.open ), std::move( matcher.need ),
+		ResolvExpr::sumCost( crnt ) + matcher.baseCost ) );
+}
 
 } // anonymous namespace
 
