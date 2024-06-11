@@ -1464,23 +1464,19 @@ ast::EnumDecl * buildEnum(
 	auto members = ret->members.begin();
 	ret->hide = td->aggregate.hiding == EnumHiding::Hide ? ast::EnumDecl::EnumHiding::Hide : ast::EnumDecl::EnumHiding::Visible;
 	for ( const DeclarationNode * cur = td->aggregate.fields ; cur != nullptr ; cur = cur->next, ++members ) {
-		if ( cur->enumInLine ) {
-			// Do Nothing
-		} else if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
+		if (cur->enumInLine) continue;
+		ast::Decl * member = members->get_and_mutate();
+		ast::ObjectDecl * object = strict_dynamic_cast<ast::ObjectDecl *>( member );
+		object->isHidden = ast::EnumDecl::EnumHiding::Hide == ret->hide;
+		if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
 			SemanticError( td->location, "Enumerator of enum(void) cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {
-			ast::Decl * member = members->get_and_mutate();
-			ast::ObjectDecl * object = strict_dynamic_cast<ast::ObjectDecl *>( member );
 			object->init = new ast::SingleInit(
 				td->location,
 				maybeMoveBuild( cur->consume_enumeratorValue() ),
 				ast::NoConstruct
 			);
-		} else if ( !cur->initializer ) {
-			if ( baseType && (!dynamic_cast<ast::BasicType *>(baseType) || !dynamic_cast<ast::BasicType *>(baseType)->isInteger())) {
-				SemanticError( td->location, "Enumerators of an non-integer typed enum must be explicitly initialized." );
-			}
-		}
+		} 
 		// else cur is a List Initializer and has been set as init in buildList()
 		// if
 	} // for

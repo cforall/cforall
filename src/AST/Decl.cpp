@@ -169,13 +169,38 @@ bool EnumDecl::valueOf( const Decl * enumerator, long long & value ) const {
 }
 
 const std::string EnumDecl::getUnmangeldArrayName( const ast::EnumAttribute attr ) const {
-		switch( attr ) {
-			case ast::EnumAttribute::Value: return "values_" + name ;
-			case ast::EnumAttribute::Label: return "labels_" + name;
-			default: /* Posn does not generate array */ 
-				return "";
-		}
+	switch( attr ) {
+		case ast::EnumAttribute::Value: return "values_" + name ;
+		case ast::EnumAttribute::Label: return "labels_" + name;
+		default: /* Posn does not generate array */ 
+			return "";
 	}
+}
+
+unsigned EnumDecl::calChildOffset(const std::string & target) const{
+	unsigned offset = 0;
+	for (auto childEnum: inlinedDecl) {
+		auto childDecl = childEnum->base;
+		if (childDecl->name == target) {
+			return offset;
+		}
+		offset += childDecl->members.size();
+	}
+    std::cerr << "Cannot find the target enum" << std::endl;
+	return 0;
+}
+
+unsigned EnumDecl::calChildOffset(const ast::EnumInstType * target) const{
+	return calChildOffset(target->base->name);
+}
+
+bool EnumDecl::isSubTypeOf(const ast::EnumDecl * other) const {
+	if (name == other->name) return true;
+	for (auto inlined: other->inlinedDecl) {
+		if (isSubTypeOf(inlined->base)) return true;
+	}
+	return false;
+}
 
 }
 

@@ -1,16 +1,14 @@
 #include "enum.hfa"
+#include "fstream.hfa"
 
 #pragma GCC visibility push(default)
 
-forall(T, E| TypedEnum(T, E)) {
-    // constructors
+forall(ostype & | basic_ostream(ostype), E, V| CfaEnum(E, V))
+ostype & ?|?(ostype& os, E e) {
+    return os | type_name(e) | "." | labelE(e);
+}
 
-    // comparison
-    int ?==?(E l, E r) { return posE(l) == posE(r); }
-    int ?!=?(E l, E r) { return posE(l) != posE(r); }
-    int ?!=?(E l, zero_t) { return !( posE(l) == 0 ); }
-    int ?<?(E l, E r) { return posE(l) < posE(r); }
-    int ?<=?(E l, E r) { return posE(l) <= posE(r); }
-    int ?>?(E l, E r) { return posE(l) > posE(r); }
-    int ?>=?(E l, E r) {  return posE(l) >= posE(r); }
+forall(ostype & | basic_ostream(ostype), E| CfaEnum(E, quasi_void))
+ostype & ?|?(ostype& os, E e) {
+    return os | type_name(e) | "." | labelE(e);
 }

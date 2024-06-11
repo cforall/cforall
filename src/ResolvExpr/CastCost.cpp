@@ -35,6 +35,11 @@
 
 namespace ResolvExpr {
 
+Cost castCost(
+	const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
+	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
+);
+
 namespace {
 	struct CastCost : public ConversionCost {
 		using ConversionCost::previsit;
@@ -44,6 +49,10 @@ namespace {
 			const ast::Type * dst, bool srcIsLvalue, const ast::SymbolTable & symtab,
 			const ast::TypeEnvironment & env, CostCalculation costFunc )
 		: ConversionCost( dst, srcIsLvalue, symtab, env, costFunc ) {}
+
+		void postvisit( const ast::EnumInstType * enumInst ) {
+			cost = conversionCost( enumInst, dst, srcIsLvalue, symtab, env );
+		}
 
 		void postvisit( const ast::BasicType * basicType ) {
 			auto ptr = dynamic_cast< const ast::PointerType * >( dst );
@@ -103,12 +112,6 @@ namespace {
 					// necessary for, e.g. void * => unsigned long
 					cost = Cost::unsafe;
 				}
-			}
-		}
-
-		void postvist( const ast::EnumInstType * ) {
-			if ( auto basic = dynamic_cast< const ast::BasicType * >(dst) ) {
-				if ( basic->isInteger() ) cost = Cost::unsafe;
 			}
 		}
 	};

@@ -177,6 +177,12 @@ static inline {
 	unsigned long long int ?\=?( unsigned long long int & x, unsigned long long int y ) { x = x \ y; return x; }
 } // distribution
 
+struct quasi_void {};
+static inline void ?{}(quasi_void &) {}
+static inline void ?{}(quasi_void &, quasi_void) {}
+static inline void ^?{}(quasi_void &) {}
+static inline quasi_void ?=?(quasi_void &, quasi_void & _src) { return _src; }
+
 // Local Variables: //
 // mode: c //
 // tab-width: 4 //

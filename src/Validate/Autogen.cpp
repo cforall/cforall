@@ -409,7 +409,7 @@ ast::FunctionDecl * FuncGenerator::genDtorProto() const {
 	return genProto( "^?{}", { dst }, {} );
 }
 
-/// Use the current type T to create `T ?{}(T & _dst, T _src)`.
+/// Use the current type T to create `T ?=?(T & _dst, T _src)`.
 ast::FunctionDecl * FuncGenerator::genAssignProto() const {
 	// Only the name is different, so just reuse the generation function.
 	auto retval = srcParam();

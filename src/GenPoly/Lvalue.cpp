@@ -388,7 +388,7 @@ ast::Expr const * ReferenceConversions::postvisit(
 	} else {
 		assert( 0 == diff );
 		// Remove useless generated casts.
-		if ( expr->isGenerated &&
+		if ( expr->isGenerated == ast::GeneratedFlag::GeneratedCast &&
 				ResolvExpr::typesCompatible(
 					expr->result,
 					expr->arg->result ) ) {
@@ -397,6 +397,13 @@ ast::Expr const * ReferenceConversions::postvisit(
 				std::cerr << "-- " << expr->result << '\n';
 				std::cerr << "-- " << expr->arg->result << std::endl;
 			)
+			auto argAsEnum = expr->arg.as<ast::EnumInstType>();
+			auto resultAsEnum = expr->result.as<ast::EnumInstType>();
+			if (argAsEnum && resultAsEnum) {
+				if (argAsEnum->base->name != resultAsEnum->base->name) {
+					return expr;
+				}
+			}
 			return ast::mutate_field( expr->arg.get(),
 					&ast::Expr::env, expr->env.get() );
 		}

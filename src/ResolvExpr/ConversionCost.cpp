@@ -190,6 +190,11 @@ Cost conversionCost(
 	}
 }
 
+Cost enumCastCost (
+	const ast::EnumInstType * src, const ast::EnumInstType * dst, 
+	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
+);
+
 static Cost convertToReferenceCost( const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
 		int diff, const ast::SymbolTable & symtab, const ast::TypeEnvironment & env,
 		PtrsCalculation func ) {
@@ -358,13 +363,8 @@ void ConversionCost::postvisit( const ast::FunctionType * functionType ) {
 }
 
 void ConversionCost::postvisit( const ast::EnumInstType * inst ) {
-	if ( auto dstAsInst = dynamic_cast<const ast::EnumInstType *>( dst ) ) {
-		if (inst->base && dstAsInst->base) {
-			if (inst->base->name == dstAsInst->base->name) {
-				cost = Cost::zero;
-				return;
-			}
-		}
+	if ( auto dstInst = dynamic_cast<const ast::EnumInstType *>( dst ) ) {
+		cost = enumCastCost(inst, dstInst, symtab, env);
 		return;
 	}
 	static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
@@ -479,6 +479,23 @@ void ConversionCost::postvisit( const ast::OneType * oneType ) {
 		}
 	}
 }
+
+// (dst) src is safe is src is a subtype of dst, or dst {inline src, ...}
+Cost enumCastCost (
+	const ast::EnumInstType * src, const ast::EnumInstType * dst, 
+	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
+) {
+	auto srcDecl = src->base;
+	auto dstDecl = dst->base;
+	if (srcDecl->name == dstDecl->name) return Cost::safe;
+	Cost minCost = Cost::infinity;
+	for (auto child: dstDecl->inlinedDecl) {
+		Cost c = enumCastCost(src, child, symtab, env) + Cost::safe;
+		if (c<minCost) minCost = c;
+	}
+	return minCost;
+}
+
 
 // size_t ConversionCost::traceId = Stats::Heap::new_stacktrace_id("ConversionCost");
 

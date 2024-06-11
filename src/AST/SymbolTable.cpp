@@ -158,6 +158,18 @@ std::vector<SymbolTable::IdData> SymbolTable::lookupId( const std::string &id ) 
 	return out;
 }
 
+std::vector<SymbolTable::IdData> SymbolTable::lookupIdIgnoreHidden( const std::string &id ) const {
+	std::vector<IdData> out;
+	std::vector<IdData> lookupResult = lookupId(id);
+	for ( auto candidate: lookupResult) {
+		if ( candidate.id ) {
+			if (candidate.id->isHidden) continue;
+		}
+		out.push_back(candidate);
+	}
+	return out;
+}
+
 std::vector<SymbolTable::IdData> SymbolTable::specialLookupId( SymbolTable::SpecialFunctionKind kind, const std::string & otypeKey ) const {
 	static Stats::Counters::CounterGroup * special_stats = Stats::Counters::build<Stats::Counters::CounterGroup>("Special Lookups");
 	static Stats::Counters::SimpleCounter * stat_counts[3] = {

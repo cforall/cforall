@@ -9,6 +9,7 @@ namespace {
 class EnumAttrFuncGenerator {
 	const ast::EnumDecl* decl;
 	unsigned int functionNesting;
+	const ast::StructDecl* quasi_void_decl;
 	ast::Linkage::Spec proto_linkage;
 
 public:
@@ -23,6 +24,9 @@ public:
 			unsigned int functionNesting )
 		: decl(decl),
 		  functionNesting{functionNesting},
+		  quasi_void_decl(new ast::StructDecl(decl->location, 
+		  	"quasi_void", ast::AggregateDecl::Struct,
+			{}, ast::Linkage::AutoGen)),
 		  proto_linkage{ast::Linkage::Cforall} {}
 
 private:
@@ -51,25 +55,22 @@ private:
 	void genFromInstanceBody(ast::FunctionDecl *) const;
 	void genSuccPredBody(ast::FunctionDecl *, const char *) const;
 
+	void genTypeNameFunc();
+
 	// Implement TypedEnum trait
 	void genTypedEnumFuncs();
 	void genTypedEnumFunction(const ast::EnumAttribute attr);
 	ast::FunctionDecl* genPosnProto() const;
 	ast::FunctionDecl* genLabelProto() const;
 	ast::FunctionDecl* genValueProto() const;
+	ast::FunctionDecl* genQuasiValueProto() const;
+	ast::FunctionDecl* genTypeNameProto() const;
+
 	void genValueOrLabelBody(
 		ast::FunctionDecl* func, ast::ObjectDecl* arrDecl) const;
 	void genPosnBody(ast::FunctionDecl* func) const;
-
-	////////////////
-
-	// ---------------------------------------------------
-	// ast::FunctionDecl* genAttrCtorProto() const;
-	/// Changes the node inside a pointer so that it has the unused attribute.
-	void addUnusedAttribute(ast::ptr<ast::DeclWithType>& declPtr) {
-		ast::DeclWithType* decl = declPtr.get_and_mutate();
-		decl->attributes.push_back(new ast::Attribute("unused"));
-	}
+	void genQuasiValueBody(ast::FunctionDecl* func) const;
+	void genTypeNameBody(ast::FunctionDecl* func) const;
 
 	// ----------------------------------------------------
 
@@ -116,6 +117,7 @@ std::vector<ast::ptr<ast::Init>> EnumAttrFuncGenerator::genValueInit() const {
 	}
 	return inits;
 }
+
 const ast::Init* EnumAttrFuncGenerator::getAutoInit(
 	const ast::Init* prev) const {
 	if (prev == nullptr) {
@@ -188,11 +190,22 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
+	if (decl->base)
+		return genProto(
+			"valueE",
+			{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
+			{new ast::ObjectDecl(getLocation(), "_ret",
+								ast::deepCopy(decl->base))});
+	else
+		return genQuasiValueProto();
+}
+
+ast::FunctionDecl* EnumAttrFuncGenerator::genQuasiValueProto() const {
 	return genProto(
 		"valueE",
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(getLocation(), "_ret",
-		                     ast::deepCopy(decl->base))});
+		                		new ast::StructInstType(quasi_void_decl))});
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genFromIntProto() const {
@@ -209,6 +222,15 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genFromInstanceProto() const {
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(getLocation(), "_ret", new ast::BasicType(ast::BasicKind::UnsignedInt))}
 	);
+}
+
+ast::FunctionDecl* EnumAttrFuncGenerator::genTypeNameProto() const {
+	return genProto(
+		"type_name",
+		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
+		{new ast::ObjectDecl(
+			getLocation(), "_ret",
+			new ast::PointerType(new ast::BasicType{ast::BasicKind::Char}))});
 }
 
 void EnumAttrFuncGenerator::genFromIntBody(ast::FunctionDecl* func) const {
@@ -268,7 +290,6 @@ void EnumAttrFuncGenerator::genSuccPredBody(ast::FunctionDecl * func, const char
 	);
 }
 
-
 void EnumAttrFuncGenerator::genSerialTraitFuncs() {
 	ast::FunctionDecl * protos[4] = {
 		genFromIntProto(),
@@ -301,7 +322,8 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genBoundedProto(const char * func) con
 void EnumAttrFuncGenerator::genBoundedBody(ast::FunctionDecl* func) const {
 	const CodeLocation & loc = func->location;
 	auto mem = func->name=="lowerBound"?  decl->members.front() : decl->members.back();
-	auto expr = new ast::NameExpr( loc, mem->name );
+	// auto expr = new ast::NameExpr( loc, mem->name );
+	auto expr = new ast::QualifiedNameExpr( loc, decl->name, mem->name );
 	func->stmts = new ast::CompoundStmt( loc, {new ast::ReturnStmt(loc, expr)});
 }
 
@@ -348,6 +370,19 @@ void EnumAttrFuncGenerator::genValueOrLabelBody(
 		func->location, {new ast::ReturnStmt(func->location, untyped)});
 }
 
+void EnumAttrFuncGenerator::genQuasiValueBody(ast::FunctionDecl* func) const {
+	auto location = func->location;
+	const ast::ObjectDecl * objDecl = new ast::ObjectDecl(
+		location, "_out", new ast::StructInstType( quasi_void_decl ));
+	const ast::DeclStmt * declStmt = new ast::DeclStmt(location, objDecl);
+	const ast::VariableExpr * varExpr = new ast::VariableExpr(location, objDecl);
+	const ast::ReturnStmt * retStmt = new ast::ReturnStmt(location, varExpr);
+
+	func->stmts = new ast::CompoundStmt(
+		location, {declStmt, retStmt}
+	);
+}
+
 void EnumAttrFuncGenerator::genPosnBody(ast::FunctionDecl* func) const {
 	auto castExpr = new ast::CastExpr(
 		func->location,
@@ -358,19 +393,38 @@ void EnumAttrFuncGenerator::genPosnBody(ast::FunctionDecl* func) const {
 		func->location, {new ast::ReturnStmt(func->location, castExpr)});
 }
 
+void EnumAttrFuncGenerator::genTypeNameBody(ast::FunctionDecl* func) const {
+	const ast::Expr * type_name = ast::ConstantExpr::from_string(func->location, decl->name);
+	func->stmts = new ast::CompoundStmt(
+		func->location, {new ast::ReturnStmt(func->location, type_name)}
+	);
+}
+
 void EnumAttrFuncGenerator::genTypedEnumFunction(const ast::EnumAttribute attr) {
-	if (attr == ast::EnumAttribute::Value ||
-		attr == ast::EnumAttribute::Label) {
-		// TypedEnum's backing arrays
-		std::vector<ast::ptr<ast::Init>> inits =
-			attr == ast::EnumAttribute::Value ? genValueInit() : genLabelInit();
+	if (attr == ast::EnumAttribute::Value) {
+		if (decl->base) {
+			// TypedEnum's backing arrays
+			std::vector<ast::ptr<ast::Init>> inits = genValueInit();
+			ast::ObjectDecl* arrayProto =
+				genAttrArrayProto(attr, getLocation(), inits);
+			forwards.push_back(arrayProto);
+
+			ast::FunctionDecl* funcProto = genValueProto();
+			produceForwardDecl(funcProto);
+			genValueOrLabelBody(funcProto, arrayProto);
+			produceDecl(funcProto);
+		}  else {
+			ast::FunctionDecl* funcProto = genQuasiValueProto();
+			produceForwardDecl(funcProto);
+			genQuasiValueBody(funcProto);
+			produceDecl(funcProto);
+		}
+	} else if (attr == ast::EnumAttribute::Label) {
+		std::vector<ast::ptr<ast::Init>> inits = genLabelInit();
 		ast::ObjectDecl* arrayProto =
 			genAttrArrayProto(attr, getLocation(), inits);
 		forwards.push_back(arrayProto);
-
-		ast::FunctionDecl* funcProto = ( attr == ast::EnumAttribute::Value )
-		                               ? genValueProto()
-		                               : genLabelProto();
+		ast::FunctionDecl* funcProto = genLabelProto();
 		produceForwardDecl(funcProto);
 		genValueOrLabelBody(funcProto, arrayProto);
 		produceDecl(funcProto);
@@ -383,14 +437,22 @@ void EnumAttrFuncGenerator::genTypedEnumFunction(const ast::EnumAttribute attr) 
 }
 
 void EnumAttrFuncGenerator::genTypedEnumFuncs() {
-	if (decl->base) genTypedEnumFunction(ast::EnumAttribute::Value);
+	genTypedEnumFunction(ast::EnumAttribute::Value);
 	genTypedEnumFunction(ast::EnumAttribute::Label);
 	genTypedEnumFunction(ast::EnumAttribute::Posn);
+}
+
+void EnumAttrFuncGenerator::genTypeNameFunc() {
+	ast::FunctionDecl* funcProto = genTypeNameProto();
+	produceForwardDecl(funcProto);
+	genTypeNameBody(funcProto);
+	produceDecl(funcProto);
 }
 
 void EnumAttrFuncGenerator::generateAndAppendFunctions(
 	std::list<ast::ptr<ast::Decl>>& decls) {
 	// Generate the functions (they go into forwards and definitions).
+	genTypeNameFunc();
 	genTypedEnumFuncs();
 	genSerialTraitFuncs();
 	genBoundedFunctions();

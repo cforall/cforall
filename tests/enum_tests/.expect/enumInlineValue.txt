@@ -1,4 +1,22 @@
-enumB.A is 5
-enumB.B is 6
-enumB.D is 11
-enumB.E is 12
+Symbols (enumerator) should have the same values:
+Symbol a: (10) 10, 10, 10
+Symbol b: (20) 20, 20
+Symbol ab: (30) 30
+Symbol c: (40) 40, 40, 40
+Symbol d: (50) 50, 50, 50
+Symbol cd: (60) 60, 60
+Symbol acd: (70) 70
+Casting/Upcasting:
+Symbol a: (10) 10, 10, 10
+Symbol b: (20) 20, 20
+Symbol ab: (30) 30
+Symbol c: (40) 40, 40, 40, 40, 40
+Symbol d: (50) 50, 50, 50, 50
+Symbol cd: (60) 60, 60
+Symbol acd: (70) 70
+Function Call:
+Symbol a: (10) 10, 10
+Symbol c: (40) 40, 40
+Symbol d: (50) 50, 50
+Symbol cd: (60) 60, 60
+Symbol acd: (70) 70

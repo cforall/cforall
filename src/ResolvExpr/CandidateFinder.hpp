@@ -57,6 +57,9 @@ struct CandidateFinder {
 
 	iterator end() { return candidates.end(); }
 	const_iterator end() const { return candidates.end(); }
+
+	const ast::Expr * makeEnumOffsetCast( const ast::EnumInstType * src, 
+		const ast::EnumInstType * dst, const ast::Expr * expr, Cost minCost );
 };
 
 /// Computes conversion cost between two types

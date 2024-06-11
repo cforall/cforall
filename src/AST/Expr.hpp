@@ -255,10 +255,14 @@ private:
 class QualifiedNameExpr final : public Expr {
 public:
 	ptr<Decl> type_decl;
-	std::string name;
+	const std::string type_name;
+	const std::string name;
 
 	QualifiedNameExpr( const CodeLocation & loc, const Decl * d, const std::string & n )
-	: Expr( loc ), type_decl( d ), name( n ) {}
+	: Expr( loc ), type_decl( d ), type_name(""), name( n ) {}
+
+	QualifiedNameExpr( const CodeLocation & loc, const std::string & type_name, const std::string & name)
+	: Expr( loc ), type_name( type_name ), name( name ) {}
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:

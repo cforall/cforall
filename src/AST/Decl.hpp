@@ -74,6 +74,7 @@ public:
 	ptr<Expr> asmName;
 	bool isDeleted = false;
 	bool isTypeFixed = false;
+	bool isHidden = false;
 
 	DeclWithType( const CodeLocation& loc, const std::string& name, Storage::Classes storage,
 		Linkage::Spec linkage, std::vector<ptr<Attribute>>&& attrs, Function::Specs fs )
@@ -312,6 +313,8 @@ public:
 	// if isTyped == true && base.get() == nullptr, it is a "void" type enum
 	ptr<Type> base;
 	enum class EnumHiding { Visible, Hide } hide;
+	std::vector< ast::ptr<ast::EnumInstType>> inlinedDecl; // child enums
+
 	EnumDecl( const CodeLocation& loc, const std::string& name, bool isTyped = false,
 		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall,
 		Type const * base = nullptr, EnumHiding hide = EnumHiding::Hide,
@@ -327,6 +330,11 @@ public:
 	const char * typeString() const override { return aggrString( Enum ); }
 
 	const std::string getUnmangeldArrayName( const EnumAttribute attr ) const;
+
+	unsigned calChildOffset(const std::string & childEnum) const;
+	unsigned calChildOffset(const ast::EnumInstType * childEnum) const;
+
+	bool isSubTypeOf(const ast::EnumDecl *) const;
 private:
 	EnumDecl * clone() const override { return new EnumDecl{ *this }; }
 	MUTATE_FRIEND

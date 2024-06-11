@@ -120,6 +120,8 @@ public:
 
 	/// Gets all declarations with the given ID
 	std::vector<IdData> lookupId( const std::string &id ) const;
+	/// Gets all declarations with the given ID, ignoring hidden members from enumeration
+	std::vector<IdData> lookupIdIgnoreHidden( const std::string &id ) const;
 	/// Gets special functions associated with a type; if no key is given, returns everything
 	std::vector<IdData> specialLookupId( SpecialFunctionKind kind, const std::string & otypeKey = "" ) const;
 	/// Gets the top-most type declaration with the given ID

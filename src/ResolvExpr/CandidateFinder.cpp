@@ -512,10 +512,27 @@ namespace {
 				if ( unify( paramType, argType, env, need, have, open, common ) ) {
 					// add new result
 					assert( common );
-						results.emplace_back(
-							i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
-							nextArg + 1, nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
-					//}
+
+					auto paramAsEnum = dynamic_cast<const ast::EnumInstType *>(paramType);
+					auto argAsEnum =dynamic_cast<const ast::EnumInstType *>(argType);
+					if (paramAsEnum && argAsEnum) {
+						if (paramAsEnum->base->name != argAsEnum->base->name) {
+							Cost c = castCost(argType, paramType, expr, context.symtab, env);
+							if (c < Cost::infinity) {
+								CandidateFinder subFinder( context, env );
+								expr = subFinder.makeEnumOffsetCast(argAsEnum, paramAsEnum, expr, c);
+								results.emplace_back(
+									i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
+									nextArg + 1, nTuples, expl.cost + c, expl.exprs.size() == 1 ? 0 : 1, j );
+								continue;
+							} else {
+								std::cerr << "Cannot instantiate " << paramAsEnum->base->name <<  " with " << argAsEnum->base->name << std::endl;
+							}
+						}
+					}
+					results.emplace_back(
+						i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
+						nextArg + 1, nTuples, expl.cost, expl.exprs.size() == 1 ? 0 : 1, j );
 				}
 			}
 		}
@@ -633,6 +650,10 @@ namespace {
 			const Candidate & cand, const Cost & addedCost, const std::string & name
 		);
 
+		void addEnumValueAsCandidate(const ast::EnumInstType * instType, const ast::Expr * expr,
+			const Cost & addedCost
+		);
+
 		/// Adds tuple member interpretations
 		void addTupleMembers(
 			const ast::TupleType * tupleType, const ast::Expr * expr, const Candidate & cand,
@@ -674,6 +695,10 @@ namespace {
 		void postvisit( const ast::StmtExpr * stmtExpr );
 		void postvisit( const ast::UntypedInitExpr * initExpr );
 		void postvisit( const ast::QualifiedNameExpr * qualifiedExpr );
+
+		const ast::Expr * makeEnumOffsetCast( const ast::EnumInstType * src, 
+			const ast::EnumInstType * dst
+			, const ast::Expr * expr, Cost minCost );
 
 		void postvisit( const ast::InitExpr * ) {
 			assertf( false, "CandidateFinder should never see a resolved InitExpr." );
@@ -875,6 +900,27 @@ namespace {
 		}
 	}
 
+	void Finder::addEnumValueAsCandidate( const ast::EnumInstType * enumInst, const ast::Expr * expr,
+		const Cost & addedCost
+	) {
+		if ( enumInst->base->base ) {
+			CandidateFinder finder( context, tenv );
+			auto location = expr->location;
+			auto callExpr = new ast::UntypedExpr(
+				location, new ast::NameExpr( location, "valueE" ), {expr}
+			);
+			finder.find( callExpr );
+			CandidateList winners = findMinCost( finder.candidates );
+			if (winners.size() != 1) {
+				SemanticError( callExpr, "Ambiguous expression in valueE..." );
+			}
+			CandidateRef & choice = winners.front();
+			choice->cost += addedCost;
+			addAnonConversions(choice);
+			candidates.emplace_back( std::move(choice) );
+		}
+	}
+
 	/// Adds implicit struct-conversions to the alternative list
 	void Finder::addAnonConversions( const CandidateRef & cand ) {
 		// adds anonymous member interpretations whenever an aggregate value type is seen.
@@ -893,24 +939,10 @@ namespace {
 		} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
 			addAggMembers( unionInst, aggrExpr, *cand, Cost::unsafe, "" );
 		} else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
-			if ( enumInst->base->base ) {
-				CandidateFinder finder( context, tenv );
-				auto location = aggrExpr->location;
-				auto callExpr = new ast::UntypedExpr(
-					location, new ast::NameExpr( location, "valueE" ), {aggrExpr}
-				);
-				finder.find( callExpr );
-				CandidateList winners = findMinCost( finder.candidates );
-				if (winners.size() != 1) {
-					SemanticError( callExpr, "Ambiguous expression in valueE..." );
-				}
-				CandidateRef & choice = winners.front();
-				choice->cost = Cost::unsafe;
-				candidates.emplace_back( std::move(choice) );
-			}
-
+			addEnumValueAsCandidate(enumInst, aggrExpr, Cost::unsafe);
 		}
 	}
+	
 
 	/// Adds aggregate member interpretations
 	void Finder::addAggMembers(
@@ -1179,6 +1211,49 @@ namespace {
 		addCandidate( labelExpr, tenv );
 	}
 
+	// src is a subset of dst
+	const ast::Expr * Finder::makeEnumOffsetCast( const ast::EnumInstType * src, 
+		const ast::EnumInstType * dst,
+		const ast::Expr * expr,
+		Cost minCost ) {
+		
+		auto srcDecl = src->base;
+		auto dstDecl = dst->base;
+
+		if (srcDecl->name == dstDecl->name) return expr;
+
+		for (auto& dstChild: dstDecl->inlinedDecl) {
+			Cost c = castCost(src, dstChild, false, symtab, tenv);
+			ast::CastExpr * castToDst;
+			if (c<minCost) {
+				unsigned offset = dstDecl->calChildOffset(dstChild.get());
+				if (offset > 0) {
+					auto untyped = ast::UntypedExpr::createCall(
+						expr->location, 
+						"?+?", 
+						{ new ast::CastExpr( expr, new ast::BasicType(ast::BasicKind::SignedInt) ),
+						ast::ConstantExpr::from_int(expr->location, offset)});
+					CandidateFinder finder(context, tenv);
+					finder.find( untyped );
+					CandidateList winners = findMinCost( finder.candidates );
+					CandidateRef & choice = winners.front();
+					// choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
+					choice->expr = new ast::CastExpr(expr->location, choice->expr, dstChild, ast::GeneratedFlag::ExplicitCast);
+					// castToDst = new ast::CastExpr(choice->expr, dstChild);
+					castToDst = new ast::CastExpr( 
+						makeEnumOffsetCast( src, dstChild, choice->expr, minCost ),
+					 dst);
+
+				} else {
+					castToDst = new ast::CastExpr( expr, dst );
+				}
+				return castToDst;
+			}
+		}
+		SemanticError(expr, src->base->name + " is not a subtype of " + dst->base->name);
+		return nullptr;
+	}
+
 	void Finder::postvisit( const ast::CastExpr * castExpr ) {
 		ast::ptr< ast::Type > toType = castExpr->result;
 		assert( toType );
@@ -1228,6 +1303,14 @@ namespace {
 				(castExpr->isGenerated == ast::GeneratedFlag::GeneratedCast)
 					? conversionCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env )
 					: castCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env );
+			
+			// Redefine enum cast
+			auto argAsEnum = cand->expr->result.as<ast::EnumInstType>();
+			auto toAsEnum = toType.as<ast::EnumInstType>();
+			if ( argAsEnum && toAsEnum && argAsEnum->name != toAsEnum->name ) {	
+				ast::ptr<ast::Expr> offsetExpr = makeEnumOffsetCast(argAsEnum, toAsEnum, cand->expr, thisCost);
+				cand->expr = offsetExpr;
+			}
 
 			PRINT(
 				std::cerr << "working on cast with result: " << toType << std::endl;
@@ -1245,10 +1328,8 @@ namespace {
 					minExprCost = cand->cost;
 					minCastCost = thisCost;
 					matches.clear();
-
-
 				}
-				// ambiguous case, still output candidates to print in error message
+				// ambigious case, still output candidates to print in error message
 				if ( cand->cost == minExprCost && thisCost == minCastCost ) {
 					CandidateRef newCand = std::make_shared<Candidate>(
 						restructureCast( cand->expr, toType, castExpr->isGenerated ),
@@ -1263,7 +1344,6 @@ namespace {
 			}
 		}
 		candidates = std::move(matches);
-
 		//CandidateList minArgCost = findMinCost( matches );
 		//promoteCvtCost( minArgCost );
 		//candidates = findMinCost( minArgCost );
@@ -1373,7 +1453,7 @@ namespace {
 				declList.insert(declList.end(), std::make_move_iterator(result.begin()), std::make_move_iterator(result.end()));
 			}
 		} else {
-			declList = symtab.lookupId( nameExpr->name );
+			declList = symtab.lookupIdIgnoreHidden( nameExpr->name );
 		}
 		PRINT( std::cerr << "nameExpr is " << nameExpr->name << std::endl; )
 
@@ -1385,16 +1465,6 @@ namespace {
 			Cost cost = Cost::zero;
 			ast::Expr * newExpr = data.combine( nameExpr->location, cost );
 
-			// bool bentConversion = false;
-			// if ( auto inst = newExpr->result.as<ast::EnumInstType>() ) {
-			// 	if ( inst->base && inst->base->base ) {
-			// 		bentConversion = true;
-			// 	}
-			// }
-
-			// CandidateRef newCand = std::make_shared<Candidate>(
-			// 	newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, bentConversion? Cost::safe: Cost::zero,
-			// 	cost );
 			CandidateRef newCand = std::make_shared<Candidate>(
 				newExpr, copy( tenv ), ast::OpenVarSet{}, ast::AssertionSet{}, Cost::zero,
 				cost );
@@ -1812,14 +1882,10 @@ namespace {
 			const ast::Type * t = data.id->get_type()->stripReferences();
 			if ( const ast::EnumInstType * enumInstType =
 				dynamic_cast<const ast::EnumInstType *>( t ) ) {
-				if ( enumInstType->base->name == expr->type_decl->name ) {
+				if ( (enumInstType->base->name == expr->type_name)
+					|| (expr->type_decl && enumInstType->base->name == expr->type_decl->name) ) {
 					Cost cost = Cost::zero;
 					ast::Expr * newExpr = data.combine( expr->location, cost );
-					// CandidateRef newCand =
-					// 	std::make_shared<Candidate>(
-					// 		newExpr, copy( tenv ), ast::OpenVarSet{},
-					// 		ast::AssertionSet{}, Cost::safe, cost
-					// 	);
 					CandidateRef newCand =
 						std::make_shared<Candidate>(
 							newExpr, copy( tenv ), ast::OpenVarSet{},
@@ -2095,6 +2161,45 @@ const ast::Expr * referenceToRvalueConversion( const ast::Expr * expr, Cost & co
 	}
 
 	return expr;
+}
+
+const ast::Expr * CandidateFinder::makeEnumOffsetCast( const ast::EnumInstType * src, 
+	const ast::EnumInstType * dst,
+	const ast::Expr * expr,
+	Cost minCost ) {
+	
+	auto srcDecl = src->base;
+	auto dstDecl = dst->base;
+
+	if (srcDecl->name == dstDecl->name) return expr;
+
+	for (auto& dstChild: dstDecl->inlinedDecl) {
+		Cost c = castCost(src, dstChild, false, context.symtab, env);
+		ast::CastExpr * castToDst;
+		if (c<minCost) {
+			unsigned offset = dstDecl->calChildOffset(dstChild.get());
+			if (offset > 0) {
+				auto untyped = ast::UntypedExpr::createCall(
+					expr->location, 
+					"?+?", 
+					{ new ast::CastExpr( expr, new ast::BasicType(ast::BasicKind::SignedInt) ),
+					ast::ConstantExpr::from_int(expr->location, offset)});
+				CandidateFinder finder(context, env);
+				finder.find( untyped );
+				CandidateList winners = findMinCost( finder.candidates );
+				CandidateRef & choice = winners.front();
+				choice->expr = new ast::CastExpr(expr->location, choice->expr, dstChild, ast::GeneratedFlag::ExplicitCast);
+				castToDst = new ast::CastExpr( 
+					makeEnumOffsetCast( src, dstChild, choice->expr, minCost ),
+					dst);
+			} else {
+				castToDst = new ast::CastExpr( expr, dst );
+			}
+			return castToDst;
+		}
+	}
+	SemanticError(expr, src->base->name + " is not a subtype of " + dst->base->name);
+	return nullptr;
 }
 
 Cost computeConversionCost(

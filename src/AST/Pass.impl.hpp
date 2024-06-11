@@ -559,18 +559,11 @@ const ast::Decl * ast::Pass< core_t >::visit( const ast::EnumDecl * node ) {
 	__pass::symtab::addEnum( core, 0, node );
 
 	if ( __visit_children() ) {
-		if ( node->hide == ast::EnumDecl::EnumHiding::Hide ) {
-			guard_symtab guard { *this };
-			maybe_accept( node, &EnumDecl::base );
-			maybe_accept( node, &EnumDecl::params     );
-			maybe_accept( node, &EnumDecl::members    );
-			maybe_accept( node, &EnumDecl::attributes );
-		} else {
-			maybe_accept( node, &EnumDecl::base );
-			maybe_accept( node, &EnumDecl::params     );
-			maybe_accept( node, &EnumDecl::members    );
-			maybe_accept( node, &EnumDecl::attributes );
-		}
+		maybe_accept( node, &EnumDecl::base        );
+		maybe_accept( node, &EnumDecl::params      );
+		maybe_accept( node, &EnumDecl::members     );
+		maybe_accept( node, &EnumDecl::attributes  );
+		maybe_accept( node, &EnumDecl::inlinedDecl );
 	}
 
 	VISIT_END( Decl, node );

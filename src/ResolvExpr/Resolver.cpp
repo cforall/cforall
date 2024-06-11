@@ -200,6 +200,14 @@ namespace {
 				castExpr->isGenerated == ast::GeneratedCast
 				&& typesCompatible( castExpr->arg->result, castExpr->result )
 			) {
+				auto argAsEnum = castExpr->arg.as<ast::EnumInstType>();
+				auto resultAsEnum = castExpr->result.as<ast::EnumInstType>();
+				if (argAsEnum && resultAsEnum) {
+					if (argAsEnum->base->name != resultAsEnum->base->name) {
+						std::cerr << "Enum Cast: " << argAsEnum->base->name << " to " << resultAsEnum->base->name << std::endl;
+						return castExpr;
+					}
+				}
 				// generated cast is the same type as its argument, remove it after keeping env
 				return ast::mutate_field(
 					castExpr->arg.get(), &ast::Expr::env, castExpr->env );

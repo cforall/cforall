@@ -1,18 +1,72 @@
 #include <fstream.hfa>
-enum enumA {
-    A=5, B, C=10, D
+#include <enum.hfa>
+
+enum(int) A !{
+    a = 10
 };
 
-enum enumB {
-    inline enumA,
-    E
+enum(int) B {
+    b = 20
 };
+
+enum(int) AB {
+    inline A,
+    inline B,
+    ab = 30
+};
+
+enum(int) C {
+    c = 40
+};
+
+enum(int) D {
+    d = 50
+};
+
+enum(int) CD {
+    inline C,
+    inline D,
+    cd = 60
+};
+
+enum(int) ACD {
+    inline A,
+    inline CD,
+    acd = 70
+};
+
+// Note: variable name (cat in this case) cannot be overloaded with those declared in enum,
+// Probably for the same reason as const overloading problem
+// i.e. int identity_t(enum ACD a) would not work as the valueE(a) is ambigious currently
+int identity_t(enum ACD cat) {
+    return valueE(cat);
+}
 
 int main() {
-    enum enumB val = A;
-    sout | "enumB.A is" | val;
-    enum enumB val2 = enumB.B;
-    sout | "enumB.B is" | val2;
-    sout | "enumB.D is" | enumB.D;
-    sout | "enumB.E is" | enumB.E;
+    // Note: We need to use qualified name syntax even if no ! hidding
+    // Because Inline introduce ambiguity on symbols
+    sout | "Symbols (enumerator) should have the same values:" |nl;
+    sout | "Symbol a: (10) " | valueE(A.a) | "," | valueE(AB.a) | "," | valueE(ACD.a) | nl;
+    sout | "Symbol b: (20) " | valueE(B.b) | "," | valueE(AB.b) | nl;
+    sout | "Symbol ab: (30) " | valueE(AB.ab) | nl;
+    sout | "Symbol c: (40) " | valueE(C.c) | "," | valueE(CD.c) | "," | valueE(ACD.c) | nl;
+    sout | "Symbol d: (50) " | valueE(D.d) | "," | valueE(CD.d) | "," | valueE(ACD.d) | nl;
+    sout | "Symbol cd: (60) " | valueE(CD.cd) | "," | valueE(ACD.cd) | nl;
+    sout | "Symbol acd: (70) " | valueE(ACD.acd) | nl;
+
+    sout | "Casting/Upcasting:" | nl;
+    sout | "Symbol a: (10) " | valueE((A)A.a) | "," | valueE((AB)A.a) | "," | valueE((ACD)A.a) | nl;
+    sout | "Symbol b: (20) " | valueE((B)B.b) | "," | valueE((AB)B.b) | nl;
+    sout | "Symbol ab: (30) " | valueE((AB)AB.ab) | nl;
+    sout | "Symbol c: (40) " | valueE((C)C.c) | "," | valueE((CD)C.c) | "," | valueE((ACD)C.c) | "," | valueE((CD)CD.c)| "," | valueE((ACD)CD.c) | nl;
+    sout | "Symbol d: (50) " | valueE((D)D.d) | "," | valueE((CD)D.d) | "," | valueE((ACD)D.d) | "," | valueE((ACD)CD.d) | nl;
+    sout | "Symbol cd: (60) " | valueE((CD)CD.cd) | "," | valueE((ACD)CD.cd) | nl;
+    sout | "Symbol acd: (70) " | valueE((ACD)ACD.acd) | nl;
+
+    sout | "Function Call:" | nl;
+    sout | "Symbol a: (10) " | identity_t(A.a) | "," | identity_t(ACD.a) | nl;
+    sout | "Symbol c: (40) " | identity_t(C.c) | "," | identity_t(ACD.c) | nl;
+    sout | "Symbol d: (50) " | identity_t(D.d) | "," | identity_t(ACD.d) | nl;
+    sout | "Symbol cd: (60) " | identity_t(CD.cd) | "," | identity_t(ACD.cd) | nl;
+    sout | "Symbol acd: (70) " | identity_t(ACD.acd) | nl;
 }

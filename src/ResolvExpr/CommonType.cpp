@@ -635,8 +635,13 @@ public:
 
 	void postvisit( const ast::UnionInstType * ) {}
 
-	void postvisit( const ast::EnumInstType * enumInst ) {
-		if ( enumInst->base && !enumInst->base->isTyped ) {
+	void postvisit( const ast::EnumInstType * param ) {
+		auto argAsEnumInst = dynamic_cast<const ast::EnumInstType *>(type2);
+		if ( argAsEnumInst ) {
+			const ast::EnumDecl* paramDecl = param->base;
+			const ast::EnumDecl* argDecl = argAsEnumInst->base;
+			if (argDecl->isSubTypeOf(paramDecl)) result = param;
+		} else if ( param->base && !param->base->isTyped ) {
 			auto basicType = new ast::BasicType( ast::BasicKind::UnsignedInt );
 			result = commonType( basicType, type2, tenv, need, have, open, widen);
 		}

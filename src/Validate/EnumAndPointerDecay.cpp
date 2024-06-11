@@ -46,23 +46,28 @@ ast::EnumDecl const * EnumAndPointerDecayCore::previsit(
 				&ast::ObjectDecl::type,
 				new ast::EnumInstType( decl, ast::CV::Const ) ) );
 		} else if ( auto value = member.as<ast::InlineMemberDecl>() ) {
-			if ( auto targetEnum = symtab.lookupEnum( value->name ) ) {
-				for ( auto enumMember : targetEnum->members ) {
-					auto enumObject = enumMember.strict_as<ast::ObjectDecl>();
-					buffer.push_back( new ast::ObjectDecl(
-						// Get the location from the "inline" declaration.
-						value->location,
-						enumObject->name,
-						// Construct a new EnumInstType as the type.
-						new ast::EnumInstType( decl, ast::CV::Const ),
-						enumObject->init,
-						enumObject->storage,
-						enumObject->linkage,
-						enumObject->bitfieldWidth,
-						{},
-						enumObject->funcSpec
-					) );
-				}
+			auto targetEnum = symtab.lookupEnum( value->name );
+			// assert( targetEnum );
+			if (!targetEnum) {
+				SemanticError(value, "Only another enum is allowed for enum inline syntax ");
+			}
+			const ast::EnumInstType * instType = new ast::EnumInstType(targetEnum);
+			mut->inlinedDecl.push_back( std::move(instType) );
+			for ( auto enumMember : targetEnum->members ) {
+				auto enumObject = enumMember.strict_as<ast::ObjectDecl>();
+				buffer.push_back(new ast::ObjectDecl(
+					// Get the location from the "inline" declaration.
+					value->location,
+					enumObject->name,
+					// Construct a new EnumInstType as the type.
+					new ast::EnumInstType( decl, ast::CV::Const ),
+					enumObject->init,
+					enumObject->storage,
+					enumObject->linkage,
+					enumObject->bitfieldWidth,
+					{},
+					enumObject->funcSpec
+				));
 			}
 		}
 	}

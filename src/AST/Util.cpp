@@ -351,10 +351,8 @@ struct InScopeCore : public ast::WithShortCircuiting {
 
 	void previsit( EnumDecl const * decl ) {
 		enumDecls.insert( decl );
-		if ( ast::EnumDecl::EnumHiding::Visible == decl->hide ) {
-			for ( auto & member : decl->members ) {
-				typedDecls.insert( member.strict_as<ast::DeclWithType>() );
-			}
+		for ( auto & member : decl->members ) {
+			typedDecls.insert( member.strict_as<ast::DeclWithType>() );
 		}
 		beginScope();
 		for ( auto & type_param : decl->params ) {

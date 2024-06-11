@@ -2826,8 +2826,8 @@ enumerator_list:
 		}
 	| enumerator_list ',' visible_hide_opt identifier_or_type_name enumerator_value_opt
 		{ $$ = $1->set_last( DeclarationNode::newEnumValueGeneric( $4, $5 ) ); }
-	| enumerator_list ',' INLINE type_name enumerator_value_opt
-		{ $$ = $1->set_last( DeclarationNode::newEnumValueGeneric( new string("inline"), nullptr ) ); }
+	| enumerator_list ',' INLINE type_name
+		{ $$ = $1->set_last( DeclarationNode::newEnumInLine( $4->symbolic.name )  ); }
 	;
 
 visible_hide_opt:
