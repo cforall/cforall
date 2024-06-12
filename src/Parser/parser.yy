@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr 27 16:23:14 2024
-// Update Count     : 6625
+// Last Modified On : Tue Jun 11 21:32:15 2024
+// Update Count     : 6641
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -386,7 +386,7 @@ if ( N ) {																		\
 
 // names and constants: lexer differentiates between identifier and typedef names
 %token<tok> IDENTIFIER		TYPEDIMname		TYPEDEFname		TYPEGENname
-%token<tok> TIMEOUT			WAND	WOR			CATCH			RECOVER			CATCHRESUME		FIXUP		FINALLY		// CFA
+%token<tok> TIMEOUT			WAND	WOR		CATCH			RECOVER			CATCHRESUME		FIXUP		FINALLY		// CFA
 %token<tok> INTEGERconstant	CHARACTERconstant	STRINGliteral
 %token<tok> DIRECTIVE
 // Floating point constant is broken into three kinds of tokens because of the ambiguity with tuple indexing and
@@ -492,7 +492,7 @@ if ( N ) {																		\
 
 %type<decl> exception_declaration
 
-%type<decl> field_declaration_list_opt field_declaration field_declaring_list_opt field_declaring_list field_declarator field_abstract_list_opt field_abstract
+%type<decl> field_declaration_list_opt field_declaration field_declaring_list_opt field_declarator field_abstract_list_opt field_abstract
 %type<expr> field field_name_list field_name fraction_constants_opt
 
 %type<decl> external_function_definition function_definition function_array function_declarator function_no_ptr function_ptr
@@ -679,6 +679,12 @@ identifier_at:
 		{ Token tok = { new string( DeclarationNode::anonymous.newName() ), yylval.tok.loc }; $$ = tok; }
 	;
 
+identifier_or_type_name:
+	identifier
+	| TYPEDEFname
+	| TYPEGENname
+	;
+
 string_literal:
 	string_literal_list							{ $$ = new ExpressionNode( build_constantStr( yylloc, *$1 ) ); }
 	;
@@ -810,11 +816,7 @@ postfix_expression:
 		//       z.U;  // lexer returns U is TYPEDEFname
 		//       z.E;  // lexer returns E is TYPEDEFname
 		//   }
-	| postfix_expression '.' identifier
-		{ $$ = new ExpressionNode( build_fieldSel( yylloc, $1, build_varref( yylloc, $3 ) ) ); }
-	| postfix_expression '.' TYPEDEFname				// CFA, SKULLDUGGERY
-		{ $$ = new ExpressionNode( build_fieldSel( yylloc, $1, build_varref( yylloc, $3 ) ) ); }
-	| postfix_expression '.' TYPEGENname				// CFA, SKULLDUGGERY
+	| postfix_expression '.' identifier_or_type_name
 		{ $$ = new ExpressionNode( build_fieldSel( yylloc, $1, build_varref( yylloc, $3 ) ) ); }
 
 	| postfix_expression '.' INTEGERconstant			// CFA, tuple index
@@ -1612,7 +1614,7 @@ for_control_expression:
 
 enum_key:
 	TYPEDEFname
-	| ENUM TYPEDEFname
+	| ENUM identifier_or_type_name
 	;
 
 downupdowneq:
@@ -2023,6 +2025,16 @@ cfa_variable_specifier:									// CFA
 		{ $$ = $1->addName( $2 )->addAsmName( $3 ); }
 	| type_qualifier_list cfa_abstract_tuple identifier_or_type_name asm_name_opt
 		{ $$ = $2->addQualifiers( $1 )->addName( $3 )->addAsmName( $4 ); }
+
+		// [ int s, int t ];			// declare s and t
+		// [ int, int ] f();
+		// [] g( int );
+		// [ int x, int y ] = f();		// declare x and y, initialize each from f
+		// g( x + y );
+	| cfa_function_return asm_name_opt
+		{ SemanticError( yylloc, "tuple-element declarations is currently unimplemented." ); $$ = nullptr; }
+	| type_qualifier_list cfa_function_return asm_name_opt
+		{ SemanticError( yylloc, "tuple variable declaration is currently unimplemented." ); $$ = nullptr; }
 	;
 
 cfa_function_declaration:								// CFA
@@ -2681,12 +2693,8 @@ field_declaration:
 field_declaring_list_opt:
 	// empty
 		{ $$ = nullptr; }
-	| field_declaring_list
-	;
-
-field_declaring_list:
-	field_declarator
-	| field_declaring_list ',' attribute_list_opt field_declarator
+	| field_declarator
+	| field_declaring_list_opt ',' attribute_list_opt field_declarator
 		{ $$ = $1->set_last( $4->addQualifiers( $3 ) ); }
 	;
 
@@ -2948,12 +2956,6 @@ identifier_list:										// K&R-style parameter list => no types
 		{ $$ = DeclarationNode::newName( $1 ); }
 	| identifier_list ',' identifier
 		{ $$ = $1->set_last( DeclarationNode::newName( $3 ) ); }
-	;
-
-identifier_or_type_name:
-	identifier
-	| TYPEDEFname
-	| TYPEGENname
 	;
 
 type_no_function:										// sizeof, alignof, cast (constructor)
@@ -3219,7 +3221,7 @@ trait_declaring_list:									// CFA
 translation_unit:
 	// empty, input file
 	| external_definition_list
-		{ parseTree = parseTree ? parseTree->set_last( $1 ) : $1;	}
+		{ parseTree = parseTree ? parseTree->set_last( $1 ) : $1; }
 	;
 
 external_definition_list:
@@ -3477,10 +3479,7 @@ attribute_name:											// GCC
 	;
 
 attr_name:												// GCC
-	IDENTIFIER
-	| quasi_keyword
-	| TYPEDEFname
-	| TYPEGENname
+	identifier_or_type_name
 	| FALLTHROUGH
 		{ $$ = Token{ new string( "fallthrough" ), { nullptr, -1 } }; }
 	| CONST
