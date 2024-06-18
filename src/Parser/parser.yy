@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 11 21:32:15 2024
-// Update Count     : 6641
+// Last Modified On : Mon Jun 17 21:43:02 2024
+// Update Count     : 6643
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -4007,8 +4007,8 @@ multi_array_dimension:
 //		int f( int (int) );		// abstract function-prototype parameter; no parameter name specified
 //
 // The pattern precludes declaring an array of functions versus a pointer to an array of functions, and returning arrays
-// and functions versus pointers to arrays and functions. In addition, the pattern handles the
-// special meaning of parenthesis around a typedef name:
+// and functions versus pointers to arrays and functions. In addition, the pattern handles the special meaning of
+// parenthesis around a typedef name:
 //
 //		ISO/IEC 9899:1999 Section 6.7.5.3(11) : "In a parameter declaration, a single typedef name in
 //		parentheses is taken to be an abstract declarator that specifies a function with a single parameter,
