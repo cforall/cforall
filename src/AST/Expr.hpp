@@ -493,6 +493,18 @@ private:
 	MUTATE_FRIEND
 };
 
+class CountExpr final : public Expr {
+public:
+	ptr<Type> type;
+
+	CountExpr( const CodeLocation & loc, const Type * t );
+
+	const Expr * accept( Visitor & v )const override { return v.visit( this ); }
+private:
+	CountExpr * clone() const override { return new CountExpr( *this ); }
+	MUTATE_FRIEND
+};
+
 /// alignof expression, e.g. `alignof(int)`, `alignof 3+4`
 class AlignofExpr final : public Expr {
 public:

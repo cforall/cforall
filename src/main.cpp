@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov  1 21:12:58 2023
-// Update Count     : 690
+// Last Modified On : Sun Jun 23 16:38:09 2024
+// Update Count     : 691
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -52,6 +52,7 @@
 #include "ControlStruct/ExceptTranslate.hpp"// for translateThrows, translat...
 #include "ControlStruct/FixLabels.hpp"      // for fixLabels
 #include "ControlStruct/HoistControlDecls.hpp" //  hoistControlDecls
+#include "ControlStruct/TranslateEnumRange.hpp" // translateEnumRange
 #include "GenPoly/Box.hpp"                  // for box
 #include "GenPoly/InstantiateGeneric.hpp"   // for instantiateGeneric
 #include "GenPoly/Lvalue.hpp"               // for convertLvalue
@@ -322,6 +323,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Eliminate Typedef", Validate::eliminateTypedef, transUnit );
 		PASS( "Hoist Struct", Validate::hoistStruct, transUnit );
 		PASS( "Validate Generic Parameters", Validate::fillGenericParameters, transUnit );
+		PASS( "Translate Enum Range Expression", ControlStruct::translateEnumRange, transUnit );
 		PASS( "Translate Dimensions", Validate::translateDimensionParameters, transUnit );
 		// Need to happen before fixing returns because implementEnumFunc has ReturnStmt
 		

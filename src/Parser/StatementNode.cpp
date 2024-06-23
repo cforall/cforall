@@ -210,6 +210,17 @@ ast::Stmt * build_for( const CodeLocation & location, ForCtrl * forctl, Statemen
 	std::vector<ast::ptr<ast::Stmt>> astinit;						// maybe empty
 	buildMoveList( forctl->init, astinit );
 
+	if ( forctl->range_over ) {
+		ast::Expr * range_over = maybeMoveBuild( forctl->range_over );
+		delete forctl;
+		return new ast::ForStmt( location,
+			std::move( astinit ),
+			range_over,
+			buildMoveSingle( stmt ),
+			buildMoveOptional( else_ )
+		);
+	}
+
 	ast::Expr * astcond = nullptr;						// maybe empty
 	astcond = maybeMoveBuild( forctl->condition );
 

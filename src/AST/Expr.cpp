@@ -281,6 +281,11 @@ SizeofExpr::SizeofExpr( const CodeLocation & loc, const Expr * e )
 SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * t )
 : Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( nullptr ), type( t ) {}
 
+// --- CountExpr
+
+CountExpr::CountExpr( const CodeLocation & loc, const Type * t )
+: Expr( loc, new BasicType( BasicKind::LongUnsignedInt) ), type( t ) {}
+
 // --- AlignofExpr
 
 AlignofExpr::AlignofExpr( const CodeLocation & loc, const Expr * e )

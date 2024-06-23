@@ -801,6 +801,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ForStmt * node ) {
 		maybe_accept( node, &ForStmt::inits );
 		maybe_accept_top( node, &ForStmt::cond  );
 		maybe_accept_top( node, &ForStmt::inc   );
+		maybe_accept_top( node, &ForStmt::range_over );
 		maybe_accept_as_compound( node, &ForStmt::body  );
 	}
 
@@ -1322,6 +1323,21 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::SizeofExpr * node ) {
 		}
 	}
 
+	VISIT_END( Expr, node );
+}
+
+//--------------------------------------------------------------------------
+// CountExpr
+template< typename core_t >
+const ast::Expr * ast::Pass< core_t >::visit( const ast::CountExpr * node ) {
+	VISIT_START( node );
+	if ( __visit_children() ) {
+		{
+			guard_symtab guard { *this };
+			maybe_accept( node, &CountExpr::result );
+		}
+		maybe_accept( node, &CountExpr::type );
+	}
 	VISIT_END( Expr, node );
 }
 

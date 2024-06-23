@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun 17 21:43:02 2024
-// Update Count     : 6643
+// Last Modified On : Thu Jun 20 21:34:49 2024
+// Update Count     : 6654
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -283,6 +283,28 @@ ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, Express
 	} // if
 } // forCtrl
 
+ForCtrl * enumRangeCtrl( ExpressionNode * index_expr, ExpressionNode * range_over_expr ) {
+	if ( auto identifier = dynamic_cast<ast::NameExpr *>(index_expr->expr.get()) ) {
+		DeclarationNode * indexDecl =
+			DeclarationNode::newName( new std::string(identifier->name) );
+		assert( range_over_expr );
+		auto node = new StatementNode( indexDecl ); // <- this cause this error
+		return new ForCtrl( node, range_over_expr );
+	} else if (auto commaExpr = dynamic_cast<ast::CommaExpr *>( index_expr->expr.get() )) {
+		if ( auto identifier = commaExpr->arg1.as<ast::NameExpr>() ) {
+			assert( range_over_expr );
+			DeclarationNode * indexDecl = distAttr(
+				DeclarationNode::newTypeof( range_over_expr, true ),
+				DeclarationNode::newName( new std::string( identifier->name) ) );
+			return new ForCtrl( new StatementNode( indexDecl ), range_over_expr );
+		} else {
+			SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed." ); return nullptr;
+		} // if
+	} else {
+		assert( false );
+	} // if
+} // enumRangeCtrl
+
 static void IdentifierBeforeIdentifier( string & identifier1, string & identifier2, const char * kind ) {
 	SemanticError( yylloc, "syntax error, adjacent identifiers \"%s\" and \"%s\" are not meaningful in an %s.\n"
 				   "Possible cause is misspelled type name or missing generic parameter.",
@@ -367,7 +389,7 @@ if ( N ) {																		\
 %token uFLOAT16 uFLOAT32 uFLOAT32X uFLOAT64 uFLOAT64X uFLOAT128 // GCC
 %token DECIMAL32 DECIMAL64 DECIMAL128					// GCC
 %token ZERO_T ONE_T										// CFA
-%token SIZEOF TYPEOF VA_LIST VA_ARG AUTO_TYPE			// GCC
+%token SIZEOF TYPEOF VA_LIST VA_ARG AUTO_TYPE COUNTOF	// GCC
 %token OFFSETOF BASETYPEOF TYPEID						// CFA
 %token ENUM STRUCT UNION
 %token EXCEPTION										// CFA
@@ -485,7 +507,7 @@ if ( N ) {																		\
 
 %type<decl> elaborated_type elaborated_type_nobody
 
-%type<decl> enumerator_list enum_type enum_type_nobody enumerator_type
+%type<decl> enumerator_list enum_type enum_type_nobody enum_key enumerator_type
 %type<init> enumerator_value_opt
 
 %type<decl> external_definition external_definition_list external_definition_list_opt
@@ -967,6 +989,10 @@ unary_expression:
 			SemanticError( yylloc, "typeid name is currently unimplemented." ); $$ = nullptr;
 			// $$ = new ExpressionNode( build_offsetOf( $3, build_varref( $5 ) ) );
 		}
+	| COUNTOF '(' type_no_function ')'
+		{ $$ = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
+	| COUNTOF unary_expression
+		{ SemanticError( yylloc, "countof for expressions is currently unimplemented. "); $$ = nullptr; }
 	;
 
 ptrref_operator:
@@ -1600,8 +1626,7 @@ for_control_expression:
 
 	| comma_expression ';' enum_key						// CFA, enum type
 		{
-			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
-			//$$ = forCtrl( new ExpressionNode( build_varref( $3 ) ), $1, nullptr, OperKinds::Range, nullptr, nullptr );
+			$$ = enumRangeCtrl( $1, new ExpressionNode( new ast::TypeExpr( yylloc, $3->buildType() ) ) );
 		}
 	| comma_expression ';' downupdowneq enum_key		// CFA, enum type, reverse direction
 		{
@@ -1613,8 +1638,12 @@ for_control_expression:
 	;
 
 enum_key:
-	TYPEDEFname
-	| ENUM identifier_or_type_name
+	type_name
+		{ $$ = DeclarationNode::newEnum( $1->symbolic.name, nullptr, false, false ); }
+	| ENUM identifier
+		{ $$ = DeclarationNode::newEnum( $2, nullptr, false, false ); }
+	| ENUM type_name
+		{ $$ = DeclarationNode::newEnum( $2->symbolic.name, nullptr, false, false ); }
 	;
 
 downupdowneq:

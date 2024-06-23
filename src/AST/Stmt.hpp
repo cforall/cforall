@@ -236,16 +236,23 @@ class ForStmt final : public Stmt {
 	std::vector<ptr<Stmt>> inits;
 	ptr<Expr> cond;
 	ptr<Expr> inc;
+	ptr<Expr> range_over;
 	ptr<Stmt> body;
 	ptr<Stmt> else_;
 
 	ForStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * cond,
 			 const Expr * inc, const Stmt * body, const std::vector<Label> && label = {} )
-		: Stmt(loc, std::move(label)), inits(std::move(inits)), cond(cond), inc(inc), body(body), else_(nullptr) {}
+		: Stmt(loc, std::move(label)), inits(std::move(inits)), cond(cond), inc(inc),
+			range_over(nullptr), body(body), else_(nullptr) {}
 
 	ForStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * cond,
 			 const Expr * inc, const Stmt * body, const Stmt * else_, const std::vector<Label> && labels = {} )
-		: Stmt(loc, std::move(labels)), inits(std::move(inits)), cond(cond), inc(inc), body(body), else_(else_) {}
+		: Stmt(loc, std::move(labels)), inits(std::move(inits)), cond(cond), inc(inc),
+			range_over(nullptr), body(body), else_(else_) {}
+
+	ForStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * range_over, 
+			 const Stmt * body, const Stmt * else_ )
+		: Stmt(loc, std::move(labels)), inits(std::move(inits)), range_over(range_over), body(body), else_(else_) {}
 
 	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
   private:

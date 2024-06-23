@@ -84,6 +84,7 @@ class UntypedMemberExpr;
 class VariableExpr;
 class ConstantExpr;
 class SizeofExpr;
+class CountExpr;
 class AlignofExpr;
 class UntypedOffsetofExpr;
 class OffsetofExpr;

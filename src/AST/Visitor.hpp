@@ -74,6 +74,7 @@ public:
     virtual const ast::Expr *             visit( const ast::VariableExpr         * ) = 0;
     virtual const ast::Expr *             visit( const ast::ConstantExpr         * ) = 0;
     virtual const ast::Expr *             visit( const ast::SizeofExpr           * ) = 0;
+    virtual const ast::Expr *             visit( const ast::CountExpr            * ) = 0;
     virtual const ast::Expr *             visit( const ast::AlignofExpr          * ) = 0;
     virtual const ast::Expr *             visit( const ast::UntypedOffsetofExpr  * ) = 0;
     virtual const ast::Expr *             visit( const ast::OffsetofExpr         * ) = 0;

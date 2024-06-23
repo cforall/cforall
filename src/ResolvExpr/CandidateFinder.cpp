@@ -695,6 +695,7 @@ namespace {
 		void postvisit( const ast::StmtExpr * stmtExpr );
 		void postvisit( const ast::UntypedInitExpr * initExpr );
 		void postvisit( const ast::QualifiedNameExpr * qualifiedExpr );
+		void postvisit( const ast::CountExpr * countExpr );
 
 		const ast::Expr * makeEnumOffsetCast( const ast::EnumInstType * src, 
 			const ast::EnumInstType * dst
@@ -1526,6 +1527,15 @@ namespace {
 			choice->cost = Cost::zero;
 			addCandidate( *choice, new ast::SizeofExpr{ sizeofExpr->location, choice->expr } );
 		}
+	}
+
+	void Finder::postvisit( const ast::CountExpr * countExpr ) {
+		assert( countExpr->type );
+		auto enumInst = countExpr->type.as<ast::EnumInstType>();
+		if ( !enumInst ) {
+			SemanticError( countExpr, "Count Expression only supports Enum Type as operand: ");
+		}
+		addCandidate( ast::ConstantExpr::from_ulong(countExpr->location, enumInst->base->members.size()), tenv );
 	}
 
 	void Finder::postvisit( const ast::AlignofExpr * alignofExpr ) {

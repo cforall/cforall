@@ -1142,6 +1142,15 @@ public:
 		return node;
 	}
 
+	virtual const ast::Expr * visit( const ast::CountExpr * node ) override final {
+		os << "Count Expression on: ";
+		++indent;
+		node->type->accept( *this );
+		--indent;
+		postprint( node );
+		return node;
+	}
+
 	virtual const ast::Expr * visit( const ast::AlignofExpr * node ) override final {
 		os << "Alignof Expression on: ";
 		++indent;

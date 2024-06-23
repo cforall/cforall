@@ -26,5 +26,7 @@ SRC += \
 	ControlStruct/LabelGenerator.cpp \
 	ControlStruct/LabelGenerator.hpp \
 	ControlStruct/MultiLevelExit.cpp \
-	ControlStruct/MultiLevelExit.hpp
+	ControlStruct/MultiLevelExit.hpp \
+	ControlStruct/TranslateEnumRange.cpp \
+	ControlStruct/TranslateEnumRange.hpp
 

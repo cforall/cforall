@@ -62,11 +62,14 @@ struct CondCtl {
 
 struct ForCtrl {
 	ForCtrl( StatementNode * stmt, ExpressionNode * condition, ExpressionNode * change ) :
-		init( stmt ), condition( condition ), change( change ) {}
+		init( stmt ), condition( condition ), change( change ), range_over( nullptr ) {}
+	ForCtrl( StatementNode * decl, ExpressionNode * _range_over) :
+		init( decl ), condition( nullptr ), change( nullptr ),  range_over( _range_over ) {}
 
 	StatementNode * init;
 	ExpressionNode * condition;
 	ExpressionNode * change;
+	ExpressionNode * range_over;
 };
 
 ast::Stmt * build_if( const CodeLocation &, CondCtl * ctl, StatementNode * then, StatementNode * else_ );

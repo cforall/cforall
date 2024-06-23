@@ -221,7 +221,8 @@ am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	ControlStruct/FixLabels.$(OBJEXT) \
 	ControlStruct/HoistControlDecls.$(OBJEXT) \
 	ControlStruct/LabelGenerator.$(OBJEXT) \
-	ControlStruct/MultiLevelExit.$(OBJEXT) $(am__objects_4) \
+	ControlStruct/MultiLevelExit.$(OBJEXT) \
+	ControlStruct/TranslateEnumRange.$(OBJEXT) $(am__objects_4) \
 	GenPoly/Box.$(OBJEXT) GenPoly/FindFunction.$(OBJEXT) \
 	GenPoly/InstantiateGeneric.$(OBJEXT) GenPoly/Lvalue.$(OBJEXT) \
 	GenPoly/ScrubTypeVars.$(OBJEXT) GenPoly/Specialize.$(OBJEXT) \
@@ -319,6 +320,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	ControlStruct/$(DEPDIR)/HoistControlDecls.Po \
 	ControlStruct/$(DEPDIR)/LabelGenerator.Po \
 	ControlStruct/$(DEPDIR)/MultiLevelExit.Po \
+	ControlStruct/$(DEPDIR)/TranslateEnumRange.Po \
 	GenPoly/$(DEPDIR)/Box.Po GenPoly/$(DEPDIR)/FindFunction.Po \
 	GenPoly/$(DEPDIR)/GenPoly.Po \
 	GenPoly/$(DEPDIR)/InstantiateGeneric.Po \
@@ -646,7 +648,9 @@ SRC = main.cpp CompilationState.cpp CompilationState.hpp \
 	ControlStruct/LabelGenerator.cpp \
 	ControlStruct/LabelGenerator.hpp \
 	ControlStruct/MultiLevelExit.cpp \
-	ControlStruct/MultiLevelExit.hpp $(SRC_GENPOLY) \
+	ControlStruct/MultiLevelExit.hpp \
+	ControlStruct/TranslateEnumRange.cpp \
+	ControlStruct/TranslateEnumRange.hpp $(SRC_GENPOLY) \
 	GenPoly/Box.cpp GenPoly/Box.hpp GenPoly/ErasableScopedMap.hpp \
 	GenPoly/FindFunction.cpp GenPoly/FindFunction.hpp \
 	GenPoly/InstantiateGeneric.cpp GenPoly/InstantiateGeneric.hpp \
@@ -1207,6 +1211,9 @@ ControlStruct/LabelGenerator.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 ControlStruct/MultiLevelExit.$(OBJEXT): ControlStruct/$(am__dirstamp) \
 	ControlStruct/$(DEPDIR)/$(am__dirstamp)
+ControlStruct/TranslateEnumRange.$(OBJEXT):  \
+	ControlStruct/$(am__dirstamp) \
+	ControlStruct/$(DEPDIR)/$(am__dirstamp)
 GenPoly/Box.$(OBJEXT): GenPoly/$(am__dirstamp) \
 	GenPoly/$(DEPDIR)/$(am__dirstamp)
 GenPoly/FindFunction.$(OBJEXT): GenPoly/$(am__dirstamp) \
@@ -1399,6 +1406,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/HoistControlDecls.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/LabelGenerator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/MultiLevelExit.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ControlStruct/$(DEPDIR)/TranslateEnumRange.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/Box.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/FindFunction.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@GenPoly/$(DEPDIR)/GenPoly.Po@am__quote@ # am--include-marker
@@ -1760,6 +1768,7 @@ distclean: distclean-am
 	-rm -f ControlStruct/$(DEPDIR)/HoistControlDecls.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelGenerator.Po
 	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
+	-rm -f ControlStruct/$(DEPDIR)/TranslateEnumRange.Po
 	-rm -f GenPoly/$(DEPDIR)/Box.Po
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
 	-rm -f GenPoly/$(DEPDIR)/GenPoly.Po
@@ -1933,6 +1942,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ControlStruct/$(DEPDIR)/HoistControlDecls.Po
 	-rm -f ControlStruct/$(DEPDIR)/LabelGenerator.Po
 	-rm -f ControlStruct/$(DEPDIR)/MultiLevelExit.Po
+	-rm -f ControlStruct/$(DEPDIR)/TranslateEnumRange.Po
 	-rm -f GenPoly/$(DEPDIR)/Box.Po
 	-rm -f GenPoly/$(DEPDIR)/FindFunction.Po
 	-rm -f GenPoly/$(DEPDIR)/GenPoly.Po

@@ -37,3 +37,14 @@ ostype & ?|?(ostype&, E);
 // forall(E, V| CfaEnum(E)) trait TypedEnum {
 //     V valueE(E e);
 // };
+
+forall(ostype & | basic_ostream(ostype), E, V| CfaEnum(E, V)) {
+    int ?==?(E, E);
+    int ?<=?(E, E);
+    int ?>=?(E, E);
+    int ?<?(E, E);
+    int ?>?(E, E);
+
+	// E ++?( E & lhs );
+	// E ?++( E & lhs );
+}
