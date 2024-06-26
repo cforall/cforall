@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 20 21:34:49 2024
-// Update Count     : 6654
+// Last Modified On : Tue Jun 25 18:44:14 2024
+// Update Count     : 6692
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -222,16 +222,11 @@ DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * field
 #define NEW_ZERO new ExpressionNode( build_constantInteger( yylloc, *new string( "0" ) ) )
 #define NEW_ONE  new ExpressionNode( build_constantInteger( yylloc, *new string( "1" ) ) )
 #define UPDOWN( compop, left, right ) (compop == OperKinds::LThan || compop == OperKinds::LEThan ? left : right)
-#define MISSING_ANON_FIELD "syntax error, missing loop fields with an anonymous loop index is meaningless as loop index is unavailable in loop body."
-#define MISSING_LOW "syntax error, missing low value for up-to range so index is uninitialized."
-#define MISSING_HIGH "syntax error, missing high value for down-to range so index is uninitialized."
+#define MISSING_ANON_FIELD "illegal syntax, missing loop fields with an anonymous loop index is meaningless as loop index is unavailable in loop body."
+#define MISSING_LOW "illegal syntax, missing low value for up-to range so index is uninitialized."
+#define MISSING_HIGH "illegal syntax, missing high value for down-to range so index is uninitialized."
 
-static ForCtrl * makeForCtrl(
-		const CodeLocation & location,
-		DeclarationNode * init,
-		enum OperKinds compop,
-		ExpressionNode * comp,
-		ExpressionNode * inc ) {
+static ForCtrl * makeForCtrl( const CodeLocation & location, DeclarationNode * init, OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	// Wrap both comp/inc if they are non-null.
 	if ( comp ) comp = new ExpressionNode( build_binary_val( location,
 		compop,
@@ -246,18 +241,18 @@ static ForCtrl * makeForCtrl(
 	return new ForCtrl( new StatementNode( init ), comp, inc );
 }
 
-ForCtrl * forCtrl( const CodeLocation & location, DeclarationNode * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
+ForCtrl * forCtrl( const CodeLocation & location, DeclarationNode * index, ExpressionNode * start, OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	if ( index->initializer ) {
-		SemanticError( yylloc, "syntax error, direct initialization disallowed. Use instead: type var; initialization ~ comparison ~ increment." );
+		SemanticError( yylloc, "illegal syntax, direct initialization disallowed. Use instead: type var; initialization ~ comparison ~ increment." );
 	} // if
 	if ( index->next ) {
-		SemanticError( yylloc, "syntax error, multiple loop indexes disallowed in for-loop declaration." );
+		SemanticError( yylloc, "illegal syntax, multiple loop indexes disallowed in for-loop declaration." );
 	} // if
 	DeclarationNode * initDecl = index->addInitializer( new InitializerNode( start ) );
 	return makeForCtrl( location, initDecl, compop, comp, inc );
 } // forCtrl
 
-ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, string * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
+ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, string * index, ExpressionNode * start, OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	ast::ConstantExpr * constant = dynamic_cast<ast::ConstantExpr *>(type->expr.get());
 	if ( constant && (constant->rep == "0" || constant->rep == "1") ) {
 		type = new ExpressionNode( new ast::CastExpr( location, maybeMoveBuild(type), new ast::BasicType( ast::BasicKind::SignedInt ) ) );
@@ -269,50 +264,34 @@ ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, string 
 	return makeForCtrl( location, initDecl, compop, comp, inc );
 } // forCtrl
 
-ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, ExpressionNode * index, ExpressionNode * start, enum OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
+#define MISSING_LOOP_INDEX "illegal syntax, only a single identifier or declaration allowed in initialization, e.g., for ( i; ... ) or for ( int i; ... ). Expression disallowed."
+
+ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, ExpressionNode * index, ExpressionNode * start, OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	if ( auto identifier = dynamic_cast<ast::NameExpr *>(index->expr.get()) ) {
 		return forCtrl( location, type, new string( identifier->name ), start, compop, comp, inc );
-	} else if ( auto commaExpr = dynamic_cast<ast::CommaExpr *>( index->expr.get() ) ) {
-		if ( auto identifier = commaExpr->arg1.as<ast::NameExpr>() ) {
-			return forCtrl( location, type, new string( identifier->name ), start, compop, comp, inc );
-		} else {
-			SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed." ); return nullptr;
-		} // if
 	} else {
-		SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed." ); return nullptr;
+		SemanticError( yylloc, MISSING_LOOP_INDEX ); return nullptr;
 	} // if
 } // forCtrl
 
-ForCtrl * enumRangeCtrl( ExpressionNode * index_expr, ExpressionNode * range_over_expr ) {
+ForCtrl * enumRangeCtrl( ExpressionNode * index_expr, __attribute__((unused)) OperKinds compop, ExpressionNode * range_over_expr ) {
 	if ( auto identifier = dynamic_cast<ast::NameExpr *>(index_expr->expr.get()) ) {
-		DeclarationNode * indexDecl =
-			DeclarationNode::newName( new std::string(identifier->name) );
+		DeclarationNode * indexDecl = DeclarationNode::newName( new std::string(identifier->name) );
 		assert( range_over_expr );
-		auto node = new StatementNode( indexDecl ); // <- this cause this error
-		return new ForCtrl( node, range_over_expr );
-	} else if (auto commaExpr = dynamic_cast<ast::CommaExpr *>( index_expr->expr.get() )) {
-		if ( auto identifier = commaExpr->arg1.as<ast::NameExpr>() ) {
-			assert( range_over_expr );
-			DeclarationNode * indexDecl = distAttr(
-				DeclarationNode::newTypeof( range_over_expr, true ),
-				DeclarationNode::newName( new std::string( identifier->name) ) );
-			return new ForCtrl( new StatementNode( indexDecl ), range_over_expr );
-		} else {
-			SemanticError( yylloc, "syntax error, loop-index name missing. Expression disallowed." ); return nullptr;
-		} // if
+		return new ForCtrl( new StatementNode( indexDecl ), range_over_expr );
 	} else {
-		assert( false );
+		SemanticError( yylloc, MISSING_LOOP_INDEX ); return nullptr;
 	} // if
 } // enumRangeCtrl
 
 static void IdentifierBeforeIdentifier( string & identifier1, string & identifier2, const char * kind ) {
-	SemanticError( yylloc, "syntax error, adjacent identifiers \"%s\" and \"%s\" are not meaningful in an %s.\n"
+	SemanticError( yylloc, "illegal syntax, adjacent identifiers \"%s\" and \"%s\" are not meaningful in an %s.\n"
 				   "Possible cause is misspelled type name or missing generic parameter.",
 				   identifier1.c_str(), identifier2.c_str(), kind );
 } // IdentifierBeforeIdentifier
 
 static void IdentifierBeforeType( string & identifier, const char * kind ) {
-	SemanticError( yylloc, "syntax error, identifier \"%s\" cannot appear before a %s.\n"
+	SemanticError( yylloc, "illegal syntax, identifier \"%s\" cannot appear before a %s.\n"
 				   "Possible cause is misspelled storage/CV qualifier, misspelled typename, or missing generic parameter.",
 				   identifier.c_str(), kind );
 } // IdentifierBeforeType
@@ -1286,7 +1265,7 @@ statement_list_nodecl:
 	| statement_list_nodecl statement
 		{ assert( $1 ); $1->set_last( $2 ); $$ = $1; }
 	| statement_list_nodecl error						// invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, declarations only allowed at the start of the switch body,"
+		{ SemanticError( yylloc, "illegal syntax, declarations only allowed at the start of the switch body,"
 						 " i.e., after the '{'." ); $$ = nullptr; }
 	;
 
@@ -1347,7 +1326,7 @@ selection_statement:
 			$$ = $7 ? new StatementNode( build_compound( yylloc, (new StatementNode( $7 ))->set_last( sw ) ) ) : sw;
 		}
 	| CHOOSE '(' comma_expression ')' '{' error '}'		// CFA, invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
 	;
 
 conditional_declaration:
@@ -1379,14 +1358,14 @@ case_value_list:										// CFA
 
 case_label:												// CFA
 	CASE error											// invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, case list missing after case." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, case list missing after case." ); $$ = nullptr; }
 	| CASE case_value_list ':'					{ $$ = $2; }
 	| CASE case_value_list error						// invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, colon missing after case list." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, colon missing after case list." ); $$ = nullptr; }
 	| DEFAULT ':'								{ $$ = new ClauseNode( build_default( yylloc ) ); }
 		// A semantic check is required to ensure only one default clause per switch/choose statement.
 	| DEFAULT error										//  invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, colon missing after default." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, colon missing after default." ); $$ = nullptr; }
 	;
 
 case_label_list:										// CFA
@@ -1475,8 +1454,7 @@ for_control_expression:
 		{ $$ = new ForCtrl( nullptr, $2, $4 ); }
 	| comma_expression ';' comma_expression_opt ';' comma_expression_opt
 		{
-			StatementNode * init = $1 ? new StatementNode( new ast::ExprStmt( yylloc, maybeMoveBuild( $1 ) ) ) : nullptr;
-			$$ = new ForCtrl( init, $3, $5 );
+			$$ = new ForCtrl( $1 ? new StatementNode( new ast::ExprStmt( yylloc, maybeMoveBuild( $1 ) ) ) : nullptr, $3, $5 );
 		}
 	| declaration comma_expression_opt ';' comma_expression_opt // C99, declaration has ';'
 		{ $$ = new ForCtrl( new StatementNode( $1 ), $2, $4 ); }
@@ -1526,6 +1504,8 @@ for_control_expression:
 	| '@' updowneq '@' '~' '@'							// CFA, invalid syntax rule
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
 
+		// These rules accept a comma_expression for the initialization, when only an identifier is correct. Being
+		// permissive allows for a better error message from forCtrl.
 	| comma_expression ';' comma_expression				// CFA
 		{ $$ = forCtrl( yylloc, $3, $1, NEW_ZERO, OperKinds::LThan, $3->clone(), NEW_ONE ); }
 	| comma_expression ';' downupdowneq comma_expression // CFA
@@ -1541,11 +1521,11 @@ for_control_expression:
 	| comma_expression ';' comma_expression updowneq '@' // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, NEW_ONE );
 		}
 	| comma_expression ';' '@' updowneq '@'				// CFA, invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
 	| comma_expression ';' comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), $7 ); }
@@ -1557,7 +1537,7 @@ for_control_expression:
 	| comma_expression ';' comma_expression updowneq '@' '~' comma_expression // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, $7 );
 		}
 	| comma_expression ';' comma_expression updowneq comma_expression '~' '@' // CFA
@@ -1570,11 +1550,11 @@ for_control_expression:
 	| comma_expression ';' comma_expression updowneq '@' '~' '@' // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, nullptr );
 		}
 	| comma_expression ';' '@' updowneq '@' '~' '@' // CFA
-		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
 	| declaration comma_expression						// CFA
 		{ $$ = forCtrl( yylloc, $1, NEW_ZERO, OperKinds::LThan, $2, NEW_ONE ); }
@@ -1591,7 +1571,7 @@ for_control_expression:
 	| declaration comma_expression updowneq '@'			// CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, NEW_ONE );
 		}
 
@@ -1605,7 +1585,7 @@ for_control_expression:
 	| declaration comma_expression updowneq '@' '~' comma_expression // CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, $6 );
 		}
 	| declaration comma_expression updowneq comma_expression '~' '@' // CFA
@@ -1618,22 +1598,22 @@ for_control_expression:
 	| declaration comma_expression updowneq '@' '~' '@'	// CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
-			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "syntax error, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
+			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, nullptr );
 		}
 	| declaration '@' updowneq '@' '~' '@'				// CFA, invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
 
 	| comma_expression ';' enum_key						// CFA, enum type
 		{
-			$$ = enumRangeCtrl( $1, new ExpressionNode( new ast::TypeExpr( yylloc, $3->buildType() ) ) );
+			$$ = enumRangeCtrl( $1, OperKinds::LThan, new ExpressionNode( new ast::TypeExpr( yylloc, $3->buildType() ) ) );
 		}
 	| comma_expression ';' downupdowneq enum_key		// CFA, enum type, reverse direction
 		{
 			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) {
-				SemanticError( yylloc, "syntax error, all enumeration ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr;
+				SemanticError( yylloc, "illegal syntax, all enumeration ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr;
 			}
-			SemanticError( yylloc, "Type iterator is currently unimplemented." ); $$ = nullptr;
+			$$ = enumRangeCtrl( $1, $3, new ExpressionNode( new ast::TypeExpr( yylloc, $4->buildType() ) ) );
 		}
 	;
 
@@ -1736,7 +1716,7 @@ with_statement:
 mutex_statement:
 	MUTEX '(' argument_expression_list_opt ')' statement
 		{
-			if ( ! $3 ) { SemanticError( yylloc, "syntax error, mutex argument list cannot be empty." ); $$ = nullptr; }
+			if ( ! $3 ) { SemanticError( yylloc, "illegal syntax, mutex argument list cannot be empty." ); $$ = nullptr; }
 			$$ = new StatementNode( build_mutex( yylloc, $3, $5 ) );
 		}
 	;
@@ -1784,7 +1764,7 @@ wor_waitfor_clause:
 		{ $$ = build_waitfor_timeout( yylloc, $1, $3, $4, maybe_build_compound( yylloc, $5 ) ); }
 	// "else" must be conditional after timeout or timeout is never triggered (i.e., it is meaningless)
 	| wor_waitfor_clause wor when_clause_opt timeout statement wor ELSE statement // invalid syntax rule
-		{ SemanticError( yylloc, "syntax error, else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, else clause must be conditional after timeout or timeout never triggered." ); $$ = nullptr; }
 	| wor_waitfor_clause wor when_clause_opt timeout statement wor when_clause ELSE statement
 		{ $$ = build_waitfor_else( yylloc, build_waitfor_timeout( yylloc, $1, $3, $4, maybe_build_compound( yylloc, $5 ) ), $7, maybe_build_compound( yylloc, $9 ) ); }
 	;
@@ -2176,11 +2156,11 @@ c_declaration:
 		{
 			assert( $1->type );
 			if ( $1->type->qualifiers.any() ) {			// CV qualifiers ?
-				SemanticError( yylloc, "syntax error, useless type qualifier(s) in empty declaration." ); $$ = nullptr;
+				SemanticError( yylloc, "illegal syntax, useless type qualifier(s) in empty declaration." ); $$ = nullptr;
 			}
 			// enums are never empty declarations because there must have at least one enumeration.
 			if ( $1->type->kind == TypeData::AggregateInst && $1->storageClasses.any() ) { // storage class ?
-				SemanticError( yylloc, "syntax error, useless storage qualifier(s) in empty aggregate declaration." ); $$ = nullptr;
+				SemanticError( yylloc, "illegal syntax, useless storage qualifier(s) in empty aggregate declaration." ); $$ = nullptr;
 			}
 		}
 	;
@@ -2213,7 +2193,7 @@ declaration_specifier:									// type specifier + storage class
 	| sue_declaration_specifier
 	| sue_declaration_specifier invalid_types			// invalid syntax rule
 		{
-			SemanticError( yylloc, "syntax error, expecting ';' at end of \"%s\" declaration.",
+			SemanticError( yylloc, "illegal syntax, expecting ';' at end of \"%s\" declaration.",
 						   ast::AggregateDecl::aggrString( $1->type->aggregate.kind ) );
 			$$ = nullptr;
 		}
@@ -2691,7 +2671,7 @@ field_declaration:
 		}
 	| type_specifier field_declaring_list_opt '}'		// invalid syntax rule
 		{
-			SemanticError( yylloc, "syntax error, expecting ';' at end of previous declaration." );
+			SemanticError( yylloc, "illegal syntax, expecting ';' at end of previous declaration." );
 			$$ = nullptr;
 		}
 	| EXTENSION type_specifier field_declaring_list_opt ';'	// GCC
@@ -2787,17 +2767,17 @@ enum_type:
 	ENUM attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
 		{
 			if ( $3 == EnumHiding::Hide ) {
-				SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr;
+				SemanticError( yylloc, "illegal syntax, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr;
 			} // if
 			$$ = DeclarationNode::newEnum( nullptr, $5, true, false )->addQualifiers( $2 );
 		}
 	| ENUM enumerator_type attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
 		{
 			if ( $2 && ($2->storageClasses.val != 0 || $2->type->qualifiers.any()) ) {
-				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
+				SemanticError( yylloc, "illegal syntax, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
 			}
 			if ( $4 == EnumHiding::Hide ) {
-				SemanticError( yylloc, "syntax error, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr;
+				SemanticError( yylloc, "illegal syntax, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr;
 			} // if
 			$$ = DeclarationNode::newEnum( nullptr, $6, true, true, $2 )->addQualifiers( $3 );
 		}
@@ -2812,7 +2792,7 @@ enum_type:
 	| ENUM enumerator_type attribute_list_opt identifier attribute_list_opt
 		{
 			if ( $2 && ($2->storageClasses.any() || $2->type->qualifiers.val != 0) ) {
-				SemanticError( yylloc, "syntax error, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
+				SemanticError( yylloc, "illegal syntax, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
 			}
 			typedefTable.makeTypedef( *$4, "enum_type 2" );
 		}
@@ -3335,7 +3315,7 @@ external_definition:
 	| type_qualifier_list
 		{
 			if ( $1->type->qualifiers.any() ) {
-				SemanticError( yylloc, "syntax error, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
+				SemanticError( yylloc, "illegal syntax, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
 			}
 			if ( $1->type->forall ) forall = true;		// remember generic type
 		}
@@ -3348,7 +3328,7 @@ external_definition:
 	| declaration_qualifier_list
 		{
 			if ( $1->type && $1->type->qualifiers.any() ) {
-				SemanticError( yylloc, "syntax error, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
+				SemanticError( yylloc, "illegal syntax, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
 			}
 			if ( $1->type && $1->type->forall ) forall = true; // remember generic type
 		}
@@ -3361,7 +3341,7 @@ external_definition:
 	| declaration_qualifier_list type_qualifier_list
 		{
 			if ( ($1->type && $1->type->qualifiers.any()) || ($2->type && $2->type->qualifiers.any()) ) {
-				SemanticError( yylloc, "syntax error, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
+				SemanticError( yylloc, "illegal syntax, CV qualifiers cannot be distributed; only storage-class and forall qualifiers." );
 			}
 			if ( ($1->type && $1->type->forall) || ($2->type && $2->type->forall) ) forall = true; // remember generic type
 		}
@@ -3393,7 +3373,7 @@ with_clause_opt:
 		{
 			$$ = $3; forall = false;
 			if ( $5 ) {
-				SemanticError( yylloc, "syntax error, attributes cannot be associated with function body. Move attribute(s) before \"with\" clause." );
+				SemanticError( yylloc, "illegal syntax, attributes cannot be associated with function body. Move attribute(s) before \"with\" clause." );
 				$$ = nullptr;
 			} // if
 		}

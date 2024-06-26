@@ -16,9 +16,9 @@ int main () {
     fishy;
     Colour c2 = fishy;
 
-    sout | "Compile Time: blue value: " | valueE(Colour.Blue) | ", position: " | posE(Colour.Blue) | ", label: " | labelE(Colour.Blue) | ", default return value: " | Colour.Blue;
-    sout | "Runtime: fishy value: " | valueE(fishy) | ", position: " | posE(fishy) | ", label: " | labelE(fishy) | ", default return value: " | fishy;
-    sout | "Runtime: C2 value: " | valueE(c2) | ", position: " | posE(c2) | ", label: " | labelE(c2) | ", default return value: " | c2;
+    sout | "Compile Time: blue value: " | value(Colour.Blue) | ", position: " | posn(Colour.Blue) | ", label: " | label(Colour.Blue) | ", default return value: " | Colour.Blue;
+    sout | "Runtime: fishy value: " | value(fishy) | ", position: " | posn(fishy) | ", label: " | label(fishy) | ", default return value: " | fishy;
+    sout | "Runtime: C2 value: " | value(c2) | ", position: " | posn(c2) | ", label: " | label(c2) | ", default return value: " | c2;
     Colour.Red;
     char * ao = Colour.Red;
     char * ko = fishy;

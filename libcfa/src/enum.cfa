@@ -5,18 +5,18 @@
 
 forall(ostype & | basic_ostream(ostype), E, V| CfaEnum(E, V))
 ostype & ?|?(ostype& os, E e) {
-    return os | type_name(e) | "." | labelE(e);
+    return os | type_name(e) | "." | label(e);
 }
 
 forall(ostype & | basic_ostream(ostype), E| CfaEnum(E, quasi_void))
 ostype & ?|?(ostype& os, E e) {
-    return os | type_name(e) | "." | labelE(e);
+    return os | type_name(e) | "." | label(e);
 }
 
 forall(ostype & | basic_ostream(ostype), E, V| CfaEnum(E, V)) {
-    int ?==?(E l, E r) { return posE(l) == posE(r); }
-    int ?<=?(E l, E r) { return posE(l) <= posE(r); }
-    int ?>=?(E l, E r) { return posE(l) >= posE(r); }
-    int ?<?(E l, E r) { return posE(l) < posE(r); }
-    int ?>?(E l, E r) { return posE(l) > posE(r); }
+    int ?==?(E l, E r) { return posn(l) == posn(r); }
+    int ?<=?(E l, E r) { return posn(l) <= posn(r); }
+    int ?>=?(E l, E r) { return posn(l) >= posn(r); }
+    int ?<?(E l, E r) { return posn(l) < posn(r); }
+    int ?>?(E l, E r) { return posn(l) > posn(r); }
 }

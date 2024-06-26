@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed Jun 5 14:30:00 2019
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Mar 16 11:58:00 2022
-// Update Count     : 3
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Jun 22 08:07:26 2024
+// Update Count     : 4
 //
 
 #include "CandidateFinder.hpp"
@@ -908,12 +908,12 @@ namespace {
 			CandidateFinder finder( context, tenv );
 			auto location = expr->location;
 			auto callExpr = new ast::UntypedExpr(
-				location, new ast::NameExpr( location, "valueE" ), {expr}
+				location, new ast::NameExpr( location, "value" ), {expr}
 			);
 			finder.find( callExpr );
 			CandidateList winners = findMinCost( finder.candidates );
 			if (winners.size() != 1) {
-				SemanticError( callExpr, "Ambiguous expression in valueE..." );
+				SemanticError( callExpr, "Ambiguous expression in value..." );
 			}
 			CandidateRef & choice = winners.front();
 			choice->cost += addedCost;

@@ -174,7 +174,7 @@ void EnumAttrFuncGenerator::produceForwardDecl(const ast::FunctionDecl* decl) {
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genPosnProto() const {
     return genProto(
-        "posE",
+        "posn",
         {new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
         {new ast::ObjectDecl(getLocation(), "_ret",
             new ast::BasicType(ast::BasicKind::UnsignedInt))});
@@ -182,7 +182,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genPosnProto() const {
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
 	return genProto(
-		"labelE",
+		"label",
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(
 			getLocation(), "_ret",
@@ -192,7 +192,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
 ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
 	if (decl->base)
 		return genProto(
-			"valueE",
+			"value",
 			{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 			{new ast::ObjectDecl(getLocation(), "_ret",
 								ast::deepCopy(decl->base))});
@@ -202,7 +202,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genQuasiValueProto() const {
 	return genProto(
-		"valueE",
+		"value",
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(getLocation(), "_ret",
 		                		new ast::StructInstType(quasi_void_decl))});
@@ -253,7 +253,7 @@ void EnumAttrFuncGenerator::genFromInstanceBody(ast::FunctionDecl* func) const {
 	assert( params.size() == 1 );
 	auto param = params.front();
 	ast::UntypedExpr* untyped = ast::UntypedExpr::createCall(
-		func->location, "posE", { new ast::VariableExpr(func->location, param) });
+		func->location, "posn", { new ast::VariableExpr(func->location, param) });
 	func->stmts = new ast::CompoundStmt(
 		func->location, {new ast::ReturnStmt(func->location, untyped)}
 	);
