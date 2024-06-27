@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 25 18:44:14 2024
-// Update Count     : 6692
+// Last Modified On : Wed Jun 26 09:37:28 2024
+// Update Count     : 6700
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1606,13 +1606,14 @@ for_control_expression:
 
 	| comma_expression ';' enum_key						// CFA, enum type
 		{
-			$$ = enumRangeCtrl( $1, OperKinds::LThan, new ExpressionNode( new ast::TypeExpr( yylloc, $3->buildType() ) ) );
+			$$ = enumRangeCtrl( $1, OperKinds::LEThan, new ExpressionNode( new ast::TypeExpr( yylloc, $3->buildType() ) ) );
 		}
 	| comma_expression ';' downupdowneq enum_key		// CFA, enum type, reverse direction
 		{
-			if ( $3 == OperKinds::LEThan || $3 == OperKinds::GEThan ) {
-				SemanticError( yylloc, "illegal syntax, all enumeration ranges are equal (all values). Remove \"=~\"." ); $$ = nullptr;
-			}
+			if ( $3 == OperKinds::GThan ) {
+				SemanticError( yylloc, "all enumeration ranges are equal (all values). Add an equal, e.g., ~=, -~=." ); $$ = nullptr;
+				$3 = OperKinds::GEThan;
+			} // if
 			$$ = enumRangeCtrl( $1, $3, new ExpressionNode( new ast::TypeExpr( yylloc, $4->buildType() ) ) );
 		}
 	;
@@ -1626,6 +1627,9 @@ enum_key:
 		{ $$ = DeclarationNode::newEnum( $2->symbolic.name, nullptr, false, false ); }
 	;
 
+// This rule exists to handle the ambiguity with unary operator '~'. The rule is the same as updowneq minus the '~'.
+// Specifically, "for ( ~5 )" means the complement of 5, not loop 0..4. Hence, in this case "for ( ~= 5 )", i.e., 0..5,
+// it is not possible to just remove the '='. The entire '~=' must be removed.
 downupdowneq:
 	ErangeDown
 		{ $$ = OperKinds::GThan; }

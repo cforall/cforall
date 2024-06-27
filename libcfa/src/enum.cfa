@@ -3,20 +3,25 @@
 
 #pragma GCC visibility push(default)
 
-forall(ostype & | basic_ostream(ostype), E, V| CfaEnum(E, V))
-ostype & ?|?(ostype& os, E e) {
-    return os | type_name(e) | "." | label(e);
+forall( ostype & | basic_ostream(ostype), E, V | CfaEnum(E, V) ) {
+	ostype & ?|?( ostype& os, E e ) {
+//		if ( scoped( e ) ) os | type_name( e ) | '.' | nonl;
+		return os | label( e );
+	}
+	OSTYPE_VOID_IMPL( E )
 }
 
-forall(ostype & | basic_ostream(ostype), E| CfaEnum(E, quasi_void))
-ostype & ?|?(ostype& os, E e) {
-    return os | type_name(e) | "." | label(e);
-}
+// forall( ostype & | basic_ostream(ostype), E | CfaEnum(E, quasi_void) )
+// ostype & ?|?( ostype & os, E e ) {
+// //    return os | type_name(e) | "." | label(e);
+//     return os | label( e );
+// }
 
-forall(ostype & | basic_ostream(ostype), E, V| CfaEnum(E, V)) {
+forall( E, V | CfaEnum(E, V) ) {						// relational operators
     int ?==?(E l, E r) { return posn(l) == posn(r); }
-    int ?<=?(E l, E r) { return posn(l) <= posn(r); }
-    int ?>=?(E l, E r) { return posn(l) >= posn(r); }
+    int ?!=?(E l, E r) { return posn(l) != posn(r); }
     int ?<?(E l, E r) { return posn(l) < posn(r); }
+    int ?<=?(E l, E r) { return posn(l) <= posn(r); }
     int ?>?(E l, E r) { return posn(l) > posn(r); }
+    int ?>=?(E l, E r) { return posn(l) >= posn(r); }
 }
