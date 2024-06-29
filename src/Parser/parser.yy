@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 26 09:37:28 2024
-// Update Count     : 6700
+// Last Modified On : Thu Jun 27 14:45:57 2024
+// Update Count     : 6705
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -223,8 +223,8 @@ DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * field
 #define NEW_ONE  new ExpressionNode( build_constantInteger( yylloc, *new string( "1" ) ) )
 #define UPDOWN( compop, left, right ) (compop == OperKinds::LThan || compop == OperKinds::LEThan ? left : right)
 #define MISSING_ANON_FIELD "illegal syntax, missing loop fields with an anonymous loop index is meaningless as loop index is unavailable in loop body."
-#define MISSING_LOW "illegal syntax, missing low value for up-to range so index is uninitialized."
-#define MISSING_HIGH "illegal syntax, missing high value for down-to range so index is uninitialized."
+#define MISSING_LOW "illegal syntax, missing low value for ascanding range so index is uninitialized."
+#define MISSING_HIGH "illegal syntax, missing high value for descending range so index is uninitialized."
 
 static ForCtrl * makeForCtrl( const CodeLocation & location, DeclarationNode * init, OperKinds compop, ExpressionNode * comp, ExpressionNode * inc ) {
 	// Wrap both comp/inc if they are non-null.
@@ -408,7 +408,7 @@ if ( N ) {																		\
 %token LSassign		RSassign							// <<=	>>=
 %token ANDassign	ERassign	ORassign				// &=	^=	|=
 
-%token ErangeUpEq	ErangeDown	ErangeDownEq			// ~=	-~	-~=
+%token ErangeUp		ErangeUpEq	ErangeDown	ErangeDownEq // +~	+~=/~=	-~	-~=
 %token ATassign											// @=
 
 %type<tok> identifier					identifier_at				identifier_or_type_name		attr_name
@@ -1525,7 +1525,7 @@ for_control_expression:
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, NEW_ONE );
 		}
 	| comma_expression ';' '@' updowneq '@'				// CFA, invalid syntax rule
-		{ SemanticError( yylloc, "illegal syntax, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, missing low/high value for ascending/descending range so index is uninitialized." ); $$ = nullptr; }
 
 	| comma_expression ';' comma_expression updowneq comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), $7 ); }
@@ -1554,7 +1554,7 @@ for_control_expression:
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, nullptr );
 		}
 	| comma_expression ';' '@' updowneq '@' '~' '@' // CFA
-		{ SemanticError( yylloc, "illegal syntax, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, missing low/high value for ascending/descending range so index is uninitialized." ); $$ = nullptr; }
 
 	| declaration comma_expression						// CFA
 		{ $$ = forCtrl( yylloc, $1, NEW_ZERO, OperKinds::LThan, $2, NEW_ONE ); }
@@ -1602,7 +1602,7 @@ for_control_expression:
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, nullptr );
 		}
 	| declaration '@' updowneq '@' '~' '@'				// CFA, invalid syntax rule
-		{ SemanticError( yylloc, "illegal syntax, missing low/high value for up/down-to range so index is uninitialized." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "illegal syntax, missing low/high value for ascending/descending range so index is uninitialized." ); $$ = nullptr; }
 
 	| comma_expression ';' enum_key						// CFA, enum type
 		{
@@ -1631,7 +1631,9 @@ enum_key:
 // Specifically, "for ( ~5 )" means the complement of 5, not loop 0..4. Hence, in this case "for ( ~= 5 )", i.e., 0..5,
 // it is not possible to just remove the '='. The entire '~=' must be removed.
 downupdowneq:
-	ErangeDown
+	ErangeUp
+		{ $$ = OperKinds::LThan; }
+	| ErangeDown
 		{ $$ = OperKinds::GThan; }
 	| ErangeUpEq
 		{ $$ = OperKinds::LEThan; }
@@ -1640,7 +1642,9 @@ downupdowneq:
 	;
 
 updown:
-	'~'
+	'~'													// shorthand 0 ~ 10 => 0 +~ 10
+		{ $$ = OperKinds::LThan; }
+	| ErangeUp
 		{ $$ = OperKinds::LThan; }
 	| ErangeDown
 		{ $$ = OperKinds::GThan; }

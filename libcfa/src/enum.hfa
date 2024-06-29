@@ -19,8 +19,6 @@ forall( E, V | Serial(E) ) trait CfaEnum {
     char * label( E e );
     unsigned int posn( E e );
     V value( E e );
-    char * type_name( E e );
-//    bool scoped( E e );
 };
 
 // I/O
@@ -30,8 +28,8 @@ forall( ostype & | basic_ostream(ostype), E, V | CfaEnum(E, V) ) {
 	OSTYPE_VOID( E );
 }
 
-//forall( ostype & | basic_ostream(ostype), E | CfaEnum(E, quasi_void) )
-//ostype & ?|?( ostype &, E );
+forall( ostype & | basic_ostream(ostype), E | CfaEnum(E, quasi_void) )
+ostype & ?|?( ostype &, E );
 
 // Design two <- should go for this if we have change the cost model
 // forall(E | Serial(E)) trait CfaEnum {

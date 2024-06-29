@@ -20,14 +20,17 @@
 #include <iomanip>
 #include <iostream>
 
-#if defined(__has_feature)
-	#if __has_feature(address_sanitizer)
-		#define NO_HEAP_STATISTICS
-	# endif
-#endif
+// Most of the other statistics features are deactivated only by defining
+// NO_STATISTICS (or their NO_%_STATISTICS macro). However the heap has some
+// other compatability concerns and will disable itself in some cases.
+//
+// I do not claim to understand these cases. But TCMALLOC is often defined by
+// default and you can pass --disable-gprofiler to configure to remove it.
 
-#if defined( NO_STATISTICS ) || defined( TCMALLOC ) || defined(__SANITIZE_ADDRESS__)
-	#if !defined(NO_HEAP_STATISTICS)
+#if defined(NO_STATISTICS) || defined(TCMALLOC) || defined(__SANITIZE_ADDRESS__)
+	#define NO_HEAP_STATISTICS
+#elif defined(__has_feature)
+	#if __has_feature(address_sanitizer)
 		#define NO_HEAP_STATISTICS
 	#endif
 #endif

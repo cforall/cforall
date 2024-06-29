@@ -196,11 +196,12 @@ extern int yydebug;
     ANDassign = 402,
     ERassign = 403,
     ORassign = 404,
-    ErangeUpEq = 405,
-    ErangeDown = 406,
-    ErangeDownEq = 407,
-    ATassign = 408,
-    THEN = 409
+    ErangeUp = 405,
+    ErangeUpEq = 406,
+    ErangeDown = 407,
+    ErangeDownEq = 408,
+    ATassign = 409,
+    THEN = 410
   };
 #endif
 /* Tokens.  */
@@ -351,11 +352,12 @@ extern int yydebug;
 #define ANDassign 402
 #define ERassign 403
 #define ORassign 404
-#define ErangeUpEq 405
-#define ErangeDown 406
-#define ErangeDownEq 407
-#define ATassign 408
-#define THEN 409
+#define ErangeUp 405
+#define ErangeUpEq 406
+#define ErangeDown 407
+#define ErangeDownEq 408
+#define ATassign 409
+#define THEN 410
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -394,7 +396,7 @@ union YYSTYPE
 	ast::WaitUntilStmt::ClauseNode * wucn;
 	ast::GenericExpr * genexpr;
 
-#line 398 "Parser/parser.hh"
+#line 400 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

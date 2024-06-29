@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Thu Jun 20 16:54:05 2024
- * Update Count     : 778
+ * Last Modified On : Thu Jun 27 14:38:27 2024
+ * Update Count     : 780
  */
 
 %option yylineno
@@ -457,7 +457,9 @@ zero_t			{ NUMERIC_RETURN(ZERO_T); }				// CFA
 ">>="			{ NAMEDOP_RETURN(RSassign); }
 
 "@="			{ NAMEDOP_RETURN(ATassign); }			// CFA
+"+~"			{ NAMEDOP_RETURN(ErangeUp); }			// CFA
 "~="			{ NAMEDOP_RETURN(ErangeUpEq); }			// CFA
+"+~="			{ NAMEDOP_RETURN(ErangeUpEq); }			// CFA
 "-~"			{ NAMEDOP_RETURN(ErangeDown); }			// CFA
 "-~="			{ NAMEDOP_RETURN(ErangeDownEq); }		// CFA
 
