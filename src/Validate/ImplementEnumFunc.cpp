@@ -475,7 +475,7 @@ private:
 };
 
 void ImplementEnumFunc::previsit(const ast::EnumDecl* enumDecl) {
-	if (!enumDecl->body || !enumDecl->isTyped) return;
+	if (!enumDecl->body || !enumDecl->isCfa) return;
 	ast::EnumInstType enumInst(enumDecl->name);
 	enumInst.base = enumDecl;
 	EnumAttrFuncGenerator gen(enumDecl, &enumInst, functionNesting);

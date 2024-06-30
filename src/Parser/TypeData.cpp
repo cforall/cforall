@@ -1468,8 +1468,8 @@ ast::EnumDecl * buildEnum(
 		ast::Decl * member = members->get_and_mutate();
 		ast::ObjectDecl * object = strict_dynamic_cast<ast::ObjectDecl *>( member );
 		object->isHidden = ast::EnumDecl::EnumHiding::Hide == ret->hide;
-		if ( ret->isTyped && !ret->base && cur->has_enumeratorValue() ) {
-			SemanticError( td->location, "Enumerator of enum(void) cannot have an explicit initializer value." );
+		if ( ret->isOpague() && cur->has_enumeratorValue() ) {
+			SemanticError( td->location, "Opague cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {
 			object->init = new ast::SingleInit(
 				td->location,

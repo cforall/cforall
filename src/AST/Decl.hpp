@@ -307,19 +307,19 @@ enum class EnumAttribute{ Value, Posn, Label };
 /// enum declaration `enum Foo { ... };`
 class EnumDecl final : public AggregateDecl {
 public:
-	// isTyped indicated if the enum has a declaration like:
+	// isCfa indicated if the enum has a declaration like:
 	// enum (type_optional) Name {...}
-	bool isTyped;
-	// if isTyped == true && base.get() == nullptr, it is a "void" type enum
+	bool isCfa;
+	// if isCfa == true && base.get() == nullptr, it is a "opague" enum
 	ptr<Type> base;
 	enum class EnumHiding { Visible, Hide } hide;
 	std::vector< ast::ptr<ast::EnumInstType>> inlinedDecl; // child enums
 
-	EnumDecl( const CodeLocation& loc, const std::string& name, bool isTyped = false,
+	EnumDecl( const CodeLocation& loc, const std::string& name, bool isCfa = false,
 		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall,
 		Type const * base = nullptr, EnumHiding hide = EnumHiding::Hide,
 		std::unordered_map< std::string, long long > enumValues = std::unordered_map< std::string, long long >() )
-	: AggregateDecl( loc, name, std::move(attrs), linkage ), isTyped(isTyped), base(base), hide(hide), enumValues(enumValues) {}
+	: AggregateDecl( loc, name, std::move(attrs), linkage ), isCfa(isCfa), base(base), hide(hide), enumValues(enumValues) {}
 
 	/// gets the integer value for this enumerator, returning true iff value found
 	// Maybe it is not used in producing the enum value
@@ -335,6 +335,8 @@ public:
 	unsigned calChildOffset(const ast::EnumInstType * childEnum) const;
 
 	bool isSubTypeOf(const ast::EnumDecl *) const;
+	bool isTyped() const;
+	bool isOpague() const;
 private:
 	EnumDecl * clone() const override { return new EnumDecl{ *this }; }
 	MUTATE_FRIEND

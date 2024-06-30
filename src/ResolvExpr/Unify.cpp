@@ -275,15 +275,12 @@ public:
 
 	void postvisit( const ast::VoidType * ) {
 		result = dynamic_cast< const ast::VoidType * >( type2 );
-			// || tryToUnifyWithEnumValue(vt, type2, tenv, need, have, open, noWiden());
-		;
 	}
 
 	void postvisit( const ast::BasicType * basic ) {
 		if ( auto basic2 = dynamic_cast< const ast::BasicType * >( type2 ) ) {
 			result = basic->kind == basic2->kind;
 		}
-		// result = result || tryToUnifyWithEnumValue(basic, type2, tenv, need, have, open, noWiden());
 	}
 
 	void postvisit( const ast::PointerType * pointer ) {
@@ -292,7 +289,6 @@ public:
 				pointer->base, pointer2->base, tenv, need, have, open,
 				noWiden());
 		}
-		// result = result || tryToUnifyWithEnumValue(pointer, type2, tenv, need, have, open, noWiden());
 	}
 
 	void postvisit( const ast::ArrayType * array ) {
@@ -311,7 +307,6 @@ public:
 
 		result = unifyExact(
 			array->base, array2->base, tenv, need, have, open, noWiden());
-			// || tryToUnifyWithEnumValue(array, type2, tenv, need, have, open, noWiden());
 	}
 
 	void postvisit( const ast::ReferenceType * ref ) {
@@ -606,22 +601,18 @@ public:
 		auto types2 = flatten( flat2 );
 
 		result = unifyList( types, types2, tenv, need, have, open );
-			// || tryToUnifyWithEnumValue(tuple, type2, tenv, need, have, open, noWiden());
 	}
 
 	void postvisit( const ast::VarArgsType * ) {
 		result = dynamic_cast< const ast::VarArgsType * >( type2 );
-			// || tryToUnifyWithEnumValue(vat, type2, tenv, need, have, open, noWiden());
 	}
 
 	void postvisit( const ast::ZeroType * ) {
 		result = dynamic_cast< const ast::ZeroType * >( type2 );
-			// || tryToUnifyWithEnumValue(zt, type2, tenv, need, have, open, noWiden());
 	}
 
 	void postvisit( const ast::OneType * ) {
 		result = dynamic_cast< const ast::OneType * >( type2 );
-			// || tryToUnifyWithEnumValue(ot, type2, tenv, need, have, open, noWiden());
 	}
 };
 

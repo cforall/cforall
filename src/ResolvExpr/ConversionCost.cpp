@@ -161,7 +161,7 @@ namespace {
 
 Cost conversionCost(
 	const ast::Type * src, const ast::Type * dst, bool srcIsLvalue,
-	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
+const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
 ) {
 	if ( const ast::TypeInstType * inst = dynamic_cast< const ast::TypeInstType * >( dst ) ) {
 		if ( const ast::EqvClass * eqv = env.lookup( *inst ) ) {
@@ -234,11 +234,22 @@ static Cost convertToReferenceCost( const ast::Type * src, const ast::Type * dst
 		} else {
 			return ast::Pass<ConversionCost>::read( src, dst, srcIsLvalue, symtab, env, conversionCost );
 		}
+		if (const ast::EnumInstType * srcAsInst = dynamic_cast< const ast::EnumInstType * >( src )) {
+			if (srcAsInst->base && !srcAsInst->base->isCfa) {
+				static const ast::BasicType* integer = new ast::BasicType( ast::BasicKind::UnsignedInt );
+				return ast::Pass<ConversionCost>::read( integer, dst, srcIsLvalue, symtab, env, conversionCost );
+			}
+		}
 	} else {
 		assert( -1 == diff );
 		const ast::ReferenceType * dstAsRef = dynamic_cast< const ast::ReferenceType * >( dst );
 		assert( dstAsRef );
-		if ( typesCompatibleIgnoreQualifiers( src, dstAsRef->base, env ) ) {
+		auto dstBaseType = dstAsRef->base;
+		const ast::Type * newSrc = src;
+		if ( dynamic_cast< const ast::EnumInstType * >( src ) && dstBaseType.as<ast::BasicType>() ) {
+			newSrc = new ast::BasicType( ast::BasicKind::UnsignedInt );
+		}
+		if ( typesCompatibleIgnoreQualifiers( newSrc, dstAsRef->base, env ) ) {
 			if ( srcIsLvalue ) {
 				if ( src->qualifiers == dstAsRef->base->qualifiers ) {
 					return Cost::reference;
@@ -283,9 +294,9 @@ void ConversionCost::conversionCostFromBasicToBasic( const ast::BasicType * src,
 void ConversionCost::postvisit( const ast::BasicType * basicType ) {
 	if ( const ast::BasicType * dstAsBasic = dynamic_cast< const ast::BasicType * >( dst ) ) {
 		conversionCostFromBasicToBasic( basicType, dstAsBasic );
-	}	else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
-		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isTyped ) {
-			cost = Cost::unsafe;
+	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
+		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isCfa ) {
+			cost = Cost::safe;
 		}
 	}
 }
@@ -365,17 +376,11 @@ void ConversionCost::postvisit( const ast::FunctionType * functionType ) {
 void ConversionCost::postvisit( const ast::EnumInstType * inst ) {
 	if ( auto dstInst = dynamic_cast<const ast::EnumInstType *>( dst ) ) {
 		cost = enumCastCost(inst, dstInst, symtab, env);
-		return;
+	} else if ( !inst->base->isCfa ) {
+		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
+		cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
 	}
-	static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
-	cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
-	if ( !inst->base->isTyped ) {
-		if ( cost < Cost::unsafe ) {
-			cost.incSafe();
-		}
-		return;
-	}
-	cost.incUnsafe();
+	// cost.incUnsafe();
 }
 
 void ConversionCost::postvisit( const ast::TraitInstType * traitInstType ) {
@@ -453,8 +458,8 @@ void ConversionCost::postvisit( const ast::ZeroType * zeroType ) {
 		cost.incSafe( maxIntCost + 2 );
 		// assuming 0p is supposed to be used for pointers?
 	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
-		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isTyped ) {
-			cost = Cost::unsafe;
+		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isCfa ) {
+			cost = Cost::safe;
 		}
 	}
 }
@@ -474,8 +479,8 @@ void ConversionCost::postvisit( const ast::OneType * oneType ) {
 			cost.incSign( signMatrix[ ast::BasicKind::SignedInt ][ dstAsBasic->kind ] );
 		}
 	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
-		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isTyped ) {
-			cost = Cost::unsafe;
+		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isCfa ) {
+			cost = Cost::safe;
 		}
 	}
 }

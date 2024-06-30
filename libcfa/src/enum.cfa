@@ -22,4 +22,26 @@ forall( E, V | CfaEnum(E, V) ) {						// relational operators
     int ?<=?(E l, E r) { return posn(l) <= posn(r); }
     int ?>?(E l, E r) { return posn(l) > posn(r); }
     int ?>=?(E l, E r) { return posn(l) >= posn(r); }
+
+    E ++?(E& l) { 
+        l = succ(l);
+        return l;
+    }
+    
+    E ?++(E& l) {
+        E ret = l;
+        l = succ(l);
+        return ret;
+    }
+
+    E --?(E& l) {
+        l = pred(l);
+        return l;
+    }
+
+    E ?--(E& l) {
+        E ret = l;
+        l = pred(l);
+        return ret;
+    }
 }

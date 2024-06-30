@@ -310,7 +310,7 @@ ForCtrl * enumRangeCtrl( ExpressionNode * index_expr, __attribute__((unused)) Op
 	if ( auto identifier = dynamic_cast<ast::NameExpr *>(index_expr->expr.get()) ) {
 		DeclarationNode * indexDecl = DeclarationNode::newName( new std::string(identifier->name) );
 		assert( range_over_expr );
-		return new ForCtrl( new StatementNode( indexDecl ), range_over_expr );
+		return new ForCtrl( new StatementNode( indexDecl ), range_over_expr, compop );
 	} else {
 		SemanticError( yylloc, MISSING_LOOP_INDEX ); return nullptr;
 	} // if

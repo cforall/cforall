@@ -48,4 +48,9 @@ forall( E, V | CfaEnum(E, V) ) {						// relational operators
     int ?<=?(E, E);
     int ?>?(E, E);
     int ?>=?(E, E);
+
+    int ++?(E&);
+    int ?++(E&);
+    int --?(E&);
+    int ?--(E&);
 }

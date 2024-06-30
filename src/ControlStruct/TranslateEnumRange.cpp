@@ -25,9 +25,12 @@ const ast::Stmt* addInitType::postvisit( const ast::ForStmt * stmt ) {
         auto enumInst = type.strict_as<ast::EnumInstType>();
         auto enumDecl = enumInst->base;
 
-        auto init = stmt->inits.front();
+        auto objInit = stmt->inits.front();
+        auto initLocation = objInit->location;
+        auto rangeLocation = stmt->range_over->location;
+        assert( stmt->inits.size() == 1 );
 
-        if (auto declStmt = init.as<ast::DeclStmt>()) {
+        if (auto declStmt = objInit.as<ast::DeclStmt>()) {
             auto decl = declStmt->decl;
             if ( auto objDecl = decl.as<ast::ObjectDecl>()) {
                 if ( !objDecl->type && type ) {
@@ -56,7 +59,10 @@ const ast::Stmt* addInit::postvisit( const ast::ForStmt * stmt ) {
             if ( auto objDecl = decl.as<ast::ObjectDecl>()) {
                 if ( !objDecl->init ) {
                     auto location = stmt->location;
-                    auto newInit = new ast::SingleInit( location, new ast::NameExpr( location, enumDecl->members.front()->name ) );
+                    // auto newInit = new ast::SingleInit( location, new ast::NameExpr( location, enumDecl->members.front()->name ) );
+                    ast::SingleInit * newInit = new ast::SingleInit( location, 
+                        new ast::NameExpr( location, 
+                           stmt->is_inc? enumDecl->members.front()->name: enumDecl->members.back()->name ) );
                     auto objDeclWithInit = ast::mutate_field( objDecl, &ast::ObjectDecl::init, newInit );
                     auto declWithInit = ast::mutate_field( declStmt, &ast::DeclStmt::decl, objDeclWithInit );
                     stmt = ast::mutate_field_index( stmt, &ast::ForStmt::inits, 0, declWithInit );
@@ -78,12 +84,18 @@ const ast::Stmt* translateEnumRangeCore::postvisit( const ast::ForStmt * stmt ) 
     auto enumInst = typeExpr->type.strict_as<ast::EnumInstType>();
     auto enumDecl = enumInst->base;
 
-    auto condition = ast::UntypedExpr::createCall( location, "?<=?", {
-        new ast::NameExpr( location, indexName ),
-        // ast::ConstantExpr::from_ulong( location, enumDecl->members.size() )
-        new ast::NameExpr( location, enumDecl->members.back()->name )
-    });
-    auto increment = ast::UntypedExpr::createCall( location, "succ", {
+    // Both inc and dec check if the current posn less than the number of enumerator
+    // for dec, it keeps call pred until it passes 0 (the first enumerator) and underflow,
+    // it wraps around and become unsigned max
+    ast::UntypedExpr * condition = ast::UntypedExpr::createCall( location,
+        "?<=?",
+        {new ast::CastExpr(location,
+            new ast::NameExpr( location, indexName ),
+            new ast::BasicType( ast::BasicKind::UnsignedInt 
+        ),ast::GeneratedFlag::ExplicitCast),
+        ast::ConstantExpr::from_ulong( location, enumDecl->members.size()-1 ) });
+    auto increment = ast::UntypedExpr::createCall( location, 
+        stmt->is_inc? "succ": "pred",{
         new ast::NameExpr( location, indexName )
     });
     auto assig = ast::UntypedExpr::createAssign( location, new ast::NameExpr( location, indexName ), increment );

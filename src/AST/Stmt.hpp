@@ -237,6 +237,7 @@ class ForStmt final : public Stmt {
 	ptr<Expr> cond;
 	ptr<Expr> inc;
 	ptr<Expr> range_over;
+	bool is_inc;
 	ptr<Stmt> body;
 	ptr<Stmt> else_;
 
@@ -250,9 +251,10 @@ class ForStmt final : public Stmt {
 		: Stmt(loc, std::move(labels)), inits(std::move(inits)), cond(cond), inc(inc),
 			range_over(nullptr), body(body), else_(else_) {}
 
-	ForStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * range_over, 
+	ForStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * range_over, bool is_inc,
 			 const Stmt * body, const Stmt * else_ )
-		: Stmt(loc, std::move(labels)), inits(std::move(inits)), range_over(range_over), body(body), else_(else_) {}
+		: Stmt(loc, std::move(labels)), inits(std::move(inits)), range_over(range_over), is_inc(is_inc), 
+		body(body), else_(else_) {}
 
 	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
   private:

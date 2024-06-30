@@ -52,6 +52,15 @@ namespace {
 
 		void postvisit( const ast::EnumInstType * enumInst ) {
 			cost = conversionCost( enumInst, dst, srcIsLvalue, symtab, env );
+			if ( enumInst->base->isTyped() ) {
+				auto baseConversionCost = 
+					castCost( enumInst->base->base, dst, srcIsLvalue, symtab, env );
+				cost = baseConversionCost < cost? baseConversionCost: cost;
+			}
+			static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
+			Cost intCost = costCalc( integer, dst, srcIsLvalue, symtab, env );
+			intCost.incSafe();
+			cost = intCost < cost? intCost: cost;
 		}
 
 		void postvisit( const ast::BasicType * basicType ) {
@@ -62,9 +71,8 @@ namespace {
 			} else {
 				cost = conversionCost( basicType, dst, srcIsLvalue, symtab, env );
 				if ( Cost::unsafe < cost ) {
-					if (auto enumInst = dynamic_cast<const ast::EnumInstType *>(dst)) {
-						// Always explict cast only for typed enum
-						if (enumInst->base->isTyped) cost = Cost::unsafe;
+					if ( dynamic_cast<const ast::EnumInstType *>(dst)) {
+						cost = Cost::unsafe;
 					}
 				}
 			}
@@ -73,8 +81,8 @@ namespace {
 		void postvisit( const ast::ZeroType * zero ) {
 			cost = conversionCost( zero, dst, srcIsLvalue, symtab, env );
 			if ( Cost::unsafe < cost ) {
-				if (auto enumInst =  dynamic_cast<const ast::EnumInstType *>(dst)) {
-					if (enumInst->base->isTyped) cost = Cost::unsafe;
+				if ( dynamic_cast<const ast::EnumInstType *>(dst)) {
+					cost = Cost::unsafe;
 				}
 			}
 		}
@@ -82,8 +90,8 @@ namespace {
 		void postvisit( const ast::OneType * one ) {
 			cost = conversionCost( one, dst, srcIsLvalue, symtab, env );
 			if ( Cost::unsafe < cost ) {
-				if (auto enumInst = dynamic_cast<const ast::EnumInstType *>(dst)) {
-					if (enumInst->base->isTyped) cost = Cost::unsafe;
+				if ( dynamic_cast<const ast::EnumInstType *>(dst)) {
+					cost = Cost::unsafe;
 				}
 			}
 		}

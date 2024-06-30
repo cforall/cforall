@@ -697,10 +697,6 @@ namespace {
 		void postvisit( const ast::QualifiedNameExpr * qualifiedExpr );
 		void postvisit( const ast::CountExpr * countExpr );
 
-		const ast::Expr * makeEnumOffsetCast( const ast::EnumInstType * src, 
-			const ast::EnumInstType * dst
-			, const ast::Expr * expr, Cost minCost );
-
 		void postvisit( const ast::InitExpr * ) {
 			assertf( false, "CandidateFinder should never see a resolved InitExpr." );
 		}
@@ -1212,49 +1208,6 @@ namespace {
 		addCandidate( labelExpr, tenv );
 	}
 
-	// src is a subset of dst
-	const ast::Expr * Finder::makeEnumOffsetCast( const ast::EnumInstType * src, 
-		const ast::EnumInstType * dst,
-		const ast::Expr * expr,
-		Cost minCost ) {
-		
-		auto srcDecl = src->base;
-		auto dstDecl = dst->base;
-
-		if (srcDecl->name == dstDecl->name) return expr;
-
-		for (auto& dstChild: dstDecl->inlinedDecl) {
-			Cost c = castCost(src, dstChild, false, symtab, tenv);
-			ast::CastExpr * castToDst;
-			if (c<minCost) {
-				unsigned offset = dstDecl->calChildOffset(dstChild.get());
-				if (offset > 0) {
-					auto untyped = ast::UntypedExpr::createCall(
-						expr->location, 
-						"?+?", 
-						{ new ast::CastExpr( expr, new ast::BasicType(ast::BasicKind::SignedInt) ),
-						ast::ConstantExpr::from_int(expr->location, offset)});
-					CandidateFinder finder(context, tenv);
-					finder.find( untyped );
-					CandidateList winners = findMinCost( finder.candidates );
-					CandidateRef & choice = winners.front();
-					// choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
-					choice->expr = new ast::CastExpr(expr->location, choice->expr, dstChild, ast::GeneratedFlag::ExplicitCast);
-					// castToDst = new ast::CastExpr(choice->expr, dstChild);
-					castToDst = new ast::CastExpr( 
-						makeEnumOffsetCast( src, dstChild, choice->expr, minCost ),
-					 dst);
-
-				} else {
-					castToDst = new ast::CastExpr( expr, dst );
-				}
-				return castToDst;
-			}
-		}
-		SemanticError(expr, src->base->name + " is not a subtype of " + dst->base->name);
-		return nullptr;
-	}
-
 	void Finder::postvisit( const ast::CastExpr * castExpr ) {
 		ast::ptr< ast::Type > toType = castExpr->result;
 		assert( toType );
@@ -1308,8 +1261,9 @@ namespace {
 			// Redefine enum cast
 			auto argAsEnum = cand->expr->result.as<ast::EnumInstType>();
 			auto toAsEnum = toType.as<ast::EnumInstType>();
-			if ( argAsEnum && toAsEnum && argAsEnum->name != toAsEnum->name ) {	
-				ast::ptr<ast::Expr> offsetExpr = makeEnumOffsetCast(argAsEnum, toAsEnum, cand->expr, thisCost);
+			if ( argAsEnum && toAsEnum && argAsEnum->name != toAsEnum->name ) {
+				CandidateFinder subFinder(context, tenv);
+				ast::ptr<ast::Expr> offsetExpr = subFinder.makeEnumOffsetCast(argAsEnum, toAsEnum, cand->expr, thisCost);
 				cand->expr = offsetExpr;
 			}
 
@@ -2192,8 +2146,11 @@ const ast::Expr * CandidateFinder::makeEnumOffsetCast( const ast::EnumInstType *
 				auto untyped = ast::UntypedExpr::createCall(
 					expr->location, 
 					"?+?", 
-					{ new ast::CastExpr( expr, new ast::BasicType(ast::BasicKind::SignedInt) ),
-					ast::ConstantExpr::from_int(expr->location, offset)});
+					{ new ast::CastExpr( expr->location,
+						expr,
+						new ast::BasicType(ast::BasicKind::SignedInt),
+						ast::GeneratedFlag::ExplicitCast ),
+						ast::ConstantExpr::from_int(expr->location, offset)} );
 				CandidateFinder finder(context, env);
 				finder.find( untyped );
 				CandidateList winners = findMinCost( finder.candidates );
