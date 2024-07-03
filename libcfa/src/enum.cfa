@@ -3,45 +3,31 @@
 
 #pragma GCC visibility push(default)
 
-forall( ostype & | basic_ostream(ostype), E, V | CfaEnum(E, V) ) {
-	ostype & ?|?( ostype& os, E e ) {
+forall( istype & | istream( istype ), E, V | CfaEnum( E, V ) )
+istype & ?|?( istype & is, E & e ) {
+	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
+	char val[256];
+	int args = fmt( is, "%255s", val );
+	if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+	// for ( s; E ) {
+	// 	if ( val == label( s ) ) { e = s; break; }
+	// } else {
+	// 	fprintf( stderr, "invalid enumeration constant\n" );
+	// 	abort();									// cannot use abort stream
+	// } // for
+	return is;
+}
+
+forall( ostype & | ostream( ostype ), E, V | CfaEnum( E, V ) ) {
+	ostype & ?|?( ostype & os, E e ) {
 		return os | label( e );
 	}
 	OSTYPE_VOID_IMPL( E )
 }
 
-forall( ostype & | basic_ostream(ostype), E | CfaEnum(E, quasi_void) )
-ostype & ?|?( ostype & os, E e ) {
-    return os | label( e );
-}
-
-forall( E, V | CfaEnum(E, V) ) {						// relational operators
-    int ?==?(E l, E r) { return posn(l) == posn(r); }
-    int ?!=?(E l, E r) { return posn(l) != posn(r); }
-    int ?<?(E l, E r) { return posn(l) < posn(r); }
-    int ?<=?(E l, E r) { return posn(l) <= posn(r); }
-    int ?>?(E l, E r) { return posn(l) > posn(r); }
-    int ?>=?(E l, E r) { return posn(l) >= posn(r); }
-
-    E ++?(E& l) { 
-        l = succ(l);
-        return l;
-    }
-    
-    E ?++(E& l) {
-        E ret = l;
-        l = succ(l);
-        return ret;
-    }
-
-    E --?(E& l) {
-        l = pred(l);
-        return l;
-    }
-
-    E ?--(E& l) {
-        E ret = l;
-        l = pred(l);
-        return ret;
-    }
+forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
+	ostype & ?|?( ostype & os, E e ) {
+		return os | label( e );
+	}
+	OSTYPE_VOID_IMPL( E )
 }

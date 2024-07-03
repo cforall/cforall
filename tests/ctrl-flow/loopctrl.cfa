@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug  8 18:32:59 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 11 23:04:35 2022
-// Update Count     : 160
+// Last Modified On : Thu Jun 27 11:00:09 2024
+// Update Count     : 161
 // 
 
 #include <fstream.hfa>
@@ -98,7 +98,6 @@ int ?<?( S t1, S t2 ) { return t1.i < t2.i && t1.j < t2.j; }
 int ?<=?( S t1, S t2 ) { return t1.i <= t2.i && t1.j <= t2.j; }
 int ?>?( S t1, S t2 ) { return t1.i > t2.i && t1.j > t2.j; }
 int ?>=?( S t1, S t2 ) { return t1.i >= t2.i && t1.j >= t2.j; }
-S ?=?( S & t1, S t2 ) { t1.i = t2.i; t1.j = t2.j; return t1; }
 S ?+=?( S & t1, S t2 ) { t1.i += t2.i; t1.j += t2.j; return t1; }
 S ?+=?( S & t, one_t ) { t.i += 1; t.j += 1; return t; }
 S ?-=?( S & t1, S t2 ) { t1.i -= t2.i; t1.j -= t2.j; return t1; }

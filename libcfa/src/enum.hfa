@@ -7,7 +7,7 @@ forall( E ) trait Bounded {
     E upperBound();
 };
 
-forall( E | Bounded(E) ) trait Serial {
+forall( E | Bounded( E ) ) trait Serial {
     unsigned fromInstance( E e );
     E fromInt( unsigned i );
     E succ( E e );
@@ -15,7 +15,7 @@ forall( E | Bounded(E) ) trait Serial {
 };
 
 // Design one
-forall( E, V | Serial(E) ) trait CfaEnum {
+forall( E, V | Serial( E ) ) trait CfaEnum {
     char * label( E e );
     unsigned int posn( E e );
     V value( E e );
@@ -23,34 +23,57 @@ forall( E, V | Serial(E) ) trait CfaEnum {
 
 // I/O
 
-forall( ostype & | basic_ostream(ostype), E, V | CfaEnum(E, V) ) {
+forall( istype & | istream( istype ), E, V | CfaEnum( E, V ) )
+istype & ?|?( istype &, E & );
+
+forall( ostype & | ostream( ostype ), E, V | CfaEnum( E, V ) ) {
 	ostype & ?|?( ostype &, E );
 	OSTYPE_VOID( E );
 }
 
-forall( ostype & | basic_ostream(ostype), E | CfaEnum(E, quasi_void) )
-ostype & ?|?( ostype &, E );
+forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
+	ostype & ?|?( ostype &, E );
+	OSTYPE_VOID( E );
+}
 
 // Design two <- should go for this if we have change the cost model
-// forall(E | Serial(E)) trait CfaEnum {
-//     char * label(E e);
-//     unsigned int posn(E e);
+// forall( E | Serial( E ) ) trait CfaEnum {
+//     char * label( E e );
+//     unsigned int posn( E e );
 // };
 
-// forall(E, V| CfaEnum(E)) trait TypedEnum {
-//     V value(E e);
+// forall( E, V| CfaEnum( E)) trait TypedEnum {
+//     V value( E e);
 // };
 
-forall( E, V | CfaEnum(E, V) ) {						// relational operators
-    int ?==?(E, E);
-    int ?!=?(E, E);
-    int ?<?(E, E);
-    int ?<=?(E, E);
-    int ?>?(E, E);
-    int ?>=?(E, E);
+static inline
+forall( E, V | CfaEnum( E, V ) ) {
+    int ?==?( E l, E r ) { return posn( l ) == posn( r ); }	// relational operators
+    int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
+    int ?<?( E l, E r ) { return posn( l ) < posn( r ); }
+    int ?<=?( E l, E r ) { return posn( l ) <= posn( r ); }
+    int ?>?( E l, E r ) { return posn( l ) > posn( r ); }
+    int ?>=?( E l, E r ) { return posn( l ) >= posn( r ); }
 
-    int ++?(E&);
-    int ?++(E&);
-    int --?(E&);
-    int ?--(E&);
+    E ++?( E & l ) { 									// increment operators
+        l = succ( l );
+        return l;
+    }
+    
+    E ?++( E & l ) {
+        E ret = l;
+        l = succ( l );
+        return ret;
+    }
+
+    E --?( E & l ) {
+        l = pred( l );
+        return l;
+    }
+
+    E ?--( E & l ) {
+        E ret = l;
+        l = pred( l );
+        return ret;
+    }
 }

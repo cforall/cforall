@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Mon Jun 10 17:45:00 2019
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Oct  1 13:56:00 2019
-// Update Count     : 2
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Jul  2 18:15:51 2024
+// Update Count     : 5
 //
 
 #include "SatisfyAssertions.hpp"
@@ -574,7 +574,7 @@ void satisfyAssertions(
 
 	// exceeded recursion limit if reaches here
 	if ( out.empty() ) {
-		SemanticError( cand->expr->location, "Too many recursive assertions" );
+		SemanticError( cand->expr->location, "Too many recursive assertions, possible cause is circular relationship between a forall assertion and defined function prototype." );
 	}
 }
 
