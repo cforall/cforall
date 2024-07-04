@@ -319,14 +319,11 @@ int main( int argc, char * argv[] ) {
 
 		PASS( "Forall Pointer Decay", Validate::decayForallPointers, transUnit );
 		PASS( "Fix Qualified Types", Validate::fixQualifiedTypes, transUnit );
-
 		PASS( "Eliminate Typedef", Validate::eliminateTypedef, transUnit );
 		PASS( "Hoist Struct", Validate::hoistStruct, transUnit );
 		PASS( "Validate Generic Parameters", Validate::fillGenericParameters, transUnit );
 		PASS( "Translate Enum Range Expression", ControlStruct::translateEnumRange, transUnit );
 		PASS( "Translate Dimensions", Validate::translateDimensionParameters, transUnit );
-		// Need to happen before fixing returns because implementEnumFunc has ReturnStmt
-		
 		PASS( "Generate Enum Attributes Functions", Validate::implementEnumFunc, transUnit );
 		PASS( "Check Function Returns", Validate::checkReturnStatements, transUnit );
 		PASS( "Fix Return Statements", InitTweak::fixReturnStatements, transUnit );
@@ -336,7 +333,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls, transUnit );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines, transUnit );
-		
+
 		PASS( "Implement Actors", Concurrency::implementActors, transUnit );
 		PASS( "Implement Virtual Destructors", Virtual::implementVirtDtors, transUnit );
 		PASS( "Implement Mutex", Concurrency::implementMutex, transUnit );
@@ -455,6 +452,13 @@ int main( int argc, char * argv[] ) {
 		} // try
 		return EXIT_FAILURE;
 	} // try
+
+	// This pseudo-pass is used to get more accurate heap statistics.
+	NewPass("Clean-up");
+	Stats::Time::StartBlock("Clean-Up");
+	transUnit.global = ast::TranslationGlobal();
+	transUnit.decls.clear();
+	Stats::Time::StopBlock();
 
 	Stats::print();
 	return EXIT_SUCCESS;

@@ -274,10 +274,11 @@ ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, Express
 	} // if
 } // forCtrl
 
-ForCtrl * enumRangeCtrl( ExpressionNode * index_expr, __attribute__((unused)) OperKinds compop, ExpressionNode * range_over_expr ) {
+ForCtrl * enumRangeCtrl( ExpressionNode * index_expr, OperKinds compop, ExpressionNode * range_over_expr, DeclarationNode * type ) {
+	assert( compop == OperKinds::LEThan || compop == OperKinds::GEThan );
 	if ( auto identifier = dynamic_cast<ast::NameExpr *>(index_expr->expr.get()) ) {
-		DeclarationNode * indexDecl = DeclarationNode::newName( new std::string(identifier->name) );
-		assert( range_over_expr );
+		DeclarationNode * indexDecl =
+			DeclarationNode::newName( new std::string(identifier->name) )->addType( type );
 		return new ForCtrl( new StatementNode( indexDecl ), range_over_expr, compop );
 	} else {
 		SemanticError( yylloc, MISSING_LOOP_INDEX ); return nullptr;
@@ -1604,9 +1605,9 @@ for_control_expression:
 	| declaration '@' updowneq '@' '~' '@'				// CFA, invalid syntax rule
 		{ SemanticError( yylloc, "illegal syntax, missing low/high value for ascending/descending range so index is uninitialized." ); $$ = nullptr; }
 
-	| comma_expression ';' enum_key						// CFA, enum type
+	| comma_expression ';' type_type_specifier						// CFA, enum type
 		{
-			$$ = enumRangeCtrl( $1, OperKinds::LEThan, new ExpressionNode( new ast::TypeExpr( yylloc, $3->buildType() ) ) );
+			$$ = enumRangeCtrl( $1, OperKinds::LEThan, new ExpressionNode( new ast::TypeExpr( yylloc, $3->clone()->buildType() ) ), $3 );
 		}
 	| comma_expression ';' downupdowneq enum_key		// CFA, enum type, reverse direction
 		{
@@ -1614,17 +1615,20 @@ for_control_expression:
 				SemanticError( yylloc, "all enumeration ranges are equal (all values). Add an equal, e.g., ~=, -~=." ); $$ = nullptr;
 				$3 = OperKinds::GEThan;
 			} // if
-			$$ = enumRangeCtrl( $1, $3, new ExpressionNode( new ast::TypeExpr( yylloc, $4->buildType() ) ) );
+			$$ = enumRangeCtrl( $1, $3, new ExpressionNode( new ast::TypeExpr( yylloc, $4->clone()->buildType() ) ), $4 );
 		}
 	;
 
 enum_key:
 	type_name
-		{ $$ = DeclarationNode::newEnum( $1->symbolic.name, nullptr, false, false ); }
+		{	typedefTable.makeTypedef( *$1->symbolic.name, "enum_type_nobody 1" );
+			$$ = DeclarationNode::newEnum( $1->symbolic.name, nullptr, false, false ); }
 	| ENUM identifier
-		{ $$ = DeclarationNode::newEnum( $2, nullptr, false, false ); }
+		{	typedefTable.makeTypedef( *$2, "enum_type_nobody 2" );
+			$$ = DeclarationNode::newEnum( $2, nullptr, false, false ); }
 	| ENUM type_name
-		{ $$ = DeclarationNode::newEnum( $2->symbolic.name, nullptr, false, false ); }
+		{	typedefTable.makeTypedef( *$2->symbolic.name, "enum_type_nobody 3" );
+			$$ = DeclarationNode::newEnum( $2->symbolic.name, nullptr, false, false ); }
 	;
 
 // This rule exists to handle the ambiguity with unary operator '~'. The rule is the same as updowneq minus the '~'.

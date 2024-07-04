@@ -1,9 +1,13 @@
 #pragma once
 
 namespace ast {
-    class TranslationUnit;
+	class TranslationUnit;
 }
 
 namespace Validate {
-    void implementEnumFunc( ast::TranslationUnit & translationUnit );
+
+/// Auto-Generation of enumeration functions.
+/// Happens before fixReturnStatements because it inserts "unfixed" returns.
+void implementEnumFunc( ast::TranslationUnit & translationUnit );
+
 }

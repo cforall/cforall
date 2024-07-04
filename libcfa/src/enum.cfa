@@ -1,5 +1,6 @@
 #include "enum.hfa"
 #include "fstream.hfa"
+#include <string.h>
 
 #pragma GCC visibility push(default)
 
@@ -9,12 +10,12 @@ istype & ?|?( istype & is, E & e ) {
 	char val[256];
 	int args = fmt( is, "%255s", val );
 	if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
-	// for ( s; E ) {
-	// 	if ( val == label( s ) ) { e = s; break; }
-	// } else {
-	// 	fprintf( stderr, "invalid enumeration constant\n" );
-	// 	abort();									// cannot use abort stream
-	// } // for
+	for ( s; E ) {
+		if ( strcmp(val, label( s )) == 0 ) { e = s; break; }
+	} else {
+		fprintf( stderr, "invalid enumeration constant\n" );
+		abort();									// cannot use abort stream
+	} // for
 	return is;
 }
 

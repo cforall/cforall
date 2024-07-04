@@ -215,7 +215,7 @@ ast::Stmt * build_for( const CodeLocation & location, ForCtrl * forctl, Statemen
 		delete forctl;
 		return new ast::ForStmt( location,
 			std::move( astinit ),
-			range_over, forctl->kind == OperKinds::LThan,
+			range_over, forctl->kind == OperKinds::LEThan,
 			buildMoveSingle( stmt ),
 			buildMoveOptional( else_ )
 		);
