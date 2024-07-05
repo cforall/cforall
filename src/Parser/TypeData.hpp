@@ -59,8 +59,8 @@ struct TypeData {
 		bool body;
 		// Is this type anonymous? (Name can still be set to generated name.)
 		bool anon;
-		// Is this a typed enumeration? Type may be stored in base.
-		bool typed;
+		// Is this a cfa enumeration? Type stored in base.
+		bool isCfa;
 		EnumHiding hiding;
 	};
 

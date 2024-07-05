@@ -83,7 +83,7 @@ TypeData::TypeData( Kind k ) : location( yylloc ), kind( k ), base( nullptr ), f
 		aggregate.fields = nullptr;
 		aggregate.body = false;
 		aggregate.anon = false;
-		aggregate.typed = false;
+		aggregate.isCfa = false;
 		aggregate.hiding = EnumHiding::Visible;
 		break;
 	case AggregateInst:
@@ -217,6 +217,8 @@ TypeData * TypeData::clone() const {
 		newtype->aggregate.attributes = aggregate.attributes;
 		newtype->aggregate.body = aggregate.body;
 		newtype->aggregate.anon = aggregate.anon;
+		newtype->aggregate.isCfa = aggregate.isCfa;
+		newtype->aggregate.hiding = aggregate.hiding;
 		break;
 	case AggregateInst:
 		newtype->aggInst.aggregate = maybeCopy( aggInst.aggregate );
@@ -1455,7 +1457,7 @@ ast::EnumDecl * buildEnum(
 	ast::EnumDecl * ret = new ast::EnumDecl(
 		td->location,
 		*td->aggregate.name,
-		td->aggregate.typed,
+		td->aggregate.isCfa,
 		std::move( attributes ),
 		linkage,
 		baseType

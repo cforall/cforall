@@ -190,7 +190,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
-	if (decl->base)
+	if (decl->isTyped())
 		return genProto(
 			"value",
 			{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},

@@ -202,7 +202,7 @@ bool EnumDecl::isSubTypeOf(const ast::EnumDecl * other) const {
 	return false;
 }
 
-bool EnumDecl::isTyped() const { return base;}
+bool EnumDecl::isTyped() const { return base; }
 
 bool EnumDecl::isOpague() const { return isCfa && !isTyped(); } 
 }

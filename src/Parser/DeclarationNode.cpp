@@ -184,12 +184,12 @@ DeclarationNode * DeclarationNode::newAggregate( ast::AggregateDecl::Aggregate k
 	return newnode;
 } // DeclarationNode::newAggregate
 
-DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base, EnumHiding hiding ) {
+DeclarationNode * DeclarationNode::newEnum( const string * name, DeclarationNode * constants, bool body, bool isCfa, DeclarationNode * base, EnumHiding hiding ) {
 	DeclarationNode * newnode = newAggregate( ast::AggregateDecl::Enum, name, nullptr, constants, body );
-	newnode->type->aggregate.typed = typed;
+	newnode->type->aggregate.isCfa = isCfa;
 	newnode->type->aggregate.hiding = hiding;
 	if ( base ) {
-		assert( typed );
+		assert( isCfa );
 		assert( base->type );
 		newnode->type->base = base->type;
 		base->type = nullptr;
@@ -540,7 +540,7 @@ static DeclarationNode * addTypedefAggr(
 	newaggr->aggregate.name = oldaggr->aggregate.name ? new string( *oldaggr->aggregate.name ) : nullptr;
 	newaggr->aggregate.body = false;
 	newaggr->aggregate.anon = oldaggr->aggregate.anon;
-	newaggr->aggregate.typed = oldaggr->aggregate.typed;
+	newaggr->aggregate.isCfa = oldaggr->aggregate.isCfa;
 	newaggr->aggregate.hiding = oldaggr->aggregate.hiding;
 	swap( newaggr, oldaggr );
 
