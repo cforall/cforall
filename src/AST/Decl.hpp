@@ -310,7 +310,7 @@ public:
 	// isCfa indicated if the enum has a declaration like:
 	// enum (type_optional) Name {...}
 	bool isCfa;
-	// if isCfa == true && base.get() == nullptr, it is a "opague" enum
+	// if isCfa == true && base.get() == nullptr, it is a "opaque" enum
 	ptr<Type> base;
 	enum class EnumHiding { Visible, Hide } hide;
 	std::vector< ast::ptr<ast::EnumInstType>> inlinedDecl; // child enums
@@ -336,7 +336,7 @@ public:
 
 	bool isSubTypeOf(const ast::EnumDecl *) const;
 	bool isTyped() const;
-	bool isOpague() const;
+	bool isOpaque() const;
 private:
 	EnumDecl * clone() const override { return new EnumDecl{ *this }; }
 	MUTATE_FRIEND

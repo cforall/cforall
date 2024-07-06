@@ -186,7 +186,8 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(
 			getLocation(), "_ret",
-			new ast::PointerType(new ast::BasicType{ast::BasicKind::Char}))});
+			new ast::PointerType(
+				new ast::BasicType(ast::BasicKind::Char, ast::CV::Const)))});
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
@@ -230,7 +231,8 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genTypeNameProto() const {
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(
 			getLocation(), "_ret",
-			new ast::PointerType(new ast::BasicType{ast::BasicKind::Char}))});
+			new ast::PointerType(
+				new ast::BasicType(ast::BasicKind::Char, ast::CV::Const)))});
 }
 
 void EnumAttrFuncGenerator::genFromIntBody(ast::FunctionDecl* func) const {
@@ -342,7 +344,8 @@ ast::ObjectDecl* EnumAttrFuncGenerator::genAttrArrayProto(
 	ast::ArrayType* arrT = new ast::ArrayType(
 		attr == ast::EnumAttribute::Value
 			? decl->base
-			: new ast::PointerType(new ast::BasicType{ast::BasicKind::Char}),
+			: new ast::PointerType(
+				new ast::BasicType(ast::BasicKind::Char, ast::CV::Const)),
 		ast::ConstantExpr::from_int(decl->location, decl->members.size()),
 		ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim);
 

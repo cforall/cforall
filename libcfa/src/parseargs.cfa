@@ -77,8 +77,8 @@ forall([opt_count]) {
 			parse_args(cfa_args_argc, cfa_args_argv, options, usage, left );
 		}
 		else {
-			char * temp = "";
-			parse_args(0, &temp, options, usage, left );
+			char * temp[1] = { 0p };
+			parse_args(0, temp, options, usage, left );
 		}
 	}
 

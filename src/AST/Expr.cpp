@@ -260,7 +260,7 @@ ConstantExpr * ConstantExpr::from_ulong( const CodeLocation & loc, unsigned long
 }
 
 ConstantExpr * ConstantExpr::from_string( const CodeLocation & loc, const std::string & str ) {
-	const Type * charType = new BasicType( BasicKind::Char );
+	const Type * charType = new BasicType( BasicKind::Char, ast::CV::Const );
 	// Adjust the length of the string for the terminator.
 	const Expr * strSize = from_ulong( loc, str.size() + 1 );
 	const Type * strType = new ArrayType( charType, strSize, FixedLen, DynamicDim );

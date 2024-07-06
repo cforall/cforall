@@ -204,7 +204,8 @@ bool EnumDecl::isSubTypeOf(const ast::EnumDecl * other) const {
 
 bool EnumDecl::isTyped() const { return base; }
 
-bool EnumDecl::isOpague() const { return isCfa && !isTyped(); } 
+bool EnumDecl::isOpaque() const { return isCfa && !isTyped(); }
+
 }
 
 // Local Variables: //

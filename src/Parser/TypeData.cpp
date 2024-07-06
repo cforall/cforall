@@ -1470,7 +1470,7 @@ ast::EnumDecl * buildEnum(
 		ast::Decl * member = members->get_and_mutate();
 		ast::ObjectDecl * object = strict_dynamic_cast<ast::ObjectDecl *>( member );
 		object->isHidden = ast::EnumDecl::EnumHiding::Hide == ret->hide;
-		if ( ret->isOpague() && cur->has_enumeratorValue() ) {
+		if ( ret->isOpaque() && cur->has_enumeratorValue() ) {
 			SemanticError( td->location, "Opague cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {
 			object->init = new ast::SingleInit(
@@ -1478,7 +1478,7 @@ ast::EnumDecl * buildEnum(
 				maybeMoveBuild( cur->consume_enumeratorValue() ),
 				ast::NoConstruct
 			);
-		} 
+		}
 		// else cur is a List Initializer and has been set as init in buildList()
 		// if
 	} // for
