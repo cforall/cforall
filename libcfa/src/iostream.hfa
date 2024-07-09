@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 21 07:32:19 2024
-// Update Count     : 744
+// Last Modified On : Sat Jul  6 11:33:31 2024
+// Update Count     : 758
 //
 
 #pragma once
@@ -358,7 +358,11 @@ forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype &, double _Complex & );
 	istype & ?|?( istype &, long double _Complex & );
 
-	istype & ?|?( istype &, const char [] );
+	// This is too restrictive as it prevents building a format in a string and using that format.
+	// inline istype & ?|?( istype &, char [] ) {			// possible error, too restrictive to change
+	// 	_Static_assert( false, "reading a character array without a maximum length is unsafe. Use input manipulator \"wdi( N, s )\", where \"char s[N]\" or fmt( s )." );
+	// }
+	istype & ?|?( istype &, const char [] );			// match text
 
 	// manipulators
 	istype & ?|?( istype &, istype & (*)( istype & ) );

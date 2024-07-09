@@ -39,6 +39,6 @@ Build Test
 ======================================
 
   $ cd ./test
-  $ make -j 8 all-tests
+  $ make -j 8 all-local
 
 The tests take about 2-5 minutes and can be stopped at any time.

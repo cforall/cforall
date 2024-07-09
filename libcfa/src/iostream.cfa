@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Feb 12 09:26:05 2024
-// Update Count     : 1966
+// Last Modified On : Mon Jul  8 23:45:06 2024
+// Update Count     : 2018
 //
 
 #include "iostream.hfa"
@@ -771,17 +771,21 @@ forall( ostype & | basic_ostream( ostype ) ) {
 // *********************************** istream ***********************************
 
 
+#define FALSE "false"
+#define TRUE "true"
+
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, bool & b ) {
 		if ( eof( is ) ) throwResume ExceptionInst( missing_data );
-		char val[6];
-		int args = fmt( is, "%5s", val );
-		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
-		if ( strcmp( val, "true" ) == 0 ) b = true;
-		else if ( strcmp( val, "false" ) == 0 ) b = false;
-		else {
-			fprintf( stderr, "invalid Boolean constant\n" );
-			abort();									// cannot use abort stream
+		int len = -1;									// len not set if no match
+		// Optional leading whitespace at start of strings.
+		fmt( is, " " FALSE "%n", &len );				// try false
+		if ( len != sizeof( FALSE ) - 1 ) {				// remove null terminate
+			fmt( is, " " TRUE "%n", &len );				// try true
+			if ( len != sizeof( TRUE ) - 1 ) throwResume ExceptionInst( missing_data );
+			b = true;
+		} else {
+			b = false;
 		} // if
 		return is;
 	} // ?|?
@@ -939,15 +943,16 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, const char fmt[] ) {
+	istype & ?|?( istype & is, const char fmt[] ) {		// match text
 		if ( eof( is ) ) throwResume ExceptionInst( missing_data );
 		size_t len = strlen( fmt );
 		char fmtstr[len + 16];
 		strcpy( fmtstr, fmt );							// copy format and add %n
 		strcpy( &fmtstr[len], "%n" );
-		int len2 = -1;
-		fmt( is, fmtstr, &len2 );
-		if ( ! eof( is ) && len2 == -1 ) throwResume ExceptionInst( missing_data );
+		len = -1;
+		// scanf cursor does not move if no match
+		fmt( is, fmtstr, &len );
+		if ( ! eof( is ) && len == -1 ) throwResume ExceptionInst( missing_data );
 		return is;
 	} // ?|?
 

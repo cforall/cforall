@@ -16,7 +16,7 @@ forall( E | Bounded( E ) ) trait Serial {
 
 // Design one
 forall( E, V | Serial( E ) ) trait CfaEnum {
-    char * label( E e );
+    const char * label( E e );
     unsigned int posn( E e );
     V value( E e );
 };

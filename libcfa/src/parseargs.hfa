@@ -9,9 +9,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Wed Oct 12 15:28:01 2022
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Jul  8 18:18:14 2024
+// Update Count     : 2
 //
 #pragma once
 
@@ -30,7 +30,7 @@ extern cfa_option last_option;
 
 static inline void ?{}( cfa_option & this ) {}
 
-forall(T & | { bool parse(const char *, T & ); })
+forall(T & | { bool parse( const char *, T & ); })
 static inline void ?{}( cfa_option & this, char short_name, const char * long_name, const char * help, T & variable ) {
 	this.val        = 0;
 	this.short_name = short_name;

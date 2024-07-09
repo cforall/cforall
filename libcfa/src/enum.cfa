@@ -1,21 +1,71 @@
 #include "enum.hfa"
 #include "fstream.hfa"
+#include <stdlib.h>										// qsort
 #include <string.h>
 
 #pragma GCC visibility push(default)
 
+int scmp( const void * str1, const void * str2 ) {
+    return -strcmp( *(char **)str1, *(char **)str2 );	// dscending order
+} // scmp
+
 forall( istype & | istream( istype ), E, V | CfaEnum( E, V ) )
 istype & ?|?( istype & is, E & e ) {
+//	printf( "here0\n" );
 	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
-	char val[256];
-	int args = fmt( is, "%255s", val );
-	if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+
+	// Match input enumerator string to enumerator labels.
+	int len = -1;
+	const char * cpy[ 20 /*countof( E )*/ ];
+	int i = 0;
 	for ( s; E ) {
-		if ( strcmp(val, label( s )) == 0 ) { e = s; break; }
+		cpy[i] = label( s );
+		printf( "%s\n", cpy[i] );
+		i += 1;
+	}
+	printf( "%d\n", i );
+	qsort( cpy, i, sizeof(char*), scmp );
+	i = 0;
+	for ( s; E ) {
+		printf( "%s\n", cpy[i] );
+		i += 1;
+	}
+	int j = 0;
+  X : for ( s; E ) {
+		len = strlen( cpy[j] );
+		printf( "%s %d\n", cpy[j], len );
+		char fmtstr[len + 16];
+		fmtstr[0] = ' ';								// optional leadig whitespace
+		strcpy( &fmtstr[1], cpy[j] );					// copy format and add %n
+		strcpy( &fmtstr[len + 1], "%n" );
+		printf( "%s\n", fmtstr );
+		len = -1;
+		// scanf cursor does not move if no match
+		fmt( is, fmtstr, &len );
+		printf( "%s %d %d\n", fmtstr, len, j );
+	  if ( eof( is ) ) { break; }
+	  if ( len != -1 ) {
+		  for ( s; E ) {
+			  if ( strcmp( label( s ), cpy[j] ) == 0 ) { e = s; break X; }
+		  }
+	  }
+		j += 1;
 	} else {
-		fprintf( stderr, "invalid enumeration constant\n" );
-		abort();									// cannot use abort stream
+		//ExceptionInst( missing_data );
 	} // for
+	printf( "X %s %d\n", label( e ), len );
+	if ( ! eof( is ) && len == -1 ) throwResume ExceptionInst( missing_data );
+
+	// if ( eof( is ) ) throwResume ExceptionInst( missing_data );
+	// char val[256];
+	// int args = fmt( is, "%255s", val );
+	// if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+	// for ( s; E ) {
+	// 	if ( strcmp(val, label( s )) == 0 ) { e = s; break; }
+	// } else {
+	// 	fprintf( stderr, "invalid enumeration constant\n" );
+	// 	abort();									// cannot use abort stream
+	// } // for
 	return is;
 }
 
