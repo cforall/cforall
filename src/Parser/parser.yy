@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 27 14:45:57 2024
-// Update Count     : 6705
+// Last Modified On : Tue Jul  9 10:29:01 2024
+// Update Count     : 6713
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1997,13 +1997,13 @@ local_label_list:										// GCC, local label
 declaration:											// old & new style declarations
 	c_declaration ';'
 	| cfa_declaration ';'								// CFA
-	| static_assert										// C11
+	| static_assert	';'									// C11
 	;
 
 static_assert:
-	STATICASSERT '(' constant_expression ',' string_literal ')' ';' // C11
+	STATICASSERT '(' constant_expression ',' string_literal ')' // C11
 		{ $$ = DeclarationNode::newStaticAssert( $3, maybeMoveBuild( $5 ) ); }
-	| STATICASSERT '(' constant_expression ')' ';'		// CFA
+	| STATICASSERT '(' constant_expression ')'			// CFA
 		{ $$ = DeclarationNode::newStaticAssert( $3, build_constantStr( yylloc, *new string( "\"\"" ) ) ); }
 
 // C declaration syntax is notoriously confusing and error prone. Cforall provides its own type, variable and function
@@ -2708,7 +2708,7 @@ field_declaration:
 	| INLINE cfa_field_abstract_list ';'				// CFA, new style field declaration
 		{ $$ = $2; }									// mark all fields in list
 	| cfa_typedef_declaration ';'						// CFA
-	| static_assert										// C11
+	| static_assert ';'									// C11
 	;
 
 field_declaring_list_opt:
@@ -3363,6 +3363,8 @@ external_definition:
 			forall = false;
 			$$ = $6;
 		}
+	| ';'												// empty declaration
+		{ $$ = nullptr; }
 	;
 
 external_function_definition:
