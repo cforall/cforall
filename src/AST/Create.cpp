@@ -75,4 +75,20 @@ UnionDecl * asForward( UnionDecl const * decl ) {
 	return fwd;
 }
 
+EnumDecl * asForward( EnumDecl const * decl ) {
+	if ( !decl->body ) {
+		return nullptr;
+	}
+	EnumDecl * fwd = new EnumDecl( decl->location,
+		decl->name,
+		decl->isCfa,
+		vectorCopy( decl->attributes ),
+		decl->linkage,
+		decl->base,
+		decl->hide
+	);
+	fwd->params = vectorCopy( decl->params );
+	return fwd;
+}
+
 }

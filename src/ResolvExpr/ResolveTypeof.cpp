@@ -60,7 +60,8 @@ struct ResolveTypeof : public ast::WithShortCircuiting {
 		// clear qualifiers for base, combine with typeoftype quals regardless
 		if ( typeofType->kind == ast::TypeofType::Basetypeof ) {
 			// replace basetypeof(<enum>) by int
-			if ( newType.as< ast::EnumInstType >() ) {
+			auto enumInst = newType.as< ast::EnumInstType >();
+			if ( enumInst && (!enumInst->base || !enumInst->base->isCfa) ) {
 				newType = new ast::BasicType(
 					ast::BasicKind::SignedInt, newType->qualifiers, copy(newType->attributes) );
 			}

@@ -87,7 +87,7 @@ protected:
 	ast::Linkage::Spec proto_linkage = ast::Linkage::AutoGen;
 
 	// Internal helpers:
-	void genStandardFuncs();
+	virtual void genStandardFuncs();
 	void produceDecl( const ast::FunctionDecl * decl );
 	void produceForwardDecl( const ast::FunctionDecl * decl );
 
@@ -195,10 +195,14 @@ public:
 	}
 
 	bool shouldAutogen() const final { return true; }
+	void generateAndPrependDecls( std::list<ast::ptr<ast::Decl>> & );
+	void genForwards();
 private:
 	void genFuncBody( ast::FunctionDecl * decl ) final;
 	void genFieldCtors() final;
 	const ast::Decl * getDecl() const final { return decl; }
+protected:
+	void genStandardFuncs() override;
 };
 
 class TypeFuncGenerator final : public FuncGenerator {
@@ -240,8 +244,13 @@ void AutogenerateRoutines::previsit( const ast::EnumDecl * enumDecl ) {
 
 	ast::EnumInstType enumInst( enumDecl->name );
 	enumInst.base = enumDecl;
-	EnumFuncGenerator gen( enumDecl, &enumInst, functionNesting );
-	gen.generateAndAppendFunctions( declsToAddAfter );
+	if ( enumDecl->isCfa ) {
+		EnumFuncGenerator gen( enumDecl, &enumInst, functionNesting );
+		gen.generateAndPrependDecls( declsToAddBefore );
+	}
+
+	EnumFuncGenerator gen2( enumDecl, &enumInst, functionNesting );
+	gen2.generateAndAppendFunctions( declsToAddAfter );
 }
 
 void AutogenerateRoutines::previsit( const ast::StructDecl * structDecl ) {
@@ -706,6 +715,41 @@ ast::ExprStmt * UnionFuncGenerator::makeAssignOp( const CodeLocation& location,
 				new ast::VariableExpr( location, srcParam ) ),
 			new ast::SizeofExpr( location, srcParam->type ),
 		} ) );
+}
+
+void EnumFuncGenerator::generateAndPrependDecls( std::list<ast::ptr<ast::Decl>> & decls ) {
+	genForwards();
+	decls.splice( decls.end(), forwards );
+}
+
+void EnumFuncGenerator::genForwards() {
+	forwards.push_back( ast::asForward(decl) );
+
+	ast::FunctionDecl *(FuncGenerator::*standardProtos[4])() const = {
+		&EnumFuncGenerator::genCtorProto, &EnumFuncGenerator::genCopyProto,
+		&EnumFuncGenerator::genDtorProto, &EnumFuncGenerator::genAssignProto };
+
+	for ( auto & generator: standardProtos) {
+		ast::FunctionDecl * decl = (this->*generator)();
+		produceForwardDecl( decl );
+	}
+}
+
+void EnumFuncGenerator::genStandardFuncs() {
+	// do everything FuncGenerator does except not make ForwardDecls
+	ast::FunctionDecl *(FuncGenerator::*standardProtos[4])() const = {
+		&EnumFuncGenerator::genCtorProto, &EnumFuncGenerator::genCopyProto,
+		&EnumFuncGenerator::genDtorProto, &EnumFuncGenerator::genAssignProto };
+
+	for ( auto & generator : standardProtos ) {
+		ast::FunctionDecl * decl = (this->*generator)();
+		produceForwardDecl( decl );
+		genFuncBody( decl );
+		if ( CodeGen::isAssignment( decl->name ) ) {
+			appendReturnThis( decl );
+		}
+		produceDecl( decl );
+	}
 }
 
 void EnumFuncGenerator::genFieldCtors() {

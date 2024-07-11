@@ -26,7 +26,7 @@ struct DeclarationNode final : public ParseList<DeclarationNode> {
 	static DeclarationNode * newFuncSpecifier( ast::Function::Specs );
 	static DeclarationNode * newFunction( const std::string * name, DeclarationNode * ret, DeclarationNode * param, StatementNode * body );
 	static DeclarationNode * newAggregate( ast::AggregateDecl::Aggregate kind, const std::string * name, ExpressionNode * actuals, DeclarationNode * fields, bool body );
-	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool typed, DeclarationNode * base = nullptr, EnumHiding hiding = EnumHiding::Visible );
+	static DeclarationNode * newEnum( const std::string * name, DeclarationNode * constants, bool body, bool isCfa = false, DeclarationNode * base = nullptr, EnumHiding hiding = EnumHiding::Visible );
 	static DeclarationNode * newEnumConstant( const std::string * name, ExpressionNode * constant );
 	static DeclarationNode * newEnumValueGeneric( const std::string * name, InitializerNode * init );
 	static DeclarationNode * newEnumInLine( const std::string * name );

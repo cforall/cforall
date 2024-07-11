@@ -23,5 +23,6 @@ namespace ast {
 FunctionDecl * asForward( FunctionDecl const * );
 StructDecl * asForward( StructDecl const * );
 UnionDecl * asForward( UnionDecl const * );
+EnumDecl * asForward( EnumDecl const * );
 
 }

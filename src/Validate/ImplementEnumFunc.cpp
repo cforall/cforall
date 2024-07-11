@@ -103,7 +103,23 @@ std::vector<ast::ptr<ast::Init>> EnumAttrFuncGenerator::genValueInit() const {
 		ast::ptr<ast::Decl> mem = decl->members.at(i);
 		auto memAsObjectDecl = mem.as<ast::ObjectDecl>();
 		assert(memAsObjectDecl);
-		if (memAsObjectDecl->init) {
+		if (auto& init = memAsObjectDecl->init) {
+			if ( auto singleInit = init.as<ast::SingleInit>() ) {
+				if ( auto nameExpr = singleInit->value.as<ast::NameExpr>() ) {
+					auto name = nameExpr->name;
+					if (auto it = std::find_if(decl->members.begin(), decl->members.end(),
+						[name](ast::ptr<ast::Decl> mem_decl) {
+							return (mem_decl->name == name);
+						}); it != std::end(decl->members)
+					) {
+						auto index = std::distance( decl->members.begin(), it );
+						auto targetInit = inits.at(index).strict_as<ast::SingleInit>();
+						auto targetExpr = targetInit->value;
+						inits.push_back( new ast::SingleInit( targetExpr->location, targetExpr ) );
+						continue;
+					}
+				}
+			}
 			inits.emplace_back(memAsObjectDecl->init);
 		} else {
 			const CodeLocation& location = mem->location;
@@ -405,7 +421,7 @@ void EnumAttrFuncGenerator::genTypeNameBody(ast::FunctionDecl* func) const {
 
 void EnumAttrFuncGenerator::genTypedEnumFunction(const ast::EnumAttribute attr) {
 	if (attr == ast::EnumAttribute::Value) {
-		if (decl->base) {
+		if (decl->isTyped()) {
 			// TypedEnum's backing arrays
 			std::vector<ast::ptr<ast::Init>> inits = genValueInit();
 			ast::ObjectDecl* arrayProto =
