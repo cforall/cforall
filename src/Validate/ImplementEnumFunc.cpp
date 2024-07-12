@@ -24,9 +24,9 @@ public:
 			unsigned int functionNesting )
 		: decl(decl),
 		  functionNesting{functionNesting},
-		  quasi_void_decl(new ast::StructDecl(decl->location, 
-		  	"quasi_void", ast::AggregateDecl::Struct,
-			{}, ast::Linkage::AutoGen)),
+		//   quasi_void_decl(new ast::StructDecl(decl->location,
+		//   	"quasi_void", ast::AggregateDecl::Struct,
+		// 	{}, ast::Linkage::AutoGen)),
 		  proto_linkage{ast::Linkage::Cforall} {}
 
 private:
@@ -207,23 +207,23 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
-	if (decl->isTyped())
-		return genProto(
-			"value",
-			{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
-			{new ast::ObjectDecl(getLocation(), "_ret",
-								ast::deepCopy(decl->base))});
-	else
-		return genQuasiValueProto();
-}
-
-ast::FunctionDecl* EnumAttrFuncGenerator::genQuasiValueProto() const {
+	assert (decl->isTyped());
 	return genProto(
 		"value",
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(getLocation(), "_ret",
-		                		new ast::StructInstType(quasi_void_decl))});
+							ast::deepCopy(decl->base))});
+	// else
+	// 	return genQuasiValueProto();
 }
+
+// ast::FunctionDecl* EnumAttrFuncGenerator::genQuasiValueProto() const {
+// 	return genProto(
+// 		"value",
+// 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
+// 		{new ast::ObjectDecl(getLocation(), "_ret",
+// 		                		new ast::StructInstType(quasi_void_decl))});
+// }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genFromIntProto() const {
 	return genProto(
@@ -389,18 +389,18 @@ void EnumAttrFuncGenerator::genValueOrLabelBody(
 		func->location, {new ast::ReturnStmt(func->location, untyped)});
 }
 
-void EnumAttrFuncGenerator::genQuasiValueBody(ast::FunctionDecl* func) const {
-	auto location = func->location;
-	const ast::ObjectDecl * objDecl = new ast::ObjectDecl(
-		location, "_out", new ast::StructInstType( quasi_void_decl ));
-	const ast::DeclStmt * declStmt = new ast::DeclStmt(location, objDecl);
-	const ast::VariableExpr * varExpr = new ast::VariableExpr(location, objDecl);
-	const ast::ReturnStmt * retStmt = new ast::ReturnStmt(location, varExpr);
+// void EnumAttrFuncGenerator::genQuasiValueBody(ast::FunctionDecl* func) const {
+// 	auto location = func->location;
+// 	const ast::ObjectDecl * objDecl = new ast::ObjectDecl(
+// 		location, "_out", new ast::StructInstType( quasi_void_decl ));
+// 	const ast::DeclStmt * declStmt = new ast::DeclStmt(location, objDecl);
+// 	const ast::VariableExpr * varExpr = new ast::VariableExpr(location, objDecl);
+// 	const ast::ReturnStmt * retStmt = new ast::ReturnStmt(location, varExpr);
 
-	func->stmts = new ast::CompoundStmt(
-		location, {declStmt, retStmt}
-	);
-}
+// 	func->stmts = new ast::CompoundStmt(
+// 		location, {declStmt, retStmt}
+// 	);
+// }
 
 void EnumAttrFuncGenerator::genPosnBody(ast::FunctionDecl* func) const {
 	auto castExpr = new ast::CastExpr(
@@ -432,12 +432,13 @@ void EnumAttrFuncGenerator::genTypedEnumFunction(const ast::EnumAttribute attr) 
 			produceForwardDecl(funcProto);
 			genValueOrLabelBody(funcProto, arrayProto);
 			produceDecl(funcProto);
-		}  else {
-			ast::FunctionDecl* funcProto = genQuasiValueProto();
-			produceForwardDecl(funcProto);
-			genQuasiValueBody(funcProto);
-			produceDecl(funcProto);
-		}
+		}  
+		// else {
+		// 	ast::FunctionDecl* funcProto = genQuasiValueProto();
+		// 	produceForwardDecl(funcProto);
+		// 	// genQuasiValueBody(funcProto);
+		// 	produceDecl(funcProto);
+		// }
 	} else if (attr == ast::EnumAttribute::Label) {
 		std::vector<ast::ptr<ast::Init>> inits = genLabelInit();
 		ast::ObjectDecl* arrayProto =

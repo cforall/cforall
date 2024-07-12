@@ -1,0 +1,8 @@
+#include <fstream.hfa>
+#include <enum.hfa>
+
+enum() E { A, B, C };
+int main() {
+    E e = A;
+    sout | e | posn( e ) | label( e );
+}

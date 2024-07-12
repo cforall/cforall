@@ -783,6 +783,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::WhileDoStmt * node ) {
 		maybe_accept( node, &WhileDoStmt::inits );
 		maybe_accept_top( node, &WhileDoStmt::cond  );
 		maybe_accept_as_compound( node, &WhileDoStmt::body  );
+		maybe_accept_as_compound( node, &WhileDoStmt::else_ );
 	}
 
 	VISIT_END( Stmt, node );
@@ -803,6 +804,7 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ForStmt * node ) {
 		maybe_accept_top( node, &ForStmt::inc   );
 		maybe_accept_top( node, &ForStmt::range_over );
 		maybe_accept_as_compound( node, &ForStmt::body  );
+		maybe_accept_as_compound( node, &ForStmt::else_ );
 	}
 
 	VISIT_END( Stmt, node );

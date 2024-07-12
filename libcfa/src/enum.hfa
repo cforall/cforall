@@ -14,27 +14,29 @@ forall( E | Bounded( E ) ) trait Serial {
     E pred( E e );
 };
 
-// Design one
-forall( E, V | Serial( E ) ) trait CfaEnum {
+forall( E | Serial( E ) ) trait CfaEnum {
     const char * label( E e );
     unsigned int posn( E e );
+};
+
+forall( E, V | CfaEnum( E ) ) trait TypedEnum {
     V value( E e );
 };
 
 // I/O
 
-forall( istype & | istream( istype ), E, V | CfaEnum( E, V ) )
+forall( istype & | istream( istype ), E | CfaEnum( E ) )
 istype & ?|?( istype &, E & );
 
-forall( ostype & | ostream( ostype ), E, V | CfaEnum( E, V ) ) {
+forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 	ostype & ?|?( ostype &, E );
 	OSTYPE_VOID( E );
 }
 
-forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
-	ostype & ?|?( ostype &, E );
-	OSTYPE_VOID( E );
-}
+// forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
+// 	ostype & ?|?( ostype &, E );
+// 	OSTYPE_VOID( E );
+// }
 
 // Design two <- should go for this if we have change the cost model
 // forall( E | Serial( E ) ) trait CfaEnum {
@@ -47,7 +49,7 @@ forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
 // };
 
 static inline
-forall( E, V | CfaEnum( E, V ) ) {
+forall( E | CfaEnum( E ) ) {
     int ?==?( E l, E r ) { return posn( l ) == posn( r ); }	// relational operators
     int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
     int ?<?( E l, E r ) { return posn( l ) < posn( r ); }

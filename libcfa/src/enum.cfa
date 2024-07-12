@@ -9,7 +9,7 @@ int scmp( const void * str1, const void * str2 ) {
     return -strcmp( *(char **)str1, *(char **)str2 );	// dscending order
 } // scmp
 
-forall( istype & | istream( istype ), E, V | CfaEnum( E, V ) )
+forall( istype & | istream( istype ), E | CfaEnum( E ) )
 istype & ?|?( istype & is, E & e ) {
 //	printf( "here0\n" );
 	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
@@ -69,16 +69,18 @@ istype & ?|?( istype & is, E & e ) {
 	return is;
 }
 
-forall( ostype & | ostream( ostype ), E, V | CfaEnum( E, V ) ) {
+// forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
+// 	ostype & ?|?( ostype & os, E e ) {
+// 		return os | label( e );
+// 	}
+// 	OSTYPE_VOID_IMPL( E )
+// }
+
+forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 	ostype & ?|?( ostype & os, E e ) {
 		return os | label( e );
 	}
 	OSTYPE_VOID_IMPL( E )
 }
 
-forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
-	ostype & ?|?( ostype & os, E e ) {
-		return os | label( e );
-	}
-	OSTYPE_VOID_IMPL( E )
-}
+// 
