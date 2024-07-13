@@ -1484,12 +1484,34 @@ namespace {
 	}
 
 	void Finder::postvisit( const ast::CountExpr * countExpr ) {
-		assert( countExpr->type );
-		auto enumInst = countExpr->type.as<ast::EnumInstType>();
-		if ( !enumInst ) {
-			SemanticError( countExpr, "Count Expression only supports Enum Type as operand: ");
+		const ast::UntypedExpr * untyped;
+		if ( countExpr->type ) {
+			auto enumInst = countExpr->type.as<ast::EnumInstType>();
+			if ( enumInst ) {
+				addCandidate( ast::ConstantExpr::from_ulong(countExpr->location, enumInst->base->members.size()), tenv );
+				return;
+			}
+			auto untypedFirst = ast::UntypedExpr::createCall( countExpr->location, "lowerBound", {} );
+			auto castFirst = new ast::CastExpr( countExpr->location, untypedFirst , countExpr->type );
+			untyped = ast::UntypedExpr::createCall(
+				countExpr->location, "Countof", { castFirst }
+			);
 		}
-		addCandidate( ast::ConstantExpr::from_ulong(countExpr->location, enumInst->base->members.size()), tenv );
+		if (!untyped) untyped = ast::UntypedExpr::createCall(
+				countExpr->location, "Countof", { countExpr->expr }
+		);
+		CandidateFinder finder( context, tenv );
+		finder.find( untyped );
+		CandidateList winners = findMinCost( finder.candidates );
+		if ( winners.size() == 0 ) {
+			SemanticError( countExpr->expr, "Countof is not implemented for operand: " );
+		}
+		if ( winners.size() !=  1 ) {
+			SemanticError( countExpr->expr, "Ambiguous expression in countof operand: " );
+		}
+		CandidateRef & choice = winners.front();
+		choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
+		addCandidate( *choice, choice->expr );
 	}
 
 	void Finder::postvisit( const ast::AlignofExpr * alignofExpr ) {

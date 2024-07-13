@@ -1745,7 +1745,7 @@ static const yytype_int16 yydefact[] =
     1045,   715,   498,   588,   725,   499,   584,   585,   589,     0,
      678,  1083,   499,  1088,  1080,   498,  1085,   855,     0,   855,
      679,   679,     0,     0,   498,     0,     0,   860,   864,    70,
-       0,    26,   498,    98,     0,   498,   107,   498,   498,    93,
+       0,    26,   498,    98,     0,   498,   106,   498,   498,    93,
      498,   100,     0,    36,    40,    41,    37,    38,    39,   498,
       96,    97,   498,   498,   498,     2,   111,   112,     0,     0,
      190,     0,     0,   624,     0,  1093,     0,     0,     0,     0,
@@ -1807,7 +1807,7 @@ static const yytype_int16 yydefact[] =
     1086,     2,   108,   498,     3,   595,     3,   499,  1042,   855,
     1041,  1044,   498,     3,  1030,  1036,   679,  1116,     0,   679,
      684,   679,     0,   689,  1116,     2,   859,   866,     0,    99,
-     102,   498,   106,   498,     0,   105,   101,   103,   498,     0,
+     102,   498,   107,   498,     0,   105,   101,   103,   498,     0,
      119,     0,     0,     0,   123,   127,   126,   191,     0,     0,
        0,   740,   116,   184,     0,     0,     0,    49,    50,    88,
        0,    88,    88,     0,    76,    78,    52,     0,    48,     0,
@@ -7637,7 +7637,7 @@ static const yytype_int8 yyr2[] =
        0,     1,     1,     3,     1,     1,     1,     3,     1,     2,
        4,     3,     5,     3,     5,     2,     2,     2,     0,     2,
        1,     1,     1,     2,     2,     2,     2,     2,     2,     4,
-       2,     4,     4,     4,     6,     4,     4,     2,     1,     1,
+       2,     4,     4,     4,     6,     4,     2,     4,     1,     1,
        1,     1,     1,     1,     1,     1,     4,     5,     5,     4,
        5,     5,     5,     4,     2,     2,     3,     3,     1,     1,
        1,     3,     1,     3,     3,     3,     1,     3,     3,     1,
@@ -9058,13 +9058,13 @@ yyreduce:
 
   case 106:
 #line 973 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.expr) = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuildType( (yyvsp[-1].decl) ) ) ); }
+                {  (yyval.expr) = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuild( (yyvsp[0].expr) ) ) ); }
 #line 9063 "Parser/parser.cc"
     break;
 
   case 107:
 #line 975 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "countof for expressions is currently unimplemented. "); (yyval.expr) = nullptr; }
+                { (yyval.expr) = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuildType( (yyvsp[-1].decl) ) ) ); }
 #line 9069 "Parser/parser.cc"
     break;
 

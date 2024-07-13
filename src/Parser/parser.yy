@@ -969,10 +969,10 @@ unary_expression:
 			SemanticError( yylloc, "typeid name is currently unimplemented." ); $$ = nullptr;
 			// $$ = new ExpressionNode( build_offsetOf( $3, build_varref( $5 ) ) );
 		}
+	| COUNTOF unary_expression
+		{  $$ = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuild( $2 ) ) ); }
 	| COUNTOF '(' type_no_function ')'
 		{ $$ = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
-	| COUNTOF unary_expression
-		{ SemanticError( yylloc, "countof for expressions is currently unimplemented. "); $$ = nullptr; }
 	;
 
 ptrref_operator:

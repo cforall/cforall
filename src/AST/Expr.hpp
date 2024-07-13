@@ -495,8 +495,10 @@ private:
 
 class CountExpr final : public Expr {
 public:
+	ptr<Expr> expr;
 	ptr<Type> type;
 
+	CountExpr( const CodeLocation & loc, const Expr * t );
 	CountExpr( const CodeLocation & loc, const Type * t );
 
 	const Expr * accept( Visitor & v )const override { return v.visit( this ); }

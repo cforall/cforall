@@ -227,7 +227,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genFromIntProto() const {
 	return genProto(
-		"fromInt",
+		"fromInt_unsafe",
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::BasicType(ast::BasicKind::UnsignedInt))},
 		{new ast::ObjectDecl(getLocation(), "_ret", new ast::EnumInstType(decl))}
 	);
@@ -312,8 +312,8 @@ void EnumAttrFuncGenerator::genSerialTraitFuncs() {
 	ast::FunctionDecl * protos[4] = {
 		genFromIntProto(),
 		genFromInstanceProto(),
-		genInstToInstFuncProto("succ"),
-		genInstToInstFuncProto("pred")
+		genInstToInstFuncProto("succ_unsafe"),
+		genInstToInstFuncProto("pred_unsafe")
 	};
 	for (auto& proto: protos) produceForwardDecl(proto);
 	genFromIntBody(protos[0]);

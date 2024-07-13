@@ -1338,7 +1338,11 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::CountExpr * node ) {
 			guard_symtab guard { *this };
 			maybe_accept( node, &CountExpr::result );
 		}
-		maybe_accept( node, &CountExpr::type );
+		if ( node->type ) {
+			maybe_accept( node, &CountExpr::type );
+		} else {
+			maybe_accept( node, &CountExpr::expr );
+		}
 	}
 	VISIT_END( Expr, node );
 }

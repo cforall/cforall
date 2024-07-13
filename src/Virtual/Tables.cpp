@@ -121,8 +121,6 @@ static std::vector<ast::ptr<ast::Init>> buildInits(
 				new ast::NameExpr( location, field->name )
 			) );
 		}
-		//ast::Expr * expr = buildInitExpr(...);
-		//inits.push_back( new ast::SingleInit( location, expr ) )
 	}
 
 	return inits;
@@ -161,6 +159,16 @@ ast::FunctionDecl * makeGetExceptionForward(
 		ast::Type const * exceptType ) {
 	assert( vtableType );
 	assert( exceptType );
+
+	// If this is called after Fix Return Statements (currently it is in
+	// Implement Concurrent Keywords) then this must be marked as unused
+	// to avoid warnings.
+	ast::ObjectDecl * frontRet = new ast::ObjectDecl( location,
+		"_retvalue",
+		new ast::ReferenceType( vtableType )
+	);
+	frontRet->attributes.emplace_back( new ast::Attribute( "unused" ) );
+
 	return new ast::FunctionDecl(
 		location,
 		functionName,
@@ -169,11 +177,7 @@ ast::FunctionDecl * makeGetExceptionForward(
 			"__unused",
 			new ast::PointerType( exceptType )
 		) },
-		{ new ast::ObjectDecl(
-			location,
-			"_retvalue",
-			new ast::ReferenceType( vtableType )
-		) },
+		{ frontRet },
 		nullptr,
 		ast::Storage::Classes(),
 		ast::Linkage::Cforall,

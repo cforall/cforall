@@ -5,6 +5,37 @@
 
 #pragma GCC visibility push(default)
 
+forall( E | Serial( E ) ) {
+    E fromInt( unsigned i ) {
+        E upper = upperBound();
+        E lower = lowerBound();
+        // It is okay to overflow as overflow will be theoretically caught by the other bound
+        assert( i <= fromInstance(upper) && i >= fromInstance(lower) 
+            &&  "Not a valid value");
+        return fromInt_unsafe( i );
+    }
+
+    E succ( E e ) {
+        E upper = upperBound();
+        assert( (fromInstance(e) < fromInstance(upper)) 
+            && "Calling succ() on the last" );
+        return succ_unsafe(e);
+    }
+
+    E pred( E e ) {
+        E lower = lowerBound();
+        assert( (fromInstance(e) > fromInstance(lower)) 
+            && "Calling pred() on the first" );
+        return pred_unsafe(e);
+    }
+
+    int Countof( __attribute__((unused)) E e ) {
+        E upper = upperBound();
+        E lower = lowerBound();
+		return fromInstance( upper ) + fromInstance( lower ) + 1;
+    }
+}
+
 int scmp( const void * str1, const void * str2 ) {
     return -strcmp( *(char **)str1, *(char **)str2 );	// dscending order
 } // scmp

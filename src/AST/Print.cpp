@@ -1145,7 +1145,8 @@ public:
 	virtual const ast::Expr * visit( const ast::CountExpr * node ) override final {
 		os << "Count Expression on: ";
 		++indent;
-		node->type->accept( *this );
+		if ( node->type ) node->type->accept( *this );
+		else safe_print( node->expr );
 		--indent;
 		postprint( node );
 		return node;

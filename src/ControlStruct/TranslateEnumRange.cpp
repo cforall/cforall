@@ -80,7 +80,7 @@ const ast::Stmt* translateEnumRangeCore::postvisit( const ast::ForStmt * stmt ) 
         {   new ast::NameExpr( location, indexName ),
             ast::UntypedExpr::createCall( location, "upperBound", {} )  });
     auto increment = ast::UntypedExpr::createCall( location, 
-        stmt->is_inc? "succ": "pred",
+        stmt->is_inc? "succ_unsafe": "pred_unsafe",
         { new ast::NameExpr( location, indexName ) });
     auto assig = ast::UntypedExpr::createAssign( location, new ast::NameExpr( location, indexName ), increment );
     auto mut = ast::mutate_field( stmt, &ast::ForStmt::cond, condition );

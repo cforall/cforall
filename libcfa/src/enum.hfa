@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include "iostream.hfa"
 
 forall( E ) trait Bounded {
@@ -9,10 +10,29 @@ forall( E ) trait Bounded {
 
 forall( E | Bounded( E ) ) trait Serial {
     unsigned fromInstance( E e );
+    E fromInt_unsafe( unsigned i );
+    E succ_unsafe( E e );
+    E pred_unsafe( E e );
+};
+
+forall( E | Serial( E ) ) {
     E fromInt( unsigned i );
     E succ( E e );
     E pred( E e );
-};
+    int Countof( E e );
+}
+
+// forall( E | Bounded(E) ) trait SafeSerial {
+//     // unsigned fromInstance( E e );
+//     E fromInt_unsafe( unsigned i );
+//     // E succ_unsafe( E e );
+//     //E pred_unsafe( E e );
+
+//     unsigned fromInstance( E e );
+//     E fromInt( unsigned i );
+//     E succ( E e );
+//     E pred( E e );
+// };
 
 forall( E | Serial( E ) ) trait CfaEnum {
     const char * label( E e );
@@ -32,21 +52,6 @@ forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 	ostype & ?|?( ostype &, E );
 	OSTYPE_VOID( E );
 }
-
-// forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
-// 	ostype & ?|?( ostype &, E );
-// 	OSTYPE_VOID( E );
-// }
-
-// Design two <- should go for this if we have change the cost model
-// forall( E | Serial( E ) ) trait CfaEnum {
-//     char * label( E e );
-//     unsigned int posn( E e );
-// };
-
-// forall( E, V| CfaEnum( E)) trait TypedEnum {
-//     V value( E e);
-// };
 
 static inline
 forall( E | CfaEnum( E ) ) {
