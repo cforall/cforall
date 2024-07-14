@@ -321,9 +321,9 @@ ast::ptr< ast::Expr > findSingleExpression(
 }
 
 namespace {
-	bool structOrUnion( const Candidate & i ) {
+	bool structOrUnionOrEnum( const Candidate & i ) {
 		const ast::Type * t = i.expr->result->stripReferences();
-		return dynamic_cast< const ast::StructInstType * >( t ) || dynamic_cast< const ast::UnionInstType * >( t );
+		return dynamic_cast< const ast::StructInstType * >( t ) || dynamic_cast< const ast::UnionInstType * >( t ) || dynamic_cast< const ast::EnumInstType * >( t );
 	}
 	/// Predicate for "Candidate has integral type"
 	bool hasIntegralType( const Candidate & i ) {
@@ -1139,7 +1139,7 @@ const ast::WithStmt * Resolver::previsit( const ast::WithStmt * withStmt ) {
 void Resolver::resolveWithExprs(std::vector<ast::ptr<ast::Expr>> & exprs, std::list<ast::ptr<ast::Stmt>> & stmtsToAdd) {
 	for (auto & expr : exprs) {
 		// only struct- and union-typed expressions are viable candidates
-		expr = findKindExpression( expr, context, structOrUnion, "with expression" );
+		expr = findKindExpression( expr, context, structOrUnionOrEnum, "with expression" );
 
 		// if with expression might be impure, create a temporary so that it is evaluated once
 		if ( Tuples::maybeImpure( expr ) ) {

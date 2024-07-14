@@ -300,10 +300,10 @@ const ast::Expr * TranslateDimensionCore::postvisit(
 
 const ast::Expr * TranslateDimensionCore::postvisit(
 		const ast::TypeExpr * expr ) {
-	if ( auto instType = dynamic_cast<const ast::EnumInstType *>( expr->type.get() ) ) {
-		const ast::EnumDecl * baseEnum = instType->base.get();
-		return ast::ConstantExpr::from_int( expr->location, baseEnum->members.size() );
-	}
+	// if ( auto instType = dynamic_cast<const ast::EnumInstType *>( expr->type.get() ) ) {
+	// 	const ast::EnumDecl * baseEnum = instType->base.get();
+	// 	return ast::ConstantExpr::from_int( expr->location, baseEnum->members.size() );
+	// }
 	return expr;
 }
 

@@ -418,16 +418,34 @@ void SymbolTable::addTrait( const TraitDecl * decl ) {
 
 void SymbolTable::addWith( const std::vector< ptr<Expr> > & withExprs, const Decl * withStmt ) {
 	for ( const Expr * expr : withExprs ) {
-		if ( ! expr->result ) continue;
-		const Type * resTy = expr->result->stripReferences();
-		auto aggrType = dynamic_cast< const BaseInstType * >( resTy );
-		assertf( aggrType, "WithStmt expr has non-aggregate type: %s",
-			toString( expr->result ).c_str() );
-		const AggregateDecl * aggr = aggrType->aggr();
-		assertf( aggr, "WithStmt has null aggregate from type: %s",
-			toString( expr->result ).c_str() );
+		if ( expr->result ) {
+			const Type * resTy = expr->result->stripReferences();
+			auto aggrType = dynamic_cast< const BaseInstType * >( resTy );
+			assertf( aggrType, "WithStmt expr has non-aggregate type: %s",
+				toString( expr->result ).c_str() );
+			const AggregateDecl * aggr = aggrType->aggr();
+			assertf( aggr, "WithStmt has null aggregate from type: %s",
+				toString( expr->result ).c_str() );
 
-		addMembers( aggr, expr, OnConflict::deleteWith( withStmt ) );
+			addMembers( aggr, expr, OnConflict::deleteWith( withStmt ) );
+		} else {
+			auto typeExpr = dynamic_cast< const ast::TypeExpr *>( expr );
+			if ( !typeExpr ) continue;
+			auto declEnumInst = typeExpr->type.as<ast::EnumInstType>();
+			// assertf( declEnumInst,  "WithStmt expr unsupprot type expression: %s",
+			// 	toString( typeExpr->type ).c_str());
+			if ( !declEnumInst ) continue;
+			
+			const EnumDecl * aggr = declEnumInst->aggr();
+			// assertf( aggr, "WithStmt has null aggregate from type: %s",
+			// 	toString( typeExpr ).c_str() );
+			// addMembers( aggr, expr, OnConflict::deleteWith( withStmt ) );
+			if ( !aggr ) {
+				aggr = lookupEnum( declEnumInst->name );
+				assert( aggr );
+			}
+			addMembers( aggr, expr, OnConflict::deleteWith( withStmt ) );
+		}
 	}
 }
 
@@ -799,7 +817,8 @@ void SymbolTable::addMembers(
 		const Type * t = dwt->get_type()->stripReferences();
 		if ( auto rty = dynamic_cast<const BaseInstType *>( t ) ) {
 			if ( ! dynamic_cast<const StructInstType *>(rty)
-				&& ! dynamic_cast<const UnionInstType *>(rty) ) continue;
+				&& ! dynamic_cast<const UnionInstType *>(rty)
+				&& ! dynamic_cast<const EnumInstType *>(rty) ) continue;
 			ResolvExpr::Cost cost = ResolvExpr::Cost::zero;
 			ast::ptr<ast::TypeSubstitution> tmp = expr->env;
 			expr = mutate_field(expr, &Expr::env, nullptr);
