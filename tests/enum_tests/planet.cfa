@@ -1,0 +1,53 @@
+#include <fstream.hfa>
+#include <stdlib.hfa>
+#include <enum.hfa>
+
+struct MR { double mass, radius; };
+
+enum( MR ) Planet {										// typed enumeration
+	//          mass (kg)  radius (km)
+	MERCURY = { 0.330_E24, 2.4397_E6 },
+	VENUS   = { 4.869_E24, 6.0518_E6 },
+	EARTH   = { 5.976_E24, 6.3781_E6 },
+	MOON    = { 7.346_E22, 1.7380_E6 },					// not a planet
+	MARS    = { 0.642_E24, 3.3972_E6 },
+	JUPITER = { 1898._E24, 71.492_E6 },
+	SATURN  = { 568.8_E24, 60.268_E6 },
+	URANUS  = { 86.86_E24, 25.559_E6 },
+	NEPTUNE = { 102.4_E24, 24.746_E6 },
+	PLUTO   = { 1.303_E22, 1.1880_E6 },					// not a planet
+};
+
+enum( double ) { G = 6.6743_E-11 };						// universal gravitational constant (m3 kg-1 s-2)
+
+static double surfaceGravity( Planet p ) with( p ) {
+//	return G * mass / ( radius \ 2 );					// no qualification, exponentiation
+	return G * p.mass / ( p.radius \ 2 );				// qualification, exponentiation
+}
+static double surfaceWeight( Planet p, double otherMass ) {
+	return otherMass * surfaceGravity( p );
+}
+
+int main( int argc, char * argv[] ) {
+//	if ( argc != 2 ) exit | "Usage: " | argv[0] | "earth-weight"; // terminate program
+//	double earthWeight = convert( argv[1] );
+	double earthWeight;
+	sin | earthWeight;									// test-suite input comes for indirection
+	double earthMass = earthWeight / surfaceGravity( EARTH );
+
+//	Planet rp = fromInt( prng( countof( Planet ) ) );	// select random orbiting body
+	Planet rp = fromInt( countof( Planet ) - 1 );		// non-random for test suite
+	choose( rp ) {										// implicit breaks
+	  case MERCURY, VENUS, EARTH, MARS:
+		sout | rp | "is a rocky planet";
+	  case JUPITER, SATURN, URANUS, NEPTUNE:
+		sout | rp | "is a gas-giant planet";
+	  default:
+		sout | rp | "is not a planet";
+	}
+
+	for ( p; Planet ) {									// enumerate
+		sout | "Your weight on" | ( p == MOON ? "the" : " " ) | p
+			 | "is" | wd( 1,1,  surfaceWeight( p, earthMass ) ) | "kg";
+	}
+}

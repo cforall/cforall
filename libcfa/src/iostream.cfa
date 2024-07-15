@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  8 23:45:06 2024
-// Update Count     : 2018
+// Last Modified On : Fri Jul 12 05:45:45 2024
+// Update Count     : 2019
 //
 
 #include "iostream.hfa"
@@ -890,7 +890,7 @@ forall( istype & | basic_istream( istype ) ) {
 				ullli = ullli * 10 + s[i] - '0';
 			} // for
 			if ( sign ) ullli = -ullli;
-		} else if ( sign ) ungetc( is, '-' );			// return minus when no digits
+		} else if ( sign ) ungetc( '-', is );			// return minus when no digits
 		return is;
 	} // ?|?
 	#endif // __SIZEOF_INT128__
@@ -1068,7 +1068,7 @@ forall( istype & | basic_istream( istype ) ) {
 				fmt( is, "%c", &peek );					// check for whitespace terminator
 				// fprintf( stderr, "peek %d '%c'\n", args, peek );
 				if ( ! eof( is ) ) {					// can only fail at eof
-					ungetc( is, peek );
+					ungetc( peek, is );
 					if ( ! isspace( peek ) ) throwResume ExceptionInst( cstring_length );
 				} // if
 			} // if
@@ -1091,7 +1091,7 @@ forall( istype & | basic_istream( istype ) ) {
 					fmt( is, "%c", &peek );				// check for delimiter
 					if ( ! eof( is ) ) {
 						if ( peek != delimiters[0] ) {
-							ungetc( is, peek );
+							ungetc( peek, is );
 							throwResume ExceptionInst( cstring_length );
 						} // if
 					} // if
@@ -1111,7 +1111,7 @@ forall( istype & | basic_istream( istype ) ) {
 					fmt( is, "%c", &peek );				// check for whitespace terminator
 					// fprintf( stderr, "peek %d '%c'\n", args, peek );
 					if ( ! eof( is ) ) {
-						ungetc( is, peek );
+						ungetc( peek, is );
 						if ( flags.inex ^ strchr( scanset, peek ) != 0p ) throwResume ExceptionInst( cstring_length );
 					} // if
 				} // if

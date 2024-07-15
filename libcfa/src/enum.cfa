@@ -1,6 +1,5 @@
 #include "enum.hfa"
 #include "fstream.hfa"
-#include <stdlib.h>										// qsort
 #include <string.h>
 
 #pragma GCC visibility push(default)
@@ -10,22 +9,23 @@ forall( E | Serial( E ) ) {
         E upper = upperBound();
         E lower = lowerBound();
         // It is okay to overflow as overflow will be theoretically caught by the other bound
-        assert( i <= fromInstance(upper) && i >= fromInstance(lower) 
-            &&  "Not a valid value");
+		if ( i < fromInstance( lower ) || i > fromInstance( upper ) )
+			abort( "call to fromInt has index %d outside enumeration range %d-%d",
+				   i, fromInstance( lower ), fromInstance( upper ) );
         return fromInt_unsafe( i );
     }
 
     E succ( E e ) {
         E upper = upperBound();
-        assert( (fromInstance(e) < fromInstance(upper)) 
-            && "Calling succ() on the last" );
+		if ( fromInstance( e ) >= fromInstance( upper ) )
+			abort( "call to succ() exceeds enumeration upper bound of %d", fromInstance( upper ) );
         return succ_unsafe(e);
     }
 
     E pred( E e ) {
         E lower = lowerBound();
-        assert( (fromInstance(e) > fromInstance(lower)) 
-            && "Calling pred() on the first" );
+		if ( fromInstance(e) <= fromInstance(lower ) )
+			abort( "call to pred() exceeds enumeration lower bound of %d", fromInstance( lower ) );
         return pred_unsafe(e);
     }
 
@@ -36,76 +36,77 @@ forall( E | Serial( E ) ) {
     }
 }
 
-int scmp( const void * str1, const void * str2 ) {
-    return -strcmp( *(char **)str1, *(char **)str2 );	// dscending order
-} // scmp
-
 forall( istype & | istream( istype ), E | CfaEnum( E ) )
 istype & ?|?( istype & is, E & e ) {
-//	printf( "here0\n" );
+//	fprintf( stderr, "here0\n" );
 	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
 
 	// Match input enumerator string to enumerator labels.
-	int len = -1;
-	const char * cpy[ 20 /*countof( E )*/ ];
+	int N = Countof( e ), lnths[N], max = 0;
+//	printf( "N %d\n", N );
+//	for ( s; E : i; 0~@ ) {
 	int i = 0;
 	for ( s; E ) {
-		cpy[i] = label( s );
-		printf( "%s\n", cpy[i] );
+		lnths[i] = strlen( label( s ) );
+		if ( lnths[i] > max ) max = lnths[i];
+//		fprintf( stderr, "%s %d %d\n", label( s ), lnths[i], max );
 		i += 1;
-	}
-	printf( "%d\n", i );
-	qsort( cpy, i, sizeof(char*), scmp );
-	i = 0;
-	for ( s; E ) {
-		printf( "%s\n", cpy[i] );
-		i += 1;
-	}
-	int j = 0;
-  X : for ( s; E ) {
-		len = strlen( cpy[j] );
-		printf( "%s %d\n", cpy[j], len );
-		char fmtstr[len + 16];
-		fmtstr[0] = ' ';								// optional leadig whitespace
-		strcpy( &fmtstr[1], cpy[j] );					// copy format and add %n
-		strcpy( &fmtstr[len + 1], "%n" );
-		printf( "%s\n", fmtstr );
-		len = -1;
-		// scanf cursor does not move if no match
-		fmt( is, fmtstr, &len );
-		printf( "%s %d %d\n", fmtstr, len, j );
-	  if ( eof( is ) ) { break; }
-	  if ( len != -1 ) {
-		  for ( s; E ) {
-			  if ( strcmp( label( s ), cpy[j] ) == 0 ) { e = s; break X; }
-		  }
-	  }
-		j += 1;
-	} else {
-		//ExceptionInst( missing_data );
 	} // for
-	printf( "X %s %d\n", label( e ), len );
-	if ( ! eof( is ) && len == -1 ) throwResume ExceptionInst( missing_data );
 
-	// if ( eof( is ) ) throwResume ExceptionInst( missing_data );
-	// char val[256];
-	// int args = fmt( is, "%255s", val );
-	// if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
-	// for ( s; E ) {
-	// 	if ( strcmp(val, label( s )) == 0 ) { e = s; break; }
-	// } else {
-	// 	fprintf( stderr, "invalid enumeration constant\n" );
-	// 	abort();									// cannot use abort stream
-	// } // for
+	int win = -1;
+	char ch, curr = '\0', prev = '\0';
+
+	fmt( is, " " );										// skip optional whitespace
+	for ( c; max ) {
+		int args = fmt( is, "%c", &ch );				// read character
+		if ( eof( is ) ) {
+//			fprintf( stderr, "Eof1\n" );
+			if ( c == 0 ) return is;					// no characters read ?
+			clear( is );								// => reset EOF => detect again on next read
+//			fprintf( stderr, "Eof2\n" );
+			goto W;
+		}
+		if ( args != 1 ) throwResume ExceptionInst( missing_data );
+//		printf( "read '%c'\n", ch );
+		for ( i; N ) {
+//			printf( "%d %d %d\n", c, i, lnths[i] );
+			if ( c < lnths[i] ) {						// eligible for this checking round ?
+				char match = label( fromInt( i ) )[c];	// optimization
+//				printf( "%c '%c'\n", match, ch );
+				if ( (match == ch) && (c == 0 || curr == label( fromInt( i ) )[c - 1]) ) {
+//					printf( "match %d %d %d '%c' '%c' '%c' '%c' 'c'\n", c, i, lnths[i], match, ch, prev, label( fromInt( i ) )[c - 1] );
+					win = c;
+					prev = curr;
+					curr = ch;
+					break;
+				} // if
+			} // if
+		} else {
+//			fprintf( stderr, "finished win: %d ch: '%c' curr: '%c' prev: '%c'\n", win, ch, curr, prev );
+			ungetc( ch, is );
+			if ( win == -1 ) throwResume ExceptionInst( missing_data );
+			goto W;										// break does not work
+		} // for
+//		printf( "\n" );
+//	} else {
+//		fprintf( stderr, "finished2 %d\n", win );
+ 	} // for
+  W :;
+	for ( i; N ) {										// scan for winner, must succeed
+		if ( win == lnths[i] - 1 ) {
+			char match = label( fromInt( i ) )[win];	// optimization
+//			printf( "finished1 win: %d i: %d lnth: %d match: '%c' curr: '%c' prev: '%c'\n", win, i, lnths[i], match, curr, prev );
+			if ( (match == curr) && (win == 0 || prev == label( fromInt( i ) )[win - 1]) ) {
+				e = fromInt( i );
+				break;
+			}
+		} // if
+	} else {
+//		fprintf( stderr, "finished3 %d\n", win );
+		throwResume ExceptionInst( missing_data );
+	} // for
 	return is;
 }
-
-// forall( ostype & | ostream( ostype ), E | CfaEnum( E, quasi_void ) ) {
-// 	ostype & ?|?( ostype & os, E e ) {
-// 		return os | label( e );
-// 	}
-// 	OSTYPE_VOID_IMPL( E )
-// }
 
 forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 	ostype & ?|?( ostype & os, E e ) {
@@ -113,5 +114,3 @@ forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 	}
 	OSTYPE_VOID_IMPL( E )
 }
-
-// 

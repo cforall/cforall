@@ -1,6 +1,5 @@
 #pragma once
 
-#include <assert.h>
 #include "iostream.hfa"
 
 forall( E ) trait Bounded {

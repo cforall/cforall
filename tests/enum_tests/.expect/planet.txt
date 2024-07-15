@@ -1,0 +1,11 @@
+PLUTO is not a planet
+Your weight on MERCURY is 37.7 kg
+Your weight on VENUS is 90.5 kg
+Your weight on EARTH is 100.0 kg
+Your weight on the MOON is 16.6 kg
+Your weight on MARS is 37.9 kg
+Your weight on JUPITER is 252.8 kg
+Your weight on SATURN is 106.6 kg
+Your weight on URANUS is 90.5 kg
+Your weight on NEPTUNE is 113.8 kg
+Your weight on PLUTO is 6.3 kg

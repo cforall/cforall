@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 11 20:55:45 2024
-// Update Count     : 580
+// Last Modified On : Fri Jul 12 05:45:49 2024
+// Update Count     : 581
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -279,7 +279,7 @@ ifstream & read( ifstream & is, char data[], size_t size ) {
 	return is;
 } // read
 
-ifstream &ungetc( ifstream & is, char c ) {
+ifstream &ungetc( char c, ifstream & is ) {
 	if ( fail( is ) ) {
 		abort | IO_MSG "attempt ungetc I/O on failed stream";
 	} // if

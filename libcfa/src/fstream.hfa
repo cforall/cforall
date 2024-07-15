@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 11 20:35:00 2024
-// Update Count     : 274
+// Last Modified On : Fri Jul 12 05:45:50 2024
+// Update Count     : 275
 //
 
 #pragma once
@@ -117,7 +117,7 @@ void unlock( ifstream & );
 void nlOn( ifstream & );
 void nlOff( ifstream & );
 int fmt( ifstream &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
-ifstream & ungetc( ifstream & is, char c );
+ifstream & ungetc( char c, ifstream & is );
 bool eof( ifstream & is );
 
 bool fail( ifstream & is );
