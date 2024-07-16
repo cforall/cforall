@@ -41,7 +41,8 @@ istype & ?|?( istype & is, E & e ) {
 //	fprintf( stderr, "here0\n" );
 	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
 
-	// Match input enumerator string to enumerator labels.
+	// Match longest input enumerator string to enumerator labels, where enumerator names are unique.
+
 	int N = Countof( e ), lnths[N], max = 0;
 //	printf( "N %d\n", N );
 //	for ( s; E : i; 0~@ ) {
@@ -59,20 +60,22 @@ istype & ?|?( istype & is, E & e ) {
 	fmt( is, " " );										// skip optional whitespace
 	for ( c; max ) {
 		int args = fmt( is, "%c", &ch );				// read character
-		if ( eof( is ) ) {
+	  if ( eof( is ) ) {
 //			fprintf( stderr, "Eof1\n" );
 			if ( c == 0 ) return is;					// no characters read ?
-			clear( is );								// => reset EOF => detect again on next read
+			clear( is );								// => read something => reset EOF => detect again on next read
 //			fprintf( stderr, "Eof2\n" );
-			goto W;
-		}
+			break;
+		} // if
 		if ( args != 1 ) throwResume ExceptionInst( missing_data );
+
 //		printf( "read '%c'\n", ch );
-		for ( i; N ) {
+		for ( i; N ) {									// scan enumeration strings for winner
 //			printf( "%d %d %d\n", c, i, lnths[i] );
 			if ( c < lnths[i] ) {						// eligible for this checking round ?
 				char match = label( fromInt( i ) )[c];	// optimization
 //				printf( "%c '%c'\n", match, ch );
+				// Stop on first match, could be other matches.
 				if ( (match == ch) && (c == 0 || curr == label( fromInt( i ) )[c - 1]) ) {
 //					printf( "match %d %d %d '%c' '%c' '%c' '%c' 'c'\n", c, i, lnths[i], match, ch, prev, label( fromInt( i ) )[c - 1] );
 					win = c;
@@ -91,15 +94,15 @@ istype & ?|?( istype & is, E & e ) {
 //	} else {
 //		fprintf( stderr, "finished2 %d\n", win );
  	} // for
-  W :;
-	for ( i; N ) {										// scan for winner, must succeed
+  W: ;
+	for ( i; N ) {										// scan enumeration strings for winner
 		if ( win == lnths[i] - 1 ) {
 			char match = label( fromInt( i ) )[win];	// optimization
 //			printf( "finished1 win: %d i: %d lnth: %d match: '%c' curr: '%c' prev: '%c'\n", win, i, lnths[i], match, curr, prev );
 			if ( (match == curr) && (win == 0 || prev == label( fromInt( i ) )[win - 1]) ) {
 				e = fromInt( i );
 				break;
-			}
+			} // if
 		} // if
 	} else {
 //		fprintf( stderr, "finished3 %d\n", win );

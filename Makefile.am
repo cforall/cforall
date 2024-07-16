@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 22:14:18 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Wed May 17 11:02:34 2023
-## Update Count     : 56
+## Last Modified On : Tue Jul 16 16:59:12 2024
+## Update Count     : 57
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -34,7 +34,7 @@ noinst_DATA = @LIBCFA_TARGET_MAKEFILES@
 
 man1_MANS = doc/man/cfa.1
 
-EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libcfa/Makefile.dist.in tools/build/distcc_hash tools/build/push2dist.sh
+EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libcfa/Makefile.dist.in tools/build/distcc_hash tools/build/push2dist.sh tools/prettyprinter
 
 debug ?= yes
 installed ?= no

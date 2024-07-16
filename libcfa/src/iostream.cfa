@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 12 05:45:45 2024
-// Update Count     : 2019
+// Last Modified On : Mon Jul 15 08:16:48 2024
+// Update Count     : 2020
 //
 
 #include "iostream.hfa"
@@ -780,7 +780,7 @@ forall( istype & | basic_istream( istype ) ) {
 		int len = -1;									// len not set if no match
 		// Optional leading whitespace at start of strings.
 		fmt( is, " " FALSE "%n", &len );				// try false
-		if ( len != sizeof( FALSE ) - 1 ) {				// remove null terminate
+		if ( len != sizeof( FALSE ) - 1 ) {				// -1 removes null terminate
 			fmt( is, " " TRUE "%n", &len );				// try true
 			if ( len != sizeof( TRUE ) - 1 ) throwResume ExceptionInst( missing_data );
 			b = true;
