@@ -1484,7 +1484,7 @@ namespace {
 	}
 
 	void Finder::postvisit( const ast::CountExpr * countExpr ) {
-		const ast::UntypedExpr * untyped;
+		const ast::UntypedExpr * untyped = nullptr;
 		if ( countExpr->type ) {
 			auto enumInst = countExpr->type.as<ast::EnumInstType>();
 			if ( enumInst ) {
