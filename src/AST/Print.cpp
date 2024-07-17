@@ -565,13 +565,21 @@ public:
 		os << "While on condition:" << endl;
 		++indent;
 		safe_print( node->cond );
-		os << indent-1 << "... with body:" << endl;
-		safe_print( node->body );
 
 		if ( ! node->inits.empty() ) {
 			os << indent-1 << "... with inits:" << endl;
 			printAll( node->inits );
 		}
+
+		os << indent-1 << "... with body:" << endl;
+		safe_print( node->body );
+
+		if ( node->else_ ) {
+			os << indent-1 << "... with else:" << endl;
+			os << indent;
+			node->else_->accept( *this );
+		}
+
 		--indent;
 
 		return node;
@@ -613,6 +621,15 @@ public:
 			node->body->accept( *this );
 			--indent;
 		}
+
+		if ( node->else_ ) {
+			os << indent << "... with else:" << endl;
+			++indent;
+			os << indent;
+			node->else_->accept( *this );
+			--indent;
+		}
+
 		os << endl;
 		print( node->labels );
 

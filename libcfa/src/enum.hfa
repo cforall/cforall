@@ -33,7 +33,7 @@ forall( E | Serial( E ) ) {
 //     E pred( E e );
 // };
 
-forall( E | Serial( E ) ) trait CfaEnum {
+forall( E ) trait CfaEnum {
     const char * label( E e );
     unsigned int posn( E e );
 };
@@ -44,7 +44,7 @@ forall( E, V | CfaEnum( E ) ) trait TypedEnum {
 
 // I/O
 
-forall( istype & | istream( istype ), E | CfaEnum( E ) )
+forall( istype & | istream( istype ), E | CfaEnum( E ) | Serial(E) )
 istype & ?|?( istype &, E & );
 
 forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
@@ -53,7 +53,7 @@ forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 }
 
 static inline
-forall( E | CfaEnum( E ) ) {
+forall( E | Serial(E) | CfaEnum(E) ) {
     int ?==?( E l, E r ) { return posn( l ) == posn( r ); }	// relational operators
     int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
     int ?<?( E l, E r ) { return posn( l ) < posn( r ); }

@@ -73,7 +73,7 @@ int main() {
 		sout | i;
 		i -= 1.7;
 	} else { sout | "else"; }														sout | nl | nl;
-	
+
 	enum { N = 10 };
 	for ( N ) { sout | "N"; } else { sout | "else"; }							sout | nl;
 	for ( i; N ) { sout | i; } else { sout | "else"; }							sout | nl;
@@ -108,5 +108,20 @@ int main() {
 	for ( s; (S){0} -~  (S){10,10} ) { sout | s; } else { sout | "else"; }		 sout | nl;
 	for ( s; (S){0} -~  (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl;
 	for ( s; (S){0} -~= (S){10,10} ) { sout | s; } else { sout | "else"; }		 sout | nl;
-	for ( s; (S){0} -~= (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl | nl;
+	for ( s; (S){0} -~= (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl;
+	sout | nl;
+
+	// A break (or a continue) in an else clause should target an outer loop.
+	sout | "before";
+	while ( true ) {
+		sout | " begin";
+		while ( false ) {
+			sout | "never";
+		} else {
+			sout | " else";
+			break;
+		}
+		sout | " end";
+	}
+	sout | " after" | nl;
 }

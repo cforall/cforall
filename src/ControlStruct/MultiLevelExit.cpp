@@ -77,6 +77,7 @@ class Entry {
 	Entry( const TryStmt *stmt, Label breakExit ) :
 		stmt( stmt ), firstTarget( breakExit ), secondTarget(), kind( TryStmtK ) {}
 
+	// Check if this entry can be the target of the given type of control flow.
 	bool isContTarget() const { return kind <= WhileDoStmtK; }
 	bool isBreakTarget() const { return kind != CaseClauseK; }
 	bool isFallTarget() const { return kind == CaseClauseK; }
@@ -206,7 +207,7 @@ size_t getUnusedIndex( const Stmt * stmt, const Label & originalTarget ) {
 	const size_t size = stmt->labels.size();
 
 	// If the label is empty, do not add unused attribute.
-  if ( originalTarget.empty() ) return size;
+	if ( originalTarget.empty() ) return size;
 
 	// Search for a label that matches the originalTarget.
 	for ( size_t i = 0 ; i < size ; ++i ) {
@@ -342,6 +343,7 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 	default:
 		assert(0);
 	}
+	assert( !exitLabel.empty() );
 
 	// Add unused attribute to silence warnings.
 	targetEntry->stmt = addUnused( targetEntry->stmt, stmt->originalTarget );
@@ -485,9 +487,7 @@ const SwitchStmt * MultiLevelExitCore::postvisit( const SwitchStmt * stmt ) {
 			mutStmt->cases.push_back( new CaseClause( mutStmt->location, nullptr, {} ) );
 		}
 
-		auto caseStmt = mutStmt->cases.back().get();
-		auto mutCase = mutate( caseStmt );
-		mutStmt->cases.back() = mutCase;
+		auto mutCase = mutStmt->cases.back().get_and_mutate();
 
 		Label label( mutCase->location, "breakLabel" );
 		auto branch = new BranchStmt( mutCase->location, BranchStmt::Break, label );
@@ -596,16 +596,16 @@ const Stmt * MultiLevelExitCore::mutateLoop(
 
 template<typename LoopNode>
 void MultiLevelExitCore::prehandleLoopStmt( const LoopNode * loopStmt ) {
-	// Remember is loop before going onto mutate the body.
+	// Create temporary labels and mark the enclosing loop before traversal.
 	// The labels will be folded in if they are used.
 	Label breakLabel = newLabel( "loopBreak", loopStmt );
 	Label contLabel = newLabel( "loopContinue", loopStmt );
 	enclosing_control_structures.emplace_back( loopStmt, breakLabel, contLabel );
-	// labels are added temporarily to see if they are used and then added permanently in postvisit if ther are used
-	// children will tag labels as being used during their traversal which occurs before postvisit
 
-	// GuardAction calls the lambda after the node is done being visited
 	GuardAction( [this](){ enclosing_control_structures.pop_back(); } );
+
+	// Because of fixBlock, this should be empty now (and must be).
+	assert( nullptr == loopStmt->else_ );
 }
 
 template<typename LoopNode>
@@ -616,9 +616,6 @@ const LoopNode * MultiLevelExitCore::posthandleLoopStmt( const LoopNode * loopSt
 
 	// Now check if the labels are used and add them if so.
 	return mutate_field( loopStmt, &LoopNode::body, mutateLoop( loopStmt->body, entry ) );
-	// this call to mutate_field compares loopStmt->body and the result of mutateLoop
-	// 		if they are the same the node isn't mutated, if they differ then the new mutated node is returned
-	// 		the stmts will only differ if a label is used
 }
 
 list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
@@ -638,35 +635,48 @@ list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
 		}
 
 		ptr<Stmt> else_stmt = nullptr;
-		const Stmt * loop_kid = nullptr;
+		const Stmt * to_visit;
 		// check if loop node and if so add else clause if it exists
-		const WhileDoStmt * whilePtr = kid.as<WhileDoStmt>();
-		if ( whilePtr && whilePtr->else_ ) {
-			else_stmt = whilePtr->else_;
-			loop_kid = mutate_field( whilePtr, &WhileDoStmt::else_, nullptr );
-		}
-		const ForStmt * forPtr = kid.as<ForStmt>();
-		if ( forPtr && forPtr->else_ ) {
-			else_stmt = forPtr->else_;
-			loop_kid = mutate_field( forPtr, &ForStmt::else_, nullptr );
+		if ( auto ptr = kid.as<WhileDoStmt>() ; ptr && ptr->else_ ) {
+			else_stmt = ptr->else_;
+			to_visit = mutate_field( ptr, &WhileDoStmt::else_, nullptr );
+		} else if ( auto ptr = kid.as<ForStmt>() ; ptr && ptr->else_ ) {
+			else_stmt = ptr->else_;
+			to_visit = mutate_field( ptr, &ForStmt::else_, nullptr );
+		} else {
+			to_visit = kid.get();
 		}
 
+		// This is the main (safe) visit of the child node.
 		try {
-			if (else_stmt) ret.push_back( loop_kid->accept( *visitor ) );
-			else ret.push_back( kid->accept( *visitor ) );
+			ret.push_back( to_visit->accept( *visitor ) );
 		} catch ( SemanticErrorException & e ) {
 			errors.append( e );
 		}
 
-		if (else_stmt) ret.push_back(else_stmt);
+		// The following sections handle visiting loop else clause and makes
+		// sure breaking from a loop body does not execute that clause.
+		Label local_break_label = std::move( break_label );
+		break_label = Label( CodeLocation(), "" );
 
-		if ( ! break_label.empty() ) {
+		if ( else_stmt ) try {
+			ret.push_back( else_stmt->accept( *visitor ) );
+		} catch ( SemanticErrorException & e ) {
+			errors.append( e );
+		}
+
+		if ( !break_label.empty() ) {
 			ret.push_back( labelledNullStmt( ret.back()->location, break_label ) );
 			break_label = Label( CodeLocation(), "" );
 		}
+
+		// This handles a break from the body or non-loop statement.
+		if ( !local_break_label.empty() ) {
+			ret.push_back( labelledNullStmt( ret.back()->location, local_break_label ) );
+		}
 	}
 
-	if ( ! errors.isEmpty() ) {
+	if ( !errors.isEmpty() ) {
 		throw errors;
 	}
 	return ret;

@@ -1194,12 +1194,14 @@ void CodeGenerator::postvisit( ast::WhileDoStmt const * stmt ) {
 	output << CodeGenerator::printLabels( stmt->body->labels );
 	stmt->body->accept( *visitor );
 
-	output << indent;
-
 	if ( stmt->isDoWhile ) {
 		output << " while (";
 		stmt->cond->accept( *visitor );
-		output << ");";
+		output << ( ( nullptr == stmt->else_ ) ? ");" : ")" );
+	}
+	if ( stmt->else_ ) {
+		output << " else ";
+		stmt->else_->accept( *visitor );
 	}
 }
 
@@ -1223,6 +1225,12 @@ void CodeGenerator::postvisit( ast::ForStmt const * stmt ) {
 	if ( nullptr != stmt->body ) {
 		output << printLabels( stmt->body->labels );
 		stmt->body->accept( *visitor );
+	}
+
+	if ( nullptr != stmt->else_ ) {
+		assertf( !options.genC, "Loop else should not reach code generation." );
+		output << " else ";
+		stmt->else_->accept( *visitor );
 	}
 }
 

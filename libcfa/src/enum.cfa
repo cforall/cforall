@@ -36,7 +36,7 @@ forall( E | Serial( E ) ) {
     }
 }
 
-forall( istype & | istream( istype ), E | CfaEnum( E ) )
+forall( istype & | istream( istype ), E | CfaEnum( E )| Serial(E) )
 istype & ?|?( istype & is, E & e ) {
 //	fprintf( stderr, "here0\n" );
 	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
