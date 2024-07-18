@@ -112,7 +112,7 @@ static void NewPass( const char * const name ) {
 
 #define DUMP( cond, unit )                  \
 	if ( cond ) {                           \
-		dump(unit);                         \
+		dump( std::move( unit ) );          \
 		return EXIT_SUCCESS;                \
 	}
 
@@ -278,12 +278,12 @@ int main( int argc, char * argv[] ) {
 
 			// Read to gcc builtins, if not generating the cfa library
 			FILE * gcc_builtins = fopen( (PreludeDirector + "/gcc-builtins.cfa").c_str(), "r" );
-			assertf( gcc_builtins, "cannot open gcc-builtins.cf\n" );
+			assertf( gcc_builtins, "cannot open gcc-builtins.cfa\n" );
 			parse( gcc_builtins, ast::Linkage::Compiler );
 
 			// read the extra prelude in, if not generating the cfa library
 			FILE * extras = fopen( (PreludeDirector + "/extras.cfa").c_str(), "r" );
-			assertf( extras, "cannot open extras.cf\n" );
+			assertf( extras, "cannot open extras.cfa\n" );
 			parse( extras, ast::Linkage::BuiltinC );
 			if ( ! libcfap ) {
 				// read the prelude in, if not generating the cfa library
@@ -293,7 +293,7 @@ int main( int argc, char * argv[] ) {
 
 				// Read to cfa builtins, if not generating the cfa library
 				FILE * builtins = fopen( (PreludeDirector + "/builtins.cfa").c_str(), "r" );
-				assertf( builtins, "cannot open builtins.cf\n" );
+				assertf( builtins, "cannot open builtins.cfa\n" );
 				parse( builtins, ast::Linkage::BuiltinCFA );
 			} // if
 		} // if
@@ -302,14 +302,14 @@ int main( int argc, char * argv[] ) {
 
 		transUnit = buildUnit();
 
-		DUMP( astp, std::move( transUnit ) );
+		DUMP( astp, transUnit );
 
 		Stats::Time::StopBlock();
 
 		PASS( "Hoist Type Decls", Validate::hoistTypeDecls, transUnit );
 
 		PASS( "Translate Exception Declarations", ControlStruct::translateExcept, transUnit );
-		DUMP( exdeclp, std::move( transUnit ) );
+		DUMP( exdeclp, transUnit );
 		PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign, transUnit );
 		PASS( "Replace Typedefs", Validate::replaceTypedef, transUnit );
 		PASS( "Fix Return Types", Validate::fixReturnTypes, transUnit );
@@ -352,7 +352,7 @@ int main( int argc, char * argv[] ) {
 			return EXIT_SUCCESS;
 		} // if
 
-		DUMP( validp, std::move( transUnit ) );
+		DUMP( validp, transUnit );
 
 		PASS( "Translate Throws", ControlStruct::translateThrows, transUnit );
 		PASS( "Fix Labels", ControlStruct::fixLabels, transUnit );
@@ -371,7 +371,7 @@ int main( int argc, char * argv[] ) {
 			return EXIT_SUCCESS;
 		} // if
 
-		DUMP( bresolvep, std::move( transUnit ) );
+		DUMP( bresolvep, transUnit );
 
 		if ( resolvprotop ) {
 			dumpAsResolverProto( transUnit );
@@ -379,12 +379,12 @@ int main( int argc, char * argv[] ) {
 		} // if
 
 		PASS( "Resolve", ResolvExpr::resolve, transUnit );
-		DUMP( exprp, std::move( transUnit ) );
+		DUMP( exprp, transUnit );
 		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() ); // Here
 		PASS( "Erase With", ResolvExpr::eraseWith, transUnit );
 
 		// fix ObjectDecl - replaces ConstructorInit nodes
-		DUMP( ctorinitp, std::move( transUnit ) );
+		DUMP( ctorinitp, transUnit );
 
 		// Currently not working due to unresolved issues with UniqueExpr
 		PASS( "Expand Unique Expr", Tuples::expandUniqueExpr, transUnit ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
@@ -397,22 +397,22 @@ int main( int argc, char * argv[] ) {
 		PASS( "Convert Specializations",  GenPoly::convertSpecializations, transUnit );
 
 		PASS( "Expand Tuples", Tuples::expandTuples, transUnit );
-		DUMP( tuplep, std::move( transUnit ) );
+		DUMP( tuplep, transUnit );
 
 		// Must come after Translate Tries.
 		PASS( "Virtual Expand Casts", Virtual::expandCasts, transUnit );
 
 		PASS( "Instantiate Generics", GenPoly::instantiateGeneric, transUnit );
-		DUMP( genericsp, std::move( transUnit ) );
+		DUMP( genericsp, transUnit );
 
 		PASS( "Convert L-Value", GenPoly::convertLvalue, transUnit );
-		DUMP( bboxp, std::move( transUnit ) );
+		DUMP( bboxp, transUnit );
 		PASS( "Box", GenPoly::box, transUnit );
 		PASS( "Link-Once", CodeGen::translateLinkOnce, transUnit );
 
 		// Code has been lowered to C, now we can start generation.
 
-		DUMP( bcodegenp, std::move( transUnit ) );
+		DUMP( bcodegenp, transUnit );
 
 		if ( optind < argc ) {							// any commands after the flags and input file ? => output file name
 			output = new ofstream( argv[ optind ] );

@@ -3,43 +3,43 @@
 #include "iostream.hfa"
 
 forall( E ) trait Bounded {
-    E lowerBound();
-    E upperBound();
+	E lowerBound();
+	E upperBound();
 };
 
 forall( E | Bounded( E ) ) trait Serial {
-    unsigned fromInstance( E e );
-    E fromInt_unsafe( unsigned i );
-    E succ_unsafe( E e );
-    E pred_unsafe( E e );
+	unsigned fromInstance( E e );
+	E fromInt_unsafe( unsigned i );
+	E succ_unsafe( E e );
+	E pred_unsafe( E e );
 };
 
 forall( E | Serial( E ) ) {
-    E fromInt( unsigned i );
-    E succ( E e );
-    E pred( E e );
-    int Countof( E e );
+	E fromInt( unsigned i );
+	E succ( E e );
+	E pred( E e );
+	int Countof( E e );
 }
 
 // forall( E | Bounded(E) ) trait SafeSerial {
-//     // unsigned fromInstance( E e );
-//     E fromInt_unsafe( unsigned i );
-//     // E succ_unsafe( E e );
-//     //E pred_unsafe( E e );
+//	 // unsigned fromInstance( E e );
+//	 E fromInt_unsafe( unsigned i );
+//	 // E succ_unsafe( E e );
+//	 //E pred_unsafe( E e );
 
-//     unsigned fromInstance( E e );
-//     E fromInt( unsigned i );
-//     E succ( E e );
-//     E pred( E e );
+//	 unsigned fromInstance( E e );
+//	 E fromInt( unsigned i );
+//	 E succ( E e );
+//	 E pred( E e );
 // };
 
 forall( E ) trait CfaEnum {
-    const char * label( E e );
-    unsigned int posn( E e );
+	const char * label( E e );
+	unsigned int posn( E e );
 };
 
 forall( E, V | CfaEnum( E ) ) trait TypedEnum {
-    V value( E e );
+	V value( E e );
 };
 
 // I/O
@@ -54,32 +54,32 @@ forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 
 static inline
 forall( E | Serial(E) | CfaEnum(E) ) {
-    int ?==?( E l, E r ) { return posn( l ) == posn( r ); }	// relational operators
-    int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
-    int ?<?( E l, E r ) { return posn( l ) < posn( r ); }
-    int ?<=?( E l, E r ) { return posn( l ) <= posn( r ); }
-    int ?>?( E l, E r ) { return posn( l ) > posn( r ); }
-    int ?>=?( E l, E r ) { return posn( l ) >= posn( r ); }
+	int ?==?( E l, E r ) { return posn( l ) == posn( r ); }	// relational operators
+	int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
+	int ?<?( E l, E r ) { return posn( l ) < posn( r ); }
+	int ?<=?( E l, E r ) { return posn( l ) <= posn( r ); }
+	int ?>?( E l, E r ) { return posn( l ) > posn( r ); }
+	int ?>=?( E l, E r ) { return posn( l ) >= posn( r ); }
 
-    E ++?( E & l ) { 									// increment operators
-        l = succ( l );
-        return l;
-    }
-    
-    E ?++( E & l ) {
-        E ret = l;
-        l = succ( l );
-        return ret;
-    }
+	E ++?( E & l ) { 									// increment operators
+		l = succ( l );
+		return l;
+	}
+	
+	E ?++( E & l ) {
+		E ret = l;
+		l = succ( l );
+		return ret;
+	}
 
-    E --?( E & l ) {
-        l = pred( l );
-        return l;
-    }
+	E --?( E & l ) {
+		l = pred( l );
+		return l;
+	}
 
-    E ?--( E & l ) {
-        E ret = l;
-        l = pred( l );
-        return ret;
-    }
+	E ?--( E & l ) {
+		E ret = l;
+		l = pred( l );
+		return ret;
+	}
 }

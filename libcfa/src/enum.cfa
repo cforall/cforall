@@ -5,60 +5,60 @@
 #pragma GCC visibility push(default)
 
 forall( E | Serial( E ) ) {
-    E fromInt( unsigned i ) {
-        E upper = upperBound();
-        E lower = lowerBound();
-        // It is okay to overflow as overflow will be theoretically caught by the other bound
+	E fromInt( unsigned i ) {
+		E upper = upperBound();
+		E lower = lowerBound();
+		// It is okay to overflow as overflow will be theoretically caught by the other bound
 		if ( i < fromInstance( lower ) || i > fromInstance( upper ) )
 			abort( "call to fromInt has index %d outside enumeration range %d-%d",
 				   i, fromInstance( lower ), fromInstance( upper ) );
-        return fromInt_unsafe( i );
-    }
+		return fromInt_unsafe( i );
+	}
 
-    E succ( E e ) {
-        E upper = upperBound();
+	E succ( E e ) {
+		E upper = upperBound();
 		if ( fromInstance( e ) >= fromInstance( upper ) )
 			abort( "call to succ() exceeds enumeration upper bound of %d", fromInstance( upper ) );
-        return succ_unsafe(e);
-    }
+		return succ_unsafe(e);
+	}
 
-    E pred( E e ) {
-        E lower = lowerBound();
+	E pred( E e ) {
+		E lower = lowerBound();
 		if ( fromInstance(e) <= fromInstance(lower ) )
 			abort( "call to pred() exceeds enumeration lower bound of %d", fromInstance( lower ) );
-        return pred_unsafe(e);
-    }
+		return pred_unsafe(e);
+	}
 
-    int Countof( __attribute__((unused)) E e ) {
-        E upper = upperBound();
-        E lower = lowerBound();
+	int Countof( __attribute__((unused)) E e ) {
+		E upper = upperBound();
+		E lower = lowerBound();
 		return fromInstance( upper ) + fromInstance( lower ) + 1;
-    }
+	}
 }
 
-forall( istype & | istream( istype ), E | CfaEnum( E )| Serial(E) )
+forall( istype & | istream( istype ), E | CfaEnum( E ) | Serial( E ) )
 istype & ?|?( istype & is, E & e ) {
 //	fprintf( stderr, "here0\n" );
 	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
 
 	// Match longest input enumerator string to enumerator labels, where enumerator names are unique.
 
-	int N = Countof( e ), lnths[N], max = 0;
+	int N = countof( E ), lnths[N], max = 0;
 //	printf( "N %d\n", N );
-//	for ( s; E : i; 0~@ ) {
-	int i = 0;
-	for ( s; E ) {
-		lnths[i] = strlen( label( s ) );
-		if ( lnths[i] > max ) max = lnths[i];
-//		fprintf( stderr, "%s %d %d\n", label( s ), lnths[i], max );
-		i += 1;
+	int r = 0;
+//	for ( s; E : r; 0~@ ) {
+	for ( s; E ) {										// scan string rows gathering lengths
+		lnths[r] = strlen( label( s ) );
+		if ( lnths[r] > max ) max = lnths[r];
+//		fprintf( stderr, "%s %d %d\n", label( s ), lnths[r], max );
+		r += 1;
 	} // for
 
-	int win = -1;
+	int mcol = -1;										// last match column
 	char ch, curr = '\0', prev = '\0';
 
 	fmt( is, " " );										// skip optional whitespace
-	for ( c; max ) {
+	for ( c; max ) {									// scan columns of the label matix (some columns missing)
 		int args = fmt( is, "%c", &ch );				// read character
 	  if ( eof( is ) ) {
 //			fprintf( stderr, "Eof1\n" );
@@ -67,46 +67,46 @@ istype & ?|?( istype & is, E & e ) {
 //			fprintf( stderr, "Eof2\n" );
 			break;
 		} // if
-		if ( args != 1 ) throwResume ExceptionInst( missing_data );
+	  if ( args != 1 ) throwResume ExceptionInst( missing_data ); // may be unnecessary since reading single character
 
 //		printf( "read '%c'\n", ch );
-		for ( i; N ) {									// scan enumeration strings for winner
-//			printf( "%d %d %d\n", c, i, lnths[i] );
-			if ( c < lnths[i] ) {						// eligible for this checking round ?
-				char match = label( fromInt( i ) )[c];	// optimization
+		for ( r; N ) {									// scan enumeration strings for matching character in current column
+//			printf( "%d %d %d\n", c, r, lnths[r] );
+			if ( c < lnths[r] ) {						// string long enough for this column check ?
+				char match = label( fromInt( r ) )[c];	// optimization
 //				printf( "%c '%c'\n", match, ch );
 				// Stop on first match, could be other matches.
-				if ( (match == ch) && (c == 0 || curr == label( fromInt( i ) )[c - 1]) ) {
-//					printf( "match %d %d %d '%c' '%c' '%c' '%c' 'c'\n", c, i, lnths[i], match, ch, prev, label( fromInt( i ) )[c - 1] );
-					win = c;
-					prev = curr;
-					curr = ch;
+				if ( (match == ch) && (c == 0 || curr == label( fromInt( r ) )[c - 1]) ) {
+//					printf( "match %d %d %d '%c' '%c' '%c' '%c' 'c'\n", c, r, lnths[r], match, ch, prev, label( fromInt( r ) )[c - 1] );
+					mcol = c;							// matching column
+					prev = curr;						// last matching character
+					curr = ch;							// current matching character
 					break;
 				} // if
 			} // if
 		} else {
-//			fprintf( stderr, "finished win: %d ch: '%c' curr: '%c' prev: '%c'\n", win, ch, curr, prev );
-			ungetc( ch, is );
-			if ( win == -1 ) throwResume ExceptionInst( missing_data );
-			goto W;										// break does not work
+//			fprintf( stderr, "finished mcol: %d ch: '%c' curr: '%c' prev: '%c'\n", mcol, ch, curr, prev );
+			ungetc( ch, is );							// push back last unmatching character
+			if ( mcol == -1 ) throwResume ExceptionInst( missing_data ); // no matching character in first column
+			break;
 		} // for
 //		printf( "\n" );
 //	} else {
-//		fprintf( stderr, "finished2 %d\n", win );
+//		fprintf( stderr, "finished2 %d\n", mcol );
  	} // for
-  W: ;
-	for ( i; N ) {										// scan enumeration strings for winner
-		if ( win == lnths[i] - 1 ) {
-			char match = label( fromInt( i ) )[win];	// optimization
-//			printf( "finished1 win: %d i: %d lnth: %d match: '%c' curr: '%c' prev: '%c'\n", win, i, lnths[i], match, curr, prev );
-			if ( (match == curr) && (win == 0 || prev == label( fromInt( i ) )[win - 1]) ) {
-				e = fromInt( i );
+
+	for ( c; N ) {										// scan enumeration strings of length "mcol" for match
+		if ( mcol == lnths[c] - 1 ) {
+			char match = label( fromInt( c ) )[mcol];	// optimization
+//			printf( "finished1 mcol: %d c: %d lnth: %d match: '%c' curr: '%c' prev: '%c'\n", mcol, c, lnths[c], match, curr, prev );
+			if ( (match == curr) && (mcol == 0 || prev == label( fromInt( c ) )[mcol - 1]) ) {
+				e = fromInt( c );
 				break;
 			} // if
 		} // if
 	} else {
-//		fprintf( stderr, "finished3 %d\n", win );
-		throwResume ExceptionInst( missing_data );
+//		fprintf( stderr, "finished3 %d\n", mcol );
+		throwResume ExceptionInst( missing_data );		// no match in this column
 	} // for
 	return is;
 }
