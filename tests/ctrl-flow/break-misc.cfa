@@ -1,0 +1,41 @@
+// Test breaking to unusual (non-loop, non-switch) statements.
+
+#include <fstream.hfa>
+
+void breakTargetLabels() {
+	sout | "if";
+	Lif: if ( true ) {
+		break Lif;
+		sout | "!";
+	}
+	sout | "end" | nl;
+
+	sout | "block";
+	Lblock: {
+		break Lblock;
+		sout | "!";
+	}
+	sout | "end" | nl;
+}
+
+void breakSkipsUnlabelled() {
+	sout | "unlabelled";
+	for (int i = 0 ; i < 2 ; ++i) {
+		sout | "loop";
+		block: {
+			break;
+			sout | "!";
+			// Prevent unused label warning.
+			if ( false ) break block;
+		}
+	}
+	sout | "end" | nl;
+}
+
+int main() {
+	sout | nlOff;
+
+	breakTargetLabels();
+	sout | nl;
+	breakSkipsUnlabelled();
+}

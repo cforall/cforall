@@ -1,17 +1,17 @@
-exceptions/try-ctrl-flow.cfa:7:1 error: "break" outside a loop, "switch", or labelled block
-exceptions/try-ctrl-flow.cfa:15:1 error: "break" outside a loop, "switch", or labelled block
-exceptions/try-ctrl-flow.cfa:23:1 error: "break" outside a loop, "switch", or labelled block
-exceptions/try-ctrl-flow.cfa:31:1 error: "continue" target must be an enclosing loop: 
+exceptions/try-ctrl-flow.cfa:7:1 error: "break" outside a loop or "switch"
+exceptions/try-ctrl-flow.cfa:15:1 error: "break" outside a loop or "switch"
+exceptions/try-ctrl-flow.cfa:23:1 error: "break" outside a loop or "switch"
+exceptions/try-ctrl-flow.cfa:31:1 error: "continue" outside a loop
 exceptions/try-ctrl-flow.cfa:48:1 error: "break" target must be an enclosing control structure: mainLoop
 exceptions/try-ctrl-flow.cfa:56:1 error: "continue" target must be an enclosing loop: mainLoop
-exceptions/try-ctrl-flow.cfa:65:1 error: "break" outside a loop, "switch", or labelled block
-exceptions/try-ctrl-flow.cfa:76:1 error: "break" outside a loop, "switch", or labelled block
+exceptions/try-ctrl-flow.cfa:65:1 error: "break" outside a loop or "switch"
+exceptions/try-ctrl-flow.cfa:76:1 error: "break" outside a loop or "switch"
 exceptions/try-ctrl-flow.cfa:87:1 error: "fallthrough" must be enclosed in a "switch" or "choose"
 exceptions/try-ctrl-flow.cfa:98:1 error: "break" target must be an enclosing control structure: mainBlock
 exceptions/try-ctrl-flow.cfa:111:1 error: "fallthrough" must be enclosed in a "switch" or "choose"
 exceptions/try-ctrl-flow.cfa:124:1 error: "fallthrough" must be enclosed in a "switch" or "choose"
 exceptions/try-ctrl-flow.cfa:133:1 error: "return" may not appear in a finally clause
 exceptions/try-ctrl-flow.cfa:139:1 error: "return" may not appear in a finally clause
-exceptions/try-ctrl-flow.cfa:148:1 error: "break" outside a loop, "switch", or labelled block
+exceptions/try-ctrl-flow.cfa:148:1 error: "break" outside a loop or "switch"
 exceptions/try-ctrl-flow.cfa:159:1 error: "return" may not appear in a try statement with a catch clause
 exceptions/try-ctrl-flow.cfa:187:1 error: "return" may not appear in a catchResume clause

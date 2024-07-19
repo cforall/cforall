@@ -8,20 +8,20 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Wed Jan 05 13:53:22 2022
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jul 19 07:58:45 2024
+// Update Count     : 10
 //
 
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <fstream.hfa>
 
 extern "C" {
 	#include <fcntl.h>
-	#include <unistd.h>
 	#include <sys/prctl.h>
 	#include <sys/resource.h>
 	#include <sys/statvfs.h>
@@ -31,125 +31,112 @@ extern "C" {
 
 void check_ulimit() {
 	struct rlimit rlp;
-	getrlimit(RLIMIT_CORE, &rlp);
-	if(rlp.rlim_cur < 536870912) {
+	getrlimit( RLIMIT_CORE, &rlp );
+	if ( rlp.rlim_cur < 536870912 ) {
 		serr | "Soft core limit is less than ~500Mb: " | rlp.rlim_cur;
-	}
+	} // if
 
-	if(rlp.rlim_max < 536870912) {
+	if ( rlp.rlim_max < 536870912 ) {
 		serr | "Hard core limit is less than ~500Mb: " | rlp.rlim_max;
-	}
+	} // if
 }
 
 void check_permission() {
-	{
-		char myExe[PATH_MAX];
-		ssize_t n = readlink("/proc/self/exe", myExe, sizeof(myExe));
-		if (n < 0) {
-			perror("readlink(/proc/self/exe) error");
-			return 1;
-		}
-		myExe[n] = '\0';
+	char myExe[PATH_MAX];
+	ssize_t n = readlink( "/proc/self/exe", myExe, sizeof(myExe));
+	if ( n < 0 ) {
+		perror( "readlink(/proc/self/exe ) error" );
+		return 1;
+	} // if
+	myExe[n] = '\0';
 
-		if(int r = access(myExe, F_OK); r != 0) serr | "Expected current executable does not exist!" | r | errno;
-		if(int r = access(myExe, R_OK); r != 0) serr | "No read access for current executable" | r | errno;
-	}
+	if ( int r = access( myExe, F_OK ); r != 0 ) serr | "Expected current executable does not exist!" | r | errno;
+	if ( int r = access( myExe, R_OK ); r != 0 ) serr | "No read access for current executable" | r | errno;
 
-	{
-		char myCwd[PATH_MAX];
-		if (getcwd(myCwd, sizeof(myCwd)) == 0p) {
-			perror("getcwd() error");
-			return;
-		}
+	char myCwd[PATH_MAX];
+	if ( getcwd( myCwd, sizeof(myCwd ) ) == 0p ) {
+		perror( "getcwd() error" );
+		return;
+	} // if
 
-		if(access(myCwd, F_OK) != 0) serr | "Expected current working directory does not exist!";
-		if(access(myCwd, R_OK) != 0) serr | "No read access for current working directory";
-		if(access(myCwd, W_OK) != 0) serr | "No write access for current working directory";
-	}
+	if ( access( myCwd, F_OK ) != 0 ) serr | "Expected current working directory does not exist!";
+	if ( access( myCwd, R_OK ) != 0 ) serr | "No read access for current working directory";
+	if ( access( myCwd, W_OK ) != 0 ) serr | "No write access for current working directory";
 }
 
 void check_free_space() {
 	struct statvfs buf;
-	if(statvfs(".", &buf) != 0) {
-		perror("statvfs() error");
+	if ( statvfs( ".", &buf ) != 0 ) {
+		perror( "statvfs() error" );
 		return;
-	}
+	} // if
 
 	uint64_t avail = buf.f_bavail;
 	avail *= buf.f_bsize;
-	if(avail < 536870912_l64u) {
+	if ( avail < 536870912_l64u ) {
 		serr | "Available diskspace is less than ~500Mb: " | avail;
-	}
+	} // if
 
-	if(buf.f_favail < 10) {
+	if ( buf.f_favail < 10 ) {
 		serr | "Available inodes is less than 10: " | buf.f_favail;
-	}
+	} // if
 
-	if(buf.f_flag & ST_RDONLY) {
+	if ( buf.f_flag & ST_RDONLY ) {
 		serr | "Filesystem is read only";
-	}
+	} // if
 }
 
 void check_noconflict() {
-	char * name = "./core";
-	if(access("./core", F_OK) == 0) serr | "A file of the core name ('" | name | "') already exists";
+	const char * name = "./core";
+	if ( access( name, F_OK ) == 0 ) serr | "File \"" | name | "\" already exists";
 }
 
 void check_dumpflag() {
-	int r = prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
-	if(r < 0) {
-		perror("prctl(PR_GET_DUMPABLE) error");
+	int r = prctl( PR_GET_DUMPABLE, 0, 0, 0, 0 );
+	if ( r < 0 ) {
+		perror( "prctl( PR_GET_DUMPABLE ) error" );
 		return;
-	}
+	} // if
 
-	if(r != 1) serr | "dumpable attribute not set to 1 \"(SUID_DUMP_USER, process is dumpable)\", was" | r;
+	if ( r != 1 ) serr | "dumpable attribute not set to 1 \"( SUID_DUMP_USER, process is dumpable )\", was" | r;
 }
 
 void check_core_pattern() {
 	int ret;
-	int cp = open("/proc/sys/kernel/core_pattern", 0, O_RDONLY);
-	if(cp < 0) {
-		perror("open(/proc/sys/kernel/core_pattern, O_RDONLY) error");
+	int cp = open( "/proc/sys/kernel/core_pattern", 0, O_RDONLY );
+
+	if ( cp < 0 ) {
+		perror( "open(/proc/sys/kernel/core_pattern, O_RDONLY ) error" );
 		return;
-	}
+	} // if
 
 	try {
 		const char * expected = "core\n";
-		const int sz = sizeof("core\n");
+		const int sz = sizeof( "core\n" );
 		char buf[512];
-		ret = read(cp, buf, 512);
-		if(ret < 0) {
-			perror("first core pattern read error");
+		ret = read( cp, buf, 512 );
+		if ( ret < 0 ) {
+			perror( "core pattern read error" );
 			return;
-		}
-		ret = strncmp(expected, buf, sz - 1);
-		if(ret != 0) {
-			serr | "/proc/sys/kernel/core_pattern does not contain 'core', was:" | nl | nl | buf | nl
-			     | "Test script expect cores files to be dumped with name 'core' in current working directory." | nl
-			     | "Apport is not supported, it should be deactivated in /etc/default/apport for the test suite to work with core dumps.";
+		} // if
 
-			return;
-		}
-	}
-	finally {
-		ret = close(cp);
-		if(ret < 0) perror("close(/proc/sys/kernel/core_pattern) error");
-	}
-
+		ret = strncmp( expected, buf, sz - 1 );
+		if ( ret != 0 ) {
+			serr | "Apport is supported on your system, which means the test-suite core-dump feature does not work." | nl
+				 | "This is not a test failure, just a limitation on debugging output should a test fail.";
+		} // if
+	} finally {
+		ret = close( cp );
+		if ( ret < 0 ) perror( "close( /proc/sys/kernel/core_pattern ) error" );
+	} // try
 }
 
 int main() {
 	check_ulimit();
-
 	check_permission();
-
 	check_free_space();
-
 	check_noconflict();
-
 	check_dumpflag();
-
 	check_core_pattern();
-
 	sout | "Done";
 }

@@ -9,14 +9,22 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 27 17:24:56 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 16 14:59:53 2021
-// Update Count     : 38
+// Last Modified On : Fri Jul 19 08:05:04 2024
+// Update Count     : 74
 //
 
 #include "time.hfa"
 #include <fstream.hfa>
+#include <stdlib.h>										// putenv
+
+extern "C" size_t malloc_unfreed() { return 1024; }		// guess at unfreed storage from putenv/tzset
 
 int main() {
+	// Set fixed time location to obtain repeatable output where ever run.
+	putenv( "TZ=America/Toronto" );						// set fixed time zone
+	// tzset has the stupidest interface I have ever seen.
+	tzset();											// set time zone
+
 	Duration d1 = 3`h, d2 = 2`s, d3 = 3.375`s, d4 = 12`s, d5 = 1`s + 10_000`ns;
 	sout | d1 | d2 | d3 | d4 | d5;
 	sout | d1`dd | d2`dm | d3`ds | d4`dms | d5`dus;
@@ -73,9 +81,3 @@ int main() {
     strftime( buf, 128, "%Y %b %e %H:%M:%S (GMT)", t3 );
     sout | buf;
 } // main
-
-// Local Variables: //
-// mode: c //
-// tab-width: 4 //
-// compile-command: "cfa time.cfa" //
-// End: //

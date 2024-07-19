@@ -83,6 +83,9 @@ class Entry {
 	bool isFallTarget() const { return kind == CaseClauseK; }
 	bool isFallDefaultTarget() const { return kind == SwitchStmtK; }
 
+	// Check if this entry can be the target of an unlabelled break.
+	bool isUnlabelledBreakTarget() const { return kind <= WhileDoStmtK || kind == SwitchStmtK; }
+
 	// These routines set a target as being "used" by a BranchStmt
 	Label useContExit() { assert( kind <= WhileDoStmtK ); return useTarget(secondTarget); }
 	Label useBreakExit() { assert( kind != CaseClauseK ); return useTarget(firstTarget); }
@@ -113,6 +116,10 @@ bool isFallthroughTarget( const Entry & entry ) {
 
 bool isFallthroughDefaultTarget( const Entry & entry ) {
 	return entry.isFallDefaultTarget();
+}
+
+bool isUnlabelledBreakTarget( const Entry & entry ) {
+	return entry.isUnlabelledBreakTarget();
 }
 
 struct MultiLevelExitCore final :
@@ -246,30 +253,34 @@ const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
 	case BranchStmt::Continue:
 	case BranchStmt::Break: {
 		bool isContinue = stmt->kind == BranchStmt::Continue;
-		// Handle unlabeled break and continue.
-		if ( stmt->target.empty() ) {
-			if ( isContinue ) {
-				targetEntry = findEnclosingControlStructure( isContinueTarget );
-			} else {
-				if ( enclosing_control_structures.empty() ) {
-					  SemanticError( stmt->location,
-									 "\"break\" outside a loop, \"switch\", or labelled block" );
-				}
-				targetEntry = findEnclosingControlStructure( isBreakTarget );
+		// Handle unlabeled continue.
+		if ( isContinue && stmt->target.empty() ) {
+			targetEntry = findEnclosingControlStructure( isContinueTarget );
+			if ( targetEntry == enclosing_control_structures.rend() ) {
+				SemanticError( stmt->location,
+				               "\"continue\" outside a loop" );
 			}
-			// Handle labeled break and continue.
+		// Handle unlabeled break.
+		} else if ( stmt->target.empty() ) {
+			targetEntry = findEnclosingControlStructure( isUnlabelledBreakTarget );
+			if ( targetEntry == enclosing_control_structures.rend() ) {
+				SemanticError( stmt->location,
+				               "\"break\" outside a loop or \"switch\"" );
+			}
+		// Handle labeled break and continue.
 		} else {
 			// Lookup label in table to find attached control structure.
 			targetEntry = findEnclosingControlStructure(
 				[ targetStmt = target_table.at(stmt->target) ](auto entry){
 					  return entry.stmt == targetStmt;
 				} );
-		}
-		// Ensure that selected target is valid.
-		if ( targetEntry == enclosing_control_structures.rend() || ( isContinue && ! isContinueTarget( *targetEntry ) ) ) {
-			SemanticError( stmt->location, toString( (isContinue ? "\"continue\"" : "\"break\""),
-							" target must be an enclosing ", (isContinue ? "loop: " : "control structure: "),
-							stmt->originalTarget ) );
+			// Ensure that selected target is valid.
+			if ( targetEntry == enclosing_control_structures.rend()
+					|| ( isContinue ? !isContinueTarget( *targetEntry ) : !isBreakTarget( *targetEntry ) ) ) {
+				SemanticError( stmt->location, toString( (isContinue ? "\"continue\"" : "\"break\""),
+				               " target must be an enclosing ", (isContinue ? "loop: " : "control structure: "),
+				               stmt->originalTarget ) );
+			}
 		}
 		break;
 	}

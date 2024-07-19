@@ -1,0 +1,18 @@
+#include <fstream.hfa>
+#include <enum.hfa>
+
+int main() {
+	enum(int) E { BBB, AAA, AA, AB, B, CB, AC };
+	E e;
+
+	for () {
+		try {
+			sin | e;
+		} catch( missing_data * ) {
+			sout | "missing data";
+			continue;									// try again
+		} // try
+	  if ( eof( sin ) ) break;
+		sout | "\"" | e | "\"";
+	} // for
+}

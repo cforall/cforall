@@ -46,7 +46,7 @@ istype & ?|?( istype & is, E & e ) {
 	int N = countof( E ), lnths[N], max = 0;
 //	printf( "N %d\n", N );
 	int r = 0;
-//	for ( s; E : r; 0~@ ) {
+	// for ( s; E : r; 0~@ ) {
 	for ( s; E ) {										// scan string rows gathering lengths
 		lnths[r] = strlen( label( s ) );
 		if ( lnths[r] > max ) max = lnths[r];
@@ -60,6 +60,7 @@ istype & ?|?( istype & is, E & e ) {
 	fmt( is, " " );										// skip optional whitespace
 	for ( c; max ) {									// scan columns of the label matix (some columns missing)
 		int args = fmt( is, "%c", &ch );				// read character
+//		fprintf( stderr, "fmt args: %d eof: %d\n", args, eof(is) );
 	  if ( eof( is ) ) {
 //			fprintf( stderr, "Eof1\n" );
 			if ( c == 0 ) return is;					// no characters read ?
