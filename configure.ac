@@ -272,6 +272,7 @@ AC_CONFIG_FILES([
 	src/Makefile
 	libcfa/Makefile:libcfa/Makefile.dist.in
 	tests/Makefile
+	tools/prettyprinter/Makefile
 ])
 
 # Some of our makefile don't need to be distributed
@@ -282,7 +283,6 @@ AM_COND_IF([CFORALL_DISTRIBUTE], [
 		benchmark/Makefile
 		benchmark/io/http/Makefile
 		tools/Makefile
-		tools/prettyprinter/Makefile
 		benchmark/Cargo.toml
 	])
 ])

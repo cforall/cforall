@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 22:14:18 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Tue Jul 16 16:59:12 2024
-## Update Count     : 57
+## Last Modified On : Fri Jul 19 16:15:24 2024
+## Update Count     : 58
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -21,7 +21,7 @@ MAINTAINERCLEANFILES = lib/* bin/* tests/.deps/* tests/.out/* # order important
 DISTCLEANFILES = version
 
 SUBDIRS = driver src . @LIBCFA_TARGET_DIRS@
-DIST_SUBDIRS = driver src . libcfa tests
+DIST_SUBDIRS = driver src . libcfa tests tools/prettyprinter
 
 @LIBCFA_TARGET_MAKEFILES@ : Makefile ${srcdir}/libcfa/configure
 	@${eval config_file = ${dir ${@}}config.data}
@@ -34,7 +34,7 @@ noinst_DATA = @LIBCFA_TARGET_MAKEFILES@
 
 man1_MANS = doc/man/cfa.1
 
-EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libcfa/Makefile.dist.in tools/build/distcc_hash tools/build/push2dist.sh tools/prettyprinter
+EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libcfa/Makefile.dist.in tools/build/distcc_hash tools/build/push2dist.sh
 
 debug ?= yes
 installed ?= no

@@ -9,15 +9,15 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 27 17:24:56 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 19 08:05:04 2024
-// Update Count     : 74
+// Last Modified On : Fri Jul 19 08:06:59 2024
+// Update Count     : 75
 //
 
 #include "time.hfa"
 #include <fstream.hfa>
 #include <stdlib.h>										// putenv
 
-extern "C" size_t malloc_unfreed() { return 1024; }		// guess at unfreed storage from putenv/tzset
+extern "C" size_t malloc_unfreed() { return 1024; }		// guess at unfreed storage from putenv
 
 int main() {
 	// Set fixed time location to obtain repeatable output where ever run.

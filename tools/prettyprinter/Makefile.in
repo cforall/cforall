@@ -112,8 +112,8 @@ PROGRAMS = $(tools_prettyprinter_PROGRAMS)
 am__objects_1 = pretty-lex.$(OBJEXT) pretty-parser.$(OBJEXT) \
 	pretty-token.$(OBJEXT) pretty-filter.$(OBJEXT) \
 	pretty-main.$(OBJEXT)
-nodist_pretty_OBJECTS = $(am__objects_1)
-pretty_OBJECTS = $(nodist_pretty_OBJECTS)
+am_pretty_OBJECTS = $(am__objects_1)
+pretty_OBJECTS = $(am_pretty_OBJECTS)
 am__DEPENDENCIES_1 =
 pretty_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -195,8 +195,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(nodist_pretty_SOURCES)
-DIST_SOURCES =
+SOURCES = $(pretty_SOURCES)
+DIST_SOURCES = $(pretty_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -222,7 +222,7 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/automake/depcomp \
-	$(top_srcdir)/automake/ylwrap
+	$(top_srcdir)/automake/ylwrap lex.cc parser.cc parser.hh
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -384,7 +384,7 @@ SRC = lex.ll \
       main.cc
 
 tools_prettyprinterdir = ../
-nodist_pretty_SOURCES = ${SRC}
+pretty_SOURCES = ${SRC}
 pretty_LDADD = ${LEXLIB} -ldl			# yywrap
 pretty_CXXFLAGS = -Wno-deprecated -Wall -Wextra -Werror=return-type -DYY_NO_INPUT -O2 -g -std=c++14
 MOSTLYCLEANFILES = parser.output
@@ -594,16 +594,8 @@ pretty-main.obj: main.cc
 .ll.cc:
 	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
 
-lex.cc: lex.ll
-	$(AM_V_LEX) \
-	$(SHELL) $(YLWRAP) `test -f 'lex.ll' || echo '$(srcdir)/'`lex.ll $(LEX_OUTPUT_ROOT).c lex.cc -- $(LEX) $(AM_LFLAGS) $(LFLAGS)
-
 .yy.cc:
 	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h `echo $@ | $(am__yacc_c2h)` y.output $*.output -- $(YACCCOMPILE)
-
-parser.cc: parser.yy
-	$(AM_V_YACC) \
-	$(SHELL) $(YLWRAP) `test -f 'parser.yy' || echo '$(srcdir)/'`parser.yy y.tab.c parser.cc y.tab.h `echo parser.cc | $(am__yacc_c2h)` y.output parser.output -- $(YACC) $(AM_YFLAGS) $(YFLAGS)
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -728,9 +720,6 @@ mostlyclean-generic:
 	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
 
 clean-generic:
-	-rm -f lex.cc
-	-rm -f parser.cc
-	-rm -f parser.hh
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -739,6 +728,9 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f lex.cc
+	-rm -f parser.cc
+	-rm -f parser.hh
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 

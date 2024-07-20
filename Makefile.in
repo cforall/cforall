@@ -401,10 +401,10 @@ ACLOCAL_AMFLAGS = -I automake
 MAINTAINERCLEANFILES = lib/* bin/* tests/.deps/* tests/.out/* # order important
 DISTCLEANFILES = version
 SUBDIRS = driver src . @LIBCFA_TARGET_DIRS@
-DIST_SUBDIRS = driver src . libcfa tests
+DIST_SUBDIRS = driver src . libcfa tests tools/prettyprinter
 noinst_DATA = @LIBCFA_TARGET_MAKEFILES@
 man1_MANS = doc/man/cfa.1
-EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libcfa/Makefile.dist.in tools/build/distcc_hash tools/build/push2dist.sh tools/prettyprinter
+EXTRA_DIST = LICENSE doc/man/cfa.1 libcfa/configure libcfa/Makefile.dist.am libcfa/Makefile.dist.in tools/build/distcc_hash tools/build/push2dist.sh
 ARCH = ${if ${arch},"arch=${arch}"}
 arch_support = "x86/x64/arm"
 all: config.h

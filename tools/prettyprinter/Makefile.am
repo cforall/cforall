@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Wed Jun 28 12:07:10 2017
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Thu Jan 28 08:48:22 2021
-## Update Count     : 23
+## Last Modified On : Sat Jul 20 12:07:15 2024
+## Update Count     : 24
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -29,7 +29,7 @@ SRC = lex.ll \
 
 tools_prettyprinter_PROGRAMS = pretty
 tools_prettyprinterdir = ../
-nodist_pretty_SOURCES = ${SRC}
+pretty_SOURCES = ${SRC}
 pretty_LDADD = ${LEXLIB} -ldl			# yywrap
 pretty_CXXFLAGS = -Wno-deprecated -Wall -Wextra -Werror=return-type -DYY_NO_INPUT -O2 -g -std=c++14
 

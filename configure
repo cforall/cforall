@@ -16951,7 +16951,7 @@ _ACEOF
 
 
 #==============================================================================
-ac_config_files="$ac_config_files Makefile driver/Makefile src/Makefile libcfa/Makefile:libcfa/Makefile.dist.in tests/Makefile"
+ac_config_files="$ac_config_files Makefile driver/Makefile src/Makefile libcfa/Makefile:libcfa/Makefile.dist.in tests/Makefile tools/prettyprinter/Makefile"
 
 
 # Some of our makefile don't need to be distributed
@@ -16965,7 +16965,7 @@ fi
 
 if test -z "$CFORALL_DISTRIBUTE_TRUE"; then :
 
-	ac_config_files="$ac_config_files longrun_tests/Makefile benchmark/Makefile benchmark/io/http/Makefile tools/Makefile tools/prettyprinter/Makefile benchmark/Cargo.toml"
+	ac_config_files="$ac_config_files longrun_tests/Makefile benchmark/Makefile benchmark/io/http/Makefile tools/Makefile benchmark/Cargo.toml"
 
 
 fi
@@ -18121,11 +18121,11 @@ do
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "libcfa/Makefile") CONFIG_FILES="$CONFIG_FILES libcfa/Makefile:libcfa/Makefile.dist.in" ;;
     "tests/Makefile") CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
+    "tools/prettyprinter/Makefile") CONFIG_FILES="$CONFIG_FILES tools/prettyprinter/Makefile" ;;
     "longrun_tests/Makefile") CONFIG_FILES="$CONFIG_FILES longrun_tests/Makefile" ;;
     "benchmark/Makefile") CONFIG_FILES="$CONFIG_FILES benchmark/Makefile" ;;
     "benchmark/io/http/Makefile") CONFIG_FILES="$CONFIG_FILES benchmark/io/http/Makefile" ;;
     "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
-    "tools/prettyprinter/Makefile") CONFIG_FILES="$CONFIG_FILES tools/prettyprinter/Makefile" ;;
     "benchmark/Cargo.toml") CONFIG_FILES="$CONFIG_FILES benchmark/Cargo.toml" ;;
     "tests/test.py") CONFIG_LINKS="$CONFIG_LINKS tests/test.py:tests/test.py" ;;
     "tests/config.py") CONFIG_FILES="$CONFIG_FILES tests/config.py" ;;

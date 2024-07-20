@@ -521,9 +521,10 @@ namespace {
 							if (c < Cost::infinity) {
 								CandidateFinder subFinder( context, env );
 								expr = subFinder.makeEnumOffsetCast(argAsEnum, paramAsEnum, expr, c);
-								results.emplace_back(
-									i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
-									nextArg + 1, nTuples, expl.cost + c, expl.exprs.size() == 1 ? 0 : 1, j );
+								if ( expr )
+									results.emplace_back(
+										i, expr, std::move( env ), std::move( need ), std::move( have ), std::move( open ),
+										nextArg + 1, nTuples, expl.cost + c, expl.exprs.size() == 1 ? 0 : 1, j );
 								continue;
 							} else {
 								std::cerr << "Cannot instantiate " << paramAsEnum->base->name <<  " with " << argAsEnum->base->name << std::endl;
@@ -1264,7 +1265,8 @@ namespace {
 			if ( argAsEnum && toAsEnum && argAsEnum->name != toAsEnum->name ) {
 				CandidateFinder subFinder(context, tenv);
 				ast::ptr<ast::Expr> offsetExpr = subFinder.makeEnumOffsetCast(argAsEnum, toAsEnum, cand->expr, thisCost);
-				cand->expr = offsetExpr;
+				if ( offsetExpr )
+					cand->expr = offsetExpr;
 			}
 
 			PRINT(
@@ -2150,10 +2152,7 @@ const ast::Expr * referenceToRvalueConversion( const ast::Expr * expr, Cost & co
 }
 
 const ast::Expr * CandidateFinder::makeEnumOffsetCast( const ast::EnumInstType * src, 
-	const ast::EnumInstType * dst,
-	const ast::Expr * expr,
-	Cost minCost ) {
-	
+	const ast::EnumInstType * dst, const ast::Expr * expr, Cost minCost ) {
 	auto srcDecl = src->base;
 	auto dstDecl = dst->base;
 
@@ -2178,16 +2177,15 @@ const ast::Expr * CandidateFinder::makeEnumOffsetCast( const ast::EnumInstType *
 				CandidateList winners = findMinCost( finder.candidates );
 				CandidateRef & choice = winners.front();
 				choice->expr = new ast::CastExpr(expr->location, choice->expr, dstChild, ast::GeneratedFlag::ExplicitCast);
-				castToDst = new ast::CastExpr( 
-					makeEnumOffsetCast( src, dstChild, choice->expr, minCost ),
-					dst);
+				auto destExpr = makeEnumOffsetCast( src, dstChild, choice->expr, minCost );
+				if ( !destExpr ) continue;
+				castToDst = new ast::CastExpr( destExpr, dst );
 			} else {
 				castToDst = new ast::CastExpr( expr, dst );
 			}
 			return castToDst;
 		}
 	}
-	SemanticError(expr, src->base->name + " is not a subtype of " + dst->base->name);
 	return nullptr;
 }
 
