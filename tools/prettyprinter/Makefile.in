@@ -109,9 +109,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(tools_prettyprinterdir)"
 PROGRAMS = $(tools_prettyprinter_PROGRAMS)
-am__objects_1 = pretty-lex.$(OBJEXT) pretty-parser.$(OBJEXT) \
-	pretty-token.$(OBJEXT) pretty-filter.$(OBJEXT) \
-	pretty-main.$(OBJEXT)
+am__objects_1 = pretty-filter.$(OBJEXT) pretty-lex.$(OBJEXT) \
+	pretty-main.$(OBJEXT) pretty-parser.$(OBJEXT) \
+	pretty-token.$(OBJEXT)
 am_pretty_OBJECTS = $(am__objects_1)
 pretty_OBJECTS = $(am_pretty_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -377,11 +377,14 @@ AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
 ACLOCAL_AMFLAGS = -I automake
 BUILT_SOURCES = parser.hh
 AM_YFLAGS = -d -t -v -Wno-yacc
-SRC = lex.ll \
+SRC = ParserTypes.h \
+      filter.cc \
+      filter.h \
+      lex.ll \
+      main.cc \
       parser.yy \
       token.cc \
-      filter.cc \
-      main.cc
+      token.h
 
 tools_prettyprinterdir = ../
 pretty_SOURCES = ${SRC}
@@ -521,6 +524,20 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
+pretty-filter.o: filter.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-filter.o -MD -MP -MF $(DEPDIR)/pretty-filter.Tpo -c -o pretty-filter.o `test -f 'filter.cc' || echo '$(srcdir)/'`filter.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-filter.Tpo $(DEPDIR)/pretty-filter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='filter.cc' object='pretty-filter.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-filter.o `test -f 'filter.cc' || echo '$(srcdir)/'`filter.cc
+
+pretty-filter.obj: filter.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-filter.obj -MD -MP -MF $(DEPDIR)/pretty-filter.Tpo -c -o pretty-filter.obj `if test -f 'filter.cc'; then $(CYGPATH_W) 'filter.cc'; else $(CYGPATH_W) '$(srcdir)/filter.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-filter.Tpo $(DEPDIR)/pretty-filter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='filter.cc' object='pretty-filter.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-filter.obj `if test -f 'filter.cc'; then $(CYGPATH_W) 'filter.cc'; else $(CYGPATH_W) '$(srcdir)/filter.cc'; fi`
+
 pretty-lex.o: lex.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-lex.o -MD -MP -MF $(DEPDIR)/pretty-lex.Tpo -c -o pretty-lex.o `test -f 'lex.cc' || echo '$(srcdir)/'`lex.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-lex.Tpo $(DEPDIR)/pretty-lex.Po
@@ -534,6 +551,20 @@ pretty-lex.obj: lex.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='lex.cc' object='pretty-lex.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-lex.obj `if test -f 'lex.cc'; then $(CYGPATH_W) 'lex.cc'; else $(CYGPATH_W) '$(srcdir)/lex.cc'; fi`
+
+pretty-main.o: main.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-main.o -MD -MP -MF $(DEPDIR)/pretty-main.Tpo -c -o pretty-main.o `test -f 'main.cc' || echo '$(srcdir)/'`main.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-main.Tpo $(DEPDIR)/pretty-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.cc' object='pretty-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-main.o `test -f 'main.cc' || echo '$(srcdir)/'`main.cc
+
+pretty-main.obj: main.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-main.obj -MD -MP -MF $(DEPDIR)/pretty-main.Tpo -c -o pretty-main.obj `if test -f 'main.cc'; then $(CYGPATH_W) 'main.cc'; else $(CYGPATH_W) '$(srcdir)/main.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-main.Tpo $(DEPDIR)/pretty-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.cc' object='pretty-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-main.obj `if test -f 'main.cc'; then $(CYGPATH_W) 'main.cc'; else $(CYGPATH_W) '$(srcdir)/main.cc'; fi`
 
 pretty-parser.o: parser.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-parser.o -MD -MP -MF $(DEPDIR)/pretty-parser.Tpo -c -o pretty-parser.o `test -f 'parser.cc' || echo '$(srcdir)/'`parser.cc
@@ -562,34 +593,6 @@ pretty-token.obj: token.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='token.cc' object='pretty-token.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-token.obj `if test -f 'token.cc'; then $(CYGPATH_W) 'token.cc'; else $(CYGPATH_W) '$(srcdir)/token.cc'; fi`
-
-pretty-filter.o: filter.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-filter.o -MD -MP -MF $(DEPDIR)/pretty-filter.Tpo -c -o pretty-filter.o `test -f 'filter.cc' || echo '$(srcdir)/'`filter.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-filter.Tpo $(DEPDIR)/pretty-filter.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='filter.cc' object='pretty-filter.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-filter.o `test -f 'filter.cc' || echo '$(srcdir)/'`filter.cc
-
-pretty-filter.obj: filter.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-filter.obj -MD -MP -MF $(DEPDIR)/pretty-filter.Tpo -c -o pretty-filter.obj `if test -f 'filter.cc'; then $(CYGPATH_W) 'filter.cc'; else $(CYGPATH_W) '$(srcdir)/filter.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-filter.Tpo $(DEPDIR)/pretty-filter.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='filter.cc' object='pretty-filter.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-filter.obj `if test -f 'filter.cc'; then $(CYGPATH_W) 'filter.cc'; else $(CYGPATH_W) '$(srcdir)/filter.cc'; fi`
-
-pretty-main.o: main.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-main.o -MD -MP -MF $(DEPDIR)/pretty-main.Tpo -c -o pretty-main.o `test -f 'main.cc' || echo '$(srcdir)/'`main.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-main.Tpo $(DEPDIR)/pretty-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.cc' object='pretty-main.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-main.o `test -f 'main.cc' || echo '$(srcdir)/'`main.cc
-
-pretty-main.obj: main.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -MT pretty-main.obj -MD -MP -MF $(DEPDIR)/pretty-main.Tpo -c -o pretty-main.obj `if test -f 'main.cc'; then $(CYGPATH_W) 'main.cc'; else $(CYGPATH_W) '$(srcdir)/main.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pretty-main.Tpo $(DEPDIR)/pretty-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.cc' object='pretty-main.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pretty_CXXFLAGS) $(CXXFLAGS) -c -o pretty-main.obj `if test -f 'main.cc'; then $(CYGPATH_W) 'main.cc'; else $(CYGPATH_W) '$(srcdir)/main.cc'; fi`
 
 .ll.cc:
 	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)

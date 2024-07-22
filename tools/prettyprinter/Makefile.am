@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Wed Jun 28 12:07:10 2017
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Sat Jul 20 12:07:15 2024
-## Update Count     : 24
+## Last Modified On : Mon Jul 22 11:33:01 2024
+## Update Count     : 25
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -21,11 +21,14 @@ BUILT_SOURCES = parser.hh
 
 AM_YFLAGS = -d -t -v -Wno-yacc
 
-SRC = lex.ll \
+SRC = ParserTypes.h \
+      filter.cc \
+      filter.h \
+      lex.ll \
+      main.cc \
       parser.yy \
       token.cc \
-      filter.cc \
-      main.cc
+      token.h
 
 tools_prettyprinter_PROGRAMS = pretty
 tools_prettyprinterdir = ../
