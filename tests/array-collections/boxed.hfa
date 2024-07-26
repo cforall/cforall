@@ -1,0 +1,113 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// boxed.hfa -- inter-compile unit dependencies and common macros for the "array boxed" test
+//
+// Author           : Mike Brooks
+// Created On       : Thu Jul 25 17:00:00 2024
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// See general test documentation in boxed.main.cfa.
+// See abbreviation definitions in boxed.cases.hfa.
+
+
+#ifdef SUPPRESS_INIT
+#define DECTYVAR(T) T*
+#define INITARR @= {}
+#else
+#define DECTYVAR(T) T
+#define INITARR
+#endif
+
+// ETG definitions
+#define ID(TY) TY
+#define PAIR(TY) pair(TY, TY)
+
+#define DECL(            F_SLUG, TRID,   SZS, SZV, ACCS, SPS, OVLD ) F_SIG( F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD );
+
+#define CALL(            F_SLUG, TRID, SZS, SZV, ... ) CALL__SZS_ ## SZS( F_SLUG, TRID, SZV, __VA_ARGS__ )
+#define CALL__SZS_NSTAT( F_SLUG, TRID,      SZV, ... ) F_NAME_NSTAT( F_SLUG, TRID ) ( __VA_ARGS__      )
+#define CALL__SZS_NDYN(  F_SLUG, TRID,      SZV, ... ) F_NAME_NDYN(  F_SLUG, TRID ) ( __VA_ARGS__, SZV )
+
+#define F_SIG(                      F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__SPS_ ## SPS( F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD )
+#define F_SIG__SPS_NA(              F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__POLY_SMPL(   F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD )
+#define F_SIG__SPS_PPD(             F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__POLY_SMPL(   F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD )
+#define F_SIG__SPS_PPA(             F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__POLY_ASSN(   F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD )
+#define F_SIG__SPS_PMA(             F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__POLY_ASSN(   F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD )
+#define F_SIG__SPS_MPD(             F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__POLY_NONE(   F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD )
+#define F_SIG__POLY_SMPL(           F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__POLY_SMPL__SZS_ ## SZS( F_SLUG, TRID, SZV, ACCS, SPS, OVLD )
+#define F_SIG__POLY_SMPL__SZS_NSTAT(F_SLUG, TRID,      SZV, ACCS, SPS, OVLD ) forall( DECTYVAR(T) ) OVLD * F_NAME_NSTAT(F_SLUG, TRID ) ( size_t expectedElmSz, const char * tcid, const char * vart           )
+#define F_SIG__POLY_SMPL__SZS_NDYN( F_SLUG, TRID,      SZV, ACCS, SPS, OVLD ) forall( DECTYVAR(T) ) OVLD * F_NAME_NDYN( F_SLUG, TRID ) ( size_t expectedElmSz, const char * tcid, const char * vart, size_t n )
+#define F_SIG__POLY_ASSN(           F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__POLY_ASSN__SZS_ ## SZS( F_SLUG, TRID, SZV, ACCS, SPS, OVLD )
+#define F_SIG__POLY_ASSN__SZS_NSTAT(F_SLUG, TRID,      SZV, ACCS, SPS, OVLD ) forall( DECTYVAR(T) | { DECL_ACCESS( F_SLUG, TRID, ACCS, SPS, SZV ) } ) OVLD * F_NAME_NSTAT(F_SLUG, TRID) ( size_t expectedElmSz, const char * tcid, const char * vart           )
+#define F_SIG__POLY_NONE(           F_SLUG, TRID, SZS, SZV, ACCS, SPS, OVLD ) F_SIG__POLY_NONE__SZS_ ## SZS( F_SLUG, TRID, SZV, ACCS, SPS, OVLD )
+#define F_SIG__POLY_NONE__SZS_NSTAT(F_SLUG, TRID,      SZV, ACCS, SPS, OVLD ) OVLD * F_NAME_NSTAT(F_SLUG, TRID) ( size_t expectedElmSz, const char * tcid, const char * vart )
+
+#define F_NAME_NSTAT( F_SLUG, TRID ) F_SLUG ## _ ## TRID
+#define F_NAME_NDYN(  F_SLUG, TRID ) F_SLUG ## _ ## TRID
+
+#define DECL_ACCESS( F_SLUG, TRID, ACCS, SPS, SZ ) void F_NAME_NSTAT( access, TRID ) ( size_t, ACCESS_PARM_TY(ACCS, SZ) );
+#define ACCESS_PARM_TY(ACCS, SZ) ACCESS_PARM_TY__ACCS_ ## ACCS( SZ )
+#define ACCESS_PARM_TY__ACCS_PFST(SZ) T *
+#define ACCESS_PARM_TY__ACCS_PARR(SZ) T (*)[SZ]
+
+// Used as the "polymorphic, but not T" element type.
+forall(U, V)
+struct pair {
+    U fst;
+    V snd;
+};
+
+// Used as the "larger than a pointer" element type.
+// Size chosen empirically to give buffers larger than the whole stack frame
+// for a pointer-sized element.
+struct bigun {
+    long long int a;
+    long long int b;
+    long long int c;
+    long long int d;
+    long long int e;
+};
+
+// Verbose output is unstable from one compiler-target-optimization to another.
+// So it can't run in the overnight test.  But it helps see what went wrong.
+#ifdef VERBOSE
+#define VPRT(...) printf(__VA_ARGS__)
+#else
+#define VPRT(...)
+#endif
+
+
+
+
+// defined in bookend.cfa
+
+void bookendInner( void );
+
+#define TC(...)
+#define TR( TRID, SZS, SZV, ETG, ACCS, SPS, OVLD ) DECL( bookendOuter, TRID, SZS, SZV, ACCS, SPS, OVLD )
+#include "boxed.cases.hfa"
+#undef TC
+#undef TR
+
+void resetBookends( void );
+void reportBookends( void );
+
+extern char * ar_hi;
+extern char * ar_lo;
+
+
+
+// defined in main.cfa
+
+#define TC(...)
+#define TR( TRID, SZS, SZV, ETG, ACCS, SPS, OVLD ) DECL( allocAndAccess, TRID, SZS, SZV, ACCS, SPS, OVLD )
+#include "boxed.cases.hfa"
+#undef TC
+#undef TR

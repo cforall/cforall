@@ -68,7 +68,7 @@ PRETTY_PATH = mkdir -p ${dir ${abspath ${@}}} && cd ${srcdir} &&
 
 .PHONY : concurrency list .validate .test_makeflags
 .INTERMEDIATE : .validate .validate.cfa .test_makeflags
-EXTRA_PROGRAMS = avl_test linkonce linking/mangling/anon .dummy_hack # build but do not install
+EXTRA_PROGRAMS = array-collections/boxed avl_test linkonce linking/mangling/anon .dummy_hack # build but do not install
 EXTRA_DIST = test.py \
 	pybin/__init__.py \
 	pybin/print-core.gdb \
@@ -76,6 +76,8 @@ EXTRA_DIST = test.py \
 	pybin/test_run.py \
 	pybin/tools.py \
 	long_tests.hfa \
+	array-collections/boxed.hfa \
+	array-collections/boxed.cases.hfa \
 	avltree/avl-private.h \
 	avltree/avl.h \
 	configs/.in/parseconfig-all.txt \
@@ -103,6 +105,7 @@ dist-hook:
 		fi; \
 	done
 
+array_collections_boxed_SOURCES = array-collections/boxed.main.cfa array-collections/boxed.bookend.cfa
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
 linking_mangling_anon_SOURCES = linking/mangling/header.hfa linking/mangling/lib.cfa linking/mangling/main.cfa
@@ -207,7 +210,7 @@ ${GENERATED_CODE} : % : %.cfa ${CFACCBIN}
 CFACOMPILE_SYNTAX = ${CFACOMPILETEST} -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o ${abspath ${@}}
 
 SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator \
-	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrency/waitfor/parse
+	init1 limits nested-types cast ctrl-flow/labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrency/waitfor/parse
 ${SYNTAX_ONLY_CODE} : % : %.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX}
 	${if ${test}, cp ${test} ${abspath ${@}}, }

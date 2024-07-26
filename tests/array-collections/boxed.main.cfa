@@ -1,0 +1,457 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// boxed.main.cfa -- core logic of the "array boxed" test
+//
+// Author           : Mike Brooks
+// Created On       : Thu Jul 25 17:00:00 2024
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// See abbreviation definitions in boxed.cases.hfa.
+
+/*
+The "array boxed" test deals with an array of T's, when T is dynamically sized.
+
+All cases generate a VLA, because even a sinlge (dynamically sized) T would be
+backed by a VLA.  All cases generate pointer arithmetic on, and casts from,
+void*, because (dynamically sized) T has no correspondig type in generated C.
+These facts are true about boxing in general.  The test ensures that the VLA
+is big enough and that accessed elements are spaced by the correct amounts,
+specifically for cases where the user declares an array of T's, i.e. demands
+several adjacent char-buffer-implemented T's.
+
+The core test logic occurs in the functions named allocAndAccess, below.  It
+allocates an array of T's, then accesses them.  In some cases, the access is
+within the allocAndAccess function, in others, it's within a called helper
+function.  The access logic prints information about the spacing of the
+elements (as it sees them) and it stores the array-edge addreses for
+subsequent validation.
+
+The access output uses n, rather than (n-1), as its "end" address, just to
+keep expectation arithmetic simple.  So the output does discuss addresses of
+elements that do not exist.
+
+The access output uses an expectedElemSz parameter, and calculations from it.
+Care is taken to ensure that we are not merely comparing two executions of the
+same, possibly flawed, math.  First, the value of expectedElemSz is always
+calculated using concrete types, e.g. sizeof(float), while the SUT-produced
+value is from (implied use of) literally sizeof(T), just in a case where we
+have T=float.  Second, the details within the calculation are not the main
+feature of interest, rather, it's _whether_ this calcuation is being applied
+in the cases where it should be, instead of, for example, seeming to assume
+sizeof(T)==1 or sizeof(T)==sizeof(size_t), both being bugs that actually
+occurred.
+
+An allocAndAccess function runs in an instrumentation context that observes
+the stack frame that allocAndAccess gets.  This instrumentation verifies that
+the recorded array-edge addresses are within the stack frame.  If the SUT has
+a bug due to a mistake in the box-pass's generated buffer declaration causes
+a function (like allocAndAccess) that declares an array of T's to get an
+incorrectly sized stack frame.  This test was created along with a fix of such
+a bug.
+
+Including the instrumentation context, the call graph is:
+    main
+        run_X
+            bookendOuter_X
+                allocAndAccess_X
+                    bookendInner
+            reportBookends
+The outer and inner "bookend" functions record the addresses of a local
+variable within their respective stack frames, thus giving a lenient
+approximation of the extent of the allocAndAccess stack frame, and
+thereby, of its VLA.  Requiring a sufficiently large VLA, and seeing the
+resulting access stay in bounds (with constant overhead shown under verbose
+output) gives confidence in the actual VLA being of the right size.
+
+For this instrumentation to work, separate compilation (optimization) units
+are required: outer and inner "bookend" functions in one, allocAndAccess in the
+other.  Otherwise, the optimizer sees the full call chain and compresses its
+use of frame pointers / VLA zones, into one ABI frame.  Then, the outer and
+inner reference local varaibles no longer span the VLA.  So, the "bookend"
+routines are in boxed.bookend.cfa, while everything else is here.
+
+These code elements are boilerplate, and are realized with macros driven by the
+tables in boxed.cases.hfa:
+    boxed.main.cfa      main calls run_X
+    boxed.main.cfa      declaration and definition of run_X, including
+                            calling bookendOuter_X
+                            calling reportBookends
+    boxed.hfa           declaration of bookendOuter_X
+    boxed.bookend.cfa   definition of bookendOuter_X, including
+                            calling allocAndAccess_X
+    boxed.hfa           declaration of allocAndAccess_X
+The definition of allocAndAcces_X is kept bespoke, to keep the actual test
+details readable.  As a result, the list of allocAndAccess_X definition in
+boxed.main.cfa must be kept aligned with the tables in boxed.cases.hfa.
+A common definition of bookendInner is used acress all test cases, so its
+declaration and definition are not table driven.
+
+*/
+
+#include "boxed.hfa"
+
+#define SHOW_ACCESS_1D( N_ELEMS )                                                               \
+    char * e0 = (char *) & x[0];                                                                \
+    char * e1 = (char *) & x[1];                                                                \
+    char * e2 = (char *) & x[2];                                                                \
+    char * en = (char *) & x[N_ELEMS];                                                          \
+                                                                                                \
+    ptrdiff_t d01 = e1 - e0;                                                                    \
+    ptrdiff_t d12 = e2 - e1;                                                                    \
+    ptrdiff_t d02 = e2 - e0;                                                                    \
+    ptrdiff_t d0n = en - e0;                                                                    \
+                                                                                                \
+    printf("Delta 0--1 expected %zd bytes, actual %zd bytes\n", 1 * expectedElmSz, d01);        \
+    printf("Delta 1--2 expected %zd bytes, actual %zd bytes\n", 1 * expectedElmSz, d12);        \
+    printf("Delta 0--2 expected %zd bytes, actual %zd bytes\n", 2 * expectedElmSz, d02);        \
+    printf("Delta 0--n expected %zd bytes, actual %zd bytes\n", N_ELEMS * expectedElmSz, d0n);  \
+                                                                                                \
+    VPRT( "Array start %p end %p\n", e0, en );                                                  \
+                                                                                                \
+    ar_lo = e0;                                                                                 \
+    ar_hi = en;
+
+
+#define SHOW_ACCESS_2D( N_ELEMS )                                                               \
+    char * e00 = (char *) & x[0][0];                                                                \
+    char * e01 = (char *) & x[0][1];                                                                \
+    char * e02 = (char *) & x[0][2];                                                                \
+    char * e0n = (char *) & x[0][N_ELEMS];                                                          \
+                                                                                                \
+    char * e10 = (char *) & x[1][0];                                                                \
+    char * e20 = (char *) & x[2][0];                                                                \
+    char * en0 = (char *) & x[N_ELEMS][0];                                                          \
+                                                                                                \
+    char * enn = (char *) & x[N_ELEMS][N_ELEMS];                                                          \
+                                                                                                \
+    ptrdiff_t d_00_01 = e01 - e00;                                                                    \
+    ptrdiff_t d_01_02 = e02 - e01;                                                                    \
+    ptrdiff_t d_00_02 = e02 - e00;                                                                    \
+    ptrdiff_t d_00_0n = e0n - e00;                                                                    \
+                                                                                                \
+    ptrdiff_t d_00_10 = e10 - e00;                                                                    \
+    ptrdiff_t d_10_20 = e20 - e10;                                                                    \
+    ptrdiff_t d_00_20 = e20 - e00;                                                                    \
+    ptrdiff_t d_00_n0 = en0 - e00;                                                                    \
+                                                                                                \
+    ptrdiff_t d_00_nn = enn - e00;                                                                    \
+                                                                                                \
+    printf("Delta 0,0--0,1 expected %zd bytes, actual %zd bytes\n", 1 * 1 * expectedElmSz, d_00_01);        \
+    printf("Delta 0,1--0,2 expected %zd bytes, actual %zd bytes\n", 1 * 1 * expectedElmSz, d_01_02);        \
+    printf("Delta 0,0--0,2 expected %zd bytes, actual %zd bytes\n", 1 * 2 * expectedElmSz, d_00_02);        \
+    printf("Delta 0,0--0,n expected %zd bytes, actual %zd bytes\n", 1 * N_ELEMS * expectedElmSz, d_00_0n);  \
+                                                                                                \
+    printf("Delta 0,0--1,0 expected %zd bytes, actual %zd bytes\n", N_ELEMS * 1 * expectedElmSz, d_00_10);        \
+    printf("Delta 1,0--2,0 expected %zd bytes, actual %zd bytes\n", N_ELEMS * 1 * expectedElmSz, d_10_20);        \
+    printf("Delta 0,0--2,0 expected %zd bytes, actual %zd bytes\n", N_ELEMS * 2 * expectedElmSz, d_00_20);        \
+    printf("Delta 0,0--n,0 expected %zd bytes, actual %zd bytes\n", N_ELEMS * N_ELEMS * expectedElmSz, d_00_n0);  \
+                                                                                                \
+    printf("Delta 0,0--n,n expected %zd bytes, actual %zd bytes\n", N_ELEMS * N_ELEMS * expectedElmSz + \
+                                                                    1       * N_ELEMS * expectedElmSz, d_00_nn);        \
+                                                                                                \
+    VPRT( "Array start %p end %p\n", e00, enn );                                                  \
+                                                                                                \
+    ar_lo = e00;                                                                                 \
+    ar_hi = en0; /* first byte past the end is not after the first row that does not exist */
+
+
+
+
+
+// ---------- 1, singleton
+
+forall( T ) T * allocAndAccess_1 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 1%s (singleton): T x[1], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 1 ] INITARR;
+    bookendInner();
+    SHOW_ACCESS_1D( 1 )
+    return 0p;
+}
+
+// ---------- 2, general
+
+forall( T ) T * allocAndAccess_2 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 2%s (general): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    bookendInner();
+    SHOW_ACCESS_1D( 42 )
+    return 0p;
+}
+
+// ---------- 3, user VLA
+
+forall( T ) T * allocAndAccess_3 ( size_t expectedElmSz, const char * tcid, const char * vart, size_t n ) { 
+    printf("------- 3%s (user VLA): T x[n], got n=%zd, expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, n, vart, sizeof(T), expectedElmSz);
+    T x[ n ] INITARR;
+    bookendInner();
+    SHOW_ACCESS_1D( n )
+    return 0p;
+}
+
+// ---------- 4, 2-dimensional
+
+forall( T ) T * allocAndAccess_4 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 4%s (2-dimensional): T x[42][42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte atoms\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ][ 42 ] INITARR;
+    bookendInner();
+    SHOW_ACCESS_2D( 42 )
+    return 0p;
+}
+
+// ---------- 5, pair
+
+forall( T ) T * allocAndAccess_5 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 5%s (pair): pair(T,T) x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte atoms\n", tcid, vart, sizeof(T), expectedElmSz);
+    pair(T,T) x[ 42 ] INITARR;
+    bookendInner();
+    SHOW_ACCESS_1D( 42 )
+    return 0p;
+}
+
+// ---------- 6, raii
+
+struct my_mgd_t {
+    float x;
+};
+
+// Auxiliary state used in the RAII rig only.  Only to format/excerpt output.  Reset per TC.
+static struct {
+    size_t total_elems;     // size of array being managed
+    size_t ctor_calls;      // number of ctor calls seen so far
+    size_t dtor_calls;      // ^dtor
+    char * ctor_first;      // argument of first ctor call
+    char * dtor_first;      // ^dtor
+    char * dtor_lo;         // lowest dtor argument seen yet
+    char * dtor_hi;         // ^highest
+} raii;
+
+void ?{}( my_mgd_t & this ) {
+    if (raii.ctor_first == 0p) raii.ctor_first = (char *) & this;
+    VPRT( "ctor call %zd targets %p\n", raii.ctor_calls, &this );
+    if (raii.ctor_calls < 2 || raii.total_elems - raii.ctor_calls <= 2)
+        printf( "ctor call %zd targets first + %zd bytes\n", raii.ctor_calls, ((char*)&this - raii.ctor_first) );
+    // ctor call locations fill the conformed ar_lo/hi
+    if ( (char *) & this < ar_lo ) ar_lo = (char *) & this;
+    if ( (char *) & this > ar_hi ) ar_hi = (char *) & this;
+    raii.ctor_calls += 1;
+}
+
+void ^?{}( my_mgd_t & this ) {
+    // dtor calls count backward
+    if (raii.dtor_first == 0p) raii.dtor_first = (char *) & this;
+    VPRT( "dtor call %zd targets %p\n", raii.dtor_calls, &this );
+    if (raii.dtor_calls < 2 || raii.total_elems - raii.dtor_calls <= 2)
+        printf( "dtor call %zd targets first - %zd bytes\n", raii.dtor_calls, (raii.dtor_first - (char*)&this) );
+    // dtor call locations fill auxiliary state; reconciled with the conformed ones on last call
+    if ( (char *) & this < raii.dtor_lo ) raii.dtor_lo = (char *) & this;
+    if ( (char *) & this > raii.dtor_hi ) raii.dtor_hi = (char *) & this;
+    raii.dtor_calls += 1;
+    if (raii.dtor_calls >= raii.total_elems)
+        printf( "dtor lo off by %zd bytes, hi off by %zd bytes\n", (ar_lo - raii.dtor_lo), (ar_hi - raii.dtor_hi) );
+}
+
+forall( T ) T * allocAndAccess_6 ( size_t expectedElmSz, const char * tcid, const char * vart ) {
+    raii.total_elems = 42;
+    raii.ctor_calls = 0;
+    raii.dtor_calls = 0;
+    raii.ctor_first = 0p;
+    raii.dtor_first = 0p;
+    raii.dtor_lo = (char*)-1;
+    raii.dtor_hi = 0p;
+    printf("------- 6%s (raii): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    bookendInner();
+    // no SHOW_ACCESS: it happens in the cdtors
+    return 0p;
+}
+
+// ---------- 7, comm, PPD, PFST
+
+forall( T* ) void access_7 ( size_t expectedElmSz, T x[] ) { 
+    SHOW_ACCESS_1D(42)
+}
+forall( T ) T * allocAndAccess_7 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 7%s (communication, poly-poly direct, by param T[]): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    bookendInner();
+    access_7( expectedElmSz, x );
+    return 0p;
+}
+
+// ---------- 8, comm, PPD, PARR
+
+forall( T* ) void access_8 ( size_t expectedElmSz, T (*temp)[42] ) { 
+    T * x = *temp;
+    SHOW_ACCESS_1D(42)
+}
+forall( T ) T * allocAndAccess_8 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 8%s (communication, poly-poly direct, by param T(*)[*]): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    bookendInner();
+    access_8( expectedElmSz, &x );
+    return 0p;
+}
+
+// ---------- 9, comm, PPA, PFST
+
+forall( T | { void access_9 ( size_t, T x[] ); } )
+T * allocAndAccess_9 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 9%s (communication, poly-poly assertion, by param T[]): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    bookendInner();
+    access_9( expectedElmSz, x );
+    return 0p;
+}
+forall( T* ) void access_9 ( size_t expectedElmSz, T x[] ) { 
+    SHOW_ACCESS_1D(42)
+}
+
+// ---------- 10, comm, PPA, PARR
+
+forall( T | { void access_10 ( size_t, T (*)[42] ); } )
+T * allocAndAccess_10( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 10%s (communication, poly-poly assertion, by param T(*)[*]): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    bookendInner();
+    access_10( expectedElmSz, &x );
+    return 0p;
+}
+forall( T* ) void access_10( size_t expectedElmSz, T (*temp)[42] ) {
+    T * x = *temp;
+    SHOW_ACCESS_1D(42)
+}
+
+// ---------- 11, comm, PMA, PFST_11
+
+forall( T | { void access_11( size_t, T * ); } )
+T * allocAndAccess_11 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 11%s (communication, poly-mono assertion, by param T[]): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    bookendInner();
+    access_11( expectedElmSz, x );
+    return 0p;
+}
+void access_11 ( size_t expectedElmSz, char x[] ) {
+    SHOW_ACCESS_1D(42)
+}
+void access_11 ( size_t expectedElmSz, bigun x[] ) { 
+    SHOW_ACCESS_1D(42)
+}
+
+// ---------- 12, comm, PMA, PARR
+
+forall( T | { void access_12 ( size_t, T (*)[42] ); } )
+T * allocAndAccess_12 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 12%s (communication, poly-mono assertion, by param T(*)[*]): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    bookendInner();
+    access_12( expectedElmSz, &x );
+    return 0p;
+}
+void access_12 ( size_t expectedElmSz, double (*temp)[42] ) {
+    double * x = *temp;
+    SHOW_ACCESS_1D(42)
+}
+
+// ---------- 13, comm, MPD, PFST
+
+forall( T* ) void access_13( size_t expectedElmSz, T x[] ) { 
+    SHOW_ACCESS_1D(42)
+}
+char * allocAndAccess_13 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 13%s (communication, mono-poly direct, by param T[]): char x[42], expecting %zd-byte elems\n", tcid, expectedElmSz);
+    char x[ 42 ] INITARR;
+    bookendInner();
+    access_13( expectedElmSz, x );
+    return 0p;
+}
+bigun * allocAndAccess_13( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 13%s (communication, mono-poly direct, by param T[]): bigun x[42], expecting %zd-byte elems\n", tcid, expectedElmSz);
+    bigun x[ 42 ] INITARR;
+    bookendInner();
+    access_13( expectedElmSz, x );
+    return 0p;
+}
+
+// ---------- 14, comm, MPD, PARR
+
+forall( T* ) void access_14 ( size_t expectedElmSz, T (*temp)[42] ) { 
+    T * x = *temp;
+    SHOW_ACCESS_1D(42)
+}
+double * allocAndAccess_14 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 13%s (communication, mono-poly direct, by param T(*)[*]): double x[42], expecting %zd-byte elems\n", tcid, expectedElmSz);
+    double x[ 42 ] INITARR;
+    bookendInner();
+    access_14( expectedElmSz, &x );
+    return 0p;
+}
+
+// ---------- 15, operators
+
+forall( T* ) void access_15 ( size_t expectedElmSz, T x[] ) {
+    // correctness of x and ?[?] established by earlier tests
+    T * x5 = & x[5];
+
+    #define SHOW( OP, ACT, EXP ) printf( #OP " off by %zd\n", ((size_t)(EXP)) - ((size_t)(ACT)) )
+    { T * xx = & 5[x];            SHOW( ?[?] rev,  xx, x5 ); }
+    { T * xx = x + 5;             SHOW( ?+?,       xx, x5 ); }
+    { T * xx = 5 + x;             SHOW( ?+? rev,   xx, x5 ); }
+    { T * xx = x;   xx += 5;      SHOW( ?+=?,      xx, x5 ); }
+//  { T * xx = x;   for(5) xx++;  SHOW( ?++,       xx, x5 ); }
+//  { T * xx = x;   for(5) ++xx;  SHOW( ++?,       xx, x5 ); }
+    { T * xx = x5;  xx -= 5;      SHOW( ?-=?,      xx, x  ); }
+//  { T * xx = x5;  for(5) xx--;  SHOW( ?--,       xx, x  ); }
+//  { T * xx = x5;  for(5) --xx;  SHOW( --?,       xx, x  ); }
+    #undef SHOW
+
+    ptrdiff_t expPos5 = x5 - x;
+    ptrdiff_t expNeg5 = x - x5;
+
+    printf( "?-? +ve off by %zd\n", ((ptrdiff_t) 5) - expPos5 );
+//  printf( "?-? -ve off by %zd\n", ((ptrdiff_t)-5) - expNeg5 );
+}
+
+forall( T ) T * allocAndAccess_15 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    printf("------- 15%s (operators): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
+    T x[ 42 ] INITARR;
+    // bookends unused
+    access_15( expectedElmSz, x );
+    return 0p;
+}
+
+
+
+
+
+#define TC(...)
+#define TR( TRID,       SZS,   SZV, ETG,   ACCS, SPS, OVLD              ) \
+    F_SIG( run, TRID, SZS, SZV, ACCS, SPS, OVLD ) {                                              \
+        resetBookends();                                                                \
+        OVLD * retval = CALL( bookendOuter, TRID, SZS, SZV, expectedElmSz, tcid, vart ); \
+        reportBookends();                                                               \
+        return retval;                                                                  \
+    }
+#include "boxed.cases.hfa"
+#undef TC
+#undef TR
+
+
+#define Q_(x) #x
+#define Q(x) Q_(x)
+
+int main() {
+    #define TR(...)
+    #define TC( TRID, TCID, SZS, SZV, ETG, VART ) \
+        { VART * ignore = CALL( run, TRID, SZS, SZV, sizeof(ETG(VART)), Q(TCID), Q(VART) ); (void) ignore; }
+    #include "boxed.cases.hfa"
+    #undef TR
+    #undef TC
+}

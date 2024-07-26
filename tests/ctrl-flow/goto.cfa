@@ -1,0 +1,22 @@
+// Some runtime tests for goto.
+
+#include <fstream.hfa>
+
+// Make sure loop hoisting
+void gotoLabelledLoop() {
+	sout | "goto-loop";
+	goto label;
+	sout | "!";
+
+	// Verbose loop will lead to lifting.
+	label: for (int i = 0 ; i < 2 ; ++i) {
+		sout | "loop";
+	}
+	sout | "end" | nl;
+}
+
+int main(int argc, char * argv[]) {
+	sout | nlOff;
+
+	gotoLabelledLoop();
+}

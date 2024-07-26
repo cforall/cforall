@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul  9 10:29:01 2024
-// Update Count     : 6713
+// Last Modified On : Thu Jul 25 15:19:32 2024
+// Update Count     : 6730
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -851,25 +851,6 @@ postfix_expression:
 		}
 	;
 
-argument_expression_list_opt:
-	// empty
-		{ $$ = nullptr; }
-	| argument_expression_list
-	;
-
-argument_expression_list:
-	argument_expression
-	| argument_expression_list_opt ',' argument_expression
-		{ $$ = $1->set_last( $3 ); }
-	;
-
-argument_expression:
-	'@'													// CFA, default parameter
-		{ SemanticError( yylloc, "Default parameter for argument is currently unimplemented." ); $$ = nullptr; }
-		// { $$ = new ExpressionNode( build_constantInteger( *new string( "2" ) ) ); }
-	| assignment_expression
-	;
-
 field_name_list:										// CFA, tuple field selector
 	field
 	| field_name_list ',' field					{ $$ = $1->set_last( $3 ); }
@@ -1115,6 +1096,28 @@ conditional_expression:
 
 constant_expression:
 	conditional_expression
+	;
+
+argument_expression_list_opt:
+	// empty
+		{ $$ = nullptr; }
+	| argument_expression_list
+	;
+
+argument_expression_list:
+	argument_expression
+	// | argument_expression_list_opt ',' argument_expression // CFA, allow empty argument
+	| argument_expression_list ',' argument_expression	// no empty argument
+		{ $$ = $1->set_last( $3 ); }
+	;
+
+argument_expression:
+	'?'													// CFA, default parameter
+		{ SemanticError( yylloc, "Argument to default parameter is currently unimplemented." ); $$ = nullptr; }
+		// { $$ = new ExpressionNode( build_constantInteger( *new string( "2" ) ) ); }
+	| '?' identifier '=' assignment_expression			// CFA, keyword argument
+		{ SemanticError( yylloc, "keyword argument is currently unimplemented." ); $$ = nullptr; }
+	| assignment_expression
 	;
 
 assignment_expression:
@@ -3542,6 +3545,8 @@ attr_name:												// GCC
 paren_identifier:
 	identifier_at
 		{ $$ = DeclarationNode::newName( $1 ); }
+	| '?' identifier
+		{ SemanticError( yylloc, "keyword parameter is currently unimplemented." ); $$ = nullptr; }
 	| '(' paren_identifier ')'							// redundant parenthesis
 		{ $$ = $2; }
 	;

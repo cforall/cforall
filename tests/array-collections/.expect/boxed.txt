@@ -1,0 +1,248 @@
+------- 1a (singleton): T x[1], expecting T=short, got sizeof(T)=2, expecting 2-byte elems
+Delta 0--1 expected 2 bytes, actual 2 bytes
+Delta 1--2 expected 2 bytes, actual 2 bytes
+Delta 0--2 expected 4 bytes, actual 4 bytes
+Delta 0--n expected 2 bytes, actual 2 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 1b (singleton): T x[1], expecting T=bigun, got sizeof(T)=40, expecting 40-byte elems
+Delta 0--1 expected 40 bytes, actual 40 bytes
+Delta 1--2 expected 40 bytes, actual 40 bytes
+Delta 0--2 expected 80 bytes, actual 80 bytes
+Delta 0--n expected 40 bytes, actual 40 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 2a (general): T x[42], expecting T=char, got sizeof(T)=1, expecting 1-byte elems
+Delta 0--1 expected 1 bytes, actual 1 bytes
+Delta 1--2 expected 1 bytes, actual 1 bytes
+Delta 0--2 expected 2 bytes, actual 2 bytes
+Delta 0--n expected 42 bytes, actual 42 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 2b (general): T x[42], expecting T=float, got sizeof(T)=4, expecting 4-byte elems
+Delta 0--1 expected 4 bytes, actual 4 bytes
+Delta 1--2 expected 4 bytes, actual 4 bytes
+Delta 0--2 expected 8 bytes, actual 8 bytes
+Delta 0--n expected 168 bytes, actual 168 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 2c (general): T x[42], expecting T=long long, got sizeof(T)=8, expecting 8-byte elems
+Delta 0--1 expected 8 bytes, actual 8 bytes
+Delta 1--2 expected 8 bytes, actual 8 bytes
+Delta 0--2 expected 16 bytes, actual 16 bytes
+Delta 0--n expected 336 bytes, actual 336 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 2d (general): T x[42], expecting T=bigun, got sizeof(T)=40, expecting 40-byte elems
+Delta 0--1 expected 40 bytes, actual 40 bytes
+Delta 1--2 expected 40 bytes, actual 40 bytes
+Delta 0--2 expected 80 bytes, actual 80 bytes
+Delta 0--n expected 1680 bytes, actual 1680 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 3a (user VLA): T x[n], got n=1, expecting T=int, got sizeof(T)=4, expecting 4-byte elems
+Delta 0--1 expected 4 bytes, actual 4 bytes
+Delta 1--2 expected 4 bytes, actual 4 bytes
+Delta 0--2 expected 8 bytes, actual 8 bytes
+Delta 0--n expected 4 bytes, actual 4 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 3b (user VLA): T x[n], got n=42, expecting T=int, got sizeof(T)=4, expecting 4-byte elems
+Delta 0--1 expected 4 bytes, actual 4 bytes
+Delta 1--2 expected 4 bytes, actual 4 bytes
+Delta 0--2 expected 8 bytes, actual 8 bytes
+Delta 0--n expected 168 bytes, actual 168 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 3c (user VLA): T x[n], got n=1, expecting T=bigun, got sizeof(T)=40, expecting 40-byte elems
+Delta 0--1 expected 40 bytes, actual 40 bytes
+Delta 1--2 expected 40 bytes, actual 40 bytes
+Delta 0--2 expected 80 bytes, actual 80 bytes
+Delta 0--n expected 40 bytes, actual 40 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 3d (user VLA): T x[n], got n=42, expecting T=bigun, got sizeof(T)=40, expecting 40-byte elems
+Delta 0--1 expected 40 bytes, actual 40 bytes
+Delta 1--2 expected 40 bytes, actual 40 bytes
+Delta 0--2 expected 80 bytes, actual 80 bytes
+Delta 0--n expected 1680 bytes, actual 1680 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 4a (2-dimensional): T x[42][42], expecting T=char, got sizeof(T)=1, expecting 1-byte atoms
+Delta 0,0--0,1 expected 1 bytes, actual 1 bytes
+Delta 0,1--0,2 expected 1 bytes, actual 1 bytes
+Delta 0,0--0,2 expected 2 bytes, actual 2 bytes
+Delta 0,0--0,n expected 42 bytes, actual 42 bytes
+Delta 0,0--1,0 expected 42 bytes, actual 42 bytes
+Delta 1,0--2,0 expected 42 bytes, actual 42 bytes
+Delta 0,0--2,0 expected 84 bytes, actual 84 bytes
+Delta 0,0--n,0 expected 1764 bytes, actual 1764 bytes
+Delta 0,0--n,n expected 1806 bytes, actual 1806 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 4b (2-dimensional): T x[42][42], expecting T=bigun, got sizeof(T)=40, expecting 40-byte atoms
+Delta 0,0--0,1 expected 40 bytes, actual 40 bytes
+Delta 0,1--0,2 expected 40 bytes, actual 40 bytes
+Delta 0,0--0,2 expected 80 bytes, actual 80 bytes
+Delta 0,0--0,n expected 1680 bytes, actual 1680 bytes
+Delta 0,0--1,0 expected 1680 bytes, actual 1680 bytes
+Delta 1,0--2,0 expected 1680 bytes, actual 1680 bytes
+Delta 0,0--2,0 expected 3360 bytes, actual 3360 bytes
+Delta 0,0--n,0 expected 70560 bytes, actual 70560 bytes
+Delta 0,0--n,n expected 72240 bytes, actual 72240 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 5a (pair): pair(T,T) x[42], expecting T=double, got sizeof(T)=8, expecting 16-byte atoms
+Delta 0--1 expected 16 bytes, actual 16 bytes
+Delta 1--2 expected 16 bytes, actual 16 bytes
+Delta 0--2 expected 32 bytes, actual 32 bytes
+Delta 0--n expected 672 bytes, actual 672 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 5b (pair): pair(T,T) x[42], expecting T=bigun, got sizeof(T)=40, expecting 80-byte atoms
+Delta 0--1 expected 80 bytes, actual 80 bytes
+Delta 1--2 expected 80 bytes, actual 80 bytes
+Delta 0--2 expected 160 bytes, actual 160 bytes
+Delta 0--n expected 3360 bytes, actual 3360 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 6a (raii): T x[42], expecting T=my_mgd_t, got sizeof(T)=4, expecting 4-byte elems
+ctor call 0 targets first + 0 bytes
+ctor call 1 targets first + 4 bytes
+ctor call 40 targets first + 160 bytes
+ctor call 41 targets first + 164 bytes
+dtor call 0 targets first - 0 bytes
+dtor call 1 targets first - 4 bytes
+dtor call 40 targets first - 160 bytes
+dtor call 41 targets first - 164 bytes
+dtor lo off by 0 bytes, hi off by 0 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 7a (communication, poly-poly direct, by param T[]): T x[42], expecting T=char, got sizeof(T)=1, expecting 1-byte elems
+Delta 0--1 expected 1 bytes, actual 1 bytes
+Delta 1--2 expected 1 bytes, actual 1 bytes
+Delta 0--2 expected 2 bytes, actual 2 bytes
+Delta 0--n expected 42 bytes, actual 42 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 7b (communication, poly-poly direct, by param T[]): T x[42], expecting T=float, got sizeof(T)=4, expecting 4-byte elems
+Delta 0--1 expected 4 bytes, actual 4 bytes
+Delta 1--2 expected 4 bytes, actual 4 bytes
+Delta 0--2 expected 8 bytes, actual 8 bytes
+Delta 0--n expected 168 bytes, actual 168 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 7c (communication, poly-poly direct, by param T[]): T x[42], expecting T=long long, got sizeof(T)=8, expecting 8-byte elems
+Delta 0--1 expected 8 bytes, actual 8 bytes
+Delta 1--2 expected 8 bytes, actual 8 bytes
+Delta 0--2 expected 16 bytes, actual 16 bytes
+Delta 0--n expected 336 bytes, actual 336 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 7d (communication, poly-poly direct, by param T[]): T x[42], expecting T=bigun, got sizeof(T)=40, expecting 40-byte elems
+Delta 0--1 expected 40 bytes, actual 40 bytes
+Delta 1--2 expected 40 bytes, actual 40 bytes
+Delta 0--2 expected 80 bytes, actual 80 bytes
+Delta 0--n expected 1680 bytes, actual 1680 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 8a (communication, poly-poly direct, by param T(*)[*]): T x[42], expecting T=double, got sizeof(T)=8, expecting 8-byte elems
+Delta 0--1 expected 8 bytes, actual 8 bytes
+Delta 1--2 expected 8 bytes, actual 8 bytes
+Delta 0--2 expected 16 bytes, actual 16 bytes
+Delta 0--n expected 336 bytes, actual 336 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 9a (communication, poly-poly assertion, by param T[]): T x[42], expecting T=char, got sizeof(T)=1, expecting 1-byte elems
+Delta 0--1 expected 1 bytes, actual 1 bytes
+Delta 1--2 expected 1 bytes, actual 1 bytes
+Delta 0--2 expected 2 bytes, actual 2 bytes
+Delta 0--n expected 42 bytes, actual 42 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 9b (communication, poly-poly assertion, by param T[]): T x[42], expecting T=float, got sizeof(T)=4, expecting 4-byte elems
+Delta 0--1 expected 4 bytes, actual 4 bytes
+Delta 1--2 expected 4 bytes, actual 4 bytes
+Delta 0--2 expected 8 bytes, actual 8 bytes
+Delta 0--n expected 168 bytes, actual 168 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 9c (communication, poly-poly assertion, by param T[]): T x[42], expecting T=long long, got sizeof(T)=8, expecting 8-byte elems
+Delta 0--1 expected 8 bytes, actual 8 bytes
+Delta 1--2 expected 8 bytes, actual 8 bytes
+Delta 0--2 expected 16 bytes, actual 16 bytes
+Delta 0--n expected 336 bytes, actual 336 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 9d (communication, poly-poly assertion, by param T[]): T x[42], expecting T=bigun, got sizeof(T)=40, expecting 40-byte elems
+Delta 0--1 expected 40 bytes, actual 40 bytes
+Delta 1--2 expected 40 bytes, actual 40 bytes
+Delta 0--2 expected 80 bytes, actual 80 bytes
+Delta 0--n expected 1680 bytes, actual 1680 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 10a (communication, poly-poly assertion, by param T(*)[*]): T x[42], expecting T=double, got sizeof(T)=8, expecting 8-byte elems
+Delta 0--1 expected 8 bytes, actual 8 bytes
+Delta 1--2 expected 8 bytes, actual 8 bytes
+Delta 0--2 expected 16 bytes, actual 16 bytes
+Delta 0--n expected 336 bytes, actual 336 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 11a (communication, poly-mono assertion, by param T[]): T x[42], expecting T=char, got sizeof(T)=1, expecting 1-byte elems
+Delta 0--1 expected 1 bytes, actual 1 bytes
+Delta 1--2 expected 1 bytes, actual 1 bytes
+Delta 0--2 expected 2 bytes, actual 2 bytes
+Delta 0--n expected 42 bytes, actual 42 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 11b (communication, poly-mono assertion, by param T[]): T x[42], expecting T=bigun, got sizeof(T)=40, expecting 40-byte elems
+Delta 0--1 expected 40 bytes, actual 40 bytes
+Delta 1--2 expected 40 bytes, actual 40 bytes
+Delta 0--2 expected 80 bytes, actual 80 bytes
+Delta 0--n expected 1680 bytes, actual 1680 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 12a (communication, poly-mono assertion, by param T(*)[*]): T x[42], expecting T=double, got sizeof(T)=8, expecting 8-byte elems
+Delta 0--1 expected 8 bytes, actual 8 bytes
+Delta 1--2 expected 8 bytes, actual 8 bytes
+Delta 0--2 expected 16 bytes, actual 16 bytes
+Delta 0--n expected 336 bytes, actual 336 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 13a (communication, mono-poly direct, by param T[]): char x[42], expecting 1-byte elems
+Delta 0--1 expected 1 bytes, actual 1 bytes
+Delta 1--2 expected 1 bytes, actual 1 bytes
+Delta 0--2 expected 2 bytes, actual 2 bytes
+Delta 0--n expected 42 bytes, actual 42 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 13b (communication, mono-poly direct, by param T[]): bigun x[42], expecting 40-byte elems
+Delta 0--1 expected 40 bytes, actual 40 bytes
+Delta 1--2 expected 40 bytes, actual 40 bytes
+Delta 0--2 expected 80 bytes, actual 80 bytes
+Delta 0--n expected 1680 bytes, actual 1680 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 13a (communication, mono-poly direct, by param T(*)[*]): double x[42], expecting 8-byte elems
+Delta 0--1 expected 8 bytes, actual 8 bytes
+Delta 1--2 expected 8 bytes, actual 8 bytes
+Delta 0--2 expected 16 bytes, actual 16 bytes
+Delta 0--n expected 336 bytes, actual 336 bytes
+array starts after lo bookend: yes
+array ends before hi bookend: yes
+------- 15a (operators): T x[42], expecting T=char, got sizeof(T)=1, expecting 1-byte elems
+?[?] rev off by 0
+?+? off by 0
+?+? rev off by 0
+?+=? off by 0
+?-=? off by 0
+?-? +ve off by 0
+bookends were not set
+------- 15b (operators): T x[42], expecting T=bigun, got sizeof(T)=40, expecting 40-byte elems
+?[?] rev off by 0
+?+? off by 0
+?+? rev off by 0
+?+=? off by 0
+?-=? off by 0
+?-? +ve off by 0
+bookends were not set

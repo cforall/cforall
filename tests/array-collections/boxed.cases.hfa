@@ -1,0 +1,116 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// boxed.cases.hfa -- tables of test cases for the "array boxed" test
+//
+// Author           : Mike Brooks
+// Created On       : Thu Jul 25 17:00:00 2024
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// See general test documentation in boxed.main.cfa.
+
+/*
+This pair of tables summarizes the handwritten functions of .main.cfa, for automatically wrapping and calling them.
+
+TR        test rig                    one handwritten function and its stack of generated wrappers
+- TRID    test rig identifier         (primary key)
+- SZS     sizing style                how the array's length (in number of elements) is given
+  - NSTAT static number of elements   generated code hardcodes the array length; the outputted C VLA accommodates only varying-sized T
+  - NDYN  dynamic number of elements  generated code uses a parameter for the length; represents a VLA apparent to the CFA programmer
+- SZV     sizing value                concrete size of the test case, except for (TR, NDYN), which has the parameter name
+- ETG     element type generator      how the array's element type relates to T
+  - ID    identity                    array is of T
+  - PAIR  pair                        array is of pair(T,T)
+- ACCS    access style                how the access-side code sees the elements
+  - BUF   buffer                      accessor is working directly with the declared array (buffer) variable
+  - RAII  RAII                        accessor is a constructor/destructor pair
+  - PFST  pointer to first element    accessor is in a support function, who receives the array as parameter T x[]
+  - PARR  pointer to array            accessor is in a support function, who receives the array as parameter T (*x)[length]
+- SPS     support polymorphism style  when passing the array to a support (helper) function, how the call uses type variables and assertions
+  - NA    not applicable              the rig does not use a support function
+  - PPD   poly-poly direct            polymorphic calls polymorphic, directly (C-style name lookup)
+  - PPA   poly-poly assertion         polymorphic calls polymorphic, via assertion
+  - PMA   poly-mono assertion         polymorphic calls monomorphic, via assertion
+  - MPD   mono-poly direct            monomorphic calls polymorphic, directly (C-style name lookup)
+- OVLD    overloading type            type of pointer returned from the function (wrapper), lets caller 
+TC        test case                   one call to (the stack of wrappers of) a handwritten function
+- TRID    test rig identifier         (primary key, pseudo foreign key)
+- TCID    test case identifier        (primary key)
+- SZS     sizing style                (duplicate, join result)
+- SZV     sizing value                (duplicate, join result), except for TC under TR NDYN, which has concrete size of the test case
+- ETG     element type generator      (duplicate, join result)
+- VART    varying type                type to use for T in this call
+*/
+
+// #define TR( TRID,       SZS,   SZV, ETG,   ACCS, SPS, OVLD              )
+// #define TC( TRID, TCID, SZS,   SZV, ETG,                      VART      )
+
+           TR( 1,          NSTAT, 1,   ID,    BUF,  NA,  T                 )
+           TC( 1,    a,    NSTAT, 1,   ID,                       short     )
+           TC( 1,    b,    NSTAT, 1,   ID,                       bigun     )
+
+           TR( 2,          NSTAT, 42,  ID,    BUF,  NA,  T                 )
+           TC( 2,    a,    NSTAT, 42,  ID,                       char      )
+           TC( 2,    b,    NSTAT, 42,  ID,                       float     )
+           TC( 2,    c,    NSTAT, 42,  ID,                       long long )
+           TC( 2,    d,    NSTAT, 42,  ID,                       bigun     )
+
+           TR( 3,          NDYN,  n,   ID,    BUF,  NA,  T                 )
+           TC( 3,    a,    NDYN,  1,   ID,                       int       )
+           TC( 3,    b,    NDYN,  42,  ID,                       int       )
+           TC( 3,    c,    NDYN,  1,   ID,                       bigun     )
+           TC( 3,    d,    NDYN,  42,  ID,                       bigun     )
+
+           TR( 4,          NSTAT, 42,  ID,    BUF,  NA,  T                 )
+           TC( 4,    a,    NSTAT, 42,  ID,                       char      )
+           TC( 4,    b,    NSTAT, 42,  ID,                       bigun     )
+
+           TR( 5,          NSTAT, 42,  PAIR,  BUF,  NA,  T                 )
+           TC( 5,    a,    NSTAT, 42,  PAIR,                     double    )
+           TC( 5,    b,    NSTAT, 42,  PAIR,                     bigun     )
+
+           TR( 6,          NSTAT, 42,  ID,    RAII, NA,  T                 )
+           TC( 6,    a,    NSTAT, 42,  ID,                       my_mgd_t  )
+
+           TR( 7,          NSTAT, 42,  ID,    PFST, PPD, T                 )
+           TC( 7,    a,    NSTAT, 42,  ID,                       char      )
+           TC( 7,    b,    NSTAT, 42,  ID,                       float     )
+           TC( 7,    c,    NSTAT, 42,  ID,                       long long )
+           TC( 7,    d,    NSTAT, 42,  ID,                       bigun     )
+
+           TR( 8,          NSTAT, 42,  ID,    PARR, PPD, T                 )
+           TC( 8,    a,    NSTAT, 42,  ID,                       double    )
+
+           TR( 9,          NSTAT, 42,  ID,    PFST, PPA, T                 )
+           TC( 9,    a,    NSTAT, 42,  ID,                       char      )
+           TC( 9,    b,    NSTAT, 42,  ID,                       float     )
+           TC( 9,    c,    NSTAT, 42,  ID,                       long long )
+           TC( 9,    d,    NSTAT, 42,  ID,                       bigun     )
+
+           TR( 10,         NSTAT, 42,  ID,    PARR, PPA, T                 )
+           TC( 10,   a,    NSTAT, 42,  ID,                       double    )
+
+           TR( 11,         NSTAT, 42,  ID,    PFST, PMA, T                 )
+           TC( 11,   a,    NSTAT, 42,  ID,                       char      )
+           TC( 11,   b,    NSTAT, 42,  ID,                       bigun     )
+
+           TR( 12,         NSTAT, 42,  ID,    PARR, PMA, T                 )
+           TC( 12,   a,    NSTAT, 42,  ID,                       double    )
+
+           TR( 13,         NSTAT, 42,  ID,    PFST, MPD, char              ) // overload 1
+           TR( 13,         NSTAT, 42,  ID,    PFST, MPD, bigun             ) // overload 2
+           TC( 13,   a,    NSTAT, 42,  ID,                       char      )
+           TC( 13,   b,    NSTAT, 42,  ID,                       bigun     )
+
+           TR( 14,         NSTAT, 42,  ID,    PARR, MPD, double            )
+           TC( 14,   a,    NSTAT, 42,  ID,                       double    )
+
+           TR( 15,         NSTAT, 42,  ID,    PFST, PPD, T                 )
+           TC( 15,   a,    NSTAT, 42,  ID,                       char      )
+           TC( 15,   b,    NSTAT, 42,  ID,                       bigun     )

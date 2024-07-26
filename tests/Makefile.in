@@ -90,8 +90,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-EXTRA_PROGRAMS = avl_test$(EXEEXT) linkonce$(EXEEXT) \
-	linking/mangling/anon$(EXEEXT) .dummy_hack$(EXEEXT)
+EXTRA_PROGRAMS = array-collections/boxed$(EXEEXT) avl_test$(EXEEXT) \
+	linkonce$(EXEEXT) linking/mangling/anon$(EXEEXT) \
+	.dummy_hack$(EXEEXT)
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/automake/libtool.m4 \
@@ -116,6 +117,12 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 am__dirstamp = $(am__leading_dot)dirstamp
+am_array_collections_boxed_OBJECTS =  \
+	array-collections/boxed.main.$(OBJEXT) \
+	array-collections/boxed.bookend.$(OBJEXT)
+array_collections_boxed_OBJECTS =  \
+	$(am_array_collections_boxed_OBJECTS)
+array_collections_boxed_LDADD = $(LDADD)
 am_avl_test_OBJECTS = avltree/avl_test.$(OBJEXT) \
 	avltree/avl0.$(OBJEXT) avltree/avl1.$(OBJEXT) \
 	avltree/avl2.$(OBJEXT) avltree/avl3.$(OBJEXT) \
@@ -183,10 +190,11 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(nodist__dummy_hack_SOURCES) $(avl_test_SOURCES) \
+SOURCES = $(nodist__dummy_hack_SOURCES) \
+	$(array_collections_boxed_SOURCES) $(avl_test_SOURCES) \
 	$(linking_mangling_anon_SOURCES) $(linkonce_SOURCES)
-DIST_SOURCES = $(avl_test_SOURCES) $(linking_mangling_anon_SOURCES) \
-	$(linkonce_SOURCES)
+DIST_SOURCES = $(array_collections_boxed_SOURCES) $(avl_test_SOURCES) \
+	$(linking_mangling_anon_SOURCES) $(linkonce_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -449,6 +457,8 @@ EXTRA_DIST = test.py \
 	pybin/test_run.py \
 	pybin/tools.py \
 	long_tests.hfa \
+	array-collections/boxed.hfa \
+	array-collections/boxed.cases.hfa \
 	avltree/avl-private.h \
 	avltree/avl.h \
 	configs/.in/parseconfig-all.txt \
@@ -467,6 +477,7 @@ EXTRA_DIST = test.py \
 	array-collections/dimexpr-match-detail.sh \
 	array-collections/array-raii.hfa
 
+array_collections_boxed_SOURCES = array-collections/boxed.main.cfa array-collections/boxed.bookend.cfa
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
 linking_mangling_anon_SOURCES = linking/mangling/header.hfa linking/mangling/lib.cfa linking/mangling/main.cfa
@@ -494,7 +505,7 @@ GENERATED_CODE = declarationSpecifier gccExtensions extension attributes functio
 # tests that just validate syntax and compiler output should be compared to stderr
 CFACOMPILE_SYNTAX = ${CFACOMPILETEST} -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o ${abspath ${@}}
 SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator \
-	init1 limits nested-types cast labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrency/waitfor/parse
+	init1 limits nested-types cast ctrl-flow/labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrency/waitfor/parse
 
 all: all-am
 
@@ -536,6 +547,22 @@ config.py: $(top_builddir)/config.status $(srcdir)/config.py.in
 .dummy_hack$(EXEEXT): $(_dummy_hack_OBJECTS) $(_dummy_hack_DEPENDENCIES) $(EXTRA__dummy_hack_DEPENDENCIES) 
 	@rm -f .dummy_hack$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(_dummy_hack_OBJECTS) $(_dummy_hack_LDADD) $(LIBS)
+array-collections/$(am__dirstamp):
+	@$(MKDIR_P) array-collections
+	@: > array-collections/$(am__dirstamp)
+array-collections/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) array-collections/$(DEPDIR)
+	@: > array-collections/$(DEPDIR)/$(am__dirstamp)
+array-collections/boxed.main.$(OBJEXT):  \
+	array-collections/$(am__dirstamp) \
+	array-collections/$(DEPDIR)/$(am__dirstamp)
+array-collections/boxed.bookend.$(OBJEXT):  \
+	array-collections/$(am__dirstamp) \
+	array-collections/$(DEPDIR)/$(am__dirstamp)
+
+array-collections/boxed$(EXEEXT): $(array_collections_boxed_OBJECTS) $(array_collections_boxed_DEPENDENCIES) $(EXTRA_array_collections_boxed_DEPENDENCIES) array-collections/$(am__dirstamp)
+	@rm -f array-collections/boxed$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(array_collections_boxed_OBJECTS) $(array_collections_boxed_LDADD) $(LIBS)
 avltree/$(am__dirstamp):
 	@$(MKDIR_P) avltree
 	@: > avltree/$(am__dirstamp)
@@ -591,6 +618,7 @@ linkonce$(EXEEXT): $(linkonce_OBJECTS) $(linkonce_DEPENDENCIES) $(EXTRA_linkonce
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f array-collections/*.$(OBJEXT)
 	-rm -f avltree/*.$(OBJEXT)
 	-rm -f link-once/*.$(OBJEXT)
 	-rm -f linking/mangling/*.$(OBJEXT)
@@ -660,6 +688,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf array-collections/.libs array-collections/_libs
 	-rm -rf linking/mangling/.libs linking/mangling/_libs
 
 ID: $(am__tagged_files)
@@ -779,6 +808,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f array-collections/$(DEPDIR)/$(am__dirstamp)
+	-rm -f array-collections/$(am__dirstamp)
 	-rm -f avltree/$(DEPDIR)/$(am__dirstamp)
 	-rm -f avltree/$(am__dirstamp)
 	-rm -f link-once/$(DEPDIR)/$(am__dirstamp)

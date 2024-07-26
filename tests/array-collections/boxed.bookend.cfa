@@ -1,0 +1,80 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// boxed.bookend.cfa -- stack address recording and acceptance for the "array boxed" test
+//
+// Author           : Mike Brooks
+// Created On       : Thu Jul 25 17:00:00 2024
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// See general test documentation in boxed.main.cfa.
+// See abbreviation definitions in boxed.cases.hfa.
+
+
+
+
+#include "boxed.hfa"
+
+char * ar_lo = (char *) -1;
+char * ar_hi = 0p;
+static char * bookend_lo = (char *) -1;
+static char * bookend_hi = 0p;
+
+void bookendInner( void ) {
+    char var = 'x';
+    (void) var;
+    bookend_lo = & var;
+}
+
+#define TC(...)
+#define TR( TRID, SZS, SZV, ETG, ACCS, SPS, OVLD ) \
+    F_SIG( bookendOuter, TRID, SZS, SZV, ACCS, SPS, OVLD ) {                                  \
+        char var = 'x';                                                              \
+        (void) var;                                                                  \
+        bookend_hi = & var;                                                          \
+        return CALL( allocAndAccess, TRID, SZS, n, expectedElmSz, tcid, vart );     \
+    }
+#include "boxed.cases.hfa"
+#undef TC
+#undef TR
+
+void resetBookends( void ) {
+    bookend_lo = (char *) -1;
+    bookend_hi = 0p;
+    ar_lo = (char *) -1;
+    ar_hi = 0p;
+}
+
+void reportBookends( void ) {
+    ptrdiff_t ar_lo_fwd_offs = ar_lo - bookend_lo;
+    ptrdiff_t ar_hi_rev_offs = bookend_hi - ar_hi;
+
+    VPRT( "Bookends are %p and %p\n", bookend_lo, bookend_hi );
+    VPRT( "Array ends are %p and %p\n", ar_lo, ar_hi );
+    VPRT( "Bookend lo fwd offset %zd\n", bookend_lo - bookend_lo );
+    VPRT( "Array lo fwd offset %zd\n", ar_lo_fwd_offs );
+    VPRT( "Array hi fwd offset %zd\n", ar_hi - bookend_lo );
+    VPRT( "Bookend hi fwd offset %zd\n", bookend_hi - bookend_lo );
+    VPRT( "Bookend lo rev offset %zd\n", bookend_hi - bookend_lo );
+    VPRT( "Array lo rev offset %zd\n", bookend_hi - ar_lo );
+    VPRT( "Array hi rev offset %zd\n", ar_hi_rev_offs );
+    VPRT( "Bookend hi rev offset %zd\n", bookend_hi - bookend_hi );
+
+    if (bookend_lo >= bookend_hi) {
+        printf("bookends were not set\n");
+        return;
+    }
+    if (ar_lo >= ar_hi) {
+        printf("array bounds were not set\n");
+        return;
+    }
+
+    printf("array starts after lo bookend: %s\n", ar_lo_fwd_offs > 0 ? "yes" : "no" );
+    printf("array ends before hi bookend: %s\n", ar_hi_rev_offs > 0 ? "yes" : "no" );
+}

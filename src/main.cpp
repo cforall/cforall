@@ -330,6 +330,8 @@ int main( int argc, char * argv[] ) {
 		PASS( "Implement Concurrent Keywords", Concurrency::implementKeywords, transUnit );
 		PASS( "Fix Unique Ids", Validate::fixUniqueIds, transUnit );
 		PASS( "Implement Corun", Concurrency::implementCorun, transUnit );
+		PASS( "Fix Label Address", Validate::fixLabelAddresses, transUnit );
+		PASS( "Fix Labels", ControlStruct::fixLabels, transUnit );
 		PASS( "Hoist Control Declarations", ControlStruct::hoistControlDecls, transUnit );
 
 		PASS( "Generate Autogen Routines", Validate::autogenerateRoutines, transUnit );
@@ -341,7 +343,6 @@ int main( int argc, char * argv[] ) {
 		PASS( "Compound Literal", Validate::handleCompoundLiterals, transUnit );
 		PASS( "Set Length From Initializer", Validate::setLengthFromInitializer, transUnit );
 		PASS( "Find Global Decls", Validate::findGlobalDecls, transUnit );
-		PASS( "Fix Label Address", Validate::fixLabelAddresses, transUnit );
 
 		if ( symtabp ) {
 			return EXIT_SUCCESS;
@@ -355,7 +356,6 @@ int main( int argc, char * argv[] ) {
 		DUMP( validp, transUnit );
 
 		PASS( "Translate Throws", ControlStruct::translateThrows, transUnit );
-		PASS( "Fix Labels", ControlStruct::fixLabels, transUnit );
 		PASS( "Implement Waituntil", Concurrency::generateWaitUntil, transUnit  );
 		PASS( "Fix Names", CodeGen::fixNames, transUnit );
 		PASS( "Gen Init", InitTweak::genInit, transUnit );

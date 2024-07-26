@@ -1,39 +1,39 @@
-"BBB"
-"AB"
-"AAA"
-"AB"
-"BBB"
-"AAA"
-"AB"
-"AA"
-"B"
-"BBB"
-"AAA"
-"AA"
-"AB"
-"B"
-"BBB"
-"AAA"
-"AA"
-"AB"
-"B"
-"AAA"
-"B"
-"CB"
-"AC"
-"CB"
-"AC"
-"BBB"
-"AAA"
-"AA"
+BBB = 3
+AB = 6
+AAA = 4
+AB = 6
+BBB = 3
+AAA = 4
+AB = 6
+AA = 5
+B = 7
+BBB = 3
+AAA = 4
+AA = 5
+AB = 6
+B = 7
+BBB = 3
+AAA = 4
+AA = 5
+AB = 6
+B = 7
+AAA = 4
+B = 7
+CB = 8
+AC = 9
+CB = 8
+AC = 9
+BBB = 3
+AAA = 4
+AA = 5
 missing data
-"AAA"
-"B"
-"CB"
-"AC"
-"CB"
-"AC"
-"BBB"
-"AAA"
-"AA"
+AAA = 4
+B = 7
+CB = 8
+AC = 9
+CB = 8
+AC = 9
+BBB = 3
+AAA = 4
+AA = 5
 missing data

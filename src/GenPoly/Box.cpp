@@ -672,11 +672,18 @@ ast::Expr const * CallAdapter::postvisit( ast::ApplicationExpr const * expr ) {
 bool isPolyDeref( ast::UntypedExpr const * expr,
 		TypeVarMap const & typeVars,
 		ast::TypeSubstitution const * typeSubs ) {
-	if ( expr->result && isPolyType( expr->result, typeVars, typeSubs ) ) {
-		if ( auto name = expr->func.as<ast::NameExpr>() ) {
-			if ( "*?" == name->name ) {
-				return true;
-			}
+	if ( auto name = expr->func.as<ast::NameExpr>() ) {
+		if ( "*?" == name->name ) {
+			// It's a deref.
+			// Must look under the * (and strip its ptr-ty) because expr's
+			// result could be ar/ptr-decayed.  If expr.inner:T(*)[n], then
+			// expr is a poly deref, even though expr:T*, which is not poly.
+			auto ptrExpr = expr->args.front();
+			auto ptrTy = ptrExpr->result.as<ast::PointerType>();
+			assert(ptrTy); // thing being deref'd must be pointer
+			auto referentTy = ptrTy->base;
+			assert(referentTy);
+			return isPolyType( referentTy, typeVars, typeSubs );
 		}
 	}
 	return false;
@@ -1191,16 +1198,19 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 		assert( expr->result );
 		assert( 2 == expr->args.size() );
 
-		ast::Type const * baseType1 =
-			isPolyPtr( expr->args.front()->result, scopeTypeVars, typeSubs );
-		ast::Type const * baseType2 =
-			isPolyPtr( expr->args.back()->result, scopeTypeVars, typeSubs );
+		ast::Type const * arg1Ty = expr->args.front()->result;
+		ast::Type const * arg2Ty = expr->args.back()->result;
+
+		// two cases: a[i] with first arg poly ptr, i[a] with second arg poly ptr
+		bool isPoly1 = isPolyPtr( arg1Ty, scopeTypeVars, typeSubs ) != nullptr;
+		bool isPoly2 = isPolyPtr( arg2Ty, scopeTypeVars, typeSubs ) != nullptr;
+
 		// If neither argument is a polymorphic pointer, do nothing.
-		if ( !baseType1 && !baseType2 ) {
+		if ( !isPoly1 && !isPoly2 ) {
 			return expr;
 		}
 		// The arguments cannot both be polymorphic pointers.
-		assert( !baseType1 || !baseType2 );
+		assert( !isPoly1 || !isPoly2 );
 		// (So exactly one of the arguments is a polymorphic pointer.)
 
 		CodeLocation const & location = expr->location;
@@ -1209,18 +1219,24 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 
 		ast::UntypedExpr * ret = new ast::UntypedExpr( location,
 				new ast::NameExpr( location, "?+?" ) );
-		if ( baseType1 ) {
+		if ( isPoly1 ) {
+			assert( arg1Ty );
+			auto arg1TyPtr = dynamic_cast<ast::PointerType const * >( arg1Ty );
+			assert( arg1TyPtr );
 			auto multiply = ast::UntypedExpr::createCall( location2, "?*?", {
 				expr->args.back(),
-				new ast::SizeofExpr( location1, deepCopy( baseType1 ) ),
+				new ast::SizeofExpr( location1, deepCopy( arg1TyPtr->base ) ),
 			} );
 			ret->args.push_back( expr->args.front() );
 			ret->args.push_back( multiply );
 		} else {
-			assert( baseType2 );
+			assert( isPoly2 );
+			assert( arg2Ty );
+			auto arg2TyPtr = dynamic_cast<ast::PointerType const * >( arg2Ty );
+			assert( arg2TyPtr );
 			auto multiply = ast::UntypedExpr::createCall( location1, "?*?", {
 				expr->args.front(),
-				new ast::SizeofExpr( location2, deepCopy( baseType2 ) ),
+				new ast::SizeofExpr( location2, deepCopy( arg2TyPtr->base ) ),
 			} );
 			ret->args.push_back( multiply );
 			ret->args.push_back( expr->args.back() );
@@ -1233,8 +1249,14 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 		assert( expr->result );
 		assert( 1 == expr->args.size() );
 
+		auto ptrExpr = expr->args.front();
+		auto ptrTy = ptrExpr->result.as<ast::PointerType>();
+		assert(ptrTy); // thing being deref'd must be pointer
+		auto referentTy = ptrTy->base;
+		assert(referentTy);
+
 		// If this isn't for a poly type, then do nothing.
-		if ( !isPolyType( expr->result, scopeTypeVars, typeSubs ) ) {
+		if ( !isPolyType( referentTy, scopeTypeVars, typeSubs ) ) {
 			return expr;
 		}
 
@@ -1242,6 +1264,10 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 		ast::Expr * ret = ast::deepCopy( expr->args.front() );
 		// Fix expression type to remove pointer.
 		ret->result = expr->result;
+		// apply pointer decay
+		if (auto retArTy = ret->result.as<ast::ArrayType>()) {
+			ret->result = new ast::PointerType( retArTy->base );
+		}
 		ret->env = expr->env ? expr->env : ret->env;
 		return ret;
 	// Post-Increment/Decrement Intrinsics:
@@ -1290,40 +1316,51 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 		}
 		return makeIncrDecrExpr(
 			expr->location, expr, baseType, "++?" == varName );
-	// Addition and Subtration Intrinsics:
+	// Addition and Subtraction Intrinsics:
 	} else if ( "?+?" == varName || "?-?" == varName ) {
 		assert( expr->result );
 		assert( 2 == expr->args.size() );
 
-		auto baseType1 =
-			isPolyPtr( expr->args.front()->result, scopeTypeVars, typeSubs );
-		auto baseType2 =
-			isPolyPtr( expr->args.back()->result, scopeTypeVars, typeSubs );
+		ast::Type const * arg1Ty = expr->args.front()->result;
+		ast::Type const * arg2Ty = expr->args.back()->result;
+
+		bool isPoly1 = isPolyPtr( arg1Ty, scopeTypeVars, typeSubs ) != nullptr;
+		bool isPoly2 = isPolyPtr( arg2Ty, scopeTypeVars, typeSubs ) != nullptr;
 
 		CodeLocation const & location = expr->location;
 		CodeLocation const & location1 = expr->args.front()->location;
 		CodeLocation const & location2 = expr->args.back()->location;
-		// LHS op RHS -> (LHS op RHS) / sizeof(LHS)
-		if ( baseType1 && baseType2 ) {
+		// LHS minus RHS -> (LHS minus RHS) / sizeof(LHS)
+		if ( isPoly1 && isPoly2 ) {
+			assert( "?-?" == varName );
+			assert( arg1Ty );
+			auto arg1TyPtr = dynamic_cast<ast::PointerType const * >( arg1Ty );
+			assert( arg1TyPtr );
 			auto divide = ast::UntypedExpr::createCall( location, "?/?", {
 				expr,
-				new ast::SizeofExpr( location, deepCopy( baseType1 ) ),
+				new ast::SizeofExpr( location, deepCopy( arg1TyPtr->base ) ),
 			} );
 			if ( expr->env ) divide->env = expr->env;
 			return divide;
 		// LHS op RHS -> LHS op (RHS * sizeof(LHS))
-		} else if ( baseType1 ) {
+		} else if ( isPoly1 ) {
+			assert( arg1Ty );
+			auto arg1TyPtr = dynamic_cast<ast::PointerType const * >( arg1Ty );
+			assert( arg1TyPtr );
 			auto multiply = ast::UntypedExpr::createCall( location2, "?*?", {
 				expr->args.back(),
-				new ast::SizeofExpr( location1, deepCopy( baseType1 ) ),
+				new ast::SizeofExpr( location1, deepCopy( arg1TyPtr->base ) ),
 			} );
 			return ast::mutate_field_index(
 				expr, &ast::ApplicationExpr::args, 1, multiply );
 		// LHS op RHS -> (LHS * sizeof(RHS)) op RHS
-		} else if ( baseType2 ) {
+		} else if ( isPoly2 ) {
+			assert( arg2Ty );
+			auto arg2TyPtr = dynamic_cast<ast::PointerType const * >( arg2Ty );
+			assert( arg2TyPtr );
 			auto multiply = ast::UntypedExpr::createCall( location1, "?*?", {
 				expr->args.front(),
-				new ast::SizeofExpr( location2, deepCopy( baseType2 ) ),
+				new ast::SizeofExpr( location2, deepCopy( arg2TyPtr->base ) ),
 			} );
 			return ast::mutate_field_index(
 				expr, &ast::ApplicationExpr::args, 0, multiply );
@@ -1587,9 +1624,10 @@ private:
 		const ast::vector<ast::Type> & otypeParams );
 	/// Change the type of generic aggregate members to char[].
 	void mutateMembers( ast::AggregateDecl * aggr );
-	/// Returns the calculated sizeof expression for type, or nullptr for use
-	/// C sizeof().
+	/// Returns the calculated sizeof/alignof expressions for type, or
+	/// nullptr for use C size/alignof().
 	ast::Expr const * genSizeof( CodeLocation const &, ast::Type const * );
+	ast::Expr const * genAlignof( CodeLocation const &, ast::Type const * );
 	/// Enters a new scope for type-variables,
 	/// adding the type variables from the provided type.
 	void beginTypeScope( ast::Type const * );
@@ -1612,17 +1650,32 @@ PolyGenericCalculator::PolyGenericCalculator() :
 	knownLayouts(), knownOffsets(), bufNamer( "_buf" )
 {}
 
+static ast::Type * polyToMonoTypeRec( CodeLocation const & loc,
+		ast::Type const * ty ) {
+	ast::Type * ret;
+	if ( auto aTy = dynamic_cast<ast::ArrayType const *>( ty ) ) {
+		// recursive case
+		auto monoBase = polyToMonoTypeRec( loc, aTy->base );
+		ret = new ast::ArrayType( monoBase, aTy->dimension,
+			aTy->isVarLen, aTy->isStatic, aTy->qualifiers );
+	} else {
+		// base case
+		auto charType = new ast::BasicType( ast::BasicKind::Char );
+		auto size = new ast::NameExpr( loc,
+			sizeofName( Mangle::mangleType( ty ) ) );
+		ret = new ast::ArrayType( charType, size,
+			ast::VariableLen, ast::DynamicDim, ast::CV::Qualifiers() );
+	}
+	return ret;
+}
+
 /// Converts polymorphic type into a suitable monomorphic representation.
-/// Currently: __attribute__(( aligned(8) )) char[size_T];
-ast::Type * polyToMonoType( CodeLocation const & location,
-		ast::Type const * declType ) {
-	auto charType = new ast::BasicType( ast::BasicKind::Char );
-	auto size = new ast::NameExpr( location,
-		sizeofName( Mangle::mangleType( declType ) ) );
-	auto ret = new ast::ArrayType( charType, size,
-		ast::VariableLen, ast::DynamicDim, ast::CV::Qualifiers() );
+/// Simple cases: T -> __attribute__(( aligned(8) )) char[sizeof_T];
+/// Array cases: T[eOut][eIn] ->  __attribute__(( aligned(8) )) char[eOut][eIn][sizeof_T];
+ast::Type * polyToMonoType( CodeLocation const & loc, ast::Type const * ty ) {
+	auto ret = polyToMonoTypeRec( loc, ty );
 	ret->attributes.emplace_back( new ast::Attribute( "aligned",
-		{ ast::ConstantExpr::from_int( location, 8 ) } ) );
+		{ ast::ConstantExpr::from_int( loc, 8 ) } ) );
 	return ret;
 }
 
@@ -1715,6 +1768,27 @@ ast::DeclStmt const * PolyGenericCalculator::previsit( ast::DeclStmt const * stm
 
 	// Forally, side effects are not safe in this function. But it works.
 	erase_if( mutDecl->attributes, matchAndMove );
+
+	// Change the decl's type.
+	// Upon finishing the box pass, it shall be void*.
+	// At this middle-of-box-pass point, that type is T.
+
+	// example 1
+	// before box:                                  T     t ;
+	// before here:  char _bufxx    [_sizeof_Y1T];  T     t = _bufxx;
+	// after here:   char _bufxx    [_sizeof_Y1T];  T     t = _bufxx;  (no change here - non array case)
+	// after box:    char _bufxx    [_sizeof_Y1T];  void *t = _bufxx;
+
+	// example 2
+	// before box:                                  T     t[42] ;
+	// before here:  char _bufxx[42][_sizeof_Y1T];  T     t[42] = _bufxx;
+	// after here:   char _bufxx[42][_sizeof_Y1T];  T     t     = _bufxx;
+	// after box:    char _bufxx[42][_sizeof_Y1T];  void *t     = _bufxx;
+
+	// Strip all "array of" wrappers
+	while ( auto arrayType = dynamic_cast<ast::ArrayType const *>( mutDecl->type.get() ) ) {
+		mutDecl->type = arrayType->base;
+	}
 
 	mutDecl->init = new ast::SingleInit( decl->location,
 		new ast::VariableExpr( decl->location, newBuf ) );
@@ -1868,12 +1942,8 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 ast::Expr const * PolyGenericCalculator::postvisit(
 		ast::AlignofExpr const * expr ) {
 	ast::Type const * type = expr->type ? expr->type : expr->expr->result;
-	if ( findGeneric( expr->location, type ) ) {
-		return new ast::NameExpr( expr->location,
-			alignofName( Mangle::mangleType( type ) ) );
-	} else {
-		return expr;
-	}
+	ast::Expr const * gen = genAlignof( expr->location, type );
+	return ( gen ) ? gen : expr;
 }
 
 ast::Expr const * PolyGenericCalculator::postvisit(
@@ -2094,6 +2164,9 @@ bool PolyGenericCalculator::findGeneric(
 			new ast::ExprStmt( location, layoutCall ) );
 
 		return true;
+
+	} else if ( auto inst = dynamic_cast<ast::ArrayType const *>( type ) ) {
+		return findGeneric( location, inst->base );
 	}
 	return false;
 }
@@ -2154,8 +2227,22 @@ ast::Expr const * PolyGenericCalculator::genSizeof(
 		ast::Expr const * dim = array->dimension;
 		return makeOp( location, "?*?", sizeofBase, dim );
 	} else if ( findGeneric( location, type ) ) {
-		// Generate calculated size for generic type.
+		// Generate reference to _sizeof parameter
 		return new ast::NameExpr( location, sizeofName(
+				Mangle::mangleType( type ) ) );
+	} else {
+		return nullptr;
+	}
+}
+
+ast::Expr const * PolyGenericCalculator::genAlignof(
+		CodeLocation const & location, ast::Type const * type ) {
+	if ( auto * array = dynamic_cast<ast::ArrayType const *>( type ) ) {
+		// alignof array is alignof element
+		return genAlignof( location, array->base );
+	} else if ( findGeneric( location, type ) ) {
+		// Generate reference to _alignof parameter
+		return new ast::NameExpr( location, alignofName(
 				Mangle::mangleType( type ) ) );
 	} else {
 		return nullptr;

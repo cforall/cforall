@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Fri Dec  3 15:34:00 2021
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  1 18:59:47 2022
-// Update Count     : 25
+// Last Modified By : Andrew Beach
+// Last Modified On : Wed Jul 24 12:00:00 2024
+// Update Count     : 3
 //
 
 #include "HoistControlDecls.hpp"
@@ -22,36 +22,41 @@ using namespace ast;
 
 namespace ControlStruct {
 
+namespace {
+
 template<typename StmtT>
 const Stmt * hoist( const StmtT * stmt ) {
-	// If no hoisting is needed, then make no changes.
-
-	if ( stmt->inits.size() == 0 ) {					// no declarations ?
+	// If no hoisting is needed (no declaration), then make no changes.
+	if ( stmt->inits.size() == 0 ) {
 		// if ( /* no conditional declarations */ ...  ) ...
 		return stmt;
-	} // if
+	}
 
-	// Put hoist declarations and modified statement in a compound statement.
-
-	CompoundStmt * block = new CompoundStmt( stmt->location ); // create empty compound statement
+	StmtT * mutStmt = mutate( stmt );
+	CompoundStmt * block = new CompoundStmt( stmt->location );
 	//    {}
 
-	for ( const Stmt * next : stmt->inits ) {			// link conditional declarations into compound
+	//    Label: if ( int x = f(), y = g(); ... ) ...
+	// link declarations into compound statement
+	for ( const Stmt * next : mutStmt->inits ) {
 		block->kids.push_back( next );
 	}
-	//    if ( int x = f(), y = g(); ... ) ...
-	// link declarations into compound statement
 	//    {
 	//         int x = f();
 	//         int y = g();
 	//    }
+	mutStmt->inits.clear();
+	//    Label: if ( ... ) ...
 
-	StmtT * mutStmt = mutate( stmt );					// create mutate handle to change statement
-	mutStmt->inits.clear();								// remove declarations
+	block->labels.swap( mutStmt->labels );
+	//    Label: {
+	//        int x = f();
+	//        int y = g();
+	//    }
 	//    if ( ... ) ...
 
-	block->kids.push_back( mutStmt );					// link modified statement into compound
-	//    {
+	block->kids.push_back( mutStmt );
+	//    Label: {
 	//        int x = f();
 	//        int y = g();
 	//        if ( ... ) ...
@@ -71,6 +76,8 @@ struct hoistControlDeclsCore {
 		return hoist<WhileDoStmt>( stmt );
 	}
 };
+
+} // namespace
 
 // Hoist initialization out of for statements.
 void hoistControlDecls( TranslationUnit & translationUnit ) {
