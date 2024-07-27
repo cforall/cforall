@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 25 15:19:32 2024
-// Update Count     : 6730
+// Last Modified On : Fri Jul 26 14:09:30 2024
+// Update Count     : 6733
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1113,10 +1113,11 @@ argument_expression_list:
 
 argument_expression:
 	'?'													// CFA, default parameter
-		{ SemanticError( yylloc, "Argument to default parameter is currently unimplemented." ); $$ = nullptr; }
-		// { $$ = new ExpressionNode( build_constantInteger( *new string( "2" ) ) ); }
+		// { SemanticError( yylloc, "Argument to default parameter is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = new ExpressionNode( build_constantInteger( yylloc, *new string( "2" ) ) ); }
 	| '?' identifier '=' assignment_expression			// CFA, keyword argument
-		{ SemanticError( yylloc, "keyword argument is currently unimplemented." ); $$ = nullptr; }
+		// { SemanticError( yylloc, "keyword argument is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = $4; }
 	| assignment_expression
 	;
 
@@ -3546,7 +3547,8 @@ paren_identifier:
 	identifier_at
 		{ $$ = DeclarationNode::newName( $1 ); }
 	| '?' identifier
-		{ SemanticError( yylloc, "keyword parameter is currently unimplemented." ); $$ = nullptr; }
+		// { SemanticError( yylloc, "keyword parameter is currently unimplemented." ); $$ = nullptr; }
+		{ $$ = DeclarationNode::newName( $2 ); }
 	| '(' paren_identifier ')'							// redundant parenthesis
 		{ $$ = $2; }
 	;
