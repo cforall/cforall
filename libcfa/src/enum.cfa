@@ -24,9 +24,9 @@ forall( E | Serial( E ) ) {
 
 	E pred( E e ) {
 		E lower = lowerBound();
-		if ( fromInstance(e) <= fromInstance(lower ) )
+		if ( fromInstance( e ) <= fromInstance(lower ) )
 			abort( "call to pred() exceeds enumeration lower bound of %d", fromInstance( lower ) );
-		return pred_unsafe(e);
+		return pred_unsafe( e );
 	}
 
 	int Countof( __attribute__((unused)) E e ) {

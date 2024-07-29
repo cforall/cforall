@@ -27,6 +27,7 @@
 // of `a[i][j,k]` vs `a[i,j,k]` and `a[all,3][42]` vs `a[42,3]`, though
 // generally using ptrdiff_t-typed variables to convey numeric values.
 
+#include <assert.h>
 
 #define show( expr ) printf( "%.1f\n", expr )
 
