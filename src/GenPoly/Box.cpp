@@ -29,7 +29,7 @@
 #include "Common/ToString.hpp"         // for toCString
 #include "Common/UniqueName.hpp"       // for UniqueName
 #include "GenPoly/FindFunction.hpp"    // for findFunction
-#include "GenPoly/GenPoly.hpp"         // for getFunctionType, ...
+#include "GenPoly/GenPoly.hpp"         // for getFunctionType, isPolyType, ...
 #include "GenPoly/Lvalue.hpp"          // for generalizedLvalue
 #include "GenPoly/ScopedSet.hpp"       // for ScopedSet
 #include "GenPoly/ScrubTypeVars.hpp"   // for scrubTypeVars, scrubAllTypeVars
@@ -669,22 +669,24 @@ ast::Expr const * CallAdapter::postvisit( ast::ApplicationExpr const * expr ) {
 	return ret;
 }
 
+// Get the referent (base type of pointer). Must succeed.
+ast::Type const * getReferentType( ast::ptr<ast::Type> const & type ) {
+	auto pointerType = type.strict_as<ast::PointerType>();
+	assertf( pointerType->base, "getReferentType: pointer base is nullptr." );
+	return pointerType->base.get();
+}
+
 bool isPolyDeref( ast::UntypedExpr const * expr,
 		TypeVarMap const & typeVars,
 		ast::TypeSubstitution const * typeSubs ) {
-	if ( auto name = expr->func.as<ast::NameExpr>() ) {
-		if ( "*?" == name->name ) {
-			// It's a deref.
-			// Must look under the * (and strip its ptr-ty) because expr's
-			// result could be ar/ptr-decayed.  If expr.inner:T(*)[n], then
-			// expr is a poly deref, even though expr:T*, which is not poly.
-			auto ptrExpr = expr->args.front();
-			auto ptrTy = ptrExpr->result.as<ast::PointerType>();
-			assert(ptrTy); // thing being deref'd must be pointer
-			auto referentTy = ptrTy->base;
-			assert(referentTy);
-			return isPolyType( referentTy, typeVars, typeSubs );
-		}
+	auto name = expr->func.as<ast::NameExpr>();
+	if ( name && "*?" == name->name ) {
+		// It's a deref.
+		// Must look under the * (and strip its ptr-ty) because expr's
+		// result could be ar/ptr-decayed.  If expr.inner:T(*)[n], then
+		// expr is a poly deref, even though expr:T*, which is not poly.
+		auto referentType = getReferentType( expr->args.front()->result );
+		return isPolyType( referentType, typeVars, typeSubs );
 	}
 	return false;
 }
@@ -1198,12 +1200,12 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 		assert( expr->result );
 		assert( 2 == expr->args.size() );
 
-		ast::Type const * arg1Ty = expr->args.front()->result;
-		ast::Type const * arg2Ty = expr->args.back()->result;
+		ast::ptr<ast::Type> const & argType1 = expr->args.front()->result;
+		ast::ptr<ast::Type> const & argType2 = expr->args.back()->result;
 
-		// two cases: a[i] with first arg poly ptr, i[a] with second arg poly ptr
-		bool isPoly1 = isPolyPtr( arg1Ty, scopeTypeVars, typeSubs ) != nullptr;
-		bool isPoly2 = isPolyPtr( arg2Ty, scopeTypeVars, typeSubs ) != nullptr;
+		// Two Cases: a[i] with first arg poly ptr, i[a] with second arg poly ptr
+		bool isPoly1 = isPolyPtr( argType1, scopeTypeVars, typeSubs ) != nullptr;
+		bool isPoly2 = isPolyPtr( argType2, scopeTypeVars, typeSubs ) != nullptr;
 
 		// If neither argument is a polymorphic pointer, do nothing.
 		if ( !isPoly1 && !isPoly2 ) {
@@ -1220,23 +1222,19 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 		ast::UntypedExpr * ret = new ast::UntypedExpr( location,
 				new ast::NameExpr( location, "?+?" ) );
 		if ( isPoly1 ) {
-			assert( arg1Ty );
-			auto arg1TyPtr = dynamic_cast<ast::PointerType const * >( arg1Ty );
-			assert( arg1TyPtr );
+			auto referentType = getReferentType( argType1 );
 			auto multiply = ast::UntypedExpr::createCall( location2, "?*?", {
 				expr->args.back(),
-				new ast::SizeofExpr( location1, deepCopy( arg1TyPtr->base ) ),
+				new ast::SizeofExpr( location1, deepCopy( referentType ) ),
 			} );
 			ret->args.push_back( expr->args.front() );
 			ret->args.push_back( multiply );
 		} else {
 			assert( isPoly2 );
-			assert( arg2Ty );
-			auto arg2TyPtr = dynamic_cast<ast::PointerType const * >( arg2Ty );
-			assert( arg2TyPtr );
+			auto referentType = getReferentType( argType2 );
 			auto multiply = ast::UntypedExpr::createCall( location1, "?*?", {
 				expr->args.front(),
-				new ast::SizeofExpr( location2, deepCopy( arg2TyPtr->base ) ),
+				new ast::SizeofExpr( location2, deepCopy( referentType ) ),
 			} );
 			ret->args.push_back( multiply );
 			ret->args.push_back( expr->args.back() );
@@ -1249,14 +1247,9 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 		assert( expr->result );
 		assert( 1 == expr->args.size() );
 
-		auto ptrExpr = expr->args.front();
-		auto ptrTy = ptrExpr->result.as<ast::PointerType>();
-		assert(ptrTy); // thing being deref'd must be pointer
-		auto referentTy = ptrTy->base;
-		assert(referentTy);
-
 		// If this isn't for a poly type, then do nothing.
-		if ( !isPolyType( referentTy, scopeTypeVars, typeSubs ) ) {
+		auto referentType = getReferentType( expr->args.front()->result );
+		if ( !isPolyType( referentType, scopeTypeVars, typeSubs ) ) {
 			return expr;
 		}
 
@@ -1321,51 +1314,46 @@ ast::Expr const * CallAdapter::handleIntrinsics(
 		assert( expr->result );
 		assert( 2 == expr->args.size() );
 
-		ast::Type const * arg1Ty = expr->args.front()->result;
-		ast::Type const * arg2Ty = expr->args.back()->result;
+		ast::ptr<ast::Type> const & argType1 = expr->args.front()->result;
+		ast::ptr<ast::Type> const & argType2 = expr->args.back()->result;
 
-		bool isPoly1 = isPolyPtr( arg1Ty, scopeTypeVars, typeSubs ) != nullptr;
-		bool isPoly2 = isPolyPtr( arg2Ty, scopeTypeVars, typeSubs ) != nullptr;
+		bool isPoly1 = isPolyPtr( argType1, scopeTypeVars, typeSubs ) != nullptr;
+		bool isPoly2 = isPolyPtr( argType2, scopeTypeVars, typeSubs ) != nullptr;
 
 		CodeLocation const & location = expr->location;
 		CodeLocation const & location1 = expr->args.front()->location;
 		CodeLocation const & location2 = expr->args.back()->location;
-		// LHS minus RHS -> (LHS minus RHS) / sizeof(LHS)
+		// LHS - RHS -> (LHS - RHS) / sizeof(LHS)
 		if ( isPoly1 && isPoly2 ) {
+			// There are only subtraction intrinsics for this pattern.
 			assert( "?-?" == varName );
-			assert( arg1Ty );
-			auto arg1TyPtr = dynamic_cast<ast::PointerType const * >( arg1Ty );
-			assert( arg1TyPtr );
+			auto referentType = getReferentType( argType1 );
 			auto divide = ast::UntypedExpr::createCall( location, "?/?", {
 				expr,
-				new ast::SizeofExpr( location, deepCopy( arg1TyPtr->base ) ),
+				new ast::SizeofExpr( location, deepCopy( referentType ) ),
 			} );
 			if ( expr->env ) divide->env = expr->env;
 			return divide;
 		// LHS op RHS -> LHS op (RHS * sizeof(LHS))
 		} else if ( isPoly1 ) {
-			assert( arg1Ty );
-			auto arg1TyPtr = dynamic_cast<ast::PointerType const * >( arg1Ty );
-			assert( arg1TyPtr );
+			auto referentType = getReferentType( argType1 );
 			auto multiply = ast::UntypedExpr::createCall( location2, "?*?", {
 				expr->args.back(),
-				new ast::SizeofExpr( location1, deepCopy( arg1TyPtr->base ) ),
+				new ast::SizeofExpr( location1, deepCopy( referentType ) ),
 			} );
 			return ast::mutate_field_index(
 				expr, &ast::ApplicationExpr::args, 1, multiply );
 		// LHS op RHS -> (LHS * sizeof(RHS)) op RHS
 		} else if ( isPoly2 ) {
-			assert( arg2Ty );
-			auto arg2TyPtr = dynamic_cast<ast::PointerType const * >( arg2Ty );
-			assert( arg2TyPtr );
+			auto referentType = getReferentType( argType2 );
 			auto multiply = ast::UntypedExpr::createCall( location1, "?*?", {
 				expr->args.front(),
-				new ast::SizeofExpr( location2, deepCopy( arg2TyPtr->base ) ),
+				new ast::SizeofExpr( location2, deepCopy( referentType ) ),
 			} );
 			return ast::mutate_field_index(
 				expr, &ast::ApplicationExpr::args, 0, multiply );
 		}
-	// Addition and Subtration Relative Assignment Intrinsics:
+	// Addition and Subtraction Relative Assignment Intrinsics:
 	} else if ( "?+=?" == varName || "?-=?" == varName ) {
 		assert( expr->result );
 		assert( 2 == expr->args.size() );
