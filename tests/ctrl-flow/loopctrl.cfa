@@ -9,11 +9,12 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug  8 18:32:59 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 27 11:00:09 2024
-// Update Count     : 161
+// Last Modified On : Fri Aug  2 08:42:55 2024
+// Update Count     : 185
 // 
 
 #include <fstream.hfa>
+#include <enum.hfa>
 
 void fred() {
 	// Test all possible loop syntax.
@@ -80,12 +81,12 @@ void fred() {
 	for ( int j; @ -~ s ~ i ) { if ( j == -10 ) break; sout | j; }		sout | nl;
 	for ( int j; s ~ @ ~ @ ) { if ( j == 10 ) break; sout | j; j += 1; } sout | nl;
 
-	// enum E { A, B, C, D };
-	// for ( e; A ~= C ) { sout | j; }
-	// for ( e; A ~= D ) { sout | j; }
-	// for ( e; A -~= D ~ 2 ) { sout | j; }
-	// for ( e; E ) { sout | j; }
-	// for ( e; -~ E ) { sout | j; }
+	enum(int) E { A, B, C, D };
+//	for ( E e; A ~= C ) { sout | e; } sout | nl;
+//	for ( e; A ~= D ) { sout | e; } sout | nl;
+//	for ( e; A -~= D ~ 2 ) { sout | e; } sout | nl;
+	for ( e; E ) { sout | e; } sout | nl;
+	for ( e; -~= E ) { sout | e; } sout | nl;
 }
 
 struct S { int i, j; };
@@ -94,16 +95,16 @@ void ?{}( S & s, int i ) { s.[i, j] = [i, 0]; }
 void ?{}( S & s, int i, int j ) { s.[i, j] = [i, j]; }
 void ?{}( S & s, zero_t ) { s.[i, j] = 0; }
 void ?{}( S & s, one_t ) { s.[i, j] = 1; }
-int ?<?( S t1, S t2 ) { return t1.i < t2.i && t1.j < t2.j; }
-int ?<=?( S t1, S t2 ) { return t1.i <= t2.i && t1.j <= t2.j; }
-int ?>?( S t1, S t2 ) { return t1.i > t2.i && t1.j > t2.j; }
-int ?>=?( S t1, S t2 ) { return t1.i >= t2.i && t1.j >= t2.j; }
-S ?+=?( S & t1, S t2 ) { t1.i += t2.i; t1.j += t2.j; return t1; }
-S ?+=?( S & t, one_t ) { t.i += 1; t.j += 1; return t; }
-S ?-=?( S & t1, S t2 ) { t1.i -= t2.i; t1.j -= t2.j; return t1; }
-S ?-=?( S & t, one_t ) { t.i -= 1; t.j -= 1; return t; }
-ofstream & ?|?( ofstream & os, S v ) { return os | '(' | v.i | v.j | ')'; }
-void & ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
+int ?<?( S s1, S s2 ) { return s1.i < s2.i || s1.j < s2.j; }
+int ?<=?( S s1, S s2 ) { return s1.i <= s2.i || s1.j <= s2.j; }
+int ?>?( S s1, S s2 ) { return s1.i > s2.i || s1.j > s2.j; }
+int ?>=?( S s1, S s2 ) { return s1.i >= s2.i || s1.j >= s2.j; }
+S ?+=?( S & s1, S s2 ) { s1.i += s2.i; s1.j += s2.j; return s1; }
+S ?+=?( S & s, one_t ) { s.i += 1; s.j += 1; return s; }
+S ?-=?( S & s1, S s2 ) { s1.i -= s2.i; s1.j -= s2.j; return s1; }
+S ?-=?( S & s, one_t ) { s.i -= 1; s.j -= 1; return s; }
+ofstream & ?|?( ofstream & os, S s ) { return os | '(' | s.i | s.j | ')'; }
+void & ?|?( ofstream & os, S s ) { (ofstream &)(os | s); ends( os ); }
 
 int main() {
 	// Test some loop options.
@@ -182,7 +183,7 @@ int main() {
 	for ( j; @ -~ -5 ~ 2 : k; 1.5 ~ @ : i; 10 ) { sout | i | j | k; } sout | nl;
 	for ( k; 1.5 ~ @ : j; @ -~ -5 ~ 2 : i; 10 ) { sout | i | j | k; } sout | nl;
 
-	for ( S s = (S){0}; s < (S){10,10}; s += (S){1} ) { sout | s; } sout | nl;
+	for ( S s = (S){0}; s < (S){10,10}; s += (S){1} ) { sout | s; } sout | nl; // 0 does not work
 	for ( s; (S){10,10} ) { sout | s; } sout | nl;
 	sout | nl;
 	for ( s; (S){0} ~ (S){10,10} ) { sout | s; }		 sout | nl;
@@ -194,6 +195,22 @@ int main() {
 	for ( s; (S){0} -~  (S){10,10} ~ (S){1} ) { sout | s; } sout | nl;
 	for ( s; (S){0} -~= (S){10,10} ) { sout | s; }		 sout | nl;
 	for ( s; (S){0} -~= (S){10,10} ~ (S){1} ) { sout | s; } sout | nl | nl;
+
+	int i = 10;
+	double d = 10.;
+	char c = 'e';
+	S s = { 7 };
+
+	for ( anon; 3 ~ i ) sout | anon;					sout | nl;
+	for ( anon; 3 ~ i ) sout | anon;					sout | nl;
+	for ( anon; 3 -~ i ) sout | anon;					sout | nl;
+	for ( anon; 3.5 ~ d ) sout | anon;					sout | nl;
+	for ( anon; 'a' ~= c ) sout | anon;					sout | nl;
+	for ( anon; 'a' -~= c ) sout | anon;				sout | nl;
+	for ( anon; (S){0} ~ s ) sout | anon;				sout | nl; // 0 does not work
+	for ( anon; (S){1} ~ s ) sout | anon;				sout | nl; // 1 does not work
+	for ( anon; (S){3} ~ s ) sout | anon;				sout | nl;
+	for ( anon; (S){3} -~ s ) sout | anon;				sout | nl | nl;
 
 	fred();
 }

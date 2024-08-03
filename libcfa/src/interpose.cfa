@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Wed Mar 29 16:10:31 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 19 16:47:35 2024
-// Update Count     : 219
+// Last Modified On : Sun Jul 28 08:54:31 2024
+// Update Count     : 220
 //
 
 #include <stdio.h>
@@ -263,7 +263,7 @@ void __abort( bool signalAbort, const char fmt[], va_list args ) {
 		__cabi_libc.abort();
 	}
 
-	int len = snprintf( abort_text, abort_text_size, "Cforall Runtime error (UNIX pid:%ld) ", (long int)getpid() ); // use UNIX pid (versus getPid)
+	int len = snprintf( abort_text, abort_text_size, "Cforall Runtime error (UNIX pid:%ld): ", (long int)getpid() ); // use UNIX pid (versus getPid)
 	__cfaabi_bits_write( STDERR_FILENO, abort_text, len );
 
 	// print the cause of the error

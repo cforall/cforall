@@ -286,6 +286,6 @@ forall(ostype &, T | writeable(T, ostype)) {
     ostype & ?|?(ostype & os, vec4(T) v) with (v) {
         return os | '<' | x | ',' | y | ',' | z | ',' | w | '>';
     }
-	OSTYPE_VOID_IMPL( vec4(T) )
+	OSTYPE_VOID_IMPL( os, vec4(T) )
 }
 

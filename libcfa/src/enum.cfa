@@ -116,5 +116,5 @@ forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 	ostype & ?|?( ostype & os, E e ) {
 		return os | label( e );
 	}
-	OSTYPE_VOID_IMPL( E )
+	OSTYPE_VOID_IMPL( os, E )
 }

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr 19 08:43:43 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 18 11:04:54 2023
-// Update Count     : 35
+// Last Modified On : Fri Aug  2 07:41:25 2024
+// Update Count     : 36
 //
 
 // https://gmplib.org/gmp-man-6.1.1.pdf
@@ -267,7 +267,7 @@ static inline {
 			sep( os );
 			return os;
 		} // ?|?
-		OSTYPE_VOID_IMPL( Int )
+		OSTYPE_VOID_IMPL( os, Int )
 	} // distribution
 } // distribution
 

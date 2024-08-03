@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 15 08:16:48 2024
-// Update Count     : 2020
+// Last Modified On : Fri Aug  2 07:38:44 2024
+// Update Count     : 2021
 //
 
 #include "iostream.hfa"
@@ -46,84 +46,84 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		fmt( os, "%s", b ? "true" : "false" );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( bool )
+	OSTYPE_VOID_IMPL( os, bool )
 
 	ostype & ?|?( ostype & os, char c ) {
 		fmt( os, "%c", c );
 		if ( c == '\n' ) setNL$( os, true );
 		return nosep( os );
 	} // ?|?
-	OSTYPE_VOID_IMPL( char )
+	OSTYPE_VOID_IMPL( os, char )
 
 	ostype & ?|?( ostype & os, signed char sc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'hhd", sc );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( signed char )
+	OSTYPE_VOID_IMPL( os, signed char )
 
 	ostype & ?|?( ostype & os, unsigned char usc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'hhu", usc );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( unsigned char )
+	OSTYPE_VOID_IMPL( os, unsigned char )
 
 	ostype & ?|?( ostype & os, short int si ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'hd", si );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( short int )
+	OSTYPE_VOID_IMPL( os, short int )
 
 	ostype & ?|?( ostype & os, unsigned short int usi ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'hu", usi );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( unsigned short int )
+	OSTYPE_VOID_IMPL( os, unsigned short int )
 
 	ostype & ?|?( ostype & os, int i ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'d", i );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( int )
+	OSTYPE_VOID_IMPL( os, int )
 
 	ostype & ?|?( ostype & os, unsigned int ui ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'u", ui );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( unsigned int )
+	OSTYPE_VOID_IMPL( os, unsigned int )
 
 	ostype & ?|?( ostype & os, long int li ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'ld", li );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( long int )
+	OSTYPE_VOID_IMPL( os, long int )
 
 	ostype & ?|?( ostype & os, unsigned long int uli ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'lu", uli );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( unsigned long int )
+	OSTYPE_VOID_IMPL( os, unsigned long int )
 
 	ostype & ?|?( ostype & os, long long int lli ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'lld", lli );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( long long int )
+	OSTYPE_VOID_IMPL( os, long long int )
 
 	ostype & ?|?( ostype & os, unsigned long long int ulli ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'llu", ulli );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( unsigned long long int )
+	OSTYPE_VOID_IMPL( os, unsigned long long int )
 
 	#if defined( __SIZEOF_INT128__ )
 	//      UINT64_MAX 18_446_744_073_709_551_615_ULL
@@ -155,14 +155,14 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		base10_128( os, llli );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( int128 )
+	OSTYPE_VOID_IMPL( os, int128 )
 
 	ostype & ?|?( ostype & os, unsigned int128 ullli ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		base10_128( os, ullli );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( unsigned int128 )
+	OSTYPE_VOID_IMPL( os, unsigned int128 )
 	#endif // __SIZEOF_INT128__
 
 	#define PRINT_WITH_DP( os, format, val, ... ) \
@@ -185,21 +185,21 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		PRINT_WITH_DP( os, "%'g", f );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( float )
+	OSTYPE_VOID_IMPL( os, float )
 
 	ostype & ?|?( ostype & os, double d ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		PRINT_WITH_DP( os, "%'.*lg", d, DBL_DIG );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( double )
+	OSTYPE_VOID_IMPL( os, double )
 
 	ostype & ?|?( ostype & os, long double ld ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		PRINT_WITH_DP( os, "%'.*Lg", ld, LDBL_DIG );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( long double )
+	OSTYPE_VOID_IMPL( os, long double )
 
 	ostype & ?|?( ostype & os, float _Complex fc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
@@ -209,7 +209,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		fmt( os, "i" );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( float _Complex )
+	OSTYPE_VOID_IMPL( os, float _Complex )
 
 	ostype & ?|?( ostype & os, double _Complex dc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
@@ -219,7 +219,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		fmt( os, "i" );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( double _Complex )
+	OSTYPE_VOID_IMPL( os, double _Complex )
 
 	ostype & ?|?( ostype & os, long double _Complex ldc ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
@@ -229,7 +229,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		fmt( os, "i" );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( long double _Complex )
+	OSTYPE_VOID_IMPL( os, long double _Complex )
 
 	ostype & ?|?( ostype & os, const char s[] ) {
 		enum { Open = 1, Close, OpenClose };
@@ -272,7 +272,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		return os;
 //		return write( os, s, len );
 	} // ?|?
-	OSTYPE_VOID_IMPL( const char * )
+	OSTYPE_VOID_IMPL( os, const char * )
 
 // 	ostype & ?|?( ostype & os, const char16_t s[] ) {
 // 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
@@ -299,7 +299,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		fmt( os, "%p", p );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( const void * )
+	OSTYPE_VOID_IMPL( os, const void * )
 
 	// manipulators
 	ostype & ?|?( ostype & os, ostype & (* manip)( ostype & ) ) {
@@ -486,7 +486,7 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 		} /* if */ \
 		return os; \
 	} /* ?|? */ \
-	OSTYPE_VOID_IMPL( _Ostream_Manip(T) ) \
+	OSTYPE_VOID_IMPL( os, _Ostream_Manip(T) ) \
 } // distribution
 
 INTEGRAL_FMT_IMPL( signed char,            "      *hh ", "      *.*hh " )
@@ -584,7 +584,7 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 		} /* if */ \
 		return os; \
 	} /* ?|? */ \
-	OSTYPE_VOID_IMPL( _Ostream_Manip(T) ) \
+	OSTYPE_VOID_IMPL( os, _Ostream_Manip(T) ) \
 } // distribution
 
 INTEGRAL_FMT_IMPL128( int128 )
@@ -682,7 +682,7 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 		return os; \
 	} /* ?|? */ \
 \
-	OSTYPE_VOID_IMPL( _Ostream_Manip(T) ) \
+	OSTYPE_VOID_IMPL( os, _Ostream_Manip(T) ) \
 } // distribution
 
 FLOATING_POINT_FMT_IMPL( double,      "      * ",  "      *.* " )
@@ -717,7 +717,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		fmt( os, &fmtstr[star], f.wd, f.val );
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( _Ostream_Manip(char) )
+	OSTYPE_VOID_IMPL( os, _Ostream_Manip(char) )
 } // distribution
 
 // *********************************** C string ***********************************
@@ -764,7 +764,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		if ( f.val[0] == '\0' ) { nosep( os ); }		// null string => no trailing separator
 		return os;
 	} // ?|?
-	OSTYPE_VOID_IMPL( _Ostream_Manip(const char *) )
+	OSTYPE_VOID_IMPL( os, _Ostream_Manip(const char *) )
 } // distribution
 
 
