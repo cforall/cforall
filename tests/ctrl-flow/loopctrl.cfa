@@ -82,9 +82,9 @@ void fred() {
 	for ( int j; s ~ @ ~ @ ) { if ( j == 10 ) break; sout | j; j += 1; } sout | nl;
 
 	enum(int) E { A, B, C, D };
-//	for ( E e; A ~= C ) { sout | e; } sout | nl;
-//	for ( e; A ~= D ) { sout | e; } sout | nl;
-//	for ( e; A -~= D ~ 2 ) { sout | e; } sout | nl;
+	for ( E e; A ~= C ) { sout | e; } sout | nl;
+	for ( e; A ~= D ) { sout | e; } sout | nl;
+	for ( e; A -~= D ~ 2 ) { sout | e; } sout | nl;
 	for ( e; E ) { sout | e; } sout | nl;
 	for ( e; -~= E ) { sout | e; } sout | nl;
 }

@@ -129,6 +129,21 @@ const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const Reso
 
 	mutDecl->type = renameTyVars(mutDecl->type, RenameMode::GEN_EXPR_ID);
 	mutDecl->isTypeFixed = true;
+
+	auto enumInst = decl->type.as<ast::EnumInstType>();
+	if ( enumInst && enumInst->base->isCfa ) {
+		if ( auto init = decl->init.as<ast::SingleInit>() ) {
+			if ( auto initExpr = init->value.as<ast::ConstantExpr>() ) {
+				if ( initExpr->result.as<ast::ZeroType>() ) {
+					auto newInit = new ast::SingleInit( init->location, 
+						ast::UntypedExpr::createCall( init->location, "lowerBound", {} )
+					);
+					mutDecl->init = newInit;
+				}
+			}
+		}
+	}
+
 	return mutDecl;
 }
 

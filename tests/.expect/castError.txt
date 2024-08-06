@@ -5,7 +5,7 @@ Explicit Cast of:
   char
 ... with resolved type:
   char Alternatives are:
-Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+Cost ( 1, 0, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: f: double
       ... with resolved type:
         double
@@ -18,7 +18,7 @@ Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
   )
   Environment:
 
-Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+Cost ( 1, 0, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: f: function
         accepting unspecified arguments
       ... returning nothing
@@ -37,7 +37,7 @@ Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
   )
   Environment:
 
-Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+Cost ( 1, 0, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: f: signed int
       ... with resolved type:
         signed int
@@ -61,7 +61,7 @@ Generated Cast of:
 ... to: nothing
 ... with resolved type:
   void Alternatives are:
-Cost ( 0, 0, 2, 0, 0, 0, 0 ): Generated Cast of:
+Cost ( 0, 0, 0, 2, 0, 0, 0, 0 ): Generated Cast of:
       Comma Expression:
         Constant Expression (3: signed int)
         ... with resolved type:
@@ -79,7 +79,7 @@ Cost ( 0, 0, 2, 0, 0, 0, 0 ): Generated Cast of:
   )
   Environment:
 
-Cost ( 0, 0, 2, 0, 0, 0, 0 ): Generated Cast of:
+Cost ( 0, 0, 0, 2, 0, 0, 0, 0 ): Generated Cast of:
       Comma Expression:
         Constant Expression (3: signed int)
         ... with resolved type:

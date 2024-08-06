@@ -8,7 +8,7 @@ Generated Cast of:
 ... to: nothing
 ... with resolved type:
   void Alternatives are:
-Cost ( 0, 1, 2, 0, 1, -1, 0 ): Generated Cast of:
+Cost ( 0, 0, 1, 2, 0, 1, -1, 0 ): Generated Cast of:
       Application of
         Variable Expression: *?: forall
           instance of type DT (not function type)
@@ -43,7 +43,7 @@ Cost ( 0, 1, 2, 0, 1, -1, 0 ): Generated Cast of:
   Environment:([unbound]DT) -> instance of struct A without body (no widening)
 
 
-Cost ( 0, 1, 2, 0, 1, -1, 0 ): Generated Cast of:
+Cost ( 0, 0, 1, 2, 0, 1, -1, 0 ): Generated Cast of:
       Application of
         Variable Expression: *?: forall
           instance of type DT (not function type)
@@ -110,7 +110,7 @@ errors/completeType.cfa:72:1 error: No alternatives with satisfiable assertions 
   Name: z
 
       Unsatisfiable alternative:
-Cost ( 0, 1, 0, 0, 1, -5, 0 ): Application of
+Cost ( 0, 0, 1, 0, 0, 1, -5, 0 ): Application of
             Variable Expression: baz: forall
               instance of type T (not function type)
               with assertions

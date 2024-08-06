@@ -937,7 +937,7 @@ namespace {
 		} else if ( auto unionInst = aggrExpr->result.as< ast::UnionInstType >() ) {
 			addAggMembers( unionInst, aggrExpr, *cand, Cost::unsafe, "" );
 		} else if ( auto enumInst = aggrExpr->result.as< ast::EnumInstType >() ) {
-			addEnumValueAsCandidate(enumInst, aggrExpr, Cost::unsafe);
+			addEnumValueAsCandidate( enumInst, aggrExpr, Cost::implicit );
 		}
 	}
 	

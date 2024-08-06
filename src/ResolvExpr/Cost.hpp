@@ -30,13 +30,13 @@ class Cost {
 		struct {
 		#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 			// Little-endian => first value is low priority and last is high priority.
-			unsigned char padding;					///< unused
 			unsigned char referenceCost;			///< reference conversions
 			unsigned char specCost;					///< Polymorphic type specializations (type assertions), negative cost
 			unsigned char varCost;					///< Count of polymorphic type variables
 			unsigned char signCost;					///< Count of safe sign conversions
 			unsigned char safeCost;					///< Safe (widening) conversions
 			unsigned char polyCost;					///< Count of parameters and return values bound to some poly type
+			unsigned char implicitCost;				///< Aggregate implicit cost
 			unsigned char unsafeCost;				///< Unsafe (narrowing) conversions
 		#else
 			#error Cost BIG_ENDIAN unsupported
@@ -45,33 +45,34 @@ class Cost {
 		uint64_t all;
 	};
 	static const unsigned char correctb = 0xff;		// byte correction for negative spec cost
-	static const uint64_t correctw = 0x00'00'00'00'00'ff'00'00; //' word correction for negative spec cost
+	static const uint64_t correctw = 0x00'00'00'00'00'00'ff'00; //' word correction for negative spec cost
   public:
 	// Compiler adjusts constants for correct endian.
 	enum : uint64_t {
-		zero      = 0x00'00'00'00'00'ff'00'00,
-		infinity  = 0xff'ff'ff'ff'ff'00'ff'ff,
-		unsafe    = 0x01'00'00'00'00'ff'00'00,
-		poly      = 0x00'01'00'00'00'ff'00'00,
-		safe      = 0x00'00'01'00'00'ff'00'00,
-		sign      = 0x00'00'00'01'00'ff'00'00,
-		var       = 0x00'00'00'00'01'ff'00'00,
-		spec      = 0x00'00'00'00'00'fe'00'00,
-		reference = 0x00'00'00'00'00'ff'01'00,
+		zero      = 0x00'00'00'00'00'00'ff'00,
+		infinity  = 0xff'ff'ff'ff'ff'ff'00'ff,
+		unsafe    = 0x01'00'00'00'00'00'ff'00,
+		implicit  = 0x00'01'00'00'01'00'ff'00,
+		poly      = 0x00'00'01'00'00'00'ff'00,
+		safe      = 0x00'00'00'01'00'00'ff'00,
+		sign      = 0x00'00'00'00'01'00'ff'00,
+		var       = 0x00'00'00'00'00'01'ff'00,
+		spec      = 0x00'00'00'00'00'00'fe'00,
+		reference = 0x00'00'00'00'00'00'ff'01,
 	}; //'
 
 	Cost( uint64_t all ) { Cost::all = all; }
-	Cost( int unsafeCost, int polyCost, int safeCost, int signCost, int varCost, int specCost, int referenceCost ) {
+	Cost( int unsafeCost, int polyCost, int safeCost, int signCost, int implicitCost, int varCost, int specCost, int referenceCost ) {
 		// Assume little-endian => first value is low priority and last is high priority.
 		v = {
 		#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-			(unsigned char)0,						// padding
 			(unsigned char)referenceCost,			// low priority
 			(unsigned char)(specCost + correctb),	// correct for signedness
 			(unsigned char)varCost,
 			(unsigned char)signCost,
 			(unsigned char)safeCost,
 			(unsigned char)polyCost,
+			(unsigned char)implicitCost,
 			(unsigned char)unsafeCost, 				// high priority
 		#else
 			#error Cost BIG_ENDIAN unsupported
@@ -80,6 +81,7 @@ class Cost {
 	}
 
 	int get_unsafeCost() const { return v.unsafeCost; }
+	int get_implictCost() const { return v.implicitCost; }
 	int get_polyCost() const { return v.polyCost; }
 	int get_safeCost() const { return v.safeCost; }
 	int get_signCost() const { return v.signCost; }
@@ -111,6 +113,11 @@ class Cost {
 
 	Cost incUnsafe( int inc = 1 ) {
 		if ( all != infinity ) { assert( v.unsafeCost + inc <= UCHAR_MAX ); v.unsafeCost += inc; }
+		return *this;
+	}
+
+	Cost incImplicit( int inc = 1 ) {
+		if ( all != infinity ) { assert( v.implicitCost + inc <= UCHAR_MAX ); v.implicitCost += inc; }
 		return *this;
 	}
 
@@ -167,7 +174,7 @@ inline Cost operator+( const Cost lhs, const Cost rhs ) {
 }
 
 inline std::ostream & operator<<( std::ostream & os, const Cost cost ) {
-	return os << "( " << cost.get_unsafeCost() << ", " << cost.get_polyCost() << ", " << cost.get_safeCost()
+	return os << "( " << cost.get_unsafeCost() << ", " << cost.get_implictCost() << ", " << cost.get_polyCost() << ", " << cost.get_safeCost()
 			  << ", " << cost.get_signCost() << ", " << cost.get_varCost() << ", " << cost.get_specCost()
 			  << ", " << cost.get_referenceCost() << " )";
 }

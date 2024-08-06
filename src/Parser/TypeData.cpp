@@ -1453,7 +1453,8 @@ ast::EnumDecl * buildEnum(
 		ast::Linkage::Spec linkage ) {
 	assert( td->kind == TypeData::Aggregate );
 	assert( td->aggregate.kind == ast::AggregateDecl::Enum );
-	ast::Type * baseType = td->base ? typebuild(td->base) : nullptr;
+	ast::ptr<ast::Type> baseType = td->base ? typebuild(td->base) : nullptr;
+
 	ast::EnumDecl * ret = new ast::EnumDecl(
 		td->location,
 		*td->aggregate.name,
@@ -1473,9 +1474,15 @@ ast::EnumDecl * buildEnum(
 		if ( ret->isOpaque() && cur->has_enumeratorValue() ) {
 			SemanticError( td->location, "Opague cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {
+			ast::Expr * initValue;
+			if (ret->isCfa && ret->base) {
+				initValue = new ast::CastExpr( cur->enumeratorValue->location, maybeMoveBuild( cur->consume_enumeratorValue() ), ret->base  );
+			} else {
+				initValue = maybeMoveBuild( cur->consume_enumeratorValue() );
+			}
 			object->init = new ast::SingleInit(
 				td->location,
-				maybeMoveBuild( cur->consume_enumeratorValue() ),
+				initValue,
 				ast::NoConstruct
 			);
 		}

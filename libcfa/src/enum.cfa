@@ -5,7 +5,7 @@
 #pragma GCC visibility push(default)
 
 forall( E | Serial( E ) ) {
-	E fromInt( unsigned i ) {
+	E fromInt( int i ) {
 		E upper = upperBound();
 		E lower = lowerBound();
 		// It is okay to overflow as overflow will be theoretically caught by the other bound

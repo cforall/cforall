@@ -5,7 +5,7 @@ Explicit Cast of:
   char
 ... with resolved type:
   char Alternatives are:
-Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+Cost ( 1, 0, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: FX86: double
       ... with resolved type:
         double
@@ -18,7 +18,7 @@ Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
   )
   Environment:
 
-Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+Cost ( 1, 0, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: FX86: function
         accepting unspecified arguments
       ... returning nothing
@@ -37,7 +37,7 @@ Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
   )
   Environment:
 
-Cost ( 1, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
+Cost ( 1, 0, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: FX86: signed int
       ... with resolved type:
         signed int

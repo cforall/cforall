@@ -24,9 +24,6 @@ public:
 			unsigned int functionNesting )
 		: decl(decl),
 		  functionNesting{functionNesting},
-		//   quasi_void_decl(new ast::StructDecl(decl->location,
-		//   	"quasi_void", ast::AggregateDecl::Struct,
-		// 	{}, ast::Linkage::AutoGen)),
 		  proto_linkage{ast::Linkage::Cforall} {}
 
 private:
@@ -150,8 +147,9 @@ const ast::Init* EnumAttrFuncGenerator::getAutoInit(
 				getLocation(), constInit->intValue() + 1));
 	} else {
 		auto untypedThisInit = new ast::UntypedExpr(
-			getLocation(), new ast::NameExpr(getLocation(), "?++"),
-			{prevInitExpr});
+			getLocation(), new ast::NameExpr(getLocation(), "?+?"),
+			{	prevInitExpr,
+				new ast::ConstantExpr( getLocation(), new ast::OneType, "1", 1) });
 		return new ast::SingleInit(getLocation(), untypedThisInit);
 	}
 }
@@ -193,7 +191,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genPosnProto() const {
         "posn",
         {new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
         {new ast::ObjectDecl(getLocation(), "_ret",
-            new ast::BasicType(ast::BasicKind::UnsignedInt))});
+            new ast::BasicType(ast::BasicKind::SignedInt))});
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
@@ -228,7 +226,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
 ast::FunctionDecl* EnumAttrFuncGenerator::genFromIntProto() const {
 	return genProto(
 		"fromInt_unsafe",
-		{new ast::ObjectDecl(getLocation(), "_i", new ast::BasicType(ast::BasicKind::UnsignedInt))},
+		{new ast::ObjectDecl(getLocation(), "_i", new ast::BasicType(ast::BasicKind::SignedInt))},
 		{new ast::ObjectDecl(getLocation(), "_ret", new ast::EnumInstType(decl))}
 	);
 }
@@ -237,7 +235,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genFromInstanceProto() const {
 	return genProto(
 		"fromInstance",
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
-		{new ast::ObjectDecl(getLocation(), "_ret", new ast::BasicType(ast::BasicKind::UnsignedInt))}
+		{new ast::ObjectDecl(getLocation(), "_ret", new ast::BasicType(ast::BasicKind::SignedInt))}
 	);
 }
 
@@ -284,7 +282,7 @@ void EnumAttrFuncGenerator::genSuccPredBody(ast::FunctionDecl * func, const char
 	auto enumToInt = new ast::CastExpr(
 		func->location,
 		new ast::VariableExpr(func->location, param),
-		new ast::BasicType(ast::BasicKind::UnsignedInt),
+		new ast::BasicType(ast::BasicKind::SignedInt),
 		ast::GeneratedFlag::ExplicitCast
 	);
 	ast::UntypedExpr* addOneExpr = ast::UntypedExpr::createCall( func->location,
@@ -382,7 +380,7 @@ void EnumAttrFuncGenerator::genValueOrLabelBody(
 		new ast::CastExpr(
 			func->location,
 			new ast::VariableExpr( func->location, func->params.front() ),
-			new ast::BasicType( ast::BasicKind::UnsignedInt ),
+			new ast::BasicType( ast::BasicKind::SignedInt ),
 			ast::GeneratedFlag::ExplicitCast
 		)});
 	func->stmts = new ast::CompoundStmt(
@@ -406,7 +404,7 @@ void EnumAttrFuncGenerator::genPosnBody(ast::FunctionDecl* func) const {
 	auto castExpr = new ast::CastExpr(
 		func->location,
 		new ast::VariableExpr(func->location, func->params.front()),
-		new ast::BasicType( ast::BasicKind::UnsignedInt ),
+		new ast::BasicType( ast::BasicKind::SignedInt ),
 			ast::GeneratedFlag::ExplicitCast);
 	func->stmts = new ast::CompoundStmt(
 		func->location, {new ast::ReturnStmt(func->location, castExpr)});

@@ -8,14 +8,14 @@ forall( E ) trait Bounded {
 };
 
 forall( E | Bounded( E ) ) trait Serial {
-	unsigned fromInstance( E e );
-	E fromInt_unsafe( unsigned i );
+	int fromInstance( E e );
+	E fromInt_unsafe( int i );
 	E succ_unsafe( E e );
 	E pred_unsafe( E e );
 };
 
 forall( E | Serial( E ) ) {
-	E fromInt( unsigned i );
+	E fromInt( int i );
 	E succ( E e );
 	E pred( E e );
 	int Countof( E e );
@@ -35,7 +35,7 @@ forall( E | Serial( E ) ) {
 
 forall( E ) trait CfaEnum {
 	const char * label( E e );
-	unsigned int posn( E e );
+	int posn( E e );
 };
 
 forall( E, V | CfaEnum( E ) ) trait TypedEnum {
@@ -62,24 +62,50 @@ forall( E | Serial(E) | CfaEnum(E) ) {
 	int ?>=?( E l, E r ) { return posn( l ) >= posn( r ); }
 
 	E ++?( E & l ) { 									// increment operators
-		l = succ( l );
+		int pos = posn(l);
+		l = fromInt_unsafe(pos+1);
 		return l;
-	}
-	
-	E ?++( E & l ) {
-		E ret = l;
-		l = succ( l );
-		return ret;
 	}
 
 	E --?( E & l ) {
-		l = pred( l );
+		int pos = posn(l);
+		l = fromInt_unsafe(pos-1);
 		return l;
 	}
 
+	E ?+=? ( E & l, one_t ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos+1);
+		return l;
+	}
+
+	E ?-=? ( E & l, one_t ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos-1);
+		return l;
+	}
+
+	E ?+=? ( E & l, int i ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos+i);
+		return l;
+	}
+
+	E ?-=? ( E & l, int i ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos-i);
+		return l;
+	}
+
+	E ?++( E & l ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos+1);
+		return fromInt_unsafe(pos);
+	}
+
 	E ?--( E & l ) {
-		E ret = l;
-		l = pred( l );
-		return ret;
+		int pos = posn(l);
+		l = fromInt_unsafe(pos-1);
+		return fromInt_unsafe(pos);
 	}
 }
