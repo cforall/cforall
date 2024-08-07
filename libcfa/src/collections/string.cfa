@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 15 21:56:28 2024
-// Update Count     : 260
+// Last Modified On : Mon Aug  5 23:12:05 2024
+// Update Count     : 273
 //
 
 #include "string.hfa"
@@ -44,7 +44,7 @@ void ?{}( string & s, const string & c ) {
     ?{}( *s.inner, *c.inner, COPY_VALUE );
 }
 
-void ?{}( string & s, const string & s2, size_t maxlen) {
+void ?{}( string & s, const string & s2, size_t maxlen ) {
     (s.inner) { malloc() };
     ?{}( *s.inner, *s2.inner, COPY_VALUE, maxlen );
 }
@@ -64,7 +64,7 @@ void ?{}( string & s, const char * c ) {
     ?{}( *s.inner, c );
 }
 
-void ?{}( string & s, const char * c, size_t size) {
+void ?{}( string & s, const char * c, size_t size ) {
     (s.inner) { malloc() };
     ?{}( *s.inner, c, size );
 }
@@ -99,6 +99,36 @@ void ?{}( string & s, long double _Complex rhs ) {
     ?{}( *s.inner, rhs );
 }
 
+string str( ssize_t rhs ) {
+	string s = rhs;
+	return s;
+}
+
+string str( size_t rhs ) {
+	string s = rhs;
+	return s;
+}
+
+string str( double rhs ) {
+	string s = rhs;
+	return s;
+}
+
+string str( long double rhs ) {
+	string s = rhs;
+	return s;
+}
+
+string str( double _Complex rhs ) {
+	string s = rhs;
+	return s;
+}
+
+string str( long double _Complex rhs ) {
+	string s = rhs;
+	return s;
+}
+
 void ^?{}( string & s ) {
     ^(*s.inner){};
     free( s.inner );
@@ -114,18 +144,18 @@ string_WithSharedEdits ?`shareEdits( string & s ) {
 }
 
 void ?{}( string & s, string_WithSharedEdits src ) {
-    ?{}( s, *src.s->inner, 0, src.s->inner->Handle.lnth);
+    ?{}( s, *src.s->inner, 0, src.s->inner->Handle.lnth );
 }
 
 ////////////////////////////////////////////////////////
 // Assignment
 
-string & ?=?(string & s, const string & c) {
+string & ?=?( string & s, const string & c ) {
     (*s.inner) = (*c.inner);
     return s;
 }
 
-string & ?=?(string & s, string & c) {
+string & ?=?( string & s, string & c ) {
     (*s.inner) = (*c.inner);
     return s;
 }
@@ -140,13 +170,13 @@ string & ?=?( string & s, char val ) {
     return s;
 }
 
-string & assign(string & s, const string & c, size_t n) {
-    assign(*s.inner, *c.inner, n);
+string & assign( string & s, const string & c, size_t n ) {
+    assign( *s.inner, *c.inner, n );
     return s;
 }
 
-string & assign(string & s, const char * c, size_t n) {
-    assign(*s.inner, c, n);
+string & assign( string & s, const char * c, size_t n ) {
+    assign( *s.inner, c, n );
     return s;
 }
 
@@ -204,7 +234,7 @@ void ?|?( ofstream & os, _Ostream_Manip(string) f ) {
 	(ofstream &)(os | f); ends( os );
 }
 
-ifstream & ?|?(ifstream & in, string & s) {
+ifstream & ?|?( ifstream & in, string & s ) {
     return in | (*s.inner); // read to internal string_res
 }
 
@@ -235,80 +265,104 @@ string ?()( string & s, size_t start ) {
 ////////////////////////////////////////////////////////
 // Comparison
 
-int  strcmp(const string & s1, const string & s2) { return strcmp(*s1.inner, *s2.inner); }
-bool ?==?(const string & s1, const string & s2) { return *s1.inner == *s2.inner; }
-bool ?!=?(const string & s1, const string & s2) { return *s1.inner != *s2.inner; }
-bool ?>? (const string & s1, const string & s2) { return *s1.inner >  *s2.inner; }
-bool ?>=?(const string & s1, const string & s2) { return *s1.inner >= *s2.inner; }
-bool ?<=?(const string & s1, const string & s2) { return *s1.inner <= *s2.inner; }
-bool ?<? (const string & s1, const string & s2) { return *s1.inner <  *s2.inner; }
+int strcmp( const string & s1, const string & s2 ) { return strcmp( *s1.inner, *s2.inner ); }
+bool ?==?( const string & s1, const string & s2 ) { return *s1.inner == *s2.inner; }
+bool ?!=?( const string & s1, const string & s2 ) { return *s1.inner != *s2.inner; }
+bool ?>? ( const string & s1, const string & s2 ) { return *s1.inner >  *s2.inner; }
+bool ?>=?( const string & s1, const string & s2 ) { return *s1.inner >= *s2.inner; }
+bool ?<=?( const string & s1, const string & s2 ) { return *s1.inner <= *s2.inner; }
+bool ?<? ( const string & s1, const string & s2 ) { return *s1.inner <  *s2.inner; }
 
-int  strcmp(const string & s1, const char * s2) { return strcmp(*s1.inner, s2 ); }
-bool ?==?(const string & s1, const char * s2) { return *s1.inner == s2; }
-bool ?!=?(const string & s1, const char * s2) { return *s1.inner != s2; }
-bool ?>? (const string & s1, const char * s2) { return *s1.inner >  s2; }
-bool ?>=?(const string & s1, const char * s2) { return *s1.inner >= s2; }
-bool ?<=?(const string & s1, const char * s2) { return *s1.inner <= s2; }
-bool ?<? (const string & s1, const char * s2) { return *s1.inner <  s2; }
+int strcmp( const string & s1, const char * s2 ) { return strcmp( *s1.inner, s2 ); }
+bool ?==?( const string & s1, const char * s2 ) { return *s1.inner == s2; }
+bool ?!=?( const string & s1, const char * s2 ) { return *s1.inner != s2; }
+bool ?>? ( const string & s1, const char * s2 ) { return *s1.inner >  s2; }
+bool ?>=?( const string & s1, const char * s2 ) { return *s1.inner >= s2; }
+bool ?<=?( const string & s1, const char * s2 ) { return *s1.inner <= s2; }
+bool ?<? ( const string & s1, const char * s2 ) { return *s1.inner <  s2; }
 
-int  strcmp(const char * s1, const string & s2) { return strcmp( s1, *s2.inner); }
-bool ?==?(const char * s1, const string & s2) { return s1 == *s2.inner; }
-bool ?!=?(const char * s1, const string & s2) { return s1 != *s2.inner; }
-bool ?>? (const char * s1, const string & s2) { return s1 >  *s2.inner; }
-bool ?>=?(const char * s1, const string & s2) { return s1 >= *s2.inner; }
-bool ?<=?(const char * s1, const string & s2) { return s1 <= *s2.inner; }
-bool ?<? (const char * s1, const string & s2) { return s1 <  *s2.inner; }
+int strcmp( const char * s1, const string & s2 ) { return strcmp( s1, *s2.inner ); }
+bool ?==?( const char * s1, const string & s2 ) { return s1 == *s2.inner; }
+bool ?!=?( const char * s1, const string & s2 ) { return s1 != *s2.inner; }
+bool ?>? ( const char * s1, const string & s2 ) { return s1 >  *s2.inner; }
+bool ?>=?( const char * s1, const string & s2 ) { return s1 >= *s2.inner; }
+bool ?<=?( const char * s1, const string & s2 ) { return s1 <= *s2.inner; }
+bool ?<? ( const char * s1, const string & s2 ) { return s1 <  *s2.inner; }
 
 
 ////////////////////////////////////////////////////////
 // Getter
 
-size_t size(const string & s) {
+size_t size( const string & s ) {
     return size( *s.inner );
 }
 
 ////////////////////////////////////////////////////////
 // Concatenation
 
-void ?+=?(string & s, char c) {
+void ?+=?( string & s, char c ) {
     (*s.inner) += c;
 }
 
-void ?+=?(string & s, const string & s2) {
+void ?+=?( string & s, const string & s2 ) {
     (*s.inner) += (*s2.inner);
 }
 
-void append(string & s, const string & s2, size_t maxlen) {
+void append( string & s, const string & s2, size_t maxlen ) {
     append( (*s.inner), (*s2.inner), maxlen );
 }
 
-void ?+=?(string & s, const char * c) {
+void ?+=?( string & s, const char * c ) {
     (*s.inner) += c;
 }
 
-void append(string & s, const char * buffer, size_t bsize) {
+void append( string & s, const char * buffer, size_t bsize ) {
     append( (*s.inner), buffer, bsize );
 }
 
-string ?+?(const string & s, char c) {
+string ?+?( const string & s, char c ) {
     string ret = s;
     ret += c;
     return ret;
 }
 
-string ?+?(const string & s, const string & s2) {
+string ?+?( char c, const string & s ) {
+    string ret = s;
+    ret += c;
+    return ret;
+}
+
+string ?+?( const string & s, const string & s2 ) {
     string ret = s;
     ret += s2;
     return ret;
 }
 
-string ?+?(const char * s1, const char * s2) {
+string ?+?( const char * s,  char c ) {
+    string ret = s;
+    ret += c;
+    return ret;
+}
+
+string ?+?( char c, const char * s ) {
+    string ret = c;
+    ret += s;
+    return ret;
+}
+
+string ?+?( const char * s1, const char * s2 ) {
     string ret = s1;
     ret += s2;
     return ret;
 }
 
-string ?+?(const string & s, const char * c) {
+string ?+?( const char * s1, string & s2 ) {
+    string ret = s1;
+    ret += s2;
+    return ret;
+}
+
+string ?+?( const string & s, const char * c ) {
     string ret = s;
     ret += c;
     return ret;
@@ -317,23 +371,23 @@ string ?+?(const string & s, const char * c) {
 ////////////////////////////////////////////////////////
 // Repetition
 
-void ?*=?(string & s, size_t factor) {
+void ?*=?( string & s, size_t factor ) {
     (*s.inner) *= factor;
 }
 
-string ?*?(const string & s, size_t factor) {
+string ?*?( const string & s, size_t factor ) {
     string ret = s;
     ret *= factor;
     return ret;
 }
 
-string ?*?(char c, size_t factor) {
+string ?*?( char c, size_t factor ) {
     string ret = c;
     ret *= factor;
     return ret;
 }
 
-string ?*?(const char * s, size_t factor) {
+string ?*?( const char * s, size_t factor ) {
     string ret = s;
     ret *= factor;
     return ret;
@@ -342,11 +396,11 @@ string ?*?(const char * s, size_t factor) {
 ////////////////////////////////////////////////////////
 // Character access
 
-char ?[?](const string & s, size_t index) {
+char ?[?]( const string & s, size_t index ) {
     return (*s.inner)[index];
 }
 
-string ?[?](string & s, size_t index) {
+string ?[?]( string & s, size_t index ) {
     string ret = { *s.inner, index, 1 };
     return ret`shareEdits;
 }
@@ -354,75 +408,75 @@ string ?[?](string & s, size_t index) {
 ////////////////////////////////////////////////////////
 // Search
 
-bool contains(const string & s, char ch) {
+bool contains( const string & s, char ch ) {
     return contains( *s.inner, ch );
 }
 
-int find(const string & s, char search) {
+int find( const string & s, char search ) {
     return find( *s.inner, search );
 }
 
-int find(const string & s, const string & search) {
+int find( const string & s, const string & search ) {
     return find( *s.inner, *search.inner );
 }
 
-int find(const string & s, const char * search) {
-    return find( *s.inner, search);
+int find( const string & s, const char * search ) {
+    return find( *s.inner, search );
 }
 
-int find(const string & s, const char * search, size_t searchsize) {
-    return find( *s.inner, search, searchsize);
+int find( const string & s, const char * search, size_t searchsize ) {
+    return find( *s.inner, search, searchsize );
 }
 
-int findFrom(const string & s, size_t fromPos, char search) {
+int findFrom( const string & s, size_t fromPos, char search ) {
     return findFrom( *s.inner, fromPos, search );
 }
 
-int findFrom(const string & s, size_t fromPos, const string & search) {
+int findFrom( const string & s, size_t fromPos, const string & search ) {
     return findFrom( *s.inner, fromPos, *search.inner );
 }
 
-int findFrom(const string & s, size_t fromPos, const char * search) {
+int findFrom( const string & s, size_t fromPos, const char * search ) {
     return findFrom( *s.inner, fromPos, search );
 }
 
-int findFrom(const string & s, size_t fromPos, const char * search, size_t searchsize) {
+int findFrom( const string & s, size_t fromPos, const char * search, size_t searchsize ) {
     return findFrom( *s.inner, fromPos, search, searchsize );
 }
 
-bool includes(const string & s, const string & search) {
+bool includes( const string & s, const string & search ) {
     return includes( *s.inner, *search.inner );
 }
 
-bool includes(const string & s, const char * search) {
+bool includes( const string & s, const char * search ) {
     return includes( *s.inner, search );
 }
 
-bool includes(const string & s, const char * search, size_t searchsize) {
+bool includes( const string & s, const char * search, size_t searchsize ) {
     return includes( *s.inner, search, searchsize );
 }
 
-bool startsWith(const string & s, const string & prefix) {
+bool startsWith( const string & s, const string & prefix ) {
     return startsWith( *s.inner, *prefix.inner );
 }
 
-bool startsWith(const string & s, const char * prefix) {
+bool startsWith( const string & s, const char * prefix ) {
     return startsWith( *s.inner, prefix );
 }
 
-bool startsWith(const string & s, const char * prefix, size_t prefixsize) {
+bool startsWith( const string & s, const char * prefix, size_t prefixsize ) {
     return startsWith( *s.inner, prefix, prefixsize );
 }
 
-bool endsWith(const string & s, const string & suffix) {
+bool endsWith( const string & s, const string & suffix ) {
     return endsWith( *s.inner, *suffix.inner );
 }
 
-bool endsWith(const string & s, const char * suffix) {
+bool endsWith( const string & s, const char * suffix ) {
     return endsWith( *s.inner, suffix );
 }
 
-bool endsWith(const string & s, const char * suffix, size_t suffixsize) {
+bool endsWith( const string & s, const char * suffix, size_t suffixsize ) {
     return endsWith( *s.inner, suffix, suffixsize );
 }
 
@@ -430,7 +484,7 @@ bool endsWith(const string & s, const char * suffix, size_t suffixsize) {
 ///////////////////////////////////////////////////////////////////////////
 // charclass, include, exclude
 
-void ?{}( charclass & s, const string & chars) {
+void ?{}( charclass & s, const string & chars ) {
     (s.inner) { malloc() };
     ?{}( *s.inner, *(const string_res *)chars.inner );
 }
@@ -452,20 +506,19 @@ void ^?{}( charclass & s ) {
 }
 
 
-int exclude(const string & s, const charclass & mask) {
+int exclude( const string & s, const charclass & mask ) {
     return exclude( *s.inner, *mask.inner );
 }
 /*
-StrSlice exclude(string & s, const charclass & mask) {
+StrSlice exclude( string & s, const charclass & mask ) {
 }
 */
 
-int include(const string & s, const charclass & mask) {
+int include( const string & s, const charclass & mask ) {
     return include( *s.inner, *mask.inner );
 }
 
 /*
-StrSlice include(string & s, const charclass & mask) {
+StrSlice include( string & s, const charclass & mask ) {
 }
 */
-

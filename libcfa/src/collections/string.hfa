@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  6 20:59:18 2024
-// Update Count     : 118
+// Last Modified On : Tue Aug  6 07:49:52 2024
+// Update Count     : 130
 //
 
 #pragma once
@@ -27,18 +27,18 @@ struct string {
 };
 
 // Getters
-size_t size(const string & s);
-static inline size_t strlen(const string & s) { return size( s ); }
+size_t size( const string & s );
+static inline size_t strlen( const string & s ) { return size( s ); }
 
 // RAII, assignment
-void ?{}(string & s); // empty string
-void ?{}(string & s, const string & s2);
-void ?{}(string & s, const string & s2, size_t maxlen);
-void ?{}(string & s, string & s2);
+void ?{}( string & s ); // empty string
+void ?{}( string & s, const string & s2 );
+void ?{}( string & s, const string & s2, size_t maxlen );
+void ?{}( string & s, string & s2 );
 
-void ?{}(string & s, char);
-void ?{}(string & s, const char * c); // copy from string literal (NULL-terminated)
-void ?{}(string & s, const char * c, size_t size); // copy specific length from buffer
+void ?{}( string & s, char );
+void ?{}( string & s, const char * c );					// copy from string literal (NULL-terminated)
+void ?{}( string & s, const char * c, size_t size );	// copy specific length from buffer
 
 void ?{}( string & s, ssize_t rhs );
 void ?{}( string & s, size_t rhs );
@@ -47,17 +47,24 @@ void ?{}( string & s, long double rhs );
 void ?{}( string & s, double _Complex rhs );
 void ?{}( string & s, long double _Complex rhs );
 
-string & ?=?(string & s, const string & c);
-string & ?=?(string & s, string & c);
-string & ?=?(string & s, const char * c); // copy from "literal"
-string & ?=?(string & s, char c);  // copy from 'l'
-string & assign(string & s, const string & c, size_t n);
-string & assign(string & s, const char * c, size_t n);
+string str( ssize_t rhs );
+string str( size_t rhs );
+string str( double rhs );
+string str( long double rhs );
+string str( double _Complex rhs );
+string str( long double _Complex rhs );
 
-static inline string & strcpy(string & s, const char * c) { s = c; return s; }
-static inline string & strncpy(string & s, const char * c, size_t n) { assign( s, c, n); return s; }
-static inline string & strcpy(string & s, const string & c) { s = c; return s; }
-static inline string & strncpy(string & s, const string & c, size_t n) { assign(s, c, n); return s; }
+string & ?=?( string & s, const string & c );
+string & ?=?( string & s, string & c );
+string & ?=?( string & s, const char * c );				// copy from "literal"
+string & ?=?( string & s, char c );						// copy from 'l'
+string & assign( string & s, const string & c, size_t n );
+string & assign( string & s, const char * c, size_t n );
+
+static inline string & strcpy( string & s, const char * c ) { s = c; return s; }
+static inline string & strncpy( string & s, const char * c, size_t n ) { assign( s, c, n ); return s; }
+static inline string & strcpy( string & s, const string & c ) { s = c; return s; }
+static inline string & strncpy( string & s, const string & c, size_t n ) { assign( s, c, n ); return s; }
 
 string & ?=?( string & s, ssize_t rhs );
 string & ?=?( string & s, size_t rhs );
@@ -66,7 +73,7 @@ string & ?=?( string & s, long double rhs );
 string & ?=?( string & s, double _Complex rhs );
 string & ?=?( string & s, long double _Complex rhs );
 
-void ^?{}(string & s);
+void ^?{}( string & s );
 
 // Alternate construction: request shared edits
 struct string_WithSharedEdits {
@@ -76,9 +83,9 @@ string_WithSharedEdits ?`shareEdits( string & s );
 void ?{}( string & s, string_WithSharedEdits src );
 
 // IO Operator
-ofstream & ?|?(ofstream & out, const string & s);
-void ?|?(ofstream & out, const string & s);
-ifstream & ?|?(ifstream & in, string & s);
+ofstream & ?|?( ofstream & out, const string & s );
+void ?|?( ofstream & out, const string & s );
+ifstream & ?|?( ifstream & in, string & s );
 
 static inline {
 	_Ostream_Manip(string) bin( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'b', { .all : 0 } }; }
@@ -144,93 +151,97 @@ ifstream & ?|?( ifstream & is, _Istream_Sstr f );
 static inline ifstream & ?|?( ifstream & is, _Istream_Swidth f ) { return is | *(_Istream_Sstr *)&f; }
 
 // Concatenation
-void ?+=?(string & s, char c); // append a character
-void ?+=?(string & s, const string & s2); // append-concatenate to first string
-void append(string & s, const string & s2, size_t maxlen);  // append-concatenate to first string, up to maxlen
-void ?+=?(string & s, const char * s2); // append-concatenate NULL-terminated string to first string
-void append(string & s, const char * buffer, size_t bsize);  // append-concatenate given range to first string
+void ?+=?( string & s, char c );						// append a character
+void ?+=?( string & s, const string & s2 );				// append-concatenate to first string
+void append( string & s, const string & s2, size_t maxlen );  // append-concatenate to first string, up to maxlen
+void ?+=?( string & s, const char * s2 );				// append-concatenate NULL-terminated string to first string
+void append( string & s, const char * buffer, size_t bsize ); // append-concatenate given range to first string
 
-string ?+?(const string & s, char c); // add a character to a copy of the string
-string ?+?(const string & s, const string & s2); // copy and concatenate both strings
-string ?+?(const char * s1, const char * s2); // copy and concatenate both strings
-string ?+?(const string & s, const char * c); // copy and concatenate with NULL-terminated string
+string ?+?( const string & s, char c );					// add a character to a copy of the string
+string ?+?( char c, const string & s );					// add a character to a copy of the string
+string ?+?( const string & s, const string & s2 );		// copy and concatenate both strings
+string ?+?( const char * s, char c );					// add a character to a copy of the string
+string ?+?( char c, const char * s );					// add a character to a copy of the string
+string ?+?( const char * c, const char * s );			// copy and add with two NULL-terminated string
+string ?+?( const char * c, string & s );				// copy and add with NULL-terminated string
+string ?+?( const string & s, const char * c );			// copy and add with NULL-terminated string
 
-static inline string & strcat(string & s, const string & s2) { s += s2; return s; }
-static inline string & strcat(string & s, const char * c) { s += c; return s; }
-static inline string & strncat(string & s, const string & s2, size_t maxlen) { append(s, s2, maxlen); return s; }
-static inline string & strncat(string & s, const char * buffer, size_t bsize) { append(s, buffer, bsize); return s; }
+static inline string & strcat( string & s, const string & s2 ) { s += s2; return s; }
+static inline string & strcat( string & s, const char * c ) { s += c; return s; }
+static inline string & strncat( string & s, const string & s2, size_t maxlen ) { append( s, s2, maxlen ); return s; }
+static inline string & strncat( string & s, const char * buffer, size_t bsize ) { append( s, buffer, bsize ); return s; }
 
 // Repetition
-string ?*?(const string & s, size_t factor);
-void ?*=?(string & s, size_t factor);
-string ?*?(char c, size_t factor);
-string ?*?(const char *s, size_t factor);
+string ?*?( const string & s, size_t factor );
+void ?*=?( string & s, size_t factor );
+string ?*?( char c, size_t factor );
+string ?*?( const char *s, size_t factor );
 
 // Character access
-char ?[?](const string & s, size_t index);
-string ?[?](string & s, size_t index);  // mutable length-1 slice of original
-//char codePointAt(const string & s, size_t index);  // to revisit under Unicode
+char ?[?]( const string & s, size_t index );
+string ?[?]( string & s, size_t index );				// mutable length-1 slice of original
+//char codePointAt(const string & s, size_t index );		// to revisit under Unicode
 
 // Comparisons
-int  strcmp (const string &, const string &);
-bool ?==?(const string &, const string &);
-bool ?!=?(const string &, const string &);
-bool ?>? (const string &, const string &);
-bool ?>=?(const string &, const string &);
-bool ?<=?(const string &, const string &);
-bool ?<? (const string &, const string &);
+int strcmp ( const string &, const string & );
+bool ?==?( const string &, const string & );
+bool ?!=?( const string &, const string & );
+bool ?>? ( const string &, const string & );
+bool ?>=?( const string &, const string & );
+bool ?<=?( const string &, const string & );
+bool ?<? ( const string &, const string & );
 
-int  strcmp (const string &, const char *);
-bool ?==?(const string &, const char *);
-bool ?!=?(const string &, const char *);
-bool ?>? (const string &, const char *);
-bool ?>=?(const string &, const char *);
-bool ?<=?(const string &, const char *);
-bool ?<? (const string &, const char *);
+int strcmp( const string &, const char * );
+bool ?==?( const string &, const char * );
+bool ?!=?( const string &, const char * );
+bool ?>? ( const string &, const char * );
+bool ?>=?( const string &, const char * );
+bool ?<=?( const string &, const char * );
+bool ?<? ( const string &, const char * );
 
-int  strcmp (const char *, const string &);
-bool ?==?(const char *, const string &);
-bool ?!=?(const char *, const string &);
-bool ?>? (const char *, const string &);
-bool ?>=?(const char *, const string &);
-bool ?<=?(const char *, const string &);
-bool ?<? (const char *, const string &);
+int strcmp( const char *, const string & );
+bool ?==?( const char *, const string & );
+bool ?!=?( const char *, const string & );
+bool ?>? ( const char *, const string & );
+bool ?>=?( const char *, const string & );
+bool ?<=?( const char *, const string & );
+bool ?<? ( const char *, const string & );
 
 
 // Slicing
-string ?()( string & s, size_t start, size_t len );  // TODO const?
-string ?()( string & s, size_t start);
+string ?()( string & s, size_t start, size_t len );		// TODO const?
+string ?()( string & s, size_t start );
 
 // String search
-bool contains(const string & s, char ch); // single character
+bool contains( const string & s, char ch );				// single character
 
-int find(const string & s, char search);
-int find(const string & s, const string & search);
-int find(const string & s, const char * search);
-int find(const string & s, const char * search, size_t searchsize);
+int find( const string & s, char search );
+int find( const string & s, const string & search );
+int find( const string & s, const char * search );
+int find( const string & s, const char * search, size_t searchsize );
 
-int findFrom(const string & s, size_t fromPos, char search);
-int findFrom(const string & s, size_t fromPos, const string & search);
-int findFrom(const string & s, size_t fromPos, const char * search);
-int findFrom(const string & s, size_t fromPos, const char * search, size_t searchsize);
+int findFrom( const string & s, size_t fromPos, char search );
+int findFrom( const string & s, size_t fromPos, const string & search );
+int findFrom( const string & s, size_t fromPos, const char * search );
+int findFrom( const string & s, size_t fromPos, const char * search, size_t searchsize );
 
-bool includes(const string & s, const string & search);
-bool includes(const string & s, const char * search);
-bool includes(const string & s, const char * search, size_t searchsize);
+bool includes( const string & s, const string & search );
+bool includes( const string & s, const char * search );
+bool includes( const string & s, const char * search, size_t searchsize );
 
-bool startsWith(const string & s, const string & prefix);
-bool startsWith(const string & s, const char * prefix);
-bool startsWith(const string & s, const char * prefix, size_t prefixsize);
+bool startsWith( const string & s, const string & prefix );
+bool startsWith( const string & s, const char * prefix );
+bool startsWith( const string & s, const char * prefix, size_t prefixsize );
 
-bool endsWith(const string & s, const string & suffix);
-bool endsWith(const string & s, const char * suffix);
-bool endsWith(const string & s, const char * suffix, size_t suffixsize);
+bool endsWith( const string & s, const string & suffix );
+bool endsWith( const string & s, const char * suffix );
+bool endsWith( const string & s, const char * suffix, size_t suffixsize );
 
 // Modifiers
-void padStart(string & s, size_t n);
-void padStart(string & s, size_t n, char padding);
-void padEnd(string & s, size_t n);
-void padEnd(string & s, size_t n, char padding);
+void padStart( string & s, size_t n );
+void padStart( string & s, size_t n, char padding );
+void padEnd( string & s, size_t n );
+void padEnd( string & s, size_t n, char padding );
 
 
 struct charclass {
@@ -238,20 +249,20 @@ struct charclass {
 };
 
 void ?{}( charclass & ) = void;
-void ?{}( charclass &, charclass) = void;
-charclass ?=?( charclass &, charclass) = void;
+void ?{}( charclass &, charclass ) = void;
+charclass ?=?( charclass &, charclass ) = void;
 
-void ?{}( charclass &, const string & chars);
+void ?{}( charclass &, const string & chars );
 void ?{}( charclass &, const char * chars );
 void ?{}( charclass &, const char * chars, size_t charssize );
 void ^?{}( charclass & );
 
-int include(const string & s, const charclass & mask);
+int include( const string & s, const charclass & mask );
 
-int exclude(const string & s, const charclass & mask);
+int exclude( const string & s, const charclass & mask );
 
 /*
 What to do with?
-StrRet include(string & s, const charclass & mask);
-StrRet exclude(string & s, const charclass & mask);
+StrRet include( string & s, const charclass & mask );
+StrRet exclude( string & s, const charclass & mask );
 */
