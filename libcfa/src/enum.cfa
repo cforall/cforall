@@ -10,7 +10,7 @@ forall( E | Serial( E ) ) {
 		E lower = lowerBound();
 		// It is okay to overflow as overflow will be theoretically caught by the other bound
 		if ( i < fromInstance( lower ) || i > fromInstance( upper ) )
-			abort( "call to fromInt has index %d outside enumeration range %d-%d",
+			abort( "call to fromInt has index %d outside of enumeration range %d-%d.",
 				   i, fromInstance( lower ), fromInstance( upper ) );
 		return fromInt_unsafe( i );
 	}
@@ -18,18 +18,18 @@ forall( E | Serial( E ) ) {
 	E succ( E e ) {
 		E upper = upperBound();
 		if ( fromInstance( e ) >= fromInstance( upper ) )
-			abort( "call to succ() exceeds enumeration upper bound of %d", fromInstance( upper ) );
+			abort( "call to succ() exceeds enumeration upper bound of %d.", fromInstance( upper ) );
 		return succ_unsafe(e);
 	}
 
 	E pred( E e ) {
 		E lower = lowerBound();
 		if ( fromInstance( e ) <= fromInstance(lower ) )
-			abort( "call to pred() exceeds enumeration lower bound of %d", fromInstance( lower ) );
+			abort( "call to pred() exceeds enumeration lower bound of %d.", fromInstance( lower ) );
 		return pred_unsafe( e );
 	}
 
-	int Countof( __attribute__((unused)) E e ) {
+	int Countof( E ) {
 		E upper = upperBound();
 		E lower = lowerBound();
 		return fromInstance( upper ) + fromInstance( lower ) + 1;

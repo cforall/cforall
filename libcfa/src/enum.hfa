@@ -18,7 +18,7 @@ forall( E | Serial( E ) ) {
 	E fromInt( int i );
 	E succ( E e );
 	E pred( E e );
-	int Countof( E e );
+	int Countof( E );
 }
 
 // forall( E | Bounded(E) ) trait SafeSerial {

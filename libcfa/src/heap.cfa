@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  7 21:54:29 2024
-// Update Count     : 1644
+// Last Modified On : Wed Aug  7 10:14:47 2024
+// Update Count     : 1646
 //
 
 #include <stdio.h>
@@ -581,7 +581,7 @@ extern "C" {
 			char helpText[512];
 			__cfaabi_bits_print_buffer( STDERR_FILENO, helpText, sizeof(helpText),
 										"CFA warning (UNIX pid:%ld) : program terminating with %td(%#tx) bytes of storage allocated but not freed.\n"
-										"Possible cause is unfreed storage allocated by the program or system/library routines called from the program.\n",
+										"Possible cause is mismatched allocation/deallocation calls (malloc/free), direct constructor call without a direct destructor call, or system/library routines not freeing storage.\n",
 										(long int)getpid(), allocUnfreed, allocUnfreed ); // always print the UNIX pid
 		} // if
 		#endif // __CFA_DEBUG__

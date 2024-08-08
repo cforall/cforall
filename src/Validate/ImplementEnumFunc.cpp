@@ -209,10 +209,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
 	return genProto(
 		"value",
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
-		{new ast::ObjectDecl(getLocation(), "_ret",
-							ast::deepCopy(decl->base))});
-	// else
-	// 	return genQuasiValueProto();
+		{new ast::ObjectDecl(getLocation(), "_ret", decl->base)});
 }
 
 // ast::FunctionDecl* EnumAttrFuncGenerator::genQuasiValueProto() const {
