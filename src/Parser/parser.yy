@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 26 14:09:30 2024
-// Update Count     : 6733
+// Last Modified On : Sat Aug 10 09:47:05 2024
+// Update Count     : 6734
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -2849,7 +2849,9 @@ enum_type_nobody:										// enum - {...}
 	;
 
 enumerator_list:
-	visible_hide_opt identifier_or_type_name enumerator_value_opt
+	// empty
+		{ SemanticError( yylloc, "enumeration must have a minimum of one enumerator, empty enumerator list is meaningless." );  $$ = nullptr; }
+	| visible_hide_opt identifier_or_type_name enumerator_value_opt
 		{ $$ = DeclarationNode::newEnumValueGeneric( $2, $3 ); }
 	| INLINE type_name
 		{
