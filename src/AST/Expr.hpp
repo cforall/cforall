@@ -10,7 +10,7 @@
 // Created On       : Fri May 10 10:30:00 2019
 // Last Modified By : Peter A. Buhr
 // Created On       : Fri May 10 10:30:00 2019
-// Update Count     : 7
+// Update Count     : 8
 //
 
 #pragma once
@@ -85,7 +85,7 @@ public:
 		} data;
 
 		/// initializes from other InferUnion
-		void init_from( const InferUnion& o ) {
+		void init_from( const InferUnion & o ) {
 			if (o.data.resnSlots) {
 				data.resnSlots = new ResnSlots(*o.data.resnSlots);
 			}
@@ -95,7 +95,7 @@ public:
 		}
 
 		/// initializes from other InferUnion (move semantics)
-		void init_from( InferUnion&& o ) {
+		void init_from( InferUnion && o ) {
 			data.resnSlots = o.data.resnSlots;
 			data.inferParams = o.data.inferParams;
 			o.data.resnSlots = nullptr;
@@ -103,22 +103,22 @@ public:
 		}
 
 		InferUnion() : mode(Empty), data() {}
-		InferUnion( const InferUnion& o ) : mode( o.mode ), data() { init_from( o ); }
-		InferUnion( InferUnion&& o ) : mode( o.mode ), data() { init_from( std::move(o) ); }
-		InferUnion& operator= ( const InferUnion& ) = delete;
-		InferUnion& operator= ( InferUnion&& ) = delete;
+		InferUnion( const InferUnion & o ) : mode( o.mode ), data() { init_from( o ); }
+		InferUnion( InferUnion && o ) : mode( o.mode ), data() { init_from( std::move(o) ); }
+		InferUnion & operator= ( const InferUnion & ) = delete;
+		InferUnion & operator= ( InferUnion && ) = delete;
 
 		bool hasSlots() const { return data.resnSlots; }
 		bool hasParams() const { return data.inferParams; }
 
-		ResnSlots& resnSlots() {
+		ResnSlots & resnSlots() {
 			if (!data.resnSlots) {
 				data.resnSlots = new ResnSlots();
 			}
 			return *data.resnSlots;
 		}
 
-		const ResnSlots& resnSlots() const {
+		const ResnSlots & resnSlots() const {
 			if (data.resnSlots) {
 				return *data.resnSlots;
 			}
@@ -126,14 +126,14 @@ public:
 			abort();
 		}
 
-		InferredParams& inferParams() {
+		InferredParams & inferParams() {
 			if (!data.inferParams) {
 				data.inferParams = new InferredParams();
 			}
 			return *data.inferParams;
 		}
 
-		const InferredParams& inferParams() const {
+		const InferredParams & inferParams() const {
 			if (data.inferParams) {
 				return *data.inferParams;
 			}
@@ -668,7 +668,7 @@ class ImplicitCopyCtorExpr final : public Expr {
 public:
 	ptr<ApplicationExpr> callExpr;
 
-	ImplicitCopyCtorExpr( const CodeLocation& loc, const ApplicationExpr * call )
+	ImplicitCopyCtorExpr( const CodeLocation & loc, const ApplicationExpr * call )
 	: Expr( loc, call->result ), callExpr(call) { assert( call ); assert(call->result); }
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }

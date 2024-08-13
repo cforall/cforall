@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 10 09:47:05 2024
-// Update Count     : 6734
+// Last Modified On : Mon Aug 12 10:21:46 2024
+// Update Count     : 6737
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1848,10 +1848,10 @@ exception_statement:
 	;
 
 handler_clause:
-	handler_key '(' push exception_declaration pop handler_predicate_opt ')' compound_statement
-		{ $$ = new ClauseNode( build_catch( yylloc, $1, $4, $6, $8 ) ); }
-	| handler_clause handler_key '(' push exception_declaration pop handler_predicate_opt ')' compound_statement
-		{ $$ = $1->set_last( new ClauseNode( build_catch( yylloc, $2, $5, $7, $9 ) ) ); }
+	handler_key '(' exception_declaration handler_predicate_opt ')' compound_statement
+		{ $$ = new ClauseNode( build_catch( yylloc, $1, $3, $4, $6 ) ); }
+	| handler_clause handler_key '(' exception_declaration handler_predicate_opt ')' compound_statement
+		{ $$ = $1->set_last( new ClauseNode( build_catch( yylloc, $2, $4, $5, $7 ) ) ); }
 	;
 
 handler_predicate_opt:
@@ -3156,8 +3156,8 @@ assertion_list:											// CFA
 assertion:												// CFA
 	'|' identifier_or_type_name '(' type_list ')'
 		{ $$ = DeclarationNode::newTraitUse( $2, $4 ); }
-	| '|' '{' push trait_declaration_list pop '}'
-		{ $$ = $4; }
+	| '|' '{' trait_declaration_list '}'
+		{ $$ = $3; }
 	// | '|' '(' push type_parameter_list pop ')' '{' push trait_declaration_list pop '}' '(' type_list ')'
 	// 	{ SemanticError( yylloc, "Generic data-type assertion is currently unimplemented." ); $$ = nullptr; }
 	;
@@ -3209,19 +3209,19 @@ trait_specifier:										// CFA
 		}
 	| forall TRAIT identifier_or_type_name '{' '}'		// alternate
 		{ $$ = DeclarationNode::newTrait( $3, $1, nullptr ); }
-	| TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' push trait_declaration_list pop '}'
+	| TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' trait_declaration_list '}'
 		{
 			SemanticWarning( yylloc, Warning::DeprecTraitSyntax );
-			$$ = DeclarationNode::newTrait( $2, $4, $8 );
+			$$ = DeclarationNode::newTrait( $2, $4, $7 );
 		}
-	| forall TRAIT identifier_or_type_name '{' push trait_declaration_list pop '}' // alternate
-		{ $$ = DeclarationNode::newTrait( $3, $1, $6 ); }
+	| forall TRAIT identifier_or_type_name '{' trait_declaration_list '}' // alternate
+		{ $$ = DeclarationNode::newTrait( $3, $1, $5 ); }
 	;
 
 trait_declaration_list:									// CFA
 	trait_declaration
-	| trait_declaration_list pop push trait_declaration
-		{ $$ = $1->set_last( $4 ); }
+	| trait_declaration_list trait_declaration
+		{ $$ = $1->set_last( $2 ); }
 	;
 
 trait_declaration:										// CFA
@@ -3232,15 +3232,15 @@ trait_declaration:										// CFA
 cfa_trait_declaring_list:								// CFA
 	cfa_variable_specifier
 	| cfa_function_specifier
-	| cfa_trait_declaring_list pop ',' push identifier_or_type_name
-		{ $$ = $1->set_last( $1->cloneType( $5 ) ); }
+	| cfa_trait_declaring_list ',' identifier_or_type_name
+		{ $$ = $1->set_last( $1->cloneType( $3 ) ); }
 	;
 
 trait_declaring_list:									// CFA
 	type_specifier declarator
 		{ $$ = $2->addType( $1 ); }
-	| trait_declaring_list pop ',' push declarator
-		{ $$ = $1->set_last( $1->cloneBaseType( $5 ) ); }
+	| trait_declaring_list ',' declarator
+		{ $$ = $1->set_last( $1->cloneBaseType( $3 ) ); }
 	;
 
 // **************************** EXTERNAL DEFINITIONS *****************************

@@ -1,0 +1,11 @@
+// Testing non-polymorphic sizeof (and alignof) expressions:
+
+#include <fstream.hfa>
+
+int main(int argc, char * argv[]) {
+	char val = 'c';
+	char & ref = val;
+	// It could check against "char *", but it should always be different.
+	sout | "char  : " | sizeof(val) | alignof(val);
+	sout | "char &: " | sizeof(ref) | alignof(ref);
+}

@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thu Sep 15 14:08:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Wed Oct  6  9:59:00 2022
-// Update Count     : 0
+// Last Modified On : Mon Aug 12 18:07:00 2024
+// Update Count     : 1
 //
 
 #include "Lvalue.hpp"
@@ -118,6 +118,8 @@ struct GeneralizedLvalue final :
 
 /// Replace all reference types with pointer types.
 struct ReferenceTypeElimination final {
+	ast::SizeofExpr const * previsit( ast::SizeofExpr const * expr );
+	ast::AlignofExpr const * previsit( ast::AlignofExpr const * expr );
 	ast::Type const * postvisit( ast::ReferenceType const * type );
 };
 
@@ -600,6 +602,20 @@ ast::Expr const * GeneralizedLvalue::applyTransformation(
 		return ret;
 	}
 	return expr;
+}
+
+ast::SizeofExpr const * ReferenceTypeElimination::previsit(
+		ast::SizeofExpr const * expr ) {
+	if ( expr->expr ) return expr;
+	return ast::mutate_field( expr, &ast::SizeofExpr::type,
+		expr->type->stripReferences() );
+}
+
+ast::AlignofExpr const * ReferenceTypeElimination::previsit(
+		ast::AlignofExpr const * expr ) {
+	if ( expr->expr ) return expr;
+	return ast::mutate_field( expr, &ast::AlignofExpr::type,
+		expr->type->stripReferences() );
 }
 
 ast::Type const * ReferenceTypeElimination::postvisit(
