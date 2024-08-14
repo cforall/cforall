@@ -78,7 +78,7 @@ void CodeGenerator::updateLocation( CodeLocation const & to ) {
 		output << "\n\n" << indent;
 		currentLocation.first_line += 2;
 	} else {
-		output << "\n# " << to.first_line << " \"" << to.filename
+		output << "\n# " << to.first_line << " \"" << to.filename.c_str()
 		       << "\"\n" << indent;
 		currentLocation = to;
 	}

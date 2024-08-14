@@ -730,10 +730,10 @@ const ast::StmtExpr * ResolveCopyCtors::previsit( const ast::StmtExpr * _stmtExp
 	// above assertion means in-place mutation is OK
 	try {
 		mutLast->expr = makeCtorDtor( "?{}", ret, mutLast->expr );
-	} catch(...) {
+	} catch (...) {
 		std::cerr << "*CFA internal error: ";
 		std::cerr << "can't resolve implicit constructor";
-		std::cerr << " at " << stmtExpr->location.filename;
+		std::cerr << " at " << stmtExpr->location.filename.c_str();
 		std::cerr << ":" << stmtExpr->location.first_line << std::endl;
 
 		abort();

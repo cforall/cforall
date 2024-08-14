@@ -1280,6 +1280,13 @@ namespace {
 				)
 				// count one safe conversion for each value that is thrown away
 				thisCost.incSafe( discardedValues );
+
+				// See Aaron Moss, page 47; this reasoning does not hold since implicit conversions
+				// can create the same resolution issue. The C intrinsic interpretations are pruned
+				// immediately for the lowest cost option regardless of result type. Related code in
+				// postvisit (UntypedExpr).
+				// Cast expression costs are updated now to use the general rules.
+				/*
 				// select first on argument cost, then conversion cost
 				if ( cand->cost < minExprCost || ( cand->cost == minExprCost && thisCost < minCastCost ) ) {
 					minExprCost = cand->cost;
@@ -1288,9 +1295,16 @@ namespace {
 				}
 				// ambigious case, still output candidates to print in error message
 				if ( cand->cost == minExprCost && thisCost == minCastCost ) {
+				*/
+				cand->cost += thisCost;
+				if (cand->cost < minExprCost) {
+					minExprCost = cand->cost;
+					matches.clear();
+				}
+				if (cand->cost == minExprCost) {
 					CandidateRef newCand = std::make_shared<Candidate>(
 						restructureCast( cand->expr, toType, castExpr->isGenerated ),
-						copy( cand->env ), std::move( open ), std::move( need ), cand->cost + thisCost);
+						copy( cand->env ), std::move( open ), std::move( need ), cand->cost);
 					// currently assertions are always resolved immediately so this should have no effect.
 					// if this somehow changes in the future (e.g. delayed by indeterminate return type)
 					// we may need to revisit the logic.

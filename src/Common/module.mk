@@ -47,6 +47,8 @@ SRC_COMMON = \
 	Common/Stats/Stats.cpp \
 	Common/Stats/Time.cpp \
 	Common/Stats/Time.hpp \
+	Common/Symbol.cpp \
+	Common/Symbol.hpp \
 	Common/ToString.hpp \
 	Common/UniqueName.cpp \
 	Common/UniqueName.hpp \

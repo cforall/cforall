@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 12 10:21:46 2024
-// Update Count     : 6737
+// Last Modified On : Tue Aug 13 11:25:16 2024
+// Update Count     : 6740
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -951,7 +951,7 @@ unary_expression:
 			// $$ = new ExpressionNode( build_offsetOf( $3, build_varref( $5 ) ) );
 		}
 	| COUNTOF unary_expression
-		{  $$ = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuild( $2 ) ) ); }
+		{ $$ = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuild( $2 ) ) ); }
 	| COUNTOF '(' type_no_function ')'
 		{ $$ = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
 	;
@@ -1625,14 +1625,20 @@ for_control_expression:
 
 enum_key:
 	type_name
-		{	typedefTable.makeTypedef( *$1->symbolic.name, "enum_type_nobody 1" );
-			$$ = DeclarationNode::newEnum( $1->symbolic.name, nullptr, false, false ); }
+		{
+			typedefTable.makeTypedef( *$1->symbolic.name, "enum_type_nobody 1" );
+			$$ = DeclarationNode::newEnum( $1->symbolic.name, nullptr, false, false );
+		}
 	| ENUM identifier
-		{	typedefTable.makeTypedef( *$2, "enum_type_nobody 2" );
-			$$ = DeclarationNode::newEnum( $2, nullptr, false, false ); }
+		{
+			typedefTable.makeTypedef( *$2, "enum_type_nobody 2" );
+			$$ = DeclarationNode::newEnum( $2, nullptr, false, false );
+		}
 	| ENUM type_name
-		{	typedefTable.makeTypedef( *$2->symbolic.name, "enum_type_nobody 3" );
-			$$ = DeclarationNode::newEnum( $2->symbolic.name, nullptr, false, false ); }
+		{
+			typedefTable.makeTypedef( *$2->symbolic.name, "enum_type_nobody 3" );
+			$$ = DeclarationNode::newEnum( $2->symbolic.name, nullptr, false, false );
+		}
 	;
 
 // This rule exists to handle the ambiguity with unary operator '~'. The rule is the same as updowneq minus the '~'.
@@ -3237,10 +3243,13 @@ cfa_trait_declaring_list:								// CFA
 	;
 
 trait_declaring_list:									// CFA
-	type_specifier declarator
+		// Cannot declare an aggregate or enumeration in a trait.
+	type_specifier_nobody declarator
 		{ $$ = $2->addType( $1 ); }
 	| trait_declaring_list ',' declarator
 		{ $$ = $1->set_last( $1->cloneBaseType( $3 ) ); }
+	| error
+		{ SemanticError( yylloc, "Possible cause is declaring an aggregate or enumeration type in a trait." ); $$ = nullptr; }
 	;
 
 // **************************** EXTERNAL DEFINITIONS *****************************

@@ -9,19 +9,19 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 27 17:24:56 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 19 08:06:59 2024
-// Update Count     : 75
+// Last Modified On : Tue Aug 13 09:09:47 2024
+// Update Count     : 76
 //
 
 #include "time.hfa"
 #include <fstream.hfa>
 #include <stdlib.h>										// putenv
 
-extern "C" size_t malloc_unfreed() { return 1024; }		// guess at unfreed storage from putenv
+extern "C" size_t malloc_unfreed() { return 2048; }		// guess at unfreed storage from putenv/tzset
 
 int main() {
 	// Set fixed time location to obtain repeatable output where ever run.
-	putenv( "TZ=America/Toronto" );						// set fixed time zone
+	putenv( "TZ=America/Toronto" );						// pick fixed time zone
 	// tzset has the stupidest interface I have ever seen.
 	tzset();											// set time zone
 

@@ -176,7 +176,7 @@ am__objects_3 = Common/Assert.$(OBJEXT) \
 	Common/SemanticError.$(OBJEXT) Common/Stats/Counter.$(OBJEXT) \
 	Common/Stats/Heap.$(OBJEXT) Common/Stats/ResolveTime.$(OBJEXT) \
 	Common/Stats/Stats.$(OBJEXT) Common/Stats/Time.$(OBJEXT) \
-	Common/UniqueName.$(OBJEXT)
+	Common/Symbol.$(OBJEXT) Common/UniqueName.$(OBJEXT)
 am__objects_4 = GenPoly/GenPoly.$(OBJEXT) GenPoly/Lvalue2.$(OBJEXT)
 am__objects_5 = InitTweak/GenInit.$(OBJEXT) \
 	InitTweak/InitTweak.$(OBJEXT)
@@ -304,7 +304,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Common/$(DEPDIR)/Eval.Po Common/$(DEPDIR)/Examine.Po \
 	Common/$(DEPDIR)/Indenter.Po \
 	Common/$(DEPDIR)/ResolvProtoDump.Po \
-	Common/$(DEPDIR)/SemanticError.Po \
+	Common/$(DEPDIR)/SemanticError.Po Common/$(DEPDIR)/Symbol.Po \
 	Common/$(DEPDIR)/UniqueName.Po \
 	Common/Stats/$(DEPDIR)/Counter.Po \
 	Common/Stats/$(DEPDIR)/Heap.Po \
@@ -799,6 +799,8 @@ SRC_COMMON = \
 	Common/Stats/Stats.cpp \
 	Common/Stats/Time.cpp \
 	Common/Stats/Time.hpp \
+	Common/Symbol.cpp \
+	Common/Symbol.hpp \
 	Common/ToString.hpp \
 	Common/UniqueName.cpp \
 	Common/UniqueName.hpp \
@@ -1066,6 +1068,8 @@ Common/Stats/Stats.$(OBJEXT): Common/Stats/$(am__dirstamp) \
 	Common/Stats/$(DEPDIR)/$(am__dirstamp)
 Common/Stats/Time.$(OBJEXT): Common/Stats/$(am__dirstamp) \
 	Common/Stats/$(DEPDIR)/$(am__dirstamp)
+Common/Symbol.$(OBJEXT): Common/$(am__dirstamp) \
+	Common/$(DEPDIR)/$(am__dirstamp)
 Common/UniqueName.$(OBJEXT): Common/$(am__dirstamp) \
 	Common/$(DEPDIR)/$(am__dirstamp)
 GenPoly/$(am__dirstamp):
@@ -1389,6 +1393,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Indenter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/ResolvProtoDump.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/SemanticError.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/Symbol.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/$(DEPDIR)/UniqueName.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Counter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Common/Stats/$(DEPDIR)/Heap.Po@am__quote@ # am--include-marker
@@ -1751,6 +1756,7 @@ distclean: distclean-am
 	-rm -f Common/$(DEPDIR)/Indenter.Po
 	-rm -f Common/$(DEPDIR)/ResolvProtoDump.Po
 	-rm -f Common/$(DEPDIR)/SemanticError.Po
+	-rm -f Common/$(DEPDIR)/Symbol.Po
 	-rm -f Common/$(DEPDIR)/UniqueName.Po
 	-rm -f Common/Stats/$(DEPDIR)/Counter.Po
 	-rm -f Common/Stats/$(DEPDIR)/Heap.Po
@@ -1925,6 +1931,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Common/$(DEPDIR)/Indenter.Po
 	-rm -f Common/$(DEPDIR)/ResolvProtoDump.Po
 	-rm -f Common/$(DEPDIR)/SemanticError.Po
+	-rm -f Common/$(DEPDIR)/Symbol.Po
 	-rm -f Common/$(DEPDIR)/UniqueName.Po
 	-rm -f Common/Stats/$(DEPDIR)/Counter.Po
 	-rm -f Common/Stats/$(DEPDIR)/Heap.Po

@@ -213,7 +213,9 @@ SyncTemplate = """{ret} cfa_{name}({params}, __u64 submit_flags) {{
 
 	__attribute__((unused)) bool parked;
 	parked = wait( future );
+#if defined(CFA_HAVE_LINUX_IO_URING_H)
 	__STATS__(false, if(!parked) io.submit.nblk += 1; )
+#endif
 	if( future.result < 0 ) {{
 		errno = -future.result;
 		return -1;

@@ -16,11 +16,11 @@
 #pragma once
 
 #include <iostream>
-#include <string>
+#include "Symbol.hpp"
 
 struct CodeLocation {
 	int first_line = -1, first_column = -1, last_line = -1, last_column = -1;
-	std::string filename = "";
+	Symbol filename = "";
 
 	/// Create a new unset CodeLocation.
 	CodeLocation() = default;
@@ -45,8 +45,8 @@ struct CodeLocation {
 	}
 
 	bool startsBefore( CodeLocation const & other ) const {
-		if( filename < other.filename ) return true;
-		if( filename > other.filename ) return false;
+		if( filename.str() < other.filename.str() ) return true;
+		if( filename.str() > other.filename.str() ) return false;
 
 		if( first_line < other.first_line ) return true;
 		if( first_line > other.first_line ) return false;
@@ -71,5 +71,5 @@ struct CodeLocation {
 
 inline std::ostream & operator<<( std::ostream & out, const CodeLocation & location ) {
 	// Column number ":1" allows IDEs to parse the error message and position the cursor in the source text.
-	return location.isSet() ? out << location.filename << ":" << location.first_line << ":1 " : out;
+	return location.isSet() ? out << location.filename.str() << ":" << location.first_line << ":1 " : out;
 }
