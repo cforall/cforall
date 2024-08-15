@@ -1240,6 +1240,11 @@ namespace {
 		Cost minExprCost = Cost::infinity;
 		Cost minCastCost = Cost::infinity;
 		for ( CandidateRef & cand : finder.candidates ) {
+			ast::ptr< ast::Type > fromType = cand->expr->result;
+			assert( fromType );
+			fromType = resolveTypeof( fromType, context );
+			fromType = adjustExprType( fromType, tenv, symtab );
+
 			ast::AssertionSet need( cand->need.begin(), cand->need.end() ), have;
 			ast::OpenVarSet open( cand->open );
 
@@ -1249,18 +1254,18 @@ namespace {
 			// expression, e.g. cast-to-void, one value to zero. Figure out the prefix of the
 			// subexpression results that are cast directly. The candidate is invalid if it
 			// has fewer results than there are types to cast to.
-			int discardedValues = cand->expr->result->size() - toType->size();
+			int discardedValues = fromType->size() - toType->size();
 			if ( discardedValues < 0 ) continue;
 
 			// unification run for side-effects
-			unify( toType, cand->expr->result, cand->env, need, have, open );
+			unify( toType, fromType, cand->env, need, have, open );
 			Cost thisCost =
 				(castExpr->isGenerated == ast::GeneratedFlag::GeneratedCast)
-					? conversionCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env )
-					: castCost( cand->expr->result, toType, cand->expr->get_lvalue(), symtab, cand->env );
+					? conversionCost( fromType, toType, cand->expr->get_lvalue(), symtab, cand->env )
+					: castCost( fromType, toType, cand->expr->get_lvalue(), symtab, cand->env );
 			
 			// Redefine enum cast
-			auto argAsEnum = cand->expr->result.as<ast::EnumInstType>();
+			auto argAsEnum = fromType.as<ast::EnumInstType>();
 			auto toAsEnum = toType.as<ast::EnumInstType>();
 			if ( argAsEnum && toAsEnum && argAsEnum->name != toAsEnum->name ) {
 				CandidateFinder subFinder(context, tenv);
@@ -1271,7 +1276,7 @@ namespace {
 
 			PRINT(
 				std::cerr << "working on cast with result: " << toType << std::endl;
-				std::cerr << "and expr type: " << cand->expr->result << std::endl;
+				std::cerr << "and expr type: " << fromType << std::endl;
 				std::cerr << "env: " << cand->env << std::endl;
 			)
 			if ( thisCost != Cost::infinity ) {

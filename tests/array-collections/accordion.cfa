@@ -1,0 +1,43 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// accordion.cfa -- declaring a struct with more content after an array member
+//
+// Author           : Mike Brooks
+// Created On       : Mon Aug 12 12:00:00 2024
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+
+#include <fstream.hfa>
+#include <array.hfa>
+
+forall( T, [N], [M] )
+struct simple_t {
+    T c[N + M];
+    array( T, N ) n;
+    array( T, M ) m;
+};
+
+void simple( void ) {
+
+    sout | "simple";
+
+    simple_t(int, 5, 8) s;
+    for ( i; 5 + 8 ) s.c[i] = i;
+    for ( i; 5     ) s.n[i] = i;
+    for ( i;     8 ) s.m[i] = i;
+    for ( i; 5 + 8 ) sout | s.c[i] | nonl;  sout | nl;
+    for ( i; 5     ) sout | s.n[i] | nonl;  sout | nl;
+    for ( i;     8 ) sout | s.m[i] | nonl;  sout | nl;
+}
+
+int main() {
+    simple();
+    return 0;
+}

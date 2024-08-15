@@ -26,6 +26,7 @@
 #include "AST/Expr.hpp"
 #include "AST/Type.hpp"
 #include "AST/TypeSubstitution.hpp"
+#include "Common/Eval.hpp"                // for eval
 #include "GenPoly/ErasableScopedMap.hpp"  // for ErasableScopedMap<>::const_...
 #include "ResolvExpr/Typeops.hpp"         // for flatten
 
@@ -242,6 +243,74 @@ namespace {
 	}
 } // namespace
 
+// This function, and its helpers following, have logic duplicated from
+// unification.  The difference in context is that unification applies where
+// the types "must" match, while this variation applies to arbitrary type
+// pairs, when an optimization could apply if they happen to match.  This
+// variation does not bind type variables.  The helper functions support
+// the case for matching ArrayType.
+bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs );
+
+static bool exprsPolyCompatibleByStaticValue(
+		const ast::Expr * e1, const ast::Expr * e2 ) {
+	Evaluation r1 = eval(e1);
+	Evaluation r2 = eval(e2);
+
+	if ( !r1.hasKnownValue ) return false;
+	if ( !r2.hasKnownValue ) return false;
+
+	if ( r1.knownValue != r2.knownValue ) return false;
+
+	return true;
+}
+
+static bool exprsPolyCompatible( ast::Expr const * lhs,
+		ast::Expr const * rhs ) {
+	type_index const lid = typeid(*lhs);
+	type_index const rid = typeid(*rhs);
+	if ( lid != rid ) return false;
+
+	if ( exprsPolyCompatibleByStaticValue( lhs, rhs ) ) return true;
+
+	if ( type_index(typeid(ast::CastExpr)) == lid ) {
+		ast::CastExpr const * l = as<ast::CastExpr>(lhs);
+		ast::CastExpr const * r = as<ast::CastExpr>(rhs);
+
+		// inspect casts' target types
+		if ( !typesPolyCompatible(
+			l->result, r->result ) ) return false;
+
+		// inspect casts' inner expressions
+		return exprsPolyCompatible( l->arg, r->arg );
+
+	} else if ( type_index(typeid(ast::VariableExpr)) == lid ) {
+		ast::VariableExpr const * l = as<ast::VariableExpr>(lhs);
+		ast::VariableExpr const * r = as<ast::VariableExpr>(rhs);
+
+		assert(l->var);
+		assert(r->var);
+
+		// conservative: variable exprs match if their declarations are
+		// represented by the same C++ AST object
+		return (l->var == r->var);
+
+	} else if ( type_index(typeid(ast::SizeofExpr)) == lid ) {
+		ast::SizeofExpr const * l = as<ast::SizeofExpr>(lhs);
+		ast::SizeofExpr const * r = as<ast::SizeofExpr>(rhs);
+
+		assert((l->type != nullptr) ^ (l->expr != nullptr));
+		assert((r->type != nullptr) ^ (r->expr != nullptr));
+		if ( !(l->type && r->type) ) return false;
+
+		// mutual recursion with type poly compatibility
+		return typesPolyCompatible( l->type, r->type );
+
+	} else {
+		// All other forms compare on static value only, done earlier
+		return false;
+	}
+}
+
 bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 	type_index const lid = typeid(*lhs);
 
@@ -255,7 +324,7 @@ bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 	if ( lid != rid ) return false;
 
 	// So remaining types can be examined case by case.
-	// Recurse through type structure (conditions borrowed from Unify.cpp).
+	// Recurse through type structure (conditions duplicated from Unify.cpp).
 
 	if ( type_index(typeid(ast::BasicType)) == lid ) {
 		return as<ast::BasicType>(lhs)->kind == as<ast::BasicType>(rhs)->kind;
@@ -279,16 +348,15 @@ bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs ) {
 		ast::ArrayType const * l = as<ast::ArrayType>(lhs);
 		ast::ArrayType const * r = as<ast::ArrayType>(rhs);
 
-		if ( l->isVarLen ) {
-			if ( !r->isVarLen ) return false;
-		} else {
-			if ( r->isVarLen ) return false;
+		if ( l->isVarLen != r->isVarLen ) return false;
+		if ( (l->dimension != nullptr) != (r->dimension != nullptr) )
+			return false;
 
-			auto lc = l->dimension.as<ast::ConstantExpr>();
-			auto rc = r->dimension.as<ast::ConstantExpr>();
-			if ( lc && rc && lc->intValue() != rc->intValue() ) {
+		if ( l->dimension ) {
+			assert( r->dimension );
+			// mutual recursion with expression poly compatibility
+			if ( !exprsPolyCompatible(l->dimension, r->dimension) )
 				return false;
-			}
 		}
 
 		return typesPolyCompatible( l->base.get(), r->base.get() );

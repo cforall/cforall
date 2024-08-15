@@ -1,0 +1,9 @@
+baseline
+|y| = 3
+y.second = 0
+y.second = 0
+with interference
+|x| = 2
+|y| = 3
+y.second = 0
+y.second = 0

@@ -1,0 +1,63 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// poly-many-arsz.cfa -- using many built-in array types with concrete sizes
+//
+// Author           : Mike Brooks
+// Created On       : Tue Aug 13 12:00:00 2024
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// This behaviour was once broken, as trac #175.
+
+forall( T1*, T2* )
+struct mypair {
+    T1 first;
+    T2 second;
+};
+
+void baseline( void ) {
+    printf("baseline\n");
+
+    // no declaration of x
+    // facts that are true of y:
+
+    mypair(char[2], char) y @= {};
+    printf("|y| = %ld\n", sizeof(y));    // 3
+
+    y.second = 0;
+    printf("y.second = %d\n", y.second); // 0
+
+    y.first[1] = 17;
+    printf("y.second = %d\n", y.second); // 0
+}
+
+void withInterference( void ) {
+    printf("with interference\n");
+
+    // adding this declaration of x ...
+    mypair(char[1], char) x @= {};
+    printf("|x| = %ld\n", sizeof(x));    // 2
+
+    // ... must not affect the observed facts of y:
+
+    mypair(char[2], char) y @= {};
+    printf("|y| = %ld\n", sizeof(y));    // 3
+
+    y.second = 0;
+    printf("y.second = %d\n", y.second); // 0
+
+    y.first[1] = 17;
+    printf("y.second = %d\n", y.second); // 0
+}
+
+int main() {
+    baseline();
+    withInterference();
+    return 0;
+}

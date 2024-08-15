@@ -1,0 +1,3 @@
+custom A ctor called
+5
+custom A dtor called

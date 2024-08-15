@@ -14,7 +14,7 @@
 //  Direct usage is:
 //
 //      compiler=gcc -x c           # pick one
-//      compiler=$fa
+//      compiler=$cfa
 //
 //      test=dimexpr-match-c.cfa    # pick one
 //      test=dimexpr-match-cfa.cfa

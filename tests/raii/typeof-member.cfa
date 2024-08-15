@@ -1,0 +1,38 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2023 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// typeof-member.cfa -- managed type declared as contained member via typeof
+//
+// Author           : Mike Brooks
+// Created On       : Tue Aug 13 12:00:00 2024
+// Last Modified By :
+// Last Modified On :
+// Update Count     :
+//
+
+// Note - array(...) expands as typeof(...).
+// So supporting member as typeof is necessary for having array as member.
+// The array type (arpk) is managed.
+
+struct A {
+    int x;
+};
+
+void  ?{}( A & ) { printf("custom A ctor called\n"); }
+void ^?{}( A & ) { printf("custom A dtor called\n"); }
+
+A foo( void );
+
+struct outer {
+    typeof( foo() ) a;
+};
+
+int main() {
+    outer b;
+    b.a.x = 5;
+    printf( "%d\n", b.a.x );
+    return 0;
+}
