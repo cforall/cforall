@@ -998,6 +998,12 @@ ast::Decl * DeclarationNode::build() const {
 ast::Type * DeclarationNode::buildType() const {
 	assert( type );
 
+	// Some types are parsed as declarations and, syntactically, can have
+	// initializers. However, semantically, this is meaningless.
+	if ( initializer ) {
+		SemanticError( this, "Initializer on type declaration " );
+	}
+
 	switch ( type->kind ) {
 	case TypeData::Aggregate: {
 		ast::BaseInstType * ret =

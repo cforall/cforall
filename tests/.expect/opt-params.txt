@@ -1,0 +1,12 @@
+opt-params.cfa:12:1 error: Initializer on type declaration i: int 
+  with initializer  maybe constructed? 1
+
+opt-params.cfa:13:1 error: Initializer on type declaration int 
+  with initializer  maybe constructed? 1
+
+opt-params.cfa:14:1 error: Initializer on type declaration int 
+  with initializer  maybe constructed? 1
+
+opt-params.cfa:15:1 error: Initializer on type declaration int 
+  with initializer  maybe constructed? 1
+

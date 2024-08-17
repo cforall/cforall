@@ -1,0 +1,16 @@
+// Check that function declarations can have optional parameters, but
+// function types cannot.
+
+void good_cases(
+	int start = 0,
+	int = -1
+);
+
+// This is a slightly weird way to do it, but it let's us try all the cases
+// before any of the errors cause compilation to stop.
+void bad_cases(
+	int (*fee)( int i = 10 ),
+	int (*fie)( int = 10 ),
+	void feo( int (*p)( int = 10 ) ),
+	void fum( int (*)( int = 10 ) )
+);

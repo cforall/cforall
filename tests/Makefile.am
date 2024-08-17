@@ -209,8 +209,10 @@ ${GENERATED_CODE} : % : %.cfa ${CFACCBIN}
 # tests that just validate syntax and compiler output should be compared to stderr
 CFACOMPILE_SYNTAX = ${CFACOMPILETEST} -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o ${abspath ${@}}
 
-SYNTAX_ONLY_CODE = expression typedefRedef variableDeclarator switch numericConstants identFuncDeclarator \
-	init1 limits nested-types cast ctrl-flow/labelledExit array quasiKeyword include/stdincludes include/includes builtins/sync warnings/self-assignment concurrency/waitfor/parse
+SYNTAX_ONLY_CODE = \
+	array cast expression identFuncDeclarator init1 limits nested-types numericConstants opt-params quasiKeyword switch typedefRedef variableDeclarator \
+	builtins/sync concurrency/waitfor/parse ctrl-flow/labelledExit include/stdincludes include/includes warnings/self-assignment
+
 ${SYNTAX_ONLY_CODE} : % : %.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX}
 	${if ${test}, cp ${test} ${abspath ${@}}, }
