@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Mar 16 15:30:34 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun 17 09:11:56 2023
-// Update Count     : 94
+// Last Modified On : Thu Aug 15 18:45:45 2024
+// Update Count     : 96
 //
 
 #include <fstream.hfa>
@@ -70,17 +70,19 @@ int main() {
 	Driver driver = { msg };
 
 	sin | nlOn;											// read newline (all) characters
-  eof: for () {											// read until end of file
-		sin | byte;										// read one character
-	  if ( eof( sin ) ) break eof;						// eof ?
-		choose( next( driver, byte ) ) {				// analyse character
-		  case CONT: ;
-		  case MSG: sout | "msg:" | msg;
-		  case ESTX: sout | "STX in message";
-		  case ELNTH: sout | "message too long";
-		  case ECRC: sout | "CRC failure";
-		} // choose
-	} // for
+	try {
+		for () {										// read until end of file
+			sin | byte;									// read one character
+			choose( next( driver, byte ) ) {			// analyse character
+			  case CONT: ;
+			  case MSG: sout | "msg:" | msg;
+			  case ESTX: sout | "STX in message";
+			  case ELNTH: sout | "message too long";
+			  case ECRC: sout | "CRC failure";
+			} // choose
+		} // for
+	} catch( end_of_file * ) {
+	} // try
 } // main
 
 // Local Variables: //

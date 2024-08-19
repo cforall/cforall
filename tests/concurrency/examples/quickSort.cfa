@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec  6 12:15:52 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  1 12:07:59 2024
-// Update Count     : 188
+// Last Modified On : Sat Aug 17 13:59:15 2024
+// Update Count     : 199
 //
 
 #include <fstream.hfa>									// sin/sout
@@ -144,31 +144,35 @@ int main( int argc, char * argv[] ) {
 	sortedfile | nlOff;									// turn off auto newline
 
 	if ( size == -1 ) {									// generate output ?
-		for () {
-			unsortedfile | size;						// read number of elements in the list
-		  if ( eof( unsortedfile ) ) break;
+		int * values = 0p;
+		try {
+			for () {
+				unsortedfile | size;					// read number of elements in the list
+				values = aalloc( size );				// values to be sorted, too large to put on stack
+				for ( counter; size ) {					// read unsorted numbers
+					unsortedfile | values[counter];
+					if ( counter != 0 && counter % ValuesPerLine == 0 ) sortedfile | nl | "  ";
+					sortedfile | values[counter];
+					if ( counter < size - 1 && (counter + 1) % ValuesPerLine != 0 ) sortedfile | ' ';
+				} // for
+				sortedfile | nl;
 
-			int * values = aalloc( size );				// values to be sorted, too large to put on stack
-			for ( counter; size ) {						// read unsorted numbers
-				unsortedfile | values[counter];
-				if ( counter != 0 && counter % ValuesPerLine == 0 ) sortedfile | nl | "  ";
-				sortedfile | values[counter];
-				if ( counter < size - 1 && (counter + 1) % ValuesPerLine != 0 ) sortedfile | ' ';
+				if ( size > 0 ) {						// values to sort ?
+					Quicksort QS = { values, size - 1, 0 }; // sort values
+				} // wait until sort tasks terminate
+				for ( counter; size ) {					// print sorted list
+					if ( counter != 0 && counter % ValuesPerLine == 0 ) sortedfile | nl | "  ";
+					sortedfile | values[counter];
+					if ( counter < size - 1 && (counter + 1) % ValuesPerLine != 0 ) sortedfile | ' ';
+				} // for
+				sortedfile | nl | nl;
+
+				delete( values );
+				values = 0p;
 			} // for
-			sortedfile | nl;
-
-			if ( size > 0 ) {							// values to sort ?
-				Quicksort QS = { values, size - 1, 0 }; // sort values
-			} // wait until sort tasks terminate
-			for ( counter; size ) {						// print sorted list
-				if ( counter != 0 && counter % ValuesPerLine == 0 ) sortedfile | nl | "  ";
-				sortedfile | values[counter];
-				if ( counter < size - 1 && (counter + 1) % ValuesPerLine != 0 ) sortedfile | ' ';
-			} // for
-			sortedfile | nl | nl;
-
+		} catch( end_of_file * ) {
 			delete( values );
-		} // for
+		} // try
 	} else {											// timing
 		PRNG prng;										
 		processor processors[ (1 << depth) - 1 ] __attribute__(( unused )); // create 2^depth-1 kernel threads

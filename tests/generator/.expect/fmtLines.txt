@@ -8,71 +8,73 @@ re c  over  ed u  nder   the
 n th  e//   file   "LI  CENC  
 E" d  istr  ibut  ed w  ith   
 Cfor  all.  ////   fmt  Line  
-s.cc   --/  ///   Auth  or    
-             : P  eter   A.   
-Buhr  // C  reat  ed O  n     
-      : Su  n Se  p 17   21:  
-56:1  5 20  17//   Las  t Mo  
-difi  ed B  y :   Pete  r A.  
- Buh  r//   Last   Mod  ifie  
-d On   : F  ri M  ar 2  2 13  
-:41:  03 2  019/  / Up  date  
- Cou  nt       :   33/  /#in  
-clud  e <f  stre  am.h  fa>#  
-incl  ude   <cor  outi  ne.h  
-fa>c  orou  tine   For  mat   
-{	ch  ar c  h;		  				  				  
-	//   used   for   com  muni  
-cati  on	i  nt g  , b;  				  
-				  			/  / gl  obal   bec  
-ause   use  d in   des  truc  
-tor}  ;voi  d ?{  }( F  orma  
-t &   fmt   ) {      r  esum  
-e( f  mt )  ;			  				  			/  
-/ st  art   coro  utin  e}vo  
-id ^  ?{}(   For  mat   & fm  
-t )   {      if   ( fm  t.g   
-!= 0   ||   fmt.  b !=   0 )  
- sou  t |   nl;}  void   mai  
-n( F  orma  t &   fmt   ) {	  
-for   ( ;;   ) {  				  				  
-		//   for   as   many   cha  
-ract  ers	  	for   ( f  mt.g  
- = 0  ; fm  t.g   < 5;   fmt  
-.g +  = 1   ) {	  	//   grou  
-ps o  f 5   bloc  ks		  	for  
- ( f  mt.b   = 0  ; fm  t.b   
-< 4;   fmt  .b +  = 1   ) {	  
-// b  lock  s of   4 c  hara  
-cter  s			  	for   ( ;  ; )   
-{			  				  // f  or n  ewli  
-ne c  hara  cter  s			  		su  
-spen  d;		  			i  f (   fmt.  
-ch !  = '\  n' )   bre  ak;	  
-	//   igno  re n  ewli  ne		  
-		}   // f  or		  		so  ut |  
- fmt  .ch;  				  			/  / pr  
-int   char  acte  r			  } //  
- for  			s  out   | "    ";	  
-				  			/  / pr  int   bloc  
-k se  para  tor	  	} /  / fo  
-r		s  out   | nl  ;			  				  
-		//   pri  nt g  roup   sep  
-arat  or	}   //   for}   //   
-main  void   prt  ( Fo  rmat  
- & f  mt,   char   ch   ) {   
-   f  mt.c  h =   ch;      r  
-esum  e( f  mt )  ;} /  / pr  
-tint   mai  n()   {	Fo  rmat  
- fmt  ;	ch  ar c  h;	f  or (  
- ;;   ) {	  	sin   | c  h;		  
-				  				  // r  ead   one   
-char  acte  r	    if (   eof  
-( si  n )   ) br  eak;  				  
-			/  / eo  f ?	  	prt  ( fm  
-t, c  h );  	} /  / fo  r} /  
-/ ma  in//   Loc  al V  aria  
-bles  : //  // t  ab-w  idth  
-: 4   ////   com  pile  -com  
-mand  : "c  fa f  mtLi  nes.  
-cfa"   ///  / En  d: /  /
+s.cf  a --   for  mat   char  
+acte  rs i  nto   bloc  ks o  
+f 4   and   grou  ps o  f 5   
+bloc  ks p  er l  ine/  ///   
+Auth  or                 : T  
+hier  ry D  elis  le//   Cre  
+ated   On           :   Thu   
+Mar    5 1  6:09  :08   2020  
+// L  ast   Modi  fied   By   
+: Pe  ter   A. B  uhr/  / La  
+st M  odif  ied   On :   Sat  
+ Aug   17   14:2  1:28   202  
+4//   Upda  te C  ount        
+ : 5  //#i  nclu  de <  fstr  
+eam.  hfa>  gene  rato  r Fo  
+rmat   {	c  har   ch;	  				  
+				  		//   use  d fo  r co  
+mmun  icat  ion	  int   g, b  
+;			  				  				  // g  loba  
+l be  caus  e us  ed i  n de  
+stru  ctor  };vo  id m  ain(  
+ For  mat   & fm  t )   with  
+( fm  t )   {	fo  r ()   {		  
+				  				  	//   for   as m  
+any   char  acte  rs		  for   
+( g   = 0;   g <   5;   g +=  
+ 1 )   {		  			/  / gr  oups  
+ of   5 bl  ocks  			f  or (  
+ b =   0;   b <   4; b   +=   
+1 )   {			  	//   bloc  ks o  
+f 4   char  acte  rs		  		fo  
+r ()   {		  				  		//   for  
+ new  line   cha  ract  ers	  
+				  susp  end;  				    if  
+ ( c  h !=   '\n  ' )   brea  
+k;		  		//   ign  ore   newl  
+ine	  			}   //   for	  			s  
+out   | ch  ;			  				  	//   
+prin  t ch  arac  ter	  		}   
+// f  or		  	sou  t |   "  "  
+;			  				  	//   prin  t bl  
+ock   sepa  rato  r		}   //   
+for	  	sou  t |   nl;	  				  
+				  	//   prin  t gr  oup   
+sepa  rato  r	}   // f  or}   
+// m  ainv  oid   ?{}(   For  
+mat   & fm  t )   {	re  sume  
+( fm  t );  				  				  		//  
+ pri  me (  star  t) c  orou  
+tine  }voi  d ^?  {}(   Form  
+at &   fmt   ) w  ith(   fmt  
+ ) {  	if   ( g   != 0   ||   
+b !=   0 )   sou  t |   nl;}  
+void   for  mat(   For  mat   
+& fm  t )   {	re  sume  ( fm  
+t );  } //   for  mati  nt m  
+ain(  ) {	  Form  at f  mt;	  
+sout   | n  lOff  ;			  				  
+			/  / tu  rn o  ff a  uto   
+newl  ine	  try   {		f  or (  
+) {	  				  				  	//   read  
+ unt  il e  nd o  f fi  le		  
+	sin   | f  mt.c  h;		  				  
+		//   rea  d on  e ch  arac  
+ter	  		fo  rmat  ( fm  t );  
+				  				  // p  ush   char  
+acte  r fo  r fo  rmat  ting  
+		}   // f  or	}   cat  ch(   
+end_  of_f  ile   * )   {	}   
+// t  ry}   // m  ain

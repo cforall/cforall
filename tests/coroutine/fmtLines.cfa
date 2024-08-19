@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Sep 17 21:56:15 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 22 13:41:16 2019
-// Update Count     : 58
+// Last Modified On : Sat Aug 17 14:26:03 2024
+// Update Count     : 60
 //
 
 #include <fstream.hfa>
@@ -53,14 +53,11 @@ int main() {
 	Format fmt;
 	sout | nlOff;										// turn off auto newline
 
-  eof: for () {											// read until end of file
-		sin | fmt.ch;									// read one character
-	  if ( eof( sin ) ) break eof;						// eof ?
-		format( fmt );									// push character for formatting
-	} // for
+	try {
+		for () {										// read until end of file
+			sin | fmt.ch;								// read one character
+			format( fmt );								// push character for formatting
+		} // for
+	} catch( end_of_file * ) {
+	} // try
 } // main
-
-// Local Variables: //
-// tab-width: 4 //
-// compile-command: "cfa fmtLines.cfa" //
-// End: //

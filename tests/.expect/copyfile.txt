@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jun 19 13:44:05 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun  5 21:20:07 2023
-// Update Count     : 5
+// Last Modified On : Sat Aug 17 14:18:47 2024
+// Update Count     : 11
 // 
 
 #include <fstream.hfa>
@@ -21,12 +21,12 @@ int main( int argc, char * argv[] ) {
 	ofstream out = stdout;
 
 	try {
-		choose ( argc ) {
-		  case 2, 3:
+		choose ( argc ) {								// terminate if command-line errors
+		  case 3, 2:
 			open( in, argv[1] );						// open input file first as output creates file
 			if ( argc == 3 ) open( out, argv[2] );		// do not create output unless input opens
 		  case 1: ;										// use default files
-		  default:
+		  default:										// wrong number of options
 			exit | "Usage" | argv[0] | "[ input-file (default stdin) [ output-file (default stdout) ] ]";
 		} // choose
 	} catch( open_failure * ex ; ex->istream == &in ) {
@@ -40,14 +40,11 @@ int main( int argc, char * argv[] ) {
 	in  | nlOn;											// turn on reading newline
 
 	char ch;
-	for () {											// read all characters
-		in | ch;
-	  if ( eof( in ) ) break;							// eof ?
-		out | ch;
-	} //for
+	try {
+		for () {										// read all characters
+			in | ch;
+			out | ch;
+		} // for
+	} catch( end_of_file * ) {
+	} // try
 } // main
-
-// Local Variables: //
-// tab-width: 4 //
-// compile-command: "cfa copyfile.cfa" //
-// End: //

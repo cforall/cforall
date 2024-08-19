@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 15 21:56:27 2024
-// Update Count     : 85
+// Last Modified On : Sat Aug 17 14:08:01 2024
+// Update Count     : 86
 //
 
 #include "string_res.hfa"
@@ -250,7 +250,7 @@ ifstream & ?|?(ifstream & in, string_res & s) {
 }
 
 ifstream & ?|?( ifstream & is, _Istream_Rquoted f ) with( f.rstr ) {
-	if ( eof( is ) ) throwResume ExceptionInst( missing_data );
+	if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 	int args;
   fini: {
 		char rfmt[5] = { ' ', delimiters[0], '%', 'n', '\0' };

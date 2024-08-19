@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug  2 07:37:57 2024
-// Update Count     : 760
+// Last Modified On : Thu Aug 15 18:21:22 2024
+// Update Count     : 761
 //
 
 #pragma once
@@ -373,6 +373,7 @@ forall( istype & | basic_istream( istype ) ) {
 
 // *********************************** exceptions ***********************************
 
+ExceptionDecl( end_of_file );							// read encounters end of file
 ExceptionDecl( missing_data );							// read finds no appropriate data
 ExceptionDecl( cstring_length );						// character string size exceeded
 ExceptionDecl( data_range );							// value too large for numerical type

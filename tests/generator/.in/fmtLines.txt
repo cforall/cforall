@@ -4,64 +4,59 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// fmtLines.cc --
+// fmtLines.cfa -- format characters into blocks of 4 and groups of 5 blocks per line
 //
-// Author           : Peter A. Buhr
-// Created On       : Sun Sep 17 21:56:15 2017
+// Author           : Thierry Delisle
+// Created On       : Thu Mar  5 16:09:08 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 22 13:41:03 2019
-// Update Count     : 33
+// Last Modified On : Sat Aug 17 14:21:28 2024
+// Update Count     : 5
 //
 
 #include <fstream.hfa>
-#include <coroutine.hfa>
 
-coroutine Format {
+generator Format {
 	char ch;											// used for communication
 	int g, b;											// global because used in destructor
 };
 
-void ?{}( Format & fmt ) {
-    resume( fmt );										// start coroutine
-}
-
-void ^?{}( Format & fmt ) {
-    if ( fmt.g != 0 || fmt.b != 0 ) sout | nl;
-}
-
-void main( Format & fmt ) {
-	for ( ;; ) {										// for as many characters
-		for ( fmt.g = 0; fmt.g < 5; fmt.g += 1 ) {		// groups of 5 blocks
-			for ( fmt.b = 0; fmt.b < 4; fmt.b += 1 ) {	// blocks of 4 characters
-				for ( ;; ) {							// for newline characters
+void main( Format & fmt ) with( fmt ) {
+	for () {											// for as many characters
+		for ( g = 0; g < 5; g += 1 ) {					// groups of 5 blocks
+			for ( b = 0; b < 4; b += 1 ) {				// blocks of 4 characters
+				for () {								// for newline characters
 					suspend;
-					if ( fmt.ch != '\n' ) break;		// ignore newline
+				  if ( ch != '\n' ) break;				// ignore newline
 				} // for
-				sout | fmt.ch;							// print character
+				sout | ch;								// print character
 			} // for
 			sout | "  ";								// print block separator
 		} // for
-		sout | nl;									// print group separator
+		sout | nl;										// print group separator
 	} // for
 } // main
 
-void prt( Format & fmt, char ch ) {
-    fmt.ch = ch;
-    resume( fmt );
-} // prt
+void ?{}( Format & fmt ) {
+	resume( fmt );										// prime (start) coroutine
+}
+
+void ^?{}( Format & fmt ) with( fmt ) {
+	if ( g != 0 || b != 0 ) sout | nl;
+}
+
+void format( Format & fmt ) {
+	resume( fmt );
+} // format
 
 int main() {
 	Format fmt;
-	char ch;
+	sout | nlOff;										// turn off auto newline
 
-	for ( ;; ) {
-		sin | ch;										// read one character
-	  if ( eof( sin ) ) break;							// eof ?
-		prt( fmt, ch );
-	} // for
+	try {
+		for () {										// read until end of file
+			sin | fmt.ch;								// read one character
+			format( fmt );								// push character for formatting
+		} // for
+	} catch( end_of_file * ) {
+	} // try
 } // main
-
-// Local Variables: //
-// tab-width: 4 //
-// compile-command: "cfa fmtLines.cfa" //
-// End: //

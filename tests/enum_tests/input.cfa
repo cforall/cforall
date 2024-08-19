@@ -5,14 +5,16 @@ int main() {
 	enum(int ) E { BBB = 3, AAA, AA, AB, B, CB, AC };
 	E e;
 
-	for () {
-		try {
-			sin | e;
-		} catch( missing_data * ) {
-			sout | "missing data";
-			continue;									// try again
-		} // try
-	  if ( eof( sin ) ) break;
-		sout | e | "= " | value( e );
-	} // for
-}
+	try {
+		for () {
+			try {
+				sin | e;
+			} catch( missing_data * ) {
+				sout | "missing data";
+				continue;								// try again
+			} // try
+			sout | e | "= " | value( e );
+		} // for
+	} catch( end_of_file * ) {
+	} // try
+} // main
