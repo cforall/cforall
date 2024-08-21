@@ -353,7 +353,7 @@ static const unsigned int bucketSizes[] @= {			// different bucket sizes
 	2_621_440, 3_145_728, 3_670_016, 4_194_304 + sizeof(Heap.Storage), // 4
 };
 
-static_assert( NoBucketSizes == sizeof(bucketSizes) / sizeof(bucketSizes[0] ), "size of bucket array wrong" );
+static_assert( sizeof(bucketSizes) == NoBucketSizes * sizeof(unsigned int), "size of bucket array wrong" );
 
 
 // extern visibility, used by runtime kernel
