@@ -1,12 +1,7 @@
-opt-params.cfa:12:1 error: Initializer on type declaration i: int 
-  with initializer  maybe constructed? 1
-
-opt-params.cfa:13:1 error: Initializer on type declaration int 
-  with initializer  maybe constructed? 1
-
-opt-params.cfa:14:1 error: Initializer on type declaration int 
-  with initializer  maybe constructed? 1
-
-opt-params.cfa:15:1 error: Initializer on type declaration int 
-  with initializer  maybe constructed? 1
-
+opt-params.cfa:13:1 error: default initialization for parameter i is unsupport for a function-pointer declaration.
+opt-params.cfa:13:1 error: default initialization for parameter j is unsupport for a function-pointer declaration.
+opt-params.cfa:14:1 error: default initialization for parameter anonymous is unsupport for a function-pointer declaration.
+opt-params.cfa:15:1 error: default initialization for parameter anonymous is unsupport for a function-pointer declaration.
+opt-params.cfa:16:1 error: default initialization for parameter anonymous is unsupport for a function-pointer declaration.
+opt-params.cfa:17:1 error: default initialization for parameter i is unsupport for a function-pointer declaration.
+opt-params.cfa:18:1 error: default initialization for parameter i is unsupport for a function-pointer declaration.

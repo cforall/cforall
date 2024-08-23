@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 23 18:25:57 2024
-// Update Count     : 1533
+// Last Modified On : Thu Aug 22 14:11:47 2024
+// Update Count     : 1555
 //
 
 #include "DeclarationNode.hpp"
@@ -133,7 +133,9 @@ void DeclarationNode::print( std::ostream & os, int indent ) const {
 	if ( initializer ) {
 		os << endl << string( indent + 2, ' ' ) << "with initializer ";
 		initializer->printOneLine( os );
-		os << " maybe constructed? " << initializer->get_maybeConstructed();
+		if ( ! initializer->get_maybeConstructed() ) {
+			os << " constructed with @= ";
+		} // if
 	} // if
 
 	if ( ! attributes.empty() ) {
@@ -998,10 +1000,11 @@ ast::Decl * DeclarationNode::build() const {
 ast::Type * DeclarationNode::buildType() const {
 	assert( type );
 
-	// Some types are parsed as declarations and, syntactically, can have
-	// initializers. However, semantically, this is meaningless.
-	if ( initializer ) {
-		SemanticError( this, "Initializer on type declaration " );
+	// Some types are parsed as declarations and, syntactically, can have initializers, which are not support (possibly
+	// meaningless).
+	if ( initializer && initializer->get_maybeConstructed() ) { // no @=
+		SemanticError( location, "default initialization for parameter %s is unsupport for a function-pointer declaration.",
+					   (this->name) ? this->name->c_str() : "anonymous" );
 	}
 
 	switch ( type->kind ) {

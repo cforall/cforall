@@ -8,9 +8,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:20:24 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Apr  4 11:18:00 2023
-// Update Count     : 27
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Aug 20 22:36:22 2024
+// Update Count     : 28
 //
 
 #include "InitializerNode.hpp"
@@ -85,7 +85,7 @@ void InitializerNode::printOneLine( std::ostream &os ) const {
 		if (aggregate) os << "--]";
 	} // if
 
-	InitializerNode *moreInit;
+	InitializerNode * moreInit;
 	if ( ( moreInit = next ) ) {
 		moreInit->printOneLine( os );
 	} // if

@@ -8,9 +8,13 @@ void good_cases(
 
 // This is a slightly weird way to do it, but it let's us try all the cases
 // before any of the errors cause compilation to stop.
+
 void bad_cases(
-	int (*fee)( int i = 10 ),
-	int (*fie)( int = 10 ),
-	void feo( int (*p)( int = 10 ) ),
-	void fum( int (*)( int = 10 ) )
+	int (*f1)( int i = 10, int j = 5 ),
+	int (*f2)( int = 10 ),
+	void f3( int (*p)( int = 10 ) ),
+	void f4( int (*)( int = 10 ) ),
+	void f5( int (*p)( int i = 10 ) ),
+	void f6( int (*)( int i = 10 ) )
 );
+
