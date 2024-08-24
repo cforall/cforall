@@ -49,8 +49,6 @@ public:
 		Linkage::Spec linkage )
 	: ParseNode( loc ), name( name ), storage( storage ), linkage( linkage ) {}
 
-	Decl* set_extension( bool ex ) { extension = ex; return this; }
-
 	/// Ensures this node has a unique ID
 	void fixUniqueId();
 

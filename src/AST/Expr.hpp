@@ -186,7 +186,6 @@ public:
 	Expr( const CodeLocation & loc, const Type * res = nullptr )
 	: ParseNode( loc ), result( res ), env(), inferred() {}
 
-	Expr * set_extension( bool ex ) { extension = ex; return this; }
 	virtual bool get_lvalue() const;
 
 	virtual const Expr * accept( Visitor & v ) const override = 0;

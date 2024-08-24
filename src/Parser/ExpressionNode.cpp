@@ -8,9 +8,9 @@
 //
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 14 18:57:07 2023
-// Update Count     : 1087
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Aug 23 10:22:00 2024
+// Update Count     : 1088
 //
 
 #include "ExpressionNode.hpp"
@@ -778,6 +778,16 @@ ast::Expr * build_compoundLiteral( const CodeLocation & location,
 		assert( false );
 	} // if
 } // build_compoundLiteral
+
+ast::Expr * build_va_arg( const CodeLocation & location,
+		ExpressionNode * function, DeclarationNode * declaration ) {
+	return build_func( location,
+		new ExpressionNode(
+			build_varref( location, new std::string( "__builtin_va_arg" ) ) ),
+		function->set_last( new ExpressionNode( new ast::TypeExpr( location,
+			maybeMoveBuildType( declaration ) ) ) )
+	);
+}
 
 // Local Variables: //
 // tab-width: 4 //

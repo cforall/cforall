@@ -791,9 +791,7 @@ postfix_expression:
 	| postfix_expression '(' argument_expression_list_opt ')'
 		{ $$ = new ExpressionNode( build_func( yylloc, $1, $3 ) ); }
 	| VA_ARG '(' primary_expression ',' declaration_specifier_nobody abstract_parameter_declarator_opt ')'
-		// { SemanticError( yylloc, "va_arg is currently unimplemented." ); $$ = nullptr; }
-		{ $$ = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, new string( "__builtin_va_arg" ) ) ),
-											   $3->set_last( (ExpressionNode *)($6 ? $6->addType( $5 ) : $5) ) ) ); }
+		{ $$ = new ExpressionNode( build_va_arg( yylloc, $3, ( $6 ? $6->addType( $5 ) : $5 ) ) ); }
 	| postfix_expression '`' identifier					// CFA, postfix call
 		{ $$ = new ExpressionNode( build_func( yylloc, new ExpressionNode( build_varref( yylloc, build_postfix_name( $3 ) ) ), $1 ) ); }
 	| constant '`' identifier							// CFA, postfix call

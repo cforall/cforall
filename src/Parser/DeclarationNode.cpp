@@ -958,7 +958,8 @@ ast::Decl * DeclarationNode::build() const {
 			asmName,
 			isDelete ? nullptr : maybeBuild( initializer ),
 			copy( attributes )
-		)->set_extension( extension );
+		);
+		decl->extension = extension;
 		if ( isDelete ) {
 			auto dwt = strict_dynamic_cast<ast::DeclWithType *>( decl );
 			dwt->isDeleted = true;

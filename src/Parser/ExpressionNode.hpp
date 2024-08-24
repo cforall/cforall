@@ -42,7 +42,7 @@ struct ExpressionNode final : public ParseList<ExpressionNode> {
 
 	ast::Expr * build() {
 		ast::Expr * node = expr.release();
-		node->set_extension( this->get_extension() );
+		node->extension = this->extension;
 		node->location = this->location;
 		return node;
 	}
@@ -82,5 +82,6 @@ ast::Expr * build_cond( const CodeLocation &, ExpressionNode * expr_node1, Expre
 ast::Expr * build_tuple( const CodeLocation &, ExpressionNode * expr_node = nullptr );
 ast::Expr * build_func( const CodeLocation &, ExpressionNode * function, ExpressionNode * expr_node );
 ast::Expr * build_compoundLiteral( const CodeLocation &, DeclarationNode * decl_node, InitializerNode * kids );
+ast::Expr * build_va_arg( const CodeLocation &, ExpressionNode * function, DeclarationNode * type );
 
 ast::Expr * build_enum_pos_expr( const CodeLocation &, ast::Expr * expr_node );
