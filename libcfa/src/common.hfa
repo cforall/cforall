@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 11 17:54:36 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 23 16:42:39 2024
-// Update Count     : 39
+// Last Modified On : Sat Aug 24 08:01:36 2024
+// Update Count     : 43
 //
 
 #pragma once
@@ -65,24 +65,6 @@ T abs( T );
 //---------------------------------------
 
 static inline __attribute__((always_inline)) {
-	forall( T | { int ?<?( T, T ); } )
-	T min( T v1, T v2 ) { return v1 < v2 ? v1 : v2; }
-
-	forall( T, Ts ... | { T min( T, T ); T min( T, Ts ); } )
-	T min( T v1, T v2, Ts vs ) { return min( min( v1, v2 ), vs ); }
-
-	forall( T | { int ?>?( T, T ); } )
-	T max( T v1, T v2 ) { return v1 > v2 ? v1 : v2; }
-
-	forall( T, Ts ... | { T max( T, T ); T max( T, Ts ); } )
-	T max( T v1, T v2, Ts vs ) { return max( max( v1, v2 ), vs ); }
-
-	forall( T | { T min( T, T ); T max( T, T ); } )
-	T clamp( T value, T min_val, T max_val ) { return max( min_val, min( value, max_val ) ); }
-
-	forall( T )
-	void swap( T & v1, T & v2 ) { T temp = v1; v1 = v2; v2 = temp; }
-
 	// Specializations
 	char min( char v1, char v2 ) { return v1 < v2 ? v1 : v2; }
 	int min( int v1, int v2 ) { return v1 < v2 ? v1 : v2; }
@@ -99,6 +81,25 @@ static inline __attribute__((always_inline)) {
 	unsigned long int max( unsigned long int v1, unsigned long int v2 ) { return v1 > v2 ? v1 : v2; }
 	long long int max( long long int v1, long long int v2 ) { return v1 > v2 ? v1 : v2; }
 	unsigned long long int max( unsigned long long int v1, unsigned long long int v2 ) { return v1 > v2 ? v1 : v2; }
+
+	// Polymorphic
+	forall( T | { int ?<?( T, T ); } )
+	T min( T v1, T v2 ) { return v1 < v2 ? v1 : v2; }
+
+	forall( T, Ts ... | { T min( T, T ); T min( Ts ); } )
+	T min( T arg, Ts args ) { return min( arg, min( args ) ); }
+
+	forall( T | { int ?>?( T, T ); } )
+	T max( T v1, T v2 ) { return v1 > v2 ? v1 : v2; }
+
+	forall( T, Ts ... | { T max( T, T ); T max( Ts ); } )
+	T max( T arg, Ts args ) { return max( arg, max( args ) ); }
+
+	forall( T | { T min( T, T ); T max( T, T ); } )
+	T clamp( T value, T min_val, T max_val ) { return max( min_val, min( value, max_val ) ); }
+
+	forall( T )
+	void swap( T & v1, T & v2 ) { T temp = v1; v1 = v2; v2 = temp; }
 } // distribution
 
 // Local Variables: //
