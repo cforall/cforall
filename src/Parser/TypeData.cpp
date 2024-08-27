@@ -1539,6 +1539,14 @@ ast::VTableType * buildVtable( const TypeData * td ) {
 } // buildVtable
 
 
+// The argument flag (is/is not var-args) of a computed property.
+static ast::ArgumentFlag argumentFlag( const TypeData * td ) {
+	assert( td->kind == TypeData::Function );
+	bool isVaArgs = !td->function.params || td->function.params->hasEllipsis;
+	return (isVaArgs) ? ast::VariableArgs : ast::FixedArgs;
+} // argumentFlag
+
+
 ast::FunctionDecl * buildFunctionDecl(
 		const TypeData * td,
 		const string &name,
@@ -1548,8 +1556,6 @@ ast::FunctionDecl * buildFunctionDecl(
 		ast::Expr * asmName,
 		std::vector<ast::ptr<ast::Attribute>> && attributes ) {
 	assert( td->kind == TypeData::Function );
-	// For some reason FunctionDecl takes a bool instead of an ArgumentFlag.
-	bool isVarArgs = !td->function.params || td->function.params->hasEllipsis;
 	ast::CV::Qualifiers cvq = buildQualifiers( td );
 	std::vector<ast::ptr<ast::TypeDecl>> forall;
 	std::vector<ast::ptr<ast::DeclWithType>> assertions;
@@ -1603,7 +1609,7 @@ ast::FunctionDecl * buildFunctionDecl(
 		linkage,
 		std::move( attributes ),
 		funcSpec,
-		(isVarArgs) ? ast::VariableArgs : ast::FixedArgs
+		argumentFlag( td )
 	);
 	buildList( td->function.withExprs, decl->withExprs );
 	decl->asmName = asmName;
@@ -1655,8 +1661,7 @@ ast::Decl * buildDecl(
 ast::FunctionType * buildFunctionType( const TypeData * td ) {
 	assert( td->kind == TypeData::Function );
 	ast::FunctionType * ft = new ast::FunctionType(
-		( !td->function.params || td->function.params->hasEllipsis )
-			? ast::VariableArgs : ast::FixedArgs,
+		argumentFlag( td ),
 		buildQualifiers( td )
 	);
 	buildTypeList( td->function.params, ft->params );
