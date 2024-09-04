@@ -2888,7 +2888,7 @@ enumerator_value_opt:
 
 parameter_list_ellipsis_opt:
 	// empty
-		{ $$ = nullptr; }
+		{ $$ = DeclarationNode::newFromTypeData( build_basic_type( TypeData::Void ) ); }
 	| ELLIPSIS
 		{ $$ = nullptr; }
 	| parameter_list

@@ -301,7 +301,7 @@ void GenerateWaitForCore::init_clause(
 	const CodeLocation & location = clause->location;
 	const ast::ObjectDecl * monitors = declMonitors( out, clause );
 	ast::Type * fptr_t = new ast::PointerType(
-			new ast::FunctionType( ast::VariableArgs ) );
+			new ast::FunctionType( ast::FixedArgs ) );
 
 	const ast::VariableExpr * variableExpr =
 		clause->target.as<ast::VariableExpr>();

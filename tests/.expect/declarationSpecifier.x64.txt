@@ -646,22 +646,22 @@ static inline void _X12_constructorFv_S13__anonymous13s_autogen___1(struct __ano
 static volatile const struct __anonymous13 _X3x35KVS13__anonymous13_1;
 _Thread_local signed int _X3x37i_1;
 __thread signed int _X3x38i_1;
-static inline volatile const signed int _X3f11Fi___1();
-static inline volatile const signed int _X3f12Fi___1();
-static inline volatile const signed int _X3f13Fi___1();
-static inline volatile const signed int _X3f14Fi___1();
-static inline volatile const signed int _X3f15Fi___1();
-static inline volatile const signed int _X3f16Fi___1();
-static inline volatile const signed int _X3f17Fi___1();
-static inline volatile const signed int _X3f18Fi___1();
-static inline volatile const signed short int _X3f21Fs___1();
-static inline volatile const signed short int _X3f22Fs___1();
-static inline volatile const signed short int _X3f23Fs___1();
-static inline volatile const signed short int _X3f24Fs___1();
-static inline volatile const signed short int _X3f25Fs___1();
-static inline volatile const signed short int _X3f26Fs___1();
-static inline volatile const signed short int _X3f27Fs___1();
-static inline volatile const signed short int _X3f28Fs___1();
+static inline volatile const signed int _X3f11Fi___1(void);
+static inline volatile const signed int _X3f12Fi___1(void);
+static inline volatile const signed int _X3f13Fi___1(void);
+static inline volatile const signed int _X3f14Fi___1(void);
+static inline volatile const signed int _X3f15Fi___1(void);
+static inline volatile const signed int _X3f16Fi___1(void);
+static inline volatile const signed int _X3f17Fi___1(void);
+static inline volatile const signed int _X3f18Fi___1(void);
+static inline volatile const signed short int _X3f21Fs___1(void);
+static inline volatile const signed short int _X3f22Fs___1(void);
+static inline volatile const signed short int _X3f23Fs___1(void);
+static inline volatile const signed short int _X3f24Fs___1(void);
+static inline volatile const signed short int _X3f25Fs___1(void);
+static inline volatile const signed short int _X3f26Fs___1(void);
+static inline volatile const signed short int _X3f27Fs___1(void);
+static inline volatile const signed short int _X3f28Fs___1(void);
 struct __anonymous14 {
     signed int _X1ii_1;
 };
@@ -706,7 +706,7 @@ static inline void _X12_constructorFv_S13__anonymous14i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous14 _X3f31FS13__anonymous14___1();
+static inline volatile const struct __anonymous14 _X3f31FS13__anonymous14___1(void);
 struct __anonymous15 {
     signed int _X1ii_1;
 };
@@ -751,7 +751,7 @@ static inline void _X12_constructorFv_S13__anonymous15i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous15 _X3f32FS13__anonymous15___1();
+static inline volatile const struct __anonymous15 _X3f32FS13__anonymous15___1(void);
 struct __anonymous16 {
     signed int _X1ii_1;
 };
@@ -796,7 +796,7 @@ static inline void _X12_constructorFv_S13__anonymous16i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous16 _X3f33FS13__anonymous16___1();
+static inline volatile const struct __anonymous16 _X3f33FS13__anonymous16___1(void);
 struct __anonymous17 {
     signed int _X1ii_1;
 };
@@ -841,7 +841,7 @@ static inline void _X12_constructorFv_S13__anonymous17i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous17 _X3f34FS13__anonymous17___1();
+static inline volatile const struct __anonymous17 _X3f34FS13__anonymous17___1(void);
 struct __anonymous18 {
     signed int _X1ii_1;
 };
@@ -886,7 +886,7 @@ static inline void _X12_constructorFv_S13__anonymous18i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous18 _X3f35FS13__anonymous18___1();
+static inline volatile const struct __anonymous18 _X3f35FS13__anonymous18___1(void);
 struct __anonymous19 {
     signed int _X1ii_1;
 };
@@ -931,7 +931,7 @@ static inline void _X12_constructorFv_S13__anonymous19i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous19 _X3f36FS13__anonymous19___1();
+static inline volatile const struct __anonymous19 _X3f36FS13__anonymous19___1(void);
 struct __anonymous20 {
     signed int _X1ii_1;
 };
@@ -976,7 +976,7 @@ static inline void _X12_constructorFv_S13__anonymous20i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous20 _X3f37FS13__anonymous20___1();
+static inline volatile const struct __anonymous20 _X3f37FS13__anonymous20___1(void);
 struct __anonymous21 {
     signed int _X1ii_1;
 };
@@ -1021,15 +1021,15 @@ static inline void _X12_constructorFv_S13__anonymous21i_autogen___1(struct __ano
     }
 
 }
-static inline volatile const struct __anonymous21 _X3f38FS13__anonymous21___1();
-static inline volatile const signed short int _X3f41Fs___1();
-static inline volatile const signed short int _X3f42Fs___1();
-static inline volatile const signed short int _X3f43Fs___1();
-static inline volatile const signed short int _X3f44Fs___1();
-static inline volatile const signed short int _X3f45Fs___1();
-static inline volatile const signed short int _X3f46Fs___1();
-static inline volatile const signed short int _X3f47Fs___1();
-static inline volatile const signed short int _X3f48Fs___1();
+static inline volatile const struct __anonymous21 _X3f38FS13__anonymous21___1(void);
+static inline volatile const signed short int _X3f41Fs___1(void);
+static inline volatile const signed short int _X3f42Fs___1(void);
+static inline volatile const signed short int _X3f43Fs___1(void);
+static inline volatile const signed short int _X3f44Fs___1(void);
+static inline volatile const signed short int _X3f45Fs___1(void);
+static inline volatile const signed short int _X3f46Fs___1(void);
+static inline volatile const signed short int _X3f47Fs___1(void);
+static inline volatile const signed short int _X3f48Fs___1(void);
 signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1){
     __attribute__ ((unused)) signed int _X12_retval_maini_1;
     {

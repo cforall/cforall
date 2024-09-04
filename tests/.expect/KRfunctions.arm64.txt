@@ -97,7 +97,7 @@ signed int (*_X3f14FPA0A0i_iPiPi__1(signed int _X1ai_1, signed int *_X1bPi_1, si
 signed int _X3f15Fi_iii__1(signed int _X1ai_1, signed int _X1bi_1, signed int _X1ci_1){
     __attribute__ ((unused)) signed int _X11_retval_f15i_1;
 }
-const signed int _X4fredFi___1(){
+const signed int _X4fredFi___1(void){
     __attribute__ ((unused)) const signed int _X12_retval_fredKi_1;
     signed int *(*_X1xFPi_ii__2)(signed int __param_0, signed int __param_1);
     signed int _X1ai_2;

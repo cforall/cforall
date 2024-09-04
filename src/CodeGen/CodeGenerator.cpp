@@ -179,10 +179,12 @@ void CodeGenerator::postvisit( ast::FunctionDecl const * decl ) {
 	acc << mangleName( decl );
 
 	if ( 0 == decl->params.size() ) {
-		if ( decl->type->isVarArgs ) {
+		if ( !decl->type->isVarArgs ) {
+			acc << "(void)";
+		} else if ( options.genC ) {
 			acc << "()";
 		} else {
-			acc << "(void)";
+			acc << "(...)";
 		}
 	} else {
 		acc << "(";

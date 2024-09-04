@@ -102,7 +102,6 @@ END {
 	printf( "\n" )
 
 	for ( prototype in prototypes ) {
-		# printf( "//\"%s\"\n", prototype )
 		if ( index( "BT_LAST", prototype ) == 1 ) {
 			continue
 		} # if
@@ -125,25 +124,23 @@ END {
 		} # for
 
 		# generate function parameter types as macro
-		if ( index( prototype, "VAR" ) != 2 ) {			# C-style empty parameters ?
-			for ( p = 0; length( prototype ) > 0; p += 1 ) { # until all parameters types are removed
-				sub( "_", "", prototype)				# remove "_"
-				printf( ", ", type )
-				temp = prototype
-				for ( t = 0; t < N; t += 1 ) {			# find longest match
-					type = types[t];
-					if ( index( prototype, type ) == 1 ) { # found match
-						printf( "BT_%s", type )
-						sub( type, "", prototype )
-						break;
-					} # if
-				} # for
-				if ( temp == prototype ) {				# no match found for parameter in macro table
-					printf( "\n********** MISSING TYPE \"%s\" **********\n", prototype )
-					exit 0
+		for ( p = 0; length( prototype ) > 0; p += 1 ) { # until all parameters types are removed
+			sub( "_", "", prototype)				# remove "_"
+			printf( ", ", type )
+			temp = prototype
+			for ( t = 0; t < N; t += 1 ) {			# find longest match
+				type = types[t];
+				if ( index( prototype, type ) == 1 ) { # found match
+					printf( "BT_%s", type )
+					sub( type, "", prototype )
+					break;
 				} # if
 			} # for
-		} # if
+			if ( temp == prototype ) {				# no match found for parameter in macro table
+				printf( "\n********** MISSING TYPE \"%s\" **********\n", prototype )
+				exit 0
+			} # if
+		} # for
 		printf( ")\n" )
 	} # for
 

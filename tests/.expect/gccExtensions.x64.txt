@@ -18,10 +18,10 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
     const signed int _X2i1Ki_2;
     const signed int _X2i2Ki_2;
     const signed int _X2i3Ki_2;
-    inline signed int _X2f1Fi___2(){
+    inline signed int _X2f1Fi___2(void){
         __attribute__ ((unused)) signed int _X10_retval_f1i_2;
     }
-    inline signed int _X2f2Fi___2(){
+    inline signed int _X2f2Fi___2(void){
         __attribute__ ((unused)) signed int _X10_retval_f2i_2;
     }
     signed int _X2s1i_2;

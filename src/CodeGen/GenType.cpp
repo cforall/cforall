@@ -167,10 +167,12 @@ void GenType::postvisit( ast::FunctionType const * type ) {
 	}
 
 	if ( type->params.empty() ) {
-		if ( type->isVarArgs ) {
+		if ( !type->isVarArgs ) {
+			os << "(void)";
+		} else if ( options.genC ) {
 			os << "()";
 		} else {
-			os << "(void)";
+			os << "(...)";
 		}
 	} else {
 		os << "(" ;

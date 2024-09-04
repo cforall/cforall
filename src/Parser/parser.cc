@@ -12299,7 +12299,7 @@ yyreduce:
 
   case 694:
 #line 2891 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.decl) = nullptr; }
+                { (yyval.decl) = DeclarationNode::newFromTypeData( build_basic_type( TypeData::Void ) ); }
 #line 12304 "Parser/parser.cc"
     break;
 

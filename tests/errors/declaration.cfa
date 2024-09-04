@@ -1,17 +1,17 @@
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-// 
-// declarationErrors.cfa -- 
-// 
+//
+// declarationErrors.cfa --
+//
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug 17 08:23:43 2016
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Tue Nov  6 17:52:47 2018
 // Update Count     : 32
-// 
+//
 
 static short int volatile static const x1;				// duplicate static
 extern short int static volatile const x2;				// multiple extern & static

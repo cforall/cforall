@@ -15,40 +15,40 @@ signed int _X1fFi_Fi__Fi_i_Fi__Fi_i_Fv____1(__attribute__ ((unused)) signed int 
     }
 
 }
-signed int _X2f1Fi___1(){
+signed int _X2f1Fi___1(void){
     __attribute__ ((unused)) signed int _X10_retval_f1i_1;
 }
-signed int _X2f2Fi___1(){
+signed int _X2f2Fi___1(void){
     __attribute__ ((unused)) signed int _X10_retval_f2i_1;
 }
-signed int (*_X2f3FFi_____1())(){
-    __attribute__ ((unused)) signed int (*_X10_retval_f3Fi___1)();
+signed int (*_X2f3FFi_____1(void))(void){
+    __attribute__ ((unused)) signed int (*_X10_retval_f3Fi___1)(void);
 }
-signed int *_X2f4FPi___1(){
+signed int *_X2f4FPi___1(void){
     __attribute__ ((unused)) signed int *_X10_retval_f4Pi_1;
 }
-signed int (*_X2f5FFi_____1())(){
-    __attribute__ ((unused)) signed int (*_X10_retval_f5Fi___1)();
+signed int (*_X2f5FFi_____1(void))(void){
+    __attribute__ ((unused)) signed int (*_X10_retval_f5Fi___1)(void);
 }
-signed int *_X2f6FPi___1(){
+signed int *_X2f6FPi___1(void){
     __attribute__ ((unused)) signed int *_X10_retval_f6Pi_1;
 }
-signed int *_X2f7FPi___1(){
+signed int *_X2f7FPi___1(void){
     __attribute__ ((unused)) signed int *_X10_retval_f7Pi_1;
 }
-signed int **_X2f8FPPi___1(){
+signed int **_X2f8FPPi___1(void){
     __attribute__ ((unused)) signed int **_X10_retval_f8PPi_1;
 }
-signed int *const *_X2f9FPKPi___1(){
+signed int *const *_X2f9FPKPi___1(void){
     __attribute__ ((unused)) signed int *const *_X10_retval_f9PKPi_1;
 }
-signed int (*_X3f10FPA0i___1())[]{
+signed int (*_X3f10FPA0i___1(void))[]{
     __attribute__ ((unused)) signed int (*_X11_retval_f10PA0i_1)[];
 }
-signed int (*_X3f11FPA0A0i___1())[][((unsigned long int )3)]{
+signed int (*_X3f11FPA0A0i___1(void))[][((unsigned long int )3)]{
     __attribute__ ((unused)) signed int (*_X11_retval_f11PA0A0i_1)[][((unsigned long int )3)];
 }
-signed int (*_X3f12FPA0A0i___1())[][((unsigned long int )3)]{
+signed int (*_X3f12FPA0A0i___1(void))[][((unsigned long int )3)]{
     __attribute__ ((unused)) signed int (*_X11_retval_f12PA0A0i_1)[][((unsigned long int )3)];
 }
 signed int _X4fII1Fi_i__1(signed int _X1ii_1){
@@ -63,19 +63,19 @@ extern signed int _X4fII3Fi_i__1(signed int _X1ii_1){
 extern const signed int _X4fII4Fi_i__1(signed int _X1ii_1){
     __attribute__ ((unused)) const signed int _X12_retval_fII4Ki_1;
 }
-signed int *_X4fII5FPi___1(){
+signed int *_X4fII5FPi___1(void){
     __attribute__ ((unused)) signed int *_X12_retval_fII5Pi_1;
 }
-signed int *const _X4fII6FPi___1(){
+signed int *const _X4fII6FPi___1(void){
     __attribute__ ((unused)) signed int *const _X12_retval_fII6KPi_1;
 }
-const signed long int *_X4fII7FPKl___1(){
+const signed long int *_X4fII7FPKl___1(void){
     __attribute__ ((unused)) const signed long int *_X12_retval_fII7PKl_1;
 }
-static const signed long int *_X4fII8FPKl___1(){
+static const signed long int *_X4fII8FPKl___1(void){
     __attribute__ ((unused)) const signed long int *_X12_retval_fII8PKl_1;
 }
-static const signed long int *_X4fII9FPKl___1(){
+static const signed long int *_X4fII9FPKl___1(void){
     __attribute__ ((unused)) const signed long int *_X12_retval_fII9PKl_1;
 }
 signed int _X3fO1Fi_i__1(signed int _X1ii_1){
@@ -223,7 +223,7 @@ struct _conc__tuple3_2 _X1fFT3iiPi_iiPi__1(__attribute__ ((unused)) signed int _
 }
 signed int _X3f11Fi_i__1(signed int __anonymous_object34);
 signed int _X3f12Fi___1(void);
-const double _X4bar1Fd___1();
+const double _X4bar1Fd___1(void);
 const double _X4bar2Fd_i__1(signed int __anonymous_object35);
 const double _X4bar3Fd_d__1(double __anonymous_object36);
 const double _X3fooFd___1(void);
@@ -289,7 +289,7 @@ signed int _X1fFi_Fi_ii_Fi_i___1(__attribute__ ((unused)) signed int (*__anonymo
     signed int (*(*_X1pPA0A0PA0A0i_2)[][((unsigned long int )10)])[][((unsigned long int )3)];
     signed int (*(*_X1pPA0Fi_i__2)[])(signed int __param_0);
 }
-static const signed int *_X2f1FPKi___1(){
+static const signed int *_X2f1FPKi___1(void){
     __attribute__ ((unused)) const signed int *_X10_retval_f1PKi_1;
 }
 static const signed int *_X2f2FPKi___1(void){
@@ -309,8 +309,8 @@ static inline const struct _conc__tuple2_3 _X2f4FT2Pii___1(void){
 static const struct _conc__tuple2_3 _X2f5FT2PiKi___1(void){
     __attribute__ ((unused)) const struct _conc__tuple2_3 _X10_retval_f5KT2PiKi_1;
 }
-signed int _X1fFi_Fi__FPi__FPPi__FPKPi__FPKPi__PiPiPPiPPiPPPiPPPiPPKPiPPKPiPKPKPiPKPKPi__1(signed int (*__anonymous_object42)(), signed int *(*__anonymous_object43)(), signed int **(*__anonymous_object44)(), signed int *const *(*__anonymous_object45)(), signed int *const *const (*__anonymous_object46)(), signed int *__anonymous_object47, signed int __anonymous_object48[10], signed int **__anonymous_object49, signed int *__anonymous_object50[10], signed int ***__anonymous_object51, signed int **__anonymous_object52[10], signed int *const **__anonymous_object53, signed int *const *__anonymous_object54[10], signed int *const *const *__anonymous_object55, signed int *const *const __anonymous_object56[10]);
-signed int _X1fFi_Fi__FPi__FPPi__FPKPi__FPKPi__PiPiPPiPPiPPPiPPPiPPKPiPPKPiPKPKPiPKPKPi__1(__attribute__ ((unused)) signed int (*__anonymous_object57)(), __attribute__ ((unused)) signed int *(*__anonymous_object58)(), __attribute__ ((unused)) signed int **(*__anonymous_object59)(), __attribute__ ((unused)) signed int *const *(*__anonymous_object60)(), __attribute__ ((unused)) signed int *const *const (*__anonymous_object61)(), __attribute__ ((unused)) signed int *__anonymous_object62, __attribute__ ((unused)) signed int __anonymous_object63[10], __attribute__ ((unused)) signed int **__anonymous_object64, __attribute__ ((unused)) signed int *__anonymous_object65[10], __attribute__ ((unused)) signed int ***__anonymous_object66, __attribute__ ((unused)) signed int **__anonymous_object67[10], __attribute__ ((unused)) signed int *const **__anonymous_object68, __attribute__ ((unused)) signed int *const *__anonymous_object69[10], __attribute__ ((unused)) signed int *const *const *__anonymous_object70, __attribute__ ((unused)) signed int *const *const __anonymous_object71[10]){
+signed int _X1fFi_Fi__FPi__FPPi__FPKPi__FPKPi__PiPiPPiPPiPPPiPPPiPPKPiPPKPiPKPKPiPKPKPi__1(signed int (*__anonymous_object42)(void), signed int *(*__anonymous_object43)(void), signed int **(*__anonymous_object44)(void), signed int *const *(*__anonymous_object45)(void), signed int *const *const (*__anonymous_object46)(void), signed int *__anonymous_object47, signed int __anonymous_object48[10], signed int **__anonymous_object49, signed int *__anonymous_object50[10], signed int ***__anonymous_object51, signed int **__anonymous_object52[10], signed int *const **__anonymous_object53, signed int *const *__anonymous_object54[10], signed int *const *const *__anonymous_object55, signed int *const *const __anonymous_object56[10]);
+signed int _X1fFi_Fi__FPi__FPPi__FPKPi__FPKPi__PiPiPPiPPiPPPiPPPiPPKPiPPKPiPKPKPiPKPKPi__1(__attribute__ ((unused)) signed int (*__anonymous_object57)(void), __attribute__ ((unused)) signed int *(*__anonymous_object58)(void), __attribute__ ((unused)) signed int **(*__anonymous_object59)(void), __attribute__ ((unused)) signed int *const *(*__anonymous_object60)(void), __attribute__ ((unused)) signed int *const *const (*__anonymous_object61)(void), __attribute__ ((unused)) signed int *__anonymous_object62, __attribute__ ((unused)) signed int __anonymous_object63[10], __attribute__ ((unused)) signed int **__anonymous_object64, __attribute__ ((unused)) signed int *__anonymous_object65[10], __attribute__ ((unused)) signed int ***__anonymous_object66, __attribute__ ((unused)) signed int **__anonymous_object67[10], __attribute__ ((unused)) signed int *const **__anonymous_object68, __attribute__ ((unused)) signed int *const *__anonymous_object69[10], __attribute__ ((unused)) signed int *const *const *__anonymous_object70, __attribute__ ((unused)) signed int *const *const __anonymous_object71[10]){
     __attribute__ ((unused)) signed int _X9_retval_fi_1;
 }
 signed int _X1fFi_Pii__1(signed int *_X1fPi_1, signed int _X1ti_1){

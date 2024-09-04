@@ -20,12 +20,10 @@ Cost ( 1, 0, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
 
 Cost ( 1, 0, 0, 0, 0, 0, 0, 0 ): Explicit Cast of:
       Variable Expression: f: function
-        accepting unspecified arguments
       ... returning nothing
 
       ... with resolved type:
         pointer to function
-          accepting unspecified arguments
         ... returning nothing
 
     ... to:

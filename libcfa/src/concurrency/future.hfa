@@ -87,7 +87,7 @@ forall( T ) {
 
                 if ( s.clause_status == 0p ) // poke in result so that woken threads do not need to reacquire any locks
                     copy_T( result, *(((future_node(T) &)s).my_result) );
-                
+
                 wake_one( waiters, s );
             }
         }
@@ -145,7 +145,7 @@ forall( T ) {
                 return [ret_val, true];
             }
             unlock( lock );
-            
+
             return [ret_val, false];
         }
 
@@ -153,7 +153,7 @@ forall( T ) {
             lock( lock );
 
             // check if we can complete operation. If so race to establish winner in special OR case
-            if ( !s.park_counter && state != FUTURE_EMPTY ) { 
+            if ( !s.park_counter && state != FUTURE_EMPTY ) {
                 if ( !__make_select_node_available( s ) ) { // we didn't win the race so give up on registering
                     unlock( lock );
                     return false;
@@ -179,7 +179,7 @@ forall( T ) {
             unlock( lock );
             return false;
         }
-		
+
         bool on_selected( future(T) & this, select_node & node ) { return true; }
 	}
 }

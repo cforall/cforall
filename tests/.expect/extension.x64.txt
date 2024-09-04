@@ -160,7 +160,7 @@ __extension__ enum E {
     _X1GKM1E_1,
     _X1BKM1E_1,
 };
-__extension__ signed int _X1fFi___1();
+__extension__ signed int _X1fFi___1(void);
 __extension__ signed int i;
 __extension__ signed int j;
 __extension__ signed int _X4fredFi_i__1(signed int _X1pi_1){

@@ -1540,11 +1540,21 @@ ast::VTableType * buildVtable( const TypeData * td ) {
 
 
 // The argument flag (is/is not var-args) of a computed property.
-static ast::ArgumentFlag argumentFlag( const TypeData * td ) {
+static ast::ArgumentFlag buildArgumentFlag( const TypeData * td ) {
 	assert( td->kind == TypeData::Function );
-	bool isVaArgs = !td->function.params || td->function.params->hasEllipsis;
-	return (isVaArgs) ? ast::VariableArgs : ast::FixedArgs;
-} // argumentFlag
+	bool isVarArgs = !td->function.params || td->function.params->hasEllipsis;
+	return (isVarArgs) ? ast::VariableArgs : ast::FixedArgs;
+}
+
+
+// Wrapper to convert the void parameter into the empty explicit list.
+static void buildParamList( DeclarationNode * decl,
+		std::vector<ast::ptr<ast::DeclWithType>> & params ) {
+	buildList( decl, params );
+	if ( 1 == params.size() && params[0]->get_type()->isVoid() ) {
+		params.pop_back();
+	}
+}
 
 
 ast::FunctionDecl * buildFunctionDecl(
@@ -1561,7 +1571,7 @@ ast::FunctionDecl * buildFunctionDecl(
 	std::vector<ast::ptr<ast::DeclWithType>> assertions;
 	std::vector<ast::ptr<ast::DeclWithType>> params;
 	std::vector<ast::ptr<ast::DeclWithType>> returns;
-	buildList( td->function.params, params );
+	buildParamList( td->function.params, params );
 	buildForall( td->forall, forall );
 	// Functions do not store their assertions there anymore.
 	for ( ast::ptr<ast::TypeDecl> & type_param : forall ) {
@@ -1609,7 +1619,7 @@ ast::FunctionDecl * buildFunctionDecl(
 		linkage,
 		std::move( attributes ),
 		funcSpec,
-		argumentFlag( td )
+		buildArgumentFlag( td )
 	);
 	buildList( td->function.withExprs, decl->withExprs );
 	decl->asmName = asmName;
@@ -1661,7 +1671,7 @@ ast::Decl * buildDecl(
 ast::FunctionType * buildFunctionType( const TypeData * td ) {
 	assert( td->kind == TypeData::Function );
 	ast::FunctionType * ft = new ast::FunctionType(
-		argumentFlag( td ),
+		buildArgumentFlag( td ),
 		buildQualifiers( td )
 	);
 	buildTypeList( td->function.params, ft->params );

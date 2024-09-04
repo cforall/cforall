@@ -1,17 +1,17 @@
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-// 
-// gccExtensions.cfa -- 
-// 
+//
+// gccExtensions.cfa --
+//
 // Author           : Peter A. Buhr
 // Created On       : Sun Aug 14 17:28:17 2016
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Mon Aug  5 18:04:37 2019
 // Update Count     : 28
-// 
+//
 
 extern int x asm( "xx" );
 

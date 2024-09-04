@@ -1509,7 +1509,7 @@ ast::CompoundStmt * MutexKeyword::addThreadDtorStatements(
 }
 
 ast::ptr<ast::Type> MutexKeyword::generic_func =
-	new ast::FunctionType( ast::VariableArgs );
+	new ast::FunctionType( ast::FixedArgs );
 
 // --------------------------------------------------------------------------
 struct ThreadStarter final {
