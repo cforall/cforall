@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 17 12:31:47 2024
-// Update Count     : 2038
+// Last Modified On : Wed Sep  4 11:30:12 2024
+// Update Count     : 2040
 //
 
 #include "iostream.hfa"
@@ -511,7 +511,7 @@ static inline void base_128( ostype & os, unsigned int128 val, unsigned int128 p
 		f.val = val % power;
 		if ( cnt == 1 && f.flags.left ) { wd = f.wd; f.wd = maxdig; } // copy f.wd and reset for printing middle chunk
 		// printf( "R val:%#lx(%lu) wd:%u pc:%u base:%c neg:%d pc:%d left:%d nobsdp:%d sign:%d pad0:%d\n",
-		// 		f.val, f.val, f.wd, f.pc, f.base, f.flags.neg, f.flags.pc, f.flags.left, f.flags.nobsdp, f.flags.sign, f.flags.pad0 ); 
+		// 		f.val, f.val, f.wd, f.pc, f.base, f.flags.neg, f.flags.pc, f.flags.left, f.flags.nobsdp, f.flags.sign, f.flags.pad0 );
 		(ostype &)(os | f);
 		if ( cnt == 1 ) {
 			if ( f.flags.left ) { wd -= maxdig; f.wd = wd < 0 ? 1 : wd; } // update and restore f.wd for printing end chunk
@@ -553,7 +553,7 @@ static inline void base_128( ostype & os, unsigned int128 val, unsigned int128 p
 
 		if ( f.flags.neg ) f.val = -f.val;
 		// printf( "L val:%#lx(%lu) wd:%u pc:%u base:%c neg:%d pc:%d left:%d nobsdp:%d sign:%d pad0:%d\n",
-		// 		f.val, f.val, f.wd, f.pc, f.base, f.flags.neg, f.flags.pc, f.flags.left, f.flags.nobsdp, f.flags.sign, f.flags.pad0 ); 
+		// 		f.val, f.val, f.wd, f.pc, f.base, f.flags.neg, f.flags.pc, f.flags.left, f.flags.nobsdp, f.flags.sign, f.flags.pad0 );
 		(ostype &)(os | f);
 
 		// remaining middle and end chunks are padded with 0s on the left
@@ -596,7 +596,7 @@ INTEGRAL_FMT_IMPL128( unsigned int128 )
 static const char *suffixes[] = {
 	"y", "z", "a", "f", "p", "n", "u", "m", "",
 	"K", "M", "G", "T", "P", "E", "Z", "Y"
-}; 
+};
 #define SUFFIXES_START (-24) /* Smallest power for which there is a suffix defined. */
 #define SUFFIXES_END (SUFFIXES_START + (int)((sizeof(suffixes) / sizeof(char *) - 1) * 3))
 
@@ -1063,6 +1063,10 @@ forall( istype & | basic_istream( istype ) ) {
 			if ( flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 			else args = fmt( is, fmtstr, s, &len );
 			// fprintf( stderr, "cstr %s %d %d %d\n", fmtstr, args, len, f.cstr.wd );
+
+			// No data read and eof is on => true eof so raise exception.
+			if ( len == 0 && eof( is ) ) throwResume ExceptionInst( end_of_file );
+
 			if ( check && len >= rwd && ! eof( is ) ) {	// might not fit
 				char peek;
 				fmt( is, "%c", &peek );					// check for whitespace terminator
@@ -1086,6 +1090,9 @@ forall( istype & | basic_istream( istype ) ) {
 				if ( flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 				else args = fmt( is, fmtstr, s, &len );
 
+				// No data read and eof is on => true eof so raise exception.
+				if ( len == 0 && eof( is ) ) throwResume ExceptionInst( end_of_file );
+
 				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
 					char peek;
 					fmt( is, "%c", &peek );				// check for delimiter
@@ -1105,6 +1112,10 @@ forall( istype & | basic_istream( istype ) ) {
 				if ( flags.ignore ) args = fmt( is, fmtstr, &len ); // no string argument for '*'
 				else args = fmt( is, fmtstr, s, &len );
 				// fprintf( stderr, "incl/excl %s \"%s\" %d %d %d %d %d %c\n", fmtstr, s, args, wd, len, eof( is ), check, s[wd] );
+
+				// No data read and eof is on => true eof so raise exception.
+				if ( len == 0 && eof( is ) ) throwResume ExceptionInst( end_of_file );
+
 				if ( check && len == rwd && ! eof( is ) ) {	// might not fit
 					// fprintf( stderr, "overflow\n" );
 					char peek;
