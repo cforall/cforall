@@ -514,6 +514,8 @@ void makeRetParam( ast::FunctionType * type ) {
 ast::FunctionType * makeAdapterType(
 		ast::FunctionType const * adaptee,
 		TypeVarMap const & typeVars ) {
+	assertf( ast::FixedArgs == adaptee->isVarArgs,
+		"Cannot adapt a varadic function, should have been checked." );
 	ast::FunctionType * adapter = ast::deepCopy( adaptee );
 	if ( isDynRet( adapter, typeVars ) ) {
 		makeRetParam( adapter );

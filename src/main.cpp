@@ -66,6 +66,7 @@
 #include "ResolvExpr/Resolver.hpp"          // for resolve
 #include "Tuples/Tuples.hpp"                // for expandMemberTuples, expan...
 #include "Validate/Autogen.hpp"             // for autogenerateRoutines
+#include "Validate/CheckAssertions.hpp"     // for checkAssertions
 #include "Validate/CompoundLiteral.hpp"     // for handleCompoundLiterals
 #include "Validate/EliminateTypedef.hpp"    // for eliminateTypedef
 #include "Validate/EnumAndPointerDecay.hpp" // for decayEnumsAndPointers
@@ -313,6 +314,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign, transUnit );
 		PASS( "Replace Typedefs", Validate::replaceTypedef, transUnit );
 		PASS( "Fix Return Types", Validate::fixReturnTypes, transUnit );
+		PASS( "Check Assertions", Validate::checkAssertions, transUnit );
 		PASS( "Enum and Pointer Decay", Validate::decayEnumsAndPointers, transUnit );
 
 		PASS( "Link Instance Types", Validate::linkInstanceTypes, transUnit );

@@ -236,6 +236,7 @@ am__objects_11 = main.$(OBJEXT) CompilationState.$(OBJEXT) \
 	$(am__objects_6) ResolvExpr/CandidatePrinter.$(OBJEXT) \
 	ResolvExpr/EraseWith.$(OBJEXT) $(am__objects_7) \
 	$(am__objects_8) $(am__objects_9) Validate/Autogen.$(OBJEXT) \
+	Validate/CheckAssertions.$(OBJEXT) \
 	Validate/CompoundLiteral.$(OBJEXT) \
 	Validate/EliminateTypedef.$(OBJEXT) \
 	Validate/EnumAndPointerDecay.$(OBJEXT) \
@@ -363,6 +364,7 @@ am__depfiles_remade = ./$(DEPDIR)/CompilationState.Po \
 	Tuples/$(DEPDIR)/TupleAssignment.Po \
 	Tuples/$(DEPDIR)/TupleExpansion.Po Tuples/$(DEPDIR)/Tuples.Po \
 	Validate/$(DEPDIR)/Autogen.Po \
+	Validate/$(DEPDIR)/CheckAssertions.Po \
 	Validate/$(DEPDIR)/CompoundLiteral.Po \
 	Validate/$(DEPDIR)/EliminateTypedef.Po \
 	Validate/$(DEPDIR)/EnumAndPointerDecay.Po \
@@ -673,6 +675,7 @@ SRC = main.cpp CompilationState.cpp CompilationState.hpp \
 	ResolvExpr/CandidatePrinter.hpp ResolvExpr/EraseWith.cpp \
 	ResolvExpr/EraseWith.hpp $(SRC_SYMTAB) $(SRC_TUPLES) \
 	$(SRC_VALIDATE) Validate/Autogen.cpp Validate/Autogen.hpp \
+	Validate/CheckAssertions.cpp Validate/CheckAssertions.hpp \
 	Validate/CompoundLiteral.cpp Validate/CompoundLiteral.hpp \
 	Validate/EliminateTypedef.cpp Validate/EliminateTypedef.hpp \
 	Validate/EnumAndPointerDecay.cpp \
@@ -1275,6 +1278,8 @@ Validate/$(DEPDIR)/$(am__dirstamp):
 	@: > Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/Autogen.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
+Validate/CheckAssertions.$(OBJEXT): Validate/$(am__dirstamp) \
+	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/CompoundLiteral.$(OBJEXT): Validate/$(am__dirstamp) \
 	Validate/$(DEPDIR)/$(am__dirstamp)
 Validate/EliminateTypedef.$(OBJEXT): Validate/$(am__dirstamp) \
@@ -1465,6 +1470,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/TupleExpansion.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Tuples/$(DEPDIR)/Tuples.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/Autogen.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/CheckAssertions.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/CompoundLiteral.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/EliminateTypedef.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@Validate/$(DEPDIR)/EnumAndPointerDecay.Po@am__quote@ # am--include-marker
@@ -1828,6 +1834,7 @@ distclean: distclean-am
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
 	-rm -f Validate/$(DEPDIR)/Autogen.Po
+	-rm -f Validate/$(DEPDIR)/CheckAssertions.Po
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/EliminateTypedef.Po
 	-rm -f Validate/$(DEPDIR)/EnumAndPointerDecay.Po
@@ -2003,6 +2010,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Tuples/$(DEPDIR)/TupleExpansion.Po
 	-rm -f Tuples/$(DEPDIR)/Tuples.Po
 	-rm -f Validate/$(DEPDIR)/Autogen.Po
+	-rm -f Validate/$(DEPDIR)/CheckAssertions.Po
 	-rm -f Validate/$(DEPDIR)/CompoundLiteral.Po
 	-rm -f Validate/$(DEPDIR)/EliminateTypedef.Po
 	-rm -f Validate/$(DEPDIR)/EnumAndPointerDecay.Po

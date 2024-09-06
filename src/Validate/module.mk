@@ -20,6 +20,8 @@ SRC_VALIDATE = \
 SRC += $(SRC_VALIDATE) \
 	Validate/Autogen.cpp \
 	Validate/Autogen.hpp \
+	Validate/CheckAssertions.cpp \
+	Validate/CheckAssertions.hpp \
 	Validate/CompoundLiteral.cpp \
 	Validate/CompoundLiteral.hpp \
 	Validate/EliminateTypedef.cpp \

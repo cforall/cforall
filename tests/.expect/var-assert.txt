@@ -1,0 +1,32 @@
+var-assert.cfa:3:1 error: Cannot assert a function that both has by-value polymorphic parameters or return values, and also takes variadic (...) parameters. Consider using a va_list parameter instead.
+bad_format: function
+... with parameters
+  format: pointer to const char
+  and a variable number of other arguments
+... returning
+  _retval_bad_format: instance of type T (not function type)
+  ... with attributes:
+    Attribute with name: unused
+
+
+var-assert.cfa:5:1 error: Cannot assert a function that both has by-value polymorphic parameters or return values, and also takes variadic (...) parameters. Consider using a va_list parameter instead.
+val_format: function
+... with parameters
+  instance of type T (not function type)
+  format: pointer to const char
+  and a variable number of other arguments
+... returning
+  _retval_val_format: void
+  ... with attributes:
+    Attribute with name: unused
+
+
+var-assert.cfa:9:1 error: Cannot assert a function that both has by-value polymorphic parameters or return values, and also takes variadic (...) parameters. Consider using a va_list parameter instead.
+vaTuple: function
+  accepting unspecified arguments
+... returning
+  _retval_vaTuple: instance of type Us (not function type)
+  ... with attributes:
+    Attribute with name: unused
+
+

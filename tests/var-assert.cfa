@@ -1,0 +1,15 @@
+// Check for the use of var-args assertions.
+
+forall(T | { T bad_format(const char * format, ...); })
+trait example {
+	void val_format(T, const char * format, ...);
+	void ref_format(T &, const char * format, ...);
+};
+
+forall(T &, Us | { Us vaTuple(...); })
+Us example(T &);
+
+// Noop Main;
+int main(int argc, char * argv[]) {
+	return 0;
+}
