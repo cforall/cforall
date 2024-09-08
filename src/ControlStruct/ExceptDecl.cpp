@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jul 12 15:50:00 2022
-// Last Modified By : Andrew Beach
-// Last Modified On : Mon Jul 18 11:01:00 2022
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sat Sep  7 12:05:55 2024
+// Update Count     : 1
 //
 
 #include "ExceptDecl.hpp"
@@ -285,7 +285,7 @@ ast::FunctionDecl const * createCopy(
 		new ast::CompoundStmt( location, {
 			new ast::ExprStmt( location,
 				new ast::UntypedExpr( location,
-					new ast::NameExpr( location, "?=?" ),
+					new ast::NameExpr( location, "?{}" ),
 					{
 						new ast::UntypedExpr( location,
 							new ast::NameExpr( location, "*?" ),
