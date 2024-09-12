@@ -1318,11 +1318,7 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::SizeofExpr * node ) {
 			guard_symtab guard { *this };
 			maybe_accept( node, &SizeofExpr::result );
 		}
-		if ( node->type ) {
-			maybe_accept( node, &SizeofExpr::type );
-		} else {
-			maybe_accept( node, &SizeofExpr::expr );
-		}
+		maybe_accept( node, &SizeofExpr::type );
 	}
 
 	VISIT_END( Expr, node );
@@ -1358,11 +1354,7 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::AlignofExpr * node ) {
 			guard_symtab guard { *this };
 			maybe_accept( node, &AlignofExpr::result );
 		}
-		if ( node->type ) {
-			maybe_accept( node, &AlignofExpr::type );
-		} else {
-			maybe_accept( node, &AlignofExpr::expr );
-		}
+		maybe_accept( node, &AlignofExpr::type );
 	}
 
 	VISIT_END( Expr, node );

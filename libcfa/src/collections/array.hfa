@@ -155,11 +155,20 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
 //	thunk creation: ?{}() needs all four otype funcs from next level, so does ^?{}(), so do the
 //	other two.  This solution offers ?{}() that needs only ?{}(), and similar for ^?{}.
 
-forall( [N], S & | sized(S), Timmed &, Tbase & | { void ?{}( Timmed & ); } )
-static inline void ?{}( arpk( N, S, Timmed, Tbase ) & this ) {	
+// skip initializing elements
+//   array(float, 5) x = { delay_init };
+enum () delay_init_t { delay_init };
+forall( [N], S & | sized(S), Timmed &, Tbase & )
+static inline void ?{}( arpk( N, S, Timmed, Tbase ) & this, delay_init_t ) {
 	void ?{}( S (&)[N] ) {}
 	?{}(this.strides);
+}
 
+// call default ctor on elements
+//   array(float, 5) x;
+forall( [N], S & | sized(S), Timmed &, Tbase & | { void ?{}( Timmed & ); } )
+static inline void ?{}( arpk( N, S, Timmed, Tbase ) & this ) {	
+	?{}( this, delay_init );
 	for (i; N) ?{}( (Timmed &)this.strides[i] );
 }
 
@@ -172,6 +181,7 @@ static inline void ^?{}( arpk( N, S, Timmed, Tbase ) & this ) {
 		^?{}( (Timmed &)this.strides[N-i-1] );
 	}
 }
+
 
 //
 // Sugar for declaring array structure instances

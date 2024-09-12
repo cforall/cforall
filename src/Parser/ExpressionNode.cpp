@@ -8,9 +8,9 @@
 //
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Fri Aug 23 10:22:00 2024
-// Update Count     : 1088
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Sep 11 16:28:06 2024
+// Update Count     : 1089
 //
 
 #include "ExpressionNode.hpp"
@@ -460,6 +460,51 @@ ast::Expr * build_constantChar( const CodeLocation & location, string & str ) {
 	return ret;
 } // build_constantChar
 
+static bool isoctal( char ch ) {
+	return ('0' <= ch && ch <= '7');
+}
+
+static bool ishexadecimal( char ch ) {
+	return (('0' <= ch && ch <= '9')
+		|| ('a' <= ch && ch <= 'f')
+		|| ('A' <= ch && ch <= 'F'));
+}
+
+// A "sequence" is the series of characters in a character/string literal
+// that becomes a single character value in the runtime value.
+static size_t sequenceLength( const std::string & str, size_t pos ) {
+	// Most "sequences" are just a single character, filter those out:
+	if ( '\\' != str[pos] ) return 1;
+	switch ( str[pos + 1] ) {
+		// Simple Escape Sequence (\_ where _ is one of the following):
+	  case '\'': case '\"': case '?': case '\\':
+	  case 'a': case 'b': case 'f': case 'n': case 'r': case 't': case 'v':
+		// GCC Escape Sequence (as simple, just some different letters):
+	  case 'e':
+		return 2;
+		// Numeric Escape Sequence (\___ where _ is 1-3 octal digits):
+	  case '0': case '1': case '2': case '3':
+	  case '4': case '5': case '6': case '7':
+		return ( !isoctal( str[pos + 2] ) ) ? 2 :
+		  ( !isoctal( str[pos + 3] ) ) ? 3 : 4;
+		  // Numeric Escape Sequence (\x_ where _ is 1 or more hexadecimal digits):
+	  case 'x': {
+		  size_t length = 2;
+		  while ( ishexadecimal( str[pos + length] ) ) ++length;
+		  return length;
+	  }
+		// Universal Character Name (\u____ where _ is 4 decimal digits):
+	  case 'u':
+		return 6;
+		// Universal Character Name (\U________ where _ is 8 decimal digits):
+	  case 'U':
+		return 10;
+	  default:
+		assertf( false, "Unknown escape sequence (start %c).", str[pos] );
+		return 1;
+	}
+}
+
 ast::Expr * build_constantStr(
 		const CodeLocation & location,
 		string & str ) {
@@ -484,10 +529,19 @@ ast::Expr * build_constantStr(
 	default:
 		strtype = new ast::BasicType( ast::BasicKind::Char );
 	} // switch
+
+	// The dimension value of the type is equal to the number of "sequences"
+	// not including the openning and closing quotes in the literal plus 1
+	// for the implicit null terminator.
+	size_t dimension = 1;
+	for ( size_t pos = 1 ; pos < str.size() - 1 ;
+			pos += sequenceLength( str, pos ) ) {
+		dimension += 1;
+	}
+
 	ast::ArrayType * at = new ast::ArrayType(
 		strtype,
-		// Length is adjusted: +1 for '\0' and -2 for '"'
-		ast::ConstantExpr::from_ulong( location, str.size() + 1 - 2 ),
+		ast::ConstantExpr::from_ulong( location, dimension ),
 		ast::FixedLen,
 		ast::DynamicDim );
 	ast::Expr * ret = new ast::ConstantExpr( location, at, str, std::nullopt );

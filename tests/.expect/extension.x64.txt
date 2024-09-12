@@ -464,7 +464,7 @@ __extension__ signed int _X4fredFi_i__1(signed int _X1pi_1){
         __attribute__ ((unused)) signed int _X12_retval_maryi_2;
     }
     {
-        ((void)__extension__ sizeof(3));
+        ((void)__extension__ sizeof(signed int ));
     }
 
     {
@@ -472,7 +472,7 @@ __extension__ signed int _X4fredFi_i__1(signed int _X1pi_1){
     }
 
     {
-        ((void)__extension__ __alignof__(__extension__ _X1ai_2));
+        ((void)__extension__ __alignof__(signed int ));
     }
 
     {

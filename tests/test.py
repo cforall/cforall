@@ -351,7 +351,7 @@ if __name__ == "__main__":
 
 		for t in tests:
 			print(os.path.relpath(t.expect(), settings.SRCDIR), end=' ')
-			print(os.path.relpath(t.input() , settings.SRCDIR), end=' ')
+			print(os.path.relpath(t.inputs_all() , settings.SRCDIR), end=' ')
 			code, out, err = make_recon(t.target())
 
 			if code != 0:
@@ -359,8 +359,6 @@ if __name__ == "__main__":
 				sys.exit(1)
 
 			print(' '.join(re.findall(r'([^\s]+\.cfa)', out)), end=' ')
-
-		print('')
 
 		# done
 		sys.exit(0)

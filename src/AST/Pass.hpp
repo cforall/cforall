@@ -341,7 +341,7 @@ struct WithDeclsToAdd {
 /// Use if visitation should stop at certain levels
 /// set visit_children false of all child nodes should be ignored
 struct WithShortCircuiting {
-	bool visit_children;
+	bool visit_children = true;
 };
 
 /// Used to restore values/functions/etc. when the Pass finishes visiting this node

@@ -461,13 +461,8 @@ EXTRA_DIST = test.py \
 	array-collections/boxed.cases.hfa \
 	avltree/avl-private.h \
 	avltree/avl.h \
-	configs/.in/parseconfig-all.txt \
-	configs/.in/parseconfig-errors.txt \
-	configs/.in/parseconfig-missing.txt \
 	exceptions/except-io.hfa \
 	exceptions/with-threads.hfa \
-	io/.in/io.data \
-	io/.in/many_read.data \
 	meta/fork+exec.hfa \
 	concurrency/clib_tls.c \
 	concurrency/clib.c \
@@ -932,9 +927,9 @@ installed ?= no
 dist-hook:
 	echo "Gathering test files"
 	for file in `${TEST_PY} --list-dist`; do \
-		if test -f ${srcdir}/$${file}; then \
+		if ls ${srcdir}/$${file} > /dev/null 2>&1; then \
 			${MKDIR_P} $$(dirname ${distdir}/$${file}); \
-			cp -df ${srcdir}/$${file} ${distdir}/$${file}; \
+			cp -df ${srcdir}/$${file} $$(dirname ${distdir}/$${file}); \
 		fi; \
 	done
 

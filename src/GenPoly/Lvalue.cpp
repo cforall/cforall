@@ -606,14 +606,12 @@ ast::Expr const * GeneralizedLvalue::applyTransformation(
 
 ast::SizeofExpr const * ReferenceTypeElimination::previsit(
 		ast::SizeofExpr const * expr ) {
-	if ( expr->expr ) return expr;
 	return ast::mutate_field( expr, &ast::SizeofExpr::type,
 		expr->type->stripReferences() );
 }
 
 ast::AlignofExpr const * ReferenceTypeElimination::previsit(
 		ast::AlignofExpr const * expr ) {
-	if ( expr->expr ) return expr;
 	return ast::mutate_field( expr, &ast::AlignofExpr::type,
 		expr->type->stripReferences() );
 }

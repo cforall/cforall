@@ -1,0 +1,185 @@
+/*
+uchunk - user-visible chunking: how a user's input-consuming loop experiences a presence/absence of qualifying input
+         slight generalization of "eof handling"; we called many of these cases the "eof tests" while first devising them
+
+Coverage criteria include when an input-provided chunk exactly fills a user-provided buffer,
+because the double-boundary case of "this happens just before eof" is (white-box) uchunk-relevant.
+But cases of input-provided chunks exceeding the user's buffer live under
+manipulatorsInput#pre* and ../collections/string-io-istream-manip#pre*.
+
+Test design with subprocesses and auxiliary inputs is cargo-culted from
+configs/parseconfig, configs/usage and io/many_read.
+If you're here to cargo-cult, start there.
+
+*/
+
+#ifdef __cplusplus
+  #include <iostream>
+  #include <iomanip>
+  #include <cstring>
+  using namespace std;
+  #define TRYREAD(str)      tryread(sizeof(str)-1, str);
+  #define DETECT_EOF( ... ) __VA_ARGS__
+  #define POLL_EOF          if ( cin.fail() ) break;
+  #define ECHO(stg, str)    cout << #stg << " \"" << str << "\"" << str[sizeof(str)-1] << endl
+#elif defined __cforall
+  #include <fstream.hfa>
+  extern "C" {
+    char* strcpy(char*, const char*);
+  }
+  #define DETECT_EOF( ... ) \
+    try { \
+      __VA_ARGS__ \
+    } catch ( end_of_file * ) {}
+  #define TRYREAD(str)      try {                                             \
+                                  tryread(sizeof(str)-1, str);                \
+                            }                                                 \
+                            catch ( cstring_length* ) {                       \
+                                /* never expected; just harness robustness */ \
+                                sout | "cstring_length and " | nonl;          \
+                            }
+  #define POLL_EOF
+  #define ECHO(stg, str)    sout | #stg | " \"" | str | "\"" | str[sizeof(str)-1]
+#else
+  #error no
+#endif
+
+
+
+//
+// BEGIN: functions only used in child process
+//
+// Parent process does not use test.py-provided stdin.
+// Parent process uses test.py-provided IN_DIR, from which it explicitly opens files.
+// Each child process sees content from one such file on its stdin.
+// The functions in this section echo, from this distinct child stdin, to parent-bridged stdout.
+//
+
+void subcaseHarness( void (*tryread)(size_t, char*) ) {
+    char s[10];
+    DETECT_EOF (
+      for (bool first = true ;; ) {
+          strcpy(s, "---");  // every time: restore "---"x
+          s[9] = 'x';
+          if (first) {
+            ECHO(BGN, s);    // first time: show it
+            first = false;
+          }
+
+          TRYREAD(s)
+          POLL_EOF
+          ECHO(GOT, s);
+      }
+    )
+    ECHO(END, s);
+}
+
+void tryread_default(size_t sizeof_s, char *s) {
+  #ifdef __cplusplus
+    cin >> setw( sizeof_s ) >> s;
+  #else
+    sin | wdi( sizeof_s, s );
+  #endif
+}
+
+void tryread_getline(size_t sizeof_s, char *s) {
+  #ifdef __cplusplus
+    cin.getline(s, sizeof_s);
+  #else
+    sin | getline( wdi( sizeof_s, s ) );
+  #endif
+}
+
+//
+// END: functions only used in child process
+//
+
+
+extern "C" {
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <fcntl.h>
+	#include <unistd.h>
+}
+
+#ifdef SUBCASE_ISOLATION
+
+    #define x(s) s
+    #define TRYREAD_FUNCTION x(tryread_ ## x(SUBCASE_ISOLATION))
+
+    #define MK_TRYREAD_FUNCTION(x) tryread_ ## x
+
+    #define _MAKEDATA(n) tryread_ ## n
+    #define MAKEDATA(n) _MAKEDATA(n)
+
+    int main() {
+        subcaseHarness( MAKEDATA(SUBCASE_ISOLATION) );
+    }
+
+#else 
+    #define xstr(s) str(s)
+    #define str(s) #s
+
+    #include "../meta/fork+exec.hfa"
+
+    void forkJoinSubcase( void (*tryread)(size_t, char*), const char* subcase_name, const char* aux_in_fname ) {
+        printf("--- %s ---\n", subcase_name);
+        int aux_in_fd = open(aux_in_fname, 0);
+        if( aux_in_fd < 0 ) {
+            printf("Failed to open file: %s\n", aux_in_fname);
+            exit(1);
+        }
+        if ( pid_t child_pid = strict_fork() ) {
+            // in parent
+            do_wait(child_pid);
+        } else {
+            // in child
+            dup2(aux_in_fd, 0);  // make stdin pull from aux
+            subcaseHarness( tryread );
+            exit(0);
+        }
+    }
+
+    #define SUBCASE_( TRYREAD_FUNCTION, IN_FILE_SLUG ) forkJoinSubcase( TRYREAD_FUNCTION, (IN_FILE_SLUG), (xstr(IN_DIR) "manipulatorsInput-uchunk." IN_FILE_SLUG ".txt") )
+    #define SUBCASE( MANIP, IN_FILE_SUFFIX ) SUBCASE_( tryread_ ## MANIP, #MANIP "." #IN_FILE_SUFFIX )
+
+    int main() {
+
+        SUBCASE( default, 1 );
+        SUBCASE( default, 2 );
+        SUBCASE( default, 3 );
+        SUBCASE( default, 4 );
+        SUBCASE( default, 5 );
+        SUBCASE( default, 6 );
+        SUBCASE( default, 7 );
+        SUBCASE( default, 8 );
+        SUBCASE( default, 9 );
+        SUBCASE( default, 10 );
+        SUBCASE( default, 11 );
+        SUBCASE( default, 12 );
+        SUBCASE( default, 13 );
+        SUBCASE( default, 14 );
+
+        SUBCASE( getline, 1 );
+        SUBCASE( getline, 2 );
+        SUBCASE( getline, 3 );
+        SUBCASE( getline, 4 );
+        SUBCASE( getline, 5 );
+        SUBCASE( getline, 6 );
+        SUBCASE( getline, 7 );
+        SUBCASE( getline, 8 );
+        SUBCASE( getline, 9 );
+        SUBCASE( getline, 10 );
+        SUBCASE( getline, 11 );
+        SUBCASE( getline, 12 );
+        SUBCASE( getline, 13 );
+        SUBCASE( getline, 14 );
+
+        return 0;
+    }
+
+    // not used
+    static int true_main(const char * path, const char * env[]) { return 0; }
+
+
+#endif

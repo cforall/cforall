@@ -10,8 +10,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 11 11:44:15 2023
-// Update Count     : 429
+// Last Modified On : Mon Sep  9 11:28:07 2024
+// Update Count     : 430
 //
 
 #include "StatementNode.hpp"
@@ -207,15 +207,16 @@ ast::Stmt * build_do_while( const CodeLocation & location, ExpressionNode * ctl,
 } // build_do_while
 
 ast::Stmt * build_for( const CodeLocation & location, ForCtrl * forctl, StatementNode * stmt, StatementNode * else_ ) {
-	std::vector<ast::ptr<ast::Stmt>> astinit;						// maybe empty
+	std::vector<ast::ptr<ast::Stmt>> astinit;			// maybe empty
 	buildMoveList( forctl->init, astinit );
 
 	if ( forctl->range_over ) {
 		ast::Expr * range_over = maybeMoveBuild( forctl->range_over );
+		auto kind = forctl->kind;						// save before delete, used in return
 		delete forctl;
 		return new ast::ForStmt( location,
 			std::move( astinit ),
-			range_over, forctl->kind == OperKinds::LEThan,
+			range_over, kind == OperKinds::LEThan,
 			buildMoveSingle( stmt ),
 			buildMoveOptional( else_ )
 		);

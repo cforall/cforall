@@ -233,10 +233,6 @@ public:
 			auto e2so = dynamic_cast< const ast::SizeofExpr * >( e2 );
 			if ( !e2so ) return;
 
-			assert((e1->type != nullptr) ^ (e1->expr != nullptr));
-			assert((e2so->type != nullptr) ^ (e2so->expr != nullptr));
-			if ( !(e1->type && e2so->type) ) return;
-
 			// expression unification calls type unification (mutual recursion)
 			result = unifyExact( e1->type, e2so->type, tenv, need, have, open, widen );
 		}

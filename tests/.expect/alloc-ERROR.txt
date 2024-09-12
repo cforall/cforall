@@ -10,7 +10,7 @@ alloc.cfa:382:1 error: Invalid application of existing declaration(s) in express
       Name: ?*?
     ...to:
       Name: dim
-      Sizeof Expression on: Applying untyped:
+      Sizeof Expression on: type-of expression Applying untyped:
           Name: *?
         ...to:
           Name: stp

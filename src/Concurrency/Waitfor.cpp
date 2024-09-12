@@ -229,7 +229,8 @@ ast::ObjectDecl * GenerateWaitForCore::declareAcceptables(
 			new ast::VariableExpr( location, acceptables ),
 			ast::ConstantExpr::from_int( location, 0 ),
 			new ast::SizeofExpr( location,
-				new ast::VariableExpr( location, acceptables ) ),
+				new ast::TypeofType(
+					new ast::VariableExpr( location, acceptables ) ) ),
 		}
 	);
 	ResolveContext context{ symtab, transUnit().global };

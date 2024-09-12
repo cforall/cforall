@@ -28,8 +28,13 @@ class Test:
 	def output_log(self):
 		return os.path.normpath( os.path.join(settings.BUILDDIR, self.path, ".out"   , "%s.log" % self.name) )
 
+	# one file that goes to the test's stdin
 	def input(self):
 		return os.path.normpath( os.path.join(settings.SRCDIR  , self.path, ".in"    , "%s.txt" % self.name) )
+
+	# several files available for this test to open
+	def inputs_all(self):
+		return os.path.normpath( os.path.join(settings.SRCDIR  , self.path, ".in"    , "%s.*" % self.name) )
 
 	def target_output(self):
 		return self.output_log() if not settings.generating else self.expect()

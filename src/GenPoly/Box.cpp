@@ -1924,15 +1924,13 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 
 ast::Expr const * PolyGenericCalculator::postvisit(
 		ast::SizeofExpr const * expr ) {
-	ast::Type const * type = expr->type ? expr->type : expr->expr->result;
-	ast::Expr const * gen = genSizeof( expr->location, type );
+	ast::Expr const * gen = genSizeof( expr->location, expr->type );
 	return ( gen ) ? gen : expr;
 }
 
 ast::Expr const * PolyGenericCalculator::postvisit(
 		ast::AlignofExpr const * expr ) {
-	ast::Type const * type = expr->type ? expr->type : expr->expr->result;
-	ast::Expr const * gen = genAlignof( expr->location, type );
+	ast::Expr const * gen = genAlignof( expr->location, expr->type );
 	return ( gen ) ? gen : expr;
 }
 

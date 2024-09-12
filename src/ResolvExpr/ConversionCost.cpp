@@ -191,7 +191,7 @@ const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
 }
 
 Cost enumCastCost (
-	const ast::EnumInstType * src, const ast::EnumInstType * dst, 
+	const ast::EnumInstType * src, const ast::EnumInstType * dst,
 	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
 );
 
@@ -487,7 +487,7 @@ void ConversionCost::postvisit( const ast::OneType * oneType ) {
 
 // (dst) src is safe is src is a subtype of dst, or dst {inline src, ...}
 Cost enumCastCost (
-	const ast::EnumInstType * src, const ast::EnumInstType * dst, 
+	const ast::EnumInstType * src, const ast::EnumInstType * dst,
 	const ast::SymbolTable & symtab, const ast::TypeEnvironment & env
 ) {
 	auto srcDecl = src->base;

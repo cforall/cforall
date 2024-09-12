@@ -19,3 +19,5 @@
 #define ADECL2(X, El, M, N) El X[M][N];
 
 #include "array-raii.hfa"
+
+void test_extras() {}

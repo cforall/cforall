@@ -275,11 +275,8 @@ ConstantExpr * ConstantExpr::null( const CodeLocation & loc, const Type * ptrTyp
 
 // --- SizeofExpr
 
-SizeofExpr::SizeofExpr( const CodeLocation & loc, const Expr * e )
-: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( e ), type( nullptr ) {}
-
 SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( nullptr ), type( t ) {}
+: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), type( t ) {}
 
 // --- CountExpr
 
@@ -291,11 +288,8 @@ CountExpr::CountExpr( const CodeLocation & loc, const Type * t )
 
 // --- AlignofExpr
 
-AlignofExpr::AlignofExpr( const CodeLocation & loc, const Expr * e )
-: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( e ), type( nullptr ) {}
-
 AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), expr( nullptr ), type( t ) {}
+: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), type( t ) {}
 
 // --- OffsetofExpr
 

@@ -298,9 +298,8 @@ static bool exprsPolyCompatible( ast::Expr const * lhs,
 		ast::SizeofExpr const * l = as<ast::SizeofExpr>(lhs);
 		ast::SizeofExpr const * r = as<ast::SizeofExpr>(rhs);
 
-		assert((l->type != nullptr) ^ (l->expr != nullptr));
-		assert((r->type != nullptr) ^ (r->expr != nullptr));
-		if ( !(l->type && r->type) ) return false;
+		assert( l->type );
+		assert( r->type );
 
 		// mutual recursion with type poly compatibility
 		return typesPolyCompatible( l->type, r->type );

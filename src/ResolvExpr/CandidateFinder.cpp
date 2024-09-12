@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Wed Jun 5 14:30:00 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun 22 08:07:26 2024
-// Update Count     : 4
+// Last Modified On : Mon Sep  9 11:30:11 2024
+// Update Count     : 5
 //
 
 #include "CandidateFinder.hpp"
@@ -1238,7 +1238,7 @@ namespace {
 
 		CandidateList matches;
 		Cost minExprCost = Cost::infinity;
-		Cost minCastCost = Cost::infinity;
+		// Cost minCastCost = Cost::infinity;
 		for ( CandidateRef & cand : finder.candidates ) {
 			ast::ptr< ast::Type > fromType = cand->expr->result;
 			assert( fromType );
@@ -1481,27 +1481,10 @@ namespace {
 	}
 
 	void Finder::postvisit( const ast::SizeofExpr * sizeofExpr ) {
-		if ( sizeofExpr->type ) {
-			addCandidate(
-				new ast::SizeofExpr{
-					sizeofExpr->location, resolveTypeof( sizeofExpr->type, context ) },
-				tenv );
-		} else {
-			// find all candidates for the argument to sizeof
-			CandidateFinder finder( context, tenv );
-			finder.find( sizeofExpr->expr );
-			// find the lowest-cost candidate, otherwise ambiguous
-			CandidateList winners = findMinCost( finder.candidates );
-			if ( winners.size() != 1 ) {
-				SemanticError(
-					sizeofExpr->expr.get(), "Ambiguous expression in sizeof operand: " );
-			}
-			// return the lowest-cost candidate
-			CandidateRef & choice = winners.front();
-			choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
-			choice->cost = Cost::zero;
-			addCandidate( *choice, new ast::SizeofExpr{ sizeofExpr->location, choice->expr } );
-		}
+		addCandidate(
+			new ast::SizeofExpr{
+				sizeofExpr->location, resolveTypeof( sizeofExpr->type, context ) },
+			tenv );
 	}
 
 	void Finder::postvisit( const ast::CountExpr * countExpr ) {
@@ -1536,28 +1519,10 @@ namespace {
 	}
 
 	void Finder::postvisit( const ast::AlignofExpr * alignofExpr ) {
-		if ( alignofExpr->type ) {
-			addCandidate(
-				new ast::AlignofExpr{
-					alignofExpr->location, resolveTypeof( alignofExpr->type, context ) },
-				tenv );
-		} else {
-			// find all candidates for the argument to alignof
-			CandidateFinder finder( context, tenv );
-			finder.find( alignofExpr->expr );
-			// find the lowest-cost candidate, otherwise ambiguous
-			CandidateList winners = findMinCost( finder.candidates );
-			if ( winners.size() != 1 ) {
-				SemanticError(
-					alignofExpr->expr.get(), "Ambiguous expression in alignof operand: " );
-			}
-			// return the lowest-cost candidate
-			CandidateRef & choice = winners.front();
-			choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );
-			choice->cost = Cost::zero;
-			addCandidate(
-				*choice, new ast::AlignofExpr{ alignofExpr->location, choice->expr } );
-		}
+		addCandidate(
+			new ast::AlignofExpr{
+				alignofExpr->location, resolveTypeof( alignofExpr->type, context ) },
+			tenv );
 	}
 
 	void Finder::postvisit( const ast::UntypedOffsetofExpr * offsetofExpr ) {

@@ -117,19 +117,20 @@ void test_custom() {
     }
 }
 
+struct thing { int mem; };
+void ?{}( thing & this, int i ) {
+    (this.mem){ i };
+    printf("ctor %d\n", this.mem);
+}
+void ?{}( thing & this ) {
+    (this){ 999 };
+}
+void ^?{}( thing & this ) {
+    printf("dtor %d\n", this.mem);
+}
+
 // Array of uninits sees explicit ctor calls (only), and implied dtor calls
 void test_uninit() {
-    struct thing { int mem; };
-    void ?{}( thing & this, int i ) {
-        (this.mem){ i };
-        printf("ctor %d\n", this.mem);
-    }
-    void ?{}( thing & this ) {
-        (this){ 999 };
-    }
-    void ^?{}( thing & this ) {
-        printf("dtor %d\n", this.mem);
-    }
     printf(" [1]\n");
     {
         ADECL1(a, uninit(thing), 5)
@@ -162,6 +163,8 @@ void test_uninit() {
     }
 }
 
+void test_extras();
+
 int main() {
     printf("=== builtins\n");
     test_builtins();
@@ -169,6 +172,8 @@ int main() {
     printf("=== custom\n");
     test_custom();
 
-    printf("=== uninit\n");
+    printf("=== uninit ( uNoCtor[] )\n");
     test_uninit();
+
+    test_extras();
 }

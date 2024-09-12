@@ -27,7 +27,7 @@ extern "C" {
 	#include <unistd.h>
 }
 
-static int true_main(const char * path, char * env[]);
+static int true_main(const char * path, const char * env[]);
 
 static int do_wait(pid_t pid) {
 	int wstatus;
@@ -69,6 +69,6 @@ static void print_status(int wstatus) {
 static void check_main(const char * path) {
 	if(getenv("CFATEST_FORK_EXEC_TEXT")) return;
 
-	char * env[] = { "CFATEST_FORK_EXEC_TEXT=1", 0p };
+	const char * env[] = { "CFATEST_FORK_EXEC_TEXT=1", (char*)0 };
 	exit( true_main(path, env) );
 }

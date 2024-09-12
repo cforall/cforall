@@ -15,9 +15,67 @@
 
 // CFA array means like `array(float, 17) x;`
 
+
+#include <fstream.hfa>
 #include <collections/array.hfa>
 
 #define ADECL1(X, El, N)    array(El, N) X;
 #define ADECL2(X, El, M, N) array(El, M, N) X;
 
 #include "array-raii.hfa"
+
+void test_uninit_alt() {
+    printf(" [1]\n");
+    {
+        array(thing, 5) a = { delay_init };
+        printf("before ctors\n");
+        for(i; 5) {
+            if (i == 1)
+                (a[i]){};  // no need for `emplace` bc no-arg ctor call means elem's real ctor
+            else if (i == 2)
+                (a[i]){888};
+            else
+                (a[i]){i};
+        }
+        for(i; 5) printf("func %d\n", a[i].mem);
+    }
+    printf(" [2]\n");
+    {
+        array(thing, 2, 3) a = { delay_init };
+        printf("before ctors\n");
+        for(i; 2) for(j; 3) {
+            if (i == 1 && j == 1)
+                (a[i][j]){};
+            else if (i == 1 && j == 2)
+                (a[i][j]){888};
+            else
+                (a[i][j]){100 + 10 * i + j};
+        }
+        for(i; 2) for(j; 3) {
+            printf("func %d at (%d, %d)\n", a[i][j].mem, i, j);
+        }
+    }
+}
+
+void test_uCxxCheatSheet() {
+    struct S {
+        int i;
+    };
+    void ?{}( S & s, int i ) { s.i = i; sout | "ctor" | s.i; }
+    void ^?{}( S & s ) { sout | "dtor" | s.i; }
+//  int main() {
+        enum { N = 5 };
+        array(S, N) s = { delay_init };   // no constructor calls
+        for ( i; N ) s[i]{ i };
+        for ( i; N ) sout | s[i].i;
+//  }
+}
+
+void test_extras() {
+
+    printf("=== uninit alt ( uArray )\n");
+    test_uninit_alt();
+
+    printf("=== uC++ cheat sheet\n");
+    test_uCxxCheatSheet();
+}

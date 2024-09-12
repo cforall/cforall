@@ -105,15 +105,6 @@ void memberMatchesAggregate( const MemberExpr * expr ) {
 	assertf( false, "Member not found." );
 }
 
-template<typename node_t>
-void oneOfExprOrType( const node_t * node ) {
-	if ( node->expr ) {
-		assertf( node->expr && !node->type, "Exactly one of expr or type should be set." );
-	} else {
-		assertf( !node->expr && node->type, "Exactly one of expr or type should be set." );
-	}
-}
-
 /// Check for Floating Nodes:
 /// Every node should be reachable from a root (the TranslationUnit) via a
 /// chain of structural references (tracked with ptr). This cannot check all
@@ -158,16 +149,6 @@ struct InvariantCore {
 	void previsit( const MemberExpr * node ) {
 		previsit( (const ParseNode *)node );
 		memberMatchesAggregate( node );
-	}
-
-	void previsit( const SizeofExpr * node ) {
-		previsit( (const ParseNode *)node );
-		oneOfExprOrType( node );
-	}
-
-	void previsit( const AlignofExpr * node ) {
-		previsit( (const ParseNode *)node );
-		oneOfExprOrType( node );
 	}
 
 	void previsit( const StructInstType * node ) {

@@ -926,11 +926,11 @@ unary_expression:
 	| DECR unary_expression
 		{ $$ = new ExpressionNode( build_unary_val( yylloc, OperKinds::Decr, $2 ) ); }
 	| SIZEOF unary_expression
-		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuild( $2 ) ) ); }
+		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, new ast::TypeofType( maybeMoveBuild( $2 ) ) ) ); }
 	| SIZEOF '(' type_no_function ')'
 		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
 	| ALIGNOF unary_expression							// GCC, variable alignment
-		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, maybeMoveBuild( $2 ) ) ); }
+		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, new ast::TypeofType( maybeMoveBuild( $2 ) ) ) ); }
 	| ALIGNOF '(' type_no_function ')'					// GCC, type alignment
 		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
 

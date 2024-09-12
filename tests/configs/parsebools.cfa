@@ -49,7 +49,7 @@ int main( int argc, char * argv[] ) {
 	sout | "set false  :" | sf;
 }
 
-int true_main( const char * path, char * env[] ) {
+int true_main( const char * path, const char * env[] ) {
 	printf( "no arg:\n" );
 	if ( pid_t child = strict_fork(); child == 0 ) {
 		int ret = execle( path, "parsebools", (const char*)0p, env );

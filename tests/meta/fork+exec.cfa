@@ -31,7 +31,7 @@ int main(int argc, char * argv[]) {
 
 
 
-int true_main(const char * path, char * env[]) {
+int true_main(const char * path, const char * env[]) {
 	printf("no arg:\n");
 	if(pid_t child = strict_fork(); child == 0) {
 		int ret = execle(path, path, (const char*)0p, env);

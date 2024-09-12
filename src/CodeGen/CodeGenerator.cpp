@@ -743,10 +743,10 @@ void CodeGenerator::postvisit( ast::ConstantExpr const * expr ) {
 void CodeGenerator::postvisit( ast::SizeofExpr const * expr ) {
 	extension( expr );
 	output << "sizeof(";
-	if ( expr->type ) {
-		output << genType( expr->type, "", options );
+	if ( auto type = expr->type.as<ast::TypeofType>() ) {
+		type->expr->accept( *visitor );
 	} else {
-		expr->expr->accept( *visitor );
+		output << genType( expr->type, "", options );
 	}
 	output << ")";
 }
@@ -755,10 +755,10 @@ void CodeGenerator::postvisit( ast::AlignofExpr const * expr ) {
 	// Using the GCC extension to avoid changing the std to C11.
 	extension( expr );
 	output << "__alignof__(";
-	if ( expr->type ) {
-		output << genType( expr->type, "", options );
+	if ( auto type = expr->type.as<ast::TypeofType>() ) {
+		type->expr->accept( *visitor );
 	} else {
-		expr->expr->accept( *visitor );
+		output << genType( expr->type, "", options );
 	}
 	output << ")";
 }

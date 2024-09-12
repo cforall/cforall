@@ -1151,8 +1151,7 @@ public:
 	virtual const ast::Expr * visit( const ast::SizeofExpr * node ) override final {
 		os << "Sizeof Expression on: ";
 		++indent;
-		if ( node->type ) node->type->accept( *this );
-		else safe_print( node->expr );
+		node->type->accept( *this );
 		--indent;
 		postprint( node );
 
@@ -1172,8 +1171,7 @@ public:
 	virtual const ast::Expr * visit( const ast::AlignofExpr * node ) override final {
 		os << "Alignof Expression on: ";
 		++indent;
-		if ( node->type ) node->type->accept( *this );
-		else safe_print( node->expr );
+		node->type->accept( *this );
 		--indent;
 		postprint( node );
 

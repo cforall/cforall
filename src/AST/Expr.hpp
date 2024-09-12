@@ -479,12 +479,9 @@ private:
 /// sizeof expression, e.g. `sizeof(int)`, `sizeof 3+4`
 class SizeofExpr final : public Expr {
 public:
-	ptr<Expr> expr;
 	ptr<Type> type;
 
-	SizeofExpr( const CodeLocation & loc, const Expr * e );
 	SizeofExpr( const CodeLocation & loc, const Type * t );
-	// deliberately no disambiguating overload for nullptr_t
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
@@ -509,12 +506,9 @@ private:
 /// alignof expression, e.g. `alignof(int)`, `alignof 3+4`
 class AlignofExpr final : public Expr {
 public:
-	ptr<Expr> expr;
 	ptr<Type> type;
 
-	AlignofExpr( const CodeLocation & loc, const Expr * e );
 	AlignofExpr( const CodeLocation & loc, const Type * t );
-	// deliberately no disambiguating overload for nullptr_t
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:

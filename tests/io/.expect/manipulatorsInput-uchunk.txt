@@ -1,0 +1,124 @@
+--- default.1 ---
+BGN "---"x
+END "---"x
+--- default.2 ---
+BGN "---"x
+GOT "123"x
+END "---"x
+--- default.3 ---
+BGN "---"x
+GOT "12345678"x
+END "---"x
+--- default.4 ---
+BGN "---"x
+END "---"x
+--- default.5 ---
+BGN "---"x
+GOT "123"x
+END "---"x
+--- default.6 ---
+BGN "---"x
+GOT "12345678"x
+END "---"x
+--- default.7 ---
+BGN "---"x
+GOT "1"x
+END "---"x
+--- default.8 ---
+BGN "---"x
+GOT "1123"x
+END "---"x
+--- default.9 ---
+BGN "---"x
+GOT "1"x
+END "---"x
+--- default.10 ---
+BGN "---"x
+GOT "1"x
+END "---"x
+--- default.11 ---
+BGN "---"x
+GOT "1"x
+GOT "123"x
+END "---"x
+--- default.12 ---
+BGN "---"x
+GOT "123"x
+GOT "12345678"x
+END "---"x
+--- default.13 ---
+BGN "---"x
+GOT "12345678"x
+GOT "1"x
+END "---"x
+--- default.14 ---
+BGN "---"x
+END "---"x
+--- getline.1 ---
+BGN "---"x
+END "---"x
+--- getline.2 ---
+BGN "---"x
+GOT "123"x
+END "---"x
+--- getline.3 ---
+BGN "---"x
+GOT "12345678"x
+END "---"x
+--- getline.4 ---
+BGN "---"x
+GOT ""x
+END "---"x
+--- getline.5 ---
+BGN "---"x
+GOT "123"x
+END "---"x
+--- getline.6 ---
+BGN "---"x
+GOT "12345678"x
+END "---"x
+--- getline.7 ---
+BGN "---"x
+GOT "1"x
+END "---"x
+--- getline.8 ---
+BGN "---"x
+GOT ""x
+GOT "123"x
+END "---"x
+--- getline.9 ---
+BGN "---"x
+GOT ""x
+GOT ""x
+GOT "1"x
+END "---"x
+--- getline.10 ---
+BGN "---"x
+GOT "1"x
+GOT ""x
+END "---"x
+--- getline.11 ---
+BGN "---"x
+GOT ""x
+GOT ""x
+GOT "1"x
+GOT "123 "x
+END "---"x
+--- getline.12 ---
+BGN "---"x
+GOT "123"x
+GOT ""x
+GOT "12345678"x
+GOT ""x
+END "---"x
+--- getline.13 ---
+BGN "---"x
+GOT ""x
+GOT "12345678"x
+GOT "1"x
+END "---"x
+--- getline.14 ---
+BGN "---"x
+GOT ""x
+GOT ""x
+END "---"x
