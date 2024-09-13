@@ -10,8 +10,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  9 11:28:07 2024
-// Update Count     : 430
+// Last Modified On : Mon Sep  9 21:49:15 2024
+// Update Count     : 431
 //
 
 #include "StatementNode.hpp"
@@ -183,7 +183,7 @@ ast::CaseClause * build_default( const CodeLocation & location ) {
 } // build_default
 
 ast::Stmt * build_while( const CodeLocation & location, CondCtl * ctl, StatementNode * stmt, StatementNode * else_ ) {
-	std::vector<ast::ptr<ast::Stmt>> astinit;						// maybe empty
+	std::vector<ast::ptr<ast::Stmt>> astinit;			// maybe empty
 	ast::Expr * astcond = build_if_control( ctl, astinit ); // ctl deleted, cond/init set
 
 	return new ast::WhileDoStmt( location,
