@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep 11 16:28:06 2024
-// Update Count     : 1089
+// Last Modified On : Thu Sep 12 22:40:35 2024
+// Update Count     : 1090
 //
 
 #include "ExpressionNode.hpp"
@@ -380,8 +380,8 @@ static inline void checkFnxFloat( string & str, size_t last, bool & explnth, int
 ast::Expr * build_constantFloat(
 		const CodeLocation & location, string & str ) {
 	static const ast::BasicKind kind[2][12] = {
-		{ ast::BasicKind::Float, ast::BasicKind::Double, ast::BasicKind::LongDouble, ast::BasicKind::uuFloat80, ast::BasicKind::uuFloat128, ast::BasicKind::uFloat16, ast::BasicKind::uFloat32, ast::BasicKind::uFloat32x, ast::BasicKind::uFloat64, ast::BasicKind::uFloat64x, ast::BasicKind::uFloat128, ast::BasicKind::uFloat128x },
-		{ ast::BasicKind::FloatComplex, ast::BasicKind::DoubleComplex, ast::BasicKind::LongDoubleComplex, ast::BasicKind::NUMBER_OF_BASIC_TYPES, ast::BasicKind::NUMBER_OF_BASIC_TYPES, ast::BasicKind::uFloat16Complex, ast::BasicKind::uFloat32Complex, ast::BasicKind::uFloat32xComplex, ast::BasicKind::uFloat64Complex, ast::BasicKind::uFloat64xComplex, ast::BasicKind::uFloat128Complex, ast::BasicKind::uFloat128xComplex },
+		{ ast::BasicKind::Float, ast::BasicKind::Double, ast::BasicKind::LongDouble, ast::BasicKind::Float80, ast::BasicKind::uuFloat128, ast::BasicKind::Float16, ast::BasicKind::Float32, ast::BasicKind::Float32x, ast::BasicKind::Float64, ast::BasicKind::Float64x, ast::BasicKind::Float128, ast::BasicKind::Float128x },
+		{ ast::BasicKind::FloatComplex, ast::BasicKind::DoubleComplex, ast::BasicKind::LongDoubleComplex, ast::BasicKind::NUMBER_OF_BASIC_TYPES, ast::BasicKind::NUMBER_OF_BASIC_TYPES, ast::BasicKind::Float16Complex, ast::BasicKind::Float32Complex, ast::BasicKind::Float32xComplex, ast::BasicKind::Float64Complex, ast::BasicKind::Float64xComplex, ast::BasicKind::Float128Complex, ast::BasicKind::Float128xComplex },
 	};
 
 	// floating-point constant has minimum of 2 characters 1. or .1
@@ -464,12 +464,6 @@ static bool isoctal( char ch ) {
 	return ('0' <= ch && ch <= '7');
 }
 
-static bool ishexadecimal( char ch ) {
-	return (('0' <= ch && ch <= '9')
-		|| ('a' <= ch && ch <= 'f')
-		|| ('A' <= ch && ch <= 'F'));
-}
-
 // A "sequence" is the series of characters in a character/string literal
 // that becomes a single character value in the runtime value.
 static size_t sequenceLength( const std::string & str, size_t pos ) {
@@ -490,7 +484,7 @@ static size_t sequenceLength( const std::string & str, size_t pos ) {
 		  // Numeric Escape Sequence (\x_ where _ is 1 or more hexadecimal digits):
 	  case 'x': {
 		  size_t length = 2;
-		  while ( ishexadecimal( str[pos + length] ) ) ++length;
+		  while ( isxdigit( str[pos + length] ) ) ++length;
 		  return length;
 	  }
 		// Universal Character Name (\u____ where _ is 4 decimal digits):

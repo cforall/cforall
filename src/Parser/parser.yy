@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 13 11:25:16 2024
-// Update Count     : 6740
+// Last Modified On : Thu Sep 12 22:48:32 2024
+// Update Count     : 6741
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -365,8 +365,9 @@ if ( N ) {																		\
 %token FORALL MUTEX VIRTUAL VTABLE COERCE				// CFA
 %token VOID CHAR SHORT INT LONG FLOAT DOUBLE SIGNED UNSIGNED
 %token BOOL COMPLEX IMAGINARY							// C99
-%token INT128 UINT128 uuFLOAT80 uuFLOAT128				// GCC
-%token uFLOAT16 uFLOAT32 uFLOAT32X uFLOAT64 uFLOAT64X uFLOAT128 // GCC
+%token INT128 UINT128 FLOAT80 uuFLOAT128				// GCC
+%token FLOAT16 FLOAT32 FLOAT32X FLOAT64 FLOAT64X FLOAT128 FLOAT128X // GCC
+%token FLOAT32X4 FLOAT64X2 SVFLOAT32 SVFLOAT64 SVBOOL	// GCC (ARM)
 %token DECIMAL32 DECIMAL64 DECIMAL128					// GCC
 %token ZERO_T ONE_T										// CFA
 %token SIZEOF TYPEOF VA_LIST VA_ARG AUTO_TYPE COUNTOF	// GCC
@@ -2363,22 +2364,34 @@ basic_type_name_type:
 		{ $$ = build_basic_type( TypeData::Float ); }
 	| DOUBLE
 		{ $$ = build_basic_type( TypeData::Double ); }
-	| uuFLOAT80
-		{ $$ = build_basic_type( TypeData::uuFloat80 ); }
+	| FLOAT80
+		{ $$ = build_basic_type( TypeData::Float80 ); }
 	| uuFLOAT128
 		{ $$ = build_basic_type( TypeData::uuFloat128 ); }
-	| uFLOAT16
-		{ $$ = build_basic_type( TypeData::uFloat16 ); }
-	| uFLOAT32
-		{ $$ = build_basic_type( TypeData::uFloat32 ); }
-	| uFLOAT32X
-		{ $$ = build_basic_type( TypeData::uFloat32x ); }
-	| uFLOAT64
-		{ $$ = build_basic_type( TypeData::uFloat64 ); }
-	| uFLOAT64X
-		{ $$ = build_basic_type( TypeData::uFloat64x ); }
-	| uFLOAT128
-		{ $$ = build_basic_type( TypeData::uFloat128 ); }
+	| FLOAT16
+		{ $$ = build_basic_type( TypeData::Float16 ); }
+	| FLOAT32
+		{ $$ = build_basic_type( TypeData::Float32 ); }
+	| FLOAT32X
+		{ $$ = build_basic_type( TypeData::Float32x ); }
+	| FLOAT64
+		{ $$ = build_basic_type( TypeData::Float64 ); }
+	| FLOAT64X
+		{ $$ = build_basic_type( TypeData::Float64x ); }
+	| FLOAT128
+		{ $$ = build_basic_type( TypeData::Float128 ); }
+	| FLOAT128X
+		{ $$ = build_basic_type( TypeData::Float128x ); }
+	| FLOAT32X4
+		{ $$ = build_basic_type( TypeData::Float32x4 ); }
+	| FLOAT64X2
+		{ $$ = build_basic_type( TypeData::Float64x2 ); }
+	| SVFLOAT32
+		{ $$ = build_basic_type( TypeData::Svfloat32 ); }
+	| SVFLOAT64
+		{ $$ = build_basic_type( TypeData::Svfloat64 ); }
+	| SVBOOL
+		{ $$ = build_basic_type( TypeData::Svbool ); }
 	| DECIMAL32
 		{ SemanticError( yylloc, "_Decimal32 is currently unimplemented." ); $$ = nullptr; }
 	| DECIMAL64

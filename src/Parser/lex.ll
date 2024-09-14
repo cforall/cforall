@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Thu Jun 27 14:38:27 2024
- * Update Count     : 780
+ * Last Modified On : Wed Sep 11 17:16:23 2024
+ * Update Count     : 791
  */
 
 %option yylineno
@@ -233,6 +233,7 @@ auto			{ KEYWORD_RETURN(AUTO); }
 __auto_type		{ KEYWORD_RETURN(AUTO_TYPE); }
 basetypeof		{ KEYWORD_RETURN(BASETYPEOF); }			// CFA
 _Bool			{ KEYWORD_RETURN(BOOL); }				// C99
+__SVBool_t		{ KEYWORD_RETURN(SVBOOL); }				// gcc (ARM)
 break			{ KEYWORD_RETURN(BREAK); }
 case			{ KEYWORD_RETURN(CASE); }
 catch			{ QKEYWORD_RETURN(CATCH); }				// CFA
@@ -269,17 +270,21 @@ fallthru		{ KEYWORD_RETURN(FALLTHRU); }			// CFA
 finally			{ QKEYWORD_RETURN(FINALLY); }			// CFA
 fixup			{ QKEYWORD_RETURN(FIXUP); }				// CFA
 float			{ KEYWORD_RETURN(FLOAT); }
-__float80		{ KEYWORD_RETURN(uuFLOAT80); }			// GCC
-float80			{ KEYWORD_RETURN(uuFLOAT80); }			// GCC
+__float80		{ KEYWORD_RETURN(FLOAT80); }			// GCC
+float80			{ KEYWORD_RETURN(FLOAT80); }			// GCC
 __float128		{ KEYWORD_RETURN(uuFLOAT128); }			// GCC
 float128		{ KEYWORD_RETURN(uuFLOAT128); }			// GCC
-_Float16		{ FLOATXX(uFLOAT16); }					// GCC
-_Float32		{ FLOATXX(uFLOAT32); }					// GCC
-_Float32x		{ FLOATXX(uFLOAT32X); }					// GCC
-_Float64		{ FLOATXX(uFLOAT64); }					// GCC
-_Float64x		{ FLOATXX(uFLOAT64X); }					// GCC
-_Float128		{ FLOATXX(uFLOAT128); }					// GCC
-_Float128x		{ FLOATXX(uFLOAT128); }					// GCC
+_Float16		{ FLOATXX(FLOAT16); }					// GCC
+_Float32		{ FLOATXX(FLOAT32); }					// GCC
+_Float32x		{ FLOATXX(FLOAT32X); }					// GCC
+_Float64		{ FLOATXX(FLOAT64); }					// GCC
+_Float64x		{ FLOATXX(FLOAT64X); }					// GCC
+_Float128		{ FLOATXX(FLOAT128); }					// GCC
+_Float128x		{ FLOATXX(FLOAT128X); }					// GCC
+__Float32x4_t	{ FLOATXX(FLOAT32X4); }					// GCC (ARM)
+__Float64x2_t	{ FLOATXX(FLOAT64X2); }					// GCC (ARM)
+__SVFloat32_t	{ FLOATXX(SVFLOAT32); }					// GCC (ARM)
+__SVFloat64_t	{ FLOATXX(SVFLOAT64); }					// GCC (ARM)
 for				{ KEYWORD_RETURN(FOR); }
 forall			{ KEYWORD_RETURN(FORALL); }				// CFA
 fortran			{ KEYWORD_RETURN(FORTRAN); }

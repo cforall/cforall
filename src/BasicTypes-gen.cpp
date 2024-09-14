@@ -8,7 +8,7 @@
 using namespace std;
 #include <assert.h>
 #include <string.h>										// strlen
-#include "config.h"									// configure info
+#include "config.h"										// configure info
 
 enum Kind {
 	Bool,
@@ -25,32 +25,38 @@ enum Kind {
 	LongLongUnsignedInt,
 	SignedInt128,
 	UnsignedInt128,
-	uFloat16,
-	uFloat16Complex,
-	uFloat32,
-	uFloat32Complex,
+	Float16,
+	Float16Complex,
+	Float32,
+	Float32Complex,
 	Float,
 	FloatComplex,
 	// FloatImaginary,
-	uFloat32x,
-	uFloat32xComplex,
-	uFloat64,
-	uFloat64Complex,
+	Float32x,
+	Float32xComplex,
+	Float64,
+	Float64Complex,
 	Double,
 	DoubleComplex,
 	// DoubleImaginary,
-	uFloat64x,
-	uFloat64xComplex,
-	uuFloat80,
-	uFloat128,
-	uFloat128Complex,
+	Float64x,
+	Float64xComplex,
+	Float80,
+	Float128,
+	Float128Complex,
 	uuFloat128,
 	LongDouble,
 	LongDoubleComplex,
 	// LongDoubleImaginary,
-	uFloat128x,
-	uFloat128xComplex,
-	NUMBER_OF_BASIC_TYPES
+	Float128x,
+	Float128xComplex,
+	NUMBER_OF_BASIC_TYPES,
+
+	Float32x4,											// ARM, gcc-14
+	Float64x2,
+	Svfloat32,
+	Svfloat64,
+	Svbool,
 };
 
 enum NumSort {											// floating point types act as both signed and unsigned
@@ -87,37 +93,37 @@ struct Node {
 	{ LongLongSignedInt, "LongLongSignedInt", "LLI", "signed long long int", "x", Signed, LongLongUnsignedInt, SignedInt128, -1, 5 },
 	{ LongLongUnsignedInt, "LongLongUnsignedInt", "LLUI", "unsigned long long int", "y", Unsigned, SignedInt128, UnsignedInt128, -1, 5 },
 
-	{ SignedInt128, "SignedInt128", "IB", "__int128", "n", Signed, UnsignedInt128, uFloat16, -1, 6 },
-	{ UnsignedInt128, "UnsignedInt128", "UIB", "unsigned __int128", "o", Unsigned, uFloat16, -1, -1, 6 },
+	{ SignedInt128, "SignedInt128", "IB", "__int128", "n", Signed, UnsignedInt128, Float16, -1, 6 },
+	{ UnsignedInt128, "UnsignedInt128", "UIB", "unsigned __int128", "o", Unsigned, Float16, -1, -1, 6 },
 
-	{ uFloat16, "uFloat16", "_FH", "_Float16", "DF16_", Floating, uFloat32, uFloat16Complex, -1, 7 },
-	{ uFloat16Complex, "uFloat16Complex", "_FH", "_Float16 _Complex", "CDF16_", Floating, uFloat32Complex, -1, -1, 7 },
-	{ uFloat32, "uFloat32", "_F", "_Float32", "DF32_", Floating, Float, uFloat32Complex, -1, 8 },
-	{ uFloat32Complex, "uFloat32Complex", "_FC", "_Float32 _Complex", "CDF32_", Floating, FloatComplex, -1, -1, 8 },
-	{ Float, "Float", "F", "float", "f", Floating, uFloat32x, FloatComplex, -1, 9 },
-	{ FloatComplex, "FloatComplex", "FC", "float _Complex", "Cf", Floating, uFloat32xComplex, -1, -1, 9 },
+	{ Float16, "Float16", "_FH", "_Float16", "DF16_", Floating, Float32, Float16Complex, -1, 7 },
+	{ Float16Complex, "Float16Complex", "_FH", "_Float16 _Complex", "CDF16_", Floating, Float32Complex, -1, -1, 7 },
+	{ Float32, "Float32", "_F", "_Float32", "DF32_", Floating, Float, Float32Complex, -1, 8 },
+	{ Float32Complex, "Float32Complex", "_FC", "_Float32 _Complex", "CDF32_", Floating, FloatComplex, -1, -1, 8 },
+	{ Float, "Float", "F", "float", "f", Floating, Float32x, FloatComplex, -1, 9 },
+	{ FloatComplex, "FloatComplex", "FC", "float _Complex", "Cf", Floating, Float32xComplex, -1, -1, 9 },
 	// { FloatImaginary, "FloatImaginary", "FI", "float _Imaginary", "If", false, DoubleImaginary, FloatComplex, -1, 9 },
 
-	{ uFloat32x, "uFloat32x", "_FX", "_Float32x", "DF32x_", Floating, uFloat64, uFloat32xComplex, -1, 10 },
-	{ uFloat32xComplex, "uFloat32xComplex", "_FXC", "_Float32x _Complex", "CDF32x_", Floating, uFloat64Complex, -1, -1, 10 },
-	{ uFloat64, "uFloat64", "FD", "_Float64", "DF64_", Floating, Double, uFloat64Complex, -1, 11 },
-	{ uFloat64Complex, "uFloat64Complex", "_FDC", "_Float64 _Complex", "CDF64_", Floating, DoubleComplex, -1, -1, 11 },
-	{ Double, "Double", "D", "double", "d", Floating, uFloat64x, DoubleComplex, -1, 12 },
-	{ DoubleComplex, "DoubleComplex", "DC", "double _Complex", "Cd", Floating, uFloat64xComplex, -1, -1, 12 },
+	{ Float32x, "Float32x", "_FX", "_Float32x", "DF32x_", Floating, Float64, Float32xComplex, -1, 10 },
+	{ Float32xComplex, "Float32xComplex", "_FXC", "_Float32x _Complex", "CDF32x_", Floating, Float64Complex, -1, -1, 10 },
+	{ Float64, "Float64", "FD", "_Float64", "DF64_", Floating, Double, Float64Complex, -1, 11 },
+	{ Float64Complex, "Float64Complex", "_FDC", "_Float64 _Complex", "CDF64_", Floating, DoubleComplex, -1, -1, 11 },
+	{ Double, "Double", "D", "double", "d", Floating, Float64x, DoubleComplex, -1, 12 },
+	{ DoubleComplex, "DoubleComplex", "DC", "double _Complex", "Cd", Floating, Float64xComplex, -1, -1, 12 },
 	// { DoubleImaginary, "DoubleImaginary", "DI", "double _Imaginary", "Id", false, LongDoubleImaginary, DoubleComplex, -1, 12 },
 
-	{ uFloat64x, "uFloat64x", "F80X", "_Float64x", "DF64x_", Floating, uuFloat80, uFloat64xComplex, -1, 13 },
-	{ uFloat64xComplex, "uFloat64xComplex", "_FDXC", "_Float64x _Complex", "CDF64x_", Floating, uFloat128Complex, -1, -1, 13 },
-	{ uuFloat80, "uuFloat80", "F80", "__float80", "Dq", Floating, uFloat128, uFloat64xComplex, -1, 14 },
-	{ uFloat128, "uFloat128", "_FB", "_Float128", "DF128_", Floating, uuFloat128, uFloat128Complex, -1, 15 },
-	{ uFloat128Complex, "uFloat128Complex", "_FLDC", "_Float128 _Complex", "CDF128_", Floating, LongDoubleComplex, -1, -1, 15 },
-	{ uuFloat128, "uuFloat128", "FB", "__float128", "g", Floating, LongDouble, uFloat128Complex, -1, 16 },
-	{ LongDouble, "LongDouble", "LD", "long double", "e", Floating, uFloat128x, LongDoubleComplex, -1, 17 },
-	{ LongDoubleComplex, "LongDoubleComplex", "LDC", "long double _Complex", "Ce", Floating, uFloat128xComplex, -1, -1, 17 },
+	{ Float64x, "Float64x", "F80X", "_Float64x", "DF64x_", Floating, Float80, Float64xComplex, -1, 13 },
+	{ Float64xComplex, "Float64xComplex", "_FDXC", "_Float64x _Complex", "CDF64x_", Floating, Float128Complex, -1, -1, 13 },
+	{ Float80, "Float80", "F80", "__float80", "Dq", Floating, Float128, Float64xComplex, -1, 14 },
+	{ Float128, "Float128", "_FB", "_Float128", "DF128_", Floating, uuFloat128, Float128Complex, -1, 15 },
+	{ Float128Complex, "Float128Complex", "_FLDC", "_Float128 _Complex", "CDF128_", Floating, LongDoubleComplex, -1, -1, 15 },
+	{ uuFloat128, "uuFloat128", "FB", "__float128", "g", Floating, LongDouble, Float128Complex, -1, 16 },
+	{ LongDouble, "LongDouble", "LD", "long double", "e", Floating, Float128x, LongDoubleComplex, -1, 17 },
+	{ LongDoubleComplex, "LongDoubleComplex", "LDC", "long double _Complex", "Ce", Floating, Float128xComplex, -1, -1, 17 },
 	// { LongDoubleImaginary, "LongDoubleImaginary", "LDI", "long double _Imaginary", "Ie", false, LongDoubleComplex, -1, -1, 17 },
 
-	{ uFloat128x, "uFloat128x", "_FBX", "_Float128x", "DF128x_", Floating, uFloat128xComplex, -1, -1, 18 },
-	{ uFloat128xComplex, "uFloat128xComplex", "_FLDXC", "_Float128x _Complex", "CDF128x_", Floating, -1, -1, -1, 18 }
+	{ Float128x, "Float128x", "_FBX", "_Float128x", "DF128x_", Floating, Float128xComplex, -1, -1, 18 },
+	{ Float128xComplex, "Float128xComplex", "_FLDXC", "_Float128x _Complex", "CDF128x_", Floating, -1, -1, -1, 18 }
 }; // graph
 
 static int costMatrix[NUMBER_OF_BASIC_TYPES][NUMBER_OF_BASIC_TYPES];

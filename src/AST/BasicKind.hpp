@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Thu Apr 18 14:00:00 2024
-// Last Modified By : Andrew Beach
-// Last Modified On : Thu Apr 18 14:00:00 2024
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Sep  9 20:51:13 2024
+// Update Count     : 2
 //
 
 #pragma once
@@ -34,28 +34,28 @@ enum BasicKind {
 	LongLongUnsignedInt,
 	SignedInt128,
 	UnsignedInt128,
-	uFloat16,
-	uFloat16Complex,
-	uFloat32,
-	uFloat32Complex,
+	Float16,
+	Float16Complex,
+	Float32,
+	Float32Complex,
 	Float,
 	FloatComplex,
-	uFloat32x,
-	uFloat32xComplex,
-	uFloat64,
-	uFloat64Complex,
+	Float32x,
+	Float32xComplex,
+	Float64,
+	Float64Complex,
 	Double,
 	DoubleComplex,
-	uFloat64x,
-	uFloat64xComplex,
-	uuFloat80,
-	uFloat128,
-	uFloat128Complex,
+	Float64x,
+	Float64xComplex,
+	Float80,
+	Float128,
+	Float128Complex,
 	uuFloat128,
 	LongDouble,
 	LongDoubleComplex,
-	uFloat128x,
-	uFloat128xComplex,
+	Float128x,
+	Float128xComplex,
 	NUMBER_OF_BASIC_TYPES,
 	MAX_INTEGER_TYPE = UnsignedInt128,
 };

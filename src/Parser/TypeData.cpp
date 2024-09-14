@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 15:12:51 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 23 08:58:30 2024
-// Update Count     : 734
+// Last Modified On : Thu Sep 12 22:43:59 2024
+// Update Count     : 735
 //
 
 #include "TypeData.hpp"
@@ -1157,18 +1157,18 @@ ast::Type * buildBasicType( const TypeData * td ) {
 	case TypeData::Float:
 	case TypeData::Double:
 	case TypeData::LongDouble:					// not set until below
-	case TypeData::uuFloat80:
+	case TypeData::Float80:
 	case TypeData::uuFloat128:
-	case TypeData::uFloat16:
-	case TypeData::uFloat32:
-	case TypeData::uFloat32x:
-	case TypeData::uFloat64:
-	case TypeData::uFloat64x:
-	case TypeData::uFloat128:
-	case TypeData::uFloat128x:
+	case TypeData::Float16:
+	case TypeData::Float32:
+	case TypeData::Float32x:
+	case TypeData::Float64:
+	case TypeData::Float64x:
+	case TypeData::Float128:
+	case TypeData::Float128x:
 		static ast::BasicKind floattype[2][12] = {
-			{ ast::BasicKind::FloatComplex, ast::BasicKind::DoubleComplex, ast::BasicKind::LongDoubleComplex, (ast::BasicKind)-1, (ast::BasicKind)-1, ast::BasicKind::uFloat16Complex, ast::BasicKind::uFloat32Complex, ast::BasicKind::uFloat32xComplex, ast::BasicKind::uFloat64Complex, ast::BasicKind::uFloat64xComplex, ast::BasicKind::uFloat128Complex, ast::BasicKind::uFloat128xComplex, },
-			{ ast::BasicKind::Float, ast::BasicKind::Double, ast::BasicKind::LongDouble, ast::BasicKind::uuFloat80, ast::BasicKind::uuFloat128, ast::BasicKind::uFloat16, ast::BasicKind::uFloat32, ast::BasicKind::uFloat32x, ast::BasicKind::uFloat64, ast::BasicKind::uFloat64x, ast::BasicKind::uFloat128, ast::BasicKind::uFloat128x, },
+			{ ast::BasicKind::FloatComplex, ast::BasicKind::DoubleComplex, ast::BasicKind::LongDoubleComplex, (ast::BasicKind)-1, (ast::BasicKind)-1, ast::BasicKind::Float16Complex, ast::BasicKind::Float32Complex, ast::BasicKind::Float32xComplex, ast::BasicKind::Float64Complex, ast::BasicKind::Float64xComplex, ast::BasicKind::Float128Complex, ast::BasicKind::Float128xComplex, },
+			{ ast::BasicKind::Float, ast::BasicKind::Double, ast::BasicKind::LongDouble, ast::BasicKind::Float80, ast::BasicKind::uuFloat128, ast::BasicKind::Float16, ast::BasicKind::Float32, ast::BasicKind::Float32x, ast::BasicKind::Float64, ast::BasicKind::Float64x, ast::BasicKind::Float128, ast::BasicKind::Float128x, },
 		};
 
 	FloatingPoint: ;
@@ -1184,7 +1184,7 @@ ast::Type * buildBasicType( const TypeData * td ) {
 		if ( td->complextype == TypeData::Imaginary ) {
 			genTSError( TypeData::complexTypeNames[ td->complextype ], td->basictype );
 		} // if
-		if ( (td->basictype == TypeData::uuFloat80 || td->basictype == TypeData::uuFloat128) && td->complextype == TypeData::Complex ) { // gcc unsupported
+		if ( (td->basictype == TypeData::Float80 || td->basictype == TypeData::uuFloat128) && td->complextype == TypeData::Complex ) { // gcc unsupported
 			genTSError( TypeData::complexTypeNames[ td->complextype ], td->basictype );
 		} // if
 		if ( td->length == TypeData::Long ) {
@@ -1204,6 +1204,9 @@ ast::Type * buildBasicType( const TypeData * td ) {
 
 		const_cast<TypeData *>(td)->basictype = TypeData::Int;
 		goto Integral;
+
+	  case TypeData::Float32x4: case TypeData::Float64x2: case TypeData::Svfloat32: case TypeData:: Svfloat64: case TypeData::Svbool:
+		return nullptr;
 	default:
 		assertf( false, "unknown basic type" );
 		return nullptr;
@@ -1453,8 +1456,14 @@ ast::EnumDecl * buildEnum(
 		ast::Linkage::Spec linkage ) {
 	assert( td->kind == TypeData::Aggregate );
 	assert( td->aggregate.kind == ast::AggregateDecl::Enum );
-	ast::ptr<ast::Type> baseType = td->base ? typebuild(td->base) : nullptr;
-
+	ast::ptr<ast::Type> baseType;
+	if ( td->base ) {
+		if ( td->base->kind == TypeData::Aggregate ) {
+			baseType = buildComAggInst( td->base, copy(attributes), linkage );
+		} else {
+			baseType = typebuild( td->base );
+		}
+	}
 	ast::EnumDecl * ret = new ast::EnumDecl(
 		td->location,
 		*td->aggregate.name,
@@ -1476,8 +1485,8 @@ ast::EnumDecl * buildEnum(
 		} else if ( cur->has_enumeratorValue() ) {
 			ast::Expr * initValue;
 			if ( ret->isCfa && ret->base ) {
-				CodeLocation location = cur->enumeratorValue->location;
-				initValue = new ast::CastExpr( location, maybeMoveBuild( cur->consume_enumeratorValue() ), ret->base );
+				initValue = new ast::CastExpr( cur->enumeratorValue->location, maybeMoveBuild( cur->consume_enumeratorValue() ),
+											   ret->base );
 			} else {
 				initValue = maybeMoveBuild( cur->consume_enumeratorValue() );
 			}

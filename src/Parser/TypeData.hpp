@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 15:18:36 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb 22 16:30:31 2024
-// Update Count     : 210
+// Last Modified On : Fri Sep 13 08:13:01 2024
+// Update Count     : 216
 //
 
 #pragma once
@@ -27,9 +27,10 @@ struct TypeData {
 	// Type flags used in this type, and there names (harmonize with implementation).
 	enum BasicType {
 		Void, Bool, Char, Int, Int128,
-		Float, Double, LongDouble, uuFloat80, uuFloat128,
-		uFloat16, uFloat32, uFloat32x, uFloat64, uFloat64x, uFloat128, uFloat128x,
-		NoBasicType
+		Float, Double, LongDouble, Float80, uuFloat128,
+		Float16, Float32, Float32x, Float64, Float64x, Float128, Float128x,
+		NoBasicType,
+		Float32x4, Float64x2, Svfloat32, Svfloat64, Svbool,
 	};
 	static const char * basicTypeNames[];
 	enum ComplexType { Complex, NoComplexType, Imaginary };
