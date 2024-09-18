@@ -1485,8 +1485,8 @@ ast::EnumDecl * buildEnum(
 		} else if ( cur->has_enumeratorValue() ) {
 			ast::Expr * initValue;
 			if ( ret->isCfa && ret->base ) {
-				initValue = new ast::CastExpr( cur->enumeratorValue->location, maybeMoveBuild( cur->consume_enumeratorValue() ),
-											   ret->base );
+				CodeLocation location = cur->enumeratorValue->location;
+				initValue = new ast::CastExpr( location, maybeMoveBuild( cur->consume_enumeratorValue() ), ret->base );
 			} else {
 				initValue = maybeMoveBuild( cur->consume_enumeratorValue() );
 			}
