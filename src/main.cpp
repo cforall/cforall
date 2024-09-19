@@ -124,124 +124,15 @@ static string PreludeDirector = "";
 static void parse_cmdline( int argc, char * argv[] );
 static void dump( ast::TranslationUnit && transUnit, ostream & out = cout );
 
-static void backtrace( int start ) {					// skip first N stack frames
-	enum { Frames = 50, };								// maximum number of stack frames
-	void * array[Frames];
-	size_t size = ::backtrace( array, Frames );
-	char ** messages = ::backtrace_symbols( array, size ); // does not demangle names
-
-	*index( messages[0], '(' ) = '\0';					// find executable name
-	cerr << "Stack back trace for: " << messages[0] << endl;
-
-	// skip last 2 stack frames after main
-	for ( unsigned int i = start; i < size - 2 && messages != nullptr; i += 1 ) {
-		char * mangled_name = nullptr, * offset_begin = nullptr, * offset_end = nullptr;
-
-		for ( char * p = messages[i]; *p; p += 1 ) {	// find parantheses and +offset
-			if ( *p == '(' ) {
-				mangled_name = p;
-			} else if ( *p == '+' ) {
-				offset_begin = p;
-			} else if ( *p == ')' ) {
-				offset_end = p;
-				break;
-			} // if
-		} // for
-
-		// if line contains symbol, attempt to demangle
-		int frameNo = i - start;
-		if ( mangled_name && offset_begin && offset_end && mangled_name < offset_begin ) {
-			*mangled_name++ = '\0';						// delimit strings
-			*offset_begin++ = '\0';
-			*offset_end++ = '\0';
-
-			int status;
-			char * real_name = __cxxabiv1::__cxa_demangle( mangled_name, 0, 0, &status );
-			// bug in __cxa_demangle for single-character lower-case non-mangled names
-			if ( status == 0 ) {						// demangling successful ?
-				cerr << "(" << frameNo << ") " << messages[i] << " : "
-					 << real_name << "+" << offset_begin << offset_end << endl;
-			} else {									// otherwise, output mangled name
-				cerr << "(" << frameNo << ") " << messages[i] << " : "
-					 << mangled_name << "(/*unknown*/)+" << offset_begin << offset_end << endl;
-			} // if
-
-			free( real_name );
-		} else {										// otherwise, print the whole line
-			cerr << "(" << frameNo << ") " << messages[i] << endl;
-		} // if
-	} // for
-
-	free( messages );
-} // backtrace
-
-#define SIGPARMS int sig __attribute__(( unused )), siginfo_t * sfp __attribute__(( unused )), ucontext_t * cxt __attribute__(( unused ))
-
-static void _Signal(struct sigaction & act, int sig, int flags ) {
-	sigemptyset( &act.sa_mask );
-	act.sa_flags = flags;
-
-	if ( sigaction( sig, &act, nullptr ) == -1 ) {
-	    cerr << "*cfa-cpp compilation error* problem installing signal handler, error(" << errno << ") " << strerror( errno ) << endl;
-	    _exit( EXIT_FAILURE );
-	} // if
-}
-
-static void Signal( int sig, void (* handler)(SIGPARMS), int flags ) {
-	struct sigaction act;
-	act.sa_sigaction = (void (*)(int, siginfo_t *, void *))handler;
-	_Signal(act, sig, flags);
-} // Signal
-
-static void Signal( int sig, void (* handler)(int), int flags ) {
-	struct sigaction act;
-	act.sa_handler = handler;
-	_Signal(act, sig, flags);
-} // Signal
-
-static void sigSegvBusHandler( SIGPARMS ) {
-	if ( sfp->si_addr == nullptr ) {
-		cerr << "Null pointer (nullptr) dereference." << endl;
-	} else {
-		cerr << (sig == SIGSEGV ? "Segment fault" : "Bus error") << " at memory location " << sfp->si_addr << "." << endl
-			 << "Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript." << endl;
-	} // if
-	backtrace( 2 );										// skip first 2 stack frames
-	abort();											// cause core dump for debugging
-} // sigSegvBusHandler
-
-static void sigFpeHandler( SIGPARMS ) {
-	const char * msg;
-
-	switch ( sfp->si_code ) {
-	  case FPE_INTDIV: case FPE_FLTDIV: msg = "divide by zero"; break;
-	  case FPE_FLTOVF: msg = "overflow"; break;
-	  case FPE_FLTUND: msg = "underflow"; break;
-	  case FPE_FLTRES: msg = "inexact result"; break;
-	  case FPE_FLTINV: msg = "invalid operation"; break;
-	  default: msg = "unknown";
-	} // choose
-	cerr << "Computation error " << msg << " at location " << sfp->si_addr << endl
-		 << "Possible cause is constant-expression evaluation invalid." << endl;
-	backtrace( 2 );										// skip first 2 stack frames
-	abort();											// cause core dump for debugging
-} // sigFpeHandler
-
-static void sigAbortHandler( SIGPARMS ) {
-	backtrace( 6 );										// skip first 6 stack frames
-	Signal( SIGABRT, SIG_DFL, SA_SIGINFO );	// reset default signal handler
-	raise( SIGABRT );									// reraise SIGABRT
-} // sigAbortHandler
+static void backtrace( int start );
+static void initSignals();
 
 int main( int argc, char * argv[] ) {
 	FILE * input;										// use FILE rather than istream because yyin is FILE
 	ostream * output = & cout;
 	ast::TranslationUnit transUnit;
 
-	Signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO );
-	Signal( SIGBUS, sigSegvBusHandler, SA_SIGINFO );
-	Signal( SIGFPE, sigFpeHandler, SA_SIGINFO );
-	Signal( SIGABRT, sigAbortHandler, SA_SIGINFO );
+	initSignals();
 
 	// cout << "main" << endl;
 	// for ( int i = 0; i < argc; i += 1 ) {
@@ -710,6 +601,122 @@ static void dump( ast::TranslationUnit && unit, std::ostream & out ) {
 	} else {
 		ast::printAll( out, unit.decls );
 	}
+}
+
+static void backtrace( int start ) {					// skip first N stack frames
+	enum { Frames = 50, };								// maximum number of stack frames
+	void * array[Frames];
+	size_t size = ::backtrace( array, Frames );
+	char ** messages = ::backtrace_symbols( array, size ); // does not demangle names
+
+	*index( messages[0], '(' ) = '\0';					// find executable name
+	cerr << "Stack back trace for: " << messages[0] << endl;
+
+	// skip last 2 stack frames after main
+	for ( unsigned int i = start; i < size - 2 && messages != nullptr; i += 1 ) {
+		char * mangled_name = nullptr, * offset_begin = nullptr, * offset_end = nullptr;
+
+		for ( char * p = messages[i]; *p; p += 1 ) {	// find parantheses and +offset
+			if ( *p == '(' ) {
+				mangled_name = p;
+			} else if ( *p == '+' ) {
+				offset_begin = p;
+			} else if ( *p == ')' ) {
+				offset_end = p;
+				break;
+			} // if
+		} // for
+
+		// if line contains symbol, attempt to demangle
+		int frameNo = i - start;
+		if ( mangled_name && offset_begin && offset_end && mangled_name < offset_begin ) {
+			*mangled_name++ = '\0';						// delimit strings
+			*offset_begin++ = '\0';
+			*offset_end++ = '\0';
+
+			int status;
+			char * real_name = __cxxabiv1::__cxa_demangle( mangled_name, 0, 0, &status );
+			// bug in __cxa_demangle for single-character lower-case non-mangled names
+			if ( status == 0 ) {						// demangling successful ?
+				cerr << "(" << frameNo << ") " << messages[i] << " : "
+					 << real_name << "+" << offset_begin << offset_end << endl;
+			} else {									// otherwise, output mangled name
+				cerr << "(" << frameNo << ") " << messages[i] << " : "
+					 << mangled_name << "(/*unknown*/)+" << offset_begin << offset_end << endl;
+			} // if
+
+			free( real_name );
+		} else {										// otherwise, print the whole line
+			cerr << "(" << frameNo << ") " << messages[i] << endl;
+		} // if
+	} // for
+
+	free( messages );
+} // backtrace
+
+#define SIGPARMS int sig __attribute__(( unused )), siginfo_t * sfp __attribute__(( unused )), ucontext_t * cxt __attribute__(( unused ))
+
+static void _Signal(struct sigaction & act, int sig, int flags ) {
+	sigemptyset( &act.sa_mask );
+	act.sa_flags = flags;
+
+	if ( sigaction( sig, &act, nullptr ) == -1 ) {
+	    cerr << "*cfa-cpp compilation error* problem installing signal handler, error(" << errno << ") " << strerror( errno ) << endl;
+	    _exit( EXIT_FAILURE );
+	} // if
+}
+
+static void Signal( int sig, void (* handler)(SIGPARMS), int flags ) {
+	struct sigaction act;
+	act.sa_sigaction = (void (*)(int, siginfo_t *, void *))handler;
+	_Signal(act, sig, flags);
+} // Signal
+
+static void Signal( int sig, void (* handler)(int), int flags ) {
+	struct sigaction act;
+	act.sa_handler = handler;
+	_Signal(act, sig, flags);
+} // Signal
+
+static void sigSegvBusHandler( SIGPARMS ) {
+	if ( sfp->si_addr == nullptr ) {
+		cerr << "Null pointer (nullptr) dereference." << endl;
+	} else {
+		cerr << (sig == SIGSEGV ? "Segment fault" : "Bus error") << " at memory location " << sfp->si_addr << "." << endl
+			 << "Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript." << endl;
+	} // if
+	backtrace( 2 );										// skip first 2 stack frames
+	abort();											// cause core dump for debugging
+} // sigSegvBusHandler
+
+static void sigFpeHandler( SIGPARMS ) {
+	const char * msg;
+
+	switch ( sfp->si_code ) {
+	  case FPE_INTDIV: case FPE_FLTDIV: msg = "divide by zero"; break;
+	  case FPE_FLTOVF: msg = "overflow"; break;
+	  case FPE_FLTUND: msg = "underflow"; break;
+	  case FPE_FLTRES: msg = "inexact result"; break;
+	  case FPE_FLTINV: msg = "invalid operation"; break;
+	  default: msg = "unknown";
+	} // choose
+	cerr << "Computation error " << msg << " at location " << sfp->si_addr << endl
+		 << "Possible cause is constant-expression evaluation invalid." << endl;
+	backtrace( 2 );										// skip first 2 stack frames
+	abort();											// cause core dump for debugging
+} // sigFpeHandler
+
+static void sigAbortHandler( SIGPARMS ) {
+	backtrace( 6 );										// skip first 6 stack frames
+	Signal( SIGABRT, SIG_DFL, SA_SIGINFO );	// reset default signal handler
+	raise( SIGABRT );									// reraise SIGABRT
+} // sigAbortHandler
+
+static void initSignals() {
+	Signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO );
+	Signal( SIGBUS, sigSegvBusHandler, SA_SIGINFO );
+	Signal( SIGFPE, sigFpeHandler, SA_SIGINFO );
+	Signal( SIGABRT, sigAbortHandler, SA_SIGINFO );
 }
 
 // Local Variables: //

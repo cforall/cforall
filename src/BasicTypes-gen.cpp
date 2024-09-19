@@ -1,3 +1,7 @@
+// Code generation/updating for basic type information.
+//
+// Should be run by make when it is changed to updated some source files.
+
 #include <algorithm>
 #include <queue>
 #include <iostream>
