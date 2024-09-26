@@ -118,7 +118,7 @@ private:
 /// Function variable arguments flag
 enum ArgumentFlag { FixedArgs, VariableArgs };
 
-/// Object declaration `int foo()`
+/// Function declaration `int foo()`
 class FunctionDecl final : public DeclWithType {
 public:
 	std::vector<ptr<TypeDecl>> type_params;

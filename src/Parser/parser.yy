@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep 12 22:48:32 2024
-// Update Count     : 6741
+// Last Modified On : Mon Sep 23 22:47:42 2024
+// Update Count     : 6753
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -331,8 +331,8 @@ if ( N ) {																		\
 	TypeData * type;
 
 	// Special "nodes" containing compound information.
-	CondCtl * ifctl;
-	ForCtrl * forctl;
+	CondCtrl * ifctrl;
+	ForCtrl * forctrl;
 	LabelNode * labels;
 
 	// Various flags and single values that become fields later.
@@ -432,8 +432,8 @@ if ( N ) {																		\
 %type<expr> conditional_expression		constant_expression			assignment_expression		assignment_expression_opt
 %type<expr> comma_expression			comma_expression_opt
 %type<expr> argument_expression_list_opt argument_expression_list	argument_expression			default_initializer_opt
-%type<ifctl> conditional_declaration
-%type<forctl> for_control_expression	for_control_expression_list
+%type<ifctrl> conditional_declaration
+%type<forctrl> for_control_expression	for_control_expression_list
 %type<oper> upupeq updown updowneq downupdowneq
 %type<expr> subrange
 %type<decl> asm_name_opt
@@ -1335,13 +1335,13 @@ selection_statement:
 
 conditional_declaration:
 	comma_expression
-		{ $$ = new CondCtl( nullptr, $1 ); }
+		{ $$ = new CondCtrl( nullptr, $1 ); }
 	| c_declaration										// no semi-colon
-		{ $$ = new CondCtl( $1, nullptr ); }
+		{ $$ = new CondCtrl( $1, nullptr ); }
 	| cfa_declaration									// no semi-colon
-		{ $$ = new CondCtl( $1, nullptr ); }
+		{ $$ = new CondCtrl( $1, nullptr ); }
 	| declaration comma_expression						// semi-colon separated
-		{ $$ = new CondCtl( $1, $2 ); }
+		{ $$ = new CondCtrl( $1, $2 ); }
 	;
 
 // CASE and DEFAULT clauses are only allowed in the SWITCH statement, precluding Duff's device. In addition, a case
@@ -1396,10 +1396,10 @@ switch_clause_list:										// CFA
 
 iteration_statement:
 	WHILE '(' ')' statement								%prec THEN // CFA => while ( 1 )
-		{ $$ = new StatementNode( build_while( yylloc, new CondCtl( nullptr, NEW_ONE ), maybe_build_compound( yylloc, $4 ) ) ); }
+		{ $$ = new StatementNode( build_while( yylloc, new CondCtrl( nullptr, NEW_ONE ), maybe_build_compound( yylloc, $4 ) ) ); }
 	| WHILE '(' ')' statement ELSE statement			// CFA
 		{
-			$$ = new StatementNode( build_while( yylloc, new CondCtl( nullptr, NEW_ONE ), maybe_build_compound( yylloc, $4 ) ) );
+			$$ = new StatementNode( build_while( yylloc, new CondCtrl( nullptr, NEW_ONE ), maybe_build_compound( yylloc, $4 ) ) );
 			SemanticWarning( yylloc, Warning::SuperfluousElse );
 		}
 	| WHILE '(' conditional_declaration ')' statement	%prec THEN
@@ -1560,6 +1560,7 @@ for_control_expression:
 	| comma_expression ';' '@' updowneq '@' '~' '@' // CFA
 		{ SemanticError( yylloc, "illegal syntax, missing low/high value for ascending/descending range so index is uninitialized." ); $$ = nullptr; }
 
+//	| '@' identifier ';' comma_expression			// CFA
 	| declaration comma_expression						// CFA
 		{ $$ = forCtrl( yylloc, $1, NEW_ZERO, OperKinds::LThan, $2, NEW_ONE ); }
 	| declaration downupdowneq comma_expression			// CFA
@@ -2380,6 +2381,7 @@ basic_type_name_type:
 		{ $$ = build_basic_type( TypeData::Float64x ); }
 	| FLOAT128
 		{ $$ = build_basic_type( TypeData::Float128 ); }
+		// https://developer.arm.com/documentation/den0018/a/NEON-Intrinsics/Accessing-vector-types-from-C
 	| FLOAT128X
 		{ $$ = build_basic_type( TypeData::Float128x ); }
 	| FLOAT32X4

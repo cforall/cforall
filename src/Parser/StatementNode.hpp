@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Wed Apr  5 11:42:00 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 11 11:44:07 2023
-// Update Count     : 2
+// Last Modified On : Mon Sep 23 22:43:05 2024
+// Update Count     : 3
 //
 
 #pragma once
@@ -50,10 +50,10 @@ struct ClauseNode final : public ParseList<ClauseNode> {
 	std::unique_ptr<ast::StmtClause> clause;
 };
 
-ast::Stmt * build_expr( CodeLocation const &, ExpressionNode * ctl );
+ast::Stmt * build_expr( CodeLocation const &, ExpressionNode * ctrl );
 
-struct CondCtl {
-	CondCtl( DeclarationNode * decl, ExpressionNode * condition ) :
+struct CondCtrl {
+	CondCtrl( DeclarationNode * decl, ExpressionNode * condition ) :
 		init( decl ? new StatementNode( decl ) : nullptr ), condition( condition ) {}
 
 	StatementNode * init;
@@ -64,7 +64,7 @@ struct ForCtrl {
 	ForCtrl( StatementNode * stmt, ExpressionNode * condition, ExpressionNode * change ) :
 		init( stmt ), condition( condition ), change( change ), range_over( nullptr ) {}
 	ForCtrl( StatementNode * decl, ExpressionNode * range_over, OperKinds kind ) :
-		init( decl ), condition( nullptr ), change( nullptr ),  range_over( range_over ), kind( kind ) {}
+		init( decl ), condition( nullptr ), change( nullptr ), range_over( range_over ), kind( kind ) {}
 
 	StatementNode * init;
 	ExpressionNode * condition;
@@ -73,20 +73,20 @@ struct ForCtrl {
 	OperKinds kind;
 };
 
-ast::Stmt * build_if( const CodeLocation &, CondCtl * ctl, StatementNode * then, StatementNode * else_ );
-ast::Stmt * build_switch( const CodeLocation &, bool isSwitch, ExpressionNode * ctl, ClauseNode * stmt );
-ast::CaseClause * build_case( const CodeLocation &, ExpressionNode * ctl );
+ast::Stmt * build_if( const CodeLocation &, CondCtrl * ctrl, StatementNode * then, StatementNode * else_ );
+ast::Stmt * build_switch( const CodeLocation &, bool isSwitch, ExpressionNode * ctrl, ClauseNode * stmt );
+ast::CaseClause * build_case( const CodeLocation &, ExpressionNode * ctrl );
 ast::CaseClause * build_default( const CodeLocation & );
-ast::Stmt * build_while( const CodeLocation &, CondCtl * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
-ast::Stmt * build_do_while( const CodeLocation &, ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ = nullptr );
-ast::Stmt * build_for( const CodeLocation &, ForCtrl * forctl, StatementNode * stmt, StatementNode * else_ = nullptr );
+ast::Stmt * build_while( const CodeLocation &, CondCtrl * ctrl, StatementNode * stmt, StatementNode * else_ = nullptr );
+ast::Stmt * build_do_while( const CodeLocation &, ExpressionNode * ctrl, StatementNode * stmt, StatementNode * else_ = nullptr );
+ast::Stmt * build_for( const CodeLocation &, ForCtrl * forctrl, StatementNode * stmt, StatementNode * else_ = nullptr );
 ast::Stmt * build_branch( const CodeLocation &, ast::BranchStmt::Kind kind );
 ast::Stmt * build_branch( const CodeLocation &, std::string * identifier, ast::BranchStmt::Kind kind );
-ast::Stmt * build_computedgoto( ExpressionNode * ctl );
-ast::Stmt * build_return( const CodeLocation &, ExpressionNode * ctl );
-ast::Stmt * build_throw( const CodeLocation &, ExpressionNode * ctl );
-ast::Stmt * build_resume( const CodeLocation &, ExpressionNode * ctl );
-ast::Stmt * build_resume_at( ExpressionNode * ctl , ExpressionNode * target );
+ast::Stmt * build_computedgoto( ExpressionNode * ctrl );
+ast::Stmt * build_return( const CodeLocation &, ExpressionNode * ctrl );
+ast::Stmt * build_throw( const CodeLocation &, ExpressionNode * ctrl );
+ast::Stmt * build_resume( const CodeLocation &, ExpressionNode * ctrl );
+ast::Stmt * build_resume_at( ExpressionNode * ctrl , ExpressionNode * target );
 ast::Stmt * build_try( const CodeLocation &, StatementNode * try_, ClauseNode * catch_, ClauseNode * finally_ );
 ast::CatchClause * build_catch( const CodeLocation &, ast::ExceptionKind kind, DeclarationNode * decl, ExpressionNode * cond, StatementNode * body );
 ast::FinallyClause * build_finally( const CodeLocation &, StatementNode * stmt );
@@ -104,4 +104,4 @@ ast::WaitUntilStmt * build_waituntil_stmt( const CodeLocation &, ast::WaitUntilS
 ast::Stmt * build_with( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
 ast::Stmt * build_mutex( const CodeLocation &, ExpressionNode * exprs, StatementNode * stmt );
 ast::Stmt * build_corun( const CodeLocation &, StatementNode * stmt );
-ast::Stmt * build_cofor( const CodeLocation & location, ForCtrl * forctl, StatementNode * stmt );
+ast::Stmt * build_cofor( const CodeLocation & location, ForCtrl * forctrl, StatementNode * stmt );

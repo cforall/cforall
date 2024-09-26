@@ -24,7 +24,7 @@ struct TypeData;
 
 #include "ExpressionNode.hpp"							// for LabelNode
 #include "ParserTypes.hpp"								// for Token
-#include "StatementNode.hpp"							// for CondCtl, ForCtrl
+#include "StatementNode.hpp"							// for CondCtrl, ForCtrl
 // This (generated) header must come late as it is missing includes.
 #include "parser.hh"									// for IDENTIFIER, TYPEDEFname, TYPEGENname
 

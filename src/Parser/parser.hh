@@ -389,8 +389,8 @@ union YYSTYPE
 	TypeData * type;
 
 	// Special "nodes" containing compound information.
-	CondCtl * ifctl;
-	ForCtrl * forctl;
+	CondCtrl * ifctrl;
+	ForCtrl * forctrl;
 	LabelNode * labels;
 
 	// Various flags and single values that become fields later.

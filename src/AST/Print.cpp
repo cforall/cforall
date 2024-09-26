@@ -636,6 +636,54 @@ public:
 		return node;
 	}
 
+	virtual const ast::Stmt * visit( const ast::ForeachStmt * node ) override final {
+		os << "Range for Statement" << endl;
+
+		if ( ! node->inits.empty() ) {
+			os << indent << "... initialization:" << endl;
+			++indent;
+			for ( const ast::Stmt * stmt : node->inits ) {
+				os << indent+1;
+				safe_print( stmt );
+			}
+			--indent;
+		}
+
+		if ( node->isIncreasing ) {
+			os << indent << "increasing" << endl;
+		} else {
+			os << indent << "decreasing" << endl;
+		}
+
+		if ( !node->range ) {
+			os << indent << "... over range:" << endl;
+			++indent;
+			node->range->accept( *this );
+			--indent;
+		}
+
+		if ( node->body ) {
+			os << indent << "... with body:" << endl;
+			++indent;
+			os << indent;
+			node->body->accept( *this );
+			--indent;
+		}
+
+		if ( node->else_ ) {
+			os << indent << "... with else:" << endl;
+			++indent;
+			os << indent;
+			node->else_->accept( *this );
+			--indent;
+		}
+
+		os << endl;
+		print( node->labels );
+
+		return node;
+	}
+
 	virtual const ast::Stmt * visit( const ast::SwitchStmt * node ) override final {
 		os << "Switch on condition: ";
 		safe_print( node->cond );

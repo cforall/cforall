@@ -802,9 +802,27 @@ const ast::Stmt * ast::Pass< core_t >::visit( const ast::ForStmt * node ) {
 		maybe_accept( node, &ForStmt::inits );
 		maybe_accept_top( node, &ForStmt::cond  );
 		maybe_accept_top( node, &ForStmt::inc   );
-		maybe_accept_top( node, &ForStmt::range_over );
 		maybe_accept_as_compound( node, &ForStmt::body  );
 		maybe_accept_as_compound( node, &ForStmt::else_ );
+	}
+
+	VISIT_END( Stmt, node );
+}
+
+//--------------------------------------------------------------------------
+// ForeachStmt
+template< typename core_t >
+const ast::Stmt * ast::Pass< core_t >::visit( const ast::ForeachStmt * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		// for statements introduce a level of scope (for the initialization)
+		guard_symtab guard { *this };
+		// xxx - old ast does not create WithStmtsToAdd scope for loop inits. should revisit this later.
+		maybe_accept( node, &ForeachStmt::inits );
+		maybe_accept_top( node, &ForeachStmt::range );
+		maybe_accept_as_compound( node, &ForeachStmt::body  );
+		maybe_accept_as_compound( node, &ForeachStmt::else_ );
 	}
 
 	VISIT_END( Stmt, node );

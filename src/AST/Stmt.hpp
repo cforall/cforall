@@ -236,29 +236,46 @@ class ForStmt final : public Stmt {
 	std::vector<ptr<Stmt>> inits;
 	ptr<Expr> cond;
 	ptr<Expr> inc;
-	ptr<Expr> range_over;
-	bool is_inc;
 	ptr<Stmt> body;
 	ptr<Stmt> else_;
 
 	ForStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * cond,
 			 const Expr * inc, const Stmt * body, const std::vector<Label> && label = {} )
 		: Stmt(loc, std::move(label)), inits(std::move(inits)), cond(cond), inc(inc),
-			range_over(nullptr), body(body), else_(nullptr) {}
+		body(body), else_(nullptr) {}
 
 	ForStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * cond,
 			 const Expr * inc, const Stmt * body, const Stmt * else_, const std::vector<Label> && labels = {} )
 		: Stmt(loc, std::move(labels)), inits(std::move(inits)), cond(cond), inc(inc),
-			range_over(nullptr), body(body), else_(else_) {}
-
-	ForStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits, const Expr * range_over, bool is_inc,
-			 const Stmt * body, const Stmt * else_ )
-		: Stmt(loc, std::move(labels)), inits(std::move(inits)), range_over(range_over), is_inc(is_inc), 
 		body(body), else_(else_) {}
 
 	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
   private:
 	ForStmt * clone() const override { return new ForStmt{ *this }; }
+	MUTATE_FRIEND
+};
+
+enum RangeDirection { DecreasingRange, IncreasingRange };
+
+// For-each loop: for (... : ...) ... else ...
+class ForeachStmt final : public Stmt {
+  public:
+	std::vector<ptr<Stmt>> inits;
+	ptr<Expr> range;
+	ptr<Stmt> body;
+	ptr<Stmt> else_;
+	// This is a property of the range, but there is no place to store it.
+	RangeDirection isIncreasing;
+
+	ForeachStmt( const CodeLocation & loc, const std::vector<ptr<Stmt>> && inits,
+			const Expr * range_over, RangeDirection isInc, const Stmt * body,
+			const Stmt * else_, const std::vector<Label> && labels = {} )
+		: Stmt(loc, std::move(labels)), inits(std::move(inits)), range(range_over),
+		body(body), else_(else_), isIncreasing(isInc) {}
+
+	const Stmt * accept( Visitor & v ) const override { return v.visit( this ); }
+  private:
+	ForeachStmt * clone() const override { return new ForeachStmt{ *this }; }
 	MUTATE_FRIEND
 };
 

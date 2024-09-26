@@ -40,6 +40,7 @@ public:
     virtual const ast::Stmt *             visit( const ast::IfStmt               * ) = 0;
     virtual const ast::Stmt *             visit( const ast::WhileDoStmt          * ) = 0;
     virtual const ast::Stmt *             visit( const ast::ForStmt              * ) = 0;
+    virtual const ast::Stmt *             visit( const ast::ForeachStmt          * ) = 0;
     virtual const ast::Stmt *             visit( const ast::SwitchStmt           * ) = 0;
     virtual const ast::CaseClause *       visit( const ast::CaseClause           * ) = 0;
     virtual const ast::Stmt *             visit( const ast::BranchStmt           * ) = 0;

@@ -8,51 +8,53 @@ namespace ControlStruct {
 namespace {
 
 struct TranslateEnumRangeCore {
-	const ast::Stmt * postvisit( const ast::ForStmt * stmt );
+	const ast::Stmt * postvisit( const ast::ForeachStmt * stmt );
 };
 
-const ast::Stmt * TranslateEnumRangeCore::postvisit( const ast::ForStmt * stmt ) {
-	if ( !stmt->range_over ) return stmt;
-	auto mutStmt = ast::mutate( stmt );
-	auto & location = mutStmt->location;
+const ast::Stmt * TranslateEnumRangeCore::postvisit( const ast::ForeachStmt * stmt ) {
+	auto & location = stmt->location;
 
-	if ( auto declStmt = mutStmt->inits.front().as<ast::DeclStmt>() ) {
-		if ( auto objDecl = declStmt->decl.as<ast::ObjectDecl>() ) {
-			if ( !objDecl->init ) {
-				ast::SingleInit * newInit = new ast::SingleInit( location,
-					ast::UntypedExpr::createCall( location,
-						mutStmt->is_inc ? "lowerBound" : "upperBound", {} ),
-					ast::ConstructFlag::MaybeConstruct
-				);
-				auto objDeclWithInit = ast::mutate_field( objDecl, &ast::ObjectDecl::init, newInit );
-				auto declWithInit = ast::mutate_field( declStmt, &ast::DeclStmt::decl, objDeclWithInit );
-				mutStmt->inits[0] = declWithInit;
-			}
-		}
+	assert( stmt->inits.size() == 1 );
+	ast::DeclStmt const * initialize = stmt->inits.front().strict_as<ast::DeclStmt>();
+
+	auto objDecl = initialize->decl.strict_as<ast::ObjectDecl>();
+	if ( !objDecl->init ) {
+		ast::SingleInit * init = new ast::SingleInit( location,
+			ast::UntypedExpr::createCall( location,
+				stmt->isIncreasing ? "lowerBound" : "upperBound", {} ),
+			ast::ConstructFlag::MaybeConstruct
+		);
+		objDecl = ast::mutate_field( objDecl, &ast::ObjectDecl::init, init );
+		initialize = ast::mutate_field( initialize, &ast::DeclStmt::decl, objDecl );
 	}
 
-	auto declStmt = mutStmt->inits.front().strict_as<ast::DeclStmt>();
-	auto initDecl = declStmt->decl.strict_as<ast::ObjectDecl>();
-	auto indexName = initDecl->name;
+	auto indexName = objDecl->name;
 
 	// Both inc and dec check if the current posn less than the number of enumerator
 	// for dec, it keeps call pred until it passes 0 (the first enumerator) and underflow,
 	// it wraps around and become unsigned max
 	ast::UntypedExpr * condition = ast::UntypedExpr::createCall( location,
-		mutStmt->is_inc ? "?<=?" : "?>=?",
+		stmt->isIncreasing ? "?<=?" : "?>=?",
 		{
 			new ast::NameExpr( location, indexName ),
 			ast::UntypedExpr::createCall( location,
-				mutStmt->is_inc ? "upperBound" : "lowerBound", {} )
+				stmt->isIncreasing ? "upperBound" : "lowerBound", {} )
 		} );
-	auto increment = ast::UntypedExpr::createCall( location,
-		mutStmt->is_inc ? "succ_unsafe" : "pred_unsafe",
-		{ new ast::NameExpr( location, indexName ) } );
-	auto assig = ast::UntypedExpr::createAssign( location,
-		new ast::NameExpr( location, indexName ), increment );
-	mutStmt->cond = condition;
-	mutStmt->inc = assig;
-	return mutStmt;
+	ast::UntypedExpr * increment = ast::UntypedExpr::createAssign( location,
+		new ast::NameExpr( location, indexName ),
+		ast::UntypedExpr::createCall( location,
+			stmt->isIncreasing ? "succ_unsafe" : "pred_unsafe",
+			{ new ast::NameExpr( location, indexName ) } ) );
+
+	return new ast::ForStmt(
+		stmt->location,
+		{ initialize },
+		condition,
+		increment,
+		stmt->body,
+		stmt->else_,
+		copy( stmt->labels )
+	);
 }
 
 } // namespace

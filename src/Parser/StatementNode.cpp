@@ -10,8 +10,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  9 21:49:15 2024
-// Update Count     : 431
+// Last Modified On : Mon Sep 23 22:50:35 2024
+// Update Count     : 432
 //
 
 #include "StatementNode.hpp"
@@ -104,24 +104,24 @@ ClauseNode * ClauseNode::append_last_case( StatementNode * stmt ) {
 	return this;
 } // ClauseNode::append_last_case
 
-ast::Stmt * build_expr( CodeLocation const & location, ExpressionNode * ctl ) {
-	if ( ast::Expr * e = maybeMoveBuild( ctl ) ) {
+ast::Stmt * build_expr( CodeLocation const & location, ExpressionNode * ctrl ) {
+	if ( ast::Expr * e = maybeMoveBuild( ctrl ) ) {
 		return new ast::ExprStmt( location, e );
 	} else {
 		return new ast::NullStmt( location );
 	}
 } // build_expr
 
-static ast::Expr * build_if_control( CondCtl * ctl,
+static ast::Expr * build_if_control( CondCtrl * ctrl,
 		std::vector<ast::ptr<ast::Stmt>> & inits ) {
 	assert( inits.empty() );
-	if ( nullptr != ctl->init ) {
-		buildMoveList( ctl->init, inits );
+	if ( nullptr != ctrl->init ) {
+		buildMoveList( ctrl->init, inits );
 	} // if
 
 	ast::Expr * cond = nullptr;
-	if ( ctl->condition ) {
-		cond = maybeMoveBuild( ctl->condition );
+	if ( ctrl->condition ) {
+		cond = maybeMoveBuild( ctrl->condition );
 	} else {
 		for ( ast::ptr<ast::Stmt> & stmt : inits ) {
 			// build the && of all of the declared variables compared against 0
@@ -131,13 +131,13 @@ static ast::Expr * build_if_control( CondCtl * ctl,
 			cond = cond ? new ast::LogicalExpr( dwt->location, cond, nze, ast::AndExpr ) : nze;
 		}
 	}
-	delete ctl;
+	delete ctrl;
 	return cond;
 } // build_if_control
 
-ast::Stmt * build_if( const CodeLocation & location, CondCtl * ctl, StatementNode * then, StatementNode * else_ ) {
-	std::vector<ast::ptr<ast::Stmt>> astinit;						// maybe empty
-	ast::Expr * astcond = build_if_control( ctl, astinit ); // ctl deleted, cond/init set
+ast::Stmt * build_if( const CodeLocation & location, CondCtrl * ctrl, StatementNode * then, StatementNode * else_ ) {
+	std::vector<ast::ptr<ast::Stmt>> astinit;			// maybe empty
+	ast::Expr * astcond = build_if_control( ctrl, astinit ); // ctrl deleted, cond/init set
 
 	ast::Stmt const * astthen = buildMoveSingle( then );
 	ast::Stmt const * astelse = buildMoveOptional( else_ );
@@ -147,7 +147,7 @@ ast::Stmt * build_if( const CodeLocation & location, CondCtl * ctl, StatementNod
 	);
 } // build_if
 
-ast::Stmt * build_switch( const CodeLocation & location, bool isSwitch, ExpressionNode * ctl, ClauseNode * stmt ) {
+ast::Stmt * build_switch( const CodeLocation & location, bool isSwitch, ExpressionNode * ctrl, ClauseNode * stmt ) {
 	std::vector<ast::ptr<ast::CaseClause>> aststmt;
 	buildMoveList( stmt, aststmt );
 	// If it is not a switch it is a choose statement.
@@ -168,12 +168,12 @@ ast::Stmt * build_switch( const CodeLocation & location, bool isSwitch, Expressi
 	} // if
 	// aststmt.size() == 0 for switch (...) {}, i.e., no declaration or statements
 	return new ast::SwitchStmt( location,
-		maybeMoveBuild( ctl ), std::move( aststmt ) );
+		maybeMoveBuild( ctrl ), std::move( aststmt ) );
 } // build_switch
 
-ast::CaseClause * build_case( const CodeLocation & location, ExpressionNode * ctl ) {
+ast::CaseClause * build_case( const CodeLocation & location, ExpressionNode * ctrl ) {
 	// stmt starts empty and then added to
-	auto expr = maybeMoveBuild( ctl );
+	auto expr = maybeMoveBuild( ctrl );
 	return new ast::CaseClause( location, expr, {} );
 } // build_case
 
@@ -182,9 +182,9 @@ ast::CaseClause * build_default( const CodeLocation & location ) {
 	return new ast::CaseClause( location, nullptr, {} );
 } // build_default
 
-ast::Stmt * build_while( const CodeLocation & location, CondCtl * ctl, StatementNode * stmt, StatementNode * else_ ) {
+ast::Stmt * build_while( const CodeLocation & location, CondCtrl * ctrl, StatementNode * stmt, StatementNode * else_ ) {
 	std::vector<ast::ptr<ast::Stmt>> astinit;			// maybe empty
-	ast::Expr * astcond = build_if_control( ctl, astinit ); // ctl deleted, cond/init set
+	ast::Expr * astcond = build_if_control( ctrl, astinit ); // ctrl deleted, cond/init set
 
 	return new ast::WhileDoStmt( location,
 		astcond,
@@ -195,10 +195,10 @@ ast::Stmt * build_while( const CodeLocation & location, CondCtl * ctl, Statement
 	);
 } // build_while
 
-ast::Stmt * build_do_while( const CodeLocation & location, ExpressionNode * ctl, StatementNode * stmt, StatementNode * else_ ) {
+ast::Stmt * build_do_while( const CodeLocation & location, ExpressionNode * ctrl, StatementNode * stmt, StatementNode * else_ ) {
 	// do-while cannot have declarations in the contitional, so init is always empty
 	return new ast::WhileDoStmt( location,
-		maybeMoveBuild( ctl ),
+		maybeMoveBuild( ctrl ),
 		buildMoveSingle( stmt ),
 		buildMoveOptional( else_ ),
 		{},
@@ -206,28 +206,30 @@ ast::Stmt * build_do_while( const CodeLocation & location, ExpressionNode * ctl,
 	);
 } // build_do_while
 
-ast::Stmt * build_for( const CodeLocation & location, ForCtrl * forctl, StatementNode * stmt, StatementNode * else_ ) {
+ast::Stmt * build_for( const CodeLocation & location, ForCtrl * forctrl, StatementNode * stmt, StatementNode * else_ ) {
 	std::vector<ast::ptr<ast::Stmt>> astinit;			// maybe empty
-	buildMoveList( forctl->init, astinit );
+	buildMoveList( forctrl->init, astinit );
 
-	if ( forctl->range_over ) {
-		ast::Expr * range_over = maybeMoveBuild( forctl->range_over );
-		auto kind = forctl->kind;						// save before delete, used in return
-		delete forctl;
-		return new ast::ForStmt( location,
+	if ( forctrl->range_over ) {
+		ast::Expr * range_over = maybeMoveBuild( forctrl->range_over );
+		bool isIncreasing = forctrl->kind == OperKinds::LEThan;
+		// Copy all the data needed before the delete.
+		delete forctrl;
+		return new ast::ForeachStmt( location,
 			std::move( astinit ),
-			range_over, kind == OperKinds::LEThan,
+			range_over,
+			isIncreasing ? ast::IncreasingRange : ast::DecreasingRange,
 			buildMoveSingle( stmt ),
 			buildMoveOptional( else_ )
 		);
 	}
 
 	ast::Expr * astcond = nullptr;						// maybe empty
-	astcond = maybeMoveBuild( forctl->condition );
+	astcond = maybeMoveBuild( forctrl->condition );
 
 	ast::Expr * astincr = nullptr;						// maybe empty
-	astincr = maybeMoveBuild( forctl->change );
-	delete forctl;
+	astincr = maybeMoveBuild( forctrl->change );
+	delete forctrl;
 
 	return new ast::ForStmt( location,
 		std::move( astinit ),
@@ -254,14 +256,14 @@ ast::Stmt * build_branch( const CodeLocation & location, string * identifier, as
 	return ret;
 } // build_branch
 
-ast::Stmt * build_computedgoto( ExpressionNode * ctl ) {
-	ast::Expr * expr = maybeMoveBuild( ctl );
+ast::Stmt * build_computedgoto( ExpressionNode * ctrl ) {
+	ast::Expr * expr = maybeMoveBuild( ctrl );
 	return new ast::BranchStmt( expr->location, expr );
 } // build_computedgoto
 
-ast::Stmt * build_return( const CodeLocation & location, ExpressionNode * ctl ) {
+ast::Stmt * build_return( const CodeLocation & location, ExpressionNode * ctrl ) {
 	std::vector<ast::ptr<ast::Expr>> exps;
-	buildMoveList( ctl, exps );
+	buildMoveList( ctrl, exps );
 	return new ast::ReturnStmt( location,
 		exps.size() > 0 ? exps.back().release() : nullptr
 	);
@@ -269,10 +271,10 @@ ast::Stmt * build_return( const CodeLocation & location, ExpressionNode * ctl ) 
 
 static ast::Stmt * build_throw_stmt(
 		const CodeLocation & location,
-		ExpressionNode * ctl,
+		ExpressionNode * ctrl,
 		ast::ExceptionKind kind ) {
 	std::vector<ast::ptr<ast::Expr>> exps;
-	buildMoveList( ctl, exps );
+	buildMoveList( ctrl, exps );
 	assertf( exps.size() < 2, "CFA internal error: leaking memory" );
 	return new ast::ThrowStmt( location,
 		kind,
@@ -281,16 +283,16 @@ static ast::Stmt * build_throw_stmt(
 	);
 }
 
-ast::Stmt * build_throw( const CodeLocation & loc, ExpressionNode * ctl ) {
-	return build_throw_stmt( loc, ctl, ast::Terminate );
+ast::Stmt * build_throw( const CodeLocation & loc, ExpressionNode * ctrl ) {
+	return build_throw_stmt( loc, ctrl, ast::Terminate );
 } // build_throw
 
-ast::Stmt * build_resume( const CodeLocation & loc, ExpressionNode * ctl ) {
-	return build_throw_stmt( loc, ctl, ast::Resume );
+ast::Stmt * build_resume( const CodeLocation & loc, ExpressionNode * ctrl ) {
+	return build_throw_stmt( loc, ctrl, ast::Resume );
 } // build_resume
 
-ast::Stmt * build_resume_at( ExpressionNode * ctl, ExpressionNode * target ) {
-	(void)ctl;
+ast::Stmt * build_resume_at( ExpressionNode * ctrl, ExpressionNode * target ) {
+	(void)ctrl;
 	(void)target;
 	assertf( false, "resume at (non-local throw) is not yet supported," );
 } // build_resume_at
@@ -513,16 +515,16 @@ ast::Stmt * build_corun( const CodeLocation & location, StatementNode * stmt ) {
 	return new ast::CorunStmt( location, body );
 } // build_corun
 
-ast::Stmt * build_cofor( const CodeLocation & location, ForCtrl * forctl, StatementNode * stmt ) {
+ast::Stmt * build_cofor( const CodeLocation & location, ForCtrl * forctrl, StatementNode * stmt ) {
 	std::vector<ast::ptr<ast::Stmt>> astinit;						// maybe empty
-	buildMoveList( forctl->init, astinit );
+	buildMoveList( forctrl->init, astinit );
 
 	ast::Expr * astcond = nullptr;						// maybe empty
-	astcond = maybeMoveBuild( forctl->condition );
+	astcond = maybeMoveBuild( forctrl->condition );
 
 	ast::Expr * astincr = nullptr;						// maybe empty
-	astincr = maybeMoveBuild( forctl->change );
-	delete forctl;
+	astincr = maybeMoveBuild( forctrl->change );
+	delete forctrl;
 
 	return new ast::CoforStmt( location,
 		std::move( astinit ),

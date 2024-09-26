@@ -118,6 +118,7 @@ public:
     macro(IfStmt, Stmt) \
     macro(WhileDoStmt, Stmt) \
     macro(ForStmt, Stmt) \
+    macro(ForeachStmt, Stmt) \
     macro(SwitchStmt, Stmt) \
     macro(CaseClause, CaseClause) \
     macro(BranchStmt, Stmt) \

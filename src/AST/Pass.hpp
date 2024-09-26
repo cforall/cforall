@@ -137,6 +137,7 @@ public:
 	const ast::Stmt *             visit( const ast::IfStmt               * ) override final;
 	const ast::Stmt *             visit( const ast::WhileDoStmt          * ) override final;
 	const ast::Stmt *             visit( const ast::ForStmt              * ) override final;
+	const ast::Stmt *             visit( const ast::ForeachStmt          * ) override final;
 	const ast::Stmt *             visit( const ast::SwitchStmt           * ) override final;
 	const ast::CaseClause *       visit( const ast::CaseClause           * ) override final;
 	const ast::Stmt *             visit( const ast::BranchStmt           * ) override final;

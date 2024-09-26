@@ -48,6 +48,7 @@ class DirectiveStmt;
 class IfStmt;
 class WhileDoStmt;
 class ForStmt;
+class ForeachStmt;
 class SwitchStmt;
 class CaseClause;
 class BranchStmt;
