@@ -1640,23 +1640,20 @@ PolyGenericCalculator::PolyGenericCalculator() :
 	knownLayouts(), knownOffsets(), bufNamer( "_buf" )
 {}
 
-static ast::Type * polyToMonoTypeRec( CodeLocation const & loc,
+/// Recursive section of polyToMonoType.
+ast::Type * polyToMonoTypeRec( CodeLocation const & loc,
 		ast::Type const * ty ) {
-	ast::Type * ret;
 	if ( auto aTy = dynamic_cast<ast::ArrayType const *>( ty ) ) {
-		// recursive case
 		auto monoBase = polyToMonoTypeRec( loc, aTy->base );
-		ret = new ast::ArrayType( monoBase, aTy->dimension,
+		return new ast::ArrayType( monoBase, aTy->dimension,
 			aTy->isVarLen, aTy->isStatic, aTy->qualifiers );
 	} else {
-		// base case
 		auto charType = new ast::BasicType( ast::BasicKind::Char );
 		auto size = new ast::NameExpr( loc,
 			sizeofName( Mangle::mangleType( ty ) ) );
-		ret = new ast::ArrayType( charType, size,
+		return new ast::ArrayType( charType, size,
 			ast::VariableLen, ast::DynamicDim, ast::CV::Qualifiers() );
 	}
-	return ret;
 }
 
 /// Converts polymorphic type into a suitable monomorphic representation.

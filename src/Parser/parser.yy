@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 23 22:47:42 2024
-// Update Count     : 6753
+// Last Modified On : Mon Sep 30 09:40:28 2024
+// Update Count     : 6776
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1170,12 +1170,12 @@ tuple:													// CFA, tuple
 		// comma_expression in cfa_identifier_parameter_array and cfa_abstract_array
 //	'[' ']'
 //		{ $$ = new ExpressionNode( build_tuple() ); }
-//	| '[' push assignment_expression pop ']'
-//		{ $$ = new ExpressionNode( build_tuple( $3 ) ); }
+//	'[' assignment_expression ']'
+//		{ $$ = new ExpressionNode( build_tuple( $2 ) ); }
 	'[' ',' tuple_expression_list ']'
 		{ $$ = new ExpressionNode( build_tuple( yylloc, (new ExpressionNode( nullptr ))->set_last( $3 ) ) ); }
-	| '[' push assignment_expression pop ',' tuple_expression_list ']'
-		{ $$ = new ExpressionNode( build_tuple( yylloc, $3->set_last( $6 ) ) ); }
+	| '[' assignment_expression ',' tuple_expression_list ']'
+	 	{ $$ = new ExpressionNode( build_tuple( yylloc, $2->set_last( $4 ) ) ); }
 	;
 
 tuple_expression_list:
@@ -2108,11 +2108,11 @@ cfa_function_specifier:									// CFA
 	;
 
 cfa_function_return:									// CFA
-	'[' push cfa_parameter_list pop ']'
-		{ $$ = DeclarationNode::newTuple( $3 ); }
-	| '[' push cfa_parameter_list ',' cfa_abstract_parameter_list pop ']'
+	'[' cfa_parameter_list ']'
+		{ $$ = DeclarationNode::newTuple( $2 ); }
+	| '[' cfa_parameter_list ',' cfa_abstract_parameter_list ']'
 		// To obtain LR(1 ), the last cfa_abstract_parameter_list is added into this flattened rule to lookahead to the ']'.
-		{ $$ = DeclarationNode::newTuple( $3->set_last( $5 ) ); }
+		{ $$ = DeclarationNode::newTuple( $2->set_last( $4 ) ); }
 	;
 
 cfa_typedef_declaration:								// CFA
@@ -3064,15 +3064,15 @@ designator_list:										// C99
 designator:
 	'.' identifier_at									// C99, field name
 		{ $$ = new ExpressionNode( build_varref( yylloc, $2 ) ); }
-	| '[' push assignment_expression pop ']'			// C99, single array element
+	| '[' assignment_expression ']'						// C99, single array element
 		// assignment_expression used instead of constant_expression because of shift/reduce conflicts with tuple.
+		{ $$ = $2; }
+	| '[' subrange ']'									// CFA, multiple array elements
+		{ $$ = $2; }
+	| '[' constant_expression ELLIPSIS constant_expression ']' // GCC, multiple array elements
+		{ $$ = new ExpressionNode( new ast::RangeExpr( yylloc, maybeMoveBuild( $2 ), maybeMoveBuild( $4 ) ) ); }
+	| '.' '[' field_name_list ']'						// CFA, tuple field selector
 		{ $$ = $3; }
-	| '[' push subrange pop ']'							// CFA, multiple array elements
-		{ $$ = $3; }
-	| '[' push constant_expression ELLIPSIS constant_expression pop ']' // GCC, multiple array elements
-		{ $$ = new ExpressionNode( new ast::RangeExpr( yylloc, maybeMoveBuild( $3 ), maybeMoveBuild( $5 ) ) ); }
-	| '.' '[' push field_name_list pop ']'				// CFA, tuple field selector
-		{ $$ = $4; }
 	;
 
 // The CFA type system is based on parametric polymorphism, the ability to declare functions with type parameters,
@@ -4004,15 +4004,15 @@ array_dimension:
 	| '[' ']' multi_array_dimension
 		{ $$ = DeclarationNode::newArray( nullptr, nullptr, false )->addArray( $3 ); }
 		// Cannot use constant_expression because of tuples => semantic check
-	| '[' push assignment_expression pop ',' comma_expression ']' // CFA
-		{ $$ = DeclarationNode::newArray( $3, nullptr, false )->addArray( DeclarationNode::newArray( $6, nullptr, false ) ); }
+	| '[' assignment_expression ',' comma_expression ']' // CFA
+		{ $$ = DeclarationNode::newArray( $2, nullptr, false )->addArray( DeclarationNode::newArray( $4, nullptr, false ) ); }
 		// { SemanticError( yylloc, "New array dimension is currently unimplemented." ); $$ = nullptr; }
 
 		// If needed, the following parses and does not use comma_expression, so the array structure can be built.
 	// | '[' push assignment_expression pop ',' push array_dimension_list pop ']' // CFA
 
-	| '[' push array_type_list pop ']'					// CFA
-		{ $$ = DeclarationNode::newArray( $3, nullptr, false ); }
+	| '[' array_type_list ']'							// CFA
+		{ $$ = DeclarationNode::newArray( $2, nullptr, false ); }
 	| multi_array_dimension
 	;
 
@@ -4042,13 +4042,13 @@ upupeq:
 	;
 
 multi_array_dimension:
-	'[' push assignment_expression pop ']'
-		{ $$ = DeclarationNode::newArray( $3, nullptr, false ); }
-	| '[' push '*' pop ']'								// C99
+	'[' assignment_expression ']'
+		{ $$ = DeclarationNode::newArray( $2, nullptr, false ); }
+	| '[' '*' ']'										// C99
 		{ $$ = DeclarationNode::newVarArray( 0 ); }
-	| multi_array_dimension '[' push assignment_expression pop ']'
-		{ $$ = $1->addArray( DeclarationNode::newArray( $4, nullptr, false ) ); }
-	| multi_array_dimension '[' push '*' pop ']'		// C99
+	| multi_array_dimension '[' assignment_expression ']'
+		{ $$ = $1->addArray( DeclarationNode::newArray( $3, nullptr, false ) ); }
+	| multi_array_dimension '[' '*' ']'					// C99
 		{ $$ = $1->addArray( DeclarationNode::newVarArray( 0 ) ); }
 	;
 
@@ -4265,17 +4265,17 @@ cfa_identifier_parameter_array:							// CFA
 	;
 
 cfa_array_parameter_1st_dimension:
-	'[' push type_qualifier_list '*' pop ']'			// remaining C99
-		{ $$ = DeclarationNode::newVarArray( $3 ); }
-	| '[' push type_qualifier_list assignment_expression pop ']'
-		{ $$ = DeclarationNode::newArray( $4, $3, false ); }
-	| '[' push declaration_qualifier_list assignment_expression pop ']'
+	'[' type_qualifier_list '*' ']'						// remaining C99
+		{ $$ = DeclarationNode::newVarArray( $2 ); }
+	| '[' type_qualifier_list assignment_expression ']'
+		{ $$ = DeclarationNode::newArray( $3, $2, false ); }
+	| '[' declaration_qualifier_list assignment_expression ']'
 		// declaration_qualifier_list must be used because of shift/reduce conflict with
 		// assignment_expression, so a semantic check is necessary to preclude them as a type_qualifier cannot
 		// appear in this context.
-		{ $$ = DeclarationNode::newArray( $4, $3, true ); }
-	| '[' push declaration_qualifier_list type_qualifier_list assignment_expression pop ']'
-		{ $$ = DeclarationNode::newArray( $5, $4->addQualifiers( $3 ), true ); }
+		{ $$ = DeclarationNode::newArray( $3, $2, true ); }
+	| '[' declaration_qualifier_list type_qualifier_list assignment_expression ']'
+		{ $$ = DeclarationNode::newArray( $4, $3->addQualifiers( $2 ), true ); }
 	;
 
 // This pattern parses a new-style declaration of an abstract variable or function prototype, i.e., there is no
@@ -4344,11 +4344,11 @@ cfa_abstract_array:										// CFA
 	;
 
 cfa_abstract_tuple:										// CFA
-	'[' push cfa_abstract_parameter_list pop ']'
-		{ $$ = DeclarationNode::newTuple( $3 ); }
-	| '[' push type_specifier_nobody ELLIPSIS pop ']'
+	'[' cfa_abstract_parameter_list ']'
+		{ $$ = DeclarationNode::newTuple( $2 ); }
+	| '[' type_specifier_nobody ELLIPSIS ']'
 		{ SemanticError( yylloc, "Tuple array currently unimplemented." ); $$ = nullptr; }
-	| '[' push type_specifier_nobody ELLIPSIS constant_expression pop ']'
+	| '[' type_specifier_nobody ELLIPSIS constant_expression ']'
 		{ SemanticError( yylloc, "Tuple array currently unimplemented." ); $$ = nullptr; }
 	;
 
