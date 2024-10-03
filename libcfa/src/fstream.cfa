@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 12 05:45:49 2024
-// Update Count     : 581
+// Last Modified On : Tue Oct  1 20:59:45 2024
+// Update Count     : 582
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -190,7 +190,7 @@ ofstream & serr = serrFile, & stderr = serrFile;
 static ofstream lsoutFile = { (FILE *)stdout };
 ofstream & lsout = lsoutFile;
 
-static ofstream exitFile = { (FILE *)stdout };
+static ofstream exitFile = { (FILE *)stderr };
 ofstream & exit = exitFile;
 static ofstream abortFile = { (FILE *)stderr };
 ofstream & abort = abortFile;
