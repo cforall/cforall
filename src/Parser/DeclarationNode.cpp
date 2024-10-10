@@ -828,9 +828,7 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & 
 		} // try
 	} // for
 
-	if ( ! errors.isEmpty() ) {
-		throw errors;
-	} // if
+	errors.throwIfNonEmpty();
 } // buildList
 
 // currently only builds assertions, function parameters, and return values
@@ -878,9 +876,7 @@ void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::DeclWithT
 		} // try
 	} // for
 
-	if ( ! errors.isEmpty() ) {
-		throw errors;
-	} // if
+	errors.throwIfNonEmpty();
 } // buildList
 
 void buildTypeList( const DeclarationNode * firstNode,
@@ -896,9 +892,7 @@ void buildTypeList( const DeclarationNode * firstNode,
 		} // try
 	} // for
 
-	if ( ! errors.isEmpty() ) {
-		throw errors;
-	} // if
+	errors.throwIfNonEmpty();
 } // buildTypeList
 
 ast::Decl * DeclarationNode::build() const {

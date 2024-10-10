@@ -155,9 +155,7 @@ void buildList( NodeType * firstNode,
 			errors.append( e );
 		} // try
 	} // for
-	if ( ! errors.isEmpty() ) {
-		throw errors;
-	} // if
+	errors.throwIfNonEmpty();
 }
 
 void buildList( DeclarationNode * firstNode, std::vector<ast::ptr<ast::Decl>> & outputList );

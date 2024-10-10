@@ -687,9 +687,7 @@ list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
 		}
 	}
 
-	if ( !errors.isEmpty() ) {
-		throw errors;
-	}
+	errors.throwIfNonEmpty();
 	return ret;
 }
 

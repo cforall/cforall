@@ -300,9 +300,7 @@ void FixInit::fixInitializers( ast::TranslationUnit & translationUnit ) {
 			errors.append( e );
 		} // try
 	} // for
-	if ( ! errors.isEmpty() ) {
-		throw errors;
-	} // if
+	errors.throwIfNonEmpty();
 }
 
 const ast::StmtExpr * StmtExprResult::previsit( const ast::StmtExpr * stmtExpr ) {
@@ -1172,9 +1170,7 @@ const ast::DeclWithType * GenStructMemberCalls::postvisit( const ast::FunctionDe
 		}
 		function->stmts = mutStmts;
 	}
-	if (! errors.isEmpty()) {
-		throw errors;
-	}
+	errors.throwIfNonEmpty();
 	return function;
 }
 

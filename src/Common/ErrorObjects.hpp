@@ -40,7 +40,7 @@ class SemanticErrorException : public std::exception {
 
 	void append( SemanticErrorException & other );
 	void append( CodeLocation location, const std::string & );
-	bool isEmpty() const;
+	void throwIfNonEmpty();
 	void print();
   private:
 	std::list< error > errors;

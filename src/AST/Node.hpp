@@ -160,9 +160,7 @@ void accept_each( const Container & c, Visitor & v ) {
 			errors.append( e );
 		}
 	}
-	if ( ! errors.isEmpty() ) {
-		throw errors;
-	}
+	errors.throwIfNonEmpty();
 }
 
 /// Base class for the smart pointer types

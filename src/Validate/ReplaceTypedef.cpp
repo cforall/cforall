@@ -326,7 +326,7 @@ AggrDecl const * ReplaceTypedefCore::handleAggregate( AggrDecl const * decl ) {
 	}
 	assert( declsToAddBefore.empty() );
 	assert( declsToAddAfter.empty() );
-	if ( !errors.isEmpty() ) { throw errors; }
+	errors.throwIfNonEmpty();
 
 	mut->members.clear();
 	for ( auto member : members ) {

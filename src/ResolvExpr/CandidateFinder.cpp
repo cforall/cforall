@@ -1114,7 +1114,7 @@ namespace {
 
 		// Implement SFINAE; resolution errors are only errors if there aren't any non-error
 		// candidates
-		if ( found.empty() && ! errors.isEmpty() ) { throw errors; }
+		if ( found.empty() ) errors.throwIfNonEmpty();
 
 		// only keep the best matching intrinsic result to match C semantics (no unexpected narrowing/widening)
 		// TODO: keep one for each set of argument candidates?

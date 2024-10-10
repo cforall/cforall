@@ -59,7 +59,7 @@ struct VariadicAssertionCore final {
 		SemanticErrorException errors;
 		makeTypeVarMap( decl, typeVars );
 		checkList( typeVars, errors, decl->assertions );
-		if ( !errors.isEmpty() ) { throw errors; }
+		errors.throwIfNonEmpty();
 	}
 
 	void checkAggr( bool checkMembers,
@@ -71,7 +71,7 @@ struct VariadicAssertionCore final {
 			checkList( typeVars, errors, param->assertions );
 		}
 		if ( checkMembers ) checkList( typeVars, errors, decl->members );
-		if ( !errors.isEmpty() ) { throw errors; }
+		errors.throwIfNonEmpty();
 	}
 
 	void postvisit( ast::StructDecl const * decl ) {

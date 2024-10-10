@@ -87,8 +87,10 @@ void SemanticErrorException::append( CodeLocation location, const string & msg )
 	errors.emplace_back( location, msg );
 }
 
-bool SemanticErrorException::isEmpty() const {
-	return errors.empty();
+void SemanticErrorException::throwIfNonEmpty() {
+	if ( !errors.empty() ) {
+		throw *this;
+	}
 }
 
 void SemanticErrorException::print() {

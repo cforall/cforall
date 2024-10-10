@@ -249,7 +249,7 @@ ast::__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept(
 		}
 	}
 	pass_visitor_stats.depth--;
-	if ( !errors.isEmpty() ) { throw errors; }
+	errors.throwIfNonEmpty();
 
 	return new_kids;
 }
@@ -286,7 +286,7 @@ ast::__pass::template resultN<container_t, node_t> ast::Pass< core_t >::call_acc
 
 	__pedantic_pass_assert( new_kids.size() == container.size() );
 	pass_visitor_stats.depth--;
-	if ( !errors.isEmpty() ) { throw errors; }
+	errors.throwIfNonEmpty();
 
 	return ast::__pass::resultN<container_t, node_t>{ mutated, new_kids };
 }
@@ -400,7 +400,7 @@ inline void ast::accept_all( std::list< ast::ptr<ast::Decl> > & decls, ast::Pass
 		if ( !empty( decls_before ) ) { decls.splice( i, *decls_before ); }
 	}
 	pass_visitor_stats.depth--;
-	if ( !errors.isEmpty() ) { throw errors; }
+	errors.throwIfNonEmpty();
 }
 
 template< typename core_t >
