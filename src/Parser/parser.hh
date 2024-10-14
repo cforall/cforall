@@ -175,39 +175,40 @@ extern int yydebug;
     CHARACTERconstant = 381,
     STRINGliteral = 382,
     DIRECTIVE = 383,
-    FLOATING_DECIMALconstant = 384,
-    FLOATING_FRACTIONconstant = 385,
-    FLOATINGconstant = 386,
-    ARROW = 387,
-    ICR = 388,
-    DECR = 389,
-    LS = 390,
-    RS = 391,
-    LE = 392,
-    GE = 393,
-    EQ = 394,
-    NE = 395,
-    ANDAND = 396,
-    OROR = 397,
-    ATTR = 398,
-    ELLIPSIS = 399,
-    EXPassign = 400,
-    MULTassign = 401,
-    DIVassign = 402,
-    MODassign = 403,
-    PLUSassign = 404,
-    MINUSassign = 405,
-    LSassign = 406,
-    RSassign = 407,
-    ANDassign = 408,
-    ERassign = 409,
-    ORassign = 410,
-    ErangeUp = 411,
-    ErangeUpEq = 412,
-    ErangeDown = 413,
-    ErangeDownEq = 414,
-    ATassign = 415,
-    THEN = 416
+    C23_ATTRIBUTE = 384,
+    FLOATING_DECIMALconstant = 385,
+    FLOATING_FRACTIONconstant = 386,
+    FLOATINGconstant = 387,
+    ARROW = 388,
+    ICR = 389,
+    DECR = 390,
+    LS = 391,
+    RS = 392,
+    LE = 393,
+    GE = 394,
+    EQ = 395,
+    NE = 396,
+    ANDAND = 397,
+    OROR = 398,
+    ATTR = 399,
+    ELLIPSIS = 400,
+    EXPassign = 401,
+    MULTassign = 402,
+    DIVassign = 403,
+    MODassign = 404,
+    PLUSassign = 405,
+    MINUSassign = 406,
+    LSassign = 407,
+    RSassign = 408,
+    ANDassign = 409,
+    ERassign = 410,
+    ORassign = 411,
+    ErangeUp = 412,
+    ErangeUpEq = 413,
+    ErangeDown = 414,
+    ErangeDownEq = 415,
+    ATassign = 416,
+    THEN = 417
   };
 #endif
 /* Tokens.  */
@@ -337,39 +338,40 @@ extern int yydebug;
 #define CHARACTERconstant 381
 #define STRINGliteral 382
 #define DIRECTIVE 383
-#define FLOATING_DECIMALconstant 384
-#define FLOATING_FRACTIONconstant 385
-#define FLOATINGconstant 386
-#define ARROW 387
-#define ICR 388
-#define DECR 389
-#define LS 390
-#define RS 391
-#define LE 392
-#define GE 393
-#define EQ 394
-#define NE 395
-#define ANDAND 396
-#define OROR 397
-#define ATTR 398
-#define ELLIPSIS 399
-#define EXPassign 400
-#define MULTassign 401
-#define DIVassign 402
-#define MODassign 403
-#define PLUSassign 404
-#define MINUSassign 405
-#define LSassign 406
-#define RSassign 407
-#define ANDassign 408
-#define ERassign 409
-#define ORassign 410
-#define ErangeUp 411
-#define ErangeUpEq 412
-#define ErangeDown 413
-#define ErangeDownEq 414
-#define ATassign 415
-#define THEN 416
+#define C23_ATTRIBUTE 384
+#define FLOATING_DECIMALconstant 385
+#define FLOATING_FRACTIONconstant 386
+#define FLOATINGconstant 387
+#define ARROW 388
+#define ICR 389
+#define DECR 390
+#define LS 391
+#define RS 392
+#define LE 393
+#define GE 394
+#define EQ 395
+#define NE 396
+#define ANDAND 397
+#define OROR 398
+#define ATTR 399
+#define ELLIPSIS 400
+#define EXPassign 401
+#define MULTassign 402
+#define DIVassign 403
+#define MODassign 404
+#define PLUSassign 405
+#define MINUSassign 406
+#define LSassign 407
+#define RSassign 408
+#define ANDassign 409
+#define ERassign 410
+#define ORassign 411
+#define ErangeUp 412
+#define ErangeUpEq 413
+#define ErangeDown 414
+#define ErangeDownEq 415
+#define ATassign 416
+#define THEN 417
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -408,7 +410,7 @@ union YYSTYPE
 	ast::WaitUntilStmt::ClauseNode * wucn;
 	ast::GenericExpr * genexpr;
 
-#line 412 "Parser/parser.hh"
+#line 414 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

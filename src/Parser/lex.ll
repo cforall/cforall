@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Mon Sep 23 22:45:33 2024
- * Update Count     : 792
+ * Last Modified On : Sun Oct 13 16:49:47 2024
+ * Update Count     : 876
  */
 
 %option yylineno
@@ -146,7 +146,7 @@ hex_floating_constant {hex_prefix}(({hex_floating_fraction}{binary_exponent})|({
 
 				// character escape sequence, GCC: \e => esc character
 simple_escape "\\"[abefnrtv'"?\\]
-				// ' stop editor highlighting
+				// " stop editor highlighting
 octal_escape "\\"{octal}("_"?{octal}){0,2}
 hex_escape "\\""x""_"?{hex_digits}
 escape_seq {simple_escape}|{octal_escape}|{hex_escape}|{universal_char}
@@ -154,11 +154,14 @@ cwide_prefix "L"|"U"|"u"
 swide_prefix {cwide_prefix}|"u8"
 
 				// display/white-space characters
-h_tab [\011]
-form_feed [\014]
-v_tab [\013]
-c_return [\015]
-h_white [ ]|{h_tab}
+h_tab "\t"
+form_feed "\f"
+v_tab "\v"
+new_line "\n"
+c_return "\r"
+h_white " "|{h_tab}
+v_white {v_tab}|{c_return}|{form_feed}
+hv_white {h_white}|{v_tab}|{new_line}|{c_return}|{form_feed}
 
 				// overloadable operators
 op_unary_only "~"|"!"
@@ -171,8 +174,12 @@ op_binary_over {op_unary_binary}|{op_binary_only}
 				// op_binary_not_over "?"|"->"|"."|"&&"|"||"|"@="
 				// operator {op_unary_pre_post}|{op_binary_over}|{op_binary_not_over}
 
+				// C23 attributes, CPP also handles missing quote delimiter
+attr_string "\""([^\"\\\n]|{escape_seq})*["\n]
+attr_arg_opt ({hv_white}*"("({hv_white}*{attr_string}{hv_white}*)+")")?
+attributes "deprecated"{attr_arg_opt}|"fallthrough"|"nodiscard"{attr_arg_opt}|"maybe_unused"|"noreturn"|"_Noreturn"|"unsequenced"|"unused"|"reproducible"|{identifier}{hv_white}*"::"{hv_white}*{identifier}
+
 %x COMMENT
-%x BKQUOTE
 %x QUOTE
 %x STRING
 
@@ -211,9 +218,8 @@ op_binary_over {op_unary_binary}|{op_binary_only}
 "//"[^\n]*"\n"	;
 
 				/* ignore whitespace */
-{h_white}+		{ WHITE_RETURN(' '); }
-({v_tab}|{c_return}|{form_feed})+ { WHITE_RETURN(' '); }
-({h_white}|{v_tab}|{c_return}|{form_feed})*"\n" { NEWLINE_RETURN(); }
+({h_white}|{v_white})+ { WHITE_RETURN(' '); }			// do nothing
+"\n"			{ NEWLINE_RETURN(); }					// reset column counter
 
 				/* keywords */
 alignas			{ KEYWORD_RETURN(ALIGNAS); }			// CFA
@@ -372,23 +378,29 @@ zero_t			{ NUMERIC_RETURN(ZERO_T); }				// CFA
 	IDENTIFIER_RETURN();
 }
 
+				/* C23 attributes */
+"[["{hv_white}*{attributes}({hv_white}*","{hv_white}*{attributes})*{hv_white}*"]]" {
+	strtext = new string( &yytext[2], yyleng - 4 );		// remove delimiters "[[" and "]]"
+	RETURN_STR(C23_ATTRIBUTE);
+}
+
 				/* numeric constants */
 {binary_constant} { NUMERIC_RETURN(INTEGERconstant); }
 {octal_constant} { NUMERIC_RETURN(INTEGERconstant); }
 {decimal_constant} { NUMERIC_RETURN(INTEGERconstant); }
-{hex_constant}	{ NUMERIC_RETURN(INTEGERconstant); }
-{floating_decimal}	{ NUMERIC_RETURN(FLOATING_DECIMALconstant); } // must appear before floating_constant
+{hex_constant} { NUMERIC_RETURN(INTEGERconstant); }
+{floating_decimal} { NUMERIC_RETURN(FLOATING_DECIMALconstant); } // must appear before floating_constant
 {floating_fraction}	{ NUMERIC_RETURN(FLOATING_FRACTIONconstant); } // must appear before floating_constant
 {floating_constant}	{ NUMERIC_RETURN(FLOATINGconstant); }
 {hex_floating_constant}	{ NUMERIC_RETURN(FLOATINGconstant); }
 
-				/* character constant, allows empty value */
+				/* character constant, allows empty value, CPP also handles missing quote delimiter */
 ({cwide_prefix}[_]?)?['] { BEGIN QUOTE; rm_underscore(); strtext = new string( yytext, yyleng ); }
 <QUOTE>[^'\\\n]* { strtext->append( yytext, yyleng ); }
 <QUOTE>['\n]	{ BEGIN 0; strtext->append( yytext, yyleng ); RETURN_STR(CHARACTERconstant); }
 				/* ' stop editor highlighting */
 
-				/* string constant */
+				/* string constant, CPP also handles missing quote delimiter */
 ({swide_prefix}[_]?)?["] { BEGIN STRING; rm_underscore(); strtext = new string( yytext, yyleng ); }
 <STRING>[^"\\\n]* { strtext->append( yytext, yyleng ); }
 <STRING>["\n]	{ BEGIN 0; strtext->append( yytext, yyleng ); RETURN_STR(STRINGliteral); }

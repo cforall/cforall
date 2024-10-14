@@ -17,11 +17,11 @@ const char * msg(log_message * this) {
 }
 
 const struct log_message_vtable log_vt @= {
-	.__cfavir_typeid : &__cfatid_log_message,
-	.size : sizeof(struct log_message),
-	.copy : copy,
-	.^?{} : ^?{},
-	.msg : msg,
+	.__cfavir_typeid = &__cfatid_log_message,
+	.size = sizeof(struct log_message),
+	.copy = copy,
+	.^?{} = ^?{},
+	.msg = msg,
 };
 
 // Logging messages don't have to be handled.

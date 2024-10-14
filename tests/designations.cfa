@@ -9,20 +9,16 @@
 // Author           : Rob Schluntz
 // Created On       : Thu Jun 29 15:26:36 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 29 11:31:21 2023
-// Update Count     : 28
+// Last Modified On : Sun Oct 13 11:53:16 2024
+// Update Count     : 31
 //
 
 #include <fstream.hfa>
 
 // Note: this test case has been crafted so that it compiles with both cfa and with gcc without any modifications.
-// In particular, since the syntax for designations in Cforall differs from that of C, preprocessor substitution
-// is used for the designation syntax
 #ifdef __cforall
-#define _ :
 #define AT @
 #else
-#define _ =
 #define AT
 #endif
 
@@ -99,14 +95,14 @@ struct Fred {
 		double i;
 	} m;
 };
-struct Fred s1 AT= { .m.j _ 3 };
-struct Fred s2 AT= { .i _ { [2] _ 2 } };
+struct Fred s1 AT= { .m.j = 3 };
+struct Fred s2 AT= { .i = { [2] = 2 } };
 
 int main() {
 	// simple designation case - starting from beginning of structure, leaves ptr default-initialized (zero)
 	struct A y0 = {
-		.x _ 2,
-		.y _ 3
+		.x = 2,
+		.y = 3
 	};
 
 	// simple initializaiton case - initialize all elements explicitly with no designations
@@ -117,7 +113,7 @@ int main() {
 
 	// use designation to move to member y, leaving x default-initialized (zero)
 	struct A y2 = {
-		.y _ 3,
+		.y = 3,
 		0
 	};
 
@@ -140,9 +136,9 @@ int main() {
 	struct B z1 = {
 		{ 3 }, // z1.a0
 		{ 4 }, // z1.a1
-		.a0 _ { 5 }, // z1.a0
+		.a0 = { 5 }, // z1.a0
 		{ 6 }, // z1.a1
-		.a0.y _ 2, // z1.a0.y
+		.a0.y = 2, // z1.a0.y
 		0, // z1.a0.ptr
 	};
 
@@ -213,15 +209,15 @@ int main() {
 	};
 #endif
 	// array designation
-	int i[2] = { [1] _ 3 };
+	int i[2] = { [1] = 3 };
 	// allowed to have 'too many' initialized lists - essentially they are ignored.
 	int i1 = { 3 };
 
 	// doesn't work yet.
 	// designate unnamed object's members
-	// struct D d = { .x _ 3 };
+	// struct D d = { .x = 3 };
 #if ERROR
-	struct D d1 = { .y _ 3 };
+	struct D d1 = { .y = 3 };
 #endif
 
 	// simple union initialization - initialized first member (e0.a)
@@ -241,7 +237,7 @@ int main() {
 
 	// move cursor to e4.b.a0.x and initialize until e3.b.a1.ptr inclusive
 	union E e3 = {
-		.b.a0.x _ 2, 3, 0, 5, 6, 0
+		.b.a0.x = 2, 3, 0, 5, 6, 0
 	};
 
 	sout | "=====E=====";
@@ -260,16 +256,16 @@ int main() {
 
 	// more cases
 
-//	int widths[] = { [3 ... 9] _ 1, [10 ... 99] _ 2, [100] _ 3 };
-//	int widths[] = { [3 ~ 9] _ 1, [10 ~ 99] _ 2, [100] _ 3 };
+//	int widths[] = { [3 ... 9] = 1, [10 ... 99] = 2, [100] = 3 };
+//	int widths[] = { [3 ~ 9] = 1, [10 ~ 99] = 2, [100] = 3 };
 	struct point { int x, y; };
-	struct point p = { .y _ 5, .x _ 7 };
+	struct point p = { .y = 5, .x = 7 };
 	union foo { int i; double d; };
-	union foo f = { .d _ 4 };
+	union foo f = { .d = 4 };
 	int v1, v2, v4;
-	int w[6] = { [1] _ v1, v2, [4] _ v4 };
-	int whitespace[256] = { [' '] _ 1, ['\t'] _ 1, ['\v'] _ 1, ['\f'] _ 1, ['\n'] _ 1, ['\r'] _ 1 };
-	struct point ptarray[10] = { [2].y _ 34, [2].x _ 35, [0].x _ 36 };
+	int w[6] = { [1] = v1, v2, [4] = v4 };
+	int whitespace[256] = { [' '] = 1, ['\t'] = 1, ['\v'] = 1, ['\f'] = 1, ['\n'] = 1, ['\r'] = 1 };
+	struct point ptarray[10] = { [2].y = 34, [2].x = 35, [0].x = 36 };
 }
 
 // Local Variables: //

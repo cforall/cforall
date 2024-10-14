@@ -131,16 +131,16 @@ extern int __map_prot;
 //-----------------------------------------------------------------------------
 // Global state
 __thread struct KernelThreadData __cfaabi_tls __attribute__ ((tls_model ( "initial-exec" ))) @= {
-	.this_thread : NULL,								// cannot use 0p
-	.this_processor : NULL,
-	.sched_lock : false,
-	.preemption_state : { .disable_count : 1, .enabled : false, .in_progress : false },
+	.this_thread = NULL,								// cannot use 0p
+	.this_processor = NULL,
+	.sched_lock = false,
+	.preemption_state = { .disable_count = 1, .enabled = false, .in_progress = false },
 	// random_state uninitialized
-	.ready_rng : { .fwd_seed : 0, .bck_seed : 0 },
-	.this_stats : NULL,
+	.ready_rng = { .fwd_seed = 0, .bck_seed = 0 },
+	.this_stats = NULL,
 	#ifdef __CFA_WITH_VERIFY__
-		.in_sched_lock : false,
-		.sched_id : 0,
+		.in_sched_lock = false,
+		.sched_id = 0,
 	#endif
 };
 

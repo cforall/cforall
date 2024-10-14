@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 30 09:40:28 2024
-// Update Count     : 6776
+// Last Modified On : Sun Oct 13 12:18:15 2024
+// Update Count     : 6845
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -391,7 +391,7 @@ if ( N ) {																		\
 %token<tok> IDENTIFIER		TYPEDIMname		TYPEDEFname		TYPEGENname
 %token<tok> TIMEOUT			WAND	WOR		CATCH			RECOVER			CATCHRESUME		FIXUP		FINALLY		// CFA
 %token<tok> INTEGERconstant	CHARACTERconstant	STRINGliteral
-%token<tok> DIRECTIVE
+%token<tok> DIRECTIVE		C23_ATTRIBUTE
 // Floating point constant is broken into three kinds of tokens because of the ambiguity with tuple indexing and
 // overloading constants 0/1, e.g., x.1 is lexed as (x)(.1), where (.1) is a factional constant, but is semantically
 // converted into the tuple index (.)(1). e.g., 3.x
@@ -1168,14 +1168,16 @@ compound_assignment_operator:
 tuple:													// CFA, tuple
 		// CFA, one assignment_expression is factored out of comma_expression to eliminate a shift/reduce conflict with
 		// comma_expression in cfa_identifier_parameter_array and cfa_abstract_array
-//	'[' ']'
-//		{ $$ = new ExpressionNode( build_tuple() ); }
-//	'[' assignment_expression ']'
-//		{ $$ = new ExpressionNode( build_tuple( $2 ) ); }
-	'[' ',' tuple_expression_list ']'
-		{ $$ = new ExpressionNode( build_tuple( yylloc, (new ExpressionNode( nullptr ))->set_last( $3 ) ) ); }
-	| '[' assignment_expression ',' tuple_expression_list ']'
+	'[' ',' ']'
+		{ $$ = new ExpressionNode( build_tuple( yylloc, nullptr ) ); }
+	| '[' assignment_expression ',' ']'
+		{ $$ = new ExpressionNode( build_tuple( yylloc, $2 ) ); }
+	| '[' '@' comma_opt ']'
+		{ SemanticError( yylloc, "Eliding tuple element with '@' is currently unimplemented." ); $$ = nullptr; }
+	| '[' assignment_expression ',' tuple_expression_list comma_opt ']'
 	 	{ $$ = new ExpressionNode( build_tuple( yylloc, $2->set_last( $4 ) ) ); }
+	| '[' '@' ',' tuple_expression_list comma_opt ']'
+		{ SemanticError( yylloc, "Eliding tuple element with '@' is currently unimplemented." ); $$ = nullptr; }
 	;
 
 tuple_expression_list:
@@ -3049,8 +3051,8 @@ initializer_list_opt:
 // shift/reduce conflicts
 
 designation:
-	designator_list ':'									// C99, CFA uses ":" instead of "="
-	| identifier_at ':'									// GCC, field name
+	designator_list '='									// C99, CFA uses ":" instead of "="
+	| identifier_at ':'									// GCC, field name, obsolete since GCC 2.5
 		{ $$ = new ExpressionNode( build_varref( yylloc, $1 ) ); }
 	;
 
@@ -3058,14 +3060,12 @@ designator_list:										// C99
 	designator
 	| designator_list designator
 		{ $$ = $1->set_last( $2 ); }
-	//| designator_list designator						{ $$ = new ExpressionNode( $1, $2 ); }
 	;
 
 designator:
 	'.' identifier_at									// C99, field name
 		{ $$ = new ExpressionNode( build_varref( yylloc, $2 ) ); }
-	| '[' assignment_expression ']'						// C99, single array element
-		// assignment_expression used instead of constant_expression because of shift/reduce conflicts with tuple.
+	| '[' constant_expression ']'						// C99, single array element
 		{ $$ = $2; }
 	| '[' subrange ']'									// CFA, multiple array elements
 		{ $$ = $2; }
@@ -3512,6 +3512,8 @@ attribute:												// GCC
 		{ $$ = $3; }
 	| ATTR '(' attribute_name_list ')'					// CFA
 		{ $$ = $3; }
+	| C23_ATTRIBUTE
+		{ $$ = DeclarationNode::newAttribute( $1 ); }
 	;
 
 attribute_name_list:									// GCC

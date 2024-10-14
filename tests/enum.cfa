@@ -37,7 +37,7 @@ enum { B = 3 + 4 - 7 * 20 / 34 << 3 >> 4 > 8 < 9 <= 23 >= 42 == 12 != 13  & 4 ^ 
 int y[B];
 enum { J = +3 + -4 / ~20 * ! 0 };
 int z[J] = { 1, 2, 3 };
-int aa[41] @= { [3] : 3, [1] : 6 };
+int aa[41] @= { [3] = 3, [1] = 6 };
 
 //Dummy main
 int main(int argc, char const *argv[]) {

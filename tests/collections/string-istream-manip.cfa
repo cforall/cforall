@@ -9,8 +9,8 @@
 // (One for reading plain strings, the other for reading via a manipulator.)
 // The test cases that use plainjane(-) are exercising the via-manipulator code path,
 // just with trivial manipulation.
-static _Istream_Sstr plainjane( string & s )  { return (_Istream_Sstr)@{  s, {{0p}, -1, {.flags.rwd : false}} }; }
-static _Istream_Rstr plainjane( string_res & s )  { return (_Istream_Rstr)@{ &s, {{0p}, -1, {.flags.rwd : false}} }; }
+static _Istream_Sstr plainjane( string & s )  { return (_Istream_Sstr)@{  s, {{0p}, -1, {.flags.rwd = false}} }; }
+static _Istream_Rstr plainjane( string_res & s )  { return (_Istream_Rstr)@{ &s, {{0p}, -1, {.flags.rwd = false}} }; }
 
 static void forceStringHeapFreeSpaceTo(int desiredSize) {
 	for (1_000_000) {

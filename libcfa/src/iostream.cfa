@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep  4 11:30:12 2024
-// Update Count     : 2040
+// Last Modified On : Sun Oct 13 10:53:09 2024
+// Update Count     : 2041
 //
 
 #include "iostream.hfa"
@@ -235,16 +235,16 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		enum { Open = 1, Close, OpenClose };
 		static const unsigned char mask[256] @= {		// 256 covers all Latin-1 characters
 			// opening delimiters, no space after
-			['('] : Open, ['['] : Open, ['{'] : Open,
-			['='] : Open, ['$'] : Open, [(unsigned char)'£'] : Open, [(unsigned char)'¥'] : Open,
-			[(unsigned char)'¡'] : Open, [(unsigned char)'¿'] : Open, [(unsigned char)'«'] : Open,
+			['('] = Open, ['['] = Open, ['{'] = Open,
+			['='] = Open, ['$'] = Open, [(unsigned char)'£'] = Open, [(unsigned char)'¥'] = Open,
+			[(unsigned char)'¡'] = Open, [(unsigned char)'¿'] = Open, [(unsigned char)'«'] = Open,
 			// closing delimiters, no space before
-			[','] : Close, ['.'] : Close, [';'] : Close, ['!'] : Close, ['?'] : Close,
-			['%'] : Close, [(unsigned char)'¢'] : Close, [(unsigned char)'»'] : Close,
-			[')'] : Close, [']'] : Close, ['}'] : Close,
+			[','] = Close, ['.'] = Close, [';'] = Close, ['!'] = Close, ['?'] = Close,
+			['%'] = Close, [(unsigned char)'¢'] = Close, [(unsigned char)'»'] = Close,
+			[')'] = Close, [']'] = Close, ['}'] = Close,
 			// opening-closing delimiters, no space before or after
-			['\''] : OpenClose, ['`'] : OpenClose, ['"'] : OpenClose, [':'] : OpenClose,
-			[' '] : OpenClose, ['\f'] : OpenClose, ['\n'] : OpenClose, ['\r'] : OpenClose, ['\t'] : OpenClose, ['\v'] : OpenClose, // isspace
+			['\''] = OpenClose, ['`'] = OpenClose, ['"'] = OpenClose, [':'] = OpenClose,
+			[' '] = OpenClose, ['\f'] = OpenClose, ['\n'] = OpenClose, ['\r'] = OpenClose, ['\t'] = OpenClose, ['\v'] = OpenClose, // isspace
 		}; // mask
 
 	  if ( s == 0p ) { fmt( os, "%s", "0p" ); return os; } // null pointer

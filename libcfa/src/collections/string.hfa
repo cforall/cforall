@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  6 07:49:52 2024
-// Update Count     : 130
+// Last Modified On : Sun Oct 13 10:50:30 2024
+// Update Count     : 131
 //
 
 #pragma once
@@ -88,11 +88,11 @@ void ?|?( ofstream & out, const string & s );
 ifstream & ?|?( ifstream & in, string & s );
 
 static inline {
-	_Ostream_Manip(string) bin( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'b', { .all : 0 } }; }
-	_Ostream_Manip(string) oct( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'o', { .all : 0 } }; }
-	_Ostream_Manip(string) hex( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'x', { .all : 0 } }; }
-	_Ostream_Manip(string) wd( unsigned int w, string s ) { return (_Ostream_Manip(string))@{ s, w, 0, 's', { .all : 0 } }; }
-	_Ostream_Manip(string) wd( unsigned int w, unsigned int pc, string s ) { return (_Ostream_Manip(string))@{ s, w, pc, 's', { .flags.pc : true } }; }
+	_Ostream_Manip(string) bin( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'b', { .all = 0 } }; }
+	_Ostream_Manip(string) oct( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'o', { .all = 0 } }; }
+	_Ostream_Manip(string) hex( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'x', { .all = 0 } }; }
+	_Ostream_Manip(string) wd( unsigned int w, string s ) { return (_Ostream_Manip(string))@{ s, w, 0, 's', { .all = 0 } }; }
+	_Ostream_Manip(string) wd( unsigned int w, unsigned int pc, string s ) { return (_Ostream_Manip(string))@{ s, w, pc, 's', { .flags.pc = true } }; }
 	_Ostream_Manip(string) & wd( unsigned int w, _Ostream_Manip(string) & fmt ) { fmt.wd = w; return fmt; }
 	_Ostream_Manip(string) & wd( unsigned int w, unsigned int pc, _Ostream_Manip(string) & fmt ) { fmt.wd = w; fmt.pc = pc; fmt.flags.pc = true; return fmt; }
 	_Ostream_Manip(string) & left( _Ostream_Manip(string) & fmt ) { fmt.flags.left = true; return fmt; }
@@ -118,29 +118,29 @@ struct _Istream_Sstr {
 
 static inline {
 	// read width does not include null terminator
-	_Istream_Swidth wdi( unsigned int rwd, string & s ) { return (_Istream_Swidth)@{ .s : s, { {.scanset : 0p}, .wd : rwd, {.flags.rwd : true} } }; }
+	_Istream_Swidth wdi( unsigned int rwd, string & s ) { return (_Istream_Swidth)@{ .s = s, { {.scanset = 0p}, .wd = rwd, {.flags.rwd = true} } }; }
 	_Istream_Sstr getline( string & s, const char delimiter = '\n' ) {
-//		return (_Istream_Sstr)@{ { .s : s, { {.delimiters : { delimiter, '\0' } }, .wd : -1, {.flags.delimiter : true} } } };
-		return (_Istream_Sstr)@{ .s : s, { {.delimiters : { delimiter, '\0' } }, .wd : -1, {.flags.delimiter : true} } };
+//		return (_Istream_Sstr)@{ { .s = s, { {.delimiters = { delimiter, '\0' } }, .wd = -1, {.flags.delimiter = true} } } };
+		return (_Istream_Sstr)@{ .s = s, { {.delimiters = { delimiter, '\0' } }, .wd = -1, {.flags.delimiter = true} } };
 	}
 	_Istream_Sstr & getline( _Istream_Swidth & f, const char delimiter = '\n' ) {
 		f.delimiters[0] = delimiter; f.delimiters[1] = '\0'; f.flags.delimiter = true; return (_Istream_Sstr &)f;
 	}
 	_Istream_Squoted quoted( string & s, const char Ldelimiter = '\"', const char Rdelimiter = '\0' ) {
-		return (_Istream_Squoted)@{ { .s : s, { {.delimiters : { Ldelimiter, Rdelimiter, '\0' }}, .wd : -1, {.flags.rwd : true} } } };
+		return (_Istream_Squoted)@{ { .s = s, { {.delimiters = { Ldelimiter, Rdelimiter, '\0' }}, .wd = -1, {.flags.rwd = true} } } };
 	}
 	_Istream_Squoted & quoted( _Istream_Swidth & f, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
 		f.delimiters[0] = Ldelimiter;  f.delimiters[1] = Rdelimiter;  f.delimiters[2] = '\0';
 		return (_Istream_Squoted &)f;
 	}
-//	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ { .s : s, { {.scanset : scanset}, .wd : -1, {.flags.inex : false} } } }; }
-	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ .s : s, { {.scanset : scanset}, .wd : -1, {.flags.inex : false} } }; }
+//	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ { .s = s, { {.scanset = scanset}, .wd = -1, {.flags.inex = false} } } }; }
+	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ .s = s, { {.scanset = scanset}, .wd = -1, {.flags.inex = false} } }; }
 	_Istream_Sstr & incl( const char scanset[], _Istream_Swidth & f ) { f.scanset = scanset; f.flags.inex = false; return (_Istream_Sstr &)f; }
-//	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ { .s : s, { {.scanset : scanset}, .wd : -1, {.flags.inex : true} } } }; }
-	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ .s : s, { {.scanset : scanset}, .wd : -1, {.flags.inex : true} } }; }
+//	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ { .s = s, { {.scanset = scanset}, .wd = -1, {.flags.inex = true} } } }; }
+	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ .s = s, { {.scanset = scanset}, .wd = -1, {.flags.inex = true} } }; }
 	_Istream_Sstr & excl( const char scanset[], _Istream_Swidth & f ) { f.scanset = scanset; f.flags.inex = true; return (_Istream_Sstr &)f; }
-//	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ { .s : s, { {.scanset : 0p}, .wd : -1, {.flags.ignore : true} } } }; }
-	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ .s : s, { {.scanset : 0p}, .wd : -1, {.flags.ignore : true} } }; }
+//	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ { .s = s, { {.scanset = 0p}, .wd = -1, {.flags.ignore = true} } } }; }
+	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ .s = s, { {.scanset = 0p}, .wd = -1, {.flags.ignore = true} } }; }
 	_Istream_Sstr & ignore( _Istream_Swidth & f ) { f.flags.ignore = true; return (_Istream_Sstr &)f; }
 	_Istream_Squoted & ignore( _Istream_Squoted & f ) { f.sstr.flags.ignore = true; return (_Istream_Squoted &)f; }
 //	_Istream_Sstr & ignore( _Istream_Sstr & f ) { f.sstr.flags.ignore = true; return (_Istream_Sstr &)f; }

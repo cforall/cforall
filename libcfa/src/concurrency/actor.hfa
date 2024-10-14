@@ -709,7 +709,7 @@ static inline void stop_actor_system() {
 
 // Default messages to send to any actor to change status
 // assigned at creation to __base_msg_finished to avoid unused message warning
-message __base_msg_finished @= { .alloc : Finished };
+message __base_msg_finished @= { .alloc = Finished };
 struct delete_msg_t { inline message; } delete_msg = __base_msg_finished;
 struct destroy_msg_t { inline message; } destroy_msg = __base_msg_finished;
 struct finished_msg_t { inline message; } finished_msg = __base_msg_finished;
@@ -717,3 +717,7 @@ struct finished_msg_t { inline message; } finished_msg = __base_msg_finished;
 allocation receive( actor & this, delete_msg_t & msg ) { return Delete; }
 allocation receive( actor & this, destroy_msg_t & msg ) { return Destroy; }
 allocation receive( actor & this, finished_msg_t & msg ) { return Finished; }
+
+// Default messages used all the time.
+//static struct startmsg_t { inline message; } start_msg; // start actor
+//static struct stopmsg_t { inline message; } stop_msg; // terminate actor
