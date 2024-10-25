@@ -301,7 +301,9 @@ private:
 	MUTATE_FRIEND
 };
 
+/// Enumeration attribute kind.
 enum class EnumAttribute{ Value, Posn, Label };
+
 /// enum declaration `enum Foo { ... };`
 class EnumDecl final : public AggregateDecl {
 public:
@@ -327,12 +329,6 @@ public:
 
 	const char * typeString() const override { return aggrString( Enum ); }
 
-	const std::string getUnmangeldArrayName( const EnumAttribute attr ) const;
-
-	unsigned calChildOffset(const std::string & childEnum) const;
-	unsigned calChildOffset(const ast::EnumInstType * childEnum) const;
-
-	bool isSubTypeOf(const ast::EnumDecl *) const;
 	bool isTyped() const;
 	bool isOpaque() const;
 private:

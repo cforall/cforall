@@ -635,12 +635,24 @@ public:
 
 	void postvisit( const ast::UnionInstType * ) {}
 
+	/// Is the target enum a child of the base enum?
+	static bool isChildEnum(
+			const ast::EnumDecl * decl, const ast::EnumDecl * target ) {
+		if ( decl == target ) return true;
+		for ( auto inlined : decl->inlinedDecl ) {
+			if ( isChildEnum( inlined->base, target ) ) return true;
+		}
+		return false;
+	}
+
 	void postvisit( const ast::EnumInstType * param ) {
 		auto argAsEnumInst = dynamic_cast<const ast::EnumInstType *>(type2);
 		if ( argAsEnumInst ) {
 			const ast::EnumDecl* paramDecl = param->base;
 			const ast::EnumDecl* argDecl = argAsEnumInst->base;
-			if (argDecl->isSubTypeOf(paramDecl)) result = param;
+			if ( isChildEnum( paramDecl, argDecl ) ) {
+				result = param;
+			}
 		} else if ( param->base && !param->base->isCfa ) {
 			auto basicType = new ast::BasicType( ast::BasicKind::UnsignedInt );
 			result = commonType( basicType, type2, tenv, need, have, open, widen);

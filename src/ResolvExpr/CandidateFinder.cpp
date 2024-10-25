@@ -2135,6 +2135,20 @@ const ast::Expr * referenceToRvalueConversion( const ast::Expr * expr, Cost & co
 	return expr;
 }
 
+/// If the target enum is a child, get the offset from the base to the target.
+static unsigned findChildOffset(
+		const ast::EnumDecl * decl, const ast::EnumDecl * target ) {
+	unsigned offset = 0;
+	for ( auto inlined : decl->inlinedDecl ) {
+		auto childDecl = inlined->base;
+		if ( childDecl == target ) {
+			return offset;
+		}
+		offset += childDecl->members.size();
+	}
+	SemanticError( decl, "Cannot find the target enum." );
+}
+
 const ast::Expr * CandidateFinder::makeEnumOffsetCast( const ast::EnumInstType * src, 
 	const ast::EnumInstType * dst, const ast::Expr * expr, Cost minCost ) {
 	auto srcDecl = src->base;
@@ -2146,11 +2160,11 @@ const ast::Expr * CandidateFinder::makeEnumOffsetCast( const ast::EnumInstType *
 		Cost c = castCost(src, dstChild, false, context.symtab, env);
 		ast::CastExpr * castToDst;
 		if (c<minCost) {
-			unsigned offset = dstDecl->calChildOffset(dstChild.get());
+			unsigned offset = findChildOffset( dstDecl, dstChild.get()->base );
 			if (offset > 0) {
 				auto untyped = ast::UntypedExpr::createCall(
-					expr->location, 
-					"?+?", 
+					expr->location,
+					"?+?",
 					{ new ast::CastExpr( expr->location,
 						expr,
 						new ast::BasicType(ast::BasicKind::SignedInt),

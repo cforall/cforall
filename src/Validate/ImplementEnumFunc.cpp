@@ -77,8 +77,8 @@ private:
 
 	std::vector<ast::ptr<ast::Init>> genValueInit() const;
 	ast::ObjectDecl* genAttrArrayProto(
-		const ast::EnumAttribute attr, const CodeLocation& location,
-		std::vector<ast::ptr<ast::Init>>& inits) const;
+		const CodeLocation& location, const std::string& prefix,
+		const ast::Type * type, std::vector<ast::ptr<ast::Init>>& inits ) const;
 };
 
 std::vector<ast::ptr<ast::Init>> EnumAttrFuncGenerator::genLabelInit() const {
@@ -350,19 +350,16 @@ void EnumAttrFuncGenerator::genBoundedFunctions() {
 }
 
 ast::ObjectDecl* EnumAttrFuncGenerator::genAttrArrayProto(
-	const ast::EnumAttribute attr, const CodeLocation& location,
-	std::vector<ast::ptr<ast::Init>>& inits) const {
+		const CodeLocation& location, const std::string& prefix,
+		const ast::Type * type, std::vector<ast::ptr<ast::Init>>& inits ) const {
 	ast::ArrayType* arrT = new ast::ArrayType(
-		attr == ast::EnumAttribute::Value
-			? decl->base
-			: new ast::PointerType(
-				new ast::BasicType(ast::BasicKind::Char, ast::CV::Const)),
+		type,
 		ast::ConstantExpr::from_int(decl->location, decl->members.size()),
 		ast::LengthFlag::FixedLen, ast::DimensionFlag::DynamicDim);
 
 	ast::ObjectDecl* objDecl =
 		new ast::ObjectDecl(
-			decl->location, decl->getUnmangeldArrayName( attr ),
+			decl->location, prefix + decl->name,
 			arrT, new ast::ListInit( location, std::move( inits ) ),
 			ast::Storage::Static, ast::Linkage::AutoGen );
 
@@ -416,34 +413,29 @@ void EnumAttrFuncGenerator::genTypeNameBody(ast::FunctionDecl* func) const {
 
 void EnumAttrFuncGenerator::genTypedEnumFunction(const ast::EnumAttribute attr) {
 	if (attr == ast::EnumAttribute::Value) {
-		if (decl->isTyped()) {
-			// TypedEnum's backing arrays
-			std::vector<ast::ptr<ast::Init>> inits = genValueInit();
-			ast::ObjectDecl* arrayProto =
-				genAttrArrayProto(attr, getLocation(), inits);
-			forwards.push_back(arrayProto);
+		if ( !decl->isTyped() ) return;
+		std::vector<ast::ptr<ast::Init>> inits = genValueInit();
+		ast::ObjectDecl* arrayProto =
+			genAttrArrayProto( getLocation(), "values_", decl->base, inits );
+		forwards.push_back(arrayProto);
 
-			ast::FunctionDecl* funcProto = genValueProto();
-			produceForwardDecl(funcProto);
-			genValueOrLabelBody(funcProto, arrayProto);
-			produceDecl(funcProto);
-		}  
-		// else {
-		// 	ast::FunctionDecl* funcProto = genQuasiValueProto();
-		// 	produceForwardDecl(funcProto);
-		// 	// genQuasiValueBody(funcProto);
-		// 	produceDecl(funcProto);
-		// }
+		ast::FunctionDecl* funcProto = genValueProto();
+		produceForwardDecl(funcProto);
+		genValueOrLabelBody(funcProto, arrayProto);
+		produceDecl(funcProto);
 	} else if (attr == ast::EnumAttribute::Label) {
 		std::vector<ast::ptr<ast::Init>> inits = genLabelInit();
+		const ast::Type * type = new ast::PointerType(
+			new ast::BasicType( ast::BasicKind::Char, ast::CV::Const ) );
 		ast::ObjectDecl* arrayProto =
-			genAttrArrayProto(attr, getLocation(), inits);
+			genAttrArrayProto( getLocation(), "labels_", type, inits );
 		forwards.push_back(arrayProto);
 		ast::FunctionDecl* funcProto = genLabelProto();
 		produceForwardDecl(funcProto);
 		genValueOrLabelBody(funcProto, arrayProto);
 		produceDecl(funcProto);
 	} else {
+		assert( attr == ast::EnumAttribute::Posn );
 		ast::FunctionDecl* funcProto = genPosnProto();
 		produceForwardDecl(funcProto);
 		genPosnBody(funcProto);
