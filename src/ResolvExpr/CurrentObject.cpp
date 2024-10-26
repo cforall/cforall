@@ -59,7 +59,7 @@ public:
 
 	/// Retrieve the list of possible (Type,Designation) pairs for the
 	/// current position in the current object.
-	virtual std::deque< InitAlternative > operator* () const = 0;
+	virtual std::deque< InitAlternative > getOptions() const = 0;
 
 	/// True if the iterator is not currently at the end.
 	virtual operator bool() const = 0;
@@ -76,8 +76,8 @@ public:
 	/// The type of the current subobject.
 	virtual const Type * getNext() = 0;
 
-	/// Helper for operator*; aggregates must add designator to each init
-	/// alternative, but adding designators in operator* creates duplicates.
+	/// Helper for getOptions; aggregates must add designator to each init
+	/// alternative, but adding designators in getOptions creates duplicates.
 	virtual std::deque< InitAlternative > first() const = 0;
 };
 
@@ -102,7 +102,7 @@ public:
 		}
 	}
 
-	std::deque< InitAlternative > operator* () const override { return first(); }
+	std::deque< InitAlternative > getOptions() const override { return first(); }
 
 	operator bool() const override { return type; }
 
@@ -168,7 +168,7 @@ public:
 		memberIter->setPosition( ++begin, end );
 	}
 
-	std::deque< InitAlternative > operator* () const override { return first(); }
+	std::deque< InitAlternative > getOptions() const override { return first(); }
 
 	operator bool() const override { return index < size; }
 };
@@ -296,7 +296,7 @@ public:
 		}
 	}
 
-	std::deque< InitAlternative > operator* () const final {
+	std::deque< InitAlternative > getOptions() const final {
 		if ( memberIter && *memberIter ) {
 			std::deque< InitAlternative > ret = memberIter->first();
 			PRINT( std::cerr << "sub: " << sub << std::endl; )
@@ -593,7 +593,7 @@ void CurrentObject::exitListInit() {
 std::deque< InitAlternative > CurrentObject::getOptions() {
 	PRINT( std::cerr << "____getting current options" << std::endl; )
 	assertf( ! objStack.empty(), "objstack empty in getOptions" );
-	return **objStack.back();
+	return objStack.back()->getOptions();
 }
 
 const Type * CurrentObject::getCurrentType() {
