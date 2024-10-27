@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec  6 12:15:52 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 17 13:59:15 2024
-// Update Count     : 199
+// Last Modified On : Fri Oct 18 16:43:26 2024
+// Update Count     : 200
 //
 
 #include <fstream.hfa>									// sin/sout
@@ -111,21 +111,12 @@ int main( int argc, char * argv[] ) {
 				if ( depth < 0 ) throw ExceptionInst( cmd_error );
 				fallthrough;
 			  case 3: case 2:
+				// open input file first as output creates file
 				if ( strcmp( argv[1], "d" ) != 0 ) {
-					try {								// open input file first as output creates file
-						open( unsortedfile, argv[1] );
-					} catch( open_failure * ) {			// open failed ?
-						serr | "Error! Could not open unsorted input file \"" | argv[1] | "\"";
-						throw ExceptionInst( cmd_error );
-					} // try
+					open( unsortedfile, argv[1] );
 				} // if
 				if ( argc > 2 && strcmp( argv[2], "d" ) != 0 ) {
-					try {
-						open( sortedfile, argv[2] );
-					} catch( open_failure * ) {			// open failed ?
-						serr | "Error! Could not open sorted output file \"" | argv[2] | "\"";
-						throw ExceptionInst( cmd_error );
-					} // try
+					open( sortedfile, argv[2] );
 				} // if
 				fallthrough;
 			  case 1: ;									// defaults
@@ -133,11 +124,15 @@ int main( int argc, char * argv[] ) {
 				throw ExceptionInst( cmd_error );
 			} // choose
 		} // if
+	} catch( open_failure * ) {			// open failed ?
+		exit | "Error! Could not open unsorted input file \"" | argv[1] | "\"";
+	} catch( open_failure * ) {			// open failed ?
+		exit | "Error! Could not open sorted output file \"" | argv[2] | "\"";
 	} catch( exception_t * ) {							// catch any
 		exit | "Usage: " | argv[0] |					// TERMINATE
 			" ( [ unsorted-file | 'd' [ sorted-file | 'd' [ depth (>= 0) ] ] ]"
 			" | -t size (>= 0) [ depth (>= 0) ] )";
-	} //  try
+	} // try
 
 	enum { ValuesPerLine = 22 };						// number of values printed per line
 
