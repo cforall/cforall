@@ -2,7 +2,7 @@
 #include <enum.hfa>
 
 int main() {
-	enum(int ) E { BBB = 3, AAA, AA, AB, B, CB, AC };
+	enum(int) E { BBB = 3, AAA, AA, AB, B, CB, AC };
 	E e;
 
 	try {
