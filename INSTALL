@@ -38,7 +38,7 @@ to list them.  The most common argument is:
 Build Test
 ======================================
 
-  $ cd ./test
+  $ cd ./tests
   $ make -j 8 all-local
 
 The tests take about 2-5 minutes and can be stopped at any time.
