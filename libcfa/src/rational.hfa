@@ -11,8 +11,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:56:25 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct  6 07:52:20 2023
-// Update Count     : 122
+// Last Modified On : Fri Nov  8 17:02:09 2024
+// Update Count     : 126
 //
 
 #pragma once
@@ -22,11 +22,13 @@
 
 // implementation
 
-forall( T | arithmetic( T ) ) {
+forall( T ) {
 	struct rational {
 		T numerator, denominator;						// invariant: denominator > 0
 	}; // rational
+}
 
+forall( T | arithmetic( T ) ) {
 	// constructors
 
 	void ?{}( rational(T) & r );

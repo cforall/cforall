@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 21 16:21:03 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:33:56 2023
-// Update Count     : 135
+// Last Modified On : Fri Nov  8 17:07:15 2024
+// Update Count     : 144
 //
 
 #define __cforall_builtins__
@@ -139,11 +139,12 @@ static inline {
 		if ( y >= sizeof(y) * CHAR_BIT ) return 0;		/* immediate overflow, negative exponent > 2^size-1 */ \
 	) \
 	typeof(x) op = 1;									/* accumulate odd product */ \
+	typeof(x) w = x; /* FIX-ME: possible bug in the box pass changing value argument through parameter */ \
 	for ( ; y > 1; y >>= 1 ) {							/* squaring exponentiation, O(log2 y) */ \
-		if ( (y & 1) == 1 ) op = op * x;				/* odd ? */ \
-		x = x * x; \
+		if ( (y & 1) == 1 ) op = op * w;				/* odd ? */ \
+		w = w * w; \
 	} \
-	return x * op
+	return w * op
 #define __CFA_EXP_INT__(...) __VA_ARGS__
 
 static inline {
