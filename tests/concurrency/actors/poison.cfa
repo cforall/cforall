@@ -14,32 +14,32 @@ int main() {
 
 	sout | "Finished";
 	{
-		start_actor_system();
+		actor_start();
 		Server s[10];
 		for ( i; 10 ) {
 			s[i] | finished_msg;
 		}
-		stop_actor_system();
+		actor_stop();
 	}
 
 	sout | "Delete";
 	{
-		start_actor_system();
+		actor_start();
 		for ( i; 10 ) {
 			Server * s = alloc();
 			(*s){};
 			(*s) | delete_msg;
 		}
-		stop_actor_system();
+		actor_stop();
 	}
 
 	sout | "Destroy";
 	{
-		start_actor_system();
+		actor_start();
 		Server s[10];
 		for ( i; 10 )
 			s[i] | destroy_msg;
-		stop_actor_system();
+		actor_stop();
 		for ( i; 10 )
 			if (s[i].val != 777)
 				sout | "Error: dtor not called correctly.";

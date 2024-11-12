@@ -46,14 +46,14 @@ int main( int argc, char * argv[] ) {
 
 	processor p[Processors - 1];
 
-	start_actor_system( Processors ); // test passing number of processors
+	actor_start( Processors ); // test passing number of processors
 	ping pi_actor;
 	pong po_actor;
 	po = &po_actor;
 	pi = &pi_actor;
 	p_msg m;
 	pi_actor | m;
-	stop_actor_system();
+	actor_stop();
 
 	sout | "end";
 }

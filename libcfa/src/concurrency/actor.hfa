@@ -397,7 +397,7 @@ static inline size_t __get_next_ticket( executor & this ) with(this) {
 
 // TODO: update globals in this file to be static fields once the static fields project is done
 static executor * __actor_executor_ = 0p;
-static bool __actor_executor_passed = false;			// was an executor passed to start_actor_system
+static bool __actor_executor_passed = false;			// was an executor passed to actor_start
 static size_t __num_actors_ = 0;						// number of actor objects in system
 static struct thread$ * __actor_executor_thd = 0p;		// used to wake executor after actors finish
 struct actor {
@@ -409,7 +409,7 @@ struct actor {
 static inline void ?{}( actor & this ) with(this) {
 	// Once an actor is allocated it must be sent a message or the actor system cannot stop. Hence, its receive
 	// member must be called to end it
-	DEBUG_ABORT( __actor_executor_ == 0p, "Creating actor before calling start_actor_system() can cause undefined behaviour.\n" );
+	DEBUG_ABORT( __actor_executor_ == 0p, "Creating actor before calling actor_start() can cause undefined behaviour.\n" );
 	alloc = Nodelete;
 	ticket = __get_next_ticket( *__actor_executor_ );
 	__atomic_fetch_add( &__num_actors_, 1, __ATOMIC_RELAXED );
@@ -681,23 +681,23 @@ static inline void __reset_stats() {
 	#endif
 }
 
-static inline void start_actor_system( size_t num_thds ) {
+static inline void actor_start( size_t num_thds ) {
 	__reset_stats();
 	__actor_executor_thd = active_thread();
 	__actor_executor_ = alloc();
 	(*__actor_executor_){ 0, num_thds, num_thds == 1 ? 1 : num_thds * 16 };
 }
 
-static inline void start_actor_system() { start_actor_system( get_proc_count( *active_cluster() ) ); }
+static inline void actor_start() { actor_start( get_proc_count( *active_cluster() ) ); }
 
-static inline void start_actor_system( executor & this ) {
+static inline void actor_start( executor & this ) {
 	__reset_stats();
 	__actor_executor_thd = active_thread();
 	__actor_executor_ = &this;
 	__actor_executor_passed = true;
 }
 
-static inline void stop_actor_system() {
+static inline void actor_stop() {
 	park();												// unparked when actor system is finished
 
 	if ( !__actor_executor_passed ) delete( __actor_executor_ );
@@ -714,10 +714,10 @@ struct delete_msg_t { inline message; } delete_msg = __base_msg_finished;
 struct destroy_msg_t { inline message; } destroy_msg = __base_msg_finished;
 struct finished_msg_t { inline message; } finished_msg = __base_msg_finished;
 
-allocation receive( actor & this, delete_msg_t & msg ) { return Delete; }
-allocation receive( actor & this, destroy_msg_t & msg ) { return Destroy; }
-allocation receive( actor & this, finished_msg_t & msg ) { return Finished; }
+allocation receive( actor & this, delete_msg_t & ) { return Delete; }
+allocation receive( actor & this, destroy_msg_t & ) { return Destroy; }
+allocation receive( actor & this, finished_msg_t & ) { return Finished; }
 
 // Default messages used all the time.
-//static struct startmsg_t { inline message; } start_msg; // start actor
-//static struct stopmsg_t { inline message; } stop_msg; // terminate actor
+struct start_msg_t { inline message; } start_msg = __base_msg_finished; // start actor
+struct stop_msg_t { inline message; } stop_msg = __base_msg_finished; // terminate actor

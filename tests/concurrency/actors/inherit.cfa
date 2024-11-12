@@ -28,7 +28,7 @@ allocation receive( Server2 & receiver, D_msg2 & msg ) { return Delete; }
 int main() {
 	sout | "Start";
 	{
-		start_actor_system();
+		actor_start();
 		D_msg * dm = alloc();
 		(*dm){};
 		D_msg2 * dm2 = alloc();
@@ -39,10 +39,10 @@ int main() {
 		(*s2){};
 		*s | *dm;
 		*s2 | *dm2;
-		stop_actor_system();
+		actor_stop();
 	}
 	{
-		start_actor_system();
+		actor_start();
 		Server s[2];
 		D_msg * dm = alloc();
 		(*dm){};
@@ -50,7 +50,7 @@ int main() {
 		(*dm2){};
 		s[0] | *dm;
 		s[1] | *dm2;
-		stop_actor_system();
+		actor_stop();
 	}
 	sout | "Finished";
 }

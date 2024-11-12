@@ -1,59 +1,46 @@
-//
+//                               -*- Mode: C -*- 
+// 
 // Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
-//
+// 
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// barrier.hfa -- simple barrier implemented from monitors
-//
-// Author           : Thierry Delisle
-// Created On       : Thu Mar 31 16:51:35 2022
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
-//
+// barrier.hfa -- simple barrier implemented using a monitor
+// 
+// Author           : Peter A. Buhr
+// Created On       : Sun Nov 10 08:07:35 2024
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Nov 10 08:11:55 2024
+// Update Count     : 3
+// 
 
 #pragma once
 
 #include <monitor.hfa>
 
-// Simple barrier based on a monitor
+// Plan 9 inheritance does not work with monitors. Two monitor locks are created.
+
 monitor barrier {
-	// Number of threads blocking needed to unblock the barrier
-	// Unsigned should be enough, I don't expect use cases with 2^32 thread barriers.
-	unsigned width;
-
-	// Current count (counting backwards)
-	unsigned count;
-
-	// Barrier uses internal scheduling
-	condition c;
+	unsigned int group, arrivals;						// group size, arrival counter
+	condition c;										// wait for group to form
 };
 
 // Constructor
-void ?{}( barrier & this, unsigned width ) {
-	this.width = width;
-	this.count = width; // Count backwards so initialize at width
+void ?{}( barrier & b, unsigned group ) {
+	b.group = b.arrivals = group;						// count backwards
 }
 
-// block until the number of threads needed have blocked
-// returns an value indicating the reverse order the threads arrived in
-// i.e. last thread will return 0 (and not block)
-//      second last thread returns 1
-//      etc.
-// last is an optional hook that will be called by the last thread
-// before unblocking the others
-static inline unsigned block(barrier & mutex this, fptr_t last = (fptr_t)0 ) {
-	this.count -= 1; // prefix decrement so we the last is 0 and not 1
-	unsigned arrival = this.count; // Note arrival order
-	if(arrival == 0) {
-		if(last) last();
-		// If arrived last unblock everyone and reset
-		signal_all(this.c);
-		this.count = this.width;
-	} else {
-		// Otherwise block
-		wait(this.c);
-	}
-	return arrival; // return arrival order
+// Returns a value indicating the reverse order the threads arrived i.e. last thread returns 0 (and does not block)
+// last is an optional hook that is called by the last thread before unblocking the others.
+static inline unsigned block( barrier & mutex b, fptr_t last = (fptr_t)0 ) with( b ) {
+	arrivals -= 1;										// prefix decrement so last is 0 not 1
+	unsigned arrived = b.arrivals;						// note arrival order
+	if ( arrivals != 0 ) {								// wait for group to form
+		wait( b.c );
+	} else {											// group formed
+		if ( last ) last();								// safe to call
+		signal_all( c );								// unblock group
+		arrivals = group;								// reset
+	} // if
+	return arrived;										// return arrival order
 }

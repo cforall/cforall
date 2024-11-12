@@ -37,15 +37,15 @@ allocation receive( d_actor &, d_msg2 & msg ) {
 int main() {
 	processor p;
 	{
-		start_actor_system();								// sets up executor
+		actor_start();								// sets up executor
 		d_actor da;
 		d_msg * dm = alloc();
 		(*dm){ 42, 2423 };
 		da | *dm;
-		stop_actor_system();								// waits until actors finish
+		actor_stop();								// waits until actors finish
 	}
 	{
-		start_actor_system();								// sets up executor
+		actor_start();								// sets up executor
 		d_actor da;
 		d_msg2 dm{ 29079 };
 		set_allocation( dm, Nodelete );
@@ -53,6 +53,6 @@ int main() {
 		message * mg = &dm;
 		virtual_dtor * v = &dm;
 		da | dm;
-		stop_actor_system();								// waits until actors finish
+		actor_stop();								// waits until actors finish
 	}
 }

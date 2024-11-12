@@ -44,17 +44,11 @@ int main( int argc, char * argv[] ) {
 	sout | "starting";
 
 	executor e{ 0, 1, 1, false };
-	start_actor_system( e );
-
+	actor_start( e );
 	sout | "started";
-
 	derived_msg msg;
-
 	derived_actor actor;
-
 	actor | msg;
-
-	stop_actor_system();
-
+	actor_stop();
 	sout | "stopped";
 }

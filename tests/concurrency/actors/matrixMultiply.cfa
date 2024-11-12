@@ -87,27 +87,20 @@ int main( int argc, char * argv[] ) {
 	executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 16, true };
 
 	sout | "starting";
-
-	start_actor_system( e );
-
+	actor_start( e );
 	sout | "started";
-
 	derived_msg messages[xr];
-
 	derived_actor actors[xr];
 
 	for ( r; xr ) {
 		messages[r]{ Z[r], X[r], Y };
 	} // for
-
 	for ( r; xr ) {
 		actors[r] | messages[r];
 	} // for
 
 	sout | "stopping";
-
-	stop_actor_system();
-
+	actor_stop();
 	sout | "stopped";
 
 	for ( r; xr ) {										// deallocate X and Z matrices

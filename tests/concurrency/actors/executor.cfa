@@ -83,20 +83,13 @@ int main( int argc, char * argv[] ) {
 	executor e{ Processors, Processors, Processors == 1 ? 1 : Processors * 512, true };
 
 	sout | "starting";
-
-	start_actor_system( e );
-
+	actor_start( e );
 	sout | "started";
-
 	d_actor actors[ Actors ];
-
 	for ( i; Actors ) {
 		actors[i] | shared_msg;
 	} // for
-
 	sout | "stopping";
-
-	stop_actor_system();
-
+	actor_stop();
 	sout | "stopped";
 }

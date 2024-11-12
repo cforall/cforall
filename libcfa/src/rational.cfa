@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:54:28 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov  8 17:00:38 2024
-// Update Count     : 205
+// Last Modified On : Mon Nov 11 22:37:12 2024
+// Update Count     : 206
 //
 
 #include "rational.hfa"
@@ -210,7 +210,7 @@ forall( T | arithmetic( T ) ) {
 } // distribution
 
 forall( T | arithmetic( T ) | { T ?\?( T, unsigned long ); } ) {
-rational(T) ?\?( rational(T) x, long int y ) {
+	rational(T) ?\?( rational(T) x, long int y ) {
 		if ( y < 0 ) {
 			return (rational(T)){ x.denominator \ -y, x.numerator \ -y };
 		} else {

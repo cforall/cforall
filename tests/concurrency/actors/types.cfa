@@ -66,61 +66,61 @@ int main( int argc, char * argv[] ) {
 	processor p[Processors - 1];
 
 	sout | "basic test"; 
-	start_actor_system( Processors ); // test passing number of processors
+	actor_start( Processors ); // test passing number of processors
 	derived_actor a;
 	d_msg b, c;
 	b.num = 1;
 	c.num = 2;
 	a | b | c;
-	stop_actor_system();
+	actor_stop();
 
 	sout | "same message and different actors test";
-	start_actor_system(); // let system detect # of processors
+	actor_start(); // let system detect # of processors
 	derived_actor2 d_ac2_0, d_ac2_1;
 	d_msg d_ac2_msg;
 	d_ac2_msg.num = 3;
 	d_ac2_0 | d_ac2_msg;
 	d_ac2_1 | d_ac2_msg;
-	stop_actor_system();
+	actor_stop();
 
 	
 	{
 		sout | "same message and different actor types test";
 		executor e{ 0, Processors, Processors == 1 ? 1 : Processors * 4, false };
-		start_actor_system( e ); // pass an explicit executor
+		actor_start( e ); // pass an explicit executor
 		derived_actor2 d_ac2_2;
 		derived_actor3 d_ac3_0;
 		d_msg d_ac23_msg;
 		d_ac23_msg.num = 4;
 		d_ac3_0 | d_ac23_msg;
 		d_ac2_2 | d_ac23_msg;
-		stop_actor_system();
+		actor_stop();
 	} // RAII to clean up executor
 
 	{
 		sout | "different message types, one actor test";
 		executor e{ 1, Processors, Processors == 1 ? 1 : Processors * 4, true };
-		start_actor_system( Processors );
+		actor_start( Processors );
 		derived_actor3 a3;
 		d_msg b1;
 		d_msg2 c2;
 		b1.num = -1;
 		c2.num = 5;
 		a3 | b1 | c2;
-		stop_actor_system();
+		actor_stop();
 	} // RAII to clean up executor
 
 	{
 		sout | "nested inheritance actor test";
 		executor e{ 1, Processors, Processors == 1 ? 1 : Processors * 4, true };
-		start_actor_system( Processors );
+		actor_start( Processors );
 		derived_actor4 a4;
 		d_msg b1;
 		d_msg2 c2;
 		b1.num = -1;
 		c2.num = 5;
 		a4 | b1 | c2;
-		stop_actor_system();
+		actor_stop();
 	} // RAII to clean up executor
 
 	sout | "end";
