@@ -249,6 +249,26 @@ static Cost convertToReferenceCost( const ast::Type * src, const ast::Type * dst
 		if ( dynamic_cast< const ast::EnumInstType * >( src ) && dstBaseType.as<ast::BasicType>() ) {
 			newSrc = new ast::BasicType( ast::BasicKind::UnsignedInt );
 		}
+		if (dstAsRef->base->is_const() ) {
+			auto cvtCost = conversionCost(newSrc, dstAsRef->base, srcIsLvalue, symtab, env) ;
+			if (cvtCost == Cost::zero) { // exact match, may use a lvalue src
+				if ( srcIsLvalue ) {
+					if ( src->qualifiers == dstAsRef->base->qualifiers ) {
+						return Cost::reference;
+					} else if ( src->qualifiers < dstAsRef->base->qualifiers ) {
+						return Cost::safe;
+					} else {
+						return Cost::unsafe;
+					}
+				}
+				else {
+					return Cost::reference;
+				}
+			}
+			else { // not exact match, conversion is needed so lvalueness of src does not matter
+				return cvtCost + Cost::reference;
+			}
+		}
 		if ( typesCompatibleIgnoreQualifiers( newSrc, dstAsRef->base, env ) ) {
 			if ( srcIsLvalue ) {
 				if ( src->qualifiers == dstAsRef->base->qualifiers ) {
@@ -258,9 +278,7 @@ static Cost convertToReferenceCost( const ast::Type * src, const ast::Type * dst
 				} else {
 					return Cost::unsafe;
 				}
-			} else if ( dstAsRef->base->is_const() ) {
-				return Cost::safe;
-			} else {
+			} else { // rvalue-to-NC-ref conversion
 				return Cost::unsafe;
 			}
 		}

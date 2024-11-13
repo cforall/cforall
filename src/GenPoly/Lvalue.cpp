@@ -315,10 +315,17 @@ ast::Expr const * ReferenceConversions::postvisit(
 		SemanticWarning( expr->arg->location,
 			Warning::RvalueToReferenceConversion, toCString( expr->arg ) );
 
+
+		// allowing conversion in the rvalue to const ref case
+		// use the referenced-to type to create temp variables
+		ast::Type const * targetType = dstType;
+		for (int i = 0; i < diff; ++i) targetType = (strict_dynamic_cast<ast::ReferenceType const *>(targetType))->base;
+
 		static UniqueName tmpNamer( "__ref_tmp_" );
 		ast::ObjectDecl * tmp = new ast::ObjectDecl( expr->arg->location,
 			tmpNamer.newName(),
-			ast::deepCopy( expr->arg->result ),
+			// ast::deepCopy( expr->arg->result ),
+			ast::deepCopy (targetType),
 			new ast::SingleInit( expr->arg->location, expr->arg ) );
 		PRINT( std::cerr << "make tmp: " << tmp << std::endl; )
 		stmtsToAddBefore.push_back( new ast::DeclStmt( tmp->location, tmp ) );
