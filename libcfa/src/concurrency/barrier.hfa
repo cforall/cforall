@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Nov 10 08:07:35 2024
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 10 08:11:55 2024
-// Update Count     : 3
+// Last Modified On : Wed Nov 13 12:37:04 2024
+// Update Count     : 9
 // 
 
 #pragma once
@@ -25,14 +25,13 @@ monitor barrier {
 	condition c;										// wait for group to form
 };
 
-// Constructor
-void ?{}( barrier & b, unsigned group ) {
-	b.group = b.arrivals = group;						// count backwards
+static inline void ?{}( barrier & b, unsigned int group ) {
+	b.group = b.arrivals = group;						// arrivals count backward
 }
 
-// Returns a value indicating the reverse order the threads arrived i.e. last thread returns 0 (and does not block)
-// last is an optional hook that is called by the last thread before unblocking the others.
-static inline unsigned block( barrier & mutex b, fptr_t last = (fptr_t)0 ) with( b ) {
+// Returns a value indicating the reverse order the threads arrived, i.e. last thread returns 0 (and does not block)
+// last is an optional hook that is called by the Gth thread before unblocking the other threads.
+static inline unsigned int block( barrier & mutex b, fptr_t last = (fptr_t)0 ) with( b ) {
 	arrivals -= 1;										// prefix decrement so last is 0 not 1
 	unsigned arrived = b.arrivals;						// note arrival order
 	if ( arrivals != 0 ) {								// wait for group to form

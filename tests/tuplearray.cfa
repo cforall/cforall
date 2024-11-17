@@ -1,0 +1,33 @@
+#include <fstream.hfa>
+
+[void] bar1( size_t size, [10] [int,int] f ) {
+	for ( i; size )	f[i] = [1, 2];
+}
+[void] bar2( * [int,int] f );
+
+[void] bar3( [][10] [int,int] f );
+[void] bar4( [const *] [int,int] f );
+[void] bar5( [const 3] [int,int] f );
+//[void] bar6( [static 3] [int,int] f );
+[void] bar7( [3] [int,int] f );
+
+[void] bar8( [3][10] [int,int] f );
+[void] bar9( [3]* [int,int] f );
+
+[void] bar10( * [3] [int,int] f );
+
+[void] bar11( [3][10] [int,int] f );
+[void] bar12( * [3][10] [int,int] f );
+
+//[void] foo( size_t size, [size] [int,int] f ) {
+[void] foo( size_t size, [10] [int,int] f ) {
+	for ( i; size ) f[i] = [1, 2];
+}
+
+int main() {
+	[10] [int,int] arr;
+//	[int,int] arr[10];	// unimplemented
+
+	foo( 10, arr );
+	for ( i; 10 ) sout | arr[i];
+}

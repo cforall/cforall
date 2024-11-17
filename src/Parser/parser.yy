@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 13 12:18:15 2024
-// Update Count     : 6845
+// Last Modified On : Fri Nov 15 15:01:33 2024
+// Update Count     : 6915
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -23,12 +23,8 @@
 // Acknowledgments to Richard Bilson, Glen Ditchfield, and Rodolfo Gabriel Esteves who all helped when I got stuck with
 // the grammar.
 
-// The root language for this grammar is ANSI99/11 C. All of ANSI99/11 is parsed, except for:
-//
-//   designation with '=' (use ':' instead)
-//
-// This incompatibility is discussed in detail before the "designation" grammar rule.  Most of the syntactic extensions
-// from ANSI90 to ANSI11 C are marked with the comment "C99/C11".
+// The root language for this grammar is ANSI99/11 C. All of ANSI99/11 is parsed.  Most of the syntactic extensions from
+// ANSI90 to ANSI11 C are marked with the comment "C99/C11".
 
 // This grammar also has two levels of extensions. The first extensions cover most of the GCC C extensions. All of the
 // syntactic extensions for GCC C are marked with the comment "GCC". The second extensions are for Cforall (CFA), which
@@ -1169,7 +1165,8 @@ tuple:													// CFA, tuple
 		// CFA, one assignment_expression is factored out of comma_expression to eliminate a shift/reduce conflict with
 		// comma_expression in cfa_identifier_parameter_array and cfa_abstract_array
 	'[' ',' ']'
-		{ $$ = new ExpressionNode( build_tuple( yylloc, nullptr ) ); }
+		// { $$ = new ExpressionNode( build_tuple( yylloc, nullptr ) ); }
+		{ SemanticError( yylloc, "Empty tuple is meaningless." ); $$ = nullptr; }
 	| '[' assignment_expression ',' ']'
 		{ $$ = new ExpressionNode( build_tuple( yylloc, $2 ) ); }
 	| '[' '@' comma_opt ']'
@@ -1223,6 +1220,8 @@ statement:
 	| asm_statement
 	| DIRECTIVE
 		{ $$ = new StatementNode( build_directive( yylloc, $1 ) ); }
+//	| attribute ';'
+//		{ $$ = new StatementNode( $1 ); } 
 	;
 
 labeled_statement:
@@ -2056,8 +2055,10 @@ cfa_variable_specifier:									// CFA
 		{ $$ = $1->addName( $2 )->addAsmName( $3 ); }
 	| cfa_abstract_tuple identifier_or_type_name asm_name_opt
 		{ $$ = $1->addName( $2 )->addAsmName( $3 ); }
-	| type_qualifier_list cfa_abstract_tuple identifier_or_type_name asm_name_opt
-		{ $$ = $2->addQualifiers( $1 )->addName( $3 )->addAsmName( $4 ); }
+ 	| multi_array_dimension cfa_abstract_tuple identifier_or_type_name asm_name_opt
+		{ $$ = $2->addNewArray( $1 )->addName( $3 )->addAsmName( $4 ); }
+ 	| multi_array_dimension type_qualifier_list cfa_abstract_tuple identifier_or_type_name asm_name_opt
+		{ $$ = $3->addNewArray( $1 )->addQualifiers( $2 )->addName( $4 )->addAsmName( $5 ); }
 
 		// [ int s, int t ];			// declare s and t
 		// [ int, int ] f();
@@ -4222,6 +4223,8 @@ cfa_identifier_parameter_declarator_tuple:				// CFA
 cfa_identifier_parameter_declarator_no_tuple:			// CFA
 	cfa_identifier_parameter_ptr
 	| cfa_identifier_parameter_array
+	| type_qualifier_list cfa_identifier_parameter_array
+		{ $$ = $2->addQualifiers( $1 ); }
 	;
 
 cfa_identifier_parameter_ptr:							// CFA
@@ -4245,13 +4248,23 @@ cfa_identifier_parameter_array:							// CFA
 		// shift/reduce conflict with new-style empty (void) function return type.
 	'[' ']' type_specifier_nobody
 		{ $$ = $3->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
+	| '[' ']' cfa_abstract_tuple
+		{ $$ = $3->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
 	| cfa_array_parameter_1st_dimension type_specifier_nobody
+		{ $$ = $2->addNewArray( $1 ); }
+	| cfa_array_parameter_1st_dimension cfa_abstract_tuple
 		{ $$ = $2->addNewArray( $1 ); }
 	| '[' ']' multi_array_dimension type_specifier_nobody
 		{ $$ = $4->addNewArray( $3 )->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
+	| '[' ']' multi_array_dimension cfa_abstract_tuple
+		{ $$ = $4->addNewArray( $3 )->addNewArray( DeclarationNode::newArray( nullptr, nullptr, false ) ); }
 	| cfa_array_parameter_1st_dimension multi_array_dimension type_specifier_nobody
 		{ $$ = $3->addNewArray( $2 )->addNewArray( $1 ); }
+	| cfa_array_parameter_1st_dimension multi_array_dimension cfa_abstract_tuple
+		{ $$ = $3->addNewArray( $2 )->addNewArray( $1 ); }
 	| multi_array_dimension type_specifier_nobody
+		{ $$ = $2->addNewArray( $1 ); }
+	| multi_array_dimension cfa_abstract_tuple
 		{ $$ = $2->addNewArray( $1 ); }
 
 	| '[' ']' cfa_identifier_parameter_ptr
