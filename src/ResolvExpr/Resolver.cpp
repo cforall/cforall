@@ -374,7 +374,7 @@ namespace {
 class Resolver final
 : public ast::WithSymbolTable, public ast::WithGuards,
   public ast::WithVisitorRef<Resolver>, public ast::WithShortCircuiting,
-  public ast::WithStmtsToAdd<> {
+  public ast::WithStmtsToAdd {
 
 	ast::ptr< ast::Type > functionReturn = nullptr;
 	ast::CurrentObject currentObject;

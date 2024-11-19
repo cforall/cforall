@@ -1397,7 +1397,7 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
 
 // To add the predicates at global scope we need to do it in a second pass
 // Predicates are added after "struct select_node { ... };"
-class AddPredicateDecls final : public WithDeclsToAdd<> {
+class AddPredicateDecls final : public WithDeclsToAdd {
 	vector<FunctionDecl *> & satFns;
 	const StructDecl * selectNodeDecl = nullptr;
 

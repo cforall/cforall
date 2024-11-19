@@ -400,7 +400,7 @@ ast::ObjectDecl * createVirtualTable(
 	);
 }
 
-struct ExceptDeclCore : public ast::WithDeclsToAdd<> {
+struct ExceptDeclCore : public ast::WithDeclsToAdd {
 	ast::StructDecl const * transformExcept( ast::StructDecl const * decl );
 	ast::ObjectDecl const * transformVTable(
 		ast::ObjectDecl const * decl, ast::VTableType const * type );

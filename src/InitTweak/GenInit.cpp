@@ -45,7 +45,7 @@ namespace {
 
 	// Outer pass finds declarations, for their type could wrap a type that needs hoisting
 	struct HoistArrayDimension_NoResolve final :
-			public ast::WithDeclsToAdd<>, public ast::WithShortCircuiting,
+			public ast::WithDeclsToAdd, public ast::WithShortCircuiting,
 			public ast::WithGuards, public ast::WithConstTranslationUnit,
 			public ast::WithVisitorRef<HoistArrayDimension_NoResolve>,
 			public ast::WithSymbolTableX<ast::SymbolTable::ErrorDetection::IgnoreErrors> {
@@ -204,7 +204,7 @@ namespace {
 	};
 
 	struct ReturnFixer final :
-			public ast::WithStmtsToAdd<>, ast::WithGuards, ast::WithShortCircuiting {
+			public ast::WithStmtsToAdd, ast::WithGuards, ast::WithShortCircuiting {
 		void previsit( const ast::FunctionDecl * decl );
 		const ast::ReturnStmt * previsit( const ast::ReturnStmt * stmt );
 	private:

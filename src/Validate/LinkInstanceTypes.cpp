@@ -26,7 +26,7 @@ namespace {
 
 struct LinkTypesCore : public WithNoIdSymbolTable,
 		public ast::WithCodeLocation,
-		public ast::WithDeclsToAdd<>,
+		public ast::WithDeclsToAdd,
 		public ast::WithGuards,
 		public ast::WithShortCircuiting,
 		public ast::WithVisitorRef<LinkTypesCore> {

@@ -27,7 +27,7 @@ namespace {
 
 struct ReplaceTypedefCore final :
 		public ast::WithCodeLocation,
-		public ast::WithDeclsToAdd<>,
+		public ast::WithDeclsToAdd,
 		public ast::WithGuards,
 		public ast::WithShortCircuiting,
 		public ast::WithVisitorRef<ReplaceTypedefCore> {

@@ -104,7 +104,7 @@ struct InsertImplicitCalls : public ast::WithShortCircuiting {
 /// generate temporary ObjectDecls for each argument and return value of each ImplicitCopyCtorExpr,
 /// generate/resolve copy construction expressions for each, and generate/resolve destructors for both
 /// arguments and return value temporaries
-struct ResolveCopyCtors final : public ast::WithGuards, public ast::WithStmtsToAdd<>, public ast::WithSymbolTable, public ast::WithShortCircuiting, public ast::WithVisitorRef<ResolveCopyCtors>, public ast::WithConstTranslationUnit {
+struct ResolveCopyCtors final : public ast::WithGuards, public ast::WithStmtsToAdd, public ast::WithSymbolTable, public ast::WithShortCircuiting, public ast::WithVisitorRef<ResolveCopyCtors>, public ast::WithConstTranslationUnit {
 	const ast::Expr * postvisit( const ast::ImplicitCopyCtorExpr * impCpCtorExpr );
 	const ast::StmtExpr * previsit( const ast::StmtExpr * stmtExpr );
 	const ast::UniqueExpr * previsit( const ast::UniqueExpr * unqExpr );
@@ -176,7 +176,7 @@ struct LabelFinder final : public ObjDeclCollector {
 
 /// insert destructor calls at the appropriate places.  must happen before CtorInit nodes are removed
 /// (currently by FixInit)
-struct InsertDtors final : public ObjDeclCollector, public ast::WithStmtsToAdd<> {
+struct InsertDtors final : public ObjDeclCollector, public ast::WithStmtsToAdd {
 	InsertDtors( ast::Pass<LabelFinder> & finder ) : finder( finder ), labelVars( finder.core.vars ) {}
 
 	typedef ObjDeclCollector Parent;
@@ -193,7 +193,7 @@ private:
 };
 
 /// expand each object declaration to use its constructor after it is declared.
-struct FixInit : public ast::WithStmtsToAdd<> {
+struct FixInit : public ast::WithStmtsToAdd {
 	static void fixInitializers( ast::TranslationUnit &translationUnit );
 
 	const ast::DeclWithType * postvisit( const ast::ObjectDecl *objDecl );
@@ -229,7 +229,7 @@ private:
 };
 
 /// expands ConstructorExpr nodes into comma expressions, using a temporary for the first argument
-struct FixCtorExprs final : public ast::WithDeclsToAdd<>, public ast::WithSymbolTable, public ast::WithShortCircuiting, public ast::WithConstTranslationUnit {
+struct FixCtorExprs final : public ast::WithDeclsToAdd, public ast::WithSymbolTable, public ast::WithShortCircuiting, public ast::WithConstTranslationUnit {
 	const ast::Expr * postvisit( const ast::ConstructorExpr * ctorExpr );
 };
 

@@ -26,7 +26,7 @@ namespace Validate {
 namespace {
 
 struct CompoundLiteral final :
-		public ast::WithDeclsToAdd<> {
+		public ast::WithDeclsToAdd {
 	ast::Storage::Classes storageClasses;
 
 	void previsit( const ast::ObjectDecl * decl );

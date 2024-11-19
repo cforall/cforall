@@ -29,7 +29,7 @@ namespace {
 
 struct SpecializeCore final :
 		public ast::WithConstTypeSubstitution,
-		public ast::WithDeclsToAdd<>,
+		public ast::WithDeclsToAdd,
 		public ast::WithVisitorRef<SpecializeCore> {
 	std::string paramPrefix = "_p";
 

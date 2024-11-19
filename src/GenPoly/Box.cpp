@@ -54,7 +54,7 @@ ast::BasicType * makeLayoutCType() {
 // --------------------------------------------------------------------------
 /// Adds layout-generation functions to polymorphic types.
 struct LayoutFunctionBuilder final :
-		public ast::WithDeclsToAdd<>,
+		public ast::WithDeclsToAdd,
 		public ast::WithShortCircuiting,
 		public ast::WithVisitorRef<LayoutFunctionBuilder> {
 	void previsit( ast::StructDecl const * decl );
@@ -343,7 +343,7 @@ struct CallAdapter final :
 		public ast::WithConstTypeSubstitution,
 		public ast::WithGuards,
 		public ast::WithShortCircuiting,
-		public ast::WithStmtsToAdd<>,
+		public ast::WithStmtsToAdd,
 		public ast::WithVisitorRef<CallAdapter> {
 	CallAdapter();
 
@@ -1574,9 +1574,9 @@ ast::VariableExpr const * RewireAdapters::previsit(
 /// * Inserts dynamic calculation of polymorphic type layouts where needed.
 struct PolyGenericCalculator final :
 		public ast::WithConstTypeSubstitution,
-		public ast::WithDeclsToAdd<>,
+		public ast::WithDeclsToAdd,
 		public ast::WithGuards,
-		public ast::WithStmtsToAdd<>,
+		public ast::WithStmtsToAdd,
 		public ast::WithVisitorRef<PolyGenericCalculator> {
 	PolyGenericCalculator();
 

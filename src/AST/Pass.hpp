@@ -326,18 +326,22 @@ struct WithConstTypeSubstitution {
 /// Used if visitor requires added statements before or after the current node.
 /// The Pass template handles what *before* and *after* means automatically
 template< template<class...> class container_t = std::list >
-struct WithStmtsToAdd {
+struct WithStmtsToAddX {
 	container_t< ptr<Stmt> > stmtsToAddBefore;
 	container_t< ptr<Stmt> > stmtsToAddAfter;
 };
 
+struct WithStmtsToAdd : public WithStmtsToAddX<> {};
+
 /// Used if visitor requires added declarations before or after the current node.
 /// The Pass template handles what *before* and *after* means automatically
 template< template<class...> class container_t = std::list >
-struct WithDeclsToAdd {
+struct WithDeclsToAddX {
 	container_t< ptr<Decl> > declsToAddBefore;
 	container_t< ptr<Decl> > declsToAddAfter;
 };
+
+struct WithDeclsToAdd : public WithDeclsToAddX<> {};
 
 /// Use if visitation should stop at certain levels
 /// set visit_children false of all child nodes should be ignored

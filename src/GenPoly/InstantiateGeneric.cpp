@@ -276,7 +276,7 @@ struct FixDtypeStatic final :
 		public ast::WithGuards,
 		public ast::WithVisitorRef<FixDtypeStatic>,
 		public ast::WithShortCircuiting,
-		public ast::WithStmtsToAdd<> {
+		public ast::WithStmtsToAdd {
 	ast::ApplicationExpr const * previsit( ast::ApplicationExpr const * expr );
 	void previsit( ast::AddressExpr const * expr );
 
@@ -420,7 +420,7 @@ ast::Expr const * FixDtypeStatic::fixMemberExpr(
 struct GenericInstantiator final :
 		public ast::WithCodeLocation,
 		public ast::WithConstTypeSubstitution,
-		public ast::WithDeclsToAdd<>,
+		public ast::WithDeclsToAdd,
 		public ast::WithGuards,
 		public ast::WithVisitorRef<GenericInstantiator>
 {

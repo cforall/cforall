@@ -27,7 +27,7 @@ struct MemberTupleExpander final : public ast::WithShortCircuiting, public ast::
 	const ast::Expr * postvisit( const ast::UntypedMemberExpr * memberExpr );
 };
 
-struct UniqueExprExpander final : public ast::WithDeclsToAdd<> {
+struct UniqueExprExpander final : public ast::WithDeclsToAdd {
 	const ast::Expr * postvisit( const ast::UniqueExpr * unqExpr );
 	// Not a vector, because they may not be adding in increasing order.
 	std::map< int, ast::ptr<ast::Expr> > decls;
@@ -36,7 +36,7 @@ struct UniqueExprExpander final : public ast::WithDeclsToAdd<> {
 /// Replaces Tuple Assign & Index Expressions, and Tuple Types.
 struct TupleMainExpander final :
 		public ast::WithCodeLocation,
-		public ast::WithDeclsToAdd<>,
+		public ast::WithDeclsToAdd,
 		public ast::WithGuards,
 		public ast::WithVisitorRef<TupleMainExpander> {
 	ast::Expr const * postvisit( ast::TupleAssignExpr const * expr );

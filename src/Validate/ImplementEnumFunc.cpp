@@ -471,7 +471,7 @@ void EnumAttrFuncGenerator::generateAndAppendFunctions(
 // ---------------------------------------------------------
 
 struct ImplementEnumFunc final :
-		public ast::WithDeclsToAdd<>, public ast::WithShortCircuiting {
+		public ast::WithDeclsToAdd, public ast::WithShortCircuiting {
 	void previsit(const ast::EnumDecl* enumDecl);
 	void previsit(const ast::FunctionDecl* functionDecl);
 	void postvisit(const ast::FunctionDecl* functionDecl);

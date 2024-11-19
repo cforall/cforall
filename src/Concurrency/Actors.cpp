@@ -193,7 +193,7 @@ class FwdDeclTable {
 // generates the definitions of send operators for actors
 // collects data needed for next pass that does the circular defn resolution
 //     for message send operators (via table above)
-struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
+struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 	unordered_set<const StructDecl *> & actorStructDecls;
 	unordered_set<const StructDecl *>  & messageStructDecls;
 	const StructDecl ** requestDecl;
@@ -450,7 +450,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
 
 // separate pass is needed since this pass resolves circular defn issues
 // generates the forward declarations of the send operator for actor routines
-struct FwdDeclOperator : public ast::WithDeclsToAdd<> {
+struct FwdDeclOperator : public ast::WithDeclsToAdd {
 	unordered_set<const StructDecl *> & actorStructDecls;
 	unordered_set<const StructDecl *>  & messageStructDecls;
 	FwdDeclTable & forwardDecls;

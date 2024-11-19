@@ -21,7 +21,7 @@ namespace Validate {
 
 namespace {
 
-struct HoistTypeDecls final : public ast::WithDeclsToAdd<> {
+struct HoistTypeDecls final : public ast::WithDeclsToAdd {
 	void previsit( ast::SizeofExpr const * );
 	void previsit( ast::AlignofExpr const * );
 	void previsit( ast::UntypedOffsetofExpr const * );

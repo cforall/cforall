@@ -118,7 +118,7 @@ struct CollectStructDecls : public ast::WithGuards {
 // generates the call to the virtual dtor routine in each appropriate ctor
 // collects data needed for next pass that does the circular defn resolution
 //     for dtor setters and delete fns (via table above)
-struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
+struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 	unordered_map<const StructDecl *, CtorDtor> & structDecls;
 	CtorDtorTable & torDecls;
 	const StructDecl ** virtualDtor;
@@ -350,7 +350,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd<> {
 // generates the function defns of __CFA_set_dtor
 // separate pass is needed since  __CFA_set_dtor needs to be defined after
 //   the last dtor defn which is found in prior pass
-struct GenSetDtor : public ast::WithDeclsToAdd<> {
+struct GenSetDtor : public ast::WithDeclsToAdd {
 	unordered_map<const StructDecl *, CtorDtor> & structDecls; // set of decls that inherit from virt dtor
 	CtorDtorTable & torDecls;
 

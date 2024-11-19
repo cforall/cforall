@@ -67,7 +67,7 @@ ast::Decl const * updateNames( ast::Decl const * decl ) {
  * and updates instance types of the hoisted types.
  */
 struct HoistStructCore final :
-		public ast::WithDeclsToAdd<>, public ast::WithGuards {
+		public ast::WithDeclsToAdd, public ast::WithGuards {
 	ast::StructDecl const * previsit( ast::StructDecl const * decl );
 	ast::StructDecl const * postvisit( ast::StructDecl const * decl );
 	ast::UnionDecl const * previsit( ast::UnionDecl const * decl );

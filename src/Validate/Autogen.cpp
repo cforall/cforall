@@ -49,7 +49,7 @@ namespace {
 
 // --------------------------------------------------------------------------
 struct AutogenerateRoutines final :
-		public ast::WithDeclsToAdd<>,
+		public ast::WithDeclsToAdd,
 		public ast::WithShortCircuiting {
 	void previsit( const ast::EnumDecl * enumDecl );
 	void previsit( const ast::StructDecl * structDecl );

@@ -24,7 +24,7 @@ using namespace std;
 
 namespace Concurrency {
 
-struct CorunKeyword : public WithDeclsToAdd<>, public WithStmtsToAdd<> {
+struct CorunKeyword : public WithDeclsToAdd, public WithStmtsToAdd {
 	UniqueName CorunFnNamer = "__CFA_corun_lambda_"s;
 	UniqueName CoforFnNamer = "__CFA_cofor_lambda_"s;
 	// UniqueName CoforFnVarNamer = "__CFA_cofor_lambda_var"s;

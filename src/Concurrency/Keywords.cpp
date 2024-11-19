@@ -116,7 +116,7 @@ ast::FunctionDecl * fixupGenerics(
 }
 
 // --------------------------------------------------------------------------
-struct ConcurrentSueKeyword : public ast::WithDeclsToAdd<> {
+struct ConcurrentSueKeyword : public ast::WithDeclsToAdd {
 	ConcurrentSueKeyword(
 		std::string&& type_name, std::string&& field_name,
 		std::string&& getter_name, std::string&& context_error,
@@ -638,7 +638,7 @@ void ConcurrentSueKeyword::addLockUnlockRoutines(
 
 // --------------------------------------------------------------------------
 struct SuspendKeyword final :
-		public ast::WithStmtsToAdd<>, public ast::WithGuards {
+		public ast::WithStmtsToAdd, public ast::WithGuards {
 	SuspendKeyword() = default;
 	virtual ~SuspendKeyword() = default;
 
@@ -859,7 +859,7 @@ const ast::Stmt * SuspendKeyword::make_coroutine_suspend(
 }
 
 // --------------------------------------------------------------------------
-struct MutexKeyword final : public ast::WithDeclsToAdd<> {
+struct MutexKeyword final : public ast::WithDeclsToAdd {
 	const ast::FunctionDecl * postvisit( const ast::FunctionDecl * decl );
 	void postvisit( const ast::StructDecl * decl );
 	const ast::Stmt * postvisit( const ast::MutexStmt * stmt );

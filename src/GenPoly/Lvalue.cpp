@@ -84,7 +84,7 @@ struct AddressRef final :
 /// creating temporaries for the conversion.
 struct ReferenceConversions final :
 		public ast::WithConstTranslationUnit,
-		public ast::WithGuards, public ast::WithStmtsToAdd<> {
+		public ast::WithGuards, public ast::WithStmtsToAdd {
 	ast::Expr const * postvisit( ast::CastExpr const * expr );
 	ast::Expr const * postvisit( ast::AddressExpr const * expr );
 };
