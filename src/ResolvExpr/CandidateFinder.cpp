@@ -1219,7 +1219,7 @@ namespace {
 		if (toType->isVoid()) {
 			finder.allowVoid = true;
 		}
-		if ( castExpr->kind == ast::CastExpr::Return ) {
+		if ( ast::ReturnCast == castExpr->kind ) {
 			finder.strictMode = true;
 			finder.find( castExpr->arg, ResolveMode::withAdjustment() );
 

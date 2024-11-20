@@ -679,12 +679,29 @@ void CodeGenerator::postvisit( ast::LabelAddressExpr const * expr ) {
 void CodeGenerator::postvisit( ast::CastExpr const * expr ) {
 	extension( expr );
 	output << "(";
-	if ( expr->result->isVoid() ) {
-		output << "(void)";
-	} else {
-		output << "(";
+	switch ( expr->kind ) {
+	case ast::CCast:
+		if ( expr->result->isVoid() ) {
+			output << "(void)";
+		} else {
+			output << "(";
+			output << genType( expr->result, "", options );
+			output << ")";
+		}
+		break;
+	case ast::CoerceCast:
+		assertf( ast::CoerceCast != expr->kind, "Coercion cast is not implemented." );
+		// And likely shouldn't reach code generation when it is implemented.
+		break;
+	case ast::ReturnCast:
+		// This should be invisible in the resulting C code.
+		// Can we insert a check here?
+		//assert( ResolvExpr::typesCompatable(???) );
+		if ( options.genC ) break;
+		output << "(return ";
 		output << genType( expr->result, "", options );
 		output << ")";
+		break;
 	}
 	expr->arg->accept( *visitor );
 	output << ")";

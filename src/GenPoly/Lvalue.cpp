@@ -315,7 +315,6 @@ ast::Expr const * ReferenceConversions::postvisit(
 		SemanticWarning( expr->arg->location,
 			Warning::RvalueToReferenceConversion, toCString( expr->arg ) );
 
-
 		// allowing conversion in the rvalue to const ref case
 		// use the referenced-to type to create temp variables
 		ast::Type const * targetType = dstType;
@@ -365,10 +364,9 @@ ast::Expr const * ReferenceConversions::postvisit(
 		for ( int i = 0 ; i < diff ; ++i ) {
 			ret = new ast::AddressExpr( ret->location, ret );
 		}
-		if ( expr->arg->get_lvalue() &&
-				!ResolvExpr::typesCompatible(
-					srcType,
-					strict_dynamic_cast<ast::ReferenceType const *>( dstType )->base ) ) {
+		if ( !ResolvExpr::typesCompatible(
+				srcType,
+				strict_dynamic_cast<ast::ReferenceType const *>( dstType )->base ) ) {
 			// Must keep cast if cast-to type is different from the actual type.
 			return ast::mutate_field( expr, &ast::CastExpr::arg, ret );
 		}
@@ -383,7 +381,7 @@ ast::Expr const * ReferenceConversions::postvisit(
 			ret = mkDeref( transUnit().global, ret );
 		}
 		// Must keep cast if types are different.
-		if ( !ResolvExpr::typesCompatibleIgnoreQualifiers(
+		if ( !ResolvExpr::typesCompatible(
 				dstType->stripReferences(),
 				srcType->stripReferences() ) ) {
 			return ast::mutate_field( expr, &ast::CastExpr::arg, ret );
@@ -396,27 +394,20 @@ ast::Expr const * ReferenceConversions::postvisit(
 	// Conversion with the same depth.
 	} else {
 		assert( 0 == diff );
-		// Remove useless generated casts.
-		if ( expr->isGenerated == ast::GeneratedFlag::GeneratedCast &&
-				ResolvExpr::typesCompatible(
+		// Must keep cast if types are different. (Or it is explicit.)
+		if ( ast::ExplicitCast == expr->isGenerated ||
+				!ResolvExpr::typesCompatible(
 					expr->result,
 					expr->arg->result ) ) {
-			PRINT(
-				std::cerr << "types are compatible, removing cast: " << expr << '\n';
-				std::cerr << "-- " << expr->result << '\n';
-				std::cerr << "-- " << expr->arg->result << std::endl;
-			)
-			auto argAsEnum = expr->arg.as<ast::EnumInstType>();
-			auto resultAsEnum = expr->result.as<ast::EnumInstType>();
-			if (argAsEnum && resultAsEnum) {
-				if (argAsEnum->base->name != resultAsEnum->base->name) {
-					return expr;
-				}
-			}
-			return ast::mutate_field( expr->arg.get(),
-					&ast::Expr::env, expr->env.get() );
+			return expr;
 		}
-		return expr;
+		PRINT(
+			std::cerr << "types are compatible, removing cast: " << expr << '\n';
+			std::cerr << "-- " << expr->result << '\n';
+			std::cerr << "-- " << expr->arg->result << std::endl;
+		)
+		return ast::mutate_field( expr->arg.get(),
+				&ast::Expr::env, expr->env.get() );
 	}
 }
 

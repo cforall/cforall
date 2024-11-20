@@ -978,7 +978,7 @@ cast_expression:
 	| '(' VIRTUAL type_no_function ')' cast_expression	// CFA
 		{ $$ = new ExpressionNode( new ast::VirtualCastExpr( yylloc, maybeMoveBuild( $5 ), maybeMoveBuildType( $3 ) ) ); }
 	| '(' RETURN type_no_function ')' cast_expression	// CFA
-		{ $$ = new ExpressionNode( build_cast( yylloc, $3, $5, ast::CastExpr::Return ) ); }
+		{ $$ = new ExpressionNode( build_cast( yylloc, $3, $5, ast::ReturnCast ) ); }
 	| '(' COERCE type_no_function ')' cast_expression	// CFA
 		{ SemanticError( yylloc, "Coerce cast is currently unimplemented." ); $$ = nullptr; }
 	| '(' qualifier_cast_list ')' cast_expression		// CFA

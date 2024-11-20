@@ -329,24 +329,24 @@ private:
 /// subject cast being ExplicitCast means someone in charge wants it that way
 enum GeneratedFlag { ExplicitCast, GeneratedCast };
 
+/// Even within the basic cast expression there are variants:
+/// CCast - C-Style Cast: A backwards compatable cast from C.
+/// CoerceCast - Coercion Cast: Change the type without changing the value.
+/// ReturnCast - Ascription Cast: Requires the given expression result type.
+enum CastKind { CCast, CoerceCast, ReturnCast };
+
 /// A type cast, e.g. `(int)e`
 class CastExpr final : public Expr {
 public:
 	ptr<Expr> arg;
 	GeneratedFlag isGenerated;
 
-	enum CastKind {
-		Default, // C
-		Coerce, // reinterpret cast
-		Return  // overload selection
-	};
-
-	CastKind kind = Default;
+	CastKind kind = CCast;
 
 	CastExpr( const CodeLocation & loc, const Expr * a, const Type * to,
-		GeneratedFlag g = GeneratedCast, CastKind kind = Default ) : Expr( loc, to ), arg( a ), isGenerated( g ), kind( kind ) {}
+		GeneratedFlag g = GeneratedCast, CastKind kind = CCast ) : Expr( loc, to ), arg( a ), isGenerated( g ), kind( kind ) {}
 	/// Cast-to-void
-	CastExpr( const CodeLocation & loc, const Expr * a, GeneratedFlag g = GeneratedCast, CastKind kind = Default );
+	CastExpr( const CodeLocation & loc, const Expr * a, GeneratedFlag g = GeneratedCast, CastKind kind = CCast );
 
 	/// Wrap a cast expression around an existing expression (always generated)
 	CastExpr( const Expr * a, const Type * to ) : CastExpr( a->location, a, to, GeneratedCast ) {}

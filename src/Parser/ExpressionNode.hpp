@@ -68,7 +68,7 @@ ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation &, const Decla
 ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation &, const ast::EnumDecl * decl, const ast::NameExpr * name );
 ast::DimensionExpr * build_dimensionref( const CodeLocation &, const std::string * name );
 
-ast::Expr * build_cast( const CodeLocation &, DeclarationNode * decl_node, ExpressionNode * expr_node, ast::CastExpr::CastKind kind = ast::CastExpr::Default );
+ast::Expr * build_cast( const CodeLocation &, DeclarationNode * decl_node, ExpressionNode * expr_node, ast::CastKind kind = ast::CCast );
 ast::Expr * build_keyword_cast( const CodeLocation &, ast::AggregateDecl::Aggregate target, ExpressionNode * expr_node );
 ast::Expr * build_virtual_cast( const CodeLocation &, DeclarationNode * decl_node, ExpressionNode * expr_node );
 ast::Expr * build_fieldSel( const CodeLocation &, ExpressionNode * expr_node, ast::Expr * member );
