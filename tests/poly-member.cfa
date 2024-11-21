@@ -1,0 +1,25 @@
+forall( T & )
+struct Proxy {};
+
+struct MonoCell {
+	Proxy(int) data;
+};
+
+forall( T & )
+struct PolyCell {
+	Proxy(T) data;
+};
+
+int main() {
+	{
+		MonoCell thing1;
+		Proxy(int) & thing2 = thing1.data;
+	}
+
+	{
+		PolyCell(int) thing1;
+		Proxy(int) & thing2 = thing1.data;
+	}
+
+	printf("Done\n");
+}

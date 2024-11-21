@@ -364,10 +364,10 @@ ast::Expr const * ReferenceConversions::postvisit(
 		for ( int i = 0 ; i < diff ; ++i ) {
 			ret = new ast::AddressExpr( ret->location, ret );
 		}
+		// Must keep cast if types are different.
 		if ( !ResolvExpr::typesCompatible(
 				srcType,
 				strict_dynamic_cast<ast::ReferenceType const *>( dstType )->base ) ) {
-			// Must keep cast if cast-to type is different from the actual type.
 			return ast::mutate_field( expr, &ast::CastExpr::arg, ret );
 		}
 		ret->env = expr->env;
@@ -502,6 +502,22 @@ ast::Expr const * FixIntrinsicArgs::postvisit(
 	return mutExpr;
 }
 
+/// Recursively move an address expression underneath casts. Casts are not
+/// lvalue expressions in C but are sometimes considered as such in Cforall,
+/// (passes like InstantiateGeneric can add them.) - &(int) => (int*)&
+ast::Expr const * moveAddressUnderCast( ast::AddressExpr const * expr ) {
+	if ( !dynamic_cast<ast::CastExpr const *>( expr->arg.get() ) ) {
+		return expr;
+	}
+	auto mutExpr = ast::mutate( expr );
+	auto mutCast = strict_dynamic_cast<ast::CastExpr *>(
+			ast::mutate( mutExpr->arg.release() ) );
+	mutExpr->arg = mutCast->arg;
+	mutCast->arg = moveAddressUnderCast( mutExpr );
+	mutCast->result = new ast::PointerType( mutCast->result );
+	return mutCast;
+}
+
 ast::Expr const * CollapseAddressDeref::postvisit(
 		ast::AddressExpr const * expr ) {
 	ast::Expr const * arg = expr->arg;
@@ -513,19 +529,8 @@ ast::Expr const * CollapseAddressDeref::postvisit(
 			ret->env = expr->env;
 			return ret;
 		}
-	} else if ( auto cast = dynamic_cast<ast::CastExpr const *>( arg ) ) {
-		// Need to move cast to pointer type out a level since address of
-		// pointer is not valid C code (can be introduced in prior passes,
-		// e.g., InstantiateGeneric)
-		if ( ast::getPointerBase( cast->result ) ) {
-			auto mutExpr = ast::mutate( expr );
-			auto mutCast = strict_dynamic_cast<ast::CastExpr *>(
-					ast::mutate( mutExpr->arg.release() ) );
-			mutExpr->arg = mutCast->arg;
-			mutCast->arg = mutExpr;
-			mutCast->result = new ast::PointerType( mutCast->result );
-			return mutCast;
-		}
+	} else {
+		return moveAddressUnderCast( expr );
 	}
 	return expr;
 }
