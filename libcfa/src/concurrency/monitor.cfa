@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thd Feb 23 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 19 17:00:59 2023
-// Update Count     : 12
+// Last Modified On : Thu Nov 21 08:31:55 2024
+// Update Count     : 18
 //
 
 #define __cforall_thread__
@@ -930,32 +930,28 @@ static inline void brand_condition( condition & this ) {
 }
 
 static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask, monitor$ * monitors [], __lock_size_t count ) {
-
 	__queue_t(thread$) & entry_queue = monitors[0]->entry_queue;
 
+#if 0
 	#if defined( __CFA_WITH_VERIFY__ )
 		thread$ * last = 0p;
 	#endif
 	// For each thread in the entry-queue
-	for(	thread$ ** thrd_it = &entry_queue.head;
-		(*thrd_it) != 1p;
-		thrd_it = &get_next(**thrd_it)
-	) {
+	for ( thread$ ** thrd_it = &entry_queue.head; (*thrd_it) != 1p; thrd_it = &get_next(**thrd_it) ) {
 		thread$ * curr = *thrd_it;
 
-		/* paranoid */ verifyf( !last || last->user_link.next == curr, "search not making progress, from %p (%p) to %p", last, last->user_link.next, curr );
+		/* paranoid */ verifyf( !last || last->user_link.next == curr, "search not making progress, from %p (%p) to %p",
+								last, last->user_link.next, curr );
 		/* paranoid */ verifyf( curr != last, "search not making progress, from %p to %p", last, curr );
 
 		// For each acceptable check if it matches
 		int i = 0;
 		__acceptable_t * end   = end  (mask);
 		__acceptable_t * begin = begin(mask);
-		for( __acceptable_t * it = begin; it != end; it++, i++ ) {
-			// Check if we have a match
-			if( *it == curr->monitors ) {
-
-				// If we have a match return it
-				// after removeing it from the entry queue
+		for ( __acceptable_t * it = begin; it != end; it++, i++ ) {
+			// Check for match
+			if ( *it == curr->monitors ) {
+				// If match, return it after removeing it from the entry queue
 				return [remove( entry_queue, thrd_it ), i];
 			}
 		}
@@ -964,7 +960,34 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 			last = curr;
 		#endif
 	}
+#endif
+	int i = 0;
+	__acceptable_t * end   = end  (mask);
+	__acceptable_t * begin = begin(mask);
+	// For each acceptable (respect lexical priority in waitfor statement)
+	for ( __acceptable_t * it = begin; it != end; it++, i++ ) {
+		#if defined( __CFA_WITH_VERIFY__ )
+		thread$ * last = 0p;
+		#endif // __CFA_WITH_VERIFY__
 
+		for ( thread$ ** thrd_it = &entry_queue.head; (*thrd_it) != 1p; thrd_it = &get_next(**thrd_it) ) {
+			thread$ * curr = *thrd_it;
+
+			/* paranoid */ verifyf( !last || last->user_link.next == curr, "search not making progress, from %p (%p) to %p",
+									last, last->user_link.next, curr );
+			/* paranoid */ verifyf( curr != last, "search not making progress, from %p to %p", last, curr );
+
+			// For each thread in the entry-queue check for a match
+			if ( *it == curr->monitors ) {
+				// If match, return it after removeing from the entry queue
+				return [remove( entry_queue, thrd_it ), i];
+			} // if
+
+			#if defined( __CFA_WITH_VERIFY__ )
+			last = curr;
+			#endif
+		} // for
+	} // for
 	return [0, -1];
 }
 
