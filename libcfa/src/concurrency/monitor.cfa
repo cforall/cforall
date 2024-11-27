@@ -961,11 +961,11 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 		#endif
 	}
 #endif
-	int i = 0;
-	__acceptable_t * end   = end  (mask);
-	__acceptable_t * begin = begin(mask);
+	__acceptable_t * end   = begin(mask);
+	__acceptable_t * it = end (mask); --it;
+	int i = mask.size - 1;
 	// For each acceptable (respect lexical priority in waitfor statement)
-	for ( __acceptable_t * it = begin; it != end; it++, i++ ) {
+	for () {
 		#if defined( __CFA_WITH_VERIFY__ )
 		thread$ * last = 0p;
 		#endif // __CFA_WITH_VERIFY__
@@ -987,6 +987,9 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 			last = curr;
 			#endif
 		} // for
+        if ( it == end ) break;
+        --it;
+        --i;
 	} // for
 	return [0, -1];
 }
