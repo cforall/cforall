@@ -43,7 +43,6 @@ extern "C" {
 
 typedef unsigned long long __cfaabi_abi_exception_type_t;
 
-#include <limits.h>										// CHAR_BIT
 #include "../src/virtual.h"
 #include "../src/exception.h"
 
@@ -131,43 +130,19 @@ static inline {
 	long double _Complex ?\?( long double _Complex x, _Complex long double y ) { return cpowl( x, y ); }
 } // distribution
 
-#define __CFA_EXP__() \
-	if ( y == 0 ) return 1;								/* convention */ \
-	__CFA_EXP_INT__(									/* special cases for integral types */ \
-		if ( x == 1 ) return 1;							/* base case */ \
-		if ( x == 2 ) return x << (y - 1);				/* positive shifting */ \
-		if ( y >= sizeof(y) * CHAR_BIT ) return 0;		/* immediate overflow, negative exponent > 2^size-1 */ \
-	) \
-	typeof(x) op = 1;									/* accumulate odd product */ \
-	typeof(x) w = x; /* FIX-ME: possible bug in the box pass changing value argument through parameter */ \
-	for ( ; y > 1; y >>= 1 ) {							/* squaring exponentiation, O(log2 y) */ \
-		if ( (y & 1) == 1 ) op = op * w;				/* odd ? */ \
-		w = w * w; \
-	} \
-	return w * op
-#define __CFA_EXP_INT__(...) __VA_ARGS__
+int ?\?( int x, unsigned int y );
+long int ?\?( long int x, unsigned long int y );
+long long int ?\?( long long int x, unsigned long long int y );
+// unsigned computation may be faster and larger
+unsigned int ?\?( unsigned int x, unsigned int y );
+unsigned long int ?\?( unsigned long int x, unsigned long int y );
+unsigned long long int ?\?( unsigned long long int x, unsigned long long int y );
 
-static inline {
-	int ?\?( int x, unsigned int y ) { __CFA_EXP__(); }
-	long int ?\?( long int x, unsigned long int y ) { __CFA_EXP__(); }
-	long long int ?\?( long long int x, unsigned long long int y ) { __CFA_EXP__(); }
-	// unsigned computation may be faster and larger
-	unsigned int ?\?( unsigned int x, unsigned int y ) { __CFA_EXP__(); }
-	unsigned long int ?\?( unsigned long int x, unsigned long int y ) { __CFA_EXP__(); }
-	unsigned long long int ?\?( unsigned long long int x, unsigned long long int y ) { __CFA_EXP__(); }
+forall( OT | { void ?{}( OT & this, one_t ); OT ?*?( OT, OT ); } ) {
+	OT ?\?( OT x, unsigned int y );
+	OT ?\?( OT x, unsigned long int y );
+	OT ?\?( OT x, unsigned long long int y );
 } // distribution
-
-#undef __CFA_EXP_INT__
-#define __CFA_EXP_INT__(...)
-
-static inline forall( OT | { void ?{}( OT & this, one_t ); OT ?*?( OT, OT ); } ) {
-	OT ?\?( OT x, unsigned int y ) { __CFA_EXP__(); }
-	OT ?\?( OT x, unsigned long int y ) { __CFA_EXP__(); }
-	OT ?\?( OT x, unsigned long long int y ) { __CFA_EXP__(); }
-} // distribution
-
-#undef __CFA_EXP_INT__
-#undef __CFA_EXP__
 
 static inline {
 	int ?\=?( int & x, unsigned int y ) { x = x \ y; return x; }

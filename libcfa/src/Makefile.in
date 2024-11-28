@@ -138,29 +138,29 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(cfa_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libcfa_la_LIBADD =
 am__libcfa_la_SOURCES_DIST = common.hfa fstream.hfa heap.hfa \
-	iostream.hfa iterator.hfa limits.hfa memory.hfa parseargs.hfa \
-	parseconfig.hfa rational.hfa enum.hfa stdlib.hfa strstream.hfa \
-	time.hfa bits/weakso_locks.hfa algorithms/range_iterator.hfa \
-	collections/maybe.hfa collections/pair.hfa \
-	collections/result.hfa collections/string.hfa \
-	collections/string_res.hfa collections/vector.hfa \
-	device/cpu.hfa common.cfa fstream.cfa heap.cfa iostream.cfa \
-	iterator.cfa limits.cfa memory.cfa parseargs.cfa \
-	parseconfig.cfa rational.cfa enum.cfa stdlib.cfa strstream.cfa \
-	time.cfa bits/weakso_locks.cfa algorithms/range_iterator.cfa \
-	collections/maybe.cfa collections/pair.cfa \
-	collections/result.cfa collections/string.cfa \
-	collections/string_res.cfa collections/vector.cfa \
-	device/cpu.cfa assert.cfa bits/debug.cfa exception.c \
-	interpose.cfa lsda.h startup.cfa startup.hfa virtual.c \
-	virtual.h
+	iostream.hfa iterator.hfa limits.hfa math.hfa memory.hfa \
+	parseargs.hfa parseconfig.hfa rational.hfa enum.hfa stdlib.hfa \
+	strstream.hfa time.hfa bits/weakso_locks.hfa \
+	algorithms/range_iterator.hfa collections/maybe.hfa \
+	collections/pair.hfa collections/result.hfa \
+	collections/string.hfa collections/string_res.hfa \
+	collections/vector.hfa device/cpu.hfa common.cfa fstream.cfa \
+	heap.cfa iostream.cfa iterator.cfa limits.cfa math.cfa \
+	memory.cfa parseargs.cfa parseconfig.cfa rational.cfa enum.cfa \
+	stdlib.cfa strstream.cfa time.cfa bits/weakso_locks.cfa \
+	algorithms/range_iterator.cfa collections/maybe.cfa \
+	collections/pair.cfa collections/result.cfa \
+	collections/string.cfa collections/string_res.cfa \
+	collections/vector.cfa device/cpu.cfa assert.cfa \
+	bits/debug.cfa exception.c interpose.cfa lsda.h startup.cfa \
+	startup.hfa virtual.c virtual.h
 am__objects_1 =
 am__dirstamp = $(am__leading_dot)dirstamp
 @BUILDLIB_TRUE@am__objects_2 = common.lo fstream.lo heap.lo \
-@BUILDLIB_TRUE@	iostream.lo iterator.lo limits.lo memory.lo \
-@BUILDLIB_TRUE@	parseargs.lo parseconfig.lo rational.lo enum.lo \
-@BUILDLIB_TRUE@	stdlib.lo strstream.lo time.lo \
-@BUILDLIB_TRUE@	bits/weakso_locks.lo \
+@BUILDLIB_TRUE@	iostream.lo iterator.lo limits.lo math.lo \
+@BUILDLIB_TRUE@	memory.lo parseargs.lo parseconfig.lo \
+@BUILDLIB_TRUE@	rational.lo enum.lo stdlib.lo strstream.lo \
+@BUILDLIB_TRUE@	time.lo bits/weakso_locks.lo \
 @BUILDLIB_TRUE@	algorithms/range_iterator.lo \
 @BUILDLIB_TRUE@	collections/maybe.lo collections/pair.lo \
 @BUILDLIB_TRUE@	collections/result.lo collections/string.lo \
@@ -285,19 +285,19 @@ am__can_run_installinfo = \
   esac
 am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	-type f -printf "%p ") common.hfa fstream.hfa heap.hfa \
-	iostream.hfa iterator.hfa limits.hfa memory.hfa parseargs.hfa \
-	parseconfig.hfa rational.hfa enum.hfa stdlib.hfa strstream.hfa \
-	time.hfa bits/weakso_locks.hfa algorithms/range_iterator.hfa \
-	collections/maybe.hfa collections/pair.hfa \
-	collections/result.hfa collections/string.hfa \
-	collections/string_res.hfa collections/vector.hfa \
-	device/cpu.hfa Exception.hfa bitmanip.hfa clock.hfa \
-	exception.hfa exception.h gmp.hfa math.trait.hfa math.hfa \
-	raii.hfa time_t.hfa virtual_dtor.hfa bits/algorithm.hfa \
-	bits/align.hfa bits/collections.hfa bits/debug.hfa \
-	bits/defs.hfa bits/locks.hfa bits/collection.hfa \
-	bits/stack.hfa bits/queue.hfa bits/sequence.hfa \
-	concurrency/atomic.hfa concurrency/iofwd.hfa \
+	iostream.hfa iterator.hfa limits.hfa math.hfa memory.hfa \
+	parseargs.hfa parseconfig.hfa rational.hfa enum.hfa stdlib.hfa \
+	strstream.hfa time.hfa bits/weakso_locks.hfa \
+	algorithms/range_iterator.hfa collections/maybe.hfa \
+	collections/pair.hfa collections/result.hfa \
+	collections/string.hfa collections/string_res.hfa \
+	collections/vector.hfa device/cpu.hfa Exception.hfa \
+	bitmanip.hfa clock.hfa exception.hfa exception.h gmp.hfa \
+	math.trait.hfa raii.hfa time_t.hfa virtual_dtor.hfa \
+	bits/algorithm.hfa bits/align.hfa bits/collections.hfa \
+	bits/debug.hfa bits/defs.hfa bits/locks.hfa \
+	bits/collection.hfa bits/stack.hfa bits/queue.hfa \
+	bits/sequence.hfa concurrency/atomic.hfa concurrency/iofwd.hfa \
 	concurrency/barrier.hfa collections/array.hfa \
 	collections/list.hfa collections/lockfree.hfa \
 	collections/string_sharectx.hfa collections/vector2.hfa \
@@ -545,7 +545,6 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	exception.h \
 @BUILDLIB_TRUE@	gmp.hfa \
 @BUILDLIB_TRUE@	math.trait.hfa \
-@BUILDLIB_TRUE@	math.hfa \
 @BUILDLIB_TRUE@	raii.hfa \
 @BUILDLIB_TRUE@	time_t.hfa \
 @BUILDLIB_TRUE@	virtual_dtor.hfa \
@@ -580,6 +579,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	iostream.hfa \
 @BUILDLIB_TRUE@	iterator.hfa \
 @BUILDLIB_TRUE@	limits.hfa \
+@BUILDLIB_TRUE@	math.hfa \
 @BUILDLIB_TRUE@	memory.hfa \
 @BUILDLIB_TRUE@	parseargs.hfa \
 @BUILDLIB_TRUE@	parseconfig.hfa \

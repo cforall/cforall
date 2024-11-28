@@ -11,8 +11,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr  6 17:56:25 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov  8 17:02:09 2024
-// Update Count     : 126
+// Last Modified On : Wed Nov 27 18:11:07 2024
+// Update Count     : 128
 //
 
 #pragma once
@@ -20,13 +20,15 @@
 #include "iostream.hfa"
 #include "math.trait.hfa"								// arithmetic
 
-// implementation
+// Implementation
 
 forall( T ) {
 	struct rational {
 		T numerator, denominator;						// invariant: denominator > 0
 	}; // rational
 }
+
+// Arithmetic, Relational
 
 forall( T | arithmetic( T ) ) {
 	// constructors
@@ -72,9 +74,12 @@ forall( T | arithmetic( T ) ) {
 	rational(T) ?*=?( rational(T) & l, rational(T) r );
 	rational(T) ?/?( rational(T) l, rational(T) r );
 	rational(T) ?/=?( rational(T) & l, rational(T) r );
+} // distribution
 
-	// I/O
-	forall( istype & | istream( istype ) | { istype & ?|?( istype &, T & ); } )
+// I/O
+
+forall( T ) {
+	forall( istype & | istream( istype ) | { istype & ?|?( istype &, T & ); } | arithmetic( T ) )
 	istype & ?|?( istype &, rational(T) & );
 
 	forall( ostype & | ostream( ostype ) | { ostype & ?|?( ostype &, T ); } ) {
@@ -83,12 +88,15 @@ forall( T | arithmetic( T ) ) {
 	} // distribution
 } // distribution
 
+// Exponentiation
+
 forall( T | arithmetic( T ) | { T ?\?( T, unsigned long ); } ) {
 	rational(T) ?\?( rational(T) x, long int y );
 	rational(T) ?\=?( rational(T) & x, long int y );
 } // distribution
 
-// conversion
+// Conversion
+
 forall( T | arithmetic( T ) | { double convert( T ); } )
 double widen( rational(T) r );
 forall( T | arithmetic( T ) | { double convert( T );  T convert( double );} )

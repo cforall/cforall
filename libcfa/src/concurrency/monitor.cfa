@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thd Feb 23 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov 21 08:31:55 2024
-// Update Count     : 18
+// Last Modified On : Wed Nov 27 12:13:14 2024
+// Update Count     : 72
 //
 
 #define __cforall_thread__
@@ -26,56 +26,56 @@
 
 //-----------------------------------------------------------------------------
 // Forward declarations
-static inline void __set_owner ( monitor$ * this, thread$ * owner );
-static inline void __set_owner ( monitor$ * storage [], __lock_size_t count, thread$ * owner );
-static inline void set_mask  ( monitor$ * storage [], __lock_size_t count, const __waitfor_mask_t & mask );
+static inline void __set_owner( monitor$ * this, thread$ * owner );
+static inline void __set_owner( monitor$ * storage [], __lock_size_t count, thread$ * owner );
+static inline void set_mask( monitor$ * storage [], __lock_size_t count, const __waitfor_mask_t & mask );
 static inline void reset_mask( monitor$ * this );
 
 static inline thread$ * next_thread( monitor$ * this );
 static inline bool is_accepted( monitor$ * this, const __monitor_group_t & monitors );
 
-static inline void lock_all  ( __spinlock_t * locks [], __lock_size_t count );
-static inline void lock_all  ( monitor$ * source [], __spinlock_t * /*out*/ locks [], __lock_size_t count );
+static inline void lock_all( __spinlock_t * locks [], __lock_size_t count );
+static inline void lock_all( monitor$ * source [], __spinlock_t * /*out*/ locks [], __lock_size_t count );
 static inline void unlock_all( __spinlock_t * locks [], __lock_size_t count );
 static inline void unlock_all( monitor$ * locks [], __lock_size_t count );
 
-static inline void save   ( monitor$ * ctx [], __lock_size_t count, __spinlock_t * locks [], unsigned int /*out*/ recursions [], __waitfor_mask_t /*out*/ masks [] );
+static inline void save( monitor$ * ctx [], __lock_size_t count, __spinlock_t * locks [], unsigned int /*out*/ recursions [], __waitfor_mask_t /*out*/ masks [] );
 static inline void restore( monitor$ * ctx [], __lock_size_t count, __spinlock_t * locks [], unsigned int /*in */ recursions [], __waitfor_mask_t /*in */ masks [] );
 
 static inline void ?{}(__condition_node_t & this, thread$ * waiting_thread, __lock_size_t count, uintptr_t user_info );
 static inline void ?{}(__condition_criterion_t & this );
 static inline void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t * owner );
 
-static inline void init     ( __lock_size_t count, monitor$ * monitors [], __condition_node_t & waiter, __condition_criterion_t criteria [] );
+static inline void init( __lock_size_t count, monitor$ * monitors [], __condition_node_t & waiter, __condition_criterion_t criteria [] );
 static inline void init_push( __lock_size_t count, monitor$ * monitors [], __condition_node_t & waiter, __condition_criterion_t criteria [] );
 
-static inline thread$ *        check_condition   ( __condition_criterion_t * );
-static inline void                 brand_condition   ( condition & );
+static inline thread$ * check_condition ( __condition_criterion_t * );
+static inline void brand_condition( condition & );
 static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t &, monitor$ * monitors [], __lock_size_t count );
 
 forall(T & | sized( T ))
 static inline __lock_size_t insert_unique( T * array [], __lock_size_t & size, T * val );
-static inline __lock_size_t count_max    ( const __waitfor_mask_t & mask );
-static inline __lock_size_t aggregate    ( monitor$ * storage [], const __waitfor_mask_t & mask );
+static inline __lock_size_t count_max( const __waitfor_mask_t & mask );
+static inline __lock_size_t aggregate( monitor$ * storage [], const __waitfor_mask_t & mask );
 
 //-----------------------------------------------------------------------------
 // Useful defines
-#define wait_ctx(thrd, user_info)                               /* Create the necessary information to use the signaller stack                         */ \
-	__condition_node_t waiter = { thrd, count, user_info };   /* Create the node specific to this wait operation                                     */ \
-	__condition_criterion_t criteria[count];                  /* Create the creteria this wait operation needs to wake up                            */ \
-	init( count, monitors, waiter, criteria );                /* Link everything together                                                            */ \
+#define wait_ctx( thrd, user_info )							/* Create the necessary information to use the signaller stack */ \
+	__condition_node_t waiter = { thrd, count, user_info };	/* Create the node specific to this wait operation */ \
+	__condition_criterion_t criteria[count];				/* Create the creteria this wait operation needs to wake up */ \
+	init( count, monitors, waiter, criteria );				/* Link everything together */
 
-#define wait_ctx_primed(thrd, user_info)                        /* Create the necessary information to use the signaller stack                         */ \
-	__condition_node_t waiter = { thrd, count, user_info };   /* Create the node specific to this wait operation                                     */ \
-	__condition_criterion_t criteria[count];                  /* Create the creteria this wait operation needs to wake up                            */ \
-	init_push( count, monitors, waiter, criteria );           /* Link everything together and push it to the AS-Stack                                */ \
+#define wait_ctx_primed( thrd, user_info )					/* Create the necessary information to use the signaller stack */ \
+	__condition_node_t waiter = { thrd, count, user_info };	/* Create the node specific to this wait operation */ \
+	__condition_criterion_t criteria[count];				/* Create the creteria this wait operation needs to wake up */ \
+	init_push( count, monitors, waiter, criteria );			/* Link everything together and push it to the AS-Stack */
 
-#define monitor_ctx( mons, cnt )                                /* Define that create the necessary struct for internal/external scheduling operations */ \
-	monitor$ ** monitors = mons;                          /* Save the targeted monitors                                                          */ \
-	__lock_size_t count = cnt;                                /* Save the count to a local variable                                                  */ \
-	unsigned int recursions[ count ];                         /* Save the current recursion levels to restore them later                             */ \
-	__waitfor_mask_t masks [ count ];                         /* Save the current waitfor masks to restore them later                                */ \
-	__spinlock_t *   locks [ count ];                         /* We need to pass-in an array of locks to BlockInternal                               */ \
+#define monitor_ctx( mons, cnt )							/* Define that create the necessary struct for internal/external scheduling operations */ \
+	monitor$ ** monitors = mons;							/* Save the targeted monitors */ \
+	__lock_size_t count = cnt;								/* Save the count to a local variable */ \
+	unsigned int recursions[count];							/* Save the current recursion levels to restore them later */ \
+	__waitfor_mask_t masks[count];							/* Save the current waitfor masks to restore them later */ \
+	__spinlock_t * locks[count];							/* We need to pass-in an array of locks to BlockInternal */
 
 #define monitor_save    save   ( monitors, count, locks, recursions, masks )
 #define monitor_restore restore( monitors, count, locks, recursions, masks )
@@ -92,22 +92,19 @@ static void __enter( monitor$ * this, const __monitor_group_t & group ) {
 
 	__cfaabi_dbg_print_safe( "Kernel : %10p Entering mon %p (%p)\n", thrd, this, this->owner);
 
-	if( unlikely(0 != (0x1 & (uintptr_t)this->owner)) ) {
+	if ( unlikely(0 != (0x1 & (uintptr_t)this->owner)) ) {
 		abort( "Attempt by thread \"%.256s\" (%p) to access joined monitor %p.", thrd->self_cor.name, thrd, this );
-	}
-	else if( !this->owner ) {
+	} else if ( !this->owner ) {
 		// No one has the monitor, just take it
 		__set_owner( this, thrd );
 
 		__cfaabi_dbg_print_safe( "Kernel :  mon is free \n" );
-	}
-	else if( this->owner == thrd) {
+	} else if ( this->owner == thrd) {
 		// We already have the monitor, just note how many times we took it
 		this->recursion += 1;
 
 		__cfaabi_dbg_print_safe( "Kernel :  mon already owned \n" );
-	}
-	else if( is_accepted( this, group) ) {
+	} else if ( is_accepted( this, group) ) {
 		// Some one was waiting for us, enter
 		__set_owner( this, thrd );
 
@@ -115,8 +112,7 @@ static void __enter( monitor$ * this, const __monitor_group_t & group ) {
 		reset_mask( this );
 
 		__cfaabi_dbg_print_safe( "Kernel :  mon accepts \n" );
-	}
-	else {
+	} else {
 		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
 
 		// Some one else has the monitor, wait in line for it
@@ -155,7 +151,7 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 	__cfaabi_dbg_print_safe( "Kernel : %10p Entering dtor for mon %p (%p)\n", thrd, this, this->owner);
 
 
-	if( !this->owner ) {
+	if ( !this->owner ) {
 		__cfaabi_dbg_print_safe( "Kernel : Destroying free mon %p\n", this);
 
 		// No one has the monitor, just take it
@@ -166,8 +162,7 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 
 		unlock( this->lock );
 		return;
-	}
-	else if( this->owner == thrd && !join) {
+	} else if ( this->owner == thrd && !join) {
 		// We already have the monitor... but where about to destroy it so the nesting will fail
 		// Abort!
 		abort( "Attempt to destroy monitor %p by thread \"%.256s\" (%p) in nested mutex.", this, thrd->self_cor.name, thrd );
@@ -175,7 +170,7 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 	// SKULLDUGGERY: join will act as a dtor so it would normally trigger to above check
 	// because join will not release the monitor after it executed.
 	// to avoid that it sets the owner to the special value thrd | 1p before exiting
-	else if( this->owner == (thread$*)(1 | (uintptr_t)thrd) ) {
+	else if ( this->owner == (thread$*)(1 | (uintptr_t)thrd) ) {
 		// restore the owner and just return
 		__cfaabi_dbg_print_safe( "Kernel : Destroying free mon %p\n", this);
 
@@ -195,7 +190,7 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 	__lock_size_t count = 1;
 	monitor$ ** monitors = &this;
 	__monitor_group_t group = { &this, 1, func };
-	if( is_accepted( this, group) ) {
+	if ( is_accepted( this, group) ) {
 		__cfaabi_dbg_print_safe( "Kernel :  mon accepts dtor, block and signal it \n" );
 
 		// Wake the thread that is waiting for this
@@ -223,8 +218,7 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 
 		__cfaabi_dbg_print_safe( "Kernel : Destroying %p\n", this);
 		return;
-	}
-	else {
+	} else {
 		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
 
 		wait_ctx( thrd, 0 )
@@ -258,7 +252,7 @@ static void __leave( monitor$ * this ) {
 
 	// If we haven't left the last level of recursion
 	// it means we don't need to do anything
-	if( this->recursion != 0) {
+	if ( this->recursion != 0) {
 		__cfaabi_dbg_print_safe( "Kernel :  recursion still %d\n", this->recursion);
 		unlock( this->lock );
 		return;
@@ -282,10 +276,10 @@ static void __leave( monitor$ * this ) {
 // Leave single monitor for the last time
 static void __dtor_leave( monitor$ * this, bool join ) {
 	__cfaabi_dbg_debug_do(
-		if( active_thread() != this->owner ) {
+		if ( active_thread() != this->owner ) {
 			abort( "Destroyed monitor %p has inconsistent owner, expected %p got %p.\n", this, active_thread(), this->owner);
 		}
-		if( this->recursion != 1  && !join ) {
+		if ( this->recursion != 1  && !join ) {
 			abort( "Destroyed monitor %p has %d outstanding nested calls.\n", this, this->recursion - 1);
 		}
 	)
@@ -331,7 +325,7 @@ void __thread_finish( thread$ * thrd ) {
 // Enter multiple monitor
 // relies on the monitor array being sorted
 static inline void enter( __monitor_group_t monitors ) {
-	for( __lock_size_t i = 0; i < monitors.size; i++) {
+	for ( i; monitors.size ) {
 		__enter( monitors[i], monitors );
 	}
 }
@@ -339,7 +333,7 @@ static inline void enter( __monitor_group_t monitors ) {
 // Leave multiple monitor
 // relies on the monitor array being sorted
 static inline void leave(monitor$ * monitors [], __lock_size_t count) {
-	for( __lock_size_t i = count - 1; i >= 0; i--) {
+	for ( i; -~= count - 1 ) {
 		__leave( monitors[i] );
 	}
 }
@@ -453,7 +447,7 @@ void wait( condition & this, uintptr_t user_info = 0 ) libcfa_public {
 	verifyf( this.monitor_count < 32u, "Excessive monitor count (%"PRIiFAST16")", this.monitor_count );
 
 	// Create storage for monitor context
-	monitor_ctx( this.monitors, this.monitor_count );
+	monitor_ctx( this.monitors, this.monitor_count );	// creates monitors, count, recursions, masks, locks
 
 	// Create the node specific to this wait operation
 	wait_ctx( active_thread(), user_info );
@@ -476,18 +470,18 @@ void wait( condition & this, uintptr_t user_info = 0 ) libcfa_public {
 	monitor_save;
 
 	// Remove any duplicate threads
-	for( __lock_size_t i = 0; i < count; i++) {
+	for ( i; count ) {
 		thread$ * new_owner = next_thread( monitors[i] );
 		insert_unique( threads, thread_count, new_owner );
 	}
 
 	// Unlock the locks, we don't need them anymore
-	for(int i = 0; i < count; i++) {
+	for ( i; count ) {
 		unlock( *locks[i] );
 	}
 
 	// Wake the threads
-	for(int i = 0; i < thread_count; i++) {
+	for ( i; thread_count ) {
 		unpark( threads[i] );
 	}
 
@@ -499,7 +493,7 @@ void wait( condition & this, uintptr_t user_info = 0 ) libcfa_public {
 }
 
 bool signal( condition & this ) libcfa_public {
-	if( is_empty( this ) ) { return false; }
+	if ( is_empty( this ) ) { return false; }
 
 	//Check that everything is as expected
 	verify( this.monitors );
@@ -512,7 +506,7 @@ bool signal( condition & this ) libcfa_public {
 			abort( "Signal on condition %p made with different number of monitor(s), expected %zi got %zi", &this, this.monitor_count, this_thrd->monitors.size );
 		}
 
-		for(int i = 0; i < this.monitor_count; i++) {
+		for ( i; this.monitor_count ) {
 			if ( this.monitors[i] != this_thrd->monitors[i] ) {
 				abort( "Signal on condition %p made with different monitor, expected %p got %p", &this, this.monitors[i], this_thrd->monitors[i] );
 			}
@@ -528,7 +522,7 @@ bool signal( condition & this ) libcfa_public {
 	__condition_node_t * node = pop_head( this.blocked );
 
 	//Add the thread to the proper AS stack
-	for(int i = 0; i < count; i++) {
+	for ( i; count ) {
 		__condition_criterion_t * crit = &node->criteria[i];
 		assert( !crit->ready );
 		push( crit->target->signal_stack, crit );
@@ -541,18 +535,17 @@ bool signal( condition & this ) libcfa_public {
 }
 
 bool signal_block( condition & this ) libcfa_public {
-	if( !this.blocked.head ) { return false; }
+	if ( !this.blocked.head ) { return false; }
 
 	//Check that everything is as expected
 	verifyf( this.monitors != 0p, "Waiting with no monitors (%p)", this.monitors );
 	verifyf( this.monitor_count != 0, "Waiting with 0 monitors (%"PRIiFAST16")", this.monitor_count );
 
 	// Create storage for monitor context
-	monitor_ctx( this.monitors, this.monitor_count );
+	monitor_ctx( this.monitors, this.monitor_count );	// creates monitors, count, recursions, masks, locks
 
 	// Lock all monitors (aggregates the locks them as well)
 	lock_all( monitors, locks, count );
-
 
 	// Create the node specific to this wait operation
 	wait_ctx_primed( active_thread(), 0 )
@@ -575,9 +568,7 @@ bool signal_block( condition & this ) libcfa_public {
 	//Everything is ready to go to sleep
 	park();
 
-
 	// WE WOKE UP
-
 
 	__cfaabi_dbg_print_buffer_local( "Kernel :   signal_block returned\n" );
 
@@ -620,12 +611,12 @@ void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_pu
 
 	__cfaabi_dbg_print_buffer_decl( "Kernel : waitfor %"PRIdFAST16" (s: %"PRIdFAST16", m: %"PRIdFAST16")\n", actual_count, mask.size, (__lock_size_t)max);
 
-	if(actual_count == 0) return;
+	if (actual_count == 0) return;
 
 	__cfaabi_dbg_print_buffer_local( "Kernel : waitfor internal proceeding\n" );
 
 	// Create storage for monitor context
-	monitor_ctx( mon_storage, actual_count );
+	monitor_ctx( mon_storage, actual_count );			// creates monitors, count, recursions, masks, locks
 
 	// Lock all monitors (aggregates the locks as well)
 	lock_all( monitors, locks, count );
@@ -635,10 +626,10 @@ void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_pu
 		thread$ * next; int index;
 		[next, index] = search_entry_queue( mask, monitors, count );
 
-		if( next ) {
+		if ( next ) {
 			*mask.accepted = index;
 			__acceptable_t& accepted = mask[index];
-			if( accepted.is_dtor ) {
+			if ( accepted.is_dtor ) {
 				__cfaabi_dbg_print_buffer_local( "Kernel : dtor already there\n" );
 				verifyf( accepted.size == 1,  "ERROR: Accepted dtor has more than 1 mutex parameter." );
 
@@ -661,7 +652,7 @@ void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_pu
 
 				__cfaabi_dbg_print_buffer_local( "Kernel :  baton of %"PRIdFAST16" monitors : ", count );
 				#ifdef __CFA_DEBUG_PRINT__
-					for( int i = 0; i < count; i++) {
+					for ( i; count ) {
 						__cfaabi_dbg_print_buffer_local( "%p %p ", monitors[i], monitors[i]->signal_stack.top );
 					}
 				#endif
@@ -691,7 +682,7 @@ void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_pu
 	}
 
 
-	if( duration == 0 ) {
+	if ( duration == 0 ) {
 		__cfaabi_dbg_print_buffer_local( "Kernel : non-blocking, exiting\n" );
 
 		unlock_all( locks, count );
@@ -711,7 +702,7 @@ void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_pu
 	monitor_save;
 	set_mask( monitors, count, mask );
 
-	for( __lock_size_t i = 0; i < count; i++) {
+	for ( i; count ) {
 		verify( monitors[i]->owner == active_thread() );
 	}
 
@@ -751,7 +742,7 @@ static inline void __set_owner( monitor$ * monitors [], __lock_size_t count, thr
 	/* paranoid */ verifyf( monitors[0]->owner == active_thread(), "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), monitors[0]->owner, monitors[0]->recursion, monitors[0] );
 	monitors[0]->owner        = owner;
 	monitors[0]->recursion    = 1;
-	for( __lock_size_t i = 1; i < count; i++ ) {
+	for ( i; 1~count ) {
 		/* paranoid */ verify ( monitors[i]->lock.lock );
 		/* paranoid */ verifyf( monitors[i]->owner == active_thread(), "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), monitors[i]->owner, monitors[i]->recursion, monitors[i] );
 		monitors[i]->owner        = owner;
@@ -760,7 +751,7 @@ static inline void __set_owner( monitor$ * monitors [], __lock_size_t count, thr
 }
 
 static inline void set_mask( monitor$ * storage [], __lock_size_t count, const __waitfor_mask_t & mask ) {
-	for( __lock_size_t i = 0; i < count; i++) {
+	for ( i; count) {
 		storage[i]->mask = mask;
 	}
 }
@@ -775,7 +766,7 @@ static inline thread$ * next_thread( monitor$ * this ) {
 	//Check the signaller stack
 	__cfaabi_dbg_print_safe( "Kernel :  mon %p AS-stack top %p\n", this, this->signal_stack.top);
 	__condition_criterion_t * urgent = pop( this->signal_stack );
-	if( urgent ) {
+	if ( urgent ) {
 		//The signaller stack is not empty,
 		//regardless of if we are ready to baton pass,
 		//we need to set the monitor as in use
@@ -800,14 +791,14 @@ static inline bool is_accepted( monitor$ * this, const __monitor_group_t & group
 	__lock_size_t count = this->mask.size;
 
 	// Check if there are any acceptable functions
-	if( !it ) return false;
+	if ( !it ) return false;
 
 	// If this isn't the first monitor to test this, there is no reason to repeat the test.
-	if( this != group[0] ) return group[0]->mask.accepted >= 0;
+	if ( this != group[0] ) return group[0]->mask.accepted >= 0;
 
 	// For all acceptable functions check if this is the current function.
-	for( __lock_size_t i = 0; i < count; i++, it++ ) {
-		if( *it == group ) {
+	for ( __lock_size_t i = 0; i < count; i++, it++ ) {
+		if ( *it == group ) {
 			*this->mask.accepted = i;
 			return true;
 		}
@@ -818,7 +809,7 @@ static inline bool is_accepted( monitor$ * this, const __monitor_group_t & group
 }
 
 static inline void init( __lock_size_t count, monitor$ * monitors [], __condition_node_t & waiter, __condition_criterion_t criteria [] ) {
-	for( __lock_size_t i = 0; i < count; i++) {
+	for ( i; count ) {
 		(criteria[i]){ monitors[i], waiter };
 	}
 
@@ -826,7 +817,7 @@ static inline void init( __lock_size_t count, monitor$ * monitors [], __conditio
 }
 
 static inline void init_push( __lock_size_t count, monitor$ * monitors [], __condition_node_t & waiter, __condition_criterion_t criteria [] ) {
-	for( __lock_size_t i = 0; i < count; i++) {
+	for ( i; count ) {
 		(criteria[i]){ monitors[i], waiter };
 		__cfaabi_dbg_print_safe( "Kernel :  target %p = %p\n", criteria[i].target, &criteria[i] );
 		push( criteria[i].target->signal_stack, &criteria[i] );
@@ -836,27 +827,27 @@ static inline void init_push( __lock_size_t count, monitor$ * monitors [], __con
 }
 
 static inline void lock_all( __spinlock_t * locks [], __lock_size_t count ) {
-	for( __lock_size_t i = 0; i < count; i++ ) {
+	for ( i; count ) {
 		lock( *locks[i] __cfaabi_dbg_ctx2 );
 	}
 }
 
 static inline void lock_all( monitor$ * source [], __spinlock_t * /*out*/ locks [], __lock_size_t count ) {
-	for( __lock_size_t i = 0; i < count; i++ ) {
+	for ( i; count ) {
 		__spinlock_t * l = &source[i]->lock;
 		lock( *l __cfaabi_dbg_ctx2 );
-		if(locks) locks[i] = l;
+		if (locks) locks[i] = l;
 	}
 }
 
 static inline void unlock_all( __spinlock_t * locks [], __lock_size_t count ) {
-	for( __lock_size_t i = 0; i < count; i++ ) {
+	for ( i; count ) {
 		unlock( *locks[i] );
 	}
 }
 
 static inline void unlock_all( monitor$ * locks [], __lock_size_t count ) {
-	for( __lock_size_t i = 0; i < count; i++ ) {
+	for ( i; count ) {
 		unlock( locks[i]->lock );
 	}
 }
@@ -868,9 +859,9 @@ static inline void save(
 	unsigned int /*out*/ recursions [],
 	__waitfor_mask_t /*out*/ masks []
 ) {
-	for( __lock_size_t i = 0; i < count; i++ ) {
+	for ( i; count ) {
 		recursions[i] = ctx[i]->recursion;
-		masks[i]      = ctx[i]->mask;
+		masks[i] = ctx[i]->mask;
 	}
 }
 
@@ -882,9 +873,9 @@ static inline void restore(
 	__waitfor_mask_t /*out*/ masks []
 ) {
 	lock_all( locks, count );
-	for( __lock_size_t i = 0; i < count; i++ ) {
+	for ( i; count ) {
 		ctx[i]->recursion = recursions[i];
-		ctx[i]->mask      = masks[i];
+		ctx[i]->mask = masks[i];
 	}
 	unlock_all( locks, count );
 }
@@ -900,10 +891,9 @@ static inline thread$ * check_condition( __condition_criterion_t * target ) {
 
 	bool ready2run = true;
 
-	for(	int i = 0; i < count; i++ ) {
-
+	for ( i; count ) {
 		// __cfaabi_dbg_print_safe( "Checking %p for %p\n", &criteria[i], target );
-		if( &criteria[i] == target ) {
+		if ( &criteria[i] == target ) {
 			criteria[i].ready = true;
 			// __cfaabi_dbg_print_safe( "True\n" );
 		}
@@ -917,13 +907,13 @@ static inline thread$ * check_condition( __condition_criterion_t * target ) {
 
 static inline void brand_condition( condition & this ) {
 	thread$ * thrd = active_thread();
-	if( !this.monitors ) {
+	if ( !this.monitors ) {
 		// __cfaabi_dbg_print_safe( "Branding\n" );
 		assertf( thrd->monitors.data != 0p, "No current monitor to brand condition %p", thrd->monitors.data );
 		this.monitor_count = thrd->monitors.size;
 
 		this.monitors = (monitor$ **)malloc( this.monitor_count * sizeof( *this.monitors ) );
-		for( int i = 0; i < this.monitor_count; i++ ) {
+		for ( i; this.monitor_count ) {
 			this.monitors[i] = thrd->monitors[i];
 		}
 	}
@@ -946,7 +936,7 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 
 		// For each acceptable check if it matches
 		int i = 0;
-		__acceptable_t * end   = end  (mask);
+		__acceptable_t * end = end(mask);
 		__acceptable_t * begin = begin(mask);
 		for ( __acceptable_t * it = begin; it != end; it++, i++ ) {
 			// Check for match
@@ -960,12 +950,10 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 			last = curr;
 		#endif
 	}
-#endif
-	int i = 0;
-	__acceptable_t * end   = end  (mask);
-	__acceptable_t * begin = begin(mask);
+#else
 	// For each acceptable (respect lexical priority in waitfor statement)
-	for ( __acceptable_t * it = begin; it != end; it++, i++ ) {
+	__acceptable_t * it = end(mask); it--;				// end is passed the last node, so backup
+	for ( int i = mask.size - 1; i >= 0; i -= 1, it-- ) {
 		#if defined( __CFA_WITH_VERIFY__ )
 		thread$ * last = 0p;
 		#endif // __CFA_WITH_VERIFY__
@@ -979,7 +967,7 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 
 			// For each thread in the entry-queue check for a match
 			if ( *it == curr->monitors ) {
-				// If match, return it after removeing from the entry queue
+				// If match, return it after removing from the entry queue
 				return [remove( entry_queue, thrd_it ), i];
 			} // if
 
@@ -988,25 +976,25 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 			#endif
 		} // for
 	} // for
+#endif
 	return [0, -1];
 }
 
-forall(T & | sized( T ))
+forall( T & | sized( T ) )
 static inline __lock_size_t insert_unique( T * array [], __lock_size_t & size, T * val ) {
-	if( !val ) return size;
+	if ( ! val ) return size;
 
-	for( __lock_size_t i = 0; i <= size; i++) {
-		if( array[i] == val ) return size;
+	for ( __lock_size_t i; ~= size ) {
+		if ( array[i] == val ) return size;
 	}
 
 	array[size] = val;
-	size = size + 1;
-	return size;
+	return size += 1;
 }
 
 static inline __lock_size_t count_max( const __waitfor_mask_t & mask ) {
 	__lock_size_t max = 0;
-	for( __lock_size_t i = 0; i < mask.size; i++ ) {
+	for ( i; mask.size ) {
 		__acceptable_t & accepted = mask[i];
 		max += accepted.size;
 	}
@@ -1015,10 +1003,10 @@ static inline __lock_size_t count_max( const __waitfor_mask_t & mask ) {
 
 static inline __lock_size_t aggregate( monitor$ * storage [], const __waitfor_mask_t & mask ) {
 	__lock_size_t size = 0;
-	for( __lock_size_t i = 0; i < mask.size; i++ ) {
+	for ( i; mask.size ) {
 		__acceptable_t & accepted = mask[i];
 		__libcfa_small_sort( accepted.data, accepted.size );
-		for( __lock_size_t j = 0; j < accepted.size; j++) {
+		for ( __lock_size_t j = 0; j < accepted.size; j++) {
 			insert_unique( storage, size, accepted[j] );
 		}
 	}
@@ -1039,22 +1027,19 @@ void lock( monitor$ * this ) libcfa_public {
 
 	__cfaabi_dbg_print_safe( "Kernel : %10p Entering mon %p (%p)\n", thrd, this, this->owner);
 
-	if( unlikely(0 != (0x1 & (uintptr_t)this->owner)) ) {
+	if ( unlikely(0 != (0x1 & (uintptr_t)this->owner)) ) {
 		abort( "Attempt by thread \"%.256s\" (%p) to access joined monitor %p.", thrd->self_cor.name, thrd, this );
-	}
-	else if( !this->owner ) {
+	} else if ( !this->owner ) {
 		// No one has the monitor, just take it
 		__set_owner( this, thrd );
 
 		__cfaabi_dbg_print_safe( "Kernel :  mon is free \n" );
-	}
-	else if( this->owner == thrd) {
+	} else if ( this->owner == thrd) {
 		// We already have the monitor, just note how many times we took it
 		this->recursion += 1;
 
 		__cfaabi_dbg_print_safe( "Kernel :  mon already owned \n" );
-	}
-	else {
+	} else {
 		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
 
 		// Some one else has the monitor, wait in line for it

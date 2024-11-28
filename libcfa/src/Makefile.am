@@ -46,7 +46,6 @@ inst_headers_nosrc = \
 	exception.h \
 	gmp.hfa \
 	math.trait.hfa \
-	math.hfa \
 	raii.hfa \
 	time_t.hfa \
 	virtual_dtor.hfa \
@@ -80,6 +79,7 @@ inst_headers_src = \
 	iostream.hfa \
 	iterator.hfa \
 	limits.hfa \
+	math.hfa \
 	memory.hfa \
 	parseargs.hfa \
 	parseconfig.hfa \
