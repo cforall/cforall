@@ -19,15 +19,20 @@
 [void] bar11( [3][10] [int,int] f );
 [void] bar12( * [3][10] [int,int] f );
 
-//[void] foo( size_t size, [size] [int,int] f ) {
-[void] foo( size_t size, [10] [int,int] f ) {
-	for ( i; size ) f[i] = [1, 2];
+[void] foo1( [10] [int,int] f ) {
+	for ( i; 10 ) f[i] = [1, 2];
+}
+[void] foo2( size_t size, [size] [int,int] f ) {
+	for ( i; size ) f[i] = [2, 4];
 }
 
 int main() {
 	[10] [int,int] arr;
 //	[int,int] arr[10];	// unimplemented
 
-	foo( 10, arr );
+	foo1( arr );
+	for ( i; 10 ) sout | arr[i];
+
+	foo2( 10, arr );
 	for ( i; 10 ) sout | arr[i];
 }

@@ -1,4 +1,6 @@
-typedefRedef.cfa:75:25: warning: Compiled
+typedefRedef.cfa:87:25: warning: Compiled
 typedefRedef.cfa:4:1 error: Cannot redefine typedef Foo
 typedefRedef.cfa:31:1 error: Cannot redefine typedef ARR
-typedefRedef.cfa:65:1 error: Cannot redefine typedef ARR
+typedefRedef.cfa:37:1 error: Cannot redefine typedef ARRSa
+typedefRedef.cfa:43:1 error: Cannot redefine typedef ARRSb
+typedefRedef.cfa:77:1 error: Cannot redefine typedef ARR

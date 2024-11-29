@@ -119,28 +119,60 @@ ast::Type const * ReplaceTypedefCore::postvisit(
 		return ast::mutate_field( type, &ast::TypeInstType::base, base->second );
 	}
 }
-
 struct VarLenChecker : public ast::WithShortCircuiting {
 	bool result = false;
 	void previsit( ast::FunctionType const * ) { visit_children = false; }
 	void previsit( ast::ArrayType const * at ) { result |= at->isVarLen; }
 };
-
+static bool hasVarLen( const ast::Type * t ) {
+	return ast::Pass<VarLenChecker>::read( t );
+}
+struct ArrayTypeExtractor {
+	std::vector<const ast::ArrayType *> result;
+	void postvisit( const ast::ArrayType * at ) {
+		result.push_back( at );
+	}
+};
+static bool dimensionPresenceMismatched( const ast::Type * t0, const ast::Type * t1) {
+	std::vector<const ast::ArrayType *> at0s = std::move(
+		ast::Pass<ArrayTypeExtractor>::read( t0 ) );
+	std::vector<const ast::ArrayType *> at1s = std::move(
+		ast::Pass<ArrayTypeExtractor>::read( t1 ) );
+	assert( at0s.size() == at1s.size() );
+	for (size_t i = 0; i < at0s.size(); i++) {
+		const ast::ArrayType * at0 = at0s[i];
+		const ast::ArrayType * at1 = at1s[i];
+		assert( ResolvExpr::typesCompatible( at0, at1 ) );
+		if ( (at0->dimension != nullptr) != (at1->dimension != nullptr) ) return true;
+	}
+	return false;
+}
 ast::Decl const * ReplaceTypedefCore::postvisit(
 		ast::TypedefDecl const * decl ) {
 	if ( 1 == typedefNames.count( decl->name ) &&
 			typedefNames[ decl->name ].second == scopeLevel ) {
 		ast::Type const * t0 = decl->base;
 		ast::Type const * t1 = typedefNames[ decl->name ].first->base;
+		// [hasVarLen]
 		// Cannot redefine VLA typedefs. Note: this is slightly incorrect,
 		// because our notion of VLAs at this point in the translator is
 		// imprecise. In particular, this will disallow redefining typedefs
 		// with arrays whose dimension is an enumerator or a cast of a
 		// constant/enumerator. The effort required to fix this corner case
 		// likely outweighs the utility of allowing it.
+		// [dimensionPresenceMismatched]
+		// Core typesCompatible logic interprets absent dimensions as wildcards,
+		// i.e. float[][*] matches float[][42].
+		// For detecting incompatible typedefs, we have to interpret them verbatim,
+		// i.e. float[] is different than float[42].
+		// But typesCompatible does assure that the pair of types is structurally
+		// consistent, outside of the dimension expressions.  This assurance guards
+		// the dimension-presence traversal.  So this traversal logic can (and does)
+		// assume that ArrayTypes will be encountered in analogous places.
 		if ( !ResolvExpr::typesCompatible( t0, t1 )
-				|| ast::Pass<VarLenChecker>::read( t0 )
-				|| ast::Pass<VarLenChecker>::read( t1 ) ) {
+				|| hasVarLen( t0 )
+				|| hasVarLen( t1 )
+				|| dimensionPresenceMismatched( t0, t1 ) ) {
 			SemanticError( decl->location, "Cannot redefine typedef %s", decl->name.c_str() );
 		}
 	} else {

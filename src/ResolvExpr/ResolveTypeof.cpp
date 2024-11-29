@@ -87,12 +87,16 @@ struct FixArrayDimension {
 	const ResolveContext & context;
 	FixArrayDimension(const ResolveContext & context) : context( context ) {}
 
-	const ast::ArrayType * previsit (const ast::ArrayType * arrayType) {
-		if (!arrayType->dimension) return arrayType;
-		auto mutType = mutate(arrayType);
+	template< typename PtrType >
+	const PtrType * previsitImpl( const PtrType * type ) {
+		// Note: resolving dimension expressions seems to require duplicate logic,
+		// here and Resolver.cpp: handlePtrType
+
+		if (!type->dimension) return type;
+		auto mutType = mutate(type);
 		auto globalSizeType = context.global.sizeType;
 		ast::ptr<ast::Type> sizetype = globalSizeType ? globalSizeType : new ast::BasicType( ast::BasicKind::LongUnsignedInt );
-		mutType->dimension = findSingleExpression(arrayType->dimension, sizetype, context );
+		mutType->dimension = findSingleExpression(type->dimension, sizetype, context );
 
 		if (InitTweak::isConstExpr(mutType->dimension)) {
 			mutType->isVarLen = ast::LengthFlag::FixedLen;
@@ -101,6 +105,14 @@ struct FixArrayDimension {
 			mutType->isVarLen = ast::LengthFlag::VariableLen;
 		}
 		return mutType;
+	}
+
+	const ast::ArrayType * previsit (const ast::ArrayType * arrayType) {
+		return previsitImpl( arrayType );
+	}
+
+	const ast::PointerType * previsit (const ast::PointerType * pointerType) {
+		return previsitImpl( pointerType );
 	}
 };
 

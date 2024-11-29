@@ -56,6 +56,14 @@ E1(     int a2[*];   )
         int a5[n];
     }
 
+    int fred2(int n,
+        int a1[],
+E1(     int a2[*],   )
+        int a4[3],
+        int T[3],
+        int a5[n]
+    ) {}
+
     int mary( int T[3],                                 // same as: int *T
               int p1[const 3],                          // same as: int const *p1
               int p2[static 3],                         // same as T, but length >=3 checked
@@ -109,10 +117,8 @@ E1(     int a2[*];   )
 E2( int fm3( int r, int c, int m[][static c] ) {}  )    // that's not static
 E3( int fm4( int r, int c, int m[][] );            )    // m's immediate element type is incomplete
     int fm5x( int, int, int[*][*] );                    // same as fm1 decl
-                                                        #ifndef __cforall
-    int fm5y( int r, int c, int m[r][c] ) {}            // BUG 276: CFA chokes but should accept
-                                                        // C: same as fm1 defn
-                                                        #endif
+    int fm5y( int r, int c, int m[r][c] ) {}            // same as fm1 defn
+
 
 
 int main() {

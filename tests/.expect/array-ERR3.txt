@@ -1,2 +1,2 @@
-array.cfa:119:25: warning: Preprocessor started
-array.cfa:110:32: error: syntax error, unexpected ']' before token "]"
+array.cfa:125:25: warning: Preprocessor started
+array.cfa:118:32: error: syntax error, unexpected ']' before token "]"

@@ -31,6 +31,18 @@ typedef int ARR[];
 typedef int ARR[2];
 #endif
 
+typedef [ float[], char[], int[] ] ARRSa;
+typedef [ float[], char[], int[] ] ARRSa;
+#ifdef ERR1
+typedef [ float[], char[2], int[] ] ARRSa;
+#endif
+
+typedef int ARRSb[][1][2][3];
+typedef int ARRSb[][1][2][3];
+#ifdef ERR1
+typedef int ARRSb[][1][2][99];
+#endif
+
 typedef int X;
 typedef int Y;
 typedef Y Y2;

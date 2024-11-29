@@ -1,6 +1,8 @@
-array.cfa:119:25: warning: Preprocessor started
+array.cfa:125:25: warning: Preprocessor started
 array.cfa:40:22: error: '[*]' not allowed in other than function prototype scope
 array.cfa:46:24: error: '[*]' not allowed in other than function prototype scope
 array.cfa: In function '_X4fredFi_i__1':
 array.cfa:52:16: error: array size missing in '_X2a1A0i_2'
 array.cfa:53:26: error: '[*]' not allowed in other than function prototype scope
+array.cfa: At top level:
+array.cfa:64:1: error: '[*]' not allowed in other than function prototype scope

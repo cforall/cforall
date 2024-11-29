@@ -291,10 +291,16 @@ public:
 		auto array2 = dynamic_cast< const ast::ArrayType * >( type2 );
 		if ( !array2 ) return;
 
-		if ( array->isVarLen != array2->isVarLen ) return;
-		if ( (array->dimension != nullptr) != (array2->dimension != nullptr) ) return;
+		// Permit cases where one side has a dimension or isVarLen,
+		// while the other side is the opposite.
+		// Acheves a wildcard-iterpretation semantics, where lack of
+		// dimension (`float a[]` or `float a[25][*]`) means
+		// "anything here is fine."
+		// Sole known case where a verbatim-match semantics is intended
+		// is typedef redefinition, for which extra checking is added
+		// in src/Validate/ReplaceTypedef.cpp.
 
-		if ( array->dimension ) {
+		if ( array->dimension && array2->dimension ) {
 			assert( array2->dimension );
 			// type unification calls expression unification (mutual recursion)
 			if ( !unify(array->dimension, array2->dimension,

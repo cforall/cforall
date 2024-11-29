@@ -493,6 +493,73 @@ namespace {
 	}
 }
 
+// Returns a version of `ty`, with some detail redacted.
+// `ty` is that of a parameter or return of `functionDecl`.
+// Redaction:
+//   - concerns the dimension expression, when `ty` is a pointer or array
+//   - prevents escape of variables bound by other parameter declarations
+//   - replaces the whole dimension with `*` if it uses such a variable
+//   - produces the caller's view of `functionDecl`, where `ty` is from the callee/body's view
+// Example 1
+//   functionDecl:     void   f( int n, float a[][5][n + 1] );
+//   outcome:      f : void (*)( int  , float  [][5][*]     ), redaction on deepest ArrayType
+// Example 2
+//   functionDecl:     void   f( int n, float a[n] );
+//   outcome:      f : void (*)( int  , float  [*]     ), redaction on PointerType
+// Example 3
+//   in scope:         int n;
+//   functionDecl:     void   f( float a[][n] );
+//   outcome:      f : void (*)( float  [][n] ), no redaction
+static const ast::Type * redactBoundDimExprs(
+	const ast::Type * ty,
+	const ast::FunctionDecl * functionDecl
+);
+struct UsesParams {
+	const ast::FunctionDecl * functionDecl;
+	UsesParams( const ast::FunctionDecl * functionDecl ) : functionDecl(functionDecl) {}
+	bool result = false;
+	void postvisit( const ast::VariableExpr * e ) {
+		for ( auto p : functionDecl->params ) {
+			if ( p.get() == e->var ) result = true;
+		}
+	}
+};
+struct Redactor {
+	const ast::FunctionDecl * functionDecl;
+	Redactor( const ast::FunctionDecl * functionDecl ) : functionDecl(functionDecl) {}
+	template< typename PtrType >
+	const PtrType * postvisitImpl( const PtrType * type ) {
+		if ( type->dimension && ast::Pass<UsesParams>::read( type->dimension.get(), functionDecl ) ) {
+			// PtrType * newtype = ast::shallowCopy( type );
+			// newtype->dimension = nullptr;
+			// type = newtype;
+			auto mutType = mutate(type);
+			mutType->dimension = nullptr;
+			type = mutType;
+		}
+		return type;
+	}
+
+	const ast::ArrayType * postvisit (const ast::ArrayType * arrayType) {
+		return postvisitImpl( arrayType );
+	}
+
+	const ast::PointerType * postvisit (const ast::PointerType * pointerType) {
+		return postvisitImpl( pointerType );
+	}
+};
+static const ast::Type * redactBoundDimExprs(
+	const ast::Type * ty,
+	const ast::FunctionDecl * functionDecl
+) {
+	if ( ast::Pass<UsesParams>::read( ty, functionDecl ) ) {
+		ast::Type * newty = ast::deepCopy( ty );
+		ast::Pass<Redactor> visitor(functionDecl);
+		ty = newty->accept(visitor);
+	}
+	return ty;
+}
+
 const ast::FunctionDecl * Resolver::previsit( const ast::FunctionDecl * functionDecl ) {
 	GuardValue( functionReturn );
 
@@ -533,11 +600,13 @@ const ast::FunctionDecl * Resolver::previsit( const ast::FunctionDecl * function
 		for (auto & param : mutDecl->params) {
 			param = fixObjectType(param.strict_as<ast::ObjectDecl>(), context);
 			symtab.addId(param);
-			paramTypes.emplace_back(param->get_type());
+			auto exportParamT = redactBoundDimExprs( param->get_type(), mutDecl );
+			paramTypes.emplace_back( exportParamT );
 		}
 		for (auto & ret : mutDecl->returns) {
 			ret = fixObjectType(ret.strict_as<ast::ObjectDecl>(), context);
-			returnTypes.emplace_back(ret->get_type());
+			auto exportRetT = redactBoundDimExprs( ret->get_type(), mutDecl );
+			returnTypes.emplace_back( exportRetT );
 		}
 		// since function type in decl is just a view of param types, need to update that as well
 		mutType->params = std::move(paramTypes);
@@ -698,12 +767,14 @@ const ast::StaticAssertDecl * Resolver::previsit(
 
 template< typename PtrType >
 const PtrType * handlePtrType( const PtrType * type, const ResolveContext & context ) {
+	// Note: resolving dimension expressions seems to require duplicate logic,
+	// here and ResolveTypeof.cpp:fixArrayType.
 	if ( type->dimension ) {
 		const ast::Type * sizeType = context.global.sizeType.get();
 		ast::ptr< ast::Expr > dimension = findSingleExpression( type->dimension, sizeType, context );
 		assertf(dimension->env->empty(), "array dimension expr has nonempty env");
 		dimension.get_and_mutate()->env = nullptr;
-		ast::mutate_field( type, &PtrType::dimension, dimension );
+		type = ast::mutate_field( type, &PtrType::dimension, dimension );
 	}
 	return type;
 }

@@ -1,0 +1,36 @@
+void iota1( int n, float * a, float base ) {
+    for (i; n) {
+        a[i] = base + 0.1f * (float)(i + 1);
+    }
+}
+
+void f__bound_ptr_allow( int n, float a[n] ) {
+    printf( "bound_ptr_allow %d: %.1f %.1f %.1f\n", n, a[0], a[1], a[2] );
+}
+void bound_ptr_allow() {
+    float a[42];
+    iota1( 42, a, 1.0 );
+    f__bound_ptr_allow( 999, a );
+}
+
+void f__bound_ar_allow( int n, float a[][n + 1] ) {
+    printf( "bound_ar_allow %d:\n", n );
+    printf( "%.1f %.1f %.1f\n", a[0][0], a[0][1], a[0][2] );
+    printf( "%.1f %.1f %.1f\n", a[1][0], a[1][1], a[1][2] );
+    printf( "%.1f %.1f %.1f\n", a[2][0], a[2][1], a[2][2] );
+}
+void bound_ar_allow() {
+    float a[3][42];
+    iota1( 42, a[0], 1.0 );
+    iota1( 42, a[1], 2.0 );
+    iota1( 42, a[2], 3.0 );
+    f__bound_ar_allow( 41, a );
+}
+
+
+int main() {
+    bound_ptr_allow();
+    bound_ar_allow();
+
+    return 0;
+}
