@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle & Peiran Hong & Colby Parsons
 // Created On       : Wed Jan 06 17:33:18 2021
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Nov 29 16:07:34 2024
+// Update Count     : 30
 //
 
 #pragma once
@@ -22,15 +22,10 @@
 
 //----------------------------------------------------------------------------
 // future
-// I don't use future_t here since I need to use a lock for this future
-//  since it supports multiple consumers
-//  future_t is lockfree and uses atomics which aren't needed given we use locks here
+// I don't use future_t here as I need to use a lock for this future since it supports multiple consumers.
+// future_t is lockfree and uses atomics which aren't needed given we use locks here
 forall( T ) {
-    // enum { FUTURE_EMPTY = 0, FUTURE_FULFILLED = 1 }; // Enums seem to be broken so feel free to add this back afterwards
-
-    // temporary enum replacement
-    const int FUTURE_EMPTY = 0;
-    const int FUTURE_FULFILLED = 1;
+    enum { FUTURE_EMPTY = 0, FUTURE_FULFILLED = 1 };
 
 	struct future {
 		int state;
