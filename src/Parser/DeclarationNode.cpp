@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 12:34:05 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 22 14:11:47 2024
-// Update Count     : 1555
+// Last Modified On : Mon Dec  2 15:04:12 2024
+// Update Count     : 1558
 //
 
 #include "DeclarationNode.hpp"
@@ -454,10 +454,6 @@ DeclarationNode * DeclarationNode::addQualifiers( DeclarationNode * q ) {
 	} // if
 
 	checkQualifiers( type, q->type );
-	TypeData::BuiltinType const builtin = type->builtintype;
-	if ( (builtin == TypeData::Zero || builtin == TypeData::One) && q->type->qualifiers.any() && error.length() == 0 ) {
-		SemanticWarning( yylloc, Warning::BadQualifiersZeroOne, TypeData::builtinTypeNames[builtin] );
-	} // if
 	type = ::addQualifiers( type, q->type );
 	q->type = nullptr;
 
