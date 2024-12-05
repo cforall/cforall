@@ -1058,8 +1058,8 @@ signed int main(signed int _X4argci_1, char **_X4argvPPc_1, char **_X4envpPPc_1)
         ((void)(_X13cfa_args_envpPPc_1=_X4envpPPc_1));
     }
 
-    signed int _tmp_cp_ret0;
-    signed int _X3reti_2 = (((void)(_tmp_cp_ret0=invoke_main(_X4argci_1, _X4argvPPc_1, _X4envpPPc_1))) , _tmp_cp_ret0);
+    signed int _tmp_cp_ret8;
+    signed int _X3reti_2 = (((void)(_tmp_cp_ret8=invoke_main(_X4argci_1, _X4argvPPc_1, _X4envpPPc_1))) , _tmp_cp_ret8);
     if ( ((&_X17cfa_main_returnedi_1)!=((signed int *)0)) ) {
         {
             ((void)(_X17cfa_main_returnedi_1=((signed int )1)));

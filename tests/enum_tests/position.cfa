@@ -16,9 +16,9 @@ int main () {
     fishy;
     Colour c2 = fishy;
 
-    sout | "Compile Time: blue value: " | value(Colour.Blue) | ", position: " | posn(Colour.Blue) | ", label: " | label(Colour.Blue) | ", default return value: " | Colour.Blue;
-    sout | "Runtime: fishy value: " | value(fishy) | ", position: " | posn(fishy) | ", label: " | label(fishy) | ", default return value: " | fishy;
-    sout | "Runtime: C2 value: " | value(c2) | ", position: " | posn(c2) | ", label: " | label(c2) | ", default return value: " | c2;
+    sout | "Enumeration Constant<Blue>:: value: " | value(Colour.Blue) | ", position: " | posn(Colour.Blue) | ", label: " | label(Colour.Blue) | ", default output: " | Colour.Blue;
+    sout | "Runtime Value<fishy>:: value: " | value(fishy) | ", position: " | posn(fishy) | ", label: " | label(fishy) | ", default output: " | fishy;
+    sout | "Runtime Value<C2>:: value: " | value(c2) | ", position: " | posn(c2) | ", label: " | label(c2) | ", default output: " | c2;
     Colour.Red;
     char * ao = Colour.Red;
     char * ko = fishy;

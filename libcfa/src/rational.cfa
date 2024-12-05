@@ -20,10 +20,8 @@
 #pragma GCC visibility push(default)
 
 // Arithmetic, Relational
-
-forall( T | arithmetic( T ) ) {
+forall( T | Simple(T) ) {
 	// helper routines
-
 	// Calculate greatest common denominator of two numbers, the first of which may be negative. Used to reduce
 	// rationals.  alternative: https://en.wikipedia.org/wiki/Binary_GCD_algorithm
 	static T gcd( T a, T b ) {
@@ -43,7 +41,9 @@ forall( T | arithmetic( T ) ) {
 		if ( d < (T){0} ) { d = -d; n = -n; }			// move sign to numerator
 		return gcd( abs( n ), d );						// simplify
 	} // simplify
+}
 
+forall( T | arithmetic( T ) ) {
 	// constructors
 
 	void ?{}( rational(T) & r, zero_t ) {
@@ -196,7 +196,7 @@ forall( T | arithmetic( T ) ) {
 // I/O
 
 forall( T ) {
-	forall( istype & | istream( istype ) | { istype & ?|?( istype &, T & ); } | arithmetic( T ) )
+	forall( istype & | istream( istype ) | { istype & ?|?( istype &, T & ); } | Simple(T) )
 	istype & ?|?( istype & is, rational(T) & r ) {
 		is | r.numerator | r.denominator;
 		T t = simplify( r.numerator, r.denominator );

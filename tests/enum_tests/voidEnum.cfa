@@ -1,5 +1,4 @@
 #include <fstream.hfa>
-#include <enum.hfa>
 
 enum() E { A, B, C };
 int main() {

@@ -14,7 +14,6 @@
 // 
 
 #include <fstream.hfa>
-#include <enum.hfa>
 
 void fred() {
 	// Test all possible loop syntax.

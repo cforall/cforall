@@ -122,6 +122,7 @@ VariableExpr::VariableExpr( const CodeLocation & loc, const DeclWithType * v )
 
 bool VariableExpr::get_lvalue() const {
 	// It isn't always an lvalue, but it is never an rvalue.
+	if(dynamic_cast<const ast::EnumInstType *>(var->get_type())) return !var->isMember;
 	return true;
 }
 

@@ -1,6 +1,6 @@
-Compile Time: blue value: blue, position: 2, label: Blue, default return value: blue
-Runtime: fishy value: green, position: 1, label: Green, default return value: green
-Runtime: C2 value: green, position: 1, label: Green, default return value: green
+Enumeration Constant<Blue>:: value: blue, position: 2, label: Blue, default output: Blue
+Runtime Value<fishy>:: value: green, position: 1, label: Green, default output: Green
+Runtime Value<C2>:: value: green, position: 1, label: Green, default output: Green
 ao is red
 ko is green
 0, 1, 10, 

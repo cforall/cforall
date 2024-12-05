@@ -11,12 +11,12 @@ enum(int) IntEnum {
 };
 
 int main() {
-    sout | "0=" | zero;
-    sout | "1=" | one;
-    sout | "1000=" | thousand;
-    sout | "1001=" | thousand_one;
-    sout | "2000=" | two_thousand;
-    sout | "2001=" | two_thousand_one;
-    sout | "2002=" | two_thousand_two;
+    sout | "0=" | value(zero);
+    sout | "1=" | value(one);
+    sout | "1000=" | value(thousand);
+    sout | "1001=" | value(thousand_one);
+    sout | "2000=" | value(two_thousand);
+    sout | "2001=" | value(two_thousand_one);
+    sout | "2002=" | value(two_thousand_two);
     return 0;
 }

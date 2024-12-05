@@ -456,8 +456,8 @@ __extension__ signed int _X4fredFi_i__1(signed int _X1pi_1){
     }
 
     {
-        signed int _tmp_cp_ret0;
-        ((void)(((void)(_tmp_cp_ret0=__extension__ _X4fredFi_i__1(3))) , _tmp_cp_ret0));
+        signed int _tmp_cp_ret8;
+        ((void)(((void)(_tmp_cp_ret8=__extension__ _X4fredFi_i__1(3))) , _tmp_cp_ret8));
     }
 
     __extension__ signed int _X4maryFi_i__2(signed int _X1pi_2){

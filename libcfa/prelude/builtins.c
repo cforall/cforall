@@ -159,6 +159,126 @@ static inline void ?{}(quasi_void &, quasi_void) {}
 static inline void ^?{}(quasi_void &) {}
 static inline quasi_void ?=?(quasi_void &, quasi_void & _src) { return _src; }
 
+forall( E ) trait Bounded {
+	E lowerBound(void);
+	E upperBound(void);
+};
+
+forall( E | Bounded( E ) ) trait Serial {
+	int fromInstance( E e );
+	E fromInt_unsafe( int i );
+	E succ_unsafe( E e );
+	E pred_unsafe( E e );
+};
+
+static inline forall( E | Serial( E ) ) {
+	E fromInt( int i );
+	E succ( E e );
+	E pred( E e );
+	int Countof( E );
+}
+
+forall( E ) trait CfaEnum {
+	const char * label( E e );
+	int posn( E e );
+};
+
+forall( E, V | CfaEnum( E ) ) trait TypedEnum {
+	V value( E e );
+};
+
+static inline {
+forall( E | Serial( E ) ) {
+	E fromInt( int i ) {
+		E upper = upperBound();
+		E lower = lowerBound();
+		// It is okay to overflow as overflow will be theoretically caught by the other bound
+		if ( i < fromInstance( lower ) || i > fromInstance( upper ) )
+			abort( "call to fromInt has index %d outside of enumeration range %d-%d.",
+				   i, fromInstance( lower ), fromInstance( upper ) );
+		return fromInt_unsafe( i );
+	}
+
+	E succ( E e ) {
+		E upper = upperBound();
+		if ( fromInstance( e ) >= fromInstance( upper ) )
+			abort( "call to succ() exceeds enumeration upper bound of %d.", fromInstance( upper ) );
+		return succ_unsafe(e);
+	}
+
+	E pred( E e ) {
+		E lower = lowerBound();
+		if ( fromInstance( e ) <= fromInstance(lower ) )
+			abort( "call to pred() exceeds enumeration lower bound of %d.", fromInstance( lower ) );
+		return pred_unsafe( e );
+	}
+
+	int Countof( E ) {
+		E upper = upperBound();
+		E lower = lowerBound();
+		return fromInstance( upper ) + fromInstance( lower ) + 1;
+	}
+}
+}
+
+static inline
+forall( E | CfaEnum(E) | Serial(E) ) {
+	int ?==?( E l, E r ) { return posn( l ) == posn( r ); }	// relational operators
+	int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
+	int ?<?( E l, E r ) { return posn( l ) < posn( r ); }
+	int ?<=?( E l, E r ) { return posn( l ) <= posn( r ); }
+	int ?>?( E l, E r ) { return posn( l ) > posn( r ); }
+	int ?>=?( E l, E r ) { return posn( l ) >= posn( r ); }
+
+	E ++?( E & l ) { 									// increment operators
+		int pos = posn(l);
+		l = fromInt_unsafe(pos+1);
+		return l;
+	}
+
+	E --?( E & l ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos-1);
+		return l;
+	}
+
+	E ?+=? ( E & l, one_t ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos+1);
+		return l;
+	}
+
+	E ?-=? ( E & l, one_t ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos-1);
+		return l;
+	}
+
+	E ?+=? ( E & l, int i ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos+i);
+		return l;
+	}
+
+	E ?-=? ( E & l, int i ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos-i);
+		return l;
+	}
+
+	E ?++( E & l ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos+1);
+		return fromInt_unsafe(pos);
+	}
+
+	E ?--( E & l ) {
+		int pos = posn(l);
+		l = fromInt_unsafe(pos-1);
+		return fromInt_unsafe(pos);
+	}
+}
+
 // Local Variables: //
 // mode: c //
 // tab-width: 4 //

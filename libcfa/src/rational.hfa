@@ -77,9 +77,13 @@ forall( T | arithmetic( T ) ) {
 } // distribution
 
 // I/O
+forall(T | multiplicative(T) | equality(T))
+trait Simple {
+	int ?<?( T, T );
+};
 
 forall( T ) {
-	forall( istype & | istream( istype ) | { istype & ?|?( istype &, T & ); } | arithmetic( T ) )
+	forall( istype & | istream( istype ) | { istype & ?|?( istype &, T & ); } | Simple(T) )
 	istype & ?|?( istype &, rational(T) & );
 
 	forall( ostype & | ostream( ostype ) | { ostype & ?|?( ostype &, T ); } ) {

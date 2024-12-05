@@ -1480,6 +1480,7 @@ ast::EnumDecl * buildEnum(
 		ast::Decl * member = members->get_and_mutate();
 		ast::ObjectDecl * object = strict_dynamic_cast<ast::ObjectDecl *>( member );
 		object->isHidden = ast::EnumDecl::EnumHiding::Hide == ret->hide;
+		object->isMember = true;
 		if ( ret->isOpaque() && cur->has_enumeratorValue() ) {
 			SemanticError( td->location, "Opague cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {

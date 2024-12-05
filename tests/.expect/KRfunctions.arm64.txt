@@ -103,8 +103,8 @@ const signed int _X4fredFi___1(void){
     signed int _X1ai_2;
     signed int _X1bi_2;
     {
-        signed int *(*_tmp_cp_ret0)(signed int __param_0, signed int __param_1);
-        ((void)(_X1xFPi_ii__2=(((void)(_tmp_cp_ret0=_X3f10FFPi_ii__iPiPid__1(3, (&_X1ai_2), (&_X1bi_2), 3.5))) , _tmp_cp_ret0)));
+        signed int *(*_tmp_cp_ret8)(signed int __param_0, signed int __param_1);
+        ((void)(_X1xFPi_ii__2=(((void)(_tmp_cp_ret8=_X3f10FFPi_ii__iPiPid__1(3, (&_X1ai_2), (&_X1bi_2), 3.5))) , _tmp_cp_ret8)));
     }
 
     const signed int _X2f1Fi_iPiPi__2(signed int _X1ai_2, signed int *_X1bPi_2, signed int *_X1cPi_2){

@@ -506,6 +506,14 @@ forall( ostype & | ostream( ostype ) ) {
 	OSTYPE_VOID( Time );
 } // distribution
 
+forall( istype & | istream( istype ), E | CfaEnum( E ) | Serial(E) )
+istype & ?|?( istype &, E & );
+
+forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
+	ostype & ?|?( ostype &, E );
+	OSTYPE_VOID( E );
+}
+
 // Local Variables: //
 // tab-width: 4 //
 // End: //

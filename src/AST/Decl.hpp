@@ -73,6 +73,7 @@ public:
 	bool isDeleted = false;
 	bool isTypeFixed = false;
 	bool isHidden = false;
+	bool isMember = false;
 
 	DeclWithType( const CodeLocation& loc, const std::string& name, Storage::Classes storage,
 		Linkage::Spec linkage, std::vector<ptr<Attribute>>&& attrs, Function::Specs fs )

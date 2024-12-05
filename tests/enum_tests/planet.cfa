@@ -1,6 +1,5 @@
 #include <fstream.hfa>
 #include <stdlib.hfa>
-#include <enum.hfa>
 
 struct MR { double mass, radius; };
 

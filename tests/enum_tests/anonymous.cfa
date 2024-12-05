@@ -2,7 +2,7 @@
 enum(unsigned long int ) { nthreads = 17 };
 
 int main() {
-    sout | nthreads;
+    sout | value(nthreads);
 }
 
 

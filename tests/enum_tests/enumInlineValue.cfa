@@ -1,5 +1,4 @@
 #include <fstream.hfa>
-#include <enum.hfa>
 
 enum(int) A !{
     a = 10
