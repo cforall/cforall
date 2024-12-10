@@ -9,32 +9,33 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 21 16:21:03 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov  8 17:07:15 2024
-// Update Count     : 144
+// Last Modified On : Sun Dec  8 09:01:23 2024
+// Update Count     : 149
 //
 
 #define __cforall_builtins__
 
-// type that wraps a pointer and a destructor-like function - used in generating implicit destructor calls for struct members in user-defined functions
-// Note: needs to occur early, because it is used to generate destructor calls during code generation
-forall(T &)
+// Type that wraps a pointer and a destructor-like function - used in generating implicit destructor calls for struct
+// members in user-defined functions. Note: needs to occur early, because it is used to generate destructor calls during
+// code generation
+forall( T & )
 struct __Destructor {
 	T * object;
-	void (*dtor)(T *);
+	void (*dtor)( T * );
 };
 
-// defined destructor in the case that non-generated code wants to use __Destructor
-forall(T &)
-static inline void ^?{}(__Destructor(T) & x) {
-	if (x.object && x.dtor) {
-		x.dtor(x.object);
+// Defined destructor in the case that non-generated code wants to use __Destructor.
+forall( T & )
+static inline void ^?{}( __Destructor(T) & x ) {
+	if ( x.object && x.dtor ) {
+		x.dtor( x.object );
 	}
 }
 
-// easy interface into __Destructor's destructor for easy codegen purposes
+// Easy interface into __Destructor's destructor for easy codegen purposes.
 extern "C" {
-	forall(T &)
-	static inline void __destroy_Destructor(__Destructor(T) * dtor) {
+	forall( T & )
+	static inline void __destroy_Destructor( __Destructor(T) * dtor ) {
 		^(*dtor){};
 	}
 }
@@ -46,11 +47,11 @@ typedef unsigned long long __cfaabi_abi_exception_type_t;
 #include "../src/virtual.h"
 #include "../src/exception.h"
 
-void exit( int status, const char fmt[], ... ) __attribute__ (( format(printf, 2, 3), __nothrow__, __leaf__, __noreturn__ ));
-void abort( const char fmt[], ... ) __attribute__ (( format(printf, 1, 2), __nothrow__, __leaf__, __noreturn__ ));
+void exit( int status, const char fmt[], ... ) __attribute__ (( format( printf, 2, 3 ), __nothrow__, __leaf__, __noreturn__ ));
+void abort( const char fmt[], ... ) __attribute__ (( format( printf, 1, 2 ), __nothrow__, __leaf__, __noreturn__ ));
 
-forall(T &)
-static inline T & identity(T & i) {
+forall( T & )
+static inline T & identity( T & i ) {
 	return i;
 }
 
@@ -59,24 +60,24 @@ struct generator$ {
 	inline int;
 };
 
-static inline void  ?{}(generator$ & this) { ((int&)this) = 0; }
-static inline void ^?{}(generator$ &) {}
+static inline void  ?{}( generator$ & this ) { ((int&)this) = 0; }
+static inline void ^?{}( generator$ & ) {}
 
 forall( T & )
 trait is_generator {
-      void main(T & this);
-      generator$ * get_generator(T & this);
+      void main( T & this );
+      generator$ * get_generator( T & this );
 };
 
-forall(T & | is_generator(T))
-static inline T & resume(T & gen) {
-	main(gen);
+forall( T & | is_generator( T ) )
+static inline T & resume( T & gen ) {
+	main( gen );
 	return gen;
 }
 
 // implicit increment, decrement if += defined, and implicit not if != defined
 
-// C11 reference manual Section 6.5.16 (page101): "An assignment expression has the value of the left operand after the
+// C11 reference manual Section 6.5.16 (page 101): "An assignment expression has the value of the left operand after the
 // assignment, but is not an lvalue." Hence, return a value not a reference.
 static inline {
 	forall( T | { T ?+=?( T &, one_t ); } )
@@ -106,9 +107,6 @@ static inline void ?{}( unsigned int128 & this, unsigned long int h, unsigned lo
 } // ?{}
 #endif // __SIZEOF_INT128__
 
-// for-control index constraints
-// forall( T | { void ?{}( T &, zero_t ); void ?{}( T &, one_t ); T ?+=?( T &, T ); T ?-=?( T &, T ); int ?<?( T, T ); } )
-// static inline T __for_control_index_constraints__( T t ) { return t; }
 
 // exponentiation operator implementation
 
@@ -121,11 +119,11 @@ extern "C" {
 	long double _Complex cpowl( long double _Complex x, _Complex long double z );
 } // extern "C"
 
-static inline {
+static inline {											// wrappers
 	float ?\?( float x, float y ) { return powf( x, y ); }
 	double ?\?( double x, double y ) { return pow( x, y ); }
 	long double ?\?( long double x, long double y ) { return powl( x, y ); }
-	float _Complex ?\?( float _Complex x, _Complex float y ) { return cpowf(x, y ); }
+	float _Complex ?\?( float _Complex x, _Complex float y ) { return cpowf( x, y ); }
 	double _Complex ?\?( double _Complex x, _Complex double y ) { return cpow( x, y ); }
 	long double _Complex ?\?( long double _Complex x, _Complex long double y ) { return cpowl( x, y ); }
 } // distribution
@@ -153,15 +151,12 @@ static inline {
 	unsigned long long int ?\=?( unsigned long long int & x, unsigned long long int y ) { x = x \ y; return x; }
 } // distribution
 
-struct quasi_void {};
-static inline void ?{}(quasi_void &) {}
-static inline void ?{}(quasi_void &, quasi_void) {}
-static inline void ^?{}(quasi_void &) {}
-static inline quasi_void ?=?(quasi_void &, quasi_void & _src) { return _src; }
+
+// enumeration implementation
 
 forall( E ) trait Bounded {
-	E lowerBound(void);
-	E upperBound(void);
+	E lowerBound( void );
+	E upperBound( void );
 };
 
 forall( E | Bounded( E ) ) trait Serial {
@@ -203,12 +198,12 @@ forall( E | Serial( E ) ) {
 		E upper = upperBound();
 		if ( fromInstance( e ) >= fromInstance( upper ) )
 			abort( "call to succ() exceeds enumeration upper bound of %d.", fromInstance( upper ) );
-		return succ_unsafe(e);
+		return succ_unsafe( e );
 	}
 
 	E pred( E e ) {
 		E lower = lowerBound();
-		if ( fromInstance( e ) <= fromInstance(lower ) )
+		if ( fromInstance( e ) <= fromInstance( lower ) )
 			abort( "call to pred() exceeds enumeration lower bound of %d.", fromInstance( lower ) );
 		return pred_unsafe( e );
 	}
@@ -222,7 +217,7 @@ forall( E | Serial( E ) ) {
 }
 
 static inline
-forall( E | CfaEnum(E) | Serial(E) ) {
+forall( E | CfaEnum( E ) | Serial( E ) ) {
 	int ?==?( E l, E r ) { return posn( l ) == posn( r ); }	// relational operators
 	int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
 	int ?<?( E l, E r ) { return posn( l ) < posn( r ); }
@@ -231,51 +226,51 @@ forall( E | CfaEnum(E) | Serial(E) ) {
 	int ?>=?( E l, E r ) { return posn( l ) >= posn( r ); }
 
 	E ++?( E & l ) { 									// increment operators
-		int pos = posn(l);
-		l = fromInt_unsafe(pos+1);
+		int pos = posn( l );
+		l = fromInt_unsafe( pos + 1 );
 		return l;
 	}
 
 	E --?( E & l ) {
-		int pos = posn(l);
-		l = fromInt_unsafe(pos-1);
+		int pos = posn( l );
+		l = fromInt_unsafe( pos - 1 );
 		return l;
 	}
 
-	E ?+=? ( E & l, one_t ) {
-		int pos = posn(l);
-		l = fromInt_unsafe(pos+1);
+	E ?+=?( E & l, one_t ) {
+		int pos = posn( l );
+		l = fromInt_unsafe( pos + 1 );
 		return l;
 	}
 
-	E ?-=? ( E & l, one_t ) {
-		int pos = posn(l);
-		l = fromInt_unsafe(pos-1);
+	E ?-=?( E & l, one_t ) {
+		int pos = posn( l );
+		l = fromInt_unsafe( pos - 1 );
 		return l;
 	}
 
-	E ?+=? ( E & l, int i ) {
-		int pos = posn(l);
-		l = fromInt_unsafe(pos+i);
+	E ?+=?( E & l, int i ) {
+		int pos = posn( l );
+		l = fromInt_unsafe( pos + i );
 		return l;
 	}
 
-	E ?-=? ( E & l, int i ) {
-		int pos = posn(l);
-		l = fromInt_unsafe(pos-i);
+	E ?-=?( E & l, int i ) {
+		int pos = posn( l );
+		l = fromInt_unsafe( pos - i );
 		return l;
 	}
 
 	E ?++( E & l ) {
-		int pos = posn(l);
-		l = fromInt_unsafe(pos+1);
-		return fromInt_unsafe(pos);
+		int pos = posn( l );
+		l = fromInt_unsafe( pos + 1 );
+		return fromInt_unsafe( pos );
 	}
 
 	E ?--( E & l ) {
-		int pos = posn(l);
-		l = fromInt_unsafe(pos-1);
-		return fromInt_unsafe(pos);
+		int pos = posn( l );
+		l = fromInt_unsafe( pos - 1 );
+		return fromInt_unsafe( pos );
 	}
 }
 
