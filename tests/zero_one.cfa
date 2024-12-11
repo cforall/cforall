@@ -1,0 +1,45 @@
+#include <fstream.hfa>
+
+void foo(zero_t)
+{
+	sout | "It's a Zero!";
+}
+
+void foo(one_t)
+{
+	sout | "It's a One!";
+}
+
+void foo(int)
+{
+	sout | "It's a Number!";
+}
+
+void testOverloads()
+{
+	foo(0);
+	foo(1);
+	foo(2);
+}
+
+struct S { int i, j; };
+void ?{}( S & s, zero_t ) { s.[i,j] = 0; }				// constructors
+void ?{}( S & s, one_t ) { s.[i,j] = 1; }
+S ?=?( S & dst, zero_t ) { dst.[i,j] = 0; return dst; }	// assignment
+S ?=?( S & dst, one_t ) { dst.[i,j] = 1; return dst; }
+S ?+=?( S & s, one_t ) { s.[i,j] += 1; return s; }		// increment/decrement each field
+S ?-=?( S & s, one_t ) { s.[i,j] -= 1; return s; }
+int ?!=?( S s, zero_t ) { return s.i != 0 && s.j != 0; } // comparison
+void testInitAssignQueryIncrement() {
+	S s = 0;											// initialization
+	s = 0;												// assignments
+	s = 1;
+	if ( s ) ++s;										// special, unary ++/-\,- come from +=/-=
+	sout | s.i | s.j;
+}
+
+int main() {
+	testOverloads();
+	testInitAssignQueryIncrement();
+	return 0;
+}

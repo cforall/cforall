@@ -1,17 +1,16 @@
-#include <select.hfa>
+#include <fstream.hfa>
 #include <thread.hfa>
 #include <channel.hfa>
 #include <time.hfa>
 
-channel(long long int) A, B;
+channel(ssize_t) A, B;
 
-volatile long long int inserts = 0;
-volatile long long int removes = 0;
+volatile size_t inserts = 0, removes = 0;
 
 thread Producer {};
 void main( Producer & this ) {
     try {
-        for( long long int i = 0;;i++ ) {
+        for( size_t i; 0~@ ) {
             waituntil( A << i ) { inserts++; }
             and waituntil( B << i ) { inserts++; }
         }
@@ -21,9 +20,10 @@ void main( Producer & this ) {
 bool useAnd = false;
 thread Consumer {}; // ensures that the changing when states of Server1 don't result in a deadlock
 void main( Consumer & this ) {
-    long long int in, in2, A_removes = 0, B_removes = 0;
+    ssize_t in, in2, A_removes = 0, B_removes = 0;
+
     try {
-        for( ;; ) {
+        for () {
             if ( useAnd ) {
                 waituntil( (in << A) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( A_removes == in ); A_removes++; removes++; }
                 and waituntil( (in2 << B) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( B_removes == in2 ); B_removes++; removes++; }
@@ -32,23 +32,25 @@ void main( Consumer & this ) {
             waituntil( (in << A) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( A_removes == in ); A_removes++; removes++; }
             or waituntil( (in << B) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); ( B_removes == in ); B_removes++; removes++; }
         }
-    } catchResume ( channel_closed * e ) {} // continue to remove until would block
-    catch ( channel_closed * e ) {} 
+    } catchResume ( channel_closed * e ) {				// continue to remove until would block
+	} catch ( channel_closed * e ) {} 
+
     try {
-        for( ;; )
+        for ()
             waituntil( (in << A) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( A_removes == in ); A_removes++; removes++; }
-    } catchResume ( channel_closed * e ) {} // continue to remove until would block
-    catch ( channel_closed * e ) {} 
+    } catchResume ( channel_closed * e ) {				// continue to remove until would block
+	} catch ( channel_closed * e ) {} 
+
     try {
-        for( ;; )
+        for ()
             waituntil( (in << B) ) { __atomic_thread_fence( __ATOMIC_SEQ_CST ); assert( B_removes == in ); B_removes++; removes++; }
-    } catchResume ( channel_closed * e ) {} // continue to remove until would block
-    catch ( channel_closed * e ) {} 
+    } catchResume ( channel_closed * e ) {				// continue to remove until would block
+	} catch ( channel_closed * e ) {} 
 }
 
-
-size_t time = 5;
 int main( int argc, char * argv[] ) {
+	size_t time = 5;
+
     if ( argc == 2 )
         time = atoi( argv[1] );
 
@@ -56,41 +58,39 @@ int main( int argc, char * argv[] ) {
     A{5};
     B{5};
 
-    printf("start OR\n");
+    sout | "start OR";
     {
         Producer p;
         Consumer c;
         sleep(time`s);
-        printf("done sleep\n");
-        printf("closing A\n");
-        close(A);
-        printf("closing B\n");
-        close(B);
+        sout | "done sleep";
+        sout | "closing A";
+        close( A );
+        sout | "closing B";
+        close( B );
     }
     if ( inserts != removes ) 
-        printf("CHECKSUM MISMATCH!! Producer got: %lld, Consumer got: %lld\n", inserts, removes);
-    printf("done\n");
+        sout | "CHECKSUM MISMATCH!! Producer got:" | inserts | ", Consumer got:" | removes;
+    sout | "done";
     ^A{};
     ^B{};
 
     useAnd = true;
-
-    inserts = 0;
-    removes = 0;
+    inserts = removes = 0;
     A{5};
     B{5};
-    printf("start AND\n");
+    sout | "start AND";
     {
         Producer p;
         Consumer c;
-        sleep(time`s);
-        printf("done sleep\n");
-        printf("closing A\n");
-        close(A);
-        printf("closing B\n");
-        close(B);
+        sleep( time`s );
+        sout | "done sleep";
+        sout | "closing A";
+        close( A );
+        sout | "closing B";
+        close( B );
     }
     if ( inserts != removes ) 
-        printf("CHECKSUM MISMATCH!! Producer got: %lld, Consumer got: %lld\n", inserts, removes);
-    printf("done\n");
+        sout | "CHECKSUM MISMATCH!! Producer got:" | inserts | ", Consumer got:" | removes;
+    sout | "done";
 }
