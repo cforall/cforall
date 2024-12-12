@@ -27,10 +27,13 @@
 //-----------------------------------------------------------------------------
 // thread trait
 forall( T & )
-trait is_thread {
-	void ^?{}(T& mutex this);
+trait is_basic_thread {
 	void main(T& this);
 	thread$ * get_thread(T& this);
+};
+forall( T & | is_basic_thread(T) )
+trait is_thread {
+	void ^?{}(T& mutex this);
 };
 
 forall(thread_t &)
@@ -46,10 +49,10 @@ forall(T &)
 const char * msg(ThreadCancelled(T) *);
 
 // Inline getters for threads/coroutines/monitors
-forall( T & | is_thread(T) )
+forall( T & | is_basic_thread(T) )
 static inline coroutine$ * get_coroutine(T & this) __attribute__((const)) { return &get_thread(this)->self_cor; }
 
-forall( T & | is_thread(T) )
+forall( T & | is_basic_thread(T) )
 static inline monitor$   * get_monitor  (T & this) __attribute__((const)) { return &get_thread(this)->self_mon; }
 
 static inline coroutine$ * get_coroutine(thread$ * this) __attribute__((const)) { return &this->self_cor; }
@@ -59,7 +62,7 @@ static inline monitor$   * get_monitor  (thread$ * this) __attribute__((const)) 
 // forward declarations needed for threads
 extern struct cluster * mainCluster;
 
-forall( T & | is_thread(T) )
+forall( T & | is_basic_thread(T) )
 void __thrd_start( T & this, void (*)(T &) );
 
 //-----------------------------------------------------------------------------

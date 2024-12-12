@@ -70,7 +70,6 @@ private:
 /// help pass around some of the common arguments.
 class FuncGenerator {
 public:
-	std::list<ast::ptr<ast::Decl>> forwards;
 	std::list<ast::ptr<ast::Decl>> definitions;
 
 	FuncGenerator( const ast::Type * type, unsigned int functionNesting ) :
@@ -89,7 +88,6 @@ protected:
 	// Internal helpers:
 	virtual void genStandardFuncs();
 	void produceDecl( const ast::FunctionDecl * decl );
-	void produceForwardDecl( const ast::FunctionDecl * decl );
 
 	const CodeLocation& getLocation() const { return getDecl()->location; }
 	ast::FunctionDecl * genProto( std::string&& name,
@@ -195,8 +193,6 @@ public:
 	}
 
 	bool shouldAutogen() const final { return true; }
-	void generateAndPrependDecls( std::list<ast::ptr<ast::Decl>> & );
-	void genForwards();
 private:
 	void genFuncBody( ast::FunctionDecl * decl ) final;
 	void genFieldCtors() final;
@@ -244,13 +240,9 @@ void AutogenerateRoutines::previsit( const ast::EnumDecl * enumDecl ) {
 
 	ast::EnumInstType enumInst( enumDecl->name );
 	enumInst.base = enumDecl;
-	if ( enumDecl->isCfa ) {
-		EnumFuncGenerator gen( enumDecl, &enumInst, functionNesting );
-		gen.generateAndPrependDecls( declsToAddBefore );
-	}
 
-	EnumFuncGenerator gen2( enumDecl, &enumInst, functionNesting );
-	gen2.generateAndAppendFunctions( declsToAddAfter );
+	EnumFuncGenerator gen( enumDecl, &enumInst, functionNesting );
+	gen.generateAndAppendFunctions( declsToAddAfter );
 }
 
 void AutogenerateRoutines::previsit( const ast::StructDecl * structDecl ) {
@@ -319,7 +311,7 @@ void FuncGenerator::generateAndAppendFunctions(
 	genFieldCtors();
 
 	// Now export the lists contents.
-	decls.splice( decls.end(), forwards );
+//	decls.splice( decls.end(), forwards );    // mlb wip: delete me
 	decls.splice( decls.end(), definitions );
 }
 
@@ -328,15 +320,6 @@ void FuncGenerator::produceDecl( const ast::FunctionDecl * decl ) {
 	assert( decl->type_params.size() == getGenericParams( type ).size() );
 
 	definitions.push_back( decl );
-}
-
-/// Make a forward declaration of the decl and add it to forwards.
-void FuncGenerator::produceForwardDecl( const ast::FunctionDecl * decl ) {
-	if (0 != functionNesting) return;
-	ast::FunctionDecl * fwd =
-		( decl->stmts ) ? ast::asForward( decl ) : ast::deepCopy( decl ) ;
-	fwd->fixUniqueId();
-	forwards.push_back( fwd );
 }
 
 void replaceAll( std::vector<ast::ptr<ast::DeclWithType>> & dwts,
@@ -482,7 +465,6 @@ void FuncGenerator::genStandardFuncs() {
 			&FuncGenerator::genDtorProto, &FuncGenerator::genAssignProto };
 	for ( auto & generator : standardProtos ) {
 		ast::FunctionDecl * decl = (this->*generator)();
-		produceForwardDecl( decl );
 		genFuncBody( decl );
 		if ( CodeGen::isAssignment( decl->name ) ) {
 			appendReturnThis( decl );
@@ -504,7 +486,6 @@ void StructFuncGenerator::genFieldCtors() {
 		if ( nullptr == ctor ) {
 			continue;
 		}
-		produceForwardDecl( ctor );
 		makeFieldCtorBody( decl->members.begin(), decl->members.end(), ctor );
 		produceDecl( ctor );
 	}
@@ -666,7 +647,6 @@ void UnionFuncGenerator::genFieldCtors() {
 		if ( nullptr == ctor ) {
 			return;
 		}
-		produceForwardDecl( ctor );
 		auto params = ctor->params;
 		auto dstParam = params.front().strict_as<ast::ObjectDecl>();
 		auto srcParam = params.back().strict_as<ast::ObjectDecl>();
@@ -694,12 +674,6 @@ void UnionFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 		functionDecl->stmts = new ast::CompoundStmt( location );
 		// Add unused attribute to parameter to silence warnings.
 		addUnusedAttribute( params.front() );
-
-		// Just an extra step to make the forward and declaration match.
-		if ( forwards.empty() ) return;
-		ast::FunctionDecl * fwd = strict_dynamic_cast<ast::FunctionDecl *>(
-			forwards.back().get_and_mutate() );
-		addUnusedAttribute( fwd->params.front() );
 	}
 }
 
@@ -717,24 +691,6 @@ ast::ExprStmt * UnionFuncGenerator::makeAssignOp( const CodeLocation& location,
 		} ) );
 }
 
-void EnumFuncGenerator::generateAndPrependDecls( std::list<ast::ptr<ast::Decl>> & decls ) {
-	genForwards();
-	decls.splice( decls.end(), forwards );
-}
-
-void EnumFuncGenerator::genForwards() {
-	forwards.push_back( ast::asForward(decl) );
-
-	ast::FunctionDecl *(FuncGenerator::*standardProtos[4])() const = {
-		&EnumFuncGenerator::genCtorProto, &EnumFuncGenerator::genCopyProto,
-		&EnumFuncGenerator::genDtorProto, &EnumFuncGenerator::genAssignProto };
-
-	for ( auto & generator: standardProtos) {
-		ast::FunctionDecl * decl = (this->*generator)();
-		produceForwardDecl( decl );
-	}
-}
-
 void EnumFuncGenerator::genStandardFuncs() {
 	// do everything FuncGenerator does except not make ForwardDecls
 	ast::FunctionDecl *(FuncGenerator::*standardProtos[4])() const = {
@@ -743,7 +699,6 @@ void EnumFuncGenerator::genStandardFuncs() {
 
 	for ( auto & generator : standardProtos ) {
 		ast::FunctionDecl * decl = (this->*generator)();
-		produceForwardDecl( decl );
 		genFuncBody( decl );
 		if ( CodeGen::isAssignment( decl->name ) ) {
 			appendReturnThis( decl );
@@ -793,12 +748,6 @@ void EnumFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 		functionDecl->stmts = new ast::CompoundStmt( location );
 		// Just add unused attribute to parameter to silence warnings.
 		addUnusedAttribute( params.front() );
-
-		// Just an extra step to make the forward and declaration match.
-		if ( forwards.empty() ) return;
-		ast::FunctionDecl * fwd = strict_dynamic_cast<ast::FunctionDecl *>(
-			forwards.back().get_and_mutate() );
-		addUnusedAttribute( fwd->params.front() );
 	}
 }
 

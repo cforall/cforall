@@ -1072,6 +1072,10 @@ raii/dtor-early-exit-ERR2 : raii/dtor-early-exit.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR2
 	-cp ${test} ${abspath ${@}}
 
+raii/partial-ERR1 : raii/partial.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR1
+	-cp ${test} ${abspath ${@}}
+
 # Exception Tests
 # Test with libcfathread; it changes how storage works.
 
@@ -1085,6 +1089,11 @@ linking/linkerror : linking/linkerror.cfa ${CFACCBIN}
 	${CFACOMPILETEST} -O0 -c -o ${abspath ${@}}.o
 	${CFACCLINK}  -O0 ${@}.o -o ${abspath ${@}}
 	rm ${abspath ${@}}.o
+
+# No-warning tests
+# Tests to make sure that given CFA code gets emitted C code that GCC accepts without any warnings
+nowarn/% : nowarn/%.cfa ${CFABIN}
+	${CFACOMPILETEST} -Wunused-function -Wpsabi -Wall -Wextra -Werror -o ${abspath ${@}}
 
 #------------------------------------------------------------------------------
 # Other targets

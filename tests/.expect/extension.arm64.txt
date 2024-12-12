@@ -6,13 +6,6 @@ __extension__ struct S {
     __extension__ signed int _X1bi_1;
     __extension__ signed int _X1ci_1;
 };
-static inline void _X12_constructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1);
-static inline void _X12_constructorFv_S1SS1S_autogen___1(struct S *_X4_dstS1S_1, struct S _X4_srcS1S_1);
-static inline void _X11_destructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1);
-static inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___1(struct S *_X4_dstS1S_1, struct S _X4_srcS1S_1);
-static inline void _X12_constructorFv_S1Si_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1);
-static inline void _X12_constructorFv_S1Sii_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1, signed int _X1bi_1);
-static inline void _X12_constructorFv_S1Siii_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ai_1, signed int _X1bi_1, signed int _X1ci_1);
 static inline void _X12_constructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1){
     {
         ((void)((*_X4_dstS1S_1)._X1ai_1) /* ?{} */);
@@ -122,11 +115,6 @@ __extension__ union U {
     __extension__ signed int _X1bi_1;
     __extension__ signed int _X1ci_1;
 };
-static inline void _X12_constructorFv_U1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1);
-static inline void _X12_constructorFv_U1UU1U_autogen___1(union U *_X4_dstU1U_1, union U _X4_srcU1U_1);
-static inline void _X11_destructorFv_U1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1);
-static inline union U _X16_operator_assignFU1U_U1UU1U_autogen___1(union U *_X4_dstU1U_1, union U _X4_srcU1U_1);
-static inline void _X12_constructorFv_U1Ui_autogen___1(union U *_X4_dstU1U_1, signed int _X1ai_1);
 static inline void _X12_constructorFv_U1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1){
 }
 static inline void _X12_constructorFv_U1UU1U_autogen___1(union U *_X4_dstU1U_1, union U _X4_srcU1U_1){

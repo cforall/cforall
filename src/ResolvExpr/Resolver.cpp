@@ -1330,6 +1330,7 @@ bool Resolver::on_error(ast::ptr<ast::Decl> & decl) {
 			auto mutDecl = mutate(functionDecl);
 			mutDecl->isDeleted = true;
 			mutDecl->stmts = nullptr;
+			symtab.reviseSpecialAsDeleted( functionDecl );
 			decl = mutDecl;
 			return false;
 		}

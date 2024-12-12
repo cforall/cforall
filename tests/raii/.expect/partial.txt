@@ -1,0 +1,34 @@
+====== Top-level declarations ======
+test1
+custom ctor
+test2
+custom ctor
+custom dtor
+custom dtor
+test3
+test4
+custom ctor
+custom dtor
+test5
+custom ctor
+custom dtor
+test6
+custom ctor
+custom dtor
+====== Function-nested declarations ======
+test1
+custom ctor
+test2
+custom ctor
+custom dtor
+custom dtor
+test3
+test4
+custom ctor
+custom dtor
+test5
+custom ctor
+custom dtor
+test6
+custom ctor
+custom dtor

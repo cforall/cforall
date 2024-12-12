@@ -134,7 +134,7 @@ void ^?{}( thread_dtor_guard_t & this ) {
 
 //-----------------------------------------------------------------------------
 // Starting and stopping threads
-forall( T & | is_thread(T) )
+forall( T & | is_basic_thread(T) )
 void __thrd_start( T & this, void (*main_p)(T &) ) {
 	thread$ * this_thrd = get_thread(this);
 

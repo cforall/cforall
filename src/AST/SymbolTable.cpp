@@ -521,6 +521,27 @@ namespace {
 	}
 }
 
+void SymbolTable::reviseSpecialAsDeleted( const FunctionDecl * func ) {
+	SpecialFunctionKind kind = getSpecialFunctionKind(func->name);
+	assert( kind != NUMBER_OF_KINDS );
+	assert( func->linkage.is_overrideable );
+	IdTable::Ptr & idTable = specialFunctionTable[kind];
+
+	std::string otypeKey = getOtypeKey(func->type);
+	IdTable::iterator idHit = idTable->find( otypeKey );
+	assert( idHit != idTable->end() );
+	MangleTable::Ptr mangleTable = idHit->second;
+
+	std::string mangleName = Mangle::mangle( func, Mangle::Mode{ Mangle::NoOverrideable } );
+	MangleTable::iterator mangleHit = mangleTable->find( mangleName );
+	assert( mangleHit != mangleTable->end() );
+	IdData oldEntry = mangleHit->second;
+	assert( oldEntry.id == func );
+
+	mangleTable = mangleTable->set( mangleName, oldEntry.withDeleter( func ) );
+	idTable = idTable->set( otypeKey, mangleTable );
+}
+
 bool SymbolTable::removeSpecialOverrides(
 		SymbolTable::IdData & data, SymbolTable::MangleTable::Ptr & mangleTable ) {
 	// if a type contains user defined ctor/dtor/assign, then special rules trigger, which

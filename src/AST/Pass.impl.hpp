@@ -217,9 +217,9 @@ ast::__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept(
 
 	__pass::resultNstmt<container_t> new_kids;
 	for ( auto value : enumerate( statements ) ) {
+		size_t i = value.idx;
+		const Stmt * stmt = value.val;
 		try {
-			size_t i = value.idx;
-			const Stmt * stmt = value.val;
 			__pedantic_pass_assert( stmt );
 			const ast::Stmt * new_stmt = stmt->accept( *this );
 			assert( new_stmt );
@@ -245,7 +245,13 @@ ast::__pass::template resultNstmt<container_t> ast::Pass< core_t >::call_accept(
 			new_kids.take_all( decls_after );
 			new_kids.take_all( stmts_after );
 		} catch ( SemanticErrorException &e ) {
+			if ( auto dstmt = dynamic_cast<const DeclStmt *>( stmt ) ) {
+				assert( dstmt->decl->unique() );
+				auto & declLink = const_cast< ptr<Decl> & >( dstmt->decl );
+		  if ( !__pass::on_error (core, declLink, 0) ) goto handled;
+			}
 			errors.append( e );
+		  handled:;
 		}
 	}
 	pass_visitor_stats.depth--;

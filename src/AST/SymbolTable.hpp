@@ -176,6 +176,9 @@ public:
 	/// convenience function for adding all of the declarations in a function type to the indexer
 	void addFunction( const FunctionDecl * );
 
+	/// Reclassifies the previously-indexed special declaration, so `combine` shows it as deleted
+	void reviseSpecialAsDeleted( const FunctionDecl * );
+
 private:
 	void OnFindError( CodeLocation location, std::string error ) const;
 

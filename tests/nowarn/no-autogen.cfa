@@ -1,0 +1,10 @@
+// A structure with no autogeneratable lifecycle functions
+forall( T * )
+struct Thing {
+    T x;
+};
+
+int main() {
+    printf("done\n");
+    return 0;
+}

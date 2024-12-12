@@ -1,0 +1,148 @@
+// Partial autogen means that some lifecycle functions are possible to generate, and needed, while
+// others are impossible to generate, but unneeded.
+
+#ifdef ERR1
+#define BAD(...) __VA_ARGS__
+#else
+#define BAD(...)
+#endif
+
+void testAllNested() {
+
+    // Declaring your own empty ctor leaves an autogen dtor usable
+    struct thing1 {};
+    void ?{}( thing1 & this ) {  printf( "custom ctor\n"); }
+    void test1() {
+        printf("test1\n");
+        thing1 x;
+    }
+
+    // Declaring your own empty ctor and dtor leaves an autogen copy ctor usable
+    struct thing2 {};
+    void  ?{}( thing2 & this ) {  printf( "custom ctor\n"); }
+    void ^?{}( thing2 & this ) {  printf( "custom dtor\n"); }
+    void test2() {
+        printf("test2\n");
+        thing2 x;
+        thing2 y = x;
+    }
+
+    // Deleting the autogen copy ctor also deletes the autogen empty ctor
+    struct thing3 {};
+    void  ?{}( thing3 &, thing3 ) = void;
+    void test3() {
+        printf("test3\n");
+        BAD( thing3 x; )  // Unique best alternative includes deleted identifier
+    }
+
+    struct thing456 {};
+    void    ?{}( thing456 & this ) {  printf( "custom ctor\n"); }
+    void    ?{}( thing456 &, thing456 ) = void;
+    thing456 & ?=?( thing456 &, thing456 ) = void;
+    void   ^?{}( thing456 & this ) {  printf( "custom dtor\n"); }
+
+    struct wrapper1 { thing456 x; };
+    struct wrapper2 { wrapper1 x; };
+
+    // Deleting some autogens and declaring your own for the others leaves yours usable
+    // and the deleted ones cleanly deleted
+    void test4() {
+        printf("test4\n");
+        thing456 x;
+        BAD(  thing456 y = x;  )   // Unique best alternative includes deleted identifier
+    }
+
+    // Wrapping v4 leaves yours usable via autogen
+    // and the autogen-lifts of your deleted ones are not usable
+    void test5() {
+        printf("test5\n");
+        wrapper1 x;
+        BAD(  wrapper1 y = x;  )  //  Unique best alternative includes deleted identifier
+    }
+
+    // Wrapping again works similarly
+    void test6() {
+        printf("test6\n");
+        wrapper2 x;
+        BAD(  wrapper2 y = x;  )  //  Unique best alternative includes deleted identifier
+    }
+
+    test1();
+    test2();
+    test3();
+    test4();
+    test5();
+    test6();
+}
+
+// ===== Repeat, now as top-level declarations
+
+// Declaring your own empty ctor leaves an autogen dtor usable
+struct thing1 {};
+void ?{}( thing1 & this ) {  printf( "custom ctor\n"); }
+void test1() {
+    printf("test1\n");
+    thing1 x;
+}
+
+// Declaring your own empty ctor and dtor leaves an autogen copy ctor usable
+struct thing2 {};
+void  ?{}( thing2 & this ) {  printf( "custom ctor\n"); }
+void ^?{}( thing2 & this ) {  printf( "custom dtor\n"); }
+void test2() {
+    printf("test2\n");
+    thing2 x;
+    thing2 y = x;
+}
+
+// Deleting the autogen copy ctor also deletes the autogen empty ctor
+struct thing3 {};
+void  ?{}( thing3 &, thing3 ) = void;
+void test3() {
+    printf("test3\n");
+    BAD( thing3 x; )  // Unique best alternative includes deleted identifier
+}
+
+struct thing456 {};
+void    ?{}( thing456 & this ) {  printf( "custom ctor\n"); }
+void    ?{}( thing456 &, thing456 ) = void;
+thing456 & ?=?( thing456 &, thing456 ) = void;
+void   ^?{}( thing456 & this ) {  printf( "custom dtor\n"); }
+
+struct wrapper1 { thing456 x; };
+struct wrapper2 { wrapper1 x; };
+
+// Deleting some autogens and declaring your own for the others leaves yours usable
+// and the deleted ones cleanly deleted
+void test4() {
+    printf("test4\n");
+    thing456 x;
+    BAD(  thing456 y = x;  )   // Unique best alternative includes deleted identifier
+}
+
+// Wrapping v4 leaves yours usable via autogen
+// and the autogen-lifts of your deleted ones are not usable
+void test5() {
+    printf("test5\n");
+    wrapper1 x;
+    BAD(  wrapper1 y = x;  )  //  Unique best alternative includes deleted identifier
+}
+
+// Wrapping again works similarly
+void test6() {
+    printf("test6\n");
+    wrapper2 x;
+    BAD(  wrapper2 y = x;  )  //  Unique best alternative includes deleted identifier
+}
+
+int main() {
+    printf("====== Top-level declarations ======\n");
+    test1();
+    test2();
+    test3();
+    test4();
+    test5();
+    test6();
+    printf("====== Function-nested declarations ======\n");
+    testAllNested();
+}
