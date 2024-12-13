@@ -10,26 +10,26 @@ signed int _X2f2Fi_iPiPi__1(signed int _X1ai_1, signed int *_X1bPi_1, signed int
 struct S {
     signed int _X1ii_1;
 };
-static inline void _X12_constructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1){
+static inline void _X12_constructorFv_S1S_autogen___1(__attribute__ ((unused)) struct S *_X4_dstS1S_1){
     {
         ((void)((*_X4_dstS1S_1)._X1ii_1) /* ?{} */);
     }
 
 }
-static inline void _X12_constructorFv_S1SS1S_autogen___1(struct S *_X4_dstS1S_1, struct S _X4_srcS1S_1){
+static inline void _X12_constructorFv_S1SS1S_autogen___1(__attribute__ ((unused)) struct S *_X4_dstS1S_1, __attribute__ ((unused)) struct S _X4_srcS1S_1){
     {
         ((void)((*_X4_dstS1S_1)._X1ii_1=_X4_srcS1S_1._X1ii_1) /* ?{} */);
     }
 
 }
-static inline void _X11_destructorFv_S1S_autogen___1(struct S *_X4_dstS1S_1){
+static inline void _X11_destructorFv_S1S_autogen___1(__attribute__ ((unused)) struct S *_X4_dstS1S_1){
     {
         ((void)((*_X4_dstS1S_1)._X1ii_1) /* ^?{} */);
     }
 
 }
-static inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___1(struct S *_X4_dstS1S_1, struct S _X4_srcS1S_1){
-    struct S _X4_retS1S_1;
+static inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___1(__attribute__ ((unused)) struct S *_X4_dstS1S_1, __attribute__ ((unused)) struct S _X4_srcS1S_1){
+    __attribute__ ((unused)) struct S _X4_retS1S_1;
     {
         ((void)((*_X4_dstS1S_1)._X1ii_1=_X4_srcS1S_1._X1ii_1));
     }
@@ -40,7 +40,7 @@ static inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___1(struct S *_X4
 
     return _X4_retS1S_1;
 }
-static inline void _X12_constructorFv_S1Si_autogen___1(struct S *_X4_dstS1S_1, signed int _X1ii_1){
+static inline void _X12_constructorFv_S1Si_autogen___1(__attribute__ ((unused)) struct S *_X4_dstS1S_1, signed int _X1ii_1){
     {
         ((void)((*_X4_dstS1S_1)._X1ii_1=_X1ii_1) /* ?{} */);
     }

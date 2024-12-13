@@ -1,0 +1,9 @@
+#include <array.hfa>
+
+void f() {
+    ( array(float, 5) * ) 0p;
+}
+
+int main() {
+    printf( "done\n" );
+}

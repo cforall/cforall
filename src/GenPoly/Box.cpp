@@ -85,11 +85,13 @@ void addSTypeParams(
 			sizeofName( paramName ),
 			makeLayoutCType()
 		) );
-		params.emplace_back( new ast::ObjectDecl(
+		auto alignParam = new ast::ObjectDecl(
 			sizedParam->location,
 			alignofName( paramName ),
 			makeLayoutCType()
-		) );
+		);
+		alignParam->attributes.push_back( new ast::Attribute( "unused" ) );
+		params.emplace_back( alignParam );
 	}
 }
 

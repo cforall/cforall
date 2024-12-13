@@ -1,6 +1,5 @@
 #pragma once
 
-//#include <assert.h>
 
 
 forall( __CFA_tysys_id_only_X & ) struct tag {};
@@ -8,12 +7,18 @@ forall( __CFA_tysys_id_only_X & ) struct tag {};
 #define ztag(n) ttag(n)
 
 #ifdef __CFA_DEBUG__
-#define subcheck( arr, sub, lb, ub ) \
-	if ( (sub) < (lb) || (sub) >= (ub) ) \
-		abort( "subscript %ld exceeds dimension range [%d,%zd) for array %p.\n", \
-			   (sub), (lb), (ub), (arr) )
+// FIXME: `len` printing format %ld is a workaround for #269; once fixed, it should be %zd
+#define subcheck( arr, sub, len ) \
+	if ( (sub) < 0 || (sub) >= (len) ) \
+		abort( "Subscript %ld exceeds dimension range [0,%ld) for array %p.\n", \
+			   (sub), (len), (arr) )
+#define subchecku( arr, sub, len ) \
+	if ( (sub) >= (len) ) \
+		abort( "Subscript %ld exceeds dimension range [0,%ld) for array %p.\n", \
+			   (sub), (len), (arr) )
 #else
-#define subcheck( arr, sub, lb, ub ) do {} while (0)
+#define subcheck( arr, sub, len ) do {} while (0)
+#define subchecku( arr, sub, len ) do {} while (0)
 #endif
 
 // 
@@ -83,66 +88,56 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
 	// Mike is open to being shown a smaller set of overloads that still passes the test.
 
 	static inline Timmed & ?[?]( arpk( N, S, Timmed, Tbase ) & a, zero_t ) {
-		//assert( 0 < N );
-		subcheck( a, 0L, 0, N );
+		subcheck( a, 0L, N );
 		return (Timmed &)a.strides[0];
 	}
 
 	static inline Timmed & ?[?]( arpk( N, S, Timmed, Tbase ) & a, one_t ) {
-		//assert( 1 < N );
-		subcheck( a, 1L, 0, N );
+		subcheck( a, 1L, N );
 		return (Timmed &)a.strides[1];
 	}
 
 	static inline Timmed & ?[?]( arpk( N, S, Timmed, Tbase ) & a, int i ) {
-		//assert( i < N );
-		subcheck( a, (long int)i, 0, N );
+		subcheck( a, (long int)i, N );
 		return (Timmed &)a.strides[i];
 	}
 
 	static inline const Timmed & ?[?]( const arpk( N, S, Timmed, Tbase ) & a, int i ) {
-		//assert( i < N );
-		subcheck( a, (long int)i, 0, N );
+		subcheck( a, (long int)i, N );
 		return (Timmed &)a.strides[i];
 	}
 
 	static inline Timmed & ?[?]( arpk( N, S, Timmed, Tbase ) & a, unsigned int i ) {
-		//assert( i < N );
-		subcheck( a, (long int)i, 0, N );
+		subchecku( a, (unsigned long int)i, N );
 		return (Timmed &)a.strides[i];
 	}
 
 	static inline const Timmed & ?[?]( const arpk( N, S, Timmed, Tbase ) & a, unsigned int i ) {
-		//assert( i < N );
-		subcheck( a, (unsigned long int)i, 0, N );
+		subchecku( a, (unsigned long int)i, N );
 		return (Timmed &)a.strides[i];
 	}
 
 	static inline Timmed & ?[?]( arpk( N, S, Timmed, Tbase ) & a, long int i ) {
-		//assert( i < N );
-		subcheck( a, i, 0, N );
+		subcheck( a, i, N );
 		return (Timmed &)a.strides[i];
 	}
 
 	static inline const Timmed & ?[?]( const arpk( N, S, Timmed, Tbase ) & a, long int i ) {
-		//assert( i < N );
-		subcheck( a, i, 0, N );
+		subcheck( a, i, N );
 		return (Timmed &)a.strides[i];
 	}
 
 	static inline Timmed & ?[?]( arpk( N, S, Timmed, Tbase ) & a, unsigned long int i ) {
-		//assert( i < N );
-		subcheck( a, i, 0, N );
+		subchecku( a, i, N );
 		return (Timmed &)a.strides[i];
 	}
 
 	static inline const Timmed & ?[?]( const arpk( N, S, Timmed, Tbase ) & a, unsigned long int i ) {
-		//assert( i < N );
-		subcheck( a, i, 0, N );
+		subchecku( a, i, N );
 		return (Timmed &)a.strides[i];
 	}
 
-	static inline size_t ?`len( arpk( N, S, Timmed, Tbase ) & a ) {
+	static inline size_t ?`len( arpk( N, S, Timmed, Tbase ) & ) {
 		return N;
 	}
 

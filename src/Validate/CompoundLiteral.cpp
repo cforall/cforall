@@ -51,6 +51,9 @@ const ast::Expr * CompoundLiteral::postvisit(
 		expr->init,
 		storageClasses
 		);
+	// FIXME: A resolution of #280 could make the unused attribute unnecessary here
+	//     (let test nowarn/unused decide)
+	temp->attributes.push_back( new ast::Attribute( "unused" ) );
 	declsToAddBefore.push_back( temp );
 	return new ast::VariableExpr( expr->location, temp );
 }

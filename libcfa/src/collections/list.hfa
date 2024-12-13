@@ -316,7 +316,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
         // TODO: verify that it is back at this`elems;
         return true;
 	}
-	static bool validate( dlist(tE, tLinks) & this ) {
+	static inline bool validate( dlist(tE, tLinks) & this ) {
 		return $validate_fwd(this) && $validate_rev(this);
 	}
   #endif

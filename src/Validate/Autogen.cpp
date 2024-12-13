@@ -228,10 +228,10 @@ const std::vector<ast::ptr<ast::TypeDecl>>& getGenericParams( const ast::Type * 
 	return empty;
 }
 
-/// Changes the node inside a pointer so that it has the unused attribute.
-void addUnusedAttribute( ast::ptr<ast::DeclWithType> & declPtr ) {
-	ast::DeclWithType * decl = declPtr.get_and_mutate();
+/// Changes the freshly-constructed (non-const) decl so that it has the unused attribute.
+ast::ObjectDecl * addUnusedAttribute( ast::ObjectDecl * decl ) {
 	decl->attributes.push_back( new ast::Attribute( "unused" ) );
+	return decl;
 }
 
 // --------------------------------------------------------------------------
@@ -372,13 +372,15 @@ ast::FunctionDecl * FuncGenerator::genProto( std::string&& name,
 }
 
 ast::ObjectDecl * FuncGenerator::dstParam() const {
-	return new ast::ObjectDecl( getLocation(), "_dst",
-		new ast::ReferenceType( ast::deepCopy( type ) ) );
+	return addUnusedAttribute(
+		new ast::ObjectDecl( getLocation(), "_dst",
+			new ast::ReferenceType( ast::deepCopy( type ) ) ) );
 }
 
 ast::ObjectDecl * FuncGenerator::srcParam() const {
-	return new ast::ObjectDecl( getLocation(), "_src",
-		ast::deepCopy( type ) );
+	return addUnusedAttribute(
+		new ast::ObjectDecl( getLocation(), "_src",
+			ast::deepCopy( type ) ) );
 }
 
 /// Use the current type T to create `void ?{}(T & _dst)`.
@@ -672,8 +674,6 @@ void UnionFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 		assert( 1 == params.size() );
 		// Default constructor and destructor is empty.
 		functionDecl->stmts = new ast::CompoundStmt( location );
-		// Add unused attribute to parameter to silence warnings.
-		addUnusedAttribute( params.front() );
 	}
 }
 
@@ -746,8 +746,6 @@ void EnumFuncGenerator::genFuncBody( ast::FunctionDecl * functionDecl ) {
 		assert( 1 == params.size() );
 		// Default constructor and destructor is empty.
 		functionDecl->stmts = new ast::CompoundStmt( location );
-		// Just add unused attribute to parameter to silence warnings.
-		addUnusedAttribute( params.front() );
 	}
 }
 

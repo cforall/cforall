@@ -1,0 +1,22 @@
+// autogens for zero fields won't touch their parameters
+struct Unit {};
+
+// a compound literal in an unevaluated context isn't accessed
+struct Thing { int x; };
+void f() {
+    ( typeof( (Thing){} ) * ) 0p;
+}
+
+// layoutof my_array doesn't need alignof N
+forall( [N] )
+struct my_array {
+    float strides[N];
+};
+
+// generated type_name function only needs its parameter as a tag
+enum () foo_t { foo };
+
+
+int main() {
+    printf( "done\n" );
+}

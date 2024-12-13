@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 21 16:21:03 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec  8 09:01:23 2024
-// Update Count     : 149
+// Last Modified On : Thu Dec 12 18:22:26 2024
+// Update Count     : 150
 //
 
 #define __cforall_builtins__
@@ -81,7 +81,7 @@ static inline T & resume( T & gen ) {
 //     forall( T ...
 // can be "simplified" to
 //     forall( T& | is_value(T) ...
-forall( T* )
+forall( T * )
 trait is_value {
 	void ?{}( T&, T );
 	T ?=?( T&, T );
@@ -179,13 +179,6 @@ forall( E | Bounded( E ) ) trait Serial {
 	E pred_unsafe( E e );
 };
 
-static inline forall( E | Serial( E ) ) {
-	E fromInt( int i );
-	E succ( E e );
-	E pred( E e );
-	int Countof( E );
-}
-
 forall( E ) trait CfaEnum {
 	const char * label( E e );
 	int posn( E e );
@@ -195,7 +188,7 @@ forall( E, V | CfaEnum( E ) ) trait TypedEnum {
 	V value( E e );
 };
 
-static inline {
+static inline
 forall( E | Serial( E ) ) {
 	E fromInt( int i ) {
 		E upper = upperBound();
@@ -227,61 +220,63 @@ forall( E | Serial( E ) ) {
 		return fromInstance( upper ) + fromInstance( lower ) + 1;
 	}
 }
-}
 
 static inline
-forall( E | CfaEnum( E ) | Serial( E ) ) {
-	int ?==?( E l, E r ) { return posn( l ) == posn( r ); }	// relational operators
+forall( E | CfaEnum( E ) ) {
+	int ?==?( E l, E r ) { return posn( l ) == posn( r ); }
 	int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
 	int ?<?( E l, E r ) { return posn( l ) < posn( r ); }
 	int ?<=?( E l, E r ) { return posn( l ) <= posn( r ); }
 	int ?>?( E l, E r ) { return posn( l ) > posn( r ); }
 	int ?>=?( E l, E r ) { return posn( l ) >= posn( r ); }
+}
 
-	E ++?( E & l ) { 									// increment operators
-		int pos = posn( l );
+static inline
+forall( E | Serial( E ) ) {
+	E ++?( E & l ) {
+		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos + 1 );
 		return l;
 	}
 
 	E --?( E & l ) {
-		int pos = posn( l );
+		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos - 1 );
 		return l;
 	}
 
 	E ?+=?( E & l, one_t ) {
-		int pos = posn( l );
+		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos + 1 );
 		return l;
 	}
 
 	E ?-=?( E & l, one_t ) {
-		int pos = posn( l );
+		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos - 1 );
 		return l;
 	}
 
 	E ?+=?( E & l, int i ) {
-		int pos = posn( l );
+		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos + i );
 		return l;
 	}
 
 	E ?-=?( E & l, int i ) {
-		int pos = posn( l );
+		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos - i );
 		return l;
 	}
 
 	E ?++( E & l ) {
-		int pos = posn( l );
+		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos + 1 );
 		return fromInt_unsafe( pos );
 	}
 
 	E ?--( E & l ) {
-		int pos = posn( l );
+		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos - 1 );
 		return fromInt_unsafe( pos );
 	}

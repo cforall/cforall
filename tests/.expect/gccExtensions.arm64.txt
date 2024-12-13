@@ -36,7 +36,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
         __extension__ signed int _X1bi_2;
         __extension__ signed int _X1ci_2;
     };
-    inline void _X12_constructorFv_S1S_autogen___2(struct S *_X4_dstS1S_2){
+    inline void _X12_constructorFv_S1S_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2){
         {
             ((void)((*_X4_dstS1S_2)._X1ai_2) /* ?{} */);
         }
@@ -50,7 +50,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
         }
 
     }
-    inline void _X12_constructorFv_S1SS1S_autogen___2(struct S *_X4_dstS1S_2, struct S _X4_srcS1S_2){
+    inline void _X12_constructorFv_S1SS1S_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2, __attribute__ ((unused)) struct S _X4_srcS1S_2){
         {
             ((void)((*_X4_dstS1S_2)._X1ai_2=_X4_srcS1S_2._X1ai_2) /* ?{} */);
         }
@@ -64,7 +64,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
         }
 
     }
-    inline void _X11_destructorFv_S1S_autogen___2(struct S *_X4_dstS1S_2){
+    inline void _X11_destructorFv_S1S_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2){
         {
             ((void)((*_X4_dstS1S_2)._X1ci_2) /* ^?{} */);
         }
@@ -78,8 +78,8 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
         }
 
     }
-    inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___2(struct S *_X4_dstS1S_2, struct S _X4_srcS1S_2){
-        struct S _X4_retS1S_2;
+    inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2, __attribute__ ((unused)) struct S _X4_srcS1S_2){
+        __attribute__ ((unused)) struct S _X4_retS1S_2;
         {
             ((void)((*_X4_dstS1S_2)._X1ai_2=_X4_srcS1S_2._X1ai_2));
         }
@@ -98,7 +98,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
 
         return _X4_retS1S_2;
     }
-    inline void _X12_constructorFv_S1Si_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2){
+    inline void _X12_constructorFv_S1Si_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2, signed int _X1ai_2){
         {
             ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
         }
@@ -112,7 +112,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
         }
 
     }
-    inline void _X12_constructorFv_S1Sii_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2){
+    inline void _X12_constructorFv_S1Sii_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2){
         {
             ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
         }
@@ -126,7 +126,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
         }
 
     }
-    inline void _X12_constructorFv_S1Siii_autogen___2(struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2, signed int _X1ci_2){
+    inline void _X12_constructorFv_S1Siii_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2, signed int _X1ai_2, signed int _X1bi_2, signed int _X1ci_2){
         {
             ((void)((*_X4_dstS1S_2)._X1ai_2=_X1ai_2) /* ?{} */);
         }
@@ -169,26 +169,26 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
     struct s2 {
         signed int _X1ii_2;
     };
-    inline void _X12_constructorFv_S2s2_autogen___2(struct s2 *_X4_dstS2s2_2){
+    inline void _X12_constructorFv_S2s2_autogen___2(__attribute__ ((unused)) struct s2 *_X4_dstS2s2_2){
         {
             ((void)((*_X4_dstS2s2_2)._X1ii_2) /* ?{} */);
         }
 
     }
-    inline void _X12_constructorFv_S2s2S2s2_autogen___2(struct s2 *_X4_dstS2s2_2, struct s2 _X4_srcS2s2_2){
+    inline void _X12_constructorFv_S2s2S2s2_autogen___2(__attribute__ ((unused)) struct s2 *_X4_dstS2s2_2, __attribute__ ((unused)) struct s2 _X4_srcS2s2_2){
         {
             ((void)((*_X4_dstS2s2_2)._X1ii_2=_X4_srcS2s2_2._X1ii_2) /* ?{} */);
         }
 
     }
-    inline void _X11_destructorFv_S2s2_autogen___2(struct s2 *_X4_dstS2s2_2){
+    inline void _X11_destructorFv_S2s2_autogen___2(__attribute__ ((unused)) struct s2 *_X4_dstS2s2_2){
         {
             ((void)((*_X4_dstS2s2_2)._X1ii_2) /* ^?{} */);
         }
 
     }
-    inline struct s2 _X16_operator_assignFS2s2_S2s2S2s2_autogen___2(struct s2 *_X4_dstS2s2_2, struct s2 _X4_srcS2s2_2){
-        struct s2 _X4_retS2s2_2;
+    inline struct s2 _X16_operator_assignFS2s2_S2s2S2s2_autogen___2(__attribute__ ((unused)) struct s2 *_X4_dstS2s2_2, __attribute__ ((unused)) struct s2 _X4_srcS2s2_2){
+        __attribute__ ((unused)) struct s2 _X4_retS2s2_2;
         {
             ((void)((*_X4_dstS2s2_2)._X1ii_2=_X4_srcS2s2_2._X1ii_2));
         }
@@ -199,7 +199,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
 
         return _X4_retS2s2_2;
     }
-    inline void _X12_constructorFv_S2s2i_autogen___2(struct s2 *_X4_dstS2s2_2, signed int _X1ii_2){
+    inline void _X12_constructorFv_S2s2i_autogen___2(__attribute__ ((unused)) struct s2 *_X4_dstS2s2_2, signed int _X1ii_2){
         {
             ((void)((*_X4_dstS2s2_2)._X1ii_2=_X1ii_2) /* ?{} */);
         }
@@ -208,26 +208,26 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
     struct s3 {
         signed int _X1ii_2;
     };
-    inline void _X12_constructorFv_S2s3_autogen___2(struct s3 *_X4_dstS2s3_2){
+    inline void _X12_constructorFv_S2s3_autogen___2(__attribute__ ((unused)) struct s3 *_X4_dstS2s3_2){
         {
             ((void)((*_X4_dstS2s3_2)._X1ii_2) /* ?{} */);
         }
 
     }
-    inline void _X12_constructorFv_S2s3S2s3_autogen___2(struct s3 *_X4_dstS2s3_2, struct s3 _X4_srcS2s3_2){
+    inline void _X12_constructorFv_S2s3S2s3_autogen___2(__attribute__ ((unused)) struct s3 *_X4_dstS2s3_2, __attribute__ ((unused)) struct s3 _X4_srcS2s3_2){
         {
             ((void)((*_X4_dstS2s3_2)._X1ii_2=_X4_srcS2s3_2._X1ii_2) /* ?{} */);
         }
 
     }
-    inline void _X11_destructorFv_S2s3_autogen___2(struct s3 *_X4_dstS2s3_2){
+    inline void _X11_destructorFv_S2s3_autogen___2(__attribute__ ((unused)) struct s3 *_X4_dstS2s3_2){
         {
             ((void)((*_X4_dstS2s3_2)._X1ii_2) /* ^?{} */);
         }
 
     }
-    inline struct s3 _X16_operator_assignFS2s3_S2s3S2s3_autogen___2(struct s3 *_X4_dstS2s3_2, struct s3 _X4_srcS2s3_2){
-        struct s3 _X4_retS2s3_2;
+    inline struct s3 _X16_operator_assignFS2s3_S2s3S2s3_autogen___2(__attribute__ ((unused)) struct s3 *_X4_dstS2s3_2, __attribute__ ((unused)) struct s3 _X4_srcS2s3_2){
+        __attribute__ ((unused)) struct s3 _X4_retS2s3_2;
         {
             ((void)((*_X4_dstS2s3_2)._X1ii_2=_X4_srcS2s3_2._X1ii_2));
         }
@@ -238,7 +238,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
 
         return _X4_retS2s3_2;
     }
-    inline void _X12_constructorFv_S2s3i_autogen___2(struct s3 *_X4_dstS2s3_2, signed int _X1ii_2){
+    inline void _X12_constructorFv_S2s3i_autogen___2(__attribute__ ((unused)) struct s3 *_X4_dstS2s3_2, signed int _X1ii_2){
         {
             ((void)((*_X4_dstS2s3_2)._X1ii_2=_X1ii_2) /* ?{} */);
         }
@@ -249,26 +249,26 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
     struct s4 {
         signed int _X1ii_2;
     };
-    inline void _X12_constructorFv_S2s4_autogen___2(struct s4 *_X4_dstS2s4_2){
+    inline void _X12_constructorFv_S2s4_autogen___2(__attribute__ ((unused)) struct s4 *_X4_dstS2s4_2){
         {
             ((void)((*_X4_dstS2s4_2)._X1ii_2) /* ?{} */);
         }
 
     }
-    inline void _X12_constructorFv_S2s4S2s4_autogen___2(struct s4 *_X4_dstS2s4_2, struct s4 _X4_srcS2s4_2){
+    inline void _X12_constructorFv_S2s4S2s4_autogen___2(__attribute__ ((unused)) struct s4 *_X4_dstS2s4_2, __attribute__ ((unused)) struct s4 _X4_srcS2s4_2){
         {
             ((void)((*_X4_dstS2s4_2)._X1ii_2=_X4_srcS2s4_2._X1ii_2) /* ?{} */);
         }
 
     }
-    inline void _X11_destructorFv_S2s4_autogen___2(struct s4 *_X4_dstS2s4_2){
+    inline void _X11_destructorFv_S2s4_autogen___2(__attribute__ ((unused)) struct s4 *_X4_dstS2s4_2){
         {
             ((void)((*_X4_dstS2s4_2)._X1ii_2) /* ^?{} */);
         }
 
     }
-    inline struct s4 _X16_operator_assignFS2s4_S2s4S2s4_autogen___2(struct s4 *_X4_dstS2s4_2, struct s4 _X4_srcS2s4_2){
-        struct s4 _X4_retS2s4_2;
+    inline struct s4 _X16_operator_assignFS2s4_S2s4S2s4_autogen___2(__attribute__ ((unused)) struct s4 *_X4_dstS2s4_2, __attribute__ ((unused)) struct s4 _X4_srcS2s4_2){
+        __attribute__ ((unused)) struct s4 _X4_retS2s4_2;
         {
             ((void)((*_X4_dstS2s4_2)._X1ii_2=_X4_srcS2s4_2._X1ii_2));
         }
@@ -279,7 +279,7 @@ signed int _X4mainFi_iPPKc__1(signed int _X4argci_1, const char **_X4argvPPKc_1)
 
         return _X4_retS2s4_2;
     }
-    inline void _X12_constructorFv_S2s4i_autogen___2(struct s4 *_X4_dstS2s4_2, signed int _X1ii_2){
+    inline void _X12_constructorFv_S2s4i_autogen___2(__attribute__ ((unused)) struct s4 *_X4_dstS2s4_2, signed int _X1ii_2){
         {
             ((void)((*_X4_dstS2s4_2)._X1ii_2=_X1ii_2) /* ?{} */);
         }

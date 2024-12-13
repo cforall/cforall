@@ -239,7 +239,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genFromInstanceProto() const {
 ast::FunctionDecl* EnumAttrFuncGenerator::genTypeNameProto() const {
 	return genProto(
 		"type_name",
-		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
+		{new ast::ObjectDecl(getLocation(), "", new ast::EnumInstType(decl))},
 		{new ast::ObjectDecl(
 			getLocation(), "_ret",
 			new ast::PointerType(

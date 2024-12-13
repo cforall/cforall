@@ -312,13 +312,17 @@ ast::Expr const * ReferenceConversions::postvisit(
 		//   int && __ref_tmp_2 = &__ref_tmp_1;
 		//   &__ref_tmp_2;
 		// The last & comes from the remaining reference conversion code.
-		SemanticWarning( expr->arg->location,
-			Warning::RvalueToReferenceConversion, toCString( expr->arg ) );
+
 
 		// allowing conversion in the rvalue to const ref case
 		// use the referenced-to type to create temp variables
 		ast::Type const * targetType = dstType;
 		for (int i = 0; i < diff; ++i) targetType = (strict_dynamic_cast<ast::ReferenceType const *>(targetType))->base;
+
+		if (!targetType->qualifiers.is_const) {
+			SemanticWarning( expr->arg->location,
+				Warning::RvalueToReferenceConversion, toCString( expr->arg ) );
+		}
 
 		static UniqueName tmpNamer( "__ref_tmp_" );
 		ast::ObjectDecl * tmp = new ast::ObjectDecl( expr->arg->location,
