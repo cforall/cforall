@@ -333,7 +333,7 @@ ast::FunctionDecl const * createMsg(
 		{
 			new ast::ObjectDecl(
 				location,
-				"this",
+				"", // "this," though unused in the body
 				new ast::PointerType(
 					createExceptionInstType( exceptionName, params ) )
 			),

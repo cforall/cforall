@@ -1,0 +1,27 @@
+exception SkyFalling{ 
+    int fromHeight;
+};
+__attribute__(( cfa_linkonce )) vtable( SkyFalling ) SkyFalling_vt;
+void manual() {
+    try {
+        throwResume (SkyFalling){ & SkyFalling_vt, 42 };
+    } catch ( SkyFalling * ) {
+    }
+}
+
+#include <Exception.hfa>
+
+ExceptionDecl( WaterRising, int fromDepth; );
+void abbreviated() {
+    try {
+        throwResume ExceptionInst( WaterRising, 42 );
+    } catch ( WaterRising * ) {
+    }
+}
+
+int main() {
+    manual();
+    abbreviated();
+    printf("done\n");
+    return 0;
+}

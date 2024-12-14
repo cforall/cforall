@@ -22,8 +22,8 @@
 	#define __cfaabi_dbg_no_debug_do(...)
 	#define __cfaabi_dbg_ctx __PRETTY_FUNCTION__
 	#define __cfaabi_dbg_ctx2 , __PRETTY_FUNCTION__
-	#define __cfaabi_dbg_ctx_param const char caller[]
-	#define __cfaabi_dbg_ctx_param2 , const char caller[]
+	#define __cfaabi_dbg_ctx_param __attribute__((unused)) const char caller[]
+	#define __cfaabi_dbg_ctx_param2 , __attribute__((unused)) const char caller[]
 	#define __cfaabi_dbg_ctx_fwd caller
 	#define __cfaabi_dbg_ctx_fwd2 , caller
 #else

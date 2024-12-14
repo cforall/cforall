@@ -182,15 +182,19 @@ struct _Ostream_Flags {
 	unsigned char pad0:1;								// zero pad
 };
 
+// FIXME: Should be an anonymous inner union of _Ostream_Manip.
+// Hoisting manually to work around warning of #294.
+union _Ostream_Manip_Mode {
+	unsigned char all;
+	_Ostream_Flags flags;
+};
+
 forall( T )
 struct _Ostream_Manip {
 	T val;												// polymorphic base-type
 	int wd, pc;											// width, precision: signed for computations
 	char base;											// numeric base / floating-point style
-	union {
-		unsigned char all;
-		_Ostream_Flags flags;
-	};
+	inline _Ostream_Manip_Mode;
 }; // _Ostream_Manip
 
 // *********************************** integral ***********************************
@@ -458,12 +462,17 @@ forall( istype & | basic_istream( istype ) ) {
 	static inline istype & ?|?( istype & is, _Istream_Cwidth f ) { return is | *(_Istream_Cstr *)&f; }
 } // distribution
 
-forall( T & | sized( T ) )
+// FIXME: `| sized(T)` seems to be working around a bug, but it is logically unnecessary.
+// Including sized(T) causes a warning that is telling us to get rid of it.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+forall( T & | sized(T) )
 struct _Istream_Manip {
 	T & val;											// polymorphic base-type
 	int wd;												// width
 	bool ignore;										// do not change input argument
 }; // _Istream_Manip
+#pragma GCC diagnostic pop
 
 #define INPUT_FMT_DECL( T ) \
 static inline { \
