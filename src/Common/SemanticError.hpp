@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec  2 15:14:13 2024
-// Update Count     : 75
+// Last Modified On : Sun Dec 15 21:04:32 2024
+// Update Count     : 77
 //
 
 #pragma once
@@ -57,14 +57,14 @@ struct WarningData {
 };
 
 constexpr WarningData WarningFormats[] = {
-	{"self-assign"              , Severity::Warn, "self assignment of expression: %s"                          },
-	{"reference-conversion"     , Severity::Warn, "rvalue to reference conversion of rvalue: %s"               },
-	{"aggregate-forward-decl"   , Severity::Warn, "forward declaration of nested aggregate: %s"                },
-	{"superfluous-decl"         , Severity::Warn, "declaration does not allocate storage: %s"                  },
-	{"superfluous-else"         , Severity::Warn, "else clause never executed for empty loop conditional"      },
-	{"gcc-attributes"           , Severity::Warn, "invalid attribute: %s"                                      },
-	{"c++-like-copy"            , Severity::Warn, "Constructor from reference is not a valid copy constructor" },
-	{"depreciated-trait-syntax" , Severity::Warn, "trait type-parameters are now specified using the forall clause" },
+	{"self-assign"              , Severity::Warn, "self assignment of expression: %s." },
+	{"reference-conversion"     , Severity::Warn, "rvalue to reference conversion of rvalue: %s." },
+	{"aggregate-forward-decl"   , Severity::Warn, "forward declaration of nested aggregate: %s." },
+	{"superfluous-decl"         , Severity::Warn, "declaration does not declare anything." },
+	{"superfluous-else"         , Severity::Warn, "else clause never executed for empty loop conditional." },
+	{"gcc-attributes"           , Severity::Warn, "invalid attribute: %s." },
+	{"c++-like-copy"            , Severity::Warn, "Constructor from reference is not a valid copy constructor." },
+	{"depreciated-trait-syntax" , Severity::Warn, "trait type-parameters are now specified using the forall clause." },
 };
 
 enum class Warning {

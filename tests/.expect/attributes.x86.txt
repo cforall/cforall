@@ -1336,3 +1336,82 @@ static inline struct Vad _X16_operator_assignFS3Vad_S3VadS3Vad_autogen___1(__att
 
     return _X4_retS3Vad_1;
 }
+__attribute__ (( noreturn )) void _X4fredFv___1(void){
+    __attribute__ ((unused)) signed int _X1ii_2;
+    switch ( 3 ) {
+        case 2:
+            {
+                {
+                    ((void)4);
+                }
+
+            }
+        case 1:
+            {
+                {
+                    ((void)3);
+                }
+
+            }
+    }
+
+}
+__attribute__ ((noreturn)) void _X4maryFv___1(void){
+    struct __attribute__ ((aligned(64))) S {
+        signed int _X1ii_2;
+    };
+    inline void _X12_constructorFv_S1S_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ii_2) /* ?{} */);
+        }
+
+    }
+    inline void _X12_constructorFv_S1SS1S_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2, __attribute__ ((unused)) struct S _X4_srcS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ii_2=_X4_srcS1S_2._X1ii_2) /* ?{} */);
+        }
+
+    }
+    inline void _X11_destructorFv_S1S_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ii_2) /* ^?{} */);
+        }
+
+    }
+    inline struct S _X16_operator_assignFS1S_S1SS1S_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2, __attribute__ ((unused)) struct S _X4_srcS1S_2){
+        __attribute__ ((unused)) struct S _X4_retS1S_2;
+        {
+            ((void)((*_X4_dstS1S_2)._X1ii_2=_X4_srcS1S_2._X1ii_2));
+        }
+
+        {
+            ((void)_X12_constructorFv_S1SS1S_autogen___2((&_X4_retS1S_2), (*_X4_dstS1S_2)));
+        }
+
+        return _X4_retS1S_2;
+    }
+    inline void _X12_constructorFv_S1Si_autogen___2(__attribute__ ((unused)) struct S *_X4_dstS1S_2, signed int _X1ii_2){
+        {
+            ((void)((*_X4_dstS1S_2)._X1ii_2=_X1ii_2) /* ?{} */);
+        }
+
+    }
+    __attribute__ ((unused)) signed int _X1ii_2;
+    switch ( 3 ) {
+        case 2:
+            {
+                {
+                    ((void)4);
+                }
+
+            }
+        case 1:
+            {
+                {
+                    ((void)3);
+                }
+
+            }
+    }
+
+}

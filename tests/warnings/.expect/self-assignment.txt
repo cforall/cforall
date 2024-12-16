@@ -6,7 +6,7 @@ warnings/self-assignment.cfa:29:1 warning: self assignment of expression: Genera
 ... to:
   reference to signed int
 ... with resolved type:
-  reference to signed int
+  reference to signed int.
 warnings/self-assignment.cfa:30:1 warning: self assignment of expression: Generated Cast of:
   Variable Expression: s: instance of struct S with body
   ... with resolved type:
@@ -14,7 +14,7 @@ warnings/self-assignment.cfa:30:1 warning: self assignment of expression: Genera
 ... to:
   reference to instance of struct S with body
 ... with resolved type:
-  reference to instance of struct S with body
+  reference to instance of struct S with body.
 warnings/self-assignment.cfa:31:1 warning: self assignment of expression: Generated Cast of:
   Member Expression, with field:
     i: signed int
@@ -27,7 +27,7 @@ warnings/self-assignment.cfa:31:1 warning: self assignment of expression: Genera
 ... to:
   reference to signed int
 ... with resolved type:
-  reference to signed int
+  reference to signed int.
 warnings/self-assignment.cfa:32:1 warning: self assignment of expression: Generated Cast of:
   Member Expression, with field:
     i: signed int
@@ -45,4 +45,4 @@ warnings/self-assignment.cfa:32:1 warning: self assignment of expression: Genera
 ... to:
   reference to signed int
 ... with resolved type:
-  reference to signed int
+  reference to signed int.

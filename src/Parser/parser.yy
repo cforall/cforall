@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov 15 15:01:33 2024
-// Update Count     : 6915
+// Last Modified On : Sun Dec 15 21:30:38 2024
+// Update Count     : 6933
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -198,15 +198,14 @@ string * build_postfix_name( string * name ) {
 } // build_postfix_name
 
 DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * fieldList ) {
-	if ( nullptr == fieldList ) {
-		if ( !( typeSpec->type && typeSpec->type->kind == TypeData::Aggregate ) ) {
-			stringstream ss;
+	if ( fieldList == nullptr ) {
+		if ( !( typeSpec->type && typeSpec->type->kind == TypeData::Aggregate ) ) { // int; no fieldList
 			// printf( "fieldDecl1 typeSpec %p\n", typeSpec ); typeSpec->type->print( std::cout );
-			SemanticWarning( yylloc, Warning::SuperfluousDecl, ss.str().c_str() );
+			SemanticWarning( yylloc, Warning::SuperfluousDecl );
 			return nullptr;
 		} // if
 		// printf( "fieldDecl2 typeSpec %p\n", typeSpec ); typeSpec->type->print( std::cout );
-		fieldList = DeclarationNode::newName( nullptr );
+		fieldList = DeclarationNode::newName( nullptr ); // struct S { ... } no fieldList
 	} // if
 
 	// printf( "fieldDecl3 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout, 0 );
@@ -463,8 +462,8 @@ if ( N ) {																		\
 
 // declarations
 %type<decl> abstract_declarator abstract_ptr abstract_array abstract_function array_dimension multi_array_dimension
-%type<decl> abstract_parameter_declarator_opt abstract_parameter_declarator abstract_parameter_ptr abstract_parameter_array abstract_parameter_function array_parameter_dimension array_parameter_1st_dimension
-%type<decl> abstract_parameter_declaration
+%type<decl> abstract_parameter_declarator_opt abstract_parameter_declarator abstract_parameter_ptr abstract_parameter_array
+			abstract_parameter_function array_parameter_dimension array_parameter_1st_dimension abstract_parameter_declaration
 
 %type<aggKey> aggregate_key aggregate_data aggregate_control
 %type<decl> aggregate_type aggregate_type_nobody
@@ -491,7 +490,7 @@ if ( N ) {																		\
 
 %type<decl> exception_declaration
 
-%type<decl> field_declaration_list_opt field_declaration field_declaring_list_opt field_declarator field_abstract_list_opt field_abstract
+%type<decl> field_declaration_list_opt field_declaration field_declaring_list field_declaring_list_opt field_declarator field_abstract_list_opt field_abstract
 %type<expr> field field_name_list field_name fraction_constants_opt
 
 %type<decl> external_function_definition function_definition function_array function_declarator function_no_ptr function_ptr
@@ -977,11 +976,11 @@ cast_expression:
 		{ $$ = new ExpressionNode( new ast::VirtualCastExpr( yylloc, maybeMoveBuild( $4 ), nullptr ) ); }
 	| '(' VIRTUAL type_no_function ')' cast_expression	// CFA
 		{ $$ = new ExpressionNode( new ast::VirtualCastExpr( yylloc, maybeMoveBuild( $5 ), maybeMoveBuildType( $3 ) ) ); }
-	| '(' RETURN type_no_function ')' cast_expression	// CFA
+	| '(' RETURN type_no_function ')' cast_expression	// CFA (ASCRIPTION)
 		{ $$ = new ExpressionNode( build_cast( yylloc, $3, $5, ast::ReturnCast ) ); }
-	| '(' COERCE type_no_function ')' cast_expression	// CFA
+	| '(' COERCE type_no_function ')' cast_expression	// CFA (COERCION)
 		{ SemanticError( yylloc, "Coerce cast is currently unimplemented." ); $$ = nullptr; }
-	| '(' qualifier_cast_list ')' cast_expression		// CFA
+	| '(' qualifier_cast_list ')' cast_expression		// CFA, (modify CVs of cast_expression)
 		{ SemanticError( yylloc, "Qualifier cast is currently unimplemented." ); $$ = nullptr; }
 //	| '(' type_no_function ')' tuple
 //		{ $$ = new ast::ExpressionNode( build_cast( yylloc, $2, $4 ) ); }
@@ -2700,12 +2699,7 @@ field_declaration_list_opt:
 field_declaration:
 	type_specifier field_declaring_list_opt ';'
 		{
-			// printf( "type_specifier1 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
 			$$ = fieldDecl( $1, $2 );
-			// printf( "type_specifier2 %p %s\n", $$, $$->type->aggregate.name ? $$->type->aggregate.name->c_str() : "(nil)" );
-			// for ( Attribute * attr: reverseIterate( $$->attributes ) ) {
-			//   printf( "\tattr %s\n", attr->name.c_str() );
-			// } // for
 		}
 	| type_specifier field_declaring_list_opt '}'		// invalid syntax rule
 		{
@@ -2740,7 +2734,11 @@ field_declaration:
 field_declaring_list_opt:
 	// empty
 		{ $$ = nullptr; }
-	| field_declarator
+	| field_declaring_list
+	;
+
+field_declaring_list:
+	field_declarator
 	| field_declaring_list_opt ',' attribute_list_opt field_declarator
 		{ $$ = $1->set_last( $4->addQualifiers( $3 ) ); }
 	;
@@ -3511,9 +3509,9 @@ attribute:												// GCC
 		{ $$ = $4; }
 	| ATTRIBUTE '(' attribute_name_list ')'				// CFA
 		{ $$ = $3; }
-	| ATTR '(' attribute_name_list ')'					// CFA
-		{ $$ = $3; }
-	| C23_ATTRIBUTE
+	| ATTR attribute_name_list ']'						// CFA, @[...]
+		{ $$ = $2; }
+	| C23_ATTRIBUTE										// C23, [[...]], see lexer
 		{ $$ = DeclarationNode::newAttribute( $1 ); }
 	;
 
