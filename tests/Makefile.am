@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Wed Aug 30 22:31:45 2023
-## Update Count     : 197
+## Last Modified On : Thu Dec 19 22:11:14 2024
+## Update Count     : 200
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -35,6 +35,222 @@ quick_test = avl_test operators numericConstants expression enum array typeof ca
 
 TEST_PY = python3 ${builddir}/test.py
 
+WFLAGS_STRICT = \
+	-Wall \
+	-Wextra \
+	-Werror
+
+WFLAGS_LAX = \
+	-Wall \
+	-Werror=return-type \
+	-Wno-unused-function \
+	-Wno-psabi
+
+# These tests opt for lax wflags.  (By default, new tests get strict wflags.)
+# Indented list entries are finer-grained targets under the test.
+# Making this association implicit would be ideal, but requires learning more automake than is affordable.
+WFLGAS_OPT_LAX = \
+	alloc \
+	alloc2 \
+	array \
+	array-collections/array-raii-c \
+	array-collections/array-raii-cfa \
+	array-collections/boxed \
+		array-collections/boxed% \
+	array-collections/dimexpr-match-c \
+	array-collections/dimexpr-match-cfa \
+	array-ERR1 \
+	array-ERR2 \
+	array-ERR3 \
+	attributes \
+	attr-priority \
+	builtins/sync \
+	cast \
+	collections/atomic_mpsc \
+	collections/multi_list \
+	collections/queue \
+	collections/sequence \
+	collections/stack \
+	collections/vector-demo \
+	concurrency/actors/dynamic \
+	concurrency/actors/executor \
+	concurrency/actors/inherit \
+	concurrency/actors/inline \
+	concurrency/actors/matrixMultiply \
+	concurrency/actors/pingpong \
+	concurrency/actors/poison \
+	concurrency/actors/static \
+	concurrency/actors/types \
+	concurrency/barrier/generation \
+	concurrency/barrier/last \
+	concurrency/barrier/order \
+	concurrency/channels/big_elems \
+	concurrency/channels/churn \
+	concurrency/channels/contend \
+	concurrency/channels/daisy_chain \
+	concurrency/channels/hot_potato \
+	concurrency/channels/ping_pong \
+	concurrency/channels/pub_sub \
+	concurrency/channels/zero_size \
+	concurrency/cluster \
+	concurrency/cofor \
+	concurrency/coroutineYield \
+	concurrency/examples/boundedBufferEXT \
+	concurrency/examples/boundedBufferINT \
+	concurrency/futures/abandon \
+	concurrency/futures/multi \
+	concurrency/futures/select_future \
+	concurrency/futures/typed \
+	concurrency/futures/wait_any \
+	concurrency/join \
+	concurrency/lockfree_stack \
+	concurrency/migrate \
+	concurrency/monitor \
+	concurrency/multi-monitor \
+	concurrency/mutexstmt/locks \
+	concurrency/mutexstmt/monitors \
+	concurrency/mutexstmt/tuple \
+	concurrency/once \
+	concurrency/preempt \
+	concurrency/pthread/bounded_buffer \
+	concurrency/pthread/pthread_attr_test \
+	concurrency/pthread/pthread_cond_test \
+	concurrency/pthread/pthread_demo_create_join \
+	concurrency/pthread/pthread_demo_lock \
+	concurrency/pthread/pthread_key_test \
+	concurrency/pthread/pthread_once_test \
+	concurrency/readyQ/leader_spin \
+	concurrency/signal/block \
+	concurrency/signal/disjoint \
+	concurrency/signal/wait \
+	concurrency/sleep \
+	concurrency/suspend_then \
+	concurrency/thread \
+	concurrency/unified_locking/block_spin_lock \
+	concurrency/unified_locking/exp_backoff \
+	concurrency/unified_locking/fast_block_lock \
+	concurrency/unified_locking/futex_mutex \
+	concurrency/unified_locking/locks \
+	concurrency/unified_locking/mcs \
+	concurrency/unified_locking/mcs_block_spin_lock \
+	concurrency/unified_locking/mcs_spin \
+	concurrency/unified_locking/pthread_locks \
+	concurrency/unified_locking/simple_owner_lock \
+	concurrency/unified_locking/spin_queue_lock \
+	concurrency/unified_locking/timeout_lock \
+	concurrency/waitfor/barge \
+	concurrency/waitfor/parse \
+	concurrency/waitfor/statment \
+	concurrency/waitfor/when \
+	concurrency/waituntil/all_types \
+	concurrency/waituntil/basic_else \
+	concurrency/waituntil/channel_close \
+	concurrency/waituntil/channel_zero_size \
+	concurrency/waituntil/channels \
+	concurrency/waituntil/futures \
+	concurrency/waituntil/locks \
+	concurrency/waituntil/one_chan \
+	concurrency/waituntil/repeat_close \
+	concurrency/waituntil/timeout \
+	configs/parsebools \
+	configs/parsenums \
+	configs/usage \
+	coroutine/raii \
+	ctrl-flow/goto \
+	ctrl-flow/ifwhileCtl \
+	ctrl-flow/labelledExit \
+	ctrl-flow/loop_else \
+	designations \
+	enum \
+	enum_tests/inc-dec \
+	enum_tests/planet \
+	enum_tests/structEnum \
+	exceptions/cardgame \
+	exceptions/defaults \
+	exceptions/defaults-threads \
+	exceptions/hotpotato \
+	exceptions/hotpotato_checked \
+	exceptions/pingpong_nonlocal \
+	exceptions/polymorphic \
+	exceptions/try-leave-catch \
+	exceptions/virtual-poly \
+	expression \
+	forall \
+	function-operator \
+	gmp \
+	heap \
+	identFuncDeclarator \
+	identParamDeclarator \
+	include/includes \
+	include/stdincludes \
+	include/vector-collections \
+	include/vector-fstream \
+	include/vector-sequence \
+	init1 \
+	init1-ERROR \
+	io/away_fair \
+	io/comp_basic \
+	io/comp_fair \
+	io/io-acquire \
+	io/io-acquire2 \
+	io/io-acquire-in \
+	io/io-acquire-no-io \
+	io/io-acquire-out \
+	io/manipulatorsInput \
+	io/manipulatorsInput-uchunk \
+	io/many_read \
+	limits \
+	linking/io-acquire \
+	linking/mangling/anon \
+		linking/mangling/lib.o \
+		linking/mangling/main.o \
+	linkonce \
+		link-once/% \
+	malloc \
+	math \
+	mathX \
+	maybe \
+	minmax \
+	nested-types \
+	nested-types-ERR1 \
+	nested-types-ERR2 \
+	numericConstants \
+	operators \
+	poly-d-cycle \
+	poly-many-arsz \
+	poly-member \
+	polymorphism \
+	poly-o-cycle \
+	PRNG \
+	quasiKeyword \
+	quotedKeyword \
+	raii/boxed-types \
+	raii/ctor-autogen \
+	raii/dtor-early-exit \
+	raii/init_once \
+	raii/partial \
+	references \
+	result \
+	shortCircuit \
+	sizeof \
+	smart-pointers \
+	sum \
+	switch \
+	tuple/tupleAssign \
+	tuple/tupleCast \
+	tuple/tupleMember \
+	tuple/tuplePolymorphism \
+	tuple/tupleVariadic \
+	typedefRedef \
+	typedefRedef-ERR1 \
+	typeof \
+	userLiterals \
+	variableDeclarator \
+	vector \
+	warnings/self-assignment
+
+WFLAGS=${if ${filter ${WFLGAS_OPT_LAX},${@}},${WFLAGS_LAX},${WFLAGS_STRICT}}
+
 # applies to both programs
 # since automake doesn't have support for CFA we have to
 AM_CFLAGS = ${if ${test}, 2> ${test}, } \
@@ -42,10 +258,7 @@ AM_CFLAGS = ${if ${test}, 2> ${test}, } \
 	-fdebug-prefix-map=/tmp= \
 	-fno-diagnostics-show-caret \
 	-g \
-	-Wall \
-	-Werror=return-type \
-	-Wno-unused-function \
-	-Wno-psabi \
+	$(WFLAGS) \
 	-quiet @CFA_FLAGS@
 
 AM_CFAFLAGS = -XCFA --deterministic-out
@@ -288,11 +501,6 @@ linking/linkerror : linking/linkerror.cfa ${CFACCBIN}
 	${CFACOMPILETEST} -O0 -c -o ${abspath ${@}}.o
 	${CFACCLINK}  -O0 ${@}.o -o ${abspath ${@}}
 	rm ${abspath ${@}}.o
-
-# No-warning tests
-# Tests to make sure that given CFA code gets emitted C code that GCC accepts without any warnings
-nowarn/% : nowarn/%.cfa ${CFABIN}
-	${CFACOMPILETEST} -Wunused-function -Wpsabi -Wall -Wextra -Werror -o ${abspath ${@}}
 
 #------------------------------------------------------------------------------
 # Other targets

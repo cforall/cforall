@@ -1,6 +1,0 @@
-#include <string.hfa>
-#include <string_res.hfa>
-
-int main() {
-    printf( "done\n" );
-}

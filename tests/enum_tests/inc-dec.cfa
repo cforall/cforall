@@ -1,0 +1,22 @@
+// Test increment and decrement operation:
+#include <assert.h>
+
+enum() Number { One, Two, Three };
+
+int main(int argc, char * argv[]) {
+	Number a = One;
+
+	assert( Two == ++a );
+	assert( Two == a );
+
+	assert( Two == a++ );
+	assert( Three == a );
+
+	assert( Two == --a );
+	assert( Two == a );
+
+	assert( Two == a-- );
+	assert( One == a );
+
+	printf( "done!\n" );
+}

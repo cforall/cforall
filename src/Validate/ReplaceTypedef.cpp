@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Jun 29 14:59:00 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 14 16:11:51 2023
-// Update Count     : 4
+// Last Modified On : Mon Dec 16 20:50:42 2024
+// Update Count     : 5
 //
 
 #include "ReplaceTypedef.hpp"
@@ -134,10 +134,8 @@ struct ArrayTypeExtractor {
 	}
 };
 static bool dimensionPresenceMismatched( const ast::Type * t0, const ast::Type * t1) {
-	std::vector<const ast::ArrayType *> at0s = std::move(
-		ast::Pass<ArrayTypeExtractor>::read( t0 ) );
-	std::vector<const ast::ArrayType *> at1s = std::move(
-		ast::Pass<ArrayTypeExtractor>::read( t1 ) );
+	std::vector<const ast::ArrayType *> at0s = ast::Pass<ArrayTypeExtractor>::read( t0 );
+	std::vector<const ast::ArrayType *> at1s = ast::Pass<ArrayTypeExtractor>::read( t1 );
 	assert( at0s.size() == at1s.size() );
 	for (size_t i = 0; i < at0s.size(); i++) {
 		const ast::ArrayType * at0 = at0s[i];

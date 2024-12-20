@@ -65,8 +65,8 @@ static inline void ^?{}( generator$ & ) {}
 
 forall( T & )
 trait is_generator {
-      void main( T & this );
-      generator$ * get_generator( T & this );
+	void main( T & this );
+	generator$ * get_generator( T & this );
 };
 
 forall( T & | is_generator( T ) )
@@ -233,18 +233,6 @@ forall( E | CfaEnum( E ) ) {
 
 static inline
 forall( E | Serial( E ) ) {
-	E ++?( E & l ) {
-		int pos = fromInstance( l );
-		l = fromInt_unsafe( pos + 1 );
-		return l;
-	}
-
-	E --?( E & l ) {
-		int pos = fromInstance( l );
-		l = fromInt_unsafe( pos - 1 );
-		return l;
-	}
-
 	E ?+=?( E & l, one_t ) {
 		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos + 1 );
@@ -267,18 +255,6 @@ forall( E | Serial( E ) ) {
 		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos - i );
 		return l;
-	}
-
-	E ?++( E & l ) {
-		int pos = fromInstance( l );
-		l = fromInt_unsafe( pos + 1 );
-		return fromInt_unsafe( pos );
-	}
-
-	E ?--( E & l ) {
-		int pos = fromInstance( l );
-		l = fromInt_unsafe( pos - 1 );
-		return fromInt_unsafe( pos );
 	}
 }
 

@@ -9,7 +9,7 @@ exception moon {};
 vtable(star) star_vt;
 vtable(moon) moon_vt;
 
-int main(int argc, char * argv[]) {
+int main() {
 	// Resume falls back to terminate.
 	try {
 		throwResume (star){&star_vt};

@@ -1,5 +1,0 @@
-#include <fstream.hfa>
-
-int main() {
-    sout | "done";
-}

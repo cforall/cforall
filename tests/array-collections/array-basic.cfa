@@ -11,9 +11,9 @@ void typesTest( tag(Nx), tag(Ny), tag(Nz) ) {
 
     // numeric subscripts
     ptrdiff_t ix = 1, iy = 2, iz = 3;
-    array( float, Ny, Nz ) & yz = xyz[ix];
-    array( float, Nz ) & z = xyz[ix][iy];
-    float & val = xyz[ix][iy][iz];
+    array( float, Ny, Nz ) & yz = xyz[ix];      (void) yz;
+    array( float, Nz ) & z = xyz[ix][iy];       (void) z;
+    float & val = xyz[ix][iy][iz];              (void) val;
 
     // deferral subscript
     typeof( xyz[all] ) yzx = xyz[all];

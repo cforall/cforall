@@ -1338,6 +1338,7 @@ static inline struct Vad _X16_operator_assignFS3Vad_S3VadS3Vad_autogen___1(__att
 }
 __attribute__ (( noreturn )) void _X4fredFv___1(void){
     __attribute__ ((unused)) signed int _X1ii_2;
+    __attribute__ ((gnu::xxx)) signed int _X1ji_2;
     switch ( 3 ) {
         case 2:
             {

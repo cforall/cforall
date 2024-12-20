@@ -92,8 +92,7 @@ extern "C" {
 	gamma_vtable _gamma_vtable_instance = { &__cfatid_gamma, ret_g };
 }
 
-int main (int argc, char * argv[]) {
-
+int main() {
 	gamma * tri = malloc(); tri->virtual_table = &_gamma_vtable_instance;
 	beta * mid = (virtual beta *)tri;
 	assert( 'g' == mid->virtual_table->code() );

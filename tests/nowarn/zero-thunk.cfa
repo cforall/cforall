@@ -1,0 +1,15 @@
+forall( | { int g( zero_t ); } )
+void f( ) {
+    g( 0 );
+}
+
+forall( T )
+T g( zero_t ) {
+    printf( "%ld\n", sizeof(T) );
+    return (T){};
+}
+
+int main() {
+    f();
+    return 0;
+}

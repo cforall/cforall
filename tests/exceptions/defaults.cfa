@@ -105,7 +105,7 @@ void cross_test(void) {
 	}
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	log_test();
 	jump_test();
 	unhandled_test();

@@ -188,7 +188,7 @@ void return_in_catchResume() {
 	}
 }
 
-void main() {
+int main() {
 	// Should not compile.
 	return 1;
 }

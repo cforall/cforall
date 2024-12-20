@@ -8,17 +8,17 @@ vtable(internal_error) internal_vt;
 
 coroutine WillCancel {};
 
-const char * msg(CoroutineCancelled(WillCancel) * this) {
+const char * msg(CoroutineCancelled(WillCancel) *) {
 	return "CoroutineCancelled(WillCancel)";
 }
 
-void main(WillCancel & wc) {
+void main(WillCancel &) {
 	sout | '1';
 	cancel_stack((internal_error){&internal_vt});
 	sout | '!';
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	sout | nlOff;
 	WillCancel cancel;
 	try {

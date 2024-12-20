@@ -13,7 +13,7 @@ const char * virtual_msg(paired * this) {
 	return this->virtual_table->msg(this);
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	paired except = {&paired_vt, 3, 13};
 
 	try {

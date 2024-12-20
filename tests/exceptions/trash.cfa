@@ -8,7 +8,7 @@ exception yang {};
 vtable(yin) yin_vt;
 vtable(yang) yang_vt;
 
-int main(int argc, char * argv[]) {
+int main() {
 	try {
 		try {
 			throw (yin){&yin_vt};

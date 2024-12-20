@@ -1,5 +1,0 @@
-#include <list.hfa>
-
-int main() {
-    printf( "done\n" );
-}

@@ -8,7 +8,7 @@ vtable(internal_error) internal_vt;
 
 thread WillCancel {};
 
-const char * msg(ThreadCancelled(WillCancel) * this) {
+const char * msg(ThreadCancelled(WillCancel) *) {
 	return "ThreadCancelled(WillCancel)";
 }
 
@@ -51,7 +51,7 @@ void implicit() {
 	sout | '5' | nl;
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	sout | nlOff;
 	explicit();
 	implicit();

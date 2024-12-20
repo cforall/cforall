@@ -174,7 +174,7 @@ ast::FunctionDecl * makeGetExceptionForward(
 		functionName,
 		{ new ast::ObjectDecl(
 			location,
-			"__unused",
+			/* The parameter only exists to provide a type id. */ "",
 			new ast::PointerType( exceptType )
 		) },
 		{ frontRet },

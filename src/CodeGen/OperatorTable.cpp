@@ -75,9 +75,12 @@ const OperatorInfo * operatorLookup( const std::string & inputName ) {
 		inputTable[ op.inputName ] = &op;
 	}
 
-	if ( inputName.find_first_of( "?^*+-!", 0, 1 ) == std::string::npos ) return nullptr; // prefilter
-	const OperatorInfo * ret = inputTable.find( inputName )->second;
+	// Filter out non-operator names:
+	if ( inputName.find_first_of( "?^*+-!", 0, 1 ) == std::string::npos ) return nullptr;
+	auto entry = inputTable.find( inputName );
 	// This can only happen if an invalid identifier name has been used.
+	assertf( entry != inputTable.end(), "Not a real operator: %s\n", inputName.c_str() );
+	const OperatorInfo * ret = entry->second;
 	assert( ret );
 	return ret;
 }

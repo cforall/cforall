@@ -7,7 +7,7 @@ exception myth {};
 
 vtable(myth) myth_vt;
 
-int main(int argc, char * argv[]) {
+int main() {
 	myth exc = {&myth_vt};
 
 	try {

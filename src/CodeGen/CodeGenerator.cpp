@@ -741,9 +741,7 @@ void CodeGenerator::postvisit( ast::MemberExpr const * expr ) {
 void CodeGenerator::postvisit( ast::VariableExpr const * expr ) {
 	extension( expr );
 	const OperatorInfo * opInfo;
-	if ( dynamic_cast<ast::ZeroType const *>( expr->var->get_type() ) ) {
-		output << "0";
-	} else if ( expr->var->linkage == ast::Linkage::Intrinsic
+	if ( expr->var->linkage == ast::Linkage::Intrinsic
 			&& ( opInfo = operatorLookup( expr->var->name ) )
 			&& opInfo->type == OT_CONSTANT ) {
 		output << opInfo->symbol;

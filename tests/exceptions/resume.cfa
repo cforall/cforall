@@ -13,7 +13,7 @@ vtable(zen) zen_vt;
 
 void in_void(void);
 
-int main(int argc, char * argv[]) {
+int main() {
 	yin a_yin = {&yin_vt};
 	yang a_yang = {&yang_vt};
 	zen a_zen = {&zen_vt};

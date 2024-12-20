@@ -1,26 +1,6 @@
 #include <collections/string.hfa>
 #include <string_sharectx.hfa>
 
-void assertWellFormedHandleList( int maxLen ) { // with(HeapArea)
-    // HandleNode *n;
-    // int limit1 = maxLen;
-    // for ( n = Header.flink; (limit1-- > 0) && n != &Header; n = n->flink ) {}
-    // assert (n == &Header);
-    // int limit2 = maxLen;
-    // for ( n = Header.blink; (limit2-- > 0) && n != &Header; n = n->blink ) {}
-    // assert (n == &Header);
-    // assert (limit1 == limit2);
-}
-
-// The given string is reachable.
-void assertOnHandleList( string & q ) { // with(HeapArea)
-    // HandleNode *n;
-    // for ( n = Header.flink; n != &Header; n = n->flink ) {
-    //     if ( n == & q.inner->Handle ) return;
-    // }
-    // assert( false );
-}
-
 
 // Purpose: call each function in string.hfa, top to bottom
 
@@ -60,7 +40,6 @@ int main () {
     sout | ( s(1,3) != "world" ) | ( s(1,3) != "ell"   );
 
 
-                                            assertWellFormedHandleList( 10 );
     //
     // breadth Constructors
     //
@@ -115,7 +94,7 @@ int main () {
         string b11 = 5.5L+3.4Li;
         sout | b11; // 5.5+3.4i
     }
-                                            assertWellFormedHandleList( 10 );
+
     //
     // Assignments
     //
@@ -175,7 +154,7 @@ int main () {
         b = 5.5L+3.4Li;
         sout | b; // 5.5+3.4i
     }
-                                            assertWellFormedHandleList( 10 );
+
 
 
 
@@ -186,15 +165,10 @@ int main () {
     //
 
     string sx = s + s3;
-                                            assertWellFormedHandleList( 10 );
     sout | sx; // helloworld
-                                            assertWellFormedHandleList( 10 );
     sx = "xx";
-                                            assertWellFormedHandleList( 10 );
     sx = s + s3;
-                                            assertWellFormedHandleList( 10 );
     sout | sx; // helloworld
-                                            assertWellFormedHandleList( 10 );
 
     sx += '!';
     sout | sx; // helloworld!
@@ -204,7 +178,6 @@ int main () {
     sx = s;
     sx += s;
     sout | sx; // hellohello
-                                            assertWellFormedHandleList( 10 );
     sx += ", friend";    
     sout | sx; // hellohello, friend
 

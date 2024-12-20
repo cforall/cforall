@@ -15,7 +15,7 @@ void caught_num_error(int expect, num_error * actual) {
 	sout | "Caught num_error: expected=" | expect | "actual=" | actual->num | '.';
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	num_error exc = {&num_error_vt, 2};
 
 	try {

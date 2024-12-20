@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 23 14:05:21 2024
-// Update Count     : 963
+// Last Modified On : Wed Dec 18 22:25:25 2024
+// Update Count     : 965
 //
 
 #pragma once
@@ -240,16 +240,16 @@ static inline forall( T & | sized(T) ) {
 	// being overwritten by the postfix argument in the ttype.
 	forall( List ... | { T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t Align, T_fill(T) Fill, List ); } ) {
 		// middle interface
-		T * alloc_internal$( size_t Dim, T_resize dummy, T_realloc Realloc, size_t Align, T_fill(T) Fill, T_resize Resize, List rest ) {
+		T * alloc_internal$( size_t Dim, T_resize /*dummy*/, T_realloc /*Realloc*/, size_t Align, T_fill(T) Fill, T_resize Resize, List rest ) {
 	        return alloc_internal$( Dim, Resize, (T_realloc){0p}, Align, Fill, rest );
 		}
-		T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc dummy, size_t Align, T_fill(T) Fill, T_realloc Realloc, List rest ) {
+		T * alloc_internal$( size_t Dim, T_resize /*Resize*/, T_realloc /*dummy*/, size_t Align, T_fill(T) Fill, T_realloc Realloc, List rest ) {
 	        return alloc_internal$( Dim, (T_resize){0p}, Realloc, Align, Fill, rest );
 		}
-		T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t dummy, T_fill(T) Fill, T_align Align, List rest ) {
+		T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t /*dummy*/, T_fill(T) Fill, T_align Align, List rest ) {
 	        return alloc_internal$( Dim, Resize, Realloc, Align.align, Fill, rest );
 		}
-		T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t Align, T_fill(T) dummy, T_fill(T) Fill, List rest ) {
+		T * alloc_internal$( size_t Dim, T_resize Resize, T_realloc Realloc, size_t Align, T_fill(T) /*dummy*/, T_fill(T) Fill, List rest ) {
 	        return alloc_internal$( Dim, Resize, Realloc, Align, Fill, rest );
 		}
 		// public interface

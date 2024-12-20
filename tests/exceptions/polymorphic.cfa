@@ -58,7 +58,7 @@ void cell_test(void) {
 	}
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	proxy_test();
 	sout | nl;
 	cell_test();

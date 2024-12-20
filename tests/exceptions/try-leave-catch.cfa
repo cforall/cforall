@@ -52,7 +52,7 @@ int test_return() {
 	return 0;
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	test_loop();
 	test_switch();
 	printf("Result of test_return: %d\n", test_return());

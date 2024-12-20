@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep 12 22:40:35 2024
-// Update Count     : 1090
+// Last Modified On : Mon Dec 16 20:50:27 2024
+// Update Count     : 1110
 //
 
 #include "ExpressionNode.hpp"
@@ -161,10 +161,10 @@ ast::Expr * build_constantInteger(
 	if ( isdigit( str[str.length() - 1] ) ) {			// no suffix ?
 		lnthSuffix( str, type, ltype );					// could have length suffix
 	} else {
-		// At least one digit in integer constant, so safe to backup while looking for suffix.
-		// This declaration and the comma expressions in the conditions mimic
-		// the declare and check pattern allowed in later compiler versions.
-		// (Only some early compilers/C++ standards do not support it.)
+		// At least one digit in integer constant, so safe to backup while looking for suffix.  This
+		// declaration and the comma expressions in the conditions mimic the declare and check
+		// pattern allowed in later compiler versions.  (Only some early compilers/C++ standards do
+		// not support it.)
 		string::size_type posn;
 		// pointer value
 		if ( posn = str.find_last_of( "pP" ), posn != string::npos ) {
@@ -464,8 +464,8 @@ static bool isoctal( char ch ) {
 	return ('0' <= ch && ch <= '7');
 }
 
-// A "sequence" is the series of characters in a character/string literal
-// that becomes a single character value in the runtime value.
+// A "sequence" is the series of characters in a character/string literal that becomes a single
+// character value in the runtime value.
 static size_t sequenceLength( const std::string & str, size_t pos ) {
 	// Most "sequences" are just a single character, filter those out:
 	if ( '\\' != str[pos] ) return 1;
@@ -496,12 +496,10 @@ static size_t sequenceLength( const std::string & str, size_t pos ) {
 	  default:
 		assertf( false, "Unknown escape sequence (start %c).", str[pos] );
 		return 1;
-	}
+	} // switch
 }
 
-ast::Expr * build_constantStr(
-		const CodeLocation & location,
-		string & str ) {
+ast::Expr * build_constantStr( const CodeLocation & location, string & str ) {
 	assert( str.length() > 0 );
 	string units;										// units
 	sepString( str, units, '"' );						// separate constant from units
@@ -524,25 +522,27 @@ ast::Expr * build_constantStr(
 		strtype = new ast::BasicType( ast::BasicKind::Char );
 	} // switch
 
-	// The dimension value of the type is equal to the number of "sequences"
-	// not including the openning and closing quotes in the literal plus 1
-	// for the implicit null terminator.
-	size_t dimension = 1;
-	for ( size_t pos = 1 ; pos < str.size() - 1 ;
-			pos += sequenceLength( str, pos ) ) {
-		dimension += 1;
-	}
+	// The length value of the type is equal to the number of "sequences" not including the openning
+	// and closing quotes in the literal plus 1 for the implicit null terminator.
+	size_t length = 1;
+	for ( size_t pos = 1 ; pos < str.size() - 1 ; pos += sequenceLength( str, pos ) ) {
+		if ( '"' == str[pos] ) {						// concatenated strings ? "ABC" "DEF"
+			int cnt = 1;								// skip outside quotes and space between
+			for ( unsigned int i = pos + 1; str[i] != '"'; i += 1, cnt += 1 );
+			pos += cnt;
+			continue;									// not part of length
+		} // if
+		length += 1;
+	} // for
 
 	ast::ArrayType * at = new ast::ArrayType(
 		strtype,
-		ast::ConstantExpr::from_ulong( location, dimension ),
+		ast::ConstantExpr::from_ulong( location, length ),
 		ast::FixedLen,
 		ast::DynamicDim );
 	ast::Expr * ret = new ast::ConstantExpr( location, at, str, std::nullopt );
 	if ( units.length() != 0 ) {
-		ret = new ast::UntypedExpr( location,
-			new ast::NameExpr( location, units ),
-			{ ret } );
+		ret = new ast::UntypedExpr( location, new ast::NameExpr( location, units ),	{ ret } );
 	} // if
 
 	delete &str;										// created by lex
