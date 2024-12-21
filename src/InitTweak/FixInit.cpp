@@ -69,6 +69,7 @@ ast::FunctionDecl * genDefaultFunc(
 		{},
 		ast::Linkage::Cforall
 	);
+	dstParam->attributes.push_back( new ast::Attribute( "unused" ) );
 	return new ast::FunctionDecl( loc,
 		fname,
 		std::move(typeParams),

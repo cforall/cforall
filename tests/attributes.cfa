@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Feb  6 16:07:02 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 16 14:45:04 2024
-// Update Count     : 51
+// Last Modified On : Fri Dec 20 15:32:21 2024
+// Update Count     : 53
 // 
 
 
@@ -163,7 +163,8 @@ struct Vad {
 
 [[ noreturn ]] void fred() {
 	int [[unused]] i;
-	int [[gnu::xxx]] j;
+	// C23 attributes are parsed but not pushed through the compiler.
+	// int [[gnu::xxx]] j;
 	switch ( 3 ) {
 	  case 2:
 		4;

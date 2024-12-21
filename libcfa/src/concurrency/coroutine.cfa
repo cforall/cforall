@@ -80,7 +80,7 @@ void __cfaehm_cancelled_coroutine(
 }
 
 // helper for popping from coroutine's ehm buffer
-inline nonlocal_exception * pop_ehm_head( coroutine$ * this ) {
+static nonlocal_exception * pop_ehm_head( coroutine$ * this ) {
     lock( this->ehm_state.buffer_lock __cfaabi_dbg_ctx2 );
     nonlocal_exception * nl_ex = pop_head( this->ehm_state.ehm_buffer );
     unlock( this->ehm_state.buffer_lock );

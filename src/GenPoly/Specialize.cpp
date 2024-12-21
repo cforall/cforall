@@ -299,7 +299,9 @@ const ast::Expr * SpecializeCore::createThunkFunction(
 			return ast::deepCopy( expr->var );
 		} ),
 		map_range<DWTVector>( newType->params, [&location, &paramNamer]( const ast::Type * type ) {
-			return new ast::ObjectDecl( location, paramNamer.newName(), ast::deepCopy( type ) );
+			auto param = new ast::ObjectDecl( location, paramNamer.newName(), ast::deepCopy( type ) );
+			param->attributes.push_back( new ast::Attribute( "unused" ) );
+			return param;
 		} ),
 		map_range<DWTVector>( newType->returns, [&location, &paramNamer]( const ast::Type * type ) {
 			return new ast::ObjectDecl( location, paramNamer.newName(), ast::deepCopy( type ) );

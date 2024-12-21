@@ -13,7 +13,7 @@ forall( T & | { T *& Next ( T * ); } ) {
 		inline Collection;								// Plan 9 inheritance
 	};
 
-	inline {
+	static inline {
 		// wrappers to make Collection have T
 		T & head( Stack(T) & s ) with( s ) {
 			return *(T *)head( (Collection &)s );
@@ -69,9 +69,9 @@ forall( T & | { T *& Next ( T * ); } ) {
 forall( T & | { T *& Next ( T * ); } ) {
 	struct StackIter {
 		inline ColIter;									// Plan 9 inheritance
-	};	
+	};
 
-	inline {
+	static inline {
 		void ?{}( StackIter(T) & si ) with( si ) {
 			((ColIter &)si){};
 		} // post: curr == 0p

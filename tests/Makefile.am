@@ -51,10 +51,7 @@ WFLAGS_LAX = \
 # Making this association implicit would be ideal, but requires learning more automake than is affordable.
 WFLGAS_OPT_LAX = \
 	alloc \
-	alloc2 \
 	array \
-	array-collections/array-raii-c \
-	array-collections/array-raii-cfa \
 	array-collections/boxed \
 		array-collections/boxed% \
 	array-collections/dimexpr-match-c \
@@ -97,7 +94,6 @@ WFLGAS_OPT_LAX = \
 	concurrency/coroutineYield \
 	concurrency/examples/boundedBufferEXT \
 	concurrency/examples/boundedBufferINT \
-	concurrency/futures/abandon \
 	concurrency/futures/multi \
 	concurrency/futures/select_future \
 	concurrency/futures/typed \
@@ -178,7 +174,6 @@ WFLGAS_OPT_LAX = \
 	forall \
 	function-operator \
 	gmp \
-	heap \
 	identFuncDeclarator \
 	identParamDeclarator \
 	include/includes \

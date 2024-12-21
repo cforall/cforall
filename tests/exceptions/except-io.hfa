@@ -8,11 +8,11 @@ struct loud_exit {
     const char * area;
 };
 
-inline void ?{}(loud_exit & this, const char * area) {
+static inline void ?{}(loud_exit & this, const char * area) {
     this.area = area;
 }
 
-inline void ^?{}(loud_exit & this) {
+static inline void ^?{}(loud_exit & this) {
     sout | "Exiting: " | this.area;
 }
 
@@ -20,11 +20,11 @@ struct loud_region {
 	const char * region;
 };
 
-inline void ?{}(loud_region & this, const char * region) {
+static inline void ?{}(loud_region & this, const char * region) {
 	this.region = region;
 	sout | "Entering: " | region;
 }
 
-inline void ^?{}(loud_region & this) {
+static inline void ^?{}(loud_region & this) {
 	sout | "Exiting: " | this.region;
 }

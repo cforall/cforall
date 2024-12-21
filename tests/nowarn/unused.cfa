@@ -16,6 +16,15 @@ struct my_array {
 // generated type_name function only needs its parameter as a tag
 enum () foo_t { foo };
 
+// on empty tuple,  __cleanup_dtor takes zero actions on its param and
+// _thunk's purpose is to ignore its param
+forall( Args... | { void foo( Args ); } )
+void wrap( Args ) {}
+void foo() {}
+void callWrap() {
+    wrap();
+}
+
 
 int main() {
     printf( "done\n" );
