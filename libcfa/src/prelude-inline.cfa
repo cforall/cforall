@@ -1,0 +1,104 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2015 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// prelude-inline.cfa -- Create the external prelude definitions.
+//
+// Author           : Andrew Beach
+// Created On       : Thu Dec 19  9:40:00 2024
+// Last Modified By : Andrew Beach
+// Created On       : Thu Dec 23 14:01:00 2024
+// Update Count     : 0
+//
+
+// There are:
+// 1.  No includes, because everything should be in the prelude somewhere.
+// 2.  No bodies, because those are also in the prelude for inlining.
+//
+// In C99 inline is used to mark functions that are avalible for inlining but
+// do not belong to the current translation unit, so no definition will be
+// inluded. The declarations in this file say that they do belong to this
+// translation unit. Uses of these features that were not inlined will refer
+// to these declarations are standard library functions.
+
+#pragma GCC visibility push(default)
+
+forall( T & )
+extern inline void ^?{}( __Destructor(T) & x );
+
+forall( T & )
+extern inline T & identity( T & i );
+
+extern inline void  ?{}( generator$ & this );
+extern inline void ^?{}( generator$ & );
+
+forall( T & | is_generator( T ) )
+extern inline T & resume( T & gen );
+
+extern inline {
+	forall( T& | is_value(T) | { T ?+=?( T &, one_t ); } )
+	T ++?( T & x );
+
+	forall( T& | is_value(T) | { T ?+=?( T &, one_t ); } )
+	T ?++( T & x );
+
+	forall( T& | is_value(T) | { T ?-=?( T &, one_t ); } )
+	T --?( T & x );
+
+	forall( T& | is_value(T) | { T ?-=?( T &, one_t ); } )
+	T ?--( T & x );
+
+	forall( T& | is_value(T) | { int ?!=?( T, zero_t ); } )
+	int !?( T & x );
+} // distribution
+
+
+#if defined(__SIZEOF_INT128__)
+extern inline void ?{}( unsigned int128 & this, unsigned long int h, unsigned long int l );
+#endif // __SIZEOF_INT128__
+
+extern inline {
+	float ?\?( float x, float y );
+	double ?\?( double x, double y );
+	long double ?\?( long double x, long double y );
+	float _Complex ?\?( float _Complex x, _Complex float y );
+	double _Complex ?\?( double _Complex x, _Complex double y );
+	long double _Complex ?\?( long double _Complex x, _Complex long double y );
+} // distribution
+
+extern inline {
+	int ?\=?( int & x, unsigned int y );
+	long int ?\=?( long int & x, unsigned long int y );
+	long long int ?\=?( long long int & x, unsigned long long int y );
+	unsigned int ?\=?( unsigned int & x, unsigned int y );
+	unsigned long int ?\=?( unsigned long int & x, unsigned long int y );
+	unsigned long long int ?\=?( unsigned long long int & x, unsigned long long int y );
+} // distribution
+
+extern inline
+forall( E | Serial( E ) ) {
+	E fromInt( int i );
+	E succ( E e );
+	E pred( E e );
+	int Countof( E );
+}
+
+extern inline
+forall( E | CfaEnum( E ) ) {
+	int ?==?( E l, E r );
+	int ?!=?( E l, E r );
+	int ?<?( E l, E r );
+	int ?<=?( E l, E r );
+	int ?>?( E l, E r );
+	int ?>=?( E l, E r );
+}
+
+extern inline
+forall( E | Serial( E ) ) {
+	E ?+=?( E & l, one_t );
+	E ?-=?( E & l, one_t );
+	E ?+=?( E & l, int i );
+	E ?-=?( E & l, int i );
+}

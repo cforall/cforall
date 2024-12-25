@@ -521,7 +521,6 @@ int main( int argc, char * argv[] ) {
 		if ( ! std_flag && ! x_flag ) {
 			args[nargs++] = "-std=gnu11";				// default c11, if none specified
 		} // if
-		args[nargs++] = "-fgnu89-inline";
 		args[nargs++] = "-D__int8_t_defined";			// prevent gcc type-size attributes
 		args[nargs++] = ( *new string( string("-B") + bprefix ) ).c_str();
 	} else {

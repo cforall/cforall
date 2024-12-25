@@ -26,7 +26,7 @@ struct __Destructor {
 
 // Defined destructor in the case that non-generated code wants to use __Destructor.
 forall( T & )
-static inline void ^?{}( __Destructor(T) & x ) {
+inline void ^?{}( __Destructor(T) & x ) {
 	if ( x.object && x.dtor ) {
 		x.dtor( x.object );
 	}
@@ -51,7 +51,7 @@ void exit( int status, const char fmt[], ... ) __attribute__ (( format( printf, 
 void abort( const char fmt[], ... ) __attribute__ (( format( printf, 1, 2 ), __nothrow__, __leaf__, __noreturn__ ));
 
 forall( T & )
-static inline T & identity( T & i ) {
+inline T & identity( T & i ) {
 	return i;
 }
 
@@ -60,8 +60,8 @@ struct generator$ {
 	inline int;
 };
 
-static inline void  ?{}( generator$ & this ) { ((int&)this) = 0; }
-static inline void ^?{}( generator$ & ) {}
+inline void  ?{}( generator$ & this ) { ((int&)this) = 0; }
+inline void ^?{}( generator$ & ) {}
 
 forall( T & )
 trait is_generator {
@@ -70,7 +70,7 @@ trait is_generator {
 };
 
 forall( T & | is_generator( T ) )
-static inline T & resume( T & gen ) {
+inline T & resume( T & gen ) {
 	main( gen );
 	return gen;
 }
@@ -92,7 +92,7 @@ trait is_value {
 
 // C11 reference manual Section 6.5.16 (page 101): "An assignment expression has the value of the left operand after the
 // assignment, but is not an lvalue." Hence, return a value not a reference.
-static inline {
+inline {
 	forall( T& | is_value(T) | { T ?+=?( T &, one_t ); } )
 	T ++?( T & x ) { return x += 1; }
 
@@ -115,7 +115,7 @@ static inline forall( ftype FT ) FT * intptr( uintptr_t addr ) { return (FT *)ad
 
 #if defined(__SIZEOF_INT128__)
 // constructor for 128-bit numbers (all constants are unsigned as +/- are operators)
-static inline void ?{}( unsigned int128 & this, unsigned long int h, unsigned long int l ) {
+inline void ?{}( unsigned int128 & this, unsigned long int h, unsigned long int l ) {
 	this = (unsigned int128)h << 64 | (unsigned int128)l;
 } // ?{}
 #endif // __SIZEOF_INT128__
@@ -132,7 +132,7 @@ extern "C" {
 	long double _Complex cpowl( long double _Complex x, _Complex long double z );
 } // extern "C"
 
-static inline {											// wrappers
+inline {
 	float ?\?( float x, float y ) { return powf( x, y ); }
 	double ?\?( double x, double y ) { return pow( x, y ); }
 	long double ?\?( long double x, long double y ) { return powl( x, y ); }
@@ -155,7 +155,7 @@ forall( OT | { void ?{}( OT & this, one_t ); OT ?*?( OT, OT ); } ) {
 	OT ?\?( OT x, unsigned long long int y );
 } // distribution
 
-static inline {
+inline {
 	int ?\=?( int & x, unsigned int y ) { x = x \ y; return x; }
 	long int ?\=?( long int & x, unsigned long int y ) { x = x \ y; return x; }
 	long long int ?\=?( long long int & x, unsigned long long int y ) { x = x \ y; return x; }
@@ -188,8 +188,7 @@ forall( E, V | CfaEnum( E ) ) trait TypedEnum {
 	V value( E e );
 };
 
-static inline
-forall( E | Serial( E ) ) {
+inline forall( E | Serial( E ) ) {
 	E fromInt( int i ) {
 		E upper = upperBound();
 		E lower = lowerBound();
@@ -221,8 +220,7 @@ forall( E | Serial( E ) ) {
 	}
 }
 
-static inline
-forall( E | CfaEnum( E ) ) {
+inline forall( E | CfaEnum( E ) ) {
 	int ?==?( E l, E r ) { return posn( l ) == posn( r ); }
 	int ?!=?( E l, E r ) { return posn( l ) != posn( r ); }
 	int ?<?( E l, E r ) { return posn( l ) < posn( r ); }
@@ -231,8 +229,7 @@ forall( E | CfaEnum( E ) ) {
 	int ?>=?( E l, E r ) { return posn( l ) >= posn( r ); }
 }
 
-static inline
-forall( E | Serial( E ) ) {
+inline forall( E | Serial( E ) ) {
 	E ?+=?( E & l, one_t ) {
 		int pos = fromInstance( l );
 		l = fromInt_unsafe( pos + 1 );

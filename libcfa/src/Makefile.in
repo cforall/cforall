@@ -152,8 +152,8 @@ am__libcfa_la_SOURCES_DIST = common.hfa fstream.hfa heap.hfa \
 	collections/pair.cfa collections/result.cfa \
 	collections/string.cfa collections/string_res.cfa \
 	collections/vector.cfa device/cpu.cfa assert.cfa \
-	bits/debug.cfa exception.c interpose.cfa lsda.h startup.cfa \
-	startup.hfa virtual.c virtual.h
+	bits/debug.cfa exception.c interpose.cfa lsda.h \
+	prelude-inline.cfa startup.cfa startup.hfa virtual.c virtual.h
 am__objects_1 =
 am__dirstamp = $(am__leading_dot)dirstamp
 @BUILDLIB_TRUE@am__objects_2 = common.lo fstream.lo heap.lo \
@@ -168,7 +168,8 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @BUILDLIB_TRUE@	device/cpu.lo
 @BUILDLIB_TRUE@am__objects_3 = $(am__objects_1) $(am__objects_2) \
 @BUILDLIB_TRUE@	assert.lo bits/debug.lo exception.lo \
-@BUILDLIB_TRUE@	interpose.lo startup.lo virtual.lo
+@BUILDLIB_TRUE@	interpose.lo prelude-inline.lo startup.lo \
+@BUILDLIB_TRUE@	virtual.lo
 am_libcfa_la_OBJECTS = $(am__objects_3)
 nodist_libcfa_la_OBJECTS = prelude.lo
 libcfa_la_OBJECTS = $(am_libcfa_la_OBJECTS) \
@@ -604,6 +605,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	exception.c \
 @BUILDLIB_TRUE@	interpose.cfa \
 @BUILDLIB_TRUE@	lsda.h \
+@BUILDLIB_TRUE@	prelude-inline.cfa \
 @BUILDLIB_TRUE@	startup.cfa \
 @BUILDLIB_TRUE@	startup.hfa \
 @BUILDLIB_TRUE@	virtual.c \

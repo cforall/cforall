@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <bits/defs.hfa>
 
-forall( T &) {
+forall( T & ) {
 	//------------------------------------------------------------
 	// Queue based on the MCS lock
 	// It is a Multi-Producer/Single-Consumer queue threads pushing
@@ -199,8 +199,8 @@ forall( T &) {
 
 forall( T & )
 struct LinkData {
-	T * volatile top;								// pointer to stack top
-	uintptr_t count;								// count each push
+	T * volatile top;									// pointer to stack top
+	uintptr_t count;									// count each push
 };
 
 forall( T & )
@@ -214,7 +214,7 @@ union Link {
 	atom;
 }; // Link
 
-forall( T | sized(T) | { Link(T) * ?`next( T * ); } ) {
+forall( T /*| sized(T)*/ | { Link(T) * ?`next( T * ); } ) {
 	struct StackLF {
 		Link(T) stack;
 	}; // StackLF
@@ -234,7 +234,7 @@ forall( T | sized(T) | { Link(T) * ?`next( T * ); } ) {
 		T * pop( StackLF(T) & this ) with(this) {
 			Link(T) t @= stack;							// atomic assignment unnecessary, or use CAA
 			for () {									// busy wait
-				if ( t.data.top == 0p ) return 0p;				// empty stack ?
+				if ( t.data.top == 0p ) return 0p;		// empty stack ?
 				Link(T) * next = ( t.data.top )`next;
 				if ( __atomic_compare_exchange_n( &stack.atom, &t.atom, (Link(T))@{ (LinkData(T))@{ next->data.top, t.data.count } }.atom, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) return t.data.top; // attempt to update top node
 			} // for

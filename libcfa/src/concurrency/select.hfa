@@ -183,7 +183,7 @@ static inline bool __handle_waituntil_OR( dlist( select_node ) & queue ) {
 }
 
 // wake one thread from the list
-static inline void wake_one( dlist( select_node ) & queue, select_node & popped ) {
+static inline void wake_one( dlist( select_node ) & /*queue*/, select_node & popped ) {
     if ( !popped.clause_status                              // normal case, node is not a select node
         || ( popped.clause_status && !popped.park_counter ) // If popped link is special case OR selecting unpark but don't call __make_select_node_available
         || __make_select_node_available( popped ) )         // check if popped link belongs to a selecting thread

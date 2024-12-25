@@ -103,6 +103,7 @@ libsrc = ${inst_headers_src} ${inst_headers_src:.hfa=.cfa} \
 	exception.c \
 	interpose.cfa \
 	lsda.h \
+	prelude-inline.cfa \
 	startup.cfa \
 	startup.hfa \
 	virtual.c \
