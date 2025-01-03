@@ -47,7 +47,7 @@
 #include <wctype.h>
 
 int main() {
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+    printf("done\n");
 }
 
 // Local Variables: //

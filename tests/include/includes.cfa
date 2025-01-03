@@ -170,7 +170,7 @@ extern "C" {
 #endif // __CFA__
 
 int main() {
-    #pragma GCC warning "Compiled"							// force non-empty .expect file, NO TABS!!!
+    printf("done\n");
 }
 
 // Local Variables: //

@@ -1,4 +1,3 @@
-warnings/self-assignment.cfa:34:25: warning: Compiled
 warnings/self-assignment.cfa:29:1 warning: self assignment of expression: Generated Cast of:
   Variable Expression: j: signed int
   ... with resolved type:

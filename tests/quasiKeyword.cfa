@@ -12,14 +12,15 @@
 //
 
 exception E {};
+vtable(E) E_vt;
 
-void catch( int i ) {}
-void recover( int i ) {}
-void catchResume( int i ) {}
-void fixup( int i ) {}
-void finally( int i ) {}
+void catch( int i )       { (void) i; }
+void recover( int i )     { (void) i; }
+void catchResume( int i ) { (void) i; }
+void fixup( int i )       { (void) i; }
+void finally( int i )     { (void) i; }
 
-int main(int argc, char const *argv[]) {
+int main() {
 	int catch, recover, catchResume, fixup, finally;
 	try {
 		catch = 3;
@@ -32,9 +33,9 @@ int main(int argc, char const *argv[]) {
 		fixup( fixup );
 		finally = 3;
 		finally( finally );
-		throw (E){};
-		report (E){};
-		throwResume (E){};
+		throw (E){ & E_vt };
+		report (E){ & E_vt };
+		throwResume (E){ & E_vt };
 	} catch ( E * ) {
 	} recover ( E * ) {									// same as catch
 	} catchResume ( E * ) {
@@ -49,5 +50,5 @@ int main(int argc, char const *argv[]) {
 		}
 	else catch = 3;
 
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	printf("done\n");
 }

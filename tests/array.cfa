@@ -36,10 +36,10 @@
 #define E3(...)
 #endif
 
-    int a1[0];
-E1( int a2[*];       )
+    int ga1[0];
+E1( int ga2[*];       )
                                                         #ifndef __cforall
-E1( double a4[3.0];  )                                  // BUG 275: CFA accepts but should reject
+E1( int ga3[3.0];  )                                  // BUG 275: CFA accepts but should reject
                                                         #endif
 
     int m1[0][3];
@@ -48,31 +48,49 @@ E1( int m2[*][*];    )
 
     typedef int T;
 
-    int fred(int n) {
-E1(     int a1[];    )
-E1(     int a2[*];   )
-        int a4[3];
-        int T[3];
-        int a5[n];
+    void fred(int n) {
+E1(     int a1[];   )
+E1(     int a2[*];  )
+        int a4[3];      (void) a4;
+        int T[3];       (void) T;
+        int a5[n];      (void) a5;
     }
 
-    int fred2(int n,
+    void fred2(int n,
         int a1[],
-E1(     int a2[*],   )
+E1(     int a2[*],  )
         int a4[3],
-        int T[3],
+        int T[3]        __attribute__((unused)),
         int a5[n]
-    ) {}
+    ) {
+        // FIX ME: Replace attribute-unused on T with void cast, once Trac 297 is fixed.
+        // This parameter should be in scope and usable within the body.
 
-    int mary( int T[3],                                 // same as: int *T
-              int p1[const 3],                          // same as: int const *p1
-              int p2[static 3],                         // same as T, but length >=3 checked
-              int p3[static const 3]                    // both above: 3 is static, p3 is const
-        ) {
+        (void) a1;
+E1(     (void) a2;  )
+        (void) a4;
+//      (void) T;
+        (void) a5;
+    }
+
+    void mary(
+        int T[3]        __attribute__((unused)),  // same as: int *T
+        int p1[const 3],                          // same as: int const *p1
+        int p2[static 3],                         // same as T, but length >=3 checked
+        int p3[static const 3]                    // both above: 3 is static, p3 is const
+    ) {
+        // FIX ME: Replace attribute-unused on T with void cast, once Trac 297 is fixed.
+        // This parameter should be in scope and usable within the body.
+
+//      (void) T;
+        (void) p1;
+        (void) p2;
+        (void) p3;
     }
 
     // function taking (), returning pointer to array of ints
     int (*tom())[3] {
+        return 0p;
     }
 
     // function taking (), returning pointer to function of same type as mary
@@ -81,11 +99,13 @@ E1(     int a2[*],   )
                      int p2[static 3],
                      int p3[static const 3]
         ) {
+        return 0p;
     }
 
     // functions returning same exotic pointers, in CFA's non-onion syntax
     #ifdef __cforall
     [ * [3] int ] toms_twin(...) {
+        return 0p;
     }
     [ * [int]( [3] int T,
                [const 3] int p1,
@@ -93,6 +113,7 @@ E1(     int a2[*],   )
                [static const 3] int p3
              )
     ] janes_twin(...) {
+        return 0p;
     }
     #endif
 
@@ -111,18 +132,18 @@ E1(     int a2[*],   )
     // fm1, followed by its definition, is instead split into fm1x and fm1y.  And similarly for
     // fm5.
 
-    int fm1x( int, int, int[][*] );
-    int fm1y( int r, int c, int m[][c] ) {}
-    int fm2( int r, int c, int (*m)[c] ) {}             // same as fm1
-E2( int fm3( int r, int c, int m[][static c] ) {}  )    // that's not static
-E3( int fm4( int r, int c, int m[][] );            )    // m's immediate element type is incomplete
-    int fm5x( int, int, int[*][*] );                    // same as fm1 decl
-    int fm5y( int r, int c, int m[r][c] ) {}            // same as fm1 defn
+    void fm1x( int, int, int[][*] );
+    void fm1y( int r, int c, int m[][c] ) { (void) r; (void) c; (void) m; }
+    void fm2( int r, int c, int (*m)[c] ) { (void) r; (void) c; (void) m; }             // same as fm1
+E2( void fm3( int r, int c, int m[][static c] ) {}  )    // that's not static
+E3( void fm4( int r, int c, int m[][] );            )    // m's immediate element type is incomplete
+    void fm5x( int, int, int[*][*] );                    // alt syntax for fm1 decl
+    void fm5y( int r, int c, int m[r][c] ) { (void) r; (void) c; (void) m; }            // alt syntax for fm1 defn
 
 
 
 int main() {
-    #pragma GCC warning "Preprocessor started"          // force non-empty .expect file, NO TABS!!!
+    printf("done\n");
 }
 
 // Local Variables: //

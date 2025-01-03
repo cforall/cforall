@@ -178,7 +178,7 @@ int foo() {
 }
 
 int main( int argc, char const *argv[] ) {
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	printf("done\n");
 }
 
 // Local Variables: //

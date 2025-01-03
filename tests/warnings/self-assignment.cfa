@@ -21,7 +21,7 @@ struct T {
 	S s;
 };
 
-int main() {
+void f() {
 	int j = 0;
 	S s = { 0 };
 	T t = { { 0 } };
@@ -31,7 +31,7 @@ int main() {
 	s.i = s.i;
 	t.s.i = t.s.i;
 
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	// Is compiled -fsyntax-only (not run), to make the test's "output" be the warnings from cfa-cpp.
 }
 
 // Local Variables: //

@@ -148,8 +148,8 @@ long double _Complex ln_10 = LN_10;
 long double _Complex sqrt_2 = SQRT_2;
 long double _Complex _1_sqrt_2 = _1_SQRT_2;
 
-int main(int argc, char const *argv[]) {
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+int main() {
+	printf("done\n");
 }
 
 // Local Variables: //

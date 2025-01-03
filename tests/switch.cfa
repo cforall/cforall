@@ -100,7 +100,7 @@ int main( void ) {
 		j = 5;
 	} // choose
 
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	printf("done\n");
 } // main
 
 // Local Variables: //

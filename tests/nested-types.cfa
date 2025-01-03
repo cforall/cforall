@@ -63,6 +63,8 @@ struct S {
 // S.C c;
 // S.T t;
 
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 int main() {
 	// access nested struct
 	S.T x;
@@ -92,12 +94,12 @@ int main() {
 	// U.S un;
 
 	S.Bar y;
-	S.Baz x;
+	S.Baz w;
 	S.T.Bar z;
 
 	// A.N(int) x;  // xxx - should not be an error, but currently is.
 
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	printf("done\n");
 }
 
 // Local Variables: //

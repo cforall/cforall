@@ -63,7 +63,7 @@ int main() {
 	0x_ff.ffp0;					// hex real
 	0x_1.ffff_ffff_p_128_l;
 
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	printf("done\n");
 } // main
 
 // Local Variables: //

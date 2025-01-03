@@ -50,19 +50,22 @@ WFLAGS_LAX = \
 # Indented list entries are finer-grained targets under the test.
 # Making this association implicit would be ideal, but requires learning more automake than is affordable.
 WFLGAS_OPT_LAX = \
+	${WFLGAS_OPT_LAX_EXPECT_WARN} \
+	${WFLGAS_OPT_LAX_TO_INVESTIGATE}
+
+# Tests checking that cfa-cc raises a certain warning, so -Werror is permanently inappropriate
+WFLGAS_OPT_LAX_EXPECT_WARN = \
+	attr-priority \
+	warnings/self-assignment
+
+# Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
+WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	alloc \
-	array \
 	array-collections/boxed \
 		array-collections/boxed% \
 	array-collections/dimexpr-match-c \
 	array-collections/dimexpr-match-cfa \
-	array-ERR1 \
-	array-ERR2 \
-	array-ERR3 \
 	attributes \
-	attr-priority \
-	builtins/sync \
-	cast \
 	collections/atomic_mpsc \
 	collections/multi_list \
 	collections/queue \
@@ -135,7 +138,6 @@ WFLGAS_OPT_LAX = \
 	concurrency/unified_locking/spin_queue_lock \
 	concurrency/unified_locking/timeout_lock \
 	concurrency/waitfor/barge \
-	concurrency/waitfor/parse \
 	concurrency/waitfor/statment \
 	concurrency/waitfor/when \
 	concurrency/waituntil/all_types \
@@ -170,19 +172,15 @@ WFLGAS_OPT_LAX = \
 	exceptions/polymorphic \
 	exceptions/try-leave-catch \
 	exceptions/virtual-poly \
-	expression \
 	forall \
 	function-operator \
 	gmp \
-	identFuncDeclarator \
 	identParamDeclarator \
 	include/includes \
 	include/stdincludes \
 	include/vector-collections \
 	include/vector-fstream \
 	include/vector-sequence \
-	init1 \
-	init1-ERROR \
 	io/away_fair \
 	io/comp_basic \
 	io/comp_fair \
@@ -194,7 +192,6 @@ WFLGAS_OPT_LAX = \
 	io/manipulatorsInput \
 	io/manipulatorsInput-uchunk \
 	io/many_read \
-	limits \
 	linking/io-acquire \
 	linking/mangling/anon \
 		linking/mangling/lib.o \
@@ -206,10 +203,6 @@ WFLGAS_OPT_LAX = \
 	mathX \
 	maybe \
 	minmax \
-	nested-types \
-	nested-types-ERR1 \
-	nested-types-ERR2 \
-	numericConstants \
 	operators \
 	poly-d-cycle \
 	poly-many-arsz \
@@ -217,7 +210,6 @@ WFLGAS_OPT_LAX = \
 	polymorphism \
 	poly-o-cycle \
 	PRNG \
-	quasiKeyword \
 	quotedKeyword \
 	raii/boxed-types \
 	raii/ctor-autogen \
@@ -236,13 +228,9 @@ WFLGAS_OPT_LAX = \
 	tuple/tupleMember \
 	tuple/tuplePolymorphism \
 	tuple/tupleVariadic \
-	typedefRedef \
-	typedefRedef-ERR1 \
 	typeof \
 	userLiterals \
-	variableDeclarator \
-	vector \
-	warnings/self-assignment
+	vector
 
 WFLAGS=${if ${filter ${WFLGAS_OPT_LAX},${@}},${WFLAGS_LAX},${WFLAGS_STRICT}}
 
@@ -412,9 +400,7 @@ ${GENERATED_CODE} : % : %.cfa ${CFACCBIN}
 # tests that just validate syntax and compiler output should be compared to stderr
 CFACOMPILE_SYNTAX = ${CFACOMPILETEST} -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o ${abspath ${@}}
 
-SYNTAX_ONLY_CODE = \
-	array cast expression identFuncDeclarator init1 limits nested-types numericConstants opt-params quasiKeyword switch typedefRedef variableDeclarator \
-	builtins/sync concurrency/waitfor/parse ctrl-flow/labelledExit include/stdincludes include/includes warnings/self-assignment
+SYNTAX_ONLY_CODE = attr-priority warnings/self-assignment
 
 ${SYNTAX_ONLY_CODE} : % : %.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX}

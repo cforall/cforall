@@ -1,1 +1,1 @@
-typedefRedef.cfa:87:25: warning: Compiled
+done

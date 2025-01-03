@@ -77,12 +77,12 @@ int main() {
 	typedef int ARR[sz];
 #endif
 
-	Foo * x;
+	Foo * x;	(void) x;
 
 	typedef struct Bar Foo;
-	Foo * y;
+	Foo * y;	(void) y;
 
 	typedef int *** pt;
 
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	printf("done\n");
 }

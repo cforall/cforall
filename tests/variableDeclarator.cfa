@@ -92,6 +92,9 @@ int (* const * const f64[3][3]);
 int f65(int);
 int (f66)(int);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+
 int * f67(int);
 int ** f68(int);
 int * const * f69(int);
@@ -111,6 +114,8 @@ int (* const * const f78)(int);
 int (*(* f79)(int))();
 int (*(* const f80)(int))();
 int (* const(* const f81)(int))();
+
+#pragma GCC diagnostic pop
 
 // errors
 
@@ -165,10 +170,15 @@ const * const * [10] int cf42;
 [int] cf65(int);
 [int] cf66(int);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+
 [* int] cf67(int);
 [* * int] cf68(int);
 [const * * int] cf69(int);
 [const * const * int] cf70(int);
+
+#pragma GCC diagnostic pop
 
 // function pointer
 
@@ -176,8 +186,8 @@ const * const * [10] int cf42;
 #endif // __CFA__
 
 //Dummy main
-int main( int argc, char const * argv[] ) {
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+int main() {
+    printf("done\n");
 }
 
 // Local Variables: //

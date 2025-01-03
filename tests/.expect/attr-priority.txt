@@ -1,6 +1,2 @@
 attr-priority.cfa:7:1 warning: invalid attribute: constructor priorities from 101 to 200 are reserved for the implementation.
 attr-priority.cfa:12:1 warning: invalid attribute: destructor priorities from 101 to 200 are reserved for the implementation.
-attr-priority.cfa:8:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
-  Name: malloc
-...to:
-

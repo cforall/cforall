@@ -3,7 +3,7 @@ char f;
 
 void f() {
 	char f;
-	double f;
+	double f __attribute__((unused));
 	(int)f;
 	short f;
 	(int)f;
@@ -12,6 +12,6 @@ void f() {
 }
 
 //Dummy main
-int main( int argc, char const * argv[] ) {
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+int main() {
+    printf("done\n");
 }

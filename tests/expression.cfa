@@ -1,10 +1,10 @@
 struct S { int i; };
 void ?{}( S & s, int i ) { s.i = i; }
-int ?`mary( int );
-int ?`mary( S );
-[int] ?`mary( [int, int] );
-int & ?`jane( int & );
-int jack( int );
+int ?`mary( int ) { return 0; }
+int ?`mary( S ) { return 0; }
+[int] ?`mary( [int, int] ) { return 0; }
+int & ?`jane( int & x ) { return x; }
+int jack( int ) { return 0; }
 
 int main() {
 	int a[3] = { 0, 0, 0 };
@@ -83,5 +83,5 @@ int main() {
 	(S){2}`mary;
 	(S)@{2}`mary;
 
-    #pragma GCC warning "Compiled"                      // force non-empty .expect file, NO TABS!!!
+	printf("done\n");
 } // main
