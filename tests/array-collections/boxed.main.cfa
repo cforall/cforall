@@ -365,14 +365,16 @@ void access_12 ( size_t expectedElmSz, double (*temp)[42] ) {
 forall( T* ) void access_13( size_t expectedElmSz, T x[] ) { 
     SHOW_ACCESS_1D(42)
 }
-char * allocAndAccess_13 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+char * allocAndAccess_13 ( size_t expectedElmSz, const char * tcid, const char * vart ) {
+    (void) vart;
     printf("------- 13%s (communication, mono-poly direct, by param T[]): char x[42], expecting %zd-byte elems\n", tcid, expectedElmSz);
     char x[ 42 ] INITARR;
     bookendInner();
     access_13( expectedElmSz, x );
     return 0p;
 }
-bigun * allocAndAccess_13( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+bigun * allocAndAccess_13( size_t expectedElmSz, const char * tcid, const char * vart ) {
+    (void) vart;
     printf("------- 13%s (communication, mono-poly direct, by param T[]): bigun x[42], expecting %zd-byte elems\n", tcid, expectedElmSz);
     bigun x[ 42 ] INITARR;
     bookendInner();
@@ -382,11 +384,12 @@ bigun * allocAndAccess_13( size_t expectedElmSz, const char * tcid, const char *
 
 // ---------- 14, comm, MPD, PARR
 
-forall( T* ) void access_14 ( size_t expectedElmSz, T (*temp)[42] ) { 
+forall( T* ) void access_14 ( size_t expectedElmSz, T (*temp)[42] ) {
     T * x = *temp;
     SHOW_ACCESS_1D(42)
 }
-double * allocAndAccess_14 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+double * allocAndAccess_14 ( size_t expectedElmSz, const char * tcid, const char * vart ) {
+    (void) vart;
     printf("------- 13%s (communication, mono-poly direct, by param T(*)[*]): double x[42], expecting %zd-byte elems\n", tcid, expectedElmSz);
     double x[ 42 ] INITARR;
     bookendInner();
@@ -396,7 +399,7 @@ double * allocAndAccess_14 ( size_t expectedElmSz, const char * tcid, const char
 
 // ---------- 15, operators
 
-forall( T* ) void access_15 ( size_t expectedElmSz, T x[] ) {
+forall( T* ) void access_15 ( T x[] ) {
     // correctness of x and ?[?] established by earlier tests
     T * x5 = & x[5];
 
@@ -413,17 +416,18 @@ forall( T* ) void access_15 ( size_t expectedElmSz, T x[] ) {
     #undef SHOW
 
     ptrdiff_t expPos5 = x5 - x;
-    ptrdiff_t expNeg5 = x - x5;
+//  ptrdiff_t expNeg5 = x - x5;
 
     printf( "?-? +ve off by %zd\n", ((ptrdiff_t) 5) - expPos5 );
 //  printf( "?-? -ve off by %zd\n", ((ptrdiff_t)-5) - expNeg5 );
 }
 
 forall( T ) T * allocAndAccess_15 ( size_t expectedElmSz, const char * tcid, const char * vart ) { 
+    (void) expectedElmSz;
     printf("------- 15%s (operators): T x[42], expecting T=%s, got sizeof(T)=%zd, expecting %zd-byte elems\n", tcid, vart, sizeof(T), expectedElmSz);
     T x[ 42 ] INITARR;
     // bookends unused
-    access_15( expectedElmSz, x );
+    access_15( x );
     return 0p;
 }
 

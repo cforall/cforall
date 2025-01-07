@@ -44,16 +44,22 @@ POUNDINCLUDE <collections/array.hfa>
 #endif
 
 forall( [N] )
-void zip( array(float, N) & a, array(float, N) & b ) {}
+void zip( array(float, N) &, array(float, N) & ) {}
 
 DECLN_runTests {
 
     enum { enu7 = 7, enu42 = 42 };
     int mut7 = 7, mut42 = 42;
 
+    // Many are only used in rejection cases, so they are unused in the non-ERRS compilation.
+    (void) cpr7;
+    (void) cpr42;
+    (void) mut7;
+    (void) mut42;
+
     #define TRY_COMPAT( LV, RV )            \
     {                                       \
-        void f( array(float, LV) * x ) {}   \
+        void f( array(float, LV) * ) {}     \
         array(float, RV) a;                 \
         f( & a );                           \
     }
@@ -64,6 +70,7 @@ DECLN_runTests {
     {                                       \
         array(float, RV) a;                 \
         array(float, LV) * b = & a;         \
+        (void) b;                           \
     }
     ARRANGEMENT( PTRVAR_INIT )
     #undef TRY_COMPAT
@@ -79,7 +86,7 @@ DECLN_runTests {
 
     #define TRY_COMPAT( LV, RV )            \
     {                                       \
-        void f( array(float, LV) & x ) {}   \
+        void f( array(float, LV) & ) {}     \
         array(float, RV) a;                 \
         f( a );                             \
     }
@@ -90,6 +97,7 @@ DECLN_runTests {
     {                                       \
         array(float, RV) a;                 \
         array(float, LV) & b = a;           \
+        (void) b;                           \
     }
     ARRANGEMENT( REFVAR_INIT )
     #undef TRY_COMPAT

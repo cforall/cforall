@@ -7,14 +7,13 @@ forall( __CFA_tysys_id_only_X & ) struct tag {};
 #define ztag(n) ttag(n)
 
 #ifdef __CFA_DEBUG__
-// FIXME: `len` printing format %ld is a workaround for #269; once fixed, it should be %zd
 #define subcheck( arr, sub, len ) \
 	if ( (sub) < 0 || (sub) >= (len) ) \
-		abort( "Subscript %ld exceeds dimension range [0,%ld) for array %p.\n", \
+		abort( "Subscript %ld exceeds dimension range [0,%zu) for array %p.\n", \
 			   (sub), (len), (arr) )
 #define subchecku( arr, sub, len ) \
 	if ( (sub) >= (len) ) \
-		abort( "Subscript %ld exceeds dimension range [0,%ld) for array %p.\n", \
+		abort( "Subscript %ld exceeds dimension range [0,%zu) for array %p.\n", \
 			   (sub), (len), (arr) )
 #else
 #define subcheck( arr, sub, len ) do {} while (0)

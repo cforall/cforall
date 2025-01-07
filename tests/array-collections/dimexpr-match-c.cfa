@@ -25,9 +25,15 @@ DECLN_runTests {
     enum { enu7 = 7, enu42 = 42 };
     int mut7 = 7, mut42 = 42;
 
+    // Many are only used in rejection cases, so they are unused in the non-ERRS compilation.
+    (void) cpr7;
+    (void) cpr42;
+    (void) mut7;
+    (void) mut42;
+
     #define TRY_COMPAT( LV, RV )        \
     {                                   \
-        void f( float (*x)[LV] ) {}     \
+        void f( float (*x)[LV] ) { (void) x; }      \
         float a[RV];                    \
         f( & a );                       \
     }
@@ -38,6 +44,7 @@ DECLN_runTests {
     {                                   \
         float a[RV];                    \
         float (*b)[LV] = & a;           \
+        (void) b;                       \
     }
     ARRANGEMENT( PTRVAR_INIT )
     #undef TRY_COMPAT

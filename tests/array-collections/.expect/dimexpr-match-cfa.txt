@@ -1,4 +1,4 @@
----- PTRPARM_CALL:   { void f( typeof( mkar_( ((tag(float)){}) , ((tag(__L__)){}) ) ) * x ) {} typeof( mkar_( ((tag(float)){}) , ((tag(__R__)){}) ) ) a; f( & a ); }
+---- PTRPARM_CALL:   { void f( typeof( mkar_( ((tag(float)){}) , ((tag(__L__)){}) ) ) * ) {} typeof( mkar_( ((tag(float)){}) , ((tag(__R__)){}) ) ) a; f( & a ); }
 done STA EQ STA, L=7, R=7
 skip STA NE STA, L=7, R=42
 done STA EQ STA, L=7, R=enu7
@@ -31,7 +31,7 @@ skip DYN NE STA, L=dim7, R=enu42
 skip DYN NE DYN, L=dim7, R=cpr42
 skip DYN NE UNS, L=dim7, R=mut42
 skip UNS NE DYN, L=mut7, R=dim42
----- PTRVAR_INIT:   { typeof( mkar_( ((tag(float)){}) , ((tag(__R__)){}) ) ) a; typeof( mkar_( ((tag(float)){}) , ((tag(__L__)){}) ) ) * b = & a; }
+---- PTRVAR_INIT:   { typeof( mkar_( ((tag(float)){}) , ((tag(__R__)){}) ) ) a; typeof( mkar_( ((tag(float)){}) , ((tag(__L__)){}) ) ) * b = & a; (void) b; }
 done STA EQ STA, L=7, R=7
 skip STA NE STA, L=7, R=42
 done STA EQ STA, L=7, R=enu7
@@ -97,7 +97,7 @@ skip DYN NE STA, L=dim7, R=enu42
 skip DYN NE DYN, L=dim7, R=cpr42
 skip DYN NE UNS, L=dim7, R=mut42
 skip UNS NE DYN, L=mut7, R=dim42
----- REFPARM_CALL:   { void f( typeof( mkar_( ((tag(float)){}) , ((tag(__L__)){}) ) ) & x ) {} typeof( mkar_( ((tag(float)){}) , ((tag(__R__)){}) ) ) a; f( a ); }
+---- REFPARM_CALL:   { void f( typeof( mkar_( ((tag(float)){}) , ((tag(__L__)){}) ) ) & ) {} typeof( mkar_( ((tag(float)){}) , ((tag(__R__)){}) ) ) a; f( a ); }
 done STA EQ STA, L=7, R=7
 skip STA NE STA, L=7, R=42
 done STA EQ STA, L=7, R=enu7
@@ -130,7 +130,7 @@ skip DYN NE STA, L=dim7, R=enu42
 skip DYN NE DYN, L=dim7, R=cpr42
 skip DYN NE UNS, L=dim7, R=mut42
 skip UNS NE DYN, L=mut7, R=dim42
----- REFVAR_INIT:   { typeof( mkar_( ((tag(float)){}) , ((tag(__R__)){}) ) ) a; typeof( mkar_( ((tag(float)){}) , ((tag(__L__)){}) ) ) & b = a; }
+---- REFVAR_INIT:   { typeof( mkar_( ((tag(float)){}) , ((tag(__R__)){}) ) ) a; typeof( mkar_( ((tag(float)){}) , ((tag(__L__)){}) ) ) & b = a; (void) b; }
 done STA EQ STA, L=7, R=7
 skip STA NE STA, L=7, R=42
 done STA EQ STA, L=7, R=enu7

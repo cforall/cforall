@@ -1,0 +1,13 @@
+// Simple example use of the return/annotation cast.
+
+#include <limits.hfa>
+
+int main() {
+	unsigned int max0 = (return int)MAX;
+	signed int max1 = MAX;
+	if (max0 == max1) {
+		printf("match\n");
+	} else {
+		printf("error (%u vs %d)\n", max0, max1);
+	}
+}

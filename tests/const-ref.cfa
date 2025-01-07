@@ -1,0 +1,9 @@
+// A const reference binding should not work without warning.
+int intref(int const & x) {
+	return x;
+}
+
+int main() {
+	printf("done\n");
+	return intref(0);
+}

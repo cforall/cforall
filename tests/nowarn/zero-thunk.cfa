@@ -5,7 +5,7 @@ void f( ) {
 
 forall( T )
 T g( zero_t ) {
-    printf( "%ld\n", sizeof(T) );
+    printf( "%zd\n", sizeof(T) );
     return (T){};
 }
 

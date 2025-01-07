@@ -1,0 +1,31 @@
+// From fixed Trac #269
+
+forall( T )
+void fred( T x ) {
+    printf( "%zu\n", sizeof(T) );
+    printf( "%zu\n", sizeof(x) );
+    (void) x;  // FIX ME: work around Trac #300
+}
+
+#include <array.hfa>
+forall( [N] )
+void mary( array(char, N) & ) {
+    printf( "%zu\n", N );    
+  #if defined TRY_TRAC_269_REMAINDER
+	for ( i; N ) {
+        if (i > 0) printf(" ");
+        printf( "%zu", i); // FIX ME: i still getting type long unsigned int on -m32
+	}
+    printf("\n");
+  #endif
+}
+
+int main() {
+    char c = 'x';
+    fred(c);
+
+    array( char, 10 ) a;
+    mary(a);
+
+    return 0;
+}

@@ -1224,7 +1224,12 @@ namespace {
 			finder.find( castExpr->arg, ResolveMode::withAdjustment() );
 
 			// return casts are eliminated (merely selecting an overload, no actual operation)
-			candidates = std::move(finder.candidates);
+			for (auto & cand : finder.candidates) {
+				if (typesCompatibleIgnoreQualifiers(toType, cand->expr->result, cand->env)) {
+					candidates.push_back (cand);
+				}
+			}
+			// candidates = std::move(finder.candidates);
 			return;
 		}
 		else if (toType->isVoid()) {

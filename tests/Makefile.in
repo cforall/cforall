@@ -453,10 +453,6 @@ WFLGAS_OPT_LAX_EXPECT_WARN = \
 # Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
 WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	alloc \
-	array-collections/boxed \
-		array-collections/boxed% \
-	array-collections/dimexpr-match-c \
-	array-collections/dimexpr-match-cfa \
 	attributes \
 	collections/atomic_mpsc \
 	collections/multi_list \
