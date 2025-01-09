@@ -21,7 +21,8 @@
 #include <parseargs.hfa>
 
 int main( int argc, char * argv[] ) {
-	check_main(argv[0]);
+	if ( argc == 0 ) abort( "Test requires a command-line argument" );
+	check_main( argv[0] );
 
 	bool YN = false;
 	bool Yn = false;

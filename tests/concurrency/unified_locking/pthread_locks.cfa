@@ -17,7 +17,7 @@ volatile int counter = 0;
 
 thread Wait_Signal_1 {};
 
-void main( Wait_Signal_1 & this ) {
+void main( Wait_Signal_1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(l);
 		if(empty(c) && i != num_times - 1) {
@@ -31,7 +31,7 @@ void main( Wait_Signal_1 & this ) {
 
 thread Wait_3_Signal_3 {};
 
-void main( Wait_3_Signal_3 & this ) {
+void main( Wait_3_Signal_3 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(l);
         counter++;
@@ -47,7 +47,7 @@ void main( Wait_3_Signal_3 & this ) {
 
 thread Rec_Lock_Wait_Signal_1 {};
 
-void main( Rec_Lock_Wait_Signal_1 & this ) {
+void main( Rec_Lock_Wait_Signal_1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(l);
 		lock(l);
@@ -65,7 +65,7 @@ void main( Rec_Lock_Wait_Signal_1 & this ) {
 
 thread Wait_Time_Signal_1 {};
 
-void main( Wait_Time_Signal_1 & this ) {
+void main( Wait_Time_Signal_1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(l);
 		if(empty(c) || random(10) >= 9 ) {
@@ -73,6 +73,7 @@ void main( Wait_Time_Signal_1 & this ) {
 			clock_gettime(CLOCK_REALTIME, &t);
 			timespec waitTime{0,1};
 			bool woken = wait(c,l, t + waitTime);
+			(void) woken;
 		}else{
 			notify_one(c);
 		}

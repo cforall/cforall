@@ -18,9 +18,9 @@ void f( void ) {
 		Banana,
 		Pear,
 		Mango
-	} fruit = Mango;
-	enum Fruits f1;
-	Fruits f2;
+	} fruit = Mango;	(void) fruit;
+	enum Fruits f1;		(void) f1;
+	Fruits f2;			(void) f2;
 }
 
 // test constant-expressions
@@ -40,6 +40,6 @@ int z[J] = { 1, 2, 3 };
 int aa[41] @= { [3] = 3, [1] = 6 };
 
 //Dummy main
-int main(int argc, char const *argv[]) {
+int main() {
 	printf( "done\n" );				// non-empty .expect file
 }

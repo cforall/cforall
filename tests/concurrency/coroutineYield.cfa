@@ -23,7 +23,7 @@ static const unsigned long N = 1_000ul;
 
 coroutine Coroutine {};
 
-void main(Coroutine& this) {
+void main( Coroutine & ) {
 	while(true) {
 		#if !defined(TEST_FOREVER)
 			sout | "Coroutine 1";
@@ -38,7 +38,7 @@ void main(Coroutine& this) {
 
 
 Coroutine c;
-int main(int argc, char* argv[]) {
+int main() {
 	for(int i = 0; TEST(i < N); i++) {
 		#if !defined(TEST_FOREVER)
 			sout | "Thread 1";

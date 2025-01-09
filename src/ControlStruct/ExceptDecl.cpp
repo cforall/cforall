@@ -444,6 +444,13 @@ ast::StructDecl const * ExceptDeclCore::transformExcept(
 	return createExceptionStruct( location, exceptionName, forall, params, members );
 }
 
+ast::NameExpr const * designatedName( ast::Designation const * des ) {
+	if ( des && 1 == des->designators.size() ) {
+		return des->designators.front().as<ast::NameExpr>();
+	}
+	return nullptr;
+}
+
 ast::ObjectDecl const * ExceptDeclCore::transformVTable(
 		ast::ObjectDecl const * decl, ast::VTableType const * type ) {
 	CodeLocation const & location = decl->location;
@@ -466,12 +473,44 @@ ast::ObjectDecl const * ExceptDeclCore::transformVTable(
 			declsToAddBefore.push_back(
 				createTypeIdValue( location, exceptionName, params ) );
 		}
-		declsToAddBefore.push_back(
-			createCopy( location, exceptionName, params ) );
-		declsToAddBefore.push_back(
-			createMsg( location, exceptionName, params ) );
 		retDecl = createVirtualTable(
 			location, exceptionName, params, tableName );
+		// There is quite a bit of work to pull over any initializers and
+		// decide if we want to insert the default functions.
+		bool foundCopy = false;
+		bool foundMsg = false;
+		ast::ListInit const * init = decl->init.as<ast::ListInit>();
+		if ( init ) {
+			for ( size_t i = 0 ; i < init->initializers.size() ; ++i ) {
+				ast::Designation const * des = init->designations.at(i);
+				auto name = designatedName( des );
+				if ( nullptr == name ) continue;
+				if ( "copy" == name->name ) {
+					foundCopy = true;
+				} else if ( "msg" == name->name ) {
+					foundMsg = true;
+				}
+				auto retInit = retDecl->init.as<ast::ListInit>();
+				for ( size_t j = 0 ; j < retInit->initializers.size() ; ++j ) {
+					ast::Designation const * des = retInit->designations.at(j);
+					auto retName = designatedName( des );
+					if ( retName && name->name == retName->name ) {
+						retInit = ast::mutate_field_index( retInit,
+							&ast::ListInit::initializers, j,
+							init->initializers.at(i) );
+					}
+				}
+				retDecl->init = retInit;
+			}
+		}
+		if ( !foundCopy ) {
+			declsToAddBefore.push_back(
+				createCopy( location, exceptionName, params ) );
+		}
+		if ( !foundMsg ) {
+			declsToAddBefore.push_back(
+				createMsg( location, exceptionName, params ) );
+		}
 	}
 
 	for ( ast::ptr<ast::Attribute> const & attr : decl->attributes ) {

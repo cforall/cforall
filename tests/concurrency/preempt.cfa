@@ -70,7 +70,7 @@ void main(worker_t & this) {
 	}
 }
 
-int main(int argc, char* argv[]) {
+int main() {
 	processor p;
 	globals.counter = 0;
 	globals.durations[0] = 0;

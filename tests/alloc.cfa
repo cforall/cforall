@@ -20,9 +20,9 @@
 #include <fstream.hfa>
 #include <stdlib.hfa>									// access C malloc, realloc
 
-int * foo( int * p, int c ) { return p; }
-int * bar( int * p, int c ) { return p; }
-int * baz( int * p, int c ) { return p; }
+int * foo( int * p, int ) { return p; }
+int * bar( int * p, int ) { return p; }
+int * baz( int * p, int ) { return p; }
 
 int main( void ) {
 	size_t dim = 10;
@@ -216,7 +216,7 @@ int main( void ) {
 		a.[ x, y ] = [ x, y ];
 		const_count++;
 	}
-	void ^?{}( Struct & a ) { dest_count++; }			// destruct
+	void ^?{}( Struct & ) { dest_count++; }			// destruct
 	Struct st, st1, sta[dim], sta1[dim], * stp, * stp1;
 
 	// alignment, non-array types

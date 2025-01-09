@@ -34,7 +34,8 @@
 int true_main( const char * exec );
 
 int main( int argc, char * argv[]) {
-	check_main( argv[0]);
+	if ( argc == 0 ) abort( "Test requires a command-line argument" );
+	check_main( argv[0] );
 
 	int i = -3;
 	unsigned u = 3;

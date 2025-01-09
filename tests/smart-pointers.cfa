@@ -64,7 +64,7 @@ void declare_test(void) {
 	unique_ptr(double) ptr_d1 = 3.5;
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	counter_test();
 	unique_test();
 	pointer_equality();

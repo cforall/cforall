@@ -64,7 +64,7 @@ void wait( condition & cond, global_t & mutex a, global_t & mutex b, global_t & 
 
 //----------------------------------------------------------------------------------------------------
 // Signaler
-void main( Signaler & this ) {
+void main( Signaler & ) {
 
 	while( waiter_left != 0 ) {
 		unsigned action = random( 4 );
@@ -91,7 +91,7 @@ void main( Signaler & this ) {
 
 //----------------------------------------------------------------------------------------------------
 // Waiter ABC
-void main( WaiterABC & this ) {
+void main( WaiterABC & ) {
 	for( int i = 0; TEST(i < N); i++ ) {
 		wait( condABC, globalA, globalB, globalC );
 		KICK_WATCHDOG;
@@ -102,7 +102,7 @@ void main( WaiterABC & this ) {
 
 //----------------------------------------------------------------------------------------------------
 // Waiter AB
-void main( WaiterAB & this ) {
+void main( WaiterAB & ) {
 	for( int i = 0; TEST(i < N); i++ ) {
 		wait( condAB , globalA, globalB );
 		KICK_WATCHDOG;
@@ -113,7 +113,7 @@ void main( WaiterAB & this ) {
 
 //----------------------------------------------------------------------------------------------------
 // Waiter AC
-void main( WaiterAC & this ) {
+void main( WaiterAC & ) {
 	for( int i = 0; TEST(i < N); i++ ) {
 		wait( condAC , globalA, globalC );
 		KICK_WATCHDOG;
@@ -124,7 +124,7 @@ void main( WaiterAC & this ) {
 
 //----------------------------------------------------------------------------------------------------
 // Waiter BC
-void main( WaiterBC & this ) {
+void main( WaiterBC & ) {
 	for( int i = 0; TEST(i < N); i++ ) {
 		wait( condBC , globalB, globalC );
 		KICK_WATCHDOG;
@@ -135,7 +135,7 @@ void main( WaiterBC & this ) {
 
 //----------------------------------------------------------------------------------------------------
 // Main
-int main(int argc, char* argv[]) {
+int main() {
 	srandom( time( NULL ) );
 	waiter_left = 4;
 	processor p[2];

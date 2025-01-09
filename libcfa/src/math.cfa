@@ -19,6 +19,96 @@
 
 #pragma GCC visibility push(default)
 
+unsigned long long log2_u32_32( unsigned long long val ) {
+	enum {
+		TABLE_BITS = 6,
+		TABLE_SIZE = (1 << TABLE_BITS) + 2,
+	};
+	// for(i; TABLE_SIZE) {
+	//  table[i] = (unsigned long long)(log2(1.0 + i / pow(2, TABLE_BITS)) * pow(2, 32)));
+	// }
+	static const unsigned long long table[] = {
+		0x0000000000, 0x0005b9e5a1, 0x000b5d69ba, 0x0010eb389f,
+		0x001663f6fa, 0x001bc84240, 0x002118b119, 0x002655d3c4,
+		0x002b803473, 0x00309857a0, 0x00359ebc5b, 0x003a93dc98,
+		0x003f782d72, 0x00444c1f6b, 0x0049101eac, 0x004dc4933a,
+		0x005269e12f, 0x00570068e7, 0x005b888736, 0x006002958c,
+		0x00646eea24, 0x0068cdd829, 0x006d1fafdc, 0x007164beb4,
+		0x00759d4f80, 0x0079c9aa87, 0x007dea15a3, 0x0081fed45c,
+		0x0086082806, 0x008a064fd5, 0x008df988f4, 0x0091e20ea1,
+		0x0095c01a39, 0x009993e355, 0x009d5d9fd5, 0x00a11d83f4,
+		0x00a4d3c25e, 0x00a8808c38, 0x00ac241134, 0x00afbe7fa0,
+		0x00b3500472, 0x00b6d8cb53, 0x00ba58feb2, 0x00bdd0c7c9,
+		0x00c1404ead, 0x00c4a7ba58, 0x00c80730b0, 0x00cb5ed695,
+		0x00ceaecfea, 0x00d1f73f9c, 0x00d53847ac, 0x00d8720935,
+		0x00dba4a47a, 0x00ded038e6, 0x00e1f4e517, 0x00e512c6e5,
+		0x00e829fb69, 0x00eb3a9f01, 0x00ee44cd59, 0x00f148a170,
+		0x00f446359b, 0x00f73da38d, 0x00fa2f045e, 0x00fd1a708b,
+		0x0100000000, 0x0102dfca16,
+	};
+	_Static_assert((sizeof(table) / sizeof(table[0])) == TABLE_SIZE, "TABLE_SIZE should be accurate");
+	// starting from val = (2 ** i)*(1 + f) where 0 <= f < 1
+	// log identities mean log2(val) = log2((2 ** i)*(1 + f)) = log2(2**i) + log2(1+f)
+	//
+	// getting i is easy to do using builtin_clz (count leading zero)
+	//
+	// we want to calculate log2(1+f) independently to have a many bits of precision as possible.
+	//     val = (2 ** i)*(1 + f) = 2 ** i   +   f * 2 ** i
+	// isolating f we get
+	//     val - 2 ** i = f * 2 ** i
+	//     (val - 2 ** i) / 2 ** i = f
+	//
+	// we want to interpolate from the table to get the values
+	// and compromise by doing quadratic interpolation (rather than higher degree interpolation)
+	//
+	// for the interpolation we want to shift everything the fist sample point
+	// so our parabola becomes x = 0
+	// this further simplifies the equations
+	//
+	// the consequence is that we need f in 2 forms:
+	//  - finding the index of x0
+	//  - finding the distance between f and x0
+	//
+	// since sample points are equidistant we can significantly simplify the equations
+
+	// get i
+	const unsigned long long bits = sizeof(val) * __CHAR_BIT__;
+	const unsigned long long lz = __builtin_clzl(val);
+	const unsigned long long i = bits - 1 - lz;
+
+	// get the fractinal part as a u32.32
+	const unsigned long long frac = (val << (lz + 1)) >> 32;
+
+	// get high order bits for the index into the table
+	const unsigned long long idx0 = frac >> (32 - TABLE_BITS);
+
+	// get the x offset, i.e., the difference between the first sample point and the actual fractional part
+	const long long udx = frac - (idx0 << (32 - TABLE_BITS));
+	/* paranoid */ verify((idx0 + 2) < TABLE_SIZE);
+
+	const long long y0 = table[idx0 + 0];
+	const long long y1 = table[idx0 + 1];
+	const long long y2 = table[idx0 + 2];
+
+	// from there we can quadraticly interpolate to get the data, using the lagrange polynomial
+	// normally it would look like:
+	//     double r0 = y0 * ((x - x1) / (x0 - x1)) * ((x - x2) / (x0 - x2));
+	//     double r1 = y1 * ((x - x0) / (x1 - x0)) * ((x - x2) / (x1 - x2));
+	//     double r2 = y2 * ((x - x0) / (x2 - x0)) * ((x - x1) / (x2 - x1));
+	// but since the spacing between sample points is fixed, we can simplify itand extract common expressions
+	const long long f1 = (y1 - y0);
+	const long long f2 = (y2 - y0);
+	const long long a = f2 - (f1 * 2l);
+	const long long b = (f1 * 2l) - a;
+
+	// Now we can compute it in the form (ax + b)x + c (which avoid repeating steps)
+	long long sum = ((a*udx) >> (32 - TABLE_BITS))  + b;
+	sum = (sum*udx) >> (32 - TABLE_BITS + 1);
+	sum = y0 + sum;
+
+	return (i << 32) + (sum);
+} // log2_u32_32
+
 // Implementation of power functions (from the prelude):
 
 #define __CFA_EXP__() \

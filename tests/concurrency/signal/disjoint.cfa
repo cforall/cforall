@@ -64,7 +64,7 @@ void ?{}( Barger & this ) {
 	((thread&)this){ "Barger Thread" };
 }
 
-void main( Barger & this ) {
+void main( Barger & ) {
 	while( !all_done ) {
 		barge( globals.data );
 		yield();
@@ -92,7 +92,7 @@ void ?{}( Waiter & this ) {
 	((thread&)this){ "Waiter Thread" };
 }
 
-void main( Waiter & this ) {
+void main( Waiter & ) {
 	while( wait( globals.mut, globals.data ) ) { KICK_WATCHDOG; yield(); }
 }
 
@@ -121,7 +121,7 @@ void ?{}( Signaller & this ) {
 	((thread&)this){ "Signaller Thread" };
 }
 
-void main( Signaller & this ) {
+void main( Signaller & ) {
 	while( !all_done ) {
 		logic( globals.mut );
 		yield();
@@ -130,7 +130,7 @@ void main( Signaller & this ) {
 
 //------------------------------------------------------------------------------
 // Main loop
-int main(int argc, char* argv[]) {
+int main() {
 	srandom( time( NULL ) );
 	all_done = false;
 	processor p;

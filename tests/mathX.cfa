@@ -28,10 +28,6 @@ int main( void ) {
 	long long int lli, llir1, llir2, llir3;
 	unsigned long long int ulli, ullir1, ullir2, ullir3;
 
-	float f;
-	double d;
-	long double l;
-
 	//---------------------- Nearest Integer ----------------------
 
 	//============================================================

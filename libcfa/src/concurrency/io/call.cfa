@@ -209,7 +209,7 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 			sqe->user_data = (uintptr_t)&future;
 			
 			sqe->fd = fd;
-			sqe->addr = (typeof(sqe->addr))iov;
+			sqe->addr = (uintptr_t)iov;
 			sqe->len = iovcnt;
 			sqe->off = offset;
 			sqe->rw_flags = flags;
@@ -267,7 +267,7 @@ void async_tee(io_future_t & future, int fd_in, int fd_out, size_t len, unsigned
 			sqe->user_data = (uintptr_t)&future;
 			
 			sqe->fd = fd;
-			sqe->addr = (typeof(sqe->addr))iov;
+			sqe->addr = (uintptr_t)iov;
 			sqe->len = iovcnt;
 			sqe->off = offset;
 			sqe->rw_flags = flags;
@@ -486,7 +486,7 @@ inline void async_sendmsg(io_future_t & future, int sockfd, const struct msghdr 
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (typeof(sqe->addr))(struct msghdr *)msg;
+		sqe->addr = (uintptr_t)(struct msghdr *)msg;
 		sqe->len = 1;
 		sqe->msg_flags = flags;
 
@@ -541,7 +541,7 @@ inline void async_recvmsg(io_future_t & future, int sockfd, struct msghdr * msg,
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (typeof(sqe->addr))(struct msghdr *)msg;
+		sqe->addr = (uintptr_t)(struct msghdr *)msg;
 		sqe->len = 1;
 		sqe->msg_flags = flags;
 
@@ -596,7 +596,7 @@ inline void async_send(io_future_t & future, int sockfd, const void * buf, size_
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (typeof(sqe->addr))buf;
+		sqe->addr = (uintptr_t)buf;
 		sqe->len = len;
 		sqe->msg_flags = flags;
 
@@ -651,7 +651,7 @@ inline void async_recv(io_future_t & future, int sockfd, void * buf, size_t len,
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (typeof(sqe->addr))buf;
+		sqe->addr = (uintptr_t)buf;
 		sqe->len = len;
 		sqe->msg_flags = flags;
 
@@ -706,7 +706,7 @@ inline void async_accept4(io_future_t & future, int sockfd, __SOCKADDR_ARG addr,
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (typeof(sqe->addr))&addr;
+		sqe->addr = (uintptr_t)&addr;
 		sqe->addr2 = (typeof(sqe->addr2))addrlen;
 		sqe->accept_flags = flags;
 
@@ -761,7 +761,7 @@ inline void async_connect(io_future_t & future, int sockfd, __CONST_SOCKADDR_ARG
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = sockfd;
-		sqe->addr = (typeof(sqe->addr))&addr;
+		sqe->addr = (uintptr_t)&addr;
 		sqe->off = addrlen;
 
 		asm volatile("": : :"memory");
@@ -924,7 +924,7 @@ inline void async_madvise(io_future_t & future, void * addr, size_t length, int 
 		sqe->flags = sflags;
 		sqe->user_data = (uintptr_t)&future;
 		
-		sqe->addr = (typeof(sqe->addr))addr;
+		sqe->addr = (uintptr_t)addr;
 		sqe->len = length;
 		sqe->fadvise_advice = advice;
 
@@ -979,7 +979,7 @@ inline void async_openat(io_future_t & future, int dirfd, const char * pathname,
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = dirfd;
-		sqe->addr = (typeof(sqe->addr))pathname;
+		sqe->addr = (uintptr_t)pathname;
 		sqe->open_flags = flags;;
 		sqe->len = mode;
 
@@ -1035,7 +1035,7 @@ int cfa_openat(int dirfd, const char * pathname, int flags, mode_t mode, __u64 s
 			sqe->user_data = (uintptr_t)&future;
 			
 			sqe->fd = dirfd;
-			sqe->addr = (typeof(sqe->addr))pathname;
+			sqe->addr = (uintptr_t)pathname;
 			sqe->off = (typeof(sqe->off))how;
 			sqe->len = sizeof(*how);
 	
@@ -1144,7 +1144,7 @@ int cfa_close(int fd, __u64 submit_flags) {
 			sqe->user_data = (uintptr_t)&future;
 			
 			sqe->fd = dirfd;
-			sqe->addr = (typeof(sqe->addr))pathname;
+			sqe->addr = (uintptr_t)pathname;
 			sqe->statx_flags = flags;
 			sqe->len = mask;
 			sqe->off = (typeof(sqe->off))statxbuf;
@@ -1201,7 +1201,7 @@ inline void async_read(io_future_t & future, int fd, void * buf, size_t count, _
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = fd;
-		sqe->addr = (typeof(sqe->addr))buf;
+		sqe->addr = (uintptr_t)buf;
 		sqe->len = count;
 
 		asm volatile("": : :"memory");
@@ -1255,7 +1255,7 @@ inline void async_write(io_future_t & future, int fd, void * buf, size_t count, 
 		sqe->user_data = (uintptr_t)&future;
 		
 		sqe->fd = fd;
-		sqe->addr = (typeof(sqe->addr))buf;
+		sqe->addr = (uintptr_t)buf;
 		sqe->len = count;
 
 		asm volatile("": : :"memory");

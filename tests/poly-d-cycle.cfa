@@ -19,7 +19,7 @@ void func(object(int) *) {
 
 func_table(int) an_instance = { func };
 
-int main(int argc, char * argv[]) {
+int main() {
 	object(int) x = { 0p };
 	an_instance.object_func( &x );
 	return 0;

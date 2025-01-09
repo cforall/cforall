@@ -65,6 +65,7 @@ int main() {
 
 forall(T)
 [T, T] foo([T, T] y) {
+	(void) y;
 	[T, T] x;
 	return x;
 }

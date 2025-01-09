@@ -227,7 +227,7 @@ calls = [
 	# CFA_HAVE_IORING_OP_READV
 	Call('READV', 'ssize_t preadv2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags)', {
 		'fd'  : 'fd',
-		'addr': '(typeof(sqe->addr))iov',
+		'addr': '(uintptr_t)iov',
 		'len' : 'iovcnt',
 		'off' : 'offset',
 		'rw_flags' : 'flags'
@@ -235,7 +235,7 @@ calls = [
 	# CFA_HAVE_IORING_OP_WRITEV
 	Call('WRITEV', 'ssize_t pwritev2(int fd, const struct iovec * iov, int iovcnt, off_t offset, int flags)', {
 		'fd'  : 'fd',
-		'addr': '(typeof(sqe->addr))iov',
+		'addr': '(uintptr_t)iov',
 		'len' : 'iovcnt',
 		'off' : 'offset',
 		'rw_flags' : 'flags'
@@ -261,42 +261,42 @@ calls = [
 	# CFA_HAVE_IORING_OP_SENDMSG
 	Call('SENDMSG', 'ssize_t sendmsg(int sockfd, const struct msghdr * msg, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(typeof(sqe->addr))(struct msghdr *)msg',
+		'addr': '(uintptr_t)(struct msghdr *)msg',
 		'len': '1',
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_RECVMSG
 	Call('RECVMSG', 'ssize_t recvmsg(int sockfd, struct msghdr * msg, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(typeof(sqe->addr))(struct msghdr *)msg',
+		'addr': '(uintptr_t)(struct msghdr *)msg',
 		'len': '1',
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_SEND
 	Call('SEND', 'ssize_t send(int sockfd, const void * buf, size_t len, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(typeof(sqe->addr))buf',
+		'addr': '(uintptr_t)buf',
 		'len': 'len',
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_RECV
 	Call('RECV', 'ssize_t recv(int sockfd, void * buf, size_t len, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(typeof(sqe->addr))buf',
+		'addr': '(uintptr_t)buf',
 		'len': 'len',
 		'msg_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_ACCEPT
 	Call('ACCEPT', 'int accept4(int sockfd, __SOCKADDR_ARG addr, socklen_t * restrict addrlen, int flags)', {
 		'fd': 'sockfd',
-		'addr': '(typeof(sqe->addr))&addr',
+		'addr': '(uintptr_t)&addr',
 		'addr2': '(typeof(sqe->addr2))addrlen',
 		'accept_flags': 'flags'
 	}),
 	# CFA_HAVE_IORING_OP_CONNECT
 	Call('CONNECT', 'int connect(int sockfd, __CONST_SOCKADDR_ARG addr, socklen_t addrlen)', {
 		'fd': 'sockfd',
-		'addr': '(typeof(sqe->addr))&addr',
+		'addr': '(uintptr_t)&addr',
 		'off': 'addrlen'
 	}),
 	# CFA_HAVE_IORING_OP_FALLOCATE
@@ -315,21 +315,21 @@ calls = [
 	}),
 	# CFA_HAVE_IORING_OP_MADVISE
 	Call('MADVISE', 'int madvise(void * addr, size_t length, int advice)', {
-		'addr': '(typeof(sqe->addr))addr',
+		'addr': '(uintptr_t)addr',
 		'len': 'length',
 		'fadvise_advice': 'advice'
 	}),
 	# CFA_HAVE_IORING_OP_OPENAT
 	Call('OPENAT', 'int openat(int dirfd, const char * pathname, int flags, mode_t mode)', {
 		'fd': 'dirfd',
-		'addr': '(typeof(sqe->addr))pathname',
+		'addr': '(uintptr_t)pathname',
 		'open_flags': 'flags;',
 		'len': 'mode'
 	}),
 	# CFA_HAVE_IORING_OP_OPENAT2
 	Call('OPENAT2', 'int openat2(int dirfd, const char * pathname, struct open_how * how, size_t size)', {
 		'fd': 'dirfd',
-		'addr': '(typeof(sqe->addr))pathname',
+		'addr': '(uintptr_t)pathname',
 		'off': '(typeof(sqe->off))how',
 		'len': 'sizeof(*how)'
 	}, define = 'CFA_HAVE_OPENAT2'),
@@ -340,7 +340,7 @@ calls = [
 	# CFA_HAVE_IORING_OP_STATX
 	Call('STATX', 'int statx(int dirfd, const char * pathname, int flags, unsigned int mask, struct statx * statxbuf)', {
 		'fd': 'dirfd',
-		'addr': '(typeof(sqe->addr))pathname',
+		'addr': '(uintptr_t)pathname',
 		'statx_flags': 'flags',
 		'len': 'mask',
 		'off': '(typeof(sqe->off))statxbuf'
@@ -348,13 +348,13 @@ calls = [
 	# CFA_HAVE_IORING_OP_READ
 	Call('READ', 'ssize_t read(int fd, void * buf, size_t count)', {
 		'fd': 'fd',
-		'addr': '(typeof(sqe->addr))buf',
+		'addr': '(uintptr_t)buf',
 		'len': 'count'
 	}),
 	# CFA_HAVE_IORING_OP_WRITE
 	Call('WRITE', 'ssize_t write(int fd, void * buf, size_t count)', {
 		'fd': 'fd',
-		'addr': '(typeof(sqe->addr))buf',
+		'addr': '(uintptr_t)buf',
 		'len': 'count'
 	}),
 	# CFA_HAVE_IORING_OP_SPLICE

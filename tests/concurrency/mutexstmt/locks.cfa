@@ -11,7 +11,7 @@ thread T_Mutex {};
 bool insideFlag = false;
 int count = 0;
 
-void main( T_Mutex & this ) {
+void main( T_Mutex & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		mutex ( m1 ) count++;
 		mutex ( m1 ) { 
@@ -34,7 +34,7 @@ void refTest( single_acquisition_lock & m ) {
 
 thread T_Multi {};
 
-void main( T_Multi & this ) {
+void main( T_Multi & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		refTest( m1 );
 		mutex ( m1 ) {
@@ -80,7 +80,7 @@ monitor_t l4;
 
 thread T_Multi_Poly {};
 
-void main( T_Multi_Poly & this ) {
+void main( T_Multi_Poly & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		refTest( l1 );
 		mutex ( l1, l4 ) {

@@ -88,7 +88,7 @@ bool call( int index ) {
 	}
 }
 
-void main( caller & this ) {
+void main( caller & ) {
 	int index = get_index( m );
 	while( !start ) yield();
 	while( call( index ) );
@@ -121,7 +121,7 @@ void do_wait( M & mutex this ) {
 
 thread waiter{};
 
-void main( waiter & this ) {
+void main( waiter & ) {
 	do_wait( m );
 }
 

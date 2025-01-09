@@ -43,7 +43,7 @@ void delete_mutex(T * x) {
 	free(x);
 }
 
-int main(int argc, char* argv[]) {
+int main() {
 	processor p;
 	{
 		MyThread * f[6];

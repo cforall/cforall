@@ -54,7 +54,6 @@ void main( T & ) {
 
 	// above output used as input to parallel threads 
 
-	int a, b, c, d, e, f, g, h, i;
 	for ( 100 ) {										// expression protection
 		mutex(sinLock) doWork();
 	}

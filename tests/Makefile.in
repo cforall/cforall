@@ -452,10 +452,8 @@ WFLGAS_OPT_LAX_EXPECT_WARN = \
 
 # Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
 WFLGAS_OPT_LAX_TO_INVESTIGATE = \
-	alloc \
 	attributes \
 	collections/atomic_mpsc \
-	collections/multi_list \
 	collections/queue \
 	collections/sequence \
 	collections/stack \
@@ -469,50 +467,21 @@ WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	concurrency/actors/poison \
 	concurrency/actors/static \
 	concurrency/actors/types \
-	concurrency/barrier/generation \
-	concurrency/barrier/last \
-	concurrency/barrier/order \
-	concurrency/channels/big_elems \
 	concurrency/channels/churn \
 	concurrency/channels/contend \
 	concurrency/channels/daisy_chain \
 	concurrency/channels/hot_potato \
-	concurrency/channels/ping_pong \
 	concurrency/channels/pub_sub \
-	concurrency/channels/zero_size \
-	concurrency/cluster \
-	concurrency/cofor \
-	concurrency/coroutineYield \
-	concurrency/examples/boundedBufferEXT \
-	concurrency/examples/boundedBufferINT \
 	concurrency/futures/multi \
 	concurrency/futures/select_future \
 	concurrency/futures/typed \
-	concurrency/futures/wait_any \
-	concurrency/join \
 	concurrency/lockfree_stack \
-	concurrency/migrate \
-	concurrency/monitor \
-	concurrency/multi-monitor \
-	concurrency/mutexstmt/locks \
-	concurrency/mutexstmt/monitors \
-	concurrency/mutexstmt/tuple \
-	concurrency/once \
-	concurrency/preempt \
 	concurrency/pthread/bounded_buffer \
 	concurrency/pthread/pthread_attr_test \
-	concurrency/pthread/pthread_cond_test \
 	concurrency/pthread/pthread_demo_create_join \
 	concurrency/pthread/pthread_demo_lock \
 	concurrency/pthread/pthread_key_test \
 	concurrency/pthread/pthread_once_test \
-	concurrency/readyQ/leader_spin \
-	concurrency/signal/block \
-	concurrency/signal/disjoint \
-	concurrency/signal/wait \
-	concurrency/sleep \
-	concurrency/suspend_then \
-	concurrency/thread \
 	concurrency/unified_locking/block_spin_lock \
 	concurrency/unified_locking/exp_backoff \
 	concurrency/unified_locking/fast_block_lock \
@@ -525,41 +494,22 @@ WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	concurrency/unified_locking/simple_owner_lock \
 	concurrency/unified_locking/spin_queue_lock \
 	concurrency/unified_locking/timeout_lock \
-	concurrency/waitfor/barge \
-	concurrency/waitfor/statment \
-	concurrency/waitfor/when \
 	concurrency/waituntil/all_types \
 	concurrency/waituntil/basic_else \
 	concurrency/waituntil/channel_close \
-	concurrency/waituntil/channel_zero_size \
 	concurrency/waituntil/channels \
 	concurrency/waituntil/futures \
 	concurrency/waituntil/locks \
-	concurrency/waituntil/one_chan \
 	concurrency/waituntil/repeat_close \
 	concurrency/waituntil/timeout \
-	configs/parsebools \
-	configs/parsenums \
 	configs/usage \
-	coroutine/raii \
-	ctrl-flow/goto \
-	ctrl-flow/ifwhileCtl \
 	ctrl-flow/labelledExit \
 	ctrl-flow/loop_else \
 	designations \
-	enum \
-	enum_tests/inc-dec \
-	enum_tests/planet \
-	enum_tests/structEnum \
 	exceptions/cardgame \
 	exceptions/defaults \
 	exceptions/defaults-threads \
-	exceptions/hotpotato \
-	exceptions/hotpotato_checked \
-	exceptions/pingpong_nonlocal \
-	exceptions/polymorphic \
 	exceptions/try-leave-catch \
-	exceptions/virtual-poly \
 	forall \
 	function-operator \
 	gmp \
@@ -572,51 +522,23 @@ WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	io/away_fair \
 	io/comp_basic \
 	io/comp_fair \
-	io/io-acquire \
-	io/io-acquire2 \
-	io/io-acquire-in \
-	io/io-acquire-no-io \
-	io/io-acquire-out \
 	io/manipulatorsInput \
 	io/manipulatorsInput-uchunk \
 	io/many_read \
-	linking/io-acquire \
-	linking/mangling/anon \
-		linking/mangling/lib.o \
-		linking/mangling/main.o \
-	linkonce \
-		link-once/% \
-	malloc \
 	math \
-	mathX \
-	maybe \
 	minmax \
 	operators \
-	poly-d-cycle \
 	poly-many-arsz \
-	poly-member \
 	polymorphism \
-	poly-o-cycle \
-	PRNG \
-	quotedKeyword \
-	raii/boxed-types \
 	raii/ctor-autogen \
 	raii/dtor-early-exit \
 	raii/init_once \
-	raii/partial \
 	references \
-	result \
 	shortCircuit \
-	sizeof \
-	smart-pointers \
 	sum \
 	switch \
-	tuple/tupleAssign \
 	tuple/tupleCast \
 	tuple/tupleMember \
-	tuple/tuplePolymorphism \
-	tuple/tupleVariadic \
-	typeof \
 	userLiterals \
 	vector
 

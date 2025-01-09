@@ -13,6 +13,12 @@ struct my_array {
     float strides[N];
 };
 
+// layoutof curious_size_dep doesn't need sizeof T
+forall(T *)
+struct curious_size_dep {
+    int x;
+};
+
 // generated type_name function only needs its parameter as a tag
 enum () foo_t { foo };
 

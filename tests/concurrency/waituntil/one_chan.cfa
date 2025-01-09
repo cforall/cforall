@@ -8,7 +8,7 @@ volatile bool done = false;
 long long int globalTotal = 0;
 
 thread Server1 {};
-void main( Server1 & this ) {
+void main( Server1 & ) {
     long long int c, i = 0, myTotal = 0;
     for( ;;i++ ) {
         waituntil( c << C ) { if ( c == -1 ) break; myTotal += c; }

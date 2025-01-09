@@ -60,7 +60,7 @@ void checkSetters() {
 	assert('!' == get_error(&fee));
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	checkPredicates();
 	//checkNamedConstructors();
 	checkGetters();

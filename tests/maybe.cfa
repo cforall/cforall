@@ -59,7 +59,7 @@ void checkSetters() {
 	assert(!has_value(&fy));
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	checkPredicates();
 	checkGetter();
 	//checkNamedConstructors();

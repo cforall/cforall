@@ -50,7 +50,6 @@ int main( void ) {
 	enum { dim = 8, align = 64, libAlign = libAlign() };
 	size_t elemSize = sizeof(int);
 	size_t size = dim * elemSize;
-	char fill = '\xde';
 	int * ip;
 	T1 * tp;
 

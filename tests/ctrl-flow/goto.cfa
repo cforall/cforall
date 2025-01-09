@@ -15,7 +15,7 @@ void gotoLabelledLoop() {
 	sout | "end" | nl;
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	sout | nlOff;
 
 	gotoLabelledLoop();

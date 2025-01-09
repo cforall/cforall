@@ -14,11 +14,13 @@ int main() {
 	{
 		MonoCell thing1;
 		Proxy(int) & thing2 = thing1.data;
+		(void) thing2;
 	}
 
 	{
 		PolyCell(int) thing1;
 		Proxy(int) & thing2 = thing1.data;
+		(void) thing2;
 	}
 
 	printf("Done\n");

@@ -93,7 +93,6 @@ Consumer * cons[Cons];
 int main() {
 	Buffer(int) buffer;
 	int sums[Cons];
-	int i;
 	processor p;
 
 	//srandom( getpid() );

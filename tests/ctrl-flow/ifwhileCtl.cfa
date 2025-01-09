@@ -18,7 +18,7 @@
 int f( int r ) { return r; }
 
 int main( void ) {
-	int x = 4, y = 3;
+	int x = 4, y = 3;		(void) x; (void) y;
 
 	if ( int x = 1 ) {
 		sout | "x != 0 correct";
@@ -41,10 +41,10 @@ int main( void ) {
 	} // if
 
 	if ( struct S { int i; } s = { 3 }; s.i < 4 ) {
-		S s1;
+		S s1;	(void) s1;
 		sout | "s.i < 4 correct";
 	} else {
-		S s1;
+		S s1;	(void) s1;
 		sout | "s.i >= 4 incorrect";
 	} // if
 
@@ -63,7 +63,7 @@ int main( void ) {
 	} // while
 
 	while ( struct S { int i; } s = { 3 }; s.i < 4 ) {
-		S s1;
+		S s1;	(void) s1;
 		sout | "s.i < 4 correct";
 		break;
 	} // while

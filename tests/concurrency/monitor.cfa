@@ -27,13 +27,13 @@ void increment( global_t & mutex this ) {
 
 thread MyThread {};
 
-void main( MyThread & this ) {
+void main( MyThread & ) {
 	for(int i = 0; i < 750_000; i++) {
 		increment( global );
 	}
 }
 
-int main(int argc, char* argv[]) {
+int main() {
 	assert( global.__mon.entry_queue.tail != NULL );
 	processor p;
 	{

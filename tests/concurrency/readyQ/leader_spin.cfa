@@ -96,7 +96,7 @@ void main(MyThread & this) {
 }
 
 // ==================================================
-int main(int argc, char * argv[]) {
+int main() {
 	lead_idx = 0;
 	leader = prng( lead_rng, nthreads );
 

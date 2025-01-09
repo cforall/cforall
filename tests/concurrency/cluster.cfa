@@ -8,7 +8,7 @@ void ?{}( MyThread & this ) {
 	((thread&)this){ *the_cluster };
 }
 
-void main( MyThread & this ) {
+void main( MyThread & ) {
 	for(50) {
 		yield();
 	}

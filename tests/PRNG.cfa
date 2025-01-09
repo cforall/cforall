@@ -85,7 +85,7 @@ void main( T2 & ) {
 } // main
 
 thread T3 {};
-void main( T3 & th ) {
+void main( T3 & ) {
 	size_t * buckets = calloc( BUCKETS );				// too big for task stack
 	for ( TRIALS / 5 ) {
 		buckets[prng() % BUCKETS] += 1;					// concurrent

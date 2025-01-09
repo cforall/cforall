@@ -22,7 +22,7 @@ fast_cond_var( fast_block_lock ) f_c_f;
 
 thread T_C_M_WS1 {};
 
-void main( T_C_M_WS1 & this ) {
+void main( T_C_M_WS1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(m);
 		if(empty(c_m) && i != num_times - 1) {
@@ -36,7 +36,7 @@ void main( T_C_M_WS1 & this ) {
 
 thread T_C_M_WB1 {};
 
-void main( T_C_M_WB1 & this ) {
+void main( T_C_M_WB1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(m);
 		if(counter(c_m) == 3 || i == num_times - 1) {
@@ -50,7 +50,7 @@ void main( T_C_M_WB1 & this ) {
 
 thread T_C_S_WS1 {};
 
-void main( T_C_S_WS1 & this ) {
+void main( T_C_S_WS1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(s);
 		if(empty(c_s) && i != num_times - 1) {
@@ -64,7 +64,7 @@ void main( T_C_S_WS1 & this ) {
 
 thread T_C_S_WB1 {};
 
-void main( T_C_S_WB1 & this ) {
+void main( T_C_S_WB1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(s);
 		if(counter(c_s) == 3 || i == num_times - 1) {
@@ -78,7 +78,7 @@ void main( T_C_S_WB1 & this ) {
 
 thread T_C_L_WS1 {};
 
-void main( T_C_L_WS1 & this ) {
+void main( T_C_L_WS1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(l);
 		if(empty(c_l) && i != num_times - 1) {
@@ -92,7 +92,7 @@ void main( T_C_L_WS1 & this ) {
 
 thread T_C_L_WB1 {};
 
-void main( T_C_L_WB1 & this ) {
+void main( T_C_L_WB1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(l);
 		if(counter(c_l) == 3 || i == num_times - 1) {
@@ -106,7 +106,7 @@ void main( T_C_L_WB1 & this ) {
 
 thread T_F_C_F_WS1 {};
 
-void main( T_F_C_F_WS1 & this ) {
+void main( T_F_C_F_WS1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(f);
 		if(empty(f_c_f) && i != num_times - 1) {
@@ -120,7 +120,7 @@ void main( T_F_C_F_WS1 & this ) {
 
 thread T_C_O_WS1 {};
 
-void main( T_C_O_WS1 & this ) {
+void main( T_C_O_WS1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(o);
 		if(empty(c_o) && i != num_times - 1) {
@@ -134,7 +134,7 @@ void main( T_C_O_WS1 & this ) {
 
 thread T_C_O_WB1 {};
 
-void main( T_C_O_WB1 & this ) {
+void main( T_C_O_WB1 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(o);
 		if(counter(c_o) == 3 || i == num_times - 1) {
@@ -148,7 +148,7 @@ void main( T_C_O_WB1 & this ) {
 
 thread T_C_M_WS2 {};
 
-void main( T_C_M_WS2 & this ) {
+void main( T_C_M_WS2 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(m);
 		lock(m);
@@ -166,7 +166,7 @@ void main( T_C_M_WS2 & this ) {
 
 thread T_C_O_WS2 {};
 
-void main( T_C_O_WS2 & this ) {
+void main( T_C_O_WS2 & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(o);
 		lock(o);
@@ -184,7 +184,7 @@ void main( T_C_O_WS2 & this ) {
 
 thread T_C_NLW {};
 
-void main( T_C_NLW & this ) {
+void main( T_C_NLW & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		wait(c_o);
 	}
@@ -192,7 +192,7 @@ void main( T_C_NLW & this ) {
 
 thread T_C_NLS {};
 
-void main( T_C_NLS & this ) {
+void main( T_C_NLS & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		while (empty(c_o)) { }
 		notify_one(c_o);
@@ -201,7 +201,7 @@ void main( T_C_NLS & this ) {
 
 thread T_C_S_WNF {};
 
-void main( T_C_S_WNF & this ) {
+void main( T_C_S_WNF & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		lock(s);
 		if(empty(c_s) && i != num_times - 1) {
@@ -218,7 +218,7 @@ bool done = false;
 
 thread T_C_NLWD {};
 
-void main( T_C_NLWD & this ) {
+void main( T_C_NLWD & ) {
 	done = false;
 	for (unsigned int i = 0; i < num_times/5; i++) {
 		if (i % 1000 == 0) printf("Iteration: %d\n", i);
@@ -229,7 +229,7 @@ void main( T_C_NLWD & this ) {
 
 thread T_C_WDS {};
 
-void main( T_C_WDS & this ) {
+void main( T_C_WDS & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		while (empty(c_s) && !done) { }
 		notify_one(c_s);
@@ -240,7 +240,7 @@ void main( T_C_WDS & this ) {
 
 thread T_C_LWD {};
 
-void main( T_C_LWD & this ) {
+void main( T_C_LWD & ) {
 	done = false;
 	for (unsigned int i = 0; i < num_times/5; i++) {
 		if (i % 1000 == 0) printf("Iteration: %d\n", i);
@@ -253,7 +253,7 @@ void main( T_C_LWD & this ) {
 
 thread T_C_LWDS {};
 
-void main( T_C_LWDS & this ) {
+void main( T_C_LWDS & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		while (empty(c_s) && !done) { }
 		lock(s);

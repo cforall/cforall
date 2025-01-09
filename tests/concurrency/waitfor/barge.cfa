@@ -29,7 +29,7 @@ void ?{} ( global_t & this ) {
 	this.state = BARGE;
 }
 
-void ^?{} ( global_t & mutex this ) {}
+void ^?{} ( global_t & mutex ) {}
 
 global_t global;
 
@@ -39,7 +39,7 @@ bool barge( global_t & mutex this ) {
 }
 
 thread barger_t {};
-void main( barger_t & this ) {
+void main( barger_t & ) {
 	yield();
 	while( barge( global ) ) { yield(random( 10 )); }
 }
@@ -55,7 +55,7 @@ bool do_call( global_t & mutex this ) {
 }
 
 thread caller_t {};
-void main( caller_t & this ) {
+void main( caller_t & ) {
 	while( do_call(global) ) { yield(random( 10 )); }
 }
 
@@ -77,7 +77,7 @@ void do_wait( global_t & mutex this ) {
 }
 
 thread waiter_t{};
-void main( waiter_t & this ) {
+void main( waiter_t & ) {
 	do_wait(global);
 }
 

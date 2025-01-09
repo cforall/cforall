@@ -63,7 +63,7 @@ void main(Coroutine& this) {
 }
 
 thread Thread {};
-void main(Thread & this) {
+void main( Thread & ) {
 	Coroutine * mine = 0p;
 	while(!done) {
 		yield();
@@ -77,7 +77,7 @@ void main(Thread & this) {
 }
 
 
-int main(int argc, char* argv[]) {
+int main() {
 	processor p[2];
 	Coroutine c;
 	resume(c); // Prime the coroutine to avoid one of the threads being its starter

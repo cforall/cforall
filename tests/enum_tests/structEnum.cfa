@@ -25,8 +25,8 @@ struct Point apple = first;
 // Failed due to Qualified name is currently unimplemented.
 
 int main() {
-     PointEnum vals = second;
-     PointEnum val2;
+     PointEnum vals = second;      (void) vals;
+     PointEnum val2;               (void) val2;
      // The failing line: assignment
      // val2 = vals;
 

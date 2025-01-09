@@ -27,7 +27,7 @@ static double surfaceWeight( Planet p, double otherMass ) {
 	return otherMass * surfaceGravity( p );
 }
 
-int main( int argc, char * argv[] ) {
+int main() {
 //	if ( argc != 2 ) exit | "Usage: " | argv[0] | "earth-weight"; // terminate program
 //	double earthWeight = convert( argv[1] );
 	double earthWeight;

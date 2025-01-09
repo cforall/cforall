@@ -1129,10 +1129,21 @@ void CodeGenerator::postvisit( ast::ThrowStmt const * stmt ) {
 	output << ";";
 }
 
+void CodeGenerator::postvisit( ast::TryStmt const * stmt ) {
+	assertf( !options.genC, "TryStmt should not reach code generation." );
+
+	output << "try ";
+	stmt->body->accept( *visitor );
+	for ( ast::ptr<ast::CatchClause> const & handler : stmt->handlers ) {
+		handler->accept( *visitor );
+	}
+	if ( stmt->finally ) stmt->finally->accept( *visitor );
+}
+
 void CodeGenerator::postvisit( ast::CatchClause const * stmt ) {
 	assertf( !options.genC, "CatchClause should not reach code generation." );
 
-	output << ((stmt->kind == ast::Terminate) ? "catch" : "catchResume");
+	output << ((stmt->kind == ast::Terminate) ? " catch " : " catchResume ");
 	output << "( ";
 	stmt->decl->accept( *visitor );
 	if ( stmt->cond ) {
@@ -1141,6 +1152,13 @@ void CodeGenerator::postvisit( ast::CatchClause const * stmt ) {
 	}
 	output << " ) ";
 	stmt->body->accept( *visitor );
+}
+
+void CodeGenerator::postvisit( ast::FinallyClause const * clause ) {
+	assertf( !options.genC, "FinallyClause should not reach code generation." );
+
+	output << " finally ";
+	clause->body->accept( *visitor );
 }
 
 void CodeGenerator::postvisit( ast::WaitForStmt const * stmt ) {

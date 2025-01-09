@@ -38,7 +38,7 @@ bool call5( global_t & mutex this ) { this.last_call = 5; return this.done; }
 bool call6( global_t & mutex this ) { this.last_call = 6; return this.done; }
 
 thread caller_t{};
-void main( caller_t & this ) {
+void main( caller_t & ) {
 	while( true ) {
 		rand_yield();
 		if( call1( global ) ) return;
@@ -75,7 +75,7 @@ void arbiter( global_t & mutex this ) {
 }
 
 thread arbiter_t{};
-void main( arbiter_t & this ) {
+void main( arbiter_t & ) {
 	arbiter( global );
 }
 

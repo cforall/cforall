@@ -47,7 +47,7 @@ int main() {
 		struct X {
 			int z;
 		} x;
-		X ?=?(X & x, double d) { return x; }
+		X ?=?(X & x, double) { return x; }
 		[int, double, int] t;
 
 		// no conversion from X to integral types, so this serves as a santiy

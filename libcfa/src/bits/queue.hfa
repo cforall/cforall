@@ -32,10 +32,12 @@ forall( T & | { T *& Next ( T * ); } ) {
 			return *last;
 		}
 
-		T * succ( Queue(T) & q, T * n ) with( q ) {		// pre: *n in *q
-			#ifdef __CFA_DEBUG__
+		T * succ( Queue(T) & q, T * n ) {					// pre: *n in *q
+		  #ifdef __CFA_DEBUG__
 			if ( ! listed( n ) ) abort( "(Queue &)%p.succ( %p ) : Node is not on a list.", &q, n );
-			#endif // __CFA_DEBUG__
+		  #else
+			(void) q;
+		  #endif // __CFA_DEBUG__
 			return (Next( n ) == n) ? 0p : Next( n );
 		} // post: n == tail() & succ(n) == 0 | n != tail() & *succ(n) in *q
 

@@ -8,8 +8,8 @@ int done_flag = 0;
 pthread_mutex_t _mutex;
 pthread_cond_t cond;
 
-extern "C"{
-    void* S1(void* arg){
+extern "C" {
+    void* S1( void * ) {
         pthread_mutex_lock(&_mutex);
         for (int i = 0; i < 1000; i++) sout | "S1 done " | i;
         done_flag = 1;
@@ -18,7 +18,7 @@ extern "C"{
         return NULL;
     }
 
-    void* S2(void* arg){
+    void* S2( void * ) {
         pthread_mutex_lock(&_mutex);
         if (!done_flag) pthread_cond_wait(&cond, &_mutex);
         sout | "S2 statement done!";
@@ -29,9 +29,7 @@ extern "C"{
 
 
 
-int main(int argc, char const *argv[])
-{
-    /* code */
+int main() {
     pthread_mutex_init(&_mutex, NULL);
     pthread_cond_init(&cond, NULL);
     pthread_t s1,s2;

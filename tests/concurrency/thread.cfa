@@ -27,7 +27,7 @@ void main(Second& this) {
 }
 
 
-int main(int argc, char* argv[]) {
+int main() {
 	semaphore lock = { 0 };
 	sout | "User main begin";
 	{

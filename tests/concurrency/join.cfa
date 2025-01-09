@@ -27,7 +27,7 @@ void main(OtherWorker & this) {
 }
 
 
-int main(int argc, char* argv[]) {
+int main() {
 	{
 		Worker workers[17];
 		for(i; 17) {

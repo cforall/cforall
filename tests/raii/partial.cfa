@@ -11,7 +11,7 @@ void testAllNested() {
 
     // Declaring your own empty ctor leaves an autogen dtor usable
     struct thing1 {};
-    void ?{}( thing1 & this ) {  printf( "custom ctor\n"); }
+    void ?{}( thing1 & ) {  printf( "custom ctor\n"); }
     void test1() {
         printf("test1\n");
         thing1 x;
@@ -19,8 +19,8 @@ void testAllNested() {
 
     // Declaring your own empty ctor and dtor leaves an autogen copy ctor usable
     struct thing2 {};
-    void  ?{}( thing2 & this ) {  printf( "custom ctor\n"); }
-    void ^?{}( thing2 & this ) {  printf( "custom dtor\n"); }
+    void  ?{}( thing2 & ) {  printf( "custom ctor\n"); }
+    void ^?{}( thing2 & ) {  printf( "custom dtor\n"); }
     void test2() {
         printf("test2\n");
         thing2 x;
@@ -36,10 +36,10 @@ void testAllNested() {
     }
 
     struct thing456 {};
-    void    ?{}( thing456 & this ) {  printf( "custom ctor\n"); }
+    void    ?{}( thing456 & ) {  printf( "custom ctor\n"); }
     void    ?{}( thing456 &, thing456 ) = void;
     thing456 & ?=?( thing456 &, thing456 ) = void;
-    void   ^?{}( thing456 & this ) {  printf( "custom dtor\n"); }
+    void   ^?{}( thing456 & ) {  printf( "custom dtor\n"); }
 
     struct wrapper1 { thing456 x; };
     struct wrapper2 { wrapper1 x; };
@@ -79,7 +79,7 @@ void testAllNested() {
 
 // Declaring your own empty ctor leaves an autogen dtor usable
 struct thing1 {};
-void ?{}( thing1 & this ) {  printf( "custom ctor\n"); }
+void ?{}( thing1 & ) {  printf( "custom ctor\n"); }
 void test1() {
     printf("test1\n");
     thing1 x;
@@ -87,8 +87,8 @@ void test1() {
 
 // Declaring your own empty ctor and dtor leaves an autogen copy ctor usable
 struct thing2 {};
-void  ?{}( thing2 & this ) {  printf( "custom ctor\n"); }
-void ^?{}( thing2 & this ) {  printf( "custom dtor\n"); }
+void  ?{}( thing2 & ) {  printf( "custom ctor\n"); }
+void ^?{}( thing2 & ) {  printf( "custom dtor\n"); }
 void test2() {
     printf("test2\n");
     thing2 x;
@@ -104,10 +104,10 @@ void test3() {
 }
 
 struct thing456 {};
-void    ?{}( thing456 & this ) {  printf( "custom ctor\n"); }
+void    ?{}( thing456 & ) {  printf( "custom ctor\n"); }
 void    ?{}( thing456 &, thing456 ) = void;
 thing456 & ?=?( thing456 &, thing456 ) = void;
-void   ^?{}( thing456 & this ) {  printf( "custom dtor\n"); }
+void   ^?{}( thing456 & ) {  printf( "custom dtor\n"); }
 
 struct wrapper1 { thing456 x; };
 struct wrapper2 { wrapper1 x; };

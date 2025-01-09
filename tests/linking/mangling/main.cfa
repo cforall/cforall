@@ -11,5 +11,7 @@ int main() {
 	a_typedefed_global.some_int = 8;
 	a_typedefed_global.a_float = 9.0f;
 
+	(void) test;
+
 	sout | "Done!";
 }

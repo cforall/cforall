@@ -1,0 +1,86 @@
+// Use of the exception system where we provide our own functions.
+
+#include <stdio.h>
+#include <string.h>
+// Using collections/string.hfa leads to a resolution error on snprintf.
+
+exception BadIndexException {
+	int value;
+	int size;
+	char * message;
+};
+
+const char * virtual_msg(BadIndexException * this) {
+	return this->virtual_table->msg(this);
+}
+
+// Array length calculated to ususually be big enough.
+const size_t msg_size = 52;
+
+char * format_bad_index(int value, int size) {
+	char * out = (char *)(void *)malloc(msg_size + 1);
+	snprintf(out, msg_size,
+		"Out of Range Index %d (expected less than %d)", value, size);
+	return out;
+}
+
+const char * msg(BadIndexException * this) {
+	if (this->message) {
+		free(this->message);
+	}
+	this->message = format_bad_index(this->value, this->size);
+	return this->message;
+}
+
+void copy(BadIndexException * dst, BadIndexException * src) {
+	// This is an easy detail to miss, you have to copy the table over.
+	dst->virtual_table = src->virtual_table;
+
+	dst->value = src->value;
+	dst->size = src->size;
+	dst->message = (src->message) ? strndup(src->message, msg_size) : 0p;
+}
+
+// Do not construct an exception without a vtable!
+void ?{}(BadIndexException&) = void;
+
+void ?{}(BadIndexException & this,
+		vtable(BadIndexException) & vt, int value, int size) {
+	this.virtual_table = &vt;
+	this.value = value;
+	this.size = size;
+	this.message = 0p;
+}
+
+void ?{}(BadIndexException & this, BadIndexException that) {
+	copy(&this, &that);
+}
+
+void ^?{}(BadIndexException & this) {
+	free(this.message);
+}
+
+vtable(BadIndexException) arrayIndex = {
+	.msg = msg,
+	.copy = copy,
+	.^?{} = ^?{},
+};
+
+// This is not supposed to be a real range check, but that's the idea:
+void failRangeCheck(int index, int size) {
+	throw (BadIndexException){ arrayIndex, index, size };
+}
+
+int atDefault(int fallback) {
+	try {
+		failRangeCheck(10, 8);
+	} catch (BadIndexException * error) {
+		printf("%s\n", virtual_msg(error));
+	}
+	return fallback;
+}
+
+int main() {
+	int value = atDefault(5);
+	printf("%d\n", value);
+}

@@ -29,6 +29,6 @@ static inline void ?{}( __mutex_stmt_lock_guard & this, void * lockarr [], __loc
 
 forall(L & | is_lock(L)) {
     static inline void * __get_mutexstmt_lock_ptr( L & this ) { return &this; }
-    static inline L __get_mutexstmt_lock_type( L & this ) {}
-    static inline L __get_mutexstmt_lock_type( L * this ) {}
+    static inline L __get_mutexstmt_lock_type( L & ) {}
+    static inline L __get_mutexstmt_lock_type( L * ) {}
 }

@@ -2,10 +2,14 @@
 
 #include <fstream.hfa>
 
-int main(int argc, char * argv[]) {
+int main() {
 	char val = 'c';
 	char & ref = val;
 	// It could check against "char *", but it should always be different.
 	sout | "char  : " | sizeof(val) | alignof(val);
 	sout | "char &: " | sizeof(ref) | alignof(ref);
+
+	// FIX ME: work around Trac #300
+	(void) val;
+	(void) ref;
 }

@@ -128,7 +128,6 @@ int main( int argc, char * argv[] ) {
 	intmax_t numPlayers = 0;							// players for a particular game
 	intmax_t seed = 42;									// random-number seed
 	bool playersSet = false;
-	char * nosummary = getenv( "NOSUMMARY" );			// print extra output
 
 	try {
 		choose ( argc ) {

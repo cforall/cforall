@@ -31,18 +31,18 @@ void ^?{}( Raii & this ) {
 
 coroutine Cor {};
 
-void ?{}( Cor & this ) {
+void ?{}( Cor & ) {
 	sout | "Coroutine Ctor";
 }
 
-void main( Cor & this ) {
+void main( Cor & ) {
 	Raii raii = { "Coroutine" };
 	sout | "Before Suspend";
 	suspend;
 	sout | "After Suspend";
 }
 
-void ^?{}( Cor & this ) {
+void ^?{}( Cor & ) {
 	sout | "Coroutine Dtor";
 }
 

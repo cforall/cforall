@@ -105,7 +105,9 @@ struct CodeGenerator final :
 	void postvisit( ast::BranchStmt const * );
 	void postvisit( ast::ReturnStmt const * );
 	void postvisit( ast::ThrowStmt const * );
+	void postvisit( ast::TryStmt const * );
 	void postvisit( ast::CatchClause const * );
+	void postvisit( ast::FinallyClause const * );
 	void postvisit( ast::WaitForStmt const * );
 	void postvisit( ast::WithStmt const * );
 	void postvisit( ast::WhileDoStmt const * );

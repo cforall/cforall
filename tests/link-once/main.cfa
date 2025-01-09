@@ -8,6 +8,6 @@ void printformat(signed int signed_value, unsigned int unsigned_value) {
 	printf("signed=%d unsigned=%d\n", signed_value, unsigned_value);
 }
 
-int main(int argc, char * argv[]) {
+int main() {
 	printformat(example, example);
 }

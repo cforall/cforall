@@ -9,4 +9,13 @@ int main() {
 	typeof( [int] ( int, int p ) ) *v8;
 	(typeof(v1)) v2; // cast with typeof
 	printf( "done\n" );				// non-empty .expect file
+
+	// FIX ME: work around Trac #300
+	(void) v1;
+	(void) v3;
+	(void) v4;
+	(void) v5;
+	(void) v6;
+	(void) v7;
+	(void) v8;
 }

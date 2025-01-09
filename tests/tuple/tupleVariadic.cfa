@@ -97,7 +97,7 @@ T * copy(T x) {
 	return new(x);
 }
 
-forall(T... | { void foo(T); }) void bar(T x) {}
+forall(T... | { void foo(T); }) void bar( T ) {}
 void foo(int) {}
 
 int main() {
@@ -125,7 +125,7 @@ int main() {
 
 	{
 		// T = [const int] -- this ensures that void(*)(int) satisfies void(*)(const int)
-		const int x;
+		const int x = 42;
 		bar(x);
 	}
 

@@ -94,18 +94,20 @@ void addSTypeParams(
 	for ( ast::ptr<ast::TypeDecl> const & sizedParam : sizedParams ) {
 		ast::TypeInstType inst( sizedParam );
 		std::string paramName = Mangle::mangleType( &inst );
-		params.emplace_back( new ast::ObjectDecl(
+		auto sizeofParam = new ast::ObjectDecl(
 			sizedParam->location,
 			sizeofName( paramName ),
 			getLayoutCType( transUnit )
-		) );
-		auto alignParam = new ast::ObjectDecl(
+		);
+		sizeofParam->attributes.push_back( new ast::Attribute( "unused" ) );
+		params.emplace_back( sizeofParam );
+		auto alignofParam = new ast::ObjectDecl(
 			sizedParam->location,
 			alignofName( paramName ),
 			getLayoutCType( transUnit )
 		);
-		alignParam->attributes.push_back( new ast::Attribute( "unused" ) );
-		params.emplace_back( alignParam );
+		alignofParam->attributes.push_back( new ast::Attribute( "unused" ) );
+		params.emplace_back( alignofParam );
 	}
 }
 

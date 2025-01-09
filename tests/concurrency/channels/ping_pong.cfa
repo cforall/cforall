@@ -15,7 +15,7 @@ bool done = false;
 size_t total_operations = 0;
 
 thread Pong {};
-void main(Pong & this) {
+void main(Pong &) {
     try {
         for ( ;; ) {
             if ( done ) break;
@@ -26,7 +26,7 @@ void main(Pong & this) {
 }
 
 thread Ping {};
-void main(Ping & this) {
+void main(Ping &) {
     try {
         for ( ;; ) {
             if ( done ) break;
@@ -38,7 +38,7 @@ void main(Ping & this) {
 }
 
 
-int main( int argc, char * argv[] ) {
+int main() {
     sout | "start";
     processor proc[1];
 

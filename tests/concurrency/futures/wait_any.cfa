@@ -31,7 +31,7 @@ void synchronize() {
 }
 
 thread Waiter {};
-void main( Waiter & this ) {
+void main( Waiter & ) {
     for (numtimes) {
         wait_any(futures, num_futures);
         synchronize();
@@ -41,7 +41,7 @@ void main( Waiter & this ) {
 }
 
 thread Deliverer {};
-void main( Deliverer & this ) {
+void main( Deliverer & ) {
     while (!done) {
         size_t num_satisfy = random(1,num_futures);
         for ( i; num_satisfy ) {								// random shuffle a few values

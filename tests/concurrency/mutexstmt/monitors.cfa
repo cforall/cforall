@@ -15,7 +15,7 @@ bool insideFlag = false;
 int count = 0;
 bool startFlag = false;
 
-void main( T_Mutex & this ) {
+void main( T_Mutex & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		mutex ( m1 ) count++;
 		mutex ( m1 ) {
@@ -29,7 +29,7 @@ void main( T_Mutex & this ) {
 
 thread T_Multi {};
 
-void main( T_Multi & this ) {
+void main( T_Multi & ) {
 	for (unsigned int i = 0; i < num_times; i++) {
 		mutex ( m1 ) {
 			assert(!insideFlag);

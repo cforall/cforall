@@ -46,8 +46,6 @@ void main( MyThread & this ) {
 		assert( ((thread&)this).curr_cluster == active_processor()->cltr );
 	}
 
-	struct cluster_wrapper * curr = (struct cluster_wrapper *)&the_clusters[0];
-
 	for(100) {
 		unsigned idx = prng( this, cluster_cnt );
 
