@@ -2072,6 +2072,7 @@ uninstall-am: uninstall-cfa_cpplibPROGRAMS
 
 $(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cpp ResolvExpr/CommonType.cpp SymTab/ManglerCommon.cpp) : $(srcdir)/AST/BasicKind.hpp
 
+.PRECIOUS: $(srcdir)/AST/BasicKind.hpp
 $(srcdir)/AST/BasicKind.hpp : BasicTypes-gen.cpp
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type
 	@./BasicTypes-gen

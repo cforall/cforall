@@ -10,13 +10,29 @@ For developers using the root git:
   $ ./autogen.sh
   $ ./configure [ --prefix=/some/directory ]
   $ make -j 8 install
+  $ cfa
 
 For users using the distributed tarball / github:
 
   $ ./configure
   $ make -j 8 install
+  $ cfa
 
 where 8 is the number of CPUs on your computer.
+
+The above instructions produce an in-tree, installed build, where intermediate
+binaries share the same folders as their sources, and where the final result
+becomes an "official" CFA version for the current environment.  For developers
+preferring an isolated side-by-side build, where all binaries are separated
+from sources, where it is possible to build multiple configurations from a
+common set of sources, and where no "official" CFA version is designated:
+
+  $ ./autogen.sh
+  $ mkdir ../build
+  $ cd ../build
+  $ ../cfa-cc/configure
+  $ make -j 8
+  $ ./driver/cfa
 
 
 Options for configure

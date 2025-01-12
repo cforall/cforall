@@ -35,14 +35,12 @@ enum Kind {
 	Float32Complex,
 	Float,
 	FloatComplex,
-	// FloatImaginary,
 	Float32x,
 	Float32xComplex,
 	Float64,
 	Float64Complex,
 	Double,
 	DoubleComplex,
-	// DoubleImaginary,
 	Float64x,
 	Float64xComplex,
 	Float80,
@@ -51,7 +49,6 @@ enum Kind {
 	uuFloat128,
 	LongDouble,
 	LongDoubleComplex,
-	// LongDoubleImaginary,
 	Float128x,
 	Float128xComplex,
 	NUMBER_OF_BASIC_TYPES,
@@ -86,47 +83,49 @@ struct Node {
 	{ UnsignedChar, "UnsignedChar", "UC", "unsigned char", "h", Unsigned, ShortUnsignedInt, ShortSignedInt, -1, 1 },
 
 	{ ShortSignedInt, "ShortSignedInt", "SI", "signed short int", "s", Signed, ShortUnsignedInt, SignedInt, -1, 2 },
-	{ ShortUnsignedInt, "ShortUnsignedInt", "SUI", "unsigned short int", "t", Unsigned, UnsignedInt, SignedInt, -1, 2 },
+	{ ShortUnsignedInt, "ShortUnsignedInt", "USI", "unsigned short int", "t", Unsigned, UnsignedInt, SignedInt, -1, 2 },
 
 	{ SignedInt, "SignedInt", "I", "signed int", "i", Signed, UnsignedInt, LongSignedInt, -1, 3 },
 	{ UnsignedInt, "UnsignedInt", "UI", "unsigned int", "j", Unsigned, LongUnsignedInt, LongSignedInt, -1, 3 },
 
 	{ LongSignedInt, "LongSignedInt", "LI", "signed long int", "l", Signed, LongUnsignedInt, LongLongSignedInt, -1, 4 },
-	{ LongUnsignedInt, "LongUnsignedInt", "LUI", "unsigned long int", "m", Unsigned, LongLongSignedInt, LongLongUnsignedInt, -1, 4 },
+	{ LongUnsignedInt, "LongUnsignedInt", "ULI", "unsigned long int", "m", Unsigned, LongLongSignedInt, LongLongUnsignedInt, -1, 4 },
 
 	{ LongLongSignedInt, "LongLongSignedInt", "LLI", "signed long long int", "x", Signed, LongLongUnsignedInt, SignedInt128, -1, 5 },
-	{ LongLongUnsignedInt, "LongLongUnsignedInt", "LLUI", "unsigned long long int", "y", Unsigned, SignedInt128, UnsignedInt128, -1, 5 },
+	{ LongLongUnsignedInt, "LongLongUnsignedInt", "ULLI", "unsigned long long int", "y", Unsigned, SignedInt128, UnsignedInt128, -1, 5 },
 
-	{ SignedInt128, "SignedInt128", "IB", "__int128", "n", Signed, UnsignedInt128, Float16, -1, 6 },
-	{ UnsignedInt128, "UnsignedInt128", "UIB", "unsigned __int128", "o", Unsigned, Float16, -1, -1, 6 },
+	{ SignedInt128, "SignedInt128", "__ID", "__int128", "n", Signed, UnsignedInt128, Float16, -1, 6 },
+	{ UnsignedInt128, "UnsignedInt128", "__UID", "unsigned __int128", "o", Unsigned, Float16, -1, -1, 6 },
 
 	{ Float16, "Float16", "_FH", "_Float16", "DF16_", Floating, Float32, Float16Complex, -1, 7 },
-	{ Float16Complex, "Float16Complex", "_FH", "_Float16 _Complex", "CDF16_", Floating, Float32Complex, -1, -1, 7 },
+	{ Float16Complex, "Float16Complex", "_FHC", "_Float16 _Complex", "CDF16_", Floating, Float32Complex, -1, -1, 7 },
+
 	{ Float32, "Float32", "_F", "_Float32", "DF32_", Floating, Float, Float32Complex, -1, 8 },
 	{ Float32Complex, "Float32Complex", "_FC", "_Float32 _Complex", "CDF32_", Floating, FloatComplex, -1, -1, 8 },
 	{ Float, "Float", "F", "float", "f", Floating, Float32x, FloatComplex, -1, 9 },
 	{ FloatComplex, "FloatComplex", "FC", "float _Complex", "Cf", Floating, Float32xComplex, -1, -1, 9 },
-	// { FloatImaginary, "FloatImaginary", "FI", "float _Imaginary", "If", false, DoubleImaginary, FloatComplex, -1, 9 },
-
 	{ Float32x, "Float32x", "_FX", "_Float32x", "DF32x_", Floating, Float64, Float32xComplex, -1, 10 },
 	{ Float32xComplex, "Float32xComplex", "_FXC", "_Float32x _Complex", "CDF32x_", Floating, Float64Complex, -1, -1, 10 },
-	{ Float64, "Float64", "FD", "_Float64", "DF64_", Floating, Double, Float64Complex, -1, 11 },
+
+	{ Float64, "Float64", "_FD", "_Float64", "DF64_", Floating, Double, Float64Complex, -1, 11 },
 	{ Float64Complex, "Float64Complex", "_FDC", "_Float64 _Complex", "CDF64_", Floating, DoubleComplex, -1, -1, 11 },
 	{ Double, "Double", "D", "double", "d", Floating, Float64x, DoubleComplex, -1, 12 },
 	{ DoubleComplex, "DoubleComplex", "DC", "double _Complex", "Cd", Floating, Float64xComplex, -1, -1, 12 },
-	// { DoubleImaginary, "DoubleImaginary", "DI", "double _Imaginary", "Id", false, LongDoubleImaginary, DoubleComplex, -1, 12 },
-
-	{ Float64x, "Float64x", "F80X", "_Float64x", "DF64x_", Floating, Float80, Float64xComplex, -1, 13 },
+	{ Float64x, "Float64x", "_FDX", "_Float64x", "DF64x_", Floating, Float80, Float64xComplex, -1, 13 },
 	{ Float64xComplex, "Float64xComplex", "_FDXC", "_Float64x _Complex", "CDF64x_", Floating, Float128Complex, -1, -1, 13 },
-	{ Float80, "Float80", "F80", "__float80", "Dq", Floating, Float128, Float64xComplex, -1, 14 },
-	{ Float128, "Float128", "_FB", "_Float128", "DF128_", Floating, uuFloat128, Float128Complex, -1, 15 },
+
+	{ Float80, "Float80", "_F80", "__float80", "Dq", Floating, Float128, Float64xComplex, -1, 14 },
+	// __float80 _Complex, no complex counterpart
+
+	{ Float128, "Float128", "_FLD", "_Float128", "DF128_", Floating, uuFloat128, Float128Complex, -1, 15 },
 	{ Float128Complex, "Float128Complex", "_FLDC", "_Float128 _Complex", "CDF128_", Floating, LongDoubleComplex, -1, -1, 15 },
-	{ uuFloat128, "uuFloat128", "FB", "__float128", "g", Floating, LongDouble, Float128Complex, -1, 16 },
+	{ uuFloat128, "uuFloat128", "__FLD", "__float128", "g", Floating, LongDouble, Float128Complex, -1, 16 },
+	// __float128 _Complex, no complex counterpart
 	{ LongDouble, "LongDouble", "LD", "long double", "e", Floating, Float128x, LongDoubleComplex, -1, 17 },
 	{ LongDoubleComplex, "LongDoubleComplex", "LDC", "long double _Complex", "Ce", Floating, Float128xComplex, -1, -1, 17 },
-	// { LongDoubleImaginary, "LongDoubleImaginary", "LDI", "long double _Imaginary", "Ie", false, LongDoubleComplex, -1, -1, 17 },
 
-	{ Float128x, "Float128x", "_FBX", "_Float128x", "DF128x_", Floating, Float128xComplex, -1, -1, 18 },
+	// may not be supported
+	{ Float128x, "Float128x", "_FLDX", "_Float128x", "DF128x_", Floating, Float128xComplex, -1, -1, 18 },
 	{ Float128xComplex, "Float128xComplex", "_FLDXC", "_Float128x _Complex", "CDF128x_", Floating, -1, -1, -1, 18 }
 }; // graph
 
@@ -158,13 +157,13 @@ void generateCosts( int row ) {
 	do {
 		// visit cost element
 		int col = q.top().i;
+
 		// skip if already set
 		if ( seen[col] ) {
 			q.pop();
 			continue;
-		} else {
-			seen[col] = true;
 		} // if
+		seen[col] = true;
 
 		// otherwise set min-costs into matrix
 		int cost = q.top().path;
@@ -175,16 +174,16 @@ void generateCosts( int row ) {
 
 		// traverse children
 		int i = graph[col].left;
-		if ( i == -1 ) continue;
-		q.emplace( i, cost + 1, scost + ! (graph[col].sign & graph[i].sign) );
+		if ( i == -1 ) continue;						// leaf
+		q.emplace( i, cost + max(1, graph[i].rank-graph[col].rank), scost + ! (graph[col].sign & graph[i].sign) );
 
 		i = graph[col].middle;
-		if ( i == -1 ) continue;
-		q.emplace( i, cost + 1, scost + !(graph[col].sign & graph[i].sign) );
+		if ( i == -1 ) continue;						// leaf
+		q.emplace( i, cost + max(1, graph[i].rank-graph[col].rank), scost + !(graph[col].sign & graph[i].sign) );
 
 		i = graph[col].right;
-		if ( i == -1 ) continue;
-		q.emplace( i, cost + 1, scost + !(graph[col].sign & graph[i].sign) );
+		if ( i == -1 ) continue;						// leaf
+		q.emplace( i, cost + max(1, graph[i].rank-graph[col].rank), scost + !(graph[col].sign & graph[i].sign) );
 	} while ( ! q.empty() );
 } // generateCosts
 

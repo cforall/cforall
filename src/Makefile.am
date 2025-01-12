@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:51:46 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Mon Nov 20 11:28:05 2023
-## Update Count     : 109
+## Last Modified On : Sat Jan 11 16:27:27 2025
+## Update Count     : 112
 ###############################################################################
 
 # create object files in directory with source files
@@ -54,6 +54,7 @@ include Virtual/module.mk
 
 $(addprefix $(srcdir)/, ResolvExpr/ConversionCost.cpp ResolvExpr/CommonType.cpp SymTab/ManglerCommon.cpp) : $(srcdir)/AST/BasicKind.hpp
 
+.PRECIOUS: $(srcdir)/AST/BasicKind.hpp
 $(srcdir)/AST/BasicKind.hpp : BasicTypes-gen.cpp
 	${AM_V_GEN}${CXXCOMPILE} $< -o BasicTypes-gen -Wall -Wextra -Werror=return-type
 	@./BasicTypes-gen

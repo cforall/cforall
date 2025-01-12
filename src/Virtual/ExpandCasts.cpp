@@ -4,7 +4,7 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ExpandCasts.cpp --
+// ExpandCasts.cpp -- Expand virtual casts into lower level code.
 //
 // Author           : Andrew Beach
 // Created On       : Mon Jul 24 13:59:00 2017

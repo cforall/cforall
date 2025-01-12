@@ -4,13 +4,13 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// ExceptDecl.cpp --
+// ExceptDecl.cpp -- Translate "exception" and exception related declarations.
 //
 // Author           : Andrew Beach
 // Created On       : Tue Jul 12 15:50:00 2022
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  7 12:05:55 2024
-// Update Count     : 1
+// Last Modified By : Andrew Beach
+// Last Modified On : Fri Jan 10 15:35:55 2024
+// Update Count     : 2
 //
 
 #include "ExceptDecl.hpp"
@@ -116,7 +116,16 @@ ast::StructDecl const * createTypeIdStruct(
 	) );
 	decl->body = true;
 	for ( ast::ptr<ast::TypeDecl> const & param : forallClause ) {
-		decl->params.push_back( ast::deepCopy( param ) );
+		// Create an unsized and assertionless copy of the parameter.
+		decl->params.push_back( new ast::TypeDecl(
+			param->location,
+			param->name,
+			param->storage,
+			param->base ? ast::deepCopy( param->base ) : nullptr,
+			ast::TypeDecl::Dtype,
+			false,
+			nullptr
+		) );
 	}
 	return decl;
 }
