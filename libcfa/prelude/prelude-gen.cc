@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz and Thierry Delisle
 // Created On       : Sat Feb 16 08:44:58 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:40:01 2023
-// Update Count     : 38
+// Last Modified On : Sun Jan 12 20:28:33 2025
+// Update Count     : 53
 //
 
 #include <algorithm>
@@ -23,32 +23,36 @@ using namespace std;
 static struct{
 	const string name;
 	bool isFloat;
-	bool hasComparison;
+	bool hasComparison;		// CANNOT COMPARE COMPLEX NUMBERS!!!
 } basicTypes[] = {
-	{ "char"                  , false, true , },
-	{ "signed char"           , false, true , },
-	{ "unsigned char"         , false, true , },
-	{ "signed short"          , false, true , },
-	{ "unsigned short"        , false, true , },
-	{ "signed int"            , false, true , },
-	{ "unsigned int"          , false, true , },
-	{ "signed long int"       , false, true , },
-	{ "unsigned long int"     , false, true , },
-	{ "signed long long int"  , false, true , },
-	{ "unsigned long long int", false, true , },
-	{ "float"                 , true , true , },
-	{ "double"                , true , true , },
-	{ "long double"           , true , true , },
-	{ "float _Complex"        , true , false, },
-	{ "double _Complex"       , true , false, },
-	{ "long double _Complex"  , true , false, },
+	{ "char",					false, true,  },
+	{ "signed char",			false, true,  },
+	{ "unsigned char",			false, true,  },
+	{ "signed short",			false, true,  },
+	{ "unsigned short",			false, true,  },
+	{ "signed int",				false, true,  },
+	{ "unsigned int",			false, true,  },
+	{ "signed long int",		false, true,  },
+	{ "unsigned long int",		false, true,  },
+	{ "signed long long int",	false, true,  },
+	{ "unsigned long long int",	false, true,  },
+	{ "float",					true , true,  },
+	{ "double",					true,  true,  },
+	{ "long double",			true,  true,  },
+	{ "float _Complex",			true,  false, },
+	{ "double _Complex",		true,  false, },
+	{ "long double _Complex",	true,  false, },
 #if defined(__SIZEOF_INT128__)
-	{ "__int128"              , false, true , },
-	{ "unsigned __int128"     , false, true , },
+	{ "__int128",				false, true,  },
+	{ "unsigned __int128",		false, true,  },
 #endif
 #if defined(__i386__) || defined(__ia64__) || defined(__x86_64__)
-	{ "__float80"             , true , true , },
-	{ "__float128"            , true , true , },
+	{ "__float80",				true,  true,  },
+	{ "__float128",				true,  true,  },
+	{ "_Float128",				true,  true,  },
+	{ "_Float128 _Complex",		true,  false, },
+//	{ "_Float128x",				true,  true,  },		// add declarations if type supported
+//	{ "_Float128x _Complex",	true,  false, },
 #endif
 };
 
@@ -59,41 +63,41 @@ struct {
 	bool isComparison = false;
 	bool isEqual = false;
 } arithmeticOperators[] = {
-	{ "?++"  , true , true, false, false },
-	{ "?--"  , true , true, false, false },
-	{ "++?"  , true , true, false, false },
-	{ "--?"  , true , true, false, false },
-	{ "+?"   , false, true , false, false },
-	{ "-?"   , false, true , false, false },
-	{ "~?"   , false, false, false, false },
-	{ "!?"   , false, true , false, true  },
-	{ "?*?"  , false, true , false, false },
-	{ "?/?"  , false, true , false, false },
-	{ "?%?"  , false, false, false, false },
-	{ "?+?"  , false, true , false, false },
-	{ "?-?"  , false, true , false, false },
-	{ "?<<?" , false, false, false, false },
-	{ "?>>?" , false, false, false, false },
-	{ "?<?"  , false, true , true , false },
-	{ "?<=?" , false, true , true , true  },
-	{ "?>?"  , false, true , true , false },
-	{ "?>=?" , false, true , true , true  },
-	{ "?==?" , false, true , false, true  },
-	{ "?!=?" , false, true , false, true  },
-	{ "?&?"  , false, false, false, false },
-	{ "?^?"  , false, false, false, false },
-	{ "?|?"  , false, false, false, false },
-	{ "?=?"  , true , true , false, false },
-	{ "?+=?" , true , true , false, false },
-	{ "?-=?" , true , true , false, false },
-	{ "?*=?" , true , true , false, false },
-	{ "?/=?" , true , true , false, false },
-	{ "?%=?" , true , false, false, false },
-	{ "?<<=?", true , false, false, false },
-	{ "?>>=?", true , false, false, false },
-	{ "?&=?" , true , false, false, false },
-	{ "?|=?" , true , false, false, false },
-	{ "?^=?" , true , false, false, false },
+	{ "?++",	true,  true,  false, false },
+	{ "?--",	true,  true,  false, false },
+	{ "++?",	true,  true,  false, false },
+	{ "--?",	true,  true,  false, false },
+	{ "+?",		false, true,  false, false },
+	{ "-?",		false, true,  false, false },
+	{ "~?",		false, false, false, false },
+	{ "!?",		false, true,  false, true  },
+	{ "?*?",	false, true,  false, false },
+	{ "?/?",	false, true,  false, false },
+	{ "?%?",	false, false, false, false },
+	{ "?+?",	false, true,  false, false },
+	{ "?-?",	false, true,  false, false },
+	{ "?<<?",	false, false, false, false },
+	{ "?>>?",	false, false, false, false },
+	{ "?<?",	false, true,  true,  false },
+	{ "?<=?",	false, true,  true,  true  },
+	{ "?>?",	false, true,  true,  false },
+	{ "?>=?",	false, true,  true,  true  },
+	{ "?==?",	false, true,  false, true  },
+	{ "?!=?",	false, true,  false, true  },
+	{ "?&?",	false, false, false, false },
+	{ "?^?",	false, false, false, false },
+	{ "?|?",	false, false, false, false },
+	{ "?=?",	true,  true,  false, false },
+	{ "?+=?",	true,  true,  false, false },
+	{ "?-=?",	true,  true,  false, false },
+	{ "?*=?",	true,  true,  false, false },
+	{ "?/=?",	true,  true,  false, false },
+	{ "?%=?",	true,  false, false, false },
+	{ "?<<=?",	true,  false, false, false },
+	{ "?>>=?",	true,  false, false, false },
+	{ "?&=?",	true,  false, false, false },
+	{ "?|=?",	true,  false, false, false },
+	{ "?^=?",	true,  false, false, false },
 };
 
 enum ArgType { Normal, PtrDiff, CommPtrDiff };
@@ -105,28 +109,28 @@ struct {
 	ArgType diffArg2 = Normal;
 	string sized;
 } pointerOperators[] = {
-	{ "?++", true, "", Normal, " | sized(DT)" },
-	{ "?--", true, "", Normal, " | sized(DT)" },
-	{ "++?", true, "", Normal, " | sized(DT)" },
-	{ "--?", true, "", Normal, " | sized(DT)" },
-	{ "!?" , false, "int", Normal, "" },
-	{ "?<?", false, "signed int", Normal, "" },
-	{ "?<=?", false, "signed int", Normal, "" },
-	{ "?>?", false, "signed int", Normal, "" },
-	{ "?>=?", false, "signed int", Normal, "" },
-	{ "?==?", false, "signed int", Normal, "" },
-	{ "?!=?", false, "signed int", Normal, "" },
-	{ "?=?", true, "", Normal, "" }, // void * LHS, zero_t RHS ???
-//	{ "*?", false, "&", Normal, " | sized(DT)" }, // & ???
-	{ "*?", false, "&", Normal, "" }, // & ???
+	{ "?++",	true,  "",				Normal,			" | sized(DT)" },
+	{ "?--",	true,  "",				Normal,			" | sized(DT)" },
+	{ "++?",	true,  "",				Normal,			" | sized(DT)" },
+	{ "--?",	true,  "",				Normal,			" | sized(DT)" },
+	{ "!?",		false, "int",			Normal,			"" },
+	{ "?<?",	false, "signed int",	Normal,			"" },
+	{ "?<=?",	false, "signed int",	Normal,			"" },
+	{ "?>?",	false, "signed int",	Normal,			"" },
+	{ "?>=?",	false, "signed int",	Normal,			"" },
+	{ "?==?",	false, "signed int",	Normal,			"" },
+	{ "?!=?",	false, "signed int",	Normal,			"" },
+	{ "?=?",	true,  "",				Normal,			"" }, // void * LHS, zero_t RHS ???
+//	{ "*?",		false, "&",				Normal,			" | sized(DT)" }, // & ???
+	{ "*?",		false, "&",				Normal,			"" }, // & ???
 
-	{ "?-?", false, "ptrdiff_t", Normal, " | sized(DT)" },
-	{ "?-?", false, "", PtrDiff, " | sized(DT)" },
-	{ "?-=?", true, "", PtrDiff, " | sized(DT)" },
+	{ "?-?",	false, "ptrdiff_t",		Normal,			" | sized(DT)" },
+	{ "?-?",	false, "",				PtrDiff,		" | sized(DT)" },
+	{ "?-=?",	true,  "",				PtrDiff,		" | sized(DT)" },
 
-	{ "?+?", false, "", CommPtrDiff, " | sized(DT)" },
-	{ "?[?]", false, "&", CommPtrDiff, " | sized(DT)" }, // & ???
-	{ "?+=?" , true, "", PtrDiff, " | sized(DT)" },
+	{ "?+?",	false, "",				CommPtrDiff,	" | sized(DT)" },
+	{ "?[?]",	false, "&",				CommPtrDiff,	" | sized(DT)" }, // & ???
+	{ "?+=?",	true,  "",				PtrDiff,		" | sized(DT)" },
 };
 
 template<size_t N>

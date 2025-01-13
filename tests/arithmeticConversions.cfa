@@ -1,0 +1,150 @@
+#include <stdio.h>
+
+int main() {
+	char c;
+	signed char sc;				unsigned char uc;
+	signed short int ssi;		unsigned short int usi;
+	signed int si;				unsigned int ui;
+	signed long int sli;		unsigned long int uli;
+	signed long long int slli;	unsigned long long int ulli;
+
+	_Float32 f32;				_Float32 _Complex f32c;
+	float f;					float _Complex fc;
+	_Float32x f32x;				_Float32x _Complex f32xc;
+
+	_Float64 f64;				_Float64 _Complex f64c;
+	double d;					double _Complex dc;
+	_Float64x f64x;				_Float64x _Complex f64xc;
+
+	__float80 f80;				// __float80 _Complex f80; // unsupported
+	long double ld;				long double _Complex ldc;
+
+	__float128 uuf128;			// __float128 _Complex uuf128c; // unsupported
+	_Float128 f128;				_Float128 _Complex f128c;
+	//_Float128x f128x;			_Float128x _Complex f128xc; // unsupported
+
+	// Prevent warning about unused variables because sizeof(v) => sizeof(typeof(v)).
+	c; sc; uc; ssi; usi; si; ui; sli; uli; slli; ulli;
+	f32; f32c; f; fc; f32x; f32xc; f64; f64c; d; dc; f64x; f64xc; f80; ld; ldc; uuf128; f128; f128c;
+
+	#define SZ( T ) sizeof(T)
+	#define ST( s ) #s
+
+	printf( "integral + integral\n" );
+	printf( "            %4s %4s %4s %4s %4s %4s %4s %4s %4s %4s %4s\n",
+			ST(c), ST(sc), ST( uc), ST( ssi), ST(usi), ST(si), ST(ui), ST(sli), ST(uli), ST(slli), ST(ulli) );
+	printf( "  bytes     %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+			SZ(c), SZ(sc), SZ( uc), SZ( ssi), SZ(usi), SZ(si), SZ(ui), SZ(sli), SZ(uli), SZ(slli), SZ(ulli) );
+	printf( "          + ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----\n" );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(c), SZ(c),  SZ(c + c), SZ(c + sc), SZ(c + uc), SZ(c + ssi), SZ(c + usi), SZ(c + si), SZ(c + ui), SZ(c + sli), SZ(c + uli), SZ(c + slli), SZ(c + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(sc), SZ(sc), SZ(sc + c), SZ(sc + sc), SZ(sc + uc), SZ(sc + ssi), SZ(sc + usi), SZ(sc + si), SZ(sc + ui), SZ(sc + sli), SZ(sc + uli), SZ(sc + slli), SZ(sc + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST( uc), SZ(uc), SZ(uc + c), SZ(uc + sc), SZ(uc + uc), SZ(uc + ssi), SZ(uc + usi), SZ(uc + si), SZ(uc + ui), SZ(uc + sli), SZ(uc + uli), SZ(uc + slli), SZ(uc + ulli) );
+
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST( ssi), SZ(ssi), SZ(ssi + c), SZ(ssi + sc), SZ(ssi + uc), SZ(ssi + ssi), SZ(ssi + usi), SZ(ssi + si), SZ(ssi + ui), SZ(ssi + sli), SZ(ssi + uli), SZ(ssi + slli), SZ(ssi + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(usi), SZ(usi), SZ(usi + c), SZ(usi + sc), SZ(usi + uc), SZ(usi + ssi), SZ(usi + usi), SZ(usi + si), SZ(usi + ui), SZ(usi + sli), SZ(usi + uli), SZ(usi + slli), SZ(usi + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(si), SZ(si), SZ(si + c), SZ(si + sc), SZ(si + uc), SZ(si + ssi), SZ(si + usi), SZ(si + si), SZ(si + ui), SZ(si + sli), SZ(si + uli), SZ(si + slli), SZ(si + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(ui), SZ(ui), SZ(ui + c), SZ(ui + sc), SZ(ui + uc), SZ(ui + ssi), SZ(ui + usi), SZ(ui + si), SZ(ui + ui), SZ(ui + sli), SZ(ui + uli), SZ(ui + slli), SZ(ui + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(sli), SZ(sli), SZ(sli + c), SZ(sli + sc), SZ(sli + uc), SZ(sli + ssi), SZ(sli + usi), SZ(sli + si), SZ(sli + ui), SZ(sli + sli), SZ(sli + uli), SZ(sli + slli), SZ(sli + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(uli), SZ(uli), SZ(uli + c), SZ(uli + sc), SZ(uli + uc), SZ(uli + ssi), SZ(uli + usi), SZ(uli + si), SZ(uli + ui), SZ(uli + sli), SZ(uli + uli), SZ(uli + slli), SZ(uli + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(slli), SZ(slli), SZ(slli + c), SZ(slli + sc), SZ(slli + uc), SZ(slli + ssi), SZ(slli + usi), SZ(slli + si), SZ(slli + ui), SZ(slli + sli), SZ(slli + slli), SZ(slli + slli), SZ(slli + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n\n",
+		ST(ulli), SZ(ulli), SZ(ulli + c), SZ(ulli + sc), SZ(ulli + uc), SZ(ulli + ssi), SZ(ulli + usi), SZ(ulli + si), SZ(ulli + ui), SZ(ulli + sli), SZ(ulli + ulli), SZ(ulli + ulli), SZ(ulli + ulli) );
+
+	printf( "float + integral\n" );
+	printf( "            %4s %4s %4s %4s %4s %4s %4s %4s %4s %4s %4s\n",
+			ST(c), ST(sc), ST( uc), ST( ssi), ST(usi), ST(si), ST(ui), ST(sli), ST(uli), ST(slli), ST(ulli) );
+	printf( "  bytes     %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+			SZ(c), SZ(sc), SZ( uc), SZ( ssi), SZ(usi), SZ(si), SZ(ui), SZ(sli), SZ(uli), SZ(slli), SZ(ulli) );
+	printf( "          + ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----\n" );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f32), SZ(f32), SZ(f32 + c), SZ(f32 + sc), SZ(f32 + uc), SZ(f32 + ssi), SZ(f32 + usi), SZ(f32 + si), SZ(f32 + ui), SZ(f32 + sli), SZ(f32 + ulli), SZ(f32 + ulli), SZ(f32 + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f32c), SZ(f32c), SZ(f32c + c), SZ(f32c + sc), SZ(f32c + uc), SZ(f32c + ssi), SZ(f32c + usi), SZ(f32c + si), SZ(f32c + ui), SZ(f32c + sli), SZ(f32c + ulli), SZ(f32c + ulli), SZ(f32c + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f), SZ(f), SZ(f + c), SZ(f + sc), SZ(f + uc), SZ(f + ssi), SZ(f + usi), SZ(f + si), SZ(f + ui), SZ(f + sli), SZ(f + ulli), SZ(f + ulli), SZ(f + ulli ) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(fc), SZ(fc), SZ(fc + c), SZ(fc + sc), SZ(fc + uc), SZ(fc + ssi), SZ(fc + usi), SZ(fc + si), SZ(fc + ui), SZ(fc + sli), SZ(fc + ulli), SZ(fc + ulli), SZ(fc + ulli ) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f32x), SZ(f32x), SZ(f32x + c), SZ(f32x + sc), SZ(f32x + uc), SZ(f32x + ssi), SZ(f32x + usi), SZ(f32x + si), SZ(f32x + ui), SZ(f32x + sli), SZ(f32x + ulli), SZ(f32x + ulli), SZ(f32x + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f32xc), SZ(f32xc), SZ(f32xc + c), SZ(f32xc + sc), SZ(f32xc + uc), SZ(f32xc + ssi), SZ(f32xc + usi), SZ(f32xc + si), SZ(f32xc + ui), SZ(f32xc + sli), SZ(f32xc + ulli), SZ(f32xc + ulli), SZ(f32xc + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f64), SZ(f64), SZ(f64 + c), SZ(f64 + sc), SZ(f64 + uc), SZ(f64 + ssi), SZ(f64 + usi), SZ(f64 + si), SZ(f64 + ui), SZ(f64 + sli), SZ(f64 + ulli), SZ(f64 + ulli), SZ(f64 + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f64c), SZ(f64c), SZ(f64c + c), SZ(f64c + sc), SZ(f64c + uc), SZ(f64c + ssi), SZ(f64c + usi), SZ(f64c + si), SZ(f64c + ui), SZ(f64c + sli), SZ(f64c + ulli), SZ(f64c + ulli), SZ(f64c + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(d), SZ(d), SZ(d + c), SZ(d + sc), SZ(d + uc), SZ(d + ssi), SZ(d + usi), SZ(d + si), SZ(d + ui), SZ(d + sli), SZ(d + ulli), SZ(d + ulli), SZ(d + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(dc), SZ(dc), SZ(dc + c), SZ(dc + sc), SZ(dc + uc), SZ(dc + ssi), SZ(dc + usi), SZ(dc + si), SZ(dc + ui), SZ(dc + sli), SZ(dc + ulli), SZ(dc + ulli), SZ(dc + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f64x), SZ(f64x), SZ(f64x + c), SZ(f64x + sc), SZ(f64x + uc), SZ(f64x + ssi), SZ(f64x + usi), SZ(f64x + si), SZ(f64x + ui), SZ(f64x + sli), SZ(f64x + ulli), SZ(f64x + ulli), SZ(f64x + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f64xc), SZ(f64xc), SZ(f64xc + c), SZ(f64xc + sc), SZ(f64xc + uc), SZ(f64xc + ssi), SZ(f64xc + usi), SZ(f64xc + si), SZ(f64xc + ui), SZ(f64xc + sli), SZ(f64xc + ulli), SZ(f64xc + ulli), SZ(f64xc + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f80), SZ(f80), SZ(f80 + c), SZ(f80 + sc), SZ(f80 + uc), SZ(f80 + ssi), SZ(f80 + usi), SZ(f80 + si), SZ(f80 + ui), SZ(f80 + sli), SZ(f80 + ulli), SZ(f80 + ulli), SZ(f80 + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(ld), SZ(ld), SZ(ld + c), SZ(ld + sc), SZ(ld + uc), SZ(ld + ssi), SZ(ld + usi), SZ(ld + si), SZ(ld + ui), SZ(ld + sli), SZ(ld + ulli), SZ(ld + ulli), SZ(ld + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(ldc), SZ(ldc), SZ(ldc + c), SZ(ldc + sc), SZ(ldc + uc), SZ(ldc + ssi), SZ(ldc + usi), SZ(ldc + si), SZ(ldc + ui), SZ(ldc + sli), SZ(ldc + ulli), SZ(ldc + ulli), SZ(ldc + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(uuf128), SZ(uuf128), SZ(uuf128 + c), SZ(uuf128 + sc), SZ(uuf128 + uc), SZ(uuf128 + ssi), SZ(uuf128 + usi), SZ(uuf128 + si), SZ(uuf128 + ui), SZ(uuf128 + sli), SZ(uuf128 + ulli), SZ(uuf128 + ulli), SZ(uuf128 + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n",
+		ST(f128), SZ(f128), SZ(f128 + c), SZ(f128 + sc), SZ(f128 + uc), SZ(f128 + ssi), SZ(f128 + usi), SZ(f128 + si), SZ(f128 + ui), SZ(f128 + sli), SZ(f128 + ulli), SZ(f128 + ulli), SZ(f128 + ulli) );
+	printf( "%6s %2zd | %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd %4zd\n\n",
+		ST(f128c), SZ(f128c), SZ(f128c + c), SZ(f128c + sc), SZ(f128c + uc), SZ(f128c + ssi), SZ(f128c + usi), SZ(f128c + si), SZ(f128c + ui), SZ(f128c + sli), SZ(f128c + ulli), SZ(f128c + ulli), SZ(f128c + ulli) );
+
+
+	printf( "float + float\n" );
+	printf( "            %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s\n",
+ 		ST(f32), ST(f32c), ST(f), ST(fc), ST(f32x), ST(f32xc), ST(f64), ST(f64c), ST(d), ST(dc), ST(f64x), ST(f64xc), ST(f80), ST(ld), ST(ldc), ST(uuf128), ST(f128), ST(f128c) );
+	printf( "  bytes     %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		 SZ(f32), SZ(f32c), SZ(f), SZ(fc), SZ(f32x), SZ(f32xc), SZ(f64), SZ(f64c), SZ(d), SZ(dc), SZ(f64x), SZ(f64xc), SZ(f80), SZ(ld), SZ(ldc), SZ(uuf128), SZ(f128), SZ(f128c) );
+	printf( "          + ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ------ ----- -----\n" );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f32), SZ(f32), SZ(f32 + f32), SZ(f32 + f32c), SZ(f32 + f), SZ(f32 + fc), SZ(f32 + f32x), SZ(f32 + f32xc), SZ(f32 + f64), SZ(f32 + f64c), SZ(f32 + d), SZ(f32 + dc), SZ(f32 + f64x), SZ(f32 + f64xc), SZ(f32 + f80), SZ(f32 + ld), SZ(f32 + ldc), SZ(f32 + uuf128), SZ(f32 + f128), SZ(f32 + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f32c), SZ(f32c), SZ(f32c + f32), SZ(f32c + f32c), SZ(f32c + f), SZ(f32c + fc), SZ(f32c + f32x), SZ(f32c + f32xc), SZ(f32c + f64), SZ(f32c + f64c), SZ(f32c + d), SZ(f32c + dc), SZ(f32c + f64x), SZ(f32c + f64xc), SZ(f32c + f80), SZ(f32c + ld), SZ(f32c + ldc), SZ(f32c + uuf128), SZ(f32c + f128), SZ(f32c + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f), SZ(f), SZ(f + f32), SZ(f + f32c), SZ(f + f), SZ(f + fc), SZ(f + f32x), SZ(f + f32xc), SZ(f + f64), SZ(f + f64c), SZ(f + d), SZ(f + dc), SZ(f + f64x), SZ(f + f64xc), SZ(f + f80), SZ(f + ld), SZ(f + ldc), SZ(f + uuf128), SZ(f + f128), SZ(f + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(fc), SZ(fc), SZ(fc + f32), SZ(fc + f32c), SZ(fc + f), SZ(fc + fc), SZ(fc + f32x), SZ(fc + f32xc), SZ(fc + f64), SZ(fc + f64c), SZ(fc + d), SZ(fc + dc), SZ(fc + f64x), SZ(fc + f64xc), SZ(fc + f80), SZ(fc + ld), SZ(fc + ldc), SZ(fc + uuf128), SZ(fc + f128), SZ(fc + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f32x), SZ(f32x), SZ(f32x + f32), SZ(f32x + f32c), SZ(f32x + f), SZ(f32x + fc), SZ(f32x + f32x), SZ(f32x + f32xc), SZ(f32x + f64), SZ(f32x + f64c), SZ(f32x + d), SZ(f32x + dc), SZ(f32x + f64x), SZ(f32x + f64xc), SZ(f32x + f80), SZ(f32x + ld), SZ(f32x + ldc), SZ(f32x + uuf128), SZ(f32x + f128), SZ(f32x + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f32xc), SZ(f32xc), SZ(f32xc + f32), SZ(f32xc + f32c), SZ(f32xc + f), SZ(f32xc + fc), SZ(f32xc + f32x), SZ(f32xc + f32xc), SZ(f32xc + f64), SZ(f32xc + f64c), SZ(f32xc + d), SZ(f32xc + dc), SZ(f32xc + f64x), SZ(f32xc + f64xc), SZ(f32xc + f80), SZ(f32xc + ld), SZ(f32xc + ldc), SZ(f32xc + uuf128), SZ(f32xc + f128), SZ(f32xc + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f64), SZ(f64), SZ(f64 + f32), SZ(f64 + f32c), SZ(f64 + f), SZ(f64 + fc), SZ(f64 + f32x), SZ(f64 + f32xc), SZ(f64 + f64), SZ(f64 + f64c), SZ(f64 + d), SZ(f64 + dc), SZ(f64 + f64x), SZ(f64 + f64xc), SZ(f64 + f80), SZ(f64 + ld), SZ(f64 + ldc), SZ(f64 + uuf128), SZ(f64 + f128), SZ(f64 + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f64c), SZ(f64c), SZ(f64c + f32), SZ(f64c + f32c), SZ(f64c + f), SZ(f64c + fc), SZ(f64c + f32x), SZ(f64c + f32xc), SZ(f64c + f64), SZ(f64c + f64c), SZ(f64c + d), SZ(f64c + dc), SZ(f64c + f64x), SZ(f64c + f64xc), SZ(f64c + f80), SZ(f64c + ld), SZ(f64c + ldc), SZ(f64c + uuf128), SZ(f64c + f128), SZ(f64c + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(d), SZ(d), SZ(d + f32), SZ(d + f32c), SZ(d + f), SZ(d + fc), SZ(d + f32x), SZ(d + f32xc), SZ(d + f64), SZ(d + f64c), SZ(d + d), SZ(d + dc), SZ(d + f64x), SZ(d + f64xc), SZ(d + f80), SZ(d + ld), SZ(d + ldc), SZ(d + uuf128), SZ(d + f128), SZ(d + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(dc), SZ(dc), SZ(dc + f32), SZ(dc + f32c), SZ(dc + f), SZ(dc + fc), SZ(dc + f32x), SZ(dc + f32xc), SZ(dc + f64), SZ(dc + f64c), SZ(dc + d), SZ(dc + dc), SZ(dc + f64x), SZ(dc + f64xc), SZ(dc + f80), SZ(dc + ld), SZ(dc + ldc), SZ(dc + uuf128), SZ(dc + f128), SZ(dc + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f64x), SZ(f64x), SZ(f64x + f32), SZ(f64x + f32c), SZ(f64x + f), SZ(f64x + fc), SZ(f64x + f32x), SZ(f64x + f32xc), SZ(f64x + f64), SZ(f64x + f64c), SZ(f64x + d), SZ(f64x + dc), SZ(f64x + f64x), SZ(f64x + f64xc), SZ(f64x + f80), SZ(f64x + ld), SZ(f64x + ldc), SZ(f64x + uuf128), SZ(f64x + f128), SZ(f64x + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f64xc), SZ(f64xc), SZ(f64xc + f32), SZ(f64xc + f32c), SZ(f64xc + f), SZ(f64xc + fc), SZ(f64xc + f32x), SZ(f64xc + f32xc), SZ(f64xc + f64), SZ(f64xc + f64c), SZ(f64xc + d), SZ(f64xc + dc), SZ(f64xc + f64x), SZ(f64xc + f64xc), SZ(f64xc + f80), SZ(f64xc + ld), SZ(f64xc + ldc), SZ(f64xc + uuf128), SZ(f64xc + f128), SZ(f64xc + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f80), SZ(f80), SZ(f80 + f32), SZ(f80 + f32c), SZ(f80 + f), SZ(f80 + fc), SZ(f80 + f32x), SZ(f80 + f32xc), SZ(f80 + f64), SZ(f80 + f64c), SZ(f80 + d), SZ(f80 + dc), SZ(f80 + f64x), SZ(f80 + f64xc), SZ(f80 + f80), SZ(f80 + ld), SZ(f80 + ldc), SZ(f80 + uuf128), SZ(f80 + f128), SZ(f80 + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(ld), SZ(ld), SZ(ld + f32), SZ(ld + f32c), SZ(ld + f), SZ(ld + fc), SZ(ld + f32x), SZ(ld + f32xc), SZ(ld + f64), SZ(ld + f64c), SZ(ld + d), SZ(ld + dc), SZ(ld + f64x), SZ(ld + f64xc), SZ(ld + f80), SZ(ld + ld), SZ(ld + ldc), SZ(ld + uuf128), SZ(ld + f128), SZ(ld + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(ldc), SZ(ldc), SZ(ldc + f32), SZ(ldc + f32c), SZ(ldc + f), SZ(ldc + fc), SZ(ldc + f32x), SZ(ldc + f32xc), SZ(ldc + f64), SZ(ldc + f64c), SZ(ldc + d), SZ(ldc + dc), SZ(ldc + f64x), SZ(ldc + f64xc), SZ(ldc + f80), SZ(ldc + ld), SZ(ldc + ldc), SZ(ldc + uuf128), SZ(ldc + f128), SZ(ldc + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(uuf128), SZ(uuf128), SZ(uuf128 + f32), SZ(uuf128 + f32c), SZ(uuf128 + f), SZ(uuf128 + fc), SZ(uuf128 + f32x), SZ(uuf128 + f32xc), SZ(uuf128 + f64), SZ(uuf128 + f64c), SZ(uuf128 + d), SZ(uuf128 + dc), SZ(uuf128 + f64x), SZ(uuf128 + f64xc), SZ(uuf128 + f80), SZ(uuf128 + ld), SZ(uuf128 + ldc), SZ(uuf128 + uuf128), SZ(uuf128 + f128), SZ(uuf128 + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f128), SZ(f128), SZ(f128 + f32), SZ(f128 + f32c), SZ(f128 + f), SZ(f128 + fc), SZ(f128 + f32x), SZ(f128 + f32xc), SZ(f128 + f64), SZ(f128 + f64c), SZ(f128 + d), SZ(f128 + dc), SZ(f128 + f64x), SZ(f128 + f64xc), SZ(f128 + f80), SZ(f128 + ld), SZ(f128 + ldc), SZ(f128 + uuf128), SZ(f128 + f128), SZ(f128 + f128c) );
+	printf( "%6s %2zd | %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %5zd %6zd %5zd %5zd\n",
+		ST(f128c), SZ(f128c), SZ(f128c + f32), SZ(f128c + f32c), SZ(f128c + f), SZ(f128c + fc), SZ(f128c + f32x), SZ(f128c + f32xc), SZ(f128c + f64), SZ(f128c + f64c), SZ(f128c + d), SZ(f128c + dc), SZ(f128c + f64x), SZ(f128c + f64xc), SZ(f128c + f80), SZ(f128c + ld), SZ(f128c + ldc), SZ(f128c + uuf128), SZ(f128c + f128), SZ(f128c + f128c) );
+
+}
