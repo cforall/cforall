@@ -1520,6 +1520,7 @@ public:
 		preprint( node );
 		if ( ! node->isArray() ) {
 			os << "pointer to ";
+			safe_print( node->base );
 		} else {
 			os << "decayed ";
 			if ( node->isStatic ) {
@@ -1530,11 +1531,17 @@ public:
 				os << "variable length array of ";
 			} else if ( node->dimension ) {
 				os << "array of ";
+			} else {
+				os << "open array of ";
+			}
+
+			safe_print( node->base );
+
+			if ( node->dimension ) {
+				os << " with dimension of ";
 				node->dimension->accept( *this );
-				os << " ";
 			}
 		}
-		safe_print( node->base );
 
 		return node;
 	}

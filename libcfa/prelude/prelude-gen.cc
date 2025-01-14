@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz and Thierry Delisle
 // Created On       : Sat Feb 16 08:44:58 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 12 20:28:33 2025
-// Update Count     : 53
+// Last Modified On : Mon Jan 13 14:15:29 2025
+// Update Count     : 55
 //
 
 #include <algorithm>
@@ -49,11 +49,11 @@ static struct{
 #if defined(__i386__) || defined(__ia64__) || defined(__x86_64__)
 	{ "__float80",				true,  true,  },
 	{ "__float128",				true,  true,  },
+#endif
 	{ "_Float128",				true,  true,  },
 	{ "_Float128 _Complex",		true,  false, },
 //	{ "_Float128x",				true,  true,  },		// add declarations if type supported
 //	{ "_Float128x _Complex",	true,  false, },
-#endif
 };
 
 struct {

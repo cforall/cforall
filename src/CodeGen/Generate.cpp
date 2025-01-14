@@ -66,6 +66,23 @@ void generate( ast::TranslationUnit & translationUnit, std::ostream & os, bool d
 	}
 }
 
+// to be invoked manually from GDB
+void generate( const ast::Node * node, std::ostream & os,
+		bool pretty, bool generateC, bool lineMarks, bool printExprTypes ) {
+	ast::Pass<CodeGenerator> cgv( os,
+			Options( pretty, generateC, lineMarks, printExprTypes ) );
+	node->accept( cgv );
+	if ( auto decl = dynamic_cast<const ast::Decl *>( node ) ) {
+		if ( doSemicolon( decl ) ) {
+			os << ";";
+		}
+	}
+	os << cgv.core.endl;
+}
+void generate( const ast::Node * node, std::ostream & os ) {
+	generate( node, os, true, false, false, false );
+}
+
 } // namespace CodeGen
 
 // Local Variables: //

@@ -21,7 +21,7 @@ void trash() {
 
 unsigned cs() {
 	thread$ * me = active_thread();
-	unsigned value = (unsigned)me;
+	unsigned value = (uintptr_t)me;
 	mcs_node n;
 	lock(mo.l, n);
 	{

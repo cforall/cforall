@@ -31,7 +31,7 @@ uint32_t cs() {
 		uint32_t cnt = mo.cnt;
 		mo.id = me;
 		yield(random(5));
-		value = ((uint32_t)random()) ^ ((uint32_t)me);
+		value = ((uint32_t)random()) ^ ((uint32_t)(uintptr_t)me);
 		if(mo.id != me) sout | "Intruder!";
 		mo.cnt = cnt + 1;
 		mo.sum = tsum + value;

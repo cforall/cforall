@@ -22,7 +22,7 @@ void block() { // used for barrier like behaviour
 
 thread T1 {};
 
-void main( T1 & this ) {
+void main( T1 & ) {
 	lock(m);
 	wait( c_m, m, 1`s );
 	// printf("Thread: %p timedout\n", active_thread()); // removed since can't expect non deterministic output
@@ -45,7 +45,7 @@ void main( T1 & this ) {
 
 thread T2 {};
 
-void main( T2 & this ) {
+void main( T2 & ) {
 	block();
 
 	// Test calls which occur increasingly close to timeout value.

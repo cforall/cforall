@@ -20,10 +20,10 @@ allocation handle() {
 	return Finished;
 }
 
-allocation receive( Server & receiver, D_msg & msg ) { return handle(); }
-allocation receive( Server & receiver, D_msg2 & msg ) { return handle(); }
-allocation receive( Server2 & receiver, D_msg & msg ) { return Delete; }
-allocation receive( Server2 & receiver, D_msg2 & msg ) { return Delete; }
+allocation receive( Server &, D_msg & ) { return handle(); }
+allocation receive( Server &, D_msg2 & ) { return handle(); }
+allocation receive( Server2 &, D_msg & ) { return Delete; }
+allocation receive( Server2 &, D_msg2 & ) { return Delete; }
 
 int main() {
 	sout | "Start";

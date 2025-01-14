@@ -112,7 +112,6 @@ static inline request & remove( copy_queue & this ) with(this) {
 		index = count == 0 ? 0 : index + 1;
 		return buffer[old_idx];
 	}
-	request * ret = 0p;
 	return *0p;
 }
 
@@ -146,6 +145,8 @@ static inline void ?{}( work_queue & this, size_t buf_size, unsigned int i ) wit
 	#ifdef ACTOR_STATS
 	id = i;
 	missed = 0;
+	#else
+	(void) i;
 	#endif
 }
 
@@ -714,9 +715,9 @@ struct delete_msg_t { inline message; } delete_msg = __base_msg_finished;
 struct destroy_msg_t { inline message; } destroy_msg = __base_msg_finished;
 struct finished_msg_t { inline message; } finished_msg = __base_msg_finished;
 
-allocation receive( actor & this, delete_msg_t & ) { return Delete; }
-allocation receive( actor & this, destroy_msg_t & ) { return Destroy; }
-allocation receive( actor & this, finished_msg_t & ) { return Finished; }
+allocation receive( actor &, delete_msg_t & ) { return Delete; }
+allocation receive( actor &, destroy_msg_t & ) { return Destroy; }
+allocation receive( actor &, finished_msg_t & ) { return Finished; }
 
 // Default messages used all the time.
 struct start_msg_t { inline message; } start_msg = __base_msg_finished; // start actor

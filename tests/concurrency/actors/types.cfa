@@ -35,7 +35,7 @@ struct derived_actor2 {
 	inline actor;
 };
 
-allocation receive( derived_actor2 & receiver, d_msg & msg ) {
+allocation receive( derived_actor2 &, d_msg & msg ) {
 	mutex(sout) sout | msg.num;
 	return Finished;
 }
@@ -47,20 +47,20 @@ struct d_msg2 {
 	int num;
 };
 
-allocation receive( derived_actor3 & receiver, d_msg & msg ) {
+allocation receive( derived_actor3 &, d_msg & msg ) {
 	mutex(sout) sout | msg.num;
 	if ( msg.num == -1 ) return Nodelete;
 	return Finished;
 }
 
-allocation receive( derived_actor3 & receiver, d_msg2 & msg ) {
+allocation receive( derived_actor3 &, d_msg2 & msg ) {
 	mutex(sout) sout | msg.num;
 	return Finished;
 }
 
 size_t Processors = 3;
 
-int main( int argc, char * argv[] ) {
+int main() {
 	sout | "start";
 
 	processor p[Processors - 1];

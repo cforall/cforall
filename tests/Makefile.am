@@ -61,7 +61,6 @@ WFLGAS_OPT_LAX_EXPECT_WARN = \
 # Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
 WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	attributes \
-	collections/atomic_mpsc \
 	collections/queue \
 	collections/sequence \
 	collections/stack \
@@ -89,19 +88,6 @@ WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	concurrency/pthread/pthread_demo_create_join \
 	concurrency/pthread/pthread_demo_lock \
 	concurrency/pthread/pthread_key_test \
-	concurrency/pthread/pthread_once_test \
-	concurrency/unified_locking/block_spin_lock \
-	concurrency/unified_locking/exp_backoff \
-	concurrency/unified_locking/fast_block_lock \
-	concurrency/unified_locking/futex_mutex \
-	concurrency/unified_locking/locks \
-	concurrency/unified_locking/mcs \
-	concurrency/unified_locking/mcs_block_spin_lock \
-	concurrency/unified_locking/mcs_spin \
-	concurrency/unified_locking/pthread_locks \
-	concurrency/unified_locking/simple_owner_lock \
-	concurrency/unified_locking/spin_queue_lock \
-	concurrency/unified_locking/timeout_lock \
 	concurrency/waituntil/all_types \
 	concurrency/waituntil/basic_else \
 	concurrency/waituntil/channel_close \

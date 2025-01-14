@@ -49,9 +49,9 @@ int main() {
 		d_actor da;
 		d_msg2 dm{ 29079 };
 		set_allocation( dm, Nodelete );
-		msg_wrapper * mw = &dm;
-		message * mg = &dm;
-		virtual_dtor * v = &dm;
+		msg_wrapper * mw = &dm;		(void) mw;
+		message * mg = &dm;			(void) mg;
+		virtual_dtor * v = &dm;		(void) v;
 		da | dm;
 		actor_stop();								// waits until actors finish
 	}

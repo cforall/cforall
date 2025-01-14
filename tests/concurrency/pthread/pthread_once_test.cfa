@@ -73,8 +73,8 @@ extern "C"{
             printf("pthread_join failed, thread %d, errno=%d\n", i+1, errno);        
                                                                                         
             if (thread_stat[i] != 0)                                                    
-                printf("bad thread status, thread %d, status=%d\n", i+1,                
-                                                        (int)thread_stat[i]);             
+                printf("bad thread status, thread %d, status=%zu\n", i+1,                
+                                                        (size_t)thread_stat[i]);             
         }                                                                             
                                                                                         
         if (once_counter != 1) {

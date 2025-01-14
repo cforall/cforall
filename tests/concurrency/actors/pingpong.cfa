@@ -19,7 +19,7 @@ ping * pi;
 pong * po;
 size_t times = 100000;
 
-allocation receive( ping & receiver, p_msg & msg ) {
+allocation receive( ping &, p_msg & msg ) {
 	msg.count++;
 	if ( msg.count > times ) return Finished;
 
@@ -29,7 +29,7 @@ allocation receive( ping & receiver, p_msg & msg ) {
 	return retval;
 }
 
-allocation receive( pong & receiver, p_msg & msg ) {
+allocation receive( pong &, p_msg & msg ) {
 	msg.count++;
 	if ( msg.count > times ) return Finished;
 	
@@ -41,7 +41,7 @@ allocation receive( pong & receiver, p_msg & msg ) {
 
 size_t Processors = 2;
 
-int main( int argc, char * argv[] ) {
+int main() {
 	sout | "start";
 
 	processor p[Processors - 1];

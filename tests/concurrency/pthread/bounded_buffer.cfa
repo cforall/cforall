@@ -125,7 +125,7 @@ int main() {
                 sout | " producers join thread failure";
                 exit( EXIT_FAILURE );
             } // if
-            if ( (uint64_t)result != 0 ) {
+            if ( result != 0p ) {
                 sout | "producers" | prods[i] |" bad return value " | result;
                 exit( EXIT_FAILURE );
             } // if
@@ -141,7 +141,7 @@ int main() {
                 sout| "consumers join thread failure" ;
                 exit( EXIT_FAILURE );
             } // if
-            if ( (uint64_t)result != 0 ) {
+            if ( result != 0p ) {
                 sout| "consumers bad return value" | result;
                 exit( EXIT_FAILURE );
             } // if
