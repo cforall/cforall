@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Thd Feb 23 12:27:26 2017
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 27 12:13:14 2024
-// Update Count     : 72
+// Last Modified By : Kyoung Seo
+// Last Modified On : Thd Jan 16 12:59:00 2025
+// Update Count     : 73
 //
 
 #define __cforall_thread__
@@ -921,39 +921,11 @@ static inline void brand_condition( condition & this ) {
 
 static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask, monitor$ * monitors [], __lock_size_t count ) {
 	__queue_t(thread$) & entry_queue = monitors[0]->entry_queue;
-
-#if 0
-	#if defined( __CFA_WITH_VERIFY__ )
-		thread$ * last = 0p;
-	#endif
-	// For each thread in the entry-queue
-	for ( thread$ ** thrd_it = &entry_queue.head; (*thrd_it) != 1p; thrd_it = &get_next(**thrd_it) ) {
-		thread$ * curr = *thrd_it;
-
-		/* paranoid */ verifyf( !last || last->user_link.next == curr, "search not making progress, from %p (%p) to %p",
-								last, last->user_link.next, curr );
-		/* paranoid */ verifyf( curr != last, "search not making progress, from %p to %p", last, curr );
-
-		// For each acceptable check if it matches
-		int i = 0;
-		__acceptable_t * end = end(mask);
-		__acceptable_t * begin = begin(mask);
-		for ( __acceptable_t * it = begin; it != end; it++, i++ ) {
-			// Check for match
-			if ( *it == curr->monitors ) {
-				// If match, return it after removeing it from the entry queue
-				return [remove( entry_queue, thrd_it ), i];
-			}
-		}
-
-		#if defined( __CFA_WITH_VERIFY__ )
-			last = curr;
-		#endif
-	}
-#else
 	// For each acceptable (respect lexical priority in waitfor statement)
-	__acceptable_t * it = end(mask); it--;				// end is passed the last node, so backup
-	for ( int i = mask.size - 1; i >= 0; i -= 1, it-- ) {
+	int i = 0;
+	__acceptable_t * end = end(mask);
+	__acceptable_t * begin = begin(mask);
+	for ( __acceptable_t * it = begin; it != end; it++, i++ ) {
 		#if defined( __CFA_WITH_VERIFY__ )
 		thread$ * last = 0p;
 		#endif // __CFA_WITH_VERIFY__
@@ -976,7 +948,6 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 			#endif
 		} // for
 	} // for
-#endif
 	return [0, -1];
 }
 

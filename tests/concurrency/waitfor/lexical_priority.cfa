@@ -1,0 +1,47 @@
+#include <thread.hfa>
+#include <fstream.hfa>
+
+// Test priority order of waitfor clauses. To get deterministic output for repeatable testing, preemption is disabled
+// and the threads defer to each other at certain points.
+
+Duration default_preemption() {	return 0; }				// disable preemption
+
+enum { Times = 50, Half = Times / 2 };
+
+thread T {};
+void f( T & mutex ) {}
+void g( T & mutex ) {}
+void main( T & t ) {
+	sout | nlOff;
+	for ( Times / Half ) {
+		for ( Half ) {
+			waitfor( f : t ) sout | "f";
+			or waitfor( g :t ) sout | "g";				// service f before g
+		} // for
+		for ( Half ) {
+			waitfor( g : t ) sout | "g";				// service g before f
+			or waitfor( f : t )	sout | "f";
+		} // for
+		sout | "\n";
+	} // for
+}
+
+T t;													// shared
+
+thread F{};
+void main( F & ) {
+	for ( Half ) f( t );
+	for ( Half ) f( t );
+}
+
+thread G{};
+void main( G & ) {
+	for ( Half ) g( t );
+	for ( Half ) g( t );
+}
+
+int main() {
+	F f;
+	yield();											// let f get ahead
+	G g;
+}

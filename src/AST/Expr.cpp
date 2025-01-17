@@ -121,8 +121,11 @@ VariableExpr::VariableExpr( const CodeLocation & loc, const DeclWithType * v )
 }
 
 bool VariableExpr::get_lvalue() const {
-	// It isn't always an lvalue, but it is never an rvalue.
+	// Special case for enumeration labels (more literals than variables):
 	if(dynamic_cast<const ast::EnumInstType *>(var->get_type())) return !var->isMember;
+	// The remaining uses are either actual variables (lvalues) or function
+	// names which are a special value catagory that can be treated as
+	// lvalues in the places we are worried about.
 	return true;
 }
 

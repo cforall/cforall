@@ -9,9 +9,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 23 22:50:35 2024
-// Update Count     : 432
+// Last Modified By : Kyoung Seo
+// Last Modified On : Thd Jan 16 13:05:00 2025
+// Update Count     : 433
 //
 
 #include "StatementNode.hpp"
@@ -350,7 +350,7 @@ ast::WaitForStmt * build_waitfor( const CodeLocation & location, ast::WaitForStm
 
 	delete targetExpr;
 
-	existing->clauses.insert( existing->clauses.begin(), clause );
+	existing->clauses.insert( existing->clauses.end(), clause );
 
 	return existing;
 } // build_waitfor
