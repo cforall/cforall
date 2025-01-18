@@ -80,11 +80,11 @@ void choose_break_in_finally() {
 	}
 }
 
-void choose_fallthru_in_finally() {
+void choose_fallthrough_in_finally() {
 	choose (1) {
 	case 1:
 		try {} finally {
-			fallthru;
+			fallthrough;
 		}
 	default:
 		break;
@@ -104,11 +104,11 @@ void labelled_choose_break_in_finally() {
 	}
 }
 
-void labelled_choose_fallthru_in_finally() {
+void labelled_choose_fallthrough_in_finally() {
 	mainBlock: choose (1) {
 	case 1:
 		try {} finally {
-			fallthru mainBlock;
+			fallthrough mainBlock;
 		}
 	case 2:
 		break;
@@ -117,11 +117,11 @@ void labelled_choose_fallthru_in_finally() {
 	}
 }
 
-void choose_fallthru_default_in_finally() {
+void choose_fallthrough_default_in_finally() {
 	choose (1) {
 	case 1:
 		try {} finally {
-			fallthru default;
+			fallthrough default;
 		}
 	default:
 		break;

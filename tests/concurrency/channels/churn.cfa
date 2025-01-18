@@ -90,17 +90,17 @@ int main( int argc, char *argv[] ) {
       case 4:
 		if ( strcmp( argv[3], "d" ) != 0 ) {			// default ?
 			ChannelSize = ato( argv[3] );
-			if ( ChannelSize < 1 ) fallthru default;
+			if ( ChannelSize < 1 ) fallthrough default;
 		} // if
       case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
 			Channels = ato( argv[2] );
-			if ( Channels < 1 ) fallthru default;
+			if ( Channels < 1 ) fallthrough default;
 		} // if
       case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			Processors = ato( argv[1] );
-			if ( Processors < 1 ) fallthru default;
+			if ( Processors < 1 ) fallthrough default;
 		} // if
 	  case 1:											// use defaults
 		break;

@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Wed May  8 13:00:00 2019
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr  5 10:34:00 2023
-// Update Count     : 37
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jan 17 14:18:56 2025
+// Update Count     : 38
 //
 
 #pragma once
@@ -279,7 +279,7 @@ class ForeachStmt final : public Stmt {
 	MUTATE_FRIEND
 };
 
-// Branch control flow statement: goto ... or break or continue or fallthru
+// Branch control flow statement: goto ... or break or continue or fallthrough
 class BranchStmt final : public Stmt {
   public:
 	enum Kind { Goto, Break, Continue, FallThrough, FallThroughDefault };

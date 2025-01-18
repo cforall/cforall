@@ -40,32 +40,32 @@ int main( int argc, char * argv[] ) {
 	  case 7:
 		if ( strcmp( argv[6], "d" ) != 0 ) {			// default ?
 			BufSize = ato( argv[6] );
-			if ( BufSize < 0 ) fallthru default;
+			if ( BufSize < 0 ) fallthrough default;
 		} // if
 	  case 6:
 		if ( strcmp( argv[5], "d" ) != 0 ) {			// default ?
 			Batch = ato( argv[5] );
-			if ( Batch < 1 ) fallthru default;
+			if ( Batch < 1 ) fallthrough default;
 		} // if
 	  case 5:
 		if ( strcmp( argv[4], "d" ) != 0 ) {			// default ?
 			Processors = ato( argv[4] );
-			if ( Processors < 1 ) fallthru default;
+			if ( Processors < 1 ) fallthrough default;
 		} // if
 	  case 4:
 		if ( strcmp( argv[3], "d" ) != 0 ) {			// default ?
 			Rounds = ato( argv[3] );
-			if ( Rounds < 1 ) fallthru default;
+			if ( Rounds < 1 ) fallthrough default;
 		} // if
 	  case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
 			Set = ato( argv[2] );
-			if ( Set < 1 ) fallthru default;
+			if ( Set < 1 ) fallthrough default;
 		} // if
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			Actors = ato( argv[1] );
-			if ( Actors < 1 || Actors <= Set || Actors % Set != 0 ) fallthru default;
+			if ( Actors < 1 || Actors <= Set || Actors % Set != 0 ) fallthrough default;
 		} // if
 	  case 1:											// use defaults
 		break;

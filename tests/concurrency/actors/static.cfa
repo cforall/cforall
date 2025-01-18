@@ -33,7 +33,7 @@ int main( int argc, char * argv[] ) {
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			Times = ato( argv[1] );
-			if ( Times < 1 ) fallthru default;
+			if ( Times < 1 ) fallthrough default;
 		} // if
 	  case 1:											// use defaults
 		break;

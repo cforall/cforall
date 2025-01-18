@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Tue Oct 17 15:54:00 2023
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Oct 25 18:28:00 2023
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Jan 17 14:19:22 2025
+// Update Count     : 1
 //
 
 #include "CodeGenerator.hpp"
@@ -1091,13 +1091,13 @@ void CodeGenerator::postvisit( ast::BranchStmt const * stmt ) {
 		break;
 	case ast::BranchStmt::FallThrough:
 	case ast::BranchStmt::FallThroughDefault:
-		assertf( !options.genC, "fallthru should not reach code generation." );
-		output << "fallthru";
+		assertf( !options.genC, "fallthrough should not reach code generation." );
+		output << "fallthrough";
 		break;
 	default:
 		assertf( false, "Bad BranchStmt value." );
 	}
-	// Print branch target for labelled break/continue/fallthru in debug mode.
+	// Print branch target for labelled break/continue/fallthrough in debug mode.
 	if ( !options.genC && stmt->kind != ast::BranchStmt::Goto ) {
 		if ( !stmt->target.empty() ) {
 			output << " " << stmt->target;

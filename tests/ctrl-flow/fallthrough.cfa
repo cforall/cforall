@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Wed Mar 14 10:06:25 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 24 11:24:35 2018
-// Update Count     : 22
+// Last Modified On : Fri Jan 17 14:09:49 2025
+// Update Count     : 23
 //
 
 #include <fstream.hfa>
@@ -19,36 +19,36 @@ void test(int choice) {
 	choose ( choice ) {
 	  case 1:
 		sout | "case 1";
-		fallthru;
+		fallthrough;
 	  case 2:
 		sout | "case 2";
-		fallthru;
-		sout | "did not fallthru";
-		if ( 7 ) fallthru common2;
-		fallthru common1;
+		fallthrough;
+		sout | "did not fallthrough";
+		if ( 7 ) fallthrough common2;
+		fallthrough common1;
 	  case 3:
 		sout | "case 3";
-		fallthru default;
-		fallthru common1;
+		fallthrough default;
+		fallthrough common1;
 	  common1:
 		sout | "common1";
 		// break
 	  case 4:
 		sout | "case 4";
-		fallthru common2;
+		fallthrough common2;
 	  case 5:
 		sout | "case 5";
-		fallthru common2;
-		fallthru default;
+		fallthrough common2;
+		fallthrough default;
 	  case 6:
 		sout | "case 6";
-		fallthru common2;
+		fallthrough common2;
 	  common2:
 		sout | "common2";
 		// break
 	  default:
 		sout | "default";
-		fallthru;
+		fallthrough;
 	} // choose
 
 	sout | nl;
@@ -61,7 +61,7 @@ void test(int choice) {
 			sout | "case 1";
 			for ( int i = 0; i < 4; i += 1 ) {
 				sout | i;
-				if ( i == 2 ) fallthru common;
+				if ( i == 2 ) fallthrough common;
 			} // for
 		} // switch
 		break;
@@ -72,34 +72,34 @@ void test(int choice) {
 				sout | "error";
 			} else {
 				sout | "check";
-				fallthru common;
+				fallthrough common;
 			} // if
 		} // if
 	  common:
 		sout | "common";
-		fallthru;
+		fallthrough;
 		break;
 	  default:
 		sout | "default";
-		fallthru;
+		fallthrough;
 	} // switch
 
 #if ERR1
 	// ERROR: fallthrough must be enclosed in switch or choose
-	fallthru;
+	fallthrough;
 	// ERROR: fallthrough must be enclosed in switch or choose
-	fallthru common4;
+	fallthrough common4;
 	// ERROR: fallthrough must be enclosed in switch or choose
-	fallthru default;
+	fallthrough default;
 	choose ( 3 ) {
 	  case 2:
 		for () {
 			choose ( 2 ) {
 			  case 1:
 				// ERROR: default is later, but in a different switch
-				fallthru default;
+				fallthrough default;
 				// ERROR: common3 is later, but not at the same level as a case clause
-				fallthru common3;
+				fallthrough common3;
 			}
 		  common3: ;
 		} // for
@@ -107,9 +107,9 @@ void test(int choice) {
 	  case 1:
 	  common4:
 		// ERROR: attempt to jump up with fallthrough
-		if ( 7 ) fallthru common4;
+		if ( 7 ) fallthrough common4;
 		// ERROR: attempt to jump up with fallthrough
-		fallthru default;
+		fallthrough default;
 	} // choose
 #endif
 }

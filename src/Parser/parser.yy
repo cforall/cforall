@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 15 21:30:38 2024
-// Update Count     : 6933
+// Last Modified On : Fri Jan 17 14:35:08 2025
+// Update Count     : 6935
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -376,7 +376,7 @@ if ( N ) {																		\
 %token SUSPEND											// CFA
 %token ATTRIBUTE EXTENSION								// GCC
 %token IF ELSE SWITCH CASE DEFAULT DO WHILE FOR BREAK CONTINUE GOTO RETURN
-%token CHOOSE FALLTHRU FALLTHROUGH WITH WHEN WAITFOR WAITUNTIL // CFA
+%token CHOOSE FALLTHROUGH WITH WHEN WAITFOR WAITUNTIL	// CFA
 %token CORUN COFOR
 %token DISABLE ENABLE TRY THROW THROWRESUME AT			// CFA
 %token ASM												// C99, extension ISO/IEC 9899:1999 Section J.5.10(1)
@@ -1679,12 +1679,12 @@ jump_statement:
 		// The syntax for the GCC computed goto violates normal expression precedence, e.g., goto *i+3; => goto *(i+3);
 		// whereas normal operator precedence yields goto (*i)+3;
 		{ $$ = new StatementNode( build_computedgoto( $3 ) ); }
-		// A semantic check is required to ensure fallthru appears only in the body of a choose statement.
-	| fall_through_name ';'								// CFA
+		// A semantic check is required to ensure fallthrough appears only in the body of a choose statement.
+	| FALLTHROUGH ';'									// CFA
 		{ $$ = new StatementNode( build_branch( yylloc, ast::BranchStmt::FallThrough ) ); }
-	| fall_through_name identifier_or_type_name ';'		// CFA
+	| FALLTHROUGH identifier_or_type_name ';'			// CFA
 		{ $$ = new StatementNode( build_branch( yylloc, $2, ast::BranchStmt::FallThrough ) ); }
-	| fall_through_name DEFAULT ';'						// CFA
+	| FALLTHROUGH DEFAULT ';'							// CFA
 		{ $$ = new StatementNode( build_branch( yylloc, ast::BranchStmt::FallThroughDefault ) ); }
 	| CONTINUE ';'
 		// A semantic check is required to ensure this statement appears only in the body of an iteration statement.
@@ -1722,11 +1722,6 @@ jump_statement:
 		{ $$ = new StatementNode( build_resume( yylloc, $2 ) ); }
 	| THROWRESUME assignment_expression_opt AT assignment_expression ';' // handles reresume
 		{ $$ = new StatementNode( build_resume_at( $2, $4 ) ); }
-	;
-
-fall_through_name:										// CFA
-	FALLTHRU
-	| FALLTHROUGH
 	;
 
 with_statement:

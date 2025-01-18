@@ -37,12 +37,12 @@ int main( int argc, char * argv[] ) {
 	  case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
 			Tasks = ato( argv[2] );
-            if ( Tasks < 1 ) fallthru default;
+            if ( Tasks < 1 ) fallthrough default;
 		} // if
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			Processors = ato( argv[1] );
-			if ( Processors < 1 ) fallthru default;
+			if ( Processors < 1 ) fallthrough default;
 		} // if
 	  case 1:											// use defaults
 		break;

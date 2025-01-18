@@ -38,22 +38,22 @@ int main( int argc, char * argv[] ) {
 	  case 5:
 		if ( strcmp( argv[4], "d" ) != 0 ) {			// default ?
 			Processors = ato( argv[4] );
-			if ( Processors < 1 ) fallthru default;
+			if ( Processors < 1 ) fallthrough default;
 		} // if
 	  case 4:
 		if ( strcmp( argv[3], "d" ) != 0 ) {			// default ?
 			xr = ato( argv[3] );
-			if ( xr < 1 ) fallthru default;
+			if ( xr < 1 ) fallthrough default;
 		} // if
 	  case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
 			xc = ato( argv[2] );
-			if ( xc < 1 ) fallthru default;
+			if ( xc < 1 ) fallthrough default;
 		} // if
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			yc = ato( argv[1] );
-			if ( yc < 1 ) fallthru default;
+			if ( yc < 1 ) fallthrough default;
 		} // if
 	  case 1:											// use defaults
 		break;
