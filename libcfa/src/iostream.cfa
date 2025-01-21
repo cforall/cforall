@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 13 10:53:09 2024
-// Update Count     : 2041
+// Last Modified On : Mon Jan 20 18:45:43 2025
+// Update Count     : 2063
 //
 
 #include "iostream.hfa"
@@ -794,7 +794,7 @@ forall( istype & | basic_istream( istype ) ) {
 		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		char temp;
 		for () {
-			int args = fmt( is, "%c", &temp );
+			int args = fmt( is, "%c", &temp );			// can be called with EOF on
 			if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 			assert( args == 1 );						// if not EOF => a single character must be read
 			// do not overwrite parameter with newline unless appropriate
@@ -804,72 +804,72 @@ forall( istype & | basic_istream( istype ) ) {
 	} // ?|?
 
 	istype & ?|?( istype & is, signed char & sc ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		int args = fmt( is, "%hhi", &sc );				// can be multiple characters (100)
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned char & usc ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		int args = fmt( is, "%hhi", &usc );				// can be multiple characters (-100)
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, short int & si ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%hi", &si );
+		int args = fmt( is, "%hi", &si );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned short int & usi ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%hi", &usi );
+		int args = fmt( is, "%hi", &usi );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, int & i ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%i", &i );
+		int args = fmt( is, "%i", &i );					// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned int & ui ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%i", &ui );
+		int args = fmt( is, "%i", &ui );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, long int & li ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%li", &li );
+		int args = fmt( is, "%li", &li );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned long int & ulli ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%li", &ulli );
+		int args = fmt( is, "%li", &ulli );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, long long int & lli ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%lli", &lli );
+		int args = fmt( is, "%lli", &lli );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, unsigned long long int & ulli ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%lli", &ulli );
+		int args = fmt( is, "%lli", &ulli );			// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
@@ -896,63 +896,63 @@ forall( istype & | basic_istream( istype ) ) {
 	#endif // __SIZEOF_INT128__
 
 	istype & ?|?( istype & is, float & f ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%f", &f );
+		int args = fmt( is, "%f", &f );					// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, double & d ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%lf", &d );
+		int args = fmt( is, "%lf", &d );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, long double & ld ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-		int args = fmt( is, "%Lf", &ld );
+		int args = fmt( is, "%Lf", &ld );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, float _Complex & fc ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		float re, im;
-		int args = fmt( is, "%f%fi", &re, &im );
+		int args = fmt( is, "%f%fi", &re, &im );		// can be called with EOF on
 		if ( ! eof( is ) && args != 2 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 2 ) throwResume ExceptionInst( end_of_file );
 		fc = re + im * _Complex_I;
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, double _Complex & dc ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		double re, im;
-		int args = fmt( is, "%lf%lfi", &re, &im );
+		int args = fmt( is, "%lf%lfi", &re, &im );		// can be called with EOF on
 		if ( ! eof( is ) && args != 2 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 2 ) throwResume ExceptionInst( end_of_file );
 		dc = re + im * _Complex_I;
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, long double _Complex & ldc ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		long double re, im;
-		int args = fmt( is, "%Lf%Lfi", &re, &im );
+		int args = fmt( is, "%Lf%Lfi", &re, &im );		// can be called with EOF on
 		if ( ! eof( is ) && args != 2 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && args != 2 ) throwResume ExceptionInst( end_of_file );
 		ldc = re + im * _Complex_I;
 		return is;
 	} // ?|?
 
 	istype & ?|?( istype & is, const char fmt[] ) {		// match text
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		size_t len = strlen( fmt );
 		char fmtstr[len + 16];
 		strcpy( fmtstr, fmt );							// copy format and add %n
 		strcpy( &fmtstr[len], "%n" );
 		len = -1;
 		// scanf cursor does not move if no match
-		fmt( is, fmtstr, &len );
-		if ( len == -1 ) throwResume ExceptionInst( missing_data );
+		fmt( is, fmtstr, &len );						// can be called with EOF on
+		if ( ! eof( is ) && len == -1 ) throwResume ExceptionInst( missing_data );
+		if ( eof( is ) && len == -1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
@@ -998,7 +998,7 @@ forall( istype & | basic_istream( istype ) ) {
 		} else {
 			char ch;
 			for ( f.wd ) {								// skip N characters
-				int args = fmt( is, "%c", &ch );
+				int args = fmt( is, "%c", &ch );		// can be called with EOF on
 				if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 			} // for
 		} // if
