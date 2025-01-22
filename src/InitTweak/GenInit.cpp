@@ -161,16 +161,37 @@ namespace {
 				// The hoist, by example, is:
 				// FROM USER:  float a[ rand() ];
 				// TO GCC:     const size_t __len_of_a = rand(); float a[ __len_of_a ];
+				ast::ObjectDecl * arrayDimension = nullptr;
 
-				ast::ObjectDecl * arrayDimension = new ast::ObjectDecl(
-					arrayType->dimension->location,
-					dimensionName.newName(),
-					dimType,
-					new ast::SingleInit(
+				const ast::TypeExpr * ty = dynamic_cast< const ast::TypeExpr * >( arrayType->dimension.get() );
+				if ( ty ) {
+					auto inst = ty->type.as<ast::EnumInstType>();
+					if ( inst ) {
+						if ( inst->base->isCfa ) {
+							arrayDimension = new ast::ObjectDecl(
+								arrayType->dimension->location,
+								dimensionName.newName(),
+								new ast::BasicType( ast::BasicKind::UnsignedChar ),
+								new ast::SingleInit(
+									arrayType->dimension->location,
+									ast::ConstantExpr::from_int( arrayType->dimension->location, inst->base->members.size() )
+								)
+							);
+							// return arrayType;
+						}
+					}
+				}
+				if ( arrayDimension == nullptr ) {
+					arrayDimension = new ast::ObjectDecl(
 						arrayType->dimension->location,
-						arrayType->dimension
-					)
-				);
+						dimensionName.newName(),
+						dimType,
+						new ast::SingleInit(
+							arrayType->dimension->location,
+							arrayType->dimension
+						)
+					);
+				}
 
 				ast::ArrayType * mutType = ast::mutate( arrayType );
 				mutType->dimension = new ast::VariableExpr(
