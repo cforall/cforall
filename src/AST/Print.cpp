@@ -1206,11 +1206,10 @@ public:
 		return node;
 	}
 
-	virtual const ast::Expr * visit( const ast::CountExpr * node ) override final {
+	virtual const ast::Expr * visit( const ast::CountofExpr * node ) override final {
 		os << "Count Expression on: ";
 		++indent;
-		if ( node->type ) node->type->accept( *this );
-		else safe_print( node->expr );
+		safe_print( node->type );
 		--indent;
 		postprint( node );
 		return node;

@@ -63,7 +63,11 @@ int main( void ) {
 	test_use( ip );
 	free( ip );
 
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wpragmas" // -Walloc-size unrecognized until GCC 14
+  #pragma GCC diagnostic ignored "-Walloc-size"
 	ip = (int *)malloc( 0 );
+  #pragma GCC diagnostic pop
 	test_base( ip, 0, libAlign );
 	test_use( ip );
 	free( ip );

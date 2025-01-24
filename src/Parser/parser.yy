@@ -945,9 +945,9 @@ unary_expression:
 			// $$ = new ExpressionNode( build_offsetOf( $3, build_varref( $5 ) ) );
 		}
 	| COUNTOF unary_expression
-		{ $$ = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuild( $2 ) ) ); }
+		{ $$ = new ExpressionNode( new ast::CountofExpr( yylloc, new ast::TypeofType( maybeMoveBuild( $2 ) ) ) ); }
 	| COUNTOF '(' type_no_function ')'
-		{ $$ = new ExpressionNode( new ast::CountExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
+		{ $$ = new ExpressionNode( new ast::CountofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
 	;
 
 ptrref_operator:

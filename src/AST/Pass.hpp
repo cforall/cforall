@@ -172,8 +172,8 @@ public:
 	const ast::Expr *             visit( const ast::VariableExpr         * ) override final;
 	const ast::Expr *             visit( const ast::ConstantExpr         * ) override final;
 	const ast::Expr *             visit( const ast::SizeofExpr           * ) override final;
-	const ast::Expr *             visit( const ast::CountExpr            * ) override final;
 	const ast::Expr *             visit( const ast::AlignofExpr          * ) override final;
+	const ast::Expr *             visit( const ast::CountofExpr          * ) override final;
 	const ast::Expr *             visit( const ast::UntypedOffsetofExpr  * ) override final;
 	const ast::Expr *             visit( const ast::OffsetofExpr         * ) override final;
 	const ast::Expr *             visit( const ast::OffsetPackExpr       * ) override final;

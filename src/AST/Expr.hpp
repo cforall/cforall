@@ -489,20 +489,6 @@ private:
 	MUTATE_FRIEND
 };
 
-class CountExpr final : public Expr {
-public:
-	ptr<Expr> expr;
-	ptr<Type> type;
-
-	CountExpr( const CodeLocation & loc, const Expr * t );
-	CountExpr( const CodeLocation & loc, const Type * t );
-
-	const Expr * accept( Visitor & v )const override { return v.visit( this ); }
-private:
-	CountExpr * clone() const override { return new CountExpr( *this ); }
-	MUTATE_FRIEND
-};
-
 /// alignof expression, e.g. `alignof(int)`, `alignof 3+4`
 class AlignofExpr final : public Expr {
 public:
@@ -513,6 +499,19 @@ public:
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
 	AlignofExpr * clone() const override { return new AlignofExpr{ *this }; }
+	MUTATE_FRIEND
+};
+
+/// countof expression, e.g. `countof(AnEnum)`, `countof pred(Head)`
+class CountofExpr final : public Expr {
+public:
+	ptr<Type> type;
+
+	CountofExpr( const CodeLocation & loc, const Type * t );
+
+	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
+private:
+	CountofExpr * clone() const override { return new CountofExpr( *this ); }
 	MUTATE_FRIEND
 };
 

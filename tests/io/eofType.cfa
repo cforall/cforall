@@ -1,0 +1,119 @@
+// 
+// Cforall Version 1.0.0 Copyright (C) 2025 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+// 
+// eofType.cfa -- Test for end-of-file with and without a terminating newline across multiple types.
+// 
+// Author           : Peter A. Buhr
+// Created On       : Wed Jan 22 07:41:41 2025
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jan 23 14:33:08 2025
+// Update Count     : 9
+// 
+
+#include <fstream.hfa>									// sin/sout
+
+void openfile( ifstream & testfile, const char * filename ) { // helper
+	try {
+		open( testfile, filename );
+	} catch( open_failure * ex; ex->istream == &testfile ) { // input file errors
+		exit | "Unable to open input file \"" | filename | "\"";
+	} // try
+}
+
+// test.py provides macro IN_DIR, which is the absolute path to the current .in directory
+#define xstr(s) str(s)
+#define str(s) #s
+// Add quotes around directory name.
+#define INDIR xstr(IN_DIR)
+
+int main() {
+	ifstream testfile;
+	{
+		char * filenames[] = { INDIR "eofType.bool.1.txt", INDIR "eofType.bool.2.txt" };
+		bool value;
+
+		for ( i; 2 ) {
+			openfile( testfile, filenames[i] );
+			try {
+				for () {
+					testfile | value;
+					sout | value;
+				} // for
+			} catch( end_of_file * ) {
+				sout | "eof";
+			} // try
+			close( testfile );
+		}
+	}
+	{
+		char * filenames[] = { INDIR "eofType.char.1.txt", INDIR "eofType.char.2.txt" };
+		char value;
+
+		for ( i; 2 ) {
+			openfile( testfile, filenames[i] );
+			try {
+				for () {
+					testfile | value;
+					sout | value;
+				} // for
+			} catch( end_of_file * ) {
+				sout | "eof";
+			} // try
+			close( testfile );
+		}
+	}
+	{
+		char * filenames[] = { INDIR "eofType.int.1.txt", INDIR "eofType.int.2.txt" };
+		int value;
+
+		for ( i; 2 ) {
+			openfile( testfile, filenames[i] );
+			try {
+				for () {
+					testfile | value;
+					sout | value;
+				} // for
+			} catch( end_of_file * ) {
+				sout | "eof";
+			} // try
+			close( testfile );
+		}
+	}
+	{
+		char * filenames[] = { INDIR "eofType.double.1.txt", INDIR "eofType.double.2.txt" };
+		double value;
+
+		for ( i; 2 ) {
+			openfile( testfile, filenames[i] );
+			try {
+				for () {
+					testfile | value;
+					sout | value;
+				} // for
+			} catch( end_of_file * ) {
+				sout | "eof";
+			} // try
+			close( testfile );
+		}
+	}
+	{
+		char * filenames[] = { INDIR "eofType.complex.1.txt", INDIR "eofType.complex.2.txt" };
+		_Complex value;
+
+		for ( i; 2 ) {
+			openfile( testfile, filenames[i] );
+			try {
+				for () {
+					testfile | value;
+					sout | value;
+				} // for
+			} catch( end_of_file * ) {
+				sout | "eof";
+			} // try
+			close( testfile );
+		}
+	}
+} // main

@@ -282,18 +282,15 @@ ConstantExpr * ConstantExpr::null( const CodeLocation & loc, const Type * ptrTyp
 SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * t )
 : Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), type( t ) {}
 
-// --- CountExpr
-
-CountExpr::CountExpr( const CodeLocation & loc, const Expr * e )
-: Expr( loc, new BasicType( BasicKind::LongUnsignedInt) ), expr(e), type( nullptr ) {}
-
-CountExpr::CountExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, new BasicType( BasicKind::LongUnsignedInt) ), expr(nullptr), type( t ) {}
-
 // --- AlignofExpr
 
 AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * t )
 : Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), type( t ) {}
+
+// --- CountofExpr
+
+CountofExpr::CountofExpr( const CodeLocation & loc, const Type * t )
+: Expr( loc, new BasicType( BasicKind::LongUnsignedInt) ), type( t ) {}
 
 // --- OffsetofExpr
 

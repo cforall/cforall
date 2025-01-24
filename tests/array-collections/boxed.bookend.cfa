@@ -26,6 +26,12 @@ char * ar_hi = 0p;
 static char * bookend_lo = (char *) -1;
 static char * bookend_hi = 0p;
 
+// bookend pointers are set to stack addresses and compared (but not dereferenced)
+// after their functions exit; they are "dangling"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas" // -Wdangling-pointer unrecognized until GCC 12
+#pragma GCC diagnostic ignored "-Wdangling-pointer"
+
 void bookendInner( void ) {
     char var = 'x';
     (void) var;
@@ -34,15 +40,17 @@ void bookendInner( void ) {
 
 #define TC(...)
 #define TR( TRID, SZS, SZV, ETG, ACCS, SPS, OVLD ) \
-    F_SIG( bookendOuter, TRID, SZS, SZV, ACCS, SPS, OVLD ) {                                  \
+    F_SIG( bookendOuter, TRID, SZS, SZV, ACCS, SPS, OVLD ) {                         \
         char var = 'x';                                                              \
         (void) var;                                                                  \
         bookend_hi = & var;                                                          \
-        return CALL( allocAndAccess, TRID, SZS, n, expectedElmSz, tcid, vart );     \
+        return CALL( allocAndAccess, TRID, SZS, n, expectedElmSz, tcid, vart );      \
     }
 #include "boxed.cases.hfa"
 #undef TC
 #undef TR
+
+#pragma GCC diagnostic pop
 
 void resetBookends( void ) {
     bookend_lo = (char *) -1;

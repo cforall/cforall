@@ -1349,25 +1349,6 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::SizeofExpr * node ) {
 }
 
 //--------------------------------------------------------------------------
-// CountExpr
-template< typename core_t >
-const ast::Expr * ast::Pass< core_t >::visit( const ast::CountExpr * node ) {
-	VISIT_START( node );
-	if ( __visit_children() ) {
-		{
-			guard_symtab guard { *this };
-			maybe_accept( node, &CountExpr::result );
-		}
-		if ( node->type ) {
-			maybe_accept( node, &CountExpr::type );
-		} else {
-			maybe_accept( node, &CountExpr::expr );
-		}
-	}
-	VISIT_END( Expr, node );
-}
-
-//--------------------------------------------------------------------------
 // AlignofExpr
 template< typename core_t >
 const ast::Expr * ast::Pass< core_t >::visit( const ast::AlignofExpr * node ) {
@@ -1379,6 +1360,23 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::AlignofExpr * node ) {
 			maybe_accept( node, &AlignofExpr::result );
 		}
 		maybe_accept( node, &AlignofExpr::type );
+	}
+
+	VISIT_END( Expr, node );
+}
+
+//--------------------------------------------------------------------------
+// CountofExpr
+template< typename core_t >
+const ast::Expr * ast::Pass< core_t >::visit( const ast::CountofExpr * node ) {
+	VISIT_START( node );
+
+	if ( __visit_children() ) {
+		{
+			guard_symtab guard { *this };
+			maybe_accept( node, &CountofExpr::result );
+		}
+		maybe_accept( node, &CountofExpr::type );
 	}
 
 	VISIT_END( Expr, node );

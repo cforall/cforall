@@ -671,6 +671,7 @@ namespace {
 		void postvisit( const ast::ConstantExpr * constantExpr );
 		void postvisit( const ast::SizeofExpr * sizeofExpr );
 		void postvisit( const ast::AlignofExpr * alignofExpr );
+		void postvisit( const ast::CountofExpr * countExpr );
 		void postvisit( const ast::AddressExpr * addressExpr );
 		void postvisit( const ast::LabelAddressExpr * labelExpr );
 		void postvisit( const ast::CastExpr * castExpr );
@@ -696,7 +697,6 @@ namespace {
 		void postvisit( const ast::StmtExpr * stmtExpr );
 		void postvisit( const ast::UntypedInitExpr * initExpr );
 		void postvisit( const ast::QualifiedNameExpr * qualifiedExpr );
-		void postvisit( const ast::CountExpr * countExpr );
 
 		void postvisit( const ast::InitExpr * ) {
 			assertf( false, "CandidateFinder should never see a resolved InitExpr." );
@@ -940,7 +940,6 @@ namespace {
 			addEnumValueAsCandidate( enumInst, aggrExpr, Cost::implicit );
 		}
 	}
-	
 
 	/// Adds aggregate member interpretations
 	void Finder::addAggMembers(
@@ -1268,7 +1267,7 @@ namespace {
 				(castExpr->isGenerated == ast::GeneratedFlag::GeneratedCast)
 					? conversionCost( fromType, toType, cand->expr->get_lvalue(), symtab, cand->env )
 					: castCost( fromType, toType, cand->expr->get_lvalue(), symtab, cand->env );
-			
+
 			// Redefine enum cast
 			auto argAsEnum = fromType.as<ast::EnumInstType>();
 			auto toAsEnum = toType.as<ast::EnumInstType>();
@@ -1492,31 +1491,24 @@ namespace {
 			tenv );
 	}
 
-	void Finder::postvisit( const ast::CountExpr * countExpr ) {
-		const ast::UntypedExpr * untyped = nullptr;
-		if ( countExpr->type ) {
-			auto enumInst = countExpr->type.as<ast::EnumInstType>();
-			if ( enumInst ) {
-				addCandidate( ast::ConstantExpr::from_ulong(countExpr->location, enumInst->base->members.size()), tenv );
-				return;
-			}
-			auto untypedFirst = ast::UntypedExpr::createCall( countExpr->location, "lowerBound", {} );
-			auto castFirst = new ast::CastExpr( countExpr->location, untypedFirst , countExpr->type );
-			untyped = ast::UntypedExpr::createCall(
-				countExpr->location, "Countof", { castFirst }
-			);
+	void Finder::postvisit( const ast::CountofExpr * countExpr ) {
+		if ( auto enumInst = countExpr->type.as<ast::EnumInstType>() ) {
+			addCandidate( ast::ConstantExpr::from_ulong( countExpr->location, enumInst->base->members.size()), tenv );
+			return;
 		}
-		if (!untyped) untyped = ast::UntypedExpr::createCall(
-				countExpr->location, "Countof", { countExpr->expr }
+		auto untypedFirst = ast::UntypedExpr::createCall( countExpr->location, "lowerBound", {} );
+		auto castFirst = new ast::CastExpr( countExpr->location, untypedFirst , countExpr->type );
+		const ast::UntypedExpr * untyped = ast::UntypedExpr::createCall(
+			countExpr->location, "Countof", { castFirst }
 		);
 		CandidateFinder finder( context, tenv );
 		finder.find( untyped );
 		CandidateList winners = findMinCost( finder.candidates );
 		if ( winners.size() == 0 ) {
-			SemanticError( countExpr->expr, "Countof is not implemented for operand: " );
+			SemanticError( countExpr, "Countof is not implemented: " );
 		}
-		if ( winners.size() !=  1 ) {
-			SemanticError( countExpr->expr, "Ambiguous expression in countof operand: " );
+		if ( winners.size() != 1 ) {
+			SemanticError( countExpr, "Ambiguous expression in countof: " );
 		}
 		CandidateRef & choice = winners.front();
 		choice->expr = referenceToRvalueConversion( choice->expr, choice->cost );

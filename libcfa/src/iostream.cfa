@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 20 18:45:43 2025
-// Update Count     : 2063
+// Last Modified On : Wed Jan 22 07:31:19 2025
+// Update Count     : 2079
 //
 
 #include "iostream.hfa"
@@ -776,12 +776,13 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, bool & b ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		int len = -1;									// len not set if no match
-		// remove optional leading whitespace at start of strings.
-		fmt( is, " " FALSE "%n", &len );				// try false
+		fmt( is, " " );									// remove leading whitespace
+		fmt( is, FALSE "%n", &len );					// try false, returns 0
 		if ( len != sizeof( FALSE ) - 1 ) {				// -1 removes null terminate
-			fmt( is, " " TRUE "%n", &len );				// try true
+			if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
+			fmt( is, " " );								// remove leading whitespace
+			fmt( is, TRUE "%n", &len );					// try true, returns 0
 			if ( len != sizeof( TRUE ) - 1 ) throwResume ExceptionInst( missing_data );
 			b = true;
 		} else {
@@ -791,7 +792,6 @@ forall( istype & | basic_istream( istype ) ) {
 	} // ?|?
 
 	istype & ?|?( istype & is, char & c ) {
-		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		char temp;
 		for () {
 			int args = fmt( is, "%c", &temp );			// can be called with EOF on
@@ -949,7 +949,7 @@ forall( istype & | basic_istream( istype ) ) {
 		strcpy( fmtstr, fmt );							// copy format and add %n
 		strcpy( &fmtstr[len], "%n" );
 		len = -1;
-		// scanf cursor does not move if no match
+		// scanf cursor does not move if no match, so eof cannot be detected.
 		fmt( is, fmtstr, &len );						// can be called with EOF on
 		if ( ! eof( is ) && len == -1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && len == -1 ) throwResume ExceptionInst( end_of_file );
@@ -1203,49 +1203,38 @@ forall( istype & | basic_istream( istype ) ) {
 
 forall( istype & | istream( istype ), E | CfaEnum( E ) | Serial( E ) )
 istype & ?|?( istype & is, E & e ) {
-//	fprintf( stderr, "here0\n" );
-	if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
+//	if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 
 	// Match longest input enumerator string to enumerator labels, where enumerator names are unique.
 
 	int N = countof( E ), lnths[N], fred = 0;
-//	printf( "N %d\n", N );
 	int r = 0;
-	// for ( s; E : r; 0~@ ) {
 	for ( s; E ) {										// scan string rows gathering lengths
 		lnths[r] = strlen( label( s ) );
 		if ( lnths[r] > fred ) fred = lnths[r];
-//		fprintf( stderr, "%s %d %d\n", label( s ), lnths[r], fred );
 		r += 1;
 	} // for
 
 	int mcol = -1;										// last match column
 	char ch, curr = '\0', prev = '\0';
 
-	fmt( is, " " );										// skip optional whitespace
+	fmt( is, " " );										// remove leading whitespace
 	if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 
 	for ( c; fred ) {									// scan columns of the label matix (some columns missing)
 		int args = fmt( is, "%c", &ch );				// read character
-//		fprintf( stderr, "fmt args: %d eof: %d\n", args, eof(is) );
 	  if ( eof( is ) ) {
-//			fprintf( stderr, "Eof1\n" );
 			if ( c == 0 ) return is;					// no characters read ?
 			clear( is );								// => read something => reset EOF => detect again on next read
-//			fprintf( stderr, "Eof2\n" );
 			break;
 		} // if
 	  if ( args != 1 ) throwResume ExceptionInst( missing_data ); // may be unnecessary since reading single character
 
-//		printf( "read '%c'\n", ch );
 		for ( r; N ) {									// scan enumeration strings for matching character in current column
-//			printf( "%d %d %d\n", c, r, lnths[r] );
 			if ( c < lnths[r] ) {						// string long enough for this column check ?
 				char match = label( fromInt( r ) )[c];	// optimization
-//				printf( "%c '%c'\n", match, ch );
 				// Stop on first match, could be other matches.
 				if ( (match == ch) && (c == 0 || curr == label( fromInt( r ) )[c - 1]) ) {
-//					printf( "match %d %d %d '%c' '%c' '%c' '%c' 'c'\n", c, r, lnths[r], match, ch, prev, label( fromInt( r ) )[c - 1] );
 					mcol = c;							// matching column
 					prev = curr;						// last matching character
 					curr = ch;							// current matching character
@@ -1253,27 +1242,21 @@ istype & ?|?( istype & is, E & e ) {
 				} // if
 			} // if
 		} else {
-//			fprintf( stderr, "finished mcol: %d ch: '%c' curr: '%c' prev: '%c'\n", mcol, ch, curr, prev );
 			ungetc( ch, is );							// push back last unmatching character
 			if ( mcol == -1 ) throwResume ExceptionInst( missing_data ); // no matching character in first column
 			break;
 		} // for
-//		printf( "\n" );
-//	} else {
-//		fprintf( stderr, "finished2 %d\n", mcol );
  	} // for
 
 	for ( c; N ) {										// scan enumeration strings of length "mcol" for match
 		if ( mcol == lnths[c] - 1 ) {
 			char match = label( fromInt( c ) )[mcol];	// optimization
-//			printf( "finished1 mcol: %d c: %d lnth: %d match: '%c' curr: '%c' prev: '%c'\n", mcol, c, lnths[c], match, curr, prev );
 			if ( (match == curr) && (mcol == 0 || prev == label( fromInt( c ) )[mcol - 1]) ) {
 				e = fromInt( c );
 				break;
 			} // if
 		} // if
 	} else {
-//		fprintf( stderr, "finished3 %d\n", mcol );
 		throwResume ExceptionInst( missing_data );		// no match in this column
 	} // for
 	return is;

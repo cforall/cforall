@@ -153,8 +153,8 @@ public:
     macro(VariableExpr, Expr) \
     macro(ConstantExpr, Expr) \
     macro(SizeofExpr, Expr) \
-    macro(CountExpr, Expr ) \
     macro(AlignofExpr, Expr) \
+    macro(CountofExpr, Expr ) \
     macro(UntypedOffsetofExpr, Expr) \
     macro(OffsetofExpr, Expr) \
     macro(OffsetPackExpr, Expr) \
