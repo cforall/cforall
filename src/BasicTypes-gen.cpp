@@ -98,43 +98,43 @@ struct Node {
 	{ UnsignedInt128, "UnsignedInt128", "__UID", "unsigned __int128", "o", Unsigned, Float16, -1, -1, 6 },
 
 	{ Float16, "Float16", "_FH", "_Float16", "DF16_", Floating, Float32, Float16Complex, -1, 7 },
-	{ Float16Complex, "Float16Complex", "_FHC", "_Float16 _Complex", "CDF16_", Floating, Float32Complex, -1, -1, 7 },
+	{ Float16Complex, "Float16Complex", "_FHC", "_Float16 _Complex", "CDF16_", Floating, Float32Complex, -1, -1, 8 },
 
-	{ Float32, "Float32", "_F", "_Float32", "DF32_", Floating, Float, Float32Complex, -1, 8 },
-	{ Float32Complex, "Float32Complex", "_FC", "_Float32 _Complex", "CDF32_", Floating, FloatComplex, -1, -1, 8 },
-	{ Float, "Float", "F", "float", "f", Floating, Float32x, FloatComplex, -1, 9 },
-	{ FloatComplex, "FloatComplex", "FC", "float _Complex", "Cf", Floating, Float32xComplex, -1, -1, 9 },
-	{ Float32x, "Float32x", "_FX", "_Float32x", "DF32x_", Floating, Float64, Float32xComplex, -1, 10 },
-	{ Float32xComplex, "Float32xComplex", "_FXC", "_Float32x _Complex", "CDF32x_", Floating, Float64Complex, -1, -1, 10 },
+	{ Float32, "Float32", "_F", "_Float32", "DF32_", Floating, Float, Float32Complex, -1, 9 },
+	{ Float32Complex, "Float32Complex", "_FC", "_Float32 _Complex", "CDF32_", Floating, FloatComplex, -1, -1, 10 },
+	{ Float, "Float", "F", "float", "f", Floating, Float32x, FloatComplex, -1, 11 },
+	{ FloatComplex, "FloatComplex", "FC", "float _Complex", "Cf", Floating, Float32xComplex, -1, -1, 12 },
+	{ Float32x, "Float32x", "_FX", "_Float32x", "DF32x_", Floating, Float64, Float32xComplex, -1, 13 },
+	{ Float32xComplex, "Float32xComplex", "_FXC", "_Float32x _Complex", "CDF32x_", Floating, Float64Complex, -1, -1, 14 },
 
-	{ Float64, "Float64", "_FD", "_Float64", "DF64_", Floating, Double, Float64Complex, -1, 11 },
-	{ Float64Complex, "Float64Complex", "_FDC", "_Float64 _Complex", "CDF64_", Floating, DoubleComplex, -1, -1, 11 },
-	{ Double, "Double", "D", "double", "d", Floating, Float64x, DoubleComplex, -1, 12 },
-	{ DoubleComplex, "DoubleComplex", "DC", "double _Complex", "Cd", Floating, Float64xComplex, -1, -1, 12 },
-	{ Float64x, "Float64x", "_FDX", "_Float64x", "DF64x_", Floating, Float80, Float64xComplex, -1, 13 },
-	{ Float64xComplex, "Float64xComplex", "_FDXC", "_Float64x _Complex", "CDF64x_", Floating, LongDoubleComplex, -1, -1, 13 },
+	{ Float64, "Float64", "_FD", "_Float64", "DF64_", Floating, Double, Float64Complex, -1, 15 },
+	{ Float64Complex, "Float64Complex", "_FDC", "_Float64 _Complex", "CDF64_", Floating, DoubleComplex, -1, -1, 16 },
+	{ Double, "Double", "D", "double", "d", Floating, Float64x, DoubleComplex, -1, 17 },
+	{ DoubleComplex, "DoubleComplex", "DC", "double _Complex", "Cd", Floating, Float64xComplex, -1, -1, 18 },
+	{ Float64x, "Float64x", "_FDX", "_Float64x", "DF64x_", Floating, Float80, Float64xComplex, -1, 19 },
+	{ Float64xComplex, "Float64xComplex", "_FDXC", "_Float64x _Complex", "CDF64x_", Floating, LongDoubleComplex, -1, -1, 20 },
 
-	{ Float80, "Float80", "_F80", "__float80", "Dq", Floating, LongDouble, LongDoubleComplex, -1, 14 },
+	{ Float80, "Float80", "_F80", "__float80", "Dq", Floating, LongDouble, LongDoubleComplex, -1, 21 },
 	// __float80 _Complex, no complex counterpart
 	// gcc implements long double as float80 (12 bytes)
-	{ LongDouble, "LongDouble", "LD", "long double", "e", Floating, uuFloat128, LongDoubleComplex, -1, 15 },
-	{ LongDoubleComplex, "LongDoubleComplex", "LDC", "long double _Complex", "Ce", Floating, Float128Complex, -1, -1, 15 },
+	{ LongDouble, "LongDouble", "LD", "long double", "e", Floating, uuFloat128, LongDoubleComplex, -1, 22 },
+	{ LongDoubleComplex, "LongDoubleComplex", "LDC", "long double _Complex", "Ce", Floating, Float128Complex, -1, -1, 23 },
 
-	{ uuFloat128, "uuFloat128", "__FLD", "__float128", "g", Floating, Float128, Float128Complex, -1, 16 },
+	{ uuFloat128, "uuFloat128", "__FLD", "__float128", "g", Floating, Float128, Float128Complex, -1, 24 },
 	// __float128 _Complex, no complex counterpart
-	{ Float128, "Float128", "_FLD", "_Float128", "DF128_", Floating, Float128x, Float128Complex, -1, 17 },
-	{ Float128Complex, "Float128Complex", "_FLDC", "_Float128 _Complex", "CDF128_", Floating, Float128xComplex, -1, -1, 17 },
+	{ Float128, "Float128", "_FLD", "_Float128", "DF128_", Floating, Float128x, Float128Complex, -1, 25 },
+	{ Float128Complex, "Float128Complex", "_FLDC", "_Float128 _Complex", "CDF128_", Floating, Float128xComplex, -1, -1, 26 },
 
 	// may not be supported
-	{ Float128x, "Float128x", "_FLDX", "_Float128x", "DF128x_", Floating, Float128xComplex, -1, -1, 18 },
-	{ Float128xComplex, "Float128xComplex", "_FLDXC", "_Float128x _Complex", "CDF128x_", Floating, -1, -1, -1, 18 }
+	{ Float128x, "Float128x", "_FLDX", "_Float128x", "DF128x_", Floating, Float128xComplex, -1, -1, 27 },
+	{ Float128xComplex, "Float128xComplex", "_FLDXC", "_Float128x _Complex", "CDF128x_", Floating, -1, -1, -1, 28 }
 }; // graph
 
 static int costMatrix[NUMBER_OF_BASIC_TYPES][NUMBER_OF_BASIC_TYPES];
 static int signMatrix[NUMBER_OF_BASIC_TYPES][NUMBER_OF_BASIC_TYPES];
 static Kind commonTypeMatrix[NUMBER_OF_BASIC_TYPES][NUMBER_OF_BASIC_TYPES];
 
-// Fangren explain shortest cost algorithm.
+// Compute the minimal conversion costs using Dijkstra's algorithm
 void generateCosts( int row ) {
 	bool seen[NUMBER_OF_BASIC_TYPES] = { false /*, ... */ };
 
@@ -175,7 +175,7 @@ void generateCosts( int row ) {
 		q.pop();
 
 		// traverse children
-		// Fangren explain "max"
+		// any conversion should have a cost of at least 1, even if between types of equal rank
 		int i = graph[col].left;
 		if ( i == -1 ) continue;						// leaf
 		q.emplace( i, cost + max(1, graph[i].rank-graph[col].rank), scost + ! (graph[col].sign & graph[i].sign) );
@@ -190,7 +190,10 @@ void generateCosts( int row ) {
 	} while ( ! q.empty() );
 } // generateCosts
 
-// Fangren explain this routine if you can.
+// Note: this algorithm is not general.
+// It relies on the specific structure of the conversion graph.
+// When the common type is not one of the two given types, we should always have a real and a complex floating point type,
+// in which case the common type is the next complex type ranked higher than the real type.
 void generateCommonType( int row, int col ) {			// row <= col
 	if ( costMatrix[row][col] >= 0 ) {
 		// safe conversion from row => col

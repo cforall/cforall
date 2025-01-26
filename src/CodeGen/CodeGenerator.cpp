@@ -250,7 +250,8 @@ ast::ObjectDecl const * CodeGenerator::postvisit(
 	asmName( decl );
 
 	if ( decl->init ) {
-		output << " = ";
+		bool isGenericInit = options.genC || decl->init->maybeConstructed;
+		output << ( (isGenericInit) ? " = " : " @= " );
 		decl->init->accept( *visitor );
 	}
 	if ( decl->isDeleted ) {
