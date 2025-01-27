@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Nov 16  9:53:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 14 18:02:25 2023
-// Update Count     : 6
+// Last Modified On : Sun Jan 26 15:16:16 2025
+// Update Count     : 15
 //
 
 #include "Concurrency/Keywords.hpp"
@@ -68,8 +68,8 @@ static ast::Type * mutate_under_references( ast::ptr<ast::Type>& type ) {
 	return mutType;
 }
 
-// Describe that it adds the generic parameters and the uses of the generic
-// parameters on the function and first "this" argument.
+// Describe that it adds the generic parameters and the uses of the generic parameters on the
+// function and first "this" argument.
 ast::FunctionDecl * fixupGenerics(
 		const ast::FunctionDecl * func, const ast::StructDecl * decl ) {
 	const CodeLocation & location = decl->location;
@@ -116,6 +116,14 @@ ast::FunctionDecl * fixupGenerics(
 }
 
 // --------------------------------------------------------------------------
+
+// This type describes the general information used to transform a generator, coroutine, monitor, or
+// thread aggregate kind.  A pass is made over the AST in ConcurrentSueKeyword::postvisit looking
+// for each of these kinds. When found, this data structure is filled in with the information from
+// the specific structures below, and handleStruct is called to perform the common changes that
+// augment the aggregate kind with fields and generate appropriate companion routines.  The location
+// of any extra fields is specified in addField.
+
 struct ConcurrentSueKeyword : public ast::WithDeclsToAdd {
 	ConcurrentSueKeyword(
 		std::string&& type_name, std::string&& field_name,
@@ -170,35 +178,34 @@ private:
 
 };
 
-// Handles thread type declarations:
+// Handles generator type declarations:
 //
-// thread Mythread {                         struct MyThread {
-//  int data;                                  int data;
-//  a_struct_t more_data;                      a_struct_t more_data;
-//                                =>             thread$ __thrd_d;
+// generator MyGenerator {                   struct MyGenerator {
+//                                =>             int __generator_state;
+//    int data;                                  int data;
+//    a_struct_t more_data;                      a_struct_t more_data;
 // };                                        };
-//                                           static inline thread$ * get_thread( MyThread * this ) { return &this->__thrd_d; }
 //
-struct ThreadKeyword final : public ConcurrentSueKeyword {
-	ThreadKeyword() : ConcurrentSueKeyword(
-		"thread$",
-		"__thrd",
-		"get_thread",
-		"thread keyword requires threads to be in scope, add #include <thread.hfa>\n",
-		"ThreadCancelled",
+struct GeneratorKeyword final : public ConcurrentSueKeyword {
+	GeneratorKeyword() : ConcurrentSueKeyword(
+		"generator$",
+		"__generator_state",
+		"get_generator",
+		"Unable to find builtin type generator$\n",
+		"",
 		true,
-		ast::AggregateDecl::Thread )
+		ast::AggregateDecl::Generator )
 	{}
 
-	virtual ~ThreadKeyword() {}
+	virtual ~GeneratorKeyword() {}
 };
 
 // Handles coroutine type declarations:
 //
 // coroutine MyCoroutine {                   struct MyCoroutine {
-//  int data;                                  int data;
-//  a_struct_t more_data;                      a_struct_t more_data;
 //                                =>             coroutine$ __cor_d;
+//    int data;                                  int data;
+//    a_struct_t more_data;                      a_struct_t more_data;
 // };                                        };
 //                                           static inline coroutine$ * get_coroutine( MyCoroutine * this ) { return &this->__cor_d; }
 //
@@ -219,9 +226,9 @@ struct CoroutineKeyword final : public ConcurrentSueKeyword {
 // Handles monitor type declarations:
 //
 // monitor MyMonitor {                       struct MyMonitor {
-//  int data;                                  int data;
-//  a_struct_t more_data;                      a_struct_t more_data;
 //                                =>             monitor$ __mon_d;
+//    int data;                                  int data;
+//    a_struct_t more_data;                      a_struct_t more_data;
 // };                                        };
 //                                           static inline monitor$ * get_coroutine( MyMonitor * this ) {
 //                                               return &this->__cor_d;
@@ -247,26 +254,27 @@ struct MonitorKeyword final : public ConcurrentSueKeyword {
 	virtual ~MonitorKeyword() {}
 };
 
-// Handles generator type declarations:
+// Handles thread type declarations:
 //
-// generator MyGenerator {                   struct MyGenerator {
-//  int data;                                  int data;
-//  a_struct_t more_data;                      a_struct_t more_data;
-//                                =>             int __generator_state;
+// thread Mythread {                         struct MyThread {
+//                                =>             thread$ __thrd_d;
+//    int data;                                  int data;
+//    a_struct_t more_data;                      a_struct_t more_data;
 // };                                        };
+//                                           static inline thread$ * get_thread( MyThread * this ) { return &this->__thrd_d; }
 //
-struct GeneratorKeyword final : public ConcurrentSueKeyword {
-	GeneratorKeyword() : ConcurrentSueKeyword(
-		"generator$",
-		"__generator_state",
-		"get_generator",
-		"Unable to find builtin type generator$\n",
-		"",
+struct ThreadKeyword final : public ConcurrentSueKeyword {
+	ThreadKeyword() : ConcurrentSueKeyword(
+		"thread$",
+		"__thrd",
+		"get_thread",
+		"thread keyword requires threads to be in scope, add #include <thread.hfa>\n",
+		"ThreadCancelled",
 		true,
-		ast::AggregateDecl::Generator )
+		ast::AggregateDecl::Thread )
 	{}
 
-	virtual ~GeneratorKeyword() {}
+	virtual ~ThreadKeyword() {}
 };
 
 const ast::Decl * ConcurrentSueKeyword::postvisit(
@@ -353,7 +361,7 @@ const ast::StructDecl * ConcurrentSueKeyword::handleStruct(
 	}
 
 	if ( !exception_name.empty() ) {
-		if( !typeid_decl || !vtable_decl ) {
+		if ( !typeid_decl || !vtable_decl ) {
 			SemanticError( decl, context_error );
 		}
 		addTypeId( decl );
@@ -418,8 +426,8 @@ void ConcurrentSueKeyword::addTypeId( const ast::StructDecl * decl ) {
 		new ast::TypeExpr( location, new ast::StructInstType( decl ) ) );
 	declsToAddBefore.push_back(
 		Virtual::makeTypeIdInstance( location, typeid_type ) );
-	// If the typeid_type is going to be kept, the other reference will have
-	// been made by now, but we also get to avoid extra mutates.
+	// If the typeid_type is going to be kept, the other reference will have been made by now, but
+	// we also get to avoid extra mutates.
 	ast::ptr<ast::StructInstType> typeid_cleanup = typeid_type;
 }
 
@@ -524,6 +532,8 @@ ConcurrentSueKeyword::StructAndField ConcurrentSueKeyword::addField(
 	);
 
 	auto mutDecl = ast::mutate( decl );
+	// Insert at start of special aggregate structures => front of vector
+	//mutDecl->members.insert( mutDecl->members.begin(), field );
 	mutDecl->members.push_back( field );
 
 	return {mutDecl, field};
@@ -916,7 +926,7 @@ const ast::FunctionDecl * MutexKeyword::postvisit(
 			if ( nullptr == baseStruct ) return decl;
 
 			// If it is a monitor, then it is a monitor.
-			if( baseStruct->base->is_monitor() || baseStruct->base->is_thread() ) {
+			if ( baseStruct->base->is_monitor() || baseStruct->base->is_thread() ) {
 				SemanticError( decl, "destructors for structures declared as \"monitor\" must use mutex parameters " );
 			}
 		}
@@ -1030,7 +1040,7 @@ void MutexKeyword::validate( const ast::DeclWithType * decl ) {
 	if ( nullptr == baseStruct ) return;
 
 	// Make sure that only the outer reference is mutex.
-	if( baseStruct->is_mutex() ) {
+	if ( baseStruct->is_mutex() ) {
 		SemanticError( decl, "mutex keyword may only appear once per argument " );
 	}
 }
@@ -1178,8 +1188,8 @@ ast::CompoundStmt * MutexKeyword::addStatements(
 	return mutBody;
 }
 
-// generates a cast to the void ptr to the appropriate lock type and dereferences it before calling lock or unlock on it
-// used to undo the type erasure done by storing all the lock pointers as void
+// Generates a cast to the void ptr to the appropriate lock type and dereferences it before calling
+// lock or unlock on it used to undo the type erasure done by storing all the lock pointers as void.
 ast::ExprStmt * MutexKeyword::genVirtLockUnlockExpr( const std::string & fnName, ast::ptr<ast::Expr> expr, const CodeLocation & location, ast::Expr * param ) {
 	return new ast::ExprStmt( location,
 		new ast::UntypedExpr( location,
