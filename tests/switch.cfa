@@ -4,14 +4,14 @@
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
 //
-// switch.cfa -- 
+// switch.cfa --
 //
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 12 06:50:22 2016
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Fri Jan 17 14:10:12 2025
 // Update Count     : 45
-// 
+//
 
 int f( int i ) { return i; }
 
@@ -56,12 +56,15 @@ int main( void ) {
 	  case 8~10:
 	  default:
 		i = 3;
+		s = (S){ -7 };
+		fallthrough;
 	  case 19:
 	  case 'A' ... 'Z':
 	  case 1 ... 6:
 	  case 20, 30:
 		j = 3;
 		f( 3 );
+		k = 5;
 		break;
 	} // switch
 
@@ -91,13 +94,14 @@ int main( void ) {
 	  case 20, 30, 40:
 		i = 3;
 		f( 3 );
+		s = (S){ -7 };
 	  default:
 		j = 3;
 	  case 8~10:
 		f( 3 );
 		fallthrough;
 	  case 'd':
-		j = 5;
+		k = 5;
 	} // choose
 
 	printf("done\n");

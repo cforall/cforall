@@ -1,17 +1,20 @@
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2016 University of Waterloo
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-// 
-// identParamDeclarator.cfa -- 
-// 
+//
+// identParamDeclarator.cfa --
+//
 // Author           : Peter A. Buhr
 // Created On       : Wed Aug 17 08:37:56 2016
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Fri Sep 25 14:31:08 2020
 // Update Count     : 4
-// 
+//
+
+// We have some useless const qualifiers for parsing testing.
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
 
 int fred (
 	int f1,
@@ -156,7 +159,7 @@ int fred (
 	int * const * const (f117[static const 3][3])
     );
 
-int main( int argc, char const *argv[] ) {				// dummy main
+int main() {
 	printf( "done\n" );									// non-empty .expect file
 }
 

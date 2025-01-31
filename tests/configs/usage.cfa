@@ -107,4 +107,5 @@ int main() {
 }
 
 // no used
-static int true_main( const char * path, const char * env[]) { return 0; }
+static int true_main( const char *, const char * []) { return 0; }
+__attribute__((unused)) static void check_main(const char *);

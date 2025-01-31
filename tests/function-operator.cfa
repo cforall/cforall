@@ -28,7 +28,8 @@ trait Copyable { void ?{}(T &, T); };
 forall(T &)
 trait Destructable { void ^?{}(T &); };
 
-trait Iterator(iter & | sized(iter) | Copyable(iter) | Destructable(iter), T) {
+forall(iter & | sized(iter) | Copyable(iter) | Destructable(iter), T)
+trait Iterator {
 	T & *?(iter);
 	iter ++?(iter &);
 	int ?!=?(iter, iter);
@@ -66,7 +67,6 @@ Iter find_if (Iter first, Iter last, Pred pred) {
 // test ?()(T, ...) -- ?() with function call-by-reference
 forall(Generator, GenRet | { GenRet ?()(Generator &); }, Iter &, T | Iterator(Iter, T) | Assignable(T, GenRet))
 void generate(Iter first, Iter last, Generator & gen) {
-	int i = 0;
 	while (first != last) {
 		*first = gen();
 		++first;

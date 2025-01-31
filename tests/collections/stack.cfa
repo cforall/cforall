@@ -27,7 +27,7 @@ int main() {
 		sout | f.i | ' ';
 	}
 	sout | "empty" | nl;
-	
+
 	for ( i; 10 ) {
 		push( fred, *new( 2 * i ) );
 	}
@@ -38,7 +38,7 @@ int main() {
 	sout | nl;
 
 	sout | head( fred ).i | nl;
-	
+
 	for ( i; 9 ) {
 		delete( &pop( fred ) );
 	}
@@ -47,7 +47,7 @@ int main() {
 		sout | f.i | ' ';
 	}
 	sout | nl;
-	
+
 	for ( i; 10 ) {
 		push( fred, *new( 2 * i + 1 ) );
 	}
@@ -66,6 +66,7 @@ int main() {
 		inline Fred;									// Plan 9 inheritance
 		int j;
 	};
+	__attribute__((unused))
 	void ?{}( Mary & mary ) { abort(); }
 	void ?{}( Mary & mary, int p ) with( mary ) {
 		((Fred &)mary){ p };
@@ -84,7 +85,7 @@ int main() {
 		sout | m.i | m.j | ' ';
 	}
 	sout | "empty" | nl;
-	
+
 	for ( i; 10 ) {
 		push( mary, *new( 2 * i ) );
 	}
@@ -93,7 +94,7 @@ int main() {
 		sout | m.i | m.j | ' ';
 	}
 	sout | nl;
-	
+
 	for ( i; 9 ) {
 		delete( &pop( mary ) );
 	}
@@ -102,7 +103,7 @@ int main() {
 		sout | m.i | m.j | ' ';
 	}
 	sout | nl;
-	
+
 	for ( i; 10 ) {
 		push( mary, *new( 2 * i + 1 ) );
 	}

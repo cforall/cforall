@@ -1,4 +1,4 @@
-int ?*?( int a, int b ) {
+int ?*?( int, int ) {
 	return 0;
 }
 
@@ -6,29 +6,29 @@ int ?()( int number1, int number2 ) {
 	return number1 * number2;
 }
 
-int ?+?( int a, int b ) {
+int ?+?( int, int ) {
 	return 0;
 }
 
-int ?=?( int &a, int b ) {
+int ?=?( int &, int ) {
 	return 0;
 }
 struct accumulator {
 	int total;
 };
 
-char ?()( struct accumulator a, char number1, char number2 ) {
+char ?()( struct accumulator, char, char ) {
 	return 'a';
 }
 
 void f( void ) {
-	char a, b;
+	char a = 0, b = 0;
 	?()( a, b );
 	a(b);
 	a + b;
 }
 
-int main(int argc, char const *argv[]) {
+int main() {
 	/* code */
 	printf( "done\n" );				// non-empty .expect file
 }

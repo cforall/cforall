@@ -95,16 +95,16 @@ void raiiTests() {
         f( it ); // Unique best alternative includes deleted identifier
       #endif
 
+        // forbid calling a function that returns permit by value
+      #ifdef TRY_RETURN_PERMIT_BYVAL_1
         // can declare function that returns permit (wish to forbid)
         vector_permit(float) g( vector( float ) & theVec ) {
             return theVec[0]; // want to forbid
         }
 
-        // forbid calling a function that returns permit by value
-      #ifdef TRY_RETURN_PERMIT_BYVAL_1
         vector_permit(float) ofG = g( v ); // Unique best alternative includes deleted identifier
       #endif
-        
+
         // allow declaration of permit, populating from exit
         vector_exit(float) h( vector( float ) & theVec ) {
             return theVec[0];

@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle & Peiran Hong & Colby Parsons
 // Created On       : Wed Jan 06 17:33:18 2021
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov 29 16:07:34 2024
-// Update Count     : 30
+// Last Modified By : Kyoung Seo
+// Last Modified On : Mon Jan 27 20:35:00 2025
+// Update Count     : 3
 //
 
 #pragma once
@@ -259,13 +259,13 @@ forall( T ) {
 		void reset(multi_future(T) & mutex this) {
 			if( this.has_first != false) abort("Attempting to reset a multi_future with at least one blocked threads");
 			if( !is_empty(this.blocked) ) abort("Attempting to reset a multi_future with multiple blocked threads");
-			reset( (future_t&)this );
+			reset( (future_t&)*(future_t*)((uintptr_t)&this + sizeof(monitor$)) );
 		}
 
 		// Fulfil the future, returns whether or not someone was unblocked
 		bool fulfil( multi_future(T) & this, T result ) {
 			this.result = result;
-			return fulfil( (future_t&)this ) != 0p;
+			return fulfil( (future_t&)*(future_t*)((uintptr_t)&this + sizeof(monitor$)) ) != 0p;
 		}
 
 		// Wait for the future to be fulfilled
@@ -274,7 +274,7 @@ forall( T ) {
 			bool sw = $first( this );
 			bool w = !sw;
 			if ( sw ) {
-				w = wait( (future_t&)this );
+				w = wait( (future_t&)*(future_t*)((uintptr_t)&this + sizeof(monitor$)) );
 				$first_done( this );
 			}
 

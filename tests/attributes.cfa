@@ -1,22 +1,24 @@
-// 
+//
 // Cforall Version 1.0.0 Copyright (C) 2017 University of Waterloo
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-// 
-// attributes.cfa -- 
-// 
+//
+// attributes.cfa --
+//
 // Author           : Peter A. Buhr
 // Created On       : Mon Feb  6 16:07:02 2017
 // Last Modified By : Peter A. Buhr
 // Last Modified On : Fri Dec 20 15:32:21 2024
 // Update Count     : 53
-// 
+//
 
+#pragma GCC diagnostic ignored "-Wattributes"
 
 // label attribute
 int la() {
   L: __attribute__(( unused )) 1;
+  return 1;
 }
 
 
@@ -63,22 +65,22 @@ const __attribute__(( used )) int __attribute__(( used )) ( __attribute__(( used
 
 // function_declarator
 __attribute__(( unused )) int f1() __attribute__(( used ));
-__attribute__(( unused )) int f1() {}
+__attribute__(( unused )) int f1() { return 1; }
 __attribute__(( unused )) int * __attribute__(( unused )) * const __attribute__(( unused )) f2() __attribute__(( used ));
-__attribute__(( unused )) int * __attribute__(( unused )) * const __attribute__(( unused )) f2() {}
+__attribute__(( unused )) int * __attribute__(( unused )) * const __attribute__(( unused )) f2() { return 0p; }
 __attribute__(( unused )) int (* __attribute__(( unused )) f3(int))[] __attribute__(( used ));
 __attribute__(( unused )) int ( __attribute__(( unused )) * __attribute__(( unused )) f4(int))[] __attribute__(( used ));
-__attribute__(( unused )) int (* __attribute__(( unused )) f5(int p))[] {}
-__attribute__(( unused )) int ( __attribute__(( unused )) * (f6)(int p))[] {}
+__attribute__(( unused )) int (* __attribute__(( unused )) f5(int p))[] { (void)p; return 0p; }
+__attribute__(( unused )) int ( __attribute__(( unused )) * (f6)(int p))[] { (void)p; return 0p; }
 __attribute__(( unused )) int (* __attribute__(( unused )) f7())(int) __attribute__(( used ));
-__attribute__(( unused )) int (* __attribute__(( unused )) f8())(int) {}
-__attribute__(( unused )) int ( __attribute__(( unused )) * f9())(int) {}
-__attribute__(( unused )) int ( __attribute__(( unused )) * (f10)())(int) {}
+__attribute__(( unused )) int (* __attribute__(( unused )) f8())(int) { return 0p; }
+__attribute__(( unused )) int ( __attribute__(( unused )) * f9())(int) { return 0p; }
+__attribute__(( unused )) int ( __attribute__(( unused )) * (f10)())(int) { return 0p; }
 
 
 // variable_type_redeclarator
 typedef int t1, t2, t3, t4, t5, t6, t7, t8;
-int vtr() {
+void vtr() {
     // redefine typedef name in new scope
     __attribute__(( unused )) int __attribute__(( unused )) t1 __attribute__(( used ));
     __attribute__(( unused )) int __attribute__(( unused )) (* (* t2 __attribute__(( unused )) ) __attribute__(( unused )) ) __attribute__(( unused ));
@@ -91,21 +93,21 @@ int vtr() {
 
 
 // identifier_parameter_declarator
-int ipd1( __attribute__(( unused )) int __attribute__(( unused )) p __attribute__(( unused )),
+void ipd1( __attribute__(( unused )) int __attribute__(( unused )) p __attribute__(( unused )),
 	  __attribute__(( unused )) int __attribute__(( unused )) q __attribute__(( unused )) );
-int ipd1( __attribute__(( unused )) int __attribute__(( unused )) p __attribute__(( unused )),
+void ipd1( __attribute__(( unused )) int __attribute__(( unused )) p __attribute__(( unused )),
 	  __attribute__(( unused )) int __attribute__(( unused )) q __attribute__(( unused )) ) {}
-int ipd2( __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) p __attribute__(( unused )),
+void ipd2( __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) p __attribute__(( unused )),
 	  __attribute__(( unused )) int __attribute__(( unused )) (* (q)) __attribute__(( unused )) );
-int ipd2( __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) p __attribute__(( unused )),
+void ipd2( __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) p __attribute__(( unused )),
 	  __attribute__(( unused )) int __attribute__(( unused )) (* (q)) __attribute__(( unused )) ) {}
-int ipd3( __attribute__(( unused )) int __attribute__(( unused )) p[] __attribute__(( unused )),
+void ipd3( __attribute__(( unused )) int __attribute__(( unused )) p[] __attribute__(( unused )),
 	  __attribute__(( unused )) int __attribute__(( unused )) ((q)[]) __attribute__(( unused )) );
-int ipd3( __attribute__(( unused )) int __attribute__(( unused )) p[] __attribute__(( unused )),
+void ipd3( __attribute__(( unused )) int __attribute__(( unused )) p[] __attribute__(( unused )),
 	  __attribute__(( unused )) int __attribute__(( unused )) ((q)[]) __attribute__(( unused )) ) {}
-int ipd4( __attribute__(( unused )) int __attribute__(( unused )) p() __attribute__(( unused )),
+void ipd4( __attribute__(( unused )) int __attribute__(( unused )) p() __attribute__(( unused )),
 	  __attribute__(( unused )) int __attribute__(( unused )) ((q)()) __attribute__(( unused )) );
-int ipd4( __attribute__(( unused )) int __attribute__(( unused )) p() __attribute__(( unused )),
+void ipd4( __attribute__(( unused )) int __attribute__(( unused )) p() __attribute__(( unused )),
 	  __attribute__(( unused )) int __attribute__(( unused )) ((q)()) __attribute__(( unused )) ) {}
 
 
@@ -121,7 +123,7 @@ int tpr7( __attribute__(( unused )) int __attribute__(( unused )) ( __attribute_
 
 
 // abstract_declarator
-int ad() {
+void ad() {
     typeof( int __attribute__(( used )) ) ad1 __attribute__(( unused ));
     typeof( int __attribute__(( unused )) * __attribute__(( unused )) ) ad2 __attribute__(( unused ));
     typeof( int __attribute__(( unused )) [5] ) __attribute__(( unused )) ad3 __attribute__(( unused ));
@@ -156,7 +158,7 @@ int apd7( __attribute__(( unused )) int __attribute__(( unused )) ((*)( __attrib
 
 // variable_abstract_declarator
 struct Vad {
-    int __attribute__(( unused ));
+    int __attribute__(( unused )) x;
     int __attribute__(( unused )) :4;
     int __attribute__(( unused )) :4, __attribute__(( unused )) :6;
 };
@@ -173,10 +175,11 @@ struct Vad {
 	  case 1:
 		3;
 	}
+	abort();
 }
 
 @[ noreturn ] void mary() {
-	@[aligned(64)] struct S { int i; };
+	@[aligned(16)] struct S { int i; };
 	int @[unused] i;
 	switch ( 3 ) {
 	  case 2:
@@ -186,6 +189,7 @@ struct Vad {
 	  case 1:
 		3;
 	}
+	abort();
 }
 
 // Local Variables: //

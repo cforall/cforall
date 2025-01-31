@@ -14,8 +14,13 @@
 //
 
 #include <fstream.hfa>
-#include <wchar.h>
 #include <uchar.h>
+
+// Warning triggered by the standard header, we can't fix that.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#include <wchar.h>
+#pragma GCC diagnostic pop
 
 int ?`s( int s ) { sout | "secs" | s; return s; }
 int ?`m( int m ) { sout | "mins" | m; return m * 60; }

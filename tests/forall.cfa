@@ -39,10 +39,10 @@ void g2() {
 	forall( T ) void f( T, T ) { sout | "fT"; }
 	forall( T, U ) void f( T, U ) { sout | "fTU"; }
 
-	int x;
-	float y;
-	int * z;
-	float * w;
+	int x = 0;
+	float y = 0;
+	int * z = 0;
+	float * w = 0;
 
 	f( x, x );
 	f( y, y );
@@ -131,8 +131,9 @@ forall( T ) {
 	forall( X ) {
 		typedef int TD2;
 		struct S2 {};
-		X RT2( T, X ) {
-			int TD2;
+		X RT2( T, X x ) {
+			int TD2; (void)TD2;
+			return x;
 		}
 	}
 	extern "C" {
@@ -145,11 +146,11 @@ forall( T ) {
 		forall( W ) struct S4 {};
 		typedef int TD3;
 	}
-	static {
-		struct S5 {};
+	struct S5 {};
+	inline {
 		void RT5( T ) {
 			struct S6 {};
-			int TD2;
+			int TD2; (void)TD2;
 		}
 	}
 	struct S7 {};
@@ -167,16 +168,16 @@ double j = RT2( 3, 4.5 );
 
 static inline {
 	forall( T ) {
-		int RT6( T p );
+		int RT6( T ) { return 0; }
 	}
 	forall( T, U ) {
-		int RT7( T, U );
+		int RT7( T, U ) { return 0; }
 	}
 }
-static forall( T ) {
-	int RT8( T );
+inline forall( T ) {
+	int RT8( T ) { return 0; }
 }
-forall( T ) inline static {
+forall( T ) inline {
 	int RT9( T ) { T t; return 3; }
 }
 
@@ -225,7 +226,7 @@ forall( T ) void check_otype() {
 
 	&tr += 1;
 	tp += 1;
-	T & tx = tp[1];
+	T & tx = tp[1]; (void)tx;
 
 	T t;
 	T t2 = t;
@@ -238,12 +239,12 @@ forall( T * ) void check_dstype() {
 
 	&tr += 1;
 	tp += 1;
-	T & tx = tp[1];
+	T & tx = tp[1]; (void)tx;
 }
 
 forall( T & ) void check_dtype() {
-	T & tr = *0p;
-	T * tp = 0p;
+	T & tr = *0p; (void)tr;
+	T * tp = 0p; (void)tp;
 }
 
 //otype T1 | { void xxx( T1 ); };

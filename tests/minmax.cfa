@@ -17,10 +17,6 @@
 #include <stdlib.hfa>										// min, max
 
 int main( void ) {
-	// char does not have less or greater than.
-	int ?<?( char op1, char op2 ) { return (int)op1 < (int)op2; }
-	int ?>?( char op1, char op2 ) { return (int)op1 > (int)op2; }
-
 	sout | "char\t\t\t"					| 'z' | ' ' | 'a' | "\tmin " | min( 'z', 'a' );
 	sout | "signed int\t\t"				| 4 | -3 | "\tmin" | min( 4, -3 );
 	sout | "unsigned int\t\t"			| 4u | 3u | "\tmin" | min( 4u, 3u );

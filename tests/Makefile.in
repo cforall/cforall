@@ -452,10 +452,6 @@ WFLGAS_OPT_LAX_EXPECT_WARN = \
 
 # Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
 WFLGAS_OPT_LAX_TO_INVESTIGATE = \
-	attributes \
-	collections/queue \
-	collections/sequence \
-	collections/stack \
 	collections/vector-demo \
 	concurrency/actors/dynamic \
 	concurrency/actors/executor \
@@ -488,18 +484,11 @@ WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	concurrency/waituntil/locks \
 	concurrency/waituntil/repeat_close \
 	concurrency/waituntil/timeout \
-	configs/usage \
-	ctrl-flow/labelledExit \
-	ctrl-flow/loop_else \
-	designations \
 	exceptions/cardgame \
 	exceptions/defaults \
 	exceptions/defaults-threads \
 	exceptions/try-leave-catch \
 	forall \
-	function-operator \
-	gmp \
-	identParamDeclarator \
 	include/includes \
 	include/stdincludes \
 	include/vector-collections \
@@ -511,22 +500,12 @@ WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	io/manipulatorsInput \
 	io/manipulatorsInput-uchunk \
 	io/many_read \
-	math \
-	minmax \
-	operators \
-	poly-many-arsz \
-	polymorphism \
 	raii/ctor-autogen \
 	raii/dtor-early-exit \
 	raii/init_once \
 	references \
-	shortCircuit \
-	sum \
-	switch \
 	tuple/tupleCast \
-	tuple/tupleMember \
-	userLiterals \
-	vector
+	tuple/tupleMember
 
 WFLAGS = ${if ${filter ${WFLGAS_OPT_LAX},${@}},${WFLAGS_LAX},${WFLAGS_STRICT}}
 

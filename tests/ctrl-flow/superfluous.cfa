@@ -1,0 +1,9 @@
+// Check the superfluous-else warning.
+
+void main() {
+	while () {
+		return;
+	} else {
+		abort();
+	}
+}

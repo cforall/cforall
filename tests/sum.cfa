@@ -86,7 +86,6 @@ int main( void ) {
 
 	struct S { int i, j; };
 	void ?{}( S & s ) { s.[i, j] = 0; }
-	void ?{}( S & s, int i ) { s.[i, j] = [i, 0]; }
 	void ?{}( S & s, int i, int j ) { s.[i, j] = [i, j]; }
 	void ?{}( S & s, zero_t ) { s.[i, j] = 0; }
 	void ?{}( S & s, one_t ) { s.[i, j] = 1; }

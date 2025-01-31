@@ -28,7 +28,7 @@ void baseline( void ) {
     // facts that are true of y:
 
     mypair(char[2], char) y @= {};
-    printf("|y| = %ld\n", sizeof(y));    // 3
+    printf("|y| = %zd\n", sizeof(y));    // 3
 
     y.second = 0;
     printf("y.second = %d\n", y.second); // 0
@@ -42,12 +42,15 @@ void withInterference( void ) {
 
     // adding this declaration of x ...
     mypair(char[1], char) x @= {};
-    printf("|x| = %ld\n", sizeof(x));    // 2
+    printf("|x| = %zd\n", sizeof(x));    // 2
+
+    // ... even if it isn't really used ...
+    (void)x;
 
     // ... must not affect the observed facts of y:
 
     mypair(char[2], char) y @= {};
-    printf("|y| = %ld\n", sizeof(y));    // 3
+    printf("|y| = %zd\n", sizeof(y));    // 3
 
     y.second = 0;
     printf("y.second = %d\n", y.second); // 0

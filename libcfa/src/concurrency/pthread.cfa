@@ -8,8 +8,8 @@
 //
 // Author           : Zhenyan Zhu
 // Created On       : Sat Aug 6 16:29:18 2022
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  4 15:37:51 2023
+// Last Modified By : Kyoung Seo
+// Last Modified On : Mon Jan 27 20:35:00 2025
 // Update Count     : 1
 //
 
@@ -391,7 +391,7 @@ extern "C"{
 	}
 
 	pthread_t pthread_self(void) libcfa_public __THROW {
-		return (pthread_t)((uintptr_t)active_thread() - (sizeof(cfaPthread) - sizeof(thread$)));
+		return (pthread_t)((uintptr_t)active_thread());
 	}
 
 	void pthread_exit(void * status) libcfa_public __THROW {

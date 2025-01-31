@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Nov 16  9:53:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 26 15:16:16 2025
-// Update Count     : 15
+// Last Modified On : Fri Jan 24 18:33:02 2025
+// Update Count     : 14
 //
 
 #include "Concurrency/Keywords.hpp"
@@ -533,8 +533,7 @@ ConcurrentSueKeyword::StructAndField ConcurrentSueKeyword::addField(
 
 	auto mutDecl = ast::mutate( decl );
 	// Insert at start of special aggregate structures => front of vector
-	//mutDecl->members.insert( mutDecl->members.begin(), field );
-	mutDecl->members.push_back( field );
+	mutDecl->members.insert( mutDecl->members.begin(), field );
 
 	return {mutDecl, field};
 }

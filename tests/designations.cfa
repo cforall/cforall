@@ -9,22 +9,27 @@
 // Author           : Rob Schluntz
 // Created On       : Thu Jun 29 15:26:36 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 13 11:53:16 2024
-// Update Count     : 31
+// Last Modified On : Tue Jan 28 21:49:50 2025
+// Update Count     : 82
 //
 
-#include <fstream.hfa>
-
 // Note: this test case has been crafted so that it compiles with both cfa and with gcc without any modifications.
+#include <stdio.h>
+
 #ifdef __cforall
 #define AT @
 #else
 #define AT
 #endif
 
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#pragma GCC diagnostic ignored "-Woverride-init"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
+
 const int indentAmt = 2;
 void indent( int level ) {
-	sout | wd( level, "" ) | nonl;
+	printf( "%*s", level, "" );
 }
 
 // A contains fields with different types (int vs. int *)
@@ -34,7 +39,7 @@ struct A {
 };
 void printA( struct A a, int level ) {
 	indent( level );
-	sout | "(A){ " | a.x | a.y | a.ptr | " }";
+	printf( "(A){ %d %d %p }\n", a.x, a.y, a.ptr );
 }
 
 // B contains struct members
@@ -43,11 +48,11 @@ struct B {
 };
 void printB( struct B b, int level ) {
 	indent( level );
-	sout | "(B){";
+	printf( "(B){\n" );
 	printA( b.a0, level+indentAmt );
 	printA( b.a1, level+indentAmt );
 	indent( level );
-	sout | "}";
+	printf( "}\n" );
 }
 
 // C contains an array - tests that after 3 ints, the members of B are initialized.
@@ -57,12 +62,12 @@ struct C {
 };
 void printC( struct C c, int level ) {
 	indent( level );
-	sout | "(C){";
+	printf( "(C){\n" );
 	indent( level+indentAmt );
-	sout | "(int[]{ " | c.arr[0] | c.arr[1] | c.arr[2] | " }";
+	printf( "(int[]{ %d %d %d }\n", c.arr[0], c.arr[1], c.arr[2] );
 	printB( c.b, level+indentAmt );
 	indent( level );
-	sout | "}";
+	printf( "}\n" );
 }
 
 // D contains an unnamed aggregate - tests that this doesn't interfere with initialization.
@@ -73,7 +78,7 @@ struct D {
 };
 void printD( struct D d, int level ) {
 	indent( level);
-	sout | "(D){ " | d.x | "}";
+	printf( "(D){ %d }\n", d.x );
 }
 
 // E tests unions
@@ -95,7 +100,7 @@ struct Fred {
 		double i;
 	} m;
 };
-struct Fred s1 AT= { .m.j = 3 };
+struct Fred s1 AT= { .m.j = { 3 } };
 struct Fred s2 AT= { .i = { [2] = 2 } };
 
 int main() {
@@ -123,11 +128,11 @@ int main() {
 	};
 #endif
 
-	sout | "=====A=====";
+	printf( "=====A=====\n" );
 	printA( y0, 0 );
 	printA( y1, 0 );
 	printA( y2, 0 );
-	sout | "=====A=====" | nl | nl;
+	printf( "=====A=====\n\n" );
 
 	// initialize only first element (z0.a.x), leaving everything else default-initialized (zero), no nested curly-braces
 	struct B z0 = { 5 };
@@ -155,6 +160,8 @@ int main() {
 
 	// no initializer - legal C, but garbage values - don't print this one
 	struct B z4;
+	// Mark this as unused since it can't be printed.
+	(void)z4;
 
 	// no curly braces - initialize with object of same type
 	struct B z5 = z2;
@@ -166,14 +173,14 @@ int main() {
 		2, 3, 0
 	};
 
-	sout | "=====B=====";
+	printf( "=====B=====\n" );
 	printB( z0, 0 );
 	printB( z1, 0 );
 	printB( z2, 0 );
 	printB( z3, 0 );
 	printB( z5, 0 );
 	printB( z6, 0 );
-	sout | "=====B=====" | nl | nl;
+	printf( "=====B=====\n\n" );
 
 	// TODO: what about extra things in a nested init? are empty structs skipped??
 
@@ -184,9 +191,9 @@ int main() {
 		7, 8, 0,  // b.a1
 	};
 
-	sout | "=====C=====";
+	printf( "=====C=====\n" );
 	printC( c1, 0 );
-	sout | "=====C=====" | nl | nl;
+	printf( "=====C=====\n\n" );
 
 #if ERROR
 	// nested initializer can't refer to same type in C
@@ -210,8 +217,14 @@ int main() {
 #endif
 	// array designation
 	int i[2] = { [1] = 3 };
+
 	// allowed to have 'too many' initialized lists - essentially they are ignored.
 	int i1 = { 3 };
+
+	printf( "====ARR====\n" );
+	printf( "[%d, %d]\n", i[0], i[1] );
+	printf( "%d\n", i1 );
+	printf( "====ARR====\n\n" );
 
 	// doesn't work yet.
 	// designate unnamed object's members
@@ -240,19 +253,31 @@ int main() {
 		.b.a0.x = 2, 3, 0, 5, 6, 0
 	};
 
-	sout | "=====E=====";
+	printf( "=====E=====\n" );
 	printA( e0.a, 0 );
 	printA( e1.a, 0 );
 	printA( e2.a, 0 );
 	printB( e3.b, 0 );
-	sout | "=====E=====" | nl | nl;
+	printf( "=====E=====\n\n" );
 
 	// special case of initialization: char[] can be initialized with a string literal
 	const char * str0 = "hello";
 	char str1[] = "hello";
 	const char c2[] = "abc";
 	const char c3[] = { 'a', 'b', 'c' };
-	const char c4[][2] = { { 'a', 'b' }, { 'c', 'd'}, { 'c', 'd'} };
+	const char c4[][2] = { { 'a', 'b' }, { 'c', 'd' }, { 'c', 'd' } };
+	const char ch = c4[0][0];
+
+	printf( "==STRINGS==\n" );
+	printf( "%s\n", str0 );
+	printf( "%s\n", str1 );
+	printf( "%s\n", c2 );
+	printf( "[%c, %c, %c]\n", c3[0], c3[1], c3[2] );
+	for ( unsigned index = 0 ; index < 3 ; ++index ) {
+		printf( "[%c, %c]\n", c4[index][0], c4[index][1] );
+	}
+	printf( "%c\n", ch );
+	printf( "==STRINGS==\n\n" );
 
 	// more cases
 
@@ -262,10 +287,18 @@ int main() {
 	struct point p = { .y = 5, .x = 7 };
 	union foo { int i; double d; };
 	union foo f = { .d = 4 };
-	int v1, v2, v4;
+	int v1 = 1, v2 = 2, v4 = 4;
 	int w[6] = { [1] = v1, v2, [4] = v4 };
 	int whitespace[256] = { [' '] = 1, ['\t'] = 1, ['\v'] = 1, ['\f'] = 1, ['\n'] = 1, ['\r'] = 1 };
 	struct point ptarray[10] = { [2].y = 34, [2].x = 35, [0].x = 36 };
+
+	printf( "===EXTRA===\n" );
+	printf( "(point){ %d %d }\n", p.x, p.y );
+	printf( "(foo){ %f }\n", f.d );
+	printf( "[%d, %d, %d, %d, %d, %d]\n", w[0], w[1], w[2], w[3], w[4], w[5] );
+	printf( "[%d ... %d ...]\n", whitespace[0], whitespace[32] );
+	printf( "[{ %d %d }, { %d %d }, { %d %d } ...]\n", ptarray[0].x, ptarray[0].y, ptarray[1].x, ptarray[1].y, ptarray[2].x, ptarray[2].y );
+	printf( "===EXTRA===\n\n" );
 }
 
 // Local Variables: //

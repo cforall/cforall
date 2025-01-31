@@ -249,7 +249,7 @@ static inline {
 	void srandom( gmp_randstate_t state ) { gmp_randinit_default( state ); }
 	Int random( gmp_randstate_t state, mp_bitcnt_t n ) { Int rand; mpz_urandomb( rand.mpz, state, n ); return rand; }
 	Int random( gmp_randstate_t state, Int n ) { Int rand; mpz_urandomm( rand.mpz, state, n.mpz ); return rand; }
-	Int random( gmp_randstate_t state, mp_size_t max_size ) { Int rand; mpz_random( rand.mpz, max_size ); return rand; }
+	Int random( gmp_randstate_t, mp_size_t max_size ) { Int rand; mpz_random( rand.mpz, max_size ); return rand; }
 	int sgn( Int oper ) { return mpz_sgn( oper.mpz ); }
 	Int sqrt( Int oper ) { Int root; mpz_sqrt( root.mpz, oper.mpz ); return root; }
 

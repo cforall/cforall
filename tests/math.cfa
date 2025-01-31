@@ -54,8 +54,6 @@ int main( void ) {
 	sout | 4 \ -3 | -4 \ -3 | 4.0 \ 2.1 | (1.0f+2.0fi) \ (3.0f+2.0fi);
 
 	struct S { int i; };
-	double ?*?( double d, S s ) { return d * s.i; }
-	double ?/?( double d, S s ) { return d / s.i; }
 	S ?\?( S s, unsigned long y ) { return (S){ s.i \ y }; }
 	ofstream & ?|?( ofstream & os, S s ) { return os | s.i; }
 	void ?|?( ofstream & os, S s ) { (ofstream &)(os | s); ends( os ); }

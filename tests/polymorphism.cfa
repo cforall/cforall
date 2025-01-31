@@ -28,20 +28,20 @@ forall(T) T ident(T x) {
 }
 
 forall( T, U )
-size_t struct_size( T i, U j ) {
+size_t struct_size( T, U ) {
 	struct S { T i; U j; };
 	return sizeof(S);
 }
 
 forall( T, U )
-size_t union_size( T i, U j ) {
+size_t union_size( T, U ) {
 	union B { T i; U j; };
 	return sizeof(B);
 }
 
 // perform some simple operations on aggregates of T and U
 forall( T | { void print(T); int ?==?(T, T); }, U | { void print(U); U ?=?(U&, zero_t); } )
-U foo(T i, U j) {
+U foo(T i, U) {
 	struct S { T i; U j; };
 	union B { T i; U j; };
 
@@ -67,8 +67,8 @@ void checkPlan9offsets() {
 	#define SHOW_OFFSETS \
 		double & x_inner_double = x; \
 		float  & x_inner_float  = x; \
-		printf("  offset of inner double: %ld\n", ((char *) & x_inner_double) - ((char *) & x) ); \
-		printf("  offset of inner float:  %ld\n", ((char *) & x_inner_float ) - ((char *) & x) );
+		printf("  offset of inner double: %zd\n", ((char *) & x_inner_double) - ((char *) & x) ); \
+		printf("  offset of inner float:  %zd\n", ((char *) & x_inner_float ) - ((char *) & x) );
 
 	void showStatic( thing(long long int) & x ) {
 		printf("static:\n");

@@ -96,7 +96,7 @@ static inline size_t size(vector(T, allocator_t)* this)
 forall(T, allocator_t | allocator_c(T, allocator_t))
 static inline void reserve(vector(T, allocator_t)* this, size_t size)
 {
-	realloc_storage(&this->storage, this->size+1);
+	realloc_storage(&this->storage, size);
 }
 
 //------------------------------------------------------------------------------

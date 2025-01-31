@@ -22,9 +22,9 @@ int main() {
 	// Test some loop options.
 
 	sout | nlOff;										// turn off auto newline
-	while () { sout | "empty"; break; } else { sout | "else"; }						sout | nl;
-	do { sout | "empty"; break; } while () else { sout | "else"; }					sout | nl;
-	for () { sout | "empty"; break; } else { sout | "else"; }						sout | nl | nl;
+	while ( true ) { sout | "empty"; break; } else { sout | "else"; }				sout | nl;
+	do { sout | "empty"; break; } while ( true ) else { sout | "else"; }			sout | nl;
+	for ( ; true ; ) { sout | "empty"; break; } else { sout | "else"; }				sout | nl | nl;
 
 	do { sout | "false"; } while (false) else { sout | "else"; }					sout | nl | nl;
 
