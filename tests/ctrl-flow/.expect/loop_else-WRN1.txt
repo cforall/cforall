@@ -1,0 +1,3 @@
+ctrl-flow/loop_else.cfa:26:1 warning: else clause never executed for empty loop conditional.
+ctrl-flow/loop_else.cfa:27:1 warning: else clause never executed for empty loop conditional.
+ctrl-flow/loop_else.cfa:28:1 warning: else clause never executed for empty loop conditional.

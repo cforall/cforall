@@ -19,13 +19,23 @@ ofstream & ?|?( ofstream & os, S v ) { return os | '(' | v.i | v.j | ')'; }
 void & ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
 
 int main() {
+	sout | nlOff;										// turn off auto newline
+
+	// Special cases print warning: else clause never executed for empty loop conditional.
+
+	while () { sout | "empty"; break; } else { sout | "else"; }						sout | nl;
+	do { sout | "empty"; break; } while () else { sout | "else"; }					sout | nl;
+	for () { sout | "empty"; break; } else { sout | "else"; }						sout | nl;
+
 	// Test some loop options.
 
-	sout | nlOff;										// turn off auto newline
 	while ( true ) { sout | "empty"; break; } else { sout | "else"; }				sout | nl;
 	do { sout | "empty"; break; } while ( true ) else { sout | "else"; }			sout | nl;
+	for ( ;; ) { sout | "empty"; break; } else { sout | "else"; }					sout | nl;
 	for ( ; true ; ) { sout | "empty"; break; } else { sout | "else"; }				sout | nl | nl;
 
+	while ( false ) { sout | "false"; break; } else { sout | "else"; }				sout | nl;
+	for ( ; false; ) { sout | "false"; break; } else { sout | "else"; }				sout | nl;
 	do { sout | "false"; } while (false) else { sout | "else"; }					sout | nl | nl;
 
 	for ( 0 ) { sout | "A"; } else { sout | "else"; }								sout | "zero" | nl;
@@ -47,6 +57,7 @@ int main() {
 	for ( ui; 2u -~= 10u ~ 2u ) { sout | ui; } else { sout | "else"; }				sout | nl | nl;
 
 	// @ means do nothing
+
 	for ( i; 1 ~ @ ) {
 	  if ( i > 10 ) break;
 		sout | i;
@@ -112,6 +123,7 @@ int main() {
 	sout | nl;
 
 	// A break (or a continue) in an else clause should target an outer loop.
+
 	sout | "before";
 	while ( true ) {
 		sout | " begin";

@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 09:08:15 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Thu Dec 19 22:11:14 2024
-## Update Count     : 200
+## Last Modified On : Sat Feb  1 08:20:27 2025
+## Update Count     : 201
 ###############################################################################
 
 AUTOMAKE_OPTIONS = foreign    # do not require all the GNU file names
@@ -56,6 +56,7 @@ WFLGAS_OPT_LAX = \
 # Tests checking that cfa-cc raises a certain warning, so -Werror is permanently inappropriate
 WFLGAS_OPT_LAX_EXPECT_WARN = \
 	attr-priority \
+	ctrl-flow/loop_else-WRN1 \
 	warnings/self-assignment
 
 # Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
@@ -349,6 +350,13 @@ raii/dtor-early-exit-ERR2 : raii/dtor-early-exit.cfa ${CFACCBIN}
 	-cp ${test} ${abspath ${@}}
 
 raii/partial-ERR1 : raii/partial.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR1
+	-cp ${test} ${abspath ${@}}
+
+ctrl-flow/loop_else : ctrl-flow/loop_else.cfa ${CFACCBIN}
+	${CC} ${AM_CFLAGS} -Wno-superfluous-else $< -o $@ 
+
+ctrl-flow/loop_else-WRN1 : ctrl-flow/loop_else.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR1
 	-cp ${test} ${abspath ${@}}
 
