@@ -180,6 +180,13 @@ private:
 	void handleAggregate( ast::AggregateDecl const *, const std::string & );
 	void handleTypedef( ast::NamedTypeDecl const * type );
 	std::string mangleName( ast::DeclWithType const * decl );
+
+	bool nextVisitedNodeIsArgToIntrinsic = false;
+	bool visitingArgToIntrinsic = false;
+	void changeState_ArgToIntrinsic( bool newValue ) {
+		GuardValue( visitingArgToIntrinsic ) = nextVisitedNodeIsArgToIntrinsic;
+		GuardValue( nextVisitedNodeIsArgToIntrinsic ) = newValue;
+	}
 };
 
 inline bool doSemicolon( ast::Decl const * decl ) {

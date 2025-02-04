@@ -52,15 +52,15 @@ namespace {
 
 		void postvisit( const ast::EnumInstType * enumInst ) {
 			cost = conversionCost( enumInst, dst, srcIsLvalue, symtab, env );
-			if ( enumInst->base->isTyped() ) {
-				auto baseConversionCost = 
+			if ( enumInst->base->is_typed_enum() ) {
+				auto baseConversionCost =
 					castCost( enumInst->base->base, dst, srcIsLvalue, symtab, env );
-				cost = baseConversionCost < cost? baseConversionCost: cost;
+				cost = baseConversionCost < cost ? baseConversionCost : cost;
 			}
 			static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
 			Cost intCost = costCalc( integer, dst, srcIsLvalue, symtab, env );
 			intCost.incSafe();
-			cost = intCost < cost? intCost: cost;
+			cost = intCost < cost ? intCost : cost;
 		}
 
 		void postvisit( const ast::BasicType * basicType ) {

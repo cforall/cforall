@@ -2,3 +2,13 @@ It's a Zero!
 It's a One!
 It's a Number!
 2 2
+0 0
+42 42
+0 0
+1 1
+42 42
+1 1
+zero true
+zero true
+one false
+one false

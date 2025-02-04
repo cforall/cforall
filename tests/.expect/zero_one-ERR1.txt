@@ -1,0 +1,6 @@
+zero_one.cfa:80:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: p
+  Name: o
+

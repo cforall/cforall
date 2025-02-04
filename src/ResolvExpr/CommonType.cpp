@@ -385,7 +385,7 @@ public:
 			}
 		} else if ( const ast::EnumInstType * enumInst = dynamic_cast< const ast::EnumInstType * >( type2 ) ) {
 			const ast::EnumDecl* enumDecl = enumInst->base;
-			if ( !enumDecl->isCfa  ) {
+			if ( enumDecl->is_c_enum() ) {
 				ast::BasicKind kind = commonTypes[ basic->kind ][ ast::BasicKind::SignedInt ];
 				if (
 					( ( kind == basic->kind && basic->qualifiers >= type2->qualifiers )
@@ -653,7 +653,7 @@ public:
 			if ( isChildEnum( paramDecl, argDecl ) ) {
 				result = param;
 			}
-		} else if ( param->base && !param->base->isCfa ) {
+		} else if ( param->base && param->base->is_c_enum() ) {
 			auto basicType = new ast::BasicType( ast::BasicKind::UnsignedInt );
 			result = commonType( basicType, type2, tenv, need, have, open, widen);
 		}

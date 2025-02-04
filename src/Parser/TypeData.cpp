@@ -1481,11 +1481,11 @@ ast::EnumDecl * buildEnum(
 		ast::ObjectDecl * object = strict_dynamic_cast<ast::ObjectDecl *>( member );
 		object->isHidden = ast::EnumDecl::EnumHiding::Hide == ret->hide;
 		object->isMember = true;
-		if ( ret->isOpaque() && cur->has_enumeratorValue() ) {
+		if ( ret->is_opaque_enum() && cur->has_enumeratorValue() ) {
 			SemanticError( td->location, "Opague cannot have an explicit initializer value." );
 		} else if ( cur->has_enumeratorValue() ) {
 			ast::Expr * initValue;
-			if ( ret->isCfa && ret->base ) {
+			if ( ret->is_typed_enum() ) {
 				CodeLocation location = cur->enumeratorValue->location;
 				initValue = new ast::CastExpr( location, maybeMoveBuild( cur->consume_enumeratorValue() ), ret->base );
 			} else {

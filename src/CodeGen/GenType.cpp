@@ -267,13 +267,13 @@ void GenType::postvisit( ast::VarArgsType const * type ) {
 
 void GenType::postvisit( ast::ZeroType const * type ) {
 	// Ideally these wouldn't hit codegen at all, but should be safe to make them ints.
-	result = (options.pretty ? "zero_t " : "long int ") + result;
+	result = ( options.genC ? "long int /*zero_t*/ " : "zero_t " ) + result;
 	handleQualifiers( type );
 }
 
 void GenType::postvisit( ast::OneType const * type ) {
 	// Ideally these wouldn't hit codegen at all, but should be safe to make them ints.
-	result = (options.pretty ? "one_t " : "long int ") + result;
+	result = ( options.genC ? "long int /*one_t*/ " : "one_t " ) + result;
 	handleQualifiers( type );
 }
 

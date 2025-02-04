@@ -60,7 +60,6 @@ private:
 	ast::FunctionDecl* genPosnProto() const;
 	ast::FunctionDecl* genLabelProto() const;
 	ast::FunctionDecl* genValueProto() const;
-	ast::FunctionDecl* genQuasiValueProto() const;
 	ast::FunctionDecl* genTypeNameProto() const;
 
 	void genValueOrLabelBody(
@@ -205,7 +204,7 @@ ast::FunctionDecl* EnumAttrFuncGenerator::genLabelProto() const {
 }
 
 ast::FunctionDecl* EnumAttrFuncGenerator::genValueProto() const {
-	assert (decl->isTyped());
+	assert( decl->is_typed_enum() );
 	return genProto(
 		"value",
 		{new ast::ObjectDecl(getLocation(), "_i", new ast::EnumInstType(decl))},
@@ -413,7 +412,7 @@ void EnumAttrFuncGenerator::genTypeNameBody(ast::FunctionDecl* func) const {
 
 void EnumAttrFuncGenerator::genTypedEnumFunction(const ast::EnumAttribute attr) {
 	if (attr == ast::EnumAttribute::Value) {
-		if ( !decl->isTyped() ) return;
+		if ( !decl->is_typed_enum() ) return;
 		std::vector<ast::ptr<ast::Init>> inits = genValueInit();
 		ast::ObjectDecl* arrayProto =
 			genAttrArrayProto( getLocation(), "values_", decl->base, inits );
@@ -482,7 +481,7 @@ private:
 };
 
 void ImplementEnumFunc::previsit(const ast::EnumDecl* enumDecl) {
-	if (!enumDecl->body || !enumDecl->isCfa) return;
+	if ( !enumDecl->body || enumDecl->is_c_enum() ) return;
 	ast::EnumInstType enumInst(enumDecl->name);
 	enumInst.base = enumDecl;
 	EnumAttrFuncGenerator gen(enumDecl, &enumInst, functionNesting);

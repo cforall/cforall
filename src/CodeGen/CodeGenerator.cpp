@@ -129,6 +129,7 @@ void CodeGenerator::previsit( ast::Node const * ) {
 	// All traversal is manual.
 	// TODO: Which means the ast::Pass is just providing a default no visit?
 	visit_children = false;
+	changeState_ArgToIntrinsic(false);
 }
 
 void CodeGenerator::previsit( ast::ParseNode const * node ) {
@@ -465,6 +466,7 @@ void CodeGenerator::postvisit( ast::ApplicationExpr const * expr ) {
 		const OperatorInfo * opInfo;
 		if ( var->var->linkage == ast::Linkage::Intrinsic &&
 				( opInfo = operatorLookup( var->var->name ) ) ) {
+			changeState_ArgToIntrinsic(true);
 			auto arg = expr->args.begin();
 			switch ( opInfo->type ) {
 			case OT_INDEX:
@@ -557,6 +559,7 @@ void CodeGenerator::postvisit( ast::UntypedExpr const * expr ) {
 	extension( expr );
 	if ( auto name = expr->func.as<ast::NameExpr>() ) {
 		if ( const OperatorInfo * opInfo = operatorLookup( name->name ) ) {
+			changeState_ArgToIntrinsic(true);
 			auto arg = expr->args.begin();
 			switch ( opInfo->type ) {
 			case OT_INDEX:
@@ -742,7 +745,14 @@ void CodeGenerator::postvisit( ast::MemberExpr const * expr ) {
 void CodeGenerator::postvisit( ast::VariableExpr const * expr ) {
 	extension( expr );
 	const OperatorInfo * opInfo;
-	if ( expr->var->linkage == ast::Linkage::Intrinsic
+	if ( visitingArgToIntrinsic
+			&& options.genC
+			&& dynamic_cast<ast::ZeroType const *>( expr->var->get_type() ) ) {
+		// int * p; p = 0;               ==>  ?=?( p, (zero_t){} );  ==>  p = 0;
+		// void f( zero_t z ) { g(z); }  ==>  g(z);                  ==>  g(z);
+		// (we are at the last '==>')
+		output << "0";
+	} else if ( expr->var->linkage == ast::Linkage::Intrinsic
 			&& ( opInfo = operatorLookup( expr->var->name ) )
 			&& opInfo->type == OT_CONSTANT ) {
 		output << opInfo->symbol;

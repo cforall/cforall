@@ -38,8 +38,66 @@ void testInitAssignQueryIncrement() {
 	sout | s.i | s.j;
 }
 
+void testCompats() {
+    zero_t zero = 0;
+    one_t one = 1;
+
+    int x = 0;
+	int xx = zero;
+
+	sout | x | xx;
+
+	x = xx = 42;
+	sout | x | xx;
+
+	x = 0;
+	xx = zero;
+	sout | x | xx;
+
+	int y = 1;
+	int yy = one;
+
+	sout | y | yy;
+
+	y = yy = 42;
+	sout | y | yy;
+
+	y = 1;
+	yy = one;
+	sout | y | yy;
+
+	void z_helper( int * p, zero_t z ) {
+		p = z;  // expect z not reported unused here; expect no missing cast from -Wint-conversion
+		sout | "zero" | (bool) (p == 0);
+	}
+
+	void z_call( int * p, zero_t z ) {
+		z_helper(p, z);
+	}
+
+	void o_helper( int * p, one_t o ) {
+	  #ifdef ERR1
+		p = o;
+	  #else
+		(void) x;  (void) o;
+	  #endif
+		sout | "one" | (bool) (p == 0);
+	}
+
+	void o_call( int * p, one_t o ) {
+		o_helper(p, o);
+	}
+
+	z_call( &x, 0 );
+	z_call( &x, zero );
+
+	o_call( &x, 1 );
+	o_call( &x, one );
+}
+
 int main() {
 	testOverloads();
 	testInitAssignQueryIncrement();
+	testCompats();
 	return 0;
 }

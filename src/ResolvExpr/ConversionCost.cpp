@@ -245,7 +245,7 @@ static Cost convertToReferenceCost( const ast::Type * src, const ast::Type * dst
 			return ast::Pass<ConversionCost>::read( src, dst, srcIsLvalue, symtab, env, conversionCost );
 		}
 		if (const ast::EnumInstType * srcAsInst = dynamic_cast< const ast::EnumInstType * >( src )) {
-			if (srcAsInst->base && !srcAsInst->base->isCfa) {
+			if ( srcAsInst->base && srcAsInst->base->is_c_enum() ) {
 				static const ast::BasicType* integer = new ast::BasicType( ast::BasicKind::UnsignedInt );
 				return ast::Pass<ConversionCost>::read( integer, dst, srcIsLvalue, symtab, env, conversionCost );
 			}
@@ -323,7 +323,7 @@ void ConversionCost::postvisit( const ast::BasicType * basicType ) {
 	if ( const ast::BasicType * dstAsBasic = dynamic_cast< const ast::BasicType * >( dst ) ) {
 		conversionCostFromBasicToBasic( basicType, dstAsBasic );
 	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
-		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isCfa ) {
+		if ( dstAsEnumInst->base && dstAsEnumInst->base->is_c_enum() ) {
 			cost = Cost::safe;
 		}
 	}
@@ -404,7 +404,7 @@ void ConversionCost::postvisit( const ast::FunctionType * functionType ) {
 void ConversionCost::postvisit( const ast::EnumInstType * inst ) {
 	if ( auto dstInst = dynamic_cast<const ast::EnumInstType *>( dst ) ) {
 		cost = enumCastCost(inst, dstInst, symtab, env);
-	} else if ( !inst->base->isCfa ) {
+	} else if ( inst->base->is_c_enum() ) {
 		static ast::ptr<ast::BasicType> integer = { new ast::BasicType( ast::BasicKind::SignedInt ) };
 		cost = costCalc( integer, dst, srcIsLvalue, symtab, env );
 	}
@@ -454,15 +454,13 @@ void ConversionCost::postvisit( const ast::TupleType * tupleType ) {
 	}
 }
 
-void ConversionCost::postvisit( const ast::VarArgsType * varArgsType ) {
-	(void)varArgsType;
+void ConversionCost::postvisit( const ast::VarArgsType * ) {
 	if ( dynamic_cast< const ast::VarArgsType * >( dst ) ) {
 		cost = Cost::zero;
 	}
 }
 
-void ConversionCost::postvisit( const ast::ZeroType * zeroType ) {
-	(void)zeroType;
+void ConversionCost::postvisit( const ast::ZeroType * ) {
 	if ( dynamic_cast< const ast::ZeroType * >( dst ) ) {
 		cost = Cost::zero;
 	} else if ( const ast::BasicType * dstAsBasic =
@@ -486,14 +484,13 @@ void ConversionCost::postvisit( const ast::ZeroType * zeroType ) {
 		cost.incSafe( maxIntCost + 2 );
 		// assuming 0p is supposed to be used for pointers?
 	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
-		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isCfa ) {
+		if ( dstAsEnumInst->base && dstAsEnumInst->base->is_c_enum() ) {
 			cost = Cost::safe;
 		}
 	}
 }
 
-void ConversionCost::postvisit( const ast::OneType * oneType ) {
-	(void)oneType;
+void ConversionCost::postvisit( const ast::OneType * ) {
 	if ( dynamic_cast< const ast::OneType * >( dst ) ) {
 		cost = Cost::zero;
 	} else if ( const ast::BasicType * dstAsBasic =
@@ -507,7 +504,7 @@ void ConversionCost::postvisit( const ast::OneType * oneType ) {
 			cost.incSign( signMatrix[ ast::BasicKind::SignedInt ][ dstAsBasic->kind ] );
 		}
 	} else if ( auto dstAsEnumInst = dynamic_cast< const ast::EnumInstType * >( dst ) ) {
-		if ( dstAsEnumInst->base && !dstAsEnumInst->base->isCfa ) {
+		if ( dstAsEnumInst->base && dstAsEnumInst->base->is_c_enum() ) {
 			cost = Cost::safe;
 		}
 	}

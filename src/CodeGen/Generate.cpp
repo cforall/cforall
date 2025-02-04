@@ -45,12 +45,24 @@ namespace {
 			return stmt->callStmt;
 		}
 	};
+
+	struct ZeroOneObjectHider final {
+		ast::ObjectDecl const * postvisit( ast::ObjectDecl const * decl ) {
+			if ( decl->type.as<ast::ZeroType>() || decl->type.as<ast::OneType>() ) {
+				ast::ObjectDecl * mutDecl = ast::mutate( decl );
+				mutDecl->attributes.push_back( new ast::Attribute( "unused" ) );
+				return mutDecl;
+			}
+			return decl;
+		}
+	};
 } // namespace
 
 void generate( ast::TranslationUnit & translationUnit, std::ostream & os, bool doIntrinsics,
 		bool pretty, bool generateC, bool lineMarks, bool printExprTypes ) {
 	erase_if( translationUnit.decls, shouldClean );
 	ast::Pass<TreeCleaner>::run( translationUnit );
+	ast::Pass<ZeroOneObjectHider>::run( translationUnit );
 
 	ast::Pass<CodeGenerator> cgv( os,
 			Options( pretty, generateC, lineMarks, printExprTypes ) );

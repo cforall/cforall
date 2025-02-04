@@ -86,6 +86,13 @@ void functionDeclMatchesType( const FunctionDecl * decl ) {
 	assert( type->returns.size() == decl->returns.size() );
 }
 
+/// Check that an enumeration has not been made with an inconsistent spec.
+void isEnumerationConsistent( const EnumDecl * node ) {
+	if ( node->is_c_enum() ) {
+		assert( nullptr == node->base );
+	}
+}
+
 /// Check that the MemberExpr has an aggregate type and matching member.
 void memberMatchesAggregate( const MemberExpr * expr ) {
 	const Type * aggrType = expr->aggregate->result->stripReferences();
@@ -134,6 +141,11 @@ struct InvariantCore {
 	void previsit( const FunctionDecl * node ) {
 		previsit( (const ParseNode *)node );
 		functionDeclMatchesType( node );
+	}
+
+	void previsit( const EnumDecl * node ) {
+		previsit( (const ParseNode *)node );
+		isEnumerationConsistent( node );
 	}
 
 	void previsit( const Stmt * node ) {

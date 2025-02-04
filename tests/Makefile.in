@@ -1155,6 +1155,10 @@ raii/partial-ERR1 : raii/partial.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR1
 	-cp ${test} ${abspath ${@}}
 
+zero_one-ERR1 : zero_one.cfa ${CFACCBIN}
+	${CFACOMPILE_SYNTAX} -DERR1
+	-cp ${test} ${abspath ${@}}
+
 ctrl-flow/loop_else : ctrl-flow/loop_else.cfa ${CFACCBIN}
 	${CC} ${AM_CFLAGS} -Wno-superfluous-else $< -o $@ 
 

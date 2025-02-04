@@ -163,22 +163,18 @@ namespace {
 				// TO GCC:     const size_t __len_of_a = rand(); float a[ __len_of_a ];
 				ast::ObjectDecl * arrayDimension = nullptr;
 
-				const ast::TypeExpr * ty = dynamic_cast< const ast::TypeExpr * >( arrayType->dimension.get() );
-				if ( ty ) {
+				if ( auto ty = dynamic_cast< const ast::TypeExpr * >( arrayType->dimension.get() ) ) {
 					auto inst = ty->type.as<ast::EnumInstType>();
-					if ( inst ) {
-						if ( inst->base->isCfa ) {
-							arrayDimension = new ast::ObjectDecl(
+					if ( inst && !inst->base->is_c_enum() ) {
+						arrayDimension = new ast::ObjectDecl(
+							arrayType->dimension->location,
+							dimensionName.newName(),
+							new ast::BasicType( ast::BasicKind::UnsignedChar ),
+							new ast::SingleInit(
 								arrayType->dimension->location,
-								dimensionName.newName(),
-								new ast::BasicType( ast::BasicKind::UnsignedChar ),
-								new ast::SingleInit(
-									arrayType->dimension->location,
-									ast::ConstantExpr::from_int( arrayType->dimension->location, inst->base->members.size() )
-								)
-							);
-							// return arrayType;
-						}
+								ast::ConstantExpr::from_int( arrayType->dimension->location, inst->base->members.size() )
+							)
+						);
 					}
 				}
 				if ( arrayDimension == nullptr ) {

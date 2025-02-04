@@ -305,7 +305,7 @@ private:
 /// Enumeration attribute kind.
 enum class EnumAttribute{ Value, Posn, Label };
 
-/// enum declaration `enum Foo { ... };`
+/// enum declaration `enum Foo { ... };` or `enum(...) Foo { ... };`
 class EnumDecl final : public AggregateDecl {
 public:
 	// isCfa indicated if the enum has a declaration like:
@@ -315,6 +315,10 @@ public:
 	ptr<Type> base;
 	enum class EnumHiding { Visible, Hide } hide;
 	std::vector< ast::ptr<ast::EnumInstType>> inlinedDecl; // child enums
+
+	bool is_c_enum     () const { return !isCfa; }
+	bool is_opaque_enum() const { return isCfa && nullptr == base; }
+	bool is_typed_enum () const { return isCfa && nullptr != base; }
 
 	EnumDecl( const CodeLocation& loc, const std::string& name, bool isCfa = false,
 		std::vector<ptr<Attribute>>&& attrs = {}, Linkage::Spec linkage = Linkage::Cforall,
@@ -330,8 +334,6 @@ public:
 
 	const char * typeString() const override { return aggrString( Enum ); }
 
-	bool isTyped() const;
-	bool isOpaque() const;
 private:
 	EnumDecl * clone() const override { return new EnumDecl{ *this }; }
 	MUTATE_FRIEND

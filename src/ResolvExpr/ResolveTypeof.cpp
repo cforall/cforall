@@ -61,7 +61,7 @@ struct ResolveTypeof : public ast::WithShortCircuiting {
 		if ( typeofType->kind == ast::TypeofType::Basetypeof ) {
 			// replace basetypeof(<enum>) by int
 			auto enumInst = newType.as< ast::EnumInstType >();
-			if ( enumInst && (!enumInst->base || !enumInst->base->isCfa) ) {
+			if ( enumInst && (!enumInst->base || enumInst->base->is_c_enum() ) ) {
 				newType = new ast::BasicType(
 					ast::BasicKind::SignedInt, newType->qualifiers, copy(newType->attributes) );
 			}
@@ -143,11 +143,11 @@ const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const Reso
 	mutDecl->isTypeFixed = true;
 
 	auto enumInst = decl->type.as<ast::EnumInstType>();
-	if ( enumInst && enumInst->base->isCfa ) {
+	if ( enumInst && !enumInst->base->is_c_enum() ) {
 		if ( auto init = decl->init.as<ast::SingleInit>() ) {
 			if ( auto initExpr = init->value.as<ast::ConstantExpr>() ) {
 				if ( initExpr->result.as<ast::ZeroType>() ) {
-					auto newInit = new ast::SingleInit( init->location, 
+					auto newInit = new ast::SingleInit( init->location,
 						ast::UntypedExpr::createCall( init->location, "lowerBound", {} )
 					);
 					mutDecl->init = newInit;

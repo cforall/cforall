@@ -168,10 +168,6 @@ bool EnumDecl::valueOf( const Decl * enumerator, long long & value ) const {
 	return false;
 }
 
-bool EnumDecl::isTyped() const { return base; }
-
-bool EnumDecl::isOpaque() const { return isCfa && !isTyped(); }
-
 }
 
 // Local Variables: //
