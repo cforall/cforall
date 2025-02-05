@@ -10,14 +10,12 @@ void fred( T x ) {
 #include <array.hfa>
 forall( [N] )
 void mary( array(char, N) & ) {
-    printf( "%zu\n", N );    
-  #if defined TRY_TRAC_269_REMAINDER
-	for ( i; N ) {
+    printf( "%zu\n", N );
+    for ( i; N ) {
         if (i > 0) printf(" ");
-        printf( "%zu", i); // FIX ME: i still getting type long unsigned int on -m32
-	}
+        printf( "%zu", i);
+    }
     printf("\n");
-  #endif
 }
 
 int main() {

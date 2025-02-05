@@ -2,16 +2,24 @@
 # This script helps you run the dimexpr-match test manually, in a more thorough fashion.
 # test.py runs do not use this script.
 
+# When a test.py run shows that an output has changed, use this script for verification, before running --regenerate-expected.
+# Particularly with -ERRS, we don't actually care what the error message is (likely source of noise requiring --regenerate-expected), just that all the should-reject cases are rejected (which this script shows).
+
+# Success means the script does not print "TEST FAILURE."
+# Expect one large output with a mix of "done" and "skip" messages.  That is the acceptance cases.
+# Then expect many small outputs all showing rc=1.  These are the rejection cases.
+
 # The thoroughness that this script affords is
 #   - verifying that _each_ rejection case is rejected, among a huge number of rejection cases
 #     - particularly, counting those that reject by way of CFACC calling GCC, which issues a warning; these rejections are not reached by getting CFACC to report all errors at once
 #   - observing the behaviour of a compiler other than the CFACC version in whose folder the test occurs; for example, GCC
 
-# usage (one of)
-#   ./dimexpr-match-detail.sh '/u0/mlbrooks/cfa2/build-straw3/driver/cfa -DCFA_PREVIEW_FUNCTIONALITY'
+# usage examples
+#   ./dimexpr-match-detail.sh cfa
+#   ./dimexpr-match-detail.sh      # same as above
 #   ./dimexpr-match-detail.sh ~/cfa6/build/driver/cfa
+#   ./dimexpr-match-detail.sh "$cfa -m32 -nodebug"
 #   ./dimexpr-match-detail.sh 'gcc -x c'
-
 
 
 compiler=${1:-cfa}

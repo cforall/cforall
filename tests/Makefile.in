@@ -439,20 +439,20 @@ WFLAGS_LAX = \
 # These tests opt for lax wflags.  (By default, new tests get strict wflags.)
 # Indented list entries are finer-grained targets under the test.
 # Making this association implicit would be ideal, but requires learning more automake than is affordable.
-WFLGAS_OPT_LAX = \
-	${WFLGAS_OPT_LAX_EXPECT_WARN} \
-	${WFLGAS_OPT_LAX_TO_INVESTIGATE}
+WFLAGS_OPT_LAX = \
+	${WFLAGS_OPT_LAX_EXPECT_WARN} \
+	${WFLAGS_OPT_LAX_TO_INVESTIGATE}
 
 
 # Tests checking that cfa-cc raises a certain warning, so -Werror is permanently inappropriate
-WFLGAS_OPT_LAX_EXPECT_WARN = \
+WFLAGS_OPT_LAX_EXPECT_WARN = \
 	attr-priority \
 	ctrl-flow/loop_else-WRN1 \
 	warnings/self-assignment
 
 
 # Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
-WFLGAS_OPT_LAX_TO_INVESTIGATE = \
+WFLAGS_OPT_LAX_TO_INVESTIGATE = \
 	collections/vector-demo \
 	concurrency/actors/dynamic \
 	concurrency/actors/executor \
@@ -508,7 +508,7 @@ WFLGAS_OPT_LAX_TO_INVESTIGATE = \
 	tuple/tupleCast \
 	tuple/tupleMember
 
-WFLAGS = ${if ${filter ${WFLGAS_OPT_LAX},${@}},${WFLAGS_LAX},${WFLAGS_STRICT}}
+WFLAGS = ${if ${filter ${WFLAGS_OPT_LAX},${@}},${WFLAGS_LAX},${WFLAGS_STRICT}}
 
 # applies to both programs
 # since automake doesn't have support for CFA we have to

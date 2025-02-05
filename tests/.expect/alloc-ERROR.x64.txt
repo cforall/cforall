@@ -1,0 +1,48 @@
+alloc.cfa:382:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: ip
+  Applying untyped:
+    Name: realloc
+  ...to:
+    Name: stp
+    Applying untyped:
+      Name: ?*?
+    ...to:
+      Name: dim
+      Sizeof Expression on: type-of expression Applying untyped:
+          Name: *?
+        ...to:
+          Name: stp
+
+      ... with resolved type:
+        unsigned long int
+
+
+
+alloc.cfa:383:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: ip
+  Applying untyped:
+    Name: memset
+  ...to:
+    Name: stp
+    Constant Expression (10: signed int)
+    ... with resolved type:
+      signed int
+
+
+alloc.cfa:384:1 error: Invalid application of existing declaration(s) in expression Applying untyped:
+  Name: ?=?
+...to:
+  Name: ip
+  Applying untyped:
+    Name: memcpy
+  ...to:
+    Address of:
+      Name: st1
+    Address of:
+      Name: st
+
+

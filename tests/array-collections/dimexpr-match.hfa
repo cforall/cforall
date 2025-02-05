@@ -2,6 +2,8 @@
 
 //  Framework for the dimexpr-match tests.
 //
+//  For general test-suite maintenance instrutions, see *-detail.sh.
+//
 //  These tests show whether an expression of type like `float (*)[25]`
 //  can be used in a context expecting a type like `float (*)[rand()]`.
 //
@@ -180,7 +182,7 @@ CFA "classic" rules (what CFA actually does, before Mike brings in CFA rules)
     - same as C, except
     - reject STA/non-STA crossing
 
-CFA rules ("preview" only)
+CFA rules
     - accept a pair from group STA if it has the same value
     - accept a pair from group DYN if it is written out the same (e.g. refers to same variable)
     - otherwise, reject

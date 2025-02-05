@@ -25,6 +25,7 @@
 #include "LinkageSpec.hpp"
 #include "Stmt.hpp"
 #include "Type.hpp"
+#include "Util.hpp"                // for TranslationDeps
 #include "TypeSubstitution.hpp"
 #include "Common/Utility.hpp"
 #include "Common/SemanticError.hpp"
@@ -280,22 +281,22 @@ ConstantExpr * ConstantExpr::null( const CodeLocation & loc, const Type * ptrTyp
 // --- SizeofExpr
 
 SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), type( t ) {}
+: Expr( loc, ast::TranslationDeps::getSizeType() ), type( t ) {}
 
 // --- AlignofExpr
 
 AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), type( t ) {}
+: Expr( loc, ast::TranslationDeps::getSizeType() ), type( t ) {}
 
 // --- CountofExpr
 
 CountofExpr::CountofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, new BasicType( BasicKind::LongUnsignedInt) ), type( t ) {}
+: Expr( loc, ast::TranslationDeps::getSizeType() ), type( t ) {}
 
 // --- OffsetofExpr
 
 OffsetofExpr::OffsetofExpr( const CodeLocation & loc, const Type * ty, const DeclWithType * mem )
-: Expr( loc, new BasicType{ BasicKind::LongUnsignedInt } ), type( ty ), member( mem ) {
+: Expr( loc, ast::TranslationDeps::getSizeType() ), type( ty ), member( mem ) {
 	assert( type );
 	assert( member );
 }
@@ -304,7 +305,7 @@ OffsetofExpr::OffsetofExpr( const CodeLocation & loc, const Type * ty, const Dec
 
 OffsetPackExpr::OffsetPackExpr( const CodeLocation & loc, const StructInstType * ty )
 : Expr( loc, new ArrayType{
-	new BasicType{ BasicKind::LongUnsignedInt }, nullptr, FixedLen, DynamicDim }
+	ast::TranslationDeps::getSizeType(), nullptr, FixedLen, DynamicDim }
 ), type( ty ) {
 	assert( type );
 }

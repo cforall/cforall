@@ -207,56 +207,6 @@ array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existin
 array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
   Address of:
     Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
-    Sizeof Expression on: instance of type dim7 (not function type)
-    ... with resolved type:
-      unsigned long int
-  ... to:
-    unsigned int
-  ... with resolved type:
-    unsigned int
-array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
-  Address of:
-    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
-    Sizeof Expression on: instance of type dim7 (not function type)
-    ... with resolved type:
-      unsigned long int
-  ... to:
-    unsigned int
-  ... with resolved type:
-    unsigned int
-array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
-  Address of:
-    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
-    Sizeof Expression on: instance of type dim7 (not function type)
-    ... with resolved type:
-      unsigned long int
-  ... to:
-    unsigned int
-  ... with resolved type:
-    unsigned int
-array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
-  Address of:
-    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
-    Sizeof Expression on: instance of type dim7 (not function type)
-    ... with resolved type:
-      unsigned long int
-  ... to:
-    unsigned int
-  ... with resolved type:
-    unsigned int
-array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
-  Address of:
-    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
-    Sizeof Expression on: instance of type dim7 (not function type)
-    ... with resolved type:
-      unsigned long int
-  ... to:
-    unsigned int
-  ... with resolved type:
-    unsigned int
-array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
-  Address of:
-    Name: a  InitAlternative: pointer to array of float with dimension of Generated Cast of:
     Variable Expression: enu7: const instance of enum __anonymous0 with body
     ... with resolved type:
       const instance of enum __anonymous0 with body
@@ -302,6 +252,31 @@ array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existin
       const instance of enum __anonymous0 with body
   ... to:
     unsigned int
+  ... with resolved type:
+    unsigned int
+array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Sizeof Expression on: instance of type dim7 (not function type)
+  ... with resolved type:
+    unsigned int
+array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Sizeof Expression on: instance of type dim7 (not function type)
+  ... with resolved type:
+    unsigned int
+array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Sizeof Expression on: instance of type dim7 (not function type)
+  ... with resolved type:
+    unsigned int
+array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Sizeof Expression on: instance of type dim7 (not function type)
+  ... with resolved type:
+    unsigned int
+array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression
+  Address of:
+    Name: a  InitAlternative: pointer to array of float with dimension of Sizeof Expression on: instance of type dim7 (not function type)
   ... with resolved type:
     unsigned int
 array-collections/dimexpr-match-c.cfa:49:1 error: Invalid application of existing declaration(s) in expression Untyped Init Expression

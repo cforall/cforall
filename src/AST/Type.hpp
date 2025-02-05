@@ -343,7 +343,7 @@ private:
 
 struct TypeEnvKey;
 
-/// instance of named type alias (typedef or variable)
+/// instance of named type alias (typedef, variable, or even, just after parsing, the name of a struct)
 class TypeInstType final : public BaseInstType {
 public:
 	readonly<TypeDecl> base;
