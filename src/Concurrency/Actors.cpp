@@ -28,18 +28,18 @@ namespace Concurrency {
 
 struct CollectactorStructDecls : public ast::WithGuards {
 	unordered_set<const StructDecl *> & actorStructDecls;
-	unordered_set<const StructDecl *>  & messageStructDecls;
-	const StructDecl ** requestDecl;
-	const EnumDecl ** allocationDecl;
-	const StructDecl ** actorDecl;
-	const StructDecl ** msgDecl;
+	unordered_set<const StructDecl *> & messageStructDecls;
+	const StructDecl *& requestDecl;
+	const EnumDecl *& allocationDecl;
+	const StructDecl *& actorDecl;
+	const StructDecl *& msgDecl;
 	StructDecl * parentDecl;
 	bool insideStruct = false;
 	bool namedDecl = false;
 
 	// finds and sets a ptr to the allocation enum, which is needed in the next pass
 	void previsit( const EnumDecl * decl ) {
-		if( decl->name == "allocation" ) *allocationDecl = decl;
+		if( decl->name == "allocation" ) allocationDecl = decl;
 	}
 
 	// finds and sets a ptr to the actor, message, and request structs, which are needed in the next pass
@@ -47,12 +47,13 @@ struct CollectactorStructDecls : public ast::WithGuards {
 		if ( !decl->body ) return;
 		if ( decl->name == "actor" ) {
 			actorStructDecls.insert( decl ); // skip inserting fwd decl
-			*actorDecl = decl;
+			actorDecl = decl;
 		} else if( decl->name == "message" ) {
 			messageStructDecls.insert( decl ); // skip inserting fwd decl
-			*msgDecl = decl;
-		} else if( decl->name == "request" ) *requestDecl = decl;
-		else {
+			msgDecl = decl;
+		} else if( decl->name == "request" ) {
+			requestDecl = decl;
+		} else {
 			GuardValue(insideStruct);
 			insideStruct = true;
 			parentDecl = mutate( decl );
@@ -72,7 +73,7 @@ struct CollectactorStructDecls : public ast::WithGuards {
 
 	// this collects the derived actor and message struct decl ptrs
 	void postvisit( const StructInstType * node ) {
-		if ( ! *actorDecl || ! *msgDecl ) return;
+		if ( !actorDecl || !msgDecl ) return;
 		if ( insideStruct && !namedDecl ) {
 			auto actorIter = actorStructDecls.find( node->aggr() );
 			if ( actorIter != actorStructDecls.end() ) {
@@ -88,7 +89,7 @@ struct CollectactorStructDecls : public ast::WithGuards {
 
   public:
 	CollectactorStructDecls( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls,
-		const StructDecl ** requestDecl, const EnumDecl ** allocationDecl, const StructDecl ** actorDecl, const StructDecl ** msgDecl )
+		const StructDecl *& requestDecl, const EnumDecl *& allocationDecl, const StructDecl *& actorDecl, const StructDecl *& msgDecl )
 		: actorStructDecls( actorStructDecls ), messageStructDecls( messageStructDecls ), requestDecl( requestDecl ),
 		allocationDecl( allocationDecl ), actorDecl(actorDecl), msgDecl(msgDecl) {}
 };
@@ -195,11 +196,11 @@ class FwdDeclTable {
 //     for message send operators (via table above)
 struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 	unordered_set<const StructDecl *> & actorStructDecls;
-	unordered_set<const StructDecl *>  & messageStructDecls;
-	const StructDecl ** requestDecl;
-	const EnumDecl ** allocationDecl;
-	const StructDecl ** actorDecl;
-	const StructDecl ** msgDecl;
+	unordered_set<const StructDecl *> & messageStructDecls;
+	const StructDecl *& requestDecl;
+	const EnumDecl *& allocationDecl;
+	const StructDecl *& actorDecl;
+	const StructDecl *& msgDecl;
 	FwdDeclTable & forwardDecls;
 
 	// generates the operator for actor message sends
@@ -278,19 +279,19 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 					new ObjectDecl(
 						decl->location,
 						"base_actor",
-						new PointerType( new PointerType( new StructInstType( *actorDecl ) ) )
+						new PointerType( new PointerType( new StructInstType( actorDecl ) ) )
 					),
 					new ObjectDecl(
 						decl->location,
 						"base_msg",
-						new PointerType( new PointerType( new StructInstType( *msgDecl ) ) )
+						new PointerType( new PointerType( new StructInstType( msgDecl ) ) )
 					)
 				},                      // params
 				{
 					new ObjectDecl(
 						decl->location,
 						"__CFA_receive_wrap_ret",
-						new EnumInstType( *allocationDecl )
+						new EnumInstType( allocationDecl )
 					)
 				},
 				wrapBody,               // body
@@ -322,7 +323,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 				new ObjectDecl(
 					decl->location,
 					"new_req",
-					new StructInstType( *requestDecl )
+					new StructInstType( requestDecl )
 				)
 			));
 
@@ -330,9 +331,9 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 			FunctionType * derivedReceive = new FunctionType();
 			derivedReceive->params.push_back( ast::deepCopy( derivedActorRef ) );
 			derivedReceive->params.push_back( ast::deepCopy( derivedMsgRef ) );
-			derivedReceive->params.push_back( new PointerType( new PointerType( new StructInstType( *actorDecl ) ) ) );
-			derivedReceive->params.push_back( new PointerType( new PointerType( new StructInstType( *msgDecl ) ) ) );
-			derivedReceive->returns.push_back( new EnumInstType( *allocationDecl ) );
+			derivedReceive->params.push_back( new PointerType( new PointerType( new StructInstType( actorDecl ) ) ) );
+			derivedReceive->params.push_back( new PointerType( new PointerType( new StructInstType( msgDecl ) ) ) );
+			derivedReceive->returns.push_back( new EnumInstType( allocationDecl ) );
 
 			// Generates: allocation (*my_work_fn)( derived_actor &, derived_msg &, actor **, message ** ) = receive;
 			sendBody->push_back( new DeclStmt(
@@ -347,11 +348,11 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 
 			// Function type is: allocation (*)( actor &, message & )
 			FunctionType * genericReceive = new FunctionType();
-			genericReceive->params.push_back( new ReferenceType( new StructInstType( *actorDecl ) ) );
-			genericReceive->params.push_back( new ReferenceType( new StructInstType( *msgDecl ) ) );
-			genericReceive->params.push_back( new PointerType( new PointerType( new StructInstType( *actorDecl ) ) ) );
-			genericReceive->params.push_back( new PointerType( new PointerType( new StructInstType( *msgDecl ) ) ) );
-			genericReceive->returns.push_back( new EnumInstType( *allocationDecl ) );
+			genericReceive->params.push_back( new ReferenceType( new StructInstType( actorDecl ) ) );
+			genericReceive->params.push_back( new ReferenceType( new StructInstType( msgDecl ) ) );
+			genericReceive->params.push_back( new PointerType( new PointerType( new StructInstType( actorDecl ) ) ) );
+			genericReceive->params.push_back( new PointerType( new PointerType( new StructInstType( msgDecl ) ) ) );
+			genericReceive->returns.push_back( new EnumInstType( allocationDecl ) );
 
 			// Generates: allocation (*fn)( actor &, message & ) = (allocation (*)( actor &, message & ))my_work_fn;
 			// More readable synonymous code:
@@ -377,8 +378,8 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 					new NameExpr( decl->location, "?{}" ),
 					{
 						new NameExpr( decl->location, "new_req" ),
-						new CastExpr( decl->location, new AddressExpr( new NameExpr( decl->location, "receiver" ) ), new PointerType( new StructInstType( *actorDecl ) ), ExplicitCast ),
-						new CastExpr( decl->location, new AddressExpr( new NameExpr( decl->location, "msg" ) ), new PointerType( new StructInstType( *msgDecl ) ), ExplicitCast ),
+						new CastExpr( decl->location, new AddressExpr( new NameExpr( decl->location, "receiver" ) ), new PointerType( new StructInstType( actorDecl ) ), ExplicitCast ),
+						new CastExpr( decl->location, new AddressExpr( new NameExpr( decl->location, "msg" ) ), new PointerType( new StructInstType( msgDecl ) ), ExplicitCast ),
 						new NameExpr( decl->location, "fn" )
 					}
 				)
@@ -442,7 +443,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 
   public:
 	GenFuncsCreateTables( unordered_set<const StructDecl *> & actorStructDecls, unordered_set<const StructDecl *> & messageStructDecls,
-		const StructDecl ** requestDecl, const EnumDecl ** allocationDecl, const StructDecl ** actorDecl, const StructDecl ** msgDecl,
+		const StructDecl *& requestDecl, const EnumDecl *& allocationDecl, const StructDecl *& actorDecl, const StructDecl *& msgDecl,
 		FwdDeclTable & forwardDecls ) : actorStructDecls(actorStructDecls), messageStructDecls(messageStructDecls),
 		requestDecl(requestDecl), allocationDecl(allocationDecl), actorDecl(actorDecl), msgDecl(msgDecl), forwardDecls(forwardDecls) {}
 };
@@ -452,7 +453,7 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 // generates the forward declarations of the send operator for actor routines
 struct FwdDeclOperator : public ast::WithDeclsToAdd {
 	unordered_set<const StructDecl *> & actorStructDecls;
-	unordered_set<const StructDecl *>  & messageStructDecls;
+	unordered_set<const StructDecl *> & messageStructDecls;
 	FwdDeclTable & forwardDecls;
 
 	// handles forward declaring the message operator
@@ -494,30 +495,24 @@ void implementActors( TranslationUnit & translationUnit ) {
 
 	// for storing through the passes
 	// these are populated with various important struct decls
-	const StructDecl * requestDeclPtr = nullptr;
-	const EnumDecl * allocationDeclPtr = nullptr;
-	const StructDecl * actorDeclPtr = nullptr;
-	const StructDecl * msgDeclPtr = nullptr;
-
-	// double pointer to modify local ptrs above
-	const StructDecl ** requestDecl = &requestDeclPtr;
-	const EnumDecl ** allocationDecl = &allocationDeclPtr;
-	const StructDecl ** actorDecl = &actorDeclPtr;
-	const StructDecl ** msgDecl = &msgDeclPtr;
+	const StructDecl * requestDecl = nullptr;
+	const EnumDecl * allocationDecl = nullptr;
+	const StructDecl * actorDecl = nullptr;
+	const StructDecl * msgDecl = nullptr;
 
 	// first pass collects ptrs to allocation enum, request type, and generic receive fn typedef
 	// also populates maps of all derived actors and messages
-	Pass<CollectactorStructDecls>::run( translationUnit, actorStructDecls, messageStructDecls, requestDecl,
-		allocationDecl, actorDecl, msgDecl );
+	Pass<CollectactorStructDecls>::run( translationUnit, actorStructDecls, messageStructDecls,
+		requestDecl, allocationDecl, actorDecl, msgDecl );
 
 	// check that we have found all the decls we need from <actor.hfa>, if not no need to run the rest of this pass
-	if ( !allocationDeclPtr || !requestDeclPtr || !actorDeclPtr || !msgDeclPtr )
+	if ( !allocationDecl || !requestDecl || !actorDecl || !msgDecl )
 		return;
 
 	// second pass locates all receive() routines that overload the generic receive fn
 	// it then generates the appropriate operator '|' send routines for the receive routines
-	Pass<GenFuncsCreateTables>::run( translationUnit, actorStructDecls, messageStructDecls, requestDecl,
-		allocationDecl, actorDecl, msgDecl, forwardDecls );
+	Pass<GenFuncsCreateTables>::run( translationUnit, actorStructDecls, messageStructDecls,
+		requestDecl, allocationDecl, actorDecl, msgDecl, forwardDecls );
 
 	// The third pass forward declares operator '|' send routines
 	Pass<FwdDeclOperator>::run( translationUnit, actorStructDecls, messageStructDecls, forwardDecls );
