@@ -400,8 +400,16 @@ struct GenFuncsCreateTables : public ast::WithDeclsToAdd {
 				)
 			));
 
-			// Generates: return receiver;
-			sendBody->push_back( new ReturnStmt( decl->location, new NameExpr( decl->location, "receiver" ) ) );
+			// Generates: &receiver_ret = &receiver; return receiver_ret;
+			// Note: This is the general pattern used as a "return convention".
+			sendBody->push_back( new ExprStmt( decl->location,
+				ast::UntypedExpr::createAssign( decl->location,
+					new AddressExpr( new NameExpr( decl->location, "receiver_ret" ) ),
+					new AddressExpr( new NameExpr( decl->location, "receiver" ) )
+				)
+			) );
+			sendBody->push_back( new ReturnStmt( decl->location,
+				new NameExpr( decl->location, "receiver_ret" ) ) );
 
 			// put it all together into the complete function decl from above
 			FunctionDecl * sendOperatorFunction = new FunctionDecl(

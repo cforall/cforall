@@ -1160,10 +1160,10 @@ zero_one-ERR1 : zero_one.cfa ${CFACCBIN}
 	-cp ${test} ${abspath ${@}}
 
 ctrl-flow/loop_else : ctrl-flow/loop_else.cfa ${CFACCBIN}
-	${CC} ${AM_CFLAGS} -Wno-superfluous-else $< -o $@ 
+	${CC} ${AM_CFLAGS} -Wno-superfluous-else $< -o $@
 
 ctrl-flow/loop_else-WRN1 : ctrl-flow/loop_else.cfa ${CFACCBIN}
-	${CFACOMPILE_SYNTAX} -DERR1
+	${CFACOMPILE_SYNTAX}
 	-cp ${test} ${abspath ${@}}
 
 # Exception Tests
